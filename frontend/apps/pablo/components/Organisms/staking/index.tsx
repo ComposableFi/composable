@@ -30,9 +30,9 @@ const tableHeaders = [
   {
     header: "Locked PBLO",
   },
-  // {
-  //   header: "Expiry",
-  // },
+  {
+    header: "Expiry",
+  },
   {
     header: "Multiplier",
   },
@@ -60,7 +60,9 @@ export const Staking: React.FC<BoxProps> = ({ ...boxProps }) => {
     <Box {...boxProps}>
       <StakingStatistics />
       {shouldShowPortfolio && (
-        <XPablosBox mt={8} title="Portfolio" header={tableHeaders} />
+        <XPablosBox financialNftCollectionId={
+          stakingRewardPool ? stakingRewardPool.financialNftAssetId : "-"
+        } mt={8} title="Portfolio" header={tableHeaders} />
       )}
       <BoxWrapper mt={8}>
         <Tabs items={tabItems} value={tab} onChange={handleTabChange} />

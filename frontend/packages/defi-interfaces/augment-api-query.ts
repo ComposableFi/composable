@@ -7,10 +7,10 @@ import type { PalletCurrencyFactoryRanges } from './currencyFactory';
 import type { PalletPabloPoolConfiguration, PalletPabloPriceCumulative, PalletPabloTimeWeightedAveragePrice } from './pablo';
 import type { ApiTypes } from '@polkadot/api-base/types';
 import type { Data } from '@polkadot/types';
-import type { BTreeMap, Bytes, Null, Option, U8aFixed, Vec, WrapperKeepOpaque, bool, u128, u16, u32, u64 } from '@polkadot/types-codec';
+import type { BTreeMap, Bytes, Null, Option, U8aFixed, Vec, WrapperKeepOpaque, bool, u128, u16, u32, u64, BTreeSet } from '@polkadot/types-codec';
 import type { AnyNumber, ITuple } from '@polkadot/types-codec/types';
 import type { AccountId32, Call, H256 } from '@polkadot/types/interfaces/runtime';
-import type { FrameSupportWeightsPerDispatchClassU64, FrameSystemAccountInfo, FrameSystemEventRecord, FrameSystemLastRuntimeUpgradeInfo, FrameSystemPhase, PalletAuthorshipUncleEntryItem, PalletBalancesAccountData, PalletBalancesBalanceLock, PalletBalancesReleases, PalletBalancesReserveData, PalletCollectiveVotes, PalletMultisigMultisig, PalletProxyAnnouncement, PalletProxyProxyDefinition, PalletTransactionPaymentReleases, PolkadotCorePrimitivesOutboundHrmpMessage, SpCoreCryptoKeyTypeId, SpRuntimeDigest, XcmV1MultiLocation } from '@polkadot/types/lookup';
+import type { ComposableTraitsAccountProxyProxyDefinition, FrameSupportWeightsPerDispatchClassU64, FrameSystemAccountInfo, FrameSystemEventRecord, FrameSystemLastRuntimeUpgradeInfo, FrameSystemPhase, PalletAccountProxyAnnouncement, PalletAuthorshipUncleEntryItem, PalletBalancesAccountData, PalletBalancesBalanceLock, PalletBalancesReleases, PalletBalancesReserveData, PalletCollectiveVotes, PalletMultisigMultisig, PalletTransactionPaymentReleases, PolkadotCorePrimitivesOutboundHrmpMessage, SpCoreCryptoKeyTypeId, SpRuntimeDigest, XcmV1MultiLocation } from '@polkadot/types/lookup';
 import type { Observable } from '@polkadot/types/types';
 
 declare module '@polkadot/api-base/types/storage' {
@@ -385,6 +385,23 @@ declare module '@polkadot/api-base/types/storage' {
        **/
       takes: AugmentedQuery<ApiType, (arg: u128 | AnyNumber | Uint8Array) => Observable<Option<Vec<PalletDutchAuctionTakeOrder>>>, [u128]> & QueryableStorageEntry<ApiType, [u128]>;
       xcmSellOrders: AugmentedQuery<ApiType, (arg1: u32 | AnyNumber | Uint8Array, arg2: u64 | AnyNumber | Uint8Array) => Observable<Option<u128>>, [u32, u64]> & QueryableStorageEntry<ApiType, [u32, u64]>;
+      /**
+       * Generic query
+       **/
+      [key: string]: QueryableStorageEntry<ApiType>;
+    };
+    fnft: {
+      collection: AugmentedQuery<ApiType, (arg: u128 | AnyNumber | Uint8Array) => Observable<Option<ITuple<[AccountId32, AccountId32, BTreeMap<Bytes, Bytes>]>>>, [u128]> & QueryableStorageEntry<ApiType, [u128]>;
+      /**
+       * Map of NFT collections to all of the instances of that collection.
+       **/
+      collectionInstances: AugmentedQuery<ApiType, (arg: u128 | AnyNumber | Uint8Array) => Observable<Option<BTreeSet<u64>>>, [u128]> & QueryableStorageEntry<ApiType, [u128]>;
+      financialNftId: AugmentedQuery<ApiType, (arg: u128 | AnyNumber | Uint8Array) => Observable<u64>, [u128]> & QueryableStorageEntry<ApiType, [u128]>;
+      instance: AugmentedQuery<ApiType, (arg: ITuple<[u128, u64]> | [u128 | AnyNumber | Uint8Array, u64 | AnyNumber | Uint8Array]) => Observable<Option<ITuple<[AccountId32, BTreeMap<Bytes, Bytes>]>>>, [ITuple<[u128, u64]>]> & QueryableStorageEntry<ApiType, [ITuple<[u128, u64]>]>;
+      /**
+       * All the NFTs owned by an account.
+       **/
+      ownerInstances: AugmentedQuery<ApiType, (arg: AccountId32 | string | Uint8Array) => Observable<Option<BTreeSet<ITuple<[u128, u64]>>>>, [AccountId32]> & QueryableStorageEntry<ApiType, [AccountId32]>;
       /**
        * Generic query
        **/
@@ -814,12 +831,12 @@ declare module '@polkadot/api-base/types/storage' {
       /**
        * The announcements made by the proxy (key).
        **/
-      announcements: AugmentedQuery<ApiType, (arg: AccountId32 | string | Uint8Array) => Observable<ITuple<[Vec<PalletProxyAnnouncement>, u128]>>, [AccountId32]> & QueryableStorageEntry<ApiType, [AccountId32]>;
+      announcements: AugmentedQuery<ApiType, (arg: AccountId32 | string | Uint8Array) => Observable<ITuple<[Vec<PalletAccountProxyAnnouncement>, u128]>>, [AccountId32]> & QueryableStorageEntry<ApiType, [AccountId32]>;
       /**
        * The set of account proxies. Maps the account which has delegated to the accounts
        * which are being delegated to, together with the amount held on deposit.
        **/
-      proxies: AugmentedQuery<ApiType, (arg: AccountId32 | string | Uint8Array) => Observable<ITuple<[Vec<PalletProxyProxyDefinition>, u128]>>, [AccountId32]> & QueryableStorageEntry<ApiType, [AccountId32]>;
+      proxies: AugmentedQuery<ApiType, (arg: AccountId32 | string | Uint8Array) => Observable<ITuple<[Vec<ComposableTraitsAccountProxyProxyDefinition>, u128]>>, [AccountId32]> & QueryableStorageEntry<ApiType, [AccountId32]>;
       /**
        * Generic query
        **/
@@ -892,10 +909,9 @@ declare module '@polkadot/api-base/types/storage' {
       [key: string]: QueryableStorageEntry<ApiType>;
     };
     stakingRewards: {
-      rewardPoolCount: AugmentedQuery<ApiType, () => Observable<u16>, []> & QueryableStorageEntry<ApiType, []>;
-      rewardPools: AugmentedQuery<ApiType, (arg: u16 | AnyNumber | Uint8Array) => Observable<Option<ComposableTraitsStakingRewardPool>>, [u16]> & QueryableStorageEntry<ApiType, [u16]>;
-      stakeCount: AugmentedQuery<ApiType, () => Observable<u128>, []> & QueryableStorageEntry<ApiType, []>;
-      stakes: AugmentedQuery<ApiType, (arg: u128 | AnyNumber | Uint8Array) => Observable<Option<ComposableTraitsStakingStake>>, [u128]> & QueryableStorageEntry<ApiType, [u128]>;
+      rewardPools: AugmentedQuery<ApiType, (arg: u128 | AnyNumber | Uint8Array) => Observable<Option<ComposableTraitsStakingRewardPool>>, [u128]> & QueryableStorageEntry<ApiType, [u128]>;
+      rewardsPotIsEmpty: AugmentedQuery<ApiType, (arg1: u128 | AnyNumber | Uint8Array, arg2: u128 | AnyNumber | Uint8Array) => Observable<Option<Null>>, [u128, u128]> & QueryableStorageEntry<ApiType, [u128, u128]>;
+      stakes: AugmentedQuery<ApiType, (arg1: u128 | AnyNumber | Uint8Array, arg2: u64 | AnyNumber | Uint8Array) => Observable<Option<ComposableTraitsStakingStake>>, [u128, u64]> & QueryableStorageEntry<ApiType, [u128, u64]>;
       /**
        * Generic query
        **/

@@ -71,8 +71,8 @@ export const RenewModal: React.FC<RenewModalProps> = ({
 
         <SelectLockPeriod
           mt={7}
-          multiplier={multiplier}
-          setMultiplier={setMultiplier}
+          durationPreset={"0"}
+          periodItems={[]}
         />
 
         <Box mt={7}>

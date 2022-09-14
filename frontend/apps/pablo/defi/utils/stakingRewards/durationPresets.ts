@@ -30,14 +30,14 @@ export function createDurationPresetLabel(period: Period): string {
                     : "-";
 
     return `${period.days
-            ? period.days
-            : period.weeks
-                ? period.weeks
-                : period.months
-                    ? period.months
-                    : period.years
-                        ? period.years
-                        : "-"
+        ? period.days
+        : period.weeks
+            ? period.weeks
+            : period.months
+                ? period.months
+                : period.years
+                    ? period.years
+                    : "-"
         } ${suf}`;
 }
 
@@ -64,9 +64,7 @@ export function extractDurationPresets(
     return Object.keys(stakingPool.lock.durationPresets).map((i) => {
         const seconds = Number(i);
         const period = calculatePeriod(seconds);
-      
-
-    const label = createDurationPresetLabel(period);
+        const label = createDurationPresetLabel(period);
 
         return {
             label,

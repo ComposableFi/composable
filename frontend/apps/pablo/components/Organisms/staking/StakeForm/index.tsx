@@ -3,7 +3,6 @@ import { BigNumberInput } from "@/components/Atoms";
 import { useMemo, useState } from "react";
 import { BoxProps } from "@mui/material";
 import { SelectLockPeriod } from "./SelectLockPeriod";
-import { isNumber } from "lodash";
 import { StakingRewardPool } from "@/defi/types";
 import { useAssetBalance } from "@/store/assets/hooks";
 import { DEFAULT_NETWORK_ID, PBLO_ASSET_ID } from "@/defi/utils";
@@ -33,22 +32,21 @@ export const StakeForm: React.FC<
   const balance = useAssetBalance(DEFAULT_NETWORK_ID, PBLO_ASSET_ID);
 
   const multipliers = useMemo(() => {
-    return extractDurationPresets(stakingRewardPool)
+    return extractDurationPresets(stakingRewardPool);
   }, [stakingRewardPool]);
 
-
-  const validMultiplier = isNumber(durationPreset);
+  const validMultiplier = stakingRewardPool && durationPreset in stakingRewardPool.lock.durationPresets;
   const handleStake = useStake({
     poolId: new BigNumber(PBLO_ASSET_ID),
     amount,
-    durationPreset: new BigNumber(durationPreset)
-  })
+    durationPreset: new BigNumber(durationPreset),
+  });
 
   const isStaking = usePendingExtrinsic(
     "stake",
     "stakingRewards",
     selectedAccount ? selectedAccount.address : "-"
-  )
+  );
 
   return (
     <Box {...boxProps}>
@@ -75,9 +73,9 @@ export const StakeForm: React.FC<
           },
         }}
         EndAdornmentAssetProps={{
-          assets: pabloAsset ? [
-            { icon: pabloAsset.icon, label: pabloAsset.symbol },
-          ] : [],
+          assets: pabloAsset
+            ? [{ icon: pabloAsset.icon, label: pabloAsset.symbol }]
+            : [],
         }}
       />
 
@@ -93,7 +91,7 @@ export const StakeForm: React.FC<
           onClick={handleStake}
           fullWidth
           variant="contained"
-          disabled={!valid || !validMultiplier}
+          disabled={!valid || !validMultiplier || isStaking}
         >
           Stake and mint
         </Button>

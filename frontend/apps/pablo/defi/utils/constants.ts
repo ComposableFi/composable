@@ -10,7 +10,7 @@ export const PALLET_TYPE_ID = "modl";
 export const SECONDS = 1 * 1000;
 export const MINUTES = 60 * SECONDS;
 export const HOURS = 60 * MINUTES;
-/** 1 Day in milisec */
+/** 1 Day in milliseconds */
 export const DAYS = 24 * HOURS;
 
 export const PERMILL_UNIT = new BigNumber(1_000_000);

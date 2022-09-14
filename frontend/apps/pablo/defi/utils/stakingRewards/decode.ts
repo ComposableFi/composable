@@ -7,6 +7,8 @@ import { fromChainUnits, fromPerbill } from "../units";
 
 export function decodeStakingRewardPool(pool: any): StakingRewardPool {
   return {
+    shareAssetId: new BigNumber(pool.shareAssetId).toString(),
+    financialNftAssetId: new BigNumber(pool.financialNftAssetId).toString(),
     assetId: new BigNumber(pool.assetId),
     claimedShares: new BigNumber(pool.claimedShares),
     endBlock: new BigNumber(pool.endBlock),

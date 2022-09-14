@@ -31,4 +31,6 @@ export type StakingRewardPool = {
   owner: string;
   rewards: Record<string, StakingRewardPoolRewardConfig>;
   totalShares: BigNumber;
+  shareAssetId: string;
+  financialNftAssetId: string;
 };

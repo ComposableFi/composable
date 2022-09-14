@@ -11,12 +11,14 @@ import {
 } from "@mui/material";
 import { BaseAsset } from "@/components/Atoms";
 import { useAppSelector } from "@/hooks/store";
-import React from "react";
-import { TableHeader, XPablo } from "@/defi/types";
+import React, { useMemo } from "react";
+import { TableHeader } from "@/defi/types";
 import { BoxWrapper } from "./BoxWrapper";
-import { getToken } from "@/defi/Tokens";
-import moment from "moment-timezone";
-import { Add } from "@mui/icons-material";
+import { useStakedPositions } from "@/store/stakingRewards/stakingRewards.slice";
+import { useOwnedFinancialNfts } from "@/store/financialNfts/financialNfts.slice";
+import { DEFAULT_UI_FORMAT_DECIMALS, fromChainUnits, PBLO_ASSET_ID } from "@/defi/utils";
+import { useAsset } from "@/defi/hooks";
+import moment from "moment";
 
 const tableHeaders: TableHeader[] = [
   {
@@ -25,9 +27,9 @@ const tableHeaders: TableHeader[] = [
   {
     header: "PBLO locked",
   },
-  // {
-  //   header: "Expiry",
-  // },
+  {
+    header: "Expiry",
+  },
   {
     header: "Multiplier",
   },
@@ -42,15 +44,34 @@ const tableHeaders: TableHeader[] = [
 export type XPablosBoxProps = {
   title?: string;
   header?: TableHeader[];
+  financialNftCollectionId: string;
 } & BoxProps;
 
 export const XPablosBox: React.FC<XPablosBoxProps> = ({
   title,
   header,
+  financialNftCollectionId,
   ...boxProps
 }) => {
   const xPablos = useAppSelector((state) => state.polkadot.yourXPablos);
   const expired = (expiry: number) => expiry < new Date().getTime();
+
+  const myStakingPositions = useStakedPositions(PBLO_ASSET_ID);
+  const myFinancialNfts = useOwnedFinancialNfts();
+
+  const _xPablos = useMemo(() => {
+    if (financialNftCollectionId === "-") return [];
+
+    return myStakingPositions.filter((x) => {
+      return (
+        x.fnftCollectionId === financialNftCollectionId &&
+        x.fnftCollectionId in myFinancialNfts &&
+        myFinancialNfts[x.fnftCollectionId].includes(x.fnftInstanceId)
+      );
+    });
+  }, [myStakingPositions, myFinancialNfts, financialNftCollectionId]);
+
+  const xPablo = useAsset(PBLO_ASSET_ID);
 
   return (
     <BoxWrapper title={title || "Your xPBLO"} {...boxProps}>
@@ -66,36 +87,52 @@ export const XPablosBox: React.FC<XPablosBoxProps> = ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {xPablos.map(({tokenId, locked, expiry, multiplier, amount}: XPablo, index: number) => (
-              <TableRow key={tokenId + index}>
-                <TableCell align="left">
-                  <BaseAsset
-                    icon={getToken(tokenId).icon}
-                    label={getToken(tokenId).symbol}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <Typography variant="body1">{locked.toFormat(2)}</Typography>
-                </TableCell>
-                {/* <TableCell align="left">
+            {_xPablos.map(
+              (
+                { 
+                  fnftInstanceId,
+                  endTimestamp,
+                  amount,
+                  }
+              ) => (
+                <TableRow key={fnftInstanceId}>
+                  <TableCell align="left">
+                    <BaseAsset
+                      icon={xPablo?.icon}
+                      label={xPablo?.symbol}
+                    />
+                  </TableCell>
+                  <TableCell align="left">
+                    <Typography variant="body1">
+                      {fromChainUnits(amount).toFixed(DEFAULT_UI_FORMAT_DECIMALS)}
+                    </Typography>
+                  </TableCell>
+                  <TableCell align="left">
                   <Typography
                     variant="body1"
-                    color={expired(expiry) ? "error" : undefined}
+                    color={expired(+endTimestamp) ? "error" : undefined}
                   >
-                    {expired(expiry)
+                    {expired(+endTimestamp)
                       ? "Expired"
-                      : moment(expiry).utc().format("DD MMM YYYY")
+                      : moment(+endTimestamp).utc().format("DD MMM YYYY")
                     }
                   </Typography>
-                </TableCell> */}
-                <TableCell align="left">
-                  <Typography variant="body1">{multiplier.toFixed(2)}</Typography>
                 </TableCell>
-                <TableCell align="left">
-                  <Typography variant="body1">{amount.toFormat(2)}</Typography>
-                </TableCell>
-              </TableRow>
-            ))}
+                  <TableCell align="left">
+                    <Typography variant="body1">
+                      {"0"} 
+                      {/* Multiplier */}
+                    </Typography>
+                  </TableCell>
+                  <TableCell align="left">
+                    <Typography variant="body1">
+                      {"0"}
+                      {/* xPablo amount */}
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              )
+            )}
           </TableBody>
         </Table>
       </TableContainer>

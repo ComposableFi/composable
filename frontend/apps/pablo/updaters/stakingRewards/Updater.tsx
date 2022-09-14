@@ -1,5 +1,5 @@
 import { useParachainApi, useSelectedAccount } from "substrate-react";
-import { DEFAULT_NETWORK_ID } from "@/defi/utils";
+import { DEFAULT_NETWORK_ID, fetchOwnedFinancialNfts } from "@/defi/utils";
 import { fetchStakingRewardPools } from "@/defi/utils/stakingRewards";
 import { useAsyncEffect } from "@/hooks/useAsyncEffect";
 import {
@@ -9,6 +9,7 @@ import {
 import { useOnChainAssetIds } from "@/store/hooks/useOnChainAssetsIds";
 import { useEffect } from "react";
 import { fetchStakingPositions } from "@/defi/subsquid/stakingRewards/queries";
+import { setOwnedFinancialNfts } from "@/store/financialNfts/financialNfts.slice";
 
 const Updater = () => {
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
@@ -30,6 +31,12 @@ const Updater = () => {
         .catch(console.error);
     }
   }, [selectedAccount]);
+
+  useAsyncEffect(async () => {
+    if (parachainApi && selectedAccount) {
+      fetchOwnedFinancialNfts(parachainApi, selectedAccount.address).then(setOwnedFinancialNfts)
+    }
+  }, [parachainApi, selectedAccount])
 
   return null;
 };
