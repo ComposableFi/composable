@@ -226,6 +226,7 @@ pub mod pallet {
 	/// Used to create seeds for fNFT asset accounts
 	#[pallet::storage]
 	#[pallet::getter(fn financial_nft_asset_account_seed)]
+	#[allow(clippy::disallowed_types)] // Allow `frame_support::pallet_prelude::ValueQuery` because default of 0 is correct
 	pub type FinancialNftAssetAccountSeed<T: Config> =
 		StorageValue<_, u32, ValueQuery, Nonce<OneInit, SafeIncrement>>;
 
