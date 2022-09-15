@@ -113,7 +113,7 @@ export const SelectLockPeriod: React.FC<SelectLockPeriodProps> = ({
           <Alert
             severity="warning"
             alertTitle="Warning"
-            alertText="Your PICA will be locked until the expiry date."
+            alertText="Your PBLO will be locked until the expiry date."
             AlertTextProps={{ color: "text.secondary" }}
           />
         </Box>
