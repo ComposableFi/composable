@@ -302,7 +302,7 @@
                 mkdir -p $out/bin
                 cp target/release/composable $out/bin/composable-node
               '';
-              meta = { mainProgram = "composable"; };
+              meta = { mainProgram = "composable-node"; };
             });
 
           composable-node-release = crane-nightly.buildPackage (common-attrs
@@ -312,9 +312,9 @@
               cargoBuildCommand = "cargo build --release --package composable";
               installPhase = ''
                 mkdir -p $out/bin
-                cp target/release/composable $out/bin/composable
+                cp target/release/composable $out/bin/composable-node
               '';
-              meta = { mainProgram = "composable"; };
+              meta = { mainProgram = "composable-node"; };
             });
 
           composable-bench-node = crane-nightly.cargoBuild (common-bench-attrs
@@ -331,7 +331,7 @@
                 mkdir -p $out/bin
                 cp target/release/composable $out/bin/composable-node
               '';
-              meta = { mainProgram = "composable"; };
+              meta = { mainProgram = "composable-node"; };
             });
 
           run-with-benchmarks = chain:
@@ -533,21 +533,21 @@
               ];
 
               text = ''
-                  # .nix 
+                  # .nix
                 	find . -name "*.nix" -type f -print0 | xargs -0 nixfmt;
 
                   # .toml
                   taplo fmt
-                  
+
                   # .rs
                 	find . -path ./code/target -prune -o -name "*.rs" -type f -print0 | xargs -0 rustfmt --edition 2021;
-                  
-                  # .js .ts .tsx 
+
+                  # .js .ts .tsx
                   prettier \
                     --config="./code/integration-tests/runtime-tests/.prettierrc" \
                     --write \
                     --ignore-path="./code/integration-tests/runtime-tests/.prettierignore" \
-                    ./code/integration-tests/runtime-tests/                  
+                    ./code/integration-tests/runtime-tests/
               '';
             };
 
@@ -556,7 +556,7 @@
                 echo "Wiping all docker containers, images, and volumes";
                 docker stop $(docker ps -q)
                 docker system prune -f
-                docker rmi -f $(docker images -a -q)    
+                docker rmi -f $(docker images -a -q)
                 docker volume prune -f
               '';
 
@@ -1123,7 +1123,7 @@
         mk-docker-in-docker = pkgs: [
           # TODO: this home works well in VS Devcontainer launcher as it injects low-level Dockerd
           # For manual runs need tuning to setup it (need to mount docker links to root and do they executable)
-          # INFO[2022-09-06T13:14:43.437764897Z] Starting up                                            
+          # INFO[2022-09-06T13:14:43.437764897Z] Starting up
           # dockerd needs to be started with root privileges. To run dockerd in rootless mode as an unprivileged user, see https://docs.docker.com/go/rootless/ dockerd-rootless-setuptool.sh install
           pkgs.docker
           pkgs.docker-buildx
@@ -1136,7 +1136,7 @@
         ];
       in {
 
-        # minimal means we do not build in composable devnets and tooling, but allow to build or nix these 
+        # minimal means we do not build in composable devnets and tooling, but allow to build or nix these
         vscode-minimal.x86_64-linux =
           let pkgs = nixpkgs.legacyPackages.x86_64-linux;
           in with pkgs;
