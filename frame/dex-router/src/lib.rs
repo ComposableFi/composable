@@ -443,6 +443,14 @@ pub mod pallet {
 			}
 		}
 
+		fn get_price_of_lp_token(pool_id: Self::PoolId) -> Result<Self::Balance, DispatchError> {
+			let (route, _reverse) = Self::get_route(pool_id).ok_or(Error::<T>::NoRouteFound)?;
+			match route[..] {
+				[pool_id] => T::Pablo::get_price_of_lp_token(pool_id),
+				_ => Err(Error::<T>::UnsupportedOperation.into()),
+			}
+		}
+
 		fn get_exchange_value(
 			pool_id: Self::PoolId,
 			asset_id: Self::AssetId,
