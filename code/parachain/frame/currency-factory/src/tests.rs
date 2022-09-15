@@ -100,3 +100,19 @@ mod protocol_asset_id_to_unique_asset_id {
 		})
 	}
 }
+
+mod unique_asset_id_to_protocol_asset_id {
+	use super::*;
+
+	#[test]
+	fn should_provide_correct_protocol_asset_id() {
+		new_test_ext().execute_with(|| {
+			assert_eq!(
+				<CurrencyRanges as CurrencyFactory>::unique_asset_id_to_protocol_asset_id(
+					u32::MAX as u128 * 2 + 1
+				),
+				1
+			)
+		})
+	}
+}
