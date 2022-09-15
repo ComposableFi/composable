@@ -5,13 +5,14 @@ use crate::{
 };
 use composable_tests_helpers::test::{
 	currency::{BTC, PICA, USDT, XPICA},
-	helper::{assert_extrinsic_event, assert_extrinsic_event_with, assert_last_event_with},
+	helper::{self, assert_extrinsic_event, assert_extrinsic_event_with, assert_last_event_with},
 };
 use composable_traits::{
 	fnft::FinancialNft as FinancialNftT,
 	staking::{
 		lock::{Lock, LockConfig},
-		ProtocolStaking, RateBasedConfig, RewardPoolConfig, RewardRate, Stake, Staking,
+		ProtocolStaking, RateBasedConfig, RewardConfigType, RewardPoolConfig, RewardRate, Stake,
+		Staking,
 	},
 	time::{DurationSeconds, ONE_HOUR, ONE_MINUTE},
 };
@@ -150,7 +151,6 @@ fn stake_in_case_of_zero_inflation_should_work() {
 					duration: duration_preset,
 					unlock_penalty: rewards_pool.lock.unlock_penalty,
 				},
-				fnft_instance_id,
 			})
 		);
 
@@ -225,7 +225,6 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 					duration: DURATION_PRESET,
 					unlock_penalty: rewards_pool.lock.unlock_penalty,
 				},
-				fnft_instance_id: 0,
 			})
 		);
 
@@ -304,7 +303,6 @@ fn test_extend_stake_amount() {
 		assert_eq!(
 			stake,
 			Some(Stake {
-				fnft_instance_id: 0,
 				reward_pool_id: pool_id,
 				stake: amount + extend_amount,
 				share: boosted_amount + extend_amount,
@@ -523,7 +521,7 @@ fn test_transfer_reward() {
 			&BOB,
 			20_000_u128
 		));
-		assert_ok!(<StakingRewards as ProtocolStaking>::transfer_reward(
+		assert_ok!(<StakingRewards as ProtocolStaking>::transfer_earnings(
 			&ALICE,
 			&1,
 			USDT::ID,
@@ -531,7 +529,12 @@ fn test_transfer_reward() {
 		));
 		// can't transfer more than max_rewards set in the rewards config
 		assert_noop!(
-			<StakingRewards as ProtocolStaking>::transfer_reward(&ALICE, &1, USDT::ID, 10_000_u128),
+			<StakingRewards as ProtocolStaking>::transfer_earnings(
+				&ALICE,
+				&1,
+				USDT::ID,
+				10_000_u128
+			),
 			crate::Error::<Test>::MaxRewardLimitReached
 		);
 		// only pool owner can add new reward
@@ -541,7 +544,7 @@ fn test_transfer_reward() {
 		// 	crate::Error::<Test>::OnlyPoolOwnerCanAddNewReward
 		// );
 
-		assert_ok!(<StakingRewards as ProtocolStaking>::transfer_reward(
+		assert_ok!(<StakingRewards as ProtocolStaking>::transfer_earnings(
 			&ALICE,
 			&1,
 			BTC::ID,
@@ -590,7 +593,6 @@ fn test_split_position() {
 				duration: 10000000_u64,
 				unlock_penalty: Perbill::from_percent(2),
 			},
-			fnft_instance_id: 1,
 		};
 
 		assert_extrinsic_event::<Test, _, _, _>(
@@ -626,11 +628,11 @@ fn test_split_position() {
 			stake2.reductions.get(&USDT::ID),
 			Some(&left_from_one_ratio.mul_floor(reduction))
 		);
-		assert_last_event::<Test, _>(|e| {
-			matches!(&e.event,
-			Event::StakingRewards(crate::Event::SplitPosition { positions })
-			if positions == &vec![(PICA::ID, 0, stake1.stake), (PICA::ID, 1, stake2.stake)])
-		});
+		helper::assert_last_event::<Test>(Event::StakingRewards(crate::Event::SplitPosition {
+			stake: stake2.stake,
+			fnft_collection_id: PICA::ID,
+			fnft_instance_id: 1,
+		}));
 	});
 }
 
@@ -904,11 +906,14 @@ fn default_lock_config() -> LockConfig<MaxStakingDurationPresets> {
 	}
 }
 
-fn default_reward_config() -> BoundedBTreeMap<u128, RateBasedConfig<u128>, MaxRewardConfigsPerPool>
+fn default_reward_config() -> BoundedBTreeMap<u128, RewardConfigType<u128>, MaxRewardConfigsPerPool>
 {
 	[(
 		USDT::ID,
-		RateBasedConfig { max_rewards: 100_u128, reward_rate: RewardRate::per_second(10_u128) },
+		RewardConfigType::RateBased(RateBasedConfig {
+			max_rewards: 100_u128,
+			reward_rate: RewardRate::per_second(10_u128),
+		}),
 	)]
 	.into_iter()
 	.try_collect()
@@ -953,6 +958,8 @@ fn balance(asset_id: u128, account: &Public) -> u128 {
 	)
 }
 
+// TODO(benluelo): REMOVE THIS! Storage should NOT be directly modified in tests. Use the
+// appropriate extrinsics and exposed pallet interfaces.
 fn update_total_rewards_and_total_shares_in_rewards_pool(
 	pool_id: u128,
 	total_rewards: u128,

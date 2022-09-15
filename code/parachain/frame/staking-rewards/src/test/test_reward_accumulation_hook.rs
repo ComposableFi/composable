@@ -68,7 +68,7 @@ fn test_reward_update_calculation() {
 			// to clear events
 			process_and_progress_blocks::<crate::Pallet<Test>, Test>(1);
 
-			StakingRewards::reward_accumulation_hook_reward_update_calculation(
+			StakingRewards::reward_accumulation_hook_rate_based_reward_update_calculation(
 				pool_id,
 				PICA::ID,
 				&mut reward,
@@ -101,7 +101,7 @@ fn test_reward_update_calculation() {
 
 		let current_block_number = (expected.len() + 1) as u64;
 
-		StakingRewards::reward_accumulation_hook_reward_update_calculation(
+		StakingRewards::reward_accumulation_hook_rate_based_reward_update_calculation(
 			pool_id,
 			PICA::ID,
 			&mut reward,
@@ -575,16 +575,10 @@ fn test_accumulate_rewards_hook() {
 			owner: CHARLIE,
 			asset_id: F::ID,
 			end_block: current_block + ONE_YEAR_OF_BLOCKS,
-			reward_configs: [(
-				F::ID,
-				RateBasedConfig {
-					max_rewards: F::units(0xDEADC0DE),
-					reward_rate: RewardRate::per_second(0_u128),
-				},
-			)]
-			.into_iter()
-			.try_collect()
-			.unwrap(),
+			reward_configs: [(F::ID, RewardConfigType::Earnings())]
+				.into_iter()
+				.try_collect()
+				.unwrap(),
 			lock: default_lock_config(),
 			share_asset_id: XF::ID,
 			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID + 2,
@@ -788,15 +782,6 @@ pub(crate) fn check_rewards(expected: &[CheckRewards<'_>]) {
 			));
 
 			assert!(
-				&reward.total_rewards == expected_total_rewards,
-				r#"
-error at pool {pool_asset_id}, asset {reward_asset_id}: unexpected total_rewards:
-	expected: {expected_total_rewards}
-	found:    {found_total_rewards}"#,
-				found_total_rewards = reward.total_rewards
-			);
-
-			assert!(
 				&actual_locked_balance == expected_locked_balance,
 				r#"
 error at pool {pool_asset_id}, asset {reward_asset_id}: unexpected locked balance:
@@ -811,6 +796,20 @@ error at pool {pool_asset_id}, asset {reward_asset_id}: unexpected unlocked bala
 	expected: {expected_unlocked_balance}
 	found:    {actual_unlocked_balance}"#
 			);
+
+			match reward {
+				RewardType::Earnings() => {},
+				RewardType::RateBased(rate_based_reward) => {
+					assert!(
+						&rate_based_reward.total_rewards == expected_total_rewards,
+						r#"
+error at pool {pool_asset_id}, asset {reward_asset_id}: unexpected total_rewards:
+	expected: {expected_total_rewards}
+	found:    {found_total_rewards}"#,
+						found_total_rewards = rate_based_reward.total_rewards
+					);
+				},
+			}
 		}
 
 		assert!(

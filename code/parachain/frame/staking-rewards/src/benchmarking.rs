@@ -4,7 +4,7 @@ use crate::*;
 use composable_support::validation::TryIntoValidated;
 use composable_traits::{
 	staking::{lock::LockConfig, RateBasedConfig, RewardPoolConfig, RewardRate, RewardUpdate},
-	time::{DurationSeconds, ONE_HOUR, ONE_MINUTE},
+	time::{ONE_HOUR, ONE_MINUTE},
 };
 use frame_benchmarking::{account, benchmarks, whitelisted_caller};
 use frame_support::{
@@ -29,7 +29,18 @@ fn get_reward_pool<T: Config>(
 		owner,
 		asset_id: BASE_ASSET_ID.into(),
 		end_block: 5_u128.saturated_into(),
-		reward_configs: reward_config::<T>(reward_count),
+		reward_configs: (0..reward_count)
+			.map(|asset_id| {
+				(
+					((asset_id as u128) + BASE_ASSET_ID).into(),
+					RewardConfigType::RateBased(RateBasedConfig {
+						max_rewards: 100_u128.into(),
+						reward_rate: RewardRate::per_second(1_u128),
+					}),
+				)
+			})
+			.try_collect()
+			.unwrap(),
 		lock: lock_config::<T>(),
 		share_asset_id: X_ASSET_ID.into(),
 		financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID.into(),
@@ -50,7 +61,7 @@ fn lock_config<T: Config>() -> LockConfig<T::MaxStakingDurationPresets> {
 	}
 }
 
-fn reward_config<T: Config>(
+fn rate_based_reward_configs<T: Config>(
 	reward_count: u32,
 ) -> BoundedBTreeMap<T::AssetId, RateBasedConfig<T::Balance>, T::MaxRewardConfigsPerPool> {
 	(0..reward_count)
@@ -179,10 +190,10 @@ benchmarks! {
 		let pool_asset_id = 100.into();
 		let reward_asset_id = 1_u128.into();
 
-		let reward_config = RateBasedConfig {
+		let reward_config = RewardConfigType::RateBased(RateBasedConfig {
 			max_rewards: 1_000_000.into(),
 			reward_rate: RewardRate::per_second(10_000),
-		};
+		});
 
 		let pool_id = <Pallet<T> as ManageStaking>::create_staking_pool(RewardPoolConfig {
 			owner: user,
@@ -200,8 +211,12 @@ benchmarks! {
 		let now = now + seconds_per_block;
 
 		let mut reward = RewardPools::<T>::get(&pool_id).unwrap().rewards.get(&reward_asset_id).unwrap().clone();
+		let reward = match reward {
+			RewardType::Earnings() => panic!("reward should be rate based"),
+			RewardType::RateBased(rate_based_reward) => rate_based_reward,
+		};
 	}: {
-		let reward = Pallet::<T>::reward_accumulation_hook_reward_update_calculation(pool_id, reward_asset_id,&mut reward, now);
+		let reward = Pallet::<T>::reward_accumulation_hook_rate_based_reward_update_calculation(pool_id, reward_asset_id,&mut reward, now);
 	}
 
 	unix_time_now {}: {

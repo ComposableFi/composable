@@ -69,6 +69,7 @@ impl<Balance: Zero> RewardType<Balance> {
 
 #[derive(RuntimeDebug, PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo)]
 pub enum RewardConfigType<Balance> {
+	// REVIEW(benluelo): Consider renaming. Perhaps `ExternallyFunded` or something similar?
 	Earnings(),
 	RateBased(RateBasedConfig<Balance>),
 }
@@ -103,6 +104,7 @@ impl RewardRatePeriod {
 }
 
 /// A reward update states the new reward and reward_rate for a given asset
+// REVIEW(benluelo): Make this an enum with variants per reward type?
 #[derive(RuntimeDebug, Encode, Decode, MaxEncodedLen, Clone, PartialEq, Eq, TypeInfo)]
 pub struct RewardUpdate<Balance> {
 	/// The rewarding rate that increases the pool `total_reward`
@@ -165,7 +167,7 @@ pub struct RewardPool<
 	pub share_asset_id: AssetId,
 
 	// Asset ID (collection ID) of the financial NFTs issued for staking positions of this pool
-	pub financial_nft_asset_id: AssetId,
+	pub fnft_collection_id: AssetId,
 }
 
 /// Default transfer limit on new asset added as rewards.
@@ -233,14 +235,10 @@ pub struct RewardPoolConfig<
 #[scale_info(skip_type_params(MaxReductions))]
 pub struct Stake<
 	AssetId: Debug + PartialEq + Eq + Clone,
-	ItemId: Debug + PartialEq + Eq + Clone,
 	RewardPoolId: Debug + PartialEq + Eq + Clone,
 	Balance: Debug + PartialEq + Eq + Clone,
 	MaxReductions: Get<u32>,
 > {
-	/// The ItemID is used in conjunction with the fNFT collection ID to identify the stake.
-	pub fnft_instance_id: ItemId,
-
 	/// Reward Pool ID from which pool to allocate rewards for this
 	pub reward_pool_id: RewardPoolId,
 
@@ -299,7 +297,7 @@ pub trait ProtocolStaking {
 
 	/// Transfers rewards `from` to pool.
 	/// If may be bigger than total shares.
-	fn transfer_reward(
+	fn transfer_earnings(
 		from: &Self::AccountId,
 		pool: &Self::RewardPoolId,
 		reward_currency: Self::AssetId,
@@ -351,7 +349,7 @@ pub trait Staking {
 		who: &Self::AccountId,
 		position: &Self::PositionId,
 		ratio: Permill,
-	) -> Result<[Self::PositionId; 2], DispatchError>;
+	) -> Result<Self::PositionId, DispatchError>;
 
 	/// Claim remaining reward earned up to this point in time.
 	///
