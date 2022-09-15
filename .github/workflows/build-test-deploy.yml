@@ -1074,7 +1074,7 @@ jobs:
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PICASSO_WEB_APP }}
-          projectId: ${{ secrets.FIREBASE_PICASSO_PROJECT_ID }}
+          projectId: picasso-f0d16
           entrypoint: firebase/picasso/
           channelId: ${{ steps.extract_branch.outputs.branch }}
       - name: Deploy Pablo on preview channel
@@ -1083,7 +1083,7 @@ jobs:
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PABLO_WEB_APP }}
-          projectId: ${{ secrets.FIREBASE_PABLO_PROJECT_ID }}
+          projectId: pablo-afa5d
           entrypoint: firebase/pablo/
           channelId: ${{ steps.extract_branch.outputs.branch }}
 
@@ -1144,7 +1144,7 @@ jobs:
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PICASSO_WEB_APP }}
-          projectId: ${{ secrets.FIREBASE_PICASSO_PROJECT_ID }}
+          projectId: picasso-f0d16
           entrypoint: firebase/picasso/
           channelId: live
       - name: Deploy Pablo on live channel
@@ -1153,7 +1153,7 @@ jobs:
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PABLO_WEB_APP }}
-          projectId: ${{ secrets.FIREBASE_PABLO_PROJECT_ID }}
+          projectId: pablo-afa5d
           entrypoint: firebase/pablo/
           channelId: live
 
