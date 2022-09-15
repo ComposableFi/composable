@@ -7,7 +7,6 @@ import {
 } from "@mui/material";
 
 import { useDispatch } from "react-redux";
-import { XPablo } from "@/defi/types";
 import { Label } from "@/components/Atoms";
 import { TokenValueItem } from "../TokenValueItem";
 import { TOKENS } from "@/defi/Tokens";
@@ -17,7 +16,7 @@ import { Multiplier } from "../StakeForm";
 import { isNumber } from "lodash";
 
 export type RenewModalProps = {
-  xPablo: XPablo,
+  xPablo: any,
 } & ModalProps;
 
 export const RenewModal: React.FC<RenewModalProps> = ({

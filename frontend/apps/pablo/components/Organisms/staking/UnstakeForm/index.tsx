@@ -6,10 +6,9 @@ import { CheckableXPabloItemBox } from "./CheckableXPabloItemBox";
 import { useState } from "react";
 import { UnstakeModal } from "./UnstakeModal";
 import { RenewModal } from "./RenewModal";
-import { XPablo } from "@/defi/types";
 
 export const UnstakeForm: React.FC<BoxProps> = ({ ...boxProps }) => {
-  const xPablos = useAppSelector((state) => state.polkadot.yourXPablos);
+  const xPablos: any[] = [];
   const [selectedXPabloId, setSelectedXPabloId] = useState<
     number | undefined
   >();
@@ -30,7 +29,7 @@ export const UnstakeForm: React.FC<BoxProps> = ({ ...boxProps }) => {
   return (
     <Box {...boxProps}>
       <Box display="flex" flexDirection="column" gap={3}>
-        {xPablos.map((xPablo: XPablo) => (
+        {xPablos.map((xPablo) => (
           <CheckableXPabloItemBox
             key={xPablo.id}
             xPablo={xPablo}

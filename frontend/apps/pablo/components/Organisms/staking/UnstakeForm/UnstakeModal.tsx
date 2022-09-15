@@ -9,14 +9,13 @@ import {
 } from "@mui/material";
 
 import { useDispatch } from "react-redux";
-import { XPablo } from "@/defi/types";
 import { Label } from "@/components/Atoms";
 import { TokenValueItem } from "../TokenValueItem";
 import { TOKENS } from "@/defi/Tokens";
 import { setMessage } from "@/stores/ui/uiSlice";
 
 export type UnstakeModalProps = {
-  xPablo: XPablo,
+  xPablo: any,
 } & ModalProps;
 
 export const UnstakeModal: React.FC<UnstakeModalProps> = ({

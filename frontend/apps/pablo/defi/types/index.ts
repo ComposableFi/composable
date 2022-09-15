@@ -93,16 +93,6 @@ export type TransactionSettings = {
   deadline: number,
 };
 
-export type XPablo = {
-  id: number,
-  tokenId: TokenId,
-  locked: BigNumber,
-  expiry: number;
-  multiplier: number;
-  amount: BigNumber;
-  withdrawableAmount: BigNumber;
-};
-
 export type PoolTVLChartData = {
   series: [number, number][],
   timeSlots: string[],

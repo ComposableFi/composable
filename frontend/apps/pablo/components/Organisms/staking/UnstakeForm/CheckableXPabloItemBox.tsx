@@ -8,7 +8,6 @@ import {
 } from "@mui/material";
 import { BaseAsset, Checkbox } from "@/components/Atoms";
 import { TOKENS } from "@/defi/Tokens";
-import { XPablo } from "@/defi/types";
 
 const defaultFlexBoxProps = {
   display: "flex",
@@ -34,7 +33,7 @@ const containerProps = (theme: Theme, selected?: boolean) =>
   } as const);
 
 export type CheckableXPabloItemBoxProps = {
-  xPablo: XPablo;
+  xPablo: any;
   selectedXPabloId?: number;
   setSelectedXPabloId?: (id?: number) => void;
 } & BoxProps;

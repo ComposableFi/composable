@@ -16,7 +16,7 @@ import {
 import BigNumber from "bignumber.js";
 import { PoolDetailsProps } from "./index";
 import { BoxWrapper } from "../../BoxWrapper";
-import { useStakingRewardPool } from "@/store/stakingRewards/stakingRewards.slice";
+import { useStakedPositions, useStakingRewardPool } from "@/store/stakingRewards/stakingRewards.slice";
 import { useAssets } from "@/defi/hooks";
 import { MockedAsset } from "@/store/assets/assets.types";
 import { useClaimStakingRewards } from "@/defi/hooks/stakingRewards/useClaimStakingRewards";
@@ -76,6 +76,7 @@ export const PoolRewardsPanel: React.FC<PoolDetailsProps> = ({
 
   const { baseAsset, quoteAsset, pool } = poolDetails;
   const stakingRewardsPool = useStakingRewardPool(pool ? pool.lpToken : "-");
+  const stakedPositions = useStakedPositions(pool ? pool.lpToken : "0")
   const rewardAssets = useAssets(stakingRewardsPool ? Object.keys(stakingRewardsPool.rewards) : []);
 
   // WIP - awaiting Andres' subsquid changes

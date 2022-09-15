@@ -53,7 +53,6 @@ export const XPablosBox: React.FC<XPablosBoxProps> = ({
   financialNftCollectionId,
   ...boxProps
 }) => {
-  const xPablos = useAppSelector((state) => state.polkadot.yourXPablos);
   const expired = (expiry: number) => expiry < new Date().getTime();
 
   const myStakingPositions = useStakedPositions(PBLO_ASSET_ID);

@@ -1,69 +1,78 @@
-import {
-  Box,
-  useTheme,
-  Button,
-} from "@mui/material";
+import { Box, useTheme, Button } from "@mui/material";
 import { BigNumberInput } from "@/components/Atoms";
-import { useState } from "react";
-import BigNumber from "bignumber.js";
-import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import { useMemo, useState } from "react";
 import { PoolDetailsProps } from "./index";
 import { useLiquidityPoolDetails } from "@/store/hooks/useLiquidityPoolDetails";
-import { useSelectedAccount } from "substrate-react";
-import { DEFAULT_NETWORK_ID } from "@/defi/utils";
+import { fromChainUnits } from "@/defi/utils";
 import { useStakedPositions } from "@/store/stakingRewards/stakingRewards.slice";
+import BigNumber from "bignumber.js";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import moment from "moment";
 
 export const PoolUnstakeForm: React.FC<PoolDetailsProps> = ({
   poolId,
   ...boxProps
 }) => {
-  
   const theme = useTheme();
-  const poolDetails = useLiquidityPoolDetails(poolId);
-  const { pool } = poolDetails;
-  const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
+  const { baseAsset, quoteAsset, lpBalance, pool } =
+    useLiquidityPoolDetails(poolId);
   const [amount, setAmount] = useState<BigNumber>(new BigNumber(0));
   const [valid, setValid] = useState<boolean>(false);
 
   const positions = useStakedPositions(pool?.lpToken ?? "-");
-  console.log(positions);
+  const canUnstake = useMemo(() => {
+    if (positions.length <= 0) return false;
+
+    return Date.now() > new BigNumber(positions[0].endTimestamp).toNumber()
+  }, [positions]);
 
   const handleUnStake = () => {
     // TODO: handle stake here
-  }
+  };
 
   return (
     <Box {...boxProps}>
       <Box>
         <BigNumberInput
-          maxValue={poolDetails.lpBalance}
+          maxValue={lpBalance}
           setValid={setValid}
           noBorder
           value={amount}
           setValue={setAmount}
           buttonLabel={"Max"}
           ButtonProps={{
-            onClick: () => setAmount(poolDetails.lpBalance),
+            onClick: () => setAmount(lpBalance),
             sx: {
               padding: theme.spacing(1),
             },
           }}
           LabelProps={{
             label: "Amount to Unstake",
-            TypographyProps: {color: "text.secondary"},
+            TypographyProps: { color: "text.secondary" },
             BalanceProps: {
               title: <AccountBalanceWalletIcon color="primary" />,
-              balance: `${poolDetails.lpBalance} ${poolDetails.baseAsset?.symbol}/${poolDetails.quoteAsset?.symbol}`,
-              BalanceTypographyProps: {color: "text.secondary"},
+              balance: `${
+                positions.length > 0
+                  ? fromChainUnits(positions[0].amount)
+                  : new BigNumber(0)
+              } ${baseAsset?.symbol}/${quoteAsset?.symbol}`,
+              BalanceTypographyProps: { color: "text.secondary" },
             },
           }}
           EndAdornmentAssetProps={{
-            assets: 
-            poolDetails.baseAsset && poolDetails.quoteAsset ? 
-            [
-              {icon: poolDetails.baseAsset.icon, label: poolDetails.baseAsset.symbol},
-              {icon: poolDetails.quoteAsset.icon, label: poolDetails.quoteAsset.symbol},
-            ] : [],
+            assets:
+              baseAsset && quoteAsset
+                ? [
+                    {
+                      icon: baseAsset.icon,
+                      label: baseAsset.symbol,
+                    },
+                    {
+                      icon: quoteAsset.icon,
+                      label: quoteAsset.symbol,
+                    },
+                  ]
+                : [],
             separator: "/",
           }}
         />
@@ -74,12 +83,11 @@ export const PoolUnstakeForm: React.FC<PoolDetailsProps> = ({
           size="large"
           fullWidth
           onClick={handleUnStake}
-          disabled={!valid}
+          disabled={!valid || !canUnstake}
         >
-          {`Unstake ${poolDetails.baseAsset?.symbol}/${poolDetails.quoteAsset?.symbol}`}
+          {`Unstake ${baseAsset?.symbol}/${quoteAsset?.symbol}`}
         </Button>
       </Box>
     </Box>
   );
 };
-
