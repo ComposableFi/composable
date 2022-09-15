@@ -61,7 +61,6 @@ pub mod pallet {
 	use core::ops::AddAssign;
 
 	use crate::{
-		models::StrategyOverview,
 		rent::{self, Verdict},
 		traits::{CurrencyFactory, StrategicVault},
 		validation::{ValidateCreationDeposit, ValidateMaxStrategies},
@@ -73,14 +72,15 @@ pub mod pallet {
 		currency::RangeId,
 		defi::Rate,
 		vault::{
-			CapabilityVault, Deposit, FundsAvailability, ReportableStrategicVault, Vault,
-			VaultConfig,
+			CapabilityVault, Deposit, FundsAvailability, ReportableStrategicVault,
+			StrategyOverview, Vault, VaultConfig,
 		},
 	};
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
 		ensure,
 		pallet_prelude::*,
+		storage::PrefixIterator,
 		traits::{
 			fungible::{
 				Inspect as InspectNative, Mutate as MutateNative, MutateHold as MutateHoldNative,
@@ -993,6 +993,12 @@ pub mod pallet {
 			let lp =
 				Self::do_amount_of_lp_token_for_added_liquidity(vault_id, &vault, asset_amount)?;
 			Ok(lp)
+		}
+
+		fn get_strategies(
+			vault_id: &T::VaultId,
+		) -> Result<PrefixIterator<(T::AccountId, StrategyOverview<T::Balance>)>, DispatchError> {
+			Ok(CapitalStructure::<T>::iter_prefix(vault_id))
 		}
 	}
 
