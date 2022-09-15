@@ -1003,7 +1003,7 @@ jobs:
         - prettier-check        
         - check-simnode
         - benchmarks-check
-        - check-spelling
+        - cspell-check
       steps:
         - run: echo "Goblins allow your work to see the light"
 
