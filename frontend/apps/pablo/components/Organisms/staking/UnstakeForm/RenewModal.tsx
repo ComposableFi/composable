@@ -14,9 +14,10 @@ import { setMessage } from "@/stores/ui/uiSlice";
 import { SelectLockPeriod } from "../StakeForm/SelectLockPeriod";
 import { Multiplier } from "../StakeForm";
 import { isNumber } from "lodash";
+import { StakedFinancialNftPosition } from "@/defi/types";
 
 export type RenewModalProps = {
-  xPablo: any,
+  xPablo: StakedFinancialNftPosition,
 } & ModalProps;
 
 export const RenewModal: React.FC<RenewModalProps> = ({
@@ -63,7 +64,7 @@ export const RenewModal: React.FC<RenewModalProps> = ({
           />
           <TokenValueItem
             token={TOKENS.pablo}
-            value={xPablo.amount.toFormat()}
+            value={xPablo.lockedPrincipalAsset.toFormat()}
             ValueProps={{color: "text.secondary"}}
           />
         </Box>

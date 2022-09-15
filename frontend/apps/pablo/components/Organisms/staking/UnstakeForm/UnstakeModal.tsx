@@ -13,9 +13,10 @@ import { Label } from "@/components/Atoms";
 import { TokenValueItem } from "../TokenValueItem";
 import { TOKENS } from "@/defi/Tokens";
 import { setMessage } from "@/stores/ui/uiSlice";
+import { StakedFinancialNftPosition } from "@/defi/types";
 
 export type UnstakeModalProps = {
-  xPablo: any,
+  xPablo: StakedFinancialNftPosition,
 } & ModalProps;
 
 export const UnstakeModal: React.FC<UnstakeModalProps> = ({
@@ -61,7 +62,7 @@ export const UnstakeModal: React.FC<UnstakeModalProps> = ({
               />
               <TokenValueItem
                 token={TOKENS.pablo}
-                value={xPablo.withdrawableAmount.toFormat()}
+                value={xPablo.lockedPrincipalAsset.toFormat()}
               />
             </Grid>
 
@@ -75,7 +76,7 @@ export const UnstakeModal: React.FC<UnstakeModalProps> = ({
               />
               <TokenValueItem
                 token={TOKENS.pablo}
-                value={xPablo.amount.toFormat()}
+                value={xPablo.lockedPrincipalAsset.toFormat()}
                 ValueProps={{color: "text.secondary"}}
               />
             </Grid>

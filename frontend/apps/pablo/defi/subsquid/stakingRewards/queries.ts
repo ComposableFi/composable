@@ -1,24 +1,13 @@
+import { StakingPositionHistory } from "@/defi/types";
 import { fetchSubsquid } from "./helpers";
 
-export interface StakingPosition {
-    startTimestamp: string;
-    fnftCollectionId: string;
-    fnftInstanceId: string;
-    endTimestamp: string;
-    assetId: string;
-    amount:string;
-    owner: string;
-    source: string;
-    id: string;
-}
-
-export async function fetchStakingPositions(
+export async function fetchStakingPositionHistory(
     owner: string,
     orderBy: "ASC" | "DESC" = "DESC"
-): Promise<Record<string, StakingPosition[]>> {
-  let _stakingPositions : Record<string, StakingPosition[]> = {};
+): Promise<Record<string, StakingPositionHistory[]>> {
+  let _stakingPositions : Record<string, StakingPositionHistory[]> = {};
   try {
-    const data = await fetchSubsquid<{  stakingPositions: StakingPosition[] }>
+    const data = await fetchSubsquid<{  stakingPositions: StakingPositionHistory[] }>
     (`query stakingPositions {
       stakingPositions (
         limit: 1,
@@ -49,7 +38,7 @@ export async function fetchStakingPositions(
           agg[currAssetId] = [curr]
         }
         return agg;
-      }, {} as Record<string, StakingPosition[]>);
+      }, {} as Record<string, StakingPositionHistory[]>);
     }
 
   } catch (error) {

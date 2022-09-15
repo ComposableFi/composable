@@ -1,13 +1,12 @@
 import { Box, useTheme, Button } from "@mui/material";
 import { BigNumberInput } from "@/components/Atoms";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { PoolDetailsProps } from "./index";
 import { useLiquidityPoolDetails } from "@/store/hooks/useLiquidityPoolDetails";
 import { fromChainUnits } from "@/defi/utils";
-import { useStakedPositions } from "@/store/stakingRewards/stakingRewards.slice";
 import BigNumber from "bignumber.js";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-import moment from "moment";
+import { useStakingPositions } from "@/store/hooks/useStakingPosiitons";
 
 export const PoolUnstakeForm: React.FC<PoolDetailsProps> = ({
   poolId,
@@ -19,12 +18,8 @@ export const PoolUnstakeForm: React.FC<PoolDetailsProps> = ({
   const [amount, setAmount] = useState<BigNumber>(new BigNumber(0));
   const [valid, setValid] = useState<boolean>(false);
 
-  const positions = useStakedPositions(pool?.lpToken ?? "-");
-  const canUnstake = useMemo(() => {
-    if (positions.length <= 0) return false;
-
-    return Date.now() > new BigNumber(positions[0].endTimestamp).toNumber()
-  }, [positions]);
+  const positions = useStakingPositions({ stakedAssetId: pool?.lpToken });
+  const canUnstake = false;
 
   const handleUnStake = () => {
     // TODO: handle stake here
@@ -53,7 +48,7 @@ export const PoolUnstakeForm: React.FC<PoolDetailsProps> = ({
               title: <AccountBalanceWalletIcon color="primary" />,
               balance: `${
                 positions.length > 0
-                  ? fromChainUnits(positions[0].amount)
+                  ? fromChainUnits(positions[0].lockedPrincipalAsset)
                   : new BigNumber(0)
               } ${baseAsset?.symbol}/${quoteAsset?.symbol}`,
               BalanceTypographyProps: { color: "text.secondary" },

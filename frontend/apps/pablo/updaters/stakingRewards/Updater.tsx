@@ -8,7 +8,7 @@ import {
 } from "@/store/stakingRewards/stakingRewards.slice";
 import { useOnChainAssetIds } from "@/store/hooks/useOnChainAssetsIds";
 import { useEffect } from "react";
-import { fetchStakingPositions } from "@/defi/subsquid/stakingRewards/queries";
+import { fetchStakingPositionHistory } from "@/defi/subsquid/stakingRewards/queries";
 import { setOwnedFinancialNfts } from "@/store/financialNfts/financialNfts.slice";
 
 const Updater = () => {
@@ -26,7 +26,7 @@ const Updater = () => {
 
   useEffect(() => {
     if (selectedAccount) {
-      fetchStakingPositions(selectedAccount.address)
+      fetchStakingPositionHistory(selectedAccount.address)
         .then(putStakingRewardPoolStakedPositions)
         .catch(console.error);
     }

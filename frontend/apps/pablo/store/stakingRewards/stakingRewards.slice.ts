@@ -1,11 +1,16 @@
-import { StakingPosition } from "@/defi/subsquid/stakingRewards/queries";
-import { StakingRewardPool } from "@/defi/types/stakingRewards";
+import {
+  StakingPositionHistory,
+  StakingRewardPool,
+} from "@/defi/types/stakingRewards";
 import BigNumber from "bignumber.js";
 import create from "zustand";
 
 export interface StakingRewardsSlice {
   rewardPools: Record<string, StakingRewardPool>;
-  rewardPoolStakedPositions: Record<string, Array<StakingPosition>>;
+  rewardPoolStakedPositionHistory: Record<
+    string,
+    Array<StakingPositionHistory>
+  >;
   pabloStaking: {
     totalPBLOLocked: BigNumber;
     totalFnftMinted: BigNumber;
@@ -16,7 +21,7 @@ export interface StakingRewardsSlice {
 
 export const useStakingRewardsSlice = create<StakingRewardsSlice>(() => ({
   rewardPools: {},
-  rewardPoolStakedPositions: {},
+  rewardPoolStakedPositionHistory: {},
   pabloStaking: {
     totalPBLOLocked: new BigNumber(0),
     totalFnftMinted: new BigNumber(0),
@@ -50,11 +55,11 @@ export const putStakingRewardPools = (
   }));
 
 export const putStakingRewardPoolStakedPositions = (
-  stakingRewardPositions: Record<string, Array<StakingPosition>>
+  stakingRewardPositions: Record<string, Array<StakingPositionHistory>>
 ) =>
   useStakingRewardsSlice.setState((state) => ({
     ...state,
-    rewardPoolStakedPositions: stakingRewardPositions
+    rewardPoolStakedPositionHistory: stakingRewardPositions,
   }));
 
 export const useStakingRewardPool = (
@@ -62,8 +67,8 @@ export const useStakingRewardPool = (
 ): StakingRewardPool | null =>
   useStakingRewardsSlice().rewardPools[principalAssetId] ?? null;
 
-
-export const useStakedPositions = (
-    principalAssetId: string
-): StakingPosition[] =>
-    useStakingRewardsSlice().rewardPoolStakedPositions[principalAssetId] ?? [] as StakingPosition[];
+export const useStakedPositionHistory = (
+  principalAssetId: string
+): StakingPositionHistory[] =>
+  useStakingRewardsSlice().rewardPoolStakedPositionHistory[principalAssetId] ??
+  ([] as StakingPositionHistory[]);

@@ -1,39 +1,5 @@
-import { TOKENS } from "@/defi/Tokens";
-import { Token } from "@/defi/types";
 import { createSlice } from "@reduxjs/toolkit";
-import { bondPoolsData } from "../../utils/bondPoolsData";
 import BigNumber from "bignumber.js";
-
-export type BondPoolRow = {
-  token1: Token;
-  token2?: Token;
-  tvl: BigNumber;
-  roi: BigNumber;
-  rewardsLeft: Array<{
-    value: BigNumber;
-    token: Token;
-  }>;
-  volume: BigNumber;
-  price: BigNumber;
-  pending: BigNumber;
-};
-
-export type YourBondPoolRow = {
-  token1: Token;
-  token2: Token;
-  tvl: BigNumber;
-  apr: BigNumber;
-  bond: Array<{
-    value: BigNumber;
-    token: Token;
-  }>;
-  volume: BigNumber;
-  vesting_term: number;
-  claimable: BigNumber;
-  discount: BigNumber;
-  price: BigNumber;
-  pending: BigNumber;
-};
 
 export type Overview = {
   totalValueLocked: BigNumber;

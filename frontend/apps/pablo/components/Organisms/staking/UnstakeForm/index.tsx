@@ -1,24 +1,26 @@
 import { Box, Button, Grid } from "@mui/material";
 import { Alert } from "@/components/Atoms";
 import { BoxProps } from "@mui/material";
-import { useAppSelector } from "@/hooks/store";
 import { CheckableXPabloItemBox } from "./CheckableXPabloItemBox";
 import { useState } from "react";
 import { UnstakeModal } from "./UnstakeModal";
-import { RenewModal } from "./RenewModal";
+import { useStakingPositions } from "@/store/hooks/useStakingPosiitons";
+import { PBLO_ASSET_ID } from "@/defi/utils";
 
 export const UnstakeForm: React.FC<BoxProps> = ({ ...boxProps }) => {
-  const xPablos: any[] = [];
+  const xPablos = useStakingPositions({
+    stakedAssetId: PBLO_ASSET_ID
+  })
   const [selectedXPabloId, setSelectedXPabloId] = useState<
-    number | undefined
+    string | undefined
   >();
 
   const selectedXPablo =
     selectedXPabloId &&
-    xPablos.find((item: { id: number }) => item.id == selectedXPabloId);
+    xPablos.find((item) => item.nftId == selectedXPabloId);
 
   const expired =
-    selectedXPablo && selectedXPablo.expiry < new Date().getTime();
+    selectedXPablo && selectedXPablo.isExpired;
 
   const [isUnstakeModalOpen, setIsUnstakeModalOpen] = useState<boolean>(false);
 
@@ -31,7 +33,7 @@ export const UnstakeForm: React.FC<BoxProps> = ({ ...boxProps }) => {
       <Box display="flex" flexDirection="column" gap={3}>
         {xPablos.map((xPablo) => (
           <CheckableXPabloItemBox
-            key={xPablo.id}
+            key={xPablo.nftId}
             xPablo={xPablo}
             selectedXPabloId={selectedXPabloId}
             setSelectedXPabloId={setSelectedXPabloId}
