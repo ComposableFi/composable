@@ -55,7 +55,7 @@ pub(crate) fn mint_nft_and_assert() -> FinancialNftInstanceIdOf<MockRuntime> {
 	));
 
 	assert_eq!(
-		Instance::<MockRuntime>::get(&(TEST_COLLECTION_ID, created_nft_id)).unwrap(),
+		Instance::<MockRuntime>::get(TEST_COLLECTION_ID, created_nft_id).unwrap(),
 		(ALICE, BTreeMap::from([(1_u32.encode(), 1_u32.encode())])),
 		"owner should be ALICE"
 	);
@@ -91,7 +91,7 @@ pub(crate) fn mint_into_and_assert() -> FinancialNftInstanceIdOf<MockRuntime> {
 	);
 
 	assert_eq!(
-		Instance::<MockRuntime>::get(&(TEST_COLLECTION_ID, NEW_NFT_ID)).unwrap(),
+		Instance::<MockRuntime>::get(TEST_COLLECTION_ID, NEW_NFT_ID).unwrap(),
 		(ALICE, BTreeMap::new()),
 		"owner should be ALICE, with no attributes"
 	);
@@ -170,7 +170,7 @@ pub(crate) fn add_attributes_and_assert<
 		);
 	}
 
-	let (found_owner, data) = Instance::<MockRuntime>::get(&(class, *instance)).unwrap();
+	let (found_owner, data) = Instance::<MockRuntime>::get(class, *instance).unwrap();
 
 	assert_eq!(owner, found_owner, "instance owner should be {owner}");
 

@@ -51,7 +51,7 @@ mod mint_into {
 			);
 
 			assert_eq!(
-				Instance::<MockRuntime>::get(&(TEST_COLLECTION_ID, NEW_NFT_ID)).unwrap(),
+				Instance::<MockRuntime>::get(TEST_COLLECTION_ID, NEW_NFT_ID).unwrap(),
 				(ALICE, BTreeMap::new()),
 				"owner should be ALICE, with no attributes"
 			);
@@ -148,10 +148,7 @@ mod set_attribute {
 
 			for should_not_be_mutated_nft_id in other_nft_ids {
 				assert_eq!(
-					Instance::<MockRuntime>::get(&(
-						TEST_COLLECTION_ID,
-						should_not_be_mutated_nft_id
-					)),
+					Instance::<MockRuntime>::get(TEST_COLLECTION_ID, should_not_be_mutated_nft_id),
 					Some((ALICE, BTreeMap::from([]))),
 					"instance should not have any attributes"
 				);
@@ -238,7 +235,7 @@ mod burn_from {
 			);
 
 			assert_eq!(
-				Instance::<MockRuntime>::get(&(TEST_COLLECTION_ID, nft_to_burn)),
+				Instance::<MockRuntime>::get(TEST_COLLECTION_ID, nft_to_burn),
 				None,
 				"instance should not exist"
 			);
@@ -271,7 +268,7 @@ mod burn_from {
 			);
 
 			assert_eq!(
-				Instance::<MockRuntime>::get(&(TEST_COLLECTION_ID, new_id)),
+				Instance::<MockRuntime>::get(TEST_COLLECTION_ID, new_id),
 				None,
 				"instance should not exist"
 			);
