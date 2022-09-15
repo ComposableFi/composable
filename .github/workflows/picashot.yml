@@ -9,7 +9,7 @@ jobs:
       - self-hosted
       - linux
       - X64
-      - ansible-runner
+      - picasso-ansible
 
     steps:
     - name: Clean up
@@ -20,14 +20,14 @@ jobs:
         
     - name: Run ansible playbook
       run: |
-        ansible-playbook -l _node_name_picasso_bootnode_1  /opt/ansible/inventory/picashot.yml -i /opt/ansible/inventory/picasso-gcp.yaml  --user root -e 'ansible_python_interpreter=/usr/bin/python3'
+        ansible-playbook -l label_node_name_picasso_bn_0  /opt/ansible/inventory/picashot.yml -i /opt/ansible/inventory/picasso-gcp.yaml  --user ubuntu -e 'ansible_python_interpreter=/usr/bin/python3'
 
   dalishot:
     runs-on: 
       - self-hosted
       - linux
       - X64
-      - ansible-runner
+      - dali-ansible
 
     steps:
     - name: Clean up
@@ -38,7 +38,7 @@ jobs:
 
     - name: Run ansible playbook
       run: |
-        ansible-playbook -l _node_name_dali_bootnode_1  /opt/ansible/inventory/dalishot.yml -i  /opt/ansible/inventory/gcp.yaml  --user root -e 'ansible_python_interpreter=/usr/bin/python3'
+        sudo ansible-playbook -l label_node_name_dali_rococo_bn_0 /opt/ansible/inventory/dalishot.yml -i gcp.yaml --user ubuntu -e 'ansible_python_interpreter=/usr/bin/python3'
 
 
   composable-snapshot:
@@ -46,7 +46,7 @@ jobs:
       - self-hosted
       - linux
       - X64
-      - ansible-runner
+      - composable-ansible
 
     steps:
     - name: Clean up
@@ -57,4 +57,4 @@ jobs:
 
     - name: Run ansible playbook
       run: |
-        ansible-playbook -l _node_name_composable_bootnode_1  /opt/ansible/inventory/composable-shot.yml -i  /opt/ansible/inventory/composable-gcp.yaml  --user root -e 'ansible_python_interpreter=/usr/bin/python3'
+        sudo ansible-playbook -l label_node_name_composable_bn_0  /opt/ansible/playbooks/composable-shot.yml -i  /opt/ansible/inventory/composable-gcp.yaml  --user ubuntu -e 'ansible_python_interpreter=/usr/bin/python3'

@@ -1,0 +1,133 @@
+name: "WASM runtime upgrade"
+
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        type: choice
+        required: true
+        description: 'Network environment'
+        options:
+          - dali
+          - composable
+          - picasso
+      release_selection:
+        type: string
+        required: true
+        description: 'Release version. Example: v2.2.0'
+
+jobs:
+  dali-runtime-upgrade:
+    if: ${{ inputs.name == 'dali' }}
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    steps:
+      - name: Clean up
+        continue-on-error: true
+        run: |
+          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+          docker system prune --force --all --volumes
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "16"
+
+      - name: Install yarn
+        run: npm install -g yarn
+
+      - name: Download wasm file
+        working-directory: scripts/github/
+        run: |
+          FILE_NAME=dali_runtime.wasm
+          FILE_GITHUB_PATH=https://github.com/ComposableFi/composable/releases/download/${{ inputs.release_selection }}/${FILE_NAME}
+          wget $FILE_GITHUB_PATH
+      - name: Install
+        working-directory: scripts/github/
+        run: yarn install
+
+      - name: Upgrade runtime
+        working-directory: scripts/github/
+        run: |
+          FILE_NAME=dali_runtime.wasm
+          yarn upgrade-runtime --root_key=${{ secrets.DALI_ROOT_KEY }} --rpc_ws_url=wss://rpc.composablefinance.ninja --path=./${FILE_NAME}
+  composable-runtime-upgrade:
+    if: ${{ inputs.name == 'composable' }}
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    steps:
+      - name: Clean up
+        continue-on-error: true
+        run: |
+          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+          docker system prune --force --all --volumes
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "16"
+
+      - name: Install yarn
+        run: npm install -g yarn
+
+      - name: Download wasm file
+        working-directory: scripts/github/
+        run: |
+          FILE_NAME=composable_runtime.wasm
+          FILE_GITHUB_PATH=https://github.com/ComposableFi/composable/releases/download/${{ inputs.release_selection }}/${FILE_NAME}
+          wget $FILE_GITHUB_PATH
+      - name: Install
+        working-directory: scripts/github/
+        run: yarn install
+
+      - name: Upgrade runtime
+        working-directory: scripts/github/
+        run: |
+          FILE_NAME=composable_runtime.wasm
+          yarn upgrade-runtime --root_key=${{ secrets.COMPOSABLE_ROOT_KEY }} --rpc_ws_url=wss://rpc.composablefinance.ninja --path=./${FILE_NAME}
+  picasso-runtime-upgrade:
+    if: ${{ inputs.name == 'picasso' }}
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    steps:
+      - name: Clean up
+        continue-on-error: true
+        run: |
+          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+          docker system prune --force --all --volumes
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "16"
+
+      - name: Install yarn
+        run: npm install -g yarn
+
+      - name: Download wasm file
+        working-directory: scripts/github/
+        run: |
+          FILE_NAME=picasso_runtime.wasm
+          FILE_GITHUB_PATH=https://github.com/ComposableFi/composable/releases/download/${{ inputs.release_selection }}/${FILE_NAME}
+          wget $FILE_GITHUB_PATH
+      - name: Install
+        working-directory: scripts/github/
+        run: yarn install
+
+      - name: Upgrade runtime
+        working-directory: scripts/github/
+        run: |
+          FILE_NAME=picasso_runtime.wasm
+          yarn upgrade-runtime --root_key=${{ secrets.PICASSO_ROOT_KEY }} --rpc_ws_url=wss://picasso-rpc.composable.finance --path=./${FILE_NAME}
