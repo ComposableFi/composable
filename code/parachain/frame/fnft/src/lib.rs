@@ -54,7 +54,7 @@ pub mod pallet {
 	};
 	use composable_traits::{
 		account_proxy::AccountProxy,
-		currency::{AssetIdLike, CurrencyFactory},
+		currency::AssetIdLike,
 		fnft::{FinancialNft, FnftAccountProxyTypeSelector},
 	};
 	use core::fmt::Debug;
@@ -117,22 +117,12 @@ pub mod pallet {
 
 		type MaxProperties: Get<u32>;
 
-		type CurrencyFactory: CurrencyFactory<AssetId = Self::FinancialNftCollectionId>;
-
 		type FinancialNftCollectionId: Parameter
 			+ Member
 			+ AssetIdLike
 			+ MaybeSerializeDeserialize
 			+ Ord
 			+ Into<u128>;
-
-		type FinancialNftProtocolCollectionId: Parameter
-			+ Member
-			+ AssetIdLike
-			+ MaybeSerializeDeserialize
-			+ Ord
-			+ Into<u32>
-			+ From<u32>;
 
 		type FinancialNftInstanceId: FullCodec
 			+ Debug
@@ -167,6 +157,7 @@ pub mod pallet {
 	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
+	/// Mapping of fNFT collection to the newest instance ID
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
 	pub type FinancialNftId<T: Config> = StorageMap<
@@ -183,6 +174,7 @@ pub mod pallet {
 		Zero::zero()
 	}
 
+	/// Mapping of collection and instance IDs to fNFT data
 	#[pallet::storage]
 	#[pallet::getter(fn instance)]
 	pub type Instance<T: Config> = StorageDoubleMap<
@@ -541,15 +533,6 @@ pub mod pallet {
 					Ok(id)
 				},
 			)
-		}
-	}
-
-	impl<T: Config> Pallet<T> {
-		/// Returns the smaller locally unique AssetId of the fNFT collection.
-		fn protocol_colletion_id(
-			collection: &T::FinancialNftCollectionId,
-		) -> T::FinancialNftProtocolCollectionId {
-			T::CurrencyFactory::unique_asset_id_to_protocol_asset_id(collection.to_owned()).into()
 		}
 	}
 
