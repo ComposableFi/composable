@@ -13,7 +13,7 @@ import {
   get,
   getLatestPoolByPoolId,
   getOrCreate,
-  storeHistoricalLockedValue,
+  storeHistoricalLockedValueAssetPair,
 } from "../dbHelper";
 import {
   Event,
@@ -272,22 +272,16 @@ export async function processLiquidityAddedEvent(
       liquidityAddedEvt.quoteAmount
     );
 
-    // await storeHistoricalLockedValue(
-    //   ctx,
-    //   liquidityAddedEvt.baseAmount,
-    //   baseAsset.assetId
-    // );
-    // await storeHistoricalLockedValue(
-    //   ctx,
-    //   liquidityAddedEvt.quoteAmount,
-    //   quoteAsset.assetId
-    // );
-
     await ctx.store.save(pool);
     await ctx.store.save(baseAsset);
     await ctx.store.save(quoteAsset);
     await ctx.store.save(eventEntity);
     await ctx.store.save(pabloTransaction);
+
+    await storeHistoricalLockedValueAssetPair(ctx, {
+      [baseAsset.assetId]: liquidityAddedEvt.baseAmount,
+      [quoteAsset.assetId]: liquidityAddedEvt.quoteAmount,
+    });
   } else {
     throw new Error("Pool not found");
   }
@@ -383,22 +377,16 @@ export async function processLiquidityRemovedEvent(
       liquidityRemovedEvt.quoteAmount
     );
 
-    // await storeHistoricalLockedValue(
-    //   ctx,
-    //   -liquidityRemovedEvt.baseAmount,
-    //   baseAsset.assetId
-    // );
-    // await storeHistoricalLockedValue(
-    //   ctx,
-    //   -liquidityRemovedEvt.quoteAmount,
-    //   quoteAsset.assetId.toString()
-    // );
-
     await ctx.store.save(pool);
     await ctx.store.save(baseAsset);
     await ctx.store.save(quoteAsset);
     await ctx.store.save(eventEntity);
     await ctx.store.save(pabloTransaction);
+
+    await storeHistoricalLockedValueAssetPair(ctx, {
+      [baseAsset.assetId]: liquidityRemovedEvt.baseAmount,
+      [quoteAsset.assetId]: liquidityRemovedEvt.quoteAmount,
+    });
   } else {
     throw new Error("Pool not found");
   }
