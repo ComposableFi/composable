@@ -1,6 +1,4 @@
 import { BaseAsset, PairAsset } from "@/components/Atoms";
-import { TOKENS } from "@/defi/Tokens";
-import { useAppSelector } from "@/hooks/store";
 import { useLiquidityPoolDetails } from "@/store/hooks/useLiquidityPoolDetails";
 import { useUserProvidedLiquidityByPool } from "@/store/hooks/useUserProvidedLiquidityByPool";
 import {
