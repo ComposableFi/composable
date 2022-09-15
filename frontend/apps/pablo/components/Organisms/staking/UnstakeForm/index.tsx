@@ -4,7 +4,7 @@ import { BoxProps } from "@mui/material";
 import { CheckableXPabloItemBox } from "./CheckableXPabloItemBox";
 import { useState } from "react";
 import { UnstakeModal } from "./UnstakeModal";
-import { useStakingPositions } from "@/store/hooks/useStakingPosiitons";
+import { useStakingPositions } from "@/store/hooks/useStakingPositions";
 import { PBLO_ASSET_ID } from "@/defi/utils";
 
 export const UnstakeForm: React.FC<BoxProps> = ({ ...boxProps }) => {

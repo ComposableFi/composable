@@ -6,7 +6,7 @@ import { useLiquidityPoolDetails } from "@/store/hooks/useLiquidityPoolDetails";
 import { fromChainUnits } from "@/defi/utils";
 import BigNumber from "bignumber.js";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-import { useStakingPositions } from "@/store/hooks/useStakingPosiitons";
+import { useStakingPositions } from "@/store/hooks/useStakingPositions";
 
 export const PoolUnstakeForm: React.FC<PoolDetailsProps> = ({
   poolId,

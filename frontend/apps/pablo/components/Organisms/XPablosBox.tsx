@@ -17,7 +17,7 @@ import {
   PBLO_ASSET_ID,
 } from "@/defi/utils";
 import { useAsset } from "@/defi/hooks";
-import { useStakingPositions } from "@/store/hooks/useStakingPosiitons";
+import { useStakingPositions } from "@/store/hooks/useStakingPositions";
 import { NoPositionsPlaceholder } from "./overview/NoPositionsPlaceholder";
 import { OVERVIEW_ERRORS } from "./overview/errors";
 
