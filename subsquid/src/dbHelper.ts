@@ -7,10 +7,9 @@ import {
   Activity,
   Currency,
   Event,
+  EventType,
   HistoricalLockedValue,
   PabloPool,
-  RewardPool,
-  EventType,
 } from "./model";
 
 export async function get<T extends { id: string }>(
@@ -188,7 +187,7 @@ export async function storeHistoricalLockedValue(
   amountLocked: bigint,
   assetId: string
 ): Promise<void> {
-  const wsProvider = new WsProvider("ws://127.0.0.1:9988");
+  const wsProvider = new WsProvider("ws://host.docker.internal:9988");
   const api = await ApiPromise.create({ provider: wsProvider });
 
   const oraclePrice = await api.query.oracle.prices(assetId);
@@ -204,7 +203,7 @@ export async function storeHistoricalLockedValue(
 
   const lastLockedValue = await getLastLockedValue(ctx);
 
-  let event = await ctx.store.get(Event, { where: { id: ctx.event.id } });
+  const event = await ctx.store.get(Event, { where: { id: ctx.event.id } });
 
   if (!event) {
     return Promise.reject("Event not found");
@@ -227,9 +226,9 @@ export async function storeHistoricalLockedValue(
 export async function getLastLockedValue(
   ctx: EventHandlerContext<Store>
 ): Promise<bigint> {
-  const lastLockedValue = await ctx.store.get(HistoricalLockedValue, {
+  const lastLockedValue = await ctx.store.find(HistoricalLockedValue, {
     order: { timestamp: "DESC" },
   });
 
-  return BigInt(lastLockedValue?.amount || 0);
+  return BigInt(lastLockedValue.length > 0 ? lastLockedValue[0].amount : 0);
 }

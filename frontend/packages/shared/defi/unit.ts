@@ -8,8 +8,8 @@ export function toChainIdUnit(value: number | BigNumber, decimalPlaces = 12) {
   return bigNumberValue.multipliedBy(10 ** decimalPlaces);
 }
 
-export function fromChainIdUnit(value: number | BigNumber, decimalPlaces = 12) {
-  return (typeof value === "number" ? new BigNumber(value) : value).dividedBy(
+export function fromChainIdUnit(value: number | BigNumber | BigInt, decimalPlaces = 12) {
+  return (BigNumber.isBigNumber(value) ? value : new BigNumber(value.toString())).dividedBy(
     10 ** decimalPlaces
   );
 }
