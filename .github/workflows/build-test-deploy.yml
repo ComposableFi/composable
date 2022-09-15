@@ -870,7 +870,7 @@ jobs:
       run: |
         git config --global --add safe.directory /__w/composable/composable
         COMMIT_SHA=$(git rev-parse --short=9 HEAD)
-        docker build --file Dockerfile --tag "${{ env.DOCKER_REGISTRY_NAME }}/composable-devcontainer-minimal:${ COMMIT_SHA }" --tag "${{ env.DOCKER_REGISTRY_NAME }}/composable-devcontainer-minimal:latest" .
+        docker build --file Dockerfile --tag "${{ env.DOCKER_REGISTRY_NAME }}/composable-devcontainer-minimal:${COMMIT_SHA}" --tag "${{ env.DOCKER_REGISTRY_NAME }}/composable-devcontainer-minimal:latest" .
         docker push --all-tags "${{ env.DOCKER_REGISTRY_NAME }}/composable-devcontainer-minimal"
 
   devcontainer-publish:
@@ -915,7 +915,7 @@ jobs:
           COMMIT_SHA=$(git rev-parse --short=9 HEAD)
           DOCKER_IMAGE_HASH=$(docker images | tail --lines=1 | tr --squeeze-repeats  ' ' |  cut --delimiter " " --fields 3)
           # TODO: make nix sha256 hash(allow to find by using nix ids) and branch dependant(allow to test from branches) tags
-          docker image tag $DOCKER_IMAGE_HASH "${{ env.DOCKER_REGISTRY_NAME }}/composable-devcontainer:${ COMMIT_SHA }"
+          docker image tag $DOCKER_IMAGE_HASH "${{ env.DOCKER_REGISTRY_NAME }}/composable-devcontainer:${COMMIT_SHA}"
           docker image tag $DOCKER_IMAGE_HASH "${{ env.DOCKER_REGISTRY_NAME }}/composable-devcontainer:latest"
           # TODO: upload a docker image with `latest` tag only from `main` branch
           docker push --all-tags "${{ env.DOCKER_REGISTRY_NAME }}/composable-devcontainer"
