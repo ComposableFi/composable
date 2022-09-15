@@ -178,6 +178,9 @@ pub trait Amm {
 		min_receive: Self::Balance,
 		keep_alive: bool,
 	) -> Result<Self::Balance, DispatchError>;
+
+	/// Get current price of LP token.
+	fn get_price_of_lp_token(pool_id: Self::PoolId) -> Result<Self::Balance, DispatchError>;
 }
 
 #[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, PartialEq, Eq, Copy, RuntimeDebug)]
