@@ -30,9 +30,9 @@ pub enum FundsAvailability<Balance> {
 
 #[derive(Copy, Clone, Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, TypeInfo)]
 pub struct StrategyOverview<Balance> {
-	// The allocation of this strategy
+	/// The allocation of this strategy.
 	pub allocation: Perquintill,
-	/// The reported balance of the strategy
+	/// The reported balance of the strategy.
 	pub balance: Balance,
 	/// Sum of all withdrawn funds.
 	pub lifetime_withdrawn: Balance,
