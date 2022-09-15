@@ -89,7 +89,8 @@ fn roundtrip() {
 			to: BOB,
 		}));
 		// get the asset account of the fNFT
-		let asset_account = Nft::asset_account(&TEST_COLLECTION_ID, &nft_to_trade);
+		let asset_account = Nft::asset_account(&TEST_COLLECTION_ID, &nft_to_trade)
+			.expect("Well under u32 account limit; QED");
 		assert_ok!(Proxy::find_proxy(&asset_account, &BOB, Some(ProxyType::Any)));
 
 		process_and_progress_blocks::<Pallet<MockRuntime>, MockRuntime>(10);

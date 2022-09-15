@@ -42,7 +42,16 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::FullCodec;
-	use composable_support::math::safe::SafeAdd;
+	use composable_support::{
+		abstractions::{
+			nonce::Nonce,
+			utils::{
+				increment::{Increment, SafeIncrement},
+				start_at::OneInit,
+			},
+		},
+		math::safe::SafeAdd,
+	};
 	use composable_traits::{
 		account_proxy::AccountProxy,
 		currency::{AssetIdLike, CurrencyFactory},
@@ -207,6 +216,26 @@ pub mod pallet {
 		(AccountIdOf<T>, AccountIdOf<T>, BTreeMap<Vec<u8>, Vec<u8>>),
 		OptionQuery,
 	>;
+
+	/// Associates the Collection and Instance ID of a fNFT to the seed used to create its asset
+	/// account
+	#[pallet::storage]
+	#[pallet::getter(fn financial_nft_asset_account_seeds)]
+	pub type FinancialNftAssetAccountSeeds<T: Config> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		FinancialNftCollectionIdOf<T>,
+		Blake2_128Concat,
+		FinancialNftInstanceIdOf<T>,
+		u32,
+		OptionQuery,
+	>;
+
+	/// Used to create seeds for fNFT asset accounts
+	#[pallet::storage]
+	#[pallet::getter(fn financial_nft_asset_account_seed)]
+	pub type FinancialNftAssetAccountSeed<T: Config> =
+		StorageValue<_, u32, ValueQuery, Nonce<OneInit, SafeIncrement>>;
 
 	impl<T: Config> Inspect<AccountIdOf<T>> for Pallet<T> {
 		type ItemId = FinancialNftInstanceIdOf<T>;
@@ -458,7 +487,7 @@ pub mod pallet {
 			prev_delegate: Option<&AccountIdOf<T>>,
 		) -> DispatchResult {
 			let asset_account =
-				<Self as FinancialNft<AccountIdOf<T>>>::asset_account(collection, instance);
+				<Self as FinancialNft<AccountIdOf<T>>>::asset_account(collection, instance)?;
 			for proxy_type in T::ProxyTypeSelector::get_proxy_types() {
 				if let Some(existing_delegate) = prev_delegate {
 					T::AccountProxy::remove_proxy_delegate(
@@ -484,9 +513,21 @@ pub mod pallet {
 		fn asset_account(
 			collection: &Self::CollectionId,
 			instance: &Self::ItemId,
-		) -> AccountIdOf<T> {
-			T::PalletId::get()
-				.into_sub_account_truncating((Self::protocol_colletion_id(collection), instance))
+		) -> Result<AccountIdOf<T>, DispatchError> {
+			// If seed is already stored
+			let seed = match FinancialNftAssetAccountSeeds::<T>::try_get(collection, instance) {
+				// Then get the seed
+				Ok(seed) => seed,
+				// Else get the next valid seed, associate the fNFT
+				Err(_) => {
+					let seed = FinancialNftAssetAccountSeed::<T>::increment()?;
+					FinancialNftAssetAccountSeeds::<T>::set(collection, instance, Some(seed));
+					seed
+				},
+			};
+
+			// Get the account associated with the seed
+			Ok(T::PalletId::get().into_sub_account_truncating(seed))
 		}
 
 		fn get_next_nft_id(
