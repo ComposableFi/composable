@@ -50,15 +50,15 @@ const main = async () => {
     await bootstrapAssets(api, walletSudo, config.mintAssets as [string, string, string][]);
   }
 
+  // 1 million in 5 months
   // await updateStakingRewardPoolRewardConfig(
   //   api,
   //   walletSudo,
-  //   "100000000001",
+  //   "4294967296",
   //   {
   //     "5": {
   //       rewardRate: {
   //         period: "PerSecond",
-  // 1 million in 5 months
   //         amount: api.createType("u128", "77160494000")
   //       }
   //     }

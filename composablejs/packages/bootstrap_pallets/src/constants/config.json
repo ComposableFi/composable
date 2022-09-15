@@ -6,7 +6,7 @@
   "mintAssetsToWallets": true,
   "bondOffers": [
     {
-      "asset": "100000000001",
+      "asset": "4294967296",
       "bondPrice": "100000000000000",
       "nbOfBonds": "10",
       "maturity": { "Finite": { "returnIn": "1440" } },
@@ -61,7 +61,7 @@
   ],
   "stakingRewardPools": [
     {
-      "assetId": "100000000001",
+      "assetId": "4294967296",
       "endBlock": "5000",
       "rewardConfigs": {
         "1": {
