@@ -10,7 +10,7 @@ set -e # fail on any error
 # shellcheck disable=SC2039
 VERSIONS_FILES=(
   "picasso,picasso"
-#  "dali-rococo,dali"
+  "dali-rococo,dali"
   "composable,composable"
 )
 
