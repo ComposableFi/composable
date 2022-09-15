@@ -159,9 +159,9 @@ jobs:
 
           mkdir -p release-artifacts
 
-          cp dali-runtime/lib/runtime.optimized.wasm release-artifacts/dali-runtime.optimized.wasm
-          cp picasso-runtime/lib/runtime.optimized.wasm release-artifacts/picasso-runtime.optimized.wasm
-          cp composable-runtime/lib/runtime.optimized.wasm release-artifacts/composable-runtime.optimized.wasm
+          cp dali-runtime/lib/runtime.optimized.wasm release-artifacts/dali_runtime.wasm
+          cp picasso-runtime/lib/runtime.optimized.wasm release-artifacts/picasso_runtime.wasm
+          cp composable-runtime/lib/runtime.optimized.wasm release-artifacts/composable_runtime.wasm
           # RPM Name convention: https://docs.oracle.com/en/database/oracle/oracle-database/19/ladbi/rpm-packages-naming-convention.html
           cp rpm/*.rpm release-artifacts/composable-node-${{ env.COMPOSABLE_VERSION }}-1.x86_64.rpm
           # DEB Name convention: https://askubuntu.com/questions/330018/what-is-the-standard-for-naming-deb-file-name
@@ -169,11 +169,11 @@ jobs:
           cd release-artifacts
           sha256sum * > checksums.txt
 
-      # - name: Release docker image
-      #   run: |
-      #     docker load --input ./composable-docker-image
-      #     docker tag composable:$(nix eval --raw .#composable-node-release.version) "${{ env.DOCKER_REGISTRY_NAME }}/composable:$(nix eval --raw .#composable-node-release.version)"
-      #     docker push "${{ env.DOCKER_REGISTRY_NAME }}/composable:$(nix eval --raw .#composable-node-release.version)"
+      - name: Release docker image
+        run: |
+          docker load --input ./composable-docker-image
+          docker tag composable-node-release-${{ env.COMPOSABLE_VERSION }}:latest "${{ env.DOCKER_REGISTRY_NAME }}/composable:v${{ env.COMPOSABLE_VERSION }}"
+          docker push "${{ env.DOCKER_REGISTRY_NAME }}/composable:v${{ env.COMPOSABLE_VERSION }}"
 
       - name: Get commit
         id: fetch_commit_sha
