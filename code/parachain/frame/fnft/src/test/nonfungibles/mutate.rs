@@ -39,12 +39,6 @@ mod mint_into {
 			}));
 
 			assert_eq!(
-				CollectionInstances::<MockRuntime>::get(TEST_COLLECTION_ID).unwrap(),
-				BTreeSet::from([NEW_NFT_ID]),
-				"class should only have one instance"
-			);
-
-			assert_eq!(
 				OwnerInstances::<MockRuntime>::get(&ALICE).unwrap(),
 				BTreeSet::from([(TEST_COLLECTION_ID, NEW_NFT_ID)]),
 				"ALICE should only have one instance"
@@ -223,12 +217,6 @@ mod burn_from {
 			}));
 
 			assert_eq!(
-				CollectionInstances::<MockRuntime>::get(TEST_COLLECTION_ID).unwrap(),
-				BTreeSet::from(new_nft_ids),
-				"class should have all of the original NFTs except for the one burned"
-			);
-
-			assert_eq!(
 				OwnerInstances::<MockRuntime>::get(&ALICE).unwrap(),
 				to_btree(TEST_COLLECTION_ID, &new_nft_ids),
 				"ALICE should have all of the original NFTs except for the one burned"
@@ -254,12 +242,6 @@ mod burn_from {
 				collection_id: TEST_COLLECTION_ID,
 				instance_id: new_id,
 			}));
-
-			assert_eq!(
-				CollectionInstances::<MockRuntime>::get(TEST_COLLECTION_ID).unwrap(),
-				BTreeSet::new(),
-				"class should not have any instances"
-			);
 
 			assert_eq!(
 				OwnerInstances::<MockRuntime>::get(&ALICE).unwrap(),

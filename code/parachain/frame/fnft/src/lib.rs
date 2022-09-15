@@ -176,17 +176,6 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
-	/// Map of NFT collections to all of the instances of that collection.
-	#[pallet::storage]
-	#[pallet::getter(fn collection_instances)]
-	pub type CollectionInstances<T: Config> = StorageMap<
-		_,
-		Blake2_128Concat,
-		FinancialNftCollectionIdOf<T>,
-		BTreeSet<FinancialNftInstanceIdOf<T>>,
-		OptionQuery,
-	>;
-
 	/// All the NFTs owned by an account.
 	#[pallet::storage]
 	#[pallet::getter(fn owner_instances)]
@@ -264,14 +253,10 @@ pub mod pallet {
 		}
 
 		/// Returns an iterator of the items of a `collection` in existence.
-		///
+		// REVIEW(connor): Is this still the case?
 		/// NOTE: iterating this list invokes a storage read per item.
 		fn items(collection: &Self::CollectionId) -> Box<dyn Iterator<Item = Self::ItemId>> {
-			Box::new(
-				CollectionInstances::<T>::get(collection)
-					.into_iter()
-					.flat_map(|i| i.into_iter()),
-			)
+			Box::new(Instance::<T>::iter_key_prefix(collection))
 		}
 
 		/// Returns an iterator of the items of all collections owned by `who`.
@@ -359,7 +344,6 @@ pub mod pallet {
 			);
 			ensure!(Collection::<T>::contains_key(collection), Error::<T>::CollectionNotFound);
 			Instance::<T>::insert(collection, instance, (who, BTreeMap::<Vec<u8>, Vec<u8>>::new()));
-			CollectionInstances::<T>::mutate(collection, insert_or_init_and_insert(*instance));
 			OwnerInstances::<T>::mutate(who, insert_or_init_and_insert((*collection, *instance)));
 
 			// Set the owner as the proxy for certain types of actions for the financial NFT account
@@ -397,14 +381,6 @@ pub mod pallet {
 					None => Err(Error::<T>::InstanceNotFound.into()),
 				}
 			})?;
-			CollectionInstances::<T>::mutate(collection, |x| match x {
-				Some(instances) => {
-					instances.remove(instance);
-				},
-				None => {
-					debug_assert!(false, "unreachable")
-				},
-			});
 
 			// TODO (vim): Remove account proxy ??
 			Self::deposit_event(Event::FinancialNftBurned {

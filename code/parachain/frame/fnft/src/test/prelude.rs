@@ -11,7 +11,7 @@ use std::{
 };
 
 use crate::{
-	pallet::{CollectionInstances, Event as NftEvent, Instance, OwnerInstances},
+	pallet::{Event as NftEvent, Instance, OwnerInstances},
 	test::{
 		mock::{Event, MockRuntime, Nft},
 		ALICE, BOB,
@@ -34,12 +34,6 @@ pub(crate) fn mint_nft_and_assert() -> FinancialNftInstanceIdOf<MockRuntime> {
 		collection_id: TEST_COLLECTION_ID,
 		instance_id: created_nft_id,
 	}));
-
-	assert_eq!(
-		CollectionInstances::<MockRuntime>::get(TEST_COLLECTION_ID).unwrap(),
-		BTreeSet::from([created_nft_id]),
-		"class should only have one instance"
-	);
 
 	assert_eq!(
 		OwnerInstances::<MockRuntime>::get(&ALICE).unwrap(),
@@ -77,12 +71,6 @@ pub(crate) fn mint_into_and_assert() -> FinancialNftInstanceIdOf<MockRuntime> {
 		collection_id: TEST_COLLECTION_ID,
 		instance_id: NEW_NFT_ID,
 	}));
-
-	assert_eq!(
-		CollectionInstances::<MockRuntime>::get(&TEST_COLLECTION_ID).unwrap(),
-		BTreeSet::from([NEW_NFT_ID]),
-		"class should only have one instance"
-	);
 
 	assert_eq!(
 		OwnerInstances::<MockRuntime>::get(&ALICE).unwrap(),
