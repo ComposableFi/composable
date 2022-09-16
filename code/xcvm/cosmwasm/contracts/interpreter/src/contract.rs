@@ -100,7 +100,7 @@ pub fn interpret_spawn(
 	salt: Vec<u8>,
 	assets: Funds,
 	program: XCVMProgram,
-	response: Response,
+	mut response: Response,
 ) -> Result<Response, ContractError> {
 	#[derive(Serialize)]
 	struct SpawnEvent {
@@ -143,7 +143,21 @@ pub fn interpret_spawn(
 			amount.apply(response.balance.into()).into()
 		};
 
-		normalized_funds.0.insert(asset_id, amount.into());
+		if amount.0 > 0 {
+			normalized_funds.0.insert(asset_id, amount.into());
+		}
+	}
+
+  // TODO(probably call the router via a Cw20 `send` to spawn the program and do w/e required with the funds)
+	for (asset_id, amount) in normalized_funds.clone().0 {
+		let query_msg = AssetRegistryQueryMsg::GetAssetContract(asset_id.into());
+		let cw20_address: GetAssetContractResponse = deps.querier.query(
+			&WasmQuery::Smart { contract_addr: registry_addr.clone(), msg: to_binary(&query_msg)? }
+				.into(),
+		)?;
+		let contract = Cw20Contract(cw20_address.addr);
+		response =
+			response.add_message(contract.call(Cw20ExecuteMsg::Burn { amount: amount.0.into() })?);
 	}
 
 	let data = SpawnEvent { network, salt, assets: normalized_funds, program };
