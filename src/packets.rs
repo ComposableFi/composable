@@ -45,7 +45,7 @@ pub async fn query_ready_and_timed_out_packets(
 					port_id.clone()
 				))
 			})?)?;
-
+		// we're only interested in open or closed channels
 		if !matches!(source_channel_end.state, State::Open | State::Closed) {
 			continue
 		}
@@ -88,27 +88,6 @@ pub async fn query_ready_and_timed_out_packets(
 		let next_sequence_recv = sink
 			.query_next_sequence_recv(sink_height, &sink_port_id, &sink_channel_id)
 			.await?;
-		// query packets that are waiting for connection delay.
-		let seqs = query_undelivered_sequences(
-			source_height,
-			sink_height,
-			channel_id,
-			port_id.clone(),
-			source,
-			sink,
-		)
-		.await?;
-
-		// query acknowledgements that are waiting for connection delay.
-		let acks = query_undelivered_acks(
-			source_height,
-			sink_height,
-			channel_id,
-			port_id.clone(),
-			source,
-			sink,
-		)
-		.await?;
 
 		let source_client_state_on_sink =
 			sink.query_client_state(sink_height, source.client_id()).await?;
@@ -150,12 +129,25 @@ pub async fn query_ready_and_timed_out_packets(
 		let latest_sink_height_on_source = sink_client_state_on_source.latest_height();
 		let latest_source_height_on_sink = source_client_state_on_sink.latest_height();
 
-		let packet_infos = source.query_send_packets(channel_id, port_id.clone(), seqs).await?;
-		for packet_info in packet_infos {
-			let packet = packet_info_to_packet(&packet_info);
+		// query packets that are waiting for connection delay.
+		let seqs = query_undelivered_sequences(
+			source_height,
+			sink_height,
+			channel_id,
+			port_id.clone(),
+			source,
+			sink,
+		).await?;
+
+		let send_packets = source.query_send_packets(channel_id, port_id.clone(), seqs).await?;
+		for send_packet in send_packets {
+			let packet = packet_info_to_packet(&send_packet);
 
 			// Check if packet has timed out
 			if packet.timed_out(&sink_timestamp, sink_height) {
+				// so we know this packet has timed out on the sink, we need to find the maximum
+				// consensus state height at which we can generate a non-merbership proof of the packet
+				// for the sink's client on the source.
 				let proof_height = if let Some(proof_height) = get_timeout_proof_height(
 					source,
 					sink,
@@ -172,6 +164,7 @@ pub async fn query_ready_and_timed_out_packets(
 					continue
 				};
 
+				// given this maximum height, has the connection delay been satisfied?
 				if !verify_delay_passed(
 					source,
 					sink,
@@ -188,6 +181,7 @@ pub async fn query_ready_and_timed_out_packets(
 					continue
 				}
 
+				// lets construct the timeout message to be sent to the source
 				let msg = construct_timeout_message(
 					source,
 					sink,
@@ -218,7 +212,7 @@ pub async fn query_ready_and_timed_out_packets(
 			// If sink does not have a client height that is equal to or greater than the packet
 			// creation height, we can't send it yet, packet_info.height should represent the packet
 			// creation height on source chain
-			if packet_info.height > latest_source_height_on_sink.revision_height {
+			if send_packet.height > latest_source_height_on_sink.revision_height {
 				// Sink does not have client update required to prove recv packet message
 				continue
 			}
@@ -227,7 +221,7 @@ pub async fn query_ready_and_timed_out_packets(
 				sink,
 				sink_height,
 				source.client_id(),
-				Height::new(latest_source_height_on_sink.revision_number, packet_info.height),
+				Height::new(latest_source_height_on_sink.revision_number, send_packet.height),
 				None,
 				latest_source_height_on_sink,
 			)
@@ -258,12 +252,21 @@ pub async fn query_ready_and_timed_out_packets(
 			messages.push(msg)
 		}
 
+		// query acknowledgements that are waiting for connection delay.
+		let acks = query_undelivered_acks(
+			source_height,
+			sink_height,
+			channel_id,
+			port_id.clone(),
+			source,
+			sink,
+		)
+			.await?;
 		// Get acknowledgement messages
-		let packet_infos = source.query_recv_packets(channel_id, port_id, acks).await?;
-
-		for packet_info in packet_infos {
-			let packet = packet_info_to_packet(&packet_info);
-			let ack = if let Some(ack) = packet_info.ack {
+		let acknowledgements = source.query_recv_packets(channel_id, port_id, acks).await?;
+		for acknowledgement in acknowledgements {
+			let packet = packet_info_to_packet(&acknowledgement);
+			let ack = if let Some(ack) = acknowledgement.ack {
 				ack
 			} else {
 				// Packet has no valid acknowledgement, skip
@@ -274,7 +277,7 @@ pub async fn query_ready_and_timed_out_packets(
 			// If sink does not have a client height that is equal to or greater than the packet
 			// creation height, we can't send it yet packet_info.height should represent the
 			// acknowledgement creation height on source chain
-			if packet_info.height > latest_source_height_on_sink.revision_height {
+			if acknowledgement.height > latest_source_height_on_sink.revision_height {
 				// Sink does not have client update required to prove acknowledgement packet message
 				continue
 			}
@@ -283,7 +286,7 @@ pub async fn query_ready_and_timed_out_packets(
 				sink,
 				sink_height,
 				source.client_id(),
-				Height::new(latest_source_height_on_sink.revision_number, packet_info.height),
+				Height::new(latest_source_height_on_sink.revision_number, acknowledgement.height),
 				None,
 				latest_source_height_on_sink,
 			)

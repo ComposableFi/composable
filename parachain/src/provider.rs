@@ -143,15 +143,20 @@ where
 			.map(|h| BlockNumberOrHash::Number(From::from(*h.number())))
 			.collect::<Vec<_>>();
 
+		// 1. we should query the sink chain for any outgoing packets to the source chain and return
+		// the maximum height at which we can construct non-existence proofs for all these packets
+		// on the source chain
+		// todo: return Option<u64> maximum height for timedout packets
 		let update_required = self.is_update_required(
 			latest_finalized_height.into(),
 			client_state.latest_height().revision_height,
 		);
+
+		let authority_set_changed =
+			signed_commitment.commitment.validator_set_id == beefy_client_state.next_authorities.id;
+
 		// if validator set has changed this is a mandatory update
-		let update_type = match signed_commitment.commitment.validator_set_id ==
-			beefy_client_state.next_authorities.id ||
-			update_required
-		{
+		let update_type = match authority_set_changed || update_required {
 			true => UpdateType::Mandatory,
 			false => UpdateType::Optional,
 		};
@@ -176,6 +181,7 @@ where
 			.collect::<Vec<_>>();
 
 		let events: Vec<IbcEvent> = events.into_values().flatten().collect();
+		// 2. insert the maximum height for timeouts here.
 		if headers_with_events.is_empty() &&
 			update_required &&
 			latest_finalized_height != 0u32.into()
@@ -360,6 +366,27 @@ where
 		Ok(res)
 	}
 
+	async fn latest_height_and_timestamp(&self) -> Result<(Height, Timestamp), Self::Error> {
+		let finalized_header = self
+			.para_client
+			.rpc()
+			.header(None)
+			.await?
+			.ok_or_else(|| Error::Custom("Latest height query returned None".to_string()))?;
+		let latest_height = *finalized_header.number();
+		let height = Height::new(self.para_id.into(), latest_height.into());
+
+		let api = self
+			.para_client
+			.clone()
+			.to_runtime_api::<parachain::api::RuntimeApi<T, subxt::PolkadotExtrinsicParams<_>>>();
+		let block_hash = finalized_header.hash();
+		let unix_timestamp_millis = api.storage().timestamp().now(Some(block_hash)).await?;
+		let timestamp_nanos = Duration::from_millis(unix_timestamp_millis).as_nanos() as u64;
+
+		Ok((height, Timestamp::from_nanoseconds(timestamp_nanos)?))
+	}
+
 	async fn query_packet_commitments(
 		&self,
 		at: Height,
@@ -396,14 +423,14 @@ where
 			.collect())
 	}
 
-	async fn query_unreceived_acknowledgements(
+	async fn query_unreceived_packets(
 		&self,
 		at: Height,
 		channel_id: ChannelId,
 		port_id: PortId,
 		seqs: Vec<u64>,
 	) -> Result<Vec<u64>, Self::Error> {
-		let res = IbcApiClient::<u32, H256>::query_unreceived_acknowledgements(
+		let res = IbcApiClient::<u32, H256>::query_unreceived_packets(
 			&*self.para_client.rpc().client,
 			at.revision_height as u32,
 			channel_id.to_string(),
@@ -414,14 +441,14 @@ where
 		Ok(res)
 	}
 
-	async fn query_unreceived_packets(
+	async fn query_unreceived_acknowledgements(
 		&self,
 		at: Height,
 		channel_id: ChannelId,
 		port_id: PortId,
 		seqs: Vec<u64>,
 	) -> Result<Vec<u64>, Self::Error> {
-		let res = IbcApiClient::<u32, H256>::query_unreceived_packets(
+		let res = IbcApiClient::<u32, H256>::query_unreceived_acknowledgements(
 			&*self.para_client.rpc().client,
 			at.revision_height as u32,
 			channel_id.to_string(),
@@ -450,34 +477,13 @@ where
 		Ok(response)
 	}
 
-	async fn latest_height_and_timestamp(&self) -> Result<(Height, Timestamp), Self::Error> {
-		let finalized_header = self
-			.para_client
-			.rpc()
-			.header(None)
-			.await?
-			.ok_or_else(|| Error::Custom("Latest height query returned None".to_string()))?;
-		let latest_height = *finalized_header.number();
-		let height = Height::new(self.para_id.into(), latest_height.into());
-
-		let api = self
-			.para_client
-			.clone()
-			.to_runtime_api::<parachain::api::RuntimeApi<T, subxt::PolkadotExtrinsicParams<_>>>();
-		let block_hash = finalized_header.hash();
-		let unix_timestamp_millis = api.storage().timestamp().now(Some(block_hash)).await?;
-		let timestamp_nanos = Duration::from_millis(unix_timestamp_millis).as_nanos() as u64;
-
-		Ok((height, Timestamp::from_nanoseconds(timestamp_nanos)?))
-	}
-
-	async fn query_recv_packets(
+	async fn query_send_packets(
 		&self,
 		channel_id: ChannelId,
 		port_id: PortId,
 		seqs: Vec<u64>,
 	) -> Result<Vec<PacketInfo>, Self::Error> {
-		let response = IbcApiClient::<u32, H256>::query_recv_packets(
+		let response = IbcApiClient::<u32, H256>::query_send_packets(
 			&*self.para_client.rpc().client,
 			channel_id.to_string(),
 			port_id.to_string(),
@@ -487,13 +493,13 @@ where
 		Ok(response)
 	}
 
-	async fn query_send_packets(
+	async fn query_recv_packets(
 		&self,
 		channel_id: ChannelId,
 		port_id: PortId,
 		seqs: Vec<u64>,
 	) -> Result<Vec<PacketInfo>, Self::Error> {
-		let response = IbcApiClient::<u32, H256>::query_send_packets(
+		let response = IbcApiClient::<u32, H256>::query_recv_packets(
 			&*self.para_client.rpc().client,
 			channel_id.to_string(),
 			port_id.to_string(),
