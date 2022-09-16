@@ -89,7 +89,7 @@ export const XPablosBox: React.FC<XPablosBoxProps> = ({
                 }) => (
                   <TableRow key={nftId}>
                     <TableCell align="left">
-                      <BaseAsset icon={xPablo?.icon} label={xPablo?.symbol} />
+                      <BaseAsset icon={xPablo?.icon} label={xPablo?.symbol + ` ${nftId}`} />
                     </TableCell>
                     <TableCell align="left">
                       <Typography variant="body1">
