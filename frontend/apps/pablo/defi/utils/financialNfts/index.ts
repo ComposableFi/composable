@@ -37,12 +37,12 @@ export async function fetchOwnedFinancialNfts(
   return ownedNfts;
 }
 
+/** this will change later from pallet team */
 export function createFinancialNftAccountId(
   parachainApi: ApiPromise,
   financialNFTCollectionId: string,
   financialNFTInstanceId: string
 ) {
-  console.log(financialNFTInstanceId)
   const palletId = parachainApi.consts.fnft.palletId.toU8a();
   const accountPrefix = concatU8a(PALLET_TYPE_ID, palletId);
   const collectionId = bnToU8a(new BN(financialNFTCollectionId));
