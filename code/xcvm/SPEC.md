@@ -1,12 +1,12 @@
 # Summary
 
-`XCVM` is a specification outlining an application-level messaging protocol for smart contracts (and other execution environments). It allows for a more sophisticated mechanism for cross-chain communication compared to message passing, by defining an interpreter-based communication interface between chains. 
+`XCVM` is a specification outlining an application-level messaging protocol for smart contracts (and other execution environments). It allows for a more sophisticated mechanism for cross-chain communication compared to message passing, by defining an interpreter-based communication interface between chains.
 
 The combined set of contracts and bridges across chains achieve the following properties:
 
 - Turing-Complete Interactions: Complicated business logic can be dynamically dispatched to other chains, without the need for developers to deploy contracts on the destination chain.
 - Configurable Security Levels: Developers can opt-in to use less secure transports, with the advantage of cheaper and faster execution.
-- Coincidence of Wants: Developers can opt-in to having their cross-chain operations canceled if an off-chain actor can fulfill the end state directly. 
+- Coincidence of Wants: Developers can opt-in to having their cross-chain operations canceled if an off-chain actor can fulfill the end state directly.
 
 Most of all, `XCVM` has been designed in a very extensible way, building up small functionalities and by combining them, allows for immense complexity.
 
@@ -37,7 +37,7 @@ The priority of features may change. Items are additive in functionality and wil
 
 ## Overview
 
-The `XCVM` refers to both a set of on-chain contracts, orchestrating the bridging operations, ownership, and execution, as well as the interchain system of bridges and relayers. This document mainly specifies the logic within a single chain. 
+The `XCVM` refers to both a set of on-chain contracts, orchestrating the bridging operations, ownership, and execution, as well as the interchain system of bridges and relayers. This document mainly specifies the logic within a single chain.
 
 Although execution environments change depending on the chain, the `XCVM` protocol is generic over the differences and provides an abstract target for smart contracts to interact with. We describe components as separate contracts, but depending on the environment, they might be a pallet, Cosmos SDK module, or a single contract as opposed to many. Here the choice is based made on gas optimizations, engineering standards, and security practices.
 
@@ -49,7 +49,7 @@ sequenceDiagram
     participant XCVM Interpreter
     IBC->>Gateway: Pass program.
     Gateway->>Router: Add bridging info and transfer funds.
-    Router->>XCVM Interpreter: Instantiate vm and transfer funds.
+    Router->>XCVM Interpreter: Instantiate VM and transfer funds.
     loop Program
         XCVM Interpreter-->XCVM Interpreter: Execute instructions and interact with contracts.
     end
@@ -67,15 +67,17 @@ Each chain within the `XCVM` ecosystem has a set of contracts to enable the exec
 
 ### Encoding
 
-Different chains may choose to accept different encoding as the main entry point for contract calls. Such encodings can be `scale`, `ethabi`, or `bors` but are not limited to these alone. Chain-to-chain calls are always in a single encoding,: `protobuf`, which is used within the transport.
+Different chains may choose to accept different encoding as the main entry point for contract calls. Such encodings can be `scale`, `ethabi`, or `bors` but are not limited to these alone. Chain-to-chain calls are always in a single encoding: `protobuf`, which is used within the transport.
+
+`protobuf` generally not deterministic. XCVM restricts encoders and decoders to deterministic subset of protobuf.
 
 ### Gateway
 
-Each chain contains a bridge aggregator contract (`Gateway`), which connects incoming and outgoing channels over different transports. 
+Each chain contains a bridge aggregator contract (`Gateway`), which connects incoming and outgoing channels over different transports.
 
 The `Gateway` is configured to label bridges with different security levels, using oracle-based, disputable governance. We define three security levels as of now:
 
-```
+```ebpf
 BridgeSecurity ::= 
     Deterministic 
     | Probabilistic 
@@ -90,7 +92,7 @@ Outgoing messages are routed based on bridge security, or by specifying the brid
 
 Each XCVM execution has access to its message origin and can be configured to deny execution depending on the address or security level:
 
-```
+```ebpf
 MessageOrigin ::=
     IBC
     | XCM
@@ -107,9 +109,9 @@ The `Gateway` allows for third parties to add their bridges as well, using our o
 
 ### Router
 
-Each program arriving through the `Gateway` is passed to the `Router`, which receives the provided `Assets` as well as instantiates an interpreter instance. The router then transfers funds to the interpreter instance. 
+Each program arriving through the `Gateway` is passed to the `Router`, which receives the provided `Assets` as well as instantiates an `Interpreter` instance. The router then transfers funds to the `Interpreter` instance.
 
-Subsequent calls by the same caller will not result in an instantiation, but instead in a re-use of the interpreter instance. This allows foreign callers to maintain state across different protocols, such as managing LP positions. 
+Subsequent calls by the same Origin will not result in an instantiation, but instead in a re-use of the `Interpreter` instance. This allows foreign Origins to maintain state across different protocols, such as managing LP positions.
 
 If no interpreter instance has been created for a given caller, the call to the router must either come from the `IBC`, `XCM`, `OTP` with `Deterministic` security, or a local origin. After the instance has been created, it can be configured to accept other origins by the caller.
 
@@ -197,7 +199,7 @@ Absolute     ::= u128
 Unit         ::= u128 Ratio
 Ratio        ::= u128 u128
 Account      ::= bytes
-Assets       ::= { AssetId : Balance }
+Assets       ::= [{ AssetId : Balance }]
 Transfer     ::= Account Assets | Relayer Assets
 Call         ::= Payload Bindings
 Payload      ::= bytes
