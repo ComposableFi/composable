@@ -21,55 +21,75 @@ use ibc::{
 	Height,
 };
 use ibc_proto::google::protobuf::Any;
-use primitives::{apply_prefix, find_block_height_by_timestamp, Chain};
+use primitives::{apply_prefix, find_suitable_proof_height_for_client, Chain};
 use std::time::Duration;
 use tendermint_proto::Protobuf;
 
 pub async fn get_timeout_proof_height(
+	source: &impl Chain,
 	sink: &impl Chain,
-	sink_timestamp: Timestamp,
+	source_height: Height,
 	sink_height: Height,
+	sink_timestamp: Timestamp,
+	latest_client_height_on_source: Height,
 	packet: &Packet,
 ) -> Option<Height> {
 	let timeout_variant = timeout_variant(&packet, &sink_timestamp, sink_height).unwrap();
 
-	let proof_height = match timeout_variant {
-		TimeoutVariant::Height => packet.timeout_height.add(1),
-		TimeoutVariant::Timestamp =>
-			if let Some(height) = find_block_height_by_timestamp(
-				sink,
-				packet.timeout_timestamp,
-				sink_timestamp,
-				sink_height,
+	match timeout_variant {
+		TimeoutVariant::Height =>
+			find_suitable_proof_height_for_client(
+				source,
+				source_height,
+				sink.client_id(),
+				packet.timeout_height,
+				None,
+				latest_client_height_on_source,
+			)
+			.await,
+		TimeoutVariant::Timestamp => {
+			// Get approximate number of blocks contained in this timestamp so we can have a lower
+			// bound for where to start our search
+			let first_timestamp = sink.query_timestamp_at(1).await.ok()?;
+			let period = packet.timeout_timestamp.nanoseconds() - first_timestamp;
+			let period = Duration::from_nanos(period);
+			let start_height =
+				calculate_block_delay(period, sink.expected_block_time()).saturating_sub(1);
+			let start_height = Height::new(sink_height.revision_number, start_height);
+			find_suitable_proof_height_for_client(
+				source,
+				source_height,
+				sink.client_id(),
+				start_height,
+				Some(packet.timeout_timestamp),
+				latest_client_height_on_source,
 			)
 			.await
-			{
-				height
-			} else {
-				return None
-			},
-		TimeoutVariant::Both => {
-			let timeout_height = if let Some(height) = find_block_height_by_timestamp(
-				sink,
-				packet.timeout_timestamp,
-				sink_timestamp,
-				sink_height,
-			)
-			.await
-			{
-				height
-			} else {
-				return None
-			};
-			if timeout_height < packet.timeout_height {
-				packet.timeout_height.add(1)
-			} else {
-				timeout_height
-			}
 		},
-	};
-
-	Some(proof_height)
+		TimeoutVariant::Both => {
+			// Get approximate number of blocks contained in this timestamp so we can have a lower
+			// bound for where to start our search
+			let first_timestamp = sink.query_timestamp_at(1).await.ok()?;
+			let period = packet.timeout_timestamp.nanoseconds() - first_timestamp;
+			let period = Duration::from_nanos(period);
+			let start_height =
+				calculate_block_delay(period, sink.expected_block_time()).saturating_sub(1);
+			let start_height = if start_height < packet.timeout_height.revision_height {
+				packet.timeout_height
+			} else {
+				Height::new(packet.timeout_height.revision_number, start_height)
+			};
+			find_suitable_proof_height_for_client(
+				source,
+				source_height,
+				sink.client_id(),
+				start_height,
+				Some(packet.timeout_timestamp),
+				latest_client_height_on_source,
+			)
+			.await
+		},
+	}
 }
 
 pub enum VerifyDelayOn {

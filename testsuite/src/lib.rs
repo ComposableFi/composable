@@ -243,7 +243,7 @@ where
 		.skip_while(|ev| future::ready(!matches!(ev, IbcEvent::TimeoutPacket(_))))
 		.take(1)
 		.collect::<Vec<_>>();
-	timeout_future(future, 10 * 60, format!("Didn't see Timeout packet on {}", chain.name())).await;
+	timeout_future(future, 20 * 60, format!("Didn't see Timeout packet on {}", chain.name())).await;
 }
 
 /// Simply send a packet and check that it was acknowledged.

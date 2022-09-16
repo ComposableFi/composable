@@ -20,10 +20,11 @@ use ibc::applications::transfer::msgs::transfer::MsgTransfer;
 use ibc::{
 	applications::transfer::PrefixedCoin,
 	core::{
-		ics02_client::{client_type::ClientType, header::AnyHeader},
+		ics02_client::{
+			client_consensus::AnyConsensusState, client_type::ClientType, header::AnyHeader,
+		},
 		ics04_channel::{
 			channel::{ChannelEnd, Order::Unordered},
-			context::calculate_block_delay,
 			packet::Packet,
 		},
 		ics23_commitment::commitment::CommitmentPrefix,
@@ -37,7 +38,6 @@ use ibc::{
 use ibc_proto::ibc::core::channel::v1::QueryChannelsResponse;
 use ibc_rpc::PacketInfo;
 
-pub mod client_update_type;
 pub mod error;
 #[cfg(test)]
 mod mocks;
@@ -264,6 +264,14 @@ pub trait IbcProvider {
 
 	/// Should return a list of all clients on the chain
 	async fn query_channels(&self) -> Result<Vec<(ChannelId, PortId)>, Self::Error>;
+
+	/// Returns a boolean value that determines if the light client should receive a mandatory
+	/// update
+	fn is_update_required(
+		&self,
+		latest_height: u64,
+		latest_client_height_on_counterparty: u64,
+	) -> bool;
 }
 
 /// Provides an interface that allows us run the hyperspace-testsuite
@@ -416,73 +424,69 @@ pub fn packet_info_to_packet(packet_info: &PacketInfo) -> Packet {
 	}
 }
 
-/// Should return the first block height with a timestamp that is equal to or greater than the
-/// given timestamp
-/// `timestamp` must always be less than the chain's latest timestamp
-pub async fn find_block_height_by_timestamp(
+/// Should return the first client height with an latest_height and consensus state timestamp that
+/// is equal to or greater than the values provided
+pub async fn find_suitable_proof_height_for_client(
 	chain: &impl Chain,
-	timestamp: Timestamp,
-	latest_timestamp: Timestamp,
-	latest_height: Height,
+	at: Height,
+	client_id: ClientId,
+	start_height: Height,
+	timestamp_to_match: Option<Timestamp>,
+	latest_client_height: Height,
 ) -> Option<Height> {
-	let timestamp_diff =
-		Duration::from_nanos(latest_timestamp.nanoseconds() - timestamp.nanoseconds());
-	// Let's convert this duration into approximate number of blocks
-	let num_blocks = calculate_block_delay(timestamp_diff, chain.expected_block_time());
-	// subtract this duration from the latest block height
-	let maybe_block = latest_height.revision_height - num_blocks;
-	// Get timestamp of this block
-	let maybe_timestamp = chain.query_timestamp_at(maybe_block).await.ok()?;
-	if maybe_timestamp >= timestamp.nanoseconds() {
-		Some(Height::new(latest_height.revision_number, maybe_block))
-	} else {
-		if maybe_block + 1 > latest_height.revision_height - 1 {
-			None
-		} else {
-			let block = search_for_matching_block_height(
-				chain,
-				timestamp,
-				maybe_block + 1,
-				latest_height.revision_height - 1,
-			)
-			.await?;
-			Some(Height::new(latest_height.revision_number, block))
-		}
-	}
-}
-
-async fn search_for_matching_block_height(
-	chain: &impl Chain,
-	timestamp: Timestamp,
-	mut start: u64,
-	mut end: u64,
-) -> Option<u64> {
-	while end - start > 1 {
-		let mid = (end + start) / 2;
-		let temp_timestamp = chain.query_timestamp_at(mid).await.ok()?;
-		if temp_timestamp < timestamp.nanoseconds() {
-			start = mid + 1;
-		} else {
-			// We don't want to exit immediately because we are looking for the first block with a
-			// timestamp greater than or equal to the given timestamp since we want to maintain a
-			// consistency in calculating block delays later on, to ensure this we perform a check
-			// on the block just before this mid, if it's timestamp is less than the required
-			// timestamp, then we can safely exit.
-			let temp = chain.query_timestamp_at(mid - 1).await.ok()?;
-			if temp < timestamp.nanoseconds() {
-				return Some(mid)
+	// If searching for existence of just a height we use a pure linear search because there's no
+	// valid comparison to be made and there might be missing values  for some heights
+	if timestamp_to_match.is_none() {
+		for height in start_height.revision_height..=latest_client_height.revision_height {
+			let temp_height = Height::new(start_height.revision_number, height);
+			let consensus_state =
+				chain.query_client_consensus(at, client_id.clone(), temp_height).await.ok();
+			if consensus_state.is_none() {
+				continue
 			}
-			end = mid;
+			return Some(temp_height)
 		}
-	}
-	let start_timestamp = chain.query_timestamp_at(start).await.ok()?;
-	let high_timestamp = chain.query_timestamp_at(end).await.ok()?;
-	// Check if the smaller block number meets our requirement and return if it does
-	if start_timestamp >= timestamp.nanoseconds() {
-		Some(start)
-	} else if high_timestamp >= timestamp.nanoseconds() {
-		Some(end)
 	} else {
-		None
+		let timestamp_to_match = timestamp_to_match.unwrap();
+		let mut start = start_height.revision_height;
+		let mut end = latest_client_height.revision_height;
+		let mut last_known_valid_height = None;
+		if start > end {
+			return None
+		}
+		while end - start > 1 {
+			let mid = (end + start) / 2;
+			let temp_height = Height::new(start_height.revision_number, mid);
+			let consensus_state =
+				chain.query_client_consensus(at, client_id.clone(), temp_height).await.ok();
+			if consensus_state.is_none() {
+				start += 1;
+				continue
+			}
+
+			let consensus_state =
+				AnyConsensusState::try_from(consensus_state.unwrap().consensus_state?).ok()?;
+			if consensus_state.timestamp().nanoseconds() < timestamp_to_match.nanoseconds() {
+				start = mid + 1;
+				continue
+			} else {
+				last_known_valid_height = Some(temp_height);
+				end = mid;
+			}
+		}
+		let start_height = Height::new(start_height.revision_number, start);
+
+		let consensus_state =
+			chain.query_client_consensus(at, client_id.clone(), start_height).await.ok();
+		if let Some(consensus_state) = consensus_state {
+			let consensus_state =
+				AnyConsensusState::try_from(consensus_state.consensus_state?).ok()?;
+			if consensus_state.timestamp().nanoseconds() >= timestamp_to_match.nanoseconds() {
+				return Some(start_height)
+			}
+		}
+
+		return last_known_valid_height
 	}
+	None
 }

@@ -15,7 +15,8 @@ use ibc::{
 };
 use ibc_proto::google::protobuf::Any;
 use primitives::{
-	error::Error, packet_info_to_packet, query_undelivered_acks, query_undelivered_sequences, Chain,
+	error::Error, find_suitable_proof_height_for_client, packet_info_to_packet,
+	query_undelivered_acks, query_undelivered_sequences, Chain,
 };
 
 pub mod connection_delay;
@@ -127,6 +128,26 @@ pub async fn query_ready_and_timed_out_packets(
 				sink.name()
 			))
 		})?;
+
+		let sink_client_state_on_source =
+			sink.query_client_state(sink_height, source.client_id()).await?;
+		let sink_client_state_on_source = AnyClientState::try_from(
+			sink_client_state_on_source.client_state.ok_or_else(|| {
+				Error::Custom(format!(
+					"Client state for {} should exist on {}",
+					source.name(),
+					sink.name()
+				))
+			})?,
+		)
+		.map_err(|_| {
+			Error::Custom(format!(
+				"Invalid Client state for {} should found on {}",
+				source.name(),
+				sink.name()
+			))
+		})?;
+		let latest_sink_height_on_source = sink_client_state_on_source.latest_height();
 		let latest_source_height_on_sink = source_client_state_on_sink.latest_height();
 
 		let packet_infos = source.query_send_packets(channel_id, port_id.clone(), seqs).await?;
@@ -135,8 +156,16 @@ pub async fn query_ready_and_timed_out_packets(
 
 			// Check if packet has timed out
 			if packet.timed_out(&sink_timestamp, sink_height) {
-				let proof_height = if let Some(proof_height) =
-					get_timeout_proof_height(sink, sink_timestamp, sink_height, &packet).await
+				let proof_height = if let Some(proof_height) = get_timeout_proof_height(
+					source,
+					sink,
+					source_height,
+					sink_height,
+					sink_timestamp,
+					latest_sink_height_on_source,
+					&packet,
+				)
+				.await
 				{
 					proof_height
 				} else {
@@ -194,8 +223,20 @@ pub async fn query_ready_and_timed_out_packets(
 				continue
 			}
 
-			let proof_height =
-				Height::new(latest_source_height_on_sink.revision_number, packet_info.height);
+			let proof_height = if let Some(proof_height) = find_suitable_proof_height_for_client(
+				sink,
+				sink_height,
+				source.client_id(),
+				Height::new(latest_source_height_on_sink.revision_number, packet_info.height),
+				None,
+				latest_source_height_on_sink,
+			)
+			.await
+			{
+				proof_height
+			} else {
+				continue
+			};
 
 			if !verify_delay_passed(
 				source,
@@ -238,8 +279,20 @@ pub async fn query_ready_and_timed_out_packets(
 				continue
 			}
 
-			let proof_height =
-				Height::new(latest_source_height_on_sink.revision_number, packet_info.height);
+			let proof_height = if let Some(proof_height) = find_suitable_proof_height_for_client(
+				sink,
+				sink_height,
+				source.client_id(),
+				Height::new(latest_source_height_on_sink.revision_number, packet_info.height),
+				None,
+				latest_source_height_on_sink,
+			)
+			.await
+			{
+				proof_height
+			} else {
+				continue
+			};
 
 			if !verify_delay_passed(
 				source,

@@ -1,11 +1,6 @@
 use beefy_light_client_primitives::{ClientState, NodesUtils};
 use codec::{Decode, Encode};
-use std::{
-	collections::{BTreeSet, HashMap},
-	fmt::Display,
-	str::FromStr,
-	time::Duration,
-};
+use std::{collections::HashMap, fmt::Display, str::FromStr, time::Duration};
 
 use ibc::{
 	applications::transfer::{Amount, PrefixedCoin, PrefixedDenom},
@@ -46,7 +41,6 @@ use crate::{parachain, parachain::api::runtime_types::primitives::currency::Curr
 use beefy_prover::helpers::fetch_timestamp_extrinsic_with_proof;
 use ibc::timestamp::Timestamp;
 use ibc_proto::ibc::core::{channel::v1::QueryChannelsResponse, client::v1::IdentifiedClientState};
-use primitives::client_update_type::is_mandatory_update;
 
 /// Finality event for parachains
 pub type FinalityEvent =
@@ -133,6 +127,8 @@ where
 		// height recorded in the on-chain client state, because in some cases a parachain
 		// block that was already finalized in a former beefy block might still be part of
 		// the parachain headers in a later beefy block, discovered this from previous logs
+		let latest_finalized_height =
+			headers.iter().map(|header| *header.number()).max().unwrap_or_default();
 		let finalized_block_numbers = headers
 			.into_iter()
 			.filter_map(|header| {
@@ -147,25 +143,14 @@ where
 			.map(|h| BlockNumberOrHash::Number(From::from(*h.number())))
 			.collect::<Vec<_>>();
 
-		let mut mandatory_parachain_headers = BTreeSet::new();
-		for header_number in &finalized_block_numbers {
-			let block_number = match header_number {
-				BlockNumberOrHash::Number(block_number) => *block_number,
-				_ => unreachable!(),
-			};
-			let timestamp = self.query_timestamp_at(block_number.into()).await?;
-			if is_mandatory_update(self, counterparty, block_number.into(), timestamp)
-				.await
-				.map_err(|_| Error::Custom("Failed to check if header is mandatory".to_string()))?
-			{
-				mandatory_parachain_headers.insert(T::BlockNumber::from(block_number));
-			}
-		}
-
+		let update_required = self.is_update_required(
+			latest_finalized_height.into(),
+			client_state.latest_height().revision_height,
+		);
 		// if validator set has changed this is a mandatory update
 		let update_type = match signed_commitment.commitment.validator_set_id ==
 			beefy_client_state.next_authorities.id ||
-			!mandatory_parachain_headers.is_empty()
+			update_required
 		{
 			true => UpdateType::Mandatory,
 			false => UpdateType::Optional,
@@ -179,23 +164,32 @@ where
 		.await?;
 
 		// header number is serialized to string
-		let headers_with_events = events.iter().filter_map(|(num, events)| {
-			if events.is_empty() {
-				None
-			} else {
-				str::parse::<u32>(&*num).ok().map(T::BlockNumber::from)
-			}
-		});
-		mandatory_parachain_headers.extend(headers_with_events);
+		let mut headers_with_events = events
+			.iter()
+			.filter_map(|(num, events)| {
+				if events.is_empty() {
+					None
+				} else {
+					str::parse::<u32>(&*num).ok().map(T::BlockNumber::from)
+				}
+			})
+			.collect::<Vec<_>>();
+
 		let events: Vec<IbcEvent> = events.into_values().flatten().collect();
+		if headers_with_events.is_empty() &&
+			update_required &&
+			latest_finalized_height != 0u32.into()
+		{
+			headers_with_events.push(latest_finalized_height)
+		}
 
 		// only query proofs for headers that actually have events or are mandatory
-		let headers_with_proof = if !mandatory_parachain_headers.is_empty() {
+		let headers_with_proof = if !headers_with_events.is_empty() {
 			let (headers, batch_proof) = self
 				.query_finalized_parachain_headers_with_proof(
 					signed_commitment.commitment.block_number,
 					&beefy_client_state,
-					mandatory_parachain_headers.into_iter().collect(),
+					headers_with_events,
 				)
 				.await?;
 			let mmr_size = NodesUtils::new(batch_proof.leaf_count).size();
@@ -630,5 +624,14 @@ where
 				))
 			})
 			.collect::<Result<Vec<_>, _>>()
+	}
+
+	fn is_update_required(
+		&self,
+		latest_height: u64,
+		latest_client_height_on_counterparty: u64,
+	) -> bool {
+		let refresh_period: u64 = if cfg!(feature = "testing") { 20 } else { 50 };
+		latest_height - latest_client_height_on_counterparty >= refresh_period
 	}
 }
