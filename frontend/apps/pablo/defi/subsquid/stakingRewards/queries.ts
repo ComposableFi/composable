@@ -10,7 +10,6 @@ export async function fetchStakingPositionHistory(
     const data = await fetchSubsquid<{  stakingPositions: StakingPositionHistory[] }>
     (`query stakingPositions {
       stakingPositions (
-        limit: 1,
         where: {
             owner_eq: "${owner}"
         },

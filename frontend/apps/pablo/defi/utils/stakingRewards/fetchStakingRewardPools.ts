@@ -4,14 +4,13 @@ import { decodeStakingRewardPool } from "./decode";
 
 export async function fetchStakingRewardPools(
   parachainApi: ApiPromise,
-  assetIds: Set<string>
+  assetIds: Array<string>
 ): Promise<StakingRewardPool[]> {
   let _stakingRewardPools: StakingRewardPool[] = [];
-  let _assetIds = Array.from(assetIds);
 
   try {
     for (
-      const assetId of _assetIds
+      const assetId of assetIds
     ) {
       try {
         let stakingRewardPoolAtIndex: any =
@@ -37,8 +36,6 @@ export async function fetchStakingRewardPools(
   } catch (err) {
     console.error(err);
   }
-
-  console.log(_stakingRewardPools)
 
   return _stakingRewardPools;
 }

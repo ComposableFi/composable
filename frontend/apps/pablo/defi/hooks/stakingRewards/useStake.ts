@@ -13,6 +13,10 @@ import {
   SNACKBAR_TYPES,
   transactionStatusSnackbarMessage,
 } from "../pools/addLiquidity/useAddLiquidity";
+import {
+  updateOwnedFinancialNfts,
+  updateStakingPositionsHistory,
+} from "@/updaters/stakingRewards/Updater";
 
 export type StakeProps = {
   poolId: BigNumber | undefined; // staking pool Id
@@ -51,8 +55,22 @@ export function useStake({ poolId, amount, durationPreset }: StakeProps) {
         ),
         SNACKBAR_TYPES.SUCCESS
       );
+
+      if (parachainApi && selectedAccount) {
+        /**
+         * To update UI with latest stake 
+         * positions delay intentionally added
+         * as subsquid doesn't process the event
+         * immediately it recieves, can be shortened
+         * to discuss later.
+         */
+        setTimeout(() => {
+          updateOwnedFinancialNfts(parachainApi, selectedAccount.address);
+          updateStakingPositionsHistory(selectedAccount.address);
+        }, 10_000);
+      }
     },
-    [enqueueSnackbar]
+    [enqueueSnackbar, parachainApi, selectedAccount]
   );
 
   const onTxError = useCallback(
@@ -104,6 +122,6 @@ export function useStake({ poolId, amount, durationPreset }: StakeProps) {
     executor,
     signer,
     amount,
-    poolId
+    poolId,
   ]);
 }
