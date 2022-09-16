@@ -1,17 +1,18 @@
 use crate::{
 	error::ContractError,
-	msg::{ExecuteMsg, InstantiateMsg, QueryMsg, XCVMProgram},
+	msg::{ExecuteMsg, InstantiateMsg, QueryMsg, XCVMInstruction, XCVMProgram},
 	state::{Config, CONFIG},
 };
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-	to_binary, Binary, CosmosMsg, Deps, DepsMut, Env, Event, MessageInfo, QueryRequest, Response,
-	StdError, StdResult, WasmQuery,
+	to_binary, wasm_execute, Binary, CosmosMsg, Deps, DepsMut, Env, Event, MessageInfo,
+	QueryRequest, Response, StdError, StdResult, WasmQuery,
 };
 use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg};
 use num::Zero;
 use serde::Serialize;
+use std::collections::VecDeque;
 use xcvm_asset_registry::msg::{GetAssetContractResponse, QueryMsg as AssetRegistryQueryMsg};
 use xcvm_core::{Displayed, Funds, Instruction, NetworkId};
 
@@ -54,15 +55,29 @@ pub fn interpret_program(
 	program: XCVMProgram,
 ) -> Result<Response, ContractError> {
 	let mut response = Response::new();
-
-	for instruction in program.instructions {
+	let instruction_len = program.instructions.len();
+	let mut instruction_iter = program.instructions.into_iter().enumerate();
+	while let Some((index, instruction)) = instruction_iter.next() {
 		response = match instruction {
-			Instruction::Call { encoded } => interpret_call(encoded, response),
+			Instruction::Call { encoded } =>
+				if index >= instruction_len - 1 {
+					interpret_call(encoded, response)?
+				} else {
+					let response = interpret_call(encoded, response)?;
+					let instructions: VecDeque<XCVMInstruction> =
+						instruction_iter.map(|(_, instr)| instr).collect();
+					let program = XCVMProgram { tag: program.tag, instructions };
+					return Ok(response.add_message(wasm_execute(
+						env.contract.address,
+						&ExecuteMsg::Execute { program },
+						vec![],
+					)?))
+				},
 			Instruction::Spawn { network, salt, assets, program } =>
-				interpret_spawn(&deps, &env, network, salt, assets, program, response),
+				interpret_spawn(&deps, &env, network, salt, assets, program, response)?,
 			Instruction::Transfer { to, assets } =>
-				interpret_transfer(&mut deps, &env, to, assets, response),
-		}?;
+				interpret_transfer(&mut deps, &env, to, assets, response)?,
+		};
 	}
 
 	Ok(response.add_event(Event::new("xcvm.interpreter.executed").add_attribute(
@@ -234,7 +249,11 @@ mod tests {
 		// Make sure that the storage is empty
 		assert_eq!(
 			CONFIG.load(&deps.storage).unwrap(),
-			Config { registry_address: Addr::unchecked("addr") }
+			Config {
+				registry_address: Addr::unchecked("addr"),
+				network_id: Picasso.into(),
+				user_id: vec![]
+			}
 		);
 	}
 
@@ -320,18 +339,40 @@ mod tests {
 		)
 		.unwrap();
 
-		let cosmos_msg: CosmosMsg =
+		let out_msg_1: CosmosMsg =
 			wasm_execute("1234", &"hello world".to_string(), vec![]).unwrap().into();
-		let msg = serde_json_wasm::to_string(&cosmos_msg).unwrap();
+		let msg = serde_json_wasm::to_string(&out_msg_1).unwrap();
+		let instructions = vec![
+			XCVMInstruction::Call { encoded: msg.as_bytes().into() },
+			XCVMInstruction::Transfer { to: "1234".into(), assets: Funds::empty() },
+			XCVMInstruction::Call { encoded: msg.as_bytes().into() },
+			XCVMInstruction::Spawn {
+				network: Picasso.into(),
+				salt: vec![],
+				assets: Funds::empty(),
+				program: XCVMProgram { tag: vec![], instructions: vec![].into() },
+			},
+		];
 
-		let program = XCVMProgram {
-			tag: vec![],
-			instructions: vec![XCVMInstruction::Call { encoded: msg.as_bytes().into() }].into(),
-		};
+		let program = XCVMProgram { tag: vec![], instructions: instructions.clone().into() };
+		let out_msg_2: CosmosMsg = wasm_execute(
+			"cosmos2contract",
+			&ExecuteMsg::Execute {
+				program: XCVMProgram {
+					tag: vec![],
+					instructions: instructions[1..].to_owned().into(),
+				},
+			},
+			vec![],
+		)
+		.unwrap()
+		.into();
 
 		let res = execute(deps.as_mut(), mock_env(), info.clone(), ExecuteMsg::Execute { program })
 			.unwrap();
-		assert_eq!(res.messages[0].msg, cosmos_msg);
+		assert_eq!(res.messages[0].msg, out_msg_1);
+		assert_eq!(res.messages[1].msg, out_msg_2);
+		assert_eq!(res.messages.len(), 2);
 	}
 
 	#[test]
