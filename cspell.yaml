@@ -42,9 +42,12 @@ dictionaryDefinitions:
 patterns:
   - name: hash-literal
     pattern: "[a-zA-Z0-9]{47,66}"
+  - name: shebang
+    pattern: "#!\/nix\/store\/[^\/]+\/bin\/[^\/]+" # e.g. "#!/nix/store/2r9n7fz1rxq088j6mi5s7izxdria6d5f-bash-5.1-p16/bin/bash"
 
 ignoreRegExpList:
   - hash-literal
+  - shebang
 
 ignorePaths:
   - "code/parachain/node/src/res"

@@ -792,6 +792,19 @@
               cargoExtraArgs = "--benches --all --features runtime-benchmarks";
             });
 
+            cspell-check = stdenv.mkDerivation {
+              name = "cspell-check";
+              dontUnpack = true;
+
+              buildInputs = [ all-directories-and-files nodePackages.cspell ];
+              installPhase = ''
+                mkdir $out
+                echo "cspell version: $(cspell --version)"
+                cd ${all-directories-and-files}
+                cspell lint --config cspell.yaml --no-progress "**"
+              '';
+            };
+
             kusama-picasso-karura-devnet = let
               config = (pkgs.callPackage
                 ./scripts/polkadot-launch/kusama-local-picasso-dev-karura-dev.nix {
