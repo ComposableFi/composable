@@ -56,7 +56,7 @@ export default function MyApp(props: MyAppProps) {
     () => ({
       toggleColorMode: () => {
         setMode((prevMode) => (prevMode === "light" ? "dark" : "light"));
-      },
+      }
     }),
     []
   );
@@ -77,7 +77,7 @@ export default function MyApp(props: MyAppProps) {
         blockchainInfo={Object.entries(NETWORKS).map(([netId, net]) => {
           return {
             chainId: +netId,
-            rpcUrl: net.rpcUrl,
+            rpcUrl: net.rpcUrl
           };
         })}
       >
@@ -100,14 +100,14 @@ export default function MyApp(props: MyAppProps) {
                       info: ThemeResponsiveSnackbar,
                       success: ThemeResponsiveSnackbar,
                       error: ThemeResponsiveSnackbar,
-                      warning: ThemeResponsiveSnackbar,
+                      warning: ThemeResponsiveSnackbar
                     }}
                     autoHideDuration={null}
                     maxSnack={4}
                     disableWindowBlurListener={true}
                     anchorOrigin={{
                       vertical: "bottom",
-                      horizontal: "center",
+                      horizontal: "center"
                     }}
                   >
                     <ExecutorProvider>

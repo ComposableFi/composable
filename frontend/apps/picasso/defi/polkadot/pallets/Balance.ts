@@ -49,7 +49,7 @@ export const fetchKaruraBalanceByAssetId = async (
     const balance = await api.query.tokens.accounts(
       uAccount,
       api.createType("AcalaPrimitivesCurrencyCurrencyId", {
-        token: api.createType("AcalaPrimitivesCurrencyTokenSymbol", assetId),
+        token: api.createType("AcalaPrimitivesCurrencyTokenSymbol", assetId)
       })
     );
 

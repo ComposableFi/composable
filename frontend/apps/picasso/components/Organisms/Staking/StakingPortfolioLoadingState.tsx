@@ -27,7 +27,7 @@ export const StakingPortfolioLoadingState = () => {
                 <TableCell>Locked Pica</TableCell>
                 <TableCell>Expiry Date</TableCell>
                 <TableCell>Multiplier</TableCell>
-                <TableCell>Your CHAOS</TableCell>
+                <TableCell>Your xPICA</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>

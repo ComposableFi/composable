@@ -20,15 +20,15 @@ export const StakingHighlights: FC = () => {
       </Grid>
       <Grid item xs={6} sm={4}>
         <HighlightBox
-          tooltip={"Total CHAOS APY"}
-          title={"Total CHAOS APY"}
+          tooltip={"Total xPICA APY"}
+          title={"Total xPICA APY"}
           value={totalChaosAPY}
         />
       </Grid>
       <Grid item xs={6} sm={4}>
         <HighlightBox
-          tooltip={"Total CHAOS minted"}
-          title={"Total CHAOS minted"}
+          tooltip={"Total xPICA minted"}
+          title={"Total xPICA minted"}
           value={totalChaosMinted}
         />
       </Grid>

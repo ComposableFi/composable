@@ -8,7 +8,6 @@ import { Executor, getSigner } from "substrate-react";
 import { AnyComponentMap, EnqueueSnackbar, SnackbarKey } from "notistack";
 import { APP_NAME } from "@/defi/polkadot/constants";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
-import { EventRecord } from "@polkadot/types/interfaces/system";
 
 export async function fetchStakingRewardPosition(
   api: ApiPromise,
@@ -121,7 +120,7 @@ export function stake({
           url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash
         });
       },
-      (txHash: string, _events: EventRecord[]) => {
+      (txHash: string) => {
         closeSnackbar(snackbarKey);
         enqueueSnackbar(
           `Successfully staked ${lockablePICA

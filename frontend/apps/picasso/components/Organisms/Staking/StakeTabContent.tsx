@@ -1,53 +1,29 @@
 import BigNumber from "bignumber.js";
 import { alpha, Box, Button, Slider, Stack, Typography, useTheme } from "@mui/material";
-import { callbackGate, formatNumber } from "shared";
+import { formatNumber } from "shared";
 import { AlertBox, BigNumberInput } from "@/components";
 import { TextWithTooltip } from "@/components/Molecules/TextWithTooltip";
 import { FutureDatePaper } from "@/components/Atom/FutureDatePaper";
 import { WarningAmberRounded } from "@mui/icons-material";
-import { FC, useEffect, useState } from "react";
-import { useStore } from "@/stores/root";
-import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
-import { useExecutor } from "substrate-react";
+import { FC, useState } from "react";
+import { useSelectedAccount } from "@/defi/polkadot/hooks";
 import { useSnackbar } from "notistack";
-import {
-  calculateStakingPeriodAPR,
-  fetchRewardPools,
-  formatDurationOption,
-  stake
-} from "@/defi/polkadot/pallets/StakingRewards";
+import { calculateStakingPeriodAPR, formatDurationOption, stake } from "@/defi/polkadot/pallets/StakingRewards";
+import { useStakingRewards } from "@/defi/polkadot/hooks/useStakingRewards";
 
 
 export const StakeTabContent: FC = () => {
   const theme = useTheme();
   const [lockablePICA, setLockablePICA] = useState<BigNumber>(new BigNumber(0));
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
-  const { meta } = useStore(
-    (state) => state.substrateBalances.picasso.assets.pica
-  );
-  const balance = useStore(
-    (state) => state.substrateBalances.picasso.native.balance
-  );
-  const setRewardPool = useStore((state) => state.setRewardPool);
-  const assetId = meta.supportedNetwork.picasso || 1;
-  const picaRewardPool = useStore((state) => state.rewardPools[assetId]);
-
-  const { parachainApi } = usePicassoProvider();
-
-  const executor = useExecutor();
-
-  useEffect(() => {
-    callbackGate(
-      (api) =>
-        fetchRewardPools(api, assetId).then((pool) =>
-          callbackGate(
-            (poolToStore) => setRewardPool(assetId, poolToStore),
-            pool
-          )
-        ),
-      parachainApi
-    );
-  }, [assetId, parachainApi, setRewardPool]);
+  const {
+    picaRewardPool,
+    balance,
+    meta,
+    executor,
+    parachainApi,
+    assetId
+  } = useStakingRewards();
 
   const options = Object.entries(picaRewardPool.lock.durationPresets).reduce(
     (acc, [duration, _]) => [

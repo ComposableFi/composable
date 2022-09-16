@@ -1,5 +1,6 @@
 import BigNumber from "bignumber.js";
 import { StoreSlice } from "@/stores/types";
+import { StakingPosition } from "@/apollo/queries/stakingPositions";
 
 export type RewardPool = {
   owner: string;
@@ -17,11 +18,26 @@ export type RewardPool = {
   financialNftAssetId: string;
 };
 
+export type StakingPortfolio = {
+  [key: string]: {
+    [key: string]: {
+      share: BigNumber;
+      stake: BigNumber;
+      multiplier: BigNumber;
+    }
+  }
+}
 export type StakingRewardsSlice = {
   rewardPools: {
     [key in number]: RewardPool;
   };
   setRewardPool: (assetId: number, pool: RewardPool) => void;
+  stakingPositions: StakingPosition[];
+  isStakingPositionsLoadingState: boolean;
+  setStakingPositions: (positions: StakingPosition[]) => void;
+  setStakingPositionLoadingState: (k: boolean) => void;
+  stakingPortfolio: StakingPortfolio;
+  setStakingPortfolio: (value: StakingPortfolio) => void;
 };
 const initialState = {
   rewardPools: {
@@ -33,12 +49,15 @@ const initialState = {
       endBlock: new BigNumber(0),
       lock: {
         durationPresets: {},
-        unlockPenalty: "",
+        unlockPenalty: ""
       },
       shareAssetId: "",
-      financialNftAssetId: "",
-    },
+      financialNftAssetId: ""
+    }
   },
+  stakingPositions: [],
+  isStakingPositionsLoadingState: false,
+  stakingPortfolio: {}
 };
 
 export const createStakingRewardsSlice: StoreSlice<StakingRewardsSlice> = (
@@ -51,4 +70,13 @@ export const createStakingRewardsSlice: StoreSlice<StakingRewardsSlice> = (
 
       return state;
     }),
+  setStakingPositionLoadingState: (status: boolean) => set(state => {
+    state.isStakingPositionsLoadingState = status;
+  }),
+  setStakingPositions: (positions) => set(state => {
+    state.stakingPositions = positions;
+  }),
+  setStakingPortfolio: (portfolio) => set(state => {
+    state.stakingPortfolio = portfolio;
+  })
 });

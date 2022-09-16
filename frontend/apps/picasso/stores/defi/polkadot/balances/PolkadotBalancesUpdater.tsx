@@ -2,7 +2,7 @@ import { ParachainContext } from "@/defi/polkadot/context/ParachainContext";
 import { usePicassoProvider } from "@/defi/polkadot/hooks";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { SubstrateNetwork, SubstrateNetworkId } from "@/defi/polkadot/types";
-import { getExistentialDeposit, toTokenUnitsBN } from "shared";
+import { callbackGate, getExistentialDeposit, toTokenUnitsBN } from "shared";
 
 import { useCallback, useContext, useEffect } from "react";
 
@@ -26,6 +26,7 @@ export async function subscribeNativeBalance(
   // and retrieve balances
   const accountId = api.createType("AccountId32", account);
   await api.query.system.account(accountId, (result) => {
+    console.log("Processing balance update...");
     const blObject: any = result.toJSON();
 
     const {
@@ -88,6 +89,7 @@ const PolkadotBalancesUpdater = ({
   const { selectedAccount, parachainProviders } = useContext(ParachainContext);
   const picassoProvider = usePicassoProvider();
 
+  // Subscribe for native balance changes
   useEffect(() => {
     if (selectedAccount !== -1 && picassoProvider.accounts.length) {
       Object.entries(parachainProviders).forEach(([chainId, chain]) => {
@@ -103,7 +105,10 @@ const PolkadotBalancesUpdater = ({
         }
       });
     } else if (selectedAccount === -1) {
+      console.log("selectedAccount is not specified");
       clearBalance();
+    } else {
+      console.log("picassoPrivider is not available");
     }
   }, [
     selectedAccount,
@@ -117,10 +122,10 @@ const PolkadotBalancesUpdater = ({
 
   const picassoBalanceSubscriber = useCallback(
     async (chain, asset, chainId) => {
-      if (chain.accounts[selectedAccount]) {
+      callbackGate(async (account) => {
         await subscribePicassoBalanceByAssetId(
           chain.parachainApi!,
-          chain.accounts[selectedAccount].address,
+          account.address,
           String(asset.meta.supportedNetwork[chainId as SubstrateNetworkId]),
           (balance) => {
             updateAssetBalance({
@@ -130,11 +135,12 @@ const PolkadotBalancesUpdater = ({
             });
           }
         );
-      }
+      }, chain.accounts[selectedAccount]);
     },
     []
   );
 
+  // Subscribe non-native token balances
   useEffect(() => {
     if (selectedAccount !== -1 && picassoProvider.accounts.length) {
       Object.entries(parachainProviders).forEach(([chainId, chain]) => {
@@ -168,7 +174,7 @@ const PolkadotBalancesUpdater = ({
         }
       });
     }
-  }, [selectedAccount]);
+  }, [selectedAccount, picassoProvider, parachainProviders]);
 
   return null;
 };
