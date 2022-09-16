@@ -50,7 +50,7 @@ pub fn execute(
 
 pub fn interpret_program(
 	mut deps: DepsMut,
-	_env: Env,
+	env: Env,
 	_info: MessageInfo,
 	program: XCVMProgram,
 ) -> Result<Response, ContractError> {
@@ -62,7 +62,7 @@ pub fn interpret_program(
 			Instruction::Spawn { network, salt, assets, program } =>
 				interpret_spawn(&deps, network, salt, assets, program, response),
 			Instruction::Transfer { to, assets } =>
-				interpret_transfer(&mut deps, to, assets, response),
+				interpret_transfer(&mut deps, &env, to, assets, response),
 		}?;
 	}
 
@@ -121,6 +121,7 @@ pub fn interpret_spawn(
 
 pub fn interpret_transfer(
 	deps: &mut DepsMut,
+	env: &Env,
 	to: String,
 	assets: Funds,
 	mut response: Response,
@@ -145,7 +146,9 @@ pub fn interpret_transfer(
 			let response =
 				deps.querier.query::<BalanceResponse>(&QueryRequest::Wasm(WasmQuery::Smart {
 					contract_addr: cw20_address.addr.clone().into_string(),
-					msg: to_binary(&Cw20QueryMsg::Balance { address: to.clone() })?,
+					msg: to_binary(&Cw20QueryMsg::Balance {
+						address: env.contract.address.clone().into_string(),
+					})?,
 				}))?;
 			amount.apply(response.balance.into())
 		};
