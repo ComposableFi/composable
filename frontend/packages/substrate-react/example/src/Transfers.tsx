@@ -36,7 +36,7 @@ export const Transfers = () => {
 
       executor.execute(
         //@ts-ignore
-        parachainApi.tx.balances.transfer(_to, transferAmnt.toString()),
+        parachainApi.tx.balances.transfer(_to, transferAmount.toString()),
         _from,
         parachainApi,
         signer,

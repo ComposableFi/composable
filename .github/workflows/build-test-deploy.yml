@@ -27,20 +27,6 @@ env:
   DOCKER_USER_OPTION: '$UID:$GID'
 
 jobs:
-  # TODO: migrate most of these to nix
-  check-spelling:
-    runs-on: ubuntu-latest
-    concurrency:
-      group: ${{ github.workflow}}-check-spelling-${{ github.ref }}
-      cancel-in-progress: true
-    steps:
-      - uses: actions/checkout@v3
-      - uses: streetsidesoftware/cspell-action@v2
-        with:
-          # When the spellcheck.dic is altered, we'd want to recheck existing files too.
-          incremental_files_only: false
-          config: "cspell.yaml"
-
   common-deps:
     name: "Common dependencies"
     needs:
@@ -66,7 +52,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           name: ${{  env.CACHIX_COMPOSABLE }}
@@ -97,7 +83,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -131,7 +117,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -161,7 +147,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -191,7 +177,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -221,13 +207,43 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - run: |
           cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#nixfmt-check --no-update-lock-file --show-trace -L
+
+  cspell-check:
+    name: "Spelling check"
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    concurrency:
+      group: ${{ github.workflow }}-cspell-check-${{ github.ref }}
+      cancel-in-progress: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+          echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+      - run: |
+          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#cspell-check --no-update-lock-file --show-trace -L
 
   cargo-clippy-check:
     name: "Cargo clippy check"
@@ -252,7 +268,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -283,7 +299,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -314,7 +330,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -345,7 +361,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -376,7 +392,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -447,7 +463,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -522,7 +538,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -583,7 +599,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -613,7 +629,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -643,7 +659,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -676,7 +692,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -705,7 +721,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -738,7 +754,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -771,7 +787,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix nixpkgs.docker nixpkgs.docker-buildx
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -854,8 +870,8 @@ jobs:
       run: |
         git config --global --add safe.directory /__w/composable/composable
         COMMIT_SHA=$(git rev-parse --short=9 HEAD)
-        docker build --file Dockerfile --tag ${{env.DOCKER_REGISTRY_NAME}}/composable-devcontainer-minimal:${COMMIT_SHA} --tag ${{env.DOCKER_REGISTRY_NAME}}/composable-devcontainer-minimal:latest .
-        docker push --all-tags ${{env.DOCKER_REGISTRY_NAME}}/composable-devcontainer-minimal
+        docker build --file Dockerfile --tag "${{ env.DOCKER_REGISTRY_NAME }}/composable-devcontainer-minimal:${COMMIT_SHA}" --tag "${{ env.DOCKER_REGISTRY_NAME }}/composable-devcontainer-minimal:latest" .
+        docker push --all-tags "${{ env.DOCKER_REGISTRY_NAME }}/composable-devcontainer-minimal"
 
   devcontainer-publish:
     name: "Devcontainer publish"
@@ -899,10 +915,10 @@ jobs:
           COMMIT_SHA=$(git rev-parse --short=9 HEAD)
           DOCKER_IMAGE_HASH=$(docker images | tail --lines=1 | tr --squeeze-repeats  ' ' |  cut --delimiter " " --fields 3)
           # TODO: make nix sha256 hash(allow to find by using nix ids) and branch dependant(allow to test from branches) tags
-          docker image tag $DOCKER_IMAGE_HASH ${{env.DOCKER_REGISTRY_NAME}}/composable-devcontainer:$COMMIT_SHA
-          docker image tag $DOCKER_IMAGE_HASH ${{env.DOCKER_REGISTRY_NAME}}/composable-devcontainer:latest
+          docker image tag $DOCKER_IMAGE_HASH "${{ env.DOCKER_REGISTRY_NAME }}/composable-devcontainer:${COMMIT_SHA}"
+          docker image tag $DOCKER_IMAGE_HASH "${{ env.DOCKER_REGISTRY_NAME }}/composable-devcontainer:latest"
           # TODO: upload a docker image with `latest` tag only from `main` branch
-          docker push --all-tags ${{env.DOCKER_REGISTRY_NAME}}/composable-devcontainer
+          docker push --all-tags "${{ env.DOCKER_REGISTRY_NAME }}/composable-devcontainer"
 
   devnet-integration-tests:
       name: "Devnet integration tests"
@@ -929,7 +945,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix nixpkgs.nodejs
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -987,7 +1003,7 @@ jobs:
         - prettier-check        
         - check-simnode
         - benchmarks-check
-        - check-spelling
+        - cspell-check
       steps:
         - run: echo "Goblins allow your work to see the light"
 
@@ -1015,7 +1031,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix nixpkgs.jq
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
