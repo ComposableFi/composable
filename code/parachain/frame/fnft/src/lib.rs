@@ -253,8 +253,6 @@ pub mod pallet {
 		}
 
 		/// Returns an iterator of the items of a `collection` in existence.
-		// REVIEW(connor): Is this still the case?
-		/// NOTE: iterating this list invokes a storage read per item.
 		fn items(collection: &Self::CollectionId) -> Box<dyn Iterator<Item = Self::ItemId>> {
 			Box::new(Instance::<T>::iter_key_prefix(collection))
 		}
