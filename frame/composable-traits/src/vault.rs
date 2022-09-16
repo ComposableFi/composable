@@ -28,7 +28,7 @@ pub enum FundsAvailability<Balance> {
 	None,
 }
 
-#[derive(Copy, Clone, Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, TypeInfo)]
+#[derive(Copy, Clone, Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, TypeInfo, Eq)]
 pub struct StrategyOverview<Balance> {
 	/// The allocation of this strategy.
 	pub allocation: Perquintill,
