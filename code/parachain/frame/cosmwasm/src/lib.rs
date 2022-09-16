@@ -405,7 +405,6 @@ pub mod pallet {
 				funds,
 				message,
 			);
-			log::debug!(target: "runtime::contracts", "Instantiate Result: {:?}", outcome);
 			Self::refund_gas(outcome, gas, shared.gas.remaining())
 		}
 
@@ -643,6 +642,7 @@ pub mod pallet {
 			initial_gas: u64,
 			remaining_gas: u64,
 		) -> DispatchResultWithPostInfo {
+			log::debug!(target: "runtime::contracts", "outcome: {:?}", outcome);
 			let post_info = PostDispatchInfo {
 				actual_weight: Some(initial_gas.saturating_sub(remaining_gas)),
 				pays_fee: Pays::Yes,
