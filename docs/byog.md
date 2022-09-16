@@ -14,7 +14,7 @@ Any cross-chain XCM transactions can choose what assets to use to pay for the tr
 
 Direct transaction can add header to pick up `payment` asset or an account can configure its' default [payment asset](https://github.com/paritytech/substrate/discussions/12055).
 
-`Payment` assets are configurable and configuration is shared withith native and XCM transaction.
+`Payment` assets are configurable and configuration is shared within native and XCM transactions.
 
 In future, direct Pablo-based swaps from an asset to PICA will be available.
 
