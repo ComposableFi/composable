@@ -128,6 +128,8 @@ impl<T> From<T> for Displayed<T> {
 	}
 }
 
+pub const MAX_PARTS: u128 = 1000000000000000000;
+
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[derive(
 	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
@@ -191,9 +193,10 @@ impl Amount {
 			self.intercept.0
 		} else {
 			FixedU128::<U16>::wrapping_from_num(value)
+				.saturating_sub(FixedU128::<U16>::wrapping_from_num(self.intercept.0))
 				.saturating_mul(
 					FixedU128::<U16>::wrapping_from_num(self.slope.0)
-						.saturating_div(FixedU128::<U16>::wrapping_from_num(u128::MAX)),
+						.saturating_div(FixedU128::<U16>::wrapping_from_num(MAX_PARTS)),
 				)
 				.wrapping_to_num::<u128>()
 				.saturating_add(self.intercept.0)
