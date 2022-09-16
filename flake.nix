@@ -350,7 +350,6 @@
             '';
           docs-renders = [ mdbook plantuml graphviz pandoc ];
 
-<<<<<<< HEAD
           mkFrontendStatic = { kusamaEndpoint, picassoEndpoint, karuraEndpoint
             , subsquidEndpoint }:
             let bp = pkgs.callPackage npm-buildpackage { };
