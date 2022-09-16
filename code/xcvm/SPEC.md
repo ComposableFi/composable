@@ -183,29 +183,30 @@ Specialized instructions, such as `Transfer`, `Swap` etc will always be coercibl
 
 #### Instruction Set
 
-```
-Program ::= [Instruction]
+```ebnf
+Program      ::= Tag [Instruction]
 
-Instruction ::= 
+Instruction  ::= 
     Transfer
     | Call
     | Spawn
     | Query
    
-Balance ::= Ratio | Absolute | Unit
-Absolute ::= u128
-Unit ::= u128 Ratio
-Ratio ::= u128 u128
-Account ::= bytes
-Assets ::= { AssetId : Balance }
-Transfer ::= Account Assets | Relayer Assets
-Call ::= Payload Bindings
-Payload ::= bytes
-Bindings ::= [(u16, BindingValue)]
+Balance      ::= Ratio | Absolute | Unit
+Absolute     ::= u128
+Unit         ::= u128 Ratio
+Ratio        ::= u128 u128
+Account      ::= bytes
+Assets       ::= { AssetId : Balance }
+Transfer     ::= Account Assets | Relayer Assets
+Call         ::= Payload Bindings
+Payload      ::= bytes
+Bindings     ::= [(u16, BindingValue)]
 BindingValue ::= Self | Relayer | Result | Balance | AssetId
-Spawn ::= Network BridgeSecurity Salt Program Assets
-Query ::= Network Salt
-Account ::= bytes
+Spawn        ::= Network BridgeSecurity Salt Program Assets
+Query        ::= Network Salt
+Account      ::= bytes
+Tag          ::= bytes
 ```
 
 - `Transfer`: Transfers funds within a chain between accounts.
