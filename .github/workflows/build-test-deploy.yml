@@ -729,8 +729,6 @@ jobs:
       - run: |          
           cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#junod --no-update-lock-file --show-trace -L
           cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#gex --no-update-lock-file --show-trace -L
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#wasmswap --no-update-lock-file --show-trace -L
-
 
   package-price-feed:
     needs: common-deps
@@ -875,6 +873,7 @@ jobs:
 
   devcontainer-publish:
     name: "Devcontainer publish"
+    if: github.event_name == 'push' && github.ref_name == 'main'
     needs:
       - effects-gate
     runs-on:

@@ -10,15 +10,15 @@ Such mechanisms are built into the runtime on Picasso and [other Dotsama paracha
 
 ## Current state
 
-Any cross-chain (XCMP) transactions can choose what assets to use to pay for the transaction.
+Any cross-chain XCM transactions can choose what assets to use to pay for the transaction.
 
-Direct transaction can add header to pick up `payment` asset or accounts can configure default [payment asset](https://github.com/paritytech/substrate/discussions/12055).
+Direct transaction can add header to pick up `payment` asset or an account can configure its' default [payment asset](https://github.com/paritytech/substrate/discussions/12055).
 
-`Payment` assets are configurable and configuration is shared.
+`Payment` assets are configurable and configuration is shared within native and XCM transactions.
 
-In future, direct Pablo-based swaps from an asset to PICA will be available later.
+In future, direct Pablo-based swaps from an asset to PICA will be available.
 
-Minting, burns, and airdrops are out of the scope of this feature.
+Minting, burning, and airdrops are out of the scope of this feature.
 
 Fees are small now, but later we will have a way to show the exact fee for a transaction paid in any possible asset.
 
