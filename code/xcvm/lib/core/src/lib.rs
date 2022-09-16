@@ -13,7 +13,7 @@ pub use crate::{asset::*, instruction::*, network::*, program::*, protocol::*};
 use alloc::{collections::VecDeque, vec::Vec};
 use core::marker::PhantomData;
 
-/// Strongly typed network builder originating on `CurrentNetwork` network. 
+/// Strongly typed network builder originating on `CurrentNetwork` network.
 #[derive(Clone)]
 pub struct ProgramBuilder<CurrentNetwork: Network, Account, Assets> {
 	pub tag: Vec<u8>,
