@@ -1,20 +1,19 @@
+use crate::{
+	error::ContractError,
+	msg::{ExecuteMsg, InstantiateMsg, QueryMsg, XCVMProgram},
+	state::{Config, CONFIG},
+};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
 	to_binary, Binary, CosmosMsg, Deps, DepsMut, Env, Event, MessageInfo, QueryRequest, Response,
 	StdError, StdResult, WasmQuery,
 };
-use serde::Serialize;
-
-use crate::{
-	error::ContractError,
-	msg::{ExecuteMsg, InstantiateMsg, QueryMsg, XCVMProgram},
-	state::{Config, CONFIG},
-};
 use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg};
 use num::Zero;
+use serde::Serialize;
 use xcvm_asset_registry::msg::{GetAssetContractResponse, QueryMsg as AssetRegistryQueryMsg};
-use xcvm_core::{Funds, Instruction, NetworkId};
+use xcvm_core::{Displayed, Funds, Instruction, NetworkId};
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -60,7 +59,7 @@ pub fn interpret_program(
 		response = match instruction {
 			Instruction::Call { encoded } => interpret_call(encoded, response),
 			Instruction::Spawn { network, salt, assets, program } =>
-				interpret_spawn(&deps, network, salt, assets, program, response),
+				interpret_spawn(&deps, &env, network, salt, assets, program, response),
 			Instruction::Transfer { to, assets } =>
 				interpret_transfer(&mut deps, &env, to, assets, response),
 		}?;
@@ -81,6 +80,7 @@ pub fn interpret_call(encoded: Vec<u8>, response: Response) -> Result<Response, 
 
 pub fn interpret_spawn(
 	deps: &DepsMut,
+	env: &Env,
 	network: NetworkId,
 	salt: Vec<u8>,
 	assets: Funds,
@@ -91,13 +91,47 @@ pub fn interpret_spawn(
 	struct SpawnEvent {
 		network: NetworkId,
 		salt: Vec<u8>,
-		assets: Funds,
+		assets: Funds<Displayed<u128>>,
 		program: XCVMProgram,
 	}
 
-	let data = SpawnEvent { network, salt, assets, program };
-
 	let config = CONFIG.load(deps.storage)?;
+	let registry_addr = config.registry_address.into_string();
+	let mut normalized_funds = Funds::<Displayed<u128>>::empty();
+
+	for (asset_id, amount) in assets.0 {
+		if amount.is_zero() {
+			// We ignore zero amounts
+			continue
+		}
+
+		let amount = if amount.slope.0 == 0 {
+			// No need to get balance from cw20 contract
+			amount.intercept
+		} else {
+			let query_msg = AssetRegistryQueryMsg::GetAssetContract(asset_id.into());
+
+			let cw20_address: GetAssetContractResponse = deps.querier.query(
+				&WasmQuery::Smart {
+					contract_addr: registry_addr.clone(),
+					msg: to_binary(&query_msg)?,
+				}
+				.into(),
+			)?;
+			let response =
+				deps.querier.query::<BalanceResponse>(&QueryRequest::Wasm(WasmQuery::Smart {
+					contract_addr: cw20_address.addr.clone().into_string(),
+					msg: to_binary(&Cw20QueryMsg::Balance {
+						address: env.contract.address.clone().into_string(),
+					})?,
+				}))?;
+			amount.apply(response.balance.into()).into()
+		};
+
+		normalized_funds.0.insert(asset_id, amount.into());
+	}
+
+	let data = SpawnEvent { network, salt, assets: normalized_funds, program };
 
 	Ok(response.add_event(
 		Event::new("xcvm.interpreter.spawn")

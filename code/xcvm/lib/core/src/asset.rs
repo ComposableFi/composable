@@ -209,7 +209,7 @@ impl Amount {
 #[repr(transparent)]
 pub struct Funds<T = Amount>(pub BTreeMap<AssetId, T>);
 
-impl Funds {
+impl<T> Funds<T> {
 	#[inline]
 	pub fn empty() -> Self {
 		Funds(BTreeMap::new())
