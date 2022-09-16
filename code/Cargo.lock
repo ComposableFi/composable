@@ -7958,6 +7958,7 @@ dependencies = [
  "composable-traits",
  "frame-support",
  "frame-system",
+ "multihash",
  "pallet-account-proxy",
  "pallet-timestamp",
  "parity-scale-codec",

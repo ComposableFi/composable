@@ -42,16 +42,7 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::FullCodec;
-	use composable_support::{
-		abstractions::{
-			nonce::Nonce,
-			utils::{
-				increment::{Increment, SafeIncrement},
-				start_at::OneInit,
-			},
-		},
-		math::safe::SafeAdd,
-	};
+	use composable_support::math::safe::SafeAdd;
 	use composable_traits::{
 		account_proxy::AccountProxy,
 		currency::AssetIdLike,
@@ -66,6 +57,7 @@ pub mod pallet {
 		},
 		PalletId,
 	};
+	use multihash::{Blake2b256, Hasher};
 	use sp_arithmetic::traits::One;
 	use sp_runtime::traits::{AccountIdConversion, Zero};
 	use sp_std::{
@@ -208,27 +200,6 @@ pub mod pallet {
 		(AccountIdOf<T>, AccountIdOf<T>, BTreeMap<Vec<u8>, Vec<u8>>),
 		OptionQuery,
 	>;
-
-	/// Associates the Collection and Instance ID of a fNFT to the seed used to create its asset
-	/// account
-	#[pallet::storage]
-	#[pallet::getter(fn financial_nft_asset_account_seeds)]
-	pub type FinancialNftAssetAccountSeeds<T: Config> = StorageDoubleMap<
-		_,
-		Blake2_128Concat,
-		FinancialNftCollectionIdOf<T>,
-		Blake2_128Concat,
-		FinancialNftInstanceIdOf<T>,
-		u32,
-		OptionQuery,
-	>;
-
-	/// Used to create seeds for fNFT asset accounts
-	#[pallet::storage]
-	#[pallet::getter(fn financial_nft_asset_account_seed)]
-	#[allow(clippy::disallowed_types)] // Nonce; ValueQuery is ok
-	pub type FinancialNftAssetAccountSeed<T: Config> =
-		StorageValue<_, u32, ValueQuery, Nonce<OneInit, SafeIncrement>>;
 
 	impl<T: Config> Inspect<AccountIdOf<T>> for Pallet<T> {
 		type ItemId = FinancialNftInstanceIdOf<T>;
@@ -507,20 +478,8 @@ pub mod pallet {
 			collection: &Self::CollectionId,
 			instance: &Self::ItemId,
 		) -> Result<AccountIdOf<T>, DispatchError> {
-			// If seed is already stored
-			let seed = match FinancialNftAssetAccountSeeds::<T>::try_get(collection, instance) {
-				// Then get the seed
-				Ok(seed) => seed,
-				// Else get the next valid seed, associate the fNFT
-				Err(_) => {
-					let seed = FinancialNftAssetAccountSeed::<T>::increment()?;
-					FinancialNftAssetAccountSeeds::<T>::set(collection, instance, Some(seed));
-					seed
-				},
-			};
-
-			// Get the account associated with the seed
-			Ok(T::PalletId::get().into_sub_account_truncating(seed))
+			Ok(T::PalletId::get()
+				.into_sub_account_truncating(hash::<_, Blake2b256>((collection, instance))))
 		}
 
 		fn get_next_nft_id(
@@ -535,6 +494,21 @@ pub mod pallet {
 				},
 			)
 		}
+	}
+
+	fn hash<I, H>(input: I) -> [u8; 32]
+	where
+		H: Hasher + Default,
+		I: Encode,
+	{
+		let mut hasher: H = Default::default();
+		let mut hash: [u8; 32] = [0; 32];
+
+		hasher.update(&input.encode());
+		hash.copy_from_slice(hasher.finalize());
+		hasher.reset();
+
+		hash
 	}
 
 	/// Returns a closure that inserts the given value into the contained set, initializing the set
