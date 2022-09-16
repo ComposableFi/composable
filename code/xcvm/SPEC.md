@@ -90,13 +90,13 @@ BridgeSecurity ::=
 
 Outgoing messages are routed based on bridge security, or by specifying the bridge contract directly.
 
-Each XCVM execution has access to its message origin and can be configured to deny execution depending on the address or security level:
+Each XCVM execution has access to its message `MessageOrigin` and can be configured to deny execution depending on the address or security level:
 
 ```ebpf
 MessageOrigin ::=
     IBC
     | XCM
-    | OTP bytes BridgeSecurity
+    | (OTP, bytes, BridgeSecurity)
 ```
 
 The `Gateway` allows for third parties to add their bridges as well, using our open transport protocol (`OTP`), although this is a feature that we will only later make public. `OTP` provides the following functionality
@@ -111,7 +111,7 @@ The `Gateway` allows for third parties to add their bridges as well, using our o
 
 Each program arriving through the `Gateway` is passed to the `Router`, which receives the provided `Assets` as well as instantiates an `Interpreter` instance. The router then transfers funds to the `Interpreter` instance.
 
-Subsequent calls by the same Origin will not result in an instantiation, but instead in a re-use of the `Interpreter` instance. This allows foreign Origins to maintain state across different protocols, such as managing LP positions.
+Subsequent calls by the same `Origin` will not result in an instantiation, but instead in a re-use of the `Interpreter` instance. This allows foreign Origins to maintain state across different protocols, such as managing LP positions.
 
 If no interpreter instance has been created for a given caller, the call to the router must either come from the `IBC`, `XCM`, `OTP` with `Deterministic` security, or a local origin. After the instance has been created, it can be configured to accept other origins by the caller.
 
@@ -129,7 +129,8 @@ Depending on the implementation, the XCVM may accept a typed `Program`, or a `pr
 
 Each instance of the `XCVM` keeps track of certain persistent states, such as the `MessageFilter`, which determines which `MessageOrigins` are accepted. Note that `IBC` and `XCM` are accepted by default.
 
-Each interpreter keeps track of a set of owners, which may configure and operate on behalf of the instance. 
+Each `Interpreter` instance keeps track of a set of owners, which may configure and operate on behalf of the instance.
+`Router` is in set of owners of `Interpreter` instance.
 
 ##### Registers
 
@@ -137,7 +138,7 @@ Each interpreter keeps track of persistent states during and across executions, 
 
 - `Result Register`: Contains the result of the last executed instruction.
 
-```
+```ebpf
 Result ::= 
     Error 
     | Value
@@ -154,7 +155,7 @@ CallError ::= bytes
 ```
 
 - `IP Register`: Contains the instruction pointer. Querying for the `IP` and `Result` can be used to compute the state of the interpreter on another chain.
-- `Relayer Register`: Contains the `Account` of the account triggering the initial execution. 
+- `Relayer Register`: Contains the `Account` of the account triggering the initial execution.
 - `Self Register`: Contains the `Account` of the interpreter
 
 As we add conditionals, such as the `If` instructions, the coercion of the `Result` registry will be defined. Note that the `Result` of the `Call` instruction can never be coerced into a `boolean`, and thus the execution of the following program is always undefined:
@@ -181,7 +182,7 @@ Else
     Abort b'abortion message'       
 ```
 
-Specialized instructions, such as `Transfer`, `Swap` etc will always be coercible.
+Specialized instructions, such as `Transfer`, `Swap`, etc will always be coercible.
 
 #### Instruction Set
 
@@ -199,24 +200,25 @@ Absolute     ::= u128
 Unit         ::= u128 Ratio
 Ratio        ::= u128 u128
 Account      ::= bytes
-Assets       ::= [{ AssetId : Balance }]
-Transfer     ::= Account Assets | Relayer Assets
-Call         ::= Payload Bindings
+Assets       ::= { AssetId, Balance } (* optional with unique AssetId *)
+Transfer     ::= ( Account, Assets ) | ( Relayer, Assets )
+Call         ::= Payload, Bindings
 Payload      ::= bytes
-Bindings     ::= [(u16, BindingValue)]
+Bindings     ::= { u16, BindingValue } (* optional with unique u16 *)
 BindingValue ::= Self | Relayer | Result | Balance | AssetId
-Spawn        ::= Network BridgeSecurity Salt Program Assets
-Query        ::= Network Salt
+Spawn        ::= Network, BridgeSecurity, Salt, Program, Assets
+Query        ::= Network, Salt
 Account      ::= bytes
 Tag          ::= bytes
+Salt         ::= bytes
 ```
 
 - `Transfer`: Transfers funds within a chain between accounts.
 - `Call`: Executes a payload within the execution context of the chain, such as an extrinsic or smart contract invocation.
 - `Spawn`: Sends a `Program` to another chain to be executed asynchronously. The calling program is not informed of the execution state, but must `Query` explicitly.
-- `Query`: Queries register values of an `XCVM` contract across chains. The provided Salt is used to look up the interpreter instance. It sets the current `Result Register` `QueryResult`.
+- `Query`: Queries register values of an `XCVM` contract across chains. The provided `Salt` is used to look up the interpreter instance. It sets the current `Result Register` to `QueryResult`.
 
-For each instruction, this diagram approximately displays what happens: 
+For each instruction, this diagram approximately displays what happens:
 
 ```mermaid
 sequenceDiagram
@@ -230,13 +232,13 @@ sequenceDiagram
 
 ##### Call Instruction and Late Bindings
 
-The call instruction supports bindings values on the executing side of the program by specifying the `Bindings`. This allows us to construct a program that uses data only available on the executing side. For example, the swap call of the following smart contract snippet expects a `to` address to receive the funds after a trade. 
+The call instruction supports bindings values on the executing side of the program by specifying the `Bindings`. This allows us to construct a program that uses data only available on the executing side. For example, the swap call of the following smart contract snippet expects a `to` address to receive the funds after a trade.
 
-```
+```rust
 fn swap(amount: u256, pair: (u128, u128), to: AccountId) { ... } 
 ```
 
-If we want to swap funds from the interpreter account and receive the funds into the interpreter account, we need to specify the BindingValue `Self`, using the index of the `to` field for the serialized data being passed to the smart contract. For the `Call` instruction of `swap(10, (1, 2), ${UNKNOWN})`, we then serialize it into the following struct: 
+If we want to swap funds from the interpreter account and receive the funds into the interpreter account, we need to specify the BindingValue `Self`, using the index of the `to` field for the serialized data being passed to the smart contract. For the `Call` instruction of `swap(10, (1, 2), ${UNKNOWN})`, we then serialize it into the following struct:
 
 ```
 Call {
@@ -245,9 +247,11 @@ Call {
 }
 ```
 
-On the executing interpreter, `BindingValue::Self` will be interpolated at index 13 of the payload before being executed, the final payload then becomes `swap(10,(1,2), BindingValue::Self)`, where `BindingValue::Self` is the canonical address of the interpreter on the destination side. 
+On the executing interpreter, `BindingValue::Self` will be interpolated at byte index 13  of the payload before being executed, the final payload then becomes `swap(10,(1,2), BindingValue::Self)`, where `BindingValue::Self` is the canonical address of the interpreter on the destination side.
 
 Besides accessing the `Self` register, `BindingValue` allows for lazy lookups of AssetId conversions, by using `BindingValue::AssetId(GlobalId)`, or lazily converting decimal points depending on the chain using the `Balance` type.
+
+Bindings do not support non byte aligned encodings.
 
 #### Handling Balances
 
@@ -259,7 +263,7 @@ Registers are persisted after `Program` invocations and `Query`able from other c
 
 A query returns a `QueryResult`:
 
-```
+```ebpf
 QueryResult ::= Header Data 
 Header ::= Hash Number
 Data ::= 
@@ -277,7 +281,6 @@ Call 0xmy_contract_on_this_chain    // my_contract_on_this_chain can inspect the
                                     // instance and do something with the actual result
 ```
 
-
 ### Fees
 
 There are three different components to the fees charged for interacting with the `XCVM`:
@@ -286,9 +289,9 @@ There are three different components to the fees charged for interacting with th
 2. Bridging fees (optional): Some bridges charge a dynamic fee based on the number of assets sent. If possible, fees are folded into 1., otherwise charged during transmission.
 3. Execution fees (optional): A reward added by the instruction author to reward the relayer for paying for the execution on the destination chain.
 
-#### Execution Fees.
+#### Execution Fees
 
-Gas and Bridging fees are handled during the invocation and at the `router` level, however, Execution fees are opt-in and paid by the user by using the `Relayer` registry value. The following example program performs an operation, and rewards the relayer:
+Gas and Bridging fees are handled during the invocation and at the `Router` level, however, Execution fees are opt-in and paid by the user by using the `Relayer` registry value. The following example program performs an operation, and rewards the relayer:
 
 ```
 Call 0x13371337...
@@ -302,12 +305,12 @@ This model is very much like Bitcoin's UTXOs, where the difference between input
 Within the `XCVM`, we define an `Identity` as a global, unique identifier of an on-chain account.
 
 ```
-Identity ::= Network Account
+Identity ::= Network, Account
 ```
 
 On initial instantiation of the `XCVM` interpreter, the calling `Identity` is the owner. This can be a local or foreign account, depending on the origin. The owning `Identity` has total control of the interpreter instance and the funds held and can make delegate calls from the instance's account.
 
-Oftentimes, multiple `Identities` represent a single real-world entity, such as a cross-chain protocol or a user. To accommodate for shared/global ownership of resources, each interpreter keeps track of a set of `Identities`, which share ownership of the interpreter. Each owning identity has full permissions on the interpreter instance.
+Oftentimes, multiple `Identities` represent a single real-world entity, such as a cross-chain protocol or a user. To accommodate for shared/global ownership of resources, each interpreter keeps track of a set of `Identities`, which share ownership of the interpreter. Each owning `Identity` has full permissions on the interpreter instance.
 
 Owners may be added by having the interpreter call the appropriate setters. We will consider adding specialized instructions later.
 
@@ -315,7 +318,7 @@ Owners may be added by having the interpreter call the appropriate setters. We w
 
 The `CNS` provides an abstraction on top of the `Identity` system, allowing developers and users to use a single name across interpreter instances. Each `XCVM` chain contains a `CNS` registry, which maps `Identity` to `Name`. On bridge relays, the calling program can specify to use an associated `Name` instead of its `Identity`. The `XCVM` interpreter has to be configured to accept the `CNS` as an owner. 
 
-```
+```ebnf
 Name ::= string 
 ```
 
@@ -325,7 +328,7 @@ We will later elaborate on using alternative name registries such as [`ENS`](htt
 
 Assets are identified using a global asset identifier.
 
-```
+```ebnf
 AssetId ::= u128
 ```
 
@@ -335,7 +338,7 @@ Propagating updates across registries is handled by the `XCVM` too. We will go m
 
 ## NFTs
 
-The design specification currently does not hold NFTs into account. We have chosen to not (yet) specify NFTs as part of `Assets` due to the complexity of owning and value accruing NFTs. We do however intend to update the specification once the approach has been finalized. 
+The design specification currently does not hold NFTs into account. We have chosen to not (yet) specify NFTs as part of `Assets` due to the complexity of owning and value accruing NFTs. We do however intend to update the specification once the approach has been finalized.
 
 ## Examples
 
