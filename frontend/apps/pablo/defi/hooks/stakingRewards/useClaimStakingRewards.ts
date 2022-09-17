@@ -1,69 +1,119 @@
 import {
-    getSigner,
-    useExecutor,
-    useParachainApi,
-    useSelectedAccount,
-  } from "substrate-react";
-  import _ from "lodash";
-  import { useCallback } from "react";
-  import BigNumber from "bignumber.js";
-  import { useSnackbar } from "notistack";
-import { APP_NAME } from "@/defi/polkadot/constants";
+  useExecutor,
+  useParachainApi,
+  useSelectedAccount,
+  useSigner,
+} from "substrate-react";
+import _ from "lodash";
+import { useCallback, useMemo } from "react";
+import { useSnackbar } from "notistack";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
-  
-  export type StakeProps = {
-    positionId: BigNumber | undefined; // position Id
-  };
-  
-  export function useClaimStakingRewards({ positionId }: StakeProps) {
-    const { enqueueSnackbar } = useSnackbar();
-    const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
-    const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
-    const executor = useExecutor();
-  
-    return useCallback(async () => {
-      if (!parachainApi || !selectedAccount || !executor || !positionId) {
-          throw new Error('Invalid stake pool.');
-      }
-  
-      try {
-        const signer = await getSigner(APP_NAME, selectedAccount.address);
-        await executor.execute(
-          // @ts-ignore
-          parachainApi.tx.stakingRewards.claim(
-            parachainApi.createType("u128", positionId.toString()),
-          ),
-          selectedAccount.address,
-          parachainApi,
-          signer,
-          (_transactionHash) => {
-            console.log("Tx Ready: ", _transactionHash);
-          },
-          (_transactionHash, _events) => {
-            enqueueSnackbar(
-              `Amount Claimed, transaction hash: ${_transactionHash}`,
-              {
-                variant: "success",
-              }
-            );
-          },
-          (errorMessage) => {
-            enqueueSnackbar(`Error: ${errorMessage}`, {
-              variant: "error",
-            });
-          }
-        );
-      } catch (error: any) {
-        enqueueSnackbar(`Error: ${error.message}`, {
-          variant: "error",
-        });
-      }
-    }, [
-      parachainApi,
-      selectedAccount,
-      executor,
-      enqueueSnackbar,
-      positionId
-    ]);
-  }
-  
+import {
+  transactionStatusSnackbarMessage,
+  SNACKBAR_TYPES,
+} from "../pools/addLiquidity/useAddLiquidity";
+
+const TxOrigin = "Claim Staking Position";
+
+export type StakeProps = {
+  financialNftCollectionId?: string;
+  financialNftInstanceId?: string;
+};
+
+export function useClaimStakingRewards({
+  financialNftCollectionId,
+  financialNftInstanceId,
+}: StakeProps) {
+  const { enqueueSnackbar } = useSnackbar();
+  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
+  const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
+  const signer = useSigner();
+  const executor = useExecutor();
+
+  const onTxReady = useCallback(
+    (transactionHash: string) => {
+      enqueueSnackbar(
+        transactionStatusSnackbarMessage(
+          TxOrigin,
+          transactionHash,
+          "Initiated"
+        ),
+        SNACKBAR_TYPES.INFO
+      );
+    },
+    [enqueueSnackbar]
+  );
+
+  const onTxFinalized = useCallback(
+    (transactionHash: string, _eventsRecord: any[]) => {
+      enqueueSnackbar(
+        transactionStatusSnackbarMessage(
+          TxOrigin,
+          transactionHash,
+          "Finalized"
+        ),
+        SNACKBAR_TYPES.SUCCESS
+      );
+    },
+    [enqueueSnackbar]
+  );
+
+  const onTxError = useCallback(
+    (errorMessage: string) => {
+      enqueueSnackbar(
+        transactionStatusSnackbarMessage(TxOrigin, errorMessage, "Error"),
+        SNACKBAR_TYPES.ERROR
+      );
+    },
+    [enqueueSnackbar]
+  );
+
+  const collectionId = useMemo(() => {
+    if (!parachainApi || !financialNftCollectionId) return null;
+
+    return parachainApi.createType("u128", financialNftCollectionId);
+  }, [parachainApi, financialNftCollectionId]);
+
+  const instanceId = useMemo(() => {
+    if (!parachainApi || !financialNftInstanceId) return null;
+
+    return parachainApi.createType("u64", financialNftInstanceId);
+  }, [parachainApi, financialNftInstanceId]);
+
+  return useCallback(async () => {
+    if (
+      !parachainApi ||
+      !selectedAccount ||
+      !executor ||
+      !collectionId ||
+      !instanceId ||
+      !signer
+    ) {
+      throw new Error("Invalid stake pool.");
+    }
+
+    try {
+      await executor.execute(
+        parachainApi.tx.stakingRewards.claim(collectionId, instanceId),
+        selectedAccount.address,
+        parachainApi,
+        signer,
+        onTxReady,
+        onTxFinalized,
+        onTxError
+      );
+    } catch (error: any) {
+      onTxError(error.message);
+    }
+  }, [
+    parachainApi,
+    selectedAccount,
+    executor,
+    collectionId,
+    instanceId,
+    signer,
+    onTxReady,
+    onTxFinalized,
+    onTxError,
+  ]);
+}
