@@ -112,6 +112,7 @@ pub mod pallet {
 		/// Pool with specified id `T::AssetId` was created successfully by `T::AccountId`.
 		RewardPoolCreated {
 			/// The staked asset of the pool, also used as the pool's id.
+			// TODO(benluelo): Rename to 'staked asset id'
 			pool_id: T::AssetId,
 			/// Owner of the pool.
 			owner: T::AccountId,
@@ -1276,7 +1277,7 @@ pub mod pallet {
 			let mut total_weight = unix_time_now_weight;
 
 			RewardPools::<T>::translate(|pool_id, mut reward_pool: RewardPoolOf<T>| {
-				for (asset_id, reward) in &mut reward_pool.rewards {
+				for (reward_asset_id, reward) in &mut reward_pool.rewards {
 					match reward {
 						RewardType::Earnings() => continue,
 						RewardType::RateBased(rate_based_reward) => {
@@ -1284,7 +1285,7 @@ pub mod pallet {
 								T::WeightInfo::reward_accumulation_hook_reward_update_calculation();
 							Self::reward_accumulation_hook_rate_based_reward_update_calculation(
 								pool_id,
-								*asset_id,
+								*reward_asset_id,
 								rate_based_reward,
 								now_seconds,
 							);
@@ -1308,41 +1309,38 @@ pub mod pallet {
 		type RewardPoolId = T::AssetId;
 		type Balance = T::Balance;
 
-		fn accumulate_reward(
-			_pool: &Self::RewardPoolId,
-			_reward_currency: Self::AssetId,
-			_reward_increment: Self::Balance,
-		) -> DispatchResult {
-			Ok(())
-		}
-
+		// REVIEW(benluelo): Review the difference between transfer_earning and
+		// add_to_rewards_pot, and if we still need both of them.
 		#[transactional]
 		fn transfer_earnings(
 			from: &Self::AccountId,
 			pool_id: &Self::RewardPoolId,
 			reward_currency: Self::AssetId,
-			reward_increment: Self::Balance,
+			amount: Self::Balance,
+			keep_alive: bool,
 		) -> DispatchResult {
 			RewardPools::<T>::try_mutate(pool_id, |maybe_reward_pool| {
 				let reward_pool =
 					maybe_reward_pool.as_mut().ok_or(Error::<T>::RewardsPoolNotFound)?;
+
+				let pool_account_id = Self::pool_account_id(pool_id);
+
+				let do_transfer = || {
+					T::Assets::transfer(reward_currency, from, &pool_account_id, amount, keep_alive)
+				};
 
 				// this is basically just the entry api for std's map types, i.e. modify or insert
 				match reward_pool.rewards.get_mut(&reward_currency) {
 					Some(reward) => match reward {
 						RewardType::Earnings() => {
 							// asset already exists as an earnings reward
+							do_transfer()?;
 						},
-						RewardType::RateBased(rate_based_reward) => {
-							let new_total_reward =
-								rate_based_reward.total_rewards.safe_add(&reward_increment)?;
-							ensure!(
-								(new_total_reward
-									.safe_sub(&rate_based_reward.total_dilution_adjustment)?) <=
-									rate_based_reward.max_rewards,
-								Error::<T>::MaxRewardLimitReached
-							);
-							rate_based_reward.total_rewards = new_total_reward;
+						RewardType::RateBased(_rate_based_reward) => {
+							do_transfer()?;
+							T::Assets::hold(reward_currency, &pool_account_id, amount)?;
+
+							RewardsPotIsEmpty::<T>::remove(pool_id, reward_currency);
 						},
 					},
 					None => {
@@ -1356,22 +1354,16 @@ pub mod pallet {
 							.rewards
 							.try_insert(reward_currency, RewardType::Earnings())
 							.map_err(|_| Error::<T>::TooManyRewardAssetTypes)?;
+
+						do_transfer()?;
 					},
 				}
-
-				T::Assets::transfer(
-					reward_currency,
-					from,
-					&Self::pool_account_id(pool_id),
-					reward_increment,
-					false,
-				)?;
 
 				Self::deposit_event(Event::RewardTransferred {
 					from: from.clone(),
 					pool_id: *pool_id,
 					reward_currency,
-					reward_increment,
+					reward_increment: amount,
 				});
 				Ok(())
 			})

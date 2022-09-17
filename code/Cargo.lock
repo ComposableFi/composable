@@ -8656,6 +8656,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal",
+ "lazy_static",
  "once_cell",
  "orml-tokens",
  "orml-traits",

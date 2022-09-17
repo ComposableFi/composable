@@ -161,6 +161,7 @@ pub mod pallet {
 		<T as Config>::MaxRewardConfigsPerPool,
 	>;
 	pub(crate) type MomentOf<T> = <<T as Config>::Time as Time>::Moment;
+	// TODO(benluelo): Rename to TwapStateOf
 	pub(crate) type TWAPStateOf<T> = TimeWeightedAveragePrice<MomentOf<T>, <T as Config>::Balance>;
 	pub(crate) type PriceCumulativeStateOf<T> =
 		PriceCumulative<MomentOf<T>, <T as Config>::Balance>;
@@ -836,6 +837,8 @@ pub mod pallet {
 					&T::PbloAssetId::get(),
 					fees.asset_id,
 					fees.protocol_fee,
+					// REVIEW(benluelo): Should this be kept alive?
+					false,
 				)?;
 			}
 			Ok(())
@@ -1334,6 +1337,9 @@ pub mod pallet {
 		}
 
 		#[transactional]
+		// FIXME(benluelo): This function gets the pool from storage, then calls
+		// Self::get_exchange_value and Self::exchange which both read the same pool from storage
+		// again.
 		fn buy(
 			who: &Self::AccountId,
 			pool_id: Self::PoolId,

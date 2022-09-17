@@ -61,24 +61,6 @@ fn lock_config<T: Config>() -> LockConfig<T::MaxStakingDurationPresets> {
 	}
 }
 
-fn rate_based_reward_configs<T: Config>(
-	reward_count: u32,
-) -> BoundedBTreeMap<T::AssetId, RateBasedConfig<T::Balance>, T::MaxRewardConfigsPerPool> {
-	(0..reward_count)
-		.map(|asset_id| {
-			let asset_id = (asset_id as u128) + BASE_ASSET_ID;
-			(
-				asset_id.into(),
-				RateBasedConfig {
-					max_rewards: 100_u128.into(),
-					reward_rate: RewardRate::per_second(1_u128),
-				},
-			)
-		})
-		.try_collect()
-		.unwrap()
-}
-
 fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
 	let events = frame_system::Pallet::<T>::events();
 	let system_event: <T as frame_system::Config>::Event = generic_event.into();
@@ -210,13 +192,18 @@ benchmarks! {
 
 		let now = now + seconds_per_block;
 
-		let mut reward = RewardPools::<T>::get(&pool_id).unwrap().rewards.get(&reward_asset_id).unwrap().clone();
-		let reward = match reward {
+		let reward = RewardPools::<T>::get(&pool_id).unwrap().rewards.get(&reward_asset_id).unwrap().clone();
+		let mut reward = match reward {
 			RewardType::Earnings() => panic!("reward should be rate based"),
 			RewardType::RateBased(rate_based_reward) => rate_based_reward,
 		};
 	}: {
-		let reward = Pallet::<T>::reward_accumulation_hook_rate_based_reward_update_calculation(pool_id, reward_asset_id,&mut reward, now);
+		Pallet::<T>::reward_accumulation_hook_rate_based_reward_update_calculation(
+			pool_id,
+			reward_asset_id,
+			&mut reward,
+			now
+		);
 	}
 
 	unix_time_now {}: {

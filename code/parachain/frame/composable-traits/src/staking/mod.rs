@@ -146,6 +146,7 @@ pub struct RewardPool<
 	pub owner: AccountId,
 
 	/// The staked asset id of the reward pool.
+	// TODO(benluelo): Remove this field
 	pub asset_id: AssetId,
 
 	/// rewards accumulated
@@ -287,14 +288,6 @@ pub trait ProtocolStaking {
 	type Balance;
 	type RewardPoolId;
 
-	/// Adds reward to common pool share.
-	/// Does not actually transfers real assets.
-	fn accumulate_reward(
-		pool: &Self::RewardPoolId,
-		reward_currency: Self::AssetId,
-		reward_increment: Self::Balance,
-	) -> DispatchResult;
-
 	/// Transfers rewards `from` to pool.
 	/// If may be bigger than total shares.
 	fn transfer_earnings(
@@ -302,6 +295,7 @@ pub trait ProtocolStaking {
 		pool: &Self::RewardPoolId,
 		reward_currency: Self::AssetId,
 		reward_increment: Self::Balance,
+		keep_alive: bool,
 	) -> DispatchResult;
 }
 
