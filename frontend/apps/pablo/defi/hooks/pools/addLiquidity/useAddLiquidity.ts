@@ -16,6 +16,8 @@ import { ConnectedAccount } from "substrate-react/dist/dotsama/types";
 import { Signer } from "@polkadot/api/types";
 import { useCallback, useMemo } from "react";
 
+const TxOrigin = "Add Liquidity";
+
 export function transactionStatusSnackbarMessage(
   moduleName: string,
   transactionHashOrErrorMessage: string,
@@ -84,7 +86,7 @@ export const useAddLiquidity = ({
   const onTxReady = useCallback(
     (transactionHash: string) => {
       enqueueSnackbar(
-        transactionStatusSnackbarMessage('Add Liquidity', transactionHash, "Initiated"),
+        transactionStatusSnackbarMessage(TxOrigin, transactionHash, "Initiated"),
         SNACKBAR_TYPES.INFO
       );
       dispatch(openConfirmingSupplyModal());
@@ -95,7 +97,7 @@ export const useAddLiquidity = ({
   const onTxFinalized = useCallback(
     (transactionHash: string, _eventRecords: any[]) => {
       enqueueSnackbar(
-        transactionStatusSnackbarMessage('Add Liquidity', transactionHash, "Finalized"),
+        transactionStatusSnackbarMessage(TxOrigin, transactionHash, "Finalized"),
         SNACKBAR_TYPES.SUCCESS
       );
       resetAddLiquiditySlice();
@@ -108,7 +110,7 @@ export const useAddLiquidity = ({
   const onTxError = useCallback(
     (transactionError: string) => {
       enqueueSnackbar(
-        transactionStatusSnackbarMessage('Add Liquidity', transactionError, "Error"),
+        transactionStatusSnackbarMessage(TxOrigin, transactionError, "Error"),
         SNACKBAR_TYPES.ERROR
       );
       dispatch(closeConfirmingSupplyModal());
@@ -151,7 +153,7 @@ export const useAddLiquidity = ({
       );
     } catch (err: any) {
       enqueueSnackbar(
-        transactionStatusSnackbarMessage('Add Liquidity', err.message, "Error"),
+        transactionStatusSnackbarMessage(TxOrigin, err.message, "Error"),
         SNACKBAR_TYPES.ERROR
       );
       dispatch(closeConfirmingSupplyModal());
