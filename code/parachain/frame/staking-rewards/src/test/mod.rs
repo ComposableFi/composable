@@ -85,8 +85,7 @@ fn stake_in_case_of_low_balance_should_not_work() {
 
 		create_default_reward_pool();
 
-		let asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
-		assert_eq!(balance(asset_id, &ALICE), 0);
+		assert_eq!(balance(PICA::ID, &ALICE), 0);
 
 		assert_noop!(
 			StakingRewards::stake(Origin::signed(ALICE), PICA::ID, AMOUNT, ONE_HOUR),
@@ -108,8 +107,7 @@ fn stake_in_case_of_zero_inflation_should_work() {
 		let duration_preset: u64 = ONE_HOUR;
 		let fnft_asset_account = FinancialNft::asset_account(&1, &0);
 
-		let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
-		mint_assets([staker], [staked_asset_id], amount * 2);
+		mint_assets([staker], [PICA::ID], amount * 2);
 
 		let fnft_instance_id = assert_extrinsic_event_with::<Test, _, _, _>(
 			StakingRewards::stake(Origin::signed(staker), PICA::ID, amount, duration_preset),
@@ -142,8 +140,8 @@ fn stake_in_case_of_zero_inflation_should_work() {
 		assert_eq!(
 			Stakes::<Test>::get(PICA::ID, fnft_instance_id),
 			Some(Stake {
-				reward_pool_id: PICA::ID,
-				stake: amount,
+				staked_asset_id: PICA::ID,
+				amount,
 				share: StakingRewards::boosted_amount(reward_multiplier, amount),
 				reductions,
 				lock: Lock {
@@ -154,8 +152,8 @@ fn stake_in_case_of_zero_inflation_should_work() {
 			})
 		);
 
-		assert_eq!(balance(staked_asset_id, &staker), amount);
-		assert_eq!(balance(staked_asset_id, &fnft_asset_account), amount);
+		assert_eq!(balance(PICA::ID, &staker), amount);
+		assert_eq!(balance(PICA::ID, &fnft_asset_account), amount);
 
 		assert_last_event_with::<Test, _>(|event| {
 			matches!(
@@ -356,8 +354,7 @@ fn not_owner_of_stake_can_not_unstake() {
 		let duration_preset = ONE_HOUR;
 		assert_ne!(owner, not_owner);
 
-		let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
-		mint_assets([owner, not_owner], [staked_asset_id], amount * 2);
+		mint_assets([owner, not_owner], [PICA::ID], amount * 2);
 
 		assert_ok!(StakingRewards::stake(Origin::signed(owner), pool_id, amount, duration_preset));
 
@@ -380,13 +377,12 @@ fn unstake_in_case_of_zero_claims_and_early_unlock_should_work() {
 		let duration_preset = ONE_HOUR;
 		let fnft_asset_account = FinancialNft::asset_account(&1, &0);
 
-		let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
-		mint_assets([staker], [staked_asset_id], amount * 2);
+		mint_assets([staker], [PICA::ID], amount * 2);
 
 		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration_preset));
 		let unlock_penalty =
 			StakingRewards::stakes(1, 0).expect("stake expected").lock.unlock_penalty;
-		assert_eq!(balance(staked_asset_id, &staker), amount);
+		assert_eq!(balance(PICA::ID, &staker), amount);
 
 		assert_ok!(StakingRewards::unstake(Origin::signed(staker), 1, 0));
 		assert_eq!(StakingRewards::stakes(1, 0), None);
@@ -399,10 +395,10 @@ fn unstake_in_case_of_zero_claims_and_early_unlock_should_work() {
 		});
 
 		let penalty = unlock_penalty.mul_ceil(amount);
-		assert_eq!(balance(staked_asset_id, &staker), amount + (amount - penalty));
+		assert_eq!(balance(PICA::ID, &staker), amount + (amount - penalty));
 		// NOTE(connor): Used to keep penalty in the pool account, fNFT design has assets being
 		// burned instead
-		assert_eq!(balance(staked_asset_id, &fnft_asset_account), 0);
+		assert_eq!(balance(PICA::ID, &fnft_asset_account), 0);
 		// assert_eq!(balance(staked_asset_id, &fnft_asset_account), penalty);
 
 		// Assert fNFT is removed from storage
@@ -590,8 +586,8 @@ fn test_split_position() {
 
 		let reduction = PICA::units(10);
 		let stake = StakeOf::<Test> {
-			reward_pool_id: PICA::ID,
-			stake: PICA::units(1_000),
+			staked_asset_id: PICA::ID,
+			amount: PICA::units(1_000),
 			share: PICA::units(1_000),
 			reductions: [(USDT::ID, reduction)]
 				.into_iter()
@@ -628,17 +624,17 @@ fn test_split_position() {
 		let stake1 = stake1.unwrap();
 		let stake2 = stake2.unwrap();
 		// validate stake and share as per ratio
-		assert_eq!(stake1.stake, ratio.mul_floor(stake.stake));
+		assert_eq!(stake1.amount, ratio.mul_floor(stake.amount));
 		assert_eq!(stake1.share, ratio.mul_floor(stake.share));
 		assert_eq!(stake1.reductions.get(&USDT::ID), Some(&ratio.mul_floor(reduction)));
-		assert_eq!(stake2.stake, left_from_one_ratio.mul_floor(stake.stake));
+		assert_eq!(stake2.amount, left_from_one_ratio.mul_floor(stake.amount));
 		assert_eq!(stake2.share, left_from_one_ratio.mul_floor(stake.share));
 		assert_eq!(
 			stake2.reductions.get(&USDT::ID),
 			Some(&left_from_one_ratio.mul_floor(reduction))
 		);
 		helper::assert_last_event::<Test>(Event::StakingRewards(crate::Event::SplitPosition {
-			stake: stake2.stake,
+			stake: stake2.amount,
 			fnft_collection_id: PICA::ID,
 			fnft_instance_id: 1,
 		}));

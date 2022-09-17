@@ -145,10 +145,6 @@ pub struct RewardPool<
 > {
 	pub owner: AccountId,
 
-	/// The staked asset id of the reward pool.
-	// TODO(benluelo): Remove this field
-	pub asset_id: AssetId,
-
 	/// rewards accumulated
 	pub rewards: BoundedBTreeMap<AssetId, RewardType<Balance>, MaxRewards>,
 
@@ -241,11 +237,11 @@ pub struct Stake<
 	MaxReductions: Get<u32>,
 > {
 	/// Reward Pool ID from which pool to allocate rewards for this
-	pub reward_pool_id: RewardPoolId,
+	pub staked_asset_id: RewardPoolId,
 
 	/// The original stake this position was created for or updated position with any extended
 	/// stake amount.
-	pub stake: Balance,
+	pub amount: Balance,
 
 	/// Pool share received for this position
 	pub share: Balance,
