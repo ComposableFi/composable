@@ -8,7 +8,6 @@ use frame_support::{
 	PalletId,
 };
 use frame_system as system;
-use frame_system::EnsureRoot;
 pub use sp_core::{
 	sr25519::{Public, Signature},
 	H256,
@@ -20,7 +19,6 @@ use sp_runtime::{
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<MockRuntime>;
 type AccountId = u128;
-type Balance = u128;
 type Block = frame_system::mocking::MockBlock<MockRuntime>;
 type CurrencyId = u128;
 
@@ -33,19 +31,10 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system,
 		Timestamp: pallet_timestamp,
-		CurrencyFactory: pallet_currency_factory,
 		Nft: crate,
 		Proxy: pallet_account_proxy,
 	}
 );
-
-impl pallet_currency_factory::Config for MockRuntime {
-	type Event = Event;
-	type AssetId = CurrencyId;
-	type AddOrigin = EnsureRoot<AccountId>;
-	type Balance = Balance;
-	type WeightInfo = ();
-}
 
 parameter_types! {
 	pub const FnftPalletId: PalletId = PalletId(*b"pal_fnft");
