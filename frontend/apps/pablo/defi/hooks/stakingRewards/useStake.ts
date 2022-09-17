@@ -61,7 +61,7 @@ export function useStake({ poolId, amount, durationPreset }: StakeProps) {
          * To update UI with latest stake 
          * positions delay intentionally added
          * as subsquid doesn't process the event
-         * immediately it recieves, can be shortened
+         * immediately it receives, can be shortened
          * to discuss later.
          */
         setTimeout(() => {
