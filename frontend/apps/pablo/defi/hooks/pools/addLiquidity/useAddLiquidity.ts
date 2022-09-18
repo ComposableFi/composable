@@ -24,7 +24,7 @@ function transactionStatusSnackbarMessage(
 }
 
 /**
- * Later: move to snakbar utils
+ * Later: move to snackbars utils
  */
 const SNACKBAR_TYPES: Record<string, { variant: VariantType }> = {
   ERROR: { variant: "error" },
@@ -128,7 +128,7 @@ export const useAddLiquidity = ({
         !signer ||
         !pool
       ) {
-        throw new Error("Missing dependancies.");
+        throw new Error("Missing dependencies.");
       }
 
       dispatch(closeConfirmSupplyModal());
