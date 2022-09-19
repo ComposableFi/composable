@@ -32,8 +32,8 @@ use governance::*;
 use common::{
 	governance::native::*, impls::DealWithFees, multi_existential_deposits, AccountId,
 	AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, BondOfferId, Hash, MaxStringSize,
-	Moment, NativeExistentialDeposit, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS,
-	MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	Moment, NativeExistentialDeposit, PriceConverter, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS,
+	HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 
 use composable_traits::assets::Asset;
@@ -386,6 +386,36 @@ impl transaction_payment::Config for Runtime {
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 }
 
+pub struct TransferToTreasuryOrDrop;
+impl asset_tx_payment::HandleCredit<AccountId, Tokens> for TransferToTreasuryOrDrop {
+	fn handle_credit(credit: fungibles::CreditOf<AccountId, Tokens>) {
+		let _ =
+			<Tokens as fungibles::Balanced<AccountId>>::resolve(&TreasuryAccount::get(), credit);
+	}
+}
+
+impl asset_tx_payment::Config for Runtime {
+	type Fungibles = Tokens;
+	type OnChargeAssetTransaction = asset_tx_payment::FungiblesAdapter<
+		PriceConverter<AssetsRegistry>,
+		TransferToTreasuryOrDrop,
+	>;
+
+	type UseUserConfiguration = ConstBool<true>;
+
+	type WeightInfo = weights::asset_tx_payment::WeightInfo<Runtime>;
+
+	type ConfigurationOrigin = EnsureRootOrHalfNativeCouncil;
+
+	type ConfigurationExistentialDeposit = common::NativeExistentialDeposit;
+
+	type PayableCall = Call;
+
+	type Lock = Assets;
+
+	type BalanceConverter = PriceConverter<AssetsRegistry>;
+}
+
 impl sudo::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
@@ -439,7 +469,7 @@ where
 			system::CheckEra::<Runtime>::from(era),
 			system::CheckNonce::<Runtime>::from(nonce),
 			system::CheckWeight::<Runtime>::new(),
-			transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
+			asset_tx_payment::ChargeAssetTxPayment::<Runtime>::from(tip, None),
 		);
 		let raw_payload = SignedPayload::new(call, extra)
 			.map_err(|_e| {
@@ -713,6 +743,7 @@ construct_runtime!(
 		Sudo: sudo = 2,
 		RandomnessCollectiveFlip: randomness_collective_flip = 3,
 		TransactionPayment: transaction_payment = 4,
+		AssetTxPayment : asset_tx_payment  = 12,
 		Indices: indices = 5,
 		Balances: balances = 6,
 		Identity: identity = 7,
@@ -777,7 +808,7 @@ pub type SignedExtra = (
 	system::CheckEra<Runtime>,
 	system::CheckNonce<Runtime>,
 	system::CheckWeight<Runtime>,
-	transaction_payment::ChargeTransactionPayment<Runtime>,
+	asset_tx_payment::ChargeAssetTxPayment<Runtime>,
 );
 
 // Migration for scheduler pallet to move from a plain Call to a CallOrHash.
@@ -977,7 +1008,7 @@ impl_runtime_apis! {
 				system::CheckEra::<Runtime>::from(Era::Immortal),
 				system::CheckNonce::<Runtime>::from(nonce),
 				system::CheckWeight::<Runtime>::new(),
-				transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
+				asset_tx_payment::ChargeAssetTxPayment::<Runtime>::from(0, None),
 			);
 			let signature = MultiSignature::from(sr25519::Signature([0_u8;64]));
 			let address = AccountIdLookup::unlookup(signer.into());
