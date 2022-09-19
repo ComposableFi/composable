@@ -1,7 +1,7 @@
 { pkgs, packages, ... }:
 {
   modules = [
-    ({ pkgs, ... }:
+    (
       let
         dali-container-name = "dali-devnet";
         subsquidGraphqlContainerName = "subsquid-graphql";
@@ -39,7 +39,8 @@
           container // {
             service = container.service // { networks = [ network-name ]; };
           };
-      in {
+      in
+      {
         config = {
           project.name = "composable";
           networks."${network-name}" = { };
@@ -119,7 +120,8 @@
               (import ../services/frontend-pablo.nix { inherit pkgs packages; });
           };
         };
-      })
+      }
+    )
   ];
   inherit pkgs;
 }

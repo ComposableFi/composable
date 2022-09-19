@@ -1,7 +1,7 @@
 { pkgs, packages, ... }:
 {
   modules = [
-    ({ pkgs, ... }:
+    (
       let
         db-container-name = "db";
         redis-container-name = "subsquid-redis";
@@ -234,5 +234,4 @@
         };
       })
   ];
-  inherit pkgs;
 }
