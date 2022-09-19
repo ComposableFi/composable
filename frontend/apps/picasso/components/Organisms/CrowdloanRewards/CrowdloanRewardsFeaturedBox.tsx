@@ -1,13 +1,12 @@
-import { ParachainContext } from "@/defi/polkadot/context/ParachainContext";
+import { useDotSamaContext } from "substrate-react";
 import { useTheme } from "@mui/material";
 import { useRouter } from "next/router";
-import { useContext } from "react";
 import { FeaturedBox } from "../../Molecules/FeaturedBox";
 
 export const CrowdloanRewardsFeaturedBox: React.FC<{}> = () => {
   const theme = useTheme();
   const router = useRouter();
-  const { extensionStatus } = useContext(ParachainContext);
+  const { extensionStatus } = useDotSamaContext();
 
   return (
     <FeaturedBox
@@ -20,10 +19,10 @@ export const CrowdloanRewardsFeaturedBox: React.FC<{}> = () => {
           router.push("/crowdloan-rewards");
         },
         variant: "contained",
-        disabled: extensionStatus !== "connected",
+        disabled: extensionStatus !== "connected"
       }}
       sx={{
-        padding: theme.spacing(6),
+        padding: theme.spacing(6)
       }}
     />
   );

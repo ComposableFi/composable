@@ -1,5 +1,5 @@
 import type { InjectedWindowProvider } from "@polkadot/extension-inject/types";
-import { SupportedWalletId } from "@/dotsama";
+import { SupportedWalletId } from "../src/dotsama/types";
 
 declare global {
   interface Window {

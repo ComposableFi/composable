@@ -1,15 +1,15 @@
-import { ParachainContext } from "@/defi/polkadot/context/ParachainContext";
 import { usePicassoProvider } from "@/defi/polkadot/hooks";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { SubstrateNetwork, SubstrateNetworkId } from "@/defi/polkadot/types";
 import { callbackGate, getExistentialDeposit, toTokenUnitsBN } from "shared";
 
-import { useCallback, useContext, useEffect } from "react";
+import { useCallback, useEffect } from "react";
 
 import { useStore } from "@/stores/root";
 import { ApiPromise } from "@polkadot/api";
 import { fetchKaruraBalanceByAssetId, subscribePicassoBalanceByAssetId } from "@/defi/polkadot/pallets/Balance";
 import BigNumber from "bignumber.js";
+import { useDotSamaContext } from "substrate-react";
 
 export async function subscribeNativeBalance(
   account: string,
@@ -86,7 +86,7 @@ const PolkadotBalancesUpdater = ({
 }) => {
   const { updateBalance, clearBalance, updateAssetBalance, ...assets } =
     useStore(({ substrateBalances }) => substrateBalances);
-  const { selectedAccount, parachainProviders } = useContext(ParachainContext);
+  const { selectedAccount, parachainProviders, relaychainProviders } = useDotSamaContext();
   const picassoProvider = usePicassoProvider();
 
   // Subscribe for native balance changes

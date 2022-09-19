@@ -1,6 +1,7 @@
 import { ApiPromise } from "@polkadot/api";
 import { DEFI_CONFIG } from "./config";
-import type { Signer as InjectedSigner } from '@polkadot/api/types';
+import type { Signer as InjectedSigner } from "@polkadot/api/types";
+
 export type TokenId = typeof DEFI_CONFIG.tokenIds[number];
 export type ParachainId = typeof DEFI_CONFIG.parachainIds[number];
 export type RelayChainId = typeof DEFI_CONFIG.relayChainIds[number];

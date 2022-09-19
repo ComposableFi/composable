@@ -10,18 +10,19 @@ import { CacheProvider, EmotionCache } from "@emotion/react";
 import createEmotionCache from "@/styles/createEmotionCache";
 import { getDesignTokens } from "@/styles/theme";
 import { ColorModeContext } from "@/contexts/ColorMode";
-import ParachainContextProvider from "@/defi/polkadot/context/ParachainContext";
 import SubstrateBalancesUpdater from "@/stores/defi/polkadot/balances/PolkadotBalancesUpdater";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import CrowdloanRewardsUpdater from "@/stores/defi/polkadot/crowdloanRewards/CrowdloanRewardsUpdater";
 import { PalletsContextProvider } from "@/defi/polkadot/context/PalletsContext";
-import { BlockchainProvider } from "bi-lib";
-import { NETWORKS } from "@/defi/Networks";
 import { SnackbarProvider } from "notistack";
 import { ThemeResponsiveSnackbar } from "@/components/Molecules/Snackbar";
-import { ExecutorProvider } from "substrate-react";
+import { DotSamaContextProvider, ExecutorProvider } from "substrate-react";
 import { ApolloProvider } from "@apollo/client";
 import { client as apolloClient } from "@/apollo/apolloGraphql";
+import * as definitions from "defi-interfaces/definitions";
+import { APP_NAME } from "@/defi/polkadot/constants";
+import { BlockchainProvider } from "bi-lib";
+import { NETWORKS } from "@/defi/Networks";
 // Client-side cache, shared for the whole session of the user in the browser.
 const clientSideEmotionCache = createEmotionCache();
 
@@ -48,7 +49,30 @@ const initializeHotjar = () => {
     );
   }
 };
-
+const rpc = Object.keys(definitions)
+  .filter((k) => {
+    if (!(definitions as any)[k].rpc) {
+      return false;
+    } else {
+      return Object.keys((definitions as any)[k].rpc).length > 0;
+    }
+  })
+  .reduce(
+    (accumulator, key) => ({
+      ...accumulator,
+      [key]: (definitions as any)[key].rpc
+    }),
+    {}
+  );
+const types = Object.keys(definitions)
+  .filter((key) => Object.keys((definitions as any)[key].types).length > 0)
+  .reduce(
+    (accumulator, key) => ({
+      ...accumulator,
+      ...(definitions as any)[key].types
+    }),
+    {}
+  );
 export default function MyApp(props: MyAppProps) {
   const { Component, emotionCache = clientSideEmotionCache, pageProps } = props;
   const [mode, setMode] = React.useState<"light" | "dark">("dark");
@@ -73,21 +97,44 @@ export default function MyApp(props: MyAppProps) {
       <Head>
         <meta name="viewport" content="initial-scale=1, width=device-width" />
       </Head>
-      <BlockchainProvider
-        blockchainInfo={Object.entries(NETWORKS).map(([netId, net]) => {
-          return {
-            chainId: +netId,
-            rpcUrl: net.rpcUrl
-          };
-        })}
-      >
-        <ColorModeContext.Provider value={colorMode}>
-          <ThemeProvider theme={theme}>
-            {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
-            <CssBaseline />
-            <ParachainContextProvider
-              appName="Picasso UI"
-              supportedChains={Object.values(SUBSTRATE_NETWORKS)}
+      <ColorModeContext.Provider value={colorMode}>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <BlockchainProvider
+            blockchainInfo={Object.entries(NETWORKS).map(([netId, net]) => {
+              return {
+                chainId: +netId,
+                rpcUrl: net.rpcUrl
+              };
+            })}
+          >
+            <DotSamaContextProvider
+              supportedParachains={[
+                {
+                  chainId: "picasso",
+                  rpcUrl:
+                    process.env.SUBSTRATE_PROVIDER_URL_KUSAMA_2019 || "",
+                  rpc,
+                  types
+                },
+                {
+                  chainId: "karura",
+                  rpcUrl:
+                    process.env.SUBSTRATE_PROVIDER_URL_KARURA || "",
+                  rpc: null,
+                  types: null
+                }
+              ]}
+              supportedChains={[
+                {
+                  chainId: "kusama",
+                  rpcUrl:
+                    process.env.SUBSTRATE_PROVIDER_URL_KUSAMA || "",
+                  rpc: null,
+                  types: null
+                }
+              ]}
+              appName={APP_NAME}
             >
               <PalletsContextProvider>
                 <ApolloProvider client={apolloClient}>
@@ -116,10 +163,10 @@ export default function MyApp(props: MyAppProps) {
                   </SnackbarProvider>
                 </ApolloProvider>
               </PalletsContextProvider>
-            </ParachainContextProvider>
-          </ThemeProvider>
-        </ColorModeContext.Provider>
-      </BlockchainProvider>
+            </DotSamaContextProvider>
+          </BlockchainProvider>;
+        </ThemeProvider>
+      </ColorModeContext.Provider>
     </CacheProvider>
   );
 }

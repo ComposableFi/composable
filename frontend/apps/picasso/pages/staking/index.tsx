@@ -2,14 +2,13 @@ import type { NextPage } from "next";
 import Default from "@/components/Templates/Default";
 import { Box, useTheme } from "@mui/material";
 import { StakingDisconnected } from "@/components/Organisms/Staking/StakingDisconnected";
-import { useContext } from "react";
-import { ParachainContext } from "@/defi/polkadot/context/ParachainContext";
 import { StakingConnected } from "@/components/Organisms/Staking/StakingConnected";
 import { StakingPageHeading } from "@/components/Organisms/Staking/StakingPageHeading";
+import { useDotSamaContext } from "substrate-react";
 
 const Staking: NextPage = () => {
   const theme = useTheme();
-  const { extensionStatus } = useContext(ParachainContext);
+  const { extensionStatus } = useDotSamaContext();
   const isDisconnected = extensionStatus !== "connected";
   const standardPageSize = {
     xs: 12

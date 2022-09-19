@@ -7,7 +7,6 @@ import BigNumber from "bignumber.js";
 import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
 import { getSigner, useExecutor } from "substrate-react";
 import { APP_NAME } from "@/defi/polkadot/constants";
-import { EventRecord } from "@polkadot/types/interfaces/system";
 import { SnackbarKey, useSnackbar } from "notistack";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { fetchStakingRewardPosition } from "@/defi/polkadot/pallets/StakingRewards";
@@ -17,13 +16,13 @@ const positionId = new BigNumber(4);
 
 export const BurnModal: FC<{ open: boolean; onClose: () => void }> = ({
   open,
-  onClose,
+  onClose
 }) => {
   const { parachainApi } = usePicassoProvider();
   const [position, setPosition] = useState({
     unlockPenalty: new BigNumber(0),
     share: new BigNumber(0),
-    stake: new BigNumber(0),
+    stake: new BigNumber(0)
   });
   const withdrawablePica = position.stake.minus(
     position.stake.multipliedBy(position.unlockPenalty)
@@ -47,16 +46,16 @@ export const BurnModal: FC<{ open: boolean; onClose: () => void }> = ({
               variant: "info",
               isClosable: true,
               persist: true,
-              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
+              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash
             });
           },
-          (txHash: string, events: EventRecord[]) => {
+          (txHash: string) => {
             closeSnackbar(snackbarKey);
             enqueueSnackbar(`Successfully claimed`, {
               variant: "success",
               isClosable: true,
               persist: true,
-              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
+              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash
             });
             onClose();
           },
@@ -66,7 +65,7 @@ export const BurnModal: FC<{ open: boolean; onClose: () => void }> = ({
               variant: "error",
               isClosable: true,
               persist: true,
-              description: errorMessage,
+              description: errorMessage
             });
             onClose();
           }
@@ -95,8 +94,8 @@ export const BurnModal: FC<{ open: boolean; onClose: () => void }> = ({
           sx={{
             flexDirection: {
               sm: "column",
-              md: "row",
-            },
+              md: "row"
+            }
           }}
           display="flex"
           width="100%"
@@ -107,7 +106,7 @@ export const BurnModal: FC<{ open: boolean; onClose: () => void }> = ({
           <Stack gap={1.5} width="100%">
             <TextWithTooltip
               TypographyProps={{
-                variant: "inputLabel",
+                variant: "inputLabel"
               }}
               tooltip="Withdrawable PICA"
             >
@@ -119,7 +118,7 @@ export const BurnModal: FC<{ open: boolean; onClose: () => void }> = ({
                   position: "absolute",
                   left: "1rem",
                   top: "50%",
-                  transform: "translateY(-50%)",
+                  transform: "translateY(-50%)"
                 }}
               >
                 <TokenAsset tokenId={"pica"} iconOnly />
@@ -132,7 +131,7 @@ export const BurnModal: FC<{ open: boolean; onClose: () => void }> = ({
           <Stack gap={1.5} width="100%">
             <TextWithTooltip
               TypographyProps={{
-                variant: "inputLabel",
+                variant: "inputLabel"
               }}
               tooltip="Withdrawable PICA"
             >
@@ -144,7 +143,7 @@ export const BurnModal: FC<{ open: boolean; onClose: () => void }> = ({
                   position: "absolute",
                   left: "1rem",
                   top: "50%",
-                  transform: "translateY(-50%)",
+                  transform: "translateY(-50%)"
                 }}
               >
                 <TokenAsset tokenId={"pica"} iconOnly />

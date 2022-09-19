@@ -2,7 +2,7 @@
   // see https://www.typescriptlang.org/tsconfig to better understand tsconfigs
   "include": [
     "src",
-    "types"
+    "@types"
   ],
   "extends": "tsconfig/nextjs.json",
   "compilerOptions": {
@@ -25,8 +25,8 @@
     // error out if import and file system have a casing mismatch. Recommended by TS
     "forceConsistentCasingInFileNames": true,
     "typeRoots": [
-      "node_modules/@types",
-      "@types"
+      "@types/global.d.ts",
+      "node_modules/@types"
     ],
     "module": "esnext",
     "lib": [

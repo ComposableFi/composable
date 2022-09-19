@@ -6,15 +6,14 @@ import {
   NoEligibleWalletFeaturedBox,
   PageTitle,
   SS8WalletHelper,
-  StablecoinClaimForm,
+  StablecoinClaimForm
 } from "@/components";
-import { ParachainContext } from "@/defi/polkadot/context/ParachainContext";
 import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
 import { useStore } from "@/stores/root";
 import { alpha, Grid, Typography, useTheme } from "@mui/material";
 import { ApiPromise } from "@polkadot/api";
 import { stringToHex } from "@polkadot/util";
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { crowdLoanSignableMessage } from "@/utils/crowdloanRewards";
 import { toBaseUnitBN, toTokenUnitsBN } from "shared";
@@ -24,7 +23,7 @@ import { updateBalances } from "@/stores/defi/polkadot/balances/PolkadotBalances
 import { SubstrateNetworkId } from "@/defi/polkadot/types";
 import { OpenInNewRounded } from "@mui/icons-material";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import { useExecutor, usePendingExtrinsic } from "substrate-react";
+import { useDotSamaContext, useExecutor, usePendingExtrinsic } from "substrate-react";
 import { useSnackbar } from "notistack";
 import BigNumber from "bignumber.js";
 
@@ -35,17 +34,17 @@ const ERROR_MESSAGES = {
   KSM_WALLET_NOT_CONNECTED: {
     message:
       "Please connect the KSM address used to contribute to the Picasso crowdloan.",
-    title: "Nothing to claim",
+    title: "Nothing to claim"
   },
   WRONG_ADDRESS: {
     message:
       "Please connect the address used to contribute to Picasso crowdloan.",
-    title: "Nothing to claim",
+    title: "Nothing to claim"
   },
   ETH_WALLET_NOT_CONNECTED: {
     message: "Please connect metamask to claim PICA rewards.",
-    title: "Nothing to claim",
-  },
+    title: "Nothing to claim"
+  }
 };
 
 interface ClaimLoan {
@@ -64,7 +63,7 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
     setUseAssociationMode,
     setUserAssociatedWith,
     setUserClaimEligibility,
-    setUserCrowdloanData,
+    setUserCrowdloanData
   } = useStore(({ crowdloanRewards }) => crowdloanRewards);
   const updateBalance = useStore(
     ({ substrateBalances }) => substrateBalances.updateBalance
@@ -82,13 +81,13 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
   const isEvmAlreadyAssociated = useStore(
     ({ crowdloanRewards }) => crowdloanRewards.evmAlreadyAssociated
   );
-  const { extensionStatus } = useContext(ParachainContext);
+  const { extensionStatus } = useDotSamaContext();
   const selectedAccount = useSelectedAccount();
   const { parachainApi, accounts } = usePicassoProvider();
   const theme = useTheme();
   const [ineligibleText, setIneligibleText] = useState({
     title: ERROR_MESSAGES.KSM_WALLET_NOT_CONNECTED.title,
-    textBelow: ERROR_MESSAGES.KSM_WALLET_NOT_CONNECTED.message,
+    textBelow: ERROR_MESSAGES.KSM_WALLET_NOT_CONNECTED.message
   });
   const [showAlertBox, setShowAlertBox] = useState<boolean>(false);
 
@@ -188,7 +187,7 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
     crUiState.useAssociationMode,
     extensionStatus,
     isActive,
-    selectedAccount,
+    selectedAccount
   ]);
 
   let netPICAVested = new BigNumber(crUserData.netVestedPICA);
@@ -211,10 +210,10 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
           ? claimablePICA
           : netPICAVested.times(initialPayment)
         : crUiState.useAssociationMode === "relayChain"
-        ? userAssociation === null
-          ? netPICAVested.times(initialPayment)
+          ? userAssociation === null
+            ? netPICAVested.times(initialPayment)
+            : claimablePICA
           : claimablePICA
-        : claimablePICA
       : claimablePICA;
 
   const isPendingClaim = usePendingExtrinsic(
@@ -233,7 +232,7 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
     try {
       const {
         web3FromAddress,
-        web3Enable,
+        web3Enable
       } = require("@polkadot/extension-dapp");
       await web3Enable(APP_NAME);
       const injector = await web3FromAddress(address);
@@ -249,14 +248,14 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
             enqueueSnackbar("Claim Processing", {
               variant: "info",
               isClosable: true,
-              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
+              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash
             });
           },
           (txHash) => {
             enqueueSnackbar("Claim Finalized", {
               variant: "success",
               isClosable: true,
-              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
+              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash
             });
 
             setUserCrowdloanData(
@@ -289,11 +288,11 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
         const { signature } = await injector.signer.signRaw({
           address: address,
           data: stringToHex(crowdLoanSignableMessage(accId32)),
-          type: "bytes",
+          type: "bytes"
         });
 
         const param = {
-          RelayChain: [accId32, { Sr25519: signature }],
+          RelayChain: [accId32, { Sr25519: signature }]
         };
 
         let toUpdateAmount = claimedPICA.plus(claimablePICA);
@@ -304,7 +303,7 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
             enqueueSnackbar("Claim Processing", {
               variant: "info",
               isClosable: true,
-              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + _txHash,
+              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + _txHash
             });
           },
           (_txHash) => {
@@ -320,7 +319,7 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
             enqueueSnackbar("Claim Finalized", {
               variant: "info",
               isClosable: true,
-              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + _txHash,
+              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + _txHash
             });
             onAssociationSuccess("relayChain", address);
           }
@@ -343,7 +342,7 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
         );
 
         const param = {
-          Ethereum: signature,
+          Ethereum: signature
         };
 
         let toUpdateAmount = claimedPICA.plus(claimablePICA);
@@ -354,7 +353,7 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
             enqueueSnackbar("Claim Processing", {
               variant: "info",
               isClosable: true,
-              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + _txHash,
+              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + _txHash
             });
           },
           (_txHash) => {
@@ -370,7 +369,7 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
             enqueueSnackbar("Claim Finalized", {
               variant: "info",
               isClosable: true,
-              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + _txHash,
+              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + _txHash
             });
             onAssociationSuccess("ethereum", address);
           }
@@ -400,11 +399,11 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
     </Link>,
     <Typography key="claims" color="text.secondary">
       {crUiState.useAssociationMode === "ethereum" ? "Stablecoin" : "KSM"}
-    </Typography>,
+    </Typography>
   ];
 
   const standardPageSize = {
-    xs: 12,
+    xs: 12
   };
 
   return (
@@ -440,8 +439,8 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
               <StablecoinClaimForm
                 disabled={Boolean(
                   (userAssociation !== null && claimablePICA.lte(0)) ||
-                    isPendingClaim ||
-                    isPendingAssociate
+                  isPendingClaim ||
+                  isPendingAssociate
                 )}
                 claimedPICA={claimedPICA}
                 crowdLoanContribution={contributedAmount}
@@ -461,8 +460,8 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
               <KSMClaimForm
                 disabled={Boolean(
                   (userAssociation !== null && claimablePICA.lte(0)) ||
-                    isPendingClaim ||
-                    isPendingAssociate
+                  isPendingClaim ||
+                  isPendingAssociate
                 )}
                 claimedPICA={claimedPICA}
                 crowdLoanContribution={contributedAmount}
@@ -496,7 +495,7 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
                     color: alpha(
                       theme.palette.text.primary,
                       theme.custom.opacity.darker
-                    ),
+                    )
                   }}
                 />
               }

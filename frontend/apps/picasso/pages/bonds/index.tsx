@@ -4,12 +4,11 @@ import Default from "@/components/Templates/Default";
 import { alpha, Box, Grid, Typography, useTheme } from "@mui/material";
 import { MyBondsTable, PageTitle } from "@/components";
 import { AllBondsTable } from "@/components/Molecules/AllBondsTable";
-import { useContext } from "react";
-import { ParachainContext } from "@/defi/polkadot/context/ParachainContext";
 import { Updater } from "@/stores/defi/polkadot/bonds/PolkadotBondsUpdater";
 import { useActiveBonds } from "@/defi/polkadot/hooks/useActiveBonds";
 import { useStore } from "@/stores/root";
 import { DisconnectedBond } from "@/components/Organisms/Bond/DisconnectedBond";
+import { useDotSamaContext } from "substrate-react";
 
 const standardPageSize = {
   xs: 12
@@ -19,7 +18,7 @@ const Bonds: NextPage = () => {
   const { activeBonds } = useActiveBonds();
   const theme = useTheme();
   const router = useRouter();
-  const { extensionStatus } = useContext(ParachainContext);
+  const { extensionStatus } = useDotSamaContext();
   const bonds = useStore((state) => state.bonds.bonds);
   const handleActiveBondsClick = (offerId: string) => {
     router.push({
