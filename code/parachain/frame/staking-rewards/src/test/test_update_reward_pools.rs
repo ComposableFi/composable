@@ -4,8 +4,8 @@ use composable_tests_helpers::test::{
 	helper::assert_extrinsic_event,
 };
 use composable_traits::staking::{
-	RateBasedConfig, RateBasedReward, RewardConfigType, RewardPoolConfig, RewardRate,
-	RewardRatePeriod, RewardType, RewardUpdate,
+	RateBasedConfig, RateBasedReward, Reward, RewardConfig, RewardPoolConfig, RewardRate,
+	RewardRatePeriod, RewardUpdate,
 };
 use frame_support::{traits::TryCollect, BoundedBTreeMap};
 
@@ -38,7 +38,7 @@ fn test_update_reward_pool() {
 			end_block: ONE_YEAR_OF_BLOCKS,
 			reward_configs: [(
 				USDT::ID,
-				RewardConfigType::RateBased(RateBasedConfig {
+				RewardConfig::RateBased(RateBasedConfig {
 					max_rewards: 1_000_u128,
 					reward_rate: RewardRate::per_second(INITIAL_REWARD_RATE_AMOUNT),
 				}),
@@ -86,7 +86,7 @@ fn test_update_reward_pool() {
 		let pool = StakingRewards::pools(PICA::ID).unwrap();
 		assert!(matches!(
 			pool.rewards.get(&USDT::ID).unwrap(),
-			RewardType::RateBased(RateBasedReward {
+			Reward::RateBased(RateBasedReward {
 				max_rewards: 1_000,
 				reward_rate: RewardRate {
 					period: RewardRatePeriod::PerSecond,

@@ -646,7 +646,7 @@ pub mod pallet {
 			let rewards = initial_reward_config
 				.into_iter()
 				.map(|(asset_id, reward_config)| {
-					(asset_id, RewardType::from_config(reward_config, now_seconds))
+					(asset_id, Reward::from_config(reward_config, now_seconds))
 				})
 				.try_collect()
 				.expect("No items were added; qed;");
@@ -739,8 +739,8 @@ pub mod pallet {
 
 					for (asset_id, reward) in &mut rewards_pool.rewards {
 						let rate_based_reward = match reward {
-							RewardType::Earnings() => continue,
-							RewardType::RateBased(ref mut rate_based_reward) => rate_based_reward,
+							Reward::ProtocolDistribution() => continue,
+							Reward::RateBased(ref mut rate_based_reward) => rate_based_reward,
 						};
 
 						let inflation = if rewards_pool.total_shares == T::Balance::zero() {
@@ -854,8 +854,8 @@ pub mod pallet {
 					for (asset_id, reward) in
 						(&mut rewards_pool.rewards).into_iter().filter_map(|(asset_id, reward)| {
 							match reward {
-								RewardType::Earnings() => None,
-								RewardType::RateBased(ref mut rate_based_reward) =>
+								Reward::ProtocolDistribution() => None,
+								Reward::RateBased(ref mut rate_based_reward) =>
 									Some((asset_id, rate_based_reward)),
 							}
 						}) {
@@ -1177,15 +1177,17 @@ pub mod pallet {
 			// are pallet sub accounts.
 			keep_alive: bool,
 		) -> Result<(), DispatchError> {
-			for (asset_id, reward) in
-				(&mut rewards_pool.rewards).into_iter().filter_map(|(asset_id, reward)| {
-					reward.as_ref_mut_rate_based().map(|reward| (asset_id, reward))
-				}) {
+			for (asset_id, reward) in &mut rewards_pool.rewards {
+				let rate_based_reward = match reward {
+					Reward::ProtocolDistribution() => continue,
+					Reward::RateBased(ref mut rate_based_reward) => rate_based_reward,
+				};
+
 				let inflation = stake.reductions.get(asset_id).cloned().unwrap_or_else(Zero::zero);
 				let claim = if rewards_pool.total_shares.is_zero() {
 					Zero::zero()
 				} else {
-					reward
+					rate_based_reward
 						.total_rewards
 						.safe_mul(&stake.share)?
 						.safe_div(&rewards_pool.total_shares)?
@@ -1198,10 +1200,11 @@ pub mod pallet {
 				};
 				let claim = sp_std::cmp::min(
 					claim,
-					reward.total_rewards.safe_sub(&reward.claimed_rewards)?,
+					rate_based_reward.total_rewards.safe_sub(&rate_based_reward.claimed_rewards)?,
 				);
 
-				reward.claimed_rewards = reward.claimed_rewards.safe_add(&claim)?;
+				rate_based_reward.claimed_rewards =
+					rate_based_reward.claimed_rewards.safe_add(&claim)?;
 
 				if let Some(inflation) = stake.reductions.get_mut(asset_id) {
 					*inflation += claim;
@@ -1291,8 +1294,8 @@ pub mod pallet {
 			RewardPools::<T>::translate(|pool_id, mut reward_pool: RewardPoolOf<T>| {
 				for (reward_asset_id, reward) in &mut reward_pool.rewards {
 					match reward {
-						RewardType::Earnings() => continue,
-						RewardType::RateBased(rate_based_reward) => {
+						Reward::ProtocolDistribution() => continue,
+						Reward::RateBased(rate_based_reward) => {
 							total_weight +=
 								T::WeightInfo::reward_accumulation_hook_reward_update_calculation();
 							Self::reward_accumulation_hook_rate_based_reward_update_calculation(
@@ -1344,11 +1347,11 @@ pub mod pallet {
 				// this is basically just the entry api for std's map types, i.e. modify or insert
 				match reward_pool.rewards.get_mut(&reward_currency) {
 					Some(reward) => match reward {
-						RewardType::Earnings() => {
+						Reward::ProtocolDistribution() => {
 							// asset already exists as an earnings reward
 							do_transfer()?;
 						},
-						RewardType::RateBased(_rate_based_reward) => {
+						Reward::RateBased(_rate_based_reward) => {
 							do_transfer()?;
 							T::Assets::hold(reward_currency, &pool_account_id, amount)?;
 
@@ -1364,7 +1367,7 @@ pub mod pallet {
 						// other rewards (both by the pool owner and other third parties).
 						reward_pool
 							.rewards
-							.try_insert(reward_currency, RewardType::Earnings())
+							.try_insert(reward_currency, Reward::ProtocolDistribution())
 							.map_err(|_| Error::<T>::TooManyRewardAssetTypes)?;
 
 						do_transfer()?;
@@ -1429,8 +1432,8 @@ fn update_rewards_pool<T: Config>(
 			let reward = pool.rewards.get_mut(&asset_id).ok_or(Error::<T>::RewardAssetNotFound)?;
 
 			match reward {
-				RewardType::Earnings() => continue,
-				RewardType::RateBased(rate_based_reward) => {
+				Reward::ProtocolDistribution() => continue,
+				Reward::RateBased(rate_based_reward) => {
 					match do_rate_based_reward_accumulation::<T>(
 						asset_id,
 						rate_based_reward,

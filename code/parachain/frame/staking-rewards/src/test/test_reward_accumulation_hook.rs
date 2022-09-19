@@ -29,7 +29,7 @@ fn test_reward_update_calculation() {
 
 		let pool_start_time_secs = <<Test as crate::Config>::UnixTime as UnixTime>::now().as_secs();
 
-		let reward_config = RewardConfigType::RateBased(RateBasedConfig {
+		let reward_config = RewardConfig::RateBased(RateBasedConfig {
 			max_rewards: MAX_REWARDS,
 			reward_rate: RewardRate::per_second(PICA::units(2)),
 		});
@@ -64,8 +64,8 @@ fn test_reward_update_calculation() {
 			.expect("reward asset should exist in pool")
 			.clone()
 		{
-			RewardType::Earnings() => panic!("reward should be rate based"),
-			RewardType::RateBased(rate_based_reward) => rate_based_reward,
+			Reward::ProtocolDistribution() => panic!("reward should be rate based"),
+			Reward::RateBased(rate_based_reward) => rate_based_reward,
 		};
 
 		for (block_number, expected_total_rewards) in expected {
@@ -170,14 +170,14 @@ fn test_accumulate_rewards_pool_empty_refill() {
 			reward_configs: [
 				(
 					A::ID,
-					RewardConfigType::RateBased(RateBasedConfig {
+					RewardConfig::RateBased(RateBasedConfig {
 						max_rewards: A_A_MAX_REWARDS,
 						reward_rate: RewardRate::per_second(A_A_REWARD_RATE),
 					}),
 				),
 				(
 					B::ID,
-					RewardConfigType::RateBased(RateBasedConfig {
+					RewardConfig::RateBased(RateBasedConfig {
 						max_rewards: A_B_MAX_REWARDS,
 						reward_rate: RewardRate::per_second(A_B_REWARD_RATE),
 					}),
@@ -290,14 +290,14 @@ fn test_accumulate_rewards_hook() {
 			reward_configs: [
 				(
 					A::ID,
-					RewardConfigType::RateBased(RateBasedConfig {
+					RewardConfig::RateBased(RateBasedConfig {
 						max_rewards: A_A_MAX_REWARDS,
 						reward_rate: RewardRate::per_second(A_A_REWARD_RATE),
 					}),
 				),
 				(
 					B::ID,
-					RewardConfigType::RateBased(RateBasedConfig {
+					RewardConfig::RateBased(RateBasedConfig {
 						max_rewards: A_B_MAX_REWARDS,
 						reward_rate: RewardRate::per_second(A_B_REWARD_RATE),
 					}),
@@ -323,14 +323,14 @@ fn test_accumulate_rewards_hook() {
 			reward_configs: [
 				(
 					D::ID,
-					RewardConfigType::RateBased(RateBasedConfig {
+					RewardConfig::RateBased(RateBasedConfig {
 						max_rewards: C_D_MAX_REWARDS,
 						reward_rate: RewardRate::per_second(C_D_REWARD_RATE),
 					}),
 				),
 				(
 					E::ID,
-					RewardConfigType::RateBased(RateBasedConfig {
+					RewardConfig::RateBased(RateBasedConfig {
 						max_rewards: C_E_MAX_REWARDS,
 						reward_rate: RewardRate::per_second(C_E_REWARD_RATE),
 					}),
@@ -580,7 +580,7 @@ fn test_accumulate_rewards_hook() {
 			owner: CHARLIE,
 			asset_id: F::ID,
 			end_block: current_block + ONE_YEAR_OF_BLOCKS,
-			reward_configs: [(F::ID, RewardConfigType::Earnings())]
+			reward_configs: [(F::ID, RewardConfig::ProtocolDistribution())]
 				.into_iter()
 				.try_collect()
 				.unwrap(),
@@ -803,8 +803,8 @@ error at pool {pool_asset_id}, asset {reward_asset_id}: unexpected unlocked bala
 			);
 
 			match reward {
-				RewardType::Earnings() => {},
-				RewardType::RateBased(rate_based_reward) => {
+				Reward::ProtocolDistribution() => {},
+				Reward::RateBased(rate_based_reward) => {
 					assert!(
 						&rate_based_reward.total_rewards == expected_total_rewards,
 						r#"

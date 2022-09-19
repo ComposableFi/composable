@@ -43,34 +43,26 @@ pub struct RateBasedReward<Balance> {
 }
 
 #[derive(RuntimeDebug, PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo)]
-pub enum RewardType<Balance> {
-	Earnings(),
+pub enum Reward<Balance> {
+	ProtocolDistribution(),
 	RateBased(RateBasedReward<Balance>),
 }
 
-impl<Balance> RewardType<Balance> {
-	pub fn as_ref_mut_rate_based(&mut self) -> Option<&mut RateBasedReward<Balance>> {
-		match self {
-			RewardType::Earnings() => None,
-			RewardType::RateBased(ref mut rate_based_reward) => Some(rate_based_reward),
-		}
-	}
-}
-
-impl<Balance: Zero> RewardType<Balance> {
-	pub fn from_config(reward_config: RewardConfigType<Balance>, now_seconds: u64) -> Self {
+impl<Balance: Zero> Reward<Balance> {
+	pub fn from_config(reward_config: RewardConfig<Balance>, now_seconds: u64) -> Self {
 		match reward_config {
-			RewardConfigType::Earnings() => RewardType::Earnings(),
-			RewardConfigType::RateBased(rate_based_config) =>
-				RewardType::RateBased(RateBasedReward::from_config(rate_based_config, now_seconds)),
+			RewardConfig::ProtocolDistribution() => Reward::ProtocolDistribution(),
+			RewardConfig::RateBased(rate_based_config) =>
+				Reward::RateBased(RateBasedReward::from_config(rate_based_config, now_seconds)),
 		}
 	}
 }
 
 #[derive(RuntimeDebug, PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo)]
-pub enum RewardConfigType<Balance> {
-	// REVIEW(benluelo): Consider renaming. Perhaps `ExternallyFunded` or something similar?
-	Earnings(),
+pub enum RewardConfig<Balance> {
+	// REVIEW(benluelo): Consider renaming. Perhaps `ExternallyFunded` `Unincentivised`, or
+	// something similar?
+	ProtocolDistribution(),
 	RateBased(RateBasedConfig<Balance>),
 }
 
@@ -146,7 +138,7 @@ pub struct RewardPool<
 	pub owner: AccountId,
 
 	/// rewards accumulated
-	pub rewards: BoundedBTreeMap<AssetId, RewardType<Balance>, MaxRewards>,
+	pub rewards: BoundedBTreeMap<AssetId, Reward<Balance>, MaxRewards>,
 
 	/// Total shares distributed among stakers
 	pub total_shares: Balance,
@@ -166,9 +158,6 @@ pub struct RewardPool<
 	// Asset ID (collection ID) of the financial NFTs issued for staking positions of this pool
 	pub fnft_collection_id: AssetId,
 }
-
-/// Default transfer limit on new asset added as rewards.
-pub const DEFAULT_MAX_REWARDS: u128 = 1_000_000_000_000_000_000_u128;
 
 /// Reward configurations for a given asset type.
 #[derive(RuntimeDebug, PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo)]
@@ -213,7 +202,7 @@ pub struct RewardPoolConfig<
 	pub end_block: BlockNumber,
 
 	/// initial reward configuration for this pool
-	pub reward_configs: BoundedBTreeMap<AssetId, RewardConfigType<Balance>, MaxRewardConfigs>,
+	pub reward_configs: BoundedBTreeMap<AssetId, RewardConfig<Balance>, MaxRewardConfigs>,
 
 	/// possible lock config for this reward
 	pub lock: LockConfig<MaxDurationPresets>,

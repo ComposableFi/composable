@@ -79,8 +79,8 @@ pub mod pallet {
 			RedeemableAssets, RemoveLiquiditySimulationResult, StableSwapPoolInfo, MAX_REWARDS,
 		},
 		staking::{
-			lock::LockConfig, ManageStaking, ProtocolStaking, RateBasedConfig, RewardConfigType,
-			RewardPoolConfig, RewardRate, RewardType,
+			lock::LockConfig, ManageStaking, ProtocolStaking, RateBasedConfig, Reward,
+			RewardConfig, RewardPoolConfig, RewardRate,
 		},
 		time::{ONE_MONTH, ONE_WEEK},
 	};
@@ -662,7 +662,7 @@ pub mod pallet {
 			let pblo_asset_id: T::AssetId = T::PbloAssetId::get();
 			let reward_configs = [(
 				pblo_asset_id,
-				RewardConfigType::RateBased(RateBasedConfig { max_rewards, reward_rate }),
+				RewardConfig::RateBased(RateBasedConfig { max_rewards, reward_rate }),
 			)]
 			.into_iter()
 			.try_collect()

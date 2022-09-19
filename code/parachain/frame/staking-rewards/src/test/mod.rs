@@ -1,6 +1,9 @@
 pub(crate) use crate::test::runtime::{new_test_ext, Test}; // for benchmarks
 use crate::{
-	test::{prelude::H256, runtime::*},
+	test::{
+		prelude::{create_rewards_pool_and_assert, H256},
+		runtime::*,
+	},
 	Config, RewardPoolConfigurationOf, RewardPools, StakeOf, Stakes,
 };
 use composable_tests_helpers::test::{
@@ -11,7 +14,7 @@ use composable_traits::{
 	fnft::FinancialNft as FinancialNftT,
 	staking::{
 		lock::{Lock, LockConfig},
-		ProtocolStaking, RateBasedConfig, RewardConfigType, RewardPoolConfig, RewardRate, Stake,
+		ProtocolStaking, RateBasedConfig, RewardConfig, RewardPoolConfig, RewardRate, Stake,
 		Staking,
 	},
 	time::{DurationSeconds, ONE_HOUR, ONE_MINUTE},
@@ -642,7 +645,7 @@ fn test_split_position() {
 }
 
 mod claim {
-	use composable_traits::staking::RewardType;
+	use composable_traits::staking::Reward;
 
 	use super::*;
 
@@ -810,8 +813,8 @@ mod claim {
 					.expect("reward asset should exist in pool")
 					.clone()
 				{
-					RewardType::Earnings() => panic!("reward should be rate based"),
-					RewardType::RateBased(rate_based_reward) => rate_based_reward,
+					Reward::ProtocolDistribution() => panic!("reward should be rate based"),
+					Reward::RateBased(rate_based_reward) => rate_based_reward,
 				};
 
 				assert_eq!(rate_based_reward.claimed_rewards, 50);
@@ -840,7 +843,8 @@ fn with_stake<R>(
 ) -> R {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
-		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
+
+		create_rewards_pool_and_assert(get_default_reward_pool());
 
 		let rewards_pool = StakingRewards::pools(PICA::ID).expect("rewards_pool expected. QED");
 		let staked_asset_id = PICA::ID;
@@ -920,11 +924,11 @@ lazy_static::lazy_static! {
 
 	static ref DEFAULT_REWARD_CONFIG: BoundedBTreeMap<
 		u128,
-		RewardConfigType<u128>,
+		RewardConfig<u128>,
 		MaxRewardConfigsPerPool,
 	> = [(
 		USDT::ID,
-		RewardConfigType::RateBased(RateBasedConfig {
+		RewardConfig::RateBased(RateBasedConfig {
 			max_rewards: 100_u128,
 			reward_rate: RewardRate::per_second(10_u128),
 		}),

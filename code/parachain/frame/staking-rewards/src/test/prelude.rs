@@ -10,6 +10,7 @@ use composable_tests_helpers::test::{
 	block::MILLISECS_PER_BLOCK,
 	helper::{assert_extrinsic_event, assert_extrinsic_event_with},
 };
+use frame_system::pallet_prelude::OriginFor;
 pub use sp_core::{
 	sr25519::{Public, Signature},
 	H256,
@@ -53,11 +54,16 @@ pub(crate) fn add_to_rewards_pot_and_assert(
 	// TODO(benluelo): Add storage checks
 }
 
-pub(crate) fn create_rewards_pool_and_assert(reward_config: RewardPoolConfigurationOf<Test>) {
-	assert_extrinsic_event_with::<Test, _, _, _>(
-		StakingRewards::create_reward_pool(Origin::root(), reward_config.clone()),
+pub(crate) fn create_rewards_pool_and_assert<Runtime: crate::Config>(
+	reward_config: RewardPoolConfigurationOf<Runtime>,
+) {
+	assert_extrinsic_event_with::<Runtime, _, _, _>(
+		crate::Pallet::<Runtime>::create_reward_pool(
+			OriginFor::<Runtime>::root(),
+			reward_config.clone(),
+		),
 		|event| match event {
-			Event::StakingRewards(crate::Event::<Test>::RewardPoolCreated {
+			Event::StakingRewards(crate::Event::<Runtime>::RewardPoolCreated {
 				pool_id,
 				owner,
 				end_block,

@@ -33,7 +33,7 @@ fn get_reward_pool<T: Config>(
 			.map(|asset_id| {
 				(
 					((asset_id as u128) + BASE_ASSET_ID).into(),
-					RewardConfigType::RateBased(RateBasedConfig {
+					RewardConfig::RateBased(RateBasedConfig {
 						max_rewards: 100_u128.into(),
 						reward_rate: RewardRate::per_second(1_u128),
 					}),
@@ -172,7 +172,7 @@ benchmarks! {
 		let pool_asset_id = 100.into();
 		let reward_asset_id = 1_u128.into();
 
-		let reward_config = RewardConfigType::RateBased(RateBasedConfig {
+		let reward_config = RewardConfig::RateBased(RateBasedConfig {
 			max_rewards: 1_000_000.into(),
 			reward_rate: RewardRate::per_second(10_000),
 		});
@@ -194,8 +194,8 @@ benchmarks! {
 
 		let reward = RewardPools::<T>::get(&pool_id).unwrap().rewards.get(&reward_asset_id).unwrap().clone();
 		let mut reward = match reward {
-			RewardType::Earnings() => panic!("reward should be rate based"),
-			RewardType::RateBased(rate_based_reward) => rate_based_reward,
+			Reward::ProtocolDistribution() => panic!("reward should be rate based"),
+			Reward::RateBased(rate_based_reward) => rate_based_reward,
 		};
 	}: {
 		Pallet::<T>::reward_accumulation_hook_rate_based_reward_update_calculation(
