@@ -52,7 +52,7 @@ export function calculatePeriod(durationInSeconds: string | number): Period {
 }
 
 export function extractDurationPresets(
-    stakingPool: StakingRewardPool | null | undefined
+    stakingPool: StakingRewardPool | undefined
 ): Array<{
     label: string;
     period: Period;

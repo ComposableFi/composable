@@ -7,7 +7,6 @@ import {
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { useCallback } from "react";
 import { useSnackbar } from "notistack";
-import { APP_NAME } from "@/defi/polkadot/constants";
 import _ from "lodash";
 import BigNumber from "bignumber.js";
 import {
@@ -15,7 +14,7 @@ import {
   SNACKBAR_TYPES,
 } from "../pools/addLiquidity/useAddLiquidity";
 
-export type StakeProps = {
+export type UnstakeProps = {
   financialNftCollectionId?: BigNumber;
   financialNftInstanceId?: BigNumber;
 };
@@ -25,7 +24,7 @@ const TxOrigin = "Burn Staking Position";
 export function useUnstake({
   financialNftCollectionId,
   financialNftInstanceId,
-}: StakeProps) {
+}: UnstakeProps) {
   const { enqueueSnackbar } = useSnackbar();
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);

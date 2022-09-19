@@ -5,7 +5,7 @@ import { StakeForm } from "pablo/components/Organisms/staking/StakeForm";
 const StakeFormStories = ({}) => {
   return (
     <Box>
-      <StakeForm stakingRewardPool={null} />
+      <StakeForm />
     </Box>
   );
 };

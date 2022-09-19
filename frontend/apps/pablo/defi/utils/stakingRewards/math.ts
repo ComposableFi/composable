@@ -10,7 +10,7 @@ export function convertRewardRatePeriod(
   }[rewardRate];
 }
 
-export function calculateRewardPerDayByAssetId(assetId: string, stakingRewardPool: StakingRewardPool | null): BigNumber {
+export function calculateRewardPerDayByAssetId(assetId: string, stakingRewardPool: StakingRewardPool | undefined): BigNumber {
     let rewardPerDay = new BigNumber(0);
     
     if (stakingRewardPool) {

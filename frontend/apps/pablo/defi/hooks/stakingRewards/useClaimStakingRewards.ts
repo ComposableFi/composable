@@ -15,7 +15,7 @@ import {
 
 const TxOrigin = "Claim Staking Position";
 
-export type StakeProps = {
+export type StakeClaimProps = {
   financialNftCollectionId?: string;
   financialNftInstanceId?: string;
 };
@@ -23,7 +23,7 @@ export type StakeProps = {
 export function useClaimStakingRewards({
   financialNftCollectionId,
   financialNftInstanceId,
-}: StakeProps) {
+}: StakeClaimProps) {
   const { enqueueSnackbar } = useSnackbar();
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);

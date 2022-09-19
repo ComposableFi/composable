@@ -4,11 +4,11 @@ import { BoxProps } from "@mui/material";
 import { CheckableXPabloItemBox } from "./CheckableXPabloItemBox";
 import { useState } from "react";
 import { UnstakeModal } from "./UnstakeModal";
-import { useStakingPositions } from "@/store/hooks/useStakingPositions";
 import { PBLO_ASSET_ID } from "@/defi/utils";
+import { useXTokensList } from "@/defi/hooks";
 
 export const UnstakeForm: React.FC<BoxProps> = ({ ...boxProps }) => {
-  const xPablos = useStakingPositions({
+  const xPablos = useXTokensList({
     stakedAssetId: PBLO_ASSET_ID
   })
   const [selectedXPabloId, setSelectedXPabloId] = useState<

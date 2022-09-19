@@ -64,8 +64,8 @@ export const putStakingRewardPoolStakedPositions = (
 
 export const useStakingRewardPool = (
   principalAssetId: string
-): StakingRewardPool | null =>
-  useStakingRewardsSlice().rewardPools[principalAssetId] ?? null;
+): StakingRewardPool | undefined =>
+  useStakingRewardsSlice().rewardPools[principalAssetId] ?? undefined;
 
 export const useStakedPositionHistory = (
   principalAssetId: string

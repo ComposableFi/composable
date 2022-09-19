@@ -4,9 +4,9 @@ import { useState } from "react";
 import { PoolDetailsProps } from "./index";
 import { useLiquidityPoolDetails } from "@/store/hooks/useLiquidityPoolDetails";
 import { fromChainUnits } from "@/defi/utils";
+import { useXTokensList } from "@/defi/hooks/financialNfts";
 import BigNumber from "bignumber.js";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-import { useStakingPositions } from "@/store/hooks/useStakingPositions";
 
 export const PoolUnstakeForm: React.FC<PoolDetailsProps> = ({
   poolId,
@@ -18,7 +18,7 @@ export const PoolUnstakeForm: React.FC<PoolDetailsProps> = ({
   const [amount, setAmount] = useState<BigNumber>(new BigNumber(0));
   const [valid, setValid] = useState<boolean>(false);
 
-  const positions = useStakingPositions({ stakedAssetId: pool?.lpToken });
+  const positions = useXTokensList({ stakedAssetId: pool?.lpToken });
   const canUnstake = false;
 
   const handleUnStake = () => {

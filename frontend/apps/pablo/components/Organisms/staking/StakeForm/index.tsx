@@ -20,7 +20,7 @@ export type Multiplier = {
 };
 
 export const StakeForm: React.FC<
-  BoxProps & { stakingRewardPool: StakingRewardPool | null }
+  BoxProps & { stakingRewardPool?: StakingRewardPool }
 > = ({ stakingRewardPool, ...boxProps }) => {
   const theme = useTheme();
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);

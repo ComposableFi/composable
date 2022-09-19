@@ -17,9 +17,9 @@ import {
   PBLO_ASSET_ID,
 } from "@/defi/utils";
 import { useAsset } from "@/defi/hooks";
-import { useStakingPositions } from "@/store/hooks/useStakingPositions";
 import { NoPositionsPlaceholder } from "./overview/NoPositionsPlaceholder";
 import { OVERVIEW_ERRORS } from "./overview/errors";
+import { useXTokensList } from "@/defi/hooks/financialNfts";
 
 const tableHeaders: TableHeader[] = [
   {
@@ -55,7 +55,7 @@ export const XPablosBox: React.FC<XPablosBoxProps> = ({
   ...boxProps
 }) => {
   const xPablo = useAsset(PBLO_ASSET_ID);
-  const _xPablos = useStakingPositions({
+  const _xPablos = useXTokensList({
     stakedAssetId: PBLO_ASSET_ID,
   });
 

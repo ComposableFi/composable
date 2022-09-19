@@ -1,27 +1,10 @@
+import { Stake, StakingPositionHistory, StakingRewardPool } from "@/defi/types";
+import { DEFAULT_NETWORK_ID, fetchXTokenBalances } from "@/defi/utils";
+import { useOwnedFinancialNfts, putXTokenBalances, useXTokenBalances } from "@/store/financialNfts/financialNfts.slice";
+import { useStakingRewardPool, useStakedPositionHistory } from "@/store/stakingRewards/stakingRewards.slice";
 import { useParachainApi } from "substrate-react";
-import {
-  DATE_FORMAT,
-  DEFAULT_NETWORK_ID,
-  fetchXTokenBalances,
-  fromChainUnits,
-} from "@/defi/utils";
 import { useEffect, useMemo, useState } from "react";
-import {
-  putXTokenBalances,
-  useOwnedFinancialNfts,
-  useXTokenBalances,
-} from "../financialNfts/financialNfts.slice";
-import {
-  useStakedPositionHistory,
-  useStakingRewardPool,
-} from "../stakingRewards/stakingRewards.slice";
 import { decodeStake } from "@/defi/utils/stakingRewards";
-import {
-  Stake,
-  StakedFinancialNftPosition,
-  StakingPositionHistory,
-} from "@/defi/types";
-import moment from "moment";
 import BigNumber from "bignumber.js";
 
 export interface StakingPositionsProps {
@@ -30,7 +13,12 @@ export interface StakingPositionsProps {
 
 export function useStakingPositions({
   stakedAssetId,
-}: StakingPositionsProps): StakedFinancialNftPosition[] {
+}: StakingPositionsProps): {
+  stakingRewardPool: StakingRewardPool | undefined,
+  ownedFinancialNftsHistory: StakingPositionHistory[],
+  stakes: Stake[],
+  xTokenBalances: Record<string, BigNumber>
+} {
   const ownedFinancialNfts = useOwnedFinancialNfts();
   const stakingRewardPool = useStakingRewardPool(
     stakedAssetId ? stakedAssetId : "-"
@@ -65,7 +53,7 @@ export function useStakingPositions({
    * owned financial NFTs by the
    * user
    */
-  const currentlyOwnedFinancialNFtsHistory = useMemo(() => {
+  const ownedFinancialNftsHistory = useMemo(() => {
     if (userStakingEvents.length <= 0 || financialNftCollectionId === null)
       return [];
     if (ownedFinancialNfts[financialNftCollectionId] === undefined) return [];
@@ -86,8 +74,8 @@ export function useStakingPositions({
    * xToken multiplier on UI
    */
   useEffect(() => {
-    if (!parachainApi || currentlyOwnedFinancialNFtsHistory.length <= 0) return;
-    let allPromises = currentlyOwnedFinancialNFtsHistory.map((stake) =>
+    if (!parachainApi || ownedFinancialNftsHistory.length <= 0) return;
+    let allPromises = ownedFinancialNftsHistory.map((stake) =>
       parachainApi.query.stakingRewards.stakes(
         parachainApi.createType("u128", stake.fnftCollectionId),
         parachainApi.createType("u128", stake.fnftInstanceId)
@@ -99,7 +87,7 @@ export function useStakingPositions({
         setStakes(result);
       })
       .catch(console.error);
-  }, [parachainApi, currentlyOwnedFinancialNFtsHistory]);
+  }, [parachainApi, ownedFinancialNftsHistory]);
   /**
    * This effect will be used to store
    * xTokens balances, currently not
@@ -115,13 +103,13 @@ export function useStakingPositions({
       return;
 
     if (
-      currentlyOwnedFinancialNFtsHistory.length > 0 &&
+      ownedFinancialNftsHistory.length > 0 &&
       financialNftCollectionId &&
       financialNftCollectionId in ownedFinancialNfts
     ) {
       fetchXTokenBalances(
         parachainApi,
-        currentlyOwnedFinancialNFtsHistory,
+        ownedFinancialNftsHistory,
         stakingRewardPool
       )
         .then(putXTokenBalances)
@@ -131,60 +119,17 @@ export function useStakingPositions({
     parachainApi,
     financialNftCollectionId,
     stakingRewardPool,
-    currentlyOwnedFinancialNFtsHistory,
+    ownedFinancialNftsHistory,
     ownedFinancialNfts,
   ]);
   const xTokenBalances = useXTokenBalances(
     financialNftCollectionId ? financialNftCollectionId : "-"
   );
-  /**
-   * Create formatted list of
-   * owned financial NFTs to display
-   * as is via UI components
-   */
-  const xPositions = useMemo(() => {
-    if (
-      !(currentlyOwnedFinancialNFtsHistory.length > 0) ||
-      !(stakes.length > 0) ||
-      !stakingRewardPool
-    )
-      return [];
 
-    return currentlyOwnedFinancialNFtsHistory.map(
-      (financialNftPosition: StakingPositionHistory) => {
-        const { amount, fnftInstanceId, endTimestamp } = financialNftPosition;
-        const lockedPrincipalAsset = fromChainUnits(amount);
-        const expiryDate = moment(
-          new BigNumber(endTimestamp).toNumber()
-        ).format(DATE_FORMAT);
-        const stakeForMultiplier = stakes.find(
-          (stake) => stake.fnftInstanceId === fnftInstanceId
-        );
-        const preset = stakeForMultiplier
-          ? stakeForMultiplier.lock.duration.toString()
-          : null;
-        const multiplier =
-          preset === null || !(preset in stakingRewardPool.lock.durationPresets)
-            ? "-"
-            : `${stakingRewardPool.lock.durationPresets[preset].toString()} %`;
-        let xTokenBalance = new BigNumber(0);
-        if (fnftInstanceId in xTokenBalances) {
-          xTokenBalance = xTokenBalances[fnftInstanceId];
-        }
-        const isExpired =
-          Date.now() >
-          new BigNumber(financialNftPosition.endTimestamp).toNumber();
-
-        return {
-          lockedPrincipalAsset,
-          nftId: fnftInstanceId,
-          expiryDate,
-          isExpired,
-          multiplier,
-          xTokenBalance,
-        };
-      }
-    );
-  }, [stakes, currentlyOwnedFinancialNFtsHistory, stakingRewardPool, xTokenBalances]);
-  return xPositions;
+  return {
+    xTokenBalances,
+    stakingRewardPool,
+    ownedFinancialNftsHistory,
+    stakes
+  };
 }

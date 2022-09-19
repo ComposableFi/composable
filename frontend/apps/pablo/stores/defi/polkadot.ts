@@ -18,12 +18,6 @@ export type StakingOverview = {
   averageLockTime: number,
 };
 
-export type ClaimableRewards = {
-  ksm: BigNumber,
-  pica: BigNumber,
-  pablo: BigNumber,
-};
-
 export type BondChartData = {
   total: BigNumber,
   change: number,
@@ -33,7 +27,6 @@ export type BondChartData = {
 interface PolkadotState {
   overview: Overview;
   stakingOverview: StakingOverview,
-  claimableRewards: ClaimableRewards,
   bondPortfolioChartData: BondChartData,
 }
 
@@ -52,11 +45,6 @@ const initialState: PolkadotState = {
     totalChaosMinted: new BigNumber(4265),
     averageLockMultiplier: 0.8,
     averageLockTime: 265,
-  },
-  claimableRewards: {
-    ksm: new BigNumber(25.135),
-    pica: new BigNumber(55265),
-    pablo: new BigNumber(48551),
   },
   bondPortfolioChartData: {
     total: new BigNumber(24546395.04),
