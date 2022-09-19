@@ -8,7 +8,8 @@
 		"memory": "20gb",
 		"cpus": 8
 	},
-	"postCreateCommand": "sudo chmod +x /home/vscode/.nix-profile/bin/setfacl && sudo chmod 1777 /tmp/ && sudo /home/vscode/.nix-profile/bin/setfacl  --remove-default  /tmp",
+	// GH bads ownership/ACL on each start and breaks nix
+	"postStartCommand": "sudo chmod +x /home/vscode/.nix-profile/bin/setfacl && sudo chmod 1777 /tmp/ && sudo /home/vscode/.nix-profile/bin/setfacl  --remove-default  /tmp",
 	"settings": {
 		"workbench.colorTheme": "GitHub Dark",
 		"workbench.iconTheme": "vscode-icons",
@@ -79,6 +80,5 @@
 	"features": {
 		// TODO: replace adhoc injection and derivation with manual docker/nix 
 		"docker-in-docker": "20.10",
-		//"node": "16"
-	}
+	},
 }
