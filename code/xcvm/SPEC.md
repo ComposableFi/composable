@@ -77,7 +77,7 @@ Each chain contains a bridge aggregator contract (`Gateway`), which connects inc
 
 The `Gateway` is configured to label bridges with different security levels, using oracle-based, disputable governance. We define three security levels as of now:
 
-```ebpf
+```
 BridgeSecurity ::= 
     Deterministic 
     | Probabilistic 
@@ -92,11 +92,11 @@ Outgoing messages are routed based on bridge security, or by specifying the brid
 
 Each XCVM execution has access to its message `MessageOrigin` and can be configured to deny execution depending on the address or security level:
 
-```ebpf
+```
 MessageOrigin ::=
     IBC
     | XCM
-    | OTP bytes BridgeSecurity
+    | (OTP bytes BridgeSecurity)
 ```
 
 The `Gateway` allows for third parties to add their bridges as well, using our open transport protocol (`OTP`), although this is a feature that we will only later make public. `OTP` provides the following functionality
@@ -138,7 +138,7 @@ Each interpreter keeps track of persistent states during and across executions, 
 
 - `Result Register`: Contains the result of the last executed instruction.
 
-```ebpf
+```
 Result ::= 
     Error 
     | Value
@@ -186,7 +186,7 @@ Specialized instructions, such as `Transfer`, `Swap`, etc will always be coercib
 
 #### Instruction Set
 
-```ebnf
+```
 Program      ::= Tag [Instruction]
 
 Instruction  ::= 
@@ -200,9 +200,9 @@ Absolute     ::= u128
 Unit         ::= u128 Ratio
 Ratio        ::= u128 u128
 Account      ::= bytes
-Assets       ::= { AssetId : Balance } (* optional with unique AssetId *)
+Assets       ::= { AssetId : Balance }
 Transfer     ::= Account Assets  |  Relayer Assets 
-Call     ::= Payload Bindings
+Call         ::= Payload Bindings
 Payload      ::= bytes
 Bindings     ::= { u16 : BindingValue }
 BindingValue ::= Self | Relayer | Result | Balance | AssetId
@@ -263,11 +263,11 @@ Registers are persisted after `Program` invocations and `Query`able from other c
 
 A query returns a `QueryResult`:
 
-QueryResult ::= Header Data 
+QueryResult ::= Header Data
 Header ::= Hash Number
 Data ::= 
     Assets
-    | (Result, IP)
+    | (Result IP)
     | bytes
 ```
 
@@ -276,7 +276,7 @@ To inspect a Query result from an XCVM program, use `Call` to a contract with th
 ```
 Query Ethereum 1                    // Pauses execution, which will be resumed once the 
                                     // result values have been loaded.
-Call 0xmy_contract_on_this_chain    // my_contract_on_this_chain can inspect the Result Register of his                             
+Call 0xmy_contract_on_this_chain    // my_contract_on_this_chain can inspect the Result Register of his
                                     // instance and do something with the actual result
 ```
 
@@ -304,7 +304,7 @@ This model is very much like Bitcoin's UTXOs, where the difference between input
 Within the `XCVM`, we define an `Identity` as a global, unique identifier of an on-chain account.
 
 ```
-Identity ::= Network, Account
+Identity ::= Network Account
 ```
 
 On initial instantiation of the `XCVM` interpreter, the calling `Identity` is the owner. This can be a local or foreign account, depending on the origin. The owning `Identity` has total control of the interpreter instance and the funds held and can make delegate calls from the instance's account.
