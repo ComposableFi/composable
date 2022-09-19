@@ -54,7 +54,10 @@ export const putStakingRewardPools = (
     }, {} as Record<string, StakingRewardPool>),
   }));
 
-export const putStakingRewardPoolStakedPositions = (
+export const resetStakingRewardPools = () =>
+  useStakingRewardsSlice.setState((state) => ({ ...state, rewardPools: {} }));
+
+export const putStakingRewardPoolStakedPositionsHistory = (
   stakingRewardPositions: Record<string, Array<StakingPositionHistory>>
 ) =>
   useStakingRewardsSlice.setState((state) => ({
@@ -62,10 +65,22 @@ export const putStakingRewardPoolStakedPositions = (
     rewardPoolStakedPositionHistory: stakingRewardPositions,
   }));
 
+export const resetStakingRewardPoolStakedPositionsHistory = () =>
+  useStakingRewardsSlice.setState((state) => ({
+    ...state,
+    rewardPoolStakedPositionHistory: {},
+  }));
+
 export const useStakingRewardPool = (
   principalAssetId: string
 ): StakingRewardPool | undefined =>
   useStakingRewardsSlice().rewardPools[principalAssetId] ?? undefined;
+
+export const useStakingRewardPoolCollectionId = (
+  principalAssetId: string
+): string | undefined =>
+  useStakingRewardsSlice().rewardPools[principalAssetId]?.financialNftAssetId ??
+  undefined;
 
 export const useStakedPositionHistory = (
   principalAssetId: string

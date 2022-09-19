@@ -1,12 +1,12 @@
 import { CustomRpcBalance } from "@/../../packages/defi-interfaces";
 import { StakingPositionHistory, StakingRewardPool } from "@/defi/types";
 import { ApiPromise } from "@polkadot/api";
-import { bnToU8a, stringToU8a, u8aToHex } from "@polkadot/util";
-import BigNumber from "bignumber.js";
+import { bnToU8a } from "@polkadot/util";
 import { BN } from "bn.js";
 import { PALLET_TYPE_ID } from "../constants";
 import { concatU8a } from "../misc";
 import { fromChainUnits } from "../units";
+import BigNumber from "bignumber.js";
 
 export async function fetchOwnedFinancialNfts(
   parachainApi: ApiPromise,

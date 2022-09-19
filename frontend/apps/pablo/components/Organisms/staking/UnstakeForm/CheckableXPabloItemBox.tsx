@@ -65,7 +65,7 @@ export const CheckableXPabloItemBox: React.FC<CheckableXPabloItemBoxProps> = ({
           onChange={handleChange}
           inputProps={{ "aria-label": "controlled" }}
         />
-        <BaseAsset icon={pabloAsset?.icon} label={`fNFT ${xPablo.nftId}`} />
+        <BaseAsset icon={pabloAsset?.icon} label={`x-${pabloAsset?.symbol} ${xPablo.nftId}`} />
       </Box>
       <Typography variant="body1">
         {`${xPablo.lockedPrincipalAsset.toFormat()}(~$${xPablo.lockedPrincipalAsset.toFormat()})`}

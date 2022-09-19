@@ -16,6 +16,8 @@ export const setOwnedFinancialNfts = (
   ownedNfts: Record<string, Array<string>>
 ) => useFinancialNftSlice.setState((state) => ({ ownedNfts }));
 
+export const resetOwnedFinancialNfts = () => useFinancialNftSlice.setState((state) => ({ ...state, ownedNfts: {} }))
+
 export const useOwnedFinancialNfts = (): Record<string, Array<string>> =>
   useFinancialNftSlice().ownedNfts;
 

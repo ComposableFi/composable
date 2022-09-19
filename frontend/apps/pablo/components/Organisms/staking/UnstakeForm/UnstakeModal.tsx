@@ -28,14 +28,6 @@ export const UnstakeModal: React.FC<UnstakeModalProps> = ({
   const dispatch = useDispatch();
 
   const handleUnstake = () => {
-    dispatch(setMessage(
-      {
-        title: "Transaction successful",
-        text: "Burn and unstake confirmed",
-        link: "/",
-        severity: "success",
-      }
-    ));
     onClose?.({}, "backdropClick");
   };
 

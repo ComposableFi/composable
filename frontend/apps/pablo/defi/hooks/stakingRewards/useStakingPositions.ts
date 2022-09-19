@@ -1,7 +1,15 @@
 import { Stake, StakingPositionHistory, StakingRewardPool } from "@/defi/types";
 import { DEFAULT_NETWORK_ID, fetchXTokenBalances } from "@/defi/utils";
-import { useOwnedFinancialNfts, putXTokenBalances, useXTokenBalances } from "@/store/financialNfts/financialNfts.slice";
-import { useStakingRewardPool, useStakedPositionHistory } from "@/store/stakingRewards/stakingRewards.slice";
+import {
+  useOwnedFinancialNfts,
+  putXTokenBalances,
+  useXTokenBalances,
+} from "@/store/financialNfts/financialNfts.slice";
+import {
+  useStakingRewardPool,
+  useStakedPositionHistory,
+  useStakingRewardPoolCollectionId,
+} from "@/store/stakingRewards/stakingRewards.slice";
 import { useParachainApi } from "substrate-react";
 import { useEffect, useMemo, useState } from "react";
 import { decodeStake } from "@/defi/utils/stakingRewards";
@@ -11,13 +19,11 @@ export interface StakingPositionsProps {
   stakedAssetId?: string;
 }
 
-export function useStakingPositions({
-  stakedAssetId,
-}: StakingPositionsProps): {
-  stakingRewardPool: StakingRewardPool | undefined,
-  ownedFinancialNftsHistory: StakingPositionHistory[],
-  stakes: Stake[],
-  xTokenBalances: Record<string, BigNumber>
+export function useStakingPositions({ stakedAssetId }: StakingPositionsProps): {
+  stakingRewardPool: StakingRewardPool | undefined;
+  ownedFinancialNftsHistory: StakingPositionHistory[];
+  stakes: Stake[];
+  xTokenBalances: Record<string, BigNumber>;
 } {
   const ownedFinancialNfts = useOwnedFinancialNfts();
   const stakingRewardPool = useStakingRewardPool(
@@ -31,11 +37,9 @@ export function useStakingPositions({
    * extract the financial NFT
    * collection Id
    */
-  const financialNftCollectionId = useMemo(() => {
-    if (!stakingRewardPool) return null;
-
-    return stakingRewardPool.financialNftAssetId;
-  }, [stakingRewardPool]);
+  const financialNftCollectionId = useStakingRewardPoolCollectionId(
+    stakedAssetId ? stakedAssetId : "-"
+  );
   /**
    * Extract user staking
    * events previously from
@@ -54,8 +58,7 @@ export function useStakingPositions({
    * user
    */
   const ownedFinancialNftsHistory = useMemo(() => {
-    if (userStakingEvents.length <= 0 || financialNftCollectionId === null)
-      return [];
+    if (userStakingEvents.length <= 0 || !financialNftCollectionId) return [];
     if (ownedFinancialNfts[financialNftCollectionId] === undefined) return [];
 
     return userStakingEvents.filter((x) => {
@@ -130,6 +133,6 @@ export function useStakingPositions({
     xTokenBalances,
     stakingRewardPool,
     ownedFinancialNftsHistory,
-    stakes
+    stakes,
   };
 }

@@ -13,6 +13,7 @@ import {
   transactionStatusSnackbarMessage,
   SNACKBAR_TYPES,
 } from "../pools/addLiquidity/useAddLiquidity";
+import { updateOwnedFinancialNfts } from "@/updaters/stakingRewards/Updater";
 
 export type UnstakeProps = {
   financialNftCollectionId?: BigNumber;
@@ -55,8 +56,12 @@ export function useUnstake({
         ),
         SNACKBAR_TYPES.SUCCESS
       );
+
+      if (parachainApi && selectedAccount) {
+        updateOwnedFinancialNfts(parachainApi, selectedAccount.address);
+      }
     },
-    [enqueueSnackbar]
+    [enqueueSnackbar,  parachainApi, selectedAccount]
   );
 
   const onTxError = useCallback(

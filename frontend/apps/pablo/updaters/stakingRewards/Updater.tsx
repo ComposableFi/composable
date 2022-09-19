@@ -2,14 +2,16 @@ import { useParachainApi, useSelectedAccount } from "substrate-react";
 import { DEFAULT_NETWORK_ID, fetchOwnedFinancialNfts } from "@/defi/utils";
 import { fetchStakingRewardPools } from "@/defi/utils/stakingRewards";
 import { useOnChainAssetIds } from "@/store/hooks/useOnChainAssetsIds";
-import { useEffect } from "react";
 import { fetchStakingPositionHistory } from "@/defi/subsquid/stakingRewards/queries";
-import { setOwnedFinancialNfts } from "@/store/financialNfts/financialNfts.slice";
+import { resetOwnedFinancialNfts, setOwnedFinancialNfts } from "@/store/financialNfts/financialNfts.slice";
+import { ApiPromise } from "@polkadot/api";
+import { useEffect } from "react";
 import {
   putStakingRewardPools,
-  putStakingRewardPoolStakedPositions,
+  putStakingRewardPoolStakedPositionsHistory,
+  resetStakingRewardPools,
+  resetStakingRewardPoolStakedPositionsHistory,
 } from "@/store/stakingRewards/stakingRewards.slice";
-import { ApiPromise } from "@polkadot/api";
 
 export function updateStakingRewardPools(
   parachainApi: ApiPromise,
@@ -17,13 +19,13 @@ export function updateStakingRewardPools(
 ): void {
   fetchStakingRewardPools(parachainApi, assetIds)
     .then(putStakingRewardPools)
-    .catch(console.error);
+    .catch(resetStakingRewardPools);
 }
 
 export function updateStakingPositionsHistory(address: string): void {
   fetchStakingPositionHistory(address)
-    .then(putStakingRewardPoolStakedPositions)
-    .catch(console.error);
+    .then(putStakingRewardPoolStakedPositionsHistory)
+    .catch(resetStakingRewardPoolStakedPositionsHistory);
 }
 
 export function updateOwnedFinancialNfts(
@@ -32,7 +34,7 @@ export function updateOwnedFinancialNfts(
 ): void {
   fetchOwnedFinancialNfts(parachainApi, address)
     .then(setOwnedFinancialNfts)
-    .catch(console.error);
+    .catch(resetOwnedFinancialNfts);
 }
 
 const Updater = () => {
