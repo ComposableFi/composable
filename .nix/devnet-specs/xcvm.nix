@@ -58,7 +58,7 @@ pkgs.arion.build {
           services = {
             # ============ COMMON ===============
             "${db-container-name}" = mk-composable-container
-              (import ./services/postgres.nix {
+              (import ../services/postgres.nix {
                 inherit pkgs;
                 database = default-db;
                 version = "14";
@@ -75,23 +75,23 @@ pkgs.arion.build {
               });
 
             # ============== COSMOS ===============
-            "${junod-container-name}" = mk-composable-container
-              (import ./services/junod.nix { rpcPort = junoRpcPort; });
+            "${junod-container-name}" =
+              mk-composable-container (import ../services/junod.nix { rpcPort = junoRpcPort; });
             "${juno-indexer-container-name}" = mk-composable-container
-              (import ./services/juno-subql-indexer.nix {
+              (import ../services/juno-subql.nix {
                 inherit pkgs;
                 database = juno-indexer-db;
                 juno = junod-container-name;
                 junoPort = junoRpcPort;
               });
             "${subql-query-container-name}" = mk-composable-container
-              (import ./services/subql-query.nix {
+              (import ../services/subql-query.nix {
                 database = juno-indexer-db;
                 subql-node = juno-indexer-container-name;
                 subqlPort = 3000;
               });
             hasura-aggregated = mk-composable-container
-              (import ./services/hasura.nix {
+              (import ../services/hasura.nix {
                 inherit pkgs;
                 database = hasura-db;
                 graphql-port = hasuraGraphqlPort;
@@ -202,14 +202,14 @@ pkgs.arion.build {
 
             # ============== POLKADOT ==============
             "${dali-container-name}" = mk-composable-container
-              (import ./services/devnet-dali.nix {
+              (import ../services/devnet-dali.nix {
                 inherit pkgs;
                 inherit packages;
                 inherit relaychainPort;
                 inherit parachainPort;
               });
             subsquid-indexer = mk-composable-container
-              (import ./services/subsquid-indexer.nix {
+              (import ../services/subsquid-indexer.nix {
                 database = composable-indexer-db;
                 redis = redis-container-name;
                 parachain = dali-container-name;
@@ -218,18 +218,18 @@ pkgs.arion.build {
               });
             "${subsquid-indexer-gateway-container-name}" =
               mk-composable-container
-              (import ./services/subsquid-indexer-gateway.nix {
+              (import ../services/subsquid-indexer-gateway.nix {
                 database = composable-indexer-db;
                 status = subsquid-status-container-name;
                 graphql-port = subsquidIndexerGateway;
               });
             "${subsquid-status-container-name}" = mk-composable-container
-              (import ./services/subsquid-indexer-status-service.nix {
+              (import ../services/subsquid-indexer-status-service.nix {
                 redis = redis-container-name;
                 port = subsquidIndexerStatusService;
               });
             "${redis-container-name}" =
-              mk-composable-container (import ./services/redis.nix);
+              mk-composable-container (import ../services/redis.nix);
           };
         };
       })

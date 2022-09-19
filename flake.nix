@@ -1028,43 +1028,47 @@
 
             default = developers;
           };
-
-          apps = let
-            arion-pure = import ./.nix/arion-pure.nix {
+          
+          devnet-specs = {
+            default = import ./.nix/devnet-specs/default.nix {
               inherit pkgs;
               inherit packages;
             };
-            arion-up-program = pkgs.writeShellApplication {
-              name = "devnet-up";
+
+            xcvm = import ./.nix/devnet-specs/xcvm.nix {
+              inherit pkgs;
+              inherit packages;
+            };
+          };
+
+          apps = let
+            devnet-default-program = pkgs.writeShellApplication {
+              name = "devnet-default";
               runtimeInputs =
                 [ pkgs.arion pkgs.docker pkgs.coreutils pkgs.bash ];
               text = ''
-                arion --prebuilt-file ${arion-pure} up --build --force-recreate -V --always-recreate-deps --remove-orphans
+                arion --prebuilt-file ${devnet-specs.default} up --build --force-recreate -V --always-recreate-deps --remove-orphans
               '';
             };
 
-            devnet-xcvm = import ./.nix/arion-xcvm.nix {
-              inherit pkgs;
-              inherit packages;
-            };
-            devnet-xcvm-up-program = pkgs.writeShellApplication {
-              name = "devnet-xcvm-up";
+            devnet-xcvm-program = pkgs.writeShellApplication {
+              name = "devnet-xcvm";
               runtimeInputs =
                 [ pkgs.arion pkgs.docker pkgs.coreutils pkgs.bash ];
               text = ''
-                arion --prebuilt-file ${devnet-xcvm} up --build --force-recreate -V --always-recreate-deps --remove-orphans
+                arion --prebuilt-file ${devnet-specs.xcvm} up --build --force-recreate -V --always-recreate-deps --remove-orphans
               '';
             };
 
           in rec {
-            devnet-up = {
+            devnet = {
               type = "app";
-              program = "${arion-up-program}/bin/devnet-up";
+              program = "${devnet-default-program}/bin/devnet-default";
             };
 
-            devnet-xcvm-up = {
+            devnet-xcvm = {
               type = "app";
-              program = "${devnet-xcvm-up-program}/bin/devnet-xcvm-up";
+              program = "${devnet-xcvm-program}/bin/devnet-xcvm";
             };
 
             devnet-dali = {
