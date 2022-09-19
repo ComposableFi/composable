@@ -17,7 +17,6 @@ pub mod math;
 /// Defines staking duration, rewards and early unstake penalty for a given asset type.
 /// TODO refer to the relevant section in the design doc.
 #[derive(RuntimeDebug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
-// TODO: Rename to RateBasedReward
 pub struct RateBasedReward<Balance> {
 	/// Total rewards including inflation for adjusting for new stakers joining the pool. All
 	/// stakers in a pool are eligible to receive a part of this value based on their share of the
@@ -27,8 +26,11 @@ pub struct RateBasedReward<Balance> {
 	/// Already claimed rewards by stakers by unstaking.
 	pub claimed_rewards: Balance,
 
-	/// A book keeping field to track the actual total reward without the
-	/// reward dilution adjustment caused by new stakers joining the pool.
+	/// A book keeping field to track the actual total reward without the reward dilution
+	/// adjustment caused by new stakers joining the pool.
+	///
+	/// This field is the same as the sum of all of the reductions of all of the stakes in the
+	/// pool.
 	pub total_dilution_adjustment: Balance,
 
 	/// Upper bound on the `total_rewards - total_dilution_adjustment`.
@@ -60,8 +62,6 @@ impl<Balance: Zero> Reward<Balance> {
 
 #[derive(RuntimeDebug, PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo)]
 pub enum RewardConfig<Balance> {
-	// REVIEW(benluelo): Consider renaming. Perhaps `ExternallyFunded` `Unincentivised`, or
-	// something similar?
 	ProtocolDistribution(),
 	RateBased(RateBasedConfig<Balance>),
 }
@@ -314,13 +314,12 @@ pub trait Staking {
 		keep_alive: bool,
 	) -> Result<Self::PositionId, DispatchError>;
 
-	/// Unstake an actual staked position, represented by a NFT.
+	/// Unstake an actual staked position, represented by an NFT.
 	///
 	/// Arguments
 	///
-	/// * `instance_id` the ID uniquely identifying the NFT from which we will compute the available
-	///   rewards.
-	/// * `to` the account to transfer the final claimed rewards to.
+	/// * `who` the account to transfer the final claimed rewards to.
+	/// * `position` the ID uniquely identifying the NFT to unstake.
 	fn unstake(who: &Self::AccountId, position: &Self::PositionId) -> DispatchResult;
 
 	/// `ratio` - how much of share to retain in the original position.

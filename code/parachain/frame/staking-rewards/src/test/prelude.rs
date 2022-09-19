@@ -54,15 +54,18 @@ pub(crate) fn add_to_rewards_pot_and_assert(
 	// TODO(benluelo): Add storage checks
 }
 
-pub(crate) fn create_rewards_pool_and_assert<Runtime: crate::Config>(
+pub(crate) fn create_rewards_pool_and_assert<Runtime>(
 	reward_config: RewardPoolConfigurationOf<Runtime>,
-) {
+) where
+	Runtime: crate::Config,
+	<Runtime as crate::Config>::Event: From<crate::Event<Runtime>>,
+{
 	assert_extrinsic_event_with::<Runtime, _, _, _>(
 		crate::Pallet::<Runtime>::create_reward_pool(
 			OriginFor::<Runtime>::root(),
 			reward_config.clone(),
 		),
-		|event| match event {
+		|event| match event.into() {
 			Event::StakingRewards(crate::Event::<Runtime>::RewardPoolCreated {
 				pool_id,
 				owner,
