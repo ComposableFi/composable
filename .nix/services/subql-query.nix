@@ -1,4 +1,4 @@
-{ database, subql-node }: {
+{ database, subql-node, subqlPort }: {
   service = {
     image = "onfinality/subql-query:v1.5.0";
     restart = "always";
@@ -9,8 +9,9 @@
       DB_HOST = database.host;
       DB_PORT = database.port;
     };
+    # as of today it is seems cors * by default
     command =
       [ "--name=cosmos" "--playground" "--indexer=http://${subql-node}:3000" ];
-    ports = [ "3000:3000" ];
+    ports = [ "${toString subqlPort}:3000" ];
   };
 }

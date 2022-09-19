@@ -12,7 +12,7 @@ in {
     relaychain = {
       bin = "${polkadot-bin}/bin/polkadot";
       # NOTE: kusama-dev and kusama-local failed to connect in 10 minutes, seems need to change spec to work faster
-      chain = "rococo-dev";
+      chain = "rococo-local";
       port = 30444;
       wsPort = 9944;
       count = 5;
