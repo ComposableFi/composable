@@ -1042,24 +1042,17 @@
           };
 
           apps = let
-            devnet-default-program = pkgs.writeShellApplication {
-              name = "devnet-default";
+            mkDevnetProgram = name: spec: pkgs.writeShellApplication {
+              inherit name;
               runtimeInputs =
                 [ pkgs.arion pkgs.docker pkgs.coreutils pkgs.bash ];
               text = ''
-                arion --prebuilt-file ${devnet-specs.default} up --build --force-recreate -V --always-recreate-deps --remove-orphans
+                arion --prebuilt-file ${pkgs.arion.build spec} up --build --force-recreate -V --always-recreate-deps --remove-orphans
               '';
             };
 
-            devnet-xcvm-program = pkgs.writeShellApplication {
-              name = "devnet-xcvm";
-              runtimeInputs =
-                [ pkgs.arion pkgs.docker pkgs.coreutils pkgs.bash ];
-              text = ''
-                arion --prebuilt-file ${devnet-specs.xcvm} up --build --force-recreate -V --always-recreate-deps --remove-orphans
-              '';
-            };
-
+            devnet-default-program = mkDevnetProgram "devnet-default" devnet-specs.default;
+            devnet-xcvm-program = mkDevnetProgram "devnet-xcvm" devnet-specs.xcvm;
           in rec {
             devnet = {
               type = "app";

@@ -1,5 +1,5 @@
 { pkgs, packages, ... }:
-pkgs.arion.build {
+{
   modules = [
     ({ pkgs, ... }:
       let
