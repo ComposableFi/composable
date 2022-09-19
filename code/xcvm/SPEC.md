@@ -326,7 +326,6 @@ We will later elaborate on using alternative name registries such as [`ENS`](htt
 
 Assets are identified using a global asset identifier.
 
-```ebnf
 AssetId ::= u128
 ```
 
