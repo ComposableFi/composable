@@ -135,39 +135,12 @@ where
 	}
 
 	async fn submit(&self, messages: Vec<Any>) -> Result<(), Error> {
-		let signer = ExtrinsicSigner::<T, Self>::new(
-			self.key_store.clone(),
-			self.key_type_id.clone(),
-			self.public_key.clone(),
-		);
-
 		let messages = messages
 			.into_iter()
 			.map(|msg| RawAny { type_url: msg.type_url.as_bytes().to_vec(), value: msg.value })
 			.collect::<Vec<_>>();
 
-		let metadata = self.para_client.rpc().metadata().await?;
-		// Check for pallet and call index existence in latest chain metadata to ensure our static
-		// definitions are up to date
-		let pallet = metadata
-			.pallet(<Deliver as subxt::Call>::PALLET)
-			.map_err(|_| Error::PalletNotFound(<Deliver as subxt::Call>::PALLET))?;
-		pallet
-			.call_index::<Deliver>()
-			.map_err(|_| Error::CallNotFound(<Deliver as subxt::Call>::FUNCTION))?;
-		// Update the metadata held by the client
-		let _ = self.para_client.metadata().try_write().and_then(|mut writer| {
-			*writer = metadata;
-			Some(writer)
-		});
-
-		let tx_params = PolkadotExtrinsicParamsBuilder::new()
-			.tip(PlainTip::new(100_000))
-			.era(Era::Immortal, *self.para_client.genesis());
-
-		let _ = deliver::<T, PolkadotExtrinsicParams<T>>(&self.para_client, Deliver { messages })
-			.sign_and_submit(&signer, tx_params)
-			.await?;
+		self.submit_call(Deliver { messages }, false).await?;
 
 		Ok(())
 	}

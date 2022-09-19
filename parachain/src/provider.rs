@@ -1,6 +1,11 @@
 use beefy_light_client_primitives::{ClientState, NodesUtils};
 use codec::{Decode, Encode};
-use std::{collections::HashMap, fmt::Display, str::FromStr, time::Duration};
+use std::{
+	collections::{BTreeSet, HashMap},
+	fmt::Display,
+	str::FromStr,
+	time::Duration,
+};
 
 use ibc::{
 	applications::transfer::{Amount, PrefixedCoin, PrefixedDenom},
@@ -34,7 +39,9 @@ use subxt::Config;
 
 use super::{error::Error, ParachainClient};
 use ibc_rpc::{BlockNumberOrHash, IbcApiClient, PacketInfo};
-use primitives::{Chain, IbcProvider, KeyProvider, UpdateType};
+use primitives::{
+	find_maximum_height_for_timeout_proofs, Chain, IbcProvider, KeyProvider, UpdateType,
+};
 use sp_core::H256;
 
 use crate::{parachain, parachain::api::runtime_types::primitives::currency::CurrencyId};
@@ -127,39 +134,49 @@ where
 		// height recorded in the on-chain client state, because in some cases a parachain
 		// block that was already finalized in a former beefy block might still be part of
 		// the parachain headers in a later beefy block, discovered this from previous logs
-		let latest_finalized_height =
-			headers.iter().map(|header| *header.number()).max().unwrap_or_default();
-		let finalized_block_numbers = headers
-			.into_iter()
-			.filter_map(|header| {
-				if (client_state.latest_height().revision_height as u32) <
-					u32::from(*header.number())
-				{
-					Some(header)
+		let finalized_blocks =
+			headers.iter().map(|header| u32::from(*header.number())).collect::<Vec<_>>();
+
+		let finalized_block_numbers = finalized_blocks
+			.iter()
+			.filter_map(|block_number| {
+				if (client_state.latest_height().revision_height as u32) < *block_number {
+					Some(*block_number)
 				} else {
 					None
 				}
 			})
-			.map(|h| BlockNumberOrHash::Number(From::from(*h.number())))
+			.map(|h| BlockNumberOrHash::Number(h))
 			.collect::<Vec<_>>();
 
 		// 1. we should query the sink chain for any outgoing packets to the source chain and return
 		// the maximum height at which we can construct non-existence proofs for all these packets
 		// on the source chain
-		// todo: return Option<u64> maximum height for timedout packets
-		let update_required = self.is_update_required(
-			latest_finalized_height.into(),
-			client_state.latest_height().revision_height,
-		);
+		let max_height_for_timeouts =
+			find_maximum_height_for_timeout_proofs(counterparty, self).await;
+		let timeout_update_required = if let Some(max_height) = max_height_for_timeouts {
+			let max_height = max_height as u32;
+			finalized_blocks.contains(&max_height)
+		} else {
+			false
+		};
+
+		let latest_finalized_block = finalized_blocks.into_iter().max().unwrap_or_default();
 
 		let authority_set_changed =
 			signed_commitment.commitment.validator_set_id == beefy_client_state.next_authorities.id;
 
+		let is_update_required = self.is_update_required(
+			latest_finalized_block.into(),
+			client_state.latest_height().revision_height,
+		);
+
 		// if validator set has changed this is a mandatory update
-		let update_type = match authority_set_changed || update_required {
-			true => UpdateType::Mandatory,
-			false => UpdateType::Optional,
-		};
+		let update_type =
+			match authority_set_changed || timeout_update_required || is_update_required {
+				true => UpdateType::Mandatory,
+				false => UpdateType::Optional,
+			};
 
 		// block_number => events
 		let events: HashMap<String, Vec<IbcEvent>> = IbcApiClient::<u32, H256>::query_events(
@@ -178,15 +195,20 @@ where
 					str::parse::<u32>(&*num).ok().map(T::BlockNumber::from)
 				}
 			})
-			.collect::<Vec<_>>();
+			.collect::<BTreeSet<_>>();
 
 		let events: Vec<IbcEvent> = events.into_values().flatten().collect();
-		// 2. insert the maximum height for timeouts here.
-		if headers_with_events.is_empty() &&
-			update_required &&
-			latest_finalized_height != 0u32.into()
-		{
-			headers_with_events.push(latest_finalized_height)
+
+		if timeout_update_required {
+			let max_height_for_timeouts = max_height_for_timeouts.unwrap();
+			if max_height_for_timeouts > client_state.latest_height().revision_height {
+				let max_timeout_height = T::BlockNumber::from(max_height_for_timeouts as u32);
+				headers_with_events.insert(max_timeout_height);
+			}
+		}
+
+		if is_update_required {
+			headers_with_events.insert(T::BlockNumber::from(latest_finalized_block));
 		}
 
 		// only query proofs for headers that actually have events or are mandatory
@@ -195,7 +217,7 @@ where
 				.query_finalized_parachain_headers_with_proof(
 					signed_commitment.commitment.block_number,
 					&beefy_client_state,
-					headers_with_events,
+					headers_with_events.into_iter().collect(),
 				)
 				.await?;
 			let mmr_size = NodesUtils::new(batch_proof.leaf_count).size();

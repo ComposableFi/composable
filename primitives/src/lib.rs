@@ -25,6 +25,7 @@ use ibc::{
 		},
 		ics04_channel::{
 			channel::{ChannelEnd, Order::Unordered},
+			context::calculate_block_delay,
 			packet::Packet,
 		},
 		ics23_commitment::commitment::CommitmentPrefix,
@@ -489,4 +490,47 @@ pub async fn find_suitable_proof_height_for_client(
 		return last_known_valid_height
 	}
 	None
+}
+
+pub async fn find_maximum_height_for_timeout_proofs(
+	source: &impl Chain,
+	sink: &impl Chain,
+) -> Option<u64> {
+	let mut min_timeout_height = None;
+	let (source_height, ..) = source.latest_height_and_timestamp().await.ok()?;
+	let (sink_height, ..) = sink.latest_height_and_timestamp().await.ok()?;
+	let first_timestamp = sink.query_timestamp_at(1).await.ok()?;
+	for (channel, port_id) in source.channel_whitelist() {
+		let undelivered_sequences = query_undelivered_sequences(
+			source_height,
+			sink_height,
+			channel,
+			port_id.clone(),
+			source,
+			sink,
+		)
+		.await
+		.ok()?;
+		let send_packets =
+			source.query_send_packets(channel, port_id, undelivered_sequences).await.ok()?;
+		for packet_info in send_packets {
+			let period = packet_info.timeout_timestamp.saturating_sub(first_timestamp);
+			if period == 0 {
+				min_timeout_height =
+					min_timeout_height.max(Some(packet_info.timeout_height.revision_height));
+				continue
+			}
+			let period = Duration::from_nanos(period);
+			let approx_height =
+				calculate_block_delay(period, sink.expected_block_time()).saturating_add(1);
+			let timeout_height = if packet_info.timeout_height.revision_height < approx_height {
+				packet_info.timeout_height.revision_height
+			} else {
+				approx_height
+			};
+
+			min_timeout_height = min_timeout_height.max(Some(timeout_height))
+		}
+	}
+	min_timeout_height
 }

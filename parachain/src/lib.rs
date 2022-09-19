@@ -16,7 +16,7 @@ pub mod test_provider;
 use codec::{Codec, Decode};
 use error::Error;
 
-use calls::{ibc_transfer, sudo_call, Sudo, Transfer, TransferParams};
+use calls::{sudo_call, Sudo, Transfer, TransferParams};
 use common::AccountId;
 use signer::ExtrinsicSigner;
 
@@ -424,27 +424,10 @@ where
 		asset_id: u128,
 		amount: u128,
 	) -> Result<(), Error> {
-		let signer = ExtrinsicSigner::<T, Self>::new(
-			self.key_store.clone(),
-			self.key_type_id.clone(),
-			self.public_key.clone(),
-		);
-
-		let ext = ibc_transfer::<T, subxt::PolkadotExtrinsicParams<T>>(
-			&self.para_client,
-			Transfer { params, asset_id, amount },
-		);
+		let call = Transfer { params, asset_id, amount };
 		// Submit extrinsic to parachain node
 
-		let tx_params = subxt::PolkadotExtrinsicParamsBuilder::new()
-			.tip(PlainTip::new(100_000))
-			.era(Era::Immortal, *self.para_client.genesis());
-
-		let mut _progress = ext
-			.sign_and_submit_then_watch(&signer, tx_params)
-			.await?
-			.wait_for_in_block()
-			.await?;
+		self.submit_call(call, true).await?;
 
 		Ok(())
 	}
@@ -452,6 +435,7 @@ where
 	pub async fn submit_call<C: Codec + Send + Sync + subxt::Call + Clone>(
 		&self,
 		call: C,
+		wait_for_in_block: bool,
 	) -> Result<(), Error> {
 		use polkadot::api::runtime_types::sp_runtime::DispatchError;
 		let signer = ExtrinsicSigner::<T, Self>::new(
@@ -460,21 +444,51 @@ where
 			self.public_key.clone(),
 		);
 
-		let ext = SubmittableExtrinsic::<T, PolkadotExtrinsicParams<T>, _, DispatchError, ()>::new(
-			&self.para_client,
-			call,
-		);
+		let metadata = self.para_client.rpc().metadata().await?;
+		// Check for pallet and call index existence in latest chain metadata to ensure our static
+		// definitions are up to date
+		let pallet = metadata
+			.pallet(<C as subxt::Call>::PALLET)
+			.map_err(|_| Error::PalletNotFound(<C as subxt::Call>::PALLET))?;
+		pallet
+			.call_index::<Deliver>()
+			.map_err(|_| Error::CallNotFound(<C as subxt::Call>::FUNCTION))?;
+		// Update the metadata held by the client
+		let _ = self.para_client.metadata().try_write().and_then(|mut writer| {
+			*writer = metadata;
+			Some(writer)
+		});
 
 		// Submit extrinsic to parachain node
-		let tx_params = subxt::PolkadotExtrinsicParamsBuilder::new()
-			.tip(PlainTip::new(100_000))
-			.era(Era::Immortal, *self.para_client.genesis());
+		let tip = 100_000u128;
+		// Try extrinsic submission five times in case of failures
+		let mut count = 0;
+		let progress = loop {
+			if count == 5 {
+				return Err(Error::Custom("Failed to submit extrinsic after 5 tries".to_string()))
+			}
 
-		let _progress = ext
-			.sign_and_submit_then_watch(&signer, tx_params)
-			.await?
-			.wait_for_in_block()
-			.await?;
+			let ext =
+				SubmittableExtrinsic::<T, PolkadotExtrinsicParams<T>, _, DispatchError, ()>::new(
+					&self.para_client,
+					call.clone(),
+				);
+
+			let tx_params = subxt::PolkadotExtrinsicParamsBuilder::new()
+				.era(Era::Immortal, *self.para_client.genesis());
+
+			let res = ext
+				.sign_and_submit_then_watch(&signer, tx_params.tip(PlainTip::new(count * tip)))
+				.await;
+			if res.is_ok() {
+				break res.unwrap()
+			}
+			count += 1;
+		};
+
+		if wait_for_in_block {
+			progress.wait_for_in_block().await?;
+		}
 
 		Ok(())
 	}
