@@ -68,13 +68,6 @@ export default {
     },
     PalletIdentityRegistration: "Null",
     PalletIdentityRegistrarInfo: "Null",
-    PalletOracleAssetInfo: "Null",
-    PalletOracleWithdraw: {
-      stake: "u128",
-      unlockBlock: "u32"
-    },
-    PalletOraclePrePrice: "Null",
-    PalletOraclePrice: "Null",
     PolkadotPrimitivesV1AbridgedHostConfiguration: "Null",
     PolkadotPrimitivesV2PersistedValidationData: "Null",
     PolkadotPrimitivesV2UpgradeRestriction: "Null",
@@ -145,7 +138,6 @@ export default {
     ComposableTraitsLendingCreateInput: "Null",
     ComposableTraitsLendingUpdateInput: "Null",
     ComposableTraitsDexStableSwapPoolInfo: "Null",
-    ComposableTraitsOraclePrice: "Null",
     PalletLiquidityBootstrappingPool: "Null",
     ComposableTraitsDexConstantProductPoolInfo: {
       owner: "AccountId32",
@@ -192,7 +184,6 @@ export default {
     ComposableTraitsStakingRewardPoolConfiguration: "Null",
     IbcTransferPalletParams: "Null",
     IbcTransferTransferParams: "Null",
-    ComposableTraitsOracleRewardTracker: "Null",
     ComposableTraitsStakingStake: "Null",
     ComposableTraitsStakingRewardUpdate: "Null",
     ComposableTraitsAccountProxyProxyType: "Null",
