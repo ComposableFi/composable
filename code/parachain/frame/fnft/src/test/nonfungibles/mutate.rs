@@ -50,8 +50,7 @@ mod mint_into {
 				"owner should be ALICE, with no attributes"
 			);
 			// get the asset account of the fNFT
-			let asset_account = Nft::asset_account(&TEST_COLLECTION_ID, &NEW_NFT_ID)
-				.expect("Well under u32 account limit; QED");
+			let asset_account = Nft::asset_account(&TEST_COLLECTION_ID, &NEW_NFT_ID);
 			// check the proxies
 			assert_ok!(Proxy::find_proxy(&asset_account, &ALICE, Some(ProxyType::Any)));
 			assert_ok!(Proxy::find_proxy(&asset_account, &ALICE, Some(ProxyType::CancelProxy)));

@@ -736,7 +736,7 @@ pub mod pallet {
 			let fnft_collection_id = rewards_pool.financial_nft_asset_id;
 			let fnft_instance_id = T::FinancialNft::get_next_nft_id(&fnft_collection_id)?;
 			let fnft_account =
-				T::FinancialNft::asset_account(&fnft_collection_id, &fnft_instance_id)?;
+				T::FinancialNft::asset_account(&fnft_collection_id, &fnft_instance_id);
 
 			let new_position = StakeOf::<T> {
 				reward_pool_id: *pool_id,
@@ -822,7 +822,7 @@ pub mod pallet {
 			}
 
 			let fnft_asset_account =
-				T::FinancialNft::asset_account(&fnft_collection_id, &fnft_instance_id)?;
+				T::FinancialNft::asset_account(&fnft_collection_id, &fnft_instance_id);
 
 			// TODO (vim): transfer the staked amount to the NFT account and lock it
 			// TODO (vim): Transfer the shares with share asset ID to the Financial NFT account and
@@ -890,7 +890,7 @@ pub mod pallet {
 			};
 
 			let fnft_asset_account =
-				T::FinancialNft::asset_account(fnft_collection_id, fnft_instance_id)?;
+				T::FinancialNft::asset_account(fnft_collection_id, fnft_instance_id);
 
 			T::Assets::remove_lock(T::LockId::get(), asset_id, &fnft_asset_account)?;
 			T::Assets::remove_lock(T::LockId::get(), share_asset_id, &fnft_asset_account)?;
@@ -951,9 +951,9 @@ pub mod pallet {
 
 			let new_fnft_instance_id = T::FinancialNft::get_next_nft_id(fnft_collection_id)?;
 			let old_fnft_asset_account =
-				T::FinancialNft::asset_account(fnft_collection_id, &old_position.fnft_instance_id)?;
+				T::FinancialNft::asset_account(fnft_collection_id, &old_position.fnft_instance_id);
 			let new_fnft_asset_account =
-				T::FinancialNft::asset_account(fnft_collection_id, &new_fnft_instance_id)?;
+				T::FinancialNft::asset_account(fnft_collection_id, &new_fnft_instance_id);
 
 			let new_stake = StakeOf::<T> {
 				stake: left_from_one_ratio.mul_floor(old_position.stake),

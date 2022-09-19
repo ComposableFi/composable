@@ -107,8 +107,7 @@ fn stake_in_case_of_zero_inflation_should_work() {
 		let staker: Public = ALICE;
 		let amount: u128 = 100_500_u128;
 		let duration_preset: u64 = ONE_HOUR;
-		let fnft_asset_account =
-			FinancialNft::asset_account(&1, &0).expect("Well under u32 account limit; QED");
+		let fnft_asset_account = FinancialNft::asset_account(&1, &0);
 
 		let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
 		mint_assets([staker], [staked_asset_id], amount * 2);
@@ -188,8 +187,7 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 		const DURATION_PRESET: u64 = ONE_HOUR;
 		const TOTAL_REWARDS: u128 = 100;
 		const TOTAL_SHARES: u128 = 200;
-		let fnft_asset_account =
-			FinancialNft::asset_account(&1, &0).expect("Well under u32 account limit; QED");
+		let fnft_asset_account = FinancialNft::asset_account(&1, &0);
 
 		System::set_block_number(1);
 		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
@@ -322,7 +320,7 @@ fn test_extend_stake_amount() {
 		);
 		assert_eq!(balance(staked_asset_id, &staker), existential_deposit);
 		assert_eq!(
-			balance(staked_asset_id, &FinancialNft::asset_account(&1, &0).expect("Well under u32 account limit; QED")),
+			balance(staked_asset_id, &FinancialNft::asset_account(&1, &0)),
 			amount + extend_amount
 		);
 		assert_last_event::<Test, _>(|e| {
@@ -378,8 +376,7 @@ fn unstake_in_case_of_zero_claims_and_early_unlock_should_work() {
 		let pool_id = PICA::ID;
 		let amount = 100_500_u32.into();
 		let duration_preset = ONE_HOUR;
-		let fnft_asset_account =
-			FinancialNft::asset_account(&1, &0).expect("Well under u32 account limit; QED");
+		let fnft_asset_account = FinancialNft::asset_account(&1, &0);
 
 		let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
 		mint_assets([staker], [staked_asset_id], amount * 2);
@@ -428,8 +425,7 @@ fn unstake_in_case_of_not_zero_claims_and_early_unlock_should_work() {
 		total_shares,
 		Some(claim),
 		|pool_id, unlock_penalty, _, staked_asset_id| {
-			let fnft_asset_account =
-				FinancialNft::asset_account(&1, &0).expect("Well under u32 account limit; QED");
+			let fnft_asset_account = FinancialNft::asset_account(&1, &0);
 
 			assert_ok!(StakingRewards::unstake(Origin::signed(staker), 1, 0));
 			assert_eq!(StakingRewards::stakes(1, 0), None);

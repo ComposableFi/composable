@@ -57,7 +57,6 @@ pub mod pallet {
 		},
 		PalletId,
 	};
-	use multihash::{Blake2b256, Hasher};
 	use sp_arithmetic::traits::One;
 	use sp_runtime::traits::{AccountIdConversion, Zero};
 	use sp_std::{
@@ -451,7 +450,7 @@ pub mod pallet {
 			prev_delegate: Option<&AccountIdOf<T>>,
 		) -> DispatchResult {
 			let asset_account =
-				<Self as FinancialNft<AccountIdOf<T>>>::asset_account(collection, instance)?;
+				<Self as FinancialNft<AccountIdOf<T>>>::asset_account(collection, instance);
 			for proxy_type in T::ProxyTypeSelector::get_proxy_types() {
 				if let Some(existing_delegate) = prev_delegate {
 					T::AccountProxy::remove_proxy_delegate(
@@ -477,9 +476,12 @@ pub mod pallet {
 		fn asset_account(
 			collection: &Self::CollectionId,
 			instance: &Self::ItemId,
-		) -> Result<AccountIdOf<T>, DispatchError> {
-			Ok(T::PalletId::get()
-				.into_sub_account_truncating(hash::<_, Blake2b256>((collection, instance))))
+		) -> AccountIdOf<T> {
+			// `into_sub_account_truncating()` gives us 20 bytes of space to create a seed.
+			// `blake2_128()` returns 16 bytes of data. Opperation will not create collisions.
+			T::PalletId::get().into_sub_account_truncating(sp_io::hashing::blake2_128(
+				&(collection, instance).encode(),
+			))
 		}
 
 		fn get_next_nft_id(
@@ -494,21 +496,6 @@ pub mod pallet {
 				},
 			)
 		}
-	}
-
-	fn hash<I, H>(input: I) -> [u8; 32]
-	where
-		H: Hasher + Default,
-		I: Encode,
-	{
-		let mut hasher: H = Default::default();
-		let mut hash: [u8; 32] = [0; 32];
-
-		hasher.update(&input.encode());
-		hash.copy_from_slice(hasher.finalize());
-		hasher.reset();
-
-		hash
 	}
 
 	/// Returns a closure that inserts the given value into the contained set, initializing the set

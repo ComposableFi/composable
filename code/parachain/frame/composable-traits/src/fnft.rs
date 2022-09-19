@@ -20,10 +20,7 @@ pub trait FinancialNft<AccountId>: Inspect<AccountId> {
 	/// financial NFT is the sum total of balances of all asset types in this account plus the
 	/// future returns minus any liabilities. Future returns and liabilities should be queried
 	/// through the originating financial NFT protocol.
-	fn asset_account(
-		collection: &Self::CollectionId,
-		instance: &Self::ItemId,
-	) -> Result<AccountId, DispatchError>;
+	fn asset_account(collection: &Self::CollectionId, instance: &Self::ItemId) -> AccountId;
 
 	/// Retrieve the next valid financial NFT ID for the given collection in order to
 	/// mint a new NFT.

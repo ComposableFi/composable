@@ -17,10 +17,7 @@ impl Inspect<u128> for MockFnft {
 }
 
 impl FinancialNft<u128> for MockFnft {
-	fn asset_account(
-		_collection: &Self::CollectionId,
-		_instance: &Self::ItemId,
-	) -> Result<u128, DispatchError> {
+	fn asset_account(_collection: &Self::CollectionId, _instance: &Self::ItemId) -> u128 {
 		todo!()
 	}
 
