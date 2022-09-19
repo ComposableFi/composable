@@ -8,7 +8,7 @@ import {
   TableContainerProps,
   TableHead,
   TableRow,
-  Typography,
+  Typography
 } from "@mui/material";
 import { BaseAsset, TokenAsset, TokenPairAsset } from "../Atom";
 import { NoAssetsCover } from "./NoAssetsCover";
@@ -32,8 +32,8 @@ export const BondTableRow: FC<{
     <TableRow
       sx={{
         "&:hover": {
-          cursor: "pointer",
-        },
+          cursor: "pointer"
+        }
       }}
       key={getTokenString(bond.reward.asset)}
       onClick={() => onRowClick(bond.bondOfferId)}
@@ -81,10 +81,10 @@ export const BondTableRow: FC<{
 
 export const MyBondsTable: React.FC<MyBondsTableProps> = ({
   activeBonds,
-  onRowClick = () => {},
+  onRowClick = () => {
+  },
   ...rest
 }) => {
-  console.log(activeBonds);
   if (activeBonds.length > 0) {
     return (
       <TableContainer {...rest}>

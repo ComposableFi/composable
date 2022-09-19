@@ -17,16 +17,18 @@ export type RewardPool = {
   shareAssetId: string;
   financialNftAssetId: string;
 };
-
-export type StakingPortfolio = {
-  [key: string]: {
-    [key: string]: {
-      share: BigNumber;
-      stake: BigNumber;
-      multiplier: BigNumber;
-    }
-  }
+export type PortfolioItem = {
+  instanceId: string;
+  collectionId: string;
+  assetId: string,
+  endTimestamp: BigInt,
+  id: string,
+  multiplier: BigNumber,
+  share: BigNumber,
+  stake: BigNumber
 }
+export type PortfolioTuple = [string, string, PortfolioItem];
+export type StakingPortfolio = Array<PortfolioItem>
 export type StakingRewardsSlice = {
   rewardPools: {
     [key in number]: RewardPool;
@@ -57,7 +59,7 @@ const initialState = {
   },
   stakingPositions: [],
   isStakingPositionsLoadingState: false,
-  stakingPortfolio: {}
+  stakingPortfolio: []
 };
 
 export const createStakingRewardsSlice: StoreSlice<StakingRewardsSlice> = (

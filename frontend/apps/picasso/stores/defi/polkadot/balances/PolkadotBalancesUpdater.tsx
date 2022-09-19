@@ -9,7 +9,7 @@ import { useStore } from "@/stores/root";
 import { ApiPromise } from "@polkadot/api";
 import { fetchKaruraBalanceByAssetId, subscribePicassoBalanceByAssetId } from "@/defi/polkadot/pallets/Balance";
 import BigNumber from "bignumber.js";
-import { useDotSamaContext } from "substrate-react";
+import { useDotSamaContext, useEagerConnect } from "substrate-react";
 
 export async function subscribeNativeBalance(
   account: string,
@@ -84,6 +84,7 @@ const PolkadotBalancesUpdater = ({
 }: {
   substrateNetworks: SubstrateNetwork[];
 }) => {
+  useEagerConnect("picasso");
   const { updateBalance, clearBalance, updateAssetBalance, ...assets } =
     useStore(({ substrateBalances }) => substrateBalances);
   const { selectedAccount, parachainProviders, relaychainProviders } = useDotSamaContext();
@@ -108,7 +109,7 @@ const PolkadotBalancesUpdater = ({
       console.log("selectedAccount is not specified");
       clearBalance();
     } else {
-      console.log("picassoPrivider is not available");
+      console.log("picassoProvider is not available");
     }
   }, [
     selectedAccount,
@@ -116,6 +117,7 @@ const PolkadotBalancesUpdater = ({
     picassoProvider.accounts.length,
     picassoProvider.accounts,
     parachainProviders,
+    picassoProvider.parachainApi,
     updateBalance,
     clearBalance
   ]);

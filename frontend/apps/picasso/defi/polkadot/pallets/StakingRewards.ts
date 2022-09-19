@@ -1,8 +1,6 @@
 import { ApiPromise } from "@polkadot/api";
 import BigNumber from "bignumber.js";
-import { Option } from "@polkadot/types-codec";
 import { callbackGate, fromChainIdUnit, fromPerbill, humanDateDiff, toChainIdUnit, unwrapNumberOrHex } from "shared";
-import { ComposableTraitsStakingStake } from "defi-interfaces";
 import { RewardPool } from "@/stores/defi/polkadot/stakingRewards/slice";
 import { Executor, getSigner } from "substrate-react";
 import { AnyComponentMap, EnqueueSnackbar, SnackbarKey } from "notistack";
@@ -11,12 +9,12 @@ import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 
 export async function fetchStakingRewardPosition(
   api: ApiPromise,
-  positionId: BigNumber,
+  fnftCollectionId: BigNumber,
   setter: (position: any) => void
 ) {
-  const result: Option<ComposableTraitsStakingStake> =
+  const result: any =
     await api.query.stakingRewards.stakes(
-      api.createType("u128", positionId.toString())
+      api.createType("u128", fnftCollectionId.toString()), null
     );
 
   if (result.isSome) {

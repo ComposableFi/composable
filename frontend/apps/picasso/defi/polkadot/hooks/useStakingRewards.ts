@@ -1,15 +1,17 @@
-import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
+import { useSelectedAccount } from "@/defi/polkadot/hooks";
 import { useStore } from "@/stores/root";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useQuery } from "@apollo/client";
 import { GET_STAKING_POSITIONS, StakingPositions } from "@/apollo/queries/stakingPositions";
-import { callbackGate, unwrapNumberOrHex } from "shared";
-import { useExecutor } from "substrate-react";
+import { callbackGate, fromChainIdUnit, unwrapNumberOrHex } from "shared";
+import { useExecutor, useParachainApi } from "substrate-react";
 import { fetchRewardPools } from "@/defi/polkadot/pallets/StakingRewards";
+import { PortfolioItem, StakingPortfolio } from "@/stores/defi/polkadot/stakingRewards/slice";
 
 export const useStakingRewards = () => {
   const account = useSelectedAccount();
-  const { parachainApi } = usePicassoProvider();
+  const { parachainApi } = useParachainApi("picasso");
+
   const rewardPools = useStore(state => state.rewardPools);
   const setStakingPositions = useStore(state => state.setStakingPositions);
   const setStakingPositionLoadingState = useStore(state => state.setStakingPositionLoadingState);
@@ -17,13 +19,13 @@ export const useStakingRewards = () => {
   const stakingPositions = useStore(state => state.stakingPositions);
   const stakingPortfolio = useStore(state => state.stakingPortfolio);
   const isStakingPositionsLoadingState = useStore(state => state.isStakingPositionsLoadingState);
-  const { data, loading, error } = useQuery<StakingPositions>(GET_STAKING_POSITIONS, {
+  const { data, loading, error, refetch } = useQuery<StakingPositions>(GET_STAKING_POSITIONS, {
     variables: {
       accountId: account?.address
     },
     pollInterval: 30000
   });
-
+  const hasRewardPools = Object.values(rewardPools).length > 0 && rewardPools[1]; // PICA reward pool is necessary
   const { meta } = useStore(
     (state) => state.substrateBalances.picasso.assets.pica
   );
@@ -49,42 +51,50 @@ export const useStakingRewards = () => {
     );
   }, [assetId, parachainApi, setRewardPool]);
 
-  // fetch position meta from chain
-  useEffect(() => {
-    const stakingPositions = data?.stakingPositions;
-    setStakingPositions(stakingPositions ?? []);
-    setStakingPositionLoadingState(loading);
+  const fetchPortfolio = useCallback(() => {
     callbackGate(async (positions, api) => {
       if (loading) return;
-      let map: any = {};
+      let map: StakingPortfolio = [];
       for (const position of positions) {
         try {
           const result: any = (await api.query.stakingRewards.stakes(
             api.createType("u128", position.fnftCollectionId),
             api.createType("u64", position.fnftInstanceId)
           )).toJSON();
-          map = {
-            ...map,
-            [position.fnftCollectionId]: {
-              ...map[position.fnftCollectionId],
-              [position.fnftInstanceId]: {
-                multiplier: rewardPools[1].lock.durationPresets[result.lock.duration],
-                share: unwrapNumberOrHex(result.share),
-                stake: unwrapNumberOrHex(result.stake)
-              }
-            }
-          };
+          if (result) {
+            const item: PortfolioItem = {
+              collectionId: position.fnftCollectionId,
+              instanceId: position.fnftInstanceId,
+              assetId: position.assetId,
+              endTimestamp: position.endTimestamp,
+              id: position.id,
+              multiplier: rewardPools[1].lock.durationPresets[result.lock.duration],
+              share: fromChainIdUnit(unwrapNumberOrHex(result.share)),
+              stake: fromChainIdUnit(unwrapNumberOrHex(result.stake))
+            };
+            map = [...map, item];
+          }
         } catch (error) {
           console.log(error);
-        } finally {
-          setStakingPortfolio(map);
         }
+
+        setStakingPortfolio(map);
       }
-
-
     }, stakingPositions, parachainApi);
-  }, [data?.stakingPositions, loading, setStakingPortfolio]);
+  }, [stakingPositions, parachainApi]);
 
+  // fetch position meta from chain
+  useEffect(() => {
+    const stakingPositions = data?.stakingPositions;
+    setStakingPositions(stakingPositions ?? []);
+    setStakingPositionLoadingState(loading);
+    fetchPortfolio();
+
+  }, [data, loading, setStakingPortfolio]);
+
+  const refresh = () => {
+    fetchPortfolio();
+  };
 
   return {
     picaRewardPool,
@@ -95,6 +105,7 @@ export const useStakingRewards = () => {
     assetId,
     stakingPortfolio,
     stakingPositions,
-    isPositionsLoading: isStakingPositionsLoadingState
+    isPositionsLoading: isStakingPositionsLoadingState,
+    refresh
   };
 };

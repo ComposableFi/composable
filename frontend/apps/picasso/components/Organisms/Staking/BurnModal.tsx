@@ -1,7 +1,7 @@
 import { Modal, TokenAsset } from "@/components";
 import { Box, Button, Paper, Stack, Typography } from "@mui/material";
 import { TextWithTooltip } from "@/components/Molecules/TextWithTooltip";
-import { FC, useEffect, useState } from "react";
+import { FC } from "react";
 import { callbackGate, formatNumber } from "shared";
 import BigNumber from "bignumber.js";
 import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
@@ -9,27 +9,26 @@ import { getSigner, useExecutor } from "substrate-react";
 import { APP_NAME } from "@/defi/polkadot/constants";
 import { SnackbarKey, useSnackbar } from "notistack";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
-import { fetchStakingRewardPosition } from "@/defi/polkadot/pallets/StakingRewards";
+import { useStakingRewards } from "@/defi/polkadot/hooks/useStakingRewards";
 
 // TODO: positionId should be fetched from subsquid or other sources
 const positionId = new BigNumber(4);
 
-export const BurnModal: FC<{ open: boolean; onClose: () => void }> = ({
+function setPosition() {
+
+}
+
+export const BurnModal: FC<{ open: boolean; onClose: () => void; unstakeToken: [string, string] }> = ({
   open,
-  onClose
+  onClose,
+  unstakeToken
 }) => {
   const { parachainApi } = usePicassoProvider();
-  const [position, setPosition] = useState({
-    unlockPenalty: new BigNumber(0),
-    share: new BigNumber(0),
-    stake: new BigNumber(0)
-  });
-  const withdrawablePica = position.stake.minus(
-    position.stake.multipliedBy(position.unlockPenalty)
-  );
   const account = useSelectedAccount();
   const executor = useExecutor();
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+  const { stakingPortfolio, refresh } = useStakingRewards();
+  const [fnftCollectionId, fnftInstanceId] = unstakeToken;
 
   const handleBurnUnstake = () => {
     let snackbarKey: SnackbarKey | undefined;
@@ -37,7 +36,7 @@ export const BurnModal: FC<{ open: boolean; onClose: () => void }> = ({
       async (api, acc, exec) => {
         const signer = await getSigner(APP_NAME, acc.address);
         await exec.execute(
-          api.tx.stakingRewards.unstake(positionId.toString()),
+          api.tx.stakingRewards.unstake(...unstakeToken),
           acc.address,
           api,
           signer,
@@ -57,6 +56,7 @@ export const BurnModal: FC<{ open: boolean; onClose: () => void }> = ({
               persist: true,
               url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash
             });
+            refresh();
             onClose();
           },
           (errorMessage: string) => {
@@ -77,12 +77,13 @@ export const BurnModal: FC<{ open: boolean; onClose: () => void }> = ({
     );
   };
 
-  useEffect(() => {
-    callbackGate(
-      (api) => fetchStakingRewardPosition(api, positionId, setPosition),
-      parachainApi
-    );
-  }, [parachainApi]);
+  const currentPortfolio = Object.values(stakingPortfolio).find(portfolio => portfolio.collectionId === fnftCollectionId && portfolio.instanceId === fnftInstanceId);
+  if (unstakeToken.join("").length === 0 || !currentPortfolio) {
+    return null;
+  }
+
+  const withdrawablePica = currentPortfolio.share;
+  const initialPICA = currentPortfolio.stake;
 
   return (
     <Modal open={open} dismissible onClose={onClose} maxWidth="md">
@@ -124,7 +125,7 @@ export const BurnModal: FC<{ open: boolean; onClose: () => void }> = ({
                 <TokenAsset tokenId={"pica"} iconOnly />
               </Box>
               <Typography variant="body2" textAlign="center">
-                {formatNumber(withdrawablePica)}
+                {withdrawablePica.toFixed()}
               </Typography>
             </Paper>
           </Stack>
@@ -153,7 +154,7 @@ export const BurnModal: FC<{ open: boolean; onClose: () => void }> = ({
                 color="text.secondary"
                 textAlign="center"
               >
-                {formatNumber(position.stake)}
+                {formatNumber(initialPICA)}
               </Typography>
             </Paper>
           </Stack>

@@ -6,7 +6,7 @@ import { FC, useState } from "react";
 
 export const BurnUnstakeTabContent: FC = () => {
   const [unstakeToken, setUnstakeToken] =
-    useState<string | undefined>(undefined);
+    useState<[string, string]>(["", ""]);
   const [isBurnModalOpen, setIsBurnModalOpen] = useState<boolean>(false);
   const [isRenewModalOpen, setIsRenewModalOpen] = useState<boolean>(false);
 
@@ -15,11 +15,18 @@ export const BurnUnstakeTabContent: FC = () => {
       <BurnCheckboxList
         openBurnModal={() => setIsBurnModalOpen(true)}
         openRenewModal={() => setIsRenewModalOpen(true)}
-        onSelectUnstakeToken={(v) => setUnstakeToken(v)}
+        onSelectUnstakeToken={(collection, instance) => setUnstakeToken(prev => {
+          if (prev[0] === collection && prev[1] === instance) {
+            return ["", ""];
+          }
+          return [collection, instance];
+        })
+        }
         unstakeTokenId={unstakeToken}
       />
       <BurnModal
         open={isBurnModalOpen}
+        unstakeToken={unstakeToken}
         onClose={() => setIsBurnModalOpen(false)}
       />
       <RenewModal

@@ -100,41 +100,32 @@ export default function MyApp(props: MyAppProps) {
       <ColorModeContext.Provider value={colorMode}>
         <ThemeProvider theme={theme}>
           <CssBaseline />
-          <BlockchainProvider
-            blockchainInfo={Object.entries(NETWORKS).map(([netId, net]) => {
-              return {
-                chainId: +netId,
-                rpcUrl: net.rpcUrl
-              };
-            })}
+          <DotSamaContextProvider
+            supportedParachains={[
+              {
+                chainId: "picasso",
+                rpcUrl:
+                  process.env.SUBSTRATE_PROVIDER_URL_KUSAMA_2019 || "",
+                rpc,
+                types
+              },
+              {
+                chainId: "karura",
+                rpcUrl:
+                  process.env.SUBSTRATE_PROVIDER_URL_KARURA || "",
+                rpc: {},
+                types: {}
+              }
+            ]}
+            appName={APP_NAME}
           >
-            <DotSamaContextProvider
-              supportedParachains={[
-                {
-                  chainId: "picasso",
-                  rpcUrl:
-                    process.env.SUBSTRATE_PROVIDER_URL_KUSAMA_2019 || "",
-                  rpc,
-                  types
-                },
-                {
-                  chainId: "karura",
-                  rpcUrl:
-                    process.env.SUBSTRATE_PROVIDER_URL_KARURA || "",
-                  rpc: null,
-                  types: null
-                }
-              ]}
-              supportedChains={[
-                {
-                  chainId: "kusama",
-                  rpcUrl:
-                    process.env.SUBSTRATE_PROVIDER_URL_KUSAMA || "",
-                  rpc: null,
-                  types: null
-                }
-              ]}
-              appName={APP_NAME}
+            <BlockchainProvider
+              blockchainInfo={Object.entries(NETWORKS).map(([netId, net]) => {
+                return {
+                  chainId: +netId,
+                  rpcUrl: net.rpcUrl
+                };
+              })}
             >
               <PalletsContextProvider>
                 <ApolloProvider client={apolloClient}>
@@ -163,8 +154,8 @@ export default function MyApp(props: MyAppProps) {
                   </SnackbarProvider>
                 </ApolloProvider>
               </PalletsContextProvider>
-            </DotSamaContextProvider>
-          </BlockchainProvider>;
+            </BlockchainProvider>
+          </DotSamaContextProvider>
         </ThemeProvider>
       </ColorModeContext.Provider>
     </CacheProvider>

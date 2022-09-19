@@ -5,7 +5,7 @@ import { useStore } from "@/stores/root";
 import { ChevronLeft } from "@mui/icons-material";
 import { Box, Button, IconButton, Typography, useTheme } from "@mui/material";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Select } from "../../Atom";
 import { AccountIndicator } from "../../Molecules/AccountIndicator";
 import { Modal } from "../../Molecules/Modal";
@@ -96,20 +96,6 @@ export const PolkadotConnect: React.FC<{}> = () => {
       await activate();
     }
   };
-
-  useEffect(() => {
-    let cancel = setTimeout(() => {
-      if (!hasTriedEagerConnect) {
-        openPolkadotModal();
-      }
-    }, 2000);
-
-    return () => {
-      clearTimeout(cancel);
-    };
-    // Only to be called on page load therefore we can omit dependencies.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasTriedEagerConnect]);
 
   return (
     <>

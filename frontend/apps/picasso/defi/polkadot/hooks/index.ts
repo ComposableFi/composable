@@ -1,23 +1,14 @@
 import { useDotSamaContext, useParachainApi, useRelayChainApi } from "substrate-react";
 
-export const usePicassoProvider = () => {
-  const api = useParachainApi(
-    "picasso"
-  );
-  return api;
-};
+export const usePicassoProvider = () => useParachainApi(
+  "picasso"
+);
 
-export const useKaruraProvider = () => {
-  const api = useParachainApi(
-    "karura"
-  );
-  return api;
-};
+const useKaruraProvider = () => useParachainApi(
+  "karura"
+);
 
-export const useKusamaProvider = () => {
-  const api = useRelayChainApi("kusama");
-  return api;
-};
+export const useKusamaProvider = () => useRelayChainApi("kusama");
 
 export const useSelectedAccount: () =>
   | { name: string; address: string }
