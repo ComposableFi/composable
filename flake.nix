@@ -812,8 +812,12 @@
               installPhase = ''
                 mkdir -p $out/book
                 chmod 777 $out/book
-                mdbook --version
                 cd ${all-directories-and-files}/book
+                mdbook --version
+
+                # `mdbook test` is most strict than `mdbook build`,
+                # it catches code blocks without a language tag,
+                # but it doesn't work with nix.
                 TMPDIR=$out/book mdbook build --dest-dir=$out/book 2>&1 | tee $out/log
                 if [ -z "$(cat $out/log | grep ERROR)" ]; then
                   true
