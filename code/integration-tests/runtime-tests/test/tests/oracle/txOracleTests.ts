@@ -16,6 +16,7 @@ import { getNewConnection } from "@composable/utils/connectionHelper";
 import { getDevWallets } from "@composable/utils/walletHelper";
 import { mintAssetsToWallet } from "@composable/utils/mintingHelper";
 import BN from "bn.js";
+import { u32 } from "@polkadot/types-codec";
 
 /**
  * Contains all TX tests for the pallet:
@@ -389,7 +390,7 @@ describe("[LAUNCH] Oracle Tests", function () {
    */
   describe("tx.reclaimStake Success Test", function () {
     if (!testConfiguration.enabledTests.reclaimStake__success.enabled) return;
-    let unlockBlock;
+    let unlockBlock: u32;
     // Timeout set to 20 minutes
     this.timeout(20 * 60 * 1000);
     this.slow(15 * 60 * 1000);

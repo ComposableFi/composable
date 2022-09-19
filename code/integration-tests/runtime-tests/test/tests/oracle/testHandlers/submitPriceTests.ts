@@ -74,7 +74,8 @@ export async function txOracleSubmitPriceSuccessTestHandler(
   } else await waitForBlocks(api);
 
   if (slashablePrice) {
-    const slashedStakeBalanceAfter = <Option<u128>>await api.query.oracle.stake(signerWallet4.publicKey);
+    const slashedStakeBalanceAfter = <Option<u128>>await api.query.oracle.oracleStake(signerWallet4.publicKey);
+    if (!slashedStakeBalanceBefore) throw new Error("Stake amount was unexpectedly `undefined`!");
     expect(slashedStakeBalanceBefore.unwrap()).to.be.bignumber.greaterThan(slashedStakeBalanceAfter.unwrap());
   }
 
@@ -85,7 +86,7 @@ export async function txOracleSubmitPriceSuccessTestHandler(
 async function priceEventVerification(api: ApiPromise) {
   const currentBlockNum = await api.query.system.number();
   let found = false;
-  let eventResult: FrameSystemEventRecord;
+  let eventResult: FrameSystemEventRecord | undefined;
   do {
     await waitForBlocks(api);
     const events = await api.query.system.events();
