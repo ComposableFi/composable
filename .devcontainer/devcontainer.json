@@ -8,9 +8,27 @@
 		"memory": "20gb",
 		"cpus": 8
 	},
+	"portsAttributes": {
+		"9988": {
+			"label": "Dali/Picasso",
+			"onAutoForward": "notify",
+			"protocol": "http"
+		},
+		"26657": {
+			"label": "Juno",
+			"onAutoForward": "notify",
+			"protocol": "http"
+		},
+		"8080": {
+			"label": "Hasura",
+			"onAutoForward": "notify",
+			"protocol": "http"
+		}
+	},
 	// GH bads ownership/ACL on each start and breaks nix
 	"postStartCommand": "sudo chmod +x /home/vscode/.nix-profile/bin/setfacl && sudo chmod 1777 /tmp/ && sudo /home/vscode/.nix-profile/bin/setfacl  --remove-default  /tmp",
 	"settings": {
+		"remote.autoForwardPorts": true,
 		"workbench.colorTheme": "GitHub Dark",
 		"workbench.iconTheme": "vscode-icons",
 		"lldb.executable": "/usr/bin/lldb",
