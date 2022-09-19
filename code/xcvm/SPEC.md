@@ -263,7 +263,6 @@ Registers are persisted after `Program` invocations and `Query`able from other c
 
 A query returns a `QueryResult`:
 
-```ebpf
 QueryResult ::= Header Data 
 Header ::= Hash Number
 Data ::= 
