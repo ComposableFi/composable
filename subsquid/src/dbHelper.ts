@@ -186,51 +186,7 @@ export async function saveAccountAndEvent(
  * @param amountLocked
  * @param assetId
  */
-export async function storeHistoricalLockedValue(
-  ctx: EventHandlerContext<Store>,
-  amountLocked: bigint,
-  assetId: string
-): Promise<void> {
-  const wsProvider = new WsProvider("ws://127.0.0.1:9988");
-  const api = await ApiPromise.create({ provider: wsProvider });
-
-  const oraclePrice = await api.query.oracle.prices(assetId);
-
-  // @ts-ignore
-  if (!oraclePrice?.price) {
-    // no-op.
-    return;
-  }
-
-  // @ts-ignore
-  const assetPrice = BigInt(oraclePrice.price.toString());
-
-  const lastLockedValue = await getLastLockedValue(ctx);
-
-  let event = await ctx.store.get(Event, { where: { id: ctx.event.id } });
-
-  if (!event) {
-    return Promise.reject("Event not found");
-  }
-
-  const historicalLockedValue = new HistoricalLockedValue({
-    id: randomUUID(),
-    event,
-    amount: lastLockedValue + amountLocked * assetPrice,
-    currency: Currency.USD,
-    timestamp: BigInt(new Date(ctx.block.timestamp).valueOf()),
-  });
-
-  await ctx.store.save(historicalLockedValue);
-}
-
-/**
- * Stores a new HistoricalLockedValue with current locked amount
- * @param ctx
- * @param amountLocked
- * @param assetId
- */
- export async function storeHistoricalLockedValueAssetPair(
+ export async function storeHistoricalLockedValue(
   ctx: EventHandlerContext<Store>,
   amountsLocked: Record<string, bigint>
 ): Promise<void> {

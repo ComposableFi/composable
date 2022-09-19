@@ -13,7 +13,7 @@ import {
   get,
   getLatestPoolByPoolId,
   getOrCreate,
-  storeHistoricalLockedValueAssetPair,
+  storeHistoricalLockedValue,
 } from "../dbHelper";
 import {
   Event,
@@ -278,7 +278,7 @@ export async function processLiquidityAddedEvent(
     await ctx.store.save(eventEntity);
     await ctx.store.save(pabloTransaction);
 
-    await storeHistoricalLockedValueAssetPair(ctx, {
+    await storeHistoricalLockedValue(ctx, {
       [baseAsset.assetId]: liquidityAddedEvt.baseAmount,
       [quoteAsset.assetId]: liquidityAddedEvt.quoteAmount,
     });
@@ -383,7 +383,7 @@ export async function processLiquidityRemovedEvent(
     await ctx.store.save(eventEntity);
     await ctx.store.save(pabloTransaction);
 
-    await storeHistoricalLockedValueAssetPair(ctx, {
+    await storeHistoricalLockedValue(ctx, {
       [baseAsset.assetId]: liquidityRemovedEvt.baseAmount,
       [quoteAsset.assetId]: liquidityRemovedEvt.quoteAmount,
     });
