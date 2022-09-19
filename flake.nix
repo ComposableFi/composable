@@ -1040,6 +1040,17 @@
               inherit packages;
             };
           };
+          
+          utils = {
+            mkDevnetProgram = name: spec: pkgs.writeShellApplication {
+              inherit name;
+              runtimeInputs =
+                [ pkgs.arion pkgs.docker pkgs.coreutils pkgs.bash ];
+              text = ''
+                arion --prebuilt-file ${pkgs.arion.build spec} up --build --force-recreate -V --always-recreate-deps --remove-orphans
+              '';
+            };
+          };
 
           apps = let
             mkDevnetProgram = name: spec: pkgs.writeShellApplication {
