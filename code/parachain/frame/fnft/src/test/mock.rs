@@ -8,7 +8,9 @@ use frame_support::{
 	PalletId,
 };
 use frame_system as system;
+use frame_system::EnsureRoot;
 pub use sp_core::{
+	crypto::AccountId32,
 	sr25519::{Public, Signature},
 	H256,
 };
@@ -18,9 +20,7 @@ use sp_runtime::{
 };
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<MockRuntime>;
-type AccountId = u128;
 type Block = frame_system::mocking::MockBlock<MockRuntime>;
-type CurrencyId = u128;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -31,10 +31,19 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system,
 		Timestamp: pallet_timestamp,
+		CurrencyFactory: pallet_currency_factory,
 		Nft: crate,
 		Proxy: pallet_account_proxy,
 	}
 );
+
+impl pallet_currency_factory::Config for MockRuntime {
+	type Event = Event;
+	type AssetId = u128;
+	type AddOrigin = EnsureRoot<AccountId32>;
+	type Balance = u128;
+	type WeightInfo = ();
+}
 
 parameter_types! {
 	pub const FnftPalletId: PalletId = PalletId(*b"pal_fnft");
@@ -49,9 +58,9 @@ impl FnftAccountProxyTypeSelector<ProxyType> for MockFnftAccountProxyType {
 
 impl crate::Config for MockRuntime {
 	type Event = Event;
-
+	type CurrencyFactory = CurrencyFactory;
 	type MaxProperties = ConstU32<16>;
-	type FinancialNftCollectionId = CurrencyId;
+	type FinancialNftCollectionId = u128;
 	type FinancialNftInstanceId = u64;
 	type ProxyType = ProxyType;
 	type AccountProxy = Proxy;
@@ -104,7 +113,7 @@ impl system::Config for MockRuntime {
 	type BlockNumber = u64;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
-	type AccountId = AccountId;
+	type AccountId = AccountId32;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type Event = Event;

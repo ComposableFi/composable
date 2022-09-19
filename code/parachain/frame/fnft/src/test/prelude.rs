@@ -134,7 +134,7 @@ pub(crate) fn add_attributes_and_assert<
 >(
 	class: FinancialNftCollectionIdOf<MockRuntime>,
 	instance: &FinancialNftInstanceIdOf<MockRuntime>,
-	owner: u128,
+	owner: AccountIdOf<MockRuntime>,
 	attributes: &[(K, V)],
 ) {
 	for (key, value) in attributes {

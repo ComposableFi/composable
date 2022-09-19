@@ -30,6 +30,7 @@ sp-std = { default-features = false, git = "https://github.com/paritytech/substr
 
 composable-support = { path = "../composable-support", default-features = false }
 composable-traits = { path = "../composable-traits", default-features = false }
+pallet-currency-factory = { path = "../../frame/currency-factory", default-features = false }
 
 [dev-dependencies]
 composable-tests-helpers = { path = "../composable-tests-helpers" }
@@ -53,6 +54,7 @@ std = [
   "composable-support/std",
   "composable-tests-helpers/std",
   "pallet-account-proxy/std",
+  "pallet-currency-factory/std",
 ]
 
 runtime-benchmarks = [

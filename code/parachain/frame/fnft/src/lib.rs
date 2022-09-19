@@ -45,7 +45,7 @@ pub mod pallet {
 	use composable_support::math::safe::SafeAdd;
 	use composable_traits::{
 		account_proxy::AccountProxy,
-		currency::AssetIdLike,
+		currency::{AssetIdLike, CurrencyFactory},
 		fnft::{FinancialNft, FnftAccountProxyTypeSelector},
 	};
 	use core::fmt::Debug;
@@ -107,6 +107,8 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		type MaxProperties: Get<u32>;
+
+		type CurrencyFactory: CurrencyFactory<AssetId = Self::FinancialNftCollectionId>;
 
 		type FinancialNftCollectionId: Parameter
 			+ Member
@@ -477,11 +479,10 @@ pub mod pallet {
 			collection: &Self::CollectionId,
 			instance: &Self::ItemId,
 		) -> AccountIdOf<T> {
-			// `into_sub_account_truncating()` gives us 20 bytes of space to create a seed.
-			// `blake2_128()` returns 16 bytes of data. Opperation will not create collisions.
-			T::PalletId::get().into_sub_account_truncating(sp_io::hashing::blake2_128(
-				&(collection, instance).encode(),
-			))
+			let protocol_collection_id =
+				T::CurrencyFactory::unique_asset_id_to_protocol_asset_id(*collection);
+
+			T::PalletId::get().into_sub_account_truncating((protocol_collection_id, instance))
 		}
 
 		fn get_next_nft_id(

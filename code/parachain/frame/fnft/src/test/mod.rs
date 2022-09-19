@@ -1,12 +1,14 @@
+use sp_runtime::AccountId32;
+
 /// Contains the mock runtime for this pallet's test suite.
 pub(crate) mod mock;
 
 /// Various helpers used throughout this test suite.
 pub(crate) mod prelude;
 
-const ALICE: u128 = 0;
-const BOB: u128 = 1;
-const CHARLIE: u128 = 2;
+const ALICE: AccountId32 = AccountId32::new([0_u8; 32]);
+const BOB: AccountId32 = AccountId32::new([1_u8; 32]);
+const CHARLIE: AccountId32 = AccountId32::new([2_u8; 32]);
 
 /// Tests the pallet's [`frame_support::traits::tokens::nonfungibles`] traits implementations.
 mod nonfungibles {

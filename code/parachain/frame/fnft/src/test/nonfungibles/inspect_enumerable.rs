@@ -1,10 +1,13 @@
 use frame_support::traits::tokens::nonfungibles::{Create, InspectEnumerable};
 use std::collections::BTreeSet;
 
-use crate::test::{
-	mock::{new_test_ext, Nft},
-	prelude::*,
-	ALICE, BOB,
+use crate::{
+	test::{
+		mock::{new_test_ext, MockRuntime, Nft},
+		prelude::*,
+		ALICE, BOB,
+	},
+	AccountIdOf,
 };
 
 #[test]
@@ -21,12 +24,14 @@ pub(crate) fn test() {
 		let second_collection_items_bob = mint_many_nfts_and_assert::<1>(BOB, second_collection);
 
 		assert_eq!(
-			<Nft as InspectEnumerable<u128>>::collections().collect::<BTreeSet<_>>(),
+			<Nft as InspectEnumerable<AccountIdOf<MockRuntime>>>::collections()
+				.collect::<BTreeSet<_>>(),
 			BTreeSet::from([first_collection, second_collection])
 		);
 
 		assert_eq!(
-			<Nft as InspectEnumerable<u128>>::items(&first_collection).collect::<BTreeSet<_>>(),
+			<Nft as InspectEnumerable<AccountIdOf<MockRuntime>>>::items(&first_collection)
+				.collect::<BTreeSet<_>>(),
 			first_collection_items_alice
 				.into_iter()
 				.chain(first_collection_items_bob.into_iter())
@@ -34,7 +39,8 @@ pub(crate) fn test() {
 		);
 
 		assert_eq!(
-			<Nft as InspectEnumerable<u128>>::items(&second_collection).collect::<BTreeSet<_>>(),
+			<Nft as InspectEnumerable<AccountIdOf<MockRuntime>>>::items(&second_collection)
+				.collect::<BTreeSet<_>>(),
 			second_collection_items_alice
 				.into_iter()
 				.chain(second_collection_items_bob.into_iter())
@@ -42,7 +48,8 @@ pub(crate) fn test() {
 		);
 
 		assert_eq!(
-			<Nft as InspectEnumerable<u128>>::owned(&ALICE).collect::<BTreeSet<_>>(),
+			<Nft as InspectEnumerable<AccountIdOf<MockRuntime>>>::owned(&ALICE)
+				.collect::<BTreeSet<_>>(),
 			first_collection_items_alice
 				.iter()
 				.map(|i| (first_collection, *i))
@@ -52,7 +59,8 @@ pub(crate) fn test() {
 		);
 
 		assert_eq!(
-			<Nft as InspectEnumerable<u128>>::owned(&BOB).collect::<BTreeSet<_>>(),
+			<Nft as InspectEnumerable<AccountIdOf<MockRuntime>>>::owned(&BOB)
+				.collect::<BTreeSet<_>>(),
 			first_collection_items_bob
 				.iter()
 				.map(|i| (first_collection, *i))
@@ -62,29 +70,41 @@ pub(crate) fn test() {
 		);
 
 		assert_eq!(
-			<Nft as InspectEnumerable<u128>>::owned_in_collection(&first_collection, &ALICE)
-				.collect::<BTreeSet<_>>(),
+			<Nft as InspectEnumerable<AccountIdOf<MockRuntime>>>::owned_in_collection(
+				&first_collection,
+				&ALICE
+			)
+			.collect::<BTreeSet<_>>(),
 			BTreeSet::from(first_collection_items_alice),
 			"Iteration must work for owned instances in collection"
 		);
 
 		assert_eq!(
-			<Nft as InspectEnumerable<u128>>::owned_in_collection(&second_collection, &ALICE)
-				.collect::<BTreeSet<_>>(),
+			<Nft as InspectEnumerable<AccountIdOf<MockRuntime>>>::owned_in_collection(
+				&second_collection,
+				&ALICE
+			)
+			.collect::<BTreeSet<_>>(),
 			BTreeSet::from(second_collection_items_alice),
 			"Iteration must work for owned instances in collection"
 		);
 
 		assert_eq!(
-			<Nft as InspectEnumerable<u128>>::owned_in_collection(&first_collection, &BOB)
-				.collect::<BTreeSet<_>>(),
+			<Nft as InspectEnumerable<AccountIdOf<MockRuntime>>>::owned_in_collection(
+				&first_collection,
+				&BOB
+			)
+			.collect::<BTreeSet<_>>(),
 			BTreeSet::from(first_collection_items_bob),
 			"Iteration must work for owned instances in collection"
 		);
 
 		assert_eq!(
-			<Nft as InspectEnumerable<u128>>::owned_in_collection(&second_collection, &BOB)
-				.collect::<BTreeSet<_>>(),
+			<Nft as InspectEnumerable<AccountIdOf<MockRuntime>>>::owned_in_collection(
+				&second_collection,
+				&BOB
+			)
+			.collect::<BTreeSet<_>>(),
 			BTreeSet::from(second_collection_items_bob),
 			"Iteration must work for owned instances in collection"
 		);
