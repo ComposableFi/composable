@@ -29,6 +29,7 @@ in {
     environment = {
       HASURA_GRAPHQL_ENABLE_CONSOLE = "true";
       HASURA_GRAPHQL_DEV_MODE = "true";
+      HASURA_GRAPHQL_CORS_DOMAIN = "*";
       HASURA_GRAPHQL_ENABLED_LOG_TYPES =
         "startup, http-log, webhook-log, websocket-log, query-log, action-handler-log, data-connector-log";
       HASURA_GRAPHQL_METADATA_DATABASE_URL =
