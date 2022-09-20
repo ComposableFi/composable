@@ -108,8 +108,6 @@ pub mod pallet {
 
 		type MaxProperties: Get<u32>;
 
-		type CurrencyFactory: CurrencyFactory<AssetId = Self::FinancialNftCollectionId>;
-
 		type FinancialNftCollectionId: Parameter
 			+ Member
 			+ AssetIdLike

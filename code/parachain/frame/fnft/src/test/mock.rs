@@ -31,19 +31,10 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system,
 		Timestamp: pallet_timestamp,
-		CurrencyFactory: pallet_currency_factory,
 		Nft: crate,
 		Proxy: pallet_account_proxy,
 	}
 );
-
-impl pallet_currency_factory::Config for MockRuntime {
-	type Event = Event;
-	type AssetId = u128;
-	type AddOrigin = EnsureRoot<AccountId32>;
-	type Balance = u128;
-	type WeightInfo = ();
-}
 
 parameter_types! {
 	pub const FnftPalletId: PalletId = PalletId(*b"pal_fnft");
@@ -58,7 +49,6 @@ impl FnftAccountProxyTypeSelector<ProxyType> for MockFnftAccountProxyType {
 
 impl crate::Config for MockRuntime {
 	type Event = Event;
-	type CurrencyFactory = CurrencyFactory;
 	type MaxProperties = ConstU32<16>;
 	type FinancialNftCollectionId = u128;
 	type FinancialNftInstanceId = u64;
