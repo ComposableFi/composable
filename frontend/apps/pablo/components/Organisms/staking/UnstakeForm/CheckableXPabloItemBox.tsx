@@ -7,7 +7,6 @@ import {
   useTheme,
 } from "@mui/material";
 import { BaseAsset, Checkbox } from "@/components/Atoms";
-import { TOKENS } from "@/defi/Tokens";
 import { StakedFinancialNftPosition } from "@/defi/types";
 import { useAsset } from "@/defi/hooks";
 import { PBLO_ASSET_ID } from "@/defi/utils";

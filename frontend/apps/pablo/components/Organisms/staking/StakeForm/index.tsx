@@ -7,7 +7,9 @@ import { StakingRewardPool } from "@/defi/types";
 import { useAssetBalance } from "@/store/assets/hooks";
 import { DEFAULT_NETWORK_ID, PBLO_ASSET_ID } from "@/defi/utils";
 import { useAsset } from "@/defi/hooks";
-import { extractDurationPresets } from "@/defi/utils/stakingRewards/durationPresets";
+import {
+  extractDurationPresets,
+} from "@/defi/utils/stakingRewards/durationPresets";
 import { useStake } from "@/defi/hooks/stakingRewards";
 import { usePendingExtrinsic, useSelectedAccount } from "substrate-react";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
@@ -26,7 +28,7 @@ export const StakeForm: React.FC<
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const [amount, setAmount] = useState<BigNumber>(new BigNumber(0));
   const [valid, setValid] = useState<boolean>(false);
-  const [durationPreset, setDurationPreset] = useState<string>("0");
+  const [selectedMultiplier, setSelectedMultiplier] = useState<number>(0);
 
   const pabloAsset = useAsset(PBLO_ASSET_ID);
   const balance = useAssetBalance(DEFAULT_NETWORK_ID, PBLO_ASSET_ID);
@@ -35,11 +37,22 @@ export const StakeForm: React.FC<
     return extractDurationPresets(stakingRewardPool);
   }, [stakingRewardPool]);
 
-  const validMultiplier = stakingRewardPool && durationPreset in stakingRewardPool.lock.durationPresets;
+  const durationPresetSelected = useMemo(() => {
+    return multipliers.find((mul) => mul.value === selectedMultiplier);
+  }, [multipliers, selectedMultiplier]);
+
+  const validMultiplier =
+    stakingRewardPool &&
+    durationPresetSelected &&
+    durationPresetSelected.periodInSeconds in
+      stakingRewardPool.lock.durationPresets;
+
   const handleStake = useStake({
     poolId: new BigNumber(PBLO_ASSET_ID),
     amount,
-    durationPreset: new BigNumber(durationPreset),
+    durationPreset: new BigNumber(
+      durationPresetSelected ? durationPresetSelected.periodInSeconds : "-"
+    ),
   });
 
   const isStaking = usePendingExtrinsic(
@@ -81,9 +94,10 @@ export const StakeForm: React.FC<
 
       <SelectLockPeriod
         mt={3}
-        durationPreset={durationPreset}
+        setMultiplier={setSelectedMultiplier}
         periodItems={multipliers}
-        setDurationPreset={setDurationPreset}
+        durationPresetSelected={durationPresetSelected}
+        multiplier={selectedMultiplier}
       />
 
       <Box mt={3}>

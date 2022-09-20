@@ -1,57 +1,63 @@
-import { alpha, Box, Button, Grid, Typography, useTheme } from "@mui/material";
+import { alpha, Box, Typography, useTheme, Slider } from "@mui/material";
 import { Alert, Label } from "@/components/Atoms";
 import { BoxProps } from "@mui/material";
-import BigNumber from "bignumber.js";
-import moment from "moment";
+import { DurationPresetMark } from "@/defi/utils/stakingRewards/durationPresets";
+import {
+  calculatePresetExpiry,
+} from "@/defi/utils/stakingRewards/durationPresets";
+import { DATE_FORMAT } from "@/defi/utils";
 import { useMemo } from "react";
 
-type Period = {
-  days?: number;
-  years?: number;
-  months?: number;
-  weeks?: number;
-};
-
 export type SelectLockPeriodProps = {
-  periodItems: {
-    label: string;
-    period: Period;
-    multiplier: BigNumber;
-    value: string;
-  }[];
-  durationPreset: string;
-  setDurationPreset?: (multiplier: string) => void;
+  periodItems: DurationPresetMark[];
+  durationPresetSelected?: DurationPresetMark;
+  setMultiplier?: (multiplier: number) => void;
+  multiplier: number;
 } & BoxProps;
 
 export const SelectLockPeriod: React.FC<SelectLockPeriodProps> = ({
   periodItems,
-  durationPreset,
-  setDurationPreset,
+  durationPresetSelected,
+  setMultiplier,
+  multiplier,
   ...boxProps
 }) => {
   const theme = useTheme();
 
-  const selected = (duration: string) => {
-    return duration === durationPreset;
-  };
+  const durationPresetExpiry = useMemo(() => {
+    if (!durationPresetSelected) return null;
 
-  const expiry = useMemo(() => {
-    if (durationPreset === "0") return null;
-    const right_now = moment();
-    right_now.add(durationPreset, "seconds");
-    return right_now.format("DD.MM.YYYY");
-  }, [durationPreset]);
+    return calculatePresetExpiry(+durationPresetSelected.periodInSeconds);
+  }, [durationPresetSelected]);
+
 
   return (
     <Box {...boxProps}>
-      <Label
-        label="Select lock period (multiplier)"
-        TypographyProps={{ color: "text.secondary" }}
-        TooltipProps={{
-          title: "Select lock period (multiplier)",
-        }}
-      />
-      <Grid container spacing={3}>
+
+      <Box display="flex" justifyContent="space-between" alignItems="center">
+        <Label
+          label="Select lock period (multiplier)"
+          TypographyProps={{ color: "text.secondary" }}
+          TooltipProps={{
+            title: "Select lock period (multiplier)",
+          }}
+        />
+        <Box display="flex" justifyContent="flex-end" alignItems="center">
+          <Typography variant="body2" color={alpha(theme.palette.common.white, 0.6)}>
+            APR
+          </Typography>
+        </Box>
+      </Box>
+      <Box display="flex" justifyContent="space-between" alignItems="center">
+        <Typography variant="h6">
+          {durationPresetSelected?.label}
+        </Typography>
+        <Typography variant="subtitle1" color={theme.palette.success.main}>
+          6.00
+        </Typography>
+      </Box>
+
+      {/* <Grid container spacing={3}>
         {periodItems.map((item) => (
           <Grid item sm={12} md={6} lg={3} key={item.multiplier.toString()}>
             <Button
@@ -81,7 +87,22 @@ export const SelectLockPeriod: React.FC<SelectLockPeriodProps> = ({
             </Button>
           </Grid>
         ))}
-      </Grid>
+      </Grid> */}
+
+      <Slider
+        value={multiplier}
+        step={null}
+        max={periodItems.reduce((agg, curr) => {
+          return curr.value > agg ? curr.value : agg
+        }, Number.MIN_SAFE_INTEGER)}
+        min={periodItems.reduce((agg, curr) => {
+          return curr.value < agg ? curr.value : agg
+        }, Number.MAX_SAFE_INTEGER)}
+        marks={periodItems}
+        onChange={(_evt, value) => {
+          setMultiplier?.(value as number)
+        }}
+      />
 
       <Label
         mt={3}
@@ -102,13 +123,13 @@ export const SelectLockPeriod: React.FC<SelectLockPeriodProps> = ({
       >
         <Typography
           variant="body1"
-          color={expiry ? "text.primary" : "text.secondary"}
+          color={durationPresetExpiry ? "text.primary" : "text.secondary"}
         >
-          {expiry !== null ? expiry : "Select lock time"}
+          {durationPresetExpiry !== null ? durationPresetExpiry.format(DATE_FORMAT) : "Select lock time"}
         </Typography>
       </Box>
 
-      {expiry && (
+      {durationPresetExpiry && (
         <Box mt={1.5}>
           <Alert
             severity="warning"

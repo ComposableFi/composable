@@ -1,4 +1,5 @@
 import { StakingRewardPool } from "@/defi/types";
+import { Mark } from "@mui/base";
 import BigNumber from "bignumber.js";
 import moment from "moment";
 import { DAYS } from "../constants";
@@ -51,14 +52,14 @@ export function calculatePeriod(durationInSeconds: string | number): Period {
                 { years: moment.duration(durationInSeconds, "seconds").asYears() };
 }
 
+export interface DurationPresetMark extends Mark {
+    period: Period;
+    periodInSeconds: string;
+}
+
 export function extractDurationPresets(
     stakingPool: StakingRewardPool | undefined
-): Array<{
-    label: string;
-    period: Period;
-    multiplier: BigNumber;
-    value: string;
-}> {
+): Array<DurationPresetMark> {
     if (!stakingPool) return [];
 
     return Object.keys(stakingPool.lock.durationPresets).map((i) => {
@@ -69,8 +70,19 @@ export function extractDurationPresets(
         return {
             label,
             period,
-            multiplier: stakingPool.lock.durationPresets[i],
-            value: i,
+            periodInSeconds: i,
+            value: stakingPool.lock.durationPresets[i].toNumber(),
         };
     });
+}
+
+/**
+ * Get preset duration expiry
+ * @param presetDuration amount of lock time in seconds
+ * @returns 
+ */
+export function calculatePresetExpiry(presetDuration: number): moment.Moment {
+    const timeNow = moment();
+    timeNow.add(presetDuration, "seconds");
+    return timeNow;
 }

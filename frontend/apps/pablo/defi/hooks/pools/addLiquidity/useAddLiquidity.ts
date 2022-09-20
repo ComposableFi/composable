@@ -118,7 +118,7 @@ export const useAddLiquidity = ({
     [enqueueSnackbar, dispatch]
   );
 
-  const onAddLiquidity = useCallback(async () => {
+  return useCallback(async () => {
     try {
       if (
         !selectedAccount ||
@@ -176,5 +176,4 @@ export const useAddLiquidity = ({
     onTxReady,
   ]);
 
-  return onAddLiquidity;
 };
