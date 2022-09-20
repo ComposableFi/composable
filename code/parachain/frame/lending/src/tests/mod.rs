@@ -1,5 +1,5 @@
-use crate::{currency::*, mocks::general::*, MarketIndex};
-use composable_support::validation::TryIntoValidated;
+use crate::{currency::*, mocks::general::*, MarketId};
+use composable_support::{math::safe::SafeAdd, validation::TryIntoValidated};
 use composable_traits::{
 	defi::{CurrencyPair, DeFiComposableConfig, MoreThanOneFixedU128, Rate},
 	lending::{math::*, CreateInput, UpdateInput},
@@ -9,11 +9,16 @@ use composable_traits::{
 use frame_support::{
 	assert_ok,
 	dispatch::DispatchResultWithPostInfo,
-	traits::{fungibles::Mutate, OriginTrait},
+	traits::{fungibles::Mutate, Hooks, OriginTrait},
 	BoundedVec,
 };
 use pallet_vault::models::VaultInfo;
 use sp_runtime::{FixedPointNumber, Percent, Perquintill};
+
+use core::ops::Mul;
+use frame_system::Config as FrameSystemConfig;
+use pallet_timestamp::Config as PalletTimestampConfig;
+use sp_runtime::traits::One;
 
 pub mod borrow;
 pub mod interest;
@@ -126,7 +131,7 @@ pub fn create_market<T, const NORMALIZED_PRICE: u128>(
 	manager: SystemAccountIdOf<T>,
 	reserved_factor: Perquintill,
 	collateral_factor: MoreThanOneFixedU128,
-) -> (MarketIndex, T::VaultId)
+) -> (MarketId, T::VaultId)
 where
 	T: ConfigBound,
 	SystemOriginOf<T>: OriginTrait<AccountId = SystemAccountIdOf<T>>,
@@ -189,7 +194,7 @@ fn new_jump_model() -> (Percent, InterestRateModel) {
 pub fn create_simple_vaulted_market(
 	borrow_asset: RuntimeCurrency,
 	manager: AccountId,
-) -> ((MarketIndex, VaultId), CurrencyId) {
+) -> ((MarketId, VaultId), CurrencyId) {
 	let (_, VaultInfo { lp_token_id, .. }) = create_simple_vault(borrow_asset, manager);
 
 	let market = create_market::<Runtime, 50_000>(
@@ -208,7 +213,7 @@ pub fn create_simple_vaulted_market(
 /// `NORMALIZED_PRICE` is set to `50_000`.
 ///
 /// See [`create_market()`] for more information.
-pub fn create_simple_market() -> (MarketIndex, VaultId) {
+pub fn create_simple_market() -> (MarketId, VaultId) {
 	create_market_with_specific_collateral_factor::<Runtime>(DEFAULT_COLLATERAL_FACTOR, *ALICE)
 }
 
@@ -216,9 +221,7 @@ pub fn create_simple_market() -> (MarketIndex, VaultId) {
 /// Initial collateral asset price is `50_000` USDT. Market's collateral factor equals two.
 /// It means that borrow supposed to be undercollateralized when
 /// borrowed amount is higher then one half of collateral amount in terms of USDT.
-pub fn create_market_for_liquidation_test<T>(
-	manager: T::AccountId,
-) -> (crate::MarketIndex, T::VaultId)
+pub fn create_market_for_liquidation_test<T>(manager: T::AccountId) -> (crate::MarketId, T::VaultId)
 where
 	T: ConfigBound,
 	SystemOriginOf<T>: OriginTrait<AccountId = SystemAccountIdOf<T>>,
@@ -233,7 +236,7 @@ where
 pub fn create_market_with_specific_collateral_factor<T>(
 	collateral_factor: u128,
 	manager: T::AccountId,
-) -> (crate::MarketIndex, T::VaultId)
+) -> (crate::MarketId, T::VaultId)
 where
 	T: ConfigBound,
 	SystemOriginOf<T>: OriginTrait<AccountId = SystemAccountIdOf<T>>,
@@ -257,7 +260,7 @@ where
 pub fn mint_and_deposit_collateral<T>(
 	account: SystemAccountIdOf<T>,
 	balance: u128,
-	market_index: MarketIndex,
+	market_index: MarketId,
 	asset_id: u128,
 ) where
 	T: frame_system::Config
@@ -287,7 +290,7 @@ pub fn mint_and_deposit_collateral<T>(
 /// Checks if corresponded event was emitted.
 pub fn borrow<T>(
 	borrower: T::AccountId,
-	market_id: crate::MarketIndex,
+	market_id: crate::MarketId,
 	amount: <T as DeFiComposableConfig>::Balance,
 ) where
 	T: ConfigBound,
@@ -323,4 +326,56 @@ where
 	T: frame_system::Config,
 {
 	assert!(frame_system::Pallet::<T>::events().iter().all(|record| record.event != event));
+}
+
+pub const MILLISECS_PER_BLOCK: u64 = 6000;
+
+/// Processes the specified amount of blocks with [`next_block()`]
+pub fn process_and_progress_blocks<Pallet, Runtime>(blocks_to_process: usize)
+where
+	Runtime: FrameSystemConfig + PalletTimestampConfig,
+	<Runtime as FrameSystemConfig>::BlockNumber: SafeAdd,
+	Pallet: Hooks<<Runtime as FrameSystemConfig>::BlockNumber>,
+	u64: Mul<
+		<Runtime as FrameSystemConfig>::BlockNumber,
+		Output = <Runtime as PalletTimestampConfig>::Moment,
+	>,
+	<Runtime as frame_system::Config>::Hash: From<[u8; 32]>,
+{
+	(0..blocks_to_process).for_each(|_| {
+		next_block::<Pallet, Runtime>();
+	})
+}
+
+/// Finalizes the previous block with [`Pallet::on_finalize`](Hooks::on_finalize), progresses to the
+// next block, initializes the block with [`Pallet::on_initialize`](Hooks::on_initialize), and then
+/// sets the timestamp to where it should be for the block. Returns the block number of the block
+/// that was progressed to.
+pub fn next_block<Pallet, Runtime>() -> <Runtime as FrameSystemConfig>::BlockNumber
+where
+	Runtime: FrameSystemConfig + PalletTimestampConfig,
+	<Runtime as FrameSystemConfig>::BlockNumber: SafeAdd,
+	Pallet: Hooks<<Runtime as FrameSystemConfig>::BlockNumber>,
+	u64: Mul<
+		<Runtime as FrameSystemConfig>::BlockNumber,
+		Output = <Runtime as PalletTimestampConfig>::Moment,
+	>,
+	<Runtime as frame_system::Config>::Hash: From<[u8; 32]>,
+{
+	let current_block = frame_system::Pallet::<Runtime>::block_number();
+	frame_system::Pallet::<Runtime>::on_finalize(current_block);
+	Pallet::on_finalize(current_block);
+
+	let next_block = current_block
+		.safe_add(&<<Runtime as FrameSystemConfig>::BlockNumber as One>::one())
+		.expect("hit the numeric limit for block number");
+
+	frame_system::Pallet::<Runtime>::on_initialize(next_block);
+	frame_system::Pallet::<Runtime>::set_block_number(next_block);
+
+	pallet_timestamp::Pallet::<Runtime>::set_timestamp(MILLISECS_PER_BLOCK * next_block);
+
+	Pallet::on_initialize(next_block);
+
+	next_block
 }

@@ -7,7 +7,6 @@ use crate::{
 	},
 };
 use codec::Decode;
-use composable_tests_helpers::test;
 use frame_support::{assert_ok, traits::fungibles::Mutate, BoundedVec};
 use sp_core::{
 	offchain::{testing, TransactionPoolExt},
@@ -44,7 +43,9 @@ fn test_liquidation_offchain_worker() {
 		assert_ok!(Tokens::mint_into(USDT::ID, &lender, vault_value));
 		assert_ok!(Vault::deposit(Origin::signed(lender), vault_id, vault_value));
 
-		test::block::process_and_progress_blocks::<Lending, Runtime>(1);
+		//test::block::process_and_progress_blocks::<Lending, Runtime>(1);
+		crate::Markets::<Runtime>::iter().for_each(|x| println!("{:?}", x));
+		crate::tests::process_and_progress_blocks::<Lending, Runtime>(1);
 		// Deposit 1 BTC collateral from risky borrower account.
 		mint_and_deposit_collateral::<Runtime>(risky_borrower, BTC::units(1), market_id, BTC::ID);
 		// Risky borrower borrows 20_000 USDT.

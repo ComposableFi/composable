@@ -1,8 +1,6 @@
 use super::prelude::*;
 use crate::{
-	helpers::{accrue_interest_internal, current_interest_rate},
-	tests::new_jump_model,
-	types::AccruedInterest,
+	helpers::interest::current_interest_rate, tests::new_jump_model, types::AccruedInterest,
 };
 use composable_traits::{defi::Rate, lending::math::InterestRate, time::SECONDS_PER_YEAR_NAIVE};
 use sp_arithmetic::assert_eq_error_rate;
@@ -29,7 +27,7 @@ fn apr_for_zero() {
 	let borrow_index = Rate::saturating_from_integer(1_u128);
 
 	let AccruedInterest { accrued_increment: accrued_increase, .. } =
-		accrue_interest_internal::<Runtime, InterestRateModel>(
+		Lending::accrue_interest_internal::<InterestRateModel>(
 			utilization,
 			interest_rate_model,
 			borrow_index,
@@ -46,7 +44,7 @@ fn apr_for_year_for_max() {
 	let utilization = Percent::from_percent(80);
 	let borrow_index = Rate::saturating_from_integer(1_u128);
 	let total_borrows = u128::MAX;
-	let result = accrue_interest_internal::<Runtime, InterestRateModel>(
+	let result = Lending::accrue_interest_internal::<InterestRateModel>(
 		utilization,
 		interest_rate_model,
 		borrow_index,
@@ -67,7 +65,7 @@ fn accrue_interest_base_cases() {
 	let accrued_debt = 0;
 	let total_borrows = total_issued - accrued_debt;
 	let AccruedInterest { accrued_increment: accrued_increase, .. } =
-		accrue_interest_internal::<Runtime, InterestRateModel>(
+		Lending::accrue_interest_internal::<InterestRateModel>(
 			optimal,
 			interest_rate_model,
 			borrow_index,
@@ -79,7 +77,7 @@ fn accrue_interest_base_cases() {
 
 	let delta_time = MILLISECS_PER_BLOCK;
 	let AccruedInterest { accrued_increment: accrued_increase, .. } =
-		accrue_interest_internal::<Runtime, InterestRateModel>(
+		Lending::accrue_interest_internal::<InterestRateModel>(
 			optimal,
 			interest_rate_model,
 			borrow_index,
@@ -114,7 +112,7 @@ fn accrue_interest_induction() {
 				let AccruedInterest {
 					accrued_increment: accrued_increase_1,
 					new_borrow_index: borrow_index_1,
-				} = accrue_interest_internal::<Runtime, InterestRateModel>(
+				} = Lending::accrue_interest_internal::<InterestRateModel>(
 					optimal,
 					interest_rate_model,
 					borrow_index,
@@ -126,7 +124,7 @@ fn accrue_interest_induction() {
 				let AccruedInterest {
 					accrued_increment: accrued_increase_2,
 					new_borrow_index: borrow_index_2,
-				} = accrue_interest_internal::<Runtime, InterestRateModel>(
+				} = Lending::accrue_interest_internal::<InterestRateModel>(
 					optimal,
 					interest_rate_model,
 					borrow_index,
@@ -155,7 +153,7 @@ fn accrue_interest_plotter() {
 	let _data: Vec<_> = (0..TOTAL_BLOCKS)
 		.map(|x| {
 			let AccruedInterest { accrued_increment, .. } =
-				accrue_interest_internal::<Runtime, InterestRateModel>(
+				Lending::accrue_interest_internal::<InterestRateModel>(
 					optimal,
 					interest_rate_model,
 					borrow_index,
@@ -169,7 +167,7 @@ fn accrue_interest_plotter() {
 		.collect();
 
 	let AccruedInterest { accrued_increment: total_accrued, .. } =
-		accrue_interest_internal::<Runtime, InterestRateModel>(
+		Lending::accrue_interest_internal::<InterestRateModel>(
 			optimal,
 			interest_rate_model,
 			Rate::checked_from_integer::<u128>(1).unwrap(),
