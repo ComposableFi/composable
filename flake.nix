@@ -479,15 +479,25 @@
                   taplo fmt
                   
                   # .rs
-                	find . -name "*.rs" -type f -print0 | xargs -0 rustfmt --edition 2021;
+                	find . -path ./code/target -prune -o -name "*.rs" -type f -print0 | xargs -0 rustfmt --edition 2021;
                   
                   # .js .ts .tsx 
                   prettier \
                     --config="./code/integration-tests/runtime-tests/.prettierrc" \
+                    --write \
                     --ignore-path="./code/integration-tests/runtime-tests/.prettierignore" \
                     ./code/integration-tests/runtime-tests/                  
               '';
             };
+
+            docker-wipe-system =
+              pkgs.writeShellScriptBin "docker-wipe-system" ''
+                echo "Wiping all docker containers, images, and volumes";
+                docker stop $(docker ps -q)
+                docker system prune -f
+                docker rmi -f $(docker images -a -q)    
+                docker volume prune -f
+              '';
 
             composable-book = import ./book/default.nix {
               crane = crane-stable;
@@ -781,6 +791,19 @@
               cargoBuildCommand = "cargo check";
               cargoExtraArgs = "--benches --all --features runtime-benchmarks";
             });
+
+            cspell-check = stdenv.mkDerivation {
+              name = "cspell-check";
+              dontUnpack = true;
+
+              buildInputs = [ all-directories-and-files nodePackages.cspell ];
+              installPhase = ''
+                mkdir $out
+                echo "cspell version: $(cspell --version)"
+                cd ${all-directories-and-files}
+                cspell lint --config cspell.yaml --no-progress "**"
+              '';
+            };
 
             kusama-picasso-karura-devnet = let
               config = (pkgs.callPackage

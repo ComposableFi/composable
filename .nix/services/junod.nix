@@ -1,4 +1,4 @@
-{
+{ rpcPort }: {
   service = {
     name = "junod-testing-local";
     image = "ghcr.io/cosmoscontracts/juno:v9.0.0";
@@ -17,7 +17,6 @@
         junod start --rpc.laddr tcp://0.0.0.0:26657 --grpc.address 0.0.0.0:9099 --trace
       ''
     ];
-    ports = [ "9090:9099" "26657:26657" ];
+    ports = [ "9090:9099" "${toString rpcPort}:26657" ];
   };
 }
-

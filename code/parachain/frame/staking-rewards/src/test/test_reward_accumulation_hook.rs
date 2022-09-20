@@ -30,7 +30,6 @@ fn test_reward_update_calculation() {
 		let now = <<Test as crate::Config>::UnixTime as UnixTime>::now().as_secs();
 
 		let reward_config = RewardConfig {
-			asset_id: PICA::ID,
 			max_rewards: MAX_REWARDS,
 			reward_rate: RewardRate::per_second(PICA::units(2)),
 		};
@@ -71,6 +70,7 @@ fn test_reward_update_calculation() {
 
 			StakingRewards::reward_accumulation_hook_reward_update_calculation(
 				pool_id,
+				PICA::ID,
 				&mut reward,
 				now.safe_add(&block_seconds(block_number).try_into().unwrap()).unwrap(),
 			);
@@ -103,6 +103,7 @@ fn test_reward_update_calculation() {
 
 		StakingRewards::reward_accumulation_hook_reward_update_calculation(
 			pool_id,
+			PICA::ID,
 			&mut reward,
 			now.safe_add(&block_seconds(current_block_number).try_into().unwrap()).unwrap(),
 		);
@@ -160,7 +161,6 @@ fn test_accumulate_rewards_pool_empty_refill() {
 					(
 						A::ID,
 						RewardConfig {
-							asset_id: A::ID,
 							max_rewards: A_A_MAX_REWARDS,
 							reward_rate: RewardRate::per_second(A_A_REWARD_RATE),
 						},
@@ -168,7 +168,6 @@ fn test_accumulate_rewards_pool_empty_refill() {
 					(
 						B::ID,
 						RewardConfig {
-							asset_id: B::ID,
 							max_rewards: A_B_MAX_REWARDS,
 							reward_rate: RewardRate::per_second(A_B_REWARD_RATE),
 						},
@@ -289,7 +288,6 @@ fn test_accumulate_rewards_hook() {
 					(
 						A::ID,
 						RewardConfig {
-							asset_id: A::ID,
 							max_rewards: A_A_MAX_REWARDS,
 							reward_rate: RewardRate::per_second(A_A_REWARD_RATE),
 						},
@@ -297,7 +295,6 @@ fn test_accumulate_rewards_hook() {
 					(
 						B::ID,
 						RewardConfig {
-							asset_id: B::ID,
 							max_rewards: A_B_MAX_REWARDS,
 							reward_rate: RewardRate::per_second(A_B_REWARD_RATE),
 						},
@@ -325,7 +322,6 @@ fn test_accumulate_rewards_hook() {
 					(
 						D::ID,
 						RewardConfig {
-							asset_id: D::ID,
 							max_rewards: C_D_MAX_REWARDS,
 							reward_rate: RewardRate::per_second(C_D_REWARD_RATE),
 						},
@@ -333,7 +329,6 @@ fn test_accumulate_rewards_hook() {
 					(
 						E::ID,
 						RewardConfig {
-							asset_id: E::ID,
 							max_rewards: C_E_MAX_REWARDS,
 							reward_rate: RewardRate::per_second(C_E_REWARD_RATE),
 						},
@@ -587,7 +582,6 @@ fn test_accumulate_rewards_hook() {
 				reward_configs: [(
 					F::ID,
 					RewardConfig {
-						asset_id: F::ID,
 						max_rewards: F::units(0xDEADC0DE),
 						reward_rate: RewardRate::per_second(0_u128),
 					},
@@ -797,10 +791,6 @@ pub(crate) fn check_rewards(expected: &[CheckRewards<'_>]) {
 				"reward asset {reward_asset_id} not present in pool {pool_asset_id}"
 			));
 
-			assert_eq!(
-				reward.asset_id, *reward_asset_id,
-				r#"error at pool {pool_asset_id}, asset {reward_asset_id}"#,
-			);
 			assert!(
 				&reward.total_rewards == expected_total_rewards,
 				r#"

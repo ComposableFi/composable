@@ -13,6 +13,7 @@ use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
+	DispatchError,
 };
 use system::EnsureRoot;
 
@@ -67,6 +68,10 @@ pub struct CurrencyIdGenerator;
 
 impl CurrencyFactory<AssetId, Balance> for CurrencyIdGenerator {
 	fn create(_: RangeId, _: Balance) -> Result<AssetId, sp_runtime::DispatchError> {
+		Ok(1_u64)
+	}
+
+	fn protocol_asset_id_to_unique_asset_id(_: u32, _: RangeId) -> Result<AssetId, DispatchError> {
 		Ok(1_u64)
 	}
 }

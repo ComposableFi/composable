@@ -21,6 +21,12 @@ pub trait CurrencyFactory<AssetId, Balance> {
 	fn reserve_lp_token_id(ed: Balance) -> Result<AssetId, DispatchError> {
 		Self::create(RangeId::LP_TOKENS, ed)
 	}
+	/// Given a `u32` ID (within the range of `0` to `u32::MAX`) returns a unique `AssetId` reserved
+	/// by Currency Factory for the runtime.
+	fn protocol_asset_id_to_unique_asset_id(
+		protocol_asset_id: u32,
+		range_id: RangeId,
+	) -> Result<AssetId, DispatchError>;
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Encode, Decode, TypeInfo)]

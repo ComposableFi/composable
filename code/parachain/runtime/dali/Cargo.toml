@@ -213,6 +213,7 @@ runtime-benchmarks = [
   "ibc-transfer/runtime-benchmarks",
   "pallet-staking-rewards/runtime-benchmarks",
   "cosmwasm/runtime-benchmarks",
+  "asset-tx-payment/runtime-benchmarks",
 ]
 std = [
   "assets-registry/std",
@@ -302,4 +303,5 @@ std = [
   "xcm-executor/std",
   "xcm/std",
   "cosmwasm/std",
+  "asset-tx-payment/std",
 ]
