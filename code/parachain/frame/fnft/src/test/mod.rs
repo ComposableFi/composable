@@ -6,9 +6,15 @@ pub(crate) mod mock;
 /// Various helpers used throughout this test suite.
 pub(crate) mod prelude;
 
-const ALICE: AccountId32 = AccountId32::new([0_u8; 32]);
-const BOB: AccountId32 = AccountId32::new([1_u8; 32]);
-const CHARLIE: AccountId32 = AccountId32::new([2_u8; 32]);
+const ALICE: AccountId32 = AccountId32::new([
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+]);
+const BOB: AccountId32 = AccountId32::new([
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2,
+]);
+const CHARLIE: AccountId32 = AccountId32::new([
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
+]);
 
 /// Tests the pallet's [`frame_support::traits::tokens::nonfungibles`] traits implementations.
 mod nonfungibles {
