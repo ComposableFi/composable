@@ -35,6 +35,7 @@ pub enum CosmwasmVMError<T: Config> {
 	ReadOnlyViolation,
 	OutOfGas,
 	Unsupported,
+	Rpc(String),
 }
 
 impl<T: Config> core::fmt::Display for CosmwasmVMError<T> {

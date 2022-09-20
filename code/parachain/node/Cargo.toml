@@ -38,6 +38,9 @@ lending-rpc = { path = "../frame/lending/rpc" }
 lending-runtime-api = { path = "../frame/lending/runtime-api" }
 pablo-rpc = { path = "../frame/pablo/rpc" }
 pablo-runtime-api = { path = "../frame/pablo/runtime-api" }
+cosmwasm-rpc = { path = "../frame/cosmwasm/rpc" }
+cosmwasm-runtime-api = { path = "../frame/cosmwasm/runtime-api" }
+
 
 # FRAME Dependencies
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }

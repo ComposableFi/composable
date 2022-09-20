@@ -62,6 +62,7 @@ pub mod pallet {
 	};
 	use alloc::{
 		collections::{btree_map::Entry, BTreeMap},
+		format,
 		string::String,
 	};
 	use composable_support::abstractions::{
@@ -77,13 +78,14 @@ pub mod pallet {
 		ContractInfo as CosmwasmContractInfo, Env, Event as CosmwasmEvent, MessageInfo, Timestamp,
 		TransactionInfo,
 	};
+	pub use cosmwasm_minimal_std::{QueryRequest, QueryResponse};
 	use cosmwasm_vm::{
 		executor::{
 			AllocateInput, AsFunctionName, DeallocateInput, ExecuteInput, InstantiateInput,
 			MigrateInput, QueryInput, ReplyInput,
 		},
 		memory::PointerOf,
-		system::{cosmwasm_system_entrypoint, CosmwasmCodeId},
+		system::{cosmwasm_system_entrypoint, cosmwasm_system_query, CosmwasmCodeId},
 		vm::VmMessageCustomOf,
 	};
 	use cosmwasm_vm_wasmi::{host_functions, new_wasmi_vm, WasmiImportResolver, WasmiVM};
@@ -1221,6 +1223,36 @@ pub mod pallet {
 
 			sp_io::crypto::ed25519_verify(&signature, message, &public_key)
 		}
+	}
+
+	/// Query cosmwasm contracts
+	///
+	/// * `contract` the address of contract to query.
+	/// * `gas` the maximum gas to use, the remaining is refunded at the end of the transaction.
+	/// * `query_request` the binary query, which should be deserializable to `QueryRequest`.
+	pub fn query<T: Config>(
+		contract: AccountIdOf<T>,
+		gas: u64,
+		query_request: Vec<u8>,
+	) -> Result<QueryResponse, CosmwasmVMError<T>> {
+		let mut shared = Pallet::<T>::do_create_vm_shared(gas, InitialStorageMutability::ReadOnly);
+		let info = Pallet::<T>::contract_info(&contract)?;
+		let query_request: QueryRequest = serde_json::from_slice(&query_request)
+			.map_err(|e| CosmwasmVMError::Rpc(format!("{}", e)))?;
+		Pallet::<T>::cosmwasm_call(
+			&mut shared,
+			contract.clone(),
+			contract,
+			info,
+			Default::default(),
+			|vm| {
+				cosmwasm_system_query(vm, query_request)?
+					.into_result()
+					.map_err(|e| CosmwasmVMError::Rpc(format!("{:?}", e)))?
+					.into_result()
+					.map_err(|e| CosmwasmVMError::Rpc(e))
+			},
+		)
 	}
 
 	impl<T: Config> VMPallet for T {

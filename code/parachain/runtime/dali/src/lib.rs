@@ -1542,6 +1542,22 @@ impl_runtime_apis! {
 		}
 	}
 
+	impl cosmwasm_runtime_api::CosmwasmRuntimeApi<Block, AccountId, Vec<u8>, Vec<u8>> for Runtime {
+		fn query(
+			contract: AccountId,
+			gas: u64,
+			query_request: Vec<u8>,
+		) -> Vec<u8> {
+			cosmwasm::query::<Runtime>(
+				contract,
+				gas,
+				query_request,
+			).map(|resp| resp.0).unwrap_or_else(|_| {
+				Default::default()
+			})
+		}
+	}
+
 	impl sp_api::Core<Block> for Runtime {
 		fn version() -> RuntimeVersion {
 			VERSION
