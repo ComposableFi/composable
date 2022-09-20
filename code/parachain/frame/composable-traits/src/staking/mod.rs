@@ -34,7 +34,7 @@ pub struct RewardPool<
 	/// rewards accumulated
 	pub rewards: BoundedBTreeMap<AssetId, Reward<Balance>, MaxRewards>,
 
-	/// Total shares distributed among stakers
+	/// Total shares distributed among stakers. Bounded by whatever `Balance::MAX` is.
 	pub total_shares: Balance,
 
 	/// Already claimed shares by stakers by unstaking

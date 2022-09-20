@@ -29,6 +29,28 @@ pub struct Stake<
 	pub share: Balance,
 
 	/// Reduced rewards by asset for the position (d_n)
+	// REVIEW(benluelo): Consider moving the reductions out of the Stake struct.
+	//
+	// Options:
+	//
+	// - Separate storage item just for reductions
+	//   - Advantages:
+	//     - No longer need RateBasedReward.total_dilution_adjustment, as that field is the same as
+	//       the sum of all of the reductions of all of the stakes in the pool. Having to keep both
+	//       of those in sync feels like unnecessary complexity. This may also apply to other
+	//       fields as well.
+	//   - Disadvantages:
+	//     - In order to get the reductions for a stake, another storage read is required.
+	//
+	// - Move reductions into the Reward itself
+	//   - Advantages:
+	//     - Same as above.
+	//   - Disadvantages:
+	//     - In order to get the reductions for a stake, the RewardPool associated with it must be
+	//       read. This isn't too much of an issue currently as we almost always read the pool
+	//       whenever we read the stake.
+	//     - The size of the pool struct would increase as the amount of stakers increases, causing
+	//       storage reads to become more expensive as more stakers enter the pool.
 	pub reductions: BoundedBTreeMap<AssetId, Balance, MaxReductions>,
 
 	/// The lock period for the stake.

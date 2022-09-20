@@ -43,7 +43,7 @@ fn test_reward_update_calculation() {
 			asset_id: PICA::ID,
 			end_block: ONE_YEAR_OF_BLOCKS * 10,
 			reward_configs: [(PICA::ID, reward_config)].into_iter().try_collect().unwrap(),
-			lock: DEFAULT_LOCK_CONFIG.clone(),
+			lock: get_default_lock_config(),
 			share_asset_id: XPICA::ID,
 			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
 		});
@@ -187,7 +187,7 @@ fn test_accumulate_rewards_pool_empty_refill() {
 			.into_iter()
 			.try_collect()
 			.unwrap(),
-			lock: DEFAULT_LOCK_CONFIG.clone(),
+			lock: get_default_lock_config(),
 			share_asset_id: XA::ID,
 			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
 		});
@@ -307,7 +307,7 @@ fn test_accumulate_rewards_hook() {
 			.into_iter()
 			.try_collect()
 			.unwrap(),
-			lock: DEFAULT_LOCK_CONFIG.clone(),
+			lock: get_default_lock_config(),
 			share_asset_id: XA::ID,
 			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
 		});
@@ -340,7 +340,7 @@ fn test_accumulate_rewards_hook() {
 			.into_iter()
 			.try_collect()
 			.unwrap(),
-			lock: DEFAULT_LOCK_CONFIG.clone(),
+			lock: get_default_lock_config(),
 			share_asset_id: XC::ID,
 			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID + 1,
 		});
@@ -585,7 +585,7 @@ fn test_accumulate_rewards_hook() {
 				.into_iter()
 				.try_collect()
 				.unwrap(),
-			lock: DEFAULT_LOCK_CONFIG.clone(),
+			lock: get_default_lock_config(),
 			share_asset_id: XF::ID,
 			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID + 2,
 		});

@@ -15,14 +15,14 @@ use composable_traits::staking::{
 use frame_support::{traits::TryCollect, BoundedBTreeMap};
 
 use crate::test::{
-	mint_assets, new_test_ext,
+	get_default_lock_config, mint_assets, new_test_ext,
 	prelude::{
 		add_to_rewards_pot_and_assert, block_seconds, create_rewards_pool_and_assert,
 		ONE_YEAR_OF_BLOCKS,
 	},
 	runtime::{modname::Event, MaxRewardConfigsPerPool, Origin, StakingRewards, ALICE},
 	test_reward_accumulation_hook::{check_rewards, CheckRewards, PoolRewards},
-	Test, DEFAULT_LOCK_CONFIG,
+	Test,
 };
 
 use super::prelude::STAKING_FNFT_COLLECTION_ID;
@@ -51,7 +51,7 @@ fn test_update_reward_pool() {
 			.into_iter()
 			.try_collect()
 			.unwrap(),
-			lock: DEFAULT_LOCK_CONFIG.clone(),
+			lock: get_default_lock_config(),
 			share_asset_id: XPICA::ID,
 			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
 		});

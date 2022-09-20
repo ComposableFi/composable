@@ -73,8 +73,8 @@ fn test_create_reward_pool_invalid_end_block() {
 					asset_id: PICA::ID,
 					// end block can't be before the current block
 					end_block: 0,
-					reward_configs: DEFAULT_REWARD_CONFIG.clone(),
-					lock: DEFAULT_LOCK_CONFIG.clone(),
+					reward_configs: get_default_reward_config(),
+					lock: get_default_lock_config(),
 					share_asset_id: XPICA::ID,
 					financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
 				}
@@ -576,8 +576,8 @@ fn test_split_position() {
 			owner: ALICE,
 			asset_id: PICA::ID,
 			end_block: 5,
-			reward_configs: DEFAULT_REWARD_CONFIG.clone(),
-			lock: DEFAULT_LOCK_CONFIG.clone(),
+			reward_configs: get_default_reward_config(),
+			lock: get_default_lock_config(),
 			share_asset_id: XPICA::ID,
 			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
 		};
@@ -891,8 +891,8 @@ fn create_default_reward_pool() {
 				owner: ALICE,
 				asset_id: PICA::ID,
 				end_block: 5,
-				reward_configs: DEFAULT_REWARD_CONFIG.clone(),
-				lock: DEFAULT_LOCK_CONFIG.clone(),
+				reward_configs: get_default_reward_config(),
+				lock: get_default_lock_config(),
 				share_asset_id: XPICA::ID,
 				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
 			},
@@ -907,15 +907,15 @@ fn get_default_reward_pool() -> RewardPoolConfigurationOf<Test> {
 		owner: ALICE,
 		asset_id: PICA::ID,
 		end_block: 5,
-		reward_configs: DEFAULT_REWARD_CONFIG.clone(),
-		lock: DEFAULT_LOCK_CONFIG.clone(),
+		reward_configs: get_default_reward_config(),
+		lock: get_default_lock_config(),
 		share_asset_id: XPICA::ID,
 		financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
 	}
 }
 
-lazy_static::lazy_static! {
-	static ref DEFAULT_LOCK_CONFIG: LockConfig<MaxStakingDurationPresets> = LockConfig {
+pub(crate) fn get_default_lock_config() -> LockConfig<MaxStakingDurationPresets> {
+	LockConfig {
 		duration_presets: [
 			(ONE_HOUR, Perbill::from_percent(1)),       // 1%
 			(ONE_MINUTE, Perbill::from_perthousand(1)), // 0.1%
@@ -924,13 +924,12 @@ lazy_static::lazy_static! {
 		.try_collect()
 		.unwrap(),
 		unlock_penalty: Perbill::from_percent(5),
-	};
+	}
+}
 
-	static ref DEFAULT_REWARD_CONFIG: BoundedBTreeMap<
-		u128,
-		RewardConfig<u128>,
-		MaxRewardConfigsPerPool,
-	> = [(
+pub(crate) fn get_default_reward_config(
+) -> BoundedBTreeMap<u128, RewardConfig<u128>, MaxRewardConfigsPerPool> {
+	[(
 		USDT::ID,
 		RewardConfig::RateBased(RateBasedConfig {
 			max_rewards: 100_u128,
@@ -939,7 +938,7 @@ lazy_static::lazy_static! {
 	)]
 	.into_iter()
 	.try_collect()
-	.unwrap();
+	.unwrap()
 }
 
 pub fn assert_has_event<T, F>(matcher: F)
