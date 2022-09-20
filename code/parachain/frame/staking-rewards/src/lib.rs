@@ -477,7 +477,7 @@ pub mod pallet {
 				unlock_penalty: Default::default(),
 			},
 			share_asset_id,
-			fnft_collection_id: financial_nft_asset_id,
+			fnft_asset_id: financial_nft_asset_id,
 		};
 		RewardPools::<T>::insert(staked_asset_id, staking_pool);
 		T::FinancialNft::create_collection(&financial_nft_asset_id, owner, owner)
@@ -643,7 +643,7 @@ pub mod pallet {
 				end_block,
 				lock,
 				share_asset_id,
-				financial_nft_asset_id,
+				fnft_asset_id,
 			} = pool_config;
 
 			ensure!(
@@ -676,11 +676,11 @@ pub mod pallet {
 					end_block,
 					lock,
 					share_asset_id,
-					fnft_collection_id: financial_nft_asset_id,
+					fnft_asset_id,
 				},
 			);
 
-			T::FinancialNft::create_collection(&financial_nft_asset_id, &owner, &owner)?;
+			T::FinancialNft::create_collection(&fnft_asset_id, &owner, &owner)?;
 
 			Self::deposit_event(Event::<T>::RewardPoolCreated {
 				pool_id: pool_asset,
@@ -738,7 +738,6 @@ pub mod pallet {
 					Error::<T>::NotEnoughAssets
 				);
 
-				// REVIEW(benluelo): What does "boosted amount" mean?
 				// REVIEW(benluelo): Make this a method on `Lock`
 				let boosted_amount = rewards_pool
 					.lock
@@ -779,13 +778,10 @@ pub mod pallet {
 				};
 
 				let fnft_instance_id =
-					T::FinancialNft::get_next_nft_id(&rewards_pool.fnft_collection_id)?;
-				let fnft_account = T::FinancialNft::asset_account(
-					&rewards_pool.fnft_collection_id,
-					&fnft_instance_id,
-				);
+					T::FinancialNft::get_next_nft_id(&rewards_pool.fnft_asset_id)?;
+				let fnft_account =
+					T::FinancialNft::asset_account(&rewards_pool.fnft_asset_id, &fnft_instance_id);
 
-				// REVIEW(benluelo): Is this fallible? What does it mean if this fails?
 				rewards_pool.total_shares = rewards_pool.total_shares.safe_add(&boosted_amount)?;
 
 				let new_position = StakeOf::<T> {
@@ -804,7 +800,7 @@ pub mod pallet {
 				T::Assets::transfer(*pool_id, who, &fnft_account, amount, keep_alive)?;
 				T::Assets::set_lock(T::LockId::get(), *pool_id, &fnft_account, amount)?;
 
-				// Mint share tokens into fNFT asst account & lock the assets
+				// Mint share tokens into fNFT asset account & lock the assets
 				T::Assets::mint_into(rewards_pool.share_asset_id, &fnft_account, amount)?;
 				T::Assets::set_lock(
 					T::LockId::get(),
@@ -814,17 +810,9 @@ pub mod pallet {
 				)?;
 
 				// Mint the fNFT
-				T::FinancialNft::mint_into(
-					&rewards_pool.fnft_collection_id,
-					&fnft_instance_id,
-					who,
-				)?;
+				T::FinancialNft::mint_into(&rewards_pool.fnft_asset_id, &fnft_instance_id, who)?;
 
-				Stakes::<T>::insert(
-					rewards_pool.fnft_collection_id,
-					fnft_instance_id,
-					new_position,
-				);
+				Stakes::<T>::insert(rewards_pool.fnft_asset_id, fnft_instance_id, new_position);
 
 				Self::deposit_event(Event::<T>::Staked {
 					pool_id: *pool_id,
@@ -832,11 +820,11 @@ pub mod pallet {
 					amount,
 					duration_preset,
 					fnft_instance_id,
-					fnft_collection_id: rewards_pool.fnft_collection_id,
+					fnft_collection_id: rewards_pool.fnft_asset_id,
 					keep_alive,
 				});
 
-				Ok((rewards_pool.fnft_collection_id, fnft_instance_id))
+				Ok((rewards_pool.fnft_asset_id, fnft_instance_id))
 			})
 		}
 
@@ -1060,7 +1048,7 @@ pub mod pallet {
 					let new_fnft_instance_id =
 						T::FinancialNft::get_next_nft_id(fnft_collection_id)?;
 					T::FinancialNft::mint_into(
-						&rewards_pool.fnft_collection_id,
+						&rewards_pool.fnft_asset_id,
 						&new_fnft_instance_id,
 						who,
 					)?;
@@ -1090,7 +1078,7 @@ pub mod pallet {
 
 					Self::deposit_event(Event::<T>::SplitPosition {
 						stake: new_stake,
-						fnft_collection_id: rewards_pool.fnft_collection_id,
+						fnft_collection_id: rewards_pool.fnft_asset_id,
 						fnft_instance_id: new_fnft_instance_id,
 					});
 
