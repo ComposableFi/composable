@@ -1,6 +1,8 @@
-# Note, this file is sorted by precedence. Later patterns take precedence over earlier ones
+# NOTE this file is sorted by precedence. Later patterns take precedence over earlier ones
+# NOTE: `<directory> <team1> <team2>` means `<team1> OR <team2> member is enough for review`
 
-## Default reviewers.
+
+## Default reviewers
 
 * @ComposableFi/core  # For anything not owned by a specific team, a core member needs to review or delegate
 
@@ -47,16 +49,13 @@ frontend/ @ComposableFi/blockchain-integrations @ComposableFi/parachain-finance
 
 code/integration-tests/runtime-tests/ @ComposableFi/testers
 
-## Codespaces
+## Developer Tools and Infrastructure
 
-.devcontainer/ @ComposableFi/codespacers @ComposableFi/parachain-leads
-
-## Nix
-
+.devcontainer/ @ComposableFi/nix
 .nix/ @ComposableFi/nix
 flake.nix @ComposableFi/nix
 
-# ComposableJS
+## ComposableJS
 composablejs/ @ComposableFi/parachain
 
 ## Dev stuff
@@ -66,10 +65,11 @@ docs/ @ComposableFi/developers @ComposableFi/technical-writers
 scripts/ @ComposableFi/developers @ComposableFi/sre
 code/utils/ @ComposableFi/developers @ComposableFi/sre @ComposableFi/testers
 .config/dictionaries/ @ComposableFi/developers @ComposableFi/technical-writers
-# Oracle Setup Script
+
+## Oracle Setup Script
 scripts/oracle-setup @ComposableFi/parachain
 
-# Repository 
+## Repository 
 README.md @ComposableFi/technical-writers @ComposableFi/core
 SECURITY.md @ComposableFi/security
 REVIEWERS.md @ComposableFi/core
