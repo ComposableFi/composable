@@ -1,5 +1,5 @@
 use super::prelude::*;
-use crate::tests::borrow;
+use crate::tests::{borrow, process_and_progress_blocks};
 use codec::Decode;
 use composable_traits::{lending::TotalDebtWithInterest, vault::Vault as VaultTrait};
 use frame_support::traits::{fungible::Mutate as FungibleMutateTrait, fungibles::Mutate};
@@ -30,7 +30,7 @@ fn vault_takes_part_of_borrow_so_cannot_withdraw() {
 				market_id.clone(),
 				deposit_btc + initial_total_cash
 			),
-			Error::<Runtime>::NotEnoughBorrowAsset
+			orml_tokens::Error::<Runtime>::BalanceTooLow
 		);
 		assert_no_event::<Runtime>(Event::Lending(pallet_lending::Event::<Runtime>::Borrowed {
 			sender: *ALICE,
@@ -60,7 +60,7 @@ fn test_vault_market_can_withdraw() {
 				market_id: market,
 			}),
 		);
-		test::block::process_and_progress_blocks::<Lending, Runtime>(1);
+		process_and_progress_blocks::<Lending, Runtime>(1);
 		// We waited 1 block, the market should have withdraw the funds
 		assert_extrinsic_event::<Runtime>(
 			Lending::borrow(Origin::signed(*ALICE), market, borrow - 1),
@@ -134,7 +134,7 @@ proptest! {
 			prop_assert_ok!(Tokens::mint_into(USDT::ID, &lender, USDT::units(total_amount)));
 			prop_assert_ok!(Vault::deposit(Origin::signed(lender), vault_id, USDT::units(total_amount)));
 			// Process one block to transfer not-reserved assets to the corresponded market.
-			test::block::process_and_progress_blocks::<Lending, Runtime>(1);
+			process_and_progress_blocks::<Lending, Runtime>(1);
 			// Generate a bunch of borrowers' accounts.
 			let borrowers = generate_accounts(borrowers_amount);
 			for borrower in &borrowers {
@@ -154,7 +154,7 @@ proptest! {
 				vault_id,
 				Assets::balance(USDT::ID, &vault_account)
 			));
-			test::block::process_and_progress_blocks::<Lending, Runtime>(1);
+			process_and_progress_blocks::<Lending, Runtime>(1);
 			//Now vault is unbalanced and should restore equilibrium state.
 			 while Lending::ensure_can_borrow_from_vault(&vault_id, &market_account).is_err() {
 				for borrower in &borrowers {
@@ -178,7 +178,7 @@ proptest! {
 						false,
 					)
 					.unwrap();
-					test::block::process_and_progress_blocks::<Lending, Runtime>(1);
+					process_and_progress_blocks::<Lending, Runtime>(1);
 				}
 			}
 			// Vault should be balanced.
@@ -198,12 +198,12 @@ proptest! {
 			// Check that we can not borrow from market related to unbalanced vault
 			prop_assert_noop!(Lending::borrow(Origin::signed(*borrowers.get(0).unwrap()), market_id, Assets::balance(USDT::ID, &market_account)),
 				Error::<Runtime>::CannotBorrowFromMarketWithUnbalancedVault);
-			test::block::process_and_progress_blocks::<Lending, Runtime>(1);
+			process_and_progress_blocks::<Lending, Runtime>(1);
 
 			// Lender puts back assets to the vault.
 			prop_assert_ok!(Tokens::mint_into(USDT::ID, &lender, USDT::units(total_amount)));
 			prop_assert_ok!(Vault::deposit(Origin::signed(lender), vault_id, USDT::units(total_amount)));
-			test::block::process_and_progress_blocks::<Lending, Runtime>(1);
+			process_and_progress_blocks::<Lending, Runtime>(1);
 			// Vault is balanced.
 			assert!(Lending::ensure_can_borrow_from_vault(&vault_id, &market_account).is_ok());
 			Ok(())
