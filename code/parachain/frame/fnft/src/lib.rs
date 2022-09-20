@@ -479,10 +479,13 @@ pub mod pallet {
 			collection: &Self::CollectionId,
 			instance: &Self::ItemId,
 		) -> AccountIdOf<T> {
-			let protocol_collection_id =
-				T::CurrencyFactory::unique_asset_id_to_protocol_asset_id(*collection);
-
-			T::PalletId::get().into_sub_account_truncating((protocol_collection_id, instance))
+			// `into_sub_account_truncating()` gives us 20 bytes of space to create a seed.
+			// `blake2_256()` returns 32 bytes of data, however, BLAKE2 already truncates its
+			// results. Truncating this to 20 bytes puts us at the recomended output length for
+			// BLAKE2.
+			T::PalletId::get().into_sub_account_truncating(sp_io::hashing::blake2_256(
+				&(collection, instance).encode(),
+			))
 		}
 
 		fn get_next_nft_id(
