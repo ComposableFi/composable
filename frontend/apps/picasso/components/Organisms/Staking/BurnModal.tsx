@@ -18,17 +18,17 @@ function setPosition() {
 
 }
 
-export const BurnModal: FC<{ open: boolean; onClose: () => void; unstakeToken: [string, string] }> = ({
+export const BurnModal: FC<{ open: boolean; onClose: () => void; selectedToken: [string, string] }> = ({
   open,
   onClose,
-  unstakeToken
+  selectedToken
 }) => {
   const { parachainApi } = usePicassoProvider();
   const account = useSelectedAccount();
   const executor = useExecutor();
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const { stakingPortfolio, refresh } = useStakingRewards();
-  const [fnftCollectionId, fnftInstanceId] = unstakeToken;
+  const [fnftCollectionId, fnftInstanceId] = selectedToken;
 
   const handleBurnUnstake = () => {
     let snackbarKey: SnackbarKey | undefined;
@@ -36,7 +36,7 @@ export const BurnModal: FC<{ open: boolean; onClose: () => void; unstakeToken: [
       async (api, acc, exec) => {
         const signer = await getSigner(APP_NAME, acc.address);
         await exec.execute(
-          api.tx.stakingRewards.unstake(...unstakeToken),
+          api.tx.stakingRewards.unstake(...selectedToken),
           acc.address,
           api,
           signer,
@@ -78,7 +78,7 @@ export const BurnModal: FC<{ open: boolean; onClose: () => void; unstakeToken: [
   };
 
   const currentPortfolio = Object.values(stakingPortfolio).find(portfolio => portfolio.collectionId === fnftCollectionId && portfolio.instanceId === fnftInstanceId);
-  if (unstakeToken.join("").length === 0 || !currentPortfolio) {
+  if (selectedToken.join("").length === 0 || !currentPortfolio) {
     return null;
   }
 

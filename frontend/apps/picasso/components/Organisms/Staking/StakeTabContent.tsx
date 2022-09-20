@@ -5,7 +5,7 @@ import { AlertBox, BigNumberInput } from "@/components";
 import { TextWithTooltip } from "@/components/Molecules/TextWithTooltip";
 import { FutureDatePaper } from "@/components/Atom/FutureDatePaper";
 import { WarningAmberRounded } from "@mui/icons-material";
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { useSelectedAccount } from "@/defi/polkadot/hooks";
 import { useSnackbar } from "notistack";
 import { calculateStakingPeriodAPR, formatDurationOption, stake } from "@/defi/polkadot/pallets/StakingRewards";
@@ -47,6 +47,13 @@ export const StakeTabContent: FC = () => {
 
   const [lockPeriod, setLockPeriod] = useState<string>("");
   const account = useSelectedAccount();
+  const inputValue = parseInt(lockPeriod) || minDuration;
+
+  useEffect(() => {
+    if (inputValue.toString() !== lockPeriod) {
+      setLockPeriod(inputValue.toString());
+    }
+  }, [inputValue])
 
   const setValidation = () => {
   };
@@ -90,26 +97,33 @@ export const StakeTabContent: FC = () => {
           </Typography>
         </Box>
       </Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center">
-        <Typography variant="h6">
-          {lockPeriod && picaRewardPool.lock.durationPresets && formatDurationOption(
-            lockPeriod,
-            picaRewardPool.lock.durationPresets[lockPeriod]
-          )}
-        </Typography>
-        <Typography variant="subtitle1" color={theme.palette.featured.lemon}>
-          ≈%{calculateStakingPeriodAPR(lockPeriod, picaRewardPool.lock.durationPresets)}
-        </Typography>
-      </Box>
-      <Slider
-        marks={options}
-        name="duration-presets"
-        aria-labelledby="lock-period-slider"
-        step={null}
-        min={minDuration}
-        max={maxDuration}
-        onChange={(_, value) => setLockPeriod(value.toString())}
-      />
+      {options.length > 0 && inputValue && (
+        <>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="h6">
+              {inputValue && picaRewardPool.lock.durationPresets && formatDurationOption(
+                inputValue.toString(),
+                picaRewardPool.lock.durationPresets[inputValue.toString()]
+              )}
+            </Typography>
+            <Typography variant="subtitle1" color={theme.palette.featured.lemon}>
+              ≈%{calculateStakingPeriodAPR(inputValue.toString(), picaRewardPool.lock.durationPresets)}
+            </Typography>
+          </Box>
+
+          <Slider
+            key={`slider-${inputValue}`}
+            marks={options}
+            name="duration-presets"
+            aria-labelledby="lock-period-slider"
+            step={null}
+            value={inputValue}
+            min={minDuration}
+            max={maxDuration}
+            onChange={(_, value) => setLockPeriod(value.toString())}
+          />
+        </>
+      )}
       <TextWithTooltip tooltip="Unlock date">Unlock date</TextWithTooltip>
       <FutureDatePaper duration={lockPeriod} />
       <AlertBox status="warning" icon={<WarningAmberRounded color="warning" />}>

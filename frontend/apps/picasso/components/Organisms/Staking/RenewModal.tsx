@@ -1,27 +1,105 @@
-import { Modal, TokenAsset } from "@/components";
+import { BigNumberInput, Modal, TokenAsset } from "@/components";
 import { FC, useState } from "react";
-import { Box, Button, Paper, Stack, Typography, useTheme } from "@mui/material";
+import { Box, Button, Paper, Stack, Typography } from "@mui/material";
 import { TextWithTooltip } from "@/components/Molecules/TextWithTooltip";
-import { RadioButtonGroup } from "@/components/Molecules/RadioButtonGroup";
-import { FutureDatePaper } from "@/components/Atom/FutureDatePaper";
-import { formatNumber } from "shared";
-import BigNumber from "bignumber.js";
+import { callbackGate, formatNumber, toChainIdUnit } from "shared";
 import { DurationOption } from "@/defi/polkadot/pallets/StakingRewards";
+import { useStakingRewards } from "@/defi/polkadot/hooks/useStakingRewards";
+import BigNumber from "bignumber.js";
+import { useStore } from "@/stores/root";
+import { useSelectedAccount } from "@/defi/polkadot/hooks";
+import { getSigner, useExecutor } from "substrate-react";
+import { SnackbarKey, useSnackbar } from "notistack";
+import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
+import { APP_NAME } from "@/defi/polkadot/constants";
 
-export const RenewModal: FC<{ open: boolean; onClose: () => void }> = ({
-  open,
-  onClose,
-}) => {
+export const RenewModal: FC<{
+  open: boolean;
+  onClose: () => void;
+  selectedToken: [string, string];
+}> = ({ open, onClose, selectedToken }) => {
   const [extendPeriod, setExtendPeriod] = useState<DurationOption | undefined>(
     undefined
   );
-  const match = (someValue?: DurationOption) => someValue === extendPeriod;
-  const theme = useTheme();
-  const initialPicaDeposit = new BigNumber(0);
+  const native = useStore(
+    ({ substrateBalances }) => substrateBalances.picasso.native
+  );
+  const [extendAmount, setExtendAmount] = useState<BigNumber>(new BigNumber(0));
+  const { parachainApi, stakingPortfolio, meta, assetId, refresh } =
+    useStakingRewards();
+  const [isValid, setValid] = useState(true);
+  const [fnftCollectionId, fnftInstanceId] = selectedToken;
+  const account = useSelectedAccount();
+  const executor = useExecutor();
+  const { closeSnackbar, enqueueSnackbar } = useSnackbar();
+  const currentPortfolio = stakingPortfolio.find(
+    (portfolio) =>
+      portfolio.collectionId === fnftCollectionId &&
+      portfolio.instanceId === fnftInstanceId
+  );
 
+  if (!currentPortfolio) {
+    return null;
+  }
   const handleRenew = () => {
+    if (!isValid) {
+      return;
+    }
+
+    let snackbarKey: SnackbarKey | undefined;
+    callbackGate(
+      async (api, acc, executor) => {
+        const signer = await getSigner(APP_NAME, acc.address);
+        console.log(extendAmount.toFixed().toString());
+        await executor.execute(
+          (api.tx.stakingRewards.extend as any)(
+            selectedToken[0],
+            selectedToken[1],
+            api.createType("u128", toChainIdUnit(extendAmount).toString())
+          ),
+          acc.address,
+          api,
+          signer,
+          (txHash: string) => {
+            snackbarKey = enqueueSnackbar("Processing transaction", {
+              variant: "info",
+              isClosable: true,
+              persist: true,
+              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
+            });
+          },
+          (txHash: string) => {
+            closeSnackbar(snackbarKey);
+            enqueueSnackbar(`Successfully staked`, {
+              variant: "success",
+              isClosable: true,
+              persist: true,
+              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
+            });
+            refresh();
+            onClose();
+          },
+          (errorMessage: string) => {
+            closeSnackbar(snackbarKey);
+            enqueueSnackbar("An error occurred while processing transaction", {
+              variant: "error",
+              isClosable: true,
+              persist: true,
+              description: errorMessage,
+            });
+            onClose();
+          }
+        );
+      },
+      parachainApi,
+      account,
+      executor
+    );
+    refresh();
     onClose();
   };
+
+  const initialPicaDeposit = currentPortfolio.stake;
 
   return (
     <Modal open={open} dismissible onClose={onClose} maxWidth="md">
@@ -62,29 +140,35 @@ export const RenewModal: FC<{ open: boolean; onClose: () => void }> = ({
             </Typography>
           </Paper>
         </Stack>
-        <RadioButtonGroup<DurationOption>
-          label="Lock period (multiplier)"
-          tooltip="Lock period (multiplier)"
-          options={[]}
-          value={extendPeriod}
-          isMatch={match}
-          onChange={(value) => setExtendPeriod(value)}
-          sx={{
-            marginTop: theme.spacing(4),
-          }}
-        />
-        <Stack gap={1.5} marginTop={4}>
-          <TextWithTooltip tooltip="Unlock date">Unlock date</TextWithTooltip>
-          <FutureDatePaper duration={""} />
-        </Stack>
+        <Box>
+          <TextWithTooltip
+            tooltip={"This amount will be added to your current stake"}
+          >
+            Enter Amount
+          </TextWithTooltip>
+          <BigNumberInput
+            buttonLabel={"Max"}
+            ButtonProps={{
+              onClick: () => {
+                setExtendAmount(native.balance);
+              },
+            }}
+            isValid={setValid}
+            setter={setExtendAmount}
+            maxValue={native.balance}
+            value={extendAmount}
+            tokenId={meta.assetId}
+            maxDecimals={12}
+          />
+        </Box>
         <Button
-          disabled={!extendPeriod}
+          disabled={extendAmount.eq(0) || !isValid}
           variant="contained"
           color="primary"
           fullWidth
           onClick={handleRenew}
         >
-          Renew period
+          Add stake to period
         </Button>
       </Stack>
     </Modal>
