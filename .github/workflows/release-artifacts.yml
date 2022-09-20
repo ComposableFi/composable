@@ -1,4 +1,4 @@
-name: Nix Release Pipeline
+name: Release Artifacts
 on:
   push:
     branches:
@@ -14,7 +14,7 @@ env:
 
 jobs:
   build-runtime:
-    name: "Build WASM runtime"
+    name: "Build runtime"
     runs-on:
       - self-hosted
       - linux
@@ -93,7 +93,7 @@ jobs:
           cachix watch-exec --compression-level $CACHIX_COMPRESSION_LEVEL $CACHIX_COMPOSABLE nix -- build .#composable-node-release
 
   release:
-    name: "Prepare for release"
+    name: "Release"
     runs-on:
       - self-hosted
       - linux
@@ -138,7 +138,7 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-      - name: Setup version
+      - name: Setup Composable version
         run: |
           echo "COMPOSABLE_VERSION=$(nix eval --raw .#composable-node-release.version)" >> $GITHUB_ENV
 

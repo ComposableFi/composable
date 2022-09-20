@@ -409,6 +409,7 @@
               hash = "sha256-+/yqA6lP/5qyMxZupmaYBCRtbw2MFMBSgkmnxg261P8=";
             };
           in crane-stable.buildPackage {
+            name = "subwasm";
             cargoArtifacts = crane-stable.buildDepsOnly {
               inherit src;
               doCheck = false;
