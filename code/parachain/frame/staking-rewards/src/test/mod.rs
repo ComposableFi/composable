@@ -530,7 +530,7 @@ fn test_transfer_reward() {
 			&BOB,
 			20_000_u128
 		));
-		assert_ok!(<StakingRewards as ProtocolStaking>::transfer_earnings(
+		assert_ok!(<StakingRewards as ProtocolStaking>::transfer_protocol_distribution(
 			&ALICE,
 			&1,
 			USDT::ID,
@@ -539,7 +539,7 @@ fn test_transfer_reward() {
 		));
 		// can't transfer more than max_rewards set in the rewards config
 		assert_noop!(
-			<StakingRewards as ProtocolStaking>::transfer_earnings(
+			<StakingRewards as ProtocolStaking>::transfer_protocol_distribution(
 				&ALICE,
 				&1,
 				USDT::ID,
@@ -555,7 +555,7 @@ fn test_transfer_reward() {
 		// 	crate::Error::<Test>::OnlyPoolOwnerCanAddNewReward
 		// );
 
-		assert_ok!(<StakingRewards as ProtocolStaking>::transfer_earnings(
+		assert_ok!(<StakingRewards as ProtocolStaking>::transfer_protocol_distribution(
 			&ALICE,
 			&1,
 			BTC::ID,

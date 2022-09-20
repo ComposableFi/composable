@@ -836,7 +836,7 @@ pub mod pallet {
 				T::Assets::transfer(fees.asset_id, who, owner, fees.owner_fee, false)?;
 			}
 			if !fees.protocol_fee.is_zero() {
-				T::ProtocolStaking::transfer_earnings(
+				T::ProtocolStaking::transfer_protocol_distribution(
 					who,
 					&T::PbloAssetId::get(),
 					fees.asset_id,

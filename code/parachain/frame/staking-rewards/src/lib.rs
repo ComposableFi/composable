@@ -1338,7 +1338,7 @@ pub mod pallet {
 		// REVIEW(benluelo): Review the difference between transfer_earning and
 		// add_to_rewards_pot, and if we still need both of them.
 		#[transactional]
-		fn transfer_earnings(
+		fn transfer_protocol_distribution(
 			from: &Self::AccountId,
 			pool_id: &Self::RewardPoolId,
 			reward_currency: Self::AssetId,

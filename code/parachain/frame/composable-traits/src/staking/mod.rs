@@ -130,7 +130,7 @@ pub trait ProtocolStaking {
 
 	/// Transfers rewards `from` to pool.
 	/// If may be bigger than total shares.
-	fn transfer_earnings(
+	fn transfer_protocol_distribution(
 		from: &Self::AccountId,
 		pool: &Self::RewardPoolId,
 		reward_currency: Self::AssetId,
