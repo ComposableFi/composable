@@ -37,24 +37,6 @@ ord_parameter_types! {
 	pub const RootAccount: AccountId = ALICE;
 }
 
-frame_support::construct_runtime!(
-	pub enum Test where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic,
-	{
-		System: frame_system,
-		Balances: pallet_balances,
-		Timestamp: pallet_timestamp,
-		CurrencyFactory: pallet_currency_factory,
-		Tokens: orml_tokens,
-		Assets: pallet_assets,
-		FinancialNft: pallet_fnft,
-		Proxy: pallet_account_proxy,
-		StakingRewards: pallet_staking_rewards,
-	}
-);
-
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 	pub const SS58Prefix: u8 = 42;
@@ -301,3 +283,28 @@ impl InstanceFilter<Call> for ProxyType {
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	frame_system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
 }
+
+pub mod modname {
+	use super::*;
+	use frame_support;
+
+	frame_support::construct_runtime!(
+		pub enum Test where
+			Block = Block,
+			NodeBlock = Block,
+			UncheckedExtrinsic = UncheckedExtrinsic,
+		{
+			System: frame_system,
+			Balances: pallet_balances,
+			Timestamp: pallet_timestamp,
+			CurrencyFactory: pallet_currency_factory,
+			Tokens: orml_tokens,
+			Assets: pallet_assets,
+			FinancialNft: pallet_fnft,
+			Proxy: pallet_account_proxy,
+			StakingRewards: crate,
+		}
+	);
+}
+
+pub use modname::*;

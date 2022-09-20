@@ -50,7 +50,10 @@ use sp_std::{
 
 use crate::prelude::*;
 use composable_support::math::safe::SafeSub;
-use composable_traits::staking::{RateBasedReward, RewardUpdate};
+use composable_traits::staking::reward::{
+	rate_based::{RateBasedReward, RewardUpdate},
+	Reward,
+};
 use frame_support::{
 	traits::{
 		fungibles::{InspectHold, MutateHold, Transfer},
@@ -70,7 +73,15 @@ pub mod pallet {
 	use composable_traits::{
 		currency::{BalanceLike, CurrencyFactory},
 		fnft::{FinancialNft, FinancialNftProtocol},
-		staking::{lock::LockConfig, RewardPoolConfig},
+		staking::{
+			lock::LockConfig,
+			reward::{
+				rate_based::{RateBasedReward, RewardUpdate},
+				Reward,
+			},
+			stake::Stake,
+			RewardPoolConfig,
+		},
 		time::{DurationSeconds, ONE_MONTH, ONE_WEEK},
 	};
 	use frame_support::{

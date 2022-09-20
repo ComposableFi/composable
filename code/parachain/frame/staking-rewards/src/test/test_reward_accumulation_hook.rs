@@ -3,6 +3,7 @@ use composable_tests_helpers::test::{
 	block::process_and_progress_blocks,
 	helper::{assert_last_event, assert_no_event},
 };
+use composable_traits::staking::reward::Reward;
 use frame_support::traits::{fungibles::InspectHold, TryCollect, UnixTime};
 
 use crate::test::prelude::*;
@@ -37,7 +38,7 @@ fn test_reward_update_calculation() {
 		// just mint a whole bunch of pica
 		mint_assets([ALICE], [PICA::ID], PICA::units(10_000));
 
-		create_rewards_pool_and_assert(RewardPoolConfig {
+		create_rewards_pool_and_assert::<Test, Event>(RewardPoolConfig {
 			owner: ALICE,
 			asset_id: PICA::ID,
 			end_block: ONE_YEAR_OF_BLOCKS * 10,
@@ -163,7 +164,7 @@ fn test_accumulate_rewards_pool_empty_refill() {
 		mint_assets([ALICE], [A::ID], A::units(10_000));
 		mint_assets([ALICE], [B::ID], B::units(10_000));
 
-		create_rewards_pool_and_assert(RewardPoolConfig {
+		create_rewards_pool_and_assert::<Test, Event>(RewardPoolConfig {
 			owner: ALICE,
 			asset_id: A::ID,
 			end_block: current_block + ONE_YEAR_OF_BLOCKS,
@@ -283,7 +284,7 @@ fn test_accumulate_rewards_hook() {
 		const C_E_MAX_REWARDS: u128 = E::units(10);
 		const C_E_INITIAL_AMOUNT: u128 = A::units(1_000_000);
 
-		create_rewards_pool_and_assert(RewardPoolConfig {
+		create_rewards_pool_and_assert::<Test, Event>(RewardPoolConfig {
 			owner: ALICE,
 			asset_id: A::ID,
 			end_block: current_block + ONE_YEAR_OF_BLOCKS,
@@ -316,7 +317,7 @@ fn test_accumulate_rewards_hook() {
 		mint_assets([ALICE], [B::ID], A_B_INITIAL_AMOUNT);
 		add_to_rewards_pot_and_assert(ALICE, A::ID, B::ID, A_B_INITIAL_AMOUNT);
 
-		create_rewards_pool_and_assert(RewardPoolConfig {
+		create_rewards_pool_and_assert::<Test, Event>(RewardPoolConfig {
 			owner: BOB,
 			asset_id: C::ID,
 			end_block: current_block + ONE_YEAR_OF_BLOCKS,
@@ -576,7 +577,7 @@ fn test_accumulate_rewards_hook() {
 
 		// add a new, zero-reward pool
 		// nothing needs to be added to the rewards pot as there are no rewards
-		let _charlies_pool_id = create_rewards_pool_and_assert(RewardPoolConfig {
+		let _charlies_pool_id = create_rewards_pool_and_assert::<Test, Event>(RewardPoolConfig {
 			owner: CHARLIE,
 			asset_id: F::ID,
 			end_block: current_block + ONE_YEAR_OF_BLOCKS,

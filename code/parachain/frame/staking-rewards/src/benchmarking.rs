@@ -3,14 +3,18 @@ use crate::*;
 
 use composable_support::validation::TryIntoValidated;
 use composable_traits::{
-	staking::{lock::LockConfig, RateBasedConfig, RewardPoolConfig, RewardRate, RewardUpdate},
+	staking::{
+		lock::LockConfig,
+		reward::{
+			rate_based::{RateBasedConfig, RewardRate, RewardUpdate},
+			RewardConfig,
+		},
+		RewardPoolConfig,
+	},
 	time::{ONE_HOUR, ONE_MINUTE},
 };
 use frame_benchmarking::{account, benchmarks, whitelisted_caller};
-use frame_support::{
-	traits::{fungibles::Mutate, Get, TryCollect, UnixTime},
-	BoundedBTreeMap,
-};
+use frame_support::traits::{fungibles::Mutate, Get, TryCollect, UnixTime};
 use frame_system::{EventRecord, RawOrigin};
 use sp_arithmetic::{traits::SaturatedConversion, Perbill, Permill};
 use sp_std::collections::btree_map::BTreeMap;

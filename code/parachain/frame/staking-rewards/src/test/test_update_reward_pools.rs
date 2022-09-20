@@ -4,8 +4,13 @@ use composable_tests_helpers::test::{
 	helper::assert_extrinsic_event,
 };
 use composable_traits::staking::{
-	RateBasedConfig, RateBasedReward, Reward, RewardConfig, RewardPoolConfig, RewardRate,
-	RewardRatePeriod, RewardUpdate,
+	reward::{
+		rate_based::{
+			RateBasedConfig, RateBasedReward, RewardRate, RewardRatePeriod, RewardUpdate,
+		},
+		Reward, RewardConfig,
+	},
+	RewardPoolConfig,
 };
 use frame_support::{traits::TryCollect, BoundedBTreeMap};
 
@@ -15,7 +20,7 @@ use crate::test::{
 		add_to_rewards_pot_and_assert, block_seconds, create_rewards_pool_and_assert,
 		ONE_YEAR_OF_BLOCKS,
 	},
-	runtime::{MaxRewardConfigsPerPool, Origin, StakingRewards, ALICE},
+	runtime::{modname::Event, MaxRewardConfigsPerPool, Origin, StakingRewards, ALICE},
 	test_reward_accumulation_hook::{check_rewards, CheckRewards, PoolRewards},
 	Test, DEFAULT_LOCK_CONFIG,
 };
@@ -32,7 +37,7 @@ fn test_update_reward_pool() {
 		const INITIAL_REWARD_RATE_AMOUNT: u128 = 10;
 		const UPDATED_REWARD_RATE_AMOUNT: u128 = 5;
 
-		create_rewards_pool_and_assert(RewardPoolConfig {
+		create_rewards_pool_and_assert::<Test, Event>(RewardPoolConfig {
 			owner: ALICE,
 			asset_id: PICA::ID,
 			end_block: ONE_YEAR_OF_BLOCKS,

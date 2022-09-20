@@ -79,8 +79,12 @@ pub mod pallet {
 			RedeemableAssets, RemoveLiquiditySimulationResult, StableSwapPoolInfo, MAX_REWARDS,
 		},
 		staking::{
-			lock::LockConfig, ManageStaking, ProtocolStaking, RateBasedConfig, Reward,
-			RewardConfig, RewardPoolConfig, RewardRate,
+			lock::LockConfig,
+			reward::{
+				rate_based::{RateBasedConfig, RewardRate},
+				Reward, RewardConfig,
+			},
+			ManageStaking, ProtocolStaking, RewardPoolConfig,
 		},
 		time::{ONE_MONTH, ONE_WEEK},
 	};

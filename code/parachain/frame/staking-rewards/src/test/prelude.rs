@@ -1,3 +1,5 @@
+use core::fmt::Debug;
+
 pub use crate::{self as pallet_staking_rewards, prelude::*};
 use crate::{
 	test::{
@@ -10,6 +12,7 @@ use composable_tests_helpers::test::{
 	block::MILLISECS_PER_BLOCK,
 	helper::{assert_extrinsic_event, assert_extrinsic_event_with},
 };
+use frame_support::traits::{IsSubType, OriginTrait};
 use frame_system::pallet_prelude::OriginFor;
 pub use sp_core::{
 	sr25519::{Public, Signature},
@@ -21,7 +24,7 @@ pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::Account
 
 pub use composable_tests_helpers::test::currency::*;
 
-use super::balance;
+use super::{balance, runtime};
 
 pub(crate) const fn block_seconds(amount_of_blocks: u64) -> u128 {
 	// would use `.into()` instead of `as` but `.into()` is not const
@@ -54,32 +57,28 @@ pub(crate) fn add_to_rewards_pot_and_assert(
 	// TODO(benluelo): Add storage checks
 }
 
-pub(crate) fn create_rewards_pool_and_assert<Runtime>(
+pub(crate) fn create_rewards_pool_and_assert<Runtime, RuntimeEvent>(
 	reward_config: RewardPoolConfigurationOf<Runtime>,
 ) where
-	Runtime: crate::Config,
-	<Runtime as crate::Config>::Event: From<crate::Event<Runtime>>,
+	Runtime: crate::Config<Event = RuntimeEvent>,
+	Runtime: frame_system::Config<Event = RuntimeEvent>,
+	RuntimeEvent: TryInto<crate::Event<Runtime>> + Parameter + Member + Debug + Clone,
+	<RuntimeEvent as TryInto<crate::Event<Runtime>>>::Error: std::fmt::Debug,
 {
-	assert_extrinsic_event_with::<Runtime, _, _, _>(
+	assert_extrinsic_event_with::<Runtime, RuntimeEvent, crate::Event<Runtime>, _, _, _>(
 		crate::Pallet::<Runtime>::create_reward_pool(
 			OriginFor::<Runtime>::root(),
 			reward_config.clone(),
 		),
-		|event| match event.into() {
-			Event::StakingRewards(crate::Event::<Runtime>::RewardPoolCreated {
-				pool_id,
-				owner,
-				end_block,
-			}) => {
-				assert_eq!(end_block, reward_config.end_block);
-				assert_eq!(owner, reward_config.owner);
+		|event| match event {
+			pallet_staking_rewards::Event::RewardPoolCreated { pool_id, owner, end_block } => {
 				assert_eq!(pool_id, reward_config.asset_id);
-
+				assert_eq!(owner, reward_config.owner);
+				assert_eq!(end_block, reward_config.end_block);
 				Some(())
 			},
 			_ => None,
 		},
 	);
-
 	// TODO(benluelo): Add storage checks
 }

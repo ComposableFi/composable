@@ -1,124 +1,18 @@
-use core::{fmt::Debug, num::NonZeroU64};
+use core::fmt::Debug;
 
-use crate::{
-	staking::lock::{Lock, LockConfig},
-	time::DurationSeconds,
-};
+use crate::{staking::lock::LockConfig, time::DurationSeconds};
 
 use codec::{Decode, Encode};
 use frame_support::{dispatch::DispatchResult, pallet_prelude::*, BoundedBTreeMap};
 use scale_info::TypeInfo;
-use sp_arithmetic::traits::Zero;
 use sp_runtime::{DispatchError, Permill};
+
+use reward::{Reward, RewardConfig};
 
 pub mod lock;
 pub mod math;
-
-/// Defines staking duration, rewards and early unstake penalty for a given asset type.
-/// TODO refer to the relevant section in the design doc.
-#[derive(RuntimeDebug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
-pub struct RateBasedReward<Balance> {
-	/// Total rewards including inflation for adjusting for new stakers joining the pool. All
-	/// stakers in a pool are eligible to receive a part of this value based on their share of the
-	/// pool.
-	pub total_rewards: Balance,
-
-	/// Already claimed rewards by stakers by unstaking.
-	pub claimed_rewards: Balance,
-
-	/// A book keeping field to track the actual total reward without the reward dilution
-	/// adjustment caused by new stakers joining the pool.
-	///
-	/// This field is the same as the sum of all of the reductions of all of the stakes in the
-	/// pool.
-	pub total_dilution_adjustment: Balance,
-
-	/// Upper bound on the `total_rewards - total_dilution_adjustment`.
-	pub max_rewards: Balance,
-
-	/// The rewarding rate that increases the pool `total_reward`
-	/// at a given time.
-	pub reward_rate: RewardRate<Balance>,
-
-	/// The last time the reward was updated, in seconds.
-	pub last_updated_timestamp: u64,
-}
-
-#[derive(RuntimeDebug, PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo)]
-pub enum Reward<Balance> {
-	ProtocolDistribution(),
-	RateBased(RateBasedReward<Balance>),
-}
-
-impl<Balance: Zero> Reward<Balance> {
-	pub fn from_config(reward_config: RewardConfig<Balance>, now_seconds: u64) -> Self {
-		match reward_config {
-			RewardConfig::ProtocolDistribution() => Reward::ProtocolDistribution(),
-			RewardConfig::RateBased(rate_based_config) =>
-				Reward::RateBased(RateBasedReward::from_config(rate_based_config, now_seconds)),
-		}
-	}
-}
-
-#[derive(RuntimeDebug, PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo)]
-pub enum RewardConfig<Balance> {
-	ProtocolDistribution(),
-	RateBased(RateBasedConfig<Balance>),
-}
-
-#[derive(RuntimeDebug, PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo)]
-pub struct RewardRate<Balance> {
-	/// The period that the rewards are handed out in.
-	pub period: RewardRatePeriod,
-	/// The amount that is rewarded each period.
-	pub amount: Balance,
-}
-
-impl<Balance> RewardRate<Balance> {
-	pub fn per_second<B: Into<Balance>>(amount: B) -> Self {
-		Self { period: RewardRatePeriod::PerSecond, amount: amount.into() }
-	}
-}
-
-#[derive(RuntimeDebug, PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo)]
-pub enum RewardRatePeriod {
-	PerSecond,
-}
-
-impl RewardRatePeriod {
-	/// Returns the length of the period in seconds.
-	pub fn as_secs(&self) -> NonZeroU64 {
-		match self {
-			RewardRatePeriod::PerSecond =>
-				sp_std::num::NonZeroU64::new(1).expect("1 is non-zero; qed;"),
-		}
-	}
-}
-
-/// A reward update states the new reward and reward_rate for a given asset
-// REVIEW(benluelo): Make this an enum with variants per reward type?
-#[derive(RuntimeDebug, Encode, Decode, MaxEncodedLen, Clone, PartialEq, Eq, TypeInfo)]
-pub struct RewardUpdate<Balance> {
-	/// The rewarding rate that increases the pool `total_reward`
-	/// at a given time.
-	pub reward_rate: RewardRate<Balance>,
-}
-
-impl<Balance: Zero> RateBasedReward<Balance> {
-	pub fn from_config(
-		reward_config: RateBasedConfig<Balance>,
-		now_seconds: u64,
-	) -> RateBasedReward<Balance> {
-		RateBasedReward {
-			total_rewards: Zero::zero(),
-			claimed_rewards: Zero::zero(),
-			total_dilution_adjustment: Zero::zero(),
-			max_rewards: reward_config.max_rewards,
-			reward_rate: reward_config.reward_rate,
-			last_updated_timestamp: now_seconds,
-		}
-	}
-}
+pub mod reward;
+pub mod stake;
 
 /// A reward pool is a collection of rewards that are allocated to stakers to incentivize a
 /// particular purpose. Eg: a pool of rewards for incentivizing adding liquidity to a pablo swap
@@ -157,17 +51,6 @@ pub struct RewardPool<
 
 	// Asset ID (collection ID) of the financial NFTs issued for staking positions of this pool
 	pub fnft_collection_id: AssetId,
-}
-
-/// Reward configurations for a given asset type.
-#[derive(RuntimeDebug, PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo)]
-pub struct RateBasedConfig<Balance> {
-	/// Upper bound on the `total_rewards - total_dilution_adjustment`.
-	pub max_rewards: Balance,
-
-	/// The rewarding rate that increases the pool `total_reward`
-	/// at a given time.
-	pub reward_rate: RewardRate<Balance>,
 }
 
 /// Categorize the reward pool by it's incentive characteristics and expose
@@ -212,34 +95,6 @@ pub struct RewardPoolConfig<
 
 	/// Asset ID (collection ID) of the financial NFTs issued for staking positions of this pool
 	pub financial_nft_asset_id: AssetId,
-}
-
-/// Staking typed fNFT, usually can be mapped to raw fNFT storage type. A position identifier
-/// should exist for each position when stored in the runtime storage.
-/// TODO refer to the relevant section in the design doc.
-#[derive(DebugNoBound, PartialEqNoBound, EqNoBound, CloneNoBound, Encode, Decode, TypeInfo)]
-#[scale_info(skip_type_params(MaxReductions))]
-pub struct Stake<
-	AssetId: Debug + PartialEq + Eq + Clone,
-	RewardPoolId: Debug + PartialEq + Eq + Clone,
-	Balance: Debug + PartialEq + Eq + Clone,
-	MaxReductions: Get<u32>,
-> {
-	/// Reward Pool ID from which pool to allocate rewards for this
-	pub staked_asset_id: RewardPoolId,
-
-	/// The original stake this position was created for or updated position with any extended
-	/// stake amount.
-	pub amount: Balance,
-
-	/// Pool share received for this position
-	pub share: Balance,
-
-	/// Reduced rewards by asset for the position (d_n)
-	pub reductions: BoundedBTreeMap<AssetId, Balance, MaxReductions>,
-
-	/// The lock period for the stake.
-	pub lock: Lock,
 }
 
 /// Trait to provide interface to manage staking reward pool.

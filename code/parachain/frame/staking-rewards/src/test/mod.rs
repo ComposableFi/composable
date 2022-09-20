@@ -14,8 +14,12 @@ use composable_traits::{
 	fnft::FinancialNft as FinancialNftT,
 	staking::{
 		lock::{Lock, LockConfig},
-		ProtocolStaking, RateBasedConfig, RewardConfig, RewardPoolConfig, RewardRate, Stake,
-		Staking,
+		reward::{
+			rate_based::{RateBasedConfig, RewardRate},
+			RewardConfig,
+		},
+		stake::Stake,
+		ProtocolStaking, RewardPoolConfig, Staking,
 	},
 	time::{DurationSeconds, ONE_HOUR, ONE_MINUTE},
 };
@@ -112,10 +116,10 @@ fn stake_in_case_of_zero_inflation_should_work() {
 
 		mint_assets([staker], [PICA::ID], amount * 2);
 
-		let fnft_instance_id = assert_extrinsic_event_with::<Test, _, _, _>(
+		let fnft_instance_id = assert_extrinsic_event_with::<Test, Event, _, _, _, _>(
 			StakingRewards::stake(Origin::signed(staker), PICA::ID, amount, duration_preset),
 			|event| match event {
-				Event::StakingRewards(crate::Event::<Test>::Staked {
+				crate::Event::<Test>::Staked {
 					pool_id: PICA::ID,
 					owner: _staker,
 					amount: _,
@@ -123,7 +127,7 @@ fn stake_in_case_of_zero_inflation_should_work() {
 					fnft_collection_id: _,
 					fnft_instance_id,
 					keep_alive: _,
-				}) => Some(fnft_instance_id),
+				} => Some(fnft_instance_id),
 				_ => None,
 			},
 		);
@@ -158,10 +162,10 @@ fn stake_in_case_of_zero_inflation_should_work() {
 		assert_eq!(balance(PICA::ID, &staker), amount);
 		assert_eq!(balance(PICA::ID, &fnft_asset_account), amount);
 
-		assert_last_event_with::<Test, _>(|event| {
+		assert_last_event_with::<Test, Event, _, _>(|event| {
 			matches!(
 				event,
-				Event::StakingRewards(crate::Event::Staked {
+				crate::Event::Staked {
 					pool_id: PICA::ID,
 					owner,
 					amount: _,
@@ -169,7 +173,7 @@ fn stake_in_case_of_zero_inflation_should_work() {
 					fnft_collection_id: PICA::ID,
 					fnft_instance_id: _,
 					keep_alive: _,
-				}) if owner == staker
+				} if owner == staker
 			)
 			.then_some(())
 		});
@@ -645,7 +649,7 @@ fn test_split_position() {
 }
 
 mod claim {
-	use composable_traits::staking::Reward;
+	use composable_traits::staking::reward::Reward;
 
 	use super::*;
 
@@ -844,7 +848,7 @@ fn with_stake<R>(
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
 
-		create_rewards_pool_and_assert(get_default_reward_pool());
+		create_rewards_pool_and_assert::<Test, Event>(get_default_reward_pool());
 
 		let rewards_pool = StakingRewards::pools(PICA::ID).expect("rewards_pool expected. QED");
 		let staked_asset_id = PICA::ID;
