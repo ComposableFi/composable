@@ -336,7 +336,7 @@
 
           run-with-benchmarks = chain:
             writeShellScriptBin "run-benchmarks-once" ''
-              ${composable-bench-node}/bin/composable benchmark pallet \
+              ${composable-bench-node}/bin/composable-node benchmark pallet \
               --chain="${chain}" \
               --execution=wasm \
               --wasm-execution=compiled \
