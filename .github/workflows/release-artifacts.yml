@@ -2,8 +2,7 @@ name: Nix Release Pipeline
 on:
   push:
     branches:
-      - release-*
-      - nix-releaZe-workflow
+      - release-v[0-9].[0-9].[0-9]
 
 env:
   GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
