@@ -1,0 +1,45 @@
+@startuml
+
+
+box Dotsama
+    database Picasso
+    entity Pablo
+end box
+
+box Cosmos
+    database Juno
+    entity Wasmswap
+end box
+
+
+box IBC 
+    control Relayer
+end box
+
+group Open Connection
+    Picasso -> Picasso: Emit Init Event
+    Relayer --> Picasso: Get Init Event
+    Relayer --> Juno: Try Tx
+    Juno --> Juno: Emit OpenTry Event
+    Relayer --> Juno : Get OpenTry Event
+    Relayer --> Picasso : ConnAck(ClientId) Tx
+    Picasso -> Picasso : Emit OpenAck Event
+    Relayer --> Picasso: Get OpenAck Event
+    Relayer --> Juno: OpenConfirm(ClientId) Tx
+end
+
+group Open Channel(ordered/unordered) on top of Connection 
+    Pablo -> Pablo: Emit (ClientId, Port, Wasmswap) Event
+    Relayer --> Pablo: Get Init Event
+    Relayer --> Wasmswap: Try Tx
+    Wasmswap --> Wasmswap: Emit OpenTry Event
+    Relayer --> Wasmswap : Get OpenTry Event
+    Relayer --> Pablo : ConnAck(ClientId, Port, Wasmswap) Tx
+    Pablo -> Pablo : Emit OpenAck Event
+    Relayer --> Pablo: Get OpenAck Event
+    Relayer --> Wasmswap: OpenConfirm(ClientId, Port, Wasmswap) Tx
+end
+
+
+
+@enduml

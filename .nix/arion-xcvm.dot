@@ -1,7 +1,7 @@
 digraph arion_xcvm {
-    Dali [shape = diamond]
-    Rococo [shape = diamond]
-    Juno [shape = diamond]
+    Dali [shape = box3d]
+    Rococo [shape = box3d]
+    Juno [shape = box3d]
     Hasura [shape = trapezium]    
     SubqlQuery [shape = trapezium]
     SubsquidGateway [shape = trapezium]
@@ -11,7 +11,7 @@ digraph arion_xcvm {
     
     PicassoFrontend -> Dali [label = "get data" arrowhead = inv]
     PicassoFrontend -> SubsquidGateway [label = "get data" arrowhead = inv]
-    Hasura -> Postgres [label = "get data"]
+    Hasura -> Postgres [label = "get data" arrowhead = inv]
     SubqlIndexer -> Juno [label = "get data" arrowhead = inv]
     SubsquidIndexer -> Redis
     SubsquidIndexer -> Postgres [label = "add data"]

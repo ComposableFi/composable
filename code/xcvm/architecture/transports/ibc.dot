@@ -1,0 +1,60 @@
+digraph arion_xcvm {
+    FinalityProof -> ConsesusProof
+    FinalityProof -> StateProof
+    ConsesusProof -> SignaturesFromAuthoritySet
+    StateProof -> StateRoot
+
+    
+    
+    subgraph cluster_picasso {
+        label = "Substrate Picasso";
+        TendermintLightClient [shape = component]    
+        SubstrateIbcPallet
+        JunoConnection [label="Connection"]
+        ChannelAngular
+        ChannelPablo
+    }
+
+    JunoConnection -> ClientId [label="has"]
+    PicassoConnection -> ClientId [label="has"]
+    ChannelAngular -> JunoConnection
+    
+    subgraph cluster_juno {
+        label = "Cosmos Juno";
+        BeefyLightClient [shape = component]        
+        PicassoConnection [label="Connection"]
+        CosmosIbcModule
+        Try [shape=parallelogram]
+        OpenTry [shape=diamond]
+        ChannelMars
+        ChannelWasmswap
+    }
+
+    Relayer -> SubstrateIbcPallet
+    Relayer -> CosmosIbcModule
+
+
+    // Dali [shape = box3d]
+    // Rococo [shape = box3d]
+    // Juno [shape = box3d]
+    // Hasura [shape = trapezium]    
+    // SubqlQuery [shape = trapezium]
+    // SubsquidGateway [shape = trapezium]
+    // Postgres [shape = cylinder]
+    // Redis [shape = cylinder]
+    // PicassoFrontend [shape=hexagon]
+    
+    // PicassoFrontend -> Dali [label = "get data" arrowhead = inv]
+    // PicassoFrontend -> SubsquidGateway [label = "get data" arrowhead = inv]
+    // Hasura -> Postgres [label = "get data" arrowhead = inv]
+    // SubqlIndexer -> Juno [label = "get data" arrowhead = inv]
+    // SubsquidIndexer -> Redis
+    // SubsquidIndexer -> Postgres [label = "add data"]
+    // SubsquidIndexer -> Dali [label = "get data" arrowhead = inv]
+    // SubqlIndexer -> Postgres [label = "add data"]
+    // SubqlQuery -> Postgres [label = "get data" arrowhead = inv]
+    // SubqlQuery -> SubqlIndexer [style = dashed label = "get metadata" arrowhead = inv]
+    // SubsquidGateway -> Postgres [label = "get data" arrowhead = inv]
+    // Dali -> Rococo
+    // Rococo -> Dali
+}
