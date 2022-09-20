@@ -1,12 +1,12 @@
-import {ApiPromise} from "@polkadot/api";
-import {KeyringPair} from "@polkadot/keyring/types";
+import { ApiPromise } from "@polkadot/api";
+import { KeyringPair } from "@polkadot/keyring/types";
 import {
   sendAndWaitForMultipleEvents,
   sendAndWaitForSuccess,
   sendWithBatchAndWaitForSuccess
 } from "@composable/utils/polkadotjs";
-import {Pica} from "@composable/utils/mintingHelper";
-import {AccountId32} from "@polkadot/types/interfaces/runtime";
+import { Pica } from "@composable/utils/mintingHelper";
+import { AccountId32 } from "@polkadot/types/interfaces/runtime";
 
 export async function createConsProdPoolforFnft(
   api: ApiPromise,
@@ -31,15 +31,23 @@ export async function createConsProdPoolforFnft(
   const events = await sendAndWaitForMultipleEvents(
     api,
     sudoKey,
-    [api.events.fnft.FinancialNftCollectionCreated.is,
+    [
+      api.events.fnft.FinancialNftCollectionCreated.is,
       api.events.stakingRewards.RewardPoolCreated.is,
-      api.events.pablo.PoolCreated.is],
+      api.events.pablo.PoolCreated.is
+    ],
     api.tx.sudo.sudo(api.tx.pablo.create(pool)),
     false
   );
-  const {data: [collectionId, who,]} = events[0];
-  const {data: [rewardsPoolId, rewardPoolOwner,]} = events[1];
-  const {data: [pabloPoolId, pabloPoolOwner,]} = events[2];
+  const {
+    data: [collectionId, who]
+  } = events[0];
+  const {
+    data: [rewardsPoolId, rewardPoolOwner]
+  } = events[1];
+  const {
+    data: [pabloPoolId, pabloPoolOwner]
+  } = events[2];
   return {
     fnftCollectionInfo: {
       fnftCollectionId: parseInt(collectionId.toString()),
@@ -53,7 +61,7 @@ export async function createConsProdPoolforFnft(
       poolId: parseInt(pabloPoolId.toString()),
       poolOwner: pabloPoolOwner.toString()
     }
-  }
+  };
 }
 
 export async function createStableSwapPoolforFnft(
@@ -79,15 +87,23 @@ export async function createStableSwapPoolforFnft(
   const events = await sendAndWaitForMultipleEvents(
     api,
     sudoKey,
-    [api.events.fnft.FinancialNftCollectionCreated.is,
+    [
+      api.events.fnft.FinancialNftCollectionCreated.is,
       api.events.stakingRewards.RewardPoolCreated.is,
-      api.events.pablo.PoolCreated.is],
+      api.events.pablo.PoolCreated.is
+    ],
     api.tx.sudo.sudo(api.tx.pablo.create(pool)),
     false
   );
-  const {data: [collectionId, who,]} = events[0];
-  const {data: [rewardsPoolId, rewardPoolOwner,]} = events[1];
-  const {data: [pabloPoolId, pabloPoolOwner,]} = events[2];
+  const {
+    data: [collectionId, who]
+  } = events[0];
+  const {
+    data: [rewardsPoolId, rewardPoolOwner]
+  } = events[1];
+  const {
+    data: [pabloPoolId, pabloPoolOwner]
+  } = events[2];
   return {
     fnftCollectionInfo: {
       fnftCollectionId: parseInt(collectionId.toString()),
@@ -101,7 +117,7 @@ export async function createStableSwapPoolforFnft(
       poolId: parseInt(pabloPoolId.toString()),
       poolOwner: pabloPoolOwner.toString()
     }
-  }
+  };
 }
 
 export async function addFundsToThePools(api: ApiPromise, pools: number[], funderWallet: KeyringPair) {
@@ -114,13 +130,7 @@ export async function addFundsToThePools(api: ApiPromise, pools: number[], funde
     const minMintAmount = api.createType("u128", 0);
     txs.push(api.tx.pablo.addLiquidity(pool, baseAmount, quoteAmount, minMintAmount, keepAlive));
   }
-  await sendWithBatchAndWaitForSuccess(
-    api,
-    funderWallet,
-    api.events.system.NewAccount.is,
-    txs,
-    false
-  );
+  await sendWithBatchAndWaitForSuccess(api, funderWallet, api.events.system.NewAccount.is, txs, false);
 }
 
 export async function addRewardsToRewardPools(
@@ -128,27 +138,17 @@ export async function addRewardsToRewardPools(
   rewardPools: number[],
   assetIdP: number,
   funderWallet: KeyringPair,
-  amount: number) {
+  amount: number
+) {
   const txs = [];
   for (const rewardPool of rewardPools) {
     const pool = api.createType("u128", rewardPool);
     const assetId = api.createType("u128", assetIdP);
     const addAmount = api.createType("u128", Pica(amount));
     const keepAlive = api.createType("bool", false);
-    txs.push(api.tx.stakingRewards.addToRewardsPot(
-      pool,
-      assetId,
-      addAmount,
-      keepAlive)
-    );
+    txs.push(api.tx.stakingRewards.addToRewardsPot(pool, assetId, addAmount, keepAlive));
   }
-  await sendWithBatchAndWaitForSuccess(
-    api,
-    funderWallet,
-    api.events.stakingRewards.RewardsPotIncreased.is,
-    txs,
-    false
-  );
+  await sendWithBatchAndWaitForSuccess(api, funderWallet, api.events.stakingRewards.RewardsPotIncreased.is, txs, false);
 }
 
 export async function stakeLpTokens(
@@ -156,11 +156,14 @@ export async function stakeLpTokens(
   rewardPool: number,
   lpProviderWallet: KeyringPair,
   lpAmount: number,
-  lockTime: number): Promise<AccountId32> {
+  lockTime: number
+): Promise<AccountId32> {
   const poolId = api.createType("u128", rewardPool);
   const amountParam = api.createType("u128", Pica(lpAmount));
   const duration = api.createType("u64", lockTime);
-  const {data: [, who,]} = await sendAndWaitForSuccess(
+  const {
+    data: [, who]
+  } = await sendAndWaitForSuccess(
     api,
     lpProviderWallet,
     api.events.tokens.Endowed.is,
@@ -190,7 +193,8 @@ export async function extendStakingPosition(
   lpProvider: KeyringPair,
   fnftCollectionId: number,
   instanceId: number,
-  amountToBeAdded: number) {
+  amountToBeAdded: number
+) {
   const collectionId = api.createType("u128", fnftCollectionId);
   const instance = api.createType("u64", instanceId);
   const amount = api.createType("u128", Pica(amountToBeAdded));
@@ -206,7 +210,8 @@ export async function createStakingRewardPool(
   api: ApiPromise,
   poolOwner: KeyringPair,
   stakeAssetId: number,
-  rewardAsset: number) {
+  rewardAsset: number
+) {
   const rewardConfigs = api.createType("ComposableTraitsStakingRewardConfig", {
     assetId: api.createType("u128", rewardAsset),
     maxRewards: api.createType("u128", Pica(5000000)),
@@ -237,21 +242,21 @@ export async function createStakingRewardPool(
       shareAssetId: api.createType("u128", stakeAssetId + 100000),
       financialNftAssetId: api.createType("u128", stakeAssetId + 200000)
     }
-  })
-  const {data: [poolId,]} = await sendAndWaitForSuccess(
+  });
+  const {
+    data: [poolId]
+  } = await sendAndWaitForSuccess(
     api,
     poolOwner,
     api.events.stakingRewards.RewardPoolCreated.is,
-    api.tx.sudo.sudo(
-      api.tx.stakingRewards.createRewardPool(poolConfig)),
+    api.tx.sudo.sudo(api.tx.stakingRewards.createRewardPool(poolConfig)),
     false
-  )
+  );
   return {
     poolId: poolId.toNumber(),
     fnftAssetId: financialNftAssetId
   };
 }
-
 
 export async function getUserFnfts(api: ApiPromise, stakerWallet: KeyringPair) {
   const instancesRaw = await api.query.fnft.ownerInstances(stakerWallet.address);
@@ -259,12 +264,16 @@ export async function getUserFnfts(api: ApiPromise, stakerWallet: KeyringPair) {
 }
 
 export async function unstakeAndBurn(
-  api: ApiPromise, stakerWallet: KeyringPair,
+  api: ApiPromise,
+  stakerWallet: KeyringPair,
   fnftCollectionId: number,
-  fnftCollectionInstance: number) {
+  fnftCollectionInstance: number
+) {
   const fnftCollectionIdP = api.createType("u128", fnftCollectionId);
   const fnftInstanceP = api.createType("u128", fnftCollectionInstance);
-  const {data: [owner, collectionId, instanceId]} = await sendAndWaitForSuccess(
+  const {
+    data: [owner, collectionId, instanceId]
+  } = await sendAndWaitForSuccess(
     api,
     stakerWallet,
     api.events.stakingRewards.Unstaked.is,
@@ -290,5 +299,5 @@ export async function getCollectionOwnerAndAdmin(api: ApiPromise, fnftCollection
   return {
     owner: owner,
     admin: admin
-  }
+  };
 }

@@ -1,26 +1,30 @@
-import {ApiPromise} from "@polkadot/api";
-import {KeyringPair} from "@polkadot/keyring/types";
-import {getNewConnection} from "@composable/utils/connectionHelper";
-import {getDevWallets} from "@composable/utils/walletHelper";
-import {mintAssetsToWallet, Pica} from "@composable/utils/mintingHelper";
+import { ApiPromise } from "@polkadot/api";
+import { KeyringPair } from "@polkadot/keyring/types";
+import { getNewConnection } from "@composable/utils/connectionHelper";
+import { getDevWallets } from "@composable/utils/walletHelper";
+import { mintAssetsToWallet, Pica } from "@composable/utils/mintingHelper";
 import {
   addFundsToThePools,
   addRewardsToRewardPools,
   createConsProdPoolforFnft,
-  createStableSwapPoolforFnft, createStakingRewardPool,
+  createStableSwapPoolforFnft,
+  createStakingRewardPool,
   extendStakingPosition,
   getCollectionInstanceOwner,
-  getCollectionInstances, getCollectionOwnerAndAdmin,
+  getCollectionInstances,
+  getCollectionOwnerAndAdmin,
   getLockedToken,
-  getRewardPoolOwner, getUserFnfts,
-  stakeLpTokens, unstakeAndBurn,
-} from "@composabletests/tests/fnft/fnftTestsHelper";
-import {addFundsToThePool} from "@composabletests/tests/pablo/testHandlers/pabloTestHelper";
-import {expect} from "chai";
-import {AccountId32} from "@polkadot/types/interfaces/runtime";
-import * as testConfig from "./test_configuration.json"
+  getRewardPoolOwner,
+  getUserFnfts,
+  stakeLpTokens,
+  unstakeAndBurn
+} from "@composabletests/tests/fnft/fnftPalletTestHelper";
+import { addFundsToThePool } from "@composabletests/tests/pablo/testHandlers/pabloTestHelper";
+import { expect } from "chai";
+import { AccountId32 } from "@polkadot/types/interfaces/runtime";
+import * as testConfig from "./test_configuration.json";
 
-describe("Fnft Pallet Tests", function () {
+describe.only ("Fnft Pallet Tests", function () {
   if (!testConfig.enabledTests.tx.enabled) {
     console.log("Fnft Tests are being skipped");
     return;
@@ -38,9 +42,9 @@ describe("Fnft Pallet Tests", function () {
   this.timeout(2 * 60 * 1000);
 
   before("Initialize variables", async function () {
-    const {newClient, newKeyring} = await getNewConnection();
+    const { newClient, newKeyring } = await getNewConnection();
     api = newClient;
-    const {devWalletAlice, devWalletEve, devWalletFerdie} = getDevWallets(newKeyring);
+    const { devWalletAlice, devWalletEve, devWalletFerdie } = getDevWallets(newKeyring);
     sudoKey = devWalletAlice;
     poolOwner = devWalletEve.derive("/test/constantProductDex/walletId1");
     lpProvider = devWalletFerdie.derive("/test/constantProductDex/walletId2");
@@ -60,27 +64,11 @@ describe("Fnft Pallet Tests", function () {
     const rewardAmount = 10000;
     await mintAssetsToWallet(api, poolOwner, sudoKey, [pica, ksm, usdc, usdt, rewardAsset]);
     await mintAssetsToWallet(api, lpProvider, sudoKey, [pica, ksm, usdc, usdt]);
-    const picaKsmEvents = await createConsProdPoolforFnft(
-      api,
-      sudoKey,
-      poolOwner,
-      pica,
-      ksm,
-      fee,
-      baseWeight
-    );
+    const picaKsmEvents = await createConsProdPoolforFnft(api, sudoKey, poolOwner, pica, ksm, fee, baseWeight);
     picaKsmPool = picaKsmEvents.pabloPoolInfo.poolId;
     picaKsmfnftCollectionId = picaKsmEvents.fnftCollectionInfo.fnftCollectionId;
     picaKsmStakingRewardPool = picaKsmEvents.rewardPoolInfo.rewardPoolId;
-    const usdtUsdcEvents = await createStableSwapPoolforFnft(
-      api,
-      sudoKey,
-      poolOwner,
-      usdt,
-      usdc,
-      ampCoeff,
-      fee
-    );
+    const usdtUsdcEvents = await createStableSwapPoolforFnft(api, sudoKey, poolOwner, usdt, usdc, ampCoeff, fee);
     usdtUsdcPool = usdtUsdcEvents.pabloPoolInfo.poolId;
     usdtUsdcFnftCollectionId = usdtUsdcEvents.fnftCollectionInfo.fnftCollectionId;
     usdtUsdcStakingRewardPool = usdtUsdcEvents.rewardPoolInfo.rewardPoolId;
@@ -91,7 +79,8 @@ describe("Fnft Pallet Tests", function () {
       [picaKsmStakingRewardPool, usdtUsdcStakingRewardPool],
       rewardAsset,
       poolOwner,
-      rewardAmount);
+      rewardAmount
+    );
   });
 
   after("Close api connection", async function () {
@@ -167,8 +156,7 @@ describe("Fnft Pallet Tests", function () {
   it("Users after unstaking, won't be reassigned the same fnft instance id", async function () {
     const lpAmount = 1000;
     const unstakedEvent = await unstakeAndBurn(api, lpProvider, usdtUsdcFnftCollectionId, usFnftInstanceId);
-    expect(unstakedEvent.owner.toString()).to.be
-      .equal(api.createType("AccountId32", lpProvider.address).toString());
+    expect(unstakedEvent.owner.toString()).to.be.equal(api.createType("AccountId32", lpProvider.address).toString());
     expect(unstakedEvent.fnftCollectionId).to.be.equal(usdtUsdcFnftCollectionId);
     expect(unstakedEvent.fnftInstanceId).to.be.equal(usFnftInstanceId);
     await stakeLpTokens(api, usdtUsdcStakingRewardPool, lpProvider, lpAmount, ONE_WEEK);

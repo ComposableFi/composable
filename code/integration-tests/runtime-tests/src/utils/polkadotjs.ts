@@ -39,7 +39,7 @@ export async function sendAndWaitForSuccess<T extends AnyTuple>(
 }
 
 /**
- * Sends multiple signed extrinsics and waits for success
+ * Sends multiple signed extrinsic and waits for success
  * @param {ApiPromise} api Connected API Client.
  * @param {AddressOrPair} sender Wallet initiating the transaction.
  * @param {IEvent<AnyTuple>} filter Success event to be waited for.
@@ -116,12 +116,14 @@ export function sendUnsignedAndWaitFor<T extends AnyTuple>(
         }
         if (status.isInBlock || status.isFinalized) {
           if (res.events.find(e => filter(e.event)) == undefined) return reject(status.toString());
-          // @ts-ignore
-          const event = res.events.find(e => filter(e.event)).event;
-          if (filter(event)) {
-            resolve(event);
-          } else {
-            reject(Error("Event record not found"));
+          const eventRaw = res.events.find(e => filter(e.event));
+          if (eventRaw != undefined) {
+            const event = eventRaw.event;
+            if (filter(event)) {
+              resolve(event);
+            } else {
+              reject(Error("Event record not found"));
+            }
           }
         }
       })
@@ -157,36 +159,46 @@ export function sendAndWaitFor<T extends AnyTuple>(
             const decoded = api.registry.findMetaError(dispatchError.asModule);
             const { docs, name, section } = decoded;
             if (intendedToFail) {
-              // @ts-ignore
-              const event = res.events.find(e => filter(e.event)).event;
-              if (filter(event)) resolve(event);
+              const rawEvents = res.events.find(e => filter(e.event));
+              if (rawEvents !== undefined) {
+                const event = rawEvents.event;
+                if (filter(event)) resolve(event);
+              }
             }
             reject(Error(`${section}.${name}: ${docs.join(" ")}`));
           } else {
             if (intendedToFail) {
-              // @ts-ignore
-              const event = res.events.find(e => filter(e.event)).event;
-              if (filter(event)) resolve(event);
+              const rawEvents = res.events.find(e => filter(e.event));
+              if (rawEvents !== undefined) {
+                const event = rawEvents.event;
+                if (filter(event)) resolve(event);
+              }
             }
             reject(Error(dispatchError.toString()));
           }
         }
         if (status.isInBlock || status.isFinalized) {
           if (res.events.find(e => filter(e.event)) == undefined) return reject(status.toString());
-          // @ts-ignore
-          const event = res.events.find(e => filter(e.event)).event;
-          if (filter(event)) {
-            if (intendedToFail) {
-              // @ts-ignore
-              const event = res.events.find(e => filter(e.event)).event;
-              if (filter(event)) reject(event);
+          const rawEvent = res.events.find(e => filter(e.event));
+          if (rawEvent !== undefined) {
+            const event = rawEvent.event;
+            if (filter(event)) {
+              if (intendedToFail) {
+                const rawEvent = res.events.find(e => filter(e.event));
+                if (rawEvent !== undefined) {
+                  const event = rawEvent.event;
+                  if (filter(event)) reject(event);
+                }
+              }
+              resolve(event);
             }
-            resolve(event);
           } else {
             if (intendedToFail) {
-              // @ts-ignore
-              const event = res.events.find(e => filter(e.event)).event;
-              if (filter(event)) resolve(event);
+              const rawEvent = res.events.find(e => filter(e.event));
+              if (rawEvent !== undefined) {
+                const event = rawEvent.event;
+                if (filter(event)) resolve(event);
+              }
             }
             reject(Error("1014: Priority is too low:"));
           }
@@ -199,7 +211,7 @@ export function sendAndWaitFor<T extends AnyTuple>(
 }
 
 /**
- * Sends multiple signed extrinsics and waits for success
+ * Sends multiple signed extrinsic and waits for success
  * @param {ApiPromise} api Connected API Client.
  * @param {AddressOrPair} sender Wallet initiating the transaction.
  * @param {IEvent<AnyTuple>} filter Success event to be waited for.
@@ -225,37 +237,98 @@ export function sendAndWaitForWithBatch<T extends AnyTuple>(
             const decoded = api.registry.findMetaError(dispatchError.asModule);
             const { docs, name, section } = decoded;
             if (intendedToFail) {
-              // @ts-ignore
-              const event = res.events.find(e => filter(e.event)).event;
-              if (filter(event)) resolve(event);
+              const eventRaw = res.events.find(e => filter(e.event));
+              if (eventRaw !== undefined) {
+                const event = eventRaw.event;
+                if (filter(event)) resolve(event);
+              }
             }
             reject(Error(`${section}.${name}: ${docs.join(" ")}`));
           } else {
             if (intendedToFail) {
-              // @ts-ignore
-              const event = res.events.find(e => filter(e.event)).event;
-              if (filter(event)) resolve(event);
+              const eventRaw = res.events.find(e => filter(e.event));
+              if (eventRaw !== undefined) {
+                const event = eventRaw.event;
+                if (filter(event)) resolve(event);
+              }
             }
             reject(Error(dispatchError.toString()));
           }
         }
         if (status.isInBlock || status.isFinalized) {
           if (res.events.find(e => filter(e.event)) == undefined) return reject(status.toString());
-          // @ts-ignore
-          const event = res.events.find(e => filter(e.event)).event;
-          if (filter(event)) {
-            if (intendedToFail) {
-              // @ts-ignore
-              const event = res.events.find(e => filter(e.event)).event;
-              if (filter(event)) reject(event);
+          const eventRaw = res.events.find(e => filter(e.event));
+          if (eventRaw !== undefined) {
+            const event = eventRaw.event;
+            if (filter(event)) {
+              if (intendedToFail) {
+                const eventRaw = res.events.find(e => filter(e.event));
+                if (eventRaw !== undefined) {
+                  const event = eventRaw.event;
+                  if (filter(event)) reject(event);
+                }
+              }
+              resolve(event);
             }
-            resolve(event);
           } else {
             if (intendedToFail) {
-              // @ts-ignore
-              const event = res.events.find(e => filter(e.event)).event;
-              if (filter(event)) resolve(event);
+              const eventRaw = res.events.find(e => filter(e.event));
+              if (eventRaw !== undefined) {
+                const event = eventRaw.event;
+                if (filter(event)) resolve(event);
+              }
             }
+            reject(Error("1014: Priority is too low:"));
+          }
+        }
+      })
+      .catch(function (e) {
+        reject(Error(e.stack));
+      });
+  });
+}
+
+/**
+ * Sends signed extrinsic and waits for multiple events
+ * @param {ApiPromise} api Connected API Client.
+ * @param {AddressOrPair} sender Wallet initiating the transaction.
+ * @param eventsToBeWaited An array of events to be waited for
+ * @param {SubmittableExtrinsic<Promise>} call Extrinsic call.
+ * @param {boolean} intendedToFail If set to true the transaction is expected to fail.
+ * @returns an array of events waited for
+ * However, you should follow the structure you passed as events to be waited for and destructure
+ * accordingly.
+ */
+export function sendAndWaitForMultipleEvents<T extends AnyTuple>(
+  api: ApiPromise,
+  sender: AddressOrPair,
+  eventsToBeWaited: Array<(event: IEvent<AnyTuple>) => event is IEvent<AnyTuple>>,
+  call: SubmittableExtrinsic<"promise">,
+  intendedToFail: boolean
+): Promise<Array<IEvent<AnyTuple>>> {
+  return new Promise<Array<IEvent<AnyTuple>>>(function (resolve, reject) {
+    call
+      .signAndSend(sender, { nonce: -1 }, function (res) {
+        const { dispatchError, status } = res;
+        if (dispatchError) {
+          if (dispatchError.isModule) {
+            // for module errors, we have the section indexed, lookup
+            const decoded = api.registry.findMetaError(dispatchError.asModule);
+            const { docs, name, section } = decoded;
+            reject(Error(`${section}.${name}: ${docs.join(" ")}`));
+          } else {
+            reject(Error(dispatchError.toString()));
+          }
+        }
+        if (status.isInBlock || status.isFinalized) {
+          const thrownEvents: Array<IEvent<AnyTuple>> = [];
+          eventsToBeWaited.map(passedEv => {
+            const event = res.events.find(ev => passedEv(ev.event));
+            if (event != undefined) thrownEvents.push(event.event);
+          });
+          if (thrownEvents) {
+            resolve(thrownEvents);
+          } else {
             reject(Error("1014: Priority is too low:"));
           }
         }
