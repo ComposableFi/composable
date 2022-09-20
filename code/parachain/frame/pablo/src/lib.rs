@@ -79,12 +79,8 @@ pub mod pallet {
 			RedeemableAssets, RemoveLiquiditySimulationResult, StableSwapPoolInfo, MAX_REWARDS,
 		},
 		staking::{
-			lock::LockConfig,
-			reward::{
-				rate_based::{RateBasedConfig, RewardRate},
-				Reward, RewardConfig,
-			},
-			ManageStaking, ProtocolStaking, RewardPoolConfig,
+			lock::LockConfig, ManageStaking, ProtocolStaking, RateBasedConfig, RewardConfig,
+			RewardPoolConfig, RewardRate,
 		},
 		time::{ONE_MONTH, ONE_WEEK},
 	};
@@ -687,7 +683,7 @@ pub mod pallet {
 				reward_configs,
 				lock,
 				share_asset_id: Self::get_x_token_from_pool(*pool_id)?,
-				financial_nft_asset_id: Self::get_financial_nft_from_pool(*pool_id)?,
+				fnft_asset_id: Self::get_financial_nft_from_pool(*pool_id)?,
 			})
 		}
 

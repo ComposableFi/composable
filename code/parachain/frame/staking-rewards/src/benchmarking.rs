@@ -4,12 +4,7 @@ use crate::*;
 use composable_support::validation::TryIntoValidated;
 use composable_traits::{
 	staking::{
-		lock::LockConfig,
-		reward::{
-			rate_based::{RateBasedConfig, RewardRate, RewardUpdate},
-			RewardConfig,
-		},
-		RewardPoolConfig,
+		lock::LockConfig, RateBasedConfig, RewardConfig, RewardPoolConfig, RewardRate, RewardUpdate,
 	},
 	time::{ONE_HOUR, ONE_MINUTE},
 };
@@ -47,7 +42,7 @@ fn get_reward_pool<T: Config>(
 			.unwrap(),
 		lock: lock_config::<T>(),
 		share_asset_id: X_ASSET_ID.into(),
-		financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID.into(),
+		fnft_asset_id: STAKING_FNFT_COLLECTION_ID.into(),
 	};
 	pool_init_config
 }
@@ -191,7 +186,7 @@ benchmarks! {
 				.unwrap(),
 			lock: lock_config::<T>(),
 			share_asset_id: 1000.into(),
-			financial_nft_asset_id: 2000.into(),
+			fnft_asset_id: 2000.into(),
 		}).unwrap();
 
 		let now = now + seconds_per_block;

@@ -14,12 +14,8 @@ use composable_traits::{
 	fnft::FinancialNft as FinancialNftT,
 	staking::{
 		lock::{Lock, LockConfig},
-		reward::{
-			rate_based::{RateBasedConfig, RewardRate},
-			RewardConfig,
-		},
-		stake::Stake,
-		ProtocolStaking, RewardPoolConfig, Staking,
+		ProtocolStaking, RateBasedConfig, RewardConfig, RewardPoolConfig, RewardRate, Stake,
+		Staking,
 	},
 	time::{DurationSeconds, ONE_HOUR, ONE_MINUTE},
 };
@@ -76,7 +72,7 @@ fn test_create_reward_pool_invalid_end_block() {
 					reward_configs: get_default_reward_config(),
 					lock: get_default_lock_config(),
 					share_asset_id: XPICA::ID,
-					financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+					fnft_asset_id: STAKING_FNFT_COLLECTION_ID,
 				}
 			),
 			crate::Error::<Test>::EndBlockMustBeInTheFuture
@@ -579,7 +575,7 @@ fn test_split_position() {
 			reward_configs: get_default_reward_config(),
 			lock: get_default_lock_config(),
 			share_asset_id: XPICA::ID,
-			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+			fnft_asset_id: STAKING_FNFT_COLLECTION_ID,
 		};
 
 		assert_extrinsic_event::<Test, _, _, _>(
@@ -649,7 +645,7 @@ fn test_split_position() {
 }
 
 mod claim {
-	use composable_traits::staking::reward::Reward;
+	use composable_traits::staking::Reward;
 
 	use super::*;
 
@@ -894,7 +890,7 @@ fn create_default_reward_pool() {
 				reward_configs: get_default_reward_config(),
 				lock: get_default_lock_config(),
 				share_asset_id: XPICA::ID,
-				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+				fnft_asset_id: STAKING_FNFT_COLLECTION_ID,
 			},
 		),
 		crate::Event::<Test>::RewardPoolCreated { pool_id: PICA::ID, owner: ALICE, end_block: 5 },
@@ -910,7 +906,7 @@ fn get_default_reward_pool() -> RewardPoolConfigurationOf<Test> {
 		reward_configs: get_default_reward_config(),
 		lock: get_default_lock_config(),
 		share_asset_id: XPICA::ID,
-		financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+		fnft_asset_id: STAKING_FNFT_COLLECTION_ID,
 	}
 }
 

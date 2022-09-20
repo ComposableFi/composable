@@ -4,13 +4,8 @@ use composable_tests_helpers::test::{
 	helper::assert_extrinsic_event,
 };
 use composable_traits::staking::{
-	reward::{
-		rate_based::{
-			RateBasedConfig, RateBasedReward, RewardRate, RewardRatePeriod, RewardUpdate,
-		},
-		Reward, RewardConfig,
-	},
-	RewardPoolConfig,
+	RateBasedConfig, RateBasedReward, Reward, RewardConfig, RewardPoolConfig, RewardRate,
+	RewardRatePeriod, RewardUpdate,
 };
 use frame_support::{traits::TryCollect, BoundedBTreeMap};
 
@@ -53,7 +48,7 @@ fn test_update_reward_pool() {
 			.unwrap(),
 			lock: get_default_lock_config(),
 			share_asset_id: XPICA::ID,
-			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+			fnft_asset_id: STAKING_FNFT_COLLECTION_ID,
 		});
 
 		mint_assets([ALICE], [USDT::ID], INITIAL_AMOUNT);

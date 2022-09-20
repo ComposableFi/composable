@@ -3,7 +3,7 @@ use composable_tests_helpers::test::{
 	block::process_and_progress_blocks,
 	helper::{assert_last_event, assert_no_event},
 };
-use composable_traits::staking::reward::Reward;
+use composable_traits::staking::Reward;
 use frame_support::traits::{fungibles::InspectHold, TryCollect, UnixTime};
 
 use crate::test::prelude::*;
@@ -45,7 +45,7 @@ fn test_reward_update_calculation() {
 			reward_configs: [(PICA::ID, reward_config)].into_iter().try_collect().unwrap(),
 			lock: get_default_lock_config(),
 			share_asset_id: XPICA::ID,
-			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+			fnft_asset_id: STAKING_FNFT_COLLECTION_ID,
 		});
 
 		add_to_rewards_pot_and_assert(ALICE, PICA::ID, PICA::ID, PICA::units(10_000));
@@ -189,7 +189,7 @@ fn test_accumulate_rewards_pool_empty_refill() {
 			.unwrap(),
 			lock: get_default_lock_config(),
 			share_asset_id: XA::ID,
-			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+			fnft_asset_id: STAKING_FNFT_COLLECTION_ID,
 		});
 
 		progress_to_block(current_block + 1, &mut current_block);
@@ -309,7 +309,7 @@ fn test_accumulate_rewards_hook() {
 			.unwrap(),
 			lock: get_default_lock_config(),
 			share_asset_id: XA::ID,
-			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+			fnft_asset_id: STAKING_FNFT_COLLECTION_ID,
 		});
 
 		mint_assets([ALICE], [A::ID], A_A_INITIAL_AMOUNT);
@@ -342,7 +342,7 @@ fn test_accumulate_rewards_hook() {
 			.unwrap(),
 			lock: get_default_lock_config(),
 			share_asset_id: XC::ID,
-			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID + 1,
+			fnft_asset_id: STAKING_FNFT_COLLECTION_ID + 1,
 		});
 
 		mint_assets([ALICE], [D::ID], C_D_INITIAL_AMOUNT);
@@ -587,7 +587,7 @@ fn test_accumulate_rewards_hook() {
 				.unwrap(),
 			lock: get_default_lock_config(),
 			share_asset_id: XF::ID,
-			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID + 2,
+			fnft_asset_id: STAKING_FNFT_COLLECTION_ID + 2,
 		});
 
 		{

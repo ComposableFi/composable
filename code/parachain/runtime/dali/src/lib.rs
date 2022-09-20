@@ -651,7 +651,7 @@ parameter_types! {
 	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) *
 	RuntimeBlockWeights::get().max_block;
 	pub const MaxScheduledPerBlock: u32 = 50;
-  pub const NoPreimagePostponement: Option<u32> = Some(10);
+	pub const NoPreimagePostponement: Option<u32> = Some(10);
 }
 
 impl scheduler::Config for Runtime {
@@ -876,6 +876,7 @@ impl pallet_staking_rewards::Config for Runtime {
 	type PicaStakeFinancialNftCollectionId = PicaStakeFinancialNftCollectionId;
 	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
 	type LockId = StakingRewardsLockId;
+	type TreasuryAccount = TreasuryAccount;
 }
 
 /// The calls we permit to be executed by extrinsics
