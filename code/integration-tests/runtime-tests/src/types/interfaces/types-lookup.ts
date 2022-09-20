@@ -22,9 +22,9 @@ declare module "@polkadot/types/lookup" {
     u64,
     u8
   } from "@polkadot/types-codec";
-  import type { ITuple } from "@polkadot/types-codec/types";
-  import type { AccountId32, Call, H256, MultiAddress, Perbill } from "@polkadot/types/interfaces/runtime";
-  import type { Event } from "@polkadot/types/interfaces/system";
+  import type {ITuple} from "@polkadot/types-codec/types";
+  import type {AccountId32, Call, H256, MultiAddress, Perbill} from "@polkadot/types/interfaces/runtime";
+  import type {Event} from "@polkadot/types/interfaces/system";
 
   /** @name FrameSystemAccountInfo (3) */
   export interface FrameSystemAccountInfo extends Struct {
@@ -287,10 +287,12 @@ declare module "@polkadot/types/lookup" {
   }
 
   /** @name SpFinalityGrandpaAppPublic (34) */
-  export interface SpFinalityGrandpaAppPublic extends SpCoreEd25519Public {}
+  export interface SpFinalityGrandpaAppPublic extends SpCoreEd25519Public {
+  }
 
   /** @name SpCoreEd25519Public (35) */
-  export interface SpCoreEd25519Public extends U8aFixed {}
+  export interface SpCoreEd25519Public extends U8aFixed {
+  }
 
   /** @name PalletImOnlineEvent (36) */
   export interface PalletImOnlineEvent extends Enum {
@@ -307,10 +309,12 @@ declare module "@polkadot/types/lookup" {
   }
 
   /** @name PalletImOnlineSr25519AppSr25519Public (37) */
-  export interface PalletImOnlineSr25519AppSr25519Public extends SpCoreSr25519Public {}
+  export interface PalletImOnlineSr25519AppSr25519Public extends SpCoreSr25519Public {
+  }
 
   /** @name SpCoreSr25519Public (38) */
-  export interface SpCoreSr25519Public extends U8aFixed {}
+  export interface SpCoreSr25519Public extends U8aFixed {
+  }
 
   /** @name PolkadotRuntimeParachainsInclusionPalletEvent (42) */
   export interface PolkadotRuntimeParachainsInclusionPalletEvent extends Enum {
@@ -343,13 +347,16 @@ declare module "@polkadot/types/lookup" {
   }
 
   /** @name PolkadotPrimitivesV0CollatorAppPublic (46) */
-  export interface PolkadotPrimitivesV0CollatorAppPublic extends SpCoreSr25519Public {}
+  export interface PolkadotPrimitivesV0CollatorAppPublic extends SpCoreSr25519Public {
+  }
 
   /** @name PolkadotPrimitivesV0CollatorAppSignature (47) */
-  export interface PolkadotPrimitivesV0CollatorAppSignature extends SpCoreSr25519Signature {}
+  export interface PolkadotPrimitivesV0CollatorAppSignature extends SpCoreSr25519Signature {
+  }
 
   /** @name SpCoreSr25519Signature (48) */
-  export interface SpCoreSr25519Signature extends U8aFixed {}
+  export interface SpCoreSr25519Signature extends U8aFixed {
+  }
 
   /** @name PolkadotRuntimeParachainsParasPalletEvent (54) */
   export interface PolkadotRuntimeParachainsParasPalletEvent extends Enum {
@@ -840,22 +847,18 @@ declare module "@polkadot/types/lookup" {
     readonly isX6: boolean;
     readonly asX6: ITuple<[XcmV1Junction, XcmV1Junction, XcmV1Junction, XcmV1Junction, XcmV1Junction, XcmV1Junction]>;
     readonly isX7: boolean;
-    readonly asX7: ITuple<
-      [XcmV1Junction, XcmV1Junction, XcmV1Junction, XcmV1Junction, XcmV1Junction, XcmV1Junction, XcmV1Junction]
-    >;
+    readonly asX7: ITuple<[XcmV1Junction, XcmV1Junction, XcmV1Junction, XcmV1Junction, XcmV1Junction, XcmV1Junction, XcmV1Junction]>;
     readonly isX8: boolean;
-    readonly asX8: ITuple<
-      [
-        XcmV1Junction,
-        XcmV1Junction,
-        XcmV1Junction,
-        XcmV1Junction,
-        XcmV1Junction,
-        XcmV1Junction,
-        XcmV1Junction,
-        XcmV1Junction
-      ]
-    >;
+    readonly asX8: ITuple<[
+      XcmV1Junction,
+      XcmV1Junction,
+      XcmV1Junction,
+      XcmV1Junction,
+      XcmV1Junction,
+      XcmV1Junction,
+      XcmV1Junction,
+      XcmV1Junction
+    ]>;
     readonly type: "Here" | "X1" | "X2" | "X3" | "X4" | "X5" | "X6" | "X7" | "X8";
   }
 
@@ -952,7 +955,8 @@ declare module "@polkadot/types/lookup" {
   }
 
   /** @name XcmV2Xcm (92) */
-  export interface XcmV2Xcm extends Vec<XcmV2Instruction> {}
+  export interface XcmV2Xcm extends Vec<XcmV2Instruction> {
+  }
 
   /** @name XcmV2Instruction (94) */
   export interface XcmV2Instruction extends Enum {
@@ -1103,7 +1107,8 @@ declare module "@polkadot/types/lookup" {
   }
 
   /** @name XcmV1MultiassetMultiAssets (95) */
-  export interface XcmV1MultiassetMultiAssets extends Vec<XcmV1MultiAsset> {}
+  export interface XcmV1MultiassetMultiAssets extends Vec<XcmV1MultiAsset> {
+  }
 
   /** @name XcmV1MultiAsset (97) */
   export interface XcmV1MultiAsset extends Struct {
@@ -1290,22 +1295,18 @@ declare module "@polkadot/types/lookup" {
     readonly isX6: boolean;
     readonly asX6: ITuple<[XcmV0Junction, XcmV0Junction, XcmV0Junction, XcmV0Junction, XcmV0Junction, XcmV0Junction]>;
     readonly isX7: boolean;
-    readonly asX7: ITuple<
-      [XcmV0Junction, XcmV0Junction, XcmV0Junction, XcmV0Junction, XcmV0Junction, XcmV0Junction, XcmV0Junction]
-    >;
+    readonly asX7: ITuple<[XcmV0Junction, XcmV0Junction, XcmV0Junction, XcmV0Junction, XcmV0Junction, XcmV0Junction, XcmV0Junction]>;
     readonly isX8: boolean;
-    readonly asX8: ITuple<
-      [
-        XcmV0Junction,
-        XcmV0Junction,
-        XcmV0Junction,
-        XcmV0Junction,
-        XcmV0Junction,
-        XcmV0Junction,
-        XcmV0Junction,
-        XcmV0Junction
-      ]
-    >;
+    readonly asX8: ITuple<[
+      XcmV0Junction,
+      XcmV0Junction,
+      XcmV0Junction,
+      XcmV0Junction,
+      XcmV0Junction,
+      XcmV0Junction,
+      XcmV0Junction,
+      XcmV0Junction
+    ]>;
     readonly type: "Null" | "X1" | "X2" | "X3" | "X4" | "X5" | "X6" | "X7" | "X8";
   }
 
@@ -1498,7 +1499,8 @@ declare module "@polkadot/types/lookup" {
   }
 
   /** @name SpConsensusBabeAppPublic (143) */
-  export interface SpConsensusBabeAppPublic extends SpCoreSr25519Public {}
+  export interface SpConsensusBabeAppPublic extends SpCoreSr25519Public {
+  }
 
   /** @name SpConsensusBabeDigestsNextConfigDescriptor (146) */
   export interface SpConsensusBabeDigestsNextConfigDescriptor extends Enum {
@@ -1781,22 +1783,28 @@ declare module "@polkadot/types/lookup" {
   }
 
   /** @name PolkadotPrimitivesV0ValidatorAppPublic (190) */
-  export interface PolkadotPrimitivesV0ValidatorAppPublic extends SpCoreSr25519Public {}
+  export interface PolkadotPrimitivesV0ValidatorAppPublic extends SpCoreSr25519Public {
+  }
 
   /** @name PolkadotPrimitivesV1AssignmentAppPublic (191) */
-  export interface PolkadotPrimitivesV1AssignmentAppPublic extends SpCoreSr25519Public {}
+  export interface PolkadotPrimitivesV1AssignmentAppPublic extends SpCoreSr25519Public {
+  }
 
   /** @name SpAuthorityDiscoveryAppPublic (192) */
-  export interface SpAuthorityDiscoveryAppPublic extends SpCoreSr25519Public {}
+  export interface SpAuthorityDiscoveryAppPublic extends SpCoreSr25519Public {
+  }
 
   /** @name BeefyPrimitivesCryptoPublic (193) */
-  export interface BeefyPrimitivesCryptoPublic extends SpCoreEcdsaPublic {}
+  export interface BeefyPrimitivesCryptoPublic extends SpCoreEcdsaPublic {
+  }
 
   /** @name SpCoreEcdsaPublic (194) */
-  export interface SpCoreEcdsaPublic extends U8aFixed {}
+  export interface SpCoreEcdsaPublic extends U8aFixed {
+  }
 
   /** @name SpCoreCryptoKeyTypeId (198) */
-  export interface SpCoreCryptoKeyTypeId extends U8aFixed {}
+  export interface SpCoreCryptoKeyTypeId extends U8aFixed {
+  }
 
   /** @name PalletSessionCall (199) */
   export interface PalletSessionCall extends Enum {
@@ -1894,10 +1902,12 @@ declare module "@polkadot/types/lookup" {
   }
 
   /** @name SpFinalityGrandpaAppSignature (210) */
-  export interface SpFinalityGrandpaAppSignature extends SpCoreEd25519Signature {}
+  export interface SpFinalityGrandpaAppSignature extends SpCoreEd25519Signature {
+  }
 
   /** @name SpCoreEd25519Signature (211) */
-  export interface SpCoreEd25519Signature extends U8aFixed {}
+  export interface SpCoreEd25519Signature extends U8aFixed {
+  }
 
   /** @name FinalityGrandpaEquivocationPrecommit (213) */
   export interface FinalityGrandpaEquivocationPrecommit extends Struct {
@@ -1964,7 +1974,8 @@ declare module "@polkadot/types/lookup" {
   }
 
   /** @name PalletImOnlineSr25519AppSr25519Signature (231) */
-  export interface PalletImOnlineSr25519AppSr25519Signature extends SpCoreSr25519Signature {}
+  export interface PalletImOnlineSr25519AppSr25519Signature extends SpCoreSr25519Signature {
+  }
 
   /** @name PalletImOnlineError (232) */
   export interface PalletImOnlineError extends Enum {
@@ -2332,9 +2343,7 @@ declare module "@polkadot/types/lookup" {
   /** @name PolkadotPrimitivesV1ScrapedOnChainVotes (252) */
   export interface PolkadotPrimitivesV1ScrapedOnChainVotes extends Struct {
     readonly session: u32;
-    readonly backingValidatorsPerCandidate: Vec<
-      ITuple<[PolkadotPrimitivesV1CandidateReceipt, Vec<ITuple<[u32, PolkadotPrimitivesV0ValidityAttestation]>>]>
-    >;
+    readonly backingValidatorsPerCandidate: Vec<ITuple<[PolkadotPrimitivesV1CandidateReceipt, Vec<ITuple<[u32, PolkadotPrimitivesV0ValidityAttestation]>>]>>;
     readonly disputes: Vec<PolkadotPrimitivesV1DisputeStatementSet>;
   }
 
@@ -2348,15 +2357,14 @@ declare module "@polkadot/types/lookup" {
   }
 
   /** @name PolkadotPrimitivesV0ValidatorAppSignature (258) */
-  export interface PolkadotPrimitivesV0ValidatorAppSignature extends SpCoreSr25519Signature {}
+  export interface PolkadotPrimitivesV0ValidatorAppSignature extends SpCoreSr25519Signature {
+  }
 
   /** @name PolkadotPrimitivesV1DisputeStatementSet (260) */
   export interface PolkadotPrimitivesV1DisputeStatementSet extends Struct {
     readonly candidateHash: H256;
     readonly session: u32;
-    readonly statements: Vec<
-      ITuple<[PolkadotPrimitivesV1DisputeStatement, u32, PolkadotPrimitivesV0ValidatorAppSignature]>
-    >;
+    readonly statements: Vec<ITuple<[PolkadotPrimitivesV1DisputeStatement, u32, PolkadotPrimitivesV0ValidatorAppSignature]>>;
   }
 
   /** @name PolkadotPrimitivesV1DisputeStatement (263) */
@@ -2454,7 +2462,8 @@ declare module "@polkadot/types/lookup" {
   }
 
   /** @name PolkadotPrimitivesV1ParathreadClaim (280) */
-  export interface PolkadotPrimitivesV1ParathreadClaim extends ITuple<[u32, PolkadotPrimitivesV0CollatorAppPublic]> {}
+  export interface PolkadotPrimitivesV1ParathreadClaim extends ITuple<[u32, PolkadotPrimitivesV0CollatorAppPublic]> {
+  }
 
   /** @name PolkadotPrimitivesV1CoreOccupied (283) */
   export interface PolkadotPrimitivesV1CoreOccupied extends Enum {
@@ -2975,10 +2984,12 @@ declare module "@polkadot/types/lookup" {
   }
 
   /** @name SpCoreEcdsaSignature (342) */
-  export interface SpCoreEcdsaSignature extends U8aFixed {}
+  export interface SpCoreEcdsaSignature extends U8aFixed {
+  }
 
   /** @name FrameSupportPalletId (344) */
-  export interface FrameSupportPalletId extends U8aFixed {}
+  export interface FrameSupportPalletId extends U8aFixed {
+  }
 
   /** @name PolkadotRuntimeCommonCrowdloanPalletError (345) */
   export interface PolkadotRuntimeCommonCrowdloanPalletError extends Enum {
@@ -4007,13 +4018,15 @@ declare module "@polkadot/types/lookup" {
   export type FrameSystemExtensionsCheckGenesis = Null;
 
   /** @name FrameSystemExtensionsCheckNonce (437) */
-  export interface FrameSystemExtensionsCheckNonce extends Compact<u32> {}
+  export interface FrameSystemExtensionsCheckNonce extends Compact<u32> {
+  }
 
   /** @name FrameSystemExtensionsCheckWeight (438) */
   export type FrameSystemExtensionsCheckWeight = Null;
 
   /** @name PalletTransactionPaymentChargeTransactionPayment (439) */
-  export interface PalletTransactionPaymentChargeTransactionPayment extends Compact<u128> {}
+  export interface PalletTransactionPaymentChargeTransactionPayment extends Compact<u128> {
+  }
 
   /** @name RococoRuntimeRuntime (440) */
   export type RococoRuntimeRuntime = Null;

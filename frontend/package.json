@@ -18,7 +18,7 @@
   "devDependencies": {
     "eslint-config-custom": "*",
     "prettier": "latest",
-    "turbo": "latest"
+    "turbo": "^1.4.7"
   },
   "engines": {
     "npm": ">=7.0.0",
@@ -26,7 +26,7 @@
   },
   "dependencies": {},
   "packageManager": "yarn@1.22.15",
-  "resolutions":  {
+  "resolutions": {
     "@types/react": "17.0.2",
     "@types/react-dom": "17.0.2",
     "react": "17.0.2",

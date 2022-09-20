@@ -26,7 +26,7 @@ import pabloTestConfiguration from "@composabletests/tests/pablo/testHandlers/te
  * Create - AddLiquidity - Buy - Sell - Swap - RemoveLiquidity with basic calculations of amplification coefficient.
  */
 
-describe("StableSwapDex Test Suite", function () {
+describe ("StableSwapDex Test Suite", function () {
   if (!pabloTestConfiguration.stableSwapTests.enabled) {
     console.log("Liquidity Bootstrapping Tests are being skipped...");
     return;

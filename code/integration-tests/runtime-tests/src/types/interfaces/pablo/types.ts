@@ -23,6 +23,55 @@ export interface PalletPabloPoolConfiguration extends Enum {
   readonly asStableSwap: {
     readonly owner: AccountId32;
     readonly pair: ComposableTraitsDefiCurrencyPairCurrencyId;
+    readonly lpToken: u128;
+    readonly amplificationCoefficient: u16;
+    readonly feeConfig: {
+    readonly feeRate: Permill;
+    readonly ownerFeeRate: Permill;
+    readonly protocolFeeRate: Permill;
+  } & Struct;
+  } & Struct;
+  readonly isConstantProduct: boolean;
+  readonly asConstantProduct: {
+    readonly owner: AccountId32;
+    readonly pair: ComposableTraitsDefiCurrencyPairCurrencyId;
+    readonly lpToken: u128;
+    readonly feeConfig: {
+    readonly feeRate: Permill;
+    readonly ownerFeeRate: Permill;
+    readonly protocolFeeRate: Permill;
+  } & Struct;
+    readonly baseWeight: Permill;
+    readonly quoteWeight: Permill;
+  } & Struct;
+  readonly isLiquidityBootstrapping: boolean;
+  readonly asLiquidityBootstrapping: {
+    readonly owner: AccountId32;
+    readonly pair: ComposableTraitsDefiCurrencyPairCurrencyId;
+    readonly sale: {
+    readonly start: BlockNumber;
+    readonly end: BlockNumber;
+    readonly initial_weight: Permill;
+    readonly final_weight: Permill;
+  } & Struct;
+    readonly feeConfig: {
+    readonly feeRate: Permill;
+    readonly ownerFeeRate: Permill;
+    readonly protocolFeeRate: Permill;
+  } & Struct;
+  } & Struct;
+  readonly type: 'StableSwap' | 'ConstantProduct' | 'LiquidityBootstrapping';
+}
+
+/** @name PalletPabloPoolId */
+export interface PalletPabloPoolId extends SafeRpcWrapper {}
+
+/** @name PalletPabloPoolInitConfiguration */
+export interface PalletPabloPoolInitConfiguration extends Enum {
+  readonly isStableSwap: boolean;
+  readonly asStableSwap: {
+    readonly owner: AccountId32;
+    readonly pair: ComposableTraitsDefiCurrencyPairCurrencyId;
     readonly amplification_coefficient: u16;
     readonly fee: Permill;
   } & Struct;
@@ -51,12 +100,6 @@ export interface PalletPabloPoolConfiguration extends Enum {
   } & Struct;
   readonly type: 'StableSwap' | 'ConstantProduct' | 'LiquidityBootstrapping';
 }
-
-/** @name PalletPabloPoolId */
-export interface PalletPabloPoolId extends SafeRpcWrapper {}
-
-/** @name PalletPabloPoolInitConfiguration */
-export interface PalletPabloPoolInitConfiguration extends PalletPabloPoolConfiguration {}
 
 /** @name PalletPabloPriceAggregate */
 export interface PalletPabloPriceAggregate extends Struct {

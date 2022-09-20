@@ -2,7 +2,7 @@
 /* eslint-disable */
 
 import type { ComposableTraitsDefiCurrencyPairCurrencyId, CurrencyId } from '@composable/types/interfaces/common';
-import type { Enum, Null, Struct, bool, u128, u32 } from '@polkadot/types-codec';
+import type { BTreeMap, Enum, Null, Struct, bool, u128, u32 } from '@polkadot/types-codec';
 import type { ITuple } from '@polkadot/types-codec/types';
 import type { EthereumAccountId } from '@polkadot/types/interfaces/eth';
 import type { EcdsaSignature, MultiSignature } from '@polkadot/types/interfaces/extrinsics';
@@ -115,8 +115,24 @@ export interface ComposableTraitsOraclePrice extends Null {}
 /** @name ComposableTraitsOracleRewardTracker */
 export interface ComposableTraitsOracleRewardTracker extends Null {}
 
+/** @name ComposableTraitsStakingLockLockConfig */
+export interface ComposableTraitsStakingLockLockConfig extends Null {}
+
+/** @name ComposableTraitsStakingRewardConfig */
+export interface ComposableTraitsStakingRewardConfig extends Null {}
+
 /** @name ComposableTraitsStakingRewardPool */
-export interface ComposableTraitsStakingRewardPool extends Null {}
+export interface ComposableTraitsStakingRewardPool extends Struct {
+  readonly owner: AccountId32;
+  readonly assetId: u128;
+  readonly rewards: BTreeMap<u128, ComposableTraitsStakingRewardConfig>;
+  readonly totalShares: u128;
+  readonly claimedShares: u128;
+  readonly endBlock: u128;
+  readonly lock: ComposableTraitsStakingLockLockConfig;
+  readonly shareAssetId: u128;
+  readonly financialNftAssetId: u128;
+}
 
 /** @name ComposableTraitsStakingRewardPoolConfiguration */
 export interface ComposableTraitsStakingRewardPoolConfiguration extends Null {}
@@ -147,6 +163,9 @@ export interface ComposableTraitsXcmAssetsForeignMetadata extends Null {}
 
 /** @name ComposableTraitsXcmAssetsXcmAssetLocation */
 export interface ComposableTraitsXcmAssetsXcmAssetLocation extends Null {}
+
+/** @name ContractExecResultErrModule */
+export interface ContractExecResultErrModule extends Null {}
 
 /** @name CumulusPalletDmpQueueConfigData */
 export interface CumulusPalletDmpQueueConfigData extends Null {}
@@ -218,7 +237,10 @@ export interface OrmlTokensAccountData extends Struct {
 }
 
 /** @name OrmlTokensBalanceLock */
-export interface OrmlTokensBalanceLock extends Null {}
+export interface OrmlTokensBalanceLock extends Struct {
+  readonly id: string;
+  readonly amount: u128;
+}
 
 /** @name OrmlTokensReserveData */
 export interface OrmlTokensReserveData extends Null {}

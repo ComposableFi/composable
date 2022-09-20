@@ -40,7 +40,7 @@ export default {
       keepAlive: "bool"
     },
     ComposableTraitsBondedFinanceBondDuration: {
-      Finite: { returnIn: "u32" }
+      Finite: {returnIn: "u32"}
     },
     ComposableTraitsBondedFinanceBondOfferReward: {
       asset: "CurrencyId",
@@ -86,7 +86,10 @@ export default {
       reserved: "u128",
       frozen: "u128"
     },
-    OrmlTokensBalanceLock: "Null",
+    OrmlTokensBalanceLock: {
+      id: "string",
+      amount: "u128"
+    },
     OrmlTokensReserveData: "Null",
     PalletTreasuryProposal: "Null",
     PalletVaultModelsStrategyOverview: "Null",
@@ -184,7 +187,17 @@ export default {
     PalletIbcEventsIbcEvent: "Null",
     PalletIbcErrorsIbcError: "Null",
     PalletMosaicAmmSwapInfo: "Null",
-    ComposableTraitsStakingRewardPool: "Null",
+    ComposableTraitsStakingRewardPool: {
+      owner: "AccountId32",
+      assetId: "u128",
+      rewards: "BTreeMap<u128, ComposableTraitsStakingRewardConfig>",
+      totalShares: "u128",
+      claimedShares: "u128",
+      endBlock: "u128",
+      lock: "ComposableTraitsStakingLockLockConfig",
+      shareAssetId: "u128",
+      financialNftAssetId: "u128"
+    },
     ComposableTraitsStakingRewardPoolConfiguration: "Null",
     IbcTransferPalletParams: "Null",
     IbcTransferTransferParams: "Null",
@@ -196,9 +209,12 @@ export default {
     ComposableTraitsAccountProxyProxyType: "Null",
     ComposableTraitsAccountProxyProxyDefinition: "Null",
     PalletAccountProxyAnnouncement: "Null",
-    PalletCosmwasmContractInfo: "Null",
-    PalletCosmwasmCodeInfo: "Null",
     PalletCosmwasmEntryPoint: "Null",
-    PalletStakingRewardsRewardAccumulationHookError: "Null"
+    PalletCosmwasmContractInfo: "Null",
+    PalletStakingRewardsRewardAccumulationHookError: "Null",
+    PalletCosmwasmCodeInfo: "Null",
+    ComposableTraitsStakingRewardConfig: "Null",
+    ComposableTraitsStakingLockLockConfig: "Null",
+    ContractExecResultErrModule: "Null"
   }
 };
