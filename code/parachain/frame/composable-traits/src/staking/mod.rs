@@ -15,8 +15,6 @@ use crate::{
 
 pub mod lock;
 pub mod math;
-pub mod reward;
-pub mod stake;
 
 /// A reward pool is a collection of rewards that are allocated to stakers to incentivize a
 /// particular purpose. Eg: a pool of rewards for incentivizing adding liquidity to a pablo swap
