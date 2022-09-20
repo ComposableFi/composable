@@ -75,7 +75,7 @@ export async function txOracleSubmitPriceSuccessTestHandler(
 
   if (slashablePrice) {
     const slashedStakeBalanceAfter = <Option<u128>>await api.query.oracle.oracleStake(signerWallet4.publicKey);
-    if (!slashedStakeBalanceBefore) throw new Error("Stake amount was unexpectedly `undefined`!");
+    if (!slashedStakeBalanceBefore) throw new AssertionError("Stake amount was unexpectedly `undefined`!");
     expect(slashedStakeBalanceBefore.unwrap()).to.be.bignumber.greaterThan(slashedStakeBalanceAfter.unwrap());
   }
 
