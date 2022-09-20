@@ -805,6 +805,28 @@
               '';
             };
 
+            mdbook-check = stdenv.mkDerivation {
+              name = "mdbook-check";
+              dontUnpack = true;
+              buildInputs = [ all-directories-and-files mdbook ];
+              installPhase = ''
+                mkdir -p $out/book
+                chmod 777 $out/book
+                cd ${all-directories-and-files}/book
+                mdbook --version
+
+                # `mdbook test` is most strict than `mdbook build`,
+                # it catches code blocks without a language tag,
+                # but it doesn't work with nix.
+                TMPDIR=$out/book mdbook build --dest-dir=$out/book 2>&1 | tee $out/log
+                if [ -z "$(cat $out/log | grep ERROR)" ]; then
+                  true
+                else
+                  exit 1
+                fi
+              '';
+            };
+
             kusama-picasso-karura-devnet = let
               config = (pkgs.callPackage
                 ./scripts/polkadot-launch/kusama-local-picasso-dev-karura-dev.nix {
