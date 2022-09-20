@@ -32,14 +32,6 @@ export const RenewModal: React.FC<RenewModalProps> = ({
   const validMultiplier = isNumber(multiplier.value);
 
   const handleUnstake = () => {
-    dispatch(setMessage(
-      {
-        title: "Transaction successful",
-        text: "Renew staking period confirmed",
-        link: "/",
-        severity: "success",
-      }
-    ));
     onClose?.({}, "backdropClick");
   };
 
@@ -71,7 +63,7 @@ export const RenewModal: React.FC<RenewModalProps> = ({
 
         <SelectLockPeriod
           mt={7}
-          durationPreset={"0"}
+          multiplier={0}
           periodItems={[]}
         />
 
