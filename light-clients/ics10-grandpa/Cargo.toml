@@ -1,0 +1,65 @@
+[package]
+name = "ics10-grandpa"
+version = "0.1.0"
+edition = "2021"
+authors = ["Seun Lanlege <seunlanlege@gmail.com>"]
+
+
+[features]
+default = ["std"]
+std = [
+    "ibc/std",
+    "ibc-proto/std",
+    "grandpa-client/std",
+    "grandpa-client-primitives/std",
+    "light-client-common/std",
+    "prost/std",
+    "prost-types/std",
+    "codec/std",
+    "anyhow/std",
+    "primitive-types/std",
+    "serde/std",
+    "sp-core/std",
+    "sp-runtime/std",
+    "sp-trie/std",
+    "sp-finality-grandpa/std",
+]
+
+[build-dependencies]
+protobuf-src = "1.1.0"
+prost-build = "0.11.1"
+
+[dependencies]
+# ibc deps
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "d4b034e6768a3553a7d0ca9e2e3d532e3cea5f29", default-features = false }
+ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", rev = "d4b034e6768a3553a7d0ca9e2e3d532e3cea5f29", default-features = false }
+
+# local deps
+grandpa-client = { package = "grandpa-light-client", path = "../../algorithms/grandpa",  default-features = false }
+grandpa-client-primitives = { package = "grandpa-light-client-primitives", path = "../../algorithms/grandpa/primitives", default-features = false }
+light-client-common = { path = "../common", default-features = false }
+
+# crates.io
+prost = { version = "0.10", default-features = false }
+prost-types = { version = "0.10", default-features = false }
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
+anyhow = { version = "1.0.65", default-features = false }
+derive_more = { version = "0.99.17", default-features = false, features = ["from"] }
+primitive-types = { version = "0.11.1", default-features = false }
+serde = { version = "1.0.144", default-features = false, features = ["derive"] }
+
+# substrate deps
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
+sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
+sp-finality-grandpa = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
+
+[dependencies.tendermint]
+git = "https://github.com/composableFi/tendermint-rs"
+rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8"
+default-features = false
+
+[dependencies.tendermint-proto]
+git = "https://github.com/composableFi/tendermint-rs"
+rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8"
+default-features = false

@@ -1,0 +1,43 @@
+[package]
+name = "grandpa-light-client-primitives"
+version = "0.1.0"
+edition = "2021"
+authors = ["Seun Lanlege <seunlanlege@gmail.com>"]
+
+[dependencies]
+# crates.io
+anyhow = { version = "1.0.64", default-features = false }
+hash-db = { version = "0.15.2", default-features = false }
+derive_more = { version = "0.99.17", default-features = false, features = ["display"] }
+sp-storage = { version = "6.0.0", default-features = false }
+finality-grandpa = { version = "0.16.0", features = ["derive-codec"], default-features = false }
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
+
+# substrate
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
+sp-finality-grandpa = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
+sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
+
+light-client-common = { path = "../../../light-clients/common", default-features = false }
+
+[features]
+default = ["std"]
+std = [
+    "anyhow/std",
+    "hash-db/std",
+    "sp-storage/std",
+    "finality-grandpa/std",
+    "codec/std",
+    "sp-core/std",
+    "sp-runtime/std",
+    "sp-io/std",
+    "frame-support/std",
+    "sp-finality-grandpa/std",
+    "sp-std/std",
+    "sp-trie/std",
+    "light-client-common/std",
+]

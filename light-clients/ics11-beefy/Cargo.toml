@@ -1,0 +1,85 @@
+[package]
+name = "ics11-beefy"
+version = "0.1.0"
+edition = "2021"
+authors = ["Seun Lanlege <seunlanlege@gmail.com>", "David Salami <david.salami@gmail.com>"]
+
+[package.metadata.docs.rs]
+all-features = true
+
+[features]
+default = ["std"]
+mocks = ["std"]
+std = [
+    "ibc/std",
+    "ibc-proto/std",
+    "beefy-client/std",
+    "beefy-client-primitives/std",
+    "light-client-common/std",
+    "pallet-mmr-primitives/std",
+    "beefy-primitives/std",
+    "sp-runtime/std",
+    "sp-storage/std",
+    "sp-trie/std",
+    "anyhow/std",
+    "codec/std",
+    "prost/std",
+    "prost-types/std",
+    "serde/std",
+    "bytes/std",
+    "tendermint/std",
+]
+
+[build-dependencies]
+protobuf-src = "1.1.0"
+prost-build = "0.11.1"
+
+[dependencies]
+# ibc deps
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "d4b034e6768a3553a7d0ca9e2e3d532e3cea5f29", default-features = false }
+ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", rev = "d4b034e6768a3553a7d0ca9e2e3d532e3cea5f29", default-features = false }
+
+# beefy deps
+beefy-client = { package = "beefy-light-client", path = "../../algorithms/beefy",  default-features = false }
+beefy-client-primitives = { package = "primitives", path = "../../algorithms/beefy/primitives", default-features = false }
+light-client-common = { path = "../common", default-features = false }
+
+# substrate deps
+pallet-mmr-primitives = { package = "sp-mmr-primitives", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
+beefy-primitives = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
+sp-storage = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
+sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
+
+# crates.io
+anyhow = { version = "1.0.65", default-features = false }
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
+prost = { version = "0.10", default-features = false }
+prost-types = { version = "0.10", default-features = false }
+serde = { version = "1.0", default-features = false }
+bytes = { version = "1.1.0", default-features = false }
+derive_more = { version = "0.99.17", default-features = false, features = ["from"] }
+primitive-types = { version = "0.11.1", default-features = false }
+
+[dependencies.tendermint]
+git = "https://github.com/composableFi/tendermint-rs"
+rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8"
+default-features = false
+
+[dependencies.tendermint-proto]
+git = "https://github.com/composableFi/tendermint-rs"
+rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8"
+default-features = false
+
+[dev-dependencies]
+serde = { version = "1.0.144", features = ["derive"] }
+beefy-prover = { path = "../../algorithms/beefy/prover" }
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "d4b034e6768a3553a7d0ca9e2e3d532e3cea5f29", features = ["mocks"] }
+ibc-derive = { git = "https://github.com/ComposableFi/ibc-rs", rev = "d4b034e6768a3553a7d0ca9e2e3d532e3cea5f29" }
+subxt = { git = "https://github.com/paritytech/subxt", rev = "c55b7ba3e34118f61dc51499a0b38262c513aec4" }
+tokio = { version = "1.21.1", features = ["macros"] }
+sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+json = { package = "serde_json", version = "1.0.85" }
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
