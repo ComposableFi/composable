@@ -970,8 +970,7 @@ pub mod pallet {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
 			match pool {
-				PoolConfiguration::StableSwap(StableSwapPoolInfo { pair, lp_token, .. }) =>
-					calculate_price_of_lp_token::<T>(pair, lp_token, &pool_account),
+				PoolConfiguration::StableSwap(StableSwapPoolInfo { pair, lp_token, .. }) |
 				PoolConfiguration::ConstantProduct(ConstantProductPoolInfo {
 					pair,
 					lp_token,
