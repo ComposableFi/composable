@@ -1,0 +1,64 @@
+@startuml
+skinparam handwritten true
+!includeurl https://raw.githubusercontent.com/inthepocket/plantuml-styles/master/styles.plantuml!0
+
+box Picasso
+    participant PicassoGovernance
+    participant XcvmGovernance
+    entity "Picasso IBC Pallet" as picasso_ibc
+    entity "XCVM" as picasso_xcvm
+end box
+
+box Composable
+    entity "Composable IBC Module" as Composable_ibc
+    entity "XCVM" as Composable_xcvm
+end box
+
+box IBC
+    control Relayer
+end box
+
+group Open Connection 
+    PicassoGovernance -> picasso_ibc: Emit Init(ClientId) Event
+    note top
+      there is also step to register client before
+    end note 
+    Relayer --> picasso_ibc: Get Init Event
+    Relayer --> Composable_ibc: Try Tx
+    note right
+        From now and on relayer sends Proofs with messages
+    end note
+    Composable_ibc -> Composable_ibc: Emit OpenTry Event
+    Relayer --> Composable_ibc : Get OpenTry Event
+    Relayer --> picasso_ibc : ConnAck(ClientId) Tx
+    picasso_ibc -> picasso_ibc : Emit OpenAck Event
+    Relayer --> picasso_ibc: Get OpenAck Event
+    Relayer --> Composable_ibc: OpenConfirm(ClientId) Tx
+end
+
+group Open Channel(ordered/unordered) on top of Connection    
+    XcvmGovernance -> picasso_ibc: Emit Init(ClientId, SelfPort, Destination Port, Composable_xcvm) Event
+    Relayer --> picasso_ibc: Get Init Event
+    Relayer --> Composable_ibc: Try(Composable_xcvm) Tx
+    Composable_ibc -> Composable_xcvm: Callback
+    Composable_ibc -> Composable_ibc: Emit OpenTry Event
+    Relayer --> Composable_ibc : Get OpenTry Event
+    Relayer --> picasso_ibc : ConnAck(ClientId, Port, Composable_xcvm) Tx
+    picasso_ibc -> picasso_xcvm : Callback
+    picasso_ibc -> picasso_ibc : Emit OpenAck Event
+    Relayer --> picasso_ibc: Get OpenAck Event
+    Relayer --> Composable_ibc: OpenConfirm(ClientId, Port, Composable_xcvm) Tx
+end
+
+group Packet
+    Composable_xcvm -> Composable_ibc : SendPacket(Port, data)
+    ... from now assume Relayer...
+    Composable_ibc --> picasso_ibc : MsgReceivedPacket Tx
+    picasso_ibc -> picasso_ibc: Is Connection/Channel/Port opened?
+    picasso_ibc -> picasso_xcvm: Callback(data)
+    picasso_ibc -> picasso_ibc : Emit Packet Ack
+    picasso_ibc --> Composable_ibc : MessageAcknowledged(Either Success or Fail)
+    Composable_ibc -> Composable_xcvm: Callback
+end
+
+@enduml
