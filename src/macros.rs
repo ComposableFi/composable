@@ -28,12 +28,17 @@ macro_rules! process_finality_event {
 					queue::flush_message_batch(timeouts, &$source).await?;
 				}
 				// there'd at least be the `MsgUpdateClient` packet.
-				if messages.len() == 1 && update_type.is_optional() {
+				// We want to send client update if packet message exist but where not sent due to a
+				// connection delay
+				if messages.len() == 1 &&
+					!has_packet_events(&event_types) &&
+					update_type.is_optional()
+				{
 					// skip sending ibc messages if no new events
 					log::info!("Skipping finality notification for {}", $source.name());
 					continue
 				} else if messages.len() == 1 {
-					log::info!("Sending mandatory client update message to {}", $source.name());
+					log::info!("Sending mandatory client update message to {}", $sink.name());
 				} else {
 					log::info!(
 						"Received finalized events from: {} {event_types:#?}",

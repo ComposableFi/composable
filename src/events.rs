@@ -26,7 +26,7 @@ use ibc::{
 		},
 		ics23_commitment::commitment::{CommitmentPrefix, CommitmentProofBytes},
 	},
-	events::IbcEvent,
+	events::{IbcEvent, IbcEventType},
 	proofs::{ConsensusProof, Proofs},
 	tx_msg::Msg,
 	Height,
@@ -559,4 +559,10 @@ async fn query_consensus_proof(
 		};
 
 	Ok(consensus_proof_bytes)
+}
+
+pub fn has_packet_events(event_types: &[IbcEventType]) -> bool {
+	event_types
+		.into_iter()
+		.any(|event_type| matches!(event_type, &IbcEventType::SendPacket | &IbcEventType::WriteAck))
 }

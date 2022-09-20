@@ -9,7 +9,7 @@ mod macros;
 pub mod packets;
 pub mod queue;
 
-use events::parse_events;
+use events::{has_packet_events, parse_events};
 
 /// Core relayer loop, waits for new finality events and forwards any new [`ibc::IbcEvents`]
 /// to the counter party chain.

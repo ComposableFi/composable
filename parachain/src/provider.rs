@@ -659,7 +659,7 @@ where
 		latest_height: u64,
 		latest_client_height_on_counterparty: u64,
 	) -> bool {
-		let refresh_period: u64 = if cfg!(feature = "testing") { 20 } else { 50 };
+		let refresh_period: u64 = if cfg!(feature = "testing") { 15 } else { 50 };
 		latest_height - latest_client_height_on_counterparty >= refresh_period
 	}
 }
