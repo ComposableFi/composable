@@ -1,5 +1,4 @@
-import { u128, u32, BTreeMap, u64 } from "@polkadot/types-codec";
-import { Perbill } from "@polkadot/types/interfaces";
+import { u128, u32 } from "@polkadot/types-codec";
 
 export type StakingRewardsPoolConfig = {
   RewardRateBasedIncentive: {
@@ -10,5 +9,7 @@ export type StakingRewardsPoolConfig = {
     endBlock: u32;
     rewardConfigs: any;
     lock: any;
+    financialNftAssetId: u128,
+    shareAssetId: u128
   }
 };

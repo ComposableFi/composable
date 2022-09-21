@@ -24,7 +24,9 @@ export function toStakingRewardPoolConfig(
         durationPresets: api.createType("BTreeMap<u64, Perbill>", poolConfig.locK.durationPresets),
         // early unlock penalty
         unlockPenalty: api.createType("Perbill", poolConfig.locK.unlockPenalty)
-      })
+      }),
+      financialNftAssetId: api.createType("u128", poolConfig.financialNftAssetId),
+      shareAssetId: api.createType("u128", poolConfig.shareAssetId)
     }
   };
 }
