@@ -285,6 +285,7 @@ pub mod pallet {
 		type FinancialNftInstanceId: Parameter + Member + Copy + From<u64> + Into<u64>;
 
 		/// Is used to create staked asset per reward pool
+		// REVIEW(benluelo): This is currently unused; remove?
 		type CurrencyFactory: CurrencyFactory<Self::AssetId, Self::Balance>;
 
 		/// Dependency allowing this pallet to transfer funds from one account to another.
@@ -868,6 +869,7 @@ pub mod pallet {
 							.total_dilution_adjustment
 							.safe_add(&additional_inflation)?;
 
+						// REVIEW(benluelo): This is currently unused; remove?
 						// REVIEW(benluelo): Review the expected behaviour of stake.reductions with
 						// the new rewards types
 						if let Some(existing_inflation) = stake.reductions.get_mut(asset_id) {
