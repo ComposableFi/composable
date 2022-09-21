@@ -31,7 +31,7 @@ import { u128 } from "@polkadot/types-codec";
  * This suite consists of happy path tests. Additionally, we started implementing suites for later references such as regression, smoke etc.
  *
  */
-describe("tx.mosaic Tests", function () {
+describe("[LAUNCH] tx.mosaic Tests", function () {
   // Check if group of tests are enabled.
   if (!testConfiguration.enabledTests.query.enabled) return;
 
