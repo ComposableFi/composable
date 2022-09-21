@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use alloc::string::ToString;
 use beefy_primitives::{known_payload_ids::MMR_ROOT_ID, mmr::BeefyNextAuthoritySet};
 use codec::{Decode, Encode};
 use core::{convert::TryFrom, fmt::Debug, marker::PhantomData, time::Duration};
@@ -212,7 +213,7 @@ impl<H> ClientState<H> {
 	}
 
 	pub fn client_type() -> ClientType {
-		"11-beefy"
+		"11-beefy".to_string()
 	}
 
 	pub fn frozen_height(&self) -> Option<Height> {

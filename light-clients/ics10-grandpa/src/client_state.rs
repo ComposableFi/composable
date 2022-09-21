@@ -90,7 +90,7 @@ impl<H> ClientState<H> {
 	}
 
 	pub fn client_type() -> ClientType {
-		"10-grandpa"
+		"10-grandpa".to_string()
 	}
 
 	pub fn frozen_height(&self) -> Option<Height> {

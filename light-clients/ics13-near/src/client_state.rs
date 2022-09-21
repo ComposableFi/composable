@@ -110,7 +110,7 @@ impl<H: HostFunctionsTrait> ClientState for NearClientState<H> {
 
 impl<H> NearClientState<H> {
 	pub fn client_type() -> ClientType {
-		"13-near"
+		"13-near".to_string()
 	}
 }
 
