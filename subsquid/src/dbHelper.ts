@@ -103,19 +103,14 @@ export async function saveEvent(
   ctx: EventHandlerContext<Store>,
   eventType: EventType
 ): Promise<Event> {
-  console.log(
-    "Saving Event: ",
-    ctx.event.name,
-    ctx.event.extrinsic?.signature?.address,
-    ctx.event.extrinsic?.signature?.address.value,
-    encodeAccount(hexToU8a(ctx.event.extrinsic?.signature?.address.value))
-  );
+  const accountId: string = ctx.event.extrinsic?.signature?.address.value
+    ? encodeAccount(hexToU8a(ctx.event.extrinsic?.signature?.address.value))
+    : ctx.event.extrinsic?.signature?.address;
+
   // Create event
   const event = new Event({
     id: ctx.event.id,
-    accountId: encodeAccount(
-      hexToU8a(ctx.event.extrinsic?.signature?.address.value)
-    ),
+    accountId,
     eventType,
     blockNumber: BigInt(ctx.block.height),
     timestamp: BigInt(ctx.block.timestamp),
