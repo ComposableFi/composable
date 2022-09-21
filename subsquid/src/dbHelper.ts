@@ -103,11 +103,19 @@ export async function saveEvent(
   ctx: EventHandlerContext<Store>,
   eventType: EventType
 ): Promise<Event> {
-  console.log('Saving Event: ', ctx.event.name, encodeAccount(hexToU8a(ctx.event.extrinsic?.signature?.address.value)))
+  console.log(
+    "Saving Event: ",
+    ctx.event.name,
+    ctx.event.extrinsic?.signature?.address,
+    ctx.event.extrinsic?.signature?.address.value,
+    encodeAccount(hexToU8a(ctx.event.extrinsic?.signature?.address.value))
+  );
   // Create event
   const event = new Event({
     id: ctx.event.id,
-    accountId: encodeAccount(hexToU8a(ctx.event.extrinsic?.signature?.address.value)),
+    accountId: encodeAccount(
+      hexToU8a(ctx.event.extrinsic?.signature?.address.value)
+    ),
     eventType,
     blockNumber: BigInt(ctx.block.height),
     timestamp: BigInt(ctx.block.timestamp),
@@ -186,7 +194,7 @@ export async function saveAccountAndEvent(
  * @param amountLocked
  * @param assetId
  */
- export async function storeHistoricalLockedValue(
+export async function storeHistoricalLockedValue(
   ctx: EventHandlerContext<Store>,
   amountsLocked: Record<string, bigint>
 ): Promise<void> {
@@ -208,10 +216,9 @@ export async function saveAccountAndEvent(
   }
 
   const netLockedValue = Object.keys(oraclePrices).reduce((agg, assetId) => {
-    const lockedValue = oraclePrices[assetId] * amountsLocked[assetId]
+    const lockedValue = oraclePrices[assetId] * amountsLocked[assetId];
     return BigInt(agg) + lockedValue;
   }, BigInt(0));
-
 
   const lastLockedValue = await getLastLockedValue(ctx);
   const event = await ctx.store.get(Event, { where: { id: ctx.event.id } });
@@ -230,7 +237,6 @@ export async function saveAccountAndEvent(
 
   await ctx.store.save(historicalLockedValue);
 }
-
 
 /**
  * Get latest locked value
