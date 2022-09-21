@@ -209,8 +209,10 @@ pub mod pallet {
 		NoDurationPresetsConfigured,
 		/// Too many rewarded asset types per pool violating the storage allowed.
 		TooManyRewardAssetTypes,
+		/// Invalid start block number provided for creating a pool.
+		StartBlockMustBeNowOrLater,
 		/// Invalid end block number provided for creating a pool.
-		EndBlockMustBeInTheFuture,
+		EndBlockMustBeAfterStartBlock,
 		/// Unimplemented reward pool type.
 		UnimplementedRewardPoolConfiguration,
 		/// Rewards pool not found.
@@ -450,6 +452,7 @@ pub mod pallet {
 			rewards: Default::default(),
 			total_shares: T::Balance::zero(),
 			claimed_shares: T::Balance::zero(),
+			start_block: T::BlockNumber::zero(),
 			end_block: T::BlockNumber::zero(),
 			lock: LockConfig {
 				duration_presets: [
@@ -626,15 +629,18 @@ pub mod pallet {
 					owner,
 					asset_id: pool_asset,
 					reward_configs: initial_reward_config,
+					start_block,
 					end_block,
 					lock,
 					share_asset_id,
 					financial_nft_asset_id,
 				} => {
+					// now <= start_block < end_block
 					ensure!(
-						end_block > frame_system::Pallet::<T>::current_block_number(),
-						Error::<T>::EndBlockMustBeInTheFuture
+						start_block >= frame_system::Pallet::<T>::current_block_number(),
+						Error::<T>::StartBlockMustBeNowOrLater
 					);
+					ensure!(end_block > start_block, Error::<T>::EndBlockMustBeAfterStartBlock);
 
 					ensure!(
 						!RewardPools::<T>::contains_key(pool_asset),
@@ -660,6 +666,7 @@ pub mod pallet {
 							rewards,
 							total_shares: T::Balance::zero(),
 							claimed_shares: T::Balance::zero(),
+							start_block,
 							end_block,
 							lock,
 							share_asset_id,

@@ -673,11 +673,13 @@ pub mod pallet {
 					.map_err(|_| Error::<T>::StakingPoolConfigError)?;
 			let lock = LockConfig { duration_presets, unlock_penalty: Perbill::from_percent(5) };
 			let five_years_block = 5 * 365 * 24 * 60 * 60 / T::MsPerBlock::get();
-			let end_block =
-				frame_system::Pallet::<T>::current_block_number() + five_years_block.into();
+			let start_block = frame_system::Pallet::<T>::current_block_number();
+			let end_block = start_block + five_years_block.into();
+
 			Ok(RewardPoolConfiguration::RewardRateBasedIncentive {
 				owner: Self::account_id(pool_id),
 				asset_id: Self::lp_token(*pool_id)?,
+				start_block,
 				end_block,
 				reward_configs,
 				lock,

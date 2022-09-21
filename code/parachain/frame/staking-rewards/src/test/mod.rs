@@ -66,6 +66,7 @@ fn test_create_reward_pool_invalid_end_block() {
 					owner: ALICE,
 					asset_id: PICA::ID,
 					// end block can't be before the current block
+					start_block: 0,
 					end_block: 0,
 					reward_configs: default_reward_config(),
 					lock: default_lock_config(),
@@ -73,7 +74,7 @@ fn test_create_reward_pool_invalid_end_block() {
 					financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
 				}
 			),
-			crate::Error::<Test>::EndBlockMustBeInTheFuture
+			crate::Error::<Test>::EndBlockMustBeAfterStartBlock
 		);
 	});
 }
@@ -562,6 +563,7 @@ fn test_split_position() {
 		let pool_init_config = RewardRateBasedIncentive {
 			owner: ALICE,
 			asset_id: PICA::ID,
+			start_block: 1,
 			end_block: 5,
 			reward_configs: default_reward_config(),
 			lock: default_lock_config(),
@@ -869,6 +871,7 @@ fn create_default_reward_pool() {
 			RewardRateBasedIncentive {
 				owner: ALICE,
 				asset_id: PICA::ID,
+				start_block: 0,
 				end_block: 5,
 				reward_configs: default_reward_config(),
 				lock: default_lock_config(),
@@ -885,6 +888,7 @@ fn get_default_reward_pool() -> RewardPoolConfigurationOf<Test> {
 	RewardRateBasedIncentive {
 		owner: ALICE,
 		asset_id: PICA::ID,
+		start_block: 0,
 		end_block: 5,
 		reward_configs: default_reward_config(),
 		lock: default_lock_config(),

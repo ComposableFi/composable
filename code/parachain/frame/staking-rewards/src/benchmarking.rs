@@ -31,6 +31,7 @@ fn get_reward_pool<T: Config>(
 	let pool_init_config = RewardRateBasedIncentive {
 		owner,
 		asset_id: BASE_ASSET_ID.into(),
+		start_block: 0_u128.saturated_into(),
 		end_block: 5_u128.saturated_into(),
 		reward_configs: reward_config::<T>(reward_count),
 		lock: lock_config::<T>(),
@@ -190,6 +191,7 @@ benchmarks! {
 		let pool_id = <Pallet<T> as ManageStaking>::create_staking_pool(RewardRateBasedIncentive {
 			owner: user,
 			asset_id: pool_asset_id,
+			start_block: 0_u128.saturated_into(),
 			end_block: 5_u128.saturated_into(),
 			reward_configs: [(reward_asset_id, reward_config)]
 				.into_iter()
