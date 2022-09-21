@@ -120,11 +120,4 @@ processor.addEventHandler(
 
 processor.addEventHandler("Oracle.PriceChanged", processOraclePriceChanged);
 
-processor.addEventHandler("*", async (ctx) => {
-  const signer = ctx?.event?.extrinsic?.signature?.address;
-  console.log(ctx?.event?.name);
-  console.log(">>");
-  console.log("signer", signer);
-});
-
 processor.run();
