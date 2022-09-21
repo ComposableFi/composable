@@ -4,4 +4,4 @@
 
 ---
 
-{{#include ../../../frame/fnft/README.md:8:}}
+{{#include ../../../code/parachain/frame/fnft/README.md:8:}}

@@ -195,7 +195,7 @@ In this web UI we will run extrinsics & RPCs, to attach the price feed to the no
 
 Composable provides a reference implementation for the price-feed server. It can be found 
 
-at the following address, in the [Composable GitHub repository](https://github.com/ComposableFi/composable/tree/main/utils/price-feed). The implementation is general enough and allows any fork to implement a new feed easily. By default, the prices are fetched from the [Binance public websocket API](https://docs.binance.org/api-reference/dex-api/ws-streams.html#4-trades).
+at the following address, in the [Composable GitHub repository](https://github.com/ComposableFi/composable/tree/main/code/utils/price-feed). The implementation is general enough and allows any fork to implement a new feed easily. By default, the prices are fetched from the [Binance public websocket API](https://docs.binance.org/api-reference/dex-api/ws-streams.html#4-trades).
 
 ### Setup
 

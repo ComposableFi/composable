@@ -1,11 +1,17 @@
 /** @type {import('next').NextConfig} */
-const withPWA = require("next-pwa");
+const withPWA = require("next-pwa")({
+  dest: "public",
+  skipWaiting: true, // Turn this to false once you're ready to deploy a banner to develop update prompt.
+  mode: process.env.NODE_ENV === "production" ? "production" : "development", // This will create worker-box production build.
+});
+
 const withTM = require("next-transpile-modules")([
-  "@integrations-lib/core",
   "substrate-react",
   "@web3-react/core",
   "shared",
   "tokens",
+  "bi-lib",
+  "defi-interfaces",
 ]);
 
 function getVersion() {
@@ -22,11 +28,17 @@ function getVersion() {
 }
 
 const nextConfig = {
+  experimental: {
+    images: {
+      unoptimized: true,
+    },
+  },
   reactStrictMode: true,
   env: {
     SUBSTRATE_PROVIDER_URL_KUSAMA_2019:
       process.env.SUBSTRATE_PROVIDER_URL_KUSAMA_2019,
     SUBSTRATE_PROVIDER_URL_KUSAMA: process.env.SUBSTRATE_PROVIDER_URL_KUSAMA,
+    SUBSTRATE_PROVIDER_URL_KARURA: process.env.SUBSTRATE_PROVIDER_URL_KARURA,
     RPC_URL_1: process.env.RPC_URL_1,
     RPC_URL_42161: process.env.RPC_URL_42161,
     RPC_URL_137: process.env.RPC_URL_137,
@@ -35,11 +47,6 @@ const nextConfig = {
     RPC_URL_250: process.env.RPC_URL_250,
     SUBSQUID_URL: process.env.SUBSQUID_URL,
     WEBSITE_VERSION: getVersion(),
-  },
-  pwa: {
-    dest: "public",
-    skipWaiting: true, // Turn this to false once you're ready to deploy a banner to develop update prompt.
-    mode: process.env.NODE_ENV === "production" ? "production" : "development", // This will create worker-box production build.
   },
   webpack(config) {
     config.module.rules.push({

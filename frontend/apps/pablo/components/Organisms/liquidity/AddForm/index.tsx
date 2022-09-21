@@ -22,14 +22,18 @@ import { ConfirmingSupplyModal } from "./ConfirmingSupplyModal";
 import { TransactionSettings } from "../../TransactionSettings";
 import { YourPosition } from "../YourPosition";
 import { PoolShare } from "./PoolShare";
-import {useAddLiquidity} from "@/store/hooks/useAddLiquidity";
+import { useAddLiquidityForm } from "@/store/hooks/useAddLiquidityForm";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
+import { useSnackbar } from "notistack";
+import BigNumber from "bignumber.js";
+import { useState } from "react";
 
 export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
   const isMobile = useMobile();
   const theme = useTheme();
   const router = useRouter();
   const dispatch = useDispatch();
+  const { enqueueSnackbar } = useSnackbar();
 
   const {
     assetList1,
@@ -37,8 +41,8 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
     setAmount,
     setToken,
     share,
-    assetOneAmountBn,
-    assetTwoAmountBn,
+    assetOneAmount,
+    assetTwoAmount,
     assetOne,
     assetTwo,
     balanceOne,
@@ -51,8 +55,10 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
     canSupply,
     lpReceiveAmount,
     needToSelectToken,
-    findPoolManually
-  } = useAddLiquidity();
+    findPoolManually,
+    spotPrice,
+    pool
+  } = useAddLiquidityForm();
 
   const isConfirmSupplyModalOpen = useAppSelector(
     (state) => state.ui.isConfirmSupplyModalOpen
@@ -60,6 +66,8 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
   const isConfirmingSupplyModalOpen = useAppSelector(
     (state) => state.ui.isConfirmingSupplyModalOpen
   );
+
+  const [manualUpdateMode, setManualUpdateMode] = useState<1 | 2>(1);
 
   const onBackHandler = () => {
     router.push("/pool");
@@ -100,11 +108,15 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
 
       <Box mt={4}>
         <DropdownCombinedBigNumberInput
+          onMouseDown={() => setManualUpdateMode(1)}
           maxValue={balanceOne}
           setValid={setValid}
           noBorder
-          value={assetOneAmountBn}
-          setValue={setAmount("assetOneAmount")}
+          value={assetOneAmount}
+          setValue={
+            manualUpdateMode === 1 ?
+            setAmount("assetOneAmount") : undefined
+          }
           InputProps={{
             disabled: !isValidToken1,
           }}
@@ -164,11 +176,15 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
 
       <Box mt={4}>
         <DropdownCombinedBigNumberInput
+          onMouseDown={() => setManualUpdateMode(2)}
           maxValue={balanceTwo}
           setValid={setValid}
           noBorder
-          value={assetTwoAmountBn}
-          setValue={setAmount("assetTwoAmount")}
+          value={assetTwoAmount}
+          setValue={
+            manualUpdateMode === 2 ?
+            setAmount("assetTwoAmount") : undefined
+          }
           InputProps={{
             disabled: !isValidToken2,
           }}
@@ -215,8 +231,8 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
         <PoolShare
           baseAsset={assetOne}
           quoteAsset={assetTwo}
-          price={assetOneAmountBn.div(assetTwoAmountBn)}
-          revertPrice={assetTwoAmountBn.div(assetOneAmountBn)}
+          price={spotPrice}
+          revertPrice={new BigNumber(1).div(spotPrice)}
           share={share.toNumber()}
         />
       )}
@@ -234,13 +250,21 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
           </Button>
         )}
 
-        {canSupply() && (
+        {!needToSelectToken() && canSupply() && !invalidTokenPair() && (
           <Button
             variant="contained"
             size="large"
             fullWidth
             disabled={!valid}
-            onClick={() => dispatch(openConfirmSupplyModal())}
+            onClick={() => {
+              if (!pool) {
+                return enqueueSnackbar("Liquidity pool for the selected token pair does not exist.", {
+                  variant: "error",
+                });
+              }
+
+              dispatch(openConfirmSupplyModal());
+            }}
           >
             Supply
           </Button>
@@ -252,8 +276,8 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
           noTitle={false}
           token1={assetOne}
           token2={assetTwo}
-          pooledAmount1={assetOneAmountBn}
-          pooledAmount2={assetTwoAmountBn}
+          pooledAmount1={assetOneAmount}
+          pooledAmount2={assetTwoAmount}
           amount={lpReceiveAmount}
           share={share}
           mt={4}
@@ -261,11 +285,12 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
       )}
 
       <ConfirmSupplyModal
+        pool={pool}
         lpReceiveAmount={lpReceiveAmount}
-        priceOneInTwo={assetOneAmountBn.div(assetTwoAmountBn)}
-        priceTwoInOne={assetTwoAmountBn.div(assetOneAmountBn)}
-        assetOneAmount={assetOneAmountBn}
-        assetTwoAmount={assetTwoAmountBn}
+        priceOneInTwo={spotPrice}
+        priceTwoInOne={new BigNumber(1).div(spotPrice)}
+        assetOneAmount={assetOneAmount}
+        assetTwoAmount={assetTwoAmount}
         assetOne={assetOne}
         assetTwo={assetTwo}
         share={share}
@@ -285,18 +310,19 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
       /> */}
 
       <ConfirmingSupplyModal
+        pool={pool}
         open={isConfirmingSupplyModalOpen}
         lpReceiveAmount={lpReceiveAmount}
-        priceOneInTwo={assetOneAmountBn.div(assetTwoAmountBn)}
-        priceTwoInOne={assetTwoAmountBn.div(assetOneAmountBn)}
-        assetOneAmount={assetOneAmountBn}
-        assetTwoAmount={assetTwoAmountBn}
+        priceOneInTwo={spotPrice}
+        priceTwoInOne={new BigNumber(1).div(spotPrice)}
+        assetOneAmount={assetOneAmount}
+        assetTwoAmount={assetTwoAmount}
         assetOne={assetOne}
         assetTwo={assetTwo}
         share={share}
       />
 
-      <TransactionSettings />
+      <TransactionSettings showSlippageSelection={false} />
     </Box>
   );
 };

@@ -35,11 +35,15 @@ const containerProps = (theme: Theme) => ({
 });
 
 export type TransactionSettingsProps = {
+  showSlippageSelection?: boolean,
+  showTransactionDeadlineSelection?: boolean,
   applyCallback?: () => void,
   closeCallback?: () => void,
 } & Omit<ModalProps, "open">;
 
 export const TransactionSettings: React.FC<TransactionSettingsProps> = ({
+  showSlippageSelection = true,
+  showTransactionDeadlineSelection = true,
   applyCallback,
   closeCallback,
   ...modalProps
@@ -111,7 +115,7 @@ export const TransactionSettings: React.FC<TransactionSettingsProps> = ({
           <Typography variant="h6">Transaction settings</Typography>
           <CloseOutlined onClick={onCloseHandler} sx={{cursor: "pointer"}} />
         </Box>
-        <Box mt={6}>
+        {showSlippageSelection && <Box mt={6}>
           <Input
             LabelProps={{
               label: "Slippage Tolerance",
@@ -120,7 +124,7 @@ export const TransactionSettings: React.FC<TransactionSettingsProps> = ({
             onChange={onToleranceChange}
             handleOnFocus={() => setIsToleranceFocussed(true)}
             handleOnBlur={() => setIsToleranceFocussed(false)}
-            customEndAdorment={
+            customEndAdornment={
               <FormControl>
                 <RadioGroup
                   row
@@ -142,8 +146,8 @@ export const TransactionSettings: React.FC<TransactionSettingsProps> = ({
               </FormControl>
             }
           />
-        </Box>
-        <Box mt={4}>
+        </Box>}
+        {showTransactionDeadlineSelection && <Box mt={4}>
           <Input
             value={deadlineStringValue}
             onChange={onDeadlineChange}
@@ -152,7 +156,7 @@ export const TransactionSettings: React.FC<TransactionSettingsProps> = ({
             }}
             referenceText="minutes"
           />
-        </Box>
+        </Box>}
         <Box mt={4}>
           <Button
             variant="contained"

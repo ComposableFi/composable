@@ -1,9 +1,5 @@
 import type { NextPage } from "next";
-import {
-  Container,
-  Box,
-  Typography,
-} from "@mui/material";
+import { Container, Box, Typography } from "@mui/material";
 import Default from "@/components/Templates/Default";
 import { ConnectWalletFeaturedBox, Link, PageTitle } from "@/components";
 import { PoolDetails } from "@/components/Organisms/pool/PoolDetails";
@@ -14,13 +10,15 @@ import { useState, useEffect } from "react";
 
 const PoolDetailsPage: NextPage = () => {
   const [poolId, setPoolId] = useState(-1);
-  const poolDetails = useLiquidityPoolDetails(poolId);
+  const { baseAsset, quoteAsset } = useLiquidityPoolDetails(poolId);
   const router = useRouter();
 
   useEffect(() => {
-    let poolId = Number(router.query.poolId);
-    if (isNaN(poolId)) router.push('/pool')
-    setPoolId(Number(poolId));
+    if (router.isReady) {
+      let poolId = Number(router.query.poolId);
+      if (isNaN(poolId)) router.push("/pool");
+      setPoolId(Number(poolId));
+    }
   }, [router]);
 
   const { extensionStatus } = useDotSamaContext();
@@ -40,7 +38,7 @@ const PoolDetailsPage: NextPage = () => {
       <Container maxWidth="lg">
         <Box display="flex" flexDirection="column" alignItems="center" mb={8}>
           <PageTitle
-            title={`${poolDetails.baseAsset?.symbol}/${poolDetails.quoteAsset?.symbol}` + " Pool"}
+            title={`${baseAsset?.symbol}/${quoteAsset?.symbol}` + " Pool"}
             subtitle="Earn tokens while adding liquidity."
           />
         </Box>

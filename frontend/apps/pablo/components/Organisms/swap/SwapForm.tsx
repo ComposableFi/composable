@@ -16,7 +16,6 @@ import { useDispatch } from "react-redux";
 import { InfoOutlined, Settings, SwapVertRounded } from "@mui/icons-material";
 import {
   closeConfirmingModal,
-  openPolkadotModal,
   openSwapPreviewModal,
   openTransactionSettingsModal,
   setMessage,
@@ -28,14 +27,15 @@ import { PreviewModal } from "./PreviewModal";
 import { ConfirmingModal } from "./ConfirmingModal";
 import { useDotSamaContext } from "substrate-react";
 import { useSwaps } from "@/defi/hooks/swaps/useSwaps";
-import BigNumber from "bignumber.js";
 import _ from "lodash";
 import { usePabloSwap } from "@/defi/hooks/swaps/usePabloSwap";
+import useStore from "@/store/useStore";
 
 const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
   const isMobile = useMobile();
   const theme = useTheme();
   const dispatch = useDispatch();
+  const { openPolkadotModal } = useStore();
 
   const { extensionStatus } = useDotSamaContext();
 
@@ -64,7 +64,8 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
     assetTwoInputValid,
     flipAssetSelection,
     isProcessing,
-    percentageToSwap
+    percentageToSwap,
+    priceImpact
   } = useSwaps();
 
   const initiateSwapTx = usePabloSwap({
@@ -80,7 +81,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
         dispatch(closeConfirmingModal());
       })
       .catch((err) => {
-        console.error(err)
+        console.error(err);
         dispatch(closeConfirmingModal());
       });
   };
@@ -95,7 +96,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
 
   const handleButtonClick = () => {
     if (extensionStatus !== "connected") {
-      dispatch(openPolkadotModal());
+      openPolkadotModal();
     } else {
       dispatch(openSwapPreviewModal());
     }
@@ -194,7 +195,9 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
           }}
           ButtonProps={{
             onClick: () => {
-              const balanceLimit = balance1.multipliedBy(percentageToSwap / 100);
+              const balanceLimit = balance1.multipliedBy(
+                percentageToSwap / 100
+              );
               if (!isProcessing && balanceLimit.gt(0)) {
                 debouncedTokenAmountUpdate("quote", balanceLimit);
               }
@@ -323,8 +326,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
           {`≈$${assetTwoAmount.multipliedBy(asset2PriceUsd)}`}
         </Typography>
       )}
-
-      {/* <Box
+      <Box
         mt={4}
         display="flex"
         justifyContent="center"
@@ -332,7 +334,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
         gap={2}
         height={26}
       >
-        {valid && selectedAssetOne && selectedAssetTwo && (
+        {selectedAssetOne && selectedAssetTwo && (
           <>
             <Typography variant="body2">
               1 {selectedAssetTwo.symbol} = {spotPrice.toFixed()}{" "}
@@ -348,14 +350,14 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
             </Tooltip>
           </>
         )}
-      </Box> */}
+      </Box>
 
       <Box mt={4}>
         <Button
           onClick={handleButtonClick}
           variant="contained"
           fullWidth
-          disabled={!valid}
+          disabled={extensionStatus === "connected" && !valid}
         >
           {buttonText}
         </Button>
@@ -363,6 +365,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
 
       {valid && (
         <SwapSummary
+          priceImpact={priceImpact}
           mt={4}
           spotPrice={spotPrice}
           baseAssetAmount={assetTwoAmount}
@@ -382,6 +385,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
             baseAsset={selectedAssetTwo}
           />
           <PreviewModal
+            priceImpact={priceImpact}
             onConfirmSwap={onConfirmSwap}
             minimumReceived={minimumReceived}
             baseAssetAmount={assetTwoAmount}

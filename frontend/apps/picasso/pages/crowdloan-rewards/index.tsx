@@ -7,7 +7,7 @@ import { useContext, useEffect } from "react";
 import { useStore } from "@/stores/root";
 import { ParachainContext } from "@/defi/polkadot/context/ParachainContext";
 import { PageTitle, FeaturedBox, SS8WalletHelper } from "@/components";
-import { useConnector } from "@integrations-lib/core";
+import { ConnectorType, useConnector } from "bi-lib";
 
 const CrowdloanRewards: NextPage = () => {
   const theme = useTheme();
@@ -29,7 +29,7 @@ const CrowdloanRewards: NextPage = () => {
   };
 
   const { extensionStatus } = useContext(ParachainContext);
-  const { isActive } = useConnector("metamask");
+  const { isActive } = useConnector(ConnectorType.MetaMask);
 
   useEffect(() => {
     if (userAssociation) {

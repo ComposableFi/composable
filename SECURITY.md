@@ -16,7 +16,7 @@ When you report a security vulnerability please include:
 The more information you provide the better. We recommend submitting a report where you describe the vulnerability, show us how you found it and provide reproducible code samples.
 Providing mitigation advice is also recommended.
 
-The report should be submitted to security@composable.finance. 
+**The report should be submitted to reporting@composable.finance.**
  
 
 ## Responsible Disclosure   
@@ -25,8 +25,8 @@ In return, we ask you to not publicly disclose your findings until either 2 week
 
 
 ## Scope:   
-What is currently in scope is finding bugs in a our code base running in a local enviroment.
-*Exploiting production systems are stricly prohibited*    
+What is currently in scope is finding bugs in a our code base running in a local environment.
+*Exploiting production systems is strictly prohibited*    
 
 
 ## Rewards   

@@ -3,7 +3,7 @@
 ---
 
 KSM Purchase Log
-This page catologues all the Picasso stable coin conversions to KSM via TPS (the OTC desk of 3AC ) and contributed to our Picasso crowdloan.
+This page catalogues all the Picasso stable coin conversions to KSM via TPS (the OTC desk of 3AC ) and contributed to our Picasso crowdloan.
  
 | Purchase Date  | Stable Coins      | KSM Purchased at USDT          |
 | -------------- | ----------------- | ------------------------------ |

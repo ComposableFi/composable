@@ -7,7 +7,6 @@ import { PageTitle } from "@/components/Molecules";
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
 import { Updater } from "@/stores/defi/polkadot/bonds/PolkadotBondsUpdater";
 import { getROI } from "@/defi/polkadot/pallets/BondedFinance";
-import { useSelectedAccount } from "@/defi/polkadot/hooks";
 import { BondDetailSkeleton } from "@/components/Organisms/Bond/BondDetailSkeleton";
 import { HighlightBoxes } from "@/components/Organisms/Bond/HighlightBoxes";
 import { BondForm } from "@/components/Organisms/Bond/BondForm";
@@ -15,7 +14,7 @@ import {
   getMaxPurchasableBonds,
   getTokenString,
 } from "@/components/Organisms/Bond/utils";
-import { useOpenPositions } from "@/defi/polkadot/hooks/useOpenPositions";
+import { useActiveBonds } from "@/defi/polkadot/hooks/useActiveBonds";
 import { ClaimForm } from "@/components/Organisms/Bond/ClaimForm";
 import { useBalanceForOffer } from "@/stores/defi/polkadot/bonds/useBalanceForOffer";
 import { useStore } from "@/stores/root";
@@ -32,17 +31,19 @@ const Bond: NextPage = () => {
     (state) => state.bonds.bonds[Number(bond) - 1]
   );
 
+  const assets = useStore(
+    ({ substrateBalances }) => substrateBalances.picasso.assets
+  );
+
   const { isLoading: isLoadingBalances, balances } =
     useBalanceForOffer(bondOffer);
-  const account = useSelectedAccount();
-  useOpenPositions(account);
-  const openPositions = useStore((state) => state.bonds.openPositions);
+  const { activeBonds, loading } = useActiveBonds();
   const maxPurchasableBond = getMaxPurchasableBonds(
     bondOffer,
     balances[bondOffer?.assetId]
   );
 
-  if (!bondOffer || !bond) {
+  if (!bondOffer || !bond || loading) {
     return (
       <Default>
         <Updater />
@@ -76,7 +77,7 @@ const Bond: NextPage = () => {
         </Grid>
         <Box display="flex" gap={2} mt={4}>
           <BondForm
-            hasClaim={openPositions.length > 0}
+            hasClaim={activeBonds.length > 0}
             offerId={bond.toString()}
             standardPageSize={standardPageSize}
             maxPurchasableBonds={maxPurchasableBond}

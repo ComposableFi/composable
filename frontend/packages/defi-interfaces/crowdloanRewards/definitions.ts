@@ -1,4 +1,4 @@
-import { DefinitionRpc } from "@polkadot/types/types";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 
 export default {
   rpc: {
@@ -7,15 +7,15 @@ export default {
       params: [
         {
           name: "accountId",
-          type: "AccountId"
+          type: "AccountId",
         },
         {
           name: "at",
           type: "Hash",
           isOptional: true,
-        }
+        },
       ],
-      type: "Balance"
+      type: "Balance",
     },
   },
   types: {
@@ -23,9 +23,9 @@ export default {
     PalletCrowdloanRewardsModelsReward: "Null",
     PalletCrowdloanRewardsModelsRemoteAccount: {
       _enum: {
-        RelayChain: 'AccountId32',
-        Ethereum: 'EthereumAccountId'
-      }
+        RelayChain: "AccountId32",
+        Ethereum: "EthereumAccountId",
+      },
     },
     ComposableTraitsCallFilterCallFilterEntry: "Null",
     PalletAssetsRegistryCandidateStatus: "Null",
@@ -37,15 +37,15 @@ export default {
       nbOfBonds: "u128",
       maturity: "ComposableTraitsBondedFinanceBondDuration",
       reward: "ComposableTraitsBondedFinanceBondOfferReward",
-      keepAlive: "bool"
+      keepAlive: "bool",
     },
     ComposableTraitsBondedFinanceBondDuration: {
-      Finite: {returnIn: "u32"}
+      Finite: { returnIn: "u32" },
     },
     ComposableTraitsBondedFinanceBondOfferReward: {
       asset: "CurrencyId",
       amount: "u128",
-      maturity: "u32"
+      maturity: "u32",
     },
     PalletCollatorSelectionCandidateInfo: "Null",
     PalletCrowdloanRewardsReward: "Null",
@@ -60,29 +60,41 @@ export default {
     ComposableTraitsVestingVestingSchedule: "Null",
     CumulusPalletDmpQueuePageIndexData: "Null",
     PalletDutchAuctionTakeOrder: "Null",
-    ComposableTraitsGovernanceSignedRawOrigin: "Null",
+    ComposableTraitsGovernanceSignedRawOrigin: {
+      _enum: {
+        Root: "Null",
+        Signed: "AccountId32",
+        isSigned: "bool",
+        asSigned: "AccountId32",
+      },
+    },
     PalletIdentityRegistration: "Null",
     PalletIdentityRegistrarInfo: "Null",
     PalletOracleAssetInfo: "Null",
     PalletOracleWithdraw: {
-      stake: 'u128',
-      unlockBlock: 'u32'
+      stake: "u128",
+      unlockBlock: "u32",
     },
     PalletOraclePrePrice: "Null",
     PalletOraclePrice: "Null",
     PolkadotPrimitivesV1AbridgedHostConfiguration: "Null",
-    CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot: "Null",
+    PolkadotPrimitivesV2PersistedValidationData: "Null",
+    PolkadotPrimitivesV2UpgradeRestriction: "Null",
+    PolkadotPrimitivesV2AbridgedHostConfiguration: "Null",
+    CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot:
+      "Null",
     PolkadotPrimitivesV1PersistedValidationData: "PersistedValidationData",
     PalletSchedulerScheduledV2: "Null",
     PalletSchedulerReleases: "Null",
     PalletSchedulerScheduledV3: "Null",
     DaliRuntimeOpaqueSessionKeys: "Null",
     OrmlTokensAccountData: {
-      free: 'u128',
-      reserved: 'u128',
-      frozen: 'u128'
+      free: "u128",
+      reserved: "u128",
+      frozen: "u128",
     },
     OrmlTokensBalanceLock: "Null",
+    OrmlTokensReserveData: "Null",
     PalletTreasuryProposal: "Null",
     PalletVaultModelsStrategyOverview: "Null",
     PalletVaultModelsVaultInfo: "Null",
@@ -94,9 +106,9 @@ export default {
     CumulusPalletXcmpQueueOutboundChannelDetails: "Null",
     PalletCrowdloanRewardsModelsProof: {
       _enum: {
-        RelayChain: '(AccountId32, MultiSignature)',
-        Ethereum: 'PalletCrowdloanRewardsModelsEcdsaSignature'
-      }
+        RelayChain: "(AccountId32, MultiSignature)",
+        Ethereum: "PalletCrowdloanRewardsModelsEcdsaSignature",
+      },
     },
     PalletCrowdloanRewardsModelsEcdsaSignature: "EcdsaSignature",
     PalletDemocracyConviction: "Null",
@@ -108,25 +120,31 @@ export default {
     PalletIdentityJudgement: "Null",
     PalletIdentityBitFlags: "Null",
     PalletIdentityIdentityInfo: "Null",
-    CumulusPrimitivesParachainInherentParachainInherentData: 'ParachainInherentData',
+    CumulusPrimitivesParachainInherentParachainInherentData:
+      "ParachainInherentData",
     DaliRuntimeOriginCaller: "Null",
     ComposableTraitsVaultVaultConfig: "Null",
     XcmVersionedMultiAsset: "Null",
     PalletMosaicNetworkInfo: {
       enabled: "bool",
-      maxTransferSize: "Balance"
+      maxTransferSize: "Balance",
     },
     PalletMosaicDecayBudgetPenaltyDecayer: "Null",
     PalletAssetsRegistryForeignMetadata: "Null",
     PalletMosaicAssetInfo: "Null",
-    PalletMosaicRelayerStaleRelayer: "Null",
+    PalletMosaicRelayerStaleRelayer: {
+      relayer: {
+        current: "AccountId32",
+        next: {
+          ttl: "u32",
+          account: "AccountId32",
+        },
+      },
+    },
     FrameSupportScheduleMaybeHashed: "Null",
     FrameSupportScheduleLookupError: "Null",
-    PalletCurrencyFactoryRanges: "Null",
-    PalletCurrencyFactoryRangesRange: "Null",
     PalletLiquidationsLiquidationStrategyConfiguration: "Null",
     CommonMosaicRemoteAssetId: "Null",
-    ComposableTraitsDexConsantProductPoolInfo: "Null",
     ComposableTraitsLendingMarketConfig: "Null",
     ComposableTraitsLendingCreateInput: "Null",
     ComposableTraitsLendingUpdateInput: "Null",
@@ -138,8 +156,47 @@ export default {
       pair: "ComposableTraitsDefiCurrencyPairCurrencyId",
       lpToken: "u128",
       fee: "Permill",
-      ownerFee: "Permill"
+      ownerFee: "Permill",
     },
-    ComposableSupportEthereumAddress: "Null"
-  },
+    ComposableSupportEthereumAddress: "Null",
+    ComposableTraitsAssetsBasicAssetMetadata: {
+      symbol: {
+        inner: "Null",
+      },
+      name: {
+        inner: "Null",
+      },
+    },
+    ComposableTraitsDexDexRoute: "Null",
+    ComposableTraitsLendingRepayStrategy: "Null",
+    ComposableTraitsXcmAssetsXcmAssetLocation: "Null",
+    SpTrieStorageProof: "Null",
+    ComposableTraitsXcmAssetsForeignMetadata: "Null",
+    FrameSystemAccountInfo: {
+      nonce: "Null",
+      consumers: "Null",
+      providers: "Null",
+      sufficients: "Null",
+      data: {
+        free: "u128",
+        reserved: "u128",
+        miscFrozen: "u128",
+        feeFrozen: "u128",
+      },
+    },
+    PalletIbcPingSendPingParams: "Null",
+    IbcTraitOpenChannelParams: "Null",
+    PalletIbcConnectionParams: "Null",
+    PalletIbcAny: "Null",
+    PalletIbcIbcConsensusState: "Null",
+    PalletIbcEventsIbcEvent: "Null",
+    PalletIbcErrorsIbcError: "Null",
+    PalletMosaicAmmSwapInfo: "Null",
+    ComposableTraitsStakingRewardPool: "Null",
+    ComposableTraitsStakingRewardPoolConfiguration: "Null",
+    IbcTransferPalletParams: "Null",
+    IbcTransferTransferParams: "Null",
+    ComposableTraitsOracleRewardTracker: "Null",
+    ComposableTraitsStakingStake: "Null"
+  }
 };

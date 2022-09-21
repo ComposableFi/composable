@@ -1,23 +1,21 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-import type { ApiTypes, AugmentedError, ModuleErrors } from '@polkadot/api/types';
+import type { ApiTypes } from '@polkadot/api-base/types';
 
-declare module '@polkadot/api/types/errors' {
-  export interface AugmentedErrors<ApiType> {
+declare module '@polkadot/api-base/types/errors' {
+  export interface AugmentedErrors<ApiType extends ApiTypes> {
     assets: {
       CannotSetNewCurrencyToRegistry: AugmentedError<ApiType>;
+      InvalidCurrency: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
       [key: string]: AugmentedError<ApiType>;
     };
     assetsRegistry: {
-      ForeignAssetIdAlreadyUsed: AugmentedError<ApiType>;
-      ForeignAssetIdNotFound: AugmentedError<ApiType>;
-      LocalAssetIdAlreadyUsed: AugmentedError<ApiType>;
-      LocalAssetIdNotFound: AugmentedError<ApiType>;
-      OnlyAllowedForAdmins: AugmentedError<ApiType>;
+      AssetNotFound: AugmentedError<ApiType>;
+      ForeignAssetAlreadyRegistered: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -173,19 +171,6 @@ declare module '@polkadot/api/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
-    constantProductDex: {
-      CannotRespectMinimumRequested: AugmentedError<ApiType>;
-      InvalidAmount: AugmentedError<ApiType>;
-      InvalidFees: AugmentedError<ApiType>;
-      InvalidPair: AugmentedError<ApiType>;
-      MissingAmount: AugmentedError<ApiType>;
-      PairMismatch: AugmentedError<ApiType>;
-      PoolNotFound: AugmentedError<ApiType>;
-      /**
-       * Generic error
-       **/
-      [key: string]: AugmentedError<ApiType>;
-    };
     council: {
       /**
        * Members are already initialized!
@@ -269,6 +254,7 @@ declare module '@polkadot/api/types/errors' {
       [key: string]: AugmentedError<ApiType>;
     };
     currencyFactory: {
+      AssetNotFound: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -398,6 +384,13 @@ declare module '@polkadot/api/types/errors' {
        * Can not respect minimum amount requested.
        **/
       CanNotRespectMinAmountRequested: AugmentedError<ApiType>;
+      /**
+       * Route with possible loop is not allowed.
+       **/
+      LoopSuspectedInRouteUpdate: AugmentedError<ApiType>;
+      /**
+       * Number of hops in route exceeded maximum limit.
+       **/
       MaxHopsExceeded: AugmentedError<ApiType>;
       /**
        * For given asset pair no route found.
@@ -449,11 +442,106 @@ declare module '@polkadot/api/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
+    fnft: {
+      CollectionAlreadyExists: AugmentedError<ApiType>;
+      CollectionNotFound: AugmentedError<ApiType>;
+      InstanceAlreadyExists: AugmentedError<ApiType>;
+      InstanceNotFound: AugmentedError<ApiType>;
+      MustBeOwner: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
     governanceRegistry: {
       /**
        * Not found
        **/
       NoneError: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    ibc: {
+      /**
+       * Channel not found
+       **/
+      ChannelNotFound: AugmentedError<ApiType>;
+      /**
+       * Client state not found
+       **/
+      ClientStateNotFound: AugmentedError<ApiType>;
+      /**
+       * Connection not found
+       **/
+      ConnectionNotFound: AugmentedError<ApiType>;
+      /**
+       * Client consensus state not found for height
+       **/
+      ConsensusStateNotFound: AugmentedError<ApiType>;
+      /**
+       * Error decoding some type
+       **/
+      DecodingError: AugmentedError<ApiType>;
+      /**
+       * Error encoding some type
+       **/
+      EncodingError: AugmentedError<ApiType>;
+      /**
+       * Invalid message for extrinsic
+       **/
+      InvalidMessageType: AugmentedError<ApiType>;
+      /**
+       * Invalid route
+       **/
+      InvalidRoute: AugmentedError<ApiType>;
+      /**
+       * Other forms of errors
+       **/
+      Other: AugmentedError<ApiType>;
+      /**
+       * Packet Acknowledgment wasn't found
+       **/
+      PacketAcknowledgmentNotFound: AugmentedError<ApiType>;
+      /**
+       * Packet commitment wasn't found
+       **/
+      PacketCommitmentNotFound: AugmentedError<ApiType>;
+      /**
+       * Packet receipt wasn't found
+       **/
+      PacketReceiptNotFound: AugmentedError<ApiType>;
+      /**
+       * Error processing ibc messages
+       **/
+      ProcessingError: AugmentedError<ApiType>;
+      /**
+       * Error generating trie proof
+       **/
+      ProofGenerationError: AugmentedError<ApiType>;
+      /**
+       * Error constructing packet
+       **/
+      SendPacketError: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    ibcPing: {
+      /**
+       * Error opening channel
+       **/
+      ChannelInitError: AugmentedError<ApiType>;
+      /**
+       * Invalid params passed
+       **/
+      InvalidParams: AugmentedError<ApiType>;
+      /**
+       * Error registering packet
+       **/
+      PacketSendError: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -556,20 +644,49 @@ declare module '@polkadot/api/types/errors' {
       [key: string]: AugmentedError<ApiType>;
     };
     lending: {
-      /**
-       * Only assets for which we can track price are supported
-       **/
-      AssetNotSupportedByOracle: AugmentedError<ApiType>;
       AssetPriceNotFound: AugmentedError<ApiType>;
+      /**
+       * Borrow and repay in the same block (flashloans) are not allowed.
+       **/
       BorrowAndRepayInSameBlockIsNotSupported: AugmentedError<ApiType>;
+      /**
+       * Only assets that have a known price are supported.
+       **/
+      BorrowAssetNotSupportedByOracle: AugmentedError<ApiType>;
       BorrowDoesNotExist: AugmentedError<ApiType>;
       BorrowerDataCalculationFailed: AugmentedError<ApiType>;
       BorrowIndexDoesNotExist: AugmentedError<ApiType>;
       BorrowRateDoesNotExist: AugmentedError<ApiType>;
+      BorrowRentDoesNotExist: AugmentedError<ApiType>;
+      CannotBorrowFromMarketWithUnbalancedVault: AugmentedError<ApiType>;
+      /**
+       * Can't allow amount 0 as collateral.
+       **/
+      CannotDepositZeroCollateral: AugmentedError<ApiType>;
+      CannotIncreaseCollateralFactorOfOpenMarket: AugmentedError<ApiType>;
       CannotRepayMoreThanBorrowAmount: AugmentedError<ApiType>;
+      /**
+       * Repaying more than once in the same block is not allowed.
+       **/
+      CannotRepayMoreThanOnceInSameBlock: AugmentedError<ApiType>;
+      /**
+       * Cannot repay the total amount of debt when partially repaying.
+       **/
+      CannotRepayMoreThanTotalDebt: AugmentedError<ApiType>;
+      /**
+       * A market with a borrow balance of `0` was attempted to be repaid.
+       **/
+      CannotRepayZeroBalance: AugmentedError<ApiType>;
       CannotWithdrawFromProvidedBorrowAccount: AugmentedError<ApiType>;
+      /**
+       * Only assets that have a known price are supported.
+       **/
+      CollateralAssetNotSupportedByOracle: AugmentedError<ApiType>;
       CollateralDepositFailed: AugmentedError<ApiType>;
-      CollateralFactorIsLessOrEqualOne: AugmentedError<ApiType>;
+      /**
+       * The collateral factor for a market must be more than one.
+       **/
+      CollateralFactorMustBeMoreThanOne: AugmentedError<ApiType>;
       ExceedLendingCount: AugmentedError<ApiType>;
       InvalidTimestampOnBorrowRequest: AugmentedError<ApiType>;
       LiquidationFailed: AugmentedError<ApiType>;
@@ -580,17 +697,25 @@ declare module '@polkadot/api/types/errors' {
        **/
       MarketDoesNotExist: AugmentedError<ApiType>;
       MarketIsClosing: AugmentedError<ApiType>;
+      MaxLiquidationBatchSizeExceeded: AugmentedError<ApiType>;
       NotEnoughBorrowAsset: AugmentedError<ApiType>;
-      NotEnoughCollateral: AugmentedError<ApiType>;
-      NotEnoughCollateralToBorrowAmount: AugmentedError<ApiType>;
+      NotEnoughCollateralToBorrow: AugmentedError<ApiType>;
+      /**
+       * Attempted to withdraw more collateral than the account has in the market.
+       **/
+      NotEnoughCollateralToWithdraw: AugmentedError<ApiType>;
       NotEnoughRent: AugmentedError<ApiType>;
       Overflow: AugmentedError<ApiType>;
       /**
        * borrow assets should have enough value as per oracle
        **/
       PriceOfInitialBorrowVaultShouldBeGreaterThanZero: AugmentedError<ApiType>;
-      RepayAmountMustBeGraterThanZero: AugmentedError<ApiType>;
+      PriceTooOld: AugmentedError<ApiType>;
+      RepayAmountMustBeGreaterThanZero: AugmentedError<ApiType>;
       TransferFailed: AugmentedError<ApiType>;
+      /**
+       * Attempted to update a market owned by someone else.
+       **/
       Unauthorized: AugmentedError<ApiType>;
       Underflow: AugmentedError<ApiType>;
       /**
@@ -598,25 +723,19 @@ declare module '@polkadot/api/types/errors' {
        **/
       VaultNotFound: AugmentedError<ApiType>;
       /**
-       * Generic error
+       * The market would go under collateralized if the requested amount of collateral was
+       * withdrawn.
        **/
-      [key: string]: AugmentedError<ApiType>;
-    };
-    liquidations: {
-      NoLiquidationEngineFound: AugmentedError<ApiType>;
+      WouldGoUnderCollateralized: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
       [key: string]: AugmentedError<ApiType>;
     };
-    liquidityBootstrapping: {
-      CannotRespectMinimumRequested: AugmentedError<ApiType>;
-      InvalidAmount: AugmentedError<ApiType>;
-      InvalidSaleState: AugmentedError<ApiType>;
-      LpTokenNotRequiedForLbp: AugmentedError<ApiType>;
-      MustBeOwner: AugmentedError<ApiType>;
-      PairMismatch: AugmentedError<ApiType>;
-      PoolNotFound: AugmentedError<ApiType>;
+    liquidations: {
+      InvalidLiquidationStrategiesVector: AugmentedError<ApiType>;
+      NoLiquidationEngineFound: AugmentedError<ApiType>;
+      OnlyDutchAuctionStrategyIsImplemented: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -628,6 +747,7 @@ declare module '@polkadot/api/types/errors' {
       BadTimelockPeriod: AugmentedError<ApiType>;
       BadTTL: AugmentedError<ApiType>;
       BelowMinTransferSize: AugmentedError<ApiType>;
+      DestinationAmmIdNotWhitelisted: AugmentedError<ApiType>;
       ExceedsMaxTransferSize: AugmentedError<ApiType>;
       InsufficientBudget: AugmentedError<ApiType>;
       NetworkDisabled: AugmentedError<ApiType>;
@@ -636,6 +756,8 @@ declare module '@polkadot/api/types/errors' {
       NoStaleTransactions: AugmentedError<ApiType>;
       Overflow: AugmentedError<ApiType>;
       RelayerNotSet: AugmentedError<ApiType>;
+      RemoteAmmIdAlreadyExists: AugmentedError<ApiType>;
+      RemoteAmmIdNotFound: AugmentedError<ApiType>;
       TxStillLocked: AugmentedError<ApiType>;
       UnsupportedAsset: AugmentedError<ApiType>;
       UnsupportedNetwork: AugmentedError<ApiType>;
@@ -715,6 +837,10 @@ declare module '@polkadot/api/types/errors' {
        * Price already submitted
        **/
       AlreadySubmitted: AugmentedError<ApiType>;
+      /**
+       * Annual rewarding cost too high
+       **/
+      AnnualRewardLessThanAlreadyRewarded: AugmentedError<ApiType>;
       ArithmeticError: AugmentedError<ApiType>;
       /**
        * Error avoids a panic
@@ -772,6 +898,10 @@ declare module '@polkadot/api/types/errors' {
        **/
       NoPermission: AugmentedError<ApiType>;
       /**
+       * Rewarding has not started
+       **/
+      NoRewardTrackerSet: AugmentedError<ApiType>;
+      /**
        * No stake for oracle
        **/
       NoStake: AugmentedError<ApiType>;
@@ -825,15 +955,21 @@ declare module '@polkadot/api/types/errors' {
       AssetAmountMustBePositiveNumber: AugmentedError<ApiType>;
       CannotRespectMinimumRequested: AugmentedError<ApiType>;
       InvalidAmount: AugmentedError<ApiType>;
+      InvalidAsset: AugmentedError<ApiType>;
       InvalidFees: AugmentedError<ApiType>;
       InvalidPair: AugmentedError<ApiType>;
       InvalidSaleState: AugmentedError<ApiType>;
       MissingAmount: AugmentedError<ApiType>;
+      MissingMinExpectedAmount: AugmentedError<ApiType>;
+      MoreThanTwoAssetsNotYetSupported: AugmentedError<ApiType>;
       MustBeOwner: AugmentedError<ApiType>;
       NoLpTokenForLbp: AugmentedError<ApiType>;
+      NotEnoughLiquidity: AugmentedError<ApiType>;
+      NotEnoughLpToken: AugmentedError<ApiType>;
       PairMismatch: AugmentedError<ApiType>;
-      PoolConfigurationNotSupported: AugmentedError<ApiType>;
       PoolNotFound: AugmentedError<ApiType>;
+      WeightsMustBeNonZero: AugmentedError<ApiType>;
+      WeightsMustSumToOne: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -903,6 +1039,44 @@ declare module '@polkadot/api/types/errors' {
        * Preimage is too large to store on-chain.
        **/
       TooLarge: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    proxy: {
+      /**
+       * Account is already a proxy.
+       **/
+      Duplicate: AugmentedError<ApiType>;
+      /**
+       * Call may not be made by proxy because it may escalate its privileges.
+       **/
+      NoPermission: AugmentedError<ApiType>;
+      /**
+       * Cannot add self as proxy.
+       **/
+      NoSelfProxy: AugmentedError<ApiType>;
+      /**
+       * Proxy registration not found.
+       **/
+      NotFound: AugmentedError<ApiType>;
+      /**
+       * Sender is not a proxy of the account to be proxied.
+       **/
+      NotProxy: AugmentedError<ApiType>;
+      /**
+       * There are too many proxies registered or too many announcements pending.
+       **/
+      TooMany: AugmentedError<ApiType>;
+      /**
+       * Announcement, if made at all, was made too recently.
+       **/
+      Unannounced: AugmentedError<ApiType>;
+      /**
+       * A call which is incompatible with the proxy type's filter was attempted.
+       **/
+      Unproxyable: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -1017,14 +1191,69 @@ declare module '@polkadot/api/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
-    stableSwapDex: {
-      AmpFactorMustBeGreaterThanZero: AugmentedError<ApiType>;
-      AssetAmountMustBePositiveNumber: AugmentedError<ApiType>;
-      CannotRespectMinimumRequested: AugmentedError<ApiType>;
-      InvalidFees: AugmentedError<ApiType>;
-      InvalidPair: AugmentedError<ApiType>;
-      PairMismatch: AugmentedError<ApiType>;
-      PoolNotFound: AugmentedError<ApiType>;
+    stakingRewards: {
+      BackToTheFuture: AugmentedError<ApiType>;
+      /**
+       * Invalid end block number provided for creating a pool.
+       **/
+      EndBlockMustBeInTheFuture: AugmentedError<ApiType>;
+      FnftNotFound: AugmentedError<ApiType>;
+      /**
+       * Reward's max limit reached.
+       **/
+      MaxRewardLimitReached: AugmentedError<ApiType>;
+      /**
+       * No duration presets configured.
+       **/
+      NoDurationPresetsConfigured: AugmentedError<ApiType>;
+      /**
+       * Not enough assets for a stake.
+       **/
+      NotEnoughAssets: AugmentedError<ApiType>;
+      /**
+       * Only pool owner can add new reward asset.
+       **/
+      OnlyPoolOwnerCanAddNewReward: AugmentedError<ApiType>;
+      /**
+       * only the owner of stake can unstake it
+       **/
+      OnlyStakeOwnerCanUnstake: AugmentedError<ApiType>;
+      /**
+       * Error when creating reduction configs.
+       **/
+      ReductionConfigProblem: AugmentedError<ApiType>;
+      /**
+       * Reward asset not found in reward pool.
+       **/
+      RewardAssetNotFound: AugmentedError<ApiType>;
+      /**
+       * Error when creating reward configs.
+       **/
+      RewardConfigProblem: AugmentedError<ApiType>;
+      /**
+       * Reward pool already exists
+       **/
+      RewardsPoolAlreadyExists: AugmentedError<ApiType>;
+      /**
+       * Rewards pool not found.
+       **/
+      RewardsPoolNotFound: AugmentedError<ApiType>;
+      /**
+       * The rewards pot for this pool is empty.
+       **/
+      RewardsPotEmpty: AugmentedError<ApiType>;
+      /**
+       * No stake found for given id.
+       **/
+      StakeNotFound: AugmentedError<ApiType>;
+      /**
+       * Too many rewarded asset types per pool violating the storage allowed.
+       **/
+      TooManyRewardAssetTypes: AugmentedError<ApiType>;
+      /**
+       * Unimplemented reward pool type.
+       **/
+      UnimplementedRewardPoolConfiguration: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -1103,6 +1332,49 @@ declare module '@polkadot/api/types/errors' {
        * Failed because the maximum locks was exceeded
        **/
       MaxLocksExceeded: AugmentedError<ApiType>;
+      TooManyReserves: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    transfer: {
+      /**
+       * Error opening channel
+       **/
+      ChannelInitError: AugmentedError<ApiType>;
+      /**
+       * Unable to get client revision number
+       **/
+      FailedToGetRevisionNumber: AugmentedError<ApiType>;
+      /**
+       * Invalid amount
+       **/
+      InvalidAmount: AugmentedError<ApiType>;
+      /**
+       * Invalid asset id
+       **/
+      InvalidAssetId: AugmentedError<ApiType>;
+      /**
+       * Invalid Ibc denom
+       **/
+      InvalidIbcDenom: AugmentedError<ApiType>;
+      /**
+       * Invalid params passed
+       **/
+      InvalidParams: AugmentedError<ApiType>;
+      /**
+       * Invalid timestamp
+       **/
+      InvalidTimestamp: AugmentedError<ApiType>;
+      /**
+       * The interchain token transfer was not successfully initiated
+       **/
+      TransferFailed: AugmentedError<ApiType>;
+      /**
+       * Error Decoding utf8 bytes
+       **/
+      Utf8Error: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -1117,6 +1389,10 @@ declare module '@polkadot/api/types/errors' {
        * No proposal or bounty at that index.
        **/
       InvalidIndex: AugmentedError<ApiType>;
+      /**
+       * Proposal has not been approved.
+       **/
+      ProposalNotApproved: AugmentedError<ApiType>;
       /**
        * Too many approvals in the queue.
        **/
@@ -1362,6 +1638,10 @@ declare module '@polkadot/api/types/errors' {
        **/
       InvalidDest: AugmentedError<ApiType>;
       /**
+       * MinXcmFee not registered for certain reserve location
+       **/
+      MinXcmFeeNotDefined: AugmentedError<ApiType>;
+      /**
        * Not cross-chain transfer.
        **/
       NotCrossChainTransfer: AugmentedError<ApiType>;
@@ -1369,6 +1649,10 @@ declare module '@polkadot/api/types/errors' {
        * Currency is not cross-chain transferable.
        **/
       NotCrossChainTransferableCurrency: AugmentedError<ApiType>;
+      /**
+       * Not supported MultiLocation
+       **/
+      NotSupportedMultiLocation: AugmentedError<ApiType>;
       /**
        * The number of assets to be sent is over the maximum.
        **/
@@ -1394,9 +1678,5 @@ declare module '@polkadot/api/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
-  }
-
-  export interface DecoratedErrors<ApiType extends ApiTypes> extends AugmentedErrors<ApiType> {
-    [key: string]: ModuleErrors<ApiType>;
-  }
-}
+  } // AugmentedErrors
+} // declare module

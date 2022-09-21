@@ -12,7 +12,7 @@
 
 This document proposes the Pablo distribution(token and pool trading fees) mechanism while considering various options and capturing the discussions about the subject.
 
-`TODO summarise the mechanism`
+`TODO summarize the mechanism`
 
 == Background
 
@@ -148,7 +148,7 @@ g -up-> UC12
 
 === System Overview
 
-[plantuml,images/pablo-distribution-verview,png]
+[plantuml,images/pablo-distribution-overview,png]
 ----
 skinparam component {
   backgroundColor<<exists>> LightGreen
@@ -294,7 +294,7 @@ Reward per calculation epoch stem:[= r.t]
 Previous total reward pool before the current epoch stem:[= P]
 
 Assuming there is a per epoch calculation which adds to the pool,
-the total reward pool for the current epoc,
+the total reward pool for the current epoch,
 
 stem:[P_(current) = P + rt]
 
@@ -381,7 +381,7 @@ Staking rewards pallet already uses the following data structure representing a 
 include::../../frame/composable-traits/src/staking/mod.rs[lines=135..150]
 ----
 
-Which is referred to in the algorithms in the followin sections.
+Which is referred to in the algorithms in the following sections.
 
 Now in order to allow redeeming the above staking position, following data structures is to be tracked in the staking rewards pallet,
 
@@ -475,9 +475,9 @@ note right: as per section 5.3.1.5
 stop
 ----
 
-==== Claim/Unstake
+==== Unstake
 
-[plantuml,images/claim,png]
+[plantuml,images/unstake,png]
 ----
 start
 ->assetId\npositionId;
@@ -498,8 +498,30 @@ endwhile (no)
 :save(rewards_pool);
 stop
 ----
+==== Reward Pool Governance
 
-==== Update Reward Pool
+===== Update Reward Allocation Per Pool
+
+Each reward pool would have its own reward pot account.
+
+* Lock the assets in the pool account so that funds can be claimed only when unlocked.
+* Reward accumulation logic would just release funds from the pool account according to the reward rate.
+* In order to add funds to the pool account, an extrinsic is needed as follows:
+** Input: rewardPoolId, AssetId, Balance
++
+For governance proposals, one can query storage to get the reward pool ID and create a proposal to call the above extrinsic.
+
+[plantuml,images/transfer-funds-extrinsic,png]
+----
+start
+->rewardPoolId\nassetId\nbalance;
+:verify signed;
+:derive pallet sub-account for cold wallet;
+:transfer the funds from\nthe origin(treasury account?) to reward pool account and lock;
+end
+----
+
+===== Update Reward Pool
 
 [plantuml,images/update-reward-pool,png]
 ----
@@ -532,11 +554,42 @@ while (assetId = stake_pools.has_next) is (yes)
     :rewards_pool = readStorage(assetId);
     while (reward = rewards_pool.rewards.has_next) is (yes)
         :assert max_reward not exceeded;
-        :reward.total_rewards += elapsed_time * reward.reward_rate;
+        :derive pallet account for the pool;
+        :new_reward = elapsed_time * reward.reward_rate;
+        :release new_reward from pool account;
+        :reward.total_rewards += new_reward;
+        note left
+            In case not having enough funds
+            this would fail. But it would recover
+            once the funds are available.
+        endnote
     endwhile (no)
     :save(rewards_pool);
 endwhile (no)
 :last_update_timestamp = current_time;
+stop
+----
+
+NOTE: Check if the transactions correctly work for hooks.
+
+==== Claim
+
+[plantuml,images/claim,png]
+----
+start
+->assetId\npositionId;
+:position = readStorage(positionId);
+:rewards_pool = readStorage(assetId);
+while (reward = rewards_pool.rewards.has_next) is (yes)
+    :claim = reward.total_rewards * position.shares /\nrewards_pool.total_shares - position.reductions[reward.asset_id];
+    note right: as per section 5.3.1.2
+    :claim = min(claim, reward.total_rewards - reward.claimed_rewards);
+    :transfer(claim);
+    :reward.claimed_rewards += claim;
+    :position.reductions[reward.asset_id] += claim;
+    note right: as per section 5.3.1.1
+endwhile (no)
+:save(rewards_pool);
 stop
 ----
 

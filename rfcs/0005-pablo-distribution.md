@@ -17,7 +17,7 @@ Table of Contents
     - [4.4. Pablo Governance](#44-pablo-governance)
     - [4.5. PICA Governance](#45-pica-governance)
     - [4.6. Technical Requirements](#46-technical-requirements)
-    - [4.7 Financial NFT Requirements](#47-financial-nft-requirements)
+    - [4.7. Financial NFT Requirements](#47-financial-nft-requirements)
 -   [5. Method](#5-method)
     -   [5.1. System Overview](#51-system-overview)
     -   [5.2. Pallet-Pablo](#52-pallet-pablo)
@@ -36,7 +36,7 @@ Table of Contents
                 existing stakers(<span
                 class="image"><img src="0005-pablo-distribution-assets/images/stem-55a049b8f161ae7cfeb0197d75aff967.png" width="9" height="6" alt="stem 55a049b8f161ae7cfeb0197d75aff967" /></span>)
                 reward would
-                be,](#5311-when-adding-a-new-staker-n1-existing-stakersn-reward-would-be)
+                be,](#5311-when-adding-a-new-staker-n1-existing-stakers-reward-would-be)
             -   [5.3.1.2. When removing a staker(Claim/Unstake) from the pool the above
                 addition step has to be
                 reverted](#5312-when-removing-a-stakerclaimunstake-from-the-pool-the-above-addition-step-has-to-be-reverted)
@@ -53,8 +53,12 @@ Table of Contents
         -   [5.3.4. Extend Position](#534-extend-position)
         -   [5.3.5. Split Position](#535-split-position)
         -   [5.3.6. Claim/Unstake](#536-claimunstake)
-        -   [5.3.7. Update Reward Pool](#537-update-reward-pool)
+         -   [5.3.7. Reward Pool Governance](#537-reward-pool-governance)
+            -   [5.3.7.1. Update Reward Allocation Per
+                Pool](#5371-update-reward-allocation-per-pool)
+            -   [5.3.7.2. Update Reward Pool](#5372-update-reward-pool)
         -   [5.3.8. RewardAccumulationHook](#538-rewardaccumulationhook)
+        -   [5.3.9. Claim](#539-claim)
 -   [6. Implementation](#6-implementation)
     -   [6.1. Pallet Pablo: LP Fee + Staking
         Changes](#61-pallet-pablo-lp-fee-staking-changes)
@@ -70,7 +74,7 @@ This document proposes the Pablo distribution(token and pool trading
 fees) mechanism while considering various options and capturing the
 discussions about the subject.
 
-`TODO summarise the mechanism`
+`TODO summarize the mechanism`
 
 ## 2. Background
 
@@ -234,7 +238,7 @@ for brevity.
 
 ### 5.1. System Overview
 
-<img src="0005-pablo-distribution-assets/images/images/pablo-distribution-verview.png" width="977" height="807" alt="pablo distribution verview" />
+<img src="0005-pablo-distribution-assets/images/images/pablo-distribution-overview.png" width="977" height="807" alt="pablo distribution overview" />
 
 TODO: What to do for part of protocol fees that should be transferred to
 treasury eventually as treasury does not stake it’s PBLO?
@@ -322,7 +326,7 @@ Dilution of LPs](#appendix-a-trading-fee-inflation-to-avoid-dilution-of-lps).
 #### 5.2.3. PBLO Staker Pool Creation
 
 When creating new Pablo pool, the creator should have option to create n PBLO staking pool.
-This newly created stking pool will receive rewards from trading fees from Pablo pool as mention in section 5.2.4
+This newly created staking pool will receive rewards from trading fees from Pablo pool as mention in section 5.2.4
 
 #### 5.2.4. PBLO Staker Trading Fee Distribution
 
@@ -385,7 +389,7 @@ Reward per calculation epoch <img src="0005-pablo-distribution-assets/images/ste
 Previous total reward pool before the current epoch <img src="0005-pablo-distribution-assets/images/stem-53fadade13e71b863963af9a23b28b71.png" width="25" height="8" alt="stem 53fadade13e71b863963af9a23b28b71" /></span>
 
 Assuming there is a per epoch calculation which adds to the pool, the
-total reward pool for the current epoc,
+total reward pool for the current epoch,
 
 <img src="0005-pablo-distribution-assets/images/stem-667bfb2c3da043fcfff3288c44c1cc6e.png" width="103" height="10" alt="stem 667bfb2c3da043fcfff3288c44c1cc6e" /></span>
 
@@ -512,7 +516,7 @@ representing a staking position,
         pub lock: Lock,
     }
 
-Which is referred to in the algorithms in the followin sections.
+Which is referred to in the algorithms in the following sections.
 
 Now in order to allow redeeming the above staking position, following
 data structures is to be tracked in the staking rewards pallet,
@@ -583,19 +587,46 @@ rewards pool based on these data structures.
 
 <img src="0005-pablo-distribution-assets/images/images/split-position.png" width="426" height="344" alt="split position" />
 
-#### 5.3.6. Claim/Unstake
+#### 5.3.6. Unstake
 
-<img src="0005-pablo-distribution-assets/images/images/claim.png" width="500" height="695" alt="claim" />
+<img src="0005-pablo-distribution-assets/images/images/unstake.png" width="500" height="695" alt="claim" />
 
-#### 5.3.7. Update Reward Pool
+#### 5.3.7. Reward Pool Governance
 
-<img src="0005-pablo-distribution-assets/images/images/update-reward-pool.png" width="508" height="476" alt="update reward pool" />
+##### 5.3.7.1. Update Reward Allocation Per Pool
+
+Each reward pool would have its own reward pot account.
+
+-   Lock the assets in the pool account so that funds can be claimed
+    only when unlocked.
+
+-   Reward accumulation logic would just release funds from the pool
+    account according to the reward rate.
+
+-   In order to add funds to the pool account, an extrinsic is needed as
+    follows:
+
+    -   Input: rewardPoolId, AssetId, Balance
+
+        For governance proposals, one can query storage to get the
+        reward pool ID and create a proposal to call the above
+        extrinsic.
+
+<img src="0005-pablo-distribution-assets/images/images/transfer-funds-extrinsic.png" width="431" height="302" alt="transfer funds extrinsic" />
+
+##### 5.3.7.2. Update Reward Pool
+
+<img src="0005-pablo-distribution-assets/images/images/update-reward-pool.png" width="497" height="647" alt="update reward pool" />
 
 #### 5.3.8. RewardAccumulationHook
 
 Following algorithm should be part of the block hook in the pallet.
 
 <img src="0005-pablo-distribution-assets/images/images/staking-rewards-reward-accumulation-hook.png" width="509" height="501" alt="staking rewards reward accumulation hook" />
+
+#### 5.3.9. Claim
+
+<img src="0005-pablo-distribution-assets/images/images/claim.png" width="684" height="642" alt="claim" />
 
 ## 6. Implementation
 

@@ -10,7 +10,7 @@ const BuyLPTokenModalStories = () => {
     roi: 26,
     vesting_term: 7,
     tvl: new BigNumber(1500000),
-    volumne: new BigNumber(132500000),
+    volume: new BigNumber(132500000),
     discount_price: new BigNumber(2.3),
     market_price: new BigNumber(2.9),
     balance: new BigNumber(435),

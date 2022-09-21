@@ -5,5 +5,8 @@ export const typographyOverrides = (): Partial<OverridesStyleRules> => ({
     root: {
       textTransform: "none",
     },
+    gutterBottom: {
+      marginBottom: "1.81rem",
+    },
   },
 });

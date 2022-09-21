@@ -6,6 +6,7 @@ export const GET_BONDED_FINANCE = gql`
       id
       beneficiary
       totalPurchased
+      offerId
     }
   }
 `;

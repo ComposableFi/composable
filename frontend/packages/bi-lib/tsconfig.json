@@ -1,0 +1,40 @@
+{
+  "extends": "../tsconfig/base.json",
+  "compileOnSave": false,
+  "compilerOptions": {
+    "declaration": true,
+    "declarationMap": true,
+    "baseUrl": ".",
+    "noEmit": false,
+    "outDir": "dist",
+    "rootDir": "src",
+    "jsx": "react", 
+    "module": "ESNext",  
+    "declarationDir": "dist",
+    "sourceMap": true,
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "allowJs": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "preserveConstEnums": true,
+    "removeComments": false,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "target": "es5",
+    "downlevelIteration": true,
+    "lib": ["dom", "es2017"],
+    "strict": true,
+    "paths": {
+      "@project/core": ["./src"],
+      "@project/core/*": ["./src/*"]
+    }
+  },
+  "include": ["src"]
+}

@@ -1,0 +1,11 @@
+{
+  "enabledTests": {
+    "enabled": true,
+    "createPoolAndAddLiquidityTests": {
+      "enabled": true
+    },
+    "buySellAndSwapTests": {
+      "enabled": true
+    }
+  }
+}
