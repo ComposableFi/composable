@@ -29,12 +29,6 @@ Onboarding other pallets onto our Kusama parachain, [Picasso](../parachains/pica
 
 Onboarding new layers, chains, and their associated validators into our ecosystem and interoperable infrastructure. 
 
-### Cross-layer application tooling (Composable SDK):
-
-Allowing other projects to integrate our tools and technology via the 
-[Composable software development kit (SDK)](../developer-guides/composable-sdk.md) 
-and [XCVM](../products/cross-chain-virtual-machine.md). 
-
-### Building with the Composable XCVM:
+### Building modular applications with the Composable XCVM:
 
 Onboarding developers to use the [Composable Cross-Chain VM (XCVM)](../products/cross-chain-virtual-machine.md).
