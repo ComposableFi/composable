@@ -39,19 +39,13 @@ mod mint_into {
 			}));
 
 			assert_eq!(
-				CollectionInstances::<MockRuntime>::get(TEST_COLLECTION_ID).unwrap(),
-				BTreeSet::from([NEW_NFT_ID]),
-				"class should only have one instance"
-			);
-
-			assert_eq!(
 				OwnerInstances::<MockRuntime>::get(&ALICE).unwrap(),
 				BTreeSet::from([(TEST_COLLECTION_ID, NEW_NFT_ID)]),
 				"ALICE should only have one instance"
 			);
 
 			assert_eq!(
-				Instance::<MockRuntime>::get(&(TEST_COLLECTION_ID, NEW_NFT_ID)).unwrap(),
+				Instance::<MockRuntime>::get(TEST_COLLECTION_ID, NEW_NFT_ID).unwrap(),
 				(ALICE, BTreeMap::new()),
 				"owner should be ALICE, with no attributes"
 			);
@@ -148,10 +142,7 @@ mod set_attribute {
 
 			for should_not_be_mutated_nft_id in other_nft_ids {
 				assert_eq!(
-					Instance::<MockRuntime>::get(&(
-						TEST_COLLECTION_ID,
-						should_not_be_mutated_nft_id
-					)),
+					Instance::<MockRuntime>::get(TEST_COLLECTION_ID, should_not_be_mutated_nft_id),
 					Some((ALICE, BTreeMap::from([]))),
 					"instance should not have any attributes"
 				);
@@ -226,19 +217,13 @@ mod burn_from {
 			}));
 
 			assert_eq!(
-				CollectionInstances::<MockRuntime>::get(TEST_COLLECTION_ID).unwrap(),
-				BTreeSet::from(new_nft_ids),
-				"class should have all of the original NFTs except for the one burned"
-			);
-
-			assert_eq!(
 				OwnerInstances::<MockRuntime>::get(&ALICE).unwrap(),
 				to_btree(TEST_COLLECTION_ID, &new_nft_ids),
 				"ALICE should have all of the original NFTs except for the one burned"
 			);
 
 			assert_eq!(
-				Instance::<MockRuntime>::get(&(TEST_COLLECTION_ID, nft_to_burn)),
+				Instance::<MockRuntime>::get(TEST_COLLECTION_ID, nft_to_burn),
 				None,
 				"instance should not exist"
 			);
@@ -259,19 +244,13 @@ mod burn_from {
 			}));
 
 			assert_eq!(
-				CollectionInstances::<MockRuntime>::get(TEST_COLLECTION_ID).unwrap(),
-				BTreeSet::new(),
-				"class should not have any instances"
-			);
-
-			assert_eq!(
 				OwnerInstances::<MockRuntime>::get(&ALICE).unwrap(),
 				BTreeSet::new(),
 				"ALICE should not have any instances"
 			);
 
 			assert_eq!(
-				Instance::<MockRuntime>::get(&(TEST_COLLECTION_ID, new_id)),
+				Instance::<MockRuntime>::get(TEST_COLLECTION_ID, new_id),
 				None,
 				"instance should not exist"
 			);

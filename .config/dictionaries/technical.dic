@@ -76,6 +76,7 @@ buildx
 cachix
 cdylib
 charlie
+chevdor
 chrono
 claimunstake
 clickup
@@ -276,6 +277,7 @@ stdenv
 structopt
 styleguide
 substituters
+subwasm
 subxt
 supertrait
 svgbob

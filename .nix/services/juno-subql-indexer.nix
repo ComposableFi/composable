@@ -1,4 +1,4 @@
-{ pkgs, juno, database }: {
+{ pkgs, juno, database, junoPort }: {
   service = let
     src = pkgs.fetchFromGitHub {
       owner = "hussein-aitlahcen";
@@ -56,10 +56,11 @@
       DB_HOST = database.host;
       DB_PORT = database.port;
     };
+    # NOTE: not found yet cors or how to set cors on express/nextjs
     command = [
       "-f=/app"
       "--db-schema=cosmos"
-      "--network-endpoint=http://${juno}:26657"
+      "--network-endpoint=http://${juno}:${toString junoPort}"
     ];
   };
 }

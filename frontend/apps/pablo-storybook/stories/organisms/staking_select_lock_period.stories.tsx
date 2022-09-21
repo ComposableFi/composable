@@ -23,5 +23,6 @@ const Template: ComponentStory<typeof SelectLockPeriod> = (args) => (
 
 export const Default = Template.bind({});
 Default.args = {
-  multiplier: {},
+  periodItems: [],
+  multiplier: 0,
 };

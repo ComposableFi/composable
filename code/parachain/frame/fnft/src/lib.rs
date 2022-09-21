@@ -166,22 +166,13 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn instance)]
-	pub type Instance<T: Config> = StorageMap<
-		_,
-		Blake2_128Concat,
-		(FinancialNftCollectionIdOf<T>, FinancialNftInstanceIdOf<T>),
-		(AccountIdOf<T>, BTreeMap<Vec<u8>, Vec<u8>>),
-		OptionQuery,
-	>;
-
-	/// Map of NFT collections to all of the instances of that collection.
-	#[pallet::storage]
-	#[pallet::getter(fn collection_instances)]
-	pub type CollectionInstances<T: Config> = StorageMap<
+	pub type Instance<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
 		FinancialNftCollectionIdOf<T>,
-		BTreeSet<FinancialNftInstanceIdOf<T>>,
+		Blake2_128Concat,
+		FinancialNftInstanceIdOf<T>,
+		(AccountIdOf<T>, BTreeMap<Vec<u8>, Vec<u8>>),
 		OptionQuery,
 	>;
 
@@ -215,7 +206,7 @@ pub mod pallet {
 			collection: &Self::CollectionId,
 			instance: &Self::ItemId,
 		) -> Option<AccountIdOf<T>> {
-			Instance::<T>::get((collection, instance)).map(|(owner, _)| owner)
+			Instance::<T>::get(collection, instance).map(|(owner, _)| owner)
 		}
 
 		fn attribute(
@@ -223,7 +214,7 @@ pub mod pallet {
 			instance: &Self::ItemId,
 			key: &[u8],
 		) -> Option<Vec<u8>> {
-			Instance::<T>::get((collection, instance))
+			Instance::<T>::get(collection, instance)
 				.and_then(|(_, instance_attributes)| instance_attributes.get(key).cloned())
 		}
 
@@ -262,14 +253,8 @@ pub mod pallet {
 		}
 
 		/// Returns an iterator of the items of a `collection` in existence.
-		///
-		/// NOTE: iterating this list invokes a storage read per item.
 		fn items(collection: &Self::CollectionId) -> Box<dyn Iterator<Item = Self::ItemId>> {
-			Box::new(
-				CollectionInstances::<T>::get(collection)
-					.into_iter()
-					.flat_map(|i| i.into_iter()),
-			)
+			Box::new(Instance::<T>::iter_key_prefix(collection))
 		}
 
 		/// Returns an iterator of the items of all collections owned by `who`.
@@ -308,7 +293,7 @@ pub mod pallet {
 			instance: &Self::ItemId,
 			destination: &AccountIdOf<T>,
 		) -> DispatchResult {
-			Instance::<T>::try_mutate((collection, instance), |entry| match entry {
+			Instance::<T>::try_mutate(collection, instance, |entry| match entry {
 				Some((owner, _)) => {
 					OwnerInstances::<T>::mutate(owner.clone(), |x| match x {
 						Some(owner_instances) => {
@@ -352,15 +337,11 @@ pub mod pallet {
 			who: &AccountIdOf<T>,
 		) -> DispatchResult {
 			ensure!(
-				Self::instance((collection, instance)).is_none(),
+				Self::instance(collection, instance).is_none(),
 				Error::<T>::InstanceAlreadyExists
 			);
 			ensure!(Collection::<T>::contains_key(collection), Error::<T>::CollectionNotFound);
-			Instance::<T>::insert(
-				(collection, instance),
-				(who, BTreeMap::<Vec<u8>, Vec<u8>>::new()),
-			);
-			CollectionInstances::<T>::mutate(collection, insert_or_init_and_insert(*instance));
+			Instance::<T>::insert(collection, instance, (who, BTreeMap::<Vec<u8>, Vec<u8>>::new()));
 			OwnerInstances::<T>::mutate(who, insert_or_init_and_insert((*collection, *instance)));
 
 			// Set the owner as the proxy for certain types of actions for the financial NFT account
@@ -381,7 +362,7 @@ pub mod pallet {
 			instance: &Self::ItemId,
 			_maybe_check_owner: Option<&AccountIdOf<T>>,
 		) -> DispatchResult {
-			Instance::<T>::try_mutate_exists((collection, instance), |entry| -> DispatchResult {
+			Instance::<T>::try_mutate_exists(collection, instance, |entry| -> DispatchResult {
 				match entry {
 					Some((owner, _)) => {
 						OwnerInstances::<T>::mutate(owner, |x| match x {
@@ -398,14 +379,6 @@ pub mod pallet {
 					None => Err(Error::<T>::InstanceNotFound.into()),
 				}
 			})?;
-			CollectionInstances::<T>::mutate(collection, |x| match x {
-				Some(instances) => {
-					instances.remove(instance);
-				},
-				None => {
-					debug_assert!(false, "unreachable")
-				},
-			});
 
 			// TODO (vim): Remove account proxy ??
 			Self::deposit_event(Event::FinancialNftBurned {
@@ -422,7 +395,7 @@ pub mod pallet {
 			key: &[u8],
 			value: &[u8],
 		) -> DispatchResult {
-			Instance::<T>::try_mutate((collection, instance), |entry| match entry {
+			Instance::<T>::try_mutate(collection, instance, |entry| match entry {
 				Some((_, nft)) => {
 					nft.insert(key.into(), value.into());
 					Ok(())

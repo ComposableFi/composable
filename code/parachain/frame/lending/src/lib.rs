@@ -44,7 +44,6 @@ pub use crate::weights::WeightInfo;
 
 pub mod crypto;
 mod helpers;
-mod impls;
 mod models;
 mod types;
 
@@ -59,30 +58,32 @@ mod benchmarking;
 #[cfg(any(feature = "runtime-benchmarks", test))]
 pub mod currency;
 
-/// Various helpers used in the implementation of [`Lending::repay_borrow`].
-///
-/// [`Lending::repay_borrow`]: composable_traits::lending::Lending::repay_borrow
-mod repay_borrow;
-
 #[frame_support::pallet]
 pub mod pallet {
-	use crate::weights::WeightInfo;
 
-	pub(crate) use crate::types::{CreateInputOf, MarketAssets};
-	pub use crate::{
-		helpers::swap,
-		types::{MarketId, MarketIndex},
-	};
-	use codec::Codec;
+	// ----------------------------------------------------------------------------------------------------
+	//                                      @Imports and Dependencies
+	// ----------------------------------------------------------------------------------------------------
+
+	pub(crate) use crate::types::MarketAssets;
+	pub use crate::types::{MarketId, MarketIdInner};
+	use crate::weights::WeightInfo;
 	use composable_traits::{
 		currency::CurrencyFactory,
 		defi::{DeFiComposableConfig, *},
-		lending::{Lending, MarketConfig, RepayStrategy, UpdateInput},
+		lending::{
+			BorrowAmountOf, CollateralLpAmountOf, CreateInput, Lending, MarketConfig,
+			RepayStrategy, TotalDebtWithInterest, UpdateInput,
+		},
 		liquidation::Liquidation,
 		oracle::Oracle,
 		time::Timestamp,
 		vault::StrategicVault,
 	};
+
+	pub use crate::crypto;
+	use codec::Codec;
+	use composable_support::validation::TryIntoValidated;
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{
@@ -95,27 +96,30 @@ pub mod pallet {
 		PalletId,
 	};
 	use frame_system::{
-		offchain::{AppCrypto, CreateSignedTransaction, SendSignedTransaction, Signer},
+		offchain::{AppCrypto, CreateSignedTransaction},
 		pallet_prelude::*,
 	};
 	use sp_core::crypto::KeyTypeId;
-	use sp_runtime::KeyTypeId as CryptoKeyTypeId;
-	use sp_std::{fmt::Debug, vec, vec::Vec};
+	use sp_runtime::{
+		traits::{AccountIdConversion, Get},
+		DispatchError, KeyTypeId as CryptoKeyTypeId, Percent,
+	};
+	use sp_std::{fmt::Debug, vec::Vec};
 
-	/// Simple type alias around [`MarketConfig`] for this pallet.
-	pub(crate) type MarketConfigOf<T> = MarketConfig<
-		<T as Config>::VaultId,
-		<T as DeFiComposableConfig>::MayBeAssetId,
-		<T as frame_system::Config>::AccountId,
-		<T as Config>::LiquidationStrategyId,
-		<T as frame_system::Config>::BlockNumber,
-	>;
+	// ----------------------------------------------------------------------------------------------------
+	//                                   @Declaration Of The Pallet Type
+	// ----------------------------------------------------------------------------------------------------
 
-	pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"lend");
-	pub const CRYPTO_KEY_TYPE: CryptoKeyTypeId = CryptoKeyTypeId(*b"lend");
+	#[pallet::pallet]
+	#[pallet::generate_store(pub(super) trait Store)]
+	#[pallet::without_storage_info]
+	pub struct Pallet<T>(_);
 
-	pub use crate::crypto;
+	// ----------------------------------------------------------------------------------------------------
+	//                                          @Config Trait
+	// ----------------------------------------------------------------------------------------------------
 
+	// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
 	pub trait Config:
 		CreateSignedTransaction<Call<Self>> + frame_system::Config + DeFiComposableConfig
@@ -222,223 +226,54 @@ pub mod pallet {
 			+ WeightToFee<Balance = Self::Balance>;
 	}
 
-	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
-	#[pallet::without_storage_info]
-	pub struct Pallet<T>(_);
+	// ----------------------------------------------------------------------------------------------------
+	//                                        @Pallet Types Aliases
+	// ----------------------------------------------------------------------------------------------------
 
-	#[pallet::hooks]
-	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
-		fn on_initialize(block_number: T::BlockNumber) -> Weight {
-			let mut weight: Weight = 0;
-			let call_counters = Self::initialize_block(block_number);
-			let one_read = T::DbWeight::get().reads(1);
-			weight += u64::from(call_counters.now) * <T as Config>::WeightInfo::now();
-			weight += u64::from(call_counters.read_markets) * one_read;
-			weight += u64::from(call_counters.accrue_interest) *
-				<T as Config>::WeightInfo::accrue_interest(1);
-			weight += u64::from(call_counters.account_id) * <T as Config>::WeightInfo::account_id();
-			weight += u64::from(call_counters.available_funds) *
-				<T as Config>::WeightInfo::available_funds();
-			weight += u64::from(call_counters.handle_withdrawable) *
-				<T as Config>::WeightInfo::handle_withdrawable();
-			weight += u64::from(call_counters.handle_depositable) *
-				<T as Config>::WeightInfo::handle_depositable();
-			weight += u64::from(call_counters.handle_must_liquidate) *
-				<T as Config>::WeightInfo::handle_must_liquidate();
-			weight
-		}
+	/// Simple type alias around [`MarketConfig`] for this pallet.
+	pub(crate) type MarketConfigOf<T> = MarketConfig<
+		<T as Config>::VaultId,
+		<T as DeFiComposableConfig>::MayBeAssetId,
+		<T as frame_system::Config>::AccountId,
+		<T as Config>::LiquidationStrategyId,
+		<T as frame_system::Config>::BlockNumber,
+	>;
+	/// A convenience wrapper around [`CreateInput`].
+	pub type CreateInputOf<T> = CreateInput<
+		<T as Config>::LiquidationStrategyId,
+		<T as DeFiComposableConfig>::MayBeAssetId,
+		<T as frame_system::Config>::BlockNumber,
+	>;
 
-		fn offchain_worker(_block_number: T::BlockNumber) {
-			log::info!("Off-chain worker running");
-			let signer = Signer::<T, <T as Config>::AuthorityId>::all_accounts();
-			if !signer.can_sign() {
-				log::warn!("No signer");
-				return
-			}
-			for (market_id, account, _) in DebtIndex::<T>::iter() {
-				//Check that it should liquidate before liquidations
-				let should_be_liquidated =
-					match Self::should_liquidate(&market_id, &account) {
-						Ok(status) => status,
-						Err(error) => {
-							log::error!("Liquidation necessity check failed, market_id: {:?}, account: {:?},
-                                        error: {:?}", market_id, account, error);
-							false
-						},
-					};
-				if !should_be_liquidated {
-					continue
-				}
-				let results = signer.send_signed_transaction(|_account| Call::liquidate {
-					market_id,
-					// Unwrapped since we push only one borrower in the vector
-					borrowers: BoundedVec::<_, T::MaxLiquidationBatchSize>::try_from(vec![
-						account.clone()
-					])
-					.expect("This function never panics"),
-				});
+	// ----------------------------------------------------------------------------------------------------
+	//                                      @Pallet Constants
+	// ----------------------------------------------------------------------------------------------------
 
-				for (_acc, res) in &results {
-					match res {
-						Ok(()) => log::info!(
-							"Liquidation succeed, market_id: {:?}, account: {:?}",
-							market_id,
-							account
-						),
-						Err(e) => log::error!(
-							"Liquidation failed, market_id: {:?}, account: {:?}, error: {:?}",
-							market_id,
-							account,
-							e
-						),
-					}
-				}
-			}
-		}
-	}
+	pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"lend");
+	pub const CRYPTO_KEY_TYPE: CryptoKeyTypeId = CryptoKeyTypeId(*b"lend");
 
-	#[pallet::error]
-	pub enum Error<T> {
-		Overflow,
-		Underflow,
-		/// vault provided does not exist
-		VaultNotFound,
-
-		/// Only assets that have a known price are supported.
-		BorrowAssetNotSupportedByOracle,
-		/// Only assets that have a known price are supported.
-		CollateralAssetNotSupportedByOracle,
-
-		AssetPriceNotFound,
-		/// The market could not be found
-		MarketDoesNotExist,
-
-		CollateralDepositFailed,
-		MarketCollateralWasNotDepositedByAccount,
-
-		/// The collateral factor for a market must be more than one.
-		CollateralFactorMustBeMoreThanOne,
-		/// Can't allow amount 0 as collateral.
-		CannotDepositZeroCollateral,
-
-		// REVIEW: Currently unused
-		MarketAndAccountPairNotFound,
-
-		MarketIsClosing,
-		InvalidTimestampOnBorrowRequest,
-		NotEnoughBorrowAsset,
-
-		/// Attempted to withdraw more collateral than the account has in the market.
-		NotEnoughCollateralToWithdraw,
-		/// The market would go under collateralized if the requested amount of collateral was
-		/// withdrawn.
-		WouldGoUnderCollateralized,
-		NotEnoughCollateralToBorrow,
-
-		// TODO: This can probably be removed, it was only used in
-		// ensure!(can_{withdraw/transfer/etc}) checks
-		TransferFailed,
-
-		// REVIEW: Currently unused
-		CannotWithdrawFromProvidedBorrowAccount,
-
-		BorrowRateDoesNotExist,
-
-		// REVIEW: Currently unused
-		BorrowIndexDoesNotExist,
-
-		/// Borrow and repay in the same block (flashloans) are not allowed.
-		BorrowAndRepayInSameBlockIsNotSupported,
-		/// Repaying more than once in the same block is not allowed.
-		CannotRepayMoreThanOnceInSameBlock,
-
-		BorrowDoesNotExist,
-
-		RepayAmountMustBeGreaterThanZero,
-		CannotRepayMoreThanBorrowAmount,
-
-		ExceedLendingCount,
-		LiquidationFailed,
-
-		BorrowerDataCalculationFailed,
-		/// Attempted to update a market owned by someone else.
-		Unauthorized,
-		NotEnoughRent,
-		/// borrow assets should have enough value as per oracle
-		PriceOfInitialBorrowVaultShouldBeGreaterThanZero,
-
-		/// A market with a borrow balance of `0` was attempted to be repaid.
-		CannotRepayZeroBalance,
-		/// Cannot repay the total amount of debt when partially repaying.
-		CannotRepayMoreThanTotalDebt,
-
-		BorrowRentDoesNotExist,
-
-		MaxLiquidationBatchSizeExceeded,
-
-		PriceTooOld,
-
-		// Open market collateral factor increase would allow market manager to liquidate all
-		// positions in any time.
-		CannotIncreaseCollateralFactorOfOpenMarket,
-
-		// If Vault is unbalanced we can not borrow from it, since
-		// we do not know how many asset it needs to balance.
-		CannotBorrowFromMarketWithUnbalancedVault,
-	}
-
-	#[pallet::event]
-	#[pallet::generate_deposit(pub (crate) fn deposit_event)]
-	pub enum Event<T: Config> {
-		/// Event emitted when new lending market is created.
-		MarketCreated {
-			market_id: MarketIndex,
-			vault_id: T::VaultId,
-			manager: T::AccountId,
-			currency_pair: CurrencyPair<T::MayBeAssetId>,
-		},
-		MarketUpdated {
-			market_id: MarketIndex,
-			input: UpdateInput<T::LiquidationStrategyId, <T as frame_system::Config>::BlockNumber>,
-		},
-		/// Event emitted when collateral is deposited.
-		CollateralDeposited { sender: T::AccountId, market_id: MarketIndex, amount: T::Balance },
-		/// Event emitted when collateral is withdrawn.
-		CollateralWithdrawn { sender: T::AccountId, market_id: MarketIndex, amount: T::Balance },
-		/// Event emitted when user borrows from given market.
-		Borrowed { sender: T::AccountId, market_id: MarketIndex, amount: T::Balance },
-		/// Event emitted when user repays borrow of beneficiary in given market.
-		BorrowRepaid {
-			sender: T::AccountId,
-			market_id: MarketIndex,
-			beneficiary: T::AccountId,
-			amount: T::Balance,
-		},
-		/// Event emitted when a liquidation is initiated for a loan.
-		LiquidationInitiated { market_id: MarketIndex, borrowers: Vec<T::AccountId> },
-		/// Event emitted to warn that loan may go under collateralized soon.
-		MayGoUnderCollateralizedSoon { market_id: MarketIndex, account: T::AccountId },
-	}
+	// ----------------------------------------------------------------------------------------------------
+	//                                      @Runtime  Storage
+	// ----------------------------------------------------------------------------------------------------
 
 	/// Lending instances counter
 	#[pallet::storage]
-	#[allow(clippy::disallowed_types)] // MarketIndex implements Default, so ValueQuery is ok here. REVIEW: Should it?
-	pub type LendingCount<T: Config> = StorageValue<_, MarketIndex, ValueQuery>;
+	#[allow(clippy::disallowed_types)] // MarketId implements Default, so ValueQuery is ok here. REVIEW: Should it?
+	pub type LendingCount<T: Config> = StorageValue<_, MarketId, ValueQuery>;
 
 	/// Indexed lending instances. Maps markets to their respective [`MarketConfig`].
 	///
 	/// ```text
-	/// MarketIndex -> MarketConfig
+	/// MarketId -> MarketConfig
 	/// ```
 	#[pallet::storage]
 	pub type Markets<T: Config> =
-		StorageMap<_, Twox64Concat, MarketIndex, MarketConfigOf<T>, OptionQuery>;
+		StorageMap<_, Twox64Concat, MarketId, MarketConfigOf<T>, OptionQuery>;
 
 	/// Maps markets to their corresponding debt token.
 	///
 	/// ```text
-	/// MarketIndex -> debt asset
+	/// MarketId -> debt asset
 	/// ```
 	///
 	/// See [this clickup task](task) for a more in-depth explanation.
@@ -448,7 +283,7 @@ pub mod pallet {
 	pub type DebtTokenForMarket<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
-		MarketIndex,
+		MarketId,
 		<T as DeFiComposableConfig>::MayBeAssetId,
 		OptionQuery,
 	>;
@@ -460,7 +295,7 @@ pub mod pallet {
 	pub type DebtIndex<T: Config> = StorageDoubleMap<
 		_,
 		Twox64Concat,
-		MarketIndex,
+		MarketId,
 		Twox64Concat,
 		T::AccountId,
 		ZeroToOneFixedU128,
@@ -474,7 +309,7 @@ pub mod pallet {
 	pub type BorrowTimestamp<T: Config> = StorageDoubleMap<
 		_,
 		Twox64Concat,
-		MarketIndex,
+		MarketId,
 		Twox64Concat,
 		T::AccountId,
 		Timestamp,
@@ -485,7 +320,7 @@ pub mod pallet {
 	pub type BorrowRent<T: Config> = StorageDoubleMap<
 		_,
 		Twox64Concat,
-		MarketIndex,
+		MarketId,
 		Twox64Concat,
 		T::AccountId,
 		T::Balance,
@@ -496,14 +331,14 @@ pub mod pallet {
 	// REVIEW: ZeroToOneFixedU128?
 	#[pallet::storage]
 	pub type BorrowIndex<T: Config> =
-		StorageMap<_, Twox64Concat, MarketIndex, ZeroToOneFixedU128, OptionQuery>;
+		StorageMap<_, Twox64Concat, MarketId, ZeroToOneFixedU128, OptionQuery>;
 
 	/// (Market, Account) -> Collateral
 	#[pallet::storage]
 	pub type AccountCollateral<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
-		MarketIndex,
+		MarketId,
 		Blake2_128Concat,
 		T::AccountId,
 		T::Balance,
@@ -514,6 +349,122 @@ pub mod pallet {
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)] // LastBlockTimestamp is set on genesis (see below) so it will always be set.
 	pub type LastBlockTimestamp<T: Config> = StorageValue<_, Timestamp, ValueQuery>;
+
+	// ----------------------------------------------------------------------------------------------------
+	//                                       @Runtime Events
+	// ----------------------------------------------------------------------------------------------------
+
+	#[pallet::event]
+	#[pallet::generate_deposit(pub (crate) fn deposit_event)]
+	pub enum Event<T: Config> {
+		/// Event emitted when new lending market is created.
+		MarketCreated {
+			market_id: MarketId,
+			vault_id: T::VaultId,
+			manager: T::AccountId,
+			currency_pair: CurrencyPair<T::MayBeAssetId>,
+		},
+		MarketUpdated {
+			market_id: MarketId,
+			input: UpdateInput<T::LiquidationStrategyId, <T as frame_system::Config>::BlockNumber>,
+		},
+		/// Event emitted when collateral is deposited.
+		CollateralDeposited { sender: T::AccountId, market_id: MarketId, amount: T::Balance },
+		/// Event emitted when collateral is withdrawn.
+		CollateralWithdrawn { sender: T::AccountId, market_id: MarketId, amount: T::Balance },
+		/// Event emitted when user borrows from given market.
+		Borrowed { sender: T::AccountId, market_id: MarketId, amount: T::Balance },
+		/// Event emitted when user repays borrow of beneficiary in given market.
+		BorrowRepaid {
+			sender: T::AccountId,
+			market_id: MarketId,
+			beneficiary: T::AccountId,
+			amount: T::Balance,
+		},
+		/// Event emitted when a liquidation is initiated for a loan.
+		LiquidationInitiated { market_id: MarketId, borrowers: Vec<T::AccountId> },
+		/// Event emitted to warn that loan may go under collateralize soon.
+		MayGoUnderCollateralizedSoon { market_id: MarketId, account: T::AccountId },
+	}
+
+	// ----------------------------------------------------------------------------------------------------
+	//                                       @Runtime  Errors
+	// ----------------------------------------------------------------------------------------------------
+
+	#[pallet::error]
+	pub enum Error<T> {
+		/// The market could not be found.
+		MarketDoesNotExist,
+		/// Account did not deposit any collateral to particular market.
+		AccountCollateralAbsent,
+		/// Invalid collateral factor was provided.
+		/// Collateral factor value must be more than one.
+		InvalidCollateralFactor,
+		// We can not operate since market is going to be closed.
+		MarketIsClosing,
+		// Provided timestamp is not consistent with the latest block timestamp.
+		InvalidTimestampOnBorrowRequest,
+		/// When user try to withdraw money beyond what is available.
+		NotEnoughCollateralToWithdraw,
+		/// The market would go under collateralized if the requested amount of collateral was
+		/// withdrawn.
+		WouldGoUnderCollateralized,
+		/// User has provided not sufficient amount of collateral.
+		NotEnoughCollateralToBorrow,
+		/// Borrow rate can not be calculated.
+		CannotCalculateBorrowRate,
+		/// Borrow and repay in the same block are not allowed.
+		/// Flashloans are not supported by the pallet.
+		BorrowAndRepayInSameBlockIsNotSupported,
+		/// User tried to repay non-existent loan.
+		BorrowDoesNotExist,
+		/// Market can not be created since
+		/// allowed number of markets was exceeded.
+		ExceedLendingCount,
+		/// Borrow limit for particular borrower was not calculated
+		/// due to arithmetic error.
+		BorrowLimitCalculationFailed,
+		/// Attempted to update a market owned by someone else.
+		Unauthorized,
+		/// Market manager has to deposit initial amount of borrow asset into the market account.
+		/// Initial amount is denominated in normalized currency and calculated based on data
+		/// from Oracle. The error is emitted if calculated amount is incorrect.
+		InitialMarketVolumeIncorrect,
+		/// A market with a borrow balance of `0` was attempted to be repaid.
+		CannotRepayZeroBalance,
+		/// Cannot repay more than total amount of debt when partially repaying.
+		CannotRepayMoreThanTotalDebt,
+		/// Account did not pay any rent to particular market.
+		BorrowRentDoesNotExist,
+		/// Block number of provided price is out of allowed tolerance.
+		PriceTooOld,
+		// Collateral factor of operating market can not be increased.
+		CannotIncreaseCollateralFactorOfOpenMarket,
+		// If Vault is unbalanced we can not borrow from it, since
+		// we do not know how many asset one needs to balance the value.
+		CannotBorrowFromMarketWithUnbalancedVault,
+	}
+
+	// ----------------------------------------------------------------------------------------------------
+	//                                           @Hooks
+	// ----------------------------------------------------------------------------------------------------
+
+	#[pallet::hooks]
+	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
+		fn on_initialize(block_number: T::BlockNumber) -> Weight {
+			let call_counters = Self::initialize_block(block_number);
+			call_counters.calculate_weight::<T>()
+		}
+
+		fn offchain_worker(_block_number: T::BlockNumber) {
+			log::info!("Off-chain worker running");
+			Self::do_offchain_worker(_block_number)
+		}
+	}
+
+	// ----------------------------------------------------------------------------------------------------
+	//                                       @Genesis Configuration
+	// ----------------------------------------------------------------------------------------------------
 
 	#[pallet::genesis_config]
 	#[derive(Default)]
@@ -548,6 +499,216 @@ pub mod pallet {
 		}
 	}
 
+	// ----------------------------------------------------------------------------------------------------
+	//                                 @Lending Trait Implementation
+	// ----------------------------------------------------------------------------------------------------
+
+	impl<T: Config> Lending for Pallet<T> {
+		type VaultId = T::VaultId;
+		type MarketId = MarketId;
+		type BlockNumber = T::BlockNumber;
+		type LiquidationStrategyId = <T as Config>::LiquidationStrategyId;
+		type Oracle = T::Oracle;
+		type MaxLiquidationBatchSize = T::MaxLiquidationBatchSize;
+
+		fn create_market(
+			manager: Self::AccountId,
+			input: CreateInputOf<T>,
+			keep_alive: bool,
+		) -> Result<(Self::MarketId, Self::VaultId), DispatchError> {
+			let (market_id, vault_id) = Self::do_create_market(
+				manager.clone(),
+				input.clone().try_into_validated()?,
+				keep_alive,
+			)?;
+			Self::deposit_event(Event::<T>::MarketCreated {
+				market_id,
+				vault_id: vault_id.clone(),
+				manager,
+				currency_pair: input.currency_pair,
+			});
+			Ok((market_id, vault_id))
+		}
+
+		fn update_market(
+			manager: Self::AccountId,
+			market_id: Self::MarketId,
+			input: UpdateInput<Self::LiquidationStrategyId, Self::BlockNumber>,
+		) -> Result<(), DispatchError> {
+			Self::do_update_market(manager, market_id, input.clone().try_into_validated()?)?;
+			Self::deposit_event(Event::<T>::MarketUpdated { market_id, input });
+			Ok(())
+		}
+
+		fn account_id(market_id: &Self::MarketId) -> Self::AccountId {
+			T::PalletId::get().into_sub_account_truncating(market_id)
+		}
+
+		fn deposit_collateral(
+			market_id: &Self::MarketId,
+			account: &Self::AccountId,
+			amount: CollateralLpAmountOf<Self>,
+			keep_alive: bool,
+		) -> Result<(), DispatchError> {
+			Self::do_deposit_collateral(
+				market_id,
+				account,
+				amount.try_into_validated()?,
+				keep_alive,
+			)?;
+			Self::deposit_event(Event::<T>::CollateralDeposited {
+				sender: account.clone(),
+				market_id: *market_id,
+				amount,
+			});
+			Ok(())
+		}
+
+		fn withdraw_collateral(
+			market_id: &Self::MarketId,
+			account: &Self::AccountId,
+			amount: CollateralLpAmountOf<Self>,
+		) -> Result<(), DispatchError> {
+			Self::do_withdraw_collateral(market_id, account, amount.try_into_validated()?)?;
+			Self::deposit_event(Event::<T>::CollateralWithdrawn {
+				sender: account.clone(),
+				market_id: *market_id,
+				amount,
+			});
+			Ok(())
+		}
+
+		fn get_markets_for_borrow(borrow: Self::VaultId) -> Vec<Self::MarketId> {
+			Self::do_get_markets_for_borrow(borrow)
+		}
+
+		fn borrow(
+			market_id: &Self::MarketId,
+			borrowing_account: &Self::AccountId,
+			amount_to_borrow: BorrowAmountOf<Self>,
+		) -> Result<(), DispatchError> {
+			Self::do_borrow(market_id, borrowing_account, amount_to_borrow)?;
+			Self::deposit_event(Event::<T>::Borrowed {
+				sender: borrowing_account.clone(),
+				market_id: *market_id,
+				amount: amount_to_borrow,
+			});
+			Ok(())
+		}
+
+		/// NOTE: Must be called in transaction!
+		fn repay_borrow(
+			market_id: &Self::MarketId,
+			from: &Self::AccountId,
+			beneficiary: &Self::AccountId,
+			total_repay_amount: RepayStrategy<BorrowAmountOf<Self>>,
+			keep_alive: bool,
+		) -> Result<BorrowAmountOf<Self>, DispatchError> {
+			let amount = Self::do_repay_borrow(
+				market_id,
+				from,
+				beneficiary,
+				total_repay_amount,
+				keep_alive,
+			)?;
+			Self::deposit_event(Event::<T>::BorrowRepaid {
+				sender: from.clone(),
+				market_id: *market_id,
+				beneficiary: beneficiary.clone(),
+				amount,
+			});
+			Ok(amount)
+		}
+
+		fn total_borrowed_from_market_excluding_interest(
+			market_id: &Self::MarketId,
+		) -> Result<Self::Balance, DispatchError> {
+			Self::do_total_borrowed_from_market_excluding_interest(market_id)
+		}
+
+		fn total_interest(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError> {
+			Self::do_total_interest(market_id)
+		}
+
+		fn accrue_interest(
+			market_id: &Self::MarketId,
+			now: Timestamp,
+		) -> Result<(), DispatchError> {
+			Self::do_accrue_interest(market_id, now)
+		}
+
+		fn total_available_to_be_borrowed(
+			market_id: &Self::MarketId,
+		) -> Result<Self::Balance, DispatchError> {
+			Self::do_total_available_to_be_borrowed(market_id)
+		}
+
+		fn calculate_utilization_ratio(
+			cash: Self::Balance,
+			borrows: Self::Balance,
+		) -> Result<Percent, DispatchError> {
+			Self::do_calculate_utilization_ratio(cash, borrows)
+		}
+
+		fn total_debt_with_interest(
+			market_id: &Self::MarketId,
+			account: &Self::AccountId,
+		) -> Result<TotalDebtWithInterest<BorrowAmountOf<Self>>, DispatchError> {
+			Self::do_total_debt_with_interest(market_id, account)
+		}
+
+		fn collateral_of_account(
+			market_id: &Self::MarketId,
+			account: &Self::AccountId,
+		) -> Result<CollateralLpAmountOf<Self>, DispatchError> {
+			Self::do_collateral_of_account(market_id, account)
+		}
+
+		fn collateral_required(
+			market_id: &Self::MarketId,
+			borrow_amount: Self::Balance,
+		) -> Result<Self::Balance, DispatchError> {
+			Self::do_collateral_required(market_id, borrow_amount)
+		}
+
+		fn get_borrow_limit(
+			market_id: &Self::MarketId,
+			account: &Self::AccountId,
+		) -> Result<Self::Balance, DispatchError> {
+			Self::do_get_borrow_limit(market_id, account)
+		}
+
+		fn liquidate(
+			liquidator: &<Self as DeFiEngine>::AccountId,
+			market_id: &<Self as Lending>::MarketId,
+			borrowers: BoundedVec<<Self as DeFiEngine>::AccountId, Self::MaxLiquidationBatchSize>,
+		) -> Result<Vec<<Self as DeFiEngine>::AccountId>, DispatchError> {
+			let subjected_borrowers = Self::do_liquidate(liquidator, market_id, borrowers)?;
+			// if at least one borrower was affected then liquidation been initiated
+			if !subjected_borrowers.is_empty() {
+				Self::deposit_event(Event::LiquidationInitiated {
+					market_id: *market_id,
+					borrowers: subjected_borrowers.clone(),
+				});
+			}
+			Ok(subjected_borrowers)
+		}
+	}
+
+	// ----------------------------------------------------------------------------------------------------
+	//                                   @Other Traits Implementations
+	// ----------------------------------------------------------------------------------------------------
+
+	impl<T: Config> DeFiEngine for Pallet<T> {
+		type MayBeAssetId = <T as DeFiComposableConfig>::MayBeAssetId;
+		type Balance = <T as DeFiComposableConfig>::Balance;
+		type AccountId = <T as frame_system::Config>::AccountId;
+	}
+
+	// ----------------------------------------------------------------------------------------------------
+	//                                      @Callable Functions
+	// ----------------------------------------------------------------------------------------------------
+
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Create a new lending market.
@@ -564,15 +725,7 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			let pair = input.currency_pair;
-			let (market_id, vault_id) =
-				<Self as Lending>::create_market(who.clone(), input, keep_alive)?;
-			Self::deposit_event(Event::<T>::MarketCreated {
-				market_id,
-				vault_id,
-				manager: who,
-				currency_pair: pair,
-			});
+			<Self as Lending>::create_market(who, input, keep_alive)?;
 			Ok(().into())
 		}
 
@@ -582,11 +735,12 @@ pub mod pallet {
 		#[transactional]
 		pub fn update_market(
 			origin: OriginFor<T>,
-			market_id: MarketIndex,
+			market_id: MarketId,
 			input: UpdateInput<T::LiquidationStrategyId, <T as frame_system::Config>::BlockNumber>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			<Self as Lending>::update_market(who, market_id, input)
+			<Self as Lending>::update_market(who, market_id, input)?;
+			Ok(().into())
 		}
 
 		/// Deposit collateral to market.
@@ -597,13 +751,12 @@ pub mod pallet {
 		#[transactional]
 		pub fn deposit_collateral(
 			origin: OriginFor<T>,
-			market_id: MarketIndex,
+			market_id: MarketId,
 			amount: T::Balance,
 			keep_alive: bool,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			<Self as Lending>::deposit_collateral(&market_id, &sender, amount, keep_alive)?;
-			Self::deposit_event(Event::<T>::CollateralDeposited { sender, market_id, amount });
 			Ok(().into())
 		}
 
@@ -615,12 +768,11 @@ pub mod pallet {
 		#[transactional]
 		pub fn withdraw_collateral(
 			origin: OriginFor<T>,
-			market_id: MarketIndex,
+			market_id: MarketId,
 			amount: T::Balance,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			<Self as Lending>::withdraw_collateral(&market_id, &sender, amount)?;
-			Self::deposit_event(Event::<T>::CollateralWithdrawn { sender, market_id, amount });
 			Ok(().into())
 		}
 
@@ -632,16 +784,11 @@ pub mod pallet {
 		#[transactional]
 		pub fn borrow(
 			origin: OriginFor<T>,
-			market_id: MarketIndex,
+			market_id: MarketId,
 			amount_to_borrow: T::Balance,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			<Self as Lending>::borrow(&market_id, &sender, amount_to_borrow)?;
-			Self::deposit_event(Event::<T>::Borrowed {
-				sender,
-				market_id,
-				amount: amount_to_borrow,
-			});
 			Ok(().into())
 		}
 
@@ -650,7 +797,7 @@ pub mod pallet {
 		/// # Parameters
 		///
 		/// - `origin` : Sender of this extrinsic. (Also the user who repays beneficiary's borrow.)
-		/// - `market_id` : [`MarketIndex`] of the market being repaid.
+		/// - `market_id` : [`MarketId`] of the market being repaid.
 		/// - `beneficiary` : [`AccountId`] of the account who is in debt to (has borrowed assets
 		///   from) the market. This can be same or different from the `origin`, allowing one
 		///   account to pay off another's debts.
@@ -659,25 +806,13 @@ pub mod pallet {
 		#[transactional]
 		pub fn repay_borrow(
 			origin: OriginFor<T>,
-			market_id: MarketIndex,
+			market_id: MarketId,
 			beneficiary: T::AccountId,
 			amount: RepayStrategy<T::Balance>,
 			keep_alive: bool,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
-			let amount_repaid = <Self as Lending>::repay_borrow(
-				&market_id,
-				&sender,
-				&beneficiary,
-				amount,
-				keep_alive,
-			)?;
-			Self::deposit_event(Event::<T>::BorrowRepaid {
-				sender,
-				market_id,
-				beneficiary,
-				amount: amount_repaid,
-			});
+			<Self as Lending>::repay_borrow(&market_id, &sender, &beneficiary, amount, keep_alive)?;
 			Ok(().into())
 		}
 
@@ -690,25 +825,12 @@ pub mod pallet {
 		#[transactional]
 		pub fn liquidate(
 			origin: OriginFor<T>,
-			market_id: MarketIndex,
+			market_id: MarketId,
 			borrowers: BoundedVec<T::AccountId, T::MaxLiquidationBatchSize>,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin.clone())?;
-			let subjected_borrowers = Self::liquidate_internal(&sender, &market_id, borrowers)?;
-			// if at least one borrower was affected then liquidation been initiated
-			if !subjected_borrowers.is_empty() {
-				Self::deposit_event(Event::LiquidationInitiated {
-					market_id,
-					borrowers: subjected_borrowers,
-				});
-			}
+			<Self as Lending>::liquidate(&sender, &market_id, borrowers)?;
 			Ok(().into())
 		}
-	}
-
-	impl<T: Config> DeFiEngine for Pallet<T> {
-		type MayBeAssetId = <T as DeFiComposableConfig>::MayBeAssetId;
-		type Balance = <T as DeFiComposableConfig>::Balance;
-		type AccountId = <T as frame_system::Config>::AccountId;
 	}
 }

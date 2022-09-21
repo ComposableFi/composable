@@ -7,16 +7,19 @@ import {
   TableRow,
   Typography,
   BoxProps,
-  Button,
 } from "@mui/material";
 import { BaseAsset } from "@/components/Atoms";
-import { useAppSelector } from "@/hooks/store";
 import React from "react";
-import { TableHeader, XPablo } from "@/defi/types";
+import { TableHeader } from "@/defi/types";
 import { BoxWrapper } from "./BoxWrapper";
-import { getToken } from "@/defi/Tokens";
-import moment from "moment-timezone";
-import { Add } from "@mui/icons-material";
+import {
+  DEFAULT_UI_FORMAT_DECIMALS,
+  PBLO_ASSET_ID,
+} from "@/defi/utils";
+import { useAsset } from "@/defi/hooks";
+import { NoPositionsPlaceholder } from "./overview/NoPositionsPlaceholder";
+import { OVERVIEW_ERRORS } from "./overview/errors";
+import { useXTokensList } from "@/defi/hooks/financialNfts";
 
 const tableHeaders: TableHeader[] = [
   {
@@ -42,86 +45,82 @@ const tableHeaders: TableHeader[] = [
 export type XPablosBoxProps = {
   title?: string;
   header?: TableHeader[];
+  financialNftCollectionId: string;
 } & BoxProps;
 
 export const XPablosBox: React.FC<XPablosBoxProps> = ({
   title,
   header,
+  financialNftCollectionId,
   ...boxProps
 }) => {
-  const xPablos = useAppSelector((state) => state.polkadot.yourXPablos);
-  const expired = (expiry: number) => expiry < new Date().getTime();
+  const xPablo = useAsset(PBLO_ASSET_ID);
+  const _xPablos = useXTokensList({
+    stakedAssetId: PBLO_ASSET_ID,
+  });
 
   return (
     <BoxWrapper title={title || "Your xPBLO"} {...boxProps}>
-      <TableContainer>
-        <Table>
-          <TableHead>
-            <TableRow>
-              {(header || tableHeaders).map((th) => (
-                <TableCell key={th.header} align="left">
-                  {th.header}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {xPablos.map(
-              (
-                { tokenId, locked, expiry, multiplier, amount }: XPablo,
-                index: number
-              ) => (
-                <TableRow key={tokenId + index}>
-                  <TableCell align="left">
-                    <BaseAsset
-                      icon={getToken(tokenId).icon}
-                      label={getToken(tokenId).symbol}
-                    />
+      {_xPablos.length <= 0 ? (
+        <NoPositionsPlaceholder text={OVERVIEW_ERRORS.NO_XTOKENS} />
+      ) : null}
+
+      {_xPablos.length > 0 ? (
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                {(header || tableHeaders).map((th) => (
+                  <TableCell key={th.header} align="left">
+                    {th.header}
                   </TableCell>
-                  <TableCell align="left">
-                    <Typography variant="body1">
-                      {locked.toFormat(2)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="left">
-                    <Typography
-                      variant="body1"
-                      color={expired(expiry) ? "error" : undefined}
-                    >
-                      {expired(expiry)
-                        ? "Expired"
-                        : moment(expiry).utc().format("DD MMM YYYY")}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="left">
-                    <Typography variant="body1">
-                      {multiplier.toFixed(2)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="left">
-                    <Typography variant="body1">
-                      {amount.toFormat(2)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="outlined"
-                      sx={{
-                        width: "45px",
-                        height: "45px",
-                        padding: 0,
-                      }}
-                      onClick={() => console.log("Portfolio row clicked")} // TODO [Integration]: Take this to the proper screen
-                    >
-                      <Add />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              )
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {_xPablos.map(
+                ({
+                  lockedPrincipalAsset,
+                  nftId,
+                  expiryDate,
+                  isExpired,
+                  multiplier,
+                  xTokenBalance,
+                }) => (
+                  <TableRow key={nftId}>
+                    <TableCell align="left">
+                      <BaseAsset icon={xPablo?.icon} label={`x-${xPablo?.symbol} ${nftId}`} />
+                    </TableCell>
+                    <TableCell align="left">
+                      <Typography variant="body1">
+                        {lockedPrincipalAsset.toFixed(
+                          DEFAULT_UI_FORMAT_DECIMALS
+                        )}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="left">
+                      <Typography
+                        variant="body1"
+                        color={isExpired ? "error" : undefined}
+                      >
+                        {isExpired ? "Expired" : expiryDate}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="left">
+                      <Typography variant="body1">{multiplier}</Typography>
+                    </TableCell>
+                    <TableCell align="left">
+                      <Typography variant="body1">
+                        {xTokenBalance.toFixed(DEFAULT_UI_FORMAT_DECIMALS)}
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                )
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      ) : null}
     </BoxWrapper>
   );
 };

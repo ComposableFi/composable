@@ -1,5 +1,3 @@
-import { calculateProvidedLiquidity } from "@/defi/utils";
-import { liquidityTransactionsByAddressAndPool } from "@/defi/subsquid/pools/queries";
 import { useEffect, useMemo, useState } from "react";
 import { useSelectedAccount } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
@@ -73,7 +71,7 @@ export const useUserProvidedLiquidityByPool = (
     if (pool && selectedAccount) {
       fetchLiquidityProvided(
         selectedAccount.address,
-        pool.poolId.toString()
+        pool.poolId
       ).then((liqRecord) => {
         setUserProvidedTokenAmountInLiquidityPool(
           pool.poolId,

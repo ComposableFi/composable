@@ -2,12 +2,12 @@ import { SubsquidVestingScheduleEntity } from "@/defi/subsquid/bonds/queries";
 import { BondOffer, VestingSchedule } from "@/defi/types";
 import { BondedOfferVestingState } from "@/store/bond/bond.slice";
 import { ApiPromise } from "@polkadot/api";
-import { u8aToHex, stringToU8a } from "@polkadot/util";
-import BigNumber from "bignumber.js";
+import { u8aToHex } from "@polkadot/util";
 import { PALLET_TYPE_ID } from "../constants";
 import { compareU8a, concatU8a } from "../misc";
 import { fetchVestingSchedule } from "../vesting";
 import { calculateClaimableAt } from "./vestingTime";
+import BigNumber from "bignumber.js";
 
 /**
  * get BondOfferId from VestingSchedule Account
@@ -20,9 +20,9 @@ export function getBondOfferIdByVestingScheduleAccount(
   vestingScheduleSubAccount: Uint8Array
 ): BigNumber {
   let offerId = new BigNumber(-1);
-  // @ts-ignore
+
   const bondedFiPalletId = concatU8a(
-    stringToU8a(PALLET_TYPE_ID),
+    PALLET_TYPE_ID,
     parachainApi.consts.bondedFinance.palletId.toU8a()
   );
 

@@ -1,46 +1,5 @@
-import { TOKENS } from "@/defi/Tokens";
-import { Token, XPablo } from "@/defi/types";
 import { createSlice } from "@reduxjs/toolkit";
-import { bondPoolsData } from "../../utils/bondPoolsData";
 import BigNumber from "bignumber.js";
-
-export type BondPoolRow = {
-  token1: Token;
-  token2?: Token;
-  tvl: BigNumber;
-  roi: BigNumber;
-  rewardsLeft: Array<{
-    value: BigNumber;
-    token: Token;
-  }>;
-  volume: BigNumber;
-  price: BigNumber;
-  pending: BigNumber;
-};
-
-export type YourBondPoolRow = {
-  token1: Token;
-  token2: Token;
-  tvl: BigNumber;
-  apr: BigNumber;
-  bond: Array<{
-    value: BigNumber;
-    token: Token;
-  }>;
-  volume: BigNumber;
-  vesting_term: number;
-  claimable: BigNumber;
-  discount: BigNumber;
-  price: BigNumber;
-  pending: BigNumber;
-};
-
-export type UserStakeInfo = {
-  balance: BigNumber;
-  stakedBalance: BigNumber;
-  nextRewardAmount: BigNumber;
-  roi: number;
-};
 
 export type Overview = {
   totalValueLocked: BigNumber;
@@ -59,12 +18,6 @@ export type StakingOverview = {
   averageLockTime: number,
 };
 
-export type ClaimableRewards = {
-  ksm: BigNumber,
-  pica: BigNumber,
-  pablo: BigNumber,
-};
-
 export type BondChartData = {
   total: BigNumber,
   change: number,
@@ -74,10 +27,6 @@ export type BondChartData = {
 interface PolkadotState {
   overview: Overview;
   stakingOverview: StakingOverview,
-  allBondPools: BondPoolRow[];
-  userStakeInfo: UserStakeInfo;
-  yourXPablos: XPablo[];
-  claimableRewards: ClaimableRewards,
   bondPortfolioChartData: BondChartData,
 }
 
@@ -97,63 +46,17 @@ const initialState: PolkadotState = {
     averageLockMultiplier: 0.8,
     averageLockTime: 265,
   },
-  claimableRewards: {
-    ksm: new BigNumber(25.135),
-    pica: new BigNumber(55265),
-    pablo: new BigNumber(48551),
-  },
-  allBondPools: [],
   bondPortfolioChartData: {
     total: new BigNumber(24546395.04),
     change: 2,
     series: [],
-  },
-  userStakeInfo: {
-    balance: new BigNumber(200),
-    stakedBalance: new BigNumber(0),
-    nextRewardAmount: new BigNumber(0),
-    roi: 8.2,
-  },
-  yourXPablos: [
-    {
-      id: 357,
-      tokenId: "pablo",
-      locked: new BigNumber(34567),
-      expiry: 1645345320000,
-      multiplier: 1,
-      amount: new BigNumber(23309),
-      withdrawableAmount: new BigNumber(23309),
-    },
-    {
-      id: 415,
-      tokenId: "pablo",
-      locked: new BigNumber(3435),
-      expiry: 1656547200000,
-      multiplier: 1,
-      amount: new BigNumber(2330),
-      withdrawableAmount: new BigNumber(2330),
-    }
-  ]
+  }
 };
 
 export const polkadotSlice = createSlice({
   name: "PolkaDot",
   initialState,
-  reducers: {
-    addNextDataBondPools: (state, action) => {
-      state.allBondPools = [
-        ...state.allBondPools,
-        ...bondPoolsData.slice(
-          action.payload.startIndex,
-          action.payload.startIndex + 4
-        ),
-      ];
-    },
-  },
+  reducers: {},
 });
-
-export const {
-  addNextDataBondPools,
-} = polkadotSlice.actions;
 
 export default polkadotSlice.reducer;

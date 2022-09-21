@@ -176,9 +176,9 @@
                 customFilter = name: type:
                   !((isBlacklisted name type) || (isImageFile name type)
                     || (isPlantUmlFile name type)
-                    # assumption that nix is final builder, 
+                    # assumption that nix is final builder,
                     # so there would no be sandwich like  .*.nix <- build.rs <- *.nix
-                    # and if *.nix changed, nix itself will detect only relevant cache invalidations 
+                    # and if *.nix changed, nix itself will detect only relevant cache invalidations
                     || (isNixFile name type));
               in nix-gitignore.gitignoreFilterPure customFilter [ ./.gitignore ]
               ./code;
@@ -243,8 +243,8 @@
               installPhase = ''
                 mkdir -p $out/lib
                 ${wasm-optimizer}/bin/wasm-optimizer \
-                  --input ${runtime}/lib/${name}_runtime.wasm \
-                  --output $out/lib/runtime.optimized.wasm
+                --input ${runtime}/lib/${name}_runtime.wasm \
+                --output $out/lib/runtime.optimized.wasm
               '';
             };
 
@@ -253,7 +253,7 @@
               inherit system;
             };
 
-          # we reached limit of 125 for layers and build image cannot do non root ops, so split it 
+          # we reached limit of 125 for layers and build image cannot do non root ops, so split it
           devcontainer-root-image = pkgs.dockerTools.buildImage {
             name = "devcontainer-root-image";
             fromImage = devcontainer-base-image;
@@ -302,6 +302,19 @@
                 mkdir -p $out/bin
                 cp target/release/composable $out/bin/composable-node
               '';
+              meta = { mainProgram = "composable-node"; };
+            });
+
+          composable-node-release = crane-nightly.buildPackage (common-attrs
+            // {
+              pnameSuffix = "-node-release";
+              cargoArtifacts = common-deps;
+              cargoBuildCommand = "cargo build --release --package composable";
+              installPhase = ''
+                mkdir -p $out/bin
+                cp target/release/composable $out/bin/composable-node
+              '';
+              meta = { mainProgram = "composable-node"; };
             });
 
           composable-bench-node = crane-nightly.cargoBuild (common-bench-attrs
@@ -318,19 +331,20 @@
                 mkdir -p $out/bin
                 cp target/release/composable $out/bin/composable-node
               '';
+              meta = { mainProgram = "composable-node"; };
             });
 
           run-with-benchmarks = chain:
             writeShellScriptBin "run-benchmarks-once" ''
               ${composable-bench-node}/bin/composable-node benchmark pallet \
-                --chain="${chain}" \
-                --execution=wasm \
-                --wasm-execution=compiled \
-                --wasm-instantiation-strategy=legacy-instance-reuse \
-                --pallet="*" \
-                --extrinsic="*" \
-                --steps=1 \
-                --repeat=1
+              --chain="${chain}" \
+              --execution=wasm \
+              --wasm-execution=compiled \
+              --wasm-instantiation-strategy=legacy-instance-reuse \
+              --pallet="*" \
+              --extrinsic="*" \
+              --steps=1 \
+              --repeat=1
             '';
           docs-renders = [ mdbook plantuml graphviz pandoc ];
 
@@ -345,7 +359,7 @@
               yarnBuildMore =
                 "yarn export --filter=pablo --filter=picasso --filter=!picasso-storybook --filter=!pablo-storybook";
 
-              # TODO: make these configurable              
+              # TODO: make these configurable
               preBuild = ''
                 export SUBSQUID_URL="${subsquidEndpoint}";
 
@@ -376,15 +390,59 @@
               mkdir -p $out/bin
               cp target/release/simnode-tests $out/bin/simnode-tests
             '';
+            meta = { mainProgram = "simnode-tests"; };
           });
 
           run-simnode-tests = chain:
             writeShellScriptBin "run-simnode-tests-${chain}" ''
               ${simnode-tests}/bin/simnode-tests --chain=${chain} \
-                --base-path=/tmp/db/var/lib/composable-data/ \
-                --pruning=archive \
-                --execution=wasm
+              --base-path=/tmp/db/var/lib/composable-data/ \
+              --pruning=archive \
+              --execution=wasm
             '';
+
+          subwasm = let
+            src = fetchFromGitHub {
+              owner = "chevdor";
+              repo = "subwasm";
+              rev = "4d4d789326d65fc23820f70916bd6bd6f499bd0a";
+              hash = "sha256-+/yqA6lP/5qyMxZupmaYBCRtbw2MFMBSgkmnxg261P8=";
+            };
+          in crane-stable.buildPackage {
+            name = "subwasm";
+            cargoArtifacts = crane-stable.buildDepsOnly {
+              inherit src;
+              doCheck = false;
+              cargoTestCommand = "";
+            };
+            inherit src;
+            doCheck = false;
+            cargoTestCommand = "";
+            meta = { mainProgram = "subwasm"; };
+          };
+
+          subwasm-release-body = let
+            subwasm-call = runtime:
+              builtins.readFile (pkgs.runCommand "subwasm-info" { }
+                "${subwasm}/bin/subwasm info ${runtime}/lib/runtime.optimized.wasm | tail -n+2 > $out");
+          in pkgs.writeTextFile {
+            name = "release.txt";
+            text = ''
+              ## Runtimes
+              ### Dali
+              ```
+              ${subwasm-call dali-runtime}
+              ```
+              ### Picasso
+              ```
+              ${subwasm-call picasso-runtime}
+              ```
+              ### Composable
+              ```
+              ${subwasm-call composable-runtime}
+              ```
+            '';
+          };
 
         in rec {
           packages = rec {
@@ -398,9 +456,12 @@
             inherit picasso-bench-runtime;
             inherit composable-bench-runtime;
             inherit composable-node;
+            inherit composable-node-release;
             inherit composable-bench-node;
             inherit rust-nightly;
             inherit simnode-tests;
+            inherit subwasm;
+            inherit subwasm-release-body;
 
             subsquid-processor = let
               processor = pkgs.buildNpmPackage {
@@ -458,6 +519,7 @@
               pnameSuffix = "-price-feed";
               cargoArtifacts = common-deps;
               cargoBuildCommand = "cargo build --release -p price-feed";
+              meta = { mainProgram = "price-feed"; };
             });
 
             fmt = pkgs.writeShellApplication {
@@ -472,21 +534,21 @@
               ];
 
               text = ''
-                  # .nix 
+                  # .nix
                 	find . -name "*.nix" -type f -print0 | xargs -0 nixfmt;
 
                   # .toml
                   taplo fmt
-                  
+
                   # .rs
                 	find . -path ./code/target -prune -o -name "*.rs" -type f -print0 | xargs -0 rustfmt --edition 2021;
-                  
-                  # .js .ts .tsx 
+
+                  # .js .ts .tsx
                   prettier \
                     --config="./code/integration-tests/runtime-tests/.prettierrc" \
                     --write \
                     --ignore-path="./code/integration-tests/runtime-tests/.prettierignore" \
-                    ./code/integration-tests/runtime-tests/                  
+                    ./code/integration-tests/runtime-tests/
               '';
             };
 
@@ -495,7 +557,7 @@
                 echo "Wiping all docker containers, images, and volumes";
                 docker stop $(docker ps -q)
                 docker system prune -f
-                docker rmi -f $(docker images -a -q)    
+                docker rmi -f $(docker images -a -q)
                 docker volume prune -f
               '';
 
@@ -539,6 +601,7 @@
               LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
               PROTOC = "${protobuf}/bin/protoc";
               ROCKSDB_LIB_DIR = "${rocksdb}/lib";
+              meta = { mainProgram = "polkadot"; };
             };
 
             polkadot-launch =
@@ -630,7 +693,7 @@
               # to run root in buildImage needs qemu/kvm shell
               # non root extraCommands (in both methods) do not have permissions
               # not clear if using ENV or replace ENTRYPOINT will allow to setup
-              # from nixos docker.nix - they build derivation which outputs into $out/etc/nix.conf 
+              # from nixos docker.nix - they build derivation which outputs into $out/etc/nix.conf
               # (and any other stuff like /etc/group)
               fakeRootCommands = ''
                 mkdir --parents /etc/nix
@@ -638,10 +701,10 @@
                 sandbox = relaxed
                 experimental-features = nix-command flakes
                 narinfo-cache-negative-ttl = 30
-                substituters = https://cache.nixos.org https://composable-community.cachix.org 
+                substituters = https://cache.nixos.org https://composable-community.cachix.org
                 # TODO: move it separate file with flow of `cachix -> get keys -> output -> fail derivation if hash != key changed
                 # // cspell: disable-next-line
-                trusted-public-keys = cache.nixos.org-1:6nchdd59x431o0gwypbmraurkbj16zpmqfgspcdshjy= composable-community.cachix.org-1:GG4xJNpXJ+J97I8EyJ4qI5tRTAJ4i7h+NK2Z32I8sK8= 
+                trusted-public-keys = cache.nixos.org-1:6nchdd59x431o0gwypbmraurkbj16zpmqfgspcdshjy= composable-community.cachix.org-1:GG4xJNpXJ+J97I8EyJ4qI5tRTAJ4i7h+NK2Z32I8sK8=
                 EOF
               '';
               config = {
@@ -736,11 +799,11 @@
               installPhase = ''
                 mkdir $out
                 prettier \
-                  --config="${runtime-tests}/.prettierrc" \
-                  --ignore-path="${runtime-tests}/.prettierignore" \
-                  --check \
-                  --loglevel=debug \
-                  ${runtime-tests}
+                --config="${runtime-tests}/.prettierrc" \
+                --ignore-path="${runtime-tests}/.prettierignore" \
+                --check \
+                --loglevel=debug \
+                ${runtime-tests}
               '';
             };
 
@@ -752,7 +815,7 @@
               installPhase = ''
                 mkdir $out
                 nixfmt --version
-                # note, really can just src with filer by .nix, no need all files 
+                # note, really can just src with filer by .nix, no need all files
                 SRC=$(find ${all-directories-and-files} -name "*.nix" -type f | tr "\n" " ")
                 echo $SRC
                 nixfmt --check $SRC
@@ -802,6 +865,28 @@
                 echo "cspell version: $(cspell --version)"
                 cd ${all-directories-and-files}
                 cspell lint --config cspell.yaml --no-progress "**"
+              '';
+            };
+
+            mdbook-check = stdenv.mkDerivation {
+              name = "mdbook-check";
+              dontUnpack = true;
+              buildInputs = [ all-directories-and-files mdbook ];
+              installPhase = ''
+                mkdir -p $out/book
+                chmod 777 $out/book
+                cd ${all-directories-and-files}/book
+                mdbook --version
+
+                # `mdbook test` is most strict than `mdbook build`,
+                # it catches code blocks without a language tag,
+                # but it doesn't work with nix.
+                TMPDIR=$out/book mdbook build --dest-dir=$out/book 2>&1 | tee $out/log
+                if [ -z "$(cat $out/log | grep ERROR)" ]; then
+                  true
+                else
+                  exit 1
+                fi
               '';
             };
 
@@ -884,7 +969,7 @@
             });
 
             developers-minimal = mkShell (common-attrs // {
-              buildInputs = with packages; [ rust-nightly ];
+              buildInputs = with packages; [ rust-nightly subwasm ];
               NIX_PATH = "nixpkgs=${pkgs.path}";
             });
 
@@ -1061,7 +1146,7 @@
         mk-docker-in-docker = pkgs: [
           # TODO: this home works well in VS Devcontainer launcher as it injects low-level Dockerd
           # For manual runs need tuning to setup it (need to mount docker links to root and do they executable)
-          # INFO[2022-09-06T13:14:43.437764897Z] Starting up                                            
+          # INFO[2022-09-06T13:14:43.437764897Z] Starting up
           # dockerd needs to be started with root privileges. To run dockerd in rootless mode as an unprivileged user, see https://docs.docker.com/go/rootless/ dockerd-rootless-setuptool.sh install
           pkgs.docker
           pkgs.docker-buildx
@@ -1074,7 +1159,7 @@
         ];
       in {
 
-        # minimal means we do not build in composable devnets and tooling, but allow to build or nix these 
+        # minimal means we do not build in composable devnets and tooling, but allow to build or nix these
         vscode-minimal.x86_64-linux =
           let pkgs = nixpkgs.legacyPackages.x86_64-linux;
           in with pkgs;

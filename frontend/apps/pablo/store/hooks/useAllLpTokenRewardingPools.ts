@@ -1,7 +1,8 @@
+import { ConstantProductPool, StableSwapPool } from "@/defi/types";
 import useStore from "@/store/useStore";
 import { useMemo } from "react";
 
-export const useAllLpTokenRewardingPools = (): any[] => {
+export const useAllLpTokenRewardingPools = (): Array<StableSwapPool | ConstantProductPool> => {
   const {
     pools: { stableSwapPools, constantProductPools },
   } = useStore();
