@@ -45,7 +45,7 @@ To find even more information, stay up to date, and communicate with other users
 and our team, make sure to follow/join us at:
 
 [Twitter](https://twitter.com/ComposableFin) |[Telegram](https://t.me/composablefinance) | 
-[Discord](https://discord.com/invite/pFZn2GCn65) |[Website](https://www.composable.finance/) | 
+[Discord](http://discord.gg/composable) |[Website](https://www.composable.finance/) | 
 [Medium](https://composablefi.medium.com/about) |[GitHub](https://github.com/ComposableFi) | 
 [LinkedIn](https://www.linkedin.com/company/composable-finance/) |
 [Youtube](https://www.youtube.com/channel/UCXlKp8ev-8zOpJu0TNcc0uA)

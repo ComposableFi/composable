@@ -63,12 +63,12 @@ There are three separate pallet tracks for our grants: primitive, core and appli
 ### The Cross-Chain Applications Program:
 
 This program invites developers to leverage our 
-[Composable software development kit (SDK)](../developer-guides/composable-sdk.md) 
+[Composable software development kit (SDK)](https://sdk-docs.composable.finance/sdk/introduction) 
 to use our technology and build interoperable applications native to the Composable ecosystem. 
 Currently, the Composable SDK comprises a set of tools such as Mosaic, 
 which is stacked in a layer on top of the XCVM and functions as an early iteration of the XCVM.
 
-Composable Finance has built this [SDK](../developer-guides/composable-sdk.md) 
+Composable Finance has built this [SDK](https://sdk-docs.composable.finance/sdk/introduction) 
 to facilitate development across various layers and chains. 
 Given this broad scope of possibilities, our cross-layer grant recipients can have a diverse set of interests, 
 for example:
