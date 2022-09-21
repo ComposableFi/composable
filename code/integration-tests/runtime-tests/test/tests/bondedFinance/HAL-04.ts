@@ -13,13 +13,12 @@ import { txBondedFinanceOfferSuccessTest } from "@composabletests/tests/bondedFi
  * HAL-04 is about creation a bonded finance offer,
  * with the same asset for staking & reward.
  */
-describe.only("tx.bondedFinance Tests", function() {
-  if (!testConfiguration.enabledTests.HAL04)
-    return;
+describe("1. Bonded Finance Audit - HAL-04 Tests", function () {
+  if (!testConfiguration.enabledTests.HAL04) return;
   let api: ApiPromise;
   let walletAlice: KeyringPair;
 
-  before("Setting up tests", async function() {
+  before("Setting up tests", async function () {
     this.timeout(60 * 1000);
     const { newClient, newKeyring } = await getNewConnection();
     api = newClient;
@@ -27,24 +26,24 @@ describe.only("tx.bondedFinance Tests", function() {
     walletAlice = devWalletAlice;
   });
 
-  before("mint assets into the wallet", async function() {
+  before("mint assets into the wallet", async function () {
     this.timeout(2 * 60 * 1000);
     await mintAssetsToWallet(api, walletAlice, walletAlice, [4]);
   });
 
-  after("Closing the connection", async function() {
+  after("Closing the connection", async function () {
     await api.disconnect();
   });
 
   /**
    * bondedFinance.offer(...) Success Tests
    */
-  describe("HAL-05 Test Cases", function() {
+  describe("HAL-04 Test Cases", function () {
     if (!testConfiguration.enabledTests.offer_bond__success.enabled) return;
     // Timeout set to 2 minutes
     this.timeout(2 * 60 * 1000);
 
-    it("Should not be able to create offer with same asset", async function() {
+    it("Should not be able to create offer with same asset", async function () {
       const requestParameters = {
         beneficiary: walletAlice.publicKey,
         asset: api.createType("u128", 4),
