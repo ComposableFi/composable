@@ -47,6 +47,8 @@ const Item: React.FC<ItemProps> = ({ value, children, ...gridProps }) => {
   );
 };
 
+const DonutChartLabels = ["My Position", "Total Value Locked"];
+
 export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
   poolId,
   ...boxProps
@@ -64,10 +66,6 @@ export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
   );
 
   const liquidityProvided = useUserProvidedLiquidityByPool(poolId);
-
-  const donutChartData = useAppSelector(
-    (state) => state.pool.selectedPoolLiquidityChartData
-  );
 
   const handleAddLiquidity = () => {
     if (poolDetails.baseAsset && poolDetails.quoteAsset && poolDetails.pool) {
@@ -144,7 +142,7 @@ export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
                 alpha(theme.palette.common.white, theme.custom.opacity.main),
                 theme.palette.primary.main,
               ]}
-              labels={donutChartData.labels}
+              labels={DonutChartLabels}
               height={"249px"}
             />
           </Grid>

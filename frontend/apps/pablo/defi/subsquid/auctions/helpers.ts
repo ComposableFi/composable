@@ -1,10 +1,12 @@
 import { LiquidityBootstrappingPool } from "@/defi/types";
 import { LiquidityBootstrappingPoolTrade } from "@/defi/types/auctions";
 import { fromChainUnits } from "@/defi/utils";
-import { transformAuctionsTransaction } from "@/defi/utils/pablo/auctions";
+import { transformPabloTransaction } from "@/defi/utils/pablo/auctions";
 import { PoolTradeHistory } from "@/store/auctions/auctions.types";
 import BigNumber from "bignumber.js";
-import { queryPoolTransactionsByType } from "../pools/queries";
+import {
+  queryPabloTransactions
+} from "../pools/queries";
 import { queryAuctionStats } from "./queries";
 
 export async function fetchInitialBalance(
@@ -14,7 +16,7 @@ export async function fetchInitialBalance(
   let quoteBalance = new BigNumber(0);
 
   try {
-    const queryResponse = await queryPoolTransactionsByType(
+    const queryResponse = await queryPabloTransactions(
       pool.poolId,
       "ADD_LIQUIDITY"
     );
@@ -31,7 +33,7 @@ export async function fetchInitialBalance(
       );
 
     const addLiqTxs: PoolTradeHistory[] = pabloTransactions.map((t: any) =>
-      transformAuctionsTransaction(t, pool.pair.quote)
+      transformPabloTransaction(t, pool.pair.quote)
     );
 
     quoteBalance = addLiqTxs.reduce((agg, i) => {
@@ -56,7 +58,7 @@ export async function fetchAuctionTrades(
   let trades: LiquidityBootstrappingPoolTrade[] = [];
 
   try {
-    const queryResponse = await queryPoolTransactionsByType(
+    const queryResponse = await queryPabloTransactions(
       pool.poolId,
       "SWAP"
     );
@@ -75,7 +77,7 @@ export async function fetchAuctionTrades(
 
     let poolQuote = pool.pair.quote;
     trades = pabloTransactions.map((i: any) =>
-      transformAuctionsTransaction(i, poolQuote)
+    transformPabloTransaction(i, poolQuote)
     );
   } catch (err) {
     console.error(err);

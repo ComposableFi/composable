@@ -1,4 +1,4 @@
-import { APOLLO_UPDATE_BLOCKS, DEFAULT_NETWORK_ID, fetchApolloPriceByAssetIds } from "@/defi/utils";
+import { APOLLO_UPDATE_BLOCKS, DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { useOnChainAssetIds } from "@/store/hooks/useOnChainAssetsIds";
 import { useParachainApi } from "substrate-react";
 import { useCallback, useEffect, useRef } from "react";
@@ -9,20 +9,19 @@ import _ from "lodash";
 import useBlockNumber from "@/defi/hooks/useBlockNumber";
 
 const Updater = () => {
-  const { updateApolloPrice } = useStore();
+  const { updateApolloPrice, supportedAssets } = useStore();
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
-  const onChainAssetIds = useOnChainAssetIds();
 
   const lastUpdatedBlocked = useRef<BigNumber>(new BigNumber(-1));
 
   const updateAssetPrices = useCallback(async () => {
     if (parachainApi) {
-      Array.from(onChainAssetIds).map(onChainAssetId => {
-        fetchApolloPriceByAssetId(parachainApi, onChainAssetId).then(price => {
-          if (onChainAssetId === "201") {
-            updateApolloPrice(onChainAssetId, "1.5");
+      supportedAssets.map(onChainAssetId => {
+        fetchApolloPriceByAssetId(parachainApi, onChainAssetId.network[DEFAULT_NETWORK_ID]).then(price => {
+          if (onChainAssetId.network[DEFAULT_NETWORK_ID] === "5") {
+            updateApolloPrice(onChainAssetId.network[DEFAULT_NETWORK_ID], "1.5");
           } else {
-            updateApolloPrice(onChainAssetId, "1");
+            updateApolloPrice(onChainAssetId.network[DEFAULT_NETWORK_ID], "1");
           }
         })
       })
@@ -31,7 +30,7 @@ const Updater = () => {
 
       // })
     }
-  }, [onChainAssetIds, parachainApi, updateApolloPrice])
+  }, [parachainApi, updateApolloPrice, supportedAssets]);
 
   const currentBlockNumber = useBlockNumber(DEFAULT_NETWORK_ID);
 

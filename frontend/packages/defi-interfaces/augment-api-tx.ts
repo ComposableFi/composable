@@ -6,10 +6,10 @@ import type { CommonMosaicRemoteAssetId, ComposableSupportEthereumAddress, Compo
 import type { PalletPabloPoolInitConfiguration } from './pablo';
 import type { ApiTypes } from '@polkadot/api-base/types';
 import type { Data } from '@polkadot/types';
-import type { Bytes, Compact, Null, Option, U8aFixed, Vec, WrapperKeepOpaque, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
+import type { Bytes, Compact, Null, Option, U8aFixed, Vec, WrapperKeepOpaque, bool, u128, u16, u32, u64, u8, BTreeMap } from '@polkadot/types-codec';
 import type { AnyNumber, ITuple } from '@polkadot/types-codec/types';
 import type { AccountId32, Call, H256, MultiAddress, Perbill, Percent, Permill } from '@polkadot/types/interfaces/runtime';
-import type { PalletMultisigTimepoint, SpRuntimeHeader, XcmV1MultiLocation, XcmV2WeightLimit, XcmVersionedMultiAssets, XcmVersionedMultiLocation, XcmVersionedXcm } from '@polkadot/types/lookup';
+import type { ComposableTraitsStakingRewardUpdate, PalletMultisigTimepoint, SpRuntimeHeader, XcmV1MultiLocation, XcmV2WeightLimit, XcmVersionedMultiAssets, XcmVersionedMultiLocation, XcmVersionedXcm } from '@polkadot/types/lookup';
 
 declare module '@polkadot/api-base/types/submittable' {
   export interface AugmentedSubmittables<ApiType extends ApiTypes> {
@@ -2359,6 +2359,18 @@ declare module '@polkadot/api-base/types/submittable' {
     };
     stakingRewards: {
       /**
+       * Add funds to the reward pool's rewards pot for the specified asset.
+       * 
+       * Emits `RewardsPotIncreased` when successful.
+       **/
+      addToRewardsPot: AugmentedSubmittable<(poolId: u128 | AnyNumber | Uint8Array, assetId: u128 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u128, u128, bool]>;
+      /**
+       * Claim a current reward for some position.
+       * 
+       * Emits `Claimed` event when successful.
+       **/
+      claim: AugmentedSubmittable<(fnftCollectionId: u128 | AnyNumber | Uint8Array, fnftInstanceId: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u64]>;
+      /**
        * Create a new reward pool based on the config.
        * 
        * Emits `RewardPoolCreated` event when successful.
@@ -2369,14 +2381,26 @@ declare module '@polkadot/api-base/types/submittable' {
        * 
        * Emits `StakeExtended` event when successful.
        **/
-      extend: AugmentedSubmittable<(position: u128 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u128]>;
-      split: AugmentedSubmittable<(position: u128 | AnyNumber | Uint8Array, ratio: Permill | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, Permill]>;
+      extend: AugmentedSubmittable<(fnftCollectionId: u128 | AnyNumber | Uint8Array, fnftInstanceId: u64 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u64, u128]>;
+      split: AugmentedSubmittable<(fnftCollectionId: u128 | AnyNumber | Uint8Array, fnftInstanceId: u64 | AnyNumber | Uint8Array, ratio: Permill | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u64, Permill]>;
       /**
        * Create a new stake.
        * 
        * Emits `Staked` event when successful.
        **/
-      stake: AugmentedSubmittable<(poolId: u16 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array, durationPreset: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u16, u128, u64]>;
+      stake: AugmentedSubmittable<(poolId: u128 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array, durationPreset: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u128, u64]>;
+      /**
+       * Remove a stake.
+       * 
+       * Emits `Unstaked` event when successful.
+       **/
+      unstake: AugmentedSubmittable<(fnftCollectionId: u128 | AnyNumber | Uint8Array, fnftInstanceId: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u64]>;
+      /**
+       * Updates the reward pool configuration.
+       * 
+       * Emits `RewardPoolUpdated` when successful.
+       **/
+      updateRewardsPool: AugmentedSubmittable<(poolId: u128 | AnyNumber | Uint8Array, rewardUpdates: BTreeMap<u128, ComposableTraitsStakingRewardUpdate>) => SubmittableExtrinsic<ApiType>, [u128, BTreeMap<u128, ComposableTraitsStakingRewardUpdate>]>;
       /**
        * Generic tx
        **/

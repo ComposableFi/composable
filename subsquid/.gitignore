@@ -7,7 +7,7 @@
 # IDE files
 /.idea
 
-
+*.env
 # Custom additions
 src/**/**.js
 src/**/**.js.map

@@ -1,6 +1,6 @@
 import { Box, BoxProps, Grid } from "@mui/material";
 import { TabItem, TabPanel, Tabs } from "@/components";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PoolTVLChart } from "./PoolTVLChart";
 import { PoolStatistics } from "./PoolStatistics";
 import { PoolLiquidityPanel } from "./PoolLiquidityPanel";

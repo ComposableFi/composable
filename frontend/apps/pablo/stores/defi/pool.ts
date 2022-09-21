@@ -6,15 +6,10 @@ interface Pool {
   currentSupply: {
     confirmed: boolean;
   },
-  selectedPoolLiquidityChartData: PoolLiquidityChartData,
 }
 
 const initialState: Pool = {
   currentSupply: initSupplyData,
-  selectedPoolLiquidityChartData: {
-    series: [80, 20],
-    labels: ["My Position", "Total Value Locked"],
-  }
 };
 
 export const poolSlice = createSlice({
