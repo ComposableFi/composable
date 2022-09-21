@@ -25,7 +25,7 @@ a validator could see a new price update before it’s executed through the orac
 which could allow them to include a transaction to buy or sell an asset based on the expected price (frontrunning). 
 With the use of substrate blockchain on_initialize hook in Apollo, the order of the Oracle price updates is guaranteed, 
 i.e when a block initializes, the price of an asset is guaranteed a slot into the block. 
-Apollo also implements and algorithm that instead of trusting one oracle for the price, 
+Apollo also implements an algorithm that instead of trusting one oracle for the price, 
 it takes the median price from different oracles which significantly limits the ability of oracle manipulation.
 
 ---
