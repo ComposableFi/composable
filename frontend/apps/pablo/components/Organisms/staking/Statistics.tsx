@@ -11,6 +11,8 @@ import {
 import { GridProps } from "@mui/system";
 import { BoxWrapper } from "../BoxWrapper";
 import { TokenValue } from "@/components/Molecules";
+import { useStakingRewardsSlice } from "@/store/stakingRewards/stakingRewards.slice";
+import BigNumber from "bignumber.js";
 
 const threeColumnPageSize = {
   xs: 12,
@@ -64,14 +66,19 @@ export const StakingStatistics: React.FC<GridProps> = ({ ...gridProps }) => {
   const theme = useTheme();
 
   const {
+    pabloStaking
+  } = useStakingRewardsSlice();
+  const {
     totalPBLOLocked,
+    averageLockMultiplier,
+    averageLockTime
+  } = pabloStaking;
+
+  const {
     totalChaosApy,
     totalKsmApy,
     totalPicaApy,
     totalPabloApy,
-    totalChaosMinted,
-    averageLockMultiplier,
-    averageLockTime,
   } = useAppSelector((state) => state.polkadot.stakingOverview);
 
   const totalApyTooltip = (
@@ -115,8 +122,8 @@ export const StakingStatistics: React.FC<GridProps> = ({ ...gridProps }) => {
       <Grid item {...threeColumnPageSize}>
         <Item
           label="Total CHAOS minted"
-          value={totalChaosMinted.toFormat()}
-          TooltipProps={{ title: "Total CHAOS Minted" }}
+          value={new BigNumber(0).toFormat()}
+          TooltipProps={{title: "Total CHAOS Minted"}}
         />
       </Grid>
       <Grid item {...twoColumnPageSize}>

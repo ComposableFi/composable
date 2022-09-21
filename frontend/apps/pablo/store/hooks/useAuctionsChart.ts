@@ -3,6 +3,7 @@ import { fetchAuctionChartSeries } from "@/defi/utils/pablo/auctions";
 import { useEffect, useState } from "react";
 import { useParachainApi } from "substrate-react";
 import { LiquidityBootstrappingPool } from "@/defi/types";
+import { queryPabloTransactions } from "@/defi/subsquid/pools/queries";
 
 export function useAuctionsChart(
   pool: LiquidityBootstrappingPool | undefined

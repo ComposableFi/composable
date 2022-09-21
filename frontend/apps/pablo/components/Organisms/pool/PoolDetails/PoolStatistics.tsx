@@ -11,7 +11,10 @@ import { PoolDetailsProps } from "./index";
 import { BaseAsset } from "@/components/Atoms";
 import { useUSDPriceByAssetId } from "@/store/assets/hooks";
 import millify from "millify";
-import { calculatePoolTotalValueLocked } from "@/defi/utils";
+import { calculatePoolTotalValueLocked, DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils";
+import { useStakingRewardsPoolApy } from "@/defi/hooks/stakingRewards/useStakingRewardsPoolApy";
+import BigNumber from "bignumber.js";
+import { useMemo } from "react";
 
 const twoColumnPageSize = {
   sm: 12,
@@ -65,6 +68,13 @@ export const PoolStatistics: React.FC<PoolDetailsProps> = ({
     pool?.pair.quote.toString() ?? "-1"
   );
 
+  const stakePoolApy = useStakingRewardsPoolApy(pool?.lpToken);
+  const rewardAPYs = useMemo(() => {
+    return Object.keys(stakePoolApy).reduce((v, i) => {
+      return v.plus(stakePoolApy[i])
+    }, new BigNumber(0))
+  }, [stakePoolApy]);
+
   return (
     <Box {...boxProps}>
       <Grid container spacing={4}>
@@ -101,7 +111,7 @@ export const PoolStatistics: React.FC<PoolDetailsProps> = ({
           <Item label="Fees (24H)" value={`$${poolStats._24HrFeeValue}`} />
         </Grid>
         <Grid item {...twoColumnPageSize}>
-          <Item label="APR" value={`${poolStats.apr}%`} />
+          <Item label="APY" value={`${rewardAPYs.toFixed(2)}%`} />
         </Grid>
         <Grid item {...twoColumnPageSize}>
           <Item
