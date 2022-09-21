@@ -11,7 +11,7 @@ use ibc::{
 		ics04_channel::{
 			self, channel,
 			channel::{ChannelEnd, Order, State},
-			msgs::chan_open_init::MsgChannelOpenInit,
+			msgs::{chan_close_init::MsgChannelCloseInit, chan_open_init::MsgChannelOpenInit},
 		},
 		ics24_host::identifier::{ChannelId, ConnectionId, PortId},
 	},
@@ -240,7 +240,12 @@ where
 	let future = chain
 		.ibc_events()
 		.await
-		.skip_while(|ev| future::ready(!matches!(ev, IbcEvent::TimeoutPacket(_))))
+		.skip_while(|ev| {
+			future::ready(!matches!(
+				ev,
+				IbcEvent::TimeoutPacket(_) | IbcEvent::TimeoutOnClosePacket(_)
+			))
+		})
 		.take(1)
 		.collect::<Vec<_>>();
 	timeout_future(future, 20 * 60, format!("Didn't see Timeout packet on {}", chain.name())).await;
@@ -342,8 +347,7 @@ pub async fn send_packet_and_assert_timestamp_timeout<A, B>(
 	)
 	.await;
 
-	// Wait for timeout height to elapse then resume packet relay
-	// wait for the acknowledgment
+	// Wait for timeout timestamp to elapse then resume packet relay
 	let future = chain_b
 		.subscribe_blocks()
 		.await
@@ -391,4 +395,107 @@ pub async fn send_packet_with_connection_delay<A, B>(
 	let (previous_balance, ..) = send_transfer(chain_b, chain_a, channel_id, None).await;
 	assert_send_transfer(chain_b, previous_balance, 20 * 60).await;
 	log::info!(target: "hyperspace", "🚀🚀 Token Transfer successful with connection delay");
+}
+
+/// Close a channel
+pub async fn send_channel_close_init_and_assert_channel_close_confirm<A, B>(
+	chain_a: &A,
+	chain_b: &B,
+	channel_id: ChannelId,
+) where
+	A: TestProvider,
+	A::FinalityEvent: Send + Sync,
+	A::Error: From<B::Error>,
+	B: TestProvider,
+	B::FinalityEvent: Send + Sync,
+	B::Error: From<A::Error>,
+{
+	let msg = MsgChannelCloseInit {
+		port_id: PortId::transfer(),
+		channel_id,
+		signer: chain_a.account_id(),
+	};
+
+	let msg = Any { type_url: msg.type_url(), value: msg.encode_vec() };
+
+	chain_a.submit(vec![msg]).await.unwrap();
+
+	// wait channel close confirmation on chain b
+	let future = chain_b
+		.ibc_events()
+		.await
+		.skip_while(|ev| future::ready(!matches!(ev, IbcEvent::CloseConfirmChannel(_))))
+		.take(1)
+		.collect::<Vec<_>>();
+	timeout_future(
+		future,
+		10 * 60,
+		format!("Didn't see CloseConfirmChannel message on {}", chain_b.name()),
+	)
+	.await;
+
+	log::info!(target: "hyperspace", "🚀🚀 Channel successfully closed on both chains");
+}
+
+/// Send a packet and assert timeout on channel close
+pub async fn send_packet_and_assert_timeout_on_channel_close<A, B>(
+	chain_a: &A,
+	chain_b: &B,
+	channel_id: ChannelId,
+) where
+	A: TestProvider,
+	A::FinalityEvent: Send + Sync,
+	A::Error: From<B::Error>,
+	B: TestProvider,
+	B::FinalityEvent: Send + Sync,
+	B::Error: From<A::Error>,
+{
+	log::info!(target: "hyperspace", "Suspending send packet relay");
+	set_relay_status(false);
+
+	let (.., msg_transfer) = send_transfer(
+		chain_a,
+		chain_b,
+		channel_id,
+		Some(Timeout::Offset { timestamp: Some(60 * 3), height: Some(400) }),
+	)
+	.await;
+
+	let msg = MsgChannelCloseInit {
+		port_id: PortId::transfer(),
+		channel_id,
+		signer: chain_a.account_id(),
+	};
+
+	let msg = Any { type_url: msg.type_url(), value: msg.encode_vec() };
+
+	chain_a.submit(vec![msg]).await.unwrap();
+
+	// Wait timeout timestamp to elapse, then
+	let future = chain_b
+		.subscribe_blocks()
+		.await
+		.skip_while(|block_number| {
+			let block_number = *block_number;
+			let chain_clone = chain_b.clone();
+			async move {
+				let timestamp = chain_clone.query_timestamp_at(block_number).await.unwrap();
+				timestamp < msg_transfer.timeout_timestamp.nanoseconds()
+			}
+		})
+		.take(1)
+		.collect::<Vec<_>>();
+
+	log::info!(target: "hyperspace", "Waiting for packet timeout to elapse on counterparty");
+	timeout_future(
+		future,
+		10 * 60,
+		format!("Timeout timestamp was not reached on {}", chain_b.name()),
+	)
+	.await;
+
+	set_relay_status(true);
+
+	assert_timeout_packet(chain_a).await;
+	log::info!(target: "hyperspace", "🚀🚀 Timeout packet successfully processed for channel close");
 }
