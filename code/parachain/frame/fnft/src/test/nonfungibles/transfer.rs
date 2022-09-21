@@ -20,7 +20,7 @@ use crate::{
 		prelude::{TEST_COLLECTION_ID, *},
 		ALICE, BOB, CHARLIE,
 	},
-	FinancialNftInstanceIdOf, Instance, OwnerInstances, Pallet,
+	AccountIdOf, FinancialNftInstanceIdOf, Instance, OwnerInstances, Pallet,
 };
 
 /// Tests a simple transfer between 2 accounts, with only 1 total NFT existing.
@@ -131,7 +131,8 @@ fn many() {
 		let [c0, c1, c2, c3, c4, c5, c6, c7, c8, c9] = charlies_nfts;
 
 		fn assert_owners<const AMOUNT: usize>(
-			checks: [(u128, &[FinancialNftInstanceIdOf<MockRuntime>], &str); AMOUNT],
+			checks: [(AccountIdOf<MockRuntime>, &[FinancialNftInstanceIdOf<MockRuntime>], &str);
+				AMOUNT],
 		) {
 			for (who, nfts, msg) in checks {
 				assert_eq!(

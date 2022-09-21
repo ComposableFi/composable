@@ -144,8 +144,8 @@ pub mod pallet {
 		>;
 
 		type CurrencyFactory: CurrencyFactory<
-			<Self as DeFiComposableConfig>::MayBeAssetId,
-			Self::Balance,
+			AssetId = <Self as DeFiComposableConfig>::MayBeAssetId,
+			Balance = Self::Balance,
 		>;
 		type MultiCurrency: Transfer<
 				Self::AccountId,
