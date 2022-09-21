@@ -2,24 +2,22 @@ use std::{env, fs, path::Path, process::Command};
 
 use clap::{Parser, *};
 
-
 #[derive(Parser, Debug)]
 
 struct ComposableSubxt {
-	#[clap(short, long, env)]
-    generate: String,
+	#[clap(short, long, env = "COMPOSABLE_SUBXT_GENERATE")]
+	generate: String,
 }
 
 fn main() {
-	
 	let out_dir = env::var("OUT_DIR").unwrap();
-	let args = ComposableSubxt::parse(); 
-	let regenerate = env::var("COMPOSABLE_SUBXT_GENERATE").is_ok();
+	let args = ComposableSubxt::parse();
+	panic!("{:?}", args);
 
-	
 	fs::create_dir_all(Path::new(&out_dir).join("src/generated/")).unwrap();
 
-	if regenerate {
+	if args.generate == "42" {
+		panic!("42");
 		let rococo = Command::new("subxt")
 			.args(&["codegen", "--url", "https://rococo-rpc.polkadot.io"])
 			.output()
@@ -32,10 +30,10 @@ fn main() {
 			.output()
 			.unwrap();
 		let dest_path = Path::new(&out_dir).join("src/generated/dali.rs");
-		fs::write(dest_path, dali.stdout).unwrap();
+		//fs::write(dest_path, dali.stdout).unwrap();
 	}
 
 	let dest_path = Path::new(&out_dir).join("src/generated/mod.rs");
 	fs::write(&dest_path, "pub mod rococo;pub mod dali;").unwrap();
-	println!("cargo:rerun-if-changed=build.rs");
+	//println!("cargo:rerun-if-changed=build.rs");
 }
