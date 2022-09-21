@@ -34,17 +34,17 @@ sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 xcm = { default-features = false, git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.27" }
 cumulus-primitives-core  = { default-features = false, git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.27" }
 
-ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", rev = "70e3fa4bbb91f7b5893c1f1d2997ec46add1aad9", default-features = false }
+ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", rev = "dfd8cbb4022e24c1791837f46b2f3f28c8753d63", default-features = false }
 ics23 = { git = "https://github.com/composablefi/ics23", rev = "b500a5c6068eb53c83c4c6c13bd9d8c25e0bf927", default-features = false, optional = true }
 tendermint = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8", optional = true, default-features = false }
 tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8", default-features = false }
 
 # centauri
-grandpa-client-primitives = { package = "grandpa-light-client-primitives", git = "https://github.com/composableFi/centauri", branch = "master", default-features = false }
-beefy-client-primitives = { package = "primitives", git = "https://github.com/composableFi/centauri", branch = "master", default-features = false }
-light-client-common = { git = "https://github.com/composableFi/centauri", branch = "master", default-features = false }
-ics10-grandpa = { git = "https://github.com/composableFi/centauri", branch = "master", default-features = false }
-ics11-beefy = { git = "https://github.com/composableFi/centauri", branch = "master", default-features = false }
+grandpa-client-primitives = { package = "grandpa-light-client-primitives", git = "https://github.com/composableFi/centauri", rev = "bfbc43884b07efe6607fb822ea02c3731ee54f6f", default-features = false }
+beefy-client-primitives = { package = "primitives", git = "https://github.com/composableFi/centauri", rev = "bfbc43884b07efe6607fb822ea02c3731ee54f6f", default-features = false }
+light-client-common = { git = "https://github.com/composableFi/centauri", rev = "bfbc43884b07efe6607fb822ea02c3731ee54f6f", default-features = false }
+ics10-grandpa = { git = "https://github.com/composableFi/centauri", rev = "bfbc43884b07efe6607fb822ea02c3731ee54f6f", default-features = false }
+ics11-beefy = { git = "https://github.com/composableFi/centauri", rev = "bfbc43884b07efe6607fb822ea02c3731ee54f6f", default-features = false }
 
 # local deps
 assets = { package = "pallet-assets", path = "../assets", default-features = false }
@@ -56,12 +56,12 @@ common = { path = "../../runtime/common", default-features = false }
 
 [dependencies.ibc]
 git = "https://github.com/ComposableFi/ibc-rs"
-rev = "70e3fa4bbb91f7b5893c1f1d2997ec46add1aad9"
+rev = "dfd8cbb4022e24c1791837f46b2f3f28c8753d63"
 default-features = false
 
 [dependencies.ibc-derive]
 git = "https://github.com/ComposableFi/ibc-rs"
-rev = "70e3fa4bbb91f7b5893c1f1d2997ec46add1aad9"
+rev = "dfd8cbb4022e24c1791837f46b2f3f28c8753d63"
 default-features = false
 
 [dependencies.codec]
@@ -88,7 +88,7 @@ tendermint = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a7
 
 [dev-dependencies.ibc]
 git = "https://github.com/ComposableFi/ibc-rs"
-rev = "70e3fa4bbb91f7b5893c1f1d2997ec46add1aad9"
+rev = "dfd8cbb4022e24c1791837f46b2f3f28c8753d63"
 default-features = false
 features = ["mocks"]
 

@@ -3,8 +3,8 @@
 #![allow(clippy::type_complexity)]
 #![allow(non_camel_case_types)]
 #![deny(
-	// unused_imports,
-	// clippy::useless_conversion,
+	unused_imports,
+	clippy::useless_conversion,
 	bad_style,
 	bare_trait_objects,
 	const_err,
@@ -55,7 +55,7 @@ mod light_clients;
 mod port;
 pub mod routing;
 pub use client::HostConsensusProof;
-pub const IBC_DIGEST_ID: [u8; 4] = *b"/IBC";
+
 pub const MODULE_ID: &str = "pallet_ibc";
 
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]

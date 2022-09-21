@@ -664,7 +664,7 @@ dependencies = [
 [[package]]
 name = "beefy-light-client"
 version = "0.1.0"
-source = "git+https://github.com/composableFi/centauri?branch=master#b8dbc18702bc6ea29f739fbb47430e1e90d6ca9a"
+source = "git+https://github.com/composableFi/centauri?rev=bfbc43884b07efe6607fb822ea02c3731ee54f6f#bfbc43884b07efe6607fb822ea02c3731ee54f6f"
 dependencies = [
  "beefy-primitives",
  "ckb-merkle-mountain-range",
@@ -674,7 +674,7 @@ dependencies = [
  "pallet-beefy-mmr",
  "pallet-mmr",
  "parity-scale-codec",
- "primitives 0.1.0 (git+https://github.com/composableFi/centauri?branch=master)",
+ "primitives 0.1.0 (git+https://github.com/composableFi/centauri?rev=bfbc43884b07efe6607fb822ea02c3731ee54f6f)",
  "rs_merkle",
  "sp-core",
  "sp-core-hashing",
@@ -2689,7 +2689,7 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "hex",
  "hex-literal",
- "ibc",
+ "ibc 0.15.0 (git+https://github.com/ComposableFi/ibc-rs?rev=70e3fa4bbb91f7b5893c1f1d2997ec46add1aad9)",
  "ibc-primitives",
  "ibc-runtime-api",
  "lending-runtime-api",
@@ -4095,7 +4095,7 @@ dependencies = [
 [[package]]
 name = "grandpa-light-client"
 version = "0.1.0"
-source = "git+https://github.com/composableFi/centauri?branch=master#b8dbc18702bc6ea29f739fbb47430e1e90d6ca9a"
+source = "git+https://github.com/composableFi/centauri?rev=bfbc43884b07efe6607fb822ea02c3731ee54f6f#bfbc43884b07efe6607fb822ea02c3731ee54f6f"
 dependencies = [
  "anyhow",
  "finality-grandpa",
@@ -4116,7 +4116,7 @@ dependencies = [
 [[package]]
 name = "grandpa-light-client-primitives"
 version = "0.1.0"
-source = "git+https://github.com/composableFi/centauri?branch=master#b8dbc18702bc6ea29f739fbb47430e1e90d6ca9a"
+source = "git+https://github.com/composableFi/centauri?rev=bfbc43884b07efe6607fb822ea02c3731ee54f6f#bfbc43884b07efe6607fb822ea02c3731ee54f6f"
 dependencies = [
  "anyhow",
  "derive_more",
@@ -4517,8 +4517,37 @@ dependencies = [
  "borsh",
  "derive_more",
  "flex-error",
- "ibc-derive",
- "ibc-proto",
+ "ibc-derive 0.1.0 (git+https://github.com/ComposableFi/ibc-rs?rev=70e3fa4bbb91f7b5893c1f1d2997ec46add1aad9)",
+ "ibc-proto 0.18.0 (git+https://github.com/ComposableFi/ibc-rs?rev=70e3fa4bbb91f7b5893c1f1d2997ec46add1aad9)",
+ "ics23",
+ "num-traits",
+ "parity-scale-codec",
+ "primitive-types",
+ "prost 0.10.4",
+ "prost-types 0.10.1",
+ "safe-regex",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "subtle-encoding",
+ "tendermint",
+ "tendermint-proto",
+ "tendermint-rpc",
+ "time 0.3.14",
+ "tracing",
+ "uint",
+]
+
+[[package]]
+name = "ibc"
+version = "0.15.0"
+source = "git+https://github.com/ComposableFi/ibc-rs?rev=dfd8cbb4022e24c1791837f46b2f3f28c8753d63#dfd8cbb4022e24c1791837f46b2f3f28c8753d63"
+dependencies = [
+ "borsh",
+ "derive_more",
+ "flex-error",
+ "ibc-derive 0.1.0 (git+https://github.com/ComposableFi/ibc-rs?rev=dfd8cbb4022e24c1791837f46b2f3f28c8753d63)",
+ "ibc-proto 0.18.0 (git+https://github.com/ComposableFi/ibc-rs?rev=dfd8cbb4022e24c1791837f46b2f3f28c8753d63)",
  "ics23",
  "num-traits",
  "parity-scale-codec",
@@ -4552,6 +4581,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "ibc-derive"
+version = "0.1.0"
+source = "git+https://github.com/ComposableFi/ibc-rs?rev=dfd8cbb4022e24c1791837f46b2f3f28c8753d63#dfd8cbb4022e24c1791837f46b2f3f28c8753d63"
+dependencies = [
+ "convert_case 0.6.0",
+ "proc-macro-crate 1.2.1",
+ "proc-macro2 1.0.43",
+ "quote 1.0.21",
+ "syn 1.0.100",
+]
+
+[[package]]
 name = "ibc-primitives"
 version = "0.1.0"
 dependencies = [
@@ -4560,7 +4601,7 @@ dependencies = [
  "composable-traits",
  "frame-support",
  "hex",
- "ibc",
+ "ibc 0.15.0 (git+https://github.com/ComposableFi/ibc-rs?rev=dfd8cbb4022e24c1791837f46b2f3f28c8753d63)",
  "parity-scale-codec",
  "ripemd",
  "scale-info",
@@ -4590,14 +4631,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "ibc-proto"
+version = "0.18.0"
+source = "git+https://github.com/ComposableFi/ibc-rs?rev=dfd8cbb4022e24c1791837f46b2f3f28c8753d63#dfd8cbb4022e24c1791837f46b2f3f28c8753d63"
+dependencies = [
+ "base64 0.13.0",
+ "bytes 1.2.1",
+ "prost 0.10.4",
+ "prost-types 0.10.1",
+ "serde",
+ "tendermint-proto",
+]
+
+[[package]]
 name = "ibc-rpc"
 version = "0.1.0"
 dependencies = [
  "frame-system",
  "hex-literal",
- "ibc",
+ "ibc 0.15.0 (git+https://github.com/ComposableFi/ibc-rs?rev=dfd8cbb4022e24c1791837f46b2f3f28c8753d63)",
  "ibc-primitives",
- "ibc-proto",
+ "ibc-proto 0.18.0 (git+https://github.com/ComposableFi/ibc-rs?rev=dfd8cbb4022e24c1791837f46b2f3f28c8753d63)",
  "ibc-runtime-api",
  "jsonrpsee 0.13.1",
  "pallet-ibc",
@@ -4627,14 +4681,14 @@ dependencies = [
 [[package]]
 name = "ics10-grandpa"
 version = "0.1.0"
-source = "git+https://github.com/composableFi/centauri?branch=master#b8dbc18702bc6ea29f739fbb47430e1e90d6ca9a"
+source = "git+https://github.com/composableFi/centauri?rev=bfbc43884b07efe6607fb822ea02c3731ee54f6f#bfbc43884b07efe6607fb822ea02c3731ee54f6f"
 dependencies = [
  "anyhow",
  "derive_more",
  "grandpa-light-client",
  "grandpa-light-client-primitives",
- "ibc",
- "ibc-proto",
+ "ibc 0.15.0 (git+https://github.com/ComposableFi/ibc-rs?rev=dfd8cbb4022e24c1791837f46b2f3f28c8753d63)",
+ "ibc-proto 0.18.0 (git+https://github.com/ComposableFi/ibc-rs?rev=dfd8cbb4022e24c1791837f46b2f3f28c8753d63)",
  "light-client-common",
  "parity-scale-codec",
  "primitive-types",
@@ -4654,19 +4708,19 @@ dependencies = [
 [[package]]
 name = "ics11-beefy"
 version = "0.1.0"
-source = "git+https://github.com/composableFi/centauri?branch=master#b8dbc18702bc6ea29f739fbb47430e1e90d6ca9a"
+source = "git+https://github.com/composableFi/centauri?rev=bfbc43884b07efe6607fb822ea02c3731ee54f6f#bfbc43884b07efe6607fb822ea02c3731ee54f6f"
 dependencies = [
  "anyhow",
  "beefy-light-client",
  "beefy-primitives",
  "bytes 1.2.1",
  "derive_more",
- "ibc",
- "ibc-proto",
+ "ibc 0.15.0 (git+https://github.com/ComposableFi/ibc-rs?rev=dfd8cbb4022e24c1791837f46b2f3f28c8753d63)",
+ "ibc-proto 0.18.0 (git+https://github.com/ComposableFi/ibc-rs?rev=dfd8cbb4022e24c1791837f46b2f3f28c8753d63)",
  "light-client-common",
  "parity-scale-codec",
  "primitive-types",
- "primitives 0.1.0 (git+https://github.com/composableFi/centauri?branch=master)",
+ "primitives 0.1.0 (git+https://github.com/composableFi/centauri?rev=bfbc43884b07efe6607fb822ea02c3731ee54f6f)",
  "prost 0.10.4",
  "prost-build 0.11.1",
  "prost-types 0.10.1",
@@ -6162,12 +6216,12 @@ dependencies = [
 [[package]]
 name = "light-client-common"
 version = "0.1.0"
-source = "git+https://github.com/composableFi/centauri?branch=master#b8dbc18702bc6ea29f739fbb47430e1e90d6ca9a"
+source = "git+https://github.com/composableFi/centauri?rev=bfbc43884b07efe6607fb822ea02c3731ee54f6f#bfbc43884b07efe6607fb822ea02c3731ee54f6f"
 dependencies = [
  "anyhow",
  "derive_more",
  "hash-db",
- "ibc",
+ "ibc 0.15.0 (git+https://github.com/ComposableFi/ibc-rs?rev=dfd8cbb4022e24c1791837f46b2f3f28c8753d63)",
  "parity-scale-codec",
  "primitive-types",
  "serde",
@@ -8033,10 +8087,10 @@ dependencies = [
  "grandpa-light-client-primitives",
  "hex",
  "hex-literal",
- "ibc",
- "ibc-derive",
+ "ibc 0.15.0 (git+https://github.com/ComposableFi/ibc-rs?rev=dfd8cbb4022e24c1791837f46b2f3f28c8753d63)",
+ "ibc-derive 0.1.0 (git+https://github.com/ComposableFi/ibc-rs?rev=dfd8cbb4022e24c1791837f46b2f3f28c8753d63)",
  "ibc-primitives",
- "ibc-proto",
+ "ibc-proto 0.18.0 (git+https://github.com/ComposableFi/ibc-rs?rev=dfd8cbb4022e24c1791837f46b2f3f28c8753d63)",
  "ics10-grandpa",
  "ics11-beefy",
  "ics23",
@@ -8054,7 +8108,7 @@ dependencies = [
  "parachain-info",
  "parity-scale-codec",
  "primitives 0.1.0",
- "primitives 0.1.0 (git+https://github.com/composableFi/centauri?branch=master)",
+ "primitives 0.1.0 (git+https://github.com/composableFi/centauri?rev=bfbc43884b07efe6607fb822ea02c3731ee54f6f)",
  "prost 0.10.4",
  "scale-info",
  "serde",
@@ -8079,7 +8133,7 @@ version = "0.0.1"
 dependencies = [
  "frame-support",
  "frame-system",
- "ibc",
+ "ibc 0.15.0 (git+https://github.com/ComposableFi/ibc-rs?rev=dfd8cbb4022e24c1791837f46b2f3f28c8753d63)",
  "ibc-primitives",
  "log 0.4.17",
  "parity-scale-codec",
@@ -10735,7 +10789,7 @@ dependencies = [
 [[package]]
 name = "primitives"
 version = "0.1.0"
-source = "git+https://github.com/composableFi/centauri?branch=master#b8dbc18702bc6ea29f739fbb47430e1e90d6ca9a"
+source = "git+https://github.com/composableFi/centauri?rev=bfbc43884b07efe6607fb822ea02c3731ee54f6f#bfbc43884b07efe6607fb822ea02c3731ee54f6f"
 dependencies = [
  "beefy-primitives",
  "ckb-merkle-mountain-range",

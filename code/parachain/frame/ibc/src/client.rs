@@ -43,14 +43,14 @@ where
 		if <Clients<T>>::contains_key(client_id) {
 			let data = <Clients<T>>::get(client_id)
 				.ok_or_else(|| ICS02Error::client_not_found(client_id.clone()))?;
-			let _data = String::from_utf8(data).map_err(|e| {
+			let data = String::from_utf8(data).map_err(|e| {
 				ICS02Error::implementation_specific(format!(
 					"[client_type]: error decoding client type bytes to string {}",
 					e
 				))
 			})?;
 			// todo: &'static str was a bad idea
-			Ok("data")
+			Ok(data)
 		} else {
 			log::trace!(target: "pallet_ibc", "in client : [client_type] >> read client_type is None");
 			Err(ICS02Error::client_not_found(client_id.clone()))

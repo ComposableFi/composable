@@ -937,10 +937,10 @@ where
 	fn create_client() -> Result<ClientId, IbcHandlerError> {
 		use crate::benchmarks::tendermint_benchmark_utils::create_mock_state;
 		use ibc::core::ics02_client::{
-			client_consensus::AnyConsensusState,
 			client_state::ClientState,
 			msgs::create_client::{MsgCreateAnyClient, TYPE_URL},
 		};
+		use crate::light_clients::AnyConsensusState;
 
 		let (mock_client_state, mock_cs_state) = create_mock_state();
 		let client_id = ClientId::new(mock_client_state.client_type(), 0).unwrap();
@@ -952,8 +952,8 @@ where
 		.unwrap()
 		.encode_vec();
 		let msg = ibc_proto::google::protobuf::Any { type_url: TYPE_URL.to_string(), value: msg };
-		let mut ctx = crate::routing::Context::<T>::new();
-		ibc::core::ics26_routing::handler::deliver::<_, crate::host_functions::HostFunctions<T>>(
+		let mut ctx = Context::<T>::new();
+		ibc::core::ics26_routing::handler::deliver(
 			&mut ctx, msg,
 		)
 		.unwrap();

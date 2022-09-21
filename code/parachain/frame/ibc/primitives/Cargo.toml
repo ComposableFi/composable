@@ -30,7 +30,7 @@ common = {default-features = false, path = "../../../runtime/common"}
 
 [dependencies.ibc]
 git = "https://github.com/ComposableFi/ibc-rs"
-rev = "70e3fa4bbb91f7b5893c1f1d2997ec46add1aad9"
+rev = "dfd8cbb4022e24c1791837f46b2f3f28c8753d63"
 default-features = false
 
 [dependencies.codec]
