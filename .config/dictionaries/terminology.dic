@@ -319,6 +319,7 @@ currency
 Currency
 unignore
 modularly
+admined
 
 coeff # coefficient
 recvs # recieves
