@@ -40,7 +40,7 @@ fn test_reward_update_calculation() {
 		let pool_id = create_rewards_pool_and_assert(RewardRateBasedIncentive {
 			owner: ALICE,
 			asset_id: PICA::ID,
-			start_block: 0,
+			start_block: 1,
 			end_block: ONE_YEAR_OF_BLOCKS * 10,
 			reward_configs: [(PICA::ID, reward_config)].into_iter().try_collect().unwrap(),
 			lock: default_lock_config(),

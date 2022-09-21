@@ -217,6 +217,8 @@ pub mod pallet {
 		UnimplementedRewardPoolConfiguration,
 		/// Rewards pool not found.
 		RewardsPoolNotFound,
+		/// Rewards pool has not started.
+		RewardsPoolHasNotStarted,
 		/// Error when creating reduction configs.
 		ReductionConfigProblem,
 		/// Not enough assets for a stake.
@@ -724,6 +726,11 @@ pub mod pallet {
 		) -> Result<Self::PositionId, DispatchError> {
 			let mut rewards_pool =
 				RewardPools::<T>::try_get(pool_id).map_err(|_| Error::<T>::RewardsPoolNotFound)?;
+
+			ensure!(
+				rewards_pool.start_block <= frame_system::Pallet::<T>::current_block_number(),
+				Error::<T>::RewardsPoolHasNotStarted
+			);
 
 			let reward_multiplier = Self::reward_multiplier(&rewards_pool, duration_preset)
 				.ok_or(Error::<T>::NoDurationPresetsConfigured)?;

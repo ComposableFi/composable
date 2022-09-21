@@ -66,7 +66,7 @@ fn test_create_reward_pool_invalid_end_block() {
 					owner: ALICE,
 					asset_id: PICA::ID,
 					// end block can't be before the current block
-					start_block: 0,
+					start_block: 1,
 					end_block: 0,
 					reward_configs: default_reward_config(),
 					lock: default_lock_config(),
@@ -347,6 +347,7 @@ fn unstake_non_existent_stake_should_not_work() {
 #[test]
 fn not_owner_of_stake_can_not_unstake() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
 		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
 		let owner = ALICE;
 		let not_owner = BOB;
@@ -871,7 +872,7 @@ fn create_default_reward_pool() {
 			RewardRateBasedIncentive {
 				owner: ALICE,
 				asset_id: PICA::ID,
-				start_block: 0,
+				start_block: 1,
 				end_block: 5,
 				reward_configs: default_reward_config(),
 				lock: default_lock_config(),
@@ -888,7 +889,7 @@ fn get_default_reward_pool() -> RewardPoolConfigurationOf<Test> {
 	RewardRateBasedIncentive {
 		owner: ALICE,
 		asset_id: PICA::ID,
-		start_block: 0,
+		start_block: 1,
 		end_block: 5,
 		reward_configs: default_reward_config(),
 		lock: default_lock_config(),

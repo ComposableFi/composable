@@ -31,7 +31,7 @@ fn get_reward_pool<T: Config>(
 	let pool_init_config = RewardRateBasedIncentive {
 		owner,
 		asset_id: BASE_ASSET_ID.into(),
-		start_block: 0_u128.saturated_into(),
+		start_block: 1_u128.saturated_into(),
 		end_block: 5_u128.saturated_into(),
 		reward_configs: reward_config::<T>(reward_count),
 		lock: lock_config::<T>(),
@@ -106,6 +106,9 @@ benchmarks! {
 		let keep_alive = true;
 		let staker = whitelisted_caller();
 		let pool_owner: T::AccountId = account("owner", 0, 0);
+
+		frame_system::Pallet::<T>::set_block_number(1.into());
+
 		<Pallet<T>>::create_reward_pool(RawOrigin::Root.into(), get_reward_pool::<T>(pool_owner, r))?;
 		<T::Assets as Mutate<T::AccountId>>::mint_into(asset_id, &staker, amount * 2.into())?;
 	}: _(RawOrigin::Signed(staker.clone()), asset_id, amount, duration_preset)
@@ -121,6 +124,9 @@ benchmarks! {
 		let keep_alive = true;
 		let staker = whitelisted_caller();
 		let pool_owner: T::AccountId = account("owner", 0, 0);
+
+		frame_system::Pallet::<T>::set_block_number(1.into());
+
 		<Pallet<T>>::create_reward_pool(RawOrigin::Root.into(), get_reward_pool::<T>(pool_owner, r))?;
 		<T::Assets as Mutate<T::AccountId>>::mint_into(asset_id, &staker, amount * 3.into()).expect("an asset minting expected");
 		<Pallet<T>>::stake(RawOrigin::Signed(staker.clone()).into(), asset_id, amount, duration_preset)?;
@@ -137,6 +143,9 @@ benchmarks! {
 		let keep_alive = true;
 		let staker = whitelisted_caller();
 		let pool_owner: T::AccountId = account("owner", 0, 0);
+
+		frame_system::Pallet::<T>::set_block_number(1.into());
+
 		<Pallet<T>>::create_reward_pool(RawOrigin::Root.into(), get_reward_pool::<T>(pool_owner, r))?;
 		<T::Assets as Mutate<T::AccountId>>::mint_into(asset_id, &staker, amount * 2.into())?;
 		<Pallet<T>>::stake(RawOrigin::Signed(staker.clone()).into(), asset_id, amount, duration_preset)?;
@@ -191,7 +200,7 @@ benchmarks! {
 		let pool_id = <Pallet<T> as ManageStaking>::create_staking_pool(RewardRateBasedIncentive {
 			owner: user,
 			asset_id: pool_asset_id,
-			start_block: 0_u128.saturated_into(),
+			start_block: 1_u128.saturated_into(),
 			end_block: 5_u128.saturated_into(),
 			reward_configs: [(reward_asset_id, reward_config)]
 				.into_iter()
@@ -239,6 +248,9 @@ benchmarks! {
 		let keep_alive = true;
 		let staker = whitelisted_caller();
 		let pool_owner: T::AccountId = account("owner", 0, 0);
+
+		frame_system::Pallet::<T>::set_block_number(1.into());
+
 		<Pallet<T>>::create_reward_pool(RawOrigin::Root.into(), get_reward_pool::<T>(pool_owner, r))?;
 		<T::Assets as Mutate<T::AccountId>>::mint_into(asset_id, &staker, amount * 2.into())?;
 		<Pallet<T>>::stake(RawOrigin::Signed(staker.clone()).into(), asset_id, amount, duration_preset)?;

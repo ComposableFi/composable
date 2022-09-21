@@ -35,7 +35,7 @@ fn test_update_reward_pool() {
 			create_rewards_pool_and_assert(RewardPoolConfiguration::RewardRateBasedIncentive {
 				owner: ALICE,
 				asset_id: PICA::ID,
-				start_block: 0,
+				start_block: 1,
 				end_block: ONE_YEAR_OF_BLOCKS,
 				reward_configs: [(
 					USDT::ID,
