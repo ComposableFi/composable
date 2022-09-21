@@ -698,16 +698,20 @@ pub mod pallet {
 		type Balance = BalanceOf<T>;
 
 		fn collection_asset_ids() -> Vec<Self::AssetId> {
-			// TODO (vim): Following is a dummy value. Store and retrieve from storage
-			[Self::AssetId::from(1000_u128)].into()
+			RewardPools::<T>::iter().map(|(_, pool)| pool.financial_nft_asset_id).collect()
 		}
 
 		fn value_of(
-			_collection: &Self::AssetId,
-			_instance: &Self::ItemId,
-		) -> Vec<(Self::AssetId, Self::Balance)> {
-			// TODO (vim): Following is a dummy value. Store and retrieve from storage
-			[(Self::AssetId::from(1001_u128), Self::Balance::zero())].into()
+			collection: &Self::AssetId,
+			instance: &Self::ItemId,
+		) -> Result<Vec<(Self::AssetId, Self::Balance)>, DispatchError> {
+			RewardPools::<T>::get(collection)
+				.zip(Stakes::<T>::get(collection, instance))
+				// This can take into account the value of assets held in the asset account as
+				// well as the claimable rewards in the future when market places exists for these
+				// NFTs.
+				.map(|pool| vec![(pool.0.share_asset_id, pool.1.share)])
+				.ok_or(DispatchError::Other(Error::<T>::StakeNotFound.into()))
 		}
 	}
 
