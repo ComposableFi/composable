@@ -21,12 +21,52 @@ import { usePendingExtrinsic, useSelectedAccount } from "substrate-react";
 import { ConfirmingModal } from "../../swap/ConfirmingModal";
 import BigNumber from "bignumber.js";
 
+const UnstakeFormPosition: React.FC<{
+  financialNftId: string;
+  principalAssets: Array<{ label?: string; icon: string }>;
+  principalAssetValue: BigNumber;
+  principalAssetSakedAmount: BigNumber;
+  isExpired: boolean;
+  expiryDate: string;
+}> = ({
+  financialNftId,
+  principalAssets,
+  principalAssetValue,
+  principalAssetSakedAmount,
+  isExpired,
+  expiryDate,
+}) => {
+  const formattedStakedAmount = principalAssetSakedAmount.toFixed(
+    DEFAULT_UI_FORMAT_DECIMALS
+  );
+  const formattedStakedAmountValue = principalAssetSakedAmount
+    .times(principalAssetValue)
+    .toFixed(DEFAULT_UI_FORMAT_DECIMALS);
+  const stakedAmountInStr = `${formattedStakedAmount} (~$${formattedStakedAmountValue})`;
+
+  return (
+    <TableRow key={financialNftId}>
+      <TableCell align="left">
+        <PairAsset assets={principalAssets} separator="/" />
+      </TableCell>
+      <TableCell align="center">
+        <Typography variant="body1">{stakedAmountInStr}</Typography>
+      </TableCell>
+      <TableCell align="right">
+        <Typography variant="body1" color={isExpired ? "error" : undefined}>
+          {isExpired ? "Expired" : expiryDate}
+        </Typography>
+      </TableCell>
+    </TableRow>
+  );
+};
+
 export const PoolUnstakeForm: React.FC<PoolDetailsProps> = ({
   poolId,
   ...boxProps
 }) => {
   const theme = useTheme();
-  
+
   const { baseAsset, quoteAsset, pool } = useLiquidityPoolDetails(poolId);
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const positions = useXTokensList({ stakedAssetId: pool?.lpToken });
@@ -45,6 +85,21 @@ export const PoolUnstakeForm: React.FC<PoolDetailsProps> = ({
   const principalAssetSymbol = useMemo(() => {
     if (!baseAsset || !quoteAsset) return undefined;
     return `${baseAsset.symbol}/${quoteAsset.symbol}`;
+  }, [baseAsset, quoteAsset]);
+
+  const pairAssets = useMemo(() => {
+    if (!baseAsset || !quoteAsset) return [];
+
+    return [
+      {
+        icon: baseAsset.icon,
+        label: baseAsset.symbol,
+      },
+      {
+        icon: quoteAsset.icon,
+        label: quoteAsset.symbol,
+      },
+    ];
   }, [baseAsset, quoteAsset]);
 
   const hasStakedPositions = useMemo(() => {
@@ -90,49 +145,18 @@ export const PoolUnstakeForm: React.FC<PoolDetailsProps> = ({
           <Table>
             <TableBody>
               {positions.map(
-                ({
-                  lockedPrincipalAsset,
-                  nftId,
-                  expiryDate,
-                  isExpired,
-                }) => (
-                  <TableRow key={nftId}>
-                    <TableCell align="left">
-                      <PairAsset
-                        assets={
-                          baseAsset && quoteAsset
-                            ? [
-                                {
-                                  label: baseAsset.symbol,
-                                  icon: baseAsset.icon,
-                                },
-                                {
-                                  label: quoteAsset.symbol,
-                                  icon: quoteAsset.icon,
-                                },
-                              ]
-                            : []
-                        }
-                        separator="/"
-                      />
-                    </TableCell>
-                    <TableCell align="center">
-                      <Typography variant="body1">
-                        {lockedPrincipalAsset.toFixed(
-                          DEFAULT_UI_FORMAT_DECIMALS
-                        )}
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="right">
-                      <Typography
-                        variant="body1"
-                        color={isExpired ? "error" : undefined}
-                      >
-                        {isExpired ? "Expired" : expiryDate}
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                )
+                ({ lockedPrincipalAsset, nftId, expiryDate, isExpired }) => {
+                  return (
+                    <UnstakeFormPosition
+                      principalAssets={pairAssets}
+                      financialNftId={nftId}
+                      principalAssetValue={new BigNumber(0.5)} // mocked usd price
+                      principalAssetSakedAmount={lockedPrincipalAsset}
+                      isExpired={isExpired}
+                      expiryDate={expiryDate}
+                    />
+                  );
+                }
               )}
             </TableBody>
           </Table>
