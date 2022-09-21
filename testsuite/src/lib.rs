@@ -457,7 +457,7 @@ pub async fn send_packet_and_assert_timeout_on_channel_close<A, B>(
 		chain_a,
 		chain_b,
 		channel_id,
-		Some(Timeout::Offset { timestamp: Some(60 * 3), height: Some(400) }),
+		Some(Timeout::Offset { timestamp: Some(60 * 2), height: Some(400) }),
 	)
 	.await;
 

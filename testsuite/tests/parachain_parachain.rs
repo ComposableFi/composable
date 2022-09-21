@@ -189,8 +189,8 @@ async fn main() {
 	parachain_to_parachain_ibc_messaging_packet_timeout_timestamp().await;
 	parachain_to_parachain_ibc_messaging_token_transfer_with_delay().await;
 	parachain_to_parachain_ibc_messaging_token_transfer().await;
-	parachain_to_parachain_ibc_channel_close().await;
 	parachain_to_parachain_ibc_messaging_packet_timeout_on_channel_close().await;
+	parachain_to_parachain_ibc_channel_close().await;
 }
 
 async fn parachain_to_parachain_ibc_messaging_token_transfer() {
@@ -290,7 +290,7 @@ async fn parachain_to_parachain_ibc_channel_close() {
 async fn parachain_to_parachain_ibc_messaging_packet_timeout_on_channel_close() {
 	let (mut chain_a, mut chain_b) = setup_clients().await;
 	let (handle, channel_id, channel_b, _connection_id) =
-		setup_connection_and_channel(&chain_a, &chain_b, 60 * 2).await;
+		setup_connection_and_channel(&chain_a, &chain_b, 0).await;
 	handle.abort();
 	// Set channel whitelist and restart relayer loop
 	chain_a.set_channel_whitelist(vec![(channel_id, PortId::transfer())]);
