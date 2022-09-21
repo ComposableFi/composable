@@ -52,7 +52,7 @@ pub struct ClientState<H> {
 	/// authorities for the current round
 	pub current_authorities: AuthorityList,
 	/// phantom type.
-	_phantom: PhantomData<H>,
+	pub(crate) _phantom: PhantomData<H>,
 }
 
 impl<H: Clone> Protobuf<RawClientState> for ClientState<H> {}

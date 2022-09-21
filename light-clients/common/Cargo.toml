@@ -27,7 +27,7 @@ derive_more = { version = "0.99.17", default-features = false, features = ["from
 hash-db = { version = "0.15.2", default-features = false }
 
 # ibc
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "d4b034e6768a3553a7d0ca9e2e3d532e3cea5f29", default-features = false }
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "70e3fa4bbb91f7b5893c1f1d2997ec46add1aad9", default-features = false }
 
 # substrate
 sp-storage = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }

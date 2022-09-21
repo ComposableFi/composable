@@ -2310,7 +2310,7 @@ dependencies = [
 [[package]]
 name = "ibc"
 version = "0.15.0"
-source = "git+https://github.com/ComposableFi/ibc-rs?rev=d4b034e6768a3553a7d0ca9e2e3d532e3cea5f29#d4b034e6768a3553a7d0ca9e2e3d532e3cea5f29"
+source = "git+https://github.com/ComposableFi/ibc-rs?rev=70e3fa4bbb91f7b5893c1f1d2997ec46add1aad9#70e3fa4bbb91f7b5893c1f1d2997ec46add1aad9"
 dependencies = [
  "borsh",
  "derive_more",
@@ -2340,9 +2340,10 @@ dependencies = [
 [[package]]
 name = "ibc-derive"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/ibc-rs?rev=d4b034e6768a3553a7d0ca9e2e3d532e3cea5f29#d4b034e6768a3553a7d0ca9e2e3d532e3cea5f29"
+source = "git+https://github.com/ComposableFi/ibc-rs?rev=70e3fa4bbb91f7b5893c1f1d2997ec46add1aad9#70e3fa4bbb91f7b5893c1f1d2997ec46add1aad9"
 dependencies = [
  "convert_case 0.6.0",
+ "proc-macro-crate 1.2.1",
  "proc-macro2",
  "quote",
  "syn",
@@ -2351,7 +2352,7 @@ dependencies = [
 [[package]]
 name = "ibc-proto"
 version = "0.18.0"
-source = "git+https://github.com/ComposableFi/ibc-rs?rev=d4b034e6768a3553a7d0ca9e2e3d532e3cea5f29#d4b034e6768a3553a7d0ca9e2e3d532e3cea5f29"
+source = "git+https://github.com/ComposableFi/ibc-rs?rev=70e3fa4bbb91f7b5893c1f1d2997ec46add1aad9#70e3fa4bbb91f7b5893c1f1d2997ec46add1aad9"
 dependencies = [
  "base64",
  "bytes",
@@ -2396,10 +2397,16 @@ name = "ics10-grandpa"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "beefy-prover",
  "derive_more",
+ "frame-support",
+ "futures",
  "grandpa-light-client",
  "grandpa-light-client-primitives",
+ "grandpa-prover",
+ "hex",
  "ibc",
+ "ibc-derive",
  "ibc-proto",
  "light-client-common",
  "parity-scale-codec",
@@ -2408,13 +2415,18 @@ dependencies = [
  "prost-build 0.11.1",
  "prost-types 0.10.1",
  "protobuf-src",
+ "sc-finality-grandpa-rpc",
  "serde",
+ "serde_json",
  "sp-core 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
  "sp-finality-grandpa",
  "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
+ "sp-state-machine 0.12.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
  "sp-trie 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
+ "subxt",
  "tendermint",
  "tendermint-proto",
+ "tokio",
 ]
 
 [[package]]
@@ -2428,6 +2440,7 @@ dependencies = [
  "bytes",
  "derive_more",
  "frame-support",
+ "futures",
  "ibc",
  "ibc-derive",
  "ibc-proto",

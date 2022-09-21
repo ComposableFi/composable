@@ -11,8 +11,8 @@ default = ["std"]
 std = []
 
 [dependencies]
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "d4b034e6768a3553a7d0ca9e2e3d532e3cea5f29", default-features = false }
-ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", rev = "d4b034e6768a3553a7d0ca9e2e3d532e3cea5f29", default-features = false }
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "70e3fa4bbb91f7b5893c1f1d2997ec46add1aad9", default-features = false }
+ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", rev = "70e3fa4bbb91f7b5893c1f1d2997ec46add1aad9", default-features = false }
 
 ics23 = { git = "https://github.com/composablefi/ics23", rev = "b500a5c6068eb53c83c4c6c13bd9d8c25e0bf927", default-features = false }
 time = { version = "0.3", default-features = false }
@@ -40,8 +40,8 @@ rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8"
 default-features = false
 
 [dev-dependencies]
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "d4b034e6768a3553a7d0ca9e2e3d532e3cea5f29", features = ["mocks"] }
-ibc-derive = { git = "https://github.com/ComposableFi/ibc-rs", rev = "d4b034e6768a3553a7d0ca9e2e3d532e3cea5f29" }
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "70e3fa4bbb91f7b5893c1f1d2997ec46add1aad9", features = ["mocks"] }
+ibc-derive = { git = "https://github.com/ComposableFi/ibc-rs", rev = "70e3fa4bbb91f7b5893c1f1d2997ec46add1aad9" }
 env_logger = "0.9.0"
 tracing-subscriber = { version = "0.3.11", features = ["fmt", "env-filter", "json"]}
 test-log = { version = "0.2.10", features = ["trace"] }

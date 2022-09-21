@@ -20,7 +20,7 @@
 extern crate alloc;
 
 use crate::justification::{find_scheduled_change, AncestryChain, GrandpaJustification};
-use alloc::{vec, vec::Vec};
+use alloc::vec;
 use anyhow::anyhow;
 use codec::{Decode, Encode};
 use finality_grandpa::Chain;
@@ -81,7 +81,6 @@ where
 			.remove(key.as_ref())
 			.flatten()
 			.ok_or_else(|| anyhow!("Invalid proof, parachain header not found"))?;
-			let header = Vec::<u8>::decode(&mut &header[..])?;
 			let parachain_header = H::decode(&mut &header[..])?;
 			// Timestamp extrinsic should be the first inherent and hence the first extrinsic
 			// https://github.com/paritytech/substrate/blob/d602397a0bbb24b5d627795b797259a44a5e29e9/primitives/trie/src/lib.rs#L99-L101

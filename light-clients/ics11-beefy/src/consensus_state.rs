@@ -22,7 +22,7 @@ use tendermint_proto::{google::protobuf as tpb, Protobuf};
 
 use crate::proto::ConsensusState as RawConsensusState;
 
-use crate::{error::Error, header::ParachainHeader};
+use crate::{client_message::ParachainHeader, error::Error};
 use ibc::{core::ics23_commitment::commitment::CommitmentRoot, timestamp::Timestamp};
 use light_client_common::decode_timestamp_extrinsic;
 
@@ -99,7 +99,7 @@ impl From<ConsensusState> for RawConsensusState {
 	}
 }
 
-#[cfg(any(test, feature = "mocks"))]
+#[cfg(test)]
 pub mod test_util {
 	use super::*;
 	use crate::mock::AnyConsensusState;

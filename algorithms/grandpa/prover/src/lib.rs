@@ -26,7 +26,11 @@ use serde::{Deserialize, Serialize};
 use sp_core::H256;
 use sp_runtime::traits::{Header, Zero};
 use std::collections::BTreeMap;
-use subxt::{sp_runtime::traits::Header as _, Client, Config};
+use subxt::{
+	rpc::NumberOrHex,
+	sp_runtime::traits::{Header as _, One},
+	Client, Config,
+};
 
 pub mod host_functions;
 pub mod runtime;
@@ -39,7 +43,7 @@ pub struct GrandpaProver<T: Config> {
 
 /// An encoded justification proving that the given header has been finalized
 #[derive(Clone, Serialize, Deserialize)]
-pub struct JustificationNotification(sp_core::Bytes);
+pub struct JustificationNotification(pub sp_core::Bytes);
 
 impl<T> GrandpaProver<T>
 where
@@ -101,6 +105,7 @@ where
 	where
 		H: Header,
 		H::Hash: From<T::Hash>,
+		T::BlockNumber: One,
 	{
 		let header = self
 			.relay_client
@@ -120,28 +125,39 @@ where
 		finality_proof.unknown_headers = {
 			let mut unknown_headers = vec![H::decode(&mut &header.encode()[..])?];
 			let mut current = *header.parent_hash();
-			loop {
-				if current == previous_finalized_hash {
-					break
-				}
+			while current != previous_finalized_hash {
 				let header = self
 					.relay_client
 					.rpc()
 					.header(Some(current))
 					.await?
 					.ok_or_else(|| anyhow!("Header with hash: {current:?} not found!"))?;
-				current = *header.parent_hash();
 				unknown_headers.push(H::decode(&mut &header.encode()[..])?);
+				current = *header.parent_hash();
 			}
 			unknown_headers
 		};
 
 		// we are interested only in the blocks where our parachain header changes.
 		let keys = vec![parachain_header_storage_key(self.para_id)];
+		let previous_finalized = self
+			.relay_client
+			.rpc()
+			.header(Some(previous_finalized_hash))
+			.await?
+			.ok_or_else(|| anyhow!("Failed to fetch previous finalized header"))?;
+		let start = self
+			.relay_client
+			.rpc()
+			.block_hash(Some(
+				NumberOrHex::Number((*previous_finalized.number() + One::one()).into()).into(),
+			))
+			.await?
+			.ok_or_else(|| anyhow!("Failed to fetch previous finalized hash + 1"))?;
 		let change_set = self
 			.relay_client
 			.storage()
-			.query_storage(keys.clone(), previous_finalized_hash, Some(latest_finalized_hash))
+			.query_storage(keys.clone(), start, Some(latest_finalized_hash))
 			.await?;
 
 		let api = self

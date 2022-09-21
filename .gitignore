@@ -1,4 +1,5 @@
 /target
 /.idea
 /.vscode
+/.cargo
 rust-toolchain.toml

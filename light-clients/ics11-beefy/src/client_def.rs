@@ -23,7 +23,8 @@ use primitive_types::H256;
 use tendermint_proto::Protobuf;
 
 use crate::{
-	client_state::ClientState, consensus_state::ConsensusState, error::Error, header::BeefyHeader,
+	client_message::ClientMessage, client_state::ClientState, consensus_state::ConsensusState,
+	error::Error,
 };
 use ibc::{
 	core::{
@@ -61,78 +62,87 @@ impl<H> ClientDef for BeefyClient<H>
 where
 	H: light_client_common::HostFunctions + beefy_client_primitives::HostFunctions,
 {
-	type Header = BeefyHeader;
+	type ClientMessage = ClientMessage;
 	type ClientState = ClientState<H>;
 	type ConsensusState = ConsensusState;
 
-	fn verify_header<Ctx: ReaderContext>(
+	fn verify_client_message<Ctx: ReaderContext>(
 		&self,
 		_ctx: &Ctx,
 		_client_id: ClientId,
 		client_state: Self::ClientState,
-		header: Self::Header,
+		message: Self::ClientMessage,
 	) -> Result<(), Ics02Error> {
-		let light_client_state = LightClientState {
-			latest_beefy_height: client_state.latest_beefy_height,
-			mmr_root_hash: client_state.mmr_root_hash,
-			current_authorities: client_state.authority.clone(),
-			next_authorities: client_state.next_authority_set.clone(),
-			beefy_activation_block: client_state.beefy_activation_block,
-		};
-		// If mmr update exists verify it and return the new light client state
-		// or else return existing light client state
-		let light_client_state = if let Some(mmr_update) = header.mmr_update_proof {
-			beefy_client::verify_mmr_root_with_proof::<H>(light_client_state, mmr_update)
-				.map_err(Error::from)?
-		} else {
-			light_client_state
-		};
+		match message {
+			ClientMessage::Header(header) => {
+				let light_client_state = LightClientState {
+					latest_beefy_height: client_state.latest_beefy_height,
+					mmr_root_hash: client_state.mmr_root_hash,
+					current_authorities: client_state.authority.clone(),
+					next_authorities: client_state.next_authority_set.clone(),
+					beefy_activation_block: client_state.beefy_activation_block,
+				};
+				// If mmr update exists verify it and return the new light client state
+				// or else return existing light client state
+				let light_client_state = if let Some(mmr_update) = header.mmr_update_proof {
+					beefy_client::verify_mmr_root_with_proof::<H>(light_client_state, mmr_update)
+						.map_err(Error::from)?
+				} else {
+					light_client_state
+				};
 
-		// Extract parachain headers from the beefy header if they exist
-		if let Some(headers_with_proof) = header.headers_with_proof {
-			let mut leaf_indices = vec![];
-			let parachain_headers = headers_with_proof
-				.headers
-				.into_iter()
-				.map(|header| {
-					let leaf_index = client_state
-						.to_leaf_index(header.partial_mmr_leaf.parent_number_and_hash.0 + 1);
-					leaf_indices.push(leaf_index as u64);
-					ParachainHeader {
-						parachain_header: header.parachain_header.encode(),
-						partial_mmr_leaf: header.partial_mmr_leaf,
-						para_id: client_state.para_id,
-						parachain_heads_proof: header.parachain_heads_proof,
-						heads_leaf_index: header.heads_leaf_index,
-						heads_total_count: header.heads_total_count,
-						extrinsic_proof: header.extrinsic_proof,
-						timestamp_extrinsic: header.timestamp_extrinsic,
-					}
-				})
-				.collect::<Vec<_>>();
-
-			let leaf_count =
-				(client_state.to_leaf_index(light_client_state.latest_beefy_height) + 1) as u64;
-
-			let parachain_update_proof = ParachainsUpdateProof {
-				parachain_headers,
-				mmr_proof: BatchProof {
-					leaf_indices,
-					leaf_count,
-					items: headers_with_proof
-						.mmr_proofs
+				// Extract parachain headers from the beefy header if they exist
+				if let Some(headers_with_proof) = header.headers_with_proof {
+					let mut leaf_indices = vec![];
+					let parachain_headers = headers_with_proof
+						.headers
 						.into_iter()
-						.map(|item| H256::decode(&mut &*item))
-						.collect::<Result<Vec<_>, _>>()
-						.map_err(Error::from)?,
-				},
-			};
+						.map(|header| {
+							let leaf_index = client_state.to_leaf_index(
+								header.partial_mmr_leaf.parent_number_and_hash.0 + 1,
+							);
+							leaf_indices.push(leaf_index as u64);
+							ParachainHeader {
+								parachain_header: header.parachain_header.encode(),
+								partial_mmr_leaf: header.partial_mmr_leaf,
+								para_id: client_state.para_id,
+								parachain_heads_proof: header.parachain_heads_proof,
+								heads_leaf_index: header.heads_leaf_index,
+								heads_total_count: header.heads_total_count,
+								extrinsic_proof: header.extrinsic_proof,
+								timestamp_extrinsic: header.timestamp_extrinsic,
+							}
+						})
+						.collect::<Vec<_>>();
 
-			// Perform the parachain header verification
-			beefy_client::verify_parachain_headers::<H>(light_client_state, parachain_update_proof)
-				.map_err(Error::from)?
+					let leaf_count = (client_state
+						.to_leaf_index(light_client_state.latest_beefy_height) +
+						1) as u64;
+
+					let parachain_update_proof = ParachainsUpdateProof {
+						parachain_headers,
+						mmr_proof: BatchProof {
+							leaf_indices,
+							leaf_count,
+							items: headers_with_proof
+								.mmr_proofs
+								.into_iter()
+								.map(|item| H256::decode(&mut &*item))
+								.collect::<Result<Vec<_>, _>>()
+								.map_err(Error::from)?,
+						},
+					};
+
+					// Perform the parachain header verification
+					beefy_client::verify_parachain_headers::<H>(
+						light_client_state,
+						parachain_update_proof,
+					)
+					.map_err(Error::from)?
+				}
+			},
+			ClientMessage::Misbehaviour(_) => unimplemented!(),
 		}
-
 		Ok(())
 	}
 
@@ -141,8 +151,14 @@ where
 		ctx: &Ctx,
 		client_id: ClientId,
 		client_state: Self::ClientState,
-		header: Self::Header,
+		message: Self::ClientMessage,
 	) -> Result<(Self::ClientState, ConsensusUpdateResult<Ctx>), Ics02Error> {
+		let header = match message {
+			ClientMessage::Header(header) => header,
+			_ => unreachable!(
+				"02-client will check for misbehaviour before calling update_state; qed"
+			),
+		};
 		let mut parachain_cs_states = vec![];
 		// Extract the new client state from the verified header
 		let mut client_state = client_state.from_header(header.clone()).map_err(Error::from)?;
@@ -181,7 +197,7 @@ where
 	fn update_state_on_misbehaviour(
 		&self,
 		mut client_state: Self::ClientState,
-		_header: Self::Header,
+		_header: Self::ClientMessage,
 	) -> Result<Self::ClientState, Ics02Error> {
 		client_state.frozen_height =
 			Some(Height::new(client_state.para_id as u64, client_state.latest_para_height as u64));
@@ -193,9 +209,11 @@ where
 		_ctx: &Ctx,
 		_client_id: ClientId,
 		_client_state: Self::ClientState,
-		_header: Self::Header,
+		message: Self::ClientMessage,
 	) -> Result<bool, Ics02Error> {
-		Ok(false)
+		// todo: we should also check that this update doesn't include competing consensus states
+		// for heights we already processed.
+		Ok(matches!(message, ClientMessage::Misbehaviour(_)))
 	}
 
 	fn verify_upgrade_and_update_state<Ctx: ReaderContext>(

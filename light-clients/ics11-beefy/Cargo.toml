@@ -9,7 +9,6 @@ all-features = true
 
 [features]
 default = ["std"]
-mocks = ["std"]
 std = [
     "ibc/std",
     "ibc-proto/std",
@@ -36,8 +35,8 @@ prost-build = "0.11.1"
 
 [dependencies]
 # ibc deps
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "d4b034e6768a3553a7d0ca9e2e3d532e3cea5f29", default-features = false }
-ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", rev = "d4b034e6768a3553a7d0ca9e2e3d532e3cea5f29", default-features = false }
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "70e3fa4bbb91f7b5893c1f1d2997ec46add1aad9", default-features = false }
+ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", rev = "70e3fa4bbb91f7b5893c1f1d2997ec46add1aad9", default-features = false }
 
 # beefy deps
 beefy-client = { package = "beefy-light-client", path = "../../algorithms/beefy",  default-features = false }
@@ -72,10 +71,11 @@ rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8"
 default-features = false
 
 [dev-dependencies]
+futures = "0.3.24"
 serde = { version = "1.0.144", features = ["derive"] }
 beefy-prover = { path = "../../algorithms/beefy/prover" }
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "d4b034e6768a3553a7d0ca9e2e3d532e3cea5f29", features = ["mocks"] }
-ibc-derive = { git = "https://github.com/ComposableFi/ibc-rs", rev = "d4b034e6768a3553a7d0ca9e2e3d532e3cea5f29" }
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "70e3fa4bbb91f7b5893c1f1d2997ec46add1aad9", features = ["mocks"] }
+ibc-derive = { git = "https://github.com/ComposableFi/ibc-rs", rev = "70e3fa4bbb91f7b5893c1f1d2997ec46add1aad9" }
 subxt = { git = "https://github.com/paritytech/subxt", rev = "c55b7ba3e34118f61dc51499a0b38262c513aec4" }
 tokio = { version = "1.21.1", features = ["macros"] }
 sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }

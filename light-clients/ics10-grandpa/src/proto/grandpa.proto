@@ -97,3 +97,16 @@ message Header {
   // new parachain headers finalized by the GRANDPA finality proof
   repeated ParachainHeaderWithRelayHash parachain_headers = 2;
 }
+
+// GRANDPA misbehaviour type
+message Misbehaviour {
+  // todo:
+}
+
+// ClientMessage for ics10-GRANDPA
+message ClientMessage {
+  oneof message {
+    Header header = 1;
+    Misbehaviour misbehaviour = 2;
+  }
+}

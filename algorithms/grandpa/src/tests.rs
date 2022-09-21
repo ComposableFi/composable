@@ -20,7 +20,7 @@ use codec::Decode;
 use finality_grandpa_rpc::GrandpaApiClient;
 use futures::StreamExt;
 use grandpa_prover::{host_functions::HostFunctionsProvider, runtime, GrandpaProver};
-use polkadot_core_primitives::Block;
+use polkadot_core_primitives::Header;
 use primitives::ClientState;
 use serde::{Deserialize, Serialize};
 use sp_core::H256;
@@ -32,7 +32,7 @@ use subxt::{
 	DefaultConfig,
 };
 
-pub type Justification = GrandpaJustification<Block>;
+pub type Justification = GrandpaJustification<Header>;
 
 /// An encoded justification proving that the given header has been finalized
 #[derive(Clone, Serialize, Deserialize)]
@@ -62,13 +62,13 @@ async fn follow_grandpa_justifications() {
 		.await
 		.unwrap()
 		.filter_map(|result| futures::future::ready(result.ok()))
-		.skip_while(|h| futures::future::ready(*h.number() < 201))
+		.skip_while(|h| futures::future::ready(*h.number() < 210))
 		.take(1)
 		.collect::<Vec<_>>()
 		.await;
 	println!("Grandpa proofs are now available");
 
-	let mut subscription =
+	let subscription =
 		GrandpaApiClient::<JustificationNotification, H256, u32>::subscribe_justifications(
 			&*relay_client.rpc().client,
 		)
@@ -105,9 +105,9 @@ async fn follow_grandpa_justifications() {
 
 	let mut client_state =
 		ClientState { current_authorities, current_set_id, latest_relay_hash, para_id: 2000 };
-
+	let mut subscription_stream = subscription.take(100);
 	while let Some(Ok(JustificationNotification(sp_core::Bytes(justification)))) =
-		subscription.next().await
+		subscription_stream.next().await
 	{
 		println!("========= New Justification =========");
 		println!("justification size: {}kb", size_of_val(&*justification) / 1000);
@@ -139,7 +139,7 @@ async fn follow_grandpa_justifications() {
 			.expect("Failed to fetch finalized parachain headers with proof");
 
 		client_state = verify_parachain_headers_with_grandpa_finality_proof::<
-			Block,
+			Header,
 			HostFunctionsProvider,
 		>(client_state, proof)
 		.expect("Failed to verify parachain headers with grandpa finality_proof");
