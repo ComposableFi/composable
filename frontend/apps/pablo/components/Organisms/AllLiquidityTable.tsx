@@ -30,8 +30,8 @@ const tableHeaders: TableHeader[] = [
     tooltip: "TVL",
   },
   {
-    header: "ROI",
-    tooltip: "ROI",
+    header: "APY",
+    tooltip: "APY",
   },
   {
     header: "Daily Rewards",

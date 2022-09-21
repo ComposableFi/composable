@@ -56,7 +56,7 @@ const Home: NextPage = () => {
               <WalletBreakdownBox mt={8} key="wallet-breakdown" />
               <LiquidityProvidersBox mt={8} key="liquidity-provider-box" />
               <YourBondsBox mt={8} key="your-bond-box" />
-              <XPablosBox mt={8} key="xpablos-box" />
+              <XPablosBox financialNftCollectionId="-" mt={8} key="xpablos-box" />
             </>
           )}
         </Box>

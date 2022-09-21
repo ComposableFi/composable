@@ -8,28 +8,44 @@ import useStore from "@/store/useStore";
 import { fetchBalanceByAssetId } from "@/defi/utils";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import _ from "lodash";
+import { useOnChainAssetIds } from "@/store/hooks/useOnChainAssetsIds";
+
+function shouldUpdateBalances(tx: any, account: string): boolean {
+  if (
+    [
+      "dexRouter",
+      "bondedFinance",
+      "pablo",
+      "stakingRewards"
+    ].includes(tx.section) && tx.sender === account &&
+    tx.status === "isFinalized"
+  ) {
+    return true;
+  }
+  return false;
+}
 
 const processedTransactions: string[] = [];
 const Updater = () => {
-  const { putAssetBalance, supportedAssets } = useStore();
+  const { putAssetBalance } = useStore();
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
+  const onChainAssetIds = useOnChainAssetIds();
   const extrinsicCalls = useExtrinsics();
 
   const updateAllBalances = useCallback(async () => {
     if (parachainApi && selectedAccount) {
-      let assets = [];
-      for (let index = 0; index < supportedAssets.length; index++) {
-        assets.push(supportedAssets[index].network[DEFAULT_NETWORK_ID])
+      let assets = Array.from(onChainAssetIds);
+      for (let index = 0; index < assets.length; index++) {
         const balance = await fetchBalanceByAssetId(
           parachainApi,
           selectedAccount.address,
-          supportedAssets[index].network[DEFAULT_NETWORK_ID]
+          assets[index]
         )
-        putAssetBalance(DEFAULT_NETWORK_ID, supportedAssets[index].network[DEFAULT_NETWORK_ID], balance);
+        putAssetBalance(DEFAULT_NETWORK_ID, assets[index], balance);
       }
     }
-  }, [parachainApi, selectedAccount, supportedAssets, putAssetBalance])
+  }, [parachainApi, selectedAccount, onChainAssetIds, putAssetBalance])
 
   useEffect(() => {
     if (updateAllBalances && typeof updateAllBalances === "function") {
@@ -48,9 +64,7 @@ const Updater = () => {
       let shouldUpdate: string | null = null;
       txs.forEach((tx) => {
         if (
-          tx.sender === selectedAccount.address &&
-          tx.status === "isFinalized" &&
-          (tx.section === "dexRouter" || tx.section === "pablo") &&
+          shouldUpdateBalances(tx, selectedAccount.address) &&
           !processedTransactions.includes(tx.hash)
         ) {
           shouldUpdate = tx.hash;

@@ -1,19 +1,27 @@
+import { stringToU8a } from "@polkadot/util";
 import BigNumber from "bignumber.js";
 import moment from "moment";
 
+export const PBLO_ASSET_ID = "5";
 export const DEFAULT_DECIMALS = new BigNumber(10).pow(12);
 export const AVERAGE_BLOCK_TIME = 20 * 1000;
 export const DEFAULT_NETWORK_ID = "picasso";
 // cspell:disable-next
-export const PALLET_TYPE_ID = "modl";
+export const PALLET_ID = "modl";
+export const PALLET_TYPE_ID = stringToU8a(PALLET_ID);
 export const SECONDS = 1 * 1000;
 export const MINUTES = 60 * SECONDS;
 export const HOURS = 60 * MINUTES;
+/** 1 Day in milliseconds */
 export const DAYS = 24 * HOURS;
 
-export const FORMAT_1D = "hh:mm A";
+export const PERMILL_UNIT = new BigNumber(1_000_000);
+export const PERBILL_UNIT = new BigNumber(1_000_000_000);
+
+export const FORMAT_1D = "hh:mm";
 export const FORMAT_1w = "DD/MM";
 export const FORMAT_1M = "MM/YYYY";
+export const DATE_FORMAT = "DD/MM/YYYY";
 
 export const MAX_CHART_LABELS = 5;
 export const APOLLO_UPDATE_BLOCKS = 6;

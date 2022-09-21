@@ -18,7 +18,7 @@ import {
   resetBondedOfferVestingState,
   useBondOffersSlice,
 } from "@/store/bond/bond.slice";
-import { useExtrinsics, useParachainApi, useSelectedAccount } from "substrate-react";
+import { useParachainApi, useSelectedAccount } from "substrate-react";
 import {
   fetchTotalPurchasedBondsByOfferIds,
   extractUserBondedFinanceVestingScheduleAddedEvents,

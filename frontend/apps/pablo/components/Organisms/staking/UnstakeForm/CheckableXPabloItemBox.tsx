@@ -7,8 +7,9 @@ import {
   useTheme,
 } from "@mui/material";
 import { BaseAsset, Checkbox } from "@/components/Atoms";
-import { TOKENS } from "@/defi/Tokens";
-import { XPablo } from "@/defi/types";
+import { StakedFinancialNftPosition } from "@/defi/types";
+import { useAsset } from "@/defi/hooks";
+import { PBLO_ASSET_ID } from "@/defi/utils";
 
 const defaultFlexBoxProps = {
   display: "flex",
@@ -34,9 +35,9 @@ const containerProps = (theme: Theme, selected?: boolean) =>
   } as const);
 
 export type CheckableXPabloItemBoxProps = {
-  xPablo: XPablo;
-  selectedXPabloId?: number;
-  setSelectedXPabloId?: (id?: number) => void;
+  xPablo: StakedFinancialNftPosition;
+  selectedXPabloId?: string;
+  setSelectedXPabloId?: (id?: string) => void;
 } & BoxProps;
 
 export const CheckableXPabloItemBox: React.FC<CheckableXPabloItemBoxProps> = ({
@@ -47,25 +48,26 @@ export const CheckableXPabloItemBox: React.FC<CheckableXPabloItemBoxProps> = ({
 }) => {
   const theme = useTheme();
 
-  const selected = xPablo.id === selectedXPabloId;
+  const selected = xPablo.nftId === selectedXPabloId;
 
+  const pabloAsset = useAsset(PBLO_ASSET_ID);
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSelectedXPabloId?.(event.target.checked ? xPablo.id : undefined);
+    setSelectedXPabloId?.(event.target.checked ? xPablo.nftId : undefined);
   };
 
   return (
     <Box {...containerProps(theme, selected)} {...boxProps}>
       <Box {...defaultFlexBoxProps}>
         <Checkbox
-          value={xPablo.id}
+          value={xPablo.nftId}
           checked={selected}
           onChange={handleChange}
           inputProps={{ "aria-label": "controlled" }}
         />
-        <BaseAsset icon={TOKENS.pablo.icon} label={`fNFT ${xPablo.id}`} />
+        <BaseAsset icon={pabloAsset?.icon} label={`x-${pabloAsset?.symbol} ${xPablo.nftId}`} />
       </Box>
       <Typography variant="body1">
-        {`${xPablo.amount.toFormat()}(~$${xPablo.locked.toFormat()})`}
+        {`${xPablo.lockedPrincipalAsset.toFormat()}(~$${xPablo.lockedPrincipalAsset.toFormat()})`}
       </Typography>
     </Box>
   );
