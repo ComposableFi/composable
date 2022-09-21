@@ -45,7 +45,7 @@ pub mod pallet {
 	use composable_support::math::safe::SafeAdd;
 	use composable_traits::{
 		account_proxy::AccountProxy,
-		currency::{AssetIdLike, CurrencyFactory},
+		currency::AssetIdLike,
 		fnft::{FinancialNft, FnftAccountProxyTypeSelector},
 	};
 	use core::fmt::Debug;
