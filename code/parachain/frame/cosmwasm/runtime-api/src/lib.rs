@@ -3,20 +3,35 @@
 #![allow(clippy::unnecessary_mut_passed)]
 
 use codec::Codec;
+use sp_std::collections::btree_map::BTreeMap;
+#[cfg(not(feature = "std"))]
+use sp_std::vec::Vec;
 
-// Pablo Runtime API declaration. Implemented for each runtime at
+// Cosmwasm Runtime API declaration. Implemented for each runtime at
 // `runtime/<runtime-name>/src/lib.rs`.
 sp_api::decl_runtime_apis! {
-	pub trait CosmwasmRuntimeApi<AccountId, QueryRequest, Binary>
+	pub trait CosmwasmRuntimeApi<AccountId, AssetId, Balance, Error>
 	where
 		AccountId: Codec,
-		QueryRequest: Codec,
-		Binary: Codec,
+		AssetId: Codec,
+		Balance: Codec,
+		Error: Codec
 	{
 		fn query(
 			contract: AccountId,
 			gas: u64,
-			query_request: QueryRequest,
-		) -> Binary;
+			query_request: Vec<u8>,
+		) -> Result<Vec<u8>, Error>;
+
+		fn instantiate(
+			instantiator: AccountId,
+			code_id: u64,
+			salt: Vec<u8>,
+			admin: Option<AccountId>,
+			label: Vec<u8>,
+			funds: BTreeMap<AssetId, (Balance, bool)>,
+			gas: u64,
+			message: Vec<u8>,
+		) -> Result<AccountId, Error>;
 	}
 }

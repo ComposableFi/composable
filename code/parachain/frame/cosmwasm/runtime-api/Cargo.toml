@@ -18,7 +18,6 @@ composable-traits = { path = "../../composable-traits", default-features = false
 sp-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 
-
 # REVIEW: Does the runtime API need features?
 [features]
 default = ["std"]

@@ -1542,19 +1542,42 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl cosmwasm_runtime_api::CosmwasmRuntimeApi<Block, AccountId, Vec<u8>, Vec<u8>> for Runtime {
+	impl cosmwasm_runtime_api::CosmwasmRuntimeApi<Block, AccountId, CurrencyId, Balance, Vec<u8>> for Runtime {
 		fn query(
 			contract: AccountId,
 			gas: u64,
 			query_request: Vec<u8>,
-		) -> Vec<u8> {
-			cosmwasm::query::<Runtime>(
+		) -> Result<Vec<u8>, Vec<u8>>{
+			match cosmwasm::query::<Runtime>(
 				contract,
 				gas,
 				query_request,
-			).map(|resp| resp.0).unwrap_or_else(|_| {
-				Default::default()
-			})
+			) {
+				Ok(response) => Ok(response.0),
+				Err(err) => Err(alloc::format!("{:?}", err).into_bytes())
+			}
+		}
+
+		fn instantiate(
+			instantiator: AccountId,
+			code_id: u64,
+			salt: Vec<u8>,
+			admin: Option<AccountId>,
+			label: Vec<u8>,
+			funds: BTreeMap<CurrencyId, (Balance, bool)>,
+			gas: u64,
+			message: Vec<u8>,
+		) -> Result<AccountId, Vec<u8>> {
+			cosmwasm::instantiate::<Runtime>(
+				instantiator,
+				code_id,
+				salt,
+				admin,
+				label,
+				funds,
+				gas,
+				message.into()
+			).map_err(|err| alloc::format!("{:?}", err).into_bytes())
 		}
 	}
 

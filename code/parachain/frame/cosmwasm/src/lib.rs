@@ -406,7 +406,8 @@ pub mod pallet {
 				label,
 				funds,
 				message,
-			);
+			)
+			.map(|_| ());
 			Self::refund_gas(outcome, gas, shared.gas.remaining())
 		}
 
@@ -536,7 +537,7 @@ pub mod pallet {
 			label: ContractLabelOf<T>,
 			funds: FundsOf<T>,
 			message: ContractMessageOf<T>,
-		) -> Result<(), CosmwasmVMError<T>> {
+		) -> Result<AccountIdOf<T>, CosmwasmVMError<T>> {
 			let (contract, info) = Self::do_instantiate_phase1(
 				instantiator.clone(),
 				code_id,
@@ -545,15 +546,16 @@ pub mod pallet {
 				label,
 				&message,
 			)?;
-			Self::do_extrinsic_dispatch(
+			let _ = Self::do_extrinsic_dispatch(
 				shared,
 				EntryPoint::Instantiate,
 				instantiator,
-				contract,
+				contract.clone(),
 				info,
 				funds,
 				|vm| cosmwasm_system_entrypoint::<InstantiateInput, _>(vm, &message),
-			)
+			)?;
+			Ok(contract)
 		}
 
 		pub(crate) fn do_extrinsic_execute(
@@ -1253,6 +1255,52 @@ pub mod pallet {
 					.map_err(|e| CosmwasmVMError::Rpc(e))
 			},
 		)
+	}
+
+	pub fn instantiate<T: Config>(
+		instantiator: AccountIdOf<T>,
+		code_id: CosmwasmCodeId,
+		salt: Vec<u8>,
+		admin: Option<AccountIdOf<T>>,
+		label: Vec<u8>,
+		funds: BTreeMap<AssetIdOf<T>, (BalanceOf<T>, KeepAlive)>,
+		gas: u64,
+		message: Vec<u8>,
+	) -> Result<AccountIdOf<T>, CosmwasmVMError<T>> {
+		let salt: ContractSaltOf<T> = salt
+			.try_into()
+			.map_err(|_| CosmwasmVMError::Rpc(String::from("'salt' is too large")))?;
+		let label: ContractLabelOf<T> = label
+			.try_into()
+			.map_err(|_| CosmwasmVMError::Rpc(String::from("'label' is too large")))?;
+		let funds: FundsOf<T> = funds
+			.try_into()
+			.map_err(|_| CosmwasmVMError::Rpc(String::from("'funds' is too large")))?;
+		let message: ContractMessageOf<T> = message
+			.try_into()
+			.map_err(|_| CosmwasmVMError::Rpc(String::from("'message' is too large")))?;
+		let mut shared = Pallet::<T>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
+		Pallet::<T>::do_extrinsic_instantiate(
+			&mut shared,
+			instantiator,
+			code_id,
+			&salt,
+			admin,
+			label,
+			funds,
+			message,
+		)
+	}
+
+	pub fn execute<T: Config>(
+		executor: AccountIdOf<T>,
+		contract: AccountIdOf<T>,
+		funds: FundsOf<T>,
+		gas: u64,
+		message: ContractMessageOf<T>,
+	) -> Result<(), CosmwasmVMError<T>> {
+		let mut shared = Pallet::<T>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
+		Pallet::<T>::do_extrinsic_execute(&mut shared, executor, contract, funds, message)
 	}
 
 	impl<T: Config> VMPallet for T {
