@@ -76,3 +76,4 @@ ignorePaths:
   - "frame/airdrop/index.html"
   - "code/integration-tests/local-integration-tests/README.md"
   - "subsquid/src/interfaces"
+  - "code/utils/composable-subxt/src/generated"
