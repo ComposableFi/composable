@@ -52,6 +52,7 @@ export const BurnCheckboxList: FC<{
           typeof unsubscribeFunction === "function" && unsubscribeFunction?.()
       );
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stakingPortfolio]);
   return (
     <Stack gap={4} marginTop={9}>

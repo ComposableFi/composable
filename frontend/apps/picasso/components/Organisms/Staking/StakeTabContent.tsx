@@ -1,5 +1,13 @@
 import BigNumber from "bignumber.js";
-import { alpha, Box, Button, Slider, Stack, Typography, useTheme } from "@mui/material";
+import {
+  alpha,
+  Box,
+  Button,
+  Slider,
+  Stack,
+  Typography,
+  useTheme,
+} from "@mui/material";
 import { formatNumber } from "shared";
 import { AlertBox, BigNumberInput } from "@/components";
 import { TextWithTooltip } from "@/components/Molecules/TextWithTooltip";
@@ -8,42 +16,37 @@ import { WarningAmberRounded } from "@mui/icons-material";
 import { FC, useEffect, useState } from "react";
 import { useSelectedAccount } from "@/defi/polkadot/hooks";
 import { useSnackbar } from "notistack";
-import { calculateStakingPeriodAPR, formatDurationOption, stake } from "@/defi/polkadot/pallets/StakingRewards";
+import {
+  calculateStakingPeriodAPR,
+  formatDurationOption,
+  stake,
+} from "@/defi/polkadot/pallets/StakingRewards";
 import { useStakingRewards } from "@/defi/polkadot/hooks/useStakingRewards";
-
 
 export const StakeTabContent: FC = () => {
   const theme = useTheme();
   const [lockablePICA, setLockablePICA] = useState<BigNumber>(new BigNumber(0));
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
-  const {
-    picaRewardPool,
-    balance,
-    meta,
-    executor,
-    parachainApi,
-    assetId
-  } = useStakingRewards();
+  const { picaRewardPool, balance, meta, executor, parachainApi, assetId } =
+    useStakingRewards();
 
   const options = Object.entries(picaRewardPool.lock.durationPresets).reduce(
     (acc, [duration, _]) => [
       ...acc,
       {
         label: "",
-        value: Number(duration)
-      }
+        value: Number(duration),
+      },
     ],
     [] as any
   );
 
-  const minDuration = Object.entries(picaRewardPool.lock.durationPresets).reduce(
-    (a, [b, _]) => a !== 0 && a < Number(b) ? a : Number(b),
-    0
-  );
-  const maxDuration = Object.entries(picaRewardPool.lock.durationPresets).reduce(
-    (a, [b, _]) => a > Number(b) ? a : Number(b),
-    0
-  );
+  const minDuration = Object.entries(
+    picaRewardPool.lock.durationPresets
+  ).reduce((a, [b, _]) => (a !== 0 && a < Number(b) ? a : Number(b)), 0);
+  const maxDuration = Object.entries(
+    picaRewardPool.lock.durationPresets
+  ).reduce((a, [b, _]) => (a > Number(b) ? a : Number(b)), 0);
 
   const [lockPeriod, setLockPeriod] = useState<string>("");
   const account = useSelectedAccount();
@@ -53,10 +56,10 @@ export const StakeTabContent: FC = () => {
     if (inputValue.toString() !== lockPeriod) {
       setLockPeriod(inputValue.toString());
     }
-  }, [inputValue])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inputValue]);
 
-  const setValidation = () => {
-  };
+  const setValidation = () => {};
   return (
     <Stack sx={{ marginTop: theme.spacing(9) }} gap={4}>
       <Stack gap={1.5}>
@@ -92,22 +95,38 @@ export const StakeTabContent: FC = () => {
           Select lock period (multiplier)
         </TextWithTooltip>
         <Box display="flex" justifyContent="flex-end" alignItems="center">
-          <Typography variant="body2" color={alpha(theme.palette.common.white, 0.6)}>
+          <Typography
+            variant="body2"
+            color={alpha(theme.palette.common.white, 0.6)}
+          >
             APR
           </Typography>
         </Box>
       </Box>
       {options.length > 0 && inputValue && (
         <>
-          <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+          >
             <Typography variant="h6">
-              {inputValue && picaRewardPool.lock.durationPresets && formatDurationOption(
-                inputValue.toString(),
-                picaRewardPool.lock.durationPresets[inputValue.toString()]
-              )}
+              {inputValue &&
+                picaRewardPool.lock.durationPresets &&
+                formatDurationOption(
+                  inputValue.toString(),
+                  picaRewardPool.lock.durationPresets[inputValue.toString()]
+                )}
             </Typography>
-            <Typography variant="subtitle1" color={theme.palette.featured.lemon}>
-              ≈%{calculateStakingPeriodAPR(inputValue.toString(), picaRewardPool.lock.durationPresets)}
+            <Typography
+              variant="subtitle1"
+              color={theme.palette.featured.lemon}
+            >
+              ≈%
+              {calculateStakingPeriodAPR(
+                inputValue.toString(),
+                picaRewardPool.lock.durationPresets
+              )}
             </Typography>
           </Box>
 
@@ -134,8 +153,8 @@ export const StakeTabContent: FC = () => {
       </AlertBox>
       <Button
         fullWidth
-        onClick={() => stake(
-          {
+        onClick={() =>
+          stake({
             executor,
             parachainApi,
             account,
@@ -143,9 +162,9 @@ export const StakeTabContent: FC = () => {
             lockablePICA,
             lockPeriod,
             enqueueSnackbar,
-            closeSnackbar
-          }
-        )}
+            closeSnackbar,
+          })
+        }
         variant="contained"
         color="primary"
         disabled={!lockablePICA.isGreaterThan(0) || !lockPeriod}
