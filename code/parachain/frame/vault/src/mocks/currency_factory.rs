@@ -79,17 +79,17 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(10_000)]
 		pub fn create(_origin: OriginFor<T>, id: RangeId) -> DispatchResultWithPostInfo {
-			let currency_id = <Self as CurrencyFactory<MockCurrencyId, T::Balance>>::create(
-				id,
-				T::Balance::default(),
-			)?;
+			let currency_id = <Self as CurrencyFactory>::create(id, T::Balance::default())?;
 			Self::deposit_event(Event::Created(currency_id));
 			Ok(().into())
 		}
 	}
 
-	impl<T: Config> CurrencyFactory<MockCurrencyId, T::Balance> for Pallet<T> {
-		fn create(_: RangeId, _: T::Balance) -> Result<MockCurrencyId, DispatchError> {
+	impl<T: Config> CurrencyFactory for Pallet<T> {
+		type AssetId = MockCurrencyId;
+		type Balance = T::Balance;
+
+		fn create(_: RangeId, _: Self::Balance) -> Result<Self::AssetId, DispatchError> {
 			let lp_token_id = CurrencyCounter::<T>::mutate(|c| {
 				*c += 1;
 				*c
@@ -98,10 +98,14 @@ pub mod pallet {
 		}
 
 		fn protocol_asset_id_to_unique_asset_id(
-			_: u32,
-			_: RangeId,
-		) -> Result<MockCurrencyId, DispatchError> {
+			_protocol_asset_id: u32,
+			_range_id: RangeId,
+		) -> Result<Self::AssetId, DispatchError> {
 			Ok(MockCurrencyId::from(1))
+		}
+
+		fn unique_asset_id_to_protocol_asset_id(_unique_asset_id: Self::AssetId) -> u32 {
+			1
 		}
 	}
 }

@@ -1,12 +1,20 @@
+use sp_runtime::AccountId32;
+
 /// Contains the mock runtime for this pallet's test suite.
 pub(crate) mod mock;
 
 /// Various helpers used throughout this test suite.
 pub(crate) mod prelude;
 
-const ALICE: u128 = 0;
-const BOB: u128 = 1;
-const CHARLIE: u128 = 2;
+const ALICE: AccountId32 = AccountId32::new([
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+]);
+const BOB: AccountId32 = AccountId32::new([
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2,
+]);
+const CHARLIE: AccountId32 = AccountId32::new([
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
+]);
 
 /// Tests the pallet's [`frame_support::traits::tokens::nonfungibles`] traits implementations.
 mod nonfungibles {
@@ -39,7 +47,7 @@ mod nonfungibles {
 	fn create_inspect() {
 		new_test_ext().execute_with(|| {
 			assert_eq!(
-				Nft::create_collection(&255_u16, &ALICE, &BOB),
+				Nft::create_collection(&255, &ALICE, &BOB),
 				Ok(()),
 				"class creation should be successful"
 			);
@@ -60,7 +68,7 @@ mod nonfungibles {
 			);
 
 			assert_eq!(
-				Nft::create_collection(&255_u16, &ALICE, &BOB),
+				Nft::create_collection(&255, &ALICE, &BOB),
 				Err(Error::<MockRuntime>::CollectionAlreadyExists.into()),
 				"should not be able to create class that already exists"
 			);

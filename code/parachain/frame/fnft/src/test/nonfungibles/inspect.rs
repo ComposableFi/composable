@@ -19,13 +19,13 @@ pub(crate) fn success() {
 
 		// attribute check
 		assert_eq!(
-			Nft::attribute(&TEST_COLLECTION_ID, &created_nft_id, &1_u32.encode()),
-			Some(1_u32.encode())
+			Nft::attribute(&TEST_COLLECTION_ID, &created_nft_id, &1.encode()),
+			Some(1.encode())
 		);
 
 		// class attribute check
 		assert_eq!(
-			Nft::collection_attribute(&TEST_COLLECTION_ID, &1_u32.encode()),
+			Nft::collection_attribute(&TEST_COLLECTION_ID, &1.encode()),
 			None,
 			"class should have no attributes"
 		);
@@ -47,14 +47,14 @@ pub(crate) fn failure() {
 
 		// attribute check
 		assert_eq!(
-			Nft::attribute(&TEST_COLLECTION_ID, &(created_nft_id + 1), &1_u32.encode()),
+			Nft::attribute(&TEST_COLLECTION_ID, &(created_nft_id + 1), &1.encode()),
 			None,
 			"NFT does not exist, there should be no attributes"
 		);
 
 		// class attribute check
 		assert_eq!(
-			Nft::collection_attribute(&255_u16, &1_u32.encode()),
+			Nft::collection_attribute(&255, &1.encode()),
 			None,
 			"class does not exist, there should be no attributes"
 		);

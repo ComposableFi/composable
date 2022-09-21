@@ -8,7 +8,12 @@ use frame_support::{
 	PalletId,
 };
 use frame_system as system;
-use sp_core::H256;
+use frame_system::EnsureRoot;
+pub use sp_core::{
+	crypto::AccountId32,
+	sr25519::{Public, Signature},
+	H256,
+};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
@@ -24,10 +29,10 @@ frame_support::construct_runtime!(
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
-		Nft: crate::{Pallet, Storage , Event<T>},
-		Proxy: pallet_account_proxy::{Pallet, Call, Storage , Event<T>},
+		System: frame_system,
+		Timestamp: pallet_timestamp,
+		Nft: crate,
+		Proxy: pallet_account_proxy,
 	}
 );
 
@@ -44,9 +49,8 @@ impl FnftAccountProxyTypeSelector<ProxyType> for MockFnftAccountProxyType {
 
 impl crate::Config for MockRuntime {
 	type Event = Event;
-
 	type MaxProperties = ConstU32<16>;
-	type FinancialNftCollectionId = u16;
+	type FinancialNftCollectionId = u128;
 	type FinancialNftInstanceId = u64;
 	type ProxyType = ProxyType;
 	type AccountProxy = Proxy;
@@ -99,7 +103,7 @@ impl system::Config for MockRuntime {
 	type BlockNumber = u64;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
-	type AccountId = u128;
+	type AccountId = AccountId32;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type Event = Event;
