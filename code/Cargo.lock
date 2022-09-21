@@ -2881,6 +2881,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "devnets"
+version = "0.1.0"
+dependencies = [
+ "base58",
+ "clap 3.2.20",
+ "env_logger",
+ "hex",
+ "parity-scale-codec",
+ "sp-core",
+ "sp-externalities",
+ "sp-io",
+ "sp-keyring",
+ "sp-runtime-interface",
+ "sp-std",
+ "subxt 0.21.0",
+ "tokio",
+]
+
+[[package]]
 name = "digest"
 version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
