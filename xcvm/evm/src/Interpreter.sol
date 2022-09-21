@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "./interfaces/IInterpreter.sol";
 import "./interfaces/IGateway.sol";
+import "./BytesLib.sol";
 import "forge-std/console.sol";
 
 /**
@@ -13,6 +14,7 @@ import "forge-std/console.sol";
  * @notice Custom interpreter
  */
 contract Interpreter is IInterpreter {
+    using BytesLib for bytes;
     enum OPERATION {
         NONE,
         TRANSFER,
@@ -203,7 +205,7 @@ contract Interpreter is IInterpreter {
             program
         );
         console.logBytes(program[0:pos]);
-        console.log(5444, success, field, uint256(_type));
+        console.log(5443, success, field, uint256(_type));
         require(success, "decode key failed");
         // require(field == 1, "decode key failed");
         require(
@@ -287,20 +289,6 @@ contract Interpreter is IInterpreter {
         uint64 field;
         ProtobufLib.WireType _type;
 
-        // reading balance message
-        (success, pos, field, _type) = ProtobufLib.decode_key(
-            pos,
-            program
-        );
-        console.logBytes(program[0:pos]);
-        console.log(3444, success, field, uint256(_type));
-        require(field == 2, "not balance key id");
-        require(success, "decode key failed");
-        require(
-            _type == ProtobufLib.WireType.LengthDelimited,
-            "decode type is not embedded messages"
-        );
-
         // read balance message body
         (success, pos, size) = ProtobufLib.decode_embedded_message(
             pos,
@@ -331,7 +319,7 @@ contract Interpreter is IInterpreter {
                 program,
                 pos
             );
-
+            amount = IERC20(assetAddress).balanceOf(address(this)) * nominator / denominator;
         } else if (field == 2) {
             // absolute
             (amount, newPos) = _handleAbsolute(program, pos);
@@ -342,6 +330,48 @@ contract Interpreter is IInterpreter {
             require(false, "unknown balance type");
         }
 
+    }
+
+    function _handleAssetId(bytes calldata program, uint64 pos) internal returns (address asset, uint64 newPos){
+        bool success;
+        uint64 size;
+        uint64 field;
+        ProtobufLib.WireType _type;
+
+        // read asset message body
+        (success, pos, size) = ProtobufLib.decode_embedded_message(
+            pos,
+            program
+        );
+        console.logBytes(program[0:pos]);
+        console.log(22888, success, pos, size);
+        require(success, "decode embedded message failed");
+
+        // reading asset message
+        (success, pos, field, _type) = ProtobufLib.decode_key(
+            pos,
+            program
+        );
+        console.logBytes(program[0:pos]);
+        console.log(5444, success, field, uint256(_type));
+        require(field == 1, "not uint64 asset id");
+        require(success, "decode key failed");
+        require(
+            _type == ProtobufLib.WireType.Varint,
+            "decode type is not embedded messages"
+        );
+        // decode asset id
+        uint64 assetId;
+        (success, newPos, assetId) = ProtobufLib.decode_uint64(
+            pos,
+            program
+        );
+        require(success, "decode key failed");
+
+        asset = IGateway(gatewayAddress).assets(
+            uint256(assetId)
+        );
+        require(asset != address(0), "asset not registered");
     }
 
     function _handleAsset(bytes calldata program, uint64 pos)
@@ -370,14 +400,9 @@ contract Interpreter is IInterpreter {
             "decode type is not embedded messages"
         );
 
-        // read asset message body
-        (success, pos, size) = ProtobufLib.decode_embedded_message(
-            pos,
-            program
-        );
-        console.logBytes(program[0:pos]);
-        console.log(22888, success, pos, size);
-        require(success, "decode embedded message failed");
+
+        (asset, pos) = _handleAssetId(program, pos);
+
 
         // reading asset message
         (success, pos, field, _type) = ProtobufLib.decode_key(
@@ -385,25 +410,15 @@ contract Interpreter is IInterpreter {
             program
         );
         console.logBytes(program[0:pos]);
-        console.log(5444, success, field, uint256(_type));
-        require(field == 1, "not uint64 asset id");
+        console.log(3444, success, field, uint256(_type));
+        require(field == 2, "not asset id");
         require(success, "decode key failed");
         require(
-            _type == ProtobufLib.WireType.Varint,
+            _type == ProtobufLib.WireType.LengthDelimited,
             "decode type is not embedded messages"
         );
-        // decode asset id
-        uint64 assetId;
-        (success, pos, assetId) = ProtobufLib.decode_uint64(
-            pos,
-            program
-        );
-        require(success, "decode key failed");
 
-        asset = IGateway(gatewayAddress).assets(
-            uint256(assetId)
-        );
-        require(asset != address(0), "asset not registered");
+
 
         // reading
         (amount, newPos) = _handleBalance(program, asset, pos);
@@ -491,28 +506,86 @@ contract Interpreter is IInterpreter {
         (newPos) = _handleAssets(program, pos, account);
     }
 
-    function _handleBinding(bytes calldata program, uint64 pos, bytes memory payload) 
+    function _handleBindingValue(bytes calldata program, uint64 pos) internal returns(bytes memory valueToReplace, uint64 newPos) {
+
+        bool success;
+        uint64 size;
+        uint64 field;
+        ProtobufLib.WireType _type;
+        uint64 valueType;
+
+        // read binding value
+        //self
+        (success, pos, size) = ProtobufLib.decode_embedded_message(
+            pos,
+            program
+        );
+        console.log(666444, success, pos, size);
+        require(success, "decode embedded message failed");
+
+        (success, pos, valueType, _type) = ProtobufLib.decode_key(
+            pos,
+            program
+        );
+        console.logBytes(program[0:pos]);
+        console.log(3333333333333333332326, success, valueType, uint256(_type));
+        require(success, "decode key failed");
+
+
+        if (valueType == 1) {
+            //self
+            (success, pos, size) = ProtobufLib.decode_embedded_message(
+                pos,
+                program
+            );
+            newPos = pos + size;
+            valueToReplace = abi.encode(address(this));
+        } else if (valueType == 2){
+        // relayer
+        } else if (valueType == 3){
+            //result
+        } else if (valueType == 4) {
+            // TODO ratio is not support, dynamic binding for the addresses bring complexity on binding ratio based balance
+            console.log('handling balance type');
+            uint256 amount;
+            (amount, newPos) = _handleBalance(program, address(0), pos);
+            console.log("amount", amount);
+            valueToReplace = abi.encode(uint256(amount));
+            //balance
+        } else if (valueType == 5) {
+            // asset id
+            address asset;
+            (asset, newPos) = _handleAssetId(program, pos);
+            console.log('asset id', asset);
+            console.log('newPos', newPos);
+            console.log(asset);
+            valueToReplace = abi.encode(asset);
+            console.logBytes(valueToReplace);
+        } else {
+            revert("woring binding value type");
+        }
+    }
+
+    function _handleBinding(bytes calldata program, uint64 pos, bytes memory payload)
         internal 
-        returns (Binding memory bindings, uint64 newPos)
+        returns (uint64 position, bytes memory valueToReplace, uint64 newPos)
     {
         bool success;
         uint64 size;
         uint64 field;
         ProtobufLib.WireType _type;
-        if (pos >= program.length - 1){
-            //return (newPayload, newPos); 
-        }
+
         (success, pos, field, _type) = ProtobufLib.decode_key(
             pos,
             program
         );
         console.logBytes(program[0:pos]);
-        console.log(2323, success, field, uint256(_type));
-        require(field == 2, "not bindings");
+        console.log(3333333333333333332329, success, field, uint256(_type));
+        //require(field == 1, "not position");
         require(success, "decode key failed");
         require(
             _type == ProtobufLib.WireType.LengthDelimited,
-            "decode type is not embedded messages"
+            "decode type is a LengthDelimited"
         );
 
         (success, pos, size) = ProtobufLib.decode_embedded_message(
@@ -520,35 +593,238 @@ contract Interpreter is IInterpreter {
             program
         );
         console.logBytes(program[0:pos]);
-        console.log(888, success, pos, size);
+        console.log(3333444, success, pos, size);
         require(success, "decode embedded message failed");
-        uint64 totalBindingsLength = pos + size;
-        while (pos < totalBindingsLength) {
-            // reading bindings message
-            /*
-            (success, pos, field, _type) = ProtobufLib.decode_key(
-                pos,
-                program
-            );
-            console.logBytes(program[0:pos]);
-            console.log(2323, success, field, uint256(_type));
-            require(field == 2, "not bindings");
-            require(success, "decode key failed");
-            require(
-                _type == ProtobufLib.WireType.LengthDelimited,
-                "decode type is not embedded messages"
-            );
 
-            // reading instruction size
-            (success, pos, size) = ProtobufLib
-                .decode_embedded_message(pos, program);
-            console.logBytes(program[0:pos]);
-            console.log(44444, success, pos, size);
-            require(success, "decode embedded message failed");
-            */
-        }
+        (success, pos, field, _type) = ProtobufLib.decode_key(
+            pos,
+            program
+        );
+        console.logBytes(program[0:pos]);
+        console.log(3333333333333333332324, success, field, uint256(_type));
+        require(field == 1, "not position");
+        require(success, "decode key failed");
+        require(
+            _type == ProtobufLib.WireType.Varint,
+            "decode type is a varint"
+        );
+
+        (success, pos, position) = ProtobufLib.decode_uint32(
+            pos,
+            program
+        );
+        console.logBytes(program[0:pos]);
+        console.log(888, success, pos, position);
+        require(success, "decode embedded message failed");
+
+        (success, pos, field, _type) = ProtobufLib.decode_key(
+            pos,
+            program
+        );
+        console.logBytes(program[0:pos]);
+        console.log(3333333333333333332323, success, field, uint256(_type));
+        require(field == 2, "not binding value");
+        require(success, "decode key failed");
+        require(
+            _type == ProtobufLib.WireType.LengthDelimited,
+            "decode type is not embedded messages"
+        );
+
+        (valueToReplace, pos) = _handleBindingValue(program, pos);
         newPos = pos;
+    }
 
+    function _handleNetwork(bytes calldata program, uint64 pos) internal
+        returns (uint256 networkId, uint64 newPos)
+    {
+        // reading network 
+        bool success;
+        uint64 size;
+        (success, pos, size) = ProtobufLib.decode_embedded_message(
+            pos,
+            program
+        );
+        console.logBytes(program[0:pos]);
+        console.log(666, success, pos, size);
+        require(success, "decode embedded message failed");
+
+        uint64 field;
+        ProtobufLib.WireType _type;
+        (success, pos, field, _type) = ProtobufLib.decode_key(
+            pos,
+            program
+        );
+
+        require(success, "decode key failed");
+        require(field == 1, "not network");
+        require(_type == ProtobufLib.WireType.Varint, "not varint");
+
+        (success, newPos, networkId) = ProtobufLib.decode_uint64(
+            pos,
+            program
+        );
+        require(success, "decode value failed");
+    }
+
+
+    function _handleSecurity(bytes calldata program, uint64 pos) internal
+        returns (IGateway.BridgeSecurity security, uint64 newPos)
+    {
+        // reading network 
+        bool success;
+        int32 value;
+        (success, newPos, value) = ProtobufLib.decode_enum(
+            pos,
+            program
+        );
+        require(success, "decode key failed");
+        security = IGateway.BridgeSecurity(uint32(value));
+    }
+
+
+
+    function _handleSalt(bytes calldata program, uint64 pos) internal
+        returns (uint64 salt, uint64 newPos)
+    {
+        // reading network 
+        bool success;
+        uint64 size;
+        (success, pos, size) = ProtobufLib.decode_embedded_message(
+            pos,
+            program
+        );
+        console.logBytes(program[0:pos]);
+        console.log(666, success, pos, size);
+        require(success, "decode embedded message failed");
+
+        uint64 field;
+        ProtobufLib.WireType _type;
+        (success, pos, field, _type) = ProtobufLib.decode_key(
+            pos,
+            program
+        );
+
+        require(success, "decode key failed");
+        require(field == 1, "not network");
+        require(_type == ProtobufLib.WireType.Varint, "not varint");
+
+        (success, newPos, salt) = ProtobufLib.decode_uint64(
+            pos,
+            program
+        );
+        require(success, "decode value failed");
+    }
+
+    function _handleProgram(bytes calldata program, uint64 pos)
+        internal
+        returns (bytes memory subProgram, uint64 newPos) {
+
+        // reading network
+        bool success;
+        uint64 size;
+        (success, pos, size) = ProtobufLib.decode_embedded_message(
+            pos,
+            program
+        );
+        require(success, "decode embedded message failed");
+        console.logBytes(program[0:pos]);
+        subProgram = program[pos:pos+size];
+        newPos = pos + size;
+    }
+
+    function _handleSpawn(bytes calldata program, uint64 pos) 
+        internal
+        returns (uint64 newPos)
+    {
+        // reading spawm instruction
+        bool success;
+        uint64 field;
+        uint64 size;
+        ProtobufLib.WireType _type;
+        (success, pos, size) = ProtobufLib.decode_embedded_message(
+            pos,
+            program
+        );
+        console.logBytes(program[0:pos]);
+        console.log(666, success, pos, size);
+        uint256 maxPos = pos + size;
+        require(success, "decode embedded message failed");
+
+        (success, pos, field, _type) = ProtobufLib.decode_key(
+            pos,
+            program
+        );
+        console.logBytes(program[0:pos]);
+        console.log(77, success, field, uint256(_type));
+        console.log(11111111111111);
+        require(success, "decode key failed");
+        require(field == 1, "not network");
+
+        uint256 networkId;
+        (networkId, pos) = _handleNetwork(program, pos);
+
+        // read bridgeSecurity
+        (success, pos, field, _type) = ProtobufLib.decode_key(
+            pos,
+            program
+        );
+        console.logBytes(program[0:pos]);
+        console.log(77, success, field, uint256(_type));
+        console.log(11111111111111);
+        require(success, "decode key failed");
+        require(field == 2, "not security");
+        require(_type == ProtobufLib.WireType.LengthDelimited, "not security");
+
+        IGateway.BridgeSecurity security;
+        (security, pos) = _handleSecurity(program, pos);
+
+        // read salt
+        (success, pos, field, _type) = ProtobufLib.decode_key(
+            pos,
+            program
+        );
+        console.logBytes(program[0:pos]);
+        console.log(77, success, field, uint256(_type));
+        console.log(11111111111111);
+        require(success, "decode key failed");
+        require(field == 3, "not salt");
+        require(_type == ProtobufLib.WireType.LengthDelimited, "not salt");
+
+        uint256 salt;
+        (salt, pos) = _handleSalt(program, pos);
+
+
+        // read program
+        (success, pos, field, _type) = ProtobufLib.decode_key(
+            pos,
+            program
+        );
+        console.logBytes(program[0:pos]);
+        console.log(77, success, field, uint256(_type));
+        console.log(11111111111111);
+        require(success, "decode key failed");
+        require(field == 4, "not program");
+        require(_type == ProtobufLib.WireType.LengthDelimited, "not program");
+
+        bytes memory spawnedProgram;
+        (spawnedProgram, pos) = _handleProgram(program, pos);
+
+    }
+    function _replaceBytesByPosition(bytes memory payload, uint64 position, bytes memory s) internal returns (bytes memory) {
+        bytes memory temp = new bytes(payload.length + s.length - 1);
+        uint256 count = 0;
+        for(uint256 i=0; i<payload.length; i++){
+            if (i != position){
+                temp[i+count] = payload[i];
+            }else{
+                for (uint256 j=0; j<s.length; j++){
+                    temp[i+count] = s[count];
+                    count ++;
+                }
+                count -= 1;
+            }
+        }
+        return temp;
     }
 
     function _handleCall(bytes calldata program, uint64 pos)
@@ -588,10 +864,14 @@ contract Interpreter is IInterpreter {
         console.log(success, pos, size);
         require(success, "decode embedded message failed");
         bytes memory payload = program[pos:pos + size];
+        bytes memory finalPayload;
         console.logBytes(payload);
         pos = pos + size;
+        //bytes memory bindingValues;
 
         if (pos < maxPos) {
+            console.logBytes(program[0:pos]);
+            console.log(success, pos, size);
             (success, pos, field, _type) = ProtobufLib.decode_key(
                 pos,
                 program
@@ -604,20 +884,48 @@ contract Interpreter is IInterpreter {
                 _type == ProtobufLib.WireType.LengthDelimited,
                 "decode type is not embedded messages"
             );
-            // no bindings
             (success, pos, size) = ProtobufLib.decode_embedded_message(
                 pos,
                 program
             );
             console.logBytes(program[0:pos]);
-            console.log(888, success, pos, size);
+            console.log(999, success, pos, size);
             require(success, "decode embedded message failed");
             uint64 totalBindingsLength = pos + size;
+
+            uint64 positionToRight;
+
             while (pos < totalBindingsLength) {
-                Binding memory binding;
-                (binding, pos) = _handleBinding(program, pos, payload);
+                uint64 position;
+                bytes memory valueToReplace;
+                (position, valueToReplace, pos) = _handleBinding(program, pos, payload);
+                console.log("binding");
+                console.logBytes(payload);
+                console.log(position);
+                console.logBytes(valueToReplace);
+                console.log('position to right', positionToRight);
+                payload = _replaceBytesByPosition(payload, position + positionToRight, valueToReplace);
+                console.logBytes(payload);
+                console.logBytes(valueToReplace);
+                positionToRight += uint64(valueToReplace.length) - 1;
+                console.log("replaced payload");
+                console.logBytes(payload);
+                console.logBytes(abi.encode(payload));
             }
         }
+        address addr;
+
+        //console.logBytes(payload[:20]);
+        console.log("payload");
+        //get the address from first bytes
+        (addr) = abi.decode(payload, (address));
+        console.log("sending transaction", addr);
+        finalPayload = payload.slice(32, payload.length-32);
+        console.logBytes(finalPayload);
+        console.logBytes(finalPayload);
+        (bool succ, bytes memory result) = addr.call(finalPayload);
+        console.logBytes(result);
+        require(succ, "error calling target");
         newPos = pos;
     }
 
@@ -696,7 +1004,11 @@ contract Interpreter is IInterpreter {
                 console.log(pos, totalInstructionsLength);
             } else if (
                 instruction == uint64(OPERATION.SPAWN)
-            ) {} else if (instruction == uint8(OPERATION.CALL)) {
+            ) {
+                pos = _handleSpawn(program, pos);
+                console.log(pos, totalInstructionsLength);
+
+            } else if (instruction == uint8(OPERATION.CALL)) {
                 console.log(132312312312312);
                 pos = _handleCall(program, pos);
                 console.log(pos, totalInstructionsLength);

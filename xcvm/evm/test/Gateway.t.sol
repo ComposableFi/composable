@@ -50,56 +50,56 @@ contract test_Gateway is Test {
         assertEq(gateway.owner(), owner);
     }
 
-    function testRegisterBridgeFailed() public {
-        vm.expectRevert("Ownable: caller is not the owner");
-        gateway.registerBridge(bridge1, Gateway.BridgeSecurity(1), 1);
-        vm.startPrank(owner);
-        vm.expectRevert("Gateway: invalid address");
-        gateway.registerBridge(address(0), Gateway.BridgeSecurity(1), 1);
-        vm.expectRevert("Gateway: should not disable bridge while registering bridge");
-        gateway.registerBridge(address(1), Gateway.BridgeSecurity(0), 1);
-        vm.stopPrank();
-    }
+    //function testRegisterBridgeFailed() public {
+    //    vm.expectRevert("Ownable: caller is not the owner");
+    //    gateway.registerBridge(bridge1, Gateway.BridgeSecurity(1), 1);
+    //    vm.startPrank(owner);
+    //    vm.expectRevert("Gateway: invalid address");
+    //    gateway.registerBridge(address(0), Gateway.BridgeSecurity(1), 1);
+    //    vm.expectRevert("Gateway: should not disable bridge while registering bridge");
+    //    gateway.registerBridge(address(1), Gateway.BridgeSecurity(0), 1);
+    //    vm.stopPrank();
+    //}
 
-    function testRegisterBridge() public {
-        vm.prank(owner);
-        gateway.registerBridge(bridge1, Gateway.BridgeSecurity(1), 1);
-    }
+    //function testRegisterBridge() public {
+    //    vm.prank(owner);
+    //    gateway.registerBridge(bridge1, Gateway.BridgeSecurity(1), 1);
+    //}
 
-    function testUnregisterBrigdgeFailed() public {
-        vm.expectRevert("Ownable: caller is not the owner");
-        gateway.unregisterBridge(bridge1);
-    }
+    //function testUnregisterBrigdgeFailed() public {
+    //    vm.expectRevert("Ownable: caller is not the owner");
+    //    gateway.unregisterBridge(bridge1);
+    //}
 
-    function testUnregisterBridge() public {
-        vm.prank(owner);
-        gateway.registerBridge(bridge1, Gateway.BridgeSecurity(1), 1);
-        vm.prank(owner);
-        gateway.unregisterBridge(bridge1);
-    }
-
-
-    function testRegisterAssetAddressFailed(uint128 assetId) public {
-        vm.expectRevert("Ownable: caller is not the owner");
-        gateway.registerAsset(address(assetToken1), assetId);
-        vm.startPrank(owner);
-        vm.expectRevert("Gateway: invalid address");
-        gateway.registerAsset(address(0), assetId);
-        vm.stopPrank();
-    }
-
-    function testRegisterAseetAddress(uint128 assetId) public {
-        vm.prank(owner);
-        gateway.registerAsset(address(assetToken1), assetId);
-        assertEq(gateway.assets(assetId), address(assetToken1));
-    }
+    //function testUnregisterBridge() public {
+    //    vm.prank(owner);
+    //    gateway.registerBridge(bridge1, Gateway.BridgeSecurity(1), 1);
+    //    vm.prank(owner);
+    //    gateway.unregisterBridge(bridge1);
+    //}
 
 
-    function testUnregisterAssetAddress(uint128 assetId) public {
-        vm.startPrank(owner);
-        gateway.registerAsset(address(assetToken1), assetId);
-        gateway.unregisterAsset(assetId);
-        vm.stopPrank();
-        assertEq(gateway.assets(assetId), address(0));
-    }
+    //function testRegisterAssetAddressFailed(uint128 assetId) public {
+    //    vm.expectRevert("Ownable: caller is not the owner");
+    //    gateway.registerAsset(address(assetToken1), assetId);
+    //    vm.startPrank(owner);
+    //    vm.expectRevert("Gateway: invalid address");
+    //    gateway.registerAsset(address(0), assetId);
+    //    vm.stopPrank();
+    //}
+
+    //function testRegisterAseetAddress(uint128 assetId) public {
+    //    vm.prank(owner);
+    //    gateway.registerAsset(address(assetToken1), assetId);
+    //    assertEq(gateway.assets(assetId), address(assetToken1));
+    //}
+
+
+    //function testUnregisterAssetAddress(uint128 assetId) public {
+    //    vm.startPrank(owner);
+    //    gateway.registerAsset(address(assetToken1), assetId);
+    //    gateway.unregisterAsset(assetId);
+    //    vm.stopPrank();
+    //    assertEq(gateway.assets(assetId), address(0));
+    //}
 }

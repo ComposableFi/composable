@@ -102,12 +102,10 @@ message Network {
   uint32 networkId=1;
 }
 
-message BridgeSecurity {
-  oneof security {
-    uint32 deterministic = 1;
-    uint32 probabilistic = 2;
-    uint32 optimistic = 3;
-  }
+enum BridgeSecurity {
+  deterministic = 0;
+  probabilistic = 1;
+  optimistic = 2;
 } 
 
 message Spawn {
@@ -125,7 +123,7 @@ message Query {
 
 message Call {
   bytes payload  = 1;
-  repeated Binding bindings = 2;
+  Bindings bindings = 2;
 }
 
 

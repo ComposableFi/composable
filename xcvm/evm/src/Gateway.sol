@@ -9,12 +9,6 @@ import "./Interpreter.sol";
 import "./interfaces/IGateway.sol";
 
 contract Gateway is Ownable, IGateway {
-    enum BridgeSecurity {
-        Disabiled,
-        Deterministic,
-        Probabilistic,
-        Optimistic
-    }
 
     struct Bridge {
         uint256 chainId;

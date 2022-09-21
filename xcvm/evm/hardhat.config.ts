@@ -2,7 +2,7 @@ import fs from "fs";
 import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
 import "hardhat-preprocessor";
-import { HardhatUserConfig, task } from "hardhat/config";
+import {HardhatUserConfig, task} from "hardhat/config";
 
 function getRemappings() {
   return fs
@@ -13,6 +13,12 @@ function getRemappings() {
 }
 
 const config: HardhatUserConfig = {
+  networks: {
+    hardhat: {
+      gas: 10000000,
+      allowUnlimitedContractSize: true
+    }
+  },
   solidity: {
     version: "0.8.14",
     settings: {

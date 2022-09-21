@@ -4,6 +4,14 @@ pragma solidity ^0.8.14;
 pragma experimental ABIEncoderV2;
 
 interface IGateway {
+
+    enum BridgeSecurity {
+        Disabiled,
+        Deterministic,
+        Probabilistic,
+        Optimistic
+    }
+
     struct Origin {
         uint32 networkId;
         bytes account;
