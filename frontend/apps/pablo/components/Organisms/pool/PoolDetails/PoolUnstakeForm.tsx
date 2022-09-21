@@ -25,21 +25,21 @@ const UnstakeFormPosition: React.FC<{
   financialNftId: string;
   principalAssets: Array<{ label?: string; icon: string }>;
   principalAssetValue: BigNumber;
-  principalAssetSakedAmount: BigNumber;
+  principalAssetStakedAmount: BigNumber;
   isExpired: boolean;
   expiryDate: string;
 }> = ({
   financialNftId,
   principalAssets,
   principalAssetValue,
-  principalAssetSakedAmount,
+  principalAssetStakedAmount,
   isExpired,
   expiryDate,
 }) => {
-  const formattedStakedAmount = principalAssetSakedAmount.toFixed(
+  const formattedStakedAmount = principalAssetStakedAmount.toFixed(
     DEFAULT_UI_FORMAT_DECIMALS
   );
-  const formattedStakedAmountValue = principalAssetSakedAmount
+  const formattedStakedAmountValue = principalAssetStakedAmount
     .times(principalAssetValue)
     .toFixed(DEFAULT_UI_FORMAT_DECIMALS);
   const stakedAmountInStr = `${formattedStakedAmount} (~$${formattedStakedAmountValue})`;
@@ -151,7 +151,7 @@ export const PoolUnstakeForm: React.FC<PoolDetailsProps> = ({
                       principalAssets={pairAssets}
                       financialNftId={nftId}
                       principalAssetValue={new BigNumber(0.5)} // mocked usd price
-                      principalAssetSakedAmount={lockedPrincipalAsset}
+                      principalAssetStakedAmount={lockedPrincipalAsset}
                       isExpired={isExpired}
                       expiryDate={expiryDate}
                     />
