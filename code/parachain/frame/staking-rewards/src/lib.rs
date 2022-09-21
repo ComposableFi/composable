@@ -1243,6 +1243,11 @@ pub mod pallet {
 			let mut total_weight = unix_time_now_weight;
 
 			RewardPools::<T>::translate(|pool_id, mut reward_pool: RewardPoolOf<T>| {
+				// If reward pool has not started, do not accumulate rewards or adjust weight
+				if reward_pool.start_block > frame_system::Pallet::<T>::current_block_number() {
+					return Some(reward_pool)
+				}
+
 				for (asset_id, reward) in &mut reward_pool.rewards {
 					Self::reward_accumulation_hook_reward_update_calculation(
 						pool_id,
