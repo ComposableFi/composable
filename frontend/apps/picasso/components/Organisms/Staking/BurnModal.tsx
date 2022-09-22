@@ -94,7 +94,7 @@ export const BurnModal: FC<{
       );
     }
     return currentPortfolio.stake;
-  }, [currentPortfolio]);
+  }, [currentPortfolio, isExpired]);
 
   if (selectedToken.join("").length === 0 || !currentPortfolio) {
     return null;

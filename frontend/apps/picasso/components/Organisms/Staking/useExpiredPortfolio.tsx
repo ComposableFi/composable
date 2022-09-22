@@ -10,7 +10,7 @@ export const useExpiredPortfolio = (portfolio: PortfolioItem | Falsy) => {
     const now = new Date();
 
     return endDate.getTime() - now.getTime() < 0;
-  }, [portfolio?.endTimestamp]);
+  }, [portfolio]);
 
   const portfolioDate = useMemo(() => {
     if (!portfolio) return null;
@@ -23,7 +23,7 @@ export const useExpiredPortfolio = (portfolio: PortfolioItem | Falsy) => {
       );
     }
     return <Typography variant="body2">{formatDate(endDate)}</Typography>;
-  }, [isExpired, portfolio?.endTimestamp]);
+  }, [isExpired, portfolio]);
 
   return {
     isExpired,

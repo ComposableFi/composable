@@ -132,7 +132,7 @@ export const BurnCheckboxList: FC<{
     }
 
     return false;
-  }, [stakingPortfolio, isSelected]);
+  }, [stakingPortfolio, isSelected, unstakeTokenId]);
 
   const shouldShowSlashWarning = isSelected && !isExpired;
 
