@@ -70,7 +70,7 @@ export const Staking: React.FC<BoxProps> = ({ ...boxProps }) => {
           <StakeForm stakingRewardPool={stakingRewardPool} />
         </TabPanel>
         <TabPanel index={1} value={tab}>
-          <UnstakeForm />
+          <UnstakeForm stakingRewardPool={stakingRewardPool} />
         </TabPanel>
       </BoxWrapper>
       {shouldShowPortfolio && <ClaimableRewards mt={8} />}
