@@ -1090,7 +1090,7 @@ pub mod pallet {
 			T::Assets::set_lock(T::LockId::get(), share_asset_id, fnft_account, awarded_shares)
 		}
 
-		/// Ensure `who` is the owner of the fNFT accosicated with a stake
+		/// Ensure `who` is the owner of the fNFT associated with a stake
 		///
 		/// # Errors
 		/// * FnftNotFound - No fNFT with the provided collection and instance ID found
