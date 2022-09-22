@@ -465,6 +465,9 @@
             inherit subwasm;
             inherit subwasm-release-body;
 
+            subxt = pkgs.callPackage ./code/utils/composable-subxt/subxt.nix {};
+            
+
             subsquid-processor = let
               processor = pkgs.buildNpmPackage {
                 extraNodeModulesArgs = {

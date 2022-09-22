@@ -5,6 +5,6 @@ components = [
   "llvm-tools-preview",
   "rust-analyzer",
   "rustfmt",
-  "rust-src",
+  "rust-src"
 ]
 targets = ["wasm32-unknown-unknown"]
