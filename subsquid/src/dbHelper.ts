@@ -2,6 +2,8 @@ import { EventHandlerContext } from "@subsquid/substrate-processor";
 import { Entity, Store } from "@subsquid/typeorm-store";
 import { randomUUID } from "crypto";
 import { ApiPromise, WsProvider } from "@polkadot/api";
+import { hexToU8a } from "@polkadot/util";
+import { chain } from "./config";
 import {
   Account,
   Activity,
@@ -13,7 +15,6 @@ import {
   EventType,
 } from "./model";
 import { encodeAccount } from "./utils";
-import { hexToU8a } from "@polkadot/util";
 
 export async function get<T extends { id: string }>(
   store: Store,
@@ -193,7 +194,7 @@ export async function storeHistoricalLockedValue(
   ctx: EventHandlerContext<Store>,
   amountsLocked: Record<string, bigint>
 ): Promise<void> {
-  const wsProvider = new WsProvider("ws://127.0.0.1:9988");
+  const wsProvider = new WsProvider(chain());
   const api = await ApiPromise.create({ provider: wsProvider });
   const oraclePrices: Record<string, bigint> = {};
 

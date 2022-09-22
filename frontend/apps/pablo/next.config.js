@@ -26,10 +26,8 @@ const withTM = require("next-transpile-modules")([
 ]);
 
 const nextConfig = {
-  experimental: {
-    images: {
-      unoptimized: true,
-    },
+  images: {
+    unoptimized: true,
   },
   reactStrictMode: true,
   env: {

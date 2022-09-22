@@ -1,6 +1,6 @@
 import { Box, useTheme } from "@mui/material";
 import { FeaturedBox } from "@/components/Molecules";
-import { callIf, fromChainIdUnit, unwrapNumberOrHex, } from "shared";
+import { callbackGate, fromChainIdUnit, unwrapNumberOrHex } from "shared";
 import { usePicassoProvider } from "@/defi/polkadot/hooks";
 import { useEffect, useState } from "react";
 import BigNumber from "bignumber.js";
@@ -15,13 +15,13 @@ const useCirculatingSupply = () => {
   );
 
   useEffect(() => {
-    callIf(parachainApi, (api) => {
+    callbackGate((api) => {
       api.query.balances.totalIssuance((totalIssuance: u128) =>
         setCirculatingSupply(
           fromChainIdUnit(unwrapNumberOrHex(totalIssuance.toHex()))
         )
       );
-    });
+    }, parachainApi);
   }, [parachainApi]);
 
   return circulatingSupply;
@@ -32,7 +32,7 @@ const useMarketCap = () => {
   const [picaPrice, setPicaPrice] = useState<BigNumber>(new BigNumber(0));
   const { parachainApi } = usePicassoProvider();
   useEffect(() => {
-    callIf(parachainApi, (api) => {
+    callbackGate((api) => {
       api.query.oracle.prices(
         Assets.pica.supportedNetwork.picasso,
         (result: ComposableTraitsOraclePrice) => {
@@ -42,7 +42,7 @@ const useMarketCap = () => {
           }
         }
       );
-    });
+    }, parachainApi);
   }, [parachainApi]);
 
   return circulatingSupply.multipliedBy(picaPrice);

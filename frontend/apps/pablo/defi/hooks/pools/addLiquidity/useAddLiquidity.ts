@@ -3,7 +3,7 @@ import {
   closeConfirmSupplyModal,
   openConfirmingSupplyModal,
 } from "@/stores/ui/uiSlice";
-import Executor from "substrate-react/dist/extrinsics/Executor";
+import { Executor, ConnectedAccount } from "substrate-react";
 import BigNumber from "bignumber.js";
 import router from "next/router";
 import { ApiPromise } from "@polkadot/api";
@@ -12,7 +12,6 @@ import { toChainUnits } from "@/defi/utils";
 import { resetAddLiquiditySlice } from "@/store/addLiquidity/addLiquidity.slice";
 import { useSnackbar, VariantType } from "notistack";
 import { useDispatch } from "react-redux";
-import { ConnectedAccount } from "substrate-react/dist/dotsama/types";
 import { Signer } from "@polkadot/api/types";
 import { useCallback, useMemo } from "react";
 

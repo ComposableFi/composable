@@ -1,4 +1,3 @@
-import { NamedSet } from "zustand/middleware";
 import { StoreSlice } from "../types";
 import BigNumber from "bignumber.js";
 import { AssetId, SubstrateNetworkId } from "@/defi/polkadot/types";
@@ -74,9 +73,7 @@ export interface TransfersSlice {
   };
 }
 
-export const createTransfersSlice: StoreSlice<TransfersSlice> = (
-  set: NamedSet<TransfersSlice>
-) => ({
+export const createTransfersSlice: StoreSlice<TransfersSlice> = (set) => ({
   transfers: {
     ...initialState,
 

@@ -63,7 +63,7 @@ export const useEagerConnect = (chainId: ParachainId): boolean => {
     parachainApi,
     accounts,
     setSelectedAccount,
-    extensionStatus,
+    extensionStatus
   ]);
 
   return hasTriedEagerConnect;

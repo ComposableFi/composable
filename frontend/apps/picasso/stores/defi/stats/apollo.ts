@@ -1,4 +1,3 @@
-import { NamedSet } from "zustand/middleware";
 import { StoreSlice } from "../../types";
 import BigNumber from "bignumber.js";
 
@@ -10,9 +9,11 @@ interface ApolloTableData {
   apolloValue: number;
   changeValue: number;
 }
+
 type PriceHashMap = {
   [key: string]: { open: BigNumber | null; close: BigNumber | null };
 };
+
 interface ApolloState {
   binanceAssets: PriceHashMap;
   oracleAssets: PriceHashMap;
@@ -24,17 +25,17 @@ const initialState: ApolloState = {
   binanceAssets: APOLLO_ALLOWED_CURRENCIES.reduce((acc, curr) => {
     acc[curr] = {
       open: null,
-      close: null
+      close: null,
     };
     return acc;
   }, <PriceHashMap>{}),
   oracleAssets: APOLLO_ALLOWED_CURRENCIES.reduce((acc, curr) => {
     acc[curr] = {
       open: null,
-      close: null
+      close: null,
     };
     return acc;
-  }, <PriceHashMap>{})
+  }, <PriceHashMap>{}),
 };
 
 export interface StatsApolloSlice {
@@ -52,9 +53,7 @@ export interface StatsApolloSlice {
   };
 }
 
-export const createStatsApolloSlice: StoreSlice<StatsApolloSlice> = (
-  set: NamedSet<StatsApolloSlice>
-) => ({
+export const createStatsApolloSlice: StoreSlice<StatsApolloSlice> = (set) => ({
   statsApollo: {
     ...initialState,
     setBinanceAssets: (
@@ -62,10 +61,10 @@ export const createStatsApolloSlice: StoreSlice<StatsApolloSlice> = (
       open: BigNumber | null,
       close: BigNumber | null
     ) => {
-      set(state => {
+      set((state) => {
         state.statsApollo.binanceAssets[symbol] = {
           open,
-          close
+          close,
         };
 
         return state;
@@ -76,14 +75,14 @@ export const createStatsApolloSlice: StoreSlice<StatsApolloSlice> = (
       open: BigNumber | null,
       close: BigNumber | null
     ) => {
-      set(state => {
+      set((state) => {
         state.statsApollo.oracleAssets[symbol] = {
           open,
-          close
+          close,
         };
 
         return state;
       });
-    }
-  }
+    },
+  },
 });

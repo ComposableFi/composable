@@ -1,9 +1,7 @@
-import { APP_NAME } from "@/defi/polkadot/constants";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { useSnackbar } from "notistack";
 import { useCallback } from "react";
 import {
-  getSigner,
   useExecutor,
   useParachainApi,
   useSelectedAccount,
@@ -20,7 +18,8 @@ export function useCancelOffer() {
 
   const cancel = useCallback(
     async (offerId: number) => {
-      if (!parachainApi || !signer || !selectedAccount || !executor) return null;
+      if (!parachainApi || !signer || !selectedAccount || !executor)
+        return null;
 
       try {
         await executor

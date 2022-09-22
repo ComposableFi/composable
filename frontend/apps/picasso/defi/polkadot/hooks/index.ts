@@ -1,33 +1,19 @@
-import { useContext } from "react";
-import { useParachainProvider } from "../context/hooks";
-import { ParachainApi, ParachainContext } from "../context/ParachainContext";
-import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
+import { useDotSamaContext, useParachainApi, useRelayChainApi } from "substrate-react";
 
-export const usePicassoProvider = (): ParachainApi => {
-  const api = useParachainProvider(
-    "kusama",
-    SUBSTRATE_NETWORKS.picasso.parachainId
-  );
-  return api;
-};
+export const usePicassoProvider = () => useParachainApi(
+  "picasso"
+);
 
-export const useKaruraProvider = (): ParachainApi => {
-  const api = useParachainProvider(
-    "kusama",
-    SUBSTRATE_NETWORKS.karura.parachainId
-  );
-  return api;
-};
+const useKaruraProvider = () => useParachainApi(
+  "karura"
+);
 
-export const useKusamaProvider = (): ParachainApi => {
-  const api = useParachainProvider("kusama", 0);
-  return api;
-};
+export const useKusamaProvider = () => useRelayChainApi("kusama");
 
 export const useSelectedAccount: () =>
   | { name: string; address: string }
   | undefined = (): { name: string; address: string } | undefined => {
-  const { selectedAccount } = useContext(ParachainContext);
+  const { selectedAccount } = useDotSamaContext();
   const { accounts } = usePicassoProvider();
   return accounts.length && selectedAccount !== -1
     ? accounts[selectedAccount]
@@ -35,7 +21,8 @@ export const useSelectedAccount: () =>
 };
 
 export const useKusamaAccounts = (): { name: string; address: string }[] => {
-  const { accounts } = useParachainProvider("kusama", 0);
+  const { accounts } = useKusamaProvider();
   return accounts;
 };
+
 export * from "./useBlockInterval";
