@@ -347,7 +347,6 @@ pub trait StakingFinancialNft {
 		who: &Self::AccountId,
 		collection: Self::CollectionId,
 		instance: Self::InstanceId,
-		remove_amount: Self::Balance,
 	) -> DispatchResult;
 
 	/// `ratio` - how much of share to retain in the original position.

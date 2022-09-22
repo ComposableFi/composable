@@ -1057,6 +1057,49 @@ pub mod pallet {
 		}
 	}
 
+	impl<T: Config> StakingFinancialNft for Pallet<T> {
+		type AccountId = T::AccountId;
+		type CollectionId = T::AssetId;
+		type InstanceId = T::FinancialNftInstanceId;
+		type Balance = T::Balance;
+
+		#[transactional]
+		fn extend(
+			who: &Self::AccountId,
+			collection: Self::CollectionId,
+			instance: Self::InstanceId,
+			amount: Self::Balance,
+			keep_alive: bool,
+		) -> Result<Self::InstanceId, DispatchError> {
+			<Self as Staking>::extend(who, (collection, instance), amount, keep_alive)?;
+
+			Ok(instance)
+		}
+
+		#[transactional]
+		fn burn(
+			who: &Self::AccountId,
+			collection: Self::CollectionId,
+			instance: Self::InstanceId,
+		) -> DispatchResult {
+			<Self as Staking>::unstake(who, &(collection, instance))?;
+
+			Ok(())
+		}
+
+		#[transactional]
+		fn split(
+			who: &Self::AccountId,
+			collection: Self::CollectionId,
+			instance: Self::InstanceId,
+			ratio: Permill,
+		) -> Result<[Self::InstanceId; 2], DispatchError> {
+			let [(_, old_fnft_instance_id), (_, new_fnft_instance_id)] =
+				<Self as Staking>::split(who, &(collection, instance), ratio)?;
+			Ok([old_fnft_instance_id, new_fnft_instance_id])
+		}
+	}
+
 	impl<T: Config> Pallet<T> {
 		pub(crate) fn split_lock(
 			asset_id: T::AssetId,
