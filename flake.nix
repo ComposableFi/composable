@@ -123,6 +123,7 @@
           };
         in with pkgs;
         let
+          trace = pkgs.lib.debug.traceSeq;
           # Stable rust for anything except wasm runtime
           rust-stable = rust-bin.stable.latest.default;
 
@@ -656,26 +657,26 @@
               chain-spec = "picasso-dev";
             }).script;
 
-            # Dali devnet container
-            devnet-container = dockerTools.buildImage {
-              name = "composable-devnet-container";
-              tag = "latest";
-              copyToRoot = pkgs.buildEnv {
-                name = "image-root";
-                paths = [ curl websocat ] ++ container-tools;
-                pathsToLink = [ "/bin" ];
+            devnet-container = trace "Run Dali runtime on Composable node"
+              dockerTools.buildImage {
+                name = "composable-devnet-container";
+                tag = "latest";
+                copyToRoot = pkgs.buildEnv {
+                  name = "image-root";
+                  paths = [ curl websocat ] ++ container-tools;
+                  pathsToLink = [ "/bin" ];
+                };
+                config = {
+                  Entrypoint =
+                    [ "${packages.devnet-dali}/bin/run-devnet-dali-dev" ];
+                  WorkingDir = "/home/polkadot-launch";
+                };
+                runAsRoot = ''
+                  mkdir -p /home/polkadot-launch /tmp
+                  chown 1000:1000 /home/polkadot-launch
+                  chmod 777 /tmp
+                '';
               };
-              config = {
-                Entrypoint =
-                  [ "${packages.devnet-dali}/bin/run-devnet-dali-dev" ];
-                WorkingDir = "/home/polkadot-launch";
-              };
-              runAsRoot = ''
-                mkdir -p /home/polkadot-launch /tmp
-                chown 1000:1000 /home/polkadot-launch
-                chmod 777 /tmp
-              '';
-            };
 
             frontend-static = mkFrontendStatic {
               subsquidEndpoint = "http://localhost:4350/graphql";
@@ -723,6 +724,7 @@
             devcontainer = dockerTools.buildLayeredImage {
               name = "composable-devcontainer";
               fromImage = devcontainer-root-image;
+              contents = [ composable-node ];
               # substituters, same as next script, but without internet access
               # ${pkgs.cachix}/bin/cachix use composable-community
               # to run root in buildImage needs qemu/kvm shell
@@ -890,10 +892,9 @@
               cargoExtraArgs = "--benches --all --features runtime-benchmarks";
             });
 
-            cspell-check = stdenv.mkDerivation {
+            spell-check = stdenv.mkDerivation {
               name = "cspell-check";
               dontUnpack = true;
-
               buildInputs = [ all-directories-and-files nodePackages.cspell ];
               installPhase = ''
                 mkdir $out
