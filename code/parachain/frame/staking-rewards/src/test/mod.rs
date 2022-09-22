@@ -600,7 +600,6 @@ fn test_transfer_reward() {
 	});
 }
 
-// NOTE(connor): Ignoring because the test fails to correctly configure the reward pool
 #[test]
 fn test_split_position() {
 	new_test_ext().execute_with(|| {
