@@ -50,7 +50,6 @@ export const RenewModal: FC<{
     callbackGate(
       async (api, acc, executor) => {
         const signer = await getSigner(APP_NAME, acc.address);
-        console.log(extendAmount.toFixed().toString());
         await executor.execute(
           (api.tx.stakingRewards.extend as any)(
             selectedToken[0],

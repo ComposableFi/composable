@@ -20,15 +20,16 @@ export type RewardPool = {
 export type PortfolioItem = {
   instanceId: string;
   collectionId: string;
-  assetId: string,
-  endTimestamp: BigInt,
-  id: string,
-  multiplier: BigNumber,
-  share: BigNumber,
-  stake: BigNumber
-}
+  assetId: string;
+  endTimestamp: BigInt;
+  id: string;
+  multiplier: BigNumber;
+  share: BigNumber;
+  stake: BigNumber;
+  unlockPenalty: BigNumber;
+};
 export type PortfolioTuple = [string, string, PortfolioItem];
-export type StakingPortfolio = Array<PortfolioItem>
+export type StakingPortfolio = Array<PortfolioItem>;
 export type StakingRewardsSlice = {
   rewardPools: {
     [key in number]: RewardPool;
@@ -51,15 +52,15 @@ const initialState = {
       endBlock: new BigNumber(0),
       lock: {
         durationPresets: {},
-        unlockPenalty: ""
+        unlockPenalty: "",
       },
       shareAssetId: "",
-      financialNftAssetId: ""
-    }
+      financialNftAssetId: "",
+    },
   },
   stakingPositions: [],
   isStakingPositionsLoadingState: false,
-  stakingPortfolio: []
+  stakingPortfolio: [],
 };
 
 export const createStakingRewardsSlice: StoreSlice<StakingRewardsSlice> = (
@@ -72,13 +73,16 @@ export const createStakingRewardsSlice: StoreSlice<StakingRewardsSlice> = (
 
       return state;
     }),
-  setStakingPositionLoadingState: (status: boolean) => set(state => {
-    state.isStakingPositionsLoadingState = status;
-  }),
-  setStakingPositions: (positions) => set(state => {
-    state.stakingPositions = positions;
-  }),
-  setStakingPortfolio: (portfolio) => set(state => {
-    state.stakingPortfolio = portfolio;
-  })
+  setStakingPositionLoadingState: (status: boolean) =>
+    set((state) => {
+      state.isStakingPositionsLoadingState = status;
+    }),
+  setStakingPositions: (positions) =>
+    set((state) => {
+      state.stakingPositions = positions;
+    }),
+  setStakingPortfolio: (portfolio) =>
+    set((state) => {
+      state.stakingPortfolio = portfolio;
+    }),
 });

@@ -14,67 +14,94 @@ import {
   useTheme,
 } from "@mui/material";
 import { TokenAsset } from "@/components";
-import { formatDate, humanBalance } from "shared";
+import { humanBalance } from "shared";
 import { Add } from "@mui/icons-material";
+import { useState } from "react";
+import { RenewModal } from "@/components/Organisms/Staking/RenewModal";
+import { useExpiredPortfolio } from "@/components/Organisms/Staking/useExpiredPortfolio";
 
-export const PortfolioRow = ({ portfolio }: { portfolio: PortfolioItem }) => {
+export const PortfolioRow = ({
+  portfolio,
+  onSelectToken,
+}: {
+  portfolio: PortfolioItem;
+  onSelectToken: (collectionId: string, instanceId: string) => void;
+}) => {
   const theme = useTheme();
+  const { isExpired, portfolioDate } = useExpiredPortfolio(portfolio);
+
   return (
     <TableRow>
       <TableCell>
         <TokenAsset tokenId={"pica"} label={`fNFT ${portfolio.instanceId}`} />
       </TableCell>
       <TableCell>{humanBalance(portfolio.stake)}</TableCell>
-      <TableCell>
-        {formatDate(new Date(Number(portfolio.endTimestamp.toString())))}
-      </TableCell>
+      <TableCell>{portfolioDate}</TableCell>
       <TableCell>{`${portfolio.multiplier.toFixed(2)}%`}</TableCell>
       <TableCell>≈{portfolio.share.toFixed(2)}</TableCell>
       <TableCell>
-        <Button
-          variant="outlined"
-          size="small"
-          sx={{
-            minWidth: theme.spacing(6),
-          }}
-          onClick={() =>
-            console.log(
-              "add stake ",
-              portfolio.collectionId,
-              portfolio.instanceId
-            )
-          }
-        >
-          <Add />
-        </Button>
+        {!isExpired && (
+          <Button
+            variant="outlined"
+            size="small"
+            sx={{
+              minWidth: theme.spacing(6),
+            }}
+            onClick={() => {
+              onSelectToken(portfolio.collectionId, portfolio.instanceId);
+            }}
+          >
+            <Add />
+          </Button>
+        )}
       </TableCell>
     </TableRow>
   );
 };
+
 export const StakingPortfolioTable = ({
   stakingPortfolio,
 }: {
   stakingPortfolio: TStakingPortfolio;
 }) => {
+  const [selectedToken, setSelectedToken] = useState<[string, string]>([
+    "",
+    "",
+  ]);
+  const [isRenewModalOpen, setIsRenewModalOpen] = useState<boolean>(false);
   return (
-    <TableContainer component={Box}>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>fNFT ID</TableCell>
-            <TableCell>Locked PICA</TableCell>
-            <TableCell>Expiry Date</TableCell>
-            <TableCell>Multiplier</TableCell>
-            <TableCell>Your xPICA</TableCell>
-            <TableCell></TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {stakingPortfolio.map((portfolio, key) => (
-            <PortfolioRow key={key} portfolio={portfolio} />
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+    <>
+      <TableContainer component={Box}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>fNFT ID</TableCell>
+              <TableCell>Locked PICA</TableCell>
+              <TableCell>Expiry Date</TableCell>
+              <TableCell>Multiplier</TableCell>
+              <TableCell>Your xPICA</TableCell>
+              <TableCell></TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {stakingPortfolio.map((portfolio, key) => (
+              <PortfolioRow
+                key={key}
+                portfolio={portfolio}
+                onSelectToken={(collectionId, instanceId) => {
+                  setSelectedToken([collectionId, instanceId]);
+                  setIsRenewModalOpen(true);
+                }}
+              />
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+      <RenewModal
+        open={isRenewModalOpen}
+        selectedToken={selectedToken}
+        onClose={() => setIsRenewModalOpen(false)}
+      />
+    </>
   );
 };

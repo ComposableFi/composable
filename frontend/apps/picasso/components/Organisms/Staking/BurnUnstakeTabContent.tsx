@@ -7,7 +7,7 @@ import { FC, useState } from "react";
 export const BurnUnstakeTabContent: FC = () => {
   const [selectedToken, setSelectedToken] = useState<[string, string]>([
     "",
-    "",
+    ""
   ]);
   const [isBurnModalOpen, setIsBurnModalOpen] = useState<boolean>(false);
   const [isRenewModalOpen, setIsRenewModalOpen] = useState<boolean>(false);

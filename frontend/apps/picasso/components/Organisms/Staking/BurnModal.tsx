@@ -1,7 +1,7 @@
 import { Modal, TokenAsset } from "@/components";
 import { Box, Button, Paper, Stack, Typography } from "@mui/material";
 import { TextWithTooltip } from "@/components/Molecules/TextWithTooltip";
-import { FC } from "react";
+import { FC, useMemo } from "react";
 import { callbackGate, formatNumber } from "shared";
 import BigNumber from "bignumber.js";
 import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
@@ -10,19 +10,18 @@ import { APP_NAME } from "@/defi/polkadot/constants";
 import { SnackbarKey, useSnackbar } from "notistack";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { useStakingRewards } from "@/defi/polkadot/hooks/useStakingRewards";
+import { useExpiredPortfolio } from "@/components/Organisms/Staking/useExpiredPortfolio";
 
 // TODO: positionId should be fetched from subsquid or other sources
 const positionId = new BigNumber(4);
 
-function setPosition() {
+function setPosition() {}
 
-}
-
-export const BurnModal: FC<{ open: boolean; onClose: () => void; selectedToken: [string, string] }> = ({
-  open,
-  onClose,
-  selectedToken
-}) => {
+export const BurnModal: FC<{
+  open: boolean;
+  onClose: () => void;
+  selectedToken: [string, string];
+}> = ({ open, onClose, selectedToken }) => {
   const { parachainApi } = usePicassoProvider();
   const account = useSelectedAccount();
   const executor = useExecutor();
@@ -45,7 +44,7 @@ export const BurnModal: FC<{ open: boolean; onClose: () => void; selectedToken: 
               variant: "info",
               isClosable: true,
               persist: true,
-              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash
+              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
             });
           },
           (txHash: string) => {
@@ -54,7 +53,7 @@ export const BurnModal: FC<{ open: boolean; onClose: () => void; selectedToken: 
               variant: "success",
               isClosable: true,
               persist: true,
-              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash
+              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
             });
             refresh();
             onClose();
@@ -65,7 +64,7 @@ export const BurnModal: FC<{ open: boolean; onClose: () => void; selectedToken: 
               variant: "error",
               isClosable: true,
               persist: true,
-              description: errorMessage
+              description: errorMessage,
             });
             onClose();
           }
@@ -77,12 +76,30 @@ export const BurnModal: FC<{ open: boolean; onClose: () => void; selectedToken: 
     );
   };
 
-  const currentPortfolio = Object.values(stakingPortfolio).find(portfolio => portfolio.collectionId === fnftCollectionId && portfolio.instanceId === fnftInstanceId);
+  const currentPortfolio = Object.values(stakingPortfolio).find(
+    (portfolio) =>
+      portfolio.collectionId === fnftCollectionId &&
+      portfolio.instanceId === fnftInstanceId
+  );
+  const { isExpired } = useExpiredPortfolio(currentPortfolio);
+
+  const withdrawablePica = useMemo(() => {
+    if (!currentPortfolio) return 0;
+
+    if (!isExpired) {
+      return currentPortfolio.stake.minus(
+        currentPortfolio.unlockPenalty
+          .dividedBy(100)
+          .multipliedBy(currentPortfolio.stake)
+      );
+    }
+    return currentPortfolio.stake;
+  }, [currentPortfolio]);
+
   if (selectedToken.join("").length === 0 || !currentPortfolio) {
     return null;
   }
 
-  const withdrawablePica = currentPortfolio.share;
   const initialPICA = currentPortfolio.stake;
 
   return (
@@ -95,8 +112,8 @@ export const BurnModal: FC<{ open: boolean; onClose: () => void; selectedToken: 
           sx={{
             flexDirection: {
               sm: "column",
-              md: "row"
-            }
+              md: "row",
+            },
           }}
           display="flex"
           width="100%"
@@ -107,7 +124,7 @@ export const BurnModal: FC<{ open: boolean; onClose: () => void; selectedToken: 
           <Stack gap={1.5} width="100%">
             <TextWithTooltip
               TypographyProps={{
-                variant: "inputLabel"
+                variant: "inputLabel",
               }}
               tooltip="Withdrawable PICA"
             >
@@ -119,7 +136,7 @@ export const BurnModal: FC<{ open: boolean; onClose: () => void; selectedToken: 
                   position: "absolute",
                   left: "1rem",
                   top: "50%",
-                  transform: "translateY(-50%)"
+                  transform: "translateY(-50%)",
                 }}
               >
                 <TokenAsset tokenId={"pica"} iconOnly />
@@ -132,7 +149,7 @@ export const BurnModal: FC<{ open: boolean; onClose: () => void; selectedToken: 
           <Stack gap={1.5} width="100%">
             <TextWithTooltip
               TypographyProps={{
-                variant: "inputLabel"
+                variant: "inputLabel",
               }}
               tooltip="Withdrawable PICA"
             >
@@ -144,7 +161,7 @@ export const BurnModal: FC<{ open: boolean; onClose: () => void; selectedToken: 
                   position: "absolute",
                   left: "1rem",
                   top: "50%",
-                  transform: "translateY(-50%)"
+                  transform: "translateY(-50%)",
                 }}
               >
                 <TokenAsset tokenId={"pica"} iconOnly />
