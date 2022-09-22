@@ -167,6 +167,10 @@ fn stake_in_case_of_zero_inflation_should_work() {
 		);
 		assert_eq!(balance(staked_asset_id, &staker), amount);
 		assert_eq!(balance(staked_asset_id, &fnft_asset_account), amount);
+		assert_eq!(
+			balance(XPICA::ID, &fnft_asset_account),
+			StakingRewards::boosted_amount(reward_multiplier, amount)
+		);
 
 		assert_last_event_with::<Test, _>(|event| {
 			matches!(
@@ -331,6 +335,10 @@ fn test_extend_stake_amount() {
 		assert_eq!(
 			balance(staked_asset_id, &FinancialNft::asset_account(&1, &0)),
 			amount + extend_amount
+		);
+		assert_eq!(
+			balance(XPICA::ID, &FinancialNft::asset_account(&1, &0)),
+			boosted_amount + extend_amount
 		);
 		assert_last_event::<Test, _>(|e| {
 			matches!(e.event,
