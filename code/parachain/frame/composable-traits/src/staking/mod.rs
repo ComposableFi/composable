@@ -325,35 +325,3 @@ pub trait Staking {
 	/// * `position` - The uniquely identifying NFT from which we will compute the rewards.
 	fn claim(who: &Self::AccountId, position: &Self::PositionId) -> DispatchResult;
 }
-
-/// Interface for managing staking through financial NFTs.
-pub trait StakingFinancialNft {
-	type AccountId;
-	type CollectionId;
-	type InstanceId;
-	type Balance;
-
-	/// Extend the stake of an existing position represented by a financial NFT.
-	fn extend(
-		who: &Self::AccountId,
-		collection: Self::CollectionId,
-		instance: Self::InstanceId,
-		amount: Self::Balance,
-		keep_alive: bool,
-	) -> Result<Self::InstanceId, DispatchError>;
-
-	/// Unstake an actual staked position, represented by a financial NFT.
-	fn burn(
-		who: &Self::AccountId,
-		collection: Self::CollectionId,
-		instance: Self::InstanceId,
-	) -> DispatchResult;
-
-	/// `ratio` - how much of share to retain in the original position.
-	fn split(
-		who: &Self::AccountId,
-		collection: Self::CollectionId,
-		instance: Self::InstanceId,
-		ratio: Permill,
-	) -> Result<[Self::InstanceId; 2], DispatchError>;
-}
