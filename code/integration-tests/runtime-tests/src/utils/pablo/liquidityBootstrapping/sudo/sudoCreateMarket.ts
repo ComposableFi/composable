@@ -37,7 +37,7 @@ export default async function (
   protocolFeeRate: number | Permill
 ): Promise<IEvent<[Result<Null, SpRuntimeDispatchError>]>> {
   const pool = api.createType("PalletPabloPoolInitConfiguration", {
-    StableSwap: {
+    LiquidityBootstrapping: api.createType("ComposableTraitsDexLiquidityBootstrappingPoolInfo", {
       owner: api.createType("AccountId32", managerWallet),
       pair: api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", {
         base: api.createType("u128", baseAssetId),
@@ -54,7 +54,7 @@ export default async function (
         ownerFeeRate: api.createType("Permill", ownerFeeRate),
         protocolFeeRate: api.createType("Permill", protocolFeeRate)
       })
-    }
+    })
   });
   return await sendAndWaitForSuccess(
     api,

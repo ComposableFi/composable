@@ -37,8 +37,7 @@ import BN from "bn.js";
  *  - USDC/USDT
  *  - - Stableswap AMM, 0.1% fee.
  */
-// ToDo (D. Roth): Remove `SHORT` tag.
-describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function () {
+describe.only("[LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function () {
   if (!testConfiguration.enabledTests.query.enabled) return;
   this.retries(0);
 
@@ -123,9 +122,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
         const baseWeight = 500000;
         const baseAsset = ksmAssetId;
         const quoteAsset = usdcAssetId;
-        const {
-          data: [result]
-        } = await pablo.uniswap
+        await pablo.uniswap
           .createMarket(
             api,
             composableManagerWallet,
@@ -136,8 +133,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             baseWeight
           )
           .catch(err => {
-            expect(result.toString()).to.contain("Error: BadOrigin");
-            return err;
+            expect(err.toString()).to.contain("Error: BadOrigin");
           });
       });
 
@@ -529,19 +525,18 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
    *  - Pool consists of USDC only.
    *  - Pool starts 98/2, finishing at 50/50.
    */
-  describe("Picasso/Pablo Launch Plan - Phase 2B", function () {
+  describe.only("Picasso/Pablo Launch Plan - Phase 2B", function () {
     if (!testConfiguration.enabledTests.query.account__success.enabled) return;
 
-    it("Create PICA LBP w/ USDC", async function () {
+    it.only("Create PICA LBP w/ USDC", async function () {
       if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
       this.timeout(2 * 60 * 1000);
       const currentBlock = await api.query.system.number();
       const baseAsset = picaAssetId;
       const quoteAsset = usdcAssetId;
-      const saleStart = currentBlock.toNumber() + 10;
-      const saleEnd = currentBlock.toNumber() + 1000;
-      // Todo: Set initial weight to 980000.
-      const initialWeight = 980000;
+      const saleStart = currentBlock.toNumber() + 24;
+      const saleEnd = currentBlock.toNumber() + 7300;
+      const initialWeight = 950000; // TODO: !!!
       const finalWeight = 500000;
       const feeRate = 0;
       const ownerFeeRate = 0;
@@ -562,6 +557,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
         ownerFeeRate,
         protocolFeeRate
       );
+      console.debug(result.toString());
       expect(result.isOk).to.be.true;
       const { poolId } = await Phase2.verifyLastPoolCreation(
         api,
