@@ -1055,8 +1055,8 @@ pub mod pallet {
 			fnft_account: &AccountIdOf<T>,
 			keep_alive: bool,
 		) -> DispatchResult {
-			T::Assets::transfer(staked_asset_id, who, &fnft_account, amount, keep_alive)?;
-			T::Assets::set_lock(T::LockId::get(), staked_asset_id, &fnft_account, amount)
+			T::Assets::transfer(staked_asset_id, who, fnft_account, amount, keep_alive)?;
+			T::Assets::set_lock(T::LockId::get(), staked_asset_id, fnft_account, amount)
 		}
 
 		/// Mint share tokens into fNFT asst account & lock the assets
@@ -1065,8 +1065,8 @@ pub mod pallet {
 			awarded_shares: <T as Config>::Balance,
 			fnft_account: &AccountIdOf<T>,
 		) -> DispatchResult {
-			T::Assets::mint_into(share_asset_id, &fnft_account, awarded_shares)?;
-			T::Assets::set_lock(T::LockId::get(), share_asset_id, &fnft_account, awarded_shares)
+			T::Assets::mint_into(share_asset_id, fnft_account, awarded_shares)?;
+			T::Assets::set_lock(T::LockId::get(), share_asset_id, fnft_account, awarded_shares)
 		}
 
 		pub(crate) fn split_lock(
