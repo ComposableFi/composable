@@ -67,12 +67,22 @@ message Result {
   uint32 result = 1;
 } 
 
+
+message AssetAmount {
+  AssetId assetId = 1;
+  oneof balance_type {
+    Ratio ratio = 2;
+    Unit unit = 3;
+  } 
+} 
+
+
 message BindingValue {
   oneof type {
     Self self = 1;
     Relayer relayer = 2;
     uint32 Result = 3;
-    Balance balance = 4; 
+    AssetAmount assetAmount = 4; 
     AssetId assetId = 5;
   }
 }

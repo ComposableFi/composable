@@ -454,22 +454,22 @@ describe("Interpreter", function () {
       let BindingMessage = root.lookupType("interpreter.Binding");
       let BindingValueMessage = root.lookupType("interpreter.BindingValue");
       let AssetIdMessage = root.lookupType("interpreter.AssetId");
-      let BalanceMessage = root.lookupType("interpreter.Balance");
+      //let BalanceMessage = root.lookupType("interpreter.Balance");
+      let RatioMessage = root.lookupType("interpreter.Ratio");
+      let AssetAmount = root.lookupType("interpreter.AssetAmount");
       let AbsoluteMessage = root.lookupType("interpreter.Absolute");
       let BindingsMessage = root.lookupType("interpreter.Bindings");
-      const transferAmount = 1000000
-
-      let absoluteMessage = AbsoluteMessage.create({
-        value: transferAmount,
-      });
-      console.log("absolut id", AbsoluteMessage.encode(absoluteMessage).finish().toString("hex"))
-      let balanceMessage = BalanceMessage.create(
-        {absolute: absoluteMessage},
-        {oneOfs: true}
-      );
-
 
       let assetIdMessage = AssetIdMessage.create({assetId: 1});
+      let ratioMessage = RatioMessage.create({
+        nominator: 1,
+        denominator: 2,
+      });
+      console.log("ratio message", RatioMessage.encode(ratioMessage).finish().toString("hex"));
+
+      let assetAmountMessage = AssetAmount.create({assetId: assetIdMessage, ratio: ratioMessage})
+      console.log("asset amount message", AssetAmount.encode(assetAmountMessage).finish().toString("hex"));
+
       console.log("asset id", AssetIdMessage.encode(assetIdMessage).finish().toString("hex"))
       let addressBindingValueMessage = BindingValueMessage.create({assetId: assetIdMessage}, {oneofs: true});
       console.log("addressBindingValueMessage", BindingValueMessage.encode(addressBindingValueMessage).finish().toString("hex"))
@@ -477,10 +477,10 @@ describe("Interpreter", function () {
       let addressBindingMessage = BindingMessage.create({position: 0, bindingValue: addressBindingValueMessage})
       console.log("address binding", BindingMessage.encode(addressBindingMessage).finish().toString("hex"))
 
-      let balanceBindingValueMessage = BindingValueMessage.create({balance: balanceMessage}, {oneofs: true});
-      console.log("balanceBindingValueMessage", BindingValueMessage.encode(balanceBindingValueMessage).finish().toString("hex"))
+      let assetAmountBindingValueMessage = BindingValueMessage.create({assetAmount: assetAmountMessage}, {oneofs: true});
+      console.log("assetAmountBindingValueMessage", BindingValueMessage.encode(assetAmountBindingValueMessage).finish().toString("hex"))
       // bingdingValuePosition(1 byte) + function signature (4bytes) + address(32bytes, its encoded) = 37 => balanceValuePosition
-      let balanceBindingMessage = BindingMessage.create({position: 37, bindingValue: balanceBindingValueMessage})
+      let balanceBindingMessage = BindingMessage.create({position: 37, bindingValue: assetAmountBindingValueMessage})
       console.log("balanceBinding", BindingMessage.encode(balanceBindingMessage).finish().toString("hex"))
       let bindingsMessage = BindingsMessage.create({bindings: [addressBindingMessage, balanceBindingMessage]});
 
@@ -540,6 +540,7 @@ describe("Interpreter", function () {
       let encodedProgram;
       encodedProgram = ProgramMessage.encode(programMessage).finish();
       console.log(encodedProgram);
+      const oldBalance = await erc20.balanceOf(interpreterAddress)
       await gateway.runProgram(
         {networkId: 1, account: owner.address},
         encodedProgram,
@@ -549,7 +550,7 @@ describe("Interpreter", function () {
       // check if the fund was sent to user
       expect(
         (await erc20.balanceOf(user1.address)).toString()
-      ).to.be.equal(transferAmount.toString());
+      ).to.be.equal((oldBalance / 2).toString());
     });
 
     it("test program", async function () {

@@ -279,6 +279,70 @@ contract Interpreter is IInterpreter {
         console.log(6666, amount);
     }
 
+    function _handleAssetAmount(
+        bytes calldata program,
+        uint64 pos
+    ) internal returns (uint256 amount, uint64 newPos) {
+        bool success;
+        uint64 size;
+        uint64 field;
+        ProtobufLib.WireType _type;
+
+        // read balance message body
+        (success, pos, size) = ProtobufLib.decode_embedded_message(
+            pos,
+            program
+        );
+        console.logBytes(program[0:pos]);
+        console.log(32888, success, pos, size);
+        require(success, "decode embedded message failed");
+
+        // reading asset id 
+        (success, pos, field, _type) = ProtobufLib.decode_key(
+            pos,
+            program
+        );
+        console.logBytes(program[0:pos]);
+        console.log(5444, success, field, uint256(_type));
+        require(field == 1, "decode key failed");
+        require(success, "decode key failed");
+        require(
+            _type == ProtobufLib.WireType.LengthDelimited,
+            "decode type is not embedded messages"
+        );
+
+        address asset;
+        (asset, pos) = _handleAssetId(program, pos);
+        console.log("asset address", asset);
+        (success, pos, field, _type) = ProtobufLib.decode_key(
+            pos,
+            program
+        );
+        console.logBytes(program[0:pos]);
+        console.log(5444, success, field, uint256(_type));
+        require(field == 2 || field == 3, "decode key failed");
+        require(success, "decode key failed");
+        require(
+            _type == ProtobufLib.WireType.LengthDelimited,
+            "decode type is not embedded messages"
+        );
+
+
+        if (field == 2) {
+            // ratio
+            uint256 nominator;
+            uint256 denominator;
+            (nominator, denominator, newPos) = _handleRatio(
+                program,
+                pos
+            );
+            amount = IERC20(asset).balanceOf(address(this)) * nominator / denominator;
+        } else if (field == 3) {
+            // unit
+            (amount, newPos) = _handleUnit(program, pos, asset);
+        } 
+    }
+
     function _handleBalance(
         bytes calldata program,
         address assetAddress,
@@ -545,10 +609,9 @@ contract Interpreter is IInterpreter {
         } else if (valueType == 3){
             //result
         } else if (valueType == 4) {
-            // TODO ratio is not support, dynamic binding for the addresses bring complexity on binding ratio based balance
-            console.log('handling balance type');
+            console.log("handling assetAmount type");
             uint256 amount;
-            (amount, newPos) = _handleBalance(program, address(0), pos);
+            (amount, newPos) = _handleAssetAmount(program, pos);
             console.log("amount", amount);
             valueToReplace = abi.encode(uint256(amount));
             //balance
