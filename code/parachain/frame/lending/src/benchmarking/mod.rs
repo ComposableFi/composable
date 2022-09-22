@@ -75,10 +75,8 @@ benchmarks! {
 				+ pallet_balances::Config
 				+ frame_system::Config
 				+ pallet_timestamp::Config
-				+ pallet_vault::Config
-				+ orml_tokens::Config,
-			<T as orml_tokens::Config>::CurrencyId: From<CurrencyId>,
-			<T as orml_tokens::Config>::Balance: From<u64>,
+				+ pallet_vault::Config,
+			<T as pallet_balances::Config>::Balance: From<u64>,
 			<T as frame_system::Config>::BlockNumber: From<u32>,
 			<T as pallet_timestamp::Config>::Moment: From<u64>,
 			<T as pallet_vault::Config>::Balance: From<u64>,
