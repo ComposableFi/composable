@@ -5,10 +5,7 @@
   # nixConfig.sandbox = "relaxed";
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    flake-utils = {
-      url = "github:numtide/flake-utils";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    flake-utils = { url = "github:numtide/flake-utils"; };
     rust-overlay = {
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -290,7 +287,7 @@
           # /nix/store/523zlfzypzcr969p058i6lcgfmg889d5-stdenv-linux/setup: line 1393: --message-format: command not found
           composable-node = with packages;
             crane-nightly.buildPackage (common-attrs // {
-              pnameSuffix = "-node";
+              name = "composable";
               cargoArtifacts = common-deps;
               cargoBuildCommand =
                 "cargo build --release --package composable --features=builtin-wasm";
@@ -298,28 +295,33 @@
               PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
               COMPOSABLE_RUNTIME =
                 "${composable-runtime}/lib/runtime.optimized.wasm";
+              SUBSTRATE_CLI_GIT_COMMIT_HASH = self.rev or "dirty";
               installPhase = ''
                 mkdir -p $out/bin
-                cp target/release/composable $out/bin/composable-node
+                cp target/release/composable $out/bin/composable
               '';
-              meta = { mainProgram = "composable-node"; };
+              meta = { mainProgram = "composable"; };
             });
 
           composable-node-release = crane-nightly.buildPackage (common-attrs
             // {
-              pnameSuffix = "-node-release";
+              name = "composable";
               cargoArtifacts = common-deps;
               cargoBuildCommand = "cargo build --release --package composable";
+              SUBSTRATE_CLI_GIT_COMMIT_HASH = if self ? rev then
+                self.rev
+              else
+                builtins.abort "Cannot build the release node in a dirty repo.";
               installPhase = ''
                 mkdir -p $out/bin
-                cp target/release/composable $out/bin/composable-node
+                cp target/release/composable $out/bin/composable
               '';
-              meta = { mainProgram = "composable-node"; };
+              meta = { mainProgram = "composable"; };
             });
 
           composable-bench-node = crane-nightly.cargoBuild (common-bench-attrs
             // {
-              pnameSuffix = "-node";
+              name = "composable";
               cargoArtifacts = common-bench-deps;
               cargoBuildCommand = "cargo build --release --package composable";
               DALI_RUNTIME = "${dali-bench-runtime}/lib/runtime.optimized.wasm";
@@ -329,14 +331,14 @@
                 "${composable-bench-runtime}/lib/runtime.optimized.wasm";
               installPhase = ''
                 mkdir -p $out/bin
-                cp target/release/composable $out/bin/composable-node
+                cp target/release/composable $out/bin/composable
               '';
-              meta = { mainProgram = "composable-node"; };
+              meta = { mainProgram = "composable"; };
             });
 
           run-with-benchmarks = chain:
             writeShellScriptBin "run-benchmarks-once" ''
-              ${composable-bench-node}/bin/composable-node benchmark pallet \
+              ${composable-bench-node}/bin/composable benchmark pallet \
               --chain="${chain}" \
               --execution=wasm \
               --wasm-execution=compiled \
@@ -1082,7 +1084,7 @@
             };
             composable = {
               type = "app";
-              program = "${packages.composable-node}/bin/composable-node";
+              program = "${packages.composable-node}/bin/composable";
             };
             acala = {
               type = "app";
