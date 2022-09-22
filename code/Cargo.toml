@@ -49,6 +49,8 @@ members = [
   "utils/wasm-optimizer",
   "xcvm/lib/*",
 ]
+# **IMPORTANT: DO NOT REMOVE OR SUFFER IN DEPENDENCY RESOLUTION HELL**
+resolver = "2"
 
 [profile.release]
 # Polkadot runtime requires unwinding.

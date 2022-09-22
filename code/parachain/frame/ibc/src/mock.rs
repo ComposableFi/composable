@@ -140,14 +140,14 @@ impl CurrencyFactoryTrait for CurrencyIdGenerator {
 	type Balance = Balance;
 
 	fn create(_: RangeId, _: Self::Balance) -> Result<Self::AssetId, sp_runtime::DispatchError> {
-		Ok(1)
+		Ok(1.into())
 	}
 
 	fn protocol_asset_id_to_unique_asset_id(
 		_protocol_asset_id: u32,
 		_range_id: RangeId,
 	) -> Result<Self::AssetId, DispatchError> {
-		Ok(1)
+		Ok(1.into())
 	}
 
 	fn unique_asset_id_to_protocol_asset_id(_unique_asset_id: Self::AssetId) -> u32 {
