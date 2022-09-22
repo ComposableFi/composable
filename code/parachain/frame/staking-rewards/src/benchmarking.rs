@@ -1,5 +1,6 @@
 //! Benchmarks
 use crate::*;
+use composable_tests_helpers::test::helper::assert_extrinsic_event_with;
 
 use composable_support::validation::TryIntoValidated;
 use composable_traits::{
@@ -74,6 +75,8 @@ benchmarks! {
 			T::BlockNumber: From<u32>,
 			T::Balance: From<u128>,
 			T::AssetId: From<u128>,
+			<T as frame_system::Config>::Event: TryInto<crate::Event<T>> + core::fmt::Debug,
+			<<T as frame_system::Config>::Event as TryInto<crate::Event<T>>>::Error: core::fmt::Debug,
 	}
 
 	create_reward_pool {
@@ -134,7 +137,7 @@ benchmarks! {
 	}
 
 	split {
-		let r in 1 .. T::MaxRewardConfigsPerPool::get();
+		// let r in 1 .. T::MaxRewardConfigsPerPool::get();
 
 		frame_system::Pallet::<T>::set_block_number(1.into());
 
@@ -142,27 +145,40 @@ benchmarks! {
 
 		Pallet::<T>::create_reward_pool(
 			RawOrigin::Root.into(),
-			get_reward_pool::<T>(user.clone(), r)
+			get_reward_pool::<T>(user.clone(), 1)
 		).unwrap();
 
 		<T::Assets as Mutate<T::AccountId>>::mint_into(
 			BASE_ASSET_ID.into(),
 			&user,
-			// PICA::units(1_000).into()
-			100_000_000.into(),
+			100_000_000_000.into(),
 		).unwrap();
 
-		Pallet::<T>::stake(
-			RawOrigin::Signed(user.clone()).into(),
-			BASE_ASSET_ID.into(),
-			// PICA::units(1_000).into(),
-			100_000_000.into(),
-			ONE_HOUR,
-		).unwrap();
+		let instance_id = assert_extrinsic_event_with::<T, <T as frame_system::Config>::Event, crate::Event::<T>, _, _, _>(
+			Pallet::<T>::stake(
+				RawOrigin::Signed(user.clone()).into(),
+				BASE_ASSET_ID.into(),
+				// PICA::units(1_000).into(),
+				100_000_000.into(),
+				ONE_HOUR,
+			),
+			|event| match event {
+				crate::Event::Staked {
+					pool_id,
+					owner,
+					amount,
+					duration_preset,
+					fnft_collection_id,
+					fnft_instance_id,
+					keep_alive
+				} => Some(fnft_instance_id),
+				_ => None,
+			}
+		);
 
-		let ratio =  Permill::from_rational(1_u32,7_u32).try_into_validated().unwrap();
+		let ratio = Permill::from_rational(1_u32,7_u32).try_into_validated().unwrap();
 
-	}: _(RawOrigin::Signed(user), STAKING_FNFT_COLLECTION_ID.into(), FNFT_INSTANCE_ID_BASE.into(), ratio)
+	}: _(RawOrigin::Signed(user), STAKING_FNFT_COLLECTION_ID.into(), instance_id, ratio)
 
 	reward_accumulation_hook_reward_update_calculation {
 		let now = T::UnixTime::now().as_secs();

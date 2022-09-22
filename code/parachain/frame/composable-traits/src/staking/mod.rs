@@ -239,7 +239,7 @@ pub struct Stake<
 	pub share: Balance,
 
 	/// Reduced rewards by asset for the position (d_n)
-	// REVIEW(benluelo): Consider moving the reductions out of the Stake struct.
+	// review(benluelo): Consider moving the reductions out of the Stake struct.
 	//
 	// Options:
 	//

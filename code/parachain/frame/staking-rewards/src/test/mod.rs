@@ -417,7 +417,6 @@ fn unstake_in_case_of_not_zero_claims_and_early_unlock_should_work() {
 	let duration = ONE_HOUR;
 	let total_rewards = 100;
 	let total_shares = 200;
-	let claim = 50;
 
 	with_stake(
 		staker,
@@ -425,33 +424,70 @@ fn unstake_in_case_of_not_zero_claims_and_early_unlock_should_work() {
 		duration,
 		total_rewards,
 		total_shares,
-		Some(claim),
+		None,
 		|pool_id, unlock_penalty, _, staked_asset_id| {
+			dbg!(unlock_penalty);
 			let fnft_asset_account = FinancialNft::asset_account(&1, &0);
 
-			assert_ok!(StakingRewards::unstake(Origin::signed(staker), 1, 0));
+			// wait < 1 hour
+			process_and_progress_blocks::<StakingRewards, Test>(20);
+
+			let staker_balance_before_unstake = balance(staked_asset_id, &staker);
+			dbg!(staker_balance_before_unstake);
+
+			let rewards_pool = RewardPools::<Test>::get(staked_asset_id).unwrap();
+
+			let rewards_balances_in_pool_account_before_unstake = rewards_pool
+				.rewards
+				.clone()
+				.into_iter()
+				.map(|(reward_asset_id, _)| {
+					(
+						reward_asset_id,
+						balance(reward_asset_id, &StakingRewards::pool_account_id(&pool_id)),
+					)
+				})
+				.collect::<BTreeMap<_, _>>();
+
+			let rewards_balances_in_stakers_account_before_unstake = rewards_pool
+				.rewards
+				.clone()
+				.into_iter()
+				.map(|(reward_asset_id, _)| (reward_asset_id, balance(reward_asset_id, &staker)))
+				.collect::<BTreeMap<_, _>>();
+
+			assert_extrinsic_event::<Test, _, _, _>(
+				StakingRewards::unstake(Origin::signed(staker), 1, 0),
+				Event::StakingRewards(crate::Event::Unstaked {
+					owner: staker,
+					fnft_collection_id: 1,
+					fnft_instance_id: 0,
+				}),
+			);
 			assert_eq!(StakingRewards::stakes(1, 0), None);
-			assert_last_event::<Test, _>(|e| {
-				matches!(
-					e.event,
-					Event::StakingRewards(crate::Event::Unstaked { owner, fnft_collection_id, fnft_instance_id })
-						if owner == staker && fnft_collection_id == 1 && fnft_instance_id == 0
-				)
-			});
 
 			let penalty = unlock_penalty.mul_ceil(amount);
-			let claim_with_penalty = (Perbill::one() - unlock_penalty).mul_ceil(claim);
+			let claim_with_penalty = dbg!(unlock_penalty.left_from_one()).mul_ceil(100);
+			dbg!(claim_with_penalty);
 			let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
-			assert_eq!(balance(staked_asset_id, &staker), amount * 2 - penalty);
+			assert_eq!(
+				balance(staked_asset_id, &staker),
+				staker_balance_before_unstake + amount - penalty
+			);
 			// NOTE(connor): Used to keep penalty in the pool account, fNFT design has assets being
 			// burned instead
 			assert_eq!(balance(staked_asset_id, &fnft_asset_account), 0);
 			// assert_eq!(balance(staked_asset_id, &fnft_asset_account), amount * 2 + penalty);
 			for (rewarded_asset_id, _) in rewards_pool.rewards.iter() {
-				assert_eq!(balance(*rewarded_asset_id, &staker), amount * 2 + claim_with_penalty);
+				assert_eq!(
+					balance(*rewarded_asset_id, &staker),
+					rewards_balances_in_stakers_account_before_unstake[&rewarded_asset_id] +
+						claim_with_penalty
+				);
 				assert_eq!(
 					balance(*rewarded_asset_id, &StakingRewards::pool_account_id(&pool_id)),
-					amount * 2 - claim_with_penalty
+					rewards_balances_in_pool_account_before_unstake[&rewarded_asset_id] -
+						claim_with_penalty
 				);
 			}
 		},
@@ -465,7 +501,6 @@ fn unstake_in_case_of_not_zero_claims_and_not_early_unlock_should_work() {
 	let duration_preset = ONE_HOUR;
 	let total_rewards = 100;
 	let total_shares = 200;
-	let claim = 50;
 
 	with_stake(
 		staker,
@@ -473,21 +508,20 @@ fn unstake_in_case_of_not_zero_claims_and_not_early_unlock_should_work() {
 		duration_preset,
 		total_rewards,
 		total_shares,
-		Some(claim),
+		None,
 		|pool_id, _, stake_duration, staked_asset_id| {
-			let second_in_milliseconds = 1000;
-			Timestamp::set_timestamp(
-				Timestamp::now() + stake_duration * second_in_milliseconds + second_in_milliseconds,
+			// wait 1 hour
+			process_and_progress_blocks::<StakingRewards, Test>(601);
+
+			assert_extrinsic_event::<Test, _, _, _>(
+				StakingRewards::unstake(Origin::signed(staker), 1, 0),
+				Event::StakingRewards(crate::Event::Unstaked {
+					owner: staker,
+					fnft_collection_id: 1,
+					fnft_instance_id: 0,
+				}),
 			);
-			assert_ok!(StakingRewards::unstake(Origin::signed(staker), 1, 0));
 			assert_eq!(StakingRewards::stakes(1, 0), None);
-			assert_last_event::<Test, _>(|e| {
-				matches!(
-					e.event,
-					Event::StakingRewards(crate::Event::Unstaked { owner, fnft_collection_id, fnft_instance_id })
-						if owner == staker && fnft_collection_id == 1 && fnft_instance_id == 0
-				)
-			});
 
 			let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
 			assert_eq!(balance(staked_asset_id, &staker), amount * 2);
@@ -496,10 +530,11 @@ fn unstake_in_case_of_not_zero_claims_and_not_early_unlock_should_work() {
 				amount * 2
 			);
 			for (rewarded_asset_id, _) in rewards_pool.rewards.iter() {
-				assert_eq!(balance(*rewarded_asset_id, &staker), amount * 2 + claim);
+				assert_eq!(balance(*rewarded_asset_id, &staker), amount * 2 + 100);
 				assert_eq!(
 					balance(*rewarded_asset_id, &StakingRewards::pool_account_id(&pool_id)),
-					amount * 2 - claim
+					// 1 mil usdt is minted in with_stake
+					amount * 2 - 100 + USDT::units(1_000_000)
 				);
 			}
 		},
@@ -510,23 +545,22 @@ fn unstake_in_case_of_not_zero_claims_and_not_early_unlock_should_work() {
 fn test_transfer_reward() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
-		let pool_init_config = get_default_reward_pool();
-		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), pool_init_config));
-		assert_ok!(<Tokens as Mutate<<StakingRewards as ProtocolStaking>::AccountId>>::mint_into(
-			USDT::ID,
-			&ALICE,
-			20_000_u128
-		));
-		assert_ok!(<Tokens as Mutate<<StakingRewards as ProtocolStaking>::AccountId>>::mint_into(
-			BTC::ID,
-			&ALICE,
-			20_000_u128
-		));
-		assert_ok!(<Tokens as Mutate<<StakingRewards as ProtocolStaking>::AccountId>>::mint_into(
-			BTC::ID,
-			&BOB,
-			20_000_u128
-		));
+
+		let pool_init_config = RewardPoolConfig {
+			owner: ALICE,
+			asset_id: PICA::ID,
+			end_block: 5,
+			reward_configs: get_default_reward_config(),
+			lock: get_default_lock_config(),
+			share_asset_id: XPICA::ID,
+			fnft_asset_id: STAKING_FNFT_COLLECTION_ID,
+		};
+
+		create_rewards_pool_and_assert::<Test, runtime::Event>(pool_init_config);
+
+		mint_assets([ALICE], [USDT::ID, BTC::ID], 20_000);
+		mint_assets([BOB], [BTC::ID], 20_000);
+
 		assert_ok!(<StakingRewards as ProtocolStaking>::transfer_protocol_distribution(
 			&ALICE,
 			&1,
@@ -534,23 +568,14 @@ fn test_transfer_reward() {
 			10_u128,
 			true
 		));
-		// can't transfer more than max_rewards set in the rewards config
-		assert_noop!(
-			<StakingRewards as ProtocolStaking>::transfer_protocol_distribution(
-				&ALICE,
-				&1,
-				USDT::ID,
-				10_000_u128,
-				true
-			),
-			crate::Error::<Test>::MaxRewardLimitReached
-		);
-		// only pool owner can add new reward
-		// TODO (vim): Consider enabling this later
-		// assert_noop!(
-		// 	<StakingRewards as ProtocolStaking>::transfer_reward(&BOB, &1, BTC::ID, 10_000_u128),
-		// 	crate::Error::<Test>::OnlyPoolOwnerCanAddNewReward
-		// );
+
+		assert_ok!(<StakingRewards as ProtocolStaking>::transfer_protocol_distribution(
+			&ALICE,
+			&1,
+			USDT::ID,
+			10_000_u128,
+			true,
+		));
 
 		assert_ok!(<StakingRewards as ProtocolStaking>::transfer_protocol_distribution(
 			&ALICE,

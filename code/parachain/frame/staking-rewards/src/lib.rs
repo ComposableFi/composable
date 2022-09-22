@@ -869,7 +869,6 @@ pub mod pallet {
 							.total_dilution_adjustment
 							.safe_add(&additional_inflation)?;
 
-						// REVIEW(benluelo): This is currently unused; remove?
 						// REVIEW(benluelo): Review the expected behaviour of stake.reductions with
 						// the new rewards types
 						if let Some(existing_inflation) = stake.reductions.get_mut(asset_id) {
@@ -1062,7 +1061,7 @@ pub mod pallet {
 
 					// share asset (x-token)
 					Self::split_lock(
-						old_position.staked_asset_id,
+						rewards_pool.share_asset_id,
 						&old_fnft_asset_account,
 						&new_fnft_asset_account,
 						old_position.amount,
@@ -1143,6 +1142,8 @@ pub mod pallet {
 				old_account_amount,
 			)?;
 
+			dbg!(asset_id);
+
 			// transfer the amount in the new position from the old account to the new account (this
 			// should be the total unlocked amount)
 			T::Assets::transfer(
@@ -1152,6 +1153,8 @@ pub mod pallet {
 				new_account_amount,
 				false, // not a user account, doesn't need to be kept alive
 			)?;
+
+			dbg!();
 
 			// lock assets on new account
 			T::Assets::set_lock(
@@ -1181,8 +1184,6 @@ pub mod pallet {
 			// are pallet sub accounts.
 			keep_alive: bool,
 		) -> Result<(), DispatchError> {
-			dbg!(&stake);
-			dbg!(&rewards_pool);
 			for (asset_id, reward) in &mut rewards_pool.rewards {
 				let rate_based_reward = match reward {
 					Reward::ProtocolDistribution() => continue,
@@ -1192,7 +1193,7 @@ pub mod pallet {
 				// REVIEW(benluelo): As far as I can tell, stake.reductions should always contain
 				// all of the assets in the pool - review whether this is the case and if so,
 				// possible ways to verify it
-				let reduction = stake.reductions.get(asset_id).cloned().unwrap_or_else(Zero::zero);
+				let inflation = stake.reductions.get(asset_id).cloned().unwrap_or_else(Zero::zero);
 				let claim = if rewards_pool.total_shares.is_zero() {
 					Zero::zero()
 				} else {
@@ -1200,29 +1201,25 @@ pub mod pallet {
 						.total_rewards
 						.safe_mul(&stake.share)?
 						.safe_div(&rewards_pool.total_shares)?
-						.safe_sub(&reduction)?
+						.safe_sub(&inflation)?
 				};
 				let claim = if penalize_for_early_unlock {
 					(Perbill::one() - stake.lock.unlock_penalty).mul_ceil(claim)
 				} else {
 					claim
 				};
-				// REVIEW(connor): Do we encounter this case?
 				let claim = sp_std::cmp::min(
 					claim,
 					rate_based_reward.total_rewards.safe_sub(&rate_based_reward.claimed_rewards)?,
 				);
-
-				dbg!(rewards_pool.total_shares);
 
 				dbg!(claim);
 
 				rate_based_reward.claimed_rewards =
 					rate_based_reward.claimed_rewards.safe_add(&claim)?;
 
-				if let Some(reduction) = stake.reductions.get_mut(asset_id) {
-					*reduction += claim;
-					dbg!(reduction);
+				if let Some(inflation) = stake.reductions.get_mut(asset_id) {
+					*inflation += claim;
 				}
 
 				T::Assets::transfer(
@@ -1367,6 +1364,8 @@ pub mod pallet {
 						},
 						Reward::RateBased(_rate_based_reward) => {
 							do_transfer()?;
+							// REVIEW(benluelo): Should this be put on hold? (See comment on
+							// enclosing function)
 							T::Assets::hold(reward_currency, &pool_account_id, amount)?;
 
 							RewardsPotIsEmpty::<T>::remove(pool_id, reward_currency);
@@ -1597,7 +1596,6 @@ pub(crate) fn do_rate_based_reward_accumulation<T: Config>(
 	}
 }
 
-#[derive(Debug)]
 pub(crate) enum RewardAccumulationCalculationError {
 	/// T::UnixTime::now() returned a value in the past.
 	BackToTheFuture,
