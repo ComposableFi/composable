@@ -1,5 +1,5 @@
 # fNFT
-This pallet allows the creation of financial NFTs(fNFTs) with specific attributes and provides abstractions for 
+This pallet allows the creation of [financial NFTs(fNFTs)](https://github.com/ComposableFi/composable/blob/main/rfcs/0006-financial-nft.md) with specific attributes and provides abstractions for 
 typed and reference NFT design.
 
 ---
