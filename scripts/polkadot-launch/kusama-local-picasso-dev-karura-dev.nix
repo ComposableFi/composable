@@ -12,7 +12,7 @@ in {
     relaychain = {
       bin = "${polkadot-bin}/bin/polkadot";
       # NOTE: kusama-dev and kusama-local failed to connect in 10 minutes, seems need to change spec to work faster
-      # NOTE: `-dev` has long `timeouts`, so `-local` is for testing 
+      # NOTE: `-dev` has long `timeouts`, so `-local` is for testing
       chain = "rococo-local";
       port = 30444;
       wsPort = 9944;
@@ -33,7 +33,7 @@ in {
         wsPort = 9988;
         count = 2;
         chain = "picasso-dev";
-        bin = "${composable-bin}/bin/composable-node";
+        bin = "${composable-bin}/bin/composable";
       }
       {
         id = 2000;
