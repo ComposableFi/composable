@@ -383,7 +383,7 @@ fn unstake_non_existent_stake_should_not_work() {
 		let staker = ALICE;
 		assert_noop!(
 			StakingRewards::unstake(Origin::signed(staker), 1, 0),
-			crate::Error::<Test>::StakeNotFound
+			crate::Error::<Test>::FnftNotFound
 		);
 	});
 }
@@ -408,7 +408,7 @@ fn not_owner_of_stake_can_not_unstake() {
 
 		assert_noop!(
 			StakingRewards::unstake(Origin::signed(not_owner), 1, 0),
-			crate::Error::<Test>::OnlyStakeOwnerCanUnstake
+			crate::Error::<Test>::OnlyStakeOwnerCanInteractWithStake,
 		);
 	});
 }
