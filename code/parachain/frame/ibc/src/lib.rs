@@ -51,7 +51,7 @@ mod errors;
 pub mod events;
 pub mod ics20;
 mod ics23;
-mod light_clients;
+pub mod light_clients;
 mod port;
 pub mod routing;
 pub use client::HostConsensusProof;
