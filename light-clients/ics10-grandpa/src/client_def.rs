@@ -21,7 +21,9 @@ use ibc::core::ics02_client::{
 use crate::client_message::{ClientMessage, RelayChainHeader};
 use alloc::{format, string::ToString, vec, vec::Vec};
 use core::marker::PhantomData;
-use grandpa_client::justification::{find_scheduled_change, AncestryChain};
+use grandpa_client::justification::{
+	check_equivocation_proof, find_scheduled_change, AncestryChain,
+};
 use grandpa_client_primitives::ParachainHeadersWithFinalityProof;
 use ibc::{
 	core::{
@@ -87,7 +89,28 @@ where
 				>(client_state, headers_with_finality_proof)
 				.map_err(Error::GrandpaPrimitives)?;
 			},
-			ClientMessage::Misbehaviour(()) => unimplemented!(),
+			ClientMessage::Misbehaviour(misbehavior) => {
+				// first off is the number of equivocations >= 1/3?
+				if misbehavior.equivocations.len() < (client_state.current_authorities.len() / 3) {
+					Err(Error::Custom(
+						"Not enough equivocations to warrant a misbehavior".to_string(),
+					))?
+				}
+
+				misbehavior
+					.equivocations
+					.into_iter()
+					.map(|equivocation| {
+						check_equivocation_proof::<H, _, _>(
+							client_state.current_set_id,
+							equivocation,
+						)
+					})
+					.collect::<Result<(), _>>()
+					.map_err(Error::Anyhow)?;
+
+				// whoops equivocation is valid.
+			},
 		}
 
 		Ok(())
@@ -154,14 +177,52 @@ where
 
 	fn check_for_misbehaviour<Ctx: ReaderContext>(
 		&self,
-		_ctx: &Ctx,
-		_client_id: ClientId,
-		_client_state: Self::ClientState,
+		ctx: &Ctx,
+		client_id: ClientId,
+		client_state: Self::ClientState,
 		client_message: Self::ClientMessage,
 	) -> Result<bool, Ics02Error> {
-		// todo: we should also check that this update doesn't include competing consensus states
-		// for heights we already processed.
-		Ok(matches!(client_message, ClientMessage::Misbehaviour(_)))
+		if matches!(client_message, ClientMessage::Misbehaviour(_)) {
+			return Ok(true)
+		}
+
+		// we also check that this update doesn't include competing consensus states for heights we
+		// already processed.
+		let header = match client_message {
+			ClientMessage::Header(header) => header,
+			_ => unreachable!("We've checked for misbehavior in line 180; qed"),
+		};
+		let ancestry =
+			AncestryChain::<RelayChainHeader>::new(&header.finality_proof.unknown_headers);
+
+		for (relay_hash, parachain_header_proof) in header.parachain_headers {
+			let header = ancestry.header(&relay_hash).ok_or_else(|| {
+				Error::Custom(format!("No relay chain header found for hash: {relay_hash:?}"))
+			})?;
+
+			let (height, consensus_state) = ConsensusState::from_header::<H>(
+				parachain_header_proof,
+				client_state.para_id,
+				header.state_root.clone(),
+			)?;
+
+			match ctx.maybe_consensus_state(&client_id, height)? {
+				Some(cs) => {
+					let cs: ConsensusState =
+						cs.downcast().ok_or(Ics02Error::client_args_type_mismatch(
+							client_state.client_type().to_owned(),
+						))?;
+
+					if cs != consensus_state {
+						// Houston we have a problem
+						return Ok(true)
+					}
+				},
+				None => {},
+			};
+		}
+
+		Ok(false)
 	}
 
 	fn verify_upgrade_and_update_state<Ctx: ReaderContext>(

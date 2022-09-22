@@ -19,7 +19,8 @@ use codec::{Decode, Encode};
 use finality_grandpa::voter_set::VoterSet;
 use primitives::{error, Commit, HostFunctions};
 use sp_finality_grandpa::{
-	AuthorityId, AuthorityList, ConsensusLog, ScheduledChange, GRANDPA_ENGINE_ID,
+	AuthorityId, AuthorityList, AuthoritySignature, ConsensusLog, Equivocation, RoundNumber,
+	ScheduledChange, SetId, GRANDPA_ENGINE_ID,
 };
 use sp_runtime::{generic::OpaqueDigestItemId, traits::Header as HeaderT};
 use sp_std::prelude::*;
@@ -94,16 +95,16 @@ where
 				 qed.",
 			);
 
-		let mut buf = Vec::new();
 		let mut visited_hashes = BTreeSet::new();
 		for signed in self.commit.precommits.iter() {
 			let message = finality_grandpa::Message::Precommit(signed.precommit.clone());
-			// clear the buffer
-			buf.clear();
-			(message, self.round, set_id).encode_to(&mut buf);
-			if !Host::ed25519_verify(signed.signature.as_ref(), &buf, signed.id.as_ref()) {
-				Err(anyhow!("invalid signature for precommit in grandpa justification"))?
-			}
+			check_message_signature::<Host, _, _>(
+				&message,
+				&signed.id,
+				&signed.signature,
+				self.round,
+				set_id,
+			)?;
 
 			if base_hash == signed.precommit.target_hash {
 				continue
@@ -214,4 +215,80 @@ pub fn find_forced_change<H: HeaderT>(
 	// find the first consensus digest with the right ID which converts to
 	// the right kind of consensus log.
 	header.digest().convert_first(|l| l.try_to(id).and_then(filter_log))
+}
+
+/// Check a message signature by encoding the message and verifying the provided signature using the
+/// expected authority id.
+pub fn check_message_signature<Host, H, N>(
+	message: &finality_grandpa::Message<H, N>,
+	id: &AuthorityId,
+	signature: &AuthoritySignature,
+	round: RoundNumber,
+	set_id: SetId,
+) -> Result<(), anyhow::Error>
+where
+	Host: HostFunctions,
+	H: Encode,
+	N: Encode,
+{
+	let buf = (message, round, set_id).encode();
+
+	if !Host::ed25519_verify(signature.as_ref(), &buf, id.as_ref()) {
+		Err(anyhow!("invalid signature for precommit in grandpa justification"))?
+	}
+
+	Ok(())
+}
+
+/// Verifies the equivocation proof by making sure that both votes target
+/// different blocks and that its signatures are valid.
+pub fn check_equivocation_proof<Host, H, N>(
+	set_id: u64,
+	equivocation: Equivocation<H, N>,
+) -> Result<(), anyhow::Error>
+where
+	Host: HostFunctions,
+	H: Clone + Encode + PartialEq,
+	N: Clone + Encode + PartialEq,
+{
+	// NOTE: the bare `Prevote` and `Precommit` types don't share any trait,
+	// this is implemented as a macro to avoid duplication.
+	macro_rules! check {
+		( $equivocation:expr, $message:expr ) => {
+			// if both votes have the same target the equivocation is invalid.
+			if $equivocation.first.0.target_hash == $equivocation.second.0.target_hash &&
+				$equivocation.first.0.target_number == $equivocation.second.0.target_number
+			{
+				return Err(anyhow!("both votes have the same target!"))
+			}
+
+			// check signatures on both votes are valid
+			check_message_signature::<Host, _, _>(
+				&$message($equivocation.first.0),
+				&$equivocation.identity,
+				&$equivocation.first.1,
+				$equivocation.round_number,
+				set_id,
+			)?;
+
+			check_message_signature::<Host, _, _>(
+				&$message($equivocation.second.0),
+				&$equivocation.identity,
+				&$equivocation.second.1,
+				$equivocation.round_number,
+				set_id,
+			)?;
+
+			return Ok(())
+		};
+	}
+
+	match equivocation {
+		Equivocation::Prevote(equivocation) => {
+			check!(equivocation, finality_grandpa::Message::Prevote);
+		},
+		Equivocation::Precommit(equivocation) => {
+			check!(equivocation, finality_grandpa::Message::Precommit);
+		},
+	}
 }

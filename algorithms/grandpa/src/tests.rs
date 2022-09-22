@@ -143,7 +143,7 @@ async fn follow_grandpa_justifications() {
 				Header,
 				HostFunctionsProvider,
 			>(client_state, proof)
-				.expect("Failed to verify parachain headers with grandpa finality_proof");
+			.expect("Failed to verify parachain headers with grandpa finality_proof");
 			println!("========= Successfully verified grandpa justification =========");
 		}
 	}

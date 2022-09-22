@@ -23,10 +23,12 @@ use crate::{
 };
 use alloc::{collections::BTreeMap, vec::Vec};
 use anyhow::anyhow;
-use codec::Encode;
+use codec::{Decode, Encode};
 use grandpa_client_primitives::{FinalityProof, ParachainHeaderProofs};
 use primitive_types::H256;
+use sp_finality_grandpa::Equivocation;
 use sp_runtime::traits::BlakeTwo256;
+use std::collections::HashMap;
 use tendermint_proto::Protobuf;
 
 /// Protobuf type url for GRANDPA header
@@ -47,13 +49,23 @@ pub struct Header {
 	pub parachain_headers: BTreeMap<H256, ParachainHeaderProofs>,
 }
 
+///  Misbehaviour type for GRANDPA
+#[derive(Clone, Debug)]
+pub struct Misbehaviour {
+	/// set id for these misbehaviours
+	pub set_id: u64,
+	/// If there are equivocations for at least 1/3 of the validator set, then we  have to freeze
+	/// the client as the byzantine resistance for GRANDPA requires 2/3+1 honest majority
+	pub equivocations: Vec<Equivocation<H256, u32>>,
+}
+
 /// [`ClientMessage`] for Ics10-GRANDPA
 #[derive(Clone, Debug)]
 pub enum ClientMessage {
 	/// This is the variant for header updates
 	Header(Header),
 	//// This is for submitting misbehaviors. todo:
-	Misbehaviour(()),
+	Misbehaviour(Misbehaviour),
 }
 
 impl ibc::core::ics02_client::client_message::ClientMessage for ClientMessage {
@@ -125,8 +137,23 @@ impl TryFrom<RawClientMessage> for ClientMessage {
 					parachain_headers,
 				})
 			},
-			client_message::Message::Misbehaviour(_raw_misbehaviour) =>
-				ClientMessage::Misbehaviour(()),
+			client_message::Message::Misbehaviour(raw_misbehaviour) => {
+				let equivocations: Vec<Equivocation<H256, u32>> =
+					Decode::decode(&mut &raw_misbehaviour.equivocations[..])?;
+
+				// so we need to de-duplicate equivocations by authority
+				let mut map = HashMap::new();
+				for equivocation in equivocations {
+					map.insert(equivocation.offender().clone(), equivocation);
+				}
+				// collect de-duplicated equivocations
+				let equivocations = map.into_values().collect();
+
+				ClientMessage::Misbehaviour(Misbehaviour {
+					set_id: raw_misbehaviour.set_id,
+					equivocations,
+				})
+			},
 		};
 
 		Ok(message)
@@ -167,8 +194,11 @@ impl From<ClientMessage> for RawClientMessage {
 					})),
 				}
 			},
-			ClientMessage::Misbehaviour(()) => RawClientMessage {
-				message: Some(client_message::Message::Misbehaviour(RawMisbehaviour {})),
+			ClientMessage::Misbehaviour(misbehaviior) => RawClientMessage {
+				message: Some(client_message::Message::Misbehaviour(RawMisbehaviour {
+					set_id: misbehaviior.set_id,
+					equivocations: misbehaviior.equivocations.encode(),
+				})),
 			},
 		}
 	}

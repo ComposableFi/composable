@@ -238,7 +238,6 @@ async fn test_continuous_update_of_grandpa_client() {
 		let justification = Justification::decode(&mut &justification_bytes[..])
 			.expect("Failed to decode justification");
 
-
 		let headers = grandpa_prover
 			.query_finalized_parachain_headers_between(
 				justification.commit.target_hash,
@@ -258,9 +257,7 @@ async fn test_continuous_update_of_grandpa_client() {
 			.expect("Failed to fetch finalized parachain headers with proof");
 		let proof = match maybe_proof {
 			Some(proof) => proof,
-			None => {
-				continue
-			},
+			None => continue,
 		};
 		println!("========= New Justification =========");
 		println!("justification size: {}kb", size_of_val(&*justification_bytes) / 1000);

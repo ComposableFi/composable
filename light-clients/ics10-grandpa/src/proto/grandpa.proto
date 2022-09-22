@@ -100,7 +100,10 @@ message Header {
 
 // GRANDPA misbehaviour type
 message Misbehaviour {
-  // todo:
+  // The set_id of the equivocations
+  uint64 set_id = 1;
+  // SCALE-encoded array of equivocations, ideally each belonging to a distinct authority.
+  bytes equivocations = 2;
 }
 
 // ClientMessage for ics10-GRANDPA
