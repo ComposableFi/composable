@@ -33,7 +33,7 @@ mod xcmp;
 use lending::MarketId;
 use orml_traits::{parameter_type_with_key, LockIdentifier};
 // TODO: consider moving this to shared runtime
-use ibc::clients::ics11_beefy::client_state::RelayChain;
+use light_client_common::RelayChain;
 pub use xcmp::{MaxInstructions, UnitWeightCost};
 
 use common::{
@@ -227,7 +227,7 @@ impl system::Config for Runtime {
 	/// Version of the runtime.
 	type Version = Version;
 	/// The data to be stored in an account.
-	type AccountData = orml_tokens::AccountData<Balance>;
+	type AccountData = balances::AccountData<Balance>;
 
 	/// Converts a module to the index of the module in `construct_runtime!`.
 	///
@@ -324,8 +324,19 @@ parameter_types! {
 	pub const NativeCurrencyId: CurrencyId = CurrencyId::PICA;
 }
 
-/// Replacement for pallet_balances.
-pub type Balances = orml_tokens::CurrencyAdapter<Runtime, NativeCurrencyId>;
+impl balances::Config for Runtime {
+	/// The type for recording an account's balance.
+	type Balance = Balance;
+	type DustRemoval = Treasury;
+	/// The ubiquitous event type.
+	type Event = Event;
+	type ExistentialDeposit = common::NativeExistentialDeposit;
+	type AccountStore = System;
+	type WeightInfo = weights::balances::WeightInfo<Runtime>;
+	type MaxLocks = MaxLocks;
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
+}
 
 parameter_types! {
 	/// 1 milli-pica/byte should be fine
@@ -367,6 +378,7 @@ impl transaction_payment::Config for Runtime {
 		Balances,
 		DealWithFees<Runtime, NativeTreasury, Balances>,
 	>;
+	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type WeightToFee = WeightToFee;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type FeeMultiplierUpdate =
@@ -899,8 +911,7 @@ impl Contains<Call> for BaseCallFilter {
 				call,
 				Call::Tokens(_) |
 					Call::Indices(_) | Call::Treasury(_) |
-					Call::IbcPing(_) | Call::Transfer(_) |
-					Call::Ibc(_)
+					Call::IbcPing(_) | Call::Ibc(_)
 			))
 	}
 }
@@ -1298,8 +1309,7 @@ construct_runtime!(
 
 		// IBC Support
 		IbcPing: pallet_ibc_ping = 151,
-		Transfer: ibc_transfer = 152,
-		Ibc: pallet_ibc = 153,
+		Ibc: pallet_ibc = 152,
 
 		  // Cosmwasm support
 		  Cosmwasm: cosmwasm = 180

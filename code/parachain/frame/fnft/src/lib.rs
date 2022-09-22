@@ -148,6 +148,7 @@ pub mod pallet {
 	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
+	/// Mapping of fNFT collection to the newest instance ID
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
 	pub type FinancialNftId<T: Config> = StorageMap<
@@ -164,6 +165,7 @@ pub mod pallet {
 		Zero::zero()
 	}
 
+	/// Mapping of collection and instance IDs to fNFT data
 	#[pallet::storage]
 	#[pallet::getter(fn instance)]
 	pub type Instance<T: Config> = StorageDoubleMap<
@@ -471,14 +473,17 @@ pub mod pallet {
 	}
 
 	impl<T: Config> FinancialNft<AccountIdOf<T>> for Pallet<T> {
-		/// TODO (vim): Assess the probability of collision in generating accounts
-		///   with collection id type u128 and instance id type u128 this definitely collides
-		///   because the seed is longer than the account ID
 		fn asset_account(
 			collection: &Self::CollectionId,
 			instance: &Self::ItemId,
 		) -> AccountIdOf<T> {
-			T::PalletId::get().into_sub_account_truncating((collection, instance))
+			// `into_sub_account_truncating()` gives us 20 bytes of space to create a seed.
+			// `blake2_256()` returns 32 bytes of data, however, BLAKE2 already truncates its
+			// results. Truncating this to 20 bytes puts us at the recomended output length for
+			// BLAKE2.
+			T::PalletId::get().into_sub_account_truncating(sp_io::hashing::blake2_256(
+				&(collection, instance).encode(),
+			))
 		}
 
 		fn get_next_nft_id(

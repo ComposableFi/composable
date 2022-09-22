@@ -24,7 +24,7 @@ import BN from "bn.js";
  * - Mint Into
  * - Burn From
  */
-describe("tx.assets Tests", function () {
+describe("[LAUNCH] tx.assets Tests", function () {
   if (!testConfiguration.enabledTests.tx.enabled) return;
 
   let api: ApiPromise;

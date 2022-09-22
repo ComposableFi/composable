@@ -101,6 +101,7 @@ ibc-primitives = { path = "../../frame/ibc/primitives", default-features = false
 ibc-runtime-api = { path = "../../frame/ibc/runtime-api", default-features = false }
 pallet-ibc = { path = "../../frame/ibc", default-features = false }
 pallet-ibc-ping = { path = "../../frame/ibc/ping", default-features = false }
+light-client-common = { git = "https://github.com/composableFi/centauri", rev = "bb8fcda8427c32aa01f2815ba778aecff502b5bb", default-features = false }
 
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
@@ -306,4 +307,5 @@ std = [
   "xcm/std",
   "cosmwasm/std",
   "asset-tx-payment/std",
+  "light-client-common/std",
 ]

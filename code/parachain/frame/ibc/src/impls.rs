@@ -920,9 +920,7 @@ where
 	}
 
 	fn send_transfer(
-		msg: ibc::applications::transfer::msgs::transfer::MsgTransfer<
-			PrefixedCoin,
-		>,
+		msg: ibc::applications::transfer::msgs::transfer::MsgTransfer<PrefixedCoin>,
 	) -> Result<(), IbcHandlerError> {
 		let mut handler_output = HandlerOutputBuilder::default();
 		let mut ctx = Context::<T>::default();

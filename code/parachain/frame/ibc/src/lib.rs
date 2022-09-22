@@ -206,8 +206,8 @@ pub mod pallet {
 		const CHILD_TRIE_KEY: &'static [u8];
 		/// A type for creating local asset Ids
 		type CurrencyFactory: CurrencyFactory<
-			<Self as DeFiComposableConfig>::MayBeAssetId,
-			<Self as DeFiComposableConfig>::Balance,
+			AssetId = <Self as DeFiComposableConfig>::MayBeAssetId,
+			Balance = <Self as DeFiComposableConfig>::Balance,
 		>;
 		/// Account Id Conversion from SS58 string or hex string
 		type AccountIdConversion: TryFrom<Signer>

@@ -16,7 +16,6 @@ sp_api::decl_runtime_apis! {
 		/// Returns the balance of this address
 		fn query_balance_with_address(addr: Vec<u8>) -> Option<u128>;
 
-<<<<<<<< HEAD:frame/ibc/runtime-api/src/lib.rs
 		/// Query receive packet info
 		fn query_send_packet_info(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<PacketInfo>>;
 
@@ -25,13 +24,6 @@ sp_api::decl_runtime_apis! {
 
 		/// Get the host time and height at which a client was updated for given consensus height
 		fn client_update_time_and_height(client_id: Vec<u8>, revision_number: u64, revision_height: u64) -> Option<(u64, u64)>;
-========
-		/// Query offchain packets
-		fn query_packets(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<OffchainPacketType>>;
-
-		/// Query offchain acks
-		fn query_acknowledgements(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<Vec<u8>>>;
->>>>>>>> 3631796f97263993c8d9398936aab1bc7b8ce2c8:code/parachain/frame/ibc/ibc-runtime-api/src/lib.rs
 
 		/// Returns client state at height
 		fn client_state(client_id: Vec<u8>) -> Option<QueryClientStateResponse>;
