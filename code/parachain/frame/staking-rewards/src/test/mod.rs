@@ -81,6 +81,24 @@ fn test_create_reward_pool_invalid_end_block() {
 }
 
 #[test]
+fn stake_should_fail_before_start_of_rewards_pool() {
+	new_test_ext().execute_with(|| {
+		let staker = ALICE;
+		let amount = 100_500;
+		let duration = ONE_HOUR;
+		let pool_id = PICA::ID;
+
+		process_and_progress_blocks::<StakingRewards, Test>(1);
+		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
+
+		assert_noop!(
+			StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration),
+			crate::Error::<Test>::RewardsPoolHasNotStarted
+		);
+	});
+}
+
+#[test]
 fn stake_in_case_of_low_balance_should_not_work() {
 	new_test_ext().execute_with(|| {
 		process_and_progress_blocks::<StakingRewards, Test>(1);
@@ -101,9 +119,6 @@ fn stake_in_case_of_low_balance_should_not_work() {
 	});
 }
 
-// NOTE(connor): Bad test, fails when using `process_and_progress_blocks` but passes with
-// `System::set_block_number()` because amounts being checked aren't valid.
-#[ignore]
 #[test]
 fn stake_in_case_of_zero_inflation_should_work() {
 	new_test_ext().execute_with(|| {
@@ -155,7 +170,7 @@ fn stake_in_case_of_zero_inflation_should_work() {
 				share: StakingRewards::boosted_amount(reward_multiplier, amount),
 				reductions,
 				lock: Lock {
-					started_at: <Test as crate::Config>::UnixTime::now(),
+					started_at: 12,
 					duration: duration_preset,
 					unlock_penalty: rewards_pool.lock.unlock_penalty,
 				},
@@ -187,9 +202,6 @@ fn stake_in_case_of_zero_inflation_should_work() {
 // this is almost the exact same as the above function
 // spot the difference!
 // maybe do a proptest with different inflation rates?
-// NOTE(connor): Bad test, fails when using `process_and_progress_blocks` but passes with
-// `System::set_block_number()` because amounts being checked aren't valid.
-#[ignore]
 #[test]
 fn stake_in_case_of_not_zero_inflation_should_work() {
 	new_test_ext().execute_with(|| {
@@ -234,7 +246,7 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 				share: StakingRewards::boosted_amount(reward_multiplier, AMOUNT),
 				reductions,
 				lock: Lock {
-					started_at: <Test as crate::Config>::UnixTime::now(),
+					started_at: 12,
 					duration: DURATION_PRESET,
 					unlock_penalty: rewards_pool.lock.unlock_penalty,
 				},
@@ -268,9 +280,6 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 	});
 }
 
-// NOTE(connor): Bad test, fails when using `process_and_progress_blocks` but passes with
-// `System::set_block_number()` because amounts being checked aren't valid.
-#[ignore]
 #[test]
 fn test_extend_stake_amount() {
 	new_test_ext().execute_with(|| {
@@ -331,7 +340,7 @@ fn test_extend_stake_amount() {
 				share: boosted_amount + extend_amount,
 				reductions,
 				lock: Lock {
-					started_at: <Test as crate::Config>::UnixTime::now(),
+					started_at: 12,
 					duration: duration_preset,
 					unlock_penalty: rewards_pool.lock.unlock_penalty,
 				},
