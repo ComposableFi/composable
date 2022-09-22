@@ -6,16 +6,16 @@ typed and reference NFT design.
 
 ## Overview
 
-Pallet fNFT provides an implementation of NFTs as proxied accounts able to take ownership of assets, delegate
-functions and create controllers.
+Pallet fNFT provides an implementation of NFTs as proxied accounts able to take ownership of assets and create 
+controllers.
 
 ## Workflow
 
 Other pallets will provide user-facing mutating API.
-Once liquidity pools have been configured and funded, fNFTs are accessible and admined by the pool owner.
+Once liquidity pools have been configured and funded, fNFTs are accessible and maintained by the pool owner.
 Users can create liquidity pools themselves, rewarding them with fNFTs in the same manner.
-The Owning account of the fNFT is set as a delegate for the fNFT asset_account. 
-The asset_account delegates some functions to the owning account to act as a controller.
+The Owning account of the fNFT is set as a delegate for the fNFT `asset_account`. 
+The `asset_account` delegates some functions to the owning account to act as a controller.
 
 We can utilize these fNFTs to:
 
