@@ -115,7 +115,7 @@ pub mod pallet {
 		type Balance: BalanceLike;
 		#[pallet::constant]
 		type NativeAssetId: Get<Self::AssetId>;
-		type GenerateCurrencyId: CurrencyFactory<Self::AssetId, Self::Balance>;
+		type GenerateCurrencyId: CurrencyFactory<AssetId = Self::AssetId, Balance = Self::Balance>;
 		type NativeCurrency;
 		type MultiCurrency;
 		type GovernanceRegistry: GetByKey<Self::AssetId, Result<SignedRawOrigin<Self::AccountId>, DispatchError>>

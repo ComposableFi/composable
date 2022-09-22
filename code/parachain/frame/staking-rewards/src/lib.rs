@@ -281,7 +281,7 @@ pub mod pallet {
 		type FinancialNftInstanceId: Parameter + Member + Copy + From<u64> + Into<u64>;
 
 		/// Is used to create staked asset per reward pool
-		type CurrencyFactory: CurrencyFactory<Self::AssetId, Self::Balance>;
+		type CurrencyFactory: CurrencyFactory<AssetId = Self::AssetId, Balance = Self::Balance>;
 
 		/// Dependency allowing this pallet to transfer funds from one account to another.
 		type Assets: FungiblesTransfer<

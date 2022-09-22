@@ -80,7 +80,7 @@ pub mod pallet {
 		type ParachainOrGovernanceOrigin: EnsureOrigin<Self::Origin>;
 		type WeightInfo: WeightInfo;
 		type Balance: BalanceLike;
-		type CurrencyFactory: CurrencyFactory<Self::LocalAssetId, Self::Balance>;
+		type CurrencyFactory: CurrencyFactory<AssetId = Self::LocalAssetId, Balance = Self::Balance>;
 	}
 
 	#[pallet::pallet]

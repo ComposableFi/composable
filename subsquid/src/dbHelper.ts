@@ -12,6 +12,8 @@ import {
   RewardPool,
   EventType,
 } from "./model";
+import { encodeAccount } from "./utils";
+import { hexToU8a } from "@polkadot/util";
 
 export async function get<T extends { id: string }>(
   store: Store,
@@ -101,10 +103,14 @@ export async function saveEvent(
   ctx: EventHandlerContext<Store>,
   eventType: EventType
 ): Promise<Event> {
+  const accountId: string = ctx.event.extrinsic?.signature?.address.value
+    ? encodeAccount(hexToU8a(ctx.event.extrinsic?.signature?.address.value))
+    : ctx.event.extrinsic?.signature?.address;
+
   // Create event
   const event = new Event({
     id: ctx.event.id,
-    accountId: ctx.event.extrinsic?.signature?.address,
+    accountId,
     eventType,
     blockNumber: BigInt(ctx.block.height),
     timestamp: BigInt(ctx.block.timestamp),
@@ -185,35 +191,41 @@ export async function saveAccountAndEvent(
  */
 export async function storeHistoricalLockedValue(
   ctx: EventHandlerContext<Store>,
-  amountLocked: bigint,
-  assetId: string
+  amountsLocked: Record<string, bigint>
 ): Promise<void> {
   const wsProvider = new WsProvider("ws://127.0.0.1:9988");
   const api = await ApiPromise.create({ provider: wsProvider });
+  const oraclePrices: Record<string, bigint> = {};
 
-  const oraclePrice = await api.query.oracle.prices(assetId);
-
-  // @ts-ignore
-  if (!oraclePrice?.price) {
-    // no-op.
+  try {
+    for (const assetId of Object.keys(amountsLocked)) {
+      const oraclePrice = await api.query.oracle.prices(assetId);
+      if (!oraclePrice?.price) {
+        return;
+      }
+      oraclePrices[assetId] = BigInt(oraclePrice.price.toString());
+    }
+  } catch (error) {
+    console.error(error);
     return;
   }
 
-  // @ts-ignore
-  const assetPrice = BigInt(oraclePrice.price.toString());
+  const netLockedValue = Object.keys(oraclePrices).reduce((agg, assetId) => {
+    const lockedValue = oraclePrices[assetId] * amountsLocked[assetId];
+    return BigInt(agg) + lockedValue;
+  }, BigInt(0));
 
   const lastLockedValue = await getLastLockedValue(ctx);
-
-  let event = await ctx.store.get(Event, { where: { id: ctx.event.id } });
+  const event = await ctx.store.get(Event, { where: { id: ctx.event.id } });
 
   if (!event) {
-    return Promise.reject("Event not found");
+    return Promise.reject(new Error("Event not found"));
   }
 
   const historicalLockedValue = new HistoricalLockedValue({
     id: randomUUID(),
     event,
-    amount: lastLockedValue + amountLocked * assetPrice,
+    amount: lastLockedValue + netLockedValue,
     currency: Currency.USD,
     timestamp: BigInt(new Date(ctx.block.timestamp).valueOf()),
   });
@@ -227,9 +239,9 @@ export async function storeHistoricalLockedValue(
 export async function getLastLockedValue(
   ctx: EventHandlerContext<Store>
 ): Promise<bigint> {
-  const lastLockedValue = await ctx.store.get(HistoricalLockedValue, {
+  const lastLockedValue = await ctx.store.find(HistoricalLockedValue, {
     order: { timestamp: "DESC" },
   });
 
-  return BigInt(lastLockedValue?.amount || 0);
+  return BigInt(lastLockedValue.length > 0 ? lastLockedValue[0].amount : 0);
 }

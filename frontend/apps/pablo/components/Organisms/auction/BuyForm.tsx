@@ -79,15 +79,12 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
     quoteAssetId: selectedAuction.pair.quote.toString(),
     quoteAmount,
     minimumReceived,
+    swapOrigin: "Auction"
   });
 
   const onSettingHandler = () => {
     dispatch(openTransactionSettingsModal());
   };
-
-  const handleBuy = useCallback(async () => {
-    await initiateBuyTx();
-  }, [initiateBuyTx]);
 
   return (
     <Box
@@ -246,7 +243,7 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
             variant="contained"
             fullWidth
             disabled={isPendingBuy || isBuyButtonDisabled}
-            onClick={() => handleBuy()}
+            onClick={initiateBuyTx}
           >
             Buy {baseAsset ? baseAsset.symbol : ""}
           </Button>

@@ -26,12 +26,11 @@ const Template: ComponentStory<typeof UnstakeModal> = (args) => (
 export const Default = Template.bind({});
 Default.args = {
   xPablo: {
-    id: 357,
-    tokenId: "pablo",
-    locked: new BigNumber(34567),
-    expiry: 1645345320000,
-    multiplier: 1,
-    amount: new BigNumber(23309),
-    withdrawableAmount: new BigNumber(23309),
+    nftId: "357",
+    lockedPrincipalAsset: new BigNumber(34567),
+    expiryDate: "26-09-2022",
+    multiplier: "1",
+    isExpired: false,
+    xTokenBalance: new BigNumber(0)
   },
 };
