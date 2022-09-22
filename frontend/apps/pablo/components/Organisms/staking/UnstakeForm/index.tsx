@@ -10,9 +10,12 @@ import { usePendingExtrinsic, useSelectedAccount } from "substrate-react";
 import { ConfirmingModal } from "../../swap/ConfirmingModal";
 import { useUnstake } from "@/defi/hooks/stakingRewards";
 import { useStakingRewardPoolCollectionId } from "@/store/stakingRewards/stakingRewards.slice";
+import { StakingRewardPool } from "@/defi/types";
 import BigNumber from "bignumber.js";
 
-export const UnstakeForm: React.FC<BoxProps> = ({ ...boxProps }) => {
+export const UnstakeForm: React.FC<
+  BoxProps & { stakingRewardPool?: StakingRewardPool }
+> = ({ stakingRewardPool, ...boxProps }) => {
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
 
   const financialNftCollectionId =
@@ -92,11 +95,15 @@ export const UnstakeForm: React.FC<BoxProps> = ({ ...boxProps }) => {
       {selectedXPablo && (
         <UnstakeModal
           dismissible
+          stakingRewardPool={stakingRewardPool}
           xPablo={selectedXPablo}
           open={isUnstakeModalOpen}
-          onClose={() => {
+          onDismiss={() => {
+            setIsUnstakeModalOpen(false);
+          }}
+          onUnstake={() => {
+            setIsUnstakeModalOpen(false);
             handleUnstake();
-            setIsUnstakeModalOpen(false)
           }}
         />
       )}
