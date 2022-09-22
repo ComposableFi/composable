@@ -32,7 +32,7 @@ in {
         wsPort = 9988;
         count = 2;
         chain = "dali-dev";
-        bin = "${composable-bin}/bin/composable-node";
+        bin = "${composable-bin}/bin/composable";
       }
       {
         id = 2000;
