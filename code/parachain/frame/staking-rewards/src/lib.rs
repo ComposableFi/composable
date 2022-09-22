@@ -639,7 +639,7 @@ pub mod pallet {
 				} => {
 					// now < start_block < end_block
 					ensure!(
-						// Exlusively greater than to prevent erros/attacks
+						// Exclusively greater than to prevent errors/attacks
 						start_block > frame_system::Pallet::<T>::current_block_number(),
 						Error::<T>::StartBlockMustBeAfterCurrentBlock
 					);
