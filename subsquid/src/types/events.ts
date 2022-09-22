@@ -474,10 +474,10 @@ export class StakingRewardsStakedEvent {
   }
 
   get isV2401(): boolean {
-    return this._chain.getEventHash('StakingRewards.Staked') === '8c44f03aefd5329bb6ded292a6659b634acd4fafc5f0c267c8c87c32487f5410'
+    return this._chain.getEventHash('StakingRewards.Staked') === 'a489d2cb260334ccf855352a434dfcc6d577468d000cb9d9e084037d1a4c5b6f'
   }
 
-  get asV2401(): {poolId: bigint, owner: Uint8Array, amount: bigint, durationPreset: bigint, fnftCollectionId: bigint, fnftInstanceId: bigint, keepAlive: boolean} {
+  get asV2401(): {poolId: bigint, owner: Uint8Array, amount: bigint, durationPreset: bigint, fnftCollectionId: bigint, fnftInstanceId: bigint, rewardMultiplier: number, keepAlive: boolean} {
     assert(this.isV2401)
     return this._chain.decodeEvent(this.event)
   }
