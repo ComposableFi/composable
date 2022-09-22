@@ -970,6 +970,7 @@
                   nix-tree
                   nixfmt
                   rnix-lsp
+                  subxt
                 ] ++ docs-renders;
             });
 
@@ -1176,7 +1177,7 @@
                 homeDirectory = "/home/vscode";
                 stateVersion = "22.05";
                 packages =
-                  [ eachSystemOutputs.packages.x86_64-linux.rust-nightly ]
+                  [ eachSystemOutputs.packages.x86_64-linux.rust-nightly subxt]
                   ++ (mk-containers-tools-minimal pkgs)
                   ++ (mk-docker-in-docker pkgs);
               };
@@ -1201,7 +1202,7 @@
                 homeDirectory = "/home/vscode";
                 stateVersion = "22.05";
                 packages =
-                  [ eachSystemOutputs.packages.aarch64-linux.rust-nightly ]
+                  [ eachSystemOutputs.packages.aarch64-linux.rust-nightly subxt]
                   ++ (mk-containers-tools-minimal pkgs)
                   ++ (mk-docker-in-docker pkgs);
               };

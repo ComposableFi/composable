@@ -22,6 +22,7 @@ let
 in rec {
   mk-node = { port, wsPort, nodeKey, flags, basePath }: {
     name = nodeKey;
+    rpcPort = port + 1000; 
     inherit flags;
     inherit port;
     inherit wsPort;
