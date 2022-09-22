@@ -1,25 +1,27 @@
 # fNFT
-This pallet allows creating financial NFTs(fNFTs) with specific attributes and provides abstractions for typed and 
-reference NFT design.
+This pallet allows the creation of financial NFTs(fNFTs) with specific attributes and provides abstractions for 
+typed and reference NFT design.
 
 ---
 
 ## Overview
 
-Pallet fNFT provides an implementation of NFT's as proxied references for a users staking positions.
+Pallet fNFT provides an implementation of NFTs as proxied accounts able to take ownership of assets, delegate
+functions and create controllers.
 
 ## Workflow
 
-User facing mutating API is provided by other pallets.
-Once liquidity pools have been configured and funded, fNFTs admined by the owner of the pool are minted and serve as 
-proof of a users position. Users are able to create pools themselves, rewarding them with fNFTs in the same manner.
-We can use these fNFTs to: 
+Other pallets will provide user-facing mutating API.
+Once liquidity pools have been configured and funded, fNFTs are accessible and admined by the pool owner.
+Users can create liquidity pools themselves, rewarding them with fNFTs in the same manner.
+The Owning account of the fNFT is set as a delegate for the fNFT asset_account. 
+The asset_account delegates some functions to the owning account to act as a controller.
 
-* Transfer ownership of a position without leaving it
-* Take part in protocol governance
-* Represent an amount of claimable tokens
+We can utilize these fNFTs to:
 
-
+* Represent liquid assets / an amount of claimable tokens
+* Act as a proxy account on the owners behalf
+* Transferring positions taken / referenced by fNFT
 
 ## References
 
