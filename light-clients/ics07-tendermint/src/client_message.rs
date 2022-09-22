@@ -1,17 +1,128 @@
+use ibc::prelude::*;
+
+use tendermint_proto::Protobuf;
+
+use ibc_proto::ibc::lightclients::tendermint::v1::Misbehaviour as RawMisbehaviour;
+
+use crate::error::Error;
+use ibc::{core::ics24_host::identifier::ClientId, Height};
+use ibc_proto::google::protobuf::Any;
+
 use core::cmp::Ordering;
 
 use bytes::Buf;
 use prost::Message;
 use serde::{Deserialize, Serialize};
 use tendermint::{block::signed_header::SignedHeader, validator::Set as ValidatorSet};
-use tendermint_proto::Protobuf;
 
 use alloc::{string::ToString, vec::Vec};
 
 use ibc_proto::ibc::lightclients::tendermint::v1::Header as RawHeader;
 
-use crate::error::Error;
-use ibc::{core::ics24_host::identifier::ChainId, timestamp::Timestamp, Height};
+use ibc::{
+	core::{ics02_client, ics24_host::identifier::ChainId},
+	timestamp::Timestamp,
+};
+
+pub const TENDERMINT_HEADER_TYPE_URL: &str = "/ibc.lightclients.grandpa.v1.Header";
+pub const TENDERMINT_MISBEHAVIOUR_TYPE_URL: &str = "/ibc.lightclients.grandpa.v1.Misbehaviour";
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Misbehaviour {
+	pub client_id: ClientId,
+	pub header1: Header,
+	pub header2: Header,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum ClientMessage {
+	Header(Header),
+	Misbehaviour(Misbehaviour),
+}
+
+impl ics02_client::client_message::ClientMessage for ClientMessage {
+	fn encode_to_vec(&self) -> Vec<u8> {
+		self.encode_vec()
+	}
+}
+
+impl Protobuf<Any> for ClientMessage {}
+
+impl TryFrom<Any> for ClientMessage {
+	type Error = Error;
+
+	fn try_from(any: Any) -> Result<Self, Self::Error> {
+		let msg = match &*any.type_url {
+			TENDERMINT_HEADER_TYPE_URL => Self::Header(
+				Header::decode(&*any.value).map_err(|e| Error::validation(format!("{e:?}")))?,
+			),
+			TENDERMINT_MISBEHAVIOUR_TYPE_URL => Self::Misbehaviour(
+				Misbehaviour::decode(&*any.value)
+					.map_err(|e| Error::validation(format!("{e:?}")))?,
+			),
+			_ => Err(Error::validation(format!("Unknown type: {}", any.type_url)))?,
+		};
+
+		Ok(msg)
+	}
+}
+
+impl From<ClientMessage> for Any {
+	fn from(msg: ClientMessage) -> Self {
+		match msg {
+			ClientMessage::Header(header) =>
+				Any { value: header.encode_vec(), type_url: TENDERMINT_HEADER_TYPE_URL.to_string() },
+			ClientMessage::Misbehaviour(misbheaviour) => Any {
+				value: misbheaviour.encode_vec(),
+				type_url: TENDERMINT_MISBEHAVIOUR_TYPE_URL.to_string(),
+			},
+		}
+	}
+}
+
+impl Protobuf<RawMisbehaviour> for Misbehaviour {}
+
+impl TryFrom<RawMisbehaviour> for Misbehaviour {
+	type Error = Error;
+
+	fn try_from(raw: RawMisbehaviour) -> Result<Self, Self::Error> {
+		Ok(Self {
+			client_id: Default::default(),
+			header1: raw
+				.header_1
+				.ok_or_else(|| Error::invalid_raw_misbehaviour("missing header1".into()))?
+				.try_into()?,
+			header2: raw
+				.header_2
+				.ok_or_else(|| Error::invalid_raw_misbehaviour("missing header2".into()))?
+				.try_into()?,
+		})
+	}
+}
+
+impl From<Misbehaviour> for RawMisbehaviour {
+	fn from(value: Misbehaviour) -> Self {
+		RawMisbehaviour {
+			client_id: value.client_id.to_string(),
+			header_1: Some(value.header1.into()),
+			header_2: Some(value.header2.into()),
+		}
+	}
+}
+
+impl core::fmt::Display for Misbehaviour {
+	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
+		write!(
+			f,
+			"{:?} h1: {:?}-{:?} h2: {:?}-{:?}",
+			self.client_id,
+			self.header1.height(),
+			self.header1.trusted_height,
+			self.header2.height(),
+			self.header2.trusted_height,
+		)
+	}
+}
 
 /// Tendermint consensus header
 #[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]
@@ -64,16 +175,6 @@ pub fn headers_compatible(header: &SignedHeader, other: &SignedHeader) -> bool {
 			// 3 - BFT time violation
 			header.header.time < other.header.time
 		},
-	}
-}
-
-impl ibc::core::ics02_client::header::Header for Header {
-	fn encode_to_vec(&self) -> Vec<u8> {
-		self.encode_vec()
-	}
-
-	fn height(&self) -> Height {
-		self.height()
 	}
 }
 
@@ -141,7 +242,7 @@ pub mod test_util {
 		PublicKey,
 	};
 
-	use crate::header::Header;
+	use crate::client_message::Header;
 	use ibc::Height;
 
 	pub fn get_dummy_tendermint_header() -> tendermint::block::Header {

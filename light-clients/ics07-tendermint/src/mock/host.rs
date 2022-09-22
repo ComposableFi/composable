@@ -3,13 +3,17 @@
 use tendermint_testgen::{light_block::TmLightBlock, Generator, LightBlock as TestgenLightBlock};
 
 use crate::{
+	client_message::{ClientMessage, Header as TMHeader},
 	consensus_state::ConsensusState as TMConsensusState,
-	header::Header as TMHeader,
-	mock::{AnyConsensusState, AnyHeader},
+	mock::{AnyClientMessage, AnyConsensusState},
 };
 use ibc::{
 	core::ics24_host::identifier::ChainId,
-	mock::{client_state::MockConsensusState, header::MockHeader, host::HostBlock},
+	mock::{
+		client_state::MockConsensusState,
+		header::{MockClientMessage, MockHeader},
+		host::HostBlock,
+	},
 	prelude::*,
 	timestamp::Timestamp,
 	Height,
@@ -111,13 +115,14 @@ impl From<MockHostBlock> for AnyConsensusState {
 	}
 }
 
-impl From<MockHostBlock> for AnyHeader {
+impl From<MockHostBlock> for AnyClientMessage {
 	fn from(any_block: MockHostBlock) -> Self {
 		match any_block {
-			MockHostBlock::Mock(mock_header) => mock_header.into(),
+			MockHostBlock::Mock(mock_header) =>
+				AnyClientMessage::Mock(MockClientMessage::Header(mock_header.into())),
 			MockHostBlock::SyntheticTendermint(light_block_box) => {
 				// Conversion from TMLightBlock to AnyHeader
-				AnyHeader::Tendermint((*light_block_box).into())
+				AnyClientMessage::Tendermint(ClientMessage::Header((*light_block_box).into()))
 			},
 		}
 	}
@@ -135,9 +140,9 @@ impl From<TmLightBlock> for TMHeader {
 	}
 }
 
-impl From<MockHeader> for AnyHeader {
+impl From<MockHeader> for AnyClientMessage {
 	fn from(mh: MockHeader) -> Self {
-		Self::Mock(mh)
+		AnyClientMessage::Mock(MockClientMessage::Header(mh))
 	}
 }
 

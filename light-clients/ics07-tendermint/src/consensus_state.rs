@@ -6,7 +6,7 @@ use serde::Serialize;
 use tendermint::{hash::Algorithm, time::Time, Hash};
 use tendermint_proto::{google::protobuf as tpb, Protobuf};
 
-use crate::{error::Error, header::Header};
+use crate::{client_message::Header, error::Error};
 use ibc::{core::ics23_commitment::commitment::CommitmentRoot, timestamp::Timestamp};
 use ibc_proto::ibc::lightclients::tendermint::v1::ConsensusState as RawConsensusState;
 

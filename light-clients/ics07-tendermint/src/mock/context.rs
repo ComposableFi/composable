@@ -7,7 +7,7 @@ use ibc::{
 	mock::{
 		client_state::{MockClientRecord, MockClientState, MockConsensusState},
 		context::MockContext,
-		header::MockHeader,
+		header::{MockClientMessage, MockHeader},
 	},
 	timestamp::Timestamp,
 	Height,
@@ -30,10 +30,15 @@ pub fn with_client_parametrized(
 	let cs_height = consensus_state_height.unwrap_or(client_state_height);
 
 	let client_type = client_type.unwrap_or(MockClientState::client_type());
-	let (client_state, consensus_state) = match client_type {
+	let (client_state, consensus_state) = match client_type.clone() {
 		// If it's a mock client, create the corresponding mock states.
 		client_type if client_type == MockClientState::client_type() => (
-			Some(MockClientState::new(MockHeader::new(client_state_height)).into()),
+			Some(
+				MockClientState::new(MockClientMessage::Header(MockHeader::new(
+					client_state_height,
+				)))
+				.into(),
+			),
 			MockConsensusState::new(MockHeader::new(cs_height)).into(),
 		),
 		// If it's a Tendermint client, we need TM states.
@@ -74,10 +79,15 @@ pub fn with_client_parametrized_history(
 	let client_type = client_type.unwrap_or(MockClientState::client_type());
 	let now = Timestamp::now();
 
-	let (client_state, consensus_state) = match client_type {
+	let (client_state, consensus_state) = match client_type.clone() {
 		// If it's a mock client, create the corresponding mock states.
 		client_type if client_type == MockClientState::client_type() => (
-			Some(MockClientState::new(MockHeader::new(client_state_height)).into()),
+			Some(
+				MockClientState::new(MockClientMessage::Header(MockHeader::new(
+					client_state_height,
+				)))
+				.into(),
+			),
 			MockConsensusState::new(MockHeader::new(cs_height)).into(),
 		),
 		// If it's a Tendermint client, we need TM states.
@@ -97,7 +107,7 @@ pub fn with_client_parametrized_history(
 		_ => unimplemented!(),
 	};
 
-	let prev_consensus_state = match client_type {
+	let prev_consensus_state = match client_type.clone() {
 		// If it's a mock client, create the corresponding mock states.
 		client_type if client_type == MockClientState::client_type() =>
 			MockConsensusState::new(MockHeader::new(prev_cs_height)).into(),

@@ -1,19 +1,21 @@
 use ibc::prelude::*;
 
+use alloc::string::ToString;
 use core::{
 	convert::{TryFrom, TryInto},
 	fmt::Debug,
 	marker::PhantomData,
 	time::Duration,
 };
-
 use serde::{Deserialize, Serialize};
 use tendermint_light_client_verifier::options::Options;
 use tendermint_proto::Protobuf;
 
 use ibc_proto::ibc::lightclients::tendermint::v1::ClientState as RawClientState;
 
-use crate::{client_def::TendermintClient, error::Error, header::Header, HostFunctionsProvider};
+use crate::{
+	client_def::TendermintClient, client_message::Header, error::Error, HostFunctionsProvider,
+};
 use ibc::{
 	core::{
 		ics02_client::{
@@ -141,7 +143,7 @@ impl<H> ClientState<H> {
 	}
 
 	pub fn client_type() -> ClientType {
-		"07-tendermint"
+		"07-tendermint".to_string()
 	}
 
 	pub fn frozen_height(&self) -> Option<Height> {

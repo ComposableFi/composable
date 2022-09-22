@@ -14,12 +14,11 @@ extern crate alloc;
 use core::fmt::Debug;
 
 pub mod client_def;
+pub mod client_message;
 pub mod client_state;
 pub mod consensus_state;
 pub mod error;
-pub mod header;
 mod merkle;
-pub mod misbehaviour;
 #[cfg(any(test, feature = "mocks"))]
 pub mod mock;
 #[cfg(any(test, feature = "mocks"))]
@@ -46,10 +45,11 @@ mod tests {
 	};
 
 	use crate::{
-		header::test_util::{get_dummy_ics07_header, get_dummy_tendermint_header},
-		mock::{AnyClientState, AnyConsensusState, AnyHeader, MockClientTypes},
+		client_message::test_util::{get_dummy_ics07_header, get_dummy_tendermint_header},
+		mock::{AnyClientState, AnyConsensusState, MockClientTypes},
 	};
 
+	use crate::{client_message::ClientMessage, mock::AnyClientMessage};
 	use ibc::{
 		core::{
 			ics02_client::{
@@ -132,7 +132,7 @@ mod tests {
 				assert_eq!(events.len(), 1);
 				let event = events.pop().unwrap();
 				let expected_client_id =
-					ClientId::new(ClientState::<()>::client_type(), 0).unwrap();
+					ClientId::new(&ClientState::<()>::client_type(), 0).unwrap();
 				assert!(
 					matches!(event, IbcEvent::CreateClient(ref e) if e.client_id() == &expected_client_id)
 				);
@@ -164,7 +164,7 @@ mod tests {
 
 		let msg = MsgUpdateAnyClient::<MockContext<MockClientTypes>>::new(
 			client_id,
-			AnyHeader::Tendermint(header),
+			AnyClientMessage::Tendermint(ClientMessage::Header(header)),
 			signer,
 		);
 		let raw = MsgUpdateClient::from(msg.clone());

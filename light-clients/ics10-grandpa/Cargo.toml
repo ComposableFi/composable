@@ -31,8 +31,8 @@ prost-build = "0.11.1"
 
 [dependencies]
 # ibc deps
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "dfd8cbb4022e24c1791837f46b2f3f28c8753d63", default-features = false }
-ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", rev = "dfd8cbb4022e24c1791837f46b2f3f28c8753d63", default-features = false }
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "e3154cb39161d79031f61ed4a2a48975fd7c89a4", default-features = false }
+ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", rev = "e3154cb39161d79031f61ed4a2a48975fd7c89a4", default-features = false }
 
 # local deps
 grandpa-client = { package = "grandpa-light-client", path = "../../algorithms/grandpa",  default-features = false }
@@ -70,8 +70,8 @@ futures = "0.3.24"
 serde = { version = "1.0.144", features = ["derive"] }
 beefy-prover = { path = "../../algorithms/beefy/prover" }
 grandpa-prover = { path = "../../algorithms/grandpa/prover" }
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "dfd8cbb4022e24c1791837f46b2f3f28c8753d63", features = ["mocks"] }
-ibc-derive = { git = "https://github.com/ComposableFi/ibc-rs", rev = "dfd8cbb4022e24c1791837f46b2f3f28c8753d63" }
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "e3154cb39161d79031f61ed4a2a48975fd7c89a4", features = ["mocks"] }
+ibc-derive = { git = "https://github.com/ComposableFi/ibc-rs", rev = "e3154cb39161d79031f61ed4a2a48975fd7c89a4" }
 subxt = { git = "https://github.com/paritytech/subxt", rev = "c55b7ba3e34118f61dc51499a0b38262c513aec4" }
 tokio = { version = "1.21.1", features = ["macros"] }
 sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
