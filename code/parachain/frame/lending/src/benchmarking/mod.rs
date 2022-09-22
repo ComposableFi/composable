@@ -16,7 +16,6 @@ use frame_support::{
 	BoundedVec,
 };
 use frame_system::RawOrigin;
-use primitives::currency::CurrencyId;
 use setup::*;
 use sp_std::prelude::*;
 type BalanceOf<T> = <T as DeFiComposableConfig>::Balance;
@@ -67,17 +66,13 @@ pub struct LendingBenchmarkingSetup<T: Config> {
 	>,
 }
 
-frame_support::parameter_types! {
-	/// Native currency Id
-	pub const NativeCurrencyId: CurrencyId = CurrencyId::PICA;
-}
-
 benchmarks! {
 	where_clause {
 		where
 			T: pallet_oracle::Config
 				+ pallet_lending::Config
 				+ DeFiComposableConfig
+				+ pallet_balances::Config
 				+ frame_system::Config
 				+ pallet_timestamp::Config
 				+ pallet_vault::Config
@@ -142,11 +137,11 @@ benchmarks! {
 		let amount: BalanceOf<T> = 1_000_000_u64.into();
 		let part: BalanceOf<T> = 1_000_u64.into();
 
-		<orml_tokens::CurrencyAdapter::<T, NativeCurrencyId> as fungible::Mutate<T::AccountId>>::mint_into(&caller, 10_000_000_000_000_u64.into()).unwrap();
+		<pallet_balances::Pallet::<T> as fungible::Mutate<T::AccountId>>::mint_into(&caller, 10_000_000_000_000_u64.into()).unwrap();
 
 		let market_id = create_market_from_raw_origin::<T>(origin.clone(), input);
 
-		<orml_tokens::CurrencyAdapter::<T, NativeCurrencyId> as fungible::Mutate<T::AccountId>>::mint_into(&Lending::<T>::account_id(&market_id), 10_000_000_000_000_u64.into()).unwrap();
+		<pallet_balances::Pallet::<T> as fungible::Mutate<T::AccountId>>::mint_into(&Lending::<T>::account_id(&market_id), 10_000_000_000_000_u64.into()).unwrap();
 
 		Lending::<T>::deposit_collateral(origin.clone().into(), market_id, amount, false).unwrap();
 	}: _(origin, market_id, part)
@@ -165,11 +160,11 @@ benchmarks! {
 
 		let borrow_amount: BalanceOf<T> = 1_000_000_000_u64.into();
 
-		<orml_tokens::CurrencyAdapter::<T, NativeCurrencyId> as fungible::Mutate<T::AccountId>>::mint_into(&caller, 10_000_000_000_000_u64.into()).unwrap();
+		<pallet_balances::Pallet::<T> as fungible::Mutate<T::AccountId>>::mint_into(&caller, 10_000_000_000_000_u64.into()).unwrap();
 
 		let market_id = create_market_from_raw_origin::<T>(origin.clone(), input);
 
-		<orml_tokens::CurrencyAdapter::<T, NativeCurrencyId> as fungible::Mutate<T::AccountId>>::mint_into(&Lending::<T>::account_id(&market_id), 10_000_000_000_000_u64.into()).unwrap();
+		<pallet_balances::Pallet::<T> as fungible::Mutate<T::AccountId>>::mint_into(&Lending::<T>::account_id(&market_id), 10_000_000_000_000_u64.into()).unwrap();
 
 		Lending::<T>::deposit_collateral(origin.clone().into(), market_id, amount, false).unwrap();
 		Lending::<T>::borrow(origin.clone().into(), market_id, part).unwrap();
@@ -190,16 +185,16 @@ benchmarks! {
 
 		let amount: BalanceOf<T> = 1_000_000_000_u64.into();
 
-		<orml_tokens::CurrencyAdapter::<T, NativeCurrencyId> as fungible::Mutate<T::AccountId>>::mint_into(&caller, 10_000_000_000_000_u64.into()).unwrap();
+		<pallet_balances::Pallet::<T> as fungible::Mutate<T::AccountId>>::mint_into(&caller, 10_000_000_000_000_u64.into()).unwrap();
 
 		let market_id = create_market_from_raw_origin::<T>(origin.clone(), input);
 
-		<orml_tokens::CurrencyAdapter::<T, NativeCurrencyId> as fungible::Mutate<T::AccountId>>::mint_into(&Lending::<T>::account_id(&market_id), 10_000_000_000_000_u64.into()).unwrap();
+		<pallet_balances::Pallet::<T> as fungible::Mutate<T::AccountId>>::mint_into(&Lending::<T>::account_id(&market_id), 10_000_000_000_000_u64.into()).unwrap();
 
 		let mut borrowers = vec![];
 		for i in 0..b {
 			let borrower = whitelisted_caller();
-			<orml_tokens::CurrencyAdapter::<T, NativeCurrencyId> as fungible::Mutate<T::AccountId>>::mint_into(&borrower, 10_000_000_000_000_u64.into()).unwrap();
+			<pallet_balances::Pallet::<T> as fungible::Mutate<T::AccountId>>::mint_into(&borrower, 10_000_000_000_000_u64.into()).unwrap();
 			Lending::<T>::deposit_collateral(RawOrigin::Signed(borrower.clone()).into(), market_id, amount, false).unwrap();
 			borrowers.push(borrower);
 		}
@@ -226,11 +221,11 @@ benchmarks! {
 		let borrow_amount: BalanceOf<T> = 1_000_000_000_u64.into();
 		let part: BalanceOf<T> = 1_000_u64.into();
 
-		<orml_tokens::CurrencyAdapter::<T, NativeCurrencyId> as fungible::Mutate<T::AccountId>>::mint_into(&caller, 10_000_000_000_000_u64.into()).unwrap();
+		<pallet_balances::Pallet::<T> as fungible::Mutate<T::AccountId>>::mint_into(&caller, 10_000_000_000_000_u64.into()).unwrap();
 
 		let market_id = create_market_from_raw_origin::<T>(origin.clone(), input);
 
-		<orml_tokens::CurrencyAdapter::<T, NativeCurrencyId> as fungible::Mutate<T::AccountId>>::mint_into(&Lending::<T>::account_id(&market_id), 10_000_000_000_000_u64.into()).unwrap();
+		<pallet_balances::Pallet::<T> as fungible::Mutate<T::AccountId>>::mint_into(&Lending::<T>::account_id(&market_id), 10_000_000_000_000_u64.into()).unwrap();
 
 		Lending::<T>::deposit_collateral(origin.clone().into(), market_id, amount, false).unwrap();
 		Lending::<T>::borrow(origin.into(), market_id, part).unwrap();
@@ -254,7 +249,7 @@ benchmarks! {
 		let amount: BalanceOf<T> = 1_000_000_000_000_u64.into();
 		let part: BalanceOf<T> = 1_000_u64.into();
 
-		<orml_tokens::CurrencyAdapter::<T, NativeCurrencyId> as fungible::Mutate<T::AccountId>>::mint_into(&caller, 10_000_000_000_000_u64.into()).unwrap();
+		<pallet_balances::Pallet::<T> as fungible::Mutate<T::AccountId>>::mint_into(&caller, 10_000_000_000_000_u64.into()).unwrap();
 
 		let market_id = create_market_from_raw_origin::<T>(origin.clone(), input);
 	}: {
@@ -275,7 +270,7 @@ benchmarks! {
 		let amount: BalanceOf<T> = 1_000_000_000_000_u64.into();
 		let part: BalanceOf<T> = 1_000_u64.into();
 
-		<orml_tokens::CurrencyAdapter::<T, NativeCurrencyId> as fungible::Mutate<T::AccountId>>::mint_into(&caller, 10_000_000_000_000_u64.into()).unwrap();
+		<pallet_balances::Pallet::<T> as fungible::Mutate<T::AccountId>>::mint_into(&caller, 10_000_000_000_000_u64.into()).unwrap();
 
 		let market_id = create_market_from_raw_origin::<T>(origin.clone(), input);
 
@@ -297,7 +292,7 @@ benchmarks! {
 		let amount: BalanceOf<T> = 1_000_000_000_000_u64.into();
 		let part: BalanceOf<T> = 1_000_u64.into();
 
-		<orml_tokens::CurrencyAdapter::<T, NativeCurrencyId> as fungible::Mutate<T::AccountId>>::mint_into(&caller, 10_000_000_000_000_u64.into()).unwrap();
+		<pallet_balances::Pallet::<T> as fungible::Mutate<T::AccountId>>::mint_into(&caller, 10_000_000_000_000_u64.into()).unwrap();
 
 		let market_id = create_market_from_raw_origin::<T>(origin.clone(), input);
 
@@ -325,7 +320,7 @@ benchmarks! {
 		let amount: BalanceOf<T> = 1_000_000_000_000_u64.into();
 		let part: BalanceOf<T> = 1_000_u64.into();
 
-		<orml_tokens::CurrencyAdapter::<T, NativeCurrencyId> as fungible::Mutate<T::AccountId>>::mint_into(&caller, 10_000_000_000_000_u64.into()).unwrap();
+		<pallet_balances::Pallet::<T> as fungible::Mutate<T::AccountId>>::mint_into(&caller, 10_000_000_000_000_u64.into()).unwrap();
 
 		let market_id = create_market_from_raw_origin::<T>(origin.clone(), input);
 
@@ -352,7 +347,7 @@ benchmarks! {
 		let amount: BalanceOf<T> = 1_000_000_000_000_u64.into();
 		let part: BalanceOf<T> = 1_000_u64.into();
 
-		<orml_tokens::CurrencyAdapter::<T, NativeCurrencyId> as fungible::Mutate<T::AccountId>>::mint_into(&caller, 10_000_000_000_000_u64.into()).unwrap();
+		<pallet_balances::Pallet::<T> as fungible::Mutate<T::AccountId>>::mint_into(&caller, 10_000_000_000_000_u64.into()).unwrap();
 
 		let market_id = create_market_from_raw_origin::<T>(origin.clone(), input);
 

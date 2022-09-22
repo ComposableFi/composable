@@ -921,7 +921,7 @@ where
 
 	fn send_transfer(
 		msg: ibc::applications::transfer::msgs::transfer::MsgTransfer<
-			ibc::applications::transfer::PrefixedCoin,
+			PrefixedCoin,
 		>,
 	) -> Result<(), IbcHandlerError> {
 		let mut handler_output = HandlerOutputBuilder::default();
@@ -935,16 +935,15 @@ where
 
 	#[cfg(feature = "runtime-benchmarks")]
 	fn create_client() -> Result<ClientId, IbcHandlerError> {
-		use crate::benchmarks::tendermint_benchmark_utils::create_mock_state;
-		use ibc::core::ics02_client::{
-			client_state::ClientState,
-			msgs::create_client::{MsgCreateAnyClient, TYPE_URL},
+		use crate::{
+			benchmarks::tendermint_benchmark_utils::create_mock_state,
+			light_clients::AnyConsensusState,
 		};
-		use crate::light_clients::AnyConsensusState;
+		use ibc::core::ics02_client::msgs::create_client::{MsgCreateAnyClient, TYPE_URL};
 
 		let (mock_client_state, mock_cs_state) = create_mock_state();
-		let client_id = ClientId::new(mock_client_state.client_type(), 0).unwrap();
-		let msg = MsgCreateAnyClient::new(
+		let client_id = ClientId::new(&mock_client_state.client_type(), 0).unwrap();
+		let msg = MsgCreateAnyClient::<Context<T>>::new(
 			AnyClientState::Tendermint(mock_client_state),
 			AnyConsensusState::Tendermint(mock_cs_state),
 			Signer::from_str("pallet_ibc").unwrap(),
@@ -953,10 +952,7 @@ where
 		.encode_vec();
 		let msg = ibc_proto::google::protobuf::Any { type_url: TYPE_URL.to_string(), value: msg };
 		let mut ctx = Context::<T>::new();
-		ibc::core::ics26_routing::handler::deliver(
-			&mut ctx, msg,
-		)
-		.unwrap();
+		ibc::core::ics26_routing::handler::deliver(&mut ctx, msg).unwrap();
 		Ok(client_id)
 	}
 

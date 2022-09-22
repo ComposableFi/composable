@@ -6,8 +6,8 @@ use frame_support::{
 	traits::{ConstU64, Everything},
 };
 use frame_system as system;
-use ibc::clients::ics11_beefy::client_state::RelayChain;
 use ibc_primitives::IbcAccount;
+use light_client_common::RelayChain;
 use orml_traits::parameter_type_with_key;
 use sp_core::{
 	offchain::{testing::TestOffchainExt, OffchainDbExt, OffchainWorkerExt},
@@ -31,6 +31,37 @@ pub type AssetId = CurrencyId;
 pub type Amount = i128;
 pub type Balance = u128;
 type AccountId = <<MultiSignature as Verify>::Signer as IdentifyAccount>::AccountId;
+use super::*;
+use crate::light_clients::{AnyClient, AnyClientMessage, AnyClientState, AnyConsensusState};
+use ibc::mock::{
+	client_state::MockConsensusState, context::ClientTypes, header::MockClientMessage,
+	host::MockHostBlock,
+};
+
+#[derive(Debug, Eq, PartialEq, Clone, Default)]
+pub struct MockClientTypes;
+
+impl ClientTypes for MockClientTypes {
+	type AnyClientMessage = AnyClientMessage;
+	type AnyClientState = AnyClientState;
+	type AnyConsensusState = AnyConsensusState;
+	type ClientDef = AnyClient;
+	type HostBlock = MockHostBlock;
+}
+
+impl From<MockHostBlock> for AnyClientMessage {
+	fn from(block: MockHostBlock) -> Self {
+		let MockHostBlock::Mock(header) = block;
+		AnyClientMessage::Mock(MockClientMessage::Header(header))
+	}
+}
+
+impl From<MockHostBlock> for AnyConsensusState {
+	fn from(block: MockHostBlock) -> Self {
+		let MockHostBlock::Mock(header) = block;
+		AnyConsensusState::Mock(MockConsensusState::new(header))
+	}
+}
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -60,7 +91,7 @@ parameter_types! {
 }
 
 impl system::Config for Test {
-	type BaseCallFilter = frame_support::traits::Everything;
+	type BaseCallFilter = Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();
@@ -110,7 +141,7 @@ impl CurrencyFactoryTrait<AssetId, Balance> for CurrencyIdGenerator {
 	}
 
 	fn protocol_asset_id_to_unique_asset_id(_: u32, _: RangeId) -> Result<AssetId, DispatchError> {
-		Ok(1_u128)
+		Ok(1_u128.into())
 	}
 }
 

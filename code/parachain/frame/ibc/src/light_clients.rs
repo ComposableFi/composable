@@ -4,6 +4,7 @@ use ibc::core::{
 	ics02_client::{client_consensus::ConsensusState, client_state::ClientState},
 };
 use ibc_derive::{ClientDef, ClientMessage, ClientState, ConsensusState, Protobuf};
+use ibc_primitives::runtime_interface;
 use ibc_proto::google::protobuf::Any;
 use ics10_grandpa::{
 	client_message::GRANDPA_CLIENT_MESSAGE_TYPE_URL, client_state::GRANDPA_CLIENT_STATE_TYPE_URL,
@@ -17,8 +18,64 @@ use sp_core::ed25519;
 use sp_runtime::{app_crypto::RuntimePublic, traits::BlakeTwo256};
 use tendermint_proto::Protobuf;
 
+pub const TENDERMINT_CLIENT_STATE_TYPE_URL: &str = "/ibc.lightclients.tendermint.v1.ClientState";
+pub const TENDERMINT_CLIENT_MESSAGE_TYPE_URL: &str =
+	"/ibc.lightclients.tendermint.v1.ClientMessage";
+pub const TENDERMINT_CONSENSUS_STATE_TYPE_URL: &str =
+	"/ibc.lightclients.tendermint.v1.ConsensusState";
+
 #[derive(Clone, Default, PartialEq, Debug, Eq)]
 pub struct HostFunctionsManager;
+
+impl ics23::HostFunctionsProvider for HostFunctionsManager {
+	fn sha2_256(message: &[u8]) -> [u8; 32] {
+		sp_io::hashing::sha2_256(message)
+	}
+
+	fn sha2_512(message: &[u8]) -> [u8; 64] {
+		runtime_interface::sha2_512(message)
+	}
+
+	fn sha2_512_truncated(message: &[u8]) -> [u8; 32] {
+		runtime_interface::sha2_512_truncated(message)
+	}
+
+	fn sha3_512(message: &[u8]) -> [u8; 64] {
+		runtime_interface::sha3_512(message)
+	}
+
+	fn ripemd160(message: &[u8]) -> [u8; 20] {
+		runtime_interface::ripemd160(message)
+	}
+}
+
+impl tendermint_light_client_verifier::host_functions::HostFunctionsProvider
+	for HostFunctionsManager
+{
+	fn sha2_256(message: &[u8]) -> [u8; 32] {
+		sp_io::hashing::sha2_256(message)
+	}
+
+	fn ed25519_verify(signature: &[u8], msg: &[u8], pubkey: &[u8]) -> bool {
+		if let Some((signature, public_key)) = ed25519::Signature::from_slice(signature)
+			.map(|sig| {
+				let public = sp_core::ed25519::Public::try_from(pubkey).ok()?;
+				Some((sig, public))
+			})
+			.flatten()
+		{
+			sp_io::crypto::ed25519_verify(&signature, msg, &public_key)
+		} else {
+			false
+		}
+	}
+
+	fn secp256k1_verify(_: &[u8], _: &[u8], _: &[u8]) -> bool {
+		unimplemented!()
+	}
+}
+
+impl ics07_tendermint::HostFunctionsProvider for HostFunctionsManager {}
 
 impl grandpa_client_primitives::HostFunctions for HostFunctionsManager {
 	fn ed25519_verify(sig: &ed25519::Signature, msg: &[u8], pub_key: &ed25519::Public) -> bool {
@@ -46,12 +103,18 @@ impl beefy_client_primitives::HostFunctions for HostFunctionsManager {
 pub enum AnyClient {
 	Grandpa(ics10_grandpa::client_def::GrandpaClient<HostFunctionsManager>),
 	Beefy(ics11_beefy::client_def::BeefyClient<HostFunctionsManager>),
+	Tendermint(ics07_tendermint::client_def::TendermintClient<HostFunctionsManager>),
+	#[cfg(test)]
+	Mock(ibc::mock::client_def::MockClient),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum AnyUpgradeOptions {
 	Grandpa(ics10_grandpa::client_state::UpgradeOptions),
 	Beefy(ics11_beefy::client_state::UpgradeOptions),
+	Tendermint(ics07_tendermint::client_state::UpgradeOptions),
+	#[cfg(test)]
+	Mock(()),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, ClientState, Protobuf)]
@@ -60,6 +123,11 @@ pub enum AnyClientState {
 	Grandpa(ics10_grandpa::client_state::ClientState<HostFunctionsManager>),
 	#[ibc(proto_url = "BEEFY_CLIENT_STATE_TYPE_URL")]
 	Beefy(ics11_beefy::client_state::ClientState<HostFunctionsManager>),
+	#[ibc(proto_url = "TENDERMINT_CLIENT_STATE_TYPE_URL")]
+	Tendermint(ics07_tendermint::client_state::ClientState<HostFunctionsManager>),
+	#[cfg(test)]
+	#[ibc(proto_url = "MOCK_CLIENT_STATE_TYPE_URL")]
+	Mock(ibc::mock::client_state::MockClientState),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, ConsensusState, Protobuf)]
@@ -68,6 +136,11 @@ pub enum AnyConsensusState {
 	Grandpa(ics10_grandpa::consensus_state::ConsensusState),
 	#[ibc(proto_url = "BEEFY_CONSENSUS_STATE_TYPE_URL")]
 	Beefy(ics11_beefy::consensus_state::ConsensusState),
+	#[ibc(proto_url = "TENDERMINT_CONSENSUS_STATE_TYPE_URL")]
+	Tendermint(ics07_tendermint::consensus_state::ConsensusState),
+	#[cfg(test)]
+	#[ibc(proto_url = "MOCK_CONSENSUS_STATE_TYPE_URL")]
+	Mock(ibc::mock::client_state::MockConsensusState),
 }
 
 #[derive(Clone, Debug, ClientMessage)]
@@ -77,6 +150,11 @@ pub enum AnyClientMessage {
 	Grandpa(ics10_grandpa::client_message::ClientMessage),
 	#[ibc(proto_url = "BEEFY_CLIENT_MESSAGE_TYPE_URL")]
 	Beefy(ics11_beefy::client_message::ClientMessage),
+	#[ibc(proto_url = "TENDERMINT_CLIENT_MESSAGE_TYPE_URL")]
+	Tendermint(ics07_tendermint::client_message::ClientMessage),
+	#[cfg(test)]
+	#[ibc(proto_url = "MOCK_CLIENT_MESSAGE_TYPE_URL")]
+	Mock(ibc::mock::header::MockClientMessage),
 }
 
 impl Protobuf<Any> for AnyClientMessage {}
@@ -94,6 +172,10 @@ impl TryFrom<Any> for AnyClientMessage {
 				ics11_beefy::client_message::ClientMessage::decode_vec(&value.value)
 					.map_err(ics02_client::error::Error::decode_raw_header)?,
 			)),
+			TENDERMINT_CLIENT_MESSAGE_TYPE_URL => Ok(Self::Tendermint(
+				ics07_tendermint::client_message::ClientMessage::decode_vec(&value.value)
+					.map_err(ics02_client::error::Error::decode_raw_header)?,
+			)),
 			_ => Err(ics02_client::error::Error::unknown_consensus_state_type(value.type_url)),
 		}
 	}
@@ -108,6 +190,22 @@ impl From<AnyClientMessage> for Any {
 			},
 			AnyClientMessage::Beefy(msg) =>
 				Any { type_url: BEEFY_CLIENT_MESSAGE_TYPE_URL.to_string(), value: msg.encode_vec() },
+			AnyClientMessage::Tendermint(msg) => Any {
+				type_url: TENDERMINT_CLIENT_MESSAGE_TYPE_URL.to_string(),
+				value: msg.encode_vec(),
+			},
+			#[cfg(test)]
+			AnyClientMessage::Mock(_msg) => panic!("MockHeader can't be serialized"),
 		}
 	}
+}
+
+#[cfg(test)]
+pub use mocks::*;
+
+#[cfg(test)]
+mod mocks {
+	pub const MOCK_CLIENT_STATE_TYPE_URL: &str = "/ibc.mock.ClientState";
+	pub const MOCK_CLIENT_MESSAGE_TYPE_URL: &str = "/ibc.mock.ClientMessage";
+	pub const MOCK_CONSENSUS_STATE_TYPE_URL: &str = "/ibc.mock.ConsensusState";
 }

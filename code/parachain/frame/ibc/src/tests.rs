@@ -1,6 +1,8 @@
 use crate::{
-	mock::*, routing::Context, Any, Config, MultiAddress, Pallet, PalletParams, Timeout,
-	TransferParams, MODULE_ID,
+	light_clients::{AnyClientState, AnyConsensusState},
+	mock::*,
+	routing::Context,
+	Any, Config, MultiAddress, Pallet, PalletParams, Timeout, TransferParams, MODULE_ID,
 };
 use core::time::Duration;
 use frame_support::{assert_ok, traits::fungibles::Mutate};
@@ -8,8 +10,7 @@ use ibc::{
 	applications::transfer::{packet::PacketData, Coin, PrefixedDenom, VERSION},
 	core::{
 		ics02_client::{
-			client_consensus::AnyConsensusState,
-			client_state::{AnyClientState, ClientState},
+			client_state::ClientState,
 			height::Height,
 			msgs::create_client::{MsgCreateAnyClient, TYPE_URL},
 		},
@@ -31,7 +32,7 @@ use ibc::{
 	},
 	mock::{
 		client_state::{MockClientState, MockConsensusState},
-		header::MockHeader,
+		header::{MockClientMessage, MockHeader},
 	},
 	proofs::Proofs,
 	signer::Signer,
@@ -47,11 +48,12 @@ use tendermint_proto::Protobuf;
 
 fn setup_client_and_consensus_state(port_id: PortId) {
 	// Set up client state and consensus states
-	let mock_client_state = MockClientState::new(MockHeader::new(Height::new(0, 1)));
+	let mock_client_state =
+		MockClientState::new(MockClientMessage::from(MockHeader::new(Height::new(0, 1))));
 	let mock_cs_state = MockConsensusState::new(MockHeader::new(Height::new(0, 1)));
-	let client_id = ClientId::new(mock_client_state.client_type(), 0).unwrap();
-	let counterparty_client_id = ClientId::new(mock_client_state.client_type(), 1).unwrap();
-	let msg = MsgCreateAnyClient::new(
+	let client_id = ClientId::new(&mock_client_state.client_type(), 0).unwrap();
+	let counterparty_client_id = ClientId::new(&mock_client_state.client_type(), 1).unwrap();
+	let msg = MsgCreateAnyClient::<Context<Test>>::new(
 		AnyClientState::Mock(mock_client_state),
 		AnyConsensusState::Mock(mock_cs_state),
 		Signer::from_str(MODULE_ID).unwrap(),
@@ -96,11 +98,12 @@ fn setup_client_and_consensus_state(port_id: PortId) {
 #[test]
 fn initialize_connection() {
 	new_test_ext().execute_with(|| {
-		let mock_client_state = MockClientState::new(MockHeader::default());
+		let mock_client_state =
+			MockClientState::new(MockClientMessage::from(MockHeader::default()));
 		let mock_cs_state = MockConsensusState::new(MockHeader::default());
-		let client_id = ClientId::new(mock_client_state.client_type(), 0).unwrap();
-		let counterparty_client_id = ClientId::new(mock_client_state.client_type(), 1).unwrap();
-		let msg = MsgCreateAnyClient::new(
+		let client_id = ClientId::new(&mock_client_state.client_type(), 0).unwrap();
+		let counterparty_client_id = ClientId::new(&mock_client_state.client_type(), 1).unwrap();
+		let msg = MsgCreateAnyClient::<Context<Test>>::new(
 			AnyClientState::Mock(mock_client_state),
 			AnyConsensusState::Mock(mock_cs_state),
 			Signer::from_str(MODULE_ID).unwrap(),
@@ -139,11 +142,12 @@ fn initialize_connection() {
 #[test]
 fn should_open_a_channel() {
 	new_test_ext().execute_with(|| {
-		let mock_client_state = MockClientState::new(MockHeader::default());
+		let mock_client_state =
+			MockClientState::new(MockClientMessage::from(MockHeader::default()));
 		let mock_cs_state = MockConsensusState::new(MockHeader::default());
-		let client_id = ClientId::new(mock_client_state.client_type(), 0).unwrap();
-		let counterparty_client_id = ClientId::new(mock_client_state.client_type(), 1).unwrap();
-		let msg = MsgCreateAnyClient::new(
+		let client_id = ClientId::new(&mock_client_state.client_type(), 0).unwrap();
+		let counterparty_client_id = ClientId::new(&mock_client_state.client_type(), 1).unwrap();
+		let msg = MsgCreateAnyClient::<Context<Test>>::new(
 			AnyClientState::Mock(mock_client_state),
 			AnyConsensusState::Mock(mock_cs_state),
 			Signer::from_str(MODULE_ID).unwrap(),

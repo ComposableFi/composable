@@ -71,6 +71,7 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
+		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
 		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 		Vault: pallet_vault::{Pallet, Call, Storage, Event<T>},
@@ -115,12 +116,20 @@ impl frame_system::Config for Runtime {
 	type MaxConsumers = ConstU32<16>;
 }
 
-/// Replacement for pallet_balances.
-pub type Balances = orml_tokens::CurrencyAdapter<Runtime, NativeCurrencyId>;
-
 parameter_types! {
 	pub const ExistentialDeposit: u64 = 1000;
-	pub const NativeCurrencyId: CurrencyId = PICA::ID;
+}
+
+impl pallet_balances::Config for Runtime {
+	type Balance = Balance;
+	type Event = Event;
+	type DustRemoval = ();
+	type ExistentialDeposit = ExistentialDeposit;
+	type AccountStore = System;
+	type WeightInfo = ();
+	type MaxLocks = ();
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
 }
 
 pub const MILLISECS_PER_BLOCK: u64 = 6000;
@@ -442,13 +451,9 @@ pub fn set_price(asset_id: CurrencyId, new_price: Balance) {
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut storage = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
-	let balances = vec![
-		(*ALICE, PICA::ID, 1_000_000_000),
-		(*BOB, PICA::ID, 1_000_000_000),
-		(*CHARLIE, PICA::ID, 1_000_000_000),
-	];
+	let balances = vec![(*ALICE, 1_000_000_000), (*BOB, 1_000_000_000), (*CHARLIE, 1_000_000_000)];
 
-	orml_tokens::GenesisConfig::<Runtime> { balances }
+	pallet_balances::GenesisConfig::<Runtime> { balances }
 		.assimilate_storage(&mut storage)
 		.unwrap();
 	pallet_lending::GenesisConfig {}

@@ -52,16 +52,13 @@ impl<T: Config> ConsensusStates<T> {
 mod tests {
 	use super::ConsensusStates;
 	use crate::mock::*;
-	use ibc::core::{
-		ics02_client::{client_type::ClientType, height::Height},
-		ics24_host::identifier::ClientId,
-	};
+	use ibc::core::{ics02_client::height::Height, ics24_host::identifier::ClientId};
 	use sp_io::TestExternalities;
 
 	#[test]
 	fn test_child_trie_prefix_iterator() {
 		TestExternalities::default().execute_with(|| {
-			let client_id = ClientId::new(ClientType::Beefy, 1).unwrap();
+			let client_id = ClientId::new("11-beefy", 1).unwrap();
 
 			for height in 0..100u64 {
 				let height = Height { revision_height: height, revision_number: 2000 };
