@@ -701,7 +701,7 @@ pub mod pallet {
 				// well as the claimable rewards in the future when market places exists for these
 				// NFTs.
 				.map(|pool| vec![(pool.0.share_asset_id, pool.1.share)])
-				.ok_or(DispatchError::Other(Error::<T>::StakeNotFound.into()))
+				.ok_or_else(|| DispatchError::Other(Error::<T>::StakeNotFound.into()))
 		}
 	}
 

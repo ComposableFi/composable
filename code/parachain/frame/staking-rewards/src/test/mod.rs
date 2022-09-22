@@ -8,7 +8,7 @@ use composable_tests_helpers::test::{
 	helper::{assert_extrinsic_event, assert_extrinsic_event_with, assert_last_event_with},
 };
 use composable_traits::{
-	fnft::FinancialNft as FinancialNftT,
+	fnft::{FinancialNft as FinancialNftT, FinancialNftProtocol},
 	staking::{
 		lock::{Lock, LockConfig},
 		ProtocolStaking, RewardConfig,
@@ -50,6 +50,11 @@ fn test_create_reward_pool() {
 		assert_eq!(
 			FinancialNft::collections().collect::<BTreeSet<_>>(),
 			BTreeSet::from([PICA::ID])
+		);
+
+		assert_eq!(
+			<StakingRewards as FinancialNftProtocol>::collection_asset_ids(),
+			vec![PICA::ID]
 		);
 	});
 }
@@ -155,7 +160,11 @@ fn stake_in_case_of_zero_inflation_should_work() {
 				fnft_instance_id,
 			})
 		);
-
+		assert_eq!(
+			<StakingRewards as FinancialNftProtocol>::value_of(&PICA::ID, &fnft_instance_id)
+				.expect("must return a value"),
+			vec![(XPICA::ID, StakingRewards::boosted_amount(reward_multiplier, amount))]
+		);
 		assert_eq!(balance(staked_asset_id, &staker), amount);
 		assert_eq!(balance(staked_asset_id, &fnft_asset_account), amount);
 

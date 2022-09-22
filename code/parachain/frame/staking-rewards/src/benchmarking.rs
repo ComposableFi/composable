@@ -4,10 +4,10 @@ use crate::*;
 use composable_support::validation::TryIntoValidated;
 use composable_traits::{
 	staking::{
-		lock::LockConfig, RewardConfig, RewardPoolConfiguration,
-		RewardPoolConfiguration::RewardRateBasedIncentive, RewardRate, RewardUpdate,
+		lock::LockConfig, RewardConfig, RewardPoolConfiguration::RewardRateBasedIncentive,
+		RewardRate, RewardUpdate,
 	},
-	time::{DurationSeconds, ONE_HOUR, ONE_MINUTE},
+	time::{ONE_HOUR, ONE_MINUTE},
 };
 use frame_benchmarking::{account, benchmarks, whitelisted_caller};
 use frame_support::{
