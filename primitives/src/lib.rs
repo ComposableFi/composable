@@ -21,7 +21,8 @@ use ibc::{
 	applications::transfer::PrefixedCoin,
 	core::{
 		ics02_client::{
-			client_consensus::AnyConsensusState, client_type::ClientType, header::AnyHeader,
+			client_consensus::AnyConsensusState, client_state::AnyClientState,
+			client_type::ClientType, header::AnyHeader,
 		},
 		ics04_channel::{
 			channel::{ChannelEnd, Order::Unordered},
@@ -499,7 +500,6 @@ pub async fn find_maximum_height_for_timeout_proofs(
 	let mut min_timeout_height = None;
 	let (source_height, ..) = source.latest_height_and_timestamp().await.ok()?;
 	let (sink_height, ..) = sink.latest_height_and_timestamp().await.ok()?;
-	let first_timestamp = sink.query_timestamp_at(1).await.ok()?;
 	for (channel, port_id) in source.channel_whitelist() {
 		let undelivered_sequences = query_undelivered_sequences(
 			source_height,
@@ -513,18 +513,30 @@ pub async fn find_maximum_height_for_timeout_proofs(
 		.ok()?;
 		let send_packets =
 			source.query_send_packets(channel, port_id, undelivered_sequences).await.ok()?;
-		for packet_info in send_packets {
-			let period = packet_info.timeout_timestamp.saturating_sub(first_timestamp);
+		for send_packet in send_packets {
+			let sink_client_state = source
+				.query_client_state(
+					Height::new(source_height.revision_number, send_packet.height),
+					sink.client_id(),
+				)
+				.await
+				.ok()?;
+			let sink_client_state =
+				AnyClientState::try_from(sink_client_state.client_state?).ok()?;
+			let height = sink_client_state.latest_height();
+			let timestamp_at_creation =
+				sink.query_timestamp_at(height.revision_height).await.ok()?;
+			let period = send_packet.timeout_timestamp.saturating_sub(timestamp_at_creation);
 			if period == 0 {
 				min_timeout_height =
-					min_timeout_height.max(Some(packet_info.timeout_height.revision_height));
+					min_timeout_height.max(Some(send_packet.timeout_height.revision_height));
 				continue
 			}
 			let period = Duration::from_nanos(period);
 			let approx_height =
 				calculate_block_delay(period, sink.expected_block_time()).saturating_add(1);
-			let timeout_height = if packet_info.timeout_height.revision_height < approx_height {
-				packet_info.timeout_height.revision_height
+			let timeout_height = if send_packet.timeout_height.revision_height < approx_height {
+				send_packet.timeout_height.revision_height
 			} else {
 				approx_height
 			};

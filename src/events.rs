@@ -410,7 +410,7 @@ pub async fn parse_events(
 			},
 			IbcEvent::SendPacket(send_packet) => {
 				#[cfg(feature = "testing")]
-				if packet_relay_status() {
+				if !packet_relay_status() {
 					continue
 				}
 				// can we send this packet?

@@ -1,6 +1,7 @@
 use crate::packets::connection_delay::has_delay_elapsed;
 use ibc::{
 	core::{
+		ics02_client::client_state::AnyClientState,
 		ics04_channel::{
 			channel::{ChannelEnd, Order, State},
 			context::calculate_block_delay,
@@ -33,6 +34,7 @@ pub async fn get_timeout_proof_height(
 	sink_timestamp: Timestamp,
 	latest_client_height_on_source: Height,
 	packet: &Packet,
+	packet_creation_height: u64,
 ) -> Option<Height> {
 	let timeout_variant = timeout_variant(&packet, &sink_timestamp, sink_height).unwrap();
 
@@ -50,10 +52,23 @@ pub async fn get_timeout_proof_height(
 		TimeoutVariant::Timestamp => {
 			// Get approximate number of blocks contained in this timestamp so we can have a lower
 			// bound for where to start our search
-			let first_timestamp = sink.query_timestamp_at(1).await.ok()?;
-			let period = packet.timeout_timestamp.nanoseconds() - first_timestamp;
+			// We offset the sink height when this packet was created with the approximate number of
+			// blocks contained in the difference in timestamp at packet creation until timeout
+			let sink_client_state = source
+				.query_client_state(
+					Height::new(source_height.revision_number, packet_creation_height),
+					sink.client_id(),
+				)
+				.await
+				.ok()?;
+			let sink_client_state =
+				AnyClientState::try_from(sink_client_state.client_state?).ok()?;
+			let height = sink_client_state.latest_height();
+			let timestamp_at_creation =
+				sink.query_timestamp_at(height.revision_height).await.ok()?;
+			let period = packet.timeout_timestamp.nanoseconds() - timestamp_at_creation;
 			let period = Duration::from_nanos(period);
-			let start_height =
+			let start_height = height.revision_height +
 				calculate_block_delay(period, sink.expected_block_time()).saturating_sub(1);
 			let start_height = Height::new(sink_height.revision_number, start_height);
 			find_suitable_proof_height_for_client(
@@ -69,10 +84,21 @@ pub async fn get_timeout_proof_height(
 		TimeoutVariant::Both => {
 			// Get approximate number of blocks contained in this timestamp so we can have a lower
 			// bound for where to start our search
-			let first_timestamp = sink.query_timestamp_at(1).await.ok()?;
-			let period = packet.timeout_timestamp.nanoseconds() - first_timestamp;
+			let sink_client_state = source
+				.query_client_state(
+					Height::new(source_height.revision_number, packet_creation_height),
+					sink.client_id(),
+				)
+				.await
+				.ok()?;
+			let sink_client_state =
+				AnyClientState::try_from(sink_client_state.client_state?).ok()?;
+			let height = sink_client_state.latest_height();
+			let timestamp_at_creation =
+				sink.query_timestamp_at(height.revision_height).await.ok()?;
+			let period = packet.timeout_timestamp.nanoseconds() - timestamp_at_creation;
 			let period = Duration::from_nanos(period);
-			let start_height =
+			let start_height = height.revision_height +
 				calculate_block_delay(period, sink.expected_block_time()).saturating_sub(1);
 			let start_height = if start_height < packet.timeout_height.revision_height {
 				packet.timeout_height

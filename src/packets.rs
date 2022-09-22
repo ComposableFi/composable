@@ -143,11 +143,10 @@ pub async fn query_ready_and_timed_out_packets(
 		let send_packets = source.query_send_packets(channel_id, port_id.clone(), seqs).await?;
 		for send_packet in send_packets {
 			let packet = packet_info_to_packet(&send_packet);
-
 			// Check if packet has timed out
 			if packet.timed_out(&sink_timestamp, sink_height) {
 				// so we know this packet has timed out on the sink, we need to find the maximum
-				// consensus state height at which we can generate a non-merbership proof of the
+				// consensus state height at which we can generate a non-membership proof of the
 				// packet for the sink's client on the source.
 				let proof_height = if let Some(proof_height) = get_timeout_proof_height(
 					source,
@@ -157,6 +156,7 @@ pub async fn query_ready_and_timed_out_packets(
 					sink_timestamp,
 					latest_sink_height_on_source,
 					&packet,
+					send_packet.height,
 				)
 				.await
 				{
@@ -264,6 +264,9 @@ pub async fn query_ready_and_timed_out_packets(
 		)
 		.await?;
 		// Get acknowledgement messages
+		if source_channel_end.state == State::Closed {
+			continue
+		}
 		let acknowledgements = source.query_recv_packets(channel_id, port_id, acks).await?;
 		for acknowledgement in acknowledgements {
 			let packet = packet_info_to_packet(&acknowledgement);
