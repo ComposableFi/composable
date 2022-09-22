@@ -1,6 +1,6 @@
 import { ApiPromise } from "@polkadot/api";
 import BN from "bn.js";
-import { expect } from "chai";
+import { AssertionError, expect } from "chai";
 import { PalletPabloPoolConfiguration } from "@composable/types/interfaces";
 import { Option, u128 } from "@polkadot/types-codec";
 import { AccountId32 } from "@polkadot/types/interfaces/runtime";
@@ -20,7 +20,7 @@ export class Phase2 {
       return this.verifyLiquidityBootstrappingPool(poolConfig, pools, poolId);
     } else if (poolConfig.isStableSwap == true) {
       return this.verifyStableSwapPool(poolConfig, pools, poolId);
-    }
+    } else throw new AssertionError("Dev Error: verifyLastPoolCreation was called wrong!");
   }
 
   static verifyConstantProductPool(
