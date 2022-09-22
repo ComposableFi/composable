@@ -1,13 +1,5 @@
 import BigNumber from "bignumber.js";
-import {
-  alpha,
-  Box,
-  Button,
-  Slider,
-  Stack,
-  Typography,
-  useTheme,
-} from "@mui/material";
+import { alpha, Box, Button, Slider, Stack, Typography, useTheme } from "@mui/material";
 import { formatNumber } from "shared";
 import { AlertBox, BigNumberInput } from "@/components";
 import { TextWithTooltip } from "@/components/Molecules/TextWithTooltip";
@@ -16,37 +8,33 @@ import { WarningAmberRounded } from "@mui/icons-material";
 import { FC, useEffect, useState } from "react";
 import { useSelectedAccount } from "@/defi/polkadot/hooks";
 import { useSnackbar } from "notistack";
-import {
-  calculateStakingPeriodAPR,
-  formatDurationOption,
-  stake,
-} from "@/defi/polkadot/pallets/StakingRewards";
+import { calculateStakingPeriodAPR, formatDurationOption, stake } from "@/defi/polkadot/pallets/StakingRewards";
 import { useStakingRewards } from "@/defi/polkadot/hooks/useStakingRewards";
 
 export const StakeTabContent: FC = () => {
   const theme = useTheme();
   const [lockablePICA, setLockablePICA] = useState<BigNumber>(new BigNumber(0));
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
-  const { picaRewardPool, balance, meta, executor, parachainApi, assetId } =
+  const { hasRewardPools, picaRewardPool, balance, meta, executor, parachainApi, assetId } =
     useStakingRewards();
 
-  const options = Object.entries(picaRewardPool.lock.durationPresets).reduce(
+  const options = hasRewardPools ? Object.entries(picaRewardPool.lock.durationPresets).reduce(
     (acc, [duration, _]) => [
       ...acc,
       {
         label: "",
-        value: Number(duration),
-      },
+        value: Number(duration)
+      }
     ],
     [] as any
-  );
+  ) : [];
 
-  const minDuration = Object.entries(
+  const minDuration = hasRewardPools ? Object.entries(
     picaRewardPool.lock.durationPresets
-  ).reduce((a, [b, _]) => (a !== 0 && a < Number(b) ? a : Number(b)), 0);
-  const maxDuration = Object.entries(
+  ).reduce((a, [b, _]) => (a !== 0 && a < Number(b) ? a : Number(b)), 0) : 0;
+  const maxDuration = hasRewardPools ? Object.entries(
     picaRewardPool.lock.durationPresets
-  ).reduce((a, [b, _]) => (a > Number(b) ? a : Number(b)), 0);
+  ).reduce((a, [b, _]) => (a > Number(b) ? a : Number(b)), 0) : 0;
 
   const [lockPeriod, setLockPeriod] = useState<string>("");
   const account = useSelectedAccount();
@@ -59,7 +47,8 @@ export const StakeTabContent: FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inputValue]);
 
-  const setValidation = () => {};
+  const setValidation = () => {
+  };
   return (
     <Stack sx={{ marginTop: theme.spacing(9) }} gap={4}>
       <Stack gap={1.5}>
@@ -162,7 +151,7 @@ export const StakeTabContent: FC = () => {
             lockablePICA,
             lockPeriod,
             enqueueSnackbar,
-            closeSnackbar,
+            closeSnackbar
           })
         }
         variant="contained"

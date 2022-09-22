@@ -26,7 +26,6 @@ export async function subscribeNativeBalance(
   // and retrieve balances
   const accountId = api.createType("AccountId32", account);
   await api.query.system.account(accountId, (result) => {
-    console.log("Processing balance update...");
     const blObject: any = result.toJSON();
 
     const {
