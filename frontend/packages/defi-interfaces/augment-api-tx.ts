@@ -6,10 +6,10 @@ import type { CommonMosaicRemoteAssetId, ComposableSupportEthereumAddress, Compo
 import type { PalletPabloPoolInitConfiguration } from './pablo';
 import type { ApiTypes } from '@polkadot/api-base/types';
 import type { Data } from '@polkadot/types';
-import type { Bytes, Compact, Null, Option, U8aFixed, Vec, WrapperKeepOpaque, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
+import type { Bytes, Compact, Null, Option, U8aFixed, Vec, WrapperKeepOpaque, bool, u128, u16, u32, u64, u8, BTreeMap } from '@polkadot/types-codec';
 import type { AnyNumber, ITuple } from '@polkadot/types-codec/types';
 import type { AccountId32, Call, H256, MultiAddress, Perbill, Percent, Permill } from '@polkadot/types/interfaces/runtime';
-import type { PalletMultisigTimepoint, SpRuntimeHeader, XcmV1MultiLocation, XcmV2WeightLimit, XcmVersionedMultiAssets, XcmVersionedMultiLocation, XcmVersionedXcm } from '@polkadot/types/lookup';
+import type { ComposableTraitsStakingRewardUpdate, PalletMultisigTimepoint, SpRuntimeHeader, XcmV1MultiLocation, XcmV2WeightLimit, XcmVersionedMultiAssets, XcmVersionedMultiLocation, XcmVersionedXcm } from '@polkadot/types/lookup';
 
 declare module '@polkadot/api-base/types/submittable' {
   export interface AugmentedSubmittables<ApiType extends ApiTypes> {
@@ -39,7 +39,7 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       forceTransferNative: AugmentedSubmittable<(source: MultiAddress | { Id: any } | { Index: any } | { Raw: any } | { Address32: any } | { Address20: any } | string | Uint8Array, dest: MultiAddress | { Id: any } | { Index: any } | { Raw: any } | { Address32: any } | { Address20: any } | string | Uint8Array, value: Compact<u128> | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [MultiAddress, MultiAddress, Compact<u128>, bool]>;
       /**
-       * Creates a new asset, minting `amount` of funds into the `dest` account. Intented to be
+       * Creates a new asset, minting `amount` of funds into the `dest` account. intended to be
        * used for creating wrapped assets, not associated with any project.
        **/
       mintInitialize: AugmentedSubmittable<(amount: Compact<u128> | AnyNumber | Uint8Array, dest: MultiAddress | { Id: any } | { Index: any } | { Raw: any } | { Address32: any } | { Address20: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Compact<u128>, MultiAddress]>;
@@ -264,7 +264,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * parameter.
        * 
        * Emits a `NewBond`.
-       * Possibily Emits a `OfferCompleted`.
+       * Possibly Emits a `OfferCompleted`.
        **/
       bond: AugmentedSubmittable<(offerId: u128 | AnyNumber | Uint8Array, nbOfBonds: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u128, bool]>;
       /**
@@ -1467,7 +1467,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * Create a new lending market.
        * - `origin` : Sender of this extrinsic. Manager for new market to be created. Can pause
        * borrow operations.
-       * - `input`   : Borrow & deposits of assets, persentages.
+       * - `input`   : Borrow & deposits of assets, percentages.
        * 
        * `origin` irreversibly pays `T::OracleMarketCreationStake`.
        **/
@@ -1517,7 +1517,7 @@ declare module '@polkadot/api-base/types/submittable' {
       [key: string]: SubmittableExtrinsicFunction<ApiType>;
     };
     liquidations: {
-      addLiquidationStrategy: AugmentedSubmittable<(configuraiton: PalletLiquidationsLiquidationStrategyConfiguration | { DutchAuction: any } | { Pablo: any } | { Xcm: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [PalletLiquidationsLiquidationStrategyConfiguration]>;
+      addLiquidationStrategy: AugmentedSubmittable<(configuration: PalletLiquidationsLiquidationStrategyConfiguration | { DutchAuction: any } | { Pablo: any } | { Xcm: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [PalletLiquidationsLiquidationStrategyConfiguration]>;
       sell: AugmentedSubmittable<(order: ComposableTraitsDefiSellCurrencyId | { pair?: any; take?: any } | string | Uint8Array, configuration: Vec<u32> | (u32 | AnyNumber | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [ComposableTraitsDefiSellCurrencyId, Vec<u32>]>;
       /**
        * Generic tx
@@ -1540,7 +1540,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * - Amount must be equal or lower than what the user has locked
        * 
        * # Note
-       * - Reclaim period is not reset if not all the funds are moved; menaing that the clock
+       * - Reclaim period is not reset if not all the funds are moved; meaning that the clock
        * remains ticking for the relayer to pick up the rest of the transaction.
        **/
       acceptTransfer: AugmentedSubmittable<(from: AccountId32 | string | Uint8Array, networkId: u32 | AnyNumber | Uint8Array, remoteAssetId: CommonMosaicRemoteAssetId | { EthereumTokenAddress: any } | string | Uint8Array, amount: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [AccountId32, u32, CommonMosaicRemoteAssetId, u128]>;
@@ -2359,6 +2359,18 @@ declare module '@polkadot/api-base/types/submittable' {
     };
     stakingRewards: {
       /**
+       * Add funds to the reward pool's rewards pot for the specified asset.
+       * 
+       * Emits `RewardsPotIncreased` when successful.
+       **/
+      addToRewardsPot: AugmentedSubmittable<(poolId: u128 | AnyNumber | Uint8Array, assetId: u128 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u128, u128, bool]>;
+      /**
+       * Claim a current reward for some position.
+       * 
+       * Emits `Claimed` event when successful.
+       **/
+      claim: AugmentedSubmittable<(fnftCollectionId: u128 | AnyNumber | Uint8Array, fnftInstanceId: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u64]>;
+      /**
        * Create a new reward pool based on the config.
        * 
        * Emits `RewardPoolCreated` event when successful.
@@ -2369,14 +2381,26 @@ declare module '@polkadot/api-base/types/submittable' {
        * 
        * Emits `StakeExtended` event when successful.
        **/
-      extend: AugmentedSubmittable<(position: u128 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u128]>;
-      split: AugmentedSubmittable<(position: u128 | AnyNumber | Uint8Array, ratio: Permill | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, Permill]>;
+      extend: AugmentedSubmittable<(fnftCollectionId: u128 | AnyNumber | Uint8Array, fnftInstanceId: u64 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u64, u128]>;
+      split: AugmentedSubmittable<(fnftCollectionId: u128 | AnyNumber | Uint8Array, fnftInstanceId: u64 | AnyNumber | Uint8Array, ratio: Permill | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u64, Permill]>;
       /**
        * Create a new stake.
        * 
        * Emits `Staked` event when successful.
        **/
-      stake: AugmentedSubmittable<(poolId: u16 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array, durationPreset: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u16, u128, u64]>;
+      stake: AugmentedSubmittable<(poolId: u128 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array, durationPreset: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u128, u64]>;
+      /**
+       * Remove a stake.
+       * 
+       * Emits `Unstaked` event when successful.
+       **/
+      unstake: AugmentedSubmittable<(fnftCollectionId: u128 | AnyNumber | Uint8Array, fnftInstanceId: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u64]>;
+      /**
+       * Updates the reward pool configuration.
+       * 
+       * Emits `RewardPoolUpdated` when successful.
+       **/
+      updateRewardsPool: AugmentedSubmittable<(poolId: u128 | AnyNumber | Uint8Array, rewardUpdates: BTreeMap<u128, ComposableTraitsStakingRewardUpdate>) => SubmittableExtrinsic<ApiType>, [u128, BTreeMap<u128, ComposableTraitsStakingRewardUpdate>]>;
       /**
        * Generic tx
        **/

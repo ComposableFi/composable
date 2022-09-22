@@ -12,6 +12,14 @@ pkgs.arion.build {
         juno-indexer-container-name = "juno-indexer";
         subql-query-container-name = "subql-query";
 
+        hasuraGraphqlPort = 8080;
+        relaychainPort = 9944;
+        parachainPort = 9988;
+        subsquidParachainIndexerPort = 3000;
+        subsquidIndexerGateway = 8081;
+        subsquidIndexerStatusService = 60291;
+        junoRpcPort = 26657;
+
         default-db = {
           name = "xcvm";
           host = "127.0.0.1";
@@ -67,24 +75,26 @@ pkgs.arion.build {
               });
 
             # ============== COSMOS ===============
-            "${junod-container-name}" =
-              mk-composable-container (import ./services/junod.nix);
+            "${junod-container-name}" = mk-composable-container
+              (import ./services/junod.nix { rpcPort = junoRpcPort; });
             "${juno-indexer-container-name}" = mk-composable-container
-              (import ./services/juno-subql.nix {
+              (import ./services/juno-subql-indexer.nix {
                 inherit pkgs;
                 database = juno-indexer-db;
                 juno = junod-container-name;
+                junoPort = junoRpcPort;
               });
             "${subql-query-container-name}" = mk-composable-container
               (import ./services/subql-query.nix {
                 database = juno-indexer-db;
                 subql-node = juno-indexer-container-name;
+                subqlPort = 3000;
               });
             hasura-aggregated = mk-composable-container
               (import ./services/hasura.nix {
                 inherit pkgs;
                 database = hasura-db;
-                graphql-port = 8080;
+                graphql-port = hasuraGraphqlPort;
                 metadata = let
                   files = pkgs.linkFarm "metadata" [
                     {
@@ -195,25 +205,28 @@ pkgs.arion.build {
               (import ./services/devnet-dali.nix {
                 inherit pkgs;
                 inherit packages;
-                relaychain-port = 9944;
-                parachain-port = 9988;
+                inherit relaychainPort;
+                inherit parachainPort;
               });
             subsquid-indexer = mk-composable-container
               (import ./services/subsquid-indexer.nix {
                 database = composable-indexer-db;
                 redis = redis-container-name;
                 parachain = dali-container-name;
+                inherit parachainPort;
+                parachainIndexerPort = subsquidParachainIndexerPort;
               });
             "${subsquid-indexer-gateway-container-name}" =
               mk-composable-container
               (import ./services/subsquid-indexer-gateway.nix {
                 database = composable-indexer-db;
                 status = subsquid-status-container-name;
-                graphql-port = 8081;
+                graphql-port = subsquidIndexerGateway;
               });
             "${subsquid-status-container-name}" = mk-composable-container
               (import ./services/subsquid-indexer-status-service.nix {
                 redis = redis-container-name;
+                port = subsquidIndexerStatusService;
               });
             "${redis-container-name}" =
               mk-composable-container (import ./services/redis.nix);

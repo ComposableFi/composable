@@ -2,8 +2,8 @@
 # 
 # package operates in next assumptions:
 # 1. we good to have all nodes to be equal regarding logging/storage/networking per chain
-# 2. alloacte node names equal to owners sudo keys according well know keyring
-# 3. it is possible to allocate range of prots to each node starting from some base
+# 2. allocate node names equal to owners sudo keys according well know keyring
+# 3. it is possible to allocate range of ports to each node starting from some base
 { pkgs }:
 with pkgs;
 let
@@ -88,6 +88,21 @@ in rec {
   mk-shared-security-network = { parachains, relaychain }: {
     parachains = mk-parachains parachains;
     relaychain = mk-relaychain relaychain;
+    hrmpChannels = let
+      map = builtins.map;
+      filter = builtins.filter;
+      ids = map (x: x.id) parachains;
+      cross = pkgs.lib.cartesianProductOfSets {
+        sender = ids;
+        recipient = ids;
+      };
+      unique = filter (x: x.sender != x.recipient) cross;
+    in map (connection: {
+      sender = connection.sender;
+      recipient = connection.recipient;
+      maxCapacity = 8;
+      maxMessageSize = 16384;
+    }) unique;
     genesis = {
       runtime = {
         runtime_genesis_config = {

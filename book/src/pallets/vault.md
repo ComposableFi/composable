@@ -4,4 +4,4 @@
 
 ---
 
-{{#include ../../../frame/vault/README.md:5:}}
+{{#include ../../../code/parachain/frame/vault/README.md:5:}}

@@ -442,6 +442,17 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
+    fnft: {
+      CollectionAlreadyExists: AugmentedError<ApiType>;
+      CollectionNotFound: AugmentedError<ApiType>;
+      InstanceAlreadyExists: AugmentedError<ApiType>;
+      InstanceNotFound: AugmentedError<ApiType>;
+      MustBeOwner: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
     governanceRegistry: {
       /**
        * Not found
@@ -478,7 +489,7 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       EncodingError: AugmentedError<ApiType>;
       /**
-       * Invalid message for extirnsic
+       * Invalid message for extrinsic
        **/
       InvalidMessageType: AugmentedError<ApiType>;
       /**
@@ -1181,14 +1192,20 @@ declare module '@polkadot/api-base/types/errors' {
       [key: string]: AugmentedError<ApiType>;
     };
     stakingRewards: {
+      BackToTheFuture: AugmentedError<ApiType>;
       /**
        * Invalid end block number provided for creating a pool.
        **/
       EndBlockMustBeInTheFuture: AugmentedError<ApiType>;
+      FnftNotFound: AugmentedError<ApiType>;
       /**
        * Reward's max limit reached.
        **/
       MaxRewardLimitReached: AugmentedError<ApiType>;
+      /**
+       * No duration presets configured.
+       **/
+      NoDurationPresetsConfigured: AugmentedError<ApiType>;
       /**
        * Not enough assets for a stake.
        **/
@@ -1198,21 +1215,41 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       OnlyPoolOwnerCanAddNewReward: AugmentedError<ApiType>;
       /**
+       * only the owner of stake can unstake it
+       **/
+      OnlyStakeOwnerCanUnstake: AugmentedError<ApiType>;
+      /**
        * Error when creating reduction configs.
        **/
       ReductionConfigProblem: AugmentedError<ApiType>;
+      /**
+       * Reward asset not found in reward pool.
+       **/
+      RewardAssetNotFound: AugmentedError<ApiType>;
       /**
        * Error when creating reward configs.
        **/
       RewardConfigProblem: AugmentedError<ApiType>;
       /**
+       * Reward pool already exists
+       **/
+      RewardsPoolAlreadyExists: AugmentedError<ApiType>;
+      /**
        * Rewards pool not found.
        **/
       RewardsPoolNotFound: AugmentedError<ApiType>;
       /**
+       * The rewards pot for this pool is empty.
+       **/
+      RewardsPotEmpty: AugmentedError<ApiType>;
+      /**
        * No stake found for given id.
        **/
       StakeNotFound: AugmentedError<ApiType>;
+      /**
+       * Too many rewarded asset types per pool violating the storage allowed.
+       **/
+      TooManyRewardAssetTypes: AugmentedError<ApiType>;
       /**
        * Unimplemented reward pool type.
        **/

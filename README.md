@@ -76,7 +76,7 @@ If you want to run the latest version of  `devnet-dali`, for example, you can si
 nix run "github:ComposableFi/composable#devnet-dali"
 ```
 
-If you would like to run an older/pinned version of any package, you can include the commit hash in the package identifier lilke this:
+If you would like to run an older/pinned version of any package, you can include the commit hash in the package identifier like this:
 
 ```bash
 nix run "github:ComposableFi/composable/d735de9#devnet-dali"
@@ -100,5 +100,3 @@ docker volume create nix # cache builds
 
 docker run -v nix:/nix -p 9988:9988 -it nixos/nix bash -c "nix run github:ComposableFi/composable#devnet-dali --extra-experimental-features nix-command --extra-experimental-features flakes"
 ```
-
-

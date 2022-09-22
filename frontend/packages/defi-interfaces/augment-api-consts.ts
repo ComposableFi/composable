@@ -2,7 +2,7 @@
 /* eslint-disable */
 
 import type { ApiTypes } from '@polkadot/api-base/types';
-import type { Bytes, Option, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
+import type { Bytes, Option, bool, u128, u16, u32, u64, u8, U8aFixed } from '@polkadot/types-codec';
 import type { Codec } from '@polkadot/types-codec/types';
 import type { AccountId32, Perbill, Permill } from '@polkadot/types/interfaces/runtime';
 import type { FrameSupportPalletId, FrameSupportWeightsRuntimeDbWeight, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, SpVersionRuntimeVersion, XcmV1MultiLocation } from '@polkadot/types/lookup';
@@ -176,9 +176,16 @@ declare module '@polkadot/api-base/types/consts' {
     dutchAuction: {
       palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
       /**
-       * ED taken to create position. Part of if returned when position is liqudated.
+       * ED taken to create position. Part of if returned when position is liquidated.
        **/
       positionExistentialDeposit: u128 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
+    fnft: {
+      palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/
@@ -209,7 +216,7 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       maxAdditionalFields: u32 & AugmentedConst<ApiType>;
       /**
-       * Maxmimum number of registrars allowed in the system. Needed to bound the complexity
+       * Maximum number of registrars allowed in the system. Needed to bound the complexity
        * of, e.g., updating judgements.
        **/
       maxRegistrars: u32 & AugmentedConst<ApiType>;
@@ -418,6 +425,7 @@ declare module '@polkadot/api-base/types/consts' {
       [key: string]: Codec;
     };
     stakingRewards: {
+      lockId: U8aFixed & AugmentedConst<ApiType>;
       /**
        * Maximum number of reward configurations per pool.
        **/
@@ -427,10 +435,16 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       maxStakingDurationPresets: u32 & AugmentedConst<ApiType>;
       palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
+      pbloAssetId: u128 & AugmentedConst<ApiType>;
+      pbloStakeFinancialNftCollectionId: u128 & AugmentedConst<ApiType>;
+      picaAssetId: u128 & AugmentedConst<ApiType>;
+      picaStakeFinancialNftCollectionId: u128 & AugmentedConst<ApiType>;
       /**
        * the size of batch to take each time trying to release rewards
        **/
       releaseRewardsPoolsBatchSize: u8 & AugmentedConst<ApiType>;
+      xPbloAssetId: u128 & AugmentedConst<ApiType>;
+      xPicaAssetId: u128 & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/
@@ -496,10 +510,10 @@ declare module '@polkadot/api-base/types/consts' {
     };
     transactionPayment: {
       /**
-       * A fee mulitplier for `Operational` extrinsics to compute "virtual tip" to boost their
+       * A fee multiplier for `Operational` extrinsics to compute "virtual tip" to boost their
        * `priority`
        * 
-       * This value is multipled by the `final_fee` to obtain a "virtual tip" that is later
+       * This value is multiplied by the `final_fee` to obtain a "virtual tip" that is later
        * added to a tip component in regular `priority` calculations.
        * It means that a `Normal` transaction can front-run a similarly-sized `Operational`
        * extrinsic (with no tip), by including a tip value greater than the virtual tip.

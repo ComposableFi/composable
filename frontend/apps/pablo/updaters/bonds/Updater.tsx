@@ -18,7 +18,7 @@ import {
   resetBondedOfferVestingState,
   useBondOffersSlice,
 } from "@/store/bond/bond.slice";
-import { useExtrinsics, useParachainApi, useSelectedAccount } from "substrate-react";
+import { useParachainApi, useSelectedAccount } from "substrate-react";
 import {
   fetchTotalPurchasedBondsByOfferIds,
   extractUserBondedFinanceVestingScheduleAddedEvents,
@@ -78,8 +78,8 @@ const Updater = () => {
     fetchTotalPurchasedBondsByOfferIds().then(putBondOffersTotalPurchasedCount);
   }, []);
   /**
-   * Get bondoffers ids and
-   * vesting schdule
+   * Get bond offers ids and
+   * vesting schedule
    * id map from subsquid e.g { "1": ["1","2"] }
    */
   useEffect(() => {

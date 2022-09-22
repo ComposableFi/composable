@@ -9,14 +9,14 @@ import {
 } from "@mui/material";
 
 import { useDispatch } from "react-redux";
-import { XPablo } from "@/defi/types";
 import { Label } from "@/components/Atoms";
 import { TokenValueItem } from "../TokenValueItem";
 import { TOKENS } from "@/defi/Tokens";
 import { setMessage } from "@/stores/ui/uiSlice";
+import { StakedFinancialNftPosition } from "@/defi/types";
 
 export type UnstakeModalProps = {
-  xPablo: XPablo,
+  xPablo: StakedFinancialNftPosition,
 } & ModalProps;
 
 export const UnstakeModal: React.FC<UnstakeModalProps> = ({
@@ -27,15 +27,7 @@ export const UnstakeModal: React.FC<UnstakeModalProps> = ({
   const theme = useTheme();
   const dispatch = useDispatch();
 
-  const handleUntake = () => {
-    dispatch(setMessage(
-      {
-        title: "Transaction successfull",
-        text: "Burn and unstake confirmed",
-        link: "/",
-        severity: "success",
-      }
-    ));
+  const handleUnstake = () => {
     onClose?.({}, "backdropClick");
   };
 
@@ -62,7 +54,7 @@ export const UnstakeModal: React.FC<UnstakeModalProps> = ({
               />
               <TokenValueItem
                 token={TOKENS.pablo}
-                value={xPablo.withdrawableAmount.toFormat()}
+                value={xPablo.lockedPrincipalAsset.toFormat()}
               />
             </Grid>
 
@@ -76,7 +68,7 @@ export const UnstakeModal: React.FC<UnstakeModalProps> = ({
               />
               <TokenValueItem
                 token={TOKENS.pablo}
-                value={xPablo.amount.toFormat()}
+                value={xPablo.lockedPrincipalAsset.toFormat()}
                 ValueProps={{color: "text.secondary"}}
               />
             </Grid>
@@ -88,7 +80,7 @@ export const UnstakeModal: React.FC<UnstakeModalProps> = ({
             variant="contained"
             fullWidth
             size="large"
-            onClick={handleUntake}
+            onClick={handleUnstake}
           >
             Burn and unstake
           </Button>

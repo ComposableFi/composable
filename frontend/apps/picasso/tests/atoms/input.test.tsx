@@ -6,7 +6,7 @@ const {
   TextOnly,
   TextInsideButton,
   TokenInsideButton,
-  TextAndRefernece,
+  TextAndReference,
   LabeledInputsWithBalance,
 } = composeStories(stories);
 
@@ -38,7 +38,7 @@ test("renders Input/Token Inside Button", () => {
 });
 
 test("renders Input/Text And Reference", () => {
-  render(<TextAndRefernece />);
+  render(<TextAndReference />);
   expect(screen.getByDisplayValue("Input text")).toBeInTheDocument();
   expect(screen.getByPlaceholderText("Placeholder text")).toBeInTheDocument();
   expect(screen.getByDisplayValue("Disabled text")).toBeInTheDocument();

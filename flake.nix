@@ -1,7 +1,7 @@
 {
   # see ./docs/nix.md for design guidelines of nix organization
   description = "Composable Finance systems, tools and releases";
-  # when flake runs, ask for interactie answers first time
+  # when flake runs, ask for interactive answers first time
   # nixConfig.sandbox = "relaxed";
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -19,7 +19,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-utils.follows = "flake-utils";
     };
-    nix-npm-buildpackage = {
+    npm-buildpackage = {
       url = "github:serokell/nix-npm-buildpackage";
       inputs.nixpkgs.follows = "nixpkgs";
     };
@@ -34,8 +34,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
-  outputs = { self, nixpkgs, crane, flake-utils, rust-overlay
-    , nix-npm-buildpackage, arion-src, home-manager, ... }:
+  outputs = { self, nixpkgs, crane, flake-utils, rust-overlay, npm-buildpackage
+    , arion-src, home-manager }:
     let
       # https://cloud.google.com/iam/docs/creating-managing-service-account-keys
       # or just use GOOGLE_APPLICATION_CREDENTIALS env as path to file
@@ -90,10 +90,10 @@
             inherit system;
             overlays = [
               rust-overlay.overlays.default
-              nix-npm-buildpackage.overlays.default
               arion-src.overlay
+              npm-buildpackage.overlays.default
             ];
-            allowUnsupportedSystem = true; # we do not tirgger this on mac
+            allowUnsupportedSystem = true; # we do not trigger this on mac
             config = {
               permittedInsecurePackages = [
                 "openjdk-headless-16+36"
@@ -126,10 +126,12 @@
             cargoBuildCommand =
               "cargo build --release --package wasm-optimizer";
             version = "0.1.0";
-            # NOTE: we copy more then needed, but tht is simpler to setup, we depend pn substrae for sure so
+            # NOTE: we copy more then needed, but tht is simpler to setup, we depend on substrate for sure so
           });
 
-          # for containers which are intented for testing, debug and development (including running isolated runtime)
+          # for containers which are intended for testing, debug and development (including running isolated runtime)
+          docker-in-docker = [ docker docker-buildx docker-compose ];
+          containers-tools-minimal = [ acl direnv home-manager cachix ];
           container-tools = [
             bash
             bottom
@@ -141,36 +143,13 @@
             nettools
             nix
             procps
-          ];
+          ] ++ containers-tools-minimal;
 
           # source relevant to build rust only
           rust-src = let
-            directory-blacklist = [
-              ".nix"
-              "nix"
-              ".config"
-              ".devcontainer"
-              ".github"
-              ".log"
-              ".maintain"
-              ".tools"
-              ".vscode"
-              "audits"
-              "book"
-              "devnet-stage"
-              "devnet"
-              "docker"
-              "docs"
-              "frontend"
-              "rfcs"
-              "scripts"
-              "setup"
-              "subsquid"
-              "runtime-tests"
-              "composablejs"
-            ];
-            file-blacklist = [
-              # does not makes sence to black list,
+            directoryBlacklist = [ "runtime-tests" ];
+            fileBlacklist = [
+              # does not makes sense to black list,
               # if we changed some version of tooling(seldom), we want to rebuild
               # so if we changed version of tooling, nix itself will detect invalidation and rebuild
               # "flake.lock"
@@ -179,19 +158,31 @@
             filter = lib.cleanSourceFilter;
             src = lib.cleanSourceWith {
               filter = let
+                isBlacklisted = name: type:
+                  let
+                    blacklist = if type == "directory" then
+                      directoryBlacklist
+                    else if type == "regular" then
+                      fileBlacklist
+                    else
+                      [ ]; # symlink, unknown
+                  in builtins.elem (baseNameOf name) blacklist;
+                isImageFile = name: type:
+                  type == "regular" && lib.strings.hasSuffix ".png" name;
+                isPlantUmlFile = name: type:
+                  type == "regular" && lib.strings.hasSuffix ".plantuml" name;
+                isNixFile = name: type:
+                  type == "regular" && lib.strings.hasSuffix ".nix" name;
                 customFilter = name: type:
-                  !((type == "directory"
-                    && builtins.elem (baseNameOf name) directory-blacklist)
-                    || (type == "regular"
-                      && builtins.elem (baseNameOf name) file-blacklist)
-                    # assumption that nix is final builder, 
-                    # so there would no be sandwitch like  .*.nix <- build.rs <- *.nix
-                    # and if *.nix changed, nix itself will detect only relevant cache invalidations 
-                    || (type == "regular"
-                      && lib.strings.hasSuffix ".nix" name));
+                  !((isBlacklisted name type) || (isImageFile name type)
+                    || (isPlantUmlFile name type)
+                    # assumption that nix is final builder,
+                    # so there would no be sandwich like  .*.nix <- build.rs <- *.nix
+                    # and if *.nix changed, nix itself will detect only relevant cache invalidations
+                    || (isNixFile name type));
               in nix-gitignore.gitignoreFilterPure customFilter [ ./.gitignore ]
-              ./.;
-              src = ./.;
+              ./code;
+              src = ./code;
             };
           };
 
@@ -252,8 +243,8 @@
               installPhase = ''
                 mkdir -p $out/lib
                 ${wasm-optimizer}/bin/wasm-optimizer \
-                  --input ${runtime}/lib/${name}_runtime.wasm \
-                  --output $out/lib/runtime.optimized.wasm
+                --input ${runtime}/lib/${name}_runtime.wasm \
+                --output $out/lib/runtime.optimized.wasm
               '';
             };
 
@@ -261,6 +252,14 @@
             callPackage ./.devcontainer/devcontainer-base-image.nix {
               inherit system;
             };
+
+          # we reached limit of 125 for layers and build image cannot do non root ops, so split it
+          devcontainer-root-image = pkgs.dockerTools.buildImage {
+            name = "devcontainer-root-image";
+            fromImage = devcontainer-base-image;
+            contents = [ rust-nightly ] ++ containers-tools-minimal
+              ++ docker-in-docker;
+          };
 
           dali-runtime = mk-optimized-runtime {
             name = "dali";
@@ -287,7 +286,7 @@
             features = "runtime-benchmarks";
           };
 
-          # NOTE: with docs, non nighly fails but nighly fails too...
+          # NOTE: with docs, non nightly fails but nightly fails too...
           # /nix/store/523zlfzypzcr969p058i6lcgfmg889d5-stdenv-linux/setup: line 1393: --message-format: command not found
           composable-node = with packages;
             crane-nightly.buildPackage (common-attrs // {
@@ -301,8 +300,21 @@
                 "${composable-runtime}/lib/runtime.optimized.wasm";
               installPhase = ''
                 mkdir -p $out/bin
-                cp target/release/composable $out/bin/composable
+                cp target/release/composable $out/bin/composable-node
               '';
+              meta = { mainProgram = "composable-node"; };
+            });
+
+          composable-node-release = crane-nightly.buildPackage (common-attrs
+            // {
+              pnameSuffix = "-node-release";
+              cargoArtifacts = common-deps;
+              cargoBuildCommand = "cargo build --release --package composable";
+              installPhase = ''
+                mkdir -p $out/bin
+                cp target/release/composable $out/bin/composable-node
+              '';
+              meta = { mainProgram = "composable-node"; };
             });
 
           composable-bench-node = crane-nightly.cargoBuild (common-bench-attrs
@@ -317,23 +329,120 @@
                 "${composable-bench-runtime}/lib/runtime.optimized.wasm";
               installPhase = ''
                 mkdir -p $out/bin
-                cp target/release/composable $out/bin/composable
+                cp target/release/composable $out/bin/composable-node
               '';
+              meta = { mainProgram = "composable-node"; };
             });
 
           run-with-benchmarks = chain:
             writeShellScriptBin "run-benchmarks-once" ''
-              ${composable-bench-node}/bin/composable benchmark pallet \
-                --chain="${chain}" \
-                --execution=wasm \
-                --wasm-execution=compiled \
-                --wasm-instantiation-strategy=legacy-instance-reuse \
-                --pallet="*" \
-                --extrinsic="*" \
-                --steps=1 \
-                --repeat=1
+              ${composable-bench-node}/bin/composable-node benchmark pallet \
+              --chain="${chain}" \
+              --execution=wasm \
+              --wasm-execution=compiled \
+              --wasm-instantiation-strategy=legacy-instance-reuse \
+              --pallet="*" \
+              --extrinsic="*" \
+              --steps=1 \
+              --repeat=1
             '';
           docs-renders = [ mdbook plantuml graphviz pandoc ];
+
+          mkFrontendStatic = { kusamaEndpoint, picassoEndpoint, karuraEndpoint
+            , subsquidEndpoint }:
+            let bp = pkgs.callPackage npm-buildpackage { };
+            in bp.buildYarnPackage {
+              nativeBuildInputs = [ pkgs.pkg-config pkgs.vips pkgs.python3 ];
+              src = ./frontend;
+
+              # The filters exclude the storybooks for faster builds
+              yarnBuildMore =
+                "yarn export --filter=pablo --filter=picasso --filter=!picasso-storybook --filter=!pablo-storybook";
+
+              # TODO: make these configurable
+              preBuild = ''
+                export SUBSQUID_URL="${subsquidEndpoint}";
+
+                # Polkadot
+                export SUBSTRATE_PROVIDER_URL_KUSAMA_2019="${picassoEndpoint}";
+                export SUBSTRATE_PROVIDER_URL_KUSAMA="${kusamaEndpoint}";
+                export SUBSTRATE_PROVIDER_URL_KARURA="${karuraEndpoint}";
+              '';
+              installPhase = ''
+                mkdir -p $out
+                mkdir $out/pablo
+                mkdir $out/picasso
+                cp -R ./apps/pablo/out/* $out/pablo
+                cp -R ./apps/picasso/out/* $out/picasso
+              '';
+            };
+
+          simnode-tests = crane-nightly.cargoBuild (common-attrs // {
+            pnameSuffix = "-simnode";
+            cargoArtifacts = common-deps;
+            cargoBuildCommand =
+              "cargo build --release --package simnode-tests --features=builtin-wasm";
+            DALI_RUNTIME = "${dali-runtime}/lib/runtime.optimized.wasm";
+            PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
+            COMPOSABLE_RUNTIME =
+              "${composable-runtime}/lib/runtime.optimized.wasm";
+            installPhase = ''
+              mkdir -p $out/bin
+              cp target/release/simnode-tests $out/bin/simnode-tests
+            '';
+            meta = { mainProgram = "simnode-tests"; };
+          });
+
+          run-simnode-tests = chain:
+            writeShellScriptBin "run-simnode-tests-${chain}" ''
+              ${simnode-tests}/bin/simnode-tests --chain=${chain} \
+              --base-path=/tmp/db/var/lib/composable-data/ \
+              --pruning=archive \
+              --execution=wasm
+            '';
+
+          subwasm = let
+            src = fetchFromGitHub {
+              owner = "chevdor";
+              repo = "subwasm";
+              rev = "4d4d789326d65fc23820f70916bd6bd6f499bd0a";
+              hash = "sha256-+/yqA6lP/5qyMxZupmaYBCRtbw2MFMBSgkmnxg261P8=";
+            };
+          in crane-stable.buildPackage {
+            name = "subwasm";
+            cargoArtifacts = crane-stable.buildDepsOnly {
+              inherit src;
+              doCheck = false;
+              cargoTestCommand = "";
+            };
+            inherit src;
+            doCheck = false;
+            cargoTestCommand = "";
+            meta = { mainProgram = "subwasm"; };
+          };
+
+          subwasm-release-body = let
+            subwasm-call = runtime:
+              builtins.readFile (pkgs.runCommand "subwasm-info" { }
+                "${subwasm}/bin/subwasm info ${runtime}/lib/runtime.optimized.wasm | tail -n+2 > $out");
+          in pkgs.writeTextFile {
+            name = "release.txt";
+            text = ''
+              ## Runtimes
+              ### Dali
+              ```
+              ${subwasm-call dali-runtime}
+              ```
+              ### Picasso
+              ```
+              ${subwasm-call picasso-runtime}
+              ```
+              ### Composable
+              ```
+              ${subwasm-call composable-runtime}
+              ```
+            '';
+          };
 
         in rec {
           packages = rec {
@@ -347,8 +456,12 @@
             inherit picasso-bench-runtime;
             inherit composable-bench-runtime;
             inherit composable-node;
+            inherit composable-node-release;
             inherit composable-bench-node;
             inherit rust-nightly;
+            inherit simnode-tests;
+            inherit subwasm;
+            inherit subwasm-release-body;
 
             subsquid-processor = let
               processor = pkgs.buildNpmPackage {
@@ -382,7 +495,7 @@
               name = "runtime-tests";
               src = builtins.filterSource
                 (path: type: baseNameOf path != "node_modules")
-                ./integration-tests/runtime-tests;
+                ./code/integration-tests/runtime-tests;
               dontUnpack = true;
               installPhase = ''
                 mkdir $out/
@@ -406,7 +519,47 @@
               pnameSuffix = "-price-feed";
               cargoArtifacts = common-deps;
               cargoBuildCommand = "cargo build --release -p price-feed";
+              meta = { mainProgram = "price-feed"; };
             });
+
+            fmt = pkgs.writeShellApplication {
+              name = "fmt-composable";
+
+              runtimeInputs = with pkgs; [
+                nixfmt
+                coreutils
+                rust-nightly
+                taplo
+                nodePackages.prettier
+              ];
+
+              text = ''
+                  # .nix
+                	find . -name "*.nix" -type f -print0 | xargs -0 nixfmt;
+
+                  # .toml
+                  taplo fmt
+
+                  # .rs
+                	find . -path ./code/target -prune -o -name "*.rs" -type f -print0 | xargs -0 rustfmt --edition 2021;
+
+                  # .js .ts .tsx
+                  prettier \
+                    --config="./code/integration-tests/runtime-tests/.prettierrc" \
+                    --write \
+                    --ignore-path="./code/integration-tests/runtime-tests/.prettierignore" \
+                    ./code/integration-tests/runtime-tests/
+              '';
+            };
+
+            docker-wipe-system =
+              pkgs.writeShellScriptBin "docker-wipe-system" ''
+                echo "Wiping all docker containers, images, and volumes";
+                docker stop $(docker ps -q)
+                docker system prune -f
+                docker rmi -f $(docker images -a -q)
+                docker volume prune -f
+              '';
 
             composable-book = import ./book/default.nix {
               crane = crane-stable;
@@ -421,7 +574,7 @@
             polkadot-node = rustPlatform.buildRustPackage rec {
               # HACK: break the nix sandbox so we can build the runtimes. This
               # requires Nix to have `sandbox = relaxed` in its config.
-              # We don't realy care because polkadot is only used for local devnet.
+              # We don't really care because polkadot is only used for local devnet.
               __noChroot = true;
               name = "polkadot-v${version}";
               version = "0.9.27";
@@ -448,6 +601,7 @@
               LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
               PROTOC = "${protobuf}/bin/protoc";
               ROCKSDB_LIB_DIR = "${rocksdb}/lib";
+              meta = { mainProgram = "polkadot"; };
             };
 
             polkadot-launch =
@@ -488,13 +642,75 @@
               '';
             };
 
+            frontend-static = mkFrontendStatic {
+              subsquidEndpoint = "http://localhost:4350/graphql";
+              picassoEndpoint = "ws://localhost:9988";
+              kusamaEndpoint = "ws://localhost:9944";
+              karuraEndpoint = "ws://localhost:9998";
+            };
+
+            frontend-static-firebase = mkFrontendStatic {
+              subsquidEndpoint =
+                "https://dali-subsquid.composable.finance/graphql";
+              picassoEndpoint =
+                "wss://dali-cluster-fe.composablefinance.ninja/";
+              kusamaEndpoint = "wss://kusama-rpc.polkadot.io";
+              karuraEndpoint = "wss://karura.api.onfinality.io/public-ws";
+            };
+
+            frontend-pablo-server = let PORT = 8002;
+            in pkgs.writeShellApplication {
+              name = "frontend-pablo-server";
+              runtimeInputs = [ pkgs.miniserve ];
+              text = ''
+                miniserve -p ${
+                  builtins.toString PORT
+                } --spa --index index.html ${frontend-static}/pablo
+              '';
+            };
+
+            frontend-picasso-server = let PORT = 8003;
+            in pkgs.writeShellApplication {
+              name = "frontend-picasso-server";
+              runtimeInputs = [ pkgs.miniserve ];
+              text = ''
+                miniserve -p ${
+                  builtins.toString PORT
+                } --spa --index index.html ${frontend-static}/picasso
+              '';
+            };
+            # TODO: inherit and provide script to run all stuff
+
+            # devnet-container-xcvm
+            # NOTE: The devcontainer is currently broken for aarch64.
+            # Please use the developers devShell instead
+
             devcontainer = dockerTools.buildLayeredImage {
               name = "composable-devcontainer";
-              fromImage = devcontainer-base-image;
-              contents = [ home-manager ];
-
-              # TODO: call here home-manager for this flake.nix (like in ./.devcontainer/Dockefile) 
-              # TODO: it will make Dockerfile oneliner and faster to start          
+              fromImage = devcontainer-root-image;
+              # substituters, same as next script, but without internet access
+              # ${pkgs.cachix}/bin/cachix use composable-community
+              # to run root in buildImage needs qemu/kvm shell
+              # non root extraCommands (in both methods) do not have permissions
+              # not clear if using ENV or replace ENTRYPOINT will allow to setup
+              # from nixos docker.nix - they build derivation which outputs into $out/etc/nix.conf
+              # (and any other stuff like /etc/group)
+              fakeRootCommands = ''
+                mkdir --parents /etc/nix
+                cat <<EOF >> /etc/nix/nix.conf
+                sandbox = relaxed
+                experimental-features = nix-command flakes
+                narinfo-cache-negative-ttl = 30
+                substituters = https://cache.nixos.org https://composable-community.cachix.org
+                # TODO: move it separate file with flow of `cachix -> get keys -> output -> fail derivation if hash != key changed
+                # // cspell: disable-next-line
+                trusted-public-keys = cache.nixos.org-1:6nchdd59x431o0gwypbmraurkbj16zpmqfgspcdshjy= composable-community.cachix.org-1:GG4xJNpXJ+J97I8EyJ4qI5tRTAJ4i7h+NK2Z32I8sK8=
+                EOF
+              '';
+              config = {
+                User = "vscode";
+                # TODO: expose ports and other stuff done in base here too
+              };
             };
 
             check-dali-dev-benchmarks = run-with-benchmarks "dali-dev";
@@ -528,6 +744,42 @@
                 "cargo test --workspace --release --locked --verbose";
             });
 
+            cargo-llvm-cov = rustPlatform.buildRustPackage rec {
+              pname = "cargo-llvm-cov";
+              version = "0.3.3";
+              src = fetchFromGitHub {
+                owner = "andor0";
+                repo = pname;
+                rev = "v${version}";
+                sha256 = "sha256-e2MQWOCIj0GKeyOI6OfLnXkxUWbu85eX4Smc/A6eY2w";
+              };
+              cargoSha256 =
+                "sha256-1fxqIQr8hol2QEKz8IZfndIsSTjP2ACdnBpwyjG4UT0=";
+              doCheck = false;
+              meta = with lib; {
+                description =
+                  "Cargo subcommand to easily use LLVM source-based code coverage";
+                homepage = "https://github.com/taiki-e/cargo-llvm-cov";
+                license = "Apache-2.0 OR MIT";
+              };
+            };
+
+            unit-tests-with-coverage = crane-nightly.cargoBuild (common-attrs
+              // {
+                pnameSuffix = "-tests-with-coverage";
+                buildInputs = [ cargo-llvm-cov ];
+                cargoArtifacts = common-deps-nightly;
+                # NOTE: do not add --features=runtime-benchmarks because it force multi ED to be 0 because of dependencies
+                # NOTE: in order to run benchmarks as tests, just make `any(test, feature = "runtime-benchmarks")
+                cargoBuildCommand = "cargo llvm-cov";
+                cargoExtraArgs =
+                  "--workspace --release --locked --verbose --lcov --output-path lcov.info";
+                installPhase = ''
+                  mkdir -p $out/lcov
+                  mv lcov.info $out/lcov
+                '';
+              });
+
             cargo-fmt-check = crane-nightly.cargoFmt (common-attrs // {
               cargoArtifacts = common-deps-nightly;
               cargoExtraArgs = "--all --check --verbose";
@@ -547,11 +799,11 @@
               installPhase = ''
                 mkdir $out
                 prettier \
-                  --config="${runtime-tests}/.prettierrc" \
-                  --ignore-path="${runtime-tests}/.prettierignore" \
-                  --check \
-                  --loglevel=debug \
-                  ${runtime-tests}
+                --config="${runtime-tests}/.prettierrc" \
+                --ignore-path="${runtime-tests}/.prettierignore" \
+                --check \
+                --loglevel=debug \
+                ${runtime-tests}
               '';
             };
 
@@ -563,7 +815,7 @@
               installPhase = ''
                 mkdir $out
                 nixfmt --version
-                # note, really can just src with filer by .nix, no need all files 
+                # note, really can just src with filer by .nix, no need all files
                 SRC=$(find ${all-directories-and-files} -name "*.nix" -type f | tr "\n" " ")
                 echo $SRC
                 nixfmt --check $SRC
@@ -582,7 +834,7 @@
               cargoArtifacts = common-deps;
               cargoBuildCommand = "cargo deny";
               cargoExtraArgs =
-                "--manifest-path ./frame/composable-support/Cargo.toml check ban";
+                "--manifest-path ./parachain/frame/composable-support/Cargo.toml check ban";
             });
 
             cargo-udeps-check = crane-nightly.cargoBuild (common-attrs // {
@@ -596,6 +848,47 @@
               cargoExtraArgs =
                 "--workspace --exclude local-integration-tests --all-features";
             });
+
+            benchmarks-check = crane-nightly.cargoBuild (common-attrs // {
+              cargoArtifacts = common-deps-nightly;
+              cargoBuildCommand = "cargo check";
+              cargoExtraArgs = "--benches --all --features runtime-benchmarks";
+            });
+
+            cspell-check = stdenv.mkDerivation {
+              name = "cspell-check";
+              dontUnpack = true;
+
+              buildInputs = [ all-directories-and-files nodePackages.cspell ];
+              installPhase = ''
+                mkdir $out
+                echo "cspell version: $(cspell --version)"
+                cd ${all-directories-and-files}
+                cspell lint --config cspell.yaml --no-progress "**"
+              '';
+            };
+
+            mdbook-check = stdenv.mkDerivation {
+              name = "mdbook-check";
+              dontUnpack = true;
+              buildInputs = [ all-directories-and-files mdbook ];
+              installPhase = ''
+                mkdir -p $out/book
+                chmod 777 $out/book
+                cd ${all-directories-and-files}/book
+                mdbook --version
+
+                # `mdbook test` is most strict than `mdbook build`,
+                # it catches code blocks without a language tag,
+                # but it doesn't work with nix.
+                TMPDIR=$out/book mdbook build --dest-dir=$out/book 2>&1 | tee $out/log
+                if [ -z "$(cat $out/log | grep ERROR)" ]; then
+                  true
+                else
+                  exit 1
+                fi
+              '';
+            };
 
             kusama-picasso-karura-devnet = let
               config = (pkgs.callPackage
@@ -635,11 +928,12 @@
               '';
             };
 
-            junod = pkgs.callPackage ./xcvm/cosmos/junod.nix { };
-            gex = pkgs.callPackage ./xcvm/cosmos/gex.nix { };
-            wasmswap = pkgs.callPackage ./xcvm/cosmos/wasmswap.nix {
+            junod = pkgs.callPackage ./code/xcvm/cosmos/junod.nix { };
+            gex = pkgs.callPackage ./code/xcvm/cosmos/gex.nix { };
+            wasmswap = pkgs.callPackage ./code/xcvm/cosmos/wasmswap.nix {
               crane = crane-nightly;
             };
+
             default = packages.composable-node;
           };
 
@@ -669,11 +963,13 @@
                   xorriso
                   zlib.out
                   nix-tree
+                  nixfmt
+                  rnix-lsp
                 ] ++ docs-renders;
             });
 
             developers-minimal = mkShell (common-attrs // {
-              buildInputs = with packages; [ rust-nightly ];
+              buildInputs = with packages; [ rust-nightly subwasm ];
               NIX_PATH = "nixpkgs=${pkgs.path}";
             });
 
@@ -786,7 +1082,7 @@
             };
             composable = {
               type = "app";
-              program = "${packages.composable-node}/bin/composable";
+              program = "${packages.composable-node}/bin/composable-node";
             };
             acala = {
               type = "app";
@@ -812,6 +1108,16 @@
             benchmarks-once-picasso = flake-utils.lib.mkApp {
               drv = run-with-benchmarks "picasso-dev";
             };
+            simnode-tests = {
+              type = "app";
+              program = "${packages.simnode-tests}/bin/simnode-tests";
+            };
+            simnode-tests-composable =
+              flake-utils.lib.mkApp { drv = run-simnode-tests "composable"; };
+            simnode-tests-picasso =
+              flake-utils.lib.mkApp { drv = run-simnode-tests "picasso"; };
+            simnode-tests-dali-rococo =
+              flake-utils.lib.mkApp { drv = run-simnode-tests "dali-rococo"; };
             default = devnet-dali;
           };
         });
@@ -836,63 +1142,73 @@
           book = eachSystemOutputs.packages.x86_64-linux.composable-book;
         };
       };
-      homeConfigurations = {
+      homeConfigurations = let
+        mk-docker-in-docker = pkgs: [
+          # TODO: this home works well in VS Devcontainer launcher as it injects low-level Dockerd
+          # For manual runs need tuning to setup it (need to mount docker links to root and do they executable)
+          # INFO[2022-09-06T13:14:43.437764897Z] Starting up
+          # dockerd needs to be started with root privileges. To run dockerd in rootless mode as an unprivileged user, see https://docs.docker.com/go/rootless/ dockerd-rootless-setuptool.sh install
+          pkgs.docker
+          pkgs.docker-buildx
+          pkgs.docker-compose
+        ];
+        mk-containers-tools-minimal = pkgs: [
+          pkgs.acl
+          pkgs.direnv
+          pkgs.cachix
+        ];
+      in {
 
-        vscode.x86_64-linux = let pkgs = nixpkgs.legacyPackages.x86_64-linux;
-        in with pkgs;
-        home-manager.lib.homeManagerConfiguration {
-          inherit pkgs;
-          modules = [{
-            home = {
-              username = "vscode";
-              homeDirectory = "/home/vscode";
-              stateVersion = "22.05";
-              packages = [
-                cachix
-                eachSystemOutputs.packages.x86_64-linux.rust-nightly
-                docker
-                docker-buildx
-                docker-compose
-              ];
-            };
-            programs = {
-              home-manager.enable = true;
-              direnv = {
-                enable = true;
-                nix-direnv = { enable = true; };
+        # minimal means we do not build in composable devnets and tooling, but allow to build or nix these
+        vscode-minimal.x86_64-linux =
+          let pkgs = nixpkgs.legacyPackages.x86_64-linux;
+          in with pkgs;
+          home-manager.lib.homeManagerConfiguration {
+            inherit pkgs;
+            modules = [{
+              home = {
+                username = "vscode";
+                homeDirectory = "/home/vscode";
+                stateVersion = "22.05";
+                packages =
+                  [ eachSystemOutputs.packages.x86_64-linux.rust-nightly ]
+                  ++ (mk-containers-tools-minimal pkgs)
+                  ++ (mk-docker-in-docker pkgs);
               };
-            };
-          }];
-        };
+              programs = {
+                home-manager.enable = true;
+                direnv = {
+                  enable = true;
+                  nix-direnv = { enable = true; };
+                };
+              };
+            }];
+          };
 
-        vscode.aarch64-linux = let pkgs = nixpkgs.legacyPackages.aarch64-linux;
-        in with pkgs;
-        home-manager.lib.homeManagerConfiguration {
-          inherit pkgs;
-          modules = [{
-            home = {
-              username = "vscode";
-              homeDirectory = "/home/vscode";
-              stateVersion = "22.05";
-              packages = [
-                cachix
-                eachSystemOutputs.packages.aarch64-linux.rust-nightly
-                docker
-                docker-buildx
-                docker-compose
-                acl
-                direnv
-              ];
-            };
-            programs = {
-              home-manager.enable = true;
-              direnv = {
-                enable = true;
-                nix-direnv = { enable = true; };
+        vscode-minimal.aarch64-linux =
+          let pkgs = nixpkgs.legacyPackages.aarch64-linux;
+          in with pkgs;
+          home-manager.lib.homeManagerConfiguration {
+            inherit pkgs;
+            modules = [{
+              home = {
+                username = "vscode";
+                homeDirectory = "/home/vscode";
+                stateVersion = "22.05";
+                packages =
+                  [ eachSystemOutputs.packages.aarch64-linux.rust-nightly ]
+                  ++ (mk-containers-tools-minimal pkgs)
+                  ++ (mk-docker-in-docker pkgs);
               };
-            };
-          }];
-        };
+              programs = {
+                home-manager.enable = true;
+                direnv = {
+                  enable = true;
+                  nix-direnv = { enable = true; };
+                };
+              };
+            }];
+          };
 
       };
     };

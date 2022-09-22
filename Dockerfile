@@ -30,8 +30,8 @@ USER ${USER}
 ENV USER=${USER}
 
 RUN curl --location ${NIX_INSTALLER} > ~/install.sh && \
-         chmod +x ~/install.sh  && \
-         ~/install.sh
+    chmod +x ~/install.sh  && \
+    ~/install.sh
 
 RUN source ~/.nix-profile/etc/profile.d/nix.sh && \
     nix-channel --add ${CHANNEL_URL} nixpkgs && \
@@ -49,11 +49,9 @@ COPY --chown=${USER}:${USER} . .
 RUN source ~/.nix-profile/etc/profile.d/nix.sh && \
     nix-env --set-flag priority 10 nix-2.10.3 && \
     export ARCH_OS=$(uname -m)-$(uname -s | tr '[:upper:]' '[:lower:]') && \
-    nix build --no-link .#homeConfigurations.vscode.${ARCH_OS}.activationPackage -L --show-trace
+    nix build --no-link .#homeConfigurations.vscode-minimal.${ARCH_OS}.activationPackage -L --show-trace
 
-# NOTE: nix-env -i cachix  leads to fail of home-manager
-# NOTE: likely need to split minimal home and overlay on top larger one
 RUN source ~/.nix-profile/etc/profile.d/nix.sh && \
     export ARCH_OS=$(uname -m)-$(uname -s | tr '[:upper:]' '[:lower:]') && \
-    "$(nix path-info .#homeConfigurations.vscode.${ARCH_OS}.activationPackage)"/activate && \
+    "$(nix path-info .#homeConfigurations.vscode-minimal.${ARCH_OS}.activationPackage)"/activate && \
     cachix use ${CACHIX_NAME}

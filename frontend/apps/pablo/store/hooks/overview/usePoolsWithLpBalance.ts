@@ -5,7 +5,7 @@ import { useAllLpTokenRewardingPools } from "../useAllLpTokenRewardingPools";
 import { ConstantProductPool, StableSwapPool } from "@/defi/types";
 
 export interface StableSwapPoolWithLpBalance extends StableSwapPool { lpBalance: BigNumber }
-export interface ConstantProductPoolWithLpBalance extends StableSwapPool { lpBalance: BigNumber }
+export interface ConstantProductPoolWithLpBalance extends ConstantProductPool { lpBalance: BigNumber }
 
 export const usePoolsWithLpBalance = (): Array<StableSwapPoolWithLpBalance & ConstantProductPoolWithLpBalance> => {
     const {
@@ -21,7 +21,7 @@ export const usePoolsWithLpBalance = (): Array<StableSwapPoolWithLpBalance & Con
                 }
             }
             return null;
-        }).filter(i => i !== null);
+        }).filter(i => i !== null) as Array<StableSwapPoolWithLpBalance & ConstantProductPoolWithLpBalance>;
     }, [lpRewardingPools, userLpBalances]);
 
     return lpPools;

@@ -5,7 +5,7 @@ import { XPablosBox } from "pablo/components/Organisms";
 const XPablosBoxStories = ({}) => {
   return (
     <Box>
-      <XPablosBox />
+      <XPablosBox financialNftCollectionId="-" />
     </Box>
   );
 };

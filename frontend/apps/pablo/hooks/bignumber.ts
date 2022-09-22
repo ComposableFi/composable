@@ -22,7 +22,7 @@ export function useValidation({
   React.useEffect(() => {
     if (!value?.eq(0)) {
       setValid(true);
-    }else{
+    } else {
       setValid(false);
     }
   }, [value]);
@@ -37,7 +37,7 @@ export function useValidation({
 
     if (eventValue.match(FLOAT_NUMBER)) {
       const bignr = new BigNumber(eventValue);
-      if (bignr.decimalPlaces() > maxDec) {
+      if ((bignr.decimalPlaces() || 0  ) > maxDec) {
         setValid(false);
         return;
       }

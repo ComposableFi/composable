@@ -1,7 +1,7 @@
 import { LiquidityBootstrappingPool } from "@/defi/types";
 import BigNumber from "bignumber.js";
 
-export function caluclateWeightAt(
+export function calculateWeightAt(
   pool: LiquidityBootstrappingPool,
   current_block: BigNumber
 ): { baseWeight: BigNumber; quoteWeight: BigNumber } {
@@ -33,7 +33,7 @@ export function lbpCalculatePriceAtBlock(
   quoteAum: BigNumber,
   blockNumber: BigNumber
 ): BigNumber {
-  let { baseWeight, quoteWeight } = caluclateWeightAt(auction, blockNumber);
+  let { baseWeight, quoteWeight } = calculateWeightAt(auction, blockNumber);
   let baseNum = baseAum.div(baseWeight);
   let quoteNum = quoteAum.div(quoteWeight);
   return quoteNum.div(baseNum);

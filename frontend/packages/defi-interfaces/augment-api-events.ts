@@ -9,7 +9,7 @@ import type { ApiTypes } from '@polkadot/api-base/types';
 import type { BTreeMap, Bytes, Null, Option, Result, U8aFixed, Vec, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { ITuple } from '@polkadot/types-codec/types';
 import type { AccountId32, H256, Percent } from '@polkadot/types/interfaces/runtime';
-import type { FrameSupportTokensMiscBalanceStatus, FrameSupportWeightsDispatchInfo, PalletMultisigTimepoint, SpRuntimeDispatchError, XcmV1MultiAsset, XcmV1MultiLocation, XcmV1MultiassetMultiAssets, XcmV2Response, XcmV2TraitsError, XcmV2TraitsOutcome, XcmV2Xcm, XcmVersionedMultiAssets, XcmVersionedMultiLocation } from '@polkadot/types/lookup';
+import type { FrameSupportTokensMiscBalanceStatus, FrameSupportWeightsDispatchInfo, PalletMultisigTimepoint, SpRuntimeDispatchError, XcmV1MultiAsset, XcmV1MultiLocation, XcmV1MultiassetMultiAssets, XcmV2Response, XcmV2TraitsError, XcmV2TraitsOutcome, XcmV2Xcm, XcmVersionedMultiAssets, XcmVersionedMultiLocation, PalletStakingRewardsRewardAccumulationHookError } from '@polkadot/types/lookup';
 
 declare module '@polkadot/api-base/types/events' {
   export interface AugmentedEvents<ApiType extends ApiTypes> {
@@ -354,6 +354,16 @@ declare module '@polkadot/api-base/types/events' {
        **/
       [key: string]: AugmentedEvent<ApiType>;
     };
+    fnft: {
+      FinancialNftBurned: AugmentedEvent<ApiType, [collectionId: u128, instanceId: u64], { collectionId: u128, instanceId: u64 }>;
+      FinancialNftCollectionCreated: AugmentedEvent<ApiType, [collectionId: u128, who: AccountId32, admin: AccountId32], { collectionId: u128, who: AccountId32, admin: AccountId32 }>;
+      FinancialNftCreated: AugmentedEvent<ApiType, [collectionId: u128, instanceId: u64], { collectionId: u128, instanceId: u64 }>;
+      FinancialNftTransferred: AugmentedEvent<ApiType, [collectionId: u128, instanceId: u64, to: AccountId32], { collectionId: u128, instanceId: u64, to: AccountId32 }>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
     governanceRegistry: {
       GrantRoot: AugmentedEvent<ApiType, [u128]>;
       Remove: AugmentedEvent<ApiType, [u128]>;
@@ -470,7 +480,7 @@ declare module '@polkadot/api-base/types/events' {
        **/
       CollateralDeposited: AugmentedEvent<ApiType, [AccountId32, u32, u128]>;
       /**
-       * Event emitted when collateral is withdrawed.
+       * Event emitted when collateral is withdrawn.
        **/
       CollateralWithdrawn: AugmentedEvent<ApiType, [AccountId32, u32, u128]>;
       /**
@@ -483,7 +493,7 @@ declare module '@polkadot/api-base/types/events' {
       MarketCreated: AugmentedEvent<ApiType, [u32, u64, AccountId32, ComposableTraitsDefiCurrencyPairCurrencyId]>;
       MarketUpdated: AugmentedEvent<ApiType, [u32, ComposableTraitsLendingUpdateInput]>;
       /**
-       * Event emitted to warn that loan may go under collaterlized soon.
+       * Event emitted to warn that loan may go under collateralized soon.
        **/
       MayGoUnderCollateralizedSoon: AugmentedEvent<ApiType, [u32, AccountId32]>;
       /**
@@ -888,16 +898,26 @@ declare module '@polkadot/api-base/types/events' {
       [key: string]: AugmentedEvent<ApiType>;
     };
     stakingRewards: {
+      Claimed: AugmentedEvent<ApiType, [owner: AccountId32, fnftCollectionId: u128, fnftInstanceId: u64], { owner: AccountId32, fnftCollectionId: u128, fnftInstanceId: u64 }>;
+      MaxRewardsAccumulated: AugmentedEvent<ApiType, [poolId: u128, assetId: u128], { poolId: u128, assetId: u128 }>;
+      RewardAccumulationHookError: AugmentedEvent<ApiType, [poolId: u128, assetId: u128, error: PalletStakingRewardsRewardAccumulationHookError], { poolId: u128, assetId: u128, error: PalletStakingRewardsRewardAccumulationHookError }>;
       /**
-       * Pool with specified id `T::RewardPoolId` was created successfully by `T::AccountId`.
+       * Pool with specified id `T::AssetId` was created successfully by `T::AccountId`.
        **/
-      RewardPoolCreated: AugmentedEvent<ApiType, [u16, AccountId32, u32]>;
+      RewardPoolCreated: AugmentedEvent<ApiType, [poolId: u128, owner: AccountId32, endBlock: u32], { poolId: u128, owner: AccountId32, endBlock: u32 }>;
+      RewardPoolUpdated: AugmentedEvent<ApiType, [poolId: u128], { poolId: u128 }>;
+      RewardsPotIncreased: AugmentedEvent<ApiType, [poolId: u128, assetId: u128, amount: u128], { poolId: u128, assetId: u128, amount: u128 }>;
+      /**
+       * Reward transfer event.
+       **/
+      RewardTransferred: AugmentedEvent<ApiType, [from: AccountId32, poolId: u128, rewardCurrency: u128, rewardIncrement: u128], { from: AccountId32, poolId: u128, rewardCurrency: u128, rewardIncrement: u128 }>;
       /**
        * Split stake position into two positions
        **/
-      SplitPosition: AugmentedEvent<ApiType, [Vec<u128>]>;
-      StakeAmountExtended: AugmentedEvent<ApiType, [u128, u128]>;
-      Staked: AugmentedEvent<ApiType, [u16, AccountId32, u128, u64, u128, bool]>;
+      SplitPosition: AugmentedEvent<ApiType, [positions: Vec<ITuple<[u128, u64, u128]>>], { positions: Vec<ITuple<[u128, u64, u128]>> }>;
+      StakeAmountExtended: AugmentedEvent<ApiType, [fnftCollectionId: u128, fnftInstanceId: u64, amount: u128], { fnftCollectionId: u128, fnftInstanceId: u64, amount: u128 }>;
+      Staked: AugmentedEvent<ApiType, [poolId: u128, owner: AccountId32, amount: u128, durationPreset: u64, fnftCollectionId: u128, fnftInstanceId: u64, keepAlive: bool], { poolId: u128, owner: AccountId32, amount: u128, durationPreset: u64, fnftCollectionId: u128, fnftInstanceId: u64, keepAlive: bool }>;
+      Unstaked: AugmentedEvent<ApiType, [owner: AccountId32, fnftCollectionId: u128, fnftInstanceId: u64], { owner: AccountId32, fnftCollectionId: u128, fnftInstanceId: u64 }>;
       /**
        * Generic event
        **/
