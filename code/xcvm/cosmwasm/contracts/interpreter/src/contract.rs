@@ -148,7 +148,8 @@ pub fn interpret_spawn(
 		}
 	}
 
-  // TODO(probably call the router via a Cw20 `send` to spawn the program and do w/e required with the funds)
+	// TODO(probably call the router via a Cw20 `send` to spawn the program and do w/e required with
+	// the funds)
 	for (asset_id, amount) in normalized_funds.clone().0 {
 		let query_msg = AssetRegistryQueryMsg::GetAssetContract(asset_id.into());
 		let cw20_address: GetAssetContractResponse = deps.querier.query(

@@ -99,7 +99,8 @@ where
 	)?;
 
 	<FullClient<RuntimeApi, Executor> as ProvideRuntimeApi<OpaqueBlock>>::Api::extend_with_ibc_api(
-		&mut io, deps.clone(),
+		&mut io,
+		deps.clone(),
 	)?;
 
 	<FullClient<RuntimeApi, Executor> as ProvideRuntimeApi<OpaqueBlock>>::Api::extend_with_cosmwasm_api(

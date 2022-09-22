@@ -70,6 +70,7 @@ panic = "abort"
 rpath = false
 
 [patch.crates-io]
+serde-json-wasm = { git = "https://github.com/hussein-aitlahcen/serde-json-wasm", rev = "1608a13d2a2ba90605d9626a51ff6667aca5a2d6" }
 sp-application-crypto = { git = "https://github.com/ComposableFi/substrate", rev = "f709a3d3b8f116f8b7e92ec56bc1ca5a0409eaa5" }
 sp-arithmetic = { git = "https://github.com/ComposableFi/substrate", rev = "f709a3d3b8f116f8b7e92ec56bc1ca5a0409eaa5" }
 sp-core = { git = "https://github.com/ComposableFi/substrate", rev = "f709a3d3b8f116f8b7e92ec56bc1ca5a0409eaa5" }
@@ -78,7 +79,6 @@ sp-externalities = { git = "https://github.com/ComposableFi/substrate", rev = "f
 sp-io = { git = "https://github.com/ComposableFi/substrate", rev = "f709a3d3b8f116f8b7e92ec56bc1ca5a0409eaa5" }
 sp-runtime = { git = "https://github.com/ComposableFi/substrate", rev = "f709a3d3b8f116f8b7e92ec56bc1ca5a0409eaa5" }
 wasmi-validation = { git = "https://github.com/ComposableFi/wasmi", rev = "cd8c0c775a1d197a35ff3d5c7d6cded3d476411b" }
-serde-json-wasm = { git = "https://github.com/hussein-aitlahcen/serde-json-wasm", rev = "1608a13d2a2ba90605d9626a51ff6667aca5a2d6" }
 
 [patch."https://github.com/paritytech/subxt"]
 subxt-codegen = { git = "https://github.com/paritytech//subxt", rev = "2fe9a1446d32b93a10804db3304ccaac65f764b8" }
