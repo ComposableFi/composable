@@ -1,6 +1,6 @@
 use core::fmt::Debug;
 
-use frame_support::assert_ok;
+use frame_support::{assert_ok, pallet_prelude::Member, Parameter};
 use frame_system::{Config, EventRecord};
 use sp_runtime::{DispatchError, FixedPointNumber, FixedU128};
 
@@ -82,14 +82,19 @@ pub fn assert_last_event<Runtime: Config>(generic_event: <Runtime as Config>::Ev
 ///     },
 /// )
 /// ```
-pub fn assert_last_event_with<Runtime: Config, R>(
-	f: impl FnOnce(<Runtime as frame_system::Config>::Event) -> Option<R>,
-) -> R {
+pub fn assert_last_event_with<Runtime, RuntimeEvent, PalletEvent, R>(
+	f: impl FnOnce(PalletEvent) -> Option<R>,
+) -> R
+where
+	Runtime: Config<Event = RuntimeEvent>,
+	RuntimeEvent: TryInto<PalletEvent> + Parameter + Member + Debug + Clone,
+	<RuntimeEvent as TryInto<PalletEvent>>::Error: std::fmt::Debug,
+{
 	// compare to the last event record
 	let EventRecord { event, .. } =
 		frame_system::Pallet::<Runtime>::events().pop().expect("No events present!");
 
-	f(event).unwrap()
+	f(event.try_into().unwrap()).unwrap()
 }
 
 /// Asserts the event wasn't dispatched.
@@ -139,10 +144,18 @@ pub fn assert_extrinsic_event<
 ///         ..
 ///     },
 /// );
-pub fn assert_extrinsic_event_with<Runtime: Config, T: Debug, E: Into<DispatchError> + Debug, R>(
+pub fn assert_extrinsic_event_with<Runtime, RuntimeEvent, PalletEvent, T, E, R>(
 	result: sp_std::result::Result<T, E>,
-	f: impl FnOnce(<Runtime as frame_system::Config>::Event) -> Option<R>,
-) -> R {
+	f: impl FnOnce(PalletEvent) -> Option<R>,
+) -> R
+where
+	Runtime: Config<Event = RuntimeEvent>,
+	RuntimeEvent: Parameter + Member + Debug + Clone,
+	RuntimeEvent: TryInto<PalletEvent>,
+	<RuntimeEvent as TryInto<PalletEvent>>::Error: std::fmt::Debug,
+	T: Debug,
+	E: Into<DispatchError> + Debug,
+{
 	assert_ok!(result);
-	assert_last_event_with::<Runtime, R>(f)
+	assert_last_event_with::<Runtime, RuntimeEvent, PalletEvent, R>(f)
 }

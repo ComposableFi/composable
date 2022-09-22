@@ -6,7 +6,7 @@ use crate::{
 use composable_tests_helpers::test::{
 	block::process_and_progress_blocks,
 	currency::{BTC, PICA, USDT, XPICA},
-	helper::{assert_extrinsic_event, assert_extrinsic_event_with, assert_last_event_with},
+	helper::{self, assert_extrinsic_event, assert_extrinsic_event_with, assert_last_event_with},
 };
 use composable_traits::{
 	fnft::{FinancialNft as FinancialNftT, FinancialNftProtocol},
@@ -213,11 +213,10 @@ fn stake_in_case_of_zero_inflation_should_work() {
 		let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
 		mint_assets([staker], [staked_asset_id], amount * 2);
 
-		process_and_progress_blocks::<StakingRewards, Test>(1);
-		let fnft_instance_id = assert_extrinsic_event_with::<Test, _, _, _>(
+		let fnft_instance_id = assert_extrinsic_event_with::<Test, Event, _, _, _, _>(
 			StakingRewards::stake(Origin::signed(staker), PICA::ID, amount, duration_preset),
 			|event| match event {
-				Event::StakingRewards(crate::Event::<Test>::Staked {
+				crate::Event::<Test>::Staked {
 					pool_id: PICA::ID,
 					owner: _staker,
 					amount: _,
@@ -225,7 +224,7 @@ fn stake_in_case_of_zero_inflation_should_work() {
 					fnft_collection_id: _,
 					fnft_instance_id,
 					keep_alive: _,
-				}) => Some(fnft_instance_id),
+				} => Some(fnft_instance_id),
 				_ => None,
 			},
 		);
@@ -269,10 +268,10 @@ fn stake_in_case_of_zero_inflation_should_work() {
 			StakingRewards::boosted_amount(reward_multiplier, amount)
 		);
 
-		assert_last_event_with::<Test, _>(|event| {
+		assert_last_event_with::<Test, Event, crate::Event<Test>, _>(|event| {
 			matches!(
 				event,
-				Event::StakingRewards(crate::Event::Staked {
+				crate::Event::Staked {
 					pool_id: PICA::ID,
 					owner,
 					amount: _,
@@ -280,7 +279,7 @@ fn stake_in_case_of_zero_inflation_should_work() {
 					fnft_collection_id: PICA::ID,
 					fnft_instance_id: _,
 					keep_alive: _,
-				}) if owner == staker
+				} if owner == staker
 			)
 			.then_some(())
 		});
@@ -347,8 +346,8 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 
 		assert!(FinancialNft::instance(1, 0).is_some());
 
-		assert_last_event_with::<Test, _>(|event| match event {
-			Event::StakingRewards(crate::Event::Staked {
+		assert_last_event_with::<Test, Event, _, _>(|event| match event {
+			crate::Event::Staked {
 				pool_id,
 				owner,
 				amount,
@@ -356,7 +355,7 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 				fnft_collection_id: _,
 				fnft_instance_id: _,
 				keep_alive: _,
-			}) => {
+			} => {
 				assert_eq!(owner, ALICE);
 				assert_eq!(pool_id, PICA::ID);
 				assert_eq!(amount, 100_500_u32.into());
@@ -759,11 +758,11 @@ fn test_split_position() {
 			stake2.reductions.get(&USDT::ID),
 			Some(&left_from_one_ratio.mul_floor(reduction))
 		);
-		assert_last_event::<Test, _>(|e| {
-			matches!(&e.event,
-			Event::StakingRewards(crate::Event::SplitPosition { positions })
-			if positions == &vec![(PICA::ID, 0, stake1.stake), (PICA::ID, 1, stake2.stake)])
-		});
+		helper::assert_last_event::<Test>(Event::StakingRewards(crate::Event::SplitPosition {
+			stake: stake2.stake,
+			fnft_collection_id: PICA::ID,
+			fnft_instance_id: 1,
+		}));
 	});
 }
 
