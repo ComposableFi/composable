@@ -73,7 +73,7 @@ pub fn genesis_config(
 		technical_membership: Default::default(),
 		relayer_xcm: Default::default(),
 		assets_registry: Default::default(),
-		tokens: Default::default(),
+		balances: Default::default(),
 		transaction_payment: Default::default(),
 		vesting: Default::default(),
 		lending: Default::default(),

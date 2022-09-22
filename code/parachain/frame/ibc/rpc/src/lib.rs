@@ -19,7 +19,7 @@
 use codec::Encode;
 use ibc::{
 	core::{
-		ics02_client::{client_consensus::AnyConsensusState, client_state::AnyClientState},
+		ics02_client,
 		ics03_connection::connection::ConnectionEnd,
 		ics04_channel::channel::{ChannelEnd, IdentifiedChannelEnd, Order},
 		ics24_host::identifier::{ChannelId, ConnectionId, PortId},
@@ -27,6 +27,7 @@ use ibc::{
 	events::IbcEvent as RawIbcEvent,
 };
 
+use pallet_ibc::light_clients::{AnyClientState, AnyConsensusState};
 use std::{collections::HashMap, fmt::Display, str::FromStr, sync::Arc};
 
 use ibc_proto::{

@@ -15,7 +15,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 codec = { package = "parity-scale-codec", version = "3.0.0", features = ["derive"] }
 hex-literal = { version = "0.3.3" }
 ibc-primitives = { path = "../primitives" }
-jsonrpsee = { version = "0.13.0", features = ["server", "macros"] }
+jsonrpsee = { version = "0.14.0", features = ["server", "macros"] }
 pallet-ibc = { path = ".." }
 serde = { version = "1.0.136", features = ["derive"] }
 serde_json = "1.0.45"
@@ -33,6 +33,11 @@ sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8" }
 
 [dependencies.ibc]
+git = "https://github.com/ComposableFi/ibc-rs"
+rev = "e3154cb39161d79031f61ed4a2a48975fd7c89a4"
+default-features = false
+
+[dependencies.ibc-derive]
 git = "https://github.com/ComposableFi/ibc-rs"
 rev = "e3154cb39161d79031f61ed4a2a48975fd7c89a4"
 default-features = false
