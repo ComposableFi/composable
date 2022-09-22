@@ -19,7 +19,6 @@
 use codec::Encode;
 use ibc::{
 	core::{
-		ics02_client,
 		ics03_connection::connection::ConnectionEnd,
 		ics04_channel::channel::{ChannelEnd, IdentifiedChannelEnd, Order},
 		ics24_host::identifier::{ChannelId, ConnectionId, PortId},
