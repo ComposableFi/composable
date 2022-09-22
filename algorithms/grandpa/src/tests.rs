@@ -116,7 +116,7 @@ async fn follow_grandpa_justifications() {
 		let justification =
 			Justification::decode(&mut &justification[..]).expect("Failed to decode justification");
 		println!(
-			"For header: Hash({:?}), Number({})",
+			"For relay chain header: Hash({:?}), Number({})",
 			justification.commit.target_hash, justification.commit.target_number
 		);
 
@@ -129,7 +129,7 @@ async fn follow_grandpa_justifications() {
 			.expect("Failed to fetch finalized parachain headers");
 
 		let header_numbers = headers.iter().map(|h| *h.number()).collect();
-		let proof = prover
+		let maybe_proof = prover
 			.query_finalized_parachain_headers_with_proof(
 				justification.commit.target_hash,
 				client_state.latest_relay_hash,
@@ -138,11 +138,13 @@ async fn follow_grandpa_justifications() {
 			.await
 			.expect("Failed to fetch finalized parachain headers with proof");
 
-		client_state = verify_parachain_headers_with_grandpa_finality_proof::<
-			Header,
-			HostFunctionsProvider,
-		>(client_state, proof)
-		.expect("Failed to verify parachain headers with grandpa finality_proof");
-		println!("========= Successfully verified grandpa justification =========");
+		if let Some(proof) = maybe_proof {
+			client_state = verify_parachain_headers_with_grandpa_finality_proof::<
+				Header,
+				HostFunctionsProvider,
+			>(client_state, proof)
+				.expect("Failed to verify parachain headers with grandpa finality_proof");
+			println!("========= Successfully verified grandpa justification =========");
+		}
 	}
 }

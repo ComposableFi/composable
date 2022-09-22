@@ -307,7 +307,7 @@ where
 			signed_commitment.commitment.block_number.into();
 		let block_hash = self.relay_client.rpc().block_hash(Some(subxt_block_number)).await?;
 
-		let current_authorities = api.storage().beefy().authorities(block_hash).await?;
+		let current_authorities = api.storage().beefy().authorities(block_hash).await?.0;
 
 		// Current LeafIndex
 		let block_number = signed_commitment.commitment.block_number;
@@ -368,7 +368,8 @@ where
 			.beefy()
 			.authorities(Some(latest_beefy_finalized))
 			.await
-			.expect("Should retrieve authority set");
+			.expect("Should retrieve authority set")
+			.0;
 
 		let authority_address_hashes = hash_authority_addresses(
 			current_authorities.into_iter().map(|x| x.encode()).collect(),

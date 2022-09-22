@@ -101,7 +101,7 @@ where
 		latest_finalized_hash: T::Hash,
 		previous_finalized_hash: T::Hash,
 		header_numbers: Vec<T::BlockNumber>,
-	) -> Result<ParachainHeadersWithFinalityProof<H>, anyhow::Error>
+	) -> Result<Option<ParachainHeadersWithFinalityProof<H>>, anyhow::Error>
 	where
 		H: Header,
 		H::Hash: From<T::Hash>,
@@ -166,6 +166,11 @@ where
 			.to_runtime_api::<runtime::api::RuntimeApi<T, subxt::PolkadotExtrinsicParams<_>>>();
 		let mut parachain_headers = BTreeMap::<H::Hash, ParachainHeaderProofs>::default();
 
+		// no new parachain headers have been finalized
+		if change_set.len() == 1 {
+			return Ok(None)
+		}
+
 		for changes in change_set {
 			let header = self
 				.relay_client
@@ -207,6 +212,6 @@ where
 			parachain_headers.insert(header.hash().into(), proofs);
 		}
 
-		Ok(ParachainHeadersWithFinalityProof { finality_proof, parachain_headers })
+		Ok(Some(ParachainHeadersWithFinalityProof { finality_proof, parachain_headers }))
 	}
 }

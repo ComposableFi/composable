@@ -14,7 +14,9 @@
 // limitations under the License.
 
 use super::runtime;
-use crate::error::Error;
+use crate::{
+	error::Error, runtime::api::runtime_types::polkadot_runtime_parachains::paras::ParaLifecycle,
+};
 use beefy_client_primitives::get_leaf_index_for_block_number;
 use beefy_primitives::{SignedCommitment, VersionedFinalityProof};
 use codec::{Decode, Encode};
@@ -52,7 +54,20 @@ where
 		.clone()
 		.to_runtime_api::<runtime::api::RuntimeApi<T, subxt::PolkadotExtrinsicParams<_>>>();
 
-	let para_ids = api.storage().paras().parachains(block_hash).await?;
+	let mut para_ids = vec![];
+	for id in api.storage().paras().parachains(block_hash.clone()).await? {
+		match api
+			.storage()
+			.paras()
+			.para_lifecycles(&id, block_hash.clone())
+			.await?
+			.expect("ParaId is known")
+		{
+			// only care about active parachains.
+			ParaLifecycle::Parachain => para_ids.push(id),
+			_ => {},
+		}
+	}
 	let previous_finalized_block_number: subxt::BlockNumber = (latest_beefy_height + 1).into();
 	let previous_finalized_hash = client
 		.rpc()

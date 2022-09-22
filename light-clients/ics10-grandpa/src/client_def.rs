@@ -124,6 +124,11 @@ where
 			consensus_states.push((height, wrapped));
 		}
 
+		if let Some(max_height) = consensus_states.iter().map(|(h, ..)| h.revision_height).max() {
+			// this cast is safe, see [`ConsensusState::from_header`]
+			client_state.latest_para_height = max_height as u32
+		}
+
 		client_state.latest_relay_hash = header.finality_proof.block;
 
 		let target = ancestry

@@ -229,21 +229,15 @@ async fn test_continuous_update_of_grandpa_client() {
 	while let Some(Ok(JustificationNotification(sp_core::Bytes(justification_bytes)))) =
 		subscription.next().await
 	{
-		println!("========= New Justification =========");
-		println!("justification size: {}kb", size_of_val(&*justification_bytes) / 1000);
 		let client_state: ClientState<HostFunctionsManager> =
 			match ctx.client_state(&client_id).unwrap() {
 				AnyClientState::Grandpa(client_state) => client_state,
 				_ => panic!("unexpected client state"),
 			};
-		println!("current_set_id: {}", client_state.current_set_id);
 
 		let justification = Justification::decode(&mut &justification_bytes[..])
 			.expect("Failed to decode justification");
-		println!(
-			"For header: Hash({:?}), Number({})",
-			justification.commit.target_hash, justification.commit.target_number
-		);
+
 
 		let headers = grandpa_prover
 			.query_finalized_parachain_headers_between(
@@ -254,7 +248,7 @@ async fn test_continuous_update_of_grandpa_client() {
 			.expect("Failed to fetch finalized parachain headers");
 
 		let header_numbers = headers.iter().map(|h| h.number).collect();
-		let proof = grandpa_prover
+		let maybe_proof = grandpa_prover
 			.query_finalized_parachain_headers_with_proof(
 				justification.commit.target_hash,
 				client_state.latest_relay_hash,
@@ -262,6 +256,19 @@ async fn test_continuous_update_of_grandpa_client() {
 			)
 			.await
 			.expect("Failed to fetch finalized parachain headers with proof");
+		let proof = match maybe_proof {
+			Some(proof) => proof,
+			None => {
+				continue
+			},
+		};
+		println!("========= New Justification =========");
+		println!("justification size: {}kb", size_of_val(&*justification_bytes) / 1000);
+		println!("current_set_id: {}", client_state.current_set_id);
+		println!(
+			"For relay chain header: Hash({:?}), Number({})",
+			justification.commit.target_hash, justification.commit.target_number
+		);
 
 		let header = Header {
 			finality_proof: proof.finality_proof,
@@ -297,7 +304,7 @@ async fn test_continuous_update_of_grandpa_client() {
 						);
 						// todo: assert the specific heights for new consensus states
 						println!(
-							"======== Successfully verified parachain headers for block number: {} ========",
+							"======== Successfully updaated parachain client to height: {} ========",
 							upd_res.client_state.latest_height(),
 						);
 					},
