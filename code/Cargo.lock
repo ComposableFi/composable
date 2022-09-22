@@ -1616,6 +1616,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "composable-subxt"
+version = "0.1.0"
+dependencies = [
+ "base58",
+ "clap 3.2.20",
+ "env_logger",
+ "hex",
+ "parity-scale-codec",
+ "sp-core",
+ "sp-externalities",
+ "sp-io",
+ "sp-keyring",
+ "sp-runtime-interface",
+ "sp-std",
+ "subxt 0.21.0",
+ "tokio",
+]
+
+[[package]]
 name = "composable-support"
 version = "0.0.1"
 dependencies = [
@@ -2878,25 +2897,6 @@ dependencies = [
  "quote 1.0.21",
  "rustc_version 0.4.0",
  "syn 1.0.99",
-]
-
-[[package]]
-name = "devnets"
-version = "0.1.0"
-dependencies = [
- "base58",
- "clap 3.2.20",
- "env_logger",
- "hex",
- "parity-scale-codec",
- "sp-core",
- "sp-externalities",
- "sp-io",
- "sp-keyring",
- "sp-runtime-interface",
- "sp-std",
- "subxt 0.21.0",
- "tokio",
 ]
 
 [[package]]
@@ -17036,6 +17036,7 @@ version = "0.1.0"
 dependencies = [
  "base58",
  "clap 3.2.20",
+ "composable-subxt",
  "env_logger",
  "hex",
  "parity-scale-codec",

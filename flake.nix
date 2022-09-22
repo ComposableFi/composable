@@ -465,8 +465,8 @@
             inherit subwasm;
             inherit subwasm-release-body;
 
-            subxt = pkgs.callPackage ./code/utils/composable-subxt/subxt.nix {};
-            
+            subxt =
+              pkgs.callPackage ./code/utils/composable-subxt/subxt.nix { };
 
             subsquid-processor = let
               processor = pkgs.buildNpmPackage {
@@ -1177,7 +1177,7 @@
                 homeDirectory = "/home/vscode";
                 stateVersion = "22.05";
                 packages =
-                  [ eachSystemOutputs.packages.x86_64-linux.rust-nightly subxt]
+                  [ eachSystemOutputs.packages.x86_64-linux.rust-nightly subxt ]
                   ++ (mk-containers-tools-minimal pkgs)
                   ++ (mk-docker-in-docker pkgs);
               };
@@ -1201,9 +1201,10 @@
                 username = "vscode";
                 homeDirectory = "/home/vscode";
                 stateVersion = "22.05";
-                packages =
-                  [ eachSystemOutputs.packages.aarch64-linux.rust-nightly subxt]
-                  ++ (mk-containers-tools-minimal pkgs)
+                packages = [
+                  eachSystemOutputs.packages.aarch64-linux.rust-nightly
+                  subxt
+                ] ++ (mk-containers-tools-minimal pkgs)
                   ++ (mk-docker-in-docker pkgs);
               };
               programs = {

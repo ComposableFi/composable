@@ -1,4 +1,4 @@
-{pkgs} :
+{ pkgs }:
 pkgs.rustPlatform.buildRustPackage rec {
   pname = "subxt-cli";
   version = "0.24.0";

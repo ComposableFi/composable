@@ -1,2 +1,2 @@
-mod dali;
-mod rococo;
+pub mod dali;
+pub mod rococo;

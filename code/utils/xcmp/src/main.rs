@@ -1,4 +1,4 @@
-mod generated;
+use composable_subxt::generated;
 
 use base58::ToBase58;
 use clap::{clap_derive::ArgEnum, Parser, Subcommand};
@@ -21,7 +21,7 @@ use subxt::{
 
 pub type PairSigner = subxt::PairSigner<DefaultConfig, sr25519::Pair>;
 
-use crate::generated::rococo_relay_chain::{
+use crate::generated::rococo::{
 	self,
 	api::{
 		self,
@@ -121,7 +121,7 @@ async fn transfer_native_asset(command: TransferNative) {
 		.build()
 		.await
 		.unwrap()
-		.to_runtime_api::<rococo_relay_chain::api::RuntimeApi<DefaultConfig, PolkadotExtrinsicParams<_>>>(
+		.to_runtime_api::<rococo::api::RuntimeApi<DefaultConfig, PolkadotExtrinsicParams<_>>>(
 	);
 	let signer = pair_signer(
 		sr25519::Pair::from_string(&command.from_account_id, None)
@@ -169,7 +169,7 @@ async fn reserve_transfer_native_asset(command: ReserveTransferNative) {
 		.build()
 		.await
 		.unwrap()
-		.to_runtime_api::<rococo_relay_chain::api::RuntimeApi<DefaultConfig, PolkadotExtrinsicParams<_>>>(
+		.to_runtime_api::<rococo::api::RuntimeApi<DefaultConfig, PolkadotExtrinsicParams<_>>>(
 	);
 
 	let beneficiary =
