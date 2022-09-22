@@ -733,9 +733,9 @@ pub mod pallet {
 				Error::<T>::NotEnoughAssets
 			);
 
-			let boosted_amount = Self::boosted_amount(reward_multiplier, amount);
+			let awarded_shares = Self::boosted_amount(reward_multiplier, amount);
 			let (rewards, reductions) =
-				Self::compute_rewards_and_reductions(boosted_amount, &rewards_pool)?;
+				Self::compute_rewards_and_reductions(awarded_shares, &rewards_pool)?;
 
 			let fnft_collection_id = rewards_pool.financial_nft_asset_id;
 			let fnft_instance_id = T::FinancialNft::get_next_nft_id(&fnft_collection_id)?;
@@ -745,7 +745,7 @@ pub mod pallet {
 			let new_position = StakeOf::<T> {
 				reward_pool_id: *pool_id,
 				stake: amount,
-				share: boosted_amount,
+				share: awarded_shares,
 				reductions,
 				lock: lock::Lock {
 					started_at: T::UnixTime::now().as_secs(),
@@ -755,7 +755,7 @@ pub mod pallet {
 				fnft_instance_id,
 			};
 
-			rewards_pool.total_shares = rewards_pool.total_shares.safe_add(&boosted_amount)?;
+			rewards_pool.total_shares = rewards_pool.total_shares.safe_add(&awarded_shares)?;
 			rewards_pool.rewards = rewards;
 
 			// Move staked funds into fNFT asset account & lock the assets
@@ -811,14 +811,14 @@ pub mod pallet {
 				Error::<T>::NotEnoughAssets
 			);
 
-			let boosted_amount = Self::boosted_amount(reward_multiplier, amount);
+			let awarded_shares = Self::boosted_amount(reward_multiplier, amount);
 
 			let (rewards, reductions) =
-				Self::compute_rewards_and_reductions(boosted_amount, &rewards_pool)?;
-			rewards_pool.total_shares = rewards_pool.total_shares.safe_add(&boosted_amount)?;
+				Self::compute_rewards_and_reductions(awarded_shares, &rewards_pool)?;
+			rewards_pool.total_shares = rewards_pool.total_shares.safe_add(&awarded_shares)?;
 			rewards_pool.rewards = rewards;
 			stake.stake = stake.stake.safe_add(&amount)?;
-			stake.share = stake.share.safe_add(&boosted_amount)?;
+			stake.share = stake.share.safe_add(&awarded_shares)?;
 			for (asset, additional_inflation) in reductions.iter() {
 				let inflation =
 					stake.reductions.get_mut(asset).ok_or(Error::<T>::ReductionConfigProblem)?;
@@ -1152,7 +1152,7 @@ pub mod pallet {
 		}
 
 		fn compute_rewards_and_reductions(
-			boosted_amount: T::Balance,
+			shares: T::Balance,
 			rewards_pool: &RewardPoolOf<T>,
 		) -> Result<
 			(
@@ -1169,10 +1169,7 @@ pub mod pallet {
 				let inflation = if rewards_pool.total_shares == T::Balance::zero() {
 					T::Balance::zero()
 				} else {
-					reward
-						.total_rewards
-						.safe_mul(&boosted_amount)?
-						.safe_div(&rewards_pool.total_shares)?
+					reward.total_rewards.safe_mul(&shares)?.safe_div(&rewards_pool.total_shares)?
 				};
 
 				let total_rewards = reward.total_rewards.safe_add(&inflation)?;
