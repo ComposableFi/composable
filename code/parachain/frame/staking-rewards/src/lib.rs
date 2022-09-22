@@ -769,22 +769,12 @@ pub mod pallet {
 				},
 				fnft_instance_id,
 			};
-
 			rewards_pool.total_shares = rewards_pool.total_shares.safe_add(&awarded_shares)?;
 			rewards_pool.rewards = rewards;
 
 			// Move staked funds into fNFT asset account & lock the assets
-			T::Assets::transfer(rewards_pool.asset_id, who, &fnft_account, amount, keep_alive)?;
-			T::Assets::set_lock(T::LockId::get(), rewards_pool.asset_id, &fnft_account, amount)?;
-
-			// Mint share tokens into fNFT asst account & lock the assets
-			T::Assets::mint_into(rewards_pool.share_asset_id, &fnft_account, amount)?;
-			T::Assets::set_lock(
-				T::LockId::get(),
-				rewards_pool.share_asset_id,
-				&fnft_account,
-				amount,
-			)?;
+			Self::transfer_stake(who, amount, rewards_pool.asset_id, &fnft_account, keep_alive)?;
+			Self::mint_shares(rewards_pool.share_asset_id, awarded_shares, &fnft_account)?;
 
 			// Mint the fNFT
 			T::FinancialNft::mint_into(&fnft_collection_id, &fnft_instance_id, who)?;
@@ -842,18 +832,14 @@ pub mod pallet {
 
 			let fnft_asset_account =
 				T::FinancialNft::asset_account(&fnft_collection_id, &fnft_instance_id);
-
-			// TODO (vim): transfer the staked amount to the NFT account and lock it
-			// TODO (vim): Transfer the shares with share asset ID to the Financial NFT account and
-			// lock it.
-			T::Assets::transfer(
-				rewards_pool.asset_id,
+			Self::transfer_stake(
 				who,
-				&fnft_asset_account,
 				amount,
+				rewards_pool.asset_id,
+				&fnft_asset_account,
 				keep_alive,
 			)?;
-			T::Assets::mint_into(rewards_pool.share_asset_id, &fnft_asset_account, amount)?;
+			Self::mint_shares(rewards_pool.share_asset_id, awarded_shares, &fnft_asset_account)?;
 			RewardPools::<T>::insert(stake.reward_pool_id, rewards_pool);
 			Stakes::<T>::insert(fnft_collection_id, fnft_instance_id, stake);
 			Self::deposit_event(Event::<T>::StakeAmountExtended {
@@ -925,7 +911,7 @@ pub mod pallet {
 
 			// Burn the financial NFT and the shares it holds
 			T::Assets::burn_from(asset_id, &fnft_asset_account, stake.stake - stake_with_penalty)?;
-			T::Assets::burn_from(share_asset_id, &fnft_asset_account, stake.stake)?;
+			T::Assets::burn_from(share_asset_id, &fnft_asset_account, stake.share)?;
 			T::FinancialNft::burn(fnft_collection_id, fnft_instance_id, Some(who))?;
 
 			Self::deposit_event(Event::<T>::Unstaked {
@@ -1077,6 +1063,27 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
+		fn transfer_stake(
+			who: &AccountIdOf<T>,
+			amount: <T as Config>::Balance,
+			staked_asset_id: AssetIdOf<T>,
+			fnft_account: &AccountIdOf<T>,
+			keep_alive: bool,
+		) -> DispatchResult {
+			T::Assets::transfer(staked_asset_id, who, &fnft_account, amount, keep_alive)?;
+			T::Assets::set_lock(T::LockId::get(), staked_asset_id, &fnft_account, amount)
+		}
+
+		/// Mint share tokens into fNFT asst account & lock the assets
+		fn mint_shares(
+			share_asset_id: AssetIdOf<T>,
+			awarded_shares: <T as Config>::Balance,
+			fnft_account: &AccountIdOf<T>,
+		) -> DispatchResult {
+			T::Assets::mint_into(share_asset_id, &fnft_account, awarded_shares)?;
+			T::Assets::set_lock(T::LockId::get(), share_asset_id, &fnft_account, awarded_shares)
+		}
+
 		pub(crate) fn split_lock(
 			asset_id: T::AssetId,
 			existing_account_amount: T::Balance,
@@ -1280,10 +1287,10 @@ pub mod pallet {
 	}
 
 	impl<T: Config> ProtocolStaking for Pallet<T> {
-		type AssetId = T::AssetId;
 		type AccountId = T::AccountId;
-		type RewardPoolId = T::AssetId;
+		type AssetId = T::AssetId;
 		type Balance = T::Balance;
+		type RewardPoolId = T::AssetId;
 
 		fn accumulate_reward(
 			_pool: &Self::RewardPoolId,
