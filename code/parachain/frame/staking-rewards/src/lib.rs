@@ -1269,11 +1269,9 @@ pub mod pallet {
 					// NOTE: `StorageMap::translate` does one read and one write per item
 					T::DbWeight::get().reads(1) +
 					T::DbWeight::get().writes(1);
-
-					Some(reward_pool)
-				} else {
-					Some(reward_pool)
 				}
+
+				Some(reward_pool)
 			});
 
 			total_weight
