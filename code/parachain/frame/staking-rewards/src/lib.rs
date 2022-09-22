@@ -929,10 +929,10 @@ pub mod pallet {
 			(fnft_collection_id, fnft_instance_id): &Self::PositionId,
 			ratio: Permill,
 		) -> Result<[Self::PositionId; 2], DispatchError> {
-			// TODO(benluelo): Refactor
 			let keep_alive = false;
-			let mut old_position_stake = BalanceOf::<T>::zero();
-			let mut old_position =
+			let mut position_1_stake = BalanceOf::<T>::zero();
+			// update values for position 1 in place of the existing position
+			let mut existing_position =
 				Stakes::<T>::try_mutate(fnft_collection_id, fnft_instance_id, |maybe_stake| {
 					let stake = maybe_stake.as_mut().ok_or(Error::<T>::StakeNotFound)?;
 
@@ -944,32 +944,31 @@ pub mod pallet {
 						*reduction = ratio.mul_floor(*reduction);
 					}
 
-					old_position_stake = stake.stake;
+					position_1_stake = stake.stake;
 					Ok::<_, DispatchError>(old_value)
 				})?;
 
 			let left_from_one_ratio = ratio.left_from_one();
-
-			for (_, reduction) in &mut old_position.reductions {
+			// calculate reductions for the position 2
+			for (_, reduction) in &mut existing_position.reductions {
 				*reduction = left_from_one_ratio.mul_floor(*reduction);
 			}
 
-			let new_fnft_instance_id = T::FinancialNft::get_next_nft_id(fnft_collection_id)?;
+			let new_fnft_instance_id = T::FinancialNft::get_next_nft_id(&fnft_collection_id)?;
 			let old_fnft_asset_account =
-				T::FinancialNft::asset_account(fnft_collection_id, &old_position.fnft_instance_id);
+				T::FinancialNft::asset_account(&fnft_collection_id, &fnft_instance_id);
 			let new_fnft_asset_account =
-				T::FinancialNft::asset_account(fnft_collection_id, &new_fnft_instance_id);
+				T::FinancialNft::asset_account(&fnft_collection_id, &new_fnft_instance_id);
 
-			let new_stake = StakeOf::<T> {
-				stake: left_from_one_ratio.mul_floor(old_position.stake),
-				share: left_from_one_ratio.mul_floor(old_position.share),
+			let position_2 = StakeOf::<T> {
+				stake: left_from_one_ratio.mul_floor(existing_position.stake),
+				share: left_from_one_ratio.mul_floor(existing_position.share),
 				fnft_instance_id: new_fnft_instance_id,
-				..old_position
+				..existing_position
 			};
 
-			let rewards_pool = RewardPools::<T>::try_get(new_stake.reward_pool_id)
+			let rewards_pool = RewardPools::<T>::try_get(position_2.reward_pool_id)
 				.map_err(|_| Error::<T>::RewardsPoolNotFound)?;
-
 			// Unlock, Transfer, Lock staked asset
 			T::Assets::remove_lock(
 				T::LockId::get(),
@@ -980,13 +979,13 @@ pub mod pallet {
 				rewards_pool.asset_id,
 				&old_fnft_asset_account,
 				&new_fnft_asset_account,
-				new_stake.stake,
+				position_2.stake,
 				keep_alive,
 			)?;
 			Self::split_lock(
 				rewards_pool.asset_id,
-				old_position.stake,
-				new_stake.stake,
+				existing_position.stake,
+				position_2.stake,
 				&old_fnft_asset_account,
 				&new_fnft_asset_account,
 			)?;
@@ -1001,13 +1000,13 @@ pub mod pallet {
 				rewards_pool.share_asset_id,
 				&old_fnft_asset_account,
 				&new_fnft_asset_account,
-				new_stake.stake,
+				position_2.share,
 				keep_alive,
 			)?;
 			Self::split_lock(
 				rewards_pool.share_asset_id,
-				old_position.stake,
-				new_stake.stake,
+				existing_position.stake,
+				position_2.share,
 				&old_fnft_asset_account,
 				&new_fnft_asset_account,
 			)?;
@@ -1018,12 +1017,12 @@ pub mod pallet {
 				who,
 			)?;
 
-			Stakes::<T>::insert(&fnft_collection_id, &new_fnft_instance_id, &new_stake);
+			Stakes::<T>::insert(&fnft_collection_id, &new_fnft_instance_id, &position_2);
 
 			Self::deposit_event(Event::<T>::SplitPosition {
 				positions: vec![
-					(*fnft_collection_id, *fnft_instance_id, old_position_stake),
-					(*fnft_collection_id, new_fnft_instance_id, new_stake.stake),
+					(*fnft_collection_id, *fnft_instance_id, position_1_stake),
+					(*fnft_collection_id, new_fnft_instance_id, position_2.stake),
 				],
 			});
 
