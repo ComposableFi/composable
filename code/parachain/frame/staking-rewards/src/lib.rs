@@ -210,7 +210,7 @@ pub mod pallet {
 		/// Too many rewarded asset types per pool violating the storage allowed.
 		TooManyRewardAssetTypes,
 		/// Invalid start block number provided for creating a pool.
-		StartBlockMustBeNowOrLater,
+		StartBlockMustBeAfterCurrentBlock,
 		/// Invalid end block number provided for creating a pool.
 		EndBlockMustBeAfterStartBlock,
 		/// Unimplemented reward pool type.
@@ -641,7 +641,7 @@ pub mod pallet {
 					ensure!(
 						// Exlusively greater than to prevent erros/attacks
 						start_block > frame_system::Pallet::<T>::current_block_number(),
-						Error::<T>::StartBlockMustBeNowOrLater
+						Error::<T>::StartBlockMustBeAfterCurrentBlock
 					);
 					ensure!(end_block > start_block, Error::<T>::EndBlockMustBeAfterStartBlock);
 
