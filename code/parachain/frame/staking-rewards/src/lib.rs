@@ -955,6 +955,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		// TODO(benluelo): Split this out into a separate function/file
 		#[transactional]
 		fn split(
 			who: &Self::AccountId,
