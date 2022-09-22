@@ -939,11 +939,11 @@ pub mod pallet {
 				*reduction = left_from_one_ratio.mul_floor(*reduction);
 			}
 
-			let new_fnft_instance_id = T::FinancialNft::get_next_nft_id(&fnft_collection_id)?;
+			let new_fnft_instance_id = T::FinancialNft::get_next_nft_id(fnft_collection_id)?;
 			let old_fnft_asset_account =
-				T::FinancialNft::asset_account(&fnft_collection_id, &fnft_instance_id);
+				T::FinancialNft::asset_account(fnft_collection_id, fnft_instance_id);
 			let new_fnft_asset_account =
-				T::FinancialNft::asset_account(&fnft_collection_id, &new_fnft_instance_id);
+				T::FinancialNft::asset_account(fnft_collection_id, &new_fnft_instance_id);
 
 			let position_2 = StakeOf::<T> {
 				stake: left_from_one_ratio.mul_floor(existing_position.stake),
