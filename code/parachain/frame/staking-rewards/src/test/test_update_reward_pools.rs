@@ -35,8 +35,8 @@ fn test_update_reward_pool() {
 			create_rewards_pool_and_assert(RewardPoolConfiguration::RewardRateBasedIncentive {
 				owner: ALICE,
 				asset_id: PICA::ID,
-				start_block: 1,
-				end_block: ONE_YEAR_OF_BLOCKS,
+				start_block: 2,
+				end_block: ONE_YEAR_OF_BLOCKS + 1,
 				reward_configs: [(
 					USDT::ID,
 					RewardConfig {
@@ -46,7 +46,7 @@ fn test_update_reward_pool() {
 				)]
 				.into_iter()
 				.try_collect()
-				.unwrap(),
+				.expect("Rewards pool has a valid config for creation; QED"),
 				lock: default_lock_config(),
 				share_asset_id: XPICA::ID,
 				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,

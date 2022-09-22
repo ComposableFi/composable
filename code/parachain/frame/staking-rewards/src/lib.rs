@@ -637,9 +637,10 @@ pub mod pallet {
 					share_asset_id,
 					financial_nft_asset_id,
 				} => {
-					// now <= start_block < end_block
+					// now < start_block < end_block
 					ensure!(
-						start_block >= frame_system::Pallet::<T>::current_block_number(),
+						// Exlusively greater than to prevent erros/attacks
+						start_block > frame_system::Pallet::<T>::current_block_number(),
 						Error::<T>::StartBlockMustBeNowOrLater
 					);
 					ensure!(end_block > start_block, Error::<T>::EndBlockMustBeAfterStartBlock);
@@ -1251,28 +1252,28 @@ pub mod pallet {
 
 			RewardPools::<T>::translate(|pool_id, mut reward_pool: RewardPoolOf<T>| {
 				// If reward pool has not started, do not accumulate rewards or adjust weight
-				if reward_pool.start_block > frame_system::Pallet::<T>::current_block_number() {
-					return Some(reward_pool)
-				}
+				if reward_pool.start_block <= frame_system::Pallet::<T>::current_block_number() {
+					for (asset_id, reward) in &mut reward_pool.rewards {
+						Self::reward_accumulation_hook_reward_update_calculation(
+							pool_id,
+							*asset_id,
+							reward,
+							now_seconds,
+						);
+					}
 
-				for (asset_id, reward) in &mut reward_pool.rewards {
-					Self::reward_accumulation_hook_reward_update_calculation(
-						pool_id,
-						*asset_id,
-						reward,
-						now_seconds,
-					);
-				}
+					// reward_pool.rewards is limited T::MaxRewardConfigsPerPool, which is Get<u32>
+					let number_of_rewards_in_pool = reward_pool.rewards.len() as u64;
 
-				// reward_pool.rewards is limited T::MaxRewardConfigsPerPool, which is Get<u32>
-				let number_of_rewards_in_pool = reward_pool.rewards.len() as u64;
-
-				total_weight += (number_of_rewards_in_pool * T::WeightInfo::reward_accumulation_hook_reward_update_calculation()) +
+					total_weight += (number_of_rewards_in_pool * T::WeightInfo::reward_accumulation_hook_reward_update_calculation()) +
 					// NOTE: `StorageMap::translate` does one read and one write per item
 					T::DbWeight::get().reads(1) +
 					T::DbWeight::get().writes(1);
 
-				Some(reward_pool)
+					Some(reward_pool)
+				} else {
+					Some(reward_pool)
+				}
 			});
 
 			total_weight

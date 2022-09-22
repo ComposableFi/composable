@@ -40,8 +40,8 @@ fn test_reward_update_calculation() {
 		let pool_id = create_rewards_pool_and_assert(RewardRateBasedIncentive {
 			owner: ALICE,
 			asset_id: PICA::ID,
-			start_block: 1,
-			end_block: ONE_YEAR_OF_BLOCKS * 10,
+			start_block: 2,
+			end_block: ONE_YEAR_OF_BLOCKS * 10 + 1,
 			reward_configs: [(PICA::ID, reward_config)].into_iter().try_collect().unwrap(),
 			lock: default_lock_config(),
 			share_asset_id: XPICA::ID,
@@ -157,8 +157,8 @@ fn test_accumulate_rewards_pool_empty_refill() {
 			create_rewards_pool_and_assert(RewardPoolConfiguration::RewardRateBasedIncentive {
 				owner: ALICE,
 				asset_id: A::ID,
-				start_block: current_block,
-				end_block: current_block + ONE_YEAR_OF_BLOCKS,
+				start_block: current_block + 1,
+				end_block: current_block + ONE_YEAR_OF_BLOCKS + 1,
 				reward_configs: [
 					(
 						A::ID,
@@ -285,8 +285,8 @@ fn test_accumulate_rewards_hook() {
 			create_rewards_pool_and_assert(RewardPoolConfiguration::RewardRateBasedIncentive {
 				owner: ALICE,
 				asset_id: A::ID,
-				start_block: current_block,
-				end_block: current_block + ONE_YEAR_OF_BLOCKS,
+				start_block: current_block + 1,
+				end_block: current_block + ONE_YEAR_OF_BLOCKS + 1,
 				reward_configs: [
 					(
 						A::ID,
@@ -320,8 +320,8 @@ fn test_accumulate_rewards_hook() {
 			create_rewards_pool_and_assert(RewardPoolConfiguration::RewardRateBasedIncentive {
 				owner: BOB,
 				asset_id: C::ID,
-				start_block: current_block,
-				end_block: current_block + ONE_YEAR_OF_BLOCKS,
+				start_block: current_block + 1,
+				end_block: current_block + ONE_YEAR_OF_BLOCKS + 1,
 				reward_configs: [
 					(
 						D::ID,
@@ -582,8 +582,8 @@ fn test_accumulate_rewards_hook() {
 			create_rewards_pool_and_assert(RewardPoolConfiguration::RewardRateBasedIncentive {
 				owner: CHARLIE,
 				asset_id: F::ID,
-				start_block: current_block,
-				end_block: current_block + ONE_YEAR_OF_BLOCKS,
+				start_block: current_block + 1,
+				end_block: current_block + ONE_YEAR_OF_BLOCKS + 1,
 				reward_configs: [(
 					F::ID,
 					RewardConfig {
