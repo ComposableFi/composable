@@ -570,7 +570,6 @@ fn test_transfer_reward() {
 }
 
 // NOTE(connor): Ignoring because the test fails to correctly configure the reward pool
-#[ignore]
 #[test]
 fn test_split_position() {
 	new_test_ext().execute_with(|| {
@@ -599,7 +598,7 @@ fn test_split_position() {
 		let stake = StakeOf::<Test> {
 			reward_pool_id: PICA::ID,
 			stake: PICA::units(1_000),
-			share: PICA::units(1_000),
+			share: PICA::units(10),
 			reductions: [(USDT::ID, reduction)]
 				.into_iter()
 				.try_collect()
@@ -609,19 +608,20 @@ fn test_split_position() {
 				duration: 10000000_u64,
 				unlock_penalty: Perbill::from_percent(2),
 			},
-			fnft_instance_id: 1,
+			fnft_instance_id: 0,
 		};
+		mint_assets([BOB], [PICA::ID], PICA::units(2000));
 
 		assert_extrinsic_event::<Test, _, _, _>(
-			StakingRewards::stake(Origin::signed(BOB), PICA::ID, PICA::units(1_000), 10_000_000),
+			StakingRewards::stake(Origin::signed(BOB), PICA::ID, PICA::units(1_000), ONE_HOUR),
 			crate::Event::Staked {
 				pool_id: PICA::ID,
 				owner: BOB,
 				amount: PICA::units(1_000),
-				duration_preset: 10_000_000,
+				duration_preset: ONE_HOUR,
 				fnft_collection_id: 1,
-				fnft_instance_id: 1,
-				keep_alive: false,
+				fnft_instance_id: 0,
+				keep_alive: true,
 			},
 		);
 		Stakes::<Test>::insert(1, 0, stake.clone());
@@ -641,6 +641,13 @@ fn test_split_position() {
 		assert_eq!(stake1.reductions.get(&USDT::ID), Some(&ratio.mul_floor(reduction)));
 		assert_eq!(stake2.stake, left_from_one_ratio.mul_floor(stake.stake));
 		assert_eq!(stake2.share, left_from_one_ratio.mul_floor(stake.share));
+
+		assert_eq!(balance(PICA::ID, &FinancialNft::asset_account(&1, &0)), stake1.stake);
+		assert_eq!(balance(XPICA::ID, &FinancialNft::asset_account(&1, &0)), stake1.share);
+
+		assert_eq!(balance(PICA::ID, &FinancialNft::asset_account(&1, &1)), stake2.stake);
+		assert_eq!(balance(XPICA::ID, &FinancialNft::asset_account(&1, &1)), stake2.share);
+
 		assert_eq!(
 			stake2.reductions.get(&USDT::ID),
 			Some(&left_from_one_ratio.mul_floor(reduction))
