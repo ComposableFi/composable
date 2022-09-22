@@ -171,7 +171,7 @@ jobs:
       - name: Release docker image
         run: |
           docker load --input ./composable-docker-image
-          docker tag composable-node-release-${{ env.COMPOSABLE_VERSION }}:latest "${{ env.DOCKER_REGISTRY_NAME }}/composable:v${{ env.COMPOSABLE_VERSION }}"
+          docker tag composable:latest "${{ env.DOCKER_REGISTRY_NAME }}/composable:v${{ env.COMPOSABLE_VERSION }}"
           docker push "${{ env.DOCKER_REGISTRY_NAME }}/composable:v${{ env.COMPOSABLE_VERSION }}"
 
       - name: Get commit

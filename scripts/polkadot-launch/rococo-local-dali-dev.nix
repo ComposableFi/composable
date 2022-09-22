@@ -29,7 +29,7 @@ in {
       wsPort = 9988;
       count = 3;
       chain = "dali-dev";
-      bin = "${composable-bin}/bin/composable-node";
+      bin = "${composable-bin}/bin/composable";
       flags = [
         "--unsafe-ws-external"
         "--unsafe-rpc-external"
