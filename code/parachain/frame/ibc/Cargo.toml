@@ -34,12 +34,12 @@ tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev 
 ics23 = { git = "https://github.com/composablefi/ics23", rev = "b500a5c6068eb53c83c4c6c13bd9d8c25e0bf927", default-features = false }
 
 # centauri
-grandpa-client-primitives = { package = "grandpa-light-client-primitives", git = "https://github.com/composableFi/centauri", rev = "bb8fcda8427c32aa01f2815ba778aecff502b5bb", default-features = false }
-beefy-client-primitives = { package = "primitives", git = "https://github.com/composableFi/centauri", rev = "bb8fcda8427c32aa01f2815ba778aecff502b5bb", default-features = false }
-light-client-common = { git = "https://github.com/composableFi/centauri", rev = "bb8fcda8427c32aa01f2815ba778aecff502b5bb", default-features = false }
-ics10-grandpa = { git = "https://github.com/composableFi/centauri", rev = "bb8fcda8427c32aa01f2815ba778aecff502b5bb", default-features = false }
-ics11-beefy = { git = "https://github.com/composableFi/centauri", rev = "bb8fcda8427c32aa01f2815ba778aecff502b5bb", default-features = false }
-ics07-tendermint = { git = "https://github.com/composableFi/centauri", rev = "bb8fcda8427c32aa01f2815ba778aecff502b5bb", default-features = false }
+grandpa-client-primitives = { package = "grandpa-light-client-primitives", git = "https://github.com/composableFi/centauri", rev = "af723868fcae8eb67760b126c5a0dff8e3f5d0f8", default-features = false }
+beefy-client-primitives = { package = "primitives", git = "https://github.com/composableFi/centauri", rev = "af723868fcae8eb67760b126c5a0dff8e3f5d0f8", default-features = false }
+light-client-common = { git = "https://github.com/composableFi/centauri", rev = "af723868fcae8eb67760b126c5a0dff8e3f5d0f8", default-features = false }
+ics10-grandpa = { git = "https://github.com/composableFi/centauri", rev = "af723868fcae8eb67760b126c5a0dff8e3f5d0f8", default-features = false }
+ics11-beefy = { git = "https://github.com/composableFi/centauri", rev = "af723868fcae8eb67760b126c5a0dff8e3f5d0f8", default-features = false }
+ics07-tendermint = { git = "https://github.com/composableFi/centauri", rev = "af723868fcae8eb67760b126c5a0dff8e3f5d0f8", default-features = false }
 
 # local deps
 assets = { package = "pallet-assets", path = "../assets", default-features = false }
