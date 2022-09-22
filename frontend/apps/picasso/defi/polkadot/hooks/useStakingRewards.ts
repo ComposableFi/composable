@@ -81,30 +81,32 @@ export const useStakingRewards = () => {
         let map: StakingPortfolio = [];
         for (const position of positions) {
           try {
-            const result: any = (
-              await api.query.stakingRewards.stakes(
-                api.createType("u128", position.fnftCollectionId),
-                api.createType("u64", position.fnftInstanceId)
-              )
-            ).toJSON();
-            if (result) {
-              const item: PortfolioItem = {
-                collectionId: position.fnftCollectionId,
-                instanceId: position.fnftInstanceId,
-                assetId: position.assetId,
-                endTimestamp: position.endTimestamp,
-                id: position.id,
-                unlockPenalty: fromPerbill(
-                  rewardPools[assetId].lock.unlockPenalty
-                ),
-                multiplier:
-                  rewardPools[assetId].lock.durationPresets[
-                    result.lock.duration
-                  ],
-                share: fromChainIdUnit(unwrapNumberOrHex(result.share)),
-                stake: fromChainIdUnit(unwrapNumberOrHex(result.stake)),
-              };
-              map = [...map, item];
+            if (position.assetId === assetId.toString()) {
+              const result: any = (
+                await api.query.stakingRewards.stakes(
+                  api.createType("u128", position.fnftCollectionId),
+                  api.createType("u64", position.fnftInstanceId)
+                )
+              ).toJSON();
+              if (result) {
+                const item: PortfolioItem = {
+                  collectionId: position.fnftCollectionId,
+                  instanceId: position.fnftInstanceId,
+                  assetId: position.assetId,
+                  endTimestamp: position.endTimestamp,
+                  id: position.id,
+                  unlockPenalty: fromPerbill(
+                    rewardPools[assetId].lock.unlockPenalty
+                  ),
+                  multiplier:
+                    rewardPools[assetId].lock.durationPresets[
+                      result.lock.duration
+                    ],
+                  share: fromChainIdUnit(unwrapNumberOrHex(result.share)),
+                  stake: fromChainIdUnit(unwrapNumberOrHex(result.stake)),
+                };
+                map = [...map, item];
+              }
             }
           } catch (error) {
             console.log(error);

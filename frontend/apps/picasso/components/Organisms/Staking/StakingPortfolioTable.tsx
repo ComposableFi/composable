@@ -29,7 +29,7 @@ export const PortfolioRow = ({
 }) => {
   const theme = useTheme();
   const { isExpired, portfolioDate } = useExpiredPortfolio(portfolio);
-
+  console.log(JSON.stringify(portfolio, null, 2));
   return (
     <TableRow>
       <TableCell>
