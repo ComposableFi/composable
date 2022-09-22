@@ -106,6 +106,7 @@ benchmarks! {
 		let asset_id = BASE_ASSET_ID.into();
 		let amount = 100_500_u128.into();
 		let duration_preset = ONE_HOUR;
+		let reward_multiplier = Perbill::from_percent(1);
 		let keep_alive = true;
 		let staker = whitelisted_caller();
 		let pool_owner: T::AccountId = account("owner", 0, 0);
@@ -125,6 +126,7 @@ benchmarks! {
 				duration_preset,
 				fnft_collection_id: STAKING_FNFT_COLLECTION_ID.into(),
 				fnft_instance_id: FNFT_INSTANCE_ID_BASE.into(),
+				reward_multiplier,
 				keep_alive
 			}.into()
 		);
