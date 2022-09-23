@@ -41,7 +41,7 @@ export async function createOracleForAsset(
     assetID: number;
     threshold: Percent | AnyNumber;
     minAnswers: u32 | AnyNumber;
-    maXAnswers: u32 | AnyNumber;
+    maxAnswers: u32 | AnyNumber;
     blockInterval: u32 | AnyNumber;
     reward: u128 | AnyNumber;
     slash: u128 | AnyNumber;
@@ -56,10 +56,11 @@ export async function createOracleForAsset(
         oracleParameters.assetID,
         oracleParameters.threshold,
         oracleParameters.minAnswers,
-        oracleParameters.maXAnswers,
+        oracleParameters.maxAnswers,
         oracleParameters.blockInterval,
         oracleParameters.reward,
-        oracleParameters.slash
+        oracleParameters.slash,
+        true
       )
     )
   );

@@ -169,10 +169,11 @@ const CrowdloanRewardsUpdater = () => {
         netVestedPICA = (rewards as any)[addr];
       }
       // dev
-      if (process.env.VERCEL_ENV !== "production") {
+      if (process.env.NODE_ENV !== "production") {
         if (addr && (devRewards as any)[addr]) {
           netVestedPICA = (devRewards as any)[addr];
         }
+        console.log(addr, devRewards)
       }
 
       if (addr && (contributions.contributedAmountsWithoutBoost as any)[addr]) {

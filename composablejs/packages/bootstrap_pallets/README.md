@@ -1,5 +1,5 @@
 # Bootstrap data for QA/ development of Picasso/Pablo
-Please have a look at ```src/constants/config.json``` to adjust paramters and enable disable bootstrapping modules. By default dali types are used.
+Please have a look at ```src/constants/config.json``` to adjust parameters and enable disable bootstrapping modules. By default dali types are used.
 To disable bootstrapping enable bootstrap<module> flag to false in ```src/constants/config.json```
 To mint assets to your address please add your wallet address, asset id and amount (in 12 decimals) in ```src/constants/config.json``` 
 # Install Deps

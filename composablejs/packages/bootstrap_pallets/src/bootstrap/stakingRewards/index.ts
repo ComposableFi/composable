@@ -33,7 +33,6 @@ export async function bootstrapStakingRewardPools(api: ApiPromise, walletSudo: K
       logger.info("Staking Reward Pool Created: ", rewardPoolCreated.toString());
 
       for (const rewardConfig of Object.values(pool.rewardConfigs)) {
-        console.log(pool.assetId)
         const rewardPotIncreased = await addRewardsToPot(api, walletSudo, {
           poolId: api.createType("u128", pool.assetId),
           rewardAssetId: api.createType("u128", rewardConfig.assetId),
