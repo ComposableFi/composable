@@ -12,14 +12,13 @@
     "value": "http://localhost:3001/price/"
   },
   "oracle_parameters": {
-    "assetId": 4,
+    "assetID": 4,
     "threshold": 10,
     "minAnswers": 1,
-    "maxAnswers": 3,
+    "maXAnswers": 3,
     "blockInterval": 10,
     "reward": 10,
-    "slash": 10,
-    "emitPriceChanges": true
+    "slash": 10
   },
   "auto_register_offchain_worker_enabled": false
 }

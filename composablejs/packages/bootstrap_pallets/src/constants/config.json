@@ -1,16 +1,17 @@
 {
-  "bootstrapPools": false,
+  "bootstrapPools": true,
   "bootstrapBonds": true,
   "bootstrapCrowdloanRewards": false,
-  "mintAssetsToWallets": false,
+  "bootstrapRewardPools": false,
+  "mintAssetsToWallets": true,
   "bondOffers": [
     {
-      "asset": "4",
+      "asset": "4294967296",
       "bondPrice": "100000000000000",
       "nbOfBonds": "10",
       "maturity": { "Finite": { "returnIn": "1440" } },
       "reward": {
-        "asset": "201",
+        "asset": "5",
         "amount": "1000000000000000",
         "maturity": "1440"
       }
@@ -27,7 +28,7 @@
       },
       "pair": {
         "base": "1",
-        "quote": "129"
+        "quote": "131"
       },
       "sale": {
         "start": "0",
@@ -52,10 +53,37 @@
       },
       "pair": {
         "base": "4",
-        "quote": "129"
+        "quote": "131"
       },
       "fee": "10000",
       "baseWeight": "500000"
+    }
+  ],
+  "stakingRewardPools": [
+    {
+      "assetId": "130",
+      "endBlock": "5000",
+      "rewardConfigs": {
+        "131": {
+          "assetId": "131",
+          "maxRewards": "100000000000000000",
+          "rewardRate": {
+            "period": {
+              "PerSecond": "100000"
+            },
+            "amount": "1000000000000"
+          }
+        }
+      },
+      "locK": {
+        "durationPresets": {
+          "300": "10000000",
+          "600": "15000000"
+        },
+        "unlockPenalty": "10000000"
+      },
+      "financialNftAssetId": "2130",
+      "shareAssetId": "1300"
     }
   ],
   "crowdloanRewards": {
@@ -88,7 +116,9 @@
     ]
   },
   "mintAssets": [
-    ["5vXJFVmaBvxe4kwyioUgoDjMDy2NxfLikwz1Q44dknpF9r21", "1", "5000000000000000"],
-    ["5vXJFVmaBvxe4kwyioUgoDjMDy2NxfLikwz1Q44dknpF9r21", "4", "5000000000000000"]
-  ] 
+    ["5y4xiEmy4Kp3GPH7hUHDnNwwqeoEHgRbMp6HGW2iRKRu5DG2", "1", "5000000000000000"],
+    ["5y4xiEmy4Kp3GPH7hUHDnNwwqeoEHgRbMp6HGW2iRKRu5DG2", "4", "5000000000000000"],
+    ["5y4xiEmy4Kp3GPH7hUHDnNwwqeoEHgRbMp6HGW2iRKRu5DG2", "131", "5000000000000000"],
+    ["5yNZjX24n2eg7W6EVamaTXNQbWCwchhThEaSWB7V3GRjtHeL", "5", "10000000000000000000"]
+  ]
 }

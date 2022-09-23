@@ -1,4 +1,4 @@
 export * from "./assets";
 export * from "./bondedFinance";
-export * from "./crowdloanRewards";
+export * from "./crowloanRewards";
 export * from "./pablo";
