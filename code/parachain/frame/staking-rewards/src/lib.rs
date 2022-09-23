@@ -955,9 +955,9 @@ pub mod pallet {
 			let (new_fnft_instance_id, new_position) = Stakes::<T>::try_mutate(
 				fnft_collection_id,
 				existing_fnft_instance_id,
-				|maybe_old_position| {
+				|maybe_existing_position| {
 					let existing_position =
-						maybe_old_position.as_mut().ok_or(Error::<T>::StakeNotFound)?;
+						maybe_existing_position.as_mut().ok_or(Error::<T>::StakeNotFound)?;
 
 					let left_from_one_ratio = ratio.left_from_one();
 
