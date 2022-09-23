@@ -1,9 +1,9 @@
 {
-  "bootstrapPools": true,
-  "bootstrapBonds": true,
+  "bootstrapPools": false,
+  "bootstrapBonds": false,
   "bootstrapCrowdloanRewards": false,
   "bootstrapRewardPools": false,
-  "mintAssetsToWallets": true,
+  "mintAssetsToWallets": false,
   "bondOffers": [
     {
       "asset": "4294967296",
@@ -66,12 +66,10 @@
       "rewardConfigs": {
         "131": {
           "assetId": "131",
-          "maxRewards": "100000000000000000",
+          "maxRewards": "10000000000000000000",
           "rewardRate": {
-            "period": {
-              "PerSecond": "100000"
-            },
-            "amount": "1000000000000"
+            "period": "PerSecond",
+            "amount": "77160494000"
           }
         }
       },
@@ -97,7 +95,9 @@
       "5uxGz8eZmbjvVBMpun9nvQ3G8s5cWD5xHnzgU6SHyAnJf9Vy",
       "5vVWqFFPg258rCUy1HabDSf6z1bnRbKeDWKYF3XrVLvk3nEc",
       "5vVWqFFPg258rCUy1HabDSf6z1bnRbKeDWKYF3XrVLvk3nEc",
-      "5ygiZBBgoTEjJqu3hpTQAw9oqaoEaz9eSJUBYGoTguG2qsQ3"
+      "5ygiZBBgoTEjJqu3hpTQAw9oqaoEaz9eSJUBYGoTguG2qsQ3",
+      "5y4xiEmy4Kp3GPH7hUHDnNwwqeoEHgRbMp6HGW2iRKRu5DG2",
+      "5uu3rSLY94uVPFayjHcj1bqcQExZbUiQ4UforfVFACt3T2qF"
     ],
     "ethereumContributors": [
       "0x33Cd07B1ae8485a6090091ee55389237eCB0Aed4",
@@ -118,7 +118,6 @@
   "mintAssets": [
     ["5y4xiEmy4Kp3GPH7hUHDnNwwqeoEHgRbMp6HGW2iRKRu5DG2", "1", "5000000000000000"],
     ["5y4xiEmy4Kp3GPH7hUHDnNwwqeoEHgRbMp6HGW2iRKRu5DG2", "4", "5000000000000000"],
-    ["5y4xiEmy4Kp3GPH7hUHDnNwwqeoEHgRbMp6HGW2iRKRu5DG2", "131", "5000000000000000"],
-    ["5yNZjX24n2eg7W6EVamaTXNQbWCwchhThEaSWB7V3GRjtHeL", "5", "10000000000000000000"]
+    ["5y4xiEmy4Kp3GPH7hUHDnNwwqeoEHgRbMp6HGW2iRKRu5DG2", "131", "5000000000000000"]
   ]
 }

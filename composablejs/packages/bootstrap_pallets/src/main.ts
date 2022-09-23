@@ -17,7 +17,7 @@ import { bootstrapPools } from "./bootstrap/pablo";
 import { bootstrapAssets } from "./bootstrap/assets";
 import { bootstrapStakingRewardPools } from "./bootstrap/stakingRewards";
 import { logger } from "@composable/bootstrap_pallets/utils";
-// import { updateStakingRewardPoolRewardConfig } from "./lib/pallets/stakingRewards";
+import { bootstrapCrowdloanRewards } from "./bootstrap";
 
 const main = async () => {
   const rpcUrl = process.env.RPC_URL || "ws://127.0.0.1:9988";
@@ -30,9 +30,9 @@ const main = async () => {
   const types = createTypes(definitions);
   const api = await buildApi(rpcUrl, types, rpc);
 
-  // [WIP] bootstrapCrowdloanRewards
-  // if (config.bootstrapCrowdloanRewards) {
-  // }
+  if (config.bootstrapCrowdloanRewards) {
+    await bootstrapCrowdloanRewards(api, walletSudo);
+  }
 
   if (config.bootstrapBonds) {
     await bootstrapBondOffers(api, dotWallets[0], walletSudo);
@@ -49,21 +49,6 @@ const main = async () => {
   if (config.mintAssetsToWallets) {
     await bootstrapAssets(api, walletSudo, config.mintAssets as [string, string, string][]);
   }
-
-  // 1 million in 5 months
-  // await updateStakingRewardPoolRewardConfig(
-  //   api,
-  //   walletSudo,
-  //   "4294967296",
-  //   {
-  //     "5": {
-  //       rewardRate: {
-  //         period: "PerSecond",
-  //         amount: api.createType("u128", "77160494000")
-  //       }
-  //     }
-  //   }
-  // )
 
   await api.disconnect();
   process.exit(0);

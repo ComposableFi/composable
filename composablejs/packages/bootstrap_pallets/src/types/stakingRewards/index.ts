@@ -6,6 +6,7 @@ export type StakingRewardsPoolConfig = {
     // asset that will be staked
     assetId: u128;
     // end block of the rewards
+    startBlock: u32;
     endBlock: u32;
     rewardConfigs: any;
     lock: any;

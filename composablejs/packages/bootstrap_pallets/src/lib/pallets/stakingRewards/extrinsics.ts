@@ -60,3 +60,33 @@ export async function updateStakingRewardPoolRewardConfig(
     )
   );
 }
+
+/**
+ * Add rewards to pot.
+ * @param {ApiPromise} api Connected API Client.
+ * @param {IKeyringPair} wallet Connected API Promise.
+ * @param {rewardPoolConfig} { poolId: u128, rewardAssetId: u128, rewardAssetAmount: u128}
+ * @param {keepAlive} keep account alive or not
+ */
+ export async function addRewardsToPot(
+  api: ApiPromise,
+  wallet: IKeyringPair,
+  rewardPoolConfig: {
+    poolId: u128,
+    rewardAssetId: u128,
+    rewardAssetAmount: u128,
+  },
+  keepAlive = true
+) {
+  return await sendAndWaitForSuccess(
+    api,
+    wallet,
+    api.events.stakingRewards.RewardsPotIncreased.is,
+    api.tx.stakingRewards.addToRewardsPot(
+      rewardPoolConfig.poolId,
+      rewardPoolConfig.rewardAssetId,
+      rewardPoolConfig.rewardAssetAmount,
+      keepAlive
+    )
+  );
+}
