@@ -1,6 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use core::{fmt::Formatter, str::FromStr, time::Duration, write};
+use core::{fmt::Formatter, str::FromStr, write};
 use frame_support::dispatch::{DispatchResult, Weight};
 use ibc::{
 	core::{
