@@ -58,7 +58,7 @@ pub trait FinancialNftProtocol {
 	fn value_of(
 		collection: &Self::AssetId,
 		instance: &Self::ItemId,
-	) -> Vec<(Self::AssetId, Self::Balance)>;
+	) -> Result<Vec<(Self::AssetId, Self::Balance)>, DispatchError>;
 }
 
 /// Default Version type used for NFTs.
