@@ -120,6 +120,9 @@ pub struct RewardPool<
 	/// Already claimed shares by stakers by unstaking
 	pub claimed_shares: Balance,
 
+	/// Pool will start adding rewards to the pool at this block number.
+	pub start_block: BlockNumber,
+
 	/// Pool would stop adding rewards to pool at this block number.
 	pub end_block: BlockNumber,
 
@@ -176,6 +179,8 @@ pub enum RewardPoolConfiguration<
 		owner: AccountId,
 		/// The staked asset id of the reward pool.
 		asset_id: AssetId,
+		/// Pool will start adding rewards to the pool at this block number.
+		start_block: BlockNumber,
 		/// Pool would stop adding rewards to pool at this block number.
 		end_block: BlockNumber,
 		/// initial reward configuration for this pool

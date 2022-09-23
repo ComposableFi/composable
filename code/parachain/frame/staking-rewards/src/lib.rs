@@ -209,12 +209,16 @@ pub mod pallet {
 		NoDurationPresetsConfigured,
 		/// Too many rewarded asset types per pool violating the storage allowed.
 		TooManyRewardAssetTypes,
+		/// Invalid start block number provided for creating a pool.
+		StartBlockMustBeAfterCurrentBlock,
 		/// Invalid end block number provided for creating a pool.
-		EndBlockMustBeInTheFuture,
+		EndBlockMustBeAfterStartBlock,
 		/// Unimplemented reward pool type.
 		UnimplementedRewardPoolConfiguration,
 		/// Rewards pool not found.
 		RewardsPoolNotFound,
+		/// Rewards pool has not started.
+		RewardsPoolHasNotStarted,
 		/// Error when creating reduction configs.
 		ReductionConfigProblem,
 		/// Not enough assets for a stake.
@@ -450,6 +454,7 @@ pub mod pallet {
 			rewards: Default::default(),
 			total_shares: T::Balance::zero(),
 			claimed_shares: T::Balance::zero(),
+			start_block: T::BlockNumber::zero(),
 			end_block: T::BlockNumber::zero(),
 			lock: LockConfig {
 				duration_presets: [
@@ -626,15 +631,19 @@ pub mod pallet {
 					owner,
 					asset_id: pool_asset,
 					reward_configs: initial_reward_config,
+					start_block,
 					end_block,
 					lock,
 					share_asset_id,
 					financial_nft_asset_id,
 				} => {
+					// now < start_block < end_block
 					ensure!(
-						end_block > frame_system::Pallet::<T>::current_block_number(),
-						Error::<T>::EndBlockMustBeInTheFuture
+						// Exclusively greater than to prevent errors/attacks
+						start_block > frame_system::Pallet::<T>::current_block_number(),
+						Error::<T>::StartBlockMustBeAfterCurrentBlock
 					);
+					ensure!(end_block > start_block, Error::<T>::EndBlockMustBeAfterStartBlock);
 
 					ensure!(
 						!RewardPools::<T>::contains_key(pool_asset),
@@ -660,6 +669,7 @@ pub mod pallet {
 							rewards,
 							total_shares: T::Balance::zero(),
 							claimed_shares: T::Balance::zero(),
+							start_block,
 							end_block,
 							lock,
 							share_asset_id,
@@ -717,6 +727,11 @@ pub mod pallet {
 		) -> Result<Self::PositionId, DispatchError> {
 			let mut rewards_pool =
 				RewardPools::<T>::try_get(pool_id).map_err(|_| Error::<T>::RewardsPoolNotFound)?;
+
+			ensure!(
+				rewards_pool.start_block <= frame_system::Pallet::<T>::current_block_number(),
+				Error::<T>::RewardsPoolHasNotStarted
+			);
 
 			let reward_multiplier = Self::reward_multiplier(&rewards_pool, duration_preset)
 				.ok_or(Error::<T>::NoDurationPresetsConfigured)?;
@@ -1236,22 +1251,25 @@ pub mod pallet {
 			let mut total_weight = unix_time_now_weight;
 
 			RewardPools::<T>::translate(|pool_id, mut reward_pool: RewardPoolOf<T>| {
-				for (asset_id, reward) in &mut reward_pool.rewards {
-					Self::reward_accumulation_hook_reward_update_calculation(
-						pool_id,
-						*asset_id,
-						reward,
-						now_seconds,
-					);
-				}
+				// If reward pool has not started, do not accumulate rewards or adjust weight
+				if reward_pool.start_block <= frame_system::Pallet::<T>::current_block_number() {
+					for (asset_id, reward) in &mut reward_pool.rewards {
+						Self::reward_accumulation_hook_reward_update_calculation(
+							pool_id,
+							*asset_id,
+							reward,
+							now_seconds,
+						);
+					}
 
-				// reward_pool.rewards is limited T::MaxRewardConfigsPerPool, which is Get<u32>
-				let number_of_rewards_in_pool = reward_pool.rewards.len() as u64;
+					// reward_pool.rewards is limited T::MaxRewardConfigsPerPool, which is Get<u32>
+					let number_of_rewards_in_pool = reward_pool.rewards.len() as u64;
 
-				total_weight += (number_of_rewards_in_pool * T::WeightInfo::reward_accumulation_hook_reward_update_calculation()) +
+					total_weight += (number_of_rewards_in_pool * T::WeightInfo::reward_accumulation_hook_reward_update_calculation()) +
 					// NOTE: `StorageMap::translate` does one read and one write per item
 					T::DbWeight::get().reads(1) +
 					T::DbWeight::get().writes(1);
+				}
 
 				Some(reward_pool)
 			});
