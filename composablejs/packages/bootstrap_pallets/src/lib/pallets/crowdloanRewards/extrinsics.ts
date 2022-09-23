@@ -78,7 +78,7 @@ export const populate = async (
       ] as [PalletCrowdloanRewardsModelsRemoteAccount, u128, u32]
   );
 
-  const sliced = relayContributors.slice(0, 50).concat(ethereumContributors.slice(0, 50));
+  const sliced = relayContributors.concat(ethereumContributors);
 
   return await sendAndWaitForSuccess(
     api,
@@ -91,19 +91,14 @@ export const populate = async (
 export const addFundsToCrowdloan = async (
   api: ApiPromise,
   walletSudo: KeyringPair,
-  relayAccounts: Uint8Array[],
-  ethAccounts: string[],
-  rewardsPerAccount: string,
+  amount: u128,
   palletAccountId: string
 ) => {
-  const sliced = relayAccounts.slice(0, 50).length + ethAccounts.slice(0, 50).length;
-  const netRewards = new BigNumber(rewardsPerAccount).times(sliced);
-
-  await mintAssetsToWallets(api, [walletSudo], walletSudo, ["1"], netRewards);
+  await mintAssetsToWallets(api, [walletSudo], walletSudo, ["1"], new BigNumber(amount.toString()));
   await sendAndWaitForSuccess(
     api,
     walletSudo,
     api.events.balances.Transfer.is,
-    api.tx.assets.transfer(1, palletAccountId, api.createType("u128", netRewards), true)
+    api.tx.assets.transfer(1, palletAccountId, amount, true)
   );
 };
