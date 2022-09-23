@@ -1,7 +1,10 @@
 ---
 ignored:
+  - DL3002 # Last USER should not be root.
   - DL3006
   - DL3007
   - DL3008
   - DL3009
+  - DL3018 # Pin versions in apk add.
+  - SC2086 # Double quote to prevent globbing and word splitting.
   - SC2114
