@@ -9,7 +9,7 @@ use composable_tests_helpers::test::{
 	helper::{assert_extrinsic_event, assert_extrinsic_event_with, assert_last_event_with},
 };
 use composable_traits::{
-	fnft::FinancialNft as FinancialNftT,
+	fnft::{FinancialNft as FinancialNftT, FinancialNftProtocol},
 	staking::{
 		lock::{Lock, LockConfig},
 		ProtocolStaking, RewardConfig,
@@ -51,6 +51,11 @@ fn test_create_reward_pool() {
 		assert_eq!(
 			FinancialNft::collections().collect::<BTreeSet<_>>(),
 			BTreeSet::from([PICA::ID])
+		);
+
+		assert_eq!(
+			<StakingRewards as FinancialNftProtocol>::collection_asset_ids(),
+			vec![PICA::ID]
 		);
 	});
 }
@@ -177,9 +182,17 @@ fn stake_in_case_of_zero_inflation_should_work() {
 				fnft_instance_id,
 			})
 		);
-
+		assert_eq!(
+			<StakingRewards as FinancialNftProtocol>::value_of(&PICA::ID, &fnft_instance_id)
+				.expect("must return a value"),
+			vec![(XPICA::ID, StakingRewards::boosted_amount(reward_multiplier, amount))]
+		);
 		assert_eq!(balance(staked_asset_id, &staker), amount);
 		assert_eq!(balance(staked_asset_id, &fnft_asset_account), amount);
+		assert_eq!(
+			balance(XPICA::ID, &fnft_asset_account),
+			StakingRewards::boosted_amount(reward_multiplier, amount)
+		);
 
 		assert_last_event_with::<Test, _>(|event| {
 			matches!(
@@ -350,6 +363,10 @@ fn test_extend_stake_amount() {
 		assert_eq!(
 			balance(staked_asset_id, &FinancialNft::asset_account(&1, &0)),
 			amount + extend_amount
+		);
+		assert_eq!(
+			balance(XPICA::ID, &FinancialNft::asset_account(&1, &0)),
+			boosted_amount + extend_amount
 		);
 		assert_last_event::<Test, _>(|e| {
 			matches!(e.event,
@@ -583,8 +600,6 @@ fn test_transfer_reward() {
 	});
 }
 
-// NOTE(connor): Ignoring because the test fails to correctly configure the reward pool
-#[ignore]
 #[test]
 fn test_split_position() {
 	new_test_ext().execute_with(|| {
@@ -614,7 +629,7 @@ fn test_split_position() {
 		let stake = StakeOf::<Test> {
 			reward_pool_id: PICA::ID,
 			stake: PICA::units(1_000),
-			share: PICA::units(1_000),
+			share: PICA::units(10),
 			reductions: [(USDT::ID, reduction)]
 				.into_iter()
 				.try_collect()
@@ -624,19 +639,20 @@ fn test_split_position() {
 				duration: 10000000_u64,
 				unlock_penalty: Perbill::from_percent(2),
 			},
-			fnft_instance_id: 1,
+			fnft_instance_id: 0,
 		};
+		mint_assets([BOB], [PICA::ID], PICA::units(2000));
 
 		assert_extrinsic_event::<Test, _, _, _>(
-			StakingRewards::stake(Origin::signed(BOB), PICA::ID, PICA::units(1_000), 10_000_000),
+			StakingRewards::stake(Origin::signed(BOB), PICA::ID, PICA::units(1_000), ONE_HOUR),
 			crate::Event::Staked {
 				pool_id: PICA::ID,
 				owner: BOB,
 				amount: PICA::units(1_000),
-				duration_preset: 10_000_000,
+				duration_preset: ONE_HOUR,
 				fnft_collection_id: 1,
-				fnft_instance_id: 1,
-				keep_alive: false,
+				fnft_instance_id: 0,
+				keep_alive: true,
 			},
 		);
 		Stakes::<Test>::insert(1, 0, stake.clone());
@@ -656,6 +672,13 @@ fn test_split_position() {
 		assert_eq!(stake1.reductions.get(&USDT::ID), Some(&ratio.mul_floor(reduction)));
 		assert_eq!(stake2.stake, left_from_one_ratio.mul_floor(stake.stake));
 		assert_eq!(stake2.share, left_from_one_ratio.mul_floor(stake.share));
+
+		assert_eq!(balance(PICA::ID, &FinancialNft::asset_account(&1, &0)), stake1.stake);
+		assert_eq!(balance(XPICA::ID, &FinancialNft::asset_account(&1, &0)), stake1.share);
+
+		assert_eq!(balance(PICA::ID, &FinancialNft::asset_account(&1, &1)), stake2.stake);
+		assert_eq!(balance(XPICA::ID, &FinancialNft::asset_account(&1, &1)), stake2.share);
+
 		assert_eq!(
 			stake2.reductions.get(&USDT::ID),
 			Some(&left_from_one_ratio.mul_floor(reduction))
