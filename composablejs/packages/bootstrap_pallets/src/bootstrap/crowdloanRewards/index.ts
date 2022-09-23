@@ -12,15 +12,15 @@ export async function bootstrapCrowdloanRewards(api: ApiPromise, walletSudo: Key
   let index = 0;
 
   const txCalls = [];
-  const allAcounts = config.crowdloanRewards.ethereumContributors.concat(
+  const allAccounts = config.crowdloanRewards.ethereumContributors.concat(
     config.crowdloanRewards.relayChainContributors
   );
 
   const rewardsPerAccount = api.createType("u128", config.crowdloanRewards.rewardsPerAccount);
   const vestingPeriod = api.createType("u32", config.crowdloanRewards.vestingPeriod);
 
-  while (index < allAcounts.length) {
-    const accounts = allAcounts.slice(index, index + step > allAcounts.length ? allAcounts.length : step);
+  while (index < allAccounts.length) {
+    const accounts = allAccounts.slice(index, index + step > allAccounts.length ? allAccounts.length : step);
     const batchAccounts = accounts.map(account => {
       if (account.startsWith("0x")) {
         return [
@@ -48,7 +48,7 @@ export async function bootstrapCrowdloanRewards(api: ApiPromise, walletSudo: Key
   await addFundsToCrowdloan(
     api,
     walletSudo,
-    api.createType("u128", rewardsPerAccount.mul(new BN(allAcounts.length))),
+    api.createType("u128", rewardsPerAccount.mul(new BN(allAccounts.length))),
     config.crowdloanRewards.palletAccountId
   );
 
