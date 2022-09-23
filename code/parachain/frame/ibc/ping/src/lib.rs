@@ -252,24 +252,9 @@ impl<T: Config + Send + Sync> Module for IbcModule<T> {
 		_relayer: &Signer,
 	) -> OnRecvPacketAck {
 		let success = "ping-success".as_bytes().to_vec();
-		log::info!("Received Packet {:?}", packet.sequence);
+		let data = String::from_utf8(packet.data.clone()).ok();
+		log::info!("Received Packet Sequence {:?}, Packet Data {:?}", packet.sequence, data);
 		let packet = packet.clone();
-		{
-			let timeout_timestamp = Duration::from_secs(86400 * 30);
-			let data = match String::from_utf8(packet.data.clone()).ok() {
-				Some(val) if val == "ping" => b"pong".to_vec(),
-				_ => b"ping".to_vec(),
-			};
-			let send_ping_params = SendPingParams {
-				data,
-				timeout_height_offset: 500,
-				timeout_timestamp_offset: timeout_timestamp.as_nanos() as u64,
-				channel_id: packet.destination_channel.sequence(),
-			};
-			if let Err(e) = Pallet::<T>::send_ping_impl(send_ping_params) {
-				log::trace!(target: "pallet_ibc_ping", "[send_ping] error: {:?}", e);
-			}
-		}
 		OnRecvPacketAck::Successful(
 			Box::new(PingAcknowledgement(success.clone())),
 			Box::new(move |_| {
