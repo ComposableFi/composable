@@ -18,6 +18,7 @@ import {
 import {
   Event,
   EventType,
+  LockedSource,
   PabloPool,
   PabloPoolAsset,
   PabloTransaction,
@@ -280,10 +281,14 @@ export async function processLiquidityAddedEvent(
     await ctx.store.save(eventEntity);
     await ctx.store.save(pabloTransaction);
 
-    await storeHistoricalLockedValue(ctx, {
-      [baseAsset.assetId]: liquidityAddedEvt.baseAmount,
-      [quoteAsset.assetId]: liquidityAddedEvt.quoteAmount,
-    });
+    await storeHistoricalLockedValue(
+      ctx,
+      {
+        [baseAsset.assetId]: liquidityAddedEvt.baseAmount,
+        [quoteAsset.assetId]: liquidityAddedEvt.quoteAmount,
+      },
+      LockedSource.Pablo
+    );
   } else {
     throw new Error("Pool not found");
   }
@@ -386,10 +391,14 @@ export async function processLiquidityRemovedEvent(
     await ctx.store.save(eventEntity);
     await ctx.store.save(pabloTransaction);
 
-    await storeHistoricalLockedValue(ctx, {
-      [baseAsset.assetId]: liquidityRemovedEvt.baseAmount,
-      [quoteAsset.assetId]: liquidityRemovedEvt.quoteAmount,
-    });
+    await storeHistoricalLockedValue(
+      ctx,
+      {
+        [baseAsset.assetId]: -liquidityRemovedEvt.baseAmount,
+        [quoteAsset.assetId]: -liquidityRemovedEvt.quoteAmount,
+      },
+      LockedSource.Pablo
+    );
   } else {
     throw new Error("Pool not found");
   }
