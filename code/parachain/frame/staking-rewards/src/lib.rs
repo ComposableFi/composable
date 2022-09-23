@@ -886,7 +886,7 @@ pub mod pallet {
 					Self::collect_rewards(
 						rewards_pool,
 						&mut stake,
-						&who,
+						who,
 						is_early_unlock,
 						keep_alive,
 					)?;
@@ -912,7 +912,7 @@ pub mod pallet {
 			T::Assets::transfer(
 				asset_id,
 				&fnft_asset_account,
-				&who,
+				who,
 				stake_with_penalty,
 				keep_alive,
 			)?;
@@ -1052,7 +1052,7 @@ pub mod pallet {
 					let rewards_pool =
 						rewards_pool.as_mut().ok_or(Error::<T>::RewardsPoolNotFound)?;
 
-					Self::collect_rewards(rewards_pool, stake, &who, false, keep_alive)?;
+					Self::collect_rewards(rewards_pool, stake, who, false, keep_alive)?;
 
 					Ok::<_, DispatchError>(())
 				})
