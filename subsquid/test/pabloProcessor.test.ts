@@ -202,6 +202,7 @@ function createZeroPool() {
   pabloPool.totalVolume = "0.0";
   pabloPool.totalFees = "0.0";
   pabloPool.transactionCount = 1;
+  pabloPool.lpIssued = BigInt(0);
   pabloPool.blockNumber = BigInt(1);
   pabloPool.poolAssets = [baseAsset, quoteAsset];
   return pabloPool;

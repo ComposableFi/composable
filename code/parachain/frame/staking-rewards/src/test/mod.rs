@@ -4,6 +4,7 @@ use crate::{
 	Config, RewardPoolConfigurationOf, RewardPools, StakeOf, Stakes,
 };
 use composable_tests_helpers::test::{
+	block::process_and_progress_blocks,
 	currency::{BTC, PICA, USDT, XPICA},
 	helper::{assert_extrinsic_event, assert_extrinsic_event_with, assert_last_event_with},
 };
@@ -66,6 +67,7 @@ fn test_create_reward_pool_invalid_end_block() {
 					owner: ALICE,
 					asset_id: PICA::ID,
 					// end block can't be before the current block
+					start_block: 2,
 					end_block: 0,
 					reward_configs: default_reward_config(),
 					lock: default_lock_config(),
@@ -73,7 +75,25 @@ fn test_create_reward_pool_invalid_end_block() {
 					financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
 				}
 			),
-			crate::Error::<Test>::EndBlockMustBeInTheFuture
+			crate::Error::<Test>::EndBlockMustBeAfterStartBlock
+		);
+	});
+}
+
+#[test]
+fn stake_should_fail_before_start_of_rewards_pool() {
+	new_test_ext().execute_with(|| {
+		let staker = ALICE;
+		let amount = 100_500;
+		let duration = ONE_HOUR;
+		let pool_id = PICA::ID;
+
+		process_and_progress_blocks::<StakingRewards, Test>(1);
+		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
+
+		assert_noop!(
+			StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration),
+			crate::Error::<Test>::RewardsPoolHasNotStarted
 		);
 	});
 }
@@ -81,7 +101,7 @@ fn test_create_reward_pool_invalid_end_block() {
 #[test]
 fn stake_in_case_of_low_balance_should_not_work() {
 	new_test_ext().execute_with(|| {
-		System::set_block_number(1);
+		process_and_progress_blocks::<StakingRewards, Test>(1);
 		const AMOUNT: u128 = 100_500_u128;
 
 		create_default_reward_pool();
@@ -89,6 +109,7 @@ fn stake_in_case_of_low_balance_should_not_work() {
 		let asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
 		assert_eq!(balance(asset_id, &ALICE), 0);
 
+		process_and_progress_blocks::<StakingRewards, Test>(1);
 		assert_noop!(
 			StakingRewards::stake(Origin::signed(ALICE), PICA::ID, AMOUNT, ONE_HOUR),
 			crate::Error::<Test>::NotEnoughAssets
@@ -101,7 +122,7 @@ fn stake_in_case_of_low_balance_should_not_work() {
 #[test]
 fn stake_in_case_of_zero_inflation_should_work() {
 	new_test_ext().execute_with(|| {
-		System::set_block_number(1);
+		process_and_progress_blocks::<StakingRewards, Test>(1);
 
 		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
 		let staker: Public = ALICE;
@@ -112,6 +133,7 @@ fn stake_in_case_of_zero_inflation_should_work() {
 		let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
 		mint_assets([staker], [staked_asset_id], amount * 2);
 
+		process_and_progress_blocks::<StakingRewards, Test>(1);
 		let fnft_instance_id = assert_extrinsic_event_with::<Test, _, _, _>(
 			StakingRewards::stake(Origin::signed(staker), PICA::ID, amount, duration_preset),
 			|event| match event {
@@ -148,7 +170,7 @@ fn stake_in_case_of_zero_inflation_should_work() {
 				share: StakingRewards::boosted_amount(reward_multiplier, amount),
 				reductions,
 				lock: Lock {
-					started_at: <Test as crate::Config>::UnixTime::now(),
+					started_at: 12,
 					duration: duration_preset,
 					unlock_penalty: rewards_pool.lock.unlock_penalty,
 				},
@@ -189,7 +211,7 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 		const TOTAL_SHARES: u128 = 200;
 		let fnft_asset_account = FinancialNft::asset_account(&1, &0);
 
-		System::set_block_number(1);
+		process_and_progress_blocks::<StakingRewards, Test>(1);
 		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
 
 		let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
@@ -200,6 +222,7 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 			TOTAL_SHARES,
 		);
 
+		process_and_progress_blocks::<StakingRewards, Test>(1);
 		assert_ok!(StakingRewards::stake(Origin::signed(ALICE), PICA::ID, AMOUNT, DURATION_PRESET));
 		let rewards_pool = StakingRewards::pools(PICA::ID).expect("rewards_pool expected");
 		let reward_multiplier = StakingRewards::reward_multiplier(&rewards_pool, DURATION_PRESET)
@@ -223,7 +246,7 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 				share: StakingRewards::boosted_amount(reward_multiplier, AMOUNT),
 				reductions,
 				lock: Lock {
-					started_at: <Test as crate::Config>::UnixTime::now(),
+					started_at: 12,
 					duration: DURATION_PRESET,
 					unlock_penalty: rewards_pool.lock.unlock_penalty,
 				},
@@ -260,7 +283,7 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 #[test]
 fn test_extend_stake_amount() {
 	new_test_ext().execute_with(|| {
-		System::set_block_number(1);
+		process_and_progress_blocks::<StakingRewards, Test>(1);
 
 		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
 		let staker = ALICE;
@@ -275,13 +298,18 @@ fn test_extend_stake_amount() {
 		let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
 		mint_assets([staker], [staked_asset_id], amount * 2 + existential_deposit);
 		update_total_rewards_and_total_shares_in_rewards_pool(pool_id, total_rewards, total_shares);
+
+		process_and_progress_blocks::<StakingRewards, Test>(1);
 		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration_preset));
+
 		let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
 		let reward_multiplier = StakingRewards::reward_multiplier(&rewards_pool, duration_preset)
 			.expect("reward_multiplier expected");
 		let boosted_amount = StakingRewards::boosted_amount(reward_multiplier, amount);
 		let inflation = boosted_amount * total_rewards / total_shares;
+
 		assert_ok!(StakingRewards::extend(Origin::signed(staker), 1, 0, extend_amount));
+
 		let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
 
 		let total_rewards =	rewards_pool
@@ -312,7 +340,7 @@ fn test_extend_stake_amount() {
 				share: boosted_amount + extend_amount,
 				reductions,
 				lock: Lock {
-					started_at: <Test as crate::Config>::UnixTime::now(),
+					started_at: 12,
 					duration: duration_preset,
 					unlock_penalty: rewards_pool.lock.unlock_penalty,
 				},
@@ -346,6 +374,7 @@ fn unstake_non_existent_stake_should_not_work() {
 #[test]
 fn not_owner_of_stake_can_not_unstake() {
 	new_test_ext().execute_with(|| {
+		process_and_progress_blocks::<StakingRewards, Test>(1);
 		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
 		let owner = ALICE;
 		let not_owner = BOB;
@@ -357,6 +386,7 @@ fn not_owner_of_stake_can_not_unstake() {
 		let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
 		mint_assets([owner, not_owner], [staked_asset_id], amount * 2);
 
+		process_and_progress_blocks::<StakingRewards, Test>(1);
 		assert_ok!(StakingRewards::stake(Origin::signed(owner), pool_id, amount, duration_preset));
 
 		assert_noop!(
@@ -369,7 +399,7 @@ fn not_owner_of_stake_can_not_unstake() {
 #[test]
 fn unstake_in_case_of_zero_claims_and_early_unlock_should_work() {
 	new_test_ext().execute_with(|| {
-		System::set_block_number(1);
+		process_and_progress_blocks::<StakingRewards, Test>(1);
 
 		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
 		let staker = ALICE;
@@ -381,6 +411,7 @@ fn unstake_in_case_of_zero_claims_and_early_unlock_should_work() {
 		let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
 		mint_assets([staker], [staked_asset_id], amount * 2);
 
+		process_and_progress_blocks::<StakingRewards, Test>(1);
 		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration_preset));
 		let unlock_penalty =
 			StakingRewards::stakes(1, 0).expect("stake expected").lock.unlock_penalty;
@@ -562,6 +593,7 @@ fn test_split_position() {
 		let pool_init_config = RewardRateBasedIncentive {
 			owner: ALICE,
 			asset_id: PICA::ID,
+			start_block: 2,
 			end_block: 5,
 			reward_configs: default_reward_config(),
 			lock: default_lock_config(),
@@ -655,11 +687,12 @@ mod claim {
 			total_rewards,
 			total_shares,
 			Some(claim),
-			|pool_id, _, _, staked_asset_id| {
+			|pool_id, _unlock_penalty, _stake_duration, staked_asset_id| {
 				let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
 
 				// Ensure that the value of the staked asset has **not** changed
 				assert_eq!(balance(staked_asset_id, &staker), amount);
+				process_and_progress_blocks::<StakingRewards, Test>(1);
 				assert_ok!(StakingRewards::claim(Origin::signed(staker), 1, 0));
 				assert_eq!(balance(staked_asset_id, &staker), amount);
 
@@ -691,7 +724,7 @@ mod claim {
 			total_rewards,
 			total_shares,
 			Some(claim),
-			|pool_id, _, _, staked_asset_id| {
+			|pool_id, _unlock_penalty, _stake_duration, staked_asset_id| {
 				let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
 
 				// First claim
@@ -739,14 +772,7 @@ mod claim {
 			total_rewards,
 			total_shares,
 			Some(claim),
-			|_, _, stake_duration, _| {
-				let second_in_milliseconds = 1000;
-				Timestamp::set_timestamp(
-					Timestamp::now()
-						.saturating_add(stake_duration.saturating_mul(second_in_milliseconds))
-						.saturating_add(second_in_milliseconds),
-				);
-
+			|_pool_id, _unlock_penalty, _stake_duration, _staked_asset_id| {
 				assert_ok!(StakingRewards::claim(Origin::signed(staker), 1, 0));
 
 				assert_last_event::<Test, _>(|e| {
@@ -778,14 +804,7 @@ mod claim {
 			total_rewards,
 			total_shares,
 			Some(claim),
-			|pool_id, _, stake_duration, _| {
-				let second_in_milliseconds = 1000;
-				Timestamp::set_timestamp(
-					Timestamp::now()
-						.saturating_add(stake_duration.saturating_mul(second_in_milliseconds))
-						.saturating_add(second_in_milliseconds),
-				);
-
+			|pool_id, _unlock_penalty, _stake_duration, _staked_asset_id| {
 				assert_ok!(StakingRewards::claim(Origin::signed(staker), 1, 0));
 
 				assert_last_event::<Test, _>(|e| {
@@ -814,7 +833,6 @@ mod claim {
 ///
 /// `execute` closure will provide:
 /// - `pool_id`
-/// - `stake_id`
 /// - `unlock_penalty`
 /// - `stake_duration`
 /// - `staked_asset_id`
@@ -828,7 +846,7 @@ fn with_stake<R>(
 	execute: impl FnOnce(u128, Perbill, u64, u128) -> R,
 ) -> R {
 	new_test_ext().execute_with(|| {
-		System::set_block_number(1);
+		process_and_progress_blocks::<StakingRewards, Test>(1);
 		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
 
 		let pool_id = PICA::ID;
@@ -843,6 +861,7 @@ fn with_stake<R>(
 
 		update_total_rewards_and_total_shares_in_rewards_pool(pool_id, total_rewards, total_shares);
 
+		process_and_progress_blocks::<StakingRewards, Test>(1);
 		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration));
 		assert_eq!(balance(staked_asset_id, &staker), amount);
 
@@ -869,6 +888,7 @@ fn create_default_reward_pool() {
 			RewardRateBasedIncentive {
 				owner: ALICE,
 				asset_id: PICA::ID,
+				start_block: 2,
 				end_block: 5,
 				reward_configs: default_reward_config(),
 				lock: default_lock_config(),
@@ -885,6 +905,7 @@ fn get_default_reward_pool() -> RewardPoolConfigurationOf<Test> {
 	RewardRateBasedIncentive {
 		owner: ALICE,
 		asset_id: PICA::ID,
+		start_block: 2,
 		end_block: 5,
 		reward_configs: default_reward_config(),
 		lock: default_lock_config(),
@@ -914,14 +935,6 @@ fn default_reward_config() -> BoundedBTreeMap<u128, RewardConfig<u128>, MaxRewar
 	.into_iter()
 	.try_collect()
 	.unwrap()
-}
-
-pub fn assert_has_event<T, F>(matcher: F)
-where
-	T: Config,
-	F: Fn(&EventRecord<Event, H256>) -> bool,
-{
-	assert!(System::events().iter().any(matcher));
 }
 
 pub fn assert_last_event<T, F>(matcher: F)

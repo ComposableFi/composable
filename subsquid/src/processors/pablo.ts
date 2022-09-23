@@ -112,6 +112,7 @@ export async function processPoolCreatedEvent(
     pool.totalVolume = "0.0";
     pool.totalFees = "0.0";
     pool.calculatedTimestamp = timestamp;
+    pool.lpIssued = BigInt(0);
     pool.blockNumber = BigInt(ctx.block.height);
 
     let tx = await ctx.store.get(Event, ctx.event.id);
@@ -219,6 +220,7 @@ export async function processLiquidityAddedEvent(
       .toString();
     pool.calculatedTimestamp = timestamp;
     pool.blockNumber = BigInt(ctx.block.height);
+    pool.lpIssued += liquidityAddedEvt.mintedLp;
 
     // find baseAsset: Following is only valid for dual asset pools
     const baseAsset = pool.poolAssets.find(
@@ -325,6 +327,7 @@ export async function processLiquidityRemovedEvent(
       .toString();
     pool.calculatedTimestamp = timestamp;
     pool.blockNumber = BigInt(ctx.block.height);
+    pool.lpIssued = BigInt(liquidityRemovedEvt.totalIssuance);
 
     // find baseAsset: Following is only valid for dual asset pools
     const baseAsset = pool.poolAssets.find(
