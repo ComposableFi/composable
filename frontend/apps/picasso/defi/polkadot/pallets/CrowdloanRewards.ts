@@ -8,6 +8,7 @@ export class CrowdloanRewards {
   constructor(api: ApiPromise) {
     this.api = api;
   }
+
   /**
    * Send association to picasso chain
    * @param proof Signed hash by contributor
@@ -23,11 +24,11 @@ export class CrowdloanRewards {
 
     const association = !!contributorAccount
       ? {
-          RelayChain: [
-            this.api.createType("AccountId32", contributorAccount),
-            { Sr25519: proof },
-          ],
-        }
+        RelayChain: [
+          this.api.createType("AccountId32", contributorAccount),
+          { Sr25519: proof }
+        ]
+      }
       : { Ethereum: proof };
 
     return this.api.tx.crowdloanRewards
@@ -41,6 +42,7 @@ export class CrowdloanRewards {
     //   ()
     // )
   }
+
   /**
    * Claim Rewards
    * @param rewardsAccount SS58 format string
@@ -49,11 +51,12 @@ export class CrowdloanRewards {
     const methodResult = await this.api.tx.crowdloanRewards
       .claim()
       .signAndSend(rewardAccount, {
-        signer: injectedSigner,
+        signer: injectedSigner
       });
 
     return methodResult.toHuman();
   }
+
   /**
    * Query association
    */
@@ -72,11 +75,11 @@ export class CrowdloanRewards {
   public async queryRewards(userAccount: string, isRelayChain: boolean) {
     let param = isRelayChain
       ? this.api.createType("PalletCrowdloanRewardsModelsRemoteAccount", {
-          RelayChain: this.api.createType("AccountId32", userAccount),
-        })
+        RelayChain: this.api.createType("AccountId32", userAccount)
+      })
       : this.api.createType("PalletCrowdloanRewardsModelsRemoteAccount", {
-          Ethereum: userAccount,
-        });
+        Ethereum: userAccount
+      });
 
     let rewards: any = await this.api.query.crowdloanRewards.rewards(param);
 

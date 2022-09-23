@@ -1,24 +1,14 @@
-import {
-  fromChainIdUnit,
-  humanBalance,
-  toChainIdUnit,
-  unwrapNumberOrHex,
-} from "shared";
+import { fromChainIdUnit, humanBalance, toChainIdUnit, unwrapNumberOrHex } from "shared";
 import { FeeDisplay } from "@/components";
-import React, { useCallback, useEffect, useMemo } from "react";
+import React, { useCallback, useEffect } from "react";
 import { useStore } from "@/stores/root";
 import { useAllParachainProviders } from "@/defi/polkadot/context/hooks";
 import { useExecutor } from "substrate-react";
 import { useSelectedAccount } from "@/defi/polkadot/hooks";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { AssetId } from "@/defi/polkadot/types";
-import {
-  getTransferCallKaruraPicasso,
-  getTransferCallKusamaPicasso,
-  getTransferCallPicassoKarura,
-  getTransferCallPicassoKusama,
-} from "@/components/Organisms/Transfer/xcmp";
 import BigNumber from "bignumber.js";
+import { getApiCallAndSigner } from "@/defi/polkadot/pallets/Transfer";
 
 export const TransferFeeDisplay = () => {
   const { tokenId } = useStore(({ transfers }) => transfers);
@@ -50,7 +40,7 @@ export const TransferFeeDisplay = () => {
       ? assets[feeItem as AssetId].meta.supportedNetwork[from]
       : null;
 
-  const calculateFee = useCallback(() => {
+  const calculateFee = useCallback(async () => {
     if (
       !provider.parachainApi ||
       !executor ||
@@ -78,66 +68,31 @@ export const TransferFeeDisplay = () => {
     );
     const signerAddress = account.address;
 
-    const getCall = async () => {
-      const context = async () => {
-        switch (`${from}-${to}`) {
-          case "picasso-kusama":
-            return await getTransferCallPicassoKusama(
-              api,
-              TARGET_ACCOUNT_ADDRESS,
-              amountToTransfer,
-              feeItemId,
-              signerAddress,
-              hasFeeItem
-            );
-          case "picasso-karura":
-            return await getTransferCallPicassoKarura(
-              api,
-              TARGET_PARACHAIN_ID,
-              TARGET_ACCOUNT_ADDRESS,
-              hasFeeItem,
-              signerAddress,
-              amountToTransfer,
-              feeItemId
-            );
-          case "kusama-picasso":
-            return await getTransferCallKusamaPicasso(
-              api,
-              TARGET_PARACHAIN_ID,
-              TARGET_ACCOUNT_ADDRESS,
-              amountToTransfer,
-              signerAddress
-            );
-          case "karura-picasso":
-            return await getTransferCallKaruraPicasso(
-              api,
-              TARGET_PARACHAIN_ID,
-              TARGET_ACCOUNT_ADDRESS,
-              signerAddress,
-              amountToTransfer
-            );
-          default:
-            throw new Error("Invalid network");
-        }
-      };
-      const { call, signer } = await context();
 
-      executor.paymentInfo(call, account.address, signer).then((info) => {
-        updateFee({
-          class: info.class.toString(),
-          partialFee: fromChainIdUnit(
-            unwrapNumberOrHex(info.partialFee.toString())
-          ),
-          weight: unwrapNumberOrHex(info.weight.toString()),
-        } as {
-          class: string;
-          partialFee: BigNumber;
-          weight: BigNumber;
-        });
+    const { call, signer } = await getApiCallAndSigner(
+      api,
+      TARGET_ACCOUNT_ADDRESS,
+      amountToTransfer,
+      feeItemId,
+      signerAddress,
+      TARGET_PARACHAIN_ID,
+      from,
+      to,
+      hasFeeItem
+    );
+    executor.paymentInfo(call, account.address, signer).then((info) => {
+      updateFee({
+        class: info.class.toString(),
+        partialFee: fromChainIdUnit(
+          unwrapNumberOrHex(info.partialFee.toString())
+        ),
+        weight: unwrapNumberOrHex(info.weight.toString())
+      } as {
+        class: string;
+        partialFee: BigNumber;
+        weight: BigNumber;
       });
-    };
-
-    getCall();
+    });
   }, [
     provider.parachainApi,
     executor,
@@ -151,7 +106,7 @@ export const TransferFeeDisplay = () => {
     keepAlive,
     existentialDeposit,
     updateFee,
-    feeItem.length,
+    feeItem.length
   ]);
 
   useEffect(() => {
@@ -163,7 +118,7 @@ export const TransferFeeDisplay = () => {
       label="Fee"
       feeText={`${humanBalance(fee.partialFee)} ${symbol}`}
       TooltipProps={{
-        title: "Fee tooltip title",
+        title: "Fee tooltip title"
       }}
     />
   );
