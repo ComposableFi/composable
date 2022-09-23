@@ -1,7 +1,7 @@
 {
   "bootstrapPools": false,
   "bootstrapBonds": false,
-  "bootstrapCrowdloanRewards": false,
+  "bootstrapCrowdloanRewards": true,
   "bootstrapRewardPools": false,
   "mintAssetsToWallets": false,
   "bondOffers": [
@@ -89,30 +89,28 @@
     "rewardsPerAccount": "1000000000000000",
     "vestingPeriod": "100800",
     "relayChainContributors": [
-      "5w53mgBc2w2kNQZgFBaYT5h79cQQNfv8vUuoa85zUe5VxBvQ",
-      "5tirEmQwRYbyadq5QrrFvnPNBPf4WLXsh97qHJUqcqMADDQ9",
-      "5z3wa9ojQra3HqeJthg9Q6hQnsRDsUgH6DC7ZXkb7YXofh3m",
-      "5uxGz8eZmbjvVBMpun9nvQ3G8s5cWD5xHnzgU6SHyAnJf9Vy",
-      "5vVWqFFPg258rCUy1HabDSf6z1bnRbKeDWKYF3XrVLvk3nEc",
-      "5vVWqFFPg258rCUy1HabDSf6z1bnRbKeDWKYF3XrVLvk3nEc",
-      "5ygiZBBgoTEjJqu3hpTQAw9oqaoEaz9eSJUBYGoTguG2qsQ3",
-      "5y4xiEmy4Kp3GPH7hUHDnNwwqeoEHgRbMp6HGW2iRKRu5DG2",
-      "5uu3rSLY94uVPFayjHcj1bqcQExZbUiQ4UforfVFACt3T2qF"
+      "H4xZcL1zehsvdGK8Sw732SyTr5Qi4q8Vc47MNoZf8UyqyGh",
+      "HgiQYjjjn8Zy5tF8o7HRaeqTn5R1NZBa6S1d9aJviK7cyPK",
+      "Du3hotb5PoL3VaBAGGcGFLe2SEk1s7wCGddwYG6Q1w8E4UD",
+      "H7LFPcSmVTSzQVo5qfEPJM3gnDHUWcPuh5LnC1PV7w3XrEn",
+      "G5BECyNgt63KiNH4r21ptX75rhMw8czam6jRMLEaAmmBENv",
+      "EM7mTZ2FZxeZ6hbrGD5XnTkG3Jt3QJYSkLJsp4dQKkYQwvb",
+      "HRywKMedvg8Xx5qmFSYvNbfFRR2H6A669nArei6s6c1tWmM",
+      "EVGfNJpyC2TRJYvQqewiuQJip6P5j774scMdgnw96PKDAgf",
+      "CuThjuWjuMcHLWwXY4PBTtV5sKerr5cheB3Uv3jkvVswGYp",
+      "EFkdwvQG1yZpqHRrRmfPuKDKJsG35XMLkFnW2Wu7oNLjoYa",
+      "Cir68xzMsVpEspGqqW9BRtPoawEviwQpw5fNBFgreQEz6Ri",
+      "F53d3jeyFvb2eYsgAERhjC8mogao4Kg4GsdezrqiT8aj55v",
+      "DxGqWCchvdm9RM2LkogB3YHm4MnvbVVRaxWYyD9CyqPRnbs",
+      "DJohWsywfEYCY96uEjEqoRx59F79XqRdcPbpo25tMFo9LTg"
     ],
     "ethereumContributors": [
-      "0x33Cd07B1ae8485a6090091ee55389237eCB0Aed4",
-      "0xfe302f2D69cAf32d71812587ECcd4fcDF8287E22",
-      "0x38650E1FD89E6bBEfDD2f150190C70da02454b93",
-      "0x98729c03c4d5e820f5e8c45558ae07ae63f97461",
-      "0xf6ce427c29746936c954a30e892e829b65c0b22e",
-      "0x33cd07b1ae8485a6090091ee55389237ecb0aed4",
-      "0xfe302f2d69caf32d71812587eccd4fcdf8287e22",
-      "0x38650e1fd89e6bbefdd2f150190c70da02454b93",
-      "0x8d520d016246f31fe7a676648f1fd5e55ec5562d",
-      "0xd96dc025c835f155534a33a15d24482b257c7652",
-      "0x1af36325e7745cb77afad9f40c831b26d9f0324a",
-      "0x8288ec58506b8ab4137d84a62c85e90c01e9d5aa",
-      "0x6528f1110c293afa7b28aa2ba79eb038194eb182"
+      "0xf6ce427c29746936C954a30e892e829b65C0b22E",
+      "0x4Bf3f796Cea7f55B9378Fb7930AadE0e32cdce87",
+      "0x122e13B4BDA5E50E4427D41E6F93E24fFaDB1E1D",
+      "0xA907d669A5DF895E5F93d7b0d0338b94432F7Cf8",
+      "0xDC3eAe8617082998617bB0292f664bF35a5805FB",
+      "0x98729c03c4D5e820F5e8c45558ae07aE63F97461"
     ]
   },
   "mintAssets": [
