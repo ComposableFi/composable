@@ -40,7 +40,7 @@ Pallets can be configured dependent on protocol needs.
    met)
 - Only members of collective can propose dispatchable (hence it is not `democracy`)
 - Allows to seed initial members via root call
-- Usage [picasso](../book/src/products/the-picasso-parachain/council.md)
+- Usage [picasso](./council.md)
 
  **Ranked collective**:
 

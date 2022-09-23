@@ -1,4 +1,4 @@
-![picasso_banner](../picasso-banner.png)
+![picasso_banner](./picasso-banner.png)
 
 ---
 
@@ -8,15 +8,25 @@
 
 ## Overview
 
-Apollo is an oracle for submitting prices on-chain. We plan to upgrade it and allow everyone to stream arbitrary third party data in the future. By taking part in Apollo and becoming an oracle operator, you will be securing the assets prices and help the network become more resilient. Participants receive tokens as rewards for their work, but it is important to note that the on-chain algorithm also allows for slashing based on bad behavior, which is defined as submitting prices out of a certain threshold range from a pivot price calculated on all submitted prices.
+Apollo is an oracle for submitting prices on-chain. 
+We plan to upgrade it and allow everyone to stream arbitrary third party data in the future. 
+By taking part in Apollo and becoming an oracle operator, 
+you will be securing the assets prices and help the network become more resilient. 
+Participants receive tokens as rewards for their work, 
+but it is important to note that the on-chain algorithm also allows for slashing based on bad behavior, 
+which is defined as submitting prices out of a certain threshold range from a pivot price calculated on all submitted prices.
 
-Apollo consists of three key components. The On-chain pallet/worker that decides when a price is requested. An Off-Chain worker that monitors when a price has been requested and if so, submits a price for the request. Finally, a Price-Feed (we provide a reference implementation for this component) that fetches the prices from a CEX/DEX and caches them, such that the Off-Chain worker is able to query those prices and stream them by submitting a transaction. Below is a high level diagram that shows the interactions between the components.
+Apollo consists of three key components. The On-chain pallet/worker that decides when a price is requested. 
+An Off-Chain worker that monitors when a price has been requested and if so, submits a price for the request. 
+Finally, a Price-Feed (we provide a reference implementation for this component) that fetches the prices from a CEX/DEX 
+and caches them, such that the Off-Chain worker is able to query those prices and stream them by submitting a transaction. 
+Below is a high level diagram that shows the interactions between the components.
 
 
 ## High level architecture
 
 
-![oracle_architecture](./oracle-architecture.jpg)
+![oracle_architecture](./oracle-set-up-guide/oracle-architecture.jpg)
 
 
 1. Apollo off-chain worker monitors on-chain price requests.
@@ -183,11 +193,11 @@ Please note that port 9944 doesn't have pallet functionality; it is a relay node
 
 Make sure you have connected to the right port. 
 
-![polkadotjs_web_interface](./polkadotjs-web-interface.png)
+![polkadotjs_web_interface](./oracle-set-up-guide/polkadotjs-web-interface.png)
 
 You should see the block explorer:
 
-![block_explorer](./block-explorer.png)
+![block_explorer](./oracle-set-up-guide/block-explorer.png)
 
 In this web UI we will run extrinsics & RPCs, to attach the price feed to the node.
 
@@ -195,7 +205,11 @@ In this web UI we will run extrinsics & RPCs, to attach the price feed to the no
 
 Composable provides a reference implementation for the price-feed server. It can be found 
 
-at the following address, in the [Composable GitHub repository](https://github.com/ComposableFi/composable/tree/main/code/utils/price-feed). The implementation is general enough and allows any fork to implement a new feed easily. By default, the prices are fetched from the [Binance public websocket API](https://docs.binance.org/api-reference/dex-api/ws-streams.html#4-trades).
+at the following address, in the 
+[Composable GitHub repository](https://github.com/ComposableFi/composable/tree/main/utils/price-feed). 
+The implementation is general enough and allows any fork to implement a new feed easily. 
+By default, the prices are fetched from the 
+[Binance public websocket API](https://docs.binance.org/api-reference/dex-api/ws-streams.html#4-trades).
 
 ### Setup
 
@@ -238,7 +252,7 @@ Currently only the price for KSM is supported, which can be accessed using the f
 [http://127.0.0.1:3001/price/4](http://127.0.0.1:3001/price/4)
 
 
-![price_feed_output](./price-feed-output.png)
+![price_feed_output](./oracle-set-up-guide/price-feed-output.png)
 
 
 price-feed output should look like this.
@@ -306,9 +320,11 @@ OPTIONS:
 
 ## Setting up Apollo (becoming an Oracle)
 
-In order for a Collator to become an Apollo Oracle, you need to make sure that you deployed a price-feed server along your node. 
+In order for a Collator to become an Apollo Oracle, you need to make sure that you deployed a price-feed server along 
+your node. 
 
-Once you have node and price-feed setup and running, the following steps will be required to bind your price-feed to the node.
+Once you have node and price-feed setup and running, the following steps will be required to bind your price-feed to the 
+node.
 
 These are the wallet details for the Alice developer wallet.
 
@@ -384,13 +400,14 @@ suri: bottom drive obey lake curtain smoke basket hold race lonely fit walk//Ali
 publicKey: 5yNZjX24n2eg7W6EVamaTXNQbWCwchhThEaSWB7V3GRjtHeL
 ```
 
-![register_offchain_worker](./register-offchain-worker.png)
+![register_offchain_worker](./oracle-set-up-guide/register-offchain-worker.png)
 
 
-After successfully following these steps, you should see the blockchain successfully getting prices submitted, every few blocks.
+After successfully following these steps, you should see the blockchain successfully getting prices submitted, every few
+blocks.
 
 
-![successful_price_submitted](./successful-price-submitted.png)
+![successful_price_submitted](./oracle-set-up-guide/successful-price-submitted.png)
 
 
 ### 2. Manual Setup
@@ -404,7 +421,8 @@ For the manual setup we need to do the following:
 
 **Register price feed URL**
 
-Register your price-feed url in the local storage,` kind` must be **PERSISTENT**, the key is **ocw-url,** and the value is** [http://localhost:3001/price/](http://my-price-feed.com/prices/)**
+Register your price-feed url in the local storage,` kind` must be **PERSISTENT**, the key is **ocw-url,** and the value 
+is **[http://localhost:3001/price/](http://my-price-feed.com/prices/)**
 
 JavaScript:
 
@@ -417,7 +435,7 @@ To do this go to:
 _Developer menu -> RPC calls -> offchain -> **localStorageSet**_ \
 
 
-![manual_register_price_feed](./manual-register-price-feed.png)
+![manual_register_price_feed](./oracle-set-up-guide/manual-register-price-feed.png)
 
 
 **Register offchain worker**
@@ -429,12 +447,14 @@ _Developer menu -> RPC calls -> author -> **insertKey**_
 And enter the details above, as seen in the screenshot and press: “Submit RPC call”.
 
 
-![register_offchain_worker](./register-offchain-worker.png)
+![register_offchain_worker](./oracle-set-up-guide/register-offchain-worker.png)
 
 
 **Setting signer**
 
-Bond the controller account by submitting a set_signer transaction (tie the Signer to the Controller). This transaction **must** be sent by the controller. The controller **must have the necessary bond amount** as it will be transferred to the signer and put on hold (reserved).
+Bond the controller account by submitting a set_signer transaction (tie the Signer to the Controller). This transaction 
+**must** be sent by the controller. The controller **must have the necessary bond amount** as it will be transferred to 
+the signer and put on hold (reserved).
 
 JavaScript:
 
@@ -442,17 +462,19 @@ JavaScript:
 api.tx.oracle.setSigner(address);
 ```
 
-Setting the signer automatically adds a small amount of funds to the oracle stake of this wallet. These are required for submitting prices.
+Setting the signer automatically adds a small amount of funds to the oracle stake of this wallet. These are required for
+submitting prices.
 
 _Developer -> extrinsics -> Oracle -> setSinger_
 
 
-![manual_set_signer](./manual-set-signer.png)
+![manual_set_signer](./oracle-set-up-guide/manual-set-signer.png)
 
 
 **Create oracle for asset**
 
-We can create an oracle for an asset by using the extrinsic _oracle.addAssetAndInfo(...)_ and calling it using administrative rights. To call this extrinsic as an administrator go to:
+We can create an oracle for an asset by using the extrinsic _oracle.addAssetAndInfo(...)_ and calling it using 
+administrative rights. To call this extrinsic as an administrator go to:
 
 _Developer -> Sudo -> Oracle **-> addAssetAndInfo	**_
 
@@ -466,22 +488,21 @@ _Developer -> Sudo -> Oracle **-> addAssetAndInfo	**_
 * reward: 10000
 * slash: 10000
 
-![create_oracle_for_asset](./create-oracle-for-asset.png)
+![create_oracle_for_asset](./oracle-set-up-guide/create-oracle-for-asset.png)
 
 
-![authorize_transaction](./authorize-transaction.png)
+![authorize_transaction](./oracle-set-up-guide/authorize-transaction.png)
 
 
-After successfully following these steps, you should see the blockchain successfully getting prices submitted, every few blocks.
+After successfully following these steps, you should see the blockchain successfully getting prices submitted, every few
+blocks.
 
 
-![successful_price_submitted](./successful-price-submitted.png)
+![successful_price_submitted](./oracle-set-up-guide/successful-price-submitted.png)
 
 
 ____
 
 External Link 
 
-PolkadotJS API 
-
-[https://polkadot.js.org/docs/](https://polkadot.js.org/docs/)
+[Polkadotjs API](https://polkadot.js.org/docs/)
