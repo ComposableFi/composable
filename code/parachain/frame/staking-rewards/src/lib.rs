@@ -227,10 +227,8 @@ pub mod pallet {
 		StakeNotFound,
 		/// Reward's max limit reached.
 		MaxRewardLimitReached,
-		/// Only pool owner can add new reward asset.
-		OnlyPoolOwnerCanAddNewReward,
 		/// only the owner of stake can unstake it
-		OnlyStakeOwnerCanUnstake,
+		OnlyStakeOwnerCanInteractWithStake,
 		/// Reward asset not found in reward pool.
 		RewardAssetNotFound,
 		BackToTheFuture,
@@ -526,10 +524,14 @@ pub mod pallet {
 			fnft_instance_id: T::FinancialNftInstanceId,
 			amount: T::Balance,
 		) -> DispatchResult {
-			let owner = ensure_signed(origin)?;
+			let who = Self::ensure_stake_owner(
+				ensure_signed(origin)?,
+				&fnft_collection_id,
+				&fnft_instance_id,
+			)?;
 			let keep_alive = true;
 			let _position_id = <Self as Staking>::extend(
-				&owner,
+				&who,
 				(fnft_collection_id, fnft_instance_id),
 				amount,
 				keep_alive,
@@ -547,8 +549,13 @@ pub mod pallet {
 			fnft_collection_id: T::AssetId,
 			fnft_instance_id: T::FinancialNftInstanceId,
 		) -> DispatchResult {
-			let owner = ensure_signed(origin)?;
-			<Self as Staking>::unstake(&owner, &(fnft_collection_id, fnft_instance_id))?;
+			let who = Self::ensure_stake_owner(
+				ensure_signed(origin)?,
+				&fnft_collection_id,
+				&fnft_instance_id,
+			)?;
+
+			<Self as Staking>::unstake(&who, &(fnft_collection_id, fnft_instance_id))?;
 
 			Ok(())
 		}
@@ -560,7 +567,11 @@ pub mod pallet {
 			fnft_instance_id: T::FinancialNftInstanceId,
 			ratio: Validated<Permill, ValidSplitRatio>,
 		) -> DispatchResult {
-			let who = ensure_signed(origin)?;
+			let who = Self::ensure_stake_owner(
+				ensure_signed(origin)?,
+				&fnft_collection_id,
+				&fnft_instance_id,
+			)?;
 			<Self as Staking>::split(&who, &(fnft_collection_id, fnft_instance_id), ratio.value())?;
 			Ok(())
 		}
@@ -591,7 +602,11 @@ pub mod pallet {
 			fnft_collection_id: T::AssetId,
 			fnft_instance_id: T::FinancialNftInstanceId,
 		) -> DispatchResult {
-			let owner = ensure_signed(origin)?;
+			let owner = Self::ensure_stake_owner(
+				ensure_signed(origin)?,
+				&fnft_collection_id,
+				&fnft_instance_id,
+			)?;
 			<Self as Staking>::claim(&owner, &(fnft_collection_id, fnft_instance_id))?;
 
 			Ok(())
@@ -860,11 +875,6 @@ pub mod pallet {
 			let mut stake = Stakes::<T>::try_get(fnft_collection_id, fnft_instance_id)
 				.map_err(|_| Error::<T>::StakeNotFound)?;
 
-			let owner = T::FinancialNft::owner(fnft_collection_id, fnft_instance_id)
-				.ok_or(Error::<T>::FnftNotFound)?;
-
-			ensure!(who == &owner, Error::<T>::OnlyStakeOwnerCanUnstake);
-
 			let is_early_unlock = stake.lock.started_at.safe_add(&stake.lock.duration)? >=
 				T::UnixTime::now().as_secs();
 
@@ -876,7 +886,7 @@ pub mod pallet {
 					Self::collect_rewards(
 						rewards_pool,
 						&mut stake,
-						&owner,
+						who,
 						is_early_unlock,
 						keep_alive,
 					)?;
@@ -902,7 +912,7 @@ pub mod pallet {
 			T::Assets::transfer(
 				asset_id,
 				&fnft_asset_account,
-				&owner,
+				who,
 				stake_with_penalty,
 				keep_alive,
 			)?;
@@ -1042,10 +1052,7 @@ pub mod pallet {
 					let rewards_pool =
 						rewards_pool.as_mut().ok_or(Error::<T>::RewardsPoolNotFound)?;
 
-					let owner = T::FinancialNft::owner(fnft_collection_id, fnft_instance_id)
-						.ok_or(Error::<T>::FnftNotFound)?;
-
-					Self::collect_rewards(rewards_pool, stake, &owner, false, keep_alive)?;
+					Self::collect_rewards(rewards_pool, stake, who, false, keep_alive)?;
 
 					Ok::<_, DispatchError>(())
 				})
@@ -1081,6 +1088,24 @@ pub mod pallet {
 		) -> DispatchResult {
 			T::Assets::mint_into(share_asset_id, fnft_account, awarded_shares)?;
 			T::Assets::set_lock(T::LockId::get(), share_asset_id, fnft_account, awarded_shares)
+		}
+
+		/// Ensure `who` is the owner of the fNFT associated with a stake
+		///
+		/// # Errors
+		/// * FnftNotFound - No fNFT with the provided collection and instance ID found
+		/// * OnlyStakeOwnerCanUnstake -
+		pub(crate) fn ensure_stake_owner(
+			who: T::AccountId,
+			fnft_collection_id: &T::AssetId,
+			fnft_instance_id: &T::FinancialNftInstanceId,
+		) -> Result<T::AccountId, DispatchError> {
+			let owner = T::FinancialNft::owner(fnft_collection_id, fnft_instance_id)
+				.ok_or(Error::<T>::FnftNotFound)?;
+
+			ensure!(who == owner, Error::<T>::OnlyStakeOwnerCanInteractWithStake);
+
+			Ok(who)
 		}
 
 		pub(crate) fn split_lock(
@@ -1306,71 +1331,62 @@ pub mod pallet {
 			reward_currency: Self::AssetId,
 			reward_increment: Self::Balance,
 		) -> DispatchResult {
-			RewardPools::<T>::try_mutate(pool, |reward_pool| {
-				match reward_pool {
-					Some(reward_pool) => {
-						match reward_pool.rewards.get_mut(&reward_currency) {
-							Some(mut reward) => {
-								let new_total_reward =
-									reward.total_rewards.safe_add(&reward_increment)?;
-								ensure!(
-									(new_total_reward
-										.safe_sub(&reward.total_dilution_adjustment)?) <=
-										reward.max_rewards,
-									Error::<T>::MaxRewardLimitReached
-								);
-								reward.total_rewards = new_total_reward;
-								let pool_account = Self::pool_account_id(pool);
-								T::Assets::transfer(
-									reward_currency,
-									from,
-									&pool_account,
-									reward_increment,
-									false,
-								)?;
-							},
-							None => {
-								// new reward asset so only pool owner is allowed to add.
-								// TODO (vim): consider enabling this later
-								// ensure!(
-								// 	*from == reward_pool.owner,
-								// 	Error::<T>::OnlyPoolOwnerCanAddNewReward
-								// );
-								let reward = Reward {
-									total_rewards: reward_increment,
-									claimed_rewards: Zero::zero(),
-									total_dilution_adjustment: T::Balance::zero(),
-									max_rewards: max(reward_increment, DEFAULT_MAX_REWARDS.into()),
-									reward_rate: RewardRate {
-										amount: T::Balance::zero(),
-										period: RewardRatePeriod::PerSecond,
-									},
-									last_updated_timestamp: 0,
-								};
-								reward_pool
-									.rewards
-									.try_insert(reward_currency, reward)
-									.map_err(|_| Error::<T>::TooManyRewardAssetTypes)?;
-								let pool_account = Self::pool_account_id(pool);
-								T::Assets::transfer(
-									reward_currency,
-									from,
-									&pool_account,
-									reward_increment,
-									false,
-								)?;
-							},
-						}
-						Self::deposit_event(Event::RewardTransferred {
-							from: from.clone(),
-							pool_id: *pool,
-							reward_currency,
-							reward_increment,
-						});
-						Ok(())
-					},
-					None => Err(Error::<T>::RewardsPoolNotFound.into()),
-				}
+			RewardPools::<T>::try_mutate(pool, |reward_pool| match reward_pool {
+				Some(reward_pool) => {
+					match reward_pool.rewards.get_mut(&reward_currency) {
+						Some(mut reward) => {
+							let new_total_reward =
+								reward.total_rewards.safe_add(&reward_increment)?;
+							ensure!(
+								(new_total_reward.safe_sub(&reward.total_dilution_adjustment)?) <=
+									reward.max_rewards,
+								Error::<T>::MaxRewardLimitReached
+							);
+							reward.total_rewards = new_total_reward;
+							let pool_account = Self::pool_account_id(pool);
+							T::Assets::transfer(
+								reward_currency,
+								from,
+								&pool_account,
+								reward_increment,
+								false,
+							)?;
+						},
+						None => {
+							let reward = Reward {
+								total_rewards: reward_increment,
+								claimed_rewards: Zero::zero(),
+								total_dilution_adjustment: T::Balance::zero(),
+								max_rewards: max(reward_increment, DEFAULT_MAX_REWARDS.into()),
+								reward_rate: RewardRate {
+									amount: T::Balance::zero(),
+									period: RewardRatePeriod::PerSecond,
+								},
+								last_updated_timestamp: 0,
+							};
+							reward_pool
+								.rewards
+								.try_insert(reward_currency, reward)
+								.map_err(|_| Error::<T>::TooManyRewardAssetTypes)?;
+							let pool_account = Self::pool_account_id(pool);
+							T::Assets::transfer(
+								reward_currency,
+								from,
+								&pool_account,
+								reward_increment,
+								false,
+							)?;
+						},
+					}
+					Self::deposit_event(Event::RewardTransferred {
+						from: from.clone(),
+						pool_id: *pool,
+						reward_currency,
+						reward_increment,
+					});
+					Ok(())
+				},
+				None => Err(Error::<T>::RewardsPoolNotFound.into()),
 			})
 		}
 	}
