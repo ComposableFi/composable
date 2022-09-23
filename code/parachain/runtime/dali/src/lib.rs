@@ -1576,7 +1576,7 @@ impl_runtime_apis! {
 				label,
 				funds,
 				gas,
-				message.into()
+				message
 			).map_err(|err| alloc::format!("{:?}", err).into_bytes())
 		}
 	}

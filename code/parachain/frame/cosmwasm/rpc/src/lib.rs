@@ -11,36 +11,42 @@ use sp_blockchain::HeaderBackend;
 use sp_runtime::{generic::BlockId, traits::Block as BlockT};
 use sp_std::{cmp::Ord, collections::btree_map::BTreeMap, sync::Arc};
 
-#[rpc(client, server)]
-pub trait CosmwasmApi<BlockHash, AccountId, AssetId, Balance, Error>
-where
-	AccountId: FromStr + Display,
-	AssetId: FromStr + Display + Ord,
-	Balance: FromStr + Display,
-{
-	#[method(name = "cosmwasm_query")]
-	fn query(
-		&self,
-		contract: AccountId,
-		gas: u64,
-		query_request: Vec<u8>,
-		at: Option<BlockHash>,
-	) -> RpcResult<Vec<u8>>;
+#[allow(clippy::too_many_arguments)]
+mod cosmwasm_api {
+	use super::*;
+	#[rpc(client, server)]
+	pub trait CosmwasmApi<BlockHash, AccountId, AssetId, Balance, Error>
+	where
+		AccountId: FromStr + Display,
+		AssetId: FromStr + Display + Ord,
+		Balance: FromStr + Display,
+	{
+		#[method(name = "cosmwasm_query")]
+		fn query(
+			&self,
+			contract: AccountId,
+			gas: u64,
+			query_request: Vec<u8>,
+			at: Option<BlockHash>,
+		) -> RpcResult<Vec<u8>>;
 
-	#[method(name = "cosmwasm_instantiate")]
-	fn instantiate(
-		&self,
-		instantiator: AccountId,
-		code_id: u64,
-		salt: Vec<u8>,
-		admin: Option<AccountId>,
-		label: Vec<u8>,
-		funds: BTreeMap<AssetId, (Balance, bool)>,
-		gas: u64,
-		message: Vec<u8>,
-		at: Option<BlockHash>,
-	) -> RpcResult<AccountId>;
+		#[method(name = "cosmwasm_instantiate")]
+		fn instantiate(
+			&self,
+			instantiator: AccountId,
+			code_id: u64,
+			salt: Vec<u8>,
+			admin: Option<AccountId>,
+			label: Vec<u8>,
+			funds: BTreeMap<AssetId, (Balance, bool)>,
+			gas: u64,
+			message: Vec<u8>,
+			at: Option<BlockHash>,
+		) -> RpcResult<AccountId>;
+	}
 }
+
+pub use cosmwasm_api::*;
 
 pub struct Cosmwasm<C, Block> {
 	client: Arc<C>,

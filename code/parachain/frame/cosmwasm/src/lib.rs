@@ -546,7 +546,7 @@ pub mod pallet {
 				label,
 				&message,
 			)?;
-			let _ = Self::do_extrinsic_dispatch(
+			Self::do_extrinsic_dispatch(
 				shared,
 				EntryPoint::Instantiate,
 				instantiator,

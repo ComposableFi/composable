@@ -17,8 +17,6 @@ sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkad
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 
 # local
-composable-support = { path = "../../composable-support" }
-composable-traits = { path = "../../composable-traits" }
 cosmwasm-runtime-api = { path = "../runtime-api" }
 
 # SCALE

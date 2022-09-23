@@ -1829,8 +1829,6 @@ dependencies = [
 name = "cosmwasm-rpc"
 version = "0.0.1"
 dependencies = [
- "composable-support",
- "composable-traits",
  "cosmwasm-runtime-api",
  "jsonrpsee 0.14.0",
  "parity-scale-codec",
@@ -1845,8 +1843,6 @@ dependencies = [
 name = "cosmwasm-runtime-api"
 version = "0.0.1"
 dependencies = [
- "composable-support",
- "composable-traits",
  "parity-scale-codec",
  "sp-api",
  "sp-std",
@@ -1891,16 +1887,6 @@ dependencies = [
  "serde-json-wasm",
  "thiserror",
  "uint",
-]
-
-[[package]]
-name = "cosmwasm-storage"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d18403b07304d15d304dad11040d45bbcaf78d603b4be3fb5e2685c16f9229b5"
-dependencies = [
- "cosmwasm-std",
- "serde",
 ]
 
 [[package]]
@@ -2777,25 +2763,6 @@ name = "custom_derive"
 version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ef8ae57c4978a2acd8b869ce6b9ca1dfe817bff704c220209fdef2c0b75a01b9"
-
-[[package]]
-name = "cw-multi-test"
-version = "0.13.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a3f9a8ab7c3c29ec93cb7a39ce4b14a05e053153b4a17ef7cf2246af1b7c087e"
-dependencies = [
- "anyhow",
- "cosmwasm-std",
- "cosmwasm-storage",
- "cw-storage-plus",
- "cw-utils",
- "derivative",
- "itertools",
- "prost 0.9.0",
- "schemars",
- "serde",
- "thiserror",
-]
 
 [[package]]
 name = "cw-storage-plus"
@@ -4695,7 +4662,7 @@ dependencies = [
  "parity-scale-codec",
  "primitive-types",
  "primitives 0.1.0 (git+https://github.com/ComposableFi/beefy-rs?rev=ea3c74c7c1f959ba1b90e2508b1b6c1fd9afc7ee)",
- "prost 0.10.4",
+ "prost",
  "prost-types",
  "ripemd",
  "safe-regex",
@@ -4747,7 +4714,7 @@ source = "git+https://github.com/ComposableFi/ibc-rs?rev=13de07663749a59a424d67b
 dependencies = [
  "base64 0.13.0",
  "bytes 1.2.1",
- "prost 0.10.4",
+ "prost",
  "prost-types",
  "serde",
  "tendermint-proto",
@@ -4835,7 +4802,7 @@ dependencies = [
  "anyhow",
  "bytes 1.2.1",
  "hex",
- "prost 0.10.4",
+ "prost",
  "ripemd160",
  "sha2 0.9.9",
  "sha3 0.9.1",
@@ -5834,7 +5801,7 @@ dependencies = [
  "libp2p-request-response",
  "libp2p-swarm",
  "log 0.4.17",
- "prost 0.10.4",
+ "prost",
  "prost-build",
  "rand 0.8.5",
 ]
@@ -5861,7 +5828,7 @@ dependencies = [
  "multistream-select",
  "parking_lot 0.12.1",
  "pin-project",
- "prost 0.10.4",
+ "prost",
  "prost-build",
  "rand 0.8.5",
  "ring",
@@ -5912,7 +5879,7 @@ dependencies = [
  "libp2p-core",
  "libp2p-swarm",
  "log 0.4.17",
- "prost 0.10.4",
+ "prost",
  "prost-build",
  "rand 0.7.3",
  "smallvec 1.9.0",
@@ -5936,7 +5903,7 @@ dependencies = [
  "libp2p-swarm",
  "log 0.4.17",
  "prometheus-client",
- "prost 0.10.4",
+ "prost",
  "prost-build",
  "rand 0.7.3",
  "regex",
@@ -5959,7 +5926,7 @@ dependencies = [
  "libp2p-swarm",
  "log 0.4.17",
  "lru 0.7.8",
- "prost 0.10.4",
+ "prost",
  "prost-build",
  "prost-codec",
  "smallvec 1.9.0",
@@ -5984,7 +5951,7 @@ dependencies = [
  "libp2p-core",
  "libp2p-swarm",
  "log 0.4.17",
- "prost 0.10.4",
+ "prost",
  "prost-build",
  "rand 0.7.3",
  "sha2 0.10.6",
@@ -6062,7 +6029,7 @@ dependencies = [
  "lazy_static",
  "libp2p-core",
  "log 0.4.17",
- "prost 0.10.4",
+ "prost",
  "prost-build",
  "rand 0.8.5",
  "sha2 0.10.6",
@@ -6099,7 +6066,7 @@ dependencies = [
  "futures 0.3.24",
  "libp2p-core",
  "log 0.4.17",
- "prost 0.10.4",
+ "prost",
  "prost-build",
  "unsigned-varint",
  "void",
@@ -6135,7 +6102,7 @@ dependencies = [
  "libp2p-swarm",
  "log 0.4.17",
  "pin-project",
- "prost 0.10.4",
+ "prost",
  "prost-build",
  "prost-codec",
  "rand 0.8.5",
@@ -6159,7 +6126,7 @@ dependencies = [
  "libp2p-core",
  "libp2p-swarm",
  "log 0.4.17",
- "prost 0.10.4",
+ "prost",
  "prost-build",
  "rand 0.8.5",
  "sha2 0.10.6",
@@ -8244,7 +8211,7 @@ dependencies = [
  "parachain-info",
  "parity-scale-codec",
  "primitives 0.1.0",
- "prost 0.10.4",
+ "prost",
  "scale-info",
  "serde",
  "serde_json",
@@ -11094,22 +11061,12 @@ dependencies = [
 
 [[package]]
 name = "prost"
-version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "444879275cb4fd84958b1a1d5420d15e6fcf7c235fe47f053c9c2a80aceb6001"
-dependencies = [
- "bytes 1.2.1",
- "prost-derive 0.9.0",
-]
-
-[[package]]
-name = "prost"
 version = "0.10.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "71adf41db68aa0daaefc69bb30bcd68ded9b9abaad5d1fbb6304c4fb390e083e"
 dependencies = [
  "bytes 1.2.1",
- "prost-derive 0.10.1",
+ "prost-derive",
 ]
 
 [[package]]
@@ -11127,7 +11084,7 @@ dependencies = [
  "log 0.4.17",
  "multimap",
  "petgraph",
- "prost 0.10.4",
+ "prost",
  "prost-types",
  "regex",
  "tempfile",
@@ -11142,22 +11099,9 @@ checksum = "00af1e92c33b4813cc79fda3f2dbf56af5169709be0202df730e9ebc3e4cd007"
 dependencies = [
  "asynchronous-codec",
  "bytes 1.2.1",
- "prost 0.10.4",
+ "prost",
  "thiserror",
  "unsigned-varint",
-]
-
-[[package]]
-name = "prost-derive"
-version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f9cc1a3263e07e0bf68e96268f37665207b49560d98739662cdfaae215c720fe"
-dependencies = [
- "anyhow",
- "itertools",
- "proc-macro2 1.0.43",
- "quote 1.0.21",
- "syn 1.0.100",
 ]
 
 [[package]]
@@ -11180,7 +11124,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2d0a014229361011dc8e69c8a1ec6c2e8d0f2af7c91e3ea3f5b2170298461e68"
 dependencies = [
  "bytes 1.2.1",
- "prost 0.10.4",
+ "prost",
 ]
 
 [[package]]
@@ -12117,7 +12061,7 @@ dependencies = [
  "libp2p",
  "log 0.4.17",
  "parity-scale-codec",
- "prost 0.10.4",
+ "prost",
  "prost-build",
  "rand 0.7.3",
  "sc-client-api",
@@ -12690,7 +12634,7 @@ dependencies = [
  "parity-scale-codec",
  "parking_lot 0.12.1",
  "pin-project",
- "prost 0.10.4",
+ "prost",
  "prost-build",
  "rand 0.7.3",
  "sc-block-builder",
@@ -12758,7 +12702,7 @@ dependencies = [
  "libp2p",
  "log 0.4.17",
  "parity-scale-codec",
- "prost 0.10.4",
+ "prost",
  "prost-build",
  "sc-client-api",
  "sc-network-common",
@@ -12780,7 +12724,7 @@ dependencies = [
  "log 0.4.17",
  "lru 0.7.8",
  "parity-scale-codec",
- "prost 0.10.4",
+ "prost",
  "prost-build",
  "sc-client-api",
  "sc-consensus",
@@ -15261,7 +15205,7 @@ dependencies = [
  "futures 0.3.24",
  "num-traits",
  "once_cell",
- "prost 0.10.4",
+ "prost",
  "prost-types",
  "serde",
  "serde_bytes",
@@ -15310,7 +15254,7 @@ dependencies = [
  "flex-error",
  "num-derive",
  "num-traits",
- "prost 0.10.4",
+ "prost",
  "prost-types",
  "serde",
  "serde_bytes",
@@ -17245,8 +17189,6 @@ version = "0.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
- "cosmwasm-storage",
- "cw-multi-test",
  "cw-storage-plus",
  "schemars",
  "serde",
@@ -17271,8 +17213,6 @@ version = "0.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
- "cosmwasm-storage",
- "cw-multi-test",
  "cw-storage-plus",
  "cw20",
  "num",
@@ -17291,8 +17231,6 @@ version = "0.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
- "cosmwasm-storage",
- "cw-multi-test",
  "cw-storage-plus",
  "cw20",
  "hex",
