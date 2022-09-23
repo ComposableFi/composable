@@ -2,12 +2,7 @@ name: "Canary Release"
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - test-rollout-v2.3.2
-    tags: 
-      - '*'
-      
+
 env:
   DOCKER_USER_OPTION: '$UID:$GID'
   SCCACHE_GCS_BUCKET: 'composable-build-artefacts'
