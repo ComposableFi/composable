@@ -624,6 +624,7 @@ fn test_split_position() {
 				end_block: 5,
 			},
 		);
+		process_and_progress_blocks::<StakingRewards, Test>(1);
 
 		let reduction = PICA::units(10);
 		let stake = StakeOf::<Test> {
