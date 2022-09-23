@@ -417,6 +417,11 @@
               doCheck = false;
               cargoTestCommand = "";
             };
+            buildInputs = lib.optional stdenv.isDarwin
+              (with darwin.apple_sdk.frameworks; [
+                Security
+                SystemConfiguration
+              ]);
             inherit src;
             doCheck = false;
             cargoTestCommand = "";
