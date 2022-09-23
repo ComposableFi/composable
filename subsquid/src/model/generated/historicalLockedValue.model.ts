@@ -1,7 +1,8 @@
-import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, OneToOne as OneToOne_, Index as Index_, JoinColumn as JoinColumn_} from "typeorm"
+import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, ManyToOne as ManyToOne_, Index as Index_} from "typeorm"
 import * as marshal from "./marshal"
 import {Event} from "./event.model"
 import {Currency} from "./_currency"
+import {LockedSource} from "./_lockedSource"
 
 @Entity_()
 export class HistoricalLockedValue {
@@ -12,9 +13,8 @@ export class HistoricalLockedValue {
   @PrimaryColumn_()
   id!: string
 
-  @Index_({unique: true})
-  @OneToOne_(() => Event, {nullable: false})
-  @JoinColumn_()
+  @Index_()
+  @ManyToOne_(() => Event, {nullable: true})
   event!: Event
 
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
@@ -25,4 +25,7 @@ export class HistoricalLockedValue {
 
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   timestamp!: bigint
+
+  @Column_("varchar", {length: 16, nullable: false})
+  source!: LockedSource
 }

@@ -32,6 +32,10 @@ up:
 	@docker-compose up -d
 
 
+up-local:
+	docker compose up db ingest gateway explorer squid-db -d
+
+
 down:
 	@docker-compose down
 
@@ -46,8 +50,6 @@ rebuild:
 	rm -f -r lib
 	rm -rf db/migrations/*.js
 	make up
-	make codegen
-	make build
 	npx squid-typeorm-migration generate
 	make migrate
 
