@@ -251,9 +251,9 @@ export const BondForm: FC<{
             startAdornment: (
               <InputAdornment position={"start"}>
                 {Array.isArray(bondOffer.asset) ? (
-                  <PairAsset assets={bondOffer.asset} />
+                  <PairAsset assets={bondOffer.asset}/>
                 ) : (
-                  <TokenAsset tokenId={bondOffer.asset.symbol} />
+                  <TokenAsset tokenId={bondOffer.asset.symbol}/>
                 )}
               </InputAdornment>
             ),
@@ -312,7 +312,7 @@ export const BondForm: FC<{
             color="text.secondary"
             mt={theme.spacing(2)}
           >
-            Are you sure you want to bond for a negative discount? <br />
+            Are you sure you want to bond for a negative discount? <br/>
             You will lose money if you do this...
           </Typography>
         )}
@@ -396,7 +396,7 @@ export const BondForm: FC<{
           color="text.secondary"
           mt={theme.spacing(2)}
         >
-          This bond is offered at a negative discount. <br />
+          This bond is offered at a negative discount. <br/>
           Please consider waiting until bond returns to positive discount.
         </Typography>
         <Button

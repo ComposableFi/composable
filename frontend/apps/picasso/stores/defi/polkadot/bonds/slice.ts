@@ -1,6 +1,5 @@
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
 import BigNumber from "bignumber.js";
-import { NamedSet } from "zustand/middleware";
 import { StoreSlice } from "@/stores/types";
 
 export interface BondsSlice {
@@ -40,9 +39,7 @@ export interface ActiveBond {
   };
 }
 
-export const createBondsSlice: StoreSlice<BondsSlice> = (
-  set: NamedSet<BondsSlice>
-) => ({
+export const createBondsSlice: StoreSlice<BondsSlice> = (set) => ({
   bonds: {
     bonds: [],
     bondOfferCount: 0,

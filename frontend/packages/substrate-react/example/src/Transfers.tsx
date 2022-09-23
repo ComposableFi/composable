@@ -7,13 +7,15 @@ import {
   useParachainApi,
 } from '../../src/index';
 import BigNumber from 'bignumber.js';
-import useStore from '../../src/extrinsics/store/useStore';
+import { useExtrinsicStore } from "../../src/extrinsics/store/extrinsics/extrinsics.slice";
+
+const APP_NAME = "Demo App";
 
 export const Transfers = () => {
   const { activate, signer } = useDotSamaContext();
-  const { parachainApi, accounts } = useParachainApi('picasso');
+  const { parachainApi, accounts } = useParachainApi("picasso");
   const executor = useExecutor();
-  const { extrinsics } = useStore();
+  const extrinsics = useExtrinsicStore((state) => state.extrinsics);
   const [_to, setTo] = useState<string | undefined>(undefined);
   const [_from, setFrom] = useState<string | undefined>(undefined);
 
@@ -40,24 +42,24 @@ export const Transfers = () => {
         _from,
         parachainApi,
         signer,
-        txHash => {
-          console.log('Ready: ', txHash);
+        (txHash) => {
+          console.log("Ready: ", txHash);
         },
-        txHash => {
-          console.log('Finalized: ', txHash);
+        (txHash) => {
+          console.log("Finalized: ", txHash);
         }
       );
     }
   };
 
   useEffect(() => {
-    console.log('Extrinsics Update', extrinsics);
+    console.log("Extrinsics Update", extrinsics);
   }, [extrinsics]);
 
   return (
     <div>
       <input
-        onChange={evt => {
+        onChange={(evt) => {
           setTo(evt.target.value);
         }}
         type="text"

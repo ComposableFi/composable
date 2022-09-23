@@ -1,10 +1,4 @@
-import {
-  Box,
-  Button,
-  CircularProgress,
-  Typography,
-  useTheme
-} from "@mui/material";
+import { Box, Button, CircularProgress, Typography, useTheme } from "@mui/material";
 import React from "react";
 import { Input, Modal } from "@/components";
 import { TOKEN_IDS } from "tokens";
@@ -19,9 +13,11 @@ export const StakingStakeTab: React.FC<StakingStakeTabProps> = ({ flow }) => {
   const [approval, setApproval] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
 
-  const stake = () => {};
+  const stake = () => {
+  };
 
-  const unstake = () => {};
+  const unstake = () => {
+  };
 
   const onButtonClick = () => {
     if (approval) {
@@ -32,7 +28,8 @@ export const StakingStakeTab: React.FC<StakingStakeTabProps> = ({ flow }) => {
     }
   };
 
-  const handleOnClick = () => {};
+  const handleOnClick = () => {
+  };
 
   return (
     <>
@@ -47,7 +44,7 @@ export const StakingStakeTab: React.FC<StakingStakeTabProps> = ({ flow }) => {
             mainLabelProps: { label: "Amount" },
             balanceLabelProps: {
               label: flow === "stake" ? "Balance:" : "Staked Balance:",
-              balanceText: "200 CHAOS"
+              balanceText: "200 xPICA"
             }
           }}
         />

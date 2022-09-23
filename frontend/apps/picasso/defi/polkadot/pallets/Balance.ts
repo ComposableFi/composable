@@ -19,6 +19,25 @@ export const fetchBalanceByAssetId = async (
   }
 };
 
+export const subscribePicassoBalanceByAssetId = async (
+  api: ApiPromise,
+  accountId: string,
+  assetId: string,
+  callback: (balance: BigNumber) => void
+) => {
+  const uAccount = api.createType("AccountId32", accountId);
+  try {
+    await api.rpc.chain.subscribeNewHeads(async () => {
+      const result = await api.rpc.assets.balanceOf(assetId, uAccount);
+
+      callback(fromChainIdUnit(new BigNumber(result.toString())));
+    });
+  } catch (err: any) {
+    console.log(err);
+    callback(new BigNumber(0));
+  }
+};
+
 export const fetchKaruraBalanceByAssetId = async (
   api: ApiPromise,
   accountId: string,
@@ -30,7 +49,7 @@ export const fetchKaruraBalanceByAssetId = async (
     const balance = await api.query.tokens.accounts(
       uAccount,
       api.createType("AcalaPrimitivesCurrencyCurrencyId", {
-        token: api.createType("AcalaPrimitivesCurrencyTokenSymbol", assetId),
+        token: api.createType("AcalaPrimitivesCurrencyTokenSymbol", assetId)
       })
     );
 
