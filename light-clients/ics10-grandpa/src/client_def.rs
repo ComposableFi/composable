@@ -208,10 +208,9 @@ where
 
 			match ctx.maybe_consensus_state(&client_id, height)? {
 				Some(cs) => {
-					let cs: ConsensusState =
-						cs.downcast().ok_or(Ics02Error::client_args_type_mismatch(
-							client_state.client_type().to_owned(),
-						))?;
+					let cs: ConsensusState = cs
+						.downcast()
+						.ok_or(Ics02Error::client_args_type_mismatch(client_state.client_type()))?;
 
 					if cs != consensus_state {
 						// Houston we have a problem
@@ -232,8 +231,7 @@ where
 		_proof_upgrade_client: Vec<u8>,
 		_proof_upgrade_consensus_state: Vec<u8>,
 	) -> Result<(Self::ClientState, ConsensusUpdateResult<Ctx>), Ics02Error> {
-		// TODO:
-		Err(Error::Custom("Not implemented".to_string()).into())
+		Err(Error::Custom("Grandpa Client doesn't need client upgrades".to_string()).into())
 	}
 
 	fn verify_client_consensus_state<Ctx: ReaderContext>(

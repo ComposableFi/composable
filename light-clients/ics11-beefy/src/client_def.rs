@@ -206,14 +206,47 @@ where
 
 	fn check_for_misbehaviour<Ctx: ReaderContext>(
 		&self,
-		_ctx: &Ctx,
-		_client_id: ClientId,
-		_client_state: Self::ClientState,
+		ctx: &Ctx,
+		client_id: ClientId,
+		client_state: Self::ClientState,
 		message: Self::ClientMessage,
 	) -> Result<bool, Ics02Error> {
-		// todo: we should also check that this update doesn't include competing consensus states
-		// for heights we already processed.
-		Ok(matches!(message, ClientMessage::Misbehaviour(_)))
+		match message {
+			ClientMessage::Header(header) => {
+				// we simply check that this update doesn't include competing consensus states for
+				// heights we already processed.
+				if let Some(parachain_headers) = header.headers_with_proof {
+					for header in parachain_headers.headers {
+						let height = Height::new(
+							client_state.para_id as u64,
+							header.parachain_header.number as u64,
+						);
+
+						let consensus_state =
+							ConsensusState::from_header(header).map_err(Error::from)?;
+						match ctx.maybe_consensus_state(&client_id, height)? {
+							Some(cs) => {
+								let cs: ConsensusState =
+									cs.downcast().ok_or(Ics02Error::client_args_type_mismatch(
+										client_state.client_type().to_owned(),
+									))?;
+
+								if cs != consensus_state {
+									// Houston we have a problem
+									return Ok(true)
+								}
+							},
+							None => {},
+						};
+					}
+				}
+			},
+			// todo: Beefy protocol hasn't yet defined it's equivocation protocol
+			// blocked on https://github.com/paritytech/grandpa-bridge-gadget/issues/101
+			ClientMessage::Misbehaviour(_) => {},
+		}
+
+		Ok(false)
 	}
 
 	fn verify_upgrade_and_update_state<Ctx: ReaderContext>(
@@ -223,8 +256,7 @@ where
 		_proof_upgrade_client: Vec<u8>,
 		_proof_upgrade_consensus_state: Vec<u8>,
 	) -> Result<(Self::ClientState, ConsensusUpdateResult<Ctx>), Ics02Error> {
-		// TODO:
-		Err(Error::Custom("Not implemented".to_string()).into())
+		Err(Error::Custom("Beefy Client doesn't need client upgrades".to_string()).into())
 	}
 
 	fn verify_client_consensus_state<Ctx: ReaderContext>(
