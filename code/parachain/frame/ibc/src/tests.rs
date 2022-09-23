@@ -38,7 +38,7 @@ use ibc::{
 	signer::Signer,
 	tx_msg::Msg,
 };
-use ibc_primitives::{get_channel_escrow_address, IbcHandler, OpenChannelParams};
+use ibc_primitives::{get_channel_escrow_address, IbcHandler};
 use pallet_ibc_ping::SendPingParams;
 use primitives::currency::CurrencyId;
 use sp_core::Pair;
@@ -136,57 +136,6 @@ fn initialize_connection() {
 		};
 
 		assert_ok!(Ibc::deliver(Origin::signed(AccountId32::new([0; 32])), vec![msg]));
-	})
-}
-
-#[test]
-fn should_open_a_channel() {
-	new_test_ext().execute_with(|| {
-		let mock_client_state =
-			MockClientState::new(MockClientMessage::from(MockHeader::default()));
-		let mock_cs_state = MockConsensusState::new(MockHeader::default());
-		let client_id = ClientId::new(&mock_client_state.client_type(), 0).unwrap();
-		let counterparty_client_id = ClientId::new(&mock_client_state.client_type(), 1).unwrap();
-		let msg = MsgCreateAnyClient::<Context<Test>>::new(
-			AnyClientState::Mock(mock_client_state),
-			AnyConsensusState::Mock(mock_cs_state),
-			Signer::from_str(MODULE_ID).unwrap(),
-		)
-		.unwrap()
-		.encode_vec();
-
-		let msg = Any { type_url: TYPE_URL.to_string().as_bytes().to_vec(), value: msg };
-
-		assert_ok!(Ibc::deliver(Origin::signed(AccountId32::new([0; 32])), vec![msg]));
-		let commitment_prefix: CommitmentPrefix =
-			<Test as Config>::CONNECTION_PREFIX.to_vec().try_into().unwrap();
-		let value = conn_open_init::MsgConnectionOpenInit {
-			client_id: client_id.clone(),
-			counterparty: Counterparty::new(
-				counterparty_client_id.clone(),
-				Some(ConnectionId::new(1)),
-				commitment_prefix.clone(),
-			),
-			version: Some(ConnVersion::default()),
-			delay_period: Duration::from_nanos(1000),
-			signer: Signer::from_str(MODULE_ID).unwrap(),
-		};
-
-		let msg = Any {
-			type_url: conn_open_init::TYPE_URL.as_bytes().to_vec(),
-			value: value.encode_vec(),
-		};
-
-		assert_ok!(Ibc::deliver(Origin::signed(AccountId32::new([0; 32])), vec![msg]));
-
-		let params = OpenChannelParams {
-			order: 1,
-			connection_id: "connection-0".as_bytes().to_vec(),
-			counterparty_port_id: "ping".as_bytes().to_vec(),
-			version: vec![],
-		};
-
-		assert_ok!(Ping::open_channel(Origin::root(), params));
 	})
 }
 
