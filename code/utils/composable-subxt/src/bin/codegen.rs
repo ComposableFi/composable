@@ -30,7 +30,7 @@ fn main() {
 		("rococo", "ws://localhost:9944"), // "wss://rococo-rpc.polkadot.io"
 		("picasso", "ws://localhost:9988"), // "wss://picasso.devnets.composablefinance.ninja"
 		("kusama", "wss://kusama-rpc.polkadot.io:443"), /* can eat it from polkadotjs chain
-		                                                 * registry json too */
+		                                    * registry json too */
 	]
 	.into_iter()
 	.collect();

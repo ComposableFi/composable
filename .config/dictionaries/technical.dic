@@ -174,6 +174,8 @@ minvested
 mochawesome
 msapplication
 Multiaddr
+Multiassets
+multiassets
 multihash
 mutantdino
 narinfo
@@ -217,6 +219,9 @@ peekable
 peerset
 perbill
 permill
+
+permissionlessly
+Permissionlessly
 perquintill
 perthing
 perthousand
@@ -231,6 +236,10 @@ popout
 powd
 powf
 prebaked
+preclaim
+Preclaim
+preclaims
+Preclaims
 precommit
 precommits
 Prevote
@@ -241,6 +250,11 @@ prost
 protoc
 PROTOC
 PTRACE
+Rebag
+rebag
+Rebagged
+Rebond
+rebond
 reduxjs
 rekt
 resourcemonitor
@@ -313,10 +327,21 @@ tungstenite
 typegen
 typeorm
 udeps
+Unbond
+unbond
+Unbonded
+unbonded
+unbonding
+Unbonding
+Unfound
+unfound
 unlookup
 unpruned
 unstakeform
 unsubs
+Unvouch
+unvouch
+unvouched
 upsert
 uptodate # used throughout our codebase
 urql
