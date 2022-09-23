@@ -25,6 +25,7 @@ All `VestingSchedules` under an account can be queried from the chain state.
 
 Initially, we create a `vested_transfer` to add a vesting schedule to an account. 
 Once created, a vesting schedule can be updated with `update_vesting_schedules`.
+
 A third party pallet would implement `VestedTransfer` as a dependency to execute vested transfers.
 
 Funds can be claimed in two ways; either directly with `claim` to claim for the caller, or indirectly through 

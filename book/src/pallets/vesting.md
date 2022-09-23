@@ -1,1 +1,1 @@
-{{#include ../../../frame/vesting/README.md}}
+{{#include ../../../code/parachain/frame/vesting/README.md}}
