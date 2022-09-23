@@ -781,7 +781,7 @@ fn test_split_position() {
 				duration_preset: ONE_HOUR,
 				fnft_collection_id: 1,
 				fnft_instance_id: 0,
-				reward_multiplier: Perbill::from_percent(2),
+				reward_multiplier: Perbill::from_percent(1),
 				keep_alive: true,
 			},
 		);
