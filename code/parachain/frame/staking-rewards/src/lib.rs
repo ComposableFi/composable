@@ -203,7 +203,7 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// Error when creating reward configs.
 		RewardConfigProblem,
-		/// AssetId is invalid, asset IDs must be graeter than 0
+		/// AssetId is invalid, asset IDs must be greater than 0
 		InvalidAssetId,
 		/// Reward pool already exists
 		RewardsPoolAlreadyExists,
