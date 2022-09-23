@@ -1,42 +1,27 @@
 use composable_subxt::generated;
 
-use base58::ToBase58;
 use clap::{clap_derive::ArgEnum, Parser, Subcommand};
 // TODO: allow to pass name as key and use ALICE, BOB, etc
 //use sp_keyring::AccountKeyring;
-use scale_codec::{Decode, Encode};
-use sp_core::crypto::*;
-use subxt::{
-	sp_core::{crypto::AccountId32, sr25519, Pair},
-	sp_runtime::MultiAddress,
-	Call, ClientBuilder, DefaultConfig, PolkadotExtrinsicParams, SubmittableExtrinsic,
-	SubstrateExtrinsicParams, TransactionInBlock, TransactionStatus,
+use scale_codec::Encode;
+use sp_core::{
+	crypto::{AccountId32, Ss58Codec},
+	sr25519, Pair,
 };
+use sp_runtime::MultiAddress;
+use subxt::{tx::*, *};
 
-// TODO: use latest version of sp_core after upgrade (because subxt does not generates these
-// anymore) use sp_core::{
-// 	crypto::Pair,
-// 	sr25519,
-// };
-
-pub type PairSigner = subxt::PairSigner<DefaultConfig, sr25519::Pair>;
+pub type RelayPairSigner = subxt::tx::PairSigner<PolkadotConfig, sr25519::Pair>;
 
 use crate::generated::rococo::{
 	self,
-	api::{
-		self,
-		runtime_types::{
-			polkadot_parachain::primitives,
-			xcm::{
-				v0::junction::NetworkId,
-				v1::{
-					junction::Junction,
-					multiasset::{AssetId, Fungibility, MultiAsset, MultiAssets},
-				},
-				*,
-			},
+	api::runtime_types::xcm::{
+		v0::junction::NetworkId,
+		v1::{
+			junction::Junction,
+			multiasset::{AssetId, Fungibility, MultiAsset},
 		},
-		xcm_pallet::calls::*,
+		*,
 	},
 };
 
@@ -94,8 +79,8 @@ pub enum AddressFormat {
 	Base58,
 }
 
-pub fn pair_signer(pair: sr25519::Pair) -> PairSigner {
-	PairSigner::new(pair)
+pub fn pair_signer(pair: sr25519::Pair) -> RelayPairSigner {
+	RelayPairSigner::new(pair)
 }
 
 #[tokio::main]
@@ -116,13 +101,7 @@ pub async fn main() {
 
 async fn transfer_native_asset(command: TransferNative) {
 	println!("{:?}", &command);
-	let api = ClientBuilder::new()
-		.set_url(command.rpc)
-		.build()
-		.await
-		.unwrap()
-		.to_runtime_api::<rococo::api::RuntimeApi<DefaultConfig, PolkadotExtrinsicParams<_>>>(
-	);
+	let api = OnlineClient::<PolkadotConfig>::from_url(&command.rpc).await.unwrap();
 	let signer = pair_signer(
 		sr25519::Pair::from_string(&command.from_account_id, None)
 			.expect("provided key is not valid"),
@@ -133,16 +112,11 @@ async fn transfer_native_asset(command: TransferNative) {
 			.into(),
 	));
 
-	let mut balance_transfer_progress = api
-		.tx()
-		.balances()
-		.transfer(beneficiary, command.amount)
-		.unwrap()
-		.sign_and_submit_then_watch_default(&signer)
-		.await
-		.unwrap();
+	let extrinsic = rococo::api::tx().balances().transfer(beneficiary, command.amount);
+	let mut result =
+		api.tx().sign_and_submit_then_watch_default(&extrinsic, &signer).await.unwrap();
 
-	while let Some(ev) = balance_transfer_progress.next_item().await {
+	while let Some(ev) = result.next_item().await {
 		println!("{:?}", ev);
 	}
 }
@@ -164,13 +138,7 @@ async fn reserve_transfer_native_asset(command: ReserveTransferNative) {
 			.expect("provided key is not valid"),
 	);
 
-	let api = ClientBuilder::new()
-		.set_url(command.rpc)
-		.build()
-		.await
-		.unwrap()
-		.to_runtime_api::<rococo::api::RuntimeApi<DefaultConfig, PolkadotExtrinsicParams<_>>>(
-	);
+	let api = OnlineClient::<PolkadotConfig>::from_url(&command.rpc).await.unwrap();
 
 	let beneficiary =
 		sp_keyring::sr25519::sr25519::Public::from_string(command.to_account_id.as_str()).unwrap();
@@ -183,23 +151,22 @@ async fn reserve_transfer_native_asset(command: ReserveTransferNative) {
 		}),
 	});
 
-	let mut tx = api
-		.tx()
-		.xcm_pallet()
-		.reserve_transfer_assets(destination, beneficiary, assets, 0)
-		.unwrap()
-		.sign_and_submit_then_watch_default(&signer)
-		.await
-		.unwrap();
+	let extrinsic =
+		rococo::api::tx()
+			.xcm_pallet()
+			.reserve_transfer_assets(destination, beneficiary, assets, 0);
+	let mut result =
+		api.tx().sign_and_submit_then_watch_default(&extrinsic, &signer).await.unwrap();
 
-	while let Some(ev) = tx.next_item().await {
+	while let Some(ev) = result.next_item().await {
 		println!("{:?}", ev);
-		if let Ok(TransactionStatus::Finalized(block)) = ev {
+		if let Ok(TxStatus::Finalized(block)) = ev {
 			println!("https://rococo.subscan.io/extrinsic/{:?}", block.extrinsic_hash());
 		}
 	}
 }
 
+// TODO: PR this to subkey
 fn parachain_id_into_address(address: Address) {
 	//  https://substrate.stackexchange.com/questions/1200/how-to-calculate-sovereignaccount-for-parachain/1210#1210
 	let mut hex = Vec::new();
@@ -212,7 +179,7 @@ fn parachain_id_into_address(address: Address) {
 	let result = match address.format {
 		AddressFormat::Hex => hex::encode(hex),
 		_ => {
-			let account = sp_core::crypto::AccountId32::from_slice(&hex[0..32]).unwrap();
+			let account = sp_core::crypto::AccountId32::try_from(&hex[0..32]).unwrap();
 			account.to_ss58check()
 		},
 	};

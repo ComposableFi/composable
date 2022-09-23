@@ -9,18 +9,28 @@ use std::collections::HashMap;
 
 #[derive(Parser, Debug)]
 struct ComposableSubxt {
-	/// COMPOSABLE_SUBXT_GENERATE=dali,rococo=http://localhost:9933
+	/// COMPOSABLE_SUBXT_GENERATE=dali,rococo=ws://localhost:9933
 	#[clap(short, long, env = "COMPOSABLE_SUBXT_GENERATE")]
 	generate: Option<String>,
 	#[clap(short, long = "out-dir", env = "OUT_DIR")]
 	out_dir: String,
 }
 
+// TODO: consider next flow for code generation
+// 1. nix download nodes https://github.com/paritytech/subxt/blob/e48f0e3b1de130779abb3dd092c86b845de81116/examples/examples/balance_transfer_with_params.rs#L9
+// 2. ask node to produce scale
+// 3. generate from it
+// Good: can run all always in build.rs(of course only in nix shell) or in CI (no need node to run)
+// Bad: cannot generate for node you have no access in nix
 fn main() {
 	let urls: HashMap<&str, &str> = [
-		("dali", "http://localhost:10988"), // "https://dali.devnets.composablefinance.ninja"
-		("rococo", "http://localhost:10944"), // "https://rococo-rpc.polkadot.io"
-		("picasso", "http://localhost:10988"), // "https://picasso.devnets.composablefinance.ninja"
+		("dali", "ws://localhost:9988"), /* "wss://dali.devnets.composablefinance.ninja", can
+		                                  * split out port into json/toml/nix and parse out from
+		                                  * shared location too */
+		("rococo", "ws://localhost:9944"), // "wss://rococo-rpc.polkadot.io"
+		("picasso", "ws://localhost:9988"), // "wss://picasso.devnets.composablefinance.ninja"
+		("kusama", "wss://kusama-rpc.polkadot.io:443"), /* can eat it from polkadotjs chain
+		                                                 * registry json too */
 	]
 	.into_iter()
 	.collect();
@@ -37,7 +47,7 @@ fn main() {
 			let url = network
 				.next()
 				.or_else(|| urls.get(name).map(|x| *x))
-				.unwrap_or("http://localhost:10988");
+				.unwrap_or("ws://localhost:9988");
 			let subxt = Command::new("subxt").args(&["codegen", "--url", url]).output().unwrap();
 			if !subxt.stderr.is_empty() {
 				panic!("{}", String::from_utf8(subxt.stderr).unwrap());

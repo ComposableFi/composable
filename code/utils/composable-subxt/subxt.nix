@@ -1,13 +1,14 @@
 { pkgs }:
 pkgs.rustPlatform.buildRustPackage rec {
   pname = "subxt-cli";
-  version = "0.24.0";
+  # NOTE: keep in sync with Cargo.toml as generator version must be same as dependency to compile generated code
+  version = "0.23.0";
 
   src = pkgs.fetchCrate {
     inherit pname version;
-    sha256 = "sha256-Dqbrv2rVZWXxWe+UJ10yZWhmaCVCU6QpfLjGu3xKE90=";
+    sha256 = "sha256-iESFu4rpHVORyFV+g53eVADqUt6x6vB6rCuxEUq/MiM=";
   };
 
-  cargoHash = "sha256-biQEE8SRIRHPtpRyActrT4UXK81ObsrZjW9Vqd15dr8=";
+  cargoHash = "sha256-roQ6fAHT9pdzeaLjedStg+C8voDnj8gbo/R0zloXZlo=";
   cargoDepsName = pname;
 }

@@ -1066,8 +1066,7 @@
             };
             devnet-picasso = {
               type = "app";
-              program =
-                "${packages.devnet-picasso.script}/bin/run-devnet-picasso-dev";
+              program = "${packages.devnet-picasso}/bin/run-devnet-picasso-dev";
             };
 
             devnet-kusama-picasso-karura = {

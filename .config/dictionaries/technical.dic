@@ -66,6 +66,8 @@ bignumbers
 binop
 bintools
 bitfield
+Bitfields
+bitfields
 bitvec
 bob
 bootnodes
@@ -94,6 +96,7 @@ contentful
 coreutils
 cosm
 crev # cargo-crev
+crowdloaning
 devcontainers
 devel
 dhms # day hour minute second
@@ -170,6 +173,7 @@ miniserve
 minvested
 mochawesome
 msapplication
+Multiaddr
 multihash
 mutantdino
 narinfo
@@ -181,6 +185,7 @@ nixops
 nixos
 nixpkgs
 nocapture
+nocompile
 noconfirm
 nodedir
 NOFILE
@@ -190,6 +195,7 @@ npmjs
 npos
 NPROC
 numtide
+offboarded
 offences
 on_unbalanceds
 oneliner
@@ -202,6 +208,7 @@ oraclestake
 oxalica # github username
 pacman
 pandoc
+parablock
 paritytech
 patchelf
 pctest
@@ -226,6 +233,7 @@ powf
 prebaked
 precommit
 precommits
+Prevote
 procps
 proptest
 proptests
@@ -306,6 +314,7 @@ typegen
 typeorm
 udeps
 unlookup
+unpruned
 unstakeform
 unsubs
 upsert
