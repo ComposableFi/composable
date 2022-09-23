@@ -1124,8 +1124,6 @@ pub mod pallet {
 				old_account_amount,
 			)?;
 
-			dbg!();
-
 			// transfer the amount in the new position from the old account to the new account (this
 			// should be the total unlocked amount)
 			T::Assets::transfer(
@@ -1136,7 +1134,6 @@ pub mod pallet {
 				false, // not a user account, doesn't need to be kept alive
 			)?;
 
-			dbg!();
 			// lock assets on new account
 			T::Assets::set_lock(
 				T::LockId::get(),
@@ -1144,7 +1141,7 @@ pub mod pallet {
 				new_fnft_asset_account,
 				new_account_amount,
 			)?;
-			dbg!();
+
 			Ok(())
 		}
 
