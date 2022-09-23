@@ -23,8 +23,10 @@ ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "9925f24c5061832ec
 ibc-proto = { git = "https://github.com/composableFi/ibc-rs", rev = "9925f24c5061832ec5d5a0f4b16a1802dbb75128" }
 ibc-rpc = { git = "https://github.com/ComposableFi/composable", rev = "19a408a7d696bb7e238be38ce4f89ec046a2b383" }
 
+pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "19a408a7d696bb7e238be38ce4f89ec046a2b383", optional = true }
+
 [dev-dependencies]
 tokio = { version = "1.19.2", features = ["macros", "sync"] }
 
 [features]
-testing = []
+testing = ["pallet-ibc"]

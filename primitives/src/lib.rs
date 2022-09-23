@@ -284,6 +284,13 @@ pub trait TestProvider: Chain + Clone + 'static {
 	/// Initiate an ibc transfer on chain.
 	async fn send_transfer(&self, params: MsgTransfer<PrefixedCoin>) -> Result<(), Self::Error>;
 
+	/// Initiate a ping on chain
+	async fn send_ping(
+		&self,
+		channel_id: ChannelId,
+		timeout: pallet_ibc::Timeout,
+	) -> Result<(), Self::Error>;
+
 	/// Return a stream that yields when new [`IbcEvents`] are parsed from a finality notification
 	async fn ibc_events(&self) -> Pin<Box<dyn Stream<Item = IbcEvent> + Send + Sync>>;
 

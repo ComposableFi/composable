@@ -1,4 +1,4 @@
-use crate::utils::{parse_amount, timeout_future};
+use crate::utils::{assert_timeout_packet, parse_amount, timeout_future};
 use futures::{future, StreamExt};
 use hyperspace::send_packet_relay::set_relay_status;
 use hyperspace_primitives::TestProvider;
@@ -24,6 +24,7 @@ use std::{str::FromStr, time::Duration};
 use tendermint_proto::Protobuf;
 use tokio::task::JoinHandle;
 
+pub mod ordered_channels;
 mod utils;
 
 /// This will set up a connection and ics20 channel in-between the two chains.
@@ -229,26 +230,6 @@ where
 
 	let new_amount = parse_amount(balance.amount.to_string());
 	assert!(new_amount <= (previous_balance * 80) / 100);
-}
-
-async fn assert_timeout_packet<A>(chain: &A)
-where
-	A: TestProvider,
-	A::FinalityEvent: Send + Sync,
-{
-	// wait for the timeout packet
-	let future = chain
-		.ibc_events()
-		.await
-		.skip_while(|ev| {
-			future::ready(!matches!(
-				ev,
-				IbcEvent::TimeoutPacket(_) | IbcEvent::TimeoutOnClosePacket(_)
-			))
-		})
-		.take(1)
-		.collect::<Vec<_>>();
-	timeout_future(future, 20 * 60, format!("Didn't see Timeout packet on {}", chain.name())).await;
 }
 
 /// Simply send a packet and check that it was acknowledged.
