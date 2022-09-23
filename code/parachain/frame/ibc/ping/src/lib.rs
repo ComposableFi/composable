@@ -1,6 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use core::{fmt::Formatter, time::Duration, write};
+use core::{fmt::Formatter, str::FromStr, time::Duration, write};
 use frame_support::dispatch::{DispatchResult, Weight};
 use ibc::{
 	core::{
@@ -20,13 +20,14 @@ use ibc::{
 };
 use ibc_primitives::{port_id_from_bytes, CallbackWeight, IbcHandler, SendPacketData};
 use scale_info::prelude::{format, string::String};
-use sp_std::{marker::PhantomData, prelude::*, vec};
+use sp_std::{marker::PhantomData, prelude::*};
 
 // Re-export pallet items so that they can be accessed from the crate namespace.
 pub use pallet::*;
 
 pub const MODULE_ID: &str = "PalletIbcPing";
 pub const PORT_ID: &str = "ping";
+pub const VERSION: &str = "ping-1";
 
 #[derive(
 	Clone,
@@ -55,8 +56,6 @@ pub mod pallet {
 	use super::*;
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
-	use ibc::core::ics04_channel::channel::{ChannelEnd, Order, State};
-	use ibc_primitives::{connection_id_from_bytes, OpenChannelParams};
 
 	/// Our pallet's configuration trait. All our types and constants go in here. If the
 	/// pallet is dependent on specific other pallets, then their configuration traits
@@ -81,33 +80,6 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		#[pallet::weight(0)]
-		pub fn open_channel(origin: OriginFor<T>, params: OpenChannelParams) -> DispatchResult {
-			ensure_root(origin)?;
-			let order: Order = (&params).try_into().map_err(|_| Error::<T>::InvalidParams)?;
-
-			let connection_id = connection_id_from_bytes(params.connection_id)
-				.map_err(|_| Error::<T>::InvalidParams)?;
-			let version =
-				String::from_utf8(params.version).map_err(|_| Error::<T>::InvalidParams)?;
-			let counterparty_port_id = port_id_from_bytes(params.counterparty_port_id)
-				.map_err(|_| Error::<T>::InvalidParams)?;
-			let counterparty = Counterparty::new(counterparty_port_id, None);
-			let channel_end = ChannelEnd::new(
-				State::Init,
-				order,
-				counterparty,
-				vec![connection_id],
-				Version::new(version),
-			);
-
-			let port_id = port_id_from_bytes(PORT_ID.as_bytes().to_vec())
-				.map_err(|_| Error::<T>::ChannelInitError)?;
-			T::IbcHandler::open_channel(port_id.clone(), channel_end)
-				.map_err(|_| Error::<T>::ChannelInitError)?;
-			Ok(())
-		}
-
 		#[pallet::weight(0)]
 		pub fn send_ping(origin: OriginFor<T>, params: SendPingParams) -> DispatchResult {
 			ensure_root(origin)?;
@@ -198,16 +170,33 @@ impl<T: Config + Send + Sync> Module for IbcModule<T> {
 	fn on_chan_open_try(
 		&mut self,
 		_output: &mut ModuleOutputBuilder,
-		_order: Order,
+		order: Order,
 		_connection_hops: &[ConnectionId],
 		port_id: &PortId,
-		channel_id: &ChannelId,
+		_channel_id: &ChannelId,
 		counterparty: &Counterparty,
-		_version: &Version,
+		version: &Version,
 		counterparty_version: &Version,
 	) -> Result<Version, Ics04Error> {
-		log::info!("Channel initialized {:?}, {:?}, {:?}", channel_id, port_id, counterparty);
-		Ok(counterparty_version.clone())
+		if counterparty_version.to_string() != VERSION.to_string() ||
+			version.to_string() != VERSION.to_string()
+		{
+			return Err(Ics04Error::no_common_version())
+		}
+
+		if order != Order::Ordered {
+			return Err(Ics04Error::unknown_order_type(order.to_string()))
+		}
+
+		let ping_port = PortId::from_str(PORT_ID).unwrap();
+		if counterparty.port_id() != &ping_port || port_id != &ping_port {
+			return Err(Ics04Error::implementation_specific(format!(
+				"Invalid counterparty port {:?}",
+				counterparty.port_id()
+			)))
+		}
+
+		Ok(version.clone())
 	}
 
 	fn on_chan_open_ack(
@@ -263,7 +252,7 @@ impl<T: Config + Send + Sync> Module for IbcModule<T> {
 		_relayer: &Signer,
 	) -> OnRecvPacketAck {
 		let success = "ping-success".as_bytes().to_vec();
-		log::info!("Received Packet {:?}", packet);
+		log::info!("Received Packet {:?}", packet.sequence);
 		let packet = packet.clone();
 		{
 			let timeout_timestamp = Duration::from_secs(86400 * 30);
