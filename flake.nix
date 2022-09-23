@@ -895,7 +895,7 @@
             hadolint-check = stdenv.mkDerivation {
               name = "hadolint-check";
               dontUnpack = true;
-              buildInputs = [ all-directories-and-files hadolint];
+              buildInputs = [ all-directories-and-files hadolint ];
               installPhase = ''
                 mkdir -p $out
 
