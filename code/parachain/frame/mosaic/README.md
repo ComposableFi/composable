@@ -2,6 +2,8 @@
 
 The Mosaic pallet enables cross-chain and cross-layer transfers
 
+---
+
 ## Overview
 
 The Mosaic Pallet implements the interface for the Mosaic Relayer. The Mosaic 

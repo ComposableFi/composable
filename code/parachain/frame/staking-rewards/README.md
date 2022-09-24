@@ -1,8 +1,8 @@
 # Overview
 
-This pallet allows protocols to reward users for staking assets.
+This pallet allows protocols to reward users for staking assets. Stakers are protected from dilution.
 
-Stakers are protected from dilution.
+---
 
 - [Overview](#overview)
   - [General flow](#general-flow)

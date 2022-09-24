@@ -2,6 +2,8 @@
 
 A batteries included vault module, usable as liquidity pools, yield farming vaults or embeddable as core infrastructure.
 
+---
+
 ## Overview
 
 The Vault module provides functionality for asset pool management of fungible 

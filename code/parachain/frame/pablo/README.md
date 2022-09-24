@@ -1,6 +1,8 @@
 # Pablo
 Pallet Pablo provides extensive functionality to set up an exchange, enabling users to create, trade with, and manage liquidity pools.
 
+---
+
 ## Overview
 Pablo builds on four pillars:
 1. [Curve Finance](https://curve.fi/files/stableswap-paper.pdf): basic functionality and mechanisms for cross-market transactions involving stablecoins.

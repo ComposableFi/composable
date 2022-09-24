@@ -2,6 +2,8 @@
 
 The Crowdloan Rewards pallet allows contributors to claim their rewards.
 
+---
+
 ## Overview
 
 ### Unsigned Transactions
