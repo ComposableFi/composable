@@ -1,13 +1,20 @@
-# Democracy Pallet
+# Democracy
 
-### Fork
-Our pallet-democracy is a fork of frame's. Please refer to the docs for most of the functionality. Here we describe the main changes made and how that affects interactions and operations with our version.
+*The Democracy pallet handles the administration of general stakeholder voting.*
+
+---
+
+### Overview
+
+Our pallet-democracy is a fork of [Substrate's democracy pallet](https://github.com/paritytech/substrate/tree/master/frame/democracy). 
+Please refer to the docs for most of the functionality. Here we describe the main changes made and how that affects
+interactions and operations with our version.
 
 #### Changes
 
 - Proposals are identified by their hash + AssetId.
 - Voting is performed using the proposals AssetId to identify what token to lock.
-- During dispatching, [GovernanceRegistry](../governance-registry) is used to lookup the associated Origin.
+- During dispatching, [GovernanceRegistry](https://github.com/ComposableFi/composable/blob/main/code/parachain/frame/governance-registry/src/lib.rs) is used to lookup the associated Origin.
 - Different Currency traits are used, such as MutateHold.
 - Orml traits MultiCurrency, MultiLockableCurrency and MultiReservableCurrency are used to support multiple assets.
 
