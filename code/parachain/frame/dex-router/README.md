@@ -1,6 +1,8 @@
 # DEX Router
 
-A pallet that provides basic functionality to add a route to a DEX for any given pair of asset id's.
+*The DEX-Router pallet provides basic functionality to add a route to a DEX for any given pair of asset id's.*
+
+---
 
 ## Overview
 
