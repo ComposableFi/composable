@@ -38,8 +38,9 @@ Protocol owner increases total rewards share as time goes.
 
 Anybody can get and transfer rewarded assets into the pool. This process can be automated.
 
-A `staker` may leave a position, claim rewards, stake more, etc.
-Or she can make [a position to be fNFT](../fnft/README.md) and use it as an instrument in other protocols.
+A `staker` may leave a position, claim rewards, stake more, etc. Or they can make
+[a position to be fNFT](https://github.com/ComposableFi/composable/blob/main/code/parachain/frame/fnft/README.md) 
+and use it as an instrument in other protocols.
 
 
 ## Protocol
@@ -60,9 +61,11 @@ To allow the users to stake an asset, we first need to `configure` the pool.
 
 Configuration of a pool defines:
 
-Can/must user time lock tokens to get, possibly increased, `share`. What is the penalty for early unlock if there is a lock.
+Can/must user time lock tokens to get, possibly increased, `share`. 
+What is the penalty for early unlock if there is a lock.
 
-By default share does not decay with time and extending time subsumes old-time already passed in a lock. The lock gets smaller remaining time with a higher share.
+By default share does not decay with time and extending time subsumes old-time already passed in a lock. 
+The lock gets smaller remaining time with a higher share.
 
 Owner account of the pool. Usually other protocol or its "owner".
 
@@ -87,15 +90,19 @@ See pool rewards mechanics on how rewards can be distributed.
 
 ### Rewarding
 
-Only the pool owner can transfer the rewards of new assets into a `pool rewards account`. But anybody can transfer rewards of assets that previously were rewarded.
+Only the pool owner can transfer the rewards of new assets into a `pool rewards account`. 
+But anybody can transfer rewards of assets that previously were rewarded.
 
 There is a limit to the possible assets' identifiers transferred as rewards. Once reached, cannot add more variety.
 
-Each total reward share increase tracks the amount which each position should get from that. New shares added do not take the amount from previous rewards. That is how `dilution protection`` works.
+Each total reward share increase tracks the amount which each position should get from that. 
+New shares added do not take the amount from previous rewards. That is how `dilution protection`` works.
 
 ### Rate based rewards
 
-If the `reward rates` are defined in pools' configurations, a batch of pools randomly is checked on each block if the inflation rate allows increasing the rewards share of specified assets in comparison with the previous increase. If that is the case, users' rewards are increased automatically.
+If the `reward rates` are defined in pools' configurations, a batch of pools randomly is checked on each block 
+if the inflation rate allows increasing the rewards share of specified assets in comparison with the previous increase. 
+If that is the case, users' rewards are increased automatically.
 
 On change of reward rate, up to current block rewards release executed before change applied.
 
@@ -108,7 +115,11 @@ If a pool owner sets the pool's rate to zero that stops automatic rewards releas
 A pool may be configured to mint tokens same time it rewards. The default configuration does not mint
 This type of operation inflates tokens and should be used with care.
 
-Alternatively, a pool can be configured to incentive desired interest rate (amount of tokens released to be divided by the amount total staked) and desired staking rate (amount of staked divided by total supply) to have desired balance of staked amounts and liquidity. In this case, a rate is automatically adjusted to steer users to the desired interest rate.  This can only be defined if staked asset is the same as a rewarded asset by definition.
+Alternatively, a pool can be configured to incentive desired interest rate 
+(amount of tokens released to be divided by the amount total staked) and desired staking rate 
+(amount of staked divided by total supply) to have desired balance of staked amounts and liquidity. 
+In this case, a rate is automatically adjusted to steer users to the desired interest rate.  
+This can only be defined if staked asset is the same as a rewarded asset by definition.
 
 **Examples**
 
@@ -127,13 +138,16 @@ A transfer of rewards obeys the same split.
 
 ## Positions
 
-A position is what a user (or other protocol) gets when stakes amount. So that one can get a `share` of rewards and other benefits.
+A position is what a user (or other protocol) gets when stakes amount. 
+So that one can get a `share` of rewards and other benefits.
 Positions capture their configuration upon creation based on what the pool makes possible.
-Positions may be updated only on behalf of users. In that case, they will capture a new pool configuration if that was changed.
+Positions may be updated only on behalf of users. 
+In that case, they will capture a new pool configuration if that was changed.
 
 ### Staking
 
-Assuming a user has a configuration for `PICA` that allows us to stake for a month, she can `stake` an amount `X` for once month duration with the amount larger than ED.
+Assuming a user has a configuration for `PICA` that allows us to stake for a month, they can `stake` an amount `X` for 
+once month duration with the amount larger than ED.
 The reward multiplier elevates the computed share of the staking pool, the longer you stake, the higher your share.
 Let's say we have a reward multiplier of `0.8` for a `MONTH`, if I stake `X PICA`, my share will become `X * 0.8`.
 
@@ -153,7 +167,8 @@ User share amount, potentially elevated, issued as a new token onto asset accoun
 
 Each staking pool has its asset.
 
-Position with all amounts can be wrapped into [fNFT](../fnft/README.md).
+Position with all amounts can be wrapped into 
+[fNFT](https://github.com/ComposableFi/composable/blob/main/code/parachain/frame/fnft/README.md).
 
 ### Unstake
 
@@ -165,7 +180,8 @@ The position must hold enough stake token to burn as it was minted on creation.
 ### Unstake while locked
 
 A user may leave a position before maturity (if it was defined in `lock duration`), it would likely pay a penalty.
-An early unstake penalty applied on the staked asset when the user unstake early (before the end of the selected staking duration).
+An early unstake penalty applied on the staked asset when the user unstake early 
+(before the end of the selected staking duration).
 
 This case is called `early unstake` and will result in a penalty applied to the
 staked asset. A user will be returned only with part of the share.
@@ -207,7 +223,8 @@ Each of which will be the same lock duration and time lock passed.
 
 A user may add some amount to her stake and increase its share.
 
-In case there is a time lock with share configuration not decreasing with time with early unstake penalty and reward multiplier, then the remaining time lock change incentives user to extend amount in existing position.
+In case there is a time lock with share configuration not decreasing with time with early unstake penalty 
+and reward multiplier, then the remaining time lock change incentives user to extend amount in existing position.
 
 In other cases, the time is set to what was provided as a new lock period by the user.
 
@@ -263,11 +280,13 @@ After the position expired, a user can unstake without penalty.
 
 If a stake expired, any update on a position will remove its part of the share from the total.
 
-There is a special function that allows anybody to detect expired positions and get a reward for that. Part of ED of the position is transferred to a reporter.
+There is a special function that allows anybody to detect expired positions and get a reward for that. 
+Part of ED of the position is transferred to a reporter.
 
 ### Compounding
 
-If a position has staked asset to be the same as a rewarding asset and the pool is configured, that reward asset  is subject to compounding.
+If a position has staked asset to be the same as a rewarding asset and the pool is configured, 
+that reward asset  is subject to compounding.
 
 The reward is staked too and increases users' share to earn more reward.
 
