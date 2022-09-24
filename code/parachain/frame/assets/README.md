@@ -3,6 +3,8 @@
 The Asset's pallet provides implementations for common currency traits and functionality for handling transfers and minting.
 E.g. from [orml](https://docs.rs/orml-traits) or [frame_support](https://github.com/paritytech/substrate/tree/master/frame/support)
 
+---
+
 ## Overview
 
 The Asset's pallet provides functions for:
