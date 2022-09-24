@@ -1,5 +1,9 @@
 # Vesting Pallet
 
+*The vesting pallet adds functionality to gradually unlock an accounts balance*
+
+---
+
 ## Overview
 
 Vesting module provides a means of scheduled balance lock on an account. It uses the *graded vesting* way, which unlocks a specific amount of balance every period of time, until all balance unlocked.
