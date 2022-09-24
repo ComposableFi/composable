@@ -85,7 +85,7 @@
         - [Extrinsics](./pallets/dex-router/extrinsics.md)
     - [mosaic](./pallets/mosaic.md)
         - [Extrinsics](./pallets/mosaic/extrinsics.md)
-    - [nft](./pallets/nft.md)
+    - [fnft](./pallets/fnft.md)
         - [Extrinsics](./pallets/nft/extrinsics.md)
     - [oracle](./pallets/oracle.md)
         - [Extrinsics](./pallets/oracle/extrinsics.md)
