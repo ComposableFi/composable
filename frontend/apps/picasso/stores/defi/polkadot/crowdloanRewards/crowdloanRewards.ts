@@ -65,9 +65,10 @@ export async function fetchClaimableAndClaimedRewards(
   try {
     for (const account of accountsState) {
       if (account.address.picassoFormat) {
-        const claimableRewards = await api.rpc.crowdloanRewards.amountAvailableToClaimFor(
-          account.address.picassoFormat
-        );
+        const claimableRewards =
+          await api.rpc.crowdloanRewards.amountAvailableToClaimFor(
+            account.address.picassoFormat
+          );
         account.availableToClaim = fromChainIdUnit(
           new BigNumber(claimableRewards.toString())
         );
@@ -103,7 +104,6 @@ export function getConnectedAccountState(
   connectedAccountsAssociations: OnChainAccountAssociation[],
   picassoSS58Format = SUBSTRATE_NETWORKS.picasso.ss58Format
 ): CrowdloanAccountAccountState {
-  console.log('connectedAddress: ', connectedAddress)
   let crowdloan: CrowdloanAccountAccountState = {
     address: {
       ksmOrEthAddress: connectedAddress,
@@ -137,10 +137,7 @@ export function getConnectedAccountState(
       ? presentInContributorsDev(connectedAddress)
       : undefined;
 
-  if (
-    presentAmountInRewards !== undefined &&
-    presentAmountInContributions !== undefined
-  ) {
+  if (!!presentAmountInRewards && !!presentAmountInContributions) {
     crowdloanSelectedAccountStatus = "canAssociate";
 
     const association = connectedAccountsAssociations.find((association) => {

@@ -1,9 +1,11 @@
 
 import { useKusamaAccounts, usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
-import { useContext, useEffect } from "react";
+import { useEffect } from "react";
 import { useBlockchainProvider } from "bi-lib";
 import { fromPerbill } from "shared";
 import { fetchAssociations, fetchClaimableAndClaimedRewards, getConnectedAccountState } from "./crowdloanRewards";
+import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
+import { encodeAddress } from "@polkadot/util-crypto";
 import {
   setCrowdloanRewardsState,
   useCrowdloanRewardsSlice,
@@ -13,8 +15,6 @@ import rewards from "@/defi/polkadot/constants/pica-rewards.json";
 import contributions from "@/defi/polkadot/constants/contributions.json";
 import contributionsDev from "@/defi/polkadot/constants/contributions-dev.json";
 import rewardsDev from "@/defi/polkadot/constants/pica-rewards-dev.json";
-import { encodeAddress } from "@polkadot/util-crypto";
-import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 /**
  * Check for contributions in JSON
  * @param account ethereum or kusama format address
@@ -125,6 +125,7 @@ const CrowdloanRewardsUpdater = () => {
     account,
     parachainApi,
     onChainAssociations,
+    accounts
   ]);
 
   return null;
