@@ -91,26 +91,11 @@
     "relayChainContributors": [
       "H4xZcL1zehsvdGK8Sw732SyTr5Qi4q8Vc47MNoZf8UyqyGh",
       "HgiQYjjjn8Zy5tF8o7HRaeqTn5R1NZBa6S1d9aJviK7cyPK",
-      "Du3hotb5PoL3VaBAGGcGFLe2SEk1s7wCGddwYG6Q1w8E4UD",
-      "H7LFPcSmVTSzQVo5qfEPJM3gnDHUWcPuh5LnC1PV7w3XrEn",
-      "G5BECyNgt63KiNH4r21ptX75rhMw8czam6jRMLEaAmmBENv",
-      "EM7mTZ2FZxeZ6hbrGD5XnTkG3Jt3QJYSkLJsp4dQKkYQwvb",
-      "HRywKMedvg8Xx5qmFSYvNbfFRR2H6A669nArei6s6c1tWmM",
-      "EVGfNJpyC2TRJYvQqewiuQJip6P5j774scMdgnw96PKDAgf",
-      "CuThjuWjuMcHLWwXY4PBTtV5sKerr5cheB3Uv3jkvVswGYp",
-      "EFkdwvQG1yZpqHRrRmfPuKDKJsG35XMLkFnW2Wu7oNLjoYa",
-      "Cir68xzMsVpEspGqqW9BRtPoawEviwQpw5fNBFgreQEz6Ri",
-      "F53d3jeyFvb2eYsgAERhjC8mogao4Kg4GsdezrqiT8aj55v",
-      "DxGqWCchvdm9RM2LkogB3YHm4MnvbVVRaxWYyD9CyqPRnbs",
-      "DJohWsywfEYCY96uEjEqoRx59F79XqRdcPbpo25tMFo9LTg"
+      "Du3hotb5PoL3VaBAGGcGFLe2SEk1s7wCGddwYG6Q1w8E4UD"
     ],
     "ethereumContributors": [
       "0xf6ce427c29746936C954a30e892e829b65C0b22E",
-      "0x4Bf3f796Cea7f55B9378Fb7930AadE0e32cdce87",
-      "0x122e13B4BDA5E50E4427D41E6F93E24fFaDB1E1D",
-      "0xA907d669A5DF895E5F93d7b0d0338b94432F7Cf8",
-      "0xDC3eAe8617082998617bB0292f664bF35a5805FB",
-      "0x98729c03c4D5e820F5e8c45558ae07aE63F97461"
+      "0x4Bf3f796Cea7f55B9378Fb7930AadE0e32cdce87"
     ]
   },
   "mintAssets": [

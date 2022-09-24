@@ -1,6 +1,7 @@
 import { ApiPromise } from "@polkadot/api";
 import { Signer } from "@polkadot/api/types";
 import BigNumber from "bignumber.js";
+import { decodeAddress } from "@polkadot/util-crypto";
 
 export class CrowdloanRewards {
   api: ApiPromise;
@@ -61,12 +62,16 @@ export class CrowdloanRewards {
    * Query association
    */
   public async association(userAccount: string) {
-    let association: any = await this.api.query.crowdloanRewards.associations(
-      userAccount
-    );
-    association = association.toHuman();
-
-    return association;
+    try {
+      let association: any = await this.api.query.crowdloanRewards.associations(
+        this.api.createType("AccountId32", decodeAddress(userAccount))
+      );
+      association = association.toHuman();
+  
+      return association;
+    } catch (err) {
+      console.error(err)
+    }
   }
 
   /**

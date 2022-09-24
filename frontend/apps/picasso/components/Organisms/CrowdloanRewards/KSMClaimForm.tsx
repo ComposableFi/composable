@@ -1,5 +1,4 @@
 import { BigNumberInput, Input, Modal } from "@/components";
-import { AssociationMode } from "@/stores/defi/polkadot/crowdloanRewards/slice";
 import { useStore } from "@/stores/root";
 import {
   Box,
@@ -14,11 +13,11 @@ import BigNumber from "bignumber.js";
 import React from "react";
 
 type KSMClaimFormProps = {
-  availableToClaim: BigNumber | number;
-  totalPicaVested: BigNumber | number;
-  claimedPICA: BigNumber | number;
-  crowdLoanContribution: BigNumber | number;
-  account: string;
+  availableToClaim: BigNumber;
+  totalRewards: BigNumber;
+  claimedRewards: BigNumber;
+  amountContributed: BigNumber;
+  picassoAccountName: string;
   onClaim: () => Promise<any>;
   disabled?: boolean;
   readonlyAvailableToClaim: boolean;
@@ -26,17 +25,15 @@ type KSMClaimFormProps = {
   readonlyCrowdLoanContribution: boolean;
   readonlySS8Address: boolean;
   onChange: (name: string, value: unknown) => void;
-  needAssociation: boolean;
-  useAssociationMode: AssociationMode;
 };
 
 export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
   disabled,
   availableToClaim,
-  totalPicaVested,
-  claimedPICA,
-  crowdLoanContribution,
-  account,
+  totalRewards,
+  claimedRewards,
+  amountContributed,
+  picassoAccountName,
   readonlyAvailableToClaim,
   readonlyTotalPicaVested,
   readonlyCrowdLoanContribution,
@@ -45,20 +42,6 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
 }) => {
   const theme = useTheme();
   const { isClaimingKSM, closeKSMClaimModal } = useStore(({ ui }) => ui);
-  const atc =
-    typeof availableToClaim === "number"
-      ? new BigNumber(availableToClaim)
-      : availableToClaim;
-  const totalPicaVestedValue =
-    typeof totalPicaVested === "number"
-      ? new BigNumber(totalPicaVested)
-      : totalPicaVested;
-  const crowdLoanContributionValue =
-    typeof crowdLoanContribution === "number"
-      ? new BigNumber(crowdLoanContribution)
-      : crowdLoanContribution;
-  const claimedPICAValue =
-    typeof claimedPICA === "number" ? new BigNumber(claimedPICA) : claimedPICA;
 
   const handleValueChange = (value: unknown, name: string) => {
     onChange(name, value);
@@ -77,7 +60,7 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
             <Grid item xs={12} md={6}>
               <BigNumberInput
                 noBorder={true}
-                value={atc}
+                value={availableToClaim}
                 setter={(v: BigNumber) =>
                   handleValueChange(v, "availableToClaim")
                 }
@@ -110,7 +93,7 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
             <Grid item xs={12} md={6}>
               <BigNumberInput
                 noBorder={true}
-                value={claimedPICAValue}
+                value={claimedRewards}
                 setter={(v: BigNumber) =>
                   handleValueChange(v, "totalPicaVested")
                 }
@@ -146,7 +129,7 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
             <Grid item xs={12} md={6}>
               <BigNumberInput
                 noBorder={true}
-                value={totalPicaVestedValue}
+                value={totalRewards}
                 setter={(v: BigNumber) =>
                   handleValueChange(v, "totalPicaVested")
                 }
@@ -182,7 +165,7 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
             <Grid item xs={12} md={6}>
               <BigNumberInput
                 noBorder={true}
-                value={crowdLoanContributionValue}
+                value={amountContributed}
                 setter={(v: BigNumber) =>
                   handleValueChange(v, "crowdLoanContribution")
                 }
@@ -218,7 +201,7 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
           <Input
             icon="/networks/polkadot_js_wallet.svg"
             noBorder={true}
-            value={account}
+            value={picassoAccountName}
             disabled={true}
             fullWidth
             LabelProps={{

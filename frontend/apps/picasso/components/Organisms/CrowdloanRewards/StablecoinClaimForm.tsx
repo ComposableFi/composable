@@ -13,11 +13,12 @@ import BigNumber from "bignumber.js";
 import React from "react";
 
 type StablecoinClaimFormProps = {
-  availableToClaim: BigNumber | number;
-  totalPicaVested: BigNumber | number;
-  claimedPICA: BigNumber | number;
-  crowdLoanContribution: BigNumber | number;
-  SS8Address: string;
+  availableToClaim: BigNumber;
+  totalRewards: BigNumber;
+  claimedRewards: BigNumber;
+  amountContributed: BigNumber;
+  picassoAccountName: string;
+  SS58Address: string;
   onClaim: () => void;
   needsApproval?: boolean;
   readonlyAvailableToClaim: boolean;
@@ -29,39 +30,21 @@ type StablecoinClaimFormProps = {
 };
 
 export const StablecoinClaimForm: React.FC<StablecoinClaimFormProps> = ({
-  needsApproval,
+  disabled,
   availableToClaim,
-  totalPicaVested,
-  crowdLoanContribution,
-  SS8Address,
+  totalRewards,
+  claimedRewards,
+  amountContributed,
+  SS58Address,
   readonlyAvailableToClaim,
   readonlyTotalPicaVested,
-  claimedPICA,
   readonlyCrowdLoanContribution,
   onClaim,
   onChange,
-  disabled,
 }) => {
-  const [approved, setApproved] = React.useState<boolean>(
-    needsApproval ? false : true
-  );
   const theme = useTheme();
 
   const { isClaimingStablecoin, closeKSMClaimModal } = useStore(({ ui }) => ui);
-  const atc =
-    typeof availableToClaim === "number"
-      ? new BigNumber(availableToClaim)
-      : availableToClaim;
-  const totalPicaVestedValue =
-    typeof totalPicaVested === "number"
-      ? new BigNumber(totalPicaVested)
-      : totalPicaVested;
-  const crowdLoanContributionValue =
-    typeof crowdLoanContribution === "number"
-      ? new BigNumber(crowdLoanContribution)
-      : crowdLoanContribution;
-  const claimedPICAValue =
-    typeof claimedPICA === "number" ? new BigNumber(claimedPICA) : claimedPICA;
   const handleValueChange = (value: unknown, name: string) => {
     onChange(name, value);
   };
@@ -78,7 +61,7 @@ export const StablecoinClaimForm: React.FC<StablecoinClaimFormProps> = ({
           <Grid item xs={12} md={6}>
             <BigNumberInput
               noBorder={true}
-              value={atc}
+              value={availableToClaim}
               setter={(v: BigNumber) =>
                 handleValueChange(v, "availableToClaim")
               }
@@ -111,7 +94,7 @@ export const StablecoinClaimForm: React.FC<StablecoinClaimFormProps> = ({
           <Grid item xs={12} md={6}>
             <BigNumberInput
               noBorder={true}
-              value={claimedPICAValue}
+              value={claimedRewards}
               setter={(v: BigNumber) => handleValueChange(v, "totalPicaVested")}
               isValid={(_v: boolean) => {}} // TODO: Implement error state
               tokenId="pica"
@@ -145,7 +128,7 @@ export const StablecoinClaimForm: React.FC<StablecoinClaimFormProps> = ({
           <Grid item xs={12} md={6}>
             <BigNumberInput
               noBorder={true}
-              value={totalPicaVestedValue}
+              value={totalRewards}
               setter={(v: BigNumber) => handleValueChange(v, "totalPicaVested")}
               isValid={(_v: boolean) => {}} // TODO: Implement error state
               tokenId="pica"
@@ -179,7 +162,7 @@ export const StablecoinClaimForm: React.FC<StablecoinClaimFormProps> = ({
           <Grid item xs={12} md={6}>
             <BigNumberInput
               noBorder={true}
-              value={crowdLoanContributionValue}
+              value={amountContributed}
               setter={(v: BigNumber) =>
                 handleValueChange(v, "crowdLoanContribution")
               }
@@ -213,8 +196,8 @@ export const StablecoinClaimForm: React.FC<StablecoinClaimFormProps> = ({
 
         <Box sx={{ mt: theme.spacing(9) }}>
           <Input
-            value={SS8Address}
-            disabled={approved}
+            value={SS58Address}
+            disabled={true}
             onChange={(e) => handleValueChange("SS8Address", e.target.value)}
             fullWidth
             LabelProps={{
@@ -245,17 +228,6 @@ export const StablecoinClaimForm: React.FC<StablecoinClaimFormProps> = ({
             gap: theme.spacing(2),
           }}
         >
-          {!approved && (
-            <Button
-              onClick={() => setApproved(true)}
-              variant="contained"
-              color="primary"
-              fullWidth
-              disabled={approved}
-            >
-              <Typography variant="button">Approve</Typography>
-            </Button>
-          )}
           <Button
             disabled={disabled ? disabled : false}
             onClick={onClaim}

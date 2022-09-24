@@ -1,244 +1,130 @@
-import { PalletsContext } from "@/defi/polkadot/context/PalletsContext";
-import { useKusamaAccounts, usePicassoProvider } from "@/defi/polkadot/hooks";
+
+import { useKusamaAccounts, usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
 import { useContext, useEffect } from "react";
-import { useStore } from "@/stores/root";
+import { useBlockchainProvider } from "bi-lib";
+import { fromPerbill } from "shared";
+import { fetchAssociations, fetchClaimableAndClaimedRewards, getConnectedAccountState } from "./crowdloanRewards";
+import {
+  setCrowdloanRewardsState,
+  useCrowdloanRewardsSlice,
+} from "./crowdloanRewards.slice";
+// Import static JSON files
 import rewards from "@/defi/polkadot/constants/pica-rewards.json";
 import contributions from "@/defi/polkadot/constants/contributions.json";
-import devRewards from "@/defi/polkadot/constants/pica-rewards-dev.json";
-import { useBlockchainProvider } from "bi-lib";
-import { useDotSamaContext } from "substrate-react";
+import contributionsDev from "@/defi/polkadot/constants/contributions-dev.json";
+import rewardsDev from "@/defi/polkadot/constants/pica-rewards-dev.json";
+import { encodeAddress } from "@polkadot/util-crypto";
+import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
+/**
+ * Check for contributions in JSON
+ * @param account ethereum or kusama format address
+ * @returns string | undefined
+ */
+export const presentInContributors = (account: string): string | undefined =>
+  (contributions.contributedAmounts as Record<string, string>)[account];
+/**
+ * Check for rewards in JSON
+ * @param account ethereum or kusama format address
+ * @returns string | undefined
+ */
+export const presentInRewards = (account: string): string | undefined =>
+  (rewards as Record<string, string>)[account];
+/**
+ * Check for rewards in JSON (dev env)
+ * @param account ethereum or kusama format address
+ * @returns string | undefined
+ */
+export const presentInRewardsDev = (account: string): string | undefined =>
+  (rewardsDev as Record<string, string>)[account];
+/**
+ * Check for constributions in JSON (dev env)
+ * @param account ethereum or kusama format address
+ * @returns string | undefined
+ */
+export const presentInContributorsDev = (account: string): string | undefined =>
+  (contributionsDev.contributedAmounts as Record<string, string>)[account];
 
 const DEFAULT_EVM_ID = 1;
 
 const CrowdloanRewardsUpdater = () => {
   const { account } = useBlockchainProvider(DEFAULT_EVM_ID);
   const kusamaAccounts = useKusamaAccounts();
-  const { selectedAccount } = useDotSamaContext();
-  const picassoProvider = usePicassoProvider();
-  const {
-    ui,
-    setEvmAlreadyAssociated,
-    setInitialPayment,
-    setUserAssociatedWith,
-    setUserClaimEligibility,
-    setUserClaimablePICA,
-    setUserNetVestedPICA,
-    setUserContribution,
-    setUserClaimedPICA
-  } = useStore(({ crowdloanRewards }) => crowdloanRewards);
-  const { crowdloanRewards } = useContext(PalletsContext);
+  const selectedAccount = useSelectedAccount();
+  const { parachainApi, accounts } = usePicassoProvider();
 
   useEffect(() => {
-    if (
-      crowdloanRewards &&
-      kusamaAccounts.length &&
-      account &&
-      selectedAccount != -1
-    ) {
-      let promises: Promise<any>[] = [];
-      kusamaAccounts.forEach((account) => {
-        promises.push(crowdloanRewards.association(account.address));
-      });
-
-      Promise.all(promises).then((associations) => {
-        associations = associations.filter((i) => !!i);
-
-        let evmAlreadyAssociated = false;
-        if (associations.length) {
-          associations.forEach((assoc) => {
-            if (
-              assoc.Ethereum &&
-              assoc.Ethereum.toLowerCase() === account.toLowerCase()
-            ) {
-              evmAlreadyAssociated = true;
-            }
-          });
-        } else {
-          evmAlreadyAssociated = false;
-        }
-
-        setEvmAlreadyAssociated(evmAlreadyAssociated);
-      });
+    if (parachainApi) {
+      const initialPayment = fromPerbill(
+        parachainApi.consts.crowdloanRewards.initialPayment.toString()
+      ).div(100);
+      console.log('initialPayment.toString()', initialPayment.toString());
+      setCrowdloanRewardsState({ initialPayment });
     }
-  }, [
-    account,
-    kusamaAccounts.length,
-    crowdloanRewards,
-    selectedAccount,
-    kusamaAccounts,
-    setEvmAlreadyAssociated
-  ]);
+  }, [parachainApi]);
 
   useEffect(() => {
-    if (crowdloanRewards) {
-      crowdloanRewards.queryInitialPayment().then((ip) => {
-        console.log("initial payment", ip);
-        setInitialPayment(ip);
-      });
-    }
-  }, [crowdloanRewards, setInitialPayment]);
-
-  useEffect(() => {
-    const { accounts, apiStatus, parachainApi } = picassoProvider;
-    if (
-      selectedAccount !== -1 &&
-      accounts.length &&
-      apiStatus === "connected" &&
-      parachainApi &&
-      crowdloanRewards
-    ) {
-      // dispatch something
-      crowdloanRewards
-        .association(accounts[selectedAccount].address)
-        .then((association: any) => {
-          if (association === null) {
-            setUserAssociatedWith(null);
-            setUserClaimEligibility(true);
-          } else {
-            setUserAssociatedWith(
-              !!association.Ethereum ? "ethereum" : "relayChain"
-            );
-            setUserClaimEligibility(true);
-          }
+    if (parachainApi && accounts.length > 0) {
+      const addresses = accounts.map(
+        (_account) => _account.address
+      );
+      fetchAssociations(
+        parachainApi,
+        addresses.filter((address) => !address.startsWith("0x"))
+      )
+        .then((onChainAssociations) => {
+          setCrowdloanRewardsState({ onChainAssociations });
         })
-        .catch((err: any) => {
-          console.log("ye error", err);
-        });
+        .catch(console.error);
     }
-  }, [
-    selectedAccount,
-    picassoProvider.apiStatus,
-    picassoProvider.accounts.length,
-    crowdloanRewards,
-    picassoProvider,
-    setUserAssociatedWith,
-    setUserClaimEligibility
-  ]);
+  }, [selectedAccount, parachainApi, accounts]);
+
+  const { onChainAssociations } = useCrowdloanRewardsSlice();
 
   useEffect(() => {
-    const { accounts, apiStatus, parachainApi } = picassoProvider;
+    const ethereumAccount = account ? account.toLowerCase() : undefined;
+    if (!ethereumAccount) return;
+    if (!parachainApi) return;
+    if (accounts.length > 0 && !(onChainAssociations.length > 0)) return;
+
+    const accountsState = accounts.filter(acc => !acc.address.startsWith("0x")).map((picaAccount) => {
+      return getConnectedAccountState(
+        encodeAddress(picaAccount.address, SUBSTRATE_NETWORKS.kusama.ss58Format),
+        "kusama",
+        process.env.NODE_ENV as any,
+        onChainAssociations
+      );
+    });
+
+    accountsState.push(
+      getConnectedAccountState(
+        ethereumAccount,
+        "ethereum",
+        process.env.NODE_ENV as any,
+        onChainAssociations
+      )
+    );
+
     if (
-      selectedAccount !== -1 &&
-      accounts.length &&
-      apiStatus === "connected" &&
-      parachainApi &&
-      crowdloanRewards
+      accountsState.some(
+        (account) => account.crowdloanSelectedAccountStatus === "canClaim"
+      )
     ) {
-      crowdloanRewards
-        .queryAvailableToClaim(accounts[selectedAccount].address)
-        .then((availableClaim) => {
-          setUserClaimablePICA(availableClaim);
-        });
+      fetchClaimableAndClaimedRewards(parachainApi, accountsState).then(
+        (accountsState) => {
+          setCrowdloanRewardsState({ accountsState });
+        }
+      );
+    } else {
+      setCrowdloanRewardsState({
+        accountsState,
+      });
     }
   }, [
     selectedAccount,
-    picassoProvider.apiStatus,
-    picassoProvider.accounts.length,
-    crowdloanRewards,
-    picassoProvider,
-    setUserClaimablePICA
-  ]);
-
-  useEffect(() => {
-    let netVestedPICA = "0";
-    let contribution = "0";
-    if (account && ui.useAssociationMode === "ethereum") {
-      const addr = account.toLowerCase();
-      if (addr && (rewards as any)[addr]) {
-        netVestedPICA = (rewards as any)[addr];
-      }
-      // dev
-      if (process.env.VERCEL_ENV !== "production") {
-        if (addr && (devRewards as any)[addr]) {
-          netVestedPICA = (devRewards as any)[addr];
-        }
-      }
-
-      if (addr && (contributions.stablesContributedAmounts as any)[addr]) {
-        contribution = (contributions.stablesContributedAmounts as any)[addr];
-      }
-    } else if (
-      selectedAccount !== -1 &&
-      kusamaAccounts.length &&
-      ui.useAssociationMode === "relayChain"
-    ) {
-      const addr = kusamaAccounts[selectedAccount].address;
-
-      if (addr && (rewards as any)[addr]) {
-        netVestedPICA = (rewards as any)[addr];
-      }
-      // dev
-      if (process.env.VERCEL_ENV !== "production") {
-        if (addr && (devRewards as any)[addr]) {
-          netVestedPICA = (devRewards as any)[addr];
-        }
-      }
-
-      if (addr && (contributions.contributedAmountsWithoutBoost as any)[addr]) {
-        contribution = (contributions.contributedAmountsWithoutBoost as any)[
-          addr
-          ];
-      }
-    }
-
-    setUserNetVestedPICA(netVestedPICA);
-
-    setUserContribution(contribution);
-  }, [
-    selectedAccount,
-    kusamaAccounts.length,
-    ui.useAssociationMode,
-    account,
     kusamaAccounts,
-    setUserNetVestedPICA,
-    setUserContribution
-  ]);
-
-  useEffect(() => {
-    if (crowdloanRewards) {
-      const setClaimedZero = () => {
-        setUserClaimedPICA("0");
-      };
-
-      let addrToQuery = "";
-      let isRelayChain = ui.useAssociationMode === "relayChain";
-
-      if (isRelayChain) {
-        if (selectedAccount !== -1 && kusamaAccounts.length) {
-          addrToQuery = kusamaAccounts[selectedAccount].address;
-        }
-      } else {
-        if (account) {
-          addrToQuery = account;
-        }
-      }
-
-      if (!addrToQuery.length) {
-        setClaimedZero();
-      } else {
-        crowdloanRewards
-          .queryRewards(addrToQuery, isRelayChain)
-          .then((rewards) => {
-            if (rewards) {
-              let { claimed } = rewards;
-              claimed = claimed.replaceAll(",", "");
-
-              setUserClaimedPICA(claimed);
-            } else {
-              // set zero
-              setClaimedZero();
-            }
-          });
-      }
-    }
-  }, [
-    selectedAccount,
-    kusamaAccounts.length,
-    ui.useAssociationMode,
     account,
-    crowdloanRewards,
-    setUserClaimedPICA,
-    kusamaAccounts
+    parachainApi,
+    onChainAssociations,
   ]);
 
   return null;

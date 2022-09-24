@@ -4,17 +4,20 @@ import { Box, Grid, Link, Typography, useTheme } from "@mui/material";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import { useEffect } from "react";
-import { useStore } from "@/stores/root";
-import { FeaturedBox, PageTitle, SS8WalletHelper } from "@/components";
-import { ConnectorType, useConnector } from "bi-lib";
+import { PageTitle, FeaturedBox, SS8WalletHelper } from "@/components";
+import { ConnectorType, useBlockchainProvider, useConnector } from "bi-lib";
+import { useSelectedAccount } from "@/defi/polkadot/hooks";
 import { useDotSamaContext } from "substrate-react";
+import { useAccountState } from "@/stores/defi/polkadot/crowdloanRewards/crowdloanRewards.slice";
 
 const CrowdloanRewards: NextPage = () => {
   const theme = useTheme();
   const router = useRouter();
-  const userAssociation = useStore(
-    ({ crowdloanRewards }) => crowdloanRewards.associatedWith
-  );
+  const { account } = useBlockchainProvider(1);
+  const selectedAccount = useSelectedAccount();
+  
+  const ethereumAccountState = useAccountState(account ?? "-", "ethereum");
+  const ksmAccountState = useAccountState(selectedAccount?.address ?? "-", "kusama");
 
   const breadcrumbs = [
     <Link key="Overview" underline="none" color="primary" href="/frontend/fe/apps/picasso/pages">
@@ -32,14 +35,21 @@ const CrowdloanRewards: NextPage = () => {
   const { isActive } = useConnector(ConnectorType.MetaMask);
 
   useEffect(() => {
-    if (userAssociation) {
-      userAssociation === "ethereum"
-        ? router.push("crowdloan-rewards/stablecoin")
-        : router.push("crowdloan-rewards/ksm");
+    if (ksmAccountState) {
+      if (!ethereumAccountState) {
+        if (
+          (ksmAccountState.crowdloanSelectedAccountStatus === "canAssociate" ||
+          ksmAccountState.crowdloanSelectedAccountStatus === "canClaim") &&
+          !ethereumAccountState) {
+          router.push("crowdloan-rewards/ksm");
+        }
+      } else {
+        if (ksmAccountState.crowdloanSelectedAccountStatus === "ineligible") {
+          router.push("crowdloan-rewards/stablecoin");
+        }
+      }
     }
-    // Only to be called on page load therefore we can omit dependencies.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [router, ethereumAccountState, ksmAccountState]);
 
   return (
     <Default breadcrumbs={breadcrumbs}>

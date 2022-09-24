@@ -11,21 +11,21 @@ import {
 import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
 import { useStore } from "@/stores/root";
 import { alpha, Grid, Typography, useTheme } from "@mui/material";
-import { ApiPromise } from "@polkadot/api";
 import { stringToHex } from "@polkadot/util";
-import { useEffect, useState } from "react";
-import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
+import { useCallback, useMemo, useState } from "react";
 import { crowdLoanSignableMessage } from "@/utils/crowdloanRewards";
-import { toBaseUnitBN, toTokenUnitsBN } from "shared";
 import { useRouter } from "next/router";
 import { ConnectorType, useBlockchainProvider, useConnector } from "bi-lib";
-import { updateBalances } from "@/stores/defi/polkadot/balances/PolkadotBalancesUpdater";
-import { SubstrateNetworkId } from "@/defi/polkadot/types";
 import { OpenInNewRounded } from "@mui/icons-material";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import { useDotSamaContext, useExecutor, usePendingExtrinsic } from "substrate-react";
 import { useSnackbar } from "notistack";
 import BigNumber from "bignumber.js";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import {
+  useAccountState,
+  useCrowdloanRewardsSlice,
+} from "@/stores/defi/polkadot/crowdloanRewards/crowdloanRewards.slice";
+import { useCrowdloanRewardsAssociate } from "@/defi/polkadot/hooks/useCrowdloanRewardsAssociate";
 
 const DEFAULT_EVM_ID = 1;
 const APP_NAME = "Picasso UI";
@@ -55,35 +55,18 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
   const router = useRouter();
   const { enqueueSnackbar } = useSnackbar();
   const { isActive } = useConnector(ConnectorType.MetaMask);
-  const { signer } = useBlockchainProvider(DEFAULT_EVM_ID);
+  const { signer, account } = useBlockchainProvider(DEFAULT_EVM_ID);
   const executor = useExecutor();
 
-  const {
-    setEvmAlreadyAssociated,
-    setUseAssociationMode,
-    setUserAssociatedWith,
-    setUserClaimEligibility,
-    setUserCrowdloanData
-  } = useStore(({ crowdloanRewards }) => crowdloanRewards);
   const updateBalance = useStore(
     ({ substrateBalances }) => substrateBalances.updateBalance
   );
 
   const { closeKSMClaimModal, openKSMClaimModal } = useStore(({ ui }) => ui);
-  const crUiState = useStore(({ crowdloanRewards }) => crowdloanRewards.ui);
-  const crUserData = useStore(({ crowdloanRewards }) => crowdloanRewards.user);
-  const initialPayment = useStore(
-    ({ crowdloanRewards }) => crowdloanRewards.constants.initialPayment
-  );
-  const userAssociation = useStore(
-    ({ crowdloanRewards }) => crowdloanRewards.associatedWith
-  );
-  const isEvmAlreadyAssociated = useStore(
-    ({ crowdloanRewards }) => crowdloanRewards.evmAlreadyAssociated
-  );
   const { extensionStatus } = useDotSamaContext();
-  const selectedAccount = useSelectedAccount();
   const { parachainApi, accounts } = usePicassoProvider();
+
+  const selectedAccount = useSelectedAccount();
   const theme = useTheme();
   const [ineligibleText, setIneligibleText] = useState({
     title: ERROR_MESSAGES.KSM_WALLET_NOT_CONNECTED.title,
@@ -92,129 +75,19 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
   const [showAlertBox, setShowAlertBox] = useState<boolean>(false);
 
   const hasNothingToClaim = (): boolean => {
-    return (
-      extensionStatus !== "connected" ||
-      (crUiState.useAssociationMode === "ethereum" && !isActive) ||
-      (userAssociation === null && !crUiState.isEligible)
-    );
+    return extensionStatus !== "connected";
   };
 
-  const onAssociationSuccess = (
-    associationMode: "relayChain" | "ethereum",
-    account: string
-  ) => {
-    if (associationMode === "ethereum") {
-      setEvmAlreadyAssociated(true);
-    }
-
-    setUserAssociatedWith(associationMode);
-
-    setUserClaimEligibility(true);
-
-    closeKSMClaimModal();
-
-    updateBalances(
-      account,
-      parachainApi,
-      "picasso" as SubstrateNetworkId,
-      updateBalance
-    );
-  };
-
-  const onAssociationFail = (err: any) => {
-    if (
-      err.message === "1010: Invalid Transaction: Custom error: 1" ||
-      err.message === "1010: Invalid Transaction: Custom error: 3"
-    ) {
-      setUserClaimEligibility(false);
-      setIneligibleText((s) => {
-        s.title = ERROR_MESSAGES.WRONG_ADDRESS.title;
-        s.textBelow = ERROR_MESSAGES.WRONG_ADDRESS.message;
-        return { ...s };
-      });
-    }
-
-    closeKSMClaimModal();
-  };
-
-  const onClaim = async () => {
-    if (parachainApi && selectedAccount) {
-      if (crUiState.isEligible && userAssociation === null) {
-        openKSMClaimModal();
-
-        crUiState.useAssociationMode === "relayChain"
-          ? associateKSM(selectedAccount.address, parachainApi)
-          : associateETH(selectedAccount.address, parachainApi);
-      } else if (crUiState.isEligible && userAssociation !== null) {
-        // claim
-        openKSMClaimModal();
-        claim(selectedAccount.address);
-      }
-    }
-  };
-
-  useEffect(() => {
+  const flow = useMemo(() => {
     const pathNames = router.pathname.split("/");
     const pathName = pathNames[pathNames.length - 1];
 
     if (pathName.toLowerCase() === "ksm") {
-      setUseAssociationMode("relayChain");
+      return "KSM";
     } else {
-      setUseAssociationMode("ethereum");
+      return "Stable coin";
     }
-    // Only to be called on page load therefore we can omit dependencies.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (crUiState.useAssociationMode === "ethereum") {
-      if (!isActive) {
-        setIneligibleText((s) => {
-          s.textBelow = ERROR_MESSAGES.ETH_WALLET_NOT_CONNECTED.message;
-          return s;
-        });
-      }
-    }
-
-    if (extensionStatus !== "connected" || !accounts.length) {
-      setIneligibleText((s) => {
-        s.textBelow = ERROR_MESSAGES.KSM_WALLET_NOT_CONNECTED.message;
-        return s;
-      });
-    }
-  }, [
-    accounts,
-    crUiState.useAssociationMode,
-    extensionStatus,
-    isActive,
-    selectedAccount
-  ]);
-
-  let netPICAVested = new BigNumber(crUserData.netVestedPICA);
-  let contributedAmount = new BigNumber(crUserData.contribution);
-
-  let claimedPICA = toTokenUnitsBN(
-    crUserData.claimedPICA,
-    SUBSTRATE_NETWORKS.picasso.decimals
-  );
-
-  let claimablePICA = toTokenUnitsBN(
-    crUserData.claimablePICA,
-    SUBSTRATE_NETWORKS.picasso.decimals
-  );
-
-  claimablePICA =
-    Number(initialPayment) > 0 && netPICAVested.gte(0)
-      ? crUiState.useAssociationMode === "ethereum"
-        ? isEvmAlreadyAssociated
-          ? claimablePICA
-          : netPICAVested.times(initialPayment)
-        : crUiState.useAssociationMode === "relayChain"
-          ? userAssociation === null
-            ? netPICAVested.times(initialPayment)
-            : claimablePICA
-          : claimablePICA
-      : claimablePICA;
+  }, [router]);
 
   const isPendingClaim = usePendingExtrinsic(
     "claim",
@@ -228,164 +101,140 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
     ""
   );
 
-  const claim = async (address: string) => {
+  const signPolkadotJs = useCallback(async (): Promise<string> => {
     try {
-      const {
-        web3FromAddress,
-        web3Enable
-      } = require("@polkadot/extension-dapp");
+      const { web3FromAddress, web3Enable } = require("@polkadot/extension-dapp");
       await web3Enable(APP_NAME);
-      const injector = await web3FromAddress(address);
+      if (!selectedAccount || !parachainApi) throw new Error('Missing Connection')
+      const injector = await web3FromAddress(selectedAccount.address);
+      if (!injector.signer.signRaw) throw new Error('Missing Connection')
+      if (!parachainApi || !selectedAccount) throw new Error('Missing Connection');
+      const accId32 = parachainApi.createType(
+        "AccountId32",
+        selectedAccount.address
+      );
+      const { signature } = await injector.signer.signRaw({
+        address: selectedAccount.address,
+        data: stringToHex(crowdLoanSignableMessage(accId32)),
+        type: "bytes",
+      });
 
-      if (executor && parachainApi && selectedAccount) {
-        let toUpdateAmount = claimablePICA.plus(claimedPICA);
-        await executor.execute(
-          parachainApi.tx.crowdloanRewards.claim(),
-          selectedAccount.address,
-          parachainApi,
-          injector.signer,
-          (txHash) => {
-            enqueueSnackbar("Claim Processing", {
-              variant: "info",
-              isClosable: true,
-              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash
-            });
-          },
-          (txHash) => {
-            enqueueSnackbar("Claim Finalized", {
-              variant: "success",
-              isClosable: true,
-              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash
-            });
-
-            setUserCrowdloanData(
-              "0",
-              netPICAVested.toString(),
-              toBaseUnitBN(
-                toUpdateAmount.toString(),
-                SUBSTRATE_NETWORKS.picasso.decimals
-              ).toString()
-            );
-
-            closeKSMClaimModal();
-          }
-        );
-      }
+      return signature;
     } catch (err: any) {
-      console.log(err);
-      closeKSMClaimModal();
+      enqueueSnackbar(err.message, { variant: "error" });
+      return Promise.reject(new Error(err.message));
     }
-  };
+  }, [selectedAccount, parachainApi, enqueueSnackbar]);
 
-  const associateKSM = async (address: string, api: ApiPromise) => {
-    const { web3FromAddress, web3Enable } = require("@polkadot/extension-dapp");
-    await web3Enable(APP_NAME);
-    const injector = await web3FromAddress(address);
+  const signEthereum = useCallback(async (): Promise<string> => {
+    
+    try {
+      if (!parachainApi || !signer || !selectedAccount) throw new Error('Missing Connection');
+      const accId32 = parachainApi.createType(
+        "AccountId32",
+        selectedAccount.address
+      );
+      const signature = await signer.signMessage(
+        crowdLoanSignableMessage(accId32)
+      );
 
-    if (injector.signer.signRaw && executor) {
-      try {
-        const accId32 = api.createType("AccountId32", address);
-        const { signature } = await injector.signer.signRaw({
-          address: address,
-          data: stringToHex(crowdLoanSignableMessage(accId32)),
-          type: "bytes"
-        });
+      return signature;
+    } catch (err: any) {
+      enqueueSnackbar(err.message, { variant: "error" });
+      return Promise.reject(new Error(err.message));
+    }
+  }, [selectedAccount, signer, parachainApi, enqueueSnackbar]);
 
-        const param = {
-          RelayChain: [accId32, { Sr25519: signature }]
-        };
+  const { initialPayment } = useCrowdloanRewardsSlice();
+  const ethereumAccountState = useAccountState(account ?? "-", "ethereum");
+  const ksmAccountState = useAccountState(
+    selectedAccount?.address ?? "-",
+    "kusama"
+  );
 
-        let toUpdateAmount = claimedPICA.plus(claimablePICA);
-        await executor.executeUnsigned(
-          api.tx.crowdloanRewards.associate(accId32, param),
-          api,
-          (_txHash) => {
-            enqueueSnackbar("Claim Processing", {
-              variant: "info",
-              isClosable: true,
-              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + _txHash
-            });
-          },
-          (_txHash) => {
-            setUserCrowdloanData(
-              "0",
-              netPICAVested.toString(),
-              toBaseUnitBN(
-                toUpdateAmount.toString(),
-                SUBSTRATE_NETWORKS.picasso.decimals
-              ).toString()
-            );
+  const [methodToCall, setMethodToCall] = useState<
+    "associateEth" | "associateKSM" | "claim" | "none"
+  >("none");
 
-            enqueueSnackbar("Claim Finalized", {
-              variant: "info",
-              isClosable: true,
-              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + _txHash
-            });
-            onAssociationSuccess("relayChain", address);
-          }
-        );
-      } catch (err: any) {
-        onAssociationFail(err);
+  const useAssociate = useCrowdloanRewardsAssociate({
+    api: parachainApi,
+    executor,
+    selectedPicassoAddress: selectedAccount?.address,
+    selectedEthereumAddress: account,
+    associateMode:
+      methodToCall === "associateEth"
+        ? "ethereum"
+        : methodToCall === "associateKSM"
+        ? "kusama"
+        : undefined,
+  });
+
+  const {
+    claimedRewards,
+    amountContributed,
+    availableToClaim,
+    totalRewards,
+  } = useMemo(() => {
+    let claimedRewards = new BigNumber(0);
+    let amountContributed = new BigNumber(0);
+    let availableToClaim = new BigNumber(0);
+    let totalRewards = new BigNumber(0);
+
+    if (ksmAccountState) {
+      if (ksmAccountState.crowdloanSelectedAccountStatus === "ineligible") {
+        if (
+          ethereumAccountState &&
+          ethereumAccountState.crowdloanSelectedAccountStatus === "canAssociate"
+        ) {
+          claimedRewards = ethereumAccountState.claimedRewards;
+          amountContributed = ethereumAccountState.amountContributed;
+          availableToClaim = ethereumAccountState.totalRewards.times(
+            initialPayment
+          );
+          totalRewards = ethereumAccountState.totalRewards;
+          setMethodToCall("associateEth");
+          // allow associate eth
+        }
+        // check if ethereum is eligible and can be associated
+        // if ethereum is not eligible then we leave everything 0
+      } else if (
+        !ethereumAccountState ||
+        (ethereumAccountState &&
+          ethereumAccountState.crowdloanSelectedAccountStatus === "ineligible")
+      ) {
+        // in this case ethereum account is not eligible and is connected as well
+        if (ksmAccountState.crowdloanSelectedAccountStatus === "canAssociate") {
+          claimedRewards = ksmAccountState.claimedRewards;
+          amountContributed = ksmAccountState.amountContributed;
+          availableToClaim = ksmAccountState.totalRewards.times(initialPayment);
+          totalRewards = ksmAccountState.totalRewards;
+          setMethodToCall("associateKSM");
+        } else {
+          claimedRewards = ksmAccountState.claimedRewards;
+          amountContributed = ksmAccountState.amountContributed;
+          availableToClaim = ksmAccountState.availableToClaim;
+          totalRewards = ksmAccountState.totalRewards;
+          setMethodToCall("claim");
+        }
       }
+    } else {
+      setMethodToCall("none");
     }
-  };
 
-  const associateETH = async (address: string, api: ApiPromise) => {
-    const { web3Enable } = require("@polkadot/extension-dapp");
-    await web3Enable(APP_NAME);
-
-    if (signer && executor) {
-      try {
-        const accId32 = api.createType("AccountId32", address);
-        const signature = await signer.signMessage(
-          crowdLoanSignableMessage(accId32)
-        );
-
-        const param = {
-          Ethereum: signature
-        };
-
-        let toUpdateAmount = claimedPICA.plus(claimablePICA);
-        await executor.executeUnsigned(
-          api.tx.crowdloanRewards.associate(accId32, param),
-          api,
-          (_txHash) => {
-            enqueueSnackbar("Claim Processing", {
-              variant: "info",
-              isClosable: true,
-              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + _txHash
-            });
-          },
-          (_txHash) => {
-            setUserCrowdloanData(
-              "0",
-              netPICAVested.toString(),
-              toBaseUnitBN(
-                toUpdateAmount.toString(),
-                SUBSTRATE_NETWORKS.picasso.decimals
-              ).toString()
-            );
-
-            enqueueSnackbar("Claim Finalized", {
-              variant: "info",
-              isClosable: true,
-              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + _txHash
-            });
-            onAssociationSuccess("ethereum", address);
-          }
-        );
-      } catch (err: any) {
-        onAssociationFail(err);
-      }
-    }
-  };
+    return {
+      claimedRewards,
+      amountContributed,
+      availableToClaim,
+      totalRewards,
+    };
+  }, [ethereumAccountState, ksmAccountState, initialPayment]);
 
   const breadcrumbs = [
     <Link
       key="Overview"
       underline="none"
       color="primary"
-      href="/frontend/fe/apps/picasso/pages"
+      href="/"
     >
       Overview
     </Link>,
@@ -398,8 +247,8 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
       Crowdloan Rewards
     </Link>,
     <Typography key="claims" color="text.secondary">
-      {crUiState.useAssociationMode === "ethereum" ? "Stablecoin" : "KSM"}
-    </Typography>
+      {flow}
+    </Typography>,
   ];
 
   const standardPageSize = {
@@ -437,47 +286,54 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
           <Grid item {...standardPageSize} mt={theme.spacing(9)}>
             {isStable ? (
               <StablecoinClaimForm
-                disabled={Boolean(
-                  (userAssociation !== null && claimablePICA.lte(0)) ||
-                  isPendingClaim ||
-                  isPendingAssociate
-                )}
-                claimedPICA={claimedPICA}
-                crowdLoanContribution={contributedAmount}
+                SS58Address={selectedAccount ? selectedAccount.address : "-"}
+                disabled={false}
+                claimedRewards={claimedRewards}
+                amountContributed={amountContributed}
+                availableToClaim={availableToClaim}
+                totalRewards={totalRewards}
                 readonlyCrowdLoanContribution={true}
-                availableToClaim={claimablePICA}
                 readonlyAvailableToClaim
-                totalPicaVested={netPICAVested}
                 readonlyTotalPicaVested
-                SS8Address={selectedAccount ? selectedAccount.address : ""}
+                picassoAccountName={
+                  selectedAccount ? selectedAccount.name : "-"
+                }
                 readonlySS8Address
-                onClaim={onClaim}
+                onClaim={async () => {
+                  methodToCall === "associateEth"
+                    ? signEthereum().then(useAssociate)
+                    : methodToCall === "associateKSM"
+                    ? signPolkadotJs().then(useAssociate)
+                    : undefined;
+                }}
                 onChange={(name: string, value: unknown) => {
                   console.log("Change", name, value);
                 }}
               />
             ) : (
               <KSMClaimForm
-                disabled={Boolean(
-                  (userAssociation !== null && claimablePICA.lte(0)) ||
-                  isPendingClaim ||
-                  isPendingAssociate
-                )}
-                claimedPICA={claimedPICA}
-                crowdLoanContribution={contributedAmount}
+                disabled={false}
+                claimedRewards={claimedRewards}
+                amountContributed={amountContributed}
+                availableToClaim={availableToClaim}
+                totalRewards={totalRewards}
                 readonlyCrowdLoanContribution={true}
-                needAssociation={userAssociation === null}
-                availableToClaim={claimablePICA}
                 readonlyAvailableToClaim
-                totalPicaVested={netPICAVested}
                 readonlyTotalPicaVested
-                account={selectedAccount ? selectedAccount.name : ""}
+                picassoAccountName={
+                  selectedAccount ? selectedAccount.name : "-"
+                }
                 readonlySS8Address
-                onClaim={onClaim}
+                onClaim={async () => {
+                  methodToCall === "associateEth"
+                    ? signEthereum().then(useAssociate)
+                    : methodToCall === "associateKSM"
+                    ? signPolkadotJs().then(useAssociate)
+                    : undefined;
+                }}
                 onChange={(name: string, value: unknown) => {
                   console.log("Change", name, value);
                 }}
-                useAssociationMode={"relayChain"}
               />
             )}
           </Grid>
