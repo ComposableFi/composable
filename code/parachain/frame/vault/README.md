@@ -1,7 +1,6 @@
 # Vaults Pallet
 
-A batteries included vault module, usable as liquidity pools, yield farming 
-vaults or embeddable as core infrastructure.
+A batteries included vault module, usable as liquidity pools, yield farming vaults or embeddable as core infrastructure.
 
 ## Overview
 
