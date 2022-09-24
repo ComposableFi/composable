@@ -1,6 +1,8 @@
 # Airdrop
 
-The Airdrop pallet enables the granting of tokens to a set of users.
+*The Airdrop pallet allows users and protocols to airdrop tokens to users.*
+
+---
 
 ## Overview
 
