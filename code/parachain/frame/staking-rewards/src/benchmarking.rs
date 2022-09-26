@@ -1,12 +1,8 @@
 //! Benchmarks
-use core::ops::Mul;
-
 use crate::*;
 
 use composable_support::validation::TryIntoValidated;
-use composable_tests_helpers::test::{
-	block::process_and_progress_blocks, helper::assert_extrinsic_event_with,
-};
+use composable_tests_helpers::test::helper::assert_extrinsic_event_with;
 use composable_traits::{
 	staking::{
 		lock::LockConfig, RewardConfig, RewardPoolConfiguration::RewardRateBasedIncentive,
@@ -189,7 +185,7 @@ benchmarks! {
 		Pallet::<T>::create_reward_pool(
 			RawOrigin::Root.into(),
 			get_reward_pool::<T>(user.clone(), r)
-		).unwrap();
+		).expect("creating reward pool should succeed");
 
 		frame_system::Pallet::<T>::set_block_number(frame_system::Pallet::<T>::current_block_number() + T::BlockNumber::one());
 
@@ -197,13 +193,12 @@ benchmarks! {
 			BASE_ASSET_ID.into(),
 			&user,
 			100_000_000_000.into(),
-		).unwrap();
+		).expect("minting should succeed");
 
 		let instance_id = assert_extrinsic_event_with::<T, <T as frame_system::Config>::Event, crate::Event::<T>, _, _, _>(
 			Pallet::<T>::stake(
 				RawOrigin::Signed(user.clone()).into(),
 				BASE_ASSET_ID.into(),
-				// PICA::units(1_000).into(),
 				100_000_000.into(),
 				ONE_HOUR,
 			),
