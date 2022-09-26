@@ -1,8 +1,12 @@
 pub(crate) use crate::test::runtime::{new_test_ext, Test}; // for benchmarks
 use crate::{
-	test::{prelude::H256, runtime::*},
+	test::{
+		prelude::{stake_and_assert, H256},
+		runtime::*,
+	},
 	Config, RewardPoolConfigurationOf, RewardPools, StakeOf, Stakes,
 };
+use composable_support::validation::TryIntoValidated;
 use composable_tests_helpers::test::{
 	block::process_and_progress_blocks,
 	currency::{BTC, PICA, USDT, XPICA},
@@ -33,7 +37,7 @@ use sp_core::sr25519::Public;
 use sp_runtime::PerThing;
 use sp_std::collections::{btree_map::BTreeMap, btree_set::BTreeSet};
 
-use self::prelude::STAKING_FNFT_COLLECTION_ID;
+use self::prelude::{create_rewards_pool_and_assert, split_and_assert, STAKING_FNFT_COLLECTION_ID};
 
 mod prelude;
 mod runtime;
@@ -197,6 +201,48 @@ fn stake_in_case_of_low_balance_should_not_work() {
 
 		assert!(Stakes::<Test>::iter_prefix_values(PICA::ID).next().is_none());
 	});
+}
+
+#[test]
+fn split_doesnt_cause_loss_in_assets() {
+	new_test_ext().execute_with(|| {
+		process_and_progress_blocks::<StakingRewards, Test>(1);
+
+		mint_assets([ALICE], [PICA::ID], PICA::units(10_000));
+
+		create_rewards_pool_and_assert(RewardRateBasedIncentive {
+			owner: ALICE,
+			asset_id: PICA::ID,
+			start_block: 2,
+			end_block: 5,
+			reward_configs: default_reward_config(),
+			lock: default_lock_config(),
+			share_asset_id: XPICA::ID,
+			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+		});
+
+		process_and_progress_blocks::<StakingRewards, Test>(1);
+
+		let amount = 100_000;
+		let ratio = Permill::from_parts(555_555);
+
+		// 0.555_555 * 100_000 is not an integer, there will be rounding when calculating the
+		// amounts for the split positions
+		// the following rounding scheme is used to prevent loss of assets when splitting:
+		assert_eq!(ratio.mul_floor(amount), 55_555);
+		assert_eq!(ratio.left_from_one().mul_ceil(amount), 44_445);
+
+		let original_fnft_instance_id =
+			stake_and_assert::<Test, runtime::Event>(ALICE, PICA::ID, amount, ONE_MINUTE);
+
+		// split_and_assert checks for loss of assets
+		split_and_assert::<Test, runtime::Event>(
+			ALICE,
+			STAKING_FNFT_COLLECTION_ID,
+			original_fnft_instance_id,
+			ratio.try_into_validated().unwrap(),
+		);
+	})
 }
 
 #[test]
