@@ -317,7 +317,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// Initialize the Crowdloan at a given block.
 		///
-		/// If the Crowdloan is overfunded by more than the `OverFundedThreshold`, the `OverFunded`
+		/// If the Crowdloan is over funded by more than the `OverFundedThreshold`, the `OverFunded`
 		/// event will be emitted with the excess amount.
 		///
 		/// # Errors
