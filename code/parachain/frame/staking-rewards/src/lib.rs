@@ -203,6 +203,8 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// Error when creating reward configs.
 		RewardConfigProblem,
+		/// AssetId is invalid, asset IDs must be greater than 0
+		InvalidAssetId,
 		/// Reward pool already exists
 		RewardsPoolAlreadyExists,
 		/// No duration presets configured.
@@ -265,7 +267,8 @@ pub mod pallet {
 			+ Ord
 			+ From<u128>
 			+ Into<u128>
-			+ Copy;
+			+ Copy
+			+ Zero;
 
 		// REVIEW(benluelo): Mutate::CollectionId type?
 		type FinancialNft: NonFungiblesMutate<AccountIdOf<Self>>
@@ -652,6 +655,11 @@ pub mod pallet {
 					share_asset_id,
 					financial_nft_asset_id,
 				} => {
+					// AssetIds must be greater than 0
+					ensure!(!pool_asset.is_zero(), Error::<T>::InvalidAssetId);
+					ensure!(!share_asset_id.is_zero(), Error::<T>::InvalidAssetId);
+					ensure!(!financial_nft_asset_id.is_zero(), Error::<T>::InvalidAssetId);
+
 					// now < start_block < end_block
 					ensure!(
 						// Exclusively greater than to prevent errors/attacks
