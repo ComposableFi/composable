@@ -1,0 +1,8 @@
+[chain_a]
+type = "parachain"
+
+[chain_b]
+type = "near"
+
+[core]
+prometheus_endpoint = "https://127.0.0.1"

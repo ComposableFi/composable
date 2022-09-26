@@ -16,7 +16,7 @@ use ibc_proto::{
 
 use ibc::{
 	core::{
-		ics02_client::{client_type::ClientType, header::AnyHeader},
+		ics02_client::client_state::ClientType,
 		ics04_channel::packet::Packet,
 		ics23_commitment::commitment::CommitmentPrefix,
 		ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId},
@@ -25,8 +25,10 @@ use ibc::{
 	signer::Signer,
 	Height,
 };
+use pallet_ibc::light_clients::AnyClientMessage;
 
 pub mod error;
+pub mod mock;
 
 pub enum UpdateType {
 	// contains an authority set change.
@@ -61,7 +63,7 @@ pub trait IbcProvider {
 		&mut self,
 		finality_event: Self::FinalityEvent,
 		counterparty: &T,
-	) -> Result<(AnyHeader, Vec<IbcEvent>, UpdateType), Self::Error>
+	) -> Result<(AnyClientMessage, Vec<IbcEvent>, UpdateType), Self::Error>
 	where
 		T: Chain,
 		Self::Error: From<T::Error>;

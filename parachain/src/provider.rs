@@ -1,15 +1,10 @@
 use beefy_light_client_primitives::{ClientState, NodesUtils};
-use codec::{Decode, Encode};
+use codec::Encode;
 use itertools::Itertools;
 use std::{collections::HashMap, default::Default, fmt::Display};
 
 use ibc::{
-	clients::ics11_beefy::header::BeefyHeader,
 	core::{
-		ics02_client::{
-			client_state::AnyClientState,
-			header::{AnyHeader, Header as IbcHeaderT},
-		},
 		ics04_channel::packet::Packet,
 		ics23_commitment::commitment::CommitmentPrefix,
 		ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId},
@@ -32,14 +27,21 @@ use sp_runtime::{
 use subxt::Config;
 
 use super::{error::Error, ParachainClient};
+use ibc::core::ics02_client::client_state::ClientState as _;
 use ibc_rpc::{BlockNumberOrHash, IbcApiClient};
 use primitives::{Chain, IbcProvider, KeyProvider, UpdateType};
 use sp_core::H256;
 
+use crate::BeefyClientState;
 use beefy_prover::helpers::fetch_timestamp_extrinsic_with_proof;
 #[cfg(feature = "testing")]
 use futures::Stream;
-use ibc::core::ics02_client::client_type::ClientType;
+use ibc::core::ics02_client::client_state::ClientType;
+use ics11_beefy::client_message::{BeefyHeader, ClientMessage, ParachainHeadersWithProof};
+use pallet_ibc::{
+	light_clients::{AnyClientMessage, AnyClientState, HostFunctionsManager},
+	HostConsensusProof,
+};
 use pallet_mmr_primitives::BatchProof;
 #[cfg(feature = "testing")]
 use std::pin::Pin;
@@ -67,7 +69,7 @@ where
 		&mut self,
 		signed_commitment: Self::FinalityEvent,
 		counterparty: &C,
-	) -> Result<(AnyHeader, Vec<IbcEvent>, UpdateType), Self::Error>
+	) -> Result<(AnyClientMessage, Vec<IbcEvent>, UpdateType), Self::Error>
 	where
 		C: Chain,
 		Self::Error: From<C::Error>,
@@ -190,9 +192,11 @@ where
 			self.fetch_mmr_update_proof_for(signed_commitment, &beefy_client_state).await?;
 		let mmr_size = NodesUtils::new(batch_proof.leaf_count).size();
 		let beefy_header = BeefyHeader {
-			parachain_headers: Some(parachain_headers),
-			mmr_proofs: batch_proof.items.into_iter().map(|item| item.encode()).collect(),
-			mmr_size,
+			headers_with_proof: Some(ParachainHeadersWithProof {
+				headers: parachain_headers,
+				mmr_proofs: batch_proof.items.into_iter().map(|item| item.encode()).collect(),
+				mmr_size,
+			}),
 			mmr_update_proof: Some(mmr_update),
 		};
 
@@ -203,7 +207,7 @@ where
 			}
 		}
 
-		Ok((beefy_header.wrap_any(), events, update_type))
+		Ok((AnyClientMessage::Beefy(ClientMessage::Header(beefy_header)), events, update_type))
 	}
 
 	async fn query_client_consensus(
@@ -404,14 +408,6 @@ where
 				.await
 				.map_err(Error::BeefyProver)?;
 
-		// lol should probably export this from pallet-ibc
-		#[derive(Encode, Decode)]
-		struct HostConsensusProof {
-			header: Vec<u8>,
-			extrinsic: Vec<u8>,
-			extrinsic_proof: Vec<Vec<u8>>,
-		}
-
 		let host_consensus_proof = HostConsensusProof {
 			header: header.encode(),
 			extrinsic: extrinsic_with_proof.ext,
@@ -429,7 +425,7 @@ where
 	}
 
 	fn client_type(&self) -> ClientType {
-		ClientType::Beefy
+		BeefyClientState::<HostFunctionsManager>::client_type()
 	}
 
 	#[cfg(feature = "testing")]

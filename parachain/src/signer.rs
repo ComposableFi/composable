@@ -1,4 +1,4 @@
-use sp_keystore::{SyncCryptoStore, SyncCryptoStorePtr};
+use sp_keystore_git::{SyncCryptoStore, SyncCryptoStorePtr};
 use sp_runtime::{
 	app_crypto::CryptoTypePublicPair,
 	traits::{IdentifyAccount, Verify},

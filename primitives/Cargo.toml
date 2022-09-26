@@ -13,13 +13,12 @@ codec = { package = "parity-scale-codec", version = "3.0.0", features = ["derive
 thiserror = "1.0.31"
 
 # substrate
-sp-runtime = "6.0.0"
-sp-keystore = "0.12.0"
-subxt = { git = "https://github.com/paritytech/subxt", rev = "ec23283d75e4b3b894294e351fd7ffa2b4431201" }
+subxt = { git = "https://github.com/paritytech/subxt", rev = "c55b7ba3e34118f61dc51499a0b38262c513aec4" }
 
 # ibc
-ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "0438a753ac29c0b9711f00a2e33228d3d45ca5e3", features = ["ics11_beefy"] }
-ibc-proto = { git = "https://github.com/composableFi/ibc-rs", rev = "0438a753ac29c0b9711f00a2e33228d3d45ca5e3" }
+ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "9a959faabb8f2869e88327ea65a49f5697dcadf6", features = [] }
+ibc-proto = { git = "https://github.com/composableFi/ibc-rs", rev = "9a959faabb8f2869e88327ea65a49f5697dcadf6" }
+pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "052052e5b070bc36dda7f9acd393a4c69404c3b2" }
 
 
 [features]
