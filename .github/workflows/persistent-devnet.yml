@@ -1,0 +1,74 @@
+name: Deploy Persistent Devnet
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "The commit has or branch or tag you want to deploy a persistent devnet for."
+        required: true
+        type: string
+
+env:
+  NIX_NIXPKGS_CHANNEL: https://nixos.org/channels/nixpkgs-22.05-darwin
+  NIX_CONTAINER_IMAGE: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+  NIX_INSTALL_SCRIPT: https://releases.nixos.org/nix/nix-2.10.3/install
+
+  CACHIX_COMPOSABLE: composable-community
+  CACHIX_COMPRESSION_LEVEL: 3
+
+jobs:
+  deploy-devnet:
+      name: "Deploy persistent devnet (Dali + Rococo)"
+      runs-on: ubuntu-latest
+      concurrency:
+        group: nix-deploy-devnet
+        cancel-in-progress: false
+      steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.revision }}
+          clean: false
+          fetch-depth: 0
+      - uses: cachix/install-nix-action@v17
+        with:
+          extra_nix_config: |
+            sandbox = relaxed
+            narinfo-cache-negative-ttl = 0
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix nixpkgs.jq
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: ${{  env.CACHIX_COMPOSABLE }}
+
+      - uses: google-github-actions/setup-gcloud@v0
+        with:
+          service_account_key: ${{ secrets.GCP_CREDENTIALS }}
+          export_default_credentials: true
+
+      - name: Build & Push
+        run: |
+          cd devnet
+          jq --null-input --arg client_email "$GCP_DEVNET_SERVICE_ACCOUNT" --arg project_id "$GCP_PROJECT_ID" --arg key "\"$GCP_DEVNET_SERVICE_ACCOUNT_KEY\"" '{ "project_id": $project_id, "private_key": ($key | fromjson), "client_email": $client_email }' > ops.json
+          cd ..
+
+          if gsutil -q stat $NIXOPS_STATE_URL/$NIXOPS_STATE;
+          then
+            gsutil cp $NIXOPS_STATE_URL/$NIXOPS_STATE $NIXOPS_STATE
+          else
+            nix develop .#sre --show-trace -L --command cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nixops -- create --deployment devnet-gce --show-trace --option narinfo-cache-negative-ttl 0
+          fi
+
+          nix develop .#sre --show-trace -L --command cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nixops -- deploy --check --confirm --deployment devnet-gce --debug --show-trace --option narinfo-cache-negative-ttl 0 --include composable-persistent-devnet
+
+          gsutil cp $NIXOPS_STATE $NIXOPS_STATE_URL/
+
+        env:
+          NIXOPS_STATE_URL: "gs://composable-state"
+          NIXOPS_STATE: "deployment.nixops"
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          GCP_DEVNET_SERVICE_ACCOUNT: ${{ secrets.GCP_DEVNET_SERVICE_ACCOUNT }}
+          GCP_DEVNET_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_DEVNET_SERVICE_ACCOUNT_KEY }}
