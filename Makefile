@@ -26,7 +26,7 @@ clean:
 
 release:
 	echo "This command is deprecated. Please use \`nix build \".#composable-node\"\` instead."
-	return 1
+	./legacy-build.sh
 
 .PHONY: build-release
 build-release:
