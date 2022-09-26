@@ -39,8 +39,6 @@ use ibc::{
 };
 use ibc_proto::ibc::core::channel::v1::QueryChannelsResponse;
 use ibc_rpc::PacketInfo;
-#[cfg(test)]
-mod mocks;
 use pallet_ibc::light_clients::{AnyClientMessage, AnyClientState, AnyConsensusState};
 
 pub mod error;
