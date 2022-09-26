@@ -1,5 +1,11 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+extern crate alloc;
+
+use alloc::{
+	format,
+	string::{String, ToString},
+};
 use core::{fmt::Formatter, str::FromStr, write};
 use frame_support::dispatch::{DispatchResult, Weight};
 use ibc::{
@@ -19,9 +25,7 @@ use ibc::{
 	signer::Signer,
 };
 use ibc_primitives::{port_id_from_bytes, CallbackWeight, IbcHandler, SendPacketData};
-use scale_info::prelude::{format, string::String};
 use sp_std::{marker::PhantomData, prelude::*};
-
 // Re-export pallet items so that they can be accessed from the crate namespace.
 pub use pallet::*;
 
