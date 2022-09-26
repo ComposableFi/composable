@@ -9,7 +9,7 @@ use composable_tests_helpers::test::{
 	helper::{assert_extrinsic_event, assert_extrinsic_event_with, assert_last_event_with},
 };
 use composable_traits::{
-	fnft::FinancialNft as FinancialNftT,
+	fnft::{FinancialNft as FinancialNftT, FinancialNftProtocol},
 	staking::{
 		lock::{Lock, LockConfig},
 		ProtocolStaking, RewardConfig,
@@ -51,6 +51,11 @@ fn test_create_reward_pool() {
 		assert_eq!(
 			FinancialNft::collections().collect::<BTreeSet<_>>(),
 			BTreeSet::from([PICA::ID])
+		);
+
+		assert_eq!(
+			<StakingRewards as FinancialNftProtocol>::collection_asset_ids(),
+			vec![PICA::ID]
 		);
 	});
 }
@@ -149,7 +154,7 @@ fn stake_in_case_of_zero_inflation_should_work() {
 				_ => None,
 			},
 		);
-		assert_eq!(Stakes::<Test>::iter_prefix_values(PICA::ID).collect::<Vec<_>>().len(), 1);
+		assert_eq!(Stakes::<Test>::iter_prefix_values(PICA::ID).count(), 1);
 
 		let rewards_pool = StakingRewards::pools(PICA::ID).expect("rewards_pool expected");
 		let reward_multiplier = StakingRewards::reward_multiplier(&rewards_pool, duration_preset)
@@ -177,9 +182,17 @@ fn stake_in_case_of_zero_inflation_should_work() {
 				fnft_instance_id,
 			})
 		);
-
+		assert_eq!(
+			<StakingRewards as FinancialNftProtocol>::value_of(&PICA::ID, &fnft_instance_id)
+				.expect("must return a value"),
+			vec![(XPICA::ID, StakingRewards::boosted_amount(reward_multiplier, amount))]
+		);
 		assert_eq!(balance(staked_asset_id, &staker), amount);
 		assert_eq!(balance(staked_asset_id, &fnft_asset_account), amount);
+		assert_eq!(
+			balance(XPICA::ID, &fnft_asset_account),
+			StakingRewards::boosted_amount(reward_multiplier, amount)
+		);
 
 		assert_last_event_with::<Test, _>(|event| {
 			matches!(
@@ -351,6 +364,10 @@ fn test_extend_stake_amount() {
 			balance(staked_asset_id, &FinancialNft::asset_account(&1, &0)),
 			amount + extend_amount
 		);
+		assert_eq!(
+			balance(XPICA::ID, &FinancialNft::asset_account(&1, &0)),
+			boosted_amount + extend_amount
+		);
 		assert_last_event::<Test, _>(|e| {
 			matches!(e.event,
             Event::StakingRewards(crate::Event::StakeAmountExtended { fnft_collection_id, fnft_instance_id, amount})
@@ -366,7 +383,7 @@ fn unstake_non_existent_stake_should_not_work() {
 		let staker = ALICE;
 		assert_noop!(
 			StakingRewards::unstake(Origin::signed(staker), 1, 0),
-			crate::Error::<Test>::StakeNotFound
+			crate::Error::<Test>::FnftNotFound
 		);
 	});
 }
@@ -391,7 +408,7 @@ fn not_owner_of_stake_can_not_unstake() {
 
 		assert_noop!(
 			StakingRewards::unstake(Origin::signed(not_owner), 1, 0),
-			crate::Error::<Test>::OnlyStakeOwnerCanUnstake
+			crate::Error::<Test>::OnlyStakeOwnerCanInteractWithStake,
 		);
 	});
 }
@@ -583,8 +600,6 @@ fn test_transfer_reward() {
 	});
 }
 
-// NOTE(connor): Ignoring because the test fails to correctly configure the reward pool
-#[ignore]
 #[test]
 fn test_split_position() {
 	new_test_ext().execute_with(|| {
@@ -609,12 +624,13 @@ fn test_split_position() {
 				end_block: 5,
 			},
 		);
+		process_and_progress_blocks::<StakingRewards, Test>(1);
 
 		let reduction = PICA::units(10);
 		let stake = StakeOf::<Test> {
 			reward_pool_id: PICA::ID,
 			stake: PICA::units(1_000),
-			share: PICA::units(1_000),
+			share: PICA::units(10),
 			reductions: [(USDT::ID, reduction)]
 				.into_iter()
 				.try_collect()
@@ -624,19 +640,20 @@ fn test_split_position() {
 				duration: 10000000_u64,
 				unlock_penalty: Perbill::from_percent(2),
 			},
-			fnft_instance_id: 1,
+			fnft_instance_id: 0,
 		};
+		mint_assets([BOB], [PICA::ID], PICA::units(2000));
 
 		assert_extrinsic_event::<Test, _, _, _>(
-			StakingRewards::stake(Origin::signed(BOB), PICA::ID, PICA::units(1_000), 10_000_000),
+			StakingRewards::stake(Origin::signed(BOB), PICA::ID, PICA::units(1_000), ONE_HOUR),
 			crate::Event::Staked {
 				pool_id: PICA::ID,
 				owner: BOB,
 				amount: PICA::units(1_000),
-				duration_preset: 10_000_000,
+				duration_preset: ONE_HOUR,
 				fnft_collection_id: 1,
-				fnft_instance_id: 1,
-				keep_alive: false,
+				fnft_instance_id: 0,
+				keep_alive: true,
 			},
 		);
 		Stakes::<Test>::insert(1, 0, stake.clone());
@@ -656,6 +673,13 @@ fn test_split_position() {
 		assert_eq!(stake1.reductions.get(&USDT::ID), Some(&ratio.mul_floor(reduction)));
 		assert_eq!(stake2.stake, left_from_one_ratio.mul_floor(stake.stake));
 		assert_eq!(stake2.share, left_from_one_ratio.mul_floor(stake.share));
+
+		assert_eq!(balance(PICA::ID, &FinancialNft::asset_account(&1, &0)), stake1.stake);
+		assert_eq!(balance(XPICA::ID, &FinancialNft::asset_account(&1, &0)), stake1.share);
+
+		assert_eq!(balance(PICA::ID, &FinancialNft::asset_account(&1, &1)), stake2.stake);
+		assert_eq!(balance(XPICA::ID, &FinancialNft::asset_account(&1, &1)), stake2.share);
+
 		assert_eq!(
 			stake2.reductions.get(&USDT::ID),
 			Some(&left_from_one_ratio.mul_floor(reduction))
@@ -668,8 +692,110 @@ fn test_split_position() {
 	});
 }
 
+// TODO(connor): Move unit tests for functions to one (or more) modules per function
+
+#[test]
+fn extend_should_not_allow_non_owner() {
+	let staker = ALICE;
+	let non_owner = BOB;
+	let amount = 100_500;
+	let duration_preset = ONE_HOUR;
+	let total_rewards = 100;
+	let total_shares = 200;
+
+	with_stake(
+		staker,
+		amount,
+		duration_preset,
+		total_rewards,
+		total_shares,
+		None,
+		|_pool_id, _unlock_penalty, _stake_duration, _staked_asset_id| {
+			assert_noop!(
+				StakingRewards::extend(Origin::signed(non_owner), 1, 0, 1_000),
+				crate::Error::<Test>::OnlyStakeOwnerCanInteractWithStake
+			);
+		},
+	)
+}
+
+#[test]
+fn unstake_should_not_allow_non_owner() {
+	let staker = ALICE;
+	let non_owner = BOB;
+	let amount = 100_500;
+	let duration_preset = ONE_HOUR;
+	let total_rewards = 100;
+	let total_shares = 200;
+
+	with_stake(
+		staker,
+		amount,
+		duration_preset,
+		total_rewards,
+		total_shares,
+		None,
+		|_pool_id, _unlock_penalty, _stake_duration, _staked_asset_id| {
+			assert_noop!(
+				StakingRewards::unstake(Origin::signed(non_owner), 1, 0),
+				crate::Error::<Test>::OnlyStakeOwnerCanInteractWithStake
+			);
+		},
+	)
+}
+
+#[test]
+fn split_should_not_allow_non_owner() {
+	let staker = ALICE;
+	let non_owner = BOB;
+	let amount = 100_500;
+	let duration_preset = ONE_HOUR;
+	let total_rewards = 100;
+	let total_shares = 200;
+
+	with_stake(
+		staker,
+		amount,
+		duration_preset,
+		total_rewards,
+		total_shares,
+		None,
+		|_pool_id, _unlock_penalty, _stake_duration, _staked_asset_id| {
+			assert_noop!(
+				StakingRewards::unstake(Origin::signed(non_owner), 1, 0),
+				crate::Error::<Test>::OnlyStakeOwnerCanInteractWithStake
+			);
+		},
+	)
+}
+
 mod claim {
 	use super::*;
+
+	#[test]
+	fn should_not_allow_non_owner() {
+		let staker = ALICE;
+		let non_owner = BOB;
+		let amount = 100_500;
+		let duration_preset = ONE_HOUR;
+		let total_rewards = 100;
+		let total_shares = 200;
+
+		with_stake(
+			staker,
+			amount,
+			duration_preset,
+			total_rewards,
+			total_shares,
+			None,
+			|_pool_id, _unlock_penalty, _stake_duration, _staked_asset_id| {
+				assert_noop!(
+					StakingRewards::claim(Origin::signed(non_owner), 1, 0),
+					crate::Error::<Test>::OnlyStakeOwnerCanInteractWithStake
+				);
+			},
+		)
+	}
 
 	#[test]
 	fn should_reward_correct_amount() {
@@ -869,12 +995,9 @@ fn with_stake<R>(
 		let unlock_penalty = stake.lock.unlock_penalty;
 		let stake_duration = stake.lock.duration;
 
-		match claim {
-			Some(claim) => {
-				update_reductions(&mut stake.reductions, claim);
-				Stakes::<Test>::insert(1, 0, stake);
-			},
-			None => (),
+		if let Some(claim) = claim {
+			update_reductions(&mut stake.reductions, claim);
+			Stakes::<Test>::insert(1, 0, stake);
 		}
 
 		execute(pool_id, unlock_penalty, stake_duration, staked_asset_id)
@@ -945,7 +1068,7 @@ where
 	assert!(matcher(System::events().last().expect("events expected")));
 }
 
-fn mint_assets<'a>(
+fn mint_assets(
 	accounts: impl IntoIterator<Item = Public>,
 	asset_ids: impl IntoIterator<Item = u128>,
 	amount: u128,
@@ -979,7 +1102,7 @@ fn update_total_rewards_and_total_shares_in_rewards_pool(
 	}
 	rewards_pool.rewards = inner_rewards.try_into().expect("rewards expected");
 	rewards_pool.total_shares = total_shares;
-	RewardPools::<Test>::insert(pool_id, rewards_pool.clone());
+	RewardPools::<Test>::insert(pool_id, rewards_pool);
 }
 
 fn update_reductions(

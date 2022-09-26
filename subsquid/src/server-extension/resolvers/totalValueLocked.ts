@@ -8,14 +8,17 @@ import {
   Resolver,
 } from "type-graphql";
 import type { EntityManager } from "typeorm";
-import { IsDateString, Min } from "class-validator";
-import { HistoricalLockedValue } from "../../model";
+import { IsDateString, IsEnum, Min } from "class-validator";
+import { HistoricalLockedValue, LockedSource } from "../../model";
 import { getTimelineParams } from "./common";
 
 @ObjectType()
 export class TotalValueLocked {
   @Field(() => String, { nullable: false })
   date!: string;
+
+  @Field(() => String, { nullable: false })
+  source!: string;
 
   @Field(() => BigInt, { nullable: false })
   totalValueLocked!: bigint;
@@ -38,7 +41,16 @@ export class TotalValueLockedInput {
   @Field(() => String, { nullable: true })
   @IsDateString()
   dateTo?: string;
+
+  @Field(() => String, { nullable: true, defaultValue: LockedSource.All })
+  @IsEnum(LockedSource, {
+    message:
+      "Value must be a LockedSource enum. For example, 'All', 'Pablo', 'VestingSchedules', 'StakingRewards', etc",
+  })
+  source?: LockedSource;
 }
+
+console.log("qwe");
 
 @Resolver()
 export class TotalValueLockedResolver {
@@ -48,7 +60,7 @@ export class TotalValueLockedResolver {
   async totalValueLocked(
     @Arg("params", { validate: true }) input: TotalValueLockedInput
   ): Promise<TotalValueLocked[]> {
-    const { intervalMinutes, dateFrom, dateTo } = input;
+    const { intervalMinutes, dateFrom, dateTo, source } = input;
     const { where, params } = getTimelineParams(
       intervalMinutes,
       dateFrom,
@@ -60,6 +72,7 @@ export class TotalValueLockedResolver {
     const rows: {
       period: string;
       total_value_locked: string;
+      source: string;
     }[] = await manager.getRepository(HistoricalLockedValue).query(
       `
             SELECT
@@ -67,6 +80,7 @@ export class TotalValueLockedResolver {
               max(amount) as total_value_locked
             FROM historical_locked_value
             WHERE ${where.join(" AND ")}
+            AND source = '${source}'
             GROUP BY period
             ORDER BY period DESC
         `,
@@ -78,6 +92,7 @@ export class TotalValueLockedResolver {
         new TotalValueLocked({
           date: new Date(parseInt(row.period, 10)).toISOString(),
           totalValueLocked: BigInt(row.total_value_locked),
+          source,
         })
     );
   }

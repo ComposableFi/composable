@@ -2,18 +2,19 @@ import { EventHandlerContext } from "@subsquid/substrate-processor";
 import { Entity, Store } from "@subsquid/typeorm-store";
 import { randomUUID } from "crypto";
 import { ApiPromise, WsProvider } from "@polkadot/api";
+import { hexToU8a } from "@polkadot/util";
+import { chain } from "./config";
+import { encodeAccount } from "./utils";
 import {
   Account,
   Activity,
   Currency,
   Event,
-  HistoricalLockedValue,
-  PabloPool,
-  RewardPool,
   EventType,
+  HistoricalLockedValue,
+  LockedSource,
+  PabloPool,
 } from "./model";
-import { encodeAccount } from "./utils";
-import { hexToU8a } from "@polkadot/util";
 
 export async function get<T extends { id: string }>(
   store: Store,
@@ -185,15 +186,17 @@ export async function saveAccountAndEvent(
 
 /**
  * Stores a new HistoricalLockedValue with current locked amount
+ * for the specified source, and for the overall locked value
  * @param ctx
- * @param amountLocked
- * @param assetId
+ * @param amountsLocked
+ * @param source
  */
 export async function storeHistoricalLockedValue(
   ctx: EventHandlerContext<Store>,
-  amountsLocked: Record<string, bigint>
+  amountsLocked: Record<string, bigint>,
+  source: LockedSource
 ): Promise<void> {
-  const wsProvider = new WsProvider("ws://127.0.0.1:9988");
+  const wsProvider = new WsProvider(chain());
   const api = await ApiPromise.create({ provider: wsProvider });
   const oraclePrices: Record<string, bigint> = {};
 
@@ -215,31 +218,45 @@ export async function storeHistoricalLockedValue(
     return BigInt(agg) + lockedValue;
   }, BigInt(0));
 
-  const lastLockedValue = await getLastLockedValue(ctx);
+  const lastLockedValueAll = await getLastLockedValue(ctx, LockedSource.All);
+  const lastLockedValueSource = await getLastLockedValue(ctx, source);
   const event = await ctx.store.get(Event, { where: { id: ctx.event.id } });
 
   if (!event) {
     return Promise.reject(new Error("Event not found"));
   }
 
-  const historicalLockedValue = new HistoricalLockedValue({
+  const historicalLockedValueAll = new HistoricalLockedValue({
     id: randomUUID(),
     event,
-    amount: lastLockedValue + netLockedValue,
+    amount: lastLockedValueAll + netLockedValue,
     currency: Currency.USD,
     timestamp: BigInt(new Date(ctx.block.timestamp).valueOf()),
+    source: LockedSource.All,
   });
 
-  await ctx.store.save(historicalLockedValue);
+  const historicalLockedValueSource = new HistoricalLockedValue({
+    id: randomUUID(),
+    event,
+    amount: lastLockedValueSource + netLockedValue,
+    currency: Currency.USD,
+    timestamp: BigInt(new Date(ctx.block.timestamp).valueOf()),
+    source,
+  });
+
+  await ctx.store.save(historicalLockedValueAll);
+  await ctx.store.save(historicalLockedValueSource);
 }
 
 /**
  * Get latest locked value
  */
 export async function getLastLockedValue(
-  ctx: EventHandlerContext<Store>
+  ctx: EventHandlerContext<Store>,
+  source: LockedSource
 ): Promise<bigint> {
   const lastLockedValue = await ctx.store.find(HistoricalLockedValue, {
+    where: { source },
     order: { timestamp: "DESC" },
   });
 

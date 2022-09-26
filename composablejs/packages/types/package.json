@@ -12,7 +12,15 @@
     "gen:meta": "ts-node --skip-project node_modules/.bin/polkadot-types-from-chain --package @composable/types --endpoint ws://localhost:9988 --output ./src/interfaces/"
   },
   "devDependencies": {
-    "@polkadot/typegen": "^8.11.3",
+    "@polkadot/api": "^8.3.2",
+    "@polkadot/ts": "^0.4.22",
+    "@polkadot/typegen": "^8.3.2",
+    "@polkadot/types": "^8.3.2",
+    "@polkadot/types-augment": "^8.3.2",
+    "@polkadot/types-codec": "^8.3.2",
+    "@polkadot/types-create": "^8.3.2",
+    "@polkadot/types-known": "^8.3.2",
+    "@polkadot/types-support": "^8.3.2",
     "ts-node": "^10.8.2",
     "typescript": "^4.7.4"
   }

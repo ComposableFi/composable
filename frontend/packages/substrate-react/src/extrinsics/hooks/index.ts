@@ -1,21 +1,16 @@
-import { useMemo } from 'react';
+import { useMemo } from "react";
 import {
   ExtrinsicMetadata,
-  ExtrinsicSlice,
   ExtrinsicStatus,
-} from '../store/extrinsics/extrinsics.types';
-import useStore from '../store/useStore';
+  useExtrinsicStore,
+} from "../store/extrinsics";
 
-export const useExtrinsics = (): ExtrinsicSlice['extrinsics'] => {
-  const { extrinsics } = useStore();
-  return extrinsics;
-};
+export function useExtrinsics() {
+  return useExtrinsicStore((state) => state.extrinsics);
+}
 
 function isPending(extrinsicStatus: ExtrinsicStatus): boolean {
-  if (extrinsicStatus !== 'isFinalized' && extrinsicStatus !== 'Error') {
-    return true;
-  }
-  return false;
+  return extrinsicStatus !== "isFinalized" && extrinsicStatus !== "Error";
 }
 
 export const usePendingExtrinsic = (
@@ -23,9 +18,9 @@ export const usePendingExtrinsic = (
   section: string,
   sender: string
 ): boolean => {
-  const { extrinsics } = useStore();
+  const extrinsics = useExtrinsicStore((state) => state.extrinsics);
 
-  let _isPendingExtrinsic = useMemo(() => {
+  return useMemo(() => {
     const sortedTxs = Object.values(extrinsics).sort((a, b) => {
       return a.timestamp - b.timestamp;
     });
@@ -44,8 +39,6 @@ export const usePendingExtrinsic = (
 
     return false;
   }, [extrinsics]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  return _isPendingExtrinsic;
 };
 
 export const useExtrinsicCalls = (
@@ -53,9 +46,8 @@ export const useExtrinsicCalls = (
   section: string,
   sender: string
 ): ExtrinsicMetadata[] => {
-  const { extrinsics } = useStore();
-
-  const extrinsicCalls = useMemo(() => {
+  const extrinsics = useExtrinsicStore((state) => state.extrinsics);
+  return useMemo(() => {
     let calls = [];
 
     for (const tx of Object.values(extrinsics)) {
@@ -70,6 +62,4 @@ export const useExtrinsicCalls = (
 
     return calls;
   }, [extrinsics]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  return extrinsicCalls;
 };

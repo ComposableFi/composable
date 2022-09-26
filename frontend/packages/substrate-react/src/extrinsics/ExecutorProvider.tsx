@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react';
-import Executor from './Executor';
-import useStore from './store/useStore';
+import React, { useMemo } from "react";
+import { Executor } from "./Executor";
+import { useExtrinsicStore } from "./store/extrinsics";
+
 /**
  * As zustand useStore is a hook
  * we need to create a context and wrap
@@ -28,7 +29,7 @@ export const ExecutorProvider = ({
     addBlockHash,
     updateExtrinsicStatus,
     updateExtrinsicError,
-  } = useStore();
+  } = useExtrinsicStore();
   /**
    * Create and memoize executor
    */

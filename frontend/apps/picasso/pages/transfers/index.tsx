@@ -30,6 +30,7 @@ import {
 import { TransferExistentialDeposit } from "@/components/Organisms/Transfer/TransferExistentialDeposit";
 import { TransferFeeItem } from "@/components/Organisms/Transfer/TransferFeeItem";
 import { AssetId } from "@/defi/polkadot/types";
+import BigNumber from "bignumber.js";
 
 const Transfers: NextPage = () => {
   const { enqueueSnackbar } = useSnackbar();
@@ -50,7 +51,8 @@ const Transfers: NextPage = () => {
   );
   const keepAlive = useStore((state) => state.transfers.keepAlive);
   const existentialDeposit = useStore(
-    ({ substrateBalances }) => substrateBalances[from].native.existentialDeposit
+    ({ substrateBalances }) =>
+      substrateBalances[from].native.existentialDeposit as BigNumber
   );
 
   const isNativeToNetwork = useMemo(() => {

@@ -20,6 +20,7 @@ interface TransactionExecutor {
     onTxFinalized: (txHash: string, events: EventRecord[]) => void | undefined,
     onTxError?: (errorMessage: string) => void
   ): Promise<void>;
+
   executeUnsigned(
     call: SubmittableExtrinsic<"promise">,
     api: ApiPromise,
@@ -28,7 +29,7 @@ interface TransactionExecutor {
   ): Promise<void>;
 }
 
-class Executor implements TransactionExecutor {
+export class Executor implements TransactionExecutor {
   private addExtrinsic: ExtrinsicSlice["addExtrinsic"];
   private addBlockHash: ExtrinsicSlice["addBlockHash"];
   private updateExtrinsicStatus: ExtrinsicSlice["updateExtrinsicStatus"];
@@ -190,5 +191,3 @@ class Executor implements TransactionExecutor {
     this.updateExtrinsicStatus(txHash, "isFinalized");
   }
 }
-
-export default Executor;

@@ -28,10 +28,8 @@ function getVersion() {
 }
 
 const nextConfig = {
-  experimental: {
-    images: {
-      unoptimized: true,
-    },
+  images: {
+    unoptimized: true,
   },
   reactStrictMode: true,
   env: {

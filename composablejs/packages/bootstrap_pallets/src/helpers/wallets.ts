@@ -4,16 +4,16 @@ import { hexToU8a } from "@polkadot/util";
 import { ethers } from "ethers";
 import { privateKeyFromSeed } from "@composable/bootstrap_pallets/utils";
 
-export function getSubstrateWallets(): KeyringPair[] {
+export function getSubstrateWallets(maxWallets = 3): KeyringPair[] {
   const kr = new Keyring({ type: "sr25519" });
+  const wallets: KeyringPair[] = [];
 
-  return [
-    kr.addFromUri("//Saad-1"),
-    kr.addFromUri("//Saad-2"),
-    kr.addFromUri("//Saad-3"),
-    kr.addFromUri("//Saad-4"),
-    kr.addFromUri("//Saad-5")
-  ];
+  let idx = 0;
+  while (idx < maxWallets) {
+    wallets.push(kr.addFromUri(`//Saad-${idx++}`));
+  }
+
+  return wallets;
 }
 
 export function getEthereumWallets(): ethers.Wallet[] {

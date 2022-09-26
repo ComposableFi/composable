@@ -3,11 +3,11 @@ import Default from "@/components/Templates/Default";
 import { Box, Grid, Link, Typography, useTheme } from "@mui/material";
 import { useRouter } from "next/router";
 import Image from "next/image";
-import { useContext, useEffect } from "react";
+import { useEffect } from "react";
 import { useStore } from "@/stores/root";
-import { ParachainContext } from "@/defi/polkadot/context/ParachainContext";
-import { PageTitle, FeaturedBox, SS8WalletHelper } from "@/components";
+import { FeaturedBox, PageTitle, SS8WalletHelper } from "@/components";
 import { ConnectorType, useConnector } from "bi-lib";
+import { useDotSamaContext } from "substrate-react";
 
 const CrowdloanRewards: NextPage = () => {
   const theme = useTheme();
@@ -22,13 +22,13 @@ const CrowdloanRewards: NextPage = () => {
     </Link>,
     <Typography key="claims" color="text.secondary">
       Crowdloan Rewards
-    </Typography>,
+    </Typography>
   ];
   const standardPageSize = {
-    xs: 12,
+    xs: 12
   };
 
-  const { extensionStatus } = useContext(ParachainContext);
+  const { extensionStatus } = useDotSamaContext();
   const { isActive } = useConnector(ConnectorType.MetaMask);
 
   useEffect(() => {
@@ -71,7 +71,7 @@ const CrowdloanRewards: NextPage = () => {
                     mb: theme.spacing(4),
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "center",
+                    justifyContent: "center"
                   }}
                 >
                   <Image
@@ -90,7 +90,7 @@ const CrowdloanRewards: NextPage = () => {
                 disabled: extensionStatus !== "connected",
                 onClick: () => {
                   router.push("/crowdloan-rewards/ksm");
-                },
+                }
               }}
             />
             <FeaturedBox
@@ -102,7 +102,7 @@ const CrowdloanRewards: NextPage = () => {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    mb: theme.spacing(4),
+                    mb: theme.spacing(4)
                   }}
                 >
                   <Image
@@ -137,7 +137,7 @@ const CrowdloanRewards: NextPage = () => {
                 variant: "contained",
                 onClick: () => {
                   router.push("/crowdloan-rewards/stablecoin");
-                },
+                }
               }}
             />
           </Box>

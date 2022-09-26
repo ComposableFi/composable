@@ -1,20 +1,19 @@
 import { PalletsContext } from "@/defi/polkadot/context/PalletsContext";
-import { ParachainContext } from "@/defi/polkadot/context/ParachainContext";
 import { useKusamaAccounts, usePicassoProvider } from "@/defi/polkadot/hooks";
 import { useContext, useEffect } from "react";
-
 import { useStore } from "@/stores/root";
 import rewards from "@/defi/polkadot/constants/pica-rewards.json";
 import contributions from "@/defi/polkadot/constants/contributions.json";
 import devRewards from "@/defi/polkadot/constants/pica-rewards-dev.json";
 import { useBlockchainProvider } from "bi-lib";
+import { useDotSamaContext } from "substrate-react";
 
 const DEFAULT_EVM_ID = 1;
 
 const CrowdloanRewardsUpdater = () => {
   const { account } = useBlockchainProvider(DEFAULT_EVM_ID);
   const kusamaAccounts = useKusamaAccounts();
-  const { selectedAccount } = useContext(ParachainContext);
+  const { selectedAccount } = useDotSamaContext();
   const picassoProvider = usePicassoProvider();
   const {
     ui,
@@ -25,7 +24,7 @@ const CrowdloanRewardsUpdater = () => {
     setUserClaimablePICA,
     setUserNetVestedPICA,
     setUserContribution,
-    setUserClaimedPICA,
+    setUserClaimedPICA
   } = useStore(({ crowdloanRewards }) => crowdloanRewards);
   const { crowdloanRewards } = useContext(PalletsContext);
 
@@ -67,7 +66,7 @@ const CrowdloanRewardsUpdater = () => {
     crowdloanRewards,
     selectedAccount,
     kusamaAccounts,
-    setEvmAlreadyAssociated,
+    setEvmAlreadyAssociated
   ]);
 
   useEffect(() => {
@@ -113,7 +112,7 @@ const CrowdloanRewardsUpdater = () => {
     crowdloanRewards,
     picassoProvider,
     setUserAssociatedWith,
-    setUserClaimEligibility,
+    setUserClaimEligibility
   ]);
 
   useEffect(() => {
@@ -137,7 +136,7 @@ const CrowdloanRewardsUpdater = () => {
     picassoProvider.accounts.length,
     crowdloanRewards,
     picassoProvider,
-    setUserClaimablePICA,
+    setUserClaimablePICA
   ]);
 
   useEffect(() => {
@@ -178,7 +177,7 @@ const CrowdloanRewardsUpdater = () => {
       if (addr && (contributions.contributedAmountsWithoutBoost as any)[addr]) {
         contribution = (contributions.contributedAmountsWithoutBoost as any)[
           addr
-        ];
+          ];
       }
     }
 
@@ -192,7 +191,7 @@ const CrowdloanRewardsUpdater = () => {
     account,
     kusamaAccounts,
     setUserNetVestedPICA,
-    setUserContribution,
+    setUserContribution
   ]);
 
   useEffect(() => {
@@ -239,7 +238,7 @@ const CrowdloanRewardsUpdater = () => {
     account,
     crowdloanRewards,
     setUserClaimedPICA,
-    kusamaAccounts,
+    kusamaAccounts
   ]);
 
   return null;
