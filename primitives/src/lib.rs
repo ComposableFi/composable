@@ -39,7 +39,7 @@ use ibc::{
 };
 use ibc_proto::ibc::core::channel::v1::QueryChannelsResponse;
 use ibc_rpc::PacketInfo;
-use pallet_ibc::light_clients::{AnyClientMessage, AnyClientState, AnyConsensusState};
+use pallet_ibc::light_clients::{AnyClientState, AnyConsensusState};
 
 pub mod error;
 pub mod mock;
@@ -83,7 +83,7 @@ pub trait IbcProvider {
 		&mut self,
 		finality_event: Self::FinalityEvent,
 		counterparty: &T,
-	) -> Result<(AnyClientMessage, Vec<IbcEvent>, UpdateType), Self::Error>
+	) -> Result<(Any, Vec<IbcEvent>, UpdateType), anyhow::Error>
 	where
 		T: Chain,
 		Self::Error: From<T::Error>;

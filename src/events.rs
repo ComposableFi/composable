@@ -4,9 +4,7 @@ use crate::send_packet_relay::packet_relay_status;
 use codec::Encode;
 use ibc::{
 	core::{
-		ics02_client::{
-			client_state::ClientState as ClientStateT, msgs::update_client::MsgUpdateAnyClient,
-		},
+		ics02_client::client_state::ClientState as ClientStateT,
 		ics03_connection::{
 			connection::{ConnectionEnd, Counterparty},
 			msgs::{
@@ -32,7 +30,7 @@ use ibc::{
 use ibc_proto::{google::protobuf::Any, ibc::core::client::v1::QueryConsensusStateResponse};
 use ics11_beefy::client_state::ClientState as BeefyClientState;
 use ics13_near::client_state::NearClientState;
-use pallet_ibc::light_clients::{AnyClientMessage, AnyClientState, HostFunctionsManager};
+use pallet_ibc::light_clients::{AnyClientState, HostFunctionsManager};
 use primitives::{error::Error, mock::LocalClientTypes, Chain};
 use tendermint_proto::Protobuf;
 
@@ -50,7 +48,6 @@ pub async fn parse_events(
 	source: &mut impl Chain,
 	sink: &mut impl Chain,
 	events: Vec<IbcEvent>,
-	client_message: AnyClientMessage,
 ) -> Result<(Vec<Any>, Vec<Any>), anyhow::Error> {
 	let mut messages = vec![];
 	// 1. translate events to messages
@@ -535,19 +532,6 @@ pub async fn parse_events(
 	let (ready_packets, timed_out_packets) =
 		query_ready_and_timed_out_packets(source, sink).await?;
 	messages.extend(ready_packets);
-
-	// 3. insert update client message at first index
-	{
-		let msg = MsgUpdateAnyClient::<LocalClientTypes> {
-			client_id: source.client_id(),
-			client_message,
-			signer: sink.account_id(),
-		};
-		let value = msg.encode_vec();
-		let update_client = Any { value, type_url: msg.type_url() };
-
-		messages.insert(0, update_client);
-	}
 
 	Ok((messages, timed_out_packets))
 }

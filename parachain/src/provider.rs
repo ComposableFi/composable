@@ -39,10 +39,14 @@ use crate::{parachain, parachain::api::runtime_types::primitives::currency::Curr
 use beefy_prover::helpers::fetch_timestamp_extrinsic_with_proof;
 use ibc::{
 	applications::transfer::{Amount, PrefixedCoin, PrefixedDenom},
-	core::ics02_client::client_state::ClientType,
+	core::ics02_client::{client_state::ClientType, msgs::update_client::MsgUpdateAnyClient},
 	timestamp::Timestamp,
+	tx_msg::Msg,
 };
-use ibc_proto::ibc::core::{channel::v1::QueryChannelsResponse, client::v1::IdentifiedClientState};
+use ibc_proto::{
+	google::protobuf::Any,
+	ibc::core::{channel::v1::QueryChannelsResponse, client::v1::IdentifiedClientState},
+};
 use ics11_beefy::{
 	client_message::{BeefyHeader, ClientMessage, ParachainHeadersWithProof},
 	client_state::ClientState as BeefyClientState,
@@ -51,7 +55,9 @@ use pallet_ibc::{
 	light_clients::{AnyClientMessage, AnyClientState, HostFunctionsManager},
 	HostConsensusProof,
 };
+use primitives::mock::LocalClientTypes;
 use std::{str::FromStr, time::Duration};
+use tendermint_proto::Protobuf;
 
 /// Finality event for parachains
 pub type FinalityEvent =
@@ -76,19 +82,18 @@ where
 		&mut self,
 		signed_commitment: Self::FinalityEvent,
 		counterparty: &C,
-	) -> Result<(AnyClientMessage, Vec<IbcEvent>, UpdateType), Self::Error>
+	) -> Result<(Any, Vec<IbcEvent>, UpdateType), anyhow::Error>
 	where
 		C: Chain,
-		Self::Error: From<C::Error>,
 	{
 		let client_id = self.client_id();
 		let latest_height = counterparty.latest_height_and_timestamp().await?.0;
 		let response = counterparty.query_client_state(latest_height, client_id).await?;
 		let client_state = response.client_state.ok_or_else(|| {
-			From::from("Received an empty client state from counterparty".to_string())
+			Error::Custom("Received an empty client state from counterparty".to_string())
 		})?;
 		let client_state = AnyClientState::try_from(client_state)
-			.map_err(|_| From::from("Failed to decode client state".to_string()))?;
+			.map_err(|_| Error::Custom("Failed to decode client state".to_string()))?;
 		let beefy_client_state = match &client_state {
 			AnyClientState::Beefy(client_state) => ClientState {
 				latest_beefy_height: client_state.latest_beefy_height,
@@ -246,7 +251,17 @@ where
 			}
 		}
 
-		Ok((AnyClientMessage::Beefy(ClientMessage::Header(beefy_header)), events, update_type))
+		let update_header = {
+			let msg = MsgUpdateAnyClient::<LocalClientTypes> {
+				client_id: self.client_id(),
+				client_message: AnyClientMessage::Beefy(ClientMessage::Header(beefy_header)),
+				signer: counterparty.account_id(),
+			};
+			let value = msg.encode_vec();
+			Any { value, type_url: msg.type_url() }
+		};
+
+		Ok((update_header, events, update_type))
 	}
 
 	async fn query_client_consensus(

@@ -6,12 +6,12 @@ authors = ["Composable Developers"]
 
 [dependencies]
 # crates.io
+anyhow = "1.0.65"
 futures = "0.3.21"
 async-trait = "0.1.53"
 hex = "0.4.3"
 codec = { package = "parity-scale-codec", version = "3.0.0", features = ["derive"] }
 thiserror = "1.0.31"
-anyhow = "1.0.58"
 
 # substrate
 subxt = { git = "https://github.com/paritytech/subxt", rev = "c55b7ba3e34118f61dc51499a0b38262c513aec4" }
