@@ -664,7 +664,7 @@ dependencies = [
 [[package]]
 name = "beefy-light-client"
 version = "0.1.0"
-source = "git+https://github.com/composableFi/centauri?rev=0cba94593829eb057cefb0d9a1e11d2a30b1b4ec#0cba94593829eb057cefb0d9a1e11d2a30b1b4ec"
+source = "git+https://github.com/composableFi/centauri?rev=4384ccc23e82a4e06337d106d5bd170a56b56672#4384ccc23e82a4e06337d106d5bd170a56b56672"
 dependencies = [
  "beefy-primitives",
  "ckb-merkle-mountain-range",
@@ -674,7 +674,7 @@ dependencies = [
  "pallet-beefy-mmr",
  "pallet-mmr",
  "parity-scale-codec",
- "primitives 0.1.0 (git+https://github.com/composableFi/centauri?rev=0cba94593829eb057cefb0d9a1e11d2a30b1b4ec)",
+ "primitives 0.1.0 (git+https://github.com/composableFi/centauri?rev=4384ccc23e82a4e06337d106d5bd170a56b56672)",
  "rs_merkle",
  "sp-core",
  "sp-core-hashing",
@@ -4095,7 +4095,7 @@ dependencies = [
 [[package]]
 name = "grandpa-light-client"
 version = "0.1.0"
-source = "git+https://github.com/composableFi/centauri?rev=0cba94593829eb057cefb0d9a1e11d2a30b1b4ec#0cba94593829eb057cefb0d9a1e11d2a30b1b4ec"
+source = "git+https://github.com/composableFi/centauri?rev=4384ccc23e82a4e06337d106d5bd170a56b56672#4384ccc23e82a4e06337d106d5bd170a56b56672"
 dependencies = [
  "anyhow",
  "finality-grandpa",
@@ -4116,7 +4116,7 @@ dependencies = [
 [[package]]
 name = "grandpa-light-client-primitives"
 version = "0.1.0"
-source = "git+https://github.com/composableFi/centauri?rev=0cba94593829eb057cefb0d9a1e11d2a30b1b4ec#0cba94593829eb057cefb0d9a1e11d2a30b1b4ec"
+source = "git+https://github.com/composableFi/centauri?rev=4384ccc23e82a4e06337d106d5bd170a56b56672#4384ccc23e82a4e06337d106d5bd170a56b56672"
 dependencies = [
  "anyhow",
  "derive_more",
@@ -4627,7 +4627,7 @@ dependencies = [
 [[package]]
 name = "ics07-tendermint"
 version = "0.1.0"
-source = "git+https://github.com/composableFi/centauri?rev=0cba94593829eb057cefb0d9a1e11d2a30b1b4ec#0cba94593829eb057cefb0d9a1e11d2a30b1b4ec"
+source = "git+https://github.com/composableFi/centauri?rev=4384ccc23e82a4e06337d106d5bd170a56b56672#4384ccc23e82a4e06337d106d5bd170a56b56672"
 dependencies = [
  "bytes 1.2.1",
  "flex-error",
@@ -4648,7 +4648,7 @@ dependencies = [
 [[package]]
 name = "ics10-grandpa"
 version = "0.1.0"
-source = "git+https://github.com/composableFi/centauri?rev=0cba94593829eb057cefb0d9a1e11d2a30b1b4ec#0cba94593829eb057cefb0d9a1e11d2a30b1b4ec"
+source = "git+https://github.com/composableFi/centauri?rev=4384ccc23e82a4e06337d106d5bd170a56b56672#4384ccc23e82a4e06337d106d5bd170a56b56672"
 dependencies = [
  "anyhow",
  "derive_more",
@@ -4675,7 +4675,7 @@ dependencies = [
 [[package]]
 name = "ics11-beefy"
 version = "0.1.0"
-source = "git+https://github.com/composableFi/centauri?rev=0cba94593829eb057cefb0d9a1e11d2a30b1b4ec#0cba94593829eb057cefb0d9a1e11d2a30b1b4ec"
+source = "git+https://github.com/composableFi/centauri?rev=4384ccc23e82a4e06337d106d5bd170a56b56672#4384ccc23e82a4e06337d106d5bd170a56b56672"
 dependencies = [
  "anyhow",
  "beefy-light-client",
@@ -4687,7 +4687,7 @@ dependencies = [
  "light-client-common",
  "parity-scale-codec",
  "primitive-types",
- "primitives 0.1.0 (git+https://github.com/composableFi/centauri?rev=0cba94593829eb057cefb0d9a1e11d2a30b1b4ec)",
+ "primitives 0.1.0 (git+https://github.com/composableFi/centauri?rev=4384ccc23e82a4e06337d106d5bd170a56b56672)",
  "prost 0.10.4",
  "prost-build 0.11.1",
  "prost-types 0.10.1",
@@ -6095,7 +6095,7 @@ dependencies = [
 [[package]]
 name = "light-client-common"
 version = "0.1.0"
-source = "git+https://github.com/composableFi/centauri?rev=0cba94593829eb057cefb0d9a1e11d2a30b1b4ec#0cba94593829eb057cefb0d9a1e11d2a30b1b4ec"
+source = "git+https://github.com/composableFi/centauri?rev=4384ccc23e82a4e06337d106d5bd170a56b56672#4384ccc23e82a4e06337d106d5bd170a56b56672"
 dependencies = [
  "anyhow",
  "derive_more",
@@ -7988,7 +7988,7 @@ dependencies = [
  "parachain-info",
  "parity-scale-codec",
  "primitives 0.1.0",
- "primitives 0.1.0 (git+https://github.com/composableFi/centauri?rev=0cba94593829eb057cefb0d9a1e11d2a30b1b4ec)",
+ "primitives 0.1.0 (git+https://github.com/composableFi/centauri?rev=4384ccc23e82a4e06337d106d5bd170a56b56672)",
  "prost 0.10.4",
  "scale-info",
  "serde",
@@ -10669,7 +10669,7 @@ dependencies = [
 [[package]]
 name = "primitives"
 version = "0.1.0"
-source = "git+https://github.com/composableFi/centauri?rev=0cba94593829eb057cefb0d9a1e11d2a30b1b4ec#0cba94593829eb057cefb0d9a1e11d2a30b1b4ec"
+source = "git+https://github.com/composableFi/centauri?rev=4384ccc23e82a4e06337d106d5bd170a56b56672#4384ccc23e82a4e06337d106d5bd170a56b56672"
 dependencies = [
  "beefy-primitives",
  "ckb-merkle-mountain-range",
