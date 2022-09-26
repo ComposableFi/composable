@@ -10,23 +10,22 @@ log = "0.4.17"
 futures = "0.3.24"
 json = { version = "1.0.85", package = "serde_json" }
 
-ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "9925f24c5061832ec5d5a0f4b16a1802dbb75128", features = ["ics11_beefy"] }
-ibc-proto = { git = "https://github.com/composableFi/ibc-rs", rev = "9925f24c5061832ec5d5a0f4b16a1802dbb75128" }
+ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "9a959faabb8f2869e88327ea65a49f5697dcadf6", features = [] }
+ibc-proto = { git = "https://github.com/composableFi/ibc-rs", rev = "9a959faabb8f2869e88327ea65a49f5697dcadf6" }
 tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8" }
 
 hyperspace = { path = "../", features = ["testing"] }
 hyperspace-primitives = { path = "../primitives", features = ["testing"] }
-pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "19a408a7d696bb7e238be38ce4f89ec046a2b383" }
+pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "052052e5b070bc36dda7f9acd393a4c69404c3b2" }
 
 [dev-dependencies]
 parachain = { path = "../parachain", package = "hyperspace-parachain", features = ["testing"] }
-pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "19a408a7d696bb7e238be38ce4f89ec046a2b383" }
 # substrate
-sp-core = "6.0.0"
-sp-runtime = "6.0.0"
-sp-keystore = "0.12.0"
-sp-keyring = "6.0.0"
-subxt = { git = "https://github.com/paritytech/subxt", rev = "ec23283d75e4b3b894294e351fd7ffa2b4431201" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", features = ["full_crypto"] }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+subxt = { git = "https://github.com/paritytech/subxt", rev = "c55b7ba3e34118f61dc51499a0b38262c513aec4" }
 
 # We need this so the tests run sequentially
 [[test]]

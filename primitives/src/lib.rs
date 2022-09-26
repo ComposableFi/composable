@@ -21,11 +21,11 @@ use ibc::{
 	applications::transfer::PrefixedCoin,
 	core::{
 		ics02_client::{
-			client_consensus::AnyConsensusState, client_state::AnyClientState,
-			client_type::ClientType, header::AnyHeader,
+			client_consensus::ConsensusState as ConsensusStateT,
+			client_state::{ClientState as ClientStateT, ClientType},
 		},
 		ics04_channel::{
-			channel::{ChannelEnd, Order::Unordered},
+			channel::{ChannelEnd, Order},
 			context::calculate_block_delay,
 			packet::Packet,
 		},
@@ -39,10 +39,12 @@ use ibc::{
 };
 use ibc_proto::ibc::core::channel::v1::QueryChannelsResponse;
 use ibc_rpc::PacketInfo;
-
-pub mod error;
 #[cfg(test)]
 mod mocks;
+use pallet_ibc::light_clients::{AnyClientMessage, AnyClientState, AnyConsensusState};
+
+pub mod error;
+pub mod mock;
 
 pub enum UpdateType {
 	// contains an authority set change.
@@ -83,7 +85,7 @@ pub trait IbcProvider {
 		&mut self,
 		finality_event: Self::FinalityEvent,
 		counterparty: &T,
-	) -> Result<(AnyHeader, Vec<IbcEvent>, UpdateType), Self::Error>
+	) -> Result<(AnyClientMessage, Vec<IbcEvent>, UpdateType), Self::Error>
 	where
 		T: Chain,
 		Self::Error: From<T::Error>;
@@ -357,7 +359,7 @@ pub async fn query_undelivered_sequences(
 		.ok_or_else(|| Error::Custom("Expected counterparty channel id".to_string()))?;
 	let counterparty_port_id = channel_end.counterparty().port_id.clone();
 
-	let undelivered_sequences = if channel_end.ordering == Unordered {
+	let undelivered_sequences = if channel_end.ordering == Order::Unordered {
 		sink.query_unreceived_packets(
 			sink_height,
 			counterparty_channel_id,

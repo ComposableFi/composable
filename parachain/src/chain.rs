@@ -11,7 +11,7 @@ use sp_runtime::{
 use subxt::{
 	extrinsic::PlainTip,
 	rpc::{rpc_params, SubscriptionClientT},
-	Config, Encoded, PolkadotExtrinsicParams, PolkadotExtrinsicParamsBuilder,
+	Config, PolkadotExtrinsicParams, PolkadotExtrinsicParamsBuilder,
 };
 use transaction_payment_rpc::TransactionPaymentApiClient;
 use transaction_payment_runtime_api::RuntimeDispatchInfo;
@@ -77,17 +77,19 @@ where
 				.tip(PlainTip::new(100_000))
 				.era(Era::Immortal, *self.para_client.genesis());
 
-			let Encoded(extrinsic_bytes) =
+			let submitabble_ext =
 				deliver::<T, PolkadotExtrinsicParams<T>>(&self.para_client, Deliver { messages })
 					.create_signed(&signer, tx_params)
 					.await?;
-			extrinsic_bytes
+			submitabble_ext.encoded().to_vec()
 		};
-		let dispatch_info = TransactionPaymentApiClient::<
-			sp_core_git::H256,
-			RuntimeDispatchInfo<u128>,
-		>::query_info(&*self.para_client.rpc().client, extrinsic.into(), None)
-		.await?;
+		let dispatch_info =
+			TransactionPaymentApiClient::<sp_core::H256, RuntimeDispatchInfo<u128>>::query_info(
+				&*self.para_client.rpc().client,
+				extrinsic.into(),
+				None,
+			)
+			.await?;
 		Ok(dispatch_info.weight)
 	}
 

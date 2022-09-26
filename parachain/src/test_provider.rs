@@ -8,7 +8,7 @@ use ibc::{
 use pallet_ibc::{MultiAddress, Timeout, TransferParams};
 use ping::SendPingParams;
 use primitives::{KeyProvider, TestProvider};
-use sp_core_git::crypto::{AccountId32, Ss58Codec};
+use sp_core::crypto::{AccountId32, Ss58Codec};
 use sp_runtime::{
 	traits::{Header as HeaderT, IdentifyAccount, Verify},
 	MultiSignature, MultiSigner,

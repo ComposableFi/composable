@@ -5,12 +5,10 @@ use codec::Encode;
 use ibc::{
 	core::{
 		ics02_client::{
-			client_state::AnyClientState, client_type::ClientType, header::AnyHeader,
-			msgs::update_client::MsgUpdateAnyClient,
+			client_state::ClientState as ClientStateT, msgs::update_client::MsgUpdateAnyClient,
 		},
 		ics03_connection::{
 			connection::{ConnectionEnd, Counterparty},
-			handler::verify::ConnectionProof,
 			msgs::{
 				conn_open_ack::MsgConnectionOpenAck, conn_open_confirm::MsgConnectionOpenConfirm,
 				conn_open_try::MsgConnectionOpenTry,
@@ -32,8 +30,18 @@ use ibc::{
 	Height,
 };
 use ibc_proto::{google::protobuf::Any, ibc::core::client::v1::QueryConsensusStateResponse};
-use primitives::{error::Error, Chain};
+use ics11_beefy::client_state::ClientState as BeefyClientState;
+use ics13_near::client_state::NearClientState;
+use pallet_ibc::light_clients::{AnyClientMessage, AnyClientState, HostFunctionsManager};
+use primitives::{error::Error, mock::LocalClientTypes, Chain};
 use tendermint_proto::Protobuf;
+
+/// Connection proof type
+#[derive(Encode)]
+pub struct ConnectionProof {
+	pub host_proof: Vec<u8>,
+	pub connection_proof: Vec<u8>,
+}
 
 /// This parses events coming from a source chain
 /// Returns a tuple of messages, with the first item being packets that are ready to be sent to the
@@ -42,7 +50,7 @@ pub async fn parse_events(
 	source: &mut impl Chain,
 	sink: &mut impl Chain,
 	events: Vec<IbcEvent>,
-	header: AnyHeader,
+	client_message: AnyClientMessage,
 ) -> Result<(Vec<Any>, Vec<Any>), anyhow::Error> {
 	let mut messages = vec![];
 	// 1. translate events to messages
@@ -99,7 +107,7 @@ pub async fn parse_events(
 						query_consensus_proof(sink, client_state.clone(), consensus_proof).await?;
 
 					// Construct OpenTry
-					let msg = MsgConnectionOpenTry {
+					let msg = MsgConnectionOpenTry::<LocalClientTypes> {
 						client_id: counterparty.client_id().clone(),
 						// client state proof is mandatory in conn_open_try
 						client_state: Some(client_state.clone()),
@@ -176,7 +184,7 @@ pub async fn parse_events(
 					let consensus_proof =
 						query_consensus_proof(sink, client_state.clone(), consensus_proof).await?;
 					// Construct OpenAck
-					let msg = MsgConnectionOpenAck {
+					let msg = MsgConnectionOpenAck::<LocalClientTypes> {
 						connection_id: counterparty
 							.connection_id()
 							.ok_or_else(|| {
@@ -530,8 +538,11 @@ pub async fn parse_events(
 
 	// 3. insert update client message at first index
 	{
-		let msg =
-			MsgUpdateAnyClient { client_id: source.client_id(), header, signer: sink.account_id() };
+		let msg = MsgUpdateAnyClient::<LocalClientTypes> {
+			client_id: source.client_id(),
+			client_message,
+			signer: sink.account_id(),
+		};
 		let value = msg.encode_vec();
 		let update_client = Any { value, type_url: msg.type_url() };
 
@@ -547,8 +558,11 @@ async fn query_consensus_proof(
 	client_state: AnyClientState,
 	consensus_proof: QueryConsensusStateResponse,
 ) -> Result<Vec<u8>, anyhow::Error> {
+	let beefy_client_type = BeefyClientState::<HostFunctionsManager>::client_type();
+	let near_client_type = NearClientState::<HostFunctionsManager>::client_type();
+	let client_type = sink.client_type();
 	let consensus_proof_bytes =
-		if matches!(sink.client_type(), ClientType::Beefy | ClientType::Near) {
+		if client_type == beefy_client_type || client_type == near_client_type {
 			let host_proof = sink
 				.query_host_consensus_state_proof(client_state.latest_height())
 				.await?

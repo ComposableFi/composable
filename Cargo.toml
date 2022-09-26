@@ -12,10 +12,10 @@ path = "./bin/main.rs"
 primitives = { path = "primitives", package = "hyperspace-primitives" }
 parachain = { path = "parachain", package = "hyperspace-parachain", optional = true }
 cosmos = { path = "cosmos", package = "hyperspace-cosmos", optional = true }
-near = { path = "near", package = "hyperspace-near", optional = true }
+#near = { path = "near", package = "hyperspace-near", optional = true }
 
 # crates.io
-anyhow = "1.0.58"
+anyhow = "1.0.65"
 futures = "0.3.21"
 async-trait = "0.1.53"
 log = "0.4.17"
@@ -23,15 +23,44 @@ env_logger = "0.9.0"
 hex = "0.4.3"
 tokio = { version = "1.19.2", features = ["macros", "sync"] }
 codec = { version = "3.0.0", package = "parity-scale-codec" }
+clap = { version = "3.2.22", features = ["derive"] }
+toml = "0.5.9"
+serde = "1.0.144"
 
 # ibc
-ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "9925f24c5061832ec5d5a0f4b16a1802dbb75128", features = ["ics11_beefy"] }
-ibc-proto = { git = "https://github.com/composableFi/ibc-rs", rev = "9925f24c5061832ec5d5a0f4b16a1802dbb75128" }
+ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "9a959faabb8f2869e88327ea65a49f5697dcadf6", features = [] }
+ibc-proto = { git = "https://github.com/composableFi/ibc-rs", rev = "9a959faabb8f2869e88327ea65a49f5697dcadf6" }
 tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8" }
+
+ics11-beefy = { git = "https://github.com/ComposableFi/centauri", rev = "4384ccc23e82a4e06337d106d5bd170a56b56672" }
+ics13-near = { git = "https://github.com/ComposableFi/centauri", rev = "4384ccc23e82a4e06337d106d5bd170a56b56672" }
+light-client-common = { git = "https://github.com/ComposableFi/centauri", rev = "4384ccc23e82a4e06337d106d5bd170a56b56672" }
+pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "052052e5b070bc36dda7f9acd393a4c69404c3b2" }
+
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+
+[dev-dependencies]
+derive_more = "0.99.17"
+prost = "0.10"
+parachain = { path = "parachain", package = "hyperspace-parachain", features = ["testing"] }
+
+# substrate
+subxt = { git = "https://github.com/paritytech/subxt", rev = "c55b7ba3e34118f61dc51499a0b38262c513aec4" }
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+state-machine = { package = "sp-state-machine", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+
+# composable
+#comosable-primitives = { package = "primitives",  git = "https://github.com/ComposableFi/composable", rev = "052052e5b070bc36dda7f9acd393a4c69404c3b2" }
+#common = { git = "https://github.com/ComposableFi/composable", rev = "052052e5b070bc36dda7f9acd393a4c69404c3b2" }
 
 [features]
 parachain = ["dep:parachain"]
-near = ["dep:near"]
+# near = ["dep:near"]
 cosmos = ["dep:cosmos"]
 testing = []
 
@@ -40,7 +69,28 @@ members = [
     "primitives",
     "parachain",
     "cosmos",
-    "near",
     "testsuite",
+#    "near",
 ]
 
+
+[patch.crates-io]
+sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-arithmetic = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-core-hashing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-debug-derive = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-externalities = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-panic-handler = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-runtime-interface = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-runtime-interface-proc-macro = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-storage = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-wasm-interface = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }

@@ -1,26 +1,16 @@
 use beefy_light_client_primitives::{ClientState, NodesUtils};
-use codec::{Decode, Encode};
-use std::{
-	collections::{BTreeSet, HashMap},
-	fmt::Display,
-	str::FromStr,
-	time::Duration,
-};
-
+use codec::Encode;
 use ibc::{
-	applications::transfer::{Amount, PrefixedCoin, PrefixedDenom},
-	clients::ics11_beefy::header::{BeefyHeader, ParachainHeadersWithProof},
 	core::{
-		ics02_client::{
-			client_state::AnyClientState,
-			client_type::ClientType,
-			header::{AnyHeader, Header as IbcHeaderT},
-		},
 		ics23_commitment::commitment::CommitmentPrefix,
 		ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId},
 	},
 	events::IbcEvent,
 	Height,
+};
+use std::{
+	collections::{BTreeSet, HashMap},
+	fmt::Display,
 };
 
 use ibc_proto::ibc::core::{
@@ -38,6 +28,7 @@ use sp_runtime::{
 use subxt::Config;
 
 use super::{error::Error, ParachainClient};
+use ibc::core::ics02_client::client_state::ClientState as _;
 use ibc_rpc::{BlockNumberOrHash, IbcApiClient, PacketInfo};
 use primitives::{
 	find_maximum_height_for_timeout_proofs, Chain, IbcProvider, KeyProvider, UpdateType,
@@ -46,8 +37,21 @@ use sp_core::H256;
 
 use crate::{parachain, parachain::api::runtime_types::primitives::currency::CurrencyId};
 use beefy_prover::helpers::fetch_timestamp_extrinsic_with_proof;
-use ibc::timestamp::Timestamp;
+use ibc::{
+	applications::transfer::{Amount, PrefixedCoin, PrefixedDenom},
+	core::ics02_client::client_state::ClientType,
+	timestamp::Timestamp,
+};
 use ibc_proto::ibc::core::{channel::v1::QueryChannelsResponse, client::v1::IdentifiedClientState};
+use ics11_beefy::{
+	client_message::{BeefyHeader, ClientMessage, ParachainHeadersWithProof},
+	client_state::ClientState as BeefyClientState,
+};
+use pallet_ibc::{
+	light_clients::{AnyClientMessage, AnyClientState, HostFunctionsManager},
+	HostConsensusProof,
+};
+use std::{str::FromStr, time::Duration};
 
 /// Finality event for parachains
 pub type FinalityEvent =
@@ -72,7 +76,7 @@ where
 		&mut self,
 		signed_commitment: Self::FinalityEvent,
 		counterparty: &C,
-	) -> Result<(AnyHeader, Vec<IbcEvent>, UpdateType), Self::Error>
+	) -> Result<(AnyClientMessage, Vec<IbcEvent>, UpdateType), Self::Error>
 	where
 		C: Chain,
 		Self::Error: From<C::Error>,
@@ -233,7 +237,7 @@ where
 
 		let mmr_update =
 			self.fetch_mmr_update_proof_for(signed_commitment, &beefy_client_state).await?;
-		let beefy_header = BeefyHeader { mmr_update_proof: Some(mmr_update), headers_with_proof };
+		let beefy_header = BeefyHeader { headers_with_proof, mmr_update_proof: Some(mmr_update) };
 
 		for event in events.iter() {
 			if self.sender.send(event.clone()).is_err() {
@@ -242,7 +246,7 @@ where
 			}
 		}
 
-		Ok((beefy_header.wrap_any(), events, update_type))
+		Ok((AnyClientMessage::Beefy(ClientMessage::Header(beefy_header)), events, update_type))
 	}
 
 	async fn query_client_consensus(
@@ -571,14 +575,6 @@ where
 				.await
 				.map_err(Error::BeefyProver)?;
 
-		// lol should probably export this from pallet-ibc
-		#[derive(Encode, Decode)]
-		struct HostConsensusProof {
-			header: Vec<u8>,
-			extrinsic: Vec<u8>,
-			extrinsic_proof: Vec<Vec<u8>>,
-		}
-
 		let host_consensus_proof = HostConsensusProof {
 			header: header.encode(),
 			extrinsic: extrinsic_with_proof.ext,
@@ -611,7 +607,7 @@ where
 	}
 
 	fn client_type(&self) -> ClientType {
-		ClientType::Beefy
+		BeefyClientState::<HostFunctionsManager>::client_type()
 	}
 
 	async fn query_timestamp_at(&self, block_number: u64) -> Result<u64, Self::Error> {

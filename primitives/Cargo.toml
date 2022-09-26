@@ -14,19 +14,16 @@ thiserror = "1.0.31"
 anyhow = "1.0.58"
 
 # substrate
-sp-runtime = "6.0.0"
-sp-keystore = "0.12.0"
-subxt = { git = "https://github.com/paritytech/subxt", rev = "ec23283d75e4b3b894294e351fd7ffa2b4431201" }
+subxt = { git = "https://github.com/paritytech/subxt", rev = "c55b7ba3e34118f61dc51499a0b38262c513aec4" }
 
 # ibc
-ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "9925f24c5061832ec5d5a0f4b16a1802dbb75128", features = ["ics11_beefy"] }
-ibc-proto = { git = "https://github.com/composableFi/ibc-rs", rev = "9925f24c5061832ec5d5a0f4b16a1802dbb75128" }
-ibc-rpc = { git = "https://github.com/ComposableFi/composable", rev = "19a408a7d696bb7e238be38ce4f89ec046a2b383" }
-
-pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "19a408a7d696bb7e238be38ce4f89ec046a2b383", optional = true }
+ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "9a959faabb8f2869e88327ea65a49f5697dcadf6", features = [] }
+ibc-proto = { git = "https://github.com/composableFi/ibc-rs", rev = "9a959faabb8f2869e88327ea65a49f5697dcadf6" }
+pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "052052e5b070bc36dda7f9acd393a4c69404c3b2" }
+ibc-rpc = { git = "https://github.com/ComposableFi/composable", rev = "052052e5b070bc36dda7f9acd393a4c69404c3b2" }
 
 [dev-dependencies]
 tokio = { version = "1.19.2", features = ["macros", "sync"] }
 
 [features]
-testing = ["pallet-ibc"]
+testing = []

@@ -26,20 +26,15 @@ use beefy_prover::{
 	ClientWrapper,
 };
 use ibc::{
-	clients::ics11_beefy::{
-		client_state::ClientState as BeefyClientState, consensus_state::ConsensusState,
-		header::ParachainHeader,
-	},
-	core::{
-		ics02_client::{
-			client_consensus::{AnyConsensusState, ConsensusState as ConsensusStateT},
-			client_state::{AnyClientState, ClientState as ClientStateT},
-		},
-		ics24_host::identifier::{ChainId, ChannelId, ClientId, PortId},
-	},
+	core::ics24_host::identifier::{ChainId, ChannelId, ClientId, PortId},
 	events::IbcEvent,
 };
 use ibc_proto::ibc::core::client::v1::IdentifiedClientState;
+use ics11_beefy::{
+	client_message::ParachainHeader, client_state::ClientState as BeefyClientState,
+	consensus_state::ConsensusState,
+};
+use pallet_ibc::light_clients::{AnyClientState, AnyConsensusState, HostFunctionsManager};
 use pallet_mmr_primitives::BatchProof;
 use sp_core::H256;
 use sp_keystore::SyncCryptoStorePtr;
@@ -218,6 +213,7 @@ where
 			.map_err(|e| {
 				Error::from(format!("[fetch_finalized_parachain_headers_at] Failed due to {:?}", e))
 			})?;
+
 		let parachain_headers = parachain_headers
 			.into_iter()
 			.map(|para_header| {
@@ -330,7 +326,7 @@ where
 				frame_support::sp_runtime::traits::BlakeTwo256,
 			>::decode(&mut &*head_data.0)?;
 			let block_number = decoded_para_head.number;
-			let client_state = BeefyClientState {
+			let client_state = BeefyClientState::<HostFunctionsManager> {
 				chain_id: ChainId::new("relay-chain".to_string(), 0),
 				relay_chain: Default::default(),
 				mmr_root_hash: beefy_state.mmr_root_hash,
@@ -341,6 +337,7 @@ where
 				para_id: self.para_id,
 				authority: beefy_state.current_authorities,
 				next_authority_set: beefy_state.next_authorities,
+				_phantom: Default::default(),
 			};
 			// we can't use the genesis block to construct the initial state.
 			if block_number == 0 {
@@ -372,9 +369,10 @@ where
 				timestamp_extrinsic,
 			};
 
-			let consensus_state = ConsensusState::from_header(parachain_header).unwrap().wrap_any();
+			let consensus_state =
+				AnyConsensusState::Beefy(ConsensusState::from_header(parachain_header).unwrap());
 
-			return Ok((client_state.wrap_any(), consensus_state))
+			return Ok((AnyClientState::Beefy(client_state), consensus_state))
 		}
 	}
 

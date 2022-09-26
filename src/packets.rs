@@ -7,13 +7,14 @@ use crate::packets::utils::{
 };
 use ibc::{
 	core::{
-		ics02_client::client_state::AnyClientState,
+		ics02_client::client_state::ClientState as ClientStateT,
 		ics03_connection::connection::ConnectionEnd,
 		ics04_channel::channel::{ChannelEnd, State},
 	},
 	Height,
 };
 use ibc_proto::google::protobuf::Any;
+use pallet_ibc::light_clients::AnyClientState;
 use primitives::{
 	error::Error, find_suitable_proof_height_for_client, packet_info_to_packet,
 	query_undelivered_acks, query_undelivered_sequences, Chain,
