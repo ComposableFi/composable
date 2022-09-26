@@ -251,6 +251,7 @@ fn stake_in_case_of_zero_inflation_should_work() {
 		process_and_progress_blocks::<StakingRewards, Test>(1);
 
 		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
+		process_and_progress_blocks::<StakingRewards, Test>(1);
 		let staker: Public = ALICE;
 		let amount: u128 = 100_500_u128;
 		let duration_preset: u64 = ONE_HOUR;
@@ -346,6 +347,7 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 
 		process_and_progress_blocks::<StakingRewards, Test>(1);
 		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
+		process_and_progress_blocks::<StakingRewards, Test>(1);
 
 		let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
 		mint_assets([ALICE], [staked_asset_id], AMOUNT * 2);
@@ -355,7 +357,6 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 			TOTAL_SHARES,
 		);
 
-		process_and_progress_blocks::<StakingRewards, Test>(1);
 		assert_ok!(StakingRewards::stake(Origin::signed(ALICE), PICA::ID, AMOUNT, DURATION_PRESET));
 		let rewards_pool = StakingRewards::pools(PICA::ID).expect("rewards_pool expected");
 		let reward_multiplier = StakingRewards::reward_multiplier(&rewards_pool, DURATION_PRESET)
