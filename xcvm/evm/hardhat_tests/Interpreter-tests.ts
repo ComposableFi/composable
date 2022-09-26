@@ -33,9 +33,6 @@ describe("Interpreter", function () {
     interpreterAddress = await gateway.userInterpreter(
       1,
       owner.address,
-      {
-        gasLimit: 10000000
-      }
     )
     ;
     const ERC20Mock = await ethers.getContractFactory("ERC20Mock");
@@ -76,7 +73,6 @@ describe("Interpreter", function () {
       });
       let balanceMessage = BalanceMessage.create(
         {absolute: absoluteMessage},
-        {oneOfs: true}
       );
 
       console.log("owner", owner.address.toString("hex"));
@@ -104,7 +100,6 @@ describe("Interpreter", function () {
       );
       let instructionMessage = InstructionMessage.create(
         {transfer: transferMessage},
-        {oneofs: true}
       );
       console.log(
         "instruction",
@@ -553,63 +548,165 @@ describe("Interpreter", function () {
       ).to.be.equal((oldBalance / 2).toString());
     });
 
-    it("test program", async function () {
+    it("test program using sdk", async function () {
       let xcvm = new XCVMProgram();
-      await xcvm.init();
-      await xcvm;
+      let data =
+        xcvm.createProgram(
+          xcvm.createInstructions(
+            [
+              xcvm.createInstruction(
+                xcvm.createTransfer(
+                  xcvm.createAccount(owner.address),
+                  [
+                    xcvm.createAsset(
+                      xcvm.createAssetId(1),
+                      xcvm.createBalance(
+                        xcvm.createAbsolut(100)
+                      )
+                    )
+                  ]
+                )
+              )
+            ]
+          )
+        )
+      console.log(xcvm.encodeMessage(data));
+
+      await gateway.runProgram(
+        {networkId: 1, account: owner.address},
+        xcvm.encodeMessage(data),
+        [],
+        []
+      );
+      expect((await erc20.balanceOf(owner.address)).toString()).to.be.equal('100')
     });
-    /*
-    it("test user protobuf as the serialization protocol", async function () {
-      let PushMessage = root.lookupType("interpreter.Push");
-      let PopMessage = root.lookupType("interpreter.Pop");
-      let AddMessage = root.lookupType("interpreter.Add");
-      let InstructionMessage = root.lookupType("interpreter.Instruction");
-      let InstructionsMessage = root.lookupType("interpreter.Instructions");
-      let ProgramMessage = root.lookupType("interpreter.Program");
-      let pushMessage = PushMessage.create({value: 1});
-      console.log(PushMessage.toObject(pushMessage))
-      console.log(pushMessage)
 
-      let instructionMessage = InstructionMessage.create(InstructionMessage.toObject({push: pushMessage}, {oneofs: true}))
-      console.log(InstructionMessage.fromObject(instructionMessage))
+    it("test call function using sdk", async function () {
+      const abi = ethers.utils.defaultAbiCoder;
+      const abiCoder = ethers.utils.defaultAbiCoder;
 
-      let pushMessage2 = PushMessage.create({value: 2})
-      let instructionMessage2 = InstructionMessage.create(InstructionMessage.toObject({push: pushMessage2}, {oneofs: true}))
-      console.log(InstructionMessage.fromObject(instructionMessage2))
+      let functionSignature = erc20.interface.getSighash("transfer(address,uint256)")
+      // placehold 1 and 2
+      const payload = ethers.utils.concat([ethers.utils.arrayify("0x01"), ethers.utils.arrayify(functionSignature), abiCoder.encode(['address'], [user1.address]), ethers.utils.arrayify("0x02")])
+      console.log("payload", ethers.utils.hexlify(payload))
 
-      let addMessage = AddMessage.create({})
-      let instructionMessage3 = InstructionMessage.create(InstructionMessage.toObject({add: addMessage}, {oneofs: true}))
-      console.log(InstructionMessage.fromObject(instructionMessage3))
 
-      let instructionsMessage = InstructionsMessage.create(InstructionsMessage.toObject({instructions: [instructionMessage, instructionMessage2, instructionMessage3]}))
-      let programMessage = ProgramMessage.create(ProgramMessage.toObject({instructions: instructionsMessage}));
+      let xcvm = new XCVMProgram();
+      let a = xcvm.createInstruction(xcvm.createCall(payload, xcvm.createBindings([
+          xcvm.createBinding(
+            0,
+            xcvm.createBindingValue(
+              xcvm.createAssetId(1)
+            )
+          ),
+          // bingdingValuePosition(1 byte) + function signature (4bytes) + address(32bytes, its encoded) = 37 => balanceValuePosition
+          xcvm.createBinding(
+            37,
+            xcvm.createBindingValue(
+              xcvm.createAssetAmount(
+                xcvm.createAssetId(1),
+                xcvm.createRatio(1, 2)
+              )
+            )
+          )
+        ]
+      )))
+      let programMessage =
+        xcvm.createProgram(
+          xcvm.createInstructions(
+            [
+              xcvm.createInstruction(
+                xcvm.createCall(payload, xcvm.createBindings([
+                      xcvm.createBinding(
+                        0,
+                        xcvm.createBindingValue(
+                          xcvm.createAssetId(1)
+                        )
+                      ),
+                      // bingdingValuePosition(1 byte) + function signature (4bytes) + address(32bytes, its encoded) = 37 => balanceValuePosition
+                      xcvm.createBinding(
+                        37,
+                        xcvm.createBindingValue(
+                          xcvm.createAssetAmount(
+                            xcvm.createAssetId(1),
+                            xcvm.createRatio(1, 2)
+                          )
+                        )
+                      )
+                    ]
+                  )
+                )
+              )
+            ]
+          )
+        )
 
-      let res = ProgramMessage.verify(programMessage);
-
-      let encodedProgram = ProgramMessage.encode(programMessage).finish().toString("hex");
-      console.log("encoded program", encodedProgram);
-      await machine.dispatch_program("0x" + encodedProgram);
-
-      // check the result
-      let interpreterAddress = await machine.userInterpreter(owner.address);
-      interpreter = await ethers.getContractAt('Interpreter', interpreterAddress);
-      expect(await interpreter.userStack(0)).to.be.equal(3);
-
-      // test again: change value
-      let popMessage = PopMessage.create({value: 1});
-      instructionMessage = InstructionMessage.create(InstructionMessage.toObject({pop: popMessage}, {oneofs: true}))
-      console.log(InstructionMessage.fromObject(instructionMessage))
-      instructionMessage2 = InstructionMessage.create(InstructionMessage.toObject({push: pushMessage2}, {oneofs: true}))
-      console.log(InstructionMessage.fromObject(instructionMessage2))
-      instructionsMessage = InstructionsMessage.create(InstructionsMessage.toObject({instructions: [instructionMessage, instructionMessage2]}))
-      programMessage = ProgramMessage.create(ProgramMessage.toObject({instructions: instructionsMessage}));
-
-      encodedProgram = ProgramMessage.encode(programMessage).finish().toString("hex");
-      console.log("encoded program", encodedProgram);
-      await machine.dispatch_program("0x" + encodedProgram);
-      expect(await interpreter.userStack(0)).to.be.equal(2);
-
+      let encodedProgram = xcvm.encodeMessage(programMessage);
+      console.log(3333, encodedProgram);
+      await gateway.runProgram(
+        {networkId: 1, account: owner.address},
+        encodedProgram,
+        [],
+        []
+      );
+      expect((await erc20.balanceOf(user1.address)).toString()).to.be.equal(ethers.utils.parseEther("50").toString());
     })
-  */
+
+    it.only("test spawn program using sdk", async function () {
+      let xcvm = new XCVMProgram();
+      let programMessage =
+        xcvm.createProgram(
+          xcvm.createInstructions(
+            [
+              xcvm.createInstruction(
+                xcvm.createTransfer(
+                  xcvm.createAccount(owner.address),
+                  [
+                    xcvm.createAsset(
+                      xcvm.createAssetId(1),
+                      xcvm.createBalance(
+                        xcvm.createAbsolut(100)
+                      )
+                    )
+                  ]
+                )
+              )
+            ]
+          )
+        )
+
+      let data =
+        xcvm.createProgram(
+          xcvm.createInstructions(
+            [
+              xcvm.createInstruction(
+                xcvm.createSpawn(
+                  xcvm.createNetwork(1),
+                  xcvm.createSalt(1),
+                  1,
+                  programMessage,
+                  [
+                    xcvm.createAsset(
+                      xcvm.createAssetId(1),
+                      xcvm.createBalance(
+                        xcvm.createAbsolut(200)
+                      )
+                    )
+                  ]
+                )
+              )
+            ]
+          )
+        )
+
+      console.log(ethers.utils.hexlify(xcvm.encodeMessage(programMessage)));
+      await expect(gateway.runProgram(
+        {networkId: 1, account: owner.address},
+        xcvm.encodeMessage(data),
+        [],
+        []
+      )).to.emit(gateway, "Spawn").withArgs(owner.address.toLowerCase(), 1, 1, 1, ethers.utils.hexlify(xcvm.encodeMessage(programMessage)), [erc20.address], [200]);
+      expect((await erc20.balanceOf(owner.address)).toString()).to.be.equal('200')
+    });
   });
 });

@@ -60,7 +60,7 @@ message Self {
 } 
 
 message Relayer {
-  uint32 self = 1;
+  uint32 id = 1;
 } 
 
 message Result {
@@ -81,8 +81,8 @@ message BindingValue {
   oneof type {
     Self self = 1;
     Relayer relayer = 2;
-    uint32 Result = 3;
-    AssetAmount assetAmount = 4; 
+    uint32 result = 3;
+    AssetAmount assetAmount = 4;
     AssetId assetId = 5;
   }
 }
@@ -113,14 +113,15 @@ message Network {
 }
 
 enum BridgeSecurity {
-  deterministic = 0;
-  probabilistic = 1;
-  optimistic = 2;
+  none = 0;
+  deterministic = 1;
+  probabilistic = 2;
+  optimistic = 3;
 } 
 
 message Spawn {
   Network network = 1;
-  BridgeSecurity bridge_security = 2;
+  BridgeSecurity security = 2;
   Salt salt = 3;
   Program program = 4;
   repeated Asset assets = 5;
