@@ -284,10 +284,10 @@ benchmarks! {
 		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id.clone(), None);
 		let channel_end = ChannelEnd::new(
 			ibc::core::ics04_channel::channel::State::Init,
-			ibc::core::ics04_channel::channel::Order::Unordered,
+			ibc::core::ics04_channel::channel::Order::Ordered,
 			counterparty_channel,
 			vec![ConnectionId::new(0)],
-			ibc::core::ics04_channel::Version::default()
+			ibc::core::ics04_channel::Version::new(pallet_ibc_ping::VERSION.to_string())
 		);
 
 		let value = MsgChannelOpenInit {
@@ -383,10 +383,10 @@ benchmarks! {
 		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id.clone(), Some(ChannelId::new(0)));
 		let channel_end = ChannelEnd::new(
 			ibc::core::ics04_channel::channel::State::Init,
-			ibc::core::ics04_channel::channel::Order::Unordered,
+			ibc::core::ics04_channel::channel::Order::Ordered,
 			counterparty_channel,
 			vec![ConnectionId::new(0)],
-			ibc::core::ics04_channel::Version::default()
+			ibc::core::ics04_channel::Version::new(pallet_ibc_ping::VERSION.to_string())
 		);
 
 		let value = MsgChannelOpenInit {
@@ -445,10 +445,10 @@ benchmarks! {
 		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id.clone(), Some(ChannelId::new(0)));
 		let channel_end = ChannelEnd::new(
 			ibc::core::ics04_channel::channel::State::TryOpen,
-			ibc::core::ics04_channel::channel::Order::Unordered,
+			ibc::core::ics04_channel::channel::Order::Ordered,
 			counterparty_channel,
 			vec![ConnectionId::new(0)],
-			ibc::core::ics04_channel::Version::default()
+			ibc::core::ics04_channel::Version::new(pallet_ibc_ping::VERSION.to_string())
 		);
 
 		ctx.store_channel((port_id.clone(), ChannelId::new(0)), &channel_end).unwrap();
@@ -500,10 +500,10 @@ benchmarks! {
 		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id.clone(), Some(ChannelId::new(0)));
 		let channel_end = ChannelEnd::new(
 			ibc::core::ics04_channel::channel::State::Open,
-			ibc::core::ics04_channel::channel::Order::Unordered,
+			ibc::core::ics04_channel::channel::Order::Ordered,
 			counterparty_channel,
 			vec![ConnectionId::new(0)],
-			ibc::core::ics04_channel::Version::default()
+			ibc::core::ics04_channel::Version::new(pallet_ibc_ping::VERSION.to_string())
 		);
 
 		ctx.store_channel((port_id.clone(), ChannelId::new(0)), &channel_end).unwrap();
@@ -554,10 +554,10 @@ benchmarks! {
 		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id.clone(), Some(ChannelId::new(0)));
 		let channel_end = ChannelEnd::new(
 			ibc::core::ics04_channel::channel::State::Open,
-			ibc::core::ics04_channel::channel::Order::Unordered,
+			ibc::core::ics04_channel::channel::Order::Ordered,
 			counterparty_channel,
 			vec![ConnectionId::new(0)],
-			ibc::core::ics04_channel::Version::default()
+			ibc::core::ics04_channel::Version::new(pallet_ibc_ping::VERSION.to_string())
 		);
 
 		ctx.store_channel((port_id.clone(), ChannelId::new(0)), &channel_end).unwrap();

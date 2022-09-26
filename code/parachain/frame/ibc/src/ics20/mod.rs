@@ -87,15 +87,32 @@ where
 	fn on_chan_open_try(
 		&mut self,
 		_output: &mut ModuleOutputBuilder,
-		_order: Order,
+		order: Order,
 		_connection_hops: &[ConnectionId],
-		_port_id: &PortId,
+		port_id: &PortId,
 		_channel_id: &ChannelId,
-		_counterparty: &Counterparty,
-		_version: &Version,
-		_counterparty_version: &Version,
+		counterparty: &Counterparty,
+		version: &Version,
+		counterparty_version: &Version,
 	) -> Result<Version, Ics04Error> {
-		Ok(Version::new(VERSION.to_string()))
+		if counterparty_version.to_string() != VERSION.to_string() ||
+			version.to_string() != VERSION.to_string()
+		{
+			return Err(Ics04Error::no_common_version())
+		}
+
+		if order != Order::Unordered {
+			return Err(Ics04Error::unknown_order_type(order.to_string()))
+		}
+
+		if counterparty.port_id() != &PortId::transfer() || port_id != &PortId::transfer() {
+			return Err(Ics04Error::implementation_specific(format!(
+				"Invalid counterparty port {:?}",
+				counterparty.port_id()
+			)))
+		}
+
+		Ok(version.clone())
 	}
 
 	fn on_chan_open_ack(
