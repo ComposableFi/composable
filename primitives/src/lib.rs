@@ -25,7 +25,6 @@ use ibc::{
 	signer::Signer,
 	Height,
 };
-use pallet_ibc::light_clients::AnyClientMessage;
 
 pub mod error;
 pub mod mock;
@@ -63,7 +62,7 @@ pub trait IbcProvider {
 		&mut self,
 		finality_event: Self::FinalityEvent,
 		counterparty: &T,
-	) -> Result<(AnyClientMessage, Vec<IbcEvent>, UpdateType), Self::Error>
+	) -> Result<(Any, Vec<IbcEvent>, UpdateType), anyhow::Error>
 	where
 		T: Chain,
 		Self::Error: From<T::Error>;

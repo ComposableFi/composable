@@ -29,7 +29,7 @@ where
 					None => break,
 					Some(finality_event) => {
 						log::info!("Received finality notification from {}", chain_a.name());
-						let (update_client_header, events, update_type) = match chain_a.query_latest_ibc_events(finality_event, &chain_b).await {
+						let (msg_update_client, events, update_type) = match chain_a.query_latest_ibc_events(finality_event, &chain_b).await {
 							Ok(resp) => resp,
 							Err(err) => {
 								log::error!("Failed to fetch IBC events for finality event on Chain A: {:?}", err);
@@ -37,17 +37,19 @@ where
 							}
 						};
 						let event_types = events.iter().map(|ev| ev.event_type()).collect::<Vec<_>>();
-						let messages = parse_events(&mut chain_a, &mut chain_b,  events, update_client_header).await?;
-						// there'd at least be the `MsgUpdateClient` packet.
-						if messages.len() == 1 && update_type.is_optional() {
-							// skip sending ibc messages if no new events
-							log::info!("Skipping finality notification for {}", chain_a.name());
-							continue
-						} else if messages.len() == 1 {
-							log::info!("Sending mandatory client update message to {}", chain_a.name());
-						} else {
-							log::info!("Received finalized events from: {} {event_types:#?}", chain_a.name());
-						}
+						let mut messages = parse_events(&mut chain_a, &mut chain_b, events).await?;
+						match (update_type.is_optional(), messages.is_empty()) {
+							(true, true) => {
+								// skip sending ibc messages if no new events
+								log::info!("Skipping finality notification for {}, No new events", chain_a.name());
+								continue
+							},
+							(false, true) => log::info!("Sending mandatory client update message for {}", chain_a.name()),
+							_ => log::info!("Received finalized events from: {} {event_types:#?}", chain_a.name()),
+						};
+						// insert client update at first position.
+						messages.insert(0, msg_update_client);
+						log::info!("Received finalized events from: {} {event_types:#?}", chain_a.name());
 						let type_urls = messages.iter().map(|msg| msg.type_url.as_str()).collect::<Vec<_>>();
 						log::info!("Submitting messages to {}: {type_urls:#?}", chain_a.name());
 						chain_b.submit_ibc_messages(messages).await?;
@@ -61,7 +63,7 @@ where
 					None => break,
 					Some(finality_event) => {
 						log::info!("Received finality notification from {}", chain_b.name());
-						let (update_client_header, events, update_type) = match chain_b.query_latest_ibc_events(finality_event, &chain_a).await {
+						let (msg_update_client, events, update_type) = match chain_b.query_latest_ibc_events(finality_event, &chain_a).await {
 							Ok(resp) => resp,
 							Err(err) => {
 								log::error!("Failed to fetch IBC events for finality event on Chain B: {:?}", err);
@@ -69,17 +71,18 @@ where
 							}
 						};
 						let event_types = events.iter().map(|ev| ev.event_type()).collect::<Vec<_>>();
-						let messages = parse_events(&mut chain_b, &mut chain_a, events, update_client_header).await?;
-						// there'd at least be the `MsgUpdateClient` packet.
-						if messages.len() == 1 && update_type.is_optional() {
-							log::info!("Skipping finality notification for {}", chain_b.name());
-							// skip sending ibc messages if no new events
-							continue
-						} else if messages.len() == 1 {
-							log::info!("Sending mandatory client update message to {}", chain_b.name());
-						} else {
-							log::info!("Received finalized events from {}: {event_types:#?}", chain_b.name());
-						}
+						let mut messages = parse_events(&mut chain_b, &mut chain_a, events).await?;
+						match (update_type.is_optional(), messages.is_empty()) {
+							(true, true) => {
+								// skip sending ibc messages if no new events
+								log::info!("Skipping finality notification for {}, No new events", chain_b.name());
+								continue
+							},
+							(false, true) => log::info!("Sending mandatory client update message for {}", chain_b.name()),
+							_ => log::info!("Received finalized events from: {} {event_types:#?}", chain_a.name()),
+						};
+						// insert client update at first position.
+						messages.insert(0, msg_update_client);
 						let type_urls = messages.iter().map(|msg| msg.type_url.as_str()).collect::<Vec<_>>();
 						log::info!("Submitting messages to {}: {type_urls:#?}", chain_b.name());
 						chain_a.submit_ibc_messages(messages).await?;

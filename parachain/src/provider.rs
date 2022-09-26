@@ -45,6 +45,11 @@ use pallet_ibc::{
 use pallet_mmr_primitives::BatchProof;
 #[cfg(feature = "testing")]
 use std::pin::Pin;
+use ibc::core::ics02_client::msgs::update_client::MsgUpdateAnyClient;
+use ibc::tx_msg::Msg;
+use ibc_proto::google::protobuf::Any;
+use tendermint_proto::Protobuf;
+use primitives::mock::LocalClientTypes;
 
 /// Finality event for parachains
 pub type FinalityEvent =
@@ -69,10 +74,9 @@ where
 		&mut self,
 		signed_commitment: Self::FinalityEvent,
 		counterparty: &C,
-	) -> Result<(AnyClientMessage, Vec<IbcEvent>, UpdateType), Self::Error>
+	) -> Result<(Any, Vec<IbcEvent>, UpdateType), anyhow::Error>
 	where
 		C: Chain,
-		Self::Error: From<C::Error>,
 	{
 		let client_id = self.client_id();
 		let latest_height = counterparty.latest_height().await?;
@@ -207,7 +211,17 @@ where
 			}
 		}
 
-		Ok((AnyClientMessage::Beefy(ClientMessage::Header(beefy_header)), events, update_type))
+		let update_header = {
+			let msg = MsgUpdateAnyClient::<LocalClientTypes> {
+				client_id: source.client_id(),
+				client_message: AnyClientMessage::Beefy(ClientMessage::Header(beefy_header)),
+				signer: counterparty.account_id(),
+			};
+			let value = msg.encode_vec();
+			Any { value, type_url: msg.type_url() }
+		};
+
+		Ok((update_header, events, update_type))
 	}
 
 	async fn query_client_consensus(

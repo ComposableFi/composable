@@ -6,6 +6,7 @@ authors = ["Composable Developers"]
 
 [dependencies]
 # crates.io
+anyhow = "1.0.65"
 futures = "0.3.21"
 async-trait = "0.1.53"
 hex = "0.4.3"
