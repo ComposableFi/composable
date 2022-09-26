@@ -1003,7 +1003,7 @@ pub mod pallet {
 
 					let existing_fnft_asset_account = T::FinancialNft::asset_account(
 						fnft_collection_id,
-						&existing_fnft_instance_id,
+						existing_fnft_instance_id,
 					);
 					let new_fnft_asset_account =
 						T::FinancialNft::asset_account(fnft_collection_id, &new_fnft_instance_id);
@@ -1039,7 +1039,7 @@ pub mod pallet {
 							share: new_share,
 							reductions: new_reductions,
 							reward_pool_id: existing_position.reward_pool_id,
-							lock: existing_position.lock.clone(),
+							lock: existing_position.lock,
 							fnft_instance_id: new_fnft_instance_id,
 						},
 					))
@@ -1130,7 +1130,7 @@ pub mod pallet {
 			T::Assets::set_lock(
 				T::LockId::get(),
 				asset_id,
-				&old_fnft_asset_account,
+				old_fnft_asset_account,
 				old_account_amount,
 			)?;
 
@@ -1138,8 +1138,8 @@ pub mod pallet {
 			// should be the total unlocked amount)
 			T::Assets::transfer(
 				asset_id,
-				&old_fnft_asset_account,
-				&new_fnft_asset_account,
+				old_fnft_asset_account,
+				new_fnft_asset_account,
 				new_account_amount,
 				false, // not a user account, doesn't need to be kept alive
 			)?;
