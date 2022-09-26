@@ -1,18 +1,15 @@
 use codec::Decode;
-use std::{fmt::Display, pin::Pin};
+use std::{collections::BTreeMap, fmt::Display, pin::Pin};
 
 use futures::{Stream, StreamExt};
+use grandpa_light_client_primitives::{FinalityProof, ParachainHeaderProofs};
 use ibc_proto::google::protobuf::Any;
 use sp_runtime::{
 	generic::Era,
-	traits::{Header as HeaderT, IdentifyAccount, Verify},
+	traits::{Header as HeaderT, IdentifyAccount, One, Verify},
 	MultiSignature, MultiSigner,
 };
-use subxt::{
-	extrinsic::PlainTip,
-	rpc::{rpc_params, SubscriptionClientT},
-	Config, PolkadotExtrinsicParams, PolkadotExtrinsicParamsBuilder,
-};
+use subxt::{extrinsic::PlainTip, Config, PolkadotExtrinsicParams, PolkadotExtrinsicParamsBuilder};
 use transaction_payment_rpc::TransactionPaymentApiClient;
 use transaction_payment_runtime_api::RuntimeDispatchInfo;
 
@@ -34,7 +31,12 @@ where
 	MultiSigner: From<MultiSigner>,
 	<T as subxt::Config>::Address: From<<T as subxt::Config>::AccountId>,
 	T::Signature: From<MultiSignature>,
-	T::BlockNumber: From<u32> + Display + Ord + sp_runtime::traits::Zero,
+	T::BlockNumber: From<u32> + Display + Ord + sp_runtime::traits::Zero + One,
+	T::Hash: From<sp_core::H256>,
+	FinalityProof<sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256>>:
+		From<FinalityProof<T::Header>>,
+	BTreeMap<sp_core::H256, ParachainHeaderProofs>:
+		From<BTreeMap<<T as subxt::Config>::Hash, ParachainHeaderProofs>>,
 {
 	fn name(&self) -> &str {
 		&*self.name
@@ -93,9 +95,48 @@ where
 		Ok(dispatch_info.weight)
 	}
 
+	#[cfg(not(feature = "beefy"))]
 	async fn finality_notifications(
 		&self,
 	) -> Pin<Box<dyn Stream<Item = <Self as IbcProvider>::FinalityEvent> + Send + Sync>> {
+		use finality_grandpa_rpc::GrandpaApiClient;
+		/// An encoded justification proving that the given header has been finalized
+		#[derive(Clone, serde::Serialize, serde::Deserialize)]
+		struct JustificationNotification(sp_core::Bytes);
+		let subscription =
+			GrandpaApiClient::<JustificationNotification, sp_core::H256, u32>::subscribe_justifications(
+				&*self.relay_client.rpc().client,
+			)
+				.await
+				.expect("Failed to subscribe to grandpa justifications");
+
+		let stream = subscription.filter_map(|justification_notif| {
+			let encoded_justification = match justification_notif {
+				Ok(JustificationNotification(sp_core::Bytes(justification))) => justification,
+				Err(err) => {
+					log::error!("Failed to fetch Justification: {}", err);
+					return futures::future::ready(None)
+				},
+			};
+
+			let justification = match Decode::decode(&mut &*encoded_justification) {
+				Ok(j) => j,
+				Err(err) => {
+					log::error!("Grandpa Justification scale decode error: {}", err);
+					return futures::future::ready(None)
+				},
+			};
+			futures::future::ready(Some(justification))
+		});
+
+		Box::pin(Box::new(stream))
+	}
+
+	#[cfg(feature = "beefy")]
+	async fn finality_notifications(
+		&self,
+	) -> Pin<Box<dyn Stream<Item = <Self as IbcProvider>::FinalityEvent> + Send + Sync>> {
+		use subxt::rpc::{rpc_params, SubscriptionClientT};
 		let subscription = self
 			.relay_client
 			.rpc()

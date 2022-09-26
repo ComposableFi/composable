@@ -1,4 +1,3 @@
-use beefy_light_client_primitives::{ClientState, NodesUtils};
 use codec::Encode;
 use ibc::{
 	core::{
@@ -36,7 +35,6 @@ use primitives::{
 use sp_core::H256;
 
 use crate::{parachain, parachain::api::runtime_types::primitives::currency::CurrencyId};
-use beefy_prover::helpers::fetch_timestamp_extrinsic_with_proof;
 use ibc::{
 	applications::transfer::{Amount, PrefixedCoin, PrefixedDenom},
 	core::ics02_client::{client_state::ClientType, msgs::update_client::MsgUpdateAnyClient},
@@ -47,8 +45,14 @@ use ibc_proto::{
 	google::protobuf::Any,
 	ibc::core::{channel::v1::QueryChannelsResponse, client::v1::IdentifiedClientState},
 };
+
+#[cfg(feature = "beefy")]
+use beefy_light_client_primitives::{ClientState as BeefyPrimitivesClientState, NodesUtils};
+use beefy_prover::helpers::fetch_timestamp_extrinsic_with_proof;
+use grandpa_light_client_primitives::{FinalityProof, ParachainHeaderProofs};
+#[cfg(feature = "beefy")]
 use ics11_beefy::{
-	client_message::{BeefyHeader, ClientMessage, ParachainHeadersWithProof},
+	client_message::{BeefyHeader, ClientMessage as BeefyClientMessage, ParachainHeadersWithProof},
 	client_state::ClientState as BeefyClientState,
 };
 use pallet_ibc::{
@@ -56,12 +60,18 @@ use pallet_ibc::{
 	HostConsensusProof,
 };
 use primitives::mock::LocalClientTypes;
-use std::{str::FromStr, time::Duration};
+use sp_runtime::traits::One;
+use std::{collections::BTreeMap, str::FromStr, time::Duration};
 use tendermint_proto::Protobuf;
 
+#[cfg(feature = "beefy")]
 /// Finality event for parachains
 pub type FinalityEvent =
 	beefy_primitives::SignedCommitment<u32, beefy_primitives::crypto::Signature>;
+
+#[cfg(not(feature = "beefy"))]
+pub type FinalityEvent =
+	grandpa_light_client::justification::GrandpaJustification<polkadot_core_primitives::Header>;
 
 #[async_trait::async_trait]
 impl<T: Config + Send + Sync> IbcProvider for ParachainClient<T>
@@ -73,11 +83,181 @@ where
 	MultiSigner: From<MultiSigner>,
 	<T as subxt::Config>::Address: From<<T as subxt::Config>::AccountId>,
 	T::Signature: From<MultiSignature>,
-	T::BlockNumber: From<u32> + Display + Ord + sp_runtime::traits::Zero,
+	T::BlockNumber: From<u32> + Display + Ord + sp_runtime::traits::Zero + One,
+	T::Hash: From<sp_core::H256>,
+	FinalityProof<sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256>>:
+		From<FinalityProof<T::Header>>,
+	BTreeMap<sp_core::H256, ParachainHeaderProofs>:
+		From<BTreeMap<<T as subxt::Config>::Hash, ParachainHeaderProofs>>,
 {
 	type FinalityEvent = FinalityEvent;
 	type Error = Error;
 
+	#[cfg(not(feature = "beefy"))]
+	async fn query_latest_ibc_events<C>(
+		&mut self,
+		justification: Self::FinalityEvent,
+		counterparty: &C,
+	) -> Result<(Any, Vec<IbcEvent>, UpdateType), anyhow::Error>
+	where
+		C: Chain,
+	{
+		use grandpa_light_client::justification::find_scheduled_change;
+		use grandpa_light_client_primitives::ParachainHeadersWithFinalityProof;
+		use ics10_grandpa::client_message::{ClientMessage, Header as GrandpaHeader};
+
+		let client_id = self.client_id();
+		let latest_height = counterparty.latest_height_and_timestamp().await?.0;
+		let response = counterparty.query_client_state(latest_height, client_id).await?;
+		let client_state = response.client_state.ok_or_else(|| {
+			Error::Custom("Received an empty client state from counterparty".to_string())
+		})?;
+		let client_state = AnyClientState::try_from(client_state)
+			.map_err(|_| Error::Custom("Failed to decode client state".to_string()))?;
+		let grandpa_client_state = match &client_state {
+			AnyClientState::Grandpa(client_state) => client_state,
+			c => Err(Error::ClientStateRehydration(format!(
+				"Expected AnyClientState::Grandpa found: {:?}",
+				c
+			)))?,
+		};
+
+		// fetch the new parachain headers that have been finalized
+		let headers = self
+			.query_finalized_parachain_headers_between(
+				justification.commit.target_hash.into(),
+				grandpa_client_state.latest_relay_hash.into(),
+			)
+			.await?;
+
+		log::info!(
+			"Fetching events from {} for blocks {}..{}",
+			self.name(),
+			headers[0].number(),
+			headers.last().unwrap().number()
+		);
+
+		let finalized_blocks =
+			headers.iter().map(|header| u32::from(*header.number())).collect::<Vec<_>>();
+
+		let finalized_block_numbers = finalized_blocks
+			.iter()
+			.filter_map(|block_number| {
+				if (client_state.latest_height().revision_height as u32) < *block_number {
+					Some(*block_number)
+				} else {
+					None
+				}
+			})
+			.map(|h| BlockNumberOrHash::Number(h))
+			.collect::<Vec<_>>();
+
+		// 1. we should query the sink chain for any outgoing packets to the source chain and return
+		// the maximum height at which we can construct non-existence proofs for all these packets
+		// on the source chain
+		let max_height_for_timeouts =
+			find_maximum_height_for_timeout_proofs(counterparty, self).await;
+		let timeout_update_required = if let Some(max_height) = max_height_for_timeouts {
+			let max_height = max_height as u32;
+			finalized_blocks.contains(&max_height)
+		} else {
+			false
+		};
+
+		let latest_finalized_block = finalized_blocks.into_iter().max().unwrap_or_default();
+
+		let is_update_required = self.is_update_required(
+			latest_finalized_block.into(),
+			client_state.latest_height().revision_height,
+		);
+
+		let target = self
+			.relay_client
+			.rpc()
+			.header(Some(justification.commit.target_hash.into()))
+			.await?
+			.ok_or_else(|| {
+				Error::from(
+					"Could not find relay chain header for justification target".to_string(),
+				)
+			})?;
+
+		let authority_set_changed_scheduled = find_scheduled_change(&target).is_some();
+		// if validator set has changed this is a mandatory update
+		let update_type = match authority_set_changed_scheduled ||
+			timeout_update_required ||
+			is_update_required
+		{
+			true => UpdateType::Mandatory,
+			false => UpdateType::Optional,
+		};
+
+		// block_number => events
+		let events: HashMap<String, Vec<IbcEvent>> = IbcApiClient::<u32, H256>::query_events(
+			&*self.para_client.rpc().client,
+			finalized_block_numbers,
+		)
+		.await?;
+
+		// header number is serialized to string
+		let mut headers_with_events = events
+			.iter()
+			.filter_map(|(num, events)| {
+				if events.is_empty() {
+					None
+				} else {
+					str::parse::<u32>(&*num).ok().map(T::BlockNumber::from)
+				}
+			})
+			.collect::<BTreeSet<_>>();
+
+		let events: Vec<IbcEvent> = events.into_values().flatten().collect();
+
+		if timeout_update_required {
+			let max_height_for_timeouts = max_height_for_timeouts.unwrap();
+			if max_height_for_timeouts > client_state.latest_height().revision_height {
+				let max_timeout_height = T::BlockNumber::from(max_height_for_timeouts as u32);
+				headers_with_events.insert(max_timeout_height);
+			}
+		}
+
+		if is_update_required {
+			headers_with_events.insert(T::BlockNumber::from(latest_finalized_block));
+		}
+
+		let ParachainHeadersWithFinalityProof { finality_proof, parachain_headers } = self
+			.query_grandpa_finalized_parachain_headers_with_proof(
+				justification.commit.target_hash.into(),
+				grandpa_client_state.latest_relay_hash.into(),
+				headers_with_events.into_iter().collect(),
+			)
+			.await?;
+		let grandpa_header = GrandpaHeader {
+			finality_proof: finality_proof.into(),
+			parachain_headers: parachain_headers.into(),
+		};
+
+		for event in events.iter() {
+			if self.sender.send(event.clone()).is_err() {
+				log::trace!("Failed to push {event:?} to stream, no active receiver found");
+				break
+			}
+		}
+
+		let update_header = {
+			let msg = MsgUpdateAnyClient::<LocalClientTypes> {
+				client_id: self.client_id(),
+				client_message: AnyClientMessage::Grandpa(ClientMessage::Header(grandpa_header)),
+				signer: counterparty.account_id(),
+			};
+			let value = msg.encode_vec();
+			Any { value, type_url: msg.type_url() }
+		};
+
+		Ok((update_header, events, update_type))
+	}
+
+	#[cfg(feature = "beefy")]
 	async fn query_latest_ibc_events<C>(
 		&mut self,
 		signed_commitment: Self::FinalityEvent,
@@ -95,7 +275,7 @@ where
 		let client_state = AnyClientState::try_from(client_state)
 			.map_err(|_| Error::Custom("Failed to decode client state".to_string()))?;
 		let beefy_client_state = match &client_state {
-			AnyClientState::Beefy(client_state) => ClientState {
+			AnyClientState::Beefy(client_state) => BeefyPrimitivesClientState {
 				latest_beefy_height: client_state.latest_beefy_height,
 				mmr_root_hash: client_state.mmr_root_hash,
 				current_authorities: client_state.authority.clone(),
@@ -223,7 +403,7 @@ where
 		// only query proofs for headers that actually have events or are mandatory
 		let headers_with_proof = if !headers_with_events.is_empty() {
 			let (headers, batch_proof) = self
-				.query_finalized_parachain_headers_with_proof(
+				.query_beefy_finalized_parachain_headers_with_proof(
 					signed_commitment.commitment.block_number,
 					&beefy_client_state,
 					headers_with_events.into_iter().collect(),
@@ -254,7 +434,7 @@ where
 		let update_header = {
 			let msg = MsgUpdateAnyClient::<LocalClientTypes> {
 				client_id: self.client_id(),
-				client_message: AnyClientMessage::Beefy(ClientMessage::Header(beefy_header)),
+				client_message: AnyClientMessage::Beefy(BeefyClientMessage::Header(beefy_header)),
 				signer: counterparty.account_id(),
 			};
 			let value = msg.encode_vec();
@@ -621,6 +801,13 @@ where
 		self.client_id()
 	}
 
+	#[cfg(not(feature = "beefy"))]
+	fn client_type(&self) -> ClientType {
+		use ics10_grandpa::client_state::ClientState as GrandpaClientState;
+		GrandpaClientState::<HostFunctionsManager>::client_type()
+	}
+
+	#[cfg(feature = "beefy")]
 	fn client_type(&self) -> ClientType {
 		BeefyClientState::<HostFunctionsManager>::client_type()
 	}

@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{str::FromStr, time::Duration};
 
 pub mod calls;
 pub mod chain;
@@ -20,22 +20,28 @@ use calls::{sudo_call, Sudo, Transfer, TransferParams};
 use common::AccountId;
 use signer::ExtrinsicSigner;
 
+#[cfg(feature = "beefy")]
 use beefy_light_client_primitives::{ClientState, MmrUpdateProof, PartialMmrLeaf};
+#[cfg(feature = "beefy")]
 use beefy_prover::{
 	helpers::{fetch_timestamp_extrinsic_with_proof, TimeStampExtWithProof},
 	ClientWrapper,
 };
 use ibc::{
-	core::ics24_host::identifier::{ChainId, ChannelId, ClientId, PortId},
+	core::ics24_host::identifier::{ChannelId, ClientId, PortId},
 	events::IbcEvent,
 };
 use ibc_proto::ibc::core::client::v1::IdentifiedClientState;
+
+#[cfg(feature = "beefy")]
 use ics11_beefy::{
 	client_message::ParachainHeader, client_state::ClientState as BeefyClientState,
-	consensus_state::ConsensusState,
+	consensus_state::ConsensusState as BeefyConsensusState,
 };
 use pallet_ibc::light_clients::{AnyClientState, AnyConsensusState, HostFunctionsManager};
+#[cfg(feature = "beefy")]
 use pallet_mmr_primitives::BatchProof;
+#[cfg(feature = "beefy")]
 use sp_core::H256;
 use sp_keystore::SyncCryptoStorePtr;
 use sp_runtime::{
@@ -57,6 +63,15 @@ use crate::{
 	utils::fetch_max_extrinsic_weight,
 };
 use primitives::KeyProvider;
+
+use grandpa_light_client_primitives::ParachainHeadersWithFinalityProof;
+use grandpa_prover::GrandpaProver;
+use ibc::timestamp::Timestamp;
+use ics10_grandpa::{
+	client_state::ClientState as GrandpaClientState,
+	consensus_state::ConsensusState as GrandpaConsensusState,
+};
+use sp_runtime::traits::{One, Zero};
 
 #[derive(Clone)]
 /// Implements the [`crate::Chain`] trait for parachains.
@@ -158,6 +173,38 @@ where
 		})
 	}
 
+	pub async fn query_finalized_parachain_headers_between(
+		&self,
+		latest_finalized_hash: T::Hash,
+		previous_finalized_hash: T::Hash,
+	) -> Result<Vec<T::Header>, Error>
+	where
+		T::BlockNumber: From<u32>,
+		T: subxt::Config,
+		T::BlockNumber: Ord + Zero,
+		u32: From<T::BlockNumber>,
+	{
+		let prover = GrandpaProver {
+			relay_client: self.relay_client.clone(),
+			para_client: self.para_client.clone(),
+			para_id: self.para_id,
+		};
+
+		prover
+			.query_finalized_parachain_headers_between(
+				latest_finalized_hash,
+				previous_finalized_hash,
+			)
+			.await
+			.map_err(|e| {
+				Error::from(format!(
+					"[query_finalized_parachain_headers_between] Failed due to {:?}",
+					e
+				))
+			})
+	}
+
+	#[cfg(feature = "beefy")]
 	pub async fn query_finalized_parachain_headers_at(
 		&self,
 		commitment_block_number: u32,
@@ -187,7 +234,47 @@ where
 		Ok(headers)
 	}
 
-	pub async fn query_finalized_parachain_headers_with_proof(
+	pub async fn query_grandpa_finalized_parachain_headers_with_proof(
+		&self,
+		latest_finalized_hash: T::Hash,
+		previous_finalized_hash: T::Hash,
+		headers: Vec<T::BlockNumber>,
+	) -> Result<ParachainHeadersWithFinalityProof<T::Header>, Error>
+	where
+		T::BlockNumber: Ord + sp_runtime::traits::Zero,
+		T::Header: HeaderT,
+		<T::Header as HeaderT>::Hash: From<T::Hash>,
+		T::BlockNumber: One,
+	{
+		let prover = GrandpaProver {
+			relay_client: self.relay_client.clone(),
+			para_client: self.para_client.clone(),
+			para_id: self.para_id,
+		};
+
+		let result = prover
+			.query_finalized_parachain_headers_with_proof(
+				latest_finalized_hash,
+				previous_finalized_hash,
+				headers,
+			)
+			.await
+			.map_err(|e| {
+				Error::from(format!(
+					"[query_finalized_parachain_headers_with_proof] Failed due to {:?}",
+					e
+				))
+			})?;
+		result.ok_or_else(|| {
+			Error::from(
+				"[query_finalized_parachain_headers_with_proof] Failed due to empty finality proof"
+					.to_string(),
+			)
+		})
+	}
+
+	#[cfg(feature = "beefy")]
+	pub async fn query_beefy_finalized_parachain_headers_with_proof(
 		&self,
 		commitment_block_number: u32,
 		client_state: &ClientState,
@@ -232,6 +319,7 @@ where
 		Ok((parachain_headers, batch_proof))
 	}
 
+	#[cfg(feature = "beefy")]
 	pub async fn fetch_mmr_update_proof_for(
 		&self,
 		signed_commitment: beefy_primitives::SignedCommitment<
@@ -268,6 +356,7 @@ where
 		self.channel_whitelist = channel_whitelist;
 	}
 
+	#[cfg(feature = "beefy")]
 	/// Construct a beefy client state to be submitted to the counterparty chain
 	pub async fn construct_beefy_client_state(
 		&self,
@@ -281,6 +370,7 @@ where
 		<T as subxt::Config>::Address: From<<T as subxt::Config>::AccountId>,
 		u32: From<<T as subxt::Config>::BlockNumber>,
 	{
+		use ibc::core::ics24_host::identifier::ChainId;
 		loop {
 			let client_wrapper = ClientWrapper {
 				relay_client: self.relay_client.clone(),
@@ -369,10 +459,116 @@ where
 				timestamp_extrinsic,
 			};
 
-			let consensus_state =
-				AnyConsensusState::Beefy(ConsensusState::from_header(parachain_header).unwrap());
+			let consensus_state = AnyConsensusState::Beefy(
+				BeefyConsensusState::from_header(parachain_header).unwrap(),
+			);
 
 			return Ok((AnyClientState::Beefy(client_state), consensus_state))
+		}
+	}
+
+	pub async fn construct_grandpa_client_state(
+		&self,
+	) -> Result<(AnyClientState, AnyConsensusState), Error>
+	where
+		Self: KeyProvider,
+		<T::Signature as Verify>::Signer:
+			From<MultiSigner> + IdentifyAccount<AccountId = T::AccountId>,
+		MultiSigner: From<MultiSigner>,
+		<T as subxt::Config>::Address: From<<T as subxt::Config>::AccountId>,
+		u32: From<<T as subxt::Config>::BlockNumber>,
+		sp_core::H256: From<T::Hash>,
+	{
+		let api = self
+			.relay_client
+			.clone()
+			.to_runtime_api::<polkadot::api::RuntimeApi<T, subxt::PolkadotExtrinsicParams<_>>>();
+		let para_client_api = self
+			.para_client
+			.clone()
+			.to_runtime_api::<polkadot::api::RuntimeApi<T, subxt::PolkadotExtrinsicParams<_>>>();
+		loop {
+			let current_set_id = api
+				.storage()
+				.grandpa()
+				.current_set_id(None)
+				.await
+				.expect("Failed to fetch current set id");
+
+			let current_authorities = {
+				let bytes = self
+					.relay_client
+					.rpc()
+					.client
+					.request::<String>(
+						"state_call",
+						rpc_params!("GrandpaApi_grandpa_authorities", "0x"),
+					)
+					.await
+					.map(|res| hex::decode(&res[2..]))
+					.expect("Failed to fetch authorities")
+					.expect("Failed to hex decode authorities");
+
+				sp_finality_grandpa::AuthorityList::decode(&mut &bytes[..])
+					.expect("Failed to scale decode authorities")
+			};
+
+			let latest_relay_hash = self
+				.relay_client
+				.rpc()
+				.finalized_head()
+				.await
+				.expect("Failed to fetch finalized header");
+
+			let head_data = api
+				.storage()
+				.paras()
+				.heads(
+					&polkadot::api::runtime_types::polkadot_parachain::primitives::Id(self.para_id),
+					Some(latest_relay_hash),
+				)
+				.await?
+				.ok_or_else(|| {
+					Error::Custom(format!(
+						"Couldn't find header for ParaId({}) at relay block {:?}",
+						self.para_id, latest_relay_hash
+					))
+				})?;
+			let decoded_para_head = sp_runtime::generic::Header::<
+				u32,
+				sp_runtime::traits::BlakeTwo256,
+			>::decode(&mut &*head_data.0)?;
+			let block_number = decoded_para_head.number;
+			let client_state = GrandpaClientState::<HostFunctionsManager> {
+				relay_chain: Default::default(),
+				current_authorities,
+				current_set_id,
+				latest_relay_hash: latest_relay_hash.into(),
+				frozen_height: None,
+				latest_para_height: block_number,
+				para_id: self.para_id,
+				..Default::default()
+			};
+			// we can't use the genesis block to construct the initial state.
+			if block_number == 0 {
+				continue
+			}
+			let subxt_block_number: subxt::BlockNumber = block_number.into();
+			let block_hash =
+				self.para_client.rpc().block_hash(Some(subxt_block_number)).await.unwrap();
+			let unix_timestamp_millis =
+				para_client_api.storage().timestamp().now(block_hash).await?;
+			let timestamp_nanos = Duration::from_millis(unix_timestamp_millis).as_nanos() as u64;
+
+			let consensus_state = AnyConsensusState::Grandpa(GrandpaConsensusState {
+				timestamp: Timestamp::from_nanoseconds(timestamp_nanos)
+					.unwrap()
+					.into_tm_time()
+					.unwrap(),
+				root: decoded_para_head.state_root.as_bytes().to_vec().into(),
+			});
+
+			return Ok((AnyClientState::Grandpa(client_state), consensus_state))
 		}
 	}
 

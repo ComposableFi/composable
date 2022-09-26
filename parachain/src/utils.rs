@@ -1,15 +1,18 @@
 use crate::Error;
+#[cfg(feature = "beefy")]
 use beefy_light_client_primitives::{ClientState, MmrUpdateProof};
+#[cfg(feature = "beefy")]
 use beefy_primitives::known_payload_ids::MMR_ROOT_ID;
 use codec::Decode;
 use frame_support::weights::DispatchClass;
 use frame_system::limits::BlockWeights;
-use sp_core::H256;
 
+#[cfg(feature = "beefy")]
 pub fn get_updated_client_state(
 	mut client_state: ClientState,
 	mmr_update: &MmrUpdateProof,
 ) -> ClientState {
+	use sp_core::H256;
 	if mmr_update.signed_commitment.commitment.validator_set_id == client_state.next_authorities.id
 	{
 		client_state.current_authorities = client_state.next_authorities.clone();
