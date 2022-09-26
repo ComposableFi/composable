@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use ibc::{core::ics02_client::header::Header, Height};
+use ibc::{core::ics02_client::client_message::ClientMessage, Height};
 use tendermint_proto::Protobuf;
 
 use super::types::LightClientBlockView;
@@ -27,14 +27,12 @@ impl NearHeader {
 	pub fn get_light_client_block_view(&self) -> &LightClientBlockView {
 		&self.inner
 	}
-}
 
-impl Header for NearHeader {
-	fn encode_to_vec(&self) -> Vec<u8> {
+	pub fn encode_to_vec(&self) -> Vec<u8> {
 		unimplemented!()
 	}
 
-	fn height(&self) -> Height {
+	pub fn height(&self) -> Height {
 		todo!()
 	}
 }
@@ -49,6 +47,17 @@ impl From<NearHeader> for () {
 
 impl From<()> for NearHeader {
 	fn from(_: ()) -> Self {
+		todo!()
+	}
+}
+
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub enum NearClientMessage {
+	Header(NearHeader),
+}
+
+impl ClientMessage for NearClientMessage {
+	fn encode_to_vec(&self) -> Vec<u8> {
 		todo!()
 	}
 }

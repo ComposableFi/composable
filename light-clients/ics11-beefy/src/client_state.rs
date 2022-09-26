@@ -163,12 +163,12 @@ impl<H: Clone> ClientState<H> {
 		let earliest_time = (processed_time + delay_period_time)
 			.map_err(|_| Error::Custom("Timestamp overflowed!".into()))?;
 		if !(current_time == earliest_time || current_time.after(&earliest_time)) {
-			return Err(Error::Custom(format!("Not enough time elapsed current time: {current_time}, earliest time: {earliest_time}")))
+			return Err(Error::Custom(format!("Not enough time elapsed current time: {current_time}, earliest time: {earliest_time}")));
 		}
 
 		let earliest_height = processed_height.add(delay_period_blocks);
 		if current_height < earliest_height {
-			return Err(Error::Custom(format!("Not enough blocks elapsed, current height: {current_height}, earliest height: {earliest_height}")))
+			return Err(Error::Custom(format!("Not enough blocks elapsed, current height: {current_height}, earliest height: {earliest_height}")));
 		}
 
 		Ok(())

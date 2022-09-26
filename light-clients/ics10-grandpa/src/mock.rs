@@ -23,12 +23,15 @@ use crate::{
 use ibc::{
 	core::{
 		ics02_client,
-		ics02_client::{client_consensus::ConsensusState as _, client_state::ClientState as _},
+		ics02_client::{
+			client_consensus::ConsensusState as _, client_state::ClientState as _,
+			context::ClientTypes,
+		},
 	},
 	mock::{
 		client_def::MockClient,
 		client_state::{MockClientState, MockConsensusState},
-		context::ClientTypes,
+		context::HostBlockType,
 		header::MockClientMessage,
 		host::MockHostBlock,
 	},
@@ -140,6 +143,9 @@ impl ClientTypes for MockClientTypes {
 	type AnyClientState = AnyClientState;
 	type AnyConsensusState = AnyConsensusState;
 	type ClientDef = AnyClient;
+}
+
+impl HostBlockType for MockClientTypes {
 	type HostBlock = MockHostBlock;
 }
 

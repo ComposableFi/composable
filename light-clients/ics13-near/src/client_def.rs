@@ -20,6 +20,7 @@ use super::{
 	header::NearHeader,
 	types::{ApprovalInner, CryptoHash, LightClientBlockView},
 };
+use crate::header::NearClientMessage;
 use borsh::BorshSerialize;
 use core::fmt::Debug;
 use ibc::{
@@ -113,7 +114,7 @@ pub struct NearClient<H>(PhantomData<H>);
 
 impl<H: HostFunctionsTrait> ClientDef for NearClient<H> {
 	/// The data that we need to update the [`ClientState`] to a new block height
-	type Header = NearHeader;
+	type ClientMessage = NearClientMessage;
 
 	/// The data that we need to know, to validate incoming headers and update the state
 	/// of our [`ClientState`]. Ususally this will store:
@@ -136,18 +137,23 @@ impl<H: HostFunctionsTrait> ClientDef for NearClient<H> {
 	type ConsensusState = ConsensusState;
 
 	// rehydrate client from its own storage, then call this function
-	fn verify_header<Ctx>(
+	fn verify_client_message<Ctx>(
 		&self,
 		_ctx: &Ctx,
 		_client_id: ClientId,
 		client_state: Self::ClientState,
-		header: Self::Header,
+		client_message: Self::ClientMessage,
 	) -> Result<(), Error>
 	where
 		Ctx: ReaderContext,
 	{
-		// your light client, shouldn't do storage anymore, it should just do verification here.
-		validate_light_block::<H>(&header, client_state)
+		match client_message {
+			NearClientMessage::Header(header) => {
+				// your light client, shouldn't do storage anymore, it should just do verification
+				// here.
+				validate_light_block::<H>(&header, client_state)
+			},
+		}
 	}
 
 	fn update_state<Ctx: ReaderContext>(
@@ -155,7 +161,7 @@ impl<H: HostFunctionsTrait> ClientDef for NearClient<H> {
 		_ctx: &Ctx,
 		_client_id: ClientId,
 		_client_state: Self::ClientState,
-		_header: Self::Header,
+		_client_message: Self::ClientMessage,
 	) -> Result<(Self::ClientState, ConsensusUpdateResult<Ctx>), Error> {
 		// 1. create new client state from this header, return that.
 		// 2. as well as all the neccessary consensus states.
@@ -173,7 +179,7 @@ impl<H: HostFunctionsTrait> ClientDef for NearClient<H> {
 	fn update_state_on_misbehaviour(
 		&self,
 		_client_state: Self::ClientState,
-		_header: Self::Header,
+		_client_message: Self::ClientMessage,
 	) -> Result<Self::ClientState, Error> {
 		todo!()
 	}
@@ -183,7 +189,7 @@ impl<H: HostFunctionsTrait> ClientDef for NearClient<H> {
 		_ctx: &Ctx,
 		_client_id: ClientId,
 		_client_state: Self::ClientState,
-		_header: Self::Header,
+		_client_message: Self::ClientMessage,
 	) -> Result<bool, Error> {
 		Ok(false)
 	}
