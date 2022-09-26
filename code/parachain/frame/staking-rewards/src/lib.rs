@@ -1112,23 +1112,23 @@ pub mod pallet {
 
 		pub(crate) fn split_lock(
 			asset_id: T::AssetId,
-			old_fnft_asset_account: &T::AccountId,
+			existing_fnft_asset_account: &T::AccountId,
 			new_fnft_asset_account: &T::AccountId,
-			old_account_amount: T::Balance,
+			existing_account_amount: T::Balance,
 			new_account_amount: T::Balance,
 		) -> DispatchResult {
 			T::Assets::set_lock(
 				T::LockId::get(),
 				asset_id,
-				old_fnft_asset_account,
-				old_account_amount,
+				existing_fnft_asset_account,
+				existing_account_amount,
 			)?;
 
 			// transfer the amount in the new position from the old account to the new account (this
 			// should be the total unlocked amount)
 			T::Assets::transfer(
 				asset_id,
-				old_fnft_asset_account,
+				existing_fnft_asset_account,
 				new_fnft_asset_account,
 				new_account_amount,
 				false, // not a user account, doesn't need to be kept alive
