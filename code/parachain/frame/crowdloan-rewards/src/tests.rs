@@ -6,10 +6,11 @@ use crate::{
 		INITIAL_PAYMENT, PROOF_PREFIX, VESTING_STEP,
 	},
 	models::{Proof, RemoteAccount},
-	Error, RemoteAccountOf, RewardAmountOf, VestingPeriodOf,
+	Error, Event, RemoteAccountOf, RewardAmountOf, VestingPeriodOf,
 };
 use codec::Encode;
 use composable_support::types::{EcdsaSignature, EthereumAddress};
+use composable_tests_helpers::test::helper::assert_event;
 use frame_support::{assert_noop, assert_ok, traits::Currency};
 use hex_literal::hex;
 use sp_core::{ed25519, storage::StateVersion, Pair};
@@ -56,10 +57,7 @@ fn test_populate_rewards_not_funded() {
 	};
 	ExtBuilder::default().build().execute_with(|| {
 		Balances::make_free_balance_be(&CrowdloanRewards::account_id(), 0);
-		assert_noop!(
-			CrowdloanRewards::populate(Origin::root(), gen(100, DEFAULT_REWARD)),
-			Error::<Test>::RewardsNotFunded
-		);
+		assert_ok!(CrowdloanRewards::populate(Origin::root(), gen(100, DEFAULT_REWARD)));
 	});
 }
 
@@ -188,7 +186,7 @@ fn test_invalid_early_at_claim() {
 		}
 
 		set_moment(11);
-		for (picasso_account, remote_account) in accounts.clone().into_iter() {
+		for (picasso_account, remote_account) in accounts.into_iter() {
 			assert_ok!(remote_account.associate(picasso_account.clone()),);
 		}
 	});
@@ -221,6 +219,37 @@ fn test_initialize_totals() {
 		assert_eq!(CrowdloanRewards::total_rewards(), DEFAULT_REWARD * DEFAULT_NB_OF_CONTRIBUTORS);
 		assert_eq!(CrowdloanRewards::total_contributors() as u128, DEFAULT_NB_OF_CONTRIBUTORS);
 		assert_eq!(CrowdloanRewards::claimed_rewards(), 0);
+	});
+}
+
+#[test]
+fn initialize_should_fail_when_not_funded() {
+	with_rewards_default(|_set_moment, _accounts| {
+		Balances::make_free_balance_be(&CrowdloanRewards::account_id(), 0);
+		assert_noop!(CrowdloanRewards::initialize(Origin::root()), Error::<Test>::RewardsNotFunded);
+	});
+}
+
+#[test]
+fn initialize_should_emit_warning_when_over_funded() {
+	with_rewards_default(|_set_moment, _accounts| {
+		Balances::make_free_balance_be(
+			&CrowdloanRewards::account_id(),
+			DEFAULT_REWARD * DEFAULT_NB_OF_CONTRIBUTORS * 2,
+		);
+
+		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
+		assert_eq!(
+			assert_event::<Test, _, _, _>(|event| match event {
+				Event::<Test>::OverFunded { excess_funds } => {
+					assert_eq!(excess_funds, DEFAULT_REWARD * DEFAULT_NB_OF_CONTRIBUTORS);
+					Some(event)
+				},
+				_ => None,
+			})
+			.count(),
+			1
+		);
 	});
 }
 
@@ -348,7 +377,7 @@ fn test_valid_eth_hardcoded() {
 	let eth_address = EthereumAddress(hex!("176FD6F90730E02D2AF55681c65a115C174bA2C7"));
 	let eth_account =
 		EthKey::parse(&hex!("29134835563739bae90483ee3d80945edf2c87a9b55c9193a694291cfdf23a05"))
-			.unwrap();
+			.expect("Hex is valid EthKey; QED");
 
 	assert_eq!(ethereum_address(&eth_account), eth_address);
 

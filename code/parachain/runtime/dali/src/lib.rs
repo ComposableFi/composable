@@ -836,6 +836,7 @@ impl assets::Config for Runtime {
 parameter_types! {
 	  pub const CrowdloanRewardsId: PalletId = PalletId(*b"pal_crow");
 	  pub const InitialPayment: Perbill = Perbill::from_percent(25);
+	  pub const OverFundedThreshold: Perbill = Perbill::from_percent(1);
 	  pub const VestingStep: Moment = 1;
 	  pub const Prefix: &'static [u8] = b"picasso-";
 }
@@ -848,6 +849,7 @@ impl crowdloan_rewards::Config for Runtime {
 	type Convert = sp_runtime::traits::ConvertInto;
 	type RelayChainAccountId = sp_runtime::AccountId32;
 	type InitialPayment = InitialPayment;
+	type OverFundedThreshold = OverFundedThreshold;
 	type VestingStep = VestingStep;
 	type Prefix = Prefix;
 	type WeightInfo = weights::crowdloan_rewards::WeightInfo<Runtime>;

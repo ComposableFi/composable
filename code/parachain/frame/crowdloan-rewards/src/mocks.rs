@@ -28,6 +28,7 @@ pub type Balance = u128;
 
 pub const VESTING_STEP: Moment = 3600 * 24 * 7;
 pub const INITIAL_PAYMENT: Perbill = Perbill::from_percent(50);
+pub const OVER_FUNDED_THRESHOLD: Perbill = Perbill::from_percent(1);
 
 pub const ALICE: AccountId = AccountId32::new([0_u8; 32]);
 
@@ -82,6 +83,7 @@ impl pallet_balances::Config for Test {
 parameter_types! {
 	pub const CrowdloanRewardsPalletId: PalletId = PalletId(*b"pal_crow");
 	pub const InitialPayment: Perbill = INITIAL_PAYMENT;
+	pub const OverFundedThreshold: Perbill = OVER_FUNDED_THRESHOLD;
 	pub const VestingStep: Moment = VESTING_STEP;
 	pub const Prefix: &'static [u8] = PROOF_PREFIX;
 }
@@ -93,6 +95,7 @@ impl pallet_crowdloan_rewards::Config for Test {
 	type Convert = ConvertInto;
 	type RelayChainAccountId = RelayChainAccountId;
 	type InitialPayment = InitialPayment;
+	type OverFundedThreshold = OverFundedThreshold;
 	type VestingStep = VestingStep;
 	type Prefix = Prefix;
 	type AdminOrigin = EnsureRoot<AccountId>;
@@ -222,12 +225,11 @@ pub fn relay_generate(count: u64) -> Vec<(AccountId, ClaimKey)> {
 	(0..count)
 		.map(|i| {
 			let account_id =
-				[[0_u8; 16], (&(i as u128 + 1)).to_le_bytes()].concat().try_into().unwrap();
+				[[0_u8; 16], (i as u128 + 1).to_le_bytes()].concat().try_into().unwrap();
 			(
 				AccountId::new(account_id),
 				ClaimKey::Relay(ed25519::Pair::from_seed(&keccak_256(
-					&[(&(seed + i as u128)).to_le_bytes(), (&(seed + i as u128)).to_le_bytes()]
-						.concat(),
+					&[(seed + i as u128).to_le_bytes(), (seed + i as u128).to_le_bytes()].concat(),
 				))),
 			)
 		})
@@ -238,7 +240,7 @@ pub fn ethereum_generate(count: u64) -> Vec<(AccountId, ClaimKey)> {
 	(0..count)
 		.map(|i| {
 			let account_id =
-				[(&(i as u128 + 1)).to_le_bytes(), [0_u8; 16]].concat().try_into().unwrap();
+				[(i as u128 + 1).to_le_bytes(), [0_u8; 16]].concat().try_into().unwrap();
 			(
 				AccountId::new(account_id),
 				ClaimKey::Eth(EthKey::parse(&keccak_256(&i.to_le_bytes())).unwrap()),
