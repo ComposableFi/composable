@@ -1080,6 +1080,31 @@ mod claim {
 	}
 }
 
+#[test]
+fn duration_presets_are_required() {
+	new_test_ext().execute_with(|| {
+		assert_err!(
+			StakingRewards::create_reward_pool(
+				Origin::root(),
+				RewardRateBasedIncentive {
+					owner: ALICE,
+					asset_id: PICA::ID,
+					start_block: 2,
+					end_block: 5,
+					reward_configs: default_reward_config(),
+					lock: LockConfig {
+						duration_presets: BoundedBTreeMap::new(),
+						unlock_penalty: Perbill::from_percent(5),
+					},
+					share_asset_id: XPICA::ID,
+					financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+				},
+			),
+			crate::Error::<Test>::NoDurationPresetsProvided
+		);
+	});
+}
+
 /// Runs code inside of `new_test_ext().execute_with` closure while creating a stake with the given
 /// values.
 ///
