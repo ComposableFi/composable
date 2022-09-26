@@ -86,6 +86,81 @@ fn test_create_reward_pool_invalid_end_block() {
 }
 
 #[test]
+fn create_staking_reward_pool_should_fail_when_pool_asset_id_is_zero() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+
+		assert_err!(
+			StakingRewards::create_reward_pool(
+				Origin::root(),
+				RewardRateBasedIncentive {
+					owner: ALICE,
+					asset_id: 0,
+					// end block can't be before the current block
+					start_block: 2,
+					end_block: 0,
+					reward_configs: default_reward_config(),
+					lock: default_lock_config(),
+					share_asset_id: XPICA::ID,
+					financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+				}
+			),
+			crate::Error::<Test>::InvalidAssetId,
+		);
+	});
+}
+
+#[test]
+fn create_staking_reward_pool_should_fail_when_share_asset_id_is_zero() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+
+		assert_err!(
+			StakingRewards::create_reward_pool(
+				Origin::root(),
+				RewardRateBasedIncentive {
+					owner: ALICE,
+					asset_id: PICA::ID,
+					// end block can't be before the current block
+					start_block: 2,
+					end_block: 0,
+					reward_configs: default_reward_config(),
+					lock: default_lock_config(),
+					share_asset_id: 0,
+					financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+				}
+			),
+			crate::Error::<Test>::InvalidAssetId
+		);
+	});
+}
+
+#[test]
+fn create_staking_reward_pool_should_fail_when_fnft_collection_asset_id_is_zero() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+
+		assert_err!(
+			StakingRewards::create_reward_pool(
+				Origin::root(),
+				RewardRateBasedIncentive {
+					owner: ALICE,
+					asset_id: PICA::ID,
+					// end block can't be before the current block
+					start_block: 2,
+					end_block: 0,
+					reward_configs: default_reward_config(),
+					lock: default_lock_config(),
+					share_asset_id: XPICA::ID,
+					financial_nft_asset_id: 0,
+				}
+			),
+			crate::Error::<Test>::InvalidAssetId
+		);
+	});
+}
+
+#[test]
 fn stake_should_fail_before_start_of_rewards_pool() {
 	new_test_ext().execute_with(|| {
 		let staker = ALICE;
