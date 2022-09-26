@@ -250,6 +250,10 @@ pub mod pallet {
 		/// The rewards pot for this pool is empty.
 		RewardsPotEmpty,
 		FnftNotFound,
+		/// No duration presets were provided upon pool creation.
+		// NOTE(benluelo): This should be removed once this issue gets resolved:
+		// https://github.com/paritytech/substrate/issues/12257
+		NoDurationPresetsProvided,
 	}
 
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
@@ -685,6 +689,8 @@ pub mod pallet {
 						!RewardPools::<T>::contains_key(pool_asset),
 						Error::<T>::RewardsPoolAlreadyExists
 					);
+
+					ensure!(lock.duration_presets.len() > 1, Error::<T>::NoDurationPresetsProvided);
 
 					let now_seconds = T::UnixTime::now().as_secs();
 
