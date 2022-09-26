@@ -245,14 +245,10 @@ fn initialize_should_emit_warning_when_over_funded() {
 					assert_eq!(excess_funds, DEFAULT_REWARD * DEFAULT_NB_OF_CONTRIBUTORS);
 					Some(event)
 				},
-				Event::<Test>::Initialized { at } => {
-					assert_eq!(at, Timestamp::now());
-					Some(event)
-				},
 				_ => None,
 			})
 			.count(),
-			2
+			1
 		);
 	});
 }

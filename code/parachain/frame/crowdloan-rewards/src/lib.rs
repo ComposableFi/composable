@@ -333,8 +333,9 @@ pub mod pallet {
 
 			let available_funds = T::RewardAsset::balance(&Self::account_id());
 			let total_rewards = TotalRewards::<T>::get();
-			ensure!(available_funds >= total_rewards, Error::<T>::RewardsNotFunded);
-			let excess_funds = available_funds - total_rewards;
+			let excess_funds = available_funds
+				.checked_sub(&total_rewards)
+				.ok_or(Error::<T>::RewardsNotFunded)?;
 
 			if excess_funds > T::OverFundedThreshold::get().mul_floor(total_rewards) {
 				Self::deposit_event(Event::OverFunded { excess_funds })
