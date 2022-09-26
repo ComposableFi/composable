@@ -15,7 +15,7 @@ frame-system = { git = "https://github.com/paritytech/substrate", branch = "polk
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "e3154cb39161d79031f61ed4a2a48975fd7c89a4", default-features = false }
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "9a959faabb8f2869e88327ea65a49f5697dcadf6", default-features = false }
 
 ibc-primitives = { path = "../primitives", default-features = false }
 
