@@ -28,7 +28,7 @@ fn get_reward_pool<T: Config>(
 	owner: T::AccountId,
 	reward_count: u32,
 ) -> RewardPoolConfigurationOf<T> {
-	let pool_init_config = RewardRateBasedIncentive {
+	RewardRateBasedIncentive {
 		owner,
 		asset_id: BASE_ASSET_ID.into(),
 		start_block: 2_u128.saturated_into(),
@@ -37,8 +37,7 @@ fn get_reward_pool<T: Config>(
 		lock: lock_config::<T>(),
 		share_asset_id: X_ASSET_ID.into(),
 		financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID.into(),
-	};
-	pool_init_config
+	}
 }
 
 fn lock_config<T: Config>() -> LockConfig<T::MaxStakingDurationPresets> {
@@ -154,7 +153,14 @@ benchmarks! {
 		<Pallet<T>>::stake(RawOrigin::Signed(staker.clone()).into(), asset_id, amount, duration_preset)?;
 	}: _(RawOrigin::Signed(staker.clone()), STAKING_FNFT_COLLECTION_ID.into(), FNFT_INSTANCE_ID_BASE.into())
 	verify {
-		assert_last_event::<T>(Event::Unstaked { owner: staker, fnft_collection_id: STAKING_FNFT_COLLECTION_ID.into(), fnft_instance_id: FNFT_INSTANCE_ID_BASE.into() }.into());
+		assert_last_event::<T>(
+			Event::Unstaked {
+				owner: staker,
+				fnft_collection_id: STAKING_FNFT_COLLECTION_ID.into(),
+				fnft_instance_id: FNFT_INSTANCE_ID_BASE.into(),
+				slash: Some(Perbill::from_percent(5).mul_ceil(amount))
+			}.into(),
+		);
 	}
 
 	split {
