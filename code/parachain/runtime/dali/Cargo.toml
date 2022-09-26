@@ -101,7 +101,7 @@ ibc-primitives = { path = "../../frame/ibc/primitives", default-features = false
 ibc-runtime-api = { path = "../../frame/ibc/runtime-api", default-features = false }
 pallet-ibc = { path = "../../frame/ibc", default-features = false }
 pallet-ibc-ping = { path = "../../frame/ibc/ping", default-features = false }
-light-client-common = { git = "https://github.com/composableFi/centauri", rev = "af723868fcae8eb67760b126c5a0dff8e3f5d0f8", default-features = false }
+light-client-common = { git = "https://github.com/composableFi/centauri", rev = "0cba94593829eb057cefb0d9a1e11d2a30b1b4ec", default-features = false }
 
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
@@ -152,7 +152,7 @@ simnode-apis = { package = "simnode-runtime-apis", git = "https://github.com/pol
 
 [dependencies.ibc]
 git = "https://github.com/ComposableFi/ibc-rs"
-rev = "e3154cb39161d79031f61ed4a2a48975fd7c89a4"
+rev = "9a959faabb8f2869e88327ea65a49f5697dcadf6"
 default-features = false
 
 [features]

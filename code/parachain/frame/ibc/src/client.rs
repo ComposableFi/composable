@@ -22,6 +22,7 @@ use ibc::{
 	timestamp::Timestamp,
 	Height,
 };
+use ibc::core::ics02_client::context::ClientTypes;
 use sp_runtime::SaturatedConversion;
 use tendermint_proto::Protobuf;
 
@@ -287,15 +288,17 @@ where
 	}
 }
 
-impl<T: Config + Send + Sync> ClientKeeper for Context<T>
-where
-	u32: From<<T as frame_system::Config>::BlockNumber>,
-{
+impl<T: Config> ClientTypes for Context<T> {
 	type AnyClientMessage = AnyClientMessage;
 	type AnyClientState = AnyClientState;
 	type AnyConsensusState = AnyConsensusState;
 	type ClientDef = AnyClient;
+}
 
+impl<T: Config + Send + Sync> ClientKeeper for Context<T>
+where
+	u32: From<<T as frame_system::Config>::BlockNumber>,
+{
 	fn store_client_type(
 		&mut self,
 		client_id: ClientId,
