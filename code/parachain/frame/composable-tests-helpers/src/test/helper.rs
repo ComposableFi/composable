@@ -88,7 +88,7 @@ pub fn assert_last_event_with<Runtime, RuntimeEvent, PalletEvent, R>(
 where
 	Runtime: Config<Event = RuntimeEvent>,
 	RuntimeEvent: TryInto<PalletEvent> + Parameter + Member + Debug + Clone,
-	<RuntimeEvent as TryInto<PalletEvent>>::Error: std::fmt::Debug,
+	<RuntimeEvent as TryInto<PalletEvent>>::Error: sp_std::fmt::Debug,
 {
 	// compare to the last event record
 	let EventRecord { event, .. } =
@@ -152,7 +152,7 @@ where
 	Runtime: Config<Event = RuntimeEvent>,
 	RuntimeEvent: Parameter + Member + Debug + Clone,
 	RuntimeEvent: TryInto<PalletEvent>,
-	<RuntimeEvent as TryInto<PalletEvent>>::Error: std::fmt::Debug,
+	<RuntimeEvent as TryInto<PalletEvent>>::Error: sp_std::fmt::Debug,
 	T: Debug,
 	E: Into<DispatchError> + Debug,
 {
