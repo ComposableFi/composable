@@ -30,7 +30,6 @@ sp-runtime = { default-features = false, git = "https://github.com/paritytech/su
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 
 [dev-dependencies]
-composable-tests-helpers = { default-features = false, path = "../composable-tests-helpers" }
 env_logger = "0.9.0"
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
 hex-literal = "0.3.3"
