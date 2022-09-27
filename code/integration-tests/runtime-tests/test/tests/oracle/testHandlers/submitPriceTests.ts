@@ -26,11 +26,7 @@ export async function txOracleSubmitPriceSuccessTest(api: ApiPromise, signer: Ke
 
 export async function txOracleSubmitPriceSuccessTestHandler(
   api: ApiPromise,
-  controllerWallet: KeyringPair,
-  signerWallet1: KeyringPair,
-  signerWallet2: KeyringPair,
-  signerWallet3: KeyringPair,
-  signerWallet4: KeyringPair,
+  signers: KeyringPair[],
   asset: AnyNumber | BN | number | u128,
   price: BN | number | u128,
   slashablePrice: boolean | Bool | bool = false,
@@ -40,33 +36,28 @@ export async function txOracleSubmitPriceSuccessTestHandler(
   const assetId: u128 = api.createType("u128", asset);
   let slashedStakeBalanceBefore;
   if (slashablePrice)
-    slashedStakeBalanceBefore = <Option<u128>>await api.query.oracle.oracleStake(signerWallet4.publicKey);
+    slashedStakeBalanceBefore = <Option<u128>>await api.query.oracle.oracleStake(signers[0].publicKey);
 
-  const [result1, result2, result3, result4, result5] = await Promise.all([
-    txOracleSubmitPriceSuccessTest(api, controllerWallet, priceInput, assetId),
-    txOracleSubmitPriceSuccessTest(api, signerWallet1, priceInput, assetId),
-    txOracleSubmitPriceSuccessTest(api, signerWallet2, priceInput, assetId),
-    txOracleSubmitPriceSuccessTest(api, signerWallet3, priceInput, assetId),
-    txOracleSubmitPriceSuccessTest(
-      api,
-      signerWallet4,
-      // If we want someone to get slashed, we'll just add a huge amount to the correct price here.
-      slashablePrice ? <u128>priceInput.add(new BN("999999999")) : priceInput,
-      assetId
-    )
-  ]);
-  expect(result1.data[0].toString()).to.be.equal(api.createType("AccountId32", controllerWallet.publicKey).toString());
-  expect(result2.data[0].toString()).to.be.equal(api.createType("AccountId32", signerWallet1.publicKey).toString());
-  expect(result3.data[0].toString()).to.be.equal(api.createType("AccountId32", signerWallet2.publicKey).toString());
-  expect(result4.data[0].toString()).to.be.equal(api.createType("AccountId32", signerWallet3.publicKey).toString());
-  expect(result5.data[0].toString()).to.be.equal(api.createType("AccountId32", signerWallet4.publicKey).toString());
+  const transactions: any[] = [];
+  signers.forEach(function (signer, i) {
+    if (i == 1 && slashablePrice) {
+      transactions.push(
+        txOracleSubmitPriceSuccessTest(api, signer, <u128>priceInput.add(new BN("999999999999")), assetId)
+      );
+      return;
+    }
+    transactions.push(txOracleSubmitPriceSuccessTest(api, signer, priceInput, assetId));
+  });
+  console.debug(signers.toString());
 
-  expect(priceInput)
-    .to.be.bignumber.equal(result1.data[2])
-    .to.be.bignumber.equal(result2.data[2])
-    .to.be.bignumber.equal(result3.data[2])
-    .to.be.bignumber.equal(result4.data[2]);
-  expect(result5.data[2]).to.be.bignumber.equal(slashablePrice ? priceInput.add(new BN("999999999")) : priceInput);
+  const results = await Promise.all(transactions);
+  console.debug(results.toString());
+  signers.forEach(function (signer, i) {
+    expect(results[i].data[0].toString()).to.be.equal(api.createType("AccountId32", signer.publicKey).toString());
+    expect(results[i].data[2]).to.be.bignumber.equal(
+      slashablePrice && i == 1 ? priceInput.add(new BN("999999999999")) : priceInput
+    );
+  });
 
   if (checkPriceChangedEvent) {
     const eventResult = await priceEventVerification(api);
@@ -74,13 +65,35 @@ export async function txOracleSubmitPriceSuccessTestHandler(
   } else await waitForBlocks(api);
 
   if (slashablePrice) {
-    const slashedStakeBalanceAfter = <Option<u128>>await api.query.oracle.oracleStake(signerWallet4.publicKey);
+    const slashedStakeBalanceAfter = <Option<u128>>await api.query.oracle.oracleStake(signers[0].publicKey);
     if (!slashedStakeBalanceBefore) throw new AssertionError("Stake amount was unexpectedly `undefined`!");
     expect(slashedStakeBalanceBefore.unwrap()).to.be.bignumber.greaterThan(slashedStakeBalanceAfter.unwrap());
   }
 
   const oraclePriceAfter = await api.query.oracle.prices(assetId);
   expect(oraclePriceAfter.price.toString()).to.be.equal(price.toString());
+  return results;
+}
+//music.youtube.com/watch?v=VWQ-e0qXX0M&feature=share
+
+export async function getRewardEvents(api: ApiPromise) {
+  let eventFound = false;
+  const resultEvents = [];
+  do {
+    const currentEvents = await api.query.system.events();
+    for (const currEvent of currentEvents) {
+      console.error("EVENT LOOP!");
+      // Extract the phase, event and the event types
+      const { event } = currEvent;
+      if (event.method.toString().includes("OracleRewarded")) {
+        eventFound = true;
+        resultEvents.push(currEvent);
+      }
+
+      await waitForBlocks(api);
+    }
+  } while (!eventFound);
+  return resultEvents;
 }
 
 async function priceEventVerification(api: ApiPromise) {
