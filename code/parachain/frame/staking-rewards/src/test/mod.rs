@@ -6,7 +6,7 @@ use crate::{
 use composable_tests_helpers::test::{
 	block::process_and_progress_blocks,
 	currency::{BTC, PICA, USDT, XPICA},
-	helper::{assert_extrinsic_event, assert_extrinsic_event_with, assert_last_event_with},
+	helper::{self, assert_extrinsic_event, assert_extrinsic_event_with, assert_last_event_with},
 };
 use composable_traits::{
 	fnft::{FinancialNft as FinancialNftT, FinancialNftProtocol},
@@ -504,22 +504,24 @@ fn unstake_in_case_of_zero_claims_and_early_unlock_should_work() {
 		mint_assets([staker], [staked_asset_id], amount * 2);
 
 		process_and_progress_blocks::<StakingRewards, Test>(1);
+
 		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration_preset));
+
 		let unlock_penalty =
 			StakingRewards::stakes(1, 0).expect("stake expected").lock.unlock_penalty;
+		let penalty = unlock_penalty.mul_ceil(amount);
+
 		assert_eq!(balance(staked_asset_id, &staker), amount);
 
 		assert_ok!(StakingRewards::unstake(Origin::signed(staker), 1, 0));
 		assert_eq!(StakingRewards::stakes(1, 0), None);
-		assert_last_event::<Test, _>(|e| {
-			matches!(
-				e.event,
-				Event::StakingRewards(crate::Event::Unstaked { owner, fnft_collection_id, fnft_instance_id })
-					if owner == staker && fnft_collection_id == 1 && fnft_instance_id == 0
-			)
-		});
+		helper::assert_last_event::<Test>(Event::StakingRewards(crate::Event::Unstaked {
+			owner: staker,
+			fnft_collection_id: 1,
+			fnft_instance_id: 0,
+			slash: Some(penalty),
+		}));
 
-		let penalty = unlock_penalty.mul_ceil(amount);
 		assert_eq!(balance(staked_asset_id, &staker), amount + (amount - penalty));
 		// NOTE(connor): Used to keep penalty in the pool account, fNFT design has assets being
 		// burned instead
@@ -552,16 +554,19 @@ fn unstake_in_case_of_not_zero_claims_and_early_unlock_should_work() {
 
 			assert_ok!(StakingRewards::unstake(Origin::signed(staker), 1, 0));
 			assert_eq!(StakingRewards::stakes(1, 0), None);
-			assert_last_event::<Test, _>(|e| {
-				matches!(
-					e.event,
-					Event::StakingRewards(crate::Event::Unstaked { owner, fnft_collection_id, fnft_instance_id })
-						if owner == staker && fnft_collection_id == 1 && fnft_instance_id == 0
-				)
-			});
 
-			let penalty = unlock_penalty.mul_ceil(amount);
-			let claim_with_penalty = (Perbill::one() - unlock_penalty).mul_ceil(claim);
+			helper::assert_last_event::<Test>(
+				crate::Event::Unstaked {
+					owner: staker,
+					fnft_collection_id: 1,
+					fnft_instance_id: 0,
+					slash: Some(unlock_penalty.mul_floor(amount)),
+				}
+				.into(),
+			);
+
+			let penalty = unlock_penalty.mul_floor(amount);
+			let claim_with_penalty = unlock_penalty.left_from_one().mul_ceil(claim);
 			let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
 			assert_eq!(balance(staked_asset_id, &staker), amount * 2 - penalty);
 			// NOTE(connor): Used to keep penalty in the pool account, fNFT design has assets being
@@ -602,13 +607,13 @@ fn unstake_in_case_of_not_zero_claims_and_not_early_unlock_should_work() {
 			);
 			assert_ok!(StakingRewards::unstake(Origin::signed(staker), 1, 0));
 			assert_eq!(StakingRewards::stakes(1, 0), None);
-			assert_last_event::<Test, _>(|e| {
-				matches!(
-					e.event,
-					Event::StakingRewards(crate::Event::Unstaked { owner, fnft_collection_id, fnft_instance_id })
-						if owner == staker && fnft_collection_id == 1 && fnft_instance_id == 0
-				)
-			});
+
+			helper::assert_last_event::<Test>(Event::StakingRewards(crate::Event::Unstaked {
+				owner: staker,
+				fnft_collection_id: 1,
+				fnft_instance_id: 0,
+				slash: None,
+			}));
 
 			let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
 			assert_eq!(balance(staked_asset_id, &staker), amount * 2);
