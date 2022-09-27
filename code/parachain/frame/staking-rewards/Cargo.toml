@@ -10,7 +10,7 @@ version = "0.0.1"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-composable-support = { default-features = false, path = "../../frame/composable-support", optional = true }
+composable-support = { default-features = false, path = "../../frame/composable-support" }
 composable-tests-helpers = { default-features = false, path = "../composable-tests-helpers", optional = true }
 composable-traits = { default-features = false, path = "../../frame/composable-traits" }
 frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
