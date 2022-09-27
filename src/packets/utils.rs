@@ -9,7 +9,7 @@ use ibc::{
 				acknowledgement::MsgAcknowledgement, recv_packet::MsgRecvPacket,
 				timeout::MsgTimeout, timeout_on_close::MsgTimeoutOnClose,
 			},
-			packet::Packet,
+			packet::{Packet, TimeoutVariant},
 		},
 		ics23_commitment::commitment::CommitmentProofBytes,
 		ics24_host::path::{
@@ -17,7 +17,7 @@ use ibc::{
 		},
 	},
 	proofs::Proofs,
-	timestamp::{Expiry::Expired, Timestamp},
+	timestamp::Timestamp,
 	tx_msg::Msg,
 	Height,
 };
@@ -37,7 +37,7 @@ pub async fn get_timeout_proof_height(
 	packet: &Packet,
 	packet_creation_height: u64,
 ) -> Option<Height> {
-	let timeout_variant = timeout_variant(&packet, &sink_timestamp, sink_height).unwrap();
+	let timeout_variant = Packet::timeout_variant(&packet, &sink_timestamp, sink_height).unwrap();
 
 	match timeout_variant {
 		TimeoutVariant::Height =>
@@ -327,33 +327,5 @@ pub fn get_key_path(key_path_type: KeyPathType, packet: &Packet) -> String {
 				)
 			)
 		},
-	}
-}
-
-// todo: fix bug in this function in ibc-rs and remove from here
-#[derive(Debug)]
-pub enum TimeoutVariant {
-	Height,
-	Timestamp,
-	Both,
-}
-
-pub fn timeout_variant(
-	packet: &Packet,
-	dst_chain_ts: &Timestamp,
-	dst_chain_height: Height,
-) -> Option<TimeoutVariant> {
-	let height_timeout =
-		packet.timeout_height != Height::zero() && packet.timeout_height <= dst_chain_height;
-	let timestamp_timeout = packet.timeout_timestamp != Timestamp::none() &&
-		(dst_chain_ts.check_expiry(&packet.timeout_timestamp) == Expired);
-	if height_timeout && !timestamp_timeout {
-		Some(TimeoutVariant::Height)
-	} else if timestamp_timeout && !height_timeout {
-		Some(TimeoutVariant::Timestamp)
-	} else if timestamp_timeout && height_timeout {
-		Some(TimeoutVariant::Both)
-	} else {
-		None
 	}
 }
