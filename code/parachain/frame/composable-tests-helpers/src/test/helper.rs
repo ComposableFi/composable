@@ -78,7 +78,7 @@ pub fn assert_last_event<Runtime: Config>(generic_event: <Runtime as Config>::Ev
 ///         assert!(field);
 ///         Some(generated_id)
 ///     } else {
-///     	None
+///         None
 ///     },
 /// )
 /// ```
@@ -87,6 +87,7 @@ pub fn assert_last_event_with<Runtime, RuntimeEvent, PalletEvent, R>(
 ) -> R
 where
 	Runtime: Config<Event = RuntimeEvent>,
+	PalletEvent: sp_std::fmt::Debug + Clone,
 	RuntimeEvent: TryInto<PalletEvent> + Parameter + Member + Debug + Clone,
 	<RuntimeEvent as TryInto<PalletEvent>>::Error: sp_std::fmt::Debug,
 {
@@ -94,7 +95,16 @@ where
 	let EventRecord { event, .. } =
 		frame_system::Pallet::<Runtime>::events().pop().expect("No events present!");
 
-	f(event.try_into().unwrap()).unwrap()
+	match event.clone().try_into() {
+		Ok(pallet_event) => match f(pallet_event.clone()) {
+			Some(r) => r,
+			None => panic!("expected event was not found; found {pallet_event:#?}"),
+		},
+		Err(_) => panic!(
+			r#"last event was not from this pallet
+found {event:#?}"#
+		),
+	}
 }
 
 /// Asserts the event wasn't dispatched.
@@ -150,6 +160,7 @@ pub fn assert_extrinsic_event_with<Runtime, RuntimeEvent, PalletEvent, T, E, R>(
 ) -> R
 where
 	Runtime: Config<Event = RuntimeEvent>,
+	PalletEvent: sp_std::fmt::Debug + Clone,
 	RuntimeEvent: Parameter + Member + Debug + Clone,
 	RuntimeEvent: TryInto<PalletEvent>,
 	<RuntimeEvent as TryInto<PalletEvent>>::Error: sp_std::fmt::Debug,
