@@ -14878,7 +14878,7 @@ dependencies = [
 [[package]]
 name = "subxt-codegen"
 version = "0.23.0"
-source = "git+https://github.com/paritytech//subxt?rev=2fe9a1446d32b93a10804db3304ccaac65f764b8#2fe9a1446d32b93a10804db3304ccaac65f764b8"
+source = "git+https://github.com/paritytech/subxt?rev=2fe9a1446d32b93a10804db3304ccaac65f764b8#2fe9a1446d32b93a10804db3304ccaac65f764b8"
 dependencies = [
  "darling",
  "frame-metadata",
@@ -14941,7 +14941,7 @@ dependencies = [
 [[package]]
 name = "subxt-metadata"
 version = "0.23.0"
-source = "git+https://github.com/paritytech//subxt?rev=2fe9a1446d32b93a10804db3304ccaac65f764b8#2fe9a1446d32b93a10804db3304ccaac65f764b8"
+source = "git+https://github.com/paritytech/subxt?rev=2fe9a1446d32b93a10804db3304ccaac65f764b8#2fe9a1446d32b93a10804db3304ccaac65f764b8"
 dependencies = [
  "frame-metadata",
  "parity-scale-codec",
