@@ -134,6 +134,29 @@ fn test_populate_ok() {
 }
 
 #[test]
+fn populate_should_overwrite_existing_rewards_with_new_values() {
+	let gen = |c, r| -> Vec<(RemoteAccountOf<Test>, RewardAmountOf<Test>, VestingPeriodOf<Test>)> {
+		generate_accounts(c)
+			.into_iter()
+			.map(|(_, account)| (account.as_remote_public(), r, DEFAULT_VESTING_PERIOD))
+			.collect()
+	};
+	ExtBuilder::default().build().execute_with(|| {
+		let expected_total_rewards = 100 * 200;
+		Balances::make_free_balance_be(&CrowdloanRewards::account_id(), expected_total_rewards);
+		assert_ok!(CrowdloanRewards::populate(Origin::root(), gen(100, 200)));
+		assert_eq!(CrowdloanRewards::total_rewards(), expected_total_rewards);
+		assert_eq!(CrowdloanRewards::claimed_rewards(), 0);
+
+		let expected_total_rewards = 100 * 100;
+		Balances::make_free_balance_be(&CrowdloanRewards::account_id(), expected_total_rewards);
+		assert_ok!(CrowdloanRewards::populate(Origin::root(), gen(100, 100)));
+		assert_eq!(CrowdloanRewards::total_rewards(), expected_total_rewards);
+		assert_eq!(CrowdloanRewards::claimed_rewards(), 0);
+	});
+}
+
+#[test]
 fn test_populate_after_initialize_ko() {
 	ExtBuilder::default().build().execute_with(|| {
 		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
