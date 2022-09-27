@@ -91,7 +91,7 @@ pub mod pallet {
 				},
 				WithdrawConsequence,
 			},
-			TryCollect, UnixTime,
+			DefensiveSaturating, TryCollect, UnixTime,
 		},
 		transactional, BoundedBTreeMap, PalletId,
 	};
@@ -160,6 +160,8 @@ pub mod pallet {
 			fnft_collection_id: T::AssetId,
 			/// FNFT Instance Id
 			fnft_instance_id: T::FinancialNftInstanceId,
+			/// The amount slashed if the user unstaked early
+			slash: Option<T::Balance>,
 		},
 		/// Split stake position into two positions
 		SplitPosition {
@@ -190,6 +192,13 @@ pub mod pallet {
 			pool_id: T::AssetId,
 			asset_id: T::AssetId,
 			amount: T::Balance,
+		},
+		UnstakeRewardSlashed {
+			pool_id: T::AssetId,
+			owner: AccountIdOf<T>,
+			fnft_instance_id: FinancialNftInstanceIdOf<T>,
+			reward_asset_id: T::AssetId,
+			amount_slashed: T::Balance,
 		},
 	}
 
@@ -907,7 +916,7 @@ pub mod pallet {
 
 			// REVIEW(benluelo): Make this logic a method on Stake
 			let stake_with_penalty = if is_early_unlock {
-				(Perbill::one() - stake.lock.unlock_penalty).mul_ceil(stake.stake)
+				stake.lock.unlock_penalty.left_from_one().mul_ceil(stake.stake)
 			} else {
 				stake.stake
 			};
@@ -936,6 +945,7 @@ pub mod pallet {
 				owner: who.clone(),
 				fnft_collection_id: *fnft_collection_id,
 				fnft_instance_id: *fnft_instance_id,
+				slash: is_early_unlock.then(|| stake.lock.unlock_penalty.mul_floor(stake.stake)),
 			});
 
 			Ok(())
@@ -1151,8 +1161,9 @@ pub mod pallet {
 			penalize_for_early_unlock: bool,
 			keep_alive: bool,
 		) -> Result<(), DispatchError> {
-			for (asset_id, reward) in &mut rewards_pool.rewards {
-				let inflation = stake.reductions.get(asset_id).cloned().unwrap_or_else(Zero::zero);
+			for (reward_asset_id, reward) in &mut rewards_pool.rewards {
+				let inflation =
+					stake.reductions.get(reward_asset_id).cloned().unwrap_or_else(Zero::zero);
 				let claim = if rewards_pool.total_shares.is_zero() {
 					Zero::zero()
 				} else {
@@ -1162,11 +1173,22 @@ pub mod pallet {
 						.safe_div(&rewards_pool.total_shares)?
 						.safe_sub(&inflation)?
 				};
+
 				let claim = if penalize_for_early_unlock {
-					(Perbill::one() - stake.lock.unlock_penalty).mul_ceil(claim)
+					let slashed_amount = stake.lock.unlock_penalty.mul_floor(claim);
+					Self::deposit_event(Event::<T>::UnstakeRewardSlashed {
+						owner: owner.clone(),
+						pool_id: rewards_pool.asset_id,
+						fnft_instance_id: stake.fnft_instance_id,
+						reward_asset_id: *reward_asset_id,
+						amount_slashed: slashed_amount,
+					});
+					// SAFETY: slashed_amount is <= claim as is shown above
+					claim.defensive_saturating_sub(slashed_amount)
 				} else {
 					claim
 				};
+
 				let claim = sp_std::cmp::min(
 					claim,
 					reward.total_rewards.safe_sub(&reward.claimed_rewards)?,
@@ -1174,12 +1196,12 @@ pub mod pallet {
 
 				reward.claimed_rewards = reward.claimed_rewards.safe_add(&claim)?;
 
-				if let Some(inflation) = stake.reductions.get_mut(asset_id) {
+				if let Some(inflation) = stake.reductions.get_mut(reward_asset_id) {
 					*inflation += claim;
 				}
 
 				T::Assets::transfer(
-					*asset_id,
+					*reward_asset_id,
 					&Self::pool_account_id(&stake.reward_pool_id),
 					owner,
 					claim,
