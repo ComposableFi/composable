@@ -68,7 +68,7 @@ pub mod pallet {
 	use crate::weights::WeightInfo;
 	use codec::{Codec, FullCodec};
 	use composable_support::{
-		math::safe::SafeAdd,
+		math::safe::{SafeAdd, SafeSub},
 		types::{EcdsaSignature, EthereumAddress},
 	};
 	use frame_support::{
@@ -374,34 +374,57 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
+		/// Populates the `Rewards` while updating `TotalRewards` and `TotalContributors`
+		///
+		/// If a reward already exits, the reward and respective totals will be updated to account
+		/// for the new values.
+		///
+		/// # Errors
+		/// * `AlreadyInitialized` - The crowdloan has been set to initialize, population may no
+		///   longer commence
+		/// * `ArithmeticError` - Overflow/Underflow detected while calculating totals
 		pub(crate) fn do_populate(
 			rewards: Vec<(RemoteAccountOf<T>, RewardAmountOf<T>, VestingPeriodOf<T>)>,
 		) -> DispatchResult {
 			ensure!(!VestingTimeStart::<T>::exists(), Error::<T>::AlreadyInitialized);
-			rewards
-				.into_iter()
-				.for_each(|(remote_account, account_reward, vesting_period)| {
-					// This will eliminate duplicated entries.
-					Rewards::<T>::insert(
-						remote_account,
-						Reward {
-							total: account_reward,
-							claimed: T::Balance::zero(),
-							vesting_period,
-						},
-					);
-				});
-			let (total_rewards, total_contributors) = Rewards::<T>::iter_values().try_fold(
-				(T::Balance::zero(), 0),
+
+			let total_rewards: T::Balance = TotalRewards::<T>::get();
+			let total_contributors: u32 = TotalContributors::<T>::get();
+
+			let (total_rewards, total_contributors) = rewards.into_iter().try_fold(
+				(total_rewards, total_contributors),
 				|(total_rewards, total_contributors),
-				 contributor_reward|
-				 -> Result<(T::Balance, u32), DispatchError> {
-					Ok((
-						total_rewards.safe_add(&contributor_reward.total)?,
-						total_contributors.safe_add(&1)?,
-					))
+				 (remote_account, account_total, vesting_period)| {
+					Rewards::<T>::try_mutate_exists::<_, _, DispatchError, _>(
+						remote_account,
+						|reward| match reward {
+							Some(reward) => {
+								let total_rewards = total_rewards
+									.safe_sub(&reward.total)?
+									.safe_add(&account_total)?;
+
+								reward.total = account_total;
+								reward.vesting_period = vesting_period;
+
+								Ok((total_rewards, total_contributors))
+							},
+							None => {
+								let total_rewards = total_rewards.safe_add(&account_total)?;
+								let total_contributors = total_contributors.safe_add(&1)?;
+
+								reward.replace(Reward {
+									total: account_total,
+									claimed: T::Balance::zero(),
+									vesting_period,
+								});
+
+								Ok((total_rewards, total_contributors))
+							},
+						},
+					)
 				},
 			)?;
+
 			TotalRewards::<T>::set(total_rewards);
 			TotalContributors::<T>::set(total_contributors);
 			Ok(())
