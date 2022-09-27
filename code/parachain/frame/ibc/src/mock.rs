@@ -32,22 +32,8 @@ pub type Amount = i128;
 pub type Balance = u128;
 type AccountId = <<MultiSignature as Verify>::Signer as IdentifyAccount>::AccountId;
 use super::*;
-use crate::light_clients::{AnyClient, AnyClientMessage, AnyClientState, AnyConsensusState};
-use ibc::mock::{
-	client_state::MockConsensusState, context::ClientTypes, header::MockClientMessage,
-	host::MockHostBlock,
-};
-
-#[derive(Debug, Eq, PartialEq, Clone, Default)]
-pub struct MockClientTypes;
-
-impl ClientTypes for MockClientTypes {
-	type AnyClientMessage = AnyClientMessage;
-	type AnyClientState = AnyClientState;
-	type AnyConsensusState = AnyConsensusState;
-	type ClientDef = AnyClient;
-	type HostBlock = MockHostBlock;
-}
+use crate::light_clients::{AnyClientMessage, AnyConsensusState};
+use ibc::mock::{client_state::MockConsensusState, header::MockClientMessage, host::MockHostBlock};
 
 impl From<MockHostBlock> for AnyClientMessage {
 	fn from(block: MockHostBlock) -> Self {
