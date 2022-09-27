@@ -972,7 +972,7 @@ pub mod pallet {
 
 					let left_from_one_ratio = ratio.left_from_one();
 
-					// create the new position first, before mutating the old position
+					// create the new position first, before mutating the existing position
 					// mul_ceil is used for the new position, and mul_floor for the old position,
 					// that way any rounding is accounted for.
 					let new_stake = left_from_one_ratio.mul_ceil(existing_position.stake);
