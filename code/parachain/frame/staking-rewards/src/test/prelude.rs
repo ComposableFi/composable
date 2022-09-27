@@ -113,10 +113,17 @@ where
 	<RuntimeEvent as TryInto<crate::Event<Runtime>>>::Error: core::fmt::Debug,
 	<Runtime as frame_system::Config>::Origin: OriginTrait<AccountId = AccountIdOf<Runtime>>,
 {
-	let original_stake_before_split =
+	let existing_stake_before_split =
 		Stakes::<Runtime>::get(fnft_collection_id, fnft_instance_id).unwrap();
 
-	assert_extrinsic_event_with::<Runtime, RuntimeEvent, crate::Event<Runtime>, _, _, _>(
+	let (
+		(
+			event_existing_fnft_collection_id,
+			event_existing_fnft_instance_id,
+			existing_position_staked_amount,
+		),
+		(event_new_fnft_collection_id, event_new_fnft_instance_id, new_position_staked_amount),
+	) = assert_extrinsic_event_with::<Runtime, RuntimeEvent, crate::Event<Runtime>, _, _, _>(
 		crate::Pallet::<Runtime>::split(
 			OriginFor::<Runtime>::signed(staker),
 			fnft_collection_id,
@@ -124,167 +131,189 @@ where
 			ratio,
 		),
 		|event| match event {
-			crate::Event::SplitPosition {
-				stake,
-				fnft_collection_id: event_fnft_collection_id,
-				fnft_instance_id: new_fnft_instance_id,
-			} => {
-				let pool = RewardPools::<Runtime>::get(original_stake_before_split.reward_pool_id)
-					.unwrap();
-				assert_eq!(pool.financial_nft_asset_id, event_fnft_collection_id);
+			crate::Event::SplitPosition { positions } =>
+				if let [existing, new] = positions[..] {
+					Some((existing, new))
+				} else {
+					panic!("expected 2 positions in event, found {positions:#?}")
+				},
+			_ => None,
+		},
+	);
 
-				let new_stake =
-					Stakes::<Runtime>::get(fnft_collection_id, new_fnft_instance_id).unwrap();
-				let original_stake_after_split =
-					Stakes::<Runtime>::get(fnft_collection_id, fnft_instance_id).unwrap();
+	let pool = RewardPools::<Runtime>::get(existing_stake_before_split.reward_pool_id).unwrap();
 
-				assert_eq!(stake, new_stake.stake, "event should emit the amount in the new stake");
+	assert_eq!(
+		event_existing_fnft_collection_id, event_new_fnft_collection_id,
+		"positions emitted in event should have the same fnft collection"
+	);
+	assert_eq!(
+		pool.financial_nft_asset_id, event_new_fnft_collection_id,
+		"positions emitted in event should have the same fnft collection id as the pool"
+	);
 
-				// consistency checks
-				assert_eq!(
-					original_stake_before_split.reward_pool_id,
-					original_stake_after_split.reward_pool_id,
-					r#"
-reward_pool_id of original staked position changed when it should not have
+	assert_eq!(
+		fnft_instance_id, event_existing_fnft_instance_id,
+		"event should emit the existing fnft instance id"
+	);
+	assert_ne!(
+		event_new_fnft_instance_id, event_existing_fnft_instance_id,
+		"new fnft instance id should be different than the existing fnft instance id"
+	);
+
+	let new_position =
+		Stakes::<Runtime>::get(fnft_collection_id, event_new_fnft_instance_id).unwrap();
+	let existing_position_after_split =
+		Stakes::<Runtime>::get(fnft_collection_id, fnft_instance_id).unwrap();
+
+	assert_eq!(
+		new_position_staked_amount, new_position.stake,
+		"event should emit the amount in the new stake"
+	);
+	assert_eq!(
+		existing_position_staked_amount, existing_position_after_split.stake,
+		"event should emit the new amount in the existing stake"
+	);
+
+	// consistency checks
+	assert_eq!(
+		existing_stake_before_split.reward_pool_id, existing_position_after_split.reward_pool_id,
+		r#"
+reward_pool_id of original staked position should not change
 stake id: {fnft_collection_id:?}, {fnft_instance_id:?}
 "#
-				);
-				assert_eq!(
-					original_stake_before_split.reward_pool_id, new_stake.reward_pool_id,
-					r#"
+	);
+	assert_eq!(
+		existing_stake_before_split.reward_pool_id, new_position.reward_pool_id,
+		r#"
 reward_pool_id of new staked position should be the same as the original position
-new stake id: {fnft_collection_id:?}, {new_fnft_instance_id:?}
+new stake id: {fnft_collection_id:?}, {event_new_fnft_instance_id:?}
 "#
-				);
+	);
 
-				assert_eq!(
-					original_stake_before_split.lock, original_stake_after_split.lock,
-					r#"
+	assert_eq!(
+		existing_stake_before_split.lock, existing_position_after_split.lock,
+		r#"
 lock of original staked position changed when it should not have
 original stake id: {fnft_collection_id:?}, {fnft_instance_id:?}
 "#
-				);
-				assert_eq!(
-					original_stake_before_split.lock, new_stake.lock,
-					r#"
+	);
+	assert_eq!(
+		existing_stake_before_split.lock, new_position.lock,
+		r#"
 lock of new staked position should be the same as the original position
-new stake id: {fnft_collection_id:?}, {new_fnft_instance_id:?}
+new stake id: {fnft_collection_id:?}, {event_new_fnft_instance_id:?}
 "#
-				);
+	);
 
-				// stake & share ratio checks
-				assert_eq!(
-					original_stake_after_split.stake,
-					ratio.mul_floor(original_stake_before_split.stake),
-					r#"
+	// stake & share ratio checks
+	assert_eq!(
+		existing_position_after_split.stake,
+		ratio.mul_floor(existing_stake_before_split.stake),
+		r#"
 stake of the original staked position should be {:?} of what it was before the split
 original stake id: {fnft_collection_id:?}, {fnft_instance_id:?}
 "#,
-					*ratio
-				);
-				assert_eq!(
-					new_stake.stake,
-					ratio.left_from_one().mul_ceil(original_stake_before_split.stake),
-					r#"
+		*ratio
+	);
+	assert_eq!(
+		new_position.stake,
+		ratio.left_from_one().mul_ceil(existing_stake_before_split.stake),
+		r#"
 stake of the original staked position should be 1 - {:?} ({left_from_one:?}) of what it was before the split
-new stake id: {fnft_collection_id:?}, {new_fnft_instance_id:?}
+new stake id: {fnft_collection_id:?}, {event_new_fnft_instance_id:?}
 "#,
-					*ratio,
-					left_from_one = ratio.left_from_one()
-				);
+		*ratio,
+		left_from_one = ratio.left_from_one()
+	);
 
-				assert_eq!(
-					original_stake_after_split.share,
-					ratio.mul_floor(original_stake_before_split.share),
-					r#"
+	assert_eq!(
+		existing_position_after_split.share,
+		ratio.mul_floor(existing_stake_before_split.share),
+		r#"
 share of the original staked position should be {:?} of what it was before the split
 original stake id: {fnft_collection_id:?}, {fnft_instance_id:?}
 "#,
-					*ratio
-				);
-				assert_eq!(
-					new_stake.share,
-					ratio.left_from_one().mul_ceil(original_stake_before_split.share),
-					r#"
+		*ratio
+	);
+	assert_eq!(
+		new_position.share,
+		ratio.left_from_one().mul_ceil(existing_stake_before_split.share),
+		r#"
 share of the original staked position should be 1 - {:?} ({left_from_one:?}) of what it was before the split
-new stake id: {fnft_collection_id:?}, {new_fnft_instance_id:?}
+new stake id: {fnft_collection_id:?}, {event_new_fnft_instance_id:?}
 "#,
-					*ratio,
-					left_from_one = ratio.left_from_one()
-				);
+		*ratio,
+		left_from_one = ratio.left_from_one()
+	);
 
-				// assert that there is no loss in assets when splitting
-				assert_eq!(
-					original_stake_before_split.stake,
-					original_stake_after_split.stake + new_stake.stake,
-					"split should not cause any loss or gain of assets"
-				);
-				assert_eq!(
-					original_stake_before_split.share,
-					original_stake_after_split.share + new_stake.share,
-					"split should not cause any loss or gain of assets"
-				);
+	// assert that there is no loss in assets when splitting
+	assert_eq!(
+		existing_stake_before_split.stake,
+		existing_position_after_split.stake + new_position.stake,
+		"split should not cause any loss or gain of assets"
+	);
+	assert_eq!(
+		existing_stake_before_split.share,
+		existing_position_after_split.share + new_position.share,
+		"split should not cause any loss or gain of assets"
+	);
 
-				// reductions checks
-				let mut original_stake_after_split_reductions =
-					original_stake_after_split.reductions.clone();
-				let mut new_stake_reductions = new_stake.reductions.clone();
+	// reductions checks
+	let mut original_stake_after_split_reductions =
+		existing_position_after_split.reductions.clone();
+	let mut new_stake_reductions = new_position.reductions.clone();
 
-				for (reward_asset_id, original_stake_reduction_before_split) in
-					original_stake_before_split.reductions
-				{
-					let original_stake_after_split_reduction =
-						original_stake_after_split_reductions.remove(&reward_asset_id).unwrap();
-					let new_stake_reduction =
-						new_stake_reductions.remove(&reward_asset_id).unwrap();
+	for (reward_asset_id, original_stake_reduction_before_split) in
+		existing_stake_before_split.reductions
+	{
+		let original_stake_after_split_reduction =
+			original_stake_after_split_reductions.remove(&reward_asset_id).unwrap();
+		let new_stake_reduction = new_stake_reductions.remove(&reward_asset_id).unwrap();
 
-					assert_eq!(
-						original_stake_after_split_reduction,
-						ratio.mul_floor(original_stake_reduction_before_split),
-						r#"
+		assert_eq!(
+			original_stake_after_split_reduction,
+			ratio.mul_floor(original_stake_reduction_before_split),
+			r#"
 reductions of the original staked position should be {:?} of what it was before the split
 original stake id: {fnft_collection_id:?}, {fnft_instance_id:?}
 asset id: {reward_asset_id:?}
 "#,
-						*ratio
-					);
-					assert_eq!(
-						new_stake_reduction,
-						ratio.left_from_one().mul_ceil(original_stake_reduction_before_split),
-						r#"
+			*ratio
+		);
+		assert_eq!(
+			new_stake_reduction,
+			ratio.left_from_one().mul_ceil(original_stake_reduction_before_split),
+			r#"
 reductions of the original staked position should be 1 - {:?} ({left_from_one:?}) of what it was before the split
-new stake id: {fnft_collection_id:?}, {new_fnft_instance_id:?}
+new stake id: {fnft_collection_id:?}, {event_new_fnft_instance_id:?}
 asset id: {reward_asset_id:?}
 "#,
-						*ratio,
-						left_from_one = ratio.left_from_one()
-					);
+			*ratio,
+			left_from_one = ratio.left_from_one()
+		);
 
-					// assert that there is no loss in assets when splitting
-					assert_eq!(
-						original_stake_reduction_before_split,
-						original_stake_after_split_reduction + new_stake_reduction,
-						"split should not cause any loss or gain of assets"
-					);
-				}
+		// assert that there is no loss in assets when splitting
+		assert_eq!(
+			original_stake_reduction_before_split,
+			original_stake_after_split_reduction + new_stake_reduction,
+			"split should not cause any loss or gain of assets"
+		);
+	}
 
-				assert!(
-					new_stake_reductions.is_empty(),
-					"new staked position contains extra reward assets: {:#?}",
-					new_stake_reductions
-				);
+	assert!(
+		new_stake_reductions.is_empty(),
+		"new staked position contains extra reward assets: {:#?}",
+		new_stake_reductions
+	);
 
-				assert!(
-					original_stake_after_split_reductions.is_empty(),
-					"new staked position contains extra reward assets: {:#?}",
-					original_stake_after_split_reductions
-				);
+	assert!(
+		original_stake_after_split_reductions.is_empty(),
+		"new staked position contains extra reward assets: {:#?}",
+		original_stake_after_split_reductions
+	);
 
-				Some(fnft_instance_id)
-			},
-			_ => None,
-		},
-	)
+	event_new_fnft_instance_id
 }
 
 pub(crate) fn create_rewards_pool_and_assert(

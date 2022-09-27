@@ -811,9 +811,7 @@ fn test_split_position() {
 			Some(&left_from_one_ratio.mul_floor(reduction))
 		);
 		helper::assert_last_event::<Test>(Event::StakingRewards(crate::Event::SplitPosition {
-			stake: stake2.stake,
-			fnft_collection_id: PICA::ID,
-			fnft_instance_id: 1,
+			positions: vec![(PICA::ID, 0, stake1.stake), (PICA::ID, 1, stake2.stake)],
 		}));
 	});
 }

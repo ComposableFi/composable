@@ -163,14 +163,9 @@ pub mod pallet {
 			/// The amount slashed if the user unstaked early
 			slash: Option<T::Balance>,
 		},
-		/// Split stake position into two positions
+		/// A staking position was split.
 		SplitPosition {
-			// The amount staked in the new position.
-			stake: BalanceOf<T>,
-			/// FNFT Collection Id
-			fnft_collection_id: T::AssetId,
-			/// FNFT Instance Id
-			fnft_instance_id: T::FinancialNftInstanceId,
+			positions: Vec<(T::AssetId, T::FinancialNftInstanceId, BalanceOf<T>)>,
 		},
 		/// Reward transfer event.
 		RewardTransferred {
@@ -1033,9 +1028,14 @@ pub mod pallet {
 					)?;
 
 					Self::deposit_event(Event::<T>::SplitPosition {
-						stake: new_stake,
-						fnft_collection_id: rewards_pool.financial_nft_asset_id,
-						fnft_instance_id: new_fnft_instance_id,
+						positions: vec![
+							(
+								*fnft_collection_id,
+								*existing_fnft_instance_id,
+								existing_position.stake,
+							),
+							(*fnft_collection_id, new_fnft_instance_id, new_stake),
+						],
 					});
 
 					Ok::<_, DispatchError>((
