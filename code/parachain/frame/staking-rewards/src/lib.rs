@@ -1028,7 +1028,7 @@ pub mod pallet {
 					)?;
 
 					Self::deposit_event(Event::<T>::SplitPosition {
-						positions: vec![
+						positions: sp_std::vec![
 							(
 								*fnft_collection_id,
 								*existing_fnft_instance_id,
