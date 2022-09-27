@@ -892,6 +892,24 @@
               '';
             };
 
+            hadolint-check = stdenv.mkDerivation {
+              name = "hadolint-check";
+              dontUnpack = true;
+              buildInputs = [ all-directories-and-files hadolint ];
+              installPhase = ''
+                mkdir -p $out
+
+                hadolint --version
+                total_exit_code=0
+                for file in $(find ${all-directories-and-files} -name "Dockerfile" -or -name "*.dockerfile"); do
+                  echo "=== $file ==="
+                  hadolint --config ${all-directories-and-files}/.hadolint.yaml $file || total_exit_code=$?
+                  echo ""
+                done
+                exit $total_exit_code
+              '';
+            };
+
             kusama-picasso-karura-devnet = let
               config = (pkgs.callPackage
                 ./scripts/polkadot-launch/kusama-local-picasso-dev-karura-dev.nix {
