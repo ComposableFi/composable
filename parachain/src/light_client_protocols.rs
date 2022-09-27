@@ -50,7 +50,7 @@ pub enum FinalityEvent {
 }
 
 impl LightClientProtocol {
-	pub async fn query_latest_ibc_event_with_beefy<T: Config + Send + Sync, C: Chain>(
+	pub async fn query_latest_ibc_events_with_beefy<T: Config + Send + Sync, C: Chain>(
 		source: &mut ParachainClient<T>,
 		finality_event: FinalityEvent,
 		counterparty: &C,
@@ -250,7 +250,7 @@ impl LightClientProtocol {
 		Ok((update_header, events, update_type))
 	}
 
-	pub async fn query_latest_ibc_event_with_grandpa<T: Config + Send + Sync, C: Chain>(
+	pub async fn query_latest_ibc_events_with_grandpa<T: Config + Send + Sync, C: Chain>(
 		source: &mut ParachainClient<T>,
 		finality_event: FinalityEvent,
 		counterparty: &C,

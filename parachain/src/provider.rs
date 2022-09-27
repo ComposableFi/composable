@@ -82,14 +82,14 @@ where
 	{
 		match self.light_client_protocol {
 			LightClientProtocol::Grandpa =>
-				LightClientProtocol::query_latest_ibc_event_with_grandpa::<T, C>(
+				LightClientProtocol::query_latest_ibc_events_with_grandpa::<T, C>(
 					self,
 					finality_event,
 					counterparty,
 				)
 				.await,
 			LightClientProtocol::Beefy =>
-				LightClientProtocol::query_latest_ibc_event_with_beefy::<T, C>(
+				LightClientProtocol::query_latest_ibc_events_with_beefy::<T, C>(
 					self,
 					finality_event,
 					counterparty,
