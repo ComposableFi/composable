@@ -2294,6 +2294,7 @@ dependencies = [
  "hyperspace-primitives",
  "ibc",
  "ibc-proto",
+ "ics10-grandpa",
  "ics11-beefy",
  "ics13-near",
  "light-client-common",

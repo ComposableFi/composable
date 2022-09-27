@@ -36,6 +36,7 @@ ics11-beefy = { git = "https://github.com/ComposableFi/centauri", rev = "4384ccc
 ics13-near = { git = "https://github.com/ComposableFi/centauri", rev = "4384ccc23e82a4e06337d106d5bd170a56b56672" }
 light-client-common = { git = "https://github.com/ComposableFi/centauri", rev = "4384ccc23e82a4e06337d106d5bd170a56b56672" }
 pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "052052e5b070bc36dda7f9acd393a4c69404c3b2" }
+ics10-grandpa = { git = "https://github.com/ComposableFi/centauri", rev = "4384ccc23e82a4e06337d106d5bd170a56b56672" }
 
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }

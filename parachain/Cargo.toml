@@ -69,9 +69,9 @@ common = { git = "https://github.com/ComposableFi/composable", rev = "052052e5b0
 
 # Beefy
 beefy-prover = { git = "https://github.com/ComposableFi/centauri", rev = "4384ccc23e82a4e06337d106d5bd170a56b56672" }
-beefy-light-client = { git = "https://github.com/ComposableFi/centauri", rev = "4384ccc23e82a4e06337d106d5bd170a56b56672", optional = true }
-beefy-light-client-primitives = { package = "primitives", git = "https://github.com/ComposableFi/centauri", rev = "4384ccc23e82a4e06337d106d5bd170a56b56672", optional = true }
-ics11-beefy = { git = "https://github.com/ComposableFi/centauri", rev = "4384ccc23e82a4e06337d106d5bd170a56b56672", optional = true }
+beefy-light-client = { git = "https://github.com/ComposableFi/centauri", rev = "4384ccc23e82a4e06337d106d5bd170a56b56672" }
+beefy-light-client-primitives = { package = "primitives", git = "https://github.com/ComposableFi/centauri", rev = "4384ccc23e82a4e06337d106d5bd170a56b56672" }
+ics11-beefy = { git = "https://github.com/ComposableFi/centauri", rev = "4384ccc23e82a4e06337d106d5bd170a56b56672" }
 
 # Grandpa
 grandpa-prover = { git = "https://github.com/ComposableFi/centauri", rev = "4384ccc23e82a4e06337d106d5bd170a56b56672" }
@@ -92,4 +92,3 @@ primitives = { path = "../primitives", package = "hyperspace-primitives" }
 
 [features]
 testing = ["primitives/testing"]
-beefy = ["beefy-light-client", "beefy-light-client-primitives", "ics11-beefy" ]

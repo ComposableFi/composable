@@ -21,6 +21,18 @@ use super::{
 	signer::ExtrinsicSigner,
 	ParachainClient,
 };
+use crate::LightClientProtocol;
+use finality_grandpa_rpc::GrandpaApiClient;
+use subxt::rpc::{rpc_params, SubscriptionClientT};
+
+type GrandpaJustification =
+	grandpa_light_client::justification::GrandpaJustification<polkadot_core_primitives::Header>;
+type BeefyJustification =
+	beefy_primitives::SignedCommitment<u32, beefy_primitives::crypto::Signature>;
+
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
+/// An encoded justification proving that the given header has been finalized
+struct JustificationNotification(sp_core::Bytes);
 
 #[async_trait::async_trait]
 impl<T: Config + Send + Sync> Chain for ParachainClient<T>
@@ -95,86 +107,83 @@ where
 		Ok(dispatch_info.weight)
 	}
 
-	#[cfg(not(feature = "beefy"))]
 	async fn finality_notifications(
 		&self,
 	) -> Pin<Box<dyn Stream<Item = <Self as IbcProvider>::FinalityEvent> + Send + Sync>> {
-		use finality_grandpa_rpc::GrandpaApiClient;
-		/// An encoded justification proving that the given header has been finalized
-		#[derive(Clone, serde::Serialize, serde::Deserialize)]
-		struct JustificationNotification(sp_core::Bytes);
-		let subscription =
-			GrandpaApiClient::<JustificationNotification, sp_core::H256, u32>::subscribe_justifications(
-				&*self.relay_client.rpc().client,
-			)
-				.await
-				.expect("Failed to subscribe to grandpa justifications");
+		match self.light_client_protocol {
+			LightClientProtocol::Grandpa => {
+				let subscription =
+					GrandpaApiClient::<JustificationNotification, sp_core::H256, u32>::subscribe_justifications(
+						&*self.relay_client.rpc().client,
+					)
+						.await
+						.expect("Failed to subscribe to grandpa justifications");
 
-		let stream = subscription.filter_map(|justification_notif| {
-			let encoded_justification = match justification_notif {
-				Ok(JustificationNotification(sp_core::Bytes(justification))) => justification,
-				Err(err) => {
-					log::error!("Failed to fetch Justification: {}", err);
-					return futures::future::ready(None)
-				},
-			};
+				let stream = subscription.filter_map(|justification_notif| {
+					let encoded_justification = match justification_notif {
+						Ok(JustificationNotification(sp_core::Bytes(justification))) =>
+							justification,
+						Err(err) => {
+							log::error!("Failed to fetch Justification: {}", err);
+							return futures::future::ready(None)
+						},
+					};
 
-			let justification = match Decode::decode(&mut &*encoded_justification) {
-				Ok(j) => j,
-				Err(err) => {
-					log::error!("Grandpa Justification scale decode error: {}", err);
-					return futures::future::ready(None)
-				},
-			};
-			futures::future::ready(Some(justification))
-		});
+					let justification =
+						match GrandpaJustification::decode(&mut &*encoded_justification) {
+							Ok(j) => j,
+							Err(err) => {
+								log::error!("Grandpa Justification scale decode error: {}", err);
+								return futures::future::ready(None)
+							},
+						};
+					futures::future::ready(Some(Self::FinalityEvent::Grandpa(justification)))
+				});
 
-		Box::pin(Box::new(stream))
-	}
+				Box::pin(Box::new(stream))
+			},
+			LightClientProtocol::Beefy => {
+				let subscription = self
+					.relay_client
+					.rpc()
+					.client
+					.subscribe::<String>(
+						"beefy_subscribeJustifications",
+						rpc_params![],
+						"beefy_unsubscribeJustifications",
+					)
+					.await
+					.expect("Expect subscription to open");
 
-	#[cfg(feature = "beefy")]
-	async fn finality_notifications(
-		&self,
-	) -> Pin<Box<dyn Stream<Item = <Self as IbcProvider>::FinalityEvent> + Send + Sync>> {
-		use subxt::rpc::{rpc_params, SubscriptionClientT};
-		let subscription = self
-			.relay_client
-			.rpc()
-			.client
-			.subscribe::<String>(
-				"beefy_subscribeJustifications",
-				rpc_params![],
-				"beefy_unsubscribeJustifications",
-			)
-			.await
-			.expect("Expect subscription to open");
+				let stream = subscription.filter_map(|commitment| {
+					let commitment = match commitment {
+						Ok(c) => c,
+						Err(err) => {
+							log::error!("Failed to fetch SignedCommitment: {}", err);
+							return futures::future::ready(None)
+						},
+					};
+					let recv_commitment = match hex::decode(&commitment[2..]) {
+						Ok(c) => c,
+						Err(err) => {
+							log::error!("SignedCommitment hex decode error: {}", err);
+							return futures::future::ready(None)
+						},
+					};
+					let signed_commitment = match BeefyJustification::decode(&mut &*recv_commitment)
+					{
+						Ok(c) => c,
+						Err(err) => {
+							log::error!("SignedCommitment scale decode error: {}", err);
+							return futures::future::ready(None)
+						},
+					};
+					futures::future::ready(Some(Self::FinalityEvent::Beefy(signed_commitment)))
+				});
 
-		let stream = subscription.filter_map(|commitment| {
-			let commitment = match commitment {
-				Ok(c) => c,
-				Err(err) => {
-					log::error!("Failed to fetch SignedCommitment: {}", err);
-					return futures::future::ready(None)
-				},
-			};
-			let recv_commitment = match hex::decode(&commitment[2..]) {
-				Ok(c) => c,
-				Err(err) => {
-					log::error!("SignedCommitment hex decode error: {}", err);
-					return futures::future::ready(None)
-				},
-			};
-			let signed_commitment = match Decode::decode(&mut &*recv_commitment) {
-				Ok(c) => c,
-				Err(err) => {
-					log::error!("SignedCommitment scale decode error: {}", err);
-					return futures::future::ready(None)
-				},
-			};
-			futures::future::ready(Some(signed_commitment))
-		});
-
-		Box::pin(Box::new(stream))
+				Box::pin(Box::new(stream))
+			},
+		}
 	}
 
 	async fn submit(&self, messages: Vec<Any>) -> Result<(), Error> {

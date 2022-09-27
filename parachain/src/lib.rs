@@ -10,38 +10,32 @@ pub mod provider;
 pub mod signer;
 pub mod utils;
 
+pub mod light_client_protocols;
 #[cfg(feature = "testing")]
 pub mod test_provider;
 
 use codec::{Codec, Decode};
 use error::Error;
 
-use calls::{sudo_call, Sudo, Transfer, TransferParams};
-use common::AccountId;
-use signer::ExtrinsicSigner;
-
-#[cfg(feature = "beefy")]
 use beefy_light_client_primitives::{ClientState, MmrUpdateProof, PartialMmrLeaf};
-#[cfg(feature = "beefy")]
 use beefy_prover::{
 	helpers::{fetch_timestamp_extrinsic_with_proof, TimeStampExtWithProof},
 	ClientWrapper,
 };
+use calls::{sudo_call, Sudo, Transfer, TransferParams};
+use common::AccountId;
 use ibc::{
 	core::ics24_host::identifier::{ChannelId, ClientId, PortId},
 	events::IbcEvent,
 };
 use ibc_proto::ibc::core::client::v1::IdentifiedClientState;
-
-#[cfg(feature = "beefy")]
 use ics11_beefy::{
 	client_message::ParachainHeader, client_state::ClientState as BeefyClientState,
 	consensus_state::ConsensusState as BeefyConsensusState,
 };
 use pallet_ibc::light_clients::{AnyClientState, AnyConsensusState, HostFunctionsManager};
-#[cfg(feature = "beefy")]
 use pallet_mmr_primitives::BatchProof;
-#[cfg(feature = "beefy")]
+use signer::ExtrinsicSigner;
 use sp_core::H256;
 use sp_keystore::SyncCryptoStorePtr;
 use sp_runtime::{
@@ -64,6 +58,7 @@ use crate::{
 };
 use primitives::KeyProvider;
 
+use crate::light_client_protocols::LightClientProtocol;
 use grandpa_light_client_primitives::ParachainHeadersWithFinalityProof;
 use grandpa_prover::GrandpaProver;
 use ibc::timestamp::Timestamp;
@@ -106,6 +101,8 @@ pub struct ParachainClient<T: subxt::Config> {
 	pub max_extrinsic_weight: u64,
 	/// Channels cleared for packet relay
 	pub channel_whitelist: Vec<(ChannelId, PortId)>,
+	/// Light client protocol
+	pub light_client_protocol: LightClientProtocol,
 }
 
 /// config options for [`ParachainClient`]
@@ -132,6 +129,8 @@ pub struct ParachainClientConfig {
 	pub key_type_id: KeyTypeId,
 	/// Channels cleared for packet relay
 	pub channel_whitelist: Vec<(ChannelId, PortId)>,
+	/// Light client protocol
+	pub light_client_protocol: LightClientProtocol,
 }
 
 impl<T: subxt::Config + Send + Sync> ParachainClient<T>
@@ -170,6 +169,7 @@ where
 			max_extrinsic_weight,
 			ss58_version: Ss58AddressFormat::from(config.ss58_version),
 			channel_whitelist: config.channel_whitelist,
+			light_client_protocol: config.light_client_protocol,
 		})
 	}
 
@@ -204,7 +204,6 @@ where
 			})
 	}
 
-	#[cfg(feature = "beefy")]
 	pub async fn query_finalized_parachain_headers_at(
 		&self,
 		commitment_block_number: u32,
@@ -273,7 +272,6 @@ where
 		})
 	}
 
-	#[cfg(feature = "beefy")]
 	pub async fn query_beefy_finalized_parachain_headers_with_proof(
 		&self,
 		commitment_block_number: u32,
@@ -319,7 +317,6 @@ where
 		Ok((parachain_headers, batch_proof))
 	}
 
-	#[cfg(feature = "beefy")]
 	pub async fn fetch_mmr_update_proof_for(
 		&self,
 		signed_commitment: beefy_primitives::SignedCommitment<
@@ -356,7 +353,6 @@ where
 		self.channel_whitelist = channel_whitelist;
 	}
 
-	#[cfg(feature = "beefy")]
 	/// Construct a beefy client state to be submitted to the counterparty chain
 	pub async fn construct_beefy_client_state(
 		&self,
@@ -539,6 +535,11 @@ where
 				sp_runtime::traits::BlakeTwo256,
 			>::decode(&mut &*head_data.0)?;
 			let block_number = decoded_para_head.number;
+			// we can't use the genesis block to construct the initial state.
+			if block_number == 0 {
+				continue
+			}
+
 			let mut client_state = GrandpaClientState::<HostFunctionsManager>::default();
 
 			client_state.relay_chain = Default::default();
@@ -548,10 +549,7 @@ where
 			client_state.frozen_height = None;
 			client_state.latest_para_height = block_number;
 			client_state.para_id = self.para_id;
-			// we can't use the genesis block to construct the initial state.
-			if block_number == 0 {
-				continue
-			}
+
 			let subxt_block_number: subxt::BlockNumber = block_number.into();
 			let block_hash =
 				self.para_client.rpc().block_hash(Some(subxt_block_number)).await.unwrap();

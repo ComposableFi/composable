@@ -28,6 +28,7 @@ use ibc::{
 	Height,
 };
 use ibc_proto::{google::protobuf::Any, ibc::core::client::v1::QueryConsensusStateResponse};
+use ics10_grandpa::client_state::ClientState as GrandpaClientState;
 use ics11_beefy::client_state::ClientState as BeefyClientState;
 use ics13_near::client_state::NearClientState;
 use pallet_ibc::light_clients::{AnyClientState, HostFunctionsManager};
@@ -544,17 +545,20 @@ async fn query_consensus_proof(
 ) -> Result<Vec<u8>, anyhow::Error> {
 	let beefy_client_type = BeefyClientState::<HostFunctionsManager>::client_type();
 	let near_client_type = NearClientState::<HostFunctionsManager>::client_type();
+	let grandpa_client_type = GrandpaClientState::<HostFunctionsManager>::client_type();
 	let client_type = sink.client_type();
-	let consensus_proof_bytes =
-		if client_type == beefy_client_type || client_type == near_client_type {
-			let host_proof = sink
-				.query_host_consensus_state_proof(client_state.latest_height())
-				.await?
-				.expect("Host chain requires consensus state proof; qed");
-			ConnectionProof { host_proof, connection_proof: consensus_proof.proof }.encode()
-		} else {
-			consensus_proof.proof
-		};
+	let consensus_proof_bytes = if client_type == beefy_client_type ||
+		client_type == near_client_type ||
+		client_type == grandpa_client_type
+	{
+		let host_proof = sink
+			.query_host_consensus_state_proof(client_state.latest_height())
+			.await?
+			.expect("Host chain requires consensus state proof; qed");
+		ConnectionProof { host_proof, connection_proof: consensus_proof.proof }.encode()
+	} else {
+		consensus_proof.proof
+	};
 
 	Ok(consensus_proof_bytes)
 }

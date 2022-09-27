@@ -7,7 +7,10 @@ use ibc::{
 	tx_msg::Msg,
 };
 use pallet_ibc::PalletParams;
-use parachain::{calls::SetPalletParams, ParachainClient, ParachainClientConfig};
+use parachain::{
+	calls::SetPalletParams, light_client_protocols::LightClientProtocol, ParachainClient,
+	ParachainClientConfig,
+};
 use sp_core::crypto::KeyTypeId;
 use sp_keystore::{testing::KeyStore, SyncCryptoStore, SyncCryptoStorePtr};
 use sp_runtime::MultiSigner;
@@ -79,6 +82,7 @@ async fn setup_clients() -> (ParachainClient<DefaultConfig>, ParachainClient<Def
 		ss58_version: 49,
 		channel_whitelist: vec![],
 		key_type_id,
+		light_client_protocol: LightClientProtocol::Grandpa,
 	};
 	let config_b = ParachainClientConfig {
 		name: format!("ParaId({})", args.para_id_b),
@@ -92,6 +96,7 @@ async fn setup_clients() -> (ParachainClient<DefaultConfig>, ParachainClient<Def
 		ss58_version: 49,
 		channel_whitelist: vec![],
 		key_type_id,
+		light_client_protocol: LightClientProtocol::Grandpa,
 	};
 
 	let mut chain_a = ParachainClient::<DefaultConfig>::new(config_a).await.unwrap();
