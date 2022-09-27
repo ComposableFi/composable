@@ -37,19 +37,19 @@ use beefy_prover::helpers::fetch_timestamp_extrinsic_with_proof;
 #[cfg(feature = "testing")]
 use futures::Stream;
 use ibc::core::ics02_client::client_state::ClientType;
+use ibc::core::ics02_client::msgs::update_client::MsgUpdateAnyClient;
+use ibc::tx_msg::Msg;
+use ibc_proto::google::protobuf::Any;
 use ics11_beefy::client_message::{BeefyHeader, ClientMessage, ParachainHeadersWithProof};
 use pallet_ibc::{
 	light_clients::{AnyClientMessage, AnyClientState, HostFunctionsManager},
 	HostConsensusProof,
 };
 use pallet_mmr_primitives::BatchProof;
+use primitives::mock::LocalClientTypes;
 #[cfg(feature = "testing")]
 use std::pin::Pin;
-use ibc::core::ics02_client::msgs::update_client::MsgUpdateAnyClient;
-use ibc::tx_msg::Msg;
-use ibc_proto::google::protobuf::Any;
 use tendermint_proto::Protobuf;
-use primitives::mock::LocalClientTypes;
 
 /// Finality event for parachains
 pub type FinalityEvent =
@@ -82,10 +82,10 @@ where
 		let latest_height = counterparty.latest_height().await?;
 		let response = counterparty.query_client_state(latest_height, client_id).await?;
 		let client_state = response.client_state.ok_or_else(|| {
-			From::from("Received an empty client state from counterparty".to_string())
+			Error::from("Received an empty client state from counterparty".to_string())
 		})?;
 		let client_state = AnyClientState::try_from(client_state)
-			.map_err(|_| From::from("Failed to decode client state".to_string()))?;
+			.map_err(|_| Error::from("Failed to decode client state".to_string()))?;
 		let beefy_client_state = match &client_state {
 			AnyClientState::Beefy(client_state) => ClientState {
 				latest_beefy_height: client_state.latest_beefy_height,
@@ -117,8 +117,8 @@ where
 		}
 
 		// if validator set has changed this is a mandatory update
-		let update_type = match signed_commitment.commitment.validator_set_id ==
-			beefy_client_state.next_authorities.id
+		let update_type = match signed_commitment.commitment.validator_set_id
+			== beefy_client_state.next_authorities.id
 		{
 			true => UpdateType::Mandatory,
 			false => UpdateType::Optional,
@@ -146,8 +146,8 @@ where
 		let finalized_block_numbers = headers
 			.into_iter()
 			.filter_map(|header| {
-				if (client_state.latest_height().revision_height as u32) <
-					u32::from(*header.number())
+				if (client_state.latest_height().revision_height as u32)
+					< u32::from(*header.number())
 				{
 					Some(header)
 				} else {
@@ -207,13 +207,13 @@ where
 		for event in events.iter() {
 			if self.sender.send(event.clone()).is_err() {
 				log::trace!("Failed to push {event:?} to stream, no active receiver found");
-				break
+				break;
 			}
 		}
 
 		let update_header = {
 			let msg = MsgUpdateAnyClient::<LocalClientTypes> {
-				client_id: source.client_id(),
+				client_id: self.client_id(),
 				client_message: AnyClientMessage::Beefy(ClientMessage::Header(beefy_header)),
 				signer: counterparty.account_id(),
 			};

@@ -109,7 +109,7 @@ pub async fn wait_for_client_and_connection(
 		public_key: alice_pub_key.clone(),
 		key_store: key_store.clone(),
 		ss58_version: 49,
-		key_type_id,
+		key_type: key_type_id,
 	};
 
 	let config_b = ParachainClientConfig {
@@ -122,7 +122,7 @@ pub async fn wait_for_client_and_connection(
 		public_key: alice_pub_key,
 		key_store,
 		ss58_version: 49,
-		key_type_id,
+		key_type: key_type_id,
 	};
 
 	let mut chain_a = ParachainClient::<DefaultConfig>::new(config_a).await.unwrap();

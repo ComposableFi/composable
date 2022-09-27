@@ -38,8 +38,10 @@ use ics11_beefy::{
 };
 use pallet_ibc::light_clients::{AnyClientState, AnyConsensusState, HostFunctionsManager};
 use pallet_mmr_primitives::BatchProof;
-use sp_core::H256;
-use sp_keystore_git::SyncCryptoStorePtr;
+use serde::Deserialize;
+use sp_core::{ecdsa, ed25519, sr25519, Bytes, Pair, H256};
+use sp_keystore_git::testing::KeyStore;
+use sp_keystore_git::{SyncCryptoStore, SyncCryptoStorePtr};
 use sp_runtime::{
 	generic::Era,
 	traits::{IdentifyAccount, Verify},
@@ -94,7 +96,37 @@ pub struct ParachainClient<T: subxt::Config> {
 	pub client_update_status: Arc<Mutex<bool>>,
 }
 
+enum KeyType {
+	Sr25519,
+	Ed25519,
+	Ecdsa,
+}
+
+impl KeyType {
+	pub fn to_key_type_id(&self) -> KeyTypeId {
+		match self {
+			KeyType::Sr25519 => KeyTypeId(sp_core::sr25519::CRYPTO_ID.0),
+			KeyType::Ed25519 => KeyTypeId(sp_core::ed25519::CRYPTO_ID.0),
+			KeyType::Ecdsa => KeyTypeId(sp_core::ecdsa::CRYPTO_ID.0),
+		}
+	}
+}
+
+impl FromStr for KeyType {
+	type Err = Error;
+
+	fn from_str(s: &str) -> Result<Self, Self::Err> {
+		match s {
+			"sr25519" => Ok(KeyType::Sr25519),
+			"ed25519" => Ok(KeyType::Ed25519),
+			"ecdsa" => Ok(KeyType::Ecdsa),
+			_ => Err(Error::Custom("Invalid key type".to_string())),
+		}
+	}
+}
+
 /// config options for [`ParachainClient`]
+#[derive(Debug, Deserialize)]
 pub struct ParachainClientConfig {
 	/// Chain name
 	pub name: String,
@@ -107,15 +139,13 @@ pub struct ParachainClientConfig {
 	/// Light client id on counterparty chain
 	pub client_id: Option<ClientId>,
 	/// Commitment prefix
-	pub commitment_prefix: Vec<u8>,
-	/// Relayer's Public on parachain key
-	pub public_key: MultiSigner,
-	/// Reference to keystore
-	pub key_store: SyncCryptoStorePtr,
+	pub commitment_prefix: Bytes,
+	/// Path to a keystore file
+	pub private_key: String,
 	/// used for encoding relayer address.
 	pub ss58_version: u8,
-	/// 4 byte Key type id
-	pub key_type_id: KeyTypeId,
+	/// Digital signature scheme
+	pub key_type: String,
 }
 
 impl<T: subxt::Config + Send + Sync> ParachainClient<T>
@@ -140,6 +170,36 @@ where
 
 		let (sender, _) = broadcast::channel(16);
 
+		let key_store: SyncCryptoStorePtr = Arc::new(KeyStore::new());
+		let key_type = KeyType::from_str(&config.key_type)?;
+		let key_type_id = key_type.to_key_type_id();
+
+		let public_key: MultiSigner = match key_type {
+			KeyType::Sr25519 => sr25519::Pair::from_string_with_seed(&config.private_key, None)
+				.map_err(|_| Error::Custom("invalid key".to_owned()))?
+				.0
+				.public()
+				.into(),
+			KeyType::Ed25519 => ed25519::Pair::from_string_with_seed(&config.private_key, None)
+				.map_err(|_| Error::Custom("invalid key".to_owned()))?
+				.0
+				.public()
+				.into(),
+			KeyType::Ecdsa => ecdsa::Pair::from_string_with_seed(&config.private_key, None)
+				.map_err(|_| Error::Custom("invalid key".to_owned()))?
+				.0
+				.public()
+				.into(),
+		};
+
+		SyncCryptoStore::insert_unknown(
+			&*key_store,
+			key_type_id,
+			&*config.private_key,
+			public_key.as_ref(),
+		)
+		.unwrap();
+
 		Ok(Self {
 			name: config.name,
 			para_client,
@@ -148,11 +208,11 @@ where
 			client_id: config.client_id,
 			// The following should be initialized before main relayer loop starts.
 			latest_para_height: None,
-			commitment_prefix: config.commitment_prefix,
+			commitment_prefix: config.commitment_prefix.0,
 			packet_cache: vec![],
-			public_key: config.public_key,
-			key_store: config.key_store,
-			key_type_id: config.key_type_id,
+			public_key,
+			key_store,
+			key_type_id,
 			sender,
 			ss58_version: Ss58AddressFormat::from(config.ss58_version),
 			client_update_status: Arc::new(Mutex::new(false)),
@@ -349,7 +409,7 @@ where
 			};
 			// we can't use the genesis block to construct the initial state.
 			if block_number == 0 {
-				continue
+				continue;
 			}
 			let subxt_block_number: subxt::BlockNumber = block_number.into();
 			let block_hash = client_wrapper
@@ -380,7 +440,7 @@ where
 			let consensus_state =
 				AnyConsensusState::Beefy(ConsensusState::from_header(parachain_header).unwrap());
 
-			return Ok((AnyClientState::Beefy(client_state), consensus_state))
+			return Ok((AnyClientState::Beefy(client_state), consensus_state));
 		}
 	}
 
