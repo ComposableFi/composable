@@ -1,5 +1,6 @@
 use crate::ParachainClient;
 use futures::{Stream, StreamExt};
+use grandpa_light_client_primitives::{FinalityProof, ParachainHeaderProofs};
 use ibc::{
 	applications::transfer::{msgs::transfer::MsgTransfer, PrefixedCoin},
 	core::ics24_host::identifier::ChannelId,
@@ -10,10 +11,10 @@ use ping::SendPingParams;
 use primitives::{KeyProvider, TestProvider};
 use sp_core::crypto::{AccountId32, Ss58Codec};
 use sp_runtime::{
-	traits::{Header as HeaderT, IdentifyAccount, Verify},
+	traits::{Header as HeaderT, IdentifyAccount, One, Verify},
 	MultiSignature, MultiSigner,
 };
-use std::{fmt::Display, pin::Pin, time::Duration};
+use std::{collections::BTreeMap, fmt::Display, pin::Pin, time::Duration};
 
 use crate::calls::SendPing;
 use subxt::Config;
@@ -29,7 +30,12 @@ where
 	<T::Signature as Verify>::Signer: From<MultiSigner> + IdentifyAccount<AccountId = T::AccountId>,
 	<T as Config>::Address: From<<T as Config>::AccountId>,
 	T::Signature: From<MultiSignature>,
-	T::BlockNumber: From<u32> + Display + Ord + sp_runtime::traits::Zero,
+	T::BlockNumber: From<u32> + Display + Ord + sp_runtime::traits::Zero + One,
+	T::Hash: From<sp_core::H256>,
+	FinalityProof<sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256>>:
+		From<FinalityProof<T::Header>>,
+	BTreeMap<sp_core::H256, ParachainHeaderProofs>:
+		From<BTreeMap<<T as subxt::Config>::Hash, ParachainHeaderProofs>>,
 {
 	async fn send_transfer(&self, transfer: MsgTransfer<PrefixedCoin>) -> Result<(), Self::Error> {
 		let account_id = AccountId32::from_ss58check(transfer.receiver.as_ref()).unwrap();

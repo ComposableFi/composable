@@ -1,6 +1,6 @@
 use futures::StreamExt;
 use hyperspace::logging;
-use hyperspace_primitives::{IbcProvider, KeyProvider};
+use hyperspace_primitives::{mock::LocalClientTypes, IbcProvider, KeyProvider};
 use hyperspace_testsuite::setup_connection_and_channel;
 use ibc::{
 	core::{ics02_client::msgs::create_client::MsgCreateAnyClient, ics24_host::identifier::PortId},
@@ -143,7 +143,7 @@ async fn setup_clients() -> (ParachainClient<DefaultConfig>, ParachainClient<Def
 			chain_b.construct_beefy_client_state(0).await.unwrap();
 
 		// Create client message is the same for both chains
-		let msg_create_client = MsgCreateAnyClient {
+		let msg_create_client = MsgCreateAnyClient::<LocalClientTypes> {
 			client_state: client_state.clone(),
 			consensus_state,
 			signer: chain_a.account_id(),
@@ -166,7 +166,7 @@ async fn setup_clients() -> (ParachainClient<DefaultConfig>, ParachainClient<Def
 			chain_a.construct_beefy_client_state(0).await.unwrap();
 
 		// Create client message is the same for both chains
-		let msg_create_client = MsgCreateAnyClient {
+		let msg_create_client = MsgCreateAnyClient::<LocalClientTypes> {
 			client_state: client_state.clone(),
 			consensus_state,
 			signer: chain_a.account_id(),
