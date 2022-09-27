@@ -606,6 +606,39 @@
               meta = { mainProgram = "polkadot"; };
             };
 
+            polkadot-centauri-node = rustPlatform.buildRustPackage rec {
+              # HACK: break the nix sandbox so we can build the runtimes. This
+              # requires Nix to have `sandbox = relaxed` in its config.
+              # We don't really care because polkadot is only used for local devnet.
+              __noChroot = true;
+              name = "polkadot-centauri-v${version}";
+              version = "0.9.24";
+              src = fetchFromGitHub {
+                repo = "polkadot";
+                owner = "ComposableFi";
+                rev = "mmr-polkadot-v0.9.24-20220927";
+                hash = "sha256-LEz3OrVgdFTCnVwzU8C6GeEougaOl2qo7jS9qIdMqAN=";
+              };
+              cargoSha256 =
+                "sha256-ct635ewmwYn21S2y3+bNVL8YfmiNfss/4+hPDHEAA5E=";
+              doCheck = false;
+              buildInputs = [ openssl zstd ];
+              nativeBuildInputs = [ rust-nightly clang pkg-config ]
+                ++ lib.optional stdenv.isDarwin
+                (with darwin.apple_sdk.frameworks; [
+                  Security
+                  SystemConfiguration
+                ]);
+              LD_LIBRARY_PATH = lib.strings.makeLibraryPath [
+                stdenv.cc.cc.lib
+                llvmPackages.libclang.lib
+              ];
+              LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
+              PROTOC = "${protobuf}/bin/protoc";
+              ROCKSDB_LIB_DIR = "${rocksdb}/lib";
+              meta = { mainProgram = "polkadot"; };
+            };
+
             polkadot-launch =
               callPackage ./scripts/polkadot-launch/polkadot-launch.nix { };
 
@@ -613,6 +646,14 @@
             devnet-dali = (callPackage mk-devnet {
               inherit pkgs;
               inherit (packages) polkadot-launch composable-node polkadot-node;
+              chain-spec = "dali-dev";
+            }).script;
+
+            # Dali Centauri devnet
+            devnet-dali-centauri = (callPackage mk-devnet {
+              inherit pkgs;
+              inherit (packages) polkadot-launch composable-node;
+              polkadot-node = polkadot-centauri-node;
               chain-spec = "dali-dev";
             }).script;
 
@@ -643,6 +684,28 @@
                 chmod 777 /tmp
               '';
             };
+
+            # Dali Centauri devnet container
+            centauri-devnet-container = dockerTools.buildImage {
+              name = "composable-centauri-devnet-container";
+              tag = "latest";
+              copyToRoot = pkgs.buildEnv {
+                name = "image-root";
+                paths = [ curl websocat ] ++ container-tools;
+                pathsToLink = [ "/bin" ];
+              };
+              config = {
+                Entrypoint =
+                  [ "${packages.devnet-dali-centauri}/bin/run-devnet-dali-dev" ];
+                WorkingDir = "/home/polkadot-launch";
+              };
+              runAsRoot = ''
+                mkdir -p /home/polkadot-launch /tmp
+                chown 1000:1000 /home/polkadot-launch
+                chmod 777 /tmp
+              '';
+            };
+
 
             frontend-static = mkFrontendStatic {
               subsquidEndpoint = "http://localhost:4350/graphql";
