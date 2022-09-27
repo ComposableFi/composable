@@ -539,16 +539,15 @@ where
 				sp_runtime::traits::BlakeTwo256,
 			>::decode(&mut &*head_data.0)?;
 			let block_number = decoded_para_head.number;
-			let client_state = GrandpaClientState::<HostFunctionsManager> {
-				relay_chain: Default::default(),
-				current_authorities,
-				current_set_id,
-				latest_relay_hash: latest_relay_hash.into(),
-				frozen_height: None,
-				latest_para_height: block_number,
-				para_id: self.para_id,
-				..Default::default()
-			};
+			let mut client_state = GrandpaClientState::<HostFunctionsManager>::default();
+
+			client_state.relay_chain = Default::default();
+			client_state.current_authorities = current_authorities;
+			client_state.current_set_id = current_set_id;
+			client_state.latest_relay_hash = latest_relay_hash.into();
+			client_state.frozen_height = None;
+			client_state.latest_para_height = block_number;
+			client_state.para_id = self.para_id;
 			// we can't use the genesis block to construct the initial state.
 			if block_number == 0 {
 				continue
