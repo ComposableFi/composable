@@ -68,7 +68,7 @@ pub mod pallet {
 	use crate::weights::WeightInfo;
 	use codec::{Codec, FullCodec};
 	use composable_support::{
-		math::safe::SafeAdd,
+		math::safe::{SafeAdd, SafeSub},
 		types::{EcdsaSignature, EthereumAddress},
 	};
 	use frame_support::{
@@ -357,39 +357,42 @@ pub mod pallet {
 		) -> DispatchResult {
 			ensure!(!VestingTimeStart::<T>::exists(), Error::<T>::AlreadyInitialized);
 
-			let mut total_rewards: T::Balance = TotalRewards::<T>::get();
-			let mut total_contributors: u32 = TotalContributors::<T>::get();
+			let total_rewards: T::Balance = TotalRewards::<T>::get();
+			let total_contributors: u32 = TotalContributors::<T>::get();
 
-			for (remote_account, account_total, vesting_period) in rewards.into_iter() {
-				Rewards::<T>::try_mutate_exists::<_, _, DispatchError, _>(
-					remote_account,
-					|reward| match reward {
-						Some(reward) => {
-							total_rewards = total_rewards.checked_sub(&reward.total).expect(
-								"TotalRewards is greater than or equal to reward.total; QED",
-							);
-							total_rewards = total_rewards.safe_add(&account_total)?;
+			let (total_rewards, total_contributors) = rewards.into_iter().try_fold(
+				(total_rewards, total_contributors),
+				|(total_rewards, total_contributors),
+				 (remote_account, account_total, vesting_period)| {
+					Rewards::<T>::try_mutate_exists::<_, _, DispatchError, _>(
+						remote_account,
+						|reward| match reward {
+							Some(reward) => {
+								let total_rewards = total_rewards
+									.safe_sub(&reward.total)?
+									.safe_add(&account_total)?;
 
-							reward.total = account_total;
-							reward.vesting_period = vesting_period;
+								reward.total = account_total;
+								reward.vesting_period = vesting_period;
 
-							Ok(())
+								Ok((total_rewards, total_contributors))
+							},
+							None => {
+								let total_rewards = total_rewards.safe_add(&account_total)?;
+								let total_contributors = total_contributors.safe_add(&1)?;
+
+								reward.replace(Reward {
+									total: account_total,
+									claimed: T::Balance::zero(),
+									vesting_period,
+								});
+
+								Ok((total_rewards, total_contributors))
+							},
 						},
-						None => {
-							total_contributors = total_contributors.safe_add(&1)?;
-							total_rewards = total_rewards.safe_add(&account_total)?;
-
-							*reward = Some(Reward {
-								total: account_total,
-								claimed: T::Balance::zero(),
-								vesting_period,
-							});
-
-							Ok(())
-						},
-					},
-				)?;
-			}
+					)
+				},
+			)?;
 
 			TotalRewards::<T>::set(total_rewards);
 			TotalContributors::<T>::set(total_contributors);
