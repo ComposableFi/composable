@@ -64,7 +64,6 @@ sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkad
 #common = { git = "https://github.com/ComposableFi/composable", rev = "052052e5b070bc36dda7f9acd393a4c69404c3b2" }
 
 [features]
-default = ["parachain"]
 parachain = ["dep:parachain", "subxt"]
 #near = ["dep:near"]
 #cosmos = ["dep:cosmos"]
