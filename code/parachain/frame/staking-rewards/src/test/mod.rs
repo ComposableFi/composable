@@ -1,8 +1,12 @@
 pub(crate) use crate::test::runtime::{new_test_ext, Test}; // for benchmarks
 use crate::{
-	test::{prelude::H256, runtime::*},
+	test::{
+		prelude::{stake_and_assert, H256},
+		runtime::*,
+	},
 	Config, RewardPoolConfigurationOf, RewardPools, StakeOf, Stakes,
 };
+use composable_support::validation::TryIntoValidated;
 use composable_tests_helpers::test::{
 	block::process_and_progress_blocks,
 	currency::{BTC, PICA, USDT, XPICA},
@@ -33,7 +37,7 @@ use sp_core::sr25519::Public;
 use sp_runtime::PerThing;
 use sp_std::collections::{btree_map::BTreeMap, btree_set::BTreeSet};
 
-use self::prelude::STAKING_FNFT_COLLECTION_ID;
+use self::prelude::{create_rewards_pool_and_assert, split_and_assert, STAKING_FNFT_COLLECTION_ID};
 
 mod prelude;
 mod runtime;
@@ -200,11 +204,54 @@ fn stake_in_case_of_low_balance_should_not_work() {
 }
 
 #[test]
+fn split_doesnt_cause_loss_in_assets() {
+	new_test_ext().execute_with(|| {
+		process_and_progress_blocks::<StakingRewards, Test>(1);
+
+		mint_assets([ALICE], [PICA::ID], PICA::units(10_000));
+
+		create_rewards_pool_and_assert(RewardRateBasedIncentive {
+			owner: ALICE,
+			asset_id: PICA::ID,
+			start_block: 2,
+			end_block: 5,
+			reward_configs: default_reward_config(),
+			lock: default_lock_config(),
+			share_asset_id: XPICA::ID,
+			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+		});
+
+		process_and_progress_blocks::<StakingRewards, Test>(1);
+
+		let amount = 100_000;
+		let ratio = Permill::from_parts(555_555);
+
+		// 0.555_555 * 100_000 is not an integer, there will be rounding when calculating the
+		// amounts for the split positions
+		// the following rounding scheme is used to prevent loss of assets when splitting:
+		assert_eq!(ratio.mul_floor(amount), 55_555);
+		assert_eq!(ratio.left_from_one().mul_ceil(amount), 44_445);
+
+		let original_fnft_instance_id =
+			stake_and_assert::<Test, runtime::Event>(ALICE, PICA::ID, amount, ONE_MINUTE);
+
+		// split_and_assert checks for loss of assets
+		split_and_assert::<Test, runtime::Event>(
+			ALICE,
+			STAKING_FNFT_COLLECTION_ID,
+			original_fnft_instance_id,
+			ratio.try_into_validated().unwrap(),
+		);
+	})
+}
+
+#[test]
 fn stake_in_case_of_zero_inflation_should_work() {
 	new_test_ext().execute_with(|| {
 		process_and_progress_blocks::<StakingRewards, Test>(1);
 
 		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
+		process_and_progress_blocks::<StakingRewards, Test>(1);
 		let staker: Public = ALICE;
 		let amount: u128 = 100_500_u128;
 		let duration_preset: u64 = ONE_HOUR;
@@ -213,11 +260,10 @@ fn stake_in_case_of_zero_inflation_should_work() {
 		let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
 		mint_assets([staker], [staked_asset_id], amount * 2);
 
-		process_and_progress_blocks::<StakingRewards, Test>(1);
-		let fnft_instance_id = assert_extrinsic_event_with::<Test, _, _, _>(
+		let fnft_instance_id = assert_extrinsic_event_with::<Test, Event, _, _, _, _>(
 			StakingRewards::stake(Origin::signed(staker), PICA::ID, amount, duration_preset),
 			|event| match event {
-				Event::StakingRewards(crate::Event::<Test>::Staked {
+				crate::Event::<Test>::Staked {
 					pool_id: PICA::ID,
 					owner: _staker,
 					amount: _,
@@ -225,7 +271,7 @@ fn stake_in_case_of_zero_inflation_should_work() {
 					fnft_collection_id: _,
 					fnft_instance_id,
 					keep_alive: _,
-				}) => Some(fnft_instance_id),
+				} => Some(fnft_instance_id),
 				_ => None,
 			},
 		);
@@ -269,10 +315,10 @@ fn stake_in_case_of_zero_inflation_should_work() {
 			StakingRewards::boosted_amount(reward_multiplier, amount)
 		);
 
-		assert_last_event_with::<Test, _>(|event| {
+		assert_last_event_with::<Test, Event, crate::Event<Test>, _>(|event| {
 			matches!(
 				event,
-				Event::StakingRewards(crate::Event::Staked {
+				crate::Event::Staked {
 					pool_id: PICA::ID,
 					owner,
 					amount: _,
@@ -280,7 +326,7 @@ fn stake_in_case_of_zero_inflation_should_work() {
 					fnft_collection_id: PICA::ID,
 					fnft_instance_id: _,
 					keep_alive: _,
-				}) if owner == staker
+				} if owner == staker
 			)
 			.then_some(())
 		});
@@ -301,6 +347,7 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 
 		process_and_progress_blocks::<StakingRewards, Test>(1);
 		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
+		process_and_progress_blocks::<StakingRewards, Test>(1);
 
 		let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
 		mint_assets([ALICE], [staked_asset_id], AMOUNT * 2);
@@ -310,7 +357,6 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 			TOTAL_SHARES,
 		);
 
-		process_and_progress_blocks::<StakingRewards, Test>(1);
 		assert_ok!(StakingRewards::stake(Origin::signed(ALICE), PICA::ID, AMOUNT, DURATION_PRESET));
 		let rewards_pool = StakingRewards::pools(PICA::ID).expect("rewards_pool expected");
 		let reward_multiplier = StakingRewards::reward_multiplier(&rewards_pool, DURATION_PRESET)
@@ -347,8 +393,8 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 
 		assert!(FinancialNft::instance(1, 0).is_some());
 
-		assert_last_event_with::<Test, _>(|event| match event {
-			Event::StakingRewards(crate::Event::Staked {
+		assert_last_event_with::<Test, Event, _, _>(|event| match event {
+			crate::Event::Staked {
 				pool_id,
 				owner,
 				amount,
@@ -356,7 +402,7 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 				fnft_collection_id: _,
 				fnft_instance_id: _,
 				keep_alive: _,
-			}) => {
+			} => {
 				assert_eq!(owner, ALICE);
 				assert_eq!(pool_id, PICA::ID);
 				assert_eq!(amount, 100_500_u32.into());
@@ -764,11 +810,9 @@ fn test_split_position() {
 			stake2.reductions.get(&USDT::ID),
 			Some(&left_from_one_ratio.mul_floor(reduction))
 		);
-		assert_last_event::<Test, _>(|e| {
-			matches!(&e.event,
-			Event::StakingRewards(crate::Event::SplitPosition { positions })
-			if positions == &vec![(PICA::ID, 0, stake1.stake), (PICA::ID, 1, stake2.stake)])
-		});
+		helper::assert_last_event::<Test>(Event::StakingRewards(crate::Event::SplitPosition {
+			positions: vec![(PICA::ID, 0, stake1.stake), (PICA::ID, 1, stake2.stake)],
+		}));
 	});
 }
 
@@ -1032,6 +1076,31 @@ mod claim {
 			},
 		);
 	}
+}
+
+#[test]
+fn duration_presets_are_required() {
+	new_test_ext().execute_with(|| {
+		assert_err!(
+			StakingRewards::create_reward_pool(
+				Origin::root(),
+				RewardRateBasedIncentive {
+					owner: ALICE,
+					asset_id: PICA::ID,
+					start_block: 2,
+					end_block: 5,
+					reward_configs: default_reward_config(),
+					lock: LockConfig {
+						duration_presets: BoundedBTreeMap::new(),
+						unlock_penalty: Perbill::from_percent(5),
+					},
+					share_asset_id: XPICA::ID,
+					financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+				},
+			),
+			crate::Error::<Test>::NoDurationPresetsProvided
+		);
+	});
 }
 
 /// Runs code inside of `new_test_ext().execute_with` closure while creating a stake with the given
