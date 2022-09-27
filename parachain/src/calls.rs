@@ -94,7 +94,6 @@ pub fn ibc_transfer<T: Config, X: subxt::extrinsic::ExtrinsicParams<T>>(
 	SubmittableExtrinsic::new(client, call)
 }
 
-
 #[derive(Encode, Decode, Clone)]
 pub struct SetPalletParams {
 	pub params: PalletParams,

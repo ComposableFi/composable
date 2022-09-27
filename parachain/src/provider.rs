@@ -25,14 +25,7 @@ use subxt::Config;
 
 use super::{error::Error, ParachainClient};
 
-use ibc_rpc::{IbcApiClient, PacketInfo};
-use primitives::{Chain, IbcProvider, KeyProvider, UpdateType};
-use sp_core::H256;
-
-use crate::{
-	parachain, parachain::api::runtime_types::primitives::currency::CurrencyId, GrandpaClientState,
-	LightClientProtocol,
-};
+use crate::{parachain, GrandpaClientState, LightClientProtocol};
 use ibc::{
 	applications::transfer::{Amount, PrefixedCoin, PrefixedDenom},
 	core::ics02_client::client_state::ClientType,
@@ -42,6 +35,9 @@ use ibc_proto::{
 	google::protobuf::Any,
 	ibc::core::{channel::v1::QueryChannelsResponse, client::v1::IdentifiedClientState},
 };
+use ibc_rpc::{IbcApiClient, PacketInfo};
+use primitives::{Chain, IbcProvider, KeyProvider, UpdateType};
+use sp_core::H256;
 
 use crate::light_client_protocols::FinalityEvent;
 use beefy_prover::helpers::fetch_timestamp_extrinsic_with_proof;

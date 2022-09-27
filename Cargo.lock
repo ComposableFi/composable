@@ -2294,6 +2294,7 @@ dependencies = [
  "hyperspace-primitives",
  "ibc",
  "ibc-proto",
+ "ibc-rpc",
  "ics10-grandpa",
  "ics11-beefy",
  "ics13-near",
@@ -2312,6 +2313,7 @@ dependencies = [
  "sp-trie",
  "subxt",
  "tendermint-proto",
+ "thiserror",
  "tokio",
  "toml",
 ]

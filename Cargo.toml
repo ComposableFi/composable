@@ -21,16 +21,19 @@ async-trait = "0.1.53"
 log = "0.4.17"
 env_logger = "0.9.0"
 hex = "0.4.3"
-tokio = { version = "1.19.2", features = ["macros", "sync"] }
+tokio = { version = "1.19.2", features = ["macros", "rt-multi-thread"] }
 codec = { version = "3.0.0", package = "parity-scale-codec" }
 clap = { version = "3.2.22", features = ["derive"] }
 toml = "0.5.9"
 serde = "1.0.144"
+thiserror = "1.0.31"
+derive_more = { version = "0.99.17", features = ["from"] }
 
 # ibc
 ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "9a959faabb8f2869e88327ea65a49f5697dcadf6", features = [] }
 ibc-proto = { git = "https://github.com/composableFi/ibc-rs", rev = "9a959faabb8f2869e88327ea65a49f5697dcadf6" }
 tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8" }
+ibc-rpc = { git = "https://github.com/ComposableFi/composable", rev = "052052e5b070bc36dda7f9acd393a4c69404c3b2" }
 
 ics11-beefy = { git = "https://github.com/ComposableFi/centauri", rev = "4384ccc23e82a4e06337d106d5bd170a56b56672" }
 ics13-near = { git = "https://github.com/ComposableFi/centauri", rev = "4384ccc23e82a4e06337d106d5bd170a56b56672" }
@@ -42,6 +45,7 @@ sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkad
 sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+subxt = { git = "https://github.com/paritytech/subxt", rev = "c55b7ba3e34118f61dc51499a0b38262c513aec4", optional = true }
 
 [dev-dependencies]
 derive_more = "0.99.17"
@@ -60,9 +64,10 @@ sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkad
 #common = { git = "https://github.com/ComposableFi/composable", rev = "052052e5b070bc36dda7f9acd393a4c69404c3b2" }
 
 [features]
-parachain = ["dep:parachain"]
-# near = ["dep:near"]
-cosmos = ["dep:cosmos"]
+default = ["parachain"]
+parachain = ["dep:parachain", "subxt"]
+#near = ["dep:near"]
+#cosmos = ["dep:cosmos"]
 testing = []
 
 [workspace]

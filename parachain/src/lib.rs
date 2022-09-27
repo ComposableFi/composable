@@ -1,4 +1,4 @@
-use std::{str::FromStr, time::Duration};
+use std::{str::FromStr, sync::Arc, time::Duration};
 
 pub mod calls;
 pub mod chain;
@@ -16,6 +16,7 @@ pub mod test_provider;
 
 use codec::{Codec, Decode};
 use error::Error;
+use serde::Deserialize;
 
 use beefy_light_client_primitives::{ClientState, MmrUpdateProof, PartialMmrLeaf};
 use beefy_prover::{
@@ -36,8 +37,8 @@ use ics11_beefy::{
 use pallet_ibc::light_clients::{AnyClientState, AnyConsensusState, HostFunctionsManager};
 use pallet_mmr_primitives::BatchProof;
 use signer::ExtrinsicSigner;
-use sp_core::H256;
-use sp_keystore::SyncCryptoStorePtr;
+use sp_core::{ecdsa, ed25519, sr25519, Bytes, Pair, H256};
+use sp_keystore::{SyncCryptoStore, SyncCryptoStorePtr};
 use sp_runtime::{
 	generic::Era,
 	traits::{IdentifyAccount, Verify},
@@ -66,9 +67,9 @@ use ics10_grandpa::{
 	client_state::ClientState as GrandpaClientState,
 	consensus_state::ConsensusState as GrandpaConsensusState,
 };
+use sp_keystore::testing::KeyStore;
 use sp_runtime::traits::{One, Zero};
 
-#[derive(Clone)]
 /// Implements the [`crate::Chain`] trait for parachains.
 /// This is responsible for:
 /// 1. Tracking a parachain light client on a counter-party chain, advancing this light
@@ -105,7 +106,37 @@ pub struct ParachainClient<T: subxt::Config> {
 	pub light_client_protocol: LightClientProtocol,
 }
 
+enum KeyType {
+	Sr25519,
+	Ed25519,
+	Ecdsa,
+}
+
+impl KeyType {
+	pub fn to_key_type_id(&self) -> KeyTypeId {
+		match self {
+			KeyType::Sr25519 => KeyTypeId(sp_core::sr25519::CRYPTO_ID.0),
+			KeyType::Ed25519 => KeyTypeId(sp_core::ed25519::CRYPTO_ID.0),
+			KeyType::Ecdsa => KeyTypeId(sp_core::ecdsa::CRYPTO_ID.0),
+		}
+	}
+}
+
+impl FromStr for KeyType {
+	type Err = Error;
+
+	fn from_str(s: &str) -> Result<Self, Self::Err> {
+		match s {
+			"sr25519" => Ok(KeyType::Sr25519),
+			"ed25519" => Ok(KeyType::Ed25519),
+			"ecdsa" => Ok(KeyType::Ecdsa),
+			_ => Err(Error::Custom("Invalid key type".to_string())),
+		}
+	}
+}
+
 /// config options for [`ParachainClient`]
+#[derive(Debug, Deserialize)]
 pub struct ParachainClientConfig {
 	/// Chain name
 	pub name: String,
@@ -118,19 +149,17 @@ pub struct ParachainClientConfig {
 	/// Light client id on counterparty chain
 	pub client_id: Option<ClientId>,
 	/// Commitment prefix
-	pub commitment_prefix: Vec<u8>,
-	/// Relayer's Public on parachain key
-	pub public_key: MultiSigner,
-	/// Reference to keystore
-	pub key_store: SyncCryptoStorePtr,
+	pub commitment_prefix: Bytes,
+	/// Path to a keystore file
+	pub private_key: String,
 	/// used for encoding relayer address.
 	pub ss58_version: u8,
-	/// 4 byte Key type id
-	pub key_type_id: KeyTypeId,
 	/// Channels cleared for packet relay
 	pub channel_whitelist: Vec<(ChannelId, PortId)>,
 	/// Light client protocol
 	pub light_client_protocol: LightClientProtocol,
+	/// Digital signature scheme
+	pub key_type: String,
 }
 
 impl<T: subxt::Config + Send + Sync> ParachainClient<T>
@@ -155,16 +184,47 @@ where
 
 		let (sender, _) = broadcast::channel(16);
 		let max_extrinsic_weight = fetch_max_extrinsic_weight(&para_client).await?;
+
+		let key_store: SyncCryptoStorePtr = Arc::new(KeyStore::new());
+		let key_type = KeyType::from_str(&config.key_type)?;
+		let key_type_id = key_type.to_key_type_id();
+
+		let public_key: MultiSigner = match key_type {
+			KeyType::Sr25519 => sr25519::Pair::from_string_with_seed(&config.private_key, None)
+				.map_err(|_| Error::Custom("invalid key".to_owned()))?
+				.0
+				.public()
+				.into(),
+			KeyType::Ed25519 => ed25519::Pair::from_string_with_seed(&config.private_key, None)
+				.map_err(|_| Error::Custom("invalid key".to_owned()))?
+				.0
+				.public()
+				.into(),
+			KeyType::Ecdsa => ecdsa::Pair::from_string_with_seed(&config.private_key, None)
+				.map_err(|_| Error::Custom("invalid key".to_owned()))?
+				.0
+				.public()
+				.into(),
+		};
+
+		SyncCryptoStore::insert_unknown(
+			&*key_store,
+			key_type_id,
+			&*config.private_key,
+			public_key.as_ref(),
+		)
+		.unwrap();
+
 		Ok(Self {
 			name: config.name,
 			para_client,
 			relay_client,
 			para_id: config.para_id,
 			client_id: config.client_id,
-			commitment_prefix: config.commitment_prefix,
-			public_key: config.public_key,
-			key_store: config.key_store,
-			key_type_id: config.key_type_id,
+			commitment_prefix: config.commitment_prefix.0,
+			public_key,
+			key_store,
+			key_type_id,
 			sender,
 			max_extrinsic_weight,
 			ss58_version: Ss58AddressFormat::from(config.ss58_version),

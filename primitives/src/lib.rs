@@ -85,8 +85,7 @@ pub trait IbcProvider {
 		counterparty: &T,
 	) -> Result<(Any, Vec<IbcEvent>, UpdateType), anyhow::Error>
 	where
-		T: Chain,
-		Self::Error: From<T::Error>;
+		T: Chain;
 
 	/// Query client consensus state with proof
 	/// return the consensus height for the client along with the response
