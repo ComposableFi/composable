@@ -616,7 +616,7 @@
               src = fetchFromGitHub {
                 repo = "polkadot";
                 owner = "ComposableFi";
-                rev = "mmr-polkadot-v0.9.24-20220927";
+                rev = "e369f2bdbf429fe35ea7267ae49cf2e8359dd1cc";
                 hash = "sha256-LEz3OrVgdFTCnVwzU8C6GeEougaOl2qo7jS9qIdMqAN=";
               };
               cargoSha256 =
@@ -695,8 +695,9 @@
                 pathsToLink = [ "/bin" ];
               };
               config = {
-                Entrypoint =
-                  [ "${packages.devnet-dali-centauri}/bin/run-devnet-dali-dev" ];
+                Entrypoint = [
+                  "${packages.devnet-dali-centauri}/bin/run-devnet-dali-dev"
+                ];
                 WorkingDir = "/home/polkadot-launch";
               };
               runAsRoot = ''
@@ -705,7 +706,6 @@
                 chmod 777 /tmp
               '';
             };
-
 
             frontend-static = mkFrontendStatic {
               subsquidEndpoint = "http://localhost:4350/graphql";
