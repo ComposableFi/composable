@@ -7754,6 +7754,7 @@ name = "pallet-crowdloan-rewards"
 version = "0.0.1"
 dependencies = [
  "composable-support",
+ "composable-tests-helpers",
  "frame-support",
  "frame-system",
  "hex",
