@@ -349,9 +349,9 @@ pub mod pallet {
 		/// for the new values.
 		///
 		/// # Errors
-		/// * `AlreadyInitialized` - The crowdloan has been set to intitialize, population may no
+		/// * `AlreadyInitialized` - The crowdloan has been set to initialize, population may no
 		///   longer commence
-		/// * `ArithmaticError` - Overflow/Underflow detected while calculating totals
+		/// * `ArithmeticError` - Overflow/Underflow detected while calculating totals
 		pub(crate) fn do_populate(
 			rewards: Vec<(RemoteAccountOf<T>, RewardAmountOf<T>, VestingPeriodOf<T>)>,
 		) -> DispatchResult {
