@@ -36,8 +36,22 @@ use parachain::ParachainClient;
 use primitives::{Chain, IbcProvider, KeyProvider, UpdateType};
 use std::{pin::Pin, time::Duration};
 #[cfg(feature = "parachain")]
-use subxt::DefaultConfig;
+#[derive(Debug, Clone)]
+pub enum DefaultConfig {}
 
+#[cfg(feature = "parachain")]
+impl subxt::Config for DefaultConfig {
+	type Index = u32;
+	type BlockNumber = u32;
+	type Hash = sp_core::H256;
+	type Hashing = sp_runtime::traits::BlakeTwo256;
+	type AccountId = sp_runtime::AccountId32;
+	type Address = sp_runtime::MultiAddress<Self::AccountId, u32>;
+	type Header = sp_runtime::generic::Header<Self::BlockNumber, sp_runtime::traits::BlakeTwo256>;
+	type Signature = sp_runtime::MultiSignature;
+	type Extrinsic = sp_runtime::OpaqueExtrinsic;
+}
+#[derive(Clone)]
 pub enum AnyChain {
 	#[cfg(feature = "parachain")]
 	Parachain(ParachainClient<DefaultConfig>),

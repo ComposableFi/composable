@@ -70,6 +70,7 @@ use ics10_grandpa::{
 use sp_keystore::testing::KeyStore;
 use sp_runtime::traits::{One, Zero};
 
+#[derive(Clone)]
 /// Implements the [`crate::Chain`] trait for parachains.
 /// This is responsible for:
 /// 1. Tracking a parachain light client on a counter-party chain, advancing this light

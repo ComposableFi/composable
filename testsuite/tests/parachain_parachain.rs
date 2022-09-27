@@ -76,13 +76,12 @@ async fn setup_clients() -> (ParachainClient<DefaultConfig>, ParachainClient<Def
 		parachain_rpc_url: args.chain_a,
 		relay_chain_rpc_url: args.relay_chain.clone(),
 		client_id: None,
-		commitment_prefix: args.connection_prefix_b.as_bytes().to_vec(),
-		public_key: alice_pub_key.clone(),
-		key_store: key_store.clone(),
+		commitment_prefix: args.connection_prefix_b.as_bytes().to_vec().into(),
 		ss58_version: 49,
 		channel_whitelist: vec![],
-		key_type_id,
 		light_client_protocol: LightClientProtocol::Grandpa,
+		private_key: "//Alice".to_string(),
+		key_type: "sr25519".to_string(),
 	};
 	let config_b = ParachainClientConfig {
 		name: format!("ParaId({})", args.para_id_b),
@@ -90,13 +89,12 @@ async fn setup_clients() -> (ParachainClient<DefaultConfig>, ParachainClient<Def
 		parachain_rpc_url: args.chain_b,
 		relay_chain_rpc_url: args.relay_chain,
 		client_id: None,
-		commitment_prefix: args.connection_prefix_b.as_bytes().to_vec(),
-		public_key: alice_pub_key,
-		key_store,
+		commitment_prefix: args.connection_prefix_b.as_bytes().to_vec().into(),
+		private_key: "//Alice".to_string(),
 		ss58_version: 49,
 		channel_whitelist: vec![],
-		key_type_id,
 		light_client_protocol: LightClientProtocol::Grandpa,
+		key_type: "sr25519".to_string(),
 	};
 
 	let mut chain_a = ParachainClient::<DefaultConfig>::new(config_a).await.unwrap();
