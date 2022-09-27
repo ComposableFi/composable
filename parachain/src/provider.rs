@@ -439,11 +439,11 @@ where
 			.to_runtime_api::<parachain::api::RuntimeApi<T, subxt::PolkadotExtrinsicParams<_>>>();
 
 		let account = self.public_key.clone().into_account();
-		let balance = api.storage().tokens().accounts(&account, &CurrencyId(1), None).await?;
+		let balance = api.storage().system().account(&account, None).await?;
 
 		Ok(vec![PrefixedCoin {
 			denom: PrefixedDenom::from_str("PICA")?,
-			amount: Amount::from_str(&format!("{}", balance.free))?,
+			amount: Amount::from_str(&format!("{}", balance.data.free))?,
 		}])
 	}
 

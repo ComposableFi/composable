@@ -6,7 +6,7 @@ authors = ["Composable Developers"]
 resolver = "2"
 
 [build-dependencies]
-subxt-codegen = "0.22.0"
+subxt-codegen = { git = "https://github.com/paritytech/subxt", rev = "c55b7ba3e34118f61dc51499a0b38262c513aec4" }
 jsonrpsee = { version = "0.14.0", features = ["async-client", "client-ws-transport", "http-client"] }
 frame-metadata = { version = "15.0.0", features = ["v14", "std"] }
 syn = "1.0.98"

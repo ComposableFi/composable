@@ -3,7 +3,6 @@ use subxt::{Client, Config, SubmittableExtrinsic};
 
 use super::polkadot;
 use common::AccountId;
-pub use ibc_primitives::OpenChannelParams;
 pub use pallet_ibc::{Any as RawAny, PalletParams, TransferParams};
 pub use ping::SendPingParams;
 
@@ -95,15 +94,6 @@ pub fn ibc_transfer<T: Config, X: subxt::extrinsic::ExtrinsicParams<T>>(
 	SubmittableExtrinsic::new(client, call)
 }
 
-#[derive(Encode, Decode, Clone)]
-pub struct OpenTransferChannel {
-	pub params: OpenChannelParams,
-}
-
-impl subxt::Call for OpenTransferChannel {
-	const PALLET: &'static str = "Ibc";
-	const FUNCTION: &'static str = "open_transfer_channel";
-}
 
 #[derive(Encode, Decode, Clone)]
 pub struct SetPalletParams {
@@ -113,16 +103,6 @@ pub struct SetPalletParams {
 impl subxt::Call for SetPalletParams {
 	const PALLET: &'static str = "Ibc";
 	const FUNCTION: &'static str = "set_params";
-}
-
-#[derive(Encode, Decode, Clone)]
-pub struct OpenPingChannel {
-	pub params: OpenChannelParams,
-}
-
-impl subxt::Call for OpenPingChannel {
-	const PALLET: &'static str = "IbcPing";
-	const FUNCTION: &'static str = "open_channel";
 }
 
 #[derive(Encode, Decode, Clone)]
