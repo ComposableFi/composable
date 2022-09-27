@@ -1183,7 +1183,7 @@ pub mod pallet {
 						reward_asset_id: *reward_asset_id,
 						amount_slashed: slashed_amount,
 					});
-					// SAFETY(benluelo): slashed_amount is <= claim as is shown above
+					// SAFETY: slashed_amount is <= claim as is shown above
 					claim.defensive_saturating_sub(slashed_amount)
 				} else {
 					claim
