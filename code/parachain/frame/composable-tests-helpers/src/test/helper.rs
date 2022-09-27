@@ -181,7 +181,7 @@ where
 	Runtime: Config<Event = RuntimeEvent>,
 	RuntimeEvent: Parameter + Member + Debug + Clone,
 	RuntimeEvent: TryInto<PalletEvent>,
-	<RuntimeEvent as TryInto<PalletEvent>>::Error: std::fmt::Debug,
+	<RuntimeEvent as TryInto<PalletEvent>>::Error: sp_std::fmt::Debug,
 {
 	frame_system::Pallet::<Runtime>::events()
 		.into_iter()
