@@ -360,7 +360,7 @@ pub mod pallet {
 			let mut total_rewards: T::Balance = TotalRewards::<T>::get();
 			let mut total_contributors: u32 = TotalContributors::<T>::get();
 
-			for (remote_account, total, vesting_period) in rewards.into_iter() {
+			for (remote_account, account_total, vesting_period) in rewards.into_iter() {
 				Rewards::<T>::try_mutate_exists::<_, _, DispatchError, _>(
 					remote_account,
 					|reward| match reward {
@@ -368,19 +368,22 @@ pub mod pallet {
 							total_rewards = total_rewards.checked_sub(&reward.total).expect(
 								"TotalRewards is greater than or equal to reward.total; QED",
 							);
-							total_rewards = total_rewards.safe_add(&total)?;
+							total_rewards = total_rewards.safe_add(&account_total)?;
 
-							reward.total = total;
+							reward.total = account_total;
 							reward.vesting_period = vesting_period;
 
 							Ok(())
 						},
 						None => {
 							total_contributors = total_contributors.safe_add(&1)?;
-							total_rewards = total_rewards.safe_add(&total)?;
+							total_rewards = total_rewards.safe_add(&account_total)?;
 
-							*reward =
-								Some(Reward { total, claimed: T::Balance::zero(), vesting_period });
+							*reward = Some(Reward {
+								total: account_total,
+								claimed: T::Balance::zero(),
+								vesting_period,
+							});
 
 							Ok(())
 						},
