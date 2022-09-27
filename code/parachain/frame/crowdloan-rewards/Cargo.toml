@@ -22,6 +22,7 @@ pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "p
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 serde = { version = '1.0.136' }
 sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+composable-tests-helpers = { path = "../composable-tests-helpers" }
 
 [dependencies]
 libsecp256k1 = { version = "0.7.0", default-features = false, optional = true, features = [

@@ -1,6 +1,6 @@
 use core::fmt::Debug;
 
-use frame_support::assert_ok;
+use frame_support::{assert_ok, pallet_prelude::*};
 use frame_system::{Config, EventRecord};
 use sp_runtime::{DispatchError, FixedPointNumber, FixedU128};
 
@@ -145,4 +145,22 @@ pub fn assert_extrinsic_event_with<Runtime: Config, T: Debug, E: Into<DispatchEr
 ) -> R {
 	assert_ok!(result);
 	assert_last_event_with::<Runtime, R>(f)
+}
+
+/// Iterates over all of the events currently in the runtime and calls the provided function on all
+/// of the `PalletEvent` events, returning an iterator over the the returned values of all of the
+/// found events.
+pub fn assert_event<Runtime, RuntimeEvent, PalletEvent, R>(
+	f: impl FnMut(PalletEvent) -> Option<R>,
+) -> impl Iterator<Item = R>
+where
+	Runtime: Config<Event = RuntimeEvent>,
+	RuntimeEvent: Parameter + Member + Debug + Clone,
+	RuntimeEvent: TryInto<PalletEvent>,
+	<RuntimeEvent as TryInto<PalletEvent>>::Error: std::fmt::Debug,
+{
+	frame_system::Pallet::<Runtime>::events()
+		.into_iter()
+		.flat_map(move |EventRecord { event, .. }| event.try_into().ok())
+		.flat_map(f)
 }
