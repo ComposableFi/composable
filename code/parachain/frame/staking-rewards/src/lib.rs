@@ -973,8 +973,8 @@ pub mod pallet {
 					let left_from_one_ratio = ratio.left_from_one();
 
 					// create the new position first, before mutating the existing position
-					// mul_ceil is used for the new position, and mul_floor for the existing position,
-					// that way any rounding is accounted for.
+					// mul_ceil is used for the new position, and mul_floor for the existing
+					// position, that way any rounding is accounted for.
 					let new_stake = left_from_one_ratio.mul_ceil(existing_position.stake);
 					let new_share = left_from_one_ratio.mul_ceil(existing_position.share);
 					let new_reductions = {
@@ -1140,8 +1140,8 @@ pub mod pallet {
 				existing_account_amount,
 			)?;
 
-			// transfer the amount in the new position from the existing account to the new account (this
-			// should be the total unlocked amount)
+			// transfer the amount in the new position from the existing account to the new account
+			// (this should be the total unlocked amount)
 			T::Assets::transfer(
 				asset_id,
 				existing_fnft_asset_account,
