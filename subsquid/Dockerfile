@@ -1,21 +1,21 @@
 FROM node:16-alpine AS node
 CMD ["echo", "'initializing graphql-server build main Dockerfile'"]
 FROM node AS node-with-gyp
-RUN apk add g++ make python3
+RUN apk --no-cache add g++ make python3
 
 FROM node-with-gyp AS builder
 WORKDIR /squid
-ADD package.json .
-ADD package-lock.json .
+COPY package.json .
+COPY package-lock.json .
 RUN npm ci
-ADD tsconfig.json .
-ADD src src
+COPY tsconfig.json .
+COPY src src
 RUN npm run build
 
 FROM node-with-gyp AS deps
 WORKDIR /squid
-ADD package.json .
-ADD package-lock.json .
+COPY package.json .
+COPY package-lock.json .
 RUN npm ci
 
 FROM node AS squid
