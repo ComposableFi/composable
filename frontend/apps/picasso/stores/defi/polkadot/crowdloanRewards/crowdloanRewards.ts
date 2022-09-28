@@ -1,49 +1,45 @@
-import { fromChainIdUnit } from "@/../../packages/shared";
-import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { ApiPromise } from "@polkadot/api";
-import { decodeAddress, encodeAddress } from "@polkadot/util-crypto";
+import { decodeAddress } from "@polkadot/util-crypto";
 import {
-  AccountAssociation,
-  CrowdloanAccountAccountState,
-  CrowdloanSelectedAccountStatus,
-  OnChainAccountAssociation,
+  CrowdloanAssociation,
+  CrowdloanContributionRecord,
 } from "./crowdloanRewards.slice";
 import {
   presentInRewards,
-  presentInRewardsDev,
   presentInContributors,
-  presentInContributorsDev,
 } from "./CrowdloanRewardsUpdater";
 import BigNumber from "bignumber.js";
+import { fromChainIdUnit } from "shared";
 
 export async function fetchAssociations(
   api: ApiPromise,
   connectedAccounts: string[]
-): Promise<AccountAssociation[]> {
-  let associations: Array<AccountAssociation> = [];
+): Promise<CrowdloanAssociation[]> {
+  let associations: Array<CrowdloanAssociation> = [];
   try {
     const associationPromises = connectedAccounts.map<
-      Promise<AccountAssociation>
+      Promise<CrowdloanAssociation>
     >((account) => {
       return new Promise((res, rej) => {
         api.query.crowdloanRewards
           .associations(decodeAddress(account))
           .then((_association) => {
+            const associationJSON = _association.toJSON();
             res(
               _association.value.isEthereum
-                ? {
+                ? [
                     account,
-                    association: _association.value.toString(),
-                  }
+                    (
+                      associationJSON as Record<"ethereum", string>
+                    ).ethereum.toLowerCase(),
+                  ]
                 : _association.value.isRelayChain
-                ? {
+                ? [
                     account,
-                    association: _association.value.toString(),
-                  }
-                : {
-                    account,
-                    association: null,
-                  }
+                    (associationJSON as Record<"relayChain", string>)
+                      .relayChain,
+                  ]
+                : [account, null]
             );
           })
           .catch(rej);
@@ -58,104 +54,73 @@ export async function fetchAssociations(
   }
 }
 
-export async function fetchClaimableAndClaimedRewards(
+export function updateContributions(
+  connectedAddress: string
+): CrowdloanContributionRecord {
+  let crowdloanContributionRecord: CrowdloanContributionRecord = {};
+
+  let totalRewards = presentInRewards(connectedAddress, process.env.NODE_ENV);
+  let totalContributed = presentInContributors(
+    connectedAddress,
+    process.env.NODE_ENV
+  );
+
+  if (!!totalRewards && !!totalContributed) {
+    crowdloanContributionRecord[connectedAddress] = {
+      totalRewards: new BigNumber(totalContributed),
+      contributedAmount: new BigNumber(totalContributed),
+    };
+  }
+
+  return crowdloanContributionRecord;
+}
+
+export async function fetchClaimableRewards(
   api: ApiPromise,
-  accountsState: CrowdloanAccountAccountState[]
-): Promise<CrowdloanAccountAccountState[]> {
+  picassoAccount: string
+): Promise<BigNumber> {
   try {
-    for (const account of accountsState) {
-      if (account.address.picassoFormat) {
-        const claimableRewards =
-          await api.rpc.crowdloanRewards.amountAvailableToClaimFor(
-            account.address.picassoFormat
-          );
-        account.availableToClaim = fromChainIdUnit(
-          new BigNumber(claimableRewards.toString())
-        );
-      }
-
-      const isRelayChainAccount = account.address.source !== "ethereum";
-      const rewards = await api.query.crowdloanRewards.rewards(
-        isRelayChainAccount && account.address.picassoFormat
-          ? api.createType("PalletCrowdloanRewardsModelsRemoteAccount", {
-              RelayChain: api.createType(
-                "AccountId32",
-                account.address.picassoFormat
-              ),
-            })
-          : api.createType("PalletCrowdloanRewardsModelsRemoteAccount", {
-              Ethereum: account.address,
-            })
-      );
-
-      console.log(rewards.toJSON());
-    }
+    const claimableRewards =
+      await api.rpc.crowdloanRewards.amountAvailableToClaimFor(picassoAccount);
+    return fromChainIdUnit(
+        new BigNumber(claimableRewards.toString()),
+        12
+      )
   } catch (error) {
     console.error(error);
-  } finally {
-    return accountsState;
+    return new BigNumber(0)
   }
 }
 
-export function getConnectedAccountState(
-  connectedAddress: string,
-  connectedAddressSource: "ethereum" | "kusama",
-  environment: "development" | "production",
-  connectedAccountsAssociations: OnChainAccountAssociation[],
-  picassoSS58Format = SUBSTRATE_NETWORKS.picasso.ss58Format
-): CrowdloanAccountAccountState {
-  let crowdloan: CrowdloanAccountAccountState = {
-    address: {
-      ksmOrEthAddress: connectedAddress,
-      source: connectedAddressSource,
-      picassoFormat:
-        connectedAddressSource === "kusama" &&
-        !connectedAddress.startsWith("0x")
-          ? encodeAddress(connectedAddress, picassoSS58Format)
-          : undefined,
-    },
-    crowdloanSelectedAccountStatus: "ineligible",
-    amountContributed: new BigNumber(0),
-    totalRewards: new BigNumber(0),
-    availableToClaim: new BigNumber(0),
-    claimedRewards: new BigNumber(0),
-  };
+export async function fetchClaimedRewards(
+  api: ApiPromise,
+  selectedPicassoOrEthAccount: string
+): Promise<BigNumber> {
+  try {
+    const rewards = await api.query.crowdloanRewards.rewards(
+      !selectedPicassoOrEthAccount.startsWith("0x")
+        ? api.createType("PalletCrowdloanRewardsModelsRemoteAccount", {
+            RelayChain: api.createType(
+              "AccountId32",
+              selectedPicassoOrEthAccount
+            ),
+          })
+        : api.createType("PalletCrowdloanRewardsModelsRemoteAccount", {
+            Ethereum: selectedPicassoOrEthAccount,
+          })
+    );
 
-  let crowdloanSelectedAccountStatus: CrowdloanSelectedAccountStatus =
-    "ineligible";
+    const rewardsJSON = rewards.toJSON();
+    let claimed = new BigNumber(0);
 
-  let presentAmountInRewards =
-    environment === "production"
-      ? presentInRewards(connectedAddress)
-      : environment === "development"
-      ? presentInRewardsDev(connectedAddress)
-      : undefined;
-  let presentAmountInContributions =
-    environment === "production"
-      ? presentInContributors(connectedAddress)
-      : environment === "development"
-      ? presentInContributorsDev(connectedAddress)
-      : undefined;
-
-  if (!!presentAmountInRewards && !!presentAmountInContributions) {
-    crowdloanSelectedAccountStatus = "canAssociate";
-
-    const association = connectedAccountsAssociations.find((association) => {
-      return connectedAddressSource === "ethereum"
-        ? association.association === connectedAddress
-        : association.account === connectedAddress;
-    });
-
-    if (association) {
-      crowdloanSelectedAccountStatus = "canClaim";
+    if (rewardsJSON) {
+      // @ts-ignore
+      claimed = fromChainIdUnit(rewardsJSON.claimed, 12);
     }
+
+    return claimed;
+  } catch (error) {
+    console.error(error);
+    return new BigNumber(0);
   }
-
-  crowdloan.crowdloanSelectedAccountStatus = crowdloanSelectedAccountStatus;
-  if (presentAmountInContributions)
-    crowdloan.amountContributed = new BigNumber(presentAmountInContributions);
-  if (presentAmountInRewards)
-    crowdloan.totalRewards = new BigNumber(presentAmountInRewards);
-
-  return crowdloan;
 }

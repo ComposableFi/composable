@@ -29,7 +29,6 @@ export type AllSlices = PolkadotSlice &
   StatsOverviewSlice &
   StatsTelemetrySlice &
   SubstrateBalancesSlice &
-  CrowdloanRewardsSlice &
   BondsSlice &
   OracleSlice &
   StakingRewardsSlice;

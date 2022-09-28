@@ -8,16 +8,18 @@ import { PageTitle, FeaturedBox, SS8WalletHelper } from "@/components";
 import { ConnectorType, useBlockchainProvider, useConnector } from "bi-lib";
 import { useSelectedAccount } from "@/defi/polkadot/hooks";
 import { useDotSamaContext } from "substrate-react";
-import { useAccountState } from "@/stores/defi/polkadot/crowdloanRewards/crowdloanRewards.slice";
+import { useCrowdloanRewardsSlice } from "@/stores/defi/polkadot/crowdloanRewards/crowdloanRewards.slice";
+import { encodeAddress } from "@polkadot/util-crypto";
+import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
+
 
 const CrowdloanRewards: NextPage = () => {
   const theme = useTheme();
   const router = useRouter();
   const { account } = useBlockchainProvider(1);
   const selectedAccount = useSelectedAccount();
-  
-  const ethereumAccountState = useAccountState(account ?? "-", "ethereum");
-  const ksmAccountState = useAccountState(selectedAccount?.address ?? "-", "kusama");
+
+  const { ethereumContributions, kusamaContributions } = useCrowdloanRewardsSlice();
 
   const breadcrumbs = [
     <Link key="Overview" underline="none" color="primary" href="/frontend/fe/apps/picasso/pages">
@@ -35,21 +37,17 @@ const CrowdloanRewards: NextPage = () => {
   const { isActive } = useConnector(ConnectorType.MetaMask);
 
   useEffect(() => {
-    if (ksmAccountState) {
-      if (!ethereumAccountState) {
-        if (
-          (ksmAccountState.crowdloanSelectedAccountStatus === "canAssociate" ||
-          ksmAccountState.crowdloanSelectedAccountStatus === "canClaim") &&
-          !ethereumAccountState) {
-          router.push("crowdloan-rewards/ksm");
-        }
-      } else {
-        if (ksmAccountState.crowdloanSelectedAccountStatus === "ineligible") {
-          router.push("crowdloan-rewards/stablecoin");
-        }
+    if (account || selectedAccount) {
+      if (account && account.toLowerCase() in ethereumContributions) {
+        router.push("crowdloan-rewards/stablecoin");
+      }
+
+      if (selectedAccount && encodeAddress(selectedAccount.address, SUBSTRATE_NETWORKS.kusama.ss58Format) in kusamaContributions) {
+        router.push("crowdloan-rewards/ksm");
       }
     }
-  }, [router, ethereumAccountState, ksmAccountState]);
+    
+  }, [router, account, selectedAccount, ethereumContributions, kusamaContributions]);
 
   return (
     <Default breadcrumbs={breadcrumbs}>

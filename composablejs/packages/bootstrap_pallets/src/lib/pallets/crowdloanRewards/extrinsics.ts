@@ -7,6 +7,7 @@ import { mintAssetsToWallets } from "../assets/extrinsics";
 import BigNumber from "bignumber.js";
 import { sendAndWaitForSuccess, sendUnsignedAndWaitForSuccess } from "@composable/bootstrap_pallets/lib";
 import { toHexString } from "@composable/bootstrap_pallets/utils";
+import { decodeAddress } from "@polkadot/util-crypto";
 
 export const associateKSM = async (api: ApiPromise, contributorAccount: KeyringPair, rewardAccount: KeyringPair) => {
   const message = `<Bytes>picasso-${toHexString(rewardAccount.publicKey)}</Bytes>`;
@@ -69,6 +70,6 @@ export const addFundsToCrowdloan = async (
     api,
     walletSudo,
     api.events.balances.Transfer.is,
-    api.tx.balances.transfer(palletAccountId, amount)
+    api.tx.assets.transfer("1", decodeAddress(palletAccountId), amount, true)
   );
 };

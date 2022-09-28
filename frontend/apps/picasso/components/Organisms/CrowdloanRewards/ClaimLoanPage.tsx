@@ -6,7 +6,7 @@ import {
   NoEligibleWalletFeaturedBox,
   PageTitle,
   SS8WalletHelper,
-  StablecoinClaimForm
+  StablecoinClaimForm,
 } from "@/components";
 import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
 import { useStore } from "@/stores/root";
@@ -17,15 +17,20 @@ import { crowdLoanSignableMessage } from "@/utils/crowdloanRewards";
 import { useRouter } from "next/router";
 import { ConnectorType, useBlockchainProvider, useConnector } from "bi-lib";
 import { OpenInNewRounded } from "@mui/icons-material";
-import { useDotSamaContext, useExecutor, usePendingExtrinsic } from "substrate-react";
+import {
+  useDotSamaContext,
+  useExecutor,
+  usePendingExtrinsic,
+} from "substrate-react";
 import { useSnackbar } from "notistack";
-import BigNumber from "bignumber.js";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import {
-  useAccountState,
+  CrowdloanStep,
   useCrowdloanRewardsSlice,
 } from "@/stores/defi/polkadot/crowdloanRewards/crowdloanRewards.slice";
-import { useCrowdloanRewardsAssociate } from "@/defi/polkadot/hooks/useCrowdloanRewardsAssociate";
+import { useCrowdloanRewardsClaim } from "@/defi/polkadot/hooks/crowdloanRewards/useCrowdloanRewardsClaim";
+import { useCrowdloanRewardsAssociate } from "@/defi/polkadot/hooks/crowdloanRewards/useCrowdloanRewardsAssociate";
+import { useCrowdloanNextStep, useClaimableAmount, useClaimedAmount, useCrowdloanContributions } from "@/stores/defi/polkadot/crowdloanRewards/hooks";
 
 const DEFAULT_EVM_ID = 1;
 const APP_NAME = "Picasso UI";
@@ -34,17 +39,17 @@ const ERROR_MESSAGES = {
   KSM_WALLET_NOT_CONNECTED: {
     message:
       "Please connect the KSM address used to contribute to the Picasso crowdloan.",
-    title: "Nothing to claim"
+    title: "Nothing to claim",
   },
   WRONG_ADDRESS: {
     message:
       "Please connect the address used to contribute to Picasso crowdloan.",
-    title: "Nothing to claim"
+    title: "Nothing to claim",
   },
   ETH_WALLET_NOT_CONNECTED: {
     message: "Please connect metamask to claim PICA rewards.",
-    title: "Nothing to claim"
-  }
+    title: "Nothing to claim",
+  },
 };
 
 interface ClaimLoan {
@@ -70,13 +75,9 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
   const theme = useTheme();
   const [ineligibleText, setIneligibleText] = useState({
     title: ERROR_MESSAGES.KSM_WALLET_NOT_CONNECTED.title,
-    textBelow: ERROR_MESSAGES.KSM_WALLET_NOT_CONNECTED.message
+    textBelow: ERROR_MESSAGES.KSM_WALLET_NOT_CONNECTED.message,
   });
   const [showAlertBox, setShowAlertBox] = useState<boolean>(false);
-
-  const hasNothingToClaim = (): boolean => {
-    return extensionStatus !== "connected";
-  };
 
   const flow = useMemo(() => {
     const pathNames = router.pathname.split("/");
@@ -103,12 +104,17 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
 
   const signPolkadotJs = useCallback(async (): Promise<string> => {
     try {
-      const { web3FromAddress, web3Enable } = require("@polkadot/extension-dapp");
+      const {
+        web3FromAddress,
+        web3Enable,
+      } = require("@polkadot/extension-dapp");
       await web3Enable(APP_NAME);
-      if (!selectedAccount || !parachainApi) throw new Error('Missing Connection')
+      if (!selectedAccount || !parachainApi)
+        throw new Error("Missing Connection");
       const injector = await web3FromAddress(selectedAccount.address);
-      if (!injector.signer.signRaw) throw new Error('Missing Connection')
-      if (!parachainApi || !selectedAccount) throw new Error('Missing Connection');
+      if (!injector.signer.signRaw) throw new Error("Missing Connection");
+      if (!parachainApi || !selectedAccount)
+        throw new Error("Missing Connection");
       const accId32 = parachainApi.createType(
         "AccountId32",
         selectedAccount.address
@@ -127,9 +133,9 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
   }, [selectedAccount, parachainApi, enqueueSnackbar]);
 
   const signEthereum = useCallback(async (): Promise<string> => {
-    
     try {
-      if (!parachainApi || !signer || !selectedAccount) throw new Error('Missing Connection');
+      if (!parachainApi || !signer || !selectedAccount)
+        throw new Error("Missing Connection");
       const accId32 = parachainApi.createType(
         "AccountId32",
         selectedAccount.address
@@ -146,96 +152,61 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
   }, [selectedAccount, signer, parachainApi, enqueueSnackbar]);
 
   const { initialPayment } = useCrowdloanRewardsSlice();
-  const ethereumAccountState = useAccountState(account ?? "-", "ethereum");
-  const ksmAccountState = useAccountState(
-    selectedAccount?.address ?? "-",
-    "kusama"
+
+  const hasNothingToClaim = useCallback(() => {
+    if (extensionStatus !== "connected") return true;
+
+    return false;
+  }, [extensionStatus]);
+
+  const nextStep = useCrowdloanNextStep(
+    selectedAccount?.address,
+    account?.toLowerCase()
   );
 
-  const [methodToCall, setMethodToCall] = useState<
-    "associateEth" | "associateKSM" | "claim" | "none"
-  >("none");
-
   const useAssociate = useCrowdloanRewardsAssociate({
+    connectedAccounts: accounts,
     api: parachainApi,
     executor,
     selectedPicassoAddress: selectedAccount?.address,
-    selectedEthereumAddress: account,
     associateMode:
-      methodToCall === "associateEth"
+      nextStep === CrowdloanStep.AssociateEth
         ? "ethereum"
-        : methodToCall === "associateKSM"
+        : nextStep === CrowdloanStep.AssociateKsm
         ? "kusama"
         : undefined,
   });
 
-  const {
-    claimedRewards,
-    amountContributed,
-    availableToClaim,
-    totalRewards,
-  } = useMemo(() => {
-    let claimedRewards = new BigNumber(0);
-    let amountContributed = new BigNumber(0);
-    let availableToClaim = new BigNumber(0);
-    let totalRewards = new BigNumber(0);
+  const claim = useCrowdloanRewardsClaim({
+    api: parachainApi,
+    executor,
+    selectedPicassoAddress: selectedAccount?.address,
+    selectedEthereumAddress: account,
+  });
 
-    if (ksmAccountState) {
-      if (ksmAccountState.crowdloanSelectedAccountStatus === "ineligible") {
-        if (
-          ethereumAccountState &&
-          ethereumAccountState.crowdloanSelectedAccountStatus === "canAssociate"
-        ) {
-          claimedRewards = ethereumAccountState.claimedRewards;
-          amountContributed = ethereumAccountState.amountContributed;
-          availableToClaim = ethereumAccountState.totalRewards.times(
-            initialPayment
-          );
-          totalRewards = ethereumAccountState.totalRewards;
-          setMethodToCall("associateEth");
-          // allow associate eth
-        }
-        // check if ethereum is eligible and can be associated
-        // if ethereum is not eligible then we leave everything 0
-      } else if (
-        !ethereumAccountState ||
-        (ethereumAccountState &&
-          ethereumAccountState.crowdloanSelectedAccountStatus === "ineligible")
-      ) {
-        // in this case ethereum account is not eligible and is connected as well
-        if (ksmAccountState.crowdloanSelectedAccountStatus === "canAssociate") {
-          claimedRewards = ksmAccountState.claimedRewards;
-          amountContributed = ksmAccountState.amountContributed;
-          availableToClaim = ksmAccountState.totalRewards.times(initialPayment);
-          totalRewards = ksmAccountState.totalRewards;
-          setMethodToCall("associateKSM");
-        } else {
-          claimedRewards = ksmAccountState.claimedRewards;
-          amountContributed = ksmAccountState.amountContributed;
-          availableToClaim = ksmAccountState.availableToClaim;
-          totalRewards = ksmAccountState.totalRewards;
-          setMethodToCall("claim");
-        }
-      }
-    } else {
-      setMethodToCall("none");
-    }
+  const availableToClaim = useClaimableAmount(
+    nextStep,
+    account?.toLowerCase(),
+    selectedAccount?.address,
+    parachainApi,
+    initialPayment
+  );
 
-    return {
-      claimedRewards,
-      amountContributed,
-      availableToClaim,
-      totalRewards,
-    };
-  }, [ethereumAccountState, ksmAccountState, initialPayment]);
+  const claimedRewards = useClaimedAmount(
+    nextStep,
+    account?.toLowerCase(),
+    selectedAccount?.address,
+    parachainApi
+  );
+
+  const { contributedAmount, totalRewards } = useCrowdloanContributions(
+    nextStep,
+    account?.toLowerCase(),
+    selectedAccount?.address
+  )
 
   const breadcrumbs = [
-    <Link
-      key="Overview"
-      underline="none"
-      color="primary"
-      href="/"
-    >
+    <Link key="Overview" underline="none" color="primary" href="/">
       Overview
     </Link>,
     <Link
@@ -252,7 +223,7 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
   ];
 
   const standardPageSize = {
-    xs: 12
+    xs: 12,
   };
 
   return (
@@ -287,9 +258,9 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
             {isStable ? (
               <StablecoinClaimForm
                 SS58Address={selectedAccount ? selectedAccount.address : "-"}
-                disabled={false}
+                disabled={availableToClaim.eq(0)}
                 claimedRewards={claimedRewards}
-                amountContributed={amountContributed}
+                amountContributed={contributedAmount}
                 availableToClaim={availableToClaim}
                 totalRewards={totalRewards}
                 readonlyCrowdLoanContribution={true}
@@ -300,21 +271,21 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
                 }
                 readonlySS8Address
                 onClaim={async () => {
-                  methodToCall === "associateEth"
+                  nextStep === CrowdloanStep.AssociateEth
                     ? signEthereum().then(useAssociate)
-                    : methodToCall === "associateKSM"
+                    : nextStep === CrowdloanStep.AssociateKsm
                     ? signPolkadotJs().then(useAssociate)
+                    : nextStep === CrowdloanStep.Claim
+                    ? claim().catch(console.error)
                     : undefined;
                 }}
-                onChange={(name: string, value: unknown) => {
-                  console.log("Change", name, value);
-                }}
+                onChange={(name: string, value: unknown) => {}}
               />
             ) : (
               <KSMClaimForm
-                disabled={false}
+                disabled={availableToClaim.eq(0)}
                 claimedRewards={claimedRewards}
-                amountContributed={amountContributed}
+                amountContributed={contributedAmount}
                 availableToClaim={availableToClaim}
                 totalRewards={totalRewards}
                 readonlyCrowdLoanContribution={true}
@@ -325,15 +296,15 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
                 }
                 readonlySS8Address
                 onClaim={async () => {
-                  methodToCall === "associateEth"
+                  nextStep === CrowdloanStep.AssociateEth
                     ? signEthereum().then(useAssociate)
-                    : methodToCall === "associateKSM"
+                    : nextStep === CrowdloanStep.AssociateKsm
                     ? signPolkadotJs().then(useAssociate)
+                    : nextStep === CrowdloanStep.Claim
+                    ? claim().catch(console.error)
                     : undefined;
                 }}
-                onChange={(name: string, value: unknown) => {
-                  console.log("Change", name, value);
-                }}
+                onChange={(name: string, value: unknown) => {}}
               />
             )}
           </Grid>
@@ -351,7 +322,7 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
                     color: alpha(
                       theme.palette.text.primary,
                       theme.custom.opacity.darker
-                    )
+                    ),
                   }}
                 />
               }
