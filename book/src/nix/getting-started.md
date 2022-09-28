@@ -80,24 +80,35 @@ If you want to see all packages that are defined by a repository's flake, you ru
 
 Once you know which **location** and **package** you want, simply run:
 
-```nix
-nix run "location#package"
+```bash
+nix run "location#package" -L
 ```
 
 For example, if you want to run `frontend-server-pablo` for the current `main` composable branch, run:
 
-```nix
-nix run "github:ComposableFi/composable#frontend-server-pablo"
+```bash
+nix run "github:ComposableFi/composable#frontend-server-pablo" -L
 ```
+
+_Note: the `-L` is optional, but provides you with full logs which is useful for debugging._
 
 ### Running in Docker
 
 If you do not have access to `nix`, but you do have access to `docker`, then you can run nix packages within docker like this:
+
+
+#### Creating a `nix` cache volume
+In order to save time on subsequent builds, we create a volume that caches `nix` artifacts:
+
+```bash
+docker volume create nix
+```
+
+#### Running your `location#package`
+
 Make sure you replace `location#package` with your desired **location** and **package**.
 
-```nix
-docker volume create nix # cache builds
-
+```bash
 docker run -v /var/run/docker.sock:/var/run/docker.sock -v nix:/nix -p 9988:9988 -it nixos/nix bash -c "nix-env -iA nixpkgs.cachix && cachix use composable-community && nix run location#package -L --extra-experimental-features nix-command --extra-experimental-features flakes --no-sandbox"
 ```
 
