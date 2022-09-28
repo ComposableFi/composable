@@ -49,7 +49,7 @@ use sp_std::{
 };
 
 use crate::prelude::*;
-use composable_support::math::safe::SafeSub;
+use composable_support::math::safe::{SafeDiv, SafeMul, SafeSub};
 use composable_traits::staking::{Reward, RewardUpdate};
 use frame_support::{
 	traits::{
@@ -105,8 +105,8 @@ pub mod pallet {
 	use sp_std::{cmp::max, fmt::Debug, vec, vec::Vec};
 
 	use crate::{
-		add_to_rewards_pot, do_reward_accumulation, prelude::*, update_rewards_pool,
-		validation::ValidSplitRatio, RewardAccumulationCalculationError,
+		add_to_rewards_pot, claim_of_stake, do_reward_accumulation, prelude::*,
+		update_rewards_pool, validation::ValidSplitRatio, RewardAccumulationCalculationError,
 	};
 
 	#[pallet::event]
@@ -254,10 +254,7 @@ pub mod pallet {
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
 	pub(crate) type BalanceOf<T> = <T as Config>::Balance;
 	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
-	pub(crate) type FinancialNftInstanceIdOf<T> =
-		<<T as Config>::FinancialNft as nonfungibles::Inspect<
-			<T as frame_system::Config>::AccountId,
-		>>::ItemId;
+	pub(crate) type FinancialNftInstanceIdOf<T> = <T as Config>::FinancialNftInstanceId;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -295,7 +292,13 @@ pub mod pallet {
 			>;
 
 		// https://github.com/rust-lang/rust/issues/52662
-		type FinancialNftInstanceId: Parameter + Member + Copy + From<u64> + Into<u64>;
+		type FinancialNftInstanceId: Parameter
+			+ Member
+			+ Copy
+			+ PartialOrd
+			+ Ord
+			+ From<u64>
+			+ Into<u64>;
 
 		/// Is used to create staked asset per reward pool
 		type CurrencyFactory: CurrencyFactory<AssetId = Self::AssetId, Balance = Self::Balance>;
@@ -1195,36 +1198,33 @@ pub mod pallet {
 			stake: &mut StakeOf<T>,
 			owner: &T::AccountId,
 			penalize_for_early_unlock: bool,
+			// TODO(benluelo): Remove this parameter, the transfers are from the pool account.
 			keep_alive: bool,
 		) -> Result<(), DispatchError> {
 			for (reward_asset_id, reward) in &mut rewards_pool.rewards {
-				let inflation =
-					stake.reductions.get(reward_asset_id).cloned().unwrap_or_else(Zero::zero);
-				let claim = if rewards_pool.total_shares.is_zero() {
-					Zero::zero()
-				} else {
-					reward
-						.total_rewards
-						.safe_mul(&stake.share)?
-						.safe_div(&rewards_pool.total_shares)?
-						.safe_sub(&inflation)?
-				};
+				let claim = claim_of_stake::<T>(
+					stake,
+					&rewards_pool.total_shares,
+					reward,
+					reward_asset_id,
+				)?;
 
 				let claim = if penalize_for_early_unlock {
-					let slashed_amount = stake.lock.unlock_penalty.mul_floor(claim);
+					let amount_slashed = stake.lock.unlock_penalty.mul_floor(claim);
 					Self::deposit_event(Event::<T>::UnstakeRewardSlashed {
 						owner: owner.clone(),
 						pool_id: rewards_pool.asset_id,
 						fnft_instance_id: stake.fnft_instance_id,
 						reward_asset_id: *reward_asset_id,
-						amount_slashed: slashed_amount,
+						amount_slashed,
 					});
 					// SAFETY: slashed_amount is <= claim as is shown above
-					claim.defensive_saturating_sub(slashed_amount)
+					claim.defensive_saturating_sub(amount_slashed)
 				} else {
 					claim
 				};
 
+				// REVIEW(benluelo): Is this check/ calculation necessary?
 				let claim = sp_std::cmp::min(
 					claim,
 					reward.total_rewards.safe_sub(&reward.claimed_rewards)?,
@@ -1652,4 +1652,30 @@ pub(crate) enum RewardAccumulationCalculationError {
 	/// The rewards pot (held balance) for this pool is empty or doesn't have enough held balance
 	/// to release for the rewards accumulated.
 	RewardsPotEmpty,
+}
+
+pub(crate) fn claim_of_stake<T: Config>(
+	stake: &StakeOf<T>,
+	total_shares: &T::Balance,
+	reward: &Reward<T::Balance>,
+	reward_asset_id: &<T as Config>::AssetId,
+) -> Result<T::Balance, DispatchError> {
+	let claim = if total_shares.is_zero() {
+		T::Balance::zero()
+	} else {
+		let inflation = stake.reductions.get(reward_asset_id).cloned().unwrap_or_else(Zero::zero);
+
+		// REVIEW(benluelo): Which calculation is better?
+		// Perbill::from_rational(stake.share, *total_shares)
+		// 	.mul_floor(reward.total_rewards)
+		// 	.safe_sub(&inflation)?;
+
+		reward
+			.total_rewards
+			.safe_mul(&stake.share)?
+			.safe_div(total_shares)?
+			.safe_sub(&inflation)?
+	};
+
+	Ok(claim)
 }

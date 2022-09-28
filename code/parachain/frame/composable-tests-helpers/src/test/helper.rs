@@ -1,3 +1,5 @@
+#![allow(clippy::expect_fun_call)] // dumb lint for tests
+
 use core::fmt::Debug;
 
 use frame_support::{assert_ok, pallet_prelude::Member, Parameter};
@@ -174,7 +176,7 @@ where
 /// Iterates over all of the events currently in the runtime and calls the provided function on all
 /// of the `PalletEvent` events, returning an iterator over the the returned values of all of the
 /// found events.
-pub fn assert_event<Runtime, RuntimeEvent, PalletEvent, R>(
+pub fn assert_event_with<Runtime, RuntimeEvent, PalletEvent, R>(
 	f: impl FnMut(PalletEvent) -> Option<R>,
 ) -> impl Iterator<Item = R>
 where
@@ -183,8 +185,36 @@ where
 	RuntimeEvent: TryInto<PalletEvent>,
 	<RuntimeEvent as TryInto<PalletEvent>>::Error: sp_std::fmt::Debug,
 {
+	pallet_events::<Runtime, RuntimeEvent, PalletEvent>().flat_map(f)
+}
+
+pub fn pallet_events<Runtime, RuntimeEvent, PalletEvent>() -> impl Iterator<Item = PalletEvent>
+where
+	Runtime: Config<Event = RuntimeEvent>,
+	RuntimeEvent: Parameter + Member + Debug + Clone,
+	RuntimeEvent: TryInto<PalletEvent>,
+	<RuntimeEvent as TryInto<PalletEvent>>::Error: sp_std::fmt::Debug,
+{
 	frame_system::Pallet::<Runtime>::events()
 		.into_iter()
-		.flat_map(move |EventRecord { event, .. }| event.try_into().ok())
-		.flat_map(f)
+		.flat_map(|EventRecord { event, .. }| event.try_into().ok())
+}
+
+/// Iterates over all of the events currently in the runtime and calls the provided function on all
+/// of the `PalletEvent` events, returning an iterator over the the returned values of all of the
+/// found events.
+pub fn assert_event<Runtime, RuntimeEvent, PalletEvent>(pallet_event: PalletEvent)
+where
+	Runtime: Config<Event = RuntimeEvent>,
+	RuntimeEvent: Parameter + Member + Debug + Clone,
+	RuntimeEvent: TryInto<PalletEvent>,
+	<RuntimeEvent as TryInto<PalletEvent>>::Error: sp_std::fmt::Debug,
+	PalletEvent: PartialEq + sp_std::fmt::Debug,
+{
+	pallet_events::<Runtime, RuntimeEvent, PalletEvent>()
+		.find(|e| e == &pallet_event)
+		.expect(&format!(
+			r#"expected event wasn't emitted
+event checked: {pallet_event:#?}"#
+		));
 }
