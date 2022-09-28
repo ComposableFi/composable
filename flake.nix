@@ -650,7 +650,7 @@
             }).script;
 
             # Dali Centauri devnet
-            devnet-dali-centauri = (callPackage mk-devnet {
+            bridge-devnet-dali = (callPackage mk-devnet {
               inherit pkgs;
               inherit (packages) polkadot-launch composable-node;
               polkadot-node = polkadot-centauri-node;
@@ -686,7 +686,7 @@
             };
 
             # Dali Centauri devnet container
-            centauri-devnet-container = dockerTools.buildImage {
+            bridge-devnet-dali-container = dockerTools.buildImage {
               name = "composable-centauri-devnet-container";
               tag = "latest";
               copyToRoot = pkgs.buildEnv {
