@@ -215,7 +215,7 @@ jobs:
       - run: |
           cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#nixfmt-check --no-update-lock-file --show-trace -L
 
-  cspell-check:
+  spell-check:
     name: "Spelling check"
     runs-on:
       - self-hosted
@@ -223,7 +223,7 @@ jobs:
       - x64
       - sre
     concurrency:
-      group: ${{ github.workflow }}-cspell-check-${{ github.ref }}
+      group: ${{ github.workflow }}-spell-check-${{ github.ref }}
       cancel-in-progress: true
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
@@ -243,7 +243,7 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#cspell-check --no-update-lock-file --show-trace -L
+          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#spell-check --no-update-lock-file --show-trace -L
 
   mdbook-check:
     name: "Mdbook check"
@@ -791,9 +791,7 @@ jobs:
       - run: |
           cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#price-feed --no-update-lock-file --show-trace -L
 
-  composable-sandbox-publish:
-    if: ${{ github.ref == 'refs/heads/main' }}
-    name: "Docker composable-sandbox"
+  composable-sandbox-container-publish:
     needs:
       - effects-gate
     runs-on:
@@ -802,7 +800,7 @@ jobs:
       - x64
       - sre
     concurrency:
-      group: composable-sandbox-${{ github.ref }}
+      group: ${{ github.workflow }}-composable-sandbox-container-${{ github.ref }}
       cancel-in-progress: true
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
@@ -832,8 +830,18 @@ jobs:
       - run: |
           cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#devnet-container --no-update-lock-file --show-trace -L
           docker load --input ./result
-          docker tag composable-devnet-container:latest "${{ env.DOCKER_REGISTRY_NAME }}/composable-sandbox:latest"
-          docker push "${{ env.DOCKER_REGISTRY_NAME }}/composable-sandbox:latest"
+          # update soon https://github.com/actions/checkout/issues/760
+          git config --global --add safe.directory /__w/composable/composable
+          CONTAINER_NAME=composable-sandbox
+          SHA256=$(sha256sum ./result | cut --delimiter " " --fields 1)
+          COMMIT_SHA=$(git rev-parse HEAD)
+          LOCAL_DOCKER_IMAGE_NAME=composable-devnet-container:latest
+          docker image tag $LOCAL_DOCKER_IMAGE_NAME "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}:${COMMIT_SHA}"
+          docker image tag $LOCAL_DOCKER_IMAGE_NAME "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}:${SHA256}"
+          if [ $(git symbolic-ref HEAD) = "refs/heads/main" ]; then 
+            docker image tag $LOCAL_DOCKER_IMAGE_NAME "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}:latest"
+          fi;                   
+          docker push --all-tags "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}"          
 
   devcontainer-build:
     name: "Devcontainer build"
@@ -902,8 +910,7 @@ jobs:
         docker build --file Dockerfile --tag "${{ env.DOCKER_REGISTRY_NAME }}/composable-devcontainer-minimal:${COMMIT_SHA}" --tag "${{ env.DOCKER_REGISTRY_NAME }}/composable-devcontainer-minimal:latest" .
         docker push --all-tags "${{ env.DOCKER_REGISTRY_NAME }}/composable-devcontainer-minimal"
 
-  devcontainer-publish:
-    name: "Devcontainer publish"
+  composable-devcontainer-publish:
     if: github.event_name == 'push' && github.ref_name == 'main'
     needs:
       - effects-gate
@@ -913,7 +920,7 @@ jobs:
       - x64
       - sre
     concurrency:
-      group: ${{ github.workflow }}-devcontainer-publish-${{ github.ref }}
+      group: ${{ github.workflow }}-composable-devcontainer-publish-${{ github.ref }}
       cancel-in-progress: true
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
@@ -937,18 +944,20 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
       - run: |
-          # really not building, but reading from cache
-          nix build .#packages.x86_64-linux.devcontainer --no-update-lock-file --show-trace -L
+          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#packages.x86_64-linux.devcontainer --no-update-lock-file --show-trace -L
           docker load --input ./result
           # update soon https://github.com/actions/checkout/issues/760
           git config --global --add safe.directory /__w/composable/composable
-          COMMIT_SHA=$(git rev-parse --short=9 HEAD)
-          DOCKER_IMAGE_HASH=$(docker images | tail --lines=1 | tr --squeeze-repeats  ' ' |  cut --delimiter " " --fields 3)
-          # TODO: make nix sha256 hash(allow to find by using nix ids) and branch dependant(allow to test from branches) tags
-          docker image tag $DOCKER_IMAGE_HASH "${{ env.DOCKER_REGISTRY_NAME }}/composable-devcontainer:${COMMIT_SHA}"
-          docker image tag $DOCKER_IMAGE_HASH "${{ env.DOCKER_REGISTRY_NAME }}/composable-devcontainer:latest"
-          # TODO: upload a docker image with `latest` tag only from `main` branch
-          docker push --all-tags "${{ env.DOCKER_REGISTRY_NAME }}/composable-devcontainer"
+          CONTAINER_NAME=composable-devcontainer
+          SHA256=$(sha256sum ./result | cut --delimiter " " --fields 1)
+          COMMIT_SHA=$(git rev-parse HEAD)
+          LOCAL_DOCKER_IMAGE_NAME=composable-devcontainer:latest
+          docker image tag $LOCAL_DOCKER_IMAGE_NAME "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}:${COMMIT_SHA}"
+          docker image tag $LOCAL_DOCKER_IMAGE_NAME "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}:${SHA256}"
+          if [ $(git symbolic-ref HEAD) = "refs/heads/main" ]; then 
+            docker image tag $LOCAL_DOCKER_IMAGE_NAME "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}:latest"
+          fi;                   
+          docker push --all-tags "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}"
 
   devnet-integration-tests:
       name: "Devnet integration tests"
@@ -1034,7 +1043,7 @@ jobs:
         - prettier-check        
         - check-simnode
         - benchmarks-check
-        - cspell-check
+        - spell-check
         - mdbook-check
       steps:
         - run: echo "Goblins allow your work to see the light"
