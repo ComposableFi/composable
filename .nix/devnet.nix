@@ -7,6 +7,9 @@ let
     disk-size = 200;
     machine-name = "composable-persistent-devnet";
     domain = "persistent.devnets.composablefinance.ninja";
+    extra-gce = { resources, ... }: {
+      ipAddress = resources.gceStaticIPs.composable-persistent-devnet;
+    };
   };
 in builtins.foldl' (machines: devnet:
   let

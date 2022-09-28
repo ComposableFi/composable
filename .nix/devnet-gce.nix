@@ -1,4 +1,13 @@
-{ gce-input, book, devnet, disk-size, machine-name, domain }: {
+{ gce-input, book, devnet, disk-size, machine-name, domain
+, extra-gce ? (args: { }) }:
+let region = "europe-central2-c";
+in {
+  resources.gceStaticIPs.composable-persistent-devnet = gce-input // (rec {
+    inherit region;
+    name = "persistent-devnet-ip";
+    ipAddress = "34.118.46.235";
+    publicIPv4 = ipAddress;
+  });
   resources.gceNetworks.composable-devnet = gce-input // {
     name = "composable-devnet-network";
     firewall = {
@@ -12,17 +21,17 @@
       };
     };
   };
-  "${machine-name}" = { pkgs, resources, ... }: {
+  "${machine-name}" = args@{ pkgs, resources, ... }: {
     deployment = {
       targetEnv = "gce";
-      gce = gce-input // {
+      gce = (gce-input // {
+        inherit region;
         machineName = machine-name;
         network = resources.gceNetworks.composable-devnet;
-        region = "europe-central2-c";
         instanceType = "n2-standard-4";
         rootDiskSize = disk-size;
         tags = [ "http" "https" ];
-      };
+      }) // (extra-gce args);
     };
     nix = {
       gc.automatic = true;
