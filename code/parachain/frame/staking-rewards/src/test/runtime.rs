@@ -52,7 +52,7 @@ frame_support::construct_runtime!(
 		Assets: pallet_assets,
 		FinancialNft: pallet_fnft,
 		Proxy: pallet_account_proxy,
-		StakingRewards: pallet_staking_rewards,
+		StakingRewards: crate,
 	}
 );
 
@@ -237,7 +237,7 @@ parameter_types! {
 	pub const TreasuryAccountId: AccountId = sr25519::Public([10_u8; 32]);
 }
 
-impl pallet_staking_rewards::Config for Test {
+impl crate::Config for Test {
 	type Event = Event;
 	type Balance = Balance;
 	type AssetId = CurrencyId;
