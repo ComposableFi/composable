@@ -13,6 +13,7 @@ There are four ways in order to use Nix at Composable, ranked from most compatib
 4. **Nix on macOS (EXPERIMENTAL)**. You can also use Nix natively on macOS. Nix has excellent cross-system and cross-architecture building support, and a lot of the packages available in the [nixpkgs](https://nixos.wiki/wiki/Nixpkgs) repository support (ARM) macOS. _However, because we use Docker in a lot of our packages, some packages will not run using this method yet as Docker is exclusive to Linux._
 
 Once you have determined which one you want to use, [follow the official Nix installation instructions](https://nixos.org/download.html).
+_If you picked option 3, you can skip to the bottom of the page._
 
 _If you're wondering what the author is using: I'm personally using NixOS within a Parallels VM on my M1 Mac. DM me (**@cor**) on Slack if you also want this._
 
@@ -49,3 +50,54 @@ If you are in an environment where you cannot edit these config files, then you 
 ```
 --extra-experimental-features nix-command --extra-experimental-features flakes --no-sandbox
 ```
+
+## Running Nix packages
+
+Now you can run Nix packages! In order to run one, you need both a **location** and a **package or app**.
+
+### Locations
+
+Locations are the source of a `git` repository. For example, a **location** can be:
+
+- `.` for your current directory.
+- `github:ComposableFi/composable` for the latest commit on branch main.
+- `github:ComposableFi/composable/67b4df903bf8dc2ab0634f9adf9988203a93af27` for commit `67b4df903bf8dc2ab0634f9adf9988203a93af27`. 
+
+Note that for the `github:` locations, you do not need to clone the repository. For `.` you need to clone the repository and `cd` into it.
+
+### Packages
+
+Packages are defined in a repository's `flake.nix`. For example, a **package** can be:
+
+- `devnet-dali` which runs a devnet containing `dali` and `rococo`, launched by `polkadot-launch`.
+- `frontend-pablo-server` which runs a server serving the `pablo` frontend.
+- `composable-book` which builds this book (so meta!).
+
+If you want to see all packages that are defined by a repository's flake, you run `nix flake show "LOCATION"`, for example: `nix flake show "github:ComposableFi/composable"`.
+
+
+### Running
+
+Once you know which **location** and **package** you want, simply run:
+
+```nix
+nix run "location#package"
+```
+
+For example, if you want to run `frontend-server-pablo` for the current `main` composable branch, run:
+
+```nix
+nix run "github:ComposableFi/composable#frontend-server-pablo"
+```
+
+### Running in Docker
+
+If you do not have access to `nix`, but you do have access to `docker`, then you can run nix packages within docker like this:
+Make sure you replace `location#package` with your desired **location** and **package**.
+
+```nix
+docker volume create nix # cache builds
+
+docker run -v /var/run/docker.sock:/var/run/docker.sock -v nix:/nix -p 9988:9988 -it nixos/nix bash -c "nix-env -iA nixpkgs.cachix && cachix use composable-community && nix run location#package -L --extra-experimental-features nix-command --extra-experimental-features flakes --no-sandbox"
+```
+
