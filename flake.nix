@@ -30,9 +30,14 @@
       url = "github:hercules-ci/arion";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    helix = {
+      url = "github:helix-editor/helix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
   outputs = { self, nixpkgs, crane, flake-utils, rust-overlay, npm-buildpackage
-    , arion-src, home-manager }:
+    , arion-src, home-manager, helix }:
     let
       # https://cloud.google.com/iam/docs/creating-managing-service-account-keys
       # or just use GOOGLE_APPLICATION_CREDENTIALS env as path to file
@@ -940,6 +945,21 @@
           };
 
           devShells = rec {
+            
+            base-shell = mkShell {
+              buildInputs = [ helix.packages.${pkgs.system}.default ];
+              NIX_PATH = "nixpkgs=${pkgs.path}";
+            };
+
+            writers = base-shell.overrideAttrs (base: {
+              buildInputs = base.buildInputs ++ (with packages; [ python3 nodejs mdbook ]);
+            });
+
+            developers-minimal = base-shell.overrideAttrs (base: common-attrs // {
+              buildInputs = base.buildInputs ++ (with packages; [ rust-nightly subwasm ]);
+              NIX_PATH = "nixpkgs=${pkgs.path}";
+            });
+
             developers = developers-minimal.overrideAttrs (base: {
               buildInputs = with packages;
                 base.buildInputs ++ [
@@ -970,25 +990,11 @@
                 ] ++ docs-renders;
             });
 
-            developers-minimal = mkShell (common-attrs // {
-              buildInputs = with packages; [ rust-nightly subwasm ];
-              NIX_PATH = "nixpkgs=${pkgs.path}";
-            });
-
-            developers-xcvm = developers-minimal.overrideAttrs (base: {
+            developers-xcvm = developers.overrideAttrs (base: {
               buildInputs = with packages;
                 base.buildInputs ++ [
                   junod
                   gex
-                  # junod wasm swap web interface
-                  # TODO: hasura
-                  # TODO: some well know wasm contracts deployed
-                  # TODO: junod server
-                  # TODO: solc
-                  # TODO: gex
-                  # TODO: https://github.com/forbole/bdjuno
-                  # TODO: script to run all
-                  # TODO: compose export
                 ] ++ lib.lists.optional (lib.strings.hasSuffix "linux" system)
                 arion;
               shellHook = ''
@@ -1004,16 +1010,6 @@
                 echo "clip hire initial neck maid actor venue client foam budget lock catalog sweet steak waste crater broccoli pipe steak sister coyote moment obvious choose" | junod keys add alice --recover --keyring-backend test || true
               '';
             });
-
-            writers = mkShell {
-              buildInputs = with packages; [ python3 nodejs mdbook ];
-              NIX_PATH = "nixpkgs=${pkgs.path}";
-            };
-
-            sre = mkShell {
-              buildInputs = [ nixopsUnstable ];
-              NIX_PATH = "nixpkgs=${pkgs.path}";
-            };
 
             default = developers;
           };
