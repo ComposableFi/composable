@@ -86,17 +86,7 @@
   ],
   "crowdloanRewards": {
     "palletAccountId": "5w3oyasYQg6vkbxZKeMG8Dz2evBw1P7Xr7xhVwk4qwwFkm8u",
-    "rewardsPerAccount": "1000000000000000",
-    "vestingPeriod": "100800",
-    "relayChainContributors": [
-      "H4xZcL1zehsvdGK8Sw732SyTr5Qi4q8Vc47MNoZf8UyqyGh",
-      "HgiQYjjjn8Zy5tF8o7HRaeqTn5R1NZBa6S1d9aJviK7cyPK",
-      "Du3hotb5PoL3VaBAGGcGFLe2SEk1s7wCGddwYG6Q1w8E4UD"
-    ],
-    "ethereumContributors": [
-      "0xf6ce427c29746936C954a30e892e829b65C0b22E",
-      "0x4Bf3f796Cea7f55B9378Fb7930AadE0e32cdce87"
-    ]
+    "vestingPeriod": "100800"
   },
   "mintAssets": [
     ["5y4xiEmy4Kp3GPH7hUHDnNwwqeoEHgRbMp6HGW2iRKRu5DG2", "1", "5000000000000000"],
