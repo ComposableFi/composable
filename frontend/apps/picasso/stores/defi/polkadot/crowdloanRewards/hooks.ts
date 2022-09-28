@@ -146,11 +146,11 @@ export const useClaimedAmount = (
   const { ethereumContributions, kusamaContributions } =
     useCrowdloanRewardsSlice();
 
-  const [claimedAmount, setClaimedAmont] = useState(new BigNumber(0));
+  const [claimedAmount, setClaimedAmount] = useState(new BigNumber(0));
 
   useEffect(() => {
     if (api && ethAccount && ethAccount in ethereumContributions) {
-      fetchClaimedRewards(api, ethAccount.toLowerCase()).then(setClaimedAmont);
+      fetchClaimedRewards(api, ethAccount.toLowerCase()).then(setClaimedAmount);
       return;
     }
 
@@ -160,7 +160,7 @@ export const useClaimedAmount = (
         SUBSTRATE_NETWORKS.kusama.ss58Format
       );
       if (ksmAddress in kusamaContributions) {
-        fetchClaimedRewards(api, ksmAddress).then(setClaimedAmont);
+        fetchClaimedRewards(api, ksmAddress).then(setClaimedAmount);
       }
       return;
     }
