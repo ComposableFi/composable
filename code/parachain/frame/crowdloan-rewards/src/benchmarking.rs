@@ -5,11 +5,14 @@ use composable_support::types::{EcdsaSignature, EthereumAddress};
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite};
 use frame_support::{pallet_prelude::*, traits::fungible::Mutate};
 use frame_system::RawOrigin;
-use sp_core::{ed25519, keccak_256, Pair};
+use sp_io::{
+	crypto::{ed25519_generate, ed25519_sign},
+	hashing::keccak_256,
+};
 use sp_runtime::AccountId32;
 use sp_std::prelude::*;
 
-type RelayKey = ed25519::Pair;
+type RelayKey = [u8; 32];
 type EthKey = libsecp256k1::SecretKey;
 type Moment = u64;
 type Balance = u128;
@@ -35,8 +38,7 @@ enum ClaimKey {
 impl ClaimKey {
 	pub fn as_remote_public(&self) -> RemoteAccount<RelayChainAccountId> {
 		match self {
-			ClaimKey::Relay(relay_account) =>
-				RemoteAccount::RelayChain(relay_account.public().into()),
+			ClaimKey::Relay(relay_account) => RemoteAccount::RelayChain(*relay_account),
 			ClaimKey::Eth(ethereum_account) =>
 				RemoteAccount::Ethereum(ethereum_address(ethereum_account)),
 		}
@@ -54,7 +56,12 @@ fn relay_proof(relay_account: &RelayKey, reward_account: AccountId) -> Proof<Rel
 	msg.append(&mut PROOF_PREFIX.to_vec());
 	msg.append(&mut reward_account.using_encoded(|x| hex::encode(x).as_bytes().to_vec()));
 	msg.append(&mut b"</Bytes>".to_vec());
-	Proof::RelayChain(relay_account.public().into(), relay_account.sign(&msg).into())
+	Proof::RelayChain(
+		*relay_account,
+		ed25519_sign(0.into(), &ed25519_generate(0.into(), Some(relay_account.to_vec())), &msg)
+			.expect("signature is valid; QED")
+			.into(),
+	)
 }
 
 fn ethereum_proof(
@@ -96,9 +103,9 @@ fn relay_generate(count: u64) -> Vec<(AccountId, ClaimKey)> {
 				.expect("Account ID is valid; QED");
 			(
 				AccountId::new(account_id),
-				ClaimKey::Relay(ed25519::Pair::from_seed(&keccak_256(
+				ClaimKey::Relay(keccak_256(
 					&[(seed + i as u128).to_le_bytes(), (seed + i as u128).to_le_bytes()].concat(),
-				))),
+				)),
 			)
 		})
 		.collect()
