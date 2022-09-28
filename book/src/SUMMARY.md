@@ -11,6 +11,7 @@
     - [Composable Crowdloan](./parachains/composable/composable-crowdloan.md)
         - [DOT Purchase Log](./parachains/composable/DOT-purchase-log.md)
     - [LAYR Tokenomics](./parachains/composable/LAYR-tokenomics.md)
+
   
 # 💿 PRODUCTS
 - [Technical Stack Overview](./products/technical-stack-overview.md)
@@ -58,6 +59,7 @@
 
 # 💻 Developer Guides
 - [Nix](./nix.md)
+    - [Getting Started](./nix/getting-started.md)
 - [Codespaces](./codespaces.md)
     - [Getting Started](./codespaces/getting-started.md)
     - [Using Codespaces](./codespaces/using-codespaces.md)
