@@ -2,8 +2,8 @@ import { ApiPromise } from "@polkadot/api";
 import { KeyringPair } from "@polkadot/keyring/types";
 import { sendAndWaitForSuccess } from "@composable/bootstrap_pallets/lib";
 import BigNumber from "bignumber.js";
-import { u8aToHex } from "@polkadot/util";
 import { fromChainUnits, logger } from "@composable/bootstrap_pallets/utils";
+import { encodeAddress } from "@polkadot/util-crypto";
 
 /***
  * This mints all specified assets to a specified wallet.
@@ -32,7 +32,10 @@ export async function mintAssetsToWallets(
         api.tx.sudo.sudo(api.tx.assets.mintInto(asset, wallet.publicKey, amount.toString()))
       );
 
-      logger.log("info", `Minted ${fromChainUnits(amount.toString()).toString()} ${asset} for ${u8aToHex(wallet.publicKey)}`);
+      logger.log("info", `Minted ${fromChainUnits(amount.toString()).toString()} ${asset} for ${encodeAddress(
+        wallet.publicKey,
+        49
+      )}`);
     }
   }
 }

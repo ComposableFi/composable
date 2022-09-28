@@ -60,7 +60,7 @@ export async function bootstrapCrowdloanRewards(api: ApiPromise, walletSudo: Key
       config.crowdloanRewards.palletAccountId
     );
 
-    logger.info(`Populating Accounts: ${STEP}`);
+    logger.info(`Populating Accounts: ${accIndex}`);
     await sendAndWaitForSuccess(
       api,
       walletSudo,
