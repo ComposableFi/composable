@@ -1006,7 +1006,7 @@
             });
 
             writers = mkShell {
-              buildInputs = with packages; [ python3 nodejs ] ++ doc-renders;
+              buildInputs = with packages; [ python3 nodejs mdbook ];
               NIX_PATH = "nixpkgs=${pkgs.path}";
             };
 
