@@ -3,7 +3,7 @@ use crate::*;
 use crate::models::{Proof, RemoteAccount};
 use composable_support::types::{EcdsaSignature, EthereumAddress};
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite};
-use frame_support::{pallet_prelude::*, traits::tokens::currency::Currency};
+use frame_support::{pallet_prelude::*, traits::fungible::Mutate};
 use frame_system::RawOrigin;
 use sp_core::{ed25519, keccak_256, Pair};
 use sp_runtime::AccountId32;
@@ -131,14 +131,12 @@ fn generate_accounts(count: u64) -> Vec<(AccountId, ClaimKey)> {
 benchmarks! {
 	where_clause {
 		where
-			T: pallet_balances::Config<Balance = Balance>,
 			T: pallet_timestamp::Config<Moment = Moment>,
 			T: Config<
 				Balance = Balance,
 				Moment = Moment,
 				RelayChainAccountId = RelayChainAccountId,
 				AccountId = AccountId,
-				RewardAsset = pallet_balances::Pallet<T>,
 				Time = pallet_timestamp::Pallet<T>,
 			>,
 	}
@@ -158,10 +156,10 @@ benchmarks! {
 			.into_iter()
 			.map(|(_, a)| (a.as_remote_public(), ACCOUNT_REWARD, VESTING_PERIOD)).collect();
 
-		<T::RewardAsset as Currency<AccountId>>::make_free_balance_be(
+		<T::RewardAsset as Mutate<AccountId>>::mint_into(
 			&Pallet::<T>::account_id(),
 			ACCOUNT_REWARD * x as Balance
-		);
+		)?;
 
 		Pallet::<T>::do_populate(accounts)?;
 	}: _(RawOrigin::Root)
@@ -174,10 +172,10 @@ benchmarks! {
 			.into_iter()
 			.map(|(_, a)| (a.as_remote_public(), ACCOUNT_REWARD, VESTING_PERIOD)).collect();
 
-		<T::RewardAsset as Currency<AccountId>>::make_free_balance_be(
+		<T::RewardAsset as Mutate<AccountId>>::mint_into(
 			&Pallet::<T>::account_id(),
 			ACCOUNT_REWARD * x as Balance
-		);
+		)?;
 		Pallet::<T>::populate(RawOrigin::Root.into(), accounts_reward)?;
 		Pallet::<T>::initialize(RawOrigin::Root.into())?;
 	}: _(RawOrigin::None, accounts[0].0.clone(), accounts[0].1.clone().proof(accounts[0].0.clone()))
@@ -192,10 +190,10 @@ benchmarks! {
 
 		Pallet::<T>::populate(RawOrigin::Root.into(), accounts_reward)?;
 
-		<T::RewardAsset as Currency<AccountId>>::make_free_balance_be(
+		<T::RewardAsset as Mutate<AccountId>>::mint_into(
 			&Pallet::<T>::account_id(),
 			ACCOUNT_REWARD * x as Balance
-		);
+		)?;
 		Pallet::<T>::initialize(RawOrigin::Root.into())?;
 
 		for (reward_account, remote_account) in accounts.clone() {

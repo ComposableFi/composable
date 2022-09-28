@@ -74,7 +74,7 @@ pub mod pallet {
 		dispatch::PostDispatchInfo,
 		pallet_prelude::*,
 		traits::{
-			fungible::{Inspect, Transfer},
+			fungible::{Inspect, Mutate, Transfer},
 			Time,
 		},
 		transactional, PalletId,
@@ -153,7 +153,8 @@ pub mod pallet {
 
 		/// The RewardAsset used to transfer the rewards
 		type RewardAsset: Inspect<Self::AccountId, Balance = Self::Balance>
-			+ Transfer<Self::AccountId, Balance = Self::Balance>;
+			+ Transfer<Self::AccountId, Balance = Self::Balance>
+			+ Mutate<Self::AccountId>;
 
 		type Moment: AtLeast32Bit + Parameter + Default + Copy + MaxEncodedLen + FullCodec;
 

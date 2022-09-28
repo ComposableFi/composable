@@ -20,10 +20,10 @@ frame-benchmarking = { default-features = false, git = "https://github.com/parit
 composable-tests-helpers = { path = "../composable-tests-helpers" }
 hex-literal = "0.3.3"
 libsecp256k1 = { version = "0.7.0" }
-pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 serde = { version = '1.0.136' }
 sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 
 [dependencies]
 libsecp256k1 = { version = "0.7.0", default-features = false, optional = true, features = [
@@ -36,6 +36,8 @@ sp-application-crypto = { default-features = false, optional = true, git = "http
 frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", optional = true }
+pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", optional = true }
 
 # substrate primitives
 sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
@@ -75,9 +77,9 @@ std = [
 runtime-benchmarks = [
   "libsecp256k1",
   "sp-application-crypto",
-  "pallet-balances/runtime-benchmarks",
-  "pallet-timestamp/runtime-benchmarks",
-  "frame-benchmarking/runtime-benchmarks",
+  "pallet-balances",
+  "pallet-timestamp",
+  "frame-benchmarking",
   "frame-support/runtime-benchmarks",
   "frame-system/runtime-benchmarks",
 ]
