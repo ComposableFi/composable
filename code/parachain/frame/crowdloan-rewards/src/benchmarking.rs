@@ -1,10 +1,9 @@
-use super::*;
-
-use crate::Pallet as CrowdloanReward;
+use crate::*;
 
 use crate::models::{Proof, RemoteAccount};
 use composable_support::types::{EcdsaSignature, EthereumAddress};
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite};
+use frame_support::{pallet_prelude::*, traits::tokens::currency::Currency};
 use frame_system::RawOrigin;
 use sp_core::{ed25519, keccak_256, Pair};
 use sp_runtime::AccountId32;
@@ -12,19 +11,20 @@ use sp_std::prelude::*;
 
 type RelayKey = ed25519::Pair;
 type EthKey = libsecp256k1::SecretKey;
-type BlockNumber = u32;
+type Moment = u64;
 type Balance = u128;
 type AccountId = AccountId32;
 type RelayChainAccountId = [u8; 32];
 
 const PROOF_PREFIX: &[u8] = b"picasso-";
 const MILLISECS_PER_BLOCK: u64 = 6000;
-const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
-const HOURS: BlockNumber = MINUTES * 60;
-const DAYS: BlockNumber = HOURS * 24;
-const WEEKS: BlockNumber = DAYS * 7;
+const MINUTES: Moment = 60_000 / (MILLISECS_PER_BLOCK as Moment);
+const HOURS: Moment = MINUTES * 60;
+const DAYS: Moment = HOURS * 24;
+const WEEKS: Moment = DAYS * 7;
 
-const VESTING_PERIOD: BlockNumber = 48 * WEEKS;
+const VESTING_PERIOD: Moment = 48 * WEEKS;
+const ACCOUNT_REWARD: Balance = 1_000_000_000_000;
 
 #[derive(Clone)]
 enum ClaimKey {
@@ -50,8 +50,10 @@ impl ClaimKey {
 }
 
 fn relay_proof(relay_account: &RelayKey, reward_account: AccountId) -> Proof<RelayChainAccountId> {
-	let mut msg = PROOF_PREFIX.to_vec();
+	let mut msg = b"<Bytes>".to_vec();
+	msg.append(&mut PROOF_PREFIX.to_vec());
 	msg.append(&mut reward_account.using_encoded(|x| hex::encode(x).as_bytes().to_vec()));
+	msg.append(&mut b"</Bytes>".to_vec());
 	Proof::RelayChain(relay_account.public().into(), relay_account.sign(&msg).into())
 }
 
@@ -88,13 +90,14 @@ fn relay_generate(count: u64) -> Vec<(AccountId, ClaimKey)> {
 	let seed: u128 = 12345678901234567890123456789012;
 	(0..count)
 		.map(|i| {
-			let account_id =
-				[[0_u8; 16], (&(i as u128 + 1)).to_le_bytes()].concat().try_into().unwrap();
+			let account_id = [[0_u8; 16], (i as u128 + 1).to_le_bytes()]
+				.concat()
+				.try_into()
+				.expect("Account ID is valid; QED");
 			(
 				AccountId::new(account_id),
 				ClaimKey::Relay(ed25519::Pair::from_seed(&keccak_256(
-					&[(&(seed + i as u128)).to_le_bytes(), (&(seed + i as u128)).to_le_bytes()]
-						.concat(),
+					&[(seed + i as u128).to_le_bytes(), (seed + i as u128).to_le_bytes()].concat(),
 				))),
 			)
 		})
@@ -104,11 +107,15 @@ fn relay_generate(count: u64) -> Vec<(AccountId, ClaimKey)> {
 fn ethereum_generate(count: u64) -> Vec<(AccountId, ClaimKey)> {
 	(0..count)
 		.map(|i| {
-			let account_id =
-				[(&(i as u128 + 1)).to_le_bytes(), [0_u8; 16]].concat().try_into().unwrap();
+			let account_id = [(i as u128 + 1).to_le_bytes(), [0_u8; 16]]
+				.concat()
+				.try_into()
+				.expect("Account ID is valid; QED");
 			(
 				AccountId::new(account_id),
-				ClaimKey::Eth(EthKey::parse(&keccak_256(&i.to_le_bytes())).unwrap()),
+				ClaimKey::Eth(
+					EthKey::parse(&keccak_256(&i.to_le_bytes())).expect("EthKey is valid; QED"),
+				),
 			)
 		})
 		.collect()
@@ -122,59 +129,86 @@ fn generate_accounts(count: u64) -> Vec<(AccountId, ClaimKey)> {
 }
 
 benchmarks! {
-  where_clause {
-	  where
-		T: frame_system::Config<BlockNumber = BlockNumber>,
-	  T: Config<Balance = Balance, RelayChainAccountId = RelayChainAccountId, AccountId = AccountId>,
-  }
+	where_clause {
+		where
+			T: pallet_balances::Config<Balance = Balance>,
+			T: pallet_timestamp::Config<Moment = Moment>,
+			T: Config<
+				Balance = Balance,
+				Moment = Moment,
+				RelayChainAccountId = RelayChainAccountId,
+				AccountId = AccountId,
+				RewardAsset = pallet_balances::Pallet<T>,
+				Time = pallet_timestamp::Pallet<T>,
+			>,
+	}
 
-  populate {
+	populate {
 		let x in 100..1000;
-		  let accounts =
-				  generate_accounts(x as _)
-				  .into_iter()
-				  .map(|(_, a)| (a.as_remote_public(), 1_000_000_000_000, VESTING_PERIOD)).collect();
-  }: _(RawOrigin::Root, accounts)
+		let accounts =
+			generate_accounts(x as _)
+			.into_iter()
+			.map(|(_, a)| (a.as_remote_public(), ACCOUNT_REWARD, VESTING_PERIOD)).collect();
+	}: _(RawOrigin::Root, accounts)
 
 	initialize {
-		  let x in 100..1000;
-		  let accounts =
-				generate_accounts (x as _)
-				  .into_iter()
-				  .map(|(_, a)| (a.as_remote_public(), 1_000_000_000_000, VESTING_PERIOD)).collect();
-		  CrowdloanReward::<T>::do_populate(accounts)?;
-  }: _(RawOrigin::Root)
+		let x in 100..1000;
+		let accounts =
+			generate_accounts (x as _)
+			.into_iter()
+			.map(|(_, a)| (a.as_remote_public(), ACCOUNT_REWARD, VESTING_PERIOD)).collect();
 
-  associate {
-		  let x in 100..1000;
-		  let accounts =
-				generate_accounts(x as _);
-		  let accounts_reward = accounts.clone()
-				  .into_iter()
-				  .map(|(_, a)| (a.as_remote_public(), 1_000_000_000_000, VESTING_PERIOD)).collect();
-		  CrowdloanReward::<T>::do_populate(accounts_reward)?;
-			CrowdloanReward::<T>::do_initialize()?;
-		  frame_system::Pallet::<T>::set_block_number(VESTING_PERIOD);
-	}: _(RawOrigin::None, accounts[0 as usize].0.clone(), accounts[0 as usize].1.clone().proof(accounts[0 as usize].0.clone()))
+		<T::RewardAsset as Currency<AccountId>>::make_free_balance_be(
+			&Pallet::<T>::account_id(),
+			ACCOUNT_REWARD * x as Balance
+		);
 
-  claim {
-		  let x in 100..1000;
-		  let accounts =
-				  generate_accounts(x as _);
-		  let accounts_reward = accounts.clone()
-				  .into_iter()
-				  .map(|(_, a)| (a.as_remote_public(), 1_000_000_000_000, VESTING_PERIOD)).collect();
-		  CrowdloanReward::<T>::do_populate(accounts_reward)?;
-			CrowdloanReward::<T>::do_initialize()?;
-		  for (reward_account, remote_account) in accounts.clone().into_iter() {
-			  CrowdloanReward::<T>::do_associate(reward_account.clone(), remote_account.proof(reward_account))?;
-		  }
-		  frame_system::Pallet::<T>::set_block_number(VESTING_PERIOD);
-	}: _(RawOrigin::Signed(accounts[0 as usize].0.clone()))
+		Pallet::<T>::do_populate(accounts)?;
+	}: _(RawOrigin::Root)
+
+	associate {
+		let x in 100..1000;
+		let accounts =
+			generate_accounts(x as _);
+		let accounts_reward = accounts.clone()
+			.into_iter()
+			.map(|(_, a)| (a.as_remote_public(), ACCOUNT_REWARD, VESTING_PERIOD)).collect();
+
+		<T::RewardAsset as Currency<AccountId>>::make_free_balance_be(
+			&Pallet::<T>::account_id(),
+			ACCOUNT_REWARD * x as Balance
+		);
+		Pallet::<T>::populate(RawOrigin::Root.into(), accounts_reward)?;
+		Pallet::<T>::initialize(RawOrigin::Root.into())?;
+	}: _(RawOrigin::None, accounts[0].0.clone(), accounts[0].1.clone().proof(accounts[0].0.clone()))
+
+	claim {
+		let x in 100..1000;
+		let accounts =
+			generate_accounts(x as _);
+		let accounts_reward = accounts.clone()
+			.into_iter()
+			.map(|(_, a)| (a.as_remote_public(), ACCOUNT_REWARD, VESTING_PERIOD)).collect();
+
+		Pallet::<T>::populate(RawOrigin::Root.into(), accounts_reward)?;
+
+		<T::RewardAsset as Currency<AccountId>>::make_free_balance_be(
+			&Pallet::<T>::account_id(),
+			ACCOUNT_REWARD * x as Balance
+		);
+		Pallet::<T>::initialize(RawOrigin::Root.into())?;
+
+		for (reward_account, remote_account) in accounts.clone() {
+			Pallet::<T>::associate(
+				RawOrigin::None.into(),
+				reward_account.clone(),
+				remote_account.proof(reward_account)
+
+			)?;
+		}
+
+		T::Time::set_timestamp(VESTING_PERIOD);
+	}: _(RawOrigin::Signed(accounts[0].0.clone()))
 }
 
-impl_benchmark_test_suite!(
-	CrowdloanReward,
-	crate::mocks::ExtBuilder::default().build(),
-	crate::mocks::Test,
-);
+impl_benchmark_test_suite!(Pallet, crate::mocks::ExtBuilder::default().build(), crate::mocks::Test,);

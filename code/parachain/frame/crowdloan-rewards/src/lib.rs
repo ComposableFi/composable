@@ -56,9 +56,8 @@ mod mocks;
 #[cfg(test)]
 mod tests;
 
-// FIXME: runtime signature generation must use host features.
-// #[cfg(feature = "runtime-benchmarks")]
-// mod benchmarking;
+#[cfg(any(feature = "runtime-benchmarks", test))]
+mod benchmarking;
 
 pub mod weights;
 
