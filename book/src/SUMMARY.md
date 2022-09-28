@@ -61,6 +61,7 @@
 - [Nix](./nix.md)
     - [Install Nix](./nix/install.md)
     - [Running Packages](./nix/run-packages.md)
+    - [Development Environments](./nix/development-environments.md)
     - [Defining your own Packages](./nix/defining-your-own-packages.md)
     - [Composing Services with Arion](./nix/composing-services-with-arion.md)
 - [Codespaces](./codespaces.md)
