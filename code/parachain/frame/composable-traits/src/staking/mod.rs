@@ -321,7 +321,7 @@ pub trait Staking {
 		who: &Self::AccountId,
 		position: &Self::PositionId,
 		ratio: Permill,
-	) -> Result<[Self::PositionId; 2], DispatchError>;
+	) -> Result<Self::PositionId, DispatchError>;
 
 	/// Claim remaining reward earned up to this point in time.
 	///
