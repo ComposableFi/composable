@@ -42,4 +42,10 @@ experimental-features = nix-command flakes
 sandbox = relaxed
 ```
 
+### Using flags
 
+If you are in an environment where you cannot edit these config files, then you can pass the following flags to `nix`. 
+
+```
+--extra-experimental-features nix-command --extra-experimental-features flakes --no-sandbox
+```
