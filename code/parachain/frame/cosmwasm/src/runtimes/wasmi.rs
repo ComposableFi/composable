@@ -3,7 +3,9 @@ use crate::{runtimes::abstraction::GasOutcome, Config, ContractInfoOf, Pallet};
 use alloc::string::String;
 use cosmwasm_minimal_std::{Coin, ContractInfoResponse, Empty, Env, MessageInfo};
 use cosmwasm_vm::{
-	executor::{cosmwasm_call, ExecutorError, InstantiateInput, MigrateInput, QueryInput},
+	executor::{
+		cosmwasm_call, ExecuteInput, ExecutorError, InstantiateInput, MigrateInput, QueryInput,
+	},
 	has::Has,
 	memory::{
 		MemoryReadError, MemoryWriteError, Pointable, ReadWriteMemory, ReadableMemory,
@@ -33,6 +35,7 @@ pub enum CosmwasmVMError<T: Config> {
 	ReadOnlyViolation,
 	OutOfGas,
 	Unsupported,
+	Rpc(String),
 }
 
 impl<T: Config> core::fmt::Display for CosmwasmVMError<T> {
@@ -384,7 +387,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		let contract = address.into_inner();
 		let info = Pallet::<T>::contract_info(&contract)?;
 		Pallet::<T>::cosmwasm_call(self.shared, sender, contract, info, funds, |vm| {
-			cosmwasm_system_run::<InstantiateInput, _>(vm, message, event_handler)
+			cosmwasm_system_run::<ExecuteInput, _>(vm, message, event_handler)
 		})
 	}
 

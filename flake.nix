@@ -47,6 +47,27 @@
 
       gce-input = gce-to-nix service-account-credential-key-file-input;
 
+      mkDevnetProgram = { pkgs }:
+        name: spec:
+        pkgs.writeShellApplication {
+          inherit name;
+          runtimeInputs = [ pkgs.arion pkgs.docker pkgs.coreutils pkgs.bash ];
+          text = ''
+            arion --prebuilt-file ${
+              pkgs.arion.build spec
+            } up --build --force-recreate -V --always-recreate-deps --remove-orphans
+          '';
+        };
+
+      composableOverlay = nixpkgs.lib.composeManyExtensions [
+        arion-src.overlay
+        (final: prev: {
+          composable = {
+            mkDevnetProgram = final.callPackage mkDevnetProgram { };
+          };
+        })
+      ];
+
       mk-devnet = { pkgs, lib, writeTextFile, writeShellApplication
         , polkadot-launch, composable-node, polkadot-node, chain-spec }:
         let
@@ -86,8 +107,8 @@
           pkgs = import nixpkgs {
             inherit system;
             overlays = [
+              composableOverlay
               rust-overlay.overlays.default
-              arion-src.overlay
               npm-buildpackage.overlays.default
             ];
             allowUnsupportedSystem = true; # we do not trigger this on mac
@@ -403,6 +424,14 @@
               --execution=wasm
             '';
 
+          mk-xcvm-contract = name:
+            crane-nightly.buildPackage (common-attrs // {
+              pnameSuffix = name;
+              cargoBuildCommand =
+                "cargo build --target wasm32-unknown-unknown --profile cosmwasm-contracts -p ${name}";
+              RUSTFLAGS = "-C link-arg=-s";
+            });
+
           subwasm = let
             src = fetchFromGitHub {
               owner = "chevdor";
@@ -445,7 +474,6 @@
               ```
             '';
           };
-
         in rec {
           packages = rec {
             inherit wasm-optimizer;
@@ -464,6 +492,11 @@
             inherit simnode-tests;
             inherit subwasm;
             inherit subwasm-release-body;
+
+            xcvm-contract-asset-registry =
+              mk-xcvm-contract "xcvm-asset-registry";
+            xcvm-contract-router = mk-xcvm-contract "xcvm-router";
+            xcvm-contract-interpreter = mk-xcvm-contract "xcvm-interpreter";
 
             subsquid-processor = let
               processor = pkgs.buildNpmPackage {
@@ -935,7 +968,6 @@
             wasmswap = pkgs.callPackage ./code/xcvm/cosmos/wasmswap.nix {
               crane = crane-nightly;
             };
-
             default = packages.composable-node;
           };
 
@@ -1018,42 +1050,33 @@
             default = developers;
           };
 
+          devnet-specs = {
+            default = import ./.nix/devnet-specs/default.nix {
+              inherit pkgs;
+              inherit packages;
+            };
+
+            xcvm = import ./.nix/devnet-specs/xcvm.nix {
+              inherit pkgs;
+              inherit packages;
+            };
+          };
+
           apps = let
-            arion-pure = import ./.nix/arion-pure.nix {
-              inherit pkgs;
-              inherit packages;
-            };
-            arion-up-program = pkgs.writeShellApplication {
-              name = "devnet-up";
-              runtimeInputs =
-                [ pkgs.arion pkgs.docker pkgs.coreutils pkgs.bash ];
-              text = ''
-                arion --prebuilt-file ${arion-pure} up --build --force-recreate -V --always-recreate-deps --remove-orphans
-              '';
-            };
-
-            devnet-xcvm = import ./.nix/arion-xcvm.nix {
-              inherit pkgs;
-              inherit packages;
-            };
-            devnet-xcvm-up-program = pkgs.writeShellApplication {
-              name = "devnet-xcvm-up";
-              runtimeInputs =
-                [ pkgs.arion pkgs.docker pkgs.coreutils pkgs.bash ];
-              text = ''
-                arion --prebuilt-file ${devnet-xcvm} up --build --force-recreate -V --always-recreate-deps --remove-orphans
-              '';
-            };
-
+            devnet-default-program =
+              pkgs.composable.mkDevnetProgram "devnet-default"
+              devnet-specs.default;
+            devnet-xcvm-program =
+              pkgs.composable.mkDevnetProgram "devnet-xcvm" devnet-specs.xcvm;
           in rec {
-            devnet-up = {
+            devnet = {
               type = "app";
-              program = "${arion-up-program}/bin/devnet-up";
+              program = "${devnet-default-program}/bin/devnet-default";
             };
 
-            devnet-xcvm-up = {
+            devnet-xcvm = {
               type = "app";
-              program = "${devnet-xcvm-up-program}/bin/devnet-xcvm-up";
+              program = "${devnet-xcvm-program}/bin/devnet-xcvm";
             };
 
             devnet-dali = {
@@ -1124,6 +1147,8 @@
           };
         });
     in eachSystemOutputs // {
+
+      overlays.default = composableOverlay;
       nixopsConfigurations = {
         default = let pkgs = nixpkgs.legacyPackages.x86_64-linux;
         in import ./.nix/devnet.nix {
