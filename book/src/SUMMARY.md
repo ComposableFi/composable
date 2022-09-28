@@ -59,7 +59,8 @@
 
 # 💻 Developer Guides
 - [Nix](./nix.md)
-    - [Getting Started](./nix/getting-started.md)
+    - [Install Nix](./nix/install.md)
+    - [Running Packages](./nix/run-packages.md)
 - [Codespaces](./codespaces.md)
     - [Getting Started](./codespaces/getting-started.md)
     - [Using Codespaces](./codespaces/using-codespaces.md)
