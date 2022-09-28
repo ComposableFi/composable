@@ -1,5 +1,6 @@
 use assets_rpc::{Assets, AssetsApiServer};
 use common::{AccountId, Balance, Index, OpaqueBlock};
+use cosmwasm_rpc::{Cosmwasm, CosmwasmApiServer};
 use crowdloan_rewards_rpc::{CrowdloanRewards, CrowdloanRewardsApiServer};
 use cumulus_primitives_core::CollectCollationInfo;
 use ibc_rpc::{IbcApiServer, IbcRpcHandler};
@@ -238,6 +239,24 @@ define_trait! {
 		impl for dali_runtime {
 			fn (io, deps) {
 				io.merge(IbcRpcHandler::new(deps.client, deps.chain_props).into_rpc())
+			}
+		}
+	}
+
+	mod cosmwasm {
+		pub trait ExtendWithCosmwasmApi {
+			fn extend_with_cosmwasm_api(io, deps) ;
+		}
+
+		#[cfg(feature = "composable")]
+		impl for composable_runtime {}
+
+		impl for picasso_runtime {}
+
+		#[cfg(feature = "dali")]
+		impl for dali_runtime {
+			fn (io, deps) {
+				io.merge(Cosmwasm::new(deps.client).into_rpc())
 			}
 		}
 	}

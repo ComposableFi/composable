@@ -234,12 +234,14 @@ protoc
 PROTOC
 PTRACE
 reduxjs
+registryaddr
 rekt
 resourcemonitor
 revhash
 rewardaccumulationhook
 rewardtrackerstore
 ripemd
+rlib
 rnix
 rocksdb
 ROCKSDB
@@ -276,6 +278,7 @@ statemine
 stdenv
 structopt
 styleguide
+submessage
 substituters
 subwasm
 subxt

@@ -39,6 +39,7 @@ in {
         "--rpc-methods=Unsafe"
         "--execution=wasm"
         "--wasmtime-instantiation-strategy=recreate-instance-copy-on-write"
+        "--log=runtime::contracts=debug"
       ];
     }];
   };

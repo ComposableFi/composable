@@ -1,0 +1,178 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ExecuteMsg",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "execute"
+      ],
+      "properties": {
+        "execute": {
+          "type": "object",
+          "required": [
+            "program"
+          ],
+          "properties": {
+            "program": {
+              "$ref": "#/definitions/Program_for_Array_of_Instruction_for_NetworkId_and_Array_of_uint8_and_String_and_Funds_for_Amount"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "definitions": {
+    "Amount": {
+      "description": "See https://en.wikipedia.org/wiki/Linear_equation#Slope%E2%80%93intercept_form_or_Gradient-intercept_form",
+      "type": "object",
+      "required": [
+        "intercept",
+        "slope"
+      ],
+      "properties": {
+        "intercept": {
+          "$ref": "#/definitions/Displayed_for_uint128"
+        },
+        "slope": {
+          "$ref": "#/definitions/Displayed_for_uint128"
+        }
+      }
+    },
+    "Displayed_for_uint128": {
+      "type": "integer",
+      "format": "uint128",
+      "minimum": 0.0
+    },
+    "Funds_for_Amount": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/Amount"
+      }
+    },
+    "Instruction_for_NetworkId_and_Array_of_uint8_and_String_and_Funds_for_Amount": {
+      "description": "Base XCVM instructions. This set will remain as small as possible, expressiveness must come on `top` of the base instructions.",
+      "oneOf": [
+        {
+          "description": "Transfer some [`Assets`] from the current program to the [`to`] account.",
+          "type": "object",
+          "required": [
+            "transfer"
+          ],
+          "properties": {
+            "transfer": {
+              "type": "object",
+              "required": [
+                "assets",
+                "to"
+              ],
+              "properties": {
+                "assets": {
+                  "$ref": "#/definitions/Funds_for_Amount"
+                },
+                "to": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "description": "Arbitrary payload representing a raw call inside the current [`Network`].\n\nOn picasso, this will be a SCALE encoded dispatch call. On ethereum, an ethereum ABI encoded call. On cosmos, a raw json WasmMsg call.\n\nDepending on the network, the payload might be more structured than the base call. For most of the network in fact, we need to provide the target address along the payload, which can be encoded inside this single payload.",
+          "type": "object",
+          "required": [
+            "call"
+          ],
+          "properties": {
+            "call": {
+              "type": "object",
+              "required": [
+                "encoded"
+              ],
+              "properties": {
+                "encoded": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "format": "uint8",
+                    "minimum": 0.0
+                  }
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "description": "Spawn a sub-program on the target `network`.\n\nThe program will be spawned with the desired [`Assets`]. The salt is used to track the program when events are dispatched in the network.",
+          "type": "object",
+          "required": [
+            "spawn"
+          ],
+          "properties": {
+            "spawn": {
+              "type": "object",
+              "required": [
+                "assets",
+                "network",
+                "program",
+                "salt"
+              ],
+              "properties": {
+                "assets": {
+                  "$ref": "#/definitions/Funds_for_Amount"
+                },
+                "network": {
+                  "$ref": "#/definitions/NetworkId"
+                },
+                "program": {
+                  "$ref": "#/definitions/Program_for_Array_of_Instruction_for_NetworkId_and_Array_of_uint8_and_String_and_Funds_for_Amount"
+                },
+                "salt": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "format": "uint8",
+                    "minimum": 0.0
+                  }
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "NetworkId": {
+      "description": "Newtype for XCVM networks ID. Must be unique for each network and must never change. This ID is an opaque, arbitrary type from the XCVM protocol and no assumption must be made on how it is computed.",
+      "type": "integer",
+      "format": "uint8",
+      "minimum": 0.0
+    },
+    "Program_for_Array_of_Instruction_for_NetworkId_and_Array_of_uint8_and_String_and_Funds_for_Amount": {
+      "type": "object",
+      "required": [
+        "instructions",
+        "tag"
+      ],
+      "properties": {
+        "instructions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Instruction_for_NetworkId_and_Array_of_uint8_and_String_and_Funds_for_Amount"
+          }
+        },
+        "tag": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8",
+            "minimum": 0.0
+          }
+        }
+      }
+    }
+  }
+}
