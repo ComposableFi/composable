@@ -951,7 +951,7 @@
               NIX_PATH = "nixpkgs=${pkgs.path}";
             };
 
-            writers = base-shell.overrideAttrs (base: {
+            docs = base-shell.overrideAttrs (base: {
               buildInputs = base.buildInputs ++ (with packages; [ python3 nodejs mdbook ]);
             });
 

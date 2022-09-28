@@ -5,6 +5,23 @@ _Declarative tooling_
 
 We want to make sure that all developers are using identical tools within their shells. We also want to make sure that these tools are identical to the ones being used in our CI pipelines, and that we can declaratively upgrade developer environments. Nix allows us to do this with the [flakes](https://nixos.wiki/wiki/Flakes)' `devShell` system.
 
-For example, 
+In order to use our declarative development environment, go to you checked out repository and simply run:
 
+```bash
+nix develop
+```
+
+This will download all required tools you need and put you into our declarative development environment. From there you can type `hx` in order to load [Helix](https://helix-editor.com/), a very fast editor written in Rust that is preconfigured to use the correct language server. You can also launch any other editor from here that you normally use, such as `code`, `vim`, or `emacs`.
+
+## Alternative `devShell`s
+
+We not only provide the `default` devShell, but also other ones that are optimized for specific purposes. for example, you can use
+
+```bash
+nix develop ".#docs"
+```
+
+In order to launch a shell that only includes the required tools for writing docs.
+
+You can view all available devShells by typing `nix flake show`.
 
