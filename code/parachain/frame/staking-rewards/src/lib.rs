@@ -366,6 +366,10 @@ pub mod pallet {
 
 		#[pallet::constant]
 		type LockId: Get<LockIdentifier>;
+
+		// The account to send the slashed stakes to.
+		#[pallet::constant]
+		type TreasuryAccount: Get<Self::AccountId>;
 	}
 
 	/// Abstraction over RewardPoolConfiguration type
@@ -920,7 +924,7 @@ pub mod pallet {
 				})?;
 
 			// REVIEW(benluelo): Make this logic a method on Stake
-			let stake_with_penalty = if is_early_unlock {
+			let staked_amount_returned_to_staker = if is_early_unlock {
 				stake.lock.unlock_penalty.left_from_one().mul_ceil(stake.stake)
 			} else {
 				stake.stake
@@ -935,14 +939,31 @@ pub mod pallet {
 				asset_id,
 				&fnft_asset_account,
 				who,
-				stake_with_penalty,
+				staked_amount_returned_to_staker,
 				keep_alive,
 			)?;
 
 			Stakes::<T>::remove(fnft_collection_id, fnft_instance_id);
 
-			// Burn the financial NFT and the shares it holds
-			T::Assets::burn_from(asset_id, &fnft_asset_account, stake.stake - stake_with_penalty)?;
+			// transfer slashed stake to the treasury
+			if is_early_unlock {
+				// If there is no penalty then there is nothing to burn as it will all have been
+				// transferred back to the staker. burn_from isn't a noop if the amount to burn
+				// is 0, hence the check
+				T::Assets::transfer(
+					stake.reward_pool_id,
+					&fnft_asset_account,
+					&T::TreasuryAccount::get(),
+					// staked_amount_returned_to_staker should always be <= stake.amount as per
+					// the formula used to calculate it, so this should never fail.
+					// defensive_saturating_sub uses saturating_sub as a fallback if the
+					// operation *were* to fail, resulting in no transfer happening (the
+					// transferred amount would be 0) and an error being logged.
+					stake.stake.defensive_saturating_sub(staked_amount_returned_to_staker),
+					false, // pallet account, doesn't need to be kept alive
+				)?;
+			}
+			// burn the shares
 			T::Assets::burn_from(share_asset_id, &fnft_asset_account, stake.share)?;
 			T::FinancialNft::burn(fnft_collection_id, fnft_instance_id, Some(who))?;
 

@@ -160,6 +160,8 @@ parameter_types! {
 	pub const XPbloAssetId: CurrencyId = 102;
 	pub const PicaStakeFinancialNftCollectionId: CurrencyId = 1001;
 	pub const PbloStakeFinancialNftCollectionId: CurrencyId = 1001;
+	// REVIEW(beenluelo): Use a better value for this?
+	pub const TreasuryAccountId: AccountId = 123_456_789_u128;
 }
 
 impl pallet_staking_rewards::Config for Test {
@@ -185,6 +187,7 @@ impl pallet_staking_rewards::Config for Test {
 	type PicaStakeFinancialNftCollectionId = PicaStakeFinancialNftCollectionId;
 	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
 	type LockId = StakingRewardsLockId;
+	type TreasuryAccount = TreasuryAccountId;
 }
 
 ord_parameter_types! {

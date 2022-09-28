@@ -165,18 +165,19 @@ impl pallet_timestamp::Config for Test {
 }
 
 parameter_types! {
-	// cspell:disable-next
-	pub const StakingRewardsPalletId: PalletId = PalletId(*b"stk_rwrd");
-	pub const StakingRewardsLockId: LockIdentifier = *b"stk_lock";
-	pub const MaxStakingDurationPresets: u32 = 10;
-	pub const MaxRewardConfigsPerPool: u32 = 10;
-	pub const PicaAssetId : CurrencyId = 1;
-	pub const PbloAssetId : CurrencyId = 2;
-	pub const XPicaAssetId: CurrencyId = 101;
-	pub const XPbloAssetId: CurrencyId = 102;
-	pub const PicaStakeFinancialNftCollectionId: CurrencyId = 1001;
-	pub const PbloStakeFinancialNftCollectionId: CurrencyId = 1002;
-}
+// cspell:disable-next
+pub const StakingRewardsPalletId: PalletId = PalletId(*b"stk_rwrd");
+pub const StakingRewardsLockId: LockIdentifier = *b"stk_lock";
+pub const MaxStakingDurationPresets: u32 = 10;
+pub const MaxRewardConfigsPerPool: u32 = 10;
+pub const PicaAssetId : CurrencyId = 1;
+pub const PbloAssetId : CurrencyId = 2;
+pub const XPicaAssetId: CurrencyId = 101;
+pub const XPbloAssetId: CurrencyId = 102;
+pub const PicaStakeFinancialNftCollectionId: CurrencyId = 1001;
+pub const PbloStakeFinancialNftCollectionId: CurrencyId = 1002;
+// TODO(benluelo): Use a better value here?
+pub const TreasuryAccountId: AccountId = 123_456_789_u128;}
 
 impl pallet_staking_rewards::Config for Test {
 	type Event = Event;
@@ -201,6 +202,7 @@ impl pallet_staking_rewards::Config for Test {
 	type PicaStakeFinancialNftCollectionId = PicaStakeFinancialNftCollectionId;
 	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
 	type LockId = StakingRewardsLockId;
+	type TreasuryAccount = TreasuryAccountId;
 }
 
 parameter_types! {

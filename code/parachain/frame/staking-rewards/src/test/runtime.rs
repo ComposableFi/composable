@@ -14,6 +14,7 @@ use frame_system::{EnsureRoot, EnsureSignedBy};
 use hex_literal::hex;
 use orml_traits::{parameter_type_with_key, GetByKey, LockIdentifier};
 use sp_arithmetic::traits::Zero;
+use sp_core::sr25519;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
@@ -232,6 +233,8 @@ parameter_types! {
 	pub const PicaStakeFinancialNftCollectionId: CurrencyId = 1001;
 	pub const PbloStakeFinancialNftCollectionId: CurrencyId = 1002;
 	pub const StakingRewardsLockId: LockIdentifier = *b"stk_lock";
+	// REVIEW(beenluelo): Use a better value for this?
+	pub const TreasuryAccountId: AccountId = sr25519::Public([10_u8; 32]);
 }
 
 impl pallet_staking_rewards::Config for Test {
@@ -256,8 +259,8 @@ impl pallet_staking_rewards::Config for Test {
 	type PicaStakeFinancialNftCollectionId = PicaStakeFinancialNftCollectionId;
 	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
 	type WeightInfo = ();
-
 	type LockId = StakingRewardsLockId;
+	type TreasuryAccount = TreasuryAccountId;
 }
 
 impl InstanceFilter<Call> for ProxyType {
