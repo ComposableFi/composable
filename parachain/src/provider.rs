@@ -39,7 +39,7 @@ use ibc_rpc::{IbcApiClient, PacketInfo};
 use primitives::{Chain, IbcProvider, KeyProvider, UpdateType};
 use sp_core::H256;
 
-use crate::light_client_protocols::FinalityEvent;
+use crate::light_client_protocol::FinalityEvent;
 use beefy_prover::helpers::fetch_timestamp_extrinsic_with_proof;
 use grandpa_light_client_primitives::{FinalityProof, ParachainHeaderProofs};
 use ics11_beefy::client_state::ClientState as BeefyClientState;
@@ -76,22 +76,10 @@ where
 	where
 		C: Chain,
 	{
-		match self.light_client_protocol {
-			LightClientProtocol::Grandpa =>
-				LightClientProtocol::query_latest_ibc_events_with_grandpa::<T, C>(
-					self,
-					finality_event,
-					counterparty,
-				)
-				.await,
-			LightClientProtocol::Beefy =>
-				LightClientProtocol::query_latest_ibc_events_with_beefy::<T, C>(
-					self,
-					finality_event,
-					counterparty,
-				)
-				.await,
-		}
+		self.light_client_protocol
+			.clone()
+			.query_latest_ibc_events(self, finality_event, counterparty)
+			.await
 	}
 
 	async fn query_client_consensus(

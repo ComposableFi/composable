@@ -8,7 +8,7 @@ use ibc::{
 };
 use pallet_ibc::PalletParams;
 use parachain::{
-	calls::SetPalletParams, light_client_protocols::LightClientProtocol, ParachainClient,
+	calls::SetPalletParams, light_client_protocol::LightClientProtocol, ParachainClient,
 	ParachainClientConfig,
 };
 use sp_core::crypto::KeyTypeId;

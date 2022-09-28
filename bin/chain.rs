@@ -1,7 +1,9 @@
+#![allow(unused_variables, unreachable_patterns, unreachable_code)]
+
 use crate::AnyConfig;
 use async_trait::async_trait;
 use derive_more::From;
-use futures::{Stream, StreamExt};
+use futures::Stream;
 #[cfg(feature = "testing")]
 use ibc::applications::transfer::msgs::transfer::MsgTransfer;
 use ibc::{
@@ -11,7 +13,6 @@ use ibc::{
 		ics23_commitment::commitment::CommitmentPrefix,
 		ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId},
 	},
-	downcast,
 	events::IbcEvent,
 	signer::Signer,
 	timestamp::Timestamp,
@@ -60,7 +61,7 @@ pub enum AnyChain {
 #[derive(From)]
 pub enum AnyFinalityEvent {
 	#[cfg(feature = "parachain")]
-	Parachain(parachain::light_client_protocols::FinalityEvent),
+	Parachain(parachain::light_client_protocol::FinalityEvent),
 }
 
 #[derive(Error, Debug)]
@@ -94,7 +95,7 @@ impl IbcProvider for AnyChain {
 		match self {
 			#[cfg(feature = "parachain")]
 			AnyChain::Parachain(chain) => {
-				let finality_event = downcast!(finality_event => AnyFinalityEvent::Parachain)
+				let finality_event = ibc::downcast!(finality_event => AnyFinalityEvent::Parachain)
 					.ok_or_else(|| AnyError::Other("Invalid finality event type".to_owned()))?;
 				let (client_msg, events, update_type) =
 					chain.query_latest_ibc_events(finality_event, counterparty).await?;
@@ -503,7 +504,10 @@ impl Chain for AnyChain {
 	) -> Pin<Box<dyn Stream<Item = Self::FinalityEvent> + Send + Sync>> {
 		match self {
 			#[cfg(feature = "parachain")]
-			Self::Parachain(chain) => Box::pin(chain.finality_notifications().await.map(|x| x.into())),
+			Self::Parachain(chain) => {
+				use futures::StreamExt;
+				Box::pin(chain.finality_notifications().await.map(|x| x.into()))
+			},
 			_ => unreachable!(),
 		}
 	}

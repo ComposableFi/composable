@@ -10,7 +10,7 @@ pub mod provider;
 pub mod signer;
 pub mod utils;
 
-pub mod light_client_protocols;
+pub mod light_client_protocol;
 #[cfg(feature = "testing")]
 pub mod test_provider;
 
@@ -59,7 +59,7 @@ use crate::{
 };
 use primitives::KeyProvider;
 
-use crate::light_client_protocols::LightClientProtocol;
+use crate::light_client_protocol::LightClientProtocol;
 use grandpa_light_client_primitives::ParachainHeadersWithFinalityProof;
 use grandpa_prover::GrandpaProver;
 use ibc::timestamp::Timestamp;
@@ -116,9 +116,9 @@ enum KeyType {
 impl KeyType {
 	pub fn to_key_type_id(&self) -> KeyTypeId {
 		match self {
-			KeyType::Sr25519 => KeyTypeId(sp_core::sr25519::CRYPTO_ID.0),
-			KeyType::Ed25519 => KeyTypeId(sp_core::ed25519::CRYPTO_ID.0),
-			KeyType::Ecdsa => KeyTypeId(sp_core::ecdsa::CRYPTO_ID.0),
+			KeyType::Sr25519 => KeyTypeId(sr25519::CRYPTO_ID.0),
+			KeyType::Ed25519 => KeyTypeId(ed25519::CRYPTO_ID.0),
+			KeyType::Ecdsa => KeyTypeId(ecdsa::CRYPTO_ID.0),
 		}
 	}
 }
