@@ -1,0 +1,34 @@
+[package]
+authors = ["Composable Developers"]
+edition = "2021"
+name = "xcvm-router"
+version = "0.1.0"
+
+exclude = [
+  # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
+  "xcvm-router.wasm",
+  "hash.txt",
+]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+# use library feature to disable all instantiate/execute/query exports
+library = []
+
+[dependencies]
+cosmwasm-std = "1.0.0"
+cw-storage-plus = "0.13.2"
+cw20 = "0.13.2"
+hex = "0.4"
+schemars = "0.8.8"
+serde = { version = "1.0.137", default-features = false, features = ["derive"] }
+thiserror = { version = "1.0.31" }
+xcvm-asset-registry = { path = "../asset-registry", features = ["library"] }
+xcvm-core = { path = "../../../lib/core", features = ["std"] }
+xcvm-interpreter = { path = "../interpreter", features = ["library"] }
+
+[dev-dependencies]
+cosmwasm-schema = "1.0.0"
+serde-json-wasm = { git = "https://github.com/hussein-aitlahcen/serde-json-wasm", rev = "1608a13d2a2ba90605d9626a51ff6667aca5a2d6" }
