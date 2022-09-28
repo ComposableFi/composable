@@ -61,6 +61,7 @@
 - [Nix](./nix.md)
     - [Install Nix](./nix/install.md)
     - [Running Packages](./nix/run-packages.md)
+    - [Defining your own packages](./nix/defining-your-own-packages.md)
 - [Codespaces](./codespaces.md)
     - [Getting Started](./codespaces/getting-started.md)
     - [Using Codespaces](./codespaces/using-codespaces.md)
