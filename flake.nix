@@ -695,9 +695,8 @@
                 pathsToLink = [ "/bin" ];
               };
               config = {
-                Entrypoint = [
-                  "${packages.devnet-dali-centauri}/bin/run-devnet-dali-dev"
-                ];
+                Entrypoint =
+                  [ "${packages.bridge-devnet-dali}/bin/run-devnet-dali-dev" ];
                 WorkingDir = "/home/polkadot-launch";
               };
               runAsRoot = ''
