@@ -14,5 +14,32 @@ There are four ways in order to use Nix at Composable, ranked from most compatib
 
 Once you have determined which one you want to use, [follow the official Nix installation instructions](https://nixos.org/download.html).
 
+_If you're wondering what the author is using: I'm personally using NixOS within a Parallels VM on my M1 Mac. DM me (**@cor**) on Slack if you also want this._
+
 ## Configuring your Nix install
+
+### On NixOS
+
+At your Nix system config (`/etc/nixos/configuration.nix` by default), configure `nix` like this:
+
+```nix
+{
+  nix = {
+    useSandbox = "relaxed";
+    extraOptions = ''
+      experimental-features = nix-command flakes
+    '';
+  };
+}
+```
+
+### On non-NixOS
+
+Set the contents of `~/.config/nix/nix.conf` to this:
+
+```nix
+experimental-features = nix-command flakes
+sandbox = relaxed
+```
+
 
