@@ -181,6 +181,7 @@ nixops
 nixos
 nixpkgs
 nixify
+nixified
 nocapture
 noconfirm
 nodedir
