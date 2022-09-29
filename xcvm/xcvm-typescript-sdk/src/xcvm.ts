@@ -1,7 +1,8 @@
-import {load, loadSync, ReflectionObject, util, Type, Message, Enum} from "protobufjs";
-import {ethers} from "hardhat";
+import {loadSync, Type, Message, Enum} from "protobufjs";
+import { resolve } from 'path';
+import {utils} from "ethers";
 
-export class XCVMProgram {
+export class XCVM {
   root: any;
   ProgramMessage: Type;
   InstructionMessage: Type;
@@ -26,7 +27,7 @@ export class XCVMProgram {
   messageTypeLookUp: { [k: string]: any } = {};
 
   constructor() {
-    this.root = loadSync("./interpreter.proto");
+    this.root = loadSync(resolve(__dirname, './interpreter.proto'));
     this.ProgramMessage = this.root.lookupType("interpreter.Program");
     this.InstructionMessage = this.root.lookupType("interpreter.Instruction");
     this.InstructionsMessage = this.root.lookupType("interpreter.Instructions");
@@ -121,7 +122,7 @@ export class XCVMProgram {
 
   public createAccount(address: string): Message<{}> {
     return this.AccountMessage.create({
-      account: ethers.utils.arrayify(address),
+      account: utils.arrayify(address),
     });
   }
 
@@ -267,5 +268,10 @@ export class XCVMProgram {
     }
     return this.BindingsMessage.create({bindings: bindingsMessage});
   }
+
+  //public decodeProgram(programMessage: Message): Json {
+  //  let jsonData = this.ProgramMessage.decode(this.encodeMessage(this.ProgramMessage.encode(programMessage))
+  //  //return JSON.stringify(jsonData.toJSON(), null, 2))
+  //}
 
 }

@@ -1,7 +1,6 @@
 import {ethers, network} from "hardhat";
 import {expect} from "chai";
-import {encode} from "punycode";
-import {XCVMProgram} from "./xcvm";
+import { XCVM } from "xcvm-typescript-sdk";
 
 const protobuf = require("protobufjs");
 
@@ -548,8 +547,8 @@ describe("Interpreter", function () {
       ).to.be.equal((oldBalance / 2).toString());
     });
 
-    it("test program using sdk", async function () {
-      let xcvm = new XCVMProgram();
+    it.only("test program using sdk", async function () {
+      let xcvm = new XCVM();
       let data =
         xcvm.createProgram(
           xcvm.createInstructions(
@@ -572,6 +571,10 @@ describe("Interpreter", function () {
         )
       console.log(xcvm.encodeMessage(data));
 
+      let cc = xcvm.ProgramMessage.decode(xcvm.encodeMessage(data))
+
+      console.log(333, JSON.stringify(cc.toJSON(), null, 2))
+
       await gateway.runProgram(
         {networkId: 1, account: owner.address},
         xcvm.encodeMessage(data),
@@ -591,7 +594,7 @@ describe("Interpreter", function () {
       console.log("payload", ethers.utils.hexlify(payload))
 
 
-      let xcvm = new XCVMProgram();
+      let xcvm = new XCVM();
       let a = xcvm.createInstruction(xcvm.createCall(payload, xcvm.createBindings([
           xcvm.createBinding(
             0,
@@ -652,8 +655,8 @@ describe("Interpreter", function () {
       expect((await erc20.balanceOf(user1.address)).toString()).to.be.equal(ethers.utils.parseEther("50").toString());
     })
 
-    it.only("test spawn program using sdk", async function () {
-      let xcvm = new XCVMProgram();
+    it("test spawn program using sdk", async function () {
+      let xcvm = new XCVM();
       let programMessage =
         xcvm.createProgram(
           xcvm.createInstructions(
