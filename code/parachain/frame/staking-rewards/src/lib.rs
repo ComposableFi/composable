@@ -901,8 +901,6 @@ pub mod pallet {
 			who: &Self::AccountId,
 			(fnft_collection_id, fnft_instance_id): &Self::PositionId,
 		) -> DispatchResult {
-			let keep_alive = false;
-
 			let mut stake = Stakes::<T>::try_get(fnft_collection_id, fnft_instance_id)
 				.map_err(|_| Error::<T>::StakeNotFound)?;
 
@@ -914,13 +912,7 @@ pub mod pallet {
 					let rewards_pool =
 						rewards_pool.as_mut().ok_or(Error::<T>::RewardsPoolNotFound)?;
 
-					Self::collect_rewards(
-						rewards_pool,
-						&mut stake,
-						who,
-						is_early_unlock,
-						keep_alive,
-					)?;
+					Self::collect_rewards(rewards_pool, &mut stake, who, is_early_unlock)?;
 
 					rewards_pool.claimed_shares =
 						rewards_pool.claimed_shares.safe_add(&stake.share)?;
@@ -1096,7 +1088,7 @@ pub mod pallet {
 					let rewards_pool =
 						rewards_pool.as_mut().ok_or(Error::<T>::RewardsPoolNotFound)?;
 
-					Self::collect_rewards(rewards_pool, stake, who, false, keep_alive)?;
+					Self::collect_rewards(rewards_pool, stake, who, false)?;
 
 					Ok::<_, DispatchError>(())
 				})
@@ -1195,13 +1187,15 @@ pub mod pallet {
 		/// * `stake` - Stake position
 		/// * `early_unlock` - If there should be an early unlock penalty
 		/// * `keep_alive` - If the transaction should be kept alive
+		// TODO(benluelo): This function does too much - while claim and unstake have similar
+		// functionality, I don't think this is the best abstraction of that. Refactor to have
+		// smaller functions that can then be used in both claim and unstake.
+		// NOTE: Low priority, this is currently working, just not optimal
 		pub(crate) fn collect_rewards(
 			rewards_pool: &mut RewardPoolOf<T>,
 			stake: &mut StakeOf<T>,
 			owner: &T::AccountId,
 			penalize_for_early_unlock: bool,
-			// TODO(benluelo): Remove this parameter, the transfers are from the pool account.
-			keep_alive: bool,
 		) -> Result<(), DispatchError> {
 			for (reward_asset_id, reward) in &mut rewards_pool.rewards {
 				let claim = claim_of_stake::<T>(
