@@ -139,8 +139,15 @@ export const useCrowdloanContributions = (
   }, [ethAccount, ethereumContributions, kusamaContributions, picassoAccount]);
 };
 
+/**
+ * Given a picasso or ethereum account
+ * update its claimed shares in zustand store
+ * @param {string | undefined} ethAccount connected ethereum account
+ * @param {string | undefined} picassoAccount connected picasso account
+ * @param {ApiPromise} api parachain api object
+ * @returns {BigNumber} amount of rewards claimed
+ */
 export const useClaimedAmount = (
-  _crowdloanStep: CrowdloanStep,
   ethAccount: string | undefined,
   picassoAccount: string | undefined,
   api?: ApiPromise
@@ -306,9 +313,9 @@ export const useEligibility = (
 /**
  * Given an ethereum address return the connected and associated Polkadot account
  * otherwise return currently connected one to associate
- * @param ethAccount Connected Ethereum Account
- * @param connectedPicassoAccount Currently Selected Polkadot Account
- * @param connectedPicassoAccounts All Connected Polkadot Accounts
+ * @param {string | undefined} ethAccount Connected Ethereum Account
+ * @param {ConnectedAccount | undefined} connectedPicassoAccount Currently Selected Polkadot Account
+ * @param {ConnectedAccount[] | undefined} connectedPicassoAccounts All Connected Polkadot Accounts
  * @returns
  */
 export const useEthereumAssociatedAccount = (
@@ -356,21 +363,21 @@ export const useEthereumAssociatedAccount = (
 
 /**
  * Returns the vesting start time
- * of the
- * @param api API object
- * @returns unix timestamp in number
+ * of crowdloan rewards
+ * @param {ApiPromise} api API object
+ * @returns {boolean}
  */
-export const useVestingTimeStart = (api?: ApiPromise): number => {
-  const [vestingTimeStart, setVestingTimeStart] = useState(-1);
+export const useHasStartedCrowdloan = (api?: ApiPromise): boolean => {
+  const [hasStarted, setHasStarted] = useState(false);
 
   useEffect(() => {
     if (api) {
       api.query.crowdloanRewards.vestingTimeStart((timeStart) => {
-        const bn = new BigNumber(timeStart.value.toString());
-        setVestingTimeStart(bn.toNumber());
+        const bn = new BigNumber(timeStart.value.toString()); // converting to string and then BN (typesafe)
+        setHasStarted(bn.toNumber() < Date.now());
       });
     }
   }, [api]);
 
-  return vestingTimeStart;
+  return hasStarted;
 };

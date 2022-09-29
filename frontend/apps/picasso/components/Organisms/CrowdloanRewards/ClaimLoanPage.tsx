@@ -37,7 +37,7 @@ import {
   useCrowdloanContributions,
   useEligibility,
   useEthereumAssociatedAccount,
-  useVestingTimeStart,
+  useHasStartedCrowdloan,
 } from "@/stores/defi/polkadot/crowdloanRewards/hooks";
 
 const DEFAULT_EVM_ID = 1;
@@ -244,7 +244,6 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
   );
 
   const claimedRewards = useClaimedAmount(
-    nextStep,
     account?.toLowerCase(),
     selectedAccount?.address,
     parachainApi
@@ -256,7 +255,7 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
     selectedAccount?.address
   );
 
-  const vestingTimeStart = useVestingTimeStart(parachainApi);
+  const hasStarted = useHasStartedCrowdloan(parachainApi);
 
   const breadcrumbs = [
     <Link key="Overview" underline="none" color="primary" href="/">
@@ -316,7 +315,7 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
                     ? `${ethAssociatedOrSelectedAccount.address} (${ethAssociatedOrSelectedAccount.name})`
                     : "-"
                 }
-                disabled={availableToClaim.eq(0)}
+                disabled={!hasStarted || availableToClaim.eq(0)}
                 claimedRewards={claimedRewards}
                 amountContributed={contributedAmount}
                 availableToClaim={availableToClaim}
@@ -341,7 +340,7 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
             ) : (
               <KSMClaimForm
                 isClaiming={isPendingAssociate || isPendingClaim}
-                disabled={availableToClaim.eq(0)}
+                disabled={!hasStarted || availableToClaim.eq(0)}
                 claimedRewards={claimedRewards}
                 amountContributed={contributedAmount}
                 availableToClaim={availableToClaim}

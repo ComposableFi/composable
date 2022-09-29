@@ -1,10 +1,6 @@
 import create from "zustand";
 import BigNumber from "bignumber.js";
 
-export type CrowdloanSelectedAccountStatus =
-  | "canClaim"
-  | "canAssociate"
-  | "ineligible";
 /** Address in KSM format => string address in PICA or ETH format */
 export type CrowdloanContributionRecord = Record<
   string,
@@ -15,6 +11,7 @@ export type CrowdloanContributionRecord = Record<
 >;
 /** Address in PICA format => string address in PICA or ETH format */
 export type CrowdloanAssociation = [string, string | null];
+
 export enum CrowdloanStep {
   AssociateEth,
   AssociateKsm,

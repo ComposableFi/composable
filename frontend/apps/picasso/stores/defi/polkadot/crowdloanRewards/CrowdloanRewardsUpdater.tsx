@@ -2,21 +2,18 @@ import { usePicassoProvider } from "@/defi/polkadot/hooks";
 import { useEffect } from "react";
 import { useBlockchainProvider } from "bi-lib";
 import { fromPerbill } from "shared";
-import {
-  fetchAssociations,
-  updateContributions,
-} from "./crowdloanRewards";
+import { fetchAssociations, updateContributions } from "./crowdloanRewards";
 import {
   CrowdloanContributionRecord,
   setCrowdloanRewardsState,
 } from "./crowdloanRewards.slice";
+import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
+import { encodeAddress } from "@polkadot/util-crypto";
 // Import static JSON files
 import rewards from "@/defi/polkadot/constants/pica-rewards.json";
 import contributions from "@/defi/polkadot/constants/contributions.json";
 import contributionsDev from "@/defi/polkadot/constants/contributions-dev.json";
 import rewardsDev from "@/defi/polkadot/constants/pica-rewards-dev.json";
-import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
-import { encodeAddress } from "@polkadot/util-crypto";
 
 /**
  * Check for contributions in JSON
@@ -65,7 +62,9 @@ const DEFAULT_EVM_ID = 1;
 const CrowdloanRewardsUpdater = () => {
   const { account } = useBlockchainProvider(DEFAULT_EVM_ID);
   const { parachainApi, accounts } = usePicassoProvider();
-
+  /**
+   * Update initialPayment
+   */
   useEffect(() => {
     if (parachainApi) {
       const initialPayment = fromPerbill(
@@ -74,7 +73,9 @@ const CrowdloanRewardsUpdater = () => {
       setCrowdloanRewardsState({ initialPayment });
     }
   }, [parachainApi]);
-
+  /**
+   * Fetch connected accounts' associations
+   */
   useEffect(() => {
     if (parachainApi && accounts.length > 0) {
       const addresses = accounts.map((_account) => _account.address);
@@ -88,7 +89,10 @@ const CrowdloanRewardsUpdater = () => {
         .catch(console.error);
     }
   }, [parachainApi, accounts]);
-
+  /**
+   * update contributions from the static JSON
+   * for addresses from dot extension
+   */
   useEffect(() => {
     if (accounts.length <= 0) return;
 
@@ -111,7 +115,10 @@ const CrowdloanRewardsUpdater = () => {
       kusamaContributions: contributions,
     });
   }, [accounts]);
-
+  /**
+   * update contributions from the static JSON
+   * for addresses from ethereum extension
+   */
   useEffect(() => {
     if (!account) return;
 

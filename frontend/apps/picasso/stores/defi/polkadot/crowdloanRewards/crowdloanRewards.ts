@@ -10,7 +10,12 @@ import {
 } from "./CrowdloanRewardsUpdater";
 import BigNumber from "bignumber.js";
 import { fromChainIdUnit } from "shared";
-
+/**
+ * Fetch on chain associations
+ * @param {ApiPromise} api Parachain Api object
+ * @param {string[]} connectedAccounts list of accounts in Picasso SS58 format
+ * @returns {Promise<CrowdloanAssociation[]>} [address(ss58 format), address(eth or ss58) | null]
+ */
 export async function fetchAssociations(
   api: ApiPromise,
   connectedAccounts: string[]
@@ -53,7 +58,12 @@ export async function fetchAssociations(
     return associations;
   }
 }
-
+/**
+ * updateContributions from the JSON given ethereum or
+ * connected picasso address in kusama format
+ * @param {string} connectedAddress address in ss58 or ethereum format
+ * @returns {CrowdloanContributionRecord} { [<address>]: { totalRewards: BigNumber, contributedAmount: BigNumber } }
+ */
 export function updateContributions(
   connectedAddress: string
 ): CrowdloanContributionRecord {
@@ -74,7 +84,13 @@ export function updateContributions(
 
   return crowdloanContributionRecord;
 }
-
+/**
+ * Given picasso account query its
+ * claimable rewards
+ * @param {ApiPromise} api Parachain api object
+ * @param {string} picassoAccount picasso address
+ * @returns {Promise<BigNumber>} => claimableReward Amount
+ */
 export async function fetchClaimableRewards(
   api: ApiPromise,
   picassoAccount: string
@@ -82,16 +98,19 @@ export async function fetchClaimableRewards(
   try {
     const claimableRewards =
       await api.rpc.crowdloanRewards.amountAvailableToClaimFor(picassoAccount);
-    return fromChainIdUnit(
-        new BigNumber(claimableRewards.toString()),
-        12
-      )
+    return fromChainIdUnit(new BigNumber(claimableRewards.toString()), 12);
   } catch (error) {
     console.error(error);
-    return new BigNumber(0)
+    return new BigNumber(0);
   }
 }
-
+/**
+ * Given picasso account or ethereum account
+ * query its claimed rewards from the chain
+ * @param {ApiPromise} api Parachain api object
+ * @param {string} selectedPicassoOrEthAccount account in string
+ * @returns {Promise<BigNumber>} => claimedrewards amount
+ */
 export async function fetchClaimedRewards(
   api: ApiPromise,
   selectedPicassoOrEthAccount: string
