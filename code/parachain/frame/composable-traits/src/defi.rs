@@ -93,6 +93,7 @@ pub struct CurrencyPair<AssetId> {
 	pub quote: AssetId,
 }
 
+// TODO (vim): Equivalence holds even if base = quote and quote = base. Confusing!!!
 impl<AssetId: PartialEq> PartialEq for CurrencyPair<AssetId> {
 	fn eq(&self, other: &Self) -> bool {
 		(self.base == other.base && self.quote == other.quote) ||

@@ -73,6 +73,8 @@ impl<T: Config> Uniswap<T> {
 			!pool_base_aum.is_zero() && !pool_quote_aum.is_zero(),
 			Error::<T>::NotEnoughLiquidity
 		);
+		// TODO (vim): Following does not work for "buy" as this causes "out_given_in" to be used in
+		// case user wanting to buy  the quote asset of the pool.
 		let exchange_amount = if asset_id == pool.pair.quote {
 			compute_out_given_in(
 				pool.quote_weight,
@@ -157,6 +159,8 @@ impl<T: Config> Uniswap<T> {
 		quote_amount: T::Balance,
 		apply_fees: bool,
 	) -> Result<(T::Balance, T::Balance, Fee<T::AssetId, T::Balance>), DispatchError> {
+		// TODO (vim): pair implements PartialEq where equivalence holds even if base = quote and
+		//  quote = base. Confusing!!!
 		ensure!(pair == pool.pair, Error::<T>::PairMismatch);
 		let pool_base_aum = T::Convert::convert(T::Assets::balance(pair.base, pool_account));
 		let pool_quote_aum = T::Convert::convert(T::Assets::balance(pair.quote, pool_account));
@@ -170,6 +174,7 @@ impl<T: Config> Uniswap<T> {
 		// https://balancer.gitbook.io/balancer/core-concepts/protocol/index#out-given-in
 		let quote_amount_excluding_lp_fee = T::Convert::convert(quote_amount.safe_sub(&fee.fee)?);
 		let base_amount = compute_out_given_in(
+			// TODO bug (possibly the cause of https://app.clickup.com/t/39ny0d0) weights are swapped when the pair sent is different from the pool pair
 			pool.quote_weight,
 			pool.base_weight,
 			pool_quote_aum,
