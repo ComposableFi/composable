@@ -3,7 +3,7 @@
  
 ---
 
-At Composable, we use [Nix](https://nixos.org/) in order to build all of our products and services with a single tool. This ensures that our builds are **reproducible**, **declarative**, and **reliable**.
+At Composable, we use [Nix](https://nixos.org/) to build all of our products and services with a single tool. This ensures that our builds are **reproducible**, **declarative**, and **reliable**.
 
 Nix is **the only build tool** you will need at Composable. There is no need to install `cargo`, `rustup`, `tsc`, `node`, `cmake`, `libssl`, or any other system package. All of our dependencies, including system dependencies and env vars, are declared in our Nix configurations.
 
