@@ -45,7 +45,7 @@ _Note: the `-L` is optional, but provides you with full logs which is useful for
 
 ## Running in Docker
 
-If you do not have access to `nix`, but you do have access to `docker`, then you can run nix packages within docker like this:
+If you do not have access to `nix`, but you do have access to `docker`, then you can run nix packages within docker as follows:
 
 
 ### Creating a `nix` cache volume
