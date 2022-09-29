@@ -4,6 +4,7 @@ import {
   MetamaskSlice,
   OracleSlice,
   PolkadotSlice,
+  StakingRewardsSlice,
   StatsApolloSlice,
   StatsOverviewSlice,
   StatsTelemetrySlice,
@@ -28,4 +29,5 @@ export type AllSlices = PolkadotSlice &
   StatsTelemetrySlice &
   SubstrateBalancesSlice &
   BondsSlice &
+  StakingRewardsSlice &
   OracleSlice;
