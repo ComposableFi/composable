@@ -2,7 +2,7 @@ import { usePicassoProvider } from "@/defi/polkadot/hooks";
 import { useEffect } from "react";
 import { useBlockchainProvider } from "bi-lib";
 import { fromPerbill } from "shared";
-import { fetchAssociations, updateContributions } from "./crowdloanRewards";
+import { fetchAssociations, fetchContributionAndRewardsFromJSON } from "./crowdloanRewards";
 import {
   CrowdloanContributionRecord,
   setCrowdloanRewardsState,
@@ -102,7 +102,7 @@ const CrowdloanRewardsUpdater = () => {
           ksmAccount.address,
           SUBSTRATE_NETWORKS.kusama.ss58Format
         );
-        return updateContributions(ksmAddress);
+        return fetchContributionAndRewardsFromJSON(ksmAddress);
       })
       .reduce((agg, curr) => {
         return {
@@ -123,7 +123,7 @@ const CrowdloanRewardsUpdater = () => {
     if (!account) return;
 
     setCrowdloanRewardsState({
-      ethereumContributions: updateContributions(account.toLowerCase()),
+      ethereumContributions: fetchContributionAndRewardsFromJSON(account.toLowerCase()),
     });
   }, [account]);
 

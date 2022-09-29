@@ -64,7 +64,7 @@ export async function fetchAssociations(
  * @param {string} connectedAddress address in ss58 or ethereum format
  * @returns {CrowdloanContributionRecord} { [<address>]: { totalRewards: BigNumber, contributedAmount: BigNumber } }
  */
-export function updateContributions(
+export function fetchContributionAndRewardsFromJSON(
   connectedAddress: string
 ): CrowdloanContributionRecord {
   let crowdloanContributionRecord: CrowdloanContributionRecord = {};
