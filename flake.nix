@@ -945,20 +945,23 @@
           };
 
           devShells = rec {
-            
+
             base-shell = mkShell {
               buildInputs = [ helix.packages.${pkgs.system}.default ];
               NIX_PATH = "nixpkgs=${pkgs.path}";
             };
 
             docs = base-shell.overrideAttrs (base: {
-              buildInputs = base.buildInputs ++ (with packages; [ python3 nodejs mdbook ]);
+              buildInputs = base.buildInputs
+                ++ (with packages; [ python3 nodejs mdbook ]);
             });
 
-            developers-minimal = base-shell.overrideAttrs (base: common-attrs // {
-              buildInputs = base.buildInputs ++ (with packages; [ rust-nightly subwasm ]);
-              NIX_PATH = "nixpkgs=${pkgs.path}";
-            });
+            developers-minimal = base-shell.overrideAttrs (base:
+              common-attrs // {
+                buildInputs = base.buildInputs
+                  ++ (with packages; [ rust-nightly subwasm ]);
+                NIX_PATH = "nixpkgs=${pkgs.path}";
+              });
 
             developers = developers-minimal.overrideAttrs (base: {
               buildInputs = with packages;
@@ -992,10 +995,8 @@
 
             developers-xcvm = developers.overrideAttrs (base: {
               buildInputs = with packages;
-                base.buildInputs ++ [
-                  junod
-                  gex
-                ] ++ lib.lists.optional (lib.strings.hasSuffix "linux" system)
+                base.buildInputs ++ [ junod gex ]
+                ++ lib.lists.optional (lib.strings.hasSuffix "linux" system)
                 arion;
               shellHook = ''
                 echo ""
