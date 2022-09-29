@@ -88,11 +88,11 @@ export const useCrowdloanNextStep = (
             }
           );
 
-          let isksmAssociatedAccountSameAsConnected =
+          let isKsmAssociatedAccountSameAsConnected =
             hasBeenAssociated &&
             hasBeenAssociated[0] === selectedPicassoAccount;
 
-          if (isksmAssociatedAccountSameAsConnected) {
+          if (isKsmAssociatedAccountSameAsConnected) {
             return CrowdloanStep.Claim;
           } else {
             return CrowdloanStep.AssociateKsm;
@@ -373,7 +373,7 @@ export const useHasStartedCrowdloan = (api?: ApiPromise): boolean => {
   useEffect(() => {
     if (api) {
       api.query.crowdloanRewards.vestingTimeStart((timeStart) => {
-        const bn = new BigNumber(timeStart.value.toString()); // converting to string and then BN (typesafe)
+        const bn = new BigNumber(timeStart.value.toString()); // converting to string and then BN (type safe)
         setHasStarted(bn.toNumber() < Date.now());
       });
     }

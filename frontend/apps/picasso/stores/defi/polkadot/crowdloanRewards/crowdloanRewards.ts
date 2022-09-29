@@ -109,7 +109,7 @@ export async function fetchClaimableRewards(
  * query its claimed rewards from the chain
  * @param {ApiPromise} api Parachain api object
  * @param {string} selectedPicassoOrEthAccount account in string
- * @returns {Promise<BigNumber>} => claimedrewards amount
+ * @returns {Promise<BigNumber>} => claimed rewards amount
  */
 export async function fetchClaimedRewards(
   api: ApiPromise,
