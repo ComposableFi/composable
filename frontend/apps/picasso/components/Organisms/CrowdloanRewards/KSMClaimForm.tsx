@@ -88,7 +88,7 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
                 noBorder={true}
                 value={claimedRewards}
                 setter={(v: BigNumber) => {}}
-                isValid={(_v: boolean) => {}} // TODO: Implement error state
+                isValid={(_v: boolean) => {}}
                 tokenId="pica"
                 tokenDescription={false}
                 placeholder="0"
@@ -122,7 +122,7 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
                 noBorder={true}
                 value={totalRewards}
                 setter={(v: BigNumber) => {}}
-                isValid={(_v: boolean) => {}} // TODO: Implement error state
+                isValid={(_v: boolean) => {}}
                 tokenId="pica"
                 tokenDescription={false}
                 placeholder="0"
@@ -156,7 +156,7 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
                 noBorder={true}
                 value={amountContributed}
                 setter={(v: BigNumber) => {}}
-                isValid={(_v: boolean) => {}} // TODO: Implement error state
+                isValid={(_v: boolean) => {}}
                 tokenId="ksm"
                 tokenDescription={false}
                 placeholder="0"
