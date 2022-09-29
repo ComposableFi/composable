@@ -558,11 +558,11 @@
                     ./code/integration-tests/runtime-tests/
               '';
             };
-            
+
             serve-book = pkgs.writeShellApplication {
               name = "serve-book";
               runtimeInputs = [ pkgs.mdbook ];
-              text = ''mdbook serve ./book'';
+              text = "mdbook serve ./book";
             };
 
             docker-wipe-system =
