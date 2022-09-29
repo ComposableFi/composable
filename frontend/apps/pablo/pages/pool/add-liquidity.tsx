@@ -1,9 +1,5 @@
 import type { NextPage } from "next";
-import { 
-  Container, 
-  Typography, 
-  Box
-} from "@mui/material";
+import { Box, Container, Typography } from "@mui/material";
 import Default from "@/components/Templates/Default";
 import { Link } from "@/components";
 import { useRouter } from "next/router";
@@ -14,10 +10,11 @@ import { AddLiquidityForm } from "@/components/Organisms/liquidity/AddForm";
 import AddLiquidityUpdater from "@/updaters/addLiquidity/Updater";
 
 const AddLiquidity: NextPage = () => {
-
   const router = useRouter();
-  const {extensionStatus} = useDotSamaContext();
-  const { ui: { isPolkadotModalOpen } } = useStore();
+  const { extensionStatus } = useDotSamaContext();
+  const {
+    ui: { isPolkadotModalOpen },
+  } = useStore();
 
   const breadcrumbs = [
     <Link key="pool" underline="none" color="primary" href="/pool">
@@ -29,7 +26,9 @@ const AddLiquidity: NextPage = () => {
   ];
 
   useEffect(() => {
-    extensionStatus !== "connected" && !isPolkadotModalOpen && router.push('/pool');
+    extensionStatus !== "connected" &&
+      !isPolkadotModalOpen &&
+      router.push("/pool");
   }, [extensionStatus, isPolkadotModalOpen, router]);
 
   return (
@@ -49,7 +48,6 @@ const AddLiquidity: NextPage = () => {
         </Box>
       </Container>
     </Default>
-
   );
 };
 

@@ -1,8 +1,5 @@
 import type { NextPage } from "next";
-import {
-  Container,
-  Box,
-} from "@mui/material";
+import { Container } from "@mui/material";
 import Default from "@/components/Templates/Default";
 import { Bonds, PageTitle } from "@/components";
 import { ConnectWalletFeaturedBox } from "@/components/Organisms/ConnectWalletFeaturedBox";
@@ -15,9 +12,7 @@ const BondPage: NextPage = () => {
   return (
     <Default>
       <Container maxWidth="lg">
-        <Box display="flex" flexDirection="column" alignItems="center" mb={8}>
-          <PageTitle title="Bond" subtitle="Something about earning PICA" />
-        </Box>
+        <PageTitle title="Bond" subtitle="Something about earning PICA" />
         {connected ? <Bonds mb={25} /> : <ConnectWalletFeaturedBox />}
       </Container>
     </Default>

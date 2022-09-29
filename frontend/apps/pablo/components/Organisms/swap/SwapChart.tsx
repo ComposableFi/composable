@@ -8,6 +8,7 @@ import BigNumber from "bignumber.js";
 import { useSwapsChart } from "@/store/hooks/useSwapsChart";
 import { useAsset } from "@/defi/hooks/assets/useAsset";
 import { DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils";
+import { HighlightBox } from "@/components/Atoms/HighlightBox";
 
 const SwapChart: React.FC<BoxProps> = ({ ...boxProps }) => {
   const theme = useTheme();
@@ -50,7 +51,7 @@ const SwapChart: React.FC<BoxProps> = ({ ...boxProps }) => {
   //TODO: refresh Chart Data
   // };
   return (
-    <Box {...boxProps}>
+    <HighlightBox {...boxProps}>
       <Chart
         height="100%"
         titleComponent={
@@ -109,7 +110,7 @@ const SwapChart: React.FC<BoxProps> = ({ ...boxProps }) => {
         currentInterval={selectedInterval.symbol}
         timeSlots={seriesIntervals}
       />
-    </Box>
+    </HighlightBox>
   );
 };
 

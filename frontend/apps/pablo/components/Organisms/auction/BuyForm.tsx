@@ -185,7 +185,7 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
         <Box
           width={56}
           height={56}
-          borderRadius={9999}
+          borderRadius="50%"
           display="flex"
           justifyContent="center"
           alignItems="center"

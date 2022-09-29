@@ -8,7 +8,7 @@ export const listItemOverrides = (
     root: {
       padding: theme.spacing(2, 2, 2, 3),
       height: theme.spacing(10),
-      borderRadius: 9999,
+      borderRadius: theme.shape.borderRadius,
       color: theme.palette.text.disabled,
       "&:hover": {
         "> .MuiListItemIcon-root": {
