@@ -28,14 +28,7 @@ pub fn genesis_config(
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
 		},
-		tokens: dali_runtime::TokensConfig {
-			// Configure endowed accounts with initial balance.
-			balances: vec![
-				vec![(treasury, CurrencyId::PICA, existential_deposit)],
-				accounts.iter().cloned().map(|k| (k, CurrencyId::PICA, 1 << 60)).collect(),
-			]
-			.concat(),
-		},
+		tokens: Default::default(),
 		aura: Default::default(),
 		sudo: dali_runtime::SudoConfig {
 			// Assign network admin rights.
@@ -73,7 +66,9 @@ pub fn genesis_config(
 		technical_membership: Default::default(),
 		relayer_xcm: Default::default(),
 		assets_registry: Default::default(),
-		balances: Default::default(),
+		balances: dali_runtime::BalancesConfig {
+			balances: accounts.iter().cloned().map(|k| (k, 1 << 60)).collect(),
+		},
 		transaction_payment: Default::default(),
 		vesting: Default::default(),
 		lending: Default::default(),
