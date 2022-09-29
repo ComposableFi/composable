@@ -107,7 +107,7 @@ where
 	)
 }
 
-// TODO(benluelo): Assert that the shares and fnft were burned & that the stake was transfered from
+// TODO(benluelo): Assert that the shares and fnft were burned & that the stake was transferred from
 // the fnft asset account (fnft asset account should be empty)
 pub fn unstake_and_assert<Runtime, RuntimeEvent>(
 	owner: AccountIdOf<Runtime>,
