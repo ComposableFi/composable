@@ -42,9 +42,7 @@ mod test;
 mod validation;
 pub mod weights;
 
-use sp_runtime::{
-	helpers_128bit::multiply_by_rational_with_rounding, traits::Saturating, SaturatedConversion,
-};
+use sp_runtime::{traits::Saturating, SaturatedConversion};
 use sp_std::{
 	cmp,
 	ops::{Div, Sub},
@@ -86,7 +84,6 @@ pub mod pallet {
 				Transfer as FungiblesTransfer,
 			},
 			tokens::{
-				nonfungibles,
 				nonfungibles::{
 					Create as NonFungiblesCreate, Inspect as NonFungiblesInspect,
 					Mutate as NonFungiblesMutate,
@@ -937,7 +934,7 @@ pub mod pallet {
 				&fnft_asset_account,
 				who,
 				staked_amount_returned_to_staker,
-				keep_alive,
+				false, // pallet account doesn't need to be kept alive
 			)?;
 
 			Stakes::<T>::remove(fnft_collection_id, fnft_instance_id);
@@ -1080,15 +1077,18 @@ pub mod pallet {
 			who: &Self::AccountId,
 			(fnft_collection_id, fnft_instance_id): &Self::PositionId,
 		) -> DispatchResult {
-			let keep_alive = false;
-
 			Stakes::<T>::try_mutate(fnft_collection_id, fnft_instance_id, |stake| {
 				let stake = stake.as_mut().ok_or(Error::<T>::StakeNotFound)?;
 				RewardPools::<T>::try_mutate(stake.reward_pool_id, |rewards_pool| {
 					let rewards_pool =
 						rewards_pool.as_mut().ok_or(Error::<T>::RewardsPoolNotFound)?;
 
-					Self::collect_rewards(rewards_pool, stake, who, false)?;
+					Self::collect_rewards(
+						rewards_pool,
+						stake,
+						who,
+						false, // claims aren't penalized
+					)?;
 
 					Ok::<_, DispatchError>(())
 				})
@@ -1221,7 +1221,7 @@ pub mod pallet {
 						&Self::pool_account_id(&stake.reward_pool_id),
 						&T::TreasuryAccount::get(),
 						amount_slashed,
-						keep_alive,
+						false, // pallet account doesn't need to be kept alive
 					)?;
 
 					// SAFETY: amount_slashed is <= claim as is shown above
@@ -1248,7 +1248,7 @@ pub mod pallet {
 					&Self::pool_account_id(&stake.reward_pool_id),
 					owner,
 					possibly_slashed_claim,
-					keep_alive,
+					false, // pallet account doesn't need to be kept alive
 				)?;
 			}
 
