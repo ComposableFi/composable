@@ -1,11 +1,11 @@
-import { ApiPromise, WsProvider } from '@polkadot/api';
-import { ParachainApi, ParachainId } from './types';
+import { ApiPromise, WsProvider } from "@polkadot/api";
+import { ParachainApi, ParachainId } from "./types";
 
 export const getSigner = async (
   applicationName: string,
   address: string
 ): Promise<any> => {
-  const extensionPackage = await import('@polkadot/extension-dapp');
+  const extensionPackage = await import("@polkadot/extension-dapp");
   const { web3FromAddress, web3Enable } = extensionPackage;
   await web3Enable(applicationName);
   const injector = await web3FromAddress(address);
@@ -24,7 +24,7 @@ export async function createParachainApis(substrateApi: { [chainId in ParachainI
       [curr]: {
         ...substrateApi[curr as ParachainId]
       }
-    }
+    };
   }, {} as { [chainId in ParachainId]: ParachainApi });
 
   let connectionPromises: Array<Promise<boolean>> = [];
@@ -35,18 +35,21 @@ export async function createParachainApis(substrateApi: { [chainId in ParachainI
       try {
         const wsProvider = new WsProvider(rpcUrl);
         const parachainApi = new ApiPromise({ provider: wsProvider, rpc, types });
-  
-        await parachainApi.isReady;
-        newRecord[chainId].apiStatus = 'connected';
-        newRecord[chainId].parachainApi = parachainApi;
-        res(true);
+
+        await parachainApi.isReadyOrError;
+        if (parachainApi.isConnected) {
+          newRecord[chainId].apiStatus = "connected";
+          newRecord[chainId].parachainApi = parachainApi;
+          res(true);
+        } else {
+          newRecord[chainId].apiStatus = "failed";
+          newRecord[chainId].parachainApi = undefined;
+          res(false);
+        }
       } catch (err) {
-        console.log(`Error connecting API for ${chainId} `, err);
-        newRecord[chainId].apiStatus = 'failed';
-        newRecord[chainId].parachainApi = undefined;
         res(false);
       }
-    }))
+    }));
   }
 
   await Promise.all(connectionPromises);

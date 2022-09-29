@@ -16,9 +16,14 @@ function transferERC721ToLayer(
 ```
 
 
-This function emits `TransferInitiated` with `isRelease == true` if the NFT is to be released on the destination network. This is a special case when the original network of the NFT is equal to the destination network. On receiving this event the relayer has to call the `releaseSeal` method on the destination layer.
+This function emits `TransferInitiated` with `isRelease == true` if the NFT is to be released on the destination 
+network. This is a special case when the original network of the NFT is equal to the destination network. On receiving 
+this event the relayer has to call the `releaseSeal` method on the destination layer.
 
-This function emits `TransferInitiated` with `isRelease == false` when the NFT is being transferred to a destination network other than the original network of the NFT. `TransferInitiated` event contains the information about the original NFT which is needed in the `summonNFT` method. On receiving this event the relayer has to call the `summonNFT` method on the destination layer.
+This function emits `TransferInitiated` with `isRelease == false` when the NFT is being transferred to a destination 
+network other than the original network of the NFT. `TransferInitiated` event contains the information about the 
+original NFT which is needed in the `summonNFT` method. On receiving this event the relayer has to call the `summonNFT` 
+method on the destination layer.
 
 
 ```markdown
@@ -69,7 +74,8 @@ This method is called to create/transfer a MosaicNFT on the destination network.
 
 ### Transfer back to original layer
 
-* User calls `transferERC721ToLayer` on the original layer with minted NFT -> `TransferInitiated` event with `isRelease == true`
+* User calls `transferERC721ToLayer` on the original layer with minted NFT -> `TransferInitiated` event with 
+  `isRelease == true`
 * Relayer reads the event and calls `releaseSeal` on original layer with `isFailure == false`
 * Original NFT is transferred back to the user
 

@@ -26,6 +26,12 @@ export function useValidation({
     }
   }, [value]);
 
+  React.useEffect(() => {
+    if (!initialValue.eq(value)) {
+      setValue(initialValue);
+    }
+  }, [initialValue]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const validate = (event: React.ChangeEvent<HTMLInputElement>) => {
     const eventValue = event.target.value;
 

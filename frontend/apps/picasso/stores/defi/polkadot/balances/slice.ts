@@ -5,11 +5,9 @@ import {
 } from "@/defi/polkadot/Networks";
 import { AssetId, SubstrateNetworkId } from "@/defi/polkadot/types";
 import { Token, TokenId, TOKENS } from "tokens";
-
-import { NamedSet } from "zustand/middleware";
-import { StoreSlice } from "../../../types";
 import BigNumber from "bignumber.js";
 import { AssetMetadata, Assets } from "@/defi/polkadot/Assets";
+import { StoreSlice } from "@/stores/types";
 
 export interface SubstrateAsset {
   balance: string;
@@ -83,7 +81,7 @@ export interface SubstrateBalancesSlice {
 
 export const createSubstrateBalancesSlice: StoreSlice<
   SubstrateBalancesSlice
-> = (set: NamedSet<SubstrateBalancesSlice>) => ({
+> = (set) => ({
   substrateBalances: {
     ...initialState,
     updateBalance: ({

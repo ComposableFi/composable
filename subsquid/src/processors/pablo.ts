@@ -18,6 +18,7 @@ import {
 import {
   Event,
   EventType,
+  LockedSource,
   PabloPool,
   PabloPoolAsset,
   PabloTransaction,
@@ -112,6 +113,7 @@ export async function processPoolCreatedEvent(
     pool.totalVolume = "0.0";
     pool.totalFees = "0.0";
     pool.calculatedTimestamp = timestamp;
+    pool.lpIssued = BigInt(0);
     pool.blockNumber = BigInt(ctx.block.height);
 
     let tx = await ctx.store.get(Event, ctx.event.id);
@@ -219,6 +221,7 @@ export async function processLiquidityAddedEvent(
       .toString();
     pool.calculatedTimestamp = timestamp;
     pool.blockNumber = BigInt(ctx.block.height);
+    pool.lpIssued += liquidityAddedEvt.mintedLp;
 
     // find baseAsset: Following is only valid for dual asset pools
     const baseAsset = pool.poolAssets.find(
@@ -278,10 +281,14 @@ export async function processLiquidityAddedEvent(
     await ctx.store.save(eventEntity);
     await ctx.store.save(pabloTransaction);
 
-    await storeHistoricalLockedValue(ctx, {
-      [baseAsset.assetId]: liquidityAddedEvt.baseAmount,
-      [quoteAsset.assetId]: liquidityAddedEvt.quoteAmount,
-    });
+    await storeHistoricalLockedValue(
+      ctx,
+      {
+        [baseAsset.assetId]: liquidityAddedEvt.baseAmount,
+        [quoteAsset.assetId]: liquidityAddedEvt.quoteAmount,
+      },
+      LockedSource.Pablo
+    );
   } else {
     throw new Error("Pool not found");
   }
@@ -325,6 +332,7 @@ export async function processLiquidityRemovedEvent(
       .toString();
     pool.calculatedTimestamp = timestamp;
     pool.blockNumber = BigInt(ctx.block.height);
+    pool.lpIssued = BigInt(liquidityRemovedEvt.totalIssuance);
 
     // find baseAsset: Following is only valid for dual asset pools
     const baseAsset = pool.poolAssets.find(
@@ -383,10 +391,14 @@ export async function processLiquidityRemovedEvent(
     await ctx.store.save(eventEntity);
     await ctx.store.save(pabloTransaction);
 
-    await storeHistoricalLockedValue(ctx, {
-      [baseAsset.assetId]: liquidityRemovedEvt.baseAmount,
-      [quoteAsset.assetId]: liquidityRemovedEvt.quoteAmount,
-    });
+    await storeHistoricalLockedValue(
+      ctx,
+      {
+        [baseAsset.assetId]: -liquidityRemovedEvt.baseAmount,
+        [quoteAsset.assetId]: -liquidityRemovedEvt.quoteAmount,
+      },
+      LockedSource.Pablo
+    );
   } else {
     throw new Error("Pool not found");
   }

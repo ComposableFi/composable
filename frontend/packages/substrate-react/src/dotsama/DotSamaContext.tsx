@@ -1,8 +1,8 @@
-import React, { useState, useEffect, createContext, useMemo } from "react";
+import React, { createContext, useEffect, useMemo, useState } from "react";
 import {
   DotSamaContext,
-  ParachainApi,
   DotSamaExtensionStatus,
+  ParachainApi,
   ParachainId,
   RelaychainApi,
   RelayChainId,
@@ -10,9 +10,9 @@ import {
 } from "./types";
 import { ParachainNetworks, RelayChainNetworks } from "./Networks";
 import type {
-  InjectedExtension,
   InjectedAccount,
   InjectedAccountWithMeta,
+  InjectedExtension,
 } from "@polkadot/extension-inject/types";
 import { decodeAddress, encodeAddress } from "@polkadot/util-crypto";
 import { createParachainApis } from "./utils";
@@ -122,9 +122,7 @@ export const DotSamaContextProvider = ({
       let extension = window.injectedWeb3[walletId];
       if (!extension) throw new Error("Extension not installed.");
 
-      injectedExtension = await extension.enable(
-        appName
-      );
+      injectedExtension = await extension.enable(appName);
     } catch (e) {
       console.error(e);
       extensionError = e;
@@ -155,11 +153,13 @@ export const DotSamaContextProvider = ({
           s[chainId].accounts = (accounts as InjectedAccountWithMeta[]).map(
             (x, _i) => {
               const regexMatch = x.address.match(truncate_regex);
-              const nameFallback = regexMatch ? `${regexMatch[1]}...${regexMatch[2]}` : x.address;
+              const nameFallback = regexMatch
+                ? `${regexMatch[1]}...${regexMatch[2]}`
+                : x.address;
               return {
                 address: x.address,
                 name: x.meta.name ?? nameFallback,
-              }
+              };
             }
           );
           return { ...s };
@@ -186,8 +186,8 @@ export const DotSamaContextProvider = ({
     createParachainApis(parachainProviders, supportedParachains).then(
       setParachainProviders
     );
-  // only called on first render
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // only called on first render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const [selectedAccount, setSelectedAccount] = useState<number | -1>(-1);

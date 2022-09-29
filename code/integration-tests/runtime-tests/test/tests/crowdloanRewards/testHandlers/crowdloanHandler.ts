@@ -7,6 +7,7 @@ import { shares } from "@composabletests/tests/crowdloanRewards/contributions.js
 import { expect } from "chai";
 import Web3 from "web3";
 import { ApiPromise } from "@polkadot/api";
+import BN from "bn.js";
 
 const toHexString = (bytes: any) =>
   Array.prototype.map.call(bytes, x => ("0" + (x & 0xff).toString(16)).slice(-2)).join("");
@@ -62,7 +63,6 @@ export class TxCrowdloanRewardsTests {
    * tx.crowdloanRewards.populate
    *
    * @param {ApiPromise} api Connected API Client.
-   * @param {Web3} web3 Web3 Object, to be received using `connectionHelper.getNewConnection()`
    * @param {KeyringPair} sudoKey Wallet with sudo rights.
    * @param testContributorWallet KSM Wallet of contributor to populate with.
    */
@@ -85,7 +85,7 @@ export class TxCrowdloanRewardsTests {
     contributors.push([testContributorEthChainObject, testContributorReward, vesting48weeks]);
     // Iterating through our list of contributors
     let i = 0;
-    let amount = testContributorReward.toNumber() * 2;
+    let amount: BN = new BN(testContributorReward.toNumber() * 2);
     for (const [key, value] of Object.entries(shares)) {
       let remoteAccountObject: PalletCrowdloanRewardsModelsRemoteAccount;
       // Creating either an ethereum or ksm contributor object.
@@ -95,10 +95,8 @@ export class TxCrowdloanRewardsTests {
         remoteAccountObject = api.createType("PalletCrowdloanRewardsModelsRemoteAccount", {
           RelayChain: api.createType("AccountId32", key)
         });
-      // Preparing our contributor object and adding it to the list of contributors to be populated.
-      // This should be (value * 10^8) if I'm correct. But this lead to integer overflows.
-      const currentContributorAmount = parseInt((parseFloat(value) * Math.pow(10, 6)).toFixed(0));
-      amount += currentContributorAmount;
+      const currentContributorAmount = new BN((parseFloat(value) * Math.pow(10, 12)).toFixed(0));
+      amount = currentContributorAmount.add(amount);
       contributors.push([remoteAccountObject, api.createType("u128", currentContributorAmount), vesting48weeks]);
 
       // Every 2500th iteration we send our list of contributors, else we'd break the block data size limit.
@@ -117,7 +115,7 @@ export class TxCrowdloanRewardsTests {
           data: [result]
         } = await TxCrowdloanRewardsTests.txCrowdloanRewardsPopulateTestHandler(api, sudoKey, contributors);
         expect(result.isOk).to.be.true;
-        amount = 0;
+        amount = new BN(0);
         contributors = [];
       }
       i++;
@@ -128,6 +126,7 @@ export class TxCrowdloanRewardsTests {
   /**
    * tx.crowdloanRewards.populate
    *
+   * @param {ApiClient} api Connected ApiClient
    * @param {KeyringPair} sudoKey Wallet with sudo rights.
    * @param {KeyringPair} contributors List of contributors to be transacted.
    */
@@ -154,6 +153,7 @@ export class TxCrowdloanRewardsTests {
   /**
    * tx.crowdloanRewards.associate RelayChain
    *
+   * @param {ApiPromise} api Connected ApiPromise
    * @param {KeyringPair} contributor The contributor relay chain wallet public key.
    * @param {KeyringPair} contributorRewardAccount The wallet the contributor wants to receive their PICA to.
    */
@@ -177,6 +177,7 @@ export class TxCrowdloanRewardsTests {
   /**
    * tx.crowdloanRewards.associate ETH Chain
    *
+   * @param {ApiClient} api Connected ApiClient
    * @param {KeyringPair} contributor The contributor ETH chain wallet public key.
    * @param {KeyringPair} contributorRewardAccount The wallet the contributor wants to receive their PICA to.
    */
@@ -199,6 +200,7 @@ export class TxCrowdloanRewardsTests {
   /**
    * tx.crowdloanRewards.claim
    *
+   * @param {ApiClient} api Connected ApiClient
    * @param { KeyringPair } wallet The reward account which tries to claim.
    */
   public static async txCrowdloanRewardsClaimTest(api: ApiPromise, wallet: KeyringPair) {

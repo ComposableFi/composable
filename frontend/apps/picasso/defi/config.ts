@@ -12,8 +12,8 @@ export const DEFI_CONFIG = {
     "pica",
     "movr",
     "ksm",
-    "chaos",
-    "pablo",
+    "xPICA",
+    "pablo"
   ] as const, // important
-  ammIds: ["uniswap", "sushiswap", "quickswap"] as const,
+  ammIds: ["uniswap", "sushiswap", "quickswap"] as const
 };

@@ -107,3 +107,4 @@ services:
       DB_PORT: 5432
       GQL_PORT: 4350
       SUBSQUID_ARCHIVE_URI: "http://gateway:8000/graphql"
+      RELAYCHAIN_URI: "ws://host.docker.internal:9988"
