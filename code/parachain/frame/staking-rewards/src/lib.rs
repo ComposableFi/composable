@@ -1209,8 +1209,9 @@ pub mod pallet {
 					reward_asset_id,
 				)?;
 
-				let claim = if penalize_for_early_unlock {
+				let possibly_slashed_claim = if penalize_for_early_unlock {
 					let amount_slashed = stake.lock.unlock_penalty.mul_floor(claim);
+
 					Self::deposit_event(Event::<T>::UnstakeRewardSlashed {
 						owner: owner.clone(),
 						pool_id: rewards_pool.asset_id,
@@ -1218,6 +1219,15 @@ pub mod pallet {
 						reward_asset_id: *reward_asset_id,
 						amount_slashed,
 					});
+
+					T::Assets::transfer(
+						*reward_asset_id,
+						&Self::pool_account_id(&stake.reward_pool_id),
+						&T::TreasuryAccount::get(),
+						amount_slashed,
+						keep_alive,
+					)?;
+
 					// SAFETY: slashed_amount is <= claim as is shown above
 					claim.defensive_saturating_sub(amount_slashed)
 				} else {
@@ -1225,22 +1235,25 @@ pub mod pallet {
 				};
 
 				// REVIEW(benluelo): Is this check/ calculation necessary?
-				let claim = sp_std::cmp::min(
-					claim,
+				let possibly_slashed_claim = sp_std::cmp::min(
+					possibly_slashed_claim,
 					reward.total_rewards.safe_sub(&reward.claimed_rewards)?,
 				);
 
-				reward.claimed_rewards = reward.claimed_rewards.safe_add(&claim)?;
+				reward.claimed_rewards =
+					reward.claimed_rewards.safe_add(&possibly_slashed_claim)?;
 
 				if let Some(inflation) = stake.reductions.get_mut(reward_asset_id) {
 					*inflation += claim;
 				}
 
+				// transfer possibly_slashed_claim here instead of claim - if the claimed amount was
+				// penalized, then the slashed amount has already been sent to the treasury
 				T::Assets::transfer(
 					*reward_asset_id,
 					&Self::pool_account_id(&stake.reward_pool_id),
 					owner,
-					claim,
+					possibly_slashed_claim,
 					keep_alive,
 				)?;
 			}
