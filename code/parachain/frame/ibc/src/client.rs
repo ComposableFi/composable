@@ -14,7 +14,7 @@ use ibc::{
 		ics02_client::{
 			client_consensus::ConsensusState,
 			client_state::{ClientState, ClientType},
-			context::{ClientKeeper, ClientReader},
+			context::{ClientKeeper, ClientReader, ClientTypes},
 			error::Error as ICS02Error,
 		},
 		ics24_host::identifier::ClientId,
@@ -22,7 +22,6 @@ use ibc::{
 	timestamp::Timestamp,
 	Height,
 };
-use ibc::core::ics02_client::context::ClientTypes;
 use sp_runtime::SaturatedConversion;
 use tendermint_proto::Protobuf;
 
