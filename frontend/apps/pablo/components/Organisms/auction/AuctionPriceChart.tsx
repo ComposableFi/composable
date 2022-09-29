@@ -33,8 +33,8 @@ const PriceChartLabels = ({
     );
   }
 
-  if (priceSeries.length <= 0 || predictedPriceSeries.length <= 0) {
-    if (priceSeries.length <= 0) {
+  if (priceSeries.length === 0 || predictedPriceSeries.length === 0) {
+    if (priceSeries.length === 0) {
       return (
         <>
           <FiberManualRecordIcon color="primary" />
@@ -44,7 +44,7 @@ const PriceChartLabels = ({
         </>
       );
     }
-    if (predictedPriceSeries.length <= 0) {
+    if (predictedPriceSeries.length === 0) {
       return (
         <>
           <FiberManualRecordIcon color="primary" />
