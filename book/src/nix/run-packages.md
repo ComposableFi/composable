@@ -8,7 +8,7 @@ Now you can run Nix packages! In order to run one, you need both a **location** 
 
 ## Locations
 
-Locations are the source of a `git` repository containg a Nix flake (such as [ours](https://github.com/ComposableFi/composable)). For example, a **location** can be:
+Locations are the source of a `git` repository containing a Nix flake (such as [ours](https://github.com/ComposableFi/composable)). For example, a **location** can be:
 
 - `.` for your current directory.
 - `github:ComposableFi/composable` for the latest commit on branch main.
@@ -63,3 +63,6 @@ Make sure you replace `location#package` with your desired **location** and **pa
 docker run -v /var/run/docker.sock:/var/run/docker.sock -v nix:/nix -p 9988:9988 -it nixos/nix bash -c "nix-env -iA nixpkgs.cachix && cachix use composable-community && nix run location#package -L --extra-experimental-features nix-command --extra-experimental-features flakes --no-sandbox"
 ```
 
+---
+
+Now that you are able to run all pacakges, let's [set up your declarative development environment](./development-environments.html)!

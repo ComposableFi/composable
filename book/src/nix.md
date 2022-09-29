@@ -1,5 +1,5 @@
 # Nix
-*Reproducible builds, deployments, and developer environments.*
+*Reproducible builds, developer environments, service orchestrations, CI checks, and more!*
  
 ---
 
@@ -9,7 +9,11 @@ Nix is **the only build tool** you will need at Composable. There is no need to 
 
 Nix also defines our **declarative development environments**. Meaning that you do not have to set up any packages on your machine in order to start developing. All you need is a Nix install, and running `nix run develop` in our repository.
 
-Nix provides us with a **single, uniform interface** accross all products. You do not need to understand the underlying build tools for our `frontend-pablo-server` or our `devnet-dali`. You just run both of them with `nix run "#frontend-pablo-server"` and `nix run ".#devnet-dali"`.
+Nix provides us with a **single, uniform interface** across all products. You do not need to understand the underlying build tools for our `frontend-pablo-server` or our `devnet-dali`. You just run both of them with `nix run "#frontend-pablo-server"` and `nix run ".#devnet-dali"`.
+
+Nix also cuts your check-fix feedback-loop by **running all CI checks locally**, and provides you with helpful deterministic utilities like **formatting the entire repository with a single command**.
+
+---
 
 Let's get started and [install Nix](./nix/install.html)!
 

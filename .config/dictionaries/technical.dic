@@ -180,6 +180,7 @@ nixfmt
 nixops
 nixos
 nixpkgs
+nixify
 nocapture
 noconfirm
 nodedir

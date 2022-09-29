@@ -25,3 +25,6 @@ In order to launch a shell that only includes the required tools for writing doc
 
 You can view all available devShells by typing `nix flake show`.
 
+---
+
+Once you're done developing a new feature or fixing a bug, you should ensure that CI will pass. So let's use Nix to [reproducibly run all checks locally](./running-checks)!
