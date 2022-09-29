@@ -1,5 +1,4 @@
 import { BigNumberInput, Input, Modal } from "@/components";
-import { useStore } from "@/stores/root";
 import {
   Box,
   Button,
@@ -25,7 +24,7 @@ type StablecoinClaimFormProps = {
   readonlyTotalPicaVested: boolean;
   readonlyCrowdLoanContribution: boolean;
   readonlySS8Address: boolean;
-  onChange: (name: string, value: unknown) => void;
+  isClaiming: boolean;
   disabled: boolean | undefined;
 };
 
@@ -40,14 +39,9 @@ export const StablecoinClaimForm: React.FC<StablecoinClaimFormProps> = ({
   readonlyTotalPicaVested,
   readonlyCrowdLoanContribution,
   onClaim,
-  onChange,
+  isClaiming,
 }) => {
   const theme = useTheme();
-
-  const { isClaimingStablecoin, closeKSMClaimModal } = useStore(({ ui }) => ui);
-  const handleValueChange = (value: unknown, name: string) => {
-    onChange(name, value);
-  };
 
   return (
     <Box>
@@ -62,9 +56,7 @@ export const StablecoinClaimForm: React.FC<StablecoinClaimFormProps> = ({
             <BigNumberInput
               noBorder={true}
               value={availableToClaim}
-              setter={(v: BigNumber) =>
-                handleValueChange(v, "availableToClaim")
-              }
+              setter={(v: BigNumber) => {}}
               tokenId="pica"
               tokenDescription={false}
               isValid={(_v: boolean) => {}}
@@ -95,7 +87,7 @@ export const StablecoinClaimForm: React.FC<StablecoinClaimFormProps> = ({
             <BigNumberInput
               noBorder={true}
               value={claimedRewards}
-              setter={(v: BigNumber) => handleValueChange(v, "totalPicaVested")}
+              setter={(v: BigNumber) => {}}
               isValid={(_v: boolean) => {}} // TODO: Implement error state
               tokenId="pica"
               tokenDescription={false}
@@ -129,7 +121,7 @@ export const StablecoinClaimForm: React.FC<StablecoinClaimFormProps> = ({
             <BigNumberInput
               noBorder={true}
               value={totalRewards}
-              setter={(v: BigNumber) => handleValueChange(v, "totalPicaVested")}
+              setter={(v: BigNumber) => {}}
               isValid={(_v: boolean) => {}} // TODO: Implement error state
               tokenId="pica"
               tokenDescription={false}
@@ -163,9 +155,7 @@ export const StablecoinClaimForm: React.FC<StablecoinClaimFormProps> = ({
             <BigNumberInput
               noBorder={true}
               value={amountContributed}
-              setter={(v: BigNumber) =>
-                handleValueChange(v, "crowdLoanContribution")
-              }
+              setter={(v: BigNumber) => {}}
               isValid={(_v: boolean) => {}} // TODO: Implement error state
               tokenId="usdc"
               tokenDescription={false}
@@ -198,7 +188,7 @@ export const StablecoinClaimForm: React.FC<StablecoinClaimFormProps> = ({
           <Input
             value={SS58Address}
             disabled={true}
-            onChange={(e) => handleValueChange("SS8Address", e.target.value)}
+            onChange={(e) => {}}
             fullWidth
             LabelProps={{
               mainLabelProps: {
@@ -239,12 +229,7 @@ export const StablecoinClaimForm: React.FC<StablecoinClaimFormProps> = ({
           </Button>
         </Box>
       </Paper>
-      <Modal
-        onClose={() => closeKSMClaimModal()}
-        open={isClaimingStablecoin}
-        maxWidth="md"
-        dismissible
-      >
+      <Modal open={isClaiming} maxWidth="md" dismissible>
         <Box
           sx={{
             display: "flex",

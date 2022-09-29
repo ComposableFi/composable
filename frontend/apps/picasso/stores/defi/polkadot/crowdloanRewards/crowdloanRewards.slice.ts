@@ -33,6 +33,8 @@ export interface CrowdloanRewardsSlice {
   onChainAssociations: CrowdloanAssociation[];
   // initialPayment
   initialPayment: BigNumber;
+  // claimableAmount
+  claimableAmount: BigNumber;
 }
 
 export const useCrowdloanRewardsSlice = create<CrowdloanRewardsSlice>(() => ({
@@ -42,6 +44,7 @@ export const useCrowdloanRewardsSlice = create<CrowdloanRewardsSlice>(() => ({
   claimableRewards: {},
   claimedRewards: {},
   initialPayment: new BigNumber(0),
+  claimableAmount: new BigNumber(0)
 }));
 
 export const setCrowdloanRewardsState = (

@@ -76,8 +76,6 @@ export function useCrowdloanRewardsAssociate({
       });
     },
     [
-      // initialPayment,
-      // totalRewards,
       enqueueSnackbar,
     ]
   );

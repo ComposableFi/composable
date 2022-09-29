@@ -12,7 +12,7 @@ import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
 import { useStore } from "@/stores/root";
 import { alpha, Grid, Typography, useTheme } from "@mui/material";
 import { stringToHex } from "@polkadot/util";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { crowdLoanSignableMessage } from "@/utils/crowdloanRewards";
 import { useRouter } from "next/router";
 import { ConnectorType, useBlockchainProvider, useConnector } from "bi-lib";
@@ -30,7 +30,15 @@ import {
 } from "@/stores/defi/polkadot/crowdloanRewards/crowdloanRewards.slice";
 import { useCrowdloanRewardsClaim } from "@/defi/polkadot/hooks/crowdloanRewards/useCrowdloanRewardsClaim";
 import { useCrowdloanRewardsAssociate } from "@/defi/polkadot/hooks/crowdloanRewards/useCrowdloanRewardsAssociate";
-import { useCrowdloanNextStep, useClaimableAmount, useClaimedAmount, useCrowdloanContributions } from "@/stores/defi/polkadot/crowdloanRewards/hooks";
+import {
+  useCrowdloanNextStep,
+  useClaimableAmount,
+  useClaimedAmount,
+  useCrowdloanContributions,
+  useEligibility,
+  useEthereumAssociatedAccount,
+  useVestingTimeStart,
+} from "@/stores/defi/polkadot/crowdloanRewards/hooks";
 
 const DEFAULT_EVM_ID = 1;
 const APP_NAME = "Picasso UI";
@@ -153,11 +161,54 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
 
   const { initialPayment } = useCrowdloanRewardsSlice();
 
+  const { isEthAccountEligible, isPicassoAccountEligible } = useEligibility(
+    account?.toLowerCase(),
+    selectedAccount?.address
+  );
+
+  useEffect(() => {
+    if (flow === "KSM" && extensionStatus !== "connected")
+      setIneligibleText({
+        title: ERROR_MESSAGES.KSM_WALLET_NOT_CONNECTED.title,
+        textBelow: ERROR_MESSAGES.KSM_WALLET_NOT_CONNECTED.message,
+      });
+
+    if (flow === "Stable coin" && !isActive)
+      setIneligibleText({
+        title: ERROR_MESSAGES.ETH_WALLET_NOT_CONNECTED.title,
+        textBelow: ERROR_MESSAGES.ETH_WALLET_NOT_CONNECTED.message,
+      });
+
+    if (!isEthAccountEligible && !isPicassoAccountEligible)
+      setIneligibleText({
+        title: ERROR_MESSAGES.WRONG_ADDRESS.title,
+        textBelow: ERROR_MESSAGES.WRONG_ADDRESS.message,
+      });
+  }, [
+    isEthAccountEligible,
+    isPicassoAccountEligible,
+    flow,
+    isActive,
+    extensionStatus,
+  ]);
+
+  const ethAssociatedOrSelectedAccount = useEthereumAssociatedAccount(
+    account?.toLowerCase(),
+    selectedAccount,
+    accounts
+  );
+
   const hasNothingToClaim = useCallback(() => {
-    if (extensionStatus !== "connected") return true;
+    if (extensionStatus !== "connected" || !selectedAccount) return true;
+    if (!isEthAccountEligible && !isPicassoAccountEligible) return true;
 
     return false;
-  }, [extensionStatus]);
+  }, [
+    extensionStatus,
+    selectedAccount,
+    isEthAccountEligible,
+    isPicassoAccountEligible,
+  ]);
 
   const nextStep = useCrowdloanNextStep(
     selectedAccount?.address,
@@ -203,7 +254,9 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
     nextStep,
     account?.toLowerCase(),
     selectedAccount?.address
-  )
+  );
+
+  const vestingTimeStart = useVestingTimeStart(parachainApi);
 
   const breadcrumbs = [
     <Link key="Overview" underline="none" color="primary" href="/">
@@ -257,7 +310,12 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
           <Grid item {...standardPageSize} mt={theme.spacing(9)}>
             {isStable ? (
               <StablecoinClaimForm
-                SS58Address={selectedAccount ? selectedAccount.address : "-"}
+                isClaiming={isPendingAssociate || isPendingClaim}
+                SS58Address={
+                  ethAssociatedOrSelectedAccount
+                    ? `${ethAssociatedOrSelectedAccount.address} (${ethAssociatedOrSelectedAccount.name})`
+                    : "-"
+                }
                 disabled={availableToClaim.eq(0)}
                 claimedRewards={claimedRewards}
                 amountContributed={contributedAmount}
@@ -279,10 +337,10 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
                     ? claim().catch(console.error)
                     : undefined;
                 }}
-                onChange={(name: string, value: unknown) => {}}
               />
             ) : (
               <KSMClaimForm
+                isClaiming={isPendingAssociate || isPendingClaim}
                 disabled={availableToClaim.eq(0)}
                 claimedRewards={claimedRewards}
                 amountContributed={contributedAmount}
@@ -304,7 +362,6 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
                     ? claim().catch(console.error)
                     : undefined;
                 }}
-                onChange={(name: string, value: unknown) => {}}
               />
             )}
           </Grid>
@@ -312,39 +369,6 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
         <Grid item {...standardPageSize}>
           <SS8WalletHelper />
         </Grid>
-        {false && showAlertBox && (
-          <Grid item {...standardPageSize}>
-            <AlertBox
-              underlined
-              icon={
-                <CheckCircleOutlineIcon
-                  sx={{
-                    color: alpha(
-                      theme.palette.text.primary,
-                      theme.custom.opacity.darker
-                    ),
-                  }}
-                />
-              }
-              link={
-                <Link
-                  key="Crowdloan"
-                  underline="none"
-                  color="primary"
-                  href="/crowdloan-rewards"
-                  target="_blank"
-                >
-                  <OpenInNewRounded />
-                </Link>
-              }
-              mt={4}
-              dismissible
-              onClose={() => setShowAlertBox(false)}
-            >
-              Transaction successful
-            </AlertBox>
-          </Grid>
-        )}
       </Grid>
     </DefaultLayout>
   );

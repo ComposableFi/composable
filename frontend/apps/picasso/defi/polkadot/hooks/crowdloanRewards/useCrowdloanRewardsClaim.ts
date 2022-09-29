@@ -4,6 +4,8 @@ import { SUBSTRATE_NETWORKS } from "../../Networks";
 import { useSnackbar } from "notistack";
 import { useCallback } from "react";
 import { Executor, useSigner } from "substrate-react";
+import { setCrowdloanRewardsState } from "@/stores/defi/polkadot/crowdloanRewards/crowdloanRewards.slice";
+import BigNumber from "bignumber.js";
 
 
 export type ClaimProps = {
@@ -40,11 +42,9 @@ export function useCrowdloanRewardsClaim({
         url: SUBSTRATE_NETWORKS.picasso.subscanUrl + transactionHash,
       });
 
-      // if (selectedPicassoAddress) {
-      //   setClaimedKsm(selectedPicassoAddress)
-      // }
+      setCrowdloanRewardsState({ claimableAmount: new BigNumber(0) })
     },
-    [enqueueSnackbar, selectedPicassoAddress]
+    [enqueueSnackbar]
   );
 
   const onClaimFail = useCallback(

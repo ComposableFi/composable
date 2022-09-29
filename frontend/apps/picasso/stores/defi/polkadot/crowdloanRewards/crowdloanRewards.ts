@@ -67,7 +67,7 @@ export function updateContributions(
 
   if (!!totalRewards && !!totalContributed) {
     crowdloanContributionRecord[connectedAddress] = {
-      totalRewards: new BigNumber(totalContributed),
+      totalRewards: new BigNumber(totalRewards),
       contributedAmount: new BigNumber(totalContributed),
     };
   }

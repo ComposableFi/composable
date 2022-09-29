@@ -1,5 +1,4 @@
 import { BigNumberInput, Input, Modal } from "@/components";
-import { useStore } from "@/stores/root";
 import {
   Box,
   Button,
@@ -24,7 +23,7 @@ type KSMClaimFormProps = {
   readonlyTotalPicaVested: boolean;
   readonlyCrowdLoanContribution: boolean;
   readonlySS8Address: boolean;
-  onChange: (name: string, value: unknown) => void;
+  isClaiming: boolean;
 };
 
 export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
@@ -38,14 +37,10 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
   readonlyTotalPicaVested,
   readonlyCrowdLoanContribution,
   onClaim,
-  onChange,
+  isClaiming
 }) => {
   const theme = useTheme();
-  const { isClaimingKSM, closeKSMClaimModal } = useStore(({ ui }) => ui);
 
-  const handleValueChange = (value: unknown, name: string) => {
-    onChange(name, value);
-  };
 
   return (
     <Box>
@@ -61,9 +56,7 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
               <BigNumberInput
                 noBorder={true}
                 value={availableToClaim}
-                setter={(v: BigNumber) =>
-                  handleValueChange(v, "availableToClaim")
-                }
+                setter={(v: BigNumber) => {}}
                 tokenId="pica"
                 tokenDescription={false}
                 isValid={(_v: boolean) => {}}
@@ -94,9 +87,7 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
               <BigNumberInput
                 noBorder={true}
                 value={claimedRewards}
-                setter={(v: BigNumber) =>
-                  handleValueChange(v, "totalPicaVested")
-                }
+                setter={(v: BigNumber) => {}}
                 isValid={(_v: boolean) => {}} // TODO: Implement error state
                 tokenId="pica"
                 tokenDescription={false}
@@ -130,9 +121,7 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
               <BigNumberInput
                 noBorder={true}
                 value={totalRewards}
-                setter={(v: BigNumber) =>
-                  handleValueChange(v, "totalPicaVested")
-                }
+                setter={(v: BigNumber) => {}}
                 isValid={(_v: boolean) => {}} // TODO: Implement error state
                 tokenId="pica"
                 tokenDescription={false}
@@ -166,9 +155,7 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
               <BigNumberInput
                 noBorder={true}
                 value={amountContributed}
-                setter={(v: BigNumber) =>
-                  handleValueChange(v, "crowdLoanContribution")
-                }
+                setter={(v: BigNumber) => {}}
                 isValid={(_v: boolean) => {}} // TODO: Implement error state
                 tokenId="ksm"
                 tokenDescription={false}
@@ -244,8 +231,7 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
         </Box>
       </Paper>
       <Modal
-        onClose={() => closeKSMClaimModal()}
-        open={isClaimingKSM}
+        open={isClaiming}
         maxWidth="md"
         dismissible
       >

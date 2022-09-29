@@ -86,7 +86,7 @@
   ],
   "crowdloanRewards": {
     "palletAccountId": "5w3oyasYQg6vkbxZKeMG8Dz2evBw1P7Xr7xhVwk4qwwFkm8u",
-    "vestingPeriod": "100800"
+    "vestingPeriod": "86400000"
   },
   "mintAssets": [
     ["5y4xiEmy4Kp3GPH7hUHDnNwwqeoEHgRbMp6HGW2iRKRu5DG2", "1", "5000000000000000"],
