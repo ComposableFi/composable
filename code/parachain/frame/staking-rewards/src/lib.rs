@@ -42,7 +42,9 @@ mod test;
 mod validation;
 pub mod weights;
 
-use sp_runtime::{traits::Saturating, SaturatedConversion};
+use sp_runtime::{
+	helpers_128bit::multiply_by_rational_with_rounding, traits::Saturating, SaturatedConversion,
+};
 use sp_std::{
 	cmp,
 	ops::{Div, Sub},
@@ -1247,8 +1249,6 @@ pub mod pallet {
 					*inflation += claim;
 				}
 
-				// transfer possibly_slashed_claim here instead of claim - if the claimed amount was
-				// penalized, then the slashed amount has already been sent to the treasury
 				T::Assets::transfer(
 					*reward_asset_id,
 					&Self::pool_account_id(&stake.reward_pool_id),
