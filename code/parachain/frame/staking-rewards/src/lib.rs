@@ -685,7 +685,7 @@ pub mod pallet {
 						Error::<T>::RewardsPoolAlreadyExists
 					);
 
-					ensure!(lock.duration_presets.len() > 1, Error::<T>::NoDurationPresetsProvided);
+					ensure!(lock.duration_presets.len() > 0, Error::<T>::NoDurationPresetsProvided);
 
 					let now_seconds = T::UnixTime::now().as_secs();
 
