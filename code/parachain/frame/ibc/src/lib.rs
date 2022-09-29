@@ -394,6 +394,8 @@ pub mod pallet {
 		TokenTransferInitiated {
 			from: <T as frame_system::Config>::AccountId,
 			to: Vec<u8>,
+			ibc_denom: Vec<u8>,
+			local_asset_id: Option<<T as DeFiComposableConfig>::MayBeAssetId>,
 			amount: <T as DeFiComposableConfig>::Balance,
 		},
 		/// A channel has been opened
@@ -417,7 +419,13 @@ pub mod pallet {
 			amount: <T as DeFiComposableConfig>::Balance,
 		},
 		/// Ibc transfer failed, received an acknowledgement error, tokens have been refunded
-		TokenTransferFailed, // todo: add more details
+		TokenTransferFailed {
+			from: Vec<u8>,
+			to: Vec<u8>,
+			ibc_denom: Vec<u8>,
+			local_asset_id: Option<<T as DeFiComposableConfig>::MayBeAssetId>,
+			amount: <T as DeFiComposableConfig>::Balance,
+		},
 		/// On recv packet was not processed successfully processes
 		OnRecvPacketError { msg: Vec<u8> },
 	}
@@ -620,7 +628,7 @@ pub mod pallet {
 			let msg = MsgTransfer {
 				source_port,
 				source_channel,
-				token: coin,
+				token: coin.clone(),
 				sender: Signer::from_str(&from).map_err(|_| Error::<T>::Utf8Error)?,
 				receiver: Signer::from_str(&to).map_err(|_| Error::<T>::Utf8Error)?,
 				timeout_height,
@@ -656,6 +664,11 @@ pub mod pallet {
 				from: origin,
 				to: to.as_bytes().to_vec(),
 				amount,
+				local_asset_id: Pallet::<T>::ibc_denom_to_asset_id(
+					coin.clone().denom.to_string(),
+					coin.clone(),
+				),
+				ibc_denom: coin.clone().denom.to_string().as_bytes().to_vec(),
 			});
 			Ok(())
 		}

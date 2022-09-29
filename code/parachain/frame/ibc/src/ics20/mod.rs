@@ -283,7 +283,16 @@ where
 					amount: packet_data.token.amount.as_u256().as_u128().into(),
 				}),
 			Ics20Acknowledgement::Error(_) =>
-				Pallet::<T>::deposit_event(Event::<T>::TokenTransferFailed),
+				Pallet::<T>::deposit_event(Event::<T>::TokenTransferFailed {
+					from: packet_data.sender.to_string().as_bytes().to_vec(),
+					to: packet_data.receiver.to_string().as_bytes().to_vec(),
+					ibc_denom: packet_data.token.denom.to_string().as_bytes().to_vec(),
+					local_asset_id: Pallet::<T>::ibc_denom_to_asset_id(
+						packet_data.token.denom.to_string(),
+						packet_data.token.clone(),
+					),
+					amount: packet_data.token.amount.as_u256().as_u128().into(),
+				}),
 		}
 
 		Ok(())
