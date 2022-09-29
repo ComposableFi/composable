@@ -15,7 +15,10 @@
 
 use crate::runtime::api::runtime_types::polkadot_parachain::primitives::Id;
 use anyhow::anyhow;
-use beefy_prover::helpers::{fetch_timestamp_extrinsic_with_proof, TimeStampExtWithProof};
+pub use beefy_prover;
+use beefy_prover::helpers::{
+	fetch_timestamp_extrinsic_with_proof, unsafe_cast_to_jsonrpsee_client, TimeStampExtWithProof,
+};
 use codec::{Decode, Encode};
 use finality_grandpa_rpc::GrandpaApiClient;
 use primitives::{
@@ -27,17 +30,20 @@ use sp_core::H256;
 use sp_runtime::traits::{Header, Zero};
 use std::collections::BTreeMap;
 use subxt::{
+	ext::{
+		sp_core::hexdisplay::AsBytesRef,
+		sp_runtime::traits::{Header as _, One},
+	},
 	rpc::NumberOrHex,
-	sp_runtime::traits::{Header as _, One},
-	Client, Config,
+	Config, OnlineClient,
 };
 
 pub mod host_functions;
 pub mod runtime;
 
 pub struct GrandpaProver<T: Config> {
-	pub relay_client: Client<T>,
-	pub para_client: Client<T>,
+	pub relay_client: OnlineClient<T>,
+	pub para_client: OnlineClient<T>,
 	pub para_id: u32,
 }
 
@@ -57,16 +63,12 @@ where
 		latest_finalized_hash: T::Hash,
 		previous_finalized_hash: T::Hash,
 	) -> Result<Vec<T::Header>, anyhow::Error> {
-		let api = self
-			.relay_client
-			.clone()
-			.to_runtime_api::<runtime::api::RuntimeApi<T, subxt::PolkadotExtrinsicParams<_>>>();
 		let change_set = self
 			.relay_client
-			.storage()
+			.rpc()
 			.query_storage(
 				// we are interested only in the blocks where our parachain header changes.
-				vec![parachain_header_storage_key(self.para_id)],
+				vec![parachain_header_storage_key(self.para_id).as_bytes_ref()],
 				previous_finalized_hash,
 				Some(latest_finalized_hash),
 			)
@@ -79,12 +81,14 @@ where
 					anyhow!("[get_parachain_headers] block not found {:?}", changes.block)
 				})?;
 
-			let head = api
-				.storage()
-				.paras()
-				.heads(&Id(self.para_id), Some(header.hash()))
-				.await?
-				.expect("Header exists in its own changeset; qed");
+			let head = {
+				let key = runtime::api::storage().paras().heads(&Id(self.para_id));
+				self.relay_client
+					.storage()
+					.fetch(&key, Some(header.hash()))
+					.await?
+					.expect("Header exists in its own changeset; qed")
+			};
 
 			let para_header = T::Header::decode(&mut &head.0[..])
 				.map_err(|_| anyhow!("Failed to decode header"))?;
@@ -114,8 +118,9 @@ where
 			.await?
 			.ok_or_else(|| anyhow!("Header not found!"))?;
 
+		let client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.relay_client) };
 		let encoded = GrandpaApiClient::<JustificationNotification, H256, u32>::prove_finality(
-			&*self.relay_client.rpc().client,
+			&*client,
 			u32::from(*header.number()),
 		)
 		.await?
@@ -139,7 +144,8 @@ where
 		};
 
 		// we are interested only in the blocks where our parachain header changes.
-		let keys = vec![parachain_header_storage_key(self.para_id)];
+		let para_storage_key = parachain_header_storage_key(self.para_id);
+		let keys = vec![para_storage_key.as_bytes_ref()];
 		let previous_finalized = self
 			.relay_client
 			.rpc()
@@ -156,14 +162,10 @@ where
 			.ok_or_else(|| anyhow!("Failed to fetch previous finalized hash + 1"))?;
 		let change_set = self
 			.relay_client
-			.storage()
+			.rpc()
 			.query_storage(keys.clone(), start, Some(latest_finalized_hash))
 			.await?;
 
-		let api = self
-			.relay_client
-			.clone()
-			.to_runtime_api::<runtime::api::RuntimeApi<T, subxt::PolkadotExtrinsicParams<_>>>();
 		let mut parachain_headers = BTreeMap::<H::Hash, ParachainHeaderProofs>::default();
 
 		// no new parachain headers have been finalized
@@ -179,13 +181,15 @@ where
 				.await?
 				.ok_or_else(|| anyhow!("block not found {:?}", changes.block))?;
 
-			let parachain_header_bytes = api
-				.storage()
-				.paras()
-				.heads(&Id(self.para_id), Some(header.hash()))
-				.await?
-				.expect("Header exists in its own changeset; qed")
-				.0;
+			let parachain_header_bytes = {
+				let key = runtime::api::storage().paras().heads(&Id(self.para_id));
+				self.relay_client
+					.storage()
+					.fetch(&key, Some(header.hash()))
+					.await?
+					.expect("Header exists in its own changeset; qed")
+					.0
+			};
 
 			let para_header: T::Header = Decode::decode(&mut &parachain_header_bytes[..])?;
 			let para_block_number = *para_header.number();

@@ -72,7 +72,7 @@ beefy-prover = { path = "../../algorithms/beefy/prover" }
 grandpa-prover = { path = "../../algorithms/grandpa/prover" }
 ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "9a959faabb8f2869e88327ea65a49f5697dcadf6", features = ["mocks"] }
 ibc-derive = { git = "https://github.com/ComposableFi/ibc-rs", rev = "9a959faabb8f2869e88327ea65a49f5697dcadf6" }
-subxt = { git = "https://github.com/paritytech/subxt", rev = "c55b7ba3e34118f61dc51499a0b38262c513aec4" }
+subxt = { git = "https://github.com/composableFi/subxt", rev = "37df0ee525252fa9a3e7730629ce0de4da9e68fd" }
 tokio = { version = "1.21.1", features = ["macros"] }
 sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }

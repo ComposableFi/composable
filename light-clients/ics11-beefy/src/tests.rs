@@ -49,8 +49,12 @@ use ibc::{
 	test_utils::get_dummy_account_id,
 	Height,
 };
+use json::Value;
 use std::time::Duration;
-use subxt::rpc::{rpc_params, JsonValue, Subscription, SubscriptionClientT};
+use subxt::{
+	rpc::{rpc_params, Subscription},
+	PolkadotConfig,
+};
 
 #[tokio::test]
 async fn test_continuous_update_of_beefy_client() {
@@ -68,24 +72,20 @@ async fn test_continuous_update_of_beefy_client() {
 
 	let signer = get_dummy_account_id();
 
-	let url = std::env::var("NODE_ENDPOINT").unwrap_or("ws://127.0.0.1:9944".to_string());
-	let client = subxt::ClientBuilder::new()
-		.set_url(url)
-		.build::<subxt::DefaultConfig>()
-		.await
-		.unwrap();
-
-	let para_url = std::env::var("NODE_ENDPOINT").unwrap_or("ws://127.0.0.1:9988".to_string());
-	let para_client = subxt::ClientBuilder::new()
-		.set_url(para_url)
-		.build::<subxt::DefaultConfig>()
-		.await
-		.unwrap();
+	let relay_client = {
+		let url = std::env::var("NODE_ENDPOINT").unwrap_or("ws://127.0.0.1:9944".to_string());
+		subxt::client::OnlineClient::<PolkadotConfig>::from_url(url).await.unwrap()
+	};
+	let para_client = {
+		let para_url =
+			std::env::var("PARA_NODE_ENDPOINT").unwrap_or("ws://127.0.0.1:9188".to_string());
+		subxt::client::OnlineClient::<PolkadotConfig>::from_url(para_url).await.unwrap()
+	};
 	let client_wrapper = ClientWrapper {
-		relay_client: client.clone(),
+		relay_client: relay_client.clone(),
 		para_client: para_client.clone(),
 		beefy_activation_block: 0,
-		para_id: 2001,
+		para_id: 2000,
 	};
 
 	println!("Waiting for parachain to start producing blocks");
@@ -95,31 +95,21 @@ async fn test_continuous_update_of_beefy_client() {
 
 	let (client_state, consensus_state) = loop {
 		let beefy_state = client_wrapper.construct_beefy_client_state(0).await.unwrap();
-
-		let api =
-				client_wrapper.relay_client.clone().to_runtime_api::<runtime::api::RuntimeApi<
-					subxt::DefaultConfig,
-					subxt::PolkadotExtrinsicParams<_>,
-				>>();
-		let subxt_block_number: subxt::BlockNumber = beefy_state.latest_beefy_height.into();
+		let subxt_block_number: subxt::rpc::BlockNumber = beefy_state.latest_beefy_height.into();
 		let block_hash = client_wrapper
 			.relay_client
 			.rpc()
 			.block_hash(Some(subxt_block_number))
 			.await
 			.unwrap();
-		let head_data = api
-			.storage()
-			.paras()
-			.heads(
+		let head_data = {
+			let key = runtime::api::storage().paras().heads(
 				&runtime::api::runtime_types::polkadot_parachain::primitives::Id(
 					client_wrapper.para_id,
 				),
-				block_hash,
-			)
-			.await
-			.unwrap()
-			.unwrap();
+			);
+			relay_client.storage().fetch(&key, block_hash).await.unwrap().unwrap()
+		};
 		let decoded_para_head = frame_support::sp_runtime::generic::Header::<
 			u32,
 			frame_support::sp_runtime::traits::BlakeTwo256,
@@ -143,7 +133,7 @@ async fn test_continuous_update_of_beefy_client() {
 		if block_number == 0 {
 			continue
 		}
-		let subxt_block_number: subxt::BlockNumber = block_number.into();
+		let subxt_block_number: subxt::rpc::BlockNumber = block_number.into();
 		let block_hash = client_wrapper
 			.para_client
 			.rpc()
@@ -180,9 +170,8 @@ async fn test_continuous_update_of_beefy_client() {
 	// Create the client
 	let res = dispatch(&ctx, ClientMsg::CreateClient(create_client)).unwrap();
 	ctx.store_client_result(res.result).unwrap();
-	let subscription: Subscription<String> = client
+	let subscription: Subscription<String> = relay_client
 		.rpc()
-		.client
 		.subscribe(
 			"beefy_subscribeJustifications",
 			rpc_params![],
@@ -193,8 +182,7 @@ async fn test_continuous_update_of_beefy_client() {
 	let mut subscription = subscription.take(100);
 
 	while let Some(Ok(commitment)) = subscription.next().await {
-		let recv_commitment: sp_core::Bytes =
-			json::from_value(JsonValue::String(commitment)).unwrap();
+		let recv_commitment: sp_core::Bytes = json::from_value(Value::String(commitment)).unwrap();
 		let signed_commitment: beefy_primitives::SignedCommitment<
 			u32,
 			beefy_primitives::crypto::Signature,

@@ -21,7 +21,9 @@ use crate::{
 		AnyClientMessage, AnyClientState, AnyConsensusState, HostFunctionsManager, MockClientTypes,
 	},
 };
-use beefy_prover::helpers::{fetch_timestamp_extrinsic_with_proof, TimeStampExtWithProof};
+use beefy_prover::helpers::{
+	fetch_timestamp_extrinsic_with_proof, unsafe_cast_to_jsonrpsee_client, TimeStampExtWithProof,
+};
 use codec::Decode;
 use finality_grandpa_rpc::GrandpaApiClient;
 use futures::stream::StreamExt;
@@ -49,7 +51,7 @@ use ibc::{
 use primitive_types::H256;
 use sp_finality_grandpa::AuthorityList;
 use std::{mem::size_of_val, time::Duration};
-use subxt::rpc::{rpc_params, ClientT};
+use subxt::{ext::sp_core::hexdisplay::AsBytesRef, rpc::rpc_params, PolkadotConfig};
 
 pub type Justification = GrandpaJustification<RelayChainHeader>;
 
@@ -69,23 +71,19 @@ async fn test_continuous_update_of_grandpa_client() {
 
 	let signer = get_dummy_account_id();
 
-	let url = std::env::var("NODE_ENDPOINT").unwrap_or("ws://127.0.0.1:9944".to_string());
-	let relay_client = subxt::ClientBuilder::new()
-		.set_url(url)
-		.build::<subxt::DefaultConfig>()
-		.await
-		.unwrap();
-
-	let para_url = std::env::var("NODE_ENDPOINT").unwrap_or("ws://127.0.0.1:9988".to_string());
-	let para_client = subxt::ClientBuilder::new()
-		.set_url(para_url)
-		.build::<subxt::DefaultConfig>()
-		.await
-		.unwrap();
+	let relay_client = {
+		let url = std::env::var("NODE_ENDPOINT").unwrap_or("ws://127.0.0.1:9944".to_string());
+		subxt::client::OnlineClient::<PolkadotConfig>::from_url(url).await.unwrap()
+	};
+	let para_client = {
+		let para_url =
+			std::env::var("PARA_NODE_ENDPOINT").unwrap_or("ws://127.0.0.1:9188".to_string());
+		subxt::client::OnlineClient::<PolkadotConfig>::from_url(para_url).await.unwrap()
+	};
 	let grandpa_prover = GrandpaProver {
 		relay_client: relay_client.clone(),
 		para_client: para_client.clone(),
-		para_id: 2001,
+		para_id: 2000,
 	};
 
 	println!("Waiting for grandpa proofs to become available");
@@ -100,24 +98,21 @@ async fn test_continuous_update_of_grandpa_client() {
 		.collect::<Vec<_>>()
 		.await;
 	println!("Grandpa proofs are now available");
-	let api =
-		grandpa_prover.relay_client.clone().to_runtime_api::<runtime::api::RuntimeApi<
-			subxt::DefaultConfig,
-			subxt::PolkadotExtrinsicParams<_>,
-		>>();
 
 	let (client_state, consensus_state) = loop {
-		let current_set_id = api
-			.storage()
-			.grandpa()
-			.current_set_id(None)
-			.await
-			.expect("Failed to fetch current set id");
+		let current_set_id = {
+			let key = runtime::api::storage().grandpa().current_set_id();
+			relay_client
+				.storage()
+				.fetch(&key, None)
+				.await
+				.unwrap()
+				.expect("Failed to fetch current set id")
+		};
 
 		let current_authorities = {
 			let bytes = relay_client
 				.rpc()
-				.client
 				.request::<String>(
 					"state_call",
 					rpc_params!("GrandpaApi_grandpa_authorities", "0x"),
@@ -142,18 +137,19 @@ async fn test_continuous_update_of_grandpa_client() {
 			.expect("Failed to fetch finalized header")
 			.expect("Failed to fetch finalized header");
 
-		let head_data = api
-			.storage()
-			.paras()
-			.heads(
+		let head_data = {
+			let key = runtime::api::storage().paras().heads(
 				&runtime::api::runtime_types::polkadot_parachain::primitives::Id(
 					grandpa_prover.para_id,
 				),
-				Some(latest_relay_hash),
-			)
-			.await
-			.unwrap()
-			.unwrap();
+			);
+			relay_client
+				.storage()
+				.fetch(&key, Some(latest_relay_hash))
+				.await
+				.unwrap()
+				.unwrap()
+		};
 		let decoded_para_head = frame_support::sp_runtime::generic::Header::<
 			u32,
 			sp_runtime::traits::BlakeTwo256,
@@ -173,7 +169,7 @@ async fn test_continuous_update_of_grandpa_client() {
 			current_authorities,
 			_phantom: Default::default(),
 		};
-		let subxt_block_number: subxt::BlockNumber = decoded_para_head.number.into();
+		let subxt_block_number: subxt::rpc::BlockNumber = decoded_para_head.number.into();
 		let block_hash = grandpa_prover
 			.para_client
 			.rpc()
@@ -189,7 +185,7 @@ async fn test_continuous_update_of_grandpa_client() {
 			.relay_client
 			.rpc()
 			.read_proof(
-				vec![parachain_header_storage_key(grandpa_prover.para_id)],
+				vec![parachain_header_storage_key(grandpa_prover.para_id).as_bytes_ref()],
 				Some(latest_relay_hash),
 			)
 			.await
@@ -218,9 +214,10 @@ async fn test_continuous_update_of_grandpa_client() {
 	// Create the client
 	let res = dispatch(&ctx, ClientMsg::CreateClient(create_client)).unwrap();
 	ctx.store_client_result(res.result).unwrap();
+	let client = unsafe { unsafe_cast_to_jsonrpsee_client(&relay_client) };
 	let subscription =
 		GrandpaApiClient::<JustificationNotification, H256, u32>::subscribe_justifications(
-			&*relay_client.rpc().client,
+			&*client,
 		)
 		.await
 		.expect("Failed to subscribe to grandpa justifications");

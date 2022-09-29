@@ -37,14 +37,10 @@ use helpers::{
 use hex_literal::hex;
 use pallet_mmr_primitives::BatchProof;
 use relay_chain_queries::{fetch_beefy_justification, fetch_mmr_batch_proof};
-use sp_core::H256;
+use sp_core::{hexdisplay::AsBytesRef, keccak_256, H256};
 use sp_io::crypto;
 use sp_runtime::traits::{BlakeTwo256, Header as HeaderT};
-use subxt::{
-	rpc::{rpc_params, ClientT},
-	sp_core::keccak_256,
-	Client, Config,
-};
+use subxt::{rpc::rpc_params, Config, OnlineClient};
 
 use crate::{
 	relay_chain_queries::parachain_header_storage_key,
@@ -78,8 +74,8 @@ impl HostFunctions for Crypto {
 }
 
 pub struct ClientWrapper<T: Config> {
-	pub relay_client: Client<T>,
-	pub para_client: Client<T>,
+	pub relay_client: OnlineClient<T>,
+	pub para_client: OnlineClient<T>,
 	pub beefy_activation_block: u32,
 	pub para_id: u32,
 }
@@ -88,7 +84,7 @@ impl<T: Config> ClientWrapper<T>
 where
 	u32: From<<T as subxt::Config>::BlockNumber>,
 {
-	pub async fn get_initial_client_state(client: Option<&Client<T>>) -> ClientState {
+	pub async fn get_initial_client_state(client: Option<&OnlineClient<T>>) -> ClientState {
 		if client.is_none() {
 			return ClientState {
 				latest_beefy_height: 0,
@@ -114,23 +110,23 @@ where
 		// In development mode validators are the same for all sessions only validator set_id
 		// changes
 		let client = client.expect("Client should be defined");
-		let api = client
-			.clone()
-			.to_runtime_api::<runtime::api::RuntimeApi<T, subxt::PolkadotExtrinsicParams<_>>>();
-		let latest_beefy_finalized: <T as Config>::Hash = client
-			.rpc()
-			.client
-			.request("beefy_getFinalizedHead", rpc_params!())
-			.await
-			.unwrap();
+		let latest_beefy_finalized: <T as Config>::Hash =
+			client.rpc().request("beefy_getFinalizedHead", rpc_params!()).await.unwrap();
 		let header = client.rpc().header(Some(latest_beefy_finalized)).await.unwrap().unwrap();
-		let validator_set_id = api.storage().beefy().validator_set_id(None).await.unwrap();
-		let next_val_set = api
-			.storage()
-			.mmr_leaf()
-			.beefy_next_authorities(None)
-			.await
-			.expect("Authorirty set should be defined");
+		let validator_set_id = {
+			let key = runtime::api::storage().beefy().validator_set_id();
+			client.storage().fetch(&key, None).await.unwrap().unwrap()
+		};
+
+		let next_val_set = {
+			let key = runtime::api::storage().mmr_leaf().beefy_next_authorities();
+			client
+				.storage()
+				.fetch(&key, None)
+				.await
+				.unwrap()
+				.expect("Authorirty set should be defined")
+		};
 		let latest_beefy_height: u64 = (*header.number()).into();
 		ClientState {
 			latest_beefy_height: latest_beefy_height as u32,
@@ -160,9 +156,10 @@ where
 		u32: From<T::BlockNumber>,
 		T::BlockNumber: From<u32>,
 	{
-		let subxt_block_number: subxt::BlockNumber = commitment_block_number.into();
+		let subxt_block_number: subxt::rpc::BlockNumber = commitment_block_number.into();
 		let block_hash = self.relay_client.rpc().block_hash(Some(subxt_block_number)).await?;
-		let previous_finalized_block_number: subxt::BlockNumber = (latest_beefy_height + 1).into();
+		let previous_finalized_block_number: subxt::rpc::BlockNumber =
+			(latest_beefy_height + 1).into();
 		let previous_finalized_hash = self
 			.relay_client
 			.rpc()
@@ -175,16 +172,12 @@ where
 				)
 			})?;
 
-		let api = self
-			.relay_client
-			.clone()
-			.to_runtime_api::<runtime::api::RuntimeApi<T, subxt::PolkadotExtrinsicParams<_>>>();
 		let change_set = self
 			.relay_client
-			.storage()
+			.rpc()
 			.query_storage(
 				// we are interested only in the blocks where our parachain header changes.
-				vec![parachain_header_storage_key(self.para_id)],
+				vec![parachain_header_storage_key(self.para_id).as_bytes_ref()],
 				previous_finalized_hash,
 				block_hash,
 			)
@@ -199,10 +192,11 @@ where
 					))
 				})?;
 
-			let head = api
+			let key = runtime::api::storage().paras().heads(&Id(self.para_id));
+			let head = self
+				.relay_client
 				.storage()
-				.paras()
-				.heads(&Id(self.para_id), Some(header.hash()))
+				.fetch(&key, Some(header.hash()))
 				.await?
 				.expect("Header exists in its own changeset; qed");
 
@@ -235,7 +229,7 @@ where
 			)
 			.await?;
 
-		let subxt_block_number: subxt::BlockNumber = commitment_block_number.into();
+		let subxt_block_number: subxt::rpc::BlockNumber = commitment_block_number.into();
 		let block_hash = self.relay_client.rpc().block_hash(Some(subxt_block_number)).await?;
 
 		let batch_proof =
@@ -299,15 +293,19 @@ where
 			beefy_primitives::crypto::Signature,
 		>,
 	) -> Result<MmrUpdateProof, Error> {
-		let api = self
-			.relay_client
-			.clone()
-			.to_runtime_api::<runtime::api::RuntimeApi<T, subxt::PolkadotExtrinsicParams<_>>>();
-		let subxt_block_number: subxt::BlockNumber =
+		let subxt_block_number: subxt::rpc::BlockNumber =
 			signed_commitment.commitment.block_number.into();
 		let block_hash = self.relay_client.rpc().block_hash(Some(subxt_block_number)).await?;
 
-		let current_authorities = api.storage().beefy().authorities(block_hash).await?.0;
+		let current_authorities = {
+			let key = runtime::api::storage().beefy().authorities();
+			self.relay_client
+				.storage()
+				.fetch(&key, block_hash)
+				.await?
+				.ok_or_else(|| Error::Custom(format!("No beefy authorities found!")))?
+				.0
+		};
 
 		// Current LeafIndex
 		let block_number = signed_commitment.commitment.block_number;
@@ -344,32 +342,31 @@ where
 		&self,
 		beefy_activation_block: u32,
 	) -> Result<ClientState, Error> {
-		let api = self
-			.relay_client
-			.clone()
-			.to_runtime_api::<runtime::api::RuntimeApi<T, subxt::PolkadotExtrinsicParams<_>>>();
-
 		let (signed_commitment, latest_beefy_finalized) =
 			fetch_beefy_justification(&self.relay_client).await?;
 
 		// Encoding and decoding to fix dependency version conflicts
-		let next_authority_set = api
-			.storage()
-			.mmr_leaf()
-			.beefy_next_authorities(Some(latest_beefy_finalized))
-			.await
-			.expect("Should retrieve next authority set")
-			.encode();
+		let next_authority_set = {
+			let key = runtime::api::storage().mmr_leaf().beefy_next_authorities();
+			self.relay_client
+				.storage()
+				.fetch(&key, Some(latest_beefy_finalized))
+				.await?
+				.expect("Should retrieve next authority set")
+				.encode()
+		};
 		let next_authority_set = BeefyNextAuthoritySet::decode(&mut &*next_authority_set)
 			.expect("Should decode next authority set correctly");
 
-		let current_authorities = api
-			.storage()
-			.beefy()
-			.authorities(Some(latest_beefy_finalized))
-			.await
-			.expect("Should retrieve authority set")
-			.0;
+		let current_authorities = {
+			let key = runtime::api::storage().beefy().authorities();
+			self.relay_client
+				.storage()
+				.fetch(&key, Some(latest_beefy_finalized))
+				.await?
+				.expect("Should retrieve next authority set")
+				.0
+		};
 
 		let authority_address_hashes = hash_authority_addresses(
 			current_authorities.into_iter().map(|x| x.encode()).collect(),

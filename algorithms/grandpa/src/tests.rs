@@ -19,18 +19,18 @@ use crate::{
 use codec::Decode;
 use finality_grandpa_rpc::GrandpaApiClient;
 use futures::StreamExt;
-use grandpa_prover::{host_functions::HostFunctionsProvider, runtime, GrandpaProver};
+use grandpa_prover::{
+	beefy_prover::helpers::unsafe_cast_to_jsonrpsee_client, host_functions::HostFunctionsProvider,
+	runtime, GrandpaProver,
+};
+use jsonrpsee_core::client::Client;
 use polkadot_core_primitives::Header;
 use primitives::ClientState;
 use serde::{Deserialize, Serialize};
 use sp_core::H256;
 use sp_finality_grandpa::AuthorityList;
-use std::mem::size_of_val;
-use subxt::{
-	rpc::{rpc_params, ClientT},
-	sp_runtime::traits::Header as _,
-	DefaultConfig,
-};
+use std::{mem::size_of_val, sync::Arc};
+use subxt::{ext::sp_runtime::traits::Header as _, rpc::rpc_params, PolkadotConfig};
 
 pub type Justification = GrandpaJustification<Header>;
 
@@ -38,22 +38,18 @@ pub type Justification = GrandpaJustification<Header>;
 #[derive(Clone, Serialize, Deserialize)]
 pub struct JustificationNotification(sp_core::Bytes);
 
-type RelayChainApi<T> = runtime::api::RuntimeApi<DefaultConfig, subxt::PolkadotExtrinsicParams<T>>;
-
 #[tokio::test]
 async fn follow_grandpa_justifications() {
-	let relay_client = subxt::ClientBuilder::new()
-		.set_url("ws://127.0.0.1:9944")
-		.build::<DefaultConfig>()
-		.await
-		.expect("Failed to initialize subxt");
+	let relay_client = {
+		let url = std::env::var("NODE_ENDPOINT").unwrap_or("ws://127.0.0.1:9944".to_string());
+		subxt::client::OnlineClient::<PolkadotConfig>::from_url(url).await.unwrap()
+	};
 
-	let para_client = subxt::ClientBuilder::new()
-		.set_url("ws://127.0.0.1:9188")
-		.build::<DefaultConfig>()
-		.await
-		.expect("Failed to initialize subxt");
-	let api = relay_client.clone().to_runtime_api::<RelayChainApi<_>>();
+	let para_client = {
+		let para_url =
+			std::env::var("PARA_NODE_ENDPOINT").unwrap_or("ws://127.0.0.1:9188".to_string());
+		subxt::client::OnlineClient::<PolkadotConfig>::from_url(para_url).await.unwrap()
+	};
 
 	println!("Waiting for grandpa proofs to become available");
 	relay_client
@@ -67,25 +63,27 @@ async fn follow_grandpa_justifications() {
 		.collect::<Vec<_>>()
 		.await;
 	println!("Grandpa proofs are now available");
-
+	let client: Arc<Client> = unsafe { unsafe_cast_to_jsonrpsee_client(&relay_client) };
 	let subscription =
 		GrandpaApiClient::<JustificationNotification, H256, u32>::subscribe_justifications(
-			&*relay_client.rpc().client,
+			&*client,
 		)
 		.await
 		.expect("Failed to subscribe to grandpa justifications");
 
-	let current_set_id = api
-		.storage()
-		.grandpa()
-		.current_set_id(None)
-		.await
-		.expect("Failed to fetch current set id");
+	let current_set_id = {
+		let key = runtime::api::storage().grandpa().current_set_id();
+		relay_client
+			.storage()
+			.fetch(&key, None)
+			.await
+			.unwrap()
+			.expect("Failed to fetch current set id")
+	};
 
 	let current_authorities = {
 		let bytes = relay_client
 			.rpc()
-			.client
 			.request::<String>("state_call", rpc_params!("GrandpaApi_grandpa_authorities", "0x"))
 			.await
 			.map(|res| hex::decode(&res[2..]))

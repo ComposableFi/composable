@@ -25,31 +25,24 @@ use beefy_primitives::{
 use beefy_prover::{ClientWrapper, Crypto};
 use futures::stream::StreamExt;
 use pallet_mmr_primitives::Proof;
+use serde_json::Value;
 use sp_core::bytes::to_hex;
 use subxt::{
-	rpc::{rpc_params, JsonValue, Subscription, SubscriptionClientT},
-	sp_runtime::traits::Header,
+	rpc::{rpc_params, Subscription},
+	PolkadotConfig,
 };
 
 #[tokio::test]
 async fn test_verify_mmr_with_proof() {
 	let url = std::env::var("NODE_ENDPOINT").unwrap_or("ws://127.0.0.1:9944".to_string());
-	let client = subxt::ClientBuilder::new()
-		.set_url(url)
-		.build::<subxt::DefaultConfig>()
-		.await
-		.unwrap();
-	let para_url = std::env::var("PARA_NODE_ENDPOINT").unwrap_or("ws://127.0.0.1:9988".to_string());
-	let para_client = subxt::ClientBuilder::new()
-		.set_url(para_url)
-		.build::<subxt::DefaultConfig>()
-		.await
-		.unwrap();
+	let client = subxt::client::OnlineClient::<PolkadotConfig>::from_url(url).await.unwrap();
+	let para_url = std::env::var("PARA_NODE_ENDPOINT").unwrap_or("ws://127.0.0.1:9188".to_string());
+	let para_client =
+		subxt::client::OnlineClient::<PolkadotConfig>::from_url(para_url).await.unwrap();
 
 	let mut client_state = ClientWrapper::get_initial_client_state(Some(&client)).await;
 	let subscription: Subscription<String> = client
 		.rpc()
-		.client
 		.subscribe(
 			"beefy_subscribeJustifications",
 			rpc_params![],
@@ -68,7 +61,7 @@ async fn test_verify_mmr_with_proof() {
 	let mut subscription_stream = subscription.enumerate().take(100);
 	while let Some((count, Ok(commitment))) = subscription_stream.next().await {
 		let recv_commitment: sp_core::Bytes =
-			serde_json::from_value(JsonValue::String(commitment)).unwrap();
+			serde_json::from_value(Value::String(commitment)).unwrap();
 		let signed_commitment: beefy_primitives::SignedCommitment<
 			u32,
 			beefy_primitives::crypto::Signature,
@@ -143,7 +136,7 @@ async fn should_fail_with_incomplete_signature_threshold() {
 	};
 
 	let res = crate::verify_mmr_root_with_proof::<Crypto>(
-		ClientWrapper::<subxt::DefaultConfig>::get_initial_client_state(None).await,
+		ClientWrapper::<PolkadotConfig>::get_initial_client_state(None).await,
 		mmr_update,
 	);
 
@@ -182,7 +175,7 @@ async fn should_fail_with_invalid_validator_set_id() {
 	};
 
 	let res = crate::verify_mmr_root_with_proof::<Crypto>(
-		ClientWrapper::<subxt::DefaultConfig>::get_initial_client_state(None).await,
+		ClientWrapper::<PolkadotConfig>::get_initial_client_state(None).await,
 		mmr_update,
 	);
 	match res {
@@ -207,22 +200,14 @@ async fn should_fail_with_invalid_validator_set_id() {
 #[tokio::test]
 async fn verify_parachain_headers() {
 	let url = std::env::var("NODE_ENDPOINT").unwrap_or("ws://127.0.0.1:9944".to_string());
-	let client = subxt::ClientBuilder::new()
-		.set_url(url)
-		.build::<subxt::DefaultConfig>()
-		.await
-		.unwrap();
+	let client = subxt::client::OnlineClient::<PolkadotConfig>::from_url(url).await.unwrap();
 	let para_url = std::env::var("PARA_NODE_ENDPOINT").unwrap_or("ws://127.0.0.1:9188".to_string());
-	let para_client = subxt::ClientBuilder::new()
-		.set_url(para_url)
-		.build::<subxt::DefaultConfig>()
-		.await
-		.unwrap();
+	let para_client =
+		subxt::client::OnlineClient::<PolkadotConfig>::from_url(para_url).await.unwrap();
 
 	let mut client_state = ClientWrapper::get_initial_client_state(Some(&client)).await;
 	let subscription: Subscription<String> = client
 		.rpc()
-		.client
 		.subscribe(
 			"beefy_subscribeJustifications",
 			rpc_params![],
@@ -246,7 +231,7 @@ async fn verify_parachain_headers() {
 	let mut subscription_stream = subscription.enumerate().take(100);
 	while let Some((count, Ok(commitment))) = subscription_stream.next().await {
 		let recv_commitment: sp_core::Bytes =
-			serde_json::from_value(JsonValue::String(commitment)).unwrap();
+			serde_json::from_value(Value::String(commitment)).unwrap();
 		let signed_commitment: beefy_primitives::SignedCommitment<
 			u32,
 			beefy_primitives::crypto::Signature,
@@ -277,7 +262,7 @@ async fn verify_parachain_headers() {
 			.query_finalized_parachain_headers_with_proof(
 				block_number,
 				client_state.latest_beefy_height,
-				headers.iter().map(|h| *h.number()).collect(),
+				headers.iter().map(|h| h.number).collect(),
 			)
 			.await
 			.unwrap();
