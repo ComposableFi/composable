@@ -131,15 +131,18 @@ pub fn assert_no_event<Runtime: Config>(event: <Runtime as Config>::Event) {
 ///         ..
 ///     },
 /// );
-pub fn assert_extrinsic_event<
-	Runtime: Config,
-	Event: Into<<Runtime as frame_system::Config>::Event>,
+pub fn assert_extrinsic_event<Runtime, RuntimeEvent, PalletEvent, T, E>(
+	result: sp_std::result::Result<T, E>,
+	event: PalletEvent,
+) where
+	Runtime: Config<Event = RuntimeEvent>,
+	PalletEvent: sp_std::fmt::Debug + Clone,
+	RuntimeEvent: Parameter + Member + Debug + Clone + From<PalletEvent>,
+	RuntimeEvent: TryInto<PalletEvent>,
+	<RuntimeEvent as TryInto<PalletEvent>>::Error: sp_std::fmt::Debug,
 	T: Debug,
 	E: Into<DispatchError> + Debug,
->(
-	result: sp_std::result::Result<T, E>,
-	event: Event,
-) {
+{
 	assert_ok!(result);
 	assert_last_event::<Runtime>(event.into());
 }
