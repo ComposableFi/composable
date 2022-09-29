@@ -21,7 +21,7 @@ _If you're wondering what the author is using: I'm personally using NixOS within
 
 ### On NixOS
 
-At your Nix system config (`/etc/nixos/configuration.nix` by default), configure `nix` like this:
+In your Nix system config (`/etc/nixos/configuration.nix` by default), configure `nix` like this:
 
 ```nix
 {
