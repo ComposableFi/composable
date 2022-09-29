@@ -11,6 +11,7 @@ import Toolbar from "@mui/material/Toolbar";
 import * as React from "react";
 import { NavBar } from "../Organisms";
 import { PolkadotConnect } from "../Organisms/Wallet/PolkadotConnect";
+import { AnimatedCircles } from "@/components/Molecules/AnimatedCircles";
 
 type DefaultLayoutProps = {
   breadcrumbs?: React.ReactNode[];
@@ -33,6 +34,7 @@ export const DefaultLayout: React.FC<DefaultLayoutProps> = (props) => {
   };
   return (
     <>
+      <AnimatedCircles />
       <Box sx={{ display: "flex", minHeight: "100vh" }}>
         <CssBaseline />
         <AppBar
