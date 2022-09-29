@@ -65,6 +65,7 @@
     - [Running Checks](./nix/running-checks.md)
     - [Defining your own Packages](./nix/defining-your-own-packages.md)
     - [Composing Services with Arion](./nix/composing-services-with-arion.md)
+    - [Editing this Book](./nix/editing-book.md)
 - [Codespaces](./codespaces.md)
     - [Getting Started](./codespaces/getting-started.md)
     - [Using Codespaces](./codespaces/using-codespaces.md)
