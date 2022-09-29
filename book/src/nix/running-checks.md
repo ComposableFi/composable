@@ -45,7 +45,7 @@ There are many more checks, if you want to reproduce one from CI locally, you ca
 
 ---
 
-You now know all that you need to know to work on existing packages. If you need to introduce a new package, then here's how to use Nix to [define your own packages](./defining-your-own-packages.html)!
+You now know all you need to know to work on existing packages. However, if you need to introduce a new package, here's how to use Nix to [define your own packages](./defining-your-own-packages.html)!
 
 
 
