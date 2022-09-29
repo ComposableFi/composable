@@ -94,6 +94,7 @@ contentful
 coreutils
 cosm
 crev # cargo-crev
+dalek
 devcontainers
 devel
 dhms # day hour minute second
