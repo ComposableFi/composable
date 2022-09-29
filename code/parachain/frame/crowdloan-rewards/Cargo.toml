@@ -27,7 +27,7 @@ pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "p
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 
 [dependencies]
-ed25519-dalek = { version = "1.0.1", default-features = false, optional = true }
+ed25519-dalek = { version = "1.0.1", default-features = false, optional = true, features = ["u64_backend", "alloc"] }
 libsecp256k1 = { version = "0.7.0", default-features = false, optional = true, features = [
   "hmac",
   "static-context",
