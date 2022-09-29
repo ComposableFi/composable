@@ -41,7 +41,7 @@ nix build ".#check-dali-integration-tests"
 
 ### All others
 
-There are many more checks, if you want to reproduce one from CI locally, you can check `nix flake show` and the workflows defined under `.github/` to see which `nix` command they are invoking.
+There are many more checks we can run. If you want to reproduce one from CI locally, you can check `nix flake show` and the workflows defined under `.github/` to see which `nix` command they are invoking.
 
 ---
 
