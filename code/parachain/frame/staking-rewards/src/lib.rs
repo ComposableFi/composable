@@ -1228,7 +1228,7 @@ pub mod pallet {
 						keep_alive,
 					)?;
 
-					// SAFETY: slashed_amount is <= claim as is shown above
+					// SAFETY: amount_slashed is <= claim as is shown above
 					claim.defensive_saturating_sub(amount_slashed)
 				} else {
 					claim
