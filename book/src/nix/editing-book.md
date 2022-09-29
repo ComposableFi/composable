@@ -20,7 +20,7 @@ Then, edit the sources in `book/src/`, and see them update live in your browser!
 
 ## Checking your spelling
 
-After adding new content, you probably want to check your spelling. In order to do this, run the following:
+After adding new content, you probably want to check your spelling. To do this, run the following:
 
 ```bash
 nix build ".#cspell-check"'
