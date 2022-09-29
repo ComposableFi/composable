@@ -7755,6 +7755,7 @@ version = "0.0.1"
 dependencies = [
  "composable-support",
  "composable-tests-helpers",
+ "ed25519-dalek",
  "frame-benchmarking",
  "frame-support",
  "frame-system",

@@ -2,13 +2,11 @@ use crate::*;
 
 use crate::models::{Proof, RemoteAccount};
 use composable_support::types::{EcdsaSignature, EthereumAddress};
+use ed25519_dalek::{Keypair, Signer};
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite};
 use frame_support::{pallet_prelude::*, traits::fungible::Mutate};
 use frame_system::RawOrigin;
-use sp_io::{
-	crypto::{ed25519_generate, ed25519_sign},
-	hashing::keccak_256,
-};
+use sp_io::hashing::keccak_256;
 use sp_runtime::AccountId32;
 use sp_std::prelude::*;
 
@@ -38,7 +36,8 @@ enum ClaimKey {
 impl ClaimKey {
 	pub fn as_remote_public(&self) -> RemoteAccount<RelayChainAccountId> {
 		match self {
-			ClaimKey::Relay(relay_account) => RemoteAccount::RelayChain(*relay_account),
+			ClaimKey::Relay(relay_account) =>
+				RemoteAccount::RelayChain(*pair_from_seed(*relay_account).public.as_bytes()),
 			ClaimKey::Eth(ethereum_account) =>
 				RemoteAccount::Ethereum(ethereum_address(ethereum_account)),
 		}
@@ -56,11 +55,12 @@ fn relay_proof(relay_account: &RelayKey, reward_account: AccountId) -> Proof<Rel
 	msg.append(&mut PROOF_PREFIX.to_vec());
 	msg.append(&mut reward_account.using_encoded(|x| hex::encode(x).as_bytes().to_vec()));
 	msg.append(&mut b"</Bytes>".to_vec());
+
+	let pair = pair_from_seed(*relay_account);
+
 	Proof::RelayChain(
-		*relay_account,
-		ed25519_sign(0.into(), &ed25519_generate(0.into(), Some(relay_account.to_vec())), &msg)
-			.expect("signature is valid; QED")
-			.into(),
+		*pair.public.as_bytes(),
+		sp_core::ed25519::Signature::from_raw(pair.sign(&msg).to_bytes()).into(),
 	)
 }
 
@@ -97,18 +97,20 @@ fn relay_generate(count: u64) -> Vec<(AccountId, ClaimKey)> {
 	let seed: u128 = 12345678901234567890123456789012;
 	(0..count)
 		.map(|i| {
-			let account_id = [[0_u8; 16], (i as u128 + 1).to_le_bytes()]
-				.concat()
-				.try_into()
-				.expect("Account ID is valid; QED");
-			(
-				AccountId::new(account_id),
-				ClaimKey::Relay(keccak_256(
-					&[(seed + i as u128).to_le_bytes(), (seed + i as u128).to_le_bytes()].concat(),
-				)),
-			)
+			let seed_32 = keccak_256(
+				&[(seed + i as u128).to_le_bytes(), (seed + i as u128).to_le_bytes()].concat(),
+			);
+			let account_id = pair_from_seed(seed_32).public.to_bytes();
+			(AccountId::new(account_id), ClaimKey::Relay(seed_32))
 		})
 		.collect()
+}
+
+fn pair_from_seed(seed: [u8; 32]) -> Keypair {
+	let secret = ed25519_dalek::SecretKey::from_bytes(&seed).expect("Seed is valid; QED");
+	let public = ed25519_dalek::PublicKey::from(&secret);
+
+	Keypair { secret, public }
 }
 
 fn ethereum_generate(count: u64) -> Vec<(AccountId, ClaimKey)> {
