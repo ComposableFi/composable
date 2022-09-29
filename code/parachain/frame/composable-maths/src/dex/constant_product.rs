@@ -132,6 +132,20 @@ pub fn compute_first_deposit_lp(
 	base_amount: u128,
 	quote_amount: u128,
 ) -> Result<u128, ArithmeticError> {
+	/* TODO (vim): Possible attack vector exists: From https://uniswap.org/whitepaper.pdf
+		The formula ensures that a liquidity pool share will never be worth less than
+	the geometric mean of the reserves in that pool. However, it is possible for the value of
+	a liquidity pool share to grow over time, either by accumulating trading fees or through
+	“donations” to the liquidity pool. In theory, this could result in a situation where the value
+	of the minimum quantity of liquidity pool shares (1e-18 pool shares) is worth so much that
+	it becomes infeasible for small liquidity providers to provide any liquidity
+	To mitigate this, Uniswap v2 burns the first 1e-15 (0.000000000000001) pool shares that
+		are minted (1000 times the minimum quantity of pool shares), sending them to the zero
+		address instead of to the minter. This should be a negligible cost for almost any token
+		pair.11 But it dramatically increases the cost of the above attack. In order to raise the
+		value of a liquidity pool share to $100, the attacker would need to donate $100,000 to the
+		pool, which would be permanently locked up as liquidity.
+			 */
 	base_amount
 		.integer_sqrt_checked()
 		.ok_or(ArithmeticError::Overflow)?

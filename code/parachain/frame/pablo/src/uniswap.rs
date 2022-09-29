@@ -102,6 +102,9 @@ impl<T: Config> Uniswap<T> {
 		min_mint_amount: T::Balance,
 		keep_alive: bool,
 	) -> Result<(T::Balance, T::Balance, T::Balance), DispatchError> {
+		// TODO (vim): Pool weight validation is missing, which would cause the received LP tokens
+		//  to be higher than expected if the base token has more than what is allowed by the pool
+		//  weight.
 		ensure!(base_amount > T::Balance::zero(), Error::<T>::InvalidAmount);
 		let pool_base_aum = T::Convert::convert(T::Assets::balance(pool.pair.base, &pool_account));
 		let pool_quote_aum =
