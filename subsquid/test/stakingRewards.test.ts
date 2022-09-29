@@ -2,7 +2,7 @@ import { EventHandlerContext } from "@subsquid/substrate-processor";
 import { Store } from "@subsquid/typeorm-store";
 import { mock } from "ts-mockito";
 import { expect } from "chai";
-import { Event, EventType, StakingPosition, StakingSource } from "../src/model";
+import { Event, EventType, LockedSource, StakingPosition } from "../src/model";
 import { BOB, createCtx } from "../src/utils";
 import {
   createRewardPool,
@@ -45,7 +45,7 @@ function assertStakingPosition(
     expect(position.endTimestamp).to.equal(
       position.startTimestamp + 1_000n * duration
     );
-  expect(position.source).to.equal(StakingSource.StakingRewards);
+  expect(position.source).to.equal(LockedSource.StakingRewards);
 }
 
 const createMockEvent = (eventId: string, eventType: EventType) =>

@@ -1,13 +1,10 @@
-import { NamedSet } from "zustand/middleware";
-
-import { StoreSlice } from "../types";
+import { StoreSlice } from "@/stores/types";
 
 interface UIState {
   isMetamaskModalOpen: boolean;
   isPolkadotModalOpen: boolean;
   isConfirmingKSM: boolean;
   isConfirmingStablecoin: boolean;
-  hasTriedEagerConnect: boolean;
   isClaimingKSM: boolean;
   isClaimingStablecoin: boolean;
   isClaimedKSM: boolean;
@@ -19,11 +16,10 @@ const initialState: UIState = {
   isPolkadotModalOpen: false,
   isConfirmingKSM: false,
   isConfirmingStablecoin: false,
-  hasTriedEagerConnect: false,
   isClaimingStablecoin: false,
   isClaimingKSM: false,
   isClaimedKSM: false,
-  isClaimedStablecoin: false,
+  isClaimedStablecoin: false
 };
 
 export interface UISlice {
@@ -36,13 +32,12 @@ export interface UISlice {
     closeKSMClaimModal: () => void;
     openStablecoinClaimModal: () => void;
     closeStablecoinClaimModal: () => void;
-    setHasTriedEagerConnect: () => void;
     setIsClaimedKSM: (isClaimedKSM: boolean) => void;
     setIsClaimedStablecoin: (isClaimedStablecoin: boolean) => void;
   };
 }
 
-export const createUISlice: StoreSlice<UISlice> = (set: NamedSet<UISlice>) => ({
+export const createUISlice: StoreSlice<UISlice> = (set) => ({
   ui: {
     ...initialState,
 
@@ -94,12 +89,6 @@ export const createUISlice: StoreSlice<UISlice> = (set: NamedSet<UISlice>) => ({
         return state;
       });
     },
-    setHasTriedEagerConnect: () => {
-      set(function fetchClaimTotals(state) {
-        state.ui.hasTriedEagerConnect = true;
-        return state;
-      });
-    },
     setIsClaimedKSM: (isClaimedKSM) => {
       set(function fetchClaimTotals(state) {
         state.ui.isClaimedKSM = isClaimedKSM;
@@ -111,6 +100,6 @@ export const createUISlice: StoreSlice<UISlice> = (set: NamedSet<UISlice>) => ({
         state.ui.isClaimedStablecoin = isClaimedStablecoin;
         return state;
       });
-    },
-  },
+    }
+  }
 });

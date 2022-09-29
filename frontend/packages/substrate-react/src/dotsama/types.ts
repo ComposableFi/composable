@@ -1,12 +1,13 @@
-import { ApiPromise } from '@polkadot/api';
-import { DEFI_CONFIG } from './config';
-import type { Signer as InjectedSigner } from '@polkadot/api/types';
+import { ApiPromise } from "@polkadot/api";
+import { DEFI_CONFIG } from "./config";
+import type { Signer as InjectedSigner } from "@polkadot/api/types";
+
 export type TokenId = typeof DEFI_CONFIG.tokenIds[number];
 export type ParachainId = typeof DEFI_CONFIG.parachainIds[number];
 export type RelayChainId = typeof DEFI_CONFIG.relayChainIds[number];
-export type AccountType = 'secp256k1' | '*25519';
+export type AccountType = "secp256k1" | "*25519";
 
-export type SubstrateChainApiStatus = 'initializing' | 'failed' | 'connected';
+export type SubstrateChainApiStatus = "initializing" | "failed" | "connected";
 
 export enum SupportedWalletId {
   Talisman = "talisman",
@@ -14,13 +15,13 @@ export enum SupportedWalletId {
 };
 
 export type DotSamaExtensionStatus =
-  | 'initializing'
-  | 'connecting'
-  | 'connected'
-  | 'no_extension'
-  | 'error';
+  | "initializing"
+  | "connecting"
+  | "connected"
+  | "no_extension"
+  | "error";
 
-  export interface ConnectedAccount {
+export interface ConnectedAccount {
   address: string;
   name: string;
 }
@@ -31,6 +32,7 @@ export interface SubstrateChainApi {
   prefix: number;
   accounts: ConnectedAccount[];
 }
+
 export interface ParachainApi extends SubstrateChainApi {
   chainId: ParachainId;
 }

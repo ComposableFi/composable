@@ -13,8 +13,8 @@ export const formatNumber = (amount: BigNumber | number) => {
   return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 };
 
-export const dateFromNumber = (timestamp: number) => {
-  return new Date(timestamp * 1000);
+export const dateFromNumber = (timestamp: number | BigInt) => {
+  return new Date(Number(timestamp.toString()) * 1000);
 };
 
 export const formatDate = (date: Date) => {
@@ -36,10 +36,10 @@ export const formatNumberWithSymbol = (
   return formatted.startsWith("-") && symbolEnd
     ? formatted.substring(0, 1) + symbol + formatted.substring(1) + symbolEnd
     : formatted.startsWith("-")
-    ? formatted.substring(0, 1) + symbol + formatted.substring(1)
-    : symbolEnd
-    ? symbol + formatted + symbolEnd
-    : symbol + formatted;
+      ? formatted.substring(0, 1) + symbol + formatted.substring(1)
+      : symbolEnd
+        ? symbol + formatted + symbolEnd
+        : symbol + formatted;
 };
 
 export const formatNumberCompact = (amount: number) => {

@@ -49,11 +49,20 @@ frontend/ @ComposableFi/blockchain-integrations @ComposableFi/parachain-finance
 
 code/integration-tests/runtime-tests/ @ComposableFi/testers
 
-## Developer Tools and Infrastructure
+## Developer Infrastructure
 
 .devcontainer/ @ComposableFi/nix
 .nix/ @ComposableFi/nix
 flake.nix @ComposableFi/nix
+flake.lock @ComposableFi/nix
+Dockerfile @ComposableFi/nix
+composable.code-workspace @ComposableFi/nix
+.hadolint.yaml @ComposableFi/sre @ComposableFi/nix
+.envrc @ComposableFi/nix
+.dockerignore @ComposableFi/sre @ComposableFi/nix
+.gitignore @ComposableFi/sre @ComposableFi/nix
+
+rust-toolchain.toml @ComposableFi/nix @ComposableFi/core
 
 ## ComposableJS
 composablejs/ @ComposableFi/parachain
@@ -64,7 +73,15 @@ rfcs/ @ComposableFi/developers
 docs/ @ComposableFi/developers @ComposableFi/technical-writers
 scripts/ @ComposableFi/developers @ComposableFi/sre
 code/utils/ @ComposableFi/developers @ComposableFi/sre @ComposableFi/testers
+.remarkrc @ComposableFi/developers
+.taplo.toml @ComposableFi/nix @ComposableFi/parachain-leads
+Makefile.toml @ComposableFi/developers @ComposableFi/testers
+
+### Spelling
+
 .config/dictionaries/ @ComposableFi/developers @ComposableFi/technical-writers
+cspell.yaml @ComposableFi/technical-writers @ComposableFi/parachain-leads
+frontmatter.json @ComposableFi/technical-writers @ComposableFi/parachain-leads
 
 ## Oracle Setup Script
 scripts/oracle-setup @ComposableFi/parachain

@@ -72,7 +72,7 @@ describe("CrowdloanRewards Tests", function () {
     if (!testConfiguration.enabledTests.tx.setup.provideAssets) this.skip();
     // 2 minutes timeout
     this.timeout(60 * 2 * 1000);
-    await mintAssetsToWallet(api, sudoKey, sudoKey, [1]);
+    await mintAssetsToWallet(api, sudoKey, sudoKey, [1], 999_999_999_999_999_999_999_999_999n);
     await mintAssetsToWallet(api, contributorRewardAccount, sudoKey, [1]);
     await mintAssetsToWallet(api, contributorEthRewardAccount, sudoKey, [1]);
   });

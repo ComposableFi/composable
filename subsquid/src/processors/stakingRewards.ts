@@ -10,11 +10,11 @@ import {
 } from "../types/events";
 import { saveAccountAndEvent, storeHistoricalLockedValue } from "../dbHelper";
 import {
+  Event,
+  EventType,
+  LockedSource,
   RewardPool,
   StakingPosition,
-  StakingSource,
-  EventType,
-  Event,
 } from "../model";
 import { encodeAccount } from "../utils";
 
@@ -136,7 +136,7 @@ export function createStakingPosition(
     startTimestamp,
     endTimestamp: BigInt(startTimestamp + BigInt(duration * 1_000n)),
     assetId,
-    source: StakingSource.StakingRewards,
+    source: LockedSource.StakingRewards,
   });
 }
 
@@ -161,7 +161,6 @@ export function extendStakingPosition(
  * @param position
  * @param oldAmount
  * @param newAmount
- * @param newFnftCollectionId
  * @param newFnftInstanceId
  * @param event
  */
@@ -185,7 +184,7 @@ export function splitStakingPosition(
     startTimestamp: position.startTimestamp,
     endTimestamp: position.endTimestamp,
     assetId: position.assetId,
-    source: StakingSource.StakingRewards,
+    source: LockedSource.StakingRewards,
   });
 }
 
@@ -249,9 +248,13 @@ export async function processStakedEvent(
     BigInt(ctx.block.timestamp)
   );
 
-  await storeHistoricalLockedValue(ctx, {
-    [poolId.toString()]: amount,
-  });
+  await storeHistoricalLockedValue(
+    ctx,
+    {
+      [poolId.toString()]: amount,
+    },
+    LockedSource.StakingRewards
+  );
 
   await ctx.store.save(stakingPosition);
 }
@@ -290,9 +293,13 @@ export async function processStakeAmountExtendedEvent(
 
   extendStakingPosition(stakingPosition, amount, event);
 
-  await storeHistoricalLockedValue(ctx, {
-    [stakingPosition.assetId]: amountChanged
-  });
+  await storeHistoricalLockedValue(
+    ctx,
+    {
+      [stakingPosition.assetId]: amountChanged,
+    },
+    LockedSource.StakingRewards
+  );
 }
 
 /**
@@ -322,9 +329,13 @@ export async function processUnstakedEvent(
 
   await saveAccountAndEvent(ctx, EventType.STAKING_REWARDS_UNSTAKE, owner);
 
-  await storeHistoricalLockedValue(ctx, {
-    [position.assetId]: -position.amount,
-  });
+  await storeHistoricalLockedValue(
+    ctx,
+    {
+      [position.assetId]: -position.amount,
+    },
+    LockedSource.StakingRewards
+  );
 }
 
 /**

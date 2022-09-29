@@ -842,6 +842,7 @@ impl assets::Config for Runtime {
 parameter_types! {
 	  pub const CrowdloanRewardsId: PalletId = PalletId(*b"pal_crow");
 	  pub const InitialPayment: Perbill = Perbill::from_percent(25);
+	  pub const OverFundedThreshold: Perbill = Perbill::from_percent(1);
 	  pub const VestingStep: Moment = 1;
 	  pub const Prefix: &'static [u8] = b"picasso-";
 }
@@ -854,6 +855,7 @@ impl crowdloan_rewards::Config for Runtime {
 	type Convert = sp_runtime::traits::ConvertInto;
 	type RelayChainAccountId = sp_runtime::AccountId32;
 	type InitialPayment = InitialPayment;
+	type OverFundedThreshold = OverFundedThreshold;
 	type VestingStep = VestingStep;
 	type Prefix = Prefix;
 	type WeightInfo = weights::crowdloan_rewards::WeightInfo<Runtime>;
@@ -1492,6 +1494,45 @@ impl_runtime_apis! {
 				assets: new_map
 			}
 
+		}
+	}
+
+	impl cosmwasm_runtime_api::CosmwasmRuntimeApi<Block, AccountId, CurrencyId, Balance, Vec<u8>> for Runtime {
+		fn query(
+			contract: AccountId,
+			gas: u64,
+			query_request: Vec<u8>,
+		) -> Result<Vec<u8>, Vec<u8>>{
+			match cosmwasm::query::<Runtime>(
+				contract,
+				gas,
+				query_request,
+			) {
+				Ok(response) => Ok(response.0),
+				Err(err) => Err(alloc::format!("{:?}", err).into_bytes())
+			}
+		}
+
+		fn instantiate(
+			instantiator: AccountId,
+			code_id: u64,
+			salt: Vec<u8>,
+			admin: Option<AccountId>,
+			label: Vec<u8>,
+			funds: BTreeMap<CurrencyId, (Balance, bool)>,
+			gas: u64,
+			message: Vec<u8>,
+		) -> Result<AccountId, Vec<u8>> {
+			cosmwasm::instantiate::<Runtime>(
+				instantiator,
+				code_id,
+				salt,
+				admin,
+				label,
+				funds,
+				gas,
+				message
+			).map_err(|err| alloc::format!("{:?}", err).into_bytes())
 		}
 	}
 

@@ -120,6 +120,9 @@ pub struct RewardPool<
 	/// Already claimed shares by stakers by unstaking
 	pub claimed_shares: Balance,
 
+	/// Pool will start adding rewards to the pool at this block number.
+	pub start_block: BlockNumber,
+
 	/// Pool would stop adding rewards to pool at this block number.
 	pub end_block: BlockNumber,
 
@@ -176,6 +179,8 @@ pub enum RewardPoolConfiguration<
 		owner: AccountId,
 		/// The staked asset id of the reward pool.
 		asset_id: AssetId,
+		/// Pool will start adding rewards to the pool at this block number.
+		start_block: BlockNumber,
 		/// Pool would stop adding rewards to pool at this block number.
 		end_block: BlockNumber,
 		/// initial reward configuration for this pool
@@ -316,7 +321,7 @@ pub trait Staking {
 		who: &Self::AccountId,
 		position: &Self::PositionId,
 		ratio: Permill,
-	) -> Result<[Self::PositionId; 2], DispatchError>;
+	) -> Result<Self::PositionId, DispatchError>;
 
 	/// Claim remaining reward earned up to this point in time.
 	///
@@ -324,37 +329,4 @@ pub trait Staking {
 	/// * `who` - the account to transfer the final claimed rewards to.
 	/// * `position` - The uniquely identifying NFT from which we will compute the rewards.
 	fn claim(who: &Self::AccountId, position: &Self::PositionId) -> DispatchResult;
-}
-
-/// Interface for managing staking through financial NFTs.
-pub trait StakingFinancialNft {
-	type AccountId;
-	type CollectionId;
-	type InstanceId;
-	type Balance;
-
-	/// Extend the stake of an existing position represented by a financial NFT.
-	fn extend(
-		who: &Self::AccountId,
-		collection: Self::CollectionId,
-		instance: Self::InstanceId,
-		amount: Self::Balance,
-		keep_alive: bool,
-	) -> Result<Self::InstanceId, DispatchError>;
-
-	/// Unstake an actual staked position, represented by a financial NFT.
-	fn burn(
-		who: &Self::AccountId,
-		collection: Self::CollectionId,
-		instance: Self::InstanceId,
-		remove_amount: Self::Balance,
-	) -> DispatchResult;
-
-	/// `ratio` - how much of share to retain in the original position.
-	fn split(
-		who: &Self::AccountId,
-		collection: Self::CollectionId,
-		instance: Self::InstanceId,
-		ratio: Permill,
-	) -> Result<[Self::InstanceId; 2], DispatchError>;
 }

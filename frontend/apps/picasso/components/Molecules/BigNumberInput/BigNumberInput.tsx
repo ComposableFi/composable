@@ -1,8 +1,7 @@
 import React, { FC, useEffect } from "react";
 import BigNumber from "bignumber.js";
-import { Input } from "../../Atom";
+import { Input, InputProps } from "../../Atom";
 import { Typography, useTheme } from "@mui/material";
-import { InputProps } from "../../Atom";
 import { useValidation } from "./hooks";
 
 type BigNumberInputProps = InputProps & {
@@ -62,7 +61,7 @@ export const BigNumberInput: FC<BigNumberInputProps> = ({
       {!disabled && hasError && (
         <Typography
           sx={{ color: theme.palette.error.main, mt: 2 }}
-          variant="h6"
+          variant="subtitle1"
         >
           Please insert a correct amount
         </Typography>

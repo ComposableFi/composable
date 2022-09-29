@@ -9,21 +9,19 @@
 
     - name: Download composable binary {{ release_version }}
       become: yes
-      get_url: 
-        url: https://github.com/ComposableFi/composable/releases/download/{{ release_version }}/composable
+      get_url:
+        url: https://github.com/ComposableFi/composable/releases/download/v{{ release_version }}/composable-node_{{ release_version }}-1_amd64.deb
         dest: ~/
-        mode: "+x"
-  
-    - name: Move composable binary to /usr/local/bin/composable
-      become: yes
-      command: mv ~/composable /usr/bin/composable
 
-    - name: Change Composable file permission
+    - name: Remove Old Installation
       become: yes
-      file:
-        path: /usr/bin/composable
-        owner: "composable"
-        group: "composable"
+      command: rm /usr/bin/composable
+      ignore_errors: yes
+
+
+    - name: Install Composable Binary
+      become: yes
+      command: dpkg -i ~/composable-node_{{ release_version }}-1_amd64.deb
 
     - name: Check Version
       become: yes

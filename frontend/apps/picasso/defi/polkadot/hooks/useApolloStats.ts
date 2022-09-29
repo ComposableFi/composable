@@ -3,7 +3,7 @@ import { useStore } from "@/stores/root";
 import { WebsocketClient } from "binance";
 import BigNumber from "bignumber.js";
 import { useEffect } from "react";
-import { callIf, fromChainIdUnit, unwrapNumberOrHex } from "shared";
+import { callbackGate, fromChainIdUnit, unwrapNumberOrHex } from "shared";
 import { Assets } from "@/defi/polkadot/Assets";
 import { AssetId } from "@/defi/polkadot/types";
 import { BN } from "@polkadot/util";
@@ -12,7 +12,7 @@ import { ComposableTraitsOraclePrice } from "defi-interfaces";
 export function binanceMapPairToSourceSymbol(pair: string) {
   const out = {
     KSMUSDT: "KSM",
-    USDCUSDT: "USDC"
+    USDCUSDT: "USDC",
   }[pair];
 
   return out ?? "";
@@ -20,28 +20,30 @@ export function binanceMapPairToSourceSymbol(pair: string) {
 
 export const useApolloStats = () => {
   const { parachainApi } = usePicassoProvider();
-  const binanceAssets = useStore(state => state.statsApollo.binanceAssets);
-  const oracleAssets = useStore(state => state.statsApollo.oracleAssets);
+  const binanceAssets = useStore((state) => state.statsApollo.binanceAssets);
+  const oracleAssets = useStore((state) => state.statsApollo.oracleAssets);
   const setBinanceAssets = useStore(
-    state => state.statsApollo.setBinanceAssets
+    (state) => state.statsApollo.setBinanceAssets
   );
-  const setOracleAssets = useStore(state => state.statsApollo.setOracleAssets);
+  const setOracleAssets = useStore(
+    (state) => state.statsApollo.setOracleAssets
+  );
 
   const setupBinancePricePull = () => {
     const wsClient = new WebsocketClient({
       beautify: true,
       pingInterval: 60_000_000,
-      disableHeartbeat: true
+      disableHeartbeat: true,
     });
     let wsKey: string;
 
     // notification when a connection is opened
-    wsClient.on("open", data => {
+    wsClient.on("open", (data) => {
       wsKey = data.wsKey;
     });
 
     // receive formatted events with beautified keys. Any "known" floats stored in strings as parsed as floats.
-    wsClient.on("formattedMessage", data => {
+    wsClient.on("formattedMessage", (data) => {
       if (
         "eventType" in data &&
         data.eventType &&
@@ -58,7 +60,7 @@ export const useApolloStats = () => {
     });
 
     // Recommended: receive error events (e.g. first reconnection failed)
-    wsClient.on("error", data => {
+    wsClient.on("error", (data) => {
       console.log("ws saw error ", data?.wsKey);
     });
 
@@ -78,8 +80,8 @@ export const useApolloStats = () => {
   // Pulls prices from oracle for the allowed_list
   useEffect(() => {
     const unsubscribes: Array<Promise<any>> = [];
-    Object.keys(oracleAssets).forEach(symbol => {
-      const unsubPromise: Promise<() => void> = callIf(parachainApi, api => {
+    Object.keys(oracleAssets).forEach((symbol) => {
+      const unsubPromise: Promise<() => void> = callbackGate((api) => {
         const asset = Assets[symbol.toLowerCase() as AssetId];
         return api.query.oracle.prices(
           asset.supportedNetwork.picasso,
@@ -92,18 +94,18 @@ export const useApolloStats = () => {
             );
           }
         );
-      });
+      }, parachainApi);
       unsubscribes.push(unsubPromise);
     });
 
     return () => {
-      Promise.all(unsubscribes).then(unsubs =>
-        unsubs.forEach(unsub => unsub())
+      Promise.all(unsubscribes).then((unsubs) =>
+        unsubs.forEach((unsub) => unsub())
       );
     };
   }, []);
   return {
     binanceAssets,
-    oracleAssets
+    oracleAssets,
   };
 };

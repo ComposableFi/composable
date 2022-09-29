@@ -128,6 +128,8 @@ impl<T> From<T> for Displayed<T> {
 	}
 }
 
+pub const MAX_PARTS: u128 = 1000000000000000000;
+
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[derive(
 	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
@@ -136,19 +138,19 @@ impl<T> From<T> for Displayed<T> {
 /// See https://en.wikipedia.org/wiki/Linear_equation#Slope%E2%80%93intercept_form_or_Gradient-intercept_form
 pub struct Amount {
 	pub intercept: Displayed<u128>,
-	pub slope: u128,
+	pub slope: Displayed<u128>,
 }
 
 impl Amount {
 	/// An absolute amount
 	#[inline]
 	pub fn absolute(value: u128) -> Self {
-		Self { intercept: Displayed(value), slope: 0 }
+		Self { intercept: Displayed(value), slope: Displayed(0) }
 	}
 	/// A ratio amount, expressed in u128 parts (x / u128::MAX)
 	#[inline]
 	pub fn ratio(parts: u128) -> Self {
-		Self { intercept: Displayed(0), slope: parts }
+		Self { intercept: Displayed(0), slope: Displayed(parts) }
 	}
 }
 
@@ -156,16 +158,19 @@ impl Add for Amount {
 	type Output = Self;
 
 	#[inline]
-	fn add(self, Self { intercept: Displayed(i_1), slope: s_1 }: Self) -> Self::Output {
-		let Self { intercept: Displayed(i_0), slope: s_0 } = self;
-		Self { intercept: Displayed(i_0.saturating_add(i_1)), slope: s_0.saturating_add(s_1) }
+	fn add(self, Self { intercept: Displayed(i_1), slope: Displayed(s_1) }: Self) -> Self::Output {
+		let Self { intercept: Displayed(i_0), slope: Displayed(s_0) } = self;
+		Self {
+			intercept: Displayed(i_0.saturating_add(i_1)),
+			slope: Displayed(s_0.saturating_add(s_1)),
+		}
 	}
 }
 
 impl Zero for Amount {
 	#[inline]
 	fn zero() -> Self {
-		Self { intercept: Displayed(0), slope: 0 }
+		Self { intercept: Displayed(0), slope: Displayed(0) }
 	}
 
 	#[inline]
@@ -177,20 +182,25 @@ impl Zero for Amount {
 impl From<u128> for Amount {
 	#[inline]
 	fn from(x: u128) -> Self {
-		Self { intercept: Displayed(x), slope: 0 }
+		Self { intercept: Displayed(x), slope: Displayed(0) }
 	}
 }
 
 impl Amount {
 	#[inline]
 	pub fn apply(&self, value: u128) -> u128 {
-		let amount = FixedU128::<U16>::from_num(value)
-			.saturating_mul(
-				FixedU128::<U16>::from_num(self.slope)
-					.saturating_div(FixedU128::<U16>::from_num(u128::MAX)),
-			)
-			.to_num::<u128>()
-			.saturating_add(self.intercept.0);
+		let amount = if self.slope.0 == 0 {
+			self.intercept.0
+		} else {
+			FixedU128::<U16>::wrapping_from_num(value)
+				.saturating_sub(FixedU128::<U16>::wrapping_from_num(self.intercept.0))
+				.saturating_mul(
+					FixedU128::<U16>::wrapping_from_num(self.slope.0)
+						.saturating_div(FixedU128::<U16>::wrapping_from_num(MAX_PARTS)),
+				)
+				.wrapping_to_num::<u128>()
+				.saturating_add(self.intercept.0)
+		};
 		u128::min(value, amount)
 	}
 }
@@ -202,17 +212,17 @@ impl Amount {
 #[repr(transparent)]
 pub struct Funds<T = Amount>(pub BTreeMap<AssetId, T>);
 
-impl Funds {
+impl<T> Funds<T> {
 	#[inline]
 	pub fn empty() -> Self {
 		Funds(BTreeMap::new())
 	}
 }
 
-impl<U, V> From<BTreeMap<U, V>> for Funds
+impl<T, U, V> From<BTreeMap<U, V>> for Funds<T>
 where
 	U: Into<AssetId>,
-	V: Into<Amount>,
+	V: Into<T>,
 {
 	#[inline]
 	fn from(assets: BTreeMap<U, V>) -> Self {
@@ -225,10 +235,10 @@ where
 	}
 }
 
-impl<U, V, const K: usize> From<[(U, V); K]> for Funds
+impl<T, U, V, const K: usize> From<[(U, V); K]> for Funds<T>
 where
 	U: Into<AssetId>,
-	V: Into<Amount>,
+	V: Into<T>,
 {
 	#[inline]
 	fn from(x: [(U, V); K]) -> Self {
@@ -236,9 +246,9 @@ where
 	}
 }
 
-impl From<Funds> for BTreeMap<u128, Amount> {
+impl<T> From<Funds<T>> for BTreeMap<u128, T> {
 	#[inline]
-	fn from(Funds(assets): Funds) -> Self {
+	fn from(Funds(assets): Funds<T>) -> Self {
 		assets.into_iter().map(|(AssetId(asset), amount)| (asset, amount)).collect()
 	}
 }
