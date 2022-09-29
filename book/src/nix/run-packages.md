@@ -24,7 +24,7 @@ Packages are defined in a repository's `flake.nix`. For example, a **package** c
 - `frontend-pablo-server` which runs a server serving the `pablo` frontend.
 - `composable-book` which builds this book (so meta!).
 
-If you want to see all packages that are defined by a repository's flake, you run `nix flake show "LOCATION"`, for example: `nix flake show "github:ComposableFi/composable"`.
+If you want to see all packages defined by a repository's flake, run `nix flake show "LOCATION"`, for example: `nix flake show "github:ComposableFi/composable"`.
 
 
 ## Running
