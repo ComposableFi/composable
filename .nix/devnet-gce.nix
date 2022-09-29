@@ -2,12 +2,6 @@
 , extra-gce ? (args: { }) }:
 let region = "europe-central2-c";
 in {
-  resources.gceStaticIPs.composable-persistent-devnet = gce-input // (rec {
-    inherit region;
-    name = "persistent-devnet-ip";
-    ipAddress = "34.118.46.235";
-    publicIPv4 = ipAddress;
-  });
   resources.gceNetworks.composable-devnet = gce-input // {
     name = "composable-devnet-network";
     firewall = {
