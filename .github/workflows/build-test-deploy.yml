@@ -34,11 +34,7 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}-common-deps-${{ github.ref }}
       cancel-in-progress: true
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: ubuntu-latest
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
@@ -63,11 +59,7 @@ jobs:
   check-nix:
     name: "Check nix"
     continue-on-error: false
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-check-nix-${{ github.ref }}
       cancel-in-progress: true
@@ -97,11 +89,7 @@ jobs:
 
   cargo-fmt-check:
     name: "Cargo fmt check"
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-cargo-fmt-check-${{ github.ref }}
       cancel-in-progress: true
@@ -127,11 +115,7 @@ jobs:
 
   taplo-cli-check:
     name: "Taplo cli check"
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-taplo-cli-check-${{ github.ref }}
       cancel-in-progress: true
@@ -157,11 +141,7 @@ jobs:
 
   prettier-check:
     name: "Prettier check"
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-prettier-check-${{ github.ref }}
       cancel-in-progress: true
@@ -187,11 +167,7 @@ jobs:
 
   nixfmt-check:
     name: "Nixfmt check"
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-nixfmt-check-${{ github.ref }}
       cancel-in-progress: true
@@ -217,11 +193,7 @@ jobs:
 
   cspell-check:
     name: "Spelling check"
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-cspell-check-${{ github.ref }}
       cancel-in-progress: true
@@ -247,11 +219,7 @@ jobs:
 
   mdbook-check:
     name: "Mdbook check"
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-mdbook-check-${{ github.ref }}
       cancel-in-progress: true
@@ -278,11 +246,7 @@ jobs:
   cargo-clippy-check:
     name: "Cargo clippy check"
     needs: common-deps
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-cargo-clippy-check-${{ github.ref }}
       cancel-in-progress: true
@@ -309,11 +273,7 @@ jobs:
   cargo-deny-check:
     name: "Cargo deny check"
     needs: common-deps
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-cargo-deny-check-${{ github.ref }}
       cancel-in-progress: true
@@ -340,11 +300,7 @@ jobs:
   cargo-udeps-check:
     name: "Cargo udeps"
     needs: common-deps
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-cargo-udeps-check-${{ github.ref }}
       cancel-in-progress: true
