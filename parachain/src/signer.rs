@@ -4,7 +4,7 @@ use sp_runtime::{
 	traits::{IdentifyAccount, Verify},
 	KeyTypeId, MultiSignature, MultiSigner,
 };
-use subxt::{extrinsic::Signer, Config};
+use subxt::{tx::Signer, Config};
 
 use codec::Decode;
 use primitives::KeyProvider;

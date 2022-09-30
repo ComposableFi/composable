@@ -5,10 +5,10 @@ use thiserror::Error;
 pub enum Error {
 	/// subxt error
 	#[error("Subxt basic error")]
-	Subxt(#[from] subxt::BasicError),
+	Subxt(#[from] subxt::Error),
 	/// subxt rpc error
 	#[error("Subxt rpc error")]
-	SubxtRRpc(#[from] subxt::rpc::RpcError),
+	SubxtRRpc(#[from] subxt::error::RpcError),
 	/// Custom error
 	#[error("{0}")]
 	Custom(String),

@@ -6,15 +6,12 @@ use ibc::{
 	core::{ics02_client::msgs::create_client::MsgCreateAnyClient, ics24_host::identifier::PortId},
 	tx_msg::Msg,
 };
-use pallet_ibc::PalletParams;
 use parachain::{
-	calls::SetPalletParams, light_client_protocol::LightClientProtocol, ParachainClient,
-	ParachainClientConfig,
+	light_client_protocol::LightClientProtocol, ParachainClient, ParachainClientConfig,
 };
-use sp_core::crypto::KeyTypeId;
-use sp_keystore::{testing::KeyStore, SyncCryptoStore, SyncCryptoStorePtr};
-use sp_runtime::MultiSigner;
-use std::sync::Arc;
+
+use subxt::tx::SubstrateExtrinsicParams;
+
 use tendermint_proto::Protobuf;
 
 #[derive(Debug, Clone)]
@@ -55,19 +52,12 @@ impl subxt::Config for DefaultConfig {
 	type Header = sp_runtime::generic::Header<Self::BlockNumber, sp_runtime::traits::BlakeTwo256>;
 	type Signature = sp_runtime::MultiSignature;
 	type Extrinsic = sp_runtime::OpaqueExtrinsic;
+	type ExtrinsicParams = SubstrateExtrinsicParams<Self>;
 }
 
 async fn setup_clients() -> (ParachainClient<DefaultConfig>, ParachainClient<DefaultConfig>) {
 	log::info!(target: "hyperspace", "=========================== Starting Test ===========================");
 	let args = Args::default();
-	let alice = sp_keyring::AccountKeyring::Alice;
-	let alice_pub_key = MultiSigner::Sr25519(alice.public());
-
-	let key_store: SyncCryptoStorePtr = Arc::new(KeyStore::new());
-	let key_type_id = KeyTypeId::from(0u32);
-
-	SyncCryptoStore::insert_unknown(&*key_store, key_type_id, "//Alice", &alice.public().0)
-		.unwrap();
 
 	// Create client configurations
 	let config_a = ParachainClientConfig {
@@ -122,18 +112,8 @@ async fn setup_clients() -> (ParachainClient<DefaultConfig>, ParachainClient<Def
 		return (chain_a, chain_b)
 	}
 
-	chain_a
-		.submit_sudo_call(SetPalletParams {
-			params: PalletParams { send_enabled: true, receive_enabled: true },
-		})
-		.await
-		.unwrap();
-	chain_b
-		.submit_sudo_call(SetPalletParams {
-			params: PalletParams { send_enabled: true, receive_enabled: true },
-		})
-		.await
-		.unwrap();
+	chain_a.set_pallet_params(true, true).await.unwrap();
+	chain_b.set_pallet_params(true, true).await.unwrap();
 
 	{
 		// Get initial beefy state

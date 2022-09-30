@@ -1,4 +1,6 @@
+use beefy_prover::helpers::unsafe_cast_to_jsonrpsee_client;
 use codec::Decode;
+use jsonrpsee::core::client::SubscriptionClientT;
 use std::{collections::BTreeMap, fmt::Display, pin::Pin};
 
 use futures::{Stream, StreamExt};
@@ -9,21 +11,21 @@ use sp_runtime::{
 	traits::{Header as HeaderT, IdentifyAccount, One, Verify},
 	MultiSignature, MultiSigner,
 };
-use subxt::{extrinsic::PlainTip, Config, PolkadotExtrinsicParams, PolkadotExtrinsicParamsBuilder};
+use subxt::{
+	tx::{AssetTip, BaseExtrinsicParamsBuilder, ExtrinsicParams, SubstrateExtrinsicParamsBuilder},
+	Config,
+};
 use transaction_payment_rpc::TransactionPaymentApiClient;
 use transaction_payment_runtime_api::RuntimeDispatchInfo;
 
 use primitives::{Chain, IbcProvider};
 
-use super::{
-	calls::{deliver, Deliver, RawAny},
-	error::Error,
-	signer::ExtrinsicSigner,
-	ParachainClient,
+use super::{error::Error, signer::ExtrinsicSigner, ParachainClient};
+use crate::{
+	parachain::{api, api::runtime_types::pallet_ibc::Any as RawAny},
+	LightClientProtocol,
 };
-use crate::LightClientProtocol;
 use finality_grandpa_rpc::GrandpaApiClient;
-use subxt::rpc::{rpc_params, SubscriptionClientT};
 
 type GrandpaJustification =
 	grandpa_light_client::justification::GrandpaJustification<polkadot_core_primitives::Header>;
@@ -49,6 +51,9 @@ where
 		From<FinalityProof<T::Header>>,
 	BTreeMap<sp_core::H256, ParachainHeaderProofs>:
 		From<BTreeMap<<T as subxt::Config>::Hash, ParachainHeaderProofs>>,
+	sp_core::H256: From<T::Hash>,
+	<T::ExtrinsicParams as ExtrinsicParams<T::Index, T::Hash>>::OtherParams:
+		From<BaseExtrinsicParamsBuilder<T, AssetTip>> + Send + Sync,
 {
 	fn name(&self) -> &str {
 		&*self.name
@@ -72,35 +77,17 @@ where
 				.map(|msg| RawAny { type_url: msg.type_url.as_bytes().to_vec(), value: msg.value })
 				.collect::<Vec<_>>();
 
-			let metadata = self.para_client.rpc().metadata().await?;
-			// Check for pallet and call index existence in latest chain metadata to ensure our
-			// static definitions are up to date
-			let pallet = metadata
-				.pallet(<Deliver as subxt::Call>::PALLET)
-				.map_err(|_| Error::PalletNotFound(<Deliver as subxt::Call>::PALLET))?;
-			pallet
-				.call_index::<Deliver>()
-				.map_err(|_| Error::CallNotFound(<Deliver as subxt::Call>::FUNCTION))?;
-			// Update the metadata held by the client
-			let _ = self.para_client.metadata().try_write().and_then(|mut writer| {
-				*writer = metadata;
-				Some(writer)
-			});
-
-			let tx_params = PolkadotExtrinsicParamsBuilder::new()
-				.tip(PlainTip::new(100_000))
-				.era(Era::Immortal, *self.para_client.genesis());
-
-			let submitabble_ext =
-				deliver::<T, PolkadotExtrinsicParams<T>>(&self.para_client, Deliver { messages })
-					.create_signed(&signer, tx_params)
-					.await?;
-			submitabble_ext.encoded().to_vec()
+			let tx_params = SubstrateExtrinsicParamsBuilder::new()
+				.tip(AssetTip::new(100_000))
+				.era(Era::Immortal, self.para_client.genesis_hash());
+			let call = api::tx().ibc().deliver(messages);
+			self.para_client.tx().create_signed(&call, &signer, tx_params.into()).await?
 		};
+		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
 		let dispatch_info =
 			TransactionPaymentApiClient::<sp_core::H256, RuntimeDispatchInfo<u128>>::query_info(
-				&*self.para_client.rpc().client,
-				extrinsic.into(),
+				&*para_client,
+				extrinsic.encoded().to_vec().into(),
 				None,
 			)
 			.await?;
@@ -112,9 +99,10 @@ where
 	) -> Pin<Box<dyn Stream<Item = <Self as IbcProvider>::FinalityEvent> + Send + Sync>> {
 		match self.light_client_protocol {
 			LightClientProtocol::Grandpa => {
+				let relay_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.relay_client) };
 				let subscription =
 					GrandpaApiClient::<JustificationNotification, sp_core::H256, u32>::subscribe_justifications(
-						&*self.relay_client.rpc().client,
+						&*relay_client,
 					)
 						.await
 						.expect("Failed to subscribe to grandpa justifications");
@@ -143,13 +131,11 @@ where
 				Box::pin(Box::new(stream))
 			},
 			LightClientProtocol::Beefy => {
-				let subscription = self
-					.relay_client
-					.rpc()
-					.client
+				let relay_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.relay_client) };
+				let subscription = relay_client
 					.subscribe::<String>(
 						"beefy_subscribeJustifications",
-						rpc_params![],
+						None,
 						"beefy_unsubscribeJustifications",
 					)
 					.await
@@ -192,7 +178,8 @@ where
 			.map(|msg| RawAny { type_url: msg.type_url.as_bytes().to_vec(), value: msg.value })
 			.collect::<Vec<_>>();
 
-		self.submit_call(Deliver { messages }, false).await?;
+		let call = api::tx().ibc().deliver(messages);
+		self.submit_call(call, false).await?;
 
 		Ok(())
 	}

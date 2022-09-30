@@ -2,6 +2,7 @@
 
 use crate::{error::Error, ParachainClient};
 use beefy_light_client_primitives::{ClientState as BeefyPrimitivesClientState, NodesUtils};
+use beefy_prover::helpers::unsafe_cast_to_jsonrpsee_client;
 use codec::{Decode, Encode};
 use grandpa_light_client::justification::find_scheduled_change;
 use grandpa_light_client_primitives::{
@@ -33,7 +34,10 @@ use std::{
 	collections::{BTreeMap, BTreeSet, HashMap},
 	fmt::Display,
 };
-use subxt::Config;
+use subxt::{
+	tx::{AssetTip, BaseExtrinsicParamsBuilder, ExtrinsicParams},
+	Config,
+};
 use tendermint_proto::Protobuf;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -71,11 +75,14 @@ impl LightClientProtocol {
 		<T as Config>::Address: From<<T as Config>::AccountId>,
 		T::Signature: From<MultiSignature>,
 		T::BlockNumber: From<u32> + Display + Ord + sp_runtime::traits::Zero + One,
-		T::Hash: From<H256>,
+		T::Hash: From<sp_core::H256>,
+		sp_core::H256: From<T::Hash>,
 		FinalityProof<sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256>>:
 			From<FinalityProof<T::Header>>,
 		BTreeMap<H256, ParachainHeaderProofs>:
 			From<BTreeMap<<T as Config>::Hash, ParachainHeaderProofs>>,
+		<T::ExtrinsicParams as ExtrinsicParams<T::Index, T::Hash>>::OtherParams:
+			From<BaseExtrinsicParamsBuilder<T, AssetTip>> + Send + Sync,
 	{
 		match self {
 			LightClientProtocol::Grandpa =>
@@ -106,6 +113,10 @@ where
 	<T as Config>::Address: From<<T as Config>::AccountId>,
 	T::Signature: From<MultiSignature>,
 	T::BlockNumber: From<u32> + Display + Ord + sp_runtime::traits::Zero + One,
+	<T::ExtrinsicParams as ExtrinsicParams<T::Index, T::Hash>>::OtherParams:
+		From<BaseExtrinsicParamsBuilder<T, AssetTip>> + Send + Sync,
+	T::Hash: From<sp_core::H256>,
+	sp_core::H256: From<T::Hash>,
 {
 	let signed_commitment = match finality_event {
 		FinalityEvent::Beefy(signed_commitment) => signed_commitment,
@@ -211,11 +222,9 @@ where
 	};
 
 	// block_number => events
-	let events: HashMap<String, Vec<IbcEvent>> = IbcApiClient::<u32, H256>::query_events(
-		&*source.para_client.rpc().client,
-		finalized_block_numbers,
-	)
-	.await?;
+	let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&source.para_client) };
+	let events: HashMap<String, Vec<IbcEvent>> =
+		IbcApiClient::<u32, H256>::query_events(&*para_client, finalized_block_numbers).await?;
 
 	// header number is serialized to string
 	let mut headers_with_events = events
@@ -307,10 +316,13 @@ where
 	T::Signature: From<MultiSignature>,
 	T::BlockNumber: From<u32> + Display + Ord + sp_runtime::traits::Zero + One,
 	T::Hash: From<sp_core::H256>,
+	sp_core::H256: From<T::Hash>,
 	FinalityProof<sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256>>:
 		From<FinalityProof<T::Header>>,
 	BTreeMap<H256, ParachainHeaderProofs>:
 		From<BTreeMap<<T as Config>::Hash, ParachainHeaderProofs>>,
+	<T::ExtrinsicParams as ExtrinsicParams<T::Index, T::Hash>>::OtherParams:
+		From<BaseExtrinsicParamsBuilder<T, AssetTip>> + Send + Sync,
 {
 	let justification = match finality_event {
 		FinalityEvent::Grandpa(justification) => justification,
@@ -399,11 +411,9 @@ where
 		};
 
 	// block_number => events
-	let events: HashMap<String, Vec<IbcEvent>> = IbcApiClient::<u32, H256>::query_events(
-		&*source.para_client.rpc().client,
-		finalized_block_numbers,
-	)
-	.await?;
+	let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&source.para_client) };
+	let events: HashMap<String, Vec<IbcEvent>> =
+		IbcApiClient::<u32, H256>::query_events(&*para_client, finalized_block_numbers).await?;
 
 	// header number is serialized to string
 	let mut headers_with_events = events

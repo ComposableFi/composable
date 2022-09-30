@@ -9,7 +9,7 @@ use jsonrpsee::{
 	rpc_params,
 };
 use std::{env, fs, path::Path};
-use subxt_codegen::DerivesRegistry;
+use subxt_codegen::{CratePath, DerivesRegistry};
 
 async fn fetch_metadata_ws(url: &'static str) -> color_eyre::Result<Vec<u8>> {
 	let (sender, receiver) = WsTransportClientBuilder::default()
@@ -31,16 +31,16 @@ fn codegen<I: Input>(encoded: &mut I) -> color_eyre::Result<String> {
 	let item_mod = syn::parse_quote!(
 		pub mod api {}
 	);
-
+	let crate_path = CratePath::default();
 	// add any derives you want here:
 	let p = Vec::<String>::new()
 		.iter()
 		.map(|raw| syn::parse_str(raw))
 		.collect::<Result<Vec<_>, _>>()?;
-	let mut derives = DerivesRegistry::default();
+	let mut derives = DerivesRegistry::new(&crate_path);
 	derives.extend_for_all(p.into_iter());
 
-	let runtime_api = generator.generate_runtime(item_mod, derives);
+	let runtime_api = generator.generate_runtime(item_mod, derives, crate_path);
 	Ok(format!("{}", runtime_api))
 }
 

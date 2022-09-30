@@ -2,7 +2,7 @@ use ibc::{core::ics02_client, timestamp::ParseTimestampError};
 use sp_runtime::traits::BlakeTwo256;
 use sp_trie::TrieError;
 use std::num::ParseIntError;
-use subxt::MetadataError;
+use subxt::error::MetadataError;
 use thiserror::Error;
 
 /// Error definition for the parachain client
@@ -22,10 +22,10 @@ pub enum Error {
 	CallNotFound(&'static str),
 	/// subxt error
 	#[error("Subxt error: {0:?}")]
-	Subxt(#[from] subxt::BasicError),
+	Subxt(#[from] subxt::Error),
 	/// subxt rpc error
 	#[error("Rpc threw an error")]
-	SubxtRRpc(#[from] subxt::rpc::RpcError),
+	SubxtRRpc(#[from] subxt::error::RpcError),
 	/// hex error
 	#[error("Error decoding hex: {0:?}")]
 	Hex(#[from] hex::FromHexError),
@@ -64,6 +64,8 @@ pub enum Error {
 	/// Some error in relation to handling metadata
 	#[error("Metadat error: {0}")]
 	MetadataError(#[from] MetadataError),
+	#[error("Jsonrpsee error: {0}")]
+	JosnrpseeError(#[from] jsonrpsee::core::Error),
 }
 
 impl From<String> for Error {

@@ -21,7 +21,10 @@ use sp_runtime::{
 	traits::{Header as HeaderT, IdentifyAccount, Verify},
 	MultiSignature, MultiSigner,
 };
-use subxt::Config;
+use subxt::{
+	tx::{AssetTip, BaseExtrinsicParamsBuilder, ExtrinsicParams},
+	Config,
+};
 
 use super::{error::Error, ParachainClient};
 
@@ -40,7 +43,9 @@ use primitives::{Chain, IbcProvider, KeyProvider, UpdateType};
 use sp_core::H256;
 
 use crate::light_client_protocol::FinalityEvent;
-use beefy_prover::helpers::fetch_timestamp_extrinsic_with_proof;
+use beefy_prover::helpers::{
+	fetch_timestamp_extrinsic_with_proof, unsafe_cast_to_jsonrpsee_client,
+};
 use grandpa_light_client_primitives::{FinalityProof, ParachainHeaderProofs};
 use ics11_beefy::client_state::ClientState as BeefyClientState;
 use pallet_ibc::{light_clients::HostFunctionsManager, HostConsensusProof};
@@ -60,10 +65,13 @@ where
 	T::Signature: From<MultiSignature>,
 	T::BlockNumber: From<u32> + Display + Ord + sp_runtime::traits::Zero + One,
 	T::Hash: From<sp_core::H256>,
+	sp_core::H256: From<T::Hash>,
 	FinalityProof<sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256>>:
 		From<FinalityProof<T::Header>>,
 	BTreeMap<sp_core::H256, ParachainHeaderProofs>:
 		From<BTreeMap<<T as subxt::Config>::Hash, ParachainHeaderProofs>>,
+	<T::ExtrinsicParams as ExtrinsicParams<T::Index, T::Hash>>::OtherParams:
+		From<BaseExtrinsicParamsBuilder<T, AssetTip>> + Send + Sync,
 {
 	type FinalityEvent = FinalityEvent;
 	type Error = Error;
@@ -88,8 +96,9 @@ where
 		client_id: ClientId,
 		consensus_height: Height,
 	) -> Result<QueryConsensusStateResponse, Self::Error> {
+		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
 		let res = IbcApiClient::<u32, H256>::query_client_consensus_state(
-			&*self.para_client.rpc().client,
+			&*para_client,
 			Some(at.revision_height as u32),
 			client_id.to_string(),
 			consensus_height.revision_height,
@@ -105,8 +114,9 @@ where
 		at: Height,
 		client_id: ClientId,
 	) -> Result<QueryClientStateResponse, Self::Error> {
+		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
 		let response = IbcApiClient::<u32, H256>::query_client_state(
-			&*self.para_client.rpc().client,
+			&*para_client,
 			at.revision_height as u32,
 			client_id.to_string(),
 		)
@@ -119,8 +129,9 @@ where
 		at: Height,
 		connection_id: ConnectionId,
 	) -> Result<QueryConnectionResponse, Self::Error> {
+		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
 		let response = IbcApiClient::<u32, H256>::query_connection(
-			&*self.para_client.rpc().client,
+			&*para_client,
 			at.revision_height as u32,
 			connection_id.to_string(),
 		)
@@ -134,8 +145,9 @@ where
 		channel_id: ChannelId,
 		port_id: PortId,
 	) -> Result<QueryChannelResponse, Self::Error> {
+		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
 		let response = IbcApiClient::<u32, H256>::query_channel(
-			&*self.para_client.rpc().client,
+			&*para_client,
 			at.revision_height as u32,
 			channel_id.to_string(),
 			port_id.to_string(),
@@ -145,12 +157,10 @@ where
 	}
 
 	async fn query_proof(&self, at: Height, keys: Vec<Vec<u8>>) -> Result<Vec<u8>, Self::Error> {
-		let proof = IbcApiClient::<u32, H256>::query_proof(
-			&*self.para_client.rpc().client,
-			at.revision_height as u32,
-			keys,
-		)
-		.await?;
+		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
+		let proof =
+			IbcApiClient::<u32, H256>::query_proof(&*para_client, at.revision_height as u32, keys)
+				.await?;
 
 		Ok(proof.proof)
 	}
@@ -162,8 +172,9 @@ where
 		channel_id: &ChannelId,
 		seq: u64,
 	) -> Result<QueryPacketCommitmentResponse, Self::Error> {
+		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
 		let res = IbcApiClient::<u32, H256>::query_packet_commitment(
-			&*self.para_client.rpc().client,
+			&*para_client,
 			at.revision_height as u32,
 			channel_id.to_string(),
 			port_id.to_string(),
@@ -180,8 +191,9 @@ where
 		channel_id: &ChannelId,
 		seq: u64,
 	) -> Result<QueryPacketAcknowledgementResponse, Self::Error> {
+		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
 		let res = IbcApiClient::<u32, H256>::query_packet_acknowledgement(
-			&*self.para_client.rpc().client,
+			&*para_client,
 			at.revision_height as u32,
 			channel_id.to_string(),
 			port_id.to_string(),
@@ -197,8 +209,9 @@ where
 		port_id: &PortId,
 		channel_id: &ChannelId,
 	) -> Result<QueryNextSequenceReceiveResponse, Self::Error> {
+		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
 		let res = IbcApiClient::<u32, H256>::query_next_seq_recv(
-			&*self.para_client.rpc().client,
+			&*para_client,
 			at.revision_height as u32,
 			channel_id.to_string(),
 			port_id.to_string(),
@@ -214,8 +227,9 @@ where
 		channel_id: &ChannelId,
 		seq: u64,
 	) -> Result<QueryPacketReceiptResponse, Self::Error> {
+		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
 		let res = IbcApiClient::<u32, H256>::query_packet_receipt(
-			&*self.para_client.rpc().client,
+			&*para_client,
 			at.revision_height as u32,
 			channel_id.to_string(),
 			port_id.to_string(),
@@ -232,15 +246,18 @@ where
 			.header(None)
 			.await?
 			.ok_or_else(|| Error::Custom("Latest height query returned None".to_string()))?;
-		let latest_height = *finalized_header.number();
+		let latest_height: u64 = (*finalized_header.number()).into();
 		let height = Height::new(self.para_id.into(), latest_height.into());
 
-		let api = self
+		let subxt_block_number: subxt::rpc::BlockNumber = latest_height.into();
+		let block_hash = self.para_client.rpc().block_hash(Some(subxt_block_number)).await.unwrap();
+		let timestamp_addr = parachain::api::storage().timestamp().now();
+		let unix_timestamp_millis = self
 			.para_client
-			.clone()
-			.to_runtime_api::<parachain::api::RuntimeApi<T, subxt::PolkadotExtrinsicParams<_>>>();
-		let block_hash = finalized_header.hash();
-		let unix_timestamp_millis = api.storage().timestamp().now(Some(block_hash)).await?;
+			.storage()
+			.fetch(&timestamp_addr, block_hash)
+			.await?
+			.ok_or_else(|| Error::from("Timestamp should exist".to_string()))?;
 		let timestamp_nanos = Duration::from_millis(unix_timestamp_millis).as_nanos() as u64;
 
 		Ok((height, Timestamp::from_nanoseconds(timestamp_nanos)?))
@@ -252,8 +269,9 @@ where
 		channel_id: ChannelId,
 		port_id: PortId,
 	) -> Result<Vec<u64>, Self::Error> {
+		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
 		let res = IbcApiClient::<u32, H256>::query_packet_commitments(
-			&*self.para_client.rpc().client,
+			&*para_client,
 			at.revision_height as u32,
 			channel_id.to_string(),
 			port_id.to_string(),
@@ -268,8 +286,9 @@ where
 		channel_id: ChannelId,
 		port_id: PortId,
 	) -> Result<Vec<u64>, Self::Error> {
+		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
 		let res = IbcApiClient::<u32, H256>::query_packet_acknowledgements(
-			&*self.para_client.rpc().client,
+			&*para_client,
 			at.revision_height as u32,
 			channel_id.to_string(),
 			port_id.to_string(),
@@ -289,8 +308,9 @@ where
 		port_id: PortId,
 		seqs: Vec<u64>,
 	) -> Result<Vec<u64>, Self::Error> {
+		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
 		let res = IbcApiClient::<u32, H256>::query_unreceived_packets(
-			&*self.para_client.rpc().client,
+			&*para_client,
 			at.revision_height as u32,
 			channel_id.to_string(),
 			port_id.to_string(),
@@ -307,8 +327,9 @@ where
 		port_id: PortId,
 		seqs: Vec<u64>,
 	) -> Result<Vec<u64>, Self::Error> {
+		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
 		let res = IbcApiClient::<u32, H256>::query_unreceived_acknowledgements(
-			&*self.para_client.rpc().client,
+			&*para_client,
 			at.revision_height as u32,
 			channel_id.to_string(),
 			port_id.to_string(),
@@ -327,8 +348,9 @@ where
 		at: Height,
 		connection_id: &ConnectionId,
 	) -> Result<QueryChannelsResponse, Self::Error> {
+		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
 		let response = IbcApiClient::<u32, H256>::query_connection_channels(
-			&*self.para_client.rpc().client,
+			&*para_client,
 			at.revision_height as u32,
 			connection_id.to_string(),
 		)
@@ -342,8 +364,9 @@ where
 		port_id: PortId,
 		seqs: Vec<u64>,
 	) -> Result<Vec<PacketInfo>, Self::Error> {
+		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
 		let response = IbcApiClient::<u32, H256>::query_send_packets(
-			&*self.para_client.rpc().client,
+			&*para_client,
 			channel_id.to_string(),
 			port_id.to_string(),
 			seqs,
@@ -358,8 +381,9 @@ where
 		port_id: PortId,
 		seqs: Vec<u64>,
 	) -> Result<Vec<PacketInfo>, Self::Error> {
+		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
 		let response = IbcApiClient::<u32, H256>::query_recv_packets(
-			&*self.para_client.rpc().client,
+			&*para_client,
 			channel_id.to_string(),
 			port_id.to_string(),
 			seqs,
@@ -378,8 +402,9 @@ where
 		client_id: ClientId,
 		client_height: Height,
 	) -> Result<(Height, Timestamp), Self::Error> {
+		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
 		let response = IbcApiClient::<u32, H256>::query_client_update_time_and_height(
-			&*self.para_client.rpc().client,
+			&*para_client,
 			client_id.to_string(),
 			client_height.revision_number,
 			client_height.revision_height,
@@ -417,13 +442,14 @@ where
 	}
 
 	async fn query_ibc_balance(&self) -> Result<Vec<PrefixedCoin>, Self::Error> {
-		let api = self
-			.para_client
-			.clone()
-			.to_runtime_api::<parachain::api::RuntimeApi<T, subxt::PolkadotExtrinsicParams<_>>>();
-
 		let account = self.public_key.clone().into_account();
-		let balance = api.storage().system().account(&account, None).await?;
+		let account_addr = parachain::api::storage().system().account(&account);
+		let balance = self
+			.para_client
+			.storage()
+			.fetch(&account_addr, None)
+			.await?
+			.expect("Account data should exist");
 
 		Ok(vec![PrefixedCoin {
 			denom: PrefixedDenom::from_str("PICA")?,
@@ -448,19 +474,24 @@ where
 	}
 
 	async fn query_timestamp_at(&self, block_number: u64) -> Result<u64, Self::Error> {
-		let api = self
+		let subxt_block_number: subxt::rpc::BlockNumber = block_number.into();
+		let block_hash = self.para_client.rpc().block_hash(Some(subxt_block_number)).await.unwrap();
+		let timestamp_addr = parachain::api::storage().timestamp().now();
+		let unix_timestamp_millis = self
 			.para_client
-			.clone()
-			.to_runtime_api::<parachain::api::RuntimeApi<T, subxt::PolkadotExtrinsicParams<_>>>();
-		let block_hash = self.para_client.rpc().block_hash(Some(block_number.into())).await?;
-		let unix_timestamp_millis = api.storage().timestamp().now(block_hash).await?;
+			.storage()
+			.fetch(&timestamp_addr, block_hash)
+			.await?
+			.expect("Timestamp should exist");
 		let timestamp_nanos = Duration::from_millis(unix_timestamp_millis).as_nanos() as u64;
+
 		Ok(timestamp_nanos)
 	}
 
 	async fn query_clients(&self) -> Result<Vec<ClientId>, Self::Error> {
+		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
 		let response: Vec<IdentifiedClientState> =
-			IbcApiClient::<u32, H256>::query_clients(&*self.para_client.rpc().client).await?;
+			IbcApiClient::<u32, H256>::query_clients(&*para_client).await?;
 		response
 			.into_iter()
 			.map(|client| {
@@ -471,8 +502,8 @@ where
 	}
 
 	async fn query_channels(&self) -> Result<Vec<(ChannelId, PortId)>, Self::Error> {
-		let response =
-			IbcApiClient::<u32, H256>::query_channels(&*self.para_client.rpc().client).await?;
+		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
+		let response = IbcApiClient::<u32, H256>::query_channels(&*para_client).await?;
 		response
 			.channels
 			.into_iter()

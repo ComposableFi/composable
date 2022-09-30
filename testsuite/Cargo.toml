@@ -16,7 +16,7 @@ tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev 
 
 hyperspace = { path = "../", features = ["testing"] }
 hyperspace-primitives = { path = "../primitives", features = ["testing"] }
-pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "052052e5b070bc36dda7f9acd393a4c69404c3b2" }
+pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "673b7a4d8a8919e1d4f477e00f61582623868605" }
 
 [dev-dependencies]
 parachain = { path = "../parachain", package = "hyperspace-parachain", features = ["testing"] }
@@ -25,7 +25,7 @@ sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-subxt = { git = "https://github.com/paritytech/subxt", rev = "c55b7ba3e34118f61dc51499a0b38262c513aec4" }
+subxt = { git = "https://github.com/composableFi/subxt", rev = "37df0ee525252fa9a3e7730629ce0de4da9e68fd" }
 
 # We need this so the tests run sequentially
 [[test]]

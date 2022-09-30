@@ -30,7 +30,7 @@ pub fn get_updated_client_state(
 
 /// Fetch the maximum allowed extrinsic weight from a substrate node with the given client.
 pub async fn fetch_max_extrinsic_weight<T: subxt::Config>(
-	client: &subxt::Client<T>,
+	client: &subxt::OnlineClient<T>,
 ) -> Result<u64, Error> {
 	let metadata = client.rpc().metadata().await?;
 	let block_weights = metadata.pallet("System")?.constant("BlockWeights")?;

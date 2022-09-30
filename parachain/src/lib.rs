@@ -1,6 +1,5 @@
 use std::{str::FromStr, sync::Arc, time::Duration};
 
-pub mod calls;
 pub mod chain;
 pub mod error;
 pub mod key_provider;
@@ -14,16 +13,14 @@ pub mod light_client_protocol;
 #[cfg(feature = "testing")]
 pub mod test_provider;
 
-use codec::{Codec, Decode};
+use codec::Decode;
 use error::Error;
+use ibc_rpc::IbcApiClient;
 use serde::Deserialize;
 
-use beefy_light_client_primitives::{ClientState, MmrUpdateProof, PartialMmrLeaf};
-use beefy_prover::{
-	helpers::{fetch_timestamp_extrinsic_with_proof, TimeStampExtWithProof},
-	ClientWrapper,
-};
-use calls::{sudo_call, Sudo, Transfer, TransferParams};
+use beefy_light_client_primitives::{ClientState, MmrUpdateProof};
+use beefy_prover::{helpers::unsafe_cast_to_jsonrpsee_client, ClientWrapper};
+
 use common::AccountId;
 use ibc::{
 	core::ics24_host::identifier::{ChannelId, ClientId, PortId},
@@ -34,7 +31,10 @@ use ics11_beefy::{
 	client_message::ParachainHeader, client_state::ClientState as BeefyClientState,
 	consensus_state::ConsensusState as BeefyConsensusState,
 };
-use pallet_ibc::light_clients::{AnyClientState, AnyConsensusState, HostFunctionsManager};
+use pallet_ibc::{
+	light_clients::{AnyClientState, AnyConsensusState, HostFunctionsManager},
+	TransferParams,
+};
 use pallet_mmr_primitives::BatchProof;
 use signer::ExtrinsicSigner;
 use sp_core::{ecdsa, ed25519, sr25519, Bytes, Pair, H256};
@@ -46,17 +46,16 @@ use sp_runtime::{
 };
 use ss58_registry::Ss58AddressFormat;
 use subxt::{
-	extrinsic::PlainTip,
-	rpc::{rpc_params, ClientT},
-	sp_runtime::{traits::Header as HeaderT, MultiSigner},
-	PolkadotExtrinsicParams, SubmittableExtrinsic,
+	ext::sp_runtime::{traits::Header as HeaderT, MultiSigner},
+	rpc::rpc_params,
+	tx::{
+		AssetTip, BaseExtrinsicParamsBuilder, ExtrinsicParams, SubstrateExtrinsicParamsBuilder,
+		TxPayload,
+	},
 };
 use tokio::sync::broadcast::{self, Sender};
 
-use crate::{
-	calls::{deliver, Deliver},
-	utils::fetch_max_extrinsic_weight,
-};
+use crate::{parachain::api, utils::fetch_max_extrinsic_weight};
 use primitives::KeyProvider;
 
 use crate::light_client_protocol::LightClientProtocol;
@@ -80,9 +79,9 @@ pub struct ParachainClient<T: subxt::Config> {
 	/// Chain name
 	pub name: String,
 	/// Relay chain rpc client
-	pub relay_client: subxt::Client<T>,
+	pub relay_client: subxt::OnlineClient<T>,
 	/// Parachain rpc client
-	pub para_client: subxt::Client<T>,
+	pub para_client: subxt::OnlineClient<T>,
 	/// Parachain Id
 	pub para_id: u32,
 	/// Light client id on counterparty chain
@@ -171,19 +170,16 @@ where
 	MultiSigner: From<MultiSigner>,
 	<T as subxt::Config>::Address: From<<T as subxt::Config>::AccountId>,
 	T::Signature: From<MultiSignature>,
+	H256: From<T::Hash>,
+	<T::ExtrinsicParams as ExtrinsicParams<T::Index, T::Hash>>::OtherParams:
+		From<BaseExtrinsicParamsBuilder<T, AssetTip>>,
 {
 	pub async fn new(config: ParachainClientConfig) -> Result<Self, Error> {
-		let para_client = subxt::ClientBuilder::new()
-			.set_url(&config.parachain_rpc_url)
-			.build::<T>()
-			.await?;
+		let para_client = subxt::OnlineClient::from_url(&config.parachain_rpc_url).await?;
 
-		let relay_client = subxt::ClientBuilder::new()
-			.set_url(&config.relay_chain_rpc_url)
-			.build::<T>()
-			.await?;
+		let relay_client = subxt::OnlineClient::from_url(&config.relay_chain_rpc_url).await?;
 
-		let (sender, _) = broadcast::channel(16);
+		let (sender, _) = broadcast::channel(32);
 		let max_extrinsic_weight = fetch_max_extrinsic_weight(&para_client).await?;
 
 		let key_store: SyncCryptoStorePtr = Arc::new(KeyStore::new());
@@ -428,14 +424,15 @@ where
 		u32: From<<T as subxt::Config>::BlockNumber>,
 	{
 		use ibc::core::ics24_host::identifier::ChainId;
+		let api = self.relay_client.storage();
+		let para_client_api = self.para_client.storage();
+		let client_wrapper = ClientWrapper {
+			relay_client: self.relay_client.clone(),
+			para_client: self.para_client.clone(),
+			beefy_activation_block,
+			para_id: self.para_id,
+		};
 		loop {
-			let client_wrapper = ClientWrapper {
-				relay_client: self.relay_client.clone(),
-				para_client: self.para_client.clone(),
-				beefy_activation_block,
-				para_id: self.para_id,
-			};
-
 			let beefy_state = client_wrapper
 				.construct_beefy_client_state(beefy_activation_block)
 				.await
@@ -443,34 +440,21 @@ where
 					Error::from(format!("[construct_beefy_client_state] Failed due to {:?}", e))
 				})?;
 
-			// TODO: Move this code for consensus state construction to beefy-rs
-			let api = client_wrapper
-				.relay_client
-				.clone()
-				.to_runtime_api::<polkadot::api::RuntimeApi<T, subxt::PolkadotExtrinsicParams<_>>>(
-				);
-			let subxt_block_number: subxt::BlockNumber = beefy_state.latest_beefy_height.into();
-			let block_hash =
-				client_wrapper.relay_client.rpc().block_hash(Some(subxt_block_number)).await?;
-			let head_data = api
-				.storage()
-				.paras()
-				.heads(
-					&polkadot::api::runtime_types::polkadot_parachain::primitives::Id(
-						client_wrapper.para_id,
-					),
-					block_hash,
-				)
-				.await?
-				.ok_or_else(|| {
-					Error::Custom(format!(
-						"Couldn't find header for ParaId({}) at relay block {:?}",
-						client_wrapper.para_id, block_hash
-					))
-				})?;
-			let decoded_para_head = frame_support::sp_runtime::generic::Header::<
+			let subxt_block_number: subxt::rpc::BlockNumber =
+				beefy_state.latest_beefy_height.into();
+			let block_hash = self.relay_client.rpc().block_hash(Some(subxt_block_number)).await?;
+			let heads_addr = polkadot::api::storage().paras().heads(
+				&polkadot::api::runtime_types::polkadot_parachain::primitives::Id(self.para_id),
+			);
+			let head_data = api.fetch(&heads_addr, block_hash).await?.ok_or_else(|| {
+				Error::Custom(format!(
+					"Couldn't find header for ParaId({}) at relay block {:?}",
+					self.para_id, block_hash
+				))
+			})?;
+			let decoded_para_head = sp_runtime::generic::Header::<
 				u32,
-				frame_support::sp_runtime::traits::BlakeTwo256,
+				sp_runtime::traits::BlakeTwo256,
 			>::decode(&mut &*head_data.0)?;
 			let block_number = decoded_para_head.number;
 			let client_state = BeefyClientState::<HostFunctionsManager> {
@@ -490,35 +474,23 @@ where
 			if block_number == 0 {
 				continue
 			}
-			let subxt_block_number: subxt::BlockNumber = block_number.into();
-			let block_hash = client_wrapper
-				.para_client
-				.rpc()
-				.block_hash(Some(subxt_block_number))
-				.await
-				.unwrap();
+			let subxt_block_number: subxt::rpc::BlockNumber = block_number.into();
+			let block_hash =
+				self.para_client.rpc().block_hash(Some(subxt_block_number)).await.unwrap();
+			let timestamp_addr = parachain::api::storage().timestamp().now();
+			let unix_timestamp_millis = para_client_api
+				.fetch(&timestamp_addr, block_hash)
+				.await?
+				.expect("Timestamp should exist");
+			let timestamp_nanos = Duration::from_millis(unix_timestamp_millis).as_nanos() as u64;
 
-			let TimeStampExtWithProof { ext: timestamp_extrinsic, proof: extrinsic_proof } =
-				fetch_timestamp_extrinsic_with_proof(&client_wrapper.para_client, block_hash)
-					.await
-					.unwrap();
-			let parachain_header = ParachainHeader {
-				parachain_header: decoded_para_head,
-				partial_mmr_leaf: PartialMmrLeaf {
-					version: Default::default(),
-					parent_number_and_hash: Default::default(),
-					beefy_next_authority_set: Default::default(),
-				},
-				parachain_heads_proof: vec![],
-				heads_leaf_index: 0,
-				heads_total_count: 0,
-				extrinsic_proof,
-				timestamp_extrinsic,
-			};
-
-			let consensus_state = AnyConsensusState::Beefy(
-				BeefyConsensusState::from_header(parachain_header).unwrap(),
-			);
+			let consensus_state = AnyConsensusState::Beefy(BeefyConsensusState {
+				timestamp: Timestamp::from_nanoseconds(timestamp_nanos)
+					.unwrap()
+					.into_tm_time()
+					.unwrap(),
+				root: decoded_para_head.state_root.as_bytes().to_vec().into(),
+			});
 
 			return Ok((AnyClientState::Beefy(client_state), consensus_state))
 		}
@@ -534,29 +506,20 @@ where
 		MultiSigner: From<MultiSigner>,
 		<T as subxt::Config>::Address: From<<T as subxt::Config>::AccountId>,
 		u32: From<<T as subxt::Config>::BlockNumber>,
-		sp_core::H256: From<T::Hash>,
 	{
-		let api = self
-			.relay_client
-			.clone()
-			.to_runtime_api::<polkadot::api::RuntimeApi<T, subxt::PolkadotExtrinsicParams<_>>>();
-		let para_client_api = self
-			.para_client
-			.clone()
-			.to_runtime_api::<polkadot::api::RuntimeApi<T, subxt::PolkadotExtrinsicParams<_>>>();
+		let api = self.relay_client.storage();
+		let para_client_api = self.para_client.storage();
 		loop {
+			let current_set_id_addr = polkadot::api::storage().grandpa().current_set_id();
 			let current_set_id = api
-				.storage()
-				.grandpa()
-				.current_set_id(None)
-				.await
+				.fetch(&current_set_id_addr, None)
+				.await?
 				.expect("Failed to fetch current set id");
 
 			let current_authorities = {
 				let bytes = self
 					.relay_client
 					.rpc()
-					.client
 					.request::<String>(
 						"state_call",
 						rpc_params!("GrandpaApi_grandpa_authorities", "0x"),
@@ -577,15 +540,11 @@ where
 				.await
 				.expect("Failed to fetch finalized header");
 
-			let head_data = api
-				.storage()
-				.paras()
-				.heads(
-					&polkadot::api::runtime_types::polkadot_parachain::primitives::Id(self.para_id),
-					Some(latest_relay_hash),
-				)
-				.await?
-				.ok_or_else(|| {
+			let heads_addr = polkadot::api::storage().paras().heads(
+				&polkadot::api::runtime_types::polkadot_parachain::primitives::Id(self.para_id),
+			);
+			let head_data =
+				api.fetch(&heads_addr, Some(latest_relay_hash)).await?.ok_or_else(|| {
 					Error::Custom(format!(
 						"Couldn't find header for ParaId({}) at relay block {:?}",
 						self.para_id, latest_relay_hash
@@ -611,11 +570,14 @@ where
 			client_state.latest_para_height = block_number;
 			client_state.para_id = self.para_id;
 
-			let subxt_block_number: subxt::BlockNumber = block_number.into();
+			let subxt_block_number: subxt::rpc::BlockNumber = block_number.into();
 			let block_hash =
 				self.para_client.rpc().block_hash(Some(subxt_block_number)).await.unwrap();
-			let unix_timestamp_millis =
-				para_client_api.storage().timestamp().now(block_hash).await?;
+			let timestamp_addr = parachain::api::storage().timestamp().now();
+			let unix_timestamp_millis = para_client_api
+				.fetch(&timestamp_addr, block_hash)
+				.await?
+				.expect("Timestamp should exist");
 			let timestamp_nanos = Duration::from_millis(unix_timestamp_millis).as_nanos() as u64;
 
 			let consensus_state = AnyConsensusState::Grandpa(GrandpaConsensusState {
@@ -631,37 +593,19 @@ where
 	}
 
 	pub async fn submit_create_client_msg(&self, msg: pallet_ibc::Any) -> Result<ClientId, Error> {
-		let public_key = self.public_key.clone();
-		let signer = ExtrinsicSigner::<T, Self>::new(
-			self.key_store.clone(),
-			self.key_type_id.clone(),
-			public_key,
-		);
-
-		let ext = deliver::<T, subxt::PolkadotExtrinsicParams<T>>(
-			&self.para_client,
-			Deliver { messages: vec![msg] },
-		);
-		// Submit extrinsic to parachain node
-
-		let tx_params = subxt::PolkadotExtrinsicParamsBuilder::new()
-			.tip(PlainTip::new(10_000))
-			.era(Era::Immortal, *self.para_client.genesis());
-
-		let progress = ext
-			.sign_and_submit_then_watch(&signer, tx_params)
-			.await?
-			.wait_for_in_block()
-			.await?;
+		let call = api::tx().ibc().deliver(vec![api::runtime_types::pallet_ibc::Any {
+			type_url: msg.type_url,
+			value: msg.value,
+		}]);
+		let (ext_hash, block_hash) = self.submit_call(call, true).await?;
 
 		// Query newly created client Id
-		let identified_client_state: IdentifiedClientState = self
-			.para_client
-			.rpc()
-			.client
-			.request(
-				"ibc_queryNewlyCreatedClient",
-				rpc_params!(progress.block_hash(), progress.extrinsic_hash()),
+		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
+		let identified_client_state: IdentifiedClientState =
+			IbcApiClient::<u32, sp_core::H256>::query_newly_created_client(
+				&*para_client,
+				block_hash.unwrap().into(),
+				ext_hash.into(),
 			)
 			.await?;
 
@@ -676,40 +620,47 @@ where
 		asset_id: u128,
 		amount: u128,
 	) -> Result<(), Error> {
-		let call = Transfer { params, asset_id, amount };
+		use pallet_ibc::{MultiAddress, Timeout};
+		let params = api::runtime_types::pallet_ibc::TransferParams {
+			to: match params.to {
+				MultiAddress::Id(id) => {
+					let id: [u8; 32] = id.into();
+					api::runtime_types::pallet_ibc::MultiAddress::Id(id.into())
+				},
+				MultiAddress::Raw(raw) => api::runtime_types::pallet_ibc::MultiAddress::Raw(raw),
+			},
+
+			source_channel: params.source_channel,
+
+			timeout: match params.timeout {
+				Timeout::Offset { timestamp, height } =>
+					api::runtime_types::pallet_ibc::Timeout::Offset { timestamp, height },
+				Timeout::Absolute { timestamp, height } =>
+					api::runtime_types::pallet_ibc::Timeout::Absolute { timestamp, height },
+			},
+		};
 		// Submit extrinsic to parachain node
+		let call = api::tx().ibc().transfer(
+			params,
+			api::runtime_types::primitives::currency::CurrencyId(asset_id),
+			amount.into(),
+		);
 
 		self.submit_call(call, true).await?;
 
 		Ok(())
 	}
 
-	pub async fn submit_call<C: Codec + Send + Sync + subxt::Call + Clone>(
+	pub async fn submit_call<C: TxPayload>(
 		&self,
 		call: C,
 		wait_for_in_block: bool,
-	) -> Result<(), Error> {
-		use polkadot::api::runtime_types::sp_runtime::DispatchError;
+	) -> Result<(T::Hash, Option<T::Hash>), Error> {
 		let signer = ExtrinsicSigner::<T, Self>::new(
 			self.key_store.clone(),
 			self.key_type_id.clone(),
 			self.public_key.clone(),
 		);
-
-		let metadata = self.para_client.rpc().metadata().await?;
-		// Check for pallet and call index existence in latest chain metadata to ensure our static
-		// definitions are up to date
-		let pallet = metadata
-			.pallet(<C as subxt::Call>::PALLET)
-			.map_err(|_| Error::PalletNotFound(<C as subxt::Call>::PALLET))?;
-		pallet
-			.call_index::<Deliver>()
-			.map_err(|_| Error::CallNotFound(<C as subxt::Call>::FUNCTION))?;
-		// Update the metadata held by the client
-		let _ = self.para_client.metadata().try_write().and_then(|mut writer| {
-			*writer = metadata;
-			Some(writer)
-		});
 
 		// Submit extrinsic to parachain node
 		let tip = 100_000u128;
@@ -720,17 +671,17 @@ where
 				return Err(Error::Custom("Failed to submit extrinsic after 5 tries".to_string()))
 			}
 
-			let ext =
-				SubmittableExtrinsic::<T, PolkadotExtrinsicParams<T>, _, DispatchError, ()>::new(
-					&self.para_client,
-					call.clone(),
-				);
+			let tx_params = <SubstrateExtrinsicParamsBuilder<T>>::new()
+				.era(Era::Immortal, self.para_client.genesis_hash());
 
-			let tx_params = subxt::PolkadotExtrinsicParamsBuilder::new()
-				.era(Era::Immortal, *self.para_client.genesis());
-
-			let res = ext
-				.sign_and_submit_then_watch(&signer, tx_params.tip(PlainTip::new(count * tip)))
+			let res = self
+				.para_client
+				.tx()
+				.sign_and_submit_then_watch(
+					&call,
+					&signer,
+					tx_params.tip(AssetTip::new(count * tip)).into(),
+				)
 				.await;
 			if res.is_ok() {
 				break res.unwrap()
@@ -739,15 +690,17 @@ where
 		};
 
 		if wait_for_in_block {
-			progress.wait_for_in_block().await?;
+			let ext_hash = progress.extrinsic_hash();
+			let tx_in_block = progress.wait_for_in_block().await?;
+			return Ok((ext_hash, Some(tx_in_block.block_hash())))
 		}
 
-		Ok(())
+		Ok((progress.extrinsic_hash(), None))
 	}
 
-	pub async fn submit_sudo_call<C: Codec + Send + Sync + subxt::Call + Clone>(
+	pub async fn submit_sudo_call(
 		&self,
-		call: C,
+		call: api::runtime_types::dali_runtime::Call,
 	) -> Result<(), Error> {
 		let signer = ExtrinsicSigner::<T, Self>::new(
 			self.key_store.clone(),
@@ -755,21 +708,36 @@ where
 			self.public_key.clone(),
 		);
 
-		let ext = sudo_call::<T, subxt::PolkadotExtrinsicParams<T>, _>(
-			&self.para_client,
-			Sudo { call, client: &self.para_client },
-		);
+		let ext = api::tx().sudo().sudo(call);
 		// Submit extrinsic to parachain node
 
-		let tx_params = subxt::PolkadotExtrinsicParamsBuilder::new()
-			.tip(PlainTip::new(100_000))
-			.era(Era::Immortal, *self.para_client.genesis());
+		let tx_params = SubstrateExtrinsicParamsBuilder::new()
+			.tip(AssetTip::new(100_000))
+			.era(Era::Immortal, self.para_client.genesis_hash());
 
-		let _progress = ext
-			.sign_and_submit_then_watch(&signer, tx_params)
+		let _progress = self
+			.para_client
+			.tx()
+			.sign_and_submit_then_watch(&ext, &signer, tx_params.into())
 			.await?
 			.wait_for_in_block()
 			.await?;
+
+		Ok(())
+	}
+
+	pub async fn set_pallet_params(
+		&self,
+		receive_enabled: bool,
+		send_enabled: bool,
+	) -> Result<(), Error> {
+		let params = api::runtime_types::pallet_ibc::PalletParams { receive_enabled, send_enabled };
+
+		let call = api::runtime_types::dali_runtime::Call::Ibc(
+			api::runtime_types::pallet_ibc::pallet::Call::set_params { params },
+		);
+
+		self.submit_sudo_call(call).await?;
 
 		Ok(())
 	}
