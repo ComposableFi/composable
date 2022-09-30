@@ -24,7 +24,7 @@ nix run ".#fmt"
 ### Checking your spelling
 
 ```bash
-nix build ".#cspell-check"
+nix build ".#spell-check"
 ```
 
 ### Clippy errors

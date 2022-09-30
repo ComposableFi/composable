@@ -23,7 +23,7 @@ Then, edit the sources in `book/src/`, and see them update live in your browser!
 After adding new content, you probably want to check your spelling. To do this, run the following:
 
 ```bash
-nix build ".#cspell-check"'
+nix build ".#spell-check"'
 ```
 
 
