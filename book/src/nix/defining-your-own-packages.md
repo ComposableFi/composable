@@ -21,7 +21,7 @@ inputs = {
 };
 ```
 
-Your package is probably similar to one of our other packages, so you will most likely be able to adapt the definition of one of our other packages. If this is not the case, then you should look at the [trivial builders section in the nixpkgs manual](https://nixos.org/manual/nixpkgs/stable/#chap-trivial-builders).
+Your package is probably similar to one of ours, so you will most likely be able to adapt the definition of one of our packages. However, if this is not the case, you should look at the [trivial builders section in the nixpkgs manual](https://nixos.org/manual/nixpkgs/stable/#chap-trivial-builders).
 
 If you have any further questions, feel free to ask them in the `#nix` channel on Slack.
 
