@@ -1,5 +1,5 @@
 # Development Environments
-_Declarative tooling_
+*Declarative tooling*
 
 ---
 
