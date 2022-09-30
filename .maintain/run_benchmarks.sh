@@ -16,8 +16,9 @@ VERSIONS_FILES=(
 steps=${1:-1}
 repeat=${2:-1}
 
-/home/$(whoami)/.cargo/bin/rustup install nightly
-/home/$(whoami)/.cargo/bin/rustup target add wasm32-unknown-unknown --toolchain nightly
+# We use composablefi/ci-linux:2022-08-06, it consists nightly and wasm32-unknown-unknown target.
+# /home/$(whoami)/.cargo/bin/rustup install nightly
+# /home/$(whoami)/.cargo/bin/rustup target add wasm32-unknown-unknown --toolchain nightly
 
 # NOTE: decide prio and responsible for migration to nix after https://github.com/ComposableFi/composable/issues/1426
 cargo +nightly build --release -p wasm-optimizer
