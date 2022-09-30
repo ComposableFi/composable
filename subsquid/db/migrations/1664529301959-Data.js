@@ -1,5 +1,5 @@
-module.exports = class Data1663846633982 {
-  name = 'Data1663846633982'
+module.exports = class Data1664529301959 {
+  name = 'Data1664529301959'
 
   async up(db) {
     await db.query(`CREATE TABLE "account" ("id" character varying NOT NULL, "event_id" text NOT NULL, CONSTRAINT "PK_54115ee388cdb6d86bb4bf5b2ea" PRIMARY KEY ("id"))`)
@@ -15,7 +15,7 @@ module.exports = class Data1663846633982 {
     await db.query(`CREATE TABLE "pablo_transaction" ("id" character varying NOT NULL, "base_asset_id" text NOT NULL, "base_asset_amount" numeric NOT NULL, "quote_asset_id" text NOT NULL, "quote_asset_amount" numeric NOT NULL, "spot_price" text NOT NULL, "fee" text NOT NULL, "event_id" character varying NOT NULL, "pool_id" character varying, CONSTRAINT "REL_0118a010cf1571fc5cb70b90a7" UNIQUE ("event_id"), CONSTRAINT "PK_8b040ecc6da14a71ef547ae2ae6" PRIMARY KEY ("id"))`)
     await db.query(`CREATE UNIQUE INDEX "IDX_0118a010cf1571fc5cb70b90a7" ON "pablo_transaction" ("event_id") `)
     await db.query(`CREATE INDEX "IDX_969a927080f5b6c81b79b40cd8" ON "pablo_transaction" ("pool_id") `)
-    await db.query(`CREATE TABLE "pablo_pool" ("id" character varying NOT NULL, "event_id" text NOT NULL, "pool_id" numeric NOT NULL, "owner" text NOT NULL, "transaction_count" integer NOT NULL, "total_liquidity" text NOT NULL, "total_volume" text NOT NULL, "total_fees" text NOT NULL, "base_asset_id" text NOT NULL, "quote_asset_id" text NOT NULL, "block_number" numeric NOT NULL, "calculated_timestamp" numeric NOT NULL, CONSTRAINT "PK_28d674c3fdadf69d19745e5343a" PRIMARY KEY ("id"))`)
+    await db.query(`CREATE TABLE "pablo_pool" ("id" character varying NOT NULL, "event_id" text NOT NULL, "pool_id" numeric NOT NULL, "owner" text NOT NULL, "lp_issued" numeric NOT NULL, "transaction_count" integer NOT NULL, "total_liquidity" text NOT NULL, "total_volume" text NOT NULL, "total_fees" text NOT NULL, "base_asset_id" text NOT NULL, "quote_asset_id" text NOT NULL, "block_number" numeric NOT NULL, "calculated_timestamp" numeric NOT NULL, CONSTRAINT "PK_28d674c3fdadf69d19745e5343a" PRIMARY KEY ("id"))`)
     await db.query(`CREATE INDEX "IDX_4d2423a367d09f67e16c06a746" ON "pablo_pool" ("block_number") `)
     await db.query(`CREATE TABLE "bonded_finance_bond_offer" ("id" character varying NOT NULL, "event_id" text NOT NULL, "offer_id" text NOT NULL, "total_purchased" numeric NOT NULL, "beneficiary" text NOT NULL, "cancelled" boolean NOT NULL, CONSTRAINT "PK_1a7a97e3d57a4ac842dc2ef48ba" PRIMARY KEY ("id"))`)
     await db.query(`CREATE INDEX "IDX_932377f288f9b8ae200c9ed313" ON "bonded_finance_bond_offer" ("event_id") `)
@@ -32,13 +32,13 @@ module.exports = class Data1663846633982 {
     await db.query(`CREATE TABLE "reward_pool" ("id" character varying NOT NULL, "event_id" text NOT NULL, "pool_id" text NOT NULL, CONSTRAINT "PK_c88dfa6b514dcbadb05c6956afb" PRIMARY KEY ("id"))`)
     await db.query(`CREATE INDEX "IDX_863db0d97cf58a3f045eddaca4" ON "reward_pool" ("event_id") `)
     await db.query(`CREATE INDEX "IDX_a2320054a632a80a4c6be32a3d" ON "reward_pool" ("pool_id") `)
-    await db.query(`CREATE TABLE "staking_position" ("id" character varying NOT NULL, "fnft_collection_id" text NOT NULL, "fnft_instance_id" text NOT NULL, "owner" text NOT NULL, "asset_id" text NOT NULL, "amount" numeric NOT NULL, "start_timestamp" numeric NOT NULL, "duration" numeric NOT NULL, "end_timestamp" numeric, "reward_multiplier" numeric NOT NULL, "source" character varying(14) NOT NULL, "event_id" character varying NOT NULL, CONSTRAINT "REL_3e2e1b465d89dbb2736e70fe5f" UNIQUE ("event_id"), CONSTRAINT "PK_899113a8f0b5ec707171ff4db6b" PRIMARY KEY ("id"))`)
+    await db.query(`CREATE TABLE "staking_position" ("id" character varying NOT NULL, "fnft_collection_id" text NOT NULL, "fnft_instance_id" text NOT NULL, "owner" text NOT NULL, "asset_id" text NOT NULL, "amount" numeric NOT NULL, "start_timestamp" numeric NOT NULL, "duration" numeric NOT NULL, "end_timestamp" numeric, "reward_multiplier" numeric NOT NULL, "source" character varying(16) NOT NULL, "event_id" character varying NOT NULL, CONSTRAINT "REL_3e2e1b465d89dbb2736e70fe5f" UNIQUE ("event_id"), CONSTRAINT "PK_899113a8f0b5ec707171ff4db6b" PRIMARY KEY ("id"))`)
     await db.query(`CREATE UNIQUE INDEX "IDX_3e2e1b465d89dbb2736e70fe5f" ON "staking_position" ("event_id") `)
     await db.query(`CREATE INDEX "IDX_71ba8ca256d4cc74b9440bf2ac" ON "staking_position" ("fnft_instance_id") `)
     await db.query(`CREATE INDEX "IDX_e94373a6b771b4edcaca7950bc" ON "staking_position" ("owner") `)
     await db.query(`CREATE UNIQUE INDEX "IDX_69e08176f6778a2a276720109d" ON "staking_position" ("fnft_collection_id", "fnft_instance_id") `)
-    await db.query(`CREATE TABLE "historical_locked_value" ("id" character varying NOT NULL, "amount" numeric NOT NULL, "currency" character varying(3) NOT NULL, "timestamp" numeric NOT NULL, "event_id" character varying NOT NULL, CONSTRAINT "REL_e16f52796ccae0d99cb8d6e404" UNIQUE ("event_id"), CONSTRAINT "PK_39755ccbc61547e8b814bf28188" PRIMARY KEY ("id"))`)
-    await db.query(`CREATE UNIQUE INDEX "IDX_e16f52796ccae0d99cb8d6e404" ON "historical_locked_value" ("event_id") `)
+    await db.query(`CREATE TABLE "historical_locked_value" ("id" character varying NOT NULL, "amount" numeric NOT NULL, "currency" character varying(3) NOT NULL, "timestamp" numeric NOT NULL, "source" character varying(16) NOT NULL, "event_id" character varying, CONSTRAINT "PK_39755ccbc61547e8b814bf28188" PRIMARY KEY ("id"))`)
+    await db.query(`CREATE INDEX "IDX_e16f52796ccae0d99cb8d6e404" ON "historical_locked_value" ("event_id") `)
     await db.query(`ALTER TABLE "pablo_pool_asset" ADD CONSTRAINT "FK_7fd4cdb45620476d1de745a2658" FOREIGN KEY ("pool_id") REFERENCES "pablo_pool"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
     await db.query(`ALTER TABLE "activity" ADD CONSTRAINT "FK_c2c1e9fdda754a6bf7f664d7e04" FOREIGN KEY ("event_id") REFERENCES "event"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
     await db.query(`ALTER TABLE "pablo_transaction" ADD CONSTRAINT "FK_0118a010cf1571fc5cb70b90a73" FOREIGN KEY ("event_id") REFERENCES "event"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
