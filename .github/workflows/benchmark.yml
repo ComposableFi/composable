@@ -16,6 +16,8 @@ jobs:
       - linux
       - x64
       - bmark
+    container:
+      image: composablefi/ci-linux:2022-08-06
     concurrency:
       group: bench-${{ github.ref }}
       cancel-in-progress: true
