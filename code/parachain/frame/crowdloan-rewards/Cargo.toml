@@ -16,15 +16,18 @@ package = "parity-scale-codec"
 version = "3.0.0"
 
 [dev-dependencies]
+frame-benchmarking = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 composable-tests-helpers = { path = "../composable-tests-helpers" }
 hex-literal = "0.3.3"
+ed25519-dalek = "1.0.1"
 libsecp256k1 = { version = "0.7.0" }
-pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 serde = { version = '1.0.136' }
 sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 
 [dependencies]
+ed25519-dalek = { version = "1.0.1", default-features = false, optional = true, features = ["u64_backend", "alloc"] }
 libsecp256k1 = { version = "0.7.0", default-features = false, optional = true, features = [
   "hmac",
   "static-context",
@@ -32,8 +35,10 @@ libsecp256k1 = { version = "0.7.0", default-features = false, optional = true, f
 sp-application-crypto = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 
 # FRAME
+frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", optional = true }
 
 # substrate primitives
 sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
@@ -72,7 +77,10 @@ std = [
 
 runtime-benchmarks = [
   "libsecp256k1",
+  "ed25519-dalek",
   "sp-application-crypto",
+  "pallet-timestamp",
+  "frame-benchmarking",
   "frame-support/runtime-benchmarks",
   "frame-system/runtime-benchmarks",
 ]
