@@ -519,9 +519,9 @@ pub mod pallet {
 		Ok(available_to_claim)
 	}
 
-	/// Retreives the remote account from a proof
+	/// Retrieves the remote account from a proof
 	///
-	/// # Erros
+	/// # Errors
 	/// * `InvalidProof` - The proof was invalid for the reward account
 	pub fn get_remote_account<T: Config>(
 		proof: ProofOf<T>,
