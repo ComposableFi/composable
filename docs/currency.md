@@ -97,7 +97,7 @@ See [BYOG](./byog.md) for details.
 
 Cross-chain interactions over bridges may involve metered networks which allow setting limits on execution price and calculating the possible number of execution resources in the runtime. For example, Ethereum.
 
-Within the protocols built on top of the parachain, there are "native" protocol currencies that are used for governance and revenue distribution, these may be use to pay gas fees of configured that way.
+Within the protocols built on top of the parachain, there are "native" protocol currencies that are used for governance and revenue distribution, these may be used to pay gas fees if configured that way.
 
 ### Bridged gas fee (`bring your own gas`)
 
