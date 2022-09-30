@@ -21,7 +21,7 @@ We not only provide the `default` devShell, but also other ones that are optimiz
 nix develop ".#docs"
 ```
 
-In order to launch a shell that only includes the required tools for writing docs.
+To launch a shell that only includes the required tools for writing docs.
 
 You can view all available devShells by typing `nix flake show`.
 
