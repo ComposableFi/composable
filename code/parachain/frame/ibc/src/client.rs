@@ -272,11 +272,23 @@ where
 		};
 
 		// now this header can be trusted
-		let consensus_state = ics11_beefy::consensus_state::ConsensusState {
-			timestamp,
-			root: header.state_root().as_ref().to_vec().into(),
+		let consensus_state = match <T as Config>::LIGHT_CLIENT_PROTOCOL {
+			crate::LightClientProtocol::Beefy => {
+				let cs_state = ics11_beefy::consensus_state::ConsensusState {
+					timestamp,
+					root: header.state_root().as_ref().to_vec().into(),
+				};
+				AnyConsensusState::Beefy(cs_state)
+			},
+			crate::LightClientProtocol::Grandpa => {
+				let cs_state = ics10_grandpa::consensus_state::ConsensusState {
+					timestamp,
+					root: header.state_root().as_ref().to_vec().into(),
+				};
+				AnyConsensusState::Grandpa(cs_state)
+			},
 		};
-		Ok(AnyConsensusState::Beefy(consensus_state))
+		Ok(consensus_state)
 	}
 
 	fn client_counter(&self) -> Result<u64, ICS02Error> {

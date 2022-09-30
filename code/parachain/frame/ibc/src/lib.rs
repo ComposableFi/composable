@@ -129,6 +129,11 @@ pub enum Timeout {
 	},
 }
 
+pub enum LightClientProtocol {
+	Beefy,
+	Grandpa,
+}
+
 #[cfg(any(test, feature = "runtime-benchmarks"))]
 pub(crate) mod benchmarks;
 
@@ -204,6 +209,8 @@ pub mod pallet {
 		/// This is the key under the global state trie, where this pallet will
 		/// incrementally build the ICS23 commitment trie
 		const CHILD_TRIE_KEY: &'static [u8];
+		/// Light client protocol this chain is operating
+		const LIGHT_CLIENT_PROTOCOL: LightClientProtocol;
 		/// A type for creating local asset Ids
 		type CurrencyFactory: CurrencyFactory<
 			AssetId = <Self as DeFiComposableConfig>::MayBeAssetId,
