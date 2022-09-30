@@ -235,7 +235,7 @@ parameter_types! {
 	pub const PicaStakeFinancialNftCollectionId: CurrencyId = 1001;
 	pub const PbloStakeFinancialNftCollectionId: CurrencyId = 1002;
 	pub const StakingRewardsLockId: LockIdentifier = *b"stk_lock";
-	// REVIEW(beenluelo): Use a better value for this?
+	// REVIEW(benluelo): Use a better value for this?
 	pub const TreasuryAccountId: AccountId = sr25519::Public([10_u8; 32]);
 }
 
