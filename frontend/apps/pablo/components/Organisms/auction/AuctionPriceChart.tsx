@@ -34,26 +34,19 @@ const PriceChartLabels = ({
   }
 
   if (priceSeries.length === 0 || predictedPriceSeries.length === 0) {
+    let label = `${assetSymbol}`;
     if (priceSeries.length === 0) {
-      return (
-        <>
-          <FiberManualRecordIcon color="primary" />
-          <Typography variant="body2" pl={1} pr={2}>
-            {assetSymbol} predicted price (without new buyers)
-          </Typography>
-        </>
-      );
+      label += " predicted price (without new buyers)";
     }
-    if (predictedPriceSeries.length === 0) {
-      return (
-        <>
-          <FiberManualRecordIcon color="primary" />
-          <Typography variant="body2" pl={1} pr={2}>
-            {assetSymbol}
-          </Typography>
-        </>
-      );
-    }
+
+    return (
+      <>
+        <FiberManualRecordIcon color="primary" />
+        <Typography variant="body2" pl={1} pr={2}>
+          {label}
+        </Typography>
+      </>
+    );
   }
   return null;
 };
