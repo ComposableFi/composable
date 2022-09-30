@@ -161,7 +161,7 @@ where
 
 	// fetch the new parachain headers that have been finalized
 	let headers = source
-		.query_finalized_parachain_headers_at(
+		.query_beefy_finalized_parachain_headers_between(
 			signed_commitment.commitment.block_number,
 			&beefy_client_state,
 		)
@@ -222,9 +222,11 @@ where
 	};
 
 	// block_number => events
-	let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&source.para_client) };
-	let events: HashMap<String, Vec<IbcEvent>> =
-		IbcApiClient::<u32, H256>::query_events(&*para_client, finalized_block_numbers).await?;
+	let events: HashMap<String, Vec<IbcEvent>> = IbcApiClient::<u32, H256>::query_events(
+		&*unsafe { unsafe_cast_to_jsonrpsee_client(&source.para_client) },
+		finalized_block_numbers,
+	)
+	.await?;
 
 	// header number is serialized to string
 	let mut headers_with_events = events
@@ -273,9 +275,8 @@ where
 	};
 
 	let mmr_update = source
-		.fetch_mmr_update_proof_for(signed_commitment, &beefy_client_state)
+		.query_beefy_mmr_update_proof(signed_commitment, &beefy_client_state)
 		.await?;
-	let beefy_header = BeefyHeader { headers_with_proof, mmr_update_proof: Some(mmr_update) };
 
 	for event in events.iter() {
 		if source.sender.send(event.clone()).is_err() {
@@ -287,7 +288,10 @@ where
 	let update_header = {
 		let msg = MsgUpdateAnyClient::<LocalClientTypes> {
 			client_id: source.client_id(),
-			client_message: AnyClientMessage::Beefy(BeefyClientMessage::Header(beefy_header)),
+			client_message: AnyClientMessage::Beefy(BeefyClientMessage::Header(BeefyHeader {
+				headers_with_proof,
+				mmr_update_proof: Some(mmr_update),
+			})),
 			signer: counterparty.account_id(),
 		};
 		let value = msg.encode_vec();
@@ -346,7 +350,7 @@ where
 
 	// fetch the new parachain headers that have been finalized
 	let headers = source
-		.query_finalized_parachain_headers_between(
+		.query_grandpa_finalized_parachain_headers_between(
 			justification.commit.target_hash.into(),
 			grandpa_client_state.latest_relay_hash.into(),
 		)
@@ -411,9 +415,11 @@ where
 		};
 
 	// block_number => events
-	let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&source.para_client) };
-	let events: HashMap<String, Vec<IbcEvent>> =
-		IbcApiClient::<u32, H256>::query_events(&*para_client, finalized_block_numbers).await?;
+	let events: HashMap<String, Vec<IbcEvent>> = IbcApiClient::<u32, H256>::query_events(
+		&*unsafe { unsafe_cast_to_jsonrpsee_client(&source.para_client) },
+		finalized_block_numbers,
+	)
+	.await?;
 
 	// header number is serialized to string
 	let mut headers_with_events = events
