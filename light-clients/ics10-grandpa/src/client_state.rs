@@ -166,15 +166,6 @@ impl<H> TryFrom<RawClientState> for ClientState<H> {
 	type Error = Error;
 
 	fn try_from(raw: RawClientState) -> Result<Self, Self::Error> {
-		let frozen_height = {
-			let height = Height::new(raw.para_id as u64, raw.frozen_height.into());
-			if height == Height::zero() {
-				None
-			} else {
-				Some(height)
-			}
-		};
-
 		let current_authorities = raw
 			.current_authorities
 			.into_iter()
@@ -194,7 +185,7 @@ impl<H> TryFrom<RawClientState> for ClientState<H> {
 		let latest_relay_hash = H256::from(fixed_bytes);
 
 		Ok(Self {
-			frozen_height,
+			frozen_height: raw.frozen_height.map(|height| Height::new(raw.para_id.into(), height)),
 			relay_chain,
 			latest_para_height: raw.latest_para_height,
 			para_id: raw.para_id,
@@ -211,7 +202,9 @@ impl<H> From<ClientState<H>> for RawClientState {
 		RawClientState {
 			latest_relay_hash: client_state.latest_relay_hash.as_bytes().to_vec(),
 			current_set_id: client_state.current_set_id,
-			frozen_height: client_state.frozen_height.unwrap_or_default().revision_height,
+			frozen_height: client_state
+				.frozen_height
+				.map(|frozen_height| frozen_height.revision_height),
 			relay_chain: client_state.relay_chain as i32,
 			para_id: client_state.para_id,
 			latest_para_height: client_state.latest_para_height,

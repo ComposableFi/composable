@@ -20,7 +20,7 @@ pub mod helpers;
 pub mod relay_chain_queries;
 pub mod runtime;
 
-use beefy_client_primitives::{
+use beefy_light_client_primitives::{
 	get_leaf_index_for_block_number, ClientState, HostFunctions, MerkleHasher, MmrUpdateProof,
 	ParachainHeader, PartialMmrLeaf, SignedCommitment,
 };

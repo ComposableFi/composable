@@ -407,6 +407,7 @@ dependencies = [
 name = "beefy-light-client"
 version = "0.1.0"
 dependencies = [
+ "beefy-light-client-primitives",
  "beefy-primitives",
  "beefy-prover",
  "ckb-merkle-mountain-range",
@@ -420,7 +421,6 @@ dependencies = [
  "pallet-mmr",
  "pallet-mmr-rpc",
  "parity-scale-codec",
- "primitives",
  "rs_merkle",
  "serde_json",
  "sp-core 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
@@ -432,6 +432,21 @@ dependencies = [
  "sp-trie 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
  "subxt",
  "tokio",
+]
+
+[[package]]
+name = "beefy-light-client-primitives"
+version = "0.1.0"
+dependencies = [
+ "beefy-primitives",
+ "ckb-merkle-mountain-range",
+ "derive_more",
+ "light-client-common",
+ "parity-scale-codec",
+ "rs_merkle",
+ "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-mmr-primitives",
+ "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
 ]
 
 [[package]]
@@ -461,6 +476,7 @@ dependencies = [
 name = "beefy-prover"
 version = "0.1.0"
 dependencies = [
+ "beefy-light-client-primitives",
  "beefy-primitives",
  "color-eyre",
  "derive_more",
@@ -476,7 +492,6 @@ dependencies = [
  "pallet-mmr-rpc",
  "parity-scale-codec",
  "prettyplease",
- "primitives",
  "rs_merkle",
  "serde_json",
  "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2435,6 +2450,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "beefy-light-client",
+ "beefy-light-client-primitives",
  "beefy-primitives",
  "beefy-prover",
  "bytes",
@@ -2447,7 +2463,6 @@ dependencies = [
  "light-client-common",
  "parity-scale-codec",
  "primitive-types",
- "primitives",
  "prost 0.10.4",
  "prost-build 0.11.1",
  "prost-types 0.10.1",
@@ -4550,21 +4565,6 @@ dependencies = [
  "impl-serde",
  "scale-info",
  "uint",
-]
-
-[[package]]
-name = "primitives"
-version = "0.1.0"
-dependencies = [
- "beefy-primitives",
- "ckb-merkle-mountain-range",
- "derive_more",
- "light-client-common",
- "parity-scale-codec",
- "rs_merkle",
- "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-mmr-primitives",
- "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
 ]
 
 [[package]]

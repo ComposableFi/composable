@@ -13,7 +13,7 @@ std = [
     "ibc/std",
     "ibc-proto/std",
     "beefy-client/std",
-    "beefy-client-primitives/std",
+    "beefy-light-client-primitives/std",
     "light-client-common/std",
     "pallet-mmr-primitives/std",
     "beefy-primitives/std",
@@ -40,7 +40,7 @@ ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", rev = "9a959faabb8
 
 # beefy deps
 beefy-client = { package = "beefy-light-client", path = "../../algorithms/beefy",  default-features = false }
-beefy-client-primitives = { package = "primitives", path = "../../algorithms/beefy/primitives", default-features = false }
+beefy-light-client-primitives = {  path = "../../algorithms/beefy/primitives", default-features = false }
 light-client-common = { path = "../common", default-features = false }
 
 # substrate deps

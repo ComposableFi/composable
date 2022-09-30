@@ -258,10 +258,6 @@ where
 		self.latest_height()
 	}
 
-	fn is_frozen(&self) -> bool {
-		todo!()
-	}
-
 	fn frozen_height(&self) -> Option<Height> {
 		self.frozen_height()
 	}

@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use beefy_client_primitives::{
+use beefy_light_client_primitives::{
 	error::BeefyClientError, MmrUpdateProof, ParachainsUpdateProof, SignatureWithAuthorityIndex,
 	SignedCommitment,
 };

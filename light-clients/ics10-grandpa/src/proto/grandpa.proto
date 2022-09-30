@@ -41,7 +41,7 @@ message ClientState {
   uint64 current_set_id = 2;
 
   // Block height when the client was frozen due to a misbehaviour
-  uint64 frozen_height = 3;
+  optional uint64 frozen_height = 3;
 
   // Known relay chains
   RelayChain relay_chain = 4;

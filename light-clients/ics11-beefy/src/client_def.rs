@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use beefy_client_primitives::{
+use beefy_light_client_primitives::{
 	ClientState as LightClientState, ParachainHeader, ParachainsUpdateProof,
 };
 use codec::{Decode, Encode};
@@ -60,7 +60,7 @@ pub struct BeefyClient<T>(PhantomData<T>);
 
 impl<H> ClientDef for BeefyClient<H>
 where
-	H: light_client_common::HostFunctions + beefy_client_primitives::HostFunctions,
+	H: light_client_common::HostFunctions + beefy_light_client_primitives::HostFunctions,
 {
 	type ClientMessage = ClientMessage;
 	type ClientState = ClientState<H>;

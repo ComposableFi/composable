@@ -27,7 +27,7 @@ use crate::{
 };
 use alloc::{format, vec, vec::Vec};
 use anyhow::anyhow;
-use beefy_client_primitives::{
+use beefy_light_client_primitives::{
 	BeefyNextAuthoritySet, Hash, MmrUpdateProof, PartialMmrLeaf, SignatureWithAuthorityIndex,
 	SignedCommitment,
 };

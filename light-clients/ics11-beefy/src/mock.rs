@@ -52,7 +52,7 @@ pub const MOCK_CONSENSUS_STATE_TYPE_URL: &str = "/ibc.mock.ConsensusState";
 #[derive(Clone, Default, PartialEq, Debug, Eq)]
 pub struct HostFunctionsManager;
 
-impl beefy_client_primitives::HostFunctions for HostFunctionsManager {
+impl beefy_light_client_primitives::HostFunctions for HostFunctionsManager {
 	fn keccak_256(input: &[u8]) -> [u8; 32] {
 		beefy_prover::Crypto::keccak_256(input)
 	}

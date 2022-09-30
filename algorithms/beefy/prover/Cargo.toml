@@ -42,5 +42,5 @@ serde_json = { version = "1.0.74" }
 pallet-mmr-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 hex = { version = "0.4.3" }
-beefy-client-primitives = { package = "primitives", path = "../primitives" }
+beefy-light-client-primitives = {  path = "../primitives" }
 

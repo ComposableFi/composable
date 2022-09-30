@@ -242,7 +242,7 @@ impl<H> ClientState<H> {
 
 impl<H> ibc::core::ics02_client::client_state::ClientState for ClientState<H>
 where
-	H: light_client_common::HostFunctions + beefy_client_primitives::HostFunctions,
+	H: light_client_common::HostFunctions + beefy_light_client_primitives::HostFunctions,
 {
 	type UpgradeOptions = UpgradeOptions;
 	type ClientDef = BeefyClient<H>;
@@ -289,15 +289,6 @@ impl<H> TryFrom<RawClientState> for ClientState<H> {
 	type Error = Error;
 
 	fn try_from(raw: RawClientState) -> Result<Self, Self::Error> {
-		let frozen_height = {
-			let height = Height::new(0, raw.frozen_height.into());
-			if height == Height::zero() {
-				None
-			} else {
-				Some(height)
-			}
-		};
-
 		let authority_set = raw
 			.authority
 			.and_then(|set| {
@@ -328,7 +319,7 @@ impl<H> TryFrom<RawClientState> for ClientState<H> {
 			chain_id,
 			mmr_root_hash,
 			latest_beefy_height: raw.latest_beefy_height,
-			frozen_height,
+			frozen_height: raw.frozen_height.map(|height| Height::new(raw.para_id.into(), height)),
 			beefy_activation_block: raw.beefy_activation_block,
 			authority: authority_set,
 			next_authority_set,
@@ -345,7 +336,9 @@ impl<H> From<ClientState<H>> for RawClientState {
 		RawClientState {
 			mmr_root_hash: client_state.mmr_root_hash.encode(),
 			latest_beefy_height: client_state.latest_beefy_height,
-			frozen_height: client_state.frozen_height.unwrap_or_default().revision_height,
+			frozen_height: client_state
+				.frozen_height
+				.map(|frozen_height| frozen_height.revision_height),
 			beefy_activation_block: client_state.beefy_activation_block,
 			authority: Some(BeefyAuthoritySet {
 				id: client_state.authority.id,

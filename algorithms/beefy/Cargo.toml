@@ -27,7 +27,7 @@ beefy-primitives = { default-features = false, git = "https://github.com/parityt
 sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
 
 # local
-beefy-client-primitives = { package = "primitives", path = "primitives", default-features = false }
+beefy-light-client-primitives = { path = "primitives", default-features = false }
 light-client-common = { path = "../../light-clients/common", default-features = false }
 
 [dev-dependencies]
@@ -59,7 +59,7 @@ std = [
     "rs_merkle/std",
     "mmr-lib/std",
     "frame-support/std",
-    "beefy-client-primitives/std",
+    "beefy-light-client-primitives/std",
     "sp-trie/std",
     "light-client-common/std",
 ]

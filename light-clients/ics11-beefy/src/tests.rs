@@ -24,7 +24,7 @@ use crate::{
 		AnyClientMessage, AnyClientState, AnyConsensusState, HostFunctionsManager, MockClientTypes,
 	},
 };
-use beefy_client_primitives::{NodesUtils, PartialMmrLeaf};
+use beefy_light_client_primitives::{NodesUtils, PartialMmrLeaf};
 use beefy_prover::{
 	helpers::{fetch_timestamp_extrinsic_with_proof, TimeStampExtWithProof},
 	runtime, ClientWrapper,

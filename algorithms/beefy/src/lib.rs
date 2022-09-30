@@ -21,7 +21,7 @@ extern crate alloc;
 #[cfg(test)]
 mod tests;
 
-use beefy_client_primitives::{
+use beefy_light_client_primitives::{
 	error::BeefyClientError, get_leaf_index_for_block_number, BeefyNextAuthoritySet, ClientState,
 	HostFunctions, MerkleHasher, MmrUpdateProof, NodesUtils, ParachainsUpdateProof,
 	SignatureWithAuthorityIndex, HASH_LENGTH,

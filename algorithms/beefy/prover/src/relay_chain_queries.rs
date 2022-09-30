@@ -17,7 +17,7 @@ use super::runtime;
 use crate::{
 	error::Error, runtime::api::runtime_types::polkadot_runtime_parachains::paras::ParaLifecycle,
 };
-use beefy_client_primitives::get_leaf_index_for_block_number;
+use beefy_light_client_primitives::get_leaf_index_for_block_number;
 use beefy_primitives::{SignedCommitment, VersionedFinalityProof};
 use codec::{Decode, Encode};
 use pallet_mmr_rpc::{LeafBatchProof, LeafProof};

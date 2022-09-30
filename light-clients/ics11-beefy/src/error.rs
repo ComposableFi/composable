@@ -26,7 +26,7 @@ use prost::DecodeError;
 #[derive(Debug, derive_more::From, derive_more::Display)]
 pub enum Error {
 	Codec(codec::Error),
-	Beefy(beefy_client_primitives::error::BeefyClientError),
+	Beefy(beefy_light_client_primitives::error::BeefyClientError),
 	TimeStamp(TimestampOverflowError),
 	ParseTimeStamp(ParseTimestampError),
 	ValidationError(ValidationError),

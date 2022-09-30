@@ -1,5 +1,5 @@
 [package]
-name = "primitives"
+name = "beefy-light-client-primitives"
 version = "0.1.0"
 edition = "2021"
 authors = ["Seun Lanlege <seunlanlege@gmail.com>", "David Salami <david.salami@gmail.com>"]

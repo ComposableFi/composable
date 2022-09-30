@@ -80,10 +80,6 @@ impl<H: HostFunctionsTrait> ClientState for NearClientState<H> {
 		self.head.get_height()
 	}
 
-	fn is_frozen(&self) -> bool {
-		self.frozen_height().is_some()
-	}
-
 	fn frozen_height(&self) -> Option<Height> {
 		// TODO: validate this
 		Some(self.head.get_height())

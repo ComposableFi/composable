@@ -14,7 +14,7 @@
 // limitations under the License.
 
 use crate::{error::Error, Crypto};
-use beefy_client_primitives::{MerkleHasher, SignatureWithAuthorityIndex};
+use beefy_light_client_primitives::{MerkleHasher, SignatureWithAuthorityIndex};
 use codec::{Decode, Encode};
 use frame_support::sp_runtime::traits::Convert;
 use jsonrpsee_core::client::Client;
