@@ -33,7 +33,7 @@ Currently, non-native currencies are mapped to native with some configurable rat
 
 ## How much does my transaction cost in Picasso?
 
-When a transaction is executed, its `weight` is known and roughly equal to the computational resources it consumes. Computational resources are benchmarked and updated with each runtime upgrade.
+When a transaction is executed, its `weight` is known and roughly equals the computational resources it consumes. Computational resources are benchmarked and updated with each runtime upgrade.
 
 Weight is converted into an appropriate amount of PICA by the polynomial formula.
 
