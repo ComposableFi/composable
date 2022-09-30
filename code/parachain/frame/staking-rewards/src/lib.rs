@@ -1237,7 +1237,8 @@ pub mod pallet {
 					claim
 				};
 
-				// REVIEW(benluelo): Is this check/ calculation necessary?
+				// REVIEW(benluelo): Review logic/ calculations regarding total_rewards & claimed
+				// rewards
 				let possibly_slashed_claim = sp_std::cmp::min(
 					possibly_slashed_claim,
 					reward.total_rewards.safe_sub(&reward.claimed_rewards)?,
