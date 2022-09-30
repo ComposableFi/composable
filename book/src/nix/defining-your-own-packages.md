@@ -9,7 +9,7 @@ If you are working on something new within Composable that does not have a Nix p
 - [The Nix Flake system](https://nixos.wiki/wiki/Flakes). (Also very simple)
 - [Nix Flakes: an Introduction](https://xeiaso.net/blog/nix-flakes-1-2022-02-21). (This one is _very difficult_ to understand. Just kidding: also simple)
 
-Your package should probably live inside of [our monorepo](https://github.com/ComposableFi/composable). If this is the case, then you should expand our existing `flake.nix`. If this is not the case, and if your package still needs to reference packages that are defined by our monorepo, then you should add our repository as one of your flake's inputs like this:
+Your package should probably live inside of [our monorepo](https://github.com/ComposableFi/composable). If this is the case, you should expand our existing `flake.nix`. However, if this is not the case, and if your package still needs to reference packages that are defined by our monorepo, then you should add our repository as one of your flake's inputs like this:
 
 
 ```nix
