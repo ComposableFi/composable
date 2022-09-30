@@ -8,7 +8,7 @@
 There are four ways in order to use Nix at Composable, ranked from most compatible to least compatible:
 
 1. **NixOS**. NixOS is a system that uses Nix in order to define your entire OS. Switching to it (in a VM) is a great way of learning Nix, as you will use it to build and configure your own system.
-2. **Nix: the package manager, on Linux**. Nix on Linux is an (additional) package manager that allows you to build and run Nix packages using the Nix build system. _This is in most cases as compatible as #1_.
+2. **Nix: the package manager on Linux**. Nix on Linux is an (additional) package manager that allows you to build and run Nix packages using the Nix build system. _This is in most cases as compatible as #1_.
 3. **Nix in Docker, on macOS**. If you want to run a package on macOS, do not want to deal with a VM, but still want a decent reliability guarantee, then you can run Nix packages within Docker on macOS. _This is incompatible with our declarative development environments and is only meant for running a package_.
 4. **Nix on macOS (EXPERIMENTAL)**. You can also use Nix natively on macOS. Nix has excellent cross-system and cross-architecture building support, and a lot of the packages available in the [nixpkgs](https://nixos.wiki/wiki/Nixpkgs) repository support (ARM) macOS. _However, because we use Docker in many of our packages, some packages will not run using this method yet as Docker is exclusive to Linux._
 
