@@ -43,8 +43,10 @@ jobs:
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
           GITHUB_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
         id: check_runtime
-        if: contains( github.event.pull_request.labels.*.name, 'needs-benchmarks')
-        run: .maintain/check_runtime.sh
+        if: contains(github.event.pull_request.labels.*.name, 'needs-benchmarks')
+        run: |
+          git config --global --add safe.directory /__w/composable/composable
+          .maintain/check_runtime.sh
 
       # TODO: use nix
       - name: Benchmark Test
