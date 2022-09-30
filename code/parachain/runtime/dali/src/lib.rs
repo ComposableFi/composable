@@ -909,12 +909,7 @@ pub struct BaseCallFilter;
 impl Contains<Call> for BaseCallFilter {
 	fn contains(call: &Call) -> bool {
 		!(call_filter::Pallet::<Runtime>::contains(call) ||
-			matches!(
-				call,
-				Call::Tokens(_) |
-					Call::Indices(_) | Call::Treasury(_) |
-					Call::IbcPing(_) | Call::Ibc(_)
-			))
+			matches!(call, Call::Tokens(_) | Call::Indices(_) | Call::Treasury(_)))
 	}
 }
 
@@ -1131,6 +1126,8 @@ impl pallet_ibc::Config for Runtime {
 	const INDEXING_PREFIX: &'static [u8] = b"ibc/";
 	const CONNECTION_PREFIX: &'static [u8] = b"ibc/";
 	const CHILD_TRIE_KEY: &'static [u8] = b"ibc/";
+	const LIGHT_CLIENT_PROTOCOL: pallet_ibc::LightClientProtocol =
+		pallet_ibc::LightClientProtocol::Grandpa;
 	type ExpectedBlockTime = ExpectedBlockTime;
 	type MultiCurrency = Assets;
 	type AccountIdConversion = ibc_primitives::IbcAccount;
