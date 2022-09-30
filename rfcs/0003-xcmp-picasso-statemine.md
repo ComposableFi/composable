@@ -22,31 +22,27 @@ This proposal suggest to open bidirectional HRMP channel between Picasso and Sta
 3. Accept channel form Statemine to Picasso
 4. Make USDT priceable on Picasso
 
-All steps are SCALE encoded and can be decoded and executed by named consensuses.
-
-Proposal follows same steps as other chains did.
-
 ## Preparation
 
 One should have `Identity` on Kusama to create `Proposal` on  https://parachains.polkassembly.io/ . 
 
 Suggested amount is 50 KSM total for all operations on `Balance`, for creating identity, backing proposal and sending XCM messages.
 
-Picasso chain also should have Balance, better 22 KSM. Because its sovereign account may also pay some fee.
+Picasso chain also should have Balance, better 22 KSM. Because its sovereign account will pay some fee and lock amounts.
 
 ## Picasso Governance to create request
 
-Picasso to ask Statemine to open channel on Kusama encoded as `hrmp`  `0x3c00e8030000e803000000900100` to open channel. Can be decoded by Kusama.
+```shell
+xcmp sudo execute --suri <private key> --call 0x290001010002100004000000000b0060defb740513000000000b0060defb74050006000700f2052a01383c00e8030000e8030000009001000d0100040001009d20 --network composable_picasso_on_parity_kusama --rpc 'wss://picasso-rpc.composable.finance:443'
+```
 
-That should be send from Parachain account from Picasso via next `relayerXcm.send` :
+Which will transact:
 
-Encoded as `0x2900010100020c0004000000000700e876481713000100000700e876481700060102286bee383c00e8030000e803000000900100`.
+https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkusama-rpc.polkadot.io#/extrinsics/decode/0x3c00e8030000e803000000900100
 
-Can be decoded via https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rpc.composable.finance#/extrinsics/decode
+## Statemine to accept proposal and propose back
 
-## Accept proposal and propose back
-
-Create `Proposal` for referenda to ensure Kusama executed channel opening on its owned Statemine network:
+Create offchain `Proposal` for referenda to ensure Kusama executed channel opening on its owned Statemine network:
 ```
 This proposal aims to open HRMP channel between Statemine & Picasso. For more context please read here.
 
@@ -61,210 +57,37 @@ The XCM message to Statemine is `0x1f00010100020c000400000000070010a5d4e81300000
 The call is is a `batchAll` that accepts open channel request from Picasso, and make an open channel request to Picasso.
 ```
 
-### Proposal body
+See `References` links for portal to create proposal.
 
-`batchAll` call:
-<!-- cspell:disable -->
-```json
-calls: [
-    {
-        "callIndex": "0x0402",
-        "args": {
-            "source": {
-                "id": "F3opxRbN5ZbjJNU511Kj2TLuzFcDq9BGduA9TgiECafpg29"
-            },
-            "dest": {
-                "id": "F7fq1jSNVTPfJmaHaXCMtatT1EZefCUsa7rRiQVNR5efcah"
-            },
-            "value": 11000000000000
-        }
-    },
-    {
-        "callIndex": "0x6300",
-        "args": {
-            "dest": {
-                "v1": {
-                    "parents": 0,
-                    "interior": {
-                        "x1": {
-                            "parachain": 1000
-                        }
-                    }
-                }
-            },
-            "message": {
-                "v2": [
-                    {
-                        "transact": {
-                            "originType": "Superuser",
-                            "requireWeightAtMost": 1000000000,
-                            "call": {
-                                "encoded": "0x1f00010100020c000400000000070010a5d4e81300000000070010a5d4e800060002286bee5c1802083c01e70700003c00e7070000e803000000900100"
-                            }
-                        }
-                    }
-                ]
-            }
-        }
-    }
-]
-```
-<!-- cspell:enable -->
+### Create on chain proposal
+
+
+https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkusama.api.onfinality.io%2Fpublic-ws#/extrinsics/decode/0x1802080402006d6f646c70792f747273727900000000000000000000000000000000000000000070617261e80300000000000000000000000000000000000000000000000000000b00b01723010a630001000100a10f0204060202286beef41f00010100020c000400000000070010a5d4e81300000000070010a5d4e800060002286bee5c1802083c01270800003c0027080000e803000000900100
 
 #### Decoded proposal
 
-Above encoded call is next XCM message:
-<!-- cspell:disable -->
-```json
-[
-  {
-    name: "calls",
-    type: "Vec<Call>",
-    value: [
-      {
-        call_index: "0402",
-        call_module: "Balances",
-        call_name: "force_transfer",
-        params: [
-          {
-            name: "source",
-            type: "sp_runtime:multiaddress:MultiAddress",
-            value: {
-              Id: "0x6d6f646c70792f74727372790000000000000000000000000000000000000000"
-            }
-          },
-          {
-            name: "dest",
-            type: "sp_runtime:multiaddress:MultiAddress",
-            value: {
-              Id: "0x70617261e8030000000000000000000000000000000000000000000000000000"
-            }
-          },
-          {
-            name: "value",
-            type: "compact<U128>",
-            value: "11000000000000"
-          }
-        ]
-      },
-      {
-        call_index: "6300",
-        call_module: "XcmPallet",
-        call_name: "send",
-        params: [
-          {
-            name: "dest",
-            type: "xcm:VersionedMultiLocation",
-            value: {
-              V1: {
-                interior: {
-                  X1: {
-                    Parachain: 1000
-                  }
-                },
-                parents: 0
-              }
-            }
-          },
-          {
-            name: "message",
-            type: "xcm:VersionedXcm",
-            value: {
-              V2: [
-                {
-                  Transact: {
-                    call: "1f00010100020c000400000000070010a5d4e81300000000070010a5d4e800060002286bee5c1802083c01270800003c0027080000e803000000900100",
-                    origin_type: "Superuser",
-                    require_weight_at_most: 1000000000
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    ]
-  }
-]
-```
-<!-- cspell:enable -->
+Above encoded call is has next XCM Transact message:
 
-Where transact [decodes](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fstatemine-rpc.dwellir.com#/extrinsics/decode) by Statemine into:
+https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fstatemine-rpc.dwellir.com#/extrinsics/decode/0x1f00010100020c000400000000070010a5d4e81300000000070010a5d4e800060002286bee5c1802083c01270800003c0027080000e803000000900100
 
-```rust
-polkadotXcm
-send(dest, message)
-send
-dest: XcmVersionedMultiLocation
-{
-  V1: {
-    parents: 1
-    interior: Here
-  }
-}
-message: XcmVersionedXcm
-{
-  V2: [
-    {
-      WithdrawAsset: [
-        {
-          id: {
-            Concrete: {
-              parents: 0
-              interior: Here
-            }
-          }
-          fun: {
-            Fungible: 1,000,000,000,000
-          }
-        }
-      ]
-    }
-    {
-      BuyExecution: {
-        fees: {
-          id: {
-            Concrete: {
-              parents: 0
-              interior: Here
-            }
-          }
-          fun: {
-            Fungible: 1,000,000,000,000
-          }
-        }
-        weightLimit: Unlimited
-      }
-    }
-    {
-      Transact: {
-        originType: Native
-        requireWeightAtMost: 1,000,000,000
-        call: {
-          encoded: 0x1802083c01270800003c0027080000e803000000900100
-        }
-      }
-    }
-  ]
-}
+Where [Kusama.utility.batchAll](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkusama-rpc.polkadot.io#/extrinsics/decode/0x1802083c01270800003c0027080000e803000000900100) is encoded as ``
+
+## Picasso to accept request from Statemine
+
+Accept channel from Statemine:
+
+https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkusama-rpc.polkadot.io#/extrinsics/decode/0x3c01e8030000
+
+```shell
+xcmp sudo execute --suri SECRET_KEY_OR_FILE --call 0x2900010100020c0004000000000700e876481713000100000700e876481700060102286bee183c01e8030000 --network composable_picasso_on_parity_kusama --rpc 'wss://picasso-rpc.composable.finance:443'
 ```
 
-Where [Kusama.utility.batchAll](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkusama-rpc.polkadot.io#/extrinsics) is encoded as `0x1802083c01270800003c0027080000e803000000900100`
+## Make price for USDT on Picasso
 
-## Accept request from Statemine
-
-Accept channel from state mine as  `0x3c01e8030000` (can be decoded by Kusama)
-
-
-Sent as XCM  message from Picasso with that acceptance via `0x2900010100020c0004000000000700e876481713000100000700e876481700060102286bee183c01e8030000`
-
-Decoded by https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rpc.composable.finance#/extrinsics/decode
-
-## Make price for USDT
-
-Register USDT in registry with asset id 11 and decimals of 4 via `assetsRegistry.registerAsset` with next preimage (tune ratio as needed):
-`0x3b00010300a10f043206400b0000000000000000000000000000000a000000000000000000000000000000010000c16ff286230000000000000000000104000000`
-
+Register USDT:
+```shell
+xcmp sudo execute --suri SECRET_KEY_OR_FILE --call 0x3b00010300a10f043206400b0000000000000000000000000000000a000000000000000000000000000000010000c16ff286230000000000000000000104000000 --network composable_picasso_on_parity_kusama --rpc 'wss://picasso-rpc.composable.finance:443'
+```
 
 ## References
 

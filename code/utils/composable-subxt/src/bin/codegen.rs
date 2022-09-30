@@ -22,11 +22,13 @@ struct ComposableSubxt {
 // 3. generate from it
 // Good: can run all always in build.rs(of course only in nix shell) or in CI (no need node to run)
 // Bad: cannot generate for node you have no access in nix
-fn main() {
+fn main() {	
 	let urls: HashMap<&str, &str> = [
 		("dali", "ws://localhost:9988"), /* "wss://dali.devnets.composablefinance.ninja", can
 		                                  * split out port into json/toml/nix and parse out from
 		                                  * shared location too */
+		("composable_dali_on_parity_rococo", "wss://rpc.composablefinance.ninja:443"),
+		("composable_picasso_on_parity_kusama", "wss://picasso-rpc.composable.finance:443"),
 		("rococo", "ws://localhost:9944"), // "wss://rococo-rpc.polkadot.io"
 		("picasso", "ws://localhost:9988"), // "wss://picasso.devnets.composablefinance.ninja"
 		("kusama", "wss://kusama-rpc.polkadot.io:443"), /* can eat it from polkadotjs chain

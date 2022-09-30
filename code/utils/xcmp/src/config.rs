@@ -34,19 +34,23 @@ pub enum SudoCommand {
 #[derive(Parser, Debug)]
 pub struct Execute {
 	/// path to key
+	#[clap(long)]
 	pub suri: String, // name for parity clis
 
 	/// hex encoded call to execute
+	#[clap(long)]
 	pub call: String,
 
-	/// ask before
-	//#[clap(default = true)]
-	pub ask: Option<bool>,
-
 	/// one of supported networks
+	#[clap(long)]
 	pub network: String,
 
+	#[clap(long)]
 	pub rpc: String,
+
+	/// ask before
+	#[clap(default_value_t = true)]
+	pub ask: bool,
 }
 
 #[derive(Parser, Debug)]

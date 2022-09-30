@@ -1,6 +1,6 @@
 # Overview
 
-Resources which allows to grasp  XCM. General understanding how bridges work will help too.
+Resources which allows to grasp  XCM and XCMP. General understanding how bridges work will help too. 
 
 ## Terminology
 
@@ -39,6 +39,7 @@ XCMP can be upward (parachain to relay), downward(relay to parachain) and siblin
 - <https://www.youtube.com/watch?v=P_yLrFfmLrU>
 - <https://blog.quarkslab.com/resources/2022-02-27-xcmv2-audit/21-12-908-REP.pdf>
 - <https://github.com/paritytech/polkadot/blob/master/roadmap/implementers-guide/src/messaging.md>
+- https://forum.polkadot.network/t/how-xcm-will-actually-be-used-with-xcmp/190
 
 ## Generic context
 
@@ -72,7 +73,7 @@ XCMP can be upward (parachain to relay), downward(relay to parachain) and siblin
 ### Operations
 
 <https://docs.substrate.io/reference/how-to-guides/parachains/add-hrmp-channels/>
-
+- https://substrate.stackexchange.com/questions/tagged/xcm
 
 Sends KSM from Picasso to Kusama to specified account:
 

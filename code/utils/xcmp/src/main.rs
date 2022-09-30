@@ -1,7 +1,8 @@
 use std::io::Read;
 
 use clap::Parser;
-use composable_subxt::generated::{self, dali, picasso};
+use composable_subxt::generated::{self, composable_dali_on_parity_rococo, dali, picasso};
+use sc_cli::utils::*;
 use scale_codec::{Decode, Encode};
 use sp_core::{
 	crypto::{AccountId32, Ss58Codec},
@@ -9,9 +10,13 @@ use sp_core::{
 };
 
 use sp_runtime::MultiAddress;
-use subxt::{tx::*, *};
+use subxt::{config::*, tx::*, *};
+
+pub type ComposableConfig =
+	WithExtrinsicParams<SubstrateConfig, crate::tx::SubstrateExtrinsicParams<SubstrateConfig>>;
 
 pub type RelayPairSigner = subxt::tx::PairSigner<PolkadotConfig, sr25519::Pair>;
+pub type ComposablePairSigner = subxt::tx::PairSigner<ComposableConfig, sr25519::Pair>;
 
 use crate::generated::rococo::{
 	self,
@@ -28,7 +33,11 @@ use crate::generated::rococo::{
 mod config;
 use config::*;
 
-pub fn pair_signer(pair: sr25519::Pair) -> RelayPairSigner {
+pub fn pair_signer(pair: sr25519::Pair) -> ComposablePairSigner {
+	ComposablePairSigner::new(pair)
+}
+
+pub fn parity_pair_signer(pair: sr25519::Pair) -> RelayPairSigner {
 	RelayPairSigner::new(pair)
 }
 
@@ -85,59 +94,86 @@ macro_rules! sudo_call {
 	}};
 }
 
-async fn execute_sudo(ask: Option<bool>, call: String, network: String, suri: String, rpc: String) {
-	let call = sc_cli::utils::decode_hex(call).expect("call is not hex encoded");
+async fn execute_sudo(ask: bool, call: String, network: String, suri: String, rpc: String) {
+	println!("https://polkadot.js.org/apps/?rpc={:#}#/extrinsics/decode/{:}", &rpc, &call);
+	let call = sc_cli::utils::decode_hex(&call).expect("call is not hex encoded");
+	let from_file = |path| {
+		std::fs::read(path)
+			.map(String::from_utf8)
+			.unwrap()
+			.map(|suri| pair_from_suri(&suri.trim(), None))
+			.unwrap()
+			.unwrap()
+	};
+
 	let key: sr25519::Pair =
-		sc_cli::utils::pair_from_suri(&suri, None).expect("private key parsing failed");
+		sc_cli::utils::pair_from_suri(&suri, None).unwrap_or_else(|_| from_file(&suri));
 	let signer = pair_signer(key);
 
 	// https://github.com/paritytech/subxt/issues/668
-	let api = OnlineClient::<PolkadotConfig>::from_url(&rpc).await.unwrap();
+	let api = OnlineClient::<ComposableConfig>::from_url(&rpc).await.unwrap();
 	match network.as_str() {
 		"dali" => {
 			let extrinsic = sudo_call!(dali, dali_runtime, call);
+			may_be_do_call(ask, api, extrinsic, signer).await;
+		},
+		"composable_dali_on_parity_rococo" => {
+			let extrinsic = sudo_call!(composable_dali_on_parity_rococo, dali_runtime, call);
 			may_be_do_call(ask, api, extrinsic, signer).await;
 		},
 		"picasso" => {
 			let extrinsic = sudo_call!(picasso, picasso_runtime, call);
 			may_be_do_call(ask, api, extrinsic, signer).await;
 		},
+		"composable_picasso_on_parity_kusama" => {
+			let extrinsic = sudo_call!(composable_picasso_on_parity_kusama, picasso_runtime, call);
+			may_be_do_call(ask, api, extrinsic, signer).await;
+		},		
+		
 		_ => panic!("unknown network"),
 	}
 }
 
 async fn may_be_do_call<CallData: Encode>(
-	ask: Option<bool>,
+	ask: bool,
 	api: OnlineClient<
 		subxt::config::WithExtrinsicParams<
 			SubstrateConfig,
-			BaseExtrinsicParams<SubstrateConfig, PlainTip>,
+			BaseExtrinsicParams<SubstrateConfig, AssetTip>,
 		>,
 	>,
 	extrinsic: StaticTxPayload<CallData>,
 	signer: PairSigner<
 		subxt::config::WithExtrinsicParams<
 			SubstrateConfig,
-			BaseExtrinsicParams<SubstrateConfig, PlainTip>,
+			BaseExtrinsicParams<SubstrateConfig, AssetTip>,
 		>,
 		sr25519::Pair,
 	>,
 ) {
-	if ask.is_none() || matches!(Some(true), _ask) {
-		println!("type `y` or `yes` to sign and submit sudo transaction");
-		let mut message = vec![];
-		std::io::stdin().lock().read_to_end(&mut message).expect("console always work");
-		let message = String::from_utf8(message).expect("utf8").to_lowercase();
-		if !(message == "yes" || message == "y") {
+	if ask {
+		println!("type `Yes` or `yes` to sign and submit sudo transaction");
+		let mut message = String::new();
+		std::io::stdin().read_line(&mut message).expect("console always work");
+		message = message.trim().to_lowercase();
+		if !(message == "yes") {
 			panic!("rejected")
 		}
 	}
-	let _result = api.tx().sign_and_submit_then_watch_default(&extrinsic, &signer).await.unwrap();
+	println!("executing... ");
+	let mut result =
+		api.tx().sign_and_submit_then_watch_default(&extrinsic, &signer).await.unwrap();
+	while let Some(ev) = result.next_item().await {
+		println!("{:?}", ev);
+		ev.unwrap();
+	}
+
+	println!("executed: {:?}", result);
 }
 
 async fn transfer_native_asset(command: TransferNative) {
 	let api = OnlineClient::<PolkadotConfig>::from_url(&command.rpc).await.unwrap();
-	let signer = pair_signer(
+	let signer = parity_pair_signer(
 		sr25519::Pair::from_string(&command.from_account_id, None)
 			.expect("provided key is not valid"),
 	);
@@ -168,7 +204,7 @@ async fn reserve_transfer_native_asset(command: ReserveTransferNative) {
 		parents: 0,
 		interior: v1::multilocation::Junctions::X1(Junction::Parachain(command.to_para_id)),
 	});
-	let signer = pair_signer(
+	let signer = parity_pair_signer(
 		sr25519::Pair::from_string(&command.from_account_id, None)
 			.expect("provided key is not valid"),
 	);
@@ -201,7 +237,7 @@ async fn reserve_transfer_native_asset(command: ReserveTransferNative) {
 	}
 }
 
-// TODO: PR this to subkey
+// TODO: PR this to `subkey`
 fn parachain_id_into_address(address: Address) {
 	//  https://substrate.stackexchange.com/questions/1200/how-to-calculate-sovereignaccount-for-parachain/1210#1210
 	let mut hex = Vec::new();
