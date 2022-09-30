@@ -16,11 +16,12 @@ VERSIONS_FILES=(
 steps=${1:-1}
 repeat=${2:-1}
 
-# We use composablefi/ci-linux:2022-08-06, it consists nightly and wasm32-unknown-unknown target.
+# We use `composablefi/ci-linux:2022-08-06` docker image, it consists nightly and wasm32-unknown-unknown target.
 # /home/$(whoami)/.cargo/bin/rustup install nightly
 # /home/$(whoami)/.cargo/bin/rustup target add wasm32-unknown-unknown --toolchain nightly
 
 # NOTE: decide prio and responsible for migration to nix after https://github.com/ComposableFi/composable/issues/1426
+cd code
 cargo +nightly build --release -p wasm-optimizer
 cargo +nightly build --release -p composable-runtime-wasm --target wasm32-unknown-unknown --features=runtime-benchmarks
 cargo +nightly build --release -p picasso-runtime-wasm --target wasm32-unknown-unknown --features=runtime-benchmarks
