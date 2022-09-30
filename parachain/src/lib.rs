@@ -599,6 +599,8 @@ where
 		}]);
 		let (ext_hash, block_hash) = self.submit_call(call, true).await?;
 
+		println!("Ext hash {ext_hash:?}, {block_hash:?}");
+
 		// Query newly created client Id
 		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
 		let identified_client_state: IdentifiedClientState =

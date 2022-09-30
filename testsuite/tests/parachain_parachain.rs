@@ -118,7 +118,7 @@ async fn setup_clients() -> (ParachainClient<DefaultConfig>, ParachainClient<Def
 	{
 		// Get initial beefy state
 		let (client_state, consensus_state) =
-			chain_b.construct_beefy_client_state(0).await.unwrap();
+			chain_b.construct_grandpa_client_state().await.unwrap();
 
 		// Create client message is the same for both chains
 		let msg_create_client = MsgCreateAnyClient::<LocalClientTypes> {
@@ -141,7 +141,7 @@ async fn setup_clients() -> (ParachainClient<DefaultConfig>, ParachainClient<Def
 	{
 		// Get initial beefy state
 		let (client_state, consensus_state) =
-			chain_a.construct_beefy_client_state(0).await.unwrap();
+			chain_a.construct_grandpa_client_state().await.unwrap();
 
 		// Create client message is the same for both chains
 		let msg_create_client = MsgCreateAnyClient::<LocalClientTypes> {
