@@ -66,6 +66,7 @@ bignumbers
 binop
 bintools
 bitfield
+bitfields
 bitvec
 bob
 bootnodes
@@ -95,6 +96,7 @@ coreutils
 cosm
 crev # cargo-crev
 dalek
+crowdloaning
 devcontainers
 devel
 dhms # day hour minute second
@@ -133,6 +135,7 @@ hljs
 horiz
 hotjar
 iavl
+idents
 iefix
 ifeq
 imagesdir
@@ -172,6 +175,8 @@ miniserve
 minvested
 mochawesome
 msapplication
+Multiaddr
+multiassets
 multihash
 mutantdino
 narinfo
@@ -183,6 +188,7 @@ nixops
 nixos
 nixpkgs
 nocapture
+nocompile
 noconfirm
 nodedir
 NOFILE
@@ -192,6 +198,7 @@ npmjs
 npos
 NPROC
 numtide
+offboarded
 offences
 on_unbalanceds
 oneliner
@@ -204,6 +211,7 @@ oraclestake
 oxalica # github username
 pacman
 pandoc
+parablock
 paritytech
 patchelf
 pctest
@@ -212,6 +220,8 @@ peekable
 peerset
 perbill
 permill
+
+permissionlessly
 perquintill
 perthing
 perthousand
@@ -226,8 +236,11 @@ popout
 powd
 powf
 prebaked
+preclaim
+preclaims
 precommit
 precommits
+prevote
 procps
 proptest
 proptests
@@ -235,6 +248,9 @@ prost
 protoc
 PROTOC
 PTRACE
+rebag
+rebagged
+rebond
 reduxjs
 registryaddr
 rekt
@@ -310,9 +326,16 @@ tungstenite
 typegen
 typeorm
 udeps
+unbond
+unbonded
+unbonding
+unfound
 unlookup
+unpruned
 unstakeform
 unsubs
+unvouch
+unvouched
 upsert
 uptodate # used throughout our codebase
 urql
