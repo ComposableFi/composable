@@ -4,7 +4,7 @@ Crowdloan rewards pallet used by contributors to claim their rewards.
 A user is able to claim rewards once it has an associated account. Associating
 an account using the `associate` extrinsic automatically yield the upfront
 liquidity (% of the vested reward). The rest of the reward can be claimed every
-`VestingStep` starting at the timestamp when the pallet has been initialized
+`VestingStep` starting at the timestamp when the pallet was initialized
 using the `initialize` extrinsic.
 
 Proof to provide when associating a reward account:
@@ -352,7 +352,7 @@ pub mod pallet {
 		}
 
 		/// Associates a reward account with some remote account provided by a proof. Calls
-		/// `do_claim` to preform the first claim.
+		/// `do_claim` to perform the first claim.
 		///
 		/// # Errors
 		/// * `NotInitialized` - The Crowdloan has not been initialized yet
