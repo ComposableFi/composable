@@ -808,6 +808,13 @@ pub mod pallet {
 				lock: lock::Lock {
 					started_at: T::UnixTime::now().as_secs(),
 					duration: duration_preset,
+					// NOTE: Currently, the early unlock penalty for all stakes in a pool are the
+					// same as the pool's penalty *at the time of staking*. This value is duplicated
+					// to keep the stake's penalty independent from the reward pool's penalty,
+					// allowing for future changes/ feature additions to penalties such as variable
+					// penalties per stake (i.e. penalty affected by staked duration or something
+					// similar) or updating the pool's penalty while still upholding the staking
+					// contracts of existing stakers.
 					unlock_penalty: rewards_pool.lock.unlock_penalty,
 				},
 				fnft_instance_id,
