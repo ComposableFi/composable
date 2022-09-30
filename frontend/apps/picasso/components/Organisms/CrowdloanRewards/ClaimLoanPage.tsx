@@ -10,20 +10,18 @@ import {
 } from "@/components";
 import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
 import { useStore } from "@/stores/root";
-import { alpha, Grid, Typography, useTheme } from "@mui/material";
+import { Grid, Typography, useTheme } from "@mui/material";
 import { stringToHex } from "@polkadot/util";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { crowdLoanSignableMessage } from "@/utils/crowdloanRewards";
 import { useRouter } from "next/router";
 import { ConnectorType, useBlockchainProvider, useConnector } from "bi-lib";
-import { OpenInNewRounded } from "@mui/icons-material";
 import {
   useDotSamaContext,
   useExecutor,
   usePendingExtrinsic,
 } from "substrate-react";
 import { useSnackbar } from "notistack";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import {
   CrowdloanStep,
   useCrowdloanRewardsSlice,
@@ -31,13 +29,13 @@ import {
 import { useCrowdloanRewardsClaim } from "@/defi/polkadot/hooks/crowdloanRewards/useCrowdloanRewardsClaim";
 import { useCrowdloanRewardsAssociate } from "@/defi/polkadot/hooks/crowdloanRewards/useCrowdloanRewardsAssociate";
 import {
-  useCrowdloanNextStep,
-  useClaimableAmount,
-  useClaimedAmount,
-  useCrowdloanContributions,
-  useEligibility,
-  useEthereumAssociatedAccount,
-  useHasStartedCrowdloan,
+  useCrowdloanRewardsStepGivenConnectedAccounts,
+  useCrowdloanRewardsClaimableRewards,
+  useCrowdloanRewardsClaimedRewards,
+  useCrowdloanRewardsContributionAndRewards,
+  useCrowdloanRewardsEligibility,
+  useCrowdloanRewardsEthereumAddressAssociatedAccount,
+  useCrowdloanRewardsHasStarted,
 } from "@/stores/defi/polkadot/crowdloanRewards/hooks";
 
 const DEFAULT_EVM_ID = 1;
@@ -69,34 +67,22 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
   const { enqueueSnackbar } = useSnackbar();
   const { isActive } = useConnector(ConnectorType.MetaMask);
   const { signer, account } = useBlockchainProvider(DEFAULT_EVM_ID);
-  const executor = useExecutor();
-
-  const updateBalance = useStore(
-    ({ substrateBalances }) => substrateBalances.updateBalance
-  );
-
-  const { closeKSMClaimModal, openKSMClaimModal } = useStore(({ ui }) => ui);
   const { extensionStatus } = useDotSamaContext();
   const { parachainApi, accounts } = usePicassoProvider();
-
+  const { initialPayment } = useCrowdloanRewardsSlice();
+  const executor = useExecutor();
   const selectedAccount = useSelectedAccount();
   const theme = useTheme();
+  const hasStarted = useCrowdloanRewardsHasStarted(parachainApi);
+
   const [ineligibleText, setIneligibleText] = useState({
     title: ERROR_MESSAGES.KSM_WALLET_NOT_CONNECTED.title,
     textBelow: ERROR_MESSAGES.KSM_WALLET_NOT_CONNECTED.message,
   });
-  const [showAlertBox, setShowAlertBox] = useState<boolean>(false);
 
-  const flow = useMemo(() => {
-    const pathNames = router.pathname.split("/");
-    const pathName = pathNames[pathNames.length - 1];
-
-    if (pathName.toLowerCase() === "ksm") {
-      return "KSM";
-    } else {
-      return "Stable coin";
-    }
-  }, [router]);
+  const updateBalance = useStore(
+    ({ substrateBalances }) => substrateBalances.updateBalance
+  );
 
   const isPendingClaim = usePendingExtrinsic(
     "claim",
@@ -109,6 +95,53 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
     "crowdloanRewards",
     ""
   );
+
+  const ethAssociatedOrSelectedAccount = useCrowdloanRewardsEthereumAddressAssociatedAccount(
+    account?.toLowerCase(),
+    selectedAccount,
+    accounts
+  );
+
+  const nextStep = useCrowdloanRewardsStepGivenConnectedAccounts(
+    selectedAccount?.address,
+    account?.toLowerCase()
+  );
+
+  const availableToClaim = useCrowdloanRewardsClaimableRewards(
+    nextStep,
+    account?.toLowerCase(),
+    selectedAccount?.address,
+    parachainApi,
+    initialPayment
+  );
+
+  const claimedRewards = useCrowdloanRewardsClaimedRewards(
+    account?.toLowerCase(),
+    selectedAccount?.address,
+    parachainApi
+  );
+
+  const { isEthAccountEligible, isPicassoAccountEligible } = useCrowdloanRewardsEligibility(
+    account?.toLowerCase(),
+    selectedAccount?.address
+  );
+
+  const { contributedAmount, totalRewards } = useCrowdloanRewardsContributionAndRewards(
+    nextStep,
+    account?.toLowerCase(),
+    selectedAccount?.address
+  );
+
+  const flow = useMemo(() => {
+    const pathNames = router.pathname.split("/");
+    const pathName = pathNames[pathNames.length - 1];
+
+    if (pathName.toLowerCase() === "ksm") {
+      return "KSM";
+    } else {
+      return "Stable coin";
+    }
+  }, [router]);
 
   const signPolkadotJs = useCallback(async (): Promise<string> => {
     try {
@@ -159,13 +192,6 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
     }
   }, [selectedAccount, signer, parachainApi, enqueueSnackbar]);
 
-  const { initialPayment } = useCrowdloanRewardsSlice();
-
-  const { isEthAccountEligible, isPicassoAccountEligible } = useEligibility(
-    account?.toLowerCase(),
-    selectedAccount?.address
-  );
-
   useEffect(() => {
     if (flow === "KSM" && extensionStatus !== "connected")
       setIneligibleText({
@@ -192,12 +218,6 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
     extensionStatus,
   ]);
 
-  const ethAssociatedOrSelectedAccount = useEthereumAssociatedAccount(
-    account?.toLowerCase(),
-    selectedAccount,
-    accounts
-  );
-
   const hasNothingToClaim = useCallback(() => {
     if (extensionStatus !== "connected" || !selectedAccount) return true;
     if (!isEthAccountEligible && !isPicassoAccountEligible) return true;
@@ -209,11 +229,6 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
     isEthAccountEligible,
     isPicassoAccountEligible,
   ]);
-
-  const nextStep = useCrowdloanNextStep(
-    selectedAccount?.address,
-    account?.toLowerCase()
-  );
 
   const useAssociate = useCrowdloanRewardsAssociate({
     connectedAccounts: accounts,
@@ -234,28 +249,6 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
     selectedPicassoAddress: selectedAccount?.address,
     selectedEthereumAddress: account,
   });
-
-  const availableToClaim = useClaimableAmount(
-    nextStep,
-    account?.toLowerCase(),
-    selectedAccount?.address,
-    parachainApi,
-    initialPayment
-  );
-
-  const claimedRewards = useClaimedAmount(
-    account?.toLowerCase(),
-    selectedAccount?.address,
-    parachainApi
-  );
-
-  const { contributedAmount, totalRewards } = useCrowdloanContributions(
-    nextStep,
-    account?.toLowerCase(),
-    selectedAccount?.address
-  );
-
-  const hasStarted = useHasStartedCrowdloan(parachainApi);
 
   const breadcrumbs = [
     <Link key="Overview" underline="none" color="primary" href="/">

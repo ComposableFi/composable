@@ -2,116 +2,24 @@ import { ConnectedAccount } from "@/../../packages/substrate-react/src";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { ApiPromise } from "@polkadot/api";
 import { encodeAddress } from "@polkadot/util-crypto";
-import BigNumber from "bignumber.js";
-import { useMemo, useState, useEffect } from "react";
-import { fetchClaimedRewards, fetchClaimableRewards } from "./crowdloanRewards";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import {
+  fetchClaimedRewards,
+  fetchClaimableRewards,
+  findAssociation,
+  isAssociatedAccountSameAsConnectedAccount,
+} from "./crowdloanRewards";
+import {
+  CrowdloanAssociation,
   CrowdloanStep,
-  setCrowdloanRewardsState,
   useCrowdloanRewardsSlice,
 } from "./crowdloanRewards.slice";
+import BigNumber from "bignumber.js";
 
-export const useCrowdloanNextStep = (
-  selectedPicassoAccount: string | undefined,
-  selectedEthereumAccount: string | undefined
-): CrowdloanStep => {
-  const { ethereumContributions, kusamaContributions, onChainAssociations } =
-    useCrowdloanRewardsSlice();
+export const toKusamaAddressFormat = (address: string) =>
+  encodeAddress(address, SUBSTRATE_NETWORKS.kusama.ss58Format);
 
-  return useMemo(() => {
-    if (selectedPicassoAccount) {
-      const selectedPICAinKSMFormat = encodeAddress(
-        selectedPicassoAccount,
-        SUBSTRATE_NETWORKS.kusama.ss58Format
-      );
-
-      if (selectedEthereumAccount) {
-        const isEthAccountEligible =
-          selectedEthereumAccount in ethereumContributions;
-        const isKsmAccountEligible =
-          selectedPICAinKSMFormat in kusamaContributions;
-
-        if (isEthAccountEligible && !isKsmAccountEligible) {
-          const isAssociatedPicassoAccount = onChainAssociations.find(
-            ([_account, association]) => {
-              return (
-                association !== null && association === selectedEthereumAccount
-              );
-            }
-          );
-
-          const isConnectedPICAAccountAssociatedAsWell =
-            isAssociatedPicassoAccount &&
-            isAssociatedPicassoAccount[0] === selectedPicassoAccount;
-
-          if (isConnectedPICAAccountAssociatedAsWell) {
-            return CrowdloanStep.Claim;
-          } else {
-            return CrowdloanStep.AssociateEth;
-          }
-        } else if (isEthAccountEligible && isKsmAccountEligible) {
-          // cant happen
-          // two people having eth private key
-          // and ksm private key as well.
-          // prioritize ksm association
-          const hasBeenAssociated = onChainAssociations.find(
-            ([_account, association]) => {
-              return association === selectedPicassoAccount;
-            }
-          );
-
-          if (hasBeenAssociated) {
-            return CrowdloanStep.Claim;
-          } else {
-            return CrowdloanStep.AssociateKsm;
-          }
-        } else if (isKsmAccountEligible && !isEthAccountEligible) {
-          const hasBeenAssociated = onChainAssociations.find(
-            ([_account, association]) => {
-              return association === selectedPicassoAccount;
-            }
-          );
-
-          if (hasBeenAssociated) {
-            return CrowdloanStep.Claim;
-          } else {
-            return CrowdloanStep.AssociateKsm;
-          }
-        }
-      } else {
-        let isKsmEligible = selectedPICAinKSMFormat in kusamaContributions;
-
-        if (isKsmEligible) {
-          const hasBeenAssociated = onChainAssociations.find(
-            ([_account, association]) => {
-              return association === selectedPicassoAccount;
-            }
-          );
-
-          let isKsmAssociatedAccountSameAsConnected =
-            hasBeenAssociated &&
-            hasBeenAssociated[0] === selectedPicassoAccount;
-
-          if (isKsmAssociatedAccountSameAsConnected) {
-            return CrowdloanStep.Claim;
-          } else {
-            return CrowdloanStep.AssociateKsm;
-          }
-        }
-      }
-    }
-
-    return CrowdloanStep.None;
-  }, [
-    ethereumContributions,
-    kusamaContributions,
-    onChainAssociations,
-    selectedEthereumAccount,
-    selectedPicassoAccount,
-  ]);
-};
-
-export const useCrowdloanContributions = (
+export const useCrowdloanRewardsContributionAndRewards = (
   _crowdloanStep: CrowdloanStep,
   ethAccount: string | undefined,
   picassoAccount: string | undefined
@@ -124,10 +32,7 @@ export const useCrowdloanContributions = (
       return ethereumContributions[ethAccount];
 
     if (picassoAccount) {
-      const ksmFormat = encodeAddress(
-        picassoAccount,
-        SUBSTRATE_NETWORKS.kusama.ss58Format
-      );
+      const ksmFormat = toKusamaAddressFormat(picassoAccount);
       if (ksmFormat && ksmFormat in kusamaContributions)
         return kusamaContributions[ksmFormat];
     }
@@ -147,135 +52,113 @@ export const useCrowdloanContributions = (
  * @param {ApiPromise} api parachain api object
  * @returns {BigNumber} amount of rewards claimed
  */
-export const useClaimedAmount = (
+export const useCrowdloanRewardsClaimedRewards = (
   ethAccount: string | undefined,
   picassoAccount: string | undefined,
   api?: ApiPromise
 ): BigNumber => {
-  const { ethereumContributions, kusamaContributions } =
-    useCrowdloanRewardsSlice();
-
   const [claimedAmount, setClaimedAmount] = useState(new BigNumber(0));
+  const { isEthAccountEligible, isPicassoAccountEligible } =
+    useCrowdloanRewardsEligibility(ethAccount, picassoAccount);
 
   useEffect(() => {
-    if (api && ethAccount && ethAccount in ethereumContributions) {
-      fetchClaimedRewards(api, ethAccount.toLowerCase()).then(setClaimedAmount);
-      return;
+    if (api && isEthAccountEligible) {
+      fetchClaimedRewards(api, (ethAccount as string).toLowerCase()).then(
+        setClaimedAmount
+      );
     }
 
-    if (picassoAccount && api) {
-      const ksmAddress = encodeAddress(
-        picassoAccount,
-        SUBSTRATE_NETWORKS.kusama.ss58Format
-      );
-      if (ksmAddress in kusamaContributions) {
-        fetchClaimedRewards(api, ksmAddress).then(setClaimedAmount);
-      }
-      return;
+    if (api && isPicassoAccountEligible) {
+      fetchClaimedRewards(api, picassoAccount as string).then(setClaimedAmount);
     }
   }, [
-    ethereumContributions,
-    kusamaContributions,
     api,
     ethAccount,
+    isEthAccountEligible,
+    isPicassoAccountEligible,
     picassoAccount,
   ]);
 
   return claimedAmount;
 };
 
-export const useClaimableAmount = (
+export const useCrowdloanRewardsClaimableRewards = (
   _crowdloanStep: CrowdloanStep,
   ethAccount: string | undefined,
   picassoAccount: string | undefined,
   api: ApiPromise | undefined,
   initialPayment: BigNumber
 ): BigNumber => {
-  const {
-    onChainAssociations,
+  const [claimableAmount, setClaimableAmount] = useState(new BigNumber(0));
+  const { isEthAccountEligible, isPicassoAccountEligible } =
+    useCrowdloanRewardsEligibility(ethAccount, picassoAccount);
+
+  const { onChainAssociations, ethereumContributions, kusamaContributions } =
+    useCrowdloanRewardsSlice();
+
+  const updateClaimable = useCallback(async (): Promise<BigNumber> => {
+    if (!api) return new BigNumber(0);
+
+    let totalRewards = new BigNumber(0),
+      canClaim = false,
+      accountAssociation: CrowdloanAssociation | undefined;
+    if (isEthAccountEligible && !isPicassoAccountEligible) {
+      totalRewards = ethereumContributions[ethAccount as string].totalRewards;
+      accountAssociation = findAssociation(
+        ethAccount,
+        "ethereum",
+        onChainAssociations
+      );
+      canClaim = isAssociatedAccountSameAsConnectedAccount(
+        picassoAccount as string,
+        accountAssociation
+      );
+    } else if (isPicassoAccountEligible && !isEthAccountEligible) {
+      const ksmFormat = toKusamaAddressFormat(picassoAccount as string);
+      totalRewards = kusamaContributions[ksmFormat].totalRewards;
+      accountAssociation = findAssociation(
+        picassoAccount,
+        "picasso",
+        onChainAssociations
+      );
+      canClaim = isAssociatedAccountSameAsConnectedAccount(
+        picassoAccount as string,
+        accountAssociation
+      );
+    }
+
+    if (canClaim) {
+      return await fetchClaimableRewards(api, picassoAccount as string);
+    } else if (
+      !accountAssociation &&
+      (isEthAccountEligible || isPicassoAccountEligible)
+    ) {
+      return totalRewards.times(initialPayment);
+    }
+    return new BigNumber(0);
+  }, [
+    api,
+    ethAccount,
     ethereumContributions,
+    initialPayment,
+    isEthAccountEligible,
+    isPicassoAccountEligible,
     kusamaContributions,
-    claimableAmount,
-  } = useCrowdloanRewardsSlice();
+    onChainAssociations,
+    picassoAccount,
+  ]);
 
   useEffect(() => {
-    if (api) {
-      if (picassoAccount) {
-        const selectedAccountKsmFormat = encodeAddress(
-          picassoAccount,
-          SUBSTRATE_NETWORKS.kusama.ss58Format
-        );
+    const interval = setInterval(() => {
+      updateClaimable().then(setClaimableAmount);
+    }, 30_000);
 
-        const isEthEligible = ethAccount && ethAccount in ethereumContributions;
-        const isKsmEligible = selectedAccountKsmFormat in kusamaContributions;
+    updateClaimable().then(setClaimableAmount);
 
-        if (isEthEligible && !isKsmEligible) {
-          const ethAccountAssociation = onChainAssociations.find(
-            ([_associatedAccount, associatedAccount]) => {
-              return (
-                associatedAccount?.toLowerCase() === ethAccount.toLowerCase()
-              );
-            }
-          );
-
-          if (ethAccountAssociation) {
-            let isSameAsConnected = ethAccountAssociation[0] === picassoAccount;
-
-            if (isSameAsConnected) {
-              fetchClaimableRewards(api, picassoAccount).then(
-                (claimableAmount) => {
-                  setCrowdloanRewardsState({ claimableAmount });
-                }
-              );
-            } else {
-              setCrowdloanRewardsState({ claimableAmount: new BigNumber(0) });
-            }
-          } else if (!ethAccountAssociation) {
-            const claimableAmount =
-              ethereumContributions[ethAccount].totalRewards.times(
-                initialPayment
-              );
-            setCrowdloanRewardsState({ claimableAmount });
-          }
-        } else if (!isEthEligible && isKsmEligible) {
-          const onChainAssociation = onChainAssociations.find(
-            ([_associatedAccount, associationAccount]) =>
-              associationAccount === picassoAccount
-          );
-
-          if (onChainAssociation) {
-            if (onChainAssociation[0] === picassoAccount) {
-              fetchClaimableRewards(api, picassoAccount).then(
-                (claimableAmount) => {
-                  setCrowdloanRewardsState({ claimableAmount });
-                }
-              );
-            } else {
-              console.log("Invalid Account Connected");
-            }
-          } else if (!onChainAssociation) {
-            const claimableAmount =
-              kusamaContributions[selectedAccountKsmFormat].totalRewards.times(
-                initialPayment
-              );
-            setCrowdloanRewardsState({ claimableAmount });
-          }
-        } else if (!isEthEligible && !isKsmEligible) {
-          setCrowdloanRewardsState({ claimableAmount: new BigNumber(0) });
-        }
-      } else {
-        setCrowdloanRewardsState({ claimableAmount: new BigNumber(0) });
-      }
-    }
-  }, [
-    ethAccount,
-    picassoAccount,
-    kusamaContributions,
-    onChainAssociations,
-    api,
-    initialPayment,
-    ethereumContributions,
-  ]);
+    return function () {
+      clearInterval(interval);
+    };
+  }, [updateClaimable]);
 
   return claimableAmount;
 };
@@ -288,7 +171,7 @@ export const useClaimableAmount = (
  * @param picassoAccount
  * @returns { isEthAccountEligible: boolean; isPicassoAccountEligible: boolean }
  */
-export const useEligibility = (
+export const useCrowdloanRewardsEligibility = (
   ethAccount?: string,
   picassoAccount?: string
 ): { isEthAccountEligible: boolean; isPicassoAccountEligible: boolean } => {
@@ -298,8 +181,7 @@ export const useEligibility = (
   return useMemo(() => {
     const isPicassoAccountEligible =
       picassoAccount !== undefined &&
-      encodeAddress(picassoAccount, SUBSTRATE_NETWORKS.kusama.ss58Format) in
-        kusamaContributions;
+      toKusamaAddressFormat(picassoAccount) in kusamaContributions;
     const isEthAccountEligible =
       ethAccount !== undefined && ethAccount in ethereumContributions;
 
@@ -318,7 +200,7 @@ export const useEligibility = (
  * @param {ConnectedAccount[] | undefined} connectedPicassoAccounts All Connected Polkadot Accounts
  * @returns
  */
-export const useEthereumAssociatedAccount = (
+export const useCrowdloanRewardsEthereumAddressAssociatedAccount = (
   ethereumAccount?: string,
   connectedPicassoAccount?: ConnectedAccount,
   connectedPicassoAccounts?: ConnectedAccount[]
@@ -327,18 +209,17 @@ export const useEthereumAssociatedAccount = (
 
   return useMemo(() => {
     if (ethereumAccount && connectedPicassoAccount) {
-      const ethAssociation = onChainAssociations.find(
-        ([_account, _association]) => {
-          return (
-            _association !== null &&
-            _association.toLowerCase() === ethereumAccount.toLowerCase()
-          );
-        }
+      const ethAssociation = findAssociation(
+        ethereumAccount,
+        "ethereum",
+        onChainAssociations
       );
 
       if (
-        ethAssociation &&
-        ethAssociation[0] === connectedPicassoAccount.address
+        isAssociatedAccountSameAsConnectedAccount(
+          connectedPicassoAccount.address,
+          ethAssociation
+        )
       ) {
         return connectedPicassoAccount;
       } else if (
@@ -346,9 +227,11 @@ export const useEthereumAssociatedAccount = (
         connectedPicassoAccounts &&
         connectedPicassoAccounts.length > 0
       ) {
-        return connectedPicassoAccounts.find(({ address, name }) => {
+        return connectedPicassoAccounts.find(({ address }) => {
           return address === ethAssociation[0];
         });
+      } else if (!ethAssociation) {
+        return connectedPicassoAccount;
       }
     }
 
@@ -367,7 +250,7 @@ export const useEthereumAssociatedAccount = (
  * @param {ApiPromise} api API object
  * @returns {boolean}
  */
-export const useHasStartedCrowdloan = (api?: ApiPromise): boolean => {
+export const useCrowdloanRewardsHasStarted = (api?: ApiPromise): boolean => {
   const [hasStarted, setHasStarted] = useState(false);
 
   useEffect(() => {
@@ -380,4 +263,70 @@ export const useHasStartedCrowdloan = (api?: ApiPromise): boolean => {
   }, [api]);
 
   return hasStarted;
+};
+
+export const useCrowdloanRewardsStepGivenConnectedAccounts = (
+  selectedPicassoAccount: string | undefined,
+  selectedEthereumAccount: string | undefined
+): CrowdloanStep => {
+  const { isEthAccountEligible, isPicassoAccountEligible } =
+    useCrowdloanRewardsEligibility(
+      selectedEthereumAccount,
+      selectedPicassoAccount
+    );
+  const { onChainAssociations } = useCrowdloanRewardsSlice();
+
+  return useMemo(() => {
+    if (isEthAccountEligible && !isPicassoAccountEligible) {
+      const ethAssociation = findAssociation(
+        selectedEthereumAccount,
+        "ethereum",
+        onChainAssociations
+      );
+
+      if (ethAssociation) {
+        if (
+          isAssociatedAccountSameAsConnectedAccount(
+            selectedPicassoAccount,
+            ethAssociation
+          )
+        ) {
+          return CrowdloanStep.Claim;
+        } else {
+          return CrowdloanStep.None;
+        }
+      } else {
+        return CrowdloanStep.AssociateEth;
+      }
+    } else if (isPicassoAccountEligible && !isEthAccountEligible) {
+      const ksmAssociation = findAssociation(
+        selectedPicassoAccount,
+        "picasso",
+        onChainAssociations
+      );
+
+      if (ksmAssociation) {
+        if (
+          isAssociatedAccountSameAsConnectedAccount(
+            selectedPicassoAccount,
+            ksmAssociation
+          )
+        ) {
+          return CrowdloanStep.Claim;
+        } else {
+          return CrowdloanStep.None;
+        }
+      } else {
+        return CrowdloanStep.AssociateKsm;
+      }
+    } else {
+      return CrowdloanStep.None;
+    }
+  }, [
+    isEthAccountEligible,
+    isPicassoAccountEligible,
+    onChainAssociations,
+    selectedEthereumAccount,
+    selectedPicassoAccount,
+  ]);
 };

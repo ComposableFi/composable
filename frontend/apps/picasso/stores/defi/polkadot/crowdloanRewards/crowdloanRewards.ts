@@ -143,3 +143,29 @@ export async function fetchClaimedRewards(
     return new BigNumber(0);
   }
 }
+
+export function findAssociation(
+  account: string | undefined,
+  accountType: "ethereum" | "picasso",
+  associations: CrowdloanAssociation[]
+): CrowdloanAssociation | undefined {
+  if (!account) return undefined;
+
+  return associations.find(([_connectedAccount, associatedAccount]) => {
+    return associatedAccount !== null
+      ? accountType === "ethereum"
+        ? associatedAccount.toLowerCase() === account.toLowerCase()
+        : accountType === "picasso"
+        ? associatedAccount === account
+        : false
+      : false;
+  });
+}
+
+export function isAssociatedAccountSameAsConnectedAccount(
+  connectedAccount?: string,
+  associatedAccount?: CrowdloanAssociation
+): boolean {
+  if (!connectedAccount && !associatedAccount) return false;
+  return connectedAccount === associatedAccount?.[0]
+}
