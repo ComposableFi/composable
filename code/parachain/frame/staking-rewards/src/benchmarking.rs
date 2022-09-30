@@ -212,6 +212,7 @@ benchmarks! {
 					duration_preset,
 					fnft_collection_id,
 					fnft_instance_id,
+					reward_multiplier,
 					keep_alive
 				} => Some(fnft_instance_id),
 				_ => None,
