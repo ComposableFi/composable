@@ -69,7 +69,7 @@ Each chain within the `XCVM` ecosystem has a set of contracts to enable the exec
 
 Different chains may choose to accept different encoding as the main entry point for contract calls. Such encodings can include but are not limited to `scale`, `ethabi`, or `bors`. Chain-to-chain calls are always in a single encoding: `protobuf`, which is used within the transport.
 
-`protobuf` generally not deterministic. XCVM restricts encoders and decoders to deterministic subset of protobuf.
+`protobuf` is generally not deterministic. XCVM restricts encoders and decoders to a deterministic subset of protobuf.
 
 ### Gateway
 
