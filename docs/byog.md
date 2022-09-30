@@ -16,7 +16,7 @@ A runtime configuration allows mapping amount of execution which can be bought f
 
 ## Current state
 
-Any cross-chain XCMP transactions can choose what assets to use to pay for the transaction.
+Any cross-chain XCMP transactions can choose which assets to use to pay for the transaction.
 
 Direct transaction can add header to pick up `payment` asset or accounts can configure default [payment asset](https://github.com/paritytech/substrate/discussions/12055).
 
