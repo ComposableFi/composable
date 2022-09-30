@@ -15,7 +15,7 @@ This will download all required tools you need and put you into our declarative 
 
 ## Alternative `devShell`s
 
-We not only provide the `default` devShell, but also other ones that are optimized for specific purposes. for example, you can use
+We provide not only the `default` devShell but also other ones optimized for specific purposes. So, for example, you can use:
 
 ```bash
 nix develop ".#docs"
