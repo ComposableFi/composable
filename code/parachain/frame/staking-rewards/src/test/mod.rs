@@ -65,6 +65,35 @@ fn test_create_reward_pool() {
 }
 
 #[test]
+fn duration_presets_minimum_is_1() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+
+		assert_ok!(StakingRewards::create_reward_pool(
+			Origin::root(),
+			RewardRateBasedIncentive {
+				owner: ALICE,
+				asset_id: PICA::ID,
+				start_block: 2,
+				end_block: 5,
+				reward_configs: default_reward_config(),
+				lock: LockConfig {
+					duration_presets: [
+						(ONE_MINUTE, Perbill::from_rational(1_u32, 10_u32)), // 0.1%
+					]
+					.into_iter()
+					.try_collect()
+					.unwrap(),
+					unlock_penalty: Perbill::from_percent(5),
+				},
+				share_asset_id: XPICA::ID,
+				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+			},
+		));
+	});
+}
+
+#[test]
 fn test_create_reward_pool_invalid_end_block() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);

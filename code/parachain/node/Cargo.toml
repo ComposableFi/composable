@@ -32,12 +32,15 @@ pallet-crowdloan-rewards = { path = "../frame/crowdloan-rewards" }
 
 assets-rpc = { path = "../frame/assets/rpc" }
 assets-runtime-api = { path = "../frame/assets/runtime-api" }
+cosmwasm-rpc = { path = "../frame/cosmwasm/rpc" }
+cosmwasm-runtime-api = { path = "../frame/cosmwasm/runtime-api" }
 crowdloan-rewards-rpc = { path = "../frame/crowdloan-rewards/rpc" }
 crowdloan-rewards-runtime-api = { path = "../frame/crowdloan-rewards/runtime-api" }
 lending-rpc = { path = "../frame/lending/rpc" }
 lending-runtime-api = { path = "../frame/lending/runtime-api" }
 pablo-rpc = { path = "../frame/pablo/rpc" }
 pablo-runtime-api = { path = "../frame/pablo/runtime-api" }
+
 
 # FRAME Dependencies
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
