@@ -5,11 +5,11 @@ _Cut your check-fix feedback-loop by not waiting on CI runners._
 
 We've all been there. You're working on a PR, submit it for review, ping your colleagues to review it on Slack, only to notice that checks are suddenly failing in CI.
 
-This happened because it was very difficult to always run the exact same checks that CI is running on your own machine. However, Nix fixes this and allows you to **run the exact same checks locally**.
+The failing checks happened because it was difficult to reliably run the same checks that CI is running on your local machine. However, Nix fixes this and allows you to **run the same checks locally**.
 
-Since checks are just packages defined by our repositories, flakes, you can easily run them locally.
+Since checks are just packages defined by our repositories' flakes, you can efficiently run them locally.
 
-Nix also allows you to easily format the entire repository in accordance with our formatting spec.
+Nix also allows you to easily format the entire repository per our formatting spec.
 
 ## Examples
 
