@@ -335,7 +335,7 @@ Propagating updates across registries is handled by the `XCVM` too. We will go m
 
 ## NFTs
 
-The design specification currently does not hold NFTs into account. We have chosen to not (yet) specify NFTs as part of `Assets` due to the complexity of owning and value accruing NFTs. We do however intend to update the specification once the approach has been finalized.
+The design specification currently does not take NFTs into account. We have chosen to not (yet) specify NFTs as part of `Assets` due to the complexity of owning and value accruing NFTs. We do however intend to update the specification once the approach has been finalized.
 
 ## Examples
 
