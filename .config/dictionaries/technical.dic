@@ -103,6 +103,7 @@ dockerfile
 dotgraphs
 drawio
 eamodio
+ebnf
 edgeware
 endef
 enduml
