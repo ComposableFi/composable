@@ -3,7 +3,7 @@
 
 ---
 
-If you are working on something new within Composable that does not have a Nix package yet, you will need to "nixify" your project by writing a package definition in our `flake.nix`. In order to do this, you should read the following.
+If you are working on something new within Composable that does not have a Nix package yet, you will need to "nixify" your project by writing a package definition in our `flake.nix`. To do this, you should read the following:
 
 - [The Nix language](https://nixos.wiki/wiki/Overview_of_the_Nix_Language). (Don't worry, it is a very simple language)
 - [The Nix Flake system](https://nixos.wiki/wiki/Flakes). (Also very simple)
