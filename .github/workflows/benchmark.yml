@@ -18,7 +18,7 @@ jobs:
       - bmark
     container:
       image: composablefi/ci-linux:2022-08-06
-      volumes:
+      # volumes:
         # - code:/mnt/code
         # - code/parachain/runtime/composable/src/weights:/mnt/code/parachain/runtime/composable/src/weights
         # - ./code/parachain/runtime/dali/src/weights:/mnt/code/parachain/runtime/dali/src/weights
