@@ -7,11 +7,18 @@ set -e # fail on any error
 #shellcheck source=../common/lib.sh
 . "$(dirname "${0}")/./common/lib.sh"
 
+# VERSIONS_FILES=(
+#   "parachain/runtime/picasso/src/weights,picasso-dev,picasso"
+#   "parachain/runtime/dali/src/weights,dali-dev,dali"
+#   "parachain/runtime/composable/src/weights,composable-dev,composable"
+# )
+
 VERSIONS_FILES=(
-  "parachain/runtime/picasso/src/weights,picasso-dev,picasso"
-  "parachain/runtime/dali/src/weights,dali-dev,dali"
-  "parachain/runtime/composable/src/weights,composable-dev,composable"
+  "/mnt/code/parachain/runtime/picasso/src/weights,picasso-dev,picasso"
+  "/mnt/code/parachain/runtime/dali/src/weights,dali-dev,dali"
+  "/mnt/code/parachain/runtime/composable/src/weights,composable-dev,composable"
 )
+
 
 steps=${1:-1}
 repeat=${2:-1}
