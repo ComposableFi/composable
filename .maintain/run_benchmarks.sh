@@ -34,7 +34,8 @@ export PICASSO_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/picass
 export COMPOSABLE_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/composable_runtime.optimized.wasm)
 
 # TODO: use nix
-/home/$(whoami)/.cargo/bin/cargo build --release --package composable --features=runtime-benchmarks --features=builtin-wasm
+# /home/$(whoami)/.cargo/bin/cargo build --release --package composable --features=runtime-benchmarks --features=builtin-wasm
+cargo build --release --package composable --features=runtime-benchmarks --features=builtin-wasm
 
 run_benchmarks() {
   OUTPUT=$1
