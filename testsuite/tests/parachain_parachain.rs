@@ -93,12 +93,14 @@ async fn setup_clients() -> (ParachainClient<DefaultConfig>, ParachainClient<Def
 	// Wait until for parachains to start producing blocks
 	log::info!(target: "hyperspace", "Waiting for  block production from parachains");
 	let _ = chain_a
-		.para_client
+		.relay_client
 		.rpc()
 		.subscribe_blocks()
 		.await
 		.unwrap()
-		.take(2)
+		.filter_map(|result| futures::future::ready(result.ok()))
+		.skip_while(|h| futures::future::ready(h.number < 210))
+		.take(1)
 		.collect::<Vec<_>>()
 		.await;
 	log::info!(target: "hyperspace", "Parachains have started block production");
@@ -168,15 +170,15 @@ async fn setup_clients() -> (ParachainClient<DefaultConfig>, ParachainClient<Def
 async fn main() {
 	logging::setup_logging();
 	// Run tests sequentially
-	parachain_to_parachain_ibc_messaging_packet_height_timeout().await;
-	parachain_to_parachain_ibc_messaging_packet_timeout_timestamp().await;
-	parachain_to_parachain_ibc_messaging_token_transfer_with_delay().await;
-	parachain_to_parachain_ibc_messaging_token_transfer().await;
+	parachain_to_parachain_ibc_messaging_packet_height_timeout_with_connection_delay().await;
+	parachain_to_parachain_ibc_messaging_packet_timeout_timestamp_with_connection_delay().await;
+	parachain_to_parachain_ibc_messaging_with_connection_delay().await;
+	parachain_to_parachain_ibc_messaging_without_connection_delay().await;
 	parachain_to_parachain_ibc_messaging_packet_timeout_on_channel_close().await;
 	parachain_to_parachain_ibc_channel_close().await;
 }
 
-async fn parachain_to_parachain_ibc_messaging_token_transfer() {
+async fn parachain_to_parachain_ibc_messaging_without_connection_delay() {
 	let (mut chain_a, mut chain_b) = setup_clients().await;
 	let (handle, channel_id, channel_b, _connection_id) =
 		setup_connection_and_channel(&chain_a, &chain_b, 0).await;
@@ -194,7 +196,7 @@ async fn parachain_to_parachain_ibc_messaging_token_transfer() {
 	handle.abort()
 }
 
-async fn parachain_to_parachain_ibc_messaging_packet_height_timeout() {
+async fn parachain_to_parachain_ibc_messaging_packet_height_timeout_with_connection_delay() {
 	let (mut chain_a, mut chain_b) = setup_clients().await;
 	let (handle, channel_id, channel_b, _connection_id) =
 		setup_connection_and_channel(&chain_a, &chain_b, 60 * 2).await;
@@ -212,7 +214,7 @@ async fn parachain_to_parachain_ibc_messaging_packet_height_timeout() {
 	handle.abort()
 }
 
-async fn parachain_to_parachain_ibc_messaging_packet_timeout_timestamp() {
+async fn parachain_to_parachain_ibc_messaging_packet_timeout_timestamp_with_connection_delay() {
 	let (mut chain_a, mut chain_b) = setup_clients().await;
 	let (handle, channel_id, channel_b, _connection_id) =
 		setup_connection_and_channel(&chain_a, &chain_b, 60 * 2).await;
@@ -233,7 +235,7 @@ async fn parachain_to_parachain_ibc_messaging_packet_timeout_timestamp() {
 /// Send a packet over a connection with a connection delay
 /// and assert the sending chain only sees the packet after the
 /// delay has elapsed.
-async fn parachain_to_parachain_ibc_messaging_token_transfer_with_delay() {
+async fn parachain_to_parachain_ibc_messaging_with_connection_delay() {
 	let (mut chain_a, mut chain_b) = setup_clients().await;
 	let (handle, channel_id, channel_b, _connection_id) =
 		setup_connection_and_channel(&chain_a, &chain_b, 60 * 5).await; // 5 mins delay
