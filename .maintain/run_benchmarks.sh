@@ -8,9 +8,9 @@ set -e # fail on any error
 . "$(dirname "${0}")/./common/lib.sh"
 
 VERSIONS_FILES=(
-  "code/parachain/runtime/picasso/src/weights,picasso-dev,picasso"
-  "code/parachain/runtime/dali/src/weights,dali-dev,dali"
-  "code/parachain/runtime/composable/src/weights,composable-dev,composable"
+  "parachain/runtime/picasso/src/weights,picasso-dev,picasso"
+  "parachain/runtime/dali/src/weights,dali-dev,dali"
+  "parachain/runtime/composable/src/weights,composable-dev,composable"
 )
 
 steps=${1:-1}
