@@ -31,13 +31,13 @@ if [[ $PREV_TAG_OR_COMMIT == *"untagged"* ]]; then
 fi
 
 # Check for runtime changes between two commits. This is defined as any changes
-# to runtime/, frame/
+# to code/parachain/runtime/, code/parachain/frame/
 has_runtime_changes() {
   from=$1
   to=$2
   echo "diffing $from & $to"
   if git diff --name-only "${from}...${to}" |
-    grep -q -e '^frame/' -e "^runtime/$3/"; then
+    grep -q -e '^code/parachain/frame/' -e "^code/parachain/runtime/$3/"; then
     return 0
   else
     return 1
@@ -102,8 +102,8 @@ check_runtime() {
 	just bump 'impl_version'. If they do change logic, bump 'spec_version'.
 
 	source file directories:
-	- frame/*
-	- runtime/$2/*
+	- code/parachain/frame/*
+	- code/parachain/runtime/$2/*
 
 	versions file: ${VERSIONS_FILE}
 
