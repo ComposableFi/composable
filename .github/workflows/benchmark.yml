@@ -16,6 +16,13 @@ jobs:
       - linux
       - x64
       - bmark
+    container:
+      image: composablefi/ci-linux:2022-08-06
+      # volumes:
+        # - code:/mnt/code
+        # - code/parachain/runtime/composable/src/weights:/mnt/code/parachain/runtime/composable/src/weights
+        # - ./code/parachain/runtime/dali/src/weights:/mnt/code/parachain/runtime/dali/src/weights
+        # - ./code/parachain/runtime/picasso/src/weights:/mnt/code/parachain/runtime/picasso/src/weights
     concurrency:
       group: bench-${{ github.ref }}
       cancel-in-progress: true
@@ -41,8 +48,10 @@ jobs:
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
           GITHUB_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
         id: check_runtime
-        if: contains( github.event.pull_request.labels.*.name, 'needs-benchmarks')
-        run: .maintain/check_runtime.sh
+        if: contains(github.event.pull_request.labels.*.name, 'needs-benchmarks')
+        run: |
+          git config --global --add safe.directory /__w/composable/composable
+          .maintain/check_runtime.sh
 
       # TODO: use nix
       - name: Benchmark Test
@@ -55,7 +64,7 @@ jobs:
 
       - uses: EndBug/add-and-commit@v8 
         with: 
-          add: 'runtime'
+          add: 'code/parachain/runtime'
           message: 'Pushing benchmark changes'
           push: "true"
           new_branch: ${{ steps.branch-name.outputs.current_branch }}
