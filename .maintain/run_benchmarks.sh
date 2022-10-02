@@ -13,19 +13,8 @@ VERSIONS_FILES=(
   "parachain/runtime/composable/src/weights,composable-dev,composable"
 )
 
-# VERSIONS_FILES=(
-#   "/mnt/code/parachain/runtime/picasso/src/weights,picasso-dev,picasso"
-#   "/mnt/code/parachain/runtime/dali/src/weights,dali-dev,dali"
-#   "/mnt/code/parachain/runtime/composable/src/weights,composable-dev,composable"
-# )
-
-
 steps=${1:-1}
 repeat=${2:-1}
-
-# We use `composablefi/ci-linux:2022-08-06` docker image, it consists nightly and wasm32-unknown-unknown target.
-# /home/$(whoami)/.cargo/bin/rustup install nightly
-# /home/$(whoami)/.cargo/bin/rustup target add wasm32-unknown-unknown --toolchain nightly
 
 # NOTE: decide prio and responsible for migration to nix after https://github.com/ComposableFi/composable/issues/1426
 cd code
@@ -41,7 +30,6 @@ export PICASSO_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/picass
 export COMPOSABLE_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/composable_runtime.optimized.wasm)
 
 # TODO: use nix
-# /home/$(whoami)/.cargo/bin/cargo build --release --package composable --features=runtime-benchmarks --features=builtin-wasm
 cargo build --release --package composable --features=runtime-benchmarks --features=builtin-wasm
 
 run_benchmarks() {
