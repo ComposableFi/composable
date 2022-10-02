@@ -62,7 +62,7 @@ jobs:
         id: run_benchmarks
         run: .maintain/run_benchmarks.sh 50 20
 
-      - uses: EndBug/add-and-commit@v8 
+      - uses: EndBug/add-and-commit@v9
         with: 
           add: 'code/parachain/runtime'
           message: 'Pushing benchmark changes'
