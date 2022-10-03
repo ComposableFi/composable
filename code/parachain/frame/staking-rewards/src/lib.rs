@@ -1397,77 +1397,56 @@ pub mod pallet {
 		type Balance = T::Balance;
 		type RewardPoolId = T::AssetId;
 
-		fn accumulate_reward(
-			_pool: &Self::RewardPoolId,
-			_reward_currency: Self::AssetId,
-			_reward_increment: Self::Balance,
-		) -> DispatchResult {
-			Ok(())
-		}
-
 		#[transactional]
 		fn transfer_reward(
 			from: &Self::AccountId,
-			pool: &Self::RewardPoolId,
+			pool_id: &Self::RewardPoolId,
 			reward_currency: Self::AssetId,
-			reward_increment: Self::Balance,
+			amount: Self::Balance,
+			keep_alive: bool,
 		) -> DispatchResult {
-			RewardPools::<T>::try_mutate(pool, |reward_pool| match reward_pool {
-				Some(reward_pool) => {
-					match reward_pool.rewards.get_mut(&reward_currency) {
-						Some(mut reward) => {
-							let new_total_reward =
-								reward.total_rewards.safe_add(&reward_increment)?;
-							ensure!(
-								(new_total_reward.safe_sub(&reward.total_dilution_adjustment)?) <=
-									reward.max_rewards,
-								Error::<T>::MaxRewardLimitReached
-							);
-							reward.total_rewards = new_total_reward;
-							let pool_account = Self::pool_account_id(pool);
-							T::Assets::transfer(
-								reward_currency,
-								from,
-								&pool_account,
-								reward_increment,
-								false,
-							)?;
-						},
-						None => {
-							let reward = Reward {
-								total_rewards: reward_increment,
-								claimed_rewards: Zero::zero(),
-								total_dilution_adjustment: T::Balance::zero(),
-								max_rewards: max(reward_increment, DEFAULT_MAX_REWARDS.into()),
-								reward_rate: RewardRate {
-									amount: T::Balance::zero(),
-									period: RewardRatePeriod::PerSecond,
-								},
-								last_updated_timestamp: 0,
-							};
-							reward_pool
-								.rewards
-								.try_insert(reward_currency, reward)
-								.map_err(|_| Error::<T>::TooManyRewardAssetTypes)?;
-							let pool_account = Self::pool_account_id(pool);
-							T::Assets::transfer(
-								reward_currency,
-								from,
-								&pool_account,
-								reward_increment,
-								false,
-							)?;
-						},
-					}
-					Self::deposit_event(Event::RewardTransferred {
-						from: from.clone(),
-						pool_id: *pool,
-						reward_currency,
-						reward_increment,
-					});
-					Ok(())
-				},
-				None => Err(Error::<T>::RewardsPoolNotFound.into()),
+			RewardPools::<T>::try_mutate(pool_id, |maybe_reward_pool| {
+				let reward_pool =
+					maybe_reward_pool.as_mut().ok_or(Error::<T>::RewardsPoolNotFound)?;
+
+				let pool_account_id = Self::pool_account_id(pool_id);
+
+				let do_transfer = || {
+					T::Assets::transfer(reward_currency, from, &pool_account_id, amount, keep_alive)
+				};
+
+				match reward_pool.rewards.get_mut(&reward_currency) {
+					Some(_reward) => {
+						do_transfer()?;
+					},
+					None => {
+						let reward = Reward {
+							total_rewards: amount,
+							claimed_rewards: Zero::zero(),
+							total_dilution_adjustment: T::Balance::zero(),
+							max_rewards: max(amount, DEFAULT_MAX_REWARDS.into()),
+							reward_rate: RewardRate {
+								amount: T::Balance::zero(),
+								period: RewardRatePeriod::PerSecond,
+							},
+							last_updated_timestamp: 0,
+						};
+						reward_pool
+							.rewards
+							.try_insert(reward_currency, reward)
+							.map_err(|_| Error::<T>::TooManyRewardAssetTypes)?;
+						do_transfer()?;
+					},
+				}
+
+				Self::deposit_event(Event::RewardTransferred {
+					from: from.clone(),
+					pool_id: *pool_id,
+					reward_currency,
+					reward_increment: amount,
+				});
+
+				Ok(())
 			})
 		}
 	}

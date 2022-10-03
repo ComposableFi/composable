@@ -262,21 +262,14 @@ pub trait ProtocolStaking {
 	type Balance;
 	type RewardPoolId;
 
-	/// Adds reward to common pool share.
-	/// Does not actually transfers real assets.
-	fn accumulate_reward(
-		pool: &Self::RewardPoolId,
-		reward_currency: Self::AssetId,
-		reward_increment: Self::Balance,
-	) -> DispatchResult;
-
 	/// Transfers rewards `from` to pool.
 	/// If may be bigger than total shares.
 	fn transfer_reward(
 		from: &Self::AccountId,
-		pool: &Self::RewardPoolId,
+		pool_id: &Self::RewardPoolId,
 		reward_currency: Self::AssetId,
-		reward_increment: Self::Balance,
+		amount: Self::Balance,
+		keep_alive: bool,
 	) -> DispatchResult;
 }
 
