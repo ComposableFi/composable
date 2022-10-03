@@ -839,6 +839,7 @@ pub mod pallet {
 					&T::PbloAssetId::get(),
 					fees.asset_id,
 					fees.protocol_fee,
+					false,
 				)?;
 			}
 			Ok(())
