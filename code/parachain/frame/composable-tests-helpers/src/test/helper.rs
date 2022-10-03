@@ -214,12 +214,13 @@ where
 	<RuntimeEvent as TryInto<PalletEvent>>::Error: sp_std::fmt::Debug,
 	PalletEvent: PartialEq + sp_std::fmt::Debug,
 {
-	pallet_events::<Runtime, RuntimeEvent, PalletEvent>()
-		.find(|e| e == &pallet_event)
-		.expect(&sp_std::fmt::format(core::format_args!(
+	match pallet_events::<Runtime, RuntimeEvent, PalletEvent>().find(|e| e == &pallet_event) {
+		Some(_) => {},
+		None => panic!(
 			r#"
 expected event wasn't emitted
 event checked: {pallet_event:#?}
 "#
-		)));
+		),
+	}
 }
