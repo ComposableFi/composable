@@ -286,7 +286,7 @@ pub enum Error {
 	TimeoutError { msg: Option<String> },
 	/// Failed to bind port
 	BindPortError { msg: Option<String> },
-	/// Failed to intialize a new channel
+	/// Failed to initialize a new channel
 	ChannelInitError { msg: Option<String> },
 	/// Failed to decode a value
 	DecodingError { msg: Option<String> },
@@ -323,7 +323,7 @@ impl TryFrom<&OpenChannelParams> for Order {
 }
 
 /// Captures the functions modules can use to interact with the ibc pallet
-/// Currently allows modules to register packets and crreate channels
+/// Currently allows modules to register packets and create channels
 pub trait IbcHandler {
 	/// Get the latest height and latest timestamp for the client paired to the channel and port
 	/// combination
@@ -337,7 +337,7 @@ pub trait IbcHandler {
 	fn open_channel(port_id: PortId, channel_end: ChannelEnd) -> Result<ChannelId, Error>;
 	/// Modules use this to write acknowledgements into the ibc store
 	/// To be used in a successful execution of OnRecvPacket callback
-	fn write_acknowlegdement(packet: &Packet, ack: Vec<u8>) -> Result<(), Error>;
+	fn write_acknowledgement(packet: &Packet, ack: Vec<u8>) -> Result<(), Error>;
 	/// Perform an ibc token transfer
 	fn send_transfer(data: MsgTransfer<PrefixedCoin>) -> Result<(), Error>;
 
@@ -361,7 +361,7 @@ pub trait CallbackWeight {
 	/// Returns the callback weight for the channel open acknowledgement ibc message
 	fn on_chan_open_ack(&self, _port_id: &PortId, _channel_id: &ChannelId) -> Weight;
 
-	/// Returns the callback weight for the channel open comfirm ibc message
+	/// Returns the callback weight for the channel open confirm ibc message
 	fn on_chan_open_confirm(&self, _port_id: &PortId, _channel_id: &ChannelId) -> Weight;
 
 	/// Returns the callback weight for the channel close init ibc message

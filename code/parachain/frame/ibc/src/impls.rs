@@ -890,7 +890,7 @@ where
 		Ok(channel_id)
 	}
 
-	fn write_acknowlegdement(packet: &Packet, ack: Vec<u8>) -> Result<(), IbcHandlerError> {
+	fn write_acknowledgement(packet: &Packet, ack: Vec<u8>) -> Result<(), IbcHandlerError> {
 		let mut ctx = Context::<T>::default();
 		Self::store_raw_acknowledgement(
 			(packet.destination_port.clone(), packet.destination_channel, packet.sequence),
