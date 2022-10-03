@@ -302,7 +302,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
-	/// counter for packet reciepts
+	/// counter for packet receipts
 	pub type PacketReceiptCounter<T: Config> = StorageValue<_, u32, ValueQuery>;
 
 	#[pallet::storage]
@@ -397,7 +397,7 @@ pub mod pallet {
 		Events { events: Vec<events::IbcEvent> },
 		/// Errors emitted by the ibc subsystem
 		Errors { errors: Vec<errors::IbcError> },
-		/// An Ibc token tranfer has been started
+		/// An Ibc token transfer has been started
 		TokenTransferInitiated {
 			from: <T as frame_system::Config>::AccountId,
 			to: Vec<u8>,
@@ -472,7 +472,7 @@ pub mod pallet {
 		Other,
 		/// Invalid route
 		InvalidRoute,
-		/// Invalid message for extirnsic
+		/// Invalid message for extrinsic
 		InvalidMessageType,
 		/// The interchain token transfer was not successfully initiated
 		TransferFailed,
