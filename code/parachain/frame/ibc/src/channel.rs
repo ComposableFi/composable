@@ -296,7 +296,7 @@ where
 		// 		.and_then(|v| codec::Decode::decode(&mut &*v).ok())
 		// 		.unwrap_or_default();
 		let mut packet_info: PacketInfo = packet.into();
-		// Store when packe
+		// Store when packet
 		packet_info.height = Some(host_height::<T>());
 		packet_info.channel_order = channel_end.ordering as u8;
 		// offchain_packets.insert(seq, packet_info);
