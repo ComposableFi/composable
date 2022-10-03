@@ -94,6 +94,7 @@ contentful
 coreutils
 cosm
 crev # cargo-crev
+dalek
 devcontainers
 devel
 dhms # day hour minute second
@@ -102,6 +103,7 @@ dockerfile
 dotgraphs
 drawio
 eamodio
+ebnf
 edgeware
 endef
 enduml
@@ -180,6 +182,8 @@ nixfmt
 nixops
 nixos
 nixpkgs
+nixify
+nixified
 nocapture
 noconfirm
 nodedir

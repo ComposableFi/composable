@@ -56,9 +56,8 @@ mod mocks;
 #[cfg(test)]
 mod tests;
 
-// FIXME: runtime signature generation must use host features.
-// #[cfg(feature = "runtime-benchmarks")]
-// mod benchmarking;
+#[cfg(any(feature = "runtime-benchmarks", test))]
+mod benchmarking;
 
 pub mod weights;
 
@@ -75,7 +74,7 @@ pub mod pallet {
 		dispatch::PostDispatchInfo,
 		pallet_prelude::*,
 		traits::{
-			fungible::{Inspect, Transfer},
+			fungible::{Inspect, Mutate, Transfer},
 			Time,
 		},
 		transactional, PalletId,
@@ -154,7 +153,8 @@ pub mod pallet {
 
 		/// The RewardAsset used to transfer the rewards
 		type RewardAsset: Inspect<Self::AccountId, Balance = Self::Balance>
-			+ Transfer<Self::AccountId, Balance = Self::Balance>;
+			+ Transfer<Self::AccountId, Balance = Self::Balance>
+			+ Mutate<Self::AccountId>;
 
 		type Moment: AtLeast32Bit + Parameter + Default + Copy + MaxEncodedLen + FullCodec;
 
