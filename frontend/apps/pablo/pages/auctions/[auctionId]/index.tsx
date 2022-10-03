@@ -15,7 +15,6 @@ import { AuctionPriceChart } from "@/components/Organisms/auction/AuctionPriceCh
 import { useEffect } from "react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { useParachainApi, useSelectedAccount } from "substrate-react";
-import { useAuctionsChart } from "@/store/hooks/useAuctionsChart";
 import { useAssets } from "@/defi/hooks/assets/useAsset";
 import { useRouter } from "next/router";
 import AuctionDetailTabs from "@/components/Organisms/auction/AuctionDetailTabs";
@@ -23,6 +22,7 @@ import moment from "moment-timezone";
 import {
   useAuctionsSlice,
 } from "@/store/auctions/auctions.slice";
+import { useAuctionsChart } from "@/defi/hooks";
 
 const Auction: NextPage = () => {
   const theme = useTheme();
