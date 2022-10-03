@@ -1,5 +1,5 @@
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
-import { SubstrateNetwork, SubstrateNetworkId } from "@/defi/polkadot/types";
+import { SubstrateNetworkId } from "@/defi/polkadot/types";
 import { callbackGate, getExistentialDeposit, toTokenUnitsBN } from "shared";
 
 import { useCallback, useEffect } from "react";
@@ -8,7 +8,7 @@ import { useStore } from "@/stores/root";
 import { ApiPromise } from "@polkadot/api";
 import {
   fetchKaruraBalanceByAssetId,
-  subscribePicassoBalanceByAssetId,
+  subscribePicassoBalanceByAssetId
 } from "@/defi/polkadot/pallets/Balance";
 import BigNumber from "bignumber.js";
 import { useDotSamaContext, useEagerConnect } from "substrate-react";
@@ -27,11 +27,11 @@ export async function subscribeNativeBalance(
   // create AccountId32 type byte array
   // and retrieve balances
   const accountId = api.createType("AccountId32", account);
-  await api.query.system.account(accountId, (result) => {
+  await api.query.system.account(accountId, result => {
     const blObject: any = result.toJSON();
 
     const {
-      data: { free },
+      data: { free }
     } = blObject;
 
     const { decimals } = SUBSTRATE_NETWORKS[chainId as SubstrateNetworkId];
@@ -42,7 +42,7 @@ export async function subscribeNativeBalance(
     updateBalance({
       substrateNetworkId: chainId as SubstrateNetworkId,
       balance: bnBalance.toString(),
-      existentialDeposit,
+      existentialDeposit
     });
   });
 }
@@ -65,7 +65,7 @@ export async function updateBalances(
   const blObject: any = queryResult.toJSON();
 
   const {
-    data: { free },
+    data: { free }
   } = blObject;
 
   const { decimals } = SUBSTRATE_NETWORKS[chainId as SubstrateNetworkId];
@@ -76,15 +76,11 @@ export async function updateBalances(
   updateBalance({
     substrateNetworkId: chainId as SubstrateNetworkId,
     balance: bnBalance.toString(),
-    existentialDeposit,
+    existentialDeposit
   });
 }
 
-const PolkadotBalancesUpdater = ({
-  substrateNetworks,
-}: {
-  substrateNetworks: SubstrateNetwork[];
-}) => {
+const PolkadotBalancesUpdater = () => {
   useEagerConnect("picasso");
   useEagerConnect("karura");
   const updateBalance = useStore(
@@ -102,8 +98,7 @@ const PolkadotBalancesUpdater = ({
   const {
     extensionStatus,
     selectedAccount,
-    parachainProviders,
-    relaychainProviders,
+    parachainProviders
   } = useDotSamaContext();
 
   // Subscribe for native balance changes
@@ -116,7 +111,7 @@ const PolkadotBalancesUpdater = ({
             chain.parachainApi,
             chainId,
             updateBalance
-          ).catch((err) => {
+          ).catch(err => {
             console.error(err);
           });
         }
@@ -124,6 +119,7 @@ const PolkadotBalancesUpdater = ({
     } else if (selectedAccount === -1) {
       clearBalance();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [parachainProviders, selectedAccount]);
 
   const picassoBalanceSubscriber = useCallback(
@@ -134,11 +130,11 @@ const PolkadotBalancesUpdater = ({
             chain.parachainApi!,
             account.address,
             String(asset.meta.supportedNetwork[chainId as SubstrateNetworkId]),
-            (balance) => {
+            balance => {
               updateAssetBalance({
                 substrateNetworkId: chainId as SubstrateNetworkId,
                 assetId: asset.meta.assetId,
-                balance,
+                balance
               });
             }
           );
@@ -159,9 +155,9 @@ const PolkadotBalancesUpdater = ({
     }
 
     Object.entries(parachainProviders).forEach(([chainId, chain]) =>
-      callbackGate((api) => {
+      callbackGate(api => {
         Object.values(assets[chainId as SubstrateNetworkId].assets).forEach(
-          (asset) => {
+          asset => {
             if (!asset.meta.supportedNetwork[chainId as SubstrateNetworkId]) {
               return;
             }
@@ -175,11 +171,11 @@ const PolkadotBalancesUpdater = ({
                     api!,
                     chain.accounts[selectedAccount].address,
                     String(asset.meta.symbol)
-                  ).then((balance) => {
+                  ).then(balance => {
                     updateAssetBalance({
                       substrateNetworkId: chainId as SubstrateNetworkId,
                       assetId: asset.meta.assetId,
-                      balance,
+                      balance
                     });
                   });
                 }
@@ -191,6 +187,7 @@ const PolkadotBalancesUpdater = ({
         );
       }, chain.parachainApi)
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [extensionStatus, selectedAccount, parachainProviders]);
 
   return null;

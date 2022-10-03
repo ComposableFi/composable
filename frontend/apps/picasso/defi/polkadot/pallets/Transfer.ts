@@ -7,6 +7,8 @@ import {
   getTransferCallPicassoKarura,
   getTransferCallPicassoKusama
 } from "@/components/Organisms/Transfer/xcmp";
+import { toChainIdUnit } from "shared";
+import BigNumber from "bignumber.js";
 
 export async function getApiCallAndSigner(
   api: ApiPromise,
@@ -58,4 +60,30 @@ export async function getApiCallAndSigner(
     default:
       throw new Error("Invalid network");
   }
-};
+}
+
+export function getAmountToTransfer({
+  balance,
+  amount,
+  existentialDeposit,
+  keepAlive,
+  api
+}: {
+  balance: BigNumber;
+  amount: BigNumber;
+  existentialDeposit: BigNumber;
+  keepAlive: boolean;
+  api: ApiPromise;
+}): u128 {
+  const isExistentialDepositImportant = balance
+    .minus(amount)
+    .lte(existentialDeposit);
+  return api.createType(
+    "u128",
+    toChainIdUnit(
+      keepAlive && isExistentialDepositImportant
+        ? amount.minus(existentialDeposit)
+        : amount
+    ).toString()
+  );
+}

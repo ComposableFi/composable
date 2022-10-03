@@ -37,11 +37,11 @@ type InitialState = {
     };
   };
 };
-const initialState: InitialState = <InitialState>SUBSTRATE_NETWORK_IDS.reduce(
+const initialState: InitialState = SUBSTRATE_NETWORK_IDS.reduce(
   (prev, chain: SubstrateNetworkId) => {
     return {
       assets: {
-        ...prev,
+        ...prev.assets,
         [chain]: {
           native: {
             balance: new BigNumber(0),
@@ -64,7 +64,7 @@ const initialState: InitialState = <InitialState>SUBSTRATE_NETWORK_IDS.reduce(
       },
     };
   },
-  {}
+  {} as InitialState
 );
 
 export interface SubstrateBalancesSlice {

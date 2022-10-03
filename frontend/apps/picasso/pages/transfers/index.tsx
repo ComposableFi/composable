@@ -5,7 +5,7 @@ import { useStore } from "@/stores/root";
 import Default from "@/components/Templates/Default";
 import {
   gridContainerStyle,
-  gridItemStyle,
+  gridItemStyle
 } from "@/components/Organisms/Transfer/transfer-styles";
 import { Header } from "@/components/Organisms/Transfer/Header";
 import { TransferNetworkSelector } from "@/components/Organisms/Transfer/TransferNetworkSelector";
@@ -14,7 +14,6 @@ import { TransferRecipientDropdown } from "@/components/Organisms/Transfer/Trans
 import { TransferFeeDisplay } from "@/components/Organisms/Transfer/TransferFeeDisplay";
 import { TransferKeepAliveSwitch } from "@/components/Organisms/Transfer/TransferKeepAliveSwitch";
 import { useAllParachainProviders } from "@/defi/polkadot/context/hooks";
-import { toChainIdUnit } from "shared";
 import { useExecutor } from "substrate-react";
 import { useSelectedAccount } from "@/defi/polkadot/hooks";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
@@ -25,22 +24,23 @@ import {
   transferKaruraPicasso,
   transferKusamaPicasso,
   transferPicassoKarura,
-  transferPicassoKusama,
+  transferPicassoKusama
 } from "@/components/Organisms/Transfer/xcmp";
 import { TransferExistentialDeposit } from "@/components/Organisms/Transfer/TransferExistentialDeposit";
 import { TransferFeeItem } from "@/components/Organisms/Transfer/TransferFeeItem";
 import { AssetId } from "@/defi/polkadot/types";
+import { getAmountToTransfer } from "@/defi/polkadot/pallets/Transfer";
 
 const Transfers: NextPage = () => {
   const { enqueueSnackbar } = useSnackbar();
-  const tokenId = useStore((state) => state.transfers.tokenId);
-  const amount = useStore((state) => state.transfers.amount);
+  const tokenId = useStore(state => state.transfers.tokenId);
+  const amount = useStore(state => state.transfers.amount);
   const selectedRecipient = useStore(
-    (state) => state.transfers.recipients.selected
+    state => state.transfers.recipients.selected
   );
 
-  const from = useStore((state) => state.transfers.networks.from);
-  const to = useStore((state) => state.transfers.networks.to);
+  const from = useStore(state => state.transfers.networks.from);
+  const to = useStore(state => state.transfers.networks.to);
   const assets = useStore(
     ({ substrateBalances }) => substrateBalances.assets[from].assets
   );
@@ -48,7 +48,7 @@ const Transfers: NextPage = () => {
   const native = useStore(
     ({ substrateBalances }) => substrateBalances.assets[from].native
   );
-  const keepAlive = useStore((state) => state.transfers.keepAlive);
+  const keepAlive = useStore(state => state.transfers.keepAlive);
   const existentialDeposit = useStore(
     ({ substrateBalances }) =>
       substrateBalances.assets[from].native.existentialDeposit
@@ -72,7 +72,7 @@ const Transfers: NextPage = () => {
       console.error("No API or Executor or account", {
         api,
         executor,
-        account,
+        account
       });
       return;
     }
@@ -82,12 +82,13 @@ const Transfers: NextPage = () => {
 
     const TARGET_PARACHAIN_ID = SUBSTRATE_NETWORKS[to].parachainId;
     // Set amount to transfer
-    const amountToTransfer = api.createType(
-      "u128",
-      toChainIdUnit(
-        keepAlive ? amount.minus(existentialDeposit) : amount
-      ).toString()
-    );
+    const amountToTransfer = getAmountToTransfer({
+      balance,
+      amount,
+      existentialDeposit,
+      keepAlive,
+      api
+    });
 
     const feeItemId =
       hasFeeItem && feeItem.length > 0
@@ -105,7 +106,7 @@ const Transfers: NextPage = () => {
       enqueueSnackbar,
       signerAddress,
       hasFeeItem,
-      feeItemId,
+      feeItemId
     });
   };
 

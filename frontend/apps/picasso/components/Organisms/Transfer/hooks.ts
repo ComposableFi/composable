@@ -82,12 +82,11 @@ export const useExistentialDeposit = () => {
         break;
       case "kusama":
         callbackGate(async (api) => {
-          console.log("yes signer");
+          // TODO: relaychain connection fix (does not work as of now)
           const ed = api.consts.balances.existentialDeposit.toString();
           updateExistentialDeposit(fromChainIdUnit(unwrapNumberOrHex(ed)));
           updateFeeToken(Number(1));
         }, parachainApi);
-        console.log("KUSAMA");
         break;
       default:
         console.log(from);
