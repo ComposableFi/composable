@@ -251,7 +251,7 @@ pub mod pallet {
 		// NOTE(benluelo): This should be removed once this issue gets resolved:
 		// https://github.com/paritytech/substrate/issues/12257
 		NoDurationPresetsProvided,
-		/// Slashed amount of minimum reward is smaller than existential deposit
+		/// Slashed amount of minimum reward is less than existential deposit
 		SlashedAmountTooLow,
 	}
 
@@ -702,16 +702,6 @@ pub mod pallet {
 
 					let now_seconds = T::UnixTime::now().as_secs();
 
-					// TODO: Replace into_iter with iter_mut once it's available
-					let rewards = initial_reward_config
-						.clone()
-						.into_iter()
-						.map(|(asset_id, reward_config)| {
-							(asset_id, Reward::from_config(reward_config, now_seconds))
-						})
-						.try_collect()
-						.expect("No items were added; qed;");
-
 					ensure!(
 						initial_reward_config.iter().all(|(asset_id, reward_config)| {
 							lock.unlock_penalty
@@ -721,6 +711,15 @@ pub mod pallet {
 						}),
 						Error::<T>::SlashedAmountTooLow
 					);
+
+					// TODO: Replace into_iter with iter_mut once it's available
+					let rewards = initial_reward_config
+						.into_iter()
+						.map(|(asset_id, reward_config)| {
+							(asset_id, Reward::from_config(reward_config, now_seconds))
+						})
+						.try_collect()
+						.expect("No items were added; qed;");
 
 					RewardPools::<T>::insert(
 						pool_asset,
