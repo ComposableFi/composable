@@ -16,11 +16,11 @@ export const useExistentialDeposit = () => {
   const getFeeToken = useStore((state) => state.transfers.getFeeToken);
 
   const { native, assets } = useStore(
-    ({ substrateBalances }) => substrateBalances[from]
+    ({ substrateBalances }) => substrateBalances.assets[from]
   );
 
   const nativeTo = useStore(
-    ({ substrateBalances }) => substrateBalances[to].native
+    ({ substrateBalances }) => substrateBalances.assets[to].native
   );
 
   const { updateExistentialDeposit, existentialDeposit } = useStore(

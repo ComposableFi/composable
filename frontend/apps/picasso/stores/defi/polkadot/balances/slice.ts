@@ -21,16 +21,18 @@ export interface SubstrateAsset {
 }
 
 type InitialState = {
-  [chainId in SubstrateNetworkId]: {
-    native: {
-      balance: BigNumber;
-      meta: Token;
-      existentialDeposit: BigNumber;
-    };
-    assets: {
-      [assetId in AssetId]: {
+  assets: {
+    [chainId in SubstrateNetworkId]: {
+      native: {
         balance: BigNumber;
-        meta: AssetMetadata;
+        meta: Token;
+        existentialDeposit: BigNumber;
+      };
+      assets: {
+        [assetId in AssetId]: {
+          balance: BigNumber;
+          meta: AssetMetadata;
+        };
       };
     };
   };
@@ -38,25 +40,27 @@ type InitialState = {
 const initialState: InitialState = <InitialState>SUBSTRATE_NETWORK_IDS.reduce(
   (prev, chain: SubstrateNetworkId) => {
     return {
-      ...prev,
-      [chain]: {
-        native: {
-          balance: new BigNumber(0),
-          meta: TOKENS[SUBSTRATE_NETWORKS[chain].tokenId],
-          existentialDeposit: new BigNumber(0),
+      assets: {
+        ...prev,
+        [chain]: {
+          native: {
+            balance: new BigNumber(0),
+            meta: TOKENS[SUBSTRATE_NETWORKS[chain].tokenId],
+            existentialDeposit: new BigNumber(0),
+          },
+          assets: Object.values(Assets).reduce((acc, asset) => {
+            if (Object.keys(asset.supportedNetwork).includes(chain)) {
+              return {
+                ...acc,
+                [asset.assetId]: {
+                  meta: asset,
+                  balance: new BigNumber(0),
+                },
+              };
+            }
+            return acc;
+          }, {}),
         },
-        assets: Object.values(Assets).reduce((acc, asset) => {
-          if (Object.keys(asset.supportedNetwork).includes(chain)) {
-            return {
-              ...acc,
-              [asset.assetId]: {
-                meta: asset,
-                balance: new BigNumber(0),
-              },
-            };
-          }
-          return acc;
-        }, {}),
       },
     };
   },
@@ -94,17 +98,19 @@ export const createSubstrateBalancesSlice: StoreSlice<
       existentialDeposit: BigNumber;
     }) => {
       set((state) => {
-        state.substrateBalances[substrateNetworkId].native.balance =
+        state.substrateBalances.assets[substrateNetworkId].native.balance =
           new BigNumber(balance);
-        state.substrateBalances[substrateNetworkId].native.existentialDeposit =
-          existentialDeposit;
+        state.substrateBalances.assets[
+          substrateNetworkId
+        ].native.existentialDeposit = existentialDeposit;
         return state;
       });
     },
     clearBalance: () => {
       set((state) => {
         DEFI_CONFIG.networkIds.forEach((network) => {
-          state.substrateBalances[network].native.balance = new BigNumber(0);
+          state.substrateBalances.assets[network].native.balance =
+            new BigNumber(0);
         });
 
         return state;
@@ -112,8 +118,9 @@ export const createSubstrateBalancesSlice: StoreSlice<
     },
     updateAssetBalance: ({ substrateNetworkId, assetId, balance }) => {
       set((state) => {
-        state.substrateBalances[substrateNetworkId].assets[assetId].balance =
-          new BigNumber(balance);
+        state.substrateBalances.assets[substrateNetworkId].assets[
+          assetId
+        ].balance = new BigNumber(balance);
         return state;
       });
     },

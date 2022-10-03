@@ -10,7 +10,7 @@ import {
   PageTitle,
   TabItem,
   TabPanel,
-  Tabs
+  Tabs,
 } from "@/components";
 import Image from "next/image";
 import { CrowdloanRewardsFeaturedBox } from "@/components/Organisms/CrowdloanRewards/CrowdloanRewardsFeaturedBox";
@@ -21,19 +21,21 @@ import { useDotSamaContext } from "substrate-react";
 
 const Overview: NextPage = () => {
   const { extensionStatus } = useDotSamaContext();
-  const assets = useStore((state) => Object.values(state.substrateBalances));
+  const assets = useStore((state) =>
+    Object.values(state.substrateBalances.assets)
+  );
   const myStakes = useStore((state) => state.polkadot.myStakingAssets);
   const tabs: TabItem[] = [
     { label: "My assets" },
     { label: "My stakes", disabled: false },
-    { label: "My bonds", disabled: false }
+    { label: "My bonds", disabled: false },
   ];
 
   const [tabValue, setTabValue] = useState(0);
 
   const theme = useTheme();
   const standardPageSize = {
-    xs: 12
+    xs: 12,
   };
   // @ts-ignore
   // @ts-ignore
@@ -75,12 +77,12 @@ const Overview: NextPage = () => {
                 [1644560620928, 40],
                 [1644570600000, 35],
                 [1644580600000, 60],
-                [1644590600000, 80]
+                [1644590600000, 80],
               ],
               height: 118,
               shorthandLabel: "Change",
               labelFormat: (n: number) => n.toFixed(),
-              color: theme.palette.featured.lemon
+              color: theme.palette.featured.lemon,
             }}
             intervals={["1h", "24h", "1w", "1m", "1y"]}
             marginTop={9}
@@ -147,7 +149,7 @@ const Overview: NextPage = () => {
               alignItems: "center",
               justifyContent: "center",
               mt: theme.spacing(4),
-              gap: theme.spacing(5)
+              gap: theme.spacing(5),
             }}
           >
             <Box>
@@ -176,7 +178,7 @@ const Overview: NextPage = () => {
                   height="45"
                   alt="Pablo logo"
                   css={{
-                    mixBlendMode: "luminosity"
+                    mixBlendMode: "luminosity",
                   }}
                 />
               </Link>
@@ -189,13 +191,12 @@ const Overview: NextPage = () => {
             textBelow="To help support pallet development, we have launched the Composable Grant Program."
             horizontalAligned
             sx={{
-              padding: theme.spacing(6)
+              padding: theme.spacing(6),
             }}
             ButtonProps={{
               label: "Apply here",
-              onClick: () => {
-              },
-              variant: "outlined"
+              onClick: () => {},
+              variant: "outlined",
             }}
           />
         </Grid>

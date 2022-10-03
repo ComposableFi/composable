@@ -2,15 +2,13 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  Box,
-  Grid,
   Typography,
 } from "@mui/material";
-import React, { ChangeEventHandler, FC, useMemo } from "react";
+import React, { FC, useMemo } from "react";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useStore } from "@/stores/root";
-import { BigNumberInput, Select } from "@/components";
-import { AssetId, SubstrateNetworkId } from "@/defi/polkadot/types";
+import { Select } from "@/components";
+import { AssetId } from "@/defi/polkadot/types";
 
 const headerStyle = {
   "&.MuiAccordionSummary-root": {
@@ -40,7 +38,9 @@ export const TransferFeeItem: FC<{}> = () => {
   const { hasFeeItem, feeItem, setFeeItem, toggleHasFee } = useStore(
     ({ transfers }) => transfers
   );
-  const balances = useStore(({ substrateBalances }) => substrateBalances);
+  const balances = useStore(
+    ({ substrateBalances }) => substrateBalances.assets
+  );
   const from = useStore(({ transfers }) => transfers.networks.from);
   const options = useMemo(() => {
     const { assets } = balances[from];

@@ -30,7 +30,6 @@ import {
 import { TransferExistentialDeposit } from "@/components/Organisms/Transfer/TransferExistentialDeposit";
 import { TransferFeeItem } from "@/components/Organisms/Transfer/TransferFeeItem";
 import { AssetId } from "@/defi/polkadot/types";
-import BigNumber from "bignumber.js";
 
 const Transfers: NextPage = () => {
   const { enqueueSnackbar } = useSnackbar();
@@ -43,16 +42,16 @@ const Transfers: NextPage = () => {
   const from = useStore((state) => state.transfers.networks.from);
   const to = useStore((state) => state.transfers.networks.to);
   const assets = useStore(
-    ({ substrateBalances }) => substrateBalances[from].assets
+    ({ substrateBalances }) => substrateBalances.assets[from].assets
   );
   const { hasFeeItem, feeItem } = useStore(({ transfers }) => transfers);
   const native = useStore(
-    ({ substrateBalances }) => substrateBalances[from].native
+    ({ substrateBalances }) => substrateBalances.assets[from].native
   );
   const keepAlive = useStore((state) => state.transfers.keepAlive);
   const existentialDeposit = useStore(
     ({ substrateBalances }) =>
-      substrateBalances[from].native.existentialDeposit as BigNumber
+      substrateBalances.assets[from].native.existentialDeposit
   );
 
   const isNativeToNetwork = useMemo(() => {

@@ -1,4 +1,3 @@
-import { usePicassoProvider } from "@/defi/polkadot/hooks";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { SubstrateNetwork, SubstrateNetworkId } from "@/defi/polkadot/types";
 import { callbackGate, getExistentialDeposit, toTokenUnitsBN } from "shared";
@@ -87,19 +86,33 @@ const PolkadotBalancesUpdater = ({
   substrateNetworks: SubstrateNetwork[];
 }) => {
   useEagerConnect("picasso");
-  const { updateBalance, clearBalance, updateAssetBalance, ...assets } =
-    useStore(({ substrateBalances }) => substrateBalances);
-  const { selectedAccount, parachainProviders, relaychainProviders } =
-    useDotSamaContext();
-  const picassoProvider = usePicassoProvider();
+  useEagerConnect("karura");
+  const updateBalance = useStore(
+    ({ substrateBalances }) => substrateBalances.updateBalance
+  );
+  const assets = useStore(({ substrateBalances }) => substrateBalances.assets);
+
+  const updateAssetBalance = useStore(
+    ({ substrateBalances }) => substrateBalances.updateAssetBalance
+  );
+  const clearBalance = useStore(
+    ({ substrateBalances }) => substrateBalances.clearBalance
+  );
+
+  const {
+    extensionStatus,
+    selectedAccount,
+    parachainProviders,
+    relaychainProviders,
+  } = useDotSamaContext();
 
   // Subscribe for native balance changes
   useEffect(() => {
-    if (selectedAccount !== -1 && picassoProvider.accounts.length) {
+    if (selectedAccount !== -1) {
       Object.entries(parachainProviders).forEach(([chainId, chain]) => {
-        if (picassoProvider.accounts[selectedAccount] && chain.parachainApi) {
+        if (chain.accounts[selectedAccount] && chain.parachainApi) {
           subscribeNativeBalance(
-            picassoProvider.accounts[selectedAccount].address,
+            chain.accounts[selectedAccount].address,
             chain.parachainApi,
             chainId,
             updateBalance
@@ -109,21 +122,9 @@ const PolkadotBalancesUpdater = ({
         }
       });
     } else if (selectedAccount === -1) {
-      console.log("selectedAccount is not specified");
       clearBalance();
-    } else {
-      console.log("picassoProvider is not available");
     }
-  }, [
-    selectedAccount,
-    substrateNetworks,
-    picassoProvider.accounts.length,
-    picassoProvider.accounts,
-    parachainProviders,
-    picassoProvider.parachainApi,
-    updateBalance,
-    clearBalance,
-  ]);
+  }, [parachainProviders, selectedAccount]);
 
   const picassoBalanceSubscriber = useCallback(
     async (chain, asset, chainId) => {
@@ -153,21 +154,25 @@ const PolkadotBalancesUpdater = ({
 
   // Subscribe non-native token balances
   useEffect(() => {
-    if (selectedAccount !== -1 && picassoProvider.accounts.length) {
-      Object.entries(parachainProviders).forEach(([chainId, chain]) => {
-        if (chain.parachainApi) {
-          Object.values(assets[chainId as SubstrateNetworkId].assets).forEach(
-            (asset) => {
-              if (!asset.meta.supportedNetwork[chainId as SubstrateNetworkId]) {
-                return;
-              }
-              switch (chainId) {
-                case "picasso":
-                  picassoBalanceSubscriber(chain, asset, chainId);
-                  break;
-                case "karura":
+    if (extensionStatus !== "connected" || selectedAccount === -1) {
+      return () => {};
+    }
+
+    Object.entries(parachainProviders).forEach(([chainId, chain]) =>
+      callbackGate((api) => {
+        Object.values(assets[chainId as SubstrateNetworkId].assets).forEach(
+          (asset) => {
+            if (!asset.meta.supportedNetwork[chainId as SubstrateNetworkId]) {
+              return;
+            }
+            switch (chainId) {
+              case "picasso":
+                picassoBalanceSubscriber(chain, asset, chainId);
+                break;
+              case "karura":
+                if (chain.accounts[selectedAccount]) {
                   fetchKaruraBalanceByAssetId(
-                    chain.parachainApi!,
+                    api!,
                     chain.accounts[selectedAccount].address,
                     String(asset.meta.symbol)
                   ).then((balance) => {
@@ -177,20 +182,16 @@ const PolkadotBalancesUpdater = ({
                       balance,
                     });
                   });
-                  break;
-                default:
-                  break;
-              }
+                }
+                break;
+              default:
+                break;
             }
-          );
-        }
-      });
-    } else {
-      console.warn(
-        `Subscribing for non-native assets did not executed, ${selectedAccount} and ${picassoProvider.accounts.length}`
-      );
-    }
-  }, [selectedAccount, picassoProvider, parachainProviders]);
+          }
+        );
+      }, chain.parachainApi)
+    );
+  }, [extensionStatus, selectedAccount, parachainProviders]);
 
   return null;
 };

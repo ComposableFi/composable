@@ -25,7 +25,7 @@ export const TransferFeeDisplay = () => {
   const executor = useExecutor();
   const account = useSelectedAccount();
   const assets = useStore(
-    ({ substrateBalances }) => substrateBalances[from].assets
+    ({ substrateBalances }) => substrateBalances.assets[from].assets
   );
   const amount = useStore((state) => state.transfers.amount);
   const { hasFeeItem, feeItem } = useStore(({ transfers }) => transfers);

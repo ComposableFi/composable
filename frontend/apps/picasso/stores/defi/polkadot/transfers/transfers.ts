@@ -155,7 +155,7 @@ export const createTransfersSlice: StoreSlice<TransfersSlice> = (set, get) => ({
       });
     },
     getFeeToken: (network: SubstrateNetworkId): AssetMetadata | Token => {
-      const balances = get().substrateBalances[network];
+      const balances = get().substrateBalances.assets[network];
       const token = Object.values(balances.assets).find(({ meta }) => {
         return meta.supportedNetwork[network] === get().transfers.feeToken;
       })?.meta;

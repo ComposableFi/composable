@@ -22,7 +22,7 @@ export const RenewModal: FC<{
     undefined
   );
   const native = useStore(
-    ({ substrateBalances }) => substrateBalances.picasso.native
+    ({ substrateBalances }) => substrateBalances.assets.picasso.native
   );
   const [extendAmount, setExtendAmount] = useState<BigNumber>(new BigNumber(0));
   const { parachainApi, stakingPortfolio, meta, assetId, refresh } =
