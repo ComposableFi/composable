@@ -86,7 +86,7 @@ export async function fetchAuctionTrades(
   return trades;
 }
 
-export async function fetchLbpStats(pool: LiquidityBootstrappingPool): Promise<{
+export async function fetchAuctionStats(pool: LiquidityBootstrappingPool): Promise<{
   totalLiquidity: BigNumber;
   totalVolume: BigNumber;
 }> {

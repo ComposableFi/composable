@@ -1,10 +1,11 @@
-import { fetchLbpStats, fetchInitialBalance } from "@/defi/subsquid/auctions/helpers";
+import { fetchAuctionStats, fetchInitialBalance } from "@/defi/subsquid/auctions/helpers";
 import { PabloTransactions, queryPabloTransactions } from "@/defi/subsquid/pools/queries";
 import {
   LiquidityBootstrappingPool,
   LiquidityPoolTransactionType,
 } from "@/defi/types";
 import { LiquidityBootstrappingPoolTrade } from "@/defi/types/auctions";
+import { LiquidityBootstrappingPoolStatistics } from "@/store/auctions/auctions.types";
 import { ApiPromise } from "@polkadot/api";
 import BigNumber from "bignumber.js";
 import { fetchBalanceByAssetId } from "../../assets";
@@ -50,34 +51,24 @@ export function transformPabloTransaction(tx: PabloTransactions, poolQuoteAssetI
   };
 }
 
-export async function fetchAuctions(
+export async function fetchAndExtractAuctionStats(
   api: ApiPromise,
   pool: LiquidityBootstrappingPool
-): Promise<{
-  startBalances: {
-    quote: string;
-    base: string;
-  };
-  currentBalances: {
-    quote: string;
-    base: string;
-  };
-  liquidity: string;
-  totalVolume: string;
-}> {
-  let startBalances = { base: "0", quote: "0" };
-  let currentBalances = { base: "0", quote: "0" };
-  let liquidity = "0";
-  let totalVolume = "0";
+): Promise<LiquidityBootstrappingPoolStatistics> {
+  let startLiquidity = { baseAmount: new BigNumber(0), quoteAmount: new BigNumber(0) };
+  let liquidity = { baseAmount: new BigNumber(0), quoteAmount: new BigNumber(0) };
+  let totalVolume = new BigNumber(0);
+  let totalLiquidity = new BigNumber(0);
+
   const { base, quote } = pool.pair;
   const poolAccountId = createPabloPoolAccountId(api, pool.poolId);
   try {
     /**
      * Query for volume, liquidity
      */
-    const stats = await fetchLbpStats(pool);
-    totalVolume = stats.totalVolume.toString();
-    liquidity = stats.totalLiquidity.toString();
+    const stats = await fetchAuctionStats(pool);
+    totalVolume = stats.totalVolume;
+    totalLiquidity = stats.totalLiquidity;
     /**
      * Query trade history
      * for transactions tab
@@ -86,8 +77,8 @@ export async function fetchAuctions(
      * Query for initial balances
      */
     const initialBalances = await fetchInitialBalance(pool);
-    startBalances.base = initialBalances.baseBalance.toString();
-    startBalances.quote = initialBalances.quoteBalance.toString();
+    startLiquidity.baseAmount = initialBalances.baseBalance;
+    startLiquidity.quoteAmount = initialBalances.quoteBalance;
     /**
      * Query amount of base tokens in
      * the pool
@@ -97,7 +88,7 @@ export async function fetchAuctions(
       poolAccountId,
       base.toString()
     );
-    currentBalances.base = baseCurrBalance;
+    liquidity.baseAmount = new BigNumber(baseCurrBalance);
     /**
      * Query amount of quote tokens in
      * the pool
@@ -107,21 +98,21 @@ export async function fetchAuctions(
       poolAccountId,
       quote.toString()
     );
-    currentBalances.quote = quoteCurrBalance;
+    liquidity.quoteAmount = new BigNumber(quoteCurrBalance);
   } catch (err) {
     console.error(err);
   }
   return {
-    startBalances,
-    currentBalances,
+    totalLiquidity,
+    startLiquidity,
     liquidity,
     totalVolume,
   };
 }
 
 export async function fetchAuctionChartSeries(
-  parachainApi: ApiPromise,
-  auction: LiquidityBootstrappingPool
+  parachainApi?: ApiPromise,
+  auction?: LiquidityBootstrappingPool
 ): Promise<{
   chartSeries: [number, number][];
   predictedSeries: [number, number][];
@@ -129,6 +120,8 @@ export async function fetchAuctionChartSeries(
   let chartSeries: [number, number][] = [];
   let predictedSeries: [number, number][] = [];
   try {
+    if (!parachainApi || !auction || auction.poolId == -1) throw new Error('Cannot fetch data.');
+
     const subsquidResponse = await queryPabloTransactions(
       auction.poolId,
       "SWAP",
@@ -181,14 +174,16 @@ export async function fetchAuctionChartSeries(
       );
 
       predictedSeries.push([ts, price.toNumber()]);
-      ts += AVERAGE_BLOCK_TIME * 1000;
-      blockIter = blockIter.plus(1000);
+      ts += 5 * 1000;
+      blockIter = blockIter.plus(1);
     }
   } catch (err) {
     console.error(err);
+  } finally {
+    return {
+      chartSeries,
+      predictedSeries,
+    };
   }
-  return {
-    chartSeries,
-    predictedSeries,
-  };
+
 }

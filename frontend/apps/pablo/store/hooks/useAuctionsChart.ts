@@ -1,42 +1,28 @@
-import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { fetchAuctionChartSeries } from "@/defi/utils/pablo/auctions";
-import { useEffect, useState } from "react";
-import { useParachainApi } from "substrate-react";
+import { useEffect, useRef } from "react";
 import { LiquidityBootstrappingPool } from "@/defi/types";
-import { queryPabloTransactions } from "@/defi/subsquid/pools/queries";
+import { ApiPromise } from "@polkadot/api";
 
 export function useAuctionsChart(
-  pool: LiquidityBootstrappingPool | undefined
+  api?: ApiPromise,
+  pool?: LiquidityBootstrappingPool
 ): {
   currentPriceSeries: [number, number][];
   predictedPriceSeries: [number, number][];
 } {
-  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
-  let [auctionChartSeries, setAuctionChartSeries] = useState<{
-    currentPriceSeries: [number, number][];
-    predictedPriceSeries: [number, number][];
-  }>({
-    currentPriceSeries: [],
-    predictedPriceSeries: [],
+  let auctionChartSeries = useRef({
+    currentPriceSeries: [] as [number, number][],
+    predictedPriceSeries: [] as [number, number][],
   });
 
   useEffect(() => {
-    if (pool && parachainApi) {
-      fetchAuctionChartSeries(parachainApi, pool).then((response) => {
-        setAuctionChartSeries({
-          currentPriceSeries: response.chartSeries,
-          predictedPriceSeries: response.predictedSeries,
-        });
-      });
-    } else {
-      setAuctionChartSeries({
-        currentPriceSeries: [],
-        predictedPriceSeries: [],
-      });
-    }
-  }, [pool, parachainApi]);
+    fetchAuctionChartSeries(api, pool).then((response) => {
+      auctionChartSeries.current.currentPriceSeries = response.chartSeries
+      auctionChartSeries.current.predictedPriceSeries = response.predictedSeries
+    });
+  }, [pool, api]);
 
-  const { currentPriceSeries, predictedPriceSeries } = auctionChartSeries;
+  const { currentPriceSeries, predictedPriceSeries } = auctionChartSeries.current;
 
   return {
     currentPriceSeries,
