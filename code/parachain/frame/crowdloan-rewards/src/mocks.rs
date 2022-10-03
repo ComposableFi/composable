@@ -5,7 +5,10 @@ use crate::{
 use codec::Encode;
 use composable_support::types::{EcdsaSignature, EthereumAddress};
 use frame_support::{
-	construct_runtime, dispatch::DispatchResultWithPostInfo, parameter_types, traits::Everything,
+	construct_runtime,
+	dispatch::DispatchResultWithPostInfo,
+	parameter_types,
+	traits::{Everything, LockIdentifier},
 	PalletId,
 };
 use frame_system as system;
@@ -82,6 +85,7 @@ impl pallet_balances::Config for Test {
 
 parameter_types! {
 	pub const CrowdloanRewardsPalletId: PalletId = PalletId(*b"pal_crow");
+	pub const CrowdloanRewardsLockId: LockIdentifier = *b"crs_lock";
 	pub const InitialPayment: Perbill = INITIAL_PAYMENT;
 	pub const OverFundedThreshold: Perbill = OVER_FUNDED_THRESHOLD;
 	pub const VestingStep: Moment = VESTING_STEP;
@@ -103,6 +107,7 @@ impl pallet_crowdloan_rewards::Config for Test {
 	type PalletId = CrowdloanRewardsPalletId;
 	type Moment = Moment;
 	type Time = Timestamp;
+	type LockId = CrowdloanRewardsLockId;
 }
 
 parameter_types! {

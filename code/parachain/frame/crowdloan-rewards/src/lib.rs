@@ -80,7 +80,8 @@ pub mod pallet {
 		pallet_prelude::*,
 		traits::{
 			fungible::{Inspect, Mutate, Transfer},
-			Time,
+			tokens::WithdrawReasons,
+			LockIdentifier, LockableCurrency, Time,
 		},
 		transactional, PalletId,
 	};
@@ -156,7 +157,8 @@ pub mod pallet {
 		/// The RewardAsset used to transfer the rewards.
 		type RewardAsset: Inspect<Self::AccountId, Balance = Self::Balance>
 			+ Transfer<Self::AccountId, Balance = Self::Balance>
-			+ Mutate<Self::AccountId>;
+			+ Mutate<Self::AccountId>
+			+ LockableCurrency<Self::AccountId, Balance = Self::Balance>;
 
 		/// Type used to express timestamps.
 		type Moment: AtLeast32Bit + Parameter + Default + Copy + MaxEncodedLen + FullCodec;
@@ -199,6 +201,10 @@ pub mod pallet {
 		/// The unique identifier of this pallet.
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
+
+		/// The unique identifier for locks maintained by this pallet.
+		#[pallet::constant]
+		type LockId: Get<LockIdentifier>;
 	}
 
 	#[pallet::storage]
