@@ -13,7 +13,7 @@
   "license": "ISC",
   "dependencies": {
     "@types/node": "^17.0.42",
-    "polkadot-launch": "https://github.com/paritytech/polkadot-launch#951af7055e2c9abfa7a03ee7848548c1a3efdc16",
+    "polkadot-launch": "https://github.com/blasrodri/polkadot-launch#9e3619c80af930c7c1eb27863b64ee8a825b2ef2",
     "typescript": "^4.7.3"
   }
 }
