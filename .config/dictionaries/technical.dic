@@ -35,6 +35,7 @@
 0xsequence
 1ubrf2y
 5C4hrfjw
+aaaaaabb
 aarch
 acala
 ACENT
@@ -56,6 +57,7 @@ assetsinfo
 autofetch
 autorenew
 azuretools
+bbcccccc
 BCENT
 BCENTS
 BCOIN
@@ -159,6 +161,8 @@ libsecp
 libsecp256k1
 libudev
 libwasmvm
+lightclient
+lightclients
 llvm
 localstorage
 loglevel
@@ -233,6 +237,7 @@ precommits
 procps
 proptest
 proptests
+Proofwith
 prost
 protoc
 PROTOC
@@ -311,6 +316,7 @@ tsdx
 tungstenite
 typegen
 typeorm
+uatom
 udeps
 unlookup
 unstakeform

@@ -207,7 +207,7 @@ where
 			Err(err) => {
 				let packet = packet.clone();
 				OnRecvPacketAck::Nil(Box::new(move |_ctx| {
-					Pallet::<T>::write_acknowlegdement(
+					Pallet::<T>::write_acknowledgement(
 						&packet,
 						format!("{}: {:?}", ACK_ERR_STR, err).as_bytes().to_vec(),
 					)
@@ -230,7 +230,7 @@ where
 				OnRecvPacketAck::Successful(
 					Box::new(Ics20Acknowledgement::success()),
 					Box::new(move |_ctx| {
-						Pallet::<T>::write_acknowlegdement(
+						Pallet::<T>::write_acknowledgement(
 							&packet,
 							Ics20Acknowledgement::success().as_ref().to_vec(),
 						)

@@ -262,7 +262,7 @@ impl<T: Config + Send + Sync> Module for IbcModule<T> {
 		OnRecvPacketAck::Successful(
 			Box::new(PingAcknowledgement(success.clone())),
 			Box::new(move |_| {
-				T::IbcHandler::write_acknowlegdement(&packet, success)
+				T::IbcHandler::write_acknowledgement(&packet, success)
 					.map_err(|e| format!("{:?}", e))
 			}),
 		)

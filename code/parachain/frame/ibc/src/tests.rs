@@ -324,7 +324,7 @@ fn should_fetch_recv_packet_with_acknowledgement() {
 		.unwrap();
 
 		let ack = "success".as_bytes().to_vec();
-		Pallet::<Test>::write_acknowlegdement(&packet, ack.clone()).unwrap();
+		Pallet::<Test>::write_acknowledgement(&packet, ack.clone()).unwrap();
 
 		let packet_info = Pallet::<Test>::get_recv_packet_info(
 			channel_id.to_string().as_bytes().to_vec(),

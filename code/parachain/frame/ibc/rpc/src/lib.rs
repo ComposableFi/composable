@@ -324,7 +324,7 @@ where
 		seqs: Vec<u64>,
 	) -> Result<Vec<u64>>;
 
-	/// Given a list of counterparty packet acknowledgemrnts, the querier checks if the ack
+	/// Given a list of counterparty packet acknowledgements, the querier checks if the ack
 	/// has already been received by checking if a packet commitment exists on this
 	/// chain for the packet sequence. All acks that haven't been received yet
 	/// are returned in the response
