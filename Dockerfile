@@ -16,15 +16,15 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
     sudo \
     xz-utils
 
-RUN usermod --append --groups sudo ${USER} --shell /bin/bash
-RUN adduser ${USER} root
-RUN sed --in-place 's/%sudo.*ALL/%sudo   ALL=(ALL:ALL) NOPASSWD:ALL/' /etc/sudoers
+RUN usermod --append --groups sudo ${USER} --shell /bin/bash && \
+    adduser ${USER} root && \
+    sed --in-place 's/%sudo.*ALL/%sudo   ALL=(ALL:ALL) NOPASSWD:ALL/' /etc/sudoers && \
 
-RUN mkdir --parents /etc/nix/
-RUN echo "sandbox = relaxed" >> /etc/nix/nix.conf
-RUN echo "experimental-features = nix-command flakes" >> /etc/nix/nix.conf
-RUN echo "narinfo-cache-negative-ttl = 30" >> /etc/nix/nix.conf 
-RUN passwd --delete root
+RUN mkdir --parents /etc/nix/ && \
+    echo "sandbox = relaxed" >> /etc/nix/nix.conf && \
+    echo "experimental-features = nix-command flakes" >> /etc/nix/nix.conf && \
+    echo "narinfo-cache-negative-ttl = 30" >> /etc/nix/nix.conf  && \
+    passwd --delete root
 
 USER ${USER}
 ENV USER=${USER}
@@ -48,10 +48,11 @@ COPY --chown=${USER}:${USER} . .
 
 RUN source ~/.nix-profile/etc/profile.d/nix.sh && \
     nix-env --set-flag priority 10 nix-2.10.3 && \
-    export ARCH_OS=$(uname -m)-$(uname -s | tr '[:upper:]' '[:lower:]') && \
-    nix build --no-link .#homeConfigurations.vscode-minimal.${ARCH_OS}.activationPackage -L --show-trace
+    export "ARCH_OS=$(uname -m)-$(uname -s | tr '[:upper:]' '[:lower:]')" && \
+    nix build --no-link ".#homeConfigurations.vscode-minimal.${ARCH_OS}.activationPackage" -L --show-trace
 
+# hadolint ignore=SC2086
 RUN source ~/.nix-profile/etc/profile.d/nix.sh && \
-    export ARCH_OS=$(uname -m)-$(uname -s | tr '[:upper:]' '[:lower:]') && \
+    export "ARCH_OS=$(uname -m)-$(uname -s | tr '[:upper:]' '[:lower:]')" && \
     "$(nix path-info .#homeConfigurations.vscode-minimal.${ARCH_OS}.activationPackage)"/activate && \
     cachix use ${CACHIX_NAME}
