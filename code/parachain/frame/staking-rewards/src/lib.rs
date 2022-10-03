@@ -1429,7 +1429,7 @@ pub mod pallet {
 								amount: T::Balance::zero(),
 								period: RewardRatePeriod::PerSecond,
 							},
-							last_updated_timestamp: 0,
+							last_updated_timestamp: T::UnixTime::now().as_secs(),
 						};
 						reward_pool
 							.rewards
