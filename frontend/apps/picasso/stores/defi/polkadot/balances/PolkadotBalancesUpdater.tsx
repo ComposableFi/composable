@@ -98,29 +98,9 @@ const PolkadotBalancesUpdater = () => {
   const {
     extensionStatus,
     selectedAccount,
-    parachainProviders
+    parachainProviders,
+    relaychainProviders
   } = useDotSamaContext();
-
-  // Subscribe for native balance changes
-  useEffect(() => {
-    if (selectedAccount !== -1) {
-      Object.entries(parachainProviders).forEach(([chainId, chain]) => {
-        if (chain.accounts[selectedAccount] && chain.parachainApi) {
-          subscribeNativeBalance(
-            chain.accounts[selectedAccount].address,
-            chain.parachainApi,
-            chainId,
-            updateBalance
-          ).catch(err => {
-            console.error(err);
-          });
-        }
-      });
-    } else if (selectedAccount === -1) {
-      clearBalance();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [parachainProviders, selectedAccount]);
 
   const picassoBalanceSubscriber = useCallback(
     async (chain, asset, chainId) => {
@@ -148,6 +128,29 @@ const PolkadotBalancesUpdater = () => {
     [selectedAccount, updateAssetBalance]
   );
 
+  // Subscribe for native balance changes
+  useEffect(() => {
+    if (selectedAccount !== -1) {
+      Object.entries({ ...parachainProviders, ...relaychainProviders }).forEach(
+        ([chainId, chain]) => {
+          if (chain.accounts[selectedAccount] && chain.parachainApi) {
+            subscribeNativeBalance(
+              chain.accounts[selectedAccount].address,
+              chain.parachainApi,
+              chainId,
+              updateBalance
+            ).catch(err => {
+              console.error(err);
+            });
+          }
+        }
+      );
+    } else if (selectedAccount === -1) {
+      clearBalance();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [parachainProviders, relaychainProviders, selectedAccount]);
+
   // Subscribe non-native token balances
   useEffect(() => {
     if (extensionStatus !== "connected" || selectedAccount === -1) {
@@ -168,7 +171,7 @@ const PolkadotBalancesUpdater = () => {
               case "karura":
                 if (chain.accounts[selectedAccount]) {
                   fetchKaruraBalanceByAssetId(
-                    api!,
+                    api,
                     chain.accounts[selectedAccount].address,
                     String(asset.meta.symbol)
                   ).then(balance => {

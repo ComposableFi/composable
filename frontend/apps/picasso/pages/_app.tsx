@@ -11,7 +11,6 @@ import createEmotionCache from "@/styles/createEmotionCache";
 import { getDesignTokens } from "@/styles/theme";
 import { ColorModeContext } from "@/contexts/ColorMode";
 import SubstrateBalancesUpdater from "@/stores/defi/polkadot/balances/PolkadotBalancesUpdater";
-import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import CrowdloanRewardsUpdater from "@/stores/defi/polkadot/crowdloanRewards/CrowdloanRewardsUpdater";
 import { PalletsContextProvider } from "@/defi/polkadot/context/PalletsContext";
 import { SnackbarProvider } from "notistack";
@@ -51,7 +50,7 @@ const initializeHotjar = () => {
   }
 };
 const rpc = Object.keys(definitions)
-  .filter((k) => {
+  .filter(k => {
     if (!(definitions as any)[k].rpc) {
       return false;
     } else {
@@ -61,16 +60,16 @@ const rpc = Object.keys(definitions)
   .reduce(
     (accumulator, key) => ({
       ...accumulator,
-      [key]: (definitions as any)[key].rpc,
+      [key]: (definitions as any)[key].rpc
     }),
     {}
   );
 const types = Object.keys(definitions)
-  .filter((key) => Object.keys((definitions as any)[key].types).length > 0)
+  .filter(key => Object.keys((definitions as any)[key].types).length > 0)
   .reduce(
     (accumulator, key) => ({
       ...accumulator,
-      ...(definitions as any)[key].types,
+      ...(definitions as any)[key].types
     }),
     {}
   );
@@ -80,8 +79,8 @@ export default function MyApp(props: MyAppProps) {
   const colorMode = React.useMemo(
     () => ({
       toggleColorMode: () => {
-        setMode((prevMode) => (prevMode === "light" ? "dark" : "light"));
-      },
+        setMode(prevMode => (prevMode === "light" ? "dark" : "light"));
+      }
     }),
     []
   );
@@ -102,19 +101,27 @@ export default function MyApp(props: MyAppProps) {
         <ThemeProvider theme={theme}>
           <CssBaseline />
           <DotSamaContextProvider
+            supportedRelaychains={[
+              {
+                chainId: "kusama",
+                rpcUrl: process.env.SUBSTRATE_PROVIDER_URL_KUSAMA || "",
+                rpc: {},
+                types: {}
+              }
+            ]}
             supportedParachains={[
               {
                 chainId: "picasso",
                 rpcUrl: process.env.SUBSTRATE_PROVIDER_URL_KUSAMA_2019 || "",
                 rpc,
-                types,
+                types
               },
               {
                 chainId: "karura",
                 rpcUrl: process.env.SUBSTRATE_PROVIDER_URL_KARURA || "",
                 rpc: acalaRpc,
-                types: acalaTypes,
-              },
+                types: acalaTypes
+              }
             ]}
             appName={APP_NAME}
           >
@@ -122,29 +129,27 @@ export default function MyApp(props: MyAppProps) {
               blockchainInfo={Object.entries(NETWORKS).map(([netId, net]) => {
                 return {
                   chainId: +netId,
-                  rpcUrl: net.rpcUrl,
+                  rpcUrl: net.rpcUrl
                 };
               })}
             >
               <PalletsContextProvider>
                 <ApolloProvider client={apolloClient}>
-                  <SubstrateBalancesUpdater
-                    substrateNetworks={Object.values(SUBSTRATE_NETWORKS)}
-                  />
+                  <SubstrateBalancesUpdater />
                   <CrowdloanRewardsUpdater />
                   <SnackbarProvider
                     Components={{
                       info: ThemeResponsiveSnackbar,
                       success: ThemeResponsiveSnackbar,
                       error: ThemeResponsiveSnackbar,
-                      warning: ThemeResponsiveSnackbar,
+                      warning: ThemeResponsiveSnackbar
                     }}
                     autoHideDuration={null}
                     maxSnack={4}
                     disableWindowBlurListener={true}
                     anchorOrigin={{
                       vertical: "bottom",
-                      horizontal: "center",
+                      horizontal: "center"
                     }}
                   >
                     <ExecutorProvider>

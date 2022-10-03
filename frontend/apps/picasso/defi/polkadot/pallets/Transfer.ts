@@ -78,10 +78,14 @@ export function getAmountToTransfer({
   const isExistentialDepositImportant = balance
     .minus(amount)
     .lte(existentialDeposit);
+  const isZeroAmount =
+    keepAlive &&
+    isExistentialDepositImportant &&
+    amount.minus(existentialDeposit).lte(0);
   return api.createType(
     "u128",
     toChainIdUnit(
-      keepAlive && isExistentialDepositImportant
+      keepAlive && isExistentialDepositImportant && !isZeroAmount
         ? amount.minus(existentialDeposit)
         : amount
     ).toString()
