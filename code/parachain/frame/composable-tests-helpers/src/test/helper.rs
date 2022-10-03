@@ -216,8 +216,10 @@ where
 {
 	pallet_events::<Runtime, RuntimeEvent, PalletEvent>()
 		.find(|e| e == &pallet_event)
-		.expect(&format!(
-			r#"expected event wasn't emitted
-event checked: {pallet_event:#?}"#
-		));
+		.expect(&sp_std::fmt::format(core::format_args!(
+			r#"
+expected event wasn't emitted
+event checked: {pallet_event:#?}
+"#
+		)));
 }
