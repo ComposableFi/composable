@@ -7,7 +7,10 @@ import { useCallback, useEffect } from "react";
 
 import { useStore } from "@/stores/root";
 import { ApiPromise } from "@polkadot/api";
-import { fetchKaruraBalanceByAssetId, subscribePicassoBalanceByAssetId } from "@/defi/polkadot/pallets/Balance";
+import {
+  fetchKaruraBalanceByAssetId,
+  subscribePicassoBalanceByAssetId,
+} from "@/defi/polkadot/pallets/Balance";
 import BigNumber from "bignumber.js";
 import { useDotSamaContext, useEagerConnect } from "substrate-react";
 
@@ -29,7 +32,7 @@ export async function subscribeNativeBalance(
     const blObject: any = result.toJSON();
 
     const {
-      data: { free }
+      data: { free },
     } = blObject;
 
     const { decimals } = SUBSTRATE_NETWORKS[chainId as SubstrateNetworkId];
@@ -40,7 +43,7 @@ export async function subscribeNativeBalance(
     updateBalance({
       substrateNetworkId: chainId as SubstrateNetworkId,
       balance: bnBalance.toString(),
-      existentialDeposit
+      existentialDeposit,
     });
   });
 }
@@ -63,7 +66,7 @@ export async function updateBalances(
   const blObject: any = queryResult.toJSON();
 
   const {
-    data: { free }
+    data: { free },
   } = blObject;
 
   const { decimals } = SUBSTRATE_NETWORKS[chainId as SubstrateNetworkId];
@@ -74,19 +77,20 @@ export async function updateBalances(
   updateBalance({
     substrateNetworkId: chainId as SubstrateNetworkId,
     balance: bnBalance.toString(),
-    existentialDeposit
+    existentialDeposit,
   });
 }
 
 const PolkadotBalancesUpdater = ({
-  substrateNetworks
+  substrateNetworks,
 }: {
   substrateNetworks: SubstrateNetwork[];
 }) => {
   useEagerConnect("picasso");
   const { updateBalance, clearBalance, updateAssetBalance, ...assets } =
     useStore(({ substrateBalances }) => substrateBalances);
-  const { selectedAccount, parachainProviders, relaychainProviders } = useDotSamaContext();
+  const { selectedAccount, parachainProviders, relaychainProviders } =
+    useDotSamaContext();
   const picassoProvider = usePicassoProvider();
 
   // Subscribe for native balance changes
@@ -118,27 +122,33 @@ const PolkadotBalancesUpdater = ({
     parachainProviders,
     picassoProvider.parachainApi,
     updateBalance,
-    clearBalance
+    clearBalance,
   ]);
 
   const picassoBalanceSubscriber = useCallback(
     async (chain, asset, chainId) => {
-      callbackGate(async (account) => {
-        await subscribePicassoBalanceByAssetId(
-          chain.parachainApi!,
-          account.address,
-          String(asset.meta.supportedNetwork[chainId as SubstrateNetworkId]),
-          (balance) => {
-            updateAssetBalance({
-              substrateNetworkId: chainId as SubstrateNetworkId,
-              assetId: asset.meta.assetId,
-              balance
-            });
-          }
-        );
-      }, chain.accounts[selectedAccount]);
+      callbackGate(
+        async (chain, asset, chainId, account) => {
+          await subscribePicassoBalanceByAssetId(
+            chain.parachainApi!,
+            account.address,
+            String(asset.meta.supportedNetwork[chainId as SubstrateNetworkId]),
+            (balance) => {
+              updateAssetBalance({
+                substrateNetworkId: chainId as SubstrateNetworkId,
+                assetId: asset.meta.assetId,
+                balance,
+              });
+            }
+          );
+        },
+        chain,
+        asset,
+        chainId,
+        chain.accounts[selectedAccount]
+      );
     },
-    []
+    [selectedAccount, updateAssetBalance]
   );
 
   // Subscribe non-native token balances
@@ -164,9 +174,10 @@ const PolkadotBalancesUpdater = ({
                     updateAssetBalance({
                       substrateNetworkId: chainId as SubstrateNetworkId,
                       assetId: asset.meta.assetId,
-                      balance
+                      balance,
                     });
                   });
+                  break;
                 default:
                   break;
               }
@@ -174,6 +185,10 @@ const PolkadotBalancesUpdater = ({
           );
         }
       });
+    } else {
+      console.warn(
+        `Subscribing for non-native assets did not executed, ${selectedAccount} and ${picassoProvider.accounts.length}`
+      );
     }
   }, [selectedAccount, picassoProvider, parachainProviders]);
 

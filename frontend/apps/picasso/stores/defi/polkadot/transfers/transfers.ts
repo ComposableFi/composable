@@ -1,7 +1,9 @@
-import { StoreSlice } from "../types";
+import { StoreSlice } from "../../../types";
 import BigNumber from "bignumber.js";
 import { AssetId, SubstrateNetworkId } from "@/defi/polkadot/types";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
+import { AssetMetadata } from "@/defi/polkadot/Assets";
+import { Token } from "tokens";
 
 interface Networks {
   options: { networkId: SubstrateNetworkId }[];
@@ -22,6 +24,7 @@ interface TransfersState {
   feeItem: AssetId | "";
   hasFeeItem: boolean;
   existentialDeposit: BigNumber;
+  feeToken: number;
   fee: {
     class: string;
     partialFee: BigNumber;
@@ -48,6 +51,7 @@ const initialState: TransfersState = {
   feeItem: "",
   keepAlive: true,
   existentialDeposit: new BigNumber(0),
+  feeToken: 0,
   fee: {
     class: "Normal",
     partialFee: new BigNumber(0),
@@ -70,10 +74,12 @@ export interface TransfersSlice {
       partialFee: BigNumber;
     }) => void;
     updateExistentialDeposit: (data: BigNumber) => void;
+    updateFeeToken: (data: number) => void;
+    getFeeToken: (network: SubstrateNetworkId) => AssetMetadata | Token;
   };
 }
 
-export const createTransfersSlice: StoreSlice<TransfersSlice> = (set) => ({
+export const createTransfersSlice: StoreSlice<TransfersSlice> = (set, get) => ({
   transfers: {
     ...initialState,
 
@@ -143,5 +149,18 @@ export const createTransfersSlice: StoreSlice<TransfersSlice> = (set) => ({
 
         return state;
       }),
+    updateFeeToken: (assetId: number) => {
+      set((state) => {
+        state.transfers.feeToken = assetId;
+      });
+    },
+    getFeeToken: (network: SubstrateNetworkId): AssetMetadata | Token => {
+      const balances = get().substrateBalances[network];
+      const token = Object.values(balances.assets).find(({ meta }) => {
+        return meta.supportedNetwork[network] === get().transfers.feeToken;
+      })?.meta;
+
+      return token ?? balances.native.meta;
+    },
   },
 });

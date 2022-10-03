@@ -157,7 +157,7 @@ const Transfers: NextPage = () => {
           <TransferRecipientDropdown />
         </Grid>
         <Grid item {...gridItemStyle("1.5rem")}>
-          {providers[from]?.parachainApi && <TransferFeeDisplay />}
+          <TransferFeeDisplay />
         </Grid>
         <Grid item {...gridItemStyle()}>
           <TransferKeepAliveSwitch />

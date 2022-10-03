@@ -1,6 +1,11 @@
-import { fromChainIdUnit, humanBalance, toChainIdUnit, unwrapNumberOrHex } from "shared";
+import {
+  fromChainIdUnit,
+  humanBalance,
+  toChainIdUnit,
+  unwrapNumberOrHex,
+} from "shared";
 import { FeeDisplay } from "@/components";
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useMemo } from "react";
 import { useStore } from "@/stores/root";
 import { useAllParachainProviders } from "@/defi/polkadot/context/hooks";
 import { useExecutor } from "substrate-react";
@@ -9,6 +14,7 @@ import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { AssetId } from "@/defi/polkadot/types";
 import BigNumber from "bignumber.js";
 import { getApiCallAndSigner } from "@/defi/polkadot/pallets/Transfer";
+import { useExistentialDeposit } from "@/components/Organisms/Transfer/hooks";
 
 export const TransferFeeDisplay = () => {
   const { tokenId } = useStore(({ transfers }) => transfers);
@@ -21,25 +27,28 @@ export const TransferFeeDisplay = () => {
   const assets = useStore(
     ({ substrateBalances }) => substrateBalances[from].assets
   );
-  const symbol = useStore(
-    ({ substrateBalances }) => substrateBalances[from].native.meta.symbol
-  );
   const amount = useStore((state) => state.transfers.amount);
   const { hasFeeItem, feeItem } = useStore(({ transfers }) => transfers);
   const selectedRecipient = useStore(
     (state) => state.transfers.recipients.selected
   );
   const keepAlive = useStore((state) => state.transfers.keepAlive);
-  const existentialDeposit = useStore(
-    ({ substrateBalances }) => substrateBalances[from].native.existentialDeposit
-  );
+  const { existentialDeposit, feeToken } = useExistentialDeposit();
   const { updateFee, fee } = useStore(({ transfers }) => transfers);
-
-  const feeItemId =
-    hasFeeItem && feeItem.length > 0
-      ? assets[feeItem as AssetId].meta.supportedNetwork[from]
-      : null;
-
+  const symbol = useMemo(() => {
+    let out;
+    if (hasFeeItem && feeItem.length > 0) {
+      out = feeItem as AssetId;
+    } else if ("assetId" in feeToken) {
+      out = feeToken.assetId;
+    } else {
+      out = feeToken.id;
+    }
+    return out;
+  }, [feeItem, feeToken, hasFeeItem]);
+  const feeItemId = useMemo(() => {
+    return assets[symbol as AssetId].meta.supportedNetwork[from];
+  }, [assets, from, symbol]);
   const calculateFee = useCallback(async () => {
     if (
       !provider.parachainApi ||
@@ -68,7 +77,7 @@ export const TransferFeeDisplay = () => {
     );
     const signerAddress = account.address;
 
-
+    console.log(`getting transfer fee for token ${feeItemId}`);
     const { call, signer } = await getApiCallAndSigner(
       api,
       TARGET_ACCOUNT_ADDRESS,
@@ -86,12 +95,21 @@ export const TransferFeeDisplay = () => {
         partialFee: fromChainIdUnit(
           unwrapNumberOrHex(info.partialFee.toString())
         ),
-        weight: unwrapNumberOrHex(info.weight.toString())
+        weight: unwrapNumberOrHex(info.weight.toString()),
       } as {
         class: string;
         partialFee: BigNumber;
         weight: BigNumber;
       });
+      console.log(
+        JSON.stringify({
+          class: info.class.toString(),
+          partialFee: fromChainIdUnit(
+            unwrapNumberOrHex(info.partialFee.toString())
+          ),
+          weight: unwrapNumberOrHex(info.weight.toString()),
+        })
+      );
     });
   }, [
     provider.parachainApi,
@@ -106,7 +124,7 @@ export const TransferFeeDisplay = () => {
     keepAlive,
     existentialDeposit,
     updateFee,
-    feeItem.length
+    feeItem.length,
   ]);
 
   useEffect(() => {
@@ -116,9 +134,9 @@ export const TransferFeeDisplay = () => {
   return (
     <FeeDisplay
       label="Fee"
-      feeText={`${humanBalance(fee.partialFee)} ${symbol}`}
+      feeText={`${humanBalance(fee.partialFee)} ${symbol.toUpperCase()}`}
       TooltipProps={{
-        title: "Fee tooltip title"
+        title: "Fee tooltip title",
       }}
     />
   );

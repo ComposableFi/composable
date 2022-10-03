@@ -1,8 +1,8 @@
 export { createMetamaskSlice } from "./metamask";
 export type { MetamaskSlice } from "./metamask";
 
-export { createTransfersSlice } from "./transfers";
-export type { TransfersSlice } from "./transfers";
+export { createTransfersSlice } from "./polkadot/transfers/transfers";
+export type { TransfersSlice } from "./polkadot/transfers/transfers";
 
 export { createPolkadotSlice } from "./polkadot";
 export type { PolkadotSlice } from "./polkadot";
