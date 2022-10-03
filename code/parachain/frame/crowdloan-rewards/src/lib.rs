@@ -4,7 +4,7 @@ Crowdloan rewards pallet used by contributors to claim their rewards.
 A user is able to claim rewards once it has an associated account. Associating
 an account using the `associate` extrinsic automatically yield the upfront
 liquidity (% of the vested reward). The rest of the reward can be claimed every
-`VestingStep` starting at the block when the pallet has been initialized
+`VestingStep` starting at the timestamp when the pallet was initialized
 using the `initialize` extrinsic.
 
 Proof to provide when associating a reward account:
@@ -14,6 +14,11 @@ proof = sign (concat prefix (hex reward_account))
 
 Reference for proof mechanism: https://github.com/paritytech/polkadot/blob/master/runtime/common/src/claims.rs
 */
+
+#![doc = include_str!("../README.md")]
+//! ## Pallet Modules
+//! * [`Config`]
+//! * [`Pallet`]
 
 #![cfg_attr(
 	not(test),
@@ -100,22 +105,19 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		Initialized {
-			at: MomentOf<T>,
-		},
+		/// The crowdloan has been initialized or set to initialize at some time.
+		Initialized { at: MomentOf<T> },
+		/// A claim has been made.
 		Claimed {
 			remote_account: RemoteAccountOf<T>,
 			reward_account: T::AccountId,
 			amount: T::Balance,
 		},
-		Associated {
-			remote_account: RemoteAccountOf<T>,
-			reward_account: T::AccountId,
-		},
-		/// The crowdloan was successfully initialized, but with excess funds that won't be claimed
-		OverFunded {
-			excess_funds: T::Balance,
-		},
+		/// A remote account has been associated with a reward account.
+		Associated { remote_account: RemoteAccountOf<T>, reward_account: T::AccountId },
+		/// The crowdloan was successfully initialized, but with excess funds that won't be
+		/// claimed.
+		OverFunded { excess_funds: T::Balance },
 	}
 
 	#[pallet::error]
@@ -151,11 +153,12 @@ pub mod pallet {
 			+ MaxEncodedLen
 			+ Zero;
 
-		/// The RewardAsset used to transfer the rewards
+		/// The RewardAsset used to transfer the rewards.
 		type RewardAsset: Inspect<Self::AccountId, Balance = Self::Balance>
 			+ Transfer<Self::AccountId, Balance = Self::Balance>
 			+ Mutate<Self::AccountId>;
 
+		/// Type used to express timestamps.
 		type Moment: AtLeast32Bit + Parameter + Default + Copy + MaxEncodedLen + FullCodec;
 
 		/// The time provider.
@@ -186,7 +189,7 @@ pub mod pallet {
 		#[pallet::constant]
 		type VestingStep: Get<MomentOf<Self>>;
 
-		/// The arbitrary prefix used for the proof
+		/// The arbitrary prefix used for the proof.
 		#[pallet::constant]
 		type Prefix: Get<&'static [u8]>;
 
@@ -223,12 +226,13 @@ pub mod pallet {
 	#[allow(clippy::disallowed_types)]
 	pub type TotalContributors<T: Config> = StorageValue<_, u32, ValueQuery>;
 
-	/// The block at which the users are able to claim their rewards.
+	/// The timestamp at which the users are able to claim their rewards.
 	#[pallet::storage]
+	// REVIEW(connor): Can we change this getter without breaking a lot of other things?
 	#[pallet::getter(fn vesting_block_start)]
 	pub type VestingTimeStart<T: Config> = StorageValue<_, MomentOf<T>, OptionQuery>;
 
-	/// Associate a local account with a remote one.
+	/// Associations of reward accounts to remote accounts.
 	#[pallet::storage]
 	#[pallet::getter(fn associations)]
 	pub type Associations<T: Config> =
@@ -240,7 +244,7 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// Initialize the pallet at the current transaction block.
+		/// Initialize the pallet at the current timestamp.
 		#[pallet::weight(<T as Config>::WeightInfo::initialize(TotalContributors::<T>::get()))]
 		#[transactional]
 		pub fn initialize(origin: OriginFor<T>) -> DispatchResult {
@@ -249,7 +253,7 @@ pub mod pallet {
 			Self::do_initialize(now)
 		}
 
-		/// Initialize the pallet at the given transaction block.
+		/// Initialize the pallet at the given timestamp.
 		#[pallet::weight(<T as Config>::WeightInfo::initialize(TotalContributors::<T>::get()))]
 		#[transactional]
 		pub fn initialize_at(origin: OriginFor<T>, at: MomentOf<T>) -> DispatchResult {
@@ -315,14 +319,14 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		/// Initialize the Crowdloan at a given block.
+		/// Initialize the Crowdloan at a given timestamp.
 		///
 		/// If the Crowdloan is over funded by more than the `OverFundedThreshold`, the `OverFunded`
 		/// event will be emitted with the excess amount.
 		///
 		/// # Errors
-		/// * `AlreadyInitialized` - The Crowdloan has already been scheduled to start at some block
-		/// * `BackToTheFuture` - The given block, `at`, is before the current block
+		/// * `AlreadyInitialized` - The Crowdloan has already been scheduled to start at some time
+		/// * `BackToTheFuture` - The given timestamp, `at`, is before the current time
 		/// * `RewardsNotFunded` - The Crowdloan has not been funded with the minimum amount of
 		///   funds to provide the total rewards
 		pub(crate) fn do_initialize(at: MomentOf<T>) -> DispatchResult {
@@ -347,6 +351,14 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Associates a reward account with some remote account provided by a proof. Calls
+		/// `do_claim` to perform the first claim.
+		///
+		/// # Errors
+		/// * `NotInitialized` - The Crowdloan has not been initialized yet
+		/// * `NotClaimableYet` - The Crowdloan has been initialized, but the redemption period has
+		///   not begun
+		/// * `AlreadyAssociated` - The reward account has already been associated
 		pub(crate) fn do_associate(
 			reward_account: T::AccountId,
 			proof: ProofOf<T>,
@@ -362,7 +374,7 @@ pub mod pallet {
 				Error::<T>::AlreadyAssociated
 			);
 			// NOTE(hussein-aitlahcen): very important to have a claim here because we do the
-			// upfront payment, which will allow the user to execute transactions because he had 0
+			// upfront payment, which will allow the user to execute transactions because they had 0
 			// funds prior to this call.
 			let claimed = Self::do_claim(remote_account.clone(), &reward_account)?;
 			Associations::<T>::insert(reward_account.clone(), remote_account.clone());
@@ -431,40 +443,44 @@ pub mod pallet {
 		}
 
 		/// Do claim the reward for a given remote account, rewarding the `reward_account`.
-		/// Returns `InvalidProof` if the user is not a contributor or `NothingToClaim` if no
-		/// reward can be claimed yet.
+		///
+		/// # Errors
+		/// * `NothingToClaim` - No rewards are available to claim at this time
+		/// * `InvalidProof` - The user is not a contributor
 		pub(crate) fn do_claim(
 			remote_account: RemoteAccountOf<T>,
 			reward_account: &T::AccountId,
 		) -> Result<T::Balance, DispatchError> {
 			Rewards::<T>::try_mutate(remote_account, |reward| {
-				reward
-					.as_mut()
-					.map(|reward| {
-						let should_have_claimed = should_have_claimed::<T>(reward)?;
-						let available_to_claim = should_have_claimed.saturating_sub(reward.claimed);
-						ensure!(
-							available_to_claim > T::Balance::zero(),
-							Error::<T>::NothingToClaim
-						);
-						let funds_account = Self::account_id();
-						// No need to keep the pallet account alive.
-						T::RewardAsset::transfer(
-							&funds_account,
-							reward_account,
-							available_to_claim,
-							false,
-						)?;
-						reward.claimed = available_to_claim.saturating_add(reward.claimed);
-						ClaimedRewards::<T>::mutate(|x| *x = x.saturating_add(available_to_claim));
-						Ok(available_to_claim)
-					})
-					.unwrap_or_else(|| Err(Error::<T>::InvalidProof.into()))
+				if let Some(reward) = reward {
+					let should_have_claimed = should_have_claimed::<T>(reward)?;
+					let available_to_claim = should_have_claimed.saturating_sub(reward.claimed);
+					ensure!(available_to_claim > T::Balance::zero(), Error::<T>::NothingToClaim);
+
+					let funds_account = Self::account_id();
+					// No need to keep the pallet account alive.
+					T::RewardAsset::transfer(
+						&funds_account,
+						reward_account,
+						available_to_claim,
+						false,
+					)?;
+
+					reward.claimed = available_to_claim.saturating_add(reward.claimed);
+					ClaimedRewards::<T>::mutate(|x| *x = x.saturating_add(available_to_claim));
+
+					Ok(available_to_claim)
+				} else {
+					Err(Error::<T>::InvalidProof.into())
+				}
 			})
 		}
 	}
 
 	/// The reward amount a user should have claimed until now.
+	///
+	/// # Errors
+	/// * `NotInitialized` - The Crowdloan has not been initialized
 	pub fn should_have_claimed<T: Config>(
 		reward: &RewardOf<T>,
 	) -> Result<T::Balance, DispatchError> {
@@ -475,7 +491,7 @@ pub mod pallet {
 		// Current point in time
 		let vesting_point = now.saturating_sub(start);
 		if vesting_point >= reward.vesting_period {
-			// If the user is claiming when the period is over, he should
+			// If the user is claiming when the period is over, they should
 			// probably have already claimed everything.
 			Ok(reward.total)
 		} else {
@@ -503,19 +519,23 @@ pub mod pallet {
 		Ok(available_to_claim)
 	}
 
+	/// Retrieves the remote account from a proof
+	///
+	/// # Errors
+	/// * `InvalidProof` - The proof was invalid for the reward account
 	pub fn get_remote_account<T: Config>(
 		proof: ProofOf<T>,
 		reward_account: &<T as frame_system::Config>::AccountId,
 		prefix: &[u8],
 	) -> Result<RemoteAccountOf<T>, DispatchErrorWithPostInfo<PostDispatchInfo>> {
-		let remote_account = match proof {
+		match proof {
 			Proof::Ethereum(eth_proof) => {
 				let reward_account_encoded =
 					reward_account.using_encoded(|x| hex::encode(x).as_bytes().to_vec());
 				let ethereum_address =
 					ethereum_recover(prefix, &reward_account_encoded, &eth_proof)
 						.ok_or(Error::<T>::InvalidProof)?;
-				Result::<_, DispatchError>::Ok(RemoteAccount::Ethereum(ethereum_address))
+				Ok(RemoteAccount::Ethereum(ethereum_address))
 			},
 			Proof::RelayChain(relay_account, relay_proof) => {
 				ensure!(
@@ -529,8 +549,7 @@ pub mod pallet {
 				);
 				Ok(RemoteAccount::RelayChain(relay_account))
 			},
-		}?;
-		Ok(remote_account)
+		}
 	}
 
 	/// Verify that the proof is valid for the given account.
