@@ -1,20 +1,25 @@
-import { fetchAuctionStats, fetchInitialBalance } from "@/defi/subsquid/auctions/helpers";
-import { PabloTransactions, queryPabloTransactions } from "@/defi/subsquid/pools/queries";
 import {
-  LiquidityBootstrappingPool,
-  LiquidityPoolTransactionType,
-} from "@/defi/types";
+  fetchAuctionStats,
+  fetchInitialBalance,
+  fetchPabloTransactions,
+} from "@/defi/subsquid/auctions/helpers";
+import {
+  PabloTransactions,
+} from "@/defi/subsquid/pools/queries";
+import { LiquidityBootstrappingPool } from "@/defi/types";
 import { LiquidityBootstrappingPoolTrade } from "@/defi/types/auctions";
 import { LiquidityBootstrappingPoolStatistics } from "@/store/auctions/auctions.types";
 import { ApiPromise } from "@polkadot/api";
-import BigNumber from "bignumber.js";
 import { fetchBalanceByAssetId } from "../../assets";
-import { AVERAGE_BLOCK_TIME } from "../../constants";
 import { fromChainUnits } from "../../units";
 import { createPabloPoolAccountId } from "../misc";
 import { lbpCalculatePriceAtBlock } from "./weightCalculator";
+import BigNumber from "bignumber.js";
 
-export function transformPabloTransaction(tx: PabloTransactions, poolQuoteAssetId: number): LiquidityBootstrappingPoolTrade {
+export function transformPabloTransaction(
+  tx: PabloTransactions,
+  poolQuoteAssetId: number
+): LiquidityBootstrappingPoolTrade {
   const baseAssetId = Number(tx.baseAssetId);
   const quoteAssetId = Number(tx.quoteAssetId);
 
@@ -55,8 +60,14 @@ export async function fetchAndExtractAuctionStats(
   api: ApiPromise,
   pool: LiquidityBootstrappingPool
 ): Promise<LiquidityBootstrappingPoolStatistics> {
-  let startLiquidity = { baseAmount: new BigNumber(0), quoteAmount: new BigNumber(0) };
-  let liquidity = { baseAmount: new BigNumber(0), quoteAmount: new BigNumber(0) };
+  let startLiquidity = {
+    baseAmount: new BigNumber(0),
+    quoteAmount: new BigNumber(0),
+  };
+  let liquidity = {
+    baseAmount: new BigNumber(0),
+    quoteAmount: new BigNumber(0),
+  };
   let totalVolume = new BigNumber(0);
   let totalLiquidity = new BigNumber(0);
 
@@ -120,30 +131,11 @@ export async function fetchAuctionChartSeries(
   let chartSeries: [number, number][] = [];
   let predictedSeries: [number, number][] = [];
   try {
-    if (!parachainApi || !auction || auction.poolId == -1) throw new Error('Cannot fetch data.');
-
-    const subsquidResponse = await queryPabloTransactions(
-      auction.poolId,
-      "SWAP",
-      "ASC",
-      100
-    );
-
-    const { error, data } = subsquidResponse;
-
-    if (error) throw new Error(error.message);
-    if (!data || !data.pabloTransactions)
-      throw new Error("Unable to retrieve chart data.");
-
-    const { pabloTransactions } = data;
-
-    chartSeries = pabloTransactions
-      .map((t: any) => transformPabloTransaction(t, auction.pair.quote))
-      .map((i: LiquidityBootstrappingPoolTrade) => {
-        return [i.receivedTimestamp, Number(i.spotPrice)];
-      }) as [number, number][];
+    if (!parachainApi || !auction || auction.poolId == -1)
+      throw new Error("Cannot fetch data.");
 
     const accountId = createPabloPoolAccountId(parachainApi, auction.poolId);
+
     const baseBalance = await fetchBalanceByAssetId(
       parachainApi,
       accountId,
@@ -155,27 +147,70 @@ export async function fetchAuctionChartSeries(
       auction.pair.quote.toString()
     );
 
-    if (chartSeries.length > 0) {
-      let lastTimeStamp = chartSeries[chartSeries.length - 1][0];
-      let lastPrice = chartSeries[chartSeries.length - 1][1];
-      predictedSeries.push([lastTimeStamp, lastPrice])
-    }
-  
-    const block = await parachainApi.query.system.number();
-    let blockIter = new BigNumber(block.toString());
-    let ts = Date.now();
+    const { pabloTransactions } = await fetchPabloTransactions(
+      auction.poolId,
+      "SWAP",
+      "ASC",
+      100
+    );
 
-    while (ts < auction.sale.end) {
-      const price = lbpCalculatePriceAtBlock(
+    const transactions = pabloTransactions.map((tx) =>
+      transformPabloTransaction(tx, auction.pair.quote)
+    );
+
+    if (transactions.length) {
+      chartSeries = transactions.map(({ receivedTimestamp, spotPrice }) => [
+        receivedTimestamp,
+        Number(spotPrice),
+      ]);
+      let predictedSeriesStartTimeStamp =
+        transactions[transactions.length - 1].receivedTimestamp;
+      let predictedSeriesStartSpotPrice = new BigNumber(
+        transactions[transactions.length - 1].spotPrice
+      );
+      let predictedSeriesStartBlock = new BigNumber(
+        pabloTransactions[transactions.length - 1].event.blockNumber
+      );
+
+      while (predictedSeriesStartTimeStamp < auction.sale.end) {
+        predictedSeriesStartSpotPrice = lbpCalculatePriceAtBlock(
+          auction,
+          new BigNumber(baseBalance),
+          new BigNumber(quoteBalance),
+          predictedSeriesStartBlock
+        );
+        predictedSeries.push([
+          predictedSeriesStartTimeStamp,
+          predictedSeriesStartSpotPrice.toNumber(),
+        ]);
+        predictedSeriesStartBlock = predictedSeriesStartBlock.plus(1);
+        predictedSeriesStartTimeStamp += 5 * 1000;
+      }
+    } else {
+      let blockBn = await parachainApi.query.system.number();
+      let predictedSeriesStartBlock = new BigNumber(blockBn.toString());
+      let predictedSeriesStartTimeStamp = Date.now();
+      let predictedSeriesStartSpotPrice = lbpCalculatePriceAtBlock(
         auction,
         new BigNumber(baseBalance),
         new BigNumber(quoteBalance),
-        blockIter
+        predictedSeriesStartBlock
       );
 
-      predictedSeries.push([ts, price.toNumber()]);
-      ts += 5 * 1000;
-      blockIter = blockIter.plus(1);
+      while (predictedSeriesStartTimeStamp < auction.sale.end) {
+        predictedSeriesStartSpotPrice = lbpCalculatePriceAtBlock(
+          auction,
+          new BigNumber(baseBalance),
+          new BigNumber(quoteBalance),
+          predictedSeriesStartBlock
+        );
+        predictedSeries.push([
+          predictedSeriesStartTimeStamp,
+          predictedSeriesStartSpotPrice.toNumber(),
+        ]);
+        predictedSeriesStartBlock = predictedSeriesStartBlock.plus(1);
+        predictedSeriesStartTimeStamp += 5 * 1000;
+      }
     }
   } catch (err) {
     console.error(err);
@@ -185,5 +220,4 @@ export async function fetchAuctionChartSeries(
       predictedSeries,
     };
   }
-
 }
