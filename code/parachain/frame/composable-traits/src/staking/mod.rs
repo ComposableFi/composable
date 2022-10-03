@@ -26,8 +26,11 @@ pub struct Reward<Balance> {
 	/// Already claimed rewards by stakers by unstaking.
 	pub claimed_rewards: Balance,
 
-	/// A book keeping field to track the actual total reward without the
-	/// reward dilution adjustment caused by new stakers joining the pool.
+	/// A book keeping field to track the actual total reward without the reward dilution
+	/// adjustment caused by new stakers joining the pool.
+	///
+	/// total_dilution_adjustment + claimed_rewards is the same as the sum of all of the reductions
+	/// of all of the stakes in the pool.
 	pub total_dilution_adjustment: Balance,
 
 	/// Upper bound on the `total_rewards - total_dilution_adjustment`.
