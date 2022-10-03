@@ -261,6 +261,8 @@ impl crate::Config for Test {
 	type PicaStakeFinancialNftCollectionId = PicaStakeFinancialNftCollectionId;
 	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
 	type WeightInfo = ();
+	type ExistentialDeposits = ExistentialDeposits;
+
 	type LockId = StakingRewardsLockId;
 	type TreasuryAccount = TreasuryAccountId;
 }

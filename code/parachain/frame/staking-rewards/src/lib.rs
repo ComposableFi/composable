@@ -95,13 +95,14 @@ pub mod pallet {
 		transactional, BoundedBTreeMap, PalletId,
 	};
 	use frame_system::pallet_prelude::*;
-	use orml_traits::{LockIdentifier, MultiLockableCurrency};
+	use orml_traits::{GetByKey, LockIdentifier, MultiLockableCurrency};
 	use sp_arithmetic::Permill;
 	use sp_runtime::{
 		traits::{AccountIdConversion, BlockNumberProvider},
 		PerThing, Perbill,
 	};
 	use sp_std::{cmp::max, fmt::Debug, vec, vec::Vec};
+	use std::ops::Mul;
 
 	use crate::{
 		add_to_rewards_pot, claim_of_stake, do_reward_accumulation, prelude::*,
@@ -250,6 +251,8 @@ pub mod pallet {
 		// NOTE(benluelo): This should be removed once this issue gets resolved:
 		// https://github.com/paritytech/substrate/issues/12257
 		NoDurationPresetsProvided,
+		/// Slashed amount of minimum reward is smaller than existential deposit
+		SlashedAmountTooLow,
 	}
 
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
@@ -374,6 +377,8 @@ pub mod pallet {
 		// The account to send the slashed stakes to.
 		#[pallet::constant]
 		type TreasuryAccount: Get<Self::AccountId>;
+
+		type ExistentialDeposits: GetByKey<Self::AssetId, Self::Balance>;
 	}
 
 	/// Abstraction over RewardPoolConfiguration type
@@ -699,12 +704,23 @@ pub mod pallet {
 
 					// TODO: Replace into_iter with iter_mut once it's available
 					let rewards = initial_reward_config
+						.clone()
 						.into_iter()
 						.map(|(asset_id, reward_config)| {
 							(asset_id, Reward::from_config(reward_config, now_seconds))
 						})
 						.try_collect()
 						.expect("No items were added; qed;");
+
+					ensure!(
+						initial_reward_config.iter().all(|(asset_id, reward_config)| {
+							lock.unlock_penalty
+								.left_from_one()
+								.mul(reward_config.reward_rate.amount) >=
+								T::ExistentialDeposits::get(asset_id)
+						}),
+						Error::<T>::SlashedAmountTooLow
+					);
 
 					RewardPools::<T>::insert(
 						pool_asset,
