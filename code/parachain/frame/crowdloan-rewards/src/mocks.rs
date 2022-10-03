@@ -90,6 +90,7 @@ parameter_types! {
 	pub const OverFundedThreshold: Perbill = OVER_FUNDED_THRESHOLD;
 	pub const VestingStep: Moment = VESTING_STEP;
 	pub const Prefix: &'static [u8] = PROOF_PREFIX;
+	pub const LockCrowdloanRewards: bool = true;
 }
 
 impl pallet_crowdloan_rewards::Config for Test {
@@ -108,6 +109,7 @@ impl pallet_crowdloan_rewards::Config for Test {
 	type Moment = Moment;
 	type Time = Timestamp;
 	type LockId = CrowdloanRewardsLockId;
+	type LockByDefault = LockCrowdloanRewards;
 }
 
 parameter_types! {

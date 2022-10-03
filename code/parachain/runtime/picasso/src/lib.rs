@@ -660,6 +660,7 @@ parameter_types! {
 	pub const OverFundedThreshold: Perbill = Perbill::from_percent(1);
 	pub const VestingStep: Moment = (7 * DAYS as Moment) * (MILLISECS_PER_BLOCK as Moment);
 	pub const Prefix: &'static [u8] = b"picasso-";
+	pub const LockCrowdloanRewards: bool = true;
 }
 
 impl crowdloan_rewards::Config for Runtime {
@@ -678,6 +679,7 @@ impl crowdloan_rewards::Config for Runtime {
 	type Moment = Moment;
 	type Time = Timestamp;
 	type LockId = CrowdloanRewardsLockId;
+	type LockByDefault = LockCrowdloanRewards;
 }
 
 parameter_types! {
