@@ -61,7 +61,7 @@ export const useCrowdloanRewardsClaimedRewards = (
   const { isEthAccountEligible, isPicassoAccountEligible } =
     useCrowdloanRewardsEligibility(ethAccount, picassoAccount);
 
-  const fetchCalimed = useCallback(() => {
+  const fetchClaimed = useCallback(() => {
     if (api && isEthAccountEligible) {
       fetchClaimedRewards(api, (ethAccount as string).toLowerCase()).then(
         setClaimedAmount
@@ -80,16 +80,16 @@ export const useCrowdloanRewardsClaimedRewards = (
   ]);
 
   useEffect(() => {
-    fetchCalimed();
+    fetchClaimed();
 
     const fetchClaimedInterval = setInterval(() => {
-      fetchCalimed();
+      fetchClaimed();
     }, 30_000);
 
     return function () {
       clearInterval(fetchClaimedInterval);
     };
-  }, [fetchCalimed]);
+  }, [fetchClaimed]);
 
   return claimedAmount;
 };
