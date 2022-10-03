@@ -47,7 +47,7 @@ export class StakingPosition {
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: true})
   endTimestamp!: bigint | undefined | null
 
-  @Column_("numeric", {nullable: false})
+  @Column_("int4", {nullable: false})
   rewardMultiplier!: number
 
   @Column_("varchar", {length: 16, nullable: false})
