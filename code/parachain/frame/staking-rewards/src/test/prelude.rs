@@ -16,7 +16,6 @@ use composable_tests_helpers::test::{
 use frame_support::traits::{fungibles::Inspect, OriginTrait};
 use frame_system::pallet_prelude::OriginFor;
 use sp_arithmetic::Perbill;
-use pallet_staking_rewards::test::runtime;
 pub use sp_core::{
 	sr25519::{Public, Signature},
 	H256,
