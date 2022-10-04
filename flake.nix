@@ -499,6 +499,11 @@
             inherit subwasm;
             inherit subwasm-release-body;
 
+            xcmp = crane-nightly.buildPackage (common-attrs // rec {
+              pname = "xcmp";
+              cargoArtifacts = common-deps-nightly;
+            });
+
             xcvm-contract-asset-registry =
               mk-xcvm-contract "xcvm-asset-registry";
             xcvm-contract-router = mk-xcvm-contract "xcvm-router";
@@ -1046,6 +1051,7 @@
                   nixfmt
                   rnix-lsp
                   subxt
+                  xcmp
                 ] ++ docs-renders;
             });
 

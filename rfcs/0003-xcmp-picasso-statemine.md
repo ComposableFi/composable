@@ -32,17 +32,19 @@ One should have `Identity` on Kusama to create `Proposal` on  https://parachains
 
 Suggested amount is 50 KSM total for all operations on `Balance`, for creating identity, backing proposal and sending XCM messages.
 
-Picasso chain also should have Balance, better 22 KSM. Because its sovereign account may also pay some fee.
+Picasso chain also should have Balance, better 22 KSM. Because its sovereign account will pay some fee and lock amounts.
 
 ## Picasso Governance to create request
 
-Picasso to ask Statemine to open channel on Kusama encoded as `hrmp`  `0x3c00e8030000e803000000900100` to open channel. Can be decoded by Kusama.
 
-That should be send from Parachain account from Picasso via next `relayerXcm.send` :
+That to be run on Kusama:
+Send from from SUDO:
 
-Encoded as `0x2900010100020c0004000000000700e876481713000100000700e876481700060102286bee383c00e8030000e803000000900100`.
+https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rpc.composable.finance#/extrinsics/decode/0x290001010002100004000000000b0060defb740513000000000b0060defb74050006000700f2052a01383c00e8030000e8030000009001000d0100040001009d20
 
-Can be decoded via https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rpc.composable.finance#/extrinsics/decode
+Which will transact:
+
+https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkusama-rpc.polkadot.io#/extrinsics/decode/0x3c00e8030000e803000000900100
 
 ## Accept proposal and propose back
 
