@@ -22,7 +22,7 @@ use crate::{
 	},
 };
 use beefy_prover::helpers::{
-	fetch_timestamp_extrinsic_with_proof, unsafe_cast_to_jsonrpsee_client, TimeStampExtWithProof,
+	fetch_timestamp_extrinsic_with_proof, unsafe_arc_cast, TimeStampExtWithProof,
 };
 use codec::Decode;
 use finality_grandpa_rpc::GrandpaApiClient;
@@ -49,9 +49,8 @@ use ibc::{
 	Height,
 };
 use primitive_types::H256;
-use sp_finality_grandpa::AuthorityList;
 use std::{mem::size_of_val, time::Duration};
-use subxt::{ext::sp_core::hexdisplay::AsBytesRef, rpc::rpc_params, PolkadotConfig};
+use subxt::{ext::sp_core::hexdisplay::AsBytesRef, PolkadotConfig};
 
 pub type Justification = GrandpaJustification<RelayChainHeader>;
 
@@ -71,23 +70,17 @@ async fn test_continuous_update_of_grandpa_client() {
 
 	let signer = get_dummy_account_id();
 
-	let relay_client = {
-		let url = std::env::var("NODE_ENDPOINT").unwrap_or("ws://127.0.0.1:9944".to_string());
-		subxt::client::OnlineClient::<PolkadotConfig>::from_url(url).await.unwrap()
-	};
-	let para_client = {
-		let para_url =
-			std::env::var("PARA_NODE_ENDPOINT").unwrap_or("ws://127.0.0.1:9188".to_string());
-		subxt::client::OnlineClient::<PolkadotConfig>::from_url(para_url).await.unwrap()
-	};
-	let grandpa_prover = GrandpaProver {
-		relay_client: relay_client.clone(),
-		para_client: para_client.clone(),
-		para_id: 2000,
-	};
+	let relay_ws_url = std::env::var("NODE_ENDPOINT").unwrap_or("ws://127.0.0.1:9944".to_string());
+	let para_ws_url =
+		std::env::var("PARA_NODE_ENDPOINT").unwrap_or("ws://127.0.0.1:9188".to_string());
+
+	let prover = GrandpaProver::<PolkadotConfig>::new(&relay_ws_url, &para_ws_url, 2000)
+		.await
+		.unwrap();
 
 	println!("Waiting for grandpa proofs to become available");
-	relay_client
+	prover
+		.relay_client
 		.rpc()
 		.subscribe_blocks()
 		.await
@@ -100,52 +93,24 @@ async fn test_continuous_update_of_grandpa_client() {
 	println!("Grandpa proofs are now available");
 
 	let (client_state, consensus_state) = loop {
-		let current_set_id = {
-			let key = runtime::api::storage().grandpa().current_set_id();
-			relay_client
-				.storage()
-				.fetch(&key, None)
-				.await
-				.unwrap()
-				.expect("Failed to fetch current set id")
-		};
+		let client_state = prover.initialize_client_state().await.unwrap();
 
-		let current_authorities = {
-			let bytes = relay_client
-				.rpc()
-				.request::<String>(
-					"state_call",
-					rpc_params!("GrandpaApi_grandpa_authorities", "0x"),
-				)
-				.await
-				.map(|res| hex::decode(&res[2..]))
-				.expect("Failed to fetch authorities")
-				.expect("Failed to hex decode authorities");
-
-			AuthorityList::decode(&mut &bytes[..]).expect("Failed to scale decode authorities")
-		};
-
-		let latest_relay_hash = relay_client
+		let latest_relay_header = prover
+			.relay_client
 			.rpc()
-			.finalized_head()
-			.await
-			.expect("Failed to fetch finalized header");
-		let latest_relay_header = relay_client
-			.rpc()
-			.header(Some(latest_relay_hash))
+			.header(Some(client_state.latest_relay_hash))
 			.await
 			.expect("Failed to fetch finalized header")
 			.expect("Failed to fetch finalized header");
 
 		let head_data = {
 			let key = runtime::api::storage().paras().heads(
-				&runtime::api::runtime_types::polkadot_parachain::primitives::Id(
-					grandpa_prover.para_id,
-				),
+				&runtime::api::runtime_types::polkadot_parachain::primitives::Id(prover.para_id),
 			);
-			relay_client
+			prover
+				.relay_client
 				.storage()
-				.fetch(&key, Some(latest_relay_hash))
+				.fetch(&key, Some(client_state.latest_relay_hash))
 				.await
 				.unwrap()
 				.unwrap()
@@ -161,32 +126,29 @@ async fn test_continuous_update_of_grandpa_client() {
 		}
 		let client_state = ClientState {
 			relay_chain: Default::default(),
-			latest_relay_hash,
+			latest_relay_hash: client_state.latest_relay_hash,
+			latest_relay_height: latest_relay_header.number,
 			frozen_height: None,
 			latest_para_height: decoded_para_head.number,
-			para_id: grandpa_prover.para_id,
-			current_set_id,
-			current_authorities,
+			para_id: prover.para_id,
+			current_set_id: client_state.current_set_id,
+			current_authorities: client_state.current_authorities,
 			_phantom: Default::default(),
 		};
 		let subxt_block_number: subxt::rpc::BlockNumber = decoded_para_head.number.into();
-		let block_hash = grandpa_prover
-			.para_client
-			.rpc()
-			.block_hash(Some(subxt_block_number))
-			.await
-			.unwrap();
+		let block_hash =
+			prover.para_client.rpc().block_hash(Some(subxt_block_number)).await.unwrap();
 
 		let TimeStampExtWithProof { ext: timestamp_extrinsic, proof: extrinsic_proof } =
-			fetch_timestamp_extrinsic_with_proof(&grandpa_prover.para_client, block_hash)
+			fetch_timestamp_extrinsic_with_proof(&prover.para_client, block_hash)
 				.await
 				.unwrap();
-		let state_proof = grandpa_prover
+		let state_proof = prover
 			.relay_client
 			.rpc()
 			.read_proof(
-				vec![parachain_header_storage_key(grandpa_prover.para_id).as_bytes_ref()],
-				Some(latest_relay_hash),
+				vec![parachain_header_storage_key(prover.para_id).as_bytes_ref()],
+				Some(client_state.latest_relay_hash),
 			)
 			.await
 			.expect("Failed to fetch state proof!")
@@ -200,10 +162,12 @@ async fn test_continuous_update_of_grandpa_client() {
 
 		let (_, consensus_state) = ConsensusState::from_header::<HostFunctionsManager>(
 			header_proof,
-			grandpa_prover.para_id,
+			prover.para_id,
 			latest_relay_header.state_root,
 		)
 		.unwrap();
+
+		dbg!(&client_state.latest_para_height);
 
 		break (AnyClientState::Grandpa(client_state), AnyConsensusState::Grandpa(consensus_state))
 	};
@@ -214,10 +178,11 @@ async fn test_continuous_update_of_grandpa_client() {
 	// Create the client
 	let res = dispatch(&ctx, ClientMsg::CreateClient(create_client)).unwrap();
 	ctx.store_client_result(res.result).unwrap();
-	let client = unsafe { unsafe_cast_to_jsonrpsee_client(&relay_client) };
 	let subscription =
 		GrandpaApiClient::<JustificationNotification, H256, u32>::subscribe_justifications(
-			&*client,
+			&*unsafe {
+				unsafe_arc_cast::<_, jsonrpsee_ws_client::WsClient>(prover.relay_ws_client.clone())
+			},
 		)
 		.await
 		.expect("Failed to subscribe to grandpa justifications");
@@ -235,19 +200,29 @@ async fn test_continuous_update_of_grandpa_client() {
 		let justification = Justification::decode(&mut &justification_bytes[..])
 			.expect("Failed to decode justification");
 
-		let headers = grandpa_prover
+		let headers = prover
 			.query_finalized_parachain_headers_between(
-				justification.commit.target_hash,
-				client_state.latest_relay_hash,
+				justification.commit.target_number,
+				client_state.latest_relay_height,
 			)
 			.await
 			.expect("Failed to fetch finalized parachain headers");
+		let headers = match headers {
+			Some(headers) => headers,
+			None => continue,
+		};
+		let header_numbers = headers
+			.iter()
+			.map(|h| h.number)
+			.filter(|num| *num != client_state.latest_para_height)
+			.collect();
 
-		let header_numbers = headers.iter().map(|h| h.number).collect();
-		let maybe_proof = grandpa_prover
+		dbg!(&header_numbers);
+
+		let maybe_proof = prover
 			.query_finalized_parachain_headers_with_proof(
-				justification.commit.target_hash,
-				client_state.latest_relay_hash,
+				justification.commit.target_number,
+				client_state.latest_relay_height,
 				header_numbers,
 			)
 			.await

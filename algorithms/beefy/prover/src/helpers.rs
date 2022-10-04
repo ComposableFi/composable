@@ -17,11 +17,10 @@ use crate::{error::Error, Crypto};
 use beefy_light_client_primitives::{MerkleHasher, SignatureWithAuthorityIndex};
 use codec::{Decode, Encode};
 use frame_support::sp_runtime::traits::Convert;
-use jsonrpsee_core::client::Client;
 use sp_core::keccak_256;
 use sp_runtime::traits::BlakeTwo256;
 use sp_trie::{generate_trie_proof, TrieDBMut, TrieMut};
-use std::{collections::BTreeMap, ops::Deref, sync::Arc};
+use std::{collections::BTreeMap, sync::Arc};
 use subxt::{Config, OnlineClient};
 
 pub struct TimeStampExtWithProof {
@@ -184,8 +183,8 @@ pub fn hash_authority_addresses(encoded_public_keys: Vec<Vec<u8>>) -> Result<Vec
 	Ok(authority_address_hashes)
 }
 
-/// Given a subxt Client, attempts to extract the jsonrpsee client from it.
-pub unsafe fn unsafe_cast_to_jsonrpsee_client<T: Config>(client: &OnlineClient<T>) -> Arc<Client> {
-	let ptr = Arc::into_raw(client.rpc().deref().0.clone()).cast::<Client>();
+/// Perform a highly unsafe type-casting between two types hidden behind an Arc.
+pub unsafe fn unsafe_arc_cast<T, U>(arc: Arc<T>) -> Arc<U> {
+	let ptr = Arc::into_raw(arc).cast::<U>();
 	Arc::from_raw(ptr)
 }

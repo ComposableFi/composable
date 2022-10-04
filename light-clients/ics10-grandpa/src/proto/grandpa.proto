@@ -37,23 +37,26 @@ message ClientState {
   // Latest relay chain block hash
   bytes latest_relay_hash = 1;
 
+  // Latest relay chain height
+  uint32 latest_relay_height = 2;
+
   // current grandpa authority set id
-  uint64 current_set_id = 2;
+  uint64 current_set_id = 3;
 
   // Block height when the client was frozen due to a misbehaviour
-  optional uint64 frozen_height = 3;
+  optional uint64 frozen_height = 4;
 
   // Known relay chains
-  RelayChain relay_chain = 4;
+  RelayChain relay_chain = 5;
 
   // ParaId of associated parachain
-  uint32 para_id = 5;
+  uint32 para_id = 6;
 
   // latest parachain height
-  uint32 latest_para_height = 6;
+  uint32 latest_para_height = 7;
 
   // Current grandpa authorities
-  repeated Authority current_authorities = 7;
+  repeated Authority current_authorities = 8;
 }
 
 message ParachainHeaderWithRelayHash {

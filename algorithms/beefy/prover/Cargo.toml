@@ -8,7 +8,7 @@ authors = ["Seun Lanlege <seunlanlege@gmail.com>", "David Salami <david.salami@g
 targets = ["x86_64-unknown-linux-gnu"]
 
 [build-dependencies]
-subxt-codegen = { git = "https://github.com/composableFi/subxt", rev = "37df0ee525252fa9a3e7730629ce0de4da9e68fd" }
+subxt-codegen = { git = "https://github.com/paritytech/subxt", rev = "81175b2dd9a2391f71c37d4612644ee65825e2f1" }
 jsonrpsee = { version = "0.15.0", features = ["async-client", "client-ws-transport", "http-client"] }
 frame-metadata = { version = "15.0.0", features = ["v14", "std"] }
 prettyplease = "0.1"
@@ -36,7 +36,7 @@ light-client-common = { path = "../../../light-clients/common" }
 jsonrpsee-core = { version = "0.14.0", features = ["async-client"] }
 
 # Optional deps
-subxt = { git = "https://github.com/composableFi/subxt", rev = "37df0ee525252fa9a3e7730629ce0de4da9e68fd" }
+subxt = { git = "https://github.com/paritytech/subxt", rev = "81175b2dd9a2391f71c37d4612644ee65825e2f1" }
 hex-literal = { version = "0.3.4" }
 serde_json = { version = "1.0.74" }
 pallet-mmr-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }

@@ -45,7 +45,7 @@ pub fn verify_parachain_headers_with_grandpa_finality_proof<H, Host>(
 ) -> Result<ClientState<H::Hash>, error::Error>
 where
 	H: Header<Hash = H256>,
-	H::Number: finality_grandpa::BlockNumberOps,
+	H::Number: finality_grandpa::BlockNumberOps + Into<u32>,
 	Host: HostFunctions,
 	Host::BlakeTwo256: Hasher<Out = H256>,
 {
@@ -96,6 +96,7 @@ where
 
 	// 5. set new client state, optionally rotating authorities
 	client_state.latest_relay_hash = target.hash();
+	client_state.latest_relay_height = (*target.number()).into();
 	if let Some(scheduled_change) = find_scheduled_change::<H>(&target) {
 		client_state.current_set_id += 1;
 		client_state.current_authorities = scheduled_change.next_authorities;

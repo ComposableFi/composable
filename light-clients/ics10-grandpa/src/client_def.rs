@@ -20,6 +20,7 @@ use ibc::core::ics02_client::{
 
 use crate::client_message::{ClientMessage, RelayChainHeader};
 use alloc::{format, string::ToString, vec, vec::Vec};
+use codec::Decode;
 use core::marker::PhantomData;
 use grandpa_client::justification::{
 	check_equivocation_proof, find_scheduled_change, AncestryChain,
@@ -49,8 +50,15 @@ use ibc::{
 	},
 	Height,
 };
-use light_client_common::{verify_delay_passed, verify_membership, verify_non_membership};
+use light_client_common::{
+	state_machine, verify_delay_passed, verify_membership, verify_non_membership,
+};
+use primitive_types::H256;
+use sp_trie::StorageProof;
 use tendermint_proto::Protobuf;
+
+const CLIENT_STATE_UPGRADE_PATH: &[u8] = b"client-state-upgrade-path";
+const CONSENSUS_STATE_UPGRADE_PATH: &[u8] = b"consensus-state-upgrade-path";
 
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct GrandpaClient<T>(PhantomData<T>);
@@ -80,6 +88,7 @@ where
 					current_authorities: client_state.current_authorities,
 					current_set_id: client_state.current_set_id,
 					latest_relay_hash: client_state.latest_relay_hash,
+					latest_relay_height: client_state.latest_relay_height,
 					para_id: client_state.para_id,
 				};
 
@@ -147,16 +156,41 @@ where
 			consensus_states.push((height, wrapped));
 		}
 
-		if let Some(max_height) = consensus_states.iter().map(|(h, ..)| h.revision_height).max() {
-			// this cast is safe, see [`ConsensusState::from_header`]
-			client_state.latest_para_height = max_height as u32
-		}
-
-		client_state.latest_relay_hash = header.finality_proof.block;
-
+		// updates
 		let target = ancestry
 			.header(&header.finality_proof.block)
 			.expect("target header has already been checked in verify_client_message; qed");
+
+		// can't try to rewind relay chain
+		if target.number <= client_state.latest_relay_height {
+			Err(Ics02Error::implementation_specific(format!(
+				"Light client can only be updated to new relay chain height."
+			)))?
+		}
+
+		let mut heights = consensus_states
+			.iter()
+			.map(|(h, ..)| {
+				// this cast is safe, see [`ConsensusState::from_header`]
+				h.revision_height as u32
+			})
+			.collect::<Vec<_>>();
+
+		heights.sort();
+
+		if let Some((min_height, max_height)) = heights.first().zip(heights.last()) {
+			// can't try to rewind parachain.
+			if *min_height <= client_state.latest_para_height {
+				Err(Ics02Error::implementation_specific(format!(
+					"Light client can only be updated to new parachain height."
+				)))?
+			}
+			client_state.latest_para_height = *max_height
+		}
+
+		client_state.latest_relay_hash = header.finality_proof.block;
+		client_state.latest_relay_height = target.number;
+
 		if let Some(scheduled_change) = find_scheduled_change(target) {
 			client_state.current_set_id += 1;
 			client_state.current_authorities = scheduled_change.next_authorities;
@@ -226,12 +260,86 @@ where
 
 	fn verify_upgrade_and_update_state<Ctx: ReaderContext>(
 		&self,
-		_client_state: &Self::ClientState,
-		_consensus_state: &Self::ConsensusState,
-		_proof_upgrade_client: Vec<u8>,
-		_proof_upgrade_consensus_state: Vec<u8>,
+		ctx: &Ctx,
+		client_id: ClientId,
+		old_client_state: &Self::ClientState,
+		upgrade_client_state: &Self::ClientState,
+		upgrade_consensus_state: &Self::ConsensusState,
+		proof_upgrade_client: Vec<u8>,
+		proof_upgrade_consensus_state: Vec<u8>,
 	) -> Result<(Self::ClientState, ConsensusUpdateResult<Ctx>), Ics02Error> {
-		Err(Error::Custom("Grandpa Client doesn't need client upgrades".to_string()).into())
+		let height = Height::new(
+			old_client_state.para_id as u64,
+			old_client_state.latest_para_height as u64,
+		);
+
+		let consenus_state = ctx.consensus_state(&client_id, height)?
+			.downcast::<Self::ConsensusState>()
+			.ok_or_else(|| Error::Custom(format!("Wrong consensus state type stored for Grandpa client with {client_id} at {height}")))?;
+
+		let root = H256::from_slice(consenus_state.root.as_bytes());
+
+		// verify client state upgrade proof
+		{
+			let proof_upgrade_client = {
+				let nodes: Vec<Vec<u8>> =
+					Decode::decode(&mut &proof_upgrade_client[..]).map_err(Error::Codec)?;
+				StorageProof::new(nodes)
+			};
+
+			let encoded = Ctx::AnyClientState::wrap(&upgrade_client_state.clone())
+				.expect("AnyConsensusState is type-checked; qed")
+				.encode_to_vec();
+
+			let value = state_machine::read_proof_check::<H::BlakeTwo256, _>(
+				&root,
+				proof_upgrade_client,
+				vec![CLIENT_STATE_UPGRADE_PATH],
+			)
+			.map_err(|err| Error::Custom(format!("{err}")))?
+			.remove(CLIENT_STATE_UPGRADE_PATH)
+			.flatten()
+			.ok_or_else(|| Error::Custom(format!("Invalid proof for client state upgrade")))?;
+
+			if value != encoded {
+				Err(Error::Custom(format!("Invalid proof for client state upgrade")))?
+			}
+		}
+
+		// verify consensus state upgrade proof
+		{
+			let proof_upgrade_consensus_state = {
+				let nodes: Vec<Vec<u8>> = Decode::decode(&mut &proof_upgrade_consensus_state[..])
+					.map_err(Error::Codec)?;
+				StorageProof::new(nodes)
+			};
+
+			let encoded = Ctx::AnyConsensusState::wrap(upgrade_client_state)
+				.expect("AnyConsensusState is type-checked; qed")
+				.encode_to_vec();
+
+			let value = state_machine::read_proof_check::<H::BlakeTwo256, _>(
+				&root,
+				proof_upgrade_consensus_state,
+				vec![CONSENSUS_STATE_UPGRADE_PATH],
+			)
+			.map_err(|err| Error::Custom(format!("{err}")))?
+			.remove(CONSENSUS_STATE_UPGRADE_PATH)
+			.flatten()
+			.ok_or_else(|| Error::Custom(format!("Invalid proof for client state upgrade")))?;
+
+			if value != encoded {
+				Err(Error::Custom(format!("Invalid proof for client state upgrade")))?
+			}
+		}
+
+		Ok((
+			upgrade_client_state.clone(),
+			ConsensusUpdateResult::Single(
+				Ctx::AnyConsensusState::wrap(upgrade_consensus_state)
+					.expect("AnyConsensusState is type-checked; qed"),
+			),
+		))
 	}
 
 	fn verify_client_consensus_state<Ctx: ReaderContext>(

@@ -54,6 +54,8 @@ pub struct ClientState<H> {
 	pub current_authorities: AuthorityList,
 	// Id of the current authority set.
 	pub current_set_id: u64,
+	// latest finalized height on the relay chain.
+	pub latest_relay_height: u32,
 	// latest finalized hash on the relay chain.
 	pub latest_relay_hash: H,
 	// para_id of associated parachain
@@ -83,7 +85,7 @@ pub struct ParachainHeadersWithFinalityProof<H: Header> {
 }
 
 /// Host functions that allow the light client perform cryptographic operations in native.
-pub trait HostFunctions: light_client_common::HostFunctions {
+pub trait HostFunctions: light_client_common::HostFunctions + 'static {
 	/// Verify an ed25519 signature
 	fn ed25519_verify(sig: &ed25519::Signature, msg: &[u8], pub_key: &ed25519::Public) -> bool;
 }

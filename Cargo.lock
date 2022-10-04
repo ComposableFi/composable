@@ -1943,7 +1943,7 @@ dependencies = [
  "hash-db",
  "hex",
  "hex-literal",
- "jsonrpsee-core 0.14.0",
+ "jsonrpsee-ws-client 0.14.0",
  "light-client-common",
  "parity-scale-codec",
  "polkadot-core-primitives",
@@ -1994,12 +1994,14 @@ dependencies = [
  "grandpa-light-client-primitives",
  "hex",
  "jsonrpsee 0.15.1",
+ "jsonrpsee-ws-client 0.14.0",
  "light-client-common",
  "parity-scale-codec",
  "prettyplease",
  "sc-finality-grandpa-rpc",
  "serde",
  "sp-core 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
+ "sp-finality-grandpa",
  "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
  "sp-state-machine 0.12.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
  "sp-trie 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
@@ -2325,7 +2327,7 @@ dependencies = [
 [[package]]
 name = "ibc"
 version = "0.15.0"
-source = "git+https://github.com/ComposableFi/ibc-rs?rev=9a959faabb8f2869e88327ea65a49f5697dcadf6#9a959faabb8f2869e88327ea65a49f5697dcadf6"
+source = "git+https://github.com/ComposableFi/ibc-rs?rev=c599cbcbf2c7a413a21a181f65dcf374f5ad75be#c599cbcbf2c7a413a21a181f65dcf374f5ad75be"
 dependencies = [
  "borsh",
  "derive_more",
@@ -2355,7 +2357,7 @@ dependencies = [
 [[package]]
 name = "ibc-derive"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/ibc-rs?rev=9a959faabb8f2869e88327ea65a49f5697dcadf6#9a959faabb8f2869e88327ea65a49f5697dcadf6"
+source = "git+https://github.com/ComposableFi/ibc-rs?rev=c599cbcbf2c7a413a21a181f65dcf374f5ad75be#c599cbcbf2c7a413a21a181f65dcf374f5ad75be"
 dependencies = [
  "convert_case 0.6.0",
  "proc-macro-crate 1.2.1",
@@ -2367,7 +2369,7 @@ dependencies = [
 [[package]]
 name = "ibc-proto"
 version = "0.18.0"
-source = "git+https://github.com/ComposableFi/ibc-rs?rev=9a959faabb8f2869e88327ea65a49f5697dcadf6#9a959faabb8f2869e88327ea65a49f5697dcadf6"
+source = "git+https://github.com/ComposableFi/ibc-rs?rev=c599cbcbf2c7a413a21a181f65dcf374f5ad75be#c599cbcbf2c7a413a21a181f65dcf374f5ad75be"
 dependencies = [
  "base64",
  "bytes",
@@ -2420,9 +2422,11 @@ dependencies = [
  "grandpa-light-client-primitives",
  "grandpa-prover",
  "hex",
+ "hex-literal",
  "ibc",
  "ibc-derive",
  "ibc-proto",
+ "jsonrpsee-ws-client 0.14.0",
  "light-client-common",
  "parity-scale-codec",
  "primitive-types",
@@ -2745,10 +2749,32 @@ version = "0.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8bd0d559d5e679b1ab2f869b486a11182923863b1b3ee8b421763cdd707b783a"
 dependencies = [
- "jsonrpsee-client-transport",
+ "jsonrpsee-client-transport 0.15.1",
  "jsonrpsee-core 0.15.1",
  "jsonrpsee-http-client",
  "jsonrpsee-types 0.15.1",
+ "jsonrpsee-ws-client 0.15.1",
+]
+
+[[package]]
+name = "jsonrpsee-client-transport"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ce395539a14d3ad4ec1256fde105abd36a2da25d578a291cabe98f45adfdb111"
+dependencies = [
+ "futures-util",
+ "http",
+ "jsonrpsee-core 0.14.0",
+ "jsonrpsee-types 0.14.0",
+ "pin-project",
+ "rustls-native-certs 0.6.2",
+ "soketto",
+ "thiserror",
+ "tokio",
+ "tokio-rustls 0.23.4",
+ "tokio-util",
+ "tracing",
+ "webpki-roots 0.22.5",
 ]
 
 [[package]]
@@ -2901,6 +2927,29 @@ dependencies = [
  "serde_json",
  "thiserror",
  "tracing",
+]
+
+[[package]]
+name = "jsonrpsee-ws-client"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ee043cb5dd0d51d3eb93432e998d5bae797691a7b10ec4a325e036bcdb48c48a"
+dependencies = [
+ "jsonrpsee-client-transport 0.14.0",
+ "jsonrpsee-core 0.14.0",
+ "jsonrpsee-types 0.14.0",
+]
+
+[[package]]
+name = "jsonrpsee-ws-client"
+version = "0.15.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6ee5feddd5188e62ac08fcf0e56478138e581509d4730f3f7be9b57dd402a4ff"
+dependencies = [
+ "http",
+ "jsonrpsee-client-transport 0.15.1",
+ "jsonrpsee-core 0.15.1",
+ "jsonrpsee-types 0.15.1",
 ]
 
 [[package]]
@@ -7340,7 +7389,7 @@ checksum = "734676eb262c623cec13c3155096e08d1f8f29adce39ba17948b18dad1e54142"
 [[package]]
 name = "subxt"
 version = "0.24.0"
-source = "git+https://github.com/composableFi/subxt?rev=37df0ee525252fa9a3e7730629ce0de4da9e68fd#37df0ee525252fa9a3e7730629ce0de4da9e68fd"
+source = "git+https://github.com/paritytech/subxt?rev=81175b2dd9a2391f71c37d4612644ee65825e2f1#81175b2dd9a2391f71c37d4612644ee65825e2f1"
 dependencies = [
  "bitvec",
  "derivative",
@@ -7366,7 +7415,7 @@ dependencies = [
 [[package]]
 name = "subxt-codegen"
 version = "0.24.0"
-source = "git+https://github.com/composableFi/subxt?rev=37df0ee525252fa9a3e7730629ce0de4da9e68fd#37df0ee525252fa9a3e7730629ce0de4da9e68fd"
+source = "git+https://github.com/paritytech/subxt?rev=81175b2dd9a2391f71c37d4612644ee65825e2f1#81175b2dd9a2391f71c37d4612644ee65825e2f1"
 dependencies = [
  "darling",
  "frame-metadata",
@@ -7383,7 +7432,7 @@ dependencies = [
 [[package]]
 name = "subxt-macro"
 version = "0.24.0"
-source = "git+https://github.com/composableFi/subxt?rev=37df0ee525252fa9a3e7730629ce0de4da9e68fd#37df0ee525252fa9a3e7730629ce0de4da9e68fd"
+source = "git+https://github.com/paritytech/subxt?rev=81175b2dd9a2391f71c37d4612644ee65825e2f1#81175b2dd9a2391f71c37d4612644ee65825e2f1"
 dependencies = [
  "darling",
  "proc-macro-error",
@@ -7394,7 +7443,7 @@ dependencies = [
 [[package]]
 name = "subxt-metadata"
 version = "0.24.0"
-source = "git+https://github.com/composableFi/subxt?rev=37df0ee525252fa9a3e7730629ce0de4da9e68fd#37df0ee525252fa9a3e7730629ce0de4da9e68fd"
+source = "git+https://github.com/paritytech/subxt?rev=81175b2dd9a2391f71c37d4612644ee65825e2f1#81175b2dd9a2391f71c37d4612644ee65825e2f1"
 dependencies = [
  "frame-metadata",
  "parity-scale-codec",

@@ -39,6 +39,8 @@ pub const GRANDPA_CLIENT_STATE_TYPE_URL: &str = "/ibc.lightclients.grandpa.v1.Cl
 pub struct ClientState<H> {
 	/// Relay chain
 	pub relay_chain: RelayChain,
+	// Latest relay chain height
+	pub latest_relay_height: u32,
 	/// Latest relay chain block hash
 	pub latest_relay_hash: H256,
 	/// Block height when the client was frozen due to a misbehaviour
@@ -192,6 +194,7 @@ impl<H> TryFrom<RawClientState> for ClientState<H> {
 			current_set_id: raw.current_set_id,
 			current_authorities,
 			latest_relay_hash,
+			latest_relay_height: raw.latest_relay_height,
 			_phantom: Default::default(),
 		})
 	}
@@ -200,6 +203,7 @@ impl<H> TryFrom<RawClientState> for ClientState<H> {
 impl<H> From<ClientState<H>> for RawClientState {
 	fn from(client_state: ClientState<H>) -> Self {
 		RawClientState {
+			latest_relay_height: client_state.latest_relay_height,
 			latest_relay_hash: client_state.latest_relay_hash.as_bytes().to_vec(),
 			current_set_id: client_state.current_set_id,
 			frozen_height: client_state

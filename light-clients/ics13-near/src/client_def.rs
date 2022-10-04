@@ -196,8 +196,11 @@ impl<H: HostFunctionsTrait> ClientDef for NearClient<H> {
 
 	fn verify_upgrade_and_update_state<Ctx: ReaderContext>(
 		&self,
-		_client_state: &Self::ClientState,
-		_consensus_state: &Self::ConsensusState,
+		_ctx: &Ctx,
+		_client_id: ClientId,
+		_old_client_state: &Self::ClientState,
+		_upgrade_client_state: &Self::ClientState,
+		_upgrade_consensus_state: &Self::ConsensusState,
 		_proof_upgrade_client: Vec<u8>,
 		_proof_upgrade_consensus_state: Vec<u8>,
 	) -> Result<(Self::ClientState, ConsensusUpdateResult<Ctx>), Error> {
