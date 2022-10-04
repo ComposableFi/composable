@@ -612,15 +612,15 @@
               # We don't really care because polkadot is only used for local devnet.
               __noChroot = true;
               name = "polkadot-centauri-v${version}";
-              version = "0.9.24";
+              version = "0.9.27";
               src = fetchFromGitHub {
                 repo = "polkadot";
                 owner = "ComposableFi";
-                rev = "e369f2bdbf429fe35ea7267ae49cf2e8359dd1cc";
+                rev = "0898082540c42fb241c01fe500715369a33a80de";
                 hash = "sha256-LEz3OrVgdFTCnVwzU8C6GeEougaOl2qo7jS9qIdMqAN=";
               };
               cargoSha256 =
-                "sha256-ct635ewmwYn21S2y3+bNVL8YfmiNfss/4+hPDHEAA5E=";
+                "sha256-u/hFRxt3OTMDwONGoJ5l7whC4atgpgIQx+pthe2CJXo=";
               doCheck = false;
               buildInputs = [ openssl zstd ];
               nativeBuildInputs = [ rust-nightly clang pkg-config ]
