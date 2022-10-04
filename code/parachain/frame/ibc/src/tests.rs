@@ -73,7 +73,7 @@ fn setup_client_and_consensus_state(port_id: PortId) {
 		Counterparty::new(counterparty_client_id, Some(ConnectionId::new(1)), commitment_prefix);
 	let connection_end = ConnectionEnd::new(
 		ConnState::Open,
-		client_id.clone(),
+		client_id,
 		connection_counterparty,
 		vec![ConnVersion::default()],
 		delay_period,
@@ -119,11 +119,11 @@ fn initialize_connection() {
 		assert_ok!(Ibc::deliver(Origin::signed(AccountId32::new([0; 32])), vec![msg]));
 
 		let value = conn_open_init::MsgConnectionOpenInit {
-			client_id: client_id.clone(),
+			client_id,
 			counterparty: Counterparty::new(
-				counterparty_client_id.clone(),
+				counterparty_client_id,
 				Some(ConnectionId::new(1)),
-				commitment_prefix.clone(),
+				commitment_prefix,
 			),
 			version: Some(ConnVersion::default()),
 			delay_period: Duration::from_nanos(1000),
@@ -143,7 +143,7 @@ fn initialize_connection() {
 fn should_send_ping_packet() {
 	let mut ext = new_test_ext();
 	ext.execute_with(|| {
-		frame_system::Pallet::<Test>::set_block_number(1u32.into());
+		frame_system::Pallet::<Test>::set_block_number(1u32);
 
 		setup_client_and_consensus_state(PortId::from_str("ping").unwrap());
 
@@ -183,7 +183,7 @@ fn send_transfer() {
 		let balance = 100000 * CurrencyId::milli::<u128>();
 		<<Test as Config>::MultiCurrency as Mutate<
 			<Test as frame_system::Config>::AccountId,
-		>>::mint_into(CurrencyId::PICA.into(), &AccountId32::new([0; 32]), balance.into())
+		>>::mint_into(CurrencyId::PICA, &AccountId32::new([0; 32]), balance)
 		.unwrap();
 
 		Ibc::set_params(Origin::root(), PalletParams { send_enabled: true, receive_enabled: true })
@@ -198,8 +198,8 @@ fn send_transfer() {
 				source_channel: 0,
 				timeout,
 			},
-			CurrencyId::PICA.into(),
-			balance.into(),
+			CurrencyId::PICA,
+			balance,
 		)
 		.unwrap();
 	})
@@ -214,7 +214,7 @@ fn on_deliver_ics20_recv_packet() {
 		let ss58_address_bytes =
 			ibc_primitives::runtime_interface::account_id_to_ss58(pair.public().0).unwrap();
 		let ss58_address = String::from_utf8(ss58_address_bytes).unwrap();
-		frame_system::Pallet::<Test>::set_block_number(1u32.into());
+		frame_system::Pallet::<Test>::set_block_number(1u32);
 
 		setup_client_and_consensus_state(PortId::transfer());
 
@@ -235,7 +235,7 @@ fn on_deliver_ics20_recv_packet() {
 		// Endow escrow address with tokens
 		<<Test as Config>::MultiCurrency as Mutate<
 			<Test as frame_system::Config>::AccountId,
-		>>::mint_into(CurrencyId::PICA.into(), &channel_escrow_address, balance.into())
+		>>::mint_into(CurrencyId::PICA, &channel_escrow_address, balance)
 		.unwrap();
 
 		Ibc::set_params(Origin::root(), PalletParams { send_enabled: true, receive_enabled: true })
@@ -249,7 +249,7 @@ fn on_deliver_ics20_recv_packet() {
 			amount: ibc::applications::transfer::Amount::from_str(&format!("{:?}", amt)).unwrap(),
 		};
 		let packet_data = PacketData {
-			token: coin.clone(),
+			token: coin,
 			sender: Signer::from_str("alice").unwrap(),
 			receiver: Signer::from_str(&ss58_address).unwrap(),
 		};
@@ -290,7 +290,7 @@ fn on_deliver_ics20_recv_packet() {
 		Ibc::deliver(Origin::signed(AccountId32::new([0; 32])), vec![msg]).unwrap();
 
 		let account_data = Tokens::accounts(AccountId32::new(pair.public().0), CurrencyId::PICA);
-		assert_eq!(account_data.free, amt.into())
+		assert_eq!(account_data.free, amt)
 	})
 }
 
@@ -298,7 +298,7 @@ fn on_deliver_ics20_recv_packet() {
 fn should_fetch_recv_packet_with_acknowledgement() {
 	let mut ext = new_test_ext();
 	ext.execute_with(|| {
-		frame_system::Pallet::<Test>::set_block_number(1u32.into());
+		frame_system::Pallet::<Test>::set_block_number(1u32);
 		let channel_id = ChannelId::new(0);
 		let port_id = PortId::transfer();
 
@@ -318,7 +318,7 @@ fn should_fetch_recv_packet_with_acknowledgement() {
 		};
 
 		ctx.store_recv_packet(
-			(port_id.clone(), channel_id, packet.sequence.clone()),
+			(port_id.clone(), channel_id, packet.sequence),
 			packet.clone(),
 		)
 		.unwrap();

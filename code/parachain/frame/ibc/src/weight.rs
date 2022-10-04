@@ -196,8 +196,7 @@ where
 						let client_type = msg
 							.client_id
 							.as_str()
-							.rsplit_once('-')
-							.and_then(|(client_type_str, ..)| Some(client_type_str));
+							.rsplit_once('-').map(|(client_type_str, ..)| client_type_str);
 						match client_type {
 							Some(ty) if ty.contains("tendermint") =>
 								<T as Config>::WeightInfo::update_tendermint_client(),
@@ -213,8 +212,7 @@ where
 						let client_type = msg
 							.client_id
 							.as_str()
-							.rsplit_once('-')
-							.and_then(|(client_type_str, ..)| Some(client_type_str));
+							.rsplit_once('-').map(|(client_type_str, ..)| client_type_str);
 						match client_type {
 							Some(ty) if ty.contains("tendermint") =>
 								<T as Config>::WeightInfo::conn_try_open_tendermint(),
@@ -228,8 +226,7 @@ where
 						let client_type = connection_end
 							.client_id()
 							.as_str()
-							.rsplit_once('-')
-							.and_then(|(client_type_str, ..)| Some(client_type_str));
+							.rsplit_once('-').map(|(client_type_str, ..)| client_type_str);
 						match client_type {
 							Some(ty) if ty.contains("tendermint") =>
 								<T as Config>::WeightInfo::conn_open_ack_tendermint(),
@@ -243,8 +240,7 @@ where
 						let client_type = connection_end
 							.client_id()
 							.as_str()
-							.rsplit_once('-')
-							.and_then(|(client_type_str, ..)| Some(client_type_str));
+							.rsplit_once('-').map(|(client_type_str, ..)| client_type_str);
 						match client_type {
 							Some(ty) if ty.contains("tendermint") =>
 								<T as Config>::WeightInfo::conn_open_confirm_tendermint(),
@@ -266,8 +262,7 @@ where
 									let client_type = connection_end
 										.client_id()
 										.as_str()
-										.rsplit_once('-')
-										.and_then(|(client_type_str, ..)| Some(client_type_str));
+										.rsplit_once('-').map(|(client_type_str, ..)| client_type_str);
 									match client_type {
 										Some(ty) if ty.contains("tendermint") =>
 											<T as Config>::WeightInfo::channel_open_init(),
@@ -291,8 +286,7 @@ where
 									let client_type = connection_end
 										.client_id()
 										.as_str()
-										.rsplit_once('-')
-										.and_then(|(client_type_str, ..)| Some(client_type_str));
+										.rsplit_once('-').map(|(client_type_str, ..)| client_type_str);
 									match client_type {
 										Some(ty) if ty.contains("tendermint") =>
 											<T as Config>::WeightInfo::channel_open_try_tendermint(),
@@ -315,8 +309,7 @@ where
 							Ok(client_id) => {
 								let client_type = client_id
 									.as_str()
-									.rsplit_once('-')
-									.and_then(|(client_type_str, ..)| Some(client_type_str));
+									.rsplit_once('-').map(|(client_type_str, ..)| client_type_str);
 								match client_type {
 									Some(ty) if ty.contains("tendermint") =>
 										<T as Config>::WeightInfo::channel_open_ack_tendermint(),
@@ -339,8 +332,7 @@ where
 							Ok(client_id) => {
 								let client_type = client_id
 									.as_str()
-									.rsplit_once('-')
-									.and_then(|(client_type_str, ..)| Some(client_type_str));
+									.rsplit_once('-').map(|(client_type_str, ..)| client_type_str);
 								match client_type {
 									Some(ty) if ty.contains("tendermint") =>
 										<T as Config>::WeightInfo::channel_open_confirm_tendermint(),
@@ -363,8 +355,7 @@ where
 							Ok(client_id) => {
 								let client_type = client_id
 									.as_str()
-									.rsplit_once('-')
-									.and_then(|(client_type_str, ..)| Some(client_type_str));
+									.rsplit_once('-').map(|(client_type_str, ..)| client_type_str);
 								match client_type {
 									Some(ty) if ty.contains("tendermint") =>
 										<T as Config>::WeightInfo::channel_close_init(),
@@ -387,8 +378,7 @@ where
 							Ok(client_id) => {
 								let client_type = client_id
 									.as_str()
-									.rsplit_once('-')
-									.and_then(|(client_type_str, ..)| Some(client_type_str));
+									.rsplit_once('-').map(|(client_type_str, ..)| client_type_str);
 								match client_type {
 									Some(ty) if ty.contains("tendermint") =>
 										<T as Config>::WeightInfo::channel_close_confirm_tendermint(
@@ -415,8 +405,7 @@ where
 							Ok(client_id) => {
 								let client_type = client_id
 									.as_str()
-									.rsplit_once('-')
-									.and_then(|(client_type_str, ..)| Some(client_type_str));
+									.rsplit_once('-').map(|(client_type_str, ..)| client_type_str);
 								match client_type {
 									Some(ty) if ty.contains("tendermint") =>
 										<T as Config>::WeightInfo::recv_packet_tendermint(
@@ -445,8 +434,7 @@ where
 							Ok(client_id) => {
 								let client_type = client_id
 									.as_str()
-									.rsplit_once('-')
-									.and_then(|(client_type_str, ..)| Some(client_type_str));
+									.rsplit_once('-').map(|(client_type_str, ..)| client_type_str);
 								match client_type {
 									Some(ty) if ty.contains("tendermint") =>
 										<T as Config>::WeightInfo::ack_packet_tendermint(
@@ -473,8 +461,7 @@ where
 							Ok(client_id) => {
 								let client_type = client_id
 									.as_str()
-									.rsplit_once('-')
-									.and_then(|(client_type_str, ..)| Some(client_type_str));
+									.rsplit_once('-').map(|(client_type_str, ..)| client_type_str);
 								match client_type {
 									Some(ty) if ty.contains("tendermint") =>
 										<T as Config>::WeightInfo::timeout_packet_tendermint(
@@ -500,8 +487,7 @@ where
 							Ok(client_id) => {
 								let client_type = client_id
 									.as_str()
-									.rsplit_once('-')
-									.and_then(|(client_type_str, ..)| Some(client_type_str));
+									.rsplit_once('-').map(|(client_type_str, ..)| client_type_str);
 								match client_type {
 									Some(ty) if ty.contains("tendermint") =>
 										<T as Config>::WeightInfo::timeout_packet_tendermint(

@@ -182,8 +182,8 @@ impl<T: Config + Send + Sync> Module for IbcModule<T> {
 		version: &Version,
 		counterparty_version: &Version,
 	) -> Result<Version, Ics04Error> {
-		if counterparty_version.to_string() != VERSION.to_string() ||
-			version.to_string() != VERSION.to_string()
+		if counterparty_version.to_string() != *VERSION ||
+			version.to_string() != *VERSION
 		{
 			return Err(Ics04Error::no_common_version())
 		}
@@ -192,7 +192,7 @@ impl<T: Config + Send + Sync> Module for IbcModule<T> {
 			return Err(Ics04Error::unknown_order_type(order.to_string()))
 		}
 
-		let ping_port = PortId::from_str(PORT_ID).unwrap();
+		let ping_port = PortId::from_str(PORT_ID).expect("PORT_ID is static and valid; qed");
 		if counterparty.port_id() != &ping_port || port_id != &ping_port {
 			return Err(Ics04Error::implementation_specific(format!(
 				"Invalid counterparty port {:?}",

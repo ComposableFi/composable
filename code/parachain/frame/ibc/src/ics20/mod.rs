@@ -95,8 +95,8 @@ where
 		version: &Version,
 		counterparty_version: &Version,
 	) -> Result<Version, Ics04Error> {
-		if counterparty_version.to_string() != VERSION.to_string() ||
-			version.to_string() != VERSION.to_string()
+		if counterparty_version.to_string() != *VERSION ||
+			version.to_string() != *VERSION
 		{
 			return Err(Ics04Error::no_common_version())
 		}

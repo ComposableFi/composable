@@ -913,7 +913,7 @@ where
 			channel_id: packet.source_channel.clone().to_string().as_bytes().to_vec(),
 			dest_port: packet.destination_port.as_bytes().to_vec(),
 			dest_channel: packet.destination_channel.to_string().as_bytes().to_vec(),
-			sequence: packet.sequence.clone().into(),
+			sequence: packet.sequence.into(),
 		};
 		Self::deposit_event(Event::<T>::Events { events: vec![event] });
 		Ok(())

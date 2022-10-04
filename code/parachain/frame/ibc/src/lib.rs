@@ -1,6 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(unreachable_patterns)]
 #![allow(clippy::type_complexity)]
+#![allow(clippy::useless_format)]
 #![allow(non_camel_case_types)]
 #![deny(
 	unused_imports,
@@ -581,7 +582,7 @@ pub mod pallet {
 			let origin = ensure_signed(origin)?;
 			// Check if it's a local asset id, native asset or an ibc asset id
 			// If native or local asset, get the string representation of the asset
-			let denom = if let Some(denom) = IbcAssetIds::<T>::get(&asset_id) {
+			let denom = if let Some(denom) = IbcAssetIds::<T>::get(asset_id) {
 				String::from_utf8(denom).map_err(|_| Error::<T>::Utf8Error)?
 			} else {
 				let asset_id: CurrencyId = asset_id.into();
@@ -630,7 +631,7 @@ pub mod pallet {
 				},
 				Timeout::Absolute { timestamp, height } => {
 					let timestamp = timestamp
-						.map(|timestamp| Timestamp::from_nanoseconds(timestamp))
+						.map(Timestamp::from_nanoseconds)
 						.transpose()
 						.map_err(|_| Error::<T>::InvalidTimestamp)?
 						.unwrap_or_default();
@@ -683,10 +684,10 @@ pub mod pallet {
 				to: to.as_bytes().to_vec(),
 				amount,
 				local_asset_id: Pallet::<T>::ibc_denom_to_asset_id(
-					coin.clone().denom.to_string(),
+					coin.denom.to_string(),
 					coin.clone(),
 				),
-				ibc_denom: coin.clone().denom.to_string().as_bytes().to_vec(),
+				ibc_denom: coin.denom.to_string().as_bytes().to_vec(),
 			});
 			Ok(())
 		}

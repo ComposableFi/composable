@@ -245,7 +245,7 @@ where
 			sp_trie::verify_trie_proof::<LayoutV0<BlakeTwo256>, _, _, _>(
 				&H256::from(extrinsic_root),
 				proof,
-				&vec![(key, Some(&ext[..]))],
+				&vec![(key, Some(ext))],
 			)
 			.map_err(|_| ICS02Error::implementation_specific(format!("Invalid extrinsic proof")))?;
 
