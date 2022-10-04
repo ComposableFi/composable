@@ -76,7 +76,6 @@ pub mod pallet {
 		},
 		time::{DurationSeconds, ONE_MONTH, ONE_WEEK},
 	};
-	use core::ops::Mul;
 	use frame_support::{
 		traits::{
 			fungibles::{
@@ -102,7 +101,7 @@ pub mod pallet {
 		traits::{AccountIdConversion, BlockNumberProvider},
 		PerThing, Perbill,
 	};
-	use sp_std::{cmp::max, fmt::Debug, vec, vec::Vec};
+	use sp_std::{cmp::max, fmt::Debug, ops::Mul, vec, vec::Vec};
 
 	use crate::{
 		add_to_rewards_pot, claim_of_stake, do_reward_accumulation, prelude::*,
