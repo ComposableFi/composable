@@ -142,11 +142,11 @@ pub fn picasso_dev() -> picasso::ChainSpec {
 #[cfg(feature = "dali")]
 // chain spec for local testnet environments
 pub fn dali_dev(id: &str) -> dali::ChainSpec {
-	let para_id = match id.split("-").nth(1).unwrap() {
+	let para_id = match id.split('-').nth(1).expect("Dali chainspec 'dali-dev' has a dash; qed") {
 		"dev" => None,
 		number => number.parse::<u32>().ok().map(ParaId::from),
 	};
-	let para_id = para_id.unwrap_or(ParaId::from(*PARA_ID));
+	let para_id = para_id.unwrap_or(*PARA_ID);
 	let mut properties = Properties::new();
 	properties.insert("tokenSymbol".into(), "DALI".into());
 	properties.insert("tokenDecimals".into(), CurrencyId::decimals().into());

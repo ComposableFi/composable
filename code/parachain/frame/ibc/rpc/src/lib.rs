@@ -120,7 +120,7 @@ pub struct Proof {
 }
 
 /// Packet info
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct PacketInfo {
 	/// Height at which packet event was emitted height
 	pub height: u64,

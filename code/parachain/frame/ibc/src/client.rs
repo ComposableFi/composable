@@ -92,7 +92,11 @@ where
 	}
 
 	fn host_client_type(&self) -> String {
-		"beefy".to_string()
+		if cfg!(any(test, feature = "runtime-benchmarks")) {
+			"tendermint".to_string()
+		} else {
+			"beefy".to_string()
+		}
 	}
 
 	fn next_consensus_state(

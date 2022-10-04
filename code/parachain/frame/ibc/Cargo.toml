@@ -16,7 +16,6 @@ serde_json = { version = "1.0.45", default-features = false }
 sha2 = { version = "0.10.2", default-features = false }
 derive_more = { version = "0.99.17", default-features = false, features = ["from", "display"]  }
 # substrate
-balances = { package = "pallet-balances", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
 parachain-info = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.27" }
@@ -95,6 +94,7 @@ serde = { version = "1.0" }
 simple-iavl = { git = "https://github.com/ComposableFi/simple-avl", rev = "452a1126bfb8a861354b413755ac3c8fda3da4ec" }
 sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 tendermint = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8" }
+balances = { package = "pallet-balances", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
 
 [dev-dependencies.ibc]
 git = "https://github.com/ComposableFi/ibc-rs"
@@ -109,7 +109,6 @@ std = [
   "scale-info/std",
   "serde_json/std",
   "sha2/std",
-  "balances/std",
   "frame-benchmarking/std",
   "frame-support/std",
   "frame-system/std",

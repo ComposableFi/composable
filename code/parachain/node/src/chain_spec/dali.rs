@@ -1,6 +1,5 @@
 use common::{AccountId, AuraId, Balance};
 use dali_runtime::GenesisConfig;
-use primitives::currency::CurrencyId;
 
 use super::{Extensions, ParaId};
 
@@ -20,7 +19,7 @@ pub fn genesis_config(
 	accounts: Vec<AccountId>,
 	id: ParaId,
 	existential_deposit: Balance,
-	treasury: AccountId,
+	_treasury: AccountId,
 ) -> dali_runtime::GenesisConfig {
 	dali_runtime::GenesisConfig {
 		system: dali_runtime::SystemConfig {
