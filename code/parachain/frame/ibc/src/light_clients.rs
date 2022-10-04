@@ -57,12 +57,11 @@ impl tendermint_light_client_verifier::host_functions::HostFunctionsProvider
 	}
 
 	fn ed25519_verify(signature: &[u8], msg: &[u8], pubkey: &[u8]) -> bool {
-		if let Some((signature, public_key)) = ed25519::Signature::from_slice(signature)
-			.and_then(|sig| {
+		if let Some((signature, public_key)) =
+			ed25519::Signature::from_slice(signature).and_then(|sig| {
 				let public = sp_core::ed25519::Public::try_from(pubkey).ok()?;
 				Some((sig, public))
-			})
-		{
+			}) {
 			sp_io::crypto::ed25519_verify(&signature, msg, &public_key)
 		} else {
 			false

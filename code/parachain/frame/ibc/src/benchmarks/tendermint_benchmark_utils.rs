@@ -874,9 +874,7 @@ where
 		.unwrap();
 
 	let mut avl_tree = create_avl();
-	let path = format!("{}", SeqRecvsPath(port_id, ChannelId::new(0)))
-		.as_bytes()
-		.to_vec();
+	let path = format!("{}", SeqRecvsPath(port_id, ChannelId::new(0))).as_bytes().to_vec();
 	let mut seq_bytes = Vec::new();
 	prost::Message::encode(&1u64, &mut seq_bytes).unwrap();
 	avl_tree.insert(path.clone(), seq_bytes);

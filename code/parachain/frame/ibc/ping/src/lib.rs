@@ -182,9 +182,7 @@ impl<T: Config + Send + Sync> Module for IbcModule<T> {
 		version: &Version,
 		counterparty_version: &Version,
 	) -> Result<Version, Ics04Error> {
-		if counterparty_version.to_string() != *VERSION ||
-			version.to_string() != *VERSION
-		{
+		if counterparty_version.to_string() != *VERSION || version.to_string() != *VERSION {
 			return Err(Ics04Error::no_common_version())
 		}
 

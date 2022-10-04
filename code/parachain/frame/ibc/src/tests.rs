@@ -317,11 +317,8 @@ fn should_fetch_recv_packet_with_acknowledgement() {
 			timeout_timestamp: Default::default(),
 		};
 
-		ctx.store_recv_packet(
-			(port_id.clone(), channel_id, packet.sequence),
-			packet.clone(),
-		)
-		.unwrap();
+		ctx.store_recv_packet((port_id.clone(), channel_id, packet.sequence), packet.clone())
+			.unwrap();
 
 		let ack = "success".as_bytes().to_vec();
 		Pallet::<Test>::write_acknowledgement(&packet, ack.clone()).unwrap();
