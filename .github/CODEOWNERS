@@ -33,6 +33,9 @@ subsquid/ @ComposableFi/parachain-finance @ComposableFi/blockchain-integrations
 code/parachain/frame/*/rpc/ @ComposableFi/parachain-rpc
 code/parachain/frame/*/runtime-api @ComposableFi/parachain-rpc
 
+code/Cargo.lock @ComposableFi/parachain-leads @ComposableFi/core @ComposableFi/nix
+code/Cargo.toml @ComposableFi/parachain-leads @ComposableFi/core @ComposableFi/nix
+
 ## Public Gitbook
 
 book/ @ComposableFi/technical-writers
