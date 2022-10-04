@@ -119,6 +119,8 @@ pub mod pallet {
 		/// The crowdloan was successfully initialized, but with excess funds that won't be
 		/// claimed.
 		OverFunded { excess_funds: T::Balance },
+		/// A portion of rewards have been unlocked and future claims will not have locks
+		RewardsUnlocked { at: MomentOf<T> },
 	}
 
 	#[pallet::error]
@@ -488,7 +490,7 @@ pub mod pallet {
 					ensure!(available_to_claim > T::Balance::zero(), Error::<T>::NothingToClaim);
 
 					reward.claimed = available_to_claim.saturating_add(reward.claimed);
-					if T::LockByDefault::get() && RemoveRewardLocks::<T>::exists() {
+					if T::LockByDefault::get() && !RemoveRewardLocks::<T>::exists() {
 						T::RewardAsset::set_lock(
 							T::LockId::get(),
 							reward_account,
@@ -515,12 +517,16 @@ pub mod pallet {
 			})
 		}
 
+		/// Sets `RemoveRewardLocks`, removes `RewardAsset` locks on provided accounts, emmits
+		/// `RewardsUnlocked`.
 		fn do_unlock(reward_accounts: Vec<T::AccountId>) {
 			RemoveRewardLocks::<T>::put(());
 
 			reward_accounts.iter().for_each(|reward_account| {
 				T::RewardAsset::remove_lock(T::LockId::get(), reward_account);
-			})
+			});
+
+			Self::deposit_event(Event::<T>::RewardsUnlocked { at: T::Time::now() });
 		}
 	}
 
