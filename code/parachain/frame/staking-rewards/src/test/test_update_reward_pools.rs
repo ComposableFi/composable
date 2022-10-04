@@ -14,7 +14,7 @@ use crate::test::{
 		add_to_rewards_pot_and_assert, block_seconds, create_rewards_pool_and_assert,
 		ONE_YEAR_OF_BLOCKS,
 	},
-	runtime::{MaxRewardConfigsPerPool, Origin, StakingRewards, ALICE},
+	runtime::{self, MaxRewardConfigsPerPool, Origin, StakingRewards, ALICE},
 	test_reward_accumulation_hook::{check_rewards, CheckRewards, PoolRewards},
 	Test,
 };
@@ -31,8 +31,8 @@ fn test_update_reward_pool() {
 		const INITIAL_REWARD_RATE_AMOUNT: u128 = 10;
 		const UPDATED_REWARD_RATE_AMOUNT: u128 = 5;
 
-		let pool_id =
-			create_rewards_pool_and_assert(RewardPoolConfiguration::RewardRateBasedIncentive {
+		create_rewards_pool_and_assert::<Test, runtime::Event>(
+			RewardPoolConfiguration::RewardRateBasedIncentive {
 				owner: ALICE,
 				asset_id: PICA::ID,
 				start_block: 2,
@@ -50,10 +50,11 @@ fn test_update_reward_pool() {
 				lock: default_lock_config(),
 				share_asset_id: XPICA::ID,
 				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
-			});
+			},
+		);
 
 		mint_assets([ALICE], [USDT::ID], INITIAL_AMOUNT);
-		add_to_rewards_pot_and_assert(ALICE, pool_id, USDT::ID, INITIAL_AMOUNT);
+		add_to_rewards_pot_and_assert(ALICE, PICA::ID, USDT::ID, INITIAL_AMOUNT);
 
 		process_and_progress_blocks::<StakingRewards, Test>(1);
 
@@ -77,14 +78,14 @@ fn test_update_reward_pool() {
 		.try_collect()
 		.unwrap();
 
-		assert_extrinsic_event::<Test, _, _, _>(
-			StakingRewards::update_rewards_pool(Origin::root(), pool_id, reward_updates),
-			crate::Event::RewardPoolUpdated { pool_id },
+		assert_extrinsic_event::<Test, _, _, _, _>(
+			StakingRewards::update_rewards_pool(Origin::root(), PICA::ID, reward_updates),
+			crate::Event::RewardPoolUpdated { pool_id: PICA::ID },
 		);
 
 		process_and_progress_blocks::<StakingRewards, Test>(1);
 
-		let pool = StakingRewards::pools(pool_id).unwrap();
+		let pool = StakingRewards::pools(PICA::ID).unwrap();
 		assert!(matches!(
 			pool.rewards.get(&USDT::ID).unwrap(),
 			Reward {

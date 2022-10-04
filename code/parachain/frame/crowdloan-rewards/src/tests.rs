@@ -10,7 +10,7 @@ use crate::{
 };
 use codec::Encode;
 use composable_support::types::{EcdsaSignature, EthereumAddress};
-use composable_tests_helpers::test::helper::assert_event;
+use composable_tests_helpers::test::helper::assert_event_with;
 use frame_support::{assert_noop, assert_ok, traits::Currency};
 use hex_literal::hex;
 use sp_core::{ed25519, storage::StateVersion, Pair};
@@ -263,7 +263,7 @@ fn initialize_should_emit_warning_when_over_funded() {
 
 		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
 		assert_eq!(
-			assert_event::<Test, _, _, _>(|event| match event {
+			assert_event_with::<Test, _, _, _>(|event| match event {
 				Event::<Test>::OverFunded { excess_funds } => {
 					assert_eq!(excess_funds, DEFAULT_REWARD * DEFAULT_NB_OF_CONTRIBUTORS);
 					Some(event)

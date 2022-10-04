@@ -26,8 +26,11 @@ pub struct Reward<Balance> {
 	/// Already claimed rewards by stakers by unstaking.
 	pub claimed_rewards: Balance,
 
-	/// A book keeping field to track the actual total reward without the
-	/// reward dilution adjustment caused by new stakers joining the pool.
+	/// A book keeping field to track the actual total reward without the reward dilution
+	/// adjustment caused by new stakers joining the pool.
+	///
+	/// total_dilution_adjustment + claimed_rewards is the same as the sum of all of the reductions
+	/// of all of the stakes in the pool.
 	pub total_dilution_adjustment: Balance,
 
 	/// Upper bound on the `total_rewards - total_dilution_adjustment`.
@@ -259,21 +262,14 @@ pub trait ProtocolStaking {
 	type Balance;
 	type RewardPoolId;
 
-	/// Adds reward to common pool share.
-	/// Does not actually transfers real assets.
-	fn accumulate_reward(
-		pool: &Self::RewardPoolId,
-		reward_currency: Self::AssetId,
-		reward_increment: Self::Balance,
-	) -> DispatchResult;
-
 	/// Transfers rewards `from` to pool.
 	/// If may be bigger than total shares.
 	fn transfer_reward(
 		from: &Self::AccountId,
-		pool: &Self::RewardPoolId,
+		pool_id: &Self::RewardPoolId,
 		reward_currency: Self::AssetId,
-		reward_increment: Self::Balance,
+		amount: Self::Balance,
+		keep_alive: bool,
 	) -> DispatchResult;
 }
 
