@@ -87,6 +87,23 @@ pub struct PalletParams {
 	pub receive_enabled: bool,
 }
 
+/// Params needed to upgrade clients for all connected chains.
+#[derive(
+	frame_support::RuntimeDebug,
+	PartialEq,
+	Eq,
+	scale_info::TypeInfo,
+	Encode,
+	Decode,
+	Clone,
+)]
+pub struct UpgradeParams {
+	/// Protobuf encoded client state
+	pub client_state: Vec<u8>,
+	/// Protobuf encoded consensus state
+	pub consensus_state: Vec<u8>,
+}
+
 #[derive(
 	frame_support::RuntimeDebug, PartialEq, Eq, scale_info::TypeInfo, Encode, Decode, Clone,
 )]
@@ -688,6 +705,23 @@ pub mod pallet {
 				send_enabled: params.send_enabled,
 				receive_enabled: params.receive_enabled,
 			});
+			Ok(())
+		}
+
+		/// We write the consensus & client state under these predefined paths so that
+		/// we can produce state proofs of the values to connected chains
+		/// in order to execute client upgrades.
+		#[pallet::weight(0)]
+		pub fn upgrade_client(origin: OriginFor<T>, params: UpgradeParams) -> DispatchResult {
+			<T as Config>::AdminOrigin::ensure_origin(origin)?;
+			const CLIENT_STATE_UPGRADE_PATH: &[u8] = b"client-state-upgrade-path";
+			const CONSENSUS_STATE_UPGRADE_PATH: &[u8] = b"consensus-state-upgrade-path";
+
+			sp_io::storage::set(CLIENT_STATE_UPGRADE_PATH, &params.client_state);
+			sp_io::storage::set(CONSENSUS_STATE_UPGRADE_PATH, &params.consensus_state);
+
+			// todo: emit ibc.Event
+
 			Ok(())
 		}
 	}
