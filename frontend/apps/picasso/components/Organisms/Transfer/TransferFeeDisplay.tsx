@@ -18,6 +18,7 @@ import {
   getApiCallAndSigner
 } from "@/defi/polkadot/pallets/Transfer";
 import { useExistentialDeposit } from "@/components/Organisms/Transfer/hooks";
+import { getPaymentAsset } from "@/defi/polkadot/pallets/AssetTxPayment";
 
 export const TransferFeeDisplay = () => {
   const from = useStore(state => state.transfers.networks.from);
@@ -132,6 +133,19 @@ export const TransferFeeDisplay = () => {
   useEffect(() => {
     calculateFee();
   }, [calculateFee]);
+
+  useEffect(() => {
+    const asset = callbackGate(
+      (api, walletAddress) =>
+        getPaymentAsset({
+          api,
+          walletAddress
+        }),
+      provider.parachainApi,
+      account?.address
+    );
+    asset.then(console.log);
+  }, [provider, account]);
 
   return (
     <FeeDisplay

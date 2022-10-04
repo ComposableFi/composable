@@ -180,7 +180,6 @@ export const DotSamaContextProvider = ({
       }
     }
     if (supportedRelaychains?.length) {
-      console.log("Initializing relay chains...")
       for (const relayChain of supportedRelaychains) {
         const { chainId } = relayChain;
         const { prefix } = RelayChainNetworks[chainId];
@@ -195,10 +194,8 @@ export const DotSamaContextProvider = ({
           return { ...s }
         });
       }
-
     }
-
-
+    
     return injectedExtension;
   };
 
