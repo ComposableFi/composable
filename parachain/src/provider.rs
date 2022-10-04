@@ -43,9 +43,7 @@ use primitives::{Chain, IbcProvider, KeyProvider, UpdateType};
 use sp_core::H256;
 
 use crate::light_client_protocol::FinalityEvent;
-use beefy_prover::helpers::{
-	fetch_timestamp_extrinsic_with_proof, unsafe_cast_to_jsonrpsee_client,
-};
+use beefy_prover::helpers::fetch_timestamp_extrinsic_with_proof;
 use grandpa_light_client_primitives::{FinalityProof, ParachainHeaderProofs};
 use ics11_beefy::client_state::ClientState as BeefyClientState;
 use pallet_ibc::{light_clients::HostFunctionsManager, HostConsensusProof};
@@ -96,16 +94,16 @@ where
 		client_id: ClientId,
 		consensus_height: Height,
 	) -> Result<QueryConsensusStateResponse, Self::Error> {
-		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
 		let res = IbcApiClient::<u32, H256>::query_client_consensus_state(
-			&*para_client,
+			&*self.para_ws_client,
 			Some(at.revision_height as u32),
 			client_id.to_string(),
 			consensus_height.revision_height,
 			consensus_height.revision_number,
 			false,
 		)
-		.await?;
+		.await
+		.map_err(|e| Error::from(format!("Rpc Error {:?}", e)))?;
 		Ok(res)
 	}
 
@@ -114,13 +112,13 @@ where
 		at: Height,
 		client_id: ClientId,
 	) -> Result<QueryClientStateResponse, Self::Error> {
-		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
 		let response = IbcApiClient::<u32, H256>::query_client_state(
-			&*para_client,
+			&*self.para_ws_client,
 			at.revision_height as u32,
 			client_id.to_string(),
 		)
-		.await?;
+		.await
+		.map_err(|e| Error::from(format!("Rpc Error {:?}", e)))?;
 		Ok(response)
 	}
 
@@ -129,13 +127,13 @@ where
 		at: Height,
 		connection_id: ConnectionId,
 	) -> Result<QueryConnectionResponse, Self::Error> {
-		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
 		let response = IbcApiClient::<u32, H256>::query_connection(
-			&*para_client,
+			&*self.para_ws_client,
 			at.revision_height as u32,
 			connection_id.to_string(),
 		)
-		.await?;
+		.await
+		.map_err(|e| Error::from(format!("Rpc Error {:?}", e)))?;
 		Ok(response)
 	}
 
@@ -145,22 +143,25 @@ where
 		channel_id: ChannelId,
 		port_id: PortId,
 	) -> Result<QueryChannelResponse, Self::Error> {
-		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
 		let response = IbcApiClient::<u32, H256>::query_channel(
-			&*para_client,
+			&*self.para_ws_client,
 			at.revision_height as u32,
 			channel_id.to_string(),
 			port_id.to_string(),
 		)
-		.await?;
+		.await
+		.map_err(|e| Error::from(format!("Rpc Error {:?}", e)))?;
 		Ok(response)
 	}
 
 	async fn query_proof(&self, at: Height, keys: Vec<Vec<u8>>) -> Result<Vec<u8>, Self::Error> {
-		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
-		let proof =
-			IbcApiClient::<u32, H256>::query_proof(&*para_client, at.revision_height as u32, keys)
-				.await?;
+		let proof = IbcApiClient::<u32, H256>::query_proof(
+			&*self.para_ws_client,
+			at.revision_height as u32,
+			keys,
+		)
+		.await
+		.map_err(|e| Error::from(format!("Rpc Error {:?}", e)))?;
 
 		Ok(proof.proof)
 	}
@@ -172,15 +173,15 @@ where
 		channel_id: &ChannelId,
 		seq: u64,
 	) -> Result<QueryPacketCommitmentResponse, Self::Error> {
-		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
 		let res = IbcApiClient::<u32, H256>::query_packet_commitment(
-			&*para_client,
+			&*self.para_ws_client,
 			at.revision_height as u32,
 			channel_id.to_string(),
 			port_id.to_string(),
 			seq,
 		)
-		.await?;
+		.await
+		.map_err(|e| Error::from(format!("Rpc Error {:?}", e)))?;
 		Ok(res)
 	}
 
@@ -191,15 +192,15 @@ where
 		channel_id: &ChannelId,
 		seq: u64,
 	) -> Result<QueryPacketAcknowledgementResponse, Self::Error> {
-		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
 		let res = IbcApiClient::<u32, H256>::query_packet_acknowledgement(
-			&*para_client,
+			&*self.para_ws_client,
 			at.revision_height as u32,
 			channel_id.to_string(),
 			port_id.to_string(),
 			seq,
 		)
-		.await?;
+		.await
+		.map_err(|e| Error::from(format!("Rpc Error {:?}", e)))?;
 		Ok(res)
 	}
 
@@ -209,14 +210,14 @@ where
 		port_id: &PortId,
 		channel_id: &ChannelId,
 	) -> Result<QueryNextSequenceReceiveResponse, Self::Error> {
-		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
 		let res = IbcApiClient::<u32, H256>::query_next_seq_recv(
-			&*para_client,
+			&*self.para_ws_client,
 			at.revision_height as u32,
 			channel_id.to_string(),
 			port_id.to_string(),
 		)
-		.await?;
+		.await
+		.map_err(|e| Error::from(format!("Rpc Error {:?}", e)))?;
 		Ok(res)
 	}
 
@@ -227,15 +228,15 @@ where
 		channel_id: &ChannelId,
 		seq: u64,
 	) -> Result<QueryPacketReceiptResponse, Self::Error> {
-		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
 		let res = IbcApiClient::<u32, H256>::query_packet_receipt(
-			&*para_client,
+			&*self.para_ws_client,
 			at.revision_height as u32,
 			channel_id.to_string(),
 			port_id.to_string(),
 			seq,
 		)
-		.await?;
+		.await
+		.map_err(|e| Error::from(format!("Rpc Error {:?}", e)))?;
 		Ok(res)
 	}
 
@@ -269,14 +270,14 @@ where
 		channel_id: ChannelId,
 		port_id: PortId,
 	) -> Result<Vec<u64>, Self::Error> {
-		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
 		let res = IbcApiClient::<u32, H256>::query_packet_commitments(
-			&*para_client,
+			&*self.para_ws_client,
 			at.revision_height as u32,
 			channel_id.to_string(),
 			port_id.to_string(),
 		)
-		.await?;
+		.await
+		.map_err(|e| Error::from(format!("Rpc Error {:?}", e)))?;
 		Ok(res.commitments.into_iter().map(|packet_state| packet_state.sequence).collect())
 	}
 
@@ -286,14 +287,14 @@ where
 		channel_id: ChannelId,
 		port_id: PortId,
 	) -> Result<Vec<u64>, Self::Error> {
-		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
 		let res = IbcApiClient::<u32, H256>::query_packet_acknowledgements(
-			&*para_client,
+			&*self.para_ws_client,
 			at.revision_height as u32,
 			channel_id.to_string(),
 			port_id.to_string(),
 		)
-		.await?;
+		.await
+		.map_err(|e| Error::from(format!("Rpc Error {:?}", e)))?;
 		Ok(res
 			.acknowledgements
 			.into_iter()
@@ -308,15 +309,15 @@ where
 		port_id: PortId,
 		seqs: Vec<u64>,
 	) -> Result<Vec<u64>, Self::Error> {
-		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
 		let res = IbcApiClient::<u32, H256>::query_unreceived_packets(
-			&*para_client,
+			&*self.para_ws_client,
 			at.revision_height as u32,
 			channel_id.to_string(),
 			port_id.to_string(),
 			seqs,
 		)
-		.await?;
+		.await
+		.map_err(|e| Error::from(format!("Rpc Error {:?}", e)))?;
 		Ok(res)
 	}
 
@@ -327,15 +328,15 @@ where
 		port_id: PortId,
 		seqs: Vec<u64>,
 	) -> Result<Vec<u64>, Self::Error> {
-		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
 		let res = IbcApiClient::<u32, H256>::query_unreceived_acknowledgements(
-			&*para_client,
+			&*self.para_ws_client,
 			at.revision_height as u32,
 			channel_id.to_string(),
 			port_id.to_string(),
 			seqs,
 		)
-		.await?;
+		.await
+		.map_err(|e| Error::from(format!("Rpc Error {:?}", e)))?;
 		Ok(res)
 	}
 
@@ -348,13 +349,13 @@ where
 		at: Height,
 		connection_id: &ConnectionId,
 	) -> Result<QueryChannelsResponse, Self::Error> {
-		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
 		let response = IbcApiClient::<u32, H256>::query_connection_channels(
-			&*para_client,
+			&*self.para_ws_client,
 			at.revision_height as u32,
 			connection_id.to_string(),
 		)
-		.await?;
+		.await
+		.map_err(|e| Error::from(format!("Rpc Error {:?}", e)))?;
 		Ok(response)
 	}
 
@@ -364,14 +365,14 @@ where
 		port_id: PortId,
 		seqs: Vec<u64>,
 	) -> Result<Vec<PacketInfo>, Self::Error> {
-		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
 		let response = IbcApiClient::<u32, H256>::query_send_packets(
-			&*para_client,
+			&*self.para_ws_client,
 			channel_id.to_string(),
 			port_id.to_string(),
 			seqs,
 		)
-		.await?;
+		.await
+		.map_err(|e| Error::from(format!("Rpc Error {:?}", e)))?;
 		Ok(response)
 	}
 
@@ -381,14 +382,14 @@ where
 		port_id: PortId,
 		seqs: Vec<u64>,
 	) -> Result<Vec<PacketInfo>, Self::Error> {
-		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
 		let response = IbcApiClient::<u32, H256>::query_recv_packets(
-			&*para_client,
+			&*self.para_ws_client,
 			channel_id.to_string(),
 			port_id.to_string(),
 			seqs,
 		)
-		.await?;
+		.await
+		.map_err(|e| Error::from(format!("Rpc Error {:?}", e)))?;
 		Ok(response)
 	}
 
@@ -402,14 +403,14 @@ where
 		client_id: ClientId,
 		client_height: Height,
 	) -> Result<(Height, Timestamp), Self::Error> {
-		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
 		let response = IbcApiClient::<u32, H256>::query_client_update_time_and_height(
-			&*para_client,
+			&*self.para_ws_client,
 			client_id.to_string(),
 			client_height.revision_number,
 			client_height.revision_height,
 		)
-		.await?;
+		.await
+		.map_err(|e| Error::from(format!("Rpc Error {:?}", e)))?;
 		Ok((
 			response.height.into(),
 			Timestamp::from_nanoseconds(response.timestamp)
@@ -489,9 +490,10 @@ where
 	}
 
 	async fn query_clients(&self) -> Result<Vec<ClientId>, Self::Error> {
-		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
 		let response: Vec<IdentifiedClientState> =
-			IbcApiClient::<u32, H256>::query_clients(&*para_client).await?;
+			IbcApiClient::<u32, H256>::query_clients(&*self.para_ws_client)
+				.await
+				.map_err(|e| Error::from(format!("Rpc Error {:?}", e)))?;
 		response
 			.into_iter()
 			.map(|client| {
@@ -502,8 +504,9 @@ where
 	}
 
 	async fn query_channels(&self) -> Result<Vec<(ChannelId, PortId)>, Self::Error> {
-		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
-		let response = IbcApiClient::<u32, H256>::query_channels(&*para_client).await?;
+		let response = IbcApiClient::<u32, H256>::query_channels(&*self.para_ws_client)
+			.await
+			.map_err(|e| Error::from(format!("Rpc Error {:?}", e)))?;
 		response
 			.channels
 			.into_iter()

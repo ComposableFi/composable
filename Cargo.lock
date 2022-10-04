@@ -460,9 +460,63 @@ dependencies = [
 ]
 
 [[package]]
+name = "beefy-gadget"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27#5bfdbab8ba28523ef10e365627fed64ef2b77cbf"
+dependencies = [
+ "beefy-primitives",
+ "fnv",
+ "futures",
+ "futures-timer",
+ "hex",
+ "log",
+ "parity-scale-codec",
+ "parking_lot 0.12.1",
+ "sc-chain-spec",
+ "sc-client-api",
+ "sc-finality-grandpa",
+ "sc-keystore",
+ "sc-network",
+ "sc-network-gossip",
+ "sc-utils",
+ "sp-api",
+ "sp-application-crypto",
+ "sp-arithmetic",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-core 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
+ "sp-keystore",
+ "sp-mmr-primitives",
+ "sp-runtime",
+ "substrate-prometheus-endpoint",
+ "thiserror",
+ "wasm-timer",
+]
+
+[[package]]
+name = "beefy-gadget-rpc"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27#5bfdbab8ba28523ef10e365627fed64ef2b77cbf"
+dependencies = [
+ "beefy-gadget",
+ "beefy-primitives",
+ "futures",
+ "jsonrpsee 0.14.0",
+ "log",
+ "parity-scale-codec",
+ "parking_lot 0.12.1",
+ "sc-rpc",
+ "sc-utils",
+ "serde",
+ "sp-core 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
+ "sp-runtime",
+ "thiserror",
+]
+
+[[package]]
 name = "beefy-light-client"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=aa30f848e2f8a5c9b6282f0122c16c509260cdcf#aa30f848e2f8a5c9b6282f0122c16c509260cdcf"
+source = "git+https://github.com/ComposableFi/centauri?rev=55c92796310416ac81addb5850e44a166be8c4c1#55c92796310416ac81addb5850e44a166be8c4c1"
 dependencies = [
  "beefy-light-client-primitives",
  "beefy-primitives",
@@ -485,7 +539,7 @@ dependencies = [
 [[package]]
 name = "beefy-light-client-primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=aa30f848e2f8a5c9b6282f0122c16c509260cdcf#aa30f848e2f8a5c9b6282f0122c16c509260cdcf"
+source = "git+https://github.com/ComposableFi/centauri?rev=55c92796310416ac81addb5850e44a166be8c4c1#55c92796310416ac81addb5850e44a166be8c4c1"
 dependencies = [
  "beefy-primitives",
  "ckb-merkle-mountain-range",
@@ -524,7 +578,7 @@ dependencies = [
 [[package]]
 name = "beefy-prover"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=aa30f848e2f8a5c9b6282f0122c16c509260cdcf#aa30f848e2f8a5c9b6282f0122c16c509260cdcf"
+source = "git+https://github.com/ComposableFi/centauri?rev=55c92796310416ac81addb5850e44a166be8c4c1#55c92796310416ac81addb5850e44a166be8c4c1"
 dependencies = [
  "beefy-light-client-primitives",
  "beefy-primitives",
@@ -964,16 +1018,14 @@ dependencies = [
 [[package]]
 name = "common"
 version = "0.8.30"
-source = "git+https://github.com/ComposableFi/composable?rev=306930b2cc573574fe7e044cc55972f3d7de4dff#306930b2cc573574fe7e044cc55972f3d7de4dff"
+source = "git+https://github.com/ComposableFi/composable?rev=e360d73d5632f84fb53ad4a20d7a49f0de05947e#e360d73d5632f84fb53ad4a20d7a49f0de05947e"
 dependencies = [
  "composable-support",
  "composable-traits",
  "frame-support",
  "frame-system",
  "num-traits",
- "orml-tokens",
  "orml-traits",
- "pallet-balances",
  "pallet-collator-selection",
  "pallet-collective",
  "pallet-treasury",
@@ -994,7 +1046,7 @@ dependencies = [
 [[package]]
 name = "composable-support"
 version = "0.0.1"
-source = "git+https://github.com/ComposableFi/composable?rev=306930b2cc573574fe7e044cc55972f3d7de4dff#306930b2cc573574fe7e044cc55972f3d7de4dff"
+source = "git+https://github.com/ComposableFi/composable?rev=e360d73d5632f84fb53ad4a20d7a49f0de05947e#e360d73d5632f84fb53ad4a20d7a49f0de05947e"
 dependencies = [
  "frame-support",
  "hex",
@@ -1014,7 +1066,7 @@ dependencies = [
 [[package]]
 name = "composable-traits"
 version = "0.0.1"
-source = "git+https://github.com/ComposableFi/composable?rev=306930b2cc573574fe7e044cc55972f3d7de4dff#306930b2cc573574fe7e044cc55972f3d7de4dff"
+source = "git+https://github.com/ComposableFi/composable?rev=e360d73d5632f84fb53ad4a20d7a49f0de05947e#e360d73d5632f84fb53ad4a20d7a49f0de05947e"
 dependencies = [
  "bitflags",
  "composable-support",
@@ -1991,7 +2043,7 @@ dependencies = [
 [[package]]
 name = "grandpa-light-client"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=aa30f848e2f8a5c9b6282f0122c16c509260cdcf#aa30f848e2f8a5c9b6282f0122c16c509260cdcf"
+source = "git+https://github.com/ComposableFi/centauri?rev=55c92796310416ac81addb5850e44a166be8c4c1#55c92796310416ac81addb5850e44a166be8c4c1"
 dependencies = [
  "anyhow",
  "finality-grandpa",
@@ -2012,7 +2064,7 @@ dependencies = [
 [[package]]
 name = "grandpa-light-client-primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=aa30f848e2f8a5c9b6282f0122c16c509260cdcf#aa30f848e2f8a5c9b6282f0122c16c509260cdcf"
+source = "git+https://github.com/ComposableFi/centauri?rev=55c92796310416ac81addb5850e44a166be8c4c1#55c92796310416ac81addb5850e44a166be8c4c1"
 dependencies = [
  "anyhow",
  "derive_more",
@@ -2033,7 +2085,7 @@ dependencies = [
 [[package]]
 name = "grandpa-prover"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=aa30f848e2f8a5c9b6282f0122c16c509260cdcf#aa30f848e2f8a5c9b6282f0122c16c509260cdcf"
+source = "git+https://github.com/ComposableFi/centauri?rev=55c92796310416ac81addb5850e44a166be8c4c1#55c92796310416ac81addb5850e44a166be8c4c1"
 dependencies = [
  "anyhow",
  "beefy-prover",
@@ -2044,12 +2096,14 @@ dependencies = [
  "grandpa-light-client-primitives",
  "hex",
  "jsonrpsee 0.15.1",
+ "jsonrpsee-ws-client 0.14.0",
  "light-client-common",
  "parity-scale-codec",
  "prettyplease",
  "sc-finality-grandpa-rpc",
  "serde",
  "sp-core 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
+ "sp-finality-grandpa",
  "sp-runtime",
  "sp-state-machine",
  "sp-trie",
@@ -2349,6 +2403,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
+ "beefy-gadget-rpc",
  "beefy-light-client",
  "beefy-light-client-primitives",
  "beefy-primitives",
@@ -2376,6 +2431,8 @@ dependencies = [
  "ics11-beefy",
  "itertools",
  "jsonrpsee 0.14.0",
+ "jsonrpsee 0.15.1",
+ "jsonrpsee-ws-client 0.14.0",
  "light-client-common",
  "log",
  "log4rs",
@@ -2469,7 +2526,7 @@ dependencies = [
 [[package]]
 name = "ibc"
 version = "0.15.0"
-source = "git+https://github.com/composableFi/ibc-rs?rev=9a959faabb8f2869e88327ea65a49f5697dcadf6#9a959faabb8f2869e88327ea65a49f5697dcadf6"
+source = "git+https://github.com/composableFi/ibc-rs?rev=c599cbcbf2c7a413a21a181f65dcf374f5ad75be#c599cbcbf2c7a413a21a181f65dcf374f5ad75be"
 dependencies = [
  "borsh",
  "derive_more",
@@ -2498,7 +2555,7 @@ dependencies = [
 [[package]]
 name = "ibc-derive"
 version = "0.1.0"
-source = "git+https://github.com/composableFi/ibc-rs?rev=9a959faabb8f2869e88327ea65a49f5697dcadf6#9a959faabb8f2869e88327ea65a49f5697dcadf6"
+source = "git+https://github.com/composableFi/ibc-rs?rev=c599cbcbf2c7a413a21a181f65dcf374f5ad75be#c599cbcbf2c7a413a21a181f65dcf374f5ad75be"
 dependencies = [
  "convert_case 0.6.0",
  "proc-macro-crate 1.2.1",
@@ -2510,7 +2567,7 @@ dependencies = [
 [[package]]
 name = "ibc-primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable?rev=306930b2cc573574fe7e044cc55972f3d7de4dff#306930b2cc573574fe7e044cc55972f3d7de4dff"
+source = "git+https://github.com/ComposableFi/composable?rev=e360d73d5632f84fb53ad4a20d7a49f0de05947e#e360d73d5632f84fb53ad4a20d7a49f0de05947e"
 dependencies = [
  "base58",
  "common",
@@ -2536,7 +2593,7 @@ dependencies = [
 [[package]]
 name = "ibc-proto"
 version = "0.18.0"
-source = "git+https://github.com/composableFi/ibc-rs?rev=9a959faabb8f2869e88327ea65a49f5697dcadf6#9a959faabb8f2869e88327ea65a49f5697dcadf6"
+source = "git+https://github.com/composableFi/ibc-rs?rev=c599cbcbf2c7a413a21a181f65dcf374f5ad75be#c599cbcbf2c7a413a21a181f65dcf374f5ad75be"
 dependencies = [
  "base64",
  "bytes",
@@ -2550,7 +2607,7 @@ dependencies = [
 [[package]]
 name = "ibc-rpc"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable?rev=306930b2cc573574fe7e044cc55972f3d7de4dff#306930b2cc573574fe7e044cc55972f3d7de4dff"
+source = "git+https://github.com/ComposableFi/composable?rev=e360d73d5632f84fb53ad4a20d7a49f0de05947e#e360d73d5632f84fb53ad4a20d7a49f0de05947e"
 dependencies = [
  "frame-system",
  "hex-literal",
@@ -2577,7 +2634,7 @@ dependencies = [
 [[package]]
 name = "ibc-runtime-api"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable?rev=306930b2cc573574fe7e044cc55972f3d7de4dff#306930b2cc573574fe7e044cc55972f3d7de4dff"
+source = "git+https://github.com/ComposableFi/composable?rev=e360d73d5632f84fb53ad4a20d7a49f0de05947e#e360d73d5632f84fb53ad4a20d7a49f0de05947e"
 dependencies = [
  "ibc-primitives",
  "pallet-ibc",
@@ -2588,7 +2645,7 @@ dependencies = [
 [[package]]
 name = "ics07-tendermint"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=aa30f848e2f8a5c9b6282f0122c16c509260cdcf#aa30f848e2f8a5c9b6282f0122c16c509260cdcf"
+source = "git+https://github.com/ComposableFi/centauri?rev=55c92796310416ac81addb5850e44a166be8c4c1#55c92796310416ac81addb5850e44a166be8c4c1"
 dependencies = [
  "bytes",
  "flex-error",
@@ -2609,12 +2666,13 @@ dependencies = [
 [[package]]
 name = "ics10-grandpa"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=aa30f848e2f8a5c9b6282f0122c16c509260cdcf#aa30f848e2f8a5c9b6282f0122c16c509260cdcf"
+source = "git+https://github.com/ComposableFi/centauri?rev=55c92796310416ac81addb5850e44a166be8c4c1#55c92796310416ac81addb5850e44a166be8c4c1"
 dependencies = [
  "anyhow",
  "derive_more",
  "grandpa-light-client",
  "grandpa-light-client-primitives",
+ "hex-literal",
  "ibc",
  "ibc-proto",
  "light-client-common",
@@ -2636,7 +2694,7 @@ dependencies = [
 [[package]]
 name = "ics11-beefy"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=aa30f848e2f8a5c9b6282f0122c16c509260cdcf#aa30f848e2f8a5c9b6282f0122c16c509260cdcf"
+source = "git+https://github.com/ComposableFi/centauri?rev=55c92796310416ac81addb5850e44a166be8c4c1#55c92796310416ac81addb5850e44a166be8c4c1"
 dependencies = [
  "anyhow",
  "beefy-light-client",
@@ -2665,7 +2723,7 @@ dependencies = [
 [[package]]
 name = "ics13-near"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=aa30f848e2f8a5c9b6282f0122c16c509260cdcf#aa30f848e2f8a5c9b6282f0122c16c509260cdcf"
+source = "git+https://github.com/ComposableFi/centauri?rev=55c92796310416ac81addb5850e44a166be8c4c1#55c92796310416ac81addb5850e44a166be8c4c1"
 dependencies = [
  "borsh",
  "bytes",
@@ -2921,6 +2979,7 @@ dependencies = [
  "jsonrpsee-core 0.15.1",
  "jsonrpsee-http-client 0.15.1",
  "jsonrpsee-types 0.15.1",
+ "jsonrpsee-ws-client 0.15.1",
 ]
 
 [[package]]
@@ -3113,6 +3172,29 @@ dependencies = [
  "serde_json",
  "thiserror",
  "tracing",
+]
+
+[[package]]
+name = "jsonrpsee-ws-client"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ee043cb5dd0d51d3eb93432e998d5bae797691a7b10ec4a325e036bcdb48c48a"
+dependencies = [
+ "jsonrpsee-client-transport 0.14.0",
+ "jsonrpsee-core 0.14.0",
+ "jsonrpsee-types 0.14.0",
+]
+
+[[package]]
+name = "jsonrpsee-ws-client"
+version = "0.15.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6ee5feddd5188e62ac08fcf0e56478138e581509d4730f3f7be9b57dd402a4ff"
+dependencies = [
+ "http",
+ "jsonrpsee-client-transport 0.15.1",
+ "jsonrpsee-core 0.15.1",
+ "jsonrpsee-types 0.15.1",
 ]
 
 [[package]]
@@ -3765,7 +3847,7 @@ dependencies = [
 [[package]]
 name = "light-client-common"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=aa30f848e2f8a5c9b6282f0122c16c509260cdcf#aa30f848e2f8a5c9b6282f0122c16c509260cdcf"
+source = "git+https://github.com/ComposableFi/centauri?rev=55c92796310416ac81addb5850e44a166be8c4c1#55c92796310416ac81addb5850e44a166be8c4c1"
 dependencies = [
  "anyhow",
  "derive_more",
@@ -4331,21 +4413,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "orml-tokens"
-version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=377213f750755cc48e80a3131eaae63b5eda8362#377213f750755cc48e80a3131eaae63b5eda8362"
-dependencies = [
- "frame-support",
- "frame-system",
- "orml-traits",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-runtime",
- "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
-]
-
-[[package]]
 name = "orml-traits"
 version = "0.4.1-dev"
 source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=377213f750755cc48e80a3131eaae63b5eda8362#377213f750755cc48e80a3131eaae63b5eda8362"
@@ -4413,7 +4480,7 @@ dependencies = [
 [[package]]
 name = "pallet-assets"
 version = "0.0.1"
-source = "git+https://github.com/ComposableFi/composable?rev=306930b2cc573574fe7e044cc55972f3d7de4dff#306930b2cc573574fe7e044cc55972f3d7de4dff"
+source = "git+https://github.com/ComposableFi/composable?rev=e360d73d5632f84fb53ad4a20d7a49f0de05947e#e360d73d5632f84fb53ad4a20d7a49f0de05947e"
 dependencies = [
  "composable-support",
  "composable-traits",
@@ -4541,7 +4608,7 @@ dependencies = [
 [[package]]
 name = "pallet-ibc"
 version = "0.0.1"
-source = "git+https://github.com/ComposableFi/composable?rev=306930b2cc573574fe7e044cc55972f3d7de4dff#306930b2cc573574fe7e044cc55972f3d7de4dff"
+source = "git+https://github.com/ComposableFi/composable?rev=e360d73d5632f84fb53ad4a20d7a49f0de05947e#e360d73d5632f84fb53ad4a20d7a49f0de05947e"
 dependencies = [
  "beefy-light-client-primitives",
  "common",
@@ -4584,7 +4651,7 @@ dependencies = [
 [[package]]
 name = "pallet-ibc-ping"
 version = "0.0.1"
-source = "git+https://github.com/ComposableFi/composable?rev=306930b2cc573574fe7e044cc55972f3d7de4dff#306930b2cc573574fe7e044cc55972f3d7de4dff"
+source = "git+https://github.com/ComposableFi/composable?rev=e360d73d5632f84fb53ad4a20d7a49f0de05947e#e360d73d5632f84fb53ad4a20d7a49f0de05947e"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5099,7 +5166,7 @@ dependencies = [
 [[package]]
 name = "primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable?rev=306930b2cc573574fe7e044cc55972f3d7de4dff#306930b2cc573574fe7e044cc55972f3d7de4dff"
+source = "git+https://github.com/ComposableFi/composable?rev=e360d73d5632f84fb53ad4a20d7a49f0de05947e#e360d73d5632f84fb53ad4a20d7a49f0de05947e"
 dependencies = [
  "composable-support",
  "composable-traits",
@@ -7606,7 +7673,7 @@ checksum = "734676eb262c623cec13c3155096e08d1f8f29adce39ba17948b18dad1e54142"
 [[package]]
 name = "subxt"
 version = "0.24.0"
-source = "git+https://github.com/composableFi/subxt?rev=37df0ee525252fa9a3e7730629ce0de4da9e68fd#37df0ee525252fa9a3e7730629ce0de4da9e68fd"
+source = "git+https://github.com/paritytech/subxt?rev=81175b2dd9a2391f71c37d4612644ee65825e2f1#81175b2dd9a2391f71c37d4612644ee65825e2f1"
 dependencies = [
  "bitvec",
  "derivative",
@@ -7632,7 +7699,7 @@ dependencies = [
 [[package]]
 name = "subxt-codegen"
 version = "0.24.0"
-source = "git+https://github.com/composableFi/subxt?rev=37df0ee525252fa9a3e7730629ce0de4da9e68fd#37df0ee525252fa9a3e7730629ce0de4da9e68fd"
+source = "git+https://github.com/paritytech/subxt?rev=81175b2dd9a2391f71c37d4612644ee65825e2f1#81175b2dd9a2391f71c37d4612644ee65825e2f1"
 dependencies = [
  "darling",
  "frame-metadata",
@@ -7649,7 +7716,7 @@ dependencies = [
 [[package]]
 name = "subxt-macro"
 version = "0.24.0"
-source = "git+https://github.com/composableFi/subxt?rev=37df0ee525252fa9a3e7730629ce0de4da9e68fd#37df0ee525252fa9a3e7730629ce0de4da9e68fd"
+source = "git+https://github.com/paritytech/subxt?rev=81175b2dd9a2391f71c37d4612644ee65825e2f1#81175b2dd9a2391f71c37d4612644ee65825e2f1"
 dependencies = [
  "darling",
  "proc-macro-error",
@@ -7660,7 +7727,7 @@ dependencies = [
 [[package]]
 name = "subxt-metadata"
 version = "0.24.0"
-source = "git+https://github.com/composableFi/subxt?rev=37df0ee525252fa9a3e7730629ce0de4da9e68fd#37df0ee525252fa9a3e7730629ce0de4da9e68fd"
+source = "git+https://github.com/paritytech/subxt?rev=81175b2dd9a2391f71c37d4612644ee65825e2f1#81175b2dd9a2391f71c37d4612644ee65825e2f1"
 dependencies = [
  "frame-metadata",
  "parity-scale-codec",

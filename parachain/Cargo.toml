@@ -6,7 +6,7 @@ authors = ["Composable Developers"]
 resolver = "2"
 
 [build-dependencies]
-subxt-codegen = { git = "https://github.com/composableFi/subxt", rev = "37df0ee525252fa9a3e7730629ce0de4da9e68fd" }
+subxt-codegen = { git = "https://github.com/paritytech/subxt", rev = "81175b2dd9a2391f71c37d4612644ee65825e2f1" }
 jsonrpsee = { version = "0.14.0", features = ["async-client", "client-ws-transport", "http-client"] }
 frame-metadata = { version = "15.0.0", features = ["v14", "std"] }
 syn = "1.0.98"
@@ -36,14 +36,15 @@ serde = {version="1.0.137", features = ["derive"]}
 tokio-stream = { version = "0.1.9", features = ["sync"]}
 thiserror = "1.0.31"
 itertools = "0.10.3"
-jsonrpsee = "0.14.0"
+jsonrpsee = "0.15.1"
+jsonrpsee-ws-client = "0.14.0"
 
 # substrate
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", features = ["full_crypto"] }
 ss58-registry = "1.28.0"
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 
-subxt = { git = "https://github.com/composableFi/subxt", rev = "37df0ee525252fa9a3e7730629ce0de4da9e68fd" }
+subxt = { git = "https://github.com/paritytech/subxt", rev = "81175b2dd9a2391f71c37d4612644ee65825e2f1" }
 beefy-primitives = {  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 beefy-mmr = { package = "pallet-beefy-mmr", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 pallet-mmr = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
@@ -58,27 +59,28 @@ transaction-payment-runtime-api = { package = "pallet-transaction-payment-rpc-ru
 sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 
 # composable
-ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "9a959faabb8f2869e88327ea65a49f5697dcadf6", features = [] }
-ibc-proto = { git = "https://github.com/composableFi/ibc-rs", rev = "9a959faabb8f2869e88327ea65a49f5697dcadf6" }
+ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "c599cbcbf2c7a413a21a181f65dcf374f5ad75be", features = [] }
+ibc-proto = { git = "https://github.com/composableFi/ibc-rs", rev = "c599cbcbf2c7a413a21a181f65dcf374f5ad75be" }
 tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8" }
-light-client-common = { git = "https://github.com/ComposableFi/centauri", rev = "aa30f848e2f8a5c9b6282f0122c16c509260cdcf" }
-ibc-rpc = { git = "https://github.com/ComposableFi/composable", rev = "306930b2cc573574fe7e044cc55972f3d7de4dff" }
-pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "306930b2cc573574fe7e044cc55972f3d7de4dff" }
-ping = { package = "pallet-ibc-ping",  git = "https://github.com/ComposableFi/composable", rev = "306930b2cc573574fe7e044cc55972f3d7de4dff" }
-ibc-primitives = { git = "https://github.com/ComposableFi/composable", rev = "306930b2cc573574fe7e044cc55972f3d7de4dff" }
-common = { git = "https://github.com/ComposableFi/composable", rev = "306930b2cc573574fe7e044cc55972f3d7de4dff" }
+light-client-common = { git = "https://github.com/ComposableFi/centauri", rev = "55c92796310416ac81addb5850e44a166be8c4c1" }
+ibc-rpc = { git = "https://github.com/ComposableFi/composable", rev = "e360d73d5632f84fb53ad4a20d7a49f0de05947e" }
+pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "e360d73d5632f84fb53ad4a20d7a49f0de05947e" }
+ping = { package = "pallet-ibc-ping",  git = "https://github.com/ComposableFi/composable", rev = "e360d73d5632f84fb53ad4a20d7a49f0de05947e" }
+ibc-primitives = { git = "https://github.com/ComposableFi/composable", rev = "e360d73d5632f84fb53ad4a20d7a49f0de05947e" }
+common = { git = "https://github.com/ComposableFi/composable", rev = "e360d73d5632f84fb53ad4a20d7a49f0de05947e" }
 
 # Beefy
-beefy-prover = { git = "https://github.com/ComposableFi/centauri", rev = "aa30f848e2f8a5c9b6282f0122c16c509260cdcf" }
-beefy-light-client = { git = "https://github.com/ComposableFi/centauri", rev = "aa30f848e2f8a5c9b6282f0122c16c509260cdcf" }
-beefy-light-client-primitives = {  git = "https://github.com/ComposableFi/centauri", rev = "aa30f848e2f8a5c9b6282f0122c16c509260cdcf" }
-ics11-beefy = { git = "https://github.com/ComposableFi/centauri", rev = "aa30f848e2f8a5c9b6282f0122c16c509260cdcf" }
+beefy-prover = { git = "https://github.com/ComposableFi/centauri", rev = "55c92796310416ac81addb5850e44a166be8c4c1" }
+beefy-light-client = { git = "https://github.com/ComposableFi/centauri", rev = "55c92796310416ac81addb5850e44a166be8c4c1" }
+beefy-light-client-primitives = {  git = "https://github.com/ComposableFi/centauri", rev = "55c92796310416ac81addb5850e44a166be8c4c1" }
+ics11-beefy = { git = "https://github.com/ComposableFi/centauri", rev = "55c92796310416ac81addb5850e44a166be8c4c1" }
+beefy-gadget-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 
 # Grandpa
-grandpa-prover = { git = "https://github.com/ComposableFi/centauri", rev = "aa30f848e2f8a5c9b6282f0122c16c509260cdcf" }
-grandpa-light-client = { git = "https://github.com/ComposableFi/centauri", rev = "aa30f848e2f8a5c9b6282f0122c16c509260cdcf" }
-grandpa-light-client-primitives = { git = "https://github.com/ComposableFi/centauri", rev = "aa30f848e2f8a5c9b6282f0122c16c509260cdcf" }
-ics10-grandpa = { git = "https://github.com/ComposableFi/centauri", rev = "aa30f848e2f8a5c9b6282f0122c16c509260cdcf" }
+grandpa-prover = { git = "https://github.com/ComposableFi/centauri", rev = "55c92796310416ac81addb5850e44a166be8c4c1" }
+grandpa-light-client = { git = "https://github.com/ComposableFi/centauri", rev = "55c92796310416ac81addb5850e44a166be8c4c1" }
+grandpa-light-client-primitives = { git = "https://github.com/ComposableFi/centauri", rev = "55c92796310416ac81addb5850e44a166be8c4c1" }
+ics10-grandpa = { git = "https://github.com/ComposableFi/centauri", rev = "55c92796310416ac81addb5850e44a166be8c4c1" }
 finality-grandpa-rpc = { package = "sc-finality-grandpa-rpc", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 polkadot-core-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.27" }
 sp-finality-grandpa = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }

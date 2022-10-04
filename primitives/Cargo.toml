@@ -14,13 +14,13 @@ codec = { package = "parity-scale-codec", version = "3.0.0", features = ["derive
 thiserror = "1.0.31"
 
 # substrate
-subxt = { git = "https://github.com/composableFi/subxt", rev = "37df0ee525252fa9a3e7730629ce0de4da9e68fd" }
+subxt = { git = "https://github.com/paritytech/subxt", rev = "81175b2dd9a2391f71c37d4612644ee65825e2f1" }
 
 # ibc
-ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "9a959faabb8f2869e88327ea65a49f5697dcadf6", features = [] }
-ibc-proto = { git = "https://github.com/composableFi/ibc-rs", rev = "9a959faabb8f2869e88327ea65a49f5697dcadf6" }
-pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "306930b2cc573574fe7e044cc55972f3d7de4dff" }
-ibc-rpc = { git = "https://github.com/ComposableFi/composable", rev = "306930b2cc573574fe7e044cc55972f3d7de4dff" }
+ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "c599cbcbf2c7a413a21a181f65dcf374f5ad75be", features = [] }
+ibc-proto = { git = "https://github.com/composableFi/ibc-rs", rev = "c599cbcbf2c7a413a21a181f65dcf374f5ad75be" }
+pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "e360d73d5632f84fb53ad4a20d7a49f0de05947e" }
+ibc-rpc = { git = "https://github.com/ComposableFi/composable", rev = "e360d73d5632f84fb53ad4a20d7a49f0de05947e" }
 
 [dev-dependencies]
 tokio = { version = "1.19.2", features = ["macros", "sync"] }

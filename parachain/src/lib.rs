@@ -37,13 +37,14 @@ use subxt::{
 };
 use tokio::sync::broadcast::{self, Sender};
 
-use crate::utils::fetch_max_extrinsic_weight;
+use crate::utils::{fetch_max_extrinsic_weight, unsafe_cast_to_jsonrpsee_client};
 use primitives::KeyProvider;
 
 use crate::{light_client_protocol::LightClientProtocol, signer::ExtrinsicSigner};
 use grandpa_light_client_primitives::ParachainHeadersWithFinalityProof;
 use grandpa_prover::GrandpaProver;
 use ics10_grandpa::client_state::ClientState as GrandpaClientState;
+use jsonrpsee_ws_client::WsClientBuilder;
 use sp_keystore::testing::KeyStore;
 use sp_runtime::traits::{One, Zero};
 use subxt::tx::{SubstrateExtrinsicParamsBuilder, TxPayload};
@@ -61,6 +62,10 @@ pub struct ParachainClient<T: subxt::Config> {
 	pub relay_client: subxt::OnlineClient<T>,
 	/// Parachain rpc client
 	pub para_client: subxt::OnlineClient<T>,
+	/// Relay chain ws client
+	pub relay_ws_client: Arc<jsonrpsee_ws_client::WsClient>,
+	/// Parachain ws client
+	pub para_ws_client: Arc<jsonrpsee_ws_client::WsClient>,
 	/// Parachain Id
 	pub para_id: u32,
 	/// Light client id on counterparty chain
@@ -155,9 +160,28 @@ where
 {
 	/// Initializes a [`ParachainClient`] given a [`ParachainConfig`]
 	pub async fn new(config: ParachainClientConfig) -> Result<Self, Error> {
-		let para_client = subxt::OnlineClient::from_url(&config.parachain_rpc_url).await?;
+		let relay_ws_client = Arc::new(
+			WsClientBuilder::default()
+				.build(&config.relay_chain_rpc_url)
+				.await
+				.map_err(|e| Error::from(format!("Rpc Error {:?}", e)))?,
+		);
+		let para_ws_client = Arc::new(
+			WsClientBuilder::default()
+				.build(&config.parachain_rpc_url)
+				.await
+				.map_err(|e| Error::from(format!("Rpc Error {:?}", e)))?,
+		);
 
-		let relay_client = subxt::OnlineClient::from_url(&config.relay_chain_rpc_url).await?;
+		let para_client = subxt::OnlineClient::from_rpc_client(unsafe {
+			unsafe_cast_to_jsonrpsee_client(&para_ws_client)
+		})
+		.await?;
+
+		let relay_client = subxt::OnlineClient::from_rpc_client(unsafe {
+			unsafe_cast_to_jsonrpsee_client(&relay_ws_client)
+		})
+		.await?;
 
 		let (sender, _) = broadcast::channel(32);
 		let max_extrinsic_weight = fetch_max_extrinsic_weight(&para_client).await?;
@@ -204,6 +228,8 @@ where
 			key_type_id,
 			sender,
 			max_extrinsic_weight,
+			para_ws_client,
+			relay_ws_client,
 			ss58_version: Ss58AddressFormat::from(config.ss58_version),
 			channel_whitelist: config.channel_whitelist,
 			light_client_protocol: config.light_client_protocol,
@@ -214,25 +240,29 @@ where
 	/// chain heights
 	pub async fn query_grandpa_finalized_parachain_headers_between(
 		&self,
-		latest_finalized_hash: T::Hash,
-		previous_finalized_hash: T::Hash,
-	) -> Result<Vec<T::Header>, Error>
+		latest_finalized_block: u32,
+		previous_finalized_block: u32,
+	) -> Result<Option<Vec<T::Header>>, Error>
 	where
 		T::BlockNumber: From<u32>,
 		T: subxt::Config,
 		T::BlockNumber: Ord + Zero,
 		u32: From<T::BlockNumber>,
 	{
+		let relay_ws_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.relay_ws_client) };
+		let para_ws_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_ws_client) };
 		let prover = GrandpaProver {
 			relay_client: self.relay_client.clone(),
+			relay_ws_client,
 			para_client: self.para_client.clone(),
+			para_ws_client,
 			para_id: self.para_id,
 		};
 
 		prover
 			.query_finalized_parachain_headers_between(
-				latest_finalized_hash,
-				previous_finalized_hash,
+				latest_finalized_block,
+				previous_finalized_block,
 			)
 			.await
 			.map_err(|e| {
@@ -278,8 +308,8 @@ where
 	/// numbers using the GRANDPA finality proof with the given relay chain heights.
 	pub async fn query_grandpa_finalized_parachain_headers_with_proof(
 		&self,
-		latest_finalized_hash: T::Hash,
-		previous_finalized_hash: T::Hash,
+		latest_finalized_block: u32,
+		previous_finalized_block: u32,
 		headers: Vec<T::BlockNumber>,
 	) -> Result<ParachainHeadersWithFinalityProof<T::Header>, Error>
 	where
@@ -288,16 +318,20 @@ where
 		<T::Header as HeaderT>::Hash: From<T::Hash>,
 		T::BlockNumber: One,
 	{
+		let relay_ws_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.relay_ws_client) };
+		let para_ws_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_ws_client) };
 		let prover = GrandpaProver {
 			relay_client: self.relay_client.clone(),
+			relay_ws_client,
 			para_client: self.para_client.clone(),
+			para_ws_client,
 			para_id: self.para_id,
 		};
 
 		let result = prover
 			.query_finalized_parachain_headers_with_proof(
-				latest_finalized_hash,
-				previous_finalized_hash,
+				latest_finalized_block,
+				previous_finalized_block,
 				headers,
 			)
 			.await

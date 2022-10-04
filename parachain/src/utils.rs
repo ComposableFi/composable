@@ -1,7 +1,9 @@
 use crate::Error;
 use beefy_light_client_primitives::{ClientState, MmrUpdateProof};
+use std::sync::Arc;
 
 use beefy_primitives::known_payload_ids::MMR_ROOT_ID;
+use beefy_prover::helpers::unsafe_arc_cast;
 use codec::Decode;
 use frame_support::weights::DispatchClass;
 use frame_system::limits::BlockWeights;
@@ -41,4 +43,10 @@ pub async fn fetch_max_extrinsic_weight<T: subxt::Config>(
 		.or(extrinsic_weights.max_total)
 		.unwrap_or(u64::MAX);
 	Ok(max_extrinsic_weight)
+}
+
+pub unsafe fn unsafe_cast_to_jsonrpsee_client(
+	client: &Arc<jsonrpsee_ws_client::WsClient>,
+) -> Arc<jsonrpsee::core::client::Client> {
+	unsafe_arc_cast::<_, _>(client.clone())
 }

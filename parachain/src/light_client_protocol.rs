@@ -2,7 +2,6 @@
 
 use crate::{error::Error, ParachainClient};
 use beefy_light_client_primitives::{ClientState as BeefyPrimitivesClientState, NodesUtils};
-use beefy_prover::helpers::unsafe_cast_to_jsonrpsee_client;
 use codec::{Decode, Encode};
 use grandpa_light_client::justification::find_scheduled_change;
 use grandpa_light_client_primitives::{
@@ -222,11 +221,9 @@ where
 	};
 
 	// block_number => events
-	let events: HashMap<String, Vec<IbcEvent>> = IbcApiClient::<u32, H256>::query_events(
-		&*unsafe { unsafe_cast_to_jsonrpsee_client(&source.para_client) },
-		finalized_block_numbers,
-	)
-	.await?;
+	let events: HashMap<String, Vec<IbcEvent>> =
+		IbcApiClient::<u32, H256>::query_events(&*source.para_ws_client, finalized_block_numbers)
+			.await?;
 
 	// header number is serialized to string
 	let mut headers_with_events = events
@@ -351,10 +348,11 @@ where
 	// fetch the new parachain headers that have been finalized
 	let headers = source
 		.query_grandpa_finalized_parachain_headers_between(
-			justification.commit.target_hash.into(),
-			grandpa_client_state.latest_relay_hash.into(),
+			justification.target().0,
+			grandpa_client_state.latest_relay_height,
 		)
-		.await?;
+		.await?
+		.ok_or_else(|| Error::from("No parachain headers have been finalized".to_string()))?;
 
 	log::info!(
 		"Fetching events from {} for blocks {}..{}",
@@ -415,11 +413,9 @@ where
 		};
 
 	// block_number => events
-	let events: HashMap<String, Vec<IbcEvent>> = IbcApiClient::<u32, H256>::query_events(
-		&*unsafe { unsafe_cast_to_jsonrpsee_client(&source.para_client) },
-		finalized_block_numbers,
-	)
-	.await?;
+	let events: HashMap<String, Vec<IbcEvent>> =
+		IbcApiClient::<u32, H256>::query_events(&*source.para_ws_client, finalized_block_numbers)
+			.await?;
 
 	// header number is serialized to string
 	let mut headers_with_events = events
@@ -449,8 +445,8 @@ where
 
 	let ParachainHeadersWithFinalityProof { finality_proof, parachain_headers } = source
 		.query_grandpa_finalized_parachain_headers_with_proof(
-			justification.commit.target_hash.into(),
-			grandpa_client_state.latest_relay_hash.into(),
+			justification.commit.target_number.into(),
+			grandpa_client_state.latest_relay_height,
 			headers_with_events.into_iter().collect(),
 		)
 		.await?;

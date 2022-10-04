@@ -1,11 +1,13 @@
 use crate::{
-	parachain::api, polkadot, signer::ExtrinsicSigner, Error, GrandpaClientState, ParachainClient,
+	parachain::api, polkadot, signer::ExtrinsicSigner, utils::unsafe_cast_to_jsonrpsee_client,
+	Error, GrandpaClientState, ParachainClient,
 };
-use beefy_prover::{helpers::unsafe_cast_to_jsonrpsee_client, ClientWrapper};
+use beefy_prover::ClientWrapper;
 use codec::Decode;
 use common::AccountId;
 use futures::{Stream, StreamExt};
 use grandpa_light_client_primitives::{FinalityProof, ParachainHeaderProofs};
+use grandpa_prover::GrandpaProver;
 use ibc::{
 	applications::transfer::{msgs::transfer::MsgTransfer, PrefixedCoin},
 	core::ics24_host::identifier::{ChannelId, ClientId, PortId},
@@ -35,7 +37,6 @@ use sp_runtime::{
 };
 use std::{collections::BTreeMap, fmt::Display, pin::Pin, str::FromStr, time::Duration};
 use subxt::{
-	rpc::rpc_params,
 	tx::{AssetTip, BaseExtrinsicParamsBuilder, ExtrinsicParams, SubstrateExtrinsicParamsBuilder},
 	Config,
 };
@@ -52,6 +53,7 @@ where
 	H256: From<T::Hash>,
 	<T::ExtrinsicParams as ExtrinsicParams<T::Index, T::Hash>>::OtherParams:
 		From<BaseExtrinsicParamsBuilder<T, AssetTip>>,
+	T::BlockNumber: Ord + sp_runtime::traits::Zero,
 {
 	pub fn set_client_id(&mut self, client_id: ClientId) {
 		self.client_id = Some(client_id)
@@ -158,47 +160,33 @@ where
 		<T as Config>::Address: From<<T as Config>::AccountId>,
 		u32: From<<T as Config>::BlockNumber>,
 	{
+		let relay_ws_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.relay_ws_client) };
+		let para_ws_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_ws_client) };
+		let prover = GrandpaProver {
+			relay_client: self.relay_client.clone(),
+			relay_ws_client,
+			para_client: self.para_client.clone(),
+			para_ws_client,
+			para_id: self.para_id,
+		};
 		let api = self.relay_client.storage();
 		let para_client_api = self.para_client.storage();
 		loop {
-			let current_set_id_addr = polkadot::api::storage().grandpa().current_set_id();
-			let current_set_id = api
-				.fetch(&current_set_id_addr, None)
-				.await?
-				.expect("Failed to fetch current set id");
-
-			let current_authorities = {
-				let bytes = self
-					.relay_client
-					.rpc()
-					.request::<String>(
-						"state_call",
-						rpc_params!("GrandpaApi_grandpa_authorities", "0x"),
-					)
-					.await
-					.map(|res| hex::decode(&res[2..]))
-					.expect("Failed to fetch authorities")
-					.expect("Failed to hex decode authorities");
-
-				sp_finality_grandpa::AuthorityList::decode(&mut &bytes[..])
-					.expect("Failed to scale decode authorities")
-			};
-
-			let latest_relay_hash = self
-				.relay_client
-				.rpc()
-				.finalized_head()
+			let light_client_state = prover
+				.initialize_client_state()
 				.await
-				.expect("Failed to fetch finalized header");
+				.map_err(|_| Error::from("Error constructing client state".to_string()))?;
 
 			let heads_addr = polkadot::api::storage().paras().heads(
 				&polkadot::api::runtime_types::polkadot_parachain::primitives::Id(self.para_id),
 			);
-			let head_data =
-				api.fetch(&heads_addr, Some(latest_relay_hash)).await?.ok_or_else(|| {
+			let head_data = api
+				.fetch(&heads_addr, Some(light_client_state.latest_relay_hash))
+				.await?
+				.ok_or_else(|| {
 					Error::Custom(format!(
 						"Couldn't find header for ParaId({}) at relay block {:?}",
-						self.para_id, latest_relay_hash
+						self.para_id, light_client_state.latest_relay_hash
 					))
 				})?;
 			let decoded_para_head = sp_runtime::generic::Header::<
@@ -214,9 +202,9 @@ where
 			let mut client_state = GrandpaClientState::<HostFunctionsManager>::default();
 
 			client_state.relay_chain = Default::default();
-			client_state.current_authorities = current_authorities;
-			client_state.current_set_id = current_set_id;
-			client_state.latest_relay_hash = latest_relay_hash.into();
+			client_state.current_authorities = light_client_state.current_authorities;
+			client_state.current_set_id = light_client_state.current_set_id;
+			client_state.latest_relay_hash = light_client_state.latest_relay_hash.into();
 			client_state.frozen_height = None;
 			client_state.latest_para_height = block_number;
 			client_state.para_id = self.para_id;
@@ -250,15 +238,14 @@ where
 		}]);
 		let (ext_hash, block_hash) = self.submit_call(call, true).await?;
 
-		println!("Ext hash {ext_hash:?}, {block_hash:?}");
-
 		// Query newly created client Id
 		let identified_client_state = IbcApiClient::<u32, H256>::query_newly_created_client(
-			&*unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) },
+			&*self.para_ws_client,
 			block_hash.unwrap().into(),
 			ext_hash.into(),
 		)
-		.await?;
+		.await
+		.map_err(|e| Error::from(format!("Rpc Error {:?}", e)))?;
 
 		let client_id = ClientId::from_str(&identified_client_state.client_id)
 			.expect("Should have a valid client id");
@@ -407,7 +394,7 @@ where
 	}
 
 	async fn subscribe_blocks(&self) -> Pin<Box<dyn Stream<Item = u64> + Send + Sync>> {
-		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_client) };
+		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_ws_client) };
 		let stream = para_client
 			.subscribe::<T::Header>("chain_subscribeNewHeads", None, "chain_unsubscribeNewHeads")
 			.await
