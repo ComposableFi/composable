@@ -115,7 +115,7 @@ Before joining Composable, Rob gathered entrepreneurial experience founding the 
 With two bachelor degrees in Commerce and Law, Rob brings broad experience to Composable and unites product, design, 
 and development in order to bring Composable’s vision to life. 
 [Linkedin](https://www.linkedin.com/in/robertzhuangpm/?originalSubdomain=uk) | 
-[Twitter](https://www.linkedin.com/in/robertzhuangpm/?originalSubdomain=uk)
+[Twitter](https://twitter.com/GosuRZ)
 
 ## Antonio Larriba | Head of Composable Research
 Antonio is a cypherpunk deeply concerned about privacy and true decentralization in the electronic age. 
@@ -131,7 +131,7 @@ At Parity he worked on the Rust implementation of the Ethereum protocol, on the 
 and on the Polkadot Network. Seun brings deep technical expertise on protocol development, harnessing his knowledge 
 to power the development of trustless bridging solutions between various networks beyond DotSama, 
 including the IBC and more. 
-[LinkedIn](https://www.linkedin.com/in/elliot-f/) | [Twitter](https://www.linkedin.com/in/elliot-f/)
+[LinkedIn](https://www.linkedin.com/in/seunlanlege/?originalSubdomain=ng) | [Twitter](https://twitter.com/seunlanlege)
 
 ## Blas Rodriguez Irizar | Bridging Lead
 
@@ -149,7 +149,6 @@ early days, he took the dive into DeFi in 2018, building on Rust and Substrate. 
 he worked as a Senior Software Engineer at Centrifuge building the open source Centrifuge blockchain and p2p network. 
 At Composable, Vim leads the engineering team that focuses on parachains. 
 [LinkedIn](https://www.linkedin.com/in/vimukthicom/) | [Twitter](https://twitter.com/rustic_cyborg)
-
 
 ## 0xBobafetador | Bots Lead
 
