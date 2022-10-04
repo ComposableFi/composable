@@ -15,6 +15,7 @@ import { fromChainUnits } from "../../units";
 import { createPabloPoolAccountId } from "../misc";
 import { lbpCalculatePriceAtBlock } from "./weightCalculator";
 import BigNumber from "bignumber.js";
+import moment from "moment";
 
 export function transformPabloTransaction(
   tx: PabloTransactions,
@@ -183,8 +184,8 @@ export async function fetchAuctionChartSeries(
           predictedSeriesStartTimeStamp,
           predictedSeriesStartSpotPrice.toNumber(),
         ]);
-        predictedSeriesStartBlock = predictedSeriesStartBlock.plus(1);
-        predictedSeriesStartTimeStamp += 5 * 1000;
+        predictedSeriesStartBlock = predictedSeriesStartBlock.plus(5);
+        predictedSeriesStartTimeStamp += 60 * 1000;
       }
     } else {
       let blockBn = await parachainApi.query.system.number();
@@ -208,8 +209,9 @@ export async function fetchAuctionChartSeries(
           predictedSeriesStartTimeStamp,
           predictedSeriesStartSpotPrice.toNumber(),
         ]);
-        predictedSeriesStartBlock = predictedSeriesStartBlock.plus(1);
-        predictedSeriesStartTimeStamp += 5 * 1000;
+        // add 5 blocks per second
+        predictedSeriesStartBlock = predictedSeriesStartBlock.plus(5);
+        predictedSeriesStartTimeStamp += 60 * 1000;
       }
     }
   } catch (err) {
