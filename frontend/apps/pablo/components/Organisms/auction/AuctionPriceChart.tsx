@@ -9,9 +9,6 @@ const NoSSRChart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
 const createChartOptions = (color: string, theme: any, dateFormat: any): ApexOptions => {
   return {
-    noData: {
-      text: "loading"
-    },
     grid: {
       show: false,
       padding: {
