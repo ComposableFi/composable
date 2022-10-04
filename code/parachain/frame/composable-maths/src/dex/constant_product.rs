@@ -32,6 +32,9 @@ where
 	let wo: u32 = wo.deconstruct().into();
 	let weight_sum = wi.safe_add(&wo)?;
 	let expected_weight_sum: u32 = T::one().deconstruct().into();
+
+	// TODO (vim): This validation must be done at the pallet level then here as there could be more
+	//  assets  and weights in the pool than what's here.
 	ensure!(weight_sum == expected_weight_sum, ArithmeticError::Overflow);
 
 	let base_unit = Decimal::from_u128(base_unit).ok_or(ArithmeticError::Overflow)?;
@@ -70,6 +73,8 @@ where
 	let wo: u32 = wo.deconstruct().into();
 	let weight_sum = wi.safe_add(&wo)?;
 	let expected_weight_sum: u32 = T::one().deconstruct().into();
+	// TODO (vim): This validation must be done at the pallet level then here as there could be more
+	//  assets  and weights in the pool than what's here.
 	ensure!(weight_sum == expected_weight_sum, ArithmeticError::Overflow);
 
 	let ai = Decimal::from_u128(ai).ok_or(ArithmeticError::Overflow)?;
@@ -107,6 +112,9 @@ where
 	let wo: u32 = wo.deconstruct().into();
 	let weight_sum = wi.safe_add(&wo)?;
 	let expected_weight_sum: u32 = T::one().deconstruct().into();
+
+	// TODO (vim): This validation must be done at the pallet level then here as there could be more
+	//  assets  and weights in the pool than what's here.
 	ensure!(weight_sum == expected_weight_sum, ArithmeticError::Overflow);
 
 	let ao = Decimal::from_u128(ao).ok_or(ArithmeticError::Overflow)?;

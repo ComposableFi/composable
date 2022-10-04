@@ -131,7 +131,7 @@ stem:[A_k = B_k . (1 - (1 - P_"redeemed" / P_"supply")^(1/w_k))] <- (8)
 +
 One could see this formula is a generalization of the formula (7) when stem:[w_k = 1] (sum of all weights). Therefore, equation (8) can be used for both cases to get the amount of tokens received. For all assets case the result must be used as the amount for all pool assets to be disbursed.
 
-As per the derivations above , equations (5), (6) and (8) are the only ones that need to be implemented. Then the must be integrated with relevant flows.
+As per the derivations above , equations (5), (6) and (8) are the only ones that need to be implemented at `code/parachain/frame/composable-maths/src/dex/constant_product.rs`. Then they must be integrated with relevant flows.
 
 === Validation: Pool Asset (Pair) Validation Must be at the Top Level of `Amm` trait Implementation
 
@@ -141,36 +141,224 @@ Currently significant amount of logic is executed upfront without validating tha
 
 The added liquidity must follow the same ratio as the pool weight distribution according to balancer formulae. Currently, there is no such validation.
 
+[#_refactoring_currencypair_usage]
 === Refactoring: `CurrencyPair` Usage
 
-In the pool data structure [TODO link], using `CurrencyPair` with "base" and "quote" naming creates confusion when it comes to actual swap logic. A base or quote naming applies to a currency only at the point of a trade. Specially when considering possible multi-asset pools that a balancer based pool supports.
+In the existing https://github.com/ComposableFi/composable/blob/main/code/parachain/frame/composable-traits/src/dex.rs#L269[pool data structure], using `CurrencyPair` with "base" and "quote" naming creates confusion when it comes to actual swap logic.A base or quote naming applies to a currency only at the point of a trade.Specially when considering possible multi-asset pools that a balancer based pool supports.
 
 The proposal here is to use a list(vector) of maximum length of 2 (possibly allowing for future expansion) in the pool data structure for both CPP and LBP.
 
-TODO data structure code
+[source,rust]
+----
+pub struct ConstantProductPoolInfo<AccountId, AssetId> {
+	/// Owner of pool
+	pub owner: AccountId,
+	/// Swappable assets map asset_id => weight
+	pub assets: Map<AssetId, Permill>,
+	/// AssetId of LP token
+	pub lp_token: AssetId,
+	/// Amount of the fee pool charges for the exchange
+	pub fee_config: FeeConfig,
 
-=== All Unit Tests Done with Fee Included
+}
 
-Proposal is that all unit tests include fees, with 0 fees being the exception.
+pub struct LiquidityBootstrappingPoolInfo<AccountId, AssetId, BlockNumber> {
+	/// Owner of the pool
+	pub owner: AccountId,
+	/// Asset pair of the pool along their weight.
+	/// Base asset is the project token.
+	/// Quote asset is the collateral token.
+	pub assets: Map<AssetId, Permil>,
+	/// Sale period of the LBP.
+	pub sale: Sale<BlockNumber>,
+	/// Trading fees.
+	pub fee_config: FeeConfig,
+}
+----
+
+=== Unit Test Updates
+
+. Introduce unit tests for `code/parachain/frame/composable-maths/src/dex/constant_product.rs`.
+. All unit tests include fees (verified according to the math), with 0 fees being the exception.
+. Sufficient amount of cases to cover pools with differential weights according to the math.
+. Sufficient amount of cases to cover LPT issued according to the math.
+
+=== Algorithm: `constant_product::out_given_in`
+
+These are the modifications to be made to the existing https://github.com/ComposableFi/composable/blob/main/code/parachain/frame/composable-maths/src/dex/constant_product.rs#L59[function].
+
+[source,rust]
+----
+pub fn compute_out_given_in<T: PerThing>(
+	w_i: T,
+	w_o: T,
+	b_i: u128,
+	b_o: u128,
+	a_sent: u128,
+    // f=0 for getting "out" without taking into account the fee
+    f: T
+) -> Result<(/* Out */ u128, /*Fee*/ u128), ArithmeticError> {
+    // Calculate according to section 4.1 Eqn: 2
+}
+----
+
+=== Algorithm: `Amm::currency_pair` -> `Amm::assets`
+
+This is a renaming plus a reorganization of this logic to better match the `CurrencyPair` refactoring. Because of the <<_refactoring_currencypair_usage>>, this function should just return the list of assets in the pool.
+
+[source,rust]
+----
+pub trait Amm {
+    // ....
+
+    fn assets(pool_id: Self::PoolId) -> Result<Vec<AssetId>, DispatchError>;
+
+    // ....
+}
+----
+
+[plantuml,images/pablo-amm-currencies,png]
+----
+start
+->pool_id;
+:pool = get pool from storage by pool_id;
+:return pool.assets.keys();
+stop
+----
+
+=== Algorithm: `Amm::get_exchange_value`
+
+Having the fee not taken into account here causes the fees to be calculated in non-formal ways. Therefore, the proposal is to always take into account the fee input as a parameter and return the fee as a separate output. This also means that this function shall not be used to calculate a quote amount for buy operations.
+
+[source,rust]
+----
+pub struct AssetAmount<AssetId, Balance> {
+    pub asset_id: AssetId,
+    pub amount: Balance
+}
+
+pub struct ExchangeValue<AssetId, Balance> {
+    value: AssetAmount<AssetId, Balance>,
+    fee: AssetAmount<AssetId, Balance>,
+}
+
+pub trait Amm {
+    // ....
+
+    /// Return the exchange value out asset given in asset.
+    fn get_exchange_value(
+        pool_id: Self::PoolId,
+        in_asset: AssetAmount<Self::AssetId, Self::Balance>,
+        out_asset: Self::AssetId,
+    ) -> Result<ExchangeValue<Self::AssetId, Self::Balance>, DispatchError>;
+
+    // ....
+}
+----
+
+[plantuml,images/pablo-amm-get-exchange-value,png]
+----
+start
+->pool_id,in_asset,out_asset;
+:validate assets are part of the pool;
+:pool = get pool from storage by pool_id;
+:balances = get balances for in_asset and out_asset;
+:value, fee = constant_product::out_given_in(
+pool.assets[in_asset.asset_id],
+pool.assets[out_asset],
+balances[0],
+balances[1],
+in_asset.amount,
+pool.fee_config.fee_rate
+);
+:return ExchangeValue(value, fee);
+stop
+----
+
+=== Algorithm: `Amm::exchange` -> `Amm::swap`
+
+Given the previously defined `Amm::get_exchange_value` function this method can be simplified.
+
+[source,rust]
+----
+pub trait Amm {
+    // ....
+
+    /// Performs an exchange to transfer the given
+    /// quote amount to the pool while disbursing
+    /// the calculated base amount according to the pool logic.
+    /// Returns the disbursed value in base and fee charged.
+    fn swap(
+        who: &Self::AccountId,
+        pool_id: Self::PoolId,
+        in_asset: AssetAmount<Self::AssetId, Self::Balance>,
+        min_receive: AssetAmount<Self::AssetId, Self::Balance>,
+        keep_alive: bool,
+    ) -> Result<ExchangeValue<Self::AssetId, Self::Balance>, DispatchError>;
+
+    // ....
+}
+----
 
 
-=== Algorithm: `get_exchange_rate` with (Always) Fee Included
+[plantuml,images/pablo-amm-exchange,png]
+----
+start
+->who,pool_id,in_asset,min_receive;
+:validate who actually has the in_asset amount;
+:exchange_value =
+    Self::get_exchange_value(
+        pool_id,
+        in_asset,
+        min_receive.asset_id
+    );
+:validate min_receive <= exchange_value;
+:transfer in_asset to the pool account;
+:transfer exchange_value to who;
+:return exchange_value;
+stop
+----
 
-This is essentially the spot price multiplied by the amount of tokens to be exchanged. Having the fee not taken into account here causes the fees to be calculated in non-formal ways. Therefore, the proposal is to always take into account the fee input as a parameter and return the fee as a separate output. This also means that this function shall not be used to calculate a quote amount for buy operations.
+=== Algorithm: `Amm::sell`
 
-=== Algorithm: `exchange`
+This would be removed to keep the interface simple as `Amm::swap` satisfies the requirement.
 
-=== Storage Use
+=== Algorithm: `Amm::buy`
 
-?
+This function exists to provide a way for a user to easily by a given amount from the AMM.
+
+=== Algorithm: `Amm::add_liquidity`
+
+=== Algorithm: `Amm::remove_liquidity`
 
 === Fail Safes
 
+Fail safes can be categorized based on the level they act on,
+
+==== At the protocol level, where the entire Pablo protocol in multiple pallets is affected.
+==== At the pallet level, where a particular Pablo pallet is affected.
+==== At the pool type level where all pools of a particular pool type like LBP is affected.
+==== At the individual pool level where a single pool is affected
+
+For LBPs,
+
+. There needs to be a way to pause trading in situations where the trading activity is not favourable for the launch
+
+==== At the functionality level where a particular functionality for example like "removing liquidity" is affected.
+
 == Implementation
+
 
 == Quality Assurance
 
+
+
 == Audit
+
+== Questions
+
+. Would LBPs need to be converted to normal CPP after the sale has ended?
+.. If so need to combine CPP and LBP data structures
 
 [#_proof_of_fee_for_in_given_out]
 [appendix]
@@ -230,7 +418,7 @@ stem:[P_"issued" / P_"supply" = (1 + ((1 - f) . D_k) / B_k)^(w_k) - 1 ]
 
 Now with rearrangement we have,
 
-stem:[P_"issued" = P_"supply" . (((D_k. (1 - f) + B_k)/ B_k)^(w_k) - 1)] <- (5)
+stem:[P_"issued" = P_"supply" . (((D_k. (1 - f) + B_k)/ B_k)^(w_k) - 1)]
 
 Thus, this proves equation (5).
 

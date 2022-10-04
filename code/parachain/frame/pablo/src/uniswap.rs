@@ -74,7 +74,7 @@ impl<T: Config> Uniswap<T> {
 			Error::<T>::NotEnoughLiquidity
 		);
 		// TODO (vim): Following does not work for "buy" as this causes "out_given_in" to be used in
-		// case user wanting to buy  the quote asset of the pool.
+		//  case user wanting to buy the quote asset of the pool.
 		let exchange_amount = if asset_id == pool.pair.quote {
 			compute_out_given_in(
 				pool.quote_weight,
