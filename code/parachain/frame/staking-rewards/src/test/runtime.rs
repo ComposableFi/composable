@@ -129,7 +129,9 @@ impl pallet_currency_factory::Config for Test {
 
 parameter_type_with_key! {
 	pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
-		Zero::zero()
+		// Zero::zero()
+		// TODO: Fix the failing test that occurs because of this
+		1
 	};
 }
 
