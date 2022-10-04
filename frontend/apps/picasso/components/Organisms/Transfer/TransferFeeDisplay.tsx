@@ -139,13 +139,14 @@ export const TransferFeeDisplay = () => {
       (api, walletAddress) =>
         getPaymentAsset({
           api,
-          walletAddress
+          walletAddress,
+          network: from
         }),
       provider.parachainApi,
       account?.address
     );
     asset.then(console.log);
-  }, [provider, account]);
+  }, [provider, account, from]);
 
   return (
     <FeeDisplay

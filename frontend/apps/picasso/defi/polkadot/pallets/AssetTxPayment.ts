@@ -1,7 +1,12 @@
 import { ApiPromise } from "@polkadot/api";
-import { Executor, getSigner } from "substrate-react";
+import {
+  Executor,
+  getSigner,
+  ParachainId,
+  RelayChainId
+} from "substrate-react";
 import { APP_NAME } from "@/defi/polkadot/constants";
-import { Assets } from "@/defi/polkadot/Assets";
+import { Assets, getAssetById } from "@/defi/polkadot/Assets";
 
 export type SetPaymentAssetArgs = {
   api: ApiPromise;
@@ -40,19 +45,21 @@ export async function setPaymentAsset({
 export type GetPaymentAssetArgs = {
   api: ApiPromise;
   walletAddress: string;
+  network: ParachainId | Extract<"kusama", RelayChainId>;
 };
 
 export async function getPaymentAsset({
   api,
-  walletAddress
+  walletAddress,
+  network
 }: GetPaymentAssetArgs) {
   const result: any = await api.query.assetTxPayment.paymentAssets(
     api.createType("AccountId32", walletAddress)
   );
 
   if (result.isSome) {
-    console.log("Got the value", result.toJSON());
-    return Assets.pica;
+    const [assetId, _] = result.toJSON();
+    return getAssetById(network, assetId);
   }
 
   return Assets.pica;

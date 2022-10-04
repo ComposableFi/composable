@@ -86,7 +86,8 @@ export const TransferFeeItem: FC = () => {
       (api, walletAddress) =>
         getPaymentAsset({
           api,
-          walletAddress
+          walletAddress,
+          network: from
         }),
       provider.parachainApi,
       account?.address
@@ -98,7 +99,7 @@ export const TransferFeeItem: FC = () => {
         setShowApplyButton(false);
       }
     });
-  }, [provider, account, hasFeeItem, feeItem]);
+  }, [provider, account, hasFeeItem, feeItem, from]);
 
   const handleChangeItem = (item: React.ChangeEvent<HTMLInputElement>) => {
     setFeeItem(item.target.value as AssetId);

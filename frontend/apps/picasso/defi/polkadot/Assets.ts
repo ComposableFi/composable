@@ -1,5 +1,5 @@
 import { AssetId, SubstrateNetworkId } from "./types";
-import { ParachainId } from "substrate-react";
+import { ParachainId, RelayChainId } from "substrate-react";
 
 export interface AssetMetadata {
   decimals: number;
@@ -117,14 +117,11 @@ export const AssetsValidForNow: AssetId[] = ["pica", "kusd", "ksm"];
 
 export const getAsset = (assetId: AssetId): AssetMetadata => Assets[assetId];
 export const getAssetById = (
-  network: ParachainId,
+  network: ParachainId | Extract<RelayChainId, "kusama">,
   assetId: number
 ): AssetMetadata | null => {
   for (const asset in Assets) {
-    if (
-      Assets[asset as AssetId].supportedNetwork[network as ParachainId] ===
-      assetId
-    ) {
+    if (Assets[asset as AssetId].supportedNetwork[network] === assetId) {
       return Assets[asset as AssetId];
     }
   }
@@ -132,7 +129,7 @@ export const getAssetById = (
 };
 
 export const getAssetOnChainId = (
-  network: ParachainId | "kusama",
+  network: ParachainId | Extract<RelayChainId, "kusama">,
   assetId: AssetId | ""
 ): number | null => {
   if (!assetId) return null;
