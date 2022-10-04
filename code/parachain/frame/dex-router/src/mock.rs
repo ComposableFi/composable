@@ -204,6 +204,7 @@ impl pallet_staking_rewards::Config for Test {
 	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
 	type LockId = StakingRewardsLockId;
 	type TreasuryAccount = TreasuryAccountId;
+	type ExistentialDeposits = ExistentialDeposits;
 }
 
 parameter_types! {
