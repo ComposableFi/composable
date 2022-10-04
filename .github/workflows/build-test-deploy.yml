@@ -802,7 +802,7 @@ jobs:
       - x64
       - sre
     concurrency:
-      group: composable-sandbox-${{ github.ref }}
+      group: ${{ github.workflow }}-composable-sandbox-${{ github.ref }}
       cancel-in-progress: true
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
@@ -834,6 +834,50 @@ jobs:
           docker load --input ./result
           docker tag composable-devnet-container:latest "${{ env.DOCKER_REGISTRY_NAME }}/composable-sandbox:latest"
           docker push "${{ env.DOCKER_REGISTRY_NAME }}/composable-sandbox:latest"
+
+  composable-centauri-publish:
+    if: ${{ github.ref == 'refs/heads/centauri' }}
+    name: "Docker composable-centauri"
+    # needs:
+      # - effects-gate
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    concurrency:
+      group: ${{ github.workflow }}-composable-centauri-${{ github.ref }}
+      cancel-in-progress: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+          echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix nixpkgs.docker nixpkgs.docker-buildx
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+      - uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+      - run: |
+          # enable required features (see https://github.com/cachix/install-nix-action/issues/19)
+          mkdir -p ~/.config/nix
+          echo "system-features = kvm" >> ~/.config/nix/nix.conf
+      - run: |
+          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#bridge-devnet-dali-container --no-update-lock-file --show-trace -L
+          docker load --input ./result
+          docker tag composable-centauri-devnet-container:latest "${{ env.DOCKER_REGISTRY_NAME }}/composable-centauri:latest"
+          docker push "${{ env.DOCKER_REGISTRY_NAME }}/composable-centauri:latest"
 
   devcontainer-build:
     name: "Devcontainer build"
