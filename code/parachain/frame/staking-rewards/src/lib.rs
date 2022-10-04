@@ -703,10 +703,18 @@ pub mod pallet {
 
 					ensure!(
 						initial_reward_config.iter().all(|(asset_id, reward_config)| {
-							lock.unlock_penalty
-								.left_from_one()
-								.mul(reward_config.reward_rate.amount) >=
-								T::ExistentialDeposits::get(asset_id)
+							if reward_config.reward_rate.amount > T::Balance::zero() {
+								// If none zero reward, check that it's greater than ED
+								lock.unlock_penalty
+									.left_from_one()
+									.mul(reward_config.reward_rate.amount) >=
+									T::ExistentialDeposits::get(asset_id)
+							} else {
+								// Else, return true so check passes
+								// NOTE(connor): This is a band-aid that some better type management
+								// would remove the need for, outside the scope of this PR
+								true
+							}
 						}),
 						Error::<T>::SlashedAmountTooLow
 					);
