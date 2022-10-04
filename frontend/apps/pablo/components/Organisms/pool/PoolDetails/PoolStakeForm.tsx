@@ -10,6 +10,8 @@ import { useStakingRewardPool } from "@/store/stakingRewards/stakingRewards.slic
 import { usePendingExtrinsic, useSelectedAccount } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { ConfirmingModal } from "../../swap/ConfirmingModal";
+import { SelectLockPeriod } from "@/components";
+import { extractDurationPresets } from "@/defi/utils/stakingRewards/durationPresets";
 
 export const PoolStakeForm: React.FC<PoolDetailsProps> = ({
   poolId,
@@ -22,33 +24,39 @@ export const PoolStakeForm: React.FC<PoolDetailsProps> = ({
 
   const [amount, setAmount] = useState<BigNumber>(new BigNumber(0));
   const [valid, setValid] = useState<boolean>(false);
-
+  const [selectedMultiplier, setSelectedMultiplier] = useState<number>(0);
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
-  const durationPresets = useMemo(() => {
-    if (stakingRewardPool) {
-      return Object.keys(stakingRewardPool.lock.durationPresets);
-    }
-    return [];
+
+  const principalAssetSymbol = useMemo(() => {
+    if (!baseAsset || !quoteAsset) return undefined;
+
+    return `${baseAsset.symbol}/${quoteAsset.symbol}`;
+  }, [baseAsset, quoteAsset]);
+
+  const multipliers = useMemo(() => {
+    return extractDurationPresets(stakingRewardPool);
   }, [stakingRewardPool]);
+
+  const durationPresetSelected = useMemo(() => {
+    return multipliers.find((mul) => mul.value === selectedMultiplier);
+  }, [multipliers, selectedMultiplier]);
 
   const handleStake = useStake({
     amount,
     poolId: stakingRewardPool ? stakingRewardPool.assetId : undefined,
-    durationPreset:
-      durationPresets.length > 0
-        ? new BigNumber(durationPresets[0])
-        : undefined,
+    durationPreset: durationPresetSelected
+      ? new BigNumber(durationPresetSelected.periodInSeconds)
+      : undefined,
   });
 
   const isStaking = usePendingExtrinsic(
     "stake",
     "stakingRewards",
     selectedAccount ? selectedAccount.address : "-"
-  )
+  );
 
   return (
     <Box {...boxProps}>
-      <ConfirmingModal open={isStaking} />
       <Box>
         <BigNumberInput
           maxValue={poolDetails.lpBalance}
@@ -68,7 +76,7 @@ export const PoolStakeForm: React.FC<PoolDetailsProps> = ({
             TypographyProps: { color: "text.secondary" },
             BalanceProps: {
               title: <AccountBalanceWalletIcon color="primary" />,
-              balance: `${poolDetails.lpBalance} ${baseAsset?.symbol}/${quoteAsset?.symbol}`,
+              balance: `${poolDetails.lpBalance} ${principalAssetSymbol}`,
               BalanceTypographyProps: { color: "text.secondary" },
             },
           }}
@@ -89,7 +97,17 @@ export const PoolStakeForm: React.FC<PoolDetailsProps> = ({
             separator: "/",
           }}
         />
+
+        <SelectLockPeriod
+          mt={3}
+          durationPresetSelected={durationPresetSelected}
+          setMultiplier={setSelectedMultiplier}
+          periodItems={multipliers}
+          multiplier={selectedMultiplier}
+          principalAssetSymbol={principalAssetSymbol}
+        />
       </Box>
+
       <Box mt={4}>
         <Button
           variant="contained"
@@ -98,9 +116,11 @@ export const PoolStakeForm: React.FC<PoolDetailsProps> = ({
           onClick={handleStake}
           disabled={!valid}
         >
-          {`Stake ${baseAsset?.symbol}/${quoteAsset?.symbol}`}
+          {`Stake ${principalAssetSymbol}`}
         </Button>
       </Box>
+
+      <ConfirmingModal open={isStaking} />
     </Box>
   );
 };

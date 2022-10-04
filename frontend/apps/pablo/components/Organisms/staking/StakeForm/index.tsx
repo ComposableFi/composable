@@ -7,14 +7,14 @@ import { StakingRewardPool } from "@/defi/types";
 import { useAssetBalance } from "@/store/assets/hooks";
 import { DEFAULT_NETWORK_ID, PBLO_ASSET_ID } from "@/defi/utils";
 import { useAsset } from "@/defi/hooks";
-import {
-  extractDurationPresets,
-} from "@/defi/utils/stakingRewards/durationPresets";
 import { useStake } from "@/defi/hooks/stakingRewards";
 import { usePendingExtrinsic, useSelectedAccount } from "substrate-react";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import BigNumber from "bignumber.js";
 import { ConfirmingModal } from "../../swap/ConfirmingModal";
+import {
+  extractDurationPresets,
+} from "@/defi/utils/stakingRewards/durationPresets";
 
 export type Multiplier = {
   value?: number;
@@ -29,7 +29,6 @@ export const StakeForm: React.FC<
   const [amount, setAmount] = useState<BigNumber>(new BigNumber(0));
   const [valid, setValid] = useState<boolean>(false);
   const [selectedMultiplier, setSelectedMultiplier] = useState<number>(0);
-
   const pabloAsset = useAsset(PBLO_ASSET_ID);
   const balance = useAssetBalance(DEFAULT_NETWORK_ID, PBLO_ASSET_ID);
 
@@ -40,12 +39,6 @@ export const StakeForm: React.FC<
   const durationPresetSelected = useMemo(() => {
     return multipliers.find((mul) => mul.value === selectedMultiplier);
   }, [multipliers, selectedMultiplier]);
-
-  const validMultiplier =
-    stakingRewardPool &&
-    durationPresetSelected &&
-    durationPresetSelected.periodInSeconds in
-      stakingRewardPool.lock.durationPresets;
 
   const handleStake = useStake({
     poolId: new BigNumber(PBLO_ASSET_ID),
@@ -60,6 +53,12 @@ export const StakeForm: React.FC<
     "stakingRewards",
     selectedAccount ? selectedAccount.address : "-"
   );
+
+  const validMultiplier =
+  stakingRewardPool &&
+  durationPresetSelected &&
+  durationPresetSelected.periodInSeconds in
+    stakingRewardPool.lock.durationPresets;
 
   return (
     <Box {...boxProps}>
