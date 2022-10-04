@@ -15,7 +15,6 @@ use composable_tests_helpers::test::{
 };
 use frame_support::traits::{fungibles::Inspect, OriginTrait};
 use frame_system::pallet_prelude::OriginFor;
-use sp_arithmetic::Perbill;
 pub use sp_core::{
 	sr25519::{Public, Signature},
 	H256,
@@ -91,14 +90,13 @@ where
 				duration_preset: event_duration_preset,
 				fnft_collection_id: event_fnft_collection_id,
 				fnft_instance_id,
-				reward_multiplier,
+				reward_multiplier: _,
 				keep_alive: _,
 			} => {
 				assert_eq!(pool_id, event_pool_id);
 				assert_eq!(staker, event_owner);
 				assert_eq!(amount, event_amount);
 				assert_eq!(duration_preset, event_duration_preset);
-				assert_eq!(reward_multiplier, Perbill::from_percent(10));
 
 				let pool = RewardPools::<Runtime>::get(pool_id).unwrap();
 				assert_eq!(pool.financial_nft_asset_id, event_fnft_collection_id);
