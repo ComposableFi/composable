@@ -970,8 +970,8 @@
             };
 
             devnet-all-dev-local = let
-              config = (pkgs.callPackage
-                ./scripts/polkadot-launch/all-dev-local.nix {
+              config =
+                (pkgs.callPackage ./scripts/polkadot-launch/all-dev-local.nix {
                   polkadot-bin = polkadot-node;
                   composable-bin = composable-node;
                   statemine-bin = statemine-node;
@@ -988,9 +988,6 @@
                 ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
               '';
             };
-
-
-            
 
             junod = pkgs.callPackage ./code/xcvm/cosmos/junod.nix { };
             gex = pkgs.callPackage ./code/xcvm/cosmos/gex.nix { };

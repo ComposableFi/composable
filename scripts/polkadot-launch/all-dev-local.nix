@@ -36,7 +36,7 @@ in {
         chain = "statemine";
         bin = "${statemine-bin}/bin/polkadot-parachain";
       }
-      
+
       {
         id = 2000;
         port = 31210;
