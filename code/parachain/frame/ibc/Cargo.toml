@@ -50,8 +50,8 @@ primitives = { path = "../../runtime/primitives", default-features = false }
 common = { path = "../../runtime/common", default-features = false }
 
 # optional
-hex = { version = "0.4.3", optional = true }
-hex-literal = { version = "0.3.4", optional = true }
+hex = { version = "0.4.3", default-features = false, optional = true }
+hex-literal = { version = "0.3.4", default-features = false, optional = true }
 prost = { version = "0.10", default-features = false, optional = true }
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false, optional = true }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false, optional = true }
@@ -143,6 +143,7 @@ runtime-benchmarks = [
   "tendermint",
   "hex-literal",
   "pallet-timestamp",
+  "pallet-timestamp/runtime-benchmarks",
   "pallet-ibc-ping/runtime-benchmarks",
   "xcm/runtime-benchmarks",
   "hex",
