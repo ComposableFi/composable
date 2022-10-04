@@ -90,6 +90,7 @@ where
 				duration_preset: event_duration_preset,
 				fnft_collection_id: event_fnft_collection_id,
 				fnft_instance_id,
+				reward_multiplier: _,
 				keep_alive: _,
 			} => {
 				assert_eq!(pool_id, event_pool_id);
