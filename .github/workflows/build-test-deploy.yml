@@ -836,10 +836,10 @@ jobs:
           docker push "${{ env.DOCKER_REGISTRY_NAME }}/composable-sandbox:latest"
 
   composable-centauri-publish:
-    # if: ${{ github.ref == 'refs/heads/centauri' }}
+    if: ${{ github.ref == 'refs/heads/centauri' }}
     name: "Docker composable-centauri"
-    # needs:
-      # - effects-gate
+    needs:
+      - effects-gate
     runs-on:
       - self-hosted
       - linux
