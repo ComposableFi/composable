@@ -517,7 +517,7 @@ pub mod pallet {
 			})
 		}
 
-		/// Sets `RemoveRewardLocks`, removes `RewardAsset` locks on provided accounts, emmits
+		/// Sets `RemoveRewardLocks`, removes `RewardAsset` locks on provided accounts, emits
 		/// `RewardsUnlocked`.
 		fn do_unlock(reward_accounts: Vec<T::AccountId>) {
 			RemoveRewardLocks::<T>::put(());
