@@ -2,7 +2,10 @@ import { usePicassoProvider } from "@/defi/polkadot/hooks";
 import { useEffect } from "react";
 import { useBlockchainProvider } from "bi-lib";
 import { fromPerbill } from "shared";
-import { fetchAssociations, fetchContributionAndRewardsFromJSON } from "./crowdloanRewards";
+import {
+  fetchAssociations,
+  fetchContributionAndRewardsFromJSON,
+} from "./crowdloanRewards";
 import {
   CrowdloanContributionRecord,
   setCrowdloanRewardsState,
@@ -10,10 +13,8 @@ import {
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { encodeAddress } from "@polkadot/util-crypto";
 // Import static JSON files
-import rewards from "@/defi/polkadot/constants/pica-rewards.json";
-import contributions from "@/defi/polkadot/constants/contributions.json";
-import contributionsDev from "@/defi/polkadot/constants/contributions-dev.json";
-import rewardsDev from "@/defi/polkadot/constants/pica-rewards-dev.json";
+import rewardsAndContributions from "@/defi/polkadot/constants/pica-rewards-contributions.json";
+import rewardsAndContributionsDev from "@/defi/polkadot/constants/pica-rewards-contributions-dev.json";
 
 /**
  * Check for contributions in JSON
@@ -24,15 +25,42 @@ export const presentInContributors = (
   account: string,
   env: "development" | "production" | "test"
 ): string | undefined => {
+  const ethAccount = account.startsWith("0x")
+    ? account.toLowerCase()
+    : undefined;
+  const kusamaAccount = account.startsWith("0x") ? undefined : account;
   switch (env) {
     case "production":
-      return (contributions.contributedAmounts as Record<string, string>)[
-        account
-      ];
+      if (ethAccount) {
+        return (
+          rewardsAndContributions.stablesContributed as Record<string, string>
+        )[ethAccount];
+      } else if (kusamaAccount) {
+        return (
+          rewardsAndContributions.ksmContributedWithBoosts as Record<
+            string,
+            string
+          >
+        )[kusamaAccount];
+      }
+      return undefined;
     case "development":
-      return (contributionsDev.contributedAmounts as Record<string, string>)[
-        account
-      ];
+      if (ethAccount) {
+        return (
+          rewardsAndContributionsDev.stablesContributed as Record<
+            string,
+            string
+          >
+        )[ethAccount];
+      } else if (kusamaAccount) {
+        return (
+          rewardsAndContributionsDev.ksmContributedWithBoosts as Record<
+            string,
+            string
+          >
+        )[kusamaAccount];
+      }
+      return undefined;
     default:
       return undefined;
   }
@@ -47,11 +75,33 @@ export const presentInRewards = (
   account: string,
   env: "development" | "production" | "test"
 ): string | undefined => {
+  const ethAccount = account.startsWith("0x")
+    ? account.toLowerCase()
+    : undefined;
+  const kusamaAccount = account.startsWith("0x") ? undefined : account;
   switch (env) {
     case "production":
-      return (rewards as Record<string, string>)[account];
+      if (ethAccount) {
+        return (
+          rewardsAndContributions.rewardedPICAs as Record<string, string>
+        )[ethAccount];
+      } else if (kusamaAccount) {
+        return (
+          rewardsAndContributions.rewardedPICAs as Record<string, string>
+        )[kusamaAccount];
+      }
+      return undefined;
     case "development":
-      return (rewardsDev as Record<string, string>)[account];
+      if (ethAccount) {
+        return (
+          rewardsAndContributionsDev.rewardedPICAs as Record<string, string>
+        )[ethAccount];
+      } else if (kusamaAccount) {
+        return (
+          rewardsAndContributionsDev.rewardedPICAs as Record<string, string>
+        )[kusamaAccount];
+      }
+      return undefined;
     default:
       return undefined;
   }
@@ -123,7 +173,9 @@ const CrowdloanRewardsUpdater = () => {
     if (!account) return;
 
     setCrowdloanRewardsState({
-      ethereumContributions: fetchContributionAndRewardsFromJSON(account.toLowerCase()),
+      ethereumContributions: fetchContributionAndRewardsFromJSON(
+        account.toLowerCase()
+      ),
     });
   }, [account]);
 
