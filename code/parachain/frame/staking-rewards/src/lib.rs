@@ -133,6 +133,8 @@ pub mod pallet {
 			fnft_collection_id: T::AssetId,
 			/// FNFT Instance Id
 			fnft_instance_id: T::FinancialNftInstanceId,
+			/// Reward multiplier
+			reward_multiplier: Perbill,
 			// REVIEW(benluelo) is this required to be in the event?
 			keep_alive: bool,
 		},
@@ -839,6 +841,7 @@ pub mod pallet {
 				duration_preset,
 				fnft_instance_id,
 				fnft_collection_id,
+				reward_multiplier,
 				keep_alive,
 			});
 

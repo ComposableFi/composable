@@ -305,6 +305,7 @@ fn stake_in_case_of_zero_inflation_should_work() {
 					duration_preset: _,
 					fnft_collection_id: _,
 					fnft_instance_id,
+					reward_multiplier: _,
 					keep_alive: _,
 				} => Some(fnft_instance_id),
 				_ => None,
@@ -360,6 +361,7 @@ fn stake_in_case_of_zero_inflation_should_work() {
 					duration_preset: _,
 					fnft_collection_id: PICA::ID,
 					fnft_instance_id: _,
+					reward_multiplier: _,
 					keep_alive: _,
 				} if owner == staker
 			)
@@ -436,11 +438,13 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 				duration_preset: _,
 				fnft_collection_id: _,
 				fnft_instance_id: _,
+				reward_multiplier,
 				keep_alive: _,
 			} => {
 				assert_eq!(owner, ALICE);
 				assert_eq!(pool_id, PICA::ID);
 				assert_eq!(amount, 100_500_u32.into());
+				assert_eq!(reward_multiplier, Perbill::from_percent(1));
 
 				Some(())
 			},
@@ -777,6 +781,7 @@ fn test_split_position() {
 				duration_preset: ONE_HOUR,
 				fnft_collection_id: 1,
 				fnft_instance_id: 0,
+				reward_multiplier: Perbill::from_percent(1),
 				keep_alive: true,
 			},
 		);
