@@ -158,6 +158,19 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       [key: string]: SubmittableExtrinsicFunction<ApiType>;
     };
+    assetTxPayment: {
+      /**
+       * Sets or resets payment asset.
+       * 
+       * If `asset_id` is `None`, then native asset is used.
+       * Else new asset is configured and ED is on hold.
+       **/
+      setPaymentAsset: AugmentedSubmittable<(payer: AccountId32 | string | Uint8Array, assetId: Option<u128> | null | Uint8Array | u128 | AnyNumber) => SubmittableExtrinsic<ApiType>, [AccountId32, Option<u128>]>;
+      /**
+       * Generic tx
+       **/
+      [key: string]: SubmittableExtrinsicFunction<ApiType>;
+    };
     authorship: {
       /**
        * Provide a set of uncles.
@@ -2439,7 +2452,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * 
        * Emits `Claimed` event when successful.
        **/
-      claim: AugmentedSubmittable<(positionId: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128]>;
+      claim: AugmentedSubmittable<(fnftCollectionId: u128 | AnyNumber | Uint8Array, fnftInstanceId: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u64]>;
       /**
        * Create a new reward pool based on the config.
        * 
@@ -2451,8 +2464,8 @@ declare module '@polkadot/api-base/types/submittable' {
        * 
        * Emits `StakeExtended` event when successful.
        **/
-      extend: AugmentedSubmittable<(position: u128 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u128]>;
-      split: AugmentedSubmittable<(position: u128 | AnyNumber | Uint8Array, ratio: Permill | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, Permill]>;
+      extend: AugmentedSubmittable<(fnftCollectionId: u128 | AnyNumber | Uint8Array, fnftInstanceId: u64 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u64, u128]>;
+      split: AugmentedSubmittable<(fnftCollectionId: u128 | AnyNumber | Uint8Array, fnftInstanceId: u64 | AnyNumber | Uint8Array, ratio: Permill | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u64, Permill]>;
       /**
        * Create a new stake.
        * 
@@ -2464,7 +2477,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * 
        * Emits `Unstaked` event when successful.
        **/
-      unstake: AugmentedSubmittable<(positionId: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128]>;
+      unstake: AugmentedSubmittable<(fnftCollectionId: u128 | AnyNumber | Uint8Array, fnftInstanceId: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u64]>;
       /**
        * Updates the reward pool configuration.
        * 
