@@ -128,6 +128,7 @@
           };
         in with pkgs;
         let
+          trace = pkgs.lib.debug.traceSeq;
           # Stable rust for anything except wasm runtime
           rust-stable = rust-bin.stable.latest.default;
 
@@ -617,37 +618,13 @@
             acala-node = pkgs.callPackage ./.nix/acala-bin.nix {
               rust-overlay = rust-nightly;
             };
-            polkadot-node = rustPlatform.buildRustPackage rec {
-              # HACK: break the nix sandbox so we can build the runtimes. This
-              # requires Nix to have `sandbox = relaxed` in its config.
-              # We don't really care because polkadot is only used for local devnet.
-              __noChroot = true;
-              name = "polkadot-v${version}";
-              version = "0.9.27";
-              src = fetchFromGitHub {
-                repo = "polkadot";
-                owner = "paritytech";
-                rev = "v${version}";
-                hash = "sha256-LEz3OrVgdFTCnVwzU8C6GeEougaOl2qo7jS9qIdMqAM=";
-              };
-              cargoSha256 =
-                "sha256-6y+WK2k1rhqMxMjEJhzJ26WDMKZjXQ+q3ca2hbbeLvA=";
-              doCheck = false;
-              buildInputs = [ openssl zstd ];
-              nativeBuildInputs = [ rust-nightly clang pkg-config ]
-                ++ lib.optional stdenv.isDarwin
-                (with darwin.apple_sdk.frameworks; [
-                  Security
-                  SystemConfiguration
-                ]);
-              LD_LIBRARY_PATH = lib.strings.makeLibraryPath [
-                stdenv.cc.cc.lib
-                llvmPackages.libclang.lib
-              ];
-              LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
-              PROTOC = "${protobuf}/bin/protoc";
-              ROCKSDB_LIB_DIR = "${rocksdb}/lib";
-              meta = { mainProgram = "polkadot"; };
+
+            polkadot-node = pkgs.callPackage ./.nix/polkadot-bin.nix {
+              inherit rust-nightly;
+            };
+
+            statemine-node = pkgs.callPackage ./.nix/statemine-bin.nix {
+              inherit rust-nightly;
             };
 
             polkadot-launch =
@@ -992,6 +969,29 @@
               '';
             };
 
+            devnet-all-dev-local = let
+              config = (pkgs.callPackage
+                ./scripts/polkadot-launch/all-dev-local.nix {
+                  polkadot-bin = polkadot-node;
+                  composable-bin = composable-node;
+                  statemine-bin = statemine-node;
+                  acala-bin = acala-node;
+                }).result;
+              config-file = writeTextFile {
+                name = "all-dev-local.json";
+                text = "${builtins.toJSON config}";
+              };
+            in writeShellApplication {
+              name = "kusama-dali-karura";
+              text = ''
+                cat ${config-file}
+                ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
+              '';
+            };
+
+
+            
+
             junod = pkgs.callPackage ./code/xcvm/cosmos/junod.nix { };
             gex = pkgs.callPackage ./code/xcvm/cosmos/gex.nix { };
             wasmswap = pkgs.callPackage ./code/xcvm/cosmos/wasmswap.nix {
@@ -1116,11 +1116,20 @@
                 "${packages.kusama-picasso-karura-devnet}/bin/kusama-picasso-karura";
             };
 
-            devnet-kusama-dali-karura = {
-              type = "app";
-              program =
-                "${packages.kusama-dali-karura-devnet}/bin/kusama-dali-karura";
-            };
+            # OBSOLETE
+            devnet-kusama-dali-karura =
+              trace "#OBSOLETE: use ` devnet-native-all`" {
+                type = "app";
+                program =
+                  "${packages.kusama-dali-karura-devnet}/bin/kusama-dali-karura";
+              };
+
+            devnet-native-all = trace
+              "biggest native(not container) devnet with all things possible to run native" {
+                type = "app";
+                program =
+                  "${packages.devnet-all-dev-local}/bin/kusama-dali-karura";
+              };
 
             price-feed = {
               type = "app";
