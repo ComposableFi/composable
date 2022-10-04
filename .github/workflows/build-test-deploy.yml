@@ -716,7 +716,7 @@ jobs:
       - run: |
           cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#kusama-picasso-karura-devnet --no-update-lock-file --show-trace -L
 
-  cache-all-dev-local:
+  cache-devnet-all-dev-local:
     name: "Package kusama parachains devnet"
     needs:
       - package-polkadot-node
@@ -726,7 +726,7 @@ jobs:
       - x64
       - sre
     concurrency:
-      group: ${{ github.workflow }}-cache-all-dev-local-${{ github.ref }}
+      group: ${{ github.workflow }}-cache-devnet-all-dev-local-${{ github.ref }}
       cancel-in-progress: true
     continue-on-error: true
     container:
@@ -747,7 +747,7 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#all-dev-local --no-update-lock-file --show-trace -L          
+          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#devnet-all-dev-local --no-update-lock-file --show-trace -L          
 
   package-xcvm-minimal:
     name: "Package XCVM minimal"
