@@ -1,6 +1,6 @@
 import {ethers, network} from "hardhat";
 import {expect} from "chai";
-import { XCVM } from "xcvm-typescript-sdk";
+import {XCVM} from "xcvm-typescript-sdk";
 
 const protobuf = require("protobufjs");
 
@@ -39,7 +39,7 @@ describe("Interpreter", function () {
       "test",
       "test",
       interpreterAddress,
-      ethers.utils.parseEther("100")
+      ethers.utils.parseEther("10000000000000000")
     );
     await gateway.registerAsset(erc20.address, 1);
   });
@@ -560,7 +560,7 @@ describe("Interpreter", function () {
                     xcvm.createAsset(
                       xcvm.createAssetId(1),
                       xcvm.createBalance(
-                        xcvm.createAbsolut(100)
+                        xcvm.createAbsolut('1000000000000000000000000000')
                       )
                     )
                   ]
@@ -581,10 +581,10 @@ describe("Interpreter", function () {
         [],
         []
       );
-      expect((await erc20.balanceOf(owner.address)).toString()).to.be.equal('100')
+      expect((await erc20.balanceOf(owner.address)).toString()).to.be.equal('1000000000000000000000000000')
     });
 
-    it("test call function using sdk", async function () {
+    it.only("test call function using sdk", async function () {
       const abi = ethers.utils.defaultAbiCoder;
       const abiCoder = ethers.utils.defaultAbiCoder;
 
@@ -652,10 +652,10 @@ describe("Interpreter", function () {
         [],
         []
       );
-      expect((await erc20.balanceOf(user1.address)).toString()).to.be.equal(ethers.utils.parseEther("50").toString());
+      expect((await erc20.balanceOf(user1.address)).toString()).to.be.equal(ethers.utils.parseEther("5000000000000000").toString());
     })
 
-    it("test spawn program using sdk", async function () {
+    it.only("test spawn program using sdk", async function () {
       let xcvm = new XCVM();
       let programMessage =
         xcvm.createProgram(
@@ -668,7 +668,7 @@ describe("Interpreter", function () {
                     xcvm.createAsset(
                       xcvm.createAssetId(1),
                       xcvm.createBalance(
-                        xcvm.createAbsolut(100)
+                        xcvm.createAbsolut("100")
                       )
                     )
                   ]

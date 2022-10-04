@@ -112,6 +112,61 @@ contract Interpreter is IInterpreter {
         console.log(account);
         newPos = pos + size;
     }
+    function _handleUint128(bytes calldata program, uint64 pos) internal returns (uint128 value, uint64 newPos) {
+        bool success;
+        uint64 size;
+        uint64 field;
+        ProtobufLib.WireType _type;
+        // read uint128 message body
+        (success, pos, size) = ProtobufLib.decode_embedded_message(
+            pos,
+            program
+        );
+        console.logBytes(program[0 : pos]);
+        console.log(52898, success, pos, size);
+        require(success, "decode embedded message failed");
+
+        (success, pos, field, _type) = ProtobufLib.decode_key(
+            pos,
+            program
+        );
+        console.logBytes(program[0 : pos]);
+        console.log(64441, success, field, uint256(_type));
+        uint64 highBits;
+        require(success, "decode key failed");
+        require(field == 1, "decode key failed");
+        require(
+            _type == ProtobufLib.WireType.Varint,
+            "decode type is not embedded messages"
+        );
+        (success, pos, highBits) = ProtobufLib.decode_uint64(
+            pos,
+            program
+        );
+
+        (success, pos, field, _type) = ProtobufLib.decode_key(
+            pos,
+            program
+        );
+        console.logBytes(program[0 : pos]);
+        console.log(64442, success, field, uint256(_type));
+        uint64 lowBits;
+        require(success, "decode key failed");
+        require(field == 2, "decode key failed");
+        require(
+            _type == ProtobufLib.WireType.Varint,
+            "decode type is not embedded messages"
+        );
+        (success, newPos, lowBits) = ProtobufLib.decode_uint64(
+            pos,
+            program
+        );
+        console.log(highBits);
+        console.log(lowBits);
+        value = uint128(highBits) * 2 ** 64 + uint128(lowBits);
+        console.log('vvvvvvvvvvvvvalue');
+        console.log(value);
+    }
 
     function _handleUnit(bytes calldata program, uint64 pos, address tokenAddress)
     internal
@@ -138,18 +193,15 @@ contract Interpreter is IInterpreter {
             program
         );
         console.logBytes(program[0 : pos]);
-        console.log(6444, success, field, uint256(_type));
+        console.log(6444555, success, field, uint256(_type));
         require(success, "decode key failed");
         require(field == 1, "decode key failed");
         require(
-            _type == ProtobufLib.WireType.Varint,
+            _type == ProtobufLib.WireType.LengthDelimited,
             "decode type is not embedded messages"
         );
-        uint64 unit;
-        (success, pos, unit) = ProtobufLib.decode_varint(
-            pos,
-            program
-        );
+        uint128 unit;
+        (unit, pos) =  _handleUint128(program, pos);
         console.log(111, unit);
         // reading balance type
         (success, pos, field, _type) = ProtobufLib.decode_key(
@@ -209,14 +261,11 @@ contract Interpreter is IInterpreter {
         require(success, "decode key failed");
         // require(field == 1, "decode key failed");
         require(
-            _type == ProtobufLib.WireType.Varint,
+            _type == ProtobufLib.WireType.LengthDelimited,
             "decode type is not embedded messages"
         );
 
-        (success, pos, nominator) = ProtobufLib.decode_varint(
-            pos,
-            program
-        );
+        (nominator, pos) =  _handleUint128(program, pos);
         console.log(9999999, nominator);
 
         // reading ratio nominator
@@ -225,18 +274,15 @@ contract Interpreter is IInterpreter {
             program
         );
         console.logBytes(program[0 : pos]);
-        console.log(5444, success, field, uint256(_type));
+        console.log(54441, success, field, uint256(_type));
         require(success, "decode key failed");
         require(field == 2, "decode key failed");
         require(
-            _type == ProtobufLib.WireType.Varint,
+            _type == ProtobufLib.WireType.LengthDelimited,
             "decode type is not embedded messages"
         );
 
-        (success, newPos, denominator) = ProtobufLib.decode_varint(
-            pos,
-            program
-        );
+        (denominator, newPos) =  _handleUint128(program, pos);
         console.log("nominator", denominator);
     }
 
@@ -264,18 +310,15 @@ contract Interpreter is IInterpreter {
             program
         );
         console.logBytes(program[0 : pos]);
-        console.log(5444, success, field, uint256(_type));
+        console.log(54446, success, field, uint256(_type));
         require(success, "decode key failed");
         require(field == 1, "decode key failed");
         require(
-            _type == ProtobufLib.WireType.Varint,
+            _type == ProtobufLib.WireType.LengthDelimited,
             "decode type is not embedded messages"
         );
 
-        (success, newPos, amount) = ProtobufLib.decode_varint(
-            pos,
-            program
-        );
+        (amount, newPos) =  _handleUint128(program, pos);
         console.log(6666, amount);
     }
 
@@ -303,7 +346,7 @@ contract Interpreter is IInterpreter {
             program
         );
         console.logBytes(program[0 : pos]);
-        console.log(5444, success, field, uint256(_type));
+        console.log(544411, success, field, uint256(_type));
         require(field == 1, "decode key failed");
         require(success, "decode key failed");
         require(
@@ -319,7 +362,7 @@ contract Interpreter is IInterpreter {
             program
         );
         console.logBytes(program[0 : pos]);
-        console.log(5444, success, field, uint256(_type));
+        console.log(544412, success, field, uint256(_type));
         require(field == 2 || field == 3, "decode key failed");
         require(success, "decode key failed");
         require(
@@ -368,7 +411,7 @@ contract Interpreter is IInterpreter {
             program
         );
         console.logBytes(program[0 : pos]);
-        console.log(5444, success, field, uint256(_type));
+        console.log(544422, success, field, uint256(_type));
         require(success, "decode key failed");
         require(
             _type == ProtobufLib.WireType.LengthDelimited,
@@ -383,6 +426,8 @@ contract Interpreter is IInterpreter {
                 program,
                 pos
             );
+            console.log("rrrrr");
+            console.log(nominator, denominator);
             amount = IERC20(assetAddress).balanceOf(address(this)) * nominator / denominator;
         } else if (field == 2) {
             // absolute
@@ -417,7 +462,7 @@ contract Interpreter is IInterpreter {
             program
         );
         console.logBytes(program[0 : pos]);
-        console.log(5444, success, field, uint256(_type));
+        console.log(544433, success, field, uint256(_type));
         require(field == 1, "not uint64 asset id");
         require(success, "decode key failed");
         require(

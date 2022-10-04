@@ -7,7 +7,7 @@
     "test": "forge test -vvv",
     "coverage": "forge coverage",
     "solhint": "solhint src/**/*.sol",
-    "proto": "protoc interpreter.proto -o interpreter_proto.bin",
+    "proto": "protoc ../xcvm-typescript-sdk/src/interpreter.proto -o interpreter_proto.bin",
     "test-proto": "hardhat test",
     "compile": "hardhat compile"
   },

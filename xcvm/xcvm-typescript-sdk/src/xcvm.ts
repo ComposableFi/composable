@@ -1,6 +1,6 @@
 import {loadSync, Type, Message, Enum} from "protobufjs";
 import { resolve } from 'path';
-import {utils} from "ethers";
+import {utils, BigNumber} from "ethers";
 
 export class XCVM {
   root: any;
@@ -24,6 +24,7 @@ export class XCVM {
   CallMessage: Type;
   BridgeSecurityEnum: Enum;
   BindingValueMessage: Type
+  Uint128Message: Type
   messageTypeLookUp: { [k: string]: any } = {};
 
   constructor() {
@@ -47,6 +48,7 @@ export class XCVM {
     this.SaltMessage = this.root.lookupType("interpreter.Salt");
     this.CallMessage = this.root.lookupType("interpreter.Call");
     this.BindingValueMessage = this.root.lookupType("interpreter.BindingValue");
+    this.Uint128Message =  this.root.lookupType("interpreter.Uint128");
     this.BridgeSecurityEnum = this.root.lookupEnum("interpreter.BridgeSecurity");
 
     this.messageTypeLookUp['Program'] = this.ProgramMessage;
@@ -68,6 +70,7 @@ export class XCVM {
     this.messageTypeLookUp['Call'] = this.CallMessage;
     this.messageTypeLookUp['Spawn'] = this.SpawnMessage;
     this.messageTypeLookUp['BridgeSecurity'] = this.BridgeSecurityEnum;
+    this.messageTypeLookUp['Uint128'] = this.Uint128Message;
   }
 
   public encodeMessage(message: Message) {
@@ -79,19 +82,36 @@ export class XCVM {
     return messageName + " is not type of " + type;
   }
 
-  public createRatio(nominator: Number, denominator: Number): Message<{}> {
-    return this.RatioMessage.create({nominator: nominator, denominator: denominator})
+  public convertUint128(n: Number | string): Message<{}> {
+      const bn = BigNumber.from(n);
+      const hexbytes = bn.toHexString().slice(2);
+      let highbits;
+      let lowbits;
+      if (hexbytes.length > 32) {
+        throw ("Number is bigger than uint128 max value");
+      } else if (hexbytes.length > 16) {
+        highbits = BigNumber.from("0x" + hexbytes.slice(0, hexbytes.length-16)).toString()
+        lowbits = BigNumber.from("0x" + hexbytes.slice(hexbytes.length-16, hexbytes.length)).toString()
+      } else{
+        highbits = BigNumber.from("0").toString()
+        lowbits = BigNumber.from("0x" + hexbytes).toString();
+      }
+      return this.UnitMessage.create({highBits: highbits, lowBits: lowbits});
   }
 
-  public createUnit(integer: Number, ratioMessage: Message): Message<{}> {
+  public createRatio(nominator: Number | string, denominator: Number | string): Message<{}> {
+    return this.RatioMessage.create({nominator: this.convertUint128(nominator), denominator: this.convertUint128(denominator)})
+  }
+
+  public createUnit(integer: Number | string, ratioMessage: Message): Message<{}> {
     if (ratioMessage.$type.name != "Ratio") {
       throw this.getTypeError("ratioMessage", "ratio")
     }
-    return this.UnitMessage.create({integer: integer, ratio: ratioMessage})
+    return this.UnitMessage.create({integer: this.convertUint128(integer), ratio: ratioMessage})
   }
 
-  public createAbsolut(absolutValue: Number): Message<{}> {
-    return this.AbsoluteMessage.create({value: absolutValue})
+  public createAbsolut(absolutValue: Number | string): Message<{}> {
+    return this.AbsoluteMessage.create({value: this.convertUint128(absolutValue)})
   }
 
   public createBalance(balanceTypeMessage: Message): Message<{}> {
