@@ -95,13 +95,13 @@ pub mod pallet {
 		transactional, BoundedBTreeMap, PalletId,
 	};
 	use frame_system::pallet_prelude::*;
-	use orml_traits::{LockIdentifier, MultiLockableCurrency};
+	use orml_traits::{GetByKey, LockIdentifier, MultiLockableCurrency};
 	use sp_arithmetic::Permill;
 	use sp_runtime::{
 		traits::{AccountIdConversion, BlockNumberProvider},
 		PerThing, Perbill,
 	};
-	use sp_std::{cmp::max, fmt::Debug, vec, vec::Vec};
+	use sp_std::{cmp::max, fmt::Debug, ops::Mul, vec, vec::Vec};
 
 	use crate::{
 		add_to_rewards_pot, claim_of_stake, do_reward_accumulation, prelude::*,
@@ -250,6 +250,8 @@ pub mod pallet {
 		// NOTE(benluelo): This should be removed once this issue gets resolved:
 		// https://github.com/paritytech/substrate/issues/12257
 		NoDurationPresetsProvided,
+		/// Slashed amount of minimum reward is less than existential deposit
+		SlashedAmountTooLow,
 	}
 
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
@@ -374,6 +376,8 @@ pub mod pallet {
 		// The account to send the slashed stakes to.
 		#[pallet::constant]
 		type TreasuryAccount: Get<Self::AccountId>;
+
+		type ExistentialDeposits: GetByKey<Self::AssetId, Self::Balance>;
 	}
 
 	/// Abstraction over RewardPoolConfiguration type
@@ -696,6 +700,25 @@ pub mod pallet {
 					ensure!(lock.duration_presets.len() > 0, Error::<T>::NoDurationPresetsProvided);
 
 					let now_seconds = T::UnixTime::now().as_secs();
+
+					ensure!(
+						initial_reward_config.iter().all(|(asset_id, reward_config)| {
+							if reward_config.reward_rate.amount > T::Balance::zero() {
+								// If none zero reward, check that the slashed amount is greater
+								// than ED
+								lock.unlock_penalty
+									.left_from_one()
+									.mul(reward_config.reward_rate.amount) >=
+									T::ExistentialDeposits::get(asset_id)
+							} else {
+								// Else, return true so check passes
+								// NOTE(connor): This is a band-aid that some better type management
+								// would remove the need for, outside the scope of this PR
+								true
+							}
+						}),
+						Error::<T>::SlashedAmountTooLow
+					);
 
 					// TODO: Replace into_iter with iter_mut once it's available
 					let rewards = initial_reward_config
