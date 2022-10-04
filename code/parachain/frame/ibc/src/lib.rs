@@ -89,13 +89,7 @@ pub struct PalletParams {
 
 /// Params needed to upgrade clients for all connected chains.
 #[derive(
-	frame_support::RuntimeDebug,
-	PartialEq,
-	Eq,
-	scale_info::TypeInfo,
-	Encode,
-	Decode,
-	Clone,
+	frame_support::RuntimeDebug, PartialEq, Eq, scale_info::TypeInfo, Encode, Decode, Clone,
 )]
 pub struct UpgradeParams {
 	/// Protobuf encoded client state
