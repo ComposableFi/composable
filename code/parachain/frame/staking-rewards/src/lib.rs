@@ -704,7 +704,8 @@ pub mod pallet {
 					ensure!(
 						initial_reward_config.iter().all(|(asset_id, reward_config)| {
 							if reward_config.reward_rate.amount > T::Balance::zero() {
-								// If none zero reward, check that it's greater than ED
+								// If none zero reward, check that the slashed amount is greater
+								// than ED
 								lock.unlock_penalty
 									.left_from_one()
 									.mul(reward_config.reward_rate.amount) >=
