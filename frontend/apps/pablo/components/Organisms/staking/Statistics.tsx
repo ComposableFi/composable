@@ -12,6 +12,10 @@ import { GridProps } from "@mui/system";
 import { BoxWrapper } from "../BoxWrapper";
 import { TokenValue } from "@/components/Molecules";
 import { useStakingRewardsSlice } from "@/store/stakingRewards/stakingRewards.slice";
+import { useParachainApi } from "substrate-react";
+import { DEFAULT_NETWORK_ID, DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils";
+import { useTotalXTokensIssued } from "@/defi/hooks/stakingRewards/useTotalXTokensIssued";
+import { StakingRewardPool } from "@/defi/types";
 import BigNumber from "bignumber.js";
 
 const threeColumnPageSize = {
@@ -62,12 +66,20 @@ const Item: React.FC<ItemProps> = ({ label, TooltipProps, value }) => {
   );
 };
 
-export const StakingStatistics: React.FC<GridProps> = ({ ...gridProps }) => {
+export const StakingStatistics: React.FC<GridProps & { stakingRewardPool?: StakingRewardPool }> = ({ stakingRewardPool, ...gridProps }) => {
   const theme = useTheme();
+
+  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
+
+  const xTokensMinted = useTotalXTokensIssued({
+    api: parachainApi,
+    shareAssetId: stakingRewardPool?.shareAssetId
+  });
 
   const {
     pabloStaking
   } = useStakingRewardsSlice();
+
   const {
     totalPBLOLocked,
     averageLockMultiplier,
@@ -121,8 +133,8 @@ export const StakingStatistics: React.FC<GridProps> = ({ ...gridProps }) => {
       </Grid>
       <Grid item {...threeColumnPageSize}>
         <Item
-          label="Total CHAOS minted"
-          value={new BigNumber(0).toFormat()}
+          label="Total xPABLO minted"
+          value={xTokensMinted.toFormat(DEFAULT_UI_FORMAT_DECIMALS)}
           TooltipProps={{title: "Total CHAOS Minted"}}
         />
       </Grid>

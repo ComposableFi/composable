@@ -74,7 +74,7 @@ export async function fetchXTokenBalances(
       }
     }
   } catch (error: any) {
-    console.error(error.message);
+    console.error('fetchXTokenBalances ', error);
   }
   return xTokenStore
 }
