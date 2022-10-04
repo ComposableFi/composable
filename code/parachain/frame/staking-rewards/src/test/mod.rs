@@ -171,7 +171,7 @@ fn create_staking_reward_pool_should_fail_when_slashed_amount_is_less_than_exist
 						.into_iter()
 						.try_collect()
 						.unwrap(),
-						unlock_penalty: Perbill::from_percent(100),
+						unlock_penalty: Perbill::from_percent(99),
 					},
 					share_asset_id: XPICA::ID,
 					financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
