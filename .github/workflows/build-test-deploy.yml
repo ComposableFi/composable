@@ -717,7 +717,6 @@ jobs:
           cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#kusama-picasso-karura-devnet --no-update-lock-file --show-trace -L
 
   cache-devnet-all-dev-local:
-    name: "Package kusama parachains devnet"
     needs:
       - package-polkadot-node
     runs-on:

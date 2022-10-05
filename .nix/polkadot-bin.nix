@@ -17,7 +17,7 @@ rustPlatform.buildRustPackage rec {
   cargoSha256 = "sha256-6y+WK2k1rhqMxMjEJhzJ26WDMKZjXQ+q3ca2hbbeLvA=";
   meta = { mainProgram = "polkadot"; };
 
-  # next for substrate builds with runtime wasm generated crates
+  # substrate-attrs-node-with-attrs
   __noChroot = true;
   doCheck = false;
   buildInputs = [ openssl zstd ];
