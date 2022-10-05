@@ -624,7 +624,7 @@
             };
 
             statemine-node = pkgs.callPackage ./.nix/statemine-bin.nix {
-              inherit rust-nightly;
+              inherit crane-nightly rust-nightly;
             };
 
             polkadot-launch =

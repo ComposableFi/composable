@@ -12,12 +12,15 @@ mkDerivation {
     fetchSubmodules = true;
     deepClone = true;
   };
+
+  configurePhase = "git submodule update --init --recursive";
+  installPhase = ''
+    mkdir --parents $out/bin && mv ./target/production/acala $out/bin
+  '';
+
   # TODO: unify with other networks build
   __noChroot = true;
   doCheck = false;
-  configurePhase = "git submodule update --init --recursive";
-  installPhase =
-    "	mkdir --parents $out/bin && mv ./target/production/acala $out/bin\n";
   buildInputs = [ openssl ];
   nativeBuildInputs = [ clang git rust-overlay ];
   buildPhase = ''
