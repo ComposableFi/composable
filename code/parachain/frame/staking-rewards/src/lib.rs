@@ -219,8 +219,8 @@ pub mod pallet {
 		InvalidAssetId,
 		/// Reward pool already exists
 		RewardsPoolAlreadyExists,
-		/// No duration presets configured.
-		NoDurationPresetsConfigured,
+		/// The duration provided was not valid for the pool.
+		DurationPresetNotFound,
 		/// Too many rewarded asset types per pool violating the storage allowed.
 		TooManyRewardAssetTypes,
 		/// Invalid start block number provided for creating a pool.
@@ -261,6 +261,8 @@ pub mod pallet {
 		StakedAmountTooLow,
 		/// Staked amount after split is less than the minimum staking amount for the pool.
 		StakedAmountTooLowAfterSplit,
+		/// A staked position can only be extended to a duration >= the existing duration.
+		CannotExtendToShorterDuration,
 	}
 
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
@@ -832,7 +834,7 @@ pub mod pallet {
 			);
 
 			let reward_multiplier = Self::reward_multiplier(&rewards_pool, duration_preset)
-				.ok_or(Error::<T>::NoDurationPresetsConfigured)?;
+				.ok_or(Error::<T>::DurationPresetNotFound)?;
 
 			ensure!(
 				matches!(
@@ -843,8 +845,12 @@ pub mod pallet {
 			);
 
 			let awarded_shares = Self::boosted_amount(reward_multiplier, amount)?;
+
 			let (rewards, reductions) =
 				Self::compute_rewards_and_reductions(awarded_shares, &rewards_pool)?;
+
+			rewards_pool.rewards = rewards;
+			rewards_pool.total_shares = rewards_pool.total_shares.safe_add(&awarded_shares)?;
 
 			let fnft_collection_id = rewards_pool.financial_nft_asset_id;
 			let fnft_instance_id = T::FinancialNft::get_next_nft_id(&fnft_collection_id)?;
@@ -870,7 +876,6 @@ pub mod pallet {
 				},
 				fnft_instance_id,
 			};
-			rewards_pool.rewards = rewards;
 
 			// Move staked funds into fNFT asset account & lock the assets
 			Self::transfer_stake(who, amount, rewards_pool.asset_id, &fnft_account, keep_alive)?;
@@ -901,6 +906,7 @@ pub mod pallet {
 			who: &Self::AccountId,
 			(fnft_collection_id, fnft_instance_id): Self::PositionId,
 			amount: Self::Balance,
+			duration_preset: DurationSeconds,
 			keep_alive: bool,
 		) -> Result<Self::PositionId, DispatchError> {
 			let mut stake = Stakes::<T>::get(fnft_collection_id, fnft_instance_id)
@@ -908,7 +914,13 @@ pub mod pallet {
 			let mut rewards_pool = RewardPools::<T>::try_get(stake.reward_pool_id)
 				.map_err(|_| Error::<T>::RewardsPoolNotFound)?;
 
-			let reward_multiplier = FixedU64::one().try_into_validated().expect(">= 1");
+			let reward_multiplier = Self::reward_multiplier(&rewards_pool, duration_preset)
+				.ok_or(Error::<T>::DurationPresetNotFound)?;
+
+			ensure!(
+				duration_preset >= stake.lock.duration,
+				Error::<T>::CannotExtendToShorterDuration
+			);
 
 			ensure!(
 				matches!(
@@ -920,16 +932,16 @@ pub mod pallet {
 
 			let awarded_shares = Self::boosted_amount(reward_multiplier, amount)?;
 
-			let (rewards, reductions) =
+			let (rewards, additional_reductions) =
 				Self::compute_rewards_and_reductions(awarded_shares, &rewards_pool)?;
 
 			rewards_pool.rewards = rewards;
 			stake.stake = stake.stake.safe_add(&amount)?;
 			stake.share = stake.share.safe_add(&awarded_shares)?;
-			for (asset, additional_inflation) in reductions.iter() {
+			for (asset, additional_inflation) in additional_reductions {
 				let inflation =
-					stake.reductions.get_mut(asset).ok_or(Error::<T>::ReductionConfigProblem)?;
-				*inflation = inflation.safe_add(additional_inflation)?;
+					stake.reductions.get_mut(&asset).ok_or(Error::<T>::ReductionConfigProblem)?;
+				*inflation = inflation.safe_add(&additional_inflation)?;
 			}
 
 			let fnft_asset_account =
