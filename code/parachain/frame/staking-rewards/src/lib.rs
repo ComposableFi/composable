@@ -1048,9 +1048,10 @@ pub mod pallet {
 					let rewards_pool = RewardPools::<T>::get(existing_position.reward_pool_id)
 						.ok_or(Error::<T>::RewardsPoolNotFound)?;
 
+					let existing_position_stake = ratio.mul_floor(existing_position.stake);
+
 					ensure!(
-						ratio.mul_floor(existing_position.stake) >=
-							rewards_pool.minimum_staking_amount,
+						existing_position_stake >= rewards_pool.minimum_staking_amount,
 						Error::<T>::StakedAmountTooLowAfterSplit
 					);
 					ensure!(
@@ -1066,7 +1067,7 @@ pub mod pallet {
 						r
 					};
 
-					existing_position.stake = ratio.mul_floor(existing_position.stake);
+					existing_position.stake = existing_position_stake;
 					existing_position.share = ratio.mul_floor(existing_position.share);
 					for (_, reduction) in &mut existing_position.reductions {
 						*reduction = ratio.mul_floor(*reduction);
