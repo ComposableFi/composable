@@ -144,7 +144,7 @@ export async function getTransferCallPicassoKarura(
     ] // Asset to be used as fees, minFee should be calculated.
   ];
 
-  const destWeight = api.createType("u64", weight.toString()); // > 9000000000
+  const destWeight = api.createType("u64", 9000000000); // > 9000000000
 
   const signer = await getSigner(APP_NAME, signerAddress);
 
@@ -182,7 +182,7 @@ export async function getTransferCallPicassoKusama(
   });
 
   // Set dest weight
-  const destWeight = api.createType("u64", weight.toString());
+  const destWeight = api.createType("u64", 9000000000);
   const ksmAssetID = api.createType("SafeRpcWrapper", 4);
 
   const feeItemAssetID = [
@@ -245,7 +245,7 @@ export async function getTransferCallKaruraPicasso(
     }
   );
 
-  const destWeight = api.createType("u64", weight.toString()); // > 9000000000
+  const destWeight = api.createType("u64", 20000000000000); // > 9000000000
 
   const signer = await getSigner(APP_NAME, signerAddress);
 
