@@ -13,7 +13,6 @@ use frame_support::{
 use frame_system::{EnsureRoot, EnsureSignedBy};
 use hex_literal::hex;
 use orml_traits::{parameter_type_with_key, GetByKey, LockIdentifier};
-use sp_arithmetic::traits::Zero;
 use sp_core::sr25519;
 use sp_runtime::{
 	testing::Header,
@@ -129,7 +128,7 @@ impl pallet_currency_factory::Config for Test {
 
 parameter_type_with_key! {
 	pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
-		Zero::zero()
+		1
 	};
 }
 
@@ -261,6 +260,8 @@ impl crate::Config for Test {
 	type PicaStakeFinancialNftCollectionId = PicaStakeFinancialNftCollectionId;
 	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
 	type WeightInfo = ();
+	type ExistentialDeposits = ExistentialDeposits;
+
 	type LockId = StakingRewardsLockId;
 	type TreasuryAccount = TreasuryAccountId;
 }
