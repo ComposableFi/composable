@@ -254,6 +254,8 @@ pub mod pallet {
 		SlashedAmountTooLow,
 		/// Staked amount is less than the minimum staking amount for the pool.
 		StakedAmountTooLow,
+		/// Staked amount after split is less than the minimum staking amount for the pool.
+		StakedAmountTooLowAfterSplit,
 	}
 
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
@@ -1039,11 +1041,11 @@ pub mod pallet {
 					ensure!(
 						ratio.mul_floor(existing_position.stake) >=
 							rewards_pool.minimum_staking_amount,
-						Error::<T>::StakedAmountTooLow
+						Error::<T>::StakedAmountTooLowAfterSplit
 					);
 					ensure!(
 						new_stake >= rewards_pool.minimum_staking_amount,
-						Error::<T>::StakedAmountTooLow
+						Error::<T>::StakedAmountTooLowAfterSplit
 					);
 
 					let new_reductions = {

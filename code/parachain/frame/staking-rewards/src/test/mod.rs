@@ -335,7 +335,7 @@ fn split_should_fail_if_any_amount_is_less_than_minimum() {
 				original_fnft_instance_id,
 				ratio.try_into_validated().unwrap(),
 			),
-			crate::Error::<Test>::StakedAmountTooLow
+			crate::Error::<Test>::StakedAmountTooLowAfterSplit
 		);
 
 		// New stake is less than the minimum and original stake is greater.
@@ -351,7 +351,7 @@ fn split_should_fail_if_any_amount_is_less_than_minimum() {
 				original_fnft_instance_id,
 				ratio.try_into_validated().unwrap(),
 			),
-			crate::Error::<Test>::StakedAmountTooLow
+			crate::Error::<Test>::StakedAmountTooLowAfterSplit
 		);
 
 		// Both stakes are less than the minimum.
@@ -367,7 +367,7 @@ fn split_should_fail_if_any_amount_is_less_than_minimum() {
 				original_fnft_instance_id,
 				ratio.try_into_validated().unwrap(),
 			),
-			crate::Error::<Test>::StakedAmountTooLow
+			crate::Error::<Test>::StakedAmountTooLowAfterSplit
 		);
 	});
 }
