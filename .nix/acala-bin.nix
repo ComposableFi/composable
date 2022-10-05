@@ -1,6 +1,5 @@
-{ pkgs, rust-overlay }:
-let
-  substrate-attrs = pkgs.callPackage ./substrate.nix { inherit rust-overlay; };
+{ pkgs, rust-nightly }:
+let substrate-attrs = import ./substrate.nix { inherit rust-nightly pkgs; };
 in with pkgs.stdenv;
 with pkgs;
 mkDerivation (substrate-attrs // {

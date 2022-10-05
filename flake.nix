@@ -614,17 +614,15 @@
               inherit mdbook;
             };
 
-            # NOTE: crane can't be used because of how it vendors deps, which is incompatible with some packages in polkadot, an issue must be raised to the repo
-            acala-node = pkgs.callPackage ./.nix/acala-bin.nix {
-              rust-overlay = rust-nightly;
-            };
+            acala-node =
+              pkgs.callPackage ./.nix/acala-bin.nix { inherit rust-nightly; };
 
             polkadot-node = pkgs.callPackage ./.nix/polkadot-bin.nix {
               inherit rust-nightly;
             };
 
             statemine-node = pkgs.callPackage ./.nix/statemine-bin.nix {
-              inherit crane-nightly rust-nightly;
+              inherit rust-nightly;
             };
 
             polkadot-launch =

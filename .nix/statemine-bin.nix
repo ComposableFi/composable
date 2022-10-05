@@ -1,7 +1,7 @@
-{ pkgs, rust-overlay, crane-nightly }:
+{ pkgs, rust-nightly, }:
 with pkgs;
 let
-  substrate-attrs = pkgs.callPackage ./substrate.nix { inherit rust-overlay; };
+  substrate-attrs = import ./substrate.nix { inherit rust-nightly pkgs; };
   paritytech-cumulus = fetchFromGitHub {
     repo = "cumulus";
     owner = "paritytech";
