@@ -104,7 +104,7 @@ in rec {
       recipient = connection.recipient;
       maxCapacity = 8;
       maxMessageSize =
-        4096; # lowest common demominator just to make sure it runs
+        4096; # lowest common denominator just to make sure it runs
     }) unique;
     genesis = {
       runtime = {

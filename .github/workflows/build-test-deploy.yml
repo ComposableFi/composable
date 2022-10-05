@@ -710,7 +710,7 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#kusama-picasso-karura-devnet --no-update-lock-file --show-trace -L
+          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#kusama-picasso-karura-devnet --no-update-lock-file --show-trace --print-build-logs --keep-failed
 
   cache-devnet-all-dev-local:
     needs:
@@ -742,7 +742,7 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#devnet-all-dev-local --no-update-lock-file --show-trace -L          
+          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#devnet-all-dev-local --no-update-lock-file --show-trace --print-build-logs --keep-failed          
 
   package-xcvm-minimal:
     name: "Package XCVM minimal"

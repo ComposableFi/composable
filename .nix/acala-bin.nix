@@ -7,7 +7,7 @@ mkDerivation (substrate-attrs // {
   src = pkgs.fetchgit {
     url = "https://github.com/AcalaNetwork/Acala.git";
     rev = "368a6bc089534031ef2671a3071ba89720f40be7";
-    sha256 = "sha256-Cw/92L51P1LmQ34He/7+76pffUz3uU4Tlrt3kd5hNQk=";
+    sha256 = "sha256-IERbXtk0zfXOSfJPrZsmmqhcwzLbaknwH4ULaaXImJM=";
     fetchSubmodules = true;
     deepClone = true;
   };

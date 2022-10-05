@@ -1,0 +1,1 @@
+$@ --debug --print-build-logs --show-trace --keep-failed

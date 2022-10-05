@@ -180,11 +180,11 @@ nettools
 nextjs
 NFTID
 nixfmt
+nixified
+nixify
 nixops
 nixos
 nixpkgs
-nixify
-nixified
 nocapture
 noconfirm
 nodedir
@@ -330,6 +330,7 @@ wasmvm
 websocat
 websocket
 websockets
+westmint
 whereis
 WORKDIR
 wscat
