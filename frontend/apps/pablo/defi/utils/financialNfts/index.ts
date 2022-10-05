@@ -1,12 +1,14 @@
 import { CustomRpcBalance } from "@/../../packages/defi-interfaces";
 import { StakingPositionHistory, StakingRewardPool } from "@/defi/types";
 import { ApiPromise } from "@polkadot/api";
-import { bnToU8a } from "@polkadot/util";
 import { BN } from "bn.js";
-import { PALLET_TYPE_ID } from "../constants";
+import { BLAKE_HASH_BIT_LENGTH, PALLET_TYPE_ID } from "../constants";
 import { concatU8a } from "../misc";
 import { fromChainUnits } from "../units";
 import BigNumber from "bignumber.js";
+import { bnToU8a, hexToU8a, u8aToHex } from "@polkadot/util";
+import { blake2AsHex } from "@polkadot/util-crypto";
+const createBlakeHash = require("blake-hash");
 
 export async function fetchOwnedFinancialNfts(
   parachainApi: ApiPromise,
@@ -39,20 +41,28 @@ export async function fetchOwnedFinancialNfts(
 
 /** this will change later from pallet team */
 export function createFinancialNftAccountId(
-  parachainApi: ApiPromise,
+  api: ApiPromise,
   financialNFTCollectionId: string,
   financialNFTInstanceId: string
 ) {
-  const palletId = parachainApi.consts.fnft.palletId.toU8a();
+  const palletId = api.consts.fnft.palletId.toU8a();
   const accountPrefix = concatU8a(PALLET_TYPE_ID, palletId);
-  const collectionId = bnToU8a(new BN(financialNFTCollectionId));
-  const instanceId = bnToU8a(new BN(financialNFTInstanceId));
-  const accountSuffix = parachainApi.createType("(u128, u64)", [
+
+  const collectionId = new BN(financialNFTCollectionId);
+  const instanceId = new BN(financialNFTInstanceId);
+
+  const tuple = api.createType("(u128, u64)", [
     collectionId,
     instanceId
-  ]).toU8a().subarray(0, 40);
-  const accountId = concatU8a(accountPrefix, accountSuffix);
-  return parachainApi.createType("AccountId32", accountId);
+  ]);
+  /**
+   * Only used here otherwise 
+   * can be exported to constants file
+   */
+  const TRUNCATE_BITS = 20;
+  const blakeHash = blake2AsHex(tuple.toU8a(), BLAKE_HASH_BIT_LENGTH);  
+  const accountId = concatU8a(accountPrefix, hexToU8a(blakeHash).subarray(0, TRUNCATE_BITS));
+  return api.createType("AccountId32", accountId);
 }
 
 export async function fetchXTokenBalances(
