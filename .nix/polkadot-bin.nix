@@ -9,6 +9,6 @@ rustPlatform.buildRustPackage (substrate-attrs // rec {
     rev = "6882eff7961008a54749fa8ed445e40844febc3a";
     hash = "sha256-LEz3OrVgdFTCnVwzU8C6GeEougaOl2qo7jS9qIdMqAM=";
   };
-  cargoHash = "sha256-6y+WK2k1rhqMxMjEJhzJ26WDMKZjXQ+q3ca2hbbeLvA=";
+  cargoHash = "sha256-eSZGz7HXjLxQ584OMTVQNBOWPVFBtGWQfuJid489Xm4=";
   meta = { mainProgram = "polkadot"; };
 })

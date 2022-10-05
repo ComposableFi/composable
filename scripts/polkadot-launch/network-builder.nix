@@ -17,7 +17,7 @@ let
     "--force-authoring"
     "--execution=wasm"
     "--wasmtime-instantiation-strategy=recreate-instance-copy-on-write"
-    "--log=xcm=trace,ibc=trace,xcvm=trace" # so we can observer cross chain interactions
+    "--log=xcm=trace,ibc=trace,xcvm=trace" # so we can observe cross chain interactions
   ];
 
   default-node-names = [ "alice" "bob" "charlie" "dave" "eve" "ferdie" ];
