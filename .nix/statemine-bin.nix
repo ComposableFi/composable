@@ -1,11 +1,11 @@
-{ pkgs, rust-nightly, crane-nightly }:
+{ pkgs, rust-overlay, crane-nightly }:
 with pkgs;
 let
-  branch = "polkadot-v0.9.27";
+  substrate-attrs = pkgs.callPackage ./substrate.nix { inherit rust-overlay; };
   paritytech-cumulus = fetchFromGitHub {
     repo = "cumulus";
     owner = "paritytech";
-    rev = branch;
+    rev = "36dfad4cb8fa68412818be27abe67341c4a4a0ea";
     hash = "sha256-nbHdXv/93F6vHXWr/r9+AqvBBa5f9L6tmoIs8EEqiKM=";
   };
 in with pkgs;
@@ -37,33 +37,18 @@ in with pkgs;
 #        >
 #        > Caused by:
 # 5. plauing with phases and configs gives other errors hard to test (fails only after 10 minutes of run)
-stdenv.mkDerivation (rec {
-  name = "cumulus-v${version}";
-  version = "0.9.27";
-  pname = "polkadot-parachain";
+stdenv.mkDerivation (substrate-attrs // rec {
+  name = "polkadot-parachain";
   src = paritytech-cumulus;
-  doCheck = false;
-  __noChroot = true;
-  buildInputs = [ openssl zstd ];
   configurePhase = ''
     	mkdir home
       export HOME=$PWD/home	
       export WASM_TARGET_DIRECTORY=$PWD/home
   '';
   buildPhase = ''
-    cargo build --release --locked --bin polkadot-parachain --no-default-features
+    cargo build --release --locked --bin ${name} --no-default-features
   '';
   installPhase = ''
-    mkdir --parents $out/bin && mv ./target/release/polkadot-parachain $out/bin
+    mkdir --parents $out/bin && mv ./target/release/${name} $out/bin
   '';
-  # substrate-attrs-node-with-attrs
-  nativeBuildInputs = [ rust-nightly clang pkg-config ]
-    ++ lib.optional stdenv.isDarwin
-    (with darwin.apple_sdk.frameworks; [ Security SystemConfiguration ]);
-  LD_LIBRARY_PATH =
-    lib.strings.makeLibraryPath [ stdenv.cc.cc.lib llvmPackages.libclang.lib ];
-  LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
-  PROTOC = "${protobuf}/bin/protoc";
-  ROCKSDB_LIB_DIR = "${rocksdb}/lib";
-  RUST_BACKTRACE = "full";
 })

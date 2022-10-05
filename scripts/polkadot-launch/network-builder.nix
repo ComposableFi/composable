@@ -14,8 +14,10 @@ let
     "--ws-external"
     "--rpc-cors=all"
     "--rpc-methods=Unsafe"
+    "--force-authoring"
     "--execution=wasm"
     "--wasmtime-instantiation-strategy=recreate-instance-copy-on-write"
+    "--log=xcm=trace,ibc=trace,xcvm=trace" # so we can observer cross chain interactions
   ];
 
   default-node-names = [ "alice" "bob" "charlie" "dave" "eve" "ferdie" ];
@@ -101,15 +103,16 @@ in rec {
       sender = connection.sender;
       recipient = connection.recipient;
       maxCapacity = 8;
-      maxMessageSize = 16384;
+      maxMessageSize = 4096; # lowest common demominator just to make sure it runs
     }) unique;
     genesis = {
       runtime = {
         runtime_genesis_config = {
           configuration = {
             config = {
-              validation_upgrade_frequency = 2;
-              validation_upgrade_delay = 2;
+              # like in other setups
+              validation_upgrade_frequency = 1;
+              validation_upgrade_delay = 10;
             };
           };
         };

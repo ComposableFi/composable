@@ -33,7 +33,7 @@ in {
         port = 31220;
         wsPort = 10008;
         count = 2;
-        chain = "statemine";
+        chain = "westmint-dev";
         bin = "${statemine-bin}/bin/polkadot-parachain";
       }
 
@@ -44,18 +44,6 @@ in {
         count = 2;
         chain = "karura-dev";
         bin = "${acala-bin}/bin/acala";
-        flags = [
-          "--unsafe-ws-external"
-          "--unsafe-rpc-external"
-          "--rpc-external"
-          "--ws-external"
-          "--rpc-cors=all"
-          "--rpc-methods=Unsafe"
-          "--force-authoring"
-          "--log=xcm=trace"
-          "--"
-          "--execution=wasm"
-        ];
       }
     ];
   };
