@@ -70,27 +70,27 @@ where
 }
 
 #[cfg(feature = "composable")]
-/// Composable (Westend parachain)
+/// Composable Parachain (Westend relaychain)
 pub fn composable_westend() -> composable::ChainSpec {
 	composable::ChainSpec::from_json_bytes(include_bytes!("res/composable-westend.json").to_vec())
 		.expect("composable-westend chain spec not found!")
 }
 
 #[cfg(feature = "dali")]
-/// Dali (Rococo parachain)
+/// Dali Parachain (Rococo relaychain)
 pub fn dali_rococo() -> dali::ChainSpec {
 	dali::ChainSpec::from_json_bytes(include_bytes!("./res/dali-rococo.json").to_vec())
 		.expect("Dali chain spec not found!")
 }
 
-/// Picasso (Kusama parachain)
+/// Picasso Parachain (Kusama relaychain)
 pub fn picasso() -> picasso::ChainSpec {
 	picasso::ChainSpec::from_json_bytes(include_bytes!("./res/picasso.json").to_vec())
 		.expect("Picasso chain spec not found!")
 }
 
 #[cfg(feature = "composable")]
-/// Composable (Polkadot parachain)
+/// Composable Parachain (Polkadot relaychain)
 pub fn composable() -> composable::ChainSpec {
 	composable::ChainSpec::from_json_bytes(include_bytes!("./res/composable.json").to_vec())
 		.expect("Picasso chain spec not found!")
@@ -139,8 +139,8 @@ pub fn picasso_dev() -> picasso::ChainSpec {
 	)
 }
 
+/// chain spec for local testnet environments
 #[cfg(feature = "dali")]
-// chain spec for local testnet environments
 pub fn dali_dev() -> dali::ChainSpec {
 	let mut properties = Properties::new();
 	properties.insert("tokenSymbol".into(), "DALI".into());
@@ -179,7 +179,7 @@ pub fn dali_dev() -> dali::ChainSpec {
 		None,
 		None,
 		Some(properties),
-		Extensions { relay_chain: "rococo_local_testnet".into(), para_id: u32::from(*PARA_ID) },
+		Extensions { relay_chain: "rococo-local".into(), para_id: u32::from(*PARA_ID) },
 	)
 }
 
