@@ -158,7 +158,7 @@ impl assets::Config for Test {
 
 parameter_types! {
 	pub const MaxLocks: u32 = 256;
-	pub static ParachainId: ParaId = ParaId::from(2000);
+	pub static ParachainId: ParaId = ParaId::from(2087);
 	pub static RelayChainId: RelayChain = RelayChain::Rococo;
 }
 

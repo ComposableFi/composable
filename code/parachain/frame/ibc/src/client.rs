@@ -92,6 +92,7 @@ where
 	}
 
 	fn host_client_type(&self) -> String {
+		// todo: https://github.com/cosmos/ibc/pull/839
 		if cfg!(any(test, feature = "runtime-benchmarks")) {
 			"tendermint".to_string()
 		} else {

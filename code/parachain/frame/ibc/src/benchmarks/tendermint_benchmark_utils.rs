@@ -3,7 +3,6 @@ use crate::{
 	routing::Context,
 	Config, MODULE_ID,
 };
-use codec::Encode;
 use core::{str::FromStr, time::Duration};
 use frame_support::traits::Get;
 use ibc::{
@@ -133,7 +132,7 @@ pub fn create_mock_beefy_client_state(
 		frozen_height: None,
 		beefy_activation_block: 0,
 		latest_para_height: 0,
-		para_id: 2000,
+		para_id: 2087,
 		authority: Default::default(),
 		next_authority_set: Default::default(),
 		_phantom: Default::default(),
@@ -245,11 +244,6 @@ where
 	let mut consensus_buf = Vec::new();
 	let mut client_buf = Vec::new();
 	prost::Message::encode(&consensus_proof, &mut consensus_buf).unwrap();
-	let consensus_buf = ConsensusProofwithHostConsensusStateProof {
-		host_proof: vec![],
-		connection_proof: consensus_buf,
-	}
-	.encode();
 	prost::Message::encode(&client_proof, &mut client_buf).unwrap();
 	let header = create_tendermint_header();
 	let cs_state = ConsensusState {
@@ -357,11 +351,6 @@ where
 	let mut consensus_buf = Vec::new();
 	let mut client_buf = Vec::new();
 	prost::Message::encode(&consensus_proof, &mut consensus_buf).unwrap();
-	let consensus_buf = ConsensusProofwithHostConsensusStateProof {
-		host_proof: vec![],
-		connection_proof: consensus_buf,
-	}
-	.encode();
 	prost::Message::encode(&client_proof, &mut client_buf).unwrap();
 	let header = create_tendermint_header();
 	let cs_state = ConsensusState {
@@ -729,7 +718,7 @@ where
 		destination_port: port_id.clone(),
 		destination_channel: ChannelId::new(0),
 		data,
-		timeout_height: Height::new(2000, 5),
+		timeout_height: Height::new(2087, 5),
 		timeout_timestamp: Timestamp::from_nanoseconds(1690894363u64.saturating_mul(1000000000))
 			.unwrap(),
 	};
@@ -797,7 +786,7 @@ where
 		destination_port: port_id.clone(),
 		destination_channel: ChannelId::new(0),
 		data: data.clone(),
-		timeout_height: Height::new(2000, 5),
+		timeout_height: Height::new(2087, 5),
 		timeout_timestamp: Timestamp::from_nanoseconds(1690894363u64.saturating_mul(1000000000))
 			.unwrap(),
 	};
