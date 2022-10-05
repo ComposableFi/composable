@@ -38,9 +38,6 @@ pub(crate) const fn block_seconds(amount_of_blocks: u64) -> u128 {
 
 pub(crate) const ONE_YEAR_OF_BLOCKS: u64 = 60 * 60 * 24 * 365 / (block_seconds(1) as u64);
 
-/// Mock ID for staking fNFT collection
-pub(crate) const STAKING_FNFT_COLLECTION_ID: CurrencyId = 1;
-
 // helpers
 
 // TODO: Make generic over runtime
@@ -735,8 +732,6 @@ pub(crate) fn create_rewards_pool_and_assert<Runtime, RuntimeEvent>(
 			end_block,
 			reward_configs: _,
 			lock: _,
-			share_asset_id: _,
-			financial_nft_asset_id: _,
 		} => assert_extrinsic_event::<Runtime, RuntimeEvent, crate::Event<Runtime>, _, _>(
 			Pallet::<Runtime>::create_reward_pool(OriginFor::<Runtime>::root(), reward_config),
 			crate::Event::<Runtime>::RewardPoolCreated { pool_id: asset_id, owner, end_block },

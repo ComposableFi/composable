@@ -56,6 +56,7 @@ pub trait FinancialNftProtocol {
 	/// - collection: id of the financial NFT collection issued/used by the protocol.
 	/// TODO (vim): Think how to represent the difference between assets and liabilities
 	fn value_of(
+		pool_id: &Self::AssetId,
 		collection: &Self::AssetId,
 		instance: &Self::ItemId,
 	) -> Result<Vec<(Self::AssetId, Self::Balance)>, DispatchError>;

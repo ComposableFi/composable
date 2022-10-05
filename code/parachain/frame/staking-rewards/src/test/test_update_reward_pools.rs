@@ -1,6 +1,6 @@
 use composable_tests_helpers::test::{
 	block::process_and_progress_blocks,
-	currency::{PICA, USDT, XPICA},
+	currency::{PICA, USDT},
 	helper::assert_extrinsic_event,
 };
 use composable_traits::staking::{
@@ -18,8 +18,6 @@ use crate::test::{
 	test_reward_accumulation_hook::{check_rewards, CheckRewards, PoolRewards},
 	Test,
 };
-
-use super::prelude::STAKING_FNFT_COLLECTION_ID;
 
 #[test]
 fn test_update_reward_pool() {
@@ -48,8 +46,6 @@ fn test_update_reward_pool() {
 				.try_collect()
 				.expect("Rewards pool has a valid config for creation; QED"),
 				lock: default_lock_config(),
-				share_asset_id: XPICA::ID,
-				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
 			},
 		);
 

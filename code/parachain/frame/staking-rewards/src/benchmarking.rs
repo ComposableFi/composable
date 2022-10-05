@@ -22,8 +22,8 @@ use sp_std::collections::btree_map::BTreeMap;
 
 // PICA as configured in the Test runtime (./frame/staking-rewards/src/test/runtime.rs)
 pub const BASE_ASSET_ID: u128 = 42;
-pub const X_ASSET_ID: u128 = 142;
-pub const STAKING_FNFT_COLLECTION_ID: u128 = 1042;
+/// fNFT Asset ID = u32::MAX * (fNFT_RANGE_ID(4) + 1) + INDEX(1)
+pub const STAKING_FNFT_COLLECTION_ID: u128 = u32::MAX as u128 * (4 + 1) + 1;
 pub const FNFT_INSTANCE_ID_BASE: u64 = 0;
 
 fn get_reward_pool<T: Config>(
@@ -37,8 +37,6 @@ fn get_reward_pool<T: Config>(
 		end_block: 5_u128.saturated_into(),
 		reward_configs: reward_config::<T>(reward_count),
 		lock: lock_config::<T>(),
-		share_asset_id: X_ASSET_ID.into(),
-		financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID.into(),
 	}
 }
 
@@ -246,15 +244,13 @@ benchmarks! {
 				.try_collect()
 				.unwrap(),
 			lock: lock_config::<T>(),
-			share_asset_id: 1000.into(),
-			financial_nft_asset_id: 2000.into(),
 		}).unwrap();
 
 		let now = now + seconds_per_block;
 
 		let mut reward = RewardPools::<T>::get(&pool_id).unwrap().rewards.get(&reward_asset_id).unwrap().clone();
 	}: {
-		let reward = Pallet::<T>::reward_accumulation_hook_reward_update_calculation(pool_id, reward_asset_id,&mut reward, now);
+		Pallet::<T>::reward_accumulation_hook_reward_update_calculation(pool_id, reward_asset_id,&mut reward, now);
 	}
 
 	unix_time_now {}: {
@@ -265,7 +261,7 @@ benchmarks! {
 		let r in 1 .. T::MaxRewardConfigsPerPool::get();
 		frame_system::Pallet::<T>::set_block_number(1.into());
 		let user: T::AccountId = account("user", 0, 0);
-		let pool_id = <Pallet<T> as ManageStaking>::create_staking_pool(get_reward_pool::<T>(user.clone(), r)).unwrap();
+		let pool_id = <Pallet<T> as ManageStaking>::create_staking_pool(get_reward_pool::<T>(user, r)).unwrap();
 
 		let updates = (0..r).map(|r| (
 			((r as u128) + BASE_ASSET_ID).into(),

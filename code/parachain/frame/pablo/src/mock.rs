@@ -180,11 +180,7 @@ impl pallet_staking_rewards::Config for Test {
 	type RewardPoolCreationOrigin = EnsureRoot<Self::AccountId>;
 	type RewardPoolUpdateOrigin = EnsureRoot<Self::AccountId>;
 	type PicaAssetId = PicaAssetId;
-	type XPicaAssetId = XPicaAssetId;
 	type PbloAssetId = PbloAssetId;
-	type XPbloAssetId = XPbloAssetId;
-	type PicaStakeFinancialNftCollectionId = PicaStakeFinancialNftCollectionId;
-	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
 	type WeightInfo = ();
 	type LockId = StakingRewardsLockId;
 	type TreasuryAccount = TreasuryAccountId;

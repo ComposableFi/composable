@@ -72,7 +72,7 @@ pub mod pallet {
 	use codec::FullCodec;
 	use composable_support::math::safe::{safe_multiply_by_rational, SafeArithmetic, SafeSub};
 	use composable_traits::{
-		currency::{CurrencyFactory, LocalAssets, RangeId},
+		currency::{CurrencyFactory, LocalAssets},
 		defi::{CurrencyPair, Rate},
 		dex::{
 			Amm, ConstantProductPoolInfo, Fee, LiquidityBootstrappingPoolInfo, PriceAggregate,
@@ -684,8 +684,6 @@ pub mod pallet {
 				end_block,
 				reward_configs,
 				lock,
-				share_asset_id: Self::get_x_token_from_pool(*pool_id)?,
-				financial_nft_asset_id: Self::get_financial_nft_from_pool(*pool_id)?,
 			})
 		}
 
@@ -843,44 +841,6 @@ pub mod pallet {
 				)?;
 			}
 			Ok(())
-		}
-
-		fn get_x_token_from_pool(pool_id: T::PoolId) -> Result<T::AssetId, DispatchError> {
-			// Get token asset ID from pool ID
-			let pool = Self::get_pool(pool_id)?;
-			let token_id = match pool {
-				PoolConfiguration::StableSwap(info) => info.lp_token,
-				PoolConfiguration::ConstantProduct(info) => info.lp_token,
-				// REVIEW: Throw error for LBP trying to get xTokens?
-				PoolConfiguration::LiquidityBootstrapping(_) =>
-					return Err(Error::<T>::NoXTokenForLbp.into()),
-			};
-
-			// Match token asset ID with xToken asset ID
-			match token_id {
-				x if x == T::PicaAssetId::get() => Ok(T::XPicaAssetId::get()),
-				x if x == T::PbloAssetId::get() => Ok(T::XPbloAssetId::get()),
-				_ => Ok(T::CurrencyFactory::create(RangeId::XTOKEN_ASSETS, T::Balance::default())?),
-			}
-		}
-
-		fn get_financial_nft_from_pool(pool_id: T::PoolId) -> Result<T::AssetId, DispatchError> {
-			// Get token asset ID from pool ID
-			let pool = Self::get_pool(pool_id)?;
-			let token_id = match pool {
-				PoolConfiguration::StableSwap(info) => info.lp_token,
-				PoolConfiguration::ConstantProduct(info) => info.lp_token,
-				// REVIEW: Throw error for LBP trying to get xTokens?
-				PoolConfiguration::LiquidityBootstrapping(_) =>
-					return Err(Error::<T>::NoXTokenForLbp.into()),
-			};
-
-			// Match token asset ID with fNFT asset ID
-			match token_id {
-				x if x == T::PicaAssetId::get() => Ok(T::PicaStakeFinancialNftCollectionId::get()),
-				x if x == T::PbloAssetId::get() => Ok(T::PbloStakeFinancialNftCollectionId::get()),
-				_ => Ok(T::CurrencyFactory::create(RangeId::FNFT_ASSETS, T::Balance::default())?),
-			}
 		}
 	}
 

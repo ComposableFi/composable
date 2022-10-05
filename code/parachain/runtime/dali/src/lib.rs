@@ -889,10 +889,6 @@ impl pallet_staking_rewards::Config for Runtime {
 	type FinancialNftInstanceId = FinancialNftInstanceId;
 	type PicaAssetId = PicaAssetId;
 	type PbloAssetId = PbloAssetId;
-	type XPicaAssetId = XPicaAssetId;
-	type XPbloAssetId = XPbloAssetId;
-	type PicaStakeFinancialNftCollectionId = PicaStakeFinancialNftCollectionId;
-	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
 	type LockId = StakingRewardsLockId;
 	type TreasuryAccount = TreasuryAccount;
 	type ExistentialDeposits = MultiExistentialDeposits;

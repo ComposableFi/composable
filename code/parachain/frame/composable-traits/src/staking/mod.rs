@@ -190,12 +190,6 @@ pub enum RewardPoolConfiguration<
 		reward_configs: BoundedBTreeMap<AssetId, RewardConfig<Balance>, MaxRewardConfigs>,
 		// possible lock config for this reward
 		lock: LockConfig<MaxDurationPresets>,
-
-		// Asset ID issued as shares for staking in the pool. Eg: for PBLO -> xPBLO
-		share_asset_id: AssetId,
-
-		// Asset ID (collection ID) of the financial NFTs issued for staking positions of this pool
-		financial_nft_asset_id: AssetId,
 	},
 }
 

@@ -229,10 +229,6 @@ parameter_types! {
 	pub const MaxRewardConfigsPerPool : u32 = 10;
 	pub const PicaAssetId : CurrencyId = 1;
 	pub const PbloAssetId : CurrencyId = 2;
-	pub const XPicaAssetId: CurrencyId = 101;
-	pub const XPbloAssetId: CurrencyId = 102;
-	pub const PicaStakeFinancialNftCollectionId: CurrencyId = 1001;
-	pub const PbloStakeFinancialNftCollectionId: CurrencyId = 1002;
 	pub const StakingRewardsLockId: LockIdentifier = *b"stk_lock";
 	// REVIEW(benluelo): Use a better value for this?
 	pub const TreasuryAccountId: AccountId = sr25519::Public([10_u8; 32]);
@@ -255,13 +251,8 @@ impl crate::Config for Test {
 	type RewardPoolUpdateOrigin = EnsureRoot<Self::AccountId>;
 	type PicaAssetId = PicaAssetId;
 	type PbloAssetId = PbloAssetId;
-	type XPicaAssetId = XPicaAssetId;
-	type XPbloAssetId = XPbloAssetId;
-	type PicaStakeFinancialNftCollectionId = PicaStakeFinancialNftCollectionId;
-	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
 	type WeightInfo = ();
 	type ExistentialDeposits = ExistentialDeposits;
-
 	type LockId = StakingRewardsLockId;
 	type TreasuryAccount = TreasuryAccountId;
 }

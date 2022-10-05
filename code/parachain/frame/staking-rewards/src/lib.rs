@@ -68,7 +68,7 @@ pub mod pallet {
 		validation::Validated,
 	};
 	use composable_traits::{
-		currency::{BalanceLike, CurrencyFactory},
+		currency::{BalanceLike, CurrencyFactory, RangeId},
 		fnft::{FinancialNft, FinancialNftProtocol},
 		staking::{
 			lock::LockConfig, RewardPoolConfiguration::RewardRateBasedIncentive, RewardRatePeriod,
@@ -354,19 +354,7 @@ pub mod pallet {
 		type PicaAssetId: Get<Self::AssetId>;
 
 		#[pallet::constant]
-		type XPicaAssetId: Get<Self::AssetId>;
-
-		#[pallet::constant]
 		type PbloAssetId: Get<Self::AssetId>;
-
-		#[pallet::constant]
-		type XPbloAssetId: Get<Self::AssetId>;
-
-		#[pallet::constant]
-		type PicaStakeFinancialNftCollectionId: Get<Self::AssetId>;
-
-		#[pallet::constant]
-		type PbloStakeFinancialNftCollectionId: Get<Self::AssetId>;
 
 		type WeightInfo: WeightInfo;
 
@@ -454,14 +442,18 @@ pub mod pallet {
 			create_default_pool::<T>(
 				&owner,
 				T::PicaAssetId::get(),
-				T::XPicaAssetId::get(),
-				T::PicaStakeFinancialNftCollectionId::get(),
+				T::CurrencyFactory::create(RangeId::XTOKEN_ASSETS, T::Balance::default())
+					.expect("Range has space; QED"),
+				T::CurrencyFactory::create(RangeId::FNFT_ASSETS, T::Balance::default())
+					.expect("Range has space; QED"),
 			);
 			create_default_pool::<T>(
 				&owner,
 				T::PbloAssetId::get(),
-				T::XPbloAssetId::get(),
-				T::PbloStakeFinancialNftCollectionId::get(),
+				T::CurrencyFactory::create(RangeId::XTOKEN_ASSETS, T::Balance::default())
+					.expect("Range has space; QED"),
+				T::CurrencyFactory::create(RangeId::FNFT_ASSETS, T::Balance::default())
+					.expect("Range has space; QED"),
 			);
 		}
 	}
@@ -676,13 +668,9 @@ pub mod pallet {
 					start_block,
 					end_block,
 					lock,
-					share_asset_id,
-					financial_nft_asset_id,
 				} => {
 					// AssetIds must be greater than 0
 					ensure!(!pool_asset.is_zero(), Error::<T>::InvalidAssetId);
-					ensure!(!share_asset_id.is_zero(), Error::<T>::InvalidAssetId);
-					ensure!(!financial_nft_asset_id.is_zero(), Error::<T>::InvalidAssetId);
 
 					// now < start_block < end_block
 					ensure!(
@@ -728,6 +716,10 @@ pub mod pallet {
 						})
 						.try_collect()
 						.expect("No items were added; qed;");
+					let share_asset_id =
+						T::CurrencyFactory::create(RangeId::XTOKEN_ASSETS, T::Balance::default())?;
+					let financial_nft_asset_id =
+						T::CurrencyFactory::create(RangeId::FNFT_ASSETS, T::Balance::default())?;
 
 					RewardPools::<T>::insert(
 						pool_asset,
@@ -770,10 +762,11 @@ pub mod pallet {
 		}
 
 		fn value_of(
+			pool_id: &Self::AssetId,
 			collection: &Self::AssetId,
 			instance: &Self::ItemId,
 		) -> Result<Vec<(Self::AssetId, Self::Balance)>, DispatchError> {
-			RewardPools::<T>::get(collection)
+			RewardPools::<T>::get(pool_id)
 				.zip(Stakes::<T>::get(collection, instance))
 				// This can take into account the value of assets held in the asset account as
 				// well as the claimable rewards in the future when market places exists for these

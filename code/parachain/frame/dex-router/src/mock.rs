@@ -19,7 +19,6 @@ pub type Amount = i128;
 pub type PoolId = u128;
 pub type BlockNumber = u64;
 pub type AccountId = u128;
-pub type PositionId = u128;
 pub type CurrencyId = u128;
 
 #[allow(dead_code)]
@@ -198,10 +197,6 @@ impl pallet_staking_rewards::Config for Test {
 	type FinancialNftInstanceId = u64;
 	type PicaAssetId = PicaAssetId;
 	type PbloAssetId = PbloAssetId;
-	type XPicaAssetId = XPicaAssetId;
-	type XPbloAssetId = XPbloAssetId;
-	type PicaStakeFinancialNftCollectionId = PicaStakeFinancialNftCollectionId;
-	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
 	type LockId = StakingRewardsLockId;
 	type TreasuryAccount = TreasuryAccountId;
 	type ExistentialDeposits = ExistentialDeposits;
