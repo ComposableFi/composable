@@ -1361,8 +1361,19 @@ pub mod pallet {
 			let mut reductions = BoundedBTreeMap::new();
 			let mut rewards_btree_map = BoundedBTreeMap::new();
 
+			let total_issuance: T::Balance =
+				<T::Assets as FungiblesInspect<T::AccountId>>::total_issuance(
+					rewards_pool.asset_id,
+				);
+
+			dbg!(rewards_pool.total_shares);
+			dbg!(total_issuance);
+
+			ensure!(1 == 2, Error::<T>::EndBlockMustBeAfterStartBlock);
+
 			for (asset_id, reward) in rewards_pool.rewards.iter() {
 				let reward = reward.clone();
+
 				let inflation = if rewards_pool.total_shares == T::Balance::zero() {
 					T::Balance::zero()
 				} else {
