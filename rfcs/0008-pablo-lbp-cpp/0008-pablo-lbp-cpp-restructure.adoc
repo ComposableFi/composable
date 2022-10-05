@@ -186,7 +186,7 @@ pub struct LiquidityBootstrappingPoolInfo<AccountId, AssetId, BlockNumber> {
 . Sufficient amount of cases to cover LPT issued according to the math.
 
 [#_algorithm_constant_productout_given_in]
-=== Algorithm: `constant_product::out_given_in`
+=== Algorithm: `constant_product::compute_out_given_in`
 
 These are the modifications to be made to the existing https://github.com/ComposableFi/composable/blob/main/code/parachain/frame/composable-maths/src/dex/constant_product.rs#L59[function].
 
@@ -202,6 +202,30 @@ pub fn compute_out_given_in<T: PerThing>(
     f: T
 ) -> Result<(/* Out */ u128, /*Fee*/ u128), ArithmeticError> {
     // Calculate according to section 4.1 Eqn: 2
+}
+----
+
+[#_algorithm_constant_productcompute_in_given_out]
+=== Algorithm: `constant_product::compute_in_given_out`
+
+These are the modifications to be made to the existing https://github.com/ComposableFi/composable/blob/main/code/parachain/frame/composable-maths/src/dex/constant_product.rs#L96[function].
+
+[source,rust]
+----
+
+pub fn compute_in_given_out<T: PerThing>(
+    wi: T,
+    wo: T,
+    bi: u128,
+    bo: u128,
+    ao: u128,
+    // f=0 for getting "in" without taking into account the fee
+    f: T
+) -> Result<(/* In */ u128, /*Fee*/ u128), ArithmeticError>
+where
+	T::Inner: Into<u32>,
+{
+    // Calculate according to section 4.1 Eqn: 3
 }
 ----
 
@@ -268,7 +292,7 @@ start
 :validate assets are part of the pool;
 :pool = get pool from storage by pool_id;
 :balances = get balances for in_asset and out_asset;
-:value, fee = constant_product::out_given_in(
+:value, fee = constant_product::compute_out_given_in(
 pool.assets[in_asset.asset_id],
 pool.assets[out_asset],
 balances[0],
@@ -311,7 +335,7 @@ pub trait Amm {
 ----
 start
 ->who,pool_id,in_asset,min_receive;
-:validate who actually has the in_asset amount;
+:validate "who" actually has the in_asset amount;
 :exchange_value =
     Self::get_exchange_value(
         pool_id,
@@ -332,7 +356,47 @@ This would be removed to keep the interface simple as `Amm::swap` satisfies the 
 [#_algorithm_ammbuy]
 === Algorithm: `Amm::buy`
 
-This function exists to provide a way for a user to easily by a given amount from the AMM.
+This function exists to provide a way for a user to buy a given amount of an asset from the AMM.
+
+[source,rust]
+----
+pub trait Amm {
+    // ....
+
+    /// Note: min_receive has been removed as the amount specified is considered the amount to be bought
+    fn buy(
+        who: &Self::AccountId,
+        pool_id: Self::PoolId,
+        in_asset: Self::AssetId,
+        out_asset: AssetAmount<Self::AssetId, Self::Balance>,
+        keep_alive: bool,
+    ) -> Result<ExchangeValue<Self::AssetId, Self::Balance>, DispatchError>;
+
+    // ....
+}
+----
+
+
+[plantuml,images/pablo-amm-buy,png]
+----
+start
+->who,pool_id,in_asset,out_asset;
+:validate assets are part of the pool;
+:pool = get pool from storage by pool_id;
+:balances = get balances for in_asset and out_asset;
+:value, fee = constant_product::compute_in_given_out(
+pool.assets[in_asset],
+pool.assets[out_asset.asset_id],
+balances[0],
+balances[1],
+out_asset.amount,
+pool.fee_config.fee_rate
+);
+:transfer value to the pool account;
+:transfer out_asset to who;
+:return ExchangeValue(value, fee);
+stop
+----
 
 [#_algorithm_ammadd_liquidity]
 === Algorithm: `Amm::add_liquidity`
@@ -368,7 +432,7 @@ Implement the equations outlined in the <<_method>> in `code/parachain/frame/com
 
 . Implement <<_unit_test_updates>>
 . `Out-given-in` with Fee (eq: 2 + <<_algorithm_constant_productout_given_in>>)
-. `In-given-out` with Fee (eq: 3)
+. `In-given-out` with Fee (eq: 3 + <<_algorithm_constant_productcompute_in_given_out>>)
 . `LPT received for deposited liquidity in a single pool asset` (eq: 5)
 . Correct `Initial LP Calculation` (eq: 6)
 . `Tokens received for redeemed LPT` (eq: 8)
