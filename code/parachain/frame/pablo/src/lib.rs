@@ -676,7 +676,7 @@ pub mod pallet {
 			// NOTE(connor): `start_block` must greater than current block
 			let start_block = frame_system::Pallet::<T>::current_block_number() + 1_u32.into();
 			let end_block = start_block + five_years_block.into();
-			let minimum_staking_amount: T::Balance = T::Convert::convert(10_000_u128); // TODO: review this amount
+			let minimum_staking_amount: T::Balance = T::Convert::convert(10_000_u128);
 
 			Ok(RewardPoolConfiguration::RewardRateBasedIncentive {
 				owner: Self::account_id(pool_id),

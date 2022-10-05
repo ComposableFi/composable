@@ -499,7 +499,7 @@ pub mod pallet {
 			},
 			share_asset_id,
 			financial_nft_asset_id,
-			minimum_staking_amount: T::Balance::from(10_000_u128), // TODO: review this amount
+			minimum_staking_amount: T::Balance::from(10_000_u128),
 		};
 		RewardPools::<T>::insert(staked_asset_id, staking_pool);
 		T::FinancialNft::create_collection(&financial_nft_asset_id, owner, owner)
