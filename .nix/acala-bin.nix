@@ -8,16 +8,19 @@ mkDerivation {
   src = pkgs.fetchgit {
     url = "https://github.com/AcalaNetwork/Acala.git";
     rev = "e9d2b3caa0663c1d3e7d4d6e7d3faef4a569099c";
-    sha256 = "sha256-buRxUVdyMIAg/FFi/McTbYvGSk8LM7v+HQ09YGSo2dk=";
+    sha256 = "sha256-Cw/92L51P1LmQ34He/7+76pffUz3uU4Tlrt3kd5hNQk=";
     fetchSubmodules = true;
     deepClone = true;
   };
-  # TODO: unify with other networks build
+
+  configurePhase = "git submodule update --init --recursive";
+  installPhase = ''
+    mkdir --parents $out/bin && mv ./target/production/acala $out/bin
+  '';
+
+  # substrate-attrs-node-with-attrs
   __noChroot = true;
   doCheck = false;
-  configurePhase = "git submodule update --init --recursive";
-  installPhase =
-    "	mkdir --parents $out/bin && mv ./target/production/acala $out/bin\n";
   buildInputs = [ openssl ];
   nativeBuildInputs = [ clang git rust-overlay ];
   buildPhase = ''
