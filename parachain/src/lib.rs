@@ -419,10 +419,14 @@ where
 		Ok(mmr_update)
 	}
 
+	/// Submits the given transaction to the parachain node, waits for it to be included in a block
+	/// and asserts that it was successfully dispatched on-chain.
+	///
+	/// We retry sending the transaction up to 5 times in the case where the transaction pool might
+	/// reject the transaction because of conflicting nonces.
 	pub async fn submit_call<C: TxPayload>(
 		&self,
 		call: C,
-		wait_for_in_block: bool,
 	) -> Result<(T::Hash, Option<T::Hash>), Error> {
 		let signer = ExtrinsicSigner::<T, Self>::new(
 			self.key_store.clone(),
@@ -440,6 +444,7 @@ where
 			}
 
 			let tx_params = <SubstrateExtrinsicParamsBuilder<T>>::new()
+				// todo: tx should be mortal
 				.era(Era::Immortal, self.para_client.genesis_hash());
 
 			let res = self
@@ -457,13 +462,9 @@ where
 			count += 1;
 		};
 
-		if wait_for_in_block {
-			let ext_hash = progress.extrinsic_hash();
-			let tx_in_block = progress.wait_for_in_block().await?;
-			return Ok((ext_hash, Some(tx_in_block.block_hash())))
-		}
-
-		Ok((progress.extrinsic_hash(), None))
+		let tx_in_block = progress.wait_for_in_block().await?;
+		tx_in_block.wait_for_success().await?;
+		Ok((tx_in_block.extrinsic_hash(), Some(tx_in_block.block_hash())))
 	}
 
 	pub fn client_id(&self) -> ClientId {

@@ -236,7 +236,7 @@ where
 			type_url: msg.type_url,
 			value: msg.value,
 		}]);
-		let (ext_hash, block_hash) = self.submit_call(call, true).await?;
+		let (ext_hash, block_hash) = self.submit_call(call).await?;
 
 		// Query newly created client Id
 		let identified_client_state = IbcApiClient::<u32, H256>::query_newly_created_client(
@@ -282,7 +282,7 @@ where
 			amount.into(),
 		);
 
-		self.submit_call(call, true).await?;
+		self.submit_call(call).await?;
 
 		Ok(())
 	}
@@ -384,7 +384,7 @@ where
 
 		let call = api::tx().ibc_ping().send_ping(params);
 
-		self.submit_call(call, true).await.map(|_| ())
+		self.submit_call(call).await.map(|_| ())
 	}
 
 	async fn ibc_events(&self) -> Pin<Box<dyn Stream<Item = IbcEvent> + Send + Sync>> {

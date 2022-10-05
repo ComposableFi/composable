@@ -168,7 +168,7 @@ where
 			.collect::<Vec<_>>();
 
 		let call = api::tx().ibc().deliver(messages);
-		self.submit_call(call, false).await?;
+		self.submit_call(call).await?;
 
 		Ok(())
 	}
