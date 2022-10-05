@@ -10,7 +10,7 @@
 
 == Abstract
 
-This document is a review current Pablo implementation and proposes updates to better align the constant product pool(CPP) and liquidity bootstrapping pool(LBP) code with the https://docs.balancer.fi/concepts/math/weighted-math[Balancer protocol] which those implementations are based on.
+This document is a review of current Pablo implementation and proposes updates to better align the constant product pool(CPP) and liquidity bootstrapping pool(LBP) code with the https://docs.balancer.fi/concepts/math/weighted-math[Balancer protocol] which those implementations are based on.
 
 == Background
 
@@ -26,6 +26,7 @@ Pablo http://link[constant product pool (analogous to Uniswap)] and the liquidit
 
 In addition to these hard requirements the idea is also to simplify the code as much as possible to avoid confusion specially regarding the `CurrencyPair` swaps.
 
+[#_method]
 == Method
 
 Following is an overview of the proposed changes to the Pablo CPP and LBP implementation.
@@ -144,7 +145,7 @@ The added liquidity must follow the same ratio as the pool weight distribution a
 [#_refactoring_currencypair_usage]
 === Refactoring: `CurrencyPair` Usage
 
-In the existing https://github.com/ComposableFi/composable/blob/main/code/parachain/frame/composable-traits/src/dex.rs#L269[pool data structure], using `CurrencyPair` with "base" and "quote" naming creates confusion when it comes to actual swap logic.A base or quote naming applies to a currency only at the point of a trade.Specially when considering possible multi-asset pools that a balancer based pool supports.
+In the existing https://github.com/ComposableFi/composable/blob/main/code/parachain/frame/composable-traits/src/dex.rs#L269[pool data structure], using `CurrencyPair` with "base" and "quote" naming creates confusion when it comes to actual swap logic. A base or quote naming applies to a currency only at the point of a trade. Specially when considering possible multi-asset pools that a balancer based pool supports.
 
 The proposal here is to use a list(vector) of maximum length of 2 (possibly allowing for future expansion) in the pool data structure for both CPP and LBP.
 
@@ -176,6 +177,7 @@ pub struct LiquidityBootstrappingPoolInfo<AccountId, AssetId, BlockNumber> {
 }
 ----
 
+[#_unit_test_updates]
 === Unit Test Updates
 
 . Introduce unit tests for `code/parachain/frame/composable-maths/src/dex/constant_product.rs`.
@@ -183,6 +185,7 @@ pub struct LiquidityBootstrappingPoolInfo<AccountId, AssetId, BlockNumber> {
 . Sufficient amount of cases to cover pools with differential weights according to the math.
 . Sufficient amount of cases to cover LPT issued according to the math.
 
+[#_algorithm_constant_productout_given_in]
 === Algorithm: `constant_product::out_given_in`
 
 These are the modifications to be made to the existing https://github.com/ComposableFi/composable/blob/main/code/parachain/frame/composable-maths/src/dex/constant_product.rs#L59[function].
@@ -202,9 +205,10 @@ pub fn compute_out_given_in<T: PerThing>(
 }
 ----
 
+[#_algorithm_ammcurrency_pair__ammassets]
 === Algorithm: `Amm::currency_pair` -> `Amm::assets`
 
-This is a renaming plus a reorganization of this logic to better match the `CurrencyPair` refactoring. Because of the <<_refactoring_currencypair_usage>>, this function should just return the list of assets in the pool.
+This is a renaming plus a reorganization of this logic to better match the `CurrencyPair` refactoring.Because of the <<_refactoring_currencypair_usage>>, this function should just return the list of assets in the pool.
 
 [source,rust]
 ----
@@ -226,9 +230,10 @@ start
 stop
 ----
 
+[#_algorithm_ammget_exchange_value]
 === Algorithm: `Amm::get_exchange_value`
 
-Having the fee not taken into account here causes the fees to be calculated in non-formal ways. Therefore, the proposal is to always take into account the fee input as a parameter and return the fee as a separate output. This also means that this function shall not be used to calculate a quote amount for buy operations.
+Having the fee not taken into account here causes the fees to be calculated in non-formal ways.Therefore, the proposal is to always take into account the fee input as a parameter and return the fee as a separate output.This also means that this function shall not be used to calculate a quote amount for buy operations.
 
 [source,rust]
 ----
@@ -275,6 +280,7 @@ pool.fee_config.fee_rate
 stop
 ----
 
+[#_algorithm_ammexchange__ammswap]
 === Algorithm: `Amm::exchange` -> `Amm::swap`
 
 Given the previously defined `Amm::get_exchange_value` function this method can be simplified.
@@ -323,12 +329,15 @@ stop
 
 This would be removed to keep the interface simple as `Amm::swap` satisfies the requirement.
 
+[#_algorithm_ammbuy]
 === Algorithm: `Amm::buy`
 
 This function exists to provide a way for a user to easily by a given amount from the AMM.
 
+[#_algorithm_ammadd_liquidity]
 === Algorithm: `Amm::add_liquidity`
 
+[#_algorithm_ammremove_liquidity]
 === Algorithm: `Amm::remove_liquidity`
 
 === Fail Safes
@@ -348,17 +357,45 @@ For LBPs,
 
 == Implementation
 
+=== Stage 1: Cutting Down on Non-useful Parts for Launch
+
+. Remove Stableswap(Curve) implementation together with tests
+. Remove LBP implementation together with tests
+
+=== Stage 2: Consistently Implement the Balancer Based CPP Equations
+
+Implement the equations outlined in the <<_method>> in `code/parachain/frame/composable-maths/src/dex/constant_product.rs`.
+
+. Implement <<_unit_test_updates>>
+. `Out-given-in` with Fee (eq: 2 + <<_algorithm_constant_productout_given_in>>)
+. `In-given-out` with Fee (eq: 3)
+. `LPT received for deposited liquidity in a single pool asset` (eq: 5)
+. Correct `Initial LP Calculation` (eq: 6)
+. `Tokens received for redeemed LPT` (eq: 8)
+
+=== Stage 3: Change/Implement Algorithms for CPP
+
+. Implement <<_refactoring_currencypair_usage>>.
+. Implement <<_algorithm_ammcurrency_pair__ammassets>>.
+. Implement <<_algorithm_ammget_exchange_value>>.
+. Implement <<_algorithm_ammexchange__ammswap>>.
+. Implement <<_algorithm_ammbuy>>.
+. Implement <<_algorithm_ammadd_liquidity>>.
+. Implement <<_algorithm_ammremove_liquidity>>.
 
 == Quality Assurance
 
-
+QA could possibly just use the existing test cases and suites build for Uniswap pools in this case. Though more effort needs to be put into coming up with test cases that would cover LPT calculations and fees.
 
 == Audit
+
+Audit can be conducted taking into account the specification of the protocol outlined here according to balancer math. Any weaknesses found on the original balancer protocol should be taken into account in the audit.
 
 == Questions
 
 . Would LBPs need to be converted to normal CPP after the sale has ended?
 .. If so need to combine CPP and LBP data structures
+.. Answer: No, as we can just create a new LP
 
 [#_proof_of_fee_for_in_given_out]
 [appendix]
@@ -394,7 +431,7 @@ Pool invariant is given by,
 
 stem:[Pi_i B_i^(w_i) = C] <-(a)
 
-Given liquidity provided for the token `k`, We would like to issue stem:[P_"issued"] such that movement of `c` is propotional to it,
+Given liquidity provided for the token `k`, We would like to issue stem:[P_"issued"] such that movement of `c` is proportional to it,
 
 stem:[P_"issued" / P_"supply" = (Delta C) / C ] <-(b)
 
