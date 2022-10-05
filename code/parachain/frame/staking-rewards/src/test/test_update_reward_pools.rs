@@ -8,6 +8,8 @@ use composable_traits::staking::{
 };
 use frame_support::{traits::TryCollect, BoundedBTreeMap};
 
+use super::prelude::{MINIMUM_STAKING_AMOUNT, STAKING_FNFT_COLLECTION_ID};
+
 use crate::test::{
 	default_lock_config, mint_assets, new_test_ext,
 	prelude::{
@@ -18,8 +20,6 @@ use crate::test::{
 	test_reward_accumulation_hook::{check_rewards, CheckRewards, PoolRewards},
 	Test,
 };
-
-use super::prelude::STAKING_FNFT_COLLECTION_ID;
 
 #[test]
 fn test_update_reward_pool() {
@@ -50,6 +50,7 @@ fn test_update_reward_pool() {
 				lock: default_lock_config(),
 				share_asset_id: XPICA::ID,
 				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+				minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
 			},
 		);
 

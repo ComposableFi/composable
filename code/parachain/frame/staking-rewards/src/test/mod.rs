@@ -4,7 +4,7 @@ pub(crate) use crate::test::runtime::{new_test_ext, Test}; // for benchmarks
 use crate::{
 	claim_of_stake,
 	test::{
-		prelude::{stake_and_assert, unstake_and_assert, H256},
+		prelude::{stake_and_assert, unstake_and_assert, H256, MINIMUM_STAKING_AMOUNT},
 		runtime::*,
 	},
 	Config, RewardPoolConfigurationOf, RewardPools, StakeOf, Stakes,
@@ -94,6 +94,7 @@ fn duration_presets_minimum_is_1() {
 				},
 				share_asset_id: XPICA::ID,
 				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+				minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
 			},
 		));
 	});
@@ -117,6 +118,7 @@ fn test_create_reward_pool_invalid_end_block() {
 					lock: default_lock_config(),
 					share_asset_id: XPICA::ID,
 					financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+					minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
 				}
 			),
 			crate::Error::<Test>::EndBlockMustBeAfterStartBlock
@@ -142,6 +144,7 @@ fn create_staking_reward_pool_should_fail_when_pool_asset_id_is_zero() {
 					lock: default_lock_config(),
 					share_asset_id: XPICA::ID,
 					financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+					minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
 				}
 			),
 			crate::Error::<Test>::InvalidAssetId,
@@ -175,6 +178,7 @@ fn create_staking_reward_pool_should_fail_when_slashed_amount_is_less_than_exist
 					},
 					share_asset_id: XPICA::ID,
 					financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+					minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
 				}
 			),
 			crate::Error::<Test>::SlashedAmountTooLow,
@@ -200,6 +204,7 @@ fn create_staking_reward_pool_should_fail_when_share_asset_id_is_zero() {
 					lock: default_lock_config(),
 					share_asset_id: 0,
 					financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+					minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
 				}
 			),
 			crate::Error::<Test>::InvalidAssetId
@@ -225,6 +230,7 @@ fn create_staking_reward_pool_should_fail_when_fnft_collection_asset_id_is_zero(
 					lock: default_lock_config(),
 					share_asset_id: XPICA::ID,
 					financial_nft_asset_id: 0,
+					minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
 				}
 			),
 			crate::Error::<Test>::InvalidAssetId
@@ -272,6 +278,101 @@ fn stake_in_case_of_low_balance_should_not_work() {
 }
 
 #[test]
+fn stake_should_fail_if_amount_is_less_than_minimum() {
+	new_test_ext().execute_with(|| {
+		let staker = ALICE;
+		let amount = 9_000_u128;
+		let duration = ONE_HOUR;
+		let pool_id = PICA::ID;
+
+		process_and_progress_blocks::<StakingRewards, Test>(1);
+		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
+
+		assert_noop!(
+			StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration),
+			crate::Error::<Test>::StakedAmountTooLow
+		);
+	});
+}
+
+#[test]
+fn split_should_fail_if_any_amount_is_less_than_minimum() {
+	new_test_ext().execute_with(|| {
+		let staker = ALICE;
+
+		process_and_progress_blocks::<StakingRewards, Test>(1);
+
+		mint_assets([ALICE], [PICA::ID], PICA::units(10_000));
+
+		create_rewards_pool_and_assert::<Test, runtime::Event>(RewardRateBasedIncentive {
+			owner: ALICE,
+			asset_id: PICA::ID,
+			start_block: 2,
+			end_block: 5,
+			reward_configs: default_reward_config(),
+			lock: default_lock_config(),
+			share_asset_id: XPICA::ID,
+			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+			minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
+		});
+
+		process_and_progress_blocks::<StakingRewards, Test>(1);
+
+		let amount = 15_000;
+		let original_fnft_instance_id =
+			stake_and_assert::<Test, runtime::Event>(ALICE, PICA::ID, amount, ONE_MINUTE);
+
+		// Original stake is less than the minimum and new stake is greater.
+		let ratio = Permill::from_parts(333_334);
+
+		assert_eq!(ratio.mul_floor(amount), 5_000);
+		assert_eq!(ratio.left_from_one().mul_ceil(amount), 10_000);
+
+		assert_noop!(
+			StakingRewards::split(
+				Origin::signed(staker),
+				STAKING_FNFT_COLLECTION_ID,
+				original_fnft_instance_id,
+				ratio.try_into_validated().unwrap(),
+			),
+			crate::Error::<Test>::StakedAmountTooLow
+		);
+
+		// New stake is less than the minimum and original stake is greater.
+		let ratio = Permill::from_parts(666_667);
+
+		assert_eq!(ratio.mul_floor(amount), 10_000);
+		assert_eq!(ratio.left_from_one().mul_ceil(amount), 5_000);
+
+		assert_noop!(
+			StakingRewards::split(
+				Origin::signed(staker),
+				STAKING_FNFT_COLLECTION_ID,
+				original_fnft_instance_id,
+				ratio.try_into_validated().unwrap(),
+			),
+			crate::Error::<Test>::StakedAmountTooLow
+		);
+
+		// Both stakes are less than the minimum.
+		let ratio = Permill::from_parts(500_000);
+
+		assert_eq!(ratio.mul_floor(amount), 7_500);
+		assert_eq!(ratio.left_from_one().mul_ceil(amount), 7_500);
+
+		assert_noop!(
+			StakingRewards::split(
+				Origin::signed(staker),
+				STAKING_FNFT_COLLECTION_ID,
+				original_fnft_instance_id,
+				ratio.try_into_validated().unwrap(),
+			),
+			crate::Error::<Test>::StakedAmountTooLow
+		);
+	});
+}
+
+#[test]
 fn split_doesnt_cause_loss_in_assets() {
 	new_test_ext().execute_with(|| {
 		process_and_progress_blocks::<StakingRewards, Test>(1);
@@ -287,6 +388,7 @@ fn split_doesnt_cause_loss_in_assets() {
 			lock: default_lock_config(),
 			share_asset_id: XPICA::ID,
 			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+			minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
 		});
 
 		process_and_progress_blocks::<StakingRewards, Test>(1);
@@ -775,6 +877,7 @@ fn test_split_position() {
 			lock: default_lock_config(),
 			share_asset_id: XPICA::ID,
 			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+			minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
 		};
 
 		assert_extrinsic_event::<Test, _, _, _, _>(
@@ -957,6 +1060,7 @@ fn unstake_should_work() {
 			lock: default_lock_config(),
 			share_asset_id: XPICA::ID,
 			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+			minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
 		});
 
 		// far more than is necessary
@@ -1183,6 +1287,7 @@ fn duration_presets_are_required() {
 					},
 					share_asset_id: XPICA::ID,
 					financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+					minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
 				},
 			),
 			crate::Error::<Test>::NoDurationPresetsProvided
@@ -1253,6 +1358,7 @@ fn create_default_reward_pool() {
 				lock: default_lock_config(),
 				share_asset_id: XPICA::ID,
 				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+				minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
 			},
 		),
 		crate::Event::<Test>::RewardPoolCreated { pool_id: PICA::ID, owner: ALICE, end_block: 5 },
@@ -1270,6 +1376,7 @@ fn get_default_reward_pool() -> RewardPoolConfigurationOf<Test> {
 		lock: default_lock_config(),
 		share_asset_id: XPICA::ID,
 		financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+		minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
 	}
 }
 

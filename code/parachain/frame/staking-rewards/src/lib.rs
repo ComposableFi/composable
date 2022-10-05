@@ -252,6 +252,8 @@ pub mod pallet {
 		NoDurationPresetsProvided,
 		/// Slashed amount of minimum reward is less than existential deposit
 		SlashedAmountTooLow,
+		/// Staked amount is less than the minimum staking amount for the pool.
+		StakedAmountTooLow,
 	}
 
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
@@ -493,6 +495,7 @@ pub mod pallet {
 			},
 			share_asset_id,
 			financial_nft_asset_id,
+			minimum_staking_amount: T::Balance::from(10_000_u128), // TODO: review this amount
 		};
 		RewardPools::<T>::insert(staked_asset_id, staking_pool);
 		T::FinancialNft::create_collection(&financial_nft_asset_id, owner, owner)
@@ -678,6 +681,7 @@ pub mod pallet {
 					lock,
 					share_asset_id,
 					financial_nft_asset_id,
+					minimum_staking_amount,
 				} => {
 					// AssetIds must be greater than 0
 					ensure!(!pool_asset.is_zero(), Error::<T>::InvalidAssetId);
@@ -742,6 +746,7 @@ pub mod pallet {
 							lock,
 							share_asset_id,
 							financial_nft_asset_id,
+							minimum_staking_amount,
 						},
 					);
 
@@ -799,6 +804,8 @@ pub mod pallet {
 		) -> Result<Self::PositionId, DispatchError> {
 			let mut rewards_pool =
 				RewardPools::<T>::try_get(pool_id).map_err(|_| Error::<T>::RewardsPoolNotFound)?;
+
+			ensure!(amount >= rewards_pool.minimum_staking_amount, Error::<T>::StakedAmountTooLow);
 
 			ensure!(
 				rewards_pool.start_block <= frame_system::Pallet::<T>::current_block_number(),
@@ -1025,6 +1032,20 @@ pub mod pallet {
 					// position, that way any rounding is accounted for.
 					let new_stake = left_from_one_ratio.mul_ceil(existing_position.stake);
 					let new_share = left_from_one_ratio.mul_ceil(existing_position.share);
+
+					let rewards_pool = RewardPools::<T>::get(existing_position.reward_pool_id)
+						.ok_or(Error::<T>::RewardsPoolNotFound)?;
+
+					ensure!(
+						ratio.mul_floor(existing_position.stake) >=
+							rewards_pool.minimum_staking_amount,
+						Error::<T>::StakedAmountTooLow
+					);
+					ensure!(
+						new_stake >= rewards_pool.minimum_staking_amount,
+						Error::<T>::StakedAmountTooLow
+					);
+
 					let new_reductions = {
 						let mut r = existing_position.reductions.clone();
 						for (_, reduction) in &mut r {
@@ -1038,9 +1059,6 @@ pub mod pallet {
 					for (_, reduction) in &mut existing_position.reductions {
 						*reduction = ratio.mul_floor(*reduction);
 					}
-
-					let rewards_pool = RewardPools::<T>::get(existing_position.reward_pool_id)
-						.ok_or(Error::<T>::RewardsPoolNotFound)?;
 
 					let new_fnft_instance_id =
 						T::FinancialNft::get_next_nft_id(fnft_collection_id)?;
