@@ -1,8 +1,12 @@
+extern crate alloc;
+
 use crate::{
 	error::ContractError,
 	msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, XCVMInstruction, XCVMProgram},
 	state::{Config, CONFIG},
 };
+use alloc::borrow::Cow;
+use core::cmp::max;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
@@ -13,10 +17,13 @@ use cw2::set_contract_version;
 use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg};
 use cw_utils::ensure_from_older_version;
 use num::Zero;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
 use xcvm_asset_registry::msg::{GetAssetContractResponse, QueryMsg as AssetRegistryQueryMsg};
-use xcvm_core::{Displayed, Funds, Instruction, NetworkId};
+use xcvm_core::{
+	BindingValue, Displayed, Funds, IndexedBinding, Instruction, LateCall, NetworkId,
+	StaticBinding, TypedCosmosMsg,
+};
 
 const CONTRACT_NAME: &str = "composable:xcvm-interpreter";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -74,9 +81,9 @@ pub fn interpret_program(
 		response = match instruction {
 			Instruction::Call { encoded } =>
 				if index >= instruction_len - 1 {
-					interpret_call(encoded, response)?
+					interpret_call(deps.as_ref(), &env, encoded, response)?
 				} else {
-					let response = interpret_call(encoded, response)?;
+					let response = interpret_call(deps.as_ref(), &env, encoded, response)?;
 					let instructions: VecDeque<XCVMInstruction> =
 						instruction_iter.map(|(_, instr)| instr).collect();
 					let program = XCVMProgram { tag: program.tag, instructions };
@@ -99,9 +106,104 @@ pub fn interpret_program(
 	)))
 }
 
-pub fn interpret_call(encoded: Vec<u8>, response: Response) -> Result<Response, ContractError> {
-	let cosmos_msg: CosmosMsg =
-		serde_json_wasm::from_slice(&encoded).map_err(|_| ContractError::InvalidCallPayload)?;
+// TODO(aeryz): We should either have a `Call` instruction which will have two variants
+// `Raw | Late`, or have two seperate instructions `RawCall | LateCall`. Because even if
+// users specify no bindings, they still need to pay for conversion to `CosmosMsg`
+pub fn interpret_call(
+	deps: Deps,
+	env: &Env,
+	encoded: Vec<u8>,
+	response: Response,
+) -> Result<Response, ContractError> {
+	let LateCall { bindings, encoded_call } =
+		serde_json::from_slice(&encoded).map_err(|_| ContractError::InvalidCallPayload)?;
+	let cosmwasm_msg: TypedCosmosMsg<serde_json::Value> = if !bindings.is_empty() {
+		let Config { user_id, registry_address, .. } = CONFIG.load(deps.storage)?;
+		let new_len = {
+			let max_size = max(user_id.len(), env.contract.address.as_bytes().len());
+			max_size * bindings.len() + encoded_call.len()
+		};
+
+		println!("original string is: {}", String::from_utf8_lossy(&encoded_call));
+		let mut formatted_call = vec![0; new_len];
+		// Current index of the unformatted call
+		let mut original_index: usize = 0;
+		// This stores the amount of shifting we caused because of the data insertion. For example,
+		// inserting a contract address "addr1234" causes 8 chars shift. Which means index 'X' in
+		// the unformatted call, will be equal to 'X + 8' in the output call.
+		let mut offset: usize = 0;
+		for binding in bindings {
+			let (binding_index, binding) = (binding.0 as usize, binding.1);
+			// Current index of the output call
+			let shifted_index = original_index + offset;
+			println!(
+				"handling: {:?}, original index: {}, binding index: {}, shifted_index: {}",
+				binding, original_index, binding_index, shifted_index
+			);
+
+			// Check for overflow
+			if original_index > binding_index {
+				return Err(ContractError::InvalidBindings)
+			}
+
+			// Copy everything until the index of where binding happens from encoded to formatted
+			// call. Eg.
+			// Formatted call: `{ "hello": "" }`
+			// Output call supposed to be: `{ "hello": "contract_addr" }`
+			// In the first iteration, this will copy `{ "hello": "` to the formatted call.
+			formatted_call[shifted_index..=binding_index + offset]
+				.copy_from_slice(&encoded_call[original_index..=binding_index]);
+
+			println!(
+				"Current state of formatted_call: {}",
+				String::from_utf8_lossy(&formatted_call)
+			);
+
+			let data: Cow<[u8]> = match binding {
+				BindingValue::Relayer => Cow::Borrowed(&user_id),
+				BindingValue::This => Cow::Borrowed(env.contract.address.as_bytes()),
+				BindingValue::Asset(asset_id) => {
+					let query_msg = AssetRegistryQueryMsg::GetAssetContract(asset_id.into());
+
+					let response: GetAssetContractResponse = deps.querier.query(
+						&WasmQuery::Smart {
+							contract_addr: registry_address.clone().into_string(),
+							msg: to_binary(&query_msg)?,
+						}
+						.into(),
+					)?;
+
+					Cow::Owned(response.addr.into_string().into())
+				},
+				BindingValue::Ip => return Err(ContractError::InvalidBindings),
+			};
+
+			println!(
+				"Inserting data {} with size {} to {}",
+				String::from_utf8_lossy(&data),
+				data.len(),
+				shifted_index
+			);
+
+			formatted_call[binding_index + offset + 1..=binding_index + offset + data.len()]
+				.copy_from_slice(&data);
+			offset += data.len();
+			original_index = binding_index + 1;
+		}
+		// Copy the rest of the data to the output data
+		if original_index < encoded_call.len() {
+			formatted_call[original_index + offset..encoded_call.len() + offset]
+				.copy_from_slice(&encoded_call[original_index..]);
+		}
+		// Get rid of the final 0's.
+		formatted_call.truncate(encoded_call.len() + offset);
+		serde_json_wasm::from_slice(&formatted_call)
+			.map_err(|_| ContractError::InvalidCallPayload)?
+	} else {
+		serde_json_wasm::from_slice(&encoded_call).map_err(|_| ContractError::InvalidCallPayload)?
+	};
+
+	let cosmos_msg: CosmosMsg = cosmwasm_msg.try_into().unwrap();
 
 	Ok(response.add_message(cosmos_msg))
 }
@@ -253,7 +355,7 @@ mod tests {
 	use super::*;
 	use cosmwasm_std::{
 		testing::{mock_dependencies, mock_env, mock_info, MockQuerier},
-		wasm_execute, Addr, ContractResult, QuerierResult, SystemResult,
+		wasm_execute, Addr, ContractResult, QuerierResult, SystemResult, WasmMsg,
 	};
 	use xcvm_core::{Amount, AssetId, Picasso, ETH, PICA};
 
@@ -437,5 +539,62 @@ mod tests {
 		let res = execute(deps.as_mut(), mock_env(), info.clone(), ExecuteMsg::Execute { program })
 			.unwrap();
 		assert_eq!(res.events[0], Event::new("xcvm.interpreter.spawn").add_attribute("origin_network_id", "1").add_attribute("origin_user_id", "[]").add_attribute("program", r#"{"network":1,"salt":[],"assets":{},"program":{"tag":[],"instructions":[{"call":{"encoded":[]}}]}}"#.to_string()));
+	}
+
+	#[test]
+	fn late_bindings() {
+		let mut deps = mock_dependencies();
+
+		let info = mock_info("sender", &vec![]);
+		let _ = instantiate(
+			deps.as_mut(),
+			mock_env(),
+			info.clone(),
+			InstantiateMsg {
+				registry_address: "addr".into(),
+				network_id: Picasso.into(),
+				user_id: vec![65, 65],
+			},
+		)
+		.unwrap();
+
+		#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+		struct TestMsg {
+			part1: String,
+			part2: String,
+			part3: String,
+		}
+
+		let msg = LateCall::execute(
+			StaticBinding::Some(BindingValue::This),
+			IndexedBinding::Some((
+				vec![(9, BindingValue::This), (36, BindingValue::Relayer)],
+				TestMsg {
+					part1: String::new(),
+					part2: String::from("hello"),
+					part3: String::new(),
+				},
+			)),
+		)
+		.unwrap();
+
+		let msg = serde_json_wasm::to_string(&msg).unwrap();
+		let instructions = vec![XCVMInstruction::Call { encoded: msg.as_bytes().into() }];
+		let program = XCVMProgram { tag: vec![], instructions: instructions.clone().into() };
+		let res = execute(deps.as_mut(), mock_env(), info.clone(), ExecuteMsg::Execute { program })
+			.unwrap();
+		let final_test_msg = TestMsg {
+			part1: String::from("cosmos2contract"),
+			part2: String::from("hello"),
+			part3: String::from("AA"),
+		};
+		assert_eq!(
+			CosmosMsg::Wasm(WasmMsg::Execute {
+				contract_addr: String::from("cosmos2contract"),
+				msg: cosmwasm_std::Binary(serde_json::to_vec(&final_test_msg).unwrap()),
+				funds: Vec::new()
+			}),
+			res.messages[0].msg
+		);
 	}
 }

@@ -14,4 +14,7 @@ pub enum ContractError {
 
 	#[error("A program tag must be a correct utf8 encoded string")]
 	InvalidProgramTag,
+
+	#[error("Bindings are invalid")]
+	InvalidBindings,
 }

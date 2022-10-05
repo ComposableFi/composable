@@ -4,6 +4,23 @@ use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
 
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Clone, PartialEq, Eq, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum BindingValue {
+	/// Instruction pointer
+	Ip,
+	/// Relayer's address
+	Relayer,
+	/// Interpreter's address
+	This,
+	/// Asset's address
+	Asset(u32),
+}
+
+/// Bindings: (Index, Binding)
+pub type Bindings = Vec<(u32, BindingValue)>;
+
 /// Base XCVM instructions.
 /// This set will remain as small as possible, expressiveness must come on `top` of the base
 /// instructions.

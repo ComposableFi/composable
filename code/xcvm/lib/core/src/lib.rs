@@ -4,12 +4,13 @@ extern crate alloc;
 
 mod abstraction;
 mod asset;
+mod cosmwasm;
 mod instruction;
 mod network;
 mod program;
 mod protocol;
 
-pub use crate::{asset::*, instruction::*, network::*, program::*, protocol::*};
+pub use crate::{asset::*, cosmwasm::*, instruction::*, network::*, program::*, protocol::*};
 use alloc::{collections::VecDeque, vec::Vec};
 use core::marker::PhantomData;
 

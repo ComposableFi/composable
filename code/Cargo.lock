@@ -16584,12 +16584,14 @@ dependencies = [
 name = "xcvm-core"
 version = "0.1.0"
 dependencies = [
+ "cosmwasm-std",
  "fixed",
  "num",
  "parity-scale-codec",
  "scale-info",
  "schemars",
  "serde",
+ "serde_json",
 ]
 
 [[package]]
