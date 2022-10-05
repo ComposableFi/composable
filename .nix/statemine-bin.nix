@@ -8,67 +8,8 @@ let
     rev = branch;
     hash = "sha256-nbHdXv/93F6vHXWr/r9+AqvBBa5f9L6tmoIs8EEqiKM=";
   };
-  substrate-build-attrs = {
-    buildInputs = [ openssl zstd ];
-    nativeBuildInputs = [ clang openssl pkg-config ]
-      ++ lib.optional stdenv.isDarwin
-      (with darwin.apple_sdk.frameworks; [ Security SystemConfiguration ]);
-    LD_LIBRARY_PATH = lib.strings.makeLibraryPath [
-      stdenv.cc.cc.lib
-      llvmPackages.libclang.lib
-    ];
-    LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
-    PROTOC = "${protobuf}/bin/protoc";
-    ROCKSDB_LIB_DIR = "${rocksdb}/lib";
-  };
 in with pkgs;
-# rust-nightly.buildPackage (substrate-build-attrs // rec {
-#   __noChroot = true;
-#   name = "statemine-v${version}";
-#   version = "0.9.27";
-#   src = paritytech-cumulus;
-#   cargoSha256 = "sha256-s3i+XqQH+FHCqG/L/gI9BWNKDMxxLwZ/tbeFD68hNew=";
-#   doCheck = false;
-#   meta = { mainProgram = "polkadot-parachain"; };
-#   cargoBuildCommand = "cargo build --release --locked --bin polkadot-parachain";
-#   installPhase = ''
-#     mkdir -p $out/bin
-#     cp target/release/polkadot-parachain $out/bin/polkadot-parachain
-#   '';
-# })
-# rustPlatform.buildRustPackage (rec {
-#   name = "cumulus-v${version}";
-#   version = "0.9.27";
-#   pname = "polkadot-parachain";
-#   src = paritytech-cumulus;
-#   cargoDepsName = pname;
-#   cargoHash = "sha256-hL+cIQJXPzZjvIxoL0EJkrss9Q+NUBlys1cnH9x7DE0=";
-#   meta = { mainProgram = "polkadot-parachain"; };
-#   buildNoDefaultFeatures = true;
-#   doCheck = false;
-#   __noChroot = true;
-#   buildInputs = [ openssl zstd ];
-#   # configurePhase = ''
-#   #   	mkdir home
-#   #     export HOME=$PWD/home	
-#   #     export WASM_TARGET_DIRECTORY=$PWD/home
-#   # '';
-#   # buildPhase = ''
-#   # cargo build --release --locked --bin ${pname} --no-default-features
-#   # '';
-#   cargoDeps = rustPlatform.importCargoLock { lockFile = ./Cargo.lock; };
-#   nativeBuildInputs = [ rust-nightly clang pkg-config ]
-#     ++ lib.optional stdenv.isDarwin
-#     (with darwin.apple_sdk.frameworks; [ Security SystemConfiguration ]);
-#   LD_LIBRARY_PATH =
-#     lib.strings.makeLibraryPath [ stdenv.cc.cc.lib llvmPackages.libclang.lib ];
-#   LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
-#   PROTOC = "${protobuf}/bin/protoc";
-#   ROCKSDB_LIB_DIR = "${rocksdb}/lib";
-#   RUST_BACKTRACE = "full";
-# })
-
-# 1. rustPlatform.buildRustPackage and ipetkov/crane.buildPackage fail to build things
+# 1. nixpkgfs#rustPlatform.buildRustPackage and ipetkov/crane.buildPackage fail to build things
 # 2. tried variations to setup deps - did not worked.
 # 3. first fails with:
 # error: builder for '/nix/store/w8ly900j5cp0sgpd2zha5fiq9ylz4k0p-cumulus-v0.9.27.drv' failed with exit code 101;
