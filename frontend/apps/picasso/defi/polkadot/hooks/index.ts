@@ -1,7 +1,7 @@
 import {
   useDotSamaContext,
   useParachainApi,
-  useRelayChainApi,
+  useRelayChainApi
 } from "substrate-react";
 
 export const usePicassoProvider = () => useParachainApi("picasso");
@@ -26,3 +26,5 @@ export const useKusamaAccounts = (): { name: string; address: string }[] => {
 };
 
 export * from "./useBlockInterval";
+export * from "./useExistentialDeposit";
+export * from "./useTransfer";

@@ -1,40 +1,25 @@
 import { useStore } from "@/stores/root";
-import { useEffect, useMemo } from "react";
-import { getTransferToken } from "@/components/Organisms/Transfer/xcmp";
-import { useAllParachainProviders } from "@/defi/polkadot/context/hooks";
+import { useEffect } from "react";
 import BigNumber from "bignumber.js";
 import { callbackGate, fromChainIdUnit, unwrapNumberOrHex } from "shared";
-import { useSelectedAccount } from "@/defi/polkadot/hooks";
+import { useTransfer } from "@/defi/polkadot/hooks/useTransfer";
 
 export const useExistentialDeposit = () => {
-  const tokenId = useStore((state) => state.transfers.tokenId);
-  const from = useStore((state) => state.transfers.networks.from);
-  const to = useStore((state) => state.transfers.networks.to);
-  const allProviders = useAllParachainProviders();
-  const account = useSelectedAccount();
-  const updateFeeToken = useStore((state) => state.transfers.updateFeeToken);
-  const getFeeToken = useStore((state) => state.transfers.getFeeToken);
+  const { tokenId, from, balance, to, account, fromProvider } = useTransfer();
+
+  const updateFeeToken = useStore(state => state.transfers.updateFeeToken);
+
+  const getFeeToken = useStore(state => state.transfers.getFeeToken);
 
   const { native, assets } = useStore(
     ({ substrateBalances }) => substrateBalances.assets[from]
   );
 
-  const nativeTo = useStore(
-    ({ substrateBalances }) => substrateBalances.assets[to].native
-  );
-
   const { updateExistentialDeposit, existentialDeposit } = useStore(
-    (state) => state.transfers
+    state => state.transfers
   );
 
-  const isNativeToNetwork = useMemo(() => {
-    const transferableTokenId = getTransferToken(from, to);
-    return assets[transferableTokenId].meta.supportedNetwork[from] === 1;
-  }, [assets, from, to]);
-
-  const balance = isNativeToNetwork ? native.balance : assets[tokenId].balance;
-
-  const parachainApi = allProviders[from]?.parachainApi;
+  const { parachainApi } = fromProvider;
 
   /**
    * Fetch transfer token based on user config (only on karura and picasso)
@@ -70,10 +55,8 @@ export const useExistentialDeposit = () => {
               updateFeeToken(1);
               return;
             }
-            const [assetId, existentialDeposit] = result.toJSON();
-            updateExistentialDeposit(
-              fromChainIdUnit(unwrapNumberOrHex(existentialDeposit))
-            );
+            const [assetId, ed] = result.toJSON();
+            updateExistentialDeposit(fromChainIdUnit(unwrapNumberOrHex(ed)));
             updateFeeToken(Number(assetId));
           },
           parachainApi,
@@ -81,8 +64,7 @@ export const useExistentialDeposit = () => {
         );
         break;
       case "kusama":
-        callbackGate(async (api) => {
-          // TODO: relaychain connection fix (does not work as of now)
+        callbackGate(async api => {
           const ed = api.consts.balances.existentialDeposit.toString();
           updateExistentialDeposit(fromChainIdUnit(unwrapNumberOrHex(ed)));
           updateFeeToken(Number(1));
@@ -92,17 +74,25 @@ export const useExistentialDeposit = () => {
         console.log(from);
         break;
     }
-  }, [from, to, account]);
+  }, [
+    from,
+    to,
+    account,
+    tokenId,
+    parachainApi,
+    updateExistentialDeposit,
+    updateFeeToken,
+    assets
+  ]);
 
   return {
     balance,
     tokenId,
-    isNativeToNetwork,
     from,
     to,
     assets,
     native,
     existentialDeposit,
-    feeToken: getFeeToken(from),
+    feeToken: getFeeToken(from)
   };
 };

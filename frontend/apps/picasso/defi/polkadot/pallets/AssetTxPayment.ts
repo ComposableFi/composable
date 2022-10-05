@@ -53,13 +53,17 @@ export async function getPaymentAsset({
   walletAddress,
   network
 }: GetPaymentAssetArgs) {
-  const result: any = await api.query.assetTxPayment.paymentAssets(
-    api.createType("AccountId32", walletAddress)
-  );
+  if ("assetTxPayment" in api.query) {
+    const result: any = await api.query.assetTxPayment.paymentAssets(
+      api.createType("AccountId32", walletAddress)
+    );
 
-  if (result.isSome) {
-    const [assetId, _] = result.toJSON();
-    return getAssetById(network, assetId);
+    if (result.isSome) {
+      const [assetId, _] = result.toJSON();
+      return getAssetById(network, assetId);
+    }
+
+    return Assets.pica;
   }
 
   return Assets.pica;

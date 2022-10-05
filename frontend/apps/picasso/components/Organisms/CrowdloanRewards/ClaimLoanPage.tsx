@@ -23,7 +23,11 @@ import { updateBalances } from "@/stores/defi/polkadot/balances/PolkadotBalances
 import { SubstrateNetworkId } from "@/defi/polkadot/types";
 import { OpenInNewRounded } from "@mui/icons-material";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import { useDotSamaContext, useExecutor, usePendingExtrinsic } from "substrate-react";
+import {
+  useDotSamaContext,
+  useExecutor,
+  usePendingExtrinsic
+} from "substrate-react";
 import { useSnackbar } from "notistack";
 import BigNumber from "bignumber.js";
 
@@ -127,7 +131,7 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
       err.message === "1010: Invalid Transaction: Custom error: 3"
     ) {
       setUserClaimEligibility(false);
-      setIneligibleText((s) => {
+      setIneligibleText(s => {
         s.title = ERROR_MESSAGES.WRONG_ADDRESS.title;
         s.textBelow = ERROR_MESSAGES.WRONG_ADDRESS.message;
         return { ...s };
@@ -169,7 +173,7 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
   useEffect(() => {
     if (crUiState.useAssociationMode === "ethereum") {
       if (!isActive) {
-        setIneligibleText((s) => {
+        setIneligibleText(s => {
           s.textBelow = ERROR_MESSAGES.ETH_WALLET_NOT_CONNECTED.message;
           return s;
         });
@@ -177,7 +181,7 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
     }
 
     if (extensionStatus !== "connected" || !accounts.length) {
-      setIneligibleText((s) => {
+      setIneligibleText(s => {
         s.textBelow = ERROR_MESSAGES.KSM_WALLET_NOT_CONNECTED.message;
         return s;
       });
@@ -210,10 +214,10 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
           ? claimablePICA
           : netPICAVested.times(initialPayment)
         : crUiState.useAssociationMode === "relayChain"
-          ? userAssociation === null
-            ? netPICAVested.times(initialPayment)
-            : claimablePICA
+        ? userAssociation === null
+          ? netPICAVested.times(initialPayment)
           : claimablePICA
+        : claimablePICA
       : claimablePICA;
 
   const isPendingClaim = usePendingExtrinsic(
@@ -244,14 +248,14 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
           selectedAccount.address,
           parachainApi,
           injector.signer,
-          (txHash) => {
+          txHash => {
             enqueueSnackbar("Claim Processing", {
               variant: "info",
               isClosable: true,
               url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash
             });
           },
-          (txHash) => {
+          txHash => {
             enqueueSnackbar("Claim Finalized", {
               variant: "success",
               isClosable: true,
@@ -271,7 +275,7 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
           }
         );
       }
-    } catch (err: any) {
+    } catch (err) {
       console.log(err);
       closeKSMClaimModal();
     }
@@ -299,14 +303,14 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
         await executor.executeUnsigned(
           api.tx.crowdloanRewards.associate(accId32, param),
           api,
-          (_txHash) => {
+          _txHash => {
             enqueueSnackbar("Claim Processing", {
               variant: "info",
               isClosable: true,
               url: SUBSTRATE_NETWORKS.picasso.subscanUrl + _txHash
             });
           },
-          (_txHash) => {
+          _txHash => {
             setUserCrowdloanData(
               "0",
               netPICAVested.toString(),
@@ -324,7 +328,7 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
             onAssociationSuccess("relayChain", address);
           }
         );
-      } catch (err: any) {
+      } catch (err) {
         onAssociationFail(err);
       }
     }
@@ -349,14 +353,14 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
         await executor.executeUnsigned(
           api.tx.crowdloanRewards.associate(accId32, param),
           api,
-          (_txHash) => {
+          _txHash => {
             enqueueSnackbar("Claim Processing", {
               variant: "info",
               isClosable: true,
               url: SUBSTRATE_NETWORKS.picasso.subscanUrl + _txHash
             });
           },
-          (_txHash) => {
+          _txHash => {
             setUserCrowdloanData(
               "0",
               netPICAVested.toString(),
@@ -374,7 +378,7 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
             onAssociationSuccess("ethereum", address);
           }
         );
-      } catch (err: any) {
+      } catch (err) {
         onAssociationFail(err);
       }
     }
@@ -439,8 +443,8 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
               <StablecoinClaimForm
                 disabled={Boolean(
                   (userAssociation !== null && claimablePICA.lte(0)) ||
-                  isPendingClaim ||
-                  isPendingAssociate
+                    isPendingClaim ||
+                    isPendingAssociate
                 )}
                 claimedPICA={claimedPICA}
                 crowdLoanContribution={contributedAmount}
@@ -460,8 +464,8 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
               <KSMClaimForm
                 disabled={Boolean(
                   (userAssociation !== null && claimablePICA.lte(0)) ||
-                  isPendingClaim ||
-                  isPendingAssociate
+                    isPendingClaim ||
+                    isPendingAssociate
                 )}
                 claimedPICA={claimedPICA}
                 crowdLoanContribution={contributedAmount}

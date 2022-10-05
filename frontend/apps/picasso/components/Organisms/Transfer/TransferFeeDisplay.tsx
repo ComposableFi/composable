@@ -7,9 +7,8 @@ import {
 import { FeeDisplay } from "@/components";
 import React, { useCallback, useEffect, useMemo } from "react";
 import { useStore } from "@/stores/root";
-import { useAllParachainProviders } from "@/defi/polkadot/context/hooks";
 import { useExecutor } from "substrate-react";
-import { useSelectedAccount } from "@/defi/polkadot/hooks";
+import { useTransfer } from "@/defi/polkadot/hooks";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { AssetId } from "@/defi/polkadot/types";
 import BigNumber from "bignumber.js";
@@ -17,32 +16,32 @@ import {
   getAmountToTransfer,
   getApiCallAndSigner
 } from "@/defi/polkadot/pallets/Transfer";
-import { useExistentialDeposit } from "@/components/Organisms/Transfer/hooks";
+import { useExistentialDeposit } from "@/defi/polkadot/hooks/useExistentialDeposit";
 import { getPaymentAsset } from "@/defi/polkadot/pallets/AssetTxPayment";
+import { AssetMetadata } from "@/defi/polkadot/Assets";
 
 export const TransferFeeDisplay = () => {
-  const from = useStore(state => state.transfers.networks.from);
-  const to = useStore(state => state.transfers.networks.to);
-  const allProviders = useAllParachainProviders();
-  const provider = allProviders[from];
+  const { amount, from, to, balance, account, fromProvider } = useTransfer();
   const executor = useExecutor();
-  const account = useSelectedAccount();
+  const weight = useStore(state => state.transfers.fee.weight);
   const assets = useStore(
     ({ substrateBalances }) => substrateBalances.assets[from].assets
   );
-  const amount = useStore(state => state.transfers.amount);
-  const { hasFeeItem, feeItem } = useStore(({ transfers }) => transfers);
+  const feeItem = useStore(state => state.transfers.feeItem);
+  const hasFeeItem = useStore(state => state.transfers.hasFeeItem);
+  const setFeeItem = useStore(state => state.transfers.setFeeItem);
   const selectedRecipient = useStore(
     state => state.transfers.recipients.selected
   );
   const keepAlive = useStore(state => state.transfers.keepAlive);
-  const { existentialDeposit, feeToken, balance } = useExistentialDeposit();
-  const { updateFee, fee } = useStore(({ transfers }) => transfers);
+  const { existentialDeposit, feeToken } = useExistentialDeposit();
+  const fee = useStore(state => state.transfers.fee);
+  const updateFee = useStore(state => state.transfers.updateFee);
 
   const symbol = useMemo(() => {
     let out;
     if (hasFeeItem && feeItem.length > 0) {
-      out = feeItem as AssetId;
+      out = feeItem;
     } else if ("assetId" in feeToken) {
       out = feeToken.assetId;
     } else {
@@ -57,7 +56,7 @@ export const TransferFeeDisplay = () => {
 
   const calculateFee = useCallback(() => {
     callbackGate(
-      async (api, exec, acc) => {
+      async (api, exec, acc, hasFeeItem, destWeight) => {
         const TARGET_ACCOUNT_ADDRESS = selectedRecipient.length
           ? selectedRecipient
           : acc.address;
@@ -84,7 +83,8 @@ export const TransferFeeDisplay = () => {
           TARGET_PARACHAIN_ID,
           from,
           to,
-          hasFeeItem
+          hasFeeItem,
+          destWeight
         );
 
         const info = await exec.paymentInfo(call, acc.address, signer);
@@ -99,54 +99,44 @@ export const TransferFeeDisplay = () => {
           partialFee: BigNumber;
           weight: BigNumber;
         });
-        console.log(
-          JSON.stringify({
-            class: info.class.toString(),
-            partialFee: fromChainIdUnit(
-              unwrapNumberOrHex(info.partialFee.toString())
-            ),
-            weight: unwrapNumberOrHex(info.weight.toString())
-          })
-        );
       },
-      provider.parachainApi,
+      fromProvider.parachainApi,
       executor,
       account,
-      hasFeeItem && feeItem.length === 0
+      hasFeeItem && feeItem.length === 0,
+      weight
     );
   }, [
     account,
     amount,
-    balance,
-    executor,
-    existentialDeposit,
-    feeItem.length,
+    feeItem,
     feeItemId,
     from,
-    keepAlive,
-    provider.parachainApi,
-    selectedRecipient,
-    to,
-    updateFee
+    fromProvider.parachainApi,
+    to
   ]);
 
   useEffect(() => {
     calculateFee();
-  }, [calculateFee]);
+  }, [amount, from]);
 
   useEffect(() => {
-    const asset = callbackGate(
+    const asset: Promise<AssetMetadata> = callbackGate(
       (api, walletAddress) =>
         getPaymentAsset({
           api,
           walletAddress,
           network: from
         }),
-      provider.parachainApi,
+      fromProvider.parachainApi,
       account?.address
     );
-    asset.then(console.log);
-  }, [provider, account, from]);
+    asset.then(paymentAsset => {
+      if ("assetId" in paymentAsset) {
+        setFeeItem(paymentAsset.assetId);
+      }
+    });
+  }, [fromProvider.parachainApi, account?.address, from]);
 
   return (
     <FeeDisplay

@@ -7,6 +7,7 @@ import { APP_NAME } from "@/defi/polkadot/constants";
 import { toChainIdUnit } from "shared";
 import { CurrencyId } from "defi-interfaces";
 import { XcmVersionedMultiLocation } from "@polkadot/types/lookup";
+import BigNumber from "bignumber.js";
 
 export type TransferHandlerArgs = {
   api: ApiPromise;
@@ -18,6 +19,7 @@ export type TransferHandlerArgs = {
   signerAddress: string;
   hasFeeItem: boolean;
   feeItemId: number | null;
+  weight: BigNumber;
 };
 
 export function availableTargetNetwork(
@@ -50,14 +52,15 @@ export async function getTransferCallKusamaPicasso(
   targetChain: number | 0,
   targetAccount: string,
   amount: u128,
-  signerAddress: string
+  signerAddress: string,
+  weight: BigNumber
 ) {
   const destination = api.createType("XcmVersionedMultiLocation", {
     V0: api.createType("XcmV0MultiLocation", {
       X1: api.createType("XcmV0Junction", {
-        Parachain: api.createType("Compact<u32>", targetChain),
-      }),
-    }),
+        Parachain: api.createType("Compact<u32>", targetChain)
+      })
+    })
   });
 
   // Setting the wallet receiving the funds
@@ -66,10 +69,10 @@ export async function getTransferCallKusamaPicasso(
       X1: api.createType("XcmV0Junction", {
         AccountId32: {
           network: api.createType("XcmV0JunctionNetworkId", "Any"),
-          id: api.createType("AccountId32", targetAccount),
-        },
-      }),
-    }),
+          id: api.createType("AccountId32", targetAccount)
+        }
+      })
+    })
   });
 
   // Setting up the asset & amount
@@ -78,10 +81,10 @@ export async function getTransferCallKusamaPicasso(
       api.createType("XcmV0MultiAsset", {
         ConcreteFungible: {
           id: api.createType("XcmV0MultiLocation", "Null"),
-          amount,
-        },
-      }),
-    ],
+          amount
+        }
+      })
+    ]
   });
 
   // Setting the asset which will be used for fees (0 refers to first in asset list)
@@ -103,23 +106,24 @@ export async function getTransferCallPicassoKarura(
   hasFeeItem: boolean,
   signerAddress: string,
   amount: u128,
-  feeItemId: number | null
+  feeItemId: number | null,
+  weight: BigNumber
 ) {
   const destination = api.createType("XcmVersionedMultiLocation", {
     V0: api.createType("XcmV0MultiLocation", {
       X3: [
         api.createType("XcmV0Junction", "Parent"),
         api.createType("XcmV0Junction", {
-          Parachain: api.createType("Compact<u32>", targetChain),
+          Parachain: api.createType("Compact<u32>", targetChain)
         }),
         api.createType("XcmV0Junction", {
           AccountId32: {
             network: api.createType("XcmV0JunctionNetworkId", "Any"),
-            id: api.createType("AccountId32", targetAccount),
-          },
-        }),
-      ],
-    }),
+            id: api.createType("AccountId32", targetAccount)
+          }
+        })
+      ]
+    })
   });
 
   // TODO: Refactor this logic to parent
@@ -136,11 +140,11 @@ export async function getTransferCallPicassoKarura(
     [kusdAssetId, amount], // KUSD
     [
       api.createType("u128", feeItemId),
-      api.createType("u128", toChainIdUnit(1).toString()),
-    ], // Asset to be used as fees, minFee should be calculated.
+      api.createType("u128", toChainIdUnit(1).toString())
+    ] // Asset to be used as fees, minFee should be calculated.
   ];
 
-  const destWeight = api.createType("u64", 900000000000); // > 9000000000
+  const destWeight = api.createType("u64", weight.toString()); // > 9000000000
 
   const signer = await getSigner(APP_NAME, signerAddress);
 
@@ -159,7 +163,8 @@ export async function getTransferCallPicassoKusama(
   amount: u128,
   feeItemId: number | null,
   signerAddress: string,
-  hasFeeItem: boolean
+  hasFeeItem: boolean,
+  weight: BigNumber
 ) {
   // Set destination. Should have 2 Junctions, first to parent and then to wallet
   const destination = api.createType("XcmVersionedMultiLocation", {
@@ -169,23 +174,23 @@ export async function getTransferCallPicassoKusama(
         api.createType("XcmV0Junction", {
           AccountId32: {
             network: api.createType("XcmV0JunctionNetworkId", "Any"),
-            id: api.createType("AccountId32", targetAccount),
-          },
-        }),
-      ],
-    }),
+            id: api.createType("AccountId32", targetAccount)
+          }
+        })
+      ]
+    })
   });
 
   // Set dest weight
-  const destWeight = api.createType("u64", 9000000000); // > 9000000000
+  const destWeight = api.createType("u64", weight.toString());
   const ksmAssetID = api.createType("SafeRpcWrapper", 4);
 
   const feeItemAssetID = [
     [api.createType("u128", 4), amount], // KSM
     [
       api.createType("u128", feeItemId),
-      api.createType("u128", toChainIdUnit(1).toString()),
-    ], // Asset to be used as fees, minFee should be calculated.
+      api.createType("u128", toChainIdUnit(1).toString())
+    ] // Asset to be used as fees, minFee should be calculated.
   ];
 
   const signer = await getSigner(APP_NAME, signerAddress);
@@ -209,7 +214,8 @@ export async function getTransferCallKaruraPicasso(
   targetChain: number | 0,
   targetAccount: string,
   signerAddress: string,
-  amount: u128
+  amount: u128,
+  weight: BigNumber
 ) {
   // Set destination. Should have 2 Junctions, first to parent and then to wallet
   const destination: XcmVersionedMultiLocation = api.createType(
@@ -219,27 +225,27 @@ export async function getTransferCallKaruraPicasso(
         X3: [
           api.createType("XcmV0Junction", "Parent"),
           api.createType("XcmV0Junction", {
-            Parachain: api.createType("Compact<u32>", targetChain),
+            Parachain: api.createType("Compact<u32>", targetChain)
           }),
           api.createType("XcmV0Junction", {
             AccountId32: {
               network: api.createType("XcmV0JunctionNetworkId", "Any"),
-              id: api.createType("AccountId32", targetAccount),
-            },
-          }),
-        ],
-      }),
+              id: api.createType("AccountId32", targetAccount)
+            }
+          })
+        ]
+      })
     }
   );
 
   const currencyId: CurrencyId = api.createType(
     "AcalaPrimitivesCurrencyCurrencyId",
     {
-      Token: api.createType("AcalaPrimitivesCurrencyTokenSymbol", "KUSD"),
+      Token: api.createType("AcalaPrimitivesCurrencyTokenSymbol", "KUSD")
     }
   );
 
-  const destWeight = api.createType("u64", 900000000000); // > 9000000000
+  const destWeight = api.createType("u64", weight.toString()); // > 9000000000
 
   const signer = await getSigner(APP_NAME, signerAddress);
 
@@ -262,6 +268,7 @@ export async function transferPicassoKarura({
   signerAddress,
   hasFeeItem,
   feeItemId,
+  weight
 }: TransferHandlerArgs) {
   // Set destination. Should have 2 Junctions, first to parent and then to wallet
   const { signer, call } = await getTransferCallPicassoKarura(
@@ -271,7 +278,8 @@ export async function transferPicassoKarura({
     hasFeeItem,
     signerAddress,
     amount,
-    feeItemId
+    feeItemId,
+    weight
   );
 
   await executor.execute(
@@ -279,27 +287,27 @@ export async function transferPicassoKarura({
     signerAddress,
     api,
     signer,
-    (txHash) => {
+    txHash => {
       enqueueSnackbar("Transfer executed", {
         persist: true,
         description: `Transaction hash: ${txHash}`,
         variant: "info",
-        isCloseable: true,
+        isCloseable: true
       });
     },
-    (txHash) => {
+    txHash => {
       enqueueSnackbar("Transfer executed successfully.", {
         persist: true,
         variant: "success",
-        isCloseable: true,
+        isCloseable: true
       });
     },
-    (err) => {
+    err => {
       enqueueSnackbar("Transfer failed", {
         persist: true,
         description: `Error: ${err}`,
         variant: "error",
-        isCloseable: true,
+        isCloseable: true
       });
     }
   );
@@ -313,13 +321,15 @@ export async function transferKaruraPicasso({
   executor,
   enqueueSnackbar,
   signerAddress,
+  weight
 }: TransferHandlerArgs) {
   const { signer, call } = await getTransferCallKaruraPicasso(
     api,
     targetChain,
     targetAccount,
     signerAddress,
-    amount
+    amount,
+    weight
   );
 
   await executor.execute(
@@ -327,27 +337,27 @@ export async function transferKaruraPicasso({
     signerAddress,
     api,
     signer,
-    (txHash) => {
+    txHash => {
       enqueueSnackbar("Transfer executed", {
         persist: true,
         description: `Transaction hash: ${txHash}`,
         variant: "info",
-        isCloseable: true,
+        isCloseable: true
       });
     },
-    (txHash) => {
+    txHash => {
       enqueueSnackbar("Transfer executed successfully.", {
         persist: true,
         variant: "success",
-        isCloseable: true,
+        isCloseable: true
       });
     },
-    (err) => {
+    err => {
       enqueueSnackbar("Transfer failed", {
         persist: true,
         description: `Error: ${err}`,
         variant: "error",
-        isCloseable: true,
+        isCloseable: true
       });
     }
   );
@@ -362,6 +372,7 @@ export async function transferPicassoKusama({
   signerAddress,
   hasFeeItem,
   feeItemId,
+  weight
 }: TransferHandlerArgs) {
   const { signer, call } = await getTransferCallPicassoKusama(
     api,
@@ -369,7 +380,8 @@ export async function transferPicassoKusama({
     amount,
     feeItemId,
     signerAddress,
-    hasFeeItem
+    hasFeeItem,
+    weight
   );
 
   await executor.execute(
@@ -377,27 +389,27 @@ export async function transferPicassoKusama({
     signerAddress,
     api,
     signer,
-    (txHash) => {
+    txHash => {
       enqueueSnackbar("Transfer executed", {
         persist: true,
         description: `Transaction hash: ${txHash}`,
         variant: "info",
-        isCloseable: true,
+        isCloseable: true
       });
     },
-    (txHash) => {
+    txHash => {
       enqueueSnackbar("Transfer executed successfully.", {
         persist: true,
         variant: "success",
-        isCloseable: true,
+        isCloseable: true
       });
     },
-    (err) => {
+    err => {
       enqueueSnackbar("Transfer failed", {
         persist: true,
         description: `Error: ${err}`,
         variant: "error",
-        isCloseable: true,
+        isCloseable: true
       });
     }
   );
@@ -411,13 +423,15 @@ export async function transferKusamaPicasso({
   executor,
   enqueueSnackbar,
   signerAddress,
+  weight
 }: TransferHandlerArgs) {
   const { signer, call } = await getTransferCallKusamaPicasso(
     api,
     targetChain,
     targetAccount,
     amount,
-    signerAddress
+    signerAddress,
+    weight
   );
 
   await executor.execute(
@@ -425,26 +439,26 @@ export async function transferKusamaPicasso({
     signerAddress,
     api,
     signer,
-    (txHash) => {
+    txHash => {
       enqueueSnackbar("Executing transfer...", {
         persist: true,
         variant: "info",
-        timeout: 0,
+        timeout: 0
       });
     },
-    (txHash) => {
+    txHash => {
       enqueueSnackbar("Transfer executed successfully.", {
         persist: true,
         variant: "success",
-        isCloseable: true,
+        isCloseable: true
       });
     },
-    (err) => {
+    err => {
       enqueueSnackbar("Transfer failed", {
         persist: true,
         description: `Error: ${err}`,
         variant: "error",
-        isCloseable: true,
+        isCloseable: true
       });
     }
   );

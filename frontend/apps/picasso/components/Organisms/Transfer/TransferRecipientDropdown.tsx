@@ -1,5 +1,5 @@
 import { RecipientDropdown } from "@/components";
-import React from "react";
+import React, { useEffect } from "react";
 import { useStore } from "@/stores/root";
 import { useKusamaProvider, usePicassoProvider } from "@/defi/polkadot/hooks";
 
@@ -11,7 +11,7 @@ function attachNetworkIconToItems(network: "kusama" | "picasso") {
         icon:
           network === "kusama"
             ? "/networks/kusama.svg"
-            : "/networks/picasso.svg",
+            : "/networks/picasso.svg"
       };
     });
   };
@@ -24,7 +24,7 @@ function composeOptions(
     return {
       value: item.address,
       label: item.name,
-      icon: item.icon,
+      icon: item.icon
     };
   });
 }
@@ -33,7 +33,7 @@ export const TransferRecipientDropdown = () => {
   const {
     recipients,
     updateRecipient,
-    networks: { to: toNetwork },
+    networks: { to: toNetwork }
   } = useStore(({ transfers }) => transfers);
   const { accounts: picassoAccounts } = usePicassoProvider();
   const { accounts: kusamaAccounts } = useKusamaProvider();
@@ -42,6 +42,10 @@ export const TransferRecipientDropdown = () => {
       ? composeOptions(attachNetworkIconToItems("kusama")(kusamaAccounts))
       : composeOptions(attachNetworkIconToItems("picasso")(picassoAccounts));
   const handleRecipientChange = (value: string) => updateRecipient(value);
+
+  useEffect(() => {
+    updateRecipient("");
+  }, [toNetwork]);
 
   return (
     <RecipientDropdown

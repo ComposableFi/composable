@@ -19,7 +19,8 @@ export async function getApiCallAndSigner(
   targetParachainId: number,
   from: SubstrateNetworkId,
   to: SubstrateNetworkId,
-  hasFeeItem: boolean
+  hasFeeItem: boolean,
+  weight: BigNumber
 ) {
   switch (`${from}-${to}`) {
     case "picasso-kusama":
@@ -29,7 +30,8 @@ export async function getApiCallAndSigner(
         amountToTransfer,
         feeItemId,
         signerAddress,
-        hasFeeItem
+        hasFeeItem,
+        weight
       );
     case "picasso-karura":
       return getTransferCallPicassoKarura(

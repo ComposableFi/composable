@@ -11,7 +11,7 @@ import { alpha, Breadcrumbs, Typography, useTheme } from "@mui/material";
 import { useTablet } from "@/hooks/responsive";
 import { PolkadotConnect } from "../Organisms/Wallet/PolkadotConnect";
 import { MetamaskConnect } from "../Organisms/Wallet/MetamaskConnect";
-import { useSnackbar } from "notistack";
+import { GlobalSettings } from "../Organisms/Settings/GlobalSettings";
 
 type DefaultLayoutProps = {
   breadcrumbs?: React.ReactNode[];
@@ -19,20 +19,10 @@ type DefaultLayoutProps = {
 
 export const DefaultLayout: React.FC<DefaultLayoutProps> = props => {
   const { children, breadcrumbs } = props;
-  const { enqueueSnackbar } = useSnackbar();
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const isTablet = useTablet();
   const theme = useTheme();
   const drawerWidth = isTablet ? 240 : 320;
-  // useEffect(() => {
-  //   enqueueSnackbar("Hey! ", {
-  //     variant: "info",
-  //     description: "This is a warning message!",
-  //     persist: true,
-  //     isClosable: true,
-  //     url: "https://www.google.com",
-  //   })
-  // });
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -72,6 +62,7 @@ export const DefaultLayout: React.FC<DefaultLayoutProps> = props => {
             <MenuIcon />
           </IconButton>
           <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+            <GlobalSettings />
             <PolkadotConnect />
             <MetamaskConnect />
           </Box>
@@ -132,11 +123,10 @@ export const DefaultLayout: React.FC<DefaultLayoutProps> = props => {
           justifyContent: "flex-start"
         }}
       >
-        <Toolbar />
         <Box
           sx={{
             display: "flex",
-            alignItems: "flkex-start",
+            alignItems: "flex-start",
             justifyContent: "flex-start",
             flexDirection: "row",
             flexGrow: 1

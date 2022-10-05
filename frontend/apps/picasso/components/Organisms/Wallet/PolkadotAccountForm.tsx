@@ -15,7 +15,6 @@ export const PolkadotAccountForm: React.FC<{
     deactivate
   } = useDotSamaContext();
   const { accounts } = usePicassoProvider();
-  console.log(JSON.stringify(accounts));
 
   const theme = useTheme();
   const { closePolkadotModal } = useStore(({ ui }) => ui);

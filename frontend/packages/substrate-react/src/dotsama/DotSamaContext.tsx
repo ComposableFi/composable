@@ -1,4 +1,4 @@
-import React, { createContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useCallback, useEffect, useMemo, useState } from "react";
 import {
   DotSamaContext,
   DotSamaExtensionStatus,
@@ -127,7 +127,8 @@ export const DotSamaContextProvider = ({
   const [extensionInjected, setInjectedExtension] = useState<InjectedExtension | undefined>(undefined);
   const [extensionStatus, setExtensionStatus] =
     useState<DotSamaExtensionStatus>("initializing");
-  const activate = async (
+
+  const activate = useCallback(async (
     walletId: SupportedWalletId = SupportedWalletId.Polkadotjs,
     selectDefaultAccount: boolean = false
   ): Promise<any | undefined> => {
@@ -195,9 +196,9 @@ export const DotSamaContextProvider = ({
         });
       }
     }
-    
+
     return injectedExtension;
-  };
+  }, [appName, supportedParachains, supportedRelaychains])
 
   const deactivate = async (): Promise<void> => {
     setExtensionStatus("initializing");
