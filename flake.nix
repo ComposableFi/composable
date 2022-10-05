@@ -69,13 +69,14 @@
       ];
 
       mk-devnet = { pkgs, lib, writeTextFile, writeShellApplication
-        , polkadot-launch, composable-node, polkadot-node, chain-spec }:
+        , polkadot-launch, composable-node, polkadot-node, chain-spec
+        , network-config-path ?
+          ./scripts/polkadot-launch/rococo-local-dali-dev.nix }:
         let
-          original-config = (pkgs.callPackage
-            ./scripts/polkadot-launch/rococo-local-dali-dev.nix {
-              polkadot-bin = polkadot-node;
-              composable-bin = composable-node;
-            }).result;
+          original-config = (pkgs.callPackage network-config-path {
+            polkadot-bin = polkadot-node;
+            composable-bin = composable-node;
+          }).result;
 
           patched-config = lib.recursiveUpdate original-config {
             parachains = builtins.map
@@ -650,7 +651,7 @@
                 repo = "polkadot";
                 owner = "ComposableFi";
                 rev = "0898082540c42fb241c01fe500715369a33a80de";
-                hash = "sha256-LEz3OrVgdFTCnVwzU8C6GeEougaOl2qo7jS9qIdMqAN=";
+                hash = "sha256-dymuSVQXzdZe8iiMm4ykVXPIjIZd2ZcAOK7TLDGOWcU=";
               };
               cargoSha256 =
                 "sha256-u/hFRxt3OTMDwONGoJ5l7whC4atgpgIQx+pthe2CJXo=";
@@ -688,6 +689,8 @@
               inherit (packages) polkadot-launch composable-node;
               polkadot-node = polkadot-centauri-node;
               chain-spec = "dali-dev";
+              network-config-path =
+                ./scripts/polkadot-launch/rococo-local-bridge-dali-dev.nix;
             }).script;
 
             # Picasso devnet
