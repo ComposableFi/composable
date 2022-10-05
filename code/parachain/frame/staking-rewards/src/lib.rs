@@ -252,6 +252,8 @@ pub mod pallet {
 		NoDurationPresetsProvided,
 		/// Slashed amount of minimum reward is less than existential deposit
 		SlashedAmountTooLow,
+		/// Slashed amount of minimum staking amount is less than existential deposit
+		SlashedMinimumStakingAmountTooLow,
 		/// Staked amount is less than the minimum staking amount for the pool.
 		StakedAmountTooLow,
 		/// Staked amount after split is less than the minimum staking amount for the pool.
@@ -707,15 +709,23 @@ pub mod pallet {
 
 					let now_seconds = T::UnixTime::now().as_secs();
 
+					let existential_deposit = T::ExistentialDeposits::get(&pool_asset);
+
 					ensure!(
-						initial_reward_config.iter().all(|(asset_id, reward_config)| {
+						lock.unlock_penalty.left_from_one().mul(minimum_staking_amount) >=
+							existential_deposit,
+						Error::<T>::SlashedMinimumStakingAmountTooLow
+					);
+
+					ensure!(
+						initial_reward_config.iter().all(|(_, reward_config)| {
 							if reward_config.reward_rate.amount > T::Balance::zero() {
 								// If none zero reward, check that the slashed amount is greater
 								// than ED
 								lock.unlock_penalty
 									.left_from_one()
 									.mul(reward_config.reward_rate.amount) >=
-									T::ExistentialDeposits::get(asset_id)
+									existential_deposit
 							} else {
 								// Else, return true so check passes
 								// NOTE(connor): This is a band-aid that some better type management

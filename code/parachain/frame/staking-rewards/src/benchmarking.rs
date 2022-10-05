@@ -66,7 +66,7 @@ fn reward_config<T: Config>(
 				asset_id.into(),
 				RewardConfig {
 					max_rewards: 100_u128.into(),
-					reward_rate: RewardRate::per_second(1_u128),
+					reward_rate: RewardRate::per_second(10_u128),
 				},
 			)
 		})

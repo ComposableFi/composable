@@ -187,6 +187,41 @@ fn create_staking_reward_pool_should_fail_when_slashed_amount_is_less_than_exist
 }
 
 #[test]
+fn create_staking_reward_pool_should_fail_when_slashed_minimum_amount_is_less_than_existential_deposit(
+) {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+
+		assert_err!(
+			StakingRewards::create_reward_pool(
+				Origin::root(),
+				RewardRateBasedIncentive {
+					owner: ALICE,
+					asset_id: PICA::ID,
+					start_block: 2,
+					end_block: 5,
+					reward_configs: default_reward_config(),
+					lock: LockConfig {
+						duration_presets: [
+							(ONE_HOUR, Perbill::from_percent(1)),                // 1%
+							(ONE_MINUTE, Perbill::from_rational(1_u32, 10_u32)), // 0.1%
+						]
+						.into_iter()
+						.try_collect()
+						.unwrap(),
+						unlock_penalty: Perbill::from_percent(60),
+					},
+					share_asset_id: XPICA::ID,
+					financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+					minimum_staking_amount: 10,
+				}
+			),
+			crate::Error::<Test>::SlashedMinimumStakingAmountTooLow,
+		);
+	});
+}
+
+#[test]
 fn create_staking_reward_pool_should_fail_when_share_asset_id_is_zero() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
