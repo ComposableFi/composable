@@ -151,6 +151,13 @@ pub mod pallet {
 		Query,
 	}
 
+	#[derive(Copy, Clone, PartialEq, Eq, Encode, Decode, TypeInfo, Debug)]
+	#[scale_info(skip_type_params(T))]
+	pub enum CodeIdentifier<T: Config> {
+		CodeId(CosmwasmCodeId),
+		CodeHash(CodeHashOf<T>),
+	}
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
@@ -159,6 +166,7 @@ pub mod pallet {
 		Executed { contract: AccountIdOf<T>, entrypoint: EntryPoint, data: Option<Vec<u8>> },
 		ExecutionFailed { contract: AccountIdOf<T>, entrypoint: EntryPoint, error: Vec<u8> },
 		Emitted { contract: AccountIdOf<T>, ty: Vec<u8>, attributes: Vec<(Vec<u8>, Vec<u8>)> },
+		Migrated { contract: AccountIdOf<T>, to: CosmwasmCodeId },
 	}
 
 	#[pallet::error]
@@ -189,6 +197,7 @@ pub mod pallet {
 		SignatureVerificationError,
 		IteratorIdOverflow,
 		IteratorNotFound,
+		NotAuthorized,
 	}
 
 	#[pallet::config]
@@ -398,7 +407,7 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::instantiate(funds.len() as u32).saturating_add(*gas))]
 		pub fn instantiate(
 			origin: OriginFor<T>,
-			code_id: CosmwasmCodeId,
+			code_identifier: CodeIdentifier<T>,
 			salt: ContractSaltOf<T>,
 			admin: Option<AccountIdOf<T>>,
 			label: ContractLabelOf<T>,
@@ -408,6 +417,11 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
+			let code_id = match code_identifier {
+				CodeIdentifier::CodeId(code_id) => code_id,
+				CodeIdentifier::CodeHash(code_hash) =>
+					CodeHashToId::<T>::try_get(code_hash).map_err(|_| Error::<T>::CodeNotFound)?,
+			};
 			let outcome = Self::do_extrinsic_instantiate(
 				&mut shared,
 				who,
@@ -447,6 +461,40 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 			let outcome = Self::do_extrinsic_execute(&mut shared, who, contract, funds, message);
+			Self::refund_gas(outcome, gas, shared.gas.remaining())
+		}
+
+		/// Migrate a previously instantiated contract.
+		///
+		/// * Emits a `Migrated` event on success.
+		/// * Emits an `Executed` event.
+		/// * Possibly emit `Emitted` events.
+		///
+		/// Arguments
+		///
+		/// * `origin` the origin dispatching the extrinsic.
+		/// * `contract` the address of the contract that we want to migrate
+		/// * `new_code_identifier` the code identifier that we want to switch to.
+		/// * `gas` the maximum gas to use, the remaining is refunded at the end of the transaction.
+		/// * `message` MigrateMsg, that will be passed to the contract.
+		#[transactional]
+		#[pallet::weight(T::WeightInfo::migrate().saturating_add(*gas))]
+		pub fn migrate(
+			origin: OriginFor<T>,
+			contract: AccountIdOf<T>,
+			new_code_identifier: CodeIdentifier<T>,
+			gas: u64,
+			message: ContractMessageOf<T>,
+		) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
+			let new_code_id = match new_code_identifier {
+				CodeIdentifier::CodeId(code_id) => code_id,
+				CodeIdentifier::CodeHash(code_hash) =>
+					CodeHashToId::<T>::try_get(&code_hash).map_err(|_| Error::<T>::CodeNotFound)?,
+			};
+			let outcome =
+				Self::do_extrinsic_migrate(&mut shared, who, contract, new_code_id, message);
 			Self::refund_gas(outcome, gas, shared.gas.remaining())
 		}
 	}
@@ -518,6 +566,58 @@ pub mod pallet {
 			Ok((contract, contract_info))
 		}
 
+		/// Setup for a contract migration.
+		/// This is called prior to calling the `migrate` export of the contract.
+		pub(crate) fn do_migrate_phase1(
+			migrator: &AccountIdOf<T>,
+			contract: &AccountIdOf<T>,
+			new_code_id: CosmwasmCodeId,
+		) -> Result<ContractInfoOf<T>, Error<T>> {
+			CodeIdToInfo::<T>::try_mutate_exists(new_code_id, |entry| -> Result<(), Error<T>> {
+				let code_info = entry.as_mut().ok_or(Error::<T>::CodeNotFound)?;
+				code_info.refcount =
+					code_info.refcount.checked_add(1).ok_or(Error::<T>::RefcountOverflow)?;
+				Ok(())
+			})?;
+
+			let (contract_info, code_id) = ContractToInfo::<T>::try_mutate(
+				contract,
+				|entry| -> Result<(ContractInfoOf<T>, u64), Error<T>> {
+					let info = entry.as_mut().ok_or(Error::<T>::ContractNotFound)?;
+					ensure!(info.admin.as_ref() == Some(migrator), Error::<T>::NotAuthorized);
+					let old_code_id = info.code_id;
+					info.code_id = new_code_id;
+					Ok((info.clone(), old_code_id))
+				},
+			)?;
+
+			CodeIdToInfo::<T>::try_mutate_exists(code_id, |entry| -> Result<(), Error<T>> {
+				let code_info = entry.as_mut().ok_or(Error::<T>::CodeNotFound)?;
+				code_info.refcount =
+					code_info.refcount.checked_sub(1).ok_or(Error::<T>::RefcountOverflow)?;
+				if code_info.refcount == 0 {
+					// Code is unused after this point, so it can be removed
+					*entry = None;
+					let code = PristineCode::<T>::try_get(code_id)
+						.map_err(|_| Error::<T>::CodeNotFound)?;
+					let deposit = code.len().saturating_mul(T::CodeStorageByteDeposit::get() as _);
+					let _ = T::NativeAsset::unreserve(migrator, deposit.saturated_into());
+					let code_hash = T::Hashing::hash(&code);
+					PristineCode::<T>::remove(code_id);
+					InstrumentedCode::<T>::remove(code_id);
+					CodeHashToId::<T>::remove(code_hash);
+				}
+				Ok(())
+			})?;
+
+			Self::deposit_event(Event::<T>::Migrated {
+				contract: contract.clone(),
+				to: new_code_id,
+			});
+
+			Ok(contract_info)
+		}
+
 		/// Create the shared VM state. Including readonly stack, VM depth, gas metering limits and
 		/// code cache.
 		///
@@ -585,6 +685,25 @@ pub mod pallet {
 				info,
 				funds,
 				|vm| cosmwasm_system_entrypoint::<ExecuteInput, _>(vm, &message),
+			)
+		}
+
+		pub(crate) fn do_extrinsic_migrate(
+			shared: &mut CosmwasmVMShared,
+			sender: AccountIdOf<T>,
+			contract: AccountIdOf<T>,
+			new_code_id: CosmwasmCodeId,
+			message: ContractMessageOf<T>,
+		) -> Result<(), CosmwasmVMError<T>> {
+			let info = Self::do_migrate_phase1(&sender, &contract, new_code_id)?;
+			Self::do_extrinsic_dispatch(
+				shared,
+				EntryPoint::Migrate,
+				sender,
+				contract,
+				info,
+				Default::default(),
+				|vm| cosmwasm_system_entrypoint::<MigrateInput, _>(vm, &message),
 			)
 		}
 

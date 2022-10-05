@@ -1,6 +1,6 @@
 use crate::{
 	error::ContractError,
-	msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
+	msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg},
 	state::{Config, UserId, CONFIG, INTERPRETERS},
 };
 #[cfg(not(feature = "library"))]
@@ -9,13 +9,17 @@ use cosmwasm_std::{
 	from_binary, to_binary, wasm_execute, Addr, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo,
 	Reply, Response, StdError, StdResult, SubMsg, WasmMsg, WasmQuery,
 };
+use cw2::set_contract_version;
 use cw20::{Cw20Contract, Cw20ExecuteMsg};
+use cw_utils::ensure_from_older_version;
 use xcvm_asset_registry::msg::{GetAssetContractResponse, QueryMsg as AssetRegistryQueryMsg};
 use xcvm_core::{Displayed, Funds, NetworkId};
 use xcvm_interpreter::msg::{
 	ExecuteMsg as InterpreterExecuteMsg, InstantiateMsg as InterpreterInstantiateMsg,
 };
 
+const CONTRACT_NAME: &str = "composable:xcvm-router";
+const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const INSTANTIATE_REPLY_ID: u64 = 1;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -25,6 +29,7 @@ pub fn instantiate(
 	_info: MessageInfo,
 	msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
+	set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 	let addr = deps.api.addr_validate(&msg.registry_address)?;
 	CONFIG.save(
 		deps.storage,
@@ -44,6 +49,12 @@ pub fn execute(
 		ExecuteMsg::Run { network_id, user_id, interpreter_execute_msg, funds } =>
 			handle_run(deps, env, network_id, user_id, interpreter_execute_msg, funds),
 	}
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
+	let _ = ensure_from_older_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+	Ok(Response::default())
 }
 
 pub fn handle_run(

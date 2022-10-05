@@ -60,6 +60,7 @@ pub trait WeightInfo {
 	fn query_info() -> Weight;
 	fn query_continuation() -> Weight;
 	fn query_raw() -> Weight;
+	fn migrate() -> Weight;
 }
 
 /// Weights for cosmwasm using the Substrate node and recommended hardware.
@@ -301,6 +302,10 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(6 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
+
+	fn migrate() -> Weight {
+		10_000
+	}
 }
 
 // For backwards compatibility and tests
@@ -540,5 +545,9 @@ impl WeightInfo for () {
 		(235_123_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(6 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
+	}
+
+	fn migrate() -> Weight {
+		10_000
 	}
 }
