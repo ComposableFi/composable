@@ -690,7 +690,7 @@
               polkadot-node = polkadot-centauri-node;
               chain-spec = "dali-dev";
               network-config-path =
-                ./scripts/polkadot-launch/rococo-local-bridge-dali-dev.nix;
+                ./scripts/polkadot-launch/bridge-rococo-local-dali-dev.nix;
             }).script;
 
             # Picasso devnet
