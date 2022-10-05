@@ -358,10 +358,10 @@ fn split_should_fail_if_any_amount_is_less_than_minimum() {
 			stake_and_assert::<Test, runtime::Event>(ALICE, PICA::ID, amount, ONE_MINUTE);
 
 		// Original stake is less than the minimum and new stake is greater.
-		let ratio = Permill::from_parts(333_334);
+		let ratio = Permill::from_rational(1_u32, 3_u32);
 
-		assert_eq!(ratio.mul_floor(amount), 5_000);
-		assert_eq!(ratio.left_from_one().mul_ceil(amount), 10_000);
+		assert_eq!(ratio.mul_floor(amount), 4_999);
+		assert_eq!(ratio.left_from_one().mul_ceil(amount), 10_001);
 
 		assert_noop!(
 			StakingRewards::split(
@@ -374,10 +374,10 @@ fn split_should_fail_if_any_amount_is_less_than_minimum() {
 		);
 
 		// New stake is less than the minimum and original stake is greater.
-		let ratio = Permill::from_parts(666_667);
+		let ratio = Permill::from_rational(2_u32, 3_u32);
 
-		assert_eq!(ratio.mul_floor(amount), 10_000);
-		assert_eq!(ratio.left_from_one().mul_ceil(amount), 5_000);
+		assert_eq!(ratio.mul_floor(amount), 9_999);
+		assert_eq!(ratio.left_from_one().mul_ceil(amount), 5_001);
 
 		assert_noop!(
 			StakingRewards::split(
@@ -390,7 +390,7 @@ fn split_should_fail_if_any_amount_is_less_than_minimum() {
 		);
 
 		// Both stakes are less than the minimum.
-		let ratio = Permill::from_parts(500_000);
+		let ratio = Permill::from_rational(1_u32, 2_u32);
 
 		assert_eq!(ratio.mul_floor(amount), 7_500);
 		assert_eq!(ratio.left_from_one().mul_ceil(amount), 7_500);
