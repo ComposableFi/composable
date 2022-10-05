@@ -56,6 +56,7 @@ stdenv.mkDerivation (rec {
   installPhase = ''
     mkdir --parents $out/bin && mv ./target/release/polkadot-parachain $out/bin
   '';
+  # substrate-attrs-node-with-attrs
   nativeBuildInputs = [ rust-nightly clang pkg-config ]
     ++ lib.optional stdenv.isDarwin
     (with darwin.apple_sdk.frameworks; [ Security SystemConfiguration ]);
