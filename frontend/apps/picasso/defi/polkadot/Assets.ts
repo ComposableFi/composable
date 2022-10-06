@@ -47,7 +47,7 @@ export const Assets: {
     name: "K-USD",
     supportedNetwork: {
       karura: 129,
-      picasso: 12_884_901_886, // After creating the asset id via assetRegistry, this value could be anything.
+      picasso: 12884901886, // After creating the asset id via assetRegistry, this value could be anything.
       kusama: null
     }
   },

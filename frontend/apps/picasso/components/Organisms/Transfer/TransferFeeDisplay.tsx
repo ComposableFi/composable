@@ -14,16 +14,17 @@ import { AssetId } from "@/defi/polkadot/types";
 import BigNumber from "bignumber.js";
 import {
   getAmountToTransfer,
-  getApiCallAndSigner
+  getApiCallAndSigner,
+  getDestChainFee
 } from "@/defi/polkadot/pallets/Transfer";
 import { useExistentialDeposit } from "@/defi/polkadot/hooks/useExistentialDeposit";
 import { getPaymentAsset } from "@/defi/polkadot/pallets/AssetTxPayment";
 import { AssetMetadata } from "@/defi/polkadot/Assets";
+import { Stack } from "@mui/material";
 
 export const TransferFeeDisplay = () => {
   const { amount, from, to, balance, account, fromProvider } = useTransfer();
   const executor = useExecutor();
-  const weight = useStore(state => state.transfers.fee.weight);
   const assets = useStore(
     ({ substrateBalances }) => substrateBalances.assets[from].assets
   );
@@ -36,6 +37,7 @@ export const TransferFeeDisplay = () => {
   const keepAlive = useStore(state => state.transfers.keepAlive);
   const { existentialDeposit, feeToken } = useExistentialDeposit();
   const fee = useStore(state => state.transfers.fee);
+  const destFee = getDestChainFee(from, to);
   const updateFee = useStore(state => state.transfers.updateFee);
 
   const symbol = useMemo(() => {
@@ -69,7 +71,9 @@ export const TransferFeeDisplay = () => {
           amount,
           existentialDeposit,
           keepAlive,
-          api
+          api,
+          sourceChain: from,
+          targetChain: to
         });
 
         const signerAddress = acc.address;
@@ -139,12 +143,22 @@ export const TransferFeeDisplay = () => {
   }, [fromProvider.parachainApi, account?.address, from]);
 
   return (
-    <FeeDisplay
-      label="Fee"
-      feeText={`${humanBalance(fee.partialFee)} ${symbol.toUpperCase()}`}
-      TooltipProps={{
-        title: "Fee tooltip title"
-      }}
-    />
+    <Stack direction="column" gap={4}>
+      <FeeDisplay
+        label="Fee"
+        feeText={`${humanBalance(fee.partialFee)} ${symbol.toUpperCase()}`}
+        TooltipProps={{
+          title: "Fee tooltip title"
+        }}
+      />
+      <FeeDisplay
+        label="Destination chain fee"
+        feeText={`${destFee.fee.toFormat()} ${destFee.symbol.symbol}`}
+        TooltipProps={{
+          title:
+            "Destination transaction fee is approximate and might change due to network conditions"
+        }}
+      />
+    </Stack>
   );
 };

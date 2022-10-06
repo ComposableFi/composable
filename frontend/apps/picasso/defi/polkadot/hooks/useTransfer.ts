@@ -78,7 +78,9 @@ export const useTransfer = () => {
       amount,
       existentialDeposit,
       keepAlive,
-      api
+      api,
+      targetChain: to,
+      sourceChain: from
     });
 
     const feeItemId =
