@@ -14,13 +14,16 @@ codec = { package = "parity-scale-codec", version = "3.0.0", features = ["derive
 thiserror = "1.0.31"
 
 # substrate
-subxt = { git = "https://github.com/paritytech/subxt", rev = "c55b7ba3e34118f61dc51499a0b38262c513aec4" }
+subxt = { git = "https://github.com/paritytech/subxt", rev = "81175b2dd9a2391f71c37d4612644ee65825e2f1" }
 
 # ibc
 ibc = { path = "../../ibc/modules", features = [] }
 ibc-proto = { path = "../../ibc/proto" }
-pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "052052e5b070bc36dda7f9acd393a4c69404c3b2" }
+pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "e360d73d5632f84fb53ad4a20d7a49f0de05947e" }
+ibc-rpc = { git = "https://github.com/ComposableFi/composable", rev = "e360d73d5632f84fb53ad4a20d7a49f0de05947e" }
 
+[dev-dependencies]
+tokio = { version = "1.19.2", features = ["macros", "sync"] }
 
 [features]
 testing = []

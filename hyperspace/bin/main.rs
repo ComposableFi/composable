@@ -7,7 +7,7 @@ extern crate thiserror;
 use anyhow::Result;
 use clap::Parser;
 use hyperspace::logging;
-use std::{fs, path::PathBuf};
+use std::path::PathBuf;
 
 mod chain;
 
@@ -55,7 +55,7 @@ impl RelayCmd {
 	/// Run the command
 	pub async fn run(&self) -> Result<()> {
 		let path: PathBuf = self.config.parse()?;
-		let file_content = fs::read_to_string(path)?;
+		let file_content = tokio::fs::read_to_string(path).await?;
 		let config: Config = toml::from_str(&file_content)?;
 		let any_chain_a = config.chain_a.into_client().await?;
 		let any_chain_b = config.chain_b.into_client().await?;

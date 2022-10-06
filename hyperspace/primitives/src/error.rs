@@ -5,10 +5,10 @@ use thiserror::Error;
 pub enum Error {
 	/// subxt error
 	#[error("Subxt basic error")]
-	Subxt(#[from] subxt::BasicError),
+	Subxt(#[from] subxt::Error),
 	/// subxt rpc error
 	#[error("Subxt rpc error")]
-	SubxtRRpc(#[from] subxt::rpc::RpcError),
+	SubxtRRpc(#[from] subxt::error::RpcError),
 	/// Custom error
 	#[error("{0}")]
 	Custom(String),
@@ -26,4 +26,10 @@ pub enum Error {
 	IbcProofError(#[from] ibc::proofs::ProofError),
 	#[error("Hex decode error")]
 	HexDecode(#[from] hex::FromHexError),
+}
+
+impl From<String> for Error {
+	fn from(error: String) -> Self {
+		Self::Custom(error)
+	}
 }

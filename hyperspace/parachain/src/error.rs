@@ -1,7 +1,8 @@
-use ibc::core::ics02_client;
+use ibc::{core::ics02_client, timestamp::ParseTimestampError};
 use sp_runtime::traits::BlakeTwo256;
 use sp_trie::TrieError;
 use std::num::ParseIntError;
+use subxt::error::MetadataError;
 use thiserror::Error;
 
 /// Error definition for the parachain client
@@ -11,7 +12,7 @@ pub enum Error {
 	#[error("Rpc client error: {0}")]
 	RpcError(String),
 	/// Scale codec error
-	#[error("Scale decoding error")]
+	#[error("Scale decoding error: {0}")]
 	Codec(#[from] codec::Error),
 	/// Update pallet name in call definition
 	#[error("Pallet '{0}' not found in metadata, update static definition of call")]
@@ -21,10 +22,10 @@ pub enum Error {
 	CallNotFound(&'static str),
 	/// subxt error
 	#[error("Subxt error: {0:?}")]
-	Subxt(#[from] subxt::BasicError),
+	Subxt(#[from] subxt::Error),
 	/// subxt rpc error
 	#[error("Rpc threw an error")]
-	SubxtRRpc(#[from] subxt::rpc::RpcError),
+	SubxtRRpc(#[from] subxt::error::RpcError),
 	/// hex error
 	#[error("Error decoding hex: {0:?}")]
 	Hex(#[from] hex::FromHexError),
@@ -54,6 +55,17 @@ pub enum Error {
 	/// parse error
 	#[error("Failed to parse block numbers: {0}")]
 	ParseIntError(#[from] ParseIntError),
+	/// Ics-20 errors
+	#[error("Ics-20 error: {0}")]
+	Ics20Error(#[from] ibc::applications::transfer::error::Error),
+	/// Error occured parsing timestamp
+	#[error("Timestamp error: {0}")]
+	ParseTimestamp(#[from] ParseTimestampError),
+	/// Some error in relation to handling metadata
+	#[error("Metadat error: {0}")]
+	MetadataError(#[from] MetadataError),
+	#[error("Jsonrpsee error: {0}")]
+	JosnrpseeError(#[from] jsonrpsee::core::Error),
 }
 
 impl From<String> for Error {

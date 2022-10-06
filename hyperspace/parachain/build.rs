@@ -9,11 +9,11 @@ use jsonrpsee::{
 	rpc_params,
 };
 use std::{env, fs, path::Path};
-use subxt_codegen::DerivesRegistry;
+use subxt_codegen::{CratePath, DerivesRegistry};
 
-async fn fetch_metadata_ws() -> color_eyre::Result<Vec<u8>> {
+async fn fetch_metadata_ws(url: &'static str) -> color_eyre::Result<Vec<u8>> {
 	let (sender, receiver) = WsTransportClientBuilder::default()
-		.build("ws://127.0.0.1:9944".to_string().parse::<Uri>().unwrap())
+		.build(url.parse::<Uri>().unwrap())
 		.await
 		.map_err(|e| Error::Transport(e.into()))?;
 
@@ -31,30 +31,31 @@ fn codegen<I: Input>(encoded: &mut I) -> color_eyre::Result<String> {
 	let item_mod = syn::parse_quote!(
 		pub mod api {}
 	);
-
+	let crate_path = CratePath::default();
 	// add any derives you want here:
 	let p = Vec::<String>::new()
 		.iter()
 		.map(|raw| syn::parse_str(raw))
 		.collect::<Result<Vec<_>, _>>()?;
-	let mut derives = DerivesRegistry::default();
+	let mut derives = DerivesRegistry::new(&crate_path);
 	derives.extend_for_all(p.into_iter());
 
-	let runtime_api = generator.generate_runtime(item_mod, derives);
+	let runtime_api = generator.generate_runtime(item_mod, derives, crate_path);
 	Ok(format!("{}", runtime_api))
 }
 
-async fn build_script() -> color_eyre::Result<()> {
-	let metadata = fetch_metadata_ws().await?;
+async fn build_script(url: &'static str, file_name: &'static str) -> color_eyre::Result<()> {
+	let metadata = fetch_metadata_ws(url).await?;
 	let code = codegen(&mut &metadata[..])?;
 	let out_dir = env::var_os("OUT_DIR").unwrap();
-	let dest_path = Path::new(&out_dir).join("subxt_codegen.rs");
+	let dest_path = Path::new(&out_dir).join(format!("{file_name}.rs"));
 	fs::write(&dest_path, &code)?;
 	Ok(())
 }
 
 #[tokio::main]
 async fn main() -> color_eyre::Result<()> {
-	build_script().await?;
+	build_script("ws://127.0.0.1:9944", "polkadot").await?;
+	build_script("ws://127.0.0.1:9188", "parachain").await?;
 	Ok(())
 }
