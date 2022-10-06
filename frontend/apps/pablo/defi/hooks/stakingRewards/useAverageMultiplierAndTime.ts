@@ -21,7 +21,8 @@ export function useAverageLockTimeAndMultiplier(): {
     }}>(PABLO_STAKING_OVERVIEW_QUERY).then((overviewStats) => {
         setAverageLockMultiplier(fromPerbill(overviewStats.pabloOverviewStats.averageLockMultiplier).toNumber());
         setAverageLockTime(overviewStats.pabloOverviewStats.averageLockTime);
-        setTotalValueLocked(millify(fromChainUnits(overviewStats.pabloOverviewStats.totalValueLocked).toNumber()));
+        const tvl = fromChainUnits(overviewStats.pabloOverviewStats.totalValueLocked).toNumber();
+        setTotalValueLocked(millify(tvl));
     });
   }, []);
 

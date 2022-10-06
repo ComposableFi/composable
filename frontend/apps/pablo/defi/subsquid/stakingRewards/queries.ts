@@ -6,6 +6,7 @@ export const PABLO_STAKING_OVERVIEW_QUERY = `
     pabloOverviewStats {
       averageLockMultiplier
       averageLockTime
+      totalValueLocked
     }
   }
 `;
