@@ -181,7 +181,7 @@ pub mod pallet {
 
 		fn expect_create(id: RangeId, ed: Self::Balance) -> Self::AssetId {
 			let asset_id = AssetIdRanges::<T>::mutate(|range| range.increment(id))
-				.expect("Range is sufficent; QED");
+				.expect("Range is sufficient; QED");
 			AssetEd::<T>::insert(asset_id, ed);
 			asset_id
 		}
