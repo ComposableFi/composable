@@ -103,7 +103,7 @@ Within the protocols built on top of the parachain, there are "native" protocol 
 
 See [BYOG](./byog.md) for details.
 
-Users who want to have assets on our chain can either be minted with some native currency governance or be allowed to pay for cross-chain transactions in some non-native currency.
+Users who want to have assets on our chain can either be issued native currency by some on-chain protocol or be allowed to pay for cross-chain transactions in some non-native currency.
 
 ## Tokenomics
 
