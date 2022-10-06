@@ -5,10 +5,9 @@ import { BN } from "bn.js";
 import { BLAKE_HASH_BIT_LENGTH, PALLET_TYPE_ID } from "../constants";
 import { concatU8a } from "../misc";
 import { fromChainUnits } from "../units";
-import BigNumber from "bignumber.js";
-import { bnToU8a, hexToU8a, u8aToHex } from "@polkadot/util";
+import { hexToU8a } from "@polkadot/util";
 import { blake2AsHex } from "@polkadot/util-crypto";
-const createBlakeHash = require("blake-hash");
+import BigNumber from "bignumber.js";
 
 export async function fetchOwnedFinancialNfts(
   parachainApi: ApiPromise,

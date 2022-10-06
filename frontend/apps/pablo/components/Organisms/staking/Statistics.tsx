@@ -16,7 +16,8 @@ import { useParachainApi } from "substrate-react";
 import { DEFAULT_NETWORK_ID, DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils";
 import { useTotalXTokensIssued } from "@/defi/hooks/stakingRewards/useTotalXTokensIssued";
 import { StakingRewardPool } from "@/defi/types";
-import BigNumber from "bignumber.js";
+import { useAverageLockTimeAndMultiplier } from "@/defi/hooks/stakingRewards";
+import { calculatePeriod, createDurationPresetLabel } from "@/defi/utils/stakingRewards/durationPresets";
 
 const threeColumnPageSize = {
   xs: 12,
@@ -76,14 +77,14 @@ export const StakingStatistics: React.FC<GridProps & { stakingRewardPool?: Staki
     shareAssetId: stakingRewardPool?.shareAssetId
   });
 
+  const { averageLockMultiplier, averageLockTime } = useAverageLockTimeAndMultiplier();
+
   const {
     pabloStaking
   } = useStakingRewardsSlice();
 
   const {
-    totalPBLOLocked,
-    averageLockMultiplier,
-    averageLockTime
+    totalPBLOLocked
   } = pabloStaking;
 
   const {
@@ -141,14 +142,14 @@ export const StakingStatistics: React.FC<GridProps & { stakingRewardPool?: Staki
       <Grid item {...twoColumnPageSize}>
         <Item
           label="Average lock multiplier"
-          value={averageLockMultiplier.toString()}
+          value={`${averageLockMultiplier.toString()}x`}
           TooltipProps={{ title: "Average lock multiplier" }}
         />
       </Grid>
       <Grid item {...twoColumnPageSize}>
         <Item
           label="Average lock time"
-          value={`${averageLockTime} days`}
+          value={`${createDurationPresetLabel(calculatePeriod(averageLockTime))}`}
           TooltipProps={{ title: "Average lock time" }}
         />
       </Grid>

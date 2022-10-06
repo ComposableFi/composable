@@ -13,8 +13,6 @@ export interface StakingRewardsSlice {
   >;
   pabloStaking: {
     totalPBLOLocked: BigNumber;
-    averageLockMultiplier: BigNumber;
-    averageLockTime: BigNumber;
   };
 }
 
@@ -23,8 +21,6 @@ export const useStakingRewardsSlice = create<StakingRewardsSlice>(() => ({
   rewardPoolStakedPositionHistory: {},
   pabloStaking: {
     totalPBLOLocked: new BigNumber(0),
-    averageLockMultiplier: new BigNumber(0),
-    averageLockTime: new BigNumber(0),
   },
 }));
 
