@@ -71,14 +71,14 @@ common = { path = "../../../parachain/runtime/common" }
 
 # Beefy
 beefy-prover = { path = "../../algorithms/beefy/prover" }
-beefy-light-client = { path = "../../algorithms/beefy" }
+beefy-light-client = { path = "../../algorithms/beefy/verifier" }
 beefy-light-client-primitives = {  path = "../../algorithms/beefy/primitives" }
 ics11-beefy = { path = "../../light-clients/ics11-beefy" }
 beefy-gadget-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 
 # Grandpa
 grandpa-prover = { path = "../../algorithms/grandpa/prover" }
-grandpa-light-client = { path = "../../algorithms/grandpa" }
+grandpa-light-client = { path = "../../algorithms/grandpa/verifier" }
 grandpa-light-client-primitives = { path = "../../algorithms/grandpa/primitives" }
 ics10-grandpa = { path = "../../light-clients/ics10-grandpa" }
 finality-grandpa-rpc = { package = "sc-finality-grandpa-rpc", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }

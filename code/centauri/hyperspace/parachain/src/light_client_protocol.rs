@@ -20,8 +20,8 @@ use ics11_beefy::client_message::{
 };
 use pallet_ibc::light_clients::{AnyClientMessage, AnyClientState};
 use primitives::{
-	find_maximum_height_for_timeout_proofs, mock::LocalClientTypes, Chain, IbcProvider,
-	KeyProvider, UpdateMessage, UpdateType,
+    query_maximum_height_for_timeout_proofs, mock::LocalClientTypes, Chain, IbcProvider,
+    KeyProvider, UpdateMessage, UpdateType,
 };
 use serde::{Deserialize, Serialize};
 use sp_core::H256;
@@ -60,7 +60,7 @@ impl LightClientProtocol {
 		source: &mut ParachainClient<T>,
 		finality_event: FinalityEvent,
 		counterparty: &C,
-	) -> Result<(UpdateMessage, Vec<IbcEvent>, UpdateType), anyhow::Error>
+	) -> Result<(Any, Vec<IbcEvent>, UpdateType), anyhow::Error>
 	where
 		T: Config + Send + Sync,
 		C: Chain,
@@ -99,7 +99,7 @@ pub async fn query_latest_ibc_events_with_beefy<T, C>(
 	source: &mut ParachainClient<T>,
 	finality_event: FinalityEvent,
 	counterparty: &C,
-) -> Result<(UpdateMessage, Vec<IbcEvent>, UpdateType), anyhow::Error>
+) -> Result<(Any, Vec<IbcEvent>, UpdateType), anyhow::Error>
 where
 	T: Config + Send + Sync,
 	C: Chain,
@@ -196,7 +196,7 @@ where
 	// and return the maximum height at which we can construct non-existence proofs for
 	// all these packets on the source chain
 	let max_height_for_timeouts =
-		find_maximum_height_for_timeout_proofs(counterparty, source).await;
+		query_maximum_height_for_timeout_proofs(counterparty, source).await;
 	let timeout_update_required = if let Some(max_height) = max_height_for_timeouts {
 		let max_height = max_height as u32;
 		finalized_blocks.contains(&max_height)
@@ -295,7 +295,7 @@ where
 		Any { value, type_url: msg.type_url() }
 	};
 
-	Ok((UpdateMessage::Single(update_header), events, update_type))
+	Ok((update_header, events, update_type))
 }
 
 /// Query the latest events that have been finalized by the GRANDPA finality protocol.
@@ -303,7 +303,7 @@ pub async fn query_latest_ibc_events_with_grandpa<T, C>(
 	source: &mut ParachainClient<T>,
 	finality_event: FinalityEvent,
 	counterparty: &C,
-) -> Result<(UpdateMessage, Vec<IbcEvent>, UpdateType), anyhow::Error>
+) -> Result<(Any, Vec<IbcEvent>, UpdateType), anyhow::Error>
 where
 	T: Config + Send + Sync,
 	C: Chain,
@@ -335,9 +335,11 @@ where
 	let client_state = response.client_state.ok_or_else(|| {
 		Error::Custom("Received an empty client state from counterparty".to_string())
 	})?;
+
 	let client_state = AnyClientState::try_from(client_state)
 		.map_err(|_| Error::Custom("Failed to decode client state".to_string()))?;
-	let grandpa_client_state = match &client_state {
+
+	let client_state = match &client_state {
 		AnyClientState::Grandpa(client_state) => client_state,
 		c => Err(Error::ClientStateRehydration(format!(
 			"Expected AnyClientState::Grandpa found: {:?}",
@@ -345,29 +347,15 @@ where
 		)))?,
 	};
 
-	let missed_updates = source
-		.find_missed_mandatory_update(
-			counterparty,
-			grandpa_client_state.latest_relay_height,
-			justification.commit.target_number,
-		)
-		.await
-		.ok()
-		.flatten();
-
 	// fetch the new parachain headers that have been finalized
 	// If we find missed an updates we want to start querying the relay chain for parachain blocks
 	// blocks from the missed update height instead of the previous light client height
 	// Since we would have fetched parachain headers for the previous light client height while
 	// fetching proofs for the missed update
-	let previous_finalized_relay_height = missed_updates
-		.as_ref()
-		.map(|(.., height)| *height)
-		.unwrap_or(grandpa_client_state.latest_relay_height);
 	let headers = source
 		.query_grandpa_finalized_parachain_headers_between(
 			justification.commit.target_number,
-			previous_finalized_relay_height,
+			client_state.latest_relay_height,
 		)
 		.await?
 		.ok_or_else(|| {
@@ -403,7 +391,7 @@ where
 	// and return the maximum height at which we can construct non-existence proofs for
 	// all these packets on the source chain
 	let max_height_for_timeouts =
-		find_maximum_height_for_timeout_proofs(counterparty, source).await;
+		query_maximum_height_for_timeout_proofs(counterparty, source).await;
 	let timeout_update_required = if let Some(max_height) = max_height_for_timeouts {
 		let max_height = max_height as u32;
 		finalized_blocks.contains(&max_height)
@@ -417,26 +405,6 @@ where
 		latest_finalized_block.into(),
 		client_state.latest_height().revision_height,
 	);
-
-	let target = source
-		.relay_client
-		.rpc()
-		.header(Some(justification.commit.target_hash.into()))
-		.await?
-		.ok_or_else(|| {
-			Error::from("Could not find relay chain header for justification target".to_string())
-		})?;
-
-	let authority_set_changed_scheduled = find_scheduled_change(&target).is_some();
-	// if validator set has changed this is a mandatory update
-	let update_type = match authority_set_changed_scheduled ||
-		missed_updates.is_some() ||
-		timeout_update_required ||
-		is_update_required
-	{
-		true => UpdateType::Mandatory,
-		false => UpdateType::Optional,
-	};
 
 	// block_number => events
 	let events: HashMap<String, Vec<IbcEvent>> =
@@ -472,10 +440,28 @@ where
 	let ParachainHeadersWithFinalityProof { finality_proof, parachain_headers } = source
 		.query_grandpa_finalized_parachain_headers_with_proof(
 			justification.commit.target_number.into(),
-			previous_finalized_relay_height,
+			client_state.latest_relay_height,
 			headers_with_events.into_iter().collect(),
 		)
 		.await?;
+
+	let target = source
+		.relay_client
+		.rpc()
+		.header(Some(finality_proof.block.into()))
+		.await?
+		.ok_or_else(|| {
+			Error::from("Could not find relay chain header for justification target".to_string())
+		})?;
+
+	let authority_set_changed_scheduled = find_scheduled_change(&target).is_some();
+	// if validator set has changed this is a mandatory update
+	let update_type =
+		match authority_set_changed_scheduled || timeout_update_required || is_update_required {
+			true => UpdateType::Mandatory,
+			false => UpdateType::Optional,
+		};
+
 	let grandpa_header = GrandpaHeader {
 		finality_proof: finality_proof.into(),
 		parachain_headers: parachain_headers.into(),
@@ -498,10 +484,5 @@ where
 		Any { value, type_url: msg.type_url() }
 	};
 
-	if let Some((mut missed_updates, ..)) = missed_updates {
-		missed_updates.push(update_header);
-		Ok((UpdateMessage::Batch(missed_updates), events, update_type))
-	} else {
-		Ok((UpdateMessage::Single(update_header), events, update_type))
-	}
+	Ok((update_header, events, update_type))
 }

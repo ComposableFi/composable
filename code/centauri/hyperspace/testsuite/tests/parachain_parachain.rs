@@ -170,10 +170,19 @@ async fn setup_clients() -> (ParachainClient<DefaultConfig>, ParachainClient<Def
 async fn main() {
 	logging::setup_logging();
 	// Run tests sequentially
+
+	// no timeouts
+	parachain_to_parachain_ibc_messaging_with_connection_delay().await;
+	// no timeouts + connection delay
+	parachain_to_parachain_ibc_messaging_without_connection_delay().await;
+
+	// todo: timeouts without connection delay
+
+	// timeouts + connection delay
 	parachain_to_parachain_ibc_messaging_packet_height_timeout_with_connection_delay().await;
 	parachain_to_parachain_ibc_messaging_packet_timeout_timestamp_with_connection_delay().await;
-	parachain_to_parachain_ibc_messaging_with_connection_delay().await;
-	parachain_to_parachain_ibc_messaging_without_connection_delay().await;
+
+	// channel closing semantics
 	parachain_to_parachain_ibc_messaging_packet_timeout_on_channel_close().await;
 	parachain_to_parachain_ibc_channel_close().await;
 }

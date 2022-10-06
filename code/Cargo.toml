@@ -57,10 +57,10 @@ members = [
   "centauri/ibc/proto-compiler",
 
   # algorithms
-  "centauri/algorithms/beefy",
+  "centauri/algorithms/beefy/verifier",
   "centauri/algorithms/beefy/prover",
   "centauri/algorithms/beefy/primitives",
-  "centauri/algorithms/grandpa",
+  "centauri/algorithms/grandpa/verifier",
   "centauri/algorithms/grandpa/prover",
   "centauri/algorithms/grandpa/primitives",
 

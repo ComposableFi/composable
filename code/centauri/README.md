@@ -1,8 +1,8 @@
-#  composable-bridge-common
+##  Centauri: Trustless Bridging Protocol
 
-A set of crates that power composable's trustless bridge infrastructure.
+This is the concrete implementation of the centauri bridging protocol, based on IBC, Powered by light clients.
 
-###     [beefy-light-client](algorithms/beefy/src/lib.rs)
+###     [beefy-light-client](algorithms/beefy/verifier/src/lib.rs)
 
 This is a `no_std` compatible crate that contains functions for verifying BEEFY commitments and Parachain headers which have been finalized by the BEEFY protocol.
 
@@ -13,7 +13,7 @@ This contains utility functions for assembling BEEFY proofs as well as parachain
 
 A `no_std` compatible crate which contains primitive types which are shared by both crates.
 
-###     [grandpa-light-client](algorithms/grandpa/src/lib.rs)
+###     [grandpa-light-client](algorithms/grandpa/verifier/src/lib.rs)
 
 This is a `no_std` compatible crate that contains functions for verifying GrandPa commitments and Parachain headers which have been finalized by the GrandPa protocol.
 

@@ -88,7 +88,7 @@ impl IbcProvider for AnyChain {
 		&mut self,
 		finality_event: Self::FinalityEvent,
 		counterparty: &T,
-	) -> Result<(primitives::UpdateMessage, Vec<IbcEvent>, UpdateType), anyhow::Error>
+	) -> Result<(Any, Vec<IbcEvent>, UpdateType), anyhow::Error>
 	where
 		T: Chain,
 	{
@@ -243,42 +243,6 @@ impl IbcProvider for AnyChain {
 		}
 	}
 
-	async fn query_host_consensus_state_proof(
-		&self,
-		height: Height,
-	) -> Result<Option<Vec<u8>>, Self::Error> {
-		match self {
-			#[cfg(feature = "parachain")]
-			AnyChain::Parachain(chain) =>
-				chain.query_host_consensus_state_proof(height).await.map_err(Into::into),
-			_ => unreachable!(),
-		}
-	}
-
-	fn connection_prefix(&self) -> CommitmentPrefix {
-		match self {
-			#[cfg(feature = "parachain")]
-			AnyChain::Parachain(chain) => chain.connection_prefix(),
-			_ => unreachable!(),
-		}
-	}
-
-	fn client_id(&self) -> ClientId {
-		match self {
-			#[cfg(feature = "parachain")]
-			AnyChain::Parachain(chain) => chain.client_id(),
-			_ => unreachable!(),
-		}
-	}
-
-	fn client_type(&self) -> ClientType {
-		match self {
-			#[cfg(feature = "parachain")]
-			AnyChain::Parachain(chain) => chain.client_type(),
-			_ => unreachable!(),
-		}
-	}
-
 	async fn query_packet_commitments(
 		&self,
 		at: Height,
@@ -417,10 +381,46 @@ impl IbcProvider for AnyChain {
 		}
 	}
 
+	async fn query_host_consensus_state_proof(
+		&self,
+		height: Height,
+	) -> Result<Option<Vec<u8>>, Self::Error> {
+		match self {
+			#[cfg(feature = "parachain")]
+			AnyChain::Parachain(chain) =>
+				chain.query_host_consensus_state_proof(height).await.map_err(Into::into),
+			_ => unreachable!(),
+		}
+	}
+
 	async fn query_ibc_balance(&self) -> Result<Vec<PrefixedCoin>, Self::Error> {
 		match self {
 			#[cfg(feature = "parachain")]
 			Self::Parachain(chain) => chain.query_ibc_balance().await.map_err(Into::into),
+			_ => unreachable!(),
+		}
+	}
+
+	fn connection_prefix(&self) -> CommitmentPrefix {
+		match self {
+			#[cfg(feature = "parachain")]
+			AnyChain::Parachain(chain) => chain.connection_prefix(),
+			_ => unreachable!(),
+		}
+	}
+
+	fn client_id(&self) -> ClientId {
+		match self {
+			#[cfg(feature = "parachain")]
+			AnyChain::Parachain(chain) => chain.client_id(),
+			_ => unreachable!(),
+		}
+	}
+
+	fn client_type(&self) -> ClientType {
+		match self {
+			#[cfg(feature = "parachain")]
+			AnyChain::Parachain(chain) => chain.client_type(),
 			_ => unreachable!(),
 		}
 	}

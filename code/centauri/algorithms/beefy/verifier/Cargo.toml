@@ -27,8 +27,8 @@ beefy-primitives = { default-features = false, git = "https://github.com/parityt
 sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
 
 # local
-beefy-light-client-primitives = { path = "primitives", default-features = false }
-light-client-common = { path = "../../light-clients/common", default-features = false }
+beefy-light-client-primitives = { path = "../primitives", default-features = false }
+light-client-common = { path = "../../../light-clients/common", default-features = false }
 
 [dev-dependencies]
 tokio = { version = "1.17.0", features = ["full"] }
@@ -39,7 +39,7 @@ pallet-mmr-rpc = { git = "https://github.com/paritytech/substrate", branch = "po
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-beefy-prover = { path = "prover" }
+beefy-prover = { path = "../prover" }
 hex = "0.4.3"
 futures = "0.3.21"
 

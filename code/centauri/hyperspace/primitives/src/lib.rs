@@ -88,7 +88,7 @@ pub trait IbcProvider {
 		&mut self,
 		finality_event: Self::FinalityEvent,
 		counterparty: &T,
-	) -> Result<(UpdateMessage, Vec<IbcEvent>, UpdateType), anyhow::Error>
+	) -> Result<(Any, Vec<IbcEvent>, UpdateType), anyhow::Error>
 	where
 		T: Chain;
 
@@ -504,7 +504,7 @@ pub async fn find_suitable_proof_height_for_client(
 	None
 }
 
-pub async fn find_maximum_height_for_timeout_proofs(
+pub async fn query_maximum_height_for_timeout_proofs(
 	source: &impl Chain,
 	sink: &impl Chain,
 ) -> Option<u64> {

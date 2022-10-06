@@ -177,7 +177,7 @@ where
 	/// chain hashes.
 	pub async fn query_finalized_parachain_headers_with_proof<H>(
 		&self,
-		latest_finalized_height: u32,
+		mut latest_finalized_height: u32,
 		previous_finalized_height: u32,
 		header_numbers: Vec<T::BlockNumber>,
 	) -> Result<Option<ParachainHeadersWithFinalityProof<H>>, anyhow::Error>
@@ -186,6 +186,12 @@ where
 		H::Hash: From<T::Hash>,
 		T::BlockNumber: One,
 	{
+		let session_end = self.session_end_for_block(previous_finalized_height).await?;
+
+		if latest_finalized_height > session_end {
+			latest_finalized_height = session_end
+		}
+
 		let latest_finalized_hash = self
 			.relay_client
 			.rpc()
@@ -302,5 +308,18 @@ where
 		}
 
 		Ok(Some(ParachainHeadersWithFinalityProof { finality_proof, parachain_headers }))
+	}
+
+	// Queries the block at which the epoch for the given block belongs to ends.
+	async fn session_end_for_block(&self, block: u32) -> Result<u32, anyhow::Error> {
+		let epoch_addr = runtime::api::storage().babe().epoch_start();
+		let block_hash = self.relay_client.rpc().block_hash(Some(block.into())).await?;
+		let (previous_epoch_start, current_epoch_start) = self
+			.relay_client
+			.storage()
+			.fetch(&epoch_addr, block_hash)
+			.await?
+			.ok_or_else(|| anyhow!("Failed to fetch epoch information"))?;
+		Ok(current_epoch_start + (current_epoch_start - previous_epoch_start))
 	}
 }

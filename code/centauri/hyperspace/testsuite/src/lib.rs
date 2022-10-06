@@ -53,18 +53,29 @@ where
 	if !channels.is_empty() {
 		let (channel_id, port_id) = channels[0].clone();
 		let (latest_height, ..) = chain_a.latest_height_and_timestamp().await.unwrap();
-		if let Ok(channel_response) =
-			chain_a.query_channel_end(latest_height, channel_id, port_id.clone()).await
+		let channel_response = chain_a
+			.query_channel_end(latest_height, channel_id, port_id.clone())
+			.await
+			.unwrap();
+		let channel_end = ChannelEnd::try_from(channel_response.channel.unwrap()).unwrap();
+		let connection_response = chain_a
+			.query_connection_end(latest_height, channel_end.connection_hops()[0].clone())
+			.await
+			.unwrap();
+
+		dbg!(&connection_response);
+		dbg!(&connection_delay);
+
+		if channel_end.state == State::Open &&
+			port_id == PortId::transfer() &&
+			connection_response.connection.unwrap().delay_period == connection_delay
 		{
-			let channel_end = ChannelEnd::try_from(channel_response.channel.unwrap()).unwrap();
-			if channel_end.state == State::Open && port_id == PortId::transfer() {
-				return (
-					handle,
-					channel_id,
-					channel_end.counterparty().channel_id.unwrap().clone(),
-					channel_end.connection_hops[0].clone(),
-				)
-			}
+			return (
+				handle,
+				channel_id,
+				channel_end.counterparty().channel_id.unwrap().clone(),
+				channel_end.connection_hops[0].clone(),
+			)
 		}
 	}
 

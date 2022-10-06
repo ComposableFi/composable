@@ -1,4 +1,6 @@
-use std::{collections::BTreeMap, fmt::Display, str::FromStr, sync::Arc};
+#![allow(clippy::all)]
+
+use std::{fmt::Display, str::FromStr, sync::Arc};
 
 pub mod chain;
 pub mod error;
@@ -41,16 +43,11 @@ use crate::utils::{fetch_max_extrinsic_weight, unsafe_cast_to_jsonrpsee_client};
 use primitives::{Chain, KeyProvider};
 
 use crate::{light_client_protocol::LightClientProtocol, signer::ExtrinsicSigner};
-use grandpa_light_client_primitives::{
-	FinalityProof, ParachainHeaderProofs, ParachainHeadersWithFinalityProof,
-};
+use grandpa_light_client_primitives::ParachainHeadersWithFinalityProof;
 use grandpa_prover::GrandpaProver;
-use ibc::{core::ics02_client::msgs::update_client::MsgUpdateAnyClient, tx_msg::Msg};
-use ibc_proto::google::protobuf::Any;
+use ibc::tx_msg::Msg;
 use ics10_grandpa::client_state::ClientState as GrandpaClientState;
 use jsonrpsee_ws_client::WsClientBuilder;
-use pallet_ibc::light_clients::AnyClientMessage;
-use primitives::mock::LocalClientTypes;
 use sp_keystore::testing::KeyStore;
 use sp_runtime::traits::{One, Zero};
 use subxt::tx::{SubstrateExtrinsicParamsBuilder, TxPayload};
@@ -448,7 +445,7 @@ where
 		let mut count = 0;
 		let progress = loop {
 			if count == 5 {
-				return Err(Error::Custom("Failed to submit extrinsic after 5 tries".to_string()))
+				Err(Error::Custom("Failed to submit extrinsic after 5 tries".to_string()))?
 			}
 
 			let tx_params = <SubstrateExtrinsicParamsBuilder<T>>::new()
@@ -477,89 +474,5 @@ where
 
 	pub fn client_id(&self) -> ClientId {
 		self.client_id.as_ref().expect("Client Id should be defined").clone()
-	}
-}
-
-impl<T: subxt::Config + Send + Sync> ParachainClient<T>
-where
-	u32: From<<<T as subxt::Config>::Header as HeaderT>::Number>,
-	Self: KeyProvider,
-	<T::Signature as Verify>::Signer: From<MultiSigner> + IdentifyAccount<AccountId = T::AccountId>,
-	MultiSigner: From<MultiSigner>,
-	<T as subxt::Config>::Address: From<<T as subxt::Config>::AccountId>,
-	T::Signature: From<MultiSignature>,
-	H256: From<T::Hash>,
-	T::BlockNumber: From<u32> + Display + Ord + sp_runtime::traits::Zero + One,
-	<T::ExtrinsicParams as ExtrinsicParams<T::Index, T::Hash>>::OtherParams:
-		From<BaseExtrinsicParamsBuilder<T, AssetTip>>,
-	FinalityProof<sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256>>:
-		From<FinalityProof<T::Header>>,
-	BTreeMap<H256, ParachainHeaderProofs>:
-		From<BTreeMap<<T as subxt::Config>::Hash, ParachainHeaderProofs>>,
-{
-	pub async fn find_missed_mandatory_update(
-		&self,
-		counterparty: &impl Chain,
-		previous_finalized_height: u32,
-		latest_height: u32,
-	) -> Result<Option<(Vec<Any>, u32)>, Error> {
-		let session_end = self.session_end_for_block(previous_finalized_height).await?;
-
-		if latest_height > session_end {
-			let headers = self
-				.query_grandpa_finalized_parachain_headers_between(
-					session_end,
-					previous_finalized_height,
-				)
-				.await?
-				.ok_or_else(|| {
-					Error::from(
-						"[find_missed_mandatory_headers] No parachain headers have been finalized"
-							.to_string(),
-					)
-				})?;
-			let headers = headers.iter().map(|header| *header.number()).collect::<Vec<_>>();
-			let ParachainHeadersWithFinalityProof { finality_proof, parachain_headers } = self
-				.query_grandpa_finalized_parachain_headers_with_proof(
-					session_end,
-					previous_finalized_height,
-					headers,
-				)
-				.await?;
-			let grandpa_header = ics10_grandpa::client_message::Header {
-				finality_proof: finality_proof.into(),
-				parachain_headers: parachain_headers.into(),
-			};
-
-			let update_header = {
-				let msg = MsgUpdateAnyClient::<LocalClientTypes> {
-					client_id: self.client_id(),
-					client_message: AnyClientMessage::Grandpa(
-						ics10_grandpa::client_message::ClientMessage::Header(grandpa_header),
-					),
-					signer: counterparty.account_id(),
-				};
-
-				let value = msg.encode_vec();
-				Any { value, type_url: msg.type_url() }
-			};
-			Ok(Some((vec![update_header], session_end)))
-		} else {
-			Ok(None)
-		}
-	}
-
-	async fn session_end_for_block(&self, block: u32) -> Result<u32, Error> {
-		let epoch_addr = polkadot::api::storage().babe().epoch_start();
-		let block_hash = self.relay_client.rpc().block_hash(Some(block.into())).await?;
-		let (.., current_epoch_start) = self
-			.relay_client
-			.storage()
-			.fetch(&epoch_addr, block_hash)
-			.await?
-			.ok_or_else(|| Error::from("Failed to fetch epoch information".to_string()))?;
-		let epoch_duration_addr = polkadot::api::constants().babe().epoch_duration();
-		let epoch_length = self.relay_client.constants().at(&epoch_duration_addr)? as u32;
-		Ok(current_epoch_start + epoch_length)
 	}
 }

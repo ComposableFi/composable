@@ -39,7 +39,7 @@ ibc = { path = "../../ibc/modules", default-features = false }
 ibc-proto = { path = "../../ibc/proto", default-features = false }
 
 # beefy deps
-beefy-client = { package = "beefy-light-client", path = "../../algorithms/beefy",  default-features = false }
+beefy-client = { package = "beefy-light-client", path = "../../algorithms/beefy/verifier",  default-features = false }
 beefy-light-client-primitives = {  path = "../../algorithms/beefy/primitives", default-features = false }
 light-client-common = { path = "../common", default-features = false }
 

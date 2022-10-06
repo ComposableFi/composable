@@ -45,6 +45,7 @@ use grandpa_light_client_primitives::{FinalityProof, ParachainHeaderProofs};
 use ics11_beefy::client_state::ClientState as BeefyClientState;
 use pallet_ibc::{light_clients::HostFunctionsManager, HostConsensusProof};
 
+use ibc_proto::google::protobuf::Any;
 use sp_runtime::traits::One;
 use std::{collections::BTreeMap, str::FromStr, time::Duration};
 
@@ -75,7 +76,7 @@ where
 		&mut self,
 		finality_event: Self::FinalityEvent,
 		counterparty: &C,
-	) -> Result<(UpdateMessage, Vec<IbcEvent>, UpdateType), anyhow::Error>
+	) -> Result<(Any, Vec<IbcEvent>, UpdateType), anyhow::Error>
 	where
 		C: Chain,
 	{
