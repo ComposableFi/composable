@@ -235,7 +235,7 @@ sequenceDiagram
 The call instruction supports bindings values on the executing side of the program by specifying the `Bindings`. This allows us to construct a program that uses data only available on the executing side. For example, the swap call of the following smart contract snippet expects a `to` address to receive the funds after a trade.
 
 ```rust
-fn swap(amount: u256, pair: (u128, u128), to: AccountId) { .A.. } 
+fn swap(amount: u256, pair: (u128, u128), to: AccountId) { ... } 
 ```
 
 If we want to swap funds from the interpreter account and receive the funds into the interpreter account, we need to specify the BindingValue `Self`, using the index of the `to` field for the serialized data being passed to the smart contract. For the `Call` instruction of `swap(10, (1, 2), ${UNKNOWN})`, we then serialize it into the following struct:
