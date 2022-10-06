@@ -308,7 +308,7 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
                     ? `${ethAssociatedOrSelectedAccount.address} (${ethAssociatedOrSelectedAccount.name})`
                     : "-"
                 }
-                disabled={!hasStarted || availableToClaim.eq(0)}
+                disabled={!hasStarted || availableToClaim.eq(0) || nextStep === CrowdloanStep.None}
                 claimedRewards={claimedRewards}
                 amountContributed={contributedAmount}
                 availableToClaim={availableToClaim}
@@ -333,7 +333,7 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
             ) : (
               <KSMClaimForm
                 isClaiming={isPendingAssociate || isPendingClaim}
-                disabled={!hasStarted || availableToClaim.eq(0)}
+                disabled={!hasStarted || availableToClaim.eq(0) || nextStep === CrowdloanStep.None}
                 claimedRewards={claimedRewards}
                 amountContributed={contributedAmount}
                 availableToClaim={availableToClaim}

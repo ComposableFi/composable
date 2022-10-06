@@ -8,6 +8,7 @@ import {
   fetchClaimableRewards,
   findAssociation,
   isAssociatedAccountSameAsConnectedAccount,
+  findAssociatedByAccount,
 } from "./crowdloanRewards";
 import {
   CrowdloanAssociation,
@@ -243,7 +244,12 @@ export const useCrowdloanRewardsEthereumAddressAssociatedAccount = (
           return address === ethAssociation[0];
         });
       } else if (!ethAssociation) {
-        return connectedPicassoAccount;
+        const connectedKsmHasOtherAssociation = findAssociatedByAccount(connectedPicassoAccount.address, onChainAssociations);
+        if (connectedKsmHasOtherAssociation && connectedKsmHasOtherAssociation[1] === null) {
+          return connectedPicassoAccount;
+        } else {
+          return { name: connectedKsmHasOtherAssociation?.[1] ? connectedKsmHasOtherAssociation?.[1] : "-", address: "DOT Wallet is associated with" }
+        }
       }
     }
 
@@ -308,7 +314,7 @@ export const useCrowdloanRewardsStepGivenConnectedAccounts = (
           return CrowdloanStep.None;
         }
       } else {
-        const ksmAssociation = findAssociation(selectedPicassoAccount, "picasso", onChainAssociations);
+        const ksmAssociation = findAssociatedByAccount(selectedPicassoAccount, onChainAssociations);
         if (ksmAssociation && ksmAssociation[1] === null) {
           return CrowdloanStep.AssociateEth;
         } else {

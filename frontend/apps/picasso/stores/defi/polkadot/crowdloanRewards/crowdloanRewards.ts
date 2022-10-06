@@ -162,6 +162,18 @@ export function findAssociation(
   });
 }
 
+export function findAssociatedByAccount(
+  account: string | undefined,
+  associations: CrowdloanAssociation[]
+): CrowdloanAssociation | undefined {
+  if (!account) return undefined;
+
+  return associations.find(([_connectedAccount, _associatedAccount]) => {
+    return account !== undefined
+      ? account === _connectedAccount : false ;
+  });
+}
+
 export function isAssociatedAccountSameAsConnectedAccount(
   connectedAccount?: string,
   associatedAccount?: CrowdloanAssociation
