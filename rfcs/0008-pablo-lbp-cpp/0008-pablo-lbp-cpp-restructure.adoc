@@ -193,11 +193,11 @@ These are the modifications to be made to the existing https://github.com/Compos
 [source,rust]
 ----
 pub fn compute_out_given_in<T: PerThing>(
-	w_i: T,
-	w_o: T,
-	b_i: u128,
-	b_o: u128,
-	a_sent: u128,
+    w_i: T,
+    w_o: T,
+    b_i: u128,
+    b_o: u128,
+    a_sent: u128,
     // f=0 for getting "out" without taking into account the fee
     f: T
 ) -> Result<(/* Out */ u128, /*Fee*/ u128), ArithmeticError> {
@@ -226,6 +226,31 @@ where
 	T::Inner: Into<u32>,
 {
     // Calculate according to section 4.1 Eqn: 3
+}
+----
+
+=== Algorithm: `constant_product::compute_deposit_lp`
+
+These are the modifications to be made to the existing https://github.com/ComposableFi/composable/blob/main/code/parachain/frame/composable-maths/src/dex/constant_product.rs#L96[function].
+
+[source,rust]
+----
+pub fn compute_deposit_lp<T: PerThing>(
+    lp_total_issuance: u128,
+    num_tokens_in_pool: u128,
+    d_k: u128,
+    b_k: u128,
+    // w_k = 1 when providing liquidity in pool weight ratio for all assets
+    w_k: T,
+) -> Result<u128, ArithmeticError> {
+    let first_deposit = lp_total_issuance.is_zero();
+    if first_deposit {
+        // Calculate `lp_to_mint` according to section 4.2 Eqn: 6
+        Ok(lp_to_mint)
+    } else {
+        // Calculate `lp_to_mint` according to section 4.2 Eqn: 5
+        Ok(lp_to_mint)
+    }
 }
 ----
 
@@ -400,6 +425,66 @@ stop
 
 [#_algorithm_ammadd_liquidity]
 === Algorithm: `Amm::add_liquidity`
+
+LPs use this functionality to provide liquidity. It requires some adjustments.
+
+[source,rust]
+----
+pub trait Amm {
+    // ....
+
+    fn add_liquidity(
+        who: &Self::AccountId,
+        pool_id: Self::PoolId,
+        // Bounds for the Vec can be specified here to based on a pallet config.
+        // The details can be figured out in the implementation
+        assets: Vec<AssetAmount<Self::AssetId, Self::Balance>>,
+        min_mint_amount: Self::Balance,
+        keep_alive: bool,
+    ) -> Result<(), DispatchError>;
+
+    // ....
+}
+----
+
+
+[plantuml,images/pablo-amm-add-liquidity,png]
+----
+start
+->who,pool_id,assets,min_mint_amount;
+:validate assets are part of the pool;
+:pool = get pool from storage by pool_id;
+:balances = get balances for in_asset and out_asset;
+:lp_total_issuance = get issuance of pool.lp_token;
+if (assets.len() == pool.assets.len()) then (yes)
+    :validate asset amounts are according to pool weight ratios;
+    :lp_to_mint = constant_product::compute_deposit_lp(
+        lp_total_issuance,
+        // This length MUST be fixed at pool creation time,
+        // i.e by setting the assets with 0 liquidity
+        pool.assets.len(),
+        // following two values are for the same k th asset
+        d_k: assets[0].amount,
+        b_k: balances[0],
+        1,
+    );
+else if (assets.len() == 1) then (yes)
+    :lp_to_mint = constant_product::compute_deposit_lp(
+        lp_total_issuance,
+        pool.assets.len(),
+        // following two values are for the same k th asset
+        d_k: assets[0],
+        b_k: balances[0],
+        pool.assets[assets[0].asset_id],
+    );
+else
+    :Unsupported operation;
+    end
+endif
+:transfer assets to the pool account;
+:mint & transfer lp_to_mint to who;
+stop
+----
 
 [#_algorithm_ammremove_liquidity]
 === Algorithm: `Amm::remove_liquidity`
