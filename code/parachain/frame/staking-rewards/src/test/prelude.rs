@@ -240,7 +240,7 @@ pub fn unstake_and_assert<Runtime, RuntimeEvent>(
 
 			let expected_claim = claim_of_stake::<Runtime>(
 				&position_before_unstake,
-				&rewards_pool.total_shares,
+				&rewards_pool.share_asset_id,
 				reward,
 				&position_before_unstake.reward_pool_id,
 			)
@@ -374,7 +374,7 @@ staked amount: {staked_amount:?}
 	for (reward_asset_id, reward) in &rewards_pool.rewards {
 		let expected_claim = claim_of_stake::<Runtime>(
 			&position_before_unstake,
-			&rewards_pool.total_shares,
+			&rewards_pool.share_asset_id,
 			reward,
 			reward_asset_id,
 		)

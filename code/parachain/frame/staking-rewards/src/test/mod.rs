@@ -586,7 +586,9 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 
 		process_and_progress_blocks::<StakingRewards, Test>(1);
 
-		mint_assets([ALICE], [PICA::ID], AMOUNT * 2);
+		let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
+		mint_assets([ALICE], [staked_asset_id], AMOUNT * 2);
+		update_total_rewards_and_total_shares_in_rewards_pool(PICA::ID, TOTAL_REWARDS);
 
 		stake_and_assert::<Test, runtime::Event>(ALICE, PICA::ID, AMOUNT, DURATION_PRESET);
 
@@ -638,9 +640,12 @@ fn test_extend_stake_amount() {
 		let extend_amount = 100_500_u32.into();
 		let existential_deposit = 1_000_u128;
 		let duration_preset = ONE_HOUR;
+		let total_rewards = 100;
+		let total_issuance = 200;
 
 		let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
 		mint_assets([staker], [staked_asset_id], amount * 2 + existential_deposit);
+		update_total_rewards_and_total_shares_in_rewards_pool(pool_id, total_rewards);
 
 		process_and_progress_blocks::<StakingRewards, Test>(1);
 		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration_preset));
@@ -649,10 +654,23 @@ fn test_extend_stake_amount() {
 		let reward_multiplier = StakingRewards::reward_multiplier(&rewards_pool, duration_preset)
 			.expect("reward_multiplier expected");
 		let boosted_amount = StakingRewards::boosted_amount(reward_multiplier, amount).expect("boosted amount should not overflow") ;
+		dbg!(total_issuance);
+		let inflation = boosted_amount * total_rewards / total_issuance;
 
 		assert_ok!(StakingRewards::extend(Origin::signed(staker), 1, 0, extend_amount));
 
 		let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
+
+		let total_rewards =	rewards_pool
+			.rewards
+			.iter()
+			.fold(0, |total_rewards, (_asset_id, reward)| {
+				total_rewards + reward.total_rewards
+			});
+
+		let inflation_extended = extend_amount * total_rewards / total_issuance;
+		let inflation = inflation + inflation_extended;
+		assert_eq!(inflation, 50710);
 
 		let reductions = rewards_pool
 			.rewards
@@ -763,7 +781,7 @@ fn unstake_in_case_of_zero_claims_and_early_unlock_should_work() {
 			assert_eq!(
 				claim_of_stake::<Test>(
 					&Stakes::<Test>::get(STAKING_FNFT_COLLECTION_ID, fnft_instance_id).unwrap(),
-					&rewards_pool.total_shares,
+					&rewards_pool.share_asset_id,
 					&reward,
 					&reward_asset_id
 				),
@@ -987,14 +1005,12 @@ fn extend_should_not_allow_non_owner() {
 	let amount = 100_500;
 	let duration_preset = ONE_HOUR;
 	let total_rewards = 100;
-	let total_shares = 200;
 
 	with_stake(
 		staker,
 		amount,
 		duration_preset,
 		total_rewards,
-		total_shares,
 		None,
 		|_pool_id, _unlock_penalty, _stake_duration, _staked_asset_id| {
 			assert_noop!(
@@ -1042,14 +1058,12 @@ fn split_should_not_allow_non_owner() {
 	let amount = 100_500;
 	let duration_preset = ONE_HOUR;
 	let total_rewards = 100;
-	let total_shares = 200;
 
 	with_stake(
 		staker,
 		amount,
 		duration_preset,
 		total_rewards,
-		total_shares,
 		None,
 		|_pool_id, _unlock_penalty, _stake_duration, _staked_asset_id| {
 			assert_noop!(
@@ -1117,14 +1131,12 @@ mod claim {
 		let amount = 100_500;
 		let duration_preset = ONE_HOUR;
 		let total_rewards = 100;
-		let total_shares = 200;
 
 		with_stake(
 			staker,
 			amount,
 			duration_preset,
 			total_rewards,
-			total_shares,
 			None,
 			|_pool_id, _unlock_penalty, _stake_duration, _staked_asset_id| {
 				assert_noop!(
@@ -1141,7 +1153,6 @@ mod claim {
 		let amount = 100_500;
 		let duration_preset = ONE_HOUR;
 		let total_rewards = 100;
-		let total_shares = 200;
 		let claim = 50;
 
 		with_stake(
@@ -1149,7 +1160,6 @@ mod claim {
 			amount,
 			duration_preset,
 			total_rewards,
-			total_shares,
 			Some(claim),
 			|pool_id, _unlock_penalty, _stake_duration, staked_asset_id| {
 				let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
@@ -1178,7 +1188,6 @@ mod claim {
 		let amount = 100_500;
 		let duration_preset = ONE_HOUR;
 		let total_rewards = 100;
-		let total_shares = 200;
 		let claim = 50;
 
 		with_stake(
@@ -1186,7 +1195,6 @@ mod claim {
 			amount,
 			duration_preset,
 			total_rewards,
-			total_shares,
 			Some(claim),
 			|pool_id, _unlock_penalty, _stake_duration, staked_asset_id| {
 				let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
@@ -1266,7 +1274,6 @@ mod claim {
 		let amount = 100_500;
 		let duration_preset = ONE_HOUR;
 		let total_rewards = 100;
-		let total_shares = 200;
 		let claim = 50;
 
 		with_stake(
@@ -1274,7 +1281,6 @@ mod claim {
 			amount,
 			duration_preset,
 			total_rewards,
-			total_shares,
 			Some(claim),
 			|pool_id, _unlock_penalty, _stake_duration, _staked_asset_id| {
 				assert_ok!(StakingRewards::claim(Origin::signed(staker), 1, 0));
@@ -1339,7 +1345,6 @@ fn with_stake<R>(
 	amount: u128,
 	duration: DurationSeconds,
 	total_rewards: u128,
-	total_shares: u128,
 	claim: Option<u128>,
 	execute: impl FnOnce(u128, Perbill, u64, u128) -> R,
 ) -> R {
@@ -1357,7 +1362,7 @@ fn with_stake<R>(
 			amount.saturating_mul(2),
 		);
 
-		update_total_rewards_and_total_shares_in_rewards_pool(pool_id, total_rewards, total_shares);
+		update_total_rewards_and_total_shares_in_rewards_pool(pool_id, total_rewards);
 
 		process_and_progress_blocks::<StakingRewards, Test>(1);
 		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration));
@@ -1368,6 +1373,7 @@ fn with_stake<R>(
 		let stake_duration = stake.lock.duration;
 
 		if let Some(claim) = claim {
+			dbg!(claim);
 			update_reductions(&mut stake.reductions, claim);
 			Stakes::<Test>::insert(1, 0, stake);
 		}
@@ -1464,18 +1470,13 @@ fn balance(asset_id: u128, account: &Public) -> u128 {
 	)
 }
 
-fn update_total_rewards_and_total_shares_in_rewards_pool(
-	pool_id: u128,
-	total_rewards: u128,
-	total_shares: u128,
-) {
+fn update_total_rewards_and_total_shares_in_rewards_pool(pool_id: u128, total_rewards: u128) {
 	let mut rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
 	let mut inner_rewards = rewards_pool.rewards.into_inner();
 	for (_asset_id, reward) in inner_rewards.iter_mut() {
 		reward.total_rewards += total_rewards;
 	}
 	rewards_pool.rewards = inner_rewards.try_into().expect("rewards expected");
-	rewards_pool.total_shares = total_shares;
 	RewardPools::<Test>::insert(pool_id, rewards_pool);
 }
 
