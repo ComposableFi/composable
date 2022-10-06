@@ -14,7 +14,7 @@ let
     "--ws-external"
     "--rpc-cors=all"
     "--rpc-methods=Unsafe"
-    "--force-authoring"
+    #"--force-authoring" # may consider enabling it to allow to produce blocks even if fail to be part of relay consensus
     "--execution=wasm"
     "--wasmtime-instantiation-strategy=recreate-instance-copy-on-write"
     "--log=xcm=trace,ibc=trace,xcvm=trace" # so we can observe cross chain interactions
@@ -49,14 +49,15 @@ in rec {
       inherit wsPort;
       inherit nodeNames;
       inherit flags;
-      basePath = "/tmp/polkadot-launch/${chain}/";
+      basePath = "/tmp/composable-finance/polkadot-launch/${chain}/";
     };
   };
 
   mk-parachain = { balance ? "1000000000000000000000", bin, chain, id, port
     , wsPort, count, nodeNames ? default-node-names, flags ? default-flags }:
     {
-      inherit balance;
+      inherit
+        balance; # sometimes fails with https://github.com/paritytech/polkadot-launch/issues/4
       inherit id;
     } // mk-chain {
       inherit bin;
@@ -90,22 +91,21 @@ in rec {
   mk-shared-security-network = { parachains, relaychain }: {
     parachains = mk-parachains parachains;
     relaychain = mk-relaychain relaychain;
-    hrmpChannels = let
-      map = builtins.map;
-      filter = builtins.filter;
-      ids = map (x: x.id) parachains;
-      cross = pkgs.lib.cartesianProductOfSets {
-        sender = ids;
-        recipient = ids;
-      };
-      unique = filter (x: x.sender != x.recipient) cross;
-    in map (connection: {
-      sender = connection.sender;
-      recipient = connection.recipient;
-      maxCapacity = 8;
-      maxMessageSize =
-        4096; # lowest common denominator just to make sure it runs
-    }) unique;
+    hrmpChannels = with builtins;
+      let
+        ids = map (x: x.id) parachains;
+        cross = pkgs.lib.cartesianProductOfSets {
+          sender = ids;
+          recipient = ids;
+        };
+        unique = filter (x: x.sender != x.recipient) cross;
+      in map (connection: {
+        sender = connection.sender;
+        recipient = connection.recipient;
+        maxCapacity = 8;
+        maxMessageSize =
+          4096; # lowest common denominator just to make sure it runs on any chain
+      }) unique;
     genesis = {
       runtime = {
         runtime_genesis_config = {

@@ -608,6 +608,11 @@
                 docker volume prune -f
               '';
 
+            system-prune = pkgs.writeShellScriptBin "composable-system-prune" ''
+              ls ${docker-wipe-system}/bin/docker-wipe-system
+              rm /tmp/composable-finance/polkadot-launch/ -r -f && rm *.log -r -f
+            '';
+
             composable-book = import ./book/default.nix {
               crane = crane-stable;
               inherit cargo stdenv;
