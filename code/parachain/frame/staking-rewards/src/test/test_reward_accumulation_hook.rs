@@ -37,7 +37,7 @@ fn test_reward_update_calculation() {
 		// just mint a whole bunch of pica
 		mint_assets([ALICE], [PICA::ID], PICA::units(10_000));
 
-		let pool_id = create_rewards_pool_and_assert(RewardRateBasedIncentive {
+		create_rewards_pool_and_assert::<Test, runtime::Event>(RewardRateBasedIncentive {
 			owner: ALICE,
 			asset_id: PICA::ID,
 			start_block: 2,
@@ -48,7 +48,7 @@ fn test_reward_update_calculation() {
 			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
 		});
 
-		add_to_rewards_pot_and_assert(ALICE, pool_id, PICA::ID, PICA::units(10_000));
+		add_to_rewards_pot_and_assert(ALICE, PICA::ID, PICA::ID, PICA::units(10_000));
 
 		// the expected total_rewards amount for each block surpassed
 		let expected = [
@@ -58,7 +58,7 @@ fn test_reward_update_calculation() {
 			(4, PICA::units(48)),
 		];
 
-		let mut reward = RewardPools::<Test>::get(&pool_id)
+		let mut reward = RewardPools::<Test>::get(&PICA::ID)
 			.unwrap()
 			.rewards
 			.get(&PICA::ID)
@@ -70,7 +70,7 @@ fn test_reward_update_calculation() {
 			process_and_progress_blocks::<crate::Pallet<Test>, Test>(1);
 
 			StakingRewards::reward_accumulation_hook_reward_update_calculation(
-				pool_id,
+				PICA::ID,
 				PICA::ID,
 				&mut reward,
 				now.safe_add(&block_seconds(block_number).try_into().unwrap()).unwrap(),
@@ -91,7 +91,10 @@ fn test_reward_update_calculation() {
 			}
 
 			assert_no_event::<Test>(Event::StakingRewards(
-				crate::Event::<Test>::MaxRewardsAccumulated { pool_id, asset_id: PICA::ID },
+				crate::Event::<Test>::MaxRewardsAccumulated {
+					pool_id: PICA::ID,
+					asset_id: PICA::ID,
+				},
 			));
 
 			assert_eq!(
@@ -103,7 +106,7 @@ fn test_reward_update_calculation() {
 		let current_block_number = (expected.len() + 1) as u64;
 
 		StakingRewards::reward_accumulation_hook_reward_update_calculation(
-			pool_id,
+			PICA::ID,
 			PICA::ID,
 			&mut reward,
 			now.safe_add(&block_seconds(current_block_number).try_into().unwrap()).unwrap(),
@@ -153,8 +156,8 @@ fn test_accumulate_rewards_pool_empty_refill() {
 		mint_assets([ALICE], [A::ID], A::units(10_000));
 		mint_assets([ALICE], [B::ID], B::units(10_000));
 
-		let pool_id =
-			create_rewards_pool_and_assert(RewardPoolConfiguration::RewardRateBasedIncentive {
+		create_rewards_pool_and_assert::<Test, runtime::Event>(
+			RewardPoolConfiguration::RewardRateBasedIncentive {
 				owner: ALICE,
 				asset_id: A::ID,
 				start_block: current_block + 1,
@@ -181,18 +184,19 @@ fn test_accumulate_rewards_pool_empty_refill() {
 				lock: default_lock_config(),
 				share_asset_id: XA::ID,
 				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
-			});
+			},
+		);
 
 		progress_to_block(current_block + 1, &mut current_block);
 
 		check_events([
 			crate::Event::<Test>::RewardAccumulationHookError {
-				pool_id,
+				pool_id: A::ID,
 				asset_id: A::ID,
 				error: RewardAccumulationHookError::RewardsPotEmpty,
 			},
 			crate::Event::<Test>::RewardAccumulationHookError {
-				pool_id,
+				pool_id: A::ID,
 				asset_id: B::ID,
 				error: RewardAccumulationHookError::RewardsPotEmpty,
 			},
@@ -203,10 +207,10 @@ fn test_accumulate_rewards_pool_empty_refill() {
 		// RewardsPotEmpty event should only be emitted once, not every block
 		check_events([]);
 
-		add_to_rewards_pot_and_assert(ALICE, pool_id, A::ID, A_A_REWARD_RATE * block_seconds(5));
+		add_to_rewards_pot_and_assert(ALICE, A::ID, A::ID, A_A_REWARD_RATE * block_seconds(5));
 
 		check_events([crate::Event::<Test>::RewardsPotIncreased {
-			pool_id,
+			pool_id: A::ID,
 			asset_id: A::ID,
 			amount: A_A_REWARD_RATE * block_seconds(5),
 		}]);
@@ -239,7 +243,7 @@ fn test_accumulate_rewards_pool_empty_refill() {
 		progress_to_block(current_block + 1, &mut current_block);
 
 		check_events([crate::Event::<Test>::RewardAccumulationHookError {
-			pool_id,
+			pool_id: A::ID,
 			asset_id: A::ID,
 			error: RewardAccumulationHookError::RewardsPotEmpty,
 		}]);
@@ -281,10 +285,12 @@ fn test_accumulate_rewards_hook() {
 		const C_E_MAX_REWARDS: u128 = E::units(10);
 		const C_E_INITIAL_AMOUNT: u128 = A::units(1_000_000);
 
-		let alices_pool_id =
-			create_rewards_pool_and_assert(RewardPoolConfiguration::RewardRateBasedIncentive {
+		const ALICES_POOL_ID: u128 = A::ID;
+
+		create_rewards_pool_and_assert::<Test, runtime::Event>(
+			RewardPoolConfiguration::RewardRateBasedIncentive {
 				owner: ALICE,
-				asset_id: A::ID,
+				asset_id: ALICES_POOL_ID,
 				start_block: current_block + 1,
 				end_block: current_block + ONE_YEAR_OF_BLOCKS + 1,
 				reward_configs: [
@@ -309,17 +315,20 @@ fn test_accumulate_rewards_hook() {
 				lock: default_lock_config(),
 				share_asset_id: XA::ID,
 				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
-			});
+			},
+		);
 
 		mint_assets([ALICE], [A::ID], A_A_INITIAL_AMOUNT);
-		add_to_rewards_pot_and_assert(ALICE, alices_pool_id, A::ID, A_A_INITIAL_AMOUNT);
+		add_to_rewards_pot_and_assert(ALICE, ALICES_POOL_ID, A::ID, A_A_INITIAL_AMOUNT);
 		mint_assets([ALICE], [B::ID], A_B_INITIAL_AMOUNT);
-		add_to_rewards_pot_and_assert(ALICE, alices_pool_id, B::ID, A_B_INITIAL_AMOUNT);
+		add_to_rewards_pot_and_assert(ALICE, ALICES_POOL_ID, B::ID, A_B_INITIAL_AMOUNT);
 
-		let bobs_pool_id =
-			create_rewards_pool_and_assert(RewardPoolConfiguration::RewardRateBasedIncentive {
+		const BOBS_POOL_ID: u128 = C::ID;
+
+		create_rewards_pool_and_assert::<Test, runtime::Event>(
+			RewardPoolConfiguration::RewardRateBasedIncentive {
 				owner: BOB,
-				asset_id: C::ID,
+				asset_id: BOBS_POOL_ID,
 				start_block: current_block + 1,
 				end_block: current_block + ONE_YEAR_OF_BLOCKS + 1,
 				reward_configs: [
@@ -344,12 +353,13 @@ fn test_accumulate_rewards_hook() {
 				lock: default_lock_config(),
 				share_asset_id: XC::ID,
 				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID + 1,
-			});
+			},
+		);
 
 		mint_assets([ALICE], [D::ID], C_D_INITIAL_AMOUNT);
-		add_to_rewards_pot_and_assert(ALICE, bobs_pool_id, D::ID, C_D_INITIAL_AMOUNT);
+		add_to_rewards_pot_and_assert(ALICE, BOBS_POOL_ID, D::ID, C_D_INITIAL_AMOUNT);
 		mint_assets([ALICE], [E::ID], C_E_INITIAL_AMOUNT);
-		add_to_rewards_pot_and_assert(ALICE, bobs_pool_id, E::ID, C_E_INITIAL_AMOUNT);
+		add_to_rewards_pot_and_assert(ALICE, BOBS_POOL_ID, E::ID, C_E_INITIAL_AMOUNT);
 
 		{
 			progress_to_block(STARTING_BLOCK + 2, &mut current_block);
@@ -578,8 +588,8 @@ fn test_accumulate_rewards_hook() {
 
 		// add a new, zero-reward pool
 		// nothing needs to be added to the rewards pot as there are no rewards
-		let _charlies_pool_id =
-			create_rewards_pool_and_assert(RewardPoolConfiguration::RewardRateBasedIncentive {
+		create_rewards_pool_and_assert::<Test, runtime::Event>(
+			RewardPoolConfiguration::RewardRateBasedIncentive {
 				owner: CHARLIE,
 				asset_id: F::ID,
 				start_block: current_block + 1,
@@ -597,7 +607,8 @@ fn test_accumulate_rewards_hook() {
 				lock: default_lock_config(),
 				share_asset_id: XF::ID,
 				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID + 2,
-			});
+			},
+		);
 
 		{
 			progress_to_block(STARTING_BLOCK + 4167, &mut current_block);

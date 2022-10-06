@@ -10,7 +10,7 @@ import type { EntityManager } from "typeorm";
 import { Event, Account, Activity, HistoricalLockedValue } from "../../model";
 
 @ObjectType()
-export class OverviewStats {
+export class PicassoOverviewStats {
   @Field(() => BigInt, { nullable: false })
   totalValueLocked!: bigint;
 
@@ -23,19 +23,22 @@ export class OverviewStats {
   @Field(() => Number, { nullable: false })
   activeUsersCount!: number;
 
-  constructor(props: Partial<OverviewStats>) {
+  constructor(props: Partial<PicassoOverviewStats>) {
     Object.assign(this, props);
   }
 }
 
-@Resolver(() => OverviewStats)
-export class OverviewStatsResolver implements ResolverInterface<OverviewStats> {
+@Resolver(() => PicassoOverviewStats)
+export class PicassoOverviewStatsResolver
+  implements ResolverInterface<PicassoOverviewStats>
+{
   constructor(private tx: () => Promise<EntityManager>) {}
 
   @FieldResolver({ name: "totalValueLocked", defaultValue: 0 })
   async totalValueLocked(): Promise<bigint> {
     const manager = await this.tx();
 
+    // TODO: add something like WHERE source = 'All' once PR 1703 is merged
     let lockedValue: { amount: bigint }[] = await manager
       .getRepository(HistoricalLockedValue)
       .query(
@@ -113,11 +116,11 @@ export class OverviewStatsResolver implements ResolverInterface<OverviewStats> {
     return Promise.resolve(activeUsers?.[0]?.active_users_count || 0);
   }
 
-  @Query(() => OverviewStats)
-  async overviewStats(): Promise<OverviewStats> {
+  @Query(() => PicassoOverviewStats)
+  async overviewStats(): Promise<PicassoOverviewStats> {
     // Default values
     return Promise.resolve(
-      new OverviewStats({
+      new PicassoOverviewStats({
         totalValueLocked: 0n,
         transactionsCount: 0,
         accountHoldersCount: 0,

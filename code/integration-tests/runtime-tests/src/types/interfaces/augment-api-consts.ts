@@ -22,6 +22,16 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       [key: string]: Codec;
     };
+    assetTxPayment: {
+      /**
+       * where to allow configuring default asset per user
+       **/
+      useUserConfiguration: bool & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
     authorship: {
       /**
        * The number of blocks back we should accept uncles.
@@ -535,6 +545,7 @@ declare module '@polkadot/api-base/types/consts' {
       [key: string]: Codec;
     };
     stakingRewards: {
+      lockId: U8aFixed & AugmentedConst<ApiType>;
       /**
        * Maximum number of reward configurations per pool.
        **/

@@ -30,9 +30,14 @@
       url = "github:hercules-ci/arion";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    helix = {
+      url = "github:helix-editor/helix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
   outputs = { self, nixpkgs, crane, flake-utils, rust-overlay, npm-buildpackage
-    , arion-src, home-manager }:
+    , arion-src, home-manager, helix }:
     let
       # https://cloud.google.com/iam/docs/creating-managing-service-account-keys
       # or just use GOOGLE_APPLICATION_CREDENTIALS env as path to file
@@ -123,6 +128,7 @@
           };
         in with pkgs;
         let
+          trace = pkgs.lib.debug.traceSeq;
           # Stable rust for anything except wasm runtime
           rust-stable = rust-bin.stable.latest.default;
 
@@ -587,6 +593,12 @@
               '';
             };
 
+            serve-book = pkgs.writeShellApplication {
+              name = "serve-book";
+              runtimeInputs = [ pkgs.mdbook ];
+              text = "mdbook serve ./book";
+            };
+
             docker-wipe-system =
               pkgs.writeShellScriptBin "docker-wipe-system" ''
                 echo "Wiping all docker containers, images, and volumes";
@@ -606,37 +618,13 @@
             acala-node = pkgs.callPackage ./.nix/acala-bin.nix {
               rust-overlay = rust-nightly;
             };
-            polkadot-node = rustPlatform.buildRustPackage rec {
-              # HACK: break the nix sandbox so we can build the runtimes. This
-              # requires Nix to have `sandbox = relaxed` in its config.
-              # We don't really care because polkadot is only used for local devnet.
-              __noChroot = true;
-              name = "polkadot-v${version}";
-              version = "0.9.27";
-              src = fetchFromGitHub {
-                repo = "polkadot";
-                owner = "paritytech";
-                rev = "v${version}";
-                hash = "sha256-LEz3OrVgdFTCnVwzU8C6GeEougaOl2qo7jS9qIdMqAM=";
-              };
-              cargoSha256 =
-                "sha256-6y+WK2k1rhqMxMjEJhzJ26WDMKZjXQ+q3ca2hbbeLvA=";
-              doCheck = false;
-              buildInputs = [ openssl zstd ];
-              nativeBuildInputs = [ rust-nightly clang pkg-config ]
-                ++ lib.optional stdenv.isDarwin
-                (with darwin.apple_sdk.frameworks; [
-                  Security
-                  SystemConfiguration
-                ]);
-              LD_LIBRARY_PATH = lib.strings.makeLibraryPath [
-                stdenv.cc.cc.lib
-                llvmPackages.libclang.lib
-              ];
-              LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
-              PROTOC = "${protobuf}/bin/protoc";
-              ROCKSDB_LIB_DIR = "${rocksdb}/lib";
-              meta = { mainProgram = "polkadot"; };
+
+            polkadot-node = pkgs.callPackage ./.nix/polkadot-bin.nix {
+              inherit rust-nightly;
+            };
+
+            statemine-node = pkgs.callPackage ./.nix/statemine-bin.nix {
+              inherit crane-nightly rust-nightly;
             };
 
             polkadot-launch =
@@ -925,6 +913,24 @@
               '';
             };
 
+            hadolint-check = stdenv.mkDerivation {
+              name = "hadolint-check";
+              dontUnpack = true;
+              buildInputs = [ all-directories-and-files hadolint ];
+              installPhase = ''
+                mkdir -p $out
+
+                hadolint --version
+                total_exit_code=0
+                for file in $(find ${all-directories-and-files} -name "Dockerfile" -or -name "*.dockerfile"); do
+                  echo "=== $file ==="
+                  hadolint --config ${all-directories-and-files}/.hadolint.yaml $file || total_exit_code=$?
+                  echo ""
+                done
+                exit $total_exit_code
+              '';
+            };
+
             kusama-picasso-karura-devnet = let
               config = (pkgs.callPackage
                 ./scripts/polkadot-launch/kusama-local-picasso-dev-karura-dev.nix {
@@ -963,6 +969,26 @@
               '';
             };
 
+            devnet-all-dev-local = let
+              config =
+                (pkgs.callPackage ./scripts/polkadot-launch/all-dev-local.nix {
+                  polkadot-bin = polkadot-node;
+                  composable-bin = composable-node;
+                  statemine-bin = statemine-node;
+                  acala-bin = acala-node;
+                }).result;
+              config-file = writeTextFile {
+                name = "all-dev-local.json";
+                text = "${builtins.toJSON config}";
+              };
+            in writeShellApplication {
+              name = "kusama-dali-karura";
+              text = ''
+                cat ${config-file}
+                ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
+              '';
+            };
+
             junod = pkgs.callPackage ./code/xcvm/cosmos/junod.nix { };
             gex = pkgs.callPackage ./code/xcvm/cosmos/gex.nix { };
             wasmswap = pkgs.callPackage ./code/xcvm/cosmos/wasmswap.nix {
@@ -972,6 +998,24 @@
           };
 
           devShells = rec {
+
+            base-shell = mkShell {
+              buildInputs = [ helix.packages.${pkgs.system}.default ];
+              NIX_PATH = "nixpkgs=${pkgs.path}";
+            };
+
+            docs = base-shell.overrideAttrs (base: {
+              buildInputs = base.buildInputs
+                ++ (with packages; [ python3 nodejs mdbook ]);
+            });
+
+            developers-minimal = base-shell.overrideAttrs (base:
+              common-attrs // {
+                buildInputs = base.buildInputs
+                  ++ (with packages; [ rust-nightly subwasm ]);
+                NIX_PATH = "nixpkgs=${pkgs.path}";
+              });
+
             developers = developers-minimal.overrideAttrs (base: {
               buildInputs = with packages;
                 base.buildInputs ++ [
@@ -1002,26 +1046,10 @@
                 ] ++ docs-renders;
             });
 
-            developers-minimal = mkShell (common-attrs // {
-              buildInputs = with packages; [ rust-nightly subwasm ];
-              NIX_PATH = "nixpkgs=${pkgs.path}";
-            });
-
-            developers-xcvm = developers-minimal.overrideAttrs (base: {
+            developers-xcvm = developers.overrideAttrs (base: {
               buildInputs = with packages;
-                base.buildInputs ++ [
-                  junod
-                  gex
-                  # junod wasm swap web interface
-                  # TODO: hasura
-                  # TODO: some well know wasm contracts deployed
-                  # TODO: junod server
-                  # TODO: solc
-                  # TODO: gex
-                  # TODO: https://github.com/forbole/bdjuno
-                  # TODO: script to run all
-                  # TODO: compose export
-                ] ++ lib.lists.optional (lib.strings.hasSuffix "linux" system)
+                base.buildInputs ++ [ junod gex ]
+                ++ lib.lists.optional (lib.strings.hasSuffix "linux" system)
                 arion;
               shellHook = ''
                 echo ""
@@ -1036,16 +1064,6 @@
                 echo "clip hire initial neck maid actor venue client foam budget lock catalog sweet steak waste crater broccoli pipe steak sister coyote moment obvious choose" | junod keys add alice --recover --keyring-backend test || true
               '';
             });
-
-            writers = mkShell {
-              buildInputs = with packages; [ python3 nodejs ] ++ doc-renders;
-              NIX_PATH = "nixpkgs=${pkgs.path}";
-            };
-
-            sre = mkShell {
-              buildInputs = [ nixopsUnstable ];
-              NIX_PATH = "nixpkgs=${pkgs.path}";
-            };
 
             default = developers;
           };
@@ -1095,11 +1113,20 @@
                 "${packages.kusama-picasso-karura-devnet}/bin/kusama-picasso-karura";
             };
 
-            devnet-kusama-dali-karura = {
-              type = "app";
-              program =
-                "${packages.kusama-dali-karura-devnet}/bin/kusama-dali-karura";
-            };
+            # OBSOLETE
+            devnet-kusama-dali-karura =
+              trace "#OBSOLETE: use ` devnet-native-all`" {
+                type = "app";
+                program =
+                  "${packages.kusama-dali-karura-devnet}/bin/kusama-dali-karura";
+              };
+
+            devnet-native-all = trace
+              "biggest native(not container) devnet with all things possible to run native" {
+                type = "app";
+                program =
+                  "${packages.devnet-all-dev-local}/bin/kusama-dali-karura";
+              };
 
             price-feed = {
               type = "app";
