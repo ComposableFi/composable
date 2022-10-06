@@ -40,19 +40,19 @@ Picasso chain also should have Balance, better 22 KSM. Because its sovereign acc
 That to be run on Kusama:
 Send from from SUDO:
 
-https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rpc.composable.finance#/extrinsics/decode/0x290001010002100004000000000b0060defb740513000000000b0060defb74050006000700f2052a01383c00e8030000e8030000009001000d0100040001009d20
+```shell
+xcmp sudo execute --suri <private key> --call 0x290001010002100004000000000b0060defb740513000000000b0060defb74050006000700f2052a01383c00e8030000e8030000009001000d0100040001009d20 --network composable_dali_on_parity_rococo --rpc 'wss://picasso-rpc.composable.finance:443'
+```
+
+https://polkadot.js.org/apps/?rpc=wss%3A%2F%2F#/extrinsics/decode/
 
 Which will transact:
 
 https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkusama-rpc.polkadot.io#/extrinsics/decode/0x3c00e8030000e803000000900100
 
-### Rococo
+## Statemine to accept proposal and propose back
 
-https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Frpc.composablefinance.ninja#/extrinsics/decode/0x290001010002100004000000000b0060defb740513000000000b0060defb74050006000700f2052a01381700e8030000e8030000009001000d0100040001009d20
-
-## Accept proposal and propose back
-
-Create `Proposal` for referenda to ensure Kusama executed channel opening on its owned Statemine network:
+Create offchain `Proposal` for referenda to ensure Kusama executed channel opening on its owned Statemine network:
 ```
 This proposal aims to open HRMP channel between Statemine & Picasso. For more context please read here.
 
@@ -67,7 +67,7 @@ The XCM message to Statemine is `0x1f00010100020c000400000000070010a5d4e81300000
 The call is is a `batchAll` that accepts open channel request from Picasso, and make an open channel request to Picasso.
 ```
 
-### Proposal body
+### Create on chain proposal
 
 `batchAll` call:
 <!-- cspell:disable -->
@@ -195,7 +195,7 @@ Above encoded call is next XCM message:
 ```
 <!-- cspell:enable -->
 
-Where transact [decodes](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fstatemine-rpc.dwellir.com#/extrinsics/decode) by Statemine into:
+Where transact [decodes](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fstatemine-rpc.dwellir.com#/extrinsics/decode/0x1f00010100020c000400000000070010a5d4e81300000000070010a5d4e800060002286bee5c1802083c01270800003c0027080000e803000000900100) by Statemine into:
 
 ```rust
 polkadotXcm
@@ -257,19 +257,22 @@ message: XcmVersionedXcm
 
 Where [Kusama.utility.batchAll](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkusama-rpc.polkadot.io#/extrinsics) is encoded as `0x1802083c01270800003c0027080000e803000000900100`
 
-## Accept request from Statemine
+## Picasso to accept request from Statemine
 
-Accept channel from state mine as  `0x3c01e8030000` (can be decoded by Kusama)
+Accept channel from Statemine:
 
+https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkusama-rpc.polkadot.io#/extrinsics/decode/0x3c01e8030000
 
-Sent as XCM  message from Picasso with that acceptance via `0x2900010100020c0004000000000700e876481713000100000700e876481700060102286bee183c01e8030000`
+```shell
+xcmp sudo execute --suri SECRET_KEY_OR_FILE --call 0x2900010100020c0004000000000700e876481713000100000700e876481700060102286bee183c01e8030000 --network composable_dali_on_parity_rococo --rpc 'wss://picasso-rpc.composable.finance:443'
+```
 
-Decoded by https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rpc.composable.finance#/extrinsics/decode
+## Make price for USDT on Picasso
 
-## Make price for USDT
-
-Register USDT in registry with asset id 11 and decimals of 4 via `assetsRegistry.registerAsset` with next preimage (tune ratio as needed):
-`0x3b00010300a10f043206400b0000000000000000000000000000000a000000000000000000000000000000010000c16ff286230000000000000000000104000000`
+Register USDT:
+```shell
+xcmp sudo execute --suri SECRET_KEY_OR_FILE --call 0x3b00010300a10f043206400b0000000000000000000000000000000a000000000000000000000000000000010000c16ff286230000000000000000000104000000 --network composable_dali_on_parity_rococo --rpc 'wss://picasso-rpc.composable.finance:443'
+```
 
 
 ## References

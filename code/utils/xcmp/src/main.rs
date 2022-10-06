@@ -13,10 +13,6 @@ use sp_runtime::MultiAddress;
 use subxt::{tx::*, *, config::*,};
 
 
-/// A struct representing the signed extra and additional parameters required
-/// to construct a transaction for the default substrate node.
-//pub type ComposableExtrinsicParams<T> = BaseExtrinsicParams<T, AssetTip>;
-
 pub type ComposableConfig = WithExtrinsicParams<
     SubstrateConfig,
     crate::tx::SubstrateExtrinsicParams<SubstrateConfig>,
@@ -25,8 +21,6 @@ pub type ComposableConfig = WithExtrinsicParams<
 
 pub type RelayPairSigner = subxt::tx::PairSigner<PolkadotConfig, sr25519::Pair>;
 pub type ComposablePairSigner = subxt::tx::PairSigner<ComposableConfig, sr25519::Pair>;
-
-
 
 use crate::generated::rococo::{
 	self,
@@ -105,12 +99,14 @@ macro_rules! sudo_call {
 }
 
 async fn execute_sudo(ask: bool, call: String, network: String, suri: String, rpc: String) {
-	let call = sc_cli::utils::decode_hex(call).expect("call is not hex encoded");
+	println!("https://polkadot.js.org/apps/?rpc={:#}#/extrinsics/decode/{:}", &rpc, &call);
+	let call = sc_cli::utils::decode_hex(&call).expect("call is not hex encoded");
 	let from_file = |path |  std::fs::read(path).map(String::from_utf8).unwrap().map(|suri| pair_from_suri(&suri.trim(), None)).unwrap().unwrap();
 	
 	let key: sr25519::Pair =
 		sc_cli::utils::pair_from_suri(&suri, None).unwrap_or_else(|_| from_file(&suri));
 	let signer = pair_signer(key);
+
 
 	// https://github.com/paritytech/subxt/issues/668
 	let api = OnlineClient::<ComposableConfig>::from_url(&rpc).await.unwrap();
@@ -149,17 +145,18 @@ async fn may_be_do_call<CallData: Encode>(
 	>,
 ) {
 	if ask {
-		// println!("type `Yes` or `yes` to sign and submit sudo transaction");
-		// let mut message = String::new();
-		// std::io::stdin().read_line(&mut message).expect("console always work");
-		// message = message.trim().to_lowercase();
-		// if !(message == "yes") {
-		// 	panic!("rejected")
-		// }
+		println!("type `Yes` or `yes` to sign and submit sudo transaction");
+		let mut message = String::new();
+		std::io::stdin().read_line(&mut message).expect("console always work");
+		message = message.trim().to_lowercase();
+		if !(message == "yes") {
+			panic!("rejected")
+		}
 	}
-	println!("executing...");
+	println!("executing... ");
 	let mut result = api.tx().sign_and_submit_then_watch_default(&extrinsic, &signer).await.unwrap();
 	while let Some(ev) = result.next_item().await {
+		//if matches!()
 		println!("{:?}", ev);
 		ev.unwrap();
 	}
