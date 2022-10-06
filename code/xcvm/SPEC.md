@@ -318,6 +318,7 @@ Owners may be added by having the interpreter call the appropriate setters. We w
 
 The `CNS` provides an abstraction on top of the `Identity` system, allowing developers and users to use a single name across interpreter instances. Each `XCVM` chain contains a `CNS` registry, which maps `Identity` to `Name`. On bridge relays, the calling program can specify to use an associated `Name` instead of its `Identity`. The `XCVM` interpreter has to be configured to accept the `CNS` as an owner. 
 
+```
 Name ::= string 
 ```
 
