@@ -77,15 +77,7 @@ export const StakingStatistics: React.FC<GridProps & { stakingRewardPool?: Staki
     shareAssetId: stakingRewardPool?.shareAssetId
   });
 
-  const { averageLockMultiplier, averageLockTime } = useAverageLockTimeAndMultiplier();
-
-  const {
-    pabloStaking
-  } = useStakingRewardsSlice();
-
-  const {
-    totalPBLOLocked
-  } = pabloStaking;
+  const { averageLockMultiplier, averageLockTime, totalValueLocked } = useAverageLockTimeAndMultiplier();
 
   const {
     totalChaosApy,
@@ -118,8 +110,8 @@ export const StakingStatistics: React.FC<GridProps & { stakingRewardPool?: Staki
     <Grid container spacing={8} {...gridProps}>
       <Grid item {...threeColumnPageSize}>
         <Item
-          label="Total PBLO locked"
-          value={totalPBLOLocked.toFormat()}
+          label="Total Value locked"
+          value={totalValueLocked}
           TooltipProps={{ title: "Total value locked" }}
         />
       </Grid>

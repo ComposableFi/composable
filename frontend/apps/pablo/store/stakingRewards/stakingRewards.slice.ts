@@ -11,9 +11,6 @@ export interface StakingRewardsSlice {
     string,
     Array<StakingPositionHistory>
   >;
-  pabloStaking: {
-    totalPBLOLocked: BigNumber;
-  };
 }
 
 export const useStakingRewardsSlice = create<StakingRewardsSlice>(() => ({
