@@ -117,9 +117,6 @@ pub struct RewardPool<
 	/// rewards accumulated
 	pub rewards: BoundedBTreeMap<AssetId, Reward<Balance>, MaxRewards>,
 
-	/// Total shares distributed among stakers
-	pub total_shares: Balance,
-
 	/// Already claimed shares by stakers by unstaking
 	pub claimed_shares: Balance,
 
