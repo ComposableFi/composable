@@ -21,4 +21,32 @@ members = [
     "light-clients/ics10-grandpa",
     "light-clients/ics11-beefy",
     "light-clients/ics13-near",
+
+    # hyperspace
+    "hyperspace",
+    "hyperspace/primitives",
+    "hyperspace/parachain",
+    "hyperspace/cosmos",
 ]
+
+
+[patch.crates-io]
+sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-arithmetic = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-core-hashing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-debug-derive = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-externalities = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-panic-handler = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-runtime-interface = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-runtime-interface-proc-macro = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-storage = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-wasm-interface = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }

@@ -1,0 +1,83 @@
+[package]
+name = "hyperspace"
+version = "0.1.0"
+edition = "2021"
+authors = ["Composable Developers"]
+
+[[bin]]
+name = "hyperspace"
+path = "./bin/main.rs"
+
+[dependencies]
+primitives = { path = "primitives", package = "hyperspace-primitives" }
+parachain = { path = "parachain", package = "hyperspace-parachain", optional = true }
+cosmos = { path = "cosmos", package = "hyperspace-cosmos", optional = true }
+#near = { path = "near", package = "hyperspace-near", optional = true }
+
+# crates.io
+anyhow = "1.0.65"
+futures = "0.3.21"
+async-trait = "0.1.53"
+log = "0.4.17"
+env_logger = "0.9.0"
+hex = "0.4.3"
+tokio = { version = "1.19.2", features = ["macros", "rt-multi-thread"] }
+codec = { version = "3.0.0", package = "parity-scale-codec" }
+clap = { version = "3.2.22", features = ["derive"] }
+toml = "0.5.9"
+serde = "1.0.144"
+thiserror = "1.0.31"
+derive_more = { version = "0.99.17", features = ["from"] }
+
+# ibc
+ibc = { path = "../ibc/modules", features = [] }
+ibc-proto = { path = "../ibc/proto" }
+tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8" }
+
+ics11-beefy = { git = "https://github.com/ComposableFi/centauri", rev = "4384ccc23e82a4e06337d106d5bd170a56b56672" }
+ics13-near = { git = "https://github.com/ComposableFi/centauri", rev = "4384ccc23e82a4e06337d106d5bd170a56b56672" }
+light-client-common = { git = "https://github.com/ComposableFi/centauri", rev = "4384ccc23e82a4e06337d106d5bd170a56b56672" }
+pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "052052e5b070bc36dda7f9acd393a4c69404c3b2" }
+
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+subxt = { git = "https://github.com/paritytech/subxt", rev = "c55b7ba3e34118f61dc51499a0b38262c513aec4", optional = true }
+
+[dev-dependencies]
+derive_more = "0.99.17"
+prost = "0.10"
+parachain = { path = "parachain", package = "hyperspace-parachain", features = ["testing"] }
+
+# substrate
+subxt = { git = "https://github.com/paritytech/subxt", rev = "c55b7ba3e34118f61dc51499a0b38262c513aec4" }
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+state-machine = { package = "sp-state-machine", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+
+# composable
+#comosable-primitives = { package = "primitives",  git = "https://github.com/ComposableFi/composable", rev = "052052e5b070bc36dda7f9acd393a4c69404c3b2" }
+#common = { git = "https://github.com/ComposableFi/composable", rev = "052052e5b070bc36dda7f9acd393a4c69404c3b2" }
+
+[features]
+parachain = ["dep:parachain", "subxt"]
+#near = ["dep:near"]
+#cosmos = ["dep:cosmos"]
+
+
+[[test]]
+name = "parachain_ibc_test"
+harness = false
+path = "tests/parachain/parachain_ibc_test.rs"
+
+[[test]]
+name = "parachain_token_transfer"
+harness = false
+path = "tests/parachain/parachain_token_transfer.rs"
+
+[[test]]
+name = "set_up_transfer_channel"
+harness = false
+path = "tests/parachain/set_up_transfer_channel.rs"

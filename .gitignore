@@ -4,3 +4,4 @@
 /.cargo
 rust-toolchain.toml
 .DS_Store
+*.log

@@ -1,0 +1,52 @@
+[package]
+name = "hyperspace-near"
+version = "0.1.0"
+edition = "2021"
+authors = ["Composable Developers"]
+
+[dependencies]
+primitives = { path = "../primitives", package = "hyperspace-primitives" }
+
+# crates.io
+anyhow = "1.0.65"
+futures = "0.3.21"
+async-trait = "0.1.53"
+log = "0.4.17"
+log4rs = "1.1.1"
+env_logger = "0.9.0"
+hex = "0.4.3"
+tokio = { version = "1.19.2", features = ["macros", "sync"] }
+rs_merkle = "1.2.0"
+codec = { package = "parity-scale-codec", version = "3.0.0", features = ["derive"] }
+hex-literal = "0.3.4"
+serde_json = "1.0.74"
+derive_more = { version = "0.99", features = ["from"]  }
+serde = { version="1.0.137", features = ["derive"]}
+tokio-stream = { version = "0.1.9", features = ["sync"]}
+thiserror = "1.0.31"
+jsonrpsee = { version = "0.14.1", features = ["async-client", "jsonrpsee-client-transport", "client-ws-transport", "http-client"] }
+openssl-probe = "0.1.2"
+
+# substrate
+sp-core = "6.0.0"
+sp-runtime = "6.0.0"
+sp-keystore = "0.12.0"
+
+# ibc
+ibc = { path = "../../ibc/modules", features = [] }
+ibc-proto = { path = "../../ibc/proto" }
+tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8" }
+
+# near
+near-crypto = "0.14.0"
+near-primitives = "0.14.0"
+near-sdk = { git = "https://github.com/ComposableFi/near-sdk-rs", branch = "master" }
+near-lite-client = { git = "https://github.com/ComposableFi/near-rs.git", branch = "main" }
+near-lite-relayer = { git = "https://github.com/ComposableFi/near-rs.git", branch = "main" }
+near-merkle-proofs = { git = "https://github.com/ComposableFi/near-rs.git", branch = "main" }
+near-jsonrpc-client = "0.4.0-beta.0"
+near-jsonrpc-primitives = "0.14.0"
+near-indexer = { git = "https://github.com/composableFi/nearcore" }
+
+[features]
+testing = []
