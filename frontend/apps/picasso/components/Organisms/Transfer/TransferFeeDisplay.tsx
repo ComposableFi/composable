@@ -56,7 +56,7 @@ export const TransferFeeDisplay = () => {
 
   const calculateFee = useCallback(() => {
     callbackGate(
-      async (api, exec, acc, hasFeeItem, destWeight) => {
+      async (api, exec, acc, hasFeeItem) => {
         const TARGET_ACCOUNT_ADDRESS = selectedRecipient.length
           ? selectedRecipient
           : acc.address;
@@ -83,8 +83,7 @@ export const TransferFeeDisplay = () => {
           TARGET_PARACHAIN_ID,
           from,
           to,
-          hasFeeItem,
-          destWeight
+          hasFeeItem
         );
 
         const info = await exec.paymentInfo(call, acc.address, signer);
@@ -103,8 +102,7 @@ export const TransferFeeDisplay = () => {
       fromProvider.parachainApi,
       executor,
       account,
-      hasFeeItem && feeItem.length === 0,
-      weight
+      hasFeeItem && feeItem.length === 0
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
