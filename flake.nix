@@ -69,8 +69,8 @@
       ];
 
       mk-devnet = { pkgs, lib, writeTextFile, writeShellApplication
-        , polkadot-launch, composable-node, polkadot-node, chain-spec
-        , network-config-path ?
+        , useGlobalChainSpec ? true, polkadot-launch, composable-node
+        , polkadot-node, chain-spec, network-config-path ?
           ./scripts/polkadot-launch/rococo-local-dali-dev.nix }:
         let
           original-config = (pkgs.callPackage network-config-path {
@@ -78,11 +78,15 @@
             composable-bin = composable-node;
           }).result;
 
-          patched-config = lib.recursiveUpdate original-config {
-            parachains = builtins.map
-              (parachain: parachain // { chain = "${chain-spec}"; })
-              original-config.parachains;
-          };
+          patched-config = if useGlobalChainSpec then
+            lib.recursiveUpdate original-config {
+              parachains = builtins.map
+                (parachain: parachain // { chain = "${chain-spec}"; })
+                original-config.parachains;
+            }
+          else
+            original-config;
+
           config = writeTextFile {
             name = "devnet-${chain-spec}-config.json";
             text = builtins.toJSON patched-config;
@@ -691,6 +695,7 @@
               chain-spec = "dali-dev";
               network-config-path =
                 ./scripts/polkadot-launch/bridge-rococo-local-dali-dev.nix;
+              useGlobalChainSpec = false;
             }).script;
 
             # Picasso devnet
