@@ -45,8 +45,8 @@ export type EndpointPresets = {
 };
 export const endpointPresets: EndpointPresets = {
   rococo: {
-    picasso: "",
-    kusama: "",
+    picasso: "wss://rpc.composablefinance.ninja",
+    kusama: "wss://rococo-rpc.polkadot.io",
     karura: "",
     subsquid: ""
   },
