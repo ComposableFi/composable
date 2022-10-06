@@ -1,5 +1,4 @@
 import {
-  AlertBox,
   DefaultLayout,
   KSMClaimForm,
   Link,
@@ -58,11 +57,7 @@ const ERROR_MESSAGES = {
   },
 };
 
-interface ClaimLoan {
-  isStable: boolean;
-}
-
-export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
+export const ClaimLoanPage = () => {
   const router = useRouter();
   const { enqueueSnackbar } = useSnackbar();
   const { isActive } = useConnector(ConnectorType.MetaMask);
@@ -96,11 +91,12 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
     ""
   );
 
-  const ethAssociatedOrSelectedAccount = useCrowdloanRewardsEthereumAddressAssociatedAccount(
-    account?.toLowerCase(),
-    selectedAccount,
-    accounts
-  );
+  const ethAssociatedOrSelectedAccount =
+    useCrowdloanRewardsEthereumAddressAssociatedAccount(
+      account?.toLowerCase(),
+      selectedAccount,
+      accounts
+    );
 
   const nextStep = useCrowdloanRewardsStepGivenConnectedAccounts(
     selectedAccount?.address,
@@ -121,16 +117,18 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
     parachainApi
   );
 
-  const { isEthAccountEligible, isPicassoAccountEligible } = useCrowdloanRewardsEligibility(
-    account?.toLowerCase(),
-    selectedAccount?.address
-  );
+  const { isEthAccountEligible, isPicassoAccountEligible } =
+    useCrowdloanRewardsEligibility(
+      account?.toLowerCase(),
+      selectedAccount?.address
+    );
 
-  const { contributedAmount, totalRewards } = useCrowdloanRewardsContributionAndRewards(
-    nextStep,
-    account?.toLowerCase(),
-    selectedAccount?.address
-  );
+  const { contributedAmount, totalRewards } =
+    useCrowdloanRewardsContributionAndRewards(
+      nextStep,
+      account?.toLowerCase(),
+      selectedAccount?.address
+    );
 
   const flow = useMemo(() => {
     const pathNames = router.pathname.split("/");
@@ -267,6 +265,8 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
     </Typography>,
   ];
 
+  const isStable = isEthAccountEligible;
+
   const standardPageSize = {
     xs: 12,
   };
@@ -308,7 +308,11 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
                     ? `${ethAssociatedOrSelectedAccount.address} (${ethAssociatedOrSelectedAccount.name})`
                     : "-"
                 }
-                disabled={!hasStarted || availableToClaim.eq(0) || nextStep === CrowdloanStep.None}
+                disabled={
+                  !hasStarted ||
+                  availableToClaim.eq(0) ||
+                  nextStep === CrowdloanStep.None
+                }
                 claimedRewards={claimedRewards}
                 amountContributed={contributedAmount}
                 availableToClaim={availableToClaim}
@@ -333,7 +337,11 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
             ) : (
               <KSMClaimForm
                 isClaiming={isPendingAssociate || isPendingClaim}
-                disabled={!hasStarted || availableToClaim.eq(0) || nextStep === CrowdloanStep.None}
+                disabled={
+                  !hasStarted ||
+                  availableToClaim.eq(0) ||
+                  nextStep === CrowdloanStep.None
+                }
                 claimedRewards={claimedRewards}
                 amountContributed={contributedAmount}
                 availableToClaim={availableToClaim}
@@ -365,3 +373,5 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
     </DefaultLayout>
   );
 };
+
+export default ClaimLoanPage;

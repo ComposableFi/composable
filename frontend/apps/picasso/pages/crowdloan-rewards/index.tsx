@@ -12,7 +12,6 @@ import { useCrowdloanRewardsSlice } from "@/stores/defi/polkadot/crowdloanReward
 import { encodeAddress } from "@polkadot/util-crypto";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 
-
 const CrowdloanRewards: NextPage = () => {
   const theme = useTheme();
   const router = useRouter();
@@ -39,11 +38,11 @@ const CrowdloanRewards: NextPage = () => {
   useEffect(() => {
     if (account || selectedAccount) {
       if (account && account.toLowerCase() in ethereumContributions) {
-        router.push("crowdloan-rewards/stablecoin");
+        router.push("crowdloan-rewards/claim");
       }
 
       if (selectedAccount && encodeAddress(selectedAccount.address, SUBSTRATE_NETWORKS.kusama.ss58Format) in kusamaContributions) {
-        router.push("crowdloan-rewards/ksm");
+        router.push("crowdloan-rewards/claim");
       }
     }
     
@@ -97,7 +96,7 @@ const CrowdloanRewards: NextPage = () => {
                 fullWidth: true,
                 disabled: extensionStatus !== "connected",
                 onClick: () => {
-                  router.push("/crowdloan-rewards/ksm");
+                  router.push("/crowdloan-rewards/claim");
                 }
               }}
             />
@@ -144,7 +143,7 @@ const CrowdloanRewards: NextPage = () => {
                 fullWidth: true,
                 variant: "contained",
                 onClick: () => {
-                  router.push("/crowdloan-rewards/stablecoin");
+                  router.push("/crowdloan-rewards/claim");
                 }
               }}
             />
