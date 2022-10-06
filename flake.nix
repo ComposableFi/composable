@@ -210,8 +210,19 @@
             };
           };
 
+          substrate-attrs =
+            trace "basic attrs to work build parity/substarate nodes" {
+              LD_LIBRARY_PATH = lib.strings.makeLibraryPath [
+                stdenv.cc.cc.lib
+                llvmPackages.libclang.lib
+              ];
+              LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
+              PROTOC = "${protobuf}/bin/protoc";
+              ROCKSDB_LIB_DIR = "${rocksdb}/lib";
+            };
+
           # Common env required to build the node
-          common-attrs = {
+          common-attrs = substrate-attrs // {
             src = rust-src;
             buildInputs = [ openssl zstd ];
             nativeBuildInputs = [ clang openssl pkg-config ]
@@ -224,13 +235,6 @@
             cargoCheckCommand = "true";
             # Don't build any wasm as we do it ourselves
             SKIP_WASM_BUILD = "1";
-            LD_LIBRARY_PATH = lib.strings.makeLibraryPath [
-              stdenv.cc.cc.lib
-              llvmPackages.libclang.lib
-            ];
-            LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
-            PROTOC = "${protobuf}/bin/protoc";
-            ROCKSDB_LIB_DIR = "${rocksdb}/lib";
           };
 
           # Common dependencies, all dependencies listed that are out of this repo
@@ -1019,12 +1023,12 @@
             developers-minimal = base-shell.overrideAttrs (base:
               common-attrs // {
                 buildInputs = base.buildInputs
-                  ++ (with packages; [ rust-nightly subwasm ]);
+                  ++ (with packages; [ rust-nightly subwasm clang ]);
                 NIX_PATH = "nixpkgs=${pkgs.path}";
               });
 
             developers = developers-minimal.overrideAttrs (base: {
-              buildInputs = with packages;
+              buildInputs = with packages; 
                 base.buildInputs ++ [
                   bacon
                   google-cloud-sdk

@@ -46,6 +46,10 @@ Which will transact:
 
 https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkusama-rpc.polkadot.io#/extrinsics/decode/0x3c00e8030000e803000000900100
 
+### Rococo
+
+https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Frpc.composablefinance.ninja#/extrinsics/decode/0x290001010002100004000000000b0060defb740513000000000b0060defb74050006000700f2052a01381700e8030000e8030000009001000d0100040001009d20
+
 ## Accept proposal and propose back
 
 Create `Proposal` for referenda to ensure Kusama executed channel opening on its owned Statemine network:

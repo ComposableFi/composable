@@ -7,6 +7,7 @@ use sp_core::{
 	crypto::{AccountId32, Ss58Codec},
 	sr25519, Pair,
 };
+use sc_cli::utils::*;
 
 use sp_runtime::MultiAddress;
 use subxt::{tx::*, *};
@@ -85,10 +86,12 @@ macro_rules! sudo_call {
 	}};
 }
 
-async fn execute_sudo(ask: Option<bool>, call: String, network: String, suri: String, rpc: String) {
+async fn execute_sudo(ask: bool, call: String, network: String, suri: String, rpc: String) {
 	let call = sc_cli::utils::decode_hex(call).expect("call is not hex encoded");
+	let from_file = |path |  std::fs::read(path).map(String::from_utf8).unwrap().map(|suri| pair_from_suri(&suri.trim(), None)).unwrap().unwrap();
+	
 	let key: sr25519::Pair =
-		sc_cli::utils::pair_from_suri(&suri, None).expect("private key parsing failed");
+		sc_cli::utils::pair_from_suri(&suri, None).unwrap_or_else(|_| from_file(&suri));
 	let signer = pair_signer(key);
 
 	// https://github.com/paritytech/subxt/issues/668
@@ -107,7 +110,7 @@ async fn execute_sudo(ask: Option<bool>, call: String, network: String, suri: St
 }
 
 async fn may_be_do_call<CallData: Encode>(
-	ask: Option<bool>,
+	ask: bool,
 	api: OnlineClient<
 		subxt::config::WithExtrinsicParams<
 			SubstrateConfig,
@@ -123,16 +126,19 @@ async fn may_be_do_call<CallData: Encode>(
 		sr25519::Pair,
 	>,
 ) {
-	if ask.is_none() || matches!(Some(true), _ask) {
-		println!("type `y` or `yes` to sign and submit sudo transaction");
+	if ask {
+		println!("type `Yes` or `yes` to sign and submit sudo transaction");
 		let mut message = vec![];
-		std::io::stdin().lock().read_to_end(&mut message).expect("console always work");
+		std::io::stdin().lock().read_line(&mut message).expect("console always work");
 		let message = String::from_utf8(message).expect("utf8").to_lowercase();
-		if !(message == "yes" || message == "y") {
+		if !(message == "yes") {
 			panic!("rejected")
 		}
+
 	}
-	let _result = api.tx().sign_and_submit_then_watch_default(&extrinsic, &signer).await.unwrap();
+	println!("executing...");
+	let result = api.tx().sign_and_submit_then_watch_default(&extrinsic, &signer).await.unwrap();
+	println!("executed: {:?}", result);
 }
 
 async fn transfer_native_asset(command: TransferNative) {
