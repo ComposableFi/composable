@@ -1,4 +1,4 @@
-= Design Proposal: Pablo Formalization and Restructure with Constant Product/Liquidity Bootstrapping Pool Unification
+= Design Proposal: Pablo Formalization and Restructure
 :math:
 :stem:
 :imagesoutdir: images
@@ -163,6 +163,7 @@ pub struct ConstantProductPoolInfo<AccountId, AssetId> {
 
 }
 
+// Remove
 pub struct LiquidityBootstrappingPoolInfo<AccountId, AssetId, BlockNumber> {
 	/// Owner of the pool
 	pub owner: AccountId,
@@ -231,17 +232,19 @@ where
 
 === Algorithm: `constant_product::compute_deposit_lp`
 
-These are the modifications to be made to the existing https://github.com/ComposableFi/composable/blob/main/code/parachain/frame/composable-maths/src/dex/constant_product.rs#L96[function].
+These are the modifications to be made to the existing https://github.com/ComposableFi/composable/blob/main/code/parachain/frame/composable-maths/src/dex/constant_product.rs#L148[function].
 
 [source,rust]
 ----
 pub fn compute_deposit_lp<T: PerThing>(
     lp_total_issuance: u128,
-    num_tokens_in_pool: u128,
+    num_asset_types_in_pool: u128,
     d_k: u128,
     b_k: u128,
     // w_k = 1 when providing liquidity in pool weight ratio for all assets
     w_k: T,
+    // f=0 for getting "in" without taking into account the fee
+    f: T
 ) -> Result<u128, ArithmeticError> {
     let first_deposit = lp_total_issuance.is_zero();
     if first_deposit {
@@ -251,6 +254,23 @@ pub fn compute_deposit_lp<T: PerThing>(
         // Calculate `lp_to_mint` according to section 4.2 Eqn: 5
         Ok(lp_to_mint)
     }
+}
+----
+
+=== Algorithm: `constant_product::compute_redeemed_for_lp`
+
+This is a new function to be implemented as the previous version was less specific.
+
+[source,rust]
+----
+pub fn compute_redeemed_for_lp<T: PerThing>(
+    lp_total_issuance: u128,
+    lp_redeemed: u128,
+    b_k: u128,
+    // w_k = 1 when providing liquidity in pool weight ratio for all assets
+    w_k: T,
+) -> Result</* a_k */ u128, ArithmeticError> {
+    // Calculate `a_k` according to section 4.2 Eqn: 8
 }
 ----
 
@@ -454,7 +474,7 @@ start
 ->who,pool_id,assets,min_mint_amount;
 :validate assets are part of the pool;
 :pool = get pool from storage by pool_id;
-:balances = get balances for in_asset and out_asset;
+:balances = get balances for the assets in the pool;
 :lp_total_issuance = get issuance of pool.lp_token;
 if (assets.len() == pool.assets.len()) then (yes)
     :validate asset amounts are according to pool weight ratios;
@@ -464,23 +484,26 @@ if (assets.len() == pool.assets.len()) then (yes)
         // i.e by setting the assets with 0 liquidity
         pool.assets.len(),
         // following two values are for the same k th asset
-        d_k: assets[0].amount,
-        b_k: balances[0],
+        assets[0].amount,
+        balances[0],
         1,
+        pool.fee_config.fee_rate
     );
 else if (assets.len() == 1) then (yes)
     :lp_to_mint = constant_product::compute_deposit_lp(
         lp_total_issuance,
         pool.assets.len(),
         // following two values are for the same k th asset
-        d_k: assets[0],
-        b_k: balances[0],
+        assets[0],
+        balances[0],
         pool.assets[assets[0].asset_id],
+        pool.fee_config.fee_rate
     );
 else
     :Unsupported operation;
     end
 endif
+:validate min_mint_amount <= lp_to_mint;
 :transfer assets to the pool account;
 :mint & transfer lp_to_mint to who;
 stop
@@ -488,6 +511,61 @@ stop
 
 [#_algorithm_ammremove_liquidity]
 === Algorithm: `Amm::remove_liquidity`
+
+This allows LPs to claim their liquidity back with possible profits. Here also we need some adjustments.
+
+[source,rust]
+----
+pub trait Amm {
+    // ....
+
+    fn remove_liquidity(
+        who: &Self::AccountId,
+        pool_id: Self::PoolId,
+        lp_amount: Self::Balance,
+        min_amounts: Vec<AssetAmount<Self::AssetId, Self::Balance>>,
+    ) -> Result<(), DispatchError>;
+
+    // ....
+}
+----
+
+[plantuml,images/pablo-amm-remove-liquidity,png]
+----
+start
+->who,pool_id,lp_amount,min_amounts;
+:validate assets in min_amounts are part of the pool;
+:pool = get pool from storage by pool_id;
+:balances = get balances for the assets in the pool;
+:lp_total_issuance = get issuance of pool.lp_token;
+if (min_amounts.len() == pool.assets.len()) then (yes)
+    :validate asset amounts are according to pool weight ratios;
+    :amounts_out = [for each asset in min_amounts do
+        constant_product::compute_redeemed_for_lp(
+            lp_total_issuance,
+            lp_amount,
+            // balance in pool for the asset
+            balances[k],
+            1,
+    )];
+else if (assets.len() == 1) then (yes)
+    :amounts_out = constant_product::compute_redeemed_for_lp(
+        lp_total_issuance,
+        lp_amount,
+        // balance in pool for the asset
+        balances[k],
+        // weight for the asset in the pool
+        pool.assets[min_amounts[0].asset_id],
+    );
+else
+    :Unsupported operation;
+    end
+endif
+:validate min_amounts <= amounts_out;
+:burn lp_amount;
+:transfer amounts_out to who;
+stop
+----
 
 === Fail Safes
 
@@ -531,6 +609,7 @@ Implement the equations outlined in the <<_method>> in `code/parachain/frame/com
 . Implement <<_algorithm_ammbuy>>.
 . Implement <<_algorithm_ammadd_liquidity>>.
 . Implement <<_algorithm_ammremove_liquidity>>.
+. Ensure normalized weights are used everywhere.
 
 == Quality Assurance
 
