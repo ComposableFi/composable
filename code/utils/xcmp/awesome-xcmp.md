@@ -73,7 +73,7 @@ XCMP can be upward (parachain to relay), downward(relay to parachain) and siblin
 ### Operations
 
 <https://docs.substrate.io/reference/how-to-guides/parachains/add-hrmp-channels/>
-
+- https://substrate.stackexchange.com/questions/tagged/xcm
 
 Sends KSM from Picasso to Kusama to specified account:
 
