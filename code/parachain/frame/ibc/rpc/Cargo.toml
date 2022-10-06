@@ -21,7 +21,7 @@ serde = { version = "1.0.136", features = ["derive"] }
 serde_json = "1.0.45"
 
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-ibc-proto = { git = "https://github.com/ComposableFi/centauri", rev = "a9712974f987ce9aa0657616db542ce1d2beae74", default-features = false }
+ibc-proto = { path = "../../../../centauri/ibc/proto", default-features = false }
 ibc-runtime-api = { path = "../runtime-api" }
 sc-chain-spec = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
@@ -33,11 +33,9 @@ sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8" }
 
 [dependencies.ibc]
-git = "https://github.com/ComposableFi/centauri"
-rev = "a9712974f987ce9aa0657616db542ce1d2beae74"
+path = "../../../../centauri/ibc/modules"
 default-features = false
 
 [dependencies.ibc-derive]
-git = "https://github.com/ComposableFi/centauri"
-rev = "a9712974f987ce9aa0657616db542ce1d2beae74"
+path = "../../../../centauri/ibc/derive"
 default-features = false

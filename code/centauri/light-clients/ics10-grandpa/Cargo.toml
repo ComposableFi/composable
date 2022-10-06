@@ -1,0 +1,84 @@
+[package]
+name = "ics10-grandpa"
+version = "0.1.0"
+edition = "2021"
+authors = ["Seun Lanlege <seunlanlege@gmail.com>"]
+
+
+[features]
+default = ["std"]
+std = [
+    "ibc/std",
+    "ibc-proto/std",
+    "grandpa-client/std",
+    "grandpa-client-primitives/std",
+    "light-client-common/std",
+    "prost/std",
+    "prost-types/std",
+    "codec/std",
+    "anyhow/std",
+    "primitive-types/std",
+    "serde/std",
+    "sp-core/std",
+    "sp-runtime/std",
+    "sp-trie/std",
+    "sp-finality-grandpa/std",
+]
+
+[build-dependencies]
+protobuf-src = "1.1.0"
+prost-build = "0.11.1"
+
+[dependencies]
+# ibc deps
+ibc = { path = "../../ibc/modules", default-features = false }
+ibc-proto = { path = "../../ibc/proto", default-features = false }
+
+# local deps
+grandpa-client = { package = "grandpa-light-client", path = "../../algorithms/grandpa",  default-features = false }
+grandpa-client-primitives = { package = "grandpa-light-client-primitives", path = "../../algorithms/grandpa/primitives", default-features = false }
+light-client-common = { path = "../common", default-features = false }
+
+# crates.io
+hex-literal = { version = "0.3.4", default-features = false }
+prost = { version = "0.10", default-features = false }
+prost-types = { version = "0.10", default-features = false }
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
+anyhow = { version = "1.0.65", default-features = false }
+derive_more = { version = "0.99.17", default-features = false, features = ["from"] }
+primitive-types = { version = "0.11.1", default-features = false }
+serde = { version = "1.0.144", default-features = false, features = ["derive"] }
+
+# substrate deps
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
+sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
+sp-finality-grandpa = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
+
+[dependencies.tendermint]
+git = "https://github.com/composableFi/tendermint-rs"
+rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8"
+default-features = false
+
+[dependencies.tendermint-proto]
+git = "https://github.com/composableFi/tendermint-rs"
+rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8"
+default-features = false
+
+[dev-dependencies]
+hex = "0.4.3"
+futures = "0.3.24"
+serde = { version = "1.0.144", features = ["derive"] }
+beefy-prover = { path = "../../algorithms/beefy/prover" }
+grandpa-prover = { path = "../../algorithms/grandpa/prover" }
+ibc = { path = "../../ibc/modules", features = ["mocks"] }
+ibc-derive = { path = "../../ibc/derive" }
+subxt = { git = "https://github.com/composableFi/subxt", rev = "f649deb5bba9740fc5e8d02afd1a288b89cebef6" }
+tokio = { version = "1.21.1", features = ["macros"] }
+sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+json = { package = "serde_json", version = "1.0.85" }
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+finality-grandpa-rpc = { package = "sc-finality-grandpa-rpc", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+jsonrpsee-ws-client = "0.14.0"

@@ -27,18 +27,18 @@ sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 xcm = { default-features = false, git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.27" }
 cumulus-primitives-core  = { default-features = false, git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.27" }
 # ibc
-ibc-proto = { git = "https://github.com/ComposableFi/centauri", rev = "a9712974f987ce9aa0657616db542ce1d2beae74", default-features = false }
+ibc-proto = { path = "../../../centauri/ibc/proto", default-features = false }
 tendermint = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8", optional = true, default-features = false }
 tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8", default-features = false }
 ics23 = { git = "https://github.com/composablefi/ics23", rev = "b500a5c6068eb53c83c4c6c13bd9d8c25e0bf927", default-features = false }
 
 # centauri
-grandpa-client-primitives = { package = "grandpa-light-client-primitives", git = "https://github.com/composableFi/centauri", rev = "55c92796310416ac81addb5850e44a166be8c4c1", default-features = false }
-beefy-client-primitives = { package = "beefy-light-client-primitives", git = "https://github.com/composableFi/centauri", rev = "55c92796310416ac81addb5850e44a166be8c4c1", default-features = false }
-light-client-common = { git = "https://github.com/composableFi/centauri", rev = "55c92796310416ac81addb5850e44a166be8c4c1", default-features = false }
-ics10-grandpa = { git = "https://github.com/composableFi/centauri", rev = "55c92796310416ac81addb5850e44a166be8c4c1", default-features = false }
-ics11-beefy = { git = "https://github.com/composableFi/centauri", rev = "55c92796310416ac81addb5850e44a166be8c4c1", default-features = false }
-ics07-tendermint = { git = "https://github.com/composableFi/centauri", rev = "55c92796310416ac81addb5850e44a166be8c4c1", default-features = false }
+grandpa-client-primitives = { package = "grandpa-light-client-primitives", path = "../../../centauri/algorithms/grandpa/primitives", default-features = false }
+beefy-client-primitives = { package = "beefy-light-client-primitives", path = "../../../centauri/algorithms/beefy/primitives", default-features = false }
+light-client-common = { path = "../../../centauri/light-clients/common", default-features = false }
+ics10-grandpa = { path = "../../../centauri/light-clients/ics10-grandpa", default-features = false }
+ics11-beefy = { path = "../../../centauri/light-clients/ics11-beefy", default-features = false }
+ics07-tendermint = { path = "../../../centauri/light-clients/ics07-tendermint", default-features = false }
 
 # local deps
 assets = { package = "pallet-assets", path = "../assets", default-features = false }
@@ -57,13 +57,11 @@ pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "
 simple-iavl = { git = "https://github.com/ComposableFi/simple-avl", rev = "452a1126bfb8a861354b413755ac3c8fda3da4ec", default-features = false, optional = true }
 
 [dependencies.ibc]
-git = "https://github.com/ComposableFi/centauri"
-rev = "a9712974f987ce9aa0657616db542ce1d2beae74"
+path = "../../../centauri/ibc/modules"
 default-features = false
 
 [dependencies.ibc-derive]
-git = "https://github.com/ComposableFi/centauri"
-rev = "a9712974f987ce9aa0657616db542ce1d2beae74"
+path = "../../../centauri/ibc/derive"
 default-features = false
 
 [dependencies.codec]
@@ -97,8 +95,7 @@ tendermint = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a7
 balances = { package = "pallet-balances", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
 
 [dev-dependencies.ibc]
-git = "https://github.com/ComposableFi/centauri"
-rev = "a9712974f987ce9aa0657616db542ce1d2beae74"
+path = "../../../centauri/ibc/modules"
 features = ["mocks"]
 
 [features]

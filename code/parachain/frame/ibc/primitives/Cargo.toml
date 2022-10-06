@@ -29,8 +29,7 @@ composable-traits = { default-features = false, path = "../../composable-traits"
 common = {default-features = false, path = "../../../runtime/common"}
 
 [dependencies.ibc]
-git = "https://github.com/ComposableFi/centauri"
-rev = "a9712974f987ce9aa0657616db542ce1d2beae74"
+path = "../../../../centauri/ibc/modules"
 default-features = false
 
 [dependencies.codec]

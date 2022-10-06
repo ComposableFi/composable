@@ -1,0 +1,78 @@
+[package]
+name = "ics13-near"
+version = "0.1.0"
+edition = "2021"
+
+[package.metadata.docs.rs]
+all-features = true
+
+[features]
+default = ["std"]
+std = [
+    "flex-error/std",
+    "flex-error/eyre_tracer",
+    "ibc-proto/std",
+    "ics23/std",
+    "clock",
+    "codec/std",
+    "ibc/std",
+    "sp-core/std",
+]
+clock = ["tendermint/clock", "time/std", "ibc/clock"]
+
+# This feature grants access to development-time mocking libraries, such as `MockContext` or `MockHeader`.
+# Depends on the `testgen` suite for generating Tendermint light blocks.
+mocks = ["clock", "std", "sha3", "ripemd", "ibc/mocks"]
+
+[dependencies]
+# Proto definitions for all IBC-related interfaces, e.g., connections or channels.
+borsh = { version = "0.9.3", default-features = false }
+ibc = { path = "../../ibc/modules", default-features = false }
+ibc-proto = { path = "../../ibc/proto", default-features = false }
+ibc-derive = { path = "../../ibc/derive", default-features = false }
+ics23 = { git = "https://github.com/composablefi/ics23", rev = "b500a5c6068eb53c83c4c6c13bd9d8c25e0bf927", default-features = false }
+time = { version = "0.3", default-features = false }
+serde_derive = { version = "1.0.104", default-features = false }
+serde = { version = "1.0", default-features = false }
+serde_json = { version = "1", default-features = false }
+tracing = { version = "0.1.34", default-features = false }
+prost = { version = "0.10", default-features = false }
+prost-types = { version = "0.10", default-features = false }
+bytes = { version = "1.1.0", default-features = false }
+safe-regex = { version = "0.2.5", default-features = false }
+subtle-encoding = { version = "0.5", default-features = false }
+sha2 = { version = "0.10.2", default-features = false }
+flex-error = { version = "0.4.4", default-features = false }
+num-traits = { version = "0.2.15", default-features = false }
+derive_more = { version = "0.99.17", default-features = false, features = ["from", "into", "display"] }
+uint = { version = "0.9", default-features = false }
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
+sha3 = { version = "0.10.1", optional = true }
+ripemd = { version = "0.1.1", optional = true }
+
+[dependencies.tendermint]
+git = "https://github.com/composableFi/tendermint-rs"
+rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8"
+default-features = false
+
+[dependencies.tendermint-proto]
+git = "https://github.com/composableFi/tendermint-rs"
+rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8"
+default-features = false
+
+[dev-dependencies]
+ibc = { path = "../../ibc/modules", features = ['mocks'] }
+env_logger = "0.9.0"
+tracing-subscriber = { version = "0.3.11", features = ["fmt", "env-filter", "json"]}
+test-log = { version = "0.2.10", features = ["trace"] }
+modelator = "0.4.2"
+sha2 = { version = "0.10.2" }
+tendermint-rpc = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8", features = ["http-client", "websocket-client"] }
+tendermint-testgen = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8" } # Needed for generating (synthetic) light blocks.
+tokio = { version = "1.17.0", features = ["full"] }
+serde_json = "1.0.74"
+sha3 = { version = "0.10.1" }
+ripemd = { version = "0.1.1" }
+codec = { package = "parity-scale-codec", version = "3.0.0"}
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }

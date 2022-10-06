@@ -101,7 +101,7 @@ ibc-primitives = { path = "../../frame/ibc/primitives", default-features = false
 ibc-runtime-api = { path = "../../frame/ibc/runtime-api", default-features = false }
 pallet-ibc = { path = "../../frame/ibc", default-features = false }
 pallet-ibc-ping = { path = "../../frame/ibc/ping", default-features = false }
-light-client-common = { git = "https://github.com/composableFi/centauri", rev = "55c92796310416ac81addb5850e44a166be8c4c1", default-features = false }
+light-client-common = { path = "../../../centauri/light-clients/common", default-features = false }
 
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
@@ -152,8 +152,7 @@ orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-l
 simnode-apis = { package = "simnode-runtime-apis", git = "https://github.com/polytope-labs/substrate-simnode", default-features = false, branch = "polkadot-v0.9.27" }
 
 [dependencies.ibc]
-git = "https://github.com/ComposableFi/centauri"
-rev = "a9712974f987ce9aa0657616db542ce1d2beae74"
+path = "../../../centauri/ibc/modules"
 default-features = false
 
 [features]

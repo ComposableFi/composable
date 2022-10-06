@@ -49,6 +49,34 @@ members = [
   "utils/wasm-optimizer",
   "xcvm/lib/*",
   "xcvm/cosmwasm/contracts/*",
+
+  # ibc implementation
+  "centauri/ibc/derive",
+  "centauri/ibc/modules",
+  "centauri/ibc/proto",
+  "centauri/ibc/proto-compiler",
+
+  # algorithms
+  "centauri/algorithms/beefy",
+  "centauri/algorithms/beefy/prover",
+  "centauri/algorithms/beefy/primitives",
+  "centauri/algorithms/grandpa",
+  "centauri/algorithms/grandpa/prover",
+  "centauri/algorithms/grandpa/primitives",
+
+  # ibc light clients
+  "centauri/light-clients/common",
+  "centauri/light-clients/ics07-tendermint",
+  "centauri/light-clients/ics10-grandpa",
+  "centauri/light-clients/ics11-beefy",
+  "centauri/light-clients/ics13-near",
+
+  # hyperspace
+  "centauri/hyperspace",
+  "centauri/hyperspace/primitives",
+  "centauri/hyperspace/parachain",
+  "centauri/hyperspace/cosmos",
+  "centauri/hyperspace/testsuite",
 ]
 # **IMPORTANT: DO NOT REMOVE OR SUFFER IN DEPENDENCY RESOLUTION HELL**
 resolver = "2"
@@ -73,6 +101,7 @@ rpath = false
 
 [patch.crates-io]
 serde-json-wasm = { git = "https://github.com/hussein-aitlahcen/serde-json-wasm", rev = "1608a13d2a2ba90605d9626a51ff6667aca5a2d6" }
+
 sp-application-crypto = { git = "https://github.com/ComposableFi/substrate", rev = "fd75550a935d69b6a4ee4f8a48767557b4c9e801" }
 sp-arithmetic = { git = "https://github.com/ComposableFi/substrate", rev = "fd75550a935d69b6a4ee4f8a48767557b4c9e801" }
 sp-core = { git = "https://github.com/ComposableFi/substrate", rev = "fd75550a935d69b6a4ee4f8a48767557b4c9e801" }
@@ -81,6 +110,18 @@ sp-externalities = { git = "https://github.com/ComposableFi/substrate", rev = "f
 sp-io = { git = "https://github.com/ComposableFi/substrate", rev = "fd75550a935d69b6a4ee4f8a48767557b4c9e801" }
 sp-runtime = { git = "https://github.com/ComposableFi/substrate", rev = "fd75550a935d69b6a4ee4f8a48767557b4c9e801" }
 wasmi-validation = { git = "https://github.com/ComposableFi/wasmi", rev = "cd8c0c775a1d197a35ff3d5c7d6cded3d476411b" }
+sp-core-hashing = { git = "https://github.com/composableFi/substrate", rev = "fd75550a935d69b6a4ee4f8a48767557b4c9e801" }
+sp-keyring = { git = "https://github.com/composableFi/substrate", rev = "fd75550a935d69b6a4ee4f8a48767557b4c9e801" }
+sp-keystore = { git = "https://github.com/composableFi/substrate", rev = "fd75550a935d69b6a4ee4f8a48767557b4c9e801" }
+sp-panic-handler = { git = "https://github.com/composableFi/substrate", rev = "fd75550a935d69b6a4ee4f8a48767557b4c9e801" }
+sp-runtime-interface = { git = "https://github.com/composableFi/substrate", rev = "fd75550a935d69b6a4ee4f8a48767557b4c9e801" }
+sp-runtime-interface-proc-macro = { git = "https://github.com/composableFi/substrate", rev = "fd75550a935d69b6a4ee4f8a48767557b4c9e801" }
+sp-state-machine = { git = "https://github.com/composableFi/substrate", rev = "fd75550a935d69b6a4ee4f8a48767557b4c9e801" }
+sp-std = { git = "https://github.com/composableFi/substrate", rev = "fd75550a935d69b6a4ee4f8a48767557b4c9e801" }
+sp-storage = { git = "https://github.com/composableFi/substrate", rev = "fd75550a935d69b6a4ee4f8a48767557b4c9e801" }
+sp-tracing = { git = "https://github.com/composableFi/substrate", rev = "fd75550a935d69b6a4ee4f8a48767557b4c9e801" }
+sp-trie = { git = "https://github.com/composableFi/substrate", rev = "fd75550a935d69b6a4ee4f8a48767557b4c9e801" }
+sp-wasm-interface = { git = "https://github.com/composableFi/substrate", rev = "fd75550a935d69b6a4ee4f8a48767557b4c9e801" }
 
 [patch."https://github.com/paritytech/cumulus"]
 cumulus-client-cli = { git = "https://github.com/ComposableFi/cumulus", rev = "f730e6747be173e2d4609381edc7929c8671f4d8" }
