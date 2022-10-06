@@ -3,3 +3,4 @@
 /.vscode
 /.cargo
 rust-toolchain.toml
+.DS_Store

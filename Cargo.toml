@@ -1,12 +1,21 @@
 [workspace]
 resolver = "2"
 members = [
+    # ibc implementation
+    "ibc/derive",
+    "ibc/modules",
+    "ibc/proto",
+    "ibc/proto-compiler",
+
+    # algorithms
     "algorithms/beefy",
     "algorithms/beefy/prover",
     "algorithms/beefy/primitives",
     "algorithms/grandpa",
     "algorithms/grandpa/prover",
     "algorithms/grandpa/primitives",
+
+    # ibc light clients
     "light-clients/common",
     "light-clients/ics07-tendermint",
     "light-clients/ics10-grandpa",
