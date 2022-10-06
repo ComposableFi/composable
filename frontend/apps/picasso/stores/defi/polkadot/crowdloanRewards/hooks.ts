@@ -308,7 +308,12 @@ export const useCrowdloanRewardsStepGivenConnectedAccounts = (
           return CrowdloanStep.None;
         }
       } else {
-        return CrowdloanStep.AssociateEth;
+        const ksmAssociation = findAssociation(selectedPicassoAccount, "picasso", onChainAssociations);
+        if (ksmAssociation && ksmAssociation[1] === null) {
+          return CrowdloanStep.AssociateEth;
+        } else {
+          return CrowdloanStep.None;
+        }
       }
     } else if (isPicassoAccountEligible && !isEthAccountEligible) {
       const ksmAssociation = findAssociation(
