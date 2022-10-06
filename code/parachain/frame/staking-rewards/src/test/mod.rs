@@ -35,7 +35,7 @@ use frame_support::{
 	BoundedBTreeMap,
 };
 use frame_system::EventRecord;
-use sp_arithmetic::{Perbill, Permill};
+use sp_arithmetic::{fixed_point::FixedU64, Perbill, Permill};
 use sp_core::sr25519::Public;
 use sp_runtime::PerThing;
 use sp_std::collections::{btree_map::BTreeMap, btree_set::BTreeSet};
@@ -85,7 +85,7 @@ fn duration_presets_minimum_is_1() {
 				reward_configs: default_reward_config(),
 				lock: LockConfig {
 					duration_presets: [
-						(ONE_MINUTE, Perbill::from_rational(1_u32, 10_u32)), // 0.1%
+						(ONE_MINUTE, FixedU64::from_rational(1, 10)), // 0.1%
 					]
 					.into_iter()
 					.try_collect()
@@ -168,8 +168,8 @@ fn create_staking_reward_pool_should_fail_when_slashed_amount_is_less_than_exist
 					reward_configs: default_reward_config(),
 					lock: LockConfig {
 						duration_presets: [
-							(ONE_HOUR, Perbill::from_percent(1)),                // 1%
-							(ONE_MINUTE, Perbill::from_rational(1_u32, 10_u32)), // 0.1%
+							(ONE_HOUR, FixedU64::from_rational(1, 100)),     // 1%
+							(ONE_MINUTE, FixedU64::from_rational(1, 1_000)), // 0.1%
 						]
 						.into_iter()
 						.try_collect()
@@ -499,7 +499,7 @@ fn stake_in_case_of_zero_inflation_should_work() {
 			Some(Stake {
 				reward_pool_id: PICA::ID,
 				stake: amount,
-				share: StakingRewards::boosted_amount(reward_multiplier, amount),
+				share: StakingRewards::boosted_amount(reward_multiplier, amount).unwrap(),
 				reductions,
 				lock: Lock {
 					started_at: 12,
@@ -512,13 +512,13 @@ fn stake_in_case_of_zero_inflation_should_work() {
 		assert_eq!(
 			<StakingRewards as FinancialNftProtocol>::value_of(&PICA::ID, &fnft_instance_id)
 				.expect("must return a value"),
-			vec![(XPICA::ID, StakingRewards::boosted_amount(reward_multiplier, amount))]
+			vec![(XPICA::ID, StakingRewards::boosted_amount(reward_multiplier, amount).unwrap())]
 		);
 		assert_eq!(balance(staked_asset_id, &staker), amount);
 		assert_eq!(balance(staked_asset_id, &fnft_asset_account), amount);
 		assert_eq!(
 			balance(XPICA::ID, &fnft_asset_account),
-			StakingRewards::boosted_amount(reward_multiplier, amount)
+			StakingRewards::boosted_amount(reward_multiplier, amount).unwrap()
 		);
 
 		assert_last_event_with::<Test, Event, crate::Event<Test>, _>(|event| {
@@ -568,7 +568,8 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 		let rewards_pool = StakingRewards::pools(PICA::ID).expect("rewards_pool expected");
 		let reward_multiplier = StakingRewards::reward_multiplier(&rewards_pool, DURATION_PRESET)
 			.expect("reward_multiplier expected");
-		let inflation = StakingRewards::boosted_amount(reward_multiplier, AMOUNT) * TOTAL_REWARDS /
+		let inflation = StakingRewards::boosted_amount(reward_multiplier, AMOUNT).unwrap() *
+			TOTAL_REWARDS /
 			TOTAL_SHARES;
 		assert_eq!(inflation, 502);
 		let reductions = rewards_pool
@@ -584,7 +585,7 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 			Some(Stake {
 				reward_pool_id: PICA::ID,
 				stake: AMOUNT,
-				share: StakingRewards::boosted_amount(reward_multiplier, AMOUNT),
+				share: StakingRewards::boosted_amount(reward_multiplier, AMOUNT).unwrap(),
 				reductions,
 				lock: Lock {
 					started_at: 12,
@@ -614,7 +615,7 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 				assert_eq!(owner, ALICE);
 				assert_eq!(pool_id, PICA::ID);
 				assert_eq!(amount, 100_500_u32.into());
-				assert_eq!(reward_multiplier, Perbill::from_percent(1));
+				assert_eq!(reward_multiplier, FixedU64::from_rational(1, 100));
 
 				Some(())
 			},
@@ -648,7 +649,7 @@ fn test_extend_stake_amount() {
 		let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
 		let reward_multiplier = StakingRewards::reward_multiplier(&rewards_pool, duration_preset)
 			.expect("reward_multiplier expected");
-		let boosted_amount = StakingRewards::boosted_amount(reward_multiplier, amount);
+		let boosted_amount = StakingRewards::boosted_amount(reward_multiplier, amount).unwrap();
 		let inflation = boosted_amount * total_rewards / total_shares;
 
 		assert_ok!(StakingRewards::extend(Origin::signed(staker), 1, 0, extend_amount));
@@ -952,7 +953,7 @@ fn test_split_position() {
 				duration_preset: ONE_HOUR,
 				fnft_collection_id: 1,
 				fnft_instance_id: 0,
-				reward_multiplier: Perbill::from_percent(1),
+				reward_multiplier: FixedU64::from_rational(1, 100),
 				keep_alive: true,
 			},
 		);
@@ -1418,8 +1419,8 @@ fn get_default_reward_pool() -> RewardPoolConfigurationOf<Test> {
 fn default_lock_config() -> LockConfig<MaxStakingDurationPresets> {
 	LockConfig {
 		duration_presets: [
-			(ONE_HOUR, Perbill::from_percent(1)),                // 1%
-			(ONE_MINUTE, Perbill::from_rational(1_u32, 10_u32)), // 0.1%
+			(ONE_HOUR, FixedU64::from_rational(1, 100)),     // 1%
+			(ONE_MINUTE, FixedU64::from_rational(1, 1_000)), // 0.1%
 		]
 		.into_iter()
 		.try_collect()

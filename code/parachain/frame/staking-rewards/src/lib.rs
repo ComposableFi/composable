@@ -96,10 +96,13 @@ pub mod pallet {
 	};
 	use frame_system::pallet_prelude::*;
 	use orml_traits::{GetByKey, LockIdentifier, MultiLockableCurrency};
-	use sp_arithmetic::Permill;
+	use sp_arithmetic::{
+		fixed_point::{FixedPointNumber, FixedU64},
+		Permill,
+	};
 	use sp_runtime::{
-		traits::{AccountIdConversion, BlockNumberProvider},
-		PerThing, Perbill,
+		traits::{AccountIdConversion, BlockNumberProvider, One},
+		ArithmeticError, PerThing,
 	};
 	use sp_std::{cmp::max, fmt::Debug, ops::Mul, vec, vec::Vec};
 
@@ -134,7 +137,7 @@ pub mod pallet {
 			/// FNFT Instance Id
 			fnft_instance_id: T::FinancialNftInstanceId,
 			/// Reward multiplier
-			reward_multiplier: Perbill,
+			reward_multiplier: FixedU64,
 			// REVIEW(benluelo) is this required to be in the event?
 			keep_alive: bool,
 		},
@@ -489,8 +492,8 @@ pub mod pallet {
 			end_block: T::BlockNumber::zero(),
 			lock: LockConfig {
 				duration_presets: [
-					(ONE_WEEK, Perbill::from_percent(1)),
-					(ONE_MONTH, Perbill::from_percent(10)),
+					(ONE_WEEK, FixedU64::from_rational(1, 100)),
+					(ONE_MONTH, FixedU64::from_rational(10, 100)),
 				]
 				.into_iter()
 				.try_collect()
@@ -835,7 +838,7 @@ pub mod pallet {
 				Error::<T>::NotEnoughAssets
 			);
 
-			let awarded_shares = Self::boosted_amount(reward_multiplier, amount);
+			let awarded_shares = Self::boosted_amount(reward_multiplier, amount)?;
 			let (rewards, reductions) =
 				Self::compute_rewards_and_reductions(awarded_shares, &rewards_pool)?;
 
@@ -901,7 +904,7 @@ pub mod pallet {
 				.ok_or(Error::<T>::StakeNotFound)?;
 			let mut rewards_pool = RewardPools::<T>::try_get(stake.reward_pool_id)
 				.map_err(|_| Error::<T>::RewardsPoolNotFound)?;
-			let reward_multiplier = Perbill::one();
+			let reward_multiplier = FixedU64::one();
 
 			ensure!(
 				matches!(
@@ -911,7 +914,7 @@ pub mod pallet {
 				Error::<T>::NotEnoughAssets
 			);
 
-			let awarded_shares = Self::boosted_amount(reward_multiplier, amount);
+			let awarded_shares = Self::boosted_amount(reward_multiplier, amount)?;
 
 			let (rewards, reductions) =
 				Self::compute_rewards_and_reductions(awarded_shares, &rewards_pool)?;
@@ -1327,12 +1330,15 @@ pub mod pallet {
 		pub(crate) fn reward_multiplier(
 			rewards_pool: &RewardPoolOf<T>,
 			duration_preset: DurationSeconds,
-		) -> Option<Perbill> {
+		) -> Option<FixedU64> {
 			rewards_pool.lock.duration_presets.get(&duration_preset).cloned()
 		}
 
-		pub(crate) fn boosted_amount(reward_multiplier: Perbill, amount: T::Balance) -> T::Balance {
-			reward_multiplier.mul_ceil(amount)
+		pub(crate) fn boosted_amount(
+			reward_multiplier: FixedU64,
+			amount: T::Balance,
+		) -> Result<T::Balance, ArithmeticError> {
+			reward_multiplier.checked_mul_int(amount).ok_or(ArithmeticError::Overflow)
 		}
 
 		fn compute_rewards_and_reductions(

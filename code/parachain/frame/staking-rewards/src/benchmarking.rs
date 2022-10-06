@@ -16,7 +16,7 @@ use frame_support::{
 	BoundedBTreeMap,
 };
 use frame_system::{EventRecord, RawOrigin};
-use sp_arithmetic::{traits::SaturatedConversion, Perbill, Permill};
+use sp_arithmetic::{fixed_point::FixedU64, traits::SaturatedConversion, Perbill, Permill};
 use sp_runtime::traits::{BlockNumberProvider, One};
 use sp_std::collections::btree_map::BTreeMap;
 
@@ -46,8 +46,8 @@ fn get_reward_pool<T: Config>(
 fn lock_config<T: Config>() -> LockConfig<T::MaxStakingDurationPresets> {
 	LockConfig {
 		duration_presets: [
-			(ONE_HOUR, Perbill::from_percent(1)),                // 1%
-			(ONE_MINUTE, Perbill::from_rational(1_u32, 10_u32)), // 0.1%
+			(ONE_HOUR, FixedU64::from_rational(1, 100)),     // 1%
+			(ONE_MINUTE, FixedU64::from_rational(1, 1_000)), // 0.1%
 		]
 		.into_iter()
 		.try_collect()
@@ -107,7 +107,7 @@ benchmarks! {
 		let asset_id = BASE_ASSET_ID.into();
 		let amount = 100_500_u128.into();
 		let duration_preset = ONE_HOUR;
-		let reward_multiplier = Perbill::from_percent(1);
+		let reward_multiplier = FixedU64::from_rational(1, 100);
 		let keep_alive = true;
 		let staker = whitelisted_caller();
 		let pool_owner: T::AccountId = account("owner", 0, 0);
