@@ -1,22 +1,31 @@
 use crate::AnyConfig;
 use async_trait::async_trait;
 use derive_more::From;
-use futures::Stream;
-use futures::StreamExt;
-use ibc::core::ics02_client::client_state::ClientType;
-use ibc::core::ics04_channel::packet::Packet;
-use ibc::core::ics23_commitment::commitment::CommitmentPrefix;
-use ibc::core::ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId};
-use ibc::events::IbcEvent;
-use ibc::signer::Signer;
-use ibc::{downcast, Height};
-use ibc_proto::google::protobuf::Any;
-use ibc_proto::ibc::core::channel::v1::{
-	QueryChannelResponse, QueryNextSequenceReceiveResponse, QueryPacketAcknowledgementResponse,
-	QueryPacketCommitmentResponse, QueryPacketReceiptResponse,
+use futures::{Stream, StreamExt};
+use ibc::{
+	core::{
+		ics02_client::client_state::ClientType,
+		ics04_channel::packet::Packet,
+		ics23_commitment::commitment::CommitmentPrefix,
+		ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId},
+	},
+	downcast,
+	events::IbcEvent,
+	signer::Signer,
+	Height,
 };
-use ibc_proto::ibc::core::client::v1::{QueryClientStateResponse, QueryConsensusStateResponse};
-use ibc_proto::ibc::core::connection::v1::QueryConnectionResponse;
+use ibc_proto::{
+	google::protobuf::Any,
+	ibc::core::{
+		channel::v1::{
+			QueryChannelResponse, QueryNextSequenceReceiveResponse,
+			QueryPacketAcknowledgementResponse, QueryPacketCommitmentResponse,
+			QueryPacketReceiptResponse,
+		},
+		client::v1::{QueryClientStateResponse, QueryConsensusStateResponse},
+		connection::v1::QueryConnectionResponse,
+	},
+};
 #[cfg(feature = "parachain")]
 use parachain::ParachainClient;
 use primitives::{Chain, IbcProvider, KeyProvider, UpdateType};
@@ -108,9 +117,8 @@ impl IbcProvider for AnyChain {
 	) -> Result<QueryConnectionResponse, Self::Error> {
 		match self {
 			#[cfg(feature = "parachain")]
-			AnyChain::Parachain(chain) => {
-				chain.query_connection_end(at, connection_id).await.map_err(Into::into)
-			},
+			AnyChain::Parachain(chain) =>
+				chain.query_connection_end(at, connection_id).await.map_err(Into::into),
 		}
 	}
 
@@ -122,9 +130,8 @@ impl IbcProvider for AnyChain {
 	) -> Result<QueryChannelResponse, Self::Error> {
 		match self {
 			#[cfg(feature = "parachain")]
-			AnyChain::Parachain(chain) => {
-				chain.query_channel_end(at, channel_id, port_id).await.map_err(Into::into)
-			},
+			AnyChain::Parachain(chain) =>
+				chain.query_channel_end(at, channel_id, port_id).await.map_err(Into::into),
 		}
 	}
 
@@ -144,9 +151,8 @@ impl IbcProvider for AnyChain {
 	) -> Result<Vec<Packet>, Self::Error> {
 		match self {
 			#[cfg(feature = "parachain")]
-			AnyChain::Parachain(chain) => {
-				chain.query_packets(at, port_id, channel_id, seqs).await.map_err(Into::into)
-			},
+			AnyChain::Parachain(chain) =>
+				chain.query_packets(at, port_id, channel_id, seqs).await.map_err(Into::into),
 		}
 	}
 
@@ -226,9 +232,8 @@ impl IbcProvider for AnyChain {
 	) -> Result<Option<Vec<u8>>, Self::Error> {
 		match self {
 			#[cfg(feature = "parachain")]
-			AnyChain::Parachain(chain) => {
-				chain.query_host_consensus_state_proof(height).await.map_err(Into::into)
-			},
+			AnyChain::Parachain(chain) =>
+				chain.query_host_consensus_state_proof(height).await.map_err(Into::into),
 		}
 	}
 
@@ -302,9 +307,7 @@ impl AnyConfig {
 	pub async fn into_client(self) -> anyhow::Result<AnyChain> {
 		Ok(match self {
 			#[cfg(feature = "parachain")]
-			AnyConfig::Parachain(config) => AnyChain::Parachain(
-				ParachainClient::new(config).await?,
-			),
+			AnyConfig::Parachain(config) => AnyChain::Parachain(ParachainClient::new(config).await?),
 		})
 	}
 }

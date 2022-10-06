@@ -40,8 +40,7 @@ use pallet_ibc::light_clients::{AnyClientState, AnyConsensusState, HostFunctions
 use pallet_mmr_primitives::BatchProof;
 use serde::Deserialize;
 use sp_core::{ecdsa, ed25519, sr25519, Bytes, Pair, H256};
-use sp_keystore_git::testing::KeyStore;
-use sp_keystore_git::{SyncCryptoStore, SyncCryptoStorePtr};
+use sp_keystore_git::{testing::KeyStore, SyncCryptoStore, SyncCryptoStorePtr};
 use sp_runtime::{
 	generic::Era,
 	traits::{IdentifyAccount, Verify},
@@ -409,7 +408,7 @@ where
 			};
 			// we can't use the genesis block to construct the initial state.
 			if block_number == 0 {
-				continue;
+				continue
 			}
 			let subxt_block_number: subxt::BlockNumber = block_number.into();
 			let block_hash = client_wrapper
@@ -440,7 +439,7 @@ where
 			let consensus_state =
 				AnyConsensusState::Beefy(ConsensusState::from_header(parachain_header).unwrap());
 
-			return Ok((AnyClientState::Beefy(client_state), consensus_state));
+			return Ok((AnyClientState::Beefy(client_state), consensus_state))
 		}
 	}
 

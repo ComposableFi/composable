@@ -36,9 +36,10 @@ use crate::BeefyClientState;
 use beefy_prover::helpers::fetch_timestamp_extrinsic_with_proof;
 #[cfg(feature = "testing")]
 use futures::Stream;
-use ibc::core::ics02_client::client_state::ClientType;
-use ibc::core::ics02_client::msgs::update_client::MsgUpdateAnyClient;
-use ibc::tx_msg::Msg;
+use ibc::{
+	core::ics02_client::{client_state::ClientType, msgs::update_client::MsgUpdateAnyClient},
+	tx_msg::Msg,
+};
 use ibc_proto::google::protobuf::Any;
 use ics11_beefy::client_message::{BeefyHeader, ClientMessage, ParachainHeadersWithProof};
 use pallet_ibc::{
@@ -117,8 +118,8 @@ where
 		}
 
 		// if validator set has changed this is a mandatory update
-		let update_type = match signed_commitment.commitment.validator_set_id
-			== beefy_client_state.next_authorities.id
+		let update_type = match signed_commitment.commitment.validator_set_id ==
+			beefy_client_state.next_authorities.id
 		{
 			true => UpdateType::Mandatory,
 			false => UpdateType::Optional,
@@ -146,8 +147,8 @@ where
 		let finalized_block_numbers = headers
 			.into_iter()
 			.filter_map(|header| {
-				if (client_state.latest_height().revision_height as u32)
-					< u32::from(*header.number())
+				if (client_state.latest_height().revision_height as u32) <
+					u32::from(*header.number())
 				{
 					Some(header)
 				} else {
@@ -207,7 +208,7 @@ where
 		for event in events.iter() {
 			if self.sender.send(event.clone()).is_err() {
 				log::trace!("Failed to push {event:?} to stream, no active receiver found");
-				break;
+				break
 			}
 		}
 

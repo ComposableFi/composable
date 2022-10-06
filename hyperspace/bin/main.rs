@@ -7,8 +7,7 @@ extern crate thiserror;
 use anyhow::Result;
 use clap::Parser;
 use hyperspace::logging;
-use std::fs;
-use std::path::PathBuf;
+use std::{fs, path::PathBuf};
 
 mod chain;
 
