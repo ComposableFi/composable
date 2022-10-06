@@ -106,6 +106,7 @@ export const TransferFeeDisplay = () => {
       hasFeeItem && feeItem.length === 0,
       weight
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     account,
     amount,
@@ -118,7 +119,7 @@ export const TransferFeeDisplay = () => {
 
   useEffect(() => {
     calculateFee();
-  }, [amount, from]);
+  }, [calculateFee, amount, from]);
 
   useEffect(() => {
     const asset: Promise<AssetMetadata> = callbackGate(
@@ -136,6 +137,7 @@ export const TransferFeeDisplay = () => {
         setFeeItem(paymentAsset.assetId);
       }
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fromProvider.parachainApi, account?.address, from]);
 
   return (

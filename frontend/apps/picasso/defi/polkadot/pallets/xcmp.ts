@@ -52,8 +52,7 @@ export async function getTransferCallKusamaPicasso(
   targetChain: number | 0,
   targetAccount: string,
   amount: u128,
-  signerAddress: string,
-  weight: BigNumber
+  signerAddress: string
 ) {
   const destination = api.createType("XcmVersionedMultiLocation", {
     V0: api.createType("XcmV0MultiLocation", {
@@ -106,8 +105,7 @@ export async function getTransferCallPicassoKarura(
   hasFeeItem: boolean,
   signerAddress: string,
   amount: u128,
-  feeItemId: number | null,
-  weight: BigNumber
+  feeItemId: number | null
 ) {
   const destination = api.createType("XcmVersionedMultiLocation", {
     V0: api.createType("XcmV0MultiLocation", {
@@ -163,8 +161,7 @@ export async function getTransferCallPicassoKusama(
   amount: u128,
   feeItemId: number | null,
   signerAddress: string,
-  hasFeeItem: boolean,
-  weight: BigNumber
+  hasFeeItem: boolean
 ) {
   // Set destination. Should have 2 Junctions, first to parent and then to wallet
   const destination = api.createType("XcmVersionedMultiLocation", {
@@ -214,8 +211,7 @@ export async function getTransferCallKaruraPicasso(
   targetChain: number | 0,
   targetAccount: string,
   signerAddress: string,
-  amount: u128,
-  weight: BigNumber
+  amount: u128
 ) {
   // Set destination. Should have 2 Junctions, first to parent and then to wallet
   const destination: XcmVersionedMultiLocation = api.createType(
@@ -267,8 +263,7 @@ export async function transferPicassoKarura({
   enqueueSnackbar,
   signerAddress,
   hasFeeItem,
-  feeItemId,
-  weight
+  feeItemId
 }: TransferHandlerArgs) {
   // Set destination. Should have 2 Junctions, first to parent and then to wallet
   const { signer, call } = await getTransferCallPicassoKarura(
@@ -278,8 +273,7 @@ export async function transferPicassoKarura({
     hasFeeItem,
     signerAddress,
     amount,
-    feeItemId,
-    weight
+    feeItemId
   );
 
   await executor.execute(
@@ -320,16 +314,14 @@ export async function transferKaruraPicasso({
   amount,
   executor,
   enqueueSnackbar,
-  signerAddress,
-  weight
+  signerAddress
 }: TransferHandlerArgs) {
   const { signer, call } = await getTransferCallKaruraPicasso(
     api,
     targetChain,
     targetAccount,
     signerAddress,
-    amount,
-    weight
+    amount
   );
 
   await executor.execute(
@@ -380,8 +372,7 @@ export async function transferPicassoKusama({
     amount,
     feeItemId,
     signerAddress,
-    hasFeeItem,
-    weight
+    hasFeeItem
   );
 
   await executor.execute(
@@ -422,16 +413,14 @@ export async function transferKusamaPicasso({
   amount,
   executor,
   enqueueSnackbar,
-  signerAddress,
-  weight
+  signerAddress
 }: TransferHandlerArgs) {
   const { signer, call } = await getTransferCallKusamaPicasso(
     api,
     targetChain,
     targetAccount,
     amount,
-    signerAddress,
-    weight
+    signerAddress
   );
 
   await executor.execute(

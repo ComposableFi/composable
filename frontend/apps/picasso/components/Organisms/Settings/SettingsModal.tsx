@@ -37,7 +37,7 @@ export const SettingsModal = ({
       { value: "", label: "Please select an item", disabled: true },
       ...items
     ];
-  }, [fromAssets]);
+  }, [feeItem, fromAssets]);
 
   const handleChangeItem = (item: React.ChangeEvent<HTMLInputElement>) => {
     setFeeItem(item.target.value as AssetId);
@@ -67,7 +67,7 @@ export const SettingsModal = ({
               url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash
             });
           },
-          onError: err => {
+          onError: _err => {
             closeSnackbar(snackbarId);
             enqueueSnackbar(`An error occurred while saving settings.`, {
               variant: "error",

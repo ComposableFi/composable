@@ -8,7 +8,7 @@ import {
   transferKusamaPicasso,
   transferPicassoKarura,
   transferPicassoKusama
-} from "@/components/Organisms/Transfer/xcmp";
+} from "@/defi/polkadot/pallets/xcmp";
 import { useSelectedAccount } from "@/defi/polkadot/hooks/index";
 import { useAllParachainProviders } from "@/defi/polkadot/context/hooks";
 import { useExecutor } from "substrate-react";

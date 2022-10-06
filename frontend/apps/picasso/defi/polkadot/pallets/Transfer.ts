@@ -6,7 +6,7 @@ import {
   getTransferCallKusamaPicasso,
   getTransferCallPicassoKarura,
   getTransferCallPicassoKusama
-} from "@/components/Organisms/Transfer/xcmp";
+} from "@/defi/polkadot/pallets/xcmp";
 import { toChainIdUnit } from "shared";
 import BigNumber from "bignumber.js";
 

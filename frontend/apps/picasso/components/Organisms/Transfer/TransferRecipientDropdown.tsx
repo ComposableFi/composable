@@ -30,9 +30,9 @@ function composeOptions(
 }
 
 export const TransferRecipientDropdown = () => {
+  const updateRecipient = useStore(state => state.transfers.updateRecipient);
   const {
     recipients,
-    updateRecipient,
     networks: { to: toNetwork }
   } = useStore(({ transfers }) => transfers);
   const { accounts: picassoAccounts } = usePicassoProvider();
@@ -45,6 +45,7 @@ export const TransferRecipientDropdown = () => {
 
   useEffect(() => {
     updateRecipient("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toNetwork]);
 
   return (
