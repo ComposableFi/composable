@@ -499,7 +499,8 @@ fn stake_in_case_of_zero_inflation_should_work() {
 			Some(Stake {
 				reward_pool_id: PICA::ID,
 				stake: amount,
-				share: StakingRewards::boosted_amount(reward_multiplier, amount).unwrap(),
+				share: StakingRewards::boosted_amount(reward_multiplier, amount)
+					.expect("boosted amount should not overflow"),
 				reductions,
 				lock: Lock {
 					started_at: 12,
@@ -512,13 +513,18 @@ fn stake_in_case_of_zero_inflation_should_work() {
 		assert_eq!(
 			<StakingRewards as FinancialNftProtocol>::value_of(&PICA::ID, &fnft_instance_id)
 				.expect("must return a value"),
-			vec![(XPICA::ID, StakingRewards::boosted_amount(reward_multiplier, amount).unwrap())]
+			vec![(
+				XPICA::ID,
+				StakingRewards::boosted_amount(reward_multiplier, amount)
+					.expect("boosted amount should not overflow"),
+			)]
 		);
 		assert_eq!(balance(staked_asset_id, &staker), amount);
 		assert_eq!(balance(staked_asset_id, &fnft_asset_account), amount);
 		assert_eq!(
 			balance(XPICA::ID, &fnft_asset_account),
-			StakingRewards::boosted_amount(reward_multiplier, amount).unwrap()
+			StakingRewards::boosted_amount(reward_multiplier, amount)
+				.expect("boosted amount should not overflow"),
 		);
 
 		assert_last_event_with::<Test, Event, crate::Event<Test>, _>(|event| {
@@ -568,7 +574,8 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 		let rewards_pool = StakingRewards::pools(PICA::ID).expect("rewards_pool expected");
 		let reward_multiplier = StakingRewards::reward_multiplier(&rewards_pool, DURATION_PRESET)
 			.expect("reward_multiplier expected");
-		let inflation = StakingRewards::boosted_amount(reward_multiplier, AMOUNT).unwrap() *
+		let inflation = StakingRewards::boosted_amount(reward_multiplier, AMOUNT)
+			.expect("boosted amount should not overflow") *
 			TOTAL_REWARDS /
 			TOTAL_SHARES;
 		assert_eq!(inflation, 502);
@@ -585,7 +592,8 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 			Some(Stake {
 				reward_pool_id: PICA::ID,
 				stake: AMOUNT,
-				share: StakingRewards::boosted_amount(reward_multiplier, AMOUNT).unwrap(),
+				share: StakingRewards::boosted_amount(reward_multiplier, AMOUNT)
+					.expect("boosted amount should not overflow"),
 				reductions,
 				lock: Lock {
 					started_at: 12,
@@ -649,7 +657,7 @@ fn test_extend_stake_amount() {
 		let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
 		let reward_multiplier = StakingRewards::reward_multiplier(&rewards_pool, duration_preset)
 			.expect("reward_multiplier expected");
-		let boosted_amount = StakingRewards::boosted_amount(reward_multiplier, amount).unwrap();
+		let boosted_amount = StakingRewards::boosted_amount(reward_multiplier, amount).expect("boosted amount should not overflow") ;
 		let inflation = boosted_amount * total_rewards / total_shares;
 
 		assert_ok!(StakingRewards::extend(Origin::signed(staker), 1, 0, extend_amount));
