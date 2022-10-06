@@ -152,8 +152,8 @@ orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-l
 simnode-apis = { package = "simnode-runtime-apis", git = "https://github.com/polytope-labs/substrate-simnode", default-features = false, branch = "polkadot-v0.9.27" }
 
 [dependencies.ibc]
-git = "https://github.com/ComposableFi/ibc-rs"
-rev = "c599cbcbf2c7a413a21a181f65dcf374f5ad75be"
+git = "https://github.com/ComposableFi/centauri"
+rev = "a9712974f987ce9aa0657616db542ce1d2beae74"
 default-features = false
 
 [features]
