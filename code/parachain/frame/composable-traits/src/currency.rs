@@ -21,9 +21,16 @@ pub trait CurrencyFactory {
 
 	/// permissionless creation of new transferable asset id
 	fn create(id: RangeId, ed: Self::Balance) -> Result<Self::AssetId, DispatchError>;
+
+	/// Permissionless creation of new transferable asset id
+	///
+	/// **Must not fail!**
+	fn expect_create(id: RangeId, ed: Self::Balance) -> Self::AssetId;
+
 	fn reserve_lp_token_id(ed: Self::Balance) -> Result<Self::AssetId, DispatchError> {
 		Self::create(RangeId::LP_TOKENS, ed)
 	}
+
 	/// Given a `u32` ID (within the range of `0` to `u32::MAX`) returns a unique `AssetId` reserved
 	/// by Currency Factory for the runtime.
 	fn protocol_asset_id_to_unique_asset_id(

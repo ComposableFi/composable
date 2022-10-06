@@ -442,18 +442,14 @@ pub mod pallet {
 			create_default_pool::<T>(
 				&owner,
 				T::PicaAssetId::get(),
-				T::CurrencyFactory::create(RangeId::XTOKEN_ASSETS, T::Balance::default())
-					.expect("Range has space; QED"),
-				T::CurrencyFactory::create(RangeId::FNFT_ASSETS, T::Balance::default())
-					.expect("Range has space; QED"),
+				T::CurrencyFactory::expect_create(RangeId::XTOKEN_ASSETS, T::Balance::default()),
+				T::CurrencyFactory::expect_create(RangeId::FNFT_ASSETS, T::Balance::default()),
 			);
 			create_default_pool::<T>(
 				&owner,
 				T::PbloAssetId::get(),
-				T::CurrencyFactory::create(RangeId::XTOKEN_ASSETS, T::Balance::default())
-					.expect("Range has space; QED"),
-				T::CurrencyFactory::create(RangeId::FNFT_ASSETS, T::Balance::default())
-					.expect("Range has space; QED"),
+				T::CurrencyFactory::expect_create(RangeId::XTOKEN_ASSETS, T::Balance::default()),
+				T::CurrencyFactory::expect_create(RangeId::FNFT_ASSETS, T::Balance::default()),
 			);
 		}
 	}

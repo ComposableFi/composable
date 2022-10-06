@@ -97,6 +97,14 @@ pub mod pallet {
 			Ok(MockCurrencyId::LpToken(lp_token_id))
 		}
 
+		fn expect_create(_id: RangeId, _ed: Self::Balance) -> Self::AssetId {
+			let lp_token_id = CurrencyCounter::<T>::mutate(|c| {
+				*c += 1;
+				*c
+			});
+			MockCurrencyId::LpToken(lp_token_id)
+		}
+
 		fn protocol_asset_id_to_unique_asset_id(
 			_protocol_asset_id: u32,
 			_range_id: RangeId,

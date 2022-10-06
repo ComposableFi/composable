@@ -128,26 +128,6 @@ impl CurrencyId {
 		/// Acala Dollar
 		#[allow(non_upper_case_globals)]
 		pub const aUSD: CurrencyId = CurrencyId(134);
-
-		// Staked asset xTokens (1001 - 2000)
-		/// Staked asset xPICA Token
-		#[allow(non_upper_case_globals)]
-		pub const xPICA: CurrencyId = CurrencyId(1001);
-		/// Staked asset xLAYR Token
-		#[allow(non_upper_case_globals)]
-		pub const xLAYR: CurrencyId = CurrencyId(1002);
-		/// Staked asset xKSM Token
-		#[allow(non_upper_case_globals)]
-		pub const xKSM: CurrencyId = CurrencyId(1004);
-		/// Staked asset xPBLO Token
-		#[allow(non_upper_case_globals)]
-		pub const xPBLO: CurrencyId = CurrencyId(1005);
-
-		// fNFT Collection IDs (2001 - 100_000_000_000)
-		/// PICA Stake fNFT Collection
-		pub const PICA_STAKE_FNFT_COLLECTION: CurrencyId = CurrencyId(2001);
-		/// PBLO Stake fNFT Collection
-		pub const PBLO_STAKE_FNFT_COLLECTION: CurrencyId = CurrencyId(2005);
 	}
 
 	#[inline(always)]

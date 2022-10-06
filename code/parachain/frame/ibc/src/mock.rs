@@ -122,6 +122,10 @@ impl CurrencyFactoryTrait for CurrencyIdGenerator {
 		Ok(1)
 	}
 
+	fn expect_create(_id: RangeId, _ed: Self::Balance) -> Self::AssetId {
+		1
+	}
+
 	fn protocol_asset_id_to_unique_asset_id(
 		_protocol_asset_id: u32,
 		_range_id: RangeId,

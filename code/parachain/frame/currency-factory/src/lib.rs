@@ -179,6 +179,13 @@ pub mod pallet {
 			Ok(asset_id)
 		}
 
+		fn expect_create(id: RangeId, ed: Self::Balance) -> Self::AssetId {
+			let asset_id = AssetIdRanges::<T>::mutate(|range| range.increment(id))
+				.expect("Range is sufficent; QED");
+			AssetEd::<T>::insert(asset_id, ed);
+			asset_id
+		}
+
 		fn protocol_asset_id_to_unique_asset_id(
 			protocol_asset_id: u32,
 			range_id: RangeId,

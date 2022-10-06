@@ -388,20 +388,6 @@ pub mod pallet {
 		#[pallet::constant]
 		type PbloAssetId: Get<Self::AssetId>;
 
-		/// AssetId of the xToken variant of PICA asset
-		#[pallet::constant]
-		type XPicaAssetId: Get<Self::AssetId>;
-
-		/// AssetId of the xToken variant of PBLO asset
-		#[pallet::constant]
-		type XPbloAssetId: Get<Self::AssetId>;
-
-		#[pallet::constant]
-		type PicaStakeFinancialNftCollectionId: Get<Self::AssetId>;
-
-		#[pallet::constant]
-		type PbloStakeFinancialNftCollectionId: Get<Self::AssetId>;
-
 		#[pallet::constant]
 		type MsPerBlock: Get<u32>;
 	}
