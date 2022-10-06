@@ -53,7 +53,14 @@ where
 	H256: From<T::Hash>,
 	<T::ExtrinsicParams as ExtrinsicParams<T::Index, T::Hash>>::OtherParams:
 		From<BaseExtrinsicParamsBuilder<T, AssetTip>>,
-	T::BlockNumber: Ord + sp_runtime::traits::Zero,
+	T::BlockNumber: Ord + sp_runtime::traits::Zero + One,
+	T::Header: HeaderT,
+	<T::Header as HeaderT>::Hash: From<T::Hash>,
+	T::BlockNumber: From<u32>,
+	FinalityProof<sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256>>:
+		From<FinalityProof<T::Header>>,
+	BTreeMap<H256, ParachainHeaderProofs>:
+		From<BTreeMap<<T as Config>::Hash, ParachainHeaderProofs>>,
 {
 	pub fn set_client_id(&mut self, client_id: ClientId) {
 		self.client_id = Some(client_id)
@@ -208,6 +215,7 @@ where
 			client_state.frozen_height = None;
 			client_state.latest_para_height = block_number;
 			client_state.para_id = self.para_id;
+			client_state.latest_relay_height = light_client_state.latest_relay_height;
 
 			let subxt_block_number: subxt::rpc::BlockNumber = block_number.into();
 			let block_hash =
@@ -310,6 +318,8 @@ where
 			.sign_and_submit_then_watch(&ext, &signer, tx_params.into())
 			.await?
 			.wait_for_in_block()
+			.await?
+			.wait_for_success()
 			.await?;
 
 		Ok(())

@@ -34,12 +34,9 @@ use ibc::{
 	core::ics02_client::client_state::ClientType,
 	timestamp::Timestamp,
 };
-use ibc_proto::{
-	google::protobuf::Any,
-	ibc::core::{channel::v1::QueryChannelsResponse, client::v1::IdentifiedClientState},
-};
+use ibc_proto::ibc::core::{channel::v1::QueryChannelsResponse, client::v1::IdentifiedClientState};
 use ibc_rpc::{IbcApiClient, PacketInfo};
-use primitives::{Chain, IbcProvider, KeyProvider, UpdateType};
+use primitives::{Chain, IbcProvider, KeyProvider, UpdateMessage, UpdateType};
 use sp_core::H256;
 
 use crate::light_client_protocol::FinalityEvent;
@@ -78,7 +75,7 @@ where
 		&mut self,
 		finality_event: Self::FinalityEvent,
 		counterparty: &C,
-	) -> Result<(Any, Vec<IbcEvent>, UpdateType), anyhow::Error>
+	) -> Result<(UpdateMessage, Vec<IbcEvent>, UpdateType), anyhow::Error>
 	where
 		C: Chain,
 	{

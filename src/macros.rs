@@ -50,7 +50,14 @@ macro_rules! process_finality_event {
 					),
 				};
 				// insert client update at first position.
-				messages.insert(0, msg_update_client);
+				match msg_update_client {
+					primitives::UpdateMessage::Single(msg) => messages.insert(0, msg),
+					primitives::UpdateMessage::Batch(mut msgs) => {
+						msgs.extend_from_slice(&messages);
+						messages = msgs;
+					},
+				}
+
 				let type_urls =
 					messages.iter().map(|msg| msg.type_url.as_str()).collect::<Vec<_>>();
 				log::info!("Submitting messages to {}: {type_urls:#?}", $sink.name());

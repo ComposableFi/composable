@@ -44,6 +44,11 @@ use pallet_ibc::light_clients::{AnyClientState, AnyConsensusState};
 pub mod error;
 pub mod mock;
 
+pub enum UpdateMessage {
+	Single(Any),
+	Batch(Vec<Any>),
+}
+
 pub enum UpdateType {
 	// contains an authority set change.
 	Mandatory,
@@ -83,7 +88,7 @@ pub trait IbcProvider {
 		&mut self,
 		finality_event: Self::FinalityEvent,
 		counterparty: &T,
-	) -> Result<(Any, Vec<IbcEvent>, UpdateType), anyhow::Error>
+	) -> Result<(UpdateMessage, Vec<IbcEvent>, UpdateType), anyhow::Error>
 	where
 		T: Chain;
 
@@ -432,7 +437,7 @@ pub fn packet_info_to_packet(packet_info: &PacketInfo) -> Packet {
 	}
 }
 
-/// Should return the first client height with an latest_height and consensus state timestamp that
+/// Should return the first client height with a latest_height and consensus state timestamp that
 /// is equal to or greater than the values provided
 pub async fn find_suitable_proof_height_for_client(
 	chain: &impl Chain,

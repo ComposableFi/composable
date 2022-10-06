@@ -74,9 +74,6 @@ pub async fn parse_events(
 					let connection_proof =
 						CommitmentProofBytes::try_from(connection_response.proof)?;
 					let prefix: CommitmentPrefix = source.connection_prefix();
-					// Querying client state because in ibc-rs, the client state proof is
-					// required when decoding the message on the counterparty even if, client
-					// state will not be validated
 					let client_state_response = source
 						.query_client_state(
 							open_init.height(),
@@ -153,9 +150,6 @@ pub async fn parse_events(
 
 					let connection_proof =
 						CommitmentProofBytes::try_from(connection_response.proof)?;
-					// Querying client state because in ibc-rs, the client state proof is
-					// required when decoiding the message on the counterparty even if, client
-					// state will not be validated
 					let client_state_response = source
 						.query_client_state(
 							open_try.height(),

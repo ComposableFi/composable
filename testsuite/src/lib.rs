@@ -91,7 +91,7 @@ where
 
 	let mut events = timeout_future(
 		future,
-		10 * 60,
+		15 * 60,
 		format!("Didn't see OpenConfirmConnection on {}", chain_b.name()),
 	)
 	.await;
@@ -129,7 +129,7 @@ where
 
 	let mut events = timeout_future(
 		future,
-		10 * 60,
+		15 * 60,
 		format!("Didn't see OpenConfirmChannel on {}", chain_b.name()),
 	)
 	.await;

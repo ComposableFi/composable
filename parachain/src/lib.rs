@@ -1,4 +1,4 @@
-use std::{str::FromStr, sync::Arc};
+use std::{collections::BTreeMap, fmt::Display, str::FromStr, sync::Arc};
 
 pub mod chain;
 pub mod error;
@@ -34,20 +34,31 @@ use ss58_registry::Ss58AddressFormat;
 use subxt::{
 	ext::sp_runtime::{generic::Era, traits::Header as HeaderT, MultiSigner},
 	tx::{AssetTip, BaseExtrinsicParamsBuilder, ExtrinsicParams},
+	OnlineClient,
 };
 use tokio::sync::broadcast::{self, Sender};
 
 use crate::utils::{fetch_max_extrinsic_weight, unsafe_cast_to_jsonrpsee_client};
-use primitives::KeyProvider;
+use primitives::{Chain, KeyProvider};
 
 use crate::{light_client_protocol::LightClientProtocol, signer::ExtrinsicSigner};
-use grandpa_light_client_primitives::ParachainHeadersWithFinalityProof;
+use grandpa_light_client_primitives::{
+	FinalityProof, ParachainHeaderProofs, ParachainHeadersWithFinalityProof,
+};
 use grandpa_prover::GrandpaProver;
+use ibc::{core::ics02_client::msgs::update_client::MsgUpdateAnyClient, tx_msg::Msg};
+use ibc_proto::google::protobuf::Any;
 use ics10_grandpa::client_state::ClientState as GrandpaClientState;
 use jsonrpsee_ws_client::WsClientBuilder;
+use pallet_ibc::light_clients::AnyClientMessage;
+use primitives::mock::LocalClientTypes;
 use sp_keystore::testing::KeyStore;
-use sp_runtime::traits::{One, Zero};
-use subxt::tx::{SubstrateExtrinsicParamsBuilder, TxPayload};
+use sp_runtime::traits::{Hash, One, Zero};
+use subxt::{
+	events::EventsClient,
+	tx::{SubstrateExtrinsicParamsBuilder, TxInBlock, TxPayload},
+};
+use tendermint_proto::Protobuf;
 
 /// Implements the [`crate::Chain`] trait for parachains.
 /// This is responsible for:
@@ -155,6 +166,7 @@ where
 	<T as subxt::Config>::Address: From<<T as subxt::Config>::AccountId>,
 	T::Signature: From<MultiSignature>,
 	H256: From<T::Hash>,
+	T::BlockNumber: From<u32> + Ord + sp_runtime::traits::Zero + One,
 	<T::ExtrinsicParams as ExtrinsicParams<T::Index, T::Hash>>::OtherParams:
 		From<BaseExtrinsicParamsBuilder<T, AssetTip>>,
 {
@@ -463,11 +475,161 @@ where
 		};
 
 		let tx_in_block = progress.wait_for_in_block().await?;
-		tx_in_block.wait_for_success().await?;
+		self.wait_for_ext_success(&tx_in_block).await?;
 		Ok((tx_in_block.extrinsic_hash(), Some(tx_in_block.block_hash())))
+	}
+
+	pub async fn wait_for_ext_success(
+		&self,
+		tx_in_block: &TxInBlock<T, OnlineClient<T>>,
+	) -> Result<(), Error> {
+		let events = EventsClient::new(self.para_client.clone())
+			.at(Some(tx_in_block.block_hash()))
+			.await?;
+
+		let block = self
+			.para_client
+			.rpc()
+			.block(Some(tx_in_block.block_hash()))
+			.await?
+			.ok_or(Error::from("Block not found".to_string()))?;
+
+		let _ = block
+			.block
+			.extrinsics
+			.iter()
+			.position(|ext| {
+				let hash = T::Hashing::hash_of(ext);
+				hash == tx_in_block.extrinsic_hash()
+			})
+			// If we successfully obtain the block hash we think contains our
+			// extrinsic, the extrinsic should be in there somewhere..
+			.ok_or(Error::from("Block not found".to_string()))?;
+		// Try to find any errors; return the first one we encounter.
+		for ev in events.iter() {
+			let ev = ev?;
+			if ev.pallet_name() == "System" && ev.variant_name() == "ExtrinsicFailed" {
+				return Err(Error::from("Extrinsic failed".to_string()))
+			}
+		}
+
+		Ok(())
 	}
 
 	pub fn client_id(&self) -> ClientId {
 		self.client_id.as_ref().expect("Client Id should be defined").clone()
+	}
+
+	fn epoch_length(&self) -> u32 {
+		if cfg!(feature = "testing") {
+			10
+		} else {
+			100
+		}
+	}
+}
+
+impl<T: subxt::Config + Send + Sync> ParachainClient<T>
+where
+	u32: From<<<T as subxt::Config>::Header as HeaderT>::Number>,
+	Self: KeyProvider,
+	<T::Signature as Verify>::Signer: From<MultiSigner> + IdentifyAccount<AccountId = T::AccountId>,
+	MultiSigner: From<MultiSigner>,
+	<T as subxt::Config>::Address: From<<T as subxt::Config>::AccountId>,
+	T::Signature: From<MultiSignature>,
+	H256: From<T::Hash>,
+	T::BlockNumber: From<u32> + Display + Ord + sp_runtime::traits::Zero + One,
+	<T::ExtrinsicParams as ExtrinsicParams<T::Index, T::Hash>>::OtherParams:
+		From<BaseExtrinsicParamsBuilder<T, AssetTip>>,
+	FinalityProof<sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256>>:
+		From<FinalityProof<T::Header>>,
+	BTreeMap<H256, ParachainHeaderProofs>:
+		From<BTreeMap<<T as subxt::Config>::Hash, ParachainHeaderProofs>>,
+{
+	pub async fn find_missed_mandatory_update(
+		&self,
+		counterparty: &impl Chain,
+		mut previous_finalized_height: u32,
+		latest_height: u32,
+	) -> Result<Option<(Vec<Any>, u32)>, Error> {
+		if (latest_height - previous_finalized_height) / self.epoch_length() == 0 {
+			return Ok(None)
+		}
+
+		let epoch_addr = polkadot::api::storage().babe().epoch_start();
+		let block_hash = self.relay_client.rpc().block_hash(Some(latest_height.into())).await?;
+
+		let (previous_epoch_start, current_epoch_start) = self
+			.relay_client
+			.storage()
+			.fetch(&epoch_addr, block_hash)
+			.await?
+			.ok_or_else(|| Error::from("Failed to fetch epoch information".to_string()))?;
+		let mut start: u32 = if previous_finalized_height < previous_epoch_start {
+			let epochs_in_between =
+				(previous_epoch_start - previous_finalized_height) / self.epoch_length();
+			if epochs_in_between > 0 {
+				previous_epoch_start - (epochs_in_between * self.epoch_length())
+			} else {
+				previous_epoch_start
+			}
+		} else if previous_finalized_height < current_epoch_start {
+			let epochs_in_between =
+				(current_epoch_start - previous_finalized_height) / self.epoch_length();
+			if epochs_in_between > 0 {
+				current_epoch_start - (epochs_in_between * self.epoch_length())
+			} else {
+				current_epoch_start
+			}
+		} else {
+			return Ok(None)
+		};
+		// println!("Previous finalized block {} Missed Update Start {} Latest Height {}", previous_finalized_height, start, latest_height);
+
+		let mut missed_updates = vec![];
+		while start < latest_height {
+			let headers = self
+				.query_grandpa_finalized_parachain_headers_between(start, previous_finalized_height)
+				.await?
+				.ok_or_else(|| {
+					Error::from(
+						"[find_missed_mandatory_headers] No parachain headers have been finalized"
+							.to_string(),
+					)
+				})?;
+			let headers = headers.iter().map(|header| *header.number()).collect::<Vec<_>>();
+			let ParachainHeadersWithFinalityProof { finality_proof, parachain_headers } = self
+				.query_grandpa_finalized_parachain_headers_with_proof(
+					start,
+					previous_finalized_height,
+					headers,
+				)
+				.await?;
+			let grandpa_header = ics10_grandpa::client_message::Header {
+				finality_proof: finality_proof.into(),
+				parachain_headers: parachain_headers.into(),
+			};
+
+			let update_header = {
+				let msg = MsgUpdateAnyClient::<LocalClientTypes> {
+					client_id: self.client_id(),
+					client_message: AnyClientMessage::Grandpa(
+						ics10_grandpa::client_message::ClientMessage::Header(grandpa_header),
+					),
+					signer: counterparty.account_id(),
+				};
+
+				// println!("\n{msg:#?}\n");
+				let value = msg.encode_vec();
+				Any { value, type_url: msg.type_url() }
+			};
+
+			missed_updates.push(update_header);
+
+			previous_finalized_height = start;
+			start += self.epoch_length();
+		}
+
+		Ok(Some((missed_updates, previous_finalized_height)))
 	}
 }

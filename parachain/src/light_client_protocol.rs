@@ -21,7 +21,7 @@ use ics11_beefy::client_message::{
 use pallet_ibc::light_clients::{AnyClientMessage, AnyClientState};
 use primitives::{
 	find_maximum_height_for_timeout_proofs, mock::LocalClientTypes, Chain, IbcProvider,
-	KeyProvider, UpdateType,
+	KeyProvider, UpdateMessage, UpdateType,
 };
 use serde::{Deserialize, Serialize};
 use sp_core::H256;
@@ -60,7 +60,7 @@ impl LightClientProtocol {
 		source: &mut ParachainClient<T>,
 		finality_event: FinalityEvent,
 		counterparty: &C,
-	) -> Result<(Any, Vec<IbcEvent>, UpdateType), anyhow::Error>
+	) -> Result<(UpdateMessage, Vec<IbcEvent>, UpdateType), anyhow::Error>
 	where
 		T: Config + Send + Sync,
 		C: Chain,
@@ -99,7 +99,7 @@ pub async fn query_latest_ibc_events_with_beefy<T, C>(
 	source: &mut ParachainClient<T>,
 	finality_event: FinalityEvent,
 	counterparty: &C,
-) -> Result<(Any, Vec<IbcEvent>, UpdateType), anyhow::Error>
+) -> Result<(UpdateMessage, Vec<IbcEvent>, UpdateType), anyhow::Error>
 where
 	T: Config + Send + Sync,
 	C: Chain,
@@ -295,7 +295,7 @@ where
 		Any { value, type_url: msg.type_url() }
 	};
 
-	Ok((update_header, events, update_type))
+	Ok((UpdateMessage::Single(update_header), events, update_type))
 }
 
 /// Query the latest events that have been finalized by the GRANDPA finality protocol.
@@ -303,7 +303,7 @@ pub async fn query_latest_ibc_events_with_grandpa<T, C>(
 	source: &mut ParachainClient<T>,
 	finality_event: FinalityEvent,
 	counterparty: &C,
-) -> Result<(Any, Vec<IbcEvent>, UpdateType), anyhow::Error>
+) -> Result<(UpdateMessage, Vec<IbcEvent>, UpdateType), anyhow::Error>
 where
 	T: Config + Send + Sync,
 	C: Chain,
@@ -345,14 +345,31 @@ where
 		)))?,
 	};
 
+	let missed_updates = source
+		.find_missed_mandatory_update(
+			counterparty,
+			grandpa_client_state.latest_relay_height,
+			justification.commit.target_number,
+		)
+		.await.ok().flatten();
+
 	// fetch the new parachain headers that have been finalized
+	let previous_finalized_relay_height = missed_updates
+		.as_ref()
+		.map(|(.., height)| *height)
+		.unwrap_or(grandpa_client_state.latest_relay_height);
 	let headers = source
 		.query_grandpa_finalized_parachain_headers_between(
-			justification.target().0,
-			grandpa_client_state.latest_relay_height,
+			justification.commit.target_number,
+			previous_finalized_relay_height,
 		)
 		.await?
-		.ok_or_else(|| Error::from("No parachain headers have been finalized".to_string()))?;
+		.ok_or_else(|| {
+			Error::from(
+				"[query_latest_ibc_events_with_grandpa] No parachain headers have been finalized"
+					.to_string(),
+			)
+		})?;
 
 	log::info!(
 		"Fetching events from {} for blocks {}..{}",
@@ -406,11 +423,14 @@ where
 
 	let authority_set_changed_scheduled = find_scheduled_change(&target).is_some();
 	// if validator set has changed this is a mandatory update
-	let update_type =
-		match authority_set_changed_scheduled || timeout_update_required || is_update_required {
-			true => UpdateType::Mandatory,
-			false => UpdateType::Optional,
-		};
+	let update_type = match authority_set_changed_scheduled ||
+		missed_updates.is_some() ||
+		timeout_update_required ||
+		is_update_required
+	{
+		true => UpdateType::Mandatory,
+		false => UpdateType::Optional,
+	};
 
 	// block_number => events
 	let events: HashMap<String, Vec<IbcEvent>> =
@@ -446,7 +466,7 @@ where
 	let ParachainHeadersWithFinalityProof { finality_proof, parachain_headers } = source
 		.query_grandpa_finalized_parachain_headers_with_proof(
 			justification.commit.target_number.into(),
-			grandpa_client_state.latest_relay_height,
+			previous_finalized_relay_height,
 			headers_with_events.into_iter().collect(),
 		)
 		.await?;
@@ -472,5 +492,10 @@ where
 		Any { value, type_url: msg.type_url() }
 	};
 
-	Ok((update_header, events, update_type))
+	if let Some((mut missed_updates, ..)) = missed_updates {
+		missed_updates.push(update_header);
+		Ok((UpdateMessage::Batch(missed_updates), events, update_type))
+	} else {
+		Ok((UpdateMessage::Single(update_header), events, update_type))
+	}
 }

@@ -134,13 +134,13 @@ where
 						&*self.relay_ws_client,
 					)
 						.await
-						.expect("Failed to subscribe to grandpa justifications");
+						.expect("Failed to subscribe to beefy justifications");
 
 				let stream = subscription.filter_map(|commitment_notification| {
 					let encoded_commitment = match commitment_notification {
 						Ok(JustificationNotification(sp_core::Bytes(commitment))) => commitment,
 						Err(err) => {
-							log::error!("Failed to fetch Justification: {}", err);
+							log::error!("Failed to fetch Commitment: {}", err);
 							return futures::future::ready(None)
 						},
 					};
