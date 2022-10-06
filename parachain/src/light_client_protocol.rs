@@ -351,9 +351,15 @@ where
 			grandpa_client_state.latest_relay_height,
 			justification.commit.target_number,
 		)
-		.await.ok().flatten();
+		.await
+		.ok()
+		.flatten();
 
 	// fetch the new parachain headers that have been finalized
+	// If we find missed an updates we want to start querying the relay chain for parachain blocks
+	// blocks from the missed update height instead of the previous light client height
+	// Since we would have fetched parachain headers for the previous light client height while
+	// fetching proofs for the missed update
 	let previous_finalized_relay_height = missed_updates
 		.as_ref()
 		.map(|(.., height)| *height)

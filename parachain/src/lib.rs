@@ -34,7 +34,6 @@ use ss58_registry::Ss58AddressFormat;
 use subxt::{
 	ext::sp_runtime::{generic::Era, traits::Header as HeaderT, MultiSigner},
 	tx::{AssetTip, BaseExtrinsicParamsBuilder, ExtrinsicParams},
-	OnlineClient,
 };
 use tokio::sync::broadcast::{self, Sender};
 
@@ -53,11 +52,8 @@ use jsonrpsee_ws_client::WsClientBuilder;
 use pallet_ibc::light_clients::AnyClientMessage;
 use primitives::mock::LocalClientTypes;
 use sp_keystore::testing::KeyStore;
-use sp_runtime::traits::{Hash, One, Zero};
-use subxt::{
-	events::EventsClient,
-	tx::{SubstrateExtrinsicParamsBuilder, TxInBlock, TxPayload},
-};
+use sp_runtime::traits::{One, Zero};
+use subxt::tx::{SubstrateExtrinsicParamsBuilder, TxPayload};
 use tendermint_proto::Protobuf;
 
 /// Implements the [`crate::Chain`] trait for parachains.
@@ -475,57 +471,12 @@ where
 		};
 
 		let tx_in_block = progress.wait_for_in_block().await?;
-		self.wait_for_ext_success(&tx_in_block).await?;
+		tx_in_block.wait_for_success().await?;
 		Ok((tx_in_block.extrinsic_hash(), Some(tx_in_block.block_hash())))
-	}
-
-	pub async fn wait_for_ext_success(
-		&self,
-		tx_in_block: &TxInBlock<T, OnlineClient<T>>,
-	) -> Result<(), Error> {
-		let events = EventsClient::new(self.para_client.clone())
-			.at(Some(tx_in_block.block_hash()))
-			.await?;
-
-		let block = self
-			.para_client
-			.rpc()
-			.block(Some(tx_in_block.block_hash()))
-			.await?
-			.ok_or(Error::from("Block not found".to_string()))?;
-
-		let _ = block
-			.block
-			.extrinsics
-			.iter()
-			.position(|ext| {
-				let hash = T::Hashing::hash_of(ext);
-				hash == tx_in_block.extrinsic_hash()
-			})
-			// If we successfully obtain the block hash we think contains our
-			// extrinsic, the extrinsic should be in there somewhere..
-			.ok_or(Error::from("Block not found".to_string()))?;
-		// Try to find any errors; return the first one we encounter.
-		for ev in events.iter() {
-			let ev = ev?;
-			if ev.pallet_name() == "System" && ev.variant_name() == "ExtrinsicFailed" {
-				return Err(Error::from("Extrinsic failed".to_string()))
-			}
-		}
-
-		Ok(())
 	}
 
 	pub fn client_id(&self) -> ClientId {
 		self.client_id.as_ref().expect("Client Id should be defined").clone()
-	}
-
-	fn epoch_length(&self) -> u32 {
-		if cfg!(feature = "testing") {
-			10
-		} else {
-			100
-		}
 	}
 }
 
@@ -549,47 +500,17 @@ where
 	pub async fn find_missed_mandatory_update(
 		&self,
 		counterparty: &impl Chain,
-		mut previous_finalized_height: u32,
+		previous_finalized_height: u32,
 		latest_height: u32,
 	) -> Result<Option<(Vec<Any>, u32)>, Error> {
-		if (latest_height - previous_finalized_height) / self.epoch_length() == 0 {
-			return Ok(None)
-		}
+		let session_end = self.session_end_for_block(previous_finalized_height).await?;
 
-		let epoch_addr = polkadot::api::storage().babe().epoch_start();
-		let block_hash = self.relay_client.rpc().block_hash(Some(latest_height.into())).await?;
-
-		let (previous_epoch_start, current_epoch_start) = self
-			.relay_client
-			.storage()
-			.fetch(&epoch_addr, block_hash)
-			.await?
-			.ok_or_else(|| Error::from("Failed to fetch epoch information".to_string()))?;
-		let mut start: u32 = if previous_finalized_height < previous_epoch_start {
-			let epochs_in_between =
-				(previous_epoch_start - previous_finalized_height) / self.epoch_length();
-			if epochs_in_between > 0 {
-				previous_epoch_start - (epochs_in_between * self.epoch_length())
-			} else {
-				previous_epoch_start
-			}
-		} else if previous_finalized_height < current_epoch_start {
-			let epochs_in_between =
-				(current_epoch_start - previous_finalized_height) / self.epoch_length();
-			if epochs_in_between > 0 {
-				current_epoch_start - (epochs_in_between * self.epoch_length())
-			} else {
-				current_epoch_start
-			}
-		} else {
-			return Ok(None)
-		};
-		// println!("Previous finalized block {} Missed Update Start {} Latest Height {}", previous_finalized_height, start, latest_height);
-
-		let mut missed_updates = vec![];
-		while start < latest_height {
+		if latest_height > session_end {
 			let headers = self
-				.query_grandpa_finalized_parachain_headers_between(start, previous_finalized_height)
+				.query_grandpa_finalized_parachain_headers_between(
+					session_end,
+					previous_finalized_height,
+				)
 				.await?
 				.ok_or_else(|| {
 					Error::from(
@@ -600,7 +521,7 @@ where
 			let headers = headers.iter().map(|header| *header.number()).collect::<Vec<_>>();
 			let ParachainHeadersWithFinalityProof { finality_proof, parachain_headers } = self
 				.query_grandpa_finalized_parachain_headers_with_proof(
-					start,
+					session_end,
 					previous_finalized_height,
 					headers,
 				)
@@ -619,17 +540,26 @@ where
 					signer: counterparty.account_id(),
 				};
 
-				// println!("\n{msg:#?}\n");
 				let value = msg.encode_vec();
 				Any { value, type_url: msg.type_url() }
 			};
-
-			missed_updates.push(update_header);
-
-			previous_finalized_height = start;
-			start += self.epoch_length();
+			Ok(Some((vec![update_header], session_end)))
+		} else {
+			Ok(None)
 		}
+	}
 
-		Ok(Some((missed_updates, previous_finalized_height)))
+	async fn session_end_for_block(&self, block: u32) -> Result<u32, Error> {
+		let epoch_addr = polkadot::api::storage().babe().epoch_start();
+		let block_hash = self.relay_client.rpc().block_hash(Some(block.into())).await?;
+		let (.., current_epoch_start) = self
+			.relay_client
+			.storage()
+			.fetch(&epoch_addr, block_hash)
+			.await?
+			.ok_or_else(|| Error::from("Failed to fetch epoch information".to_string()))?;
+		let epoch_duration_addr = polkadot::api::constants().babe().epoch_duration();
+		let epoch_length = self.relay_client.constants().at(&epoch_duration_addr)? as u32;
+		Ok(current_epoch_start + epoch_length)
 	}
 }
