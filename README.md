@@ -23,3 +23,19 @@ This contains utility functions for assembling Grandpa proofs as well as paracha
 ###     [grandpa-primitives](algorithms/grandpa/primitives/src/lib.rs)
 
 A `no_std` compatible crate which contains primitive types which are shared by both crates.
+
+### [Hyperspace Relayer](hyperspace/)
+
+
+Rust implementation of the IBC relayer algorithm.
+
+### Goals
+
+ ✅ Event driven architecture.
+ <br />
+ ✅ Fully stateless with no caching, and instead relies on full nodes for data storage as a source of truth.
+  <br />
+ ✅ Chain agnostic, so it can be extended to support new chains with little no changes to the core framework.
+
+
+Named after a fictional technology in starwars for [relaying deep space messages](https://starwars.fandom.com/wiki/Hyperspace_relay).

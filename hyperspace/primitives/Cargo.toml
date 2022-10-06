@@ -1,0 +1,26 @@
+[package]
+name = "hyperspace-primitives"
+version = "0.1.0"
+edition = "2021"
+authors = ["Composable Developers"]
+
+[dependencies]
+# crates.io
+anyhow = "1.0.65"
+futures = "0.3.21"
+async-trait = "0.1.53"
+hex = "0.4.3"
+codec = { package = "parity-scale-codec", version = "3.0.0", features = ["derive"] }
+thiserror = "1.0.31"
+
+# substrate
+subxt = { git = "https://github.com/paritytech/subxt", rev = "c55b7ba3e34118f61dc51499a0b38262c513aec4" }
+
+# ibc
+ibc = { path = "../../ibc/modules", features = [] }
+ibc-proto = { path = "../../ibc/proto" }
+pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "052052e5b070bc36dda7f9acd393a4c69404c3b2" }
+
+
+[features]
+testing = []
