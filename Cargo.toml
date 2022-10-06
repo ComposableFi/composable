@@ -27,6 +27,7 @@ members = [
     "hyperspace/primitives",
     "hyperspace/parachain",
     "hyperspace/cosmos",
+    "hyperspace/testsuite",
 ]
 
 

@@ -1,0 +1,33 @@
+[package]
+name = "hyperspace-testsuite"
+version = "0.1.0"
+edition = "2021"
+authors = ["Composable Developers"]
+
+[dependencies]
+tokio = { version = "1.19.2", features = ["macros", "sync", "time"] }
+log = "0.4.17"
+futures = "0.3.24"
+json = { version = "1.0.85", package = "serde_json" }
+
+ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "c599cbcbf2c7a413a21a181f65dcf374f5ad75be", features = [] }
+ibc-proto = { git = "https://github.com/composableFi/ibc-rs", rev = "c599cbcbf2c7a413a21a181f65dcf374f5ad75be" }
+tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8" }
+
+hyperspace = { path = "../", features = ["testing"] }
+hyperspace-primitives = { path = "../primitives", features = ["testing"] }
+pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "e360d73d5632f84fb53ad4a20d7a49f0de05947e" }
+
+[dev-dependencies]
+parachain = { path = "../parachain", package = "hyperspace-parachain", features = ["testing"] }
+# substrate
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", features = ["full_crypto"] }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+subxt = { git = "https://github.com/paritytech/subxt", rev = "81175b2dd9a2391f71c37d4612644ee65825e2f1" }
+
+# We need this so the tests run sequentially
+[[test]]
+name = "parachain_parachain"
+harness = false

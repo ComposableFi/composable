@@ -19,7 +19,7 @@ impl Chain for Client {
 		Box::pin(ReceiverStream::new(stream))
 	}
 
-	async fn submit_ibc_messages(&self, mut messages: Vec<Any>) -> Result<(), Error> {
+	async fn submit(&self, mut messages: Vec<Any>) -> Result<(), Error> {
 		let update_client_message = messages.remove(0);
 		let mut permissioned_messages = vec![];
 		let mut non_permissioned_messages = vec![];

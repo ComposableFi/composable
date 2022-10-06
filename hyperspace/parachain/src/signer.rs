@@ -1,10 +1,10 @@
-use sp_keystore_git::{SyncCryptoStore, SyncCryptoStorePtr};
+use sp_keystore::{SyncCryptoStore, SyncCryptoStorePtr};
 use sp_runtime::{
 	app_crypto::CryptoTypePublicPair,
 	traits::{IdentifyAccount, Verify},
 	KeyTypeId, MultiSignature, MultiSigner,
 };
-use subxt::{extrinsic::Signer, Config};
+use subxt::{tx::Signer, Config};
 
 use codec::Decode;
 use primitives::KeyProvider;
