@@ -1,23 +1,19 @@
 use std::io::Read;
 
 use clap::Parser;
-use composable_subxt::generated::{self, dali, picasso, composable_dali_on_parity_rococo};
+use composable_subxt::generated::{self, composable_dali_on_parity_rococo, dali, picasso};
+use sc_cli::utils::*;
 use scale_codec::{Decode, Encode};
 use sp_core::{
 	crypto::{AccountId32, Ss58Codec},
 	sr25519, Pair,
 };
-use sc_cli::utils::*;
 
 use sp_runtime::MultiAddress;
-use subxt::{tx::*, *, config::*,};
+use subxt::{config::*, tx::*, *};
 
-
-pub type ComposableConfig = WithExtrinsicParams<
-    SubstrateConfig,
-    crate::tx::SubstrateExtrinsicParams<SubstrateConfig>,
->;
-
+pub type ComposableConfig =
+	WithExtrinsicParams<SubstrateConfig, crate::tx::SubstrateExtrinsicParams<SubstrateConfig>>;
 
 pub type RelayPairSigner = subxt::tx::PairSigner<PolkadotConfig, sr25519::Pair>;
 pub type ComposablePairSigner = subxt::tx::PairSigner<ComposableConfig, sr25519::Pair>;
@@ -101,12 +97,18 @@ macro_rules! sudo_call {
 async fn execute_sudo(ask: bool, call: String, network: String, suri: String, rpc: String) {
 	println!("https://polkadot.js.org/apps/?rpc={:#}#/extrinsics/decode/{:}", &rpc, &call);
 	let call = sc_cli::utils::decode_hex(&call).expect("call is not hex encoded");
-	let from_file = |path |  std::fs::read(path).map(String::from_utf8).unwrap().map(|suri| pair_from_suri(&suri.trim(), None)).unwrap().unwrap();
-	
+	let from_file = |path| {
+		std::fs::read(path)
+			.map(String::from_utf8)
+			.unwrap()
+			.map(|suri| pair_from_suri(&suri.trim(), None))
+			.unwrap()
+			.unwrap()
+	};
+
 	let key: sr25519::Pair =
 		sc_cli::utils::pair_from_suri(&suri, None).unwrap_or_else(|_| from_file(&suri));
 	let signer = pair_signer(key);
-
 
 	// https://github.com/paritytech/subxt/issues/668
 	let api = OnlineClient::<ComposableConfig>::from_url(&rpc).await.unwrap();
@@ -115,7 +117,7 @@ async fn execute_sudo(ask: bool, call: String, network: String, suri: String, rp
 			let extrinsic = sudo_call!(dali, dali_runtime, call);
 			may_be_do_call(ask, api, extrinsic, signer).await;
 		},
-		"composable_dali_on_parity_rococo" => {			
+		"composable_dali_on_parity_rococo" => {
 			let extrinsic = sudo_call!(composable_dali_on_parity_rococo, dali_runtime, call);
 			may_be_do_call(ask, api, extrinsic, signer).await;
 		},
@@ -154,7 +156,8 @@ async fn may_be_do_call<CallData: Encode>(
 		}
 	}
 	println!("executing... ");
-	let mut result = api.tx().sign_and_submit_then_watch_default(&extrinsic, &signer).await.unwrap();
+	let mut result =
+		api.tx().sign_and_submit_then_watch_default(&extrinsic, &signer).await.unwrap();
 	while let Some(ev) = result.next_item().await {
 		println!("{:?}", ev);
 		ev.unwrap();

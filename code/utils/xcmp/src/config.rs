@@ -37,7 +37,7 @@ pub struct Execute {
 	#[clap(long)]
 	pub suri: String, // name for parity clis
 
-	/// hex encoded call to execute	
+	/// hex encoded call to execute
 	#[clap(long)]
 	pub call: String,
 
@@ -48,9 +48,9 @@ pub struct Execute {
 	#[clap(long)]
 	pub rpc: String,
 
-		/// ask before
-		#[clap(default_value_t = true)]
-		pub ask: bool,
+	/// ask before
+	#[clap(default_value_t = true)]
+	pub ask: bool,
 }
 
 #[derive(Parser, Debug)]
