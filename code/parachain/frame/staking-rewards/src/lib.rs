@@ -1193,7 +1193,9 @@ pub mod pallet {
 			fnft_account: &AccountIdOf<T>,
 		) -> DispatchResult {
 			T::Assets::mint_into(share_asset_id, fnft_account, awarded_shares)?;
-			T::Assets::set_lock(T::LockId::get(), share_asset_id, fnft_account, awarded_shares)
+			T::Assets::set_lock(T::LockId::get(), share_asset_id, fnft_account, awarded_shares)?;
+			dbg!(T::Assets::total_issuance(share_asset_id));
+			Ok(())
 		}
 
 		/// Ensure `who` is the owner of the fNFT associated with a stake
