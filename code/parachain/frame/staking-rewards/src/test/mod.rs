@@ -1256,6 +1256,28 @@ mod claim {
 
 			assert_eq!(balance(staked_asset_id, &ALICE), PICA::units(100_000_000) - AMOUNT);
 
+			// first staker should have 0 reductions
+			assert_eq!(
+				Stakes::<Test>::get(1, 0)
+					.expect("expected stake. QED")
+					.reductions
+					.get(&USDT::ID),
+				Some(&0)
+			);
+
+			process_and_progress_blocks::<StakingRewards, Test>(1);
+
+			// reductions don't change per block
+			assert_eq!(
+				Stakes::<Test>::get(1, 0)
+					.expect("expected stake. QED")
+					.reductions
+					.get(&USDT::ID),
+				Some(&0)
+			);
+
+			assert_ok!(StakingRewards::claim(Origin::signed(staker), 1, 0));
+
 			assert_extrinsic_event::<Test, runtime::Event, _, _, _>(
 				StakingRewards::claim(Origin::signed(ALICE), 1, 0),
 				crate::Event::Claimed { owner: ALICE, fnft_collection_id: 1, fnft_instance_id: 0 },
