@@ -2826,7 +2826,7 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "hex",
  "hex-literal",
- "ibc",
+ "ibc 0.15.0 (git+https://github.com/ComposableFi/centauri?rev=a9712974f987ce9aa0657616db542ce1d2beae74)",
  "ibc-primitives",
  "ibc-runtime-api",
  "lending-runtime-api",
@@ -4334,9 +4334,9 @@ dependencies = [
 
 [[package]]
 name = "handlebars"
-version = "4.3.4"
+version = "4.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "56b224eaa4987c03c30b251de7ef0c15a6a59f34222905850dbc3026dfb24d5f"
+checksum = "433e4ab33f1213cdc25b5fa45c76881240cfe79284cf2b395e8b9e312a30a2fd"
 dependencies = [
  "log 0.4.17",
  "pest",
@@ -4670,13 +4670,13 @@ dependencies = [
 [[package]]
 name = "ibc"
 version = "0.15.0"
-source = "git+https://github.com/ComposableFi/ibc-rs?rev=c599cbcbf2c7a413a21a181f65dcf374f5ad75be#c599cbcbf2c7a413a21a181f65dcf374f5ad75be"
+source = "git+https://github.com/ComposableFi/centauri?rev=a9712974f987ce9aa0657616db542ce1d2beae74#a9712974f987ce9aa0657616db542ce1d2beae74"
 dependencies = [
  "borsh",
  "derive_more",
  "flex-error",
- "ibc-derive",
- "ibc-proto",
+ "ibc-derive 0.1.0 (git+https://github.com/ComposableFi/centauri?rev=a9712974f987ce9aa0657616db542ce1d2beae74)",
+ "ibc-proto 0.18.0 (git+https://github.com/ComposableFi/centauri?rev=a9712974f987ce9aa0657616db542ce1d2beae74)",
  "ics23",
  "num-traits",
  "parity-scale-codec",
@@ -4695,6 +4695,47 @@ dependencies = [
  "time 0.3.15",
  "tracing",
  "uint",
+]
+
+[[package]]
+name = "ibc"
+version = "0.15.0"
+source = "git+https://github.com/ComposableFi/ibc-rs?rev=c599cbcbf2c7a413a21a181f65dcf374f5ad75be#c599cbcbf2c7a413a21a181f65dcf374f5ad75be"
+dependencies = [
+ "borsh",
+ "derive_more",
+ "flex-error",
+ "ibc-derive 0.1.0 (git+https://github.com/ComposableFi/ibc-rs?rev=c599cbcbf2c7a413a21a181f65dcf374f5ad75be)",
+ "ibc-proto 0.18.0 (git+https://github.com/ComposableFi/ibc-rs?rev=c599cbcbf2c7a413a21a181f65dcf374f5ad75be)",
+ "ics23",
+ "num-traits",
+ "parity-scale-codec",
+ "primitive-types",
+ "prost 0.10.4",
+ "prost-types 0.10.1",
+ "safe-regex",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "subtle-encoding",
+ "tendermint",
+ "tendermint-proto",
+ "tendermint-rpc",
+ "time 0.3.15",
+ "tracing",
+ "uint",
+]
+
+[[package]]
+name = "ibc-derive"
+version = "0.1.0"
+source = "git+https://github.com/ComposableFi/centauri?rev=a9712974f987ce9aa0657616db542ce1d2beae74#a9712974f987ce9aa0657616db542ce1d2beae74"
+dependencies = [
+ "convert_case 0.6.0",
+ "proc-macro-crate 1.2.1",
+ "proc-macro2 1.0.46",
+ "quote 1.0.21",
+ "syn 1.0.101",
 ]
 
 [[package]]
@@ -4718,7 +4759,7 @@ dependencies = [
  "composable-traits",
  "frame-support",
  "hex",
- "ibc",
+ "ibc 0.15.0 (git+https://github.com/ComposableFi/centauri?rev=a9712974f987ce9aa0657616db542ce1d2beae74)",
  "parity-scale-codec",
  "ripemd",
  "scale-info",
@@ -4732,6 +4773,19 @@ dependencies = [
  "sp-std 4.0.0 (git+https://github.com/ComposableFi/substrate?rev=fd75550a935d69b6a4ee4f8a48767557b4c9e801)",
  "sp-trie",
  "xcm",
+]
+
+[[package]]
+name = "ibc-proto"
+version = "0.18.0"
+source = "git+https://github.com/ComposableFi/centauri?rev=a9712974f987ce9aa0657616db542ce1d2beae74#a9712974f987ce9aa0657616db542ce1d2beae74"
+dependencies = [
+ "base64 0.13.0",
+ "bytes 1.2.1",
+ "prost 0.10.4",
+ "prost-types 0.10.1",
+ "serde",
+ "tendermint-proto",
 ]
 
 [[package]]
@@ -4753,10 +4807,10 @@ version = "0.1.0"
 dependencies = [
  "frame-system",
  "hex-literal",
- "ibc",
- "ibc-derive",
+ "ibc 0.15.0 (git+https://github.com/ComposableFi/centauri?rev=a9712974f987ce9aa0657616db542ce1d2beae74)",
+ "ibc-derive 0.1.0 (git+https://github.com/ComposableFi/centauri?rev=a9712974f987ce9aa0657616db542ce1d2beae74)",
  "ibc-primitives",
- "ibc-proto",
+ "ibc-proto 0.18.0 (git+https://github.com/ComposableFi/centauri?rev=a9712974f987ce9aa0657616db542ce1d2beae74)",
  "ibc-runtime-api",
  "jsonrpsee 0.14.0",
  "pallet-ibc",
@@ -4790,8 +4844,8 @@ source = "git+https://github.com/composableFi/centauri?rev=55c92796310416ac81add
 dependencies = [
  "bytes 1.2.1",
  "flex-error",
- "ibc",
- "ibc-proto",
+ "ibc 0.15.0 (git+https://github.com/ComposableFi/ibc-rs?rev=c599cbcbf2c7a413a21a181f65dcf374f5ad75be)",
+ "ibc-proto 0.18.0 (git+https://github.com/ComposableFi/ibc-rs?rev=c599cbcbf2c7a413a21a181f65dcf374f5ad75be)",
  "ics23",
  "prost 0.10.4",
  "prost-types 0.10.1",
@@ -4814,8 +4868,8 @@ dependencies = [
  "grandpa-light-client",
  "grandpa-light-client-primitives",
  "hex-literal",
- "ibc",
- "ibc-proto",
+ "ibc 0.15.0 (git+https://github.com/ComposableFi/ibc-rs?rev=c599cbcbf2c7a413a21a181f65dcf374f5ad75be)",
+ "ibc-proto 0.18.0 (git+https://github.com/ComposableFi/ibc-rs?rev=c599cbcbf2c7a413a21a181f65dcf374f5ad75be)",
  "light-client-common",
  "parity-scale-codec",
  "primitive-types",
@@ -4843,8 +4897,8 @@ dependencies = [
  "beefy-primitives",
  "bytes 1.2.1",
  "derive_more",
- "ibc",
- "ibc-proto",
+ "ibc 0.15.0 (git+https://github.com/ComposableFi/ibc-rs?rev=c599cbcbf2c7a413a21a181f65dcf374f5ad75be)",
+ "ibc-proto 0.18.0 (git+https://github.com/ComposableFi/ibc-rs?rev=c599cbcbf2c7a413a21a181f65dcf374f5ad75be)",
  "light-client-common",
  "parity-scale-codec",
  "primitive-types",
@@ -6261,7 +6315,7 @@ dependencies = [
  "anyhow",
  "derive_more",
  "hash-db",
- "ibc",
+ "ibc 0.15.0 (git+https://github.com/ComposableFi/ibc-rs?rev=c599cbcbf2c7a413a21a181f65dcf374f5ad75be)",
  "parity-scale-codec",
  "primitive-types",
  "serde",
@@ -8130,10 +8184,10 @@ dependencies = [
  "grandpa-light-client-primitives",
  "hex",
  "hex-literal",
- "ibc",
- "ibc-derive",
+ "ibc 0.15.0 (git+https://github.com/ComposableFi/centauri?rev=a9712974f987ce9aa0657616db542ce1d2beae74)",
+ "ibc-derive 0.1.0 (git+https://github.com/ComposableFi/centauri?rev=a9712974f987ce9aa0657616db542ce1d2beae74)",
  "ibc-primitives",
- "ibc-proto",
+ "ibc-proto 0.18.0 (git+https://github.com/ComposableFi/centauri?rev=a9712974f987ce9aa0657616db542ce1d2beae74)",
  "ics07-tendermint",
  "ics10-grandpa",
  "ics11-beefy",
@@ -8176,7 +8230,7 @@ version = "0.0.1"
 dependencies = [
  "frame-support",
  "frame-system",
- "ibc",
+ "ibc 0.15.0 (git+https://github.com/ComposableFi/centauri?rev=a9712974f987ce9aa0657616db542ce1d2beae74)",
  "ibc-primitives",
  "log 0.4.17",
  "parity-scale-codec",
