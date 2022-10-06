@@ -211,7 +211,7 @@
           };
 
           substrate-attrs =
-            trace "basic attrs to work build parity/substarate nodes" {
+            trace "basic attrs to work build parity/substrate nodes" {
               LD_LIBRARY_PATH = lib.strings.makeLibraryPath [
                 stdenv.cc.cc.lib
                 llvmPackages.libclang.lib
@@ -1028,7 +1028,7 @@
               });
 
             developers = developers-minimal.overrideAttrs (base: {
-              buildInputs = with packages; 
+              buildInputs = with packages;
                 base.buildInputs ++ [
                   bacon
                   google-cloud-sdk

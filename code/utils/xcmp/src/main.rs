@@ -156,7 +156,6 @@ async fn may_be_do_call<CallData: Encode>(
 	println!("executing... ");
 	let mut result = api.tx().sign_and_submit_then_watch_default(&extrinsic, &signer).await.unwrap();
 	while let Some(ev) = result.next_item().await {
-		//if matches!()
 		println!("{:?}", ev);
 		ev.unwrap();
 	}
@@ -230,7 +229,7 @@ async fn reserve_transfer_native_asset(command: ReserveTransferNative) {
 	}
 }
 
-// TODO: PR this to subkey
+// TODO: PR this to `subkey`
 fn parachain_id_into_address(address: Address) {
 	//  https://substrate.stackexchange.com/questions/1200/how-to-calculate-sovereignaccount-for-parachain/1210#1210
 	let mut hex = Vec::new();
