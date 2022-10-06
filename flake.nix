@@ -837,7 +837,7 @@
               # NOTE: do not add --features=runtime-benchmarks because it force multi ED to be 0 because of dependencies
               # NOTE: in order to run benchmarks as tests, just make `any(test, feature = "runtime-benchmarks")
               cargoBuildCommand =
-                "cargo test --workspace --release --locked --verbose";
+                "cargo test --workspace --release --locked --verbose --exclude local-integration-tests";
             });
 
             cargo-llvm-cov = rustPlatform.buildRustPackage rec {
