@@ -33,16 +33,19 @@
         "name": "charlie",
         "wsPort": 9966,
         "port": 30666,
+        "basePath": "/tmp/polkadot-launch/relaychains/charlie",
         "flags": ["--rpc-cors=all", "--beefy"]
       },
       {
         "name": "dave",
         "wsPort": 9977,
+        "basePath": "/tmp/polkadot-launch/relaychains/dave",
         "port": 30777,
         "flags": ["--rpc-cors=all", "--beefy"]
       },
       {
         "name": "ferdie",
+        "basePath": "/tmp/polkadot-launch/relaychains/ferdie",
         "wsPort": 9978,
         "port": 30778,
         "flags": ["--rpc-cors=all", "--beefy"]
