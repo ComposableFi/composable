@@ -387,12 +387,7 @@ jobs:
 
   unit-tests:
     name: "Unit Tests"
-    needs: common-deps
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-unittests-${{ github.ref }}
       cancel-in-progress: true
@@ -418,12 +413,7 @@ jobs:
 
   unit-tests-with-coverage:
     name: "Unit Tests with coverage"
-    needs: common-deps
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-unittests-with-coverage-${{ github.ref }}
       cancel-in-progress: true
