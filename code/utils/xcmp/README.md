@@ -11,3 +11,6 @@ Client tools.
 ## Example
 
 cargo +nightly run sudo execute --suri ../../../../drr --call 0x290001010002100004000000000b0060defb740513000000000b0060defb74050006000700f2052a01381700e8030000e8030000009001000d0100040001009d20 --network dali --rpc wss://rpc.composablefinance.ninja:443
+
+
+cargo +nightly run sudo execute --suri ../../../../drr --call 0x0008083432  --network composable_dali_on_parity_rococo --rpc wss://rpc.composablefinance.ninja:443
