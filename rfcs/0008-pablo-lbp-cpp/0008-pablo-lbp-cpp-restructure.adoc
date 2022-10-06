@@ -21,8 +21,9 @@ Pablo http://link[constant product pool (analogous to Uniswap)] and the liquidit
 
 . Fees calculations on Pablo MUST align with the math for Balancer pools.
 . Liquidity provider token calculations on Pablo MUST align with the math for Balancer pools (taking into account weights).
-. Code MUST be re-organized to unify CPP and LBP implementations to avoid divergence and to allow easier maintenance.
-. MUST assess risks and propose fail safes
+. Code MUST be re-organized to unify CPP to avoid divergence and to allow easier maintenance.
+. Remove LBP and StableSwap implementations since they are not needed for the MVP.
+. MUST assess risks and propose fail safes.
 
 In addition to these hard requirements the idea is also to simplify the code as much as possible to avoid confusion specially regarding the `CurrencyPair` swaps.
 
@@ -230,6 +231,7 @@ where
 }
 ----
 
+[#_algorithm_constant_productcompute_deposit_lp]
 === Algorithm: `constant_product::compute_deposit_lp`
 
 These are the modifications to be made to the existing https://github.com/ComposableFi/composable/blob/main/code/parachain/frame/composable-maths/src/dex/constant_product.rs#L148[function].
@@ -257,6 +259,7 @@ pub fn compute_deposit_lp<T: PerThing>(
 }
 ----
 
+[#_algorithm_constant_productcompute_redeemed_for_lp]
 === Algorithm: `constant_product::compute_redeemed_for_lp`
 
 This is a new function to be implemented as the previous version was less specific.
@@ -586,8 +589,8 @@ For LBPs,
 
 === Stage 1: Cutting Down on Non-useful Parts for Launch
 
-. Remove Stableswap(Curve) implementation together with tests
-. Remove LBP implementation together with tests
+. Remove Stableswap(Curve) implementation together with tests, while keep the interfaces same.
+. Remove LBP implementation together with tests, while keeping the interfaces the same.
 
 === Stage 2: Consistently Implement the Balancer Based CPP Equations
 
@@ -596,9 +599,8 @@ Implement the equations outlined in the <<_method>> in `code/parachain/frame/com
 . Implement <<_unit_test_updates>>
 . `Out-given-in` with Fee (eq: 2 + <<_algorithm_constant_productout_given_in>>)
 . `In-given-out` with Fee (eq: 3 + <<_algorithm_constant_productcompute_in_given_out>>)
-. `LPT received for deposited liquidity in a single pool asset` (eq: 5)
-. Correct `Initial LP Calculation` (eq: 6)
-. `Tokens received for redeemed LPT` (eq: 8)
+. `LPT received for deposited liquidity in a single pool asset` (eq: 5 + <<_algorithm_constant_productcompute_deposit_lp>>)
+. `Tokens received for redeemed LPT` (eq: 8 + <<_algorithm_constant_productcompute_redeemed_for_lp>>)
 
 === Stage 3: Change/Implement Algorithms for CPP
 
@@ -699,7 +701,7 @@ Note that weights are normalized such that,
 
 stem:[Sigma w_i = 1] <-(b)
 
-Given liquidity provided for the token `k`, We would like to issue stem:[P_"issued"] such that movement of `c` is propotional to it,
+Given liquidity provided for the token `k`, We would like to issue stem:[P_"issued"] such that movement of `c` is proportional to it,
 
 stem:[P_"issued" / P_"supply" = (Delta C) / C ] <-(c)
 

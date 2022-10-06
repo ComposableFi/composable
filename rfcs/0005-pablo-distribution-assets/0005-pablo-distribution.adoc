@@ -285,6 +285,8 @@ In order to create the necessary reward pool as well as the rewarding rate for s
 
 To analyze the requirement fully, let's define the following terms for a given staking reward pool,
 
+Following equations use stem:[sum S_n]
+
 Pre-defined reward rate (say per second) stem:[= r]
 
 Pre-defined reward calculation epoch in seconds stem:[= t]
