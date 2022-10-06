@@ -31,10 +31,7 @@ use sp_core::H256;
 use sp_runtime::traits::{Header, Zero};
 use std::{collections::BTreeMap, sync::Arc};
 use subxt::{
-	ext::{
-		sp_core::hexdisplay::AsBytesRef,
-		sp_runtime::traits::One,
-	},
+	ext::{sp_core::hexdisplay::AsBytesRef, sp_runtime::traits::One},
 	Config, OnlineClient,
 };
 
