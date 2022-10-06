@@ -11,13 +11,22 @@ import {
 import { GridProps } from "@mui/system";
 import { BoxWrapper } from "../BoxWrapper";
 import { TokenValue } from "@/components/Molecules";
-import { useStakingRewardsSlice } from "@/store/stakingRewards/stakingRewards.slice";
 import { useParachainApi } from "substrate-react";
 import { DEFAULT_NETWORK_ID, DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils";
 import { useTotalXTokensIssued } from "@/defi/hooks/stakingRewards/useTotalXTokensIssued";
 import { StakingRewardPool } from "@/defi/types";
-import { useAverageLockTimeAndMultiplier } from "@/defi/hooks/stakingRewards";
-import { calculatePeriod, createDurationPresetLabel } from "@/defi/utils/stakingRewards/durationPresets";
+import {
+  useAverageLockTimeAndMultiplier,
+  useStakingRewardsPoolApy,
+} from "@/defi/hooks/stakingRewards";
+import {
+  calculatePeriod,
+  createDurationPresetLabel,
+} from "@/defi/utils/stakingRewards/durationPresets";
+import millify from "millify";
+import { useCallback, useMemo } from "react";
+import BigNumber from "bignumber.js";
+import { useAssets } from "@/defi/hooks";
 
 const threeColumnPageSize = {
   xs: 12,
@@ -67,60 +76,66 @@ const Item: React.FC<ItemProps> = ({ label, TooltipProps, value }) => {
   );
 };
 
-export const StakingStatistics: React.FC<GridProps & { stakingRewardPool?: StakingRewardPool }> = ({ stakingRewardPool, ...gridProps }) => {
+export const StakingStatistics: React.FC<
+  GridProps & { stakingRewardPool?: StakingRewardPool }
+> = ({ stakingRewardPool, ...gridProps }) => {
   const theme = useTheme();
 
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
-
   const xTokensMinted = useTotalXTokensIssued({
     api: parachainApi,
-    shareAssetId: stakingRewardPool?.shareAssetId
+    shareAssetId: stakingRewardPool?.shareAssetId,
   });
 
-  const { averageLockMultiplier, averageLockTime, totalValueLocked } = useAverageLockTimeAndMultiplier();
-
-  const {
-    totalChaosApy,
-    totalKsmApy,
-    totalPicaApy,
-    totalPabloApy,
-  } = useAppSelector((state) => state.polkadot.stakingOverview);
-
-  const totalApyTooltip = (
-    <Box {...defaultFlexBoxProps} p={3}>
-      <TokenValue
-        token={TOKENS.ksm}
-        value={`${totalKsmApy}%`}
-        {...defaultTokenValueProps}
-      />
-      <TokenValue
-        token={TOKENS.pica}
-        value={`${totalPicaApy}%`}
-        {...defaultTokenValueProps}
-      />
-      <TokenValue
-        token={TOKENS.pablo}
-        value={`${totalPabloApy}%`}
-        {...defaultTokenValueProps}
-      />
-    </Box>
+  const apy = useStakingRewardsPoolApy(
+    stakingRewardPool?.assetId.toString() ?? "-"
   );
+  const totalApy = useMemo(() => {
+    return Object.keys(apy).reduce((v, i) => {
+      return v.plus(apy[i]);
+    }, new BigNumber(0));
+  }, [apy]);
+
+  const { averageLockMultiplier, averageLockTime, totalValueLocked } =
+    useAverageLockTimeAndMultiplier();
+  let _totalValeLocked = millify(totalValueLocked.toNumber());
+
+  const assets = useAssets(
+    stakingRewardPool ? Object.keys(stakingRewardPool.rewards) : []
+  );
+
+  const apyTooltip = useMemo(() => {
+    return (
+      <Box {...defaultFlexBoxProps} p={3}>
+        {assets.map((asset) => {
+          const assetApy = apy[asset.network[DEFAULT_NETWORK_ID]];
+          return (
+            <TokenValue
+              token={asset}
+              value={`${assetApy}%`}
+              {...defaultTokenValueProps}
+            />
+          );
+        })}
+      </Box>
+    );
+  }, [assets, apy]);
 
   return (
     <Grid container spacing={8} {...gridProps}>
       <Grid item {...threeColumnPageSize}>
         <Item
           label="Total Value locked"
-          value={totalValueLocked}
+          value={_totalValeLocked}
           TooltipProps={{ title: "Total value locked" }}
         />
       </Grid>
       <Grid item {...threeColumnPageSize}>
         <Item
-          label="Total CHAOS APY"
-          value={`${totalChaosApy}%`}
+          label="Total xPABLO APY"
+          value={`${totalApy}%`}
           TooltipProps={{
-            title: totalApyTooltip,
+            title: apyTooltip,
           }}
         />
       </Grid>
@@ -128,7 +143,7 @@ export const StakingStatistics: React.FC<GridProps & { stakingRewardPool?: Staki
         <Item
           label="Total xPABLO minted"
           value={xTokensMinted.toFormat(DEFAULT_UI_FORMAT_DECIMALS)}
-          TooltipProps={{title: "Total CHAOS Minted"}}
+          TooltipProps={{ title: "Total xPABLO Minted" }}
         />
       </Grid>
       <Grid item {...twoColumnPageSize}>
@@ -141,7 +156,9 @@ export const StakingStatistics: React.FC<GridProps & { stakingRewardPool?: Staki
       <Grid item {...twoColumnPageSize}>
         <Item
           label="Average lock time"
-          value={`${createDurationPresetLabel(calculatePeriod(averageLockTime))}`}
+          value={`${createDurationPresetLabel(
+            calculatePeriod(averageLockTime)
+          )}`}
           TooltipProps={{ title: "Average lock time" }}
         />
       </Grid>
