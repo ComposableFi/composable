@@ -23,6 +23,7 @@ import * as definitions from "defi-interfaces/definitions";
 import { APP_NAME } from "@/defi/polkadot/constants";
 import { BlockchainProvider } from "bi-lib";
 import { NETWORKS } from "@/defi/Networks";
+import { getEnvironment } from "shared/endpoints";
 // Client-side cache, shared for the whole session of the user in the browser.
 const clientSideEmotionCache = createEmotionCache();
 
@@ -50,7 +51,7 @@ const initializeHotjar = () => {
   }
 };
 const rpc = Object.keys(definitions)
-  .filter((k) => {
+  .filter(k => {
     if (!(definitions as any)[k].rpc) {
       return false;
     } else {
@@ -65,7 +66,7 @@ const rpc = Object.keys(definitions)
     {}
   );
 const types = Object.keys(definitions)
-  .filter((key) => Object.keys((definitions as any)[key].types).length > 0)
+  .filter(key => Object.keys((definitions as any)[key].types).length > 0)
   .reduce(
     (accumulator, key) => ({
       ...accumulator,
@@ -79,7 +80,7 @@ export default function MyApp(props: MyAppProps) {
   const colorMode = React.useMemo(
     () => ({
       toggleColorMode: () => {
-        setMode((prevMode) => (prevMode === "light" ? "dark" : "light"));
+        setMode(prevMode => (prevMode === "light" ? "dark" : "light"));
       }
     }),
     []
@@ -104,15 +105,13 @@ export default function MyApp(props: MyAppProps) {
             supportedParachains={[
               {
                 chainId: "picasso",
-                rpcUrl:
-                  process.env.SUBSTRATE_PROVIDER_URL_KUSAMA_2019 || "",
+                rpcUrl: getEnvironment("picasso"),
                 rpc,
                 types
               },
               {
                 chainId: "karura",
-                rpcUrl:
-                  process.env.SUBSTRATE_PROVIDER_URL_KARURA || "",
+                rpcUrl: getEnvironment("karura"),
                 rpc: {},
                 types: {}
               }

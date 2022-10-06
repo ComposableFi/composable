@@ -48,7 +48,8 @@
     "shared": "*",
     "substrate-react": "*",
     "tokens": "*",
-    "zustand": "^4.0.0"
+    "zustand": "^4.0.0",
+    "endpoints": "*"
   },
   "devDependencies": {
     "@babel/core": "^7.16.7",
