@@ -20,10 +20,10 @@ use sp_arithmetic::{traits::SaturatedConversion, Perbill, Permill};
 use sp_runtime::traits::{BlockNumberProvider, One};
 use sp_std::collections::btree_map::BTreeMap;
 
-// PICA as configured in the Test runtime (./frame/staking-rewards/src/test/runtime.rs)
+/// Arbritrary asset ID not pre configured by the runtime
 pub const BASE_ASSET_ID: u128 = 42;
-/// fNFT Asset ID = u32::MAX * (fNFT_RANGE_ID(4) + 1) + INDEX(1)
-pub const STAKING_FNFT_COLLECTION_ID: u128 = u32::MAX as u128 * (4 + 1) + 1;
+/// fNFT Asset ID = u32::MAX * (fNFT_RANGE_ID(4) + 1) + INDEX(3)
+pub const STAKING_FNFT_COLLECTION_ID: u128 = u32::MAX as u128 * (4 + 1) + 3;
 pub const FNFT_INSTANCE_ID_BASE: u64 = 0;
 
 fn get_reward_pool<T: Config>(

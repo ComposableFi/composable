@@ -295,5 +295,11 @@ impl InstanceFilter<Call> for ProxyType {
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	frame_system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+	let mut storage = frame_system::GenesisConfig::default()
+		.build_storage::<Test>()
+		.expect("Default storage is valid; QED");
+	crate::GenesisConfig::<Test>::default()
+		.assimilate_storage(&mut storage)
+		.expect("Staking rewards genesis config is valid; QED");
+	storage.into()
 }

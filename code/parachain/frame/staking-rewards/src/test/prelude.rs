@@ -37,6 +37,10 @@ pub(crate) const fn block_seconds(amount_of_blocks: u64) -> u128 {
 }
 
 pub(crate) const ONE_YEAR_OF_BLOCKS: u64 = 60 * 60 * 24 * 365 / (block_seconds(1) as u64);
+/// Arbitrary asset ID not pre-configured by the runtime
+pub(crate) const MOCK_STAKE_ASSET_ID: u128 = 42;
+/// Arbitrary asset ID not pre-configured by the runtime
+pub(crate) const MOCK_REWARD_ASSET_ID: u128 = 142;
 
 // helpers
 

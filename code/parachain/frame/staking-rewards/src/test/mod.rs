@@ -43,6 +43,7 @@ use sp_std::collections::{btree_map::BTreeMap, btree_set::BTreeSet};
 
 use self::prelude::{
 	add_to_rewards_pot_and_assert, create_rewards_pool_and_assert, split_and_assert,
+	MOCK_REWARD_ASSET_ID, MOCK_STAKE_ASSET_ID,
 };
 
 mod prelude;
