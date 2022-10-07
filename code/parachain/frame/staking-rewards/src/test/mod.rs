@@ -7,7 +7,7 @@ use crate::{
 		prelude::{stake_and_assert, unstake_and_assert, H256, MINIMUM_STAKING_AMOUNT},
 		runtime::*,
 	},
-	Config, RewardPoolConfigurationOf, RewardPools, StakeOf, Stakes,
+	Config, RewardPoolConfigurationOf, RewardPools, Stakes,
 };
 use composable_support::validation::TryIntoValidated;
 use composable_tests_helpers::test::{
@@ -21,7 +21,7 @@ use composable_traits::{
 		lock::{Lock, LockConfig},
 		ProtocolStaking, RewardConfig,
 		RewardPoolConfiguration::RewardRateBasedIncentive,
-		RewardRate, Stake, Staking,
+		RewardRate, Stake,
 	},
 	time::{DurationSeconds, ONE_HOUR, ONE_MINUTE},
 };
@@ -216,8 +216,18 @@ fn create_staking_reward_pool_should_fail_when_slashed_minimum_amount_is_less_th
 					reward_configs: default_reward_config(),
 					lock: LockConfig {
 						duration_presets: [
-							(ONE_HOUR, Perbill::from_percent(1)),                // 1%
-							(ONE_MINUTE, Perbill::from_rational(1_u32, 10_u32)), // 0.1%
+							(
+								ONE_HOUR,
+								FixedU64::from_rational(101, 100)
+									.try_into_validated()
+									.expect("valid reward multiplier")
+							), // 1%
+							(
+								ONE_MINUTE,
+								FixedU64::from_rational(11, 10)
+									.try_into_validated()
+									.expect("valid reward multiplier")
+							), // 0.1%
 						]
 						.into_iter()
 						.try_collect()
