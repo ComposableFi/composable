@@ -1,3 +1,5 @@
+#![allow(clippy::all)]
+
 mod client_def;
 mod client_messaage;
 mod client_state;

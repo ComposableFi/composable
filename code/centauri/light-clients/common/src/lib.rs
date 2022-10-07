@@ -14,6 +14,7 @@
 // limitations under the License.
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::all)]
 
 //! Common utilities for light clients.
 

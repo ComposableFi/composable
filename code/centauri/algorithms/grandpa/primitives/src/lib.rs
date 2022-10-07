@@ -14,6 +14,8 @@
 // limitations under the License.
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::all)]
+
 extern crate alloc;
 
 use alloc::collections::BTreeMap;

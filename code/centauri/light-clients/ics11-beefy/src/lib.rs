@@ -14,6 +14,7 @@
 // limitations under the License.
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::all)]
 
 //! ICS-11: Beefy IBC light client protocol implementation
 

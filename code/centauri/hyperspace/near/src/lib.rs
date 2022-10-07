@@ -1,3 +1,5 @@
+#![allow(clippy::all)]
+
 use crate::error::Error;
 use ibc::core::{ics04_channel::packet::Packet, ics24_host::identifier::ClientId};
 use near_crypto::{ED25519PublicKey, KeyType, Secp256K1PublicKey};

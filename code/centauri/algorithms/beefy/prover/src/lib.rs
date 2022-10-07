@@ -15,6 +15,8 @@
 
 //! BEEFY prover utilities
 
+#![allow(clippy::all)]
+
 pub mod error;
 pub mod helpers;
 pub mod relay_chain_queries;

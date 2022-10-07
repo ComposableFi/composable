@@ -1,3 +1,5 @@
+#![allow(clippy::all)]
+
 use std::{pin::Pin, str::FromStr, time::Duration};
 
 use futures::Stream;

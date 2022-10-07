@@ -1,4 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::all)]
 
 //! ICS 07: Tendermint Client implements a client verification algorithm for blockchains which use
 //! the Tendermint consensus algorithm.

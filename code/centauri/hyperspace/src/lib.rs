@@ -1,4 +1,5 @@
 #![warn(unused_variables)]
+#![allow(clippy::all)]
 
 use futures::StreamExt;
 use primitives::Chain;

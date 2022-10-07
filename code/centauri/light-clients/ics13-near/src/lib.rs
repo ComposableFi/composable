@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#![allow(clippy::all)]
+
 extern crate alloc;
 
 pub mod client_def;

@@ -16,6 +16,7 @@
 //! GRANDPA light client verification function
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::all)]
 
 extern crate alloc;
 

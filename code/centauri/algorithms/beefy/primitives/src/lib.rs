@@ -16,6 +16,7 @@
 //! Primitive types used in the library
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::all)]
 
 pub mod error;
 use beefy_primitives::mmr::MmrLeafVersion;
