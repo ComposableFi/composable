@@ -270,7 +270,7 @@ export const ClaimLoanPage = () => {
   };
 
   const operation = useCallback(async () => {
-    switch(nextStep) {
+    switch (nextStep) {
       case CrowdloanStep.Claim:
         claim().catch(console.error);
       case CrowdloanStep.AssociateEth:
@@ -280,7 +280,7 @@ export const ClaimLoanPage = () => {
       default:
         return;
     }
-  }, [nextStep])
+  }, [nextStep, claimedRewards, signEthereum, signPolkadotJs, useAssociate]);
 
   return (
     <DefaultLayout breadcrumbs={breadcrumbs}>
