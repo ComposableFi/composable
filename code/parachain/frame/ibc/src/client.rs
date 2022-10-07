@@ -253,7 +253,9 @@ where
 				proof,
 				&vec![(key, Some(ext))],
 			)
-			.map_err(|err| ICS02Error::implementation_specific(format!("Invalid extrinsic proof: {err:?}")))?;
+			.map_err(|_err| {
+				ICS02Error::implementation_specific(format!("Invalid extrinsic proof"))
+			})?;
 
 			let (_, _, timestamp): (u8, u8, Compact<u64>) = codec::Decode::decode(&mut &ext[2..])
 				.map_err(|err| {

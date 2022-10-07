@@ -6,9 +6,7 @@ use ibc::{
 	core::{ics02_client::msgs::create_client::MsgCreateAnyClient, ics24_host::identifier::PortId},
 	tx_msg::Msg,
 };
-use parachain::{
-	finality_protocol::FinalityProtocol, ParachainClient, ParachainClientConfig,
-};
+use parachain::{finality_protocol::FinalityProtocol, ParachainClient, ParachainClientConfig};
 
 use subxt::tx::SubstrateExtrinsicParams;
 
@@ -99,7 +97,7 @@ async fn setup_clients() -> (ParachainClient<DefaultConfig>, ParachainClient<Def
 		.await
 		.unwrap()
 		.filter_map(|result| futures::future::ready(result.ok()))
-		.skip_while(|h| futures::future::ready(h.number < 210))
+		.skip_while(|h| futures::future::ready(h.number < 85))
 		.take(1)
 		.collect::<Vec<_>>()
 		.await;
@@ -114,8 +112,12 @@ async fn setup_clients() -> (ParachainClient<DefaultConfig>, ParachainClient<Def
 	// 	return (chain_a, chain_b)
 	// }
 
-	chain_a.set_pallet_params(true, true).await.unwrap();
-	chain_b.set_pallet_params(true, true).await.unwrap();
+	let (res_1, res_2) = futures::join!(
+		chain_a.set_pallet_params(true, true),
+		chain_b.set_pallet_params(true, true)
+	);
+	res_1.unwrap();
+	res_2.unwrap();
 
 	{
 		// Get initial beefy state

@@ -346,12 +346,8 @@ where
 					e
 				))
 			})?;
-		result.ok_or_else(|| {
-			Error::from(
-				"[query_finalized_parachain_headers_with_proof] Failed due to empty finality proof"
-					.to_string(),
-			)
-		})
+
+		Ok(result)
 	}
 
 	/// Construct the [`ParachainHeadersWithFinalityProof`] for parachain headers with the given

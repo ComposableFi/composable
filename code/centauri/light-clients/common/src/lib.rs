@@ -71,8 +71,8 @@ where
 	let path = path.to_string();
 	let mut key = prefix.as_bytes().to_vec();
 	key.extend(path.as_bytes());
-	let trie_proof: Vec<Vec<u8>> =
-		codec::Decode::decode(&mut &*proof.as_bytes()).map_err(anyhow::Error::msg)?;
+	let trie_proof: Vec<Vec<u8>> = codec::Decode::decode(&mut &*proof.as_bytes())
+		.map_err(|err| anyhow!("Failed to decode proof nodes for path: {path}: {err:#?}"))?;
 	let proof = StorageProof::new(trie_proof);
 	let root = H256::from_slice(root.as_bytes());
 	let child_info = ChildInfo::new_default(prefix.as_bytes());
@@ -82,7 +82,7 @@ where
 		child_info,
 		vec![(key, Some(value))],
 	)
-	.map_err(anyhow::Error::msg)?;
+	.map_err(|err| anyhow!("Failed to verify proof for path: {path}, error: {err:#?}"))?;
 	Ok(())
 }
 

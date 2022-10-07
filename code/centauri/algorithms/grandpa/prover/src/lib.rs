@@ -181,7 +181,7 @@ where
 		mut latest_finalized_height: u32,
 		previous_finalized_height: u32,
 		header_numbers: Vec<T::BlockNumber>,
-	) -> Result<Option<ParachainHeadersWithFinalityProof<H>>, anyhow::Error>
+	) -> Result<ParachainHeadersWithFinalityProof<H>, anyhow::Error>
 	where
 		H: Header,
 		H::Hash: From<T::Hash>,
@@ -258,11 +258,6 @@ where
 
 		let mut parachain_headers = BTreeMap::<H::Hash, ParachainHeaderProofs>::default();
 
-		// no new parachain headers have been finalized
-		if change_set.len() == 1 {
-			return Ok(None)
-		}
-
 		for changes in change_set {
 			let header = self
 				.relay_client
@@ -306,7 +301,7 @@ where
 			parachain_headers.insert(header.hash().into(), proofs);
 		}
 
-		Ok(Some(ParachainHeadersWithFinalityProof { finality_proof, parachain_headers }))
+		Ok(ParachainHeadersWithFinalityProof { finality_proof, parachain_headers })
 	}
 
 	// Queries the block at which the epoch for the given block belongs to ends.

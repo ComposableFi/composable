@@ -99,7 +99,7 @@ async fn follow_grandpa_justifications() {
 		};
 
 		let header_numbers = headers.iter().map(|h| *h.number()).collect();
-		let maybe_proof = prover
+		let proof = prover
 			.query_finalized_parachain_headers_with_proof(
 				justification.commit.target_number,
 				client_state.latest_relay_height,
@@ -108,13 +108,11 @@ async fn follow_grandpa_justifications() {
 			.await
 			.expect("Failed to fetch finalized parachain headers with proof");
 
-		if let Some(proof) = maybe_proof {
-			client_state = verify_parachain_headers_with_grandpa_finality_proof::<
-				Header,
-				HostFunctionsProvider,
-			>(client_state, proof)
-			.expect("Failed to verify parachain headers with grandpa finality_proof");
-			println!("========= Successfully verified grandpa justification =========");
-		}
+		client_state = verify_parachain_headers_with_grandpa_finality_proof::<
+			Header,
+			HostFunctionsProvider,
+		>(client_state, proof)
+		.expect("Failed to verify parachain headers with grandpa finality_proof");
+		println!("========= Successfully verified grandpa justification =========");
 	}
 }

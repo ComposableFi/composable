@@ -224,7 +224,7 @@ async fn test_continuous_update_of_grandpa_client() {
 			.filter(|num| *num != client_state.latest_para_height)
 			.collect::<Vec<_>>();
 
-		let maybe_proof = prover
+		let proof = prover
 			.query_finalized_parachain_headers_with_proof(
 				justification.commit.target_number,
 				client_state.latest_relay_height,
@@ -232,10 +232,6 @@ async fn test_continuous_update_of_grandpa_client() {
 			)
 			.await
 			.expect("Failed to fetch finalized parachain headers with proof");
-		let proof = match maybe_proof {
-			Some(proof) => proof,
-			None => continue,
-		};
 		println!("========= New Justification =========");
 		println!("justification size: {}kb", size_of_val(&*justification_bytes) / 1000);
 		println!("current_set_id: {}", client_state.current_set_id);

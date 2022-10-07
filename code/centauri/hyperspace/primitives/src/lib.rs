@@ -39,7 +39,9 @@ use ibc::{
 	timestamp::Timestamp,
 	Height,
 };
-use ibc_proto::ibc::core::channel::v1::QueryChannelsResponse;
+use ibc_proto::ibc::core::{
+	channel::v1::QueryChannelsResponse, connection::v1::IdentifiedConnection,
+};
 use ibc_rpc::PacketInfo;
 use pallet_ibc::light_clients::{AnyClientState, AnyConsensusState};
 
@@ -272,6 +274,13 @@ pub trait IbcProvider {
 
 	/// Should return a list of all clients on the chain
 	async fn query_channels(&self) -> Result<Vec<(ChannelId, PortId)>, Self::Error>;
+
+	/// Query all connection states for associated client
+	async fn query_connection_using_client(
+		&self,
+		height: u32,
+		client_id: String,
+	) -> Result<Vec<IdentifiedConnection>, Self::Error>;
 
 	/// Returns a boolean value that determines if the light client should receive a mandatory
 	/// update

@@ -26,13 +26,15 @@ use crate::{
 };
 use finality_grandpa_rpc::GrandpaApiClient;
 
-type GrandpaJustification =
-	grandpa_light_client_primitives::justification::GrandpaJustification<polkadot_core_primitives::Header>;
+type GrandpaJustification = grandpa_light_client_primitives::justification::GrandpaJustification<
+	polkadot_core_primitives::Header,
+>;
+
 type BeefyJustification =
 	beefy_primitives::SignedCommitment<u32, beefy_primitives::crypto::Signature>;
 
-#[derive(Clone, serde::Serialize, serde::Deserialize)]
 /// An encoded justification proving that the given header has been finalized
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
 struct JustificationNotification(sp_core::Bytes);
 
 #[async_trait::async_trait]

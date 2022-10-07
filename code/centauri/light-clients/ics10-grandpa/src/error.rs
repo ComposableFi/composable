@@ -14,18 +14,14 @@
 // limitations under the License.
 
 use crate::client_state::ClientState;
-use alloc::{
-	borrow::ToOwned,
-	string::{String, ToString},
-};
+use alloc::{borrow::ToOwned, format, string::String};
 use ibc::{
 	core::{ics02_client, ics04_channel, ics24_host::error::ValidationError},
 	timestamp::{ParseTimestampError, TimestampOverflowError},
 };
 use prost::DecodeError;
 
-#[cfg_attr(feature = "std", derive(Debug))]
-#[derive(derive_more::From, derive_more::Display)]
+#[derive(derive_more::From, derive_more::Display, Debug)]
 pub enum Error {
 	Codec(codec::Error),
 	TimeStamp(TimestampOverflowError),

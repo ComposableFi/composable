@@ -5,8 +5,8 @@ use anyhow::anyhow;
 use beefy_light_client_primitives::{ClientState as BeefyPrimitivesClientState, NodesUtils};
 use codec::{Decode, Encode};
 use grandpa_light_client_primitives::{
-	FinalityProof, ParachainHeaderProofs, ParachainHeadersWithFinalityProof,
-	justification::find_scheduled_change,
+	justification::find_scheduled_change, FinalityProof, ParachainHeaderProofs,
+	ParachainHeadersWithFinalityProof,
 };
 use ibc::{
 	core::ics02_client::{client_state::ClientState as _, msgs::update_client::MsgUpdateAnyClient},

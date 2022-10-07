@@ -7,6 +7,7 @@ use ibc::{
 		ics02_client::client_state::ClientState as ClientStateT,
 		ics03_connection::{
 			connection::{ConnectionEnd, Counterparty},
+			handler::verify::ConsensusProofwithHostConsensusStateProof,
 			msgs::{
 				conn_open_ack::MsgConnectionOpenAck, conn_open_confirm::MsgConnectionOpenConfirm,
 				conn_open_try::MsgConnectionOpenTry,
@@ -537,19 +538,17 @@ async fn query_consensus_proof(
 	client_state: AnyClientState,
 	consensus_proof: QueryConsensusStateResponse,
 ) -> Result<Vec<u8>, anyhow::Error> {
-	let beefy_client_type = BeefyClientState::<HostFunctionsManager>::client_type();
-	let near_client_type = NearClientState::<HostFunctionsManager>::client_type();
-	let grandpa_client_type = GrandpaClientState::<HostFunctionsManager>::client_type();
 	let client_type = sink.client_type();
-	let consensus_proof_bytes = if client_type == beefy_client_type ||
-		client_type == near_client_type ||
-		client_type == grandpa_client_type
-	{
-		let host_proof = sink
+	let consensus_proof_bytes = if !client_type.contains("tendermint") {
+		let host_consensus_state_proof = sink
 			.query_host_consensus_state_proof(client_state.latest_height())
 			.await?
 			.expect("Host chain requires consensus state proof; qed");
-		ConnectionProof { host_proof, connection_proof: consensus_proof.proof }.encode()
+		ConsensusProofwithHostConsensusStateProof {
+			host_consensus_state_proof,
+			consensus_proof: consensus_proof.proof,
+		}
+		.encode()
 	} else {
 		consensus_proof.proof
 	};

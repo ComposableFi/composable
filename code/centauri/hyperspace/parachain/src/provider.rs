@@ -28,7 +28,7 @@ use subxt::{
 
 use super::{error::Error, ParachainClient};
 
-use crate::{parachain, GrandpaClientState, FinalityProtocol};
+use crate::{parachain, FinalityProtocol, GrandpaClientState};
 use ibc::{
 	applications::transfer::{Amount, PrefixedCoin, PrefixedDenom},
 	core::ics02_client::client_state::ClientType,
@@ -45,7 +45,7 @@ use grandpa_light_client_primitives::{FinalityProof, ParachainHeaderProofs};
 use ics11_beefy::client_state::ClientState as BeefyClientState;
 use pallet_ibc::{light_clients::HostFunctionsManager, HostConsensusProof};
 
-use ibc_proto::google::protobuf::Any;
+use ibc_proto::{google::protobuf::Any, ibc::core::connection::v1::IdentifiedConnection};
 use sp_runtime::traits::One;
 use std::{collections::BTreeMap, str::FromStr, time::Duration};
 
@@ -466,8 +466,7 @@ where
 
 	fn client_type(&self) -> ClientType {
 		match self.light_client_protocol {
-			FinalityProtocol::Grandpa =>
-				GrandpaClientState::<HostFunctionsManager>::client_type(),
+			FinalityProtocol::Grandpa => GrandpaClientState::<HostFunctionsManager>::client_type(),
 			FinalityProtocol::Beefy => BeefyClientState::<HostFunctionsManager>::client_type(),
 		}
 	}
@@ -517,6 +516,22 @@ where
 				))
 			})
 			.collect::<Result<Vec<_>, _>>()
+	}
+
+	async fn query_connection_using_client(
+		&self,
+		height: u32,
+		client_id: String,
+	) -> Result<Vec<IdentifiedConnection>, Self::Error> {
+		let response = IbcApiClient::<u32, H256>::query_connection_using_client(
+			&*self.para_ws_client,
+			height,
+			client_id,
+		)
+		.await
+		.map_err(|e| Error::from(format!("Rpc Error {:?}", e)))?;
+
+		Ok(response)
 	}
 
 	fn is_update_required(

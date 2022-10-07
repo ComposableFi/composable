@@ -51,33 +51,47 @@ where
 		hyperspace::relay(client_a_clone, client_b_clone).await.unwrap()
 	});
 	// check if an open transfer channel exists
-	let channels = chain_a.query_channels().await.unwrap();
-	if !channels.is_empty() {
-		let (channel_id, port_id) = channels[0].clone();
-		let (latest_height, ..) = chain_a.latest_height_and_timestamp().await.unwrap();
-		let channel_response = chain_a
-			.query_channel_end(latest_height, channel_id, port_id.clone())
-			.await
-			.unwrap();
-		let channel_end = ChannelEnd::try_from(channel_response.channel.unwrap()).unwrap();
-		let connection_response = chain_a
-			.query_connection_end(latest_height, channel_end.connection_hops()[0].clone())
-			.await
-			.unwrap();
-
-		dbg!(&connection_response);
-		dbg!(&connection_delay);
-
-		if channel_end.state == State::Open &&
-			port_id == PortId::transfer() &&
-			connection_response.connection.unwrap().delay_period == connection_delay
-		{
-			return (
-				handle,
-				channel_id,
-				channel_end.counterparty().channel_id.unwrap().clone(),
-				channel_end.connection_hops[0].clone(),
+	let (latest_height, ..) = chain_a.latest_height_and_timestamp().await.unwrap();
+	let connections = chain_a
+		.query_connection_using_client(
+			latest_height.revision_height as u32,
+			chain_b.client_id().to_string(),
+		)
+		.await
+		.unwrap();
+	if !connections.is_empty() {
+		let connection = connections[0].clone();
+		let channels = chain_a
+			.query_connection_channels(
+				latest_height,
+				&ConnectionId::from_str(&connection.id).unwrap(),
 			)
+			.await
+			.unwrap()
+			.channels;
+		if !channels.is_empty() {
+			let channel_end = ChannelEnd::try_from(channel_response.channel.unwrap()).unwrap();
+			let connection_response = chain_a
+				.query_connection_end(latest_height, channel_end.connection_hops()[0].clone())
+				.await
+				.unwrap();
+
+			dbg!(&connection_delay);
+			dbg!(connection_delay * 1000000000);
+
+			let connection_end = connection_response.connection.unwrap();
+			if channel_end.state == State::Open &&
+				port_id == PortId::transfer() &&
+				connection_end.delay_period == connection_delay * 1000000000 &&
+				connection_end.client_id == chain_a.client_id()
+			{
+				return (
+					handle,
+					channel_id,
+					channel_end.counterparty().channel_id.unwrap().clone(),
+					channel_end.connection_hops[0].clone(),
+				)
+			}
 		}
 	}
 
