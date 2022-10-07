@@ -1,4 +1,5 @@
 use codec::{Decode, Encode};
+use composable_support::validation::{validators::GeOne, Validated};
 use frame_support::{dispatch::DispatchResult, pallet_prelude::*, BoundedBTreeMap};
 use scale_info::TypeInfo;
 use sp_arithmetic::fixed_point::FixedU64;
@@ -16,7 +17,8 @@ use crate::time::{DurationSeconds, Timestamp};
 pub struct LockConfig<MaxDurationPresets: Get<u32>> {
 	/// The possible locking duration.
 	// TODO(benluelo): Use Validated on the multiplier?
-	pub duration_presets: BoundedBTreeMap<DurationSeconds, FixedU64, MaxDurationPresets>,
+	pub duration_presets:
+		BoundedBTreeMap<DurationSeconds, Validated<FixedU64, GeOne>, MaxDurationPresets>,
 	/// The penalty applied if a staker unstake before the end date.
 	/// In case of zero penalty, you cannot unlock before it duration ends.
 	pub unlock_penalty: Perbill,
