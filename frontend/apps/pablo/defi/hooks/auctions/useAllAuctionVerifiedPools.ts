@@ -34,7 +34,7 @@ export const useAllAuctionVerifiedPools = (): {
           );
           let quoteAsset = supportedAssets.find(
             (asset) =>
-              asset.network[DEFAULT_NETWORK_ID] === pool.pair.base.toString()
+              asset.network[DEFAULT_NETWORK_ID] === pool.pair.quote.toString()
           );
           const poolId = pool.poolId.toString();
           const spotPrice = spotPrices[poolId] ?? new BigNumber(0);
