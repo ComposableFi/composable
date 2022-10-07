@@ -16,7 +16,6 @@ use crate::time::{DurationSeconds, Timestamp};
 #[scale_info(skip_type_params(MaxDurationPresets))]
 pub struct LockConfig<MaxDurationPresets: Get<u32>> {
 	/// The possible locking duration.
-	// TODO(benluelo): Use Validated on the multiplier?
 	pub duration_presets:
 		BoundedBTreeMap<DurationSeconds, Validated<FixedU64, GeOne>, MaxDurationPresets>,
 	/// The penalty applied if a staker unstake before the end date.
