@@ -1195,7 +1195,6 @@ pub mod pallet {
 		) -> DispatchResult {
 			T::Assets::mint_into(share_asset_id, fnft_account, awarded_shares)?;
 			T::Assets::set_lock(T::LockId::get(), share_asset_id, fnft_account, awarded_shares)?;
-			dbg!(T::Assets::total_issuance(share_asset_id));
 			Ok(())
 		}
 
@@ -1362,14 +1361,10 @@ pub mod pallet {
 			let mut reductions = BoundedBTreeMap::new();
 			let mut rewards_btree_map = BoundedBTreeMap::new();
 
-			let total_issuance: T::Balance =
-				<T::Assets as FungiblesInspect<T::AccountId>>::total_issuance(
-					rewards_pool.share_asset_id,
-				);
-
-			dbg!(total_issuance);
-
 			for (asset_id, reward) in rewards_pool.rewards.iter() {
+				let total_issuance: T::Balance =
+					<T::Assets as FungiblesInspect<T::AccountId>>::total_issuance(*asset_id);
+
 				let reward = reward.clone();
 
 				let inflation = if total_issuance == T::Balance::zero() {
