@@ -7,15 +7,15 @@ import { LaunchDescription } from "./LaunchDescription";
 import { LaunchDetails } from "./LaunchDetails";
 import { AuctionSettings } from "./AuctionSettings";
 import { AuctionStatistics } from "./AuctionStatistics";
-import { LiquidityBootstrappingPoolStats } from "@/store/pools/pools.types";
 import { MockedAsset } from "@/store/assets/assets.types";
 import { LiquidityBootstrappingPool } from "@/defi/types";
+import { LiquidityBootstrappingPoolStatistics } from "@/store/auctions/auctions.types";
 
 export type AuctionDetailsProps = {
   auction: LiquidityBootstrappingPool,
   baseAsset?: MockedAsset,
   quoteAsset?: MockedAsset,
-  stats: LiquidityBootstrappingPoolStats,
+  stats: LiquidityBootstrappingPoolStatistics,
 } & BoxProps;
 
 export const AuctionDetails: React.FC<AuctionDetailsProps> = ({
