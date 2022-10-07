@@ -46,6 +46,7 @@ fn test_reward_update_calculation() {
 			lock: default_lock_config(),
 			share_asset_id: XPICA::ID,
 			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+			minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
 		});
 
 		add_to_rewards_pot_and_assert(ALICE, PICA::ID, PICA::ID, PICA::units(10_000));
@@ -184,6 +185,7 @@ fn test_accumulate_rewards_pool_empty_refill() {
 				lock: default_lock_config(),
 				share_asset_id: XA::ID,
 				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+				minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
 			},
 		);
 
@@ -315,6 +317,7 @@ fn test_accumulate_rewards_hook() {
 				lock: default_lock_config(),
 				share_asset_id: XA::ID,
 				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+				minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
 			},
 		);
 
@@ -353,6 +356,7 @@ fn test_accumulate_rewards_hook() {
 				lock: default_lock_config(),
 				share_asset_id: XC::ID,
 				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID + 1,
+				minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
 			},
 		);
 
@@ -607,6 +611,7 @@ fn test_accumulate_rewards_hook() {
 				lock: default_lock_config(),
 				share_asset_id: XF::ID,
 				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID + 2,
+				minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
 			},
 		);
 

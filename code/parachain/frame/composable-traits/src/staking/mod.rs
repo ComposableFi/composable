@@ -137,6 +137,9 @@ pub struct RewardPool<
 
 	// Asset ID (collection ID) of the financial NFTs issued for staking positions of this pool
 	pub financial_nft_asset_id: AssetId,
+
+	/// Minimum amount to be staked.
+	pub minimum_staking_amount: Balance,
 }
 
 /// Default transfer limit on new asset added as rewards.
@@ -196,6 +199,9 @@ pub enum RewardPoolConfiguration<
 
 		// Asset ID (collection ID) of the financial NFTs issued for staking positions of this pool
 		financial_nft_asset_id: AssetId,
+
+		// Minimum amount to be staked
+		minimum_staking_amount: Balance,
 	},
 }
 

@@ -252,6 +252,12 @@ pub mod pallet {
 		NoDurationPresetsProvided,
 		/// Slashed amount of minimum reward is less than existential deposit
 		SlashedAmountTooLow,
+		/// Slashed amount of minimum staking amount is less than existential deposit
+		SlashedMinimumStakingAmountTooLow,
+		/// Staked amount is less than the minimum staking amount for the pool.
+		StakedAmountTooLow,
+		/// Staked amount after split is less than the minimum staking amount for the pool.
+		StakedAmountTooLowAfterSplit,
 	}
 
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
@@ -493,6 +499,7 @@ pub mod pallet {
 			},
 			share_asset_id,
 			financial_nft_asset_id,
+			minimum_staking_amount: T::Balance::from(2_000_000_u128),
 		};
 		RewardPools::<T>::insert(staked_asset_id, staking_pool);
 		T::FinancialNft::create_collection(&financial_nft_asset_id, owner, owner)
@@ -678,6 +685,7 @@ pub mod pallet {
 					lock,
 					share_asset_id,
 					financial_nft_asset_id,
+					minimum_staking_amount,
 				} => {
 					// AssetIds must be greater than 0
 					ensure!(!pool_asset.is_zero(), Error::<T>::InvalidAssetId);
@@ -701,15 +709,23 @@ pub mod pallet {
 
 					let now_seconds = T::UnixTime::now().as_secs();
 
+					let existential_deposit = T::ExistentialDeposits::get(&pool_asset);
+
 					ensure!(
-						initial_reward_config.iter().all(|(asset_id, reward_config)| {
+						lock.unlock_penalty.left_from_one().mul(minimum_staking_amount) >=
+							existential_deposit,
+						Error::<T>::SlashedMinimumStakingAmountTooLow
+					);
+
+					ensure!(
+						initial_reward_config.iter().all(|(_, reward_config)| {
 							if reward_config.reward_rate.amount > T::Balance::zero() {
 								// If none zero reward, check that the slashed amount is greater
 								// than ED
 								lock.unlock_penalty
 									.left_from_one()
 									.mul(reward_config.reward_rate.amount) >=
-									T::ExistentialDeposits::get(asset_id)
+									existential_deposit
 							} else {
 								// Else, return true so check passes
 								// NOTE(connor): This is a band-aid that some better type management
@@ -742,6 +758,7 @@ pub mod pallet {
 							lock,
 							share_asset_id,
 							financial_nft_asset_id,
+							minimum_staking_amount,
 						},
 					);
 
@@ -799,6 +816,8 @@ pub mod pallet {
 		) -> Result<Self::PositionId, DispatchError> {
 			let mut rewards_pool =
 				RewardPools::<T>::try_get(pool_id).map_err(|_| Error::<T>::RewardsPoolNotFound)?;
+
+			ensure!(amount >= rewards_pool.minimum_staking_amount, Error::<T>::StakedAmountTooLow);
 
 			ensure!(
 				rewards_pool.start_block <= frame_system::Pallet::<T>::current_block_number(),
@@ -1025,6 +1044,21 @@ pub mod pallet {
 					// position, that way any rounding is accounted for.
 					let new_stake = left_from_one_ratio.mul_ceil(existing_position.stake);
 					let new_share = left_from_one_ratio.mul_ceil(existing_position.share);
+
+					let rewards_pool = RewardPools::<T>::get(existing_position.reward_pool_id)
+						.ok_or(Error::<T>::RewardsPoolNotFound)?;
+
+					let existing_position_stake = ratio.mul_floor(existing_position.stake);
+
+					ensure!(
+						existing_position_stake >= rewards_pool.minimum_staking_amount,
+						Error::<T>::StakedAmountTooLowAfterSplit
+					);
+					ensure!(
+						new_stake >= rewards_pool.minimum_staking_amount,
+						Error::<T>::StakedAmountTooLowAfterSplit
+					);
+
 					let new_reductions = {
 						let mut r = existing_position.reductions.clone();
 						for (_, reduction) in &mut r {
@@ -1033,14 +1067,11 @@ pub mod pallet {
 						r
 					};
 
-					existing_position.stake = ratio.mul_floor(existing_position.stake);
+					existing_position.stake = existing_position_stake;
 					existing_position.share = ratio.mul_floor(existing_position.share);
 					for (_, reduction) in &mut existing_position.reductions {
 						*reduction = ratio.mul_floor(*reduction);
 					}
-
-					let rewards_pool = RewardPools::<T>::get(existing_position.reward_pool_id)
-						.ok_or(Error::<T>::RewardsPoolNotFound)?;
 
 					let new_fnft_instance_id =
 						T::FinancialNft::get_next_nft_id(fnft_collection_id)?;
