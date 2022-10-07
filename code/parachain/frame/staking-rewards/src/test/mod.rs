@@ -1153,7 +1153,7 @@ mod claim {
 		let amount = 100_500;
 		let duration_preset = ONE_HOUR;
 		let total_rewards = 100;
-		let claim = 50;
+		let claim = 100;
 
 		with_stake(
 			staker,
@@ -1387,17 +1387,22 @@ fn with_stake<R>(
 		update_total_rewards_and_total_shares_in_rewards_pool(pool_id, total_rewards);
 
 		process_and_progress_blocks::<StakingRewards, Test>(1);
-		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration));
+		let fnft_instance_id =
+			stake_and_assert::<Test, runtime::Event>(staker, PICA::ID, amount, duration);
+		// assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration));
 		assert_eq!(balance(staked_asset_id, &staker), amount);
 
 		let mut stake = StakingRewards::stakes(1, 0).expect("stake expected. QED");
 		let unlock_penalty = stake.lock.unlock_penalty;
 		let stake_duration = stake.lock.duration;
 
-		if let Some(claim) = claim {
-			dbg!(claim);
-			update_reductions(&mut stake.reductions, claim);
-			Stakes::<Test>::insert(1, 0, stake);
+		if let Some(_) = claim {
+			// update_reductions(&mut stake.reductions, claim);
+			assert_ok!(StakingRewards::claim(
+				Origin::signed(staker),
+				STAKING_FNFT_COLLECTION_ID,
+				fnft_instance_id
+			));
 		}
 
 		execute(pool_id, unlock_penalty, stake_duration, staked_asset_id)
