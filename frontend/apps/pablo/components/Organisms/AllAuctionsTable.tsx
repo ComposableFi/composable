@@ -17,30 +17,30 @@ import { KeyboardArrowDown } from "@mui/icons-material";
 import { KeyboardArrowUp } from "@mui/icons-material";
 import { AuctionStatusIndicator } from "./auction/AuctionStatusIndicator";
 import { LiquidityBootstrappingPool } from "@/defi/types";
-import { useLiquidityBootstrappingPools } from "@/defi/hooks/auctions";
+import { useAllAuctionVerifiedPools } from "@/defi/hooks/auctions";
+import { setAuctionsSlice } from "@/store/auctions/auctions.slice";
 
 export const AllAuctionsTable: React.FC<TableContainerProps> = ({
   ...rest
 }) => {
-  const { liquidityBootstrappingPools, setActiveAuctionsPool, auctionsTableLimit } =
-    useLiquidityBootstrappingPools();
+  const { liquidityBootstrappingPools, tableLimit } =
+  useAllAuctionVerifiedPools();
   const theme = useTheme();
-  const limit = auctionsTableLimit;
-  const [count, setCount] = useState(limit);
+  const [count, setCount] = useState(tableLimit);
 
   const router = useRouter();
 
   const goAuctionDetails = (auction: LiquidityBootstrappingPool) => {
-    setActiveAuctionsPool(auction);
+    setAuctionsSlice({ activePool: auction });
     router.push("/auctions/" + auction.id);
   };
 
   const handleSeeMore = () => {
-    setCount(count + limit);
+    setCount(count + tableLimit);
   };
 
   const handleSeeLess = () => {
-    setCount(limit);
+    setCount(tableLimit);
   };
 
   return (
@@ -106,7 +106,7 @@ export const AllAuctionsTable: React.FC<TableContainerProps> = ({
       )}
 
       {liquidityBootstrappingPools.length <= count &&
-        liquidityBootstrappingPools.length > limit && (
+        liquidityBootstrappingPools.length > tableLimit && (
           <Box
             onClick={handleSeeLess}
             mt={2}
