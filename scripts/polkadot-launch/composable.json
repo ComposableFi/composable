@@ -44,10 +44,17 @@
         "flags": ["--rpc-cors=all", "--beefy"]
       },
       {
+        "name": "eve",
+        "wsPort": 9377,
+        "basePath": "/tmp/polkadot-launch/relaychains/eve",
+        "port": 30778,
+        "flags": ["--rpc-cors=all", "--beefy"]
+      },
+      {
         "name": "ferdie",
         "basePath": "/tmp/polkadot-launch/relaychains/ferdie",
         "wsPort": 9978,
-        "port": 30778,
+        "port": 30779,
         "flags": ["--rpc-cors=all", "--beefy"]
       }
     ]
