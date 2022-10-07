@@ -64,8 +64,8 @@ evolving innovation.
 ## Fernando Reyes | Chief Information Security Officer
 
 A cybersecurity professional by trade, Fernando brings a blue-chip background working within TradFi, DeFi, and the 
-public sector. \He is a veteran of the United States Army, former National Security Agency operator, and graduate of
-MIT's Information Security & Assurance program. \Serving as Chief Information Security Officer, Fernando works closely
+public sector. He is a veteran of the United States Army, former National Security Agency operator, and graduate of
+MIT's Information Security & Assurance program. Serving as Chief Information Security Officer, Fernando works closely
 alongside all of Composable's business units to provide trust and confidence to our partners and participants in the 
 space.
 
@@ -124,7 +124,7 @@ València. He is currently finishing his PhD in Cryptography and Distributed Sys
 Machine Learning and NLP. [Linkedin](https://www.linkedin.com/in/antoniomlarribaflor/) | 
 [Twitter](https://twitter.com/Cryptoni0x)
 
-## Seun Leunlege | Principal Protocol Engineer
+## Seun Lanlege | Principal Protocol Engineer
 
 With 6 years of experience in software engineering, Seun started his career in blockchain in consulting services, moving to Parity Technologies thereafter. 
 At Parity he worked on the Rust implementation of the Ethereum protocol, on the Substrate blockchain and framework, 
