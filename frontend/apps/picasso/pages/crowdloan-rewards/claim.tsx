@@ -273,10 +273,13 @@ export const ClaimLoanPage = () => {
     switch (nextStep) {
       case CrowdloanStep.Claim:
         claim().catch(console.error);
+        break;
       case CrowdloanStep.AssociateEth:
         signEthereum().then(useAssociate);
+        break;
       case CrowdloanStep.AssociateKsm:
         signPolkadotJs().then(useAssociate);
+        break;
       default:
         return;
     }
