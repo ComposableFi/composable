@@ -34,7 +34,7 @@ function claimOfStake(
 function calculateClaim(
   stake: Stake,
   stakingRewardPool: StakingRewardPool,
-  acountForPenalty: boolean = false
+  accountForPenalty: boolean = false
 ): [string, BigNumber][] {
   return Object.keys(stakingRewardPool.rewards).map((assetId) => {
     let claimable = claimOfStake(stake, stakingRewardPool, assetId);
@@ -42,7 +42,7 @@ function calculateClaim(
       stake.lock.startedAt.plus(stake.lock.duration).toNumber() > Date.now();
 
     if (!stakingRewardPool.rewards[assetId].totalRewards.eq(0)) {
-      if (is_penalized && acountForPenalty) {
+      if (is_penalized && accountForPenalty) {
         claimable = claimable.minus(
           claimable.times(stakingRewardPool.lock.unlockPenalty)
         );
