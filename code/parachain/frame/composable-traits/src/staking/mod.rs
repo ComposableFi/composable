@@ -304,7 +304,7 @@ pub trait Staking {
 		position: Self::PositionId,
 		amount: Self::Balance,
 		keep_alive: bool,
-	) -> Result<Self::PositionId, DispatchError>;
+	) -> DispatchResult;
 
 	/// Unstake an actual staked position, represented by a NFT.
 	///
