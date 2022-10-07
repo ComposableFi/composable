@@ -17,17 +17,17 @@ Table of Contents
         Liquidity](#44-validation-the-asset-ratio-when-adding-liquidity)
     -   [4.5. Refactoring: `CurrencyPair`
         Usage](#45-refactoring-currencypair-usage)
-    -   [4.6. Unit Test Updates](#46-unit-test_updates)
+    -   [4.6. Unit Test Updates](#46-unit-test-updates)
     -   [4.7. Algorithm:
-        `constant_product::compute_out_given_in`](#47-algorithm-constant-productout-given-in)
+        `constant_product::compute_out_given_in`](#47-algorithm-constant_productcompute_out_given_in)
     -   [4.8. Algorithm:
-        `constant_product::compute_in_given_out`](#48-algorithm-constant-productcompute-in-given-out)
+        `constant_product::compute_in_given_out`](#48-algorithm-constant_productcompute_in_given_out)
     -   [4.9. Algorithm:
-        `constant_product::compute_deposit_lp`](#49-algorithm-constant-productcompute_deposit_lp)
+        `constant_product::compute_deposit_lp`](#49-algorithm-constant_productcompute_deposit_lp)
     -   [4.10. Algorithm:
-        `constant_product::compute_redeemed_for_lp`](#410-algorithm-constant-productcompute-redeemed-for-lp)
+        `constant_product::compute_redeemed_for_lp`](#410-algorithm-constant_productcompute_redeemed_for_lp)
     -   [4.11. Algorithm: `Amm::currency_pair` →
-        `Amm::assets`](#411-algorithm-ammcurrency_pair-_ammassets)
+        `Amm::assets`](#411-algorithm-ammcurrency_pair--ammassets)
     -   [4.12. Algorithm:
         `Amm::get_exchange_value`](#412-algorithm-ammget_exchange_value)
     -   [4.13. Algorithm: `Amm::exchange` →
@@ -64,13 +64,13 @@ Table of Contents
 -   [7. Audit](#7-audit)
 -   [8. Questions](#8-questions)
 -   [Appendix A: Proof of Fee for
-    "In-given-out"](#-proof-of-fee-for-in-given-out)
+    "In-given-out"](#appendix-a-proof-of-fee-for-in-given-out)
 -   [Appendix B: Proof of Proportional LPT Calculation for Liquidity
     Added in a Single Pool
-    Asset](#-proof-of-proportional-lpt-calculation-for-liquidity-added-in-a-single-pool-asset)
+    Asset](#appendix-b-proof-of-proportional-lpt-calculation-for-liquidity-added-in-a-single-pool-asset)
 -   [Appendix C: Proof of Proportional LPT Calculation for Liquidity
     Added in Pool Weight
-    Ratio](#-proof-of-proportional-lpt-calculation-for-liquidity-added-in-pool-weight-ratio)
+    Ratio](#appendix-c-proof-of-proportional-lpt-calculation-for-liquidity-added-in-pool-weight-ratio)
 
 ## 1. Abstract
 
@@ -411,14 +411,14 @@ These are the modifications to be made to the existing
         w_k: T,
         // f=0 for getting "in" without taking into account the fee
         f: T
-    ) -> Result<u128, ArithmeticError> {
+    ) -> Result<(/* LPT */ u128, /* fee */ u128), ArithmeticError> {
         let first_deposit = lp_total_issuance.is_zero();
         if first_deposit {
             // Calculate `lp_to_mint` according to section 4.2 Eqn: 6
-            Ok(lp_to_mint)
+            Ok(lp_to_mint, fee)
         } else {
             // Calculate `lp_to_mint` according to section 4.2 Eqn: 5
-            Ok(lp_to_mint)
+            Ok(lp_to_mint, fee)
         }
     }
 

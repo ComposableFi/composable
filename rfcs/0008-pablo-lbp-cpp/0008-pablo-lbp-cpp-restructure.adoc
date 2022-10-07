@@ -247,14 +247,14 @@ pub fn compute_deposit_lp<T: PerThing>(
     w_k: T,
     // f=0 for getting "in" without taking into account the fee
     f: T
-) -> Result<u128, ArithmeticError> {
+) -> Result<(/*LPT*/ u128, /*fee*/ u128), ArithmeticError> {
     let first_deposit = lp_total_issuance.is_zero();
     if first_deposit {
         // Calculate `lp_to_mint` according to section 4.2 Eqn: 6
-        Ok(lp_to_mint)
+        Ok(lp_to_mint, fee)
     } else {
         // Calculate `lp_to_mint` according to section 4.2 Eqn: 5
-        Ok(lp_to_mint)
+        Ok(lp_to_mint, fee)
     }
 }
 ----
