@@ -247,17 +247,13 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		CosmwasmContractMeta { code_id: new_code_id, admin, label }: Self::ContractMeta,
 	) -> Result<(), Self::Error> {
 		log::debug!(target: "runtime::contracts", "set_contract_meta");
-		let contract = address.into_inner();
-		let mut info = Pallet::<T>::contract_info(&contract)?;
-		info.code_id = new_code_id;
-		info.admin = admin.map(|admin| admin.into_inner());
-		info.label = label
-			.as_bytes()
-			.to_vec()
-			.try_into()
-			.map_err(|_| crate::Error::<T>::LabelTooBig)?;
-		Pallet::<T>::set_contract_info(&contract, info);
-		Ok(())
+		Pallet::<T>::set_contract_meta(
+			&address.into_inner(),
+			new_code_id,
+			admin.map(|admin| admin.into_inner()),
+			label,
+		)
+		.map_err(Into::into)
 	}
 
 	fn running_contract_meta(&mut self) -> Result<Self::ContractMeta, Self::Error> {
