@@ -59,31 +59,33 @@ where
 		)
 		.await
 		.unwrap();
+
 	if !connections.is_empty() {
 		let connection = connections[0].clone();
+		let connection_id = ConnectionId::from_str(&connection.id).unwrap();
+		let connection_response = chain_a
+			.query_connection_end(latest_height, channel_end.connection_hops()[0].clone())
+			.await
+			.unwrap();
+
 		let channels = chain_a
 			.query_connection_channels(
 				latest_height,
-				&ConnectionId::from_str(&connection.id).unwrap(),
+				&connection_id,
 			)
 			.await
 			.unwrap()
 			.channels;
-		if !channels.is_empty() {
-			let channel_end = ChannelEnd::try_from(channel_response.channel.unwrap()).unwrap();
-			let connection_response = chain_a
-				.query_connection_end(latest_height, channel_end.connection_hops()[0].clone())
-				.await
-				.unwrap();
 
+		for channel in channels {
 			dbg!(&connection_delay);
 			dbg!(connection_delay * 1000000000);
 
 			let connection_end = connection_response.connection.unwrap();
-			if channel_end.state == State::Open &&
-				port_id == PortId::transfer() &&
+			if channel.state == State::Open &&
+				channel.port_id == PortId::transfer().to_string() &&
 				connection_end.delay_period == connection_delay * 1000000000 &&
-				connection_end.client_id == chain_a.client_id()
+				connection_end.client_id == chain_a.client_id().to_string()
 			{
 				return (
 					handle,
