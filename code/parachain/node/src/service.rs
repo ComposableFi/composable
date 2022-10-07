@@ -30,10 +30,9 @@ use crate::{
 	client::{Client, FullBackend, FullClient},
 	rpc,
 	runtime::{
-		assets::ExtendWithAssetsApi,
-		// cosmwasm::ExtendWithCosmwasmApi,
-		crowdloan_rewards::ExtendWithCrowdloanRewardsApi, ibc::ExtendWithIbcApi,
-		lending::ExtendWithLendingApi, pablo::ExtendWithPabloApi, BaseHostRuntimeApis,
+		assets::ExtendWithAssetsApi, crowdloan_rewards::ExtendWithCrowdloanRewardsApi,
+		ibc::ExtendWithIbcApi, lending::ExtendWithLendingApi, pablo::ExtendWithPabloApi,
+		BaseHostRuntimeApis,
 	},
 };
 
@@ -292,7 +291,7 @@ where
 		+ ExtendWithPabloApi<RuntimeApi, Executor>
 		+ ExtendWithLendingApi<RuntimeApi, Executor>
 		+ ExtendWithIbcApi<RuntimeApi, Executor>,
-		// + ExtendWithCosmwasmApi<RuntimeApi, Executor>,
+	// + ExtendWithCosmwasmApi<RuntimeApi, Executor>,
 	StateBackendFor<FullBackend, OpaqueBlock>: StateBackend<BlakeTwo256>,
 	Executor: NativeExecutionDispatch + 'static,
 {

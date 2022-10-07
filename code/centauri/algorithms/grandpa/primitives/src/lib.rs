@@ -28,6 +28,7 @@ use sp_std::prelude::*;
 use sp_storage::StorageKey;
 
 pub mod error;
+pub mod justification;
 
 /// A commit message for this chain's block type.
 pub type Commit<H> = finality_grandpa::Commit<

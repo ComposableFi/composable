@@ -13,11 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::{error, Commit, HostFunctions};
 use alloc::collections::{BTreeMap, BTreeSet};
 use anyhow::anyhow;
 use codec::{Decode, Encode};
 use finality_grandpa::voter_set::VoterSet;
-use primitives::{error, Commit, HostFunctions};
 use sp_finality_grandpa::{
 	AuthorityId, AuthorityList, AuthoritySignature, ConsensusLog, Equivocation, RoundNumber,
 	ScheduledChange, SetId, GRANDPA_ENGINE_ID,
@@ -58,7 +58,7 @@ where
 	}
 
 	/// Validate the commit and the votes' ancestry proofs.
-	pub(crate) fn verify_with_voter_set<Host>(
+	pub fn verify_with_voter_set<Host>(
 		&self,
 		set_id: u64,
 		voters: &VoterSet<AuthorityId>,

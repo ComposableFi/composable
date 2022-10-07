@@ -20,10 +20,9 @@ use sp_runtime::traits::BlakeTwo256;
 use crate::{
 	client::{FullBackend, FullClient},
 	runtime::{
-		assets::ExtendWithAssetsApi, 
-		// cosmwasm::ExtendWithCosmwasmApi,
-		crowdloan_rewards::ExtendWithCrowdloanRewardsApi, ibc::ExtendWithIbcApi,
-		lending::ExtendWithLendingApi, pablo::ExtendWithPabloApi, BaseHostRuntimeApis,
+		assets::ExtendWithAssetsApi, crowdloan_rewards::ExtendWithCrowdloanRewardsApi,
+		ibc::ExtendWithIbcApi, lending::ExtendWithLendingApi, pablo::ExtendWithPabloApi,
+		BaseHostRuntimeApis,
 	},
 };
 
@@ -68,7 +67,7 @@ where
 			+ ExtendWithPabloApi<RuntimeApi, Executor>
 			+ ExtendWithLendingApi<RuntimeApi, Executor>
 			+ ExtendWithIbcApi<RuntimeApi, Executor>,
-			// + ExtendWithCosmwasmApi<RuntimeApi, Executor>,
+	// + ExtendWithCosmwasmApi<RuntimeApi, Executor>,
 {
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
 	use substrate_frame_rpc_system::{System, SystemApiServer};
@@ -104,8 +103,8 @@ where
 		deps.clone(),
 	)?;
 
-	// <FullClient<RuntimeApi, Executor> as ProvideRuntimeApi<OpaqueBlock>>::Api::extend_with_cosmwasm_api(
-	// 	&mut io, deps,
+	// <FullClient<RuntimeApi, Executor> as
+	// ProvideRuntimeApi<OpaqueBlock>>::Api::extend_with_cosmwasm_api( 	&mut io, deps,
 	// )?;
 
 	// Extend this RPC with a custom API by using the following syntax.

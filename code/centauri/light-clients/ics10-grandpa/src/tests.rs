@@ -27,8 +27,9 @@ use beefy_prover::helpers::{
 use codec::Decode;
 use finality_grandpa_rpc::GrandpaApiClient;
 use futures::stream::StreamExt;
-use grandpa_client::justification::GrandpaJustification;
-use grandpa_client_primitives::{parachain_header_storage_key, ParachainHeaderProofs};
+use grandpa_client_primitives::{
+	justification::GrandpaJustification, parachain_header_storage_key, ParachainHeaderProofs,
+};
 use grandpa_prover::{runtime, GrandpaProver, JustificationNotification};
 use ibc::{
 	core::{
@@ -167,8 +168,6 @@ async fn test_continuous_update_of_grandpa_client() {
 		)
 		.unwrap();
 
-		dbg!(&client_state.latest_para_height);
-
 		break (AnyClientState::Grandpa(client_state), AnyConsensusState::Grandpa(consensus_state))
 	};
 
@@ -200,6 +199,14 @@ async fn test_continuous_update_of_grandpa_client() {
 		let justification = Justification::decode(&mut &justification_bytes[..])
 			.expect("Failed to decode justification");
 
+		if justification.commit.target_number <= client_state.latest_relay_height {
+			println!(
+				"skipping outdated commit: {}, with latest relay height: {}",
+				justification.commit.target_number, client_state.latest_relay_height
+			);
+			continue
+		}
+
 		let headers = prover
 			.query_finalized_parachain_headers_between(
 				justification.commit.target_number,
@@ -215,15 +222,13 @@ async fn test_continuous_update_of_grandpa_client() {
 			.iter()
 			.map(|h| h.number)
 			.filter(|num| *num != client_state.latest_para_height)
-			.collect();
-
-		dbg!(&header_numbers);
+			.collect::<Vec<_>>();
 
 		let maybe_proof = prover
 			.query_finalized_parachain_headers_with_proof(
 				justification.commit.target_number,
 				client_state.latest_relay_height,
-				header_numbers,
+				header_numbers.clone(),
 			)
 			.await
 			.expect("Failed to fetch finalized parachain headers with proof");

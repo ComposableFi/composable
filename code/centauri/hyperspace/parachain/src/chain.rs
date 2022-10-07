@@ -22,12 +22,12 @@ use primitives::{Chain, IbcProvider};
 use super::{error::Error, signer::ExtrinsicSigner, ParachainClient};
 use crate::{
 	parachain::{api, api::runtime_types::pallet_ibc::Any as RawAny},
-	LightClientProtocol,
+	FinalityProtocol,
 };
 use finality_grandpa_rpc::GrandpaApiClient;
 
 type GrandpaJustification =
-	grandpa_light_client::justification::GrandpaJustification<polkadot_core_primitives::Header>;
+	grandpa_light_client_primitives::justification::GrandpaJustification<polkadot_core_primitives::Header>;
 type BeefyJustification =
 	beefy_primitives::SignedCommitment<u32, beefy_primitives::crypto::Signature>;
 
@@ -97,13 +97,15 @@ where
 		&self,
 	) -> Pin<Box<dyn Stream<Item = <Self as IbcProvider>::FinalityEvent> + Send + Sync>> {
 		match self.light_client_protocol {
-			LightClientProtocol::Grandpa => {
+			FinalityProtocol::Grandpa => {
 				let subscription =
 					GrandpaApiClient::<JustificationNotification, sp_core::H256, u32>::subscribe_justifications(
 						&*self.relay_ws_client,
 					)
 						.await
-						.expect("Failed to subscribe to grandpa justifications");
+						.expect("Failed to subscribe to grandpa justifications")
+						.chunks(6)
+						.map(|mut notifs| notifs.remove(notifs.len() - 1)); // skip every 4 finality notifications
 
 				let stream = subscription.filter_map(|justification_notif| {
 					let encoded_justification = match justification_notif {
@@ -128,7 +130,7 @@ where
 
 				Box::pin(Box::new(stream))
 			},
-			LightClientProtocol::Beefy => {
+			FinalityProtocol::Beefy => {
 				let subscription =
 					BeefyApiClient::<JustificationNotification, sp_core::H256>::subscribe_justifications(
 						&*self.relay_ws_client,

@@ -3057,6 +3057,7 @@ dependencies = [
  "pallet-call-filter",
  "pallet-collator-selection",
  "pallet-collective",
+ "pallet-cosmwasm",
  "pallet-crowdloan-rewards",
  "pallet-currency-factory",
  "pallet-democracy 4.0.0-dev",
@@ -17358,20 +17359,6 @@ name = "utf-8"
 version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "09cc8ee72d2a9becf2f2febe0205bbed8fc6615b7cb429ad062dc7b7ddd036a9"
-
-[[package]]
-name = "utils-common"
-version = "0.1.0"
-dependencies = [
- "composable-runtime",
- "dali-runtime",
- "derive_more",
- "frame-system",
- "pallet-transaction-payment",
- "picasso-runtime",
- "sp-core",
- "sp-runtime",
-]
 
 [[package]]
 name = "uuid"

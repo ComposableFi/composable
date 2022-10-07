@@ -43,7 +43,7 @@ impl From<Error> for ics02_client::error::Error {
 	fn from(e: Error) -> Self {
 		ics02_client::error::Error::client_error(
 			ClientState::<()>::client_type().to_owned(),
-			e.to_string(),
+			format!("{e:?}"),
 		)
 	}
 }

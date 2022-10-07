@@ -1,11 +1,12 @@
 //! Light client protocols for parachains.
 
 use crate::{error::Error, ParachainClient};
+use anyhow::anyhow;
 use beefy_light_client_primitives::{ClientState as BeefyPrimitivesClientState, NodesUtils};
 use codec::{Decode, Encode};
-use grandpa_light_client::justification::find_scheduled_change;
 use grandpa_light_client_primitives::{
 	FinalityProof, ParachainHeaderProofs, ParachainHeadersWithFinalityProof,
+	justification::find_scheduled_change,
 };
 use ibc::{
 	core::ics02_client::{client_state::ClientState as _, msgs::update_client::MsgUpdateAnyClient},
@@ -40,7 +41,7 @@ use subxt::{
 use tendermint_proto::Protobuf;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum LightClientProtocol {
+pub enum FinalityProtocol {
 	Grandpa,
 	Beefy,
 }
@@ -49,12 +50,14 @@ pub enum LightClientProtocol {
 #[derive(Decode, Encode)]
 pub enum FinalityEvent {
 	Grandpa(
-		grandpa_light_client::justification::GrandpaJustification<polkadot_core_primitives::Header>,
+		grandpa_light_client_primitives::justification::GrandpaJustification<
+			polkadot_core_primitives::Header,
+		>,
 	),
 	Beefy(beefy_primitives::SignedCommitment<u32, beefy_primitives::crypto::Signature>),
 }
 
-impl LightClientProtocol {
+impl FinalityProtocol {
 	pub async fn query_latest_ibc_events<T, C>(
 		&self,
 		source: &mut ParachainClient<T>,
@@ -84,10 +87,10 @@ impl LightClientProtocol {
 			From<BaseExtrinsicParamsBuilder<T, AssetTip>> + Send + Sync,
 	{
 		match self {
-			LightClientProtocol::Grandpa =>
+			FinalityProtocol::Grandpa =>
 				query_latest_ibc_events_with_grandpa::<T, C>(source, finality_event, counterparty)
 					.await,
-			LightClientProtocol::Beefy =>
+			FinalityProtocol::Beefy =>
 				query_latest_ibc_events_with_beefy::<T, C>(source, finality_event, counterparty)
 					.await,
 		}
@@ -346,6 +349,14 @@ where
 			c
 		)))?,
 	};
+
+	if justification.commit.target_number <= client_state.latest_relay_height {
+		Err(anyhow!(
+			"skipping outdated commit: {}, with latest relay height: {}",
+			justification.commit.target_number,
+			client_state.latest_relay_height
+		))?
+	}
 
 	// fetch the new parachain headers that have been finalized
 	// If we find missed an updates we want to start querying the relay chain for parachain blocks

@@ -11,7 +11,7 @@ pub mod provider;
 pub mod signer;
 pub mod utils;
 
-pub mod light_client_protocol;
+pub mod finality_protocol;
 #[cfg(feature = "testing")]
 pub mod test_provider;
 
@@ -42,7 +42,7 @@ use tokio::sync::broadcast::{self, Sender};
 use crate::utils::{fetch_max_extrinsic_weight, unsafe_cast_to_jsonrpsee_client};
 use primitives::{Chain, KeyProvider};
 
-use crate::{light_client_protocol::LightClientProtocol, signer::ExtrinsicSigner};
+use crate::{finality_protocol::FinalityProtocol, signer::ExtrinsicSigner};
 use grandpa_light_client_primitives::ParachainHeadersWithFinalityProof;
 use grandpa_prover::GrandpaProver;
 use ibc::tx_msg::Msg;
@@ -91,7 +91,7 @@ pub struct ParachainClient<T: subxt::Config> {
 	/// Channels cleared for packet relay
 	pub channel_whitelist: Vec<(ChannelId, PortId)>,
 	/// Light client protocol
-	pub light_client_protocol: LightClientProtocol,
+	pub light_client_protocol: FinalityProtocol,
 }
 
 enum KeyType {
@@ -145,7 +145,7 @@ pub struct ParachainClientConfig {
 	/// Channels cleared for packet relay
 	pub channel_whitelist: Vec<(ChannelId, PortId)>,
 	/// Light client protocol
-	pub light_client_protocol: LightClientProtocol,
+	pub light_client_protocol: FinalityProtocol,
 	/// Digital signature scheme
 	pub key_type: String,
 }

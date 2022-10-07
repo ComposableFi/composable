@@ -7,7 +7,7 @@ use ibc::{
 	tx_msg::Msg,
 };
 use parachain::{
-	light_client_protocol::LightClientProtocol, ParachainClient, ParachainClientConfig,
+	finality_protocol::FinalityProtocol, ParachainClient, ParachainClientConfig,
 };
 
 use subxt::tx::SubstrateExtrinsicParams;
@@ -69,7 +69,7 @@ async fn setup_clients() -> (ParachainClient<DefaultConfig>, ParachainClient<Def
 		commitment_prefix: args.connection_prefix_b.as_bytes().to_vec().into(),
 		ss58_version: 49,
 		channel_whitelist: vec![],
-		light_client_protocol: LightClientProtocol::Grandpa,
+		light_client_protocol: FinalityProtocol::Grandpa,
 		private_key: "//Alice".to_string(),
 		key_type: "sr25519".to_string(),
 	};
@@ -83,7 +83,7 @@ async fn setup_clients() -> (ParachainClient<DefaultConfig>, ParachainClient<Def
 		private_key: "//Alice".to_string(),
 		ss58_version: 49,
 		channel_whitelist: vec![],
-		light_client_protocol: LightClientProtocol::Grandpa,
+		light_client_protocol: FinalityProtocol::Grandpa,
 		key_type: "sr25519".to_string(),
 	};
 
@@ -105,14 +105,14 @@ async fn setup_clients() -> (ParachainClient<DefaultConfig>, ParachainClient<Def
 		.await;
 	log::info!(target: "hyperspace", "Parachains have started block production");
 
-	let clients_on_a = chain_a.query_clients().await.unwrap();
-	let clients_on_b = chain_b.query_clients().await.unwrap();
+	// let clients_on_a = chain_a.query_clients().await.unwrap();
+	// let clients_on_b = chain_b.query_clients().await.unwrap();
 
-	if !clients_on_a.is_empty() && !clients_on_b.is_empty() {
-		chain_a.set_client_id(clients_on_b[0].clone());
-		chain_b.set_client_id(clients_on_b[0].clone());
-		return (chain_a, chain_b)
-	}
+	// if !clients_on_a.is_empty() && !clients_on_b.is_empty() {
+	// 	chain_a.set_client_id(clients_on_b[0].clone());
+	// 	chain_b.set_client_id(clients_on_b[0].clone());
+	// 	return (chain_a, chain_b)
+	// }
 
 	chain_a.set_pallet_params(true, true).await.unwrap();
 	chain_b.set_pallet_params(true, true).await.unwrap();

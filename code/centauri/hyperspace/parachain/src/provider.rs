@@ -28,7 +28,7 @@ use subxt::{
 
 use super::{error::Error, ParachainClient};
 
-use crate::{parachain, GrandpaClientState, LightClientProtocol};
+use crate::{parachain, GrandpaClientState, FinalityProtocol};
 use ibc::{
 	applications::transfer::{Amount, PrefixedCoin, PrefixedDenom},
 	core::ics02_client::client_state::ClientType,
@@ -39,7 +39,7 @@ use ibc_rpc::{IbcApiClient, PacketInfo};
 use primitives::{Chain, IbcProvider, KeyProvider, UpdateMessage, UpdateType};
 use sp_core::H256;
 
-use crate::light_client_protocol::FinalityEvent;
+use crate::finality_protocol::FinalityEvent;
 use beefy_prover::helpers::fetch_timestamp_extrinsic_with_proof;
 use grandpa_light_client_primitives::{FinalityProof, ParachainHeaderProofs};
 use ics11_beefy::client_state::ClientState as BeefyClientState;
@@ -466,9 +466,9 @@ where
 
 	fn client_type(&self) -> ClientType {
 		match self.light_client_protocol {
-			LightClientProtocol::Grandpa =>
+			FinalityProtocol::Grandpa =>
 				GrandpaClientState::<HostFunctionsManager>::client_type(),
-			LightClientProtocol::Beefy => BeefyClientState::<HostFunctionsManager>::client_type(),
+			FinalityProtocol::Beefy => BeefyClientState::<HostFunctionsManager>::client_type(),
 		}
 	}
 
