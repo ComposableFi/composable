@@ -70,7 +70,10 @@ pub mod pallet {
 		WeightInfo,
 	};
 	use codec::FullCodec;
-	use composable_support::math::safe::{safe_multiply_by_rational, SafeArithmetic, SafeSub};
+	use composable_support::{
+		math::safe::{safe_multiply_by_rational, SafeArithmetic, SafeSub},
+		validation::TryIntoValidated,
+	};
 	use composable_traits::{
 		currency::{CurrencyFactory, LocalAssets, RangeId},
 		defi::{CurrencyPair, Rate},
@@ -668,8 +671,18 @@ pub mod pallet {
 				.try_collect()
 				.map_err(|_| Error::<T>::StakingPoolConfigError)?;
 			let duration_presets = [
-				(ONE_WEEK, FixedU64::from_rational(1, 100)),
-				(ONE_MONTH, FixedU64::from_rational(1, 10)),
+				(
+					ONE_WEEK,
+					FixedU64::from_rational(101, 100)
+						.try_into_validated()
+						.expect("valid reward multiplier"),
+				),
+				(
+					ONE_MONTH,
+					FixedU64::from_rational(11, 10)
+						.try_into_validated()
+						.expect("valid reward multiplier"),
+				),
 			]
 			.into_iter()
 			.try_collect()

@@ -492,10 +492,13 @@ pub mod pallet {
 			end_block: T::BlockNumber::zero(),
 			lock: LockConfig {
 				duration_presets: [
-					(ONE_WEEK, FixedU64::from_rational(1, 100).try_into_validated().expect(">= 1")),
+					(
+						ONE_WEEK,
+						FixedU64::from_rational(101, 100).try_into_validated().expect(">= 1"),
+					),
 					(
 						ONE_MONTH,
-						FixedU64::from_rational(10, 100).try_into_validated().expect(">= 1"),
+						FixedU64::from_rational(110, 100).try_into_validated().expect(">= 1"),
 					),
 				]
 				.into_iter()
