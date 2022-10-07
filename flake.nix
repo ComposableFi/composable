@@ -744,6 +744,13 @@
               karuraEndpoint = "ws://localhost:9998";
             };
 
+            frontend-static-persistent = mkFrontendStatic {
+              subsquidEndpoint = "https://persistent.devnets.composablefinance.ninja/subsquid";
+              picassoEndpoint = "wss://persistent.devnets.composablefinance.ninja/parachain/alice";
+              kusamaEndpoint = "wss://persistent.devnets.composablefinance.ninja/relaychain/alice";
+              karuraEndpoint = "wss://persistent.devnets.composablefinance.ninja/karura/alice";
+            };
+
             frontend-static-firebase = mkFrontendStatic {
               subsquidEndpoint =
                 "https://dali-subsquid.composable.finance/graphql";
@@ -1266,6 +1273,7 @@
             chain-spec = "picasso-dev";
           };
           book = eachSystemOutputs.packages.x86_64-linux.composable-book;
+          frontend = eachSystemOutputs.packages.x86_64-linux.frontend-static-persistent;
         };
       };
       homeConfigurations = let
