@@ -65,7 +65,7 @@ pub mod pallet {
 	pub use crate::weights::WeightInfo;
 	use composable_support::{
 		math::safe::{SafeAdd, SafeDiv, SafeMul, SafeSub},
-		validation::Validated,
+		validation::{validators::GeOne, TryIntoValidated, Validated},
 	};
 	use composable_traits::{
 		currency::{BalanceLike, CurrencyFactory},
@@ -492,8 +492,11 @@ pub mod pallet {
 			end_block: T::BlockNumber::zero(),
 			lock: LockConfig {
 				duration_presets: [
-					(ONE_WEEK, FixedU64::from_rational(1, 100)),
-					(ONE_MONTH, FixedU64::from_rational(10, 100)),
+					(ONE_WEEK, FixedU64::from_rational(1, 100).try_into_validated().expect(">= 1")),
+					(
+						ONE_MONTH,
+						FixedU64::from_rational(10, 100).try_into_validated().expect(">= 1"),
+					),
 				]
 				.into_iter()
 				.try_collect()
@@ -886,7 +889,7 @@ pub mod pallet {
 				duration_preset,
 				fnft_instance_id,
 				fnft_collection_id,
-				reward_multiplier,
+				reward_multiplier: *reward_multiplier,
 				keep_alive,
 			});
 
@@ -904,7 +907,8 @@ pub mod pallet {
 				.ok_or(Error::<T>::StakeNotFound)?;
 			let mut rewards_pool = RewardPools::<T>::try_get(stake.reward_pool_id)
 				.map_err(|_| Error::<T>::RewardsPoolNotFound)?;
-			let reward_multiplier = FixedU64::one();
+
+			let reward_multiplier = FixedU64::one().try_into_validated().expect(">= 1");
 
 			ensure!(
 				matches!(
@@ -1330,12 +1334,12 @@ pub mod pallet {
 		pub(crate) fn reward_multiplier(
 			rewards_pool: &RewardPoolOf<T>,
 			duration_preset: DurationSeconds,
-		) -> Option<FixedU64> {
+		) -> Option<Validated<FixedU64, GeOne>> {
 			rewards_pool.lock.duration_presets.get(&duration_preset).cloned()
 		}
 
 		pub(crate) fn boosted_amount(
-			reward_multiplier: FixedU64,
+			reward_multiplier: Validated<FixedU64, GeOne>,
 			amount: T::Balance,
 		) -> Result<T::Balance, ArithmeticError> {
 			reward_multiplier.checked_mul_int(amount).ok_or(ArithmeticError::Overflow)
