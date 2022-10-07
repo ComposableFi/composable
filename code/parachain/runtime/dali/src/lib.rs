@@ -1200,37 +1200,37 @@ parameter_types! {
   pub const ContractStorageByteWritePrice: u32 = 1;
 }
 
-impl cosmwasm::Config for Runtime {
-	type Event = Event;
-	type AccountId = AccountId;
-	type PalletId = CosmwasmPalletId;
-	type MaxFrames = MaxFrames;
-	type MaxCodeSize = MaxCodeSize;
-	type MaxInstrumentedCodeSize = MaxInstrumentedCodeSize;
-	type MaxMessageSize = MaxMessageSize;
-	type AccountToAddr = AccountToAddr;
-	type AssetToDenom = AssetToDenom;
-	type Balance = Balance;
-	type AssetId = CurrencyId;
-	type Assets = Assets;
-	type NativeAsset = Balances;
-	type ChainId = ChainId;
-	type MaxContractLabelSize = MaxContractLabelSize;
-	type MaxContractTrieIdSize = MaxContractTrieIdSize;
-	type MaxInstantiateSaltSize = MaxInstantiateSaltSize;
-	type MaxFundsAssets = MaxFundsAssets;
-	type CodeTableSizeLimit = CodeTableSizeLimit;
-	type CodeGlobalVariableLimit = CodeGlobalVariableLimit;
-	type CodeParameterLimit = CodeParameterLimit;
-	type CodeBranchTableSizeLimit = CodeBranchTableSizeLimit;
-	type CodeStackLimit = CodeStackLimit;
-	type CodeStorageByteDeposit = CodeStorageByteDeposit;
-	type ContractStorageByteReadPrice = ContractStorageByteReadPrice;
-	type ContractStorageByteWritePrice = ContractStorageByteWritePrice;
-	type UnixTime = Timestamp;
-	// TODO: proper weights
-	type WeightInfo = ();
-}
+// impl cosmwasm::Config for Runtime {
+// 	type Event = Event;
+// 	type AccountId = AccountId;
+// 	type PalletId = CosmwasmPalletId;
+// 	type MaxFrames = MaxFrames;
+// 	type MaxCodeSize = MaxCodeSize;
+// 	type MaxInstrumentedCodeSize = MaxInstrumentedCodeSize;
+// 	type MaxMessageSize = MaxMessageSize;
+// 	type AccountToAddr = AccountToAddr;
+// 	type AssetToDenom = AssetToDenom;
+// 	type Balance = Balance;
+// 	type AssetId = CurrencyId;
+// 	type Assets = Assets;
+// 	type NativeAsset = Balances;
+// 	type ChainId = ChainId;
+// 	type MaxContractLabelSize = MaxContractLabelSize;
+// 	type MaxContractTrieIdSize = MaxContractTrieIdSize;
+// 	type MaxInstantiateSaltSize = MaxInstantiateSaltSize;
+// 	type MaxFundsAssets = MaxFundsAssets;
+// 	type CodeTableSizeLimit = CodeTableSizeLimit;
+// 	type CodeGlobalVariableLimit = CodeGlobalVariableLimit;
+// 	type CodeParameterLimit = CodeParameterLimit;
+// 	type CodeBranchTableSizeLimit = CodeBranchTableSizeLimit;
+// 	type CodeStackLimit = CodeStackLimit;
+// 	type CodeStorageByteDeposit = CodeStorageByteDeposit;
+// 	type ContractStorageByteReadPrice = ContractStorageByteReadPrice;
+// 	type ContractStorageByteWritePrice = ContractStorageByteWritePrice;
+// 	type UnixTime = Timestamp;
+// 	// TODO: proper weights
+// 	type WeightInfo = ();
+// }
 
 construct_runtime!(
 	pub enum Runtime where
@@ -1310,8 +1310,8 @@ construct_runtime!(
 		IbcPing: pallet_ibc_ping = 151,
 		Ibc: pallet_ibc = 152,
 
-		  // Cosmwasm support
-		  Cosmwasm: cosmwasm = 180
+		//   // Cosmwasm support
+		//   Cosmwasm: cosmwasm = 180
 	}
 );
 
@@ -1494,44 +1494,44 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl cosmwasm_runtime_api::CosmwasmRuntimeApi<Block, AccountId, CurrencyId, Balance, Vec<u8>> for Runtime {
-		fn query(
-			contract: AccountId,
-			gas: u64,
-			query_request: Vec<u8>,
-		) -> Result<Vec<u8>, Vec<u8>>{
-			match cosmwasm::query::<Runtime>(
-				contract,
-				gas,
-				query_request,
-			) {
-				Ok(response) => Ok(response.0),
-				Err(err) => Err(alloc::format!("{:?}", err).into_bytes())
-			}
-		}
+	// impl cosmwasm_runtime_api::CosmwasmRuntimeApi<Block, AccountId, CurrencyId, Balance, Vec<u8>> for Runtime {
+	// 	fn query(
+	// 		contract: AccountId,
+	// 		gas: u64,
+	// 		query_request: Vec<u8>,
+	// 	) -> Result<Vec<u8>, Vec<u8>>{
+	// 		match cosmwasm::query::<Runtime>(
+	// 			contract,
+	// 			gas,
+	// 			query_request,
+	// 		) {
+	// 			Ok(response) => Ok(response.0),
+	// 			Err(err) => Err(alloc::format!("{:?}", err).into_bytes())
+	// 		}
+	// 	}
 
-		fn instantiate(
-			instantiator: AccountId,
-			code_id: u64,
-			salt: Vec<u8>,
-			admin: Option<AccountId>,
-			label: Vec<u8>,
-			funds: BTreeMap<CurrencyId, (Balance, bool)>,
-			gas: u64,
-			message: Vec<u8>,
-		) -> Result<AccountId, Vec<u8>> {
-			cosmwasm::instantiate::<Runtime>(
-				instantiator,
-				code_id,
-				salt,
-				admin,
-				label,
-				funds,
-				gas,
-				message
-			).map_err(|err| alloc::format!("{:?}", err).into_bytes())
-		}
-	}
+	// 	fn instantiate(
+	// 		instantiator: AccountId,
+	// 		code_id: u64,
+	// 		salt: Vec<u8>,
+	// 		admin: Option<AccountId>,
+	// 		label: Vec<u8>,
+	// 		funds: BTreeMap<CurrencyId, (Balance, bool)>,
+	// 		gas: u64,
+	// 		message: Vec<u8>,
+	// 	) -> Result<AccountId, Vec<u8>> {
+	// 		cosmwasm::instantiate::<Runtime>(
+	// 			instantiator,
+	// 			code_id,
+	// 			salt,
+	// 			admin,
+	// 			label,
+	// 			funds,
+	// 			gas,
+	// 			message
+	// 		).map_err(|err| alloc::format!("{:?}", err).into_bytes())
+	// 	}
+	// }
 
 	impl sp_api::Core<Block> for Runtime {
 		fn version() -> RuntimeVersion {

@@ -243,21 +243,21 @@ define_trait! {
 		}
 	}
 
-	mod cosmwasm {
-		pub trait ExtendWithCosmwasmApi {
-			fn extend_with_cosmwasm_api(io, deps) ;
-		}
+	// mod cosmwasm {
+	// 	pub trait ExtendWithCosmwasmApi {
+	// 		fn extend_with_cosmwasm_api(io, deps) ;
+	// 	}
 
-		#[cfg(feature = "composable")]
-		impl for composable_runtime {}
+	// 	#[cfg(feature = "composable")]
+	// 	impl for composable_runtime {}
 
-		impl for picasso_runtime {}
+	// 	impl for picasso_runtime {}
 
-		#[cfg(feature = "dali")]
-		impl for dali_runtime {
-			fn (io, deps) {
-				io.merge(Cosmwasm::new(deps.client).into_rpc())
-			}
-		}
-	}
+	// 	#[cfg(feature = "dali")]
+	// 	impl for dali_runtime {
+	// 		fn (io, deps) {
+	// 			io.merge(Cosmwasm::new(deps.client).into_rpc())
+	// 		}
+	// 	}
+	// }
 }
