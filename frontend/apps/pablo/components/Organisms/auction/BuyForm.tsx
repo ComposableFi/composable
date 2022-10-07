@@ -24,7 +24,7 @@ import {
 import { getFullHumanizedDateDiff } from "shared";
 import { LiquidityBootstrappingPool } from "@/defi/types";
 import { ConfirmingModal } from "../swap/ConfirmingModal";
-import { DEFAULT_NETWORK_ID } from "@/defi/utils";
+import { DEFAULT_NETWORK_ID, DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils";
 import { useAuctionBuyForm } from "@/defi/hooks/auctions/useAuctionBuyForm";
 import { useDotSamaContext } from "substrate-react";
 import { usePabloSwap } from "@/defi/hooks/swaps/usePabloSwap";
@@ -173,7 +173,7 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
         />
         {isValidQuoteInput && (
           <Typography variant="body2" mt={1.5}>
-            {`≈$${quoteAmount.multipliedBy(priceUSDQuote)}`}
+            {`≈$${quoteAmount.multipliedBy(priceUSDQuote).toFixed(DEFAULT_UI_FORMAT_DECIMALS)}`}
           </Typography>
         )}
       </Box>
