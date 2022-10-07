@@ -36,9 +36,7 @@ import {
   useCrowdloanRewardsEthereumAddressAssociatedAccount,
   useCrowdloanRewardsHasStarted,
 } from "@/stores/defi/polkadot/crowdloanRewards/hooks";
-
-const DEFAULT_EVM_ID = 1;
-const APP_NAME = "Picasso UI";
+import { DEFAULT_EVM_ID, APP_NAME } from "@/defi/polkadot/constants";
 
 const ERROR_MESSAGES = {
   KSM_WALLET_NOT_CONNECTED: {
@@ -82,7 +80,7 @@ export const ClaimLoanPage = () => {
   const isPendingClaim = usePendingExtrinsic(
     "claim",
     "crowdloanRewards",
-    selectedAccount ? selectedAccount.address : ""
+    selectedAccount?.address ?? "-"
   );
 
   const isPendingAssociate = usePendingExtrinsic(
@@ -216,7 +214,7 @@ export const ClaimLoanPage = () => {
     extensionStatus,
   ]);
 
-  const hasNothingToClaim = useCallback(() => {
+  const hasNothingToClaim = useMemo(() => {
     if (extensionStatus !== "connected" || !selectedAccount) return true;
     if (!isEthAccountEligible && !isPicassoAccountEligible) return true;
 
@@ -271,6 +269,19 @@ export const ClaimLoanPage = () => {
     xs: 12,
   };
 
+  const operation = useCallback(async () => {
+    switch(nextStep) {
+      case CrowdloanStep.Claim:
+        claim().catch(console.error);
+      case CrowdloanStep.AssociateEth:
+        signEthereum().then(useAssociate);
+      case CrowdloanStep.AssociateKsm:
+        signPolkadotJs().then(useAssociate);
+      default:
+        return;
+    }
+  }, [nextStep])
+
   return (
     <DefaultLayout breadcrumbs={breadcrumbs}>
       <Grid
@@ -290,7 +301,7 @@ export const ClaimLoanPage = () => {
             subtitle="You will be able to check on your positions here."
           />
         </Grid>
-        {hasNothingToClaim() && (
+        {hasNothingToClaim && (
           <Grid item {...standardPageSize} mt={theme.spacing(9)}>
             <NoEligibleWalletFeaturedBox
               title={ineligibleText.title}
@@ -298,7 +309,7 @@ export const ClaimLoanPage = () => {
             />
           </Grid>
         )}
-        {!hasNothingToClaim() && (
+        {!hasNothingToClaim && (
           <Grid item {...standardPageSize} mt={theme.spacing(9)}>
             {isStable ? (
               <StablecoinClaimForm
@@ -324,15 +335,7 @@ export const ClaimLoanPage = () => {
                   selectedAccount ? selectedAccount.name : "-"
                 }
                 readonlySS8Address
-                onClaim={async () => {
-                  nextStep === CrowdloanStep.AssociateEth
-                    ? signEthereum().then(useAssociate)
-                    : nextStep === CrowdloanStep.AssociateKsm
-                    ? signPolkadotJs().then(useAssociate)
-                    : nextStep === CrowdloanStep.Claim
-                    ? claim().catch(console.error)
-                    : undefined;
-                }}
+                onClaim={operation}
               />
             ) : (
               <KSMClaimForm
@@ -353,15 +356,7 @@ export const ClaimLoanPage = () => {
                   selectedAccount ? selectedAccount.name : "-"
                 }
                 readonlySS8Address
-                onClaim={async () => {
-                  nextStep === CrowdloanStep.AssociateEth
-                    ? signEthereum().then(useAssociate)
-                    : nextStep === CrowdloanStep.AssociateKsm
-                    ? signPolkadotJs().then(useAssociate)
-                    : nextStep === CrowdloanStep.Claim
-                    ? claim().catch(console.error)
-                    : undefined;
-                }}
+                onClaim={operation}
               />
             )}
           </Grid>

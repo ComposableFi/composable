@@ -1,52 +1,59 @@
 import type { NextPage } from "next";
-import Default from "@/components/Templates/Default";
 import { Box, Grid, Link, Typography, useTheme } from "@mui/material";
 import { useRouter } from "next/router";
-import Image from "next/image";
 import { useEffect } from "react";
 import { PageTitle, FeaturedBox, SS8WalletHelper } from "@/components";
 import { ConnectorType, useBlockchainProvider, useConnector } from "bi-lib";
 import { useSelectedAccount } from "@/defi/polkadot/hooks";
 import { useDotSamaContext } from "substrate-react";
-import { useCrowdloanRewardsSlice } from "@/stores/defi/polkadot/crowdloanRewards/crowdloanRewards.slice";
-import { encodeAddress } from "@polkadot/util-crypto";
-import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
+import { useCrowdloanRewardsEligibility } from "@/stores/defi/polkadot/crowdloanRewards/hooks";
+import { DEFAULT_EVM_ID } from "@/defi/polkadot/constants";
+import Default from "@/components/Templates/Default";
+import Image from "next/image";
 
 const CrowdloanRewards: NextPage = () => {
   const theme = useTheme();
   const router = useRouter();
-  const { account } = useBlockchainProvider(1);
+  const { account } = useBlockchainProvider(DEFAULT_EVM_ID);
   const selectedAccount = useSelectedAccount();
 
-  const { ethereumContributions, kusamaContributions } = useCrowdloanRewardsSlice();
-
   const breadcrumbs = [
-    <Link key="Overview" underline="none" color="primary" href="/frontend/fe/apps/picasso/pages">
+    <Link
+      key="Overview"
+      underline="none"
+      color="primary"
+      href="/frontend/fe/apps/picasso/pages"
+    >
       Overview
     </Link>,
     <Typography key="claims" color="text.secondary">
       Crowdloan Rewards
-    </Typography>
+    </Typography>,
   ];
   const standardPageSize = {
-    xs: 12
+    xs: 12,
   };
 
   const { extensionStatus } = useDotSamaContext();
   const { isActive } = useConnector(ConnectorType.MetaMask);
 
-  useEffect(() => {
-    if (account || selectedAccount) {
-      if (account && account.toLowerCase() in ethereumContributions) {
-        router.push("crowdloan-rewards/claim");
-      }
+  const { isEthAccountEligible, isPicassoAccountEligible } =
+    useCrowdloanRewardsEligibility(
+      account?.toLowerCase(),
+      selectedAccount?.address
+    );
 
-      if (selectedAccount && encodeAddress(selectedAccount.address, SUBSTRATE_NETWORKS.kusama.ss58Format) in kusamaContributions) {
-        router.push("crowdloan-rewards/claim");
-      }
+  useEffect(() => {
+    if (isEthAccountEligible || isPicassoAccountEligible) {
+      router.push("/crowdloan-rewards/claim");
     }
-    
-  }, [router, account, selectedAccount, ethereumContributions, kusamaContributions]);
+  }, [
+    router,
+    account,
+    selectedAccount,
+    isEthAccountEligible,
+    isPicassoAccountEligible,
+  ]);
 
   return (
     <Default breadcrumbs={breadcrumbs}>
@@ -78,7 +85,7 @@ const CrowdloanRewards: NextPage = () => {
                     mb: theme.spacing(4),
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "center"
+                    justifyContent: "center",
                   }}
                 >
                   <Image
@@ -97,7 +104,7 @@ const CrowdloanRewards: NextPage = () => {
                 disabled: extensionStatus !== "connected",
                 onClick: () => {
                   router.push("/crowdloan-rewards/claim");
-                }
+                },
               }}
             />
             <FeaturedBox
@@ -109,7 +116,7 @@ const CrowdloanRewards: NextPage = () => {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    mb: theme.spacing(4)
+                    mb: theme.spacing(4),
                   }}
                 >
                   <Image
@@ -144,7 +151,7 @@ const CrowdloanRewards: NextPage = () => {
                 variant: "contained",
                 onClick: () => {
                   router.push("/crowdloan-rewards/claim");
-                }
+                },
               }}
             />
           </Box>

@@ -1,7 +1,10 @@
+import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { usePicassoProvider } from "@/defi/polkadot/hooks";
 import { useEffect } from "react";
 import { useBlockchainProvider } from "bi-lib";
 import { fromPerbill } from "shared";
+import { encodeAddress } from "@polkadot/util-crypto";
+import { DEFAULT_EVM_ID } from "@/defi/polkadot/constants";
 import {
   fetchAssociations,
   fetchContributionAndRewardsFromJSON,
@@ -10,8 +13,6 @@ import {
   CrowdloanContributionRecord,
   setCrowdloanRewardsState,
 } from "./crowdloanRewards.slice";
-import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
-import { encodeAddress } from "@polkadot/util-crypto";
 // Import static JSON files
 import rewardsAndContributions from "@/defi/polkadot/constants/pica-rewards-contributions.json";
 import rewardsAndContributionsDev from "@/defi/polkadot/constants/pica-rewards-contributions-dev.json";
@@ -106,8 +107,6 @@ export const presentInRewards = (
       return undefined;
   }
 };
-
-const DEFAULT_EVM_ID = 1;
 
 const CrowdloanRewardsUpdater = () => {
   const { account } = useBlockchainProvider(DEFAULT_EVM_ID);

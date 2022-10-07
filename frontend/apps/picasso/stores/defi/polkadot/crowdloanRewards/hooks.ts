@@ -1,4 +1,4 @@
-import { ConnectedAccount } from "@/../../packages/substrate-react/src";
+import { ConnectedAccount } from "substrate-react";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { ApiPromise } from "@polkadot/api";
 import { encodeAddress } from "@polkadot/util-crypto";
