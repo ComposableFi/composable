@@ -280,7 +280,7 @@ export const ClaimLoanPage = () => {
       default:
         return;
     }
-  }, [nextStep, claimedRewards, signEthereum, signPolkadotJs, useAssociate]);
+  }, [nextStep, claim, signEthereum, signPolkadotJs, useAssociate]);
 
   return (
     <DefaultLayout breadcrumbs={breadcrumbs}>
