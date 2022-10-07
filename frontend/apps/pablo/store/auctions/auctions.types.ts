@@ -1,30 +1,32 @@
 import { LiquidityBootstrappingPool } from "@/defi/types";
-import { LiquidityBootstrappingPoolStats } from "@/store/pools/pools.types";
+import BigNumber from "bignumber.js";
+
+export type LiquidityBootstrappingPoolStatistics = {
+  totalVolume: BigNumber;
+  totalLiquidity: BigNumber;
+  liquidity: {
+    baseAmount: BigNumber;
+    quoteAmount: BigNumber;
+  };
+  startLiquidity: {
+    baseAmount: BigNumber;
+    quoteAmount: BigNumber;
+  };
+};
 export interface PoolTradeHistory {
-    baseAssetAmount: string;
-    baseAssetId: number;
-    id: string;
-    quoteAssetAmount: string;
-    quoteAssetId: number;
-    receivedTimestamp: number;
-    spotPrice: string;
-    side: "SELL" | "BUY";
-    walletAddress: string;
+  baseAssetAmount: string;
+  baseAssetId: number;
+  id: string;
+  quoteAssetAmount: string;
+  quoteAssetId: number;
+  receivedTimestamp: number;
+  spotPrice: string;
+  side: "SELL" | "BUY";
+  walletAddress: string;
 }
 export interface AuctionsSlice {
-    auctions: {
-        activeLBP: LiquidityBootstrappingPool;
-        activeLBPStats: LiquidityBootstrappingPoolStats;
-        activeLBPHistory: PoolTradeHistory[];
-    }
-    setActiveAuctionsPool: (
-        lbPool: LiquidityBootstrappingPool
-    ) => void;
-    putStatsActiveLBP: (
-        auctionStats: Partial<LiquidityBootstrappingPoolStats>
-    ) => void;
-    putHistoryActiveLBP: (
-        auctionHistory: PoolTradeHistory[]
-    ) => void;
-    resetActiveLBP: () => void;
+  activePool: LiquidityBootstrappingPool;
+  activePoolStats: LiquidityBootstrappingPoolStatistics;
+  spotPrices: Record<string, BigNumber>;
+  activePoolTradeHistory: PoolTradeHistory[];
 }

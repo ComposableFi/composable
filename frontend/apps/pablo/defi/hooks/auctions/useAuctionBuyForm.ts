@@ -1,12 +1,16 @@
 import { fetchAuctionTrades } from "@/defi/subsquid/auctions/helpers";
 import { LiquidityBootstrappingPool } from "@/defi/types";
 import { calculator, DEFAULT_NETWORK_ID, fetchSpotPrice } from "@/defi/utils";
-import { fetchAuctions } from "@/defi/utils/pablo/auctions";
+import { fetchAndExtractAuctionStats } from "@/defi/utils/pablo/auctions";
 import { useAppSelector } from "@/hooks/store";
 import { usePrevious } from "@/hooks/usePrevious";
 import { MockedAsset } from "@/store/assets/assets.types";
 import { useAssetBalance } from "@/store/assets/hooks";
-import useStore from "@/store/useStore";
+import {
+  setAuctionsSlice,
+  setAuctionsSpotPrice,
+  useAuctionsSlice,
+} from "@/store/auctions/auctions.slice";
 import BigNumber from "bignumber.js";
 import _ from "lodash";
 import { useSnackbar } from "notistack";
@@ -18,6 +22,11 @@ import {
   useSelectedAccount,
 } from "substrate-react";
 import { useAsset } from "../assets/useAsset";
+import { useAuctionSpotPrice } from "./useAuctionSpotPrice";
+
+const UPDATE_SPOT_PRICE_IN = 10_000;
+const UPDATE_TRADES_IN = 30_000;
+const UPDATE_STATS_IN = 30_000;
 
 const initialTokenAmounts = {
   baseAmount: new BigNumber(0),
@@ -43,7 +52,6 @@ export const useAuctionBuyForm = (): {
   slippageAmount: BigNumber;
   selectedAuction: LiquidityBootstrappingPool;
   isBuyButtonDisabled: boolean;
-  refreshAuctionData: () => void;
   isPendingBuy: boolean;
   onChangeTokenAmount: (
     changedSide: "quote" | "base",
@@ -54,19 +62,15 @@ export const useAuctionBuyForm = (): {
   const { extensionStatus } = useDotSamaContext();
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
-  const {
-    auctions: { activeLBP },
-    putStatsActiveLBP,
-    putHistoryActiveLBP,
-  } = useStore();
+  const { activePool } = useAuctionsSlice();
   const slippage = useAppSelector(
     (state) => state.settings.transactionSettings.tolerance
   );
   const previousSlippage = usePrevious(slippage);
 
-  const [spotPrice, setSpotPrice] = useState(new BigNumber(0));
-  const baseAsset = useAsset(activeLBP.pair.base.toString());
-  const quoteAsset = useAsset(activeLBP.pair.quote.toString());
+  const spotPrice = useAuctionSpotPrice(activePool.poolId);
+  const baseAsset = useAsset(activePool.pair.base.toString());
+  const quoteAsset = useAsset(activePool.pair.quote.toString());
 
   const balanceBase = useAssetBalance(
     DEFAULT_NETWORK_ID,
@@ -81,7 +85,10 @@ export const useAuctionBuyForm = (): {
   const [isValidQuoteInput, setIsValidQuoteInput] = useState(false);
 
   const [tokenAmounts, setTokenAmounts] = useState(initialTokenAmounts);
-  const resetTokenAmounts = useCallback(() => setTokenAmounts(initialTokenAmounts), []);
+  const resetTokenAmounts = useCallback(
+    () => setTokenAmounts(initialTokenAmounts),
+    []
+  );
 
   const isUpdatingField = useRef(false);
 
@@ -92,17 +99,19 @@ export const useAuctionBuyForm = (): {
   }, [selectedAccount, resetTokenAmounts]);
 
   const updateSpotPrice = useCallback(() => {
-    if (!activeLBP || !parachainApi) return;
-    const { base, quote } = activeLBP.pair;
+    if (!activePool || !parachainApi) return;
+    const { base, quote } = activePool.pair;
     let pair = { base: base.toString(), quote: quote.toString() };
-    fetchSpotPrice(parachainApi, pair, activeLBP.poolId)
-      .then(setSpotPrice)
+    fetchSpotPrice(parachainApi, pair, activePool.poolId)
+      .then((_spotPrice) => {
+        setAuctionsSpotPrice(activePool.poolId.toString(), _spotPrice);
+      })
       .catch(console.error);
-  }, [activeLBP, parachainApi]);
+  }, [activePool, parachainApi]);
 
   const onChangeTokenAmount = useCallback(
     (changedSide: "quote" | "base", amount: BigNumber) => {
-      if (!parachainApi || !activeLBP || isUpdatingField.current) return;
+      if (!parachainApi || !activePool || isUpdatingField.current) return;
       if (spotPrice.eq(0)) {
         updateSpotPrice();
         return;
@@ -111,7 +120,7 @@ export const useAuctionBuyForm = (): {
       updateSpotPrice();
       const {
         feeConfig: { feeRate },
-      } = activeLBP;
+      } = activePool;
       let feePercentage = new BigNumber(feeRate).toNumber();
       const { minReceive, tokenOutAmount, feeChargedAmount, slippageAmount } =
         calculator(changedSide, amount, spotPrice, slippage, feePercentage);
@@ -135,12 +144,12 @@ export const useAuctionBuyForm = (): {
     [
       parachainApi,
       balanceQuote,
-      activeLBP,
+      activePool,
       spotPrice,
       updateSpotPrice,
       enqueueSnackbar,
       resetTokenAmounts,
-      slippage
+      slippage,
     ]
   );
 
@@ -151,15 +160,59 @@ export const useAuctionBuyForm = (): {
     onChangeTokenAmount,
   ]);
 
-  const refreshAuctionData = useCallback(async () => {
-    const { poolId } = activeLBP;
-    if (parachainApi && poolId !== -1) {
-      const stats = await fetchAuctions(parachainApi, activeLBP);
-      const trades = await fetchAuctionTrades(activeLBP);
-      putStatsActiveLBP(stats);
-      putHistoryActiveLBP(trades);
+  useEffect(() => {
+    const spotPriceInterval = setInterval(
+      updateSpotPrice,
+      UPDATE_SPOT_PRICE_IN
+    );
+    return () => {
+      clearInterval(spotPriceInterval);
+    };
+  }, [updateSpotPrice]);
+
+  const updateActiveAuctionsPoolTrades = useCallback(() => {
+    if (activePool.poolId !== -1) {
+      fetchAuctionTrades(activePool)
+        .then((activePoolTradeHistory) => {
+          setAuctionsSlice({ activePoolTradeHistory });
+        })
+        .catch((err) => {
+          console.error(err);
+        });
     }
-  }, [activeLBP, putHistoryActiveLBP, putStatsActiveLBP, parachainApi]);
+  }, [activePool]);
+
+  useEffect(() => {
+    const updateActiveAuctionsPoolTradesInterval = setInterval(
+      updateActiveAuctionsPoolTrades,
+      UPDATE_TRADES_IN
+    );
+    return () => {
+      clearInterval(updateActiveAuctionsPoolTradesInterval);
+    };
+  }, [updateActiveAuctionsPoolTrades]);
+
+  const updateActiveAuctionPoolStats = useCallback(() => {
+    if (parachainApi && activePool.poolId !== -1) {
+      fetchAndExtractAuctionStats(parachainApi, activePool)
+        .then((activePoolStats) => {
+          setAuctionsSlice({ activePoolStats });
+        })
+        .catch((err) => {
+          console.error(err.message);
+        });
+    }
+  }, [parachainApi, activePool]);
+
+  useEffect(() => {
+    const updateActiveAuctionPoolStatsInterval = setInterval(
+      updateActiveAuctionPoolStats,
+      UPDATE_STATS_IN
+    );
+    return () => {
+      clearInterval(updateActiveAuctionPoolStatsInterval);
+    };
+  }, [updateActiveAuctionPoolStats]);
 
   const { baseAmount, quoteAmount } = tokenAmounts;
   const isPendingBuy = usePendingExtrinsic(
@@ -182,11 +235,11 @@ export const useAuctionBuyForm = (): {
    * there is a change in slippage
    */
   useEffect(() => {
-    if (parachainApi && activeLBP) {
+    if (parachainApi && activePool) {
       if (previousSlippage != slippage) {
         const { minimumReceived } = tokenAmounts;
         if (minimumReceived.gt(0)) {
-          const { feeRate } = activeLBP.feeConfig;
+          const { feeRate } = activePool.feeConfig;
           let feePercentage = new BigNumber(feeRate).toNumber();
 
           const { minReceive } = calculator(
@@ -209,7 +262,7 @@ export const useAuctionBuyForm = (): {
     return;
   }, [
     spotPrice,
-    activeLBP,
+    activePool,
     balanceQuote,
     previousSlippage,
     tokenAmounts,
@@ -234,8 +287,7 @@ export const useAuctionBuyForm = (): {
     slippageAmount: tokenAmounts.slippageAmount,
     feeCharged: tokenAmounts.feeCharged,
     isBuyButtonDisabled,
-    selectedAuction: activeLBP,
-    refreshAuctionData,
+    selectedAuction: activePool,
     onChangeTokenAmount: debouncedUpdater,
     isPendingBuy,
   };
