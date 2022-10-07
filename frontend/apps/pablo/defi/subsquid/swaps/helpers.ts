@@ -6,9 +6,7 @@ import {
 } from "@/defi/utils";
 import BigNumber from "bignumber.js";
 import moment from "moment";
-import {
-  queryPabloTransactions,
-} from "../pools/queries";
+import { fetchPabloTransactions } from "../auctions/helpers";
 import { querySpotPriceBeforeTimestamp } from "./queries";
 
 export function getChartLabels(
@@ -41,16 +39,12 @@ export async function fetchSwapsChart(
   let chartSeries: [number, number][] = [];
 
   try {
-    const { data, error } = await queryPabloTransactions(
+    const { pabloTransactions } = await fetchPabloTransactions(
       poolId,
       "SWAP",
       "DESC",
       250
     );
-    if (error) throw new Error(error.message);
-    if (!data)
-      throw new Error("[fetchSwapsChart] unable to fetch subsquid data.");
-    let { pabloTransactions } = data;
 
     let swapTransactions = pabloTransactions.map(
       ({ quoteAssetId, spotPrice, pool: { calculatedTimestamp } }) => {
