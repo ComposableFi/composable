@@ -499,7 +499,7 @@ pub mod pallet {
 			},
 			share_asset_id,
 			financial_nft_asset_id,
-			minimum_staking_amount: T::Balance::from(10_000_u128),
+			minimum_staking_amount: T::Balance::from(2_000_000_u128),
 		};
 		RewardPools::<T>::insert(staked_asset_id, staking_pool);
 		T::FinancialNft::create_collection(&financial_nft_asset_id, owner, owner)
@@ -710,17 +710,6 @@ pub mod pallet {
 					let now_seconds = T::UnixTime::now().as_secs();
 
 					let existential_deposit = T::ExistentialDeposits::get(&pool_asset);
-
-					println!("existential_deposit, {:?}", existential_deposit);
-					println!("lock.unlock_penalty, {:?}", lock.unlock_penalty);
-					println!(
-						"lock.unlock_penalty.left_from_one(), {:?}",
-						lock.unlock_penalty.left_from_one()
-					);
-					println!(
-						"lock.unlock_penalty.left_from_one().mul(minimum_staking_amount), {:?}",
-						lock.unlock_penalty.left_from_one().mul(minimum_staking_amount)
-					);
 
 					ensure!(
 						lock.unlock_penalty.left_from_one().mul(minimum_staking_amount) >=
