@@ -63,35 +63,39 @@ where
 	if !connections.is_empty() {
 		let connection = connections[0].clone();
 		let connection_id = ConnectionId::from_str(&connection.id).unwrap();
-		let connection_response = chain_a
-			.query_connection_end(latest_height, channel_end.connection_hops()[0].clone())
+		let connection_end = chain_a
+			.query_connection_end(latest_height, connection_id.clone())
 			.await
-			.unwrap();
+			.unwrap()
+			.connection.unwrap();
 
 		let channels = chain_a
-			.query_connection_channels(
-				latest_height,
-				&connection_id,
-			)
+			.query_connection_channels(latest_height, &connection_id)
 			.await
 			.unwrap()
 			.channels;
 
 		for channel in channels {
+			let channel_id = ChannelId::from_str(&channel.channel_id).unwrap();
+			let channel = chain_a
+				.query_channel_end(latest_height, channel_id, PortId::transfer())
+				.await
+				.unwrap()
+				.channel
+				.unwrap();
+			let channel = ChannelEnd::try_from(channel).unwrap();
 			dbg!(&connection_delay);
 			dbg!(connection_delay * 1000000000);
 
-			let connection_end = connection_response.connection.unwrap();
 			if channel.state == State::Open &&
-				channel.port_id == PortId::transfer().to_string() &&
 				connection_end.delay_period == connection_delay * 1000000000 &&
 				connection_end.client_id == chain_a.client_id().to_string()
 			{
 				return (
 					handle,
 					channel_id,
-					channel_end.counterparty().channel_id.unwrap().clone(),
-					channel_end.connection_hops[0].clone(),
+					channel.counterparty().channel_id.unwrap().clone(),
+					channel.connection_hops[0].clone(),
 				)
 			}
 		}
