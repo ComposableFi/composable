@@ -48,13 +48,11 @@ export class Asset {
         this.__picassoAssetId.toString()
       );
       const _accountId32 = this.__api.createType("AccountId32", account);
-
-      // @ts-ignore
       const balance = await this.__api.rpc.assets.balanceOf(
         _assetId,
         _accountId32
       );
-      return fromChainIdUnit(balance.toString());
+      return fromChainIdUnit(BigInt(balance.toString()));
     } catch (err: any) {
       console.error("[balanceOf]", err.message);
       return new BigNumber(0);

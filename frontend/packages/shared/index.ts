@@ -1,3 +1,6 @@
+import "defi-interfaces";
+
+export * from "./defi";
 export * from "./human";
 export * from "./hexStrings";
 export * from "./formatters";

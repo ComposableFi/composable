@@ -73,7 +73,7 @@ export class BasePabloPool implements Exchangeable {
       );
 
       const spotPrice = pricesFor.get("spotPrice");
-      return fromChainIdUnit(spotPrice ? spotPrice.toString() : 0);
+      return fromChainIdUnit(spotPrice ? BigInt(spotPrice.toString()) : 0);
     } catch (err: any) {
       console.error('[getSpotPrice] ', err.message);
       return new BigNumber(0);

@@ -1,6 +1,6 @@
 import { ApiPromise } from "@polkadot/api";
-import BigNumber from "bignumber.js";
 import { fromChainIdUnit } from "../unit";
+import BigNumber from "bignumber.js";
 
 export type VestingScheduleType = "block" | "moment";
 

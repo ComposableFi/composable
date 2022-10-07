@@ -1,5 +1,5 @@
 import BigNumber from "bignumber.js";
-import { fromChainIdUnit } from "../../unit";
+import { fromChainIdUnit } from "../unit";
 
 type OfferMaturity = { finite: { returnIn: BigNumber } } | "Infinite";
 
