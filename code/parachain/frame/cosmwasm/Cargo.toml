@@ -25,13 +25,13 @@ sp-runtime = { default-features = false, git = "https://github.com/paritytech/su
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 
 composable-support = { path = "../composable-support", default-features = false }
-cosmwasm-minimal-std = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "298d29c5c37d255dfd69a091843343101362be52", default-features = false, features = [
+cosmwasm-minimal-std = { git = "https://github.com/ComposableFi/cosmwasm-vm", branch = "feature/generate-code", default-features = false, features = [
   "iterator",
 ] }
-cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "298d29c5c37d255dfd69a091843343101362be52", default-features = false, features = [
+cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", branch = "feature/generate-code", default-features = false, features = [
   "iterator",
 ] }
-cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "298d29c5c37d255dfd69a091843343101362be52", default-features = false, features = [
+cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", branch = "feature/generate-code", default-features = false, features = [
   "iterator",
 ] }
 log = { version = "0.4.14", default-features = false }
@@ -46,9 +46,14 @@ wasmi-validation = { git = "https://github.com/ComposableFi/wasmi", rev = "cd8c0
 [dev-dependencies]
 pallet-balances = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-pallet-assets = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+pallet-assets = { default-features = false, path = "../assets" }
 hex = "0.4"
 primitives = { path = "../../runtime/primitives", default-features = false }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "377213f750755cc48e80a3131eaae63b5eda8362" }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "377213f750755cc48e80a3131eaae63b5eda8362" }
+governance-registry = { package = "pallet-governance-registry", path = "../governance-registry" }
+composable-traits = { path = "../composable-traits", default-features = false }
+num-traits = { version = "0.2.14", default-features = false }
 
 [features]
 default = ["std"]
@@ -56,6 +61,7 @@ std = [
   "codec/std",
   "frame-support/std",
   "frame-system/std",
+  "frame-benchmarking/std",
   "sp-runtime/std",
   "sp-io/std",
   "sp-core/std",
@@ -63,10 +69,8 @@ std = [
   "sp-arithmetic/std",
   "composable-support/std",
   "scale-info/std",
-  "pallet-balances/std",
-  "pallet-timestamp/std",
-  "pallet-assets/std",
   "primitives/std",
+  "pallet-balances/std"
 ]
 runtime-benchmarks = [
   "frame-benchmarking",

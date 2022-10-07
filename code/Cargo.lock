@@ -1836,7 +1836,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-minimal-std"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=298d29c5c37d255dfd69a091843343101362be52#298d29c5c37d255dfd69a091843343101362be52"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?branch=feature/generate-code#1f697485096148e5ee30562d3bfdb8802d619538"
 dependencies = [
  "base64 0.13.0",
  "serde",
@@ -1910,7 +1910,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=298d29c5c37d255dfd69a091843343101362be52#298d29c5c37d255dfd69a091843343101362be52"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?branch=feature/generate-code#1f697485096148e5ee30562d3bfdb8802d619538"
 dependencies = [
  "cosmwasm-minimal-std",
  "either",
@@ -1922,7 +1922,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm-wasmi"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=298d29c5c37d255dfd69a091843343101362be52#298d29c5c37d255dfd69a091843343101362be52"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?branch=feature/generate-code#1f697485096148e5ee30562d3bfdb8802d619538"
 dependencies = [
  "cosmwasm-minimal-std",
  "cosmwasm-vm",
@@ -1930,7 +1930,9 @@ dependencies = [
  "log 0.4.17",
  "serde",
  "serde_json",
+ "wasm-instrument 0.2.0",
  "wasmi 0.11.0",
+ "wasmi-validation 0.4.1",
 ]
 
 [[package]]
@@ -7835,6 +7837,7 @@ name = "pallet-cosmwasm"
 version = "0.0.1"
 dependencies = [
  "composable-support",
+ "composable-traits",
  "cosmwasm-minimal-std",
  "cosmwasm-vm",
  "cosmwasm-vm-wasmi",
@@ -7843,8 +7846,12 @@ dependencies = [
  "frame-system",
  "hex",
  "log 0.4.17",
- "pallet-assets 4.0.0-dev",
+ "num-traits",
+ "orml-tokens",
+ "orml-traits",
+ "pallet-assets 0.0.1",
  "pallet-balances",
+ "pallet-governance-registry",
  "pallet-timestamp",
  "parity-scale-codec",
  "parity-wasm 0.45.0",
@@ -16442,6 +16449,7 @@ dependencies = [
  "num-traits",
  "parity-wasm 0.42.2",
  "wasmi-validation 0.4.0",
+ "wasmi-validation 0.4.1",
 ]
 
 [[package]]

@@ -1,19 +1,29 @@
 use crate::*;
 
-use frame_support::{pallet_prelude::ConstU32, parameter_types, traits::ConstU64, PalletId};
-use primitives::currency::CurrencyId;
+use composable_traits::currency::{CurrencyFactory, RangeId};
+use frame_support::{
+	pallet_prelude::ConstU32,
+	parameter_types,
+	traits::{ConstU64, Everything},
+	PalletId,
+};
+use frame_system::EnsureRoot;
+use num_traits::Zero;
+use orml_traits::parameter_type_with_key;
+use primitives::currency::{CurrencyId, ValidateCurrencyId};
 use sp_core::H256;
 use sp_runtime::{
 	generic,
 	traits::{BlakeTwo256, Convert, IdentifyAccount, IdentityLookup, Verify},
-	AccountId32, MultiSignature,
+	AccountId32, DispatchError, MultiSignature,
 };
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 type Header = generic::Header<u32, BlakeTwo256>;
-type Balance = u64;
+type Balance = u128;
 type AccountId = AccountId32;
+type Amount = i128;
 
 frame_support::construct_runtime!(
 	pub enum Test where
@@ -26,6 +36,8 @@ frame_support::construct_runtime!(
 		Balances: pallet_balances,
 		Assets: pallet_assets,
 		Timestamp: pallet_timestamp,
+		GovernanceRegistry: governance_registry,
+		Tokens: orml_tokens,
 	}
 );
 
@@ -33,6 +45,7 @@ parameter_types! {
 	pub const BlockHashCount: u32 = 250;
 	pub const SS58Prefix: u8 = 42;
 	pub const ExistentialDeposit: u64 = 10000;
+	pub const NativeAssetId: CurrencyId = CurrencyId(1);
 }
 
 impl frame_system::Config for Test {
@@ -62,6 +75,39 @@ impl frame_system::Config for Test {
 	type MaxConsumers = ConstU32<2>;
 }
 
+impl governance_registry::Config for Test {
+	type AssetId = CurrencyId;
+	type WeightInfo = ();
+	type Event = Event;
+}
+
+parameter_types! {
+	pub const MaxLocks: u32 = 256;
+}
+
+parameter_type_with_key! {
+	pub ExistentialDeposits: |_a: CurrencyId| -> Balance {
+		Zero::zero()
+	};
+}
+
+type ReserveIdentifier = [u8; 8];
+impl orml_tokens::Config for Test {
+	type Event = Event;
+	type Balance = Balance;
+	type Amount = Amount;
+	type CurrencyId = CurrencyId;
+	type WeightInfo = ();
+	type ExistentialDeposits = ExistentialDeposits;
+	type OnDust = ();
+	type MaxLocks = MaxLocks;
+	type ReserveIdentifier = ReserveIdentifier;
+	type MaxReserves = frame_support::traits::ConstU32<2>;
+	type DustRemovalWhitelist = Everything;
+	type OnNewTokenAccount = ();
+	type OnKilledTokenAccount = ();
+}
+
 impl pallet_balances::Config for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
@@ -74,21 +120,39 @@ impl pallet_balances::Config for Test {
 	type WeightInfo = ();
 }
 
-impl pallet_assets::Config for Test {
-	type Event = Event;
-	type Balance = u64;
+pub struct CurrencyIdGenerator;
+
+impl CurrencyFactory for CurrencyIdGenerator {
 	type AssetId = CurrencyId;
-	type Currency = Balances;
-	type ForceOrigin = frame_system::EnsureRoot<AccountId>;
-	type AssetDeposit = ConstU64<1>;
-	type AssetAccountDeposit = ConstU64<10>;
-	type MetadataDepositBase = ConstU64<1>;
-	type MetadataDepositPerByte = ConstU64<1>;
-	type ApprovalDeposit = ConstU64<1>;
-	type StringLimit = ConstU32<50>;
-	type Freezer = ();
+	type Balance = Balance;
+
+	fn create(_: RangeId, _: Self::Balance) -> Result<Self::AssetId, sp_runtime::DispatchError> {
+		Ok(CurrencyId(1))
+	}
+
+	fn protocol_asset_id_to_unique_asset_id(
+		_protocol_asset_id: u32,
+		_range_id: RangeId,
+	) -> Result<Self::AssetId, DispatchError> {
+		Ok(CurrencyId(1))
+	}
+
+	fn unique_asset_id_to_protocol_asset_id(_unique_asset_id: Self::AssetId) -> u32 {
+		1
+	}
+}
+
+impl pallet_assets::Config for Test {
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type NativeAssetId = NativeAssetId;
+	type GenerateCurrencyId = CurrencyIdGenerator;
+	type NativeCurrency = Balances;
+	type MultiCurrency = Tokens;
+	type GovernanceRegistry = GovernanceRegistry;
 	type WeightInfo = ();
-	type Extra = ();
+	type AdminOrigin = EnsureRoot<AccountId>;
+	type CurrencyValidator = ValidateCurrencyId;
 }
 
 impl pallet_timestamp::Config for Test {
@@ -188,5 +252,10 @@ impl Config for Test {
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	frame_system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+	let origin = frame_benchmarking::account("signer", 0, 0xCAFEBABE);
+	let balances: Vec<(AccountId, Balance)> = vec![(origin, 1_000_000_000_000_000_000)];
+	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap().into();
+	let genesis = pallet_balances::GenesisConfig::<Test> { balances };
+	genesis.assimilate_storage(&mut t).unwrap();
+	t.into()
 }
