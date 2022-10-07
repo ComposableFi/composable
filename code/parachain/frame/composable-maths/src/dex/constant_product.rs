@@ -91,6 +91,59 @@ where
 	Ok(ao)
 }
 
+/// Compute the amount of the output token given the amount of the input token.
+///
+/// Returns a tuple containing `(a_out, fee)`.
+/// To get `a_out` without accounting for the fee, set `f = 0`.
+///
+/// **NOTE:** Weights must be normalized.
+///
+/// From https://balancer.fi/whitepaper.pdf, equation (15)
+///
+/// # Paramaters
+/// * `w_i` - Weight of the input token
+/// * `w_o` - Weight of the output token
+/// * `b_i` - Balance of the input token
+/// * `b_o` - Balance of the output token
+/// * `a_sent` - Amount of the input token sent by the user
+/// * `f` - Total swap fee
+pub fn compute_out_given_in_new<T: PerThing>(
+	w_i: T,
+	w_o: T,
+	b_i: u128,
+	b_o: u128,
+	a_sent: u128,
+	f: T,
+) -> Result<(u128, u128), ArithmeticError> {
+	let w_i = Decimal::from(w_i.deconstruct().into());
+	let w_o = Decimal::from(w_o.deconstruct().into());
+	let b_i = Decimal::from(b_i);
+	let b_o = Decimal::from(b_o);
+	let a_sent = Decimal::from(a_sent);
+
+	let weight_ratio = w_i.safe_div(&w_o)?;
+	// NOTE(connor): Use if to prevent pointless conversions if `f` is zero
+	let left_from_fee = if f.is_zero() {
+		Decimal::ONE
+	} else {
+		Decimal::from(f.left_from_one().deconstruct().into())
+			.safe_div(&Decimal::from(T::one().deconstruct().into()))?
+	};
+
+	let value = b_i.safe_add(&a_sent.safe_mul(&left_from_fee)?)?;
+	let value = b_i.safe_div(&value)?;
+	let value = value.checked_powd(weight_ratio).ok_or(ArithmeticError::Overflow)?;
+	let value = Decimal::ONE.safe_sub(&value)?;
+
+	let a_out = b_o.safe_mul(&value)?.to_u128().ok_or(ArithmeticError::Overflow)?;
+	let fee = a_sent
+		.safe_mul(&Decimal::ONE.safe_sub(&left_from_fee)?)?
+		.to_u128()
+		.ok_or(ArithmeticError::Overflow)?;
+
+	Ok((a_out, fee))
+}
+
 /// From https://balancer.fi/whitepaper.pdf, equation (20)
 /// Compute the amount of quote asset (in) given the expected amount of base asset (out).
 /// - `wi` the weight on the quote asset
