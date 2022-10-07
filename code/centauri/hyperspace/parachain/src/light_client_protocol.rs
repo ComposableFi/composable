@@ -20,8 +20,8 @@ use ics11_beefy::client_message::{
 };
 use pallet_ibc::light_clients::{AnyClientMessage, AnyClientState};
 use primitives::{
-    query_maximum_height_for_timeout_proofs, mock::LocalClientTypes, Chain, IbcProvider,
-    KeyProvider, UpdateMessage, UpdateType,
+	mock::LocalClientTypes, query_maximum_height_for_timeout_proofs, Chain, IbcProvider,
+	KeyProvider, UpdateType,
 };
 use serde::{Deserialize, Serialize};
 use sp_core::H256;
