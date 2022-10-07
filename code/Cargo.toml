@@ -39,7 +39,6 @@ members = [
   "parachain/runtime/dali-wasm",
   "parachain/runtime/composable",
   "parachain/runtime/composable-wasm",
-  "utils/common",
   "utils/price-feed",
   "utils/collator-sidecar",
   # "simnode/simnode-node",
