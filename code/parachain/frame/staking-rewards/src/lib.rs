@@ -711,6 +711,17 @@ pub mod pallet {
 
 					let existential_deposit = T::ExistentialDeposits::get(&pool_asset);
 
+					println!("existential_deposit, {:?}", existential_deposit);
+					println!("lock.unlock_penalty, {:?}", lock.unlock_penalty);
+					println!(
+						"lock.unlock_penalty.left_from_one(), {:?}",
+						lock.unlock_penalty.left_from_one()
+					);
+					println!(
+						"lock.unlock_penalty.left_from_one().mul(minimum_staking_amount), {:?}",
+						lock.unlock_penalty.left_from_one().mul(minimum_staking_amount)
+					);
+
 					ensure!(
 						lock.unlock_penalty.left_from_one().mul(minimum_staking_amount) >=
 							existential_deposit,
