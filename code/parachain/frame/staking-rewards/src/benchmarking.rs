@@ -39,6 +39,7 @@ fn get_reward_pool<T: Config>(
 		lock: lock_config::<T>(),
 		share_asset_id: X_ASSET_ID.into(),
 		financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID.into(),
+		minimum_staking_amount: 10_000_u128.into(),
 	}
 }
 
@@ -65,7 +66,7 @@ fn reward_config<T: Config>(
 				asset_id.into(),
 				RewardConfig {
 					max_rewards: 100_u128.into(),
-					reward_rate: RewardRate::per_second(1_u128),
+					reward_rate: RewardRate::per_second(10_u128),
 				},
 			)
 		})
@@ -248,6 +249,7 @@ benchmarks! {
 			lock: lock_config::<T>(),
 			share_asset_id: 1000.into(),
 			financial_nft_asset_id: 2000.into(),
+			minimum_staking_amount: 10_000.into(),
 		}).unwrap();
 
 		let now = now + seconds_per_block;
