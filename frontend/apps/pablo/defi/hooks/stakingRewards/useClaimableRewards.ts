@@ -4,42 +4,98 @@ import { useAssets } from "../assets";
 import { useStakingPositions } from "./useStakingPositions";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import BigNumber from "bignumber.js";
+import { Stake, StakingRewardPool } from "@/defi/types";
 
 export interface ClaimableAsset extends MockedAsset {
-    claimable: BigNumber;
+  claimable: BigNumber;
 }
 
 type ClaimableRewardsProps = {
-    stakedAssetId?: string;
+  stakedAssetId?: string;
+};
+
+function claimOfStake(
+  stake: Stake,
+  stakingRewardPool: StakingRewardPool,
+  rewardAssetId: string
+): BigNumber {
+  if (stakingRewardPool.totalShares.eq(0)) {
+    return new BigNumber(0);
+  } else {
+    let inflation = stake.reductions[rewardAssetId] || new BigNumber(0);
+
+    return stakingRewardPool.rewards[rewardAssetId].totalRewards
+      .times(stake.share)
+      .div(stakingRewardPool.totalShares)
+      .minus(inflation);
+  }
 }
 
-export function useClaimableRewards({ stakedAssetId }: ClaimableRewardsProps): Array<ClaimableAsset> {
-    const {
-        stakingRewardPool,
-        // ownedFinancialNftsHistory,
-        // stakes,
-    } = useStakingPositions({
-        stakedAssetId
+function calculateClaim(
+  stake: Stake,
+  stakingRewardPool: StakingRewardPool,
+  acountForPenalty: boolean = false
+): [string, BigNumber][] {
+  return Object.keys(stakingRewardPool.rewards).map((assetId) => {
+    let claimable = claimOfStake(stake, stakingRewardPool, assetId);
+    let is_penalized =
+      stake.lock.startedAt.plus(stake.lock.duration).toNumber() > Date.now();
+
+    if (!stakingRewardPool.rewards[assetId].totalRewards.eq(0)) {
+      if (is_penalized && acountForPenalty) {
+        claimable = claimable.minus(
+          claimable.times(stakingRewardPool.lock.unlockPenalty)
+        );
+      }
+    }
+
+    claimable = BigNumber.min(
+      claimable,
+      stakingRewardPool.rewards[assetId].totalRewards.minus(
+        stakingRewardPool.rewards[assetId].claimedRewards
+      )
+    );
+
+    return [assetId, claimable];
+  });
+}
+
+export function useClaimableRewards({
+  stakedAssetId,
+}: ClaimableRewardsProps): Array<ClaimableAsset> {
+  const { stakingRewardPool, stakes } = useStakingPositions({
+    stakedAssetId,
+  });
+
+  const rewardAssets = useAssets(
+    stakingRewardPool ? Object.keys(stakingRewardPool.rewards) : []
+  );
+
+  const claimableAmounts = useMemo(() => {
+    if (!stakingRewardPool) return [];
+
+    return stakes.map((_stake) => {
+      return calculateClaim(_stake, stakingRewardPool, false);
     });
+  }, [stakes, stakingRewardPool]);
 
-    const rewardAssets = useAssets(
-        stakingRewardPool ? Object.keys(stakingRewardPool.rewards) : []
-    )
+  return useMemo(() => {
+    return rewardAssets.map((asset) => {
+      const assetId = asset.network[DEFAULT_NETWORK_ID];
+      let claimable = new BigNumber(0);
+      if (claimableAmounts.length > 0) {
+        const claimableFromStake = claimableAmounts.find(
+          (claimableFromStake) => {
+            return claimableFromStake.find(([id, val]) => id === assetId);
+          }
+        );
 
-    return useMemo(() => {
-        if (!stakingRewardPool) return [];
+        if (claimableFromStake) {
+          claimable = claimableFromStake[0][1];
+        }
+      }
 
-        const claimable = Object.keys(stakingRewardPool.rewards).map((curr) => {
-            const asset = rewardAssets.find(_asset => _asset.network[DEFAULT_NETWORK_ID] === curr);
-
-            if (asset) {
-                let claimable = new BigNumber(0)
-                return { ... asset, claimable };
-            }
-
-            return undefined
-        })
-
-        return claimable.filter(x => !!x) as ClaimableAsset[]
-    }, [rewardAssets, stakingRewardPool])
+      return { ...asset, claimable };
+    });
+  }, [rewardAssets, claimableAmounts]);
 }
