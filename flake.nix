@@ -745,10 +745,14 @@
             };
 
             frontend-static-persistent = mkFrontendStatic {
-              subsquidEndpoint = "https://persistent.devnets.composablefinance.ninja/subsquid";
-              picassoEndpoint = "wss://persistent.devnets.composablefinance.ninja/parachain/alice";
-              kusamaEndpoint = "wss://persistent.devnets.composablefinance.ninja/relaychain/alice";
-              karuraEndpoint = "wss://persistent.devnets.composablefinance.ninja/karura/alice";
+              subsquidEndpoint =
+                "https://persistent.devnets.composablefinance.ninja/subsquid";
+              picassoEndpoint =
+                "wss://persistent.devnets.composablefinance.ninja/parachain/alice";
+              kusamaEndpoint =
+                "wss://persistent.devnets.composablefinance.ninja/relaychain/alice";
+              karuraEndpoint =
+                "wss://persistent.devnets.composablefinance.ninja/karura/alice";
             };
 
             frontend-static-firebase = mkFrontendStatic {
@@ -1166,13 +1170,59 @@
               devnet-specs.default;
             devnet-xcvm-program =
               pkgs.composable.mkDevnetProgram "devnet-xcvm" devnet-specs.xcvm;
+            arion-pure = import ./.nix/arion-pure.nix {
+              inherit pkgs;
+              inherit packages;
+              frontend = packages.frontend-static;
+            };
+            arion-up-program = pkgs.writeShellApplication {
+              name = "devnet-up";
+              runtimeInputs =
+                [ pkgs.arion pkgs.docker pkgs.coreutils pkgs.bash ];
+              text = ''
+                arion --prebuilt-file ${arion-pure} up --build --force-recreate -V --always-recreate-deps --remove-orphans
+              '';
+            };
+
+            persistent-devnet = import ./.nix/arion-pure.nix {
+              inherit pkgs;
+              inherit packages;
+              frontend = packages.frontend-static-persistent;
+            };
+            persistent-devnet-up-program = pkgs.writeShellApplication {
+              name = "devnet-up";
+              runtimeInputs =
+                [ pkgs.arion pkgs.docker pkgs.coreutils pkgs.bash ];
+              text = ''
+                arion --prebuilt-file ${persistent-devnet} up --build --force-recreate -V --always-recreate-deps --remove-orphans
+              '';
+            };
+
+            devnet-xcvm = import ./.nix/arion-xcvm.nix {
+              inherit pkgs;
+              inherit packages;
+            };
+            devnet-xcvm-up-program = pkgs.writeShellApplication {
+              name = "devnet-xcvm-up";
+              runtimeInputs =
+                [ pkgs.arion pkgs.docker pkgs.coreutils pkgs.bash ];
+              text = ''
+                arion --prebuilt-file ${devnet-xcvm} up --build --force-recreate -V --always-recreate-deps --remove-orphans
+              '';
+            };
+
           in rec {
             devnet = {
               type = "app";
               program = "${devnet-default-program}/bin/devnet-default";
             };
 
-            devnet-xcvm = {
+            persistent-devnet-up = {
+              type = "app";
+              program = "${persistent-devnet-up-program}/bin/devnet-up";
+            };
+
+            devnet-xcvm-up = {
               type = "app";
               program = "${devnet-xcvm-program}/bin/devnet-xcvm";
             };
@@ -1273,7 +1323,8 @@
             chain-spec = "picasso-dev";
           };
           book = eachSystemOutputs.packages.x86_64-linux.composable-book;
-          frontend = eachSystemOutputs.packages.x86_64-linux.frontend-static-persistent;
+          frontend =
+            eachSystemOutputs.packages.x86_64-linux.frontend-static-persistent;
         };
       };
       homeConfigurations = let
