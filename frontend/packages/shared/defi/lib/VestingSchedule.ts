@@ -71,7 +71,7 @@ export class VestingSchedule {
             return Object.values(_schedules as any)
                 .map((i) => VestingSchedule.fromJSON(i))
           } catch (err: any) {
-            console.error('[fromAddressAndAssetId] ', err);
+            console.error('[fromAddressAndAssetId] ', err.message);
             throw new Error(err.message);
           }
     }

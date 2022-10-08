@@ -7,6 +7,7 @@
   "dependencies": {
     "bn.js": "^5.2.1",
     "defi-interfaces": "*",
+    "moment": "^2.29.4",
     "tokens": "*"
   },
   "devDependencies": {

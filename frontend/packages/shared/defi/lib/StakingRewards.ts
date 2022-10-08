@@ -1,6 +1,7 @@
 import BigNumber from "bignumber.js";
 import { ApiPromise } from "@polkadot/api";
 import { fromChainIdUnit, fromPerbill } from "../unit";
+import moment from "moment";
 
 type StakingPoolRewardRatePeriod = "PerSecond";
 
@@ -98,6 +99,12 @@ export class StakingPoolReward {
 export class StakingRewardPoolLockConfig {
   durationPresets: Map<number, BigNumber>;
   unlockPenalty: BigNumber;
+
+  static calculatePresetExpiry(durationPreset: number): moment.Moment {
+    const timeNow = moment();
+    timeNow.add(durationPreset, "seconds");
+    return timeNow;
+  }
 
   static fromJSON(lockConfig: any): StakingRewardPoolLockConfig {
     try {

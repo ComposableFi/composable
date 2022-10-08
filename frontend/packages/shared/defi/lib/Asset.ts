@@ -1,5 +1,6 @@
 import { ApiPromise } from "@polkadot/api";
 import { fromChainIdUnit } from "../unit";
+import { DropdownOptionWithIcon } from "./types";
 import BigNumber from "bignumber.js";
 
 export class Asset {
@@ -8,7 +9,23 @@ export class Asset {
   protected __name: string;
   protected __symbol: string;
   protected __iconUrl: string;
-  protected __parachainAssetIds: Record<string, BigNumber>;
+  protected __parachainAssetIds: Map<string, BigNumber>;
+  /**
+   * Transform assets list
+   * to dropdown options
+   * @param {Array<Asset>} assets 
+   * @returns {DropdownOptionWithIcon[]}
+   */
+  static toDropdownList(assets: Asset[]): DropdownOptionWithIcon[] {
+    return assets.map((asset) => {
+      return {
+        label: asset.getName(),
+        shortLabel: asset.getSymbol(),
+        value: asset.getPicassoAssetId(),
+        icon: asset.getIconUrl()
+      } as DropdownOptionWithIcon
+    })
+  }
 
   constructor(
     api: ApiPromise,
@@ -22,7 +39,7 @@ export class Asset {
     this.__name = name;
     this.__symbol = symbol;
     this.__iconUrl = iconUrl;
-    this.__parachainAssetIds = {};
+    this.__parachainAssetIds = new Map<string, BigNumber>();
   }
 
   getPicassoAssetId(inBn: boolean = false): BigNumber | string {
@@ -40,7 +57,11 @@ export class Asset {
   getIconUrl(): string {
     return this.__iconUrl;
   }
-
+  /**
+   * Fetch balance of an account
+   * @param {string} account 
+   * @returns {Promise<BigNumber>}
+   */
   async balanceOf(account: string): Promise<BigNumber> {
     try {
       const _assetId = this.__api.createType(
@@ -58,7 +79,11 @@ export class Asset {
       return new BigNumber(0);
     }
   }
-
+  /**
+   * Fetch total issued amount
+   * of this asset
+   * @returns {Promise<BigNumber>}
+   */
   async totalIssued(): Promise<BigNumber> {
     try {
       const assetId = this.__api.createType(
@@ -70,5 +95,24 @@ export class Asset {
     } catch (err: any) {
       return new BigNumber(0);
     }
+  }
+  /**
+   * Set id on a different chain
+   * @param {string} chainId 
+   * @param {BigNumber} assetId
+   */
+  setIdOnChain(chainId: string, assetId: BigNumber) {
+    this.__parachainAssetIds.set(chainId, assetId)
+  }
+  /**
+   * Get Asset Id on a different chain
+   * @param {string} chainId 
+   * @param {boolean} inBn 
+   * @returns {BigNumber | string}
+   */
+  getIdOnChain(chainId: string, inBn: boolean = false): BigNumber | string {
+    const id = this.__parachainAssetIds.get(chainId);
+    if (!id) throw new Error(`Id not set for ${chainId}`);
+    return inBn ? id : id.toString();
   }
 }

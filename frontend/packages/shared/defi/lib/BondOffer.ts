@@ -16,7 +16,7 @@ export class BondOfferReward {
 
       return new BondOfferReward(amount, asset, maturity);
     } catch (err: any) {
-      console.error("[BondOffer]", err);
+      console.error("[BondOffer] ", err);
       throw new Error(err.message);
     }
   }
