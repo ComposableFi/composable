@@ -70,7 +70,10 @@ pub mod pallet {
 		WeightInfo,
 	};
 	use codec::FullCodec;
-	use composable_support::math::safe::{safe_multiply_by_rational, SafeArithmetic, SafeSub};
+	use composable_support::{
+		math::safe::{safe_multiply_by_rational, SafeArithmetic, SafeSub},
+		validation::TryIntoValidated,
+	};
 	use composable_traits::{
 		currency::{CurrencyFactory, LocalAssets, RangeId},
 		defi::{CurrencyPair, Rate},
@@ -93,6 +96,7 @@ pub mod pallet {
 		},
 		transactional, BoundedBTreeMap, PalletId, RuntimeDebug,
 	};
+	use sp_arithmetic::fixed_point::FixedU64;
 
 	use crate::liquidity_bootstrapping::LiquidityBootstrapping;
 	use composable_maths::dex::{
@@ -666,11 +670,23 @@ pub mod pallet {
 				.into_iter()
 				.try_collect()
 				.map_err(|_| Error::<T>::StakingPoolConfigError)?;
-			let duration_presets =
-				[(ONE_WEEK, Perbill::from_percent(1)), (ONE_MONTH, Perbill::from_percent(10))]
-					.into_iter()
-					.try_collect()
-					.map_err(|_| Error::<T>::StakingPoolConfigError)?;
+			let duration_presets = [
+				(
+					ONE_WEEK,
+					FixedU64::from_rational(101, 100)
+						.try_into_validated()
+						.expect("valid reward multiplier"),
+				),
+				(
+					ONE_MONTH,
+					FixedU64::from_rational(11, 10)
+						.try_into_validated()
+						.expect("valid reward multiplier"),
+				),
+			]
+			.into_iter()
+			.try_collect()
+			.map_err(|_| Error::<T>::StakingPoolConfigError)?;
 			let lock = LockConfig { duration_presets, unlock_penalty: Perbill::from_percent(5) };
 			let five_years_block = 5 * 365 * 24 * 60 * 60 / T::MsPerBlock::get();
 			// NOTE(connor): `start_block` must greater than current block
