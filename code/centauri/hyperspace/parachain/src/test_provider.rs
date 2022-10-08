@@ -397,12 +397,6 @@ where
 		self.submit_call(call).await.map(|_| ())
 	}
 
-	async fn ibc_events(&self) -> Pin<Box<dyn Stream<Item = IbcEvent> + Send + Sync>> {
-		let stream =
-			BroadcastStream::new(self.sender.subscribe()).map(|result| result.unwrap_or_default());
-		Box::pin(Box::new(stream))
-	}
-
 	async fn subscribe_blocks(&self) -> Pin<Box<dyn Stream<Item = u64> + Send + Sync>> {
 		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_ws_client) };
 		let stream = para_client

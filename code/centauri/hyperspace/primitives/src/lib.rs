@@ -96,6 +96,9 @@ pub trait IbcProvider {
 	where
 		T: Chain;
 
+	/// Return a stream that yields when new [`IbcEvents`] are parsed from a finality notification
+	async fn ibc_events(&self) -> Pin<Box<dyn Stream<Item = IbcEvent>>>;
+
 	/// Query client consensus state with proof
 	/// return the consensus height for the client along with the response
 	async fn query_client_consensus(
@@ -305,9 +308,6 @@ pub trait TestProvider: Chain + Clone + 'static {
 		channel_id: ChannelId,
 		timeout: pallet_ibc::Timeout,
 	) -> Result<(), Self::Error>;
-
-	/// Return a stream that yields when new [`IbcEvents`] are parsed from a finality notification
-	async fn ibc_events(&self) -> Pin<Box<dyn Stream<Item = IbcEvent> + Send + Sync>>;
 
 	/// Returns a stream that yields chain Block number and hash
 	async fn subscribe_blocks(&self) -> Pin<Box<dyn Stream<Item = u64> + Send + Sync>>;

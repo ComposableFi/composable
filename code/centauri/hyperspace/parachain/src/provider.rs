@@ -45,9 +45,10 @@ use grandpa_light_client_primitives::{FinalityProof, ParachainHeaderProofs};
 use ics11_beefy::client_state::ClientState as BeefyClientState;
 use pallet_ibc::{light_clients::HostFunctionsManager, HostConsensusProof};
 
+use futures::Stream;
 use ibc_proto::{google::protobuf::Any, ibc::core::connection::v1::IdentifiedConnection};
 use sp_runtime::traits::One;
-use std::{collections::BTreeMap, str::FromStr, time::Duration};
+use std::{collections::BTreeMap, pin::Pin, str::FromStr, time::Duration};
 
 #[async_trait::async_trait]
 impl<T: Config + Send + Sync> IbcProvider for ParachainClient<T>
@@ -84,6 +85,48 @@ where
 			.clone()
 			.query_latest_ibc_events(self, finality_event, counterparty)
 			.await
+	}
+
+	async fn ibc_events(&self) -> Pin<Box<dyn Stream<Item = IbcEvent>>> {
+		use futures::{stream, StreamExt};
+		use pallet_ibc::events::IbcEvent as RawIbcEvent;
+
+		let stream = self
+			.para_client
+			.events()
+			.subscribe()
+			.await
+			.expect("Failed to subscribe to events")
+			.filter_events::<(parachain::api::ibc::events::Events,)>()
+			.filter_map(|result| {
+				let events = match result {
+					Ok(ev) => ev,
+					Err(err) => {
+						log::error!("Error in IbcEvent stream: {err:?}");
+						return futures::future::ready(None)
+					},
+				};
+				let result = events
+					.event
+					.events
+					.into_iter()
+					.map(|ev| {
+						IbcEvent::try_from(RawIbcEvent::from(ev))
+							.map_err(|e| subxt::Error::Other(e.to_string()))
+					})
+					.collect::<Result<Vec<_>, _>>();
+
+				let events = match result {
+					Ok(ev) => ev,
+					Err(err) => {
+						log::error!("Failed to decode event: {err:?}");
+						return futures::future::ready(None)
+					},
+				};
+				futures::future::ready(Some(stream::iter(events)))
+			})
+			.flatten();
+		Box::pin(stream)
 	}
 
 	async fn query_client_consensus(

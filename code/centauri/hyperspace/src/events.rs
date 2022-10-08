@@ -29,10 +29,7 @@ use ibc::{
 	Height,
 };
 use ibc_proto::{google::protobuf::Any, ibc::core::client::v1::QueryConsensusStateResponse};
-use ics10_grandpa::client_state::ClientState as GrandpaClientState;
-use ics11_beefy::client_state::ClientState as BeefyClientState;
-use ics13_near::client_state::NearClientState;
-use pallet_ibc::light_clients::{AnyClientState, HostFunctionsManager};
+use pallet_ibc::light_clients::AnyClientState;
 use primitives::{error::Error, mock::LocalClientTypes, Chain};
 use tendermint_proto::Protobuf;
 

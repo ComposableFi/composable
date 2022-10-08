@@ -103,14 +103,14 @@ async fn setup_clients() -> (ParachainClient<DefaultConfig>, ParachainClient<Def
 		.await;
 	log::info!(target: "hyperspace", "Parachains have started block production");
 
-	// let clients_on_a = chain_a.query_clients().await.unwrap();
-	// let clients_on_b = chain_b.query_clients().await.unwrap();
+	let clients_on_a = chain_a.query_clients().await.unwrap();
+	let clients_on_b = chain_b.query_clients().await.unwrap();
 
-	// if !clients_on_a.is_empty() && !clients_on_b.is_empty() {
-	// 	chain_a.set_client_id(clients_on_b[0].clone());
-	// 	chain_b.set_client_id(clients_on_b[0].clone());
-	// 	return (chain_a, chain_b)
-	// }
+	if !clients_on_a.is_empty() && !clients_on_b.is_empty() {
+		chain_a.set_client_id(clients_on_b[0].clone());
+		chain_b.set_client_id(clients_on_b[0].clone());
+		return (chain_a, chain_b)
+	}
 
 	let (res_1, res_2) = futures::join!(
 		chain_a.set_pallet_params(true, true),
@@ -173,9 +173,9 @@ async fn main() {
 	logging::setup_logging();
 	// Run tests sequentially
 
-	// no timeouts
-	parachain_to_parachain_ibc_messaging_with_connection_delay().await;
 	// no timeouts + connection delay
+	parachain_to_parachain_ibc_messaging_with_connection_delay().await;
+	// no timeouts
 	parachain_to_parachain_ibc_messaging_without_connection_delay().await;
 
 	// todo: timeouts without connection delay
