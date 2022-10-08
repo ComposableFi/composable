@@ -26,7 +26,7 @@ primitives = { package = "grandpa-light-client-primitives", path = "../primitive
 light-client-common = { path = "../../../light-clients/common", default-features = false }
 
 [dev-dependencies]
-subxt = { git = "https://github.com/composableFi/subxt", rev = "f649deb5bba9740fc5e8d02afd1a288b89cebef6" }
+subxt = { git = "https://github.com/paritytech/subxt", rev = "51179a8b72472d0b43c91cda75a1ddc3fddb9555" }
 futures = "0.3.24"
 hex = "0.4.3"
 serde = "1.0.144"

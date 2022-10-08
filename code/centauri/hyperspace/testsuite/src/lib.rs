@@ -34,7 +34,7 @@ mod utils;
 pub async fn setup_connection_and_channel<A, B>(
 	chain_a: &A,
 	chain_b: &B,
-	connection_delay: u64,
+	connection_delay: Duration,
 ) -> (JoinHandle<()>, ChannelId, ChannelId, ConnectionId)
 where
 	A: TestProvider,
@@ -60,8 +60,7 @@ where
 		.await
 		.unwrap();
 
-	if !connections.is_empty() {
-		let connection = connections[0].clone();
+	for connection in connections {
 		let connection_id = ConnectionId::from_str(&connection.id).unwrap();
 		let connection_end = chain_a
 			.query_connection_end(latest_height, connection_id.clone())
@@ -70,35 +69,40 @@ where
 			.connection
 			.unwrap();
 
-		let channel = chain_a
+		let delay_period = Duration::from_nanos(connection_end.delay_period);
+
+		dbg!(&connection_delay);
+		dbg!(&delay_period);
+
+		if delay_period != connection_delay {
+			continue
+		}
+
+		let channels = chain_a
 			.query_connection_channels(latest_height, &connection_id)
 			.await
 			.unwrap()
-			.channels[0]
-			.clone();
-		let channel_id = ChannelId::from_str(&channel.channel_id).unwrap();
-		let channel_end = chain_a
-			.query_channel_end(latest_height, channel_id, PortId::transfer())
-			.await
-			.unwrap()
-			.channel
-			.unwrap();
-		let channel_end = ChannelEnd::try_from(channel_end).unwrap();
+			.channels;
 
-		dbg!(&connection_delay);
-		dbg!(connection_delay * 1000000000);
-		dbg!(&connection_end.delay_period);
+		for channel in channels {
+			let channel_id = ChannelId::from_str(&channel.channel_id).unwrap();
+			let channel_end = chain_a
+				.query_channel_end(latest_height, channel_id, PortId::transfer())
+				.await
+				.unwrap()
+				.channel
+				.unwrap();
+			let channel_end = ChannelEnd::try_from(channel_end).unwrap();
 
-		if channel_end.state == State::Open &&
-			channel.port_id == PortId::transfer().to_string() &&
-			connection_end.delay_period == connection_delay * 1000000000
-		{
-			return (
-				handle,
-				channel_id,
-				channel_end.counterparty().channel_id.unwrap().clone(),
-				channel_end.connection_hops[0].clone(),
-			)
+			if channel_end.state == State::Open && channel.port_id == PortId::transfer().to_string()
+			{
+				return (
+					handle,
+					channel_id,
+					channel_end.counterparty().channel_id.unwrap().clone(),
+					channel_end.connection_hops[0].clone(),
+				)
+			}
 		}
 	}
 
@@ -107,7 +111,7 @@ where
 		client_id: chain_a.client_id(),
 		counterparty: Counterparty::new(chain_b.client_id(), None, chain_b.connection_prefix()),
 		version: Some(ics03_connection::version::Version::default()),
-		delay_period: Duration::from_secs(connection_delay),
+		delay_period: connection_delay,
 		signer: chain_a.account_id(),
 	};
 	let msg = Any { type_url: msg.type_url(), value: msg.encode_vec() };

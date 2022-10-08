@@ -7,6 +7,7 @@ use ibc::{
 	tx_msg::Msg,
 };
 use parachain::{finality_protocol::FinalityProtocol, ParachainClient, ParachainClientConfig};
+use std::time::Duration;
 
 use subxt::tx::SubstrateExtrinsicParams;
 
@@ -97,7 +98,7 @@ async fn setup_clients() -> (ParachainClient<DefaultConfig>, ParachainClient<Def
 		.await
 		.unwrap()
 		.filter_map(|result| futures::future::ready(result.ok()))
-		.skip_while(|h| futures::future::ready(h.number < 85))
+		.skip_while(|h| futures::future::ready(h.number < 210))
 		.take(1)
 		.collect::<Vec<_>>()
 		.await;
@@ -168,8 +169,8 @@ async fn setup_clients() -> (ParachainClient<DefaultConfig>, ParachainClient<Def
 	(chain_a, chain_b)
 }
 
-#[tokio::main]
-async fn main() {
+#[tokio::test]
+async fn parachain_to_parachain_ibc_messaging_full_integration_test() {
 	logging::setup_logging();
 	// Run tests sequentially
 
@@ -177,8 +178,6 @@ async fn main() {
 	parachain_to_parachain_ibc_messaging_with_connection_delay().await;
 	// no timeouts
 	parachain_to_parachain_ibc_messaging_without_connection_delay().await;
-
-	// todo: timeouts without connection delay
 
 	// timeouts + connection delay
 	parachain_to_parachain_ibc_messaging_packet_height_timeout_with_connection_delay().await;
@@ -192,7 +191,7 @@ async fn main() {
 async fn parachain_to_parachain_ibc_messaging_without_connection_delay() {
 	let (mut chain_a, mut chain_b) = setup_clients().await;
 	let (handle, channel_id, channel_b, _connection_id) =
-		setup_connection_and_channel(&chain_a, &chain_b, 0).await;
+		setup_connection_and_channel(&chain_a, &chain_b, Duration::from_secs(0)).await;
 	handle.abort();
 	// Set channel whitelist and restart relayer loop
 	chain_a.set_channel_whitelist(vec![(channel_id, PortId::transfer())]);
@@ -210,7 +209,7 @@ async fn parachain_to_parachain_ibc_messaging_without_connection_delay() {
 async fn parachain_to_parachain_ibc_messaging_packet_height_timeout_with_connection_delay() {
 	let (mut chain_a, mut chain_b) = setup_clients().await;
 	let (handle, channel_id, channel_b, _connection_id) =
-		setup_connection_and_channel(&chain_a, &chain_b, 60 * 2).await;
+		setup_connection_and_channel(&chain_a, &chain_b, Duration::from_secs(60 * 2)).await;
 	handle.abort();
 	// Set channel whitelist and restart relayer loop
 	chain_a.set_channel_whitelist(vec![(channel_id, PortId::transfer())]);
@@ -228,7 +227,7 @@ async fn parachain_to_parachain_ibc_messaging_packet_height_timeout_with_connect
 async fn parachain_to_parachain_ibc_messaging_packet_timeout_timestamp_with_connection_delay() {
 	let (mut chain_a, mut chain_b) = setup_clients().await;
 	let (handle, channel_id, channel_b, _connection_id) =
-		setup_connection_and_channel(&chain_a, &chain_b, 60 * 2).await;
+		setup_connection_and_channel(&chain_a, &chain_b, Duration::from_secs(60 * 2)).await;
 	// Set channel whitelist and restart relayer loop
 	handle.abort();
 	chain_a.set_channel_whitelist(vec![(channel_id, PortId::transfer())]);
@@ -249,7 +248,7 @@ async fn parachain_to_parachain_ibc_messaging_packet_timeout_timestamp_with_conn
 async fn parachain_to_parachain_ibc_messaging_with_connection_delay() {
 	let (mut chain_a, mut chain_b) = setup_clients().await;
 	let (handle, channel_id, channel_b, _connection_id) =
-		setup_connection_and_channel(&chain_a, &chain_b, 60 * 5).await; // 5 mins delay
+		setup_connection_and_channel(&chain_a, &chain_b, Duration::from_secs(60 * 5)).await; // 5 mins delay
 	handle.abort();
 	// Set channel whitelist and restart relayer loop
 	chain_a.set_channel_whitelist(vec![(channel_id, PortId::transfer())]);
@@ -266,7 +265,7 @@ async fn parachain_to_parachain_ibc_messaging_with_connection_delay() {
 async fn parachain_to_parachain_ibc_channel_close() {
 	let (mut chain_a, mut chain_b) = setup_clients().await;
 	let (handle, channel_id, channel_b, _connection_id) =
-		setup_connection_and_channel(&chain_a, &chain_b, 60 * 2).await;
+		setup_connection_and_channel(&chain_a, &chain_b, Duration::from_secs(60 * 2)).await;
 	handle.abort();
 	// Set channel whitelist and restart relayer loop
 	chain_a.set_channel_whitelist(vec![(channel_id, PortId::transfer())]);
@@ -286,7 +285,7 @@ async fn parachain_to_parachain_ibc_channel_close() {
 async fn parachain_to_parachain_ibc_messaging_packet_timeout_on_channel_close() {
 	let (mut chain_a, mut chain_b) = setup_clients().await;
 	let (handle, channel_id, channel_b, _connection_id) =
-		setup_connection_and_channel(&chain_a, &chain_b, 0).await;
+		setup_connection_and_channel(&chain_a, &chain_b, Duration::from_secs(0)).await;
 	handle.abort();
 	// Set channel whitelist and restart relayer loop
 	chain_a.set_channel_whitelist(vec![(channel_id, PortId::transfer())]);

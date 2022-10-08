@@ -1,6 +1,6 @@
 #![allow(clippy::all)]
 
-use std::{fmt::Display, str::FromStr, sync::Arc};
+use std::{str::FromStr, sync::Arc};
 
 pub mod chain;
 pub mod error;
@@ -12,7 +12,7 @@ pub mod signer;
 pub mod utils;
 
 pub mod finality_protocol;
-#[cfg(feature = "testing")]
+#[cfg(any(test, feature = "testing"))]
 pub mod test_provider;
 
 use error::Error;
@@ -40,18 +40,16 @@ use subxt::{
 use tokio::sync::broadcast::{self, Sender};
 
 use crate::utils::{fetch_max_extrinsic_weight, unsafe_cast_to_jsonrpsee_client};
-use primitives::{Chain, KeyProvider};
+use primitives::KeyProvider;
 
 use crate::{finality_protocol::FinalityProtocol, signer::ExtrinsicSigner};
 use grandpa_light_client_primitives::ParachainHeadersWithFinalityProof;
 use grandpa_prover::GrandpaProver;
-use ibc::tx_msg::Msg;
 use ics10_grandpa::client_state::ClientState as GrandpaClientState;
 use jsonrpsee_ws_client::WsClientBuilder;
 use sp_keystore::testing::KeyStore;
 use sp_runtime::traits::{One, Zero};
 use subxt::tx::{SubstrateExtrinsicParamsBuilder, TxPayload};
-use tendermint_proto::Protobuf;
 
 /// Implements the [`crate::Chain`] trait for parachains.
 /// This is responsible for:

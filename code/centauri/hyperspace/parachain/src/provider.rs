@@ -36,7 +36,7 @@ use ibc::{
 };
 use ibc_proto::ibc::core::{channel::v1::QueryChannelsResponse, client::v1::IdentifiedClientState};
 use ibc_rpc::{IbcApiClient, PacketInfo};
-use primitives::{Chain, IbcProvider, KeyProvider, UpdateMessage, UpdateType};
+use primitives::{Chain, IbcProvider, KeyProvider, UpdateType};
 use sp_core::H256;
 
 use crate::finality_protocol::FinalityEvent;
