@@ -27,9 +27,9 @@ export class BondOfferReward {
     this.__maturity = maturity;
   }
 
-  // get rewardAssetId(): BigNumber {
-  //   return this.__asset;
-  // }
+  getRewardAssetId(inBn: boolean = false): BigNumber | string {
+    return inBn ? this.__asset : this.__asset.toString();
+  }
 
   // get rewardAmount(): BigNumber {
   //   return this.__amount;
@@ -40,7 +40,7 @@ export class BondOfferReward {
   // }
 }
 
-export class BondOfferV1 {
+export class BondOffer {
   protected __offerId: BigNumber;
   protected __asset: BigNumber;
   protected __beneficiary: string;
@@ -49,7 +49,7 @@ export class BondOfferV1 {
   protected __maturity: OfferMaturity;
   protected __reward: BondOfferReward;
 
-  static fromJSON(index: number, beneficiary: string, offer: any): BondOfferV1 {
+  static fromJSON(index: number, beneficiary: string, offer: any): BondOffer {
     try {
       const offerId = new BigNumber(index);
       const asset = new BigNumber(offer.asset);
@@ -65,7 +65,7 @@ export class BondOfferV1 {
           }
         : "Infinite";
 
-      return new BondOfferV1(
+      return new BondOffer(
         offerId,
         asset,
         beneficiary,
@@ -75,7 +75,7 @@ export class BondOfferV1 {
         reward
       );
     } catch (err: any) {
-      console.error("[BondOffer]", err);
+      console.error("[BondOffer] ", err);
       throw new Error(err.message);
     }
   }

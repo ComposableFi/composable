@@ -43,21 +43,32 @@ export class BasePabloPool implements Exchangeable {
     return this.__api.createType("AccountId32", poolAccount).toString();
   }
 
-  // get pair(): PabloPoolPair {
-  //   return this.__pair;
-  // }
+  getPair(): PabloPoolPair {
+    return this.__pair;
+  }
 
-  // get feeConfig(): PabloPoolFeeConfig {
-  //   return this.feeConfig;
-  // }
+  getFeeConfig(): PabloPoolFeeConfig {
+    return this.__feeConfig;
+  }
 
-  // get poolId(): string {
-  //   return this.__poolId.toString();
-  // }
+  getPoolId(inBn: boolean = false): BigNumber | string {
+    return inBn ? this.__poolId : this.__poolId.toString();
+  }
 
-  async getAssetLiquidity(assetId: string): Promise<BigNumber> {
+  async getAssetLiquidity(
+    assetId: string,
+    name: string = "",
+    symbol: string = "",
+    iconUrl: string = ""
+  ): Promise<BigNumber> {
     const accountId = this.getAccountId();
-    const asset = new Asset(this.__api, new BigNumber(assetId), "", "", "")
+    const asset = new Asset(
+      this.__api,
+      new BigNumber(assetId),
+      name,
+      symbol,
+      iconUrl
+    );
     return asset.balanceOf(accountId);
   }
 
@@ -75,7 +86,7 @@ export class BasePabloPool implements Exchangeable {
       const spotPrice = pricesFor.get("spotPrice");
       return fromChainIdUnit(spotPrice ? BigInt(spotPrice.toString()) : 0);
     } catch (err: any) {
-      console.error('[getSpotPrice] ', err.message);
+      console.error("[getSpotPrice] ", err.message);
       return new BigNumber(0);
     }
   }

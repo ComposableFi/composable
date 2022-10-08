@@ -5,7 +5,10 @@ export class PabloPoolPair {
   base: BigNumber;
   quote: BigNumber;
 
-  static fromJSON(pair: { base: string | number; quote: string | number; }): PabloPoolPair {
+  static fromJSON(pair: {
+    base: string | number;
+    quote: string | number;
+  }): PabloPoolPair {
     try {
       return new PabloPoolPair(
         humanizedBnToBn(pair.base),
@@ -40,5 +43,13 @@ export class PabloPoolPair {
       base: this.quote.toString(),
       quote: this.base.toString(),
     };
+  }
+
+  getBaseAsset(): BigNumber {
+    return this.base;
+  }
+
+  getQuoteAsset(): BigNumber {
+    return this.quote;
   }
 }

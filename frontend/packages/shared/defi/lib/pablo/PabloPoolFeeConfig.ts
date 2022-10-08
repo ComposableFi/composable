@@ -2,9 +2,9 @@ import { fromPerbill } from "shared";
 import BigNumber from "bignumber.js";
 
 export class PabloPoolFeeConfig {
-  feeRate: BigNumber;
-  ownerFeeRate: BigNumber;
-  protocolFeeRate: BigNumber;
+  protected __feeRate: BigNumber;
+  protected __ownerFeeRate: BigNumber;
+  protected __protocolFeeRate: BigNumber;
 
   static fromJSON(feeConfig: {
     feeRate: string;
@@ -23,8 +23,24 @@ export class PabloPoolFeeConfig {
     ownerFeeRate: BigNumber,
     protocolFeeRate: BigNumber
   ) {
-    this.feeRate = feeRate;
-    this.ownerFeeRate = ownerFeeRate;
-    this.protocolFeeRate = protocolFeeRate;
+    this.__feeRate = feeRate;
+    this.__ownerFeeRate = ownerFeeRate;
+    this.__protocolFeeRate = protocolFeeRate;
+  }
+
+  toJSON(): {
+    feeRate: string;
+    ownerFeeRate: string;
+    protocolFeeRate: string
+  } {
+    return {
+      feeRate: this.__feeRate.toString(),
+      ownerFeeRate: this.__ownerFeeRate.toString(),
+      protocolFeeRate: this.__protocolFeeRate.toString(),
+    }
+  }
+
+  getFeeRate(): BigNumber {
+    return this.__feeRate;
   }
 }

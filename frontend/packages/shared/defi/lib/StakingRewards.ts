@@ -24,6 +24,13 @@ export class StakingPoolRewardRate {
     this.period = period;
     this.amount = amount;
   }
+
+  toJSON(): { period: string; amount: string } {
+    return {
+      period: this.period.toString(),
+      amount: this.amount.toString(),
+    };
+  }
 }
 
 export class StakingPoolReward {

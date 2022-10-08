@@ -42,6 +42,22 @@ class LiquidityBootstrappingPoolSaleConfig {
         this.initialWeight = initialWeight;
         this.finalWeight = finalWeight;
     }
+
+    getSaleStartBlock(): BigNumber {
+        return this.start;
+    }
+
+    getSaleEndBlock(): BigNumber {
+        return this.end;
+    }
+
+    getInitialWeight(): number {
+        return this.initialWeight;
+    }
+
+    getFinalWeight(): number {
+        return this.finalWeight;
+    }
 }
 
 export class PabloLiquidityBootstrappingPool extends BasePabloPool {
@@ -95,9 +111,9 @@ export class PabloLiquidityBootstrappingPool extends BasePabloPool {
         this.__saleConfig = saleConfig;
     }
 
-    // get saleConfig() {
-    //     return this.__saleConfig;
-    // }
+    getSaleConfig() {
+        return this.__saleConfig;
+    }
 
     async getDuration(averageBlockTime: BigNumber): Promise<number> {
         let nowBn = await this.__api.query.timestamp.now();

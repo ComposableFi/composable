@@ -25,21 +25,21 @@ export class Asset {
     this.__parachainAssetIds = {};
   }
 
-  // get picassoAssetId(): string {
-  //     return this.__picassoAssetId.toString();
-  // }
+  getPicassoAssetId(inBn: boolean = false): BigNumber | string {
+    return inBn ? this.__picassoAssetId : this.__picassoAssetId.toString();
+  }
 
-  // get symbol() {
-  //     return this.__symbol;
-  // }
+  getSymbol(): string {
+    return this.__symbol;
+  }
 
-  // get name() {
-  //     return this.__name;
-  // }
+  getName() {
+    return this.__name;
+  }
 
-  // get iconUrl() {
-  //     return this.__iconUrl;
-  // }
+  getIconUrl(): string {
+    return this.__iconUrl;
+  }
 
   async balanceOf(account: string): Promise<BigNumber> {
     try {
@@ -55,6 +55,19 @@ export class Asset {
       return fromChainIdUnit(BigInt(balance.toString()));
     } catch (err: any) {
       console.error("[balanceOf]", err.message);
+      return new BigNumber(0);
+    }
+  }
+
+  async totalIssued(): Promise<BigNumber> {
+    try {
+      const assetId = this.__api.createType(
+        "u128",
+        this.getPicassoAssetId() as string
+      );
+      const totalIssued = await this.__api.query.tokens.totalIssuance(assetId);
+      return fromChainIdUnit(BigInt(totalIssued.toString()));
+    } catch (err: any) {
       return new BigNumber(0);
     }
   }

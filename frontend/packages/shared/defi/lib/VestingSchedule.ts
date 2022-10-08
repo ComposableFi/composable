@@ -24,18 +24,28 @@ export class VesingScheduleWindow {
         }
     }
 
+    toJSON(): {
+        start: string;
+        period: string
+    } {
+        return {
+            start: this.__start.toString(),
+            period: this.__period.toString()
+        }
+    }
+
     constructor(start: BigNumber, period: BigNumber) {
         this.__start = start;
         this.__period = period;
     }
 
-    // get start() {
-    //     return this.__start;
-    // }
+    getStart(): BigNumber {
+        return this.__start;
+    }
 
-    // get period() {
-    //     return this.__period;
-    // }
+    getPeriod(): BigNumber {
+        return this.__period;
+    }
 }
 
 export class VestingSchedule {
