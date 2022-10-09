@@ -1,70 +1,101 @@
-{ nixpkgs, devnet-dali, devnet-picasso, book, gce-input, frontend }:
+{ nixpkgs, devnet-dali, devnet-picasso, book, gce-input, frontend, rev }:
 let
+  region = "europe-central2-c";
   persistent-machine = let
-    pabloPort = 8110;
-    picassoPort = 8111;
     domain = "persistent.devnets.composablefinance.ninja";
-  in import ./devnet-gce.nix {
-    inherit gce-input;
-    inherit book;
-    inherit domain;
-    devnet = devnet-dali;
-    disk-size = 200;
     machine-name = "composable-persistent-devnet";
-    # Overwrite the devnet to avoid restarting for lease period (runtimemaxsec)
-    extra-services = { pkgs, ... }: {
-      systemd.services.composable-devnet = {
+  in {
+    "${machine-name}" = args@{ pkgs, resources, ... }: {
+      deployment = {
+        targetEnv = "gce";
+        gce = gce-input // {
+          inherit region;
+          machineName = machine-name;
+          network = resources.gceNetworks.composable-devnet;
+          instanceType = "n2-standard-4";
+          rootDiskSize = 200;
+          tags = [ "http" "https" ];
+        };
+      };
+      virtualisation.docker.enable = true;
+      nix = {
+        enable = true;
+        gc.automatic = true;
+        settings = {
+          auto-optimise-store = true;
+          experimental-features = [ "nix-command" "flakes" ];
+        };
+        package = pkgs.nixUnstable;
+        useSandbox = "relaxed";
+        binaryCaches = [
+          "https://nix-community.cachix.org/"
+          "https://composable-community.cachix.org/"
+        ];
+        binaryCachePublicKeys = [
+          "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+          "composable-community.cachix.org-1:GG4xJNpXJ+J97I8EyJ4qI5tRTAJ4i7h+NK2Z32I8sK8="
+        ];
+      };
+      networking.firewall.allowedTCPPorts = [ 80 443 ];
+      systemd.services.devnet = {
         wantedBy = [ "multi-user.target" ];
         after = [ "network.target" ];
         description = "Composable Devnet";
         serviceConfig = {
           Type = "simple";
           User = "root";
-          ExecStart =
-            "${devnet-dali.script}/bin/run-devnet-${devnet-dali.chain-spec}";
+          LimitNOFILE = 1048576;
+          ExecStart = "${
+              pkgs.writeShellApplication {
+                name = "run-devnet";
+                runtimeInputs = [ pkgs.nixUnstable pkgs.git ];
+                text =
+                  "nix run github:ComposableFi/Composable/${rev}#persistent-devnet-up -L";
+              }
+            }/bin/run-devnet";
           Restart = "always";
         };
       };
-      systemd.services.pablo = {
-        wantedBy = [ "multi-user.target" ];
-        after = [ "network.target" ];
-        description = "Composable Pablo Frontend";
-        serviceConfig = {
-          Type = "simple";
-          User = "root";
-          ExecStart = "${pkgs.miniserve}/bin/miniserve -p ${
-              builtins.toString pabloPort
-            } --spa --index index.html ${frontend}/pablo";
-          Restart = "always";
-        };
+      security.acme = {
+        acceptTerms = true;
+        defaults = { email = "hussein@composable.finance"; };
       };
-      systemd.services.picasso = {
-        wantedBy = [ "multi-user.target" ];
-        after = [ "network.target" ];
-        description = "Composable Picasso Frontend";
-        serviceConfig = {
-          Type = "simple";
-          User = "root";
-          ExecStart = "${pkgs.miniserve}/bin/miniserve -p ${
-              builtins.toString picassoPort
-            } --spa --index index.html ${frontend}/picasso";
-          Restart = "always";
-        };
-      };
-    };
-    extra-nginx-hosts = args: {
-      "pablo.${domain}" = {
-        enableACME = true;
-        forceSSL = true;
-        locations."/" = {
-          proxyPass = "http://127.0.0.1:${builtins.toString pabloPort}/";
-        };
-      };
-      "picasso.${domain}" = {
-        enableACME = true;
-        forceSSL = true;
-        locations."/" = {
-          proxyPass = "http://127.0.0.1:${builtins.toString picassoPort}/";
+      services.nginx = {
+        enable = true;
+        enableReload = true;
+        recommendedOptimisation = true;
+        recommendedGzipSettings = true;
+        serverNamesHashBucketSize = 128;
+        virtualHosts = let
+          proxyChain = name: port: {
+            "/chain/${name}" = {
+              proxyPass = "http://127.0.0.1:${builtins.toString port}";
+              proxyWebsockets = true;
+              extraConfig = ''
+                proxy_set_header Origin "";
+                proxy_set_header Host 127.0.0.1:${builtins.toString port};
+              '';
+            };
+          };
+        in {
+          "${domain}" = {
+            enableACME = true;
+            forceSSL = true;
+            locations = proxyChain "composable" 9988 // proxyChain "rococo" 9944
+              // {
+                "/subsquid/" = { proxyPass = "http://127.0.0.1:4350/"; };
+              };
+          };
+          "pablo.${domain}" = {
+            enableACME = true;
+            forceSSL = true;
+            locations."/" = { proxyPass = "http://127.0.0.1:8001/"; };
+          };
+          "picasso.${domain}" = {
+            enableACME = true;
+            forceSSL = true;
+            locations."/" = { proxyPass = "http://127.0.0.1:8002/"; };
+          };
         };
       };
     };
@@ -72,6 +103,7 @@ let
 in builtins.foldl' (machines: devnet:
   let
     machine = import ./devnet-gce.nix {
+      inherit region;
       inherit gce-input;
       inherit devnet;
       inherit book;

@@ -41,10 +41,10 @@
     let
       # https://cloud.google.com/iam/docs/creating-managing-service-account-keys
       # or just use GOOGLE_APPLICATION_CREDENTIALS env as path to file
-      service-account-credential-key-file-input =
-        builtins.fromJSON (builtins.readFile ./devnet/ops.json);
+      service-account-credential-key-file-input = builtins.fromJSON
+        (builtins.readFile (builtins.getEnv "GOOGLE_APPLICATION_CREDENTIALS"));
 
-      gce-to-nix = { project_id, client_email, private_key }: {
+      gce-to-nix = { project_id, client_email, private_key, ... }: {
         project = project_id;
         serviceAccount = client_email;
         accessKey = private_key;
@@ -746,13 +746,13 @@
 
             frontend-static-persistent = mkFrontendStatic {
               subsquidEndpoint =
-                "https://persistent.devnets.composablefinance.ninja/subsquid";
+                "https://persistent.devnets.composablefinance.ninja/subsquid/graphql";
               picassoEndpoint =
-                "wss://persistent.devnets.composablefinance.ninja/parachain/alice";
+                "wss://persistent.devnets.composablefinance.ninja/chain/composable";
               kusamaEndpoint =
-                "wss://persistent.devnets.composablefinance.ninja/relaychain/alice";
+                "wss://persistent.devnets.composablefinance.ninja/chain/polkadot";
               karuraEndpoint =
-                "wss://persistent.devnets.composablefinance.ninja/karura/alice";
+                "wss://persistent.devnets.composablefinance.ninja/chain/karura";
             };
 
             frontend-static-firebase = mkFrontendStatic {
@@ -1325,6 +1325,7 @@
           book = eachSystemOutputs.packages.x86_64-linux.composable-book;
           frontend =
             eachSystemOutputs.packages.x86_64-linux.frontend-static-persistent;
+          rev = builtins.getEnv "GITHUB_SHA";
         };
       };
       homeConfigurations = let

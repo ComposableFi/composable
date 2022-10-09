@@ -1,9 +1,8 @@
-{ gce-input, book, devnet, disk-size, machine-name, domain
+{ region, gce-input, book, devnet, disk-size, machine-name, domain
 , extra-gce ? (args: { }), extra-services ? (args: { })
 , extra-nginx-root ? (args: { }), extra-nginx ? (args: { })
 , extra-nginx-virtual ? (args: { }), extra-nginx-hosts ? (args: { }) }:
-let region = "europe-central2-c";
-in {
+{
   resources.gceNetworks.composable-devnet = gce-input // {
     name = "composable-devnet-network";
     firewall = {
