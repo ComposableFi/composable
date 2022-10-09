@@ -96,6 +96,7 @@ jobs:
 
     - name: Deploy
       run: |
+        nix develop .#ci --show-trace -L --command nixops -- check --deployment devnet-gce --debug --show-trace --include composable-persistent-devnet || true
         nix develop .#ci --show-trace -L --command cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nixops -- deploy --allow-recreate --confirm --deployment devnet-gce --debug --show-trace --option narinfo-cache-negative-ttl 0 --include composable-persistent-devnet
       env:
         NIXOPS_STATE: ${{ runner.temp }}/deployment.nixops
