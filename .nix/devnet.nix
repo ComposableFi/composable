@@ -17,7 +17,6 @@ let
           tags = [ "http" "https" ];
         };
       };
-      virtualisation.docker.enable = true;
       nix = {
         enable = true;
         gc.automatic = true;
@@ -36,7 +35,10 @@ let
           "composable-community.cachix.org-1:GG4xJNpXJ+J97I8EyJ4qI5tRTAJ4i7h+NK2Z32I8sK8="
         ];
       };
-      networking.firewall.allowedTCPPorts = [ 80 443 ];
+      networking = {
+        firewall.allowedTCPPorts = [ 80 443 ];
+      };
+      virtualisation.docker.enable = true;
       systemd.services.devnet = {
         wantedBy = [ "multi-user.target" ];
         after = [ "network.target" ];
