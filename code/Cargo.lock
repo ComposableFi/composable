@@ -578,15 +578,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
-name = "autotools"
-version = "0.2.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c8138adefca3e5d2e73bfba83bd6eeaf904b26a7ac1b4a19892cfe16cc7e1701"
-dependencies = [
- "cc",
-]
-
-[[package]]
 name = "axum"
 version = "0.5.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -855,18 +846,15 @@ dependencies = [
  "beefy-primitives",
  "color-eyre 0.6.2",
  "derive_more",
- "frame-metadata",
  "frame-support",
  "hex",
  "hex-literal",
- "jsonrpsee 0.15.1",
  "jsonrpsee-core 0.14.0",
  "light-client-common",
  "pallet-beefy-mmr",
  "pallet-mmr",
  "pallet-mmr-rpc",
  "parity-scale-codec",
- "prettyplease",
  "rs_merkle",
  "serde_json",
  "sp-core",
@@ -877,8 +865,7 @@ dependencies = [
  "sp-std",
  "sp-trie",
  "subxt 0.24.0",
- "subxt-codegen 0.24.0",
- "syn 1.0.101",
+ "subxt-codegen 0.1.0",
  "tokio",
 ]
 
@@ -4535,14 +4522,12 @@ dependencies = [
  "color-eyre 0.6.2",
  "derive_more",
  "downcast-rs",
- "frame-metadata",
  "grandpa-light-client-primitives",
  "hex",
  "jsonrpsee 0.15.1",
  "jsonrpsee-ws-client 0.14.0",
  "light-client-common",
  "parity-scale-codec",
- "prettyplease",
  "sc-finality-grandpa-rpc",
  "serde",
  "sp-core",
@@ -4551,8 +4536,7 @@ dependencies = [
  "sp-state-machine",
  "sp-trie",
  "subxt 0.24.0",
- "subxt-codegen 0.24.0",
- "syn 1.0.101",
+ "subxt-codegen 0.1.0",
  "tokio",
 ]
 
@@ -5056,7 +5040,6 @@ dependencies = [
  "common",
  "derive_more",
  "env_logger",
- "frame-metadata",
  "frame-support",
  "frame-system",
  "futures 0.3.24",
@@ -5073,7 +5056,6 @@ dependencies = [
  "ics10-grandpa",
  "ics11-beefy",
  "itertools",
- "jsonrpsee 0.14.0",
  "jsonrpsee 0.15.1",
  "jsonrpsee-ws-client 0.14.0",
  "light-client-common",
@@ -5104,8 +5086,7 @@ dependencies = [
  "sp-trie",
  "ss58-registry",
  "subxt 0.24.0",
- "subxt-codegen 0.24.0",
- "syn 1.0.101",
+ "subxt-codegen 0.1.0",
  "tendermint-proto",
  "thiserror",
  "tokio",
@@ -5355,7 +5336,6 @@ dependencies = [
  "prost 0.10.4",
  "prost-build 0.11.1",
  "prost-types 0.10.1",
- "protobuf-src",
  "sc-finality-grandpa-rpc",
  "serde",
  "serde_json",
@@ -5392,7 +5372,6 @@ dependencies = [
  "prost 0.10.4",
  "prost-build 0.11.1",
  "prost-types 0.10.1",
- "protobuf-src",
  "serde",
  "serde_json",
  "sp-core",
@@ -5791,7 +5770,7 @@ checksum = "11e017217fcd18da0a25296d3693153dd19c8a6aadab330b3595285d075385d1"
 dependencies = [
  "jsonrpsee-client-transport 0.14.0",
  "jsonrpsee-core 0.14.0",
- "jsonrpsee-http-client 0.14.0",
+ "jsonrpsee-http-client",
  "jsonrpsee-http-server",
  "jsonrpsee-proc-macros",
  "jsonrpsee-types 0.14.0",
@@ -5808,7 +5787,6 @@ checksum = "8bd0d559d5e679b1ab2f869b486a11182923863b1b3ee8b421763cdd707b783a"
 dependencies = [
  "jsonrpsee-client-transport 0.15.1",
  "jsonrpsee-core 0.15.1",
- "jsonrpsee-http-client 0.15.1",
  "jsonrpsee-types 0.15.1",
  "jsonrpsee-ws-client 0.15.1",
 ]
@@ -5942,7 +5920,6 @@ dependencies = [
  "futures-channel",
  "futures-timer",
  "futures-util",
- "hyper 0.14.20",
  "jsonrpsee-types 0.15.1",
  "rustc-hash",
  "serde",
@@ -5970,26 +5947,6 @@ dependencies = [
  "thiserror",
  "tokio",
  "tracing",
-]
-
-[[package]]
-name = "jsonrpsee-http-client"
-version = "0.15.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "52f7c0e2333ab2115c302eeb4f137c8a4af5ab609762df68bbda8f06496677c9"
-dependencies = [
- "async-trait",
- "hyper 0.14.20",
- "hyper-rustls 0.23.0",
- "jsonrpsee-core 0.15.1",
- "jsonrpsee-types 0.15.1",
- "rustc-hash",
- "serde",
- "serde_json",
- "thiserror",
- "tokio",
- "tracing",
- "tracing-futures",
 ]
 
 [[package]]
@@ -11925,15 +11882,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "protobuf-src"
-version = "1.1.0+21.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c7ac8852baeb3cc6fb83b93646fb93c0ffe5d14bf138c945ceb4b9948ee0e3c1"
-dependencies = [
- "autotools",
-]
-
-[[package]]
 name = "psm"
 version = "0.1.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -14545,6 +14493,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "simnode-node"
+version = "0.1.0"
+dependencies = [
+ "composable-node",
+ "sc-cli",
+ "simnode-common",
+ "substrate-simnode",
+]
+
+[[package]]
 name = "simnode-runtime-apis"
 version = "0.1.0"
 source = "git+https://github.com/polytope-labs/substrate-simnode?branch=polkadot-v0.9.27#a7bae3e69784a81d29ccc47afe6d367adc2b3936"
@@ -15953,6 +15911,19 @@ dependencies = [
  "subxt-metadata 0.24.0",
  "thiserror",
  "tracing",
+]
+
+[[package]]
+name = "subxt-codegen"
+version = "0.1.0"
+dependencies = [
+ "color-eyre 0.6.2",
+ "frame-metadata",
+ "hex",
+ "jsonrpsee 0.14.0",
+ "parity-scale-codec",
+ "subxt-codegen 0.24.0",
+ "syn 1.0.101",
 ]
 
 [[package]]

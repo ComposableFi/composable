@@ -88,8 +88,8 @@ pub struct ParachainClient<T: subxt::Config> {
 	pub max_extrinsic_weight: u64,
 	/// Channels cleared for packet relay
 	pub channel_whitelist: Vec<(ChannelId, PortId)>,
-	/// Light client protocol
-	pub light_client_protocol: FinalityProtocol,
+	/// Finality protocol
+	pub finality_protocol: FinalityProtocol,
 }
 
 enum KeyType {
@@ -136,14 +136,14 @@ pub struct ParachainClientConfig {
 	pub client_id: Option<ClientId>,
 	/// Commitment prefix
 	pub commitment_prefix: Bytes,
-	/// Path to a keystore file
+	/// Raw private key for signing transactions
 	pub private_key: String,
 	/// used for encoding relayer address.
 	pub ss58_version: u8,
 	/// Channels cleared for packet relay
 	pub channel_whitelist: Vec<(ChannelId, PortId)>,
-	/// Light client protocol
-	pub light_client_protocol: FinalityProtocol,
+	/// Finality protocol
+	pub finality_protocol: FinalityProtocol,
 	/// Digital signature scheme
 	pub key_type: String,
 }
@@ -235,7 +235,7 @@ where
 			relay_ws_client,
 			ss58_version: Ss58AddressFormat::from(config.ss58_version),
 			channel_whitelist: config.channel_whitelist,
-			light_client_protocol: config.light_client_protocol,
+			finality_protocol: config.finality_protocol,
 		})
 	}
 

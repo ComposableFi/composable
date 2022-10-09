@@ -64,10 +64,6 @@ where
 		self.client_id = Some(client_id)
 	}
 
-	pub fn set_channel_whitelist(&mut self, channel_whitelist: Vec<(ChannelId, PortId)>) {
-		self.channel_whitelist = channel_whitelist;
-	}
-
 	/// Construct a beefy client state to be submitted to the counterparty chain
 	pub async fn construct_beefy_client_state(
 		&self,
@@ -408,5 +404,9 @@ where
 			});
 
 		Box::pin(Box::new(stream))
+	}
+
+	fn set_channel_whitelist(&mut self, channel_whitelist: Vec<(ChannelId, PortId)>) {
+		self.channel_whitelist = channel_whitelist;
 	}
 }

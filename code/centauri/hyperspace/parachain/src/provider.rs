@@ -81,7 +81,7 @@ where
 	where
 		C: Chain,
 	{
-		self.light_client_protocol
+		self.finality_protocol
 			.clone()
 			.query_latest_ibc_events(self, finality_event, counterparty)
 			.await
@@ -508,7 +508,7 @@ where
 	}
 
 	fn client_type(&self) -> ClientType {
-		match self.light_client_protocol {
+		match self.finality_protocol {
 			FinalityProtocol::Grandpa => GrandpaClientState::<HostFunctionsManager>::client_type(),
 			FinalityProtocol::Beefy => BeefyClientState::<HostFunctionsManager>::client_type(),
 		}

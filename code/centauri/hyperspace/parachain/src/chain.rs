@@ -98,7 +98,7 @@ where
 	async fn finality_notifications(
 		&self,
 	) -> Pin<Box<dyn Stream<Item = <Self as IbcProvider>::FinalityEvent> + Send + Sync>> {
-		match self.light_client_protocol {
+		match self.finality_protocol {
 			FinalityProtocol::Grandpa => {
 				let subscription =
 					GrandpaApiClient::<JustificationNotification, sp_core::H256, u32>::subscribe_justifications(

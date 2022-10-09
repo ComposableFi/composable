@@ -311,6 +311,9 @@ pub trait TestProvider: Chain + Clone + 'static {
 
 	/// Returns a stream that yields chain Block number and hash
 	async fn subscribe_blocks(&self) -> Pin<Box<dyn Stream<Item = u64> + Send + Sync>>;
+
+	/// Set the channel whitelist for the relayer task.
+	fn set_channel_whitelist(&mut self, channel_whitelist: Vec<(ChannelId, PortId)>);
 }
 
 /// Provides an interface for managing key management for signing.
