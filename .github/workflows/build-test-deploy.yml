@@ -836,7 +836,7 @@ jobs:
           docker push "${{ env.DOCKER_REGISTRY_NAME }}/composable-sandbox:latest"
 
   # We temporary disable this job
-  # because we need to build composable-centauri docker images only from centauri branch now.
+  # because we need to build `composable-centauri` docker images only for `centauri` branch now.
   # composable-centauri-publish:
   #   if: ${{ github.ref == 'refs/heads/main' }}
   #   name: "Docker composable-centauri"
