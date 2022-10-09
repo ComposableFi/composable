@@ -35,9 +35,7 @@ let
           "composable-community.cachix.org-1:GG4xJNpXJ+J97I8EyJ4qI5tRTAJ4i7h+NK2Z32I8sK8="
         ];
       };
-      networking = {
-        firewall.allowedTCPPorts = [ 80 443 ];
-      };
+      networking = { firewall.allowedTCPPorts = [ 80 443 ]; };
       virtualisation.docker.enable = true;
       systemd.services.devnet = {
         wantedBy = [ "multi-user.target" ];
@@ -52,7 +50,7 @@ let
                 name = "run-devnet";
                 runtimeInputs = [ pkgs.nixUnstable pkgs.git ];
                 text =
-                  "nix run github:ComposableFi/Composable/${rev}#persistent-devnet-up -L";
+                  "nix run github:ComposableFi/Composable/${rev}#devnet-persistent -L";
               }
             }/bin/run-devnet";
           Restart = "always";
@@ -83,8 +81,9 @@ let
           "${domain}" = {
             enableACME = true;
             forceSSL = true;
-            locations = proxyChain "composable" 9988 // proxyChain "rococo" 9944
+            locations = proxyChain "dali" 9988 // proxyChain "rococo" 9944
               // {
+                "/" = { root = "${book}/book"; };
                 "/subsquid/" = { proxyPass = "http://127.0.0.1:4350/"; };
               };
           };

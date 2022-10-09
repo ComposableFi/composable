@@ -497,9 +497,9 @@
             subsquidEndpoint =
               "https://persistent.devnets.composablefinance.ninja/subsquid/graphql";
             picassoEndpoint =
-              "wss://persistent.devnets.composablefinance.ninja/chain/composable";
+              "wss://persistent.devnets.composablefinance.ninja/chain/dali";
             kusamaEndpoint =
-              "wss://persistent.devnets.composablefinance.ninja/chain/polkadot";
+              "wss://persistent.devnets.composablefinance.ninja/chain/rococo";
             karuraEndpoint =
               "wss://persistent.devnets.composablefinance.ninja/chain/karura";
           };
