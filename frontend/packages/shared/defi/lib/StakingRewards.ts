@@ -6,8 +6,8 @@ import moment from "moment";
 type StakingPoolRewardRatePeriod = "PerSecond";
 
 export class StakingPoolRewardRate {
-  period: StakingPoolRewardRatePeriod;
-  amount: BigNumber;
+  protected __period: StakingPoolRewardRatePeriod;
+  protected __amount: BigNumber;
 
   static fromJSON(rewardRate: any): StakingPoolRewardRate {
     try {
@@ -22,15 +22,28 @@ export class StakingPoolRewardRate {
   }
 
   constructor(period: StakingPoolRewardRatePeriod, amount: BigNumber) {
-    this.period = period;
-    this.amount = amount;
+    this.__period = period;
+    this.__amount = amount;
   }
 
   toJSON(): { period: string; amount: string } {
     return {
-      period: this.period.toString(),
-      amount: this.amount.toString(),
+      period: this.__period.toString(),
+      amount: this.__amount.toString(),
     };
+  }
+
+  toSeconds(): number {
+    switch (this.__period) {
+      case "PerSecond":
+        return 86400;
+      default:
+        return 0;
+    }
+  }
+
+  getAmount(): BigNumber {
+    return this.__amount;
   }
 }
 
@@ -93,6 +106,10 @@ export class StakingPoolReward {
 
   getAssetId(inBn: boolean = false): BigNumber | string {
     return inBn ? this.__assetId : this.__assetId.toString();
+  }
+
+  getRewardsPerDay(): BigNumber {
+    return this.__rewardRate.getAmount().times(this.__rewardRate.toSeconds());
   }
 }
 
