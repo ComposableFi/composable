@@ -12,6 +12,8 @@ env:
   NIX_NIXPKGS_CHANNEL: https://nixos.org/channels/nixpkgs-22.05-darwin
   CACHIX_COMPOSABLE: composable-community
   CACHIX_COMPRESSION_LEVEL: 3
+  NIXOPS_STATE_URL: gs://composable-state
+  NIXOPS_STATE_FILE: deployment.nixops
 
 jobs:
   cache-devnet:
@@ -89,17 +91,18 @@ jobs:
         else
           nix develop .#ci --show-trace -L --command cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nixops -- create --deployment devnet-gce --show-trace --option narinfo-cache-negative-ttl 0
         fi
+      env:
+        NIXOPS_STATE: ${{ runner.temp }}/deployment.nixops
 
     - name: Deploy
       run: |
         nix develop .#ci --show-trace -L --command cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nixops -- deploy --allow-recreate --confirm --deployment devnet-gce --debug --show-trace --option narinfo-cache-negative-ttl 0 --include composable-persistent-devnet
+      env:
+        NIXOPS_STATE: ${{ runner.temp }}/deployment.nixops
 
     - name: Save Nixops State
       if: always()
       run: |
         gsutil cp $NIXOPS_STATE $NIXOPS_STATE_URL/$NIXOPS_STATE_FILE
-
       env:
         NIXOPS_STATE: ${{ runner.temp }}/deployment.nixops
-        NIXOPS_STATE_URL: gs://composable-state
-        NIXOPS_STATE_FILE: deployment.nixops
