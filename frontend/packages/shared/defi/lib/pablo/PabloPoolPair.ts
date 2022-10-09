@@ -1,4 +1,4 @@
-import { humanizedBnToBn } from "shared";
+import { Asset, humanizedBnToBn } from "shared";
 import BigNumber from "bignumber.js";
 
 export class PabloPoolPair {
@@ -51,5 +51,13 @@ export class PabloPoolPair {
 
   getQuoteAsset(): BigNumber {
     return this.quote;
+  }
+
+  intoAssets(assets: Asset[]): Asset[] {
+    return assets.filter(
+      (asset) =>
+        (asset.getPicassoAssetId(true) as BigNumber).eq(this.base) ||
+        (asset.getPicassoAssetId(true) as BigNumber).eq(this.quote)
+    );
   }
 }

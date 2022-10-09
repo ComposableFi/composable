@@ -55,21 +55,16 @@ export class BasePabloPool implements Exchangeable {
     return inBn ? this.__poolId : this.__poolId.toString();
   }
 
-  async getAssetLiquidity(
-    assetId: string,
-    name: string = "",
-    symbol: string = "",
-    iconUrl: string = ""
-  ): Promise<BigNumber> {
+  async getLiquidity(assets: Asset[]): Promise<Map<string, BigNumber>> {
+    const map = new Map<string, BigNumber>();
     const accountId = this.getAccountId();
-    const asset = new Asset(
-      this.__api,
-      new BigNumber(assetId),
-      name,
-      symbol,
-      iconUrl
-    );
-    return asset.balanceOf(accountId);
+
+    for (const asset of assets) {
+      const balance = await asset.balanceOf(accountId);
+      map.set(asset.getPicassoAssetId() as string, balance);
+    }
+
+    return map;
   }
 
   async getSpotPrice(): Promise<BigNumber> {

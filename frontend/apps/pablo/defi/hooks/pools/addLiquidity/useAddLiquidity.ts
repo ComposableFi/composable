@@ -4,8 +4,6 @@ import {
   openConfirmingSupplyModal,
 } from "@/stores/ui/uiSlice";
 import { Executor, ConnectedAccount } from "substrate-react";
-import BigNumber from "bignumber.js";
-import router from "next/router";
 import { ApiPromise } from "@polkadot/api";
 import { ConstantProductPool, StableSwapPool } from "@/defi/types";
 import { toChainUnits } from "@/defi/utils";
@@ -14,6 +12,8 @@ import { useSnackbar, VariantType } from "notistack";
 import { useDispatch } from "react-redux";
 import { Signer } from "@polkadot/api/types";
 import { useCallback, useMemo } from "react";
+import BigNumber from "bignumber.js";
+import router from "next/router";
 
 const TxOrigin = "Add Liquidity";
 

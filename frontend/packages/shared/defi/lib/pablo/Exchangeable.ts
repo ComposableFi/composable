@@ -1,5 +1,6 @@
 import BigNumber from "bignumber.js";
+import { Asset } from "../Asset";
 export interface Exchangeable {
     getSpotPrice(): Promise<BigNumber>;
-    getAssetLiquidity(assetId: string): Promise<BigNumber>;
+    getLiquidity(assets: Asset[]): Promise<Map<string, BigNumber>>;
 }

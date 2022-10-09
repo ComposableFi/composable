@@ -163,6 +163,22 @@ export class StakingRewardPool {
   protected __lock: StakingRewardPoolLockConfig;
   protected __rewards: Map<string, StakingPoolReward>;
 
+  static async fetchStakingRewardPool(
+    api: ApiPromise,
+    assetId: BigNumber
+  ): Promise<StakingRewardPool> {
+    try {
+      const rewardPool = await api.query.stakingRewards.rewardPools(
+        assetId.toString()
+      );
+
+      return this.fromJSON(api, rewardPool.toJSON());
+    } catch (err: any) {
+      console.error("[fetchStakingRewardPool] ", err.message);
+      return Promise.reject(err);
+    }
+  }
+
   static fromJSON(api: ApiPromise, stakePool: any): StakingRewardPool {
     try {
       const shareAssetId = new BigNumber(stakePool.shareAssetId);

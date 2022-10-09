@@ -49,6 +49,7 @@ export class VesingScheduleWindow {
 }
 
 export class VestingSchedule {
+    protected __api: ApiPromise;
     protected __perPeriod: BigNumber;
     protected __periodCount: BigNumber;
     protected __alreadyClaimed: BigNumber;
@@ -69,14 +70,14 @@ export class VestingSchedule {
         
             const _schedules = vestingSchedule.toJSON();
             return Object.values(_schedules as any)
-                .map((i) => VestingSchedule.fromJSON(i))
+                .map((i) => VestingSchedule.fromJSON(api, i))
           } catch (err: any) {
             console.error('[fromAddressAndAssetId] ', err.message);
             throw new Error(err.message);
           }
     }
 
-    static fromJSON(vestingSchedule: any): VestingSchedule {
+    static fromJSON(api: ApiPromise, vestingSchedule: any): VestingSchedule {
         try {
             const type = vestingSchedule.window.blockNumberBased ? "block" : "moment";
             const window = VesingScheduleWindow.fromJSON(vestingSchedule.window);
@@ -88,6 +89,7 @@ export class VestingSchedule {
             const periodCount = new BigNumber(vestingSchedule.periodCount);
 
             return new VestingSchedule(
+                api,
                 perPeriod,
                 periodCount,
                 alreadyClaimed,
@@ -101,6 +103,7 @@ export class VestingSchedule {
     }
 
     constructor(
+        api: ApiPromise,
         perPeriod: BigNumber,
         periodCount: BigNumber,
         alreadyClaimed: BigNumber,
@@ -108,11 +111,30 @@ export class VestingSchedule {
         type: VestingScheduleType,
         window: VesingScheduleWindow
     ) {
+        this.__api = api;
         this.__perPeriod = perPeriod;
         this.__periodCount = periodCount;
         this.__alreadyClaimed = alreadyClaimed;
         this.__vestingScheduleId = vestingScheduleId;
         this.__type = type;
         this.__window = window;
+    }
+
+    async getClaimableAt(): Promise<BigNumber> {
+        const alreadyClaimed = this.__alreadyClaimed;
+        const perPeriod = this.__perPeriod;
+        const periodCount = this.__periodCount;
+        const claimable = new BigNumber(0);
+
+        if (this.__type === "block") {
+            const currentBlockBN = await this.__api.query.system.number();
+            const currentBlockBn = new BigNumber(currentBlockBN.toString());
+        } else {
+            const currentTimestampBN = await this.__api.query.timestamp.now();
+            const currentTimestampBn = new BigNumber(currentTimestampBN.toString());
+
+        }
+
+        return claimable;
     }
 }
