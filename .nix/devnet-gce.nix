@@ -1,8 +1,7 @@
 { region, gce-input, book, devnet, disk-size, machine-name, domain
 , extra-gce ? (args: { }), extra-services ? (args: { })
 , extra-nginx-root ? (args: { }), extra-nginx ? (args: { })
-, extra-nginx-virtual ? (args: { }), extra-nginx-hosts ? (args: { }) }:
-{
+, extra-nginx-virtual ? (args: { }), extra-nginx-hosts ? (args: { }) }: {
   resources.gceNetworks.composable-devnet = gce-input // {
     name = "composable-devnet-network";
     firewall = {
