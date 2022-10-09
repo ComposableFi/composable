@@ -1,4 +1,4 @@
-{ pkgs, packages, ... }: {
+{ pkgs, packages, frontend, ... }: {
   modules = [
     (let
       dali-container-name = "dali-devnet";
@@ -28,6 +28,8 @@
       relaychainPort = 9944;
       parachainPort = 9988;
       squidGraphqlPort = 4350;
+      pabloPort = 8001;
+      picassoPort = 8002;
 
       parachainEndpoint =
         "ws://${dali-container-name}:${toString parachainPort}";
@@ -109,12 +111,18 @@
 
           # NOTE: Ports are currently not configurable for frontend services
           frontend-picasso = mkComposableContainer
-            (import ../services/frontend-picasso.nix {
-              inherit pkgs packages;
+            (import ../services/composable-frontend.nix {
+              inherit pkgs packages frontend;
+              app = "pablo";
+              port = pabloPort;
             });
 
           frontend-pablo = mkComposableContainer
-            (import ../services/frontend-pablo.nix { inherit pkgs packages; });
+            (import ../services/composable-frontend.nix {
+              inherit pkgs packages frontend;
+              app = "picasso";
+              port = picassoPort;
+            });
         };
       };
     })

@@ -1149,13 +1149,25 @@
               '';
             });
 
+            ci = mkShell {
+              buildInputs = [ pkgs.nixopsUnstable ];
+              NIX_PATH = "nixpkgs=${pkgs.path}";
+            };
+
             default = developers;
           };
 
           devnet-specs = {
-            default = import ./.nix/devnet-specs/default.nix {
+            local = import ./.nix/devnet-specs/default.nix {
               inherit pkgs;
               inherit packages;
+              frontend = packages.frontend-static;
+            };
+
+            persistent = import ./.nix/devnet-specs/default.nix {
+              inherit pkgs;
+              inherit packages;
+              frontend = packages.frontend-static-persistent;
             };
 
             xcvm = import ./.nix/devnet-specs/xcvm.nix {
@@ -1167,49 +1179,14 @@
           apps = let
             devnet-default-program =
               pkgs.composable.mkDevnetProgram "devnet-default"
-              devnet-specs.default;
+              devnet-specs.local;
+
             devnet-xcvm-program =
               pkgs.composable.mkDevnetProgram "devnet-xcvm" devnet-specs.xcvm;
-            arion-pure = import ./.nix/arion-pure.nix {
-              inherit pkgs;
-              inherit packages;
-              frontend = packages.frontend-static;
-            };
-            arion-up-program = pkgs.writeShellApplication {
-              name = "devnet-up";
-              runtimeInputs =
-                [ pkgs.arion pkgs.docker pkgs.coreutils pkgs.bash ];
-              text = ''
-                arion --prebuilt-file ${arion-pure} up --build --force-recreate -V --always-recreate-deps --remove-orphans
-              '';
-            };
 
-            persistent-devnet = import ./.nix/arion-pure.nix {
-              inherit pkgs;
-              inherit packages;
-              frontend = packages.frontend-static-persistent;
-            };
-            persistent-devnet-up-program = pkgs.writeShellApplication {
-              name = "devnet-up";
-              runtimeInputs =
-                [ pkgs.arion pkgs.docker pkgs.coreutils pkgs.bash ];
-              text = ''
-                arion --prebuilt-file ${persistent-devnet} up --build --force-recreate -V --always-recreate-deps --remove-orphans
-              '';
-            };
-
-            devnet-xcvm = import ./.nix/arion-xcvm.nix {
-              inherit pkgs;
-              inherit packages;
-            };
-            devnet-xcvm-up-program = pkgs.writeShellApplication {
-              name = "devnet-xcvm-up";
-              runtimeInputs =
-                [ pkgs.arion pkgs.docker pkgs.coreutils pkgs.bash ];
-              text = ''
-                arion --prebuilt-file ${devnet-xcvm} up --build --force-recreate -V --always-recreate-deps --remove-orphans
-              '';
-            };
+            devnet-persistent-program =
+              pkgs.composable.mkDevnetProgram "devnet-persistent"
+              devnet-specs.persistent;
 
           in rec {
             devnet = {
@@ -1217,12 +1194,12 @@
               program = "${devnet-default-program}/bin/devnet-default";
             };
 
-            persistent-devnet-up = {
+            devnet-persistent = {
               type = "app";
-              program = "${persistent-devnet-up-program}/bin/devnet-up";
+              program = "${devnet-persistent-program}/bin/devnet-up";
             };
 
-            devnet-xcvm-up = {
+            devnet-xcvm = {
               type = "app";
               program = "${devnet-xcvm-program}/bin/devnet-xcvm";
             };
