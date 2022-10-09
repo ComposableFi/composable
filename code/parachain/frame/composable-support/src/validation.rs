@@ -72,12 +72,22 @@ use scale_info::TypeInfo;
 use sp_runtime::DispatchError;
 use sp_std::ops::Deref;
 
+pub mod validators;
+
 /// Black box that embeds the validated value.
 /// Validated during construction or serde.
-#[derive(Default, Copy, Clone)]
+#[derive(Default)]
 pub struct Validated<T, U> {
 	value: T,
 	_marker: PhantomData<U>,
+}
+
+impl<T: Copy, U> Copy for Validated<T, U> {}
+
+impl<T: Clone, U> Clone for Validated<T, U> {
+	fn clone(&self) -> Self {
+		Self { value: self.value.clone(), _marker: PhantomData }
+	}
 }
 
 impl<T, U> TypeInfo for Validated<T, U>

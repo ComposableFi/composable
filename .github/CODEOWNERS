@@ -10,10 +10,10 @@
 
 ## CI and deployment related files
 
-.github/ @ComposableFi/sre
+.github/ @ComposableFi/sre @ComposableFi/core
 .github/CODEOWNERS @ComposableFi/core
-docker/ @ComposableFi/sre
-Makefile @ComposableFi/sre
+docker/ @ComposableFi/sre @ComposableFi/core
+Makefile @ComposableFi/sre @ComposableFi/core
 
 ## Parachain related files
 
