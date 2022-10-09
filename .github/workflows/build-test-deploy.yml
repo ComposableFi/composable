@@ -858,7 +858,7 @@ jobs:
 
   # We temporary disable this job
   # because we need to build `composable-centauri` docker images only for `centauri` branch now.
-  # composable-centauri-publish:
+  # composable-centauri-container-publish:
   #   if: ${{ github.ref == 'refs/heads/main' }}
   #   name: "Docker composable-centauri"
   #   needs:
@@ -869,7 +869,7 @@ jobs:
   #     - x64
   #     - sre
   #   concurrency:
-  #     group: ${{ github.workflow }}-composable-centauri-${{ github.ref }}
+  #     group: ${{ github.workflow }}-composable-centauri-container-${{ github.ref }}
   #     cancel-in-progress: true
   #   container:
   #     image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
