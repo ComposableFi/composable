@@ -1,6 +1,6 @@
-{ pkgs, packages, relaychainPort, parachainPort }: {
+{ pkgs, devnet-dali, relaychainPort, parachainPort }: {
   image = {
-    contents = [ pkgs.coreutils packages.devnet-dali ];
+    contents = [ pkgs.coreutils devnet-dali ];
     enableRecommendedContents = true;
   };
   service = {
@@ -9,7 +9,7 @@
       "sh"
       "-c"
       ''
-        ${packages.devnet-dali}/bin/run-devnet-dali-dev
+        ${devnet-dali}/bin/run-devnet-dali-dev
       ''
     ];
     ports =

@@ -1,4 +1,4 @@
-{ pkgs, packages, ... }: {
+{ pkgs, devnet-dali, ... }: {
   modules = [
     (let
       db-container-name = "db";
@@ -202,7 +202,7 @@
           "${dali-container-name}" = mk-composable-container
             (import ../services/devnet-dali.nix {
               inherit pkgs;
-              inherit packages;
+              inherit devnet-dali;
               inherit relaychainPort;
               inherit parachainPort;
             });

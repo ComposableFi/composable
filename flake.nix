@@ -485,6 +485,55 @@
               ```
             '';
           };
+
+          frontend-static = mkFrontendStatic {
+            subsquidEndpoint = "http://localhost:4350/graphql";
+            picassoEndpoint = "ws://localhost:9988";
+            kusamaEndpoint = "ws://localhost:9944";
+            karuraEndpoint = "ws://localhost:9998";
+          };
+
+          frontend-static-persistent = mkFrontendStatic {
+            subsquidEndpoint =
+              "https://persistent.devnets.composablefinance.ninja/subsquid/graphql";
+            picassoEndpoint =
+              "wss://persistent.devnets.composablefinance.ninja/chain/composable";
+            kusamaEndpoint =
+              "wss://persistent.devnets.composablefinance.ninja/chain/polkadot";
+            karuraEndpoint =
+              "wss://persistent.devnets.composablefinance.ninja/chain/karura";
+          };
+
+          frontend-static-firebase = mkFrontendStatic {
+            subsquidEndpoint =
+              "https://dali-subsquid.composable.finance/graphql";
+            picassoEndpoint = "wss://dali-cluster-fe.composablefinance.ninja/";
+            kusamaEndpoint = "wss://kusama-rpc.polkadot.io";
+            karuraEndpoint = "wss://karura.api.onfinality.io/public-ws";
+          };
+
+          frontend-pablo-server = let PORT = 8002;
+          in pkgs.writeShellApplication {
+            name = "frontend-pablo-server";
+            runtimeInputs = [ pkgs.miniserve ];
+            text = ''
+              miniserve -p ${
+                builtins.toString PORT
+              } --spa --index index.html ${frontend-static}/pablo
+            '';
+          };
+
+          frontend-picasso-server = let PORT = 8003;
+          in pkgs.writeShellApplication {
+            name = "frontend-picasso-server";
+            runtimeInputs = [ pkgs.miniserve ];
+            text = ''
+              miniserve -p ${
+                builtins.toString PORT
+              } --spa --index index.html ${frontend-static}/picasso
+            '';
+          };
+
         in rec {
           packages = rec {
             inherit wasm-optimizer;
@@ -503,6 +552,11 @@
             inherit simnode-tests;
             inherit subwasm;
             inherit subwasm-release-body;
+            inherit frontend-static;
+            inherit frontend-static-persistent;
+            inherit frontend-static-firebase;
+            inherit frontend-pablo-server;
+            inherit frontend-picasso-server;
 
             xcvm-contract-asset-registry =
               mk-xcvm-contract "xcvm-asset-registry";
@@ -737,54 +791,6 @@
               '';
             };
 
-            frontend-static = mkFrontendStatic {
-              subsquidEndpoint = "http://localhost:4350/graphql";
-              picassoEndpoint = "ws://localhost:9988";
-              kusamaEndpoint = "ws://localhost:9944";
-              karuraEndpoint = "ws://localhost:9998";
-            };
-
-            frontend-static-persistent = mkFrontendStatic {
-              subsquidEndpoint =
-                "https://persistent.devnets.composablefinance.ninja/subsquid/graphql";
-              picassoEndpoint =
-                "wss://persistent.devnets.composablefinance.ninja/chain/composable";
-              kusamaEndpoint =
-                "wss://persistent.devnets.composablefinance.ninja/chain/polkadot";
-              karuraEndpoint =
-                "wss://persistent.devnets.composablefinance.ninja/chain/karura";
-            };
-
-            frontend-static-firebase = mkFrontendStatic {
-              subsquidEndpoint =
-                "https://dali-subsquid.composable.finance/graphql";
-              picassoEndpoint =
-                "wss://dali-cluster-fe.composablefinance.ninja/";
-              kusamaEndpoint = "wss://kusama-rpc.polkadot.io";
-              karuraEndpoint = "wss://karura.api.onfinality.io/public-ws";
-            };
-
-            frontend-pablo-server = let PORT = 8002;
-            in pkgs.writeShellApplication {
-              name = "frontend-pablo-server";
-              runtimeInputs = [ pkgs.miniserve ];
-              text = ''
-                miniserve -p ${
-                  builtins.toString PORT
-                } --spa --index index.html ${frontend-static}/pablo
-              '';
-            };
-
-            frontend-picasso-server = let PORT = 8003;
-            in pkgs.writeShellApplication {
-              name = "frontend-picasso-server";
-              runtimeInputs = [ pkgs.miniserve ];
-              text = ''
-                miniserve -p ${
-                  builtins.toString PORT
-                } --spa --index index.html ${frontend-static}/picasso
-              '';
-            };
             # TODO: inherit and provide script to run all stuff
 
             # devnet-container-xcvm
@@ -1077,6 +1083,29 @@
             wasmswap = pkgs.callPackage ./code/xcvm/cosmos/wasmswap.nix {
               crane = crane-nightly;
             };
+
+            devnet-default-program =
+              pkgs.composable.mkDevnetProgram "devnet-default"
+              (import ./.nix/devnet-specs/default.nix {
+                inherit pkgs;
+                inherit devnet-dali;
+                frontend = frontend-static;
+              });
+
+            devnet-xcvm-program = pkgs.composable.mkDevnetProgram "devnet-xcvm"
+              (import ./.nix/devnet-specs/xcvm.nix {
+                inherit pkgs;
+                inherit devnet-dali;
+              });
+
+            devnet-persistent-program =
+              pkgs.composable.mkDevnetProgram "devnet-persistent"
+              (import ./.nix/devnet-specs/default.nix {
+                inherit pkgs;
+                inherit devnet-dali;
+                frontend = frontend-static-persistent;
+              });
+
             default = packages.composable-node;
           };
 
@@ -1157,51 +1186,21 @@
             default = developers;
           };
 
-          devnet-specs = {
-            local = import ./.nix/devnet-specs/default.nix {
-              inherit pkgs;
-              inherit packages;
-              frontend = packages.frontend-static;
-            };
-
-            persistent = import ./.nix/devnet-specs/default.nix {
-              inherit pkgs;
-              inherit packages;
-              frontend = packages.frontend-static-persistent;
-            };
-
-            xcvm = import ./.nix/devnet-specs/xcvm.nix {
-              inherit pkgs;
-              inherit packages;
-            };
-          };
-
-          apps = let
-            devnet-default-program =
-              pkgs.composable.mkDevnetProgram "devnet-default"
-              devnet-specs.local;
-
-            devnet-xcvm-program =
-              pkgs.composable.mkDevnetProgram "devnet-xcvm" devnet-specs.xcvm;
-
-            devnet-persistent-program =
-              pkgs.composable.mkDevnetProgram "devnet-persistent"
-              devnet-specs.persistent;
-
-          in rec {
+          apps = rec {
             devnet = {
               type = "app";
-              program = "${devnet-default-program}/bin/devnet-default";
+              program = "${packages.devnet-default-program}/bin/devnet-default";
             };
 
             devnet-persistent = {
               type = "app";
-              program = "${devnet-persistent-program}/bin/devnet-up";
+              program =
+                "${packages.devnet-persistent-program}/bin/devnet-persistent";
             };
 
             devnet-xcvm = {
               type = "app";
-              program = "${devnet-xcvm-program}/bin/devnet-xcvm";
+              program = "${packages.devnet-xcvm-program}/bin/devnet-xcvm";
             };
 
             devnet-dali = {

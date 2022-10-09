@@ -1,4 +1,4 @@
-{ pkgs, packages, frontend, ... }: {
+{ pkgs, devnet-dali, frontend, ... }: {
   modules = [
     (let
       dali-container-name = "dali-devnet";
@@ -72,7 +72,7 @@
 
           "${dali-container-name}" = mkComposableContainer
             (import ../services/devnet-dali.nix {
-              inherit pkgs packages parachainPort relaychainPort;
+              inherit pkgs devnet-dali parachainPort relaychainPort;
             });
 
           ingest = mkComposableContainer
@@ -112,14 +112,14 @@
           # NOTE: Ports are currently not configurable for frontend services
           frontend-picasso = mkComposableContainer
             (import ../services/composable-frontend.nix {
-              inherit pkgs packages frontend;
+              inherit pkgs frontend;
               app = "pablo";
               port = pabloPort;
             });
 
           frontend-pablo = mkComposableContainer
             (import ../services/composable-frontend.nix {
-              inherit pkgs packages frontend;
+              inherit pkgs frontend;
               app = "picasso";
               port = picassoPort;
             });
