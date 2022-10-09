@@ -62,6 +62,7 @@ pub mod pallet {
 	};
 	use alloc::{
 		collections::{btree_map::Entry, BTreeMap},
+		format,
 		string::String,
 	};
 	use composable_support::abstractions::{
@@ -77,13 +78,14 @@ pub mod pallet {
 		ContractInfo as CosmwasmContractInfo, Env, Event as CosmwasmEvent, MessageInfo, Timestamp,
 		TransactionInfo,
 	};
+	pub use cosmwasm_minimal_std::{QueryRequest, QueryResponse};
 	use cosmwasm_vm::{
 		executor::{
 			AllocateInput, AsFunctionName, DeallocateInput, ExecuteInput, InstantiateInput,
 			MigrateInput, QueryInput, ReplyInput,
 		},
 		memory::PointerOf,
-		system::{cosmwasm_system_entrypoint, CosmwasmCodeId},
+		system::{cosmwasm_system_entrypoint, cosmwasm_system_query, CosmwasmCodeId},
 		vm::VmMessageCustomOf,
 	};
 	use cosmwasm_vm_wasmi::{host_functions, new_wasmi_vm, WasmiImportResolver, WasmiVM};
@@ -404,8 +406,8 @@ pub mod pallet {
 				label,
 				funds,
 				message,
-			);
-			log::debug!(target: "runtime::contracts", "Instantiate Result: {:?}", outcome);
+			)
+			.map(|_| ());
 			Self::refund_gas(outcome, gas, shared.gas.remaining())
 		}
 
@@ -535,7 +537,7 @@ pub mod pallet {
 			label: ContractLabelOf<T>,
 			funds: FundsOf<T>,
 			message: ContractMessageOf<T>,
-		) -> Result<(), CosmwasmVMError<T>> {
+		) -> Result<AccountIdOf<T>, CosmwasmVMError<T>> {
 			let (contract, info) = Self::do_instantiate_phase1(
 				instantiator.clone(),
 				code_id,
@@ -548,11 +550,12 @@ pub mod pallet {
 				shared,
 				EntryPoint::Instantiate,
 				instantiator,
-				contract,
+				contract.clone(),
 				info,
 				funds,
 				|vm| cosmwasm_system_entrypoint::<InstantiateInput, _>(vm, &message),
-			)
+			)?;
+			Ok(contract)
 		}
 
 		pub(crate) fn do_extrinsic_execute(
@@ -643,6 +646,7 @@ pub mod pallet {
 			initial_gas: u64,
 			remaining_gas: u64,
 		) -> DispatchResultWithPostInfo {
+			log::debug!(target: "runtime::contracts", "outcome: {:?}", outcome);
 			let post_info = PostDispatchInfo {
 				actual_weight: Some(initial_gas.saturating_sub(remaining_gas)),
 				pays_fee: Pays::Yes,
@@ -657,6 +661,25 @@ pub mod pallet {
 					Err(DispatchErrorWithPostInfo { error: e.into(), post_info })
 				},
 			}
+		}
+
+		/// Handy wrapper to set the contract info
+		pub(crate) fn set_contract_meta(
+			contract: &AccountIdOf<T>,
+			code_id: CosmwasmCodeId,
+			admin: Option<AccountIdOf<T>>,
+			label: String,
+		) -> Result<(), Error<T>> {
+			let mut info = Self::contract_info(contract)?;
+			info.code_id = code_id;
+			info.admin = admin;
+			info.label = label
+				.as_bytes()
+				.to_vec()
+				.try_into()
+				.map_err(|_| crate::Error::<T>::LabelTooBig)?;
+			Self::set_contract_info(contract, info);
+			Ok(())
 		}
 
 		/// Handy wrapper to return contract info.
@@ -1221,6 +1244,82 @@ pub mod pallet {
 
 			sp_io::crypto::ed25519_verify(&signature, message, &public_key)
 		}
+	}
+
+	/// Query cosmwasm contracts
+	///
+	/// * `contract` the address of contract to query.
+	/// * `gas` the maximum gas to use, the remaining is refunded at the end of the transaction.
+	/// * `query_request` the binary query, which should be deserializable to `QueryRequest`.
+	pub fn query<T: Config>(
+		contract: AccountIdOf<T>,
+		gas: u64,
+		query_request: Vec<u8>,
+	) -> Result<QueryResponse, CosmwasmVMError<T>> {
+		let mut shared = Pallet::<T>::do_create_vm_shared(gas, InitialStorageMutability::ReadOnly);
+		let info = Pallet::<T>::contract_info(&contract)?;
+		let query_request: QueryRequest = serde_json::from_slice(&query_request)
+			.map_err(|e| CosmwasmVMError::Rpc(format!("{}", e)))?;
+		Pallet::<T>::cosmwasm_call(
+			&mut shared,
+			contract.clone(),
+			contract,
+			info,
+			Default::default(),
+			|vm| {
+				cosmwasm_system_query(vm, query_request)?
+					.into_result()
+					.map_err(|e| CosmwasmVMError::Rpc(format!("{:?}", e)))?
+					.into_result()
+					.map_err(|e| CosmwasmVMError::Rpc(e))
+			},
+		)
+	}
+
+	pub fn instantiate<T: Config>(
+		instantiator: AccountIdOf<T>,
+		code_id: CosmwasmCodeId,
+		salt: Vec<u8>,
+		admin: Option<AccountIdOf<T>>,
+		label: Vec<u8>,
+		funds: BTreeMap<AssetIdOf<T>, (BalanceOf<T>, KeepAlive)>,
+		gas: u64,
+		message: Vec<u8>,
+	) -> Result<AccountIdOf<T>, CosmwasmVMError<T>> {
+		let salt: ContractSaltOf<T> = salt
+			.try_into()
+			.map_err(|_| CosmwasmVMError::Rpc(String::from("'salt' is too large")))?;
+		let label: ContractLabelOf<T> = label
+			.try_into()
+			.map_err(|_| CosmwasmVMError::Rpc(String::from("'label' is too large")))?;
+		let funds: FundsOf<T> = funds
+			.try_into()
+			.map_err(|_| CosmwasmVMError::Rpc(String::from("'funds' is too large")))?;
+		let message: ContractMessageOf<T> = message
+			.try_into()
+			.map_err(|_| CosmwasmVMError::Rpc(String::from("'message' is too large")))?;
+		let mut shared = Pallet::<T>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
+		Pallet::<T>::do_extrinsic_instantiate(
+			&mut shared,
+			instantiator,
+			code_id,
+			&salt,
+			admin,
+			label,
+			funds,
+			message,
+		)
+	}
+
+	pub fn execute<T: Config>(
+		executor: AccountIdOf<T>,
+		contract: AccountIdOf<T>,
+		funds: FundsOf<T>,
+		gas: u64,
+		message: ContractMessageOf<T>,
+	) -> Result<(), CosmwasmVMError<T>> {
+		let mut shared = Pallet::<T>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
+		Pallet::<T>::do_extrinsic_execute(&mut shared, executor, contract, funds, message)
 	}
 
 	impl<T: Config> VMPallet for T {

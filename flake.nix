@@ -30,9 +30,14 @@
       url = "github:hercules-ci/arion";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    helix = {
+      url = "github:helix-editor/helix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
   outputs = { self, nixpkgs, crane, flake-utils, rust-overlay, npm-buildpackage
-    , arion-src, home-manager }:
+    , arion-src, home-manager, helix }:
     let
       # https://cloud.google.com/iam/docs/creating-managing-service-account-keys
       # or just use GOOGLE_APPLICATION_CREDENTIALS env as path to file
@@ -46,6 +51,27 @@
       };
 
       gce-input = gce-to-nix service-account-credential-key-file-input;
+
+      mkDevnetProgram = { pkgs }:
+        name: spec:
+        pkgs.writeShellApplication {
+          inherit name;
+          runtimeInputs = [ pkgs.arion pkgs.docker pkgs.coreutils pkgs.bash ];
+          text = ''
+            arion --prebuilt-file ${
+              pkgs.arion.build spec
+            } up --build --force-recreate -V --always-recreate-deps --remove-orphans
+          '';
+        };
+
+      composableOverlay = nixpkgs.lib.composeManyExtensions [
+        arion-src.overlay
+        (final: prev: {
+          composable = {
+            mkDevnetProgram = final.callPackage mkDevnetProgram { };
+          };
+        })
+      ];
 
       mk-devnet = { pkgs, lib, writeTextFile, writeShellApplication
         , useGlobalChainSpec ? true, polkadot-launch, composable-node
@@ -91,8 +117,8 @@
           pkgs = import nixpkgs {
             inherit system;
             overlays = [
+              composableOverlay
               rust-overlay.overlays.default
-              arion-src.overlay
               npm-buildpackage.overlays.default
             ];
             allowUnsupportedSystem = true; # we do not trigger this on mac
@@ -107,6 +133,7 @@
           };
         in with pkgs;
         let
+          trace = pkgs.lib.debug.traceSeq;
           # Stable rust for anything except wasm runtime
           rust-stable = rust-bin.stable.latest.default;
 
@@ -408,6 +435,14 @@
               --execution=wasm
             '';
 
+          mk-xcvm-contract = name:
+            crane-nightly.buildPackage (common-attrs // {
+              pnameSuffix = name;
+              cargoBuildCommand =
+                "cargo build --target wasm32-unknown-unknown --profile cosmwasm-contracts -p ${name}";
+              RUSTFLAGS = "-C link-arg=-s";
+            });
+
           subwasm = let
             src = fetchFromGitHub {
               owner = "chevdor";
@@ -450,7 +485,6 @@
               ```
             '';
           };
-
         in rec {
           packages = rec {
             inherit wasm-optimizer;
@@ -469,6 +503,11 @@
             inherit simnode-tests;
             inherit subwasm;
             inherit subwasm-release-body;
+
+            xcvm-contract-asset-registry =
+              mk-xcvm-contract "xcvm-asset-registry";
+            xcvm-contract-router = mk-xcvm-contract "xcvm-router";
+            xcvm-contract-interpreter = mk-xcvm-contract "xcvm-interpreter";
 
             subsquid-processor = let
               processor = pkgs.buildNpmPackage {
@@ -559,6 +598,12 @@
               '';
             };
 
+            serve-book = pkgs.writeShellApplication {
+              name = "serve-book";
+              runtimeInputs = [ pkgs.mdbook ];
+              text = "mdbook serve ./book";
+            };
+
             docker-wipe-system =
               pkgs.writeShellScriptBin "docker-wipe-system" ''
                 echo "Wiping all docker containers, images, and volumes";
@@ -578,37 +623,13 @@
             acala-node = pkgs.callPackage ./.nix/acala-bin.nix {
               rust-overlay = rust-nightly;
             };
-            polkadot-node = rustPlatform.buildRustPackage rec {
-              # HACK: break the nix sandbox so we can build the runtimes. This
-              # requires Nix to have `sandbox = relaxed` in its config.
-              # We don't really care because polkadot is only used for local devnet.
-              __noChroot = true;
-              name = "polkadot-v${version}";
-              version = "0.9.27";
-              src = fetchFromGitHub {
-                repo = "polkadot";
-                owner = "paritytech";
-                rev = "v${version}";
-                hash = "sha256-LEz3OrVgdFTCnVwzU8C6GeEougaOl2qo7jS9qIdMqAM=";
-              };
-              cargoSha256 =
-                "sha256-6y+WK2k1rhqMxMjEJhzJ26WDMKZjXQ+q3ca2hbbeLvA=";
-              doCheck = false;
-              buildInputs = [ openssl zstd ];
-              nativeBuildInputs = [ rust-nightly clang pkg-config ]
-                ++ lib.optional stdenv.isDarwin
-                (with darwin.apple_sdk.frameworks; [
-                  Security
-                  SystemConfiguration
-                ]);
-              LD_LIBRARY_PATH = lib.strings.makeLibraryPath [
-                stdenv.cc.cc.lib
-                llvmPackages.libclang.lib
-              ];
-              LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
-              PROTOC = "${protobuf}/bin/protoc";
-              ROCKSDB_LIB_DIR = "${rocksdb}/lib";
-              meta = { mainProgram = "polkadot"; };
+
+            polkadot-node = pkgs.callPackage ./.nix/polkadot-bin.nix {
+              inherit rust-nightly;
+            };
+
+            statemine-node = pkgs.callPackage ./.nix/statemine-bin.nix {
+              inherit crane-nightly rust-nightly;
             };
 
             polkadot-centauri-node = rustPlatform.buildRustPackage rec {
@@ -672,26 +693,26 @@
               chain-spec = "picasso-dev";
             }).script;
 
-            # Dali devnet container
-            devnet-container = dockerTools.buildImage {
-              name = "composable-devnet-container";
-              tag = "latest";
-              copyToRoot = pkgs.buildEnv {
-                name = "image-root";
-                paths = [ curl websocat ] ++ container-tools;
-                pathsToLink = [ "/bin" ];
+            devnet-container = trace "Run Dali runtime on Composable node"
+              dockerTools.buildImage {
+                name = "composable-devnet-container";
+                tag = "latest";
+                copyToRoot = pkgs.buildEnv {
+                  name = "image-root";
+                  paths = [ curl websocat ] ++ container-tools;
+                  pathsToLink = [ "/bin" ];
+                };
+                config = {
+                  Entrypoint =
+                    [ "${packages.devnet-dali}/bin/run-devnet-dali-dev" ];
+                  WorkingDir = "/home/polkadot-launch";
+                };
+                runAsRoot = ''
+                  mkdir -p /home/polkadot-launch /tmp
+                  chown 1000:1000 /home/polkadot-launch
+                  chmod 777 /tmp
+                '';
               };
-              config = {
-                Entrypoint =
-                  [ "${packages.devnet-dali}/bin/run-devnet-dali-dev" ];
-                WorkingDir = "/home/polkadot-launch";
-              };
-              runAsRoot = ''
-                mkdir -p /home/polkadot-launch /tmp
-                chown 1000:1000 /home/polkadot-launch
-                chmod 777 /tmp
-              '';
-            };
 
             # Dali Centauri devnet container
             bridge-devnet-dali-container = dockerTools.buildImage {
@@ -760,6 +781,7 @@
             devcontainer = dockerTools.buildLayeredImage {
               name = "composable-devcontainer";
               fromImage = devcontainer-root-image;
+              contents = [ composable-node ];
               # substituters, same as next script, but without internet access
               # ${pkgs.cachix}/bin/cachix use composable-community
               # to run root in buildImage needs qemu/kvm shell
@@ -927,10 +949,9 @@
               cargoExtraArgs = "--benches --all --features runtime-benchmarks";
             });
 
-            cspell-check = stdenv.mkDerivation {
+            spell-check = stdenv.mkDerivation {
               name = "cspell-check";
               dontUnpack = true;
-
               buildInputs = [ all-directories-and-files nodePackages.cspell ];
               installPhase = ''
                 mkdir $out
@@ -959,6 +980,24 @@
                 else
                   exit 1
                 fi
+              '';
+            };
+
+            hadolint-check = stdenv.mkDerivation {
+              name = "hadolint-check";
+              dontUnpack = true;
+              buildInputs = [ all-directories-and-files hadolint ];
+              installPhase = ''
+                mkdir -p $out
+
+                hadolint --version
+                total_exit_code=0
+                for file in $(find ${all-directories-and-files} -name "Dockerfile" -or -name "*.dockerfile"); do
+                  echo "=== $file ==="
+                  hadolint --config ${all-directories-and-files}/.hadolint.yaml $file || total_exit_code=$?
+                  echo ""
+                done
+                exit $total_exit_code
               '';
             };
 
@@ -1000,16 +1039,53 @@
               '';
             };
 
+            devnet-all-dev-local = let
+              config =
+                (pkgs.callPackage ./scripts/polkadot-launch/all-dev-local.nix {
+                  polkadot-bin = polkadot-node;
+                  composable-bin = composable-node;
+                  statemine-bin = statemine-node;
+                  acala-bin = acala-node;
+                }).result;
+              config-file = writeTextFile {
+                name = "all-dev-local.json";
+                text = "${builtins.toJSON config}";
+              };
+            in writeShellApplication {
+              name = "kusama-dali-karura";
+              text = ''
+                cat ${config-file}
+                ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
+              '';
+            };
+
             junod = pkgs.callPackage ./code/xcvm/cosmos/junod.nix { };
             gex = pkgs.callPackage ./code/xcvm/cosmos/gex.nix { };
             wasmswap = pkgs.callPackage ./code/xcvm/cosmos/wasmswap.nix {
               crane = crane-nightly;
             };
-
             default = packages.composable-node;
           };
 
           devShells = rec {
+
+            base-shell = mkShell {
+              buildInputs = [ helix.packages.${pkgs.system}.default ];
+              NIX_PATH = "nixpkgs=${pkgs.path}";
+            };
+
+            docs = base-shell.overrideAttrs (base: {
+              buildInputs = base.buildInputs
+                ++ (with packages; [ python3 nodejs mdbook ]);
+            });
+
+            developers-minimal = base-shell.overrideAttrs (base:
+              common-attrs // {
+                buildInputs = base.buildInputs
+                  ++ (with packages; [ rust-nightly subwasm ]);
+                NIX_PATH = "nixpkgs=${pkgs.path}";
+              });
+
             developers = developers-minimal.overrideAttrs (base: {
               buildInputs = with packages;
                 base.buildInputs ++ [
@@ -1040,26 +1116,10 @@
                 ] ++ docs-renders;
             });
 
-            developers-minimal = mkShell (common-attrs // {
-              buildInputs = with packages; [ rust-nightly subwasm ];
-              NIX_PATH = "nixpkgs=${pkgs.path}";
-            });
-
-            developers-xcvm = developers-minimal.overrideAttrs (base: {
+            developers-xcvm = developers.overrideAttrs (base: {
               buildInputs = with packages;
-                base.buildInputs ++ [
-                  junod
-                  gex
-                  # junod wasm swap web interface
-                  # TODO: hasura
-                  # TODO: some well know wasm contracts deployed
-                  # TODO: junod server
-                  # TODO: solc
-                  # TODO: gex
-                  # TODO: https://github.com/forbole/bdjuno
-                  # TODO: script to run all
-                  # TODO: compose export
-                ] ++ lib.lists.optional (lib.strings.hasSuffix "linux" system)
+                base.buildInputs ++ [ junod gex ]
+                ++ lib.lists.optional (lib.strings.hasSuffix "linux" system)
                 arion;
               shellHook = ''
                 echo ""
@@ -1075,55 +1135,36 @@
               '';
             });
 
-            writers = mkShell {
-              buildInputs = with packages; [ python3 nodejs ] ++ doc-renders;
-              NIX_PATH = "nixpkgs=${pkgs.path}";
-            };
-
-            sre = mkShell {
-              buildInputs = [ nixopsUnstable ];
-              NIX_PATH = "nixpkgs=${pkgs.path}";
-            };
-
             default = developers;
           };
 
+          devnet-specs = {
+            default = import ./.nix/devnet-specs/default.nix {
+              inherit pkgs;
+              inherit packages;
+            };
+
+            xcvm = import ./.nix/devnet-specs/xcvm.nix {
+              inherit pkgs;
+              inherit packages;
+            };
+          };
+
           apps = let
-            arion-pure = import ./.nix/arion-pure.nix {
-              inherit pkgs;
-              inherit packages;
-            };
-            arion-up-program = pkgs.writeShellApplication {
-              name = "devnet-up";
-              runtimeInputs =
-                [ pkgs.arion pkgs.docker pkgs.coreutils pkgs.bash ];
-              text = ''
-                arion --prebuilt-file ${arion-pure} up --build --force-recreate -V --always-recreate-deps --remove-orphans
-              '';
-            };
-
-            devnet-xcvm = import ./.nix/arion-xcvm.nix {
-              inherit pkgs;
-              inherit packages;
-            };
-            devnet-xcvm-up-program = pkgs.writeShellApplication {
-              name = "devnet-xcvm-up";
-              runtimeInputs =
-                [ pkgs.arion pkgs.docker pkgs.coreutils pkgs.bash ];
-              text = ''
-                arion --prebuilt-file ${devnet-xcvm} up --build --force-recreate -V --always-recreate-deps --remove-orphans
-              '';
-            };
-
+            devnet-default-program =
+              pkgs.composable.mkDevnetProgram "devnet-default"
+              devnet-specs.default;
+            devnet-xcvm-program =
+              pkgs.composable.mkDevnetProgram "devnet-xcvm" devnet-specs.xcvm;
           in rec {
-            devnet-up = {
+            devnet = {
               type = "app";
-              program = "${arion-up-program}/bin/devnet-up";
+              program = "${devnet-default-program}/bin/devnet-default";
             };
 
-            devnet-xcvm-up = {
+            devnet-xcvm = {
               type = "app";
-              program = "${devnet-xcvm-up-program}/bin/devnet-xcvm-up";
+              program = "${devnet-xcvm-program}/bin/devnet-xcvm";
             };
 
             devnet-dali = {
@@ -1142,11 +1183,20 @@
                 "${packages.kusama-picasso-karura-devnet}/bin/kusama-picasso-karura";
             };
 
-            devnet-kusama-dali-karura = {
-              type = "app";
-              program =
-                "${packages.kusama-dali-karura-devnet}/bin/kusama-dali-karura";
-            };
+            # OBSOLETE
+            devnet-kusama-dali-karura =
+              trace "#OBSOLETE: use ` devnet-native-all`" {
+                type = "app";
+                program =
+                  "${packages.kusama-dali-karura-devnet}/bin/kusama-dali-karura";
+              };
+
+            devnet-native-all = trace
+              "biggest native(not container) devnet with all things possible to run native" {
+                type = "app";
+                program =
+                  "${packages.devnet-all-dev-local}/bin/kusama-dali-karura";
+              };
 
             price-feed = {
               type = "app";
@@ -1194,6 +1244,8 @@
           };
         });
     in eachSystemOutputs // {
+
+      overlays.default = composableOverlay;
       nixopsConfigurations = {
         default = let pkgs = nixpkgs.legacyPackages.x86_64-linux;
         in import ./.nix/devnet.nix {

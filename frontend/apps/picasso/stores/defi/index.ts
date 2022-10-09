@@ -19,9 +19,6 @@ export type { StatsTelemetrySlice } from "./stats/telemetry";
 export { createSubstrateBalancesSlice } from "./polkadot/balances/slice";
 export type { SubstrateBalancesSlice } from "./polkadot/balances/slice";
 
-export { createCrowdloanRewardsSlice } from "./polkadot/crowdloanRewards/slice";
-export type { CrowdloanRewardsSlice } from "./polkadot/crowdloanRewards/slice";
-
 export { createBondsSlice } from "./polkadot/bonds/slice";
 export type { BondsSlice } from "./polkadot/bonds/slice";
 

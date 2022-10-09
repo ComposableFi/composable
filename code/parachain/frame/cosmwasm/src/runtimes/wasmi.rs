@@ -3,7 +3,9 @@ use crate::{runtimes::abstraction::GasOutcome, Config, ContractInfoOf, Pallet};
 use alloc::string::String;
 use cosmwasm_minimal_std::{Coin, ContractInfoResponse, Empty, Env, MessageInfo};
 use cosmwasm_vm::{
-	executor::{cosmwasm_call, ExecutorError, InstantiateInput, MigrateInput, QueryInput},
+	executor::{
+		cosmwasm_call, ExecuteInput, ExecutorError, InstantiateInput, MigrateInput, QueryInput,
+	},
 	has::Has,
 	memory::{
 		MemoryReadError, MemoryWriteError, Pointable, ReadWriteMemory, ReadableMemory,
@@ -33,6 +35,7 @@ pub enum CosmwasmVMError<T: Config> {
 	ReadOnlyViolation,
 	OutOfGas,
 	Unsupported,
+	Rpc(String),
 }
 
 impl<T: Config> core::fmt::Display for CosmwasmVMError<T> {
@@ -244,17 +247,13 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		CosmwasmContractMeta { code_id: new_code_id, admin, label }: Self::ContractMeta,
 	) -> Result<(), Self::Error> {
 		log::debug!(target: "runtime::contracts", "set_contract_meta");
-		let contract = address.into_inner();
-		let mut info = Pallet::<T>::contract_info(&contract)?;
-		info.code_id = new_code_id;
-		info.admin = admin.map(|admin| admin.into_inner());
-		info.label = label
-			.as_bytes()
-			.to_vec()
-			.try_into()
-			.map_err(|_| crate::Error::<T>::LabelTooBig)?;
-		Pallet::<T>::set_contract_info(&contract, info);
-		Ok(())
+		Pallet::<T>::set_contract_meta(
+			&address.into_inner(),
+			new_code_id,
+			admin.map(|admin| admin.into_inner()),
+			label,
+		)
+		.map_err(Into::into)
 	}
 
 	fn running_contract_meta(&mut self) -> Result<Self::ContractMeta, Self::Error> {
@@ -384,7 +383,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		let contract = address.into_inner();
 		let info = Pallet::<T>::contract_info(&contract)?;
 		Pallet::<T>::cosmwasm_call(self.shared, sender, contract, info, funds, |vm| {
-			cosmwasm_system_run::<InstantiateInput, _>(vm, message, event_handler)
+			cosmwasm_system_run::<ExecuteInput, _>(vm, message, event_handler)
 		})
 	}
 

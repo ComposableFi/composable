@@ -1,7 +1,8 @@
 ---
 ignored:
-  - DL3006
-  - DL3007
-  - DL3008
-  - DL3009
-  - SC2114
+  - DL3002 # Last USER should not be root.
+  - DL3006 # Always tag the version of an image explicitly.
+  - DL3007 # Using latest is prone to errors if the image will ever update. Pin the version explicitly to a release tag.
+  - DL3008 # Pin versions in apt get install.
+  - DL3009 # Delete the apt-get lists after installing something.
+  - DL3018 # Pin versions in apk add.
