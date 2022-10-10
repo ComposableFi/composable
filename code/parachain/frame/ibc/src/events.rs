@@ -1,11 +1,12 @@
 use super::*;
+use crate::errors::IbcError;
 use ibc::{
 	core::{
 		ics02_client::{events as ClientEvents, events::NewBlock},
 		ics03_connection::events as ConnectionEvents,
 		ics04_channel::{events as ChannelEvents, packet::Packet},
 		ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId},
-		ics26_routing::context::ModuleId,
+		ics26_routing::{context::ModuleId, error::Error as RoutingError},
 	},
 	events::{IbcEvent as RawIbcEvent, ModuleEvent},
 	timestamp::Timestamp,
@@ -438,7 +439,17 @@ impl From<RawIbcEvent> for IbcEvent {
 
 impl<T: Config> From<Vec<RawIbcEvent>> for Event<T> {
 	fn from(events: Vec<RawIbcEvent>) -> Self {
-		let events: Vec<IbcEvent> = events.into_iter().map(|ev| ev.into()).collect();
+		let events: Vec<Result<IbcEvent, _>> = events.into_iter().map(|ev| Ok(ev.into())).collect();
+		Event::Events { events }
+	}
+}
+
+impl<T: Config> From<Vec<Result<RawIbcEvent, RoutingError>>> for Event<T> {
+	fn from(events: Vec<Result<RawIbcEvent, RoutingError>>) -> Self {
+		let events: Vec<Result<IbcEvent, IbcError>> = events
+			.into_iter()
+			.map(|result| result.map(|ev| ev.into()).map_err(|err| err.into()))
+			.collect();
 		Event::Events { events }
 	}
 }

@@ -66,7 +66,6 @@ where
 								let message = chain_a.query_client_message(
 									transaction_id.block_hash,
 									transaction_id.tx_index,
-									client_update.height(),
 									i,
 								).await?;
 								chain_b.check_for_misbehaviour(&chain_a, message).await?;
@@ -89,7 +88,6 @@ where
 								let message = chain_b.query_client_message(
 									transaction_id.block_hash,
 									transaction_id.tx_index,
-									client_update.height(),
 									i,
 								).await?;
 								chain_a.check_for_misbehaviour(&chain_b, message).await?;

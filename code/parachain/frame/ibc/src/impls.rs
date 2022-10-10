@@ -82,30 +82,26 @@ where
 		ctx: &mut Context<T>,
 		messages: Vec<ibc_proto::google::protobuf::Any>,
 	) {
-		let (events, logs, errors) = messages.into_iter().fold(
-			(vec![], vec![], vec![]),
-			|(mut events, mut logs, mut errors), msg| {
+		let (events, logs) =
+			messages.into_iter().fold((vec![], vec![]), |(mut events, mut logs), msg| {
 				match ibc::core::ics26_routing::handler::deliver(ctx, msg) {
 					Ok(MsgReceipt { events: temp_events, log: temp_logs }) => {
-						events.extend(temp_events);
+						events.extend(temp_events.into_iter().map(Ok));
 						logs.extend(temp_logs);
 					},
-					Err(e) => errors.push(e),
+					Err(e) => {
+						log::trace!(target: "pallet_ibc", "execution error: {}", e);
+						events.push(Err(e));
+					},
 				}
-				(events, logs, errors)
-			},
-		);
+				(events, logs)
+			});
 
 		log::trace!(target: "pallet_ibc", "logs: {:#?}", logs);
-		log::trace!(target: "pallet_ibc", "errors: {:#?}", errors);
 
-		// todo: consolidate into one.
 		if !events.is_empty() {
-			Self::deposit_event(events.into())
-		};
-		if !errors.is_empty() {
-			Self::deposit_event(errors.into())
-		};
+			Self::deposit_event(events.into());
+		}
 	}
 }
 
@@ -915,7 +911,7 @@ where
 			dest_channel: packet.destination_channel.to_string().as_bytes().to_vec(),
 			sequence: packet.sequence.into(),
 		};
-		Self::deposit_event(Event::<T>::Events { events: vec![event] });
+		Self::deposit_event(Event::<T>::Events { events: vec![Ok(event)] });
 		Ok(())
 	}
 

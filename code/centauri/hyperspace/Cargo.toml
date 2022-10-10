@@ -61,3 +61,4 @@ sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkad
 
 [features]
 parachain = ["dep:parachain", "subxt"]
+testing = []

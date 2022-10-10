@@ -406,9 +406,7 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub (super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// Events emitted by the ibc subsystem
-		Events { events: Vec<events::IbcEvent> },
-		/// Errors emitted by the ibc subsystem
-		Errors { errors: Vec<errors::IbcError> },
+		Events { events: Vec<Result<events::IbcEvent, errors::IbcError>> },
 		/// An Ibc token transfer has been started
 		TokenTransferInitiated {
 			from: <T as frame_system::Config>::AccountId,

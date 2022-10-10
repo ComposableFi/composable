@@ -40,7 +40,8 @@ impl From<RoutingError> for IbcError {
 
 impl<T: Config> From<Vec<RoutingError>> for Event<T> {
 	fn from(errors: Vec<RoutingError>) -> Self {
-		let errors: Vec<IbcError> = errors.into_iter().map(|err| err.into()).collect();
-		Event::<T>::Errors { errors }
+		let errors: Vec<Result<_, IbcError>> =
+			errors.into_iter().map(|err| Err(err.into())).collect();
+		Event::<T>::Events { events: errors }
 	}
 }

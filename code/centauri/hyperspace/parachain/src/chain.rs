@@ -37,7 +37,6 @@ use ibc::{
 		ics26_routing::msgs::Ics26Envelope,
 	},
 	tx_msg::Msg,
-	Height,
 };
 use ics10_grandpa::client_message::{ClientMessage, Misbehaviour, RelayChainHeader};
 use pallet_ibc::light_clients::AnyClientMessage;
