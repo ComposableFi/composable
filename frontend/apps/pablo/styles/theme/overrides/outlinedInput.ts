@@ -1,15 +1,20 @@
 import { alpha, Theme } from "@mui/material";
 import { OverridesStyleRules } from "@mui/material/styles/overrides";
 
-export const outlinedInputOverrides = (theme: Theme): Partial<OverridesStyleRules> => ({
+export const outlinedInputOverrides = (
+  theme: Theme
+): Partial<OverridesStyleRules> => ({
   defaultProps: {
     notched: false,
   },
   styleOverrides: {
     root: {
-      borderRadius: 9999,
+      borderRadius: theme.shape.borderRadius,
       paddingRight: 0,
-      background: alpha(theme.palette.common.white, theme.custom.opacity.lighter),
+      background: alpha(
+        theme.palette.common.white,
+        theme.custom.opacity.lighter
+      ),
       "&:hover": {
         "& .MuiOutlinedInput-notchedOutline": {
           borderColor: alpha(
@@ -37,12 +42,15 @@ export const outlinedInputOverrides = (theme: Theme): Partial<OverridesStyleRule
       },
       "&.Mui-disabled": {
         "& .MuiOutlinedInput-notchedOutline": {
-          borderColor: alpha(theme.palette.common.white, theme.custom.opacity.light),
+          borderColor: alpha(
+            theme.palette.common.white,
+            theme.custom.opacity.light
+          ),
         },
       },
       "& .MuiSelect-icon": {
         right: theme.spacing(3),
-        transform: 'none',
+        transform: "none",
         [theme.breakpoints.down("sm")]: {
           right: theme.spacing(2),
         },

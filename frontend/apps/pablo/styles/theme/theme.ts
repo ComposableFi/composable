@@ -21,6 +21,7 @@ import {
   cssBaselineOverrides,
   dialogOverrides,
   drawerOverrides,
+  gridOverrides,
   inputAdornmentOverrides,
   inputLabelOverrides,
   linearProgressOverrides,
@@ -108,6 +109,7 @@ export const createTheme = (mode: PaletteMode) => {
       MuiStepConnector: stepConnectorOverrides(theme),
       MuiStepLabel: stepLabelOverrides(theme),
       MuiAlertTitle: alertTitle(theme),
+      MuiGrid: gridOverrides(theme),
     },
   });
 };

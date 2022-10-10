@@ -3,10 +3,10 @@ import { TOKENS } from "@/defi/Tokens";
 import { useAppSelector } from "@/hooks/store";
 import {
   Box,
-  useTheme,
   Grid,
-  Typography,
   TooltipProps as MuiTooltipProps,
+  Typography,
+  useTheme,
 } from "@mui/material";
 import { GridProps } from "@mui/system";
 import { BoxWrapper } from "../BoxWrapper";
@@ -65,21 +65,12 @@ const Item: React.FC<ItemProps> = ({ label, TooltipProps, value }) => {
 export const StakingStatistics: React.FC<GridProps> = ({ ...gridProps }) => {
   const theme = useTheme();
 
-  const {
-    pabloStaking
-  } = useStakingRewardsSlice();
-  const {
-    totalPBLOLocked,
-    averageLockMultiplier,
-    averageLockTime
-  } = pabloStaking;
+  const { pabloStaking } = useStakingRewardsSlice();
+  const { totalPBLOLocked, averageLockMultiplier, averageLockTime } =
+    pabloStaking;
 
-  const {
-    totalChaosApy,
-    totalKsmApy,
-    totalPicaApy,
-    totalPabloApy,
-  } = useAppSelector((state) => state.polkadot.stakingOverview);
+  const { totalChaosApy, totalKsmApy, totalPicaApy, totalPabloApy } =
+    useAppSelector((state) => state.polkadot.stakingOverview);
 
   const totalApyTooltip = (
     <Box {...defaultFlexBoxProps} p={3}>
@@ -102,7 +93,7 @@ export const StakingStatistics: React.FC<GridProps> = ({ ...gridProps }) => {
   );
 
   return (
-    <Grid container spacing={8} {...gridProps}>
+    <Grid container spacing={3} {...gridProps}>
       <Grid item {...threeColumnPageSize}>
         <Item
           label="Total PBLO locked"
@@ -123,7 +114,7 @@ export const StakingStatistics: React.FC<GridProps> = ({ ...gridProps }) => {
         <Item
           label="Total CHAOS minted"
           value={new BigNumber(0).toFormat()}
-          TooltipProps={{title: "Total CHAOS Minted"}}
+          TooltipProps={{ title: "Total CHAOS Minted" }}
         />
       </Grid>
       <Grid item {...twoColumnPageSize}>
