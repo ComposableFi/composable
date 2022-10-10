@@ -118,7 +118,7 @@ these can be easily swapped out for any other modules that satisfy the requireme
 
 ### Rpc Interface
 
-The Rpc interface is designed to allow querying the state of the ibc store with membership or non-membership proofs for the result.
+The [`Rpc interface`](/code/parachain/frame/ibc/rpc/src/lib.rs) is designed to allow querying the state of the ibc store with membership or non-membership proofs for the result.
 
 - `query_send_packets` - Returns send packets for the provided sequences
 - `query_recv_packets` - Returns receive packets for the provided sequences
@@ -148,6 +148,12 @@ The Rpc interface is designed to allow querying the state of the ibc store with 
 - `query_denom_trace` - Query the ibc denom trace for the provided local asset id
 - `query_denom_traces` - Query all ibc denom traces that exist on chain
 - `query_events` - Returns all ibc events from a block.
+
+#### Runtime API
+
+A set of runtime apis are specified to enable the rpc interface, these are defined here and should be implemented for the runtime for the rpc interface to work correctly.
+The runtime interface is defined [`here`](/code/parachain/frame/ibc/runtime-api/src/lib.rs).
+Identical methods are implemented for the pallet to be called in the runtime interface implementation [`here`](/code/parachain/frame/ibc/src/impls.rs#L112)
 
 ### IBC Protocol coverage
 
