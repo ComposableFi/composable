@@ -619,10 +619,33 @@
             inherit frontend-pablo-server;
             inherit frontend-picasso-server;
             
-            docs = {
-            
+            docs-static = npm-bp.buildNpmPackage {
+              src = ./docs;
+              npmBuild = "npm run build";
+              installPhase = ''
+                mkdir -p $out
+                cp -a ./build/. $out
+              '';
             };
-
+            
+            docs-server = let PORT = 8008; in pkgs.writeShellApplication {
+              name = "docs-server";
+              runtimeInputs = [ pkgs.miniserve ];
+              text = ''
+                miniserve -p ${ builtins.toString PORT } --spa --index index.html ${docs-static}
+              '';
+            };
+            
+            docs-dev = pkgs.writeShellApplication {
+              name = "docs-dev";
+              runtimeInputs = [ pkgs.nodejs ];
+              text = ''
+                cd docs
+                npm install
+                npm run start
+              '';
+            };
+            
             xcvm-contract-asset-registry =
               mk-xcvm-contract "xcvm-asset-registry";
             xcvm-contract-router = mk-xcvm-contract "xcvm-router";
