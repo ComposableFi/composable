@@ -13,6 +13,7 @@ export type SelectLockPeriodProps = {
   durationPresetSelected?: DurationPresetMark;
   setMultiplier?: (multiplier: number) => void;
   multiplier: number;
+  principalAssetSymbol?: string
 } & BoxProps;
 
 export const SelectLockPeriod: React.FC<SelectLockPeriodProps> = ({
@@ -20,6 +21,7 @@ export const SelectLockPeriod: React.FC<SelectLockPeriodProps> = ({
   durationPresetSelected,
   setMultiplier,
   multiplier,
+  principalAssetSymbol,
   ...boxProps
 }) => {
   const theme = useTheme();
@@ -134,7 +136,7 @@ export const SelectLockPeriod: React.FC<SelectLockPeriodProps> = ({
           <Alert
             severity="warning"
             alertTitle="Warning"
-            alertText="Your PBLO will be locked until the expiry date."
+            alertText={`Your ${principalAssetSymbol} will be locked until the expiry date.`}
             AlertTextProps={{ color: "text.secondary" }}
           />
         </Box>

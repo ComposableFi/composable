@@ -156,17 +156,17 @@ const PolkadotBalancesUpdater = ({
                   picassoBalanceSubscriber(chain, asset, chainId);
                   break;
                 case "karura":
-                  fetchKaruraBalanceByAssetId(
-                    chain.parachainApi!,
-                    chain.accounts[selectedAccount].address,
-                    String(asset.meta.symbol)
-                  ).then((balance) => {
-                    updateAssetBalance({
-                      substrateNetworkId: chainId as SubstrateNetworkId,
-                      assetId: asset.meta.assetId,
-                      balance
-                    });
-                  });
+                  // fetchKaruraBalanceByAssetId(
+                  //   chain.parachainApi!,
+                  //   chain.accounts[selectedAccount].address,
+                  //   String(asset.meta.symbol)
+                  // ).then((balance) => {
+                  //   updateAssetBalance({
+                  //     substrateNetworkId: chainId as SubstrateNetworkId,
+                  //     assetId: asset.meta.assetId,
+                  //     balance
+                  //   });
+                  // });
                 default:
                   break;
               }

@@ -94,6 +94,7 @@ contentful
 coreutils
 cosm
 crev # cargo-crev
+dalek
 devcontainers
 devel
 dhms # day hour minute second
@@ -102,6 +103,7 @@ dockerfile
 dotgraphs
 drawio
 eamodio
+ebnf
 edgeware
 endef
 enduml
@@ -116,6 +118,7 @@ freetype
 fsevenm
 FSIZE
 getrandom
+giga
 GITREPO
 GITUSER
 gnugrep
@@ -180,6 +183,8 @@ nixfmt
 nixops
 nixos
 nixpkgs
+nixify
+nixified
 nocapture
 noconfirm
 nodedir
@@ -234,12 +239,14 @@ protoc
 PROTOC
 PTRACE
 reduxjs
+registryaddr
 rekt
 resourcemonitor
 revhash
 rewardaccumulationhook
 rewardtrackerstore
 ripemd
+rlib
 rnix
 rocksdb
 ROCKSDB
@@ -276,6 +283,7 @@ statemine
 stdenv
 structopt
 styleguide
+submessage
 substituters
 subwasm
 subxt

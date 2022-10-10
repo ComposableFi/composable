@@ -13,7 +13,6 @@ import { ColorModeContext } from "@/contexts/ColorMode";
 import SubstrateBalancesUpdater from "@/stores/defi/polkadot/balances/PolkadotBalancesUpdater";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import CrowdloanRewardsUpdater from "@/stores/defi/polkadot/crowdloanRewards/CrowdloanRewardsUpdater";
-import { PalletsContextProvider } from "@/defi/polkadot/context/PalletsContext";
 import { SnackbarProvider } from "notistack";
 import { ThemeResponsiveSnackbar } from "@/components/Molecules/Snackbar";
 import { DotSamaContextProvider, ExecutorProvider } from "substrate-react";
@@ -60,7 +59,7 @@ const rpc = Object.keys(definitions)
   .reduce(
     (accumulator, key) => ({
       ...accumulator,
-      [key]: (definitions as any)[key].rpc
+      [key]: (definitions as any)[key].rpc,
     }),
     {}
   );
@@ -69,7 +68,7 @@ const types = Object.keys(definitions)
   .reduce(
     (accumulator, key) => ({
       ...accumulator,
-      ...(definitions as any)[key].types
+      ...(definitions as any)[key].types,
     }),
     {}
   );
@@ -80,7 +79,7 @@ export default function MyApp(props: MyAppProps) {
     () => ({
       toggleColorMode: () => {
         setMode((prevMode) => (prevMode === "light" ? "dark" : "light"));
-      }
+      },
     }),
     []
   );
@@ -104,18 +103,16 @@ export default function MyApp(props: MyAppProps) {
             supportedParachains={[
               {
                 chainId: "picasso",
-                rpcUrl:
-                  process.env.SUBSTRATE_PROVIDER_URL_KUSAMA_2019 || "",
+                rpcUrl: process.env.SUBSTRATE_PROVIDER_URL_KUSAMA_2019 || "",
                 rpc,
-                types
+                types,
               },
               {
                 chainId: "karura",
-                rpcUrl:
-                  process.env.SUBSTRATE_PROVIDER_URL_KARURA || "",
+                rpcUrl: process.env.SUBSTRATE_PROVIDER_URL_KARURA || "",
                 rpc: {},
-                types: {}
-              }
+                types: {},
+              },
             ]}
             appName={APP_NAME}
           >
@@ -123,37 +120,35 @@ export default function MyApp(props: MyAppProps) {
               blockchainInfo={Object.entries(NETWORKS).map(([netId, net]) => {
                 return {
                   chainId: +netId,
-                  rpcUrl: net.rpcUrl
+                  rpcUrl: net.rpcUrl,
                 };
               })}
             >
-              <PalletsContextProvider>
-                <ApolloProvider client={apolloClient}>
-                  <SubstrateBalancesUpdater
-                    substrateNetworks={Object.values(SUBSTRATE_NETWORKS)}
-                  />
-                  <CrowdloanRewardsUpdater />
-                  <SnackbarProvider
-                    Components={{
-                      info: ThemeResponsiveSnackbar,
-                      success: ThemeResponsiveSnackbar,
-                      error: ThemeResponsiveSnackbar,
-                      warning: ThemeResponsiveSnackbar
-                    }}
-                    autoHideDuration={null}
-                    maxSnack={4}
-                    disableWindowBlurListener={true}
-                    anchorOrigin={{
-                      vertical: "bottom",
-                      horizontal: "center"
-                    }}
-                  >
-                    <ExecutorProvider>
-                      <Component {...pageProps} />
-                    </ExecutorProvider>
-                  </SnackbarProvider>
-                </ApolloProvider>
-              </PalletsContextProvider>
+              <ApolloProvider client={apolloClient}>
+                <SubstrateBalancesUpdater
+                  substrateNetworks={Object.values(SUBSTRATE_NETWORKS)}
+                />
+                <CrowdloanRewardsUpdater />
+                <SnackbarProvider
+                  Components={{
+                    info: ThemeResponsiveSnackbar,
+                    success: ThemeResponsiveSnackbar,
+                    error: ThemeResponsiveSnackbar,
+                    warning: ThemeResponsiveSnackbar,
+                  }}
+                  autoHideDuration={null}
+                  maxSnack={4}
+                  disableWindowBlurListener={true}
+                  anchorOrigin={{
+                    vertical: "bottom",
+                    horizontal: "center",
+                  }}
+                >
+                  <ExecutorProvider>
+                    <Component {...pageProps} />
+                  </ExecutorProvider>
+                </SnackbarProvider>
+              </ApolloProvider>
             </BlockchainProvider>
           </DotSamaContextProvider>
         </ThemeProvider>

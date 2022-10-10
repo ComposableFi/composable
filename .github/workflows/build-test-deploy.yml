@@ -34,11 +34,7 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}-common-deps-${{ github.ref }}
       cancel-in-progress: true
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: ubuntu-latest
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
@@ -63,11 +59,7 @@ jobs:
   check-nix:
     name: "Check nix"
     continue-on-error: false
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-check-nix-${{ github.ref }}
       cancel-in-progress: true
@@ -97,11 +89,7 @@ jobs:
 
   cargo-fmt-check:
     name: "Cargo fmt check"
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-cargo-fmt-check-${{ github.ref }}
       cancel-in-progress: true
@@ -127,11 +115,7 @@ jobs:
 
   taplo-cli-check:
     name: "Taplo cli check"
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-taplo-cli-check-${{ github.ref }}
       cancel-in-progress: true
@@ -157,11 +141,7 @@ jobs:
 
   prettier-check:
     name: "Prettier check"
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-prettier-check-${{ github.ref }}
       cancel-in-progress: true
@@ -187,11 +167,7 @@ jobs:
 
   nixfmt-check:
     name: "Nixfmt check"
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-nixfmt-check-${{ github.ref }}
       cancel-in-progress: true
@@ -215,15 +191,11 @@ jobs:
       - run: |
           cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#nixfmt-check --no-update-lock-file --show-trace -L
 
-  cspell-check:
+  spell-check:
     name: "Spelling check"
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: ubuntu-latest
     concurrency:
-      group: ${{ github.workflow }}-cspell-check-${{ github.ref }}
+      group: ${{ github.workflow }}-spell-check-${{ github.ref }}
       cancel-in-progress: true
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
@@ -243,15 +215,11 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#cspell-check --no-update-lock-file --show-trace -L
+          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#spell-check --no-update-lock-file --show-trace -L
 
   mdbook-check:
     name: "Mdbook check"
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-mdbook-check-${{ github.ref }}
       cancel-in-progress: true
@@ -275,14 +243,40 @@ jobs:
       - run: |
           cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#mdbook-check --no-update-lock-file --show-trace -L
 
-  cargo-clippy-check:
-    name: "Cargo clippy check"
-    needs: common-deps
+  hadolint-check:
+    name: "Dockerfiles check"
     runs-on:
       - self-hosted
       - linux
       - x64
       - sre
+    concurrency:
+      group: ${{ github.workflow }}-hadolint-check-${{ github.ref }}
+      cancel-in-progress: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+          echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+      - run: |
+          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#hadolint-check --no-update-lock-file --show-trace -L
+
+  cargo-clippy-check:
+    name: "Cargo clippy check"
+    needs: common-deps
+    runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-cargo-clippy-check-${{ github.ref }}
       cancel-in-progress: true
@@ -309,11 +303,7 @@ jobs:
   cargo-deny-check:
     name: "Cargo deny check"
     needs: common-deps
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-cargo-deny-check-${{ github.ref }}
       cancel-in-progress: true
@@ -340,11 +330,7 @@ jobs:
   cargo-udeps-check:
     name: "Cargo udeps"
     needs: common-deps
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-cargo-udeps-check-${{ github.ref }}
       cancel-in-progress: true
@@ -504,11 +490,7 @@ jobs:
   check-simnode:
     name: "Simnode"
     needs: package-simnode-tests
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: ubuntu-latest
     concurrency:
       group: check-simnode-${{ matrix.runtime }}-${{ github.ref }}
       cancel-in-progress: true
@@ -697,7 +679,7 @@ jobs:
       - run: |
           cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#polkadot-node --no-update-lock-file --show-trace -L
 
-  package-kusama-parachains-devnet:
+  cache-kusama-parachains-devnet:
     name: "Package kusama parachains devnet"
     needs:
       - package-polkadot-node
@@ -707,7 +689,7 @@ jobs:
       - x64
       - sre
     concurrency:
-      group: ${{ github.workflow }}-package-kusama-parachains-devnet-${{ github.ref }}
+      group: ${{ github.workflow }}-cache-kusama-parachains-devnet-${{ github.ref }}
       cancel-in-progress: true
     continue-on-error: true
     container:
@@ -729,7 +711,38 @@ jobs:
           name: composable-community
       - run: |
           cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#kusama-picasso-karura-devnet --no-update-lock-file --show-trace -L
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#kusama-dali-karura-devnet --no-update-lock-file --show-trace -L
+
+  cache-devnet-all-dev-local:
+    needs:
+      - package-polkadot-node
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    concurrency:
+      group: ${{ github.workflow }}-cache-devnet-all-dev-local-${{ github.ref }}
+      cancel-in-progress: true
+    continue-on-error: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+          echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+      - run: |
+          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#devnet-all-dev-local --no-update-lock-file --show-trace -L          
 
   package-xcvm-minimal:
     name: "Package XCVM minimal"
@@ -791,9 +804,7 @@ jobs:
       - run: |
           cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#price-feed --no-update-lock-file --show-trace -L
 
-  composable-sandbox-publish:
-    if: ${{ github.ref == 'refs/heads/main' }}
-    name: "Docker composable-sandbox"
+  composable-sandbox-container-publish:
     needs:
       - effects-gate
     runs-on:
@@ -802,7 +813,7 @@ jobs:
       - x64
       - sre
     concurrency:
-      group: composable-sandbox-${{ github.ref }}
+      group: ${{ github.workflow }}-composable-sandbox-container-${{ github.ref }}
       cancel-in-progress: true
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
@@ -832,8 +843,64 @@ jobs:
       - run: |
           cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#devnet-container --no-update-lock-file --show-trace -L
           docker load --input ./result
-          docker tag composable-devnet-container:latest "${{ env.DOCKER_REGISTRY_NAME }}/composable-sandbox:latest"
-          docker push "${{ env.DOCKER_REGISTRY_NAME }}/composable-sandbox:latest"
+          # update soon https://github.com/actions/checkout/issues/760
+          git config --global --add safe.directory /__w/composable/composable
+          CONTAINER_NAME=composable-sandbox
+          SHA256=$(sha256sum ./result | cut --delimiter " " --fields 1)
+          COMMIT_SHA=$(git rev-parse HEAD)
+          LOCAL_DOCKER_IMAGE_NAME=composable-devnet-container:latest
+          docker image tag $LOCAL_DOCKER_IMAGE_NAME "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}:${COMMIT_SHA}"
+          docker image tag $LOCAL_DOCKER_IMAGE_NAME "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}:${SHA256}"
+          if [ $(git symbolic-ref HEAD) = "refs/heads/main" ]; then 
+            docker image tag $LOCAL_DOCKER_IMAGE_NAME "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}:latest"
+          fi;                   
+          docker push --all-tags "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}"          
+
+  # We temporary disable this job
+  # because we need to build `composable-centauri` docker images only for `centauri` branch now.
+  # composable-centauri-container-publish:
+  #   if: ${{ github.ref == 'refs/heads/main' }}
+  #   name: "Docker composable-centauri"
+  #   needs:
+  #     - effects-gate
+  #   runs-on:
+  #     - self-hosted
+  #     - linux
+  #     - x64
+  #     - sre
+  #   concurrency:
+  #     group: ${{ github.workflow }}-composable-centauri-container-${{ github.ref }}
+  #     cancel-in-progress: true
+  #   container:
+  #     image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - run: |
+  #         echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+  #         echo "sandbox = relaxed" >> /etc/nix/nix.conf
+  #         echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+  #     - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+  #       with:
+  #         skipPush: true
+  #         installCommand: |
+  #           nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+  #           nix-channel --update
+  #           nix-env -iA nixpkgs.cachix nixpkgs.docker nixpkgs.docker-buildx
+  #         authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+  #         name: composable-community
+  #     - uses: docker/login-action@v1
+  #       with:
+  #         username: ${{ secrets.DOCKER_HUB_USERNAME }}
+  #         password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+  #     - run: |
+  #         # enable required features (see https://github.com/cachix/install-nix-action/issues/19)
+  #         mkdir -p ~/.config/nix
+  #         echo "system-features = kvm" >> ~/.config/nix/nix.conf
+  #     - run: |
+  #         cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#bridge-devnet-dali-container --no-update-lock-file --show-trace -L
+  #         docker load --input ./result
+  #         docker tag composable-centauri-devnet-container:latest "${{ env.DOCKER_REGISTRY_NAME }}/composable-centauri:latest"
+  #         docker push "${{ env.DOCKER_REGISTRY_NAME }}/composable-centauri:latest"
 
   devcontainer-build:
     name: "Devcontainer build"
@@ -902,8 +969,7 @@ jobs:
         docker build --file Dockerfile --tag "${{ env.DOCKER_REGISTRY_NAME }}/composable-devcontainer-minimal:${COMMIT_SHA}" --tag "${{ env.DOCKER_REGISTRY_NAME }}/composable-devcontainer-minimal:latest" .
         docker push --all-tags "${{ env.DOCKER_REGISTRY_NAME }}/composable-devcontainer-minimal"
 
-  devcontainer-publish:
-    name: "Devcontainer publish"
+  composable-devcontainer-publish:
     if: github.event_name == 'push' && github.ref_name == 'main'
     needs:
       - effects-gate
@@ -913,7 +979,7 @@ jobs:
       - x64
       - sre
     concurrency:
-      group: ${{ github.workflow }}-devcontainer-publish-${{ github.ref }}
+      group: ${{ github.workflow }}-composable-devcontainer-publish-${{ github.ref }}
       cancel-in-progress: true
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
@@ -937,18 +1003,20 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
       - run: |
-          # really not building, but reading from cache
-          nix build .#packages.x86_64-linux.devcontainer --no-update-lock-file --show-trace -L
+          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#packages.x86_64-linux.devcontainer --no-update-lock-file --show-trace -L
           docker load --input ./result
           # update soon https://github.com/actions/checkout/issues/760
           git config --global --add safe.directory /__w/composable/composable
-          COMMIT_SHA=$(git rev-parse --short=9 HEAD)
-          DOCKER_IMAGE_HASH=$(docker images | tail --lines=1 | tr --squeeze-repeats  ' ' |  cut --delimiter " " --fields 3)
-          # TODO: make nix sha256 hash(allow to find by using nix ids) and branch dependant(allow to test from branches) tags
-          docker image tag $DOCKER_IMAGE_HASH "${{ env.DOCKER_REGISTRY_NAME }}/composable-devcontainer:${COMMIT_SHA}"
-          docker image tag $DOCKER_IMAGE_HASH "${{ env.DOCKER_REGISTRY_NAME }}/composable-devcontainer:latest"
-          # TODO: upload a docker image with `latest` tag only from `main` branch
-          docker push --all-tags "${{ env.DOCKER_REGISTRY_NAME }}/composable-devcontainer"
+          CONTAINER_NAME=composable-devcontainer
+          SHA256=$(sha256sum ./result | cut --delimiter " " --fields 1)
+          COMMIT_SHA=$(git rev-parse HEAD)
+          LOCAL_DOCKER_IMAGE_NAME=composable-devcontainer:latest
+          docker image tag $LOCAL_DOCKER_IMAGE_NAME "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}:${COMMIT_SHA}"
+          docker image tag $LOCAL_DOCKER_IMAGE_NAME "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}:${SHA256}"
+          if [ $(git symbolic-ref HEAD) = "refs/heads/main" ]; then 
+            docker image tag $LOCAL_DOCKER_IMAGE_NAME "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}:latest"
+          fi;                   
+          docker push --all-tags "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}"
 
   devnet-integration-tests:
       name: "Devnet integration tests"
@@ -1034,8 +1102,9 @@ jobs:
         - prettier-check        
         - check-simnode
         - benchmarks-check
-        - cspell-check
+        - spell-check
         - mdbook-check
+        - hadolint-check
       steps:
         - run: echo "Goblins allow your work to see the light"
 

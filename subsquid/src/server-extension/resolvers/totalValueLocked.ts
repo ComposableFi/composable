@@ -50,8 +50,6 @@ export class TotalValueLockedInput {
   source?: LockedSource;
 }
 
-console.log("qwe");
-
 @Resolver()
 export class TotalValueLockedResolver {
   constructor(private tx: () => Promise<EntityManager>) {}
