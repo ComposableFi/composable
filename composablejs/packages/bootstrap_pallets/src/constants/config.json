@@ -1,9 +1,9 @@
 {
-  "bootstrapPools": true,
-  "bootstrapBonds": true,
+  "bootstrapPools": false,
+  "bootstrapBonds": false,
   "bootstrapCrowdloanRewards": false,
   "bootstrapRewardPools": true,
-  "mintAssetsToWallets": true,
+  "mintAssetsToWallets": false,
   "bondOffers": [
     {
       "asset": "4294967296",
@@ -75,10 +75,10 @@
       },
       "lock": {
         "durationPresets": {
-          "86400": "10000000",
-          "604800": "15000000"
+          "86400": "1000000000",
+          "604800": "1500000000"
         },
-        "unlockPenalty": "10000000"
+        "unlockPenalty": "1500000000"
       },
       "financialNftAssetId": "2130",
       "shareAssetId": "1300",
