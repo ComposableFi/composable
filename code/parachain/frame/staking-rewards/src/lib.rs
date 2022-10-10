@@ -1731,8 +1731,6 @@ pub(crate) fn claim_of_stake<T: Config>(
 	let total_issuance: T::Balance =
 		<T::Assets as FungiblesInspect<T::AccountId>>::total_issuance(*share_asset_id);
 
-	dbg!(total_issuance);
-
 	let claim = if total_issuance.is_zero() {
 		T::Balance::zero()
 	} else {
