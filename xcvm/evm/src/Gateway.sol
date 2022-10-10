@@ -9,13 +9,13 @@ import "./Interpreter.sol";
 import "./interfaces/IGateway.sol";
 
 contract Gateway is Ownable, IGateway {
-
     mapping(uint256 => mapping(bytes => address))
         public userInterpreter;
 
     mapping(address => Bridge) public bridgesInfo;
     // TODO ? do we have only one bridgge per network and security
-    mapping(uint256 => mapping(BridgeSecurity => address)) public bridges;
+    mapping(uint256 => mapping(BridgeSecurity => address))
+        public bridges;
     mapping(uint256 => address) public assets;
 
     event InstanceCreated(
@@ -24,11 +24,20 @@ contract Gateway is Ownable, IGateway {
         address instance
     );
 
-
-    event Spawn(bytes account, uint256 networkId, BridgeSecurity security, uint256 salt, bytes spawnedProgram, address[] assetAddresses, uint256[] amounts);
+    event Spawn(
+        bytes account,
+        uint256 networkId,
+        BridgeSecurity security,
+        uint256 salt,
+        bytes spawnedProgram,
+        address[] assetAddresses,
+        uint256[] amounts
+    );
 
     modifier onlyBridge() {
-        require(bridgesInfo[msg.sender].security != BridgeSecurity(0));
+        require(
+            bridgesInfo[msg.sender].security != BridgeSecurity(0)
+        );
         _;
     }
 
@@ -36,12 +45,14 @@ contract Gateway is Ownable, IGateway {
         // enable trustless bridge;
     }
 
-
     function getAsset(uint256 assetId) external returns (address) {
         return assets[assetId];
     }
 
-    function getBridge(uint256 networkId, BridgeSecurity security) external returns (address){
+    function getBridge(uint256 networkId, BridgeSecurity security)
+        external
+        returns (address)
+    {
         return bridges[networkId][security];
     }
 
@@ -65,8 +76,14 @@ contract Gateway is Ownable, IGateway {
         BridgeSecurity security,
         uint256 networkId
     ) external onlyOwner {
-        require(bridges[networkId][security] == address(0), "Gateway: this type of bridge already registered");
-        require(bridgeAddress != address(0), "Gateway: invalid address");
+        require(
+            bridges[networkId][security] == address(0),
+            "Gateway: this type of bridge already registered"
+        );
+        require(
+            bridgeAddress != address(0),
+            "Gateway: invalid address"
+        );
         require(
             bridgesInfo[bridgeAddress].security == BridgeSecurity(0),
             "Gateway: bridge already enabled"
@@ -88,7 +105,9 @@ contract Gateway is Ownable, IGateway {
             bridgesInfo[bridgeAddress].security != BridgeSecurity(0),
             "Gateway: bridge already disabled"
         );
-        delete bridges[bridgesInfo[bridgeAddress].networkId][bridgesInfo[bridgeAddress].security];
+        delete bridges[bridgesInfo[bridgeAddress].networkId][
+            bridgesInfo[bridgeAddress].security
+        ];
         bridgesInfo[bridgeAddress].security = BridgeSecurity(0);
         bridgesInfo[bridgeAddress].networkId = 0;
     }
@@ -128,21 +147,19 @@ contract Gateway is Ownable, IGateway {
         );
         _provisionAssets(interpreterAddress, _assets, _amounts);
 
-        IInterpreter(interpreterAddress).interpret(
-            program
-        );
+        IInterpreter(interpreterAddress).interpret(program);
     }
 
-    function createInterpreter(Origin memory origin)
-        public
-    {
+    function createInterpreter(Origin memory origin) public {
         address interpreterAddress = userInterpreter[
             origin.networkId
         ][origin.account];
-        require(interpreterAddress == address(0), "Interpreter already exists");
+        require(
+            interpreterAddress == address(0),
+            "Interpreter already exists"
+        );
         _getOrCreateInterpreter(origin);
     }
-
 
     function _getOrCreateInterpreter(Origin memory origin)
         private
@@ -174,13 +191,30 @@ contract Gateway is Ownable, IGateway {
         return payable(interpreterAddress);
     }
 
-
-    function emitSpawn(bytes memory account, uint256 networkId, BridgeSecurity security, uint256 salt, bytes memory spawnedProgram, address[] memory assetAddresses, uint256[] memory amounts) external {
+    function emitSpawn(
+        bytes memory account,
+        uint256 networkId,
+        BridgeSecurity security,
+        uint256 salt,
+        bytes memory spawnedProgram,
+        address[] memory assetAddresses,
+        uint256[] memory amounts
+    ) external {
         address payable interpreterAddress = _getOrCreateInterpreter(
             Origin(uint32(networkId), account)
         );
-        require(interpreterAddress == msg.sender, "Gateway: sender is not an interpreter address");
-        emit Spawn(account, networkId, security, salt, spawnedProgram, assetAddresses, amounts);
-
+        require(
+            interpreterAddress == msg.sender,
+            "Gateway: sender is not an interpreter address"
+        );
+        emit Spawn(
+            account,
+            networkId,
+            security,
+            salt,
+            spawnedProgram,
+            assetAddresses,
+            amounts
+        );
     }
 }

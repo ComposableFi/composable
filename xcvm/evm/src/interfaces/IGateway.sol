@@ -23,7 +23,17 @@ interface IGateway {
 
     function getAsset(uint256 assetId) external returns (address);
 
-    function getBridge(uint256 networkId, BridgeSecurity security) external returns (address);
+    function getBridge(uint256 networkId, BridgeSecurity security)
+        external
+        returns (address);
 
-    function emitSpawn(bytes memory account, uint256 networkId, BridgeSecurity security, uint256 salt, bytes memory spawnedProgram, address[] memory assetAddresses, uint256[] memory amounts) external;
+    function emitSpawn(
+        bytes memory account,
+        uint256 networkId,
+        BridgeSecurity security,
+        uint256 salt,
+        bytes memory spawnedProgram,
+        address[] memory assetAddresses,
+        uint256[] memory amounts
+    ) external;
 }
