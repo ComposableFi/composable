@@ -36,7 +36,10 @@ export const useEagerConnect = (chainId: ParachainId): boolean => {
 
   useEffect(() => {
     if (selectedAccount) {
-      localStorage.setItem("selectedAccount", selectedAccount.address);
+      localStorage.setItem(
+        `selectedAccount-${chainId}`,
+        selectedAccount.address
+      );
     }
   }, [selectedAccount]);
 
@@ -48,7 +51,7 @@ export const useEagerConnect = (chainId: ParachainId): boolean => {
       setSelectedAccount &&
       extensionStatus === "connected"
     ) {
-      const storedAccount = localStorage.getItem("selectedAccount");
+      const storedAccount = localStorage.getItem(`selectedAccount-${chainId}`);
       const accountIndex = accounts.findIndex(
         (account) => account.address === storedAccount
       );
@@ -63,7 +66,7 @@ export const useEagerConnect = (chainId: ParachainId): boolean => {
     parachainApi,
     accounts,
     setSelectedAccount,
-    extensionStatus
+    extensionStatus,
   ]);
 
   return hasTriedEagerConnect;

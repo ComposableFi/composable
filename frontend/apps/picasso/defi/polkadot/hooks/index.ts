@@ -1,12 +1,12 @@
-import { useDotSamaContext, useParachainApi, useRelayChainApi } from "substrate-react";
+import {
+  useDotSamaContext,
+  useParachainApi,
+  useRelayChainApi
+} from "substrate-react";
 
-export const usePicassoProvider = () => useParachainApi(
-  "picasso"
-);
+export const usePicassoProvider = () => useParachainApi("picasso");
 
-const useKaruraProvider = () => useParachainApi(
-  "karura"
-);
+export const useKaruraProvider = () => useParachainApi("karura");
 
 export const useKusamaProvider = () => useRelayChainApi("kusama");
 
@@ -26,3 +26,5 @@ export const useKusamaAccounts = (): { name: string; address: string }[] => {
 };
 
 export * from "./useBlockInterval";
+export * from "./useExistentialDeposit";
+export * from "./useTransfer";

@@ -30,11 +30,6 @@ const Bond: NextPage = () => {
   const bondOffer = useStore<BondOffer>(
     (state) => state.bonds.bonds[Number(bond) - 1]
   );
-
-  const assets = useStore(
-    ({ substrateBalances }) => substrateBalances.picasso.assets
-  );
-
   const { isLoading: isLoadingBalances, balances } =
     useBalanceForOffer(bondOffer);
   const { activeBonds, loading } = useActiveBonds();

@@ -8,9 +8,14 @@ import { useDotSamaContext } from "substrate-react";
 export const PolkadotAccountForm: React.FC<{
   onSelectChange?: (accountIndex: number) => void;
 }> = ({ onSelectChange }) => {
-  const { selectedAccount, extensionStatus, setSelectedAccount, deactivate } =
-    useDotSamaContext();
+  const {
+    selectedAccount,
+    extensionStatus,
+    setSelectedAccount,
+    deactivate
+  } = useDotSamaContext();
   const { accounts } = usePicassoProvider();
+
   const theme = useTheme();
   const { closePolkadotModal } = useStore(({ ui }) => ui);
 
