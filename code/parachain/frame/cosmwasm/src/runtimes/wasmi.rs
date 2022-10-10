@@ -1,5 +1,7 @@
 use super::abstraction::{CanonicalCosmwasmAccount, CosmwasmAccount, Gas};
-use crate::{runtimes::abstraction::GasOutcome, Config, ContractInfoOf, Pallet};
+use crate::{
+	runtimes::abstraction::GasOutcome, weights::WeightInfo, Config, ContractInfoOf, Pallet,
+};
 use alloc::string::String;
 use cosmwasm_minimal_std::{Coin, ContractInfoResponse, Empty, Env, MessageInfo};
 use cosmwasm_vm::{
@@ -571,9 +573,40 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 	fn charge(&mut self, value: VmGas) -> Result<(), Self::Error> {
 		let gas_to_charge = match value {
 			VmGas::Instrumentation { metered } => metered as u64,
+			VmGas::DbRead => T::WeightInfo::do_db_read(),
+			VmGas::DbWrite => T::WeightInfo::do_db_write(),
+			VmGas::DbRemove => T::WeightInfo::do_db_remove(),
+			VmGas::DbScan => T::WeightInfo::do_db_scan(),
+			VmGas::DbNext => T::WeightInfo::do_db_next(),
+			VmGas::Balance => T::WeightInfo::do_balance(),
+			VmGas::Transfer => T::WeightInfo::do_transfer(),
 			// TODO(hussein-aitlahcen): benchmarking required to compute _base_ gas for each
 			// operations.
 			_ => 1_u64,
+			/*
+			VmGas::RawCall => todo!(),
+			VmGas::SetContractMeta => todo!(),
+			VmGas::GetContractMeta => todo!(),
+			VmGas::QueryContinuation => todo!(),
+			VmGas::ContinueExecute => todo!(),
+			VmGas::ContinueInstantiate => todo!(),
+			VmGas::ContinueMigrate => todo!(),
+			VmGas::QueryCustom => todo!(),
+			VmGas::MessageCustom => todo!(),
+			VmGas::QueryRaw => todo!(),
+			VmGas::Burn => todo!(),
+			VmGas::AllBalance => todo!(),
+			VmGas::QueryInfo => todo!(),
+			VmGas::QueryChain => todo!(),
+			VmGas::Debug => todo!(),
+			VmGas::Secp256k1Verify => todo!(),
+			VmGas::Secp256k1RecoverPubkey => todo!(),
+			VmGas::Ed25519Verify => todo!(),
+			VmGas::Ed25519BatchVerify => todo!(),
+			VmGas::AddrValidate => todo!(),
+			VmGas::AddrCanonicalize => todo!(),
+			VmGas::AddrHumanize => todo!(),
+					*/
 		};
 		self.charge_raw(gas_to_charge)
 	}
