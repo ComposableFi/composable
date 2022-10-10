@@ -1,46 +1,42 @@
 import 'react-app-polyfill/ie11';
 import { useEffect, useState } from 'react';
-import {
-  SupportedWalletId,
-  useDotSamaContext,
-  useExecutor,
-  useParachainApi,
-} from '../../src/index';
+import { useSigner, activate, SupportedWalletId, useExecutor, useExtrinsicStore, useSubstrateNetwork, SubstrateChainApi, useHasInitialized } from '../../src';
 import BigNumber from 'bignumber.js';
-import { useExtrinsicStore } from "../../src/extrinsics/store/extrinsics/extrinsics.slice";
 
 const APP_NAME = "Demo App";
 
 export const Transfers = () => {
-  const { activate, signer } = useDotSamaContext();
-  const { parachainApi, accounts } = useParachainApi("picasso");
+  const signer = useSigner();
+  const network: SubstrateChainApi = useSubstrateNetwork("picasso");
+  const hasInitialized = useHasInitialized();
   const executor = useExecutor();
   const extrinsics = useExtrinsicStore((state) => state.extrinsics);
   const [_to, setTo] = useState<string | undefined>(undefined);
   const [_from, setFrom] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    if (activate) {
-      activate(SupportedWalletId.Polkadotjs);
+    if (hasInitialized) {
+      activate(APP_NAME, SupportedWalletId.Polkadotjs).catch(console.error);
     }
-  }, [activate]);
+  }, [hasInitialized]);
 
+  const { connectedAccounts, api } = network;
   useEffect(() => {
-    if (accounts.length) {
-      setFrom(accounts[0].address);
+    if (connectedAccounts.length > 0) {
+      setFrom(connectedAccounts[0].address)
     }
-  }, [accounts]);
+  }, [connectedAccounts]);
 
   const onTransfer = async () => {
-    if (parachainApi && _from && _to && executor && signer) {
+    if (_from && _to && executor && signer) {
       const decimals = new BigNumber(10).pow(12); // Substrate default decimals
       const transferAmount = new BigNumber(0.0001).times(decimals);
 
       executor.execute(
         //@ts-ignore
-        parachainApi.tx.balances.transfer(_to, transferAmount.toString()),
+        api.tx.balances.transfer(_to, transferAmount.toString()),
         _from,
-        parachainApi,
+        api,
         signer,
         (txHash) => {
           console.log("Ready: ", txHash);

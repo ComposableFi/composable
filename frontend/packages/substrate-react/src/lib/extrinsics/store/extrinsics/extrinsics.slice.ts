@@ -1,7 +1,5 @@
 import {
-  ExtrinsicMetadata,
   ExtrinsicSlice,
-  ExtrinsicStatus,
 } from "./extrinsics.types";
 import {
   putBlockHash,
@@ -12,6 +10,7 @@ import {
 import create from "zustand";
 import { immer } from "zustand/middleware/immer";
 import { devtools } from "zustand/middleware";
+import { ExtrinsicMetadata, ExtrinsicStatus } from "@/lib/types";
 
 export const useExtrinsicStore = create<ExtrinsicSlice>()(
   immer(

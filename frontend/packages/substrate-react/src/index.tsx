@@ -1,2 +1,1 @@
-export * from "./extrinsics";
-export * from "./dotsama";
+export * from "./lib";

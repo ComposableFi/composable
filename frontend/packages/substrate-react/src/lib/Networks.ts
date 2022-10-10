@@ -1,9 +1,10 @@
-import { ParachainId, ParachainNetwork, RelayChainId, RelaychainNetwork } from "./types";
+import { ChainId, ParachainNetwork, SubstrateNetwork } from "./types";
 
-export type ParachainNetworks = {
-  [parachainId in ParachainId]: ParachainNetwork;
-}
-export const ParachainNetworks: ParachainNetworks = {
+export type Networks = {
+  [chainId in ChainId]: ParachainNetwork | SubstrateNetwork
+};
+
+export const Networks: Networks = {
   picasso: {
     name: "Picasso",
     wsUrl: "wss://picasso-rpc.composable.finance",
@@ -17,7 +18,8 @@ export const ParachainNetworks: ParachainNetworks = {
     logo:
       "https://raw.githubusercontent.com/TalismanSociety/chaindata/2778d4b989407a2e9fca6ae897fe849561f74afe/assets/picasso/logo.svg",
     parachainId: 2087,
-    relayChain: "kusama"
+    relayChain: "kusama",
+    chainId: "picasso"
   },
   karura: {
     name: "Karura",
@@ -32,26 +34,22 @@ export const ParachainNetworks: ParachainNetworks = {
     logo:
       "https://raw.githubusercontent.com/TalismanSociety/chaindata/2778d4b989407a2e9fca6ae897fe849561f74afe/assets/karura/logo.svg",
     parachainId: 2000,
-    relayChain: "kusama"
-  }
-};
-
-export const RelayChainNetworks: {
-  [relaychainId in RelayChainId]: RelaychainNetwork;
-} = {
+    relayChain: "kusama",
+    chainId: "karura"
+  },
   kusama: {
     name: "Kusama",
     color: "#000000",
     prefix: 2,
     logo:
       "https://raw.githubusercontent.com/TalismanSociety/chaindata/2778d4b989407a2e9fca6ae897fe849561f74afe/assets/kusama/logo.svg",
-    networkId: "kusama",
     accountType: "*25519",
     wsUrl: "wss://kusama-rpc.polkadot.io",
     subscanUrl: "https://kusama.subscan.io/",
     decimals: 12,
     tokenId: "ksm",
-    symbol: "KSM"
+    symbol: "KSM",
+    chainId: "kusama"
   },
   polkadot: {
     name: "Polkadot",
@@ -59,19 +57,12 @@ export const RelayChainNetworks: {
     prefix: 0,
     logo:
       "https://raw.githubusercontent.com/TalismanSociety/chaindata/2778d4b989407a2e9fca6ae897fe849561f74afe/assets/polkadot/logo.svg",
-    networkId: "polkadot",
     accountType: "*25519",
     wsUrl: "wss://rpc.polkadot.io",
     subscanUrl: "https://polkadot.subscan.io/",
     decimals: 10,
     tokenId: "dot",
-    symbol: "DOT"
+    symbol: "DOT",
+    chainId: "polkadot"
   }
-};
-
-export const getParachainNetwork = (
-  parachainId: ParachainId
-): ParachainNetwork => ParachainNetworks[parachainId];
-export const getRelaychainNetwork = (
-  relaychainId: RelayChainId
-): RelaychainNetwork => RelayChainNetworks[relaychainId];
+}

@@ -1,8 +1,7 @@
+import { ExtrinsicMetadata, ExtrinsicStatus } from '@/lib/types';
 import produce from 'immer';
 import {
-  ExtrinsicMetadata,
   ExtrinsicSlice,
-  ExtrinsicStatus,
 } from './extrinsics.types';
 
 export const putTransactionData = (

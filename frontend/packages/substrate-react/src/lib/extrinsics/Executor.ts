@@ -5,8 +5,8 @@ import {
   SubmittableExtrinsic,
 } from "@polkadot/api/types";
 import { EventRecord } from "@polkadot/types/interfaces/system";
+import { ExtrinsicMetadata } from "../types";
 import {
-  ExtrinsicMetadata,
   ExtrinsicSlice,
 } from "./store/extrinsics/extrinsics.types";
 

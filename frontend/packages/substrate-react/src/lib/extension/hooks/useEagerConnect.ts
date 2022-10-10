@@ -1,8 +1,8 @@
+import { ChainId, SupportedWalletId } from "../../types";
 import { useEffect, useState } from "react";
-import { ParachainId, SupportedWalletId } from "../types";
-import { useDotSamaContext } from "./useDotSamaContext";
-import { useParachainApi } from "./useParachainApi";
-import { useSelectedAccount } from "./useSelectedAccount";
+import { activate } from "../lib";
+import { setSelectedAccount, useSubstrateReact } from "../store/extension.slice";
+import { useSubstrateNetwork } from "./useSubstrateNetwork";
 
 /**
  * Idea is to have substrate-react
@@ -10,18 +10,15 @@ import { useSelectedAccount } from "./useSelectedAccount";
  * once the user lands on consumer web
  * app
  */
-export const useEagerConnect = (chainId: ParachainId): boolean => {
-  const { activate, setSelectedAccount, extensionStatus } = useDotSamaContext();
-  const { parachainApi, accounts } = useParachainApi(chainId);
+export const useEagerConnect = (chainId: ChainId, appName: string): boolean => {
+  const { extensionStatus, chainApi, selectedAccount, hasInitialized } = useSubstrateReact();
   const [hasTriedEagerConnect, setHasTriedEagerConnect] =
     useState<boolean>(false);
-  const selectedAccount = useSelectedAccount(chainId);
 
   useEffect(() => {
     if (
-      parachainApi !== undefined &&
-      activate !== undefined &&
       !hasTriedEagerConnect &&
+      hasInitialized &&
       extensionStatus === "initializing"
     ) {
       const usedWallet = localStorage.getItem("wallet-id");
@@ -29,10 +26,10 @@ export const useEagerConnect = (chainId: ParachainId): boolean => {
         (usedWallet && usedWallet === SupportedWalletId.Talisman) ||
         usedWallet === SupportedWalletId.Polkadotjs
       ) {
-        activate(usedWallet, false);
+        activate(appName, usedWallet);
       }
     }
-  }, [activate, parachainApi, hasTriedEagerConnect, extensionStatus]);
+  }, [hasTriedEagerConnect, extensionStatus, chainApi, chainId, hasInitialized, appName]);
 
   useEffect(() => {
     if (selectedAccount) {
@@ -40,31 +37,26 @@ export const useEagerConnect = (chainId: ParachainId): boolean => {
     }
   }, [selectedAccount]);
 
+  const { connectedAccounts } = useSubstrateNetwork(chainId);
   useEffect(() => {
     if (
-      accounts.length > 0 &&
+      connectedAccounts.length > 0 &&
       !hasTriedEagerConnect &&
-      parachainApi !== undefined &&
-      setSelectedAccount &&
+      hasInitialized &&
       extensionStatus === "connected"
     ) {
+
       const storedAccount = localStorage.getItem("selectedAccount");
-      const accountIndex = accounts.findIndex(
+      const account = connectedAccounts.find(
         (account) => account.address === storedAccount
       );
 
-      if (accountIndex !== -1) {
-        setSelectedAccount(accountIndex);
+      if (account) {
+        setSelectedAccount(account);
       }
       setHasTriedEagerConnect(true);
     }
-  }, [
-    hasTriedEagerConnect,
-    parachainApi,
-    accounts,
-    setSelectedAccount,
-    extensionStatus
-  ]);
+  }, [hasTriedEagerConnect, extensionStatus, connectedAccounts, hasInitialized]);
 
   return hasTriedEagerConnect;
 };
