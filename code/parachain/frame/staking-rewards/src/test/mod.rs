@@ -1011,7 +1011,7 @@ fn extend_should_not_allow_non_owner() {
 		amount,
 		duration_preset,
 		total_rewards,
-		None,
+		false,
 		|_pool_id, _unlock_penalty, _stake_duration, _staked_asset_id| {
 			assert_noop!(
 				StakingRewards::extend(Origin::signed(non_owner), 1, 0, 1_000),
@@ -1064,7 +1064,7 @@ fn split_should_not_allow_non_owner() {
 		amount,
 		duration_preset,
 		total_rewards,
-		None,
+		false,
 		|_pool_id, _unlock_penalty, _stake_duration, _staked_asset_id| {
 			assert_noop!(
 				StakingRewards::unstake(Origin::signed(non_owner), 1, 0),
@@ -1138,7 +1138,7 @@ mod claim {
 			amount,
 			duration_preset,
 			total_rewards,
-			None,
+			false,
 			|_pool_id, _unlock_penalty, _stake_duration, _staked_asset_id| {
 				assert_noop!(
 					StakingRewards::claim(Origin::signed(non_owner), 1, 0),
@@ -1161,7 +1161,7 @@ mod claim {
 			amount,
 			duration_preset,
 			total_rewards,
-			Some(claim),
+			true,
 			|pool_id, _unlock_penalty, _stake_duration, staked_asset_id| {
 				let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
 
@@ -1196,7 +1196,7 @@ mod claim {
 			amount,
 			duration_preset,
 			total_rewards,
-			Some(claim),
+			true,
 			|pool_id, _unlock_penalty, _stake_duration, staked_asset_id| {
 				let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
 
@@ -1288,14 +1288,14 @@ mod claim {
 		let amount = 100_500;
 		let duration_preset = ONE_HOUR;
 		let total_rewards = 100;
-		let claim = 50;
+		let claim = 100;
 
 		with_stake(
 			staker,
 			amount,
 			duration_preset,
 			total_rewards,
-			Some(claim),
+			true,
 			|pool_id, _unlock_penalty, _stake_duration, _staked_asset_id| {
 				assert_ok!(StakingRewards::claim(Origin::signed(staker), 1, 0));
 
@@ -1313,7 +1313,7 @@ mod claim {
 						.get(&USDT::ID)
 						.expect("expected value. QED")
 						.claimed_rewards,
-					50
+					claim
 				);
 			},
 		);
@@ -1359,7 +1359,7 @@ fn with_stake<R>(
 	amount: u128,
 	duration: DurationSeconds,
 	total_rewards: u128,
-	claim: Option<u128>,
+	should_claim: bool,
 	execute: impl FnOnce(u128, Perbill, u64, u128) -> R,
 ) -> R {
 	new_test_ext().execute_with(|| {
@@ -1388,7 +1388,7 @@ fn with_stake<R>(
 		let unlock_penalty = stake.lock.unlock_penalty;
 		let stake_duration = stake.lock.duration;
 
-		if let Some(_) = claim {
+		if should_claim {
 			// update_reductions(&mut stake.reductions, claim);
 			assert_ok!(StakingRewards::claim(
 				Origin::signed(staker),
