@@ -588,14 +588,13 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 
 		let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
 		mint_assets([ALICE], [staked_asset_id], AMOUNT * 2);
-		update_total_rewards_and_total_shares_in_rewards_pool(PICA::ID, TOTAL_REWARDS);
 
 		stake_and_assert::<Test, runtime::Event>(ALICE, PICA::ID, AMOUNT, DURATION_PRESET);
 
 		let rewards_pool = StakingRewards::pools(PICA::ID).expect("rewards_pool expected");
 		let reward_multiplier = StakingRewards::reward_multiplier(&rewards_pool, DURATION_PRESET)
 			.expect("reward_multiplier expected");
-		let boosted_amount = StakingRewards::boosted_amount(reward_multiplier, AMOUNT)
+		let _ = StakingRewards::boosted_amount(reward_multiplier, AMOUNT)
 			.expect("boosted amount should not overflow");
 
 		let reductions = rewards_pool
@@ -1251,8 +1250,7 @@ mod claim {
 			process_and_progress_blocks::<StakingRewards, Test>(1);
 
 			mint_assets([ALICE], [PICA::ID], PICA::units(100_000_000));
-			let fnft_instance_id =
-				stake_and_assert::<Test, runtime::Event>(ALICE, pool_id, AMOUNT, DURATION);
+			let _ = stake_and_assert::<Test, runtime::Event>(ALICE, pool_id, AMOUNT, DURATION);
 
 			assert_eq!(balance(staked_asset_id, &ALICE), PICA::units(100_000_000) - AMOUNT);
 
@@ -1265,19 +1263,6 @@ mod claim {
 				Some(&0)
 			);
 
-			process_and_progress_blocks::<StakingRewards, Test>(1);
-
-			// reductions don't change per block
-			assert_eq!(
-				Stakes::<Test>::get(1, 0)
-					.expect("expected stake. QED")
-					.reductions
-					.get(&USDT::ID),
-				Some(&0)
-			);
-
-			assert_ok!(StakingRewards::claim(Origin::signed(staker), 1, 0));
-
 			assert_extrinsic_event::<Test, runtime::Event, _, _, _>(
 				StakingRewards::claim(Origin::signed(ALICE), 1, 0),
 				crate::Event::Claimed { owner: ALICE, fnft_collection_id: 1, fnft_instance_id: 0 },
@@ -1286,6 +1271,11 @@ mod claim {
 			let stake = Stakes::<Test>::get(1, 0).expect("expected stake. QED");
 
 			// should be 1 block's worth of claims
+			assert_eq!(stake.reductions.get(&USDT::ID), Some(&60));
+
+			process_and_progress_blocks::<StakingRewards, Test>(1);
+
+			// reductions don't change per block
 			assert_eq!(stake.reductions.get(&USDT::ID), Some(&60));
 		});
 	}
@@ -1392,7 +1382,7 @@ fn with_stake<R>(
 		// assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration));
 		assert_eq!(balance(staked_asset_id, &staker), amount);
 
-		let mut stake = StakingRewards::stakes(1, 0).expect("stake expected. QED");
+		let stake = StakingRewards::stakes(1, 0).expect("stake expected. QED");
 		let unlock_penalty = stake.lock.unlock_penalty;
 		let stake_duration = stake.lock.duration;
 
@@ -1505,13 +1495,4 @@ fn update_total_rewards_and_total_shares_in_rewards_pool(pool_id: u128, total_re
 	}
 	rewards_pool.rewards = inner_rewards.try_into().expect("rewards expected");
 	RewardPools::<Test>::insert(pool_id, rewards_pool);
-}
-
-fn update_reductions(
-	reductions: &mut BoundedBTreeMap<u128, u128, MaxRewardConfigsPerPool>,
-	claim: u128,
-) {
-	for (_asset_id, inflation) in reductions {
-		*inflation -= claim;
-	}
 }
