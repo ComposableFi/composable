@@ -77,7 +77,6 @@ pub mod pallet {
 		time::{DurationSeconds, ONE_MONTH, ONE_WEEK},
 	};
 	use frame_support::{
-		defensive,
 		traits::{
 			fungibles::{
 				Inspect as FungiblesInspect, InspectHold as FungiblesInspectHold,
@@ -1314,8 +1313,6 @@ pub mod pallet {
 
 				if let Some(inflation) = stake.reductions.get_mut(reward_asset_id) {
 					*inflation += claim;
-				} else {
-					defensive!();
 				}
 
 				T::Assets::transfer(
