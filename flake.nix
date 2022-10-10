@@ -1038,7 +1038,7 @@
               '';
             };
 
-            kusama-dali-karura-devnet = let
+            devnet-rococo-dali-karura = let
               config = (pkgs.callPackage
                 ./scripts/polkadot-launch/kusama-local-dali-dev-karura-dev.nix {
                   polkadot-bin = polkadot-node;
@@ -1050,7 +1050,7 @@
                 text = "${builtins.toJSON config}";
               };
             in writeShellApplication {
-              name = "kusama-dali-karura";
+              name = "run-rococo-dali-karura";
               text = ''
                 cat ${config-file}
                 rm -rf /tmp/polkadot-launch
@@ -1089,7 +1089,7 @@
               pkgs.composable.mkDevnetProgram "devnet-default"
               (import ./.nix/devnet-specs/default.nix {
                 inherit pkgs;
-                inherit devnet-dali;
+                inherit devnet-rococo-dali-karura;
                 frontend = frontend-static;
               });
 
@@ -1103,7 +1103,7 @@
               pkgs.composable.mkDevnetProgram "devnet-persistent"
               (import ./.nix/devnet-specs/default.nix {
                 inherit pkgs;
-                inherit devnet-dali;
+                inherit devnet-rococo-dali-karura;
                 frontend = frontend-static-persistent;
               });
 
@@ -1187,75 +1187,27 @@
             default = developers;
           };
 
-          apps = rec {
-            devnet = {
+          apps = let
+            makeApp = p: {
               type = "app";
-              program = "${packages.devnet-default-program}/bin/devnet-default";
+              program = pkgs.lib.meta.getExe p;
             };
-
-            devnet-persistent = {
-              type = "app";
-              program =
-                "${packages.devnet-persistent-program}/bin/devnet-persistent";
-            };
-
-            devnet-xcvm = {
-              type = "app";
-              program = "${packages.devnet-xcvm-program}/bin/devnet-xcvm";
-            };
-
-            devnet-dali = {
-              type = "app";
-              program = "${packages.devnet-dali}/bin/run-devnet-dali-dev";
-            };
-            devnet-picasso = {
-              type = "app";
-              program = "${packages.devnet-picasso}/bin/run-devnet-picasso-dev";
-            };
-
-            devnet-kusama-picasso-karura = {
-              type = "app";
-              program =
-                "${packages.kusama-picasso-karura-devnet}/bin/kusama-picasso-karura";
-            };
-
-            # OBSOLETE
-            devnet-kusama-dali-karura =
-              trace "#OBSOLETE: use ` devnet-native-all`" {
-                type = "app";
-                program =
-                  "${packages.kusama-dali-karura-devnet}/bin/kusama-dali-karura";
-              };
-
-            devnet-native-all = trace
-              "biggest native(not container) devnet with all things possible to run native" {
-                type = "app";
-                program =
-                  "${packages.devnet-all-dev-local}/bin/kusama-dali-karura";
-              };
-
-            price-feed = {
-              type = "app";
-              program = "${packages.price-feed}/bin/price-feed";
-            };
-            composable = {
-              type = "app";
-              program = "${packages.composable-node}/bin/composable";
-            };
-            acala = {
-              type = "app";
-              program = "${packages.acala-node}/bin/acala";
-            };
-            polkadot = {
-              type = "app";
-              program = "${packages.polkadot-node}/bin/polkadot";
-            };
-
-            junod = {
-              type = "app";
-              program = "${packages.junod}/bin/junod";
-            };
-
+          in rec {
+            devnet = makeApp packages.devnet-default-program;
+            devnet-persistent = makeApp packages.devnet-persistent-program;
+            devnet-xcvm = makeApp packages.devnet-xcvm-program;
+            devnet-dali = makeApp packages.devnet-dali;
+            devnet-picasso = makeApp packages.devnet-picasso;
+            devnet-kusama-picasso-karura =
+              makeApp packages.kusama-picasso-karura-devnet;
+            devnet-rococo-dali-karura =
+              makeApp packages.devnet-rococo-dali-karura;
+            devnet-native-all = makeApp packages.devnet-all-dev-local;
+            price-feed = makeApp packages.price-feed;
+            composable = makeApp packages.composable-node;
+            acala = makeApp packages.acala-node;
+            polkadot = makeApp packages.polkadot-node;
+            junod = makeApp packages.junod;
             # TODO: move list of chains out of here and do fold
             benchmarks-once-composable = flake-utils.lib.mkApp {
               drv = run-with-benchmarks "composable-dev";
@@ -1266,10 +1218,7 @@
             benchmarks-once-picasso = flake-utils.lib.mkApp {
               drv = run-with-benchmarks "picasso-dev";
             };
-            simnode-tests = {
-              type = "app";
-              program = "${packages.simnode-tests}/bin/simnode-tests";
-            };
+            simnode-tests = makeApp packages.simnode-tests;
             simnode-tests-composable =
               flake-utils.lib.mkApp { drv = run-simnode-tests "composable"; };
             simnode-tests-picasso =

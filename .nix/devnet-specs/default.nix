@@ -1,7 +1,7 @@
-{ pkgs, devnet-dali, frontend, ... }: {
+{ pkgs, devnet-rococo-dali-karura, frontend, ... }: {
   modules = [
     (let
-      dali-container-name = "dali-devnet";
+      devnet-container-name = "devnet-rococo-dali-karura";
       subsquidGraphqlContainerName = "subsquid-graphql";
       gatewayContainerName = "subsquid-gateway";
 
@@ -25,14 +25,14 @@
         port = 5433;
       };
 
-      relaychainPort = 9944;
-      parachainPort = 9988;
+      rococoPort = 9944;
+      daliPort = 9988;
+      karuraPort = 9999;
       squidGraphqlPort = 4350;
       pabloPort = 8001;
       picassoPort = 8002;
 
-      parachainEndpoint =
-        "ws://${dali-container-name}:${toString parachainPort}";
+      daliEndpoint = "ws://${devnet-container-name}:${toString daliPort}";
 
       network-name = "composable_devnet";
       mkComposableContainer = container:
@@ -70,15 +70,30 @@
               };
             });
 
-          "${dali-container-name}" = mkComposableContainer
-            (import ../services/devnet-dali.nix {
-              inherit pkgs devnet-dali parachainPort relaychainPort;
+          "${devnet-container-name}" = mkComposableContainer
+            (import ../services/devnet.nix {
+              inherit pkgs;
+              devnet = devnet-rococo-dali-karura;
+              ports = [
+                {
+                  host = rococoPort;
+                  container = 9944;
+                }
+                {
+                  host = daliPort;
+                  container = 9988;
+                }
+                {
+                  host = karuraPort;
+                  container = 9999;
+                }
+              ];
             });
 
           ingest = mkComposableContainer
             (import ../services/subsquid-substrate-ingest.nix {
               database = squid-archive-db;
-              polkadotEndpoint = parachainEndpoint;
+              polkadotEndpoint = daliEndpoint;
               prometheusPort = 9090;
             });
 
@@ -104,7 +119,8 @@
           subsquid-processor = mkComposableContainer
             (import ../services/subsquid-processor-dockerfile.nix {
               inherit subsquidGraphqlContainerName gatewayContainerName
-                gatewayPort parachainEndpoint;
+                gatewayPort;
+              parachainEndpoint = daliEndpoint;
               database = squid-db;
               graphqlPort = squidGraphqlPort;
             });

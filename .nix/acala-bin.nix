@@ -17,10 +17,11 @@ pkgs.stdenv.mkDerivation {
   buildInputs = with pkgs; [ openssl ];
   nativeBuildInputs = with pkgs; [ clang git rust-overlay ];
   buildPhase = ''
-    		mkdir home
-        export HOME=$PWD/home
-        cargo build --locked --features with-all-runtime,rococo-native --profile release --workspace --exclude runtime-integration-tests --exclude e2e-tests --exclude test-service
-    	'';
+    mkdir home
+    export HOME=$PWD/home
+    cargo build --locked --features with-all-runtime,rococo-native --profile release --workspace --exclude runtime-integration-tests --exclude e2e-tests --exclude test-service
+  '';
+  meta = { mainProgram = "acala"; };
   # TODO: moved these to some `cumulus based derivation`
   LD_LIBRARY_PATH = pkgs.lib.strings.makeLibraryPath
     (with pkgs; [ stdenv.cc.cc.lib llvmPackages.libclang.lib ]);
