@@ -16,9 +16,7 @@ describe("Interpreter", function () {
   beforeEach(async function () {
     accounts = await ethers.getSigners();
     [owner, user1, user2] = accounts;
-    const Interpreter = await ethers.getContractFactory(
-      "Interpreter"
-    );
+    const Interpreter = await ethers.getContractFactory("Interpreter");
     const Gateway = await ethers.getContractFactory("Gateway");
     gateway = await Gateway.deploy();
     //register owner as the bridge
@@ -28,17 +26,9 @@ describe("Interpreter", function () {
       networkId: 1,
       account: owner.address,
     });
-    interpreterAddress = await gateway.userInterpreter(
-      1,
-      owner.address
-    );
+    interpreterAddress = await gateway.userInterpreter(1, owner.address);
     const ERC20Mock = await ethers.getContractFactory("ERC20Mock");
-    erc20 = await ERC20Mock.deploy(
-      "test",
-      "test",
-      interpreterAddress,
-      ethers.utils.parseEther("10000000000000000")
-    );
+    erc20 = await ERC20Mock.deploy("test", "test", interpreterAddress, ethers.utils.parseEther("10000000000000000"));
     await gateway.registerAsset(erc20.address, 1);
   });
 
@@ -60,16 +50,9 @@ describe("Interpreter", function () {
           ),
         ])
       );
-      await gateway.runProgram(
-        { networkId: 1, account: owner.address },
-        xcvm.encodeMessage(data),
-        [],
-        []
-      );
+      await gateway.runProgram({ networkId: 1, account: owner.address }, xcvm.encodeMessage(data), [], []);
       // 1.5 units
-      expect(
-        (await erc20.balanceOf(owner.address)).toString()
-      ).to.be.equal("1500000000000000000");
+      expect((await erc20.balanceOf(owner.address)).toString()).to.be.equal("1500000000000000000");
     });
 
     it("test program using sdk: transfer ratio", async function () {
@@ -80,26 +63,14 @@ describe("Interpreter", function () {
             xcvm.createTransfer(xcvm.createAccount(owner.address), [
               xcvm.createAsset(
                 xcvm.createAssetId(1),
-                xcvm.createBalance(
-                  xcvm.createRatio(
-                    "1000000000000000000000000000",
-                    "2000000000000000000000000000"
-                  )
-                )
+                xcvm.createBalance(xcvm.createRatio("1000000000000000000000000000", "2000000000000000000000000000"))
               ),
             ])
           ),
         ])
       );
-      await gateway.runProgram(
-        { networkId: 1, account: owner.address },
-        xcvm.encodeMessage(data),
-        [],
-        []
-      );
-      expect(
-        (await erc20.balanceOf(owner.address)).toString()
-      ).to.be.equal("5000000000000000000000000000000000");
+      await gateway.runProgram({ networkId: 1, account: owner.address }, xcvm.encodeMessage(data), [], []);
+      expect((await erc20.balanceOf(owner.address)).toString()).to.be.equal("5000000000000000000000000000000000");
     });
 
     it("test program using sdk: transfer absolut", async function () {
@@ -110,65 +81,41 @@ describe("Interpreter", function () {
             xcvm.createTransfer(xcvm.createAccount(owner.address), [
               xcvm.createAsset(
                 xcvm.createAssetId(1),
-                xcvm.createBalance(
-                  xcvm.createAbsolut("1000000000000000000000000000")
-                )
+                xcvm.createBalance(xcvm.createAbsolut("1000000000000000000000000000"))
               ),
             ])
           ),
         ])
       );
       let cc = xcvm.ProgramMessage.decode(xcvm.encodeMessage(data));
-      await gateway.runProgram(
-        { networkId: 1, account: owner.address },
-        xcvm.encodeMessage(data),
-        [],
-        []
-      );
-      expect(
-        (await erc20.balanceOf(owner.address)).toString()
-      ).to.be.equal("1000000000000000000000000000");
+      await gateway.runProgram({ networkId: 1, account: owner.address }, xcvm.encodeMessage(data), [], []);
+      expect((await erc20.balanceOf(owner.address)).toString()).to.be.equal("1000000000000000000000000000");
     });
 
     it("test call function using sdk", async function () {
-      let functionSignature = erc20.interface.encodeFunctionData(
-        "transfer",
-        [user1.address, ethers.utils.parseEther("100")]
-      );
+      let functionSignature = erc20.interface.encodeFunctionData("transfer", [
+        user1.address,
+        ethers.utils.parseEther("100"),
+      ]);
       const abiCoder = ethers.utils.defaultAbiCoder;
       const payload = ethers.utils.concat([
-        ethers.utils.arrayify(
-          abiCoder.encode(["address"], [erc20.address])
-        ),
+        ethers.utils.arrayify(abiCoder.encode(["address"], [erc20.address])),
         ethers.utils.arrayify(functionSignature),
       ]);
       let xcvm = new XCVM();
       let programMessage = xcvm.createProgram(
-        xcvm.createInstructions([
-          xcvm.createInstruction(
-            xcvm.createCall(payload, xcvm.createBindings([]))
-          ),
-        ])
+        xcvm.createInstructions([xcvm.createInstruction(xcvm.createCall(payload, xcvm.createBindings([])))])
       );
 
       let encodedProgram = xcvm.encodeMessage(programMessage);
-      await gateway.runProgram(
-        { networkId: 1, account: owner.address },
-        encodedProgram,
-        [],
-        []
-      );
-      expect(
-        (await erc20.balanceOf(user1.address)).toString()
-      ).to.be.equal(ethers.utils.parseEther("100").toString());
+      await gateway.runProgram({ networkId: 1, account: owner.address }, encodedProgram, [], []);
+      expect((await erc20.balanceOf(user1.address)).toString()).to.be.equal(ethers.utils.parseEther("100").toString());
     });
 
     it("test call function using sdk: call with late binding", async function () {
       const abiCoder = ethers.utils.defaultAbiCoder;
 
-      let functionSignature = erc20.interface.getSighash(
-        "transfer(address,uint256)"
-      );
+      let functionSignature = erc20.interface.getSighash("transfer(address,uint256)");
       // placehold 1 and 2
       const payload = ethers.utils.concat([
         ethers.utils.arrayify("0x01"),
@@ -183,19 +130,11 @@ describe("Interpreter", function () {
             xcvm.createCall(
               payload,
               xcvm.createBindings([
-                xcvm.createBinding(
-                  0,
-                  xcvm.createBindingValue(xcvm.createAssetId(1))
-                ),
+                xcvm.createBinding(0, xcvm.createBindingValue(xcvm.createAssetId(1))),
                 // bingdingValuePosition(1 byte) + function signature (4bytes) + address(32bytes, its encoded) = 37 => balanceValuePosition
                 xcvm.createBinding(
                   37,
-                  xcvm.createBindingValue(
-                    xcvm.createAssetAmount(
-                      xcvm.createAssetId(1),
-                      xcvm.createRatio(1, 2)
-                    )
-                  )
+                  xcvm.createBindingValue(xcvm.createAssetAmount(xcvm.createAssetId(1), xcvm.createRatio(1, 2)))
                 ),
               ])
             )
@@ -204,15 +143,8 @@ describe("Interpreter", function () {
       );
 
       let encodedProgram = xcvm.encodeMessage(programMessage);
-      await gateway.runProgram(
-        { networkId: 1, account: owner.address },
-        encodedProgram,
-        [],
-        []
-      );
-      expect(
-        (await erc20.balanceOf(user1.address)).toString()
-      ).to.be.equal(
+      await gateway.runProgram({ networkId: 1, account: owner.address }, encodedProgram, [], []);
+      expect((await erc20.balanceOf(user1.address)).toString()).to.be.equal(
         ethers.utils.parseEther("5000000000000000").toString()
       );
     });
@@ -223,10 +155,7 @@ describe("Interpreter", function () {
         xcvm.createInstructions([
           xcvm.createInstruction(
             xcvm.createTransfer(xcvm.createAccount(owner.address), [
-              xcvm.createAsset(
-                xcvm.createAssetId(1),
-                xcvm.createBalance(xcvm.createAbsolut("100"))
-              ),
+              xcvm.createAsset(xcvm.createAssetId(1), xcvm.createBalance(xcvm.createAbsolut("100"))),
             ])
           ),
         ])
@@ -235,30 +164,14 @@ describe("Interpreter", function () {
       let data = xcvm.createProgram(
         xcvm.createInstructions([
           xcvm.createInstruction(
-            xcvm.createSpawn(
-              xcvm.createNetwork(1),
-              xcvm.createSalt(1),
-              1,
-              programMessage,
-              [
-                xcvm.createAsset(
-                  xcvm.createAssetId(1),
-                  xcvm.createBalance(xcvm.createAbsolut(200))
-                ),
-              ]
-            )
+            xcvm.createSpawn(xcvm.createNetwork(1), xcvm.createSalt(1), 1, programMessage, [
+              xcvm.createAsset(xcvm.createAssetId(1), xcvm.createBalance(xcvm.createAbsolut(200))),
+            ])
           ),
         ])
       );
 
-      await expect(
-        gateway.runProgram(
-          { networkId: 1, account: owner.address },
-          xcvm.encodeMessage(data),
-          [],
-          []
-        )
-      )
+      await expect(gateway.runProgram({ networkId: 1, account: owner.address }, xcvm.encodeMessage(data), [], []))
         .to.emit(gateway, "Spawn")
         .withArgs(
           owner.address.toLowerCase(),
@@ -269,17 +182,13 @@ describe("Interpreter", function () {
           [erc20.address],
           [200]
         );
-      expect(
-        (await erc20.balanceOf(owner.address)).toString()
-      ).to.be.equal("200");
+      expect((await erc20.balanceOf(owner.address)).toString()).to.be.equal("200");
     });
 
     it("test program with multiple instructions", async function () {
       const abiCoder = ethers.utils.defaultAbiCoder;
 
-      let functionSignature = erc20.interface.getSighash(
-        "transfer(address,uint256)"
-      );
+      let functionSignature = erc20.interface.getSighash("transfer(address,uint256)");
       // placehold 1 and 2
       const payload = ethers.utils.concat([
         ethers.utils.arrayify("0x01"),
@@ -294,19 +203,11 @@ describe("Interpreter", function () {
             xcvm.createCall(
               payload,
               xcvm.createBindings([
-                xcvm.createBinding(
-                  0,
-                  xcvm.createBindingValue(xcvm.createAssetId(1))
-                ),
+                xcvm.createBinding(0, xcvm.createBindingValue(xcvm.createAssetId(1))),
                 // bingdingValuePosition(1 byte) + function signature (4bytes) + address(32bytes, its encoded) = 37 => balanceValuePosition
                 xcvm.createBinding(
                   37,
-                  xcvm.createBindingValue(
-                    xcvm.createAssetAmount(
-                      xcvm.createAssetId(1),
-                      xcvm.createRatio(1, 2)
-                    )
-                  )
+                  xcvm.createBindingValue(xcvm.createAssetAmount(xcvm.createAssetId(1), xcvm.createRatio(1, 2)))
                 ),
               ])
             )
@@ -326,20 +227,11 @@ describe("Interpreter", function () {
       );
 
       let encodedProgram = xcvm.encodeMessage(programMessage);
-      await gateway.runProgram(
-        { networkId: 1, account: owner.address },
-        encodedProgram,
-        [],
-        []
-      );
-      expect(
-        (await erc20.balanceOf(user1.address)).toString()
-      ).to.be.equal(
+      await gateway.runProgram({ networkId: 1, account: owner.address }, encodedProgram, [], []);
+      expect((await erc20.balanceOf(user1.address)).toString()).to.be.equal(
         ethers.utils.parseEther("5000000000000000").toString()
       );
-      expect(
-        (await erc20.balanceOf(owner.address)).toString()
-      ).to.be.equal(ethers.utils.parseEther("1.5").toString());
+      expect((await erc20.balanceOf(owner.address)).toString()).to.be.equal(ethers.utils.parseEther("1.5").toString());
     });
   });
 });

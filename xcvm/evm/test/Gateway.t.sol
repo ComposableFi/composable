@@ -10,7 +10,6 @@ import "../utils/util.sol";
 import "../src/interfaces/IInterpreter.sol";
 
 contract test_Gateway is Test {
-
     Utils internal utils;
 
     address internal bridge1;
@@ -26,19 +25,17 @@ contract test_Gateway is Test {
 
     receive() external payable {}
 
-
     function setUp() public {
         utils = new Utils(vm);
 
         address payable[] memory users = utils.createUsers(6);
-
 
         owner = users[0];
         bridge1 = users[1];
         bridge2 = users[2];
         user = users[3];
 
-        defaultTokenAmount = 10 * 10 ** 18;
+        defaultTokenAmount = 10 * 10**18;
         assetToken1 = new ERC20Mock("Asset Token 1", "AT1", owner, defaultTokenAmount);
         assetToken2 = new ERC20Mock("Asset Token 2", "AT2", owner, defaultTokenAmount);
 
@@ -78,7 +75,6 @@ contract test_Gateway is Test {
         gateway.unregisterBridge(bridge1);
     }
 
-
     function testRegisterAssetAddressFailed(uint128 assetId) public {
         vm.expectRevert("Ownable: caller is not the owner");
         gateway.registerAsset(address(assetToken1), assetId);
@@ -93,7 +89,6 @@ contract test_Gateway is Test {
         gateway.registerAsset(address(assetToken1), assetId);
         assertEq(gateway.assets(assetId), address(assetToken1));
     }
-
 
     function testUnregisterAssetAddress(uint128 assetId) public {
         vm.startPrank(owner);

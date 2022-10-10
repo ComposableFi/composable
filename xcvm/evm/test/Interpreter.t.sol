@@ -42,23 +42,10 @@ contract test_Interpreter is Test {
         gateway.registerBridge(user, IGateway.BridgeSecurity(1), 1);
 
         vm.prank(user);
-        gateway.createInterpreter(
-            IGateway.Origin({
-                networkId: 1,
-                account: abi.encodePacked(owner)
-            })
-        );
-        interpreterAddress = gateway.userInterpreter(
-            1,
-            abi.encodePacked(owner)
-        );
+        gateway.createInterpreter(IGateway.Origin({networkId: 1, account: abi.encodePacked(owner)}));
+        interpreterAddress = gateway.userInterpreter(1, abi.encodePacked(owner));
         console.log(interpreterAddress);
-        ERC20Mock erc20 = new ERC20Mock(
-            "test",
-            "test",
-            interpreterAddress,
-            100 ether
-        );
+        ERC20Mock erc20 = new ERC20Mock("test", "test", interpreterAddress, 100 ether);
         gateway.registerAsset(address(erc20), 1);
 
         vm.prank(owner);
