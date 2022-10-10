@@ -80,10 +80,10 @@ jobs:
         service_account_key: ${{ secrets.GCP_CREDENTIALS }}
         export_default_credentials: true
         credentials_file_path: ${{ runner.temp }}/credentials
-    - name: Install Nixops
+    - name: Install NixOps
       run: |
         nix-env -iA nixpkgs.nixopsUnstable
-    - name: Load Nixops State
+    - name: Load NixOps State
       run: |
         if gsutil -q stat $NIXOPS_STATE_URL/$NIXOPS_STATE_FILE;
         then
@@ -101,7 +101,7 @@ jobs:
         cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nixops -- deploy --allow-recreate --confirm --deployment devnet-gce --debug --show-trace --option narinfo-cache-negative-ttl 0 --include composable-persistent-devnet
       env:
         NIXOPS_STATE: ${{ runner.temp }}/${{ env.NIXOPS_STATE_FILE }}
-    - name: Save Nixops State
+    - name: Save NixOps State
       if: always()
       run: |
         gsutil cp $NIXOPS_STATE $NIXOPS_STATE_URL/$NIXOPS_STATE_FILE

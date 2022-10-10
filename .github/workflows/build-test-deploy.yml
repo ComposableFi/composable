@@ -1036,15 +1036,11 @@ jobs:
           then
             gsutil cp $NIXOPS_STATE_URL/$NIXOPS_STATE $NIXOPS_STATE
           else
-            nix develop .#ci --show-trace -L --command cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nixops -- create --deployment devnet-gce --show-trace --option narinfo-cache-negative-ttl 0 --exclude composable-persistent-devnet
+            nix develop .#ci --show-trace -L --command cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nixops -- create --deployment devnet-gce --show-trace --option narinfo-cache-negative-ttl 0 --include composable-devnet-dali-dev composable-devnet-picasso-dev
 
           fi
 
-          nix develop .#ci --show-trace -L --command cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nixops -- deploy --check --confirm --deployment devnet-gce --debug --show-trace --option narinfo-cache-negative-ttl 0 --exclude composable-persistent-devnet
-
-          # TODO: document what happens if Deploy passed, but Store was stopped - how stat reconciled
-          # TODO: consider running state save in same step as it is unseparable from deploy
-          gsutil cp $NIXOPS_STATE $NIXOPS_STATE_URL/
+          nix develop .#ci --show-trace -L --command cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nixops -- deploy --check --confirm --deployment devnet-gce --debug --show-trace --option narinfo-cache-negative-ttl 0 --include composable-devnet-dali-dev composable-devnet-picasso-dev
 
         env:
           NIXOPS_STATE_URL: "gs://composable-state"
@@ -1052,6 +1048,14 @@ jobs:
           GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
           GCP_DEVNET_SERVICE_ACCOUNT: ${{ secrets.GCP_DEVNET_SERVICE_ACCOUNT }}
           GCP_DEVNET_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_DEVNET_SERVICE_ACCOUNT_KEY }}
+
+      - name: Save NixOps State
+        if: always()
+        run: |
+          gsutil cp $NIXOPS_STATE $NIXOPS_STATE_URL/
+        env:
+          NIXOPS_STATE_URL: gs://composable-state
+          NIXOPS_STATE: "deployment.nixops"
 
   frontend-firebase-preview-deploy:
     name: "Firebase Preview channel PR deployment"
