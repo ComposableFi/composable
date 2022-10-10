@@ -34,9 +34,9 @@ Pallet IBC is a thin wrapper around [`ibc-rs`](/code/centauri/ibc) that satisfie
 
 ### Provable store implementation (ICS23)
 
-The IBC protocol's ICS23 specification requires the host machine to be able to commit values into its storage using a set of standard keys and 
-subsequently be able to provide verifiable proofs of existence or non-existence for those values given these standard key, this is called the provable store
-The protocol requires the host to store specific values using the following keys
+The IBC protocol's ICS23 specification requires the host machine to be able to commit values into its storage using a set of standard keys and
+subsequently be able to provide verifiable proofs of existence or non-existence for those values given these standard keys, this is called the provable store.  
+The protocol requires the host to store specific values using the following keys:
 
 - `ConsensusState` - `"clients/{identifier}/consensusStates/{height}"`
 - `ClientState` - `"clients/{identifier}/clientState"`
@@ -58,12 +58,12 @@ The approach we take to implement this is to make use of the [`child trie API`](
 
 **ICS23 Implementation** 
 
-For the [`ics23`](/code/parachain/frame/ibc/src/ics23) implementation 
-Each member of the provable store is defined as a sub-module.
+For the [`ics23`](/code/parachain/frame/ibc/src/ics23) implementation, 
+each member of the provable store is defined as a sub-module.  
 A couple methods are implemented for each struct representing a provable store element, each method has a strongly typed interface.
-These methods are `insert`, `get` and `remove` in some contexts.
-Notice that we have an `iter` method defined in some of the provable store implementations, usage of this function should be avoided in on-chain contexts as it increases the POV size of the parachain blocks.
-- **Pruning** : Eventually there's going to be an implementation to effectively prune storage of outdated commitments to reduce bloat on our runtime storage.
+These methods are `insert`, `get` and `remove` in some contexts.  
+Notice that we have an `iter` method defined in some provable store implementations, usage of this function should be avoided in on-chain contexts as it increases the POV size of the parachain blocks.
+- **Pruning** : Eventually there's going to be an implementation to effectively prune storage of outdated commitments to reduce bloat on our runtime storage.  
   Clients, Connections or channels should not be deleted after they are created.
 
 ### Packet and Acknowledgement Storage
@@ -72,23 +72,23 @@ In this iteration of the pallet, packets and acknowledgements are stored on chai
 
 ### Routing (ICS26) and callback handlers
 
-The IBC protocol requires the existence of a router that routes packets to the correct module for processing based on the destination port.
-The implementation of the router in this pallet statically matches over module id strings and returns the correct handler for such module.
+The IBC protocol requires the existence of a router that routes packets to the correct module for processing based on the destination port.  
+The implementation of the router in this pallet statically matches over module id strings and returns the correct handler for such module.  
 This means that each ibc application must statically define a unique module id and port id to be used in the module router.
 
 **Plugging a new pallet to ibc**
 
-- Implement the [`Module`](/code/centauri/ibc/modules/src/core/ics26_routing/context.rs#L95) trait for struct defined in the pallet
+- Implement the [`Module`](/code/centauri/ibc/modules/src/core/ics26_routing/context.rs#L95) trait for a struct defined in the pallet.
 - Implement the [`CallbackWeight`](/code/parachain/frame/ibc/primitives/src/lib.rs#L387) trait for a struct defined in the pallet.
-- Define a unique port id and module id as static strings
-- Add the Module handler to the [`ibc router`](/code/parachain/frame/ibc/src/routing.rs#L33)
-- Add the callback weight handler to the [`weight router`](/code/parachain/frame/ibc/src/weight.rs#L150)
-- Add the module id to the `lookup_module_by_port` implementation
+- Define a unique port id and module id as static strings.
+- Add the Module handler to the [`ibc router`](/code/parachain/frame/ibc/src/routing.rs#L33).
+- Add the callback weight handler to the [`weight router`](/code/parachain/frame/ibc/src/weight.rs#L150).
+- Add the module id to the `lookup_module_by_port` implementation.
 
 **Ibc Handler**
 
-This pallet provides a public interface behind the [`IbcHandler`] trait, that allows modules to access the protocol
-It provides methods for
+This pallet provides a public interface behind the [`IbcHandler`] trait, that allows modules to access the protocol.  
+It provides methods for: 
 - Opening channels `IbcHandler::open_channel`
 - Registering a Send packet `IbcHandler::send_packet`
 - Writing Acknowledgements `IbcHandler::write_acknowledgemnent`
@@ -96,7 +96,7 @@ It provides methods for
 ### Benchmarking implementation
 
 For `transfer`, `set_params` and `upgrade_client` extrinsics we have pretty familiar substrate benchmarks, but for the `deliver` extrinsic
-we implement a non-trivial benchmark for different light clients.
+we implement a non-trivial benchmark for different light clients.  
 To effectively benchmark the `deliver` extrinsic, we need to individually benchmark the processing of each ibc message type using all available light clients,
 this is because different light clients have different header and proof verification algorithms that would execute in the runtime with distinct speeds.
 
@@ -108,8 +108,8 @@ based on the light client needed for proof verification and the specific module 
 
 ### ICS20 implementation
 
-The IBC protocol defines an inter-chain token transfer standard that specifies how token transfers should be executed across connected chains
-ICS20 is an ibc application which can be implemented as a standalone pallet nevertheless, it is implemented as a sub-module of the ibc pallet [`here`](/code/parachain/frame/ibc/src/ics20).
+The IBC protocol defines an inter-chain token transfer standard that specifies how token transfers should be executed across connected chains.  
+ICS20 is an ibc application which can be implemented as a standalone pallet nevertheless, it is implemented as a sub-module of the ibc pallet [`here`](/code/parachain/frame/ibc/src/ics20).  
 The core ics20 logic is already implemented in [`ibc-rs`](/code/centauri/ibc/modules/src/applications/transfer), all that's required to integrate this is to implement the callback handlers for ics20 
 and implement the [`Ics20Context`](/code/centauri/ibc/modules/src/applications/transfer/context.rs#l118) trait.
 
@@ -151,8 +151,8 @@ The [`Rpc interface`](/code/parachain/frame/ibc/rpc/src/lib.rs) is designed to a
 
 #### Runtime API
 
-A set of runtime apis are specified to enable the rpc interface, these are defined here and should be implemented for the runtime for the rpc interface to work correctly.
-The runtime interface is defined [`here`](/code/parachain/frame/ibc/runtime-api/src/lib.rs).
+A set of runtime apis are specified to enable the rpc interface, these are defined here and should be implemented for the runtime for the rpc interface to work correctly.  
+The runtime interface is defined [`here`](/code/parachain/frame/ibc/runtime-api/src/lib.rs).  
 Identical methods are implemented for the pallet to be called in the runtime interface implementation [`here`](/code/parachain/frame/ibc/src/impls.rs#L112)
 
 ### IBC Protocol coverage
