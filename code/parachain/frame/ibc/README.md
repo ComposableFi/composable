@@ -157,12 +157,12 @@ Identical methods are implemented for the pallet to be called in the runtime int
 
 ### IBC Protocol coverage
 
-[x] ICS02 - Light client implementations  
-[x] ICS03 - Connections  
-[x] ICS04 - Channels and Ports  
-[x] ICS23 - Vector commitments  
-[x] ICS26 - Routing and callback handlers  
-[x] ICS20 - Interchain token transfer  
+- [x] ICS02 - Light client implementations  
+- [x] ICS03 - Connections  
+- [x] ICS04 - Channels and Ports  
+- [x] ICS23 - Vector commitments  
+- [x] ICS26 - Routing and callback handlers  
+- [x] ICS20 - Interchain token transfer  
 
 ### References
 
