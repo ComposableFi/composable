@@ -74,19 +74,24 @@
       ];
 
       mk-devnet = { pkgs, lib, writeTextFile, writeShellApplication
-        , polkadot-launch, composable-node, polkadot-node, chain-spec }:
+        , useGlobalChainSpec ? true, polkadot-launch, composable-node
+        , polkadot-node, chain-spec, network-config-path ?
+          ./scripts/polkadot-launch/rococo-local-dali-dev.nix }:
         let
-          original-config = (pkgs.callPackage
-            ./scripts/polkadot-launch/rococo-local-dali-dev.nix {
-              polkadot-bin = polkadot-node;
-              composable-bin = composable-node;
-            }).result;
+          original-config = (pkgs.callPackage network-config-path {
+            polkadot-bin = polkadot-node;
+            composable-bin = composable-node;
+          }).result;
 
-          patched-config = lib.recursiveUpdate original-config {
-            parachains = builtins.map
-              (parachain: parachain // { chain = "${chain-spec}"; })
-              original-config.parachains;
-          };
+          patched-config = if useGlobalChainSpec then
+            lib.recursiveUpdate original-config {
+              parachains = builtins.map
+                (parachain: parachain // { chain = "${chain-spec}"; })
+                original-config.parachains;
+            }
+          else
+            original-config;
+
           config = writeTextFile {
             name = "devnet-${chain-spec}-config.json";
             text = builtins.toJSON patched-config;
@@ -627,6 +632,39 @@
               inherit crane-nightly rust-nightly;
             };
 
+            polkadot-centauri-node = rustPlatform.buildRustPackage rec {
+              # HACK: break the nix sandbox so we can build the runtimes. This
+              # requires Nix to have `sandbox = relaxed` in its config.
+              # We don't really care because polkadot is only used for local devnet.
+              __noChroot = true;
+              name = "polkadot-centauri-v${version}";
+              version = "0.9.27";
+              src = fetchFromGitHub {
+                repo = "polkadot";
+                owner = "ComposableFi";
+                rev = "0898082540c42fb241c01fe500715369a33a80de";
+                hash = "sha256-dymuSVQXzdZe8iiMm4ykVXPIjIZd2ZcAOK7TLDGOWcU=";
+              };
+              cargoSha256 =
+                "sha256-u/hFRxt3OTMDwONGoJ5l7whC4atgpgIQx+pthe2CJXo=";
+              doCheck = false;
+              buildInputs = [ openssl zstd ];
+              nativeBuildInputs = [ rust-nightly clang pkg-config ]
+                ++ lib.optional stdenv.isDarwin
+                (with darwin.apple_sdk.frameworks; [
+                  Security
+                  SystemConfiguration
+                ]);
+              LD_LIBRARY_PATH = lib.strings.makeLibraryPath [
+                stdenv.cc.cc.lib
+                llvmPackages.libclang.lib
+              ];
+              LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
+              PROTOC = "${protobuf}/bin/protoc";
+              ROCKSDB_LIB_DIR = "${rocksdb}/lib";
+              meta = { mainProgram = "polkadot"; };
+            };
+
             polkadot-launch =
               callPackage ./scripts/polkadot-launch/polkadot-launch.nix { };
 
@@ -635,6 +673,17 @@
               inherit pkgs;
               inherit (packages) polkadot-launch composable-node polkadot-node;
               chain-spec = "dali-dev";
+            }).script;
+
+            # Dali Centauri devnet
+            bridge-devnet-dali = (callPackage mk-devnet {
+              inherit pkgs;
+              inherit (packages) polkadot-launch composable-node;
+              polkadot-node = polkadot-centauri-node;
+              chain-spec = "dali-dev";
+              network-config-path =
+                ./scripts/polkadot-launch/bridge-rococo-local-dali-dev.nix;
+              useGlobalChainSpec = false;
             }).script;
 
             # Picasso devnet
@@ -664,6 +713,27 @@
                   chmod 777 /tmp
                 '';
               };
+
+            # Dali Centauri devnet container
+            bridge-devnet-dali-container = dockerTools.buildImage {
+              name = "composable-centauri-devnet-container";
+              tag = "latest";
+              copyToRoot = pkgs.buildEnv {
+                name = "image-root";
+                paths = [ curl websocat ] ++ container-tools;
+                pathsToLink = [ "/bin" ];
+              };
+              config = {
+                Entrypoint =
+                  [ "${packages.bridge-devnet-dali}/bin/run-devnet-dali-dev" ];
+                WorkingDir = "/home/polkadot-launch";
+              };
+              runAsRoot = ''
+                mkdir -p /home/polkadot-launch /tmp
+                chown 1000:1000 /home/polkadot-launch
+                chmod 777 /tmp
+              '';
+            };
 
             frontend-static = mkFrontendStatic {
               subsquidEndpoint = "http://localhost:4350/graphql";
