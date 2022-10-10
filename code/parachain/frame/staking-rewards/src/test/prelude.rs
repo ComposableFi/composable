@@ -233,6 +233,8 @@ pub fn unstake_and_assert<Runtime, RuntimeEvent>(
 	if should_be_early_unstake {
 		let expected_slashed_stake_amount = slashed_amount_of(position_before_unstake.stake);
 
+		dbg!(rewards_pool.rewards.clone());
+
 		if let Some(reward) = rewards_pool.rewards.get(&position_before_unstake.reward_pool_id) {
 			// if the staked asset is the same as one of the reward assets, it can't be checked
 			// individually like the rest of the reward assets since it "shares" a balance with the

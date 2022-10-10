@@ -653,7 +653,6 @@ fn test_extend_stake_amount() {
 		let reward_multiplier = StakingRewards::reward_multiplier(&rewards_pool, duration_preset)
 			.expect("reward_multiplier expected");
 		let boosted_amount = StakingRewards::boosted_amount(reward_multiplier, amount).expect("boosted amount should not overflow") ;
-		dbg!(total_issuance);
 		let inflation = boosted_amount * total_rewards / total_issuance;
 
 		assert_ok!(StakingRewards::extend(Origin::signed(staker), 1, 0, extend_amount));
@@ -813,6 +812,7 @@ fn unstake_in_case_of_not_zero_claims_and_early_unlock_should_work() {
 		process_and_progress_blocks::<StakingRewards, Test>(1);
 
 		mint_assets([BOB], [PICA::ID], PICA::units(200));
+		mint_assets([BOB], [XPICA::ID], XPICA::units(200));
 		let fnft_instance_id =
 			stake_and_assert::<Test, runtime::Event>(BOB, PICA::ID, 100_500, ONE_HOUR);
 
@@ -843,6 +843,7 @@ fn unstake_in_case_of_not_zero_claims_and_not_early_unlock_should_work() {
 		process_and_progress_blocks::<StakingRewards, Test>(1);
 
 		mint_assets([BOB], [PICA::ID], PICA::units(200));
+		mint_assets([BOB], [XPICA::ID], XPICA::units(200));
 		let fnft_instance_id =
 			stake_and_assert::<Test, runtime::Event>(BOB, PICA::ID, 100_500, ONE_HOUR);
 
@@ -1106,6 +1107,7 @@ fn unstake_should_work() {
 		next_block::<crate::Pallet<Test>, Test>();
 
 		mint_assets([BOB], [PICA::ID], PICA::units(200));
+		mint_assets([BOB], [XPICA::ID], XPICA::units(200));
 		let fnft_instance_id =
 			stake_and_assert::<Test, runtime::Event>(BOB, PICA::ID, PICA::units(100), ONE_HOUR);
 
