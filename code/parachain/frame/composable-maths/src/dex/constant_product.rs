@@ -131,6 +131,59 @@ where
 	Ok(ai)
 }
 
+/// Compute the amount of the input token given the amount of the output token.
+///
+/// If `Ok`, returns a tuple containing `(a_sent, fee)`.
+/// To get `a_sent` without accounting for the fee, set `f = 0`.
+///
+/// **NOTE:** Weights must already be normalized.
+///
+/// # Parameters
+/// * `w_i` - Weight of the input token
+/// * `w_o` - Weight of the output token
+/// * `b_i` - Balance of the input token
+/// * `b_o` - Balance of the output token
+/// * `a_out` - Amount of the output token desired by the user
+/// * `f` - Total swap fee
+///
+/// From https://github.com/ComposableFi/composable/blob/cu-2yyx1w9/rfcs/0008-pablo-lbp-cpp-restructure.md#41-fee-math-updates,
+/// equation (3)
+pub fn compute_in_given_out_new<T: PerThing>(
+	w_i: T,
+	w_o: T,
+	b_i: u128,
+	b_o: u128,
+	a_out: u128,
+	f: T,
+) -> Result<(u128, u128), ArithmeticError> {
+	let w_i = Decimal::from(w_i.deconstruct().into());
+	let w_o = Decimal::from(w_o.deconstruct().into());
+	let b_i = Decimal::from(b_i);
+	let b_o = Decimal::from(b_o);
+	let a_out = Decimal::from(a_out);
+
+	let weight_ratio = w_o.safe_div(&w_i)?;
+	// NOTE(connor): Use if to prevent pointless conversions if `f` is zero
+	let left_from_fee = if f.is_zero() {
+		Decimal::ONE
+	} else {
+		Decimal::from(f.left_from_one().deconstruct().into())
+			.safe_div(&Decimal::from(T::one().deconstruct().into()))?
+	};
+	let b_i_over_fee = b_i.safe_div(&left_from_fee)?;
+	let fee = Decimal::ONE.safe_sub(&left_from_fee)?;
+
+	let value = b_o.safe_sub(&a_out)?;
+	let value = b_o.safe_div(&value)?;
+	let value = value.checked_powd(weight_ratio).ok_or(ArithmeticError::Overflow)?;
+	let value = value.safe_sub(&Decimal::ONE)?;
+
+	let a_sent = b_i_over_fee.safe_mul(&value)?;
+	let fee = a_sent.safe_mul(&fee)?.to_u128().ok_or(ArithmeticError::Overflow)?;
+
+	Ok((a_sent.to_u128().ok_or(ArithmeticError::Overflow)?, fee))
+}
+
 /// https://uniswap.org/whitepaper.pdf, equation (13)
 /// Compute the initial share of an LP provider.
 /// - `base_amount` the base asset amount deposited.
