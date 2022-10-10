@@ -93,13 +93,10 @@ where
 
 /// Compute the amount of the output token given the amount of the input token.
 ///
-/// Returns a tuple containing `(a_out, fee)`.
+/// If `Ok`, returns a tuple containing `(a_out, fee)`.
 /// To get `a_out` without accounting for the fee, set `f = 0`.
 ///
 /// **NOTE:** Weights must already be normalized.
-///
-/// From https://github.com/ComposableFi/composable/blob/cu-2yyx1w9/rfcs/0008-pablo-lbp-cpp-restructure.md#41-fee-math-updates,
-/// equation (2)
 ///
 /// # Parameters
 /// * `w_i` - Weight of the input token
@@ -108,6 +105,9 @@ where
 /// * `b_o` - Balance of the output token
 /// * `a_sent` - Amount of the input token sent by the user
 /// * `f` - Total swap fee
+///
+/// From https://github.com/ComposableFi/composable/blob/cu-2yyx1w9/rfcs/0008-pablo-lbp-cpp-restructure.md#41-fee-math-updates,
+/// equation (2)
 pub fn compute_out_given_in_new<T: PerThing>(
 	w_i: T,
 	w_o: T,
@@ -130,17 +130,15 @@ pub fn compute_out_given_in_new<T: PerThing>(
 		Decimal::from(f.left_from_one().deconstruct().into())
 			.safe_div(&Decimal::from(T::one().deconstruct().into()))?
 	};
+	let a_sent_fee_cut = a_sent.safe_mul(&left_from_fee)?;
 
-	let value = b_i.safe_add(&a_sent.safe_mul(&left_from_fee)?)?;
+	let value = b_i.safe_add(&a_sent_fee_cut)?;
 	let value = b_i.safe_div(&value)?;
 	let value = value.checked_powd(weight_ratio).ok_or(ArithmeticError::Overflow)?;
 	let value = Decimal::ONE.safe_sub(&value)?;
 
 	let a_out = b_o.safe_mul(&value)?.to_u128().ok_or(ArithmeticError::Overflow)?;
-	let fee = a_sent
-		.safe_mul(&Decimal::ONE.safe_sub(&left_from_fee)?)?
-		.to_u128()
-		.ok_or(ArithmeticError::Overflow)?;
+	let fee = a_sent.safe_sub(&a_sent_fee_cut)?.to_u128().ok_or(ArithmeticError::Overflow)?;
 
 	Ok((a_out, fee))
 }
