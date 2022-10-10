@@ -32,6 +32,7 @@ digraph arion_xcvm {
     
     hyperspace -> Dali [label = "syncronize"; arrowhead = tee;];
     hyperspace -> sibling [label = "syncronize"; arrowhead = tee;];
+    hyperspace -> Rococo [label = "finality proofs"; arrowhead = tee;];
     
     ibc_test [shape = hexagon;label = "ibc-rs-test";];    
     

@@ -1,8 +1,8 @@
 digraph ics_xcvm {
-    graph [fontname = "Handlee"];
-    node [fontname = "Handlee"];
-    edge [fontname = "Handlee"];
-
+    graph [fontname = "Handlee";];
+    node [fontname = "Handlee";];
+    edge [fontname = "Handlee";];
+    
     FinalityProof [shape = box3d;];
     ConsensusProof [shape = box3d;];
     StateProof [shape = box3d;];
@@ -20,7 +20,8 @@ digraph ics_xcvm {
     
     ICS002_Client [shape = folder;color = grey;style = dashed;];
     ICS007_Tendermint [shape = folder;color = grey;style = dashed;];
-    ICS011_Beefy [shape = folder;color = grey;style = dashed;];
+    ICS010_Grandpa [shape = folder;color = grey;style = dashed;];
+    ICS011_Beefy [shape = folder;color = grey;style = dashed;label = "ICS011 BEEFY(next release)";];
     ICS026_Routing [shape = folder;color = grey;style = dashed;];
     ICS003_Connection [shape = folder;color = grey;style = dashed;];
     ICS004_Channel [shape = folder;color = grey;style = dashed;];
@@ -30,11 +31,11 @@ digraph ics_xcvm {
     
     subgraph cluster_picasso {
         label = "Kusama Picasso Substrate";
-        
+        RPC
         TendermintLightClient [shape = component;];
         SubstrateIbcPalletInPicasso [shape = component;label = "ibc-pallet";];
         JunoConnection [shape = cylinder;];
-        ChannelXcvmOnPicasso [label = "XCVM Channel";shape = cylinder;];
+        ChannelXcvmOnPicasso [label = "XCVM Gateway(IBC Channel)";shape = cylinder;];
         ChannelXcvmOnPicasso -> JunoConnection [label = "relies on";];
         SubstrateIbcPalletInPicasso -> TendermintLightClient [label = "verify";];
         SubstrateIbcPalletInPicasso -> ChannelXcvmOnPicasso [label = "callbacks";];
@@ -48,7 +49,7 @@ digraph ics_xcvm {
         BeefyLightClient [shape = component;];
         CosmosIbcModule [shape = component;];
         PicassoConnection [shape = cylinder;];
-        ChannelXcvmOnJuno [label = "XCVM Channel";shape = cylinder;];
+        ChannelXcvmOnJuno [label = "XCVM Gateway(IBC Channel)";shape = cylinder;];
         
         ChannelXcvmOnJuno -> PicassoConnection [label = "relies on";];
         CosmosIbcModule -> BeefyLightClient [label = "verify";];
@@ -59,7 +60,7 @@ digraph ics_xcvm {
     TendermintLightClient -> ICS002_Client [style = dashed;];
     BeefyLightClient -> ICS002_Client [style = dashed;];
     ICS007_Tendermint -> TendermintLightClient [style = dashed; arrowhead = none;];
-    ICS011_Beefy -> BeefyLightClient [style = dashed; arrowhead = none;];
+    ICS010_Grandpa -> BeefyLightClient [style = dashed; arrowhead = none;];
     ICS026_Routing -> SubstrateIbcPalletInPicasso [style = dashed; arrowhead = none;];
     ICS026_Routing -> CosmosIbcModule [style = dashed; arrowhead = none;];
     ICS003_Connection -> JunoConnection [style = dashed; arrowhead = none;];
@@ -75,6 +76,7 @@ digraph ics_xcvm {
     Relayer -> CosmosIbcModule [label = "Get events"; arrowhead = inv; color = red;];
     Relayer -> SubstrateIbcPalletInPicasso [label = "Write messages"; color = red;];
     Relayer -> CosmosIbcModule [label = "Write messages"; color = red;];
+    Relayer -> RPC [label = "Finality proofs"; color = red;];
     
     
     ChannelXcvmOnJuno -> ChannelXcvmOnPicasso [arrowhead = none; penwidth = 10; color = green;];
@@ -83,5 +85,5 @@ digraph ics_xcvm {
     Relayer -> Packet [label = "transfers"; color = red;];
     Relayer -> HandshakeProtocol [label = "runs"; color = red;];
     ICS007_Tendermint -> FinalityProof [style = dashed; arrowhead = none;];
-    ICS011_Beefy -> FinalityProof [style = dashed; arrowhead = none;];
+    ICS010_Grandpa -> FinalityProof [style = dashed; arrowhead = none;];
 }
