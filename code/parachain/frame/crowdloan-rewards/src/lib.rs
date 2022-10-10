@@ -80,7 +80,8 @@ pub mod pallet {
 		pallet_prelude::*,
 		traits::{
 			fungible::{Inspect, Mutate, Transfer},
-			Time,
+			tokens::WithdrawReasons,
+			LockIdentifier, LockableCurrency, Time,
 		},
 		transactional, PalletId,
 	};
@@ -118,6 +119,8 @@ pub mod pallet {
 		/// The crowdloan was successfully initialized, but with excess funds that won't be
 		/// claimed.
 		OverFunded { excess_funds: T::Balance },
+		/// A portion of rewards have been unlocked and future claims will not have locks
+		RewardsUnlocked { at: MomentOf<T> },
 	}
 
 	#[pallet::error]
@@ -156,7 +159,8 @@ pub mod pallet {
 		/// The RewardAsset used to transfer the rewards.
 		type RewardAsset: Inspect<Self::AccountId, Balance = Self::Balance>
 			+ Transfer<Self::AccountId, Balance = Self::Balance>
-			+ Mutate<Self::AccountId>;
+			+ Mutate<Self::AccountId>
+			+ LockableCurrency<Self::AccountId, Balance = Self::Balance>;
 
 		/// Type used to express timestamps.
 		type Moment: AtLeast32Bit + Parameter + Default + Copy + MaxEncodedLen + FullCodec;
@@ -199,6 +203,14 @@ pub mod pallet {
 		/// The unique identifier of this pallet.
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
+
+		/// The unique identifier for locks maintained by this pallet.
+		#[pallet::constant]
+		type LockId: Get<LockIdentifier>;
+
+		/// If claimed amounts should be locked by the pallet
+		#[pallet::constant]
+		type LockByDefault: Get<bool>;
 	}
 
 	#[pallet::storage]
@@ -238,6 +250,11 @@ pub mod pallet {
 	pub type Associations<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, RemoteAccountOf<T>, OptionQuery>;
 
+	/// If set, new locks will not be added to claims
+	#[pallet::storage]
+	#[pallet::getter(fn remove_reward_locks)]
+	pub type RemoveRewardLocks<T: Config> = StorageValue<_, (), OptionQuery>;
+
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
@@ -262,10 +279,15 @@ pub mod pallet {
 		}
 
 		/// Populate pallet by adding more rewards.
-		/// Can be called multiple times. If an remote account already has a reward, it will be
-		/// replaced by the new reward value.
+		///
+		/// Each index in the rewards vector should contain: `remote_account`, `reward_account`,
+		/// `vesting_period`.
+		///
+		/// Can be called multiple times. If an remote account
+		/// already has a reward, it will be replaced by the new reward value.
+		///
 		/// Can only be called before `initialize`.
-		#[pallet::weight(<T as Config>::WeightInfo::populate(rewards.len() as u32))]
+		#[pallet::weight(<T as Config>::WeightInfo::populate(rewards.len() as _))]
 		#[transactional]
 		pub fn populate(
 			origin: OriginFor<T>,
@@ -307,6 +329,16 @@ pub mod pallet {
 			let claimed = Self::do_claim(remote_account.clone(), &reward_account)?;
 			Self::deposit_event(Event::Claimed { remote_account, reward_account, amount: claimed });
 			Ok(Pays::No.into())
+		}
+
+		#[pallet::weight(<T as Config>::WeightInfo::unlock_rewards_for(reward_accounts.len() as _))]
+		pub fn unlock_rewards_for(
+			origin: OriginFor<T>,
+			reward_accounts: Vec<T::AccountId>,
+		) -> DispatchResult {
+			T::AdminOrigin::ensure_origin(origin)?;
+			Self::do_unlock(reward_accounts);
+			Ok(())
 		}
 	}
 
@@ -457,6 +489,16 @@ pub mod pallet {
 					let available_to_claim = should_have_claimed.saturating_sub(reward.claimed);
 					ensure!(available_to_claim > T::Balance::zero(), Error::<T>::NothingToClaim);
 
+					reward.claimed = available_to_claim.saturating_add(reward.claimed);
+					if T::LockByDefault::get() && !RemoveRewardLocks::<T>::exists() {
+						T::RewardAsset::set_lock(
+							T::LockId::get(),
+							reward_account,
+							reward.claimed,
+							WithdrawReasons::RESERVE,
+						);
+					}
+
 					let funds_account = Self::account_id();
 					// No need to keep the pallet account alive.
 					T::RewardAsset::transfer(
@@ -466,7 +508,6 @@ pub mod pallet {
 						false,
 					)?;
 
-					reward.claimed = available_to_claim.saturating_add(reward.claimed);
 					ClaimedRewards::<T>::mutate(|x| *x = x.saturating_add(available_to_claim));
 
 					Ok(available_to_claim)
@@ -474,6 +515,18 @@ pub mod pallet {
 					Err(Error::<T>::InvalidProof.into())
 				}
 			})
+		}
+
+		/// Sets `RemoveRewardLocks`, removes `RewardAsset` locks on provided accounts, emits
+		/// `RewardsUnlocked`.
+		fn do_unlock(reward_accounts: Vec<T::AccountId>) {
+			RemoveRewardLocks::<T>::put(());
+
+			reward_accounts.iter().for_each(|reward_account| {
+				T::RewardAsset::remove_lock(T::LockId::get(), reward_account);
+			});
+
+			Self::deposit_event(Event::<T>::RewardsUnlocked { at: T::Time::now() });
 		}
 	}
 

@@ -11,7 +11,10 @@ use crate::{
 use codec::Encode;
 use composable_support::types::{EcdsaSignature, EthereumAddress};
 use composable_tests_helpers::test::helper::assert_event_with;
-use frame_support::{assert_noop, assert_ok, traits::Currency};
+use frame_support::{
+	assert_noop, assert_ok,
+	traits::{fungible::Transfer, Currency},
+};
 use hex_literal::hex;
 use sp_core::{ed25519, storage::StateVersion, Pair};
 
@@ -45,6 +48,60 @@ fn with_rewards_default<R>(
 	execute: impl FnOnce(&dyn Fn(Moment), Vec<(AccountId, ClaimKey)>) -> R,
 ) -> R {
 	with_rewards(DEFAULT_NB_OF_CONTRIBUTORS, DEFAULT_REWARD, DEFAULT_VESTING_PERIOD, execute)
+}
+
+mod unlock_rewards_for {
+
+	use super::*;
+
+	#[test]
+	fn should_set_remove_rewards_lock() {
+		with_rewards_default(|_set_moment, accounts| {
+			assert_ok!(CrowdloanRewards::initialize(Origin::root()));
+
+			for (picasso_account, remote_account) in accounts.clone().into_iter() {
+				assert_ok!(remote_account.associate(picasso_account));
+			}
+
+			assert!(CrowdloanRewards::remove_reward_locks().is_none());
+
+			let accounts = accounts.into_iter().map(|(account, _claim_key)| account).collect();
+			assert_ok!(CrowdloanRewards::unlock_rewards_for(Origin::root(), accounts));
+			assert!(CrowdloanRewards::remove_reward_locks().is_some());
+		})
+	}
+
+	#[test]
+	fn should_unlock_reward_assets_for_accounts() {
+		with_rewards_default(|_bugs_bugs_bugs, accounts| {
+			assert_ok!(CrowdloanRewards::initialize(Origin::root()));
+
+			for (picasso_account, remote_account) in accounts.clone().into_iter() {
+				assert_ok!(remote_account.associate(picasso_account));
+			}
+
+			assert_noop!(
+				<Balances as Transfer<AccountId>>::transfer(
+					&accounts[0].0,
+					&accounts[1].0,
+					DEFAULT_REWARD / 10,
+					false,
+				),
+				pallet_balances::pallet::Error::<Test>::LiquidityRestrictions
+			);
+
+			let accounts: Vec<AccountId> =
+				accounts.into_iter().map(|(account, _claim_key)| account).collect();
+			assert_ok!(CrowdloanRewards::unlock_rewards_for(Origin::root(), accounts.clone()));
+
+			assert_ok!(<Balances as Transfer<AccountId>>::transfer(
+				&accounts[0],
+				&accounts[1],
+				DEFAULT_REWARD / 10,
+				false,
+			));
+		})
+	}
 }
 
 #[test]

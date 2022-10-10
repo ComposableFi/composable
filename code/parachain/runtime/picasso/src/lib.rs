@@ -131,7 +131,7 @@ pub fn native_version() -> NativeVersion {
 	NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
 }
 
-use orml_traits::parameter_type_with_key;
+use orml_traits::{parameter_type_with_key, LockIdentifier};
 parameter_type_with_key! {
 	// Minimum amount an account has to hold to stay in state
 	pub MultiExistentialDeposits: |currency_id: CurrencyId| -> Balance {
@@ -655,10 +655,12 @@ impl currency_factory::Config for Runtime {
 
 parameter_types! {
 	pub const CrowdloanRewardsId: PalletId = PalletId(*b"pal_crow");
+	pub const CrowdloanRewardsLockId: LockIdentifier = *b"clr_lock";
 	pub const InitialPayment: Perbill = Perbill::from_percent(25);
 	pub const OverFundedThreshold: Perbill = Perbill::from_percent(1);
 	pub const VestingStep: Moment = (7 * DAYS as Moment) * (MILLISECS_PER_BLOCK as Moment);
 	pub const Prefix: &'static [u8] = b"picasso-";
+	pub const LockCrowdloanRewards: bool = true;
 }
 
 impl crowdloan_rewards::Config for Runtime {
@@ -676,6 +678,8 @@ impl crowdloan_rewards::Config for Runtime {
 	type PalletId = CrowdloanRewardsId;
 	type Moment = Moment;
 	type Time = Timestamp;
+	type LockId = CrowdloanRewardsLockId;
+	type LockByDefault = LockCrowdloanRewards;
 }
 
 parameter_types! {
