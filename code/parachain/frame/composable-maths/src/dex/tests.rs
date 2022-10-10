@@ -89,6 +89,34 @@ mod constant_product {
 			assert_eq!(res.1, 0);
 		}
 
+		#[test]
+		fn should_return_error_if_w_o_is_zero() {
+			let w_i = Permill::from_rational::<u32>(1, 2);
+			let w_o = Permill::zero();
+			let b_i = 12;
+			let b_o = 12;
+			let a_sent = 2;
+			let fee = Permill::zero();
+
+			let res = compute_out_given_in_new(w_i, w_o, b_i, b_o, a_sent, fee);
+
+			assert_eq!(res, Err(sp_runtime::ArithmeticError::DivisionByZero));
+		}
+
+		#[test]
+		fn should_return_error_if_b_i_and_a_sent_are_zero() {
+			let w_i = Permill::from_rational::<u32>(1, 2);
+			let w_o = Permill::from_rational::<u32>(1, 2);
+			let b_i = 0;
+			let b_o = 12;
+			let a_sent = 0;
+			let fee = Permill::zero();
+
+			let res = compute_out_given_in_new(w_i, w_o, b_i, b_o, a_sent, fee);
+
+			assert_eq!(res, Err(sp_runtime::ArithmeticError::DivisionByZero));
+		}
+
 		proptest! {
 			#![proptest_config(ProptestConfig::with_cases(CHECKED_I_AND_O_SIZE))]
 
