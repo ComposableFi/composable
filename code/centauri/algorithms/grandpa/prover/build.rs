@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 #[tokio::main]
 async fn main() -> color_eyre::Result<()> {
 	subxt_codegen::build_script("ws://127.0.0.1:9944", "runtime").await?;
