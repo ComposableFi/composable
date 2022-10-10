@@ -82,7 +82,7 @@ let
             enableACME = true;
             forceSSL = true;
             locations = proxyChain "dali" 9988 // proxyChain "rococo" 9944
-              // {
+              // proxyChain "karura" 9999 // {
                 "/" = { root = "${book}/book"; };
                 "/subsquid/" = { proxyPass = "http://127.0.0.1:4350/"; };
               };
