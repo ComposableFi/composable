@@ -42,6 +42,7 @@ members = [
   "utils/common",
   "utils/price-feed",
   "utils/collator-sidecar",
+  "utils/composable-subxt",
   # "simnode/simnode-node",
   "simnode/simnode-tests",
   "simnode/common",
