@@ -1,5 +1,6 @@
 import { AssetId, SubstrateNetworkId } from "./types";
 import { ParachainId } from "substrate-react";
+import { getImageURL } from "@/utils/nextImageUrl";
 
 export interface AssetMetadata {
   decimals: number;
@@ -19,98 +20,98 @@ export const Assets: {
     decimals: 12,
     assetId: "pica",
     symbol: "PICA",
-    icon: "/tokens/picasso.svg",
+    icon: getImageURL("/tokens/picasso.svg"),
     name: "Picasso",
     supportedNetwork: {
       karura: null,
       picasso: 1,
-      kusama: null,
-    },
+      kusama: null
+    }
   },
   ksm: {
     decimals: 12,
     assetId: "ksm",
     symbol: "KSM",
-    icon: "/networks/kusama.svg",
+    icon: getImageURL("/networks/kusama.svg"),
     name: "Kusama",
     supportedNetwork: {
       karura: null,
       picasso: 4,
-      kusama: 1,
-    },
+      kusama: 1
+    }
   },
   kusd: {
     decimals: 12,
     assetId: "kusd",
     symbol: "KUSD",
-    icon: "/tokens/usd-coin-usdc.svg",
+    icon: getImageURL("/tokens/usd-coin-usdc.svg"),
     name: "K-USD",
     supportedNetwork: {
       karura: 129,
       picasso: 300_000_000_001, // After creating the asset id via assetRegistry, this value could be anything.
-      kusama: null,
-    },
+      kusama: null
+    }
   },
   layr: {
     decimals: 12,
     assetId: "layr",
     symbol: "LAYR",
-    icon: "/tokens/pablo.svg",
+    icon: getImageURL("/tokens/pablo.svg"),
     name: "LAYER",
     supportedNetwork: {
       karura: null,
       picasso: 2,
-      kusama: null,
-    },
+      kusama: null
+    }
   },
   pablo: {
     decimals: 12,
     assetId: "pablo",
     symbol: "PAB",
-    icon: "/tokens/pablo.svg",
+    icon: getImageURL("/tokens/pablo.svg"),
     name: "PABLO",
     supportedNetwork: {
       karura: null,
       picasso: 2,
-      kusama: null,
-    },
+      kusama: null
+    }
   },
   ausd: {
     decimals: 12,
     assetId: "ausd",
     symbol: "AUSD",
-    icon: "/tokens/ausd.svg",
+    icon: getImageURL("/tokens/ausd.svg"),
     name: "Acala USD",
     supportedNetwork: {
       karura: 2,
       picasso: null,
-      kusama: null,
-    },
+      kusama: null
+    }
   },
   kar: {
     decimals: 12,
     assetId: "kar",
     symbol: "KAR",
-    icon: "/tokens/karura.svg",
+    icon: getImageURL("/tokens/karura.svg"),
     name: "Karura",
     supportedNetwork: {
       karura: 1,
       picasso: null,
-      kusama: null,
-    },
+      kusama: null
+    }
   },
   usdc: {
     decimals: 12,
     assetId: "usdc",
     symbol: "USDC",
-    icon: "/tokens/usd-coin-usdc.svg",
+    icon: getImageURL("/tokens/usd-coin-usdc.svg"),
     name: "USDCoin",
     supportedNetwork: {
       karura: null,
       picasso: 100,
-      kusama: null,
-    },
-  },
+      kusama: null
+    }
+  }
 };
 
 export const AssetsValidForNow: AssetId[] = ["pica", "kusd", "ksm"];
@@ -141,19 +142,19 @@ export const getAssetOnChainId = (
 export const getAssetOptions = (noneTokenLabel?: string) => [
   ...(noneTokenLabel
     ? [
-        {
-          value: "none",
-          label: noneTokenLabel,
-          icon: undefined,
-          disabled: true,
-          hidden: true,
-        },
-      ]
+      {
+        value: "none",
+        label: noneTokenLabel,
+        icon: undefined,
+        disabled: true,
+        hidden: true
+      }
+    ]
     : []),
   ...Object.values(Assets).map((asset) => ({
     value: asset.assetId,
     label: asset.name,
     shortLabel: asset.symbol,
-    icon: asset.icon,
-  })),
+    icon: asset.icon
+  }))
 ];

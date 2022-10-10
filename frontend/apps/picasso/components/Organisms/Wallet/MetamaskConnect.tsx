@@ -48,7 +48,7 @@ const Status = () => {
       onClick={() => {
         openMetamaskModal();
       }}
-      imageSrc="/networks/mainnet_not_connected.svg"
+      imageSrc={getImageURL("/networks/mainnet_not_connected.svg")}
       imageAlt="Ethereum Mainnet"
     >
       Connect EVM

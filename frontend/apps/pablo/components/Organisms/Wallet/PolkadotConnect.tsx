@@ -3,33 +3,27 @@ import { Modal } from "../../Molecules/Modal";
 import { PolkadotAccountForm } from "./PolkadotAccountForm";
 import { Select } from "../../Atoms/Select";
 import { ChevronLeft } from "@mui/icons-material";
-import {
-  alpha,
-  Box,
-  Button,
-  IconButton,
-  Typography,
-  useTheme,
-} from "@mui/material";
+import { alpha, Box, Button, IconButton, Typography, useTheme } from "@mui/material";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import useStore from "@/store/useStore";
-import { useDotSamaContext, useParachainApi, SupportedWalletId, useEagerConnect } from "substrate-react";
+import { SupportedWalletId, useDotSamaContext, useEagerConnect, useParachainApi } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { useAssetsWithBalance } from "@/defi/hooks";
 import { useSnackbar } from "notistack";
+import { getImageURL } from "@/utils/nextImageUrl";
 
 const WALLETS_SUPPORTED: Array<{ walletId: SupportedWalletId, icon: string, name: string }> = [
   {
     walletId: SupportedWalletId.Polkadotjs,
-    icon: "/networks/polkadot_js.svg",
+    icon: getImageURL("/networks/polkadot_js.svg"),
     name: "Polkadot.js"
   },
   {
     walletId: SupportedWalletId.Talisman,
-    icon: "/logos/talisman.svg",
+    icon: getImageURL("/logos/talisman.svg"),
     name: "Talisman"
-  },
+  }
 ];
 
 const Status = () => {
@@ -55,7 +49,7 @@ const Status = () => {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          gap: theme.spacing(1),
+          gap: theme.spacing(1)
         }}
       >
         <Select
@@ -67,14 +61,14 @@ const Status = () => {
               label: asset.balance.lte(1000)
                 ? asset.balance.toFixed(2)
                 : asset.balance.div(1000).toFixed(2) + "K",
-              icon: asset.icon,
+              icon: asset.icon
             };
           })}
           sx={{
             "& .MuiOutlinedInput-root": {
               height: "56px",
-              minWidth: "170px",
-            },
+              minWidth: "170px"
+            }
           }}
         />
         <AccountIndicator
@@ -108,7 +102,7 @@ export const PolkadotConnect: React.FC<{}> = () => {
   const theme = useTheme();
   const {
     ui: { isPolkadotModalOpen },
-    closePolkadotModal,
+    closePolkadotModal
   } = useStore();
   const { extensionStatus, activate } = useDotSamaContext();
   const { enqueueSnackbar } = useSnackbar();
@@ -117,8 +111,8 @@ export const PolkadotConnect: React.FC<{}> = () => {
     try {
       if (activate) await activate(walletId);
     } catch (err: any) {
-      console.log('Logged ', err)
-      enqueueSnackbar(err.message, { variant: "error", persist: true } )
+      console.log("Logged ", err);
+      enqueueSnackbar(err.message, { variant: "error", persist: true });
     }
   };
 
@@ -134,8 +128,8 @@ export const PolkadotConnect: React.FC<{}> = () => {
         dismissible
         BackdropProps={{
           sx: {
-            backgroundImage: theme.palette.gradient.backdrop,
-          },
+            backgroundImage: theme.palette.gradient.backdrop
+          }
         }}
       >
         <Box
@@ -144,7 +138,7 @@ export const PolkadotConnect: React.FC<{}> = () => {
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            height: "100%",
+            height: "100%"
           }}
         >
           {extensionStatus !== "connected" && extensionStatus !== "connecting" && (
@@ -166,27 +160,27 @@ export const PolkadotConnect: React.FC<{}> = () => {
                 WALLETS_SUPPORTED.map(({ name, walletId, icon }) => {
                   return (
                     <Button
-                    sx={{
-                      mt: "4rem",
-                    }}
-                    variant="outlined"
-                    color="primary"
-                    size="large"
-                    key={walletId}
-                    fullWidth
-                    onClick={() => handleConnectPolkadot(walletId)}
-                  >
-                    <Box sx={{ marginRight: theme.spacing(2) }}>
-                      <Image
-                        src={icon}
-                        width="24"
-                        height="24"
-                        alt={walletId}
-                      />
-                    </Box>
-                    <Typography variant="button">{name}</Typography>
-                  </Button>
-                  )
+                      sx={{
+                        mt: "4rem"
+                      }}
+                      variant="outlined"
+                      color="primary"
+                      size="large"
+                      key={walletId}
+                      fullWidth
+                      onClick={() => handleConnectPolkadot(walletId)}
+                    >
+                      <Box sx={{ marginRight: theme.spacing(2) }}>
+                        <Image
+                          src={icon}
+                          width="24"
+                          height="24"
+                          alt={walletId}
+                        />
+                      </Box>
+                      <Typography variant="button">{name}</Typography>
+                    </Button>
+                  );
                 })
               }
             </>
@@ -198,7 +192,7 @@ export const PolkadotConnect: React.FC<{}> = () => {
                 sx={{
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "center",
+                  justifyContent: "center"
                 }}
               >
                 <Typography variant="h5" gutterBottom>
@@ -214,10 +208,11 @@ export const PolkadotConnect: React.FC<{}> = () => {
                 sx={{
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "center",
+                  justifyContent: "center"
                 }}
               >
-                <IconButton color="primary" onClick={() => {}}>
+                <IconButton color="primary" onClick={() => {
+                }}>
                   <ChevronLeft />
                 </IconButton>
 

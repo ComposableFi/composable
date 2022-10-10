@@ -1,14 +1,14 @@
 import {
+  Box,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Box,
-  Typography,
-  useTheme,
   Tooltip,
+  Typography,
+  useTheme
 } from "@mui/material";
 import Image from "next/image";
 import { useAppDispatch } from "@/hooks/store";
@@ -20,27 +20,28 @@ import { TableHeader } from "@/defi/types";
 import { useAllLpTokenRewardingPools } from "@/store/hooks/useAllLpTokenRewardingPools";
 import LiquidityPoolRow from "./pool/LiquidityPoolRow";
 import { usePoolsWithLpBalance } from "@/store/hooks/overview/usePoolsWithLpBalance";
+import { getImageURL } from "@/utils/nextImageUrl";
 
 const tableHeaders: TableHeader[] = [
   {
-    header: "Pools",
+    header: "Pools"
   },
   {
     header: "TVL",
-    tooltip: "TVL",
+    tooltip: "TVL"
   },
   {
     header: "APY",
-    tooltip: "APY",
+    tooltip: "APY"
   },
   {
     header: "Daily Rewards",
-    tooltip: "Daily Rewards",
+    tooltip: "Daily Rewards"
   },
   {
     header: "Volume",
-    tooltip: "Volume",
-  },
+    tooltip: "Volume"
+  }
 ];
 
 export type AllLiquidityTableProps = {
@@ -48,7 +49,7 @@ export type AllLiquidityTableProps = {
 };
 
 export const AllLiquidityTable: React.FC<AllLiquidityTableProps> = ({
-  flow,
+  flow
 }) => {
   const dispatch = useAppDispatch();
   const theme = useTheme();
@@ -84,7 +85,7 @@ export const AllLiquidityTable: React.FC<AllLiquidityTableProps> = ({
     return (
       <Box textAlign="center" mt={3}>
         <Image
-          src="/static/lemonade.png"
+          src={getImageURL("/static/lemonade.png")}
           css={{ mixBlendMode: "luminosity" }}
           width="96"
           height="96"

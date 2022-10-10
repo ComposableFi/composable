@@ -3,6 +3,7 @@ import { CheckRounded } from "@mui/icons-material";
 import { useDotSamaContext, useParachainApi } from "substrate-react";
 import Image from "next/image";
 import useStore from "@/store/useStore";
+import { getImageURL } from "@/utils/nextImageUrl";
 
 export const PolkadotAccountForm: React.FC<{}> = () => {
   const { closePolkadotModal } = useStore();
@@ -10,7 +11,7 @@ export const PolkadotAccountForm: React.FC<{}> = () => {
     deactivate,
     extensionStatus,
     selectedAccount,
-    setSelectedAccount,
+    setSelectedAccount
   } = useDotSamaContext();
   const theme = useTheme();
 
@@ -33,7 +34,7 @@ export const PolkadotAccountForm: React.FC<{}> = () => {
         display: "flex",
         flexDirection: "column",
         gap: 4,
-        px: 3,
+        px: 3
       }}
     >
       {accounts.map((account, index) => (
@@ -57,11 +58,11 @@ export const PolkadotAccountForm: React.FC<{}> = () => {
                 : "",
             display: "flex",
             alignItems: "center",
-            gap: theme.spacing(2),
+            gap: theme.spacing(2)
           }}
         >
           <Image
-            src="/networks/polkadot_js_wallet.svg"
+            src={getImageURL("/networks/polkadot_js_wallet.svg")}
             width="24"
             height="24"
             alt="Polkadot.js"

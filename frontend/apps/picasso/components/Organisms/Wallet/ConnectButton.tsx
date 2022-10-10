@@ -1,6 +1,5 @@
 import Image from "next/image";
 import { Box, Button, Typography, useTheme } from "@mui/material";
-import { getImageURL } from "@/utils/nextImageUrl";
 
 type ConnectButtonProps = {
   onClick: () => void;
@@ -33,7 +32,7 @@ export const ConnectButton: React.FC<ConnectButtonProps> = ({
         }}
       >
         <Box sx={{ height: 24 }}>
-          <Image src={getImageURL(imageSrc)} width="24" height="24" alt={imageAlt} />
+          <Image src={imageSrc} width="24" height="24" alt={imageAlt} />
         </Box>
         <Box>
           <Typography variant="button">{children}</Typography>

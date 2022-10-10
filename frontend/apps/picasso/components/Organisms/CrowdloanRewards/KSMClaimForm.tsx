@@ -1,15 +1,8 @@
 import { BigNumberInput, Input, Modal } from "@/components";
-import {
-  Box,
-  Button,
-  CircularProgress,
-  Grid,
-  Paper,
-  Typography,
-  useTheme,
-} from "@mui/material";
+import { Box, Button, CircularProgress, Grid, Paper, Typography, useTheme } from "@mui/material";
 import BigNumber from "bignumber.js";
 import React from "react";
+import { getImageURL } from "@/utils/nextImageUrl";
 
 type KSMClaimFormProps = {
   availableToClaim: BigNumber;
@@ -47,7 +40,7 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
       <Paper
         elevation={0}
         sx={{
-          padding: theme.spacing(4),
+          padding: theme.spacing(4)
         }}
       >
         <Box>
@@ -56,10 +49,12 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
               <BigNumberInput
                 noBorder={true}
                 value={availableToClaim}
-                setter={(v: BigNumber) => {}}
+                setter={(v: BigNumber) => {
+                }}
                 tokenId="pica"
                 tokenDescription={false}
-                isValid={(_v: boolean) => {}}
+                isValid={(_v: boolean) => {
+                }}
                 placeholder="0"
                 maxDecimals={18}
                 maxValue={new BigNumber(1e18)}
@@ -70,16 +65,16 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
                     TooltipProps: {
                       title:
                         "This is your total PICA available to claim now for your account",
-                      children: <></>,
-                    },
-                  },
+                      children: <></>
+                    }
+                  }
                 }}
                 InputProps={{
                   inputProps: {
                     sx: {
-                      textAlign: "center",
-                    },
-                  },
+                      textAlign: "center"
+                    }
+                  }
                 }}
               />
             </Grid>
@@ -87,8 +82,10 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
               <BigNumberInput
                 noBorder={true}
                 value={claimedRewards}
-                setter={(v: BigNumber) => {}}
-                isValid={(_v: boolean) => {}}
+                setter={(v: BigNumber) => {
+                }}
+                isValid={(_v: boolean) => {
+                }}
                 tokenId="pica"
                 tokenDescription={false}
                 placeholder="0"
@@ -99,21 +96,21 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
                   mainLabelProps: {
                     label: "Claimed",
                     TypographyProps: {
-                      fontSize: 16,
+                      fontSize: 16
                     },
                     TooltipProps: {
                       title:
                         "This is the total PICA you have claimed so far for your account",
-                      children: <></>,
-                    },
-                  },
+                      children: <></>
+                    }
+                  }
                 }}
                 InputProps={{
                   inputProps: {
                     sx: {
-                      textAlign: "center",
-                    },
-                  },
+                      textAlign: "center"
+                    }
+                  }
                 }}
               />
             </Grid>
@@ -121,8 +118,10 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
               <BigNumberInput
                 noBorder={true}
                 value={totalRewards}
-                setter={(v: BigNumber) => {}}
-                isValid={(_v: boolean) => {}}
+                setter={(v: BigNumber) => {
+                }}
+                isValid={(_v: boolean) => {
+                }}
                 tokenId="pica"
                 tokenDescription={false}
                 placeholder="0"
@@ -133,21 +132,21 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
                   mainLabelProps: {
                     label: "Total PICA rewards (unvested)",
                     TypographyProps: {
-                      fontSize: 16,
+                      fontSize: 16
                     },
                     TooltipProps: {
                       title:
                         "This is the total PICA rewards based on your crowdloan contribution for this account. Your unvested amount is your claimable plus your claimed.",
-                      children: <></>,
-                    },
-                  },
+                      children: <></>
+                    }
+                  }
                 }}
                 InputProps={{
                   inputProps: {
                     sx: {
-                      textAlign: "center",
-                    },
-                  },
+                      textAlign: "center"
+                    }
+                  }
                 }}
               />
             </Grid>
@@ -155,8 +154,10 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
               <BigNumberInput
                 noBorder={true}
                 value={amountContributed}
-                setter={(v: BigNumber) => {}}
-                isValid={(_v: boolean) => {}}
+                setter={(v: BigNumber) => {
+                }}
+                isValid={(_v: boolean) => {
+                }}
                 tokenId="ksm"
                 tokenDescription={false}
                 placeholder="0"
@@ -169,16 +170,16 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
                     TooltipProps: {
                       title:
                         "Amount of KSM you have contributed to the Picasso crowdloan on this account",
-                      children: <></>,
-                    },
-                  },
+                      children: <></>
+                    }
+                  }
                 }}
                 InputProps={{
                   inputProps: {
                     sx: {
-                      textAlign: "center",
-                    },
-                  },
+                      textAlign: "center"
+                    }
+                  }
                 }}
               />
             </Grid>
@@ -186,7 +187,7 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
         </Box>
         <Box sx={{ mt: theme.spacing(9) }}>
           <Input
-            icon="/networks/polkadot_js_wallet.svg"
+            icon={getImageURL("/networks/polkadot_js_wallet.svg")}
             noBorder={true}
             value={picassoAccountName}
             disabled={true}
@@ -196,17 +197,17 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
                 label: "Approved account",
                 TooltipProps: {
                   title: "Account used to contribute to crowd loan",
-                  children: <></>,
-                },
-              },
+                  children: <></>
+                }
+              }
             }}
             InputProps={{
               inputProps: {
                 sx: {
                   textAlign: "center",
-                  color: theme.palette.text.primary,
-                },
-              },
+                  color: theme.palette.text.primary
+                }
+              }
             }}
           />
         </Box>
@@ -216,7 +217,7 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            gap: theme.spacing(2),
+            gap: theme.spacing(2)
           }}
         >
           <Button
@@ -241,7 +242,7 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
             alignItems: "center",
             justifyContent: "center",
             flexDirection: "column",
-            gap: theme.spacing(1),
+            gap: theme.spacing(1)
           }}
         >
           <CircularProgress size={76} sx={{ mb: theme.spacing(8) }} />

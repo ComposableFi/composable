@@ -1,5 +1,6 @@
 import { alpha, Theme } from "@mui/material";
 import { OverridesStyleRules } from "@mui/material/styles/overrides";
+import { getImageURL } from "@/utils/nextImageUrl";
 
 export const cssBaselineOverrides = (theme: Theme): Partial<OverridesStyleRules> => ({
   styleOverrides: `
@@ -8,28 +9,28 @@ export const cssBaselineOverrides = (theme: Theme): Partial<OverridesStyleRules>
       font-style: normal;
       font-display: swap;
       font-weight: 400;
-      src: local('ArchitectsDaughter-Regular'), local('ArchitectsDaughter-Regular'), url("/static/ArchitectsDaughter-Regular.ttf") format('woff');
+      src: local('ArchitectsDaughter-Regular'), local('ArchitectsDaughter-Regular'), url("${getImageURL("/static")}/ArchitectsDaughter-Regular.ttf") format('woff');
     };
     @font-face {
       font-family: "BeVietnamPro";
       font-style: normal;
       font-display: swap;
       font-weight: normal;
-      src: local('BeVietnamPro-Regular'), local('BeVietnamPro-Regular'), url("/static/BeVietnamPro-Regular.woff2") format('woff');
+      src: local('BeVietnamPro-Regular'), local('BeVietnamPro-Regular'), url("${getImageURL("/static")}/BeVietnamPro-Regular.woff2") format('woff');
     };
     @font-face {
       font-family: "BeVietnamPro";
       font-style: normal;
       font-display: swap;
       font-weight: 300;
-      src: local('BeVietnamPro-Light'), local('BeVietnamPro-Light'), url("/static/BeVietnamPro-Light.woff2") format('woff');
+      src: local('BeVietnamPro-Light'), local('BeVietnamPro-Light'), url("${getImageURL("/static")}/BeVietnamPro-Light.woff2") format('woff');
     };
     @font-face {
       font-family: "BeVietnamPro";
       font-style: normal;
       font-display: swap;
       font-weight: 600;
-      src: local('BeVietnamPro-SemiBold'), local('BeVietnamPro-SemiBold'), url("/static/BeVietnamPro-SemiBold.ttf") format('woff');
+      src: local('BeVietnamPro-SemiBold'), local('BeVietnamPro-SemiBold'), url("${getImageURL("/static")}/BeVietnamPro-SemiBold.ttf") format('woff');
     };
     body {
       background: ${theme.palette.gradient.background};
@@ -46,9 +47,9 @@ export const cssBaselineOverrides = (theme: Theme): Partial<OverridesStyleRules>
     /* Track */
     div::-webkit-scrollbar-track {
       background: ${alpha(
-        theme.palette.common.white,
-        theme.custom.opacity.light
-      )};
+    theme.palette.common.white,
+    theme.custom.opacity.light
+  )};
       border-radius: 0 0px 12px 0;
     };
 
@@ -63,5 +64,5 @@ export const cssBaselineOverrides = (theme: Theme): Partial<OverridesStyleRules>
     div::-webkit-scrollbar-thumb:hover {
       background: ${theme.palette.common.white};
     };
-  `,
+  `
 });

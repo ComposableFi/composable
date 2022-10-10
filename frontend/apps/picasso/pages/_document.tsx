@@ -4,6 +4,7 @@ import createEmotionServer from "@emotion/server/create-instance";
 import createEmotionCache from "@/styles/createEmotionCache";
 import { getDesignTokens } from "@/styles/theme";
 import { createTheme } from "@mui/material";
+import { getImageURL } from "@/utils/nextImageUrl";
 
 export default class MyDocument extends Document {
   render() {
@@ -36,7 +37,7 @@ export default class MyDocument extends Document {
           />
           <link
             rel="preload"
-            href="/static/TentangNanti.woff"
+            href={getImageURL("/static/TentangNanti.woff")}
             as="font"
             type="font/woff"
             crossOrigin="anonymous"

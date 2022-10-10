@@ -1,13 +1,13 @@
 import {
+  Box,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Box,
-  Typography,
   Tooltip,
+  Typography
 } from "@mui/material";
 import Image from "next/image";
 import { useRouter } from "next/router";
@@ -16,23 +16,24 @@ import { InfoOutlined } from "@mui/icons-material";
 import { TableHeader } from "@/defi/types";
 import BondedOfferRow from "./bonds/BondedOfferRow";
 import { useBondOffersSlice } from "@/store/bond/bond.slice";
+import { getImageURL } from "@/utils/nextImageUrl";
 
 const tableHeaders: TableHeader[] = [
   {
-    header: "Asset",
+    header: "Asset"
   },
   {
     header: "Claimable",
-    tooltip: "Claimable",
+    tooltip: "Claimable"
   },
   {
     header: "Pending",
-    tooltip: "Pending",
+    tooltip: "Pending"
   },
   {
     header: "Vesting time",
-    tooltip: "Vesting time",
-  },
+    tooltip: "Vesting time"
+  }
 ];
 
 export const YourBondTable: React.FC = () => {
@@ -45,7 +46,7 @@ export const YourBondTable: React.FC = () => {
       return offerId in bondedOfferVestingScheduleIds;
     });
   }, [bondOffers, bondedOfferVestingScheduleIds]);
-  
+
   const handleRowClick = (offerId: number) => {
     router.push(`/bond/select/${offerId}`);
   };
@@ -54,7 +55,7 @@ export const YourBondTable: React.FC = () => {
     return (
       <Box textAlign="center" mt={3}>
         <Image
-          src="/static/lemonade.png"
+          src={getImageURL("/static/lemonade.png")}
           css={{ mixBlendMode: "luminosity" }}
           width="96"
           height="96"

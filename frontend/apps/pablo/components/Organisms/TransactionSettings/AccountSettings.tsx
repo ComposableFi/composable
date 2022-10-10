@@ -1,17 +1,11 @@
 import { Modal } from "@/components/Molecules";
 import { useAppDispatch, useAppSelector } from "@/hooks/store";
-import {
-  closeAccountSettingsModal,
-  openPolkadotModal,
-} from "@/stores/ui/uiSlice";
-import {
-  CloseOutlined,
-  ContentCopy,
-  OpenInNewRounded,
-} from "@mui/icons-material";
-import { useTheme, Box, Typography, alpha, Button } from "@mui/material";
+import { closeAccountSettingsModal, openPolkadotModal } from "@/stores/ui/uiSlice";
+import { CloseOutlined, ContentCopy, OpenInNewRounded } from "@mui/icons-material";
+import { alpha, Box, Button, Typography, useTheme } from "@mui/material";
 import Image from "next/image";
 import React from "react";
+import { getImageURL } from "@/utils/nextImageUrl";
 
 const AccountSettings: React.FC<{}> = () => {
   const theme = useTheme();
@@ -27,8 +21,8 @@ const AccountSettings: React.FC<{}> = () => {
       maxWidth="sm"
       BackdropProps={{
         sx: {
-          backgroundImage: theme.palette.gradient.backdrop,
-        },
+          backgroundImage: theme.palette.gradient.backdrop
+        }
       }}
     >
       <Box
@@ -37,14 +31,14 @@ const AccountSettings: React.FC<{}> = () => {
           padding: theme.spacing(4),
           [theme.breakpoints.down("sm")]: {
             width: "100%",
-            padding: theme.spacing(2),
+            padding: theme.spacing(2)
           },
           background: theme.palette.gradient.secondary,
           boxShadow: `-1px -1px ${alpha(
             theme.palette.common.white,
             theme.custom.opacity.light
           )}`,
-          borderRadius: 2,
+          borderRadius: 2
         }}
       >
         <Box display="flex" alignItems="center" justifyContent="space-between">
@@ -60,11 +54,11 @@ const AccountSettings: React.FC<{}> = () => {
             display: "flex",
             justifyContent: "center",
             flexDirection: "column",
-            alignItems: "center",
+            alignItems: "center"
           }}
         >
           <Image
-            src={"/networks/polkadot_js_wallet.svg"}
+            src={getImageURL("/networks/polkadot_js_wallet.svg")}
             width="50"
             height="50"
             alt="account"
@@ -99,7 +93,7 @@ const AccountSettings: React.FC<{}> = () => {
             fullWidth
           >
             <Image
-              src="/networks/polkadot_js.svg"
+              src={getImageURL("/networks/polkadot_js.svg")}
               width="24"
               height="24"
               alt="Polkadot.js"
@@ -116,12 +110,12 @@ const AccountSettings: React.FC<{}> = () => {
               background: alpha(theme.palette.common.white, 0.04),
               borderRadius: 1,
               padding: 4,
-              border: `1px solid ${alpha(theme.palette.common.white, 0.1)}`,
+              border: `1px solid ${alpha(theme.palette.common.white, 0.1)}`
             }}
             textAlign="center"
           >
             <Image
-              src="/static/lemonade.png"
+              src={getImageURL("/static/lemonade.png")}
               css={{ mixBlendMode: "luminosity" }}
               width="96"
               height="96"

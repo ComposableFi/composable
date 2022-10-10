@@ -73,7 +73,7 @@ const Status = () => {
       onClick={() => {
         openPolkadotModal();
       }}
-      imageSrc="/networks/dotsama_polkadot_not_connected.svg"
+      imageSrc={getImageURL("/networks/dotsama_polkadot_not_connected.svg")}
       imageAlt="DotSama Polkadot"
     >
       Connect DotSama

@@ -1,3 +1,4 @@
+import { getImageURL } from "@/utils/nextImageUrl";
 import { DEFI_CONFIG } from "./config";
 import { Token, TokenId } from "./types";
 
@@ -5,82 +6,82 @@ export const TOKEN_IDS = DEFI_CONFIG.tokenIds;
 export const TOKENS: { [key in TokenId]: Token } = {
   eth: {
     id: "eth",
-    icon: "/tokens/eth-mainnet.svg",
+    icon: getImageURL("/tokens/eth-mainnet.svg"),
     symbol: "ETH",
-    name: "Ethereum",
+    name: "Ethereum"
   },
   matic: {
     id: "matic",
-    icon: "/tokens/polygon-matic.svg",
+    icon: getImageURL("/tokens/polygon-matic.svg"),
     symbol: "MATIC",
-    name: "Matic",
+    name: "Matic"
   },
   avax: {
     id: "avax",
-    icon: "/tokens/avalanche.svg",
+    icon: getImageURL("/tokens/avalanche.svg"),
     symbol: "AVAX",
-    name: "Avalanche",
+    name: "Avalanche"
   },
   weth: {
     id: "weth",
-    icon: "/tokens/weth-mainnet.svg",
+    icon: getImageURL("/tokens/weth-mainnet.svg"),
     symbol: "wETH",
-    name: "wEthereum",
+    name: "wEthereum"
   },
   usdc: {
     id: "usdc",
-    icon: "/tokens/usdc.svg",
+    icon: getImageURL("/tokens/usdc.svg"),
     symbol: "USDC",
-    name: "USDC",
+    name: "USDC"
   },
   dot: {
     id: "dot",
-    icon: "/tokens/polkadot.svg",
+    icon: getImageURL("/tokens/polkadot.svg"),
     symbol: "DOT",
-    name: "Polkadot",
+    name: "Polkadot"
   },
   uni: {
     id: "uni",
-    icon: "/tokens/uniswap.svg",
+    icon: getImageURL("/tokens/uniswap.svg"),
     symbol: "UNI",
-    name: "Uniswap",
+    name: "Uniswap"
   },
   ftm: {
     id: "ftm",
-    icon: "/tokens/fantom.svg",
+    icon: getImageURL("/tokens/fantom.svg"),
     symbol: "FTM",
-    name: "Fantom",
+    name: "Fantom"
   },
   pica: {
     id: "pica",
-    icon: "/tokens/picasso.svg",
+    icon: getImageURL("/tokens/picasso.svg"),
     symbol: "PICA",
-    name: "Picasso",
+    name: "Picasso"
   },
   movr: {
     id: "movr",
-    icon: "/tokens/movr.svg",
+    icon: getImageURL("/tokens/movr.svg"),
     symbol: "MOVR",
-    name: "Moonriver",
+    name: "Moonriver"
   },
   ksm: {
     id: "ksm",
-    icon: "/tokens/dotsama-kusama.svg",
+    icon: getImageURL("/tokens/dotsama-kusama.svg"),
     symbol: "KSM",
-    name: "Kusama",
+    name: "Kusama"
   },
   pablo: {
     id: "pablo",
-    icon: "/tokens/pablo.svg",
+    icon: getImageURL("/tokens/pablo.svg"),
     symbol: "PAB",
-    name: "Pablo",
+    name: "Pablo"
   },
   chaos: {
     id: "chaos",
-    icon: "/tokens/chaos.svg",
+    icon: getImageURL("/tokens/chaos.svg"),
     symbol: "CHAOS",
-    name: "Chaos",
-  },
+    name: "Chaos"
+  }
 };
 
 export const getToken = (tokenId: TokenId): Token => TOKENS[tokenId];
@@ -88,19 +89,19 @@ export const getToken = (tokenId: TokenId): Token => TOKENS[tokenId];
 export const getTokenOptions = (noneTokenLabel?: string) => [
   ...(noneTokenLabel
     ? [
-        {
-          value: "none",
-          label: noneTokenLabel,
-          icon: undefined,
-          disabled: true,
-          hidden: true,
-        },
-      ]
+      {
+        value: "none",
+        label: noneTokenLabel,
+        icon: undefined,
+        disabled: true,
+        hidden: true
+      }
+    ]
     : []),
   ...TOKEN_IDS.map((tokenId) => ({
     value: tokenId,
     label: getToken(tokenId).name,
     shortLabel: getToken(tokenId).symbol,
-    icon: getToken(tokenId).icon,
-  })),
+    icon: getToken(tokenId).icon
+  }))
 ];

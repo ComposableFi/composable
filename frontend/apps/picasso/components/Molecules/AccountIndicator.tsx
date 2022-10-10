@@ -18,8 +18,8 @@ export const AccountIndicator: React.FC<AccountIndicatorProps> = ({
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const icon =
     network === "polkadot"
-      ? "/networks/polkadot_js_wallet.svg"
-      : "/networks/mainnet.svg";
+      ? getImageURL("/networks/polkadot_js_wallet.svg")
+      : getImageURL("/networks/mainnet.svg");
 
   return (
     <Paper
@@ -46,7 +46,7 @@ export const AccountIndicator: React.FC<AccountIndicatorProps> = ({
       }}
     >
       <Box sx={{ width: theme.spacing(3), height: theme.spacing(3) }}>
-        <Image src={getImageURL(icon)} width="24" height="24" alt="Account" />
+        <Image src={icon} width="24" height="24" alt="Account" />
       </Box>
       {isMobile ? (
         <Circle fontSize="large" sx={{ fontSize: 28 }} />
