@@ -65,7 +65,7 @@ pub mod pallet {
 	pub use crate::weights::WeightInfo;
 	use composable_support::{
 		math::safe::{SafeAdd, SafeDiv, SafeMul, SafeSub},
-		validation::Validated,
+		validation::{validators::GeOne, TryIntoValidated, Validated},
 	};
 	use composable_traits::{
 		currency::{BalanceLike, CurrencyFactory},
@@ -96,10 +96,13 @@ pub mod pallet {
 	};
 	use frame_system::pallet_prelude::*;
 	use orml_traits::{GetByKey, LockIdentifier, MultiLockableCurrency};
-	use sp_arithmetic::Permill;
+	use sp_arithmetic::{
+		fixed_point::{FixedPointNumber, FixedU64},
+		Permill,
+	};
 	use sp_runtime::{
-		traits::{AccountIdConversion, BlockNumberProvider},
-		PerThing, Perbill,
+		traits::{AccountIdConversion, BlockNumberProvider, One},
+		ArithmeticError, PerThing,
 	};
 	use sp_std::{cmp::max, fmt::Debug, ops::Mul, vec, vec::Vec};
 
@@ -134,7 +137,7 @@ pub mod pallet {
 			/// FNFT Instance Id
 			fnft_instance_id: T::FinancialNftInstanceId,
 			/// Reward multiplier
-			reward_multiplier: Perbill,
+			reward_multiplier: FixedU64,
 			// REVIEW(benluelo) is this required to be in the event?
 			keep_alive: bool,
 		},
@@ -252,6 +255,12 @@ pub mod pallet {
 		NoDurationPresetsProvided,
 		/// Slashed amount of minimum reward is less than existential deposit
 		SlashedAmountTooLow,
+		/// Slashed amount of minimum staking amount is less than existential deposit
+		SlashedMinimumStakingAmountTooLow,
+		/// Staked amount is less than the minimum staking amount for the pool.
+		StakedAmountTooLow,
+		/// Staked amount after split is less than the minimum staking amount for the pool.
+		StakedAmountTooLowAfterSplit,
 	}
 
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
@@ -483,8 +492,14 @@ pub mod pallet {
 			end_block: T::BlockNumber::zero(),
 			lock: LockConfig {
 				duration_presets: [
-					(ONE_WEEK, Perbill::from_percent(1)),
-					(ONE_MONTH, Perbill::from_percent(10)),
+					(
+						ONE_WEEK,
+						FixedU64::from_rational(101, 100).try_into_validated().expect(">= 1"),
+					),
+					(
+						ONE_MONTH,
+						FixedU64::from_rational(110, 100).try_into_validated().expect(">= 1"),
+					),
 				]
 				.into_iter()
 				.try_collect()
@@ -493,6 +508,7 @@ pub mod pallet {
 			},
 			share_asset_id,
 			financial_nft_asset_id,
+			minimum_staking_amount: T::Balance::from(2_000_000_u128),
 		};
 		RewardPools::<T>::insert(staked_asset_id, staking_pool);
 		T::FinancialNft::create_collection(&financial_nft_asset_id, owner, owner)
@@ -678,6 +694,7 @@ pub mod pallet {
 					lock,
 					share_asset_id,
 					financial_nft_asset_id,
+					minimum_staking_amount,
 				} => {
 					// AssetIds must be greater than 0
 					ensure!(!pool_asset.is_zero(), Error::<T>::InvalidAssetId);
@@ -701,15 +718,23 @@ pub mod pallet {
 
 					let now_seconds = T::UnixTime::now().as_secs();
 
+					let existential_deposit = T::ExistentialDeposits::get(&pool_asset);
+
 					ensure!(
-						initial_reward_config.iter().all(|(asset_id, reward_config)| {
+						lock.unlock_penalty.left_from_one().mul(minimum_staking_amount) >=
+							existential_deposit,
+						Error::<T>::SlashedMinimumStakingAmountTooLow
+					);
+
+					ensure!(
+						initial_reward_config.iter().all(|(_, reward_config)| {
 							if reward_config.reward_rate.amount > T::Balance::zero() {
 								// If none zero reward, check that the slashed amount is greater
 								// than ED
 								lock.unlock_penalty
 									.left_from_one()
 									.mul(reward_config.reward_rate.amount) >=
-									T::ExistentialDeposits::get(asset_id)
+									existential_deposit
 							} else {
 								// Else, return true so check passes
 								// NOTE(connor): This is a band-aid that some better type management
@@ -742,6 +767,7 @@ pub mod pallet {
 							lock,
 							share_asset_id,
 							financial_nft_asset_id,
+							minimum_staking_amount,
 						},
 					);
 
@@ -800,6 +826,8 @@ pub mod pallet {
 			let mut rewards_pool =
 				RewardPools::<T>::try_get(pool_id).map_err(|_| Error::<T>::RewardsPoolNotFound)?;
 
+			ensure!(amount >= rewards_pool.minimum_staking_amount, Error::<T>::StakedAmountTooLow);
+
 			ensure!(
 				rewards_pool.start_block <= frame_system::Pallet::<T>::current_block_number(),
 				Error::<T>::RewardsPoolHasNotStarted
@@ -816,7 +844,7 @@ pub mod pallet {
 				Error::<T>::NotEnoughAssets
 			);
 
-			let awarded_shares = Self::boosted_amount(reward_multiplier, amount);
+			let awarded_shares = Self::boosted_amount(reward_multiplier, amount)?;
 			let (rewards, reductions) =
 				Self::compute_rewards_and_reductions(awarded_shares, &rewards_pool)?;
 
@@ -864,7 +892,7 @@ pub mod pallet {
 				duration_preset,
 				fnft_instance_id,
 				fnft_collection_id,
-				reward_multiplier,
+				reward_multiplier: *reward_multiplier,
 				keep_alive,
 			});
 
@@ -882,7 +910,8 @@ pub mod pallet {
 				.ok_or(Error::<T>::StakeNotFound)?;
 			let mut rewards_pool = RewardPools::<T>::try_get(stake.reward_pool_id)
 				.map_err(|_| Error::<T>::RewardsPoolNotFound)?;
-			let reward_multiplier = Perbill::one();
+
+			let reward_multiplier = FixedU64::one().try_into_validated().expect(">= 1");
 
 			ensure!(
 				matches!(
@@ -892,7 +921,7 @@ pub mod pallet {
 				Error::<T>::NotEnoughAssets
 			);
 
-			let awarded_shares = Self::boosted_amount(reward_multiplier, amount);
+			let awarded_shares = Self::boosted_amount(reward_multiplier, amount)?;
 
 			let (rewards, reductions) =
 				Self::compute_rewards_and_reductions(awarded_shares, &rewards_pool)?;
@@ -1025,6 +1054,21 @@ pub mod pallet {
 					// position, that way any rounding is accounted for.
 					let new_stake = left_from_one_ratio.mul_ceil(existing_position.stake);
 					let new_share = left_from_one_ratio.mul_ceil(existing_position.share);
+
+					let rewards_pool = RewardPools::<T>::get(existing_position.reward_pool_id)
+						.ok_or(Error::<T>::RewardsPoolNotFound)?;
+
+					let existing_position_stake = ratio.mul_floor(existing_position.stake);
+
+					ensure!(
+						existing_position_stake >= rewards_pool.minimum_staking_amount,
+						Error::<T>::StakedAmountTooLowAfterSplit
+					);
+					ensure!(
+						new_stake >= rewards_pool.minimum_staking_amount,
+						Error::<T>::StakedAmountTooLowAfterSplit
+					);
+
 					let new_reductions = {
 						let mut r = existing_position.reductions.clone();
 						for (_, reduction) in &mut r {
@@ -1033,14 +1077,11 @@ pub mod pallet {
 						r
 					};
 
-					existing_position.stake = ratio.mul_floor(existing_position.stake);
+					existing_position.stake = existing_position_stake;
 					existing_position.share = ratio.mul_floor(existing_position.share);
 					for (_, reduction) in &mut existing_position.reductions {
 						*reduction = ratio.mul_floor(*reduction);
 					}
-
-					let rewards_pool = RewardPools::<T>::get(existing_position.reward_pool_id)
-						.ok_or(Error::<T>::RewardsPoolNotFound)?;
 
 					let new_fnft_instance_id =
 						T::FinancialNft::get_next_nft_id(fnft_collection_id)?;
@@ -1296,12 +1337,15 @@ pub mod pallet {
 		pub(crate) fn reward_multiplier(
 			rewards_pool: &RewardPoolOf<T>,
 			duration_preset: DurationSeconds,
-		) -> Option<Perbill> {
+		) -> Option<Validated<FixedU64, GeOne>> {
 			rewards_pool.lock.duration_presets.get(&duration_preset).cloned()
 		}
 
-		pub(crate) fn boosted_amount(reward_multiplier: Perbill, amount: T::Balance) -> T::Balance {
-			reward_multiplier.mul_ceil(amount)
+		pub(crate) fn boosted_amount(
+			reward_multiplier: Validated<FixedU64, GeOne>,
+			amount: T::Balance,
+		) -> Result<T::Balance, ArithmeticError> {
+			reward_multiplier.checked_mul_int(amount).ok_or(ArithmeticError::Overflow)
 		}
 
 		fn compute_rewards_and_reductions(

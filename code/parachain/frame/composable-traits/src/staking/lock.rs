@@ -1,11 +1,13 @@
-use crate::time::{DurationSeconds, Timestamp};
 use codec::{Decode, Encode};
+use composable_support::validation::{validators::GeOne, Validated};
 use frame_support::{dispatch::DispatchResult, pallet_prelude::*, BoundedBTreeMap};
+use scale_info::TypeInfo;
+use sp_arithmetic::fixed_point::FixedU64;
+use sp_runtime::Perbill;
 
 use core::fmt::Debug;
 
-use scale_info::TypeInfo;
-use sp_runtime::Perbill;
+use crate::time::{DurationSeconds, Timestamp};
 
 /// defines staking duration, rewards and early unstake penalty
 #[derive(
@@ -14,7 +16,8 @@ use sp_runtime::Perbill;
 #[scale_info(skip_type_params(MaxDurationPresets))]
 pub struct LockConfig<MaxDurationPresets: Get<u32>> {
 	/// The possible locking duration.
-	pub duration_presets: BoundedBTreeMap<DurationSeconds, Perbill, MaxDurationPresets>,
+	pub duration_presets:
+		BoundedBTreeMap<DurationSeconds, Validated<FixedU64, GeOne>, MaxDurationPresets>,
 	/// The penalty applied if a staker unstake before the end date.
 	/// In case of zero penalty, you cannot unlock before it duration ends.
 	pub unlock_penalty: Perbill,

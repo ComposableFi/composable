@@ -7,6 +7,7 @@ import { mintAssetsToWallets } from "../assets/extrinsics";
 import BigNumber from "bignumber.js";
 import { sendAndWaitForSuccess, sendUnsignedAndWaitForSuccess } from "@composable/bootstrap_pallets/lib";
 import { toHexString } from "@composable/bootstrap_pallets/utils";
+import { decodeAddress } from "@polkadot/util-crypto";
 
 export const associateKSM = async (api: ApiPromise, contributorAccount: KeyringPair, rewardAccount: KeyringPair) => {
   const message = `<Bytes>picasso-${toHexString(rewardAccount.publicKey)}</Bytes>`;
@@ -48,43 +49,13 @@ export const initialize = async (api: ApiPromise, sudoAccount: KeyringPair) => {
 export const populate = async (
   api: ApiPromise,
   walletSudo: KeyringPair,
-  relayAccounts: string[],
-  ethAccounts: string[],
-  rewardsPerAccount: string,
-  vestingPeriod: string
+  accounts: [PalletCrowdloanRewardsModelsRemoteAccount, u128, u32][]
 ) => {
-  const _vestingPeriod = api.createType("u32", vestingPeriod);
-  const _rewardsPerAccount = api.createType("u128", rewardsPerAccount);
-
-  const relayContributors = relayAccounts.map(
-    account =>
-      [
-        api.createType("PalletCrowdloanRewardsModelsRemoteAccount", {
-          RelayChain: api.createType("AccountId32", account).toU8a()
-        }),
-        _rewardsPerAccount,
-        _vestingPeriod
-      ] as [PalletCrowdloanRewardsModelsRemoteAccount, u128, u32]
-  );
-
-  const ethereumContributors = ethAccounts.map(
-    account =>
-      [
-        api.createType("PalletCrowdloanRewardsModelsRemoteAccount", {
-          Ethereum: account
-        }),
-        _rewardsPerAccount,
-        _vestingPeriod
-      ] as [PalletCrowdloanRewardsModelsRemoteAccount, u128, u32]
-  );
-
-  const sliced = relayContributors.concat(ethereumContributors);
-
   return await sendAndWaitForSuccess(
     api,
     walletSudo,
     api.events.sudo.Sudid.is,
-    api.tx.sudo.sudo(api.tx.crowdloanRewards.populate(sliced))
+    api.tx.sudo.sudo(api.tx.crowdloanRewards.populate(accounts))
   );
 };
 
@@ -99,6 +70,6 @@ export const addFundsToCrowdloan = async (
     api,
     walletSudo,
     api.events.balances.Transfer.is,
-    api.tx.assets.transfer(1, palletAccountId, amount, true)
+    api.tx.assets.transfer("1", decodeAddress(palletAccountId), amount, true)
   );
 };
