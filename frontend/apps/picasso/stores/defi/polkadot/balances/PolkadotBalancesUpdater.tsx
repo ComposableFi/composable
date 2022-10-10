@@ -7,7 +7,7 @@ import { useCallback, useEffect } from "react";
 
 import { useStore } from "@/stores/root";
 import { ApiPromise } from "@polkadot/api";
-import { fetchKaruraBalanceByAssetId, subscribePicassoBalanceByAssetId } from "@/defi/polkadot/pallets/Balance";
+import { subscribePicassoBalanceByAssetId } from "@/defi/polkadot/pallets/Balance";
 import BigNumber from "bignumber.js";
 import { useDotSamaContext, useEagerConnect } from "substrate-react";
 
@@ -155,18 +155,18 @@ const PolkadotBalancesUpdater = ({
                 case "picasso":
                   picassoBalanceSubscriber(chain, asset, chainId);
                   break;
-                case "karura":
-                  fetchKaruraBalanceByAssetId(
-                    chain.parachainApi!,
-                    chain.accounts[selectedAccount].address,
-                    String(asset.meta.symbol)
-                  ).then((balance) => {
-                    updateAssetBalance({
-                      substrateNetworkId: chainId as SubstrateNetworkId,
-                      assetId: asset.meta.assetId,
-                      balance
-                    });
-                  });
+                // case "karura":
+                //   fetchKaruraBalanceByAssetId(
+                //     chain.parachainApi!,
+                //     chain.accounts[selectedAccount].address,
+                //     String(asset.meta.symbol)
+                //   ).then((balance) => {
+                //     updateAssetBalance({
+                //       substrateNetworkId: chainId as SubstrateNetworkId,
+                //       assetId: asset.meta.assetId,
+                //       balance
+                //     });
+                //   });
                 default:
                   break;
               }

@@ -1,4 +1,4 @@
-import { Box, useTheme } from "@mui/material";
+import { Grid, useTheme } from "@mui/material";
 import { FeaturedBox } from "@/components/Molecules";
 import { callbackGate, fromChainIdUnit, unwrapNumberOrHex } from "shared";
 import { usePicassoProvider } from "@/defi/polkadot/hooks";
@@ -7,6 +7,7 @@ import BigNumber from "bignumber.js";
 import { u128 } from "@polkadot/types-codec";
 import { ComposableTraitsOraclePrice } from "defi-interfaces";
 import { Assets } from "@/defi/polkadot/Assets";
+import { DailyActiveUsersChart } from "@/components/Organisms/Stats/DailyActiveUsersChart";
 
 const useCirculatingSupply = () => {
   const { parachainApi } = usePicassoProvider();
@@ -53,32 +54,30 @@ export const StatsOverviewTab: React.FC<{}> = ({}) => {
   const marketCap = useMarketCap();
   const theme = useTheme();
 
+
   return (
-    <Box
-      display="grid"
-      sx={{
-        gridTemplateColumns: {
-          xs: "1fr 1fr",
-          lg: "1fr 1fr 1fr",
-        },
-      }}
-      mb={5}
-      gap={4}
-    >
-      <FeaturedBox
-        TextAboveProps={{
-          color: theme.palette.common.darkWhite,
-        }}
-        textAbove="Picasso market cap"
-        title={`$${marketCap.toFormat(2)}`}
-      />
-      <FeaturedBox
-        TextAboveProps={{
-          color: theme.palette.common.darkWhite,
-        }}
-        textAbove="Picasso circulating supply"
-        title={`${circulatingSupply.toFormat(0)} PICA`}
-      />
-    </Box>
+    <Grid container spacing={4}>
+      <Grid item xs={12} sm={6} md={4}>
+        <FeaturedBox
+          TextAboveProps={{
+            color: theme.palette.common.darkWhite
+          }}
+          textAbove="Picasso market cap"
+          title={`$${marketCap.toFormat(2)}`}
+        />
+      </Grid>
+      <Grid item xs={12} sm={6} md={4}>
+        <FeaturedBox
+          TextAboveProps={{
+            color: theme.palette.common.darkWhite
+          }}
+          textAbove="Picasso circulating supply"
+          title={`${circulatingSupply.toFormat(0)} PICA`}
+        />
+      </Grid>
+      <Grid item xs={12}>
+        <DailyActiveUsersChart />
+      </Grid>
+    </Grid>
   );
 };

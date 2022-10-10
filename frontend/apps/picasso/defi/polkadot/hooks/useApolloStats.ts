@@ -12,7 +12,7 @@ import { ComposableTraitsOraclePrice } from "defi-interfaces";
 export function binanceMapPairToSourceSymbol(pair: string) {
   const out = {
     KSMUSDT: "KSM",
-    USDCUSDT: "USDC",
+    USDCUSDT: "USDC"
   }[pair];
 
   return out ?? "";
@@ -33,7 +33,7 @@ export const useApolloStats = () => {
     const wsClient = new WebsocketClient({
       beautify: true,
       pingInterval: 60_000_000,
-      disableHeartbeat: true,
+      disableHeartbeat: true
     });
     let wsKey: string;
 
@@ -74,7 +74,9 @@ export const useApolloStats = () => {
 
   // Pulls price from the binance websocket and updates the store
   useEffect(() => {
-    setupBinancePricePull();
+    const unsub = setupBinancePricePull();
+
+    return unsub;
   }, []);
 
   // Pulls prices from oracle for the allowed_list
@@ -106,6 +108,6 @@ export const useApolloStats = () => {
   }, []);
   return {
     binanceAssets,
-    oracleAssets,
+    oracleAssets
   };
 };
