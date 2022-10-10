@@ -142,7 +142,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 2401,
+	spec_version: 2402,
 	impl_version: 3,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -900,6 +900,8 @@ impl pallet_staking_rewards::Config for Runtime {
 	type PicaStakeFinancialNftCollectionId = PicaStakeFinancialNftCollectionId;
 	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
 	type LockId = StakingRewardsLockId;
+	type TreasuryAccount = TreasuryAccount;
+	type ExistentialDeposits = MultiExistentialDeposits;
 }
 
 /// The calls we permit to be executed by extrinsics

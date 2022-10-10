@@ -160,31 +160,35 @@ parameter_types! {
 	pub const XPbloAssetId: CurrencyId = 102;
 	pub const PicaStakeFinancialNftCollectionId: CurrencyId = 1001;
 	pub const PbloStakeFinancialNftCollectionId: CurrencyId = 1001;
+	// REVIEW(benluelo): Use a better value for this?
+	pub const TreasuryAccountId: AccountId = 123_456_789_u128;
 }
 
 impl pallet_staking_rewards::Config for Test {
 	type Event = Event;
 	type Balance = Balance;
 	type AssetId = CurrencyId;
-	type Assets = Tokens;
+	type FinancialNft = pablo::mock_fnft::MockFnft;
+	type FinancialNftInstanceId = u64;
 	type CurrencyFactory = LpTokenFactory;
+	type Assets = Tokens;
 	type UnixTime = Timestamp;
 	type ReleaseRewardsPoolsBatchSize = frame_support::traits::ConstU8<13>;
 	type PalletId = StakingRewardsPalletId;
 	type MaxStakingDurationPresets = MaxStakingDurationPresets;
 	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
 	type RewardPoolCreationOrigin = EnsureRoot<Self::AccountId>;
-	type WeightInfo = ();
 	type RewardPoolUpdateOrigin = EnsureRoot<Self::AccountId>;
-	type FinancialNft = pablo::mock_fnft::MockFnft;
-	type FinancialNftInstanceId = u64;
 	type PicaAssetId = PicaAssetId;
-	type PbloAssetId = PbloAssetId;
 	type XPicaAssetId = XPicaAssetId;
+	type PbloAssetId = PbloAssetId;
 	type XPbloAssetId = XPbloAssetId;
 	type PicaStakeFinancialNftCollectionId = PicaStakeFinancialNftCollectionId;
 	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
+	type WeightInfo = ();
 	type LockId = StakingRewardsLockId;
+	type TreasuryAccount = TreasuryAccountId;
+	type ExistentialDeposits = ExistentialDeposits;
 }
 
 ord_parameter_types! {

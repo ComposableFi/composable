@@ -21,9 +21,9 @@ set -e # fail on any error
 
 # shellcheck disable=SC2039
 VERSIONS_FILES=(
-  "runtime/picasso/src/lib.rs,picasso,picasso"
-  "runtime/dali/src/lib.rs,dali-rococo,dali"
-  "runtime/composable/src/lib.rs,composable,composable"
+  "code/parachain/runtime/picasso/src/lib.rs,picasso,picasso"
+  "code/parachain/runtime/dali/src/lib.rs,dali-rococo,dali"
+  "code/parachain/runtime/composable/src/lib.rs,composable,composable"
 )
 
 echo "make sure the main branch and release tag are available in shallow clones"

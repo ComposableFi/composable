@@ -663,6 +663,25 @@ pub mod pallet {
 			}
 		}
 
+		/// Handy wrapper to set the contract info
+		pub(crate) fn set_contract_meta(
+			contract: &AccountIdOf<T>,
+			code_id: CosmwasmCodeId,
+			admin: Option<AccountIdOf<T>>,
+			label: String,
+		) -> Result<(), Error<T>> {
+			let mut info = Self::contract_info(contract)?;
+			info.code_id = code_id;
+			info.admin = admin;
+			info.label = label
+				.as_bytes()
+				.to_vec()
+				.try_into()
+				.map_err(|_| crate::Error::<T>::LabelTooBig)?;
+			Self::set_contract_info(contract, info);
+			Ok(())
+		}
+
 		/// Handy wrapper to return contract info.
 		pub(crate) fn contract_info(
 			contract: &AccountIdOf<T>,

@@ -141,10 +141,10 @@ pub struct ExtBuilder {
 
 impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
-		let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+		let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().expect("QED");
 		pallet_balances::GenesisConfig::<Test> { balances: self.balances }
 			.assimilate_storage(&mut t)
-			.unwrap();
+			.expect("Storage is correct; QED");
 		t.into()
 	}
 }
@@ -224,8 +224,10 @@ pub fn relay_generate(count: u64) -> Vec<(AccountId, ClaimKey)> {
 	let seed: u128 = 12345678901234567890123456789012;
 	(0..count)
 		.map(|i| {
-			let account_id =
-				[[0_u8; 16], (i as u128 + 1).to_le_bytes()].concat().try_into().unwrap();
+			let account_id = [[0_u8; 16], (i as u128 + 1).to_le_bytes()]
+				.concat()
+				.try_into()
+				.expect("Account ID is valid; QED");
 			(
 				AccountId::new(account_id),
 				ClaimKey::Relay(ed25519::Pair::from_seed(&keccak_256(
@@ -239,11 +241,15 @@ pub fn relay_generate(count: u64) -> Vec<(AccountId, ClaimKey)> {
 pub fn ethereum_generate(count: u64) -> Vec<(AccountId, ClaimKey)> {
 	(0..count)
 		.map(|i| {
-			let account_id =
-				[(i as u128 + 1).to_le_bytes(), [0_u8; 16]].concat().try_into().unwrap();
+			let account_id = [(i as u128 + 1).to_le_bytes(), [0_u8; 16]]
+				.concat()
+				.try_into()
+				.expect("Account ID is valid; QED");
 			(
 				AccountId::new(account_id),
-				ClaimKey::Eth(EthKey::parse(&keccak_256(&i.to_le_bytes())).unwrap()),
+				ClaimKey::Eth(
+					EthKey::parse(&keccak_256(&i.to_le_bytes())).expect("Account ID is valid; QED"),
+				),
 			)
 		})
 		.collect()
