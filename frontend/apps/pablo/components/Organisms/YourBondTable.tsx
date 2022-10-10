@@ -36,15 +36,18 @@ const tableHeaders: TableHeader[] = [
 ];
 
 export const YourBondTable: React.FC = () => {
-  const { bondOffers, bondedOfferVestingScheduleIds } = useBondOffersSlice();
+  const { bondOffers, bondedOfferVestingSchedules } = useBondOffersSlice();
   const router = useRouter();
 
   const myOffers = useMemo(() => {
     return bondOffers.filter((bondOffer) => {
       const offerId = bondOffer.offerId.toString();
-      return offerId in bondedOfferVestingScheduleIds;
+      return (
+        offerId in bondedOfferVestingSchedules &&
+        bondedOfferVestingSchedules[offerId].length > 0
+      );
     });
-  }, [bondOffers, bondedOfferVestingScheduleIds]);
+  }, [bondOffers, bondedOfferVestingSchedules]);
   
   const handleRowClick = (offerId: number) => {
     router.push(`/bond/select/${offerId}`);
