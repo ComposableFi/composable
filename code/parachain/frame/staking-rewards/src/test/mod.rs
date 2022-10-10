@@ -1189,7 +1189,7 @@ mod claim {
 		let amount = 100_500;
 		let duration_preset = ONE_HOUR;
 		let total_rewards = 100;
-		let claim = 50;
+		let claim = 100;
 
 		with_stake(
 			staker,
