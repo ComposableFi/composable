@@ -38,11 +38,16 @@ jobs:
         echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
     - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
       with:
+        skipPush: true
+        installCommand: |
+          nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+          nix-channel --update
+          nix-env -iA nixpkgs.cachix
         authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
         name: ${{  env.CACHIX_COMPOSABLE }}
     - name: "Build & Upload"
       run: |
-        nix build .#devnet-persistent-program --no-update-lock-file --show-trace -L
+        cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#devnet-persistent-program --no-update-lock-file --show-trace -L
 
   deploy-devnet:
     needs: cache-devnet
