@@ -96,11 +96,12 @@ where
 /// Returns a tuple containing `(a_out, fee)`.
 /// To get `a_out` without accounting for the fee, set `f = 0`.
 ///
-/// **NOTE:** Weights must be normalized.
+/// **NOTE:** Weights must already be normalized.
 ///
-/// From https://balancer.fi/whitepaper.pdf, equation (15)
+/// From https://github.com/ComposableFi/composable/blob/cu-2yyx1w9/rfcs/0008-pablo-lbp-cpp-restructure.md#41-fee-math-updates,
+/// equation (2)
 ///
-/// # Paramaters
+/// # Parameters
 /// * `w_i` - Weight of the input token
 /// * `w_o` - Weight of the output token
 /// * `b_i` - Balance of the input token
