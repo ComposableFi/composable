@@ -180,12 +180,6 @@ contract Gateway is Ownable, IGateway {
             Origin(uint32(networkId), account)
         );
         require(interpreterAddress == msg.sender, "Gateway: sender is not an interpreter address");
-        console.log(networkId);
-        console.log(uint256(security));
-        console.log(uint256(salt));
-        console.logBytes(spawnedProgram);
-        console.log(assetAddresses[0]);
-        console.log(amounts[0]);
         emit Spawn(account, networkId, security, salt, spawnedProgram, assetAddresses, amounts);
 
     }
