@@ -104,8 +104,6 @@
           script = writeShellApplication {
             name = "run-devnet-${chain-spec}";
             text = ''
-              # ISSUE: for some reason it does not cleans tmp and leads to block not produced
-              export RUST_BACKTRACE="full"
               rm -rf /tmp/polkadot-launch
               ${polkadot-launch}/bin/polkadot-launch ${config} --verbose
             '';
@@ -1035,6 +1033,7 @@
               name = "kusama-picasso-karura";
               text = ''
                 cat ${config-file}
+                rm -rf /tmp/polkadot-launch
                 ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
               '';
             };
@@ -1054,6 +1053,7 @@
               name = "kusama-dali-karura";
               text = ''
                 cat ${config-file}
+                rm -rf /tmp/polkadot-launch
                 ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
               '';
             };
@@ -1074,6 +1074,7 @@
               name = "kusama-dali-karura";
               text = ''
                 cat ${config-file}
+                rm -rf /tmp/polkadot-launch
                 ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
               '';
             };
