@@ -1,6 +1,7 @@
 import { ApiPromise } from "@polkadot/api";
 import BigNumber from "bignumber.js";
 import { fromChainIdUnit } from "shared";
+import { OrmlTokensAccountData } from "@acala-network/types/interfaces/types-lookup";
 
 export const fetchBalanceByAssetId = async (
   api: ApiPromise,
@@ -13,7 +14,7 @@ export const fetchBalanceByAssetId = async (
     const balance = await api.rpc.assets.balanceOf(assetId, uAccount);
 
     return fromChainIdUnit(new BigNumber(balance.toString()));
-  } catch (err: any) {
+  } catch (err) {
     console.log(err);
     return new BigNumber(0);
   }
@@ -26,16 +27,21 @@ export const subscribePicassoBalanceByAssetId = async (
   callback: (balance: BigNumber) => void
 ) => {
   const uAccount = api.createType("AccountId32", accountId);
+  let unsubscribe = () => {};
   try {
-    await api.rpc.chain.subscribeNewHeads(async () => {
-      const result = await api.rpc.assets.balanceOf(assetId, uAccount);
-
-      callback(fromChainIdUnit(new BigNumber(result.toString())));
-    });
-  } catch (err: any) {
+    unsubscribe = await api.query.tokens.accounts(
+      uAccount,
+      api.createType("u128", assetId),
+      (balance: OrmlTokensAccountData) => {
+        callback(fromChainIdUnit(new BigNumber(balance.free.toString())));
+      }
+    );
+  } catch (err) {
     console.log(err);
     callback(new BigNumber(0));
   }
+
+  return unsubscribe;
 };
 
 export const fetchKaruraBalanceByAssetId = async (
@@ -56,7 +62,7 @@ export const fetchKaruraBalanceByAssetId = async (
     const { free } = balance.toJSON() as any;
 
     return fromChainIdUnit(new BigNumber(free.toString()));
-  } catch (err: any) {
+  } catch (err) {
     console.log(err);
     return new BigNumber(0);
   }
