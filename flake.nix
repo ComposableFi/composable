@@ -444,8 +444,7 @@
           docs-renders = [ nodejs plantuml graphviz pandoc ];
 
           mkFrontendStatic = { kusamaEndpoint, picassoEndpoint, karuraEndpoint
-            , subsquidEndpoint }:
-            npm-bp.buildYarnPackage {
+            , subsquidEndpoint }: npm-bp.buildYarnPackage {
               nativeBuildInputs = [ pkgs.pkg-config pkgs.vips pkgs.python3 ];
               src = ./frontend;
 
@@ -660,6 +659,10 @@
             inherit frontend-static-firebase;
             inherit frontend-pablo-server;
             inherit frontend-picasso-server;
+
+            docs = {
+
+            };
 
             devnet-initialize-script =
               mkDevnetInitializeScript "ws://localhost:9944" [ 1000 2000 2087 ];
