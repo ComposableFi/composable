@@ -1738,7 +1738,7 @@ pub(crate) fn claim_of_stake<T: Config>(
 
 		// REVIEW(benluelo): Review expected rounding behaviour, possibly switching to the following
 		// implementation (or something similar):
-		// Perbill::from_rational(stake.share, *total_issuance)
+		// Perbill::from_rational(stake.share, total_issuance)
 		// 	.mul_floor(reward.total_rewards)
 		// 	.safe_sub(&inflation)?;
 
