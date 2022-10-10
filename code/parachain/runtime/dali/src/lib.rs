@@ -1281,7 +1281,7 @@ impl cosmwasm::Config for Runtime {
 	type ContractStorageByteWritePrice = ContractStorageByteWritePrice;
 	type UnixTime = Timestamp;
 	// TODO: proper weights
-	type WeightInfo = ();
+	type WeightInfo = cosmwasm::weights::SubstrateWeight<Runtime>;
 }
 
 construct_runtime!(

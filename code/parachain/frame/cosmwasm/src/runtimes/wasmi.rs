@@ -260,21 +260,12 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 
 	fn running_contract_meta(&mut self) -> Result<Self::ContractMeta, Self::Error> {
 		log::debug!(target: "runtime::contracts", "contract_meta");
-		Ok(CosmwasmContractMeta {
-			code_id: self.contract_info.code_id,
-			admin: self.contract_info.admin.clone().map(CosmwasmAccount::new),
-			label: String::from_utf8_lossy(&self.contract_info.label).into(),
-		})
+		Ok(Pallet::<T>::do_running_contract_meta(self))
 	}
 
 	fn contract_meta(&mut self, address: Self::Address) -> Result<Self::ContractMeta, Self::Error> {
 		log::debug!(target: "runtime::contracts", "code_id");
-		let info = Pallet::<T>::contract_info(address.as_ref())?;
-		Ok(CosmwasmContractMeta {
-			code_id: info.code_id,
-			admin: info.admin.map(CosmwasmAccount::new),
-			label: String::from_utf8_lossy(&info.label.into_inner()).into(),
-		})
+		Pallet::<T>::do_contract_meta(address.into_inner())
 	}
 
 	fn debug(&mut self, message: Vec<u8>) -> Result<(), Self::Error> {
@@ -284,7 +275,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 
 	fn addr_validate(&mut self, input: &str) -> Result<Result<(), Self::Error>, Self::Error> {
 		log::debug!(target: "runtime::contracts", "addr_validate");
-		match Pallet::<T>::cosmwasm_addr_to_account(input.into()) {
+		match Pallet::<T>::do_addr_validate(input.into()) {
 			Ok(_) => Ok(Ok(())),
 			Err(e) => Ok(Err(e)),
 		}
@@ -295,7 +286,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		input: &str,
 	) -> Result<Result<Self::CanonicalAddress, Self::Error>, Self::Error> {
 		log::debug!(target: "runtime::contracts", "addr_canonicalize");
-		let account = match Pallet::<T>::cosmwasm_addr_to_account(input.into()) {
+		let account = match Pallet::<T>::do_addr_canonicalize(input.into()) {
 			Ok(account) => account,
 			Err(e) => return Ok(Err(e)),
 		};
@@ -308,7 +299,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		addr: &Self::CanonicalAddress,
 	) -> Result<Result<Self::Address, Self::Error>, Self::Error> {
 		log::debug!(target: "runtime::contracts", "addr_humanize");
-		Ok(Ok(addr.0.clone()))
+		Ok(Ok(Pallet::<T>::do_addr_humanize(addr)))
 	}
 
 	fn secp256k1_recover_pubkey(

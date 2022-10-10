@@ -59,7 +59,7 @@ pub mod pallet {
 	use crate::{
 		instrument::gas_and_stack_instrumentation,
 		runtimes::{
-			abstraction::{CosmwasmAccount, Gas, VMPallet},
+			abstraction::{CanonicalCosmwasmAccount, CosmwasmAccount, Gas, VMPallet},
 			wasmi::{
 				CodeValidation, CosmwasmVM, CosmwasmVMCache, CosmwasmVMError, CosmwasmVMShared,
 				ExportRequirement, InitialStorageMutability, ValidationError,
@@ -93,7 +93,9 @@ pub mod pallet {
 			MigrateInput, QueryInput, ReplyInput,
 		},
 		memory::PointerOf,
-		system::{cosmwasm_system_entrypoint, cosmwasm_system_query, CosmwasmCodeId},
+		system::{
+			cosmwasm_system_entrypoint, cosmwasm_system_query, CosmwasmCodeId, CosmwasmContractMeta,
+		},
 		vm::VmMessageCustomOf,
 	};
 	use cosmwasm_vm_wasmi::{host_functions, new_wasmi_vm, WasmiImportResolver, WasmiVM};
@@ -1123,6 +1125,48 @@ pub mod pallet {
 			Self::with_db_entry(trie_id, key, |child_trie, entry| {
 				storage::child::kill(&child_trie, &entry)
 			})
+		}
+
+		pub(crate) fn do_running_contract_meta<'a>(
+			vm: &'a mut CosmwasmVM<T>,
+		) -> CosmwasmContractMeta<CosmwasmAccount<T>> {
+			CosmwasmContractMeta {
+				code_id: vm.contract_info.code_id,
+				admin: vm.contract_info.admin.clone().map(CosmwasmAccount::new),
+				label: String::from_utf8_lossy(&vm.contract_info.label).into(),
+			}
+		}
+
+		pub(crate) fn do_contract_meta<'a>(
+			address: AccountIdOf<T>,
+		) -> Result<CosmwasmContractMeta<CosmwasmAccount<T>>, CosmwasmVMError<T>> {
+			let info = Pallet::<T>::contract_info(&address)?;
+			Ok(CosmwasmContractMeta {
+				code_id: info.code_id,
+				admin: info.admin.clone().map(CosmwasmAccount::new),
+				label: String::from_utf8_lossy(&info.label).into(),
+			})
+		}
+
+		/// Validate a string address
+		pub(crate) fn do_addr_validate(
+			address: String,
+		) -> Result<AccountIdOf<T>, CosmwasmVMError<T>> {
+			Pallet::<T>::cosmwasm_addr_to_account(address)
+		}
+
+		/// Canonicalize a human readable address
+		pub(crate) fn do_addr_canonicalize(
+			address: String,
+		) -> Result<AccountIdOf<T>, CosmwasmVMError<T>> {
+			Pallet::<T>::cosmwasm_addr_to_account(address)
+		}
+
+		/// Humanize a canonical address
+		pub(crate) fn do_addr_humanize(
+			address: &CanonicalCosmwasmAccount<T>,
+		) -> CosmwasmAccount<T> {
+			address.0.clone()
 		}
 
 		/// Retrieve an account balance.

@@ -1,6 +1,9 @@
 use super::*;
 use crate::{
-	runtimes::wasmi::{CosmwasmVMShared, InitialStorageMutability},
+	runtimes::{
+		abstraction::{CanonicalCosmwasmAccount, CosmwasmAccount},
+		wasmi::{CosmwasmVMShared, InitialStorageMutability},
+	},
 	ContractInfoOf, Pallet as Cosmwasm,
 };
 use alloc::{string::String, vec};
@@ -131,6 +134,45 @@ benchmarks! {
 		// TODO: funds
 	}: {
 		Cosmwasm::<T>::do_transfer(&sender, &receiver, &[], false).unwrap();
+	}
+
+	// TODO: set contract_meta
+
+	running_contract_meta {
+		let sender = create_funded_account::<T>("origin");
+		let (mut shared, contract, info) = create_instantiated_contract::<T>(sender.clone());
+	}: {
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(&mut shared, sender, contract, info, vec![]).unwrap();
+		Cosmwasm::<T>::do_running_contract_meta(&mut vm.0)
+	}
+
+	contract_meta {
+		let sender = create_funded_account::<T>("origin");
+		let (mut shared, contract, info) = create_instantiated_contract::<T>(sender.clone());
+		let _vm = Cosmwasm::<T>::cosmwasm_new_vm(&mut shared, sender, contract.clone(), info, vec![]).unwrap();
+	}: {
+		Cosmwasm::<T>::do_contract_meta(contract).unwrap()
+	}
+
+	addr_validate{
+		let account = account::<<T as Config>::AccountIdExtended>("account", 0, 0xCAFEBABE);
+		let address = Cosmwasm::<T>::account_to_cosmwasm_addr(account);
+	}: {
+		Cosmwasm::<T>::do_addr_validate(address).unwrap()
+	}
+
+	addr_canonicalize{
+		let account = account::<<T as Config>::AccountIdExtended>("account", 0, 0xCAFEBABE);
+		let address = Cosmwasm::<T>::account_to_cosmwasm_addr(account);
+	}: {
+		Cosmwasm::<T>::do_addr_canonicalize(address).unwrap()
+	}
+
+	addr_humanize{
+		let account = account::<<T as Config>::AccountIdExtended>("account", 0, 0xCAFEBABE);
+		let account = CanonicalCosmwasmAccount(CosmwasmAccount::new(account));
+	}: {
+		Cosmwasm::<T>::do_addr_humanize(&account)
 	}
 
 	// TODO: do_secp256k1_recover_pubkey

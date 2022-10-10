@@ -25,13 +25,36 @@
 #![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
 #![allow(unused_imports)]
+#![allow(trivial_numeric_casts)]
 
 use frame_support::{traits::Get, weights::Weight};
 use sp_std::marker::PhantomData;
 
+pub trait WeightInfo {
+	
+	fn upload(_n: usize, ) -> Weight;
+	fn do_db_read() -> Weight;
+	fn do_db_read_other_contract() -> Weight;
+	fn do_db_write() -> Weight;
+	fn do_db_scan() -> Weight;
+	fn do_db_next() -> Weight;
+	fn do_db_remove() -> Weight;
+	fn do_balance() -> Weight;
+	fn do_transfer() -> Weight;
+	fn instantiate(_n: usize) -> Weight;
+	fn execute(_n: usize) -> Weight;
+}
+
 /// Weight functions for `cosmwasm`.
-pub struct WeightInfo<T>(PhantomData<T>);
-impl<T: frame_system::Config> cosmwasm::WeightInfo for WeightInfo<T> {
+pub struct SubstrateWeight<T>(PhantomData<T>);
+impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
+	fn execute(_n: usize) -> Weight {
+		10_000
+	}
+
+	fn instantiate(_n: usize) -> Weight {
+		10_000
+	}
 	// Storage: Cosmwasm CodeHashToId (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	// Storage: Cosmwasm CurrentCodeId (r:1 w:1)
@@ -39,10 +62,10 @@ impl<T: frame_system::Config> cosmwasm::WeightInfo for WeightInfo<T> {
 	// Storage: Cosmwasm InstrumentedCode (r:0 w:1)
 	// Storage: Cosmwasm CodeIdToInfo (r:0 w:1)
 	/// The range of component `n` is `[1, 521288]`.
-	fn upload(_n: u32, ) -> Weight {
+	fn upload(_n: usize, ) -> Weight {
 		(24_569_293_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
-			.saturating_add(T::DbWeight::get().writes(6 as Weight))
+			.saturating_add(T::DbWeight::get().reads(3))
+			.saturating_add(T::DbWeight::get().writes(6))
 	}
 	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
 	// Storage: Cosmwasm InstrumentedCode (r:1 w:0)
@@ -51,8 +74,8 @@ impl<T: frame_system::Config> cosmwasm::WeightInfo for WeightInfo<T> {
 	// Storage: unknown [0xe9a804b2e527fd3601d2ffc0bb023cd668656c6c6f20776f726c64] (r:1 w:0)
 	fn do_db_read() -> Weight {
 		(223_631_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(5 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+			.saturating_add(T::DbWeight::get().reads(5))
+			.saturating_add(T::DbWeight::get().writes(1))
 	}
 	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
 	// Storage: Cosmwasm InstrumentedCode (r:1 w:0)
@@ -112,3 +135,4 @@ impl<T: frame_system::Config> cosmwasm::WeightInfo for WeightInfo<T> {
 		(416_000 as Weight)
 	}
 }
+
