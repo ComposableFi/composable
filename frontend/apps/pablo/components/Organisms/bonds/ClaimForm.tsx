@@ -51,7 +51,7 @@ export type ClaimFormProps = {
 export const ClaimForm: React.FC<ClaimFormProps> = ({ bond, ...boxProps }) => {
   const theme = useTheme();
   const { rewardAsset } = bond;
-  const vestingTime = useBondVestingTime(bond.selectedBondOffer);
+
   const { claimable, milliSecondsSinceVestingStart, pendingRewards } =
     useBondedOfferVestingState(
       bond.selectedBondOffer ? bond.selectedBondOffer.offerId.toString() : "-"
