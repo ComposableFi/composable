@@ -14,8 +14,9 @@ use sp_core::H256;
 impl From<MetadataIbcEvent> for RawIbcEvent {
 	fn from(event: MetadataIbcEvent) -> Self {
 		match event {
-			MetadataIbcEvent::NewBlock { revision_height, revision_number } =>
-				RawIbcEvent::NewBlock { revision_height, revision_number },
+			MetadataIbcEvent::NewBlock { revision_height, revision_number } => {
+				RawIbcEvent::NewBlock { revision_height, revision_number }
+			},
 			MetadataIbcEvent::OpenInitConnection {
 				revision_height,
 				revision_number,
@@ -328,8 +329,9 @@ impl From<MetadataIbcEvent> for RawIbcEvent {
 				channel_id,
 				sequence,
 			},
-			MetadataIbcEvent::AppModule { kind, module_id } =>
-				RawIbcEvent::AppModule { kind, module_id },
+			MetadataIbcEvent::AppModule { kind, module_id } => {
+				RawIbcEvent::AppModule { kind, module_id }
+			},
 			MetadataIbcEvent::Empty => RawIbcEvent::Empty,
 			MetadataIbcEvent::ChainError => RawIbcEvent::ChainError,
 		}

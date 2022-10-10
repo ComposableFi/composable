@@ -78,6 +78,7 @@ ics10-grandpa = { path = "../../light-clients/ics10-grandpa" }
 finality-grandpa-rpc = { package = "sc-finality-grandpa-rpc", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 polkadot-core-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.27" }
 sp-finality-grandpa = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+grandpa = { package = "finality-grandpa", version = "0.16.0", default-features = false, features = ["derive-codec"] }
 
 [dev-dependencies]
 derive_more = "0.99.17"

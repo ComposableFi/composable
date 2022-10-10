@@ -1,30 +1,50 @@
-use codec::Decode;
-use std::{collections::BTreeMap, fmt::Display, pin::Pin};
+use anyhow::anyhow;
+use codec::{Decode, Encode};
+use std::{collections::BTreeMap, fmt::Display, future::Future, pin::Pin};
 
 use beefy_gadget_rpc::BeefyApiClient;
-use futures::{Stream, StreamExt};
+use futures::{future, FutureExt, Stream, StreamExt, TryFutureExt};
 use grandpa_light_client_primitives::{FinalityProof, ParachainHeaderProofs};
 use ibc_proto::google::protobuf::Any;
+use polkadot::api::runtime_types::{
+	pallet_grandpa, rococo_runtime, sp_finality_grandpa as polkadot_grandpa,
+};
 use sp_runtime::{
 	generic::Era,
 	traits::{Header as HeaderT, IdentifyAccount, One, Verify},
 	MultiSignature, MultiSigner,
 };
 use subxt::{
+	rpc_params,
 	tx::{AssetTip, BaseExtrinsicParamsBuilder, ExtrinsicParams, SubstrateExtrinsicParamsBuilder},
 	Config,
 };
 use transaction_payment_rpc::TransactionPaymentApiClient;
 use transaction_payment_runtime_api::RuntimeDispatchInfo;
 
-use primitives::{Chain, IbcProvider};
+use primitives::{Chain, IbcProvider, MisbehaviourHandler};
 
 use super::{error::Error, signer::ExtrinsicSigner, ParachainClient};
 use crate::{
-	parachain::{api, api::runtime_types::pallet_ibc::Any as RawAny},
-	FinalityProtocol,
+	parachain,
+	parachain::{api, api::runtime_types::pallet_ibc::Any as RawAny, UncheckedExtrinsic},
+	polkadot, FinalityProtocol, H256,
 };
 use finality_grandpa_rpc::GrandpaApiClient;
+use ibc::{
+	core::{
+		ics02_client::msgs::{update_client::MsgUpdateAnyClient, ClientMsg},
+		ics26_routing::msgs::Ics26Envelope,
+	},
+	tx_msg::Msg,
+	Height,
+};
+use ics10_grandpa::client_message::{ClientMessage, Misbehaviour, RelayChainHeader};
+use pallet_ibc::light_clients::AnyClientMessage;
+use primitives::mock::LocalClientTypes;
+use sp_core::ByteArray;
+
+use sp_finality_grandpa::{Equivocation, OpaqueKeyOwnershipProof};
 
 type GrandpaJustification = grandpa_light_client_primitives::justification::GrandpaJustification<
 	polkadot_core_primitives::Header,
@@ -33,9 +53,208 @@ type GrandpaJustification = grandpa_light_client_primitives::justification::Gran
 type BeefyJustification =
 	beefy_primitives::SignedCommitment<u32, beefy_primitives::crypto::Signature>;
 
-/// An encoded justification proving that the given header has been finalized
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
+/// An encoded justification proving that the given header has been finalized
 struct JustificationNotification(sp_core::Bytes);
+
+#[async_trait::async_trait]
+impl<T: Config + Send + Sync> MisbehaviourHandler for ParachainClient<T>
+where
+	u32: From<<<T as Config>::Header as HeaderT>::Number>,
+	u32: From<<T as Config>::BlockNumber>,
+	<T::Signature as Verify>::Signer: From<MultiSigner> + IdentifyAccount<AccountId = T::AccountId>,
+	MultiSigner: From<MultiSigner>,
+	<T as subxt::Config>::Address: From<<T as subxt::Config>::AccountId>,
+	T::Signature: From<MultiSignature>,
+	T::BlockNumber: From<u32> + Display + Ord + sp_runtime::traits::Zero + One,
+	T::Hash: From<sp_core::H256>,
+	FinalityProof<sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256>>:
+		From<FinalityProof<T::Header>>,
+	BTreeMap<sp_core::H256, ParachainHeaderProofs>:
+		From<BTreeMap<<T as subxt::Config>::Hash, ParachainHeaderProofs>>,
+	sp_core::H256: From<T::Hash>,
+	<T::ExtrinsicParams as ExtrinsicParams<T::Index, T::Hash>>::OtherParams:
+		From<BaseExtrinsicParamsBuilder<T, AssetTip>> + Send + Sync,
+{
+	async fn check_for_misbehaviour<C: Chain>(
+		&self,
+		counterparty: &C,
+		client_message: AnyClientMessage,
+	) -> Result<(), anyhow::Error> {
+		match client_message {
+			AnyClientMessage::Grandpa(ClientMessage::Header(header)) => {
+				let justification = GrandpaJustification::decode(
+					&mut header.finality_proof.justification.as_slice(),
+				)?;
+
+				let encoded =
+					GrandpaApiClient::<JustificationNotification, H256, u32>::prove_finality(
+						&*self.relay_ws_client,
+						justification.commit.target_number,
+					)
+					.await?
+					.ok_or_else(|| {
+						anyhow!(
+							"No justification found for block: {:?}",
+							header.finality_proof.block
+						)
+					})?
+					.0;
+				let trusted_finality_proof =
+					FinalityProof::<RelayChainHeader>::decode(&mut &encoded[..])?;
+
+				if header.finality_proof.block != trusted_finality_proof.block {
+					let trusted_justification = GrandpaJustification::decode(
+						&mut trusted_finality_proof.justification.as_slice(),
+					)?;
+
+					let api = self.relay_client.storage();
+					let current_set_id_addr = polkadot::api::storage().grandpa().current_set_id();
+					let current_set_id = api
+						.fetch(
+							&current_set_id_addr,
+							Some(T::Hash::from(trusted_finality_proof.block.clone())),
+						)
+						.await?
+						.expect("Failed to fetch current set id");
+
+					let mut fraud_precommits = Vec::new();
+					for first_precommit in &justification.commit.precommits {
+						for second_precommit in &trusted_justification.commit.precommits {
+							if first_precommit.id == second_precommit.id &&
+								first_precommit.precommit != second_precommit.precommit
+							{
+								fraud_precommits
+									.push((first_precommit.clone(), second_precommit.clone()));
+							}
+						}
+					}
+
+					let mut equivocations = Vec::new();
+					let mut equivocation_calls = Vec::new();
+
+					for (first, second) in fraud_precommits {
+						let key_ownership_proof: OpaqueKeyOwnershipProof = {
+							let bytes = self
+								.relay_client
+								.rpc()
+								.request::<String>(
+									"state_call",
+									rpc_params!(
+										"GrandpaApi_key_ownership_proof",
+										format!(
+											"0x{}",
+											hex::encode((&current_set_id, &first.id).encode())
+										)
+									),
+								)
+								.await
+								.map(|res| hex::decode(&res[2..]))
+								.expect("Failed to fetch key ownership proof")?;
+
+							Decode::decode(&mut &bytes[..])
+								.expect("Failed to scale decode key ownership proof")
+						};
+
+						let equivocation = Equivocation::Precommit(grandpa::Equivocation {
+							round_number: justification.round,
+							identity: first.id.clone(),
+							first: (first.precommit.clone(), first.signature.clone()),
+							second: (second.precommit.clone(), second.signature.clone()),
+						});
+
+						let polkadot_equivocation =
+							construct_polkadot_grandpa_equivocation(&equivocation);
+						let equivocation_proof =
+							polkadot::api::runtime_types::sp_finality_grandpa::EquivocationProof {
+								set_id: current_set_id,
+								equivocation: polkadot_equivocation,
+							};
+
+						let call = rococo_runtime::Call::Grandpa(
+							pallet_grandpa::pallet::Call::report_equivocation {
+								equivocation_proof: Box::new(equivocation_proof),
+								key_owner_proof: key_ownership_proof.decode().unwrap(),
+							},
+						);
+						equivocation_calls.push(call);
+						equivocations.push(equivocation);
+					}
+
+					let misbehaviour = ClientMessage::Misbehaviour(Misbehaviour {
+						set_id: current_set_id,
+						equivocations,
+					});
+
+					let batch_call = polkadot::api::tx().utility().batch(equivocation_calls);
+					let equivocation_report_future = self
+						.submit_call(batch_call)
+						.map_err(|e| log::error!("Failed to submit equivocation report: {:?}", e))
+						.map(|_| ());
+					let misbehaviour_report_future = counterparty
+						.submit(vec![MsgUpdateAnyClient::<LocalClientTypes>::new(
+							self.client_id(),
+							AnyClientMessage::Grandpa(misbehaviour.clone()),
+							counterparty.account_id(),
+						)
+						.to_any()])
+						.map_err(|e| log::error!("Failed to submit misbehaviour report: {:?}", e))
+						.map(|_| ());
+					future::join(
+						Box::pin(equivocation_report_future)
+							as Pin<Box<dyn Future<Output = ()> + Send>>,
+						Box::pin(misbehaviour_report_future)
+							as Pin<Box<dyn Future<Output = ()> + Send>>,
+					)
+					.await;
+				}
+			},
+			_ => {},
+		}
+		Ok(())
+	}
+}
+
+fn construct_polkadot_grandpa_equivocation<H: Copy, N: Copy>(
+	equivocation: &Equivocation<H, N>,
+) -> polkadot_grandpa::Equivocation<H, N> {
+	use polkadot::api::runtime_types::{
+		finality_grandpa as polkadot_finality_grandpa,
+		finality_grandpa::Precommit,
+		sp_core::ed25519::{Public, Signature},
+	};
+
+	match equivocation {
+		Equivocation::Precommit(equiv) =>
+			polkadot_grandpa::Equivocation::Precommit(polkadot_finality_grandpa::Equivocation {
+				round_number: equiv.round_number,
+				identity: polkadot_grandpa::app::Public(Public(
+					equiv.identity.to_raw_vec().try_into().unwrap(),
+				)),
+				first: (
+					Precommit {
+						target_number: equiv.first.0.target_number,
+						target_hash: equiv.first.0.target_hash,
+					},
+					polkadot_grandpa::app::Signature(Signature(
+						(&*equiv.first.1).try_into().unwrap(),
+					)),
+				),
+				second: (
+					Precommit {
+						target_number: equiv.second.0.target_number,
+						target_hash: equiv.second.0.target_hash,
+					},
+					polkadot_grandpa::app::Signature(Signature(
+						(&*equiv.second.1).try_into().unwrap(),
+					)),
+				),
+			}),
+		_ => {
+			unimplemented!()
+		},
+	}
+}
 
 #[async_trait::async_trait]
 impl<T: Config + Send + Sync> Chain for ParachainClient<T>
@@ -175,5 +394,51 @@ where
 		self.submit_call(call).await?;
 
 		Ok(())
+	}
+
+	async fn query_client_message(
+		&self,
+		host_block_hash: [u8; 32],
+		transaction_id: u32,
+		event_index: usize,
+	) -> Result<AnyClientMessage, primitives::error::Error> {
+		use api::runtime_types::{
+			dali_runtime::Call as RuntimeCall, pallet_ibc::pallet::Call as IbcCall,
+		};
+
+		let extrinsic_data_addr =
+			parachain::api::storage().system().extrinsic_data(&transaction_id);
+		let extrinsic_opaque = self
+			.para_client
+			.storage()
+			.fetch(&extrinsic_data_addr, Some(H256(host_block_hash).into()))
+			.await?
+			.expect("Extrinsic should exist");
+		let unchecked_extrinsic = UncheckedExtrinsic::<T>::decode(&mut &*extrinsic_opaque)
+			.map_err(|e| {
+				primitives::error::Error::from(format!("Extrinsic decode error: {}", e))
+			})?;
+
+		match unchecked_extrinsic.function {
+			RuntimeCall::Ibc(IbcCall::deliver { messages }) => {
+				let message = messages.get(event_index).ok_or_else(|| {
+					primitives::error::Error::from(format!(
+						"Message index {} out of bounds",
+						event_index
+					))
+				})?;
+				let envelope = Ics26Envelope::<LocalClientTypes>::try_from(Any {
+					type_url: String::from_utf8(message.type_url.clone())?,
+					value: message.value.clone(),
+				});
+				match envelope {
+					Ok(Ics26Envelope::Ics2Msg(ClientMsg::UpdateClient(update_msg))) =>
+						return Ok(update_msg.client_message),
+					_ => (),
+				}
+			},
+			_ => (),
+		}
+		Err(primitives::error::Error::Custom("No ICS02 update message found".into()))
 	}
 }

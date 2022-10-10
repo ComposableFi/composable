@@ -1,7 +1,7 @@
 #![warn(unused_variables)]
-#![allow(clippy::all)]
 
 use futures::StreamExt;
+use ibc::events::IbcEvent;
 use primitives::Chain;
 
 pub mod events;
@@ -33,6 +33,70 @@ where
 			// new finality event from chain B
 			result = chain_b_finality.next() => {
 				process_finality_event!(chain_b, chain_a, result)
+			}
+		}
+	}
+
+	Ok(())
+}
+
+pub async fn fish<A, B>(chain_a: A, chain_b: B) -> Result<(), anyhow::Error>
+where
+	A: Chain,
+	A::Error: From<B::Error>,
+	B: Chain,
+	B::Error: From<A::Error>,
+{
+	let (mut chain_a_client_updates, mut chain_b_client_updates) =
+		(chain_a.ibc_events().await, chain_b.ibc_events().await);
+	// loop forever
+	loop {
+		tokio::select! {
+			// new finality event from chain A
+			result = chain_a_client_updates.next() => {
+				match result.transpose()? {
+					// stream closed
+					None => break,
+					Some((transaction_id, events)) => {
+						for (i, event) in events.into_iter().enumerate() {
+							if let IbcEvent::UpdateClient(client_update) = event {
+								if *client_update.client_id() != chain_b.client_id() {
+									continue;
+								}
+								let message = chain_a.query_client_message(
+									transaction_id.block_hash,
+									transaction_id.tx_index,
+									client_update.height(),
+									i,
+								).await?;
+								chain_b.check_for_misbehaviour(&chain_a, message).await?;
+							}
+						}
+					}
+				};
+			}
+			// new finality event from chain B
+			result = chain_b_client_updates.next() => {
+				match result.transpose()? {
+					// stream closed
+					None => break,
+					Some((transaction_id, events)) => {
+						for (i, event) in events.into_iter().enumerate() {
+							if let IbcEvent::UpdateClient(client_update) = event {
+								if *client_update.client_id() != chain_a.client_id() {
+									continue;
+								}
+								let message = chain_b.query_client_message(
+									transaction_id.block_hash,
+									transaction_id.tx_index,
+									client_update.height(),
+									i,
+								).await?;
+								chain_a.check_for_misbehaviour(&chain_b, message).await?;
+							}
+						}
+					}
+				};
 			}
 		}
 	}

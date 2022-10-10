@@ -59,12 +59,5 @@ sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 state-machine = { package = "sp-state-machine", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 
-# composable
-#comosable-primitives = { package = "primitives",  path = "../../parachain/frame/ibc" }
-#common = { path = "../../parachain/frame/ibc" }
-
 [features]
 parachain = ["dep:parachain", "subxt"]
-#near = ["dep:near"]
-#cosmos = ["dep:cosmos"]
-testing = []

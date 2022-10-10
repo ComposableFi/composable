@@ -40,6 +40,7 @@ pub struct Cli {
 #[derive(Debug, Parser)]
 pub enum Subcommand {
 	Relay(RelayCmd),
+	Fisherman(FishermanCmd),
 }
 
 /// The `relay` command
@@ -63,12 +64,37 @@ impl RelayCmd {
 	}
 }
 
+/// The `Fisherman` command
+#[derive(Debug, Clone, Parser)]
+#[clap(
+	name = "fisherman",
+	about = "Start the relayer in fishing mode (catching malicious transactions)"
+)]
+pub struct FishermanCmd {
+	/// Relayer config path.
+	#[clap(long)]
+	config: String,
+}
+
+impl FishermanCmd {
+	/// Run the command
+	pub async fn run(&self) -> Result<()> {
+		let path: PathBuf = self.config.parse()?;
+		let file_content = tokio::fs::read_to_string(path).await?;
+		let config: Config = toml::from_str(&file_content)?;
+		let any_chain_a = config.chain_a.into_client().await?;
+		let any_chain_b = config.chain_b.into_client().await?;
+		hyperspace::fish(any_chain_a, any_chain_b).await
+	}
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
 	logging::setup_logging();
-	let cli = Cli::parse();
+	let cli = Cli::from_args();
 
 	match &cli.subcommand {
 		Subcommand::Relay(cmd) => cmd.run().await,
+		Subcommand::Fisherman(cmd) => cmd.run().await,
 	}
 }

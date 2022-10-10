@@ -5040,6 +5040,7 @@ dependencies = [
  "common",
  "derive_more",
  "env_logger",
+ "finality-grandpa",
  "frame-support",
  "frame-system",
  "futures 0.3.24",

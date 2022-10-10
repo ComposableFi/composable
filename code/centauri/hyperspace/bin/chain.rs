@@ -27,15 +27,20 @@ use ibc_proto::{
 			QueryPacketReceiptResponse,
 		},
 		client::v1::{QueryClientStateResponse, QueryConsensusStateResponse},
-		connection::v1::QueryConnectionResponse,
+		connection::v1::{IdentifiedConnection, QueryConnectionResponse},
 	},
 };
+use pallet_ibc::light_clients::AnyClientMessage;
 #[cfg(feature = "testing")]
 use pallet_ibc::Timeout;
 #[cfg(feature = "parachain")]
 use parachain::ParachainClient;
-use primitives::{Chain, IbcProvider, KeyProvider, UpdateType};
+use primitives::{
+	error::Error, Chain, IbcProvider, KeyProvider, MisbehaviourHandler, TransactionId, UpdateType,
+};
 use std::{pin::Pin, time::Duration};
+use subxt::tx::SubstrateExtrinsicParams;
+
 #[cfg(feature = "parachain")]
 #[derive(Debug, Clone)]
 pub enum DefaultConfig {}
@@ -51,6 +56,7 @@ impl subxt::Config for DefaultConfig {
 	type Header = sp_runtime::generic::Header<Self::BlockNumber, sp_runtime::traits::BlakeTwo256>;
 	type Signature = sp_runtime::MultiSignature;
 	type Extrinsic = sp_runtime::OpaqueExtrinsic;
+	type ExtrinsicParams = SubstrateExtrinsicParams<Self>;
 }
 #[derive(Clone)]
 pub enum AnyChain {
@@ -461,6 +467,32 @@ impl IbcProvider for AnyChain {
 			_ => unreachable!(),
 		}
 	}
+
+	async fn ibc_events(
+		&self,
+	) -> Pin<Box<dyn Stream<Item = Result<(TransactionId, Vec<IbcEvent>), subxt::Error>>>> {
+		match self {
+			#[cfg(feature = "parachain")]
+			Self::Parachain(chain) => {
+				use futures::StreamExt;
+				Box::pin(chain.ibc_events().await.map(|x| x.into()))
+			},
+			_ => unreachable!(),
+		}
+	}
+
+	async fn query_connection_using_client(
+		&self,
+		height: u32,
+		client_id: String,
+	) -> Result<Vec<IdentifiedConnection>, Self::Error> {
+		match self {
+			#[cfg(feature = "parachain")]
+			Self::Parachain(chain) =>
+				chain.query_connection_using_client(height, client_id).await.map_err(Into::into),
+			_ => unreachable!(),
+		}
+	}
 }
 
 impl KeyProvider for AnyChain {
@@ -468,6 +500,22 @@ impl KeyProvider for AnyChain {
 		match self {
 			#[cfg(feature = "parachain")]
 			AnyChain::Parachain(parachain) => parachain.account_id(),
+			_ => unreachable!(),
+		}
+	}
+}
+
+#[async_trait]
+impl MisbehaviourHandler for AnyChain {
+	async fn check_for_misbehaviour<C: Chain>(
+		&self,
+		counterparty: &C,
+		client_message: AnyClientMessage,
+	) -> Result<(), anyhow::Error> {
+		match self {
+			#[cfg(feature = "parachain")]
+			AnyChain::Parachain(parachain) =>
+				parachain.check_for_misbehaviour(counterparty, client_message).await,
 			_ => unreachable!(),
 		}
 	}
@@ -516,6 +564,22 @@ impl Chain for AnyChain {
 		match self {
 			#[cfg(feature = "parachain")]
 			Self::Parachain(chain) => chain.submit(messages).await.map_err(Into::into),
+			_ => unreachable!(),
+		}
+	}
+
+	async fn query_client_message(
+		&self,
+		host_block_hash: [u8; 32],
+		transaction_id: u32,
+		event_index: usize,
+	) -> Result<AnyClientMessage, Error> {
+		match self {
+			#[cfg(feature = "parachain")]
+			Self::Parachain(chain) => chain
+				.query_client_message(host_block_hash, transaction_id, event_index)
+				.await
+				.map_err(Into::into),
 			_ => unreachable!(),
 		}
 	}

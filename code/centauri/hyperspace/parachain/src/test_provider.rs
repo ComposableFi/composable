@@ -11,6 +11,7 @@ use grandpa_prover::GrandpaProver;
 use ibc::{
 	applications::transfer::{msgs::transfer::MsgTransfer, PrefixedCoin},
 	core::ics24_host::identifier::{ChannelId, ClientId, PortId},
+	events::IbcEvent,
 	timestamp::Timestamp,
 };
 use ibc_rpc::IbcApiClient;
@@ -39,6 +40,7 @@ use subxt::{
 	tx::{AssetTip, BaseExtrinsicParamsBuilder, ExtrinsicParams, SubstrateExtrinsicParamsBuilder},
 	Config,
 };
+use tokio_stream::wrappers::BroadcastStream;
 
 impl<T: Config + Send + Sync> ParachainClient<T>
 where
@@ -51,17 +53,14 @@ where
 	H256: From<T::Hash>,
 	<T::ExtrinsicParams as ExtrinsicParams<T::Index, T::Hash>>::OtherParams:
 		From<BaseExtrinsicParamsBuilder<T, AssetTip>>,
-	T::BlockNumber: Ord + sp_runtime::traits::Zero + One,
-	T::Header: HeaderT,
-	<T::Header as HeaderT>::Hash: From<T::Hash>,
-	T::BlockNumber: From<u32>,
-	FinalityProof<sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256>>:
-		From<FinalityProof<T::Header>>,
-	BTreeMap<H256, ParachainHeaderProofs>:
-		From<BTreeMap<<T as Config>::Hash, ParachainHeaderProofs>>,
+	T::BlockNumber: Ord + sp_runtime::traits::Zero,
 {
 	pub fn set_client_id(&mut self, client_id: ClientId) {
 		self.client_id = Some(client_id)
+	}
+
+	pub fn set_channel_whitelist(&mut self, channel_whitelist: Vec<(ChannelId, PortId)>) {
+		self.channel_whitelist = channel_whitelist;
 	}
 
 	/// Construct a beefy client state to be submitted to the counterparty chain
@@ -126,7 +125,7 @@ where
 			};
 			// we can't use the genesis block to construct the initial state.
 			if block_number == 0 {
-				continue
+				continue;
 			}
 			let subxt_block_number: subxt::rpc::BlockNumber = block_number.into();
 			let block_hash =
@@ -146,7 +145,7 @@ where
 				root: decoded_para_head.state_root.as_bytes().to_vec().into(),
 			});
 
-			return Ok((AnyClientState::Beefy(client_state), consensus_state))
+			return Ok((AnyClientState::Beefy(client_state), consensus_state));
 		}
 	}
 
@@ -197,7 +196,7 @@ where
 			let block_number = decoded_para_head.number;
 			// we can't use the genesis block to construct the initial state.
 			if block_number == 0 {
-				continue
+				continue;
 			}
 
 			let mut client_state = GrandpaClientState::<HostFunctionsManager>::default();
@@ -209,7 +208,6 @@ where
 			client_state.frozen_height = None;
 			client_state.latest_para_height = block_number;
 			client_state.para_id = self.para_id;
-			client_state.latest_relay_height = light_client_state.latest_relay_height;
 
 			let subxt_block_number: subxt::rpc::BlockNumber = block_number.into();
 			let block_hash =
@@ -229,7 +227,7 @@ where
 				root: decoded_para_head.state_root.as_bytes().to_vec().into(),
 			});
 
-			return Ok((AnyClientState::Grandpa(client_state), consensus_state))
+			return Ok((AnyClientState::Grandpa(client_state), consensus_state));
 		}
 	}
 
@@ -238,7 +236,7 @@ where
 			type_url: msg.type_url,
 			value: msg.value,
 		}]);
-		let (ext_hash, block_hash) = self.submit_call(call).await?;
+		let (ext_hash, block_hash) = self.submit_call(call, true).await?;
 
 		// Query newly created client Id
 		let identified_client_state = IbcApiClient::<u32, H256>::query_newly_created_client(
@@ -271,10 +269,12 @@ where
 
 			source_channel: params.source_channel,
 			timeout: match params.timeout {
-				Timeout::Offset { timestamp, height } =>
-					api::runtime_types::pallet_ibc::Timeout::Offset { timestamp, height },
-				Timeout::Absolute { timestamp, height } =>
-					api::runtime_types::pallet_ibc::Timeout::Absolute { timestamp, height },
+				Timeout::Offset { timestamp, height } => {
+					api::runtime_types::pallet_ibc::Timeout::Offset { timestamp, height }
+				},
+				Timeout::Absolute { timestamp, height } => {
+					api::runtime_types::pallet_ibc::Timeout::Absolute { timestamp, height }
+				},
 			},
 		};
 		// Submit extrinsic to parachain node
@@ -284,7 +284,7 @@ where
 			amount.into(),
 		);
 
-		self.submit_call(call).await?;
+		self.submit_call(call, true).await?;
 
 		Ok(())
 	}
@@ -312,8 +312,6 @@ where
 			.sign_and_submit_then_watch(&ext, &signer, tx_params.into())
 			.await?
 			.wait_for_in_block()
-			.await?
-			.wait_for_success()
 			.await?;
 
 		Ok(())
@@ -388,7 +386,7 @@ where
 
 		let call = api::tx().ibc_ping().send_ping(params);
 
-		self.submit_call(call).await.map(|_| ())
+		self.submit_call(call, true).await.map(|_| ())
 	}
 
 	async fn subscribe_blocks(&self) -> Pin<Box<dyn Stream<Item = u64> + Send + Sync>> {
@@ -404,9 +402,5 @@ where
 			});
 
 		Box::pin(Box::new(stream))
-	}
-
-	fn set_channel_whitelist(&mut self, channel_whitelist: Vec<(ChannelId, PortId)>) {
-		self.channel_whitelist = channel_whitelist;
 	}
 }
