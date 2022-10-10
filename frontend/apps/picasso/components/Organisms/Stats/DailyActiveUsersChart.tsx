@@ -1,54 +1,13 @@
 import { FC, useMemo, useState } from "react";
-import { getDiffInMinutes, getRange, PRESET_RANGE, PresetRange } from "shared";
+import { getRange, PRESET_RANGE, PresetRange } from "shared";
 import { useQuery } from "@apollo/client";
 import { ActiveUsers, GET_ACTIVE_USERS } from "@/apollo/queries/activeUsers";
-import { Box, Skeleton, Stack, useTheme } from "@mui/material";
+import { Box, Skeleton, Stack, Theme, useTheme } from "@mui/material";
 import { Chart } from "@/components";
 
-export const DailyActiveUsersChart: FC = () => {
-  const theme = useTheme();
-  const [interval, setInterval] = useState<PresetRange>("24h");
-  const [dateFrom, dateTo, intervalQuery] = useMemo(() => getRange(interval), [interval]);
-  const { data, loading, error } = useQuery<ActiveUsers>(GET_ACTIVE_USERS, {
-    variables: {
-      interval: intervalQuery,
-      dateTo,
-      dateFrom
-    }
-  });
-
-  const chartSeries = useMemo(() => {
-    if (!data) return [];
-
-    return data.activeUsers.map(activeUser => {
-      const date = new Date(activeUser.date);
-      return [date.getTime(), activeUser.count];
-    });
-  }, [data]);
-
-  const filledChartSeries = useMemo(() => {
-    if (!dateFrom) return chartSeries;
-    const startIndex = new Date(dateFrom);
-    const intervalToSeriesCount = {
-      "24h": 24,
-      "1w": 7,
-      "1m": 30,
-      "1y": 365,
-      "ALL": 365
-    }[interval];
-    let currentTimeSeriesIndex = 0;
-    if (getDiffInMinutes(startIndex, new Date(chartSeries[currentTimeSeriesIndex][0])) < 0) {
-      
-    }
-    for (let i = 1; i <= intervalToSeriesCount; i++) {
-
-    }
-
-
-  }, [chartSeries, dateFrom, interval]);
-
-  if (loading) {
-    return <Box
+function renderLoading(theme: Theme) {
+  return (
+    <Box
       borderRadius={1}
       padding={6}
       sx={{
@@ -68,7 +27,33 @@ export const DailyActiveUsersChart: FC = () => {
       }}>
         <Skeleton variant="rounded" height={330} width={"100%"} />
       </Box>
-    </Box>;
+    </Box>
+  );
+}
+
+export const DailyActiveUsersChart: FC = () => {
+  const theme = useTheme();
+  const [interval, setInterval] = useState<PresetRange>("24h");
+  const [dateFrom, dateTo, intervalQuery] = useMemo(() => getRange(interval), [interval]);
+  const { data, loading, error } = useQuery<ActiveUsers>(GET_ACTIVE_USERS, {
+    variables: {
+      interval: intervalQuery,
+      dateTo,
+      dateFrom
+    }
+  });
+
+  const chartSeries: [number, number][] = useMemo(() => {
+    if (!data) return [];
+
+    return data.activeUsers.map(activeUser => {
+      const date = new Date(activeUser.date);
+      return [date.getTime(), activeUser.count];
+    });
+  }, [data]);
+
+  if (loading) {
+    return renderLoading(theme);
   }
 
   if (error) {
@@ -76,6 +61,7 @@ export const DailyActiveUsersChart: FC = () => {
       {"error:" + error}
     </>;
   }
+
   return (
     <Box>
       <Chart
@@ -84,7 +70,7 @@ export const DailyActiveUsersChart: FC = () => {
         changeTextColor={theme.palette.error.main}
         changeText="+2% KSM"
         AreaChartProps={{
-          data: [],
+          data: chartSeries,
           height: 330,
           shorthandLabel: "Change",
           labelFormat: (n: number) => n.toFixed(),
