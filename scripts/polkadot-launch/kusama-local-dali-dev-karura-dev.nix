@@ -48,7 +48,6 @@ in {
           "--ws-external"
           "--rpc-cors=all"
           "--rpc-methods=Unsafe"
-          "--force-authoring"
           "--log=xcm=trace"
           "--"
           "--execution=wasm"
