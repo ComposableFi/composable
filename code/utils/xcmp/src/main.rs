@@ -125,6 +125,11 @@ async fn execute_sudo(ask: bool, call: String, network: String, suri: String, rp
 			let extrinsic = sudo_call!(picasso, picasso_runtime, call);
 			may_be_do_call(ask, api, extrinsic, signer).await;
 		},
+		"composable_picasso_on_parity_kusama" => {
+			let extrinsic = sudo_call!(composable_picasso_on_parity_kusama, picasso_runtime, call);
+			may_be_do_call(ask, api, extrinsic, signer).await;
+		},		
+		
 		_ => panic!("unknown network"),
 	}
 }

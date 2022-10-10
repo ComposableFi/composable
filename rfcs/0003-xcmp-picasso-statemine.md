@@ -33,7 +33,7 @@ Picasso chain also should have Balance, better 22 KSM. Because its sovereign acc
 ## Picasso Governance to create request
 
 ```shell
-xcmp sudo execute --suri <private key> --call 0x290001010002100004000000000b0060defb740513000000000b0060defb74050006000700f2052a01383c00e8030000e8030000009001000d0100040001009d20 --network picasso --rpc 'wss://picasso-rpc.composable.finance:443'
+xcmp sudo execute --suri <private key> --call 0x290001010002100004000000000b0060defb740513000000000b0060defb74050006000700f2052a01383c00e8030000e8030000009001000d0100040001009d20 --network composable_picasso_on_parity_kusama --rpc 'wss://picasso-rpc.composable.finance:443'
 ```
 
 Which will transact:
@@ -79,14 +79,14 @@ Accept channel from Statemine:
 https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkusama-rpc.polkadot.io#/extrinsics/decode/0x3c01e8030000
 
 ```shell
-xcmp sudo execute --suri SECRET_KEY_OR_FILE --call 0x2900010100020c0004000000000700e876481713000100000700e876481700060102286bee183c01e8030000 --network picasso --rpc 'wss://picasso-rpc.composable.finance:443'
+xcmp sudo execute --suri SECRET_KEY_OR_FILE --call 0x2900010100020c0004000000000700e876481713000100000700e876481700060102286bee183c01e8030000 --network composable_picasso_on_parity_kusama --rpc 'wss://picasso-rpc.composable.finance:443'
 ```
 
 ## Make price for USDT on Picasso
 
 Register USDT:
 ```shell
-xcmp sudo execute --suri SECRET_KEY_OR_FILE --call 0x3b00010300a10f043206400b0000000000000000000000000000000a000000000000000000000000000000010000c16ff286230000000000000000000104000000 --network picasso --rpc 'wss://picasso-rpc.composable.finance:443'
+xcmp sudo execute --suri SECRET_KEY_OR_FILE --call 0x3b00010300a10f043206400b0000000000000000000000000000000a000000000000000000000000000000010000c16ff286230000000000000000000104000000 --network composable_picasso_on_parity_kusama --rpc 'wss://picasso-rpc.composable.finance:443'
 ```
 
 ## References
