@@ -11,7 +11,6 @@ import {
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import BigNumber from "bignumber.js";
 import { SelectedBondOffer } from "@/defi/hooks/bonds/useBondOffer";
-import useBondVestingTime from "@/defi/hooks/bonds/useBondVestingTime";
 import { DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils";
 import { useVestingClaim } from "@/defi/hooks";
 import {
