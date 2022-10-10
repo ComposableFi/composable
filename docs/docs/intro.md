@@ -1,4 +1,4 @@
-# **👋** Introduction
+# 👋 Introduction
 
 *Composable Finance: The interoperable infrastructure for Modular DeFi*
 
