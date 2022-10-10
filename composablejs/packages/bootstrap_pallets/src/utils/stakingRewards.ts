@@ -1,8 +1,8 @@
 import { ApiPromise } from "@polkadot/api";
-import config from "@composable/bootstrap_pallets/constants/config.json";
 import { StakingRewardsPoolConfig } from "../types/stakingRewards";
-import BigNumber from "bignumber.js";
 import { KeyringPair } from "@polkadot/keyring/types";
+import config from "@composable/bootstrap_pallets/constants/config.json";
+import BigNumber from "bignumber.js";
 
 export function toStakingRewardPoolConfig(
   api: ApiPromise,
@@ -11,8 +11,8 @@ export function toStakingRewardPoolConfig(
   poolConfig: typeof config.stakingRewardPools[number],
   startDelayBlocks = 50
 ): StakingRewardsPoolConfig {
-  const endBlock = new BigNumber(currentBlock.toString()).plus(poolConfig.endBlock);
-  const startBlock = new BigNumber(currentBlock.toString()).plus(startDelayBlocks);
+  const endBlock = new BigNumber(currentBlock).plus(poolConfig.endBlock).plus(startDelayBlocks);
+  const startBlock = new BigNumber(currentBlock).plus(startDelayBlocks);
 
   return {
     RewardRateBasedIncentive: {
@@ -21,7 +21,7 @@ export function toStakingRewardPoolConfig(
       startBlock: api.createType("u32", startBlock.toString()),
       // end block of the rewards
       endBlock: api.createType("u32", endBlock.toString()),
-      rewardConfigs: api.createType("BTreeMap<u128, ComposableTraitsStakingRewardConfig>", poolConfig.rewardConfigs),
+      rewardConfigs: api.createType("BTreeMap<u128, ComposableTraitsStakingRewardConfig>", {}),
       lock: api.createType("ComposableTraitsStakingLockLockConfig", {
         // time presets for locking
         durationPresets: api.createType("BTreeMap<u64, Perbill>", poolConfig.lock.durationPresets),
@@ -29,7 +29,8 @@ export function toStakingRewardPoolConfig(
         unlockPenalty: api.createType("Perbill", poolConfig.lock.unlockPenalty)
       }),
       financialNftAssetId: api.createType("u128", poolConfig.financialNftAssetId),
-      shareAssetId: api.createType("u128", poolConfig.shareAssetId)
+      shareAssetId: api.createType("u128", poolConfig.shareAssetId),
+      minimumStakingAmount: api.createType("u128", poolConfig.minimumStakingAmount)
     }
   };
 }
