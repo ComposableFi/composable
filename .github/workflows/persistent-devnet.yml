@@ -64,6 +64,10 @@ jobs:
     - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
       with:
         skipPush: true
+        installCommand: |
+          nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+          nix-channel --update
+          nix-env -iA nixpkgs.cachix
         authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
         name: ${{  env.CACHIX_COMPOSABLE }}
     - uses: google-github-actions/setup-gcloud@v0.6.0
@@ -73,8 +77,6 @@ jobs:
         credentials_file_path: ${{ runner.temp }}/credentials
     - name: Install Nixops
       run: |
-        nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-        nix-channel --update
         nix-env -iA nixpkgs.nixopsUnstable
     - name: Load Nixops State
       run: |
