@@ -639,12 +639,9 @@ fn test_extend_stake_amount() {
 		let extend_amount = 100_500_u32.into();
 		let existential_deposit = 1_000_u128;
 		let duration_preset = ONE_HOUR;
-		let total_rewards = 100;
-		let total_issuance = 200;
 
 		let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
 		mint_assets([staker], [staked_asset_id], amount * 2 + existential_deposit);
-		update_total_rewards_and_total_shares_in_rewards_pool(pool_id, total_rewards);
 
 		process_and_progress_blocks::<StakingRewards, Test>(1);
 		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration_preset));
@@ -653,22 +650,10 @@ fn test_extend_stake_amount() {
 		let reward_multiplier = StakingRewards::reward_multiplier(&rewards_pool, duration_preset)
 			.expect("reward_multiplier expected");
 		let boosted_amount = StakingRewards::boosted_amount(reward_multiplier, amount).expect("boosted amount should not overflow") ;
-		let inflation = boosted_amount * total_rewards / total_issuance;
 
 		assert_ok!(StakingRewards::extend(Origin::signed(staker), 1, 0, extend_amount));
 
 		let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
-
-		let total_rewards =	rewards_pool
-			.rewards
-			.iter()
-			.fold(0, |total_rewards, (_asset_id, reward)| {
-				total_rewards + reward.total_rewards
-			});
-
-		let inflation_extended = extend_amount * total_rewards / total_issuance;
-		let inflation = inflation + inflation_extended;
-		assert_eq!(inflation, 50710);
 
 		let reductions = rewards_pool
 			.rewards
