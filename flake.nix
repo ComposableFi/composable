@@ -175,6 +175,7 @@
               ];
             };
           };
+          npm-bp = pkgs.callPackage npm-buildpackage { };
         in with pkgs;
         let
           # Stable rust for anything except wasm runtime
@@ -444,9 +445,7 @@
           docs-renders = [ mdbook plantuml graphviz pandoc ];
 
           mkFrontendStatic = { kusamaEndpoint, picassoEndpoint, karuraEndpoint
-            , subsquidEndpoint }:
-            let bp = pkgs.callPackage npm-buildpackage { };
-            in bp.buildYarnPackage {
+            , subsquidEndpoint }: npm-bp.buildYarnPackage {
               nativeBuildInputs = [ pkgs.pkg-config pkgs.vips pkgs.python3 ];
               src = ./frontend;
 
@@ -619,6 +618,10 @@
             inherit frontend-static-firebase;
             inherit frontend-pablo-server;
             inherit frontend-picasso-server;
+            
+            docs = {
+            
+            };
 
             xcvm-contract-asset-registry =
               mk-xcvm-contract "xcvm-asset-registry";
