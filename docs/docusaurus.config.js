@@ -6,9 +6,9 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'My Site',
-  tagline: 'Dinosaurs are cool',
-  url: 'https://your-docusaurus-test-site.com',
+  title: 'Composable Finance',
+  tagline: 'The interoperable infrastructure for Modular DeFi',
+  url: 'https://composable.finance',
   baseUrl: '/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
@@ -16,8 +16,8 @@ const config = {
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'facebook', // Usually your GitHub org/user name.
-  projectName: 'docusaurus', // Usually your repo name.
+  organizationName: 'Composable Finance', // Usually your GitHub org/user name.
+  projectName: 'composable', // Usually your repo name.
 
   // Even if you don't use internalization, you can use this field to set useful
   // metadata like html lang. For example, if your site is Chinese, you may want
@@ -37,14 +37,14 @@ const config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+            'https://github.com/ComposableFi/composable/tree/main/docs/',
         },
         blog: {
           showReadingTime: true,
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+            'https://github.com/ComposableFi/composable/tree/main/docs/',
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
@@ -57,9 +57,9 @@ const config = {
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       navbar: {
-        title: 'My Site',
+        title: 'Composable Finance',
         logo: {
-          alt: 'My Site Logo',
+          alt: 'Composable Finance Logo',
           src: 'img/logo.svg',
         },
         items: [
@@ -67,12 +67,17 @@ const config = {
             type: 'doc',
             docId: 'intro',
             position: 'left',
-            label: 'Tutorial',
+            label: 'Docs',
           },
           {to: '/blog', label: 'Blog', position: 'left'},
           {
-            href: 'https://github.com/facebook/docusaurus',
+            href: 'https://github.com/ComposableFi/composable',
             label: 'GitHub',
+            position: 'right',
+          },
+          {
+            href: 'https://composablefi.medium.com/',
+            label: 'Medium',
             position: 'right',
           },
         ],
@@ -93,16 +98,24 @@ const config = {
             title: 'Community',
             items: [
               {
-                label: 'Stack Overflow',
-                href: 'https://stackoverflow.com/questions/tagged/docusaurus',
+                label: 'Composable Twitter',
+                href: 'https://twitter.com/composablefin',
+              },
+              {
+                label: 'Picasso Twitter',
+                href: 'https://twitter.com/Picasso_Network',
+              },
+              {
+                label: 'Telegram',
+                href: 'https://t.me/composablefinance',
               },
               {
                 label: 'Discord',
-                href: 'https://discordapp.com/invite/docusaurus',
+                href: 'https://discord.com/invite/pFZn2GCn65',
               },
               {
-                label: 'Twitter',
-                href: 'https://twitter.com/docusaurus',
+                label: 'LinkedIn',
+                href: 'https://www.linkedin.com/company/composable-finance/',
               },
             ],
           },
@@ -115,12 +128,20 @@ const config = {
               },
               {
                 label: 'GitHub',
-                href: 'https://github.com/facebook/docusaurus',
+                href: 'https://github.com/ComposableFi/composable',
+              },
+              {
+                label: 'Composable Medium',
+                href: 'https://composablefi.medium.com',
+              },
+              {
+                label: 'Picasso Medium',
+                href: 'https://medium.com/@picasso_network',
               },
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
+        copyright: `Copyright © ${new Date().getFullYear()} CF Services Ltd.`,
       },
       prism: {
         theme: lightCodeTheme,
