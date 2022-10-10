@@ -14,6 +14,7 @@ import { PolkadotAccountForm } from "./PolkadotAccountForm";
 import { humanBalance } from "shared";
 import { useDotSamaContext, useEagerConnect } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/polkadot/constants";
+import { getImageURL } from "@/utils/nextImageUrl";
 
 const Status = () => {
   const { extensionStatus, selectedAccount } = useDotSamaContext();
@@ -135,7 +136,7 @@ export const PolkadotConnect: React.FC<{}> = () => {
               >
                 <Box sx={{ marginRight: theme.spacing(2) }}>
                   <Image
-                    src="/networks/polkadot_js.svg"
+                    src={getImageURL("/networks/polkadot_js.svg")}
                     width="24"
                     height="24"
                     alt="Polkadot.js"

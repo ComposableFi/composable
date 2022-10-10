@@ -2,7 +2,7 @@ import type { NextPage } from "next";
 import { Box, Grid, Link, Typography, useTheme } from "@mui/material";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
-import { PageTitle, FeaturedBox, SS8WalletHelper } from "@/components";
+import { FeaturedBox, PageTitle, SS8WalletHelper } from "@/components";
 import { ConnectorType, useBlockchainProvider, useConnector } from "bi-lib";
 import { useSelectedAccount } from "@/defi/polkadot/hooks";
 import { useDotSamaContext } from "substrate-react";
@@ -10,6 +10,7 @@ import { useCrowdloanRewardsEligibility } from "@/stores/defi/polkadot/crowdloan
 import { DEFAULT_EVM_ID } from "@/defi/polkadot/constants";
 import Default from "@/components/Templates/Default";
 import Image from "next/image";
+import { getImageURL } from "@/utils/nextImageUrl";
 
 const CrowdloanRewards: NextPage = () => {
   const theme = useTheme();
@@ -28,10 +29,10 @@ const CrowdloanRewards: NextPage = () => {
     </Link>,
     <Typography key="claims" color="text.secondary">
       Crowdloan Rewards
-    </Typography>,
+    </Typography>
   ];
   const standardPageSize = {
-    xs: 12,
+    xs: 12
   };
 
   const { extensionStatus } = useDotSamaContext();
@@ -52,7 +53,7 @@ const CrowdloanRewards: NextPage = () => {
     account,
     selectedAccount,
     isEthAccountEligible,
-    isPicassoAccountEligible,
+    isPicassoAccountEligible
   ]);
 
   return (
@@ -85,12 +86,12 @@ const CrowdloanRewards: NextPage = () => {
                     mb: theme.spacing(4),
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "center",
+                    justifyContent: "center"
                   }}
                 >
                   <Image
                     alt="polkadot"
-                    src="/tokens/dotsama-kusama.svg"
+                    src={getImageURL("/tokens/dotsama-kusama.svg")}
                     width="64"
                     height="64"
                   />
@@ -104,7 +105,7 @@ const CrowdloanRewards: NextPage = () => {
                 disabled: extensionStatus !== "connected",
                 onClick: () => {
                   router.push("/crowdloan-rewards/claim");
-                },
+                }
               }}
             />
             <FeaturedBox
@@ -116,19 +117,19 @@ const CrowdloanRewards: NextPage = () => {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    mb: theme.spacing(4),
+                    mb: theme.spacing(4)
                   }}
                 >
                   <Image
                     alt="stablecoin"
-                    src="/tokens/usd-coin-usdc.svg"
+                    src={getImageURL("/tokens/usd-coin-usdc.svg")}
                     width="64"
                     height="64"
                   />
                   <Box sx={{ width: 64, height: 64, marginLeft: "-8px" }}>
                     <Image
                       alt="dai"
-                      src="/tokens/dai.svg"
+                      src={getImageURL("/tokens/dai.svg")}
                       width="64"
                       height="64"
                     />
@@ -136,7 +137,7 @@ const CrowdloanRewards: NextPage = () => {
                   <Box sx={{ width: 64, height: 64, marginLeft: "-8px" }}>
                     <Image
                       alt="tether"
-                      src="/tokens/tether.svg"
+                      src={getImageURL("/tokens/tether.svg")}
                       width="64"
                       height="64"
                     />
@@ -151,7 +152,7 @@ const CrowdloanRewards: NextPage = () => {
                 variant: "contained",
                 onClick: () => {
                   router.push("/crowdloan-rewards/claim");
-                },
+                }
               }}
             />
           </Box>

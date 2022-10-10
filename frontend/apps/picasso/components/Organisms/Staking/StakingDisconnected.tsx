@@ -2,6 +2,7 @@ import { Box, Grid, Stack, Theme, Typography } from "@mui/material";
 import { FeaturedBox } from "@/components";
 import Image from "next/image";
 import { FC } from "react";
+import { getImageURL } from "@/utils/nextImageUrl";
 
 interface StakingDisconnectedParams {
   gridSize: { xs: number };
@@ -10,13 +11,13 @@ interface StakingDisconnectedParams {
 
 export const StakingDisconnected: FC<StakingDisconnectedParams> = ({
   gridSize,
-  theme,
+  theme
 }) => (
   <Grid container spacing={8} marginTop={6}>
     <Grid item {...gridSize}>
       <FeaturedBox
         sx={{
-          padding: theme.spacing(6, 0),
+          padding: theme.spacing(6, 0)
         }}
         title={"Connect wallet"}
         textBelow="To start staking, wallet needs to be connected."
@@ -27,7 +28,7 @@ export const StakingDisconnected: FC<StakingDisconnectedParams> = ({
         <Stack>
           <Image
             style={{ mixBlendMode: "luminosity" }}
-            src="/static/Rocket.svg"
+            src={getImageURL("/static/Rocket.svg")}
             width={200}
             height={200}
             alt="rocket orbiting the moon"

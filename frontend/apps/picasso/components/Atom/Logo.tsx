@@ -1,6 +1,7 @@
 import React from "react";
 import { useMediaQuery, useTheme } from "@mui/material";
 import Image from "next/image";
+import { getImageURL } from "@/utils/nextImageUrl";
 
 export const Logo: React.FC = () => {
   const theme = useTheme();
@@ -11,7 +12,7 @@ export const Logo: React.FC = () => {
   if (isMobile) {
     return (
       <Image
-        src="/logo/logo-sm.svg"
+        src={getImageURL("/logo/logo-sm.svg")}
         alt="Picasso logo"
         width="48"
         height="48"
@@ -20,7 +21,7 @@ export const Logo: React.FC = () => {
   } else if (isTablet) {
     return (
       <Image
-        src="/logo/logo-md.svg"
+        src={getImageURL("/logo/logo-md.svg")}
         alt="Picasso logo"
         width="120"
         height="48"
@@ -29,7 +30,7 @@ export const Logo: React.FC = () => {
   } else if (isDesktop) {
     return (
       <Image
-        src="/logo/logo-lg.svg"
+        src={getImageURL("/logo/logo-lg.svg")}
         alt="Picasso logo"
         width="130"
         height="40"

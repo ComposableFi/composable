@@ -4,11 +4,13 @@ import { ConnectButton } from "./ConnectButton";
 import { Modal } from "../../Molecules/Modal";
 
 import { useStore } from "@/stores/root";
-import { useTheme, Box, Button, Typography } from "@mui/material";
+import { Box, Button, Typography, useTheme } from "@mui/material";
 import { ConnectorType, useBlockchainProvider, useConnector } from "bi-lib";
 
 import { Input } from "@/components";
 import { FC } from "react";
+import { getImageURL } from "@/utils/nextImageUrl";
+
 const DEFAULT_EVM_ID = 1;
 
 const Status = () => {
@@ -27,7 +29,7 @@ const Status = () => {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          gap: theme.spacing(1),
+          gap: theme.spacing(1)
         }}
       >
         <AccountIndicator
@@ -90,7 +92,7 @@ export const MetamaskConnect: FC<{}> = () => {
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            justifyContent: "center",
+            justifyContent: "center"
           }}
         >
           <Typography variant="h5" gutterBottom>
@@ -103,14 +105,14 @@ export const MetamaskConnect: FC<{}> = () => {
                 disabled
                 fullWidth
                 sx={{
-                  mt: 8,
+                  mt: 8
                 }}
                 InputProps={{
                   inputProps: {
                     sx: {
-                      textAlign: "center",
-                    },
-                  },
+                      textAlign: "center"
+                    }
+                  }
                 }}
               />
               <Button
@@ -133,7 +135,7 @@ export const MetamaskConnect: FC<{}> = () => {
                   mt: 8,
                   display: "flex",
                   gap: 2,
-                  alignItems: "center",
+                  alignItems: "center"
                 }}
                 variant="outlined"
                 color="primary"
@@ -142,7 +144,7 @@ export const MetamaskConnect: FC<{}> = () => {
                 onClick={() => handleConnectMetamask()}
               >
                 <Image
-                  src="/networks/metamask_wallet.svg"
+                  src={getImageURL("/networks/metamask_wallet.svg")}
                   width="24"
                   height="24"
                   alt="Metamask Mainnet"

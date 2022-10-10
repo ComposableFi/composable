@@ -47,5 +47,5 @@ export const BaseAsset: React.FC<BaseAssetProps> = ({
 };
 
 BaseAsset.defaultProps = {
-  iconSize: 24,
+  iconSize: 24
 };

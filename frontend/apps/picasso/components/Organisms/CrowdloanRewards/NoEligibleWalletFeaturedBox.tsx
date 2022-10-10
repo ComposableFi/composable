@@ -1,6 +1,7 @@
-import { Box, Grid, useTheme } from "@mui/material";
+import { Grid, useTheme } from "@mui/material";
 import { FeaturedBox } from "../../Molecules";
 import Image from "next/image";
+import { getImageURL } from "@/utils/nextImageUrl";
 
 export const NoEligibleWalletFeaturedBox: React.FC<{
   title: string;
@@ -12,14 +13,14 @@ export const NoEligibleWalletFeaturedBox: React.FC<{
       <FeaturedBox
         textAbove={title}
         TextAboveProps={{
-          color: "white",
+          color: "white"
         }}
         textBelow={textBelow}
         image={
           <Image
             alt="lemonade"
             css={{ mixBlendMode: "luminosity" }}
-            src="/static/lemonade.png"
+            src={getImageURL("/static/lemonade.png")}
             width="96"
             height="96"
           />

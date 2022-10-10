@@ -1,6 +1,7 @@
 import * as React from "react";
 import Image from "next/image";
-import { Box, Paper, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
+import { getImageURL } from "@/utils/nextImageUrl";
 
 export const NoAssetsCover: React.FC = () => {
   return (
@@ -10,7 +11,7 @@ export const NoAssetsCover: React.FC = () => {
       </Typography>
       <Image
         alt="lemonade"
-        src="/static/lemonade.png"
+        src={getImageURL("/static/lemonade.png")}
         css={{ mixBlendMode: "luminosity" }}
         width="96"
         height="96"

@@ -1,13 +1,7 @@
 import { Circle } from "@mui/icons-material";
-import {
-  Box,
-  Paper,
-  Typography,
-  useMediaQuery,
-  useTheme,
-  alpha,
-} from "@mui/material";
+import { alpha, Box, Paper, Typography, useMediaQuery, useTheme } from "@mui/material";
 import Image from "next/image";
+import { getImageURL } from "@/utils/nextImageUrl";
 
 type AccountIndicatorProps = {
   network: "polkadot" | "metamask";
@@ -18,7 +12,7 @@ type AccountIndicatorProps = {
 export const AccountIndicator: React.FC<AccountIndicatorProps> = ({
   network,
   label,
-  onClick,
+  onClick
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -47,12 +41,12 @@ export const AccountIndicator: React.FC<AccountIndicatorProps> = ({
           background: alpha(
             theme.palette.primary.main,
             theme.custom.opacity.main
-          ),
-        },
+          )
+        }
       }}
     >
       <Box sx={{ width: theme.spacing(3), height: theme.spacing(3) }}>
-        <Image src={icon} width="24" height="24" alt="Account" />
+        <Image src={getImageURL(icon)} width="24" height="24" alt="Account" />
       </Box>
       {isMobile ? (
         <Circle fontSize="large" sx={{ fontSize: 28 }} />

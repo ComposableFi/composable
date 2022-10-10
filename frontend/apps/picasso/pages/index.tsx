@@ -18,6 +18,7 @@ import { useState } from "react";
 import { MyStakesTable } from "@/components/Molecules/MyStakesTable";
 import { useStore } from "@/stores/root";
 import { useDotSamaContext } from "substrate-react";
+import { getImageURL } from "@/utils/nextImageUrl";
 
 const Overview: NextPage = () => {
   const { extensionStatus } = useDotSamaContext();
@@ -110,7 +111,7 @@ const Overview: NextPage = () => {
             <TabPanel value={tabValue} index={1}>
               <Box marginBottom={4} padding={2}>
                 <Image
-                  src="/logo/logo-pablo.svg"
+                  src={getImageURL("/logo/logo-pablo.svg")}
                   width="150"
                   height="40"
                   alt="Pablo logo"
@@ -128,7 +129,7 @@ const Overview: NextPage = () => {
             <TabPanel value={tabValue} index={2}>
               <Box marginBottom={4} padding={2}>
                 <Image
-                  src="/logo/logo-pablo.svg"
+                  src={getImageURL("/logo/logo-pablo.svg")}
                   width="150"
                   height="40"
                   alt="Pablo logo"
@@ -157,7 +158,7 @@ const Overview: NextPage = () => {
                 rel="noopener"
               >
                 <Image
-                  src="/logo/logo-angular.svg"
+                  src={getImageURL("/logo/logo-angular.svg")}
                   width="125"
                   height="48"
                   alt="Angular logo"
@@ -171,7 +172,7 @@ const Overview: NextPage = () => {
                 rel="noopener"
               >
                 <Image
-                  src="/logo/logo-pablo.svg"
+                  src={getImageURL("/logo/logo-pablo.svg")}
                   width="172"
                   height="45"
                   alt="Pablo logo"

@@ -4,6 +4,7 @@ import { CheckRounded } from "@mui/icons-material";
 import { alpha, Box, Button, Typography, useTheme } from "@mui/material";
 import Image from "next/image";
 import { useDotSamaContext } from "substrate-react";
+import { getImageURL } from "@/utils/nextImageUrl";
 
 export const PolkadotAccountForm: React.FC<{
   onSelectChange?: (accountIndex: number) => void;
@@ -71,7 +72,7 @@ export const PolkadotAccountForm: React.FC<{
             }}
           >
             <Image
-              src="/networks/polkadot_js_wallet.svg"
+              src={getImageURL("/networks/polkadot_js_wallet.svg")}
               width="24"
               height="24"
               alt="Polkadot.js"

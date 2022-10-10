@@ -1,5 +1,6 @@
 import Image from "next/image";
-import { Box, Typography, Button, useTheme } from "@mui/material";
+import { Box, Button, Typography, useTheme } from "@mui/material";
+import { getImageURL } from "@/utils/nextImageUrl";
 
 type ConnectButtonProps = {
   onClick: () => void;
@@ -11,7 +12,7 @@ export const ConnectButton: React.FC<ConnectButtonProps> = ({
   children,
   onClick,
   imageSrc,
-  imageAlt,
+  imageAlt
 }) => {
   const theme = useTheme();
 
@@ -21,18 +22,18 @@ export const ConnectButton: React.FC<ConnectButtonProps> = ({
       color="primary"
       onClick={onClick}
       sx={{
-        cursor: "pointer",
+        cursor: "pointer"
       }}
     >
       <Box
         sx={{
           display: "grid",
           gridTemplateColumns: "24px auto 24px",
-          minWidth: theme.spacing(31.25),
+          minWidth: theme.spacing(31.25)
         }}
       >
         <Box sx={{ height: 24 }}>
-          <Image src={imageSrc} width="24" height="24" alt={imageAlt} />
+          <Image src={getImageURL(imageSrc)} width="24" height="24" alt={imageAlt} />
         </Box>
         <Box>
           <Typography variant="button">{children}</Typography>

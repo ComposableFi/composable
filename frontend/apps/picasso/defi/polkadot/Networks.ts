@@ -1,4 +1,5 @@
 import { SubstrateNetwork, SubstrateNetworkId } from "./types";
+import { getImageURL } from "@/utils/nextImageUrl";
 
 export const SUBSTRATE_NETWORKS: {
   [substrateNetworkId in SubstrateNetworkId]: SubstrateNetwork;
@@ -13,7 +14,7 @@ export const SUBSTRATE_NETWORKS: {
     subscanUrl: "",
     decimals: 12,
     symbol: "KSM",
-    logo: "/networks/kusama.svg",
+    logo: getImageURL("/networks/kusama.svg")
   },
   picasso: {
     relayChain: "kusama",
@@ -25,7 +26,7 @@ export const SUBSTRATE_NETWORKS: {
     subscanUrl: "",
     decimals: 12,
     symbol: "PICA",
-    logo: "/networks/picasso.svg",
+    logo: getImageURL("/networks/picasso.svg")
   },
   karura: {
     relayChain: "kusama",
@@ -37,8 +38,8 @@ export const SUBSTRATE_NETWORKS: {
     subscanUrl: "",
     decimals: 18,
     symbol: "KAR",
-    logo: "/networks/karura.svg",
-  },
+    logo: getImageURL("/networks/karura.svg")
+  }
 };
 export const SUBSTRATE_NETWORK_IDS: Array<SubstrateNetworkId> = Object.keys(
   SUBSTRATE_NETWORKS

@@ -1,14 +1,15 @@
 import * as React from "react";
 import Image from "next/image";
 import { Box, Typography } from "@mui/material";
+import { getImageURL } from "@/utils/nextImageUrl";
 
 export const ConnectToStakeCover: React.FC<{ message: string }> = ({
-  message,
+  message
 }) => {
   return (
     <Box textAlign="center">
       <Image
-        src="/static/lemonade.png"
+        src={getImageURL("/static/lemonade.png")}
         css={{ mixBlendMode: "luminosity" }}
         width="96"
         height="96"
