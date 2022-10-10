@@ -24,7 +24,7 @@ digraph xcvm_denominations_tokens {
         ibc_polkadot_dot [shape = diamond;label = "IBC(POLKADOT(DOT))";style = dashed;];
         ibc_polkadot_bnc [shape = diamond;label = "IBC(POLKADOT(BNC))";style = dashed;];
         
-        bitfrost_kusama [shape = box3d;label = "Bitfrost";];
+        bifrost_kusama [shape = box3d;label = "Bifrost";];
         picasso [shape = box3d;label = "Picasso";];
         kusama [shape = box3d;label = "Kusama";];
         polkadot [shape = box3d;label = "Polkadot";];
@@ -35,10 +35,10 @@ digraph xcvm_denominations_tokens {
         
         kusama_relayer -> kusama [shape = bidirectional;];
         kusama_relayer -> picasso [shape = bidirectional;];
-        kusama_relayer -> bitfrost_kusama [shape = bidirectional;];
+        kusama_relayer -> bifrost_kusama [shape = bidirectional;];
         
         polkadot_relayer -> composable [shape = bidirectional;];
-        polkadot_relayer -> bitfrost_kusama [shape = bidirectional;];
+        polkadot_relayer -> bifrost_kusama [shape = bidirectional;];
         polkadot_relayer -> polkadot [shape = bidirectional;];
         
         ibc_relayer -> composable;
@@ -48,8 +48,8 @@ digraph xcvm_denominations_tokens {
         picasso -> kusama_ksm [arrowhead = diamond;];
         kusama_ksm -> ksm [arrowhead = none; style = dashed; label = "wraps";];
         
-        bitfrost_kusama -> bnc [arrowhead = diamond; label = "issuer";];
-        bitfrost_kusama -> vksm [arrowhead = diamond; label = "issuer";];
+        bifrost_kusama -> bnc [arrowhead = diamond; label = "issuer";];
+        bifrost_kusama -> vksm [arrowhead = diamond; label = "issuer";];
         
         polkadot -> dot [arrowhead = diamond; label = "issuer";];
         composable -> polkadot_dot [arrowhead = diamond;];
