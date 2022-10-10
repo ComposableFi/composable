@@ -6,10 +6,10 @@ import {
   ParachainId,
   RelaychainApi,
   RelayChainId,
-  SupportedWalletId,
+  SupportedWalletId
 } from "./types";
 import { ParachainNetworks, RelayChainNetworks } from "./Networks";
-import type { InjectedAccount, InjectedAccountWithMeta, InjectedExtension, } from "@polkadot/extension-inject/types";
+import type { InjectedAccount, InjectedAccountWithMeta, InjectedExtension } from "@polkadot/extension-inject/types";
 import { decodeAddress, encodeAddress } from "@polkadot/util-crypto";
 import { createParachainApis, createRelaychainApis } from "./utils";
 
@@ -26,7 +26,7 @@ function getAccounts(
         : x.address;
       return {
         address: x.address,
-        name: x.meta.name ?? nameFallback,
+        name: x.meta.name ?? nameFallback
       };
     }
   );
@@ -44,7 +44,7 @@ function mapAccounts(
           ? address
           : encodeAddress(decodeAddress(address), ss58Format),
       meta: { genesisHash, name, source },
-      type,
+      type
     })
   );
 }
@@ -58,13 +58,13 @@ const PARACHAIN_PROVIDERS_DEFAULT: {
       parachainApi: undefined,
       apiStatus: "initializing",
       prefix: network.prefix,
-      accounts: [],
+      accounts: []
     };
   })
   .reduce((acc, curr) => {
     return {
       ...acc,
-      [curr.chainId]: curr,
+      [curr.chainId]: curr
     };
   }, {} as { [chainId in ParachainId]: ParachainApi });
 
@@ -77,13 +77,13 @@ const RELAYCHAIN_PROVIDERS_DEFAULT: {
       parachainApi: undefined,
       apiStatus: "initializing",
       prefix: network.prefix,
-      accounts: [],
+      accounts: []
     };
   })
   .reduce((acc, curr) => {
     return {
       ...acc,
-      [curr.chainId]: curr,
+      [curr.chainId]: curr
     };
   }, {} as { [chainId in RelayChainId]: RelaychainApi });
 
@@ -93,14 +93,14 @@ export const DotsamaContext = createContext<DotSamaContext>({
   relaychainProviders: RELAYCHAIN_PROVIDERS_DEFAULT,
   extensionStatus: "initializing",
   activate: undefined,
-  selectedAccount: -1,
+  selectedAccount: -1
 });
 
 export const DotSamaContextProvider = ({
   supportedParachains,
   supportedRelaychains,
   children,
-  appName,
+  appName
 }: {
   appName: string;
   supportedParachains: {
@@ -110,7 +110,7 @@ export const DotSamaContextProvider = ({
     types: any;
   }[];
   supportedRelaychains?: {
-    chainId: "kusama" | "polkadot";
+    chainId: RelayChainId;
     rpcUrl: string;
     rpc: any;
     types: any;
@@ -192,13 +192,13 @@ export const DotSamaContextProvider = ({
         setRelayChainProviders((s: { kusama: RelaychainApi; polkadot: RelaychainApi }): { kusama: RelaychainApi; polkadot: RelaychainApi } => {
           s[chainId].accounts = getAccounts(accounts);
 
-          return { ...s }
+          return { ...s };
         });
       }
     }
 
     return injectedExtension;
-  }, [appName, supportedParachains, supportedRelaychains])
+  }, [appName, supportedParachains, supportedRelaychains]);
 
   const deactivate = async (): Promise<void> => {
     setExtensionStatus("initializing");
@@ -238,7 +238,7 @@ export const DotSamaContextProvider = ({
         selectedAccount,
         activate,
         deactivate,
-        extensionStatus,
+        extensionStatus
       }}
     >
       {children}
