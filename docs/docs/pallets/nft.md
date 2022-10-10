@@ -1,0 +1,1 @@
+{{#include ../../../code/parachain/frame/fnft/README.md}}
