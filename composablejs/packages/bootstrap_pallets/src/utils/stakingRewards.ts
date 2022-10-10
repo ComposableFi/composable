@@ -14,6 +14,11 @@ export function toStakingRewardPoolConfig(
   const endBlock = new BigNumber(currentBlock).plus(poolConfig.endBlock).plus(startDelayBlocks);
   const startBlock = new BigNumber(currentBlock).plus(startDelayBlocks);
 
+  let initialConfig = { ... poolConfig.rewardConfigs };
+  Object.keys(initialConfig).forEach((key: string) => {
+    (initialConfig as any)[key].rewardRate.amount = "0";
+  });
+
   return {
     RewardRateBasedIncentive: {
       owner: owner.publicKey,
@@ -21,7 +26,7 @@ export function toStakingRewardPoolConfig(
       startBlock: api.createType("u32", startBlock.toString()),
       // end block of the rewards
       endBlock: api.createType("u32", endBlock.toString()),
-      rewardConfigs: api.createType("BTreeMap<u128, ComposableTraitsStakingRewardConfig>", {}),
+      rewardConfigs: api.createType("BTreeMap<u128, ComposableTraitsStakingRewardConfig>", initialConfig),
       lock: api.createType("ComposableTraitsStakingLockLockConfig", {
         // time presets for locking
         durationPresets: api.createType("BTreeMap<u64, Perbill>", poolConfig.lock.durationPresets),

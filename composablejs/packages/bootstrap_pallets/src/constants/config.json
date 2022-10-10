@@ -1,6 +1,6 @@
 {
-  "bootstrapPools": true,
-  "bootstrapBonds": true,
+  "bootstrapPools": false,
+  "bootstrapBonds": false,
   "bootstrapCrowdloanRewards": false,
   "bootstrapRewardPools": true,
   "mintAssetsToWallets": true,
@@ -78,7 +78,7 @@
           "86400": "1200000000",
           "604800": "1500000000"
         },
-        "unlockPenalty": "1000000000"
+        "unlockPenalty": "10000000"
       },
       "financialNftAssetId": "2130",
       "shareAssetId": "1300",
