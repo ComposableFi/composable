@@ -13,6 +13,35 @@ Pallet IBC is a thin wrapper around [`ibc-rs`](/code/centauri/ibc) that satisfie
 - `set_params` - Sets parameters that determine whether token transfer or receipt is allowed in ICS20
 - `upgrade_client` - Sets the new consensus state and client state for client upgrades to be executed on connected chains
 
+### Adding Ibc to a substrate runtime
+
+Implementing the ibc config trait for a substrate runtime
+```rust
+parameter_types! {
+	pub const ExpectedBlockTime: u64 = 6000;
+	pub const RelayChainId: light_client_commomn::RelayChain = light_client_commomn::RelayChain::Rococo;
+}
+
+impl pallet_ibc::Config for Runtime {
+	type TimeProvider = Timestamp;
+	type Event = Event;
+	type Currency = Balances;
+	const INDEXING_PREFIX: &'static [u8] = b"ibc/";
+	const CONNECTION_PREFIX: &'static [u8] = b"ibc/";
+	const CHILD_TRIE_KEY: &'static [u8] = b"ibc/";
+	const LIGHT_CLIENT_PROTOCOL: pallet_ibc::LightClientProtocol = pallet_ibc::LightClientProtocol::Grandpa; // Finality protocol this chain will be using
+	type ExpectedBlockTime = ExpectedBlockTime; // Expected block time in milliseconds
+	type MultiCurrency = Assets; // Add a module that implements the MultiCurrency trait
+	type AccountIdConversion = ibc_primitives::IbcAccount;
+	type AssetRegistry = AssetsRegistry; // Add a module that implements the required trait
+	type CurrencyFactory = CurrencyFactory; // Add a module that impplements the required trait;
+	type WeightInfo = crate::weights::pallet_ibc::WeightInfo<Self>; // Add your benchmarkd here;
+	type ParaId = parachain_info::Pallet<Runtime>;
+	type RelayChain = RelayChainId;
+	type AdminOrigin = EnsureRoot<AccountId>;
+}
+```
+
 ### Terminology
 
 - **ClientState:** This represents a connected chain's light client parameters, required for header verification.
@@ -93,10 +122,10 @@ It provides methods for:
 - Registering a Send packet `IbcHandler::send_packet`
 - Writing Acknowledgements `IbcHandler::write_acknowledgemnent`
 
+**Defining an example ibc compliant pallet**
 ```rust 
     const PORT_ID: &'static str = "example";
     const MODULE_ID: &'static str = "pallet_example";
-   // Defining an example ibc compliant pallet
    trait Config: frame_system::Config {
       IbcHandler: IbcHandlerT;
       WeightInfo: WeightInfo;
@@ -144,7 +173,10 @@ It provides methods for:
 	  }
    }
 
+  // All these callbacks should be benchmarked
    impl<T: Config + Send + Sync> Module for IbcModule<T> {
+      /// This is called when a channel init message is processed
+      /// If this callback fails the counterparty will not receive the channel_open_try message
 	  fn on_chan_open_init(
 		&mut self,
 		_output: &mut ModuleOutputBuilder,
@@ -159,6 +191,10 @@ It provides methods for:
 		Ok(())
 	  }
 
+      /// This is called after a channel_open_try message
+      /// has been processed successfully, at this point, this module
+      /// should verify that the counterparty's channel order, version and port matches what is expected 
+      /// If this callback fails the counterparty will not recieve the channel_open_ack message
 	  fn on_chan_open_try(
 		&mut self,
 		_output: &mut ModuleOutputBuilder,
@@ -170,7 +206,6 @@ It provides methods for:
 		version: &Version,
 		counterparty_version: &Version,
 	  ) -> Result<Version, Ics04Error> {
-	    // Verify channel version, order and port
 		if counterparty_version.to_string() != *VERSION || version.to_string() != *VERSION {
 			return Err(Ics04Error::no_common_version())
 		}
@@ -179,8 +214,8 @@ It provides methods for:
 			return Err(Ics04Error::unknown_order_type(order.to_string()))
 		}
 
-		let ping_port = PortId::from_str(PORT_ID).expect("PORT_ID is static and valid; qed");
-		if counterparty.port_id() != &ping_port || port_id != &ping_port {
+		let example_port = PortId::from_str(PORT_ID).expect("PORT_ID is static and valid; qed");
+		if counterparty.port_id() != &example_port || port_id != &ping_port {
 			return Err(Ics04Error::implementation_specific(format!(
 				"Invalid counterparty port {:?}",
 				counterparty.port_id()
@@ -190,6 +225,9 @@ It provides methods for:
 		Ok(version.clone())
 	  }
 
+      /// This is called after channel open acknowledgement is processed
+      /// Execute any pallet specific logic that requires channel to be open
+      /// If this callback fails the counterparty will not recieve the channel_open_confirm message
 	  fn on_chan_open_ack(
 		&mut self,
 		_output: &mut ModuleOutputBuilder,
@@ -201,6 +239,7 @@ It provides methods for:
 		Ok(())
 	  }
 
+      /// Called after channel open confirm is processed
 	  fn on_chan_open_confirm(
 		&mut self,
 		_output: &mut ModuleOutputBuilder,
@@ -211,6 +250,8 @@ It provides methods for:
 		Ok(())
 	  }
 
+      /// Callled after channel close init messages is processed successfully
+      /// If it fails channel close confirm will not be seen on the counterparty
 	  fn on_chan_close_init(
 		&mut self,
 		_output: &mut ModuleOutputBuilder,
@@ -221,6 +262,8 @@ It provides methods for:
 		Ok(())
 	  }
 
+      /// Called when channel close is successfully processed
+      /// Execute pallet specific logic that depends on channel closing
 	  fn on_chan_close_confirm(
 		&mut self,
 		_output: &mut ModuleOutputBuilder,
@@ -231,6 +274,9 @@ It provides methods for:
 		Ok(())
 	  }
 
+      /// Called after message receive packet is successfully processed
+      /// Execute pallet specific logic on packet data and
+      /// write error or success Acknowledgement to storage
 	  fn on_recv_packet(
 		&self,
 		_output: &mut ModuleOutputBuilder,
@@ -250,6 +296,8 @@ It provides methods for:
 		)
 	  }
 
+      /// Called after acknowledgement message is  susccessfully processed  
+      /// Decode and handle acknowledgement for both success or error cases  
 	  fn on_acknowledgement_packet(
 		&mut self,
 		_output: &mut ModuleOutputBuilder,
@@ -261,6 +309,8 @@ It provides methods for:
 		Ok(())
 	  }
 
+     /// Called on packet timeout message or packet timeout on cose message  
+     /// revert changes that were made when packet was sent  
 	 fn on_timeout_packet(
 		&mut self,
 		_output: &mut ModuleOutputBuilder,
@@ -280,34 +330,38 @@ It provides methods for:
    }
 
    impl<T: Config> CallbackWeight for WeightHandler<T> {
+      /// Returns the weight from the benchmark of the `on_chan_open_init` callback
 	  fn on_chan_open_init(&self) -> Weight {
 		T::WeightInfo::on_chan_open_init()
 	  }
-
+      /// Returns the weight from the benchmark of the `on_chan_open_try` callback
 	  fn on_chan_open_try(&self) -> Weight {
 		T::WeightInfo::on_chan_open_try()
 	  }
 
+      /// Returns the weight from the benchmark of the `on_chan_open_ack` callback
 	  fn on_chan_open_ack(&self, port_id: &PortId, channel_id: &ChannelId) -> Weight {
 		T::WeightInfo::on_chan_open_ack(port_id, channel_id)
 	  }
-
+      /// Returns the weight from the benchmark of the `on_chan_open_confirm` callback
 	  fn on_chan_open_confirm(&self, port_id: &PortId, channel_id: &ChannelId) -> Weight {
 		T::WeightInfo::on_chan_open_confirm(port_id, channel_id)
 	  }
-
+      /// Returns the weight from the benchmark of the `on_chan_close_init` callback
 	  fn on_chan_close_init(&self, port_id: &PortId, channel_id: &ChannelId) -> Weight {
 		T::WeightInfo::on_chan_close_init(port_id, channel_id)
 	  }
-
+      /// Returns the weight from the benchmark of the `on_chan_close_confirm` callback
 	  fn on_chan_close_confirm(&self, port_id: &PortId, channel_id: &ChannelId) -> Weight {
 		T::WeightInfo::on_chan_close_confirm(port_id, channel_id)
-	  }
-
+	  }  
+      /// Returns the weight from the benchmark of the `on_recv_packet` callback  
+      /// The weight returned should take the size of the packet data into consideration  
 	  fn on_recv_packet(&self, packet: &Packet) -> Weight {
 		T::WeightInfo::on_recv_packet(packet)
 	  }
-
+      /// Returns the weight from the benchmark of the `on_acknowledgement_packet` callback
+      /// The weight returned should take the size of the packet data and acknowledgement into consideration
 	  fn on_acknowledgement_packet(
 		&self,
 		packet: &Packet,
@@ -315,7 +369,8 @@ It provides methods for:
 	  ) -> Weight {
 		T::WeightInfo::on_acknowledgement_packet(packet, acknowledgement)
 	  }
-
+      /// Returns the weight from the benchmark of the `on_timeout_packet` callback
+      /// The weight returned should take the size of the packet data into consideration
 	  fn on_timeout_packet(&self, packet: &Packet) -> Weight {
 		T::WeightInfo::on_timeout_packet(packet)
 	  }
@@ -447,6 +502,11 @@ impl ibc_runtime_api::IbcRuntimeApi<Block> for Runtime {
 ### IBC Protocol coverage
 
 - [x] ICS02 - Light client implementations  
+   **Light clients supported**
+  - [x] Beefy Light Client
+  - [x] Grandpa Light Client
+  - [x] Near Light Client
+  - [x] Tendermint light client
 - [x] ICS03 - Connections  
 - [x] ICS04 - Channels and Ports  
 - [x] ICS23 - Vector commitments  
