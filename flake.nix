@@ -130,7 +130,7 @@
           tag = "latest";
           copyToRoot = pkgs.buildEnv {
             name = "image-root";
-            paths = [ nixpkgs.curl nixpkgs.websocat ] ++ container-tools;
+            paths = [ pkgs.curl pkgs.websocat ] ++ container-tools;
             pathsToLink = [ "/bin" ];
           };
           config = {
