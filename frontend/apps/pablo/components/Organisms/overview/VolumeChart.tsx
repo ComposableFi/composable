@@ -1,6 +1,7 @@
-import { Box, useTheme } from "@mui/material";
+import { useTheme } from "@mui/material";
 import { Chart } from "@/components";
 import { DEFI_CONFIG } from "@/defi/config";
+import { HighlightBox } from "@/components/Atoms/HighlightBox";
 
 export const VolumeChart = ({}) => {
   const theme = useTheme();
@@ -11,7 +12,7 @@ export const VolumeChart = ({}) => {
   const getCurrentInterval = () => {};
 
   return (
-    <Box>
+    <HighlightBox>
       <Chart
         height="100%"
         title="Volume"
@@ -30,6 +31,6 @@ export const VolumeChart = ({}) => {
         currentInterval={"hr"}
         timeSlots={["7:00 am", "10:00 am", "1:00 pm", "3:00 pm", "5:00 pm"]}
       />
-    </Box>
+    </HighlightBox>
   );
 };

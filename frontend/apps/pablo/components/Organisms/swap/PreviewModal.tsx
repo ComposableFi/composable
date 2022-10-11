@@ -1,13 +1,13 @@
 import React from "react";
-import { ModalProps, Modal } from "@/components/Molecules";
-import { Label, BaseAsset } from "@/components/Atoms";
+import { Modal, ModalProps } from "@/components/Molecules";
+import { BaseAsset, Label } from "@/components/Atoms";
 import {
   alpha,
   Box,
+  Button,
   IconButton,
   Typography,
   useTheme,
-  Button,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 
@@ -70,7 +70,7 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
           [theme.breakpoints.down("sm")]: {
             width: "100%",
           },
-          borderRadius: 0.5,
+          borderRadius: 1,
           padding: theme.spacing(4),
           boxShadow: `-1px -1px ${alpha(
             theme.palette.common.white,
@@ -134,8 +134,8 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
         </Label>
 
         <Typography variant="body2" mt={4} textAlign="center" paddingX={4.75}>
-          Output is estimated. If the price changes by more than {slippage}% your
-          transaction will revert.
+          Output is estimated. If the price changes by more than {slippage}%
+          your transaction will revert.
         </Typography>
 
         <Box

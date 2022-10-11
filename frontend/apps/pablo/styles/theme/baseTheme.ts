@@ -64,6 +64,9 @@ declare module "@mui/material/styles" {
         mobile?: number;
       };
     };
+    shape: {
+      borderRadius: string | number | string[] | undefined;
+    };
   }
 
   interface Palette {
@@ -78,7 +81,14 @@ declare module "@mui/material/styles" {
       primary: string;
       secondary: string;
       other: string;
+      grapeBackground: string;
     };
+  }
+
+  interface TypeBackground {
+    default: string;
+    paper: string;
+    transparentCharcoal: string;
   }
 
   interface PaletteOptions {
@@ -93,6 +103,7 @@ declare module "@mui/material/styles" {
       primary?: string;
       secondary?: string;
       other?: string;
+      grapeBackground?: string;
     };
   }
 }
@@ -104,6 +115,7 @@ declare module "@mui/material/Typography" {
 }
 
 // create basic theme with basic design options
+// @ts-ignore
 export const createBaseTheme = (mode: PaletteMode) =>
   createTheme({
     breakpoints: {
@@ -124,7 +136,7 @@ export const createBaseTheme = (mode: PaletteMode) =>
       toolbar: {},
     },
     shape: {
-      borderRadius: 32,
+      borderRadius: Array(4).fill("16px"),
     },
     zIndex: {
       drawer: 1200,
@@ -148,9 +160,9 @@ export const createBaseTheme = (mode: PaletteMode) =>
         larger: "155%",
       },
       fontFamily: {
-        primary: "BeVietnamPro",
-        secondary: "Architects Daughter",
-        other: "Architects Daughter",
+        primary: "CodeNext",
+        secondary: "NovaDeco",
+        other: "CodeNext",
       },
       drawerWidth: {
         desktop: 320,

@@ -1,11 +1,9 @@
 import { Theme } from "@mui/material";
 import { OverridesStyleRules } from "@mui/material/styles/overrides";
 
-export const checkboxOverrides = (
-  theme: Theme
-): Partial<OverridesStyleRules> => ({
+export const gridOverrides = (theme: Theme): Partial<OverridesStyleRules> => ({
   styleOverrides: {
-    root: {
+    item: {
       borderRadius: theme.shape.borderRadius,
     },
   },

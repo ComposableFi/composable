@@ -38,3 +38,4 @@ export { stepOverrides } from "./step";
 export { stepConnectorOverrides } from "./stepConnector";
 export { stepIconOverrides } from "./stepIcon";
 export { stepLabelOverrides } from "./stepLabel";
+export { gridOverrides } from "./grid";
