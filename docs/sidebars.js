@@ -151,9 +151,68 @@ const sidebars = {
             'products/apollo/apollo-how-it-works',
             'products/apollo/apollo-deployment'
           ],
+        },
+        {
+          type: 'category',
+          label: 'Cubic',
+          link: {
+            type: 'doc',
+            id: 'products/cubic-overview'
+          },
+          collapsible: true,
+          collapsed: true,
+          items: [
+            'products/cubic/additional-details',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Pablo',
+          link: {
+            type: 'doc',
+            id: 'products/pablo-overview'
+          },
+          collapsible: true,
+          collapsed: true,
+          items: [
+            'products/pablo/swaps-trading',
+            'products/pablo/liquidity-provision',
+            'products/pablo/auctions-bonding',
+            'products/pablo/xPBLO-fNFT-staking',
+            'products/pablo/cross-chain-DEX',
+            'products/pablo/governance-tokenomics',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'CHAOS fNFTs',
+          link: {
+            type: 'doc',
+            id: 'products/CHAOS-fNFT-overview'
+          },
+          collapsible: true,
+          collapsed: true,
+          items: [
+            'products/chaos/picasso-treasury',
+            'products/chaos/use-cases'
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Parachain Vault Strategy',
+          link: {
+            type: 'doc',
+            id: 'products/CHAOS-fNFT-overview'
+          },
+          collapsible: true,
+          collapsed: true,
+          items: [
+            'products/parachain-vault-strategy/vault-process-in-detail/vault-process-in-detail',
+            'products/parachain-vault-strategy/contracts-technical-details/contracts-technical-details',
+          ],
         }
       ]
-    }
+    },
   ],
 };
 
