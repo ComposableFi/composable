@@ -41,7 +41,7 @@ export const ClaimableRewards: React.FC<BoxProps> = ({ ...boxProps }) => {
       <Grid container spacing={3}>
         {claimableAssets.map((asset) => {
           return (
-            <Grid item {...defaultPageSize}>
+            <Grid key={asset.symbol} item {...defaultPageSize}>
               <TokenValue
                 token={asset}
                 value={asset.claimable.toFixed(DEFAULT_UI_FORMAT_DECIMALS)}
