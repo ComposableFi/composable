@@ -77,27 +77,23 @@ let
               '';
             };
           };
-        in {
-          "${domain}" = {
-            enableACME = true;
-            forceSSL = true;
-            locations = proxyChain "dali" 9988 // proxyChain "rococo" 9944
-              // proxyChain "karura" 9999 // {
-                "/" = { root = "${book}/book"; };
-                "/subsquid/" = { proxyPass = "http://127.0.0.1:4350/"; };
-              };
+          mkDomain = name: attrs: {
+            "${name}" = {
+              enableACME = true;
+              forceSSL = true;
+            } // attrs;
           };
-          "pablo.${domain}" = {
-            enableACME = true;
-            forceSSL = true;
-            locations."/" = { proxyPass = "http://127.0.0.1:8001/"; };
-          };
-          "picasso.${domain}" = {
-            enableACME = true;
-            forceSSL = true;
-            locations."/" = { proxyPass = "http://127.0.0.1:8002/"; };
-          };
-        };
+        in mkDomain domain ({
+          locations = proxyChain "dali" 9988 // proxyChain "rococo" 9944
+            // proxyChain "karura" 9999 // proxyChain "statemine" 10008 // {
+              "/" = { root = "${book}/book"; };
+              "/subsquid/" = { proxyPass = "http://127.0.0.1:4350/"; };
+            };
+        }) // mkDomain "pablo.${domain}" ({
+          locations."/" = { proxyPass = "http://127.0.0.1:8001/"; };
+        }) // mkDomain "picasso.${domain}" ({
+          locations."/" = { proxyPass = "http://127.0.0.1:8002/"; };
+        });
       };
     };
   };
