@@ -60,14 +60,86 @@ const sidebars = {
           ],
         }
       ]
-    }
+    },
+    {
+      type: 'category',
+      label: 'Products',
 
-    // 'hello',
-    // {
-    //   type: 'category',
-    //   label: 'Tutorial',
-    //   items: ['tutorial-basics/create-a-document'],
-    // },
+      link: {
+        type: 'generated-index',
+        slug: 'parachains',
+      },
+      collapsible: false,
+      items: [
+        {
+          type: 'category',
+          label: 'Composable\'s Cross-Chain Virtual Machine',
+          link: {
+            type: 'doc',
+            id: 'products/cross-chain-virtual-machine'
+          },
+          collapsible: true,
+          collapsed: true,
+          items: [
+            'products/cross-chain-virtual-machine/writing-smart-contracts-with-cosmwasm',
+            'products/cross-chain-virtual-machine/how-the-xcvm-works',
+            'products/cross-chain-virtual-machine/routing-layer',
+            'products/cross-chain-virtual-machine/routing-layer-libraries'
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Centauri',
+          link: {
+            type: 'doc',
+            id: 'products/centauri-overview'
+          },
+          collapsible: true,
+          collapsed: true,
+          items: [
+            'products/centauri/light-clients',
+            'products/centauri/merkle-mountain-ranges',
+            'products/centauri/cosmos11-BEEFY-COSMOS-IBC-light-client',
+            'products/centauri/expanding-ibc-protocol'
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Mosaic',
+          link: {
+            type: 'doc',
+            id: 'products/mosaic-overview'
+          },
+          collapsible: true,
+          collapsed: true,
+          items: [
+            'products/mosaic/dynamic-fee-model',
+            'products/mosaic/liquidity-forecasting',
+            'products/mosaic/passive-liquidity-rebalancing',
+            'products/mosaic/active-liquidity-management',
+            'products/mosaic/single-sided-staking',
+            'products/mosaic/additional-use-cases',
+            'products/mosaic/mosaic-integrations',
+            'products/mosaic/mosaic-pallet',
+            'products/mosaic/mosaic-phase1-result',
+            {
+              type: 'category',
+              label: 'Mural: NFT Transfers on Mosaic via the Summoner Vault',
+              link: {
+                type: 'doc',
+                id: 'products/mosaic/mural-NFT-transfers/mural-NFT-transfers'
+              },
+              collapsible: true,
+              collapsed: true,
+              items: [
+                'products/mosaic/mural-NFT-transfers/NFT-transfer-flow',
+                'products/mosaic/mural-NFT-transfers/NFT-contract-details'
+              ],
+            },
+          ],
+        }
+      ]
+    }
   ],
 };
 
