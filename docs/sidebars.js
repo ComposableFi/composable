@@ -137,6 +137,20 @@ const sidebars = {
               ],
             },
           ],
+        },
+        {
+          type: 'category',
+          label: 'Apollo',
+          link: {
+            type: 'doc',
+            id: 'products/apollo-overview'
+          },
+          collapsible: true,
+          collapsed: true,
+          items: [
+            'products/apollo/apollo-how-it-works',
+            'products/apollo/apollo-deployment'
+          ],
         }
       ]
     }
