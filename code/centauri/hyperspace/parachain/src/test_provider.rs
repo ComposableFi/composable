@@ -11,7 +11,6 @@ use grandpa_prover::GrandpaProver;
 use ibc::{
 	applications::transfer::{msgs::transfer::MsgTransfer, PrefixedCoin},
 	core::ics24_host::identifier::{ChannelId, ClientId, PortId},
-	events::IbcEvent,
 	timestamp::Timestamp,
 };
 use ibc_rpc::IbcApiClient;
@@ -40,7 +39,6 @@ use subxt::{
 	tx::{AssetTip, BaseExtrinsicParamsBuilder, ExtrinsicParams, SubstrateExtrinsicParamsBuilder},
 	Config,
 };
-use tokio_stream::wrappers::BroadcastStream;
 
 impl<T: Config + Send + Sync> ParachainClient<T>
 where
@@ -64,10 +62,6 @@ where
 {
 	pub fn set_client_id(&mut self, client_id: ClientId) {
 		self.client_id = Some(client_id)
-	}
-
-	pub fn set_channel_whitelist(&mut self, channel_whitelist: Vec<(ChannelId, PortId)>) {
-		self.channel_whitelist = channel_whitelist;
 	}
 
 	/// Construct a beefy client state to be submitted to the counterparty chain
@@ -397,12 +391,6 @@ where
 		self.submit_call(call).await.map(|_| ())
 	}
 
-	async fn ibc_events(&self) -> Pin<Box<dyn Stream<Item = IbcEvent> + Send + Sync>> {
-		let stream =
-			BroadcastStream::new(self.sender.subscribe()).map(|result| result.unwrap_or_default());
-		Box::pin(Box::new(stream))
-	}
-
 	async fn subscribe_blocks(&self) -> Pin<Box<dyn Stream<Item = u64> + Send + Sync>> {
 		let para_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_ws_client) };
 		let stream = para_client
@@ -416,5 +404,9 @@ where
 			});
 
 		Box::pin(Box::new(stream))
+	}
+
+	fn set_channel_whitelist(&mut self, channel_whitelist: Vec<(ChannelId, PortId)>) {
+		self.channel_whitelist = channel_whitelist;
 	}
 }

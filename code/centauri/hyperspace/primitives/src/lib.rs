@@ -39,7 +39,9 @@ use ibc::{
 	timestamp::Timestamp,
 	Height,
 };
-use ibc_proto::ibc::core::channel::v1::QueryChannelsResponse;
+use ibc_proto::ibc::core::{
+	channel::v1::QueryChannelsResponse, connection::v1::IdentifiedConnection,
+};
 use ibc_rpc::PacketInfo;
 use pallet_ibc::light_clients::{AnyClientState, AnyConsensusState};
 
@@ -93,6 +95,9 @@ pub trait IbcProvider {
 	) -> Result<(Any, Vec<IbcEvent>, UpdateType), anyhow::Error>
 	where
 		T: Chain;
+
+	/// Return a stream that yields when new [`IbcEvents`] are parsed from a finality notification
+	async fn ibc_events(&self) -> Pin<Box<dyn Stream<Item = IbcEvent>>>;
 
 	/// Query client consensus state with proof
 	/// return the consensus height for the client along with the response
@@ -273,6 +278,13 @@ pub trait IbcProvider {
 	/// Should return a list of all clients on the chain
 	async fn query_channels(&self) -> Result<Vec<(ChannelId, PortId)>, Self::Error>;
 
+	/// Query all connection states for associated client
+	async fn query_connection_using_client(
+		&self,
+		height: u32,
+		client_id: String,
+	) -> Result<Vec<IdentifiedConnection>, Self::Error>;
+
 	/// Returns a boolean value that determines if the light client should receive a mandatory
 	/// update
 	fn is_update_required(
@@ -297,11 +309,11 @@ pub trait TestProvider: Chain + Clone + 'static {
 		timeout: pallet_ibc::Timeout,
 	) -> Result<(), Self::Error>;
 
-	/// Return a stream that yields when new [`IbcEvents`] are parsed from a finality notification
-	async fn ibc_events(&self) -> Pin<Box<dyn Stream<Item = IbcEvent> + Send + Sync>>;
-
 	/// Returns a stream that yields chain Block number and hash
 	async fn subscribe_blocks(&self) -> Pin<Box<dyn Stream<Item = u64> + Send + Sync>>;
+
+	/// Set the channel whitelist for the relayer task.
+	fn set_channel_whitelist(&mut self, channel_whitelist: Vec<(ChannelId, PortId)>);
 }
 
 /// Provides an interface for managing key management for signing.

@@ -22,10 +22,10 @@ use crate::client_message::{ClientMessage, RelayChainHeader};
 use alloc::{format, string::ToString, vec, vec::Vec};
 use codec::Decode;
 use core::marker::PhantomData;
-use grandpa_client::justification::{
-	check_equivocation_proof, find_scheduled_change, AncestryChain,
+use grandpa_client_primitives::{
+	justification::{check_equivocation_proof, find_scheduled_change, AncestryChain},
+	ParachainHeadersWithFinalityProof,
 };
-use grandpa_client_primitives::ParachainHeadersWithFinalityProof;
 use ibc::{
 	core::{
 		ics02_client::{

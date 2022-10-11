@@ -142,7 +142,9 @@ type StakingPosition @entity @index(fields: ["fnftCollectionId", "fnftInstanceId
   assetId: String!
   amount: BigInt!
   startTimestamp: BigInt!
+  duration: BigInt!
   endTimestamp: BigInt
+  rewardMultiplier: Int!
   source: LockedSource!
 }
 

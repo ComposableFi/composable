@@ -15,6 +15,11 @@ use crate::{
 };
 use alloc::{format, vec::Vec};
 
+#[derive(codec::Decode, codec::Encode)]
+pub struct ConsensusProofwithHostConsensusStateProof {
+	pub host_consensus_state_proof: Vec<u8>,
+	pub consensus_proof: Vec<u8>,
+}
 /// Verifies the authenticity and semantic correctness of a commitment `proof`. The commitment
 /// claims to prove that an object of type connection exists on the source chain (i.e., the chain
 /// which created this proof). This object must match the state of `expected_conn`.
@@ -129,12 +134,7 @@ pub fn verify_consensus_proof<Ctx: ReaderContext>(
 
 	// todo: we can remove this hack, once this is merged https://github.com/cosmos/ibc/pull/839
 	let (consensus_proof, expected_consensus) = match ctx.host_client_type() {
-		client_type if client_type.contains("beefy") || client_type.contains("near") => {
-			#[derive(codec::Decode)]
-			struct ConsensusProofwithHostConsensusStateProof {
-				host_consensus_state_proof: Vec<u8>,
-				consensus_proof: Vec<u8>,
-			}
+		client_type if !client_type.contains("tendermint") => {
 			// if the host is beefy or near, we need to decode the proof before passing it on.
 			let connection_proof: ConsensusProofwithHostConsensusStateProof =
 				codec::Decode::decode(&mut proof.proof().as_bytes()).map_err(|e| {

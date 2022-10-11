@@ -3,7 +3,7 @@ authors = ["Composable Developers"]
 edition = "2021"
 homepage = "https://composable.finance"
 name = "composable"
-version = "2.3.2"
+version = "2.3.3"
 
 [[bin]]
 name = "composable"
@@ -39,24 +39,26 @@ members = [
   "parachain/runtime/dali-wasm",
   "parachain/runtime/composable",
   "parachain/runtime/composable-wasm",
-  "utils/common",
   "utils/price-feed",
   "utils/collator-sidecar",
-  # "simnode/simnode-node",
-  "simnode/simnode-tests",
-  "simnode/common",
+  "utils/subxt-codegen",
   "utils/xcmp",
   "utils/wasm-optimizer",
   "xcvm/lib/*",
   "xcvm/cosmwasm/contracts/*",
 
-  # ibc implementation
+  # simnode
+  "simnode/simnode-node",
+  "simnode/simnode-tests",
+  "simnode/common",
+
+  # IBC implementation
   "centauri/ibc/derive",
   "centauri/ibc/modules",
   "centauri/ibc/proto",
   "centauri/ibc/proto-compiler",
 
-  # algorithms
+  # Centauri algorithms
   "centauri/algorithms/beefy/verifier",
   "centauri/algorithms/beefy/prover",
   "centauri/algorithms/beefy/primitives",
@@ -64,14 +66,14 @@ members = [
   "centauri/algorithms/grandpa/prover",
   "centauri/algorithms/grandpa/primitives",
 
-  # ibc light clients
+  # IBC light clients
   "centauri/light-clients/common",
   "centauri/light-clients/ics07-tendermint",
   "centauri/light-clients/ics10-grandpa",
   "centauri/light-clients/ics11-beefy",
   "centauri/light-clients/ics13-near",
 
-  # hyperspace
+  # Hyperspace Relayer
   "centauri/hyperspace",
   "centauri/hyperspace/primitives",
   "centauri/hyperspace/parachain",

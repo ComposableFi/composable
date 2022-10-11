@@ -1,6 +1,6 @@
 #![allow(clippy::all)]
 
-use std::{fmt::Display, str::FromStr, sync::Arc};
+use std::{str::FromStr, sync::Arc};
 
 pub mod chain;
 pub mod error;
@@ -11,8 +11,8 @@ pub mod provider;
 pub mod signer;
 pub mod utils;
 
-pub mod light_client_protocol;
-#[cfg(feature = "testing")]
+pub mod finality_protocol;
+#[cfg(any(test, feature = "testing"))]
 pub mod test_provider;
 
 use error::Error;
@@ -40,18 +40,16 @@ use subxt::{
 use tokio::sync::broadcast::{self, Sender};
 
 use crate::utils::{fetch_max_extrinsic_weight, unsafe_cast_to_jsonrpsee_client};
-use primitives::{Chain, KeyProvider};
+use primitives::KeyProvider;
 
-use crate::{light_client_protocol::LightClientProtocol, signer::ExtrinsicSigner};
+use crate::{finality_protocol::FinalityProtocol, signer::ExtrinsicSigner};
 use grandpa_light_client_primitives::ParachainHeadersWithFinalityProof;
 use grandpa_prover::GrandpaProver;
-use ibc::tx_msg::Msg;
 use ics10_grandpa::client_state::ClientState as GrandpaClientState;
 use jsonrpsee_ws_client::WsClientBuilder;
 use sp_keystore::testing::KeyStore;
 use sp_runtime::traits::{One, Zero};
 use subxt::tx::{SubstrateExtrinsicParamsBuilder, TxPayload};
-use tendermint_proto::Protobuf;
 
 /// Implements the [`crate::Chain`] trait for parachains.
 /// This is responsible for:
@@ -90,8 +88,8 @@ pub struct ParachainClient<T: subxt::Config> {
 	pub max_extrinsic_weight: u64,
 	/// Channels cleared for packet relay
 	pub channel_whitelist: Vec<(ChannelId, PortId)>,
-	/// Light client protocol
-	pub light_client_protocol: LightClientProtocol,
+	/// Finality protocol
+	pub finality_protocol: FinalityProtocol,
 }
 
 enum KeyType {
@@ -138,14 +136,14 @@ pub struct ParachainClientConfig {
 	pub client_id: Option<ClientId>,
 	/// Commitment prefix
 	pub commitment_prefix: Bytes,
-	/// Path to a keystore file
+	/// Raw private key for signing transactions
 	pub private_key: String,
 	/// used for encoding relayer address.
 	pub ss58_version: u8,
 	/// Channels cleared for packet relay
 	pub channel_whitelist: Vec<(ChannelId, PortId)>,
-	/// Light client protocol
-	pub light_client_protocol: LightClientProtocol,
+	/// Finality protocol
+	pub finality_protocol: FinalityProtocol,
 	/// Digital signature scheme
 	pub key_type: String,
 }
@@ -237,7 +235,7 @@ where
 			relay_ws_client,
 			ss58_version: Ss58AddressFormat::from(config.ss58_version),
 			channel_whitelist: config.channel_whitelist,
-			light_client_protocol: config.light_client_protocol,
+			finality_protocol: config.finality_protocol,
 		})
 	}
 
@@ -346,12 +344,8 @@ where
 					e
 				))
 			})?;
-		result.ok_or_else(|| {
-			Error::from(
-				"[query_finalized_parachain_headers_with_proof] Failed due to empty finality proof"
-					.to_string(),
-			)
-		})
+
+		Ok(result)
 	}
 
 	/// Construct the [`ParachainHeadersWithFinalityProof`] for parachain headers with the given

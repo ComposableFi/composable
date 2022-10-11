@@ -2,7 +2,7 @@
 name = "hyperspace-testsuite"
 version = "0.1.0"
 edition = "2021"
-authors = ["Composable Developers"]
+authors = ["Seun Lanlege <seunlanlege@gmail.com>", "David Salami <david.salami@gmail.com>"]
 
 [dependencies]
 tokio = { version = "1.19.2", features = ["macros", "sync", "time"] }
@@ -10,7 +10,7 @@ log = "0.4.17"
 futures = "0.3.24"
 json = { version = "1.0.85", package = "serde_json" }
 
-ibc = { path = "../../ibc/modules", features = [] }
+ibc = { path = "../../ibc/modules" }
 ibc-proto = { path = "../../ibc/proto" }
 tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8" }
 
@@ -25,9 +25,8 @@ sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-subxt = { git = "https://github.com/composableFi/subxt", rev = "f649deb5bba9740fc5e8d02afd1a288b89cebef6" }
+subxt = { git = "https://github.com/paritytech/subxt", rev = "51179a8b72472d0b43c91cda75a1ddc3fddb9555" }
 
 # We need this so the tests run sequentially
 [[test]]
 name = "parachain_parachain"
-harness = false

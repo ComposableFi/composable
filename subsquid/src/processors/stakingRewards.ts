@@ -31,6 +31,7 @@ interface StakedEvent {
   durationPreset: bigint;
   fnftCollectionId: bigint;
   fnftInstanceId: bigint;
+  rewardMultiplier: number;
   keepAlive: boolean;
 }
 
@@ -65,6 +66,7 @@ function getStakedEvent(event: StakingRewardsStakedEvent): StakedEvent {
     durationPreset,
     fnftCollectionId,
     fnftInstanceId,
+    rewardMultiplier,
     keepAlive,
   } = event.asV2401;
   return {
@@ -74,6 +76,7 @@ function getStakedEvent(event: StakingRewardsStakedEvent): StakedEvent {
     durationPreset,
     fnftCollectionId,
     fnftInstanceId,
+    rewardMultiplier,
     keepAlive,
   };
 }
@@ -113,6 +116,7 @@ export function createRewardPool(eventId: string, poolId: bigint): RewardPool {
  * @param owner
  * @param amount
  * @param duration
+ * @param rewardMultiplier
  * @param event
  * @param startTimestamp
  */
@@ -123,6 +127,7 @@ export function createStakingPosition(
   owner: string,
   amount: bigint,
   duration: bigint,
+  rewardMultiplier: number,
   event: Event,
   startTimestamp: bigint
 ): StakingPosition {
@@ -134,7 +139,9 @@ export function createStakingPosition(
     owner,
     amount,
     startTimestamp,
+    duration,
     endTimestamp: BigInt(startTimestamp + BigInt(duration * 1_000n)),
+    rewardMultiplier,
     assetId,
     source: LockedSource.StakingRewards,
   });
@@ -182,7 +189,9 @@ export function splitStakingPosition(
     owner: position.owner,
     amount: newAmount,
     startTimestamp: position.startTimestamp,
+    duration: position.duration,
     endTimestamp: position.endTimestamp,
+    rewardMultiplier: position.rewardMultiplier,
     assetId: position.assetId,
     source: LockedSource.StakingRewards,
   });
@@ -228,8 +237,14 @@ export async function processStakedEvent(
   const evt = new StakingRewardsStakedEvent(ctx);
   const stakedEvent = getStakedEvent(evt);
   const owner = encodeAccount(stakedEvent.owner);
-  const { poolId, fnftCollectionId, fnftInstanceId, amount, durationPreset } =
-    stakedEvent;
+  const {
+    poolId,
+    fnftCollectionId,
+    fnftInstanceId,
+    amount,
+    durationPreset,
+    rewardMultiplier,
+  } = stakedEvent;
 
   const { event } = await saveAccountAndEvent(
     ctx,
@@ -244,6 +259,7 @@ export async function processStakedEvent(
     owner,
     amount,
     durationPreset,
+    rewardMultiplier,
     event,
     BigInt(ctx.block.timestamp)
   );

@@ -1,15 +1,14 @@
 use futures::StreamExt;
 use hyperspace::logging;
 use hyperspace_primitives::{mock::LocalClientTypes, IbcProvider, KeyProvider};
-use hyperspace_testsuite::setup_connection_and_channel;
-use ibc::{
-	core::{ics02_client::msgs::create_client::MsgCreateAnyClient, ics24_host::identifier::PortId},
-	tx_msg::Msg,
+use hyperspace_testsuite::{
+	ibc_channel_close, ibc_messaging_packet_height_timeout_with_connection_delay,
+	ibc_messaging_packet_timeout_on_channel_close,
+	ibc_messaging_packet_timestamp_timeout_with_connection_delay,
+	ibc_messaging_with_connection_delay,
 };
-use parachain::{
-	light_client_protocol::LightClientProtocol, ParachainClient, ParachainClientConfig,
-};
-
+use ibc::{core::ics02_client::msgs::create_client::MsgCreateAnyClient, tx_msg::Msg};
+use parachain::{finality_protocol::FinalityProtocol, ParachainClient, ParachainClientConfig};
 use subxt::tx::SubstrateExtrinsicParams;
 
 use tendermint_proto::Protobuf;
@@ -69,7 +68,7 @@ async fn setup_clients() -> (ParachainClient<DefaultConfig>, ParachainClient<Def
 		commitment_prefix: args.connection_prefix_b.as_bytes().to_vec().into(),
 		ss58_version: 49,
 		channel_whitelist: vec![],
-		light_client_protocol: LightClientProtocol::Grandpa,
+		finality_protocol: FinalityProtocol::Grandpa,
 		private_key: "//Alice".to_string(),
 		key_type: "sr25519".to_string(),
 	};
@@ -83,7 +82,7 @@ async fn setup_clients() -> (ParachainClient<DefaultConfig>, ParachainClient<Def
 		private_key: "//Alice".to_string(),
 		ss58_version: 49,
 		channel_whitelist: vec![],
-		light_client_protocol: LightClientProtocol::Grandpa,
+		finality_protocol: FinalityProtocol::Grandpa,
 		key_type: "sr25519".to_string(),
 	};
 
@@ -114,8 +113,12 @@ async fn setup_clients() -> (ParachainClient<DefaultConfig>, ParachainClient<Def
 		return (chain_a, chain_b)
 	}
 
-	chain_a.set_pallet_params(true, true).await.unwrap();
-	chain_b.set_pallet_params(true, true).await.unwrap();
+	let (res_1, res_2) = futures::join!(
+		chain_a.set_pallet_params(true, true),
+		chain_b.set_pallet_params(true, true)
+	);
+	res_1.unwrap();
+	res_2.unwrap();
 
 	{
 		// Get initial beefy state
@@ -166,137 +169,20 @@ async fn setup_clients() -> (ParachainClient<DefaultConfig>, ParachainClient<Def
 	(chain_a, chain_b)
 }
 
-#[tokio::main]
-async fn main() {
+#[tokio::test]
+async fn parachain_to_parachain_ibc_messaging_full_integration_test() {
 	logging::setup_logging();
+	let (mut chain_a, mut chain_b) = setup_clients().await;
 	// Run tests sequentially
 
-	// no timeouts
-	parachain_to_parachain_ibc_messaging_with_connection_delay().await;
 	// no timeouts + connection delay
-	parachain_to_parachain_ibc_messaging_without_connection_delay().await;
-
-	// todo: timeouts without connection delay
+	ibc_messaging_with_connection_delay(&mut chain_a, &mut chain_b).await;
 
 	// timeouts + connection delay
-	parachain_to_parachain_ibc_messaging_packet_height_timeout_with_connection_delay().await;
-	parachain_to_parachain_ibc_messaging_packet_timeout_timestamp_with_connection_delay().await;
+	ibc_messaging_packet_height_timeout_with_connection_delay(&mut chain_a, &mut chain_b).await;
+	ibc_messaging_packet_timestamp_timeout_with_connection_delay(&mut chain_a, &mut chain_b).await;
 
 	// channel closing semantics
-	parachain_to_parachain_ibc_messaging_packet_timeout_on_channel_close().await;
-	parachain_to_parachain_ibc_channel_close().await;
-}
-
-async fn parachain_to_parachain_ibc_messaging_without_connection_delay() {
-	let (mut chain_a, mut chain_b) = setup_clients().await;
-	let (handle, channel_id, channel_b, _connection_id) =
-		setup_connection_and_channel(&chain_a, &chain_b, 0).await;
-	handle.abort();
-	// Set channel whitelist and restart relayer loop
-	chain_a.set_channel_whitelist(vec![(channel_id, PortId::transfer())]);
-	chain_b.set_channel_whitelist(vec![(channel_b, PortId::transfer())]);
-	let client_a_clone = chain_a.clone();
-	let client_b_clone = chain_b.clone();
-	let handle = tokio::task::spawn(async move {
-		hyperspace::relay(client_a_clone, client_b_clone).await.unwrap()
-	});
-	hyperspace_testsuite::send_packet_and_assert_acknowledgment(&chain_a, &chain_b, channel_id)
-		.await;
-	handle.abort()
-}
-
-async fn parachain_to_parachain_ibc_messaging_packet_height_timeout_with_connection_delay() {
-	let (mut chain_a, mut chain_b) = setup_clients().await;
-	let (handle, channel_id, channel_b, _connection_id) =
-		setup_connection_and_channel(&chain_a, &chain_b, 60 * 2).await;
-	handle.abort();
-	// Set channel whitelist and restart relayer loop
-	chain_a.set_channel_whitelist(vec![(channel_id, PortId::transfer())]);
-	chain_b.set_channel_whitelist(vec![(channel_b, PortId::transfer())]);
-	let client_a_clone = chain_a.clone();
-	let client_b_clone = chain_b.clone();
-	let handle = tokio::task::spawn(async move {
-		hyperspace::relay(client_a_clone, client_b_clone).await.unwrap()
-	});
-	hyperspace_testsuite::send_packet_and_assert_height_timeout(&chain_a, &chain_b, channel_id)
-		.await;
-	handle.abort()
-}
-
-async fn parachain_to_parachain_ibc_messaging_packet_timeout_timestamp_with_connection_delay() {
-	let (mut chain_a, mut chain_b) = setup_clients().await;
-	let (handle, channel_id, channel_b, _connection_id) =
-		setup_connection_and_channel(&chain_a, &chain_b, 60 * 2).await;
-	// Set channel whitelist and restart relayer loop
-	handle.abort();
-	chain_a.set_channel_whitelist(vec![(channel_id, PortId::transfer())]);
-	chain_b.set_channel_whitelist(vec![(channel_b, PortId::transfer())]);
-	let client_a_clone = chain_a.clone();
-	let client_b_clone = chain_b.clone();
-	let handle = tokio::task::spawn(async move {
-		hyperspace::relay(client_a_clone, client_b_clone).await.unwrap()
-	});
-	hyperspace_testsuite::send_packet_and_assert_timestamp_timeout(&chain_a, &chain_b, channel_id)
-		.await;
-	handle.abort()
-}
-
-/// Send a packet over a connection with a connection delay
-/// and assert the sending chain only sees the packet after the
-/// delay has elapsed.
-async fn parachain_to_parachain_ibc_messaging_with_connection_delay() {
-	let (mut chain_a, mut chain_b) = setup_clients().await;
-	let (handle, channel_id, channel_b, _connection_id) =
-		setup_connection_and_channel(&chain_a, &chain_b, 60 * 5).await; // 5 mins delay
-	handle.abort();
-	// Set channel whitelist and restart relayer loop
-	chain_a.set_channel_whitelist(vec![(channel_id, PortId::transfer())]);
-	chain_b.set_channel_whitelist(vec![(channel_b, PortId::transfer())]);
-	let client_a_clone = chain_a.clone();
-	let client_b_clone = chain_b.clone();
-	let handle = tokio::task::spawn(async move {
-		hyperspace::relay(client_a_clone, client_b_clone).await.unwrap()
-	});
-	hyperspace_testsuite::send_packet_with_connection_delay(&chain_a, &chain_b, channel_id).await;
-	handle.abort()
-}
-
-async fn parachain_to_parachain_ibc_channel_close() {
-	let (mut chain_a, mut chain_b) = setup_clients().await;
-	let (handle, channel_id, channel_b, _connection_id) =
-		setup_connection_and_channel(&chain_a, &chain_b, 60 * 2).await;
-	handle.abort();
-	// Set channel whitelist and restart relayer loop
-	chain_a.set_channel_whitelist(vec![(channel_id, PortId::transfer())]);
-	chain_b.set_channel_whitelist(vec![(channel_b, PortId::transfer())]);
-	let client_a_clone = chain_a.clone();
-	let client_b_clone = chain_b.clone();
-	let handle = tokio::task::spawn(async move {
-		hyperspace::relay(client_a_clone, client_b_clone).await.unwrap()
-	});
-	hyperspace_testsuite::send_channel_close_init_and_assert_channel_close_confirm(
-		&chain_a, &chain_b, channel_id,
-	)
-	.await;
-	handle.abort()
-}
-
-async fn parachain_to_parachain_ibc_messaging_packet_timeout_on_channel_close() {
-	let (mut chain_a, mut chain_b) = setup_clients().await;
-	let (handle, channel_id, channel_b, _connection_id) =
-		setup_connection_and_channel(&chain_a, &chain_b, 0).await;
-	handle.abort();
-	// Set channel whitelist and restart relayer loop
-	chain_a.set_channel_whitelist(vec![(channel_id, PortId::transfer())]);
-	chain_b.set_channel_whitelist(vec![(channel_b, PortId::transfer())]);
-	let client_a_clone = chain_a.clone();
-	let client_b_clone = chain_b.clone();
-	let handle = tokio::task::spawn(async move {
-		hyperspace::relay(client_a_clone, client_b_clone).await.unwrap()
-	});
-	hyperspace_testsuite::send_packet_and_assert_timeout_on_channel_close(
-		&chain_a, &chain_b, channel_id,
-	)
-	.await;
-	handle.abort()
+	ibc_messaging_packet_timeout_on_channel_close(&mut chain_a, &mut chain_b).await;
+	ibc_channel_close(&mut chain_a, &mut chain_b).await;
 }

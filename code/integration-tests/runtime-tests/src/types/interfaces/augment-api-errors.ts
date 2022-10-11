@@ -191,7 +191,6 @@ declare module '@polkadot/api-base/types/errors' {
       CodeValidation: AugmentedError<ApiType>;
       ContractAlreadyExists: AugmentedError<ApiType>;
       ContractHasNoInfo: AugmentedError<ApiType>;
-      ContractNonceOverflow: AugmentedError<ApiType>;
       ContractNotFound: AugmentedError<ApiType>;
       ContractTrapped: AugmentedError<ApiType>;
       Instrumentation: AugmentedError<ApiType>;
@@ -1250,6 +1249,7 @@ declare module '@polkadot/api-base/types/errors' {
        * Invalid end block number provided for creating a pool.
        **/
       EndBlockMustBeInTheFuture: AugmentedError<ApiType>;
+      FnftNotFound: AugmentedError<ApiType>;
       /**
        * Reward's max limit reached.
        **/
@@ -1291,7 +1291,7 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       RewardsPoolNotFound: AugmentedError<ApiType>;
       /**
-       * The rewards pot (cold wallet) for this pool is empty.
+       * The rewards pot for this pool is empty.
        **/
       RewardsPotEmpty: AugmentedError<ApiType>;
       /**

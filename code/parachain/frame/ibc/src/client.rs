@@ -194,6 +194,7 @@ where
 		height: Height,
 		proof: Option<Vec<u8>>,
 	) -> Result<AnyConsensusState, ICS02Error> {
+		log::trace!(target: "pallet_ibc", "in client: [host_consensus_state]");
 		use codec::Compact;
 		use sp_core::H256;
 		use sp_runtime::traits::{BlakeTwo256, Header};
@@ -228,7 +229,7 @@ where
 			})?;
 		let header = T::Header::decode(&mut &connection_proof.header[..]).map_err(|e| {
 			ICS02Error::implementation_specific(format!(
-				"[host_consensus_state]: Failed to decode header: {}",
+				"[host_consensus_state]: Failed to decode header: {:?}",
 				e
 			))
 		})?;
@@ -252,18 +253,20 @@ where
 				proof,
 				&vec![(key, Some(ext))],
 			)
-			.map_err(|_| ICS02Error::implementation_specific(format!("Invalid extrinsic proof")))?;
+			.map_err(|_err| {
+				ICS02Error::implementation_specific(format!("Invalid extrinsic proof"))
+			})?;
 
 			let (_, _, timestamp): (u8, u8, Compact<u64>) = codec::Decode::decode(&mut &ext[2..])
 				.map_err(|err| {
-				ICS02Error::implementation_specific(format!("Failed to decode extrinsic: {err}"))
+				ICS02Error::implementation_specific(format!("Failed to decode extrinsic: {err:?}"))
 			})?;
 
 			let duration = core::time::Duration::from_millis(timestamp.into());
 			Timestamp::from_nanoseconds(duration.as_nanos().saturated_into::<u64>())
 				.map_err(|e| {
 					ICS02Error::implementation_specific(format!(
-						"[host_consensus_state]: error decoding timestamp{}",
+						"[host_consensus_state]: error decoding timestamp {:?}",
 						e
 					))
 				})?

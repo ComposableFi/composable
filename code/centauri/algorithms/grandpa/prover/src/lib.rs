@@ -24,8 +24,8 @@ use codec::{Decode, Encode};
 use finality_grandpa_rpc::GrandpaApiClient;
 use jsonrpsee::{async_client::Client, ws_client::WsClientBuilder};
 use primitives::{
-	parachain_header_storage_key, ClientState, FinalityProof, ParachainHeaderProofs,
-	ParachainHeadersWithFinalityProof,
+	justification::GrandpaJustification, parachain_header_storage_key, ClientState, FinalityProof,
+	ParachainHeaderProofs, ParachainHeadersWithFinalityProof,
 };
 use serde::{Deserialize, Serialize};
 use sp_core::H256;
@@ -181,10 +181,11 @@ where
 		mut latest_finalized_height: u32,
 		previous_finalized_height: u32,
 		header_numbers: Vec<T::BlockNumber>,
-	) -> Result<Option<ParachainHeadersWithFinalityProof<H>>, anyhow::Error>
+	) -> Result<ParachainHeadersWithFinalityProof<H>, anyhow::Error>
 	where
 		H: Header,
 		H::Hash: From<T::Hash>,
+		T::Hash: From<H::Hash>,
 		T::BlockNumber: One,
 	{
 		let session_end = self.session_end_for_block(previous_finalized_height).await?;
@@ -193,12 +194,21 @@ where
 			latest_finalized_height = session_end
 		}
 
-		let latest_finalized_hash = self
-			.relay_client
-			.rpc()
-			.block_hash(Some(latest_finalized_height.into()))
-			.await?
-			.ok_or_else(|| anyhow!("Block hash not found for number: {latest_finalized_height}"))?;
+		let encoded = GrandpaApiClient::<JustificationNotification, H256, u32>::prove_finality(
+			// we cast between the same type but different crate versions.
+			&*unsafe {
+				unsafe_arc_cast::<_, jsonrpsee_ws_client::WsClient>(self.relay_ws_client.clone())
+			},
+			latest_finalized_height,
+		)
+		.await?
+		.ok_or_else(|| anyhow!("No justification found for block: {:?}", latest_finalized_height))?
+		.0;
+		let mut finality_proof = FinalityProof::<H>::decode(&mut &encoded[..])?;
+		let justification =
+			GrandpaJustification::<H>::decode(&mut &finality_proof.justification[..])?;
+
+		let latest_finalized_hash = justification.commit.target_hash;
 		let previous_finalized_hash = self
 			.relay_client
 			.rpc()
@@ -210,23 +220,11 @@ where
 		let latest_finalized_header = self
 			.relay_client
 			.rpc()
-			.header(Some(latest_finalized_hash))
+			.header(Some(latest_finalized_hash.into()))
 			.await?
 			.ok_or_else(|| anyhow!("Header not found!"))?;
 
-		let encoded = GrandpaApiClient::<JustificationNotification, H256, u32>::prove_finality(
-			// we cast between the same type but different crate versions.
-			&*unsafe {
-				unsafe_arc_cast::<_, jsonrpsee_ws_client::WsClient>(self.relay_ws_client.clone())
-			},
-			u32::from(*latest_finalized_header.number()),
-		)
-		.await?
-		.ok_or_else(|| {
-			anyhow!("No justification found for block: {:?}", latest_finalized_header.hash())
-		})?
-		.0;
-		let mut finality_proof = FinalityProof::<H>::decode(&mut &encoded[..])?;
+		// overwrite unknown headers
 		finality_proof.unknown_headers = {
 			let mut unknown_headers = vec![H::decode(&mut &latest_finalized_header.encode()[..])?];
 			let mut current = *latest_finalized_header.parent_hash();
@@ -259,11 +257,6 @@ where
 			.await?;
 
 		let mut parachain_headers = BTreeMap::<H::Hash, ParachainHeaderProofs>::default();
-
-		// no new parachain headers have been finalized
-		if change_set.len() == 1 {
-			return Ok(None)
-		}
 
 		for changes in change_set {
 			let header = self
@@ -308,7 +301,7 @@ where
 			parachain_headers.insert(header.hash().into(), proofs);
 		}
 
-		Ok(Some(ParachainHeadersWithFinalityProof { finality_proof, parachain_headers }))
+		Ok(ParachainHeadersWithFinalityProof { finality_proof, parachain_headers })
 	}
 
 	// Queries the block at which the epoch for the given block belongs to ends.

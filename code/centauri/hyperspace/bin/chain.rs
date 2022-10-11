@@ -61,7 +61,7 @@ pub enum AnyChain {
 #[derive(From)]
 pub enum AnyFinalityEvent {
 	#[cfg(feature = "parachain")]
-	Parachain(parachain::light_client_protocol::FinalityEvent),
+	Parachain(parachain::finality_protocol::FinalityEvent),
 }
 
 #[derive(Error, Debug)]

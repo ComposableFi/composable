@@ -15,9 +15,8 @@
 
 use crate::{
 	error::Error,
-	proto,
 	proto::{
-		client_message, ClientMessage as RawClientMessage, Header as RawHeader,
+		self, client_message, ClientMessage as RawClientMessage, Header as RawHeader,
 		Misbehaviour as RawMisbehaviour,
 	},
 };

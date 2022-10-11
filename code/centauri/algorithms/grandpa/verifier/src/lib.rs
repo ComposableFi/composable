@@ -20,7 +20,6 @@
 
 extern crate alloc;
 
-use crate::justification::{find_scheduled_change, AncestryChain, GrandpaJustification};
 use alloc::vec;
 use anyhow::anyhow;
 use codec::{Decode, Encode};
@@ -29,13 +28,14 @@ use hash_db::Hasher;
 use light_client_common::state_machine;
 use primitive_types::H256;
 use primitives::{
-	error, parachain_header_storage_key, ClientState, HostFunctions, ParachainHeaderProofs,
+	error,
+	justification::{find_scheduled_change, AncestryChain, GrandpaJustification},
+	parachain_header_storage_key, ClientState, HostFunctions, ParachainHeaderProofs,
 	ParachainHeadersWithFinalityProof,
 };
 use sp_runtime::traits::Header;
 use sp_trie::{LayoutV0, StorageProof};
 
-pub mod justification;
 #[cfg(test)]
 mod tests;
 
@@ -56,10 +56,12 @@ where
 	let headers = AncestryChain::<H>::new(&finality_proof.unknown_headers);
 	let target = headers
 		.header(&finality_proof.block)
-		.ok_or_else(|| anyhow!("Target header not found!"))?;
+		.ok_or_else(|| anyhow!("Target header with hash: {:?} not found!", finality_proof.block))?;
 
 	// 2. next check that there exists a route from client.latest_relay_hash to target.
-	let finalized = headers.ancestry(client_state.latest_relay_hash, finality_proof.block)?;
+	let finalized = headers
+		.ancestry(client_state.latest_relay_hash, finality_proof.block)
+		.map_err(|_| anyhow!("Invalid ancestry!"))?;
 
 	// 3. verify justification.
 	let justification = GrandpaJustification::<H>::decode(&mut &finality_proof.justification[..])?;
