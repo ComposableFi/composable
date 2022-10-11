@@ -1058,9 +1058,32 @@
               '';
             };
 
-            devnet-all-dev-local = let
+            devnet-rococo-picasso-karura-statemine = let
               config =
                 (pkgs.callPackage ./scripts/polkadot-launch/all-dev-local.nix {
+                  chainspec = "picasso-dev";
+                  polkadot-bin = polkadot-node;
+                  composable-bin = composable-node;
+                  statemine-bin = statemine-node;
+                  acala-bin = acala-node;
+                }).result;
+              config-file = writeTextFile {
+                name = "all-dev-local.json";
+                text = "${builtins.toJSON config}";
+              };
+            in writeShellApplication {
+              name = "kusama-dali-karura";
+              text = ''
+                cat ${config-file}
+                rm -rf /tmp/polkadot-launch
+                ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
+              '';
+            };
+
+            devnet-rococo-dali-karura-statemine = let
+              config =
+                (pkgs.callPackage ./scripts/polkadot-launch/all-dev-local.nix {
+                  chainspec = "dali-dev";
                   polkadot-bin = polkadot-node;
                   composable-bin = composable-node;
                   statemine-bin = statemine-node;
@@ -1089,7 +1112,8 @@
               pkgs.composable.mkDevnetProgram "devnet-default"
               (import ./.nix/devnet-specs/default.nix {
                 inherit pkgs;
-                inherit devnet-rococo-dali-karura;
+                inherit price-feed;
+                devnet = devnet-rococo-dali-karura;
                 frontend = frontend-static;
               });
 
@@ -1103,7 +1127,8 @@
               pkgs.composable.mkDevnetProgram "devnet-persistent"
               (import ./.nix/devnet-specs/default.nix {
                 inherit pkgs;
-                devnet = devnet-all-dev-local;
+                inherit price-feed;
+                devnet = devnet-rococo-dali-karura-statemine;
                 frontend = frontend-static-persistent;
               });
 
@@ -1125,7 +1150,14 @@
             developers-minimal = base-shell.overrideAttrs (base:
               common-attrs // {
                 buildInputs = base.buildInputs
-                  ++ (with packages; [ rust-nightly subwasm ]);
+                  ++ (with packages; [ clang rust-nightly subwasm ]);
+                LD_LIBRARY_PATH = lib.strings.makeLibraryPath [
+                  stdenv.cc.cc.lib
+                  llvmPackages.libclang.lib
+                ];
+                LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
+                PROTOC = "${protobuf}/bin/protoc";
+                ROCKSDB_LIB_DIR = "${rocksdb}/lib";
                 NIX_PATH = "nixpkgs=${pkgs.path}";
               });
 
@@ -1202,7 +1234,10 @@
               makeApp packages.kusama-picasso-karura-devnet;
             devnet-rococo-dali-karura =
               makeApp packages.devnet-rococo-dali-karura;
-            devnet-native-all = makeApp packages.devnet-all-dev-local;
+            devnet-rococo-picasso-karura-statemine =
+              makeApp packages.devnet-rococo-picasso-karura-statemine;
+            devnet-rococo-dali-karura-statemine =
+              makeApp packages.devnet-rococo-dali-karura-statemine;
             price-feed = makeApp packages.price-feed;
             composable = makeApp packages.composable-node;
             acala = makeApp packages.acala-node;

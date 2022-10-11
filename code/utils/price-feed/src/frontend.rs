@@ -134,7 +134,7 @@ fn normalize_price(
 	let dt = expected_exponent - q;
 	let power = u64::pow(10_u64, dt.abs() as u32);
 	let normalized_price = match dt.signum() {
-		0 => 1,
+		0 => p,
 		1 => p * power,
 		-1 => p / power,
 		_ => unreachable!(),
@@ -177,7 +177,7 @@ mod tests {
 					TimeStamp(20),
 					TimeStamped { value, timestamp: TimeStamp(1) },
 				),
-				Some(value),
+				Some((value, Duration::seconds(19))),
 			),
 			(
 				(
@@ -185,7 +185,7 @@ mod tests {
 					TimeStamp(14),
 					TimeStamped { value, timestamp: TimeStamp(5) },
 				),
-				Some(value),
+				Some((value, Duration::seconds(9))),
 			),
 		]
 		.iter()

@@ -84,11 +84,14 @@ let
               forceSSL = true;
             } // attrs;
           };
+          # I agree, the hardcoded ports are a shame
         in mkDomain domain ({
-          locations = proxyChain "dali" 9988 // proxyChain "rococo" 9944
+          locations = proxyChain "dali" 9988 // proxyChain "dali/bob" 9989
+            // proxyChain "dali/charlie" 9990 // proxyChain "rococo" 9944
             // proxyChain "karura" 9999 // proxyChain "statemine" 10008 // {
               "/" = { root = "${book}/book"; };
               "/subsquid/" = { proxyPass = "http://127.0.0.1:4350/"; };
+              "/price-feed/" = { proxyPass = "http://127.0.0.1:8003/"; };
             };
         }) // mkDomain "pablo.${domain}" ({
           locations."/" = { proxyPass = "http://127.0.0.1:8001/"; };

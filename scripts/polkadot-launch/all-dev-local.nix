@@ -1,4 +1,4 @@
-{ pkgs, polkadot-bin, composable-bin, acala-bin, statemine-bin }:
+{ pkgs, chainspec, polkadot-bin, composable-bin, acala-bin, statemine-bin }:
 with pkgs;
 let builder = pkgs.callPackage ./network-builder.nix { };
 in {
@@ -25,7 +25,7 @@ in {
         port = 31200;
         wsPort = 9988;
         count = 3;
-        chain = "dali-dev";
+        chain = chainspec;
         bin = "${composable-bin}/bin/composable";
       }
       {
