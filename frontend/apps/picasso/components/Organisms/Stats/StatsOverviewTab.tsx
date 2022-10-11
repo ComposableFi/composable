@@ -4,6 +4,7 @@ import { DailyActiveUsersChart } from "@/components/Organisms/Stats/DailyActiveU
 import { useOverviewStats } from "@/apollo/hooks/useOverviewStats";
 import { useCirculatingSupply } from "@/apollo/hooks/useCirculatingSupply";
 import { useMarketCap } from "@/apollo/hooks/useMarketCap";
+import { TotalValueLockedChart } from "@/components/Organisms/Stats/TotalValueLockedChart";
 
 export const StatsOverviewTab: React.FC<{}> = ({}) => {
   const circulatingSupply = useCirculatingSupply();
@@ -74,6 +75,9 @@ export const StatsOverviewTab: React.FC<{}> = ({}) => {
             title={data?.overviewStats.accountHoldersCount.toString()}
           />
         )}
+      </Grid>
+      <Grid item xs={12}>
+        <TotalValueLockedChart />
       </Grid>
       <Grid item xs={12}>
         <DailyActiveUsersChart />

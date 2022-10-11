@@ -32,19 +32,3 @@ export const GET_STAKING_POSITIONS = gql`
     }
 
 `;
-
-export type TotalValueLocked = {
-  totalValueLocked: {
-    date: string;
-    totalValueLocked: BigInt
-  }
-}
-
-export const GET_TOTAL_VALUE_LOCKED = gql`
-    query totalValueLocked($dateString: String) {
-        totalValueLocked(params: {intervalMinutes: 10, dateTo: $dateString}) {
-            date
-            totalValueLocked
-        }
-    }
-`;
