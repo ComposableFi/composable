@@ -5,8 +5,9 @@ import { useOverviewStats } from "@/apollo/hooks/useOverviewStats";
 import { useCirculatingSupply } from "@/apollo/hooks/useCirculatingSupply";
 import { useMarketCap } from "@/apollo/hooks/useMarketCap";
 import { TotalValueLockedChart } from "@/components/Organisms/Stats/TotalValueLockedChart";
+import { FC } from "react";
 
-export const StatsOverviewTab: React.FC<{}> = ({}) => {
+export const StatsOverviewTab: FC = () => {
   const circulatingSupply = useCirculatingSupply();
   const marketCap = useMarketCap();
   const { data, loading } = useOverviewStats();
