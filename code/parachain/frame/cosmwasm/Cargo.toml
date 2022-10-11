@@ -43,11 +43,13 @@ wasm-instrument = { version = "0.2", default-features = false }
 wasmi = { git = "https://github.com/ComposableFi/wasmi", rev = "cd8c0c775a1d197a35ff3d5c7d6cded3d476411b", default-features = false }
 wasmi-validation = { git = "https://github.com/ComposableFi/wasmi", rev = "cd8c0c775a1d197a35ff3d5c7d6cded3d476411b", default-features = false }
 pallet-balances = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sha3 = { version = "0.10", default-features = false }
+sha2 = { version = "0.10", default-features = false }
+hex = { version = "0.4", default-features = false, features = [ "alloc" ] }
 
 [dev-dependencies]
 pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 pallet-assets = { default-features = false, path = "../assets" }
-hex = "0.4"
 primitives = { path = "../../runtime/primitives", default-features = false }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "377213f750755cc48e80a3131eaae63b5eda8362" }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "377213f750755cc48e80a3131eaae63b5eda8362" }
@@ -70,7 +72,9 @@ std = [
   "composable-support/std",
   "scale-info/std",
   "primitives/std",
-  "pallet-balances/std"
+  "pallet-balances/std",
+  "sha3/std",
+  "hex/std"
 ]
 runtime-benchmarks = [
   "frame-benchmarking",

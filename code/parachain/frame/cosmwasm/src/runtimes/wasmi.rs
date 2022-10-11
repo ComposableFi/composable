@@ -564,20 +564,27 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 	fn charge(&mut self, value: VmGas) -> Result<(), Self::Error> {
 		let gas_to_charge = match value {
 			VmGas::Instrumentation { metered } => metered as u64,
-			VmGas::DbRead => T::WeightInfo::do_db_read(),
-			VmGas::DbWrite => T::WeightInfo::do_db_write(),
-			VmGas::DbRemove => T::WeightInfo::do_db_remove(),
-			VmGas::DbScan => T::WeightInfo::do_db_scan(),
-			VmGas::DbNext => T::WeightInfo::do_db_next(),
-			VmGas::Balance => T::WeightInfo::do_balance(),
-			VmGas::Transfer => T::WeightInfo::do_transfer(),
+			VmGas::DbRead => T::WeightInfo::db_read(),
+			VmGas::DbWrite => T::WeightInfo::db_write(),
+			VmGas::DbRemove => T::WeightInfo::db_remove(),
+			VmGas::DbScan => T::WeightInfo::db_scan(),
+			VmGas::DbNext => T::WeightInfo::db_next(),
+			VmGas::Balance => T::WeightInfo::balance(),
+			VmGas::Transfer => T::WeightInfo::transfer(),
+			VmGas::Secp256k1Verify => T::WeightInfo::secp256k1_verify(),
+			VmGas::Secp256k1RecoverPubkey => T::WeightInfo::secp256k1_recover_pubkey(),
+			VmGas::Ed25519Verify => T::WeightInfo::ed25519_verify(),
+			VmGas::Ed25519BatchVerify => T::WeightInfo::ed25519_batch_verify(),
+			VmGas::AddrValidate => T::WeightInfo::addr_validate(),
+			VmGas::AddrCanonicalize => T::WeightInfo::addr_canonicalize(),
+			VmGas::AddrHumanize => T::WeightInfo::addr_humanize(),
+			VmGas::GetContractMeta => T::WeightInfo::contract_meta(),
 			// TODO(hussein-aitlahcen): benchmarking required to compute _base_ gas for each
 			// operations.
 			_ => 1_u64,
 			/*
 			VmGas::RawCall => todo!(),
 			VmGas::SetContractMeta => todo!(),
-			VmGas::GetContractMeta => todo!(),
 			VmGas::QueryContinuation => todo!(),
 			VmGas::ContinueExecute => todo!(),
 			VmGas::ContinueInstantiate => todo!(),
@@ -590,13 +597,6 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 			VmGas::QueryInfo => todo!(),
 			VmGas::QueryChain => todo!(),
 			VmGas::Debug => todo!(),
-			VmGas::Secp256k1Verify => todo!(),
-			VmGas::Secp256k1RecoverPubkey => todo!(),
-			VmGas::Ed25519Verify => todo!(),
-			VmGas::Ed25519BatchVerify => todo!(),
-			VmGas::AddrValidate => todo!(),
-			VmGas::AddrCanonicalize => todo!(),
-			VmGas::AddrHumanize => todo!(),
 					*/
 		};
 		self.charge_raw(gas_to_charge)
