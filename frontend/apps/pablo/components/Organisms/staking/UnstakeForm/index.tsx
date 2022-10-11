@@ -1,4 +1,4 @@
-import { Box, Button, Grid } from "@mui/material";
+import { Box, Button, Grid, Typography } from "@mui/material";
 import { Alert } from "@/components/Atoms";
 import { BoxProps } from "@mui/material";
 import { CheckableXPabloItemBox } from "./CheckableXPabloItemBox";
@@ -13,13 +13,14 @@ import { useStakingRewardPoolCollectionId } from "@/store/stakingRewards/staking
 import { StakingRewardPool } from "@/defi/types";
 import BigNumber from "bignumber.js";
 
-export const UnstakeForm: React.FC<
-  BoxProps & { stakingRewardPool?: StakingRewardPool }
-> = ({ stakingRewardPool, ...boxProps }) => {
+export const UnstakeForm: React.FC<BoxProps & {
+  stakingRewardPool?: StakingRewardPool;
+}> = ({ stakingRewardPool, ...boxProps }) => {
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
 
-  const financialNftCollectionId =
-    useStakingRewardPoolCollectionId(PBLO_ASSET_ID);
+  const financialNftCollectionId = useStakingRewardPoolCollectionId(
+    PBLO_ASSET_ID
+  );
 
   const xPablos = useXTokensList({
     stakedAssetId: PBLO_ASSET_ID,
@@ -28,6 +29,7 @@ export const UnstakeForm: React.FC<
     string | undefined
   >();
 
+  const hasStakedPositions = xPablos.length > 0;
   const selectedXPablo =
     selectedXPabloId && xPablos.find((item) => item.nftId == selectedXPabloId);
 
@@ -57,6 +59,26 @@ export const UnstakeForm: React.FC<
   return (
     <Box {...boxProps}>
       <Box display="flex" flexDirection="column" gap={3}>
+        {!hasStakedPositions && (
+          <Box>
+            <Typography
+              variant="subtitle1"
+              color="text.primary"
+              textAlign={"center"}
+            >
+              No PBLOs Staked.
+            </Typography>
+            <Typography
+              mt={2}
+              variant="body2"
+              color="text.secondary"
+              textAlign={"center"}
+            >
+              You currently do not have any active PBLO staked positions.
+            </Typography>
+          </Box>
+        )}
+
         {xPablos.map((xPablo) => (
           <CheckableXPabloItemBox
             key={xPablo.nftId}
