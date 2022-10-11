@@ -507,11 +507,18 @@ impl ibc_runtime_api::IbcRuntimeApi<Block> for Runtime {
   - [x] Grandpa Light Client
   - [x] Near Light Client
   - [x] Tendermint light client
+  - [ ] Ethereum Light Client
 - [x] ICS03 - Connections  
 - [x] ICS04 - Channels and Ports  
 - [x] ICS23 - Vector commitments  
 - [x] ICS26 - Routing and callback handlers  
-- [x] ICS20 - Interchain token transfer  
+- [x] ICS20 - Fungible token transfer
+- [ ] ICS027 - Interchain accounts
+- [ ] ICS028 - Cross chain validation
+- [ ] ICS029 - Fee payment
+- [ ] ICS030 - Middleware
+- [ ] ICS031 - Crosschain queries
+- [ ] ICS721 - Non-fungible token transfer
 
 ### References
 
