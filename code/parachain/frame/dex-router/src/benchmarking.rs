@@ -23,11 +23,11 @@ where
 	let usdc: <T as pallet_pablo::Config>::AssetId = 100_u128.into();
 	let usdt: <T as pallet_pablo::Config>::AssetId = 104_u128.into();
 	let owner: <T as frame_system::Config>::AccountId = whitelisted_caller();
-	let usdc_usdt_config = pallet_pablo::PoolInitConfiguration::StableSwap {
+	let usdc_usdt_config = pallet_pablo::PoolInitConfiguration::ConstantProduct {
 		owner: owner.clone(),
 		pair: CurrencyPair::new(usdc, usdt),
-		amplification_coefficient: 5_u16,
 		fee: Permill::zero(),
+		base_weight: Permill::from_percent(50_u32),
 	};
 	let usdc_usdt = pallet_pablo::Pallet::<T>::do_create_pool(usdc_usdt_config).unwrap();
 	sp_std::if_std! {
@@ -146,11 +146,11 @@ where
 	sp_std::if_std! {
 		println!(" eth_usdc {:?}", eth_usdc);
 	}
-	let usdc_usdt_config = pallet_pablo::PoolInitConfiguration::StableSwap {
+	let usdc_usdt_config = pallet_pablo::PoolInitConfiguration::ConstantProduct {
 		owner: owner.clone(),
 		pair: CurrencyPair::new(usdc, usdt),
-		amplification_coefficient: 5_u16,
 		fee: Permill::zero(),
+		base_weight: Permill::from_percent(50_u32),
 	};
 	let usdc_usdt = pallet_pablo::Pallet::<T>::do_create_pool(usdc_usdt_config).unwrap();
 	sp_std::if_std! {
