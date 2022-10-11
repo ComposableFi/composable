@@ -49,17 +49,17 @@ impl pallet_ibc::Config for Runtime {
 - **ConsensusState:** This represents the timestamp and state root of a connected chain's light client at a particular block height, 
   it is extracted from the block header on successful processing of a ClientUpdate message, its major purpose is for proof verification.
 
-- **PacketCommitment:** The sha256 hash of packet data, sequence,  timeout timestamp and timeout height committed to the runtime storage
+- **PacketCommitment:** The sha256 hash of packet data, sequence,  timeout timestamp and timeout height committed to the runtime storage.
 
-- **PacketReceipt:** An opaque value committed to storage after a message receive packet has been successfully processed
+- **PacketReceipt:** An opaque value committed to storage after a message receive packet has been successfully processed.
 
-- **PacketAcknowledgement:** A sha256 hash of packet acknowledgement committed to runtime storage by modules
+- **PacketAcknowledgement:** A sha256 hash of packet acknowledgement committed to runtime storage by modules.
 
-- **NextSequenceSend:** A u64 value representing the next packet sequence to be sent on a channel
+- **NextSequenceSend:** A u64 value representing the next packet sequence to be sent on a channel.
 
-- **NextSequenceReceive:** A u64 value representing the next packet sequence to be received on a channel
+- **NextSequenceReceive:** A u64 value representing the next packet sequence to be received on a channel.
 
-- **NextSequenceAck:** A u64 value representing the next acknowledgement sequence to be received on a channel
+- **NextSequenceAck:** A u64 value representing the next acknowledgement sequence to be received on a channel.
 
 ### Provable store implementation (ICS23)
 
