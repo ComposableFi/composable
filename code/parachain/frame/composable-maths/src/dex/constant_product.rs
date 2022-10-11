@@ -106,7 +106,7 @@ where
 /// * `a_sent` - Amount of the input token sent by the user
 /// * `f` - Total swap fee
 ///
-/// From https://github.com/ComposableFi/composable/blob/cu-2yyx1w9/rfcs/0008-pablo-lbp-cpp-restructure.md#41-fee-math-updates,
+/// From https://github.com/ComposableFi/composable/blob/main/rfcs/0008-pablo-lbp-cpp-restructure.md#41-fee-math-updates,
 /// equation (2)
 pub fn compute_out_given_in_new<T: PerThing>(
 	w_i: T,
