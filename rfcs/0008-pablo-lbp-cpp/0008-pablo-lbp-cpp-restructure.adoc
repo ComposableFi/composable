@@ -613,6 +613,12 @@ Implement the equations outlined in the <<_method>> in `code/parachain/frame/com
 . Implement <<_algorithm_ammremove_liquidity>>.
 . Ensure normalized weights are used everywhere.
 
+=== Stage 4: Fron-end Changes
+
+. Remove FE components that were built for LBP.
+. Remove FE components that were built for StableSwap.
+. Re-generate data types for any extrinsic/RPC changes and integrate.
+
 == Quality Assurance
 
 QA could possibly just use the existing test cases and suites build for Uniswap pools in this case. Though more effort needs to be put into coming up with test cases that would cover LPT calculations and fees.

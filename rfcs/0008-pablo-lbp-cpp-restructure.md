@@ -655,6 +655,12 @@ Implement the equations outlined in the [Method](#_method) in
 
 8.  Ensure normalized weights are used everywhere.
 
+### 5.4 Stage 4: Fron-end Changes
+
+1. Remove FE components that were built for LBP.
+2. Remove FE components that were built for StableSwap.
+3. Re-generate data types for any extrinsic/RPC changes and integrate.
+
 ## 6. Quality Assurance
 
 QA could possibly just use the existing test cases and suites build for
