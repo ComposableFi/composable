@@ -36,3 +36,17 @@ export const fetchAssetBalance = async (
     return new BigNumber(0);
   }
 };
+
+export const fetchTotalIssued = async (
+  api: ApiPromise,
+  assetId: string
+): Promise<BigNumber> => {
+  try {
+    const totalIssued = await api.query.tokens.totalIssuance(
+      api.createType("u128", assetId)
+    );
+    return fromChainUnits(totalIssued.toString());
+  } catch (err: any) {
+    return new BigNumber(0);
+  }
+};

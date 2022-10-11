@@ -12,6 +12,7 @@ import {
   resetStakingRewardPools,
   resetStakingRewardPoolStakedPositionsHistory,
 } from "@/store/stakingRewards/stakingRewards.slice";
+import { useTotalXTokensIssued } from "@/defi/hooks/stakingRewards/useTotalXTokensIssued";
 
 export function updateStakingRewardPools(
   parachainApi: ApiPromise,

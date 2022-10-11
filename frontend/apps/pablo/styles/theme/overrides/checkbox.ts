@@ -6,7 +6,7 @@ export const checkboxOverrides = (
 ): Partial<OverridesStyleRules> => ({
   styleOverrides: {
     root: {
-      borderRadius: "1rem",
+      borderRadius: theme.shape.borderRadius,
     },
   },
 });

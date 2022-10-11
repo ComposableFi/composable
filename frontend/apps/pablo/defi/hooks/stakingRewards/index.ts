@@ -1,3 +1,4 @@
+export * from "./useAverageMultiplierAndTime";
 export * from "./useClaimableRewards";
 export * from "./useClaimStakingRewards";
 export * from "./useStake";
