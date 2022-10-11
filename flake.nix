@@ -1267,6 +1267,8 @@
                   nixfmt
                   rnix-lsp
                   subxt
+                  pkgs.nodePackages.typescript
+                  pkgs.nodePackages.typescript-language-server
                 ] ++ docs-renders;
             });
 
