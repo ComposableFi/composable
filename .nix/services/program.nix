@@ -1,4 +1,4 @@
-{ pkgs, command, program, environment ? {}, ports }: {
+{ pkgs, command, program, environment ? { }, ports }: {
   image = {
     contents = [ pkgs.coreutils pkgs.cacert program ];
     enableRecommendedContents = true;
