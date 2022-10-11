@@ -1,9 +1,10 @@
 import { FC, useMemo, useState } from "react";
-import { getRange, PRESET_RANGE, PresetRange } from "shared";
+import { formatNumber, getRange, head, PRESET_RANGE, PresetRange, tail } from "shared";
 import { useQuery } from "@apollo/client";
 import { ActiveUsers, GET_ACTIVE_USERS } from "@/apollo/queries/activeUsers";
-import { Box, Skeleton, Stack, Theme, useTheme } from "@mui/material";
+import { Box, Skeleton, Stack, Theme, Typography, useTheme } from "@mui/material";
 import { Chart } from "@/components";
+import { useOverviewStats } from "@/apollo/hooks/useOverviewStats";
 
 function renderLoading(theme: Theme) {
   return (
@@ -42,15 +43,43 @@ export const DailyActiveUsersChart: FC = () => {
       dateFrom
     }
   });
+  const { data: overviewStats, loading: overviewStatsLoading } = useOverviewStats();
 
   const chartSeries: [number, number][] = useMemo(() => {
     if (!data) return [];
 
-    return data.activeUsers.map(activeUser => {
+    const tuples: [number, number][] = data.activeUsers.map(activeUser => {
       const date = new Date(activeUser.date);
       return [date.getTime(), activeUser.count];
     });
+
+    return tuples.sort((a, b) => a[0] > b[0] ? 1 : -1);
   }, [data]);
+  const change = useMemo(() => {
+    const first = head(chartSeries);
+    const last = tail(chartSeries);
+
+    if (first && last) {
+      const firstValue = first[1];
+      const lastValue = last[1];
+      console.log(firstValue, lastValue);
+
+      const percentageDifference = ((firstValue - lastValue) / firstValue) * 100;
+      return {
+        value: percentageDifference.toFixed(2) + "%",
+        color: firstValue > lastValue ? theme.palette.error.main : theme.palette.success.main
+      };
+    }
+
+    return {
+      value: "",
+      color: theme.palette.text.primary
+    };
+  }, [chartSeries, theme.palette.error.main, theme.palette.success.main, theme.palette.text.primary]);
+  const changeTextPrimary = useMemo(() => {
+    const first = tail(chartSeries);
+    return formatNumber(first?.[1] ?? 0);
+  }, [chartSeries]);
 
   if (loading) {
     return renderLoading(theme);
@@ -62,17 +91,27 @@ export const DailyActiveUsersChart: FC = () => {
     </>;
   }
 
+
   return (
     <Box sx={{ height: 337 }}>
       <Chart
         height="100%"
         title="Daily active users"
-        changeTextColor={theme.palette.error.main}
-        changeText="+2% KSM"
+        changeTextColor={theme.palette.text.primary}
+        ChangeTextTypographyProps={{
+          variant: "h5"
+        }}
+        changeText={
+          <>
+            <Typography variant="h5">{changeTextPrimary}</Typography>
+            <Typography color={change.color}
+                        variant="body1">{change.value}</Typography>
+          </>
+        }
         AreaChartProps={{
           data: chartSeries,
-          height: 180,
-          shorthandLabel: "Change",
+          height: 118,
+          shorthandLabel: "Active users",
           labelFormat: (n: number) => n.toFixed(),
           color: theme.palette.primary.main
         }}
