@@ -51,6 +51,7 @@ ignoreRegExpList:
 
 ignorePaths:
   - "code/parachain/node/src/res"
+  - "code/centauri"
   - "target/"
   - "**/node_modules/"
   - "book/book"
