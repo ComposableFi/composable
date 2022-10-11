@@ -10,13 +10,14 @@ import {
 } from "@mui/material";
 import BigNumber from "bignumber.js";
 
-const itemBoxPropsSX = (theme: Theme) => ({
-  background: alpha(theme.palette.common.white, theme.custom.opacity.lighter),
-  borderRadius: 0.666,
-  padding: theme.spacing(1.875, 1),
-  textAlign: "center",
-  width: '100%',
-} as const);
+const itemBoxPropsSX = (theme: Theme) =>
+  ({
+    background: alpha(theme.palette.common.white, theme.custom.opacity.lighter),
+    borderRadius: 1,
+    padding: theme.spacing(1.875, 1),
+    textAlign: "center",
+    width: "100%",
+  } as const);
 
 const valueTypographyProps = {
   variant: "body1",
@@ -31,26 +32,19 @@ const labelTypographyProps = {
 } as const;
 
 type ItemBoxProps = {
-  value: string,
-  label: string,
+  value: string;
+  label: string;
 };
 
-const ItemBox: React.FC<ItemBoxProps> = ({
-  value,
-  label,
-})  => {
+const ItemBox: React.FC<ItemBoxProps> = ({ value, label }) => {
   const theme = useTheme();
   return (
     <Box sx={itemBoxPropsSX(theme)}>
-      <Typography {...valueTypographyProps}>
-        {value}
-      </Typography>
-      <Typography {...labelTypographyProps}>
-        {label}
-      </Typography>
+      <Typography {...valueTypographyProps}>{value}</Typography>
+      <Typography {...labelTypographyProps}>{label}</Typography>
     </Box>
   );
-}
+};
 
 export type PoolShareProps = {
   tokenId1: TokenId;
@@ -78,12 +72,18 @@ export const PoolShare: React.FC<PoolShareProps> = ({
         display="flex"
         gap={4}
         mt={1.5}
-        flexDirection={{sm: "column", md: "row"}}
+        flexDirection={{ sm: "column", md: "row" }}
       >
-        <ItemBox value={price.toFixed()} label={`${token2.symbol} per ${token1.symbol}`} />
-        <ItemBox value={revertPrice.toFixed()} label={`${token1.symbol} per ${token2.symbol}`} />
+        <ItemBox
+          value={price.toFixed()}
+          label={`${token2.symbol} per ${token1.symbol}`}
+        />
+        <ItemBox
+          value={revertPrice.toFixed()}
+          label={`${token1.symbol} per ${token2.symbol}`}
+        />
         <ItemBox value={`${share.toFixed()}%`} label="Share of pool" />
       </Box>
     </Box>
-  )
-}
+  );
+};

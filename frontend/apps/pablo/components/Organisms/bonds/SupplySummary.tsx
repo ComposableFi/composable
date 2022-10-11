@@ -1,13 +1,13 @@
 import { BaseAsset, PairAsset } from "@/components/Atoms";
 import { ArrowRightAlt } from "@mui/icons-material";
 import {
+  alpha,
   Box,
   BoxProps,
+  Theme,
   Typography,
   TypographyProps,
-  Theme,
   useTheme,
-  alpha,
 } from "@mui/material";
 import TimerOutlinedIcon from "@mui/icons-material/TimerOutlined";
 import { SelectedBondOffer } from "@/defi/hooks/bonds/useBondOffer";
@@ -23,7 +23,7 @@ const containerBoxProps = (theme: Theme) => ({
   justifyContent: "space-between",
   alignItems: "center",
   p: 4,
-  borderRadius: 1.5,
+  borderRadius: 1,
   sx: {
     background: theme.palette.gradient.secondary,
     border: `1px solid ${alpha(
@@ -68,28 +68,28 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
     if (baseAsset && quoteAsset) {
       return (
         <PairAsset
-        assets={[
-          {
-            icon: baseAsset.icon,
-            label: baseAsset.symbol,
-          },
-          {
-            icon: quoteAsset.icon,
-            label: quoteAsset.symbol,
-          },
-        ]}
-        iconOnly
-        iconSize={36}
-      />
+          assets={[
+            {
+              icon: baseAsset.icon,
+              label: baseAsset.symbol,
+            },
+            {
+              icon: quoteAsset.icon,
+              label: quoteAsset.symbol,
+            },
+          ]}
+          iconOnly
+          iconSize={36}
+        />
       );
     } else if (simplePrincipalAsset) {
       return (
         <BaseAsset
-        label={simplePrincipalAsset.symbol}
-        icon={simplePrincipalAsset.icon}
-        LabelProps={{ variant: "body1" }}
-        iconSize={36}
-      />
+          label={simplePrincipalAsset.symbol}
+          icon={simplePrincipalAsset.icon}
+          LabelProps={{ variant: "body1" }}
+          iconSize={36}
+        />
       );
     }
     return null;
@@ -108,9 +108,7 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
         <Box {...itemBoxProps}>
           <Typography {...itemTitleProps}>Supply</Typography>
           {renderIcons()}
-          <Typography variant="body1">
-            {principalAssetSymbol}
-          </Typography>
+          <Typography variant="body1">{principalAssetSymbol}</Typography>
         </Box>
         <ArrowRightAlt sx={{ color: "text.secondary" }} />
         <Box {...itemBoxProps}>

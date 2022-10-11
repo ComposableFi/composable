@@ -3,12 +3,12 @@ import { DropdownCombinedBigNumberInput } from "@/components/Molecules";
 import { FormTitle } from "@/components/Organisms/FormTitle";
 import {
   Box,
-  Button,
-  useTheme,
   BoxProps,
-  Typography,
-  Theme,
+  Button,
   IconButton,
+  Theme,
+  Typography,
+  useTheme,
 } from "@mui/material";
 import { useMemo, useState } from "react";
 import BigNumber from "bignumber.js";
@@ -39,7 +39,7 @@ const priceBoxProps = (theme: Theme) =>
   ({
     mt: 4,
     p: 2,
-    borderRadius: 0.66,
+    borderRadius: 1,
     sx: {
       background: theme.palette.gradient.secondary,
     },
@@ -62,22 +62,24 @@ const priceLabelProps = (label: string, balance?: string) =>
     },
   } as const);
 
-const combinedSelectProps = (asset: MockedAsset | undefined, isMobile?: boolean) =>
+const combinedSelectProps = (
+  asset: MockedAsset | undefined,
+  isMobile?: boolean
+) =>
   ({
     value: asset?.network?.[DEFAULT_NETWORK_ID] || "",
     dropdownModal: true,
     forceHiddenLabel: isMobile ? true : false,
-    options:
-      asset
-        ? [
-            {
-              value: asset.network?.[DEFAULT_NETWORK_ID],
-              label: asset.name,
-              shortLabel: asset.symbol,
-              icon: asset.icon,
-            },
-          ]
-        : [],
+    options: asset
+      ? [
+          {
+            value: asset.network?.[DEFAULT_NETWORK_ID],
+            label: asset.name,
+            shortLabel: asset.symbol,
+            icon: asset.icon,
+          },
+        ]
+      : [],
     borderLeft: false,
     minWidth: isMobile ? undefined : 150,
     searchable: true,
@@ -110,7 +112,6 @@ const SetLiquidityStep: React.FC<BoxProps> = ({ ...boxProps }) => {
 
   const _baseAsset = useAsset(createPool.baseAsset);
   const _quoteAsset = useAsset(createPool.quoteAsset);
-
 
   const validToken1 = createPool.baseAsset !== "none";
   const validToken2 = createPool.quoteAsset !== "none";
@@ -164,10 +165,7 @@ const SetLiquidityStep: React.FC<BoxProps> = ({ ...boxProps }) => {
               padding: theme.spacing(1),
             },
           }}
-          CombinedSelectProps={combinedSelectProps(
-            _baseAsset,
-            isMobile
-          )}
+          CombinedSelectProps={combinedSelectProps(_baseAsset, isMobile)}
           LabelProps={selectLabelProps(validToken1, "Token 1", `${balance1}`)}
         />
         {valid1 && (
@@ -206,10 +204,7 @@ const SetLiquidityStep: React.FC<BoxProps> = ({ ...boxProps }) => {
               padding: theme.spacing(1),
             },
           }}
-          CombinedSelectProps={combinedSelectProps(
-            _quoteAsset,
-            isMobile
-          )}
+          CombinedSelectProps={combinedSelectProps(_quoteAsset, isMobile)}
           LabelProps={selectLabelProps(validToken2, "Token 2", `${balance2}`)}
         />
         {valid2 && (
@@ -224,7 +219,12 @@ const SetLiquidityStep: React.FC<BoxProps> = ({ ...boxProps }) => {
           {...priceLabelProps("Total", `$${usdAmount1.plus(usdAmount2)}`)}
         />
         <Label
-          {...priceLabelProps(`Available balance: $${tokenToUSD1.times(balance1).plus(tokenToUSD2.times(balance2)).toFixed(2)}`)}
+          {...priceLabelProps(
+            `Available balance: $${tokenToUSD1
+              .times(balance1)
+              .plus(tokenToUSD2.times(balance2))
+              .toFixed(2)}`
+          )}
           mt={0.5}
         />
       </Box>

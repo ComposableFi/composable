@@ -79,7 +79,7 @@ const ThemeResponsiveSnackbarComp = forwardRef<
           onMouseEnter={() => setPaused(true)}
           onMouseLeave={() => setPaused(false)}
           sx={{
-            borderRadius: `${theme.shape.borderRadius}px`,
+            borderRadius: 1,
             overflow: "hidden",
             display: "flex",
             flexDirection: "column",

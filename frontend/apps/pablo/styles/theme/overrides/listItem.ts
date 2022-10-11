@@ -8,9 +8,9 @@ export const listItemOverrides = (
     root: {
       padding: theme.spacing(2, 2, 2, 3),
       height: theme.spacing(10),
-      borderRadius: 9999,
+      borderRadius: theme.shape.borderRadius,
       color: theme.palette.text.disabled,
-      "&:hover": {
+      "&:not(.Mui-selected):hover": {
         "> .MuiListItemIcon-root": {
           opacity: 1,
           color: theme.palette.text.primary,
@@ -27,18 +27,15 @@ export const listItemOverrides = (
           color: theme.palette.primary.main,
           opacity: 1,
         },
+        " .MuiListItemText-primary": {
+          fontWeight: "bold",
+        },
         color: theme.palette.text.primary,
         opacity: 1,
         backgroundColor: alpha(
-          theme.palette.primary.light,
-          theme.custom.opacity.lighter
+          theme.palette.primary.dark,
+          theme.custom.opacity.darker
         ),
-        "&:hover": {
-          backgroundColor: alpha(
-            theme.palette.primary.light,
-            theme.custom.opacity.lighter
-          ),
-        },
       },
     },
   },
