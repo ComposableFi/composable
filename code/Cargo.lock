@@ -1836,7 +1836,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-minimal-std"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?branch=feature/generate-code#3ef5b700ed08afebdb0f16cab117095b77b87239"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?branch=feature/generate-code#bf2ad6978942d4099b82dd734bf94e80a18252c1"
 dependencies = [
  "base64 0.13.0",
  "serde",
@@ -1910,7 +1910,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?branch=feature/generate-code#3ef5b700ed08afebdb0f16cab117095b77b87239"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?branch=feature/generate-code#bf2ad6978942d4099b82dd734bf94e80a18252c1"
 dependencies = [
  "cosmwasm-minimal-std",
  "either",
@@ -1922,11 +1922,12 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm-wasmi"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?branch=feature/generate-code#3ef5b700ed08afebdb0f16cab117095b77b87239"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?branch=feature/generate-code#bf2ad6978942d4099b82dd734bf94e80a18252c1"
 dependencies = [
  "cosmwasm-minimal-std",
  "cosmwasm-vm",
  "either",
+ "hex",
  "log 0.4.17",
  "serde",
  "serde_json",

@@ -346,20 +346,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		message: &[u8],
 	) -> Result<cosmwasm_minimal_std::QueryResult, Self::Error> {
 		log::debug!(target: "runtime::contracts", "query_continuation");
-		let sender = self.contract_address.clone().into_inner();
-		let contract = address.into_inner();
-		let info = Pallet::<T>::contract_info(&contract)?;
-		self.shared.push_readonly();
-		let result = Pallet::<T>::cosmwasm_call(
-			self.shared,
-			sender,
-			contract,
-			info,
-			Default::default(),
-			|vm| cosmwasm_call::<QueryInput, WasmiVM<CosmwasmVM<T>>>(vm, message),
-		);
-		self.shared.pop_readonly();
-		result
+		Pallet::<T>::do_query_continuation(self, address.into_inner(), message)
 	}
 
 	fn continue_execute(
@@ -421,8 +408,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		key: Self::StorageKey,
 	) -> Result<Option<Self::StorageValue>, Self::Error> {
 		log::debug!(target: "runtime::contracts", "query_raw");
-		let info = Pallet::<T>::contract_info(address.as_ref())?;
-		Pallet::<T>::do_db_read_other_contract(self, &info.trie_id, &key)
+		Pallet::<T>::do_query_raw(self, address.into_inner(), &key)
 	}
 
 	fn transfer(&mut self, to: &Self::Address, funds: &[Coin]) -> Result<(), Self::Error> {
@@ -452,18 +438,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 
 	fn query_info(&mut self, address: Self::Address) -> Result<ContractInfoResponse, Self::Error> {
 		log::debug!(target: "runtime::contracts", "query_info");
-		// TODO: cache or at least check if its current contract and use `self.contract_info`
-		let info = Pallet::<T>::contract_info(address.as_ref())?;
-		let code_id = info.code_id;
-		let pinned = self.shared.cache.code.contains_key(&code_id);
-		Ok(ContractInfoResponse {
-			code_id,
-			creator: CosmwasmAccount::<T>::new(info.instantiator.clone()).into(),
-			admin: info.admin.map(|admin| CosmwasmAccount::<T>::new(admin).into()),
-			pinned,
-			// TODO(hussein-aitlahcen): IBC
-			ibc_port: None,
-		})
+		Pallet::<T>::do_query_info(self, address.into_inner())
 	}
 
 	fn db_read(
@@ -545,19 +520,23 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 			VmGas::ContinueExecute => T::WeightInfo::continue_execute(),
 			VmGas::ContinueInstantiate => T::WeightInfo::continue_instantiate(),
 			VmGas::ContinueMigrate => T::WeightInfo::continue_migrate(),
+			VmGas::QueryContinuation => T::WeightInfo::query_continuation(),
+			VmGas::QueryRaw => T::WeightInfo::query_raw(),
+			VmGas::QueryInfo => T::WeightInfo::query_info(),
 			// TODO(hussein-aitlahcen): benchmarking required to compute _base_ gas for each
 			// operations.
 			_ => 1_u64,
 			/*
-			VmGas::RawCall => todo!(),
-			VmGas::SetContractMeta => todo!(),
-			VmGas::QueryContinuation => todo!(),
+			Unsupported ones
+			-----------------
 			VmGas::QueryCustom => todo!(),
 			VmGas::MessageCustom => todo!(),
-			VmGas::QueryRaw => todo!(),
 			VmGas::Burn => todo!(),
 			VmGas::AllBalance => todo!(),
-			VmGas::QueryInfo => todo!(),
+			*/
+			/*
+			VmGas::RawCall => todo!(),
+			VmGas::SetContractMeta => todo!(),
 			VmGas::QueryChain => todo!(),
 			VmGas::Debug => todo!(),
 					*/

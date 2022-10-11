@@ -83,14 +83,14 @@ pub mod pallet {
 	use core::fmt::Debug;
 	use cosmwasm_minimal_std::{
 		Addr, Attribute as CosmwasmEventAttribute, Binary as CosmwasmBinary, BlockInfo, Coin,
-		ContractInfo as CosmwasmContractInfo, Env, Event as CosmwasmEvent, MessageInfo, Timestamp,
-		TransactionInfo,
+		ContractInfo as CosmwasmContractInfo, ContractInfoResponse, Env, Event as CosmwasmEvent,
+		MessageInfo, Timestamp, TransactionInfo,
 	};
 	pub use cosmwasm_minimal_std::{QueryRequest, QueryResponse};
 	use cosmwasm_vm::{
 		executor::{
-			AllocateInput, AsFunctionName, DeallocateInput, ExecuteInput, InstantiateInput,
-			MigrateInput, QueryInput, ReplyInput,
+			cosmwasm_call, AllocateInput, AsFunctionName, DeallocateInput, ExecuteInput,
+			InstantiateInput, MigrateInput, QueryInput, ReplyInput,
 		},
 		memory::PointerOf,
 		system::{
@@ -1360,6 +1360,54 @@ pub mod pallet {
 				Default::default(),
 				|vm| cosmwasm_system_run::<MigrateInput, _>(vm, message, event_handler),
 			)
+		}
+
+		pub(crate) fn do_query_info<'a>(
+			vm: &'a mut CosmwasmVM<T>,
+			address: AccountIdOf<T>,
+		) -> Result<ContractInfoResponse, CosmwasmVMError<T>> {
+			// TODO: cache or at least check if its current contract and use `self.contract_info`
+			let info = Pallet::<T>::contract_info(&address)?;
+			let code_id = info.code_id;
+			let pinned = vm.shared.cache.code.contains_key(&code_id);
+			Ok(ContractInfoResponse {
+				code_id,
+				creator: CosmwasmAccount::<T>::new(info.instantiator.clone()).into(),
+				admin: info.admin.map(|admin| CosmwasmAccount::<T>::new(admin).into()),
+				pinned,
+				// TODO(hussein-aitlahcen): IBC
+				ibc_port: None,
+			})
+		}
+
+		pub(crate) fn do_query_continuation<'a>(
+			vm: &'a mut CosmwasmVM<T>,
+			contract: AccountIdOf<T>,
+			message: &[u8],
+		) -> Result<cosmwasm_minimal_std::QueryResult, CosmwasmVMError<T>> {
+			log::debug!(target: "runtime::contracts", "query_continuation");
+			let sender = vm.contract_address.clone().into_inner();
+			let info = Pallet::<T>::contract_info(&contract)?;
+			vm.shared.push_readonly();
+			let result = Pallet::<T>::cosmwasm_call(
+				vm.shared,
+				sender,
+				contract,
+				info,
+				Default::default(),
+				|vm| cosmwasm_call::<QueryInput, WasmiVM<CosmwasmVM<T>>>(vm, message),
+			);
+			vm.shared.pop_readonly();
+			result
+		}
+
+		pub(crate) fn do_query_raw<'a>(
+			vm: &'a mut CosmwasmVM<T>,
+			address: AccountIdOf<T>,
+			key: &[u8],
+		) -> Result<Option<Vec<u8>>, CosmwasmVMError<T>> {
+			let info = Pallet::<T>::contract_info(&address)?;
+			Pallet::<T>::do_db_read_other_contract(vm, &info.trie_id, &key)
 		}
 	}
 

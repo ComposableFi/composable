@@ -267,24 +267,33 @@ benchmarks! {
 		let (mut shared, contract, info) = create_instantiated_contract::<T>(sender.clone());
 	}: {
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(&mut shared, sender, contract.clone(), info, vec![]).unwrap();
-		// TODO: Funds
 		Cosmwasm::<T>::do_continue_migrate(&mut vm.0, contract, "{}".as_bytes(), &mut |_event| {}).unwrap()
 	}
 
-	// VmGas::RawCall => todo!(),
-	// VmGas::SetContractMeta => todo!(),
-	// VmGas::QueryContinuation => todo!(),
-	// VmGas::ContinueExecute => todo!(),
-	// VmGas::ContinueInstantiate => todo!(),
-	// VmGas::ContinueMigrate => todo!(),
-	// VmGas::QueryCustom => todo!(),
-	// VmGas::MessageCustom => todo!(),
-	// VmGas::QueryRaw => todo!(),
-	// VmGas::Burn => todo!(),
-	// VmGas::AllBalance => todo!(),
-	// VmGas::QueryInfo => todo!(),
-	// VmGas::QueryChain => todo!(),
-	// VmGas::Debug => todo!(),
+	query_info {
+		let sender = create_funded_account::<T>("origin");
+		let (mut shared, contract, info) = create_instantiated_contract::<T>(sender.clone());
+	}: {
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(&mut shared, sender, contract.clone(), info, vec![]).unwrap();
+		Cosmwasm::<T>::do_query_info(&mut vm.0, contract).unwrap()
+	}
+
+	query_continuation {
+		let sender = create_funded_account::<T>("origin");
+		let (mut shared, contract, info) = create_instantiated_contract::<T>(sender.clone());
+	}: {
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(&mut shared, sender, contract.clone(), info, vec![]).unwrap();
+		Cosmwasm::<T>::do_query_continuation(&mut vm.0, contract, "{}".as_bytes()).unwrap()
+	}
+
+	query_raw {
+		let sender = create_funded_account::<T>("origin");
+		let (mut shared, contract, info) = create_instantiated_contract::<T>(sender.clone());
+	}: {
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(&mut shared, sender, contract.clone(), info, vec![]).unwrap();
+		Cosmwasm::<T>::do_db_write(&mut vm.0, "hello".as_bytes(), "world".as_bytes()).unwrap();
+		Cosmwasm::<T>::do_query_raw(&mut vm.0, contract, "hello".as_bytes()).unwrap()
+	}
 
 }
 
