@@ -184,7 +184,7 @@ pub fn dali_dev(id: &str) -> dali::ChainSpec {
 		None,
 		None,
 		Some(properties),
-		Extensions { relay_chain: "rococo_local_testnet".into(), para_id: u32::from(*PARA_ID) },
+		Extensions { relay_chain: "rococo_local_testnet".into(), para_id: u32::from(para_id) },
 	)
 }
 
