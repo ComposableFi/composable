@@ -523,22 +523,26 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 			VmGas::QueryContinuation => T::WeightInfo::query_continuation(),
 			VmGas::QueryRaw => T::WeightInfo::query_raw(),
 			VmGas::QueryInfo => T::WeightInfo::query_info(),
-			// TODO(hussein-aitlahcen): benchmarking required to compute _base_ gas for each
-			// operations.
 			_ => 1_u64,
 			/*
+			-----------------
 			Unsupported ones
 			-----------------
 			VmGas::QueryCustom => todo!(),
 			VmGas::MessageCustom => todo!(),
 			VmGas::Burn => todo!(),
 			VmGas::AllBalance => todo!(),
-			*/
-			/*
-			VmGas::RawCall => todo!(),
-			VmGas::SetContractMeta => todo!(),
+			---------------------------
+			Already done by other calls
+			---------------------------
 			VmGas::QueryChain => todo!(),
+			VmGas::RawCall => todo!(),
+			----
+			None
+			----
 			VmGas::Debug => todo!(),
+
+			VmGas::SetContractMeta => todo!(),
 					*/
 		};
 		self.charge_raw(gas_to_charge)

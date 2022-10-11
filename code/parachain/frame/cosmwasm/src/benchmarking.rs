@@ -7,7 +7,7 @@ use crate::{
 	ContractInfoOf, Pallet as Cosmwasm,
 };
 use alloc::{format, string::String, vec, vec::Vec};
-use cosmwasm_vm::system::CosmwasmContractMeta;
+use cosmwasm_vm::system::{cosmwasm_system_query_raw, CosmwasmContractMeta};
 use cosmwasm_vm_wasmi::code_gen::{self, WasmModule};
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_support::traits::{fungible, Get};
@@ -294,7 +294,6 @@ benchmarks! {
 		Cosmwasm::<T>::do_db_write(&mut vm.0, "hello".as_bytes(), "world".as_bytes()).unwrap();
 		Cosmwasm::<T>::do_query_raw(&mut vm.0, contract, "hello".as_bytes()).unwrap()
 	}
-
 }
 
 impl_benchmark_test_suite!(Cosmwasm, crate::mock::new_test_ext(), crate::mock::Test,);
