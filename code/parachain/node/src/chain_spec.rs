@@ -174,7 +174,7 @@ pub fn dali_dev(id: &str) -> dali::ChainSpec {
 					),
 				],
 				dev_accounts(),
-				*PARA_ID,
+				para_id,
 				common::NativeExistentialDeposit::get(),
 				dali_runtime::TreasuryAccount::get(),
 			)
