@@ -835,10 +835,12 @@ impl assets::Config for Runtime {
 
 parameter_types! {
 	  pub const CrowdloanRewardsId: PalletId = PalletId(*b"pal_crow");
+	  pub const CrowdloanRewardsLockId: LockIdentifier = *b"clr_lock";
 	  pub const InitialPayment: Perbill = Perbill::from_percent(25);
 	  pub const OverFundedThreshold: Perbill = Perbill::from_percent(1);
 	  pub const VestingStep: Moment = 1;
 	  pub const Prefix: &'static [u8] = b"picasso-";
+	  pub const LockCrowdloanRewards: bool = true;
 }
 
 impl crowdloan_rewards::Config for Runtime {
@@ -856,6 +858,8 @@ impl crowdloan_rewards::Config for Runtime {
 	type PalletId = CrowdloanRewardsId;
 	type Moment = Moment;
 	type Time = Timestamp;
+	type LockId = CrowdloanRewardsLockId;
+	type LockByDefault = LockCrowdloanRewards;
 }
 
 parameter_types! {

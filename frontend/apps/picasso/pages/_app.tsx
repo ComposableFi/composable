@@ -11,7 +11,6 @@ import createEmotionCache from "@/styles/createEmotionCache";
 import { getDesignTokens } from "@/styles/theme";
 import { ColorModeContext } from "@/contexts/ColorMode";
 import SubstrateBalancesUpdater from "@/stores/defi/polkadot/balances/PolkadotBalancesUpdater";
-import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import CrowdloanRewardsUpdater from "@/stores/defi/polkadot/crowdloanRewards/CrowdloanRewardsUpdater";
 import { SnackbarProvider } from "notistack";
 import { ThemeResponsiveSnackbar } from "@/components/Molecules/Snackbar";
@@ -23,6 +22,7 @@ import { APP_NAME } from "@/defi/polkadot/constants";
 import { BlockchainProvider } from "bi-lib";
 import { NETWORKS } from "@/defi/Networks";
 import { getEnvironment } from "shared/endpoints";
+import { rpc as acalaRpc, types as acalaTypes } from "@acala-network/types";
 // Client-side cache, shared for the whole session of the user in the browser.
 const clientSideEmotionCache = createEmotionCache();
 
@@ -101,6 +101,14 @@ export default function MyApp(props: MyAppProps) {
         <ThemeProvider theme={theme}>
           <CssBaseline />
           <DotSamaContextProvider
+            supportedRelaychains={[
+              {
+                chainId: "kusama",
+                rpcUrl: process.env.SUBSTRATE_PROVIDER_URL_KUSAMA || "",
+                rpc: {},
+                types: {}
+              }
+            ]}
             supportedParachains={[
               {
                 chainId: "picasso",
@@ -111,9 +119,9 @@ export default function MyApp(props: MyAppProps) {
               {
                 chainId: "karura",
                 rpcUrl: getEnvironment("karura"),
-                rpc: {},
-                types: {},
-              },
+                rpc: acalaRpc,
+                types: acalaTypes
+              }
             ]}
             appName={APP_NAME}
           >
@@ -126,16 +134,14 @@ export default function MyApp(props: MyAppProps) {
               })}
             >
               <ApolloProvider client={apolloClient}>
-                <SubstrateBalancesUpdater
-                  substrateNetworks={Object.values(SUBSTRATE_NETWORKS)}
-                />
-                <CrowdloanRewardsUpdater />
-                <SnackbarProvider
-                  Components={{
-                    info: ThemeResponsiveSnackbar,
-                    success: ThemeResponsiveSnackbar,
-                    error: ThemeResponsiveSnackbar,
-                    warning: ThemeResponsiveSnackbar,
+                  <SubstrateBalancesUpdater />
+                  <CrowdloanRewardsUpdater />
+                  <SnackbarProvider
+                    Components={{
+                      info: ThemeResponsiveSnackbar,
+                      success: ThemeResponsiveSnackbar,
+                      error: ThemeResponsiveSnackbar,
+                      warning: ThemeResponsiveSnackbar,
                   }}
                   autoHideDuration={null}
                   maxSnack={4}

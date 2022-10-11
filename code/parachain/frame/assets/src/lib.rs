@@ -566,10 +566,14 @@ pub mod pallet {
 	mod fungible {
 		use super::*;
 
-		use frame_support::traits::tokens::{
-			fungible::{Inspect, InspectHold, Mutate, MutateHold, Transfer, Unbalanced},
-			DepositConsequence, WithdrawConsequence,
+		use frame_support::traits::{
+			tokens::{
+				fungible::{Inspect, InspectHold, Mutate, MutateHold, Transfer, Unbalanced},
+				DepositConsequence, WithdrawConsequence,
+			},
+			LockableCurrency, WithdrawReasons,
 		};
+		use orml_traits::LockIdentifier;
 
 		impl<T: Config> MutateHold<T::AccountId> for Pallet<T>
 		where
@@ -688,6 +692,40 @@ pub mod pallet {
 				keep_alive: bool,
 			) -> Result<Self::Balance, DispatchError> {
 				<<T as Config>::NativeCurrency>::transfer(source, dest, amount, keep_alive)
+			}
+		}
+
+		impl<T: Config> LockableCurrency<T::AccountId> for Pallet<T>
+		where
+			<T as Config>::NativeCurrency: LockableCurrency<T::AccountId, Balance = T::Balance>,
+		{
+			type Moment = <T::NativeCurrency as LockableCurrency<T::AccountId>>::Moment;
+			type MaxLocks = <T::NativeCurrency as LockableCurrency<T::AccountId>>::MaxLocks;
+
+			fn set_lock(
+				id: LockIdentifier,
+				who: &T::AccountId,
+				amount: T::Balance,
+				reasons: WithdrawReasons,
+			) {
+				<T::NativeCurrency as LockableCurrency<T::AccountId>>::set_lock(
+					id, who, amount, reasons,
+				);
+			}
+
+			fn extend_lock(
+				id: LockIdentifier,
+				who: &T::AccountId,
+				amount: T::Balance,
+				reasons: WithdrawReasons,
+			) {
+				<T::NativeCurrency as LockableCurrency<T::AccountId>>::extend_lock(
+					id, who, amount, reasons,
+				);
+			}
+
+			fn remove_lock(id: LockIdentifier, who: &T::AccountId) {
+				<T::NativeCurrency as LockableCurrency<T::AccountId>>::remove_lock(id, who);
 			}
 		}
 
