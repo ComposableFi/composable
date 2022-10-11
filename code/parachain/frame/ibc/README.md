@@ -93,6 +93,236 @@ It provides methods for:
 - Registering a Send packet `IbcHandler::send_packet`
 - Writing Acknowledgements `IbcHandler::write_acknowledgemnent`
 
+```rust 
+    const PORT_ID: &'static str = "pong";
+    const MODULE_ID: &'static str = "pallet_pong";
+   // Defining an example ibc compliant pallet
+   trait Config: frame_system::Config {
+      IbcHandler: IbcHandlerT;
+      WeightInfo: WeightInfo;
+   }
+   
+   	#[pallet::call]
+	impl<T: Config> Pallet<T> {
+		#[pallet::weight(0)]
+		pub fn initiate_some_ibc_transaction(origin: OriginFor<T>, params: Params) -> DispatchResult {
+			ensure_root(origin)?;
+			let send_packet = SendPacketData {
+			  data: params.data,
+			  timeout: params.timeout,
+			  port_id: port_id_from_bytes(PORT_ID.as_bytes().to_vec())
+				.expect("Valid port id expected"),
+			  channel_id: params .channel_id,
+		    };
+			T::IbcHandler::send_packet(send_packet)
+			Ok(())
+		}
+	}
+   
+   #[derive(Clone, Eq, PartialEq)]
+   pub struct IbcModule<T: Config>(PhantomData<T>);
+
+   impl<T: Config> Default for IbcModule<T> {
+	 fn default() -> Self {
+		 Self(PhantomData::default())
+	 }
+   }
+
+   pub struct PingAcknowledgement(Vec<u8>);
+
+   impl AsRef<[u8]> for PingAcknowledgement {
+	   fn as_ref(&self) -> &[u8] {
+		  self.0.as_slice()
+      }
+   }
+
+   impl GenericAcknowledgement for PingAcknowledgement {}
+
+   impl<T: Config> core::fmt::Debug for IbcModule<T> {
+	  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+		write!(f, "pallet-ibc-ping")
+	  }
+   }
+
+   impl<T: Config + Send + Sync> Module for IbcModule<T> {
+	  fn on_chan_open_init(
+		&mut self,
+		_output: &mut ModuleOutputBuilder,
+		_order: Order,
+		_connection_hops: &[ConnectionId],
+		_port_id: &PortId,
+		_channel_id: &ChannelId,
+		_counterparty: &Counterparty,
+		_version: &Version,
+	  ) -> Result<(), Ics04Error> {
+		// Do some stuff
+		Ok(())
+	  }
+
+	  fn on_chan_open_try(
+		&mut self,
+		_output: &mut ModuleOutputBuilder,
+		order: Order,
+		_connection_hops: &[ConnectionId],
+		port_id: &PortId,
+		_channel_id: &ChannelId,
+		counterparty: &Counterparty,
+		version: &Version,
+		counterparty_version: &Version,
+	  ) -> Result<Version, Ics04Error> {
+	    // Verify channel version, order and port
+		if counterparty_version.to_string() != *VERSION || version.to_string() != *VERSION {
+			return Err(Ics04Error::no_common_version())
+		}
+
+		if order != Order::Ordered {
+			return Err(Ics04Error::unknown_order_type(order.to_string()))
+		}
+
+		let ping_port = PortId::from_str(PORT_ID).expect("PORT_ID is static and valid; qed");
+		if counterparty.port_id() != &ping_port || port_id != &ping_port {
+			return Err(Ics04Error::implementation_specific(format!(
+				"Invalid counterparty port {:?}",
+				counterparty.port_id()
+			)))
+		}
+
+		Ok(version.clone())
+	  }
+
+	  fn on_chan_open_ack(
+		&mut self,
+		_output: &mut ModuleOutputBuilder,
+		port_id: &PortId,
+		channel_id: &ChannelId,
+		counterparty_version: &Version,
+	  ) -> Result<(), Ics04Error> {
+		// Do some stuff
+		Ok(())
+	  }
+
+	  fn on_chan_open_confirm(
+		&mut self,
+		_output: &mut ModuleOutputBuilder,
+		port_id: &PortId,
+		channel_id: &ChannelId,
+	  ) -> Result<(), Ics04Error> {
+		// Do some stuff
+		Ok(())
+	  }
+
+	  fn on_chan_close_init(
+		&mut self,
+		_output: &mut ModuleOutputBuilder,
+		port_id: &PortId,
+		channel_id: &ChannelId,
+	  ) -> Result<(), Ics04Error> {
+		// Do some stuff
+		Ok(())
+	  }
+
+	  fn on_chan_close_confirm(
+		&mut self,
+		_output: &mut ModuleOutputBuilder,
+		port_id: &PortId,
+		channel_id: &ChannelId,
+	  ) -> Result<(), Ics04Error> {
+		// Do some stuff
+		Ok(())
+	  }
+
+	  fn on_recv_packet(
+		&self,
+		_output: &mut ModuleOutputBuilder,
+		packet: &Packet,
+		_relayer: &Signer,
+	  ) -> OnRecvPacketAck {
+	    // Do some custom logic and write acknowledgement
+		let success = "success".as_bytes().to_vec();
+		let data = String::from_utf8(packet.data.clone()).ok();
+		let packet = packet.clone();
+		OnRecvPacketAck::Successful(
+			Box::new(PingAcknowledgement(success.clone())),
+			Box::new(move |_| {
+				T::IbcHandler::write_acknowledgement(&packet, success)
+					.map_err(|e| format!("{:?}", e))
+			}),
+		)
+	  }
+
+	  fn on_acknowledgement_packet(
+		&mut self,
+		_output: &mut ModuleOutputBuilder,
+		packet: &Packet,
+		acknowledgement: &Acknowledgement,
+		_relayer: &Signer,
+	  ) -> Result<(), Ics04Error> {
+		// Do some custom logic stuff
+		Ok(())
+	  }
+
+	 fn on_timeout_packet(
+		&mut self,
+		_output: &mut ModuleOutputBuilder,
+		packet: &Packet,
+		_relayer: &Signer,
+	 ) -> Result<(), Ics04Error> {
+		// Do some stuff
+		Ok(())
+	 }
+   }
+
+   pub struct WeightHandler<T: Config>(PhantomData<T>);
+   impl<T: Config> Default for WeightHandler<T> {
+	  fn default() -> Self {
+		Self(PhantomData::default())
+	  }
+   }
+
+   impl<T: Config> CallbackWeight for WeightHandler<T> {
+	  fn on_chan_open_init(&self) -> Weight {
+		T::WeightInfo::on_chan_open_init()
+	  }
+
+	  fn on_chan_open_try(&self) -> Weight {
+		T::WeightInfo::on_chan_open_try()
+	  }
+
+	  fn on_chan_open_ack(&self, port_id: &PortId, channel_id: &ChannelId) -> Weight {
+		T::WeightInfo::on_chan_open_ack(port_id, channel_id)
+	  }
+
+	  fn on_chan_open_confirm(&self, port_id: &PortId, channel_id: &ChannelId) -> Weight {
+		T::WeightInfo::on_chan_open_confirm(port_id, channel_id)
+	  }
+
+	  fn on_chan_close_init(&self, port_id: &PortId, channel_id: &ChannelId) -> Weight {
+		T::WeightInfo::on_chan_close_init(port_id, channel_id)
+	  }
+
+	  fn on_chan_close_confirm(&self, port_id: &PortId, channel_id: &ChannelId) -> Weight {
+		T::WeightInfo::on_chan_close_confirm(port_id, channel_id)
+	  }
+
+	  fn on_recv_packet(&self, packet: &Packet) -> Weight {
+		T::WeightInfo::on_chan_close_confirm(packet)
+	  }
+
+	  fn on_acknowledgement_packet(
+		&self,
+		packet: &Packet,
+		acknowledgement: &Acknowledgement,
+	  ) -> Weight {
+		T::WeightInfo::on_chan_close_confirm(packet, acknowledgement)
+	  }
+
+	  fn on_timeout_packet(&self, packet: &Packet) -> Weight {
+		T::WeightInfo::on_chan_close_confirm(packet)
+	  }
+   }
+
+```
+
 ### Benchmarking implementation
 
 For `transfer`, `set_params` and `upgrade_client` extrinsics we have pretty familiar substrate benchmarks, but for the `deliver` extrinsic
@@ -154,6 +384,59 @@ The [`Rpc interface`](/code/parachain/frame/ibc/rpc/src/lib.rs) is designed to a
 A set of runtime apis are specified to enable the rpc interface, these are defined here and should be implemented for the runtime for the rpc interface to work correctly.  
 The runtime interface is defined [`here`](/code/parachain/frame/ibc/runtime-api/src/lib.rs).  
 Identical methods are implemented for the pallet to be called in the runtime interface implementation [`here`](/code/parachain/frame/ibc/src/impls.rs#L112)
+
+```rust
+
+impl ibc_runtime_api::IbcRuntimeApi<Block> for Runtime {
+  fn para_id() -> u32 {
+    <Runtime as cumulus_pallet_parachain_system::Config>::SelfParaId::get().into()
+  }
+
+  fn child_trie_key() -> Vec<u8> {
+    <Runtime as pallet_ibc::Config>::CHILD_TRIE_KEY.to_vec()
+  }
+
+  fn query_balance_with_address(addr: Vec<u8>) -> Option<u128> {
+    Ibc::query_balance_with_address(addr).ok()
+  }
+
+  fn query_send_packet_info(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<ibc_primitives::PacketInfo>> {
+    Ibc::get_send_packet_info(channel_id, port_id, seqs).ok()
+  }
+
+  fn client_consensus_state(client_id: Vec<u8>, revision_number: u64, revision_height: u64, latest_cs: bool) -> Option<ibc_primitives::QueryConsensusStateResponse> {
+    Ibc::consensus_state(client_id, revision_number, revision_height, latest_cs).ok()
+  }
+
+  // Implement remaining methods using the ibc identical functions in the pallet implementation
+  
+
+  fn block_events(extrinsic_index: Option<u32>) -> Vec<pallet_ibc::events::IbcEvent> {
+    let mut raw_events = frame_system::Pallet::<Self>::read_events_no_consensus().into_iter();
+    if let Some(idx) = extrinsic_index {
+      raw_events.find_map(|e| {
+        let frame_system::EventRecord{ event, phase, ..} = *e;
+        match (event, phase) {
+          (Event::Ibc(pallet_ibc::Event::Events{ events }), frame_system::Phase::ApplyExtrinsic(index)) if index == idx => Some(events),
+          _ => None
+        }
+      }).unwrap_or_default()
+    }
+    else {
+      raw_events.filter_map(|e| {
+        let frame_system::EventRecord{ event, ..} = *e;
+
+        match event {
+          Event::Ibc(pallet_ibc::Event::Events{ events }) => {
+            Some(events)
+          },
+          _ => None
+        }
+      }).flatten().collect()
+    }
+  }
+}
+```
 
 ### IBC Protocol coverage
 
