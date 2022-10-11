@@ -29,7 +29,10 @@ impl BinanceFeed {
 		// Notify feed started
 		sink.send(FeedNotification::Started { feed: FeedIdentifier::Binance })
 			.await
-			.map_err(|_| FeedError::ChannelIsBroken)?;
+			.map_err(|e| {
+				log::error!("{}", e);
+				FeedError::ChannelIsBroken
+			})?;
 
 		let symbol_asset = assets
 			.iter()
@@ -59,7 +62,10 @@ impl BinanceFeed {
 			for &asset in assets.iter() {
 				sink.send(FeedNotification::AssetOpened { feed: FeedIdentifier::Binance, asset })
 					.await
-					.map_err(|_| FeedError::ChannelIsBroken)?;
+					.map_err(|e| {
+						log::error!("{}", e);
+						FeedError::ChannelIsBroken
+					})?;
 			}
 
 			/* NOTE(hussein-aitlahcen):
@@ -92,27 +98,44 @@ impl BinanceFeed {
 						Ok(())
 					});
 					log::debug!("connecting to binance");
-					ws.connect_multiple_streams(&subscriptions)
-						.map_err(|_| FeedError::NetworkFailure)?;
+					ws.connect_multiple_streams(&subscriptions).map_err(|e| {
+						log::error!("{}", e);
+						FeedError::NetworkFailure
+					})?;
 					log::debug!("running event loop");
-					ws.event_loop(&keep_running_clone).map_err(|_| FeedError::NetworkFailure)?;
+					ws.event_loop(&keep_running_clone).map_err(|e| {
+						log::error!("{}", e);
+						FeedError::NetworkFailure
+					})?;
 					log::debug!("closing subscription");
 					Ok(())
 				});
 
 			// Make sure we trigger the AssetClosed/Stopped events
 			// by not returning early.
-			let e = event_loop_handle.await.map_err(|_| FeedError::NetworkFailure).and_then(|x| x);
+			let e = event_loop_handle
+				.await
+				.map_err(|e| {
+					log::error!("{}", e);
+					FeedError::NetworkFailure
+				})
+				.and_then(|x| x);
 
 			for &asset in assets.iter() {
 				sink.send(FeedNotification::AssetClosed { feed: FeedIdentifier::Binance, asset })
 					.await
-					.map_err(|_| FeedError::ChannelIsBroken)?;
+					.map_err(|e| {
+						log::error!("{}", e);
+						FeedError::ChannelIsBroken
+					})?;
 			}
 
 			sink.send(FeedNotification::Stopped { feed: FeedIdentifier::Binance })
 				.await
-				.map_err(|_| FeedError::ChannelIsBroken)?;
+				.map_err(|e| {
+					log::error!("{}", e);
+					FeedError::ChannelIsBroken
+				})?;
 
 			e
 		});
