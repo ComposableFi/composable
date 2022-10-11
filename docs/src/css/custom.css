@@ -4,6 +4,59 @@
  * work well for content-centric websites.
  */
 
+/* EkMukta Font */
+
+
+@font-face {
+  font-family: "EkMukta";
+  src: url('/fonts/EkMukta-ExtraLight.ttf') format('truetype');
+  font-weight: 200; /* normal */
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "EkMukta";
+  src: url('/fonts/EkMukta-Light.ttf') format('truetype');
+  font-weight: 300; /* normal */
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "EkMukta";
+  src: url('/fonts/EkMukta-Regular.ttf') format('truetype');
+  font-weight: 400; /* normal */
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "EkMukta";
+  src: url('/fonts/EkMukta-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "EkMukta";
+  src: url('/fonts/EkMukta-SemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "EkMukta";
+  src: url('/fonts/EkMukta-Bold.ttf') format('truetype');
+  font-weight: 700; /* bold */
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "EkMukta";
+  src: url('/fonts/EkMukta-ExtraBold.ttf') format('truetype');
+  font-weight: 800;
+  font-style: normal;
+}
+/* source for mapping numbers to files: https://qr.ae/pGVP9G */
+
 /* You can override the default Infima variables here. */
 :root {
   --ifm-color-primary: #5C57A2;
@@ -15,6 +68,10 @@
   --ifm-color-primary-lightest: #8a86be;
   --ifm-code-font-size: 95%;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+  /* --ifm-font-family-monospace: "JetBrains Mono Regular"; */
+  --ifm-font-family-base: "EkMukta", system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif, BlinkMacSystemFont,
+    'Segoe UI', Helvetica, Arial, sans-serif, 'Apple Color Emoji',
+    'Segoe UI Emoji', 'Segoe UI Symbol';
 }
 
 /* For readability concerns, you should choose a lighter palette in dark mode. */
