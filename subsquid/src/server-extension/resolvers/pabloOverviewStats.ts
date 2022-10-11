@@ -78,7 +78,7 @@ export class PabloOverviewStatsResolver
         SELECT
             avg(reward_multiplier) as average_reward_multiplier
         FROM staking_position
-        WHERE source = 'Pablo'
+        WHERE asset_id = '5'
       `
       );
 
@@ -98,7 +98,7 @@ export class PabloOverviewStatsResolver
         SELECT
             avg(duration) as average_duration
         FROM staking_position
-        WHERE source = 'Pablo'
+        WHERE asset_id = '5'
       `
       );
 
