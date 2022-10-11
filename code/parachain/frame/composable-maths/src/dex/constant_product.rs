@@ -8,7 +8,7 @@ use rust_decimal::{
 };
 use sp_runtime::{
 	traits::{IntegerSquareRoot, One, Zero},
-	ArithmeticError, PerThing,
+	ArithmeticError, DispatchError, PerThing,
 };
 
 /// From https://balancer.fi/whitepaper.pdf, equation (2)
@@ -156,7 +156,14 @@ pub fn compute_in_given_out_new<T: PerThing>(
 	b_o: u128,
 	a_out: u128,
 	f: T,
-) -> Result<(u128, u128), ArithmeticError> {
+) -> Result<(u128, u128), DispatchError> {
+	ensure!(
+		a_out <= b_o,
+		DispatchError::from(
+			"`a_out` must not be graeter than `b_o` (can't take out more than what's available)"
+		)
+	);
+	println!("past check!!!!!!!!!");
 	let w_i = Decimal::from(w_i.deconstruct().into());
 	let w_o = Decimal::from(w_o.deconstruct().into());
 	let b_i = Decimal::from(b_i);

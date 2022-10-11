@@ -1,6 +1,6 @@
 use crate::dex::constant_product::compute_in_given_out_new;
 use proptest::prelude::*;
-use sp_runtime::Permill;
+use sp_runtime::{ArithmeticError, DispatchError, Permill};
 
 /// Tests related to constant product math functions
 mod constant_product {
@@ -25,8 +25,8 @@ mod constant_product {
 						2048,
 						100,
 						Permill::from_percent(10),
-						116,
-						11,
+						117,
+						12,
 					),
 					(
 						Permill::from_rational::<u32>(1, 3),
@@ -35,8 +35,8 @@ mod constant_product {
 						2048,
 						100,
 						Permill::from_percent(10),
-						119,
-						11,
+						120,
+						12,
 					),
 					(
 						Permill::from_rational::<u32>(1, 4),
@@ -45,8 +45,8 @@ mod constant_product {
 						30_000,
 						100,
 						Permill::from_percent(10),
-						111,
-						11,
+						112,
+						12,
 					),
 					(
 						Permill::from_rational::<u32>(2, 5),
@@ -55,8 +55,8 @@ mod constant_product {
 						30_000_000,
 						100_000,
 						Permill::from_percent(10),
-						111_575,
-						11_157,
+						111_576,
+						11_158,
 					),
 					(
 						Permill::from_rational::<u32>(2, 5),
@@ -65,8 +65,8 @@ mod constant_product {
 						10_000_000,
 						100_000,
 						Permill::from_percent(10),
-						111_951,
-						11_195,
+						111_952,
+						11_196,
 					),
 				];
 
@@ -100,7 +100,7 @@ mod constant_product {
 
 			let res = compute_in_given_out_new(w_i, w_o, b_i, b_o, a_out, f);
 
-			assert_eq!(res, Err(sp_runtime::ArithmeticError::DivisionByZero))
+			assert_eq!(res, Err(DispatchError::from(ArithmeticError::DivisionByZero)))
 		}
 
 		#[test]
@@ -114,7 +114,7 @@ mod constant_product {
 
 			let res = compute_in_given_out_new(w_i, w_o, b_i, b_o, a_out, f);
 
-			assert_eq!(res, Err(sp_runtime::ArithmeticError::DivisionByZero))
+			assert_eq!(res, Err(DispatchError::from(ArithmeticError::DivisionByZero)))
 		}
 
 		#[test]
@@ -128,8 +128,7 @@ mod constant_product {
 
 			let res = compute_in_given_out_new(w_i, w_o, b_i, b_o, a_out, f);
 
-			// REVIEW: Should a more informative error be returned in this case?
-			assert_eq!(res, Err(sp_runtime::ArithmeticError::Overflow))
+			assert_eq!(res, Err(DispatchError::from("`a_out` must not be graeter than `b_o` (can't take out more than what's available)")))
 		}
 
 		proptest! {
