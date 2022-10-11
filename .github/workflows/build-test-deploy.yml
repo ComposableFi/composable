@@ -713,6 +713,7 @@ jobs:
           cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#kusama-picasso-karura-devnet --no-update-lock-file --show-trace -L
 
   cache-devnet-all-dev-local:
+    name: "Package Full Devnet"
     needs:
       - package-polkadot-node
     runs-on:
@@ -742,7 +743,7 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#devnet-all-dev-local --no-update-lock-file --show-trace -L
+          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#devnet-default-program --no-update-lock-file --show-trace -L
 
   package-xcvm-minimal:
     name: "Package XCVM minimal"
@@ -1221,12 +1222,12 @@ jobs:
             nix run "github:ComposableFi/composable/${{ github.event.pull_request.head.sha }}#composable-node" -L
             ```
 
-            #### Spin up a local devnet (Dali + Rococo):
+            #### Spin up a local devnet (Rococo + Dali + Karura + Statemine):
             ```bash
-            nix run "github:ComposableFi/composable/${{ github.event.pull_request.head.sha }}#devnet-up" -L --option sandbox relaxed --show-trace
+            nix run "github:ComposableFi/composable/${{ github.event.pull_request.head.sha }}#devnet" -L --option sandbox relaxed --show-trace
             ```
 
-            #### Spin up a local XCVM devnet (Dali + Rococo + Juno):
+            #### Spin up a local XCVM devnet (Rococo + Dali + Juno):
             ```bash
             nix run "github:ComposableFi/composable/${{ github.event.pull_request.head.sha }}#devnet-xcvm-up" -L
             ```

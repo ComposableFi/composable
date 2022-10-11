@@ -1113,7 +1113,7 @@
               (import ./.nix/devnet-specs/default.nix {
                 inherit pkgs;
                 inherit price-feed;
-                devnet = devnet-rococo-dali-karura;
+                devnet = devnet-rococo-dali-karura-statemine;
                 frontend = frontend-static;
               });
 
