@@ -140,7 +140,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 2401,
+	spec_version: 2402,
 	impl_version: 3,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -835,10 +835,12 @@ impl assets::Config for Runtime {
 
 parameter_types! {
 	  pub const CrowdloanRewardsId: PalletId = PalletId(*b"pal_crow");
+	  pub const CrowdloanRewardsLockId: LockIdentifier = *b"clr_lock";
 	  pub const InitialPayment: Perbill = Perbill::from_percent(25);
 	  pub const OverFundedThreshold: Perbill = Perbill::from_percent(1);
 	  pub const VestingStep: Moment = 1;
 	  pub const Prefix: &'static [u8] = b"picasso-";
+	  pub const LockCrowdloanRewards: bool = true;
 }
 
 impl crowdloan_rewards::Config for Runtime {
@@ -856,6 +858,8 @@ impl crowdloan_rewards::Config for Runtime {
 	type PalletId = CrowdloanRewardsId;
 	type Moment = Moment;
 	type Time = Timestamp;
+	type LockId = CrowdloanRewardsLockId;
+	type LockByDefault = LockCrowdloanRewards;
 }
 
 parameter_types! {

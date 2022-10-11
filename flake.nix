@@ -74,19 +74,24 @@
       ];
 
       mk-devnet = { pkgs, lib, writeTextFile, writeShellApplication
-        , polkadot-launch, composable-node, polkadot-node, chain-spec }:
+        , useGlobalChainSpec ? true, polkadot-launch, composable-node
+        , polkadot-node, chain-spec, network-config-path ?
+          ./scripts/polkadot-launch/rococo-local-dali-dev.nix }:
         let
-          original-config = (pkgs.callPackage
-            ./scripts/polkadot-launch/rococo-local-dali-dev.nix {
-              polkadot-bin = polkadot-node;
-              composable-bin = composable-node;
-            }).result;
+          original-config = (pkgs.callPackage network-config-path {
+            polkadot-bin = polkadot-node;
+            composable-bin = composable-node;
+          }).result;
 
-          patched-config = lib.recursiveUpdate original-config {
-            parachains = builtins.map
-              (parachain: parachain // { chain = "${chain-spec}"; })
-              original-config.parachains;
-          };
+          patched-config = if useGlobalChainSpec then
+            lib.recursiveUpdate original-config {
+              parachains = builtins.map
+                (parachain: parachain // { chain = "${chain-spec}"; })
+                original-config.parachains;
+            }
+          else
+            original-config;
+
           config = writeTextFile {
             name = "devnet-${chain-spec}-config.json";
             text = builtins.toJSON patched-config;
@@ -503,6 +508,8 @@
               mk-xcvm-contract "xcvm-asset-registry";
             xcvm-contract-router = mk-xcvm-contract "xcvm-router";
             xcvm-contract-interpreter = mk-xcvm-contract "xcvm-interpreter";
+            subxt =
+              pkgs.callPackage ./code/utils/composable-subxt/subxt.nix { };
 
             subsquid-processor = let
               processor = pkgs.buildNpmPackage {
@@ -627,6 +634,39 @@
               inherit crane-nightly rust-nightly;
             };
 
+            polkadot-centauri-node = rustPlatform.buildRustPackage rec {
+              # HACK: break the nix sandbox so we can build the runtimes. This
+              # requires Nix to have `sandbox = relaxed` in its config.
+              # We don't really care because polkadot is only used for local devnet.
+              __noChroot = true;
+              name = "polkadot-centauri-v${version}";
+              version = "0.9.27";
+              src = fetchFromGitHub {
+                repo = "polkadot";
+                owner = "ComposableFi";
+                rev = "0898082540c42fb241c01fe500715369a33a80de";
+                hash = "sha256-dymuSVQXzdZe8iiMm4ykVXPIjIZd2ZcAOK7TLDGOWcU=";
+              };
+              cargoSha256 =
+                "sha256-u/hFRxt3OTMDwONGoJ5l7whC4atgpgIQx+pthe2CJXo=";
+              doCheck = false;
+              buildInputs = [ openssl zstd ];
+              nativeBuildInputs = [ rust-nightly clang pkg-config ]
+                ++ lib.optional stdenv.isDarwin
+                (with darwin.apple_sdk.frameworks; [
+                  Security
+                  SystemConfiguration
+                ]);
+              LD_LIBRARY_PATH = lib.strings.makeLibraryPath [
+                stdenv.cc.cc.lib
+                llvmPackages.libclang.lib
+              ];
+              LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
+              PROTOC = "${protobuf}/bin/protoc";
+              ROCKSDB_LIB_DIR = "${rocksdb}/lib";
+              meta = { mainProgram = "polkadot"; };
+            };
+
             polkadot-launch =
               callPackage ./scripts/polkadot-launch/polkadot-launch.nix { };
 
@@ -637,6 +677,17 @@
               chain-spec = "dali-dev";
             }).script;
 
+            # Dali Centauri devnet
+            bridge-devnet-dali = (callPackage mk-devnet {
+              inherit pkgs;
+              inherit (packages) polkadot-launch composable-node;
+              polkadot-node = polkadot-centauri-node;
+              chain-spec = "dali-dev";
+              network-config-path =
+                ./scripts/polkadot-launch/bridge-rococo-local-dali-dev.nix;
+              useGlobalChainSpec = false;
+            }).script;
+
             # Picasso devnet
             devnet-picasso = (callPackage mk-devnet {
               inherit pkgs;
@@ -644,9 +695,30 @@
               chain-spec = "picasso-dev";
             }).script;
 
-            # Dali devnet container
-            devnet-container = dockerTools.buildImage {
-              name = "composable-devnet-container";
+            devnet-container = trace "Run Dali runtime on Composable node"
+              dockerTools.buildImage {
+                name = "composable-devnet-container";
+                tag = "latest";
+                copyToRoot = pkgs.buildEnv {
+                  name = "image-root";
+                  paths = [ curl websocat ] ++ container-tools;
+                  pathsToLink = [ "/bin" ];
+                };
+                config = {
+                  Entrypoint =
+                    [ "${packages.devnet-dali}/bin/run-devnet-dali-dev" ];
+                  WorkingDir = "/home/polkadot-launch";
+                };
+                runAsRoot = ''
+                  mkdir -p /home/polkadot-launch /tmp
+                  chown 1000:1000 /home/polkadot-launch
+                  chmod 777 /tmp
+                '';
+              };
+
+            # Dali Centauri devnet container
+            bridge-devnet-dali-container = dockerTools.buildImage {
+              name = "composable-centauri-devnet-container";
               tag = "latest";
               copyToRoot = pkgs.buildEnv {
                 name = "image-root";
@@ -655,7 +727,7 @@
               };
               config = {
                 Entrypoint =
-                  [ "${packages.devnet-dali}/bin/run-devnet-dali-dev" ];
+                  [ "${packages.bridge-devnet-dali}/bin/run-devnet-dali-dev" ];
                 WorkingDir = "/home/polkadot-launch";
               };
               runAsRoot = ''
@@ -711,6 +783,7 @@
             devcontainer = dockerTools.buildLayeredImage {
               name = "composable-devcontainer";
               fromImage = devcontainer-root-image;
+              contents = [ composable-node ];
               # substituters, same as next script, but without internet access
               # ${pkgs.cachix}/bin/cachix use composable-community
               # to run root in buildImage needs qemu/kvm shell
@@ -878,10 +951,9 @@
               cargoExtraArgs = "--benches --all --features runtime-benchmarks";
             });
 
-            cspell-check = stdenv.mkDerivation {
+            spell-check = stdenv.mkDerivation {
               name = "cspell-check";
               dontUnpack = true;
-
               buildInputs = [ all-directories-and-files nodePackages.cspell ];
               installPhase = ''
                 mkdir $out
@@ -1043,6 +1115,7 @@
                   nix-tree
                   nixfmt
                   rnix-lsp
+                  subxt
                 ] ++ docs-renders;
             });
 
@@ -1103,8 +1176,7 @@
             };
             devnet-picasso = {
               type = "app";
-              program =
-                "${packages.devnet-picasso.script}/bin/run-devnet-picasso-dev";
+              program = "${packages.devnet-picasso}/bin/run-devnet-picasso-dev";
             };
 
             devnet-kusama-picasso-karura = {
@@ -1225,7 +1297,7 @@
                 homeDirectory = "/home/vscode";
                 stateVersion = "22.05";
                 packages =
-                  [ eachSystemOutputs.packages.x86_64-linux.rust-nightly ]
+                  [ eachSystemOutputs.packages.x86_64-linux.rust-nightly subxt ]
                   ++ (mk-containers-tools-minimal pkgs)
                   ++ (mk-docker-in-docker pkgs);
               };
@@ -1249,9 +1321,10 @@
                 username = "vscode";
                 homeDirectory = "/home/vscode";
                 stateVersion = "22.05";
-                packages =
-                  [ eachSystemOutputs.packages.aarch64-linux.rust-nightly ]
-                  ++ (mk-containers-tools-minimal pkgs)
+                packages = [
+                  eachSystemOutputs.packages.aarch64-linux.rust-nightly
+                  subxt
+                ] ++ (mk-containers-tools-minimal pkgs)
                   ++ (mk-docker-in-docker pkgs);
               };
               programs = {

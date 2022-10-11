@@ -1,8 +1,8 @@
 export { createMetamaskSlice } from "./metamask";
 export type { MetamaskSlice } from "./metamask";
 
-export { createTransfersSlice } from "./transfers";
-export type { TransfersSlice } from "./transfers";
+export { createTransfersSlice } from "./polkadot/transfers/transfers";
+export type { TransfersSlice } from "./polkadot/transfers/transfers";
 
 export { createPolkadotSlice } from "./polkadot";
 export type { PolkadotSlice } from "./polkadot";
@@ -18,9 +18,6 @@ export type { StatsTelemetrySlice } from "./stats/telemetry";
 
 export { createSubstrateBalancesSlice } from "./polkadot/balances/slice";
 export type { SubstrateBalancesSlice } from "./polkadot/balances/slice";
-
-export { createCrowdloanRewardsSlice } from "./polkadot/crowdloanRewards/slice";
-export type { CrowdloanRewardsSlice } from "./polkadot/crowdloanRewards/slice";
 
 export { createBondsSlice } from "./polkadot/bonds/slice";
 export type { BondsSlice } from "./polkadot/bonds/slice";

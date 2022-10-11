@@ -21,7 +21,7 @@ const tokenIds = [
   "pablo",
   "angl",
   "chaos",
-  "usdt"
+  "usdt",
 ]; // important
 
 export const TOKEN_IDS = tokenIds;
@@ -30,85 +30,85 @@ export const TOKENS: { [key in TokenId]: Token } = {
     id: "eth",
     icon: "/tokens/eth-mainnet.svg",
     symbol: "ETH",
-    decimalsToDisplay: 4
+    decimalsToDisplay: 4,
   },
   matic: {
     id: "matic",
     icon: "/tokens/polygon-matic.svg",
     symbol: "MATIC",
-    decimalsToDisplay: 4
+    decimalsToDisplay: 4,
   },
   avax: {
     id: "avax",
     icon: "/tokens/avalanche.svg",
     symbol: "AVAX",
-    decimalsToDisplay: 4
+    decimalsToDisplay: 4,
   },
   weth: {
     id: "weth",
     icon: "/tokens/weth-mainnet.svg",
     symbol: "wETH",
-    decimalsToDisplay: 4
+    decimalsToDisplay: 4,
   },
   usdc: {
     id: "usdc",
     icon: "/tokens/usd-coin-usdc.svg",
     symbol: "USDC",
-    decimalsToDisplay: 4
+    decimalsToDisplay: 4,
   },
   dot: {
     id: "dot",
     icon: "/tokens/polkadot.svg",
     symbol: "DOT",
-    decimalsToDisplay: 4
+    decimalsToDisplay: 4,
   },
   uni: {
     id: "uni",
     icon: "/tokens/uniswap.svg",
     symbol: "UNI",
-    decimalsToDisplay: 4
+    decimalsToDisplay: 4,
   },
   ftm: {
     id: "ftm",
     icon: "/tokens/fantom.svg",
     symbol: "FTM",
-    decimalsToDisplay: 4
+    decimalsToDisplay: 4,
   },
   pica: {
     id: "pica",
     icon: "/tokens/picasso.svg",
     symbol: "PICA",
-    decimalsToDisplay: 4
+    decimalsToDisplay: 4,
   },
   movr: {
     id: "movr",
     icon: "/tokens/movr.svg",
     symbol: "MOVR",
-    decimalsToDisplay: 4
+    decimalsToDisplay: 4,
   },
   ksm: {
     id: "ksm",
     icon: "/tokens/dotsama-kusama.svg",
     symbol: "KSM",
-    decimalsToDisplay: 4
+    decimalsToDisplay: 4,
   },
   chaos: {
     id: "chaos",
     icon: "/tokens/chaos.svg",
     symbol: "CHAOS",
-    decimalsToDisplay: 4
+    decimalsToDisplay: 4,
   },
   pablo: {
     id: "pablo",
     icon: "/tokens/pablo.svg",
     symbol: "PABLO",
-    decimalsToDisplay: 4
+    decimalsToDisplay: 4,
   },
   angl: {
     id: "angl",
     icon: "/tokens/angular.svg",
     symbol: "ANGL",
-    decimalsToDisplay: 4
+    decimalsToDisplay: 4,
   },
   kar: {
     id: "kar",
@@ -132,7 +132,7 @@ export const TOKENS: { [key in TokenId]: Token } = {
     id: "usdt",
     icon: "/tokens/usdt.svg",
     symbol: "USDT",
-    decimalsToDisplay: 4
-  }
+    decimalsToDisplay: 4,
+  },
 };
 export const getToken = (tokenId: TokenId): Token => TOKENS[tokenId];

@@ -1,6 +1,5 @@
 import create from "zustand";
 import createAssetsSlice from "./assets/assets.slice";
-import createAuctionsSlice from "./auctions/auctions.slice";
 import createSwapsSlice from "./swaps/swaps.slice";
 import createPoolsSlice from "./pools/pools.slice";
 import createUiSlice from "./ui/ui.slice";
@@ -11,7 +10,7 @@ import createPoolSlice from "./createPool/createPool.slice";
 import createPoolStatsSlice from "./poolStats/poolStats.slice";
 import { UISlice } from "@/store/ui/ui.types";
 import { AssetsSlice } from "@/store/assets/assets.types";
-import { AuctionsSlice } from "@/store/auctions/auctions.types";
+
 import { SwapsSlice } from "@/store/swaps/swaps.types";
 import { PoolsSlice } from "@/store/pools/pools.types";
 import { LiquiditySlice } from "@/store/liquidity/liquidity.types";
@@ -21,7 +20,6 @@ import { CreatePoolSlice } from "@/store/createPool/createPool.types";
 
 type SliceCombined = UISlice &
   AssetsSlice &
-  AuctionsSlice &
   SwapsSlice &
   PoolsSlice &
   CreatePoolSlice &
@@ -35,7 +33,6 @@ const useStore = create<SliceCombined>(
   (set, _get) => ({
     ...createUiSlice(set),
     ...createAssetsSlice(set),
-    ...createAuctionsSlice(set),
     ...createSwapsSlice(set),
     ...createPoolsSlice(set),
     ...createLiquiditySlice(set),

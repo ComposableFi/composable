@@ -2,7 +2,6 @@ import create from "zustand";
 import { createUISlice } from "./ui/ui";
 import {
   createBondsSlice,
-  createCrowdloanRewardsSlice,
   createMetamaskSlice,
   createOracleSlice,
   createPolkadotSlice,
@@ -29,7 +28,6 @@ export const useStore = create<AllSlices>()(
       ...createStatsOverviewSlice(...a),
       ...createStatsTelemetrySlice(...a),
       ...createSubstrateBalancesSlice(...a),
-      ...createCrowdloanRewardsSlice(...a),
       ...createBondsSlice(...a),
       ...createOracleSlice(...a),
       ...createStakingRewardsSlice(...a),
