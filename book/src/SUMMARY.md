@@ -11,6 +11,7 @@
     - [Composable Crowdloan](./parachains/composable/composable-crowdloan.md)
         - [DOT Purchase Log](./parachains/composable/DOT-purchase-log.md)
     - [LAYR Tokenomics](./parachains/composable/LAYR-tokenomics.md)
+
   
 # 💿 PRODUCTS
 - [Technical Stack Overview](./products/technical-stack-overview.md)
@@ -57,6 +58,14 @@
     - [Contracts - Technical Details](./products/parachain-vault-strategy/contracts-technical-details/contracts-technical-details.md)
 
 # 💻 Developer Guides
+- [Nix](./nix.md)
+    - [Install Nix](./nix/install.md)
+    - [Running Packages](./nix/run-packages.md)
+    - [Development Environments](./nix/development-environments.md)
+    - [Running Checks](./nix/running-checks.md)
+    - [Defining your own Packages](./nix/defining-your-own-packages.md)
+    - [Composing Services with Arion](./nix/composing-services-with-arion.md)
+    - [Editing this Book](./nix/editing-book.md)
 - [Codespaces](./codespaces.md)
     - [Getting Started](./codespaces/getting-started.md)
     - [Using Codespaces](./codespaces/using-codespaces.md)

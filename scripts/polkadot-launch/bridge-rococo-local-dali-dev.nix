@@ -26,11 +26,11 @@ in {
     };
     parachains = [
       {
-        id = 2001;
+        id = 2087;
         port = 31200;
         wsPort = 9988;
         count = 3;
-        chain = "dali-2001";
+        chain = "dali-2087";
         bin = "${composable-bin}/bin/composable";
         flags = [
           "--unsafe-ws-external"

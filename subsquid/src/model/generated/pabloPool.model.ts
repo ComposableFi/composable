@@ -27,6 +27,9 @@ export class PabloPool {
   @Column_("text", {nullable: false})
   owner!: string
 
+  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
+  lpIssued!: bigint
+
   @Column_("int4", {nullable: false})
   transactionCount!: number
 
@@ -38,12 +41,9 @@ export class PabloPool {
 
   @Column_("text", {nullable: false})
   totalFees!: string
-  
+
   @Column_("text", {nullable: false})
   baseAssetId!: string
-
-  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
-  lpIssued!: bigint
 
   /**
    * Asset used for all quotes in this type

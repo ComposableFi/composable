@@ -1,12 +1,14 @@
 import { ActiveUsersResolver } from "./activeUsers";
-import { OverviewStatsResolver } from "./overviewStats";
+import { PicassoOverviewStatsResolver } from "./picassoOverviewStats";
+import { PabloOverviewStatsResolver } from "./pabloOverviewStats";
 import { AssetsResolver } from "./assets";
 import { TotalValueLockedResolver } from "./totalValueLocked";
 import { StakingRewardsStatsResolver } from "./stakingRewards";
 
 export {
   ActiveUsersResolver,
-  OverviewStatsResolver,
+  PicassoOverviewStatsResolver,
+  PabloOverviewStatsResolver,
   AssetsResolver,
   TotalValueLockedResolver,
   StakingRewardsStatsResolver,

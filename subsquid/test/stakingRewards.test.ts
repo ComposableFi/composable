@@ -22,6 +22,7 @@ import {
  * @param eventId
  * @param eventType
  * @param duration
+ * @param rewardMultiplier
  */
 function assertStakingPosition(
   position: StakingPosition,
@@ -32,7 +33,8 @@ function assertStakingPosition(
   amount: bigint,
   eventId: string,
   eventType: EventType,
-  duration: bigint
+  duration: bigint,
+  rewardMultiplier: number
 ) {
   expect(position.fnftCollectionId).to.equal(fnftCollectionId);
   expect(position.fnftInstanceId).to.equal(fnftInstanceId);
@@ -45,7 +47,9 @@ function assertStakingPosition(
     expect(position.endTimestamp).to.equal(
       position.startTimestamp + 1_000n * duration
     );
+  expect(position.duration).to.equal(duration);
   expect(position.source).to.equal(LockedSource.StakingRewards);
+  expect(position.rewardMultiplier).to.equal(rewardMultiplier);
 }
 
 const createMockEvent = (eventId: string, eventType: EventType) =>
@@ -81,6 +85,7 @@ describe("Staking rewards", () => {
       BOB,
       123n,
       10n,
+      456,
       createMockEvent("event-id", EventType.STAKING_REWARDS_STAKED),
       1662133770000n
     );
@@ -94,7 +99,8 @@ describe("Staking rewards", () => {
       123n,
       "event-id",
       EventType.STAKING_REWARDS_STAKED,
-      10n
+      10n,
+      456
     );
   });
 
@@ -106,6 +112,7 @@ describe("Staking rewards", () => {
       BOB,
       123n,
       10n,
+      456,
       createMockEvent("event-id", EventType.STAKING_REWARDS_SPLIT_POSITION),
       1662133770000n
     );
@@ -126,7 +133,8 @@ describe("Staking rewards", () => {
       100n,
       "new-event-id",
       EventType.STAKING_REWARDS_SPLIT_POSITION,
-      10n
+      10n,
+      456
     );
     assertStakingPosition(
       newPosition,
@@ -137,7 +145,8 @@ describe("Staking rewards", () => {
       50n,
       "new-event-id",
       EventType.STAKING_REWARDS_SPLIT_POSITION,
-      10n
+      10n,
+      456
     );
   });
 
@@ -149,6 +158,7 @@ describe("Staking rewards", () => {
       BOB,
       123n,
       10n,
+      456,
       createMockEvent(
         "event-id",
         EventType.STAKING_REWARDS_STAKE_AMOUNT_EXTENDED
@@ -173,7 +183,8 @@ describe("Staking rewards", () => {
       150n,
       "new-event-id",
       EventType.STAKING_REWARDS_STAKE_AMOUNT_EXTENDED,
-      10n
+      10n,
+      456
     );
   });
 });

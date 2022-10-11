@@ -42,6 +42,16 @@ declare module '@polkadot/api-base/types/storage' {
        **/
       [key: string]: QueryableStorageEntry<ApiType>;
     };
+    assetTxPayment: {
+      /**
+       * Stores default payment asset of user with ED locked.
+       **/
+      paymentAssets: AugmentedQuery<ApiType, (arg: AccountId32 | string | Uint8Array) => Observable<Option<ITuple<[u128, u128]>>>, [AccountId32]> & QueryableStorageEntry<ApiType, [AccountId32]>;
+      /**
+       * Generic query
+       **/
+      [key: string]: QueryableStorageEntry<ApiType>;
+    };
     aura: {
       /**
        * The current authority set.
@@ -205,11 +215,6 @@ declare module '@polkadot/api-base/types/storage' {
        * A mapping between an original code hash and its metadata.
        **/
       codeIdToInfo: AugmentedQuery<ApiType, (arg: u64 | AnyNumber | Uint8Array) => Observable<Option<PalletCosmwasmCodeInfo>>, [u64]> & QueryableStorageEntry<ApiType, [u64]>;
-      /**
-       * A mapping between a contract and it's nonce.
-       * The nonce is a monotonic counter incremented when the contract instantiate another contract.
-       **/
-      contractNonce: AugmentedQuery<ApiType, (arg: AccountId32 | string | Uint8Array) => Observable<u64>, [AccountId32]> & QueryableStorageEntry<ApiType, [AccountId32]>;
       /**
        * A mapping between a contract and it's metadata.
        **/
@@ -448,12 +453,8 @@ declare module '@polkadot/api-base/types/storage' {
     };
     fnft: {
       collection: AugmentedQuery<ApiType, (arg: u128 | AnyNumber | Uint8Array) => Observable<Option<ITuple<[AccountId32, AccountId32, BTreeMap<Bytes, Bytes>]>>>, [u128]> & QueryableStorageEntry<ApiType, [u128]>;
-      /**
-       * Map of NFT collections to all of the instances of that collection.
-       **/
-      collectionInstances: AugmentedQuery<ApiType, (arg: u128 | AnyNumber | Uint8Array) => Observable<Option<BTreeSet<u64>>>, [u128]> & QueryableStorageEntry<ApiType, [u128]>;
       financialNftId: AugmentedQuery<ApiType, (arg: u128 | AnyNumber | Uint8Array) => Observable<u64>, [u128]> & QueryableStorageEntry<ApiType, [u128]>;
-      instance: AugmentedQuery<ApiType, (arg: ITuple<[u128, u64]> | [u128 | AnyNumber | Uint8Array, u64 | AnyNumber | Uint8Array]) => Observable<Option<ITuple<[AccountId32, BTreeMap<Bytes, Bytes>]>>>, [ITuple<[u128, u64]>]> & QueryableStorageEntry<ApiType, [ITuple<[u128, u64]>]>;
+      instance: AugmentedQuery<ApiType, (arg1: u128 | AnyNumber | Uint8Array, arg2: u64 | AnyNumber | Uint8Array) => Observable<Option<ITuple<[AccountId32, BTreeMap<Bytes, Bytes>]>>>, [u128, u64]> & QueryableStorageEntry<ApiType, [u128, u64]>;
       /**
        * All the NFTs owned by an account.
        **/
@@ -1014,8 +1015,7 @@ declare module '@polkadot/api-base/types/storage' {
     stakingRewards: {
       rewardPools: AugmentedQuery<ApiType, (arg: u128 | AnyNumber | Uint8Array) => Observable<Option<ComposableTraitsStakingRewardPool>>, [u128]> & QueryableStorageEntry<ApiType, [u128]>;
       rewardsPotIsEmpty: AugmentedQuery<ApiType, (arg1: u128 | AnyNumber | Uint8Array, arg2: u128 | AnyNumber | Uint8Array) => Observable<Option<Null>>, [u128, u128]> & QueryableStorageEntry<ApiType, [u128, u128]>;
-      stakeCount: AugmentedQuery<ApiType, () => Observable<u128>, []> & QueryableStorageEntry<ApiType, []>;
-      stakes: AugmentedQuery<ApiType, (arg: u128 | AnyNumber | Uint8Array) => Observable<Option<ComposableTraitsStakingStake>>, [u128]> & QueryableStorageEntry<ApiType, [u128]>;
+      stakes: AugmentedQuery<ApiType, (arg1: u128 | AnyNumber | Uint8Array, arg2: u64 | AnyNumber | Uint8Array) => Observable<Option<ComposableTraitsStakingStake>>, [u128, u64]> & QueryableStorageEntry<ApiType, [u128, u64]>;
       /**
        * Generic query
        **/
