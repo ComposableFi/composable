@@ -94,8 +94,8 @@ It provides methods for:
 - Writing Acknowledgements `IbcHandler::write_acknowledgemnent`
 
 ```rust 
-    const PORT_ID: &'static str = "pong";
-    const MODULE_ID: &'static str = "pallet_pong";
+    const PORT_ID: &'static str = "example";
+    const MODULE_ID: &'static str = "pallet_example";
    // Defining an example ibc compliant pallet
    trait Config: frame_system::Config {
       IbcHandler: IbcHandlerT;
@@ -128,19 +128,19 @@ It provides methods for:
 	 }
    }
 
-   pub struct PalletAcknowledgement(Vec<u8>);
+   pub struct PalletExampleAcknowledgement(Vec<u8>);
 
-   impl AsRef<[u8]> for PingAcknowledgement {
+   impl AsRef<[u8]> for PalletExampleAcknowledgement {
 	   fn as_ref(&self) -> &[u8] {
 		  self.0.as_slice()
       }
    }
 
-   impl GenericAcknowledgement for PalletAcknowledgement {}
+   impl GenericAcknowledgement for PalletExampleAcknowledgement {}
 
    impl<T: Config> core::fmt::Debug for IbcModule<T> {
 	  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-		write!(f, "pallet-ibc-ping")
+		write!(f, MODULE_ID)
 	  }
    }
 
@@ -242,7 +242,7 @@ It provides methods for:
 		let data = String::from_utf8(packet.data.clone()).ok();
 		let packet = packet.clone();
 		OnRecvPacketAck::Successful(
-			Box::new(PalletAcknowledgement(success.clone())),
+			Box::new(PalletExampleAcknowledgement(success.clone())),
 			Box::new(move |_| {
 				T::IbcHandler::write_acknowledgement(&packet, success)
 					.map_err(|e| format!("{:?}", e))
@@ -305,7 +305,7 @@ It provides methods for:
 	  }
 
 	  fn on_recv_packet(&self, packet: &Packet) -> Weight {
-		T::WeightInfo::on_chan_close_confirm(packet)
+		T::WeightInfo::on_recv_packet(packet)
 	  }
 
 	  fn on_acknowledgement_packet(
@@ -313,16 +313,26 @@ It provides methods for:
 		packet: &Packet,
 		acknowledgement: &Acknowledgement,
 	  ) -> Weight {
-		T::WeightInfo::on_chan_close_confirm(packet, acknowledgement)
+		T::WeightInfo::on_acknowledgement_packet(packet, acknowledgement)
 	  }
 
 	  fn on_timeout_packet(&self, packet: &Packet) -> Weight {
-		T::WeightInfo::on_chan_close_confirm(packet)
+		T::WeightInfo::on_timeout_packet(packet)
 	  }
    }
 
 ```
 
+Then add a snippet like this to the `look_up_module_by_port` implementation 
+```rust
+    pallet_example::PORT_ID => Ok(ModuleId::from_str(pallet_example::MODULE_ID)
+				.map_err(|_| ICS05Error::module_not_found(port_id.clone()))?),
+```
+
+Add a snippet like this to the `get_route_mut` method in the router implementation and modify the `has_route` method as required  
+```rust
+    pallet_example::MODULE_ID => Some(&mut self.pallet_example)
+```
 ### Benchmarking implementation
 
 For `transfer`, `set_params` and `upgrade_client` extrinsics we have pretty familiar substrate benchmarks, but for the `deliver` extrinsic
@@ -394,10 +404,6 @@ impl ibc_runtime_api::IbcRuntimeApi<Block> for Runtime {
 
   fn child_trie_key() -> Vec<u8> {
     <Runtime as pallet_ibc::Config>::CHILD_TRIE_KEY.to_vec()
-  }
-
-  fn query_balance_with_address(addr: Vec<u8>) -> Option<u128> {
-    Ibc::query_balance_with_address(addr).ok()
   }
 
   fn query_send_packet_info(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<ibc_primitives::PacketInfo>> {
