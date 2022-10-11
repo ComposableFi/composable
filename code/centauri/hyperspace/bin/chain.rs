@@ -470,7 +470,7 @@ impl IbcProvider for AnyChain {
 
 	async fn ibc_events(
 		&self,
-	) -> Pin<Box<dyn Stream<Item = Result<(TransactionId, Vec<IbcEvent>), subxt::Error>>>> {
+	) -> Pin<Box<dyn Stream<Item = (TransactionId, Vec<Option<IbcEvent>>)>>> {
 		match self {
 			#[cfg(feature = "parachain")]
 			Self::Parachain(chain) => {

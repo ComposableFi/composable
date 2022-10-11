@@ -54,12 +54,12 @@ where
 		tokio::select! {
 			// new finality event from chain A
 			result = chain_a_client_updates.next() => {
-				match result.transpose()? {
+				match result {
 					// stream closed
 					None => break,
 					Some((transaction_id, events)) => {
 						for (i, event) in events.into_iter().enumerate() {
-							if let IbcEvent::UpdateClient(client_update) = event {
+							if let Some(IbcEvent::UpdateClient(client_update)) = event {
 								if *client_update.client_id() != chain_b.client_id() {
 									continue;
 								}
@@ -76,12 +76,12 @@ where
 			}
 			// new finality event from chain B
 			result = chain_b_client_updates.next() => {
-				match result.transpose()? {
+				match result {
 					// stream closed
 					None => break,
 					Some((transaction_id, events)) => {
 						for (i, event) in events.into_iter().enumerate() {
-							if let IbcEvent::UpdateClient(client_update) = event {
+							if let Some(IbcEvent::UpdateClient(client_update)) = event {
 								if *client_update.client_id() != chain_a.client_id() {
 									continue;
 								}

@@ -1,6 +1,6 @@
 #![allow(clippy::all)]
 
-use std::{pin::Pin, str::FromStr, time::Duration};
+use std::{ops::Deref, pin::Pin, str::FromStr, time::Duration};
 
 use futures::Stream;
 use ibc_proto::{
@@ -104,7 +104,7 @@ pub trait IbcProvider {
 	/// Return a stream that yields when new [`IbcEvents`] are parsed from a finality notification
 	async fn ibc_events(
 		&self,
-	) -> Pin<Box<dyn Stream<Item = Result<(TransactionId, Vec<IbcEvent>), subxt::Error>>>>;
+	) -> Pin<Box<dyn Stream<Item = (TransactionId, Vec<Option<IbcEvent>>)>>>;
 
 	/// Query client consensus state with proof
 	/// return the consensus height for the client along with the response

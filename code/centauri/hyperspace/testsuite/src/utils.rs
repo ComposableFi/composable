@@ -25,11 +25,10 @@ where
 	let future = chain
 		.ibc_events()
 		.await
-		.skip_while(|ev| {
-			future::ready(!matches!(
-				ev,
-				IbcEvent::TimeoutPacket(_) | IbcEvent::TimeoutOnClosePacket(_)
-			))
+		.filter_map(|(_, evs)| {
+			future::ready(evs.into_iter().find(|ev| {
+				matches!(ev, Some(IbcEvent::TimeoutPacket(_) | IbcEvent::TimeoutOnClosePacket(_)))
+			}))
 		})
 		.take(1)
 		.collect::<Vec<_>>();

@@ -1782,7 +1782,7 @@ impl_runtime_apis! {
 			Ibc::get_denom_traces(key, offset, limit, count_total)
 		}
 
-		fn block_events(extrinsic_index: Option<u32>) -> Vec<pallet_ibc::events::IbcEvent> {
+		fn block_events(extrinsic_index: Option<u32>) -> Vec<Result<pallet_ibc::events::IbcEvent, pallet_ibc::errors::IbcError>> {
 			let mut raw_events = frame_system::Pallet::<Self>::read_events_no_consensus().into_iter();
 			if let Some(idx) = extrinsic_index {
 				raw_events.find_map(|e| {

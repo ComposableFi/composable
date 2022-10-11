@@ -44,7 +44,7 @@ use sp_core::H256;
 
 use crate::finality_protocol::FinalityEvent;
 use beefy_prover::helpers::fetch_timestamp_extrinsic_with_proof;
-use futures::{future::ready, Stream, StreamExt};
+use futures::{future::ready, stream, Stream, StreamExt};
 use grandpa_light_client_primitives::{FinalityProof, ParachainHeaderProofs};
 use ibc_proto::ibc::core::connection::v1::IdentifiedConnection;
 use ics11_beefy::client_state::ClientState as BeefyClientState;
@@ -94,41 +94,52 @@ where
 
 	async fn ibc_events(
 		&self,
-	) -> Pin<Box<dyn Stream<Item = Result<(TransactionId, Vec<IbcEvent>), subxt::Error>>>> {
+	) -> Pin<Box<dyn Stream<Item = (TransactionId, Vec<Option<IbcEvent>>)>>> {
 		let stream = self
 			.para_client
 			.events()
 			.subscribe()
 			.await
 			.expect("Failed to subscribe to events")
-			.filter_events::<(parachain::api::ibc::events::Events,)>();
-		let map = StreamExt::filter_map(stream, |result| {
-			ready(
-				result
-					.and_then(|ev| {
-						let tx_index = match ev.phase {
-							Phase::ApplyExtrinsic(index) => index,
-							_ => return Ok(None),
-						};
-						let events = ev
-							.event
-							.events
-							.into_iter()
+			.filter_events::<(parachain::api::ibc::events::Events,)>()
+			.filter_map(|result| {
+				let events = match result {
+					Ok(ev) => ev,
+					Err(err) => {
+						log::error!("Error in IbcEvent stream: {err:?}");
+						return futures::future::ready(None)
+					},
+				};
+				let tx_index = match events.phase {
+					Phase::ApplyExtrinsic(index) => index,
+					_ => return futures::future::ready(None),
+				};
+				let result = events
+					.event
+					.events
+					.into_iter()
+					.map(|ev| {
+						ev.ok()
 							.map(|ev| {
 								IbcEvent::try_from(RawIbcEvent::from(ev))
 									.map_err(|e| subxt::Error::Other(e.to_string()))
 							})
-							.collect::<Result<Vec<_>, _>>()?;
-
-						Ok(Some((
-							TransactionId { block_hash: H256::from(ev.block_hash).0, tx_index },
-							events,
-						)))
+							.transpose()
 					})
-					.transpose(),
-			)
-		});
-		Box::pin(map)
+					.collect::<Result<Vec<Option<_>>, _>>();
+				let tx_id = TransactionId { block_hash: H256::from(events.block_hash).0, tx_index };
+				let events = match result {
+					Ok(ev) => (tx_id, ev),
+					Err(err) => {
+						log::error!("Failed to decode event: {err:?}");
+						return futures::future::ready(None)
+					},
+				};
+				futures::future::ready(Some(events))
+				// futures::future::ready(Some(stream::iter(events)))
+			});
+
+		Box::pin(stream)
 	}
 
 	async fn query_client_consensus(
