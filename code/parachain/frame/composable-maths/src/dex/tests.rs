@@ -128,7 +128,7 @@ mod constant_product {
 
 			let res = compute_in_given_out_new(w_i, w_o, b_i, b_o, a_out, f);
 
-			assert_eq!(res, Err(DispatchError::from("`a_out` must not be graeter than `b_o` (can't take out more than what's available)")))
+			assert_eq!(res, Err(DispatchError::from("`a_out` must not be greater than `b_o` (can't take out more than what's available)")))
 		}
 
 		proptest! {

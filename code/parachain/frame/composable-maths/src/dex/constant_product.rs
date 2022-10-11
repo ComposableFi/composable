@@ -160,7 +160,7 @@ pub fn compute_in_given_out_new<T: PerThing>(
 	ensure!(
 		a_out <= b_o,
 		DispatchError::from(
-			"`a_out` must not be graeter than `b_o` (can't take out more than what's available)"
+			"`a_out` must not be greater than `b_o` (can't take out more than what's available)"
 		)
 	);
 	println!("past check!!!!!!!!!");
