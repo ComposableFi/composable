@@ -10,20 +10,23 @@ export function convertRewardRatePeriod(
   }[rewardRate];
 }
 
-export function calculateRewardPerDayByAssetId(assetId: string, stakingRewardPool: StakingRewardPool | undefined): BigNumber {
-    let rewardPerDay = new BigNumber(0);
-    
-    if (stakingRewardPool) {
-        let rewardConfig = stakingRewardPool.rewards[assetId];
+export function calculateRewardPerDayByAssetId(
+  assetId: string,
+  stakingRewardPool: StakingRewardPool | undefined
+): BigNumber {
+  let rewardPerDay = new BigNumber(0);
 
-        if (rewardConfig) {
-            rewardPerDay = rewardConfig.rewardRate.amount.times(
-                convertRewardRatePeriod(rewardConfig.rewardRate.period)
-            )
-        }
+  if (stakingRewardPool) {
+    let rewardConfig = stakingRewardPool.rewards[assetId];
+
+    if (rewardConfig) {
+      rewardPerDay = rewardConfig.rewardRate.amount.times(
+        convertRewardRatePeriod(rewardConfig.rewardRate.period)
+      );
     }
+  }
 
-    return rewardPerDay;
+  return rewardPerDay;
 }
 
 export function calculateStakingRewardsPoolApy(
@@ -32,9 +35,27 @@ export function calculateStakingRewardsPoolApy(
   lpTokenValueUSD: BigNumber,
   amountOfTokensStaked: BigNumber
 ): BigNumber {
-  if (lpTokenValueUSD.eq(0) || amountOfTokensStaked.eq(0)) { return new BigNumber(0) }
+  if (lpTokenValueUSD.eq(0) || amountOfTokensStaked.eq(0)) {
+    return new BigNumber(0);
+  }
 
   let num = rewardTokenValueInUSD.times(dailyRewardAmount).times(365);
-  let den = lpTokenValueUSD.times(amountOfTokensStaked)
+  let den = lpTokenValueUSD.times(amountOfTokensStaked);
   return num.div(den);
+}
+
+export function calcualteDurationPresetAPR(
+  lockDurationInSecods: BigNumber | undefined,
+  rewardMultiplier: BigNumber
+): BigNumber {
+  if (!lockDurationInSecods) {
+    return new BigNumber(0);
+  }
+
+  const SECONDS_IN_YEAR = 31536000;
+  const APR = rewardMultiplier.multipliedBy(
+    SECONDS_IN_YEAR / Number(lockDurationInSecods)
+  );
+
+  return APR;
 }
