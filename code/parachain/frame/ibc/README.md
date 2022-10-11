@@ -128,7 +128,7 @@ It provides methods for:
 	 }
    }
 
-   pub struct PingAcknowledgement(Vec<u8>);
+   pub struct PalletAcknowledgement(Vec<u8>);
 
    impl AsRef<[u8]> for PingAcknowledgement {
 	   fn as_ref(&self) -> &[u8] {
@@ -136,7 +136,7 @@ It provides methods for:
       }
    }
 
-   impl GenericAcknowledgement for PingAcknowledgement {}
+   impl GenericAcknowledgement for PalletAcknowledgement {}
 
    impl<T: Config> core::fmt::Debug for IbcModule<T> {
 	  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
@@ -242,7 +242,7 @@ It provides methods for:
 		let data = String::from_utf8(packet.data.clone()).ok();
 		let packet = packet.clone();
 		OnRecvPacketAck::Successful(
-			Box::new(PingAcknowledgement(success.clone())),
+			Box::new(PalletAcknowledgement(success.clone())),
 			Box::new(move |_| {
 				T::IbcHandler::write_acknowledgement(&packet, success)
 					.map_err(|e| format!("{:?}", e))
