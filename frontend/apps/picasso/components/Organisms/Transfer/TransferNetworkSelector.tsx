@@ -1,7 +1,7 @@
 import { Box, Button } from "@mui/material";
 import {
   networksStyle,
-  swapButtonStyle,
+  swapButtonStyle
 } from "@/components/Organisms/Transfer/transfer-styles";
 import { NetworkSelect } from "@/components";
 import { SwapHoriz } from "@mui/icons-material";
@@ -10,8 +10,8 @@ import { useStore } from "@/stores/root";
 import { SubstrateNetworkId } from "@/defi/polkadot/types";
 import {
   availableTargetNetwork,
-  getTransferToken,
-} from "@/components/Organisms/Transfer/xcmp";
+  getTransferToken
+} from "@/defi/polkadot/pallets/xcmp";
 
 export const TransferNetworkSelector = () => {
   const { networks, updateNetworks, updateTokenId } = useStore(
@@ -27,7 +27,7 @@ export const TransferNetworkSelector = () => {
     updateNetworks({
       ...networks,
       from: value,
-      to: targetNetwork!.networkId,
+      to: targetNetwork!.networkId
     });
   };
 

@@ -1,12 +1,12 @@
 import { BigNumberInput, Label } from "@/components/Atoms";
 import {
-  Box,
-  Button,
-  BoxProps,
-  Typography,
-  Theme,
-  useTheme,
   alpha,
+  Box,
+  BoxProps,
+  Button,
+  Theme,
+  Typography,
+  useTheme,
 } from "@mui/material";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import { useMemo, useState } from "react";
@@ -31,7 +31,7 @@ import useBondVestingTime from "@/defi/hooks/bonds/useBondVestingTime";
 const containerBoxProps = (theme: Theme) =>
   ({
     p: 4,
-    borderRadius: 1.5,
+    borderRadius: 1,
     sx: {
       background: theme.palette.gradient.secondary,
       border: `1px solid ${alpha(
@@ -115,7 +115,9 @@ export const DepositForm: React.FC<DepositFormProps> = ({
       let amountOfBondsBuyable = principalBalance
         .div(bond.principalAssetPerBond)
         .decimalPlaces(0, BigNumber.ROUND_FLOOR);
-      return amountOfBondsBuyable.lt(bond.selectedBondOffer.nbOfBonds) ? amountOfBondsBuyable : bond.selectedBondOffer.nbOfBonds;
+      return amountOfBondsBuyable.lt(bond.selectedBondOffer.nbOfBonds)
+        ? amountOfBondsBuyable
+        : bond.selectedBondOffer.nbOfBonds;
     }
     return new BigNumber(0);
   }, [principalBalance, bond]);
@@ -204,15 +206,12 @@ export const DepositForm: React.FC<DepositFormProps> = ({
           {...defaultLabelProps("Max you can buy", `${maxYouCanBuy}`)}
           mt={2}
         />
+        <Label {...defaultLabelProps("Vesting period", vestingTime)} mt={2} />
         <Label
           {...defaultLabelProps(
-            "Vesting period",
-            vestingTime
+            "ROI",
+            `${bond.roi.toFixed(DEFAULT_UI_FORMAT_DECIMALS)}%`
           )}
-          mt={2}
-        />
-        <Label
-          {...defaultLabelProps("ROI", `${bond.roi.toFixed(DEFAULT_UI_FORMAT_DECIMALS)}%`)}
           mt={2}
         />
       </Box>

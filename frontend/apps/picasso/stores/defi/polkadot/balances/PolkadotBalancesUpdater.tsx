@@ -1,13 +1,15 @@
-import { usePicassoProvider } from "@/defi/polkadot/hooks";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
-import { SubstrateNetwork, SubstrateNetworkId } from "@/defi/polkadot/types";
+import { SubstrateNetworkId } from "@/defi/polkadot/types";
 import { callbackGate, getExistentialDeposit, toTokenUnitsBN } from "shared";
 
 import { useCallback, useEffect } from "react";
 
 import { useStore } from "@/stores/root";
 import { ApiPromise } from "@polkadot/api";
-import { fetchKaruraBalanceByAssetId, subscribePicassoBalanceByAssetId } from "@/defi/polkadot/pallets/Balance";
+import {
+  fetchKaruraBalanceByAssetId,
+  subscribePicassoBalanceByAssetId
+} from "@/defi/polkadot/pallets/Balance";
 import BigNumber from "bignumber.js";
 import { useDotSamaContext, useEagerConnect } from "substrate-react";
 
@@ -25,7 +27,7 @@ export async function subscribeNativeBalance(
   // create AccountId32 type byte array
   // and retrieve balances
   const accountId = api.createType("AccountId32", account);
-  await api.query.system.account(accountId, (result) => {
+  await api.query.system.account(accountId, result => {
     const blObject: any = result.toJSON();
 
     const {
@@ -78,104 +80,118 @@ export async function updateBalances(
   });
 }
 
-const PolkadotBalancesUpdater = ({
-  substrateNetworks
-}: {
-  substrateNetworks: SubstrateNetwork[];
-}) => {
+const PolkadotBalancesUpdater = () => {
   useEagerConnect("picasso");
-  const { updateBalance, clearBalance, updateAssetBalance, ...assets } =
-    useStore(({ substrateBalances }) => substrateBalances);
-  const { selectedAccount, parachainProviders, relaychainProviders } = useDotSamaContext();
-  const picassoProvider = usePicassoProvider();
+  useEagerConnect("karura");
+  const updateBalance = useStore(
+    ({ substrateBalances }) => substrateBalances.updateBalance
+  );
+  const assets = useStore(({ substrateBalances }) => substrateBalances.assets);
 
-  // Subscribe for native balance changes
-  useEffect(() => {
-    if (selectedAccount !== -1 && picassoProvider.accounts.length) {
-      Object.entries(parachainProviders).forEach(([chainId, chain]) => {
-        if (picassoProvider.accounts[selectedAccount] && chain.parachainApi) {
-          subscribeNativeBalance(
-            picassoProvider.accounts[selectedAccount].address,
-            chain.parachainApi,
-            chainId,
-            updateBalance
-          ).catch((err) => {
-            console.error(err);
-          });
-        }
-      });
-    } else if (selectedAccount === -1) {
-      console.log("selectedAccount is not specified");
-      clearBalance();
-    } else {
-      console.log("picassoProvider is not available");
-    }
-  }, [
+  const updateAssetBalance = useStore(
+    ({ substrateBalances }) => substrateBalances.updateAssetBalance
+  );
+  const clearBalance = useStore(
+    ({ substrateBalances }) => substrateBalances.clearBalance
+  );
+
+  const {
+    extensionStatus,
     selectedAccount,
-    substrateNetworks,
-    picassoProvider.accounts.length,
-    picassoProvider.accounts,
     parachainProviders,
-    picassoProvider.parachainApi,
-    updateBalance,
-    clearBalance
-  ]);
+    relaychainProviders
+  } = useDotSamaContext();
 
   const picassoBalanceSubscriber = useCallback(
     async (chain, asset, chainId) => {
-      callbackGate(async (account) => {
-        await subscribePicassoBalanceByAssetId(
-          chain.parachainApi!,
-          account.address,
-          String(asset.meta.supportedNetwork[chainId as SubstrateNetworkId]),
-          (balance) => {
-            updateAssetBalance({
-              substrateNetworkId: chainId as SubstrateNetworkId,
-              assetId: asset.meta.assetId,
-              balance
+      callbackGate(
+        async (chain, asset, chainId, account) => {
+          await subscribePicassoBalanceByAssetId(
+            chain.parachainApi!,
+            account.address,
+            String(asset.meta.supportedNetwork[chainId as SubstrateNetworkId]),
+            balance => {
+              updateAssetBalance({
+                substrateNetworkId: chainId as SubstrateNetworkId,
+                assetId: asset.meta.assetId,
+                balance
+              });
+            }
+          );
+        },
+        chain,
+        asset,
+        chainId,
+        chain.accounts[selectedAccount]
+      );
+    },
+    [selectedAccount, updateAssetBalance]
+  );
+
+  // Subscribe for native balance changes
+  useEffect(() => {
+    if (selectedAccount !== -1) {
+      Object.entries({ ...parachainProviders, ...relaychainProviders }).forEach(
+        ([chainId, chain]) => {
+          if (chain.accounts[selectedAccount] && chain.parachainApi) {
+            subscribeNativeBalance(
+              chain.accounts[selectedAccount].address,
+              chain.parachainApi,
+              chainId,
+              updateBalance
+            ).catch(err => {
+              console.error(err);
             });
           }
-        );
-      }, chain.accounts[selectedAccount]);
-    },
-    []
-  );
+        }
+      );
+    } else if (selectedAccount === -1) {
+      clearBalance();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [parachainProviders, relaychainProviders, selectedAccount]);
 
   // Subscribe non-native token balances
   useEffect(() => {
-    if (selectedAccount !== -1 && picassoProvider.accounts.length) {
-      Object.entries(parachainProviders).forEach(([chainId, chain]) => {
-        if (chain.parachainApi) {
-          Object.values(assets[chainId as SubstrateNetworkId].assets).forEach(
-            (asset) => {
-              if (!asset.meta.supportedNetwork[chainId as SubstrateNetworkId]) {
-                return;
-              }
-              switch (chainId) {
-                case "picasso":
-                  picassoBalanceSubscriber(chain, asset, chainId);
-                  break;
-                case "karura":
+    if (extensionStatus !== "connected" || selectedAccount === -1) {
+      return () => {};
+    }
+
+    Object.entries(parachainProviders).forEach(([chainId, chain]) =>
+      callbackGate(api => {
+        Object.values(assets[chainId as SubstrateNetworkId].assets).forEach(
+          asset => {
+            if (!asset.meta.supportedNetwork[chainId as SubstrateNetworkId]) {
+              return;
+            }
+            switch (chainId) {
+              case "picasso":
+                picassoBalanceSubscriber(chain, asset, chainId);
+                break;
+              case "karura":
+                if (chain.accounts[selectedAccount]) {
                   fetchKaruraBalanceByAssetId(
-                    chain.parachainApi!,
+                    api,
                     chain.accounts[selectedAccount].address,
                     String(asset.meta.symbol)
-                  ).then((balance) => {
+                  ).then(balance => {
                     updateAssetBalance({
                       substrateNetworkId: chainId as SubstrateNetworkId,
                       assetId: asset.meta.assetId,
                       balance
                     });
                   });
-                default:
-                  break;
-              }
+                }
+                break;
+              default:
+                break;
             }
-          );
-        }
-      });
-    }
-  }, [selectedAccount, picassoProvider, parachainProviders]);
+          }
+        );
+      }, chain.parachainApi)
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [extensionStatus, selectedAccount, parachainProviders]);
 
   return null;
 };

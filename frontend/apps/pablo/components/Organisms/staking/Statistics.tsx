@@ -3,10 +3,10 @@ import { TOKENS } from "@/defi/Tokens";
 import { useAppSelector } from "@/hooks/store";
 import {
   Box,
-  useTheme,
   Grid,
-  Typography,
   TooltipProps as MuiTooltipProps,
+  Typography,
+  useTheme,
 } from "@mui/material";
 import { GridProps } from "@mui/system";
 import { BoxWrapper } from "../BoxWrapper";
@@ -24,9 +24,9 @@ import {
   createDurationPresetLabel,
 } from "@/defi/utils/stakingRewards/durationPresets";
 import millify from "millify";
-import { useCallback, useMemo } from "react";
-import BigNumber from "bignumber.js";
+import { useMemo } from "react";
 import { useAssets } from "@/defi/hooks";
+import BigNumber from "bignumber.js";
 
 const threeColumnPageSize = {
   xs: 12,
@@ -122,7 +122,7 @@ export const StakingStatistics: React.FC<
   }, [assets, apy]);
 
   return (
-    <Grid container spacing={8} {...gridProps}>
+    <Grid container spacing={3} {...gridProps}>
       <Grid item {...threeColumnPageSize}>
         <Item
           label="Total Value locked"

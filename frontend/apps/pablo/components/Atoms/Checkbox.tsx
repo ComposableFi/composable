@@ -1,6 +1,5 @@
 import {
   alpha,
-  BoxProps,
   Checkbox as MuiCheckbox,
   CheckboxProps,
   styled,
@@ -19,7 +18,7 @@ const AlternativeCheckbox = styled("span")(({ theme }: { theme: Theme }) => ({
   justifyContent: "center",
   alignItems: "center",
   padding: theme.spacing(0.5),
-  borderRadius: theme.spacing(0.5),
+  borderRadius: 1,
   border: `solid 1px ${alpha(theme.palette.common.white, 0.6)}`,
 }));
 

@@ -70,7 +70,10 @@ pub mod pallet {
 		WeightInfo,
 	};
 	use codec::FullCodec;
-	use composable_support::math::safe::{safe_multiply_by_rational, SafeArithmetic, SafeSub};
+	use composable_support::{
+		math::safe::{safe_multiply_by_rational, SafeArithmetic, SafeSub},
+		validation::TryIntoValidated,
+	};
 	use composable_traits::{
 		currency::{CurrencyFactory, LocalAssets, RangeId},
 		defi::{CurrencyPair, Rate},
@@ -93,6 +96,7 @@ pub mod pallet {
 		},
 		transactional, BoundedBTreeMap, PalletId, RuntimeDebug,
 	};
+	use sp_arithmetic::fixed_point::FixedU64;
 
 	use crate::liquidity_bootstrapping::LiquidityBootstrapping;
 	use composable_maths::dex::{
@@ -666,16 +670,29 @@ pub mod pallet {
 				.into_iter()
 				.try_collect()
 				.map_err(|_| Error::<T>::StakingPoolConfigError)?;
-			let duration_presets =
-				[(ONE_WEEK, Perbill::from_percent(1)), (ONE_MONTH, Perbill::from_percent(10))]
-					.into_iter()
-					.try_collect()
-					.map_err(|_| Error::<T>::StakingPoolConfigError)?;
+			let duration_presets = [
+				(
+					ONE_WEEK,
+					FixedU64::from_rational(101, 100)
+						.try_into_validated()
+						.expect("valid reward multiplier"),
+				),
+				(
+					ONE_MONTH,
+					FixedU64::from_rational(11, 10)
+						.try_into_validated()
+						.expect("valid reward multiplier"),
+				),
+			]
+			.into_iter()
+			.try_collect()
+			.map_err(|_| Error::<T>::StakingPoolConfigError)?;
 			let lock = LockConfig { duration_presets, unlock_penalty: Perbill::from_percent(5) };
 			let five_years_block = 5 * 365 * 24 * 60 * 60 / T::MsPerBlock::get();
 			// NOTE(connor): `start_block` must greater than current block
 			let start_block = frame_system::Pallet::<T>::current_block_number() + 1_u32.into();
 			let end_block = start_block + five_years_block.into();
+			let minimum_staking_amount: T::Balance = T::Convert::convert(2_000_000_u128);
 
 			Ok(RewardPoolConfiguration::RewardRateBasedIncentive {
 				owner: Self::account_id(pool_id),
@@ -686,6 +703,7 @@ pub mod pallet {
 				lock,
 				share_asset_id: Self::get_x_token_from_pool(*pool_id)?,
 				financial_nft_asset_id: Self::get_financial_nft_from_pool(*pool_id)?,
+				minimum_staking_amount,
 			})
 		}
 

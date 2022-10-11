@@ -22,7 +22,7 @@ import moment from "moment";
 
 const containerBoxProps = (theme: Theme) => ({
   p: 4,
-  borderRadius: 1.5,
+  borderRadius: 1,
   sx: {
     background: theme.palette.gradient.secondary,
     border: `1px solid ${alpha(
@@ -122,7 +122,10 @@ export const ClaimForm: React.FC<ClaimFormProps> = ({ bond, ...boxProps }) => {
           {...defaultLabelProps(
             "Time vested",
             `${moment
-              .duration(milliSecondsSinceVestingStart.toNumber(), "milliseconds")
+              .duration(
+                milliSecondsSinceVestingStart.toNumber(),
+                "milliseconds"
+              )
               .humanize()}`
           )}
           mt={2}

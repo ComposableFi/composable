@@ -9,17 +9,17 @@ import {
   useTheme,
 } from "@mui/material";
 
-export type NotificationBoxProps =  {
-  type?: AlertColor,
-  icon?: JSX.Element,
-  mainText?: string,
-  MainTextProps?: TypographyProps,
-  subText?: string,
-  SubTextProps?: TypographyProps,
+export type NotificationBoxProps = {
+  type?: AlertColor;
+  icon?: JSX.Element;
+  mainText?: string;
+  MainTextProps?: TypographyProps;
+  subText?: string;
+  SubTextProps?: TypographyProps;
 } & BoxProps;
 
 export const NotificationBox: React.FC<NotificationBoxProps> = ({
-  type = 'warning',
+  type = "warning",
   icon,
   mainText,
   MainTextProps,
@@ -32,7 +32,7 @@ export const NotificationBox: React.FC<NotificationBoxProps> = ({
   return (
     <Box
       p={3}
-      borderRadius={0.66}
+      borderRadius={1}
       sx={{
         background: alpha(theme.palette[type].main, theme.custom.opacity.light),
       }}

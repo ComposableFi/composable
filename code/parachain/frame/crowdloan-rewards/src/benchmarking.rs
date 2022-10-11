@@ -216,6 +216,35 @@ benchmarks! {
 
 		T::Time::set_timestamp(VESTING_PERIOD);
 	}: _(RawOrigin::Signed(accounts[0].0.clone()))
+
+	unlock_rewards_for {
+		let x in 100..1000;
+
+		let accounts =
+			generate_accounts(x as _);
+		let accounts_reward = accounts.clone()
+			.into_iter()
+			.map(|(_, a)| (a.as_remote_public(), ACCOUNT_REWARD, VESTING_PERIOD)).collect();
+
+		Pallet::<T>::populate(RawOrigin::Root.into(), accounts_reward)?;
+
+		<T::RewardAsset as Mutate<AccountId>>::mint_into(
+			&Pallet::<T>::account_id(),
+			ACCOUNT_REWARD * x as Balance
+		)?;
+		Pallet::<T>::initialize(RawOrigin::Root.into())?;
+
+		for (reward_account, remote_account) in accounts.clone() {
+			Pallet::<T>::associate(
+				RawOrigin::None.into(),
+				reward_account.clone(),
+				remote_account.proof(reward_account)
+
+			)?;
+		}
+
+		let reward_accounts = accounts.into_iter().map(|(account_id, _)| account_id).collect();
+	}: _(RawOrigin::Root, reward_accounts)
 }
 
 impl_benchmark_test_suite!(Pallet, crate::mocks::ExtBuilder::default().build(), crate::mocks::Test,);
