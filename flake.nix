@@ -248,12 +248,6 @@
           common-bench-deps =
             crane-nightly.buildDepsOnly (common-bench-attrs // { });
 
-          common-test-attrs = common-attrs // {
-            cargoExtraArgs = "--tests --release";
-          };
-          common-test-deps =
-            crane-nightly.buildDepsOnly (common-test-attrs // { });
-
           # Build a wasm runtime, unoptimized
           mk-runtime = name: features:
             let file-name = "${name}_runtime.wasm";
@@ -495,7 +489,7 @@
           packages = rec {
             inherit wasm-optimizer;
             inherit common-deps;
-            inherit common-test-deps;
+            inherit common-deps-nightly;
             inherit common-bench-deps;
             inherit dali-runtime;
             inherit picasso-runtime;
@@ -840,11 +834,13 @@
 
             unit-tests = crane-nightly.cargoBuild (common-attrs // {
               pnameSuffix = "-tests";
-              cargoArtifacts = common-test-deps;
+              cargoArtifacts = common-deps-nightly;
+
               # NOTE: do not add --features=runtime-benchmarks because it force multi ED to be 0 because of dependencies
               # NOTE: in order to run benchmarks as tests, just make `any(test, feature = "runtime-benchmarks")
-              cargoBuildCommand =
-                "cargo test --workspace --release --locked --verbose --exclude local-integration-tests";
+              cargoBuildCommand = "cargo test";
+              cargoExtraArgs =
+                " --workspace --release --locked --verbose --exclude local-integration-tests";
             });
 
             cargo-llvm-cov = rustPlatform.buildRustPackage rec {
@@ -871,7 +867,7 @@
               // {
                 pnameSuffix = "-tests-with-coverage";
                 buildInputs = [ cargo-llvm-cov ];
-                cargoArtifacts = common-test-deps;
+                cargoArtifacts = common-deps-nightly;
                 # NOTE: do not add --features=runtime-benchmarks because it force multi ED to be 0 because of dependencies
                 # NOTE: in order to run benchmarks as tests, just make `any(test, feature = "runtime-benchmarks")
                 cargoBuildCommand = "cargo llvm-cov";

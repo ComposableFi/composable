@@ -56,11 +56,11 @@ jobs:
       - run: |
           cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#common-deps --no-update-lock-file --show-trace -L
 
-  build-common-test-deps:
+  build-common-deps-nightly:
     needs:
       - check-nix
     concurrency:
-      group: ${{ github.workflow }}-build-common-test-deps-${{ github.ref }}
+      group: ${{ github.workflow }}-build-common-deps-nightly-${{ github.ref }}
       cancel-in-progress: true
     runs-on: ubuntu-latest
     container:
@@ -82,7 +82,7 @@ jobs:
           name: ${{  env.CACHIX_COMPOSABLE }}
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
       - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#common-test-deps --no-update-lock-file --show-trace -L
+          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#common-deps-nightly --no-update-lock-file --show-trace -L
           
   check-nix:
     name: "Check nix"
@@ -417,7 +417,7 @@ jobs:
     name: "Unit Tests"
     runs-on: ubuntu-latest
     needs:
-      - build-common-test-deps
+      - build-common-deps-nightly
     concurrency:
       group: ${{ github.workflow }}-unittests-${{ github.ref }}
       cancel-in-progress: true
@@ -445,7 +445,7 @@ jobs:
     name: "Unit Tests with coverage"
     runs-on: ubuntu-latest
     needs:
-      - build-common-test-deps    
+      - build-common-deps-nightly    
     concurrency:
       group: ${{ github.workflow }}-unittests-with-coverage-${{ github.ref }}
       cancel-in-progress: true
