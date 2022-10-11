@@ -8,6 +8,8 @@ import { u128 } from "@polkadot/types-codec";
 import { ComposableTraitsOraclePrice } from "defi-interfaces";
 import { Assets } from "@/defi/polkadot/Assets";
 import { DailyActiveUsersChart } from "@/components/Organisms/Stats/DailyActiveUsersChart";
+import { OVERVIEW_STATS, OverviewStats } from "@/apollo/queries/overviewStats";
+import { useQuery } from "@apollo/client";
 
 const useCirculatingSupply = () => {
   const { parachainApi } = usePicassoProvider();
@@ -49,14 +51,55 @@ const useMarketCap = () => {
   return circulatingSupply.multipliedBy(picaPrice);
 };
 
+const useOverviewStats = () => {
+  const { data, error, loading } = useQuery<OverviewStats>(OVERVIEW_STATS);
+
+  return { data, error, loading };
+};
+
 export const StatsOverviewTab: React.FC<{}> = ({}) => {
   const circulatingSupply = useCirculatingSupply();
   const marketCap = useMarketCap();
+  const { data, loading } = useOverviewStats();
+
   const theme = useTheme();
 
 
   return (
     <Grid container spacing={4}>
+      <Grid item xs={12} sm={6} md={4}>
+        {!loading && data?.overviewStats && (
+          <FeaturedBox
+            TextAboveProps={{
+              color: theme.palette.common.darkWhite
+            }}
+            textAbove="Active users"
+            title={data?.overviewStats.activeUsersCount.toString()}
+          />
+        )}
+      </Grid>
+      <Grid item xs={12} sm={6} md={4}>
+        {!loading && data?.overviewStats && (
+          <FeaturedBox
+            TextAboveProps={{
+              color: theme.palette.common.darkWhite
+            }}
+            textAbove="Total value locked"
+            title={data?.overviewStats.totalValueLocked.toString()}
+          />
+        )}
+      </Grid>
+      <Grid item xs={12} sm={6} md={4}>
+        {!loading && data?.overviewStats && (
+          <FeaturedBox
+            TextAboveProps={{
+              color: theme.palette.common.darkWhite
+            }}
+            textAbove="Total transactions"
+            title={data?.overviewStats.totalValueLocked.toString()}
+          />
+        )}
+      </Grid>
       <Grid item xs={12} sm={6} md={4}>
         <FeaturedBox
           TextAboveProps={{
@@ -74,6 +117,17 @@ export const StatsOverviewTab: React.FC<{}> = ({}) => {
           textAbove="Picasso circulating supply"
           title={`${circulatingSupply.toFormat(0)} PICA`}
         />
+      </Grid>
+      <Grid item xs={12} sm={6} md={4}>
+        {!loading && data?.overviewStats && (
+          <FeaturedBox
+            TextAboveProps={{
+              color: theme.palette.common.darkWhite
+            }}
+            textAbove="Account holders"
+            title={data?.overviewStats.accountHoldersCount.toString()}
+          />
+        )}
       </Grid>
       <Grid item xs={12}>
         <DailyActiveUsersChart />

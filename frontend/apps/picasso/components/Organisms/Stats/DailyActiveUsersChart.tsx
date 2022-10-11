@@ -63,7 +63,7 @@ export const DailyActiveUsersChart: FC = () => {
   }
 
   return (
-    <Box>
+    <Box sx={{ height: 337 }}>
       <Chart
         height="100%"
         title="Daily active users"
@@ -71,7 +71,7 @@ export const DailyActiveUsersChart: FC = () => {
         changeText="+2% KSM"
         AreaChartProps={{
           data: chartSeries,
-          height: 330,
+          height: 180,
           shorthandLabel: "Change",
           labelFormat: (n: number) => n.toFixed(),
           color: theme.palette.primary.main
