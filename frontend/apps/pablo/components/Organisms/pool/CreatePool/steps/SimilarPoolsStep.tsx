@@ -3,12 +3,12 @@ import { NotificationBox } from "@/components/Molecules";
 import { FormTitle } from "@/components/Organisms/FormTitle";
 import {
   Box,
-  Button,
-  useTheme,
   BoxProps,
+  Button,
   Grid,
-  Typography,
   Theme,
+  Typography,
+  useTheme,
 } from "@mui/material";
 import { useState } from "react";
 import { useDispatch } from "react-redux";
@@ -24,7 +24,7 @@ const itemBoxProps = (theme: Theme) =>
   ({
     sx: {
       background: theme.palette.gradient.secondary,
-      borderRadius: 0.66,
+      borderRadius: 1,
       p: 2,
     },
     textAlign: "center",
@@ -49,7 +49,7 @@ const SimilarPoolsStep: React.FC<SimilarPoolsStepProps> = ({
       similarPool,
       setSelectable,
     },
-    supportedAssets
+    supportedAssets,
   } = useStore();
 
   const [isSettingOnFlow, setIsSettingOnFlow] = useState<boolean>(false);
