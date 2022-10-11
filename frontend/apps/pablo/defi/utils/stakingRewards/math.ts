@@ -1,6 +1,6 @@
 import { StakingRewardPool } from "@/defi/types/stakingRewards";
-import BigNumber from "bignumber.js";
 import { RewardPoolRewardRatePeriod } from "@/defi/types/stakingRewards";
+import BigNumber from "bignumber.js";
 
 export function convertRewardRatePeriod(
   rewardRate: RewardPoolRewardRatePeriod
@@ -32,16 +32,13 @@ export function calculateRewardPerDayByAssetId(
 export function calculateStakingRewardsPoolApy(
   rewardTokenValueInUSD: BigNumber,
   dailyRewardAmount: BigNumber,
-  lpTokenValueUSD: BigNumber,
-  amountOfTokensStaked: BigNumber
+  totalValueLocked: BigNumber
 ): BigNumber {
-  if (lpTokenValueUSD.eq(0) || amountOfTokensStaked.eq(0)) {
+  if (totalValueLocked.eq(0)) {
     return new BigNumber(0);
   }
-
   let num = rewardTokenValueInUSD.times(dailyRewardAmount).times(365);
-  let den = lpTokenValueUSD.times(amountOfTokensStaked);
-  return num.div(den);
+  return num.div(totalValueLocked);
 }
 
 export function calcualteDurationPresetAPR(

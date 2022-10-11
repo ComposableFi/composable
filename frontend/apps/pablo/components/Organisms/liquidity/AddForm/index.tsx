@@ -1,13 +1,6 @@
 import { DropdownCombinedBigNumberInput } from "@/components/Molecules";
 import { useMobile } from "@/hooks/responsive";
-import {
-  Box,
-  Button,
-  Typography,
-  useTheme,
-  alpha,
-  BoxProps,
-} from "@mui/material";
+import { Box, BoxProps, Button, Typography, useTheme } from "@mui/material";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import { useRouter } from "next/router";
 import { FormTitle } from "../../FormTitle";
@@ -27,6 +20,7 @@ import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { useSnackbar } from "notistack";
 import BigNumber from "bignumber.js";
 import { useState } from "react";
+import { HighlightBox } from "@/components/Atoms/HighlightBox";
 
 export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
   const isMobile = useMobile();
@@ -57,7 +51,7 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
     needToSelectToken,
     findPoolManually,
     spotPrice,
-    pool
+    pool,
   } = useAddLiquidityForm();
 
   const isConfirmSupplyModalOpen = useAppSelector(
@@ -78,21 +72,13 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
   };
 
   return (
-    <Box
-      borderRadius={1.33}
+    <HighlightBox
       margin="auto"
       sx={{
         width: 550,
-        padding: theme.spacing(4),
         [theme.breakpoints.down("sm")]: {
           width: "100%",
-          padding: theme.spacing(2),
         },
-        background: theme.palette.gradient.secondary,
-        boxShadow: `-1px -1px ${alpha(
-          theme.palette.common.white,
-          theme.custom.opacity.light
-        )}`,
       }}
       {...rest}
     >
@@ -114,8 +100,7 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
           noBorder
           value={assetOneAmount}
           setValue={
-            manualUpdateMode === 1 ?
-            setAmount("assetOneAmount") : undefined
+            manualUpdateMode === 1 ? setAmount("assetOneAmount") : undefined
           }
           InputProps={{
             disabled: !isValidToken1,
@@ -163,7 +148,7 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
         <Box
           width={56}
           height={56}
-          borderRadius={9999}
+          borderRadius="50%"
           display="flex"
           border={`2px solid ${theme.palette.primary.main}`}
           justifyContent="center"
@@ -182,8 +167,7 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
           noBorder
           value={assetTwoAmount}
           setValue={
-            manualUpdateMode === 2 ?
-            setAmount("assetTwoAmount") : undefined
+            manualUpdateMode === 2 ? setAmount("assetTwoAmount") : undefined
           }
           InputProps={{
             disabled: !isValidToken2,
@@ -258,9 +242,12 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
             disabled={!valid}
             onClick={() => {
               if (!pool) {
-                return enqueueSnackbar("Liquidity pool for the selected token pair does not exist.", {
-                  variant: "error",
-                });
+                return enqueueSnackbar(
+                  "Liquidity pool for the selected token pair does not exist.",
+                  {
+                    variant: "error",
+                  }
+                );
               }
 
               dispatch(openConfirmSupplyModal());
@@ -323,6 +310,6 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
       />
 
       <TransactionSettings showSlippageSelection={false} />
-    </Box>
+    </HighlightBox>
   );
 };

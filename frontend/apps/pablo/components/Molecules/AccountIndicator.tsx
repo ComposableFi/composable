@@ -1,11 +1,11 @@
 import { Circle } from "@mui/icons-material";
 import {
+  alpha,
   Box,
   Paper,
   Typography,
   useMediaQuery,
   useTheme,
-  alpha,
 } from "@mui/material";
 import Image from "next/image";
 
@@ -37,10 +37,7 @@ export const AccountIndicator: React.FC<AccountIndicatorProps> = ({
         gridTemplateColumns: "24px auto 24px",
         gap: theme.spacing(2),
         flexShrink: 0,
-        background: alpha(
-          theme.palette.primary.main,
-          theme.custom.opacity.light
-        ),
+        background: theme.palette.background.transparentCharcoal,
         cursor: "pointer",
         "&:hover": {
           background: alpha(

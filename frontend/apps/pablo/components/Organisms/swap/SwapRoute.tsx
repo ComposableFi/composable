@@ -68,7 +68,7 @@ export const SwapRoute: React.FC<SwapRouteProps> = ({
           gap={1}
           py={2.75}
           px={3}
-          borderRadius={9999}
+          borderRadius="50%"
           sx={{
             background: alpha(
               theme.palette.common.white,

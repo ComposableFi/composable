@@ -1,12 +1,12 @@
 import { DropdownCombinedBigNumberInput } from "@/components";
 import { useMobile } from "@/hooks/responsive";
 import {
+  alpha,
   Box,
   Button,
+  Tooltip,
   Typography,
   useTheme,
-  alpha,
-  Tooltip,
 } from "@mui/material";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import { useEffect, useMemo, useState } from "react";
@@ -30,6 +30,7 @@ import { useSwaps } from "@/defi/hooks/swaps/useSwaps";
 import _ from "lodash";
 import { usePabloSwap } from "@/defi/hooks/swaps/usePabloSwap";
 import useStore from "@/store/useStore";
+import { HighlightBox } from "@/components/Atoms/HighlightBox";
 
 const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
   const isMobile = useMobile();
@@ -65,7 +66,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
     flipAssetSelection,
     isProcessing,
     percentageToSwap,
-    priceImpact
+    priceImpact,
   } = useSwaps();
 
   const initiateSwapTx = usePabloSwap({
@@ -130,25 +131,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
   const debouncedTokenAmountUpdate = _.debounce(onChangeTokenAmount, 1000);
 
   return (
-    <Box
-      borderRadius={1.33}
-      margin="auto"
-      sx={{
-        width: "100%",
-        height: "100%",
-        padding: theme.spacing(4),
-        [theme.breakpoints.down("sm")]: {
-          padding: theme.spacing(2),
-        },
-        background: theme.palette.gradient.secondary,
-        border: `1px solid ${alpha(theme.palette.common.white, 0.1)}`,
-        boxShadow: `-1px -1px ${alpha(
-          theme.palette.common.white,
-          theme.custom.opacity.light
-        )}`,
-      }}
-      {...boxProps}
-    >
+    <HighlightBox margin="auto" {...boxProps}>
       <Box display="flex" justifyContent="space-between" alignItems="center">
         <Typography variant="h6">Swap</Typography>
         <Settings
@@ -402,7 +385,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
       )}
 
       <TransactionSettings />
-    </Box>
+    </HighlightBox>
   );
 };
 

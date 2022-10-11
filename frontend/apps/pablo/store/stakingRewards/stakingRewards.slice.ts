@@ -1,10 +1,8 @@
-import { StakeForm } from "@/components";
 import {
   Stake,
   StakingPositionHistory,
   StakingRewardPool,
 } from "@/defi/types/stakingRewards";
-import BigNumber from "bignumber.js";
 import create from "zustand";
 
 export interface StakingRewardsSlice {
@@ -13,24 +11,12 @@ export interface StakingRewardsSlice {
     string,
     Array<StakingPositionHistory>
   >;
-  pabloStaking: {
-    totalPBLOLocked: BigNumber;
-    totalFnftMinted: BigNumber;
-    averageLockMultiplier: BigNumber;
-    averageLockTime: BigNumber;
-  };
   stakes: Record<string, Array<Stake>>;
 }
 
 export const useStakingRewardsSlice = create<StakingRewardsSlice>(() => ({
   rewardPools: {},
   rewardPoolStakedPositionHistory: {},
-  pabloStaking: {
-    totalPBLOLocked: new BigNumber(0),
-    totalFnftMinted: new BigNumber(0),
-    averageLockMultiplier: new BigNumber(0),
-    averageLockTime: new BigNumber(0),
-  },
   stakes: {},
 }));
 

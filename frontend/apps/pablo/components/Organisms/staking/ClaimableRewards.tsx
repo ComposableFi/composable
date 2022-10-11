@@ -26,7 +26,7 @@ const defaultPageSize = {
 const defaultTokenValueProps = (theme: Theme) =>
   ({
     justifyContent: "space-between",
-    borderRadius: 0.5,
+    borderRadius: 1,
     px: 3,
     py: 2.25,
     sx: {

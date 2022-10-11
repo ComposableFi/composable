@@ -1,7 +1,9 @@
 import { alpha, Theme } from "@mui/material";
 import { OverridesStyleRules } from "@mui/material/styles/overrides";
 
-export const buttonOverrides = (theme: Theme): Partial<OverridesStyleRules> => ({
+export const buttonOverrides = (
+  theme: Theme
+): Partial<OverridesStyleRules> => ({
   styleOverrides: {
     root: {
       textTransform: "none",
@@ -14,9 +16,9 @@ export const buttonOverrides = (theme: Theme): Partial<OverridesStyleRules> => (
       color: theme.palette.common.white,
       fontFamily: theme.custom.fontFamily.primary,
       lineHeight: theme.custom.lineHeight.small,
-      borderRadius: 9999,
+      borderRadius: theme.shape.borderRadius,
       "&.MuiButton-fullWidth": {
-        padding: 'initial',
+        padding: "initial",
       },
     },
     sizeLarge: {
@@ -63,7 +65,10 @@ export const buttonOverrides = (theme: Theme): Partial<OverridesStyleRules> => (
       borderColor: theme.palette.primary.main,
       color: theme.palette.common.white,
       "&:hover": {
-        backgroundColor: alpha(theme.palette.primary.light, theme.custom.opacity.light),
+        backgroundColor: alpha(
+          theme.palette.primary.light,
+          theme.custom.opacity.light
+        ),
         borderColor: theme.palette.primary.main,
       },
       "&:disabled": {
@@ -74,7 +79,10 @@ export const buttonOverrides = (theme: Theme): Partial<OverridesStyleRules> => (
     textPrimary: {
       color: theme.palette.primary.main,
       "&:hover": {
-        backgroundColor: alpha(theme.palette.primary.light, theme.custom.opacity.light),
+        backgroundColor: alpha(
+          theme.palette.primary.light,
+          theme.custom.opacity.light
+        ),
       },
       "&:disabled": {
         color: theme.palette.secondary.main,
