@@ -5,7 +5,7 @@ use crate::{
 use alloc::string::String;
 use cosmwasm_minimal_std::{Coin, ContractInfoResponse, Empty, Env, MessageInfo};
 use cosmwasm_vm::{
-	executor::{cosmwasm_call, ExecutorError, QueryInput},
+	executor::ExecutorError,
 	has::Has,
 	memory::{
 		MemoryReadError, MemoryWriteError, Pointable, ReadWriteMemory, ReadableMemory,
@@ -247,7 +247,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		CosmwasmContractMeta { code_id: new_code_id, admin, label }: Self::ContractMeta,
 	) -> Result<(), Self::Error> {
 		log::debug!(target: "runtime::contracts", "set_contract_meta");
-		Pallet::<T>::set_contract_meta(
+		Pallet::<T>::do_set_contract_meta(
 			&address.into_inner(),
 			new_code_id,
 			admin.map(|admin| admin.into_inner()),
@@ -526,7 +526,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 			_ => 1_u64,
 			/*
 			-----------------
-			Unsupported ones
+			Unsupported operations
 			-----------------
 			VmGas::QueryCustom => todo!(),
 			VmGas::MessageCustom => todo!(),
@@ -541,9 +541,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 			None
 			----
 			VmGas::Debug => todo!(),
-
-			VmGas::SetContractMeta => todo!(),
-					*/
+			*/
 		};
 		self.charge_raw(gas_to_charge)
 	}

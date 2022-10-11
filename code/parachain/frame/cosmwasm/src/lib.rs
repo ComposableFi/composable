@@ -395,7 +395,7 @@ pub mod pallet {
 		///   export.
 		/// * `gas` the maximum gas to use, the remaining is refunded at the end of the transaction.
 		#[transactional]
-		#[pallet::weight(T::WeightInfo::instantiate(funds.len()).saturating_add(*gas))]
+		#[pallet::weight(T::WeightInfo::instantiate().saturating_add(*gas))]
 		pub fn instantiate(
 			origin: OriginFor<T>,
 			code_id: CosmwasmCodeId,
@@ -436,7 +436,7 @@ pub mod pallet {
 		///   export.
 		/// * `gas` the maximum gas to use, the remaining is refunded at the end of the transaction.
 		#[transactional]
-		#[pallet::weight(T::WeightInfo::execute(funds.len()).saturating_add(*gas))]
+		#[pallet::weight(T::WeightInfo::execute().saturating_add(*gas))]
 		pub fn execute(
 			origin: OriginFor<T>,
 			contract: AccountIdOf<T>,
@@ -675,7 +675,7 @@ pub mod pallet {
 		}
 
 		/// Handy wrapper to set the contract info
-		pub(crate) fn set_contract_meta(
+		pub(crate) fn do_set_contract_meta(
 			contract: &AccountIdOf<T>,
 			code_id: CosmwasmCodeId,
 			admin: Option<AccountIdOf<T>>,

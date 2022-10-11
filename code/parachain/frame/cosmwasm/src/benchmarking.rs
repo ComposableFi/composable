@@ -7,7 +7,7 @@ use crate::{
 	ContractInfoOf, Pallet as Cosmwasm,
 };
 use alloc::{format, string::String, vec, vec::Vec};
-use cosmwasm_vm::system::{cosmwasm_system_query_raw, CosmwasmContractMeta};
+use cosmwasm_vm::system::CosmwasmContractMeta;
 use cosmwasm_vm_wasmi::code_gen::{self, WasmModule};
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_support::traits::{fungible, Get};
@@ -89,6 +89,24 @@ benchmarks! {
 		let wasm_module: WasmModule = code_gen::ModuleDefinition::new(n as usize).unwrap().into();
 	}: _(RawOrigin::Signed(origin), wasm_module.code.try_into().unwrap())
 
+	instantiate {
+		let origin = create_funded_account::<T>("origin");
+		let wasm_module: WasmModule = code_gen::ModuleDefinition::new(10).unwrap().into();
+		Cosmwasm::<T>::do_upload(&origin, wasm_module.code.try_into().unwrap()).unwrap();
+		let salt = vec![1].try_into().unwrap();
+		let label = vec![65].try_into().unwrap();
+		let message = vec![b'{', b'}'].try_into().unwrap();
+		// TODO: funds
+		let funds = Default::default();
+	}: _(RawOrigin::Signed(origin), 1, salt, None, label, funds, 100_000_000u64, message)
+
+	execute {
+		let origin = create_funded_account::<T>("origin");
+		let (_, contract, _info) = create_instantiated_contract::<T>(origin.clone());
+		let message = vec![b'{', b'}'].try_into().unwrap();
+		// TODO: funds
+	}: _(RawOrigin::Signed(origin), contract, Default::default(), 100_000_000u64, message)
+
 	db_read {
 		let sender = create_funded_account::<T>("origin");
 		let (mut shared, contract, info) = create_instantiated_contract::<T>(sender.clone());
@@ -153,7 +171,13 @@ benchmarks! {
 		Cosmwasm::<T>::do_transfer(&sender, &receiver, &[], false).unwrap();
 	}
 
-	// TODO: set contract_meta
+	set_contract_meta {
+		let sender = create_funded_account::<T>("origin");
+		let (mut shared, contract, info) = create_instantiated_contract::<T>(sender.clone());
+		let _vm = Cosmwasm::<T>::cosmwasm_new_vm(&mut shared, sender, contract.clone(), info, vec![]).unwrap();
+	}: {
+		Cosmwasm::<T>::do_set_contract_meta(&contract, 1, None, "hello world".into()).unwrap()
+	}
 
 	running_contract_meta {
 		let sender = create_funded_account::<T>("origin");
@@ -171,21 +195,21 @@ benchmarks! {
 		Cosmwasm::<T>::do_contract_meta(contract).unwrap()
 	}
 
-	addr_validate{
+	addr_validate {
 		let account = account::<<T as Config>::AccountIdExtended>("account", 0, 0xCAFEBABE);
 		let address = Cosmwasm::<T>::account_to_cosmwasm_addr(account);
 	}: {
 		Cosmwasm::<T>::do_addr_validate(address).unwrap()
 	}
 
-	addr_canonicalize{
+	addr_canonicalize {
 		let account = account::<<T as Config>::AccountIdExtended>("account", 0, 0xCAFEBABE);
 		let address = Cosmwasm::<T>::account_to_cosmwasm_addr(account);
 	}: {
 		Cosmwasm::<T>::do_addr_canonicalize(address).unwrap()
 	}
 
-	addr_humanize{
+	addr_humanize {
 		let account = account::<<T as Config>::AccountIdExtended>("account", 0, 0xCAFEBABE);
 		let account = CanonicalCosmwasmAccount(CosmwasmAccount::new(account));
 	}: {
