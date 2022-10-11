@@ -667,6 +667,19 @@
               meta = { mainProgram = "polkadot"; };
             };
 
+            hyperspace = crane-nightly.buildPackage (common-attrs // {
+              name = "hyperspace";
+              cargoArtifacts = common-deps-nightly;
+              cargoExtraArgs = ''
+                --package hyperspace                
+              '';
+              installPhase = ''
+                mkdir -p $out/bin
+                cp target/release/hyperspace $out/bin/hyperspace
+              '';
+              meta = { mainProgram = "hyperspace"; };
+            });
+
             polkadot-launch =
               callPackage ./scripts/polkadot-launch/polkadot-launch.nix { };
 
@@ -1220,6 +1233,11 @@
             junod = {
               type = "app";
               program = "${packages.junod}/bin/junod";
+            };
+
+            hyperspace = {
+              type = "app";
+              program = pkgs.lib.meta.getExe packages.hyperspace;
             };
 
             # TODO: move list of chains out of here and do fold
