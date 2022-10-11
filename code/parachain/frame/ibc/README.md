@@ -31,11 +31,11 @@ impl pallet_ibc::Config for Runtime {
 	const CHILD_TRIE_KEY: &'static [u8] = b"ibc/";
 	const LIGHT_CLIENT_PROTOCOL: pallet_ibc::LightClientProtocol = pallet_ibc::LightClientProtocol::Grandpa; // Finality protocol this chain will be using
 	type ExpectedBlockTime = ExpectedBlockTime; // Expected block time in milliseconds
-	type MultiCurrency = Assets; // Add a module that implements the MultiCurrency trait
+	type MultiCurrency = Assets; // Add a module that implements the Transfer, Mutate and Inspect traits defined in frame_support::traits::fungibles
 	type AccountIdConversion = ibc_primitives::IbcAccount;
-	type AssetRegistry = AssetsRegistry; // Add a module that implements the required trait
-	type CurrencyFactory = CurrencyFactory; // Add a module that impplements the required trait;
-	type WeightInfo = crate::weights::pallet_ibc::WeightInfo<Self>; // Add your benchmarkd here;
+	type AssetRegistry = AssetsRegistry; // Add a module that implements RemoteAssetRegistryMutate  and RemoteAssetRegistryInspect traits defined in composable_traits::xcm::assets 
+	type CurrencyFactory = CurrencyFactory; // Add a module that implements CurrencyFactory trait, defined in composable_traits::currency;
+	type WeightInfo = crate::weights::pallet_ibc::WeightInfo<Self>;
 	type ParaId = parachain_info::Pallet<Runtime>;
 	type RelayChain = RelayChainId;
 	type AdminOrigin = EnsureRoot<AccountId>;
