@@ -94,7 +94,8 @@ pub mod pallet {
 		},
 		memory::PointerOf,
 		system::{
-			cosmwasm_system_entrypoint, cosmwasm_system_query, CosmwasmCodeId, CosmwasmContractMeta,
+			cosmwasm_system_entrypoint, cosmwasm_system_query, cosmwasm_system_run, CosmwasmCodeId,
+			CosmwasmContractMeta,
 		},
 		vm::VmMessageCustomOf,
 	};
@@ -1295,6 +1296,70 @@ pub mod pallet {
 			};
 
 			sp_io::crypto::ed25519_verify(&signature, message, &public_key)
+		}
+
+		pub(crate) fn do_continue_instantiate<'a>(
+			vm: &'a mut CosmwasmVM<T>,
+			CosmwasmContractMeta { code_id, admin, label }: CosmwasmContractMeta<
+				CosmwasmAccount<T>,
+			>,
+			funds: Vec<Coin>,
+			message: &[u8],
+			event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
+		) -> Result<Option<cosmwasm_minimal_std::Binary>, CosmwasmVMError<T>> {
+			let (contract, info) = Pallet::<T>::do_instantiate_phase1(
+				vm.contract_address.clone().into_inner(),
+				code_id,
+				&[],
+				admin.map(|admin| admin.into_inner()),
+				label
+					.as_bytes()
+					.to_vec()
+					.try_into()
+					.map_err(|_| crate::Error::<T>::LabelTooBig)?,
+				message,
+			)?;
+			Pallet::<T>::cosmwasm_call(
+				vm.shared,
+				vm.contract_address.clone().into_inner(),
+				contract,
+				info,
+				funds,
+				|vm| cosmwasm_system_run::<InstantiateInput, _>(vm, message, event_handler),
+			)
+		}
+
+		pub(crate) fn do_continue_execute<'a>(
+			vm: &'a mut CosmwasmVM<T>,
+			contract: AccountIdOf<T>,
+			funds: Vec<Coin>,
+			message: &[u8],
+			event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
+		) -> Result<Option<cosmwasm_minimal_std::Binary>, CosmwasmVMError<T>> {
+			let sender = vm.contract_address.clone().into_inner();
+			let info = Pallet::<T>::contract_info(&contract)?;
+			Pallet::<T>::cosmwasm_call(vm.shared, sender, contract, info, funds, |vm| {
+				cosmwasm_system_run::<ExecuteInput, _>(vm, message, event_handler)
+			})
+		}
+
+		pub(crate) fn do_continue_migrate<'a>(
+			vm: &'a mut CosmwasmVM<T>,
+			contract: AccountIdOf<T>,
+			message: &[u8],
+			event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
+		) -> Result<Option<cosmwasm_minimal_std::Binary>, CosmwasmVMError<T>> {
+			let sender = vm.contract_address.clone().into_inner();
+			let info = Pallet::<T>::contract_info(&contract)?;
+			Pallet::<T>::cosmwasm_call(
+				vm.shared,
+				sender,
+				contract,
+				info,
+				// Can't move funds in migration.
+				Default::default(),
+				|vm| cosmwasm_system_run::<MigrateInput, _>(vm, message, event_handler),
+			)
 		}
 	}
 

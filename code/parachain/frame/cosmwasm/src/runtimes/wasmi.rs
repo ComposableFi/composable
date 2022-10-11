@@ -5,15 +5,13 @@ use crate::{
 use alloc::string::String;
 use cosmwasm_minimal_std::{Coin, ContractInfoResponse, Empty, Env, MessageInfo};
 use cosmwasm_vm::{
-	executor::{
-		cosmwasm_call, ExecuteInput, ExecutorError, InstantiateInput, MigrateInput, QueryInput,
-	},
+	executor::{cosmwasm_call, ExecutorError, QueryInput},
 	has::Has,
 	memory::{
 		MemoryReadError, MemoryWriteError, Pointable, ReadWriteMemory, ReadableMemory,
 		WritableMemory,
 	},
-	system::{cosmwasm_system_run, CosmwasmCodeId, CosmwasmContractMeta, SystemError},
+	system::{CosmwasmCodeId, CosmwasmContractMeta, SystemError},
 	transaction::Transactional,
 	vm::{VMBase, VmErrorOf, VmGas},
 };
@@ -372,43 +370,19 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
 	) -> Result<Option<cosmwasm_minimal_std::Binary>, Self::Error> {
 		log::debug!(target: "runtime::contracts", "continue_execute");
-		let sender = self.contract_address.clone().into_inner();
-		let contract = address.into_inner();
-		let info = Pallet::<T>::contract_info(&contract)?;
-		Pallet::<T>::cosmwasm_call(self.shared, sender, contract, info, funds, |vm| {
-			cosmwasm_system_run::<ExecuteInput, _>(vm, message, event_handler)
-		})
+		Pallet::<T>::do_continue_execute(self, address.into_inner(), funds, message, event_handler)
 	}
 
 	fn continue_instantiate(
 		&mut self,
-		CosmwasmContractMeta { code_id, admin, label }: Self::ContractMeta,
+		contract_meta: Self::ContractMeta,
 		funds: Vec<Coin>,
 		message: &[u8],
 		event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
 	) -> Result<(Self::Address, Option<cosmwasm_minimal_std::Binary>), Self::Error> {
 		log::debug!(target: "runtime::contracts", "continue_instantiate");
-		let (contract, info) = Pallet::<T>::do_instantiate_phase1(
-			self.contract_address.clone().into_inner(),
-			code_id,
-			&[],
-			admin.map(|admin| admin.into_inner()),
-			label
-				.as_bytes()
-				.to_vec()
-				.try_into()
-				.map_err(|_| crate::Error::<T>::LabelTooBig)?,
-			message,
-		)?;
-		Pallet::<T>::cosmwasm_call(
-			self.shared,
-			self.contract_address.clone().into_inner(),
-			contract,
-			info,
-			funds,
-			|vm| cosmwasm_system_run::<InstantiateInput, _>(vm, message, event_handler),
-		)
-		.map(|r| (self.contract_address.clone(), r))
+		Pallet::<T>::do_continue_instantiate(self, contract_meta, funds, message, event_handler)
+			.map(|r| (self.contract_address.clone(), r))
 	}
 
 	fn continue_migrate(
@@ -418,18 +392,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
 	) -> Result<Option<cosmwasm_minimal_std::Binary>, Self::Error> {
 		log::debug!(target: "runtime::contracts", "continue_migrate");
-		let sender = self.contract_address.clone().into_inner();
-		let contract = address.into_inner();
-		let info = Pallet::<T>::contract_info(&contract)?;
-		Pallet::<T>::cosmwasm_call(
-			self.shared,
-			sender,
-			contract,
-			info,
-			// Can't move funds in migration.
-			Default::default(),
-			|vm| cosmwasm_system_run::<MigrateInput, _>(vm, message, event_handler),
-		)
+		Pallet::<T>::do_continue_migrate(self, address.into_inner(), message, event_handler)
 	}
 
 	fn query_custom(
@@ -579,6 +542,9 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 			VmGas::AddrCanonicalize => T::WeightInfo::addr_canonicalize(),
 			VmGas::AddrHumanize => T::WeightInfo::addr_humanize(),
 			VmGas::GetContractMeta => T::WeightInfo::contract_meta(),
+			VmGas::ContinueExecute => T::WeightInfo::continue_execute(),
+			VmGas::ContinueInstantiate => T::WeightInfo::continue_instantiate(),
+			VmGas::ContinueMigrate => T::WeightInfo::continue_migrate(),
 			// TODO(hussein-aitlahcen): benchmarking required to compute _base_ gas for each
 			// operations.
 			_ => 1_u64,
@@ -586,9 +552,6 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 			VmGas::RawCall => todo!(),
 			VmGas::SetContractMeta => todo!(),
 			VmGas::QueryContinuation => todo!(),
-			VmGas::ContinueExecute => todo!(),
-			VmGas::ContinueInstantiate => todo!(),
-			VmGas::ContinueMigrate => todo!(),
 			VmGas::QueryCustom => todo!(),
 			VmGas::MessageCustom => todo!(),
 			VmGas::QueryRaw => todo!(),

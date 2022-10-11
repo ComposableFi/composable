@@ -7,6 +7,7 @@ use crate::{
 	ContractInfoOf, Pallet as Cosmwasm,
 };
 use alloc::{format, string::String, vec, vec::Vec};
+use cosmwasm_vm::system::CosmwasmContractMeta;
 use cosmwasm_vm_wasmi::code_gen::{self, WasmModule};
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_support::traits::{fungible, Get};
@@ -82,7 +83,7 @@ benchmarks! {
 	}
 
 	upload {
-		let n in 1..T::MaxCodeSize::get() - 3000;
+		let n in 1..T::MaxCodeSize::get() - 10000;
 		let asset = T::AssetToDenom::convert(alloc::string::String::from("1")).unwrap();
 		let origin = create_funded_account::<T>("signer");
 		let wasm_module: WasmModule = code_gen::ModuleDefinition::new(n as usize).unwrap().into();
@@ -241,6 +242,50 @@ benchmarks! {
 		let public_keys: Vec<&[u8]> = public_keys.iter().map(Vec::as_slice).collect();
 		Cosmwasm::<T>::do_ed25519_batch_verify(&messages, &signatures, &public_keys)
 	}
+
+	continue_instantiate {
+		let sender = create_funded_account::<T>("origin");
+		let (mut shared, contract, info) = create_instantiated_contract::<T>(sender.clone());
+		let meta: CosmwasmContractMeta<CosmwasmAccount<T>> = CosmwasmContractMeta { code_id: info.code_id, admin: None, label: String::from("test")};
+	}: {
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(&mut shared, sender, contract, info, vec![]).unwrap();
+		// TODO: Funds
+		Cosmwasm::<T>::do_continue_instantiate(&mut vm.0, meta, vec![], "{}".as_bytes(), &mut |_event| {}).unwrap()
+	}
+
+	continue_execute {
+		let sender = create_funded_account::<T>("origin");
+		let (mut shared, contract, info) = create_instantiated_contract::<T>(sender.clone());
+	}: {
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(&mut shared, sender, contract.clone(), info, vec![]).unwrap();
+		// TODO: Funds
+		Cosmwasm::<T>::do_continue_execute(&mut vm.0, contract, vec![], "{}".as_bytes(), &mut |_event| {}).unwrap()
+	}
+
+	continue_migrate {
+		let sender = create_funded_account::<T>("origin");
+		let (mut shared, contract, info) = create_instantiated_contract::<T>(sender.clone());
+	}: {
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(&mut shared, sender, contract.clone(), info, vec![]).unwrap();
+		// TODO: Funds
+		Cosmwasm::<T>::do_continue_migrate(&mut vm.0, contract, "{}".as_bytes(), &mut |_event| {}).unwrap()
+	}
+
+	// VmGas::RawCall => todo!(),
+	// VmGas::SetContractMeta => todo!(),
+	// VmGas::QueryContinuation => todo!(),
+	// VmGas::ContinueExecute => todo!(),
+	// VmGas::ContinueInstantiate => todo!(),
+	// VmGas::ContinueMigrate => todo!(),
+	// VmGas::QueryCustom => todo!(),
+	// VmGas::MessageCustom => todo!(),
+	// VmGas::QueryRaw => todo!(),
+	// VmGas::Burn => todo!(),
+	// VmGas::AllBalance => todo!(),
+	// VmGas::QueryInfo => todo!(),
+	// VmGas::QueryChain => todo!(),
+	// VmGas::Debug => todo!(),
+
 }
 
 impl_benchmark_test_suite!(Cosmwasm, crate::mock::new_test_ext(), crate::mock::Test,);
