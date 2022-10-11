@@ -922,6 +922,7 @@ pub mod pallet {
 
 			let (rewards, reductions) =
 				Self::compute_rewards_and_reductions(awarded_shares, &rewards_pool)?;
+
 			rewards_pool.rewards = rewards;
 			stake.stake = stake.stake.safe_add(&amount)?;
 			stake.share = stake.share.safe_add(&awarded_shares)?;
@@ -1358,22 +1359,26 @@ pub mod pallet {
 			let mut reductions = BoundedBTreeMap::new();
 			let mut rewards_btree_map = BoundedBTreeMap::new();
 
-			for (asset_id, reward) in rewards_pool.rewards.iter() {
-				let total_issuance: T::Balance =
-					<T::Assets as FungiblesInspect<T::AccountId>>::total_issuance(*asset_id);
+			let total_shares: T::Balance =
+				<T::Assets as FungiblesInspect<T::AccountId>>::total_issuance(
+					rewards_pool.share_asset_id,
+				);
 
+			for (asset_id, reward) in rewards_pool.rewards.iter() {
 				let reward = reward.clone();
 
-				let inflation = if total_issuance == T::Balance::zero() {
+				let inflation = if total_shares.is_zero() {
 					T::Balance::zero()
 				} else {
-					reward.total_rewards.safe_mul(&shares)?.safe_div(&total_issuance)?
+					reward.total_rewards.safe_mul(&shares)?.safe_div(&total_shares)?
 				};
 
 				let total_rewards = reward.total_rewards.safe_add(&inflation)?;
 				let total_dilution_adjustment =
 					reward.total_dilution_adjustment.safe_add(&inflation)?;
+
 				let updated_reward = Reward { total_rewards, total_dilution_adjustment, ..reward };
+
 				rewards_btree_map
 					.try_insert(*asset_id, updated_reward)
 					.map_err(|_| Error::<T>::ReductionConfigProblem)?;
@@ -1725,10 +1730,10 @@ pub(crate) fn claim_of_stake<T: Config>(
 	reward: &Reward<T::Balance>,
 	reward_asset_id: &<T as Config>::AssetId,
 ) -> Result<T::Balance, DispatchError> {
-	let total_issuance: T::Balance =
+	let total_shares: T::Balance =
 		<T::Assets as FungiblesInspect<T::AccountId>>::total_issuance(*share_asset_id);
 
-	let claim = if total_issuance.is_zero() {
+	let claim = if total_shares.is_zero() {
 		T::Balance::zero()
 	} else {
 		let inflation = stake.reductions.get(reward_asset_id).cloned().unwrap_or_else(Zero::zero);
@@ -1742,7 +1747,7 @@ pub(crate) fn claim_of_stake<T: Config>(
 		reward
 			.total_rewards
 			.safe_mul(&stake.share)?
-			.safe_div(&total_issuance)?
+			.safe_div(&total_shares)?
 			.safe_sub(&inflation)?
 	};
 
