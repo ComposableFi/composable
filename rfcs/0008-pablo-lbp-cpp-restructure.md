@@ -655,7 +655,7 @@ Implement the equations outlined in the [Method](#_method) in
 
 8.  Ensure normalized weights are used everywhere.
 
-### 5.4 Stage 4: Fron-end Changes
+### 5.4 Stage 4: Front-end Changes
 
 1. Remove FE components that were built for LBP.
 2. Remove FE components that were built for StableSwap.
