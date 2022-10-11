@@ -21,6 +21,7 @@ import * as definitions from "defi-interfaces/definitions";
 import { APP_NAME } from "@/defi/polkadot/constants";
 import { BlockchainProvider } from "bi-lib";
 import { NETWORKS } from "@/defi/Networks";
+import { getEnvironment } from "shared/endpoints";
 import { rpc as acalaRpc, types as acalaTypes } from "@acala-network/types";
 // Client-side cache, shared for the whole session of the user in the browser.
 const clientSideEmotionCache = createEmotionCache();
@@ -111,13 +112,13 @@ export default function MyApp(props: MyAppProps) {
             supportedParachains={[
               {
                 chainId: "picasso",
-                rpcUrl: process.env.SUBSTRATE_PROVIDER_URL_KUSAMA_2019 || "",
+                rpcUrl: getEnvironment("picasso"),
                 rpc,
                 types,
               },
               {
                 chainId: "karura",
-                rpcUrl: process.env.SUBSTRATE_PROVIDER_URL_KARURA || "",
+                rpcUrl: getEnvironment("karura"),
                 rpc: acalaRpc,
                 types: acalaTypes
               }
