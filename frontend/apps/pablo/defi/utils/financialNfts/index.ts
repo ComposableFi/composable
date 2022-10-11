@@ -1,7 +1,6 @@
 import { CustomRpcBalance } from "@/../../packages/defi-interfaces";
 import { StakingPositionHistory, StakingRewardPool } from "@/defi/types";
 import { ApiPromise } from "@polkadot/api";
-import { bnToU8a } from "@polkadot/util";
 import { BN } from "bn.js";
 import { PALLET_TYPE_ID } from "../constants";
 import { concatU8a } from "../misc";
@@ -45,8 +44,8 @@ export function createFinancialNftAccountId(
 ) {
   const palletId = parachainApi.consts.fnft.palletId.toU8a();
   const accountPrefix = concatU8a(PALLET_TYPE_ID, palletId);
-  const collectionId = bnToU8a(new BN(financialNFTCollectionId));
-  const instanceId = bnToU8a(new BN(financialNFTInstanceId));
+  const collectionId = new BN(financialNFTCollectionId);
+  const instanceId = new BN(financialNFTInstanceId)
   const accountSuffix = parachainApi.createType("(u128, u64)", [
     collectionId,
     instanceId

@@ -1,10 +1,11 @@
 import { MockedAsset } from "@/store/assets/assets.types";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useAssets } from "../assets";
 import { useStakingPositions } from "./useStakingPositions";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import BigNumber from "bignumber.js";
 import { Stake, StakingRewardPool } from "@/defi/types";
+import { fromChainIdUnit } from "@/../../packages/shared";
 
 export interface ClaimableAsset extends MockedAsset {
   claimable: BigNumber;
@@ -22,12 +23,17 @@ function claimOfStake(
   if (stakingRewardPool.totalShares.eq(0)) {
     return new BigNumber(0);
   } else {
-    let inflation = stake.reductions[rewardAssetId] || new BigNumber(0);
+    let inflation =
+      fromChainIdUnit(stake.reductions[rewardAssetId]) || new BigNumber(0);
 
-    return stakingRewardPool.rewards[rewardAssetId].totalRewards
-      .times(stake.share)
-      .div(stakingRewardPool.totalShares)
-      .minus(inflation);
+    const totalRewards = fromChainIdUnit(
+      stakingRewardPool.rewards[rewardAssetId].totalRewards
+    );
+    const share = stake.share;
+    const totalShares = stakingRewardPool.totalShares;
+    const myShare = totalRewards.times(share).div(totalShares);
+
+    return myShare.minus(inflation);
   }
 }
 
@@ -35,9 +41,14 @@ function calculateClaim(
   stake: Stake,
   stakingRewardPool: StakingRewardPool,
   accountForPenalty: boolean = false
-): [string, BigNumber][] {
+): [string, BigNumber, string][] {
   return Object.keys(stakingRewardPool.rewards).map((assetId) => {
     let claimable = claimOfStake(stake, stakingRewardPool, assetId);
+
+    if (claimable.lte(0)) {
+      claimable = new BigNumber(0);
+    }
+
     let is_penalized =
       stake.lock.startedAt.plus(stake.lock.duration).toNumber() > Date.now();
 
@@ -51,18 +62,23 @@ function calculateClaim(
 
     claimable = BigNumber.min(
       claimable,
-      stakingRewardPool.rewards[assetId].totalRewards.minus(
-        stakingRewardPool.rewards[assetId].claimedRewards
+      fromChainIdUnit(
+        stakingRewardPool.rewards[assetId].totalRewards.minus(
+          stakingRewardPool.rewards[assetId].claimedRewards
+        )
       )
     );
 
-    return [assetId, claimable];
+    return [assetId, claimable, stake.fnftInstanceId];
   });
 }
 
 export function useClaimableRewards({
   stakedAssetId,
-}: ClaimableRewardsProps): Array<ClaimableAsset> {
+}: ClaimableRewardsProps): {
+  claimableAssets: Array<ClaimableAsset>;
+  financialNftInstanceId: string;
+} {
   const { stakingRewardPool, stakes } = useStakingPositions({
     stakedAssetId,
   });
@@ -72,30 +88,30 @@ export function useClaimableRewards({
   );
 
   const claimableAmounts = useMemo(() => {
-    if (!stakingRewardPool) return [];
+    if (!stakingRewardPool || stakes.length === 0) return [];
 
-    return stakes.map((_stake) => {
-      return calculateClaim(_stake, stakingRewardPool, false);
-    });
+    return calculateClaim(stakes[0], stakingRewardPool, false);
   }, [stakes, stakingRewardPool]);
 
   return useMemo(() => {
-    return rewardAssets.map((asset) => {
+    let financialNftInstanceId = "-";
+    const claimableAssets = rewardAssets.map((asset) => {
       const assetId = asset.network[DEFAULT_NETWORK_ID];
       let claimable = new BigNumber(0);
       if (claimableAmounts.length > 0) {
         const claimableFromStake = claimableAmounts.find(
-          (claimableFromStake) => {
-            return claimableFromStake.find(([id, val]) => id === assetId);
-          }
+          ([_assetId, _val]) => _assetId === assetId
         );
 
         if (claimableFromStake) {
-          claimable = claimableFromStake[0][1];
+          financialNftInstanceId = claimableFromStake[2];
+          claimable = claimableFromStake[1];
         }
       }
 
       return { ...asset, claimable };
     });
+
+    return { claimableAssets, financialNftInstanceId };
   }, [rewardAssets, claimableAmounts]);
 }

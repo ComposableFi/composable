@@ -52,7 +52,7 @@ export const SelectLockPeriod: React.FC<SelectLockPeriodProps> = ({
       </Box>
       <Box display="flex" justifyContent="space-between" alignItems="center">
         <Typography variant="h6">
-          {durationPresetSelected?.label}
+          {durationPresetSelected?.periodInString}
         </Typography>
         <Typography variant="subtitle1" color={theme.palette.success.main}>
           6.00
