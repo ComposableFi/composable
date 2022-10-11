@@ -1103,7 +1103,7 @@
               pkgs.composable.mkDevnetProgram "devnet-persistent"
               (import ./.nix/devnet-specs/default.nix {
                 inherit pkgs;
-                inherit devnet-native-all;
+                devnet = devnet-all-dev-local;
                 frontend = frontend-static-persistent;
               });
 

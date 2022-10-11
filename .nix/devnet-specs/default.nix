@@ -1,7 +1,7 @@
-{ pkgs, devnet-rococo-dali-karura, frontend, ... }: {
+{ pkgs, devnet, frontend, ... }: {
   modules = [
     (let
-      devnet-container-name = "devnet-rococo-dali-karura";
+      devnet-container-name = "devnet";
       subsquidGraphqlContainerName = "subsquid-graphql";
       gatewayContainerName = "subsquid-gateway";
 
@@ -28,6 +28,7 @@
       rococoPort = 9944;
       daliPort = 9988;
       karuraPort = 9999;
+      stateminePort = 10008;
       squidGraphqlPort = 4350;
       pabloPort = 8001;
       picassoPort = 8002;
@@ -73,19 +74,23 @@
           "${devnet-container-name}" = mkComposableContainer
             (import ../services/devnet.nix {
               inherit pkgs;
-              devnet = devnet-rococo-dali-karura;
+              inherit devnet;
               ports = [
                 {
                   host = rococoPort;
-                  container = 9944;
+                  container = rococoPort;
                 }
                 {
                   host = daliPort;
-                  container = 9988;
+                  container = daliPort;
                 }
                 {
                   host = karuraPort;
-                  container = 9999;
+                  container = karuraPort;
+                }
+                {
+                  host = stateminePort;
+                  container = stateminePort;
                 }
               ];
             });

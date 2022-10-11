@@ -45,6 +45,7 @@ let
           Type = "simple";
           User = "root";
           LimitNOFILE = 1048576;
+          TimeoutStopSec = 5;
           ExecStart = "${
               pkgs.writeShellApplication {
                 name = "run-devnet";
