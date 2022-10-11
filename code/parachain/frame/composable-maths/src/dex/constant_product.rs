@@ -4,7 +4,7 @@ use composable_support::math::safe::{
 use frame_support::ensure;
 use rust_decimal::{
 	prelude::{FromPrimitive, ToPrimitive},
-	Decimal, MathematicalOps,
+	Decimal, MathematicalOps, RoundingStrategy,
 };
 use sp_runtime::{
 	traits::{IntegerSquareRoot, One, Zero},
@@ -95,6 +95,7 @@ where
 ///
 /// If `Ok`, returns a tuple containing `(a_out, fee)`.
 /// To get `a_out` without accounting for the fee, set `f = 0`.
+/// Amount out, round down results.
 ///
 /// **NOTE:** Weights must already be normalized.
 ///
@@ -137,10 +138,26 @@ pub fn compute_out_given_in_new<T: PerThing>(
 	let value = value.checked_powd(weight_ratio).ok_or(ArithmeticError::Overflow)?;
 	let value = Decimal::ONE.safe_sub(&value)?;
 
-	let a_out = b_o.safe_mul(&value)?.to_u128().ok_or(ArithmeticError::Overflow)?;
-	let fee = a_sent.safe_sub(&a_sent_fee_cut)?.to_u128().ok_or(ArithmeticError::Overflow)?;
+	let a_out = round_down(b_o.safe_mul(&value)?).to_u128().ok_or(ArithmeticError::Overflow)?;
+	let fee = round_up(a_sent.safe_sub(&a_sent_fee_cut)?)
+		.to_u128()
+		.ok_or(ArithmeticError::Overflow)?;
 
 	Ok((a_out, fee))
+}
+
+/// Rounds a decimal value up to the nearest whole number
+fn round_up(decimal: Decimal) -> Decimal {
+	round(decimal, RoundingStrategy::AwayFromZero)
+}
+
+fn round_down(decimal: Decimal) -> Decimal {
+	round(decimal, RoundingStrategy::ToZero)
+}
+
+/// Rounds a decimal value to a whole number based on the provided `RoundingStrategy`
+fn round(decimal: Decimal, rounding_strategy: RoundingStrategy) -> Decimal {
+	decimal.round_dp_with_strategy(0, rounding_strategy)
 }
 
 /// From https://balancer.fi/whitepaper.pdf, equation (20)
