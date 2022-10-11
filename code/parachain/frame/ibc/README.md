@@ -510,9 +510,9 @@ impl ibc_runtime_api::IbcRuntimeApi<Block> for Runtime {
   - [ ] Ethereum Light Client
 - [x] ICS03 - Connections  
 - [x] ICS04 - Channels and Ports  
-- [x] ICS23 - Vector commitments  
-- [x] ICS26 - Routing and callback handlers  
-- [x] ICS20 - Fungible token transfer
+- [x] ICS023 - Vector commitments  
+- [x] ICS026 - Routing and callback handlers  
+- [x] ICS020 - Fungible token transfer
 - [ ] ICS027 - Interchain accounts
 - [ ] ICS028 - Cross chain validation
 - [ ] ICS029 - Fee payment
