@@ -4,7 +4,7 @@ use composable_support::math::safe::{
 use frame_support::ensure;
 use rust_decimal::{
 	prelude::{FromPrimitive, ToPrimitive},
-	Decimal, MathematicalOps,
+	Decimal, MathematicalOps, RoundingStrategy,
 };
 use sp_runtime::{
 	traits::{IntegerSquareRoot, One, Zero},
@@ -135,6 +135,7 @@ where
 ///
 /// If `Ok`, returns a tuple containing `(a_sent, fee)`.
 /// To get `a_sent` without accounting for the fee, set `f = 0`.
+/// Amount in, round up results.
 ///
 /// **NOTE:** Weights must already be normalized.
 ///
@@ -178,10 +179,20 @@ pub fn compute_in_given_out_new<T: PerThing>(
 	let value = value.checked_powd(weight_ratio).ok_or(ArithmeticError::Overflow)?;
 	let value = value.safe_sub(&Decimal::ONE)?;
 
-	let a_sent = b_i_over_fee.safe_mul(&value)?;
-	let fee = a_sent.safe_mul(&fee)?.to_u128().ok_or(ArithmeticError::Overflow)?;
+	let a_sent = round_up(b_i_over_fee.safe_mul(&value)?);
+	let fee = round_up(a_sent.safe_mul(&fee)?).to_u128().ok_or(ArithmeticError::Overflow)?;
 
 	Ok((a_sent.to_u128().ok_or(ArithmeticError::Overflow)?, fee))
+}
+
+/// Rounds a decimal value up to the nearest whole number
+fn round_up(decimal: Decimal) -> Decimal {
+	round(decimal, RoundingStrategy::AwayFromZero)
+}
+
+/// Rounds a decimal value to a whole number based on the provided `RoundingStrategy`
+fn round(decimal: Decimal, rounding_strategy: RoundingStrategy) -> Decimal {
+	decimal.round_dp_with_strategy(0, rounding_strategy)
 }
 
 /// https://uniswap.org/whitepaper.pdf, equation (13)
