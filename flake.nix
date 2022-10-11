@@ -112,6 +112,27 @@
           };
         };
 
+      mk-devnet-container = { containerName, devNet, container-tools }:
+        nixpkgs.lib.trace "Run Dali runtime on Composable node"
+        nixpkgs.dockerTools.buildImage {
+          name = containerName;
+          tag = "latest";
+          copyToRoot = nixpkgs.buildEnv {
+            name = "image-root";
+            paths = [ nixpkgs.curl nixpkgs.websocat ] ++ container-tools;
+            pathsToLink = [ "/bin" ];
+          };
+          config = {
+            Entrypoint = [ "${devNet}/bin/run-devnet-dali-dev" ];
+            WorkingDir = "/home/polkadot-launch";
+          };
+          runAsRoot = ''
+            mkdir -p /home/polkadot-launch /tmp
+            chown 1000:1000 /home/polkadot-launch
+            chmod 777 /tmp
+          '';
+        };
+
       eachSystemOutputs = flake-utils.lib.eachDefaultSystem (system:
         let
           pkgs = import nixpkgs {
@@ -648,23 +669,26 @@
               chain-spec = "dali-dev";
             }).script;
 
-            # Dali Centauri devnet
-            mk-bridge-devnet-dali = { polkadot-node }:
-              (callPackage mk-devnet {
-                inherit pkgs;
-                inherit (packages)
-                  polkadot-launch composable-node polkadot-node;
-                chain-spec = "dali-dev";
-                network-config-path =
-                  ./scripts/polkadot-launch/bridge-rococo-local-dali-dev.nix;
-                useGlobalChainSpec = false;
-              }).script;
+            # Dali bridge devnet
+            bridge-devnet-dali = (callPackage mk-devnet {
+              inherit pkgs;
+              inherit (packages) polkadot-launch composable-node polkadot-node;
+              chain-spec = "dali-dev";
+              network-config-path =
+                ./scripts/polkadot-launch/bridge-rococo-local-dali-dev.nix;
+              useGlobalChainSpec = false;
+            });
 
-            bridge-devnet-dali =
-              mk-bridge-devnet-dali { inherit polkadot-node; };
-
-            bridge-mmr-devnet-dali =
-              mk-bridge-devnet-dali { polkadot-node = mmr-polkadot-node; };
+            # Dali bridge devnet with mmr-polkadot
+            bridge-mmr-devnet-dali = (callPackage mk-devnet {
+              inherit pkgs;
+              inherit (packages) polkadot-launch composable-node;
+              chain-spec = "dali-dev";
+              polkadot-node = mmr-polkadot-node;
+              network-config-path =
+                ./scripts/polkadot-launch/bridge-rococo-local-dali-dev.nix;
+              useGlobalChainSpec = false;
+            });
 
             # Picasso devnet
             devnet-picasso = (callPackage mk-devnet {
@@ -673,36 +697,17 @@
               chain-spec = "picasso-dev";
             }).script;
 
-            mk-devnet-container = { containerName, devNet }:
-              trace "Run Dali runtime on Composable node"
-              dockerTools.buildImage {
-                name = containerName;
-                tag = "latest";
-                copyToRoot = pkgs.buildEnv {
-                  name = "image-root";
-                  paths = [ curl websocat ] ++ container-tools;
-                  pathsToLink = [ "/bin" ];
-                };
-                config = {
-                  Entrypoint = [ "${devNet}/bin/run-devnet-dali-dev" ];
-                  WorkingDir = "/home/polkadot-launch";
-                };
-                runAsRoot = ''
-                  mkdir -p /home/polkadot-launch /tmp
-                  chown 1000:1000 /home/polkadot-launch
-                  chmod 777 /tmp
-                '';
-              };
-
             devnet-container = mk-devnet-container {
               containerName = "composable-devnet-container";
               devNet = packages.devnet-dali;
+              inherit container-tools;
             };
 
             # Dali Bridge devnet container
             bridge-devnet-dali-container = mk-devnet-container {
               containerName = "composable-bridge-devnet-container";
               devNet = packages.bridge-devnet-dali;
+              inherit container-tools;
             };
 
             # Dali Bridge devnet container with mmr-polkadot
