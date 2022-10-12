@@ -14,6 +14,7 @@
 // limitations under the License.
 
 //! Light client error definition
+
 use codec::alloc::string::String;
 use sp_core::H256;
 use sp_std::prelude::*;
@@ -72,7 +73,14 @@ pub enum BeefyClientError {
 		found,
 		location
 	)]
-	InvalidMmrProof { expected: H256, found: H256, location: &'static str },
+	InvalidMmrProof {
+		/// The root hash that was expected
+		expected: H256,
+		/// The root hash that was derived
+		found: H256,
+		/// The location of the error
+		location: &'static str,
+	},
 	/// Invalid authority proof
 	InvalidAuthorityProof,
 	/// Invalid merkle proof

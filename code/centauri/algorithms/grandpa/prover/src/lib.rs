@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 #![allow(clippy::all)]
+#![deny(missing_docs)]
 
 use crate::runtime::api::runtime_types::polkadot_parachain::primitives::Id;
 use anyhow::anyhow;
@@ -36,14 +37,22 @@ use subxt::{
 	Config, OnlineClient,
 };
 
+/// Host function implementation for the verifier
 pub mod host_functions;
+/// Subxt generated code for the relay chain
 pub mod runtime;
 
+/// Contains methods useful for proving parachain header finality using GRANDPA
 pub struct GrandpaProver<T: Config> {
+	/// Subxt client for the relay chain
 	pub relay_client: OnlineClient<T>,
+	/// Relay chain jsonrpsee client for typed rpc requests, which subxt lacks support for.
 	pub relay_ws_client: Arc<Client>,
+	/// Subxt client for the parachain
 	pub para_client: OnlineClient<T>,
+	/// Parachain jsonrpsee client for typed rpc requests, which subxt lacks support for.
 	pub para_ws_client: Arc<Client>,
+	/// ParaId of the associated parachain
 	pub para_id: u32,
 }
 
@@ -57,6 +66,7 @@ where
 	T::BlockNumber: Ord + Zero,
 	u32: From<T::BlockNumber>,
 {
+	/// Initializes the parachain and relay chain clients given the ws urls.
 	pub async fn new(
 		relay_ws_url: &str,
 		para_ws_url: &str,

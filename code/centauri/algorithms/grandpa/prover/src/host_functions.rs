@@ -18,6 +18,7 @@ use sp_core::ed25519::{Public, Signature};
 use sp_runtime::{app_crypto::RuntimePublic, traits::BlakeTwo256};
 use std::fmt::Debug;
 
+/// Only holds implementations for the relevant Host Functions for the verifier
 #[derive(Clone, PartialEq, Eq, Debug, Default)]
 pub struct HostFunctionsProvider;
 

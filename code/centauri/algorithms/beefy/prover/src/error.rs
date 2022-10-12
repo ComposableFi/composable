@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/// Errors that are encountered by the prover
 #[derive(sp_std::fmt::Debug, derive_more::From)]
 pub enum Error {
 	/// subxt error

@@ -16,6 +16,7 @@
 //! BEEFY light client verification functions
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::all)]
+#![deny(missing_docs)]
 
 extern crate alloc;
 

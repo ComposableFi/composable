@@ -19,7 +19,7 @@ use error::Error;
 use serde::Deserialize;
 
 use beefy_light_client_primitives::{ClientState, MmrUpdateProof};
-use beefy_prover::ClientWrapper;
+use beefy_prover::Prover;
 use ibc::{
 	core::ics24_host::identifier::{ChannelId, ClientId, PortId},
 	events::IbcEvent,
@@ -287,7 +287,7 @@ where
 		u32: From<T::BlockNumber>,
 		T::BlockNumber: From<u32>,
 	{
-		let client_wrapper = ClientWrapper {
+		let client_wrapper = Prover {
 			relay_client: self.relay_client.clone(),
 			para_client: self.para_client.clone(),
 			beefy_activation_block: client_state.beefy_activation_block,
@@ -359,7 +359,7 @@ where
 	where
 		T::BlockNumber: Ord + sp_runtime::traits::Zero,
 	{
-		let client_wrapper = ClientWrapper {
+		let client_wrapper = Prover {
 			relay_client: self.relay_client.clone(),
 			para_client: self.para_client.clone(),
 			beefy_activation_block: client_state.beefy_activation_block,
@@ -404,7 +404,7 @@ where
 		>,
 		client_state: &ClientState,
 	) -> Result<MmrUpdateProof, Error> {
-		let prover = ClientWrapper {
+		let prover = Prover {
 			relay_client: self.relay_client.clone(),
 			para_client: self.para_client.clone(),
 			beefy_activation_block: client_state.beefy_activation_block,

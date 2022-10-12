@@ -2,7 +2,7 @@ use crate::{
 	parachain::api, polkadot, signer::ExtrinsicSigner, utils::unsafe_cast_to_jsonrpsee_client,
 	Error, GrandpaClientState, ParachainClient,
 };
-use beefy_prover::ClientWrapper;
+use beefy_prover::Prover;
 use codec::Decode;
 use common::AccountId;
 use futures::{Stream, StreamExt};
@@ -80,7 +80,7 @@ where
 		use ibc::core::ics24_host::identifier::ChainId;
 		let api = self.relay_client.storage();
 		let para_client_api = self.para_client.storage();
-		let client_wrapper = ClientWrapper {
+		let client_wrapper = Prover {
 			relay_client: self.relay_client.clone(),
 			para_client: self.para_client.clone(),
 			beefy_activation_block,

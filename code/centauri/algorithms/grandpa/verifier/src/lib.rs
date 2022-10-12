@@ -17,6 +17,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::all)]
+#![deny(missing_docs)]
 
 extern crate alloc;
 
@@ -71,7 +72,8 @@ where
 	for hash in finalized {
 		let relay_chain_header =
 			headers.header(&hash).expect("Headers have been checked by AncestryChain; qed");
-		if let Some(proofs) = parachain_headers.remove(&hash) {
+
+        if let Some(proofs) = parachain_headers.remove(&hash) {
 			let ParachainHeaderProofs { extrinsic_proof, extrinsic, state_proof } = proofs;
 			let proof = StorageProof::new(state_proof);
 			let key = parachain_header_storage_key(client_state.para_id);

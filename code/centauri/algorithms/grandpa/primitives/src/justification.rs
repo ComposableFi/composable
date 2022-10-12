@@ -36,8 +36,11 @@ use sp_std::prelude::*;
 #[cfg_attr(any(feature = "std", test), derive(Debug))]
 #[derive(Clone, Encode, Decode, PartialEq, Eq)]
 pub struct GrandpaJustification<H: HeaderT> {
+	/// Current voting round number, monotonically increasing
 	pub round: u64,
+	/// Contains block hash & number that's being finalized and the signatures.
 	pub commit: Commit<H>,
+	/// Contains the path from a [`PreCommit`]'s target hash to the GHOST finalized block.
 	pub votes_ancestries: Vec<H>,
 }
 
@@ -147,12 +150,15 @@ pub struct AncestryChain<H: HeaderT> {
 }
 
 impl<H: HeaderT> AncestryChain<H> {
+	/// Initialize the ancestry chain given a set of relay chain headers.
 	pub fn new(ancestry: &[H]) -> AncestryChain<H> {
 		let ancestry: BTreeMap<_, _> = ancestry.iter().cloned().map(|h: H| (h.hash(), h)).collect();
 
 		AncestryChain { ancestry }
 	}
 
+	/// Fetch a header from the ancestry chain, given it's hash. Returns [`None`] if it doesn't
+	/// exist.
 	pub fn header(&self, hash: &H::Hash) -> Option<&H> {
 		self.ancestry.get(hash)
 	}
