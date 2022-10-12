@@ -137,7 +137,9 @@ where
 /// To get `a_sent` without accounting for the fee, set `f = 0`.
 /// Amount in, round up results.
 ///
-/// **NOTE:** Weights must already be normalized.
+/// Notes:
+/// * Weights must already be normalized
+/// * `1 - f` must be less than `2^96`
 ///
 /// # Parameters
 /// * `w_i` - Weight of the input token
@@ -158,11 +160,11 @@ pub fn compute_in_given_out_new<T: PerThing>(
 	f: T,
 ) -> Result<(u128, u128), ConstantProductAmmError> {
 	ensure!(a_out <= b_o, ConstantProductAmmError::CannotTakeMoreThanAvailable);
-	let w_i = Decimal::from(w_i.deconstruct().into());
-	let w_o = Decimal::from(w_o.deconstruct().into());
-	let b_i = Decimal::from(b_i);
-	let b_o = Decimal::from(b_o);
-	let a_out = Decimal::from(a_out);
+	let w_i = Decimal::from_u128(w_i.deconstruct().into()).ok_or(ArithmeticError::Overflow)?;
+	let w_o = Decimal::from_u128(w_o.deconstruct().into()).ok_or(ArithmeticError::Overflow)?;
+	let b_i = Decimal::from_u128(b_i).ok_or(ArithmeticError::Overflow)?;
+	let b_o = Decimal::from_u128(b_o).ok_or(ArithmeticError::Overflow)?;
+	let a_out = Decimal::from_u128(a_out).ok_or(ArithmeticError::Overflow)?;
 
 	let weight_ratio = w_o.safe_div(&w_i)?;
 	// NOTE(connor): Use if to prevent pointless conversions if `f` is zero

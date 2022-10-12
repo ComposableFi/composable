@@ -1,4 +1,5 @@
-use crate::dex::constant_product::compute_in_given_out_new;
+use crate::dex::constant_product::{compute_in_given_out_new, ConstantProductAmmError};
+use core::ops::Range;
 use proptest::prelude::*;
 use sp_runtime::{ArithmeticError, Permill};
 
@@ -7,7 +8,7 @@ mod constant_product {
 	use super::*;
 	/// Tests related to the function `compute_in_given_out_new`
 	mod compute_in_given_out_new {
-		use crate::dex::constant_product::ConstantProductAmmError;
+		use rust_decimal::{prelude::ToPrimitive, Decimal};
 
 		use super::*;
 
@@ -80,6 +81,37 @@ mod constant_product {
 			fn checked_inputs_and_outputs()
 			(x in 0..CHECKED_I_AND_O_LIST.len()) -> InputsAndOutputs {
 				CHECKED_I_AND_O_LIST[x]
+			}
+
+		}
+
+		/// `1_960_897_022_228_042_355_440_212_770_816 / 25` rounded down
+		const SAFE_B_I_ASSUMING_1_PERCENT_FEE: u128 = 78_435_880_889_121_694_217_608_510_832;
+
+		prop_compose! {
+			#[allow(clippy::useless_conversion)]
+			fn range_inputs()
+			(
+				w_i in Range::<u32>::from(1..100),
+				w_o in Range::<u32>::from(1..100),
+				b_i in Range::<u128>::from(257_000_000_000_000..SAFE_B_I_ASSUMING_1_PERCENT_FEE),
+				b_o in Range::<u128>::from(257_000_000_000_000..Decimal::MAX
+					.to_u128()
+					.expect("Decimal::MAX is safe for into ops; QED")),
+				a_out in Range::<u128>::from(1_000_000_000_000..256_000_000_000_000),
+				f in Range::<u32>::from(0..10_000),
+			)
+			-> InputsAndOutputs {
+				InputsAndOutputs {
+					w_i: Permill::from_percent(w_i),
+					w_o: Permill::from_percent(w_o),
+					b_i,
+					b_o,
+					a_out,
+					f: Permill::from_parts(f),
+					a_sent: u128::default(),
+					fee: u128::default(),
+				}
 			}
 		}
 
@@ -156,6 +188,24 @@ mod constant_product {
 
 				prop_assert_eq!(res.0, i_and_o.a_sent);
 				prop_assert_eq!(res.1, i_and_o.fee);
+			}
+		}
+
+		proptest! {
+			#![proptest_config(ProptestConfig::with_cases(10_000))]
+
+			#[test]
+			fn no_unexpected_errors_in_range(i_and_o in range_inputs()) {
+				let res = compute_in_given_out_new(
+					i_and_o.w_i,
+					i_and_o.w_o,
+					i_and_o.b_i,
+					i_and_o.b_o,
+					i_and_o.a_out,
+					i_and_o.f
+				);
+
+				prop_assert!(res.is_ok());
 			}
 		}
 	}
