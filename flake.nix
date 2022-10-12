@@ -508,6 +508,8 @@
               mk-xcvm-contract "xcvm-asset-registry";
             xcvm-contract-router = mk-xcvm-contract "xcvm-router";
             xcvm-contract-interpreter = mk-xcvm-contract "xcvm-interpreter";
+            subxt =
+              pkgs.callPackage ./code/utils/composable-subxt/subxt.nix { };
 
             subsquid-processor = let
               processor = pkgs.buildNpmPackage {
@@ -665,38 +667,18 @@
               meta = { mainProgram = "polkadot"; };
             };
 
-            polkadot-centauri-node = rustPlatform.buildRustPackage rec {
-              # HACK: break the nix sandbox so we can build the runtimes. This
-              # requires Nix to have `sandbox = relaxed` in its config.
-              # We don't really care because polkadot is only used for local devnet.
-              __noChroot = true;
-              name = "polkadot-centauri-v${version}";
-              version = "0.9.27";
-              src = fetchFromGitHub {
-                repo = "polkadot";
-                owner = "ComposableFi";
-                rev = "0898082540c42fb241c01fe500715369a33a80de";
-                hash = "sha256-dymuSVQXzdZe8iiMm4ykVXPIjIZd2ZcAOK7TLDGOWcU=";
-              };
-              cargoSha256 =
-                "sha256-u/hFRxt3OTMDwONGoJ5l7whC4atgpgIQx+pthe2CJXo=";
-              doCheck = false;
-              buildInputs = [ openssl zstd ];
-              nativeBuildInputs = [ rust-nightly clang pkg-config ]
-                ++ lib.optional stdenv.isDarwin
-                (with darwin.apple_sdk.frameworks; [
-                  Security
-                  SystemConfiguration
-                ]);
-              LD_LIBRARY_PATH = lib.strings.makeLibraryPath [
-                stdenv.cc.cc.lib
-                llvmPackages.libclang.lib
-              ];
-              LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
-              PROTOC = "${protobuf}/bin/protoc";
-              ROCKSDB_LIB_DIR = "${rocksdb}/lib";
-              meta = { mainProgram = "polkadot"; };
-            };
+            hyperspace = crane-nightly.buildPackage (common-attrs // {
+              name = "hyperspace";
+              cargoArtifacts = common-deps-nightly;
+              cargoExtraArgs = ''
+                --package hyperspace                
+              '';
+              installPhase = ''
+                mkdir -p $out/bin
+                cp target/release/hyperspace $out/bin/hyperspace
+              '';
+              meta = { mainProgram = "hyperspace"; };
+            });
 
             polkadot-launch =
               callPackage ./scripts/polkadot-launch/polkadot-launch.nix { };
@@ -746,27 +728,6 @@
                   chmod 777 /tmp
                 '';
               };
-
-            # Dali Centauri devnet container
-            bridge-devnet-dali-container = dockerTools.buildImage {
-              name = "composable-centauri-devnet-container";
-              tag = "latest";
-              copyToRoot = pkgs.buildEnv {
-                name = "image-root";
-                paths = [ curl websocat ] ++ container-tools;
-                pathsToLink = [ "/bin" ];
-              };
-              config = {
-                Entrypoint =
-                  [ "${packages.bridge-devnet-dali}/bin/run-devnet-dali-dev" ];
-                WorkingDir = "/home/polkadot-launch";
-              };
-              runAsRoot = ''
-                mkdir -p /home/polkadot-launch /tmp
-                chown 1000:1000 /home/polkadot-launch
-                chmod 777 /tmp
-              '';
-            };
 
             # Dali Centauri devnet container
             bridge-devnet-dali-container = dockerTools.buildImage {
@@ -1167,6 +1128,7 @@
                   nix-tree
                   nixfmt
                   rnix-lsp
+                  subxt
                 ] ++ docs-renders;
             });
 
@@ -1227,8 +1189,7 @@
             };
             devnet-picasso = {
               type = "app";
-              program =
-                "${packages.devnet-picasso.script}/bin/run-devnet-picasso-dev";
+              program = "${packages.devnet-picasso}/bin/run-devnet-picasso-dev";
             };
 
             devnet-kusama-picasso-karura = {
@@ -1272,6 +1233,11 @@
             junod = {
               type = "app";
               program = "${packages.junod}/bin/junod";
+            };
+
+            hyperspace = {
+              type = "app";
+              program = pkgs.lib.meta.getExe packages.hyperspace;
             };
 
             # TODO: move list of chains out of here and do fold
@@ -1349,7 +1315,7 @@
                 homeDirectory = "/home/vscode";
                 stateVersion = "22.05";
                 packages =
-                  [ eachSystemOutputs.packages.x86_64-linux.rust-nightly ]
+                  [ eachSystemOutputs.packages.x86_64-linux.rust-nightly subxt ]
                   ++ (mk-containers-tools-minimal pkgs)
                   ++ (mk-docker-in-docker pkgs);
               };
@@ -1373,9 +1339,10 @@
                 username = "vscode";
                 homeDirectory = "/home/vscode";
                 stateVersion = "22.05";
-                packages =
-                  [ eachSystemOutputs.packages.aarch64-linux.rust-nightly ]
-                  ++ (mk-containers-tools-minimal pkgs)
+                packages = [
+                  eachSystemOutputs.packages.aarch64-linux.rust-nightly
+                  subxt
+                ] ++ (mk-containers-tools-minimal pkgs)
                   ++ (mk-docker-in-docker pkgs);
               };
               programs = {

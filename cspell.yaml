@@ -51,6 +51,7 @@ ignoreRegExpList:
 
 ignorePaths:
   - "code/parachain/node/src/res"
+  - "code/centauri"
   - "target/"
   - "**/node_modules/"
   - "book/book"
@@ -76,3 +77,4 @@ ignorePaths:
   - "frame/airdrop/index.html"
   - "code/integration-tests/local-integration-tests/README.md"
   - "subsquid/src/interfaces"
+  - "code/utils/composable-subxt/src/generated"

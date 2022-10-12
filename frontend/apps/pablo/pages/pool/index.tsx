@@ -1,27 +1,24 @@
 import type { NextPage } from "next";
 import {
-  Container,
-  Box,
-  Grid,
-  useTheme,
-  Typography,
   alpha,
+  Box,
   Button,
-  Card,
+  Container,
+  Grid,
+  Typography,
+  useTheme,
 } from "@mui/material";
 import { useState } from "react";
 import { useRouter } from "next/router";
 import Default from "@/components/Templates/Default";
 import { MessageBox } from "@/components/Atoms";
-import { PageTitle } from "@/components";
+import { Link, PageTitle } from "@/components";
 import { ConnectWalletFeaturedBox } from "@/components/Organisms/ConnectWalletFeaturedBox";
 import { AllLiquidityTable } from "@/components/Organisms/AllLiquidityTable";
-
-import { Link } from "@/components";
 import { useDotSamaContext } from "substrate-react";
 import { resetAddLiquiditySlice } from "@/store/addLiquidity/addLiquidity.slice";
 import useStore from "@/store/useStore";
-import { useStakingRewardPool } from "@/store/stakingRewards/stakingRewards.slice";
+import { HighlightBox } from "@/components/Atoms/HighlightBox";
 
 const standardPageSize = {
   xs: 12,
@@ -53,8 +50,8 @@ const Pool: NextPage = () => {
   return (
     <Default>
       <Container maxWidth="lg">
+        <PageTitle title="Pool" subtitle="Add liquidity to earn tokens." />
         <Box display="flex" flexDirection="column" alignItems="center" mb={8}>
-          <PageTitle title="Pool" subtitle="Add liquidity to earn tokens." />
           {messageBoxOpen && (
             <MessageBox
               title="Liquidity provider rewards"
@@ -74,7 +71,7 @@ const Pool: NextPage = () => {
         {extensionStatus === "connected" && (
           <Grid>
             <Grid item {...standardPageSize}>
-              <Card variant="outlined">
+              <HighlightBox>
                 <Box
                   display="flex"
                   mb={3}
@@ -97,7 +94,7 @@ const Pool: NextPage = () => {
                   </Box>
                 </Box>
                 <AllLiquidityTable flow="user" />
-              </Card>
+              </HighlightBox>
               <Box mt={4} display="flex" gap={1} justifyContent="center">
                 <Typography
                   textAlign="center"
@@ -125,12 +122,12 @@ const Pool: NextPage = () => {
         )}
         <Grid mt={4}>
           <Grid item {...standardPageSize}>
-            <Card variant="outlined">
+            <HighlightBox textAlign="left">
               <Typography variant="h6" mb={2}>
                 All Liquidity
               </Typography>
               <AllLiquidityTable flow="all" />
-            </Card>
+            </HighlightBox>
           </Grid>
         </Grid>
       </Container>

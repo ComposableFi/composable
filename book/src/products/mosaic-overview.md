@@ -1,4 +1,13 @@
-# Mosaic Overview
+# Mosaic Overview (discontinued) 
+
+---
+
+**The initial iterations of the Mosaic bridge focused on aggregating liquidity and facilitating transfer availability 
+for the ecosystem, but in order to align with our vision, our bridging solution needs to be optimized for security, 
+efficiency, and user design. Therefore, the development of Mosaic has been discontinued.**
+
+**As Mosaic showcased a pioneering design in UX, it will serve as the UX that underpins the trustless bridging 
+infrastructure that we’ve built — to Polkadot, NEAR, Cosmos, and many other chains to come**
 
 ---
 

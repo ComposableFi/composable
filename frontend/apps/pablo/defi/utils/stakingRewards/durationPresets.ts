@@ -1,8 +1,7 @@
 import { StakingRewardPool } from "@/defi/types";
 import { Mark } from "@mui/base";
-import BigNumber from "bignumber.js";
-import moment from "moment";
 import { DAYS } from "../constants";
+import moment from "moment";
 
 type Period = {
     days?: number;
@@ -31,13 +30,13 @@ export function createDurationPresetLabel(period: Period): string {
                     : "-";
 
     return `${period.days
-        ? period.days
+        ? period.days.toFixed(2)
         : period.weeks
-            ? period.weeks
+            ? period.weeks.toFixed(2)
             : period.months
-                ? period.months
+                ? period.months.toFixed(2)
                 : period.years
-                    ? period.years
+                    ? period.years.toFixed(2)
                     : "-"
         } ${suf}`;
 }

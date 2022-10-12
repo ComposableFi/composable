@@ -13,9 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::{
-	justification::GrandpaJustification, verify_parachain_headers_with_grandpa_finality_proof,
-};
+use crate::verify_parachain_headers_with_grandpa_finality_proof;
 use codec::Decode;
 use finality_grandpa_rpc::GrandpaApiClient;
 use futures::StreamExt;
@@ -23,6 +21,7 @@ use grandpa_prover::{
 	beefy_prover::helpers::unsafe_arc_cast, host_functions::HostFunctionsProvider, GrandpaProver,
 };
 use polkadot_core_primitives::Header;
+use primitives::justification::GrandpaJustification;
 use serde::{Deserialize, Serialize};
 use sp_core::H256;
 use std::mem::size_of_val;

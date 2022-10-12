@@ -111,6 +111,14 @@ impl IbcProvider for AnyChain {
 		}
 	}
 
+	async fn ibc_events(&self) -> Pin<Box<dyn Stream<Item = IbcEvent>>> {
+		match self {
+			#[cfg(feature = "parachain")]
+			Self::Parachain(chain) => chain.ibc_events().await,
+			_ => unreachable!(),
+		}
+	}
+
 	async fn query_client_consensus(
 		&self,
 		at: Height,
@@ -455,6 +463,19 @@ impl IbcProvider for AnyChain {
 		}
 	}
 
+	async fn query_connection_using_client(
+		&self,
+		height: u32,
+		client_id: String,
+	) -> Result<Vec<IdentifiedConnection>, Self::Error> {
+		match self {
+			#[cfg(feature = "parachain")]
+			Self::Parachain(chain) =>
+				chain.query_connection_using_client(height, client_id).await.map_err(Into::into),
+			_ => unreachable!(),
+		}
+	}
+
 	fn is_update_required(
 		&self,
 		latest_height: u64,
@@ -588,18 +609,18 @@ impl Chain for AnyChain {
 #[cfg(feature = "testing")]
 #[async_trait]
 impl primitives::TestProvider for AnyChain {
-	async fn ibc_events(&self) -> Pin<Box<dyn Stream<Item = IbcEvent> + Send + Sync>> {
-		match self {
-			#[cfg(feature = "parachain")]
-			Self::Parachain(chain) => chain.ibc_events().await,
-			_ => unreachable!(),
-		}
-	}
-
 	async fn send_transfer(&self, params: MsgTransfer<PrefixedCoin>) -> Result<(), Self::Error> {
 		match self {
 			#[cfg(feature = "parachain")]
 			Self::Parachain(chain) => chain.send_transfer(params).await.map_err(Into::into),
+			_ => unreachable!(),
+		}
+	}
+
+	fn set_channel_whitelist(&mut self, channel_whitelist: Vec<(ChannelId, PortId)>) {
+		match self {
+			#[cfg(feature = "parachain")]
+			Self::Parachain(chain) => chain.set_channel_whitelist(channel_whitelist),
 			_ => unreachable!(),
 		}
 	}

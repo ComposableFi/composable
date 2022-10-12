@@ -117,7 +117,7 @@ export const SelectLockPeriod: React.FC<SelectLockPeriodProps> = ({
 
       <Box
         py={2.25}
-        borderRadius={9999}
+        borderRadius="50%"
         textAlign="center"
         sx={{
           background: theme.palette.gradient.secondary,

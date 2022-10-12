@@ -1,6 +1,16 @@
 import { StakingPositionHistory } from "@/defi/types";
 import { fetchSubsquid } from "./helpers";
 
+export const PABLO_STAKING_OVERVIEW_QUERY = `
+  query pabloStakingOverviewQuery {
+    pabloOverviewStats {
+      averageLockMultiplier
+      averageLockTime
+      totalValueLocked
+    }
+  }
+`;
+
 export async function fetchStakingPositionHistory(
     owner: string,
     orderBy: "ASC" | "DESC" = "DESC"

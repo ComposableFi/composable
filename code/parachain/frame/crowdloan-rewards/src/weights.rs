@@ -14,6 +14,7 @@ pub trait WeightInfo {
 	fn initialize(x: u32) -> Weight;
 	fn associate(x: u32) -> Weight;
 	fn claim(x: u32) -> Weight;
+	fn unlock_rewards_for(x: u32) -> Weight;
 }
 
 impl WeightInfo for () {
@@ -61,5 +62,9 @@ impl WeightInfo for () {
 			.saturating_add((31_000 as Weight).saturating_mul(x as Weight))
 			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
+	}
+
+	fn unlock_rewards_for(x: u32) -> Weight {
+		x as _
 	}
 }
