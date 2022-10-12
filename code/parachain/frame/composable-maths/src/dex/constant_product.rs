@@ -156,13 +156,8 @@ pub fn compute_in_given_out_new<T: PerThing>(
 	b_o: u128,
 	a_out: u128,
 	f: T,
-) -> Result<(u128, u128), DispatchError> {
-	ensure!(
-		a_out <= b_o,
-		DispatchError::from(
-			"`a_out` must not be greater than `b_o` (can't take out more than what's available)"
-		)
-	);
+) -> Result<(u128, u128), InGivenOutError> {
+	ensure!(a_out <= b_o, InGivenOutError::CanNotTakeMoreThanAvailable);
 	let w_i = Decimal::from(w_i.deconstruct().into());
 	let w_o = Decimal::from(w_o.deconstruct().into());
 	let b_i = Decimal::from(b_i);
@@ -189,6 +184,30 @@ pub fn compute_in_given_out_new<T: PerThing>(
 	let fee = round_up(a_sent.safe_mul(&fee)?).to_u128().ok_or(ArithmeticError::Overflow)?;
 
 	Ok((a_sent.to_u128().ok_or(ArithmeticError::Overflow)?, fee))
+}
+
+#[derive(Debug, Eq, PartialEq)]
+pub enum InGivenOutError {
+	ArithmeticError(ArithmeticError),
+	CanNotTakeMoreThanAvailable,
+}
+
+impl From<ArithmeticError> for InGivenOutError {
+	fn from(error: ArithmeticError) -> Self {
+		InGivenOutError::ArithmeticError(error)
+	}
+}
+
+impl From<InGivenOutError> for DispatchError {
+	fn from(error: InGivenOutError) -> Self {
+		match error {
+			InGivenOutError::ArithmeticError(error) => DispatchError::from(error),
+			InGivenOutError::CanNotTakeMoreThanAvailable => 
+				DispatchError::from(
+					"`a_out` must not be greater than `b_o` (can't take out more than what's available)"
+				),
+		}
+	}
 }
 
 /// Rounds a decimal value up to the nearest whole number
