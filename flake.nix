@@ -112,6 +112,19 @@
           };
         };
 
+      all-such-files = { pkgs, extension }:
+        pkgs.stdenv.mkDerivation {
+          name = "all-such-files-${extension}";
+          src = builtins.filterSource (path: type:
+            baseNameOf path != ".git" || (type == "regular"
+              && pkgs.lib.strings.hasSuffix ".${extension}" path)) ./.;
+          dontUnpack = true;
+          installPhase = ''
+            mkdir $out/
+            cp -r $src/. $out/
+          '';
+        };
+
       eachSystemOutputs = flake-utils.lib.eachDefaultSystem (system:
         let
           pkgs = import nixpkgs {
@@ -563,20 +576,10 @@
               '';
             };
 
-            all-such-files = { extension }:
-              stdenv.mkDerivation {
-                name = "all-such-files-${extension}";
-                src = builtins.filterSource (path: type:
-                  baseNameOf path != ".git" || (type == "regular"
-                    && lib.strings.hasSuffix ".${extension}" path)) ./.;
-                dontUnpack = true;
-                installPhase = ''
-                  mkdir $out/
-                  cp -r $src/. $out/
-                '';
-              };
-
-            all-toml-files = all-such-files { extension = "toml"; };
+            all-toml-files = all-such-files {
+              inherit pkgs;
+              extension = "toml";
+            };
 
             price-feed = crane-nightly.buildPackage (common-attrs // {
               pnameSuffix = "-price-feed";
