@@ -1288,12 +1288,6 @@ jobs:
             nix shell --command "github:ComposableFi/composable/${{ github.event.pull_request.head.sha }}#hyperspace
             ````
 
-            
-            ```shell
-            # runs non configured hyperspace
-            nix shell --command "github:ComposableFi/composable/${{ github.event.pull_request.head.sha }}#hyperspace
-            ````
-
             Note that the initial build may take about one hour if it has not been cached by our CI yet. Once it is cached, builds should take about one minute. We currently do not provide build caches for ARM machines such as M1 Macs, but building on ARM is supported.
 
           comment_includes: 'Nix commands for this PR'
