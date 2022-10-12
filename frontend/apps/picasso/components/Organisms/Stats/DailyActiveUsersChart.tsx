@@ -1,59 +1,45 @@
 import { FC, useMemo, useState } from "react";
-import { formatNumber, getRange, head, PRESET_RANGE, PresetRange, tail } from "shared";
+import {
+  formatNumber,
+  getRange,
+  head,
+  PRESET_RANGE,
+  PresetRange,
+  tail,
+} from "shared";
 import { useQuery } from "@apollo/client";
 import { ActiveUsers, GET_ACTIVE_USERS } from "@/apollo/queries/activeUsers";
-import { Box, Skeleton, Stack, Theme, Typography, useTheme } from "@mui/material";
+import { Box, Typography, useTheme } from "@mui/material";
 import { Chart } from "@/components";
 import { useOverviewStats } from "@/apollo/hooks/useOverviewStats";
-
-function renderLoading(theme: Theme) {
-  return (
-    <Box
-      borderRadius={1}
-      padding={6}
-      sx={{
-        background: theme.palette.background.paper
-      }}
-    >
-      <Stack direction="row" gap={3}>
-        <Skeleton variant="text" height={48} width="50%" />
-        <Skeleton variant="text" width={48} />
-        <Skeleton variant="text" width={48} />
-        <Skeleton variant="text" width={48} />
-        <Skeleton variant="text" width={48} />
-      </Stack>
-      <Box sx={{
-        height: 330,
-        mt: 4
-      }}>
-        <Skeleton variant="rounded" height={330} width={"100%"} />
-      </Box>
-    </Box>
-  );
-}
+import { ChartLoadingSkeleton } from "@/components/Organisms/Stats/ChartLoadingSkeleton";
 
 export const DailyActiveUsersChart: FC = () => {
   const theme = useTheme();
   const [interval, setInterval] = useState<PresetRange>("24h");
-  const [dateFrom, dateTo, intervalQuery] = useMemo(() => getRange(interval), [interval]);
+  const [dateFrom, dateTo, intervalQuery] = useMemo(
+    () => getRange(interval),
+    [interval]
+  );
   const { data, loading, error } = useQuery<ActiveUsers>(GET_ACTIVE_USERS, {
     variables: {
       interval: intervalQuery,
       dateTo,
-      dateFrom
-    }
+      dateFrom,
+    },
   });
-  const { data: overviewStats, loading: overviewStatsLoading } = useOverviewStats();
+  const { data: overviewStats, loading: overviewStatsLoading } =
+    useOverviewStats();
 
   const chartSeries: [number, number][] = useMemo(() => {
     if (!data) return [];
 
-    const tuples: [number, number][] = data.activeUsers.map(activeUser => {
+    const tuples: [number, number][] = data.activeUsers.map((activeUser) => {
       const date = new Date(activeUser.date);
       return [date.getTime(), activeUser.count];
     });
 
-    return tuples.sort((a, b) => a[0] > b[0] ? 1 : -1);
+    return tuples.sort((a, b) => (a[0] > b[0] ? 1 : -1));
   }, [data]);
   const change = useMemo(() => {
     const first = head(chartSeries);
@@ -64,33 +50,39 @@ export const DailyActiveUsersChart: FC = () => {
       const lastValue = last[1];
       console.log(firstValue, lastValue);
 
-      const percentageDifference = ((firstValue - lastValue) / firstValue) * 100;
+      const percentageDifference =
+        ((firstValue - lastValue) / firstValue) * 100;
       return {
         value: percentageDifference.toFixed(2) + "%",
-        color: firstValue > lastValue ? theme.palette.error.main : theme.palette.success.main
+        color:
+          firstValue > lastValue
+            ? theme.palette.error.main
+            : theme.palette.success.main,
       };
     }
 
     return {
       value: "",
-      color: theme.palette.text.primary
+      color: theme.palette.text.primary,
     };
-  }, [chartSeries, theme.palette.error.main, theme.palette.success.main, theme.palette.text.primary]);
+  }, [
+    chartSeries,
+    theme.palette.error.main,
+    theme.palette.success.main,
+    theme.palette.text.primary,
+  ]);
   const changeTextPrimary = useMemo(() => {
     const first = tail(chartSeries);
     return formatNumber(first?.[1] ?? 0);
   }, [chartSeries]);
 
   if (loading) {
-    return renderLoading(theme);
+    return <ChartLoadingSkeleton />;
   }
 
   if (error) {
-    return <>
-      {"error:" + error}
-    </>;
+    return <>{"error:" + error}</>;
   }
-
 
   return (
     <Box sx={{ height: 337 }}>
@@ -99,13 +91,14 @@ export const DailyActiveUsersChart: FC = () => {
         title="Daily active users"
         changeTextColor={theme.palette.text.primary}
         ChangeTextTypographyProps={{
-          variant: "h5"
+          variant: "h5",
         }}
         changeText={
           <>
             <Typography variant="h5">{changeTextPrimary}</Typography>
-            <Typography color={change.color}
-                        variant="body1">{change.value}</Typography>
+            <Typography color={change.color} variant="body1">
+              {change.value}
+            </Typography>
           </>
         }
         AreaChartProps={{
@@ -113,7 +106,7 @@ export const DailyActiveUsersChart: FC = () => {
           height: 118,
           shorthandLabel: "Active users",
           labelFormat: (n: number) => n.toFixed(),
-          color: theme.palette.primary.main
+          color: theme.palette.primary.main,
         }}
         onIntervalChange={setInterval}
         intervals={PRESET_RANGE as unknown as string[]}

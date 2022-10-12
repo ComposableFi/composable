@@ -6,6 +6,7 @@ import { useCirculatingSupply } from "@/apollo/hooks/useCirculatingSupply";
 import { useMarketCap } from "@/apollo/hooks/useMarketCap";
 import { TotalValueLockedChart } from "@/components/Organisms/Stats/TotalValueLockedChart";
 import { FC } from "react";
+import { formatNumber } from "shared";
 
 export const StatsOverviewTab: FC = () => {
   const circulatingSupply = useCirculatingSupply();
@@ -19,18 +20,7 @@ export const StatsOverviewTab: FC = () => {
         {!loading && data?.overviewStats && (
           <FeaturedBox
             TextAboveProps={{
-              color: theme.palette.common.darkWhite
-            }}
-            textAbove="Active users"
-            title={data?.overviewStats.activeUsersCount.toString()}
-          />
-        )}
-      </Grid>
-      <Grid item xs={12} sm={6} md={4}>
-        {!loading && data?.overviewStats && (
-          <FeaturedBox
-            TextAboveProps={{
-              color: theme.palette.common.darkWhite
+              color: theme.palette.common.darkWhite,
             }}
             textAbove="Total value locked"
             title={data?.overviewStats.totalValueLocked.toString()}
@@ -41,17 +31,28 @@ export const StatsOverviewTab: FC = () => {
         {!loading && data?.overviewStats && (
           <FeaturedBox
             TextAboveProps={{
-              color: theme.palette.common.darkWhite
+              color: theme.palette.common.darkWhite,
+            }}
+            textAbove="Account holders"
+            title={data?.overviewStats.accountHoldersCount.toString()}
+          />
+        )}
+      </Grid>
+      <Grid item xs={12} sm={6} md={4}>
+        {!loading && data?.overviewStats && (
+          <FeaturedBox
+            TextAboveProps={{
+              color: theme.palette.common.darkWhite,
             }}
             textAbove="Total transactions"
-            title={data?.overviewStats.totalValueLocked.toString()}
+            title={formatNumber(data?.overviewStats.transactionsCount)}
           />
         )}
       </Grid>
       <Grid item xs={12} sm={6} md={4}>
         <FeaturedBox
           TextAboveProps={{
-            color: theme.palette.common.darkWhite
+            color: theme.palette.common.darkWhite,
           }}
           textAbove="Picasso market cap"
           title={`$${marketCap.toFormat(2)}`}
@@ -60,7 +61,7 @@ export const StatsOverviewTab: FC = () => {
       <Grid item xs={12} sm={6} md={4}>
         <FeaturedBox
           TextAboveProps={{
-            color: theme.palette.common.darkWhite
+            color: theme.palette.common.darkWhite,
           }}
           textAbove="Picasso circulating supply"
           title={`${circulatingSupply.toFormat(0)} PICA`}
@@ -70,10 +71,10 @@ export const StatsOverviewTab: FC = () => {
         {!loading && data?.overviewStats && (
           <FeaturedBox
             TextAboveProps={{
-              color: theme.palette.common.darkWhite
+              color: theme.palette.common.darkWhite,
             }}
-            textAbove="Account holders"
-            title={data?.overviewStats.accountHoldersCount.toString()}
+            textAbove="Active users"
+            title={data?.overviewStats.activeUsersCount.toString()}
           />
         )}
       </Grid>
