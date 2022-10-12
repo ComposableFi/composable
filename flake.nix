@@ -903,7 +903,6 @@
               installPhase = ''
                 mkdir $out
                 cd ${all-toml-files}
-                ls
                 taplo check --verbose
               '';
             };
