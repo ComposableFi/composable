@@ -7,6 +7,15 @@ import { instance, mock } from "ts-mockito";
 import * as ss58 from "@subsquid/ss58";
 import { Store } from "@subsquid/typeorm-store";
 import { randomUUID } from "crypto";
+import {
+  Currency,
+  Event,
+  HistoricalLockedValue,
+  LockedSource,
+} from "subsquid/model";
+import { ApiPromise, WsProvider } from "@polkadot/api";
+import { chain } from "subsquid/config";
+import { getLastLockedValue } from "subsquid/dbHelper";
 
 export const BOB = "5woQTSqveJemxVbj4eodiBTSVfC4AAJ8CQS7SoyoyHWW7MA6";
 export const CHARLIE = "5wr4XcyxyJYQb71PbSPxhqujKnsS9UAydBhSypGvFgh2QXBa";
