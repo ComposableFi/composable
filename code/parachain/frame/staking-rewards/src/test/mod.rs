@@ -10,10 +10,16 @@ use crate::{
 	Config, RewardPoolConfigurationOf, RewardPools, Stakes,
 };
 use composable_support::validation::TryIntoValidated;
-use composable_tests_helpers::test::{
-	block::{next_block, process_and_progress_blocks},
-	currency::{BTC, PICA, USDT, XPICA},
-	helper::{self, assert_extrinsic_event, assert_extrinsic_event_with, assert_last_event_with},
+use composable_tests_helpers::{
+	prop_assert_acceptable_computation_error, prop_assert_ok,
+	test::{
+		block::{next_block, process_and_progress_blocks},
+		currency::{BTC, PICA, USDT, XPICA},
+		helper::{
+			self, assert_extrinsic_event, assert_extrinsic_event_with, assert_last_event_with,
+			default_acceptable_computation_error,
+		},
+	},
 };
 use composable_traits::{
 	fnft::{FinancialNft as FinancialNftT, FinancialNftProtocol},
@@ -35,6 +41,7 @@ use frame_support::{
 	BoundedBTreeMap,
 };
 use frame_system::EventRecord;
+use proptest::prelude::*;
 use sp_arithmetic::{fixed_point::FixedU64, Perbill, Permill};
 use sp_core::sr25519::Public;
 use sp_runtime::PerThing;
@@ -1517,6 +1524,83 @@ fn duration_presets_are_required() {
 			crate::Error::<Test>::NoDurationPresetsProvided
 		);
 	});
+}
+
+mod stake {
+	use super::*;
+	use crate::Error;
+	use composable_tests_helpers::prop_assert_noop;
+
+	proptest! {
+		#![proptest_config(ProptestConfig::with_cases(10000))]
+
+		#[test]
+		fn stake_should_work(
+			amount in MINIMUM_STAKING_AMOUNT..u128::max_value(),
+		) {
+			new_test_ext().execute_with(|| {
+				process_and_progress_blocks::<StakingRewards, Test>(1);
+
+				assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
+
+				let staker = ALICE;
+				let existential_deposit = 1_000_u128;
+
+				process_and_progress_blocks::<StakingRewards, Test>(1);
+
+				let owner = Origin::signed(staker);
+				let pool_id = PICA::ID;
+				let duration_preset = ONE_HOUR;
+
+				let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
+				let mint_amount = amount * 2 + existential_deposit;
+				mint_assets([staker], [staked_asset_id], mint_amount);
+
+				prop_assert_ok!(StakingRewards::stake(
+					owner,
+					pool_id,
+					amount.into(),
+					duration_preset,
+				));
+
+				Ok(())
+			})?;
+		}
+
+		#[test]
+		fn stake_should_not_work_with_low_amounts(
+			amount in 1_u128..MINIMUM_STAKING_AMOUNT-1
+		) {
+			new_test_ext().execute_with(|| {
+				process_and_progress_blocks::<StakingRewards, Test>(1);
+
+				assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
+
+				let staker = ALICE;
+				let existential_deposit = 1_000_u128;
+
+				process_and_progress_blocks::<StakingRewards, Test>(1);
+
+				let owner = Origin::signed(staker);
+				let pool_id = PICA::ID;
+				let duration_preset = ONE_HOUR;
+
+				let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
+				let mint_amount = amount * 2 + existential_deposit;
+				mint_assets([staker], [staked_asset_id], mint_amount);
+
+				prop_assert_noop!(StakingRewards::stake(
+					owner,
+					pool_id,
+					amount.into(),
+					duration_preset,
+				),
+				Error::<Test>::StakedAmountTooLow);
+
+				Ok(())
+			})?;
+		}
+	}
 }
 
 /// Runs code inside of `new_test_ext().execute_with` closure while creating a stake with the given
