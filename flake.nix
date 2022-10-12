@@ -881,12 +881,16 @@
               cargoExtraArgs = "--all --check --verbose";
             });
 
-            taplo-cli-check = crane-stable.cargoBuild (common-attrs // {
-              buildInputs = [ taplo-cli ];
-              cargoArtifacts = common-deps;
-              cargoBuildCommand = "taplo check";
-              cargoExtraArgs = "--verbose";
-            });
+            taplo-cli-check = stdenv.mkDerivation {
+              name = "taplo-cli-check";
+              dontUnpack = true;
+              buildInputs = [ all-directories-and-files taplo-cli ];
+              installPhase = ''
+                mkdir $out
+                cd ${all-directories-and-files}
+                taplo check --verbose
+              '';
+            };
 
             prettier-check = stdenv.mkDerivation {
               name = "prettier-check";
