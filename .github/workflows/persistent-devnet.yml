@@ -1,12 +1,12 @@
 name: Deploy Persistent Devnet
 
-on: push
-  # workflow_dispatch:
-  #   inputs:
-  #     ref:
-  #       description: "The commit has or branch or tag you want to deploy a persistent devnet for."
-  #       required: true
-  #       type: string
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Release tag, branch name or any revision."
+        required: true
+        type: string
 
 env:
   NIX_NIXPKGS_CHANNEL: https://nixos.org/channels/nixpkgs-22.05-darwin
@@ -59,7 +59,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with:
-        # ref: ${{ inputs.revision }}
+        ref: ${{ inputs.revision }}
         fetch-depth: 0
     - uses: cachix/install-nix-action@v17
       with:
