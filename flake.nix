@@ -563,6 +563,21 @@
               '';
             };
 
+            all-such-files = { extension }:
+              stdenv.mkDerivation {
+                name = "all-such-files-${extension}";
+                src = builtins.filterSource (path: type:
+                  baseNameOf path != ".git" || (type == "regular"
+                    && lib.strings.hasSuffix ".${extension}" path)) ./.;
+                dontUnpack = true;
+                installPhase = ''
+                  mkdir $out/
+                  cp -r $src/. $out/
+                '';
+              };
+
+            all-toml-files = all-such-files { extension = "toml"; };
+
             price-feed = crane-nightly.buildPackage (common-attrs // {
               pnameSuffix = "-price-feed";
               cargoArtifacts = common-deps;
@@ -884,10 +899,11 @@
             taplo-cli-check = stdenv.mkDerivation {
               name = "taplo-cli-check";
               dontUnpack = true;
-              buildInputs = [ all-directories-and-files taplo-cli ];
+              buildInputs = [ all-toml-files taplo-cli ];
               installPhase = ''
                 mkdir $out
-                cd ${all-directories-and-files}
+                cd ${all-toml-files}
+                ls
                 taplo check --verbose
               '';
             };
