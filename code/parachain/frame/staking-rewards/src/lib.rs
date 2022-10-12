@@ -63,6 +63,7 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 	pub use crate::weights::WeightInfo;
+
 	use composable_support::{
 		math::safe::{SafeAdd, SafeDiv, SafeMul, SafeSub},
 		validation::{validators::GeOne, TryIntoValidated, Validated},
@@ -77,6 +78,7 @@ pub mod pallet {
 		time::{DurationSeconds, ONE_MONTH, ONE_WEEK},
 	};
 	use frame_support::{
+		defensive,
 		traits::{
 			fungibles::{
 				Inspect as FungiblesInspect, InspectHold as FungiblesInspectHold,
@@ -90,7 +92,7 @@ pub mod pallet {
 				},
 				WithdrawConsequence,
 			},
-			DefensiveSaturating, TryCollect, UnixTime,
+			Defensive, DefensiveSaturating, TryCollect, UnixTime,
 		},
 		transactional, BoundedBTreeMap, PalletId,
 	};
@@ -219,8 +221,8 @@ pub mod pallet {
 		InvalidAssetId,
 		/// Reward pool already exists
 		RewardsPoolAlreadyExists,
-		/// No duration presets configured.
-		NoDurationPresetsConfigured,
+		/// The duration provided was not valid for the pool.
+		DurationPresetNotFound,
 		/// Too many rewarded asset types per pool violating the storage allowed.
 		TooManyRewardAssetTypes,
 		/// Invalid start block number provided for creating a pool.
@@ -571,8 +573,11 @@ pub mod pallet {
 				&fnft_collection_id,
 				&fnft_instance_id,
 			)?;
+
+			// TODO(benluelo): This needs to be passed in through the extrinsic
 			let keep_alive = true;
-			let _position_id = <Self as Staking>::extend(
+
+			<Self as Staking>::extend(
 				&who,
 				(fnft_collection_id, fnft_instance_id),
 				amount,
@@ -832,7 +837,7 @@ pub mod pallet {
 			);
 
 			let reward_multiplier = Self::reward_multiplier(&rewards_pool, duration_preset)
-				.ok_or(Error::<T>::NoDurationPresetsConfigured)?;
+				.ok_or(Error::<T>::DurationPresetNotFound)?;
 
 			ensure!(
 				matches!(
@@ -843,8 +848,11 @@ pub mod pallet {
 			);
 
 			let awarded_shares = Self::boosted_amount(reward_multiplier, amount)?;
+
 			let (rewards, reductions) =
 				Self::compute_rewards_and_reductions(awarded_shares, &rewards_pool)?;
+
+			rewards_pool.rewards = rewards;
 
 			let fnft_collection_id = rewards_pool.financial_nft_asset_id;
 			let fnft_instance_id = T::FinancialNft::get_next_nft_id(&fnft_collection_id)?;
@@ -870,7 +878,6 @@ pub mod pallet {
 				},
 				fnft_instance_id,
 			};
-			rewards_pool.rewards = rewards;
 
 			// Move staked funds into fNFT asset account & lock the assets
 			Self::transfer_stake(who, amount, rewards_pool.asset_id, &fnft_account, keep_alive)?;
@@ -902,54 +909,95 @@ pub mod pallet {
 			(fnft_collection_id, fnft_instance_id): Self::PositionId,
 			amount: Self::Balance,
 			keep_alive: bool,
-		) -> Result<Self::PositionId, DispatchError> {
-			let mut stake = Stakes::<T>::get(fnft_collection_id, fnft_instance_id)
-				.ok_or(Error::<T>::StakeNotFound)?;
-			let mut rewards_pool = RewardPools::<T>::try_get(stake.reward_pool_id)
-				.map_err(|_| Error::<T>::RewardsPoolNotFound)?;
+		) -> DispatchResult {
+			Stakes::<T>::try_mutate(fnft_collection_id, fnft_instance_id, |maybe_stake| {
+				let stake = maybe_stake.as_mut().ok_or(Error::<T>::StakeNotFound)?;
 
-			let reward_multiplier = FixedU64::one().try_into_validated().expect(">= 1");
+				RewardPools::<T>::try_mutate(stake.reward_pool_id, |maybe_rewards_pool| {
+					let rewards_pool =
+						maybe_rewards_pool.as_mut().ok_or(Error::<T>::RewardsPoolNotFound)?;
 
-			ensure!(
-				matches!(
-					T::Assets::can_withdraw(rewards_pool.asset_id, who, amount),
-					WithdrawConsequence::Success
-				),
-				Error::<T>::NotEnoughAssets
-			);
+					ensure!(
+						matches!(
+							T::Assets::can_withdraw(rewards_pool.asset_id, who, amount),
+							WithdrawConsequence::Success
+						),
+						Error::<T>::NotEnoughAssets
+					);
 
-			let awarded_shares = Self::boosted_amount(reward_multiplier, amount)?;
+					// SAFETY: The duration preset on an existing stake should be valid in the
+					// pool since it's currently not possible to modify the presets after pool
+					// creation.
+					let reward_multiplier = rewards_pool
+						.lock
+						.duration_presets
+						.get(&stake.lock.duration)
+						.copied()
+						.defensive_unwrap_or_else(|| {
+							FixedU64::one().try_into_validated().expect("1 is >= 1")
+						});
 
-			let (rewards, reductions) =
-				Self::compute_rewards_and_reductions(awarded_shares, &rewards_pool)?;
+					let new_shares = Self::boosted_amount(reward_multiplier, amount)?;
 
-			rewards_pool.rewards = rewards;
-			stake.stake = stake.stake.safe_add(&amount)?;
-			stake.share = stake.share.safe_add(&awarded_shares)?;
-			for (asset, additional_inflation) in reductions.iter() {
-				let inflation =
-					stake.reductions.get_mut(asset).ok_or(Error::<T>::ReductionConfigProblem)?;
-				*inflation = inflation.safe_add(additional_inflation)?;
-			}
+					let total_shares = T::Assets::total_issuance(rewards_pool.share_asset_id);
 
-			let fnft_asset_account =
-				T::FinancialNft::asset_account(&fnft_collection_id, &fnft_instance_id);
-			Self::transfer_stake(
-				who,
-				amount,
-				rewards_pool.asset_id,
-				&fnft_asset_account,
-				keep_alive,
-			)?;
-			Self::mint_shares(rewards_pool.share_asset_id, awarded_shares, &fnft_asset_account)?;
-			RewardPools::<T>::insert(stake.reward_pool_id, rewards_pool);
-			Stakes::<T>::insert(fnft_collection_id, fnft_instance_id, stake);
-			Self::deposit_event(Event::<T>::StakeAmountExtended {
-				amount,
-				fnft_collection_id,
-				fnft_instance_id,
-			});
-			Ok((fnft_collection_id, fnft_instance_id))
+					for (reward_asset_id, reward) in &mut rewards_pool.rewards {
+						let new_inflation = if total_shares.is_zero() {
+							T::Balance::zero()
+						} else {
+							reward.total_rewards.safe_mul(&new_shares)?.safe_div(&total_shares)?
+						};
+
+						reward.total_rewards = reward.total_rewards.safe_add(&new_inflation)?;
+						reward.total_dilution_adjustment =
+							reward.total_dilution_adjustment.safe_add(&new_inflation)?;
+
+						match stake.reductions.get_mut(reward_asset_id) {
+							Some(previous_inflation_and_claims) => {
+								*previous_inflation_and_claims =
+									previous_inflation_and_claims.safe_add(&new_inflation)?;
+							},
+							None => {
+								// REVIEW(benluelo): Is this an invariant we expect? In
+								// ProtocolStaking::transfer_reward assets can be added (and is
+								// currently the only way to add a new reward asset to a pool),
+								// but they are not added to all existing stakes so this
+								// invariant is not upheld
+								defensive!("stake.reductions should contain the same assets as reward_pool.rewards");
+							},
+						}
+					}
+
+					let fnft_asset_account =
+						T::FinancialNft::asset_account(&fnft_collection_id, &fnft_instance_id);
+
+					Self::transfer_stake(
+						who,
+						amount,
+						rewards_pool.asset_id,
+						&fnft_asset_account,
+						keep_alive,
+					)?;
+					// only mint the new shares
+					Self::mint_shares(
+						rewards_pool.share_asset_id,
+						new_shares,
+						&fnft_asset_account,
+					)?;
+
+					Self::deposit_event(Event::<T>::StakeAmountExtended {
+						amount,
+						fnft_collection_id,
+						fnft_instance_id,
+					});
+
+					stake.stake = stake.stake.safe_add(&amount)?;
+					stake.share = stake.share.safe_add(&new_shares)?;
+					stake.lock.started_at = T::UnixTime::now().as_secs();
+
+					Ok(())
+				})
+			})
 		}
 
 		#[transactional]
@@ -957,21 +1005,21 @@ pub mod pallet {
 			who: &Self::AccountId,
 			(fnft_collection_id, fnft_instance_id): &Self::PositionId,
 		) -> DispatchResult {
+			// TODO(benluelo): Use ::take here instead of try_get and then remove
 			let mut stake = Stakes::<T>::try_get(fnft_collection_id, fnft_instance_id)
 				.map_err(|_| Error::<T>::StakeNotFound)?;
 
 			let is_early_unlock = stake.lock.started_at.safe_add(&stake.lock.duration)? >=
 				T::UnixTime::now().as_secs();
 
+			// TODO(benluelo): No need to return the staked asset id here, it's the same as
+			// stake.reward_pool_id
 			let (asset_id, share_asset_id) =
 				RewardPools::<T>::try_mutate(stake.reward_pool_id, |rewards_pool| {
 					let rewards_pool =
 						rewards_pool.as_mut().ok_or(Error::<T>::RewardsPoolNotFound)?;
 
 					Self::collect_rewards(rewards_pool, &mut stake, who, is_early_unlock)?;
-
-					rewards_pool.claimed_shares =
-						rewards_pool.claimed_shares.safe_add(&stake.share)?;
 
 					Ok::<_, DispatchError>((rewards_pool.asset_id, rewards_pool.share_asset_id))
 				})?;
@@ -1309,9 +1357,11 @@ pub mod pallet {
 					reward.total_rewards.safe_sub(&reward.claimed_rewards)?,
 				);
 
+				// REVIEW(benluelo): Should the claimed_rewards include the slashed amount?
 				reward.claimed_rewards =
 					reward.claimed_rewards.safe_add(&possibly_slashed_claim)?;
 
+				// REVIEW(benluelo): Expected behaviour if none?
 				if let Some(inflation) = stake.reductions.get_mut(reward_asset_id) {
 					*inflation += claim;
 				}
@@ -1332,6 +1382,8 @@ pub mod pallet {
 			T::PalletId::get().into_sub_account_truncating(pool_id)
 		}
 
+		// TODO(benluelo): Rename to 'reward_multiplier_of' and return a Result<&_, Error<T>>
+		// (remove the clone as well)
 		pub(crate) fn reward_multiplier(
 			rewards_pool: &RewardPoolOf<T>,
 			duration_preset: DurationSeconds,
@@ -1365,22 +1417,25 @@ pub mod pallet {
 				);
 
 			for (asset_id, reward) in rewards_pool.rewards.iter() {
-				let reward = reward.clone();
-
 				let inflation = if total_shares.is_zero() {
 					T::Balance::zero()
 				} else {
 					reward.total_rewards.safe_mul(&shares)?.safe_div(&total_shares)?
 				};
 
-				let total_rewards = reward.total_rewards.safe_add(&inflation)?;
-				let total_dilution_adjustment =
+				let new_total_rewards = reward.total_rewards.safe_add(&inflation)?;
+				let new_total_dilution_adjustment =
 					reward.total_dilution_adjustment.safe_add(&inflation)?;
 
-				let updated_reward = Reward { total_rewards, total_dilution_adjustment, ..reward };
-
 				rewards_btree_map
-					.try_insert(*asset_id, updated_reward)
+					.try_insert(
+						*asset_id,
+						Reward {
+							total_rewards: new_total_rewards,
+							total_dilution_adjustment: new_total_dilution_adjustment,
+							..reward.clone()
+						},
+					)
 					.map_err(|_| Error::<T>::ReductionConfigProblem)?;
 
 				reductions
