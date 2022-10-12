@@ -1,26 +1,25 @@
 import type { NextPage } from "next";
 import React from "react";
 import Default from "@/components/Templates/Default";
-import { Grid, useTheme } from "@mui/material";
+import { Grid } from "@mui/material";
 import { PageTitle, TabItem, Tabs } from "@/components";
-import { StatsOverviewTab } from "@/components/Organisms/StatsOverviewTab";
-import { StatsTelemetryTab } from "@/components/Organisms/StatsTelemetryTab";
-import { StatsApolloTab } from "@/components/Organisms/StatsApolloTab";
+import { StatsOverviewTab } from "@/components/Organisms/Stats/StatsOverviewTab";
+import { StatsTelemetryTab } from "@/components/Organisms/Stats/StatsTelemetryTab";
+import { StatsApolloTab } from "@/components/Organisms/Stats/StatsApolloTab";
 
 const tabItems: TabItem[] = [
   {
-    label: "Overview",
+    label: "Overview"
   },
   {
-    label: "Telemetry",
+    label: "Telemetry"
   },
   {
-    label: "Apollo",
-  },
+    label: "Apollo"
+  }
 ];
 
 const Stats: NextPage = () => {
-  const theme = useTheme();
   const [tabIndex, setTabIndex] = React.useState(0);
 
   const handleChange = (_: React.SyntheticEvent, newValue: number) => {
@@ -28,7 +27,7 @@ const Stats: NextPage = () => {
   };
 
   const standardPageSize = {
-    xs: 12,
+    xs: 12
   };
 
   return (
