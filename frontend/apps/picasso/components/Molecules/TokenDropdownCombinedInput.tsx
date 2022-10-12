@@ -4,7 +4,6 @@ import {
   DropdownCombinedInput,
   DropdownCombinedInputProps,
 } from "./DropdownCombinedInput";
-import { getToken } from "tokens";
 
 export type TokenDropdownCombinedInputProps = {
   CombinedSelectProps?: TokenSelectProps;
@@ -15,12 +14,11 @@ export const TokenDropdownCombinedInput: React.FC<
 > = ({ CombinedSelectProps, children, ...rest }) => {
   const { options: tokenOptions, ...restSelectProps } =
     CombinedSelectProps || {};
-  console.log(tokenOptions);
   const options = tokenOptions
-    ? tokenOptions.map(({ tokenId, disabled }) => ({
+    ? tokenOptions.map(({ tokenId, disabled, icon }) => ({
         value: tokenId,
-        icon: getToken(tokenId).icon,
-        label: getToken(tokenId).symbol,
+        icon: icon,
+        label: tokenId,
         disabled: disabled,
       }))
     : [];

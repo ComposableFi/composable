@@ -13,12 +13,28 @@ export const AmountTokenDropdown = () => {
   const handleMaxClick = () => updateAmount(balance);
 
   function makeTokenOptions() {
-    return [...Object.values(assets.assets), assets.native].map((asset) => {
-      return {
-        tokenId: asset.meta.symbol,
-        disabled: asset.balance.lte(0),
-      };
-    });
+    return [...Object.values(assets.assets), assets.native].reduce(
+      (previousValue, currentValue) => {
+        if (
+          previousValue.find(
+            (value: any) => value.tokenId === currentValue.meta.symbol
+          )
+        ) {
+          return previousValue;
+        }
+
+        return [
+          ...previousValue,
+          {
+            tokenId: currentValue.meta.symbol,
+            symbol: currentValue.meta.symbol,
+            icon: currentValue.meta.icon,
+            disabled: currentValue.balance.lte(0),
+          },
+        ];
+      },
+      [] as any[]
+    );
   }
 
   return (
@@ -43,7 +59,7 @@ export const AmountTokenDropdown = () => {
       CombinedSelectProps={{
         options: makeTokenOptions(),
       }}
-      setter={updateAmount}
+      // setter={updateAmount}
     />
   );
 };
