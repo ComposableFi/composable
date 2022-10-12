@@ -3,8 +3,7 @@
   "private": false,
   "version": "0.1.0",
   "license": "Public Domain",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "type": "commonjs",
   "scripts": {
     "build": "tsc",
     "gen": "npm run gen:defs && npm run gen:meta",
