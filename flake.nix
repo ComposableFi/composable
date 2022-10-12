@@ -255,9 +255,9 @@
             src = rust-src;
             SKIP_WASM_BUILD = "1";
             cargoExtraArgs = "--tests --release";
-            doInstallCargoArtifacts = false;
             doCheck = true;
           };
+
           common-test-deps =
             crane-nightly.buildDepsOnly (common-test-attrs // { });
 
@@ -829,16 +829,18 @@
               run-with-benchmarks "composable-dev";
 
             check-picasso-integration-tests = crane-nightly.cargoBuild
-              (common-test-attrs // {
+              (common-attrs // {
                 pname = "picasso-local-integration-tests";
+                doInstallCargoArtifacts = false;
                 cargoArtifacts = common-test-deps;
                 cargoBuildCommand = "cargo test";
                 cargoExtraArgs =
                   "--package local-integration-tests --features=local-integration-tests,picasso,std --no-default-features --verbose";
               });
             check-dali-integration-tests = crane-nightly.cargoBuild
-              (common-test-attrs // {
+              (common-attrs // {
                 pname = "dali-local-integration-tests";
+                doInstallCargoArtifacts = false;
                 cargoArtifacts = common-test-deps;
                 cargoBuildCommand = "cargo test";
                 cargoExtraArgs =
@@ -847,6 +849,7 @@
 
             unit-tests = crane-nightly.cargoBuild (common-attrs // {
               pnameSuffix = "-tests";
+              doInstallCargoArtifacts = false;
               cargoArtifacts = common-test-deps;
               # NOTE: do not add --features=runtime-benchmarks because it force multi ED to be 0 because of dependencies
               # NOTE: in order to run benchmarks as tests, just make `any(test, feature = "runtime-benchmarks")
