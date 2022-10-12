@@ -1150,7 +1150,7 @@
             developers-minimal = base-shell.overrideAttrs (base:
               common-attrs // {
                 buildInputs = base.buildInputs
-                  ++ (with packages; [ clang rust-nightly subwasm ]);
+                  ++ (with packages; [ clang rust-nightly subwasm nodejs python3 yarn ]);
                 LD_LIBRARY_PATH = lib.strings.makeLibraryPath [
                   stdenv.cc.cc.lib
                   llvmPackages.libclang.lib
