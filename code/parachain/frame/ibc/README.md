@@ -9,7 +9,7 @@ Pallet IBC is a thin wrapper around [`ibc-rs`](/code/centauri/ibc) that satisfie
 ### Dispatchable functions
 
 - `deliver` - Receives a batch of ibc transactions and executes them in the same order as they were sent.
-- `transfer` - This initiates an ics20 token transfer from the caller to an account on a connected chain via the ICS20 application
+- `transfer` - This initiates an ics20 token transfer from the caller to an account on a connected chain via the ICS20 protocol
 - `set_params` - Sets parameters that determine whether token transfer or receipt is allowed in ICS20
 - `upgrade_client` - Sets the new consensus state and client state for client upgrades to be executed on connected chains
 
