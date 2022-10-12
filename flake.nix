@@ -241,32 +241,35 @@
             SKIP_WASM_BUILD = "1";
           };
 
-          # Common dependencies, all dependencies listed that are out of this repo
           common-deps = crane-nightly.buildDepsOnly (common-attrs // { });
-          common-deps-nightly =
-            crane-nightly.buildDepsOnly (common-attrs // { });
-          common-bench-attrs = common-attrs // {
-            cargoExtraArgs = "--features=builtin-wasm,runtime-benchmarks";
-          };
-          common-bench-deps =
-            crane-nightly.buildDepsOnly (common-bench-attrs // { });
 
-          common-test-attrs = substrate-attrs // {
+          common-test-deps-attrs = substrate-attrs // {
             src = rust-src;
             SKIP_WASM_BUILD = "1";
             cargoExtraArgs = "--tests --release";
             doCheck = true;
           };
 
+          common-bench-attrs = common-attrs // {
+            cargoExtraArgs = "--features=builtin-wasm,runtime-benchmarks";
+          };
+
+          common-bench-deps-attrs = common-test-deps-attrs // {
+            cargoExtraArgs = "--features=runtime-benchmarks";
+          };
+
+          common-bench-deps =
+            crane-nightly.buildDepsOnly (common-bench-deps-attrs // { });
+
           common-test-deps =
-            crane-nightly.buildDepsOnly (common-test-attrs // { });
+            crane-nightly.buildDepsOnly (common-test-deps-attrs // { });
 
           # Build a wasm runtime, unoptimized
           mk-runtime = name: features:
             let file-name = "${name}_runtime.wasm";
             in crane-nightly.buildPackage (common-attrs // {
               pname = "${name}-runtime";
-              cargoArtifacts = common-deps-nightly;
+              cargoArtifacts = common-deps;
               cargoBuildCommand =
                 "cargo build --release -p ${name}-runtime-wasm --target wasm32-unknown-unknown"
                 + lib.strings.optionalString (features != "")
@@ -895,7 +898,7 @@
               });
 
             cargo-fmt-check = crane-nightly.cargoFmt (common-attrs // {
-              cargoArtifacts = common-deps-nightly;
+              cargoArtifacts = common-deps;
               cargoExtraArgs = "--all --check --verbose";
             });
 
@@ -938,7 +941,7 @@
             };
 
             cargo-clippy-check = crane-nightly.cargoBuild (common-attrs // {
-              cargoArtifacts = common-deps-nightly;
+              cargoArtifacts = common-deps;
               cargoBuildCommand = "cargo clippy";
               cargoExtraArgs = "--all-targets --tests -- -D warnings";
             });
@@ -957,14 +960,14 @@
               COMPOSABLE_RUNTIME =
                 "${composable-runtime}/lib/runtime.optimized.wasm";
               buildInputs = [ cargo-udeps expat freetype fontconfig openssl ];
-              cargoArtifacts = common-deps-nightly;
+              cargoArtifacts = common-deps;
               cargoBuildCommand = "cargo udeps";
               cargoExtraArgs =
                 "--workspace --exclude local-integration-tests --all-features";
             });
 
             benchmarks-check = crane-nightly.cargoBuild (common-attrs // {
-              cargoArtifacts = common-deps-nightly;
+              cargoArtifacts = common-deps;
               cargoBuildCommand = "cargo check";
               cargoExtraArgs = "--benches --all --features runtime-benchmarks";
             });
