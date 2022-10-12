@@ -7,7 +7,7 @@ mod constant_product {
 	use super::*;
 	/// Tests related to the function `compute_in_given_out_new`
 	mod compute_in_given_out_new {
-		use crate::dex::constant_product::InGivenOutError;
+		use crate::dex::constant_product::ConstantProductAmmError;
 
 		use super::*;
 
@@ -109,7 +109,7 @@ mod constant_product {
 
 			let res = compute_in_given_out_new(w_i, w_o, b_i, b_o, a_out, f);
 
-			assert_eq!(res, Err(InGivenOutError::from(ArithmeticError::DivisionByZero)));
+			assert_eq!(res, Err(ConstantProductAmmError::from(ArithmeticError::DivisionByZero)));
 		}
 
 		#[test]
@@ -123,7 +123,7 @@ mod constant_product {
 
 			let res = compute_in_given_out_new(w_i, w_o, b_i, b_o, a_out, f);
 
-			assert_eq!(res, Err(InGivenOutError::from(ArithmeticError::DivisionByZero)));
+			assert_eq!(res, Err(ConstantProductAmmError::from(ArithmeticError::DivisionByZero)));
 		}
 
 		#[test]
@@ -137,7 +137,7 @@ mod constant_product {
 
 			let res = compute_in_given_out_new(w_i, w_o, b_i, b_o, a_out, f);
 
-			assert_eq!(res, Err(InGivenOutError::CanNotTakeMoreThanAvailable))
+			assert_eq!(res, Err(ConstantProductAmmError::CannotTakeMoreThanAvailable))
 		}
 
 		proptest! {

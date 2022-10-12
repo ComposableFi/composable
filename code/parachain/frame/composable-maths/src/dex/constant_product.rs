@@ -156,8 +156,8 @@ pub fn compute_in_given_out_new<T: PerThing>(
 	b_o: u128,
 	a_out: u128,
 	f: T,
-) -> Result<(u128, u128), InGivenOutError> {
-	ensure!(a_out <= b_o, InGivenOutError::CanNotTakeMoreThanAvailable);
+) -> Result<(u128, u128), ConstantProductAmmError> {
+	ensure!(a_out <= b_o, ConstantProductAmmError::CannotTakeMoreThanAvailable);
 	let w_i = Decimal::from(w_i.deconstruct().into());
 	let w_o = Decimal::from(w_o.deconstruct().into());
 	let b_i = Decimal::from(b_i);
@@ -186,22 +186,22 @@ pub fn compute_in_given_out_new<T: PerThing>(
 }
 
 #[derive(Debug, Eq, PartialEq)]
-pub enum InGivenOutError {
+pub enum ConstantProductAmmError {
 	ArithmeticError(ArithmeticError),
-	CanNotTakeMoreThanAvailable,
+	CannotTakeMoreThanAvailable,
 }
 
-impl From<ArithmeticError> for InGivenOutError {
+impl From<ArithmeticError> for ConstantProductAmmError {
 	fn from(error: ArithmeticError) -> Self {
-		InGivenOutError::ArithmeticError(error)
+		ConstantProductAmmError::ArithmeticError(error)
 	}
 }
 
-impl From<InGivenOutError> for DispatchError {
-	fn from(error: InGivenOutError) -> Self {
+impl From<ConstantProductAmmError> for DispatchError {
+	fn from(error: ConstantProductAmmError) -> Self {
 		match error {
-			InGivenOutError::ArithmeticError(error) => DispatchError::from(error),
-			InGivenOutError::CanNotTakeMoreThanAvailable =>
+			ConstantProductAmmError::ArithmeticError(error) => DispatchError::from(error),
+			ConstantProductAmmError::CannotTakeMoreThanAvailable =>
 				DispatchError::from(
 					"`a_out` must not be greater than `b_o` (can't take out more than what's available)"
 				),
