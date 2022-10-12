@@ -215,8 +215,18 @@
             };
           };
 
+          substrate-attrs = {
+            LD_LIBRARY_PATH = lib.strings.makeLibraryPath [
+              stdenv.cc.cc.lib
+              llvmPackages.libclang.lib
+            ];
+            LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
+            PROTOC = "${protobuf}/bin/protoc";
+            ROCKSDB_LIB_DIR = "${rocksdb}/lib";
+          };
+
           # Common env required to build the node
-          common-attrs = {
+          common-attrs = substrate-attrs // {
             src = rust-src;
             buildInputs = [ openssl zstd ];
             nativeBuildInputs = [ clang openssl pkg-config ]
@@ -229,13 +239,19 @@
             cargoCheckCommand = "true";
             # Don't build any wasm as we do it ourselves
             SKIP_WASM_BUILD = "1";
-            LD_LIBRARY_PATH = lib.strings.makeLibraryPath [
-              stdenv.cc.cc.lib
-              llvmPackages.libclang.lib
-            ];
-            LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
-            PROTOC = "${protobuf}/bin/protoc";
-            ROCKSDB_LIB_DIR = "${rocksdb}/lib";
+          };
+
+          common-test-deps-attrs = substrate-attrs // {
+            src = rust-src;
+            buildInputs = [ openssl zstd ];
+            nativeBuildInputs = [ clang openssl pkg-config ]
+              ++ lib.optional stdenv.isDarwin
+              (with darwin.apple_sdk.frameworks; [
+                Security
+                SystemConfiguration
+              ]);
+            doCheck = true;
+            SKIP_WASM_BUILD = "1";
           };
 
           # Common dependencies, all dependencies listed that are out of this repo
@@ -245,6 +261,9 @@
           common-bench-attrs = common-attrs // {
             cargoExtraArgs = "--features=builtin-wasm,runtime-benchmarks";
           };
+          common-test-deps =
+            crane-nightly.buildDepsOnly (common-test-deps-attrs // { });
+
           common-bench-deps =
             crane-nightly.buildDepsOnly (common-bench-attrs // { });
 
@@ -490,6 +509,7 @@
             inherit wasm-optimizer;
             inherit common-deps;
             inherit common-bench-deps;
+            inherit common-test-deps;
             inherit dali-runtime;
             inherit picasso-runtime;
             inherit composable-runtime;
@@ -817,6 +837,8 @@
             check-picasso-integration-tests = crane-nightly.cargoBuild
               (common-attrs // {
                 pname = "picasso-local-integration-tests";
+                doInstallCargoArtifacts = false;
+                cargoArtifacts = common-test-deps;
                 cargoBuildCommand =
                   "cargo test --package local-integration-tests";
                 cargoExtraArgs =
@@ -825,6 +847,8 @@
             check-dali-integration-tests = crane-nightly.cargoBuild
               (common-attrs // {
                 pname = "dali-local-integration-tests";
+                doInstallCargoArtifacts = false;
+                cargoArtifacts = common-test-deps;
                 cargoBuildCommand =
                   "cargo test --package local-integration-tests";
                 cargoExtraArgs =
@@ -833,11 +857,12 @@
 
             unit-tests = crane-nightly.cargoBuild (common-attrs // {
               pnameSuffix = "-tests";
-              cargoArtifacts = common-deps;
+              doInstallCargoArtifacts = false;
+              cargoArtifacts = common-test-deps;
               # NOTE: do not add --features=runtime-benchmarks because it force multi ED to be 0 because of dependencies
               # NOTE: in order to run benchmarks as tests, just make `any(test, feature = "runtime-benchmarks")
               cargoBuildCommand =
-                "cargo test --workspace --release --locked --verbose";
+                "cargo test --workspace --release --locked --verbose --exclude local-integration-tests";
             });
 
             cargo-llvm-cov = rustPlatform.buildRustPackage rec {
