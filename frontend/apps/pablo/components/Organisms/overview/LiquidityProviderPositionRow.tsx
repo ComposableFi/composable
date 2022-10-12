@@ -4,11 +4,10 @@ import {
   Typography,
 } from "@mui/material";
 import { PairAsset } from "@/components/Atoms";
-import { ConstantProductPool, StableSwapPool } from "@/defi/types";
 import { useAsset } from "@/defi/hooks";
 import { useUSDPriceByAssetId } from "@/store/assets/hooks";
-import BigNumber from "bignumber.js";
 import { ConstantProductPoolWithLpBalance, StableSwapPoolWithLpBalance } from "@/store/hooks/overview/usePoolsWithLpBalance";
+import BigNumber from "bignumber.js";
 
 const LiquidityProviderPositionRow = ({
   pool,

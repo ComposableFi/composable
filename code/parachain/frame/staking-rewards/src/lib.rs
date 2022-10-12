@@ -53,7 +53,7 @@ use composable_support::math::safe::{SafeDiv, SafeMul, SafeSub};
 use composable_traits::staking::{Reward, RewardUpdate};
 use frame_support::{
 	traits::{
-		fungibles::{InspectHold, MutateHold, Transfer},
+		fungibles::{Inspect as FungiblesInspect, InspectHold, MutateHold, Transfer},
 		UnixTime,
 	},
 	transactional, BoundedBTreeMap,
@@ -486,7 +486,6 @@ pub mod pallet {
 			owner: owner.clone(),
 			asset_id: staked_asset_id,
 			rewards: Default::default(),
-			total_shares: T::Balance::zero(),
 			claimed_shares: T::Balance::zero(),
 			start_block: T::BlockNumber::zero(),
 			end_block: T::BlockNumber::zero(),
@@ -760,7 +759,6 @@ pub mod pallet {
 							owner: owner.clone(),
 							asset_id: pool_asset,
 							rewards,
-							total_shares: T::Balance::zero(),
 							claimed_shares: T::Balance::zero(),
 							start_block,
 							end_block,
@@ -872,7 +870,6 @@ pub mod pallet {
 				},
 				fnft_instance_id,
 			};
-			rewards_pool.total_shares = rewards_pool.total_shares.safe_add(&awarded_shares)?;
 			rewards_pool.rewards = rewards;
 
 			// Move staked funds into fNFT asset account & lock the assets
@@ -925,7 +922,7 @@ pub mod pallet {
 
 			let (rewards, reductions) =
 				Self::compute_rewards_and_reductions(awarded_shares, &rewards_pool)?;
-			rewards_pool.total_shares = rewards_pool.total_shares.safe_add(&awarded_shares)?;
+
 			rewards_pool.rewards = rewards;
 			stake.stake = stake.stake.safe_add(&amount)?;
 			stake.share = stake.share.safe_add(&awarded_shares)?;
@@ -1197,7 +1194,8 @@ pub mod pallet {
 			fnft_account: &AccountIdOf<T>,
 		) -> DispatchResult {
 			T::Assets::mint_into(share_asset_id, fnft_account, awarded_shares)?;
-			T::Assets::set_lock(T::LockId::get(), share_asset_id, fnft_account, awarded_shares)
+			T::Assets::set_lock(T::LockId::get(), share_asset_id, fnft_account, awarded_shares)?;
+			Ok(())
 		}
 
 		/// Ensure `who` is the owner of the fNFT associated with a stake
@@ -1274,7 +1272,7 @@ pub mod pallet {
 			for (reward_asset_id, reward) in &mut rewards_pool.rewards {
 				let claim = claim_of_stake::<T>(
 					stake,
-					&rewards_pool.total_shares,
+					&rewards_pool.share_asset_id,
 					reward,
 					reward_asset_id,
 				)?;
@@ -1361,18 +1359,26 @@ pub mod pallet {
 			let mut reductions = BoundedBTreeMap::new();
 			let mut rewards_btree_map = BoundedBTreeMap::new();
 
+			let total_shares: T::Balance =
+				<T::Assets as FungiblesInspect<T::AccountId>>::total_issuance(
+					rewards_pool.share_asset_id,
+				);
+
 			for (asset_id, reward) in rewards_pool.rewards.iter() {
 				let reward = reward.clone();
-				let inflation = if rewards_pool.total_shares == T::Balance::zero() {
+
+				let inflation = if total_shares.is_zero() {
 					T::Balance::zero()
 				} else {
-					reward.total_rewards.safe_mul(&shares)?.safe_div(&rewards_pool.total_shares)?
+					reward.total_rewards.safe_mul(&shares)?.safe_div(&total_shares)?
 				};
 
 				let total_rewards = reward.total_rewards.safe_add(&inflation)?;
 				let total_dilution_adjustment =
 					reward.total_dilution_adjustment.safe_add(&inflation)?;
+
 				let updated_reward = Reward { total_rewards, total_dilution_adjustment, ..reward };
+
 				rewards_btree_map
 					.try_insert(*asset_id, updated_reward)
 					.map_err(|_| Error::<T>::ReductionConfigProblem)?;
@@ -1720,10 +1726,13 @@ pub(crate) enum RewardAccumulationCalculationError {
 
 pub(crate) fn claim_of_stake<T: Config>(
 	stake: &StakeOf<T>,
-	total_shares: &T::Balance,
+	share_asset_id: &<T as Config>::AssetId,
 	reward: &Reward<T::Balance>,
 	reward_asset_id: &<T as Config>::AssetId,
 ) -> Result<T::Balance, DispatchError> {
+	let total_shares: T::Balance =
+		<T::Assets as FungiblesInspect<T::AccountId>>::total_issuance(*share_asset_id);
+
 	let claim = if total_shares.is_zero() {
 		T::Balance::zero()
 	} else {
@@ -1731,14 +1740,14 @@ pub(crate) fn claim_of_stake<T: Config>(
 
 		// REVIEW(benluelo): Review expected rounding behaviour, possibly switching to the following
 		// implementation (or something similar):
-		// Perbill::from_rational(stake.share, *total_shares)
+		// Perbill::from_rational(stake.share, total_issuance)
 		// 	.mul_floor(reward.total_rewards)
 		// 	.safe_sub(&inflation)?;
 
 		reward
 			.total_rewards
 			.safe_mul(&stake.share)?
-			.safe_div(total_shares)?
+			.safe_div(&total_shares)?
 			.safe_sub(&inflation)?
 	};
 

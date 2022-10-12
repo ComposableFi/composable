@@ -1,6 +1,6 @@
 import { StakingRewardPool } from "@/defi/types/stakingRewards";
-import BigNumber from "bignumber.js";
 import { RewardPoolRewardRatePeriod } from "@/defi/types/stakingRewards";
+import BigNumber from "bignumber.js";
 
 export function convertRewardRatePeriod(
   rewardRate: RewardPoolRewardRatePeriod
@@ -10,31 +10,33 @@ export function convertRewardRatePeriod(
   }[rewardRate];
 }
 
-export function calculateRewardPerDayByAssetId(assetId: string, stakingRewardPool: StakingRewardPool | undefined): BigNumber {
-    let rewardPerDay = new BigNumber(0);
-    
-    if (stakingRewardPool) {
-        let rewardConfig = stakingRewardPool.rewards[assetId];
+export function calculateRewardPerDayByAssetId(
+  assetId: string,
+  stakingRewardPool: StakingRewardPool | undefined
+): BigNumber {
+  let rewardPerDay = new BigNumber(0);
 
-        if (rewardConfig) {
-            rewardPerDay = rewardConfig.rewardRate.amount.times(
-                convertRewardRatePeriod(rewardConfig.rewardRate.period)
-            )
-        }
+  if (stakingRewardPool) {
+    let rewardConfig = stakingRewardPool.rewards[assetId];
+
+    if (rewardConfig) {
+      rewardPerDay = rewardConfig.rewardRate.amount.times(
+        convertRewardRatePeriod(rewardConfig.rewardRate.period)
+      );
     }
+  }
 
-    return rewardPerDay;
+  return rewardPerDay;
 }
 
 export function calculateStakingRewardsPoolApy(
   rewardTokenValueInUSD: BigNumber,
   dailyRewardAmount: BigNumber,
-  lpTokenValueUSD: BigNumber,
-  amountOfTokensStaked: BigNumber
+  totalValueLocked: BigNumber
 ): BigNumber {
-  if (lpTokenValueUSD.eq(0) || amountOfTokensStaked.eq(0)) { return new BigNumber(0) }
-
+  if (totalValueLocked.eq(0)) {
+    return new BigNumber(0);
+  }
   let num = rewardTokenValueInUSD.times(dailyRewardAmount).times(365);
-  let den = lpTokenValueUSD.times(amountOfTokensStaked)
-  return num.div(den);
+  return num.div(totalValueLocked);
 }

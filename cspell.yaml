@@ -61,6 +61,8 @@ ignorePaths:
   - "frontend/packages/defi-interfaces"
   - "code/integration-tests/runtime-tests/mochawesome-report"
   - "**/*.lock"
+  - "**/*.adoc"
+  - "rfcs/0008-pablo-lbp-cpp-restructure.md"
   - "frontend/apps/picasso/defi/polkadot/constants/contributions.json"
   - "frontend/apps/picasso/defi/polkadot/constants/pica-rewards-dev.json"
   - "frontend/apps/picasso/defi/polkadot/constants/pica-rewards.json"
