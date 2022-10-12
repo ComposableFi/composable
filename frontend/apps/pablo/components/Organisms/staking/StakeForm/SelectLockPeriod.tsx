@@ -7,7 +7,7 @@ import {
 } from "@/defi/utils/stakingRewards/durationPresets";
 import { DATE_FORMAT } from "@/defi/utils";
 import { useMemo } from "react";
-import { calcualteDurationPresetAPR } from "@/defi/utils/stakingRewards";
+import { calculateDurationPresetAPR } from "@/defi/utils/stakingRewards";
 import BigNumber from "bignumber.js";
 
 export type SelectLockPeriodProps = {
@@ -35,7 +35,7 @@ export const SelectLockPeriod: React.FC<SelectLockPeriodProps> = ({
   }, [durationPresetSelected]);
 
 
-  const apr = calcualteDurationPresetAPR(
+  const apr = calculateDurationPresetAPR(
     durationPresetSelected ? new BigNumber(durationPresetSelected.periodInSeconds) : undefined,
     new BigNumber(multiplier)
   )

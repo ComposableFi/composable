@@ -41,7 +41,7 @@ export function calculateStakingRewardsPoolApy(
   return num.div(totalValueLocked);
 }
 
-export function calcualteDurationPresetAPR(
+export function calculateDurationPresetAPR(
   lockDurationInSeconds: BigNumber | undefined,
   rewardMultiplier: BigNumber
 ): BigNumber {
