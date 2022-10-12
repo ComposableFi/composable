@@ -215,9 +215,7 @@
             };
           };
 
-          # Common env required to build the node
-          common-attrs = {
-            src = rust-src;
+          substrate-attrs = {
             buildInputs = [ openssl zstd ];
             nativeBuildInputs = [ clang openssl pkg-config ]
               ++ lib.optional stdenv.isDarwin
@@ -225,10 +223,6 @@
                 Security
                 SystemConfiguration
               ]);
-            doCheck = false;
-            cargoCheckCommand = "true";
-            # Don't build any wasm as we do it ourselves
-            SKIP_WASM_BUILD = "1";
             LD_LIBRARY_PATH = lib.strings.makeLibraryPath [
               stdenv.cc.cc.lib
               llvmPackages.libclang.lib
@@ -236,6 +230,15 @@
             LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
             PROTOC = "${protobuf}/bin/protoc";
             ROCKSDB_LIB_DIR = "${rocksdb}/lib";
+          };
+
+          # Common env required to build the node
+          common-attrs = substrate-attrs // {
+            src = rust-src;
+            doCheck = false;
+            cargoCheckCommand = "true";
+            # Don't build any wasm as we do it ourselves
+            SKIP_WASM_BUILD = "1";
           };
 
           # Common dependencies, all dependencies listed that are out of this repo
@@ -248,8 +251,11 @@
           common-bench-deps =
             crane-nightly.buildDepsOnly (common-bench-attrs // { });
 
-          common-test-attrs = common-attrs // {
+          common-test-attrs = substrate-attrs // {
+            src = rust-src;
+            SKIP_WASM_BUILD = "1";
             cargoExtraArgs = "--tests --release";
+            doCheck = true;
           };
           common-test-deps =
             crane-nightly.buildDepsOnly (common-test-attrs // { });
@@ -843,8 +849,9 @@
               cargoArtifacts = common-test-deps;
               # NOTE: do not add --features=runtime-benchmarks because it force multi ED to be 0 because of dependencies
               # NOTE: in order to run benchmarks as tests, just make `any(test, feature = "runtime-benchmarks")
-              cargoBuildCommand =
-                "cargo test --workspace --release --locked --verbose --exclude local-integration-tests";
+              cargoBuildCommand = "cargo test";
+              cargoExtraArgs =
+                " --workspace --release --locked --verbose --exclude local-integration-tests";
             });
 
             cargo-llvm-cov = rustPlatform.buildRustPackage rec {
