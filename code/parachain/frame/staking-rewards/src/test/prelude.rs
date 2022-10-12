@@ -1,4 +1,4 @@
-use core::ops::{Add, Sub};
+use core::ops::{Add, Div, Mul, Sub};
 
 pub use crate::prelude::*;
 use crate::{
@@ -137,6 +137,8 @@ pub fn unstake_and_assert<Runtime, RuntimeEvent>(
 	let rewards_pool = Pallet::<Runtime>::pools(position_before_unstake.reward_pool_id)
 		.expect("rewards_pool expected");
 
+	let total_shares_before_unstake = Runtime::Assets::total_issuance(rewards_pool.share_asset_id);
+
 	let pool_account_rewards_balances_before_unstake = rewards_pool
 		.rewards
 		.clone()
@@ -240,7 +242,7 @@ pub fn unstake_and_assert<Runtime, RuntimeEvent>(
 
 			let expected_claim = claim_of_stake::<Runtime>(
 				&position_before_unstake,
-				&rewards_pool.total_shares,
+				&rewards_pool.share_asset_id,
 				reward,
 				&position_before_unstake.reward_pool_id,
 			)
@@ -372,20 +374,28 @@ staked amount: {staked_amount:?}
 
 	// assert that every reward asset is rewarded (and possibly slashed) as expected
 	for (reward_asset_id, reward) in &rewards_pool.rewards {
-		let expected_claim = claim_of_stake::<Runtime>(
-			&position_before_unstake,
-			&rewards_pool.total_shares,
-			reward,
-			reward_asset_id,
-		)
-		.expect("should not fail");
+		let expected_claim = if total_shares_before_unstake.is_zero() {
+			Runtime::Balance::zero()
+		} else {
+			let inflation = position_before_unstake
+				.reductions
+				.get(reward_asset_id)
+				.cloned()
+				.unwrap_or_else(Zero::zero);
+
+			reward
+				.total_rewards
+				.mul(position_before_unstake.share)
+				.div(total_shares_before_unstake)
+				.sub(inflation)
+		};
 
 		let unstake_reward_slashed_event = crate::Event::UnstakeRewardSlashed {
 			pool_id: position_before_unstake.reward_pool_id,
 			owner: owner.clone(),
 			fnft_instance_id,
 			reward_asset_id: *reward_asset_id,
-			amount_slashed: expected_claim.sub(slashed_amount_of(expected_claim)),
+			amount_slashed: position_before_unstake.lock.unlock_penalty.mul_ceil(expected_claim),
 		};
 
 		if should_be_early_unstake {

@@ -586,14 +586,15 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 
 		process_and_progress_blocks::<StakingRewards, Test>(1);
 
-		mint_assets([ALICE], [PICA::ID], AMOUNT * 2);
+		let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
+		mint_assets([ALICE], [staked_asset_id], AMOUNT * 2);
 
 		stake_and_assert::<Test, runtime::Event>(ALICE, PICA::ID, AMOUNT, DURATION_PRESET);
 
 		let rewards_pool = StakingRewards::pools(PICA::ID).expect("rewards_pool expected");
 		let reward_multiplier = StakingRewards::reward_multiplier(&rewards_pool, DURATION_PRESET)
 			.expect("reward_multiplier expected");
-		let boosted_amount = StakingRewards::boosted_amount(reward_multiplier, AMOUNT)
+		let _ = StakingRewards::boosted_amount(reward_multiplier, AMOUNT)
 			.expect("boosted amount should not overflow");
 
 		let reductions = rewards_pool
@@ -763,7 +764,7 @@ fn unstake_in_case_of_zero_claims_and_early_unlock_should_work() {
 			assert_eq!(
 				claim_of_stake::<Test>(
 					&Stakes::<Test>::get(STAKING_FNFT_COLLECTION_ID, fnft_instance_id).unwrap(),
-					&rewards_pool.total_shares,
+					&rewards_pool.share_asset_id,
 					&reward,
 					&reward_asset_id
 				),
@@ -987,15 +988,13 @@ fn extend_should_not_allow_non_owner() {
 	let amount = 100_500;
 	let duration_preset = ONE_HOUR;
 	let total_rewards = 100;
-	let total_shares = 200;
 
 	with_stake(
 		staker,
 		amount,
 		duration_preset,
 		total_rewards,
-		total_shares,
-		None,
+		false,
 		|_pool_id, _unlock_penalty, _stake_duration, _staked_asset_id| {
 			assert_noop!(
 				StakingRewards::extend(Origin::signed(non_owner), 1, 0, 1_000),
@@ -1042,15 +1041,13 @@ fn split_should_not_allow_non_owner() {
 	let amount = 100_500;
 	let duration_preset = ONE_HOUR;
 	let total_rewards = 100;
-	let total_shares = 200;
 
 	with_stake(
 		staker,
 		amount,
 		duration_preset,
 		total_rewards,
-		total_shares,
-		None,
+		false,
 		|_pool_id, _unlock_penalty, _stake_duration, _staked_asset_id| {
 			assert_noop!(
 				StakingRewards::unstake(Origin::signed(non_owner), 1, 0),
@@ -1117,15 +1114,13 @@ mod claim {
 		let amount = 100_500;
 		let duration_preset = ONE_HOUR;
 		let total_rewards = 100;
-		let total_shares = 200;
 
 		with_stake(
 			staker,
 			amount,
 			duration_preset,
 			total_rewards,
-			total_shares,
-			None,
+			false,
 			|_pool_id, _unlock_penalty, _stake_duration, _staked_asset_id| {
 				assert_noop!(
 					StakingRewards::claim(Origin::signed(non_owner), 1, 0),
@@ -1141,16 +1136,14 @@ mod claim {
 		let amount = 100_500;
 		let duration_preset = ONE_HOUR;
 		let total_rewards = 100;
-		let total_shares = 200;
-		let claim = 50;
+		let claim = 100;
 
 		with_stake(
 			staker,
 			amount,
 			duration_preset,
 			total_rewards,
-			total_shares,
-			Some(claim),
+			true,
 			|pool_id, _unlock_penalty, _stake_duration, staked_asset_id| {
 				let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
 
@@ -1178,16 +1171,14 @@ mod claim {
 		let amount = 100_500;
 		let duration_preset = ONE_HOUR;
 		let total_rewards = 100;
-		let total_shares = 200;
-		let claim = 50;
+		let claim = 100;
 
 		with_stake(
 			staker,
 			amount,
 			duration_preset,
 			total_rewards,
-			total_shares,
-			Some(claim),
+			true,
 			|pool_id, _unlock_penalty, _stake_duration, staked_asset_id| {
 				let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
 
@@ -1243,10 +1234,18 @@ mod claim {
 			process_and_progress_blocks::<StakingRewards, Test>(1);
 
 			mint_assets([ALICE], [PICA::ID], PICA::units(100_000_000));
-			let fnft_instance_id =
-				stake_and_assert::<Test, runtime::Event>(ALICE, pool_id, AMOUNT, DURATION);
+			let _ = stake_and_assert::<Test, runtime::Event>(ALICE, pool_id, AMOUNT, DURATION);
 
 			assert_eq!(balance(staked_asset_id, &ALICE), PICA::units(100_000_000) - AMOUNT);
+
+			// first staker should have 0 reductions
+			assert_eq!(
+				Stakes::<Test>::get(1, 0)
+					.expect("expected stake. QED")
+					.reductions
+					.get(&USDT::ID),
+				Some(&0)
+			);
 
 			assert_extrinsic_event::<Test, runtime::Event, _, _, _>(
 				StakingRewards::claim(Origin::signed(ALICE), 1, 0),
@@ -1257,6 +1256,11 @@ mod claim {
 
 			// should be 1 block's worth of claims
 			assert_eq!(stake.reductions.get(&USDT::ID), Some(&60));
+
+			process_and_progress_blocks::<StakingRewards, Test>(1);
+
+			// reductions don't change per block
+			assert_eq!(stake.reductions.get(&USDT::ID), Some(&60));
 		});
 	}
 
@@ -1266,16 +1270,14 @@ mod claim {
 		let amount = 100_500;
 		let duration_preset = ONE_HOUR;
 		let total_rewards = 100;
-		let total_shares = 200;
-		let claim = 50;
+		let claim = 100;
 
 		with_stake(
 			staker,
 			amount,
 			duration_preset,
 			total_rewards,
-			total_shares,
-			Some(claim),
+			true,
 			|pool_id, _unlock_penalty, _stake_duration, _staked_asset_id| {
 				assert_ok!(StakingRewards::claim(Origin::signed(staker), 1, 0));
 
@@ -1293,7 +1295,7 @@ mod claim {
 						.get(&USDT::ID)
 						.expect("expected value. QED")
 						.claimed_rewards,
-					50
+					claim
 				);
 			},
 		);
@@ -1339,8 +1341,7 @@ fn with_stake<R>(
 	amount: u128,
 	duration: DurationSeconds,
 	total_rewards: u128,
-	total_shares: u128,
-	claim: Option<u128>,
+	should_claim: bool,
 	execute: impl FnOnce(u128, Perbill, u64, u128) -> R,
 ) -> R {
 	new_test_ext().execute_with(|| {
@@ -1357,19 +1358,25 @@ fn with_stake<R>(
 			amount.saturating_mul(2),
 		);
 
-		update_total_rewards_and_total_shares_in_rewards_pool(pool_id, total_rewards, total_shares);
+		update_total_rewards_and_total_shares_in_rewards_pool(pool_id, total_rewards);
 
 		process_and_progress_blocks::<StakingRewards, Test>(1);
-		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration));
+		let fnft_instance_id =
+			stake_and_assert::<Test, runtime::Event>(staker, PICA::ID, amount, duration);
+		// assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration));
 		assert_eq!(balance(staked_asset_id, &staker), amount);
 
-		let mut stake = StakingRewards::stakes(1, 0).expect("stake expected. QED");
+		let stake = StakingRewards::stakes(1, 0).expect("stake expected. QED");
 		let unlock_penalty = stake.lock.unlock_penalty;
 		let stake_duration = stake.lock.duration;
 
-		if let Some(claim) = claim {
-			update_reductions(&mut stake.reductions, claim);
-			Stakes::<Test>::insert(1, 0, stake);
+		if should_claim {
+			// update_reductions(&mut stake.reductions, claim);
+			assert_ok!(StakingRewards::claim(
+				Origin::signed(staker),
+				STAKING_FNFT_COLLECTION_ID,
+				fnft_instance_id
+			));
 		}
 
 		execute(pool_id, unlock_penalty, stake_duration, staked_asset_id)
@@ -1464,26 +1471,12 @@ fn balance(asset_id: u128, account: &Public) -> u128 {
 	)
 }
 
-fn update_total_rewards_and_total_shares_in_rewards_pool(
-	pool_id: u128,
-	total_rewards: u128,
-	total_shares: u128,
-) {
+fn update_total_rewards_and_total_shares_in_rewards_pool(pool_id: u128, total_rewards: u128) {
 	let mut rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
 	let mut inner_rewards = rewards_pool.rewards.into_inner();
 	for (_asset_id, reward) in inner_rewards.iter_mut() {
 		reward.total_rewards += total_rewards;
 	}
 	rewards_pool.rewards = inner_rewards.try_into().expect("rewards expected");
-	rewards_pool.total_shares = total_shares;
 	RewardPools::<Test>::insert(pool_id, rewards_pool);
-}
-
-fn update_reductions(
-	reductions: &mut BoundedBTreeMap<u128, u128, MaxRewardConfigsPerPool>,
-	claim: u128,
-) {
-	for (_asset_id, inflation) in reductions {
-		*inflation -= claim;
-	}
 }
