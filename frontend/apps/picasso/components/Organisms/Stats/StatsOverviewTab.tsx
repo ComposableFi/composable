@@ -22,6 +22,9 @@ export const StatsOverviewTab: FC = () => {
             TextAboveProps={{
               color: theme.palette.common.darkWhite,
             }}
+            TooltipProps={{
+              title: "tooltip",
+            }}
             textAbove="Total value locked"
             title={data?.overviewStats.totalValueLocked.toString()}
           />
@@ -32,6 +35,9 @@ export const StatsOverviewTab: FC = () => {
           <FeaturedBox
             TextAboveProps={{
               color: theme.palette.common.darkWhite,
+            }}
+            TooltipProps={{
+              title: "tooltip",
             }}
             textAbove="Account holders"
             title={data?.overviewStats.accountHoldersCount.toString()}
@@ -44,6 +50,9 @@ export const StatsOverviewTab: FC = () => {
             TextAboveProps={{
               color: theme.palette.common.darkWhite,
             }}
+            TooltipProps={{
+              title: "tooltip",
+            }}
             textAbove="Total transactions"
             title={formatNumber(data?.overviewStats.transactionsCount)}
           />
@@ -54,6 +63,9 @@ export const StatsOverviewTab: FC = () => {
           TextAboveProps={{
             color: theme.palette.common.darkWhite,
           }}
+          TooltipProps={{
+            title: "tooltip",
+          }}
           textAbove="Picasso market cap"
           title={`$${marketCap.toFormat(2)}`}
         />
@@ -62,6 +74,9 @@ export const StatsOverviewTab: FC = () => {
         <FeaturedBox
           TextAboveProps={{
             color: theme.palette.common.darkWhite,
+          }}
+          TooltipProps={{
+            title: "tooltip",
           }}
           textAbove="Picasso circulating supply"
           title={`${circulatingSupply.toFormat(0)} PICA`}
@@ -72,6 +87,9 @@ export const StatsOverviewTab: FC = () => {
           <FeaturedBox
             TextAboveProps={{
               color: theme.palette.common.darkWhite,
+            }}
+            TooltipProps={{
+              title: "tooltip",
             }}
             textAbove="Active users"
             title={data?.overviewStats.activeUsersCount.toString()}
