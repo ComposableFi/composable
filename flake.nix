@@ -116,8 +116,9 @@
         pkgs.stdenv.mkDerivation {
           name = "all-such-files-${extension}";
           src = builtins.filterSource (path: type:
-            baseNameOf path != ".git" || (type == "regular"
-              && pkgs.lib.strings.hasSuffix ".${extension}" path)) ./.;
+            (type == "directory" && baseNameOf path != ".git") || (type
+              == "regular" && pkgs.lib.strings.hasSuffix ".${extension}" path))
+            ./.;
           dontUnpack = true;
           installPhase = ''
             mkdir $out/
