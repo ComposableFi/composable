@@ -7,12 +7,24 @@ import { resetOwnedFinancialNfts, setOwnedFinancialNfts } from "@/store/financia
 import { ApiPromise } from "@polkadot/api";
 import { useEffect } from "react";
 import {
+  putStakingRewardPool,
   putStakingRewardPools,
   putStakingRewardPoolStakedPositionsHistory,
   resetStakingRewardPools,
   resetStakingRewardPoolStakedPositionsHistory,
 } from "@/store/stakingRewards/stakingRewards.slice";
 import { useTotalXTokensIssued } from "@/defi/hooks/stakingRewards/useTotalXTokensIssued";
+
+export function updateStakingRewardPool(
+  api: ApiPromise,
+  assetId: string
+): void {
+  fetchStakingRewardPools(api, [assetId]).then(pools => {
+    if (pools.length > 0) {
+      putStakingRewardPool(pools[0])
+    }
+  })
+}
 
 export function updateStakingRewardPools(
   parachainApi: ApiPromise,

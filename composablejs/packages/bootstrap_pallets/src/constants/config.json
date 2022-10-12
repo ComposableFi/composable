@@ -1,9 +1,9 @@
 {
   "bootstrapPools": false,
   "bootstrapBonds": false,
-  "bootstrapCrowdloanRewards": true,
-  "bootstrapRewardPools": false,
-  "mintAssetsToWallets": false,
+  "bootstrapCrowdloanRewards": false,
+  "bootstrapRewardPools": true,
+  "mintAssetsToWallets": true,
   "bondOffers": [
     {
       "asset": "4294967296",
@@ -13,7 +13,7 @@
       "reward": {
         "asset": "5",
         "amount": "1000000000000000",
-        "maturity": "1440"
+        "maturity": "100"
       }
     }
   ],
@@ -32,7 +32,7 @@
       },
       "sale": {
         "start": "0",
-        "end": "7200",
+        "end": "26800",
         "initialWeight": "750000",
         "finalWeight": "250000"
       },
@@ -75,13 +75,14 @@
       },
       "lock": {
         "durationPresets": {
-          "300": "10000000",
-          "600": "15000000"
+          "86400": "1200000000",
+          "604800": "1500000000"
         },
         "unlockPenalty": "10000000"
       },
       "financialNftAssetId": "2130",
-      "shareAssetId": "1300"
+      "shareAssetId": "1300",
+      "minimumStakingAmount": "1000000000000"
     }
   ],
   "crowdloanRewards": {

@@ -37,6 +37,16 @@ declare module '@polkadot/api-base/types/storage' {
        **/
       [key: string]: QueryableStorageEntry<ApiType>;
     };
+    assetTxPayment: {
+      /**
+       * Stores default payment asset of user with ED locked.
+       **/
+      paymentAssets: AugmentedQuery<ApiType, (arg: AccountId32 | string | Uint8Array) => Observable<Option<ITuple<[u128, u128]>>>, [AccountId32]> & QueryableStorageEntry<ApiType, [AccountId32]>;
+      /**
+       * Generic query
+       **/
+      [key: string]: QueryableStorageEntry<ApiType>;
+    };
     aura: {
       /**
        * The current authority set.
@@ -272,7 +282,7 @@ declare module '@polkadot/api-base/types/storage' {
     };
     crowdloanRewards: {
       /**
-       * Associate a local account with a remote one.
+       * Associations of reward accounts to remote accounts.
        **/
       associations: AugmentedQuery<ApiType, (arg: AccountId32 | string | Uint8Array) => Observable<Option<PalletCrowdloanRewardsModelsRemoteAccount>>, [AccountId32]> & QueryableStorageEntry<ApiType, [AccountId32]>;
       /**
@@ -289,7 +299,7 @@ declare module '@polkadot/api-base/types/storage' {
        **/
       totalRewards: AugmentedQuery<ApiType, () => Observable<u128>, []> & QueryableStorageEntry<ApiType, []>;
       /**
-       * The block at which the users are able to claim their rewards.
+       * The timestamp at which the users are able to claim their rewards.
        **/
       vestingTimeStart: AugmentedQuery<ApiType, () => Observable<Option<u64>>, []> & QueryableStorageEntry<ApiType, []>;
       /**
@@ -439,11 +449,13 @@ declare module '@polkadot/api-base/types/storage' {
     fnft: {
       collection: AugmentedQuery<ApiType, (arg: u128 | AnyNumber | Uint8Array) => Observable<Option<ITuple<[AccountId32, AccountId32, BTreeMap<Bytes, Bytes>]>>>, [u128]> & QueryableStorageEntry<ApiType, [u128]>;
       /**
-       * Map of NFT collections to all of the instances of that collection.
+       * Mapping of fNFT collection to the newest instance ID
        **/
-      collectionInstances: AugmentedQuery<ApiType, (arg: u128 | AnyNumber | Uint8Array) => Observable<Option<BTreeSet<u64>>>, [u128]> & QueryableStorageEntry<ApiType, [u128]>;
       financialNftId: AugmentedQuery<ApiType, (arg: u128 | AnyNumber | Uint8Array) => Observable<u64>, [u128]> & QueryableStorageEntry<ApiType, [u128]>;
-      instance: AugmentedQuery<ApiType, (arg: ITuple<[u128, u64]> | [u128 | AnyNumber | Uint8Array, u64 | AnyNumber | Uint8Array]) => Observable<Option<ITuple<[AccountId32, BTreeMap<Bytes, Bytes>]>>>, [ITuple<[u128, u64]>]> & QueryableStorageEntry<ApiType, [ITuple<[u128, u64]>]>;
+      /**
+       * Mapping of collection and instance IDs to fNFT data
+       **/
+      instance: AugmentedQuery<ApiType, (arg1: u128 | AnyNumber | Uint8Array, arg2: u64 | AnyNumber | Uint8Array) => Observable<Option<ITuple<[AccountId32, BTreeMap<Bytes, Bytes>]>>>, [u128, u64]> & QueryableStorageEntry<ApiType, [u128, u64]>;
       /**
        * All the NFTs owned by an account.
        **/
@@ -572,7 +584,7 @@ declare module '@polkadot/api-base/types/storage' {
        * Maps markets to their corresponding debt token.
        * 
        * ```text
-       * MarketIndex -> debt asset
+       * MarketId -> debt asset
        * ```
        * 
        * See [this clickup task](task) for a more in-depth explanation.
@@ -592,7 +604,7 @@ declare module '@polkadot/api-base/types/storage' {
        * Indexed lending instances. Maps markets to their respective [`MarketConfig`].
        * 
        * ```text
-       * MarketIndex -> MarketConfig
+       * MarketId -> MarketConfig
        * ```
        **/
       markets: AugmentedQuery<ApiType, (arg: u32 | AnyNumber | Uint8Array) => Observable<Option<ComposableTraitsLendingMarketConfig>>, [u32]> & QueryableStorageEntry<ApiType, [u32]>;

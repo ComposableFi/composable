@@ -7,6 +7,8 @@ import {
 } from "@/defi/utils/stakingRewards/durationPresets";
 import { DATE_FORMAT } from "@/defi/utils";
 import { useMemo } from "react";
+import { calculateDurationPresetAPR } from "@/defi/utils/stakingRewards";
+import BigNumber from "bignumber.js";
 
 export type SelectLockPeriodProps = {
   periodItems: DurationPresetMark[];
@@ -33,6 +35,11 @@ export const SelectLockPeriod: React.FC<SelectLockPeriodProps> = ({
   }, [durationPresetSelected]);
 
 
+  const apr = calculateDurationPresetAPR(
+    durationPresetSelected ? new BigNumber(durationPresetSelected.periodInSeconds) : undefined,
+    new BigNumber(multiplier)
+  )
+
   return (
     <Box {...boxProps}>
 
@@ -44,52 +51,20 @@ export const SelectLockPeriod: React.FC<SelectLockPeriodProps> = ({
             title: "Select lock period (multiplier)",
           }}
         />
-        <Box display="flex" justifyContent="flex-end" alignItems="center">
+        {durationPresetSelected && <Box display="flex" justifyContent="flex-end" alignItems="center">
           <Typography variant="body2" color={alpha(theme.palette.common.white, 0.6)}>
             APR
           </Typography>
-        </Box>
+        </Box>}
       </Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center">
+      {durationPresetSelected && <Box display="flex" justifyContent="space-between" alignItems="center">
         <Typography variant="h6">
-          {durationPresetSelected?.label}
+          {durationPresetSelected?.periodInString}
         </Typography>
         <Typography variant="subtitle1" color={theme.palette.success.main}>
-          6.00
+          {apr.toFixed(2)}%
         </Typography>
-      </Box>
-
-      {/* <Grid container spacing={3}>
-        {periodItems.map((item) => (
-          <Grid item sm={12} md={6} lg={3} key={item.multiplier.toString()}>
-            <Button
-              variant="outlined"
-              size="large"
-              fullWidth
-              sx={{
-                borderWidth: selected(item.value) ? 1 : 0,
-                background: selected(item.value)
-                  ? alpha(
-                      theme.palette.primary.main,
-                      theme.custom.opacity.light
-                    )
-                  : alpha(
-                      theme.palette.common.white,
-                      theme.custom.opacity.lighter
-                    ),
-              }}
-              onClick={() => setDurationPreset?.(item.value)}
-            >
-              <Typography
-                variant="body1"
-                color={selected(item.value) ? "text.primary" : "text.secondary"}
-              >
-                {item.label}
-              </Typography>
-            </Button>
-          </Grid>
-        ))}
-      </Grid> */}
+      </Box>}
 
       <Slider
         value={multiplier}

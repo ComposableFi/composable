@@ -23,7 +23,7 @@ import {
   PabloPoolAsset,
   PabloTransaction,
 } from "../model";
-import { CurrencyPair, Fee } from "../types/v2401";
+import { CurrencyPair, Fee } from "../types/v2402";
 import { encodeAccount } from "../utils";
 
 function createEvent(
@@ -87,7 +87,7 @@ interface PoolCreatedEvent {
 }
 
 function getPoolCreatedEvent(event: PabloPoolCreatedEvent): PoolCreatedEvent {
-  const { owner, poolId, assets } = event.asV2401;
+  const { owner, poolId, assets } = event.asV2402;
   return { owner, poolId, assets };
 }
 
@@ -197,7 +197,7 @@ interface LiquidityAddedEvent {
 function getLiquidityAddedEvent(
   event: PabloLiquidityAddedEvent
 ): LiquidityAddedEvent {
-  const { who, poolId, baseAmount, quoteAmount, mintedLp } = event.asV2401;
+  const { who, poolId, baseAmount, quoteAmount, mintedLp } = event.asV2402;
   return { who, poolId, baseAmount, quoteAmount, mintedLp };
 }
 
@@ -305,7 +305,7 @@ interface LiquidityRemovedEvent {
 function getLiquidityRemovedEvent(
   event: PabloLiquidityRemovedEvent
 ): LiquidityRemovedEvent {
-  const { who, poolId, baseAmount, quoteAmount, totalIssuance } = event.asV2401;
+  const { who, poolId, baseAmount, quoteAmount, totalIssuance } = event.asV2402;
   return { who, poolId, baseAmount, quoteAmount, totalIssuance };
 }
 
@@ -416,7 +416,7 @@ interface SwappedEvent {
 
 function getSwappedEvent(event: PabloSwappedEvent): SwappedEvent {
   const { poolId, who, baseAsset, quoteAsset, baseAmount, quoteAmount, fee } =
-    event.asV2401;
+    event.asV2402;
   return {
     poolId,
     who,
@@ -563,7 +563,7 @@ interface PoolDeletedEvent {
 }
 
 function getPoolDeletedEvent(event: PabloPoolDeletedEvent): PoolDeletedEvent {
-  const { poolId, baseAmount, quoteAmount } = event.asV2401;
+  const { poolId, baseAmount, quoteAmount } = event.asV2402;
   return { poolId, baseAmount, quoteAmount };
 }
 

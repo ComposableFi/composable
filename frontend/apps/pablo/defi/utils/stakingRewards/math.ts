@@ -40,3 +40,19 @@ export function calculateStakingRewardsPoolApy(
   let num = rewardTokenValueInUSD.times(dailyRewardAmount).times(365);
   return num.div(totalValueLocked);
 }
+
+export function calculateDurationPresetAPR(
+  lockDurationInSeconds: BigNumber | undefined,
+  rewardMultiplier: BigNumber
+): BigNumber {
+  if (!lockDurationInSeconds) {
+    return new BigNumber(0);
+  }
+
+  const SECONDS_IN_YEAR = 31536000;
+  const APR = rewardMultiplier.multipliedBy(
+    SECONDS_IN_YEAR / Number(lockDurationInSeconds)
+  );
+
+  return APR;
+}

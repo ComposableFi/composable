@@ -11,6 +11,7 @@ export type StakingRewardsPoolConfig = {
     rewardConfigs: any;
     lock: any;
     financialNftAssetId: u128,
-    shareAssetId: u128
+    shareAssetId: u128,
+    minimumStakingAmount: u128
   }
 };

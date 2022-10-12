@@ -22,6 +22,16 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       [key: string]: Codec;
     };
+    assetTxPayment: {
+      /**
+       * where to allow configuring default asset per user
+       **/
+      useUserConfiguration: bool & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
     authorship: {
       /**
        * The number of blocks back we should accept uncles.
@@ -170,11 +180,15 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       initialPayment: Perbill & AugmentedConst<ApiType>;
       /**
+       * The percentage of excess funds required to trigger the `OverFunded` event.
+       **/
+      overFundedThreshold: Perbill & AugmentedConst<ApiType>;
+      /**
        * The unique identifier of this pallet.
        **/
       palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
       /**
-       * The arbitrary prefix used for the proof
+       * The arbitrary prefix used for the proof.
        **/
       prefix: Bytes & AugmentedConst<ApiType>;
       /**
@@ -553,6 +567,7 @@ declare module '@polkadot/api-base/types/consts' {
        * the size of batch to take each time trying to release rewards
        **/
       releaseRewardsPoolsBatchSize: u8 & AugmentedConst<ApiType>;
+      treasuryAccount: AccountId32 & AugmentedConst<ApiType>;
       xPbloAssetId: u128 & AugmentedConst<ApiType>;
       xPicaAssetId: u128 & AugmentedConst<ApiType>;
       /**

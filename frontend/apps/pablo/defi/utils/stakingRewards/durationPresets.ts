@@ -54,6 +54,7 @@ export function calculatePeriod(durationInSeconds: string | number): Period {
 export interface DurationPresetMark extends Mark {
     period: Period;
     periodInSeconds: string;
+    periodInString: string;
 }
 
 export function extractDurationPresets(
@@ -64,10 +65,10 @@ export function extractDurationPresets(
     return Object.keys(stakingPool.lock.durationPresets).map((i) => {
         const seconds = Number(i);
         const period = calculatePeriod(seconds);
-        const label = createDurationPresetLabel(period);
+        const periodInString = createDurationPresetLabel(period);
 
         return {
-            label,
+            periodInString,
             period,
             periodInSeconds: i,
             value: stakingPool.lock.durationPresets[i].toNumber(),

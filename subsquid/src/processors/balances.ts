@@ -26,17 +26,17 @@ interface WithdrawEvent {
 }
 
 function getTransferEvent(event: BalancesTransferEvent): TransferEvent {
-  const { from, to, amount } = event.asV2401;
+  const { from, to, amount } = event.asV2402;
   return { from, to, amount };
 }
 
 function getWithdrawEvent(event: BalancesWithdrawEvent): DepositEvent {
-  const { who, amount } = event.asV2401;
+  const { who, amount } = event.asV2402;
   return { who, amount };
 }
 
 function getDepositEvent(event: BalancesDepositEvent): WithdrawEvent {
-  const { who, amount } = event.asV2401;
+  const { who, amount } = event.asV2402;
   return { who, amount };
 }
 

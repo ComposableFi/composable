@@ -1,6 +1,6 @@
 import { Box, Button, useTheme } from "@mui/material";
 import { BigNumberInput } from "@/components/Atoms";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BoxProps } from "@mui/material";
 import { SelectLockPeriod } from "./SelectLockPeriod";
 import { StakingRewardPool } from "@/defi/types";
