@@ -16,6 +16,7 @@
     "export": "./node_modules/.bin/next export"
   },
   "dependencies": {
+    "@acala-network/types": "^4.1.5",
     "@apollo/client": "^3.6.9",
     "@emotion/cache": "^11.7.1",
     "@emotion/react": "^11.8.2",
@@ -49,7 +50,8 @@
     "shared": "*",
     "substrate-react": "*",
     "tokens": "*",
-    "zustand": "^4.0.0"
+    "zustand": "^4.0.0",
+    "endpoints": "*"
   },
   "devDependencies": {
     "@babel/core": "^7.16.7",

@@ -112,7 +112,7 @@ formal enquiries to see how we can work together to build tomorrow, today.
 **Join the Composable community:**
 
 [Composable Twitter](https://twitter.com/ComposableFin) | [Picasso Twitter](https://twitter.com/Picasso_Network) | 
-[Telegram](https://t.me/composablefinance) | [Discord](https://discord.com/invite/pFZn2GCn65) | 
+[Telegram](https://t.me/composablefinance) | [Discord](https://discord.gg/composable) | 
 [Website](https://www.composable.finance/) | [GitHub](https://github.com/ComposableFi) | 
 [LinkedIn](https://www.linkedin.com/company/composable-finance/)
 

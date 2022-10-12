@@ -42,6 +42,7 @@ members = [
   "utils/price-feed",
   "utils/collator-sidecar",
   "utils/subxt-codegen",
+  "utils/composable-subxt",
   "utils/xcmp",
   "utils/wasm-optimizer",
   "xcvm/lib/*",

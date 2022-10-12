@@ -11,16 +11,13 @@ export default function useBondVestingTime(
 
   const vestingTime = useMemo(() => {
     if (bondOffer) {
-      if (bondOffer.maturity === "Infinite") {
-        return bondOffer.maturity;
-      }
 
       const blockInterval = averageBlockTime
         ? new BigNumber(averageBlockTime.toString())
         : new BigNumber(AVERAGE_BLOCK_TIME);
 
       return calculateVestingTime(
-        bondOffer.maturity.Finite.returnIn,
+        bondOffer.reward.maturity,
         blockInterval
       );
     }

@@ -1,8 +1,7 @@
 import {
+  Box,
   CircularProgress as MuiCircularProgress,
   CircularProgressProps,
-  Box,
-  alpha,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 
@@ -16,7 +15,7 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
       <MuiCircularProgress
         variant="determinate"
         sx={{
-          color: alpha(theme.palette.primary.main, theme.custom.opacity.light),
+          color: theme.palette.background.transparentCharcoal,
         }}
         thickness={4}
         {...props}

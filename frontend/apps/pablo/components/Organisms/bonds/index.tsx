@@ -1,4 +1,4 @@
-import { Box, Grid, Typography, Card, BoxProps } from "@mui/material";
+import { Box, BoxProps, Grid, Typography } from "@mui/material";
 import { YourBondTable } from "@/components/Organisms/YourBondTable";
 import { AllBondTable } from "@/components/Organisms/AllBondTable";
 import { BoxWrapper } from "../BoxWrapper";
@@ -19,12 +19,12 @@ export const Bonds: React.FC<BoxProps> = ({ ...boxProps }) => {
 
       <Grid mt={8}>
         <Grid item {...standardPageSize}>
-          <Card variant="outlined">
+          <BoxWrapper>
             <Typography variant="h6" mb={2}>
               All bonds
             </Typography>
             <AllBondTable />
-          </Card>
+          </BoxWrapper>
         </Grid>
       </Grid>
     </Box>

@@ -7,6 +7,7 @@ import { APP_NAME } from "@/defi/polkadot/constants";
 import { toChainIdUnit } from "shared";
 import { CurrencyId } from "defi-interfaces";
 import { XcmVersionedMultiLocation } from "@polkadot/types/lookup";
+import BigNumber from "bignumber.js";
 
 export type TransferHandlerArgs = {
   api: ApiPromise;
@@ -18,6 +19,7 @@ export type TransferHandlerArgs = {
   signerAddress: string;
   hasFeeItem: boolean;
   feeItemId: number | null;
+  weight: BigNumber;
 };
 
 export function availableTargetNetwork(
@@ -140,7 +142,7 @@ export async function getTransferCallPicassoKarura(
     ] // Asset to be used as fees, minFee should be calculated.
   ];
 
-  const destWeight = api.createType("u64", 900000000000); // > 9000000000
+  const destWeight = api.createType("u64", 9000000000); // > 9000000000
 
   const signer = await getSigner(APP_NAME, signerAddress);
 
@@ -177,7 +179,7 @@ export async function getTransferCallPicassoKusama(
   });
 
   // Set dest weight
-  const destWeight = api.createType("u64", 900000000000); // > 9000000000
+  const destWeight = api.createType("u64", 9000000000);
   const ksmAssetID = api.createType("SafeRpcWrapper", 4);
 
   const feeItemAssetID = [
@@ -239,7 +241,7 @@ export async function getTransferCallKaruraPicasso(
     }
   );
 
-  const destWeight = api.createType("u64", 900000000000); // > 9000000000
+  const destWeight = api.createType("u64", 20000000000000); // > 9000000000
 
   const signer = await getSigner(APP_NAME, signerAddress);
 
@@ -279,7 +281,7 @@ export async function transferPicassoKarura({
     signerAddress,
     api,
     signer,
-    (txHash) => {
+    txHash => {
       enqueueSnackbar("Transfer executed", {
         persist: true,
         description: `Transaction hash: ${txHash}`,
@@ -287,14 +289,14 @@ export async function transferPicassoKarura({
         isCloseable: true
       });
     },
-    (txHash) => {
+    txHash => {
       enqueueSnackbar("Transfer executed successfully.", {
         persist: true,
         variant: "success",
         isCloseable: true
       });
     },
-    (err) => {
+    err => {
       enqueueSnackbar("Transfer failed", {
         persist: true,
         description: `Error: ${err}`,
@@ -327,7 +329,7 @@ export async function transferKaruraPicasso({
     signerAddress,
     api,
     signer,
-    (txHash) => {
+    txHash => {
       enqueueSnackbar("Transfer executed", {
         persist: true,
         description: `Transaction hash: ${txHash}`,
@@ -335,14 +337,14 @@ export async function transferKaruraPicasso({
         isCloseable: true
       });
     },
-    (txHash) => {
+    txHash => {
       enqueueSnackbar("Transfer executed successfully.", {
         persist: true,
         variant: "success",
         isCloseable: true
       });
     },
-    (err) => {
+    err => {
       enqueueSnackbar("Transfer failed", {
         persist: true,
         description: `Error: ${err}`,
@@ -361,7 +363,8 @@ export async function transferPicassoKusama({
   enqueueSnackbar,
   signerAddress,
   hasFeeItem,
-  feeItemId
+  feeItemId,
+  weight
 }: TransferHandlerArgs) {
   const { signer, call } = await getTransferCallPicassoKusama(
     api,
@@ -377,7 +380,7 @@ export async function transferPicassoKusama({
     signerAddress,
     api,
     signer,
-    (txHash) => {
+    txHash => {
       enqueueSnackbar("Transfer executed", {
         persist: true,
         description: `Transaction hash: ${txHash}`,
@@ -385,14 +388,14 @@ export async function transferPicassoKusama({
         isCloseable: true
       });
     },
-    (txHash) => {
+    txHash => {
       enqueueSnackbar("Transfer executed successfully.", {
         persist: true,
         variant: "success",
         isCloseable: true
       });
     },
-    (err) => {
+    err => {
       enqueueSnackbar("Transfer failed", {
         persist: true,
         description: `Error: ${err}`,
@@ -425,21 +428,21 @@ export async function transferKusamaPicasso({
     signerAddress,
     api,
     signer,
-    (txHash) => {
+    txHash => {
       enqueueSnackbar("Executing transfer...", {
         persist: true,
         variant: "info",
         timeout: 0
       });
     },
-    (txHash) => {
+    txHash => {
       enqueueSnackbar("Transfer executed successfully.", {
         persist: true,
         variant: "success",
         isCloseable: true
       });
     },
-    (err) => {
+    err => {
       enqueueSnackbar("Transfer failed", {
         persist: true,
         description: `Error: ${err}`,

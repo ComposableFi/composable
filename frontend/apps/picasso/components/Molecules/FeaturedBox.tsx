@@ -5,13 +5,13 @@ import {
   BoxProps,
   Button,
   ButtonProps,
+  Theme,
+  Tooltip,
+  TooltipProps,
   Typography,
   TypographyProps,
   useMediaQuery,
   useTheme,
-  Tooltip,
-  TooltipProps,
-  Theme,
 } from "@mui/material";
 import Image from "next/image";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";

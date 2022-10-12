@@ -508,6 +508,8 @@
               mk-xcvm-contract "xcvm-asset-registry";
             xcvm-contract-router = mk-xcvm-contract "xcvm-router";
             xcvm-contract-interpreter = mk-xcvm-contract "xcvm-interpreter";
+            subxt =
+              pkgs.callPackage ./code/utils/composable-subxt/subxt.nix { };
 
             subsquid-processor = let
               processor = pkgs.buildNpmPackage {
@@ -664,6 +666,19 @@
               ROCKSDB_LIB_DIR = "${rocksdb}/lib";
               meta = { mainProgram = "polkadot"; };
             };
+
+            hyperspace = crane-nightly.buildPackage (common-attrs // {
+              name = "hyperspace";
+              cargoArtifacts = common-deps-nightly;
+              cargoExtraArgs = ''
+                --package hyperspace                
+              '';
+              installPhase = ''
+                mkdir -p $out/bin
+                cp target/release/hyperspace $out/bin/hyperspace
+              '';
+              meta = { mainProgram = "hyperspace"; };
+            });
 
             polkadot-launch =
               callPackage ./scripts/polkadot-launch/polkadot-launch.nix { };
@@ -1113,6 +1128,7 @@
                   nix-tree
                   nixfmt
                   rnix-lsp
+                  subxt
                 ] ++ docs-renders;
             });
 
@@ -1173,8 +1189,7 @@
             };
             devnet-picasso = {
               type = "app";
-              program =
-                "${packages.devnet-picasso.script}/bin/run-devnet-picasso-dev";
+              program = "${packages.devnet-picasso}/bin/run-devnet-picasso-dev";
             };
 
             devnet-kusama-picasso-karura = {
@@ -1218,6 +1233,11 @@
             junod = {
               type = "app";
               program = "${packages.junod}/bin/junod";
+            };
+
+            hyperspace = {
+              type = "app";
+              program = pkgs.lib.meta.getExe packages.hyperspace;
             };
 
             # TODO: move list of chains out of here and do fold
@@ -1295,7 +1315,7 @@
                 homeDirectory = "/home/vscode";
                 stateVersion = "22.05";
                 packages =
-                  [ eachSystemOutputs.packages.x86_64-linux.rust-nightly ]
+                  [ eachSystemOutputs.packages.x86_64-linux.rust-nightly subxt ]
                   ++ (mk-containers-tools-minimal pkgs)
                   ++ (mk-docker-in-docker pkgs);
               };
@@ -1319,9 +1339,10 @@
                 username = "vscode";
                 homeDirectory = "/home/vscode";
                 stateVersion = "22.05";
-                packages =
-                  [ eachSystemOutputs.packages.aarch64-linux.rust-nightly ]
-                  ++ (mk-containers-tools-minimal pkgs)
+                packages = [
+                  eachSystemOutputs.packages.aarch64-linux.rust-nightly
+                  subxt
+                ] ++ (mk-containers-tools-minimal pkgs)
                   ++ (mk-docker-in-docker pkgs);
               };
               programs = {
