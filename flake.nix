@@ -112,6 +112,20 @@
           };
         };
 
+      all-such-files = { pkgs, extension }:
+        pkgs.stdenv.mkDerivation {
+          name = "all-such-files-${extension}";
+          src = builtins.filterSource (path: type:
+            (type == "directory" && baseNameOf path != ".git") || (type
+              == "regular" && pkgs.lib.strings.hasSuffix ".${extension}" path))
+            ./.;
+          dontUnpack = true;
+          installPhase = ''
+            mkdir $out/
+            cp -r $src/. $out/
+          '';
+        };
+
       eachSystemOutputs = flake-utils.lib.eachDefaultSystem (system:
         let
           pkgs = import nixpkgs {
@@ -583,6 +597,11 @@
               '';
             };
 
+            all-toml-files = all-such-files {
+              inherit pkgs;
+              extension = "toml";
+            };
+
             price-feed = crane-nightly.buildPackage (common-attrs // {
               pnameSuffix = "-price-feed";
               cargoArtifacts = common-deps;
@@ -906,12 +925,16 @@
               cargoExtraArgs = "--all --check --verbose";
             });
 
-            taplo-cli-check = crane-stable.cargoBuild (common-attrs // {
-              buildInputs = [ taplo-cli ];
-              cargoArtifacts = common-deps;
-              cargoBuildCommand = "taplo check";
-              cargoExtraArgs = "--verbose";
-            });
+            taplo-cli-check = stdenv.mkDerivation {
+              name = "taplo-cli-check";
+              dontUnpack = true;
+              buildInputs = [ all-toml-files taplo-cli ];
+              installPhase = ''
+                mkdir $out
+                cd ${all-toml-files}
+                taplo check --verbose
+              '';
+            };
 
             prettier-check = stdenv.mkDerivation {
               name = "prettier-check";
