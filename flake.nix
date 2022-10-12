@@ -829,20 +829,20 @@
               run-with-benchmarks "composable-dev";
 
             check-picasso-integration-tests = crane-nightly.cargoBuild
-              (common-attrs // {
+              (common-test-attrs // {
                 pname = "picasso-local-integration-tests";
-                cargoBuildCommand =
-                  "cargo test --package local-integration-tests";
+                cargoArtifacts = common-test-deps;
+                cargoBuildCommand = "cargo test";
                 cargoExtraArgs =
-                  "--features=local-integration-tests,picasso,std --no-default-features --verbose";
+                  "--package local-integration-tests --features=local-integration-tests,picasso,std --no-default-features --verbose";
               });
             check-dali-integration-tests = crane-nightly.cargoBuild
-              (common-attrs // {
+              (common-test-attrs // {
                 pname = "dali-local-integration-tests";
-                cargoBuildCommand =
-                  "cargo test --package local-integration-tests";
+                cargoArtifacts = common-test-deps;
+                cargoBuildCommand = "cargo test";
                 cargoExtraArgs =
-                  "--features=local-integration-tests,dali,std --no-default-features --verbose";
+                  "--package local-integration-tests --features=local-integration-tests,dali,std --no-default-features --verbose";
               });
 
             unit-tests = crane-nightly.cargoBuild (common-attrs // {
