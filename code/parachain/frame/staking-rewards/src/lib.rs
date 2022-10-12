@@ -414,7 +414,6 @@ pub mod pallet {
 	/// Abstraction over Stake type
 	pub(crate) type StakeOf<T> = Stake<
 		AssetIdOf<T>,
-		FinancialNftInstanceIdOf<T>,
 		AssetIdOf<T>, // we use AssetId as the reward pool id
 		BalanceOf<T>,
 		<T as Config>::MaxRewardConfigsPerPool,
@@ -876,7 +875,6 @@ pub mod pallet {
 					// contracts of existing stakers.
 					unlock_penalty: rewards_pool.lock.unlock_penalty,
 				},
-				fnft_instance_id,
 			};
 
 			// Move staked funds into fNFT asset account & lock the assets
@@ -1019,7 +1017,13 @@ pub mod pallet {
 					let rewards_pool =
 						rewards_pool.as_mut().ok_or(Error::<T>::RewardsPoolNotFound)?;
 
-					Self::collect_rewards(rewards_pool, &mut stake, who, is_early_unlock)?;
+					Self::collect_rewards(
+						rewards_pool,
+						fnft_instance_id,
+						&mut stake,
+						who,
+						is_early_unlock,
+					)?;
 
 					Ok::<_, DispatchError>((rewards_pool.asset_id, rewards_pool.share_asset_id))
 				})?;
@@ -1180,7 +1184,6 @@ pub mod pallet {
 							reductions: new_reductions,
 							reward_pool_id: existing_position.reward_pool_id,
 							lock: existing_position.lock,
-							fnft_instance_id: new_fnft_instance_id,
 						},
 					))
 				},
@@ -1204,6 +1207,7 @@ pub mod pallet {
 
 					Self::collect_rewards(
 						rewards_pool,
+						fnft_instance_id,
 						stake,
 						who,
 						false, // claims aren't penalized
@@ -1313,6 +1317,7 @@ pub mod pallet {
 		// NOTE: Low priority, this is currently working, just not optimal
 		pub(crate) fn collect_rewards(
 			rewards_pool: &mut RewardPoolOf<T>,
+			fnft_instance_id: &T::FinancialNftInstanceId,
 			stake: &mut StakeOf<T>,
 			owner: &T::AccountId,
 			penalize_for_early_unlock: bool,
@@ -1331,7 +1336,7 @@ pub mod pallet {
 					Self::deposit_event(Event::<T>::UnstakeRewardSlashed {
 						owner: owner.clone(),
 						pool_id: rewards_pool.asset_id,
-						fnft_instance_id: stake.fnft_instance_id,
+						fnft_instance_id: *fnft_instance_id,
 						reward_asset_id: *reward_asset_id,
 						amount_slashed,
 					});

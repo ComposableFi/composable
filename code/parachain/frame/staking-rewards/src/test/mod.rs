@@ -530,7 +530,6 @@ fn stake_in_case_of_zero_inflation_should_work() {
 					duration: duration_preset,
 					unlock_penalty: rewards_pool.lock.unlock_penalty,
 				},
-				fnft_instance_id,
 			})
 		);
 		assert_eq!(
@@ -617,7 +616,6 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 					duration: DURATION_PRESET,
 					unlock_penalty: rewards_pool.lock.unlock_penalty,
 				},
-				fnft_instance_id: 0,
 			})
 		);
 
@@ -753,7 +751,6 @@ mod extend {
 			assert_eq!(
 				stake_after_extend,
 				Stake {
-					fnft_instance_id,
 					reward_pool_id: STAKED_ASSET::ID,
 					stake: staked_amount + extended_amount,
 					share: Pallet::<Test>::boosted_amount(
