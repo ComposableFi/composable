@@ -255,6 +255,7 @@
             src = rust-src;
             SKIP_WASM_BUILD = "1";
             cargoExtraArgs = "--tests --release";
+            doInstallCargoArtifacts = false;
             doCheck = true;
           };
           common-test-deps =
