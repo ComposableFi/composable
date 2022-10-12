@@ -45,7 +45,6 @@ let
           Type = "simple";
           User = "root";
           LimitNOFILE = 1048576;
-          TimeoutStopSec = 5;
           # If docker compose is killed prematurely, it will exit with 255.
           # Allow for arion to SIGKILL docker compose with success, hence avoiding an issue when deploying (deployment would fail if 255 is considered as error code).
           SuccessExitStatus = "255";
