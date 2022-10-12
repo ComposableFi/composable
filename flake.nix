@@ -491,8 +491,8 @@
                   '';
                 };
               };
-
           in builder {
+            # not parametrized yet
           };
 
           subwasm-release-body = let
