@@ -18,7 +18,7 @@ Pallet IBC is a thin wrapper around [`ibc-rs`](/code/centauri/ibc) that satisfie
 Implementing the ibc config trait for a substrate runtime
 ```rust
 parameter_types! {
-	pub const ExpectedBlockTime: u64 = 6000;
+	pub const ExpectedBlockTime: u64 = 12000;
 	pub const RelayChainId: light_client_commomn::RelayChain = light_client_commomn::RelayChain::Rococo;
 }
 
