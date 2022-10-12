@@ -163,7 +163,6 @@ pub fn compute_in_given_out_new<T: PerThing>(
 			"`a_out` must not be greater than `b_o` (can't take out more than what's available)"
 		)
 	);
-	println!("past check!!!!!!!!!");
 	let w_i = Decimal::from(w_i.deconstruct().into());
 	let w_o = Decimal::from(w_o.deconstruct().into());
 	let b_i = Decimal::from(b_i);
