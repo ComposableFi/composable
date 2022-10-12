@@ -1,12 +1,5 @@
 import { FC, useEffect, useState } from "react";
-import {
-  Box,
-  Button,
-  Grid,
-  InputAdornment,
-  Stack,
-  Typography,
-} from "@mui/material";
+import { Box, Button, Grid, InputAdornment, Stack, Typography } from "@mui/material";
 import { BigNumberInput, Modal, TokenAsset } from "@/components";
 import { PairAsset } from "@/components/Atom/PairAsset";
 import PositionDetailsRow from "@/components/Atom/PositionDetailsRow";
@@ -17,12 +10,8 @@ import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
 import { useExecutor } from "substrate-react";
 import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
 import { useSnackbar } from "notistack";
-import {
-  getTokenString,
-  lpToSymbolPair,
-} from "@/components/Organisms/Bond/utils";
 import { alpha, useTheme } from "@mui/material/styles";
-import { getROI, purchaseBond } from "@/defi/polkadot/pallets/BondedFinance";
+import { getROI, getTokenString, lpToSymbolPair, purchaseBond } from "@/defi/polkadot/pallets/BondedFinance";
 import { humanBalance } from "shared";
 
 type BondOfferBalances = {
@@ -54,7 +43,7 @@ export const BondForm: FC<{
   offerId,
   balances,
   tokenSymbol,
-  isLoadingBalances,
+  isLoadingBalances
 }) => {
   const theme = useTheme();
   const [isBondValid, setBondValidation] = useState<boolean>(false);
@@ -94,7 +83,7 @@ export const BondForm: FC<{
       enqueueSnackbar,
       setOpen,
       setOpen2nd,
-      handleFormReset,
+      handleFormReset
     });
   };
 
@@ -113,7 +102,7 @@ export const BondForm: FC<{
       enqueueSnackbar,
       setOpen,
       setOpen2nd,
-      handleFormReset,
+      handleFormReset
     });
   };
 
@@ -127,8 +116,8 @@ export const BondForm: FC<{
               label: "Your balance",
               description: `${humanBalance(
                 balances[bondOffer.assetId]
-              )} ${getTokenString(bondOffer.asset)}`,
-            },
+              )} ${getTokenString(bondOffer.asset)}`
+            }
           },
           ...{
             youWillGet: {
@@ -137,8 +126,8 @@ export const BondForm: FC<{
                 bondOffer.reward.amount
                   .dividedBy(bondOffer.nbOfBonds)
                   .multipliedBy(bondInput)
-              )} ${getTokenString(bondOffer.reward.asset)}`,
-            },
+              )} ${getTokenString(bondOffer.reward.asset)}`
+            }
           },
           ...{
             maxYouCanBuy: {
@@ -147,17 +136,17 @@ export const BondForm: FC<{
                 bondOffer.reward.amount
                   .dividedBy(bondOffer.nbOfBonds)
                   .multipliedBy(maxPurchasableBonds)
-              )} ${getTokenString(bondOffer.reward.asset)}`,
-            },
+              )} ${getTokenString(bondOffer.reward.asset)}`
+            }
           },
           ...{
             roi: {
               label: "ROI",
               description: `${humanBalance(
                 getROI(bondOffer.rewardPrice, bondOffer.price)
-              )}%`,
-            },
-          },
+              )}%`
+            }
+          }
         };
       });
     }
@@ -165,14 +154,14 @@ export const BondForm: FC<{
 
   const DetailWrapperComponent: FC<{ hasClaim: boolean }> = ({
     hasClaim,
-    children,
+    children
   }) => {
     if (hasClaim) {
       return (
         <Box
           sx={{
             marginTop: "2rem",
-            width: "100%",
+            width: "100%"
           }}
         >
           {children}
@@ -184,7 +173,7 @@ export const BondForm: FC<{
 
   const WrapperComponent: FC<{ hasClaim: boolean }> = ({
     hasClaim,
-    children,
+    children
   }) => {
     if (hasClaim) {
       return (
@@ -197,7 +186,7 @@ export const BondForm: FC<{
             backgroundColor: alpha(theme.palette.common.white, 0.02),
             borderRadius: "0.75rem",
             minWidth: "50%",
-            width: "50%",
+            width: "50%"
           }}
         >
           {children}
@@ -244,16 +233,16 @@ export const BondForm: FC<{
                 Array.isArray(bondOffer.asset)
                   ? bondOffer.asset.reduce(lpToSymbolPair, "")
                   : bondOffer.asset.symbol
-              }`,
-            },
+              }`
+            }
           }}
           InputProps={{
             startAdornment: (
               <InputAdornment position={"start"}>
                 {Array.isArray(bondOffer.asset) ? (
-                  <PairAsset assets={bondOffer.asset}/>
+                  <PairAsset assets={bondOffer.asset} />
                 ) : (
-                  <TokenAsset tokenId={bondOffer.asset.symbol}/>
+                  <TokenAsset tokenId={bondOffer.asset.symbol} />
                 )}
               </InputAdornment>
             ),
@@ -267,7 +256,7 @@ export const BondForm: FC<{
                   Max
                 </Button>
               </InputAdornment>
-            ),
+            )
           }}
         />
         {/** If Bond Is negative, show approve */}
@@ -283,7 +272,7 @@ export const BondForm: FC<{
             disabled={!isBondValid}
             sx={{
               ...(hasClaim ? { marginTop: "2rem" } : {}),
-              ...(hasClaim ? { marginTop: "2rem" } : {}),
+              ...(hasClaim ? { marginTop: "2rem" } : {})
             }}
           >
             Bond
@@ -312,7 +301,7 @@ export const BondForm: FC<{
             color="text.secondary"
             mt={theme.spacing(2)}
           >
-            Are you sure you want to bond for a negative discount? <br/>
+            Are you sure you want to bond for a negative discount? <br />
             You will lose money if you do this...
           </Typography>
         )}
@@ -320,25 +309,25 @@ export const BondForm: FC<{
           {[
             {
               label: "Bonding",
-              description: `${bondInput.toFormat(4)} ${tokenSymbol}`,
+              description: `${bondInput.toFormat(4)} ${tokenSymbol}`
             },
             {
               label: "You will get",
-              description: transferDetails.youWillGet?.description,
+              description: transferDetails.youWillGet?.description
             },
             {
               label: "Bond price",
-              description: `$${bondOffer.price.toFormat(2)}`,
+              description: `$${bondOffer.price.toFormat(2)}`
             },
             {
               label: "Market price",
-              description: `$${bondOffer.rewardPrice.toFormat(2)}`,
+              description: `$${bondOffer.rewardPrice.toFormat(2)}`
             },
             {
               label: "Discount",
               description: `${humanBalance(roi)}%`,
-              discountColor: roi.toNumber(),
-            },
+              discountColor: roi.toNumber()
+            }
           ].map(({ label, description, discountColor }) => (
             <PositionDetailsRow
               key={label}
@@ -350,7 +339,7 @@ export const BondForm: FC<{
         </Stack>
         <Button
           sx={{
-            mt: theme.spacing(4),
+            mt: theme.spacing(4)
           }}
           variant="contained"
           fullWidth
@@ -360,7 +349,7 @@ export const BondForm: FC<{
         </Button>
         <Button
           sx={{
-            mt: theme.spacing(4),
+            mt: theme.spacing(4)
           }}
           variant="text"
           fullWidth
@@ -383,7 +372,7 @@ export const BondForm: FC<{
             sx={{
               color: "text.secondary",
               width: 80,
-              height: 80,
+              height: 80
             }}
           />
         </Box>
@@ -396,12 +385,12 @@ export const BondForm: FC<{
           color="text.secondary"
           mt={theme.spacing(2)}
         >
-          This bond is offered at a negative discount. <br/>
+          This bond is offered at a negative discount. <br />
           Please consider waiting until bond returns to positive discount.
         </Typography>
         <Button
           sx={{
-            mt: theme.spacing(8),
+            mt: theme.spacing(8)
           }}
           variant="contained"
           fullWidth
@@ -411,7 +400,7 @@ export const BondForm: FC<{
         </Button>
         <Button
           sx={{
-            mt: theme.spacing(4),
+            mt: theme.spacing(4)
           }}
           variant="text"
           fullWidth

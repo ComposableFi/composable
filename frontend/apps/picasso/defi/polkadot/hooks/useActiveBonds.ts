@@ -15,6 +15,23 @@ import { useCallback, useEffect, useState } from "react";
 
 const PALLET_TYPE_ID = "modl";
 
+type VestingResponse = {
+  [key in number]: VestingSchedule;
+};
+
+type VestingSchedule = {
+  alreadyClaimed: number;
+  perPeriod: number;
+  periodCount: number;
+  vestingScheduleId: number;
+  window: {
+    blockNumberBased: {
+      period: number;
+      start: number;
+    };
+  };
+};
+
 export function concatU8a(a: Uint8Array, b: Uint8Array): Uint8Array {
   const c = new Uint8Array(a.length + b.length);
   c.set(a);
@@ -88,27 +105,6 @@ async function fetchAllVestingSchedules(
 
     return acc;
   }, new Set() as Set<string>);
-
-  console.log({
-    assetIdList: assetIdList,
-  });
-
-  type VestingSchedule = {
-    alreadyClaimed: number;
-    perPeriod: number;
-    periodCount: number;
-    vestingScheduleId: number;
-    window: {
-      blockNumberBased: {
-        period: number;
-        start: number;
-      };
-    };
-  };
-
-  type VestingResponse = {
-    [key in number]: VestingSchedule;
-  };
 
   const vestingSchedulesTransformed: { [key in string]: VestingSchedule } = {};
 

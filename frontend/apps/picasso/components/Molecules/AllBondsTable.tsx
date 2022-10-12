@@ -32,7 +32,7 @@ function getTotalPurchasedInFormat(
   },
   bondPrice: BigNumber,
   price: BigNumber
-) {
+): string {
   let totalPurchased: number | string = currentBond?.totalPurchased || 0;
   return humanBalance(
     new BigNumber(totalPurchased)
@@ -47,8 +47,10 @@ export const AllBondsTable: React.FC<AllBondsTableProps> = ({
   onRowClick = () => {},
   ...rest
 }) => {
-  const { loading, data, error } = useQuery(GET_BONDED_FINANCE);
-
+  const { loading, data, error } = useQuery(GET_BONDED_FINANCE, {
+    pollInterval: 10000,
+    fetchPolicy: "network-only",
+  });
   if (error) {
     console.error(error);
     return (
@@ -67,6 +69,7 @@ export const AllBondsTable: React.FC<AllBondsTableProps> = ({
       </>
     );
   }
+
   const bondedFinanceBondOffers = data.bondedFinanceBondOffers;
   if (bonds && bonds.length > 0) {
     return (
@@ -87,14 +90,9 @@ export const AllBondsTable: React.FC<AllBondsTableProps> = ({
                 let currentBond = bondedFinanceBondOffers.find(
                   (offer: any) => offer.offerId === bondOfferId.toString()
                 );
-                if (!currentBond) {
-                  return null;
-                }
-                let totalPurchased = getTotalPurchasedInFormat(
-                  currentBond,
-                  bondPrice,
-                  price
-                );
+                let totalPurchased = !currentBond
+                  ? ""
+                  : getTotalPurchasedInFormat(currentBond, bondPrice, price);
                 return (
                   <TableRow
                     sx={{
@@ -102,11 +100,7 @@ export const AllBondsTable: React.FC<AllBondsTableProps> = ({
                         cursor: "pointer",
                       },
                     }}
-                    key={
-                      Array.isArray(asset)
-                        ? asset.map((a) => a.symbol).join("+")
-                        : asset.symbol
-                    }
+                    key={bondOfferId}
                     onClick={() => onRowClick(String(bondOfferId))}
                   >
                     <TableCell align="left">

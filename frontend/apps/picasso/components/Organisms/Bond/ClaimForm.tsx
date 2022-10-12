@@ -39,7 +39,7 @@ export const ClaimForm = () => {
         account,
         executor,
         assetId: activeBond.bond.reward.assetId,
-        vestingScheduleId: activeBond.vestingScheduleId.toString(),
+        vestingScheduleId: activeBond.vestingScheduleId.toString()
       },
       (txHash) => {
         closeSnackbar(snackbarKey);
@@ -47,7 +47,7 @@ export const ClaimForm = () => {
           variant: "success",
           isClosable: true,
           persist: true,
-          url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
+          url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash
         });
       },
       (msg) => {
@@ -56,7 +56,7 @@ export const ClaimForm = () => {
           variant: "error",
           isClosable: true,
           persist: true,
-          description: msg,
+          description: msg
         });
       },
       (txHash) => {
@@ -64,7 +64,7 @@ export const ClaimForm = () => {
           variant: "info",
           isClosable: true,
           persist: true,
-          url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
+          url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash
         });
       }
     );
@@ -80,7 +80,7 @@ export const ClaimForm = () => {
         borderRadius: "0.75rem",
         padding: "3rem",
         width: "50%",
-        minWidth: "50%",
+        minWidth: "50%"
       }}
     >
       <Typography
@@ -93,12 +93,14 @@ export const ClaimForm = () => {
       </Typography>
       <BigNumberInput
         value={claimable}
-        isValid={() => {}}
-        setter={() => {}}
+        isValid={() => {
+        }}
+        setter={() => {
+        }}
         maxValue={claimable}
         disabled={true}
         LabelProps={{
-          mainLabelProps: { label: "Amount" },
+          mainLabelProps: { label: "Amount" }
         }}
         InputProps={{
           startAdornment: (
@@ -109,12 +111,12 @@ export const ClaimForm = () => {
                 <TokenAsset tokenId={activeBond.bond.reward.asset.id} />
               )}
             </InputAdornment>
-          ),
+          )
         }}
       />
       <Button
         sx={{
-          mt: theme.spacing(4),
+          mt: theme.spacing(4)
         }}
         variant="contained"
         fullWidth

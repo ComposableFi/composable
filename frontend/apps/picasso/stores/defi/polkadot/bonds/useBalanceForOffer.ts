@@ -1,14 +1,10 @@
-import BigNumber from "bignumber.js";
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
 import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
 import { useEffect, useState } from "react";
 import { fetchBalanceByAssetId } from "@/defi/polkadot/pallets/Balance";
+import { BondOfferBalances } from "@/defi/polkadot/pallets/BondedFinance";
 
-type BondOfferBalances = {
-  [key: string]: BigNumber;
-};
-
-export function useBalanceForOffer(offer: BondOffer) {
+export function useBalanceForOffer(offer: BondOffer | undefined) {
   const { parachainApi } = usePicassoProvider();
   const account = useSelectedAccount();
   const [balances, setBalances] = useState<BondOfferBalances>({});
@@ -19,7 +15,7 @@ export function useBalanceForOffer(offer: BondOffer) {
         (result) => {
           setBalances((amount) => ({
             ...amount,
-            ...{ [offer.assetId]: result },
+            ...{ [offer.assetId]: result }
           }));
         }
       );
@@ -28,6 +24,6 @@ export function useBalanceForOffer(offer: BondOffer) {
 
   return {
     balances,
-    isLoading: Object.keys(balances).length === 0,
+    isLoading: Object.keys(balances).length === 0
   };
 }

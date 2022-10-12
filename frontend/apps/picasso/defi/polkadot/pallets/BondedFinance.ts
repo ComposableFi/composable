@@ -5,8 +5,6 @@ import { ApiPromise } from "@polkadot/api";
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
 import { currencyIdToAssetMap } from "@/stores/defi/polkadot/bonds/constants";
 import { ComposableTraitsBondedFinanceBondOffer } from "defi-interfaces";
-import { Option } from "@polkadot/types-codec";
-import { ITuple } from "@polkadot/types-codec/types";
 import { fetchAssetPrice } from "./Oracle";
 import { Executor, getSigner } from "substrate-react";
 import { APP_NAME } from "@/defi/polkadot/constants";
@@ -28,48 +26,45 @@ export async function fetchBondOfferCount(api: ApiPromise) {
   return new BigNumber(countBondOffers.toHuman());
 }
 
-export async function fetchBonds(api: ApiPromise) {
-  // Count bonded offers
+export async function subscribeBonds(
+  api: ApiPromise,
+  callback: ([unsubs, bondOffers, bondOfferCount]: [
+    any,
+    BondOffer[],
+    BigNumber
+  ]) => void
+) {
   const bondOfferCount = await fetchBondOfferCount(api);
-  // @ts-ignore
-  const bonds: Option<
-    ITuple<[AccountId32, ComposableTraitsBondedFinanceBondOffer]>
-  >[] = await Promise.all(
-    createArrayOfLength(bondOfferCount.toNumber()).map(
-      (index) => api.query.bondedFinance.bondOffers(index + 1) // index + 1 is offerId
-    )
-  );
-  const allBonds = await bonds.reduce(
-    async (
-      acc: Promise<BondOffer[]>,
-      bond: Option<
-        ITuple<[AccountId32, ComposableTraitsBondedFinanceBondOffer]>
-      >,
-      index
-    ) => {
-      const prev = await acc;
-      if (bond.isNone) return prev;
-      const [beneficiary, bondOffer]: [
-        AccountId32,
-        ComposableTraitsBondedFinanceBondOffer
-      ] = bond.unwrap();
-      const [price, rewardPrice] = await fetchBondPrice(api, bondOffer);
-      const newBondOffer = {
-        ...bondOffer,
-        price,
-        rewardPrice,
-        offerId: index + 1,
-      };
+  let unsubs: any = [];
+  let bonds: BondOffer[] = [];
+  for (const index of createArrayOfLength(bondOfferCount.toNumber())) {
+    const unsub = await api.query.bondedFinance.bondOffers(
+      index + 1,
+      async (bond) => {
+        if (bond.isSome) {
+          const [beneficiary, bondOffer]: [
+            AccountId32,
+            ComposableTraitsBondedFinanceBondOffer
+          ] = bond.unwrap();
+          const [price, rewardPrice] = await fetchBondPrice(api, bondOffer);
+          const newBondOffer = {
+            ...bondOffer,
+            price,
+            rewardPrice,
+            offerId: index + 1,
+          };
+          const transformed = bondTransformer(beneficiary, newBondOffer);
+          if (transformed.asset) {
+            bonds = [...bonds, transformed];
+            callback([unsubs, bonds, bondOfferCount]);
+          }
+        }
+      }
+    );
+    unsubs.push(unsub);
+  }
 
-      return [...prev, bondTransformer(beneficiary, newBondOffer)];
-    },
-    Promise.resolve<BondOffer[]>([])
-  );
-
-  return {
-    bonds: allBonds,
-    bondOfferCount,
-  };
+  return [unsubs, bonds, bondOfferCount];
 }
 
 async function fetchBondPrice(
@@ -252,4 +247,67 @@ export async function purchaseBond({
   } else {
     console.log("Purchasing... no parachainAPI");
   }
+}
+
+export type BondOfferBalances = {
+  [key: string]: BigNumber;
+};
+
+export function lpToSymbolPair(acc: string, token: Token) {
+  return acc.length > 0 ? acc + "-" + token.symbol : token.symbol;
+}
+
+export function getMaxPurchasableBonds(
+  bondOffer: BondOffer,
+  balances: BondOfferBalances
+) {
+  const balance = balances[Number(bondOffer.assetId)];
+  if (!balance) return new BigNumber(0);
+
+  const tokensInAllBonds = bondOffer.bondPrice.multipliedBy(
+    bondOffer.nbOfBonds
+  );
+
+  if (balance.gte(tokensInAllBonds)) {
+    return new BigNumber(bondOffer.nbOfBonds);
+  }
+  if (balance.lt(bondOffer.bondPrice)) {
+    return new BigNumber(0);
+  }
+  return balance.modulo(bondOffer.bondPrice);
+}
+
+export function getTokenString(asset: Token | Token[]) {
+  return Array.isArray(asset) ? asset.reduce(lpToSymbolPair, "") : asset.symbol;
+}
+
+export function getClaimable(
+  block: BigNumber,
+  window: { blockNumberBased: { start: BigNumber; period: BigNumber } },
+  perPeriod: BigNumber,
+  lastBlock: BigNumber,
+  periodCount: BigNumber
+) {
+  if (block.gt(lastBlock)) {
+    if (periodCount.eq(1)) {
+      return fromChainIdUnit(perPeriod);
+    }
+    return lastBlock // 1200
+      .minus(window.blockNumberBased.start) // 45
+      .dividedBy(fromChainIdUnit(perPeriod)) // 1000
+      .multipliedBy(fromChainIdUnit(perPeriod))
+      .abs();
+  }
+
+  if (periodCount.eq(1)) {
+    return new BigNumber(0);
+  }
+
+  return block.gt(window.blockNumberBased.start)
+    ? block
+        .minus(window.blockNumberBased.start)
+        .dividedBy(periodCount)
+        .multipliedBy(fromChainIdUnit(perPeriod))
+        .abs()
+    : new BigNumber(0);
 }

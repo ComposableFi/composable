@@ -27,7 +27,8 @@ export const subscribePicassoBalanceByAssetId = async (
   callback: (balance: BigNumber) => void
 ) => {
   const uAccount = api.createType("AccountId32", accountId);
-  let unsubscribe = () => {};
+  let unsubscribe = () => {
+  };
   try {
     unsubscribe = await api.query.tokens.accounts(
       uAccount,

@@ -1,5 +1,5 @@
 import { ActiveBond } from "@/stores/defi/polkadot/bonds/slice";
-import { getClaimable } from "@/components/Organisms/Bond/utils";
+import { getClaimable } from "@/defi/polkadot/pallets/BondedFinance";
 import { fromChainIdUnit, humanDate, SHORT_HUMAN_DATE } from "shared";
 import BigNumber from "bignumber.js";
 import { useCurrentBlockAndTime } from "@/defi/polkadot/utils";

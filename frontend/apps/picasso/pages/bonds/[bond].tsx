@@ -6,14 +6,14 @@ import Default from "@/components/Templates/Default";
 import { PageTitle } from "@/components/Molecules";
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
 import { Updater } from "@/stores/defi/polkadot/bonds/PolkadotBondsUpdater";
-import { getROI } from "@/defi/polkadot/pallets/BondedFinance";
+import {
+  getMaxPurchasableBonds,
+  getROI,
+  getTokenString,
+} from "@/defi/polkadot/pallets/BondedFinance";
 import { BondDetailSkeleton } from "@/components/Organisms/Bond/BondDetailSkeleton";
 import { HighlightBoxes } from "@/components/Organisms/Bond/HighlightBoxes";
 import { BondForm } from "@/components/Organisms/Bond/BondForm";
-import {
-  getMaxPurchasableBonds,
-  getTokenString,
-} from "@/components/Organisms/Bond/utils";
 import { useActiveBonds } from "@/defi/polkadot/hooks/useActiveBonds";
 import { ClaimForm } from "@/components/Organisms/Bond/ClaimForm";
 import { useBalanceForOffer } from "@/stores/defi/polkadot/bonds/useBalanceForOffer";
@@ -27,18 +27,14 @@ const Bond: NextPage = () => {
   const theme = useTheme();
   const router = useRouter();
   const { bond } = router.query;
-  const bondOffer = useStore<BondOffer>(
-    (state) => state.bonds.bonds[Number(bond) - 1]
+  const bondOffer = useStore<BondOffer | undefined>((state) =>
+    state.bonds.bonds.find((bondOffer) => bondOffer.bondOfferId == bond)
   );
   const { isLoading: isLoadingBalances, balances } =
     useBalanceForOffer(bondOffer);
   const { activeBonds, loading } = useActiveBonds();
-  const maxPurchasableBond = getMaxPurchasableBonds(
-    bondOffer,
-    balances[bondOffer?.assetId]
-  );
 
-  if (!bondOffer || !bond || loading) {
+  if (!bondOffer || !bond || loading || Object.keys(balances).length === 0) {
     return (
       <Default>
         <Updater />
@@ -46,6 +42,8 @@ const Bond: NextPage = () => {
       </Default>
     );
   }
+
+  const maxPurchasableBond = getMaxPurchasableBonds(bondOffer, balances);
 
   const token = getTokenString(bondOffer.asset);
   const toToken = getTokenString(bondOffer.reward.asset);
