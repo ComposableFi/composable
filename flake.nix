@@ -463,6 +463,37 @@
             meta = { mainProgram = "subwasm"; };
           };
 
+          hyperspace-template = let
+            builder = { }: rec {
+              bin = crane-nightly.buildPackage (common-attrs // {
+                name = "hyperspace";
+                pname = "hyperspace";
+                cargoArtifacts = common-deps;
+                cargoExtraArgs = "--package hyperspace";
+                installPhase = ''
+                  mkdir --parents $out/bin
+                  cp target/release/hyperspace $out/bin/hyperspace
+                '';
+                meta = { mainProgram = "hyperspace"; };
+              });
+              config = pkgs.stdenv.lib.makeOverridable
+                (builtins.fromTOML (builtins.readFile ./config.toml));
+
+              default = pkgs.writeShellApplication {
+                name = "default-hyperspace";
+                runtimeInputs = [ pkgs.coreutils pkgs.bash ];
+                text = ''
+                  echo ${config.result} > hyperspace.local.config.toml
+                  ${
+                    pkgs.lib.meta.getExe bin
+                  } relay --config hyperspace.local.config.toml 
+                '';
+              };
+            };
+          in builder {
+            # not parametrized yet
+          };
+
           subwasm-release-body = let
             subwasm-call = runtime:
               builtins.readFile (pkgs.runCommand "subwasm-info" { }
@@ -667,19 +698,6 @@
               meta = { mainProgram = "polkadot"; };
             };
 
-            hyperspace = crane-nightly.buildPackage (common-attrs // {
-              name = "hyperspace";
-              cargoArtifacts = common-deps-nightly;
-              cargoExtraArgs = ''
-                --package hyperspace                
-              '';
-              installPhase = ''
-                mkdir -p $out/bin
-                cp target/release/hyperspace $out/bin/hyperspace
-              '';
-              meta = { mainProgram = "hyperspace"; };
-            });
-
             polkadot-launch =
               callPackage ./scripts/polkadot-launch/polkadot-launch.nix { };
 
@@ -700,6 +718,8 @@
                 ./scripts/polkadot-launch/bridge-rococo-local-dali-dev.nix;
               useGlobalChainSpec = false;
             }).script;
+
+            hyperspace = hyperspace-template.bin;
 
             # Picasso devnet
             devnet-picasso = (callPackage mk-devnet {
@@ -1235,10 +1255,11 @@
               program = "${packages.junod}/bin/junod";
             };
 
-            hyperspace = {
-              type = "app";
-              program = pkgs.lib.meta.getExe packages.hyperspace;
-            };
+            hyperspace =
+              trace "runs hyperspace with default local configuration" {
+                type = "app";
+                program = hyperspace-template.default;
+              };
 
             # TODO: move list of chains out of here and do fold
             benchmarks-once-composable = flake-utils.lib.mkApp {
