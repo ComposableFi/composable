@@ -12,6 +12,7 @@ on:
       - main
       - develop
       - releases
+      - centauri
 
 env:
   # NOTE: keep in sync with docs
