@@ -125,6 +125,7 @@ where
 		.ibc_events()
 		.await
 		.filter_map(|(_, evs)| {
+			log::info!("EVS: {:?}", evs);
 			future::ready(
 				evs.into_iter()
 					.find(|ev| matches!(ev, Some(IbcEvent::OpenConfirmConnection(_)))),

@@ -1,9 +1,15 @@
 use anyhow::anyhow;
 use codec::{Decode, Encode};
-use std::{collections::BTreeMap, fmt::Display, future::Future, pin::Pin};
+use std::{
+	collections::BTreeMap,
+	fmt::Display,
+	future::Future,
+	pin::Pin,
+	time::{Duration, Instant},
+};
 
 use beefy_gadget_rpc::BeefyApiClient;
-use futures::{future, FutureExt, Stream, StreamExt, TryFutureExt};
+use futures::{future, pending, ready, FutureExt, Stream, StreamExt, TryFutureExt};
 use grandpa_light_client_primitives::{FinalityProof, ParachainHeaderProofs};
 use ibc_proto::google::protobuf::Any;
 use polkadot::api::runtime_types::{
@@ -31,6 +37,7 @@ use crate::{
 	polkadot, FinalityProtocol, H256,
 };
 use finality_grandpa_rpc::GrandpaApiClient;
+use futures::future::{pending, ready};
 use ibc::{
 	core::{
 		ics02_client::msgs::{update_client::MsgUpdateAnyClient, ClientMsg},
@@ -44,6 +51,8 @@ use primitives::mock::LocalClientTypes;
 use sp_core::ByteArray;
 
 use sp_finality_grandpa::{Equivocation, OpaqueKeyOwnershipProof};
+use subxt::rpc::ChainBlock;
+use tokio::time::{sleep, timeout};
 
 type GrandpaJustification = grandpa_light_client_primitives::justification::GrandpaJustification<
 	polkadot_core_primitives::Header,
@@ -80,6 +89,9 @@ where
 		counterparty: &C,
 		client_message: AnyClientMessage,
 	) -> Result<(), anyhow::Error> {
+		use tendermint_proto::Protobuf;
+		log::info!("counterparty: {}", counterparty.client_id());
+		log::info!("client_msg: {}", hex::encode(client_message.encode_vec()));
 		match client_message {
 			AnyClientMessage::Grandpa(ClientMessage::Header(header)) => {
 				let justification = GrandpaJustification::decode(
@@ -99,10 +111,15 @@ where
 						)
 					})?
 					.0;
+				log::info!("encoded: {}", hex::encode(&encoded.0));
+
 				let trusted_finality_proof =
 					FinalityProof::<RelayChainHeader>::decode(&mut &encoded[..])?;
 
+				// dbg!(&header);
+				// dbg!(&trusted_finality_proof);
 				if header.finality_proof.block != trusted_finality_proof.block {
+					log::info!("block mismatch");
 					let trusted_justification = GrandpaJustification::decode(
 						&mut trusted_finality_proof.justification.as_slice(),
 					)?;
@@ -117,12 +134,15 @@ where
 						.await?
 						.expect("Failed to fetch current set id");
 
+					log::info!("current_set_id: {}", current_set_id);
+
 					let mut fraud_precommits = Vec::new();
 					for first_precommit in &justification.commit.precommits {
 						for second_precommit in &trusted_justification.commit.precommits {
 							if first_precommit.id == second_precommit.id &&
 								first_precommit.precommit != second_precommit.precommit
 							{
+								log::info!("found misbehaviour");
 								fraud_precommits
 									.push((first_precommit.clone(), second_precommit.clone()));
 							}
@@ -140,7 +160,7 @@ where
 								.request::<String>(
 									"state_call",
 									rpc_params!(
-										"GrandpaApi_key_ownership_proof",
+										"GrandpaApi_generate_key_ownership_proof",
 										format!(
 											"0x{}",
 											hex::encode((&current_set_id, &first.id).encode())
@@ -151,8 +171,10 @@ where
 								.map(|res| hex::decode(&res[2..]))
 								.expect("Failed to fetch key ownership proof")?;
 
-							Decode::decode(&mut &bytes[..])
+							log::info!("data: {}", hex::encode(&bytes));
+							Option::decode(&mut &bytes[..])
 								.expect("Failed to scale decode key ownership proof")
+								.expect("Failed to fetch key ownership proof")
 						};
 
 						let equivocation = Equivocation::Precommit(grandpa::Equivocation {
@@ -170,7 +192,7 @@ where
 								equivocation: polkadot_equivocation,
 							};
 
-						let call = rococo_runtime::Call::Grandpa(
+						let call = polkadot_runtime_common::Call::Grandpa(
 							pallet_grandpa::pallet::Call::report_equivocation {
 								equivocation_proof: Box::new(equivocation_proof),
 								key_owner_proof: key_ownership_proof.decode().unwrap(),
@@ -187,9 +209,11 @@ where
 
 					let batch_call = polkadot::api::tx().utility().batch(equivocation_calls);
 					let equivocation_report_future = self
-						.submit_call(batch_call)
+						.submit_call(batch_call, &self.relay_client)
 						.map_err(|e| log::error!("Failed to submit equivocation report: {:?}", e))
-						.map(|_| ());
+						.map(|res| {
+							log::info!("equivocation report submitted: {:?}", res,);
+						});
 					let misbehaviour_report_future = counterparty
 						.submit(vec![MsgUpdateAnyClient::<LocalClientTypes>::new(
 							self.client_id(),
@@ -198,7 +222,9 @@ where
 						)
 						.to_any()])
 						.map_err(|e| log::error!("Failed to submit misbehaviour report: {:?}", e))
-						.map(|_| ());
+						.map(|res| {
+							log::info!("misbehaviour report submitted: {:?}", res,);
+						});
 					future::join(
 						Box::pin(equivocation_report_future)
 							as Pin<Box<dyn Future<Output = ()> + Send>>,
@@ -206,6 +232,7 @@ where
 							as Pin<Box<dyn Future<Output = ()> + Send>>,
 					)
 					.await;
+					log::info!("submitted misbehaviour");
 				}
 			},
 			_ => {},
@@ -390,7 +417,7 @@ where
 			.collect::<Vec<_>>();
 
 		let call = api::tx().ibc().deliver(messages);
-		self.submit_call(call).await?;
+		log::info!("submitted call {:?}", self.submit_call(call, &self.para_client).await?);
 
 		Ok(())
 	}
@@ -407,13 +434,49 @@ where
 
 		let extrinsic_data_addr =
 			parachain::api::storage().system().extrinsic_data(&transaction_id);
-		let extrinsic_opaque = self
-			.para_client
-			.storage()
-			.fetch(&extrinsic_data_addr, Some(H256(host_block_hash).into()))
-			.await?
-			.expect("Extrinsic should exist");
-		let unchecked_extrinsic = UncheckedExtrinsic::<T>::decode(&mut &*extrinsic_opaque)
+		let h256 = H256(host_block_hash);
+		log::info!("Querying extrinsic data at {:?} {}", h256, transaction_id);
+		// let block = timeout(Duration::from_secs(20), || async {
+		// 	let maybe_block = self.para_client.rpc().block(Some(h256.into())).await?;
+		// 	match maybe_block {
+		// 		Some(block) =>
+		// 			Box::new(ready(block)) as Box<dyn Future<Output = _> + Send + 'static>,
+		// 		None => Box::new(pending()) as Box<dyn Future<Output = _> + Send + 'static>,
+		// 	}
+		// })
+		// .await?;
+
+		let now = Instant::now();
+		let block = loop {
+			let maybe_block = self.para_client.rpc().block(Some(h256.into())).await?;
+			match maybe_block {
+				Some(block) => {
+					log::info!("block query took {}", now.elapsed().as_millis());
+					break block
+				},
+				None => {
+					if now.elapsed() > Duration::from_secs(20) {
+						return Err(primitives::error::Error::from(
+							"Timeout while waiting for block".to_owned(),
+						))
+					}
+					sleep(Duration::from_millis(100)).await;
+				},
+			}
+		};
+		let extrinsic_opaque = block
+			.block
+			.extrinsics
+			.get(transaction_id as usize)
+			.expect("Extrinsic not found");
+
+		// let extrinsic_opaque = self
+		// 	.para_client
+		// 	.storage()
+		// 	.fetch(&extrinsic_data_addr, Some(h256.into()))
+		// 	.await?
+		// 	.expect("Extrinsic should exist");
+		let unchecked_extrinsic = UncheckedExtrinsic::<T>::decode(&mut &*extrinsic_opaque.encode())
 			.map_err(|e| {
 				primitives::error::Error::from(format!("Extrinsic decode error: {}", e))
 			})?;

@@ -103,6 +103,7 @@ where
 			.expect("Failed to subscribe to events")
 			.filter_events::<(parachain::api::ibc::events::Events,)>()
 			.filter_map(|result| {
+				log::info!("rcvd events: {:?}", result);
 				let events = match result {
 					Ok(ev) => ev,
 					Err(err) => {
@@ -112,7 +113,10 @@ where
 				};
 				let tx_index = match events.phase {
 					Phase::ApplyExtrinsic(index) => index,
-					_ => return futures::future::ready(None),
+					phase => {
+						log::error!("Received IbcEvent with unexpected phase: {phase:?}");
+						return futures::future::ready(None)
+					},
 				};
 				let result = events
 					.event

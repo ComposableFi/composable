@@ -177,7 +177,7 @@ async fn parachain_to_parachain_ibc_messaging_full_integration_test() {
 	// Run tests sequentially
 
 	// no timeouts + connection delay
-	ibc_messaging_with_connection_delay(&mut chain_a, &mut chain_b).await;
+	// ibc_messaging_with_connection_delay(&mut chain_a, &mut chain_b).await;
 
 	// timeouts + connection delay
 	// ibc_messaging_packet_height_timeout_with_connection_delay(&mut chain_a, &mut chain_b).await;
@@ -189,5 +189,5 @@ async fn parachain_to_parachain_ibc_messaging_full_integration_test() {
 	// ibc_channel_close(&mut chain_a, &mut chain_b).await;
 
 	// misbehaviour
-	// ibc_messaging_submit_misbehaviour(&mut chain_a, &mut chain_b).await;
+	ibc_messaging_submit_misbehaviour(&mut chain_a, &mut chain_b).await;
 }

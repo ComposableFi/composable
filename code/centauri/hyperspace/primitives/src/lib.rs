@@ -17,6 +17,7 @@ use ibc_proto::{
 };
 
 use crate::error::Error;
+use codec::Decode;
 #[cfg(feature = "testing")]
 use ibc::applications::transfer::msgs::transfer::MsgTransfer;
 use ibc::{
@@ -78,6 +79,14 @@ pub fn apply_prefix(mut commitment_prefix: Vec<u8>, path: String) -> Vec<u8> {
 pub struct TransactionId {
 	pub block_hash: [u8; 32],
 	pub tx_index: u32,
+}
+
+#[derive(Decode, Debug)]
+pub struct BalancesAccountData {
+	pub free: u128,
+	pub reserved: u128,
+	pub misc_frozen: u128,
+	pub fee_frozen: u128,
 }
 
 /// Provides an interface for accessing new events and Ibc data on the chain which must be
@@ -327,6 +336,8 @@ pub trait TestProvider: Chain + Clone + 'static {
 
 	/// Set the channel whitelist for the relayer task.
 	fn set_channel_whitelist(&mut self, channel_whitelist: Vec<(ChannelId, PortId)>);
+
+	async fn query_relaychain_balance(&self) -> Result<BalancesAccountData, Self::Error>;
 }
 
 /// Provides an interface for managing key management for signing.

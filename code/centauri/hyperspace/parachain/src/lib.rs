@@ -5,7 +5,7 @@ use std::{str::FromStr, sync::Arc};
 pub mod chain;
 pub mod error;
 pub mod key_provider;
-pub(crate) mod parachain;
+pub mod parachain;
 pub mod polkadot;
 pub mod provider;
 pub mod signer;
@@ -426,6 +426,7 @@ where
 	pub async fn submit_call<C: TxPayload>(
 		&self,
 		call: C,
+		client: &subxt::OnlineClient<T>,
 	) -> Result<(T::Hash, Option<T::Hash>), Error> {
 		let signer = ExtrinsicSigner::<T, Self>::new(
 			self.key_store.clone(),
@@ -444,10 +445,9 @@ where
 
 			let tx_params = <SubstrateExtrinsicParamsBuilder<T>>::new()
 				// todo: tx should be mortal
-				.era(Era::Immortal, self.para_client.genesis_hash());
+				.era(Era::Immortal, client.genesis_hash());
 
-			let res = self
-				.para_client
+			let res = client
 				.tx()
 				.sign_and_submit_then_watch(
 					&call,
@@ -455,10 +455,13 @@ where
 					tx_params.tip(AssetTip::new(count * tip)).into(),
 				)
 				.await;
-			if res.is_ok() {
-				break res.unwrap()
+			match res {
+				Ok(progress) => break progress,
+				Err(e) => {
+					log::warn!("Failed to submit extrinsic: {:?}. Retrying...", e);
+					count += 1;
+				},
 			}
-			count += 1;
 		};
 
 		let tx_in_block = progress.wait_for_in_block().await?;

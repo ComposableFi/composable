@@ -17,6 +17,7 @@
 #![allow(clippy::all)]
 
 extern crate alloc;
+extern crate core;
 
 use alloc::collections::BTreeMap;
 use codec::{Decode, Encode};

@@ -25,7 +25,7 @@ use pallet_ibc::{
 	light_clients::{AnyClientState, AnyConsensusState, HostFunctionsManager},
 	MultiAddress, Timeout, TransferParams,
 };
-use primitives::{KeyProvider, TestProvider};
+use primitives::{BalancesAccountData, KeyProvider, TestProvider};
 use sp_core::{
 	crypto::{AccountId32, Ss58Codec},
 	H256,
@@ -66,10 +66,6 @@ where
 {
 	pub fn set_client_id(&mut self, client_id: ClientId) {
 		self.client_id = Some(client_id)
-	}
-
-	pub fn set_channel_whitelist(&mut self, channel_whitelist: Vec<(ChannelId, PortId)>) {
-		self.channel_whitelist = channel_whitelist;
 	}
 
 	/// Construct a beefy client state to be submitted to the counterparty chain
@@ -246,7 +242,7 @@ where
 			type_url: msg.type_url,
 			value: msg.value,
 		}]);
-		let (ext_hash, block_hash) = self.submit_call(call).await?;
+		let (ext_hash, block_hash) = self.submit_call(call, &self.para_client).await?;
 
 		// Query newly created client Id
 		let identified_client_state = IbcApiClient::<u32, H256>::query_newly_created_client(
@@ -292,7 +288,7 @@ where
 			amount.into(),
 		);
 
-		self.submit_call(call).await?;
+		self.submit_call(call, &self.para_client).await?;
 
 		Ok(())
 	}
@@ -396,7 +392,7 @@ where
 
 		let call = api::tx().ibc_ping().send_ping(params);
 
-		self.submit_call(call).await.map(|_| ())
+		self.submit_call(call, &self.para_client).await.map(|_| ())
 	}
 
 	async fn subscribe_blocks(&self) -> Pin<Box<dyn Stream<Item = u64> + Send + Sync>> {
@@ -434,5 +430,25 @@ where
 
 	fn set_channel_whitelist(&mut self, channel_whitelist: Vec<(ChannelId, PortId)>) {
 		self.channel_whitelist = channel_whitelist;
+	}
+
+	async fn query_relaychain_balance(&self) -> Result<BalancesAccountData, Self::Error> {
+		let account = self.public_key.clone().into_account();
+		log::info!("{:?}", account);
+		let api = self.relay_client.storage();
+		let addr = polkadot::api::storage().system().account(&account);
+		let data = api
+			.fetch(&addr, None)
+			.await
+			.ok()
+			.flatten()
+			.expect("Failed to fetch relaychain balance")
+			.data;
+		Ok(BalancesAccountData {
+			free: data.free,
+			reserved: data.reserved,
+			misc_frozen: data.misc_frozen,
+			fee_frozen: data.fee_frozen,
+		})
 	}
 }

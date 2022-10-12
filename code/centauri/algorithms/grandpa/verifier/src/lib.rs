@@ -61,7 +61,7 @@ where
 	// 2. next check that there exists a route from client.latest_relay_hash to target.
 	let finalized = headers
 		.ancestry(client_state.latest_relay_hash, finality_proof.block)
-		.map_err(|_| anyhow!("Invalid ancestry!"))?;
+		.map_err(|_| anyhow!("Invalid ancestry! 1"))?;
 
 	// 3. verify justification.
 	let justification = GrandpaJustification::<H>::decode(&mut &finality_proof.justification[..])?;

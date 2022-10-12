@@ -1,8 +1,10 @@
 #![warn(unused_variables)]
 
-use futures::StreamExt;
+use futures::{future::ready, StreamExt};
 use ibc::events::IbcEvent;
 use primitives::Chain;
+use std::time::Duration;
+use tokio::time::timeout;
 
 pub mod events;
 pub mod logging;
@@ -47,6 +49,7 @@ where
 	B: Chain,
 	B::Error: From<A::Error>,
 {
+	// TODO: use block subscription to retrieve events and extrinsics simultaneously
 	let (mut chain_a_client_updates, mut chain_b_client_updates) =
 		(chain_a.ibc_events().await, chain_b.ibc_events().await);
 	// loop forever
@@ -59,15 +62,25 @@ where
 					None => break,
 					Some((transaction_id, events)) => {
 						for (i, event) in events.into_iter().enumerate() {
+							log::info!("got event 2: {:?}", event);
 							if let Some(IbcEvent::UpdateClient(client_update)) = event {
+
 								if *client_update.client_id() != chain_b.client_id() {
 									continue;
 								}
-								let message = chain_a.query_client_message(
+								// log::info!("chain_b");
+								// let message = timeout(Duration::from_secs(20), chain_b.query_client_message(
+								// 	transaction_id.block_hash,
+								// 	transaction_id.tx_index,
+								// 	i,
+								// )).await;
+								// dbg!(message);
+								log::info!("chain_a");
+								let message = timeout(Duration::from_secs(20), chain_a.query_client_message(
 									transaction_id.block_hash,
 									transaction_id.tx_index,
 									i,
-								).await?;
+								)).await??;
 								chain_b.check_for_misbehaviour(&chain_a, message).await?;
 							}
 						}
@@ -81,15 +94,24 @@ where
 					None => break,
 					Some((transaction_id, events)) => {
 						for (i, event) in events.into_iter().enumerate() {
+							log::info!("got event 3: {:?}", event);
 							if let Some(IbcEvent::UpdateClient(client_update)) = event {
 								if *client_update.client_id() != chain_a.client_id() {
 									continue;
 								}
-								let message = chain_b.query_client_message(
+								// log::info!("chain_a");
+								// let message = timeout(Duration::from_secs(20), chain_a.query_client_message(
+								// 	transaction_id.block_hash,
+								// 	transaction_id.tx_index,
+								// 	i,
+								// )).await;
+								// dbg!(message);
+								log::info!("chain_b");
+								let message = timeout(Duration::from_secs(20), chain_b.query_client_message(
 									transaction_id.block_hash,
 									transaction_id.tx_index,
 									i,
-								).await?;
+								)).await??;
 								chain_a.check_for_misbehaviour(&chain_b, message).await?;
 							}
 						}
