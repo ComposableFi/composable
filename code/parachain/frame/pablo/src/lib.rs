@@ -38,15 +38,16 @@ pub use pallet::*;
 #[cfg(test)]
 mod common_test_functions;
 #[cfg(test)]
-#[cfg(test)]
 mod mock;
 #[cfg(test)]
 mod mock_fnft;
 #[cfg(test)]
-#[cfg(test)]
 mod uniswap_tests;
 
 pub mod weights;
+
+#[cfg(any(feature = "runtime-benchmarks", test))]
+mod benchmarking;
 
 mod twap;
 mod types;
