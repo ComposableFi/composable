@@ -191,7 +191,6 @@ declare module '@polkadot/api-base/types/errors' {
       CodeValidation: AugmentedError<ApiType>;
       ContractAlreadyExists: AugmentedError<ApiType>;
       ContractHasNoInfo: AugmentedError<ApiType>;
-      ContractNonceOverflow: AugmentedError<ApiType>;
       ContractNotFound: AugmentedError<ApiType>;
       ContractTrapped: AugmentedError<ApiType>;
       Instrumentation: AugmentedError<ApiType>;
@@ -540,7 +539,7 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       EncodingError: AugmentedError<ApiType>;
       /**
-       * Invalid message for extirnsic
+       * Invalid message for extrinsic
        **/
       InvalidMessageType: AugmentedError<ApiType>;
       /**
@@ -695,84 +694,80 @@ declare module '@polkadot/api-base/types/errors' {
       [key: string]: AugmentedError<ApiType>;
     };
     lending: {
-      AssetPriceNotFound: AugmentedError<ApiType>;
       /**
-       * Borrow and repay in the same block (flashloans) are not allowed.
+       * Account did not deposit any collateral to particular market.
+       **/
+      AccountCollateralAbsent: AugmentedError<ApiType>;
+      /**
+       * Borrow and repay in the same block are not allowed.
+       * Flashloans are not supported by the pallet.
        **/
       BorrowAndRepayInSameBlockIsNotSupported: AugmentedError<ApiType>;
       /**
-       * Only assets that have a known price are supported.
+       * User tried to repay non-existent loan.
        **/
-      BorrowAssetNotSupportedByOracle: AugmentedError<ApiType>;
       BorrowDoesNotExist: AugmentedError<ApiType>;
-      BorrowerDataCalculationFailed: AugmentedError<ApiType>;
-      BorrowIndexDoesNotExist: AugmentedError<ApiType>;
-      BorrowRateDoesNotExist: AugmentedError<ApiType>;
+      /**
+       * Borrow limit for particular borrower was not calculated
+       * due to arithmetic error.
+       **/
+      BorrowLimitCalculationFailed: AugmentedError<ApiType>;
+      /**
+       * Account did not pay any rent to particular market.
+       **/
       BorrowRentDoesNotExist: AugmentedError<ApiType>;
       CannotBorrowFromMarketWithUnbalancedVault: AugmentedError<ApiType>;
       /**
-       * Can't allow amount 0 as collateral.
+       * Borrow rate can not be calculated.
        **/
-      CannotDepositZeroCollateral: AugmentedError<ApiType>;
+      CannotCalculateBorrowRate: AugmentedError<ApiType>;
       CannotIncreaseCollateralFactorOfOpenMarket: AugmentedError<ApiType>;
-      CannotRepayMoreThanBorrowAmount: AugmentedError<ApiType>;
       /**
-       * Repaying more than once in the same block is not allowed.
-       **/
-      CannotRepayMoreThanOnceInSameBlock: AugmentedError<ApiType>;
-      /**
-       * Cannot repay the total amount of debt when partially repaying.
+       * Cannot repay more than total amount of debt when partially repaying.
        **/
       CannotRepayMoreThanTotalDebt: AugmentedError<ApiType>;
       /**
        * A market with a borrow balance of `0` was attempted to be repaid.
        **/
       CannotRepayZeroBalance: AugmentedError<ApiType>;
-      CannotWithdrawFromProvidedBorrowAccount: AugmentedError<ApiType>;
       /**
-       * Only assets that have a known price are supported.
+       * Market can not be created since
+       * allowed number of markets was exceeded.
        **/
-      CollateralAssetNotSupportedByOracle: AugmentedError<ApiType>;
-      CollateralDepositFailed: AugmentedError<ApiType>;
-      /**
-       * The collateral factor for a market must be more than one.
-       **/
-      CollateralFactorMustBeMoreThanOne: AugmentedError<ApiType>;
       ExceedLendingCount: AugmentedError<ApiType>;
-      InvalidTimestampOnBorrowRequest: AugmentedError<ApiType>;
-      LiquidationFailed: AugmentedError<ApiType>;
-      MarketAndAccountPairNotFound: AugmentedError<ApiType>;
-      MarketCollateralWasNotDepositedByAccount: AugmentedError<ApiType>;
       /**
-       * The market could not be found
+       * Market manager has to deposit initial amount of borrow asset into the market account.
+       * Initial amount is denominated in normalized currency and calculated based on data
+       * from Oracle. The error is emitted if calculated amount is incorrect.
+       **/
+      InitialMarketVolumeIncorrect: AugmentedError<ApiType>;
+      /**
+       * Invalid collateral factor was provided.
+       * Collateral factor value must be more than one.
+       **/
+      InvalidCollateralFactor: AugmentedError<ApiType>;
+      InvalidTimestampOnBorrowRequest: AugmentedError<ApiType>;
+      /**
+       * The market could not be found.
        **/
       MarketDoesNotExist: AugmentedError<ApiType>;
       MarketIsClosing: AugmentedError<ApiType>;
-      MaxLiquidationBatchSizeExceeded: AugmentedError<ApiType>;
-      NotEnoughBorrowAsset: AugmentedError<ApiType>;
+      /**
+       * User has provided not sufficient amount of collateral.
+       **/
       NotEnoughCollateralToBorrow: AugmentedError<ApiType>;
       /**
-       * Attempted to withdraw more collateral than the account has in the market.
+       * When user try to withdraw money beyond what is available.
        **/
       NotEnoughCollateralToWithdraw: AugmentedError<ApiType>;
-      NotEnoughRent: AugmentedError<ApiType>;
-      Overflow: AugmentedError<ApiType>;
       /**
-       * borrow assets should have enough value as per oracle
+       * Block number of provided price is out of allowed tolerance.
        **/
-      PriceOfInitialBorrowVaultShouldBeGreaterThanZero: AugmentedError<ApiType>;
       PriceTooOld: AugmentedError<ApiType>;
-      RepayAmountMustBeGreaterThanZero: AugmentedError<ApiType>;
-      TransferFailed: AugmentedError<ApiType>;
       /**
        * Attempted to update a market owned by someone else.
        **/
       Unauthorized: AugmentedError<ApiType>;
-      Underflow: AugmentedError<ApiType>;
-      /**
-       * vault provided does not exist
-       **/
-      VaultNotFound: AugmentedError<ApiType>;
       /**
        * The market would go under collateralized if the requested amount of collateral was
        * withdrawn.
@@ -1017,6 +1012,7 @@ declare module '@polkadot/api-base/types/errors' {
       NoLpTokenForLbp: AugmentedError<ApiType>;
       NotEnoughLiquidity: AugmentedError<ApiType>;
       NotEnoughLpToken: AugmentedError<ApiType>;
+      NoXTokenForLbp: AugmentedError<ApiType>;
       PairMismatch: AugmentedError<ApiType>;
       PoolNotFound: AugmentedError<ApiType>;
       StakingPoolConfigError: AugmentedError<ApiType>;
@@ -1248,7 +1244,12 @@ declare module '@polkadot/api-base/types/errors' {
       /**
        * Invalid end block number provided for creating a pool.
        **/
-      EndBlockMustBeInTheFuture: AugmentedError<ApiType>;
+      EndBlockMustBeAfterStartBlock: AugmentedError<ApiType>;
+      FnftNotFound: AugmentedError<ApiType>;
+      /**
+       * AssetId is invalid, asset IDs must be greater than 0
+       **/
+      InvalidAssetId: AugmentedError<ApiType>;
       /**
        * Reward's max limit reached.
        **/
@@ -1258,17 +1259,17 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       NoDurationPresetsConfigured: AugmentedError<ApiType>;
       /**
+       * No duration presets were provided upon pool creation.
+       **/
+      NoDurationPresetsProvided: AugmentedError<ApiType>;
+      /**
        * Not enough assets for a stake.
        **/
       NotEnoughAssets: AugmentedError<ApiType>;
       /**
-       * Only pool owner can add new reward asset.
-       **/
-      OnlyPoolOwnerCanAddNewReward: AugmentedError<ApiType>;
-      /**
        * only the owner of stake can unstake it
        **/
-      OnlyStakeOwnerCanUnstake: AugmentedError<ApiType>;
+      OnlyStakeOwnerCanInteractWithStake: AugmentedError<ApiType>;
       /**
        * Error when creating reduction configs.
        **/
@@ -1286,17 +1287,41 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       RewardsPoolAlreadyExists: AugmentedError<ApiType>;
       /**
+       * Rewards pool has not started.
+       **/
+      RewardsPoolHasNotStarted: AugmentedError<ApiType>;
+      /**
        * Rewards pool not found.
        **/
       RewardsPoolNotFound: AugmentedError<ApiType>;
       /**
-       * The rewards pot (cold wallet) for this pool is empty.
+       * The rewards pot for this pool is empty.
        **/
       RewardsPotEmpty: AugmentedError<ApiType>;
+      /**
+       * Slashed amount of minimum reward is less than existential deposit
+       **/
+      SlashedAmountTooLow: AugmentedError<ApiType>;
+      /**
+       * Slashed amount of minimum staking amount is less than existential deposit
+       **/
+      SlashedMinimumStakingAmountTooLow: AugmentedError<ApiType>;
+      /**
+       * Staked amount is less than the minimum staking amount for the pool.
+       **/
+      StakedAmountTooLow: AugmentedError<ApiType>;
+      /**
+       * Staked amount after split is less than the minimum staking amount for the pool.
+       **/
+      StakedAmountTooLowAfterSplit: AugmentedError<ApiType>;
       /**
        * No stake found for given id.
        **/
       StakeNotFound: AugmentedError<ApiType>;
+      /**
+       * Invalid start block number provided for creating a pool.
+       **/
+      StartBlockMustBeAfterCurrentBlock: AugmentedError<ApiType>;
       /**
        * Too many rewarded asset types per pool violating the storage allowed.
        **/
