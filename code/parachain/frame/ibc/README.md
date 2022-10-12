@@ -600,10 +600,10 @@ impl ibc_runtime_api::IbcRuntimeApi<Block> for Runtime {
 
 - [x] ICS02 - Light client implementations  
    **Light clients supported**
-  - [x] Beefy Light Client
-  - [x] Grandpa Light Client
-  - [x] Near Light Client
-  - [x] Tendermint light client
+  - [x] ICS07 - Tendermint Light Client
+  - [x] ICS10 - Grandpa Light Client
+  - [x] ICS11 - Beefy Light Client
+  - [x] ICS13 - Near Light Client
   - [ ] Ethereum Light Client
 - [x] ICS03 - Connections  
 - [x] ICS04 - Channels and Ports  
