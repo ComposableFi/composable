@@ -322,7 +322,7 @@ fn stake_in_case_of_low_balance_should_not_work() {
 
 		create_default_reward_pool();
 
-		let asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
+		let asset_id = PICA::ID;
 		assert_eq!(balance(asset_id, &ALICE), 0);
 
 		process_and_progress_blocks::<StakingRewards, Test>(1);
@@ -485,7 +485,7 @@ fn stake_in_case_of_zero_inflation_should_work() {
 		let duration_preset: u64 = ONE_HOUR;
 		let fnft_asset_account = FinancialNft::asset_account(&1, &0);
 
-		let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
+		let staked_asset_id = PICA::ID;
 		mint_assets([staker], [staked_asset_id], amount * 2);
 
 		let fnft_instance_id = assert_extrinsic_event_with::<Test, Event, _, _, _, _>(
@@ -585,7 +585,7 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 
 		process_and_progress_blocks::<StakingRewards, Test>(1);
 
-		let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
+		let staked_asset_id = PICA::ID;
 		mint_assets([ALICE], [staked_asset_id], AMOUNT * 2);
 
 		stake_and_assert::<Test, runtime::Event>(ALICE, PICA::ID, AMOUNT, DURATION_PRESET);
@@ -864,7 +864,6 @@ mod extend {
 			assert_eq!(
 				stake_after_extend,
 				Stake {
-					fnft_instance_id,
 					reward_pool_id: STAKED_ASSET::ID,
 					stake: staked_amount + extended_amount,
 					share: Pallet::<Test>::boosted_amount(
@@ -911,7 +910,7 @@ fn not_owner_of_stake_can_not_unstake() {
 		let duration_preset = ONE_HOUR;
 		assert_ne!(owner, not_owner);
 
-		let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
+		let staked_asset_id = PICA::ID;
 		mint_assets([owner, not_owner], [staked_asset_id], amount * 2);
 
 		process_and_progress_blocks::<StakingRewards, Test>(1);
@@ -1415,9 +1414,9 @@ mod claim {
 				get_default_reward_pool()
 			));
 
-			let pool_id = PICA::ID;
-			let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected. QED");
-			let staked_asset_id = rewards_pool.asset_id;
+			let staked_asset_id = PICA::ID;
+			let rewards_pool =
+				StakingRewards::pools(staked_asset_id).expect("rewards_pool expected. QED");
 
 			// far more than is necessary
 			mint_assets([CHARLIE], [USDT::ID], USDT::units(100_000_000));
@@ -1426,7 +1425,7 @@ mod claim {
 			process_and_progress_blocks::<StakingRewards, Test>(1);
 
 			mint_assets([ALICE], [PICA::ID], PICA::units(100_000_000));
-			let _ = stake_and_assert::<Test, runtime::Event>(ALICE, pool_id, AMOUNT, DURATION);
+			let _ = stake_and_assert::<Test, runtime::Event>(ALICE, PICA::ID, AMOUNT, DURATION);
 
 			assert_eq!(balance(staked_asset_id, &ALICE), PICA::units(100_000_000) - AMOUNT);
 
@@ -1540,17 +1539,17 @@ fn with_stake<R>(
 		process_and_progress_blocks::<StakingRewards, Test>(1);
 		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
 
-		let pool_id = PICA::ID;
-		let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected. QED");
-		let staked_asset_id = rewards_pool.asset_id;
+		let staked_asset_id = PICA::ID;
+		let rewards_pool =
+			StakingRewards::pools(staked_asset_id).expect("rewards_pool expected. QED");
 
 		mint_assets(
-			[staker, StakingRewards::pool_account_id(&pool_id)],
+			[staker, StakingRewards::pool_account_id(&staked_asset_id)],
 			rewards_pool.rewards.keys().copied().chain([staked_asset_id]),
 			amount.saturating_mul(2),
 		);
 
-		update_total_rewards_and_total_shares_in_rewards_pool(pool_id, total_rewards);
+		update_total_rewards_and_total_shares_in_rewards_pool(staked_asset_id, total_rewards);
 
 		process_and_progress_blocks::<StakingRewards, Test>(1);
 		let fnft_instance_id =
@@ -1571,7 +1570,7 @@ fn with_stake<R>(
 			));
 		}
 
-		execute(pool_id, unlock_penalty, stake_duration, staked_asset_id)
+		execute(staked_asset_id, unlock_penalty, stake_duration, staked_asset_id)
 	})
 }
 

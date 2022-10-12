@@ -111,9 +111,6 @@ pub struct RewardPool<
 > {
 	pub owner: AccountId,
 
-	/// The staked asset id of the reward pool.
-	pub asset_id: AssetId,
-
 	/// rewards accumulated
 	pub rewards: BoundedBTreeMap<AssetId, Reward<Balance>, MaxRewards>,
 
