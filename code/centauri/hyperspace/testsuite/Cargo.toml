@@ -17,14 +17,20 @@ tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev 
 hyperspace = { path = "../", features = ["testing"] }
 hyperspace-primitives = { path = "../primitives", features = ["testing"] }
 pallet-ibc = { path = "../../../parachain/frame/ibc" }
+ics10-grandpa = { path = "../../light-clients/ics10-grandpa" }
+
+polkadot-core-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.27" }
+grandpa-client-primitives = { package = "grandpa-light-client-primitives", path = "../../../centauri/algorithms/grandpa/primitives", default-features = false }
+finality-grandpa = { version = "0.16.0", features = ["derive-codec"], default-features = false }
+sp-finality-grandpa = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", features = ["full_crypto"] }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+parachain = { path = "../parachain", package = "hyperspace-parachain", features = ["testing"] }
 
 [dev-dependencies]
-parachain = { path = "../parachain", package = "hyperspace-parachain", features = ["testing"] }
 # substrate
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", features = ["full_crypto"] }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 subxt = { git = "https://github.com/paritytech/subxt", rev = "51179a8b72472d0b43c91cda75a1ddc3fddb9555" }
 
 # We need this so the tests run sequentially

@@ -94,7 +94,7 @@ where
 
 	async fn ibc_events(
 		&self,
-	) -> Pin<Box<dyn Stream<Item = (TransactionId, Vec<Option<IbcEvent>>)>>> {
+	) -> Pin<Box<dyn Stream<Item = (TransactionId, Vec<Option<IbcEvent>>)> + Send + 'static>> {
 		let stream = self
 			.para_client
 			.events()
@@ -139,7 +139,7 @@ where
 				// futures::future::ready(Some(stream::iter(events)))
 			});
 
-		Box::pin(stream)
+		Box::pin(Box::new(stream))
 	}
 
 	async fn query_client_consensus(

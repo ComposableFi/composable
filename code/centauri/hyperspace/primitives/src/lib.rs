@@ -104,7 +104,7 @@ pub trait IbcProvider {
 	/// Return a stream that yields when new [`IbcEvents`] are parsed from a finality notification
 	async fn ibc_events(
 		&self,
-	) -> Pin<Box<dyn Stream<Item = (TransactionId, Vec<Option<IbcEvent>>)>>>;
+	) -> Pin<Box<dyn Stream<Item = (TransactionId, Vec<Option<IbcEvent>>)> + Send + 'static>>;
 
 	/// Query client consensus state with proof
 	/// return the consensus height for the client along with the response
@@ -318,6 +318,12 @@ pub trait TestProvider: Chain + Clone + 'static {
 
 	/// Returns a stream that yields chain Block number and hash
 	async fn subscribe_blocks(&self) -> Pin<Box<dyn Stream<Item = u64> + Send + Sync>>;
+
+	/// Returns a stream that yields chain Block number of the Relaychain
+	async fn subscribe_relaychain_blocks(&self) -> Pin<Box<dyn Stream<Item = u32>>>;
+
+	/// Returns current validator Set ID from the Relaychain.
+	async fn current_set_id(&self) -> u64;
 
 	/// Set the channel whitelist for the relayer task.
 	fn set_channel_whitelist(&mut self, channel_whitelist: Vec<(ChannelId, PortId)>);

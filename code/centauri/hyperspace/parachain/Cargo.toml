@@ -81,8 +81,8 @@ sp-finality-grandpa = { git = "https://github.com/paritytech/substrate", branch 
 grandpa = { package = "finality-grandpa", version = "0.16.0", default-features = false, features = ["derive-codec"] }
 
 [dev-dependencies]
-derive_more = "0.99.17"
 sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+derive_more = "0.99.17"
 clap = {version = "3.2.0", features = ["derive"]}
 state-machine = { package = "sp-state-machine", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 prost = "0.10"

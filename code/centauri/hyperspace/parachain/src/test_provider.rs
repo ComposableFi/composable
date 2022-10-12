@@ -1,6 +1,6 @@
 use crate::{
-	parachain::api, polkadot, signer::ExtrinsicSigner, utils::unsafe_cast_to_jsonrpsee_client,
-	Error, GrandpaClientState, ParachainClient,
+	parachain, parachain::api, polkadot, signer::ExtrinsicSigner,
+	utils::unsafe_cast_to_jsonrpsee_client, Error, GrandpaClientState, ParachainClient,
 };
 use beefy_prover::ClientWrapper;
 use codec::Decode;
@@ -30,6 +30,7 @@ use sp_core::{
 	crypto::{AccountId32, Ss58Codec},
 	H256,
 };
+use sp_finality_grandpa::SetId;
 use sp_runtime::{
 	generic::Era,
 	traits::{Header as HeaderT, IdentifyAccount, One, Verify},
@@ -216,6 +217,7 @@ where
 			client_state.frozen_height = None;
 			client_state.latest_para_height = block_number;
 			client_state.para_id = self.para_id;
+			client_state.latest_relay_height = light_client_state.latest_relay_height;
 
 			let subxt_block_number: subxt::rpc::BlockNumber = block_number.into();
 			let block_hash =
@@ -318,6 +320,8 @@ where
 			.sign_and_submit_then_watch(&ext, &signer, tx_params.into())
 			.await?
 			.wait_for_in_block()
+			.await?
+			.wait_for_success()
 			.await?;
 
 		Ok(())
@@ -408,6 +412,24 @@ where
 			});
 
 		Box::pin(Box::new(stream))
+	}
+
+	async fn subscribe_relaychain_blocks(&self) -> Pin<Box<dyn Stream<Item = u32>>> {
+		let stream =
+			self.relay_client.rpc().subscribe_finalized_blocks().await.unwrap().filter_map(
+				|result| futures::future::ready(result.ok().map(|x| u32::from(*x.number()))),
+			);
+		Box::pin(Box::new(stream))
+	}
+
+	async fn current_set_id(&self) -> SetId {
+		let api = self.relay_client.storage();
+		let current_set_id_addr = polkadot::api::storage().grandpa().current_set_id();
+		api.fetch(&current_set_id_addr, None)
+			.await
+			.ok()
+			.flatten()
+			.expect("Failed to fetch current set id")
 	}
 
 	fn set_channel_whitelist(&mut self, channel_whitelist: Vec<(ChannelId, PortId)>) {

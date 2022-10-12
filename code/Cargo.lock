@@ -5116,16 +5116,21 @@ dependencies = [
 name = "hyperspace-testsuite"
 version = "0.1.0"
 dependencies = [
+ "finality-grandpa",
  "futures 0.3.24",
+ "grandpa-light-client-primitives",
  "hyperspace",
  "hyperspace-parachain",
  "hyperspace-primitives",
  "ibc",
  "ibc-proto",
+ "ics10-grandpa",
  "log 0.4.17",
  "pallet-ibc",
+ "polkadot-core-primitives",
  "serde_json",
  "sp-core",
+ "sp-finality-grandpa",
  "sp-keyring",
  "sp-keystore",
  "sp-runtime",
