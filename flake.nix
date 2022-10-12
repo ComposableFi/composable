@@ -464,33 +464,32 @@
           };
 
           hyperspace-template = let
-            builder = {
-              }: rec {
-                bin = crane-nightly.buildPackage (common-attrs // {
-                  name = "hyperspace";
-                  pname="hyperspace";
-                  cargoArtifacts = common-deps;
-                  cargoExtraArgs= "--package hyperspace";
-                  installPhase = ''
-                    mkdir --parents $out/bin
-                    cp target/release/hyperspace $out/bin/hyperspace
-                  '';
-                  meta = { mainProgram = "hyperspace"; };
-                });
-                config = pkgs.stdenv.lib.makeOverridable
-                  (builtins.fromTOML (builtins.readFile ./config.toml));
+            builder = { }: rec {
+              bin = crane-nightly.buildPackage (common-attrs // {
+                name = "hyperspace";
+                pname = "hyperspace";
+                cargoArtifacts = common-deps;
+                cargoExtraArgs = "--package hyperspace";
+                installPhase = ''
+                  mkdir --parents $out/bin
+                  cp target/release/hyperspace $out/bin/hyperspace
+                '';
+                meta = { mainProgram = "hyperspace"; };
+              });
+              config = pkgs.stdenv.lib.makeOverridable
+                (builtins.fromTOML (builtins.readFile ./config.toml));
 
-                default = pkgs.writeShellApplication {
-                  name = "default-hyperspace";
-                  runtimeInputs = [ pkgs.coreutils pkgs.bash ];
-                  text = ''
-                    echo ${config.result} > hyperspace.local.config.toml
-                    ${
-                      pkgs.lib.meta.getExe bin
-                    } relay --config hyperspace.local.config.toml 
-                  '';
-                };
+              default = pkgs.writeShellApplication {
+                name = "default-hyperspace";
+                runtimeInputs = [ pkgs.coreutils pkgs.bash ];
+                text = ''
+                  echo ${config.result} > hyperspace.local.config.toml
+                  ${
+                    pkgs.lib.meta.getExe bin
+                  } relay --config hyperspace.local.config.toml 
+                '';
               };
+            };
           in builder {
             # not parametrized yet
           };
