@@ -138,26 +138,39 @@ pub fn compute_out_given_in_new<T: PerThing>(
 	let value = value.checked_powd(weight_ratio).ok_or(ArithmeticError::Overflow)?;
 	let value = Decimal::ONE.safe_sub(&value)?;
 
-	let a_out = round_down(b_o.safe_mul(&value)?).to_u128().ok_or(ArithmeticError::Overflow)?;
-	let fee = round_up(a_sent.safe_sub(&a_sent_fee_cut)?)
+	let a_out = b_o.safe_mul(&value)?.round_down().to_u128().ok_or(ArithmeticError::Overflow)?;
+	let fee = a_sent
+		.safe_sub(&a_sent_fee_cut)?
+		.round_up()
 		.to_u128()
 		.ok_or(ArithmeticError::Overflow)?;
 
 	Ok((a_out, fee))
 }
 
-/// Rounds a decimal value up to the nearest whole number
-fn round_up(decimal: Decimal) -> Decimal {
-	round(decimal, RoundingStrategy::AwayFromZero)
+trait RoundingDecimal {
+	/// Round a decimal value to the next whole number with a given `RoundingStrategy`
+	fn round_to_whole_with_strategy(&self, rounding_strategy: RoundingStrategy) -> Self;
+	/// Round a decimal value away from zero to the next whole number
+	/// i.e. `-0.5 -> -1` and `0.5 -> 1`
+	fn round_up(&self) -> Self;
+	/// Round a decimal value to zero to the next whole number
+	/// i.e. `-0.5 -> 0` and `0.5 -> 0`
+	fn round_down(&self) -> Self;
 }
 
-fn round_down(decimal: Decimal) -> Decimal {
-	round(decimal, RoundingStrategy::ToZero)
-}
+impl RoundingDecimal for Decimal {
+	fn round_to_whole_with_strategy(&self, rounding_strategy: RoundingStrategy) -> Self {
+		self.round_dp_with_strategy(0, rounding_strategy)
+	}
 
-/// Rounds a decimal value to a whole number based on the provided `RoundingStrategy`
-fn round(decimal: Decimal, rounding_strategy: RoundingStrategy) -> Decimal {
-	decimal.round_dp_with_strategy(0, rounding_strategy)
+	fn round_up(&self) -> Self {
+		self.round_to_whole_with_strategy(RoundingStrategy::AwayFromZero)
+	}
+
+	fn round_down(&self) -> Self {
+		self.round_to_whole_with_strategy(RoundingStrategy::ToZero)
+	}
 }
 
 /// From https://balancer.fi/whitepaper.pdf, equation (20)
