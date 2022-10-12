@@ -175,12 +175,11 @@ pub fn compute_in_given_out_new<T: PerThing>(
 	let b_i_over_fee = b_i.safe_div(&left_from_fee)?;
 	let fee = Decimal::ONE.safe_sub(&left_from_fee)?;
 
-	let value = b_o.safe_sub(&a_out)?;
-	let value = b_o.safe_div(&value)?;
-	let value = value.checked_powd(weight_ratio).ok_or(ArithmeticError::Overflow)?;
-	let value = value.safe_sub(&Decimal::ONE)?;
+	let base = b_o.safe_div(&b_o.safe_sub(&a_out)?)?;
+	let power = base.checked_powd(weight_ratio).ok_or(ArithmeticError::Overflow)?;
+	let ratio = power.safe_sub(&Decimal::ONE)?;
 
-	let a_sent = round_up(b_i_over_fee.safe_mul(&value)?);
+	let a_sent = round_up(b_i_over_fee.safe_mul(&ratio)?);
 	let fee = round_up(a_sent.safe_mul(&fee)?).to_u128().ok_or(ArithmeticError::Overflow)?;
 
 	Ok((a_sent.to_u128().ok_or(ArithmeticError::Overflow)?, fee))
@@ -202,7 +201,7 @@ impl From<InGivenOutError> for DispatchError {
 	fn from(error: InGivenOutError) -> Self {
 		match error {
 			InGivenOutError::ArithmeticError(error) => DispatchError::from(error),
-			InGivenOutError::CanNotTakeMoreThanAvailable => 
+			InGivenOutError::CanNotTakeMoreThanAvailable =>
 				DispatchError::from(
 					"`a_out` must not be greater than `b_o` (can't take out more than what's available)"
 				),
