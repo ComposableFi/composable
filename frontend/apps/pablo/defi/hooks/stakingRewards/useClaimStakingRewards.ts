@@ -74,12 +74,7 @@ export function useClaimStakingRewards({
           });
       }
     },
-    [
-      enqueueSnackbar,
-      parachainApi,
-      financialNftCollectionId,
-      financialNftInstanceId,
-    ]
+    [enqueueSnackbar, parachainApi, principalAssetId, financialNftCollectionId, financialNftInstanceId]
   );
 
   const onTxError = useCallback(
