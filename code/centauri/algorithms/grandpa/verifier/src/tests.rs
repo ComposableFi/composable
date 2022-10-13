@@ -107,14 +107,15 @@ async fn follow_grandpa_justifications() {
 			continue
 		}
 
-        dbg!(&client_state.latest_para_height);
-        dbg!(&client_state.latest_relay_height);
-        dbg!(&validation_data.relay_parent_number);
-
+		dbg!(&client_state.latest_para_height);
+		dbg!(&client_state.latest_relay_height);
+		dbg!(&validation_data.relay_parent_number);
+        dbg!(&header_numbers);
+        
 		let proof = prover
 			.query_finalized_parachain_headers_with_proof(
 				justification.commit.target_number,
-				validation_data.relay_parent_number,
+				validation_data.relay_parent_number.min(client_state.latest_relay_height),
 				header_numbers,
 			)
 			.await

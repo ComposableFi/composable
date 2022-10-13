@@ -250,7 +250,6 @@ where
 			.await?;
 
 		let mut parachain_headers = BTreeMap::<H::Hash, ParachainHeaderProofs>::default();
-		dbg!(&header_numbers);
 
 		for changes in change_set {
 			let header = self
@@ -276,8 +275,6 @@ where
 			if para_block_number == Zero::zero() || !header_numbers.contains(&para_block_number) {
 				continue
 			}
-			dbg!(&para_block_number);
-			dbg!(header.number());
 
 			let state_proof = self
 				.relay_client

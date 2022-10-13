@@ -103,7 +103,6 @@ where
 	// 5. set new client state, optionally rotating authorities
 	client_state.latest_relay_hash = target.hash();
 	client_state.latest_relay_height = (*target.number()).into();
-	dbg!(&para_heights);
 	if let Some(max_height) = para_heights.into_iter().max() {
 		client_state.latest_para_height = max_height;
 	}
