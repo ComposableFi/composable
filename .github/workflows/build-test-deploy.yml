@@ -925,10 +925,6 @@ jobs:
           COMMIT_SHA=$(git rev-parse HEAD)
           CONTAINER_NAME="composable-bridge-devnet"
           TEMP_CONTAINER_NAME="${CONTAINER_NAME}-container"
-          IMAGES=("${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}:${SHA256}" "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}:${COMMIT_SHA}")
-          if [ $(git symbolic-ref HEAD) = "refs/heads/main" ]; then
-            IMAGES+=("${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}:latest")
-          fi;
 
           docker tag "${TEMP_CONTAINER_NAME}:latest" \
             "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}:${SHA256}" \
