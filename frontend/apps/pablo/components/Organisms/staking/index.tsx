@@ -60,9 +60,14 @@ export const Staking: React.FC<BoxProps> = ({ ...boxProps }) => {
     <Box {...boxProps}>
       <StakingStatistics stakingRewardPool={stakingRewardPool} />
       {shouldShowPortfolio && (
-        <XPablosBox financialNftCollectionId={
-          stakingRewardPool ? stakingRewardPool.financialNftAssetId : "-"
-        } mt={8} title="Portfolio" header={tableHeaders} />
+        <XPablosBox
+          financialNftCollectionId={
+            stakingRewardPool ? stakingRewardPool.financialNftAssetId : "-"
+          }
+          mt={8}
+          title="Portfolio"
+          header={tableHeaders}
+        />
       )}
       <BoxWrapper mt={8}>
         <Tabs items={tabItems} value={tab} onChange={handleTabChange} />
@@ -73,7 +78,12 @@ export const Staking: React.FC<BoxProps> = ({ ...boxProps }) => {
           <UnstakeForm stakingRewardPool={stakingRewardPool} />
         </TabPanel>
       </BoxWrapper>
-      {shouldShowPortfolio && <ClaimableRewards mt={8} />}
+      {shouldShowPortfolio && (
+        <ClaimableRewards
+          financialNftCollectionId={stakingRewardPool?.financialNftAssetId.toString()}
+          mt={8}
+        />
+      )}
 
       {message.text && (
         <Box mt={8}>
@@ -89,7 +99,9 @@ export const Staking: React.FC<BoxProps> = ({ ...boxProps }) => {
                 <Link href={message.link} target="_blank" rel="noopener">
                   <OpenInNewRoundedIcon />
                 </Link>
-              ) : undefined
+              ) : (
+                undefined
+              )
             }
           />
         </Box>

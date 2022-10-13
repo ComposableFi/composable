@@ -155,6 +155,19 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       [key: string]: SubmittableExtrinsicFunction<ApiType>;
     };
+    assetTxPayment: {
+      /**
+       * Sets or resets payment asset.
+       * 
+       * If `asset_id` is `None`, then native asset is used.
+       * Else new asset is configured and ED is on hold.
+       **/
+      setPaymentAsset: AugmentedSubmittable<(payer: AccountId32 | string | Uint8Array, assetId: Option<u128> | null | Uint8Array | u128 | AnyNumber) => SubmittableExtrinsic<ApiType>, [AccountId32, Option<u128>]>;
+      /**
+       * Generic tx
+       **/
+      [key: string]: SubmittableExtrinsicFunction<ApiType>;
+    };
     authorship: {
       /**
        * Provide a set of uncles.
@@ -641,11 +654,11 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       claim: AugmentedSubmittable<() => SubmittableExtrinsic<ApiType>, []>;
       /**
-       * Initialize the pallet at the current transaction block.
+       * Initialize the pallet at the current timestamp.
        **/
       initialize: AugmentedSubmittable<() => SubmittableExtrinsic<ApiType>, []>;
       /**
-       * Initialize the pallet at the given transaction block.
+       * Initialize the pallet at the given timestamp.
        **/
       initializeAt: AugmentedSubmittable<(at: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u64]>;
       /**
@@ -1552,7 +1565,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * # Parameters
        * 
        * - `origin` : Sender of this extrinsic. (Also the user who repays beneficiary's borrow.)
-       * - `market_id` : [`MarketIndex`] of the market being repaid.
+       * - `market_id` : [`MarketId`] of the market being repaid.
        * - `beneficiary` : [`AccountId`] of the account who is in debt to (has borrowed assets
        * from) the market. This can be same or different from the `origin`, allowing one
        * account to pay off another's debts.
