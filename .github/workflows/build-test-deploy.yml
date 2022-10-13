@@ -930,8 +930,14 @@ jobs:
             IMAGES+=("${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}:latest")
           fi;
 
-          docker tag "${TEMP_CONTAINER_NAME}:latest" "${IMAGES[@]}"
-          docker push "${IMAGES[@]}"
+          docker tag "${TEMP_CONTAINER_NAME}:latest" \
+            "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}:${SHA256}" \
+            "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}:${COMMIT_SHA}"
+          if [ $(git symbolic-ref HEAD) = "refs/heads/main" ]; then
+            docker tag "${TEMP_CONTAINER_NAME}:latest" \
+              "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}:latest"
+          fi;
+          docker push --all-tags "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}"
 
   devnet-integration-tests:
       name: "Devnet integration tests"
