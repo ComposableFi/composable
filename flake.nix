@@ -444,7 +444,8 @@
           docs-renders = [ nodejs plantuml graphviz pandoc ];
 
           mkFrontendStatic = { kusamaEndpoint, picassoEndpoint, karuraEndpoint
-            , subsquidEndpoint }: npm-bp.buildYarnPackage {
+            , subsquidEndpoint }:
+            npm-bp.buildYarnPackage {
               nativeBuildInputs = [ pkgs.pkg-config pkgs.vips pkgs.python3 ];
               src = ./frontend;
 
