@@ -50,6 +50,7 @@ ignoreRegExpList:
   - shebang
 
 ignorePaths:
+  - "docs/static/fonts"
   - "code/parachain/node/src/res"
   - "target/"
   - "**/node_modules/"
