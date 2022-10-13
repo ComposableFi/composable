@@ -1,8 +1,12 @@
+---
+slug: /
+---
+
+
 # Introduction
 
 *Composable Finance: The interoperable infrastructure for Modular DeFi*
 
----
 
 ![composable_finance](./composable-face-banner.png)
 *Composable Finance: The interoperable infrastructure for Modular DeFi*
