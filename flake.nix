@@ -41,10 +41,10 @@
     let
       # https://cloud.google.com/iam/docs/creating-managing-service-account-keys
       # or just use GOOGLE_APPLICATION_CREDENTIALS env as path to file
-      service-account-credential-key-file-input =
-        builtins.fromJSON (builtins.readFile ./devnet/ops.json);
+      service-account-credential-key-file-input = builtins.fromJSON
+        (builtins.readFile (builtins.getEnv "GOOGLE_APPLICATION_CREDENTIALS"));
 
-      gce-to-nix = { project_id, client_email, private_key }: {
+      gce-to-nix = { project_id, client_email, private_key, ... }: {
         project = project_id;
         serviceAccount = client_email;
         accessKey = private_key;
@@ -104,8 +104,6 @@
           script = writeShellApplication {
             name = "run-devnet-${chain-spec}";
             text = ''
-              # ISSUE: for some reason it does not cleans tmp and leads to block not produced
-              export RUST_BACKTRACE="full"
               rm -rf /tmp/polkadot-launch
               ${polkadot-launch}/bin/polkadot-launch ${config} --verbose
             '';
@@ -518,6 +516,55 @@
               ```
             '';
           };
+
+          frontend-static = mkFrontendStatic {
+            subsquidEndpoint = "http://localhost:4350/graphql";
+            picassoEndpoint = "ws://localhost:9988";
+            kusamaEndpoint = "ws://localhost:9944";
+            karuraEndpoint = "ws://localhost:9998";
+          };
+
+          frontend-static-persistent = mkFrontendStatic {
+            subsquidEndpoint =
+              "https://persistent.devnets.composablefinance.ninja/subsquid/graphql";
+            picassoEndpoint =
+              "wss://persistent.devnets.composablefinance.ninja/chain/dali";
+            kusamaEndpoint =
+              "wss://persistent.devnets.composablefinance.ninja/chain/rococo";
+            karuraEndpoint =
+              "wss://persistent.devnets.composablefinance.ninja/chain/karura";
+          };
+
+          frontend-static-firebase = mkFrontendStatic {
+            subsquidEndpoint =
+              "https://dali-subsquid.composable.finance/graphql";
+            picassoEndpoint = "wss://dali-cluster-fe.composablefinance.ninja/";
+            kusamaEndpoint = "wss://kusama-rpc.polkadot.io";
+            karuraEndpoint = "wss://karura.api.onfinality.io/public-ws";
+          };
+
+          frontend-pablo-server = let PORT = 8002;
+          in pkgs.writeShellApplication {
+            name = "frontend-pablo-server";
+            runtimeInputs = [ pkgs.miniserve ];
+            text = ''
+              miniserve -p ${
+                builtins.toString PORT
+              } --spa --index index.html ${frontend-static}/pablo
+            '';
+          };
+
+          frontend-picasso-server = let PORT = 8003;
+          in pkgs.writeShellApplication {
+            name = "frontend-picasso-server";
+            runtimeInputs = [ pkgs.miniserve ];
+            text = ''
+              miniserve -p ${
+                builtins.toString PORT
+              } --spa --index index.html ${frontend-static}/picasso
+            '';
+          };
+
         in rec {
           packages = rec {
             inherit wasm-optimizer;
@@ -537,6 +584,11 @@
             inherit simnode-tests;
             inherit subwasm;
             inherit subwasm-release-body;
+            inherit frontend-static;
+            inherit frontend-static-persistent;
+            inherit frontend-static-firebase;
+            inherit frontend-pablo-server;
+            inherit frontend-picasso-server;
 
             xcvm-contract-asset-registry =
               mk-xcvm-contract "xcvm-asset-registry";
@@ -776,43 +828,6 @@
               '';
             };
 
-            frontend-static = mkFrontendStatic {
-              subsquidEndpoint = "http://localhost:4350/graphql";
-              picassoEndpoint = "ws://localhost:9988";
-              kusamaEndpoint = "ws://localhost:9944";
-              karuraEndpoint = "ws://localhost:9998";
-            };
-
-            frontend-static-firebase = mkFrontendStatic {
-              subsquidEndpoint =
-                "https://dali-subsquid.composable.finance/graphql";
-              picassoEndpoint =
-                "wss://dali-cluster-fe.composablefinance.ninja/";
-              kusamaEndpoint = "wss://kusama-rpc.polkadot.io";
-              karuraEndpoint = "wss://karura.api.onfinality.io/public-ws";
-            };
-
-            frontend-pablo-server = let PORT = 8002;
-            in pkgs.writeShellApplication {
-              name = "frontend-pablo-server";
-              runtimeInputs = [ pkgs.miniserve ];
-              text = ''
-                miniserve -p ${
-                  builtins.toString PORT
-                } --spa --index index.html ${frontend-static}/pablo
-              '';
-            };
-
-            frontend-picasso-server = let PORT = 8003;
-            in pkgs.writeShellApplication {
-              name = "frontend-picasso-server";
-              runtimeInputs = [ pkgs.miniserve ];
-              text = ''
-                miniserve -p ${
-                  builtins.toString PORT
-                } --spa --index index.html ${frontend-static}/picasso
-              '';
-            };
             # TODO: inherit and provide script to run all stuff
 
             # devnet-container-xcvm
@@ -1066,11 +1081,12 @@
               name = "kusama-picasso-karura";
               text = ''
                 cat ${config-file}
+                rm -rf /tmp/polkadot-launch
                 ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
               '';
             };
 
-            kusama-dali-karura-devnet = let
+            devnet-rococo-dali-karura = let
               config = (pkgs.callPackage
                 ./scripts/polkadot-launch/kusama-local-dali-dev-karura-dev.nix {
                   polkadot-bin = polkadot-node;
@@ -1082,16 +1098,18 @@
                 text = "${builtins.toJSON config}";
               };
             in writeShellApplication {
-              name = "kusama-dali-karura";
+              name = "run-rococo-dali-karura";
               text = ''
                 cat ${config-file}
+                rm -rf /tmp/polkadot-launch
                 ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
               '';
             };
 
-            devnet-all-dev-local = let
+            devnet-picasso-complete = let
               config =
                 (pkgs.callPackage ./scripts/polkadot-launch/all-dev-local.nix {
+                  chainspec = "picasso-dev";
                   polkadot-bin = polkadot-node;
                   composable-bin = composable-node;
                   statemine-bin = statemine-node;
@@ -1105,6 +1123,29 @@
               name = "kusama-dali-karura";
               text = ''
                 cat ${config-file}
+                rm -rf /tmp/polkadot-launch
+                ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
+              '';
+            };
+
+            devnet-dali-complete = let
+              config =
+                (pkgs.callPackage ./scripts/polkadot-launch/all-dev-local.nix {
+                  chainspec = "dali-dev";
+                  polkadot-bin = polkadot-node;
+                  composable-bin = composable-node;
+                  statemine-bin = statemine-node;
+                  acala-bin = acala-node;
+                }).result;
+              config-file = writeTextFile {
+                name = "all-dev-local.json";
+                text = "${builtins.toJSON config}";
+              };
+            in writeShellApplication {
+              name = "kusama-dali-karura";
+              text = ''
+                cat ${config-file}
+                rm -rf /tmp/polkadot-launch
                 ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
               '';
             };
@@ -1114,6 +1155,31 @@
             wasmswap = pkgs.callPackage ./code/xcvm/cosmos/wasmswap.nix {
               crane = crane-nightly;
             };
+
+            devnet-default-program =
+              pkgs.composable.mkDevnetProgram "devnet-default"
+              (import ./.nix/devnet-specs/default.nix {
+                inherit pkgs;
+                inherit price-feed;
+                devnet = devnet-dali-complete;
+                frontend = frontend-static;
+              });
+
+            devnet-xcvm-program = pkgs.composable.mkDevnetProgram "devnet-xcvm"
+              (import ./.nix/devnet-specs/xcvm.nix {
+                inherit pkgs;
+                inherit devnet-dali;
+              });
+
+            devnet-persistent-program =
+              pkgs.composable.mkDevnetProgram "devnet-persistent"
+              (import ./.nix/devnet-specs/default.nix {
+                inherit pkgs;
+                inherit price-feed;
+                devnet = devnet-dali-complete;
+                frontend = frontend-static-persistent;
+              });
+
             default = packages.composable-node;
           };
 
@@ -1131,8 +1197,21 @@
 
             developers-minimal = base-shell.overrideAttrs (base:
               common-attrs // {
-                buildInputs = base.buildInputs
-                  ++ (with packages; [ rust-nightly subwasm ]);
+                buildInputs = base.buildInputs ++ (with packages; [
+                  clang
+                  rust-nightly
+                  subwasm
+                  nodejs
+                  python3
+                  yarn
+                ]);
+                LD_LIBRARY_PATH = lib.strings.makeLibraryPath [
+                  stdenv.cc.cc.lib
+                  llvmPackages.libclang.lib
+                ];
+                LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
+                PROTOC = "${protobuf}/bin/protoc";
+                ROCKSDB_LIB_DIR = "${rocksdb}/lib";
                 NIX_PATH = "nixpkgs=${pkgs.path}";
               });
 
@@ -1186,90 +1265,36 @@
               '';
             });
 
+            ci = mkShell {
+              buildInputs = [ pkgs.nixopsUnstable ];
+              NIX_PATH = "nixpkgs=${pkgs.path}";
+            };
+
             default = developers;
           };
 
-          devnet-specs = {
-            default = import ./.nix/devnet-specs/default.nix {
-              inherit pkgs;
-              inherit packages;
-            };
-
-            xcvm = import ./.nix/devnet-specs/xcvm.nix {
-              inherit pkgs;
-              inherit packages;
-            };
-          };
-
           apps = let
-            devnet-default-program =
-              pkgs.composable.mkDevnetProgram "devnet-default"
-              devnet-specs.default;
-            devnet-xcvm-program =
-              pkgs.composable.mkDevnetProgram "devnet-xcvm" devnet-specs.xcvm;
+            makeApp = p: {
+              type = "app";
+              program = pkgs.lib.meta.getExe p;
+            };
           in rec {
-            devnet = {
-              type = "app";
-              program = "${devnet-default-program}/bin/devnet-default";
-            };
-
-            devnet-xcvm = {
-              type = "app";
-              program = "${devnet-xcvm-program}/bin/devnet-xcvm";
-            };
-
-            devnet-dali = {
-              type = "app";
-              program = "${packages.devnet-dali}/bin/run-devnet-dali-dev";
-            };
-            devnet-picasso = {
-              type = "app";
-              program = "${packages.devnet-picasso}/bin/run-devnet-picasso-dev";
-            };
-
-            devnet-kusama-picasso-karura = {
-              type = "app";
-              program =
-                "${packages.kusama-picasso-karura-devnet}/bin/kusama-picasso-karura";
-            };
-
-            # OBSOLETE
-            devnet-kusama-dali-karura =
-              trace "#OBSOLETE: use ` devnet-native-all`" {
-                type = "app";
-                program =
-                  "${packages.kusama-dali-karura-devnet}/bin/kusama-dali-karura";
-              };
-
-            devnet-native-all = trace
-              "biggest native(not container) devnet with all things possible to run native" {
-                type = "app";
-                program =
-                  "${packages.devnet-all-dev-local}/bin/kusama-dali-karura";
-              };
-
-            price-feed = {
-              type = "app";
-              program = "${packages.price-feed}/bin/price-feed";
-            };
-            composable = {
-              type = "app";
-              program = "${packages.composable-node}/bin/composable";
-            };
-            acala = {
-              type = "app";
-              program = "${packages.acala-node}/bin/acala";
-            };
-            polkadot = {
-              type = "app";
-              program = "${packages.polkadot-node}/bin/polkadot";
-            };
-
-            junod = {
-              type = "app";
-              program = "${packages.junod}/bin/junod";
-            };
-
+            devnet = makeApp packages.devnet-default-program;
+            devnet-persistent = makeApp packages.devnet-persistent-program;
+            devnet-xcvm = makeApp packages.devnet-xcvm-program;
+            devnet-dali = makeApp packages.devnet-dali;
+            devnet-picasso = makeApp packages.devnet-picasso;
+            devnet-kusama-picasso-karura =
+              makeApp packages.kusama-picasso-karura-devnet;
+            devnet-rococo-dali-karura =
+              makeApp packages.devnet-rococo-dali-karura;
+            devnet-picasso-complete = makeApp packages.devnet-picasso-complete;
+            devnet-dali-complete = makeApp packages.devnet-dali-complete;
+            price-feed = makeApp packages.price-feed;
+            composable = makeApp packages.composable-node;
+            acala = makeApp packages.acala-node;
+            polkadot = makeApp packages.polkadot-node;
+            junod = makeApp packages.junod;
             # TODO: move list of chains out of here and do fold
             benchmarks-once-composable = flake-utils.lib.mkApp {
               drv = run-with-benchmarks "composable-dev";
@@ -1280,10 +1305,7 @@
             benchmarks-once-picasso = flake-utils.lib.mkApp {
               drv = run-with-benchmarks "picasso-dev";
             };
-            simnode-tests = {
-              type = "app";
-              program = "${packages.simnode-tests}/bin/simnode-tests";
-            };
+            simnode-tests = makeApp packages.simnode-tests;
             simnode-tests-composable =
               flake-utils.lib.mkApp { drv = run-simnode-tests "composable"; };
             simnode-tests-picasso =
@@ -1314,6 +1336,9 @@
             chain-spec = "picasso-dev";
           };
           book = eachSystemOutputs.packages.x86_64-linux.composable-book;
+          frontend =
+            eachSystemOutputs.packages.x86_64-linux.frontend-static-persistent;
+          rev = builtins.getEnv "GITHUB_SHA";
         };
       };
       homeConfigurations = let

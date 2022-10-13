@@ -25,16 +25,21 @@ impl ComposableFeed {
 		assets: &HashSet<(Asset, Asset)>,
 	) -> FeedResult<Feed<FeedIdentifier, Asset, TimeStampedPrice>> {
 		let (sink, source) = mpsc::channel(CHANNEL_BUFFER_SIZE);
-		// Notify feed started
 		sink.send(FeedNotification::Started { feed: FeedIdentifier::Composable })
 			.await
-			.map_err(|_| FeedError::ChannelIsBroken)?;
+			.map_err(|e| {
+				log::error!("{}", e);
+				FeedError::ChannelIsBroken
+			})?;
 		let api =
 			ClientBuilder::new()
 				.set_url(composable_node_url)
 				.build()
 				.await
-				.map_err(|_| FeedError::NetworkFailure)?
+				.map_err(|e| {
+					log::error!("{}", e);
+					FeedError::NetworkFailure
+				})?
 				.to_runtime_api::<composable_api::api::RuntimeApi<
 					DefaultConfig,
 					PolkadotExtrinsicParams<DefaultConfig>,
@@ -46,7 +51,10 @@ impl ComposableFeed {
 				asset: base,
 			})
 			.await
-			.map_err(|_| FeedError::ChannelIsBroken)?;
+			.map_err(|e| {
+				log::error!("{}", e);
+				FeedError::ChannelIsBroken
+			})?;
 		}
 
 		let sink = sink.clone();
@@ -58,17 +66,18 @@ impl ComposableFeed {
 				.events()
 				.subscribe()
 				.await
-				.map_err(|_| FeedError::NetworkFailure)?
+				.map_err(|e| {
+					log::error!("{}", e);
+					FeedError::NetworkFailure
+				})?
 				.filter_events::<(TwapUpdated,)>()
 				.fuse();
-			// process all twap_updated events
 
 			loop {
 				tokio::select! {
 					biased;
 
 					_ = shutdown_message.changed() => {
-						println!("changed");
 						if *shutdown_message.borrow() {
 							break;
 						}
@@ -88,12 +97,18 @@ impl ComposableFeed {
 					asset: base,
 				})
 				.await
-				.map_err(|_| FeedError::ChannelIsBroken)?;
+				.map_err(|e| {
+					log::error!("{}", e);
+					FeedError::ChannelIsBroken
+				})?;
 			}
 
 			sink.send(FeedNotification::Stopped { feed: FeedIdentifier::Composable })
 				.await
-				.map_err(|_| FeedError::ChannelIsBroken)?;
+				.map_err(|e| {
+					log::error!("{}", e);
+					FeedError::ChannelIsBroken
+				})?;
 
 			Ok(())
 		});
@@ -108,26 +123,28 @@ async fn handle_twap_updated_event(
 ) -> Result<(), FeedError> {
 	let event: TwapUpdated = twap_updated_details.event;
 	let (base_asset, base_price) = &event.twaps[0];
-	let (quote_asset, quote_price) = &event.twaps[1];
-	let base_asset = primitives::currency::CurrencyId(base_asset.0)
-		.try_into()
-		.map_err(|_| FeedError::NetworkFailure)?;
-	let quote_asset = primitives::currency::CurrencyId(quote_asset.0)
-		.try_into()
-		.map_err(|_| FeedError::NetworkFailure)?;
+	let (quote_asset, _) = &event.twaps[1];
+	let base_asset = primitives::currency::CurrencyId(base_asset.0).try_into().map_err(|e| {
+		log::error!("{:?}", e);
+		FeedError::NetworkFailure
+	})?;
+	let quote_asset = primitives::currency::CurrencyId(quote_asset.0).try_into().map_err(|e| {
+		log::error!("{:?}", e);
+		FeedError::NetworkFailure
+	})?;
 	Ok(if assets.contains(&(base_asset, quote_asset)) {
-		if let Err(why) = sink
-			.send(FeedNotification::AssetPriceUpdated {
-				feed: FeedIdentifier::Composable,
-				asset: base_asset,
-				price: TimeStamped {
-					value: (Price(base_price.0.try_into().unwrap()), Exponent(12)),
-					timestamp: TimeStamp::now(),
-				},
-			})
-			.await
-		{
-			log::error!("{:#?}", why)
-		};
+		sink.send(FeedNotification::AssetPriceUpdated {
+			feed: FeedIdentifier::Composable,
+			asset: base_asset,
+			price: TimeStamped {
+				value: (Price(base_price.0.try_into().unwrap()), Exponent(12)),
+				timestamp: TimeStamp::now(),
+			},
+		})
+		.await
+		.map_err(|e| {
+			log::error!("{}", e);
+			FeedError::ChannelIsBroken
+		})?;
 	})
 }
