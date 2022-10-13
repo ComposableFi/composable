@@ -1588,13 +1588,136 @@ mod stake {
 				let mint_amount = amount * 2 + existential_deposit;
 				mint_assets([staker], [staked_asset_id], mint_amount);
 
-				prop_assert_noop!(StakingRewards::stake(
+				prop_assert_noop!(
+					StakingRewards::stake(
+						owner,
+						pool_id,
+						amount.into(),
+						duration_preset,
+					),
+					Error::<Test>::StakedAmountTooLow
+				);
+
+				Ok(())
+			})?;
+		}
+	}
+}
+
+mod split_proptests {
+	use super::*;
+	use crate::Error;
+	use composable_tests_helpers::prop_assert_noop;
+
+	proptest! {
+		#![proptest_config(ProptestConfig::with_cases(10000))]
+
+		#[test]
+		fn split_should_work(
+			parts in MINIMUM_STAKING_AMOUNT..MINIMUM_STAKING_AMOUNT*99
+		) {
+			new_test_ext().execute_with(|| {
+				let ratio = Permill::from_rational(parts, MINIMUM_STAKING_AMOUNT*100);
+				System::set_block_number(1);
+
+				let staker = ALICE;
+				let owner = Origin::signed(staker);
+				let pool_id = PICA::ID;
+				let duration_preset = ONE_HOUR;
+				let staking_amount = 100 * MINIMUM_STAKING_AMOUNT;
+
+				assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
+
+				process_and_progress_blocks::<StakingRewards, Test>(1);
+
+				let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
+				mint_assets([staker], [staked_asset_id], PICA::units(200));
+
+				let original_fnft_instance_id =
+					stake_and_assert::<Test, runtime::Event>(staker, pool_id, staking_amount, duration_preset);
+
+				prop_assert_ok!(StakingRewards::split(
 					owner,
-					pool_id,
-					amount.into(),
-					duration_preset,
-				),
-				Error::<Test>::StakedAmountTooLow);
+					STAKING_FNFT_COLLECTION_ID,
+					original_fnft_instance_id,
+					ratio.try_into_validated().unwrap(),
+				));
+
+				Ok(())
+			})?;
+		}
+
+		#[test]
+		fn split_should_not_work_when_low_ratio_results_in_too_low_amount(
+			parts in 1_u128..MINIMUM_STAKING_AMOUNT-1
+		) {
+			new_test_ext().execute_with(|| {
+				let ratio = Permill::from_rational(parts, MINIMUM_STAKING_AMOUNT*100);
+				System::set_block_number(1);
+
+				let staker = ALICE;
+				let owner = Origin::signed(staker);
+				let pool_id = PICA::ID;
+				let duration_preset = ONE_HOUR;
+				let staking_amount = 100 * MINIMUM_STAKING_AMOUNT;
+
+				assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
+
+				process_and_progress_blocks::<StakingRewards, Test>(1);
+
+				let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
+				mint_assets([staker], [staked_asset_id], PICA::units(200));
+
+				let original_fnft_instance_id =
+					stake_and_assert::<Test, runtime::Event>(staker, pool_id, staking_amount, duration_preset);
+
+				prop_assert_noop!(
+					StakingRewards::split(
+						owner,
+						STAKING_FNFT_COLLECTION_ID,
+						original_fnft_instance_id,
+						ratio.try_into_validated().unwrap(),
+					),
+					Error::<Test>::StakedAmountTooLowAfterSplit
+				);
+
+				Ok(())
+			})?;
+		}
+
+		#[test]
+		fn split_should_not_work_when_high_ratio_results_in_too_low_amount(
+			parts in MINIMUM_STAKING_AMOUNT*99+1..MINIMUM_STAKING_AMOUNT*100
+		) {
+			new_test_ext().execute_with(|| {
+				let ratio = Permill::from_rational(parts, MINIMUM_STAKING_AMOUNT*100);
+				System::set_block_number(1);
+
+				let staker = ALICE;
+				let owner = Origin::signed(staker);
+				let pool_id = PICA::ID;
+				let duration_preset = ONE_HOUR;
+				let staking_amount = 100 * MINIMUM_STAKING_AMOUNT;
+
+				assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
+
+				process_and_progress_blocks::<StakingRewards, Test>(1);
+
+				let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
+				mint_assets([staker], [staked_asset_id], PICA::units(200));
+
+				let original_fnft_instance_id =
+					stake_and_assert::<Test, runtime::Event>(staker, pool_id, staking_amount, duration_preset);
+
+				prop_assert_noop!(
+					StakingRewards::split(
+						owner,
+						STAKING_FNFT_COLLECTION_ID,
+						original_fnft_instance_id,
+						ratio.try_into_validated().unwrap(),
+					),
+					Error::<Test>::StakedAmountTooLowAfterSplit
+				);
 
 				Ok(())
 			})?;
