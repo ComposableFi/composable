@@ -19,4 +19,8 @@ jobs:
       - name: 'Dependency Review'
         uses: actions/dependency-review-action@v2
         with:
-          allow-ghsas: GHSA-w5p7-h5w8-2hfq
+          allow-ghsas: 
+            # The following two GHSAs are ignored because they are casued by the static Docusaurus build.
+            # Please remove when Docusaurus gets updated.
+            - GHSA-pfrx-2q88-qq97
+            - GHSA-w5p7-h5w8-2hfq
