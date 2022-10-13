@@ -1058,7 +1058,7 @@
               '';
             };
 
-            devnet-rococo-picasso-karura-statemine = let
+            devnet-picasso-complete = let
               config =
                 (pkgs.callPackage ./scripts/polkadot-launch/all-dev-local.nix {
                   chainspec = "picasso-dev";
@@ -1080,7 +1080,7 @@
               '';
             };
 
-            devnet-rococo-dali-karura-statemine = let
+            devnet-dali-complete = let
               config =
                 (pkgs.callPackage ./scripts/polkadot-launch/all-dev-local.nix {
                   chainspec = "dali-dev";
@@ -1113,7 +1113,7 @@
               (import ./.nix/devnet-specs/default.nix {
                 inherit pkgs;
                 inherit price-feed;
-                devnet = devnet-rococo-dali-karura-statemine;
+                devnet = devnet-dali-complete;
                 frontend = frontend-static;
               });
 
@@ -1128,7 +1128,7 @@
               (import ./.nix/devnet-specs/default.nix {
                 inherit pkgs;
                 inherit price-feed;
-                devnet = devnet-rococo-dali-karura-statemine;
+                devnet = devnet-dali-complete;
                 frontend = frontend-static-persistent;
               });
 
@@ -1240,10 +1240,10 @@
               makeApp packages.kusama-picasso-karura-devnet;
             devnet-rococo-dali-karura =
               makeApp packages.devnet-rococo-dali-karura;
-            devnet-rococo-picasso-karura-statemine =
-              makeApp packages.devnet-rococo-picasso-karura-statemine;
-            devnet-rococo-dali-karura-statemine =
-              makeApp packages.devnet-rococo-dali-karura-statemine;
+            devnet-picasso-complete =
+              makeApp packages.devnet-picasso-complete;
+            devnet-dali-complete =
+              makeApp packages.devnet-dali-complete;
             price-feed = makeApp packages.price-feed;
             composable = makeApp packages.composable-node;
             acala = makeApp packages.acala-node;

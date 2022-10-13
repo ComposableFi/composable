@@ -1222,12 +1222,12 @@ jobs:
             nix run "github:ComposableFi/composable/${{ github.event.pull_request.head.sha }}#composable-node" -L
             ```
 
-            #### Spin up a local devnet (Rococo + Dali + Karura + Statemine):
+            #### Spin up a local devnet:
             ```bash
             nix run "github:ComposableFi/composable/${{ github.event.pull_request.head.sha }}#devnet" -L --option sandbox relaxed --show-trace
             ```
 
-            #### Spin up a local XCVM devnet (Rococo + Dali + Juno):
+            #### Spin up a local XCVM devnet:
             ```bash
             nix run "github:ComposableFi/composable/${{ github.event.pull_request.head.sha }}#devnet-xcvm-up" -L
             ```

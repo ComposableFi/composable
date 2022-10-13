@@ -1,4 +1,4 @@
-name: Deploy Persistent Devnet
+name: Persistent Devnet
 
 on:
   workflow_dispatch:
@@ -16,7 +16,7 @@ env:
   NIXOPS_STATE_FILE: persistent.deployment.nixops
 
 jobs:
-  cache-devnet:
+  cache-persistent-devnet:
     name: "Cache Persistent Devnet"
     runs-on:
       - self-hosted
@@ -49,8 +49,8 @@ jobs:
       run: |
         cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#devnet-persistent-program --no-update-lock-file --show-trace -L
 
-  deploy-devnet:
-    needs: cache-devnet
+  deploy-persistent-devnet:
+    needs: cache-persistent-devnet
     name: "Deploy Persistent Devnet"
     runs-on: ubuntu-latest
     concurrency:
