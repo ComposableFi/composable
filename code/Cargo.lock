@@ -1434,6 +1434,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "parity-scale-codec",
+ "proptest",
  "rust_decimal",
  "scale-info",
  "sp-arithmetic",
