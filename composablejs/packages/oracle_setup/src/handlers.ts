@@ -21,7 +21,8 @@ import { KeyringPair } from "@polkadot/keyring/types";
  * }
  */
 export async function connect(): Promise<{ api: ApiPromise; keyring: Keyring }> {
-  const { newClient, newKeyring } = await getNewConnection();
+  const endpoint = "ws://" + (process.env.ENDPOINT ?? "127.0.0.1:9988");
+  const { newClient, newKeyring } = await getNewConnection(endpoint);
   const api = newClient;
   const keyring = newKeyring;
   return { api: api, keyring: keyring };

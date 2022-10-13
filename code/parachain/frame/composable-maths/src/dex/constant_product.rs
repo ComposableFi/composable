@@ -8,7 +8,7 @@ use rust_decimal::{
 };
 use sp_runtime::{
 	traits::{IntegerSquareRoot, One, Zero},
-	ArithmeticError, PerThing,
+	ArithmeticError, DispatchError, PerThing,
 };
 
 /// From https://balancer.fi/whitepaper.pdf, equation (2)
@@ -210,6 +210,88 @@ where
 	let term_minus_one = term_to_weight_power.safe_sub(&Decimal::one())?;
 	let ai = bi.safe_mul(&term_minus_one)?.to_u128().ok_or(ArithmeticError::Overflow)?;
 	Ok(ai)
+}
+
+/// Compute the amount of the input token given the amount of the output token.
+///
+/// If `Ok`, returns a tuple containing `(a_sent, fee)`.
+/// To get `a_sent` without accounting for the fee, set `f = 0`.
+/// Amount in, round up results.
+///
+/// Notes:
+/// * Weights must already be normalized
+/// * For an unbounded fee, `1 - f` must be greater than `b_i / 2^96`
+/// * For a fee bounded between 0% - 1%, `b_i` must be less than or equal to
+///   `1_960_897_022_228_042_355_440_212_770_816 / 25`
+///
+/// # Parameters
+/// * `w_i` - Weight of the input token
+/// * `w_o` - Weight of the output token
+/// * `b_i` - Balance of the input token
+/// * `b_o` - Balance of the output token
+/// * `a_out` - Amount of the output token desired by the user
+/// * `f` - Total swap fee
+///
+/// From https://github.com/ComposableFi/composable/blob/main/rfcs/0008-pablo-lbp-cpp-restructure.md#41-fee-math-updates,
+/// equation (3)
+pub fn compute_in_given_out_new<T: PerThing>(
+	w_i: T,
+	w_o: T,
+	b_i: u128,
+	b_o: u128,
+	a_out: u128,
+	f: T,
+) -> Result<(u128, u128), ConstantProductAmmError> {
+	ensure!(a_out <= b_o, ConstantProductAmmError::CannotTakeMoreThanAvailable);
+	let w_i = Decimal::from_u128(w_i.deconstruct().into()).ok_or(ArithmeticError::Overflow)?;
+	let w_o = Decimal::from_u128(w_o.deconstruct().into()).ok_or(ArithmeticError::Overflow)?;
+	let b_i = Decimal::from_u128(b_i).ok_or(ArithmeticError::Overflow)?;
+	let b_o = Decimal::from_u128(b_o).ok_or(ArithmeticError::Overflow)?;
+	let a_out = Decimal::from_u128(a_out).ok_or(ArithmeticError::Overflow)?;
+
+	let weight_ratio = w_o.safe_div(&w_i)?;
+	// NOTE(connor): Use if to prevent pointless conversions if `f` is zero
+	let left_from_fee = if f.is_zero() {
+		Decimal::ONE
+	} else {
+		Decimal::from(f.left_from_one().deconstruct().into())
+			.safe_div(&Decimal::from(T::one().deconstruct().into()))?
+	};
+	let b_i_over_fee = b_i.safe_div(&left_from_fee)?;
+	let fee = Decimal::ONE.safe_sub(&left_from_fee)?;
+
+	let base = b_o.safe_div(&b_o.safe_sub(&a_out)?)?;
+	let power = base.checked_powd(weight_ratio).ok_or(ArithmeticError::Overflow)?;
+	let ratio = power.safe_sub(&Decimal::ONE)?;
+
+	let a_sent = b_i_over_fee.safe_mul(&ratio)?.round_up();
+	let fee = a_sent.safe_mul(&fee)?.round_up().to_u128().ok_or(ArithmeticError::Overflow)?;
+
+	Ok((a_sent.to_u128().ok_or(ArithmeticError::Overflow)?, fee))
+}
+
+#[derive(Debug, Eq, PartialEq)]
+pub enum ConstantProductAmmError {
+	ArithmeticError(ArithmeticError),
+	CannotTakeMoreThanAvailable,
+}
+
+impl From<ArithmeticError> for ConstantProductAmmError {
+	fn from(error: ArithmeticError) -> Self {
+		ConstantProductAmmError::ArithmeticError(error)
+	}
+}
+
+impl From<ConstantProductAmmError> for DispatchError {
+	fn from(error: ConstantProductAmmError) -> Self {
+		match error {
+			ConstantProductAmmError::ArithmeticError(error) => DispatchError::from(error),
+			ConstantProductAmmError::CannotTakeMoreThanAvailable =>
+				DispatchError::from(
+					"`a_out` must not be greater than `b_o` (can't take out more than what's available)"
+				),
+		}
+	}
 }
 
 /// https://uniswap.org/whitepaper.pdf, equation (13)
