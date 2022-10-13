@@ -57,6 +57,7 @@ pub struct FinalityProof<H: Header> {
 }
 
 /// Previous light client state.
+#[derive(Clone)]
 pub struct ClientState<H> {
 	/// Current authority set
 	pub current_authorities: AuthorityList,

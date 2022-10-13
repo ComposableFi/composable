@@ -173,21 +173,17 @@ where
 		base: H::Hash,
 		block: H::Hash,
 	) -> Result<Vec<H::Hash>, finality_grandpa::Error> {
-		let mut route = Vec::new();
+		let mut route = vec![block];
 		let mut current_hash = block;
-		loop {
-			if current_hash == base {
-				break
-			}
+		while current_hash != base {
 			match self.ancestry.get(&current_hash) {
 				Some(current_header) => {
 					current_hash = *current_header.parent_hash();
 					route.push(current_hash);
 				},
 				_ => return Err(finality_grandpa::Error::NotDescendent),
-			}
+			};
 		}
-		route.pop(); // remove the base
 
 		Ok(route)
 	}

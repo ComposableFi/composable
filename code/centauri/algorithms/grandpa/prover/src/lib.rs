@@ -254,7 +254,6 @@ where
 			unknown_headers.push(H::decode(&mut &header.encode()[..])?);
 		}
 
-		dbg!(unknown_headers.iter().map(|h| u32::from(*h.number())).collect::<Vec<_>>());
 		// overwrite unknown headers
 		finality_proof.unknown_headers = unknown_headers;
 
