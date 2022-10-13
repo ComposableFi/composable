@@ -23,7 +23,7 @@ where
 	let usdc: <T as pallet_pablo::Config>::AssetId = 100_u128.into();
 	let usdt: <T as pallet_pablo::Config>::AssetId = 104_u128.into();
 	let owner: <T as frame_system::Config>::AccountId = whitelisted_caller();
-	let usdc_usdt_config = pallet_pablo::PoolInitConfiguration::ConstantProduct {
+	let usdc_usdt_config = pallet_pablo::PoolInitConfiguration::DualAssetConstantProduct {
 		owner: owner.clone(),
 		pair: CurrencyPair::new(usdc, usdt),
 		fee: Permill::zero(),
@@ -66,7 +66,7 @@ where
 	let eth: <T as pallet_pablo::Config>::AssetId = 102_u128.into();
 	let usdc: <T as pallet_pablo::Config>::AssetId = 103_u128.into();
 	let usdt: <T as pallet_pablo::Config>::AssetId = 104_u128.into();
-	let pica_ksm_config = pallet_pablo::PoolInitConfiguration::ConstantProduct {
+	let pica_ksm_config = pallet_pablo::PoolInitConfiguration::DualAssetConstantProduct {
 		owner: owner.clone(),
 		pair: CurrencyPair::new(pica, ksm),
 		fee: Permill::zero(),
@@ -92,7 +92,7 @@ where
 	sp_std::if_std! {
 		println!(" pica_ksm {:?}", pica_ksm);
 	}
-	let ksm_eth_config = pallet_pablo::PoolInitConfiguration::ConstantProduct {
+	let ksm_eth_config = pallet_pablo::PoolInitConfiguration::DualAssetConstantProduct {
 		owner: owner.clone(),
 		pair: CurrencyPair::new(ksm, eth),
 		fee: Permill::zero(),
@@ -119,7 +119,7 @@ where
 		println!(" ksm_eth {:?}", ksm_eth);
 	}
 
-	let eth_usdc_config = pallet_pablo::PoolInitConfiguration::ConstantProduct {
+	let eth_usdc_config = pallet_pablo::PoolInitConfiguration::DualAssetConstantProduct {
 		owner: owner.clone(),
 		pair: CurrencyPair::new(eth, usdc),
 		fee: Permill::zero(),
@@ -146,7 +146,7 @@ where
 	sp_std::if_std! {
 		println!(" eth_usdc {:?}", eth_usdc);
 	}
-	let usdc_usdt_config = pallet_pablo::PoolInitConfiguration::ConstantProduct {
+	let usdc_usdt_config = pallet_pablo::PoolInitConfiguration::DualAssetConstantProduct {
 		owner: owner.clone(),
 		pair: CurrencyPair::new(usdc, usdt),
 		fee: Permill::zero(),

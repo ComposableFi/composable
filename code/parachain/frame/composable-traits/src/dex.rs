@@ -2,13 +2,14 @@ use crate::{currency::BalanceLike, defi::CurrencyPair};
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
 	traits::{tokens::AssetId as AssetIdLike, Get},
-	BoundedVec, RuntimeDebug,
+	BoundedVec, CloneNoBound, EqNoBound, PartialEqNoBound, RuntimeDebug, RuntimeDebugNoBound,
 };
 use scale_info::TypeInfo;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
-use sp_runtime::{DispatchError, Permill};
+use sp_runtime::{BoundedBTreeMap, DispatchError, Permill};
 use sp_std::{collections::btree_map::BTreeMap, ops::Mul, vec::Vec};
+use std::fmt::Debug;
 
 /// Trait for automated market maker.
 pub trait Amm {
@@ -245,20 +246,33 @@ pub trait SimpleExchange {
 	) -> Result<Self::Balance, DispatchError>;
 }
 
-#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Default, PartialEq, Eq, RuntimeDebug)]
-pub struct ConstantProductPoolInfo<AccountId, AssetId> {
+/// Most basic representation of an AMM pool possible with extensibility for future cases. Any AMM
+/// implementation should embed this to inherit the basics.
+#[derive(
+	Encode,
+	Decode,
+	MaxEncodedLen,
+	TypeInfo,
+	CloneNoBound,
+	Default,
+	PartialEqNoBound,
+	EqNoBound,
+	RuntimeDebugNoBound,
+)]
+#[scale_info(skip_type_params(MaxAssets))]
+pub struct BasicPoolInfo<
+	AccountId: Clone + PartialEq + Debug,
+	AssetId: Ord + Clone + Debug,
+	MaxAssets: Get<u32>,
+> {
 	/// Owner of pool
 	pub owner: AccountId,
-	/// Swappable assets
-	pub pair: CurrencyPair<AssetId>,
+	/// Swappable assets with their normalized(sum of weights = 1) weights
+	pub assets_weights: BoundedBTreeMap<AssetId, Permill, MaxAssets>,
 	/// AssetId of LP token
 	pub lp_token: AssetId,
 	/// Amount of the fee pool charges for the exchange
 	pub fee_config: FeeConfig,
-	/// The weight of the base asset. Must hold `1 = base_weight + quote_weight`
-	pub base_weight: Permill,
-	/// The weight of the quote asset. Must hold `1 = base_weight + quote_weight`
-	pub quote_weight: Permill,
 }
 
 /// Describes route for DEX.
