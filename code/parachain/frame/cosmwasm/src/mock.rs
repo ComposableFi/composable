@@ -163,7 +163,6 @@ impl pallet_timestamp::Config for Test {
 }
 
 /// Native <-> Cosmwasm account mapping
-/// TODO(hussein-aitlahcen): Probably nicer to have SS58 representation here.
 pub struct AccountToAddr;
 impl Convert<alloc::string::String, Result<AccountId, ()>> for AccountToAddr {
 	fn convert(a: alloc::string::String) -> Result<AccountId, ()> {

@@ -6,12 +6,14 @@ use crate::{
 	},
 	ContractInfoOf, Pallet as Cosmwasm,
 };
-use alloc::{format, string::String, vec, vec::Vec};
+use alloc::{collections::BTreeMap, format, string::String, vec, vec::Vec};
+use cosmwasm_minimal_std::Coin;
 use cosmwasm_vm::system::CosmwasmContractMeta;
 use cosmwasm_vm_wasmi::code_gen::{self, WasmModule};
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
-use frame_support::traits::{fungible, Get};
+use frame_support::traits::{fungible, fungibles, fungibles::Mutate, Get};
 use frame_system::RawOrigin;
+use primitives::currency::CurrencyId;
 use sha2::{Digest, Sha256};
 use sha3::Keccak256;
 use sp_runtime::traits::Convert;
@@ -30,13 +32,14 @@ const ED25519_SIGNATURE2_HEX: &str = "92a009a9f0d4cab8720e820b5f642540a2b27b5416
 const ED25519_PUBLIC_KEY2_HEX: &str =
 	"3d4017c3e843895a92b70aa74d1b7ebc9c982ccf2ec4968cc0cd55f12af4660c";
 
-fn create_funded_account<T: Config + pallet_balances::Config>(
+fn create_funded_account<T: Config + pallet_balances::Config + pallet_assets::Config>(
 	key: &'static str,
 ) -> <T as Config>::AccountIdExtended
 where
 	<T as pallet_balances::Config>::Balance: From<u128>,
 {
 	let origin = account::<<T as Config>::AccountIdExtended>(key, 0, 0xCAFEBABE);
+
 	<pallet_balances::Pallet<T> as fungible::Mutate<T::AccountId>>::mint_into(
 		&origin,
 		10_000_000_000_000_u128.into(),
@@ -49,7 +52,7 @@ fn create_instantiated_contract<T>(
 	origin: T::AccountId,
 ) -> (CosmwasmVMShared, T::AccountId, ContractInfoOf<T>)
 where
-	T: Config + pallet_balances::Config,
+	T: Config + pallet_balances::Config + pallet_assets::Config,
 	<T as pallet_balances::Config>::Balance: From<u128>,
 {
 	// 1. Generate a wasm code
@@ -73,39 +76,115 @@ where
 	(shared, contract_addr, contract_info)
 }
 
+fn create_coins<T>(accounts: Vec<&AccountIdOf<T>>, n: u32) -> Vec<Coin>
+where
+	T: Config + pallet_balances::Config + pallet_assets::Config,
+	<T as Config>::Balance: From<u128>,
+	<T as Config>::AssetId: From<u128>,
+	<T as pallet_balances::Config>::Balance: From<u128>,
+	<T as pallet_assets::Config>::Balance: From<u128>,
+	<T as pallet_assets::Config>::AssetId: From<u128>,
+	<T as pallet_assets::Config>::NativeCurrency: fungible::Mutate<<T as pallet::Config>::AccountIdExtended>
+		+ fungible::Inspect<
+			<T as pallet::Config>::AccountIdExtended,
+			Balance = <T as pallet_assets::Config>::Balance,
+		>,
+	<T as pallet_assets::Config>::MultiCurrency: fungibles::Mutate<<T as pallet::Config>::AccountIdExtended>
+		+ fungibles::Inspect<
+			<T as pallet::Config>::AccountIdExtended,
+			Balance = <T as pallet_assets::Config>::Balance,
+			AssetId = <T as pallet_assets::Config>::AssetId,
+		>,
+{
+	let mut funds: Vec<Coin> = Vec::new();
+	let assets = CurrencyId::list_assets();
+	for i in 0..n {
+		let currency_id = assets[i as usize].id as u128;
+		// We need to fund all accounts first
+		for account in &accounts {
+			<pallet_assets::Pallet<T> as Mutate<T::AccountId>>::mint_into(
+				currency_id.into(),
+				account,
+				10_000_000_000_000_000_000u128.into(),
+			)
+			.unwrap();
+		}
+		funds.push(Cosmwasm::<T>::native_asset_to_cosmwasm_asset(
+			currency_id.into(),
+			1_000_000_000_000_000_000u128.into(),
+		));
+	}
+	funds
+}
+
 benchmarks! {
 	where_clause {
 		where
+			T: pallet_balances::Config + pallet_assets::Config<AssetId = CurrencyId>,
 			<T as Config>::Balance: From<u128>,
+			<T as Config>::AssetId: From<u128>,
 			<T as pallet_balances::Config>::Balance: From<u128>,
-			T::AssetId: From<u128>,
-			T: pallet_balances::Config
+			<T as pallet_assets::Config>::Balance: From<u128>,
+			<T as pallet_assets::Config>::AssetId: From<u128>,
+			<T as pallet_assets::Config>::NativeCurrency: fungible::Mutate<<T as pallet::Config>::AccountIdExtended>
+				+ fungible::Inspect<
+					<T as pallet::Config>::AccountIdExtended,
+					Balance = <T as pallet_assets::Config>::Balance,
+				>,
+			<T as pallet_assets::Config>::MultiCurrency: fungibles::Mutate<<T as pallet::Config>::AccountIdExtended>
+				+ fungibles::Inspect<
+					<T as pallet::Config>::AccountIdExtended,
+					Balance = <T as pallet_assets::Config>::Balance,
+					AssetId = <T as pallet_assets::Config>::AssetId,
+				>,
 	}
 
 	upload {
 		let n in 1..T::MaxCodeSize::get() - 10000;
-		let asset = T::AssetToDenom::convert(alloc::string::String::from("1")).unwrap();
 		let origin = create_funded_account::<T>("signer");
 		let wasm_module: WasmModule = code_gen::ModuleDefinition::new(n as usize).unwrap().into();
 	}: _(RawOrigin::Signed(origin), wasm_module.code.try_into().unwrap())
 
 	instantiate {
+		let n in 0..CurrencyId::list_assets().len().try_into().unwrap();
 		let origin = create_funded_account::<T>("origin");
 		let wasm_module: WasmModule = code_gen::ModuleDefinition::new(10).unwrap().into();
 		Cosmwasm::<T>::do_upload(&origin, wasm_module.code.try_into().unwrap()).unwrap();
 		let salt = vec![1].try_into().unwrap();
 		let label = vec![65].try_into().unwrap();
 		let message = vec![b'{', b'}'].try_into().unwrap();
-		// TODO: funds
-		let funds = Default::default();
-	}: _(RawOrigin::Signed(origin), 1, salt, None, label, funds, 100_000_000u64, message)
+		let mut funds = BTreeMap::new();
+		let assets = CurrencyId::list_assets();
+		for i in 0..n {
+			let currency_id = assets[i as usize].id as u128;
+			<pallet_assets::Pallet<T> as Mutate<T::AccountId>>::mint_into(
+				currency_id.into(),
+				&origin,
+				10_000_000_000_000_000_000u128.into(),
+			)
+			.unwrap();
+			funds.insert(currency_id.into(), (1_000_000_000_000_000_000u128.into(), false));
+		}
+	}: _(RawOrigin::Signed(origin), 1, salt, None, label, funds.try_into().unwrap(), 100_000_000u64, message)
 
 	execute {
+		let n in 0..CurrencyId::list_assets().len().try_into().unwrap();
 		let origin = create_funded_account::<T>("origin");
 		let (_, contract, _info) = create_instantiated_contract::<T>(origin.clone());
-		let message = vec![b'{', b'}'].try_into().unwrap();
-		// TODO: funds
-	}: _(RawOrigin::Signed(origin), contract, Default::default(), 100_000_000u64, message)
+		let message = b"{}".to_vec().try_into().unwrap();
+		let mut funds = BTreeMap::new();
+		let assets = CurrencyId::list_assets();
+		for i in 0..n {
+			let currency_id = assets[i as usize].id as u128;
+			<pallet_assets::Pallet<T> as Mutate<T::AccountId>>::mint_into(
+				currency_id.into(),
+				&origin,
+				10_000_000_000_000_000_000u128.into(),
+			)
+			.unwrap();
+			funds.insert(currency_id.into(), (1_000_000_000_000_000_000u128.into(), false));
+		}
+	}: _(RawOrigin::Signed(origin), contract, funds.try_into().unwrap(), 100_000_000u64, message)
 
 	db_read {
 		let sender = create_funded_account::<T>("origin");
@@ -164,11 +243,12 @@ benchmarks! {
 	}
 
 	transfer {
+		let n in 0..CurrencyId::list_assets().len().try_into().unwrap();
 		let sender = create_funded_account::<T>("from");
 		let receiver = account::<<T as Config>::AccountIdExtended>("to", 0, 0xCAFEBABE);
-		// TODO: funds
+		let funds: Vec<Coin> = create_coins::<T>(vec![&sender], n);
 	}: {
-		Cosmwasm::<T>::do_transfer(&sender, &receiver, &[], false).unwrap();
+		Cosmwasm::<T>::do_transfer(&sender, &receiver, &funds, false).unwrap();
 	}
 
 	set_contract_meta {
@@ -268,22 +348,24 @@ benchmarks! {
 	}
 
 	continue_instantiate {
+		let n in 0..CurrencyId::list_assets().len().try_into().unwrap();
 		let sender = create_funded_account::<T>("origin");
 		let (mut shared, contract, info) = create_instantiated_contract::<T>(sender.clone());
 		let meta: CosmwasmContractMeta<CosmwasmAccount<T>> = CosmwasmContractMeta { code_id: info.code_id, admin: None, label: String::from("test")};
+		let funds = create_coins::<T>(vec![&sender, &contract], n);
 	}: {
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(&mut shared, sender, contract, info, vec![]).unwrap();
-		// TODO: Funds
-		Cosmwasm::<T>::do_continue_instantiate(&mut vm.0, meta, vec![], "{}".as_bytes(), &mut |_event| {}).unwrap()
+		Cosmwasm::<T>::do_continue_instantiate(&mut vm.0, meta, funds, "{}".as_bytes(), &mut |_event| {}).unwrap()
 	}
 
 	continue_execute {
+		let n in 0..CurrencyId::list_assets().len().try_into().unwrap();
 		let sender = create_funded_account::<T>("origin");
 		let (mut shared, contract, info) = create_instantiated_contract::<T>(sender.clone());
+		let funds = create_coins::<T>(vec![&sender, &contract], n);
 	}: {
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(&mut shared, sender, contract.clone(), info, vec![]).unwrap();
-		// TODO: Funds
-		Cosmwasm::<T>::do_continue_execute(&mut vm.0, contract, vec![], "{}".as_bytes(), &mut |_event| {}).unwrap()
+		Cosmwasm::<T>::do_continue_execute(&mut vm.0, contract, funds, "{}".as_bytes(), &mut |_event| {}).unwrap()
 	}
 
 	continue_migrate {
