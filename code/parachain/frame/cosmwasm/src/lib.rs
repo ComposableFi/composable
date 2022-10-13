@@ -395,9 +395,7 @@ pub mod pallet {
 		///   export.
 		/// * `gas` the maximum gas to use, the remaining is refunded at the end of the transaction.
 		#[transactional]
-		// TODO(aeryz): we currently charge transfer internally with respect to count of funds,
-		// so we set it to 0 here to prevent double-charge.
-		#[pallet::weight(T::WeightInfo::instantiate(0).saturating_add(*gas))]
+		#[pallet::weight(T::WeightInfo::instantiate(funds.len() as u32).saturating_add(*gas))]
 		pub fn instantiate(
 			origin: OriginFor<T>,
 			code_id: CosmwasmCodeId,
@@ -438,9 +436,7 @@ pub mod pallet {
 		///   export.
 		/// * `gas` the maximum gas to use, the remaining is refunded at the end of the transaction.
 		#[transactional]
-		// TODO(aeryz): we currently charge transfer internally with respect to count of funds,
-		// so we set it to 0 here to prevent double-charge.
-		#[pallet::weight(T::WeightInfo::execute(0).saturating_add(*gas))]
+		#[pallet::weight(T::WeightInfo::execute(funds.len() as u32).saturating_add(*gas))]
 		pub fn execute(
 			origin: OriginFor<T>,
 			contract: AccountIdOf<T>,
