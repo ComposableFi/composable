@@ -84,19 +84,11 @@ where
 					finality_proof: header.finality_proof,
 					parachain_headers: header.parachain_headers,
 				};
-				let client_state = grandpa_client_primitives::ClientState {
-					current_authorities: client_state.current_authorities,
-					current_set_id: client_state.current_set_id,
-					latest_relay_hash: client_state.latest_relay_hash,
-					latest_relay_height: client_state.latest_relay_height,
-					latest_para_height: client_state.latest_para_height,
-					para_id: client_state.para_id,
-				};
 
 				grandpa_client::verify_parachain_headers_with_grandpa_finality_proof::<
 					RelayChainHeader,
 					H,
-				>(client_state, headers_with_finality_proof)
+				>(client_state.into(), headers_with_finality_proof)
 				.map_err(Error::GrandpaPrimitives)?;
 			},
 			ClientMessage::Misbehaviour(misbehavior) => {

@@ -363,10 +363,9 @@ where
 	// blocks from the missed update height instead of the previous light client height
 	// Since we would have fetched parachain headers for the previous light client height while
 	// fetching proofs for the missed update
-	let headers = source
-		.query_grandpa_finalized_parachain_headers_between(
+    let finalized_para_header = source
+        .query_latest_finalized_parachain_header(
 			justification.commit.target_number,
-			client_state.latest_relay_height,
 		)
 		.await?
 		.ok_or_else(|| {
@@ -375,6 +374,10 @@ where
 					.to_string(),
 			)
 		})?;
+
+    // notice the inclusive range
+    let headers = ((client_state.latest_para_height + 1)..=finalized_para_header.number).collect::<Vec<_>>();
+
 
 	log::info!(
 		"Fetching events from {} for blocks {}..{}",

@@ -30,7 +30,7 @@ use futures::stream::StreamExt;
 use grandpa_client_primitives::{
 	justification::GrandpaJustification, parachain_header_storage_key, ParachainHeaderProofs,
 };
-use grandpa_prover::{runtime, GrandpaProver, JustificationNotification};
+use grandpa_prover::{polkadot, GrandpaProver, JustificationNotification};
 use ibc::{
 	core::{
 		ics02_client::{
@@ -105,8 +105,8 @@ async fn test_continuous_update_of_grandpa_client() {
 			.expect("Failed to fetch finalized header");
 
 		let head_data = {
-			let key = runtime::api::storage().paras().heads(
-				&runtime::api::runtime_types::polkadot_parachain::primitives::Id(prover.para_id),
+			let key = polkadot::api::storage().paras().heads(
+				&polkadot::api::runtime_types::polkadot_parachain::primitives::Id(prover.para_id),
 			);
 			prover
 				.relay_client
@@ -207,28 +207,24 @@ async fn test_continuous_update_of_grandpa_client() {
 			continue
 		}
 
-		let headers = prover
+        let finalized_para_header = prover
 			.query_latest_finalized_parachain_header(
 				justification.commit.target_number,
-				client_state.latest_relay_height,
 			)
 			.await
 			.expect("Failed to fetch finalized parachain headers");
-		let headers = match headers {
-			Some(headers) => headers,
-			None => continue,
-		};
-		let header_numbers = headers
-			.iter()
-			.map(|h| h.number)
-			.filter(|num| *num != client_state.latest_para_height)
-			.collect::<Vec<_>>();
+        // notice the inclusive range
+        let header_numbers = ((client_state.latest_para_height + 1)..=finalized_para_header.number).collect::<Vec<_>>();
+
+        if header_numbers.len() == 0 {
+            continue
+        }
 
 		let proof = prover
 			.query_finalized_parachain_headers_with_proof(
-				justification.commit.target_number,
-				client_state.latest_relay_height,
-				header_numbers.clone(),
+				&(client_state.clone().into()),
+                justification.commit.target_number,
+				header_numbers,
 			)
 			.await
 			.expect("Failed to fetch finalized parachain headers with proof");
