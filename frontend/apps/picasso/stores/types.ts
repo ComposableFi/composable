@@ -16,7 +16,11 @@ import { BondsSlice } from "@/stores/defi/polkadot/bonds/slice";
 
 export type StoreSlice<T> = StateCreator<
   AllSlices,
-  [["zustand/immer", never], ["zustand/devtools", never]],
+  [
+    ["zustand/subscribeWithSelector", never],
+    ["zustand/immer", never],
+    ["zustand/devtools", never]
+  ],
   [],
   T
 >;

@@ -15,10 +15,10 @@ export const TokenDropdownCombinedInput: React.FC<
   const { options: tokenOptions, ...restSelectProps } =
     CombinedSelectProps || {};
   const options = tokenOptions
-    ? tokenOptions.map(({ tokenId, disabled, icon }) => ({
+    ? tokenOptions.map(({ symbol, tokenId, disabled, icon }) => ({
         value: tokenId,
         icon: icon,
-        label: tokenId,
+        label: symbol,
         disabled: disabled,
       }))
     : [];

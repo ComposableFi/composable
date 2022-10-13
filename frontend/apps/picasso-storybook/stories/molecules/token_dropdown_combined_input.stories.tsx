@@ -6,6 +6,7 @@ import {
 import { TOKEN_IDS, TOKENS } from "tokens";
 import { Box, SxProps } from "@mui/material";
 import { Story } from "@storybook/react";
+import { AssetId } from "picasso/defi/polkadot/types";
 
 const TokenDropdownCombinedInputsStories = (
   props: TokenDropdownCombinedInputProps
@@ -55,8 +56,10 @@ const balanceLabelProps = {
 const selectProps: TokenSelectProps = {
   value: TOKEN_IDS[0],
   options: Object.values(TOKENS).map((token) => ({
-    tokenId: token.id,
+    tokenId: token.id as AssetId,
     icon: token.icon,
+    symbol: token.symbol,
+    disabled: false,
   })),
 };
 

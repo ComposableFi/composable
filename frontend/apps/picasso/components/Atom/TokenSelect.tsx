@@ -1,12 +1,7 @@
 import React from "react";
-import { getToken, TokenId } from "tokens";
+import { getToken } from "tokens";
 import { Select, SelectProps } from "./Select";
-
-type TokenOption = {
-  tokenId: TokenId;
-  icon: string;
-  disabled?: boolean;
-};
+import { TokenOption } from "@/stores/defi/polkadot/transfers/transfers";
 
 export type TokenSelectProps = {
   options?: TokenOption[];

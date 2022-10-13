@@ -85,7 +85,7 @@ export interface SubstrateBalancesSlice {
 
 export const createSubstrateBalancesSlice: StoreSlice<
   SubstrateBalancesSlice
-> = (set) => ({
+> = (set, get) => ({
   substrateBalances: {
     ...initialState,
     updateBalance: ({
