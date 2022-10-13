@@ -5,3 +5,5 @@
 # It is recommended to check this file in to source control so that
 # everyone who runs the test benefits from these saved cases.
 cc e9c54402dec866a96921319f195004cdce8fe2d93911459a42103768990eeea6 # shrinks to network_id = 1, amm_id = 0, start_block = 1
+cc f60478cbb9380be7fea6c421e8ce2ab80edabce698b465c9669145deb780b19f # shrinks to amount = 170141183460469231731687303715884105228
+cc da2d5615192fd7056f17bb99e4904d6a0d385252d7a2fb795e9071a55130be39 # shrinks to amount = 336913234575186597488489710328483377680

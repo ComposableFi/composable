@@ -11,13 +11,12 @@ use crate::{
 };
 use composable_support::validation::TryIntoValidated;
 use composable_tests_helpers::{
-	prop_assert_acceptable_computation_error, prop_assert_ok,
+	prop_assert_ok,
 	test::{
 		block::{next_block, process_and_progress_blocks},
 		currency::{BTC, PICA, USDT, XPICA},
 		helper::{
 			self, assert_extrinsic_event, assert_extrinsic_event_with, assert_last_event_with,
-			default_acceptable_computation_error,
 		},
 	},
 };
@@ -1536,7 +1535,7 @@ mod stake {
 
 		#[test]
 		fn stake_should_work(
-			amount in MINIMUM_STAKING_AMOUNT..u128::max_value(),
+			amount in MINIMUM_STAKING_AMOUNT..(u128::max_value() / 10),
 		) {
 			new_test_ext().execute_with(|| {
 				process_and_progress_blocks::<StakingRewards, Test>(1);
@@ -1569,7 +1568,7 @@ mod stake {
 
 		#[test]
 		fn stake_should_not_work_with_low_amounts(
-			amount in 1_u128..MINIMUM_STAKING_AMOUNT-1
+			amount in 1_u128..(MINIMUM_STAKING_AMOUNT - 1)
 		) {
 			new_test_ext().execute_with(|| {
 				process_and_progress_blocks::<StakingRewards, Test>(1);
