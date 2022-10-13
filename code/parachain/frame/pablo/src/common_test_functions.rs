@@ -1,9 +1,8 @@
 use crate::{
-	liquidity_bootstrapping_tests::valid_pool,
 	mock,
 	mock::{Pablo, *},
 	Config,
-	PoolConfiguration::{ConstantProduct, LiquidityBootstrapping, StableSwap},
+	PoolConfiguration::ConstantProduct,
 	PoolInitConfiguration,
 };
 use frame_support::{
@@ -17,7 +16,7 @@ use sp_runtime::TokenError;
 /// `expected_lp_check` takes base_amount, quote_amount and lp_tokens in order and returns
 /// true if lp_tokens are expected for given base_amount, quote_amount.
 pub fn common_add_remove_lp(
-	init_config: PoolInitConfiguration<AccountId, AssetId, BlockNumber>,
+	init_config: PoolInitConfiguration<AccountId, AssetId>,
 	init_base_amount: Balance,
 	init_quote_amount: Balance,
 	next_base_amount: Balance,
@@ -30,9 +29,7 @@ pub fn common_add_remove_lp(
 		|e| matches!(e.event, mock::Event::Pablo(crate::Event::PoolCreated { pool_id, .. }) if pool_id == actual_pool_id),
 	);
 	let pair = match init_config {
-		PoolInitConfiguration::StableSwap { pair, .. } => pair,
 		PoolInitConfiguration::ConstantProduct { pair, .. } => pair,
-		PoolInitConfiguration::LiquidityBootstrapping(pool) => pool.pair,
 	};
 	// Mint the tokens
 	assert_ok!(Tokens::mint_into(pair.base, &ALICE, init_base_amount));
@@ -59,9 +56,7 @@ pub fn common_add_remove_lp(
 
 	let pool = Pablo::pools(actual_pool_id).expect("pool not found");
 	let lp_token = match pool {
-		StableSwap(pool) => pool.lp_token,
 		ConstantProduct(pool) => pool.lp_token,
-		LiquidityBootstrapping(_) => panic!("Not implemented"),
 	};
 	// Mint the tokens
 	assert_ok!(Tokens::mint_into(pair.base, &BOB, next_base_amount));
@@ -99,7 +94,7 @@ pub fn common_add_remove_lp(
 /// `pool_base_amount` and `pool_quote_amount` parameters and returns amount of expected new
 /// lp_tokens.
 pub fn common_add_lp_with_min_mint_amount(
-	init_config: PoolInitConfiguration<AccountId, AssetId, BlockNumber>,
+	init_config: PoolInitConfiguration<AccountId, AssetId>,
 	init_base_amount: Balance,
 	init_quote_amount: Balance,
 	base_amount: Balance,
@@ -108,9 +103,7 @@ pub fn common_add_lp_with_min_mint_amount(
 ) {
 	let pool_id = Pablo::do_create_pool(init_config.clone()).expect("pool creation failed");
 	let pair = match init_config {
-		PoolInitConfiguration::StableSwap { pair, .. } => pair,
 		PoolInitConfiguration::ConstantProduct { pair, .. } => pair,
-		PoolInitConfiguration::LiquidityBootstrapping(pool) => pool.pair,
 	};
 	// Mint the tokens
 	assert_ok!(Tokens::mint_into(pair.base, &ALICE, init_base_amount));
@@ -128,9 +121,7 @@ pub fn common_add_lp_with_min_mint_amount(
 
 	let pool = Pablo::pools(pool_id).expect("pool not found");
 	let lp_token = match pool {
-		StableSwap(pool) => pool.lp_token,
 		ConstantProduct(pool) => pool.lp_token,
-		LiquidityBootstrapping(_) => panic!("Not implemented"),
 	};
 	// Mint the tokens
 	assert_ok!(Tokens::mint_into(pair.base, &BOB, base_amount));
@@ -170,7 +161,7 @@ pub fn common_add_lp_with_min_mint_amount(
 }
 
 pub fn common_remove_lp_failure(
-	init_config: PoolInitConfiguration<AccountId, AssetId, BlockNumber>,
+	init_config: PoolInitConfiguration<AccountId, AssetId>,
 	init_base_amount: Balance,
 	init_quote_amount: Balance,
 	base_amount: Balance,
@@ -178,9 +169,7 @@ pub fn common_remove_lp_failure(
 ) {
 	let pool_id = Pablo::do_create_pool(init_config.clone()).expect("pool creation failed");
 	let pair = match init_config {
-		PoolInitConfiguration::StableSwap { pair, .. } => pair,
 		PoolInitConfiguration::ConstantProduct { pair, .. } => pair,
-		PoolInitConfiguration::LiquidityBootstrapping(pool) => pool.pair,
 	};
 	// Mint the tokens
 	assert_ok!(Tokens::mint_into(pair.base, &ALICE, init_base_amount));
@@ -198,9 +187,7 @@ pub fn common_remove_lp_failure(
 
 	let pool = Pablo::pools(pool_id).expect("pool not found");
 	let lp_token = match pool {
-		StableSwap(pool) => pool.lp_token,
 		ConstantProduct(pool) => pool.lp_token,
-		LiquidityBootstrapping(_) => panic!("Not implemented"),
 	};
 	// Mint the tokens
 	assert_ok!(Tokens::mint_into(pair.base, &BOB, base_amount));
@@ -239,16 +226,14 @@ pub fn common_remove_lp_failure(
 }
 
 pub fn common_exchange_failure(
-	init_config: PoolInitConfiguration<AccountId, AssetId, BlockNumber>,
+	init_config: PoolInitConfiguration<AccountId, AssetId>,
 	init_base_amount: Balance,
 	init_quote_amount: Balance,
 	exchange_base_amount: Balance,
 ) {
 	let pool_id = Pablo::do_create_pool(init_config.clone()).expect("pool creation failed");
 	let pair = match init_config {
-		PoolInitConfiguration::StableSwap { pair, .. } => pair,
 		PoolInitConfiguration::ConstantProduct { pair, .. } => pair,
-		PoolInitConfiguration::LiquidityBootstrapping(pool) => pool.pair,
 	};
 	// Mint the tokens
 	assert_ok!(Tokens::mint_into(pair.base, &ALICE, init_base_amount));
@@ -304,6 +289,9 @@ where
 
 mod create {
 	use super::*;
+	use composable_traits::defi::CurrencyPair;
+	use sp_runtime::Permill;
+
 	#[test]
 	fn signed_user_can_create() {
 		new_test_ext().execute_with(|| {
@@ -311,7 +299,12 @@ mod create {
 			assert_ok!(
 				Pablo::create(
 					Origin::signed(ALICE),
-					PoolInitConfiguration::LiquidityBootstrapping(valid_pool().value())
+					PoolInitConfiguration::ConstantProduct {
+						owner: ALICE,
+						pair: CurrencyPair::new(BTC, USDT),
+						fee: Permill::zero(),
+						base_weight: Permill::from_percent(50),
+					}
 				)
 			);
 			assert_has_event::<Test, _>(

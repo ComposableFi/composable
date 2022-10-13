@@ -26,11 +26,11 @@ fn create_curve_amm_pool(
 	assert_ok!(Tokens::mint_into(base, &BOB, amounts[0]));
 	assert_ok!(Tokens::mint_into(quote, &BOB, amounts[1]));
 
-	let init_config = PoolInitConfiguration::StableSwap {
+	let init_config = PoolInitConfiguration::ConstantProduct {
 		owner: ALICE,
 		pair: assets,
-		amplification_coefficient: amp_coeff,
 		fee,
+		base_weight: Permill::from_percent(50_u32),
 	};
 	let p = Pablo::do_create_pool(init_config);
 	assert_ok!(&p);
