@@ -139,7 +139,9 @@ where
 ///
 /// Notes:
 /// * Weights must already be normalized
-/// * `1 - f` must be less than `2^96`
+/// * For an unbounded fee, `1 - f` must be greater than `b_i / 2^96`
+/// * For a fee bounded between 0% - 1%, `b_i` must be less than or equal to
+///   `1_960_897_022_228_042_355_440_212_770_816 / 25`
 ///
 /// # Parameters
 /// * `w_i` - Weight of the input token
