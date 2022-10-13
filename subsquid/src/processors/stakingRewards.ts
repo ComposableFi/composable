@@ -31,7 +31,7 @@ interface StakedEvent {
   durationPreset: bigint;
   fnftCollectionId: bigint;
   fnftInstanceId: bigint;
-  rewardMultiplier: number;
+  rewardMultiplier: bigint;
   keepAlive: boolean;
 }
 
@@ -54,7 +54,7 @@ interface SplitPositionEvent {
 function getRewardPoolCreatedEvent(
   event: StakingRewardsRewardPoolCreatedEvent
 ): RewardPoolCreatedEvent {
-  const { poolId, owner, endBlock } = event.asV2401;
+  const { poolId, owner, endBlock } = event.asV2402;
   return { poolId, owner, endBlock };
 }
 
@@ -68,7 +68,7 @@ function getStakedEvent(event: StakingRewardsStakedEvent): StakedEvent {
     fnftInstanceId,
     rewardMultiplier,
     keepAlive,
-  } = event.asV2401;
+  } = event.asV2402;
   return {
     poolId,
     owner,
@@ -82,21 +82,21 @@ function getStakedEvent(event: StakingRewardsStakedEvent): StakedEvent {
 }
 
 function getUnstakedEvent(event: StakingRewardsUnstakedEvent): UnstakedEvent {
-  const { owner, fnftCollectionId, fnftInstanceId } = event.asV2401;
+  const { owner, fnftCollectionId, fnftInstanceId } = event.asV2402;
   return { owner, fnftCollectionId, fnftInstanceId };
 }
 
 function getStakeAmountExtendedEvent(
   event: StakingRewardsStakeAmountExtendedEvent
 ): StakeAmountExtendedEvent {
-  const { fnftCollectionId, fnftInstanceId, amount } = event.asV2401;
+  const { fnftCollectionId, fnftInstanceId, amount } = event.asV2402;
   return { fnftCollectionId, fnftInstanceId, amount };
 }
 
 function getSplitPositionEvent(
   event: StakingRewardsSplitPositionEvent
 ): SplitPositionEvent {
-  const { positions } = event.asV2401;
+  const { positions } = event.asV2402;
   return { positions };
 }
 
@@ -127,7 +127,7 @@ export function createStakingPosition(
   owner: string,
   amount: bigint,
   duration: bigint,
-  rewardMultiplier: number,
+  rewardMultiplier: bigint,
   event: Event,
   startTimestamp: bigint
 ): StakingPosition {

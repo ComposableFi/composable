@@ -12,17 +12,22 @@ import {
   transactionStatusSnackbarMessage,
   SNACKBAR_TYPES,
 } from "../pools/addLiquidity/useAddLiquidity";
+import { updateStake } from "@/store/stakingRewards/stakingRewards.slice";
+import { decodeStake } from "@/defi/utils/stakingRewards";
+import { updateStakingRewardPool } from "@/updaters/stakingRewards/Updater";
 
 const TxOrigin = "Claim Staking Position";
 
 export type StakeClaimProps = {
   financialNftCollectionId?: string;
   financialNftInstanceId?: string;
+  principalAssetId?: string;
 };
 
 export function useClaimStakingRewards({
   financialNftCollectionId,
   financialNftInstanceId,
+  principalAssetId
 }: StakeClaimProps) {
   const { enqueueSnackbar } = useSnackbar();
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
@@ -54,8 +59,22 @@ export function useClaimStakingRewards({
         ),
         SNACKBAR_TYPES.SUCCESS
       );
+
+      if (parachainApi && principalAssetId) {
+        updateStakingRewardPool(parachainApi, principalAssetId);        
+      }
+      if (parachainApi && financialNftCollectionId && financialNftInstanceId) {
+        parachainApi.query.stakingRewards
+          .stakes(
+            parachainApi.createType("u128", financialNftCollectionId),
+            parachainApi.createType("u64", financialNftInstanceId)
+          )
+          .then((stake) => {
+            updateStake(financialNftCollectionId, decodeStake(stake));
+          });
+      }
     },
-    [enqueueSnackbar]
+    [enqueueSnackbar, parachainApi, principalAssetId, financialNftCollectionId, financialNftInstanceId]
   );
 
   const onTxError = useCallback(

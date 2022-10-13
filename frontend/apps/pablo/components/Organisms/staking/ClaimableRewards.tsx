@@ -1,7 +1,10 @@
 import { TokenValue } from "@/components/Molecules";
 import { BoxWrapper } from "../BoxWrapper";
-import { useClaimableRewards } from "@/defi/hooks/stakingRewards";
-import { DEFAULT_UI_FORMAT_DECIMALS, PBLO_ASSET_ID } from "@/defi/utils";
+import {
+  useClaimableRewards,
+  useClaimStakingRewards,
+} from "@/defi/hooks/stakingRewards";
+import { DEFAULT_NETWORK_ID, PBLO_ASSET_ID } from "@/defi/utils";
 import {
   alpha,
   Box,
@@ -11,6 +14,9 @@ import {
   Theme,
   useTheme,
 } from "@mui/material";
+import millify from "millify";
+import { usePendingExtrinsic, useSelectedAccount } from "substrate-react";
+import { ConfirmingModal } from "../swap/ConfirmingModal";
 
 const defaultPageSize = {
   sm: 12,
@@ -31,45 +37,59 @@ const defaultTokenValueProps = (theme: Theme) =>
     },
   } as const);
 
-export const ClaimableRewards: React.FC<BoxProps> = ({ ...boxProps }) => {
+export const ClaimableRewards: React.FC<BoxProps & {
+  financialNftCollectionId?: string;
+}> = ({ financialNftCollectionId, ...boxProps }) => {
   const theme = useTheme();
+  const connectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
+  const claimableRewards = useClaimableRewards({
+    stakedAssetId: PBLO_ASSET_ID,
+  });
+  const { financialNftInstanceId, claimableAssets } = claimableRewards;
+  const canClaim =
+    claimableAssets.some((x) => x.claimable.gt(0)) &&
+    claimableRewards.financialNftInstanceId !== "-";
 
-  const claimableAssets = useClaimableRewards({ stakedAssetId: PBLO_ASSET_ID });
+  const onClaimStakingRewards = useClaimStakingRewards({
+    principalAssetId: PBLO_ASSET_ID,
+    financialNftInstanceId:
+      financialNftInstanceId === "-" ? undefined : financialNftInstanceId,
+    financialNftCollectionId,
+  });
+
+  const isClaiming = usePendingExtrinsic(
+    "claim",
+    "stakingRewards",
+    connectedAccount?.address ?? "-"
+  )
 
   return (
     <BoxWrapper title="Claimable rewards" {...boxProps}>
       <Grid container spacing={3}>
-        {claimableAssets.map((asset) => {
+        {claimableRewards.claimableAssets.map((asset) => {
           return (
             <Grid key={asset.symbol} item {...defaultPageSize}>
               <TokenValue
                 token={asset}
-                value={asset.claimable.toFixed(DEFAULT_UI_FORMAT_DECIMALS)}
+                value={millify(asset.claimable.toNumber())}
                 {...defaultTokenValueProps(theme)}
               />
             </Grid>
           );
         })}
-        {/* <Grid item {...defaultPageSize}>
-          <TokenValue
-            token={TOKENS.pica}
-            value={pica.toFormat()}
-            {...defaultTokenValueProps(theme)}
-          />
-        </Grid>
-        <Grid item {...defaultPageSize}>
-          <TokenValue
-            token={TOKENS.pablo}
-            value={pablo.toFormat()}
-            {...defaultTokenValueProps(theme)}
-          />
-        </Grid> */}
       </Grid>
       <Box mt={3}>
-        <Button variant="outlined" fullWidth size="large">
+        <Button
+          onClick={onClaimStakingRewards}
+          disabled={!canClaim}
+          variant="outlined"
+          fullWidth
+          size="large"
+        >
           Claim all
         </Button>
       </Box>
+      <ConfirmingModal open={isClaiming} />
     </BoxWrapper>
   );
 };

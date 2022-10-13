@@ -26,5 +26,5 @@ export function fromPermill(
 export function fromPerbill(
   amount: string | number
 ): BigNumber {
-  return new BigNumber(amount).div(PERBILL_UNIT).times(100);
+  return new BigNumber(amount).div(PERBILL_UNIT);
 }
