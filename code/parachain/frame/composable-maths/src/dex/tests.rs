@@ -8,8 +8,6 @@ mod constant_product {
 	use super::*;
 	/// Tests related to the function `compute_out_given_in_new`
 	mod compute_out_given_in_new {
-		use core::ops::Range;
-
 		use super::*;
 
 		const CHECKED_I_AND_O_LIST: [InputsAndOutputs; 5] = [
@@ -87,19 +85,16 @@ mod constant_product {
 		}
 
 		prop_compose! {
-			#[allow(clippy::useless_conversion)]
 			fn range_inputs()
 			(
-				w_i in Range::<u32>::from(1..100),
-				w_o in Range::<u32>::from(1..100),
-				b_i in Range::<u128>::from(257_000_000_000_000..Decimal::MAX
-					.to_u128()
-					.expect("Decimal::MAX is safe for into ops; QED")),
-				b_o in Range::<u128>::from(257_000_000_000_000..Decimal::MAX
-					.to_u128()
-					.expect("Decimal::MAX is safe for into ops; QED")),
-				a_sent in Range::<u128>::from(1_000_000_000_000..256_000_000_000_000),
-				f in Range::<u32>::from(0..10_000),
+				w_i in 1..100_u32,
+				w_o in 1..100_u32,
+				b_i in 257_000_000_000_000..Decimal::MAX.to_u128()
+					.expect("Decimal::MAX is safe for into ops; QED"),
+				b_o in 257_000_000_000_000..Decimal::MAX.to_u128()
+					.expect("Decimal::MAX is safe for into ops; QED"),
+				a_sent in 1_000_000_000_000..256_000_000_000_000_u128,
+				f in 0..10_000_u32,
 			)
 			-> InputsAndOutputs {
 				InputsAndOutputs {
@@ -109,8 +104,8 @@ mod constant_product {
 					b_o,
 					a_sent,
 					f: Permill::from_parts(f),
-					a_out: u128::default(),
-					fee: u128::default(),
+					a_out: 0, // Not used in range tests
+					fee: 0, // Not used in range tests
 				}
 			}
 		}
