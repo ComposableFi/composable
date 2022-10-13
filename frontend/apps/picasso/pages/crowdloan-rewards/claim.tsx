@@ -128,16 +128,31 @@ export const ClaimLoanPage = () => {
       selectedAccount?.address
     );
 
-  const flow = useMemo(() => {
-    const pathNames = router.pathname.split("/");
-    const pathName = pathNames[pathNames.length - 1];
+  /**
+   * Can be added if requested
+   */
+  // useEffect(() => {
+  //   if (isEthAccountEligible && isPicassoAccountEligible) {
+  //     enqueueSnackbar('Please connect a KSM account that was not used to contribute to the crowdloan', {
+  //       variant: "info"
+  //     });
+  //   }
+  // }, [isEthAccountEligible, isPicassoAccountEligible])
 
-    if (pathName.toLowerCase() === "ksm") {
+  /**
+   * Fixes the breadcrumb
+   */
+  const flow = useMemo(() => {
+    if (isPicassoAccountEligible) {
       return "KSM";
-    } else {
-      return "Stable coin";
     }
-  }, [router]);
+
+    if (isEthAccountEligible) {
+      return "Stable Coin"
+    }
+
+    return "";
+  }, [isEthAccountEligible, isPicassoAccountEligible]);
 
   const signPolkadotJs = useCallback(async (): Promise<string> => {
     try {
@@ -195,7 +210,7 @@ export const ClaimLoanPage = () => {
         textBelow: ERROR_MESSAGES.KSM_WALLET_NOT_CONNECTED.message,
       });
 
-    if (flow === "Stable coin" && !isActive)
+    if (flow === "Stable Coin" && !isActive)
       setIneligibleText({
         title: ERROR_MESSAGES.ETH_WALLET_NOT_CONNECTED.title,
         textBelow: ERROR_MESSAGES.ETH_WALLET_NOT_CONNECTED.message,
@@ -263,7 +278,7 @@ export const ClaimLoanPage = () => {
     </Typography>,
   ];
 
-  const isStable = isEthAccountEligible;
+  const isStable = flow === "Stable Coin";
 
   const standardPageSize = {
     xs: 12,

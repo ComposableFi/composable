@@ -65,7 +65,8 @@ const Overview: NextPage = () => {
         <Grid item {...standardPageSize}>
           <CrowdloanRewardsFeaturedBox />
         </Grid>
-        {extensionStatus === "connected" && (
+        {/* Removal of portfolio chart for Day 1 */}
+        {/* {extensionStatus === "connected" && (
           <Chart
             title="My portfolio"
             totalText="$24,587,298"
@@ -87,7 +88,7 @@ const Overview: NextPage = () => {
             intervals={["1h", "24h", "1w", "1m", "1y"]}
             marginTop={9}
           />
-        )}
+        )} */}
         {extensionStatus === "connected" && (
           <Grid item {...standardPageSize}>
             <Tabs
