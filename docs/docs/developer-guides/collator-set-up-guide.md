@@ -1,10 +1,5 @@
-![picasso_banner](./picasso-banner.png)
-
----
-
 # Collator Set-up Guide
 
----
 
 In this document we will cover how to set up a collator with Composable 
 Finance. There are several ways to do that.

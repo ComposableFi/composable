@@ -67,7 +67,7 @@ const sidebars = {
 
       link: {
         type: 'generated-index',
-        slug: 'parachains',
+        slug: 'products',
       },
       collapsible: false,
       items: [
@@ -211,6 +211,109 @@ const sidebars = {
             'products/parachain-vault-strategy/contracts-technical-details/contracts-technical-details',
           ],
         }
+      ]
+    },
+    {
+      type: 'category',
+      label: 'Developer Guides',
+
+      link: {
+        type: 'generated-index',
+        slug: 'developer-guides',
+      },
+      collapsible: false,
+      items: [
+        {
+          type: 'category',
+          label: 'Nix',
+          link: {
+            type: 'doc',
+            id: 'nix'
+          },
+          collapsible: true,
+          collapsed: true,
+          items: [
+            'nix/install',
+            'nix/run-packages',
+            'nix/development-environments',
+            'nix/running-checks',
+            'nix/defining-your-own-packages',
+            'nix/composing-services-with-arion',
+            'nix/editing-book',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Codespaces',
+          link: {
+            type: 'doc',
+            id: 'codespaces'
+          },
+          collapsible: true,
+          collapsed: true,
+          items: [
+            'codespaces/getting-started',
+            'codespaces/using-codespaces',
+            {
+              type: 'category',
+              label: 'Using Codespaces',
+              link: {
+                type: 'doc',
+                id: 'codespaces/using-codespaces'
+              },
+              collapsible: true,
+              collapsed: false,
+              items: [
+                'codespaces/book',
+                'codespaces/substrate',
+                'codespaces/frontend',
+                'codespaces/runtime-tests',
+              ],
+            }
+          ],
+        },
+        'developer-guides/oracle-set-up-guide',
+        'developer-guides/collator-set-up-guide'
+      ]
+    },
+    {
+      type: 'category',
+      label: 'Ecosystem',
+
+      link: {
+        type: 'generated-index',
+        slug: 'ecosystem',
+      },
+      collapsible: false,
+      items: [
+        'ecosystem/build-on-composable-ecosystem-development',
+        'ecosystem/composable-grants',
+        'ecosystem/business-line-development',
+        'ecosystem/press-kit',
+        'ecosystem/the-composable-team',
+        'ecosystem/careers',
+      ]
+    },
+    {
+      type: 'category',
+      label: 'Audits And Fixes',
+
+      link: {
+        type: 'generated-index',
+        slug: 'audits',
+      },
+      collapsible: false,
+      items: [
+        'audits/audit-results-recommendations-and-remediations',
+      ]
+    },
+    {
+      type: 'category',
+      label: 'FAQs',
+      collapsible: false,
+      items: [
+        'faqs/faqs',
+        'faqs/risks-disclosures'
       ]
     },
   ],

@@ -1,10 +1,5 @@
-![picasso_banner](./picasso-banner.png)
-
----
-
 # Apollo Oracle Set-up Guide 
 
----
 
 ## Overview
 
