@@ -55,11 +55,6 @@ where
 
 	// 1. First validate unknown headers.
 	let headers = AncestryChain::<H>::new(&finality_proof.unknown_headers);
-	let from = finality_proof
-		.unknown_headers
-		.iter()
-		.min_by_key(|h| *h.number())
-		.ok_or_else(|| anyhow!("Unknown headers can't be empty!"))?;
 	let target = finality_proof
 		.unknown_headers
 		.iter()
@@ -70,6 +65,11 @@ where
 	if target.hash() != finality_proof.block {
 		Err(anyhow!("Latest finalized block should be highest block in unknown_headers"))?;
 	}
+	let from = finality_proof
+		.unknown_headers
+		.iter()
+		.min_by_key(|h| *h.number())
+		.ok_or_else(|| anyhow!("Unknown headers can't be empty!"))?;
 	let finalized = headers
 		.ancestry(from.hash(), target.hash())
 		.map_err(|_| anyhow!("Invalid ancestry!"))?;

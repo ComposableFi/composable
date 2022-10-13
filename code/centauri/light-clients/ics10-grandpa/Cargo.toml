@@ -23,6 +23,7 @@ std = [
     "sp-runtime/std",
     "sp-trie/std",
     "sp-finality-grandpa/std",
+    "finality-grandpa/std",
 ]
 
 [build-dependencies]
@@ -53,6 +54,7 @@ sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
 sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
 sp-finality-grandpa = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
+finality-grandpa = { version = "0.16.0", default-features = false }
 
 [dependencies.tendermint]
 git = "https://github.com/composableFi/tendermint-rs"

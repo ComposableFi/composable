@@ -87,7 +87,7 @@ async fn test_continuous_update_of_grandpa_client() {
 		.await
 		.unwrap()
 		.filter_map(|result| futures::future::ready(result.ok()))
-		.skip_while(|h| futures::future::ready(h.number < 210))
+		.skip_while(|h| futures::future::ready(h.number < 90))
 		.take(1)
 		.collect::<Vec<_>>()
 		.await;
@@ -223,7 +223,7 @@ async fn test_continuous_update_of_grandpa_client() {
 			.query_finalized_parachain_headers_with_proof(
 				&(client_state.clone().into()),
 				justification.commit.target_number,
-				header_numbers,
+				header_numbers.clone(),
 			)
 			.await
 			.expect("Failed to fetch finalized parachain headers with proof");
@@ -237,7 +237,7 @@ async fn test_continuous_update_of_grandpa_client() {
 
 		let header = Header {
 			finality_proof: proof.finality_proof,
-			parachain_headers: proof.parachain_headers,
+			parachain_headers: proof.parachain_headers.clone(),
 		};
 		let msg = MsgUpdateAnyClient {
 			client_id: client_id.clone(),
@@ -267,9 +267,15 @@ async fn test_continuous_update_of_grandpa_client() {
 							upd_res.client_state,
 							ctx.latest_client_states(&client_id).clone()
 						);
-						// todo: assert the specific heights for new consensus states
+						for height in header_numbers {
+							let cs = ctx.consensus_state(
+								&client_id,
+								Height::new(prover.para_id as u64, height as u64),
+							).ok();
+							dbg!((height, cs.is_some()));
+						}
 						println!(
-							"======== Successfully updaated parachain client to height: {} ========",
+							"======== Successfully updated parachain client to height: {} ========",
 							upd_res.client_state.latest_height(),
 						);
 					},

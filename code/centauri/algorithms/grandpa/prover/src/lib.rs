@@ -159,8 +159,8 @@ where
 		Ok(header)
 	}
 
-	/// Returns the finality proof for the given parachain header numbers in between the given relay
-	/// chain hashes.
+	/// Returns the finality proof for the given parachain header numbers finalized by the given
+	/// relay chain height.
 	pub async fn query_finalized_parachain_headers_with_proof<H>(
 		&self,
 		client_state: &ClientState<T::Hash>,
@@ -220,12 +220,6 @@ where
 			.block_hash(Some(previous_finalized_height.into()))
 			.await?
 			.ok_or_else(|| anyhow!("Failed to fetch previous finalized hash + 1"))?;
-		let start_header = self
-			.relay_client
-			.rpc()
-			.header(Some(start))
-			.await?
-			.ok_or_else(|| anyhow!("Failed to fetch previous finalized hash + 1"))?;
 
 		let latest_finalized_hash = self
 			.relay_client
@@ -235,7 +229,7 @@ where
 			.ok_or_else(|| anyhow!("Failed to fetch previous finalized hash + 1"))?;
 
 		let mut unknown_headers = vec![];
-		for height in u32::from(*start_header.number())..=latest_finalized_height {
+		for height in previous_finalized_height..=latest_finalized_height {
 			let hash = self.relay_client.rpc().block_hash(Some(height.into())).await?.ok_or_else(
 				|| anyhow!("Failed to fetch block has for height {previous_finalized_height}"),
 			)?;

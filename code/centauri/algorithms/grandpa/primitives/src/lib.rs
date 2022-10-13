@@ -85,6 +85,7 @@ pub struct ParachainHeaderProofs {
 }
 
 /// Parachain headers with a Grandpa finality proof.
+#[derive(Clone)]
 pub struct ParachainHeadersWithFinalityProof<H: Header> {
 	/// The grandpa finality proof: contains relay chain headers from the
 	/// last known finalized grandpa block.

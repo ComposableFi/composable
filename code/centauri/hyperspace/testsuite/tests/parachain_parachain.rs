@@ -98,7 +98,7 @@ async fn setup_clients() -> (ParachainClient<DefaultConfig>, ParachainClient<Def
 		.await
 		.unwrap()
 		.filter_map(|result| futures::future::ready(result.ok()))
-		.skip_while(|h| futures::future::ready(h.number < 210))
+		.skip_while(|h| futures::future::ready(h.number < 90))
 		.take(1)
 		.collect::<Vec<_>>()
 		.await;

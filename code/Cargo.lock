@@ -5330,6 +5330,7 @@ dependencies = [
  "anyhow",
  "beefy-prover",
  "derive_more",
+ "finality-grandpa",
  "frame-support",
  "futures 0.3.24",
  "grandpa-light-client",

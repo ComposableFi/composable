@@ -22,6 +22,7 @@ use crate::client_message::{ClientMessage, RelayChainHeader};
 use alloc::{format, string::ToString, vec, vec::Vec};
 use codec::Decode;
 use core::marker::PhantomData;
+use finality_grandpa::Chain;
 use grandpa_client_primitives::{
 	justification::{check_equivocation_proof, find_scheduled_change, AncestryChain},
 	ParachainHeadersWithFinalityProof,
@@ -54,6 +55,7 @@ use light_client_common::{
 	state_machine, verify_delay_passed, verify_membership, verify_non_membership,
 };
 use primitive_types::H256;
+use sp_runtime::traits::Header as _;
 use sp_trie::StorageProof;
 use tendermint_proto::Protobuf;
 
@@ -135,7 +137,24 @@ where
 			AncestryChain::<RelayChainHeader>::new(&header.finality_proof.unknown_headers);
 		let mut consensus_states = vec![];
 
+		let from = header
+			.finality_proof
+			.unknown_headers
+			.iter()
+			.min_by_key(|h| *h.number())
+			.ok_or_else(|| Error::Custom(format!("Unknown headers can't be empty!")))?;
+
+		let finalized = ancestry
+			.ancestry(from.hash(), header.finality_proof.block)
+			.map_err(|_| Error::Custom(format!("Invalid ancestry!")))?;
+
 		for (relay_hash, parachain_header_proof) in header.parachain_headers {
+			// we really shouldn't set consensus states for parachain headers not in the finalized
+			// chain.
+			if !finalized.contains(&relay_hash) {
+				continue
+			}
+
 			let header = ancestry.header(&relay_hash).ok_or_else(|| {
 				Error::Custom(format!("No relay chain header found for hash: {relay_hash:?}"))
 			})?;

@@ -24,7 +24,6 @@ use polkadot_core_primitives::Header;
 use primitives::justification::GrandpaJustification;
 use serde::{Deserialize, Serialize};
 use sp_core::H256;
-use std::mem::size_of_val;
 use subxt::PolkadotConfig;
 
 pub type Justification = GrandpaJustification<Header>;
@@ -52,7 +51,7 @@ async fn follow_grandpa_justifications() {
 		.await
 		.unwrap()
 		.filter_map(|result| futures::future::ready(result.ok()))
-		.skip_while(|h| futures::future::ready(h.number < 210))
+		.skip_while(|h| futures::future::ready(h.number < 90))
 		.take(1)
 		.collect::<Vec<_>>()
 		.await;
@@ -74,16 +73,8 @@ async fn follow_grandpa_justifications() {
 	while let Some(Ok(JustificationNotification(sp_core::Bytes(justification)))) =
 		subscription.next().await
 	{
-		println!("========= New Justification =========");
-		println!("justification size: {}kb", size_of_val(&*justification) / 1000);
-		println!("current_set_id: {}", client_state.current_set_id);
-
 		let justification =
 			Justification::decode(&mut &justification[..]).expect("Failed to decode justification");
-		println!(
-			"For relay chain header: Hash({:?}), Number({})",
-			justification.commit.target_hash, justification.commit.target_number
-		);
 
 		let finalized_para_header = prover
 			.query_latest_finalized_parachain_header(justification.commit.target_number)
@@ -98,6 +89,16 @@ async fn follow_grandpa_justifications() {
 			continue
 		}
 
+		println!("========= New Justification =========");
+		println!("current_set_id: {}", client_state.current_set_id);
+		println!(
+			"For relay chain header: Hash({:?}), Number({})",
+			justification.commit.target_hash, justification.commit.target_number
+		);
+
+		dbg!(&client_state.latest_para_height);
+		dbg!(&header_numbers);
+
 		let proof = prover
 			.query_finalized_parachain_headers_with_proof(
 				&client_state,
@@ -110,9 +111,13 @@ async fn follow_grandpa_justifications() {
 		let new_client_state = verify_parachain_headers_with_grandpa_finality_proof::<
 			Header,
 			HostFunctionsProvider,
-		>(client_state.clone(), proof)
+		>(client_state.clone(), proof.clone())
 		.expect("Failed to verify parachain headers with grandpa finality_proof");
-		assert!(new_client_state.latest_para_height > client_state.latest_para_height);
+
+		if !proof.parachain_headers.is_empty() {
+			assert!(new_client_state.latest_para_height > client_state.latest_para_height);
+		}
+
 		client_state = new_client_state;
 		println!("========= Successfully verified grandpa justification =========");
 	}
