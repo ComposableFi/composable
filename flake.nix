@@ -1240,10 +1240,8 @@
               makeApp packages.kusama-picasso-karura-devnet;
             devnet-rococo-dali-karura =
               makeApp packages.devnet-rococo-dali-karura;
-            devnet-picasso-complete =
-              makeApp packages.devnet-picasso-complete;
-            devnet-dali-complete =
-              makeApp packages.devnet-dali-complete;
+            devnet-picasso-complete = makeApp packages.devnet-picasso-complete;
+            devnet-dali-complete = makeApp packages.devnet-dali-complete;
             price-feed = makeApp packages.price-feed;
             composable = makeApp packages.composable-node;
             acala = makeApp packages.acala-node;
