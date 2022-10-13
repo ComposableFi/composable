@@ -142,7 +142,7 @@ const config = {
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} CF Services Ltd.`,
+        copyright: `Copyright © ${new Date().getFullYear()} Composable Finance, Ltd.`,
       },
       prism: {
         theme: lightCodeTheme,

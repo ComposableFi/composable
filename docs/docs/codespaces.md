@@ -1,6 +1,9 @@
 # Codespaces
 
----
+:::danger
+Codespaces is not yet fully compatile with our new build and developer environment system, [Nix](./nix).
+The recommended approach is to follow our [Nix Guide](./nix) and work locally for now.
+:::
 
 At Composable Finance, we use [Codespaces](https://github.com/features/codespaces) in order to provide 
 **blazing fast cloud developer environments.** This means that we all use the same 
