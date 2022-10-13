@@ -8,7 +8,7 @@ use rust_decimal::{
 };
 use sp_runtime::{
 	traits::{IntegerSquareRoot, One, Zero},
-	ArithmeticError, PerThing,
+	ArithmeticError, DispatchError, PerThing,
 };
 
 /// From https://balancer.fi/whitepaper.pdf, equation (2)
@@ -186,46 +186,85 @@ pub fn compute_deposit_lp(
 	}
 }
 
+#[derive(Debug, Eq, PartialEq)]
+pub enum ConstantProductAmmError {
+	ArithmeticError(ArithmeticError),
+	CannotTakeMoreThanAvailable,
+	InvalidTokensList,
+}
+
+impl From<ArithmeticError> for ConstantProductAmmError {
+	fn from(error: ArithmeticError) -> Self {
+		ConstantProductAmmError::ArithmeticError(error)
+	}
+}
+
+impl From<ConstantProductAmmError> for DispatchError {
+	fn from(error: ConstantProductAmmError) -> Self {
+		match error {
+			ConstantProductAmmError::ArithmeticError(error) => DispatchError::from(error),
+			ConstantProductAmmError::CannotTakeMoreThanAvailable =>
+				DispatchError::from(
+					"`a_out` must not be greater than `b_o` (can't take out more than what's available)!"
+				),
+			ConstantProductAmmError::InvalidTokensList => DispatchError::from("Must provide non-empty tokens list!"),
+		}
+	}
+}
+
+/// Computes the decimal value of a a `PerThing` by taking the deconstructed parts of a `PerThing`
+/// and dividing them by `PerThing::one()`.
+///
+/// # Example
+/// ```rust,ignore
+/// let per_thing = PerMill::from_percent(10);
+/// assert_eq!(decimal_from_per_thing(per_thing), Decimal::new(10, 2));
+/// ```
+fn decimal_from_per_thing<T: PerThing>(per_thing: T) -> Result<Decimal, ArithmeticError> {
+	let numerator =
+		Decimal::from_u128(per_thing.deconstruct().into()).ok_or(ArithmeticError::Overflow)?;
+	let denominator =
+		Decimal::from_u128(T::one().deconstruct().into()).ok_or(ArithmeticError::Overflow)?;
+
+	numerator.safe_div(&denominator)
+}
+
 /// Paramaters:
-/// * lp_total_issuance -
-/// * num_asset_types_in_pool -
-/// * d_k - Deposit of token `k`
-/// * b_k - Balance of token `k`
-/// * w_k - Weight of token `k`
-/// * f - Fee
+/// * `lp_token_details` - Vec of tuples containing `(token_deposit, token_balance, token_weight)`
+/// * `f` - Fee
 ///
 /// https://github.com/ComposableFi/composable/blob/main/rfcs/0008-pablo-lbp-cpp-restructure.md#42-liquidity-provider-token-lpt-math-updates
 /// Equation 6
 fn compute_first_deposit_lp_<T: PerThing>(
-	lp_total_issuance: u128,
-	num_asset_types_in_pool: u128,
-	d_k: u128,
-	b_k: u128,
-	w_k: T,
-	f: T,
-) -> Result<(u128, u128), ArithmeticError> {
-	todo!()
+	lp_token_details: Vec<(u128, u128, T)>,
+	_f: T,
+) -> Result<(u128, u128), ConstantProductAmmError> {
+	let k: u128 = lp_token_details.len().try_into().map_err(|_| ArithmeticError::Overflow)?;
+	let product = lp_token_details
+		.iter()
+		.try_fold(1, |product, (_d_i, b_i, _w_i)| product.safe_mul(b_i))?;
+
+	// REVIEW: How is fee applied here?
+	Ok((k.safe_mul(&product)?, 0))
 }
 
 /// Paramaters:
-/// * lp_total_issuance -
-/// * num_asset_types_in_pool -
-/// * d_k - Deposit of token `k`
-/// * b_k - Balance of token `k`
-/// * w_k - Weight of token `k`
-/// * f - Fee
+/// * `p_supply` -
+/// * `d_k` - Deposit of token `k`
+/// * `b_k` - Balance of token `k`
+/// * `w_k` - Weight of token `k`
+/// * `f` - Fee
 ///
 /// https://github.com/ComposableFi/composable/blob/main/rfcs/0008-pablo-lbp-cpp-restructure.md#42-liquidity-provider-token-lpt-math-updates
 /// Equation 5
 fn compute_existing_deposit_lp_<T: PerThing>(
-	lp_total_issuance: u128,
+	p_supply: u128,
 	d_k: u128,
 	b_k: u128,
 	w_k: T,
 	f: T,
-) -> Result<(u128, u128), ArithmeticError> {
-	let lp_total_issuance =
-		Decimal::from_u128(lp_total_issuance).ok_or(ArithmeticError::Overflow)?;
+) -> Result<(u128, u128), ConstantProductAmmError> {
+	let p_supply = Decimal::from_u128(p_supply).ok_or(ArithmeticError::Overflow)?;
 	let d_k = Decimal::from_u128(d_k).ok_or(ArithmeticError::Overflow)?;
 	let b_k = Decimal::from_u128(b_k).ok_or(ArithmeticError::Overflow)?;
 	let w_k = decimal_from_per_thing(w_k)?;
@@ -238,41 +277,35 @@ fn compute_existing_deposit_lp_<T: PerThing>(
 	let power = base.checked_powd(w_k).ok_or(ArithmeticError::Overflow)?;
 	let ratio = power.safe_sub(&Decimal::ONE)?;
 
-	let issued = lp_total_issuance.safe_mul(&ratio)?.to_u128().ok_or(ArithmeticError::Overflow)?;
+	let issued = p_supply.safe_mul(&ratio)?.to_u128().ok_or(ArithmeticError::Overflow)?;
 	let fee = d_k.safe_sub(&d_k_left_from_fee)?.to_u128().ok_or(ArithmeticError::Overflow)?;
 
 	Ok((issued, fee))
 }
 
+/// Compute lp to mint for a pool.
+///
+/// If `Ok`, returns a tuple containing (lp_to_mind, fee).
+/// `lp_token_details` must not be empty.
+///
 /// Paramaters:
-/// * lp_total_issuance -
-/// * num_asset_types_in_pool -
-/// * d_k - Deposit of token `k`
-/// * b_k - Balance of token `k`
-/// * w_k - Weight of token `k`
-/// * f - Fee
+/// * `p_supply` - Existing supply of LPT tokens
+/// * `lp_token_details` - Vec of tuples containing `(token_deposit, token_balance, token_weight)`
+/// * `f` - Fee
 pub fn compute_deposit_lp_new<T: PerThing>(
-	lp_total_issuance: u128,
-	num_asset_types_in_pool: u128,
-	d_k: u128,
-	b_k: u128,
-	w_k: T,
+	p_supply: u128,
+	lp_token_details: Vec<(u128, u128, T)>,
 	f: T,
-) -> Result<(u128, u128), ArithmeticError> {
-	let is_first_deposit = lp_total_issuance.is_zero();
+) -> Result<(u128, u128), ConstantProductAmmError> {
+	ensure!(!lp_token_details.is_empty(), ConstantProductAmmError::InvalidTokensList);
+
+	let is_first_deposit = p_supply.is_zero();
 
 	if is_first_deposit {
-		compute_first_deposit_lp_(lp_total_issuance, num_asset_types_in_pool, d_k, b_k, w_k, f)
+		compute_first_deposit_lp_(lp_token_details, f)
 	} else {
-		compute_existing_deposit_lp_(lp_total_issuance, d_k, b_k, w_k, f)
+		// REVIEW: Should this be done at the scale of `lp_token_details.len()`?
+		let token_k = lp_token_details.last().expect("List is not empty; QED");
+		compute_existing_deposit_lp_(p_supply, token_k.0, token_k.1, token_k.2, f)
 	}
-}
-
-fn decimal_from_per_thing<T: PerThing>(per_thing: T) -> Result<Decimal, ArithmeticError> {
-	let numerator =
-		Decimal::from_u128(per_thing.deconstruct().into()).ok_or(ArithmeticError::Overflow)?;
-	let denominator =
-		Decimal::from_u128(T::one().deconstruct().into()).ok_or(ArithmeticError::Overflow)?;
-
-	numerator.safe_div(&denominator)
 }
