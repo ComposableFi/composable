@@ -185,3 +185,94 @@ pub fn compute_deposit_lp(
 		Ok((overwritten_quote_amount, lp_to_mint))
 	}
 }
+
+/// Paramaters:
+/// * lp_total_issuance -
+/// * num_asset_types_in_pool -
+/// * d_k - Deposit of token `k`
+/// * b_k - Balance of token `k`
+/// * w_k - Weight of token `k`
+/// * f - Fee
+///
+/// https://github.com/ComposableFi/composable/blob/main/rfcs/0008-pablo-lbp-cpp-restructure.md#42-liquidity-provider-token-lpt-math-updates
+/// Equation 6
+fn compute_first_deposit_lp_<T: PerThing>(
+	lp_total_issuance: u128,
+	num_asset_types_in_pool: u128,
+	d_k: u128,
+	b_k: u128,
+	w_k: T,
+	f: T,
+) -> Result<(u128, u128), ArithmeticError> {
+	todo!()
+}
+
+/// Paramaters:
+/// * lp_total_issuance -
+/// * num_asset_types_in_pool -
+/// * d_k - Deposit of token `k`
+/// * b_k - Balance of token `k`
+/// * w_k - Weight of token `k`
+/// * f - Fee
+///
+/// https://github.com/ComposableFi/composable/blob/main/rfcs/0008-pablo-lbp-cpp-restructure.md#42-liquidity-provider-token-lpt-math-updates
+/// Equation 5
+fn compute_existing_deposit_lp_<T: PerThing>(
+	lp_total_issuance: u128,
+	d_k: u128,
+	b_k: u128,
+	w_k: T,
+	f: T,
+) -> Result<(u128, u128), ArithmeticError> {
+	let lp_total_issuance =
+		Decimal::from_u128(lp_total_issuance).ok_or(ArithmeticError::Overflow)?;
+	let d_k = Decimal::from_u128(d_k).ok_or(ArithmeticError::Overflow)?;
+	let b_k = Decimal::from_u128(b_k).ok_or(ArithmeticError::Overflow)?;
+	let w_k = decimal_from_per_thing(w_k)?;
+
+	let left_from_fee =
+		if f.is_zero() { Decimal::ONE } else { decimal_from_per_thing(f.left_from_one())? };
+	let d_k_left_from_fee = d_k.safe_mul(&left_from_fee)?;
+
+	let base = d_k_left_from_fee.safe_add(&b_k)?.safe_div(&b_k)?;
+	let power = base.checked_powd(w_k).ok_or(ArithmeticError::Overflow)?;
+	let ratio = power.safe_sub(&Decimal::ONE)?;
+
+	let issued = lp_total_issuance.safe_mul(&ratio)?.to_u128().ok_or(ArithmeticError::Overflow)?;
+	let fee = d_k.safe_sub(&d_k_left_from_fee)?.to_u128().ok_or(ArithmeticError::Overflow)?;
+
+	Ok((issued, fee))
+}
+
+/// Paramaters:
+/// * lp_total_issuance -
+/// * num_asset_types_in_pool -
+/// * d_k - Deposit of token `k`
+/// * b_k - Balance of token `k`
+/// * w_k - Weight of token `k`
+/// * f - Fee
+pub fn compute_deposit_lp_new<T: PerThing>(
+	lp_total_issuance: u128,
+	num_asset_types_in_pool: u128,
+	d_k: u128,
+	b_k: u128,
+	w_k: T,
+	f: T,
+) -> Result<(u128, u128), ArithmeticError> {
+	let is_first_deposit = lp_total_issuance.is_zero();
+
+	if is_first_deposit {
+		compute_first_deposit_lp_(lp_total_issuance, num_asset_types_in_pool, d_k, b_k, w_k, f)
+	} else {
+		compute_existing_deposit_lp_(lp_total_issuance, d_k, b_k, w_k, f)
+	}
+}
+
+fn decimal_from_per_thing<T: PerThing>(per_thing: T) -> Result<Decimal, ArithmeticError> {
+	let numerator =
+		Decimal::from_u128(per_thing.deconstruct().into()).ok_or(ArithmeticError::Overflow)?;
+	let denominator =
+		Decimal::from_u128(T::one().deconstruct().into()).ok_or(ArithmeticError::Overflow)?;
+
+	numerator.safe_div(&denominator)
+}
