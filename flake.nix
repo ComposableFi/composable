@@ -442,7 +442,7 @@
               --steps=1 \
               --repeat=1
             '';
-          docs-renders = [ mdbook plantuml graphviz pandoc ];
+          docs-renders = [ nodejs plantuml graphviz pandoc ];
 
           mkFrontendStatic = { kusamaEndpoint, picassoEndpoint, karuraEndpoint
             , subsquidEndpoint }: npm-bp.buildYarnPackage {
@@ -752,12 +752,6 @@
               '';
             };
 
-            serve-book = pkgs.writeShellApplication {
-              name = "serve-book";
-              runtimeInputs = [ pkgs.mdbook ];
-              text = "mdbook serve ./book";
-            };
-
             docker-wipe-system =
               pkgs.writeShellScriptBin "docker-wipe-system" ''
                 echo "Wiping all docker containers, images, and volumes";
@@ -766,12 +760,6 @@
                 docker rmi -f $(docker images -a -q)
                 docker volume prune -f
               '';
-
-            composable-book = import ./book/default.nix {
-              crane = crane-stable;
-              inherit cargo stdenv;
-              inherit mdbook;
-            };
 
             # NOTE: crane can't be used because of how it vendors deps, which is incompatible with some packages in polkadot, an issue must be raised to the repo
             acala-node = pkgs.callPackage ./.nix/acala-bin.nix {
@@ -1050,28 +1038,6 @@
               '';
             };
 
-            mdbook-check = stdenv.mkDerivation {
-              name = "mdbook-check";
-              dontUnpack = true;
-              buildInputs = [ all-directories-and-files mdbook ];
-              installPhase = ''
-                mkdir -p $out/book
-                chmod 777 $out/book
-                cd ${all-directories-and-files}/book
-                mdbook --version
-
-                # `mdbook test` is most strict than `mdbook build`,
-                # it catches code blocks without a language tag,
-                # but it doesn't work with nix.
-                TMPDIR=$out/book mdbook build --dest-dir=$out/book 2>&1 | tee $out/log
-                if [ -z "$(cat $out/log | grep ERROR)" ]; then
-                  true
-                else
-                  exit 1
-                fi
-              '';
-            };
-
             hadolint-check = stdenv.mkDerivation {
               name = "hadolint-check";
               dontUnpack = true;
@@ -1216,7 +1182,7 @@
 
             docs = base-shell.overrideAttrs (base: {
               buildInputs = base.buildInputs
-                ++ (with packages; [ python3 nodejs mdbook ]);
+                ++ (with packages; [ python3 nodejs ]);
             });
 
             developers-minimal = base-shell.overrideAttrs (base:
@@ -1250,7 +1216,6 @@
                   llvmPackages_latest.bintools
                   llvmPackages_latest.lld
                   llvmPackages_latest.llvm
-                  mdbook
                   nix-tree
                   nixpkgs-fmt
                   openssl
@@ -1361,8 +1326,6 @@
               polkadot-launch composable-node polkadot-node;
             chain-spec = "picasso-dev";
           };
-          book = eachSystemOutputs.packages.x86_64-linux.composable-book;
-          rev = builtins.getEnv "GITHUB_SHA";
         };
       };
       homeConfigurations = let
