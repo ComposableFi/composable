@@ -7,7 +7,7 @@ The recommended approach is to follow our [Nix Guide](./nix) and work locally fo
 
 At Composable Finance, we use [Codespaces](https://github.com/features/codespaces) in order to provide 
 **blazing fast cloud developer environments.** This means that we all use the same 
-[Dockerized devcontainer environment](../../.devcontainer/README.md). It moves all of the resource-intensive processing 
+Dockerized devcontainer environment. It moves all of the resource-intensive processing 
 such as code compilation and analysis to the cloud, while the UI is rendered locally, providing a 
 **fast, responsive, and consistent user experience**.
 

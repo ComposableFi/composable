@@ -1,3 +1,4 @@
+```md
 # [name] Integration Guide
 
 [**Pallet Overview & Workflow**](../pallet-name.md)
@@ -40,3 +41,4 @@ end, user provided*
 
 *"Pricing sources are a must have if any Zeplin designs show users values in USD
 $"*
+```

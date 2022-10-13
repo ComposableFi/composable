@@ -53,4 +53,4 @@ If you are in an environment where you cannot edit these config files, then you 
 
 ---
 
-You are now ready to start [running packages](./run-packages.html)!
+You are now ready to start [running packages](./run-packages)!

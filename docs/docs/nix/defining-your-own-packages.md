@@ -27,4 +27,4 @@ If you have any further questions, feel free to ask them in the `#nix` channel o
 
 ---
 
-If your packaged service is part of a bigger composition, then here's [how to compose services with Arion](./composing-services-with-arion.html)!
+If your packaged service is part of a bigger composition, then here's [how to compose services with Arion](./composing-services-with-arion)!

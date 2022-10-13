@@ -39,7 +39,7 @@ For details on fees, see the chapters below.
 If a user account has enough PICA to pay for direct transactions and the user-specified PICA as payment assets in the case of XCMP,
 the appropriate amount of PICA would be moved to the `native treasury.`
 
-If a user has not enough PICA to pay and [keep the account alive](../rfcs/0002-rent-deposit.md) or a user specified USD/KSM as payment in case of XCMP,
+If a user has not enough PICA to pay and [keep the account alive](https://github.com/ComposableFi/composable/blob/main/rfcs/0002-rent-deposit.md) or a user specified USD/KSM as payment in case of XCMP,
 an appropriate amount of foreign assets will be calculated and transferred to the treasury.
 
 The amount would be defined by the configured or hardcoded ratio of PICA to USD/KSM.
@@ -85,10 +85,10 @@ There is no unified view of all fees. So if there will be, given fees prediction
 
 ### Pallets
 
-- [transaction-fee](../frame/transaction-fee)
+- transaction-fee: frame/transaction-fee
 - xcmp
-- [pablo](../frame/pablo)
-- [assets-registry](../frame/assets-registry)
-- [currency-factory](../frame/currency-factory)
-- <https://github.com/AcalaNetwork/Acala/blob/master/modules/transaction-payment/src/lib.rs>
-- <https://github.com/paritytech/substrate/blob/master/frame/transaction-payment/asset-tx-payment/src/lib.rs>
+- pablo: frame/pablo
+- assets-registry: frame/assets-registry
+- currency-factory: frame/currency-factory
+- https://github.com/AcalaNetwork/Acala/blob/master/modules/transaction-payment/src/lib.rs
+- https://github.com/paritytech/substrate/blob/master/frame/transaction-payment/asset-tx-payment/src/lib.rs

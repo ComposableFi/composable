@@ -65,4 +65,4 @@ docker run -v /var/run/docker.sock:/var/run/docker.sock -v nix:/nix -p 9988:9988
 
 ---
 
-Now that you are able to run all packages, let's [set up your declarative development environment](./development-environments.html)!
+Now that you are able to run all packages, let's [set up your declarative development environment](./development-environments)!
