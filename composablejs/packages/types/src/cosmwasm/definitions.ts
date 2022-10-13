@@ -4,7 +4,7 @@ export default {
   types: {
     PalletCosmwasmEntryPoint: {
       _enum: {
-		    Instantiate: "()",
+        Instantiate: "()",
         Execute: "()",
         Migrate: "()",
         Reply: "()",
