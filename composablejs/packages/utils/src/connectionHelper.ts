@@ -13,13 +13,12 @@ import { ApiOptions } from "@polkadot/api/types";
  * @return Promise<{ApiPromise, Keyring}> The connected API client object & a ready to use Keyring
  */
 
-export async function getNewConnection() {
+export async function getNewConnection(endpoint: string) {
   const rpc = Object.keys(definitions)
     .filter(k => Object.keys((<any>definitions)[k].rpc).length > 0) // eslint-disable-line @typescript-eslint/no-explicit-any
     .reduce((accumulator, key) => ({ ...accumulator, [key]: (<any>definitions)[key].rpc }), {}); // eslint-disable-line @typescript-eslint/no-explicit-any
   const types = Object.values(definitions).reduce((accumulator, { types }) => ({ ...accumulator, ...types }), {});
 
-  const endpoint = "ws://" + (process.env.ENDPOINT ?? "127.0.0.1:9988");
   const provider = new WsProvider(endpoint);
   const apiOptions: ApiOptions = {
     provider,

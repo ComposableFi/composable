@@ -1,35 +1,31 @@
 # TODO: move to `parachains` folder
 { pkgs, rust-overlay }:
-with pkgs.stdenv;
-with pkgs;
 
-mkDerivation {
+pkgs.stdenv.mkDerivation {
   name = "acala";
   src = pkgs.fetchgit {
     url = "https://github.com/AcalaNetwork/Acala.git";
-    rev = "e9d2b3caa0663c1d3e7d4d6e7d3faef4a569099c";
-    sha256 = "sha256-Cw/92L51P1LmQ34He/7+76pffUz3uU4Tlrt3kd5hNQk=";
+    rev = "2cc84df5298611a63ddf3198f8f242a120a932f6";
+    sha256 = "sha256-l0vQphfyE0FWISPbu3WvFMifM7mj072kXksntGAXS9k=";
     fetchSubmodules = true;
-    deepClone = true;
   };
-
-  configurePhase = "git submodule update --init --recursive";
   installPhase = ''
-    mkdir --parents $out/bin && mv ./target/production/acala $out/bin
+    mkdir --parents $out/bin && mv ./target/release/acala $out/bin
   '';
-
-  # substrate-attrs-node-with-attrs
   __noChroot = true;
   doCheck = false;
-  buildInputs = [ openssl ];
-  nativeBuildInputs = [ clang git rust-overlay ];
+  buildInputs = with pkgs; [ openssl ];
+  nativeBuildInputs = with pkgs; [ clang git rust-overlay ];
   buildPhase = ''
-    		mkdir home
-        export HOME=$PWD/home	
-    	  make build-release 
-    	'';
+    mkdir home
+    export HOME=$PWD/home
+    cargo build --locked --features with-all-runtime,rococo-native --profile release --workspace --exclude runtime-integration-tests --exclude e2e-tests --exclude test-service
+  '';
+  meta = { mainProgram = "acala"; };
   # TODO: moved these to some `cumulus based derivation`
-  LD_LIBRARY_PATH =
-    lib.strings.makeLibraryPath [ stdenv.cc.cc.lib llvmPackages.libclang.lib ];
-  LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
+  LD_LIBRARY_PATH = pkgs.lib.strings.makeLibraryPath
+    (with pkgs; [ stdenv.cc.cc.lib llvmPackages.libclang.lib ]);
+  LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
+  PROTOC = "${pkgs.protobuf}/bin/protoc";
+  ROCKSDB_LIB_DIR = "${pkgs.rocksdb}/lib";
 }
