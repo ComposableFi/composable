@@ -15,6 +15,8 @@
 #![allow(clippy::all)]
 #![deny(missing_docs)]
 
+//! GRANDPA prover utilities
+
 use crate::runtime::api::runtime_types::polkadot_parachain::primitives::Id;
 use anyhow::anyhow;
 pub use beefy_prover;
