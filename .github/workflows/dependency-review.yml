@@ -10,6 +10,9 @@ on: [pull_request]
 permissions:
   contents: read
 
+
+# The following two GHSAs are ignored because they are casued by the static Docusaurus build.
+# Please remove when Docusaurus gets updated.
 jobs:
   dependency-review:
     runs-on: ubuntu-latest
@@ -19,8 +22,6 @@ jobs:
       - name: 'Dependency Review'
         uses: actions/dependency-review-action@v2
         with:
-          # The following two GHSAs are ignored because they are casued by the static Docusaurus build.
-          # Please remove when Docusaurus gets updated.
           allow-ghsas: 
             - GHSA-pfrx-2q88-qq97
             - GHSA-w5p7-h5w8-2hfq
