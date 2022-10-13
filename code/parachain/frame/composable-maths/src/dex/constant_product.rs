@@ -117,11 +117,11 @@ pub fn compute_out_given_in_new<T: PerThing>(
 	a_sent: u128,
 	f: T,
 ) -> Result<(u128, u128), ArithmeticError> {
-	let w_i = Decimal::from(w_i.deconstruct().into());
-	let w_o = Decimal::from(w_o.deconstruct().into());
-	let b_i = Decimal::from(b_i);
-	let b_o = Decimal::from(b_o);
-	let a_sent = Decimal::from(a_sent);
+	let w_i = Decimal::from_u128(w_i.deconstruct().into()).ok_or(ArithmeticError::Overflow)?;
+	let w_o = Decimal::from_u128(w_o.deconstruct().into()).ok_or(ArithmeticError::Overflow)?;
+	let b_i = Decimal::from_u128(b_i).ok_or(ArithmeticError::Overflow)?;
+	let b_o = Decimal::from_u128(b_o).ok_or(ArithmeticError::Overflow)?;
+	let a_sent = Decimal::from_u128(a_sent).ok_or(ArithmeticError::Overflow)?;
 
 	let weight_ratio = w_i.safe_div(&w_o)?;
 	// NOTE(connor): Use if to prevent pointless conversions if `f` is zero
@@ -133,12 +133,11 @@ pub fn compute_out_given_in_new<T: PerThing>(
 	};
 	let a_sent_fee_cut = a_sent.safe_mul(&left_from_fee)?;
 
-	let value = b_i.safe_add(&a_sent_fee_cut)?;
-	let value = b_i.safe_div(&value)?;
-	let value = value.checked_powd(weight_ratio).ok_or(ArithmeticError::Overflow)?;
-	let value = Decimal::ONE.safe_sub(&value)?;
+	let base = b_i.safe_div(&b_i.safe_add(&a_sent_fee_cut)?)?;
+	let power = base.checked_powd(weight_ratio).ok_or(ArithmeticError::Overflow)?;
+	let ratio = Decimal::ONE.safe_sub(&power)?;
 
-	let a_out = b_o.safe_mul(&value)?.round_down().to_u128().ok_or(ArithmeticError::Overflow)?;
+	let a_out = b_o.safe_mul(&ratio)?.round_down().to_u128().ok_or(ArithmeticError::Overflow)?;
 	let fee = a_sent
 		.safe_sub(&a_sent_fee_cut)?
 		.round_up()
