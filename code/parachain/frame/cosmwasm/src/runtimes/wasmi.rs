@@ -508,7 +508,6 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 			VmGas::DbScan => T::WeightInfo::db_scan(),
 			VmGas::DbNext => T::WeightInfo::db_next(),
 			VmGas::Balance => T::WeightInfo::balance(),
-			VmGas::Transfer => T::WeightInfo::transfer(1),
 			VmGas::Secp256k1Verify => T::WeightInfo::secp256k1_verify(),
 			VmGas::Secp256k1RecoverPubkey => T::WeightInfo::secp256k1_recover_pubkey(),
 			VmGas::Ed25519Verify => T::WeightInfo::ed25519_verify(),
@@ -517,12 +516,15 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 			VmGas::AddrCanonicalize => T::WeightInfo::addr_canonicalize(),
 			VmGas::AddrHumanize => T::WeightInfo::addr_humanize(),
 			VmGas::GetContractMeta => T::WeightInfo::contract_meta(),
-			VmGas::ContinueExecute => T::WeightInfo::continue_execute(0),
-			VmGas::ContinueInstantiate => T::WeightInfo::continue_instantiate(0),
+			VmGas::Transfer { nb_of_coins } => T::WeightInfo::transfer(nb_of_coins),
+			VmGas::ContinueExecute { nb_of_coins } => T::WeightInfo::continue_execute(nb_of_coins),
+			VmGas::ContinueInstantiate { nb_of_coins } =>
+				T::WeightInfo::continue_instantiate(nb_of_coins),
 			VmGas::ContinueMigrate => T::WeightInfo::continue_migrate(),
 			VmGas::QueryContinuation => T::WeightInfo::query_continuation(),
 			VmGas::QueryRaw => T::WeightInfo::query_raw(),
 			VmGas::QueryInfo => T::WeightInfo::query_info(),
+			// VmGas::Debug is not charged
 			_ => 1_u64,
 			/*
 			-----------------
@@ -532,15 +534,6 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 			VmGas::MessageCustom => todo!(),
 			VmGas::Burn => todo!(),
 			VmGas::AllBalance => todo!(),
-			---------------------------
-			Already done by other calls
-			---------------------------
-			VmGas::QueryChain => todo!(),
-			VmGas::RawCall => todo!(),
-			----
-			None
-			----
-			VmGas::Debug => todo!(),
 			*/
 		};
 		self.charge_raw(gas_to_charge)

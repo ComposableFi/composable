@@ -1836,7 +1836,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-minimal-std"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?branch=feature/generate-code#bf2ad6978942d4099b82dd734bf94e80a18252c1"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?branch=feature/generate-code#16c80291b3f86c335c001e7aaeba76a8edfcfd51"
 dependencies = [
  "base64 0.13.0",
  "serde",
@@ -1910,7 +1910,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?branch=feature/generate-code#bf2ad6978942d4099b82dd734bf94e80a18252c1"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?branch=feature/generate-code#16c80291b3f86c335c001e7aaeba76a8edfcfd51"
 dependencies = [
  "cosmwasm-minimal-std",
  "either",
@@ -1922,7 +1922,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm-wasmi"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?branch=feature/generate-code#bf2ad6978942d4099b82dd734bf94e80a18252c1"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?branch=feature/generate-code#16c80291b3f86c335c001e7aaeba76a8edfcfd51"
 dependencies = [
  "cosmwasm-minimal-std",
  "cosmwasm-vm",
@@ -15815,7 +15815,7 @@ dependencies = [
  "chrono",
  "lazy_static",
  "matchers",
- "parking_lot 0.11.2",
+ "parking_lot 0.9.0",
  "regex",
  "serde",
  "serde_json",
@@ -16007,9 +16007,9 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "digest 0.10.5",
- "rand 0.8.5",
+ "rand 0.6.5",
  "static_assertions",
 ]
 

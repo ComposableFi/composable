@@ -32,10 +32,10 @@ use sp_std::marker::PhantomData;
 
 pub trait WeightInfo {
 	fn upload(n: usize) -> Weight;
-	fn instantiate(n: usize) -> Weight;
-	fn execute(n: usize) -> Weight;
-	fn continue_instantiate(n: usize) -> Weight;
-	fn continue_execute(n: usize) -> Weight;
+	fn instantiate(n: u32) -> Weight;
+	fn execute(n: u32) -> Weight;
+	fn continue_instantiate(n: u32) -> Weight;
+	fn continue_execute(n: u32) -> Weight;
 	fn continue_migrate() -> Weight;
 	fn db_read() -> Weight;
 	fn db_read_other_contract() -> Weight;
@@ -44,7 +44,7 @@ pub trait WeightInfo {
 	fn db_next() -> Weight;
 	fn db_remove() -> Weight;
 	fn balance() -> Weight;
-	fn transfer(n: usize) -> Weight;
+	fn transfer(n: u32) -> Weight;
 	fn set_contract_meta() -> Weight;
 	fn running_contract_meta() -> Weight;
 	fn contract_meta() -> Weight;
@@ -60,6 +60,7 @@ pub trait WeightInfo {
 	fn query_raw() -> Weight;
 }
 
+
 /// Weight functions for `cosmwasm`.
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
@@ -71,9 +72,9 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Cosmwasm CodeIdToInfo (r:0 w:1)
 	/// The range of component `n` is `[1, 514288]`.
 	fn upload(n: usize, ) -> Weight {
-		(221_986_000 as Weight)
+		(185_960_000 as Weight)
 			// Standard Error: 0
-			.saturating_add((44_000 as Weight).saturating_mul(n as Weight))
+			.saturating_add((45_000 as Weight).saturating_mul(n as Weight))
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}
@@ -86,10 +87,10 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: System Account (r:2 w:2)
 	// Storage: Tokens Accounts (r:2 w:2)
 	/// The range of component `n` is `[0, 17]`.
-	fn instantiate(n: usize, ) -> Weight {
-		(657_924_000 as Weight)
-			// Standard Error: 383_000
-			.saturating_add((23_834_000 as Weight).saturating_mul(n as Weight))
+	fn instantiate(n: u32, ) -> Weight {
+		(1_098_402_000 as Weight)
+			// Standard Error: 1_379_000
+			.saturating_add((27_052_000 as Weight).saturating_mul(n as Weight))
 			.saturating_add(T::DbWeight::get().reads(6 as Weight))
 			.saturating_add(T::DbWeight::get().reads((2 as Weight).saturating_mul(n as Weight)))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
@@ -103,10 +104,10 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: System Account (r:2 w:2)
 	// Storage: Tokens Accounts (r:2 w:2)
 	/// The range of component `n` is `[0, 17]`.
-	fn execute(n: usize, ) -> Weight {
-		(629_334_000 as Weight)
-			// Standard Error: 100_000
-			.saturating_add((24_670_000 as Weight).saturating_mul(n as Weight))
+	fn execute(n: u32, ) -> Weight {
+		(1_083_252_000 as Weight)
+			// Standard Error: 90_000
+			.saturating_add((23_231_000 as Weight).saturating_mul(n as Weight))
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().reads((2 as Weight).saturating_mul(n as Weight)))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
@@ -118,7 +119,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: unknown [0xe9a804b2e527fd3601d2ffc0bb023cd668656c6c6f20776f726c64] (r:1 w:0)
 	fn db_read() -> Weight {
-		(173_707_000 as Weight)
+		(208_623_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
@@ -128,7 +129,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: unknown [0xe9a804b2e527fd3601d2ffc0bb023cd668656c6c6f20776f726c64] (r:1 w:0)
 	fn db_read_other_contract() -> Weight {
-		(173_581_000 as Weight)
+		(208_080_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
@@ -138,7 +139,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: unknown [0x46fb7408d4f285228f4af516ea25851b68656c6c6f] (r:1 w:1)
 	fn db_write() -> Weight {
-		(173_748_000 as Weight)
+		(208_539_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
@@ -147,7 +148,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	fn db_scan() -> Weight {
-		(169_706_000 as Weight)
+		(204_456_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
@@ -157,7 +158,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: unknown [0x] (r:1 w:0)
 	fn db_next() -> Weight {
-		(194_249_000 as Weight)
+		(227_581_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
@@ -167,28 +168,28 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: unknown [0x46fb7408d4f285228f4af516ea25851b68656c6c6f] (r:1 w:1)
 	fn db_remove() -> Weight {
-		(175_165_000 as Weight)
+		(216_914_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
 	// Storage: Tokens Accounts (r:1 w:0)
 	fn balance() -> Weight {
-		(3_125_000 as Weight)
+		(2_750_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 	}
 	// Storage: System Account (r:2 w:2)
 	// Storage: Tokens Accounts (r:2 w:2)
 	/// The range of component `n` is `[0, 17]`.
-	fn transfer(n: usize, ) -> Weight {
-		(11_456_000 as Weight)
-			// Standard Error: 54_000
-			.saturating_add((23_224_000 as Weight).saturating_mul(n as Weight))
+	fn transfer(n: u32, ) -> Weight {
+		(10_012_000 as Weight)
+			// Standard Error: 47_000
+			.saturating_add((21_523_000 as Weight).saturating_mul(n as Weight))
 			.saturating_add(T::DbWeight::get().reads((2 as Weight).saturating_mul(n as Weight)))
 			.saturating_add(T::DbWeight::get().writes((2 as Weight).saturating_mul(n as Weight)))
 	}
 	// Storage: Cosmwasm ContractToInfo (r:1 w:1)
 	fn set_contract_meta() -> Weight {
-		(5_709_000 as Weight)
+		(5_333_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
@@ -197,35 +198,35 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	fn running_contract_meta() -> Weight {
-		(169_873_000 as Weight)
+		(204_622_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	fn contract_meta() -> Weight {
-		(3_750_000 as Weight)
+		(3_417_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 	}
 	fn addr_validate() -> Weight {
 		(792_000 as Weight)
 	}
 	fn addr_canonicalize() -> Weight {
-		(792_000 as Weight)
+		(750_000 as Weight)
 	}
 	fn addr_humanize() -> Weight {
 		(167_000 as Weight)
 	}
 	fn secp256k1_recover_pubkey() -> Weight {
-		(34_208_000 as Weight)
+		(35_416_000 as Weight)
 	}
 	fn secp256k1_verify() -> Weight {
-		(209_000 as Weight)
+		(250_000 as Weight)
 	}
 	fn ed25519_verify() -> Weight {
-		(37_250_000 as Weight)
+		(37_208_000 as Weight)
 	}
 	fn ed25519_batch_verify() -> Weight {
-		(72_666_000 as Weight)
+		(73_957_000 as Weight)
 	}
 	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
 	// Storage: Cosmwasm InstrumentedCode (r:1 w:0)
@@ -236,10 +237,10 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: System Account (r:2 w:2)
 	// Storage: Tokens Accounts (r:2 w:2)
 	/// The range of component `n` is `[0, 17]`.
-	fn continue_instantiate(n: usize, ) -> Weight {
-		(774_878_000 as Weight)
-			// Standard Error: 68_000
-			.saturating_add((24_535_000 as Weight).saturating_mul(n as Weight))
+	fn continue_instantiate(n: u32, ) -> Weight {
+		(1_271_717_000 as Weight)
+			// Standard Error: 139_000
+			.saturating_add((22_204_000 as Weight).saturating_mul(n as Weight))
 			.saturating_add(T::DbWeight::get().reads(6 as Weight))
 			.saturating_add(T::DbWeight::get().reads((2 as Weight).saturating_mul(n as Weight)))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
@@ -251,10 +252,10 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	/// The range of component `n` is `[0, 17]`.
-	fn continue_execute(n: usize, ) -> Weight {
-		(747_691_000 as Weight)
-			// Standard Error: 66_000
-			.saturating_add((1_154_000 as Weight).saturating_mul(n as Weight))
+	fn continue_execute(n: u32, ) -> Weight {
+		(1_245_735_000 as Weight)
+			// Standard Error: 134_000
+			.saturating_add((974_000 as Weight).saturating_mul(n as Weight))
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
@@ -264,7 +265,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	fn continue_migrate() -> Weight {
-		(665_243_000 as Weight)
+		(1_072_944_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
@@ -274,7 +275,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	fn query_info() -> Weight {
-		(172_206_000 as Weight)
+		(206_872_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
@@ -284,7 +285,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	fn query_continuation() -> Weight {
-		(667_452_000 as Weight)
+		(1_074_153_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
@@ -295,7 +296,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	// Storage: unknown [0x46fb7408d4f285228f4af516ea25851b68656c6c6f] (r:1 w:1)
 	fn query_raw() -> Weight {
-		(178_874_000 as Weight)
+		(213_789_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(6 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
