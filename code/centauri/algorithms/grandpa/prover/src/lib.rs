@@ -163,8 +163,8 @@ where
 	/// chain hashes.
 	pub async fn query_finalized_parachain_headers_with_proof<H>(
 		&self,
+		client_state: &ClientState<T::Hash>,
 		mut latest_finalized_height: u32,
-		previous_finalized_height: u32,
 		header_numbers: Vec<T::BlockNumber>,
 	) -> Result<ParachainHeadersWithFinalityProof<H>, anyhow::Error>
 	where
@@ -174,6 +174,27 @@ where
 		T::Hash: From<H::Hash>,
 		T::BlockNumber: One,
 	{
+		let previous_para_hash = self
+			.para_client
+			.rpc()
+			.block_hash(Some((client_state.latest_para_height + 1).into()))
+			.await?
+			.ok_or_else(|| anyhow!("Failed to fetch previous finalized parachain + 1 hash"))?;
+		let address = parachain::api::storage().parachain_system().validation_data();
+		let validation_data = self
+			.para_client
+			.storage()
+			.fetch(&address, Some(previous_para_hash))
+			.await
+			.unwrap()
+			.unwrap();
+		let previous_finalized_height =
+			validation_data.relay_parent_number.min(client_state.latest_relay_height);
+
+		dbg!(&client_state.latest_para_height);
+		dbg!(&previous_finalized_height);
+		dbg!(&header_numbers);
+
 		let session_end = self.session_end_for_block(previous_finalized_height).await?;
 
 		if latest_finalized_height > session_end {
@@ -200,7 +221,7 @@ where
 		let start = self
 			.relay_client
 			.rpc()
-			.block_hash(Some((previous_finalized_height + 1).into()))
+			.block_hash(Some(previous_finalized_height.into()))
 			.await?
 			.ok_or_else(|| anyhow!("Failed to fetch previous finalized hash + 1"))?;
 		let start_header = self
@@ -233,9 +254,7 @@ where
 			unknown_headers.push(H::decode(&mut &header.encode()[..])?);
 		}
 
-		let unkown_header_heights =
-			unknown_headers.iter().map(|h| u32::from(*h.number())).collect::<Vec<_>>();
-		dbg!(unkown_header_heights);
+		dbg!(unknown_headers.iter().map(|h| u32::from(*h.number())).collect::<Vec<_>>());
 		// overwrite unknown headers
 		finality_proof.unknown_headers = unknown_headers;
 

@@ -89,6 +89,7 @@ where
 					current_set_id: client_state.current_set_id,
 					latest_relay_hash: client_state.latest_relay_hash,
 					latest_relay_height: client_state.latest_relay_height,
+					latest_para_height: client_state.latest_para_height,
 					para_id: client_state.para_id,
 				};
 

@@ -18,8 +18,7 @@ use codec::Decode;
 use finality_grandpa_rpc::GrandpaApiClient;
 use futures::StreamExt;
 use grandpa_prover::{
-	beefy_prover::helpers::unsafe_arc_cast, host_functions::HostFunctionsProvider, parachain,
-	GrandpaProver,
+	beefy_prover::helpers::unsafe_arc_cast, host_functions::HostFunctionsProvider, GrandpaProver,
 };
 use polkadot_core_primitives::Header;
 use primitives::justification::GrandpaJustification;
@@ -90,14 +89,6 @@ async fn follow_grandpa_justifications() {
 			.query_latest_finalized_parachain_header(justification.commit.target_number)
 			.await
 			.expect("Failed to fetch finalized parachain headers");
-		let address = parachain::api::storage().parachain_system().validation_data();
-		let validation_data = prover
-			.para_client
-			.storage()
-			.fetch(&address, Some(finalized_para_header.hash()))
-			.await
-			.unwrap()
-			.unwrap();
 
 		// notice the inclusive range
 		let header_numbers = ((client_state.latest_para_height + 1)..=finalized_para_header.number)
@@ -107,15 +98,10 @@ async fn follow_grandpa_justifications() {
 			continue
 		}
 
-		dbg!(&client_state.latest_para_height);
-		dbg!(&client_state.latest_relay_height);
-		dbg!(&validation_data.relay_parent_number);
-        dbg!(&header_numbers);
-        
 		let proof = prover
 			.query_finalized_parachain_headers_with_proof(
+				&client_state,
 				justification.commit.target_number,
-				validation_data.relay_parent_number.min(client_state.latest_relay_height),
 				header_numbers,
 			)
 			.await
