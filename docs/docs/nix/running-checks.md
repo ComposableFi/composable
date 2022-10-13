@@ -45,8 +45,4 @@ There are many more checks we can run. If you want to reproduce one from CI loca
 
 ---
 
-You now know all you need to know to work on existing packages. However, if you need to introduce a new package, here's how to use Nix to [define your own packages](./defining-your-own-packages.html)!
-
-
-
-
+You now know all you need to know to work on existing packages. However, if you need to introduce a new package, here's how to use Nix to [define your own packages](./defining-your-own-packages)!

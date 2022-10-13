@@ -15,5 +15,5 @@ Nix also cuts your check-fix feedback-loop by **running all CI checks locally**,
 
 ---
 
-Let's get started and [install Nix](./nix/install.html)!
+Let's get started and [install Nix](./nix/install)!
 

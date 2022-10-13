@@ -3,7 +3,7 @@
 
 ---
 
-Getting started with [Codespaces](../codespaces.html) is super easy. 
+Getting started with [Codespaces](../codespaces) is super easy. 
 We'll just have to configure your **GitHub account** and set up **Visual Studio Code**.
 
 ## Setting up your GitHub account
@@ -36,4 +36,4 @@ and add the [GitHub Codespaces plugin](https://marketplace.visualstudio.com/item
 ![Visual Studio Code GitHub Codespaces plugin](./vscode-codespaces-plugin.png)
 *Installing the GitHub Codespaces plugin*
 
-You are now ready to [start using Codespaces](./using-codespaces.html)!
+You are now ready to [start using Codespaces](./using-codespaces)!

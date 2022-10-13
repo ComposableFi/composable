@@ -19,7 +19,7 @@ In this document, we use the following terms interchangeably:
 
 We express the identity of a currency as a positive integer. Any positive integer may be a currency id, but not all integers are currency ids.
 
-The [CurrencyFactory](../frame/currency-factory) pallet manages all currencies created in the runtime. For clarification on the low-level basics, look into the pallet readme.
+The CurrencyFactory (frame/currency-factory) pallet manages all currencies created in the runtime. For clarification on the low-level basics, look into the pallet readme.
 
 
 ### Amounts
@@ -55,7 +55,7 @@ For example, ETH is remote on Acala and AUSD is local on Acala. Both are remote 
 
 In the local consensus, bridged tokens semantically are just protocol tokens with their associated risks.
 
-For details on registry mapping, check the [AssetsRegistry](../frame/assets-registry) pallet. 
+For details on registry mapping, check the AssetsRegistry (frame/assets-registry) pallet. 
 
 ### Remote currencies equivalence
 

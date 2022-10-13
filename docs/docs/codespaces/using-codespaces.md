@@ -4,7 +4,7 @@
 
 ---
 
-Once you're [ready to get started](./getting-started.html), using Codespaces is very easy. 
+Once you're [ready to get started](./getting-started), using Codespaces is very easy. 
 Simply go to our monorepo at [github.com/ComposableFi/composable](https://github.com/ComposableFi/composable) 
 and click on the **"Create codespace on main"** button:
 
@@ -65,7 +65,7 @@ you will see it in-place. Here you will be able to reply to the comment and opti
 That's all you need to know in order to effectively make changes using Codespaces!
 Depending on what you want to work on, check out one of the following guides:
 
-- [Book](./book.html)
-- [Substrate](./substrate.html)
-- [Frontend](./frontend.html)
-- [Runtime Tests](./runtime-tests.html)
+- [Book](./book)
+- [Substrate](./substrate)
+- [Frontend](./frontend)
+- [Runtime Tests](./runtime-tests)

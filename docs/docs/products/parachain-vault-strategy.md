@@ -45,7 +45,7 @@ token of Instrumental Finance and ANGL being the native token of Angular Finance
 distributed to earners in this strategy, and LAYR and ANGL tokens will be distributed upon their respective token 
 generation events (TGEs), including any earnings generated from boosts.
 
-[Instrumental Finance](instrumental.finance) was the first protocol that began tapping into the user base that 
+[Instrumental Finance](https://instrumental.finance) was the first protocol that began tapping into the user base that 
 Composable has built. This extinct program commenced the incentivization of the vaults from 3pm CET, October 18th, 
 2021 until December 6th, 2021, 12:00 UTC.
 
