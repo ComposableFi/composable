@@ -18,14 +18,15 @@ use codec::Decode;
 use finality_grandpa_rpc::GrandpaApiClient;
 use futures::StreamExt;
 use grandpa_prover::{
-	beefy_prover::helpers::unsafe_arc_cast, host_functions::HostFunctionsProvider, GrandpaProver,
+	beefy_prover::helpers::unsafe_arc_cast, host_functions::HostFunctionsProvider, parachain,
+	GrandpaProver,
 };
 use polkadot_core_primitives::Header;
 use primitives::justification::GrandpaJustification;
 use serde::{Deserialize, Serialize};
 use sp_core::H256;
 use std::mem::size_of_val;
-use subxt::{ext::sp_runtime::traits::Header as _, PolkadotConfig};
+use subxt::PolkadotConfig;
 
 pub type Justification = GrandpaJustification<Header>;
 
@@ -85,23 +86,35 @@ async fn follow_grandpa_justifications() {
 			justification.commit.target_hash, justification.commit.target_number
 		);
 
-		let headers = prover
-			.query_finalized_parachain_headers_between(
-				justification.commit.target_number,
-				client_state.latest_relay_height,
-			)
+		let finalized_para_header = prover
+			.query_latest_finalized_parachain_header(justification.commit.target_number)
 			.await
 			.expect("Failed to fetch finalized parachain headers");
-		let headers = match headers {
-			Some(headers) => headers,
-			None => continue,
-		};
+		let address = parachain::api::storage().parachain_system().validation_data();
+		let validation_data = prover
+			.para_client
+			.storage()
+			.fetch(&address, Some(finalized_para_header.hash()))
+			.await
+			.unwrap()
+			.unwrap();
 
-		let header_numbers = headers.iter().map(|h| *h.number()).collect();
+		// notice the inclusive range
+		let header_numbers = ((client_state.latest_para_height + 1)..=finalized_para_header.number)
+			.collect::<Vec<_>>();
+
+		if header_numbers.len() == 0 {
+			continue
+		}
+
+        dbg!(&client_state.latest_para_height);
+        dbg!(&client_state.latest_relay_height);
+        dbg!(&validation_data.relay_parent_number);
+
 		let proof = prover
 			.query_finalized_parachain_headers_with_proof(
 				justification.commit.target_number,
-				client_state.latest_relay_height,
+				validation_data.relay_parent_number,
 				header_numbers,
 			)
 			.await

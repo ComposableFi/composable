@@ -208,7 +208,7 @@ async fn test_continuous_update_of_grandpa_client() {
 		}
 
 		let headers = prover
-			.query_finalized_parachain_headers_between(
+			.query_latest_finalized_parachain_header(
 				justification.commit.target_number,
 				client_state.latest_relay_height,
 			)

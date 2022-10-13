@@ -263,7 +263,7 @@ where
 		};
 
 		prover
-			.query_finalized_parachain_headers_between(
+			.query_latest_finalized_parachain_header(
 				latest_finalized_block,
 				previous_finalized_block,
 			)

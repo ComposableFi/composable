@@ -64,6 +64,8 @@ pub struct ClientState<H> {
 	pub current_set_id: u64,
 	/// latest finalized height on the relay chain.
 	pub latest_relay_height: u32,
+	/// latest finalized height on the parachain.
+	pub latest_para_height: u32,
 	/// latest finalized hash on the relay chain.
 	pub latest_relay_hash: H,
 	/// para_id of associated parachain
