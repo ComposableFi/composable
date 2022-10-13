@@ -1,0 +1,9 @@
+{
+  "name": "endpoints",
+  "version": "1.0.0",
+  "devDependencies": {
+    "@mui/material": "*",
+    "shared": "*",
+    "eslint-config-custom": "*"
+  }
+}

@@ -1,21 +1,13 @@
-import {
-  Box,
-  BoxProps,
-  Typography,
-  useTheme,
-  alpha,
-  TypographyProps,
-  Button,
-  CircularProgress,
-} from "@mui/material";
+import { Box, BoxProps, Button, CircularProgress, Typography, TypographyProps, useTheme } from "@mui/material";
 import { AreaChart, AreaChartProps } from "../Atom";
+import { isValidElement, ReactNode } from "react";
 
 export type ChartProps = {
   title?: string;
   TitleTypographyProps?: TypographyProps;
   totalText?: string;
   TotalTextTypographyProps?: TypographyProps;
-  changeText?: string;
+  changeText?: string | ReactNode;
   changeTextColor?: string;
   ChangeTextTypographyProps?: TypographyProps;
   AreaChartProps: AreaChartProps;
@@ -24,6 +16,36 @@ export type ChartProps = {
   isLoading?: boolean;
   intervals?: string[];
 } & BoxProps;
+
+export const ChangeText = ({ changeText, AreaChartProps, ChangeTextTypographyProps, changeTextColor }: {
+  changeText?: string | ReactNode;
+  ChangeTextTypographyProps?: TypographyProps;
+  changeTextColor?: string;
+  AreaChartProps: AreaChartProps;
+}) => {
+  const Component = () => <>{changeText}</>;
+  const theme = useTheme();
+  if (changeText && typeof changeText === "string") {
+    return (
+      <Typography
+        variant="body2"
+        color={
+          changeTextColor ||
+          AreaChartProps.color ||
+          theme.palette.success.main
+        }
+        mt={1}
+        {...ChangeTextTypographyProps}
+      >
+        {changeText}
+      </Typography>
+    );
+  }
+  if (typeof isValidElement(changeText)) {
+    return <Component />;
+  }
+  return null;
+};
 
 export const Chart: React.FC<ChartProps> = ({
   title,
@@ -47,7 +69,7 @@ export const Chart: React.FC<ChartProps> = ({
       borderRadius={1}
       padding={6}
       sx={{
-        background: theme.palette.background.paper,
+        background: theme.palette.background.paper
       }}
       {...boxProps}
     >
@@ -73,7 +95,7 @@ export const Chart: React.FC<ChartProps> = ({
                     interval.toLowerCase() === currentInterval
                       ? theme.palette.text.primary
                       : theme.palette.text.secondary,
-                  minWidth: 32,
+                  minWidth: 32
                 }}
               >
                 {isLoading && interval.toLowerCase() === currentInterval ? (
@@ -90,20 +112,7 @@ export const Chart: React.FC<ChartProps> = ({
           {totalText}
         </Typography>
       )}
-      {changeText && (
-        <Typography
-          variant="body2"
-          color={
-            changeTextColor ||
-            AreaChartProps.color ||
-            theme.palette.success.main
-          }
-          mt={1}
-          {...ChangeTextTypographyProps}
-        >
-          {changeText}
-        </Typography>
-      )}
+      <ChangeText AreaChartProps={AreaChartProps} changeText={changeText} changeTextColor={changeTextColor} />
       {!totalText && !changeText && <Box mb={9} />}
       <AreaChart {...AreaChartProps} />
     </Box>

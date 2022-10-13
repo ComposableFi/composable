@@ -1,7 +1,9 @@
 import { Box } from "@mui/material";
 import { ApolloTable } from "@/components/Molecules";
+import { FC } from "react";
 
-export const StatsApolloTab: React.FC<any> = () => {
+export const StatsApolloTab: FC = () => {
+
   return (
     <Box
       sx={{

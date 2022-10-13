@@ -1,0 +1,748 @@
+= Design Proposal: Pablo Formalization and Restructure
+:math:
+:stem:
+:imagesoutdir: images
+:imagesdir: images
+:toc:
+:toclevels: 4
+:sectnums:
+:sectnumlevels: 4
+
+== Abstract
+
+This document is a review of current Pablo implementation and proposes updates to better align the constant product pool(CPP) and liquidity bootstrapping pool(LBP) code with the https://docs.balancer.fi/concepts/math/weighted-math[Balancer protocol] which those implementations are based on.
+
+== Background
+
+Pablo http://link[constant product pool (analogous to Uniswap)] and the liquidity bootstrapping pool implementations are based on the balancer weighted math that is laid out https://dev.balancer.fi/resources/pool-math/weighted-math[here]. However, due to historical evolution of the code the implementations are right now separate and sometimes seems to be inconsistent. Specially the fee calculations that does not seem to follow a standard formula specially when it comes to "in given out" scenario.
+
+
+== Requirements
+
+. Fees calculations on Pablo MUST align with the math for Balancer pools.
+. Liquidity provider token calculations on Pablo MUST align with the math for Balancer pools (taking into account weights).
+. Code MUST be re-organized to unify CPP to avoid divergence and to allow easier maintenance.
+. Remove LBP and StableSwap implementations since they are not needed for the MVP.
+. MUST assess risks and propose fail safes.
+
+In addition to these hard requirements the idea is also to simplify the code as much as possible to avoid confusion specially regarding the `CurrencyPair` swaps.
+
+[#_method]
+== Method
+
+Following is an overview of the proposed changes to the Pablo CPP and LBP implementation.
+
+TODO
+
+
+=== Fee Math Updates
+
+Given the definition of symbols,
+
+stem:[A_i] : Amount (`A`) of input (`i`) token
+
+stem:[A_"sent"] : Amount of input token sent by the user
+
+stem:[A_o] : Amount of output token (`o`)
+
+stem:[B_i] : Balance (`B`) of input token in the pool
+
+stem:[B_o] : Balance of output token in the pool
+
+stem:[w_i] : weight (`w`) of input token in the pool
+
+stem:[w_o] : weight of output token in the pool
+
+stem:[s] : spot price
+
+stem:[f] : total swap fee
+
+https://balancer.fi/whitepaper.pdf[Balancer white paper] derives the following formulae for calculating,
+
+. Spot price
++
+stem:[s = (B_i/w_i) / (B_o / w_o)]
++
+When taking the fee into account the formula is adjusted as,
++
+stem:[s = (B_i/w_i) / (B_o / w_o) . (1 / (1 - f))] <- (1)
+. Out-given-in
++
+stem:[A_o = B_o . (1 - (B_i / (B_i + A_i))^(w_i / w_o))]
+Here as they recommend the application of fee on the "way-in" with the following approach,
++
+stem:[A_o = B_o . (1 - (B_i / (B_i + A_"sent" . (1 - f)))^(w_i / w_o))] <- (2)
+. In-given-out
++
+stem:[A_i = B_i . ((B_o / (B_o - A_o))^(w_o/w_i) - 1 )]
++
+Given that the fee should not affect the amount that the user would like to receive, One can derive the following formula for the "In" amount given the fee (refer <<_proof_of_fee_for_in_given_out>>).
++
+stem:[A_"sent" = (B_i / (1 - f)) . ((B_o / (B_o - A_o))^(w_o / w_i) - 1)] <- (3)
+
+The CPP and LBP implementations can directly use (1), (2) and (3) with fees included (as opposed to the current implementation where fees are not part of the core equations). The code at `code/parachain/frame/composable-maths/src/dex/constant_product.rs` must be adjusted for this.
+
+This change could be done in stages,
+
+. Change the functions in the code to include the fee percentage as an input, set the fee as 0 for all uses of those functions.
+. Adjust the uses of these functions to provide the actual fee percentage.
+
+=== Liquidity Provider Token (LPT) Math Updates
+
+Original balancer protocol https://metavision-labs.gitbook.io/balancerv2cad/code-and-instructions/balancer_py_edition/weightedpool.py#calc_token_in_given_exact_bpt_out[requires the pool weight of a given currency to be taken into account] when calculating LPT out given the input of a given amount of liquidity in that currency. Rationale being that providing liquidity the amount of received is proportional to the movement of pool invariant (value function). Current LPT math based on https://uniswap.org/whitepaper.pdf[Uniswap v2] though accurate for a 50/50 pool, it does not work when the pool weights are different.
+
+Given the additional symbol definitions,
+
+stem:[P_"issued"] : LPT tokens issued
+
+stem:[P_"supply"] : Existing supply of LPT tokens
+
+stem:[P_"redeemed"] : Redeemed LPT tokens
+
+stem:[D_k] : Deposit (`D`) of token `k`.
+
+As per the requirement of having differentially weighted pools for Pablo, the LPT math needs to be corrected as follows.
+
+. LPT received for deposited liquidity in each pool asset according to the weight ratio (must be validated in code),
++
+stem:[P_"issued" = P_"supply" . (D_k / B_k)]
++
+This ensures that the increase of LPT is proportional to the increase of the value function(invariant). The concept of an LP tax(equal to swap fee percentage) is introduced to counter the behavior of swapping without fees using add/remove liquidity operations (refer <<_proof_of_proportional_lpt_calculation_for_liquidity_added_in_pool_weight_ratio>>).
++
+stem:[P_"issued" = P_"supply" . ((D_k . (1 - f)) / B_k)] <- (4)
+. LPT received for deposited liquidity in a single pool asset (`k`),
++
+stem:[P_"issued" = P_"supply" . (((D_k + B_k)/ B_k)^(w_k) - 1)]
++
+When taking into account LP tax,
++
+stem:[P_"issued" = P_"supply" . (((D_k. (1 - f) + B_k)/ B_k)^(w_k) - 1)] <- (5)
++
+One could see this formula is a generalization of the formula (4) when stem:[w_k = 1] (sum of all weights). Therefore, equation (5) can be used for both cases to get the amount of LPT issued.
+. A sensible default must be derived for the issued LPT for the initial deposit in a pool as otherwise it would always be zero according to above formulae. Here https://github.com/balancer-labs/balancer-v2-monorepo/blob/master/pkg/pool-weighted/contracts/BaseWeightedPool.sol#L192[balancer uses] the following formula which keeps the LPT supply consistent across pools.
++
+stem:[P_"issued" = k . Pi_"i=0"^k B_i] <- (6)
++
+The https://github.com/ComposableFi/composable/blob/main/code/parachain/frame/composable-maths/src/dex/constant_product.rs#L131[current implementation] based on Uniswap must be adjusted to be consistent here.
+. Tokens received in each of the assets when withdrawing each type of asset available in a pool
++
+stem:[A_k = B_k . (P_"redeemed" / P_"supply")] <- (7)
+. Tokens(`k`) received when withdrawing a single asset from a pool (refer <<_proof_of_proportional_lpt_calculation_for_liquidity_added_in_a_single_pool_asset>>)
++
+stem:[A_k = B_k . (1 - (1 - P_"redeemed" / P_"supply")^(1/w_k))] <- (8)
++
+One could see this formula is a generalization of the formula (7) when stem:[w_k = 1] (sum of all weights). Therefore, equation (8) can be used for both cases to get the amount of tokens received. For all assets case the result must be used as the amount for all pool assets to be disbursed.
+
+As per the derivations above , equations (5), (6) and (8) are the only ones that need to be implemented at `code/parachain/frame/composable-maths/src/dex/constant_product.rs`. Then they must be integrated with relevant flows.
+
+=== Validation: Pool Asset (Pair) Validation Must be at the Top Level of `Amm` trait Implementation
+
+Currently significant amount of logic is executed upfront without validating that the pool contains the given currencies for an operation such as a swap.
+
+=== Validation: the Asset Ratio When Adding Liquidity
+
+The added liquidity must follow the same ratio as the pool weight distribution according to balancer formulae. Currently, there is no such validation.
+
+[#_refactoring_currencypair_usage]
+=== Refactoring: `CurrencyPair` Usage
+
+In the existing https://github.com/ComposableFi/composable/blob/main/code/parachain/frame/composable-traits/src/dex.rs#L269[pool data structure], using `CurrencyPair` with "base" and "quote" naming creates confusion when it comes to actual swap logic. A base or quote naming applies to a currency only at the point of a trade. Specially when considering possible multi-asset pools that a balancer based pool supports.
+
+The proposal here is to use a list(vector) of maximum length of 2 (possibly allowing for future expansion) in the pool data structure for both CPP and LBP.
+
+[source,rust]
+----
+pub struct ConstantProductPoolInfo<AccountId, AssetId> {
+	/// Owner of pool
+	pub owner: AccountId,
+	/// Swappable assets map asset_id => weight
+	pub assets: Map<AssetId, Permill>,
+	/// AssetId of LP token
+	pub lp_token: AssetId,
+	/// Amount of the fee pool charges for the exchange
+	pub fee_config: FeeConfig,
+
+}
+
+// Remove
+pub struct LiquidityBootstrappingPoolInfo<AccountId, AssetId, BlockNumber> {
+	/// Owner of the pool
+	pub owner: AccountId,
+	/// Asset pair of the pool along their weight.
+	/// Base asset is the project token.
+	/// Quote asset is the collateral token.
+	pub assets: Map<AssetId, Permil>,
+	/// Sale period of the LBP.
+	pub sale: Sale<BlockNumber>,
+	/// Trading fees.
+	pub fee_config: FeeConfig,
+}
+----
+
+[#_unit_test_updates]
+=== Unit Test Updates
+
+. Introduce unit tests for `code/parachain/frame/composable-maths/src/dex/constant_product.rs`.
+. All unit tests include fees (verified according to the math), with 0 fees being the exception.
+. Sufficient amount of cases to cover pools with differential weights according to the math.
+. Sufficient amount of cases to cover LPT issued according to the math.
+
+[#_algorithm_constant_productout_given_in]
+=== Algorithm: `constant_product::compute_out_given_in`
+
+These are the modifications to be made to the existing https://github.com/ComposableFi/composable/blob/main/code/parachain/frame/composable-maths/src/dex/constant_product.rs#L59[function].
+
+[source,rust]
+----
+pub fn compute_out_given_in<T: PerThing>(
+    w_i: T,
+    w_o: T,
+    b_i: u128,
+    b_o: u128,
+    a_sent: u128,
+    // f=0 for getting "out" without taking into account the fee
+    f: T
+) -> Result<(/* Out */ u128, /*Fee*/ u128), ArithmeticError> {
+    // Calculate according to section 4.1 Eqn: 2
+}
+----
+
+[#_algorithm_constant_productcompute_in_given_out]
+=== Algorithm: `constant_product::compute_in_given_out`
+
+These are the modifications to be made to the existing https://github.com/ComposableFi/composable/blob/main/code/parachain/frame/composable-maths/src/dex/constant_product.rs#L96[function].
+
+[source,rust]
+----
+
+pub fn compute_in_given_out<T: PerThing>(
+    wi: T,
+    wo: T,
+    bi: u128,
+    bo: u128,
+    ao: u128,
+    // f=0 for getting "in" without taking into account the fee
+    f: T
+) -> Result<(/* In */ u128, /*Fee*/ u128), ArithmeticError>
+where
+	T::Inner: Into<u32>,
+{
+    // Calculate according to section 4.1 Eqn: 3
+}
+----
+
+[#_algorithm_constant_productcompute_deposit_lp]
+=== Algorithm: `constant_product::compute_deposit_lp`
+
+These are the modifications to be made to the existing https://github.com/ComposableFi/composable/blob/main/code/parachain/frame/composable-maths/src/dex/constant_product.rs#L148[function].
+
+[source,rust]
+----
+pub fn compute_deposit_lp<T: PerThing>(
+    lp_total_issuance: u128,
+    num_asset_types_in_pool: u128,
+    d_k: u128,
+    b_k: u128,
+    // w_k = 1 when providing liquidity in pool weight ratio for all assets
+    w_k: T,
+    // f=0 for getting "in" without taking into account the fee
+    f: T
+) -> Result<(/*LPT*/ u128, /*fee*/ u128), ArithmeticError> {
+    let first_deposit = lp_total_issuance.is_zero();
+    if first_deposit {
+        // Calculate `lp_to_mint` according to section 4.2 Eqn: 6
+        Ok(lp_to_mint, fee)
+    } else {
+        // Calculate `lp_to_mint` according to section 4.2 Eqn: 5
+        Ok(lp_to_mint, fee)
+    }
+}
+----
+
+[#_algorithm_constant_productcompute_redeemed_for_lp]
+=== Algorithm: `constant_product::compute_redeemed_for_lp`
+
+This is a new function to be implemented as the previous version was less specific.
+
+[source,rust]
+----
+pub fn compute_redeemed_for_lp<T: PerThing>(
+    lp_total_issuance: u128,
+    lp_redeemed: u128,
+    b_k: u128,
+    // w_k = 1 when providing liquidity in pool weight ratio for all assets
+    w_k: T,
+) -> Result</* a_k */ u128, ArithmeticError> {
+    // Calculate `a_k` according to section 4.2 Eqn: 8
+}
+----
+
+[#_algorithm_ammcurrency_pair__ammassets]
+=== Algorithm: `Amm::currency_pair` -> `Amm::assets`
+
+This is a renaming plus a reorganization of this logic to better match the `CurrencyPair` refactoring.Because of the <<_refactoring_currencypair_usage>>, this function should just return the list of assets in the pool.
+
+[source,rust]
+----
+pub trait Amm {
+    // ....
+
+    fn assets(pool_id: Self::PoolId) -> Result<Vec<AssetId>, DispatchError>;
+
+    // ....
+}
+----
+
+[plantuml,images/pablo-amm-currencies,png]
+----
+start
+->pool_id;
+:pool = get pool from storage by pool_id;
+:return pool.assets.keys();
+stop
+----
+
+[#_algorithm_ammget_exchange_value]
+=== Algorithm: `Amm::get_exchange_value`
+
+Having the fee not taken into account here causes the fees to be calculated in non-formal ways.Therefore, the proposal is to always take into account the fee input as a parameter and return the fee as a separate output.This also means that this function shall not be used to calculate a quote amount for buy operations.
+
+[source,rust]
+----
+pub struct AssetAmount<AssetId, Balance> {
+    pub asset_id: AssetId,
+    pub amount: Balance
+}
+
+pub struct ExchangeValue<AssetId, Balance> {
+    value: AssetAmount<AssetId, Balance>,
+    fee: AssetAmount<AssetId, Balance>,
+}
+
+pub trait Amm {
+    // ....
+
+    /// Return the exchange value out asset given in asset.
+    fn get_exchange_value(
+        pool_id: Self::PoolId,
+        in_asset: AssetAmount<Self::AssetId, Self::Balance>,
+        out_asset: Self::AssetId,
+    ) -> Result<ExchangeValue<Self::AssetId, Self::Balance>, DispatchError>;
+
+    // ....
+}
+----
+
+[plantuml,images/pablo-amm-get-exchange-value,png]
+----
+start
+->pool_id,in_asset,out_asset;
+:validate assets are part of the pool;
+:pool = get pool from storage by pool_id;
+:balances = get balances for in_asset and out_asset;
+:value, fee = constant_product::compute_out_given_in(
+pool.assets[in_asset.asset_id],
+pool.assets[out_asset],
+balances[0],
+balances[1],
+in_asset.amount,
+pool.fee_config.fee_rate
+);
+:return ExchangeValue(value, fee);
+stop
+----
+
+[#_algorithm_ammexchange__ammswap]
+=== Algorithm: `Amm::exchange` -> `Amm::swap`
+
+Given the previously defined `Amm::get_exchange_value` function this method can be simplified.
+
+[source,rust]
+----
+pub trait Amm {
+    // ....
+
+    /// Performs an exchange to transfer the given
+    /// quote amount to the pool while disbursing
+    /// the calculated base amount according to the pool logic.
+    /// Returns the disbursed value in base and fee charged.
+    fn swap(
+        who: &Self::AccountId,
+        pool_id: Self::PoolId,
+        in_asset: AssetAmount<Self::AssetId, Self::Balance>,
+        min_receive: AssetAmount<Self::AssetId, Self::Balance>,
+        keep_alive: bool,
+    ) -> Result<ExchangeValue<Self::AssetId, Self::Balance>, DispatchError>;
+
+    // ....
+}
+----
+
+
+[plantuml,images/pablo-amm-exchange,png]
+----
+start
+->who,pool_id,in_asset,min_receive;
+:validate "who" actually has the in_asset amount;
+:exchange_value =
+    Self::get_exchange_value(
+        pool_id,
+        in_asset,
+        min_receive.asset_id
+    );
+:validate min_receive <= exchange_value;
+:transfer in_asset to the pool account;
+:transfer exchange_value to who;
+:return exchange_value;
+stop
+----
+
+=== Algorithm: `Amm::sell`
+
+This would be removed to keep the interface simple as `Amm::swap` satisfies the requirement.
+
+[#_algorithm_ammbuy]
+=== Algorithm: `Amm::buy`
+
+This function exists to provide a way for a user to buy a given amount of an asset from the AMM.
+
+[source,rust]
+----
+pub trait Amm {
+    // ....
+
+    /// Note: min_receive has been removed as the amount specified is considered the amount to be bought
+    fn buy(
+        who: &Self::AccountId,
+        pool_id: Self::PoolId,
+        in_asset: Self::AssetId,
+        out_asset: AssetAmount<Self::AssetId, Self::Balance>,
+        keep_alive: bool,
+    ) -> Result<ExchangeValue<Self::AssetId, Self::Balance>, DispatchError>;
+
+    // ....
+}
+----
+
+
+[plantuml,images/pablo-amm-buy,png]
+----
+start
+->who,pool_id,in_asset,out_asset;
+:validate assets are part of the pool;
+:pool = get pool from storage by pool_id;
+:balances = get balances for in_asset and out_asset;
+:value, fee = constant_product::compute_in_given_out(
+pool.assets[in_asset],
+pool.assets[out_asset.asset_id],
+balances[0],
+balances[1],
+out_asset.amount,
+pool.fee_config.fee_rate
+);
+:transfer value to the pool account;
+:transfer out_asset to who;
+:return ExchangeValue(value, fee);
+stop
+----
+
+[#_algorithm_ammadd_liquidity]
+=== Algorithm: `Amm::add_liquidity`
+
+LPs use this functionality to provide liquidity. It requires some adjustments.
+
+[source,rust]
+----
+pub trait Amm {
+    // ....
+
+    fn add_liquidity(
+        who: &Self::AccountId,
+        pool_id: Self::PoolId,
+        // Bounds for the Vec can be specified here to based on a pallet config.
+        // The details can be figured out in the implementation
+        assets: Vec<AssetAmount<Self::AssetId, Self::Balance>>,
+        min_mint_amount: Self::Balance,
+        keep_alive: bool,
+    ) -> Result<(), DispatchError>;
+
+    // ....
+}
+----
+
+
+[plantuml,images/pablo-amm-add-liquidity,png]
+----
+start
+->who,pool_id,assets,min_mint_amount;
+:validate assets are part of the pool;
+:pool = get pool from storage by pool_id;
+:balances = get balances for the assets in the pool;
+:lp_total_issuance = get issuance of pool.lp_token;
+if (assets.len() == pool.assets.len()) then (yes)
+    :validate asset amounts are according to pool weight ratios;
+    :lp_to_mint = constant_product::compute_deposit_lp(
+        lp_total_issuance,
+        // This length MUST be fixed at pool creation time,
+        // i.e by setting the assets with 0 liquidity
+        pool.assets.len(),
+        // following two values are for the same k th asset
+        assets[0].amount,
+        balances[0],
+        1,
+        pool.fee_config.fee_rate
+    );
+else if (assets.len() == 1) then (yes)
+    :lp_to_mint = constant_product::compute_deposit_lp(
+        lp_total_issuance,
+        pool.assets.len(),
+        // following two values are for the same k th asset
+        assets[0],
+        balances[0],
+        pool.assets[assets[0].asset_id],
+        pool.fee_config.fee_rate
+    );
+else
+    :Unsupported operation;
+    end
+endif
+:validate min_mint_amount <= lp_to_mint;
+:transfer assets to the pool account;
+:mint & transfer lp_to_mint to who;
+stop
+----
+
+[#_algorithm_ammremove_liquidity]
+=== Algorithm: `Amm::remove_liquidity`
+
+This allows LPs to claim their liquidity back with possible profits. Here also we need some adjustments.
+
+[source,rust]
+----
+pub trait Amm {
+    // ....
+
+    fn remove_liquidity(
+        who: &Self::AccountId,
+        pool_id: Self::PoolId,
+        lp_amount: Self::Balance,
+        min_amounts: Vec<AssetAmount<Self::AssetId, Self::Balance>>,
+    ) -> Result<(), DispatchError>;
+
+    // ....
+}
+----
+
+[plantuml,images/pablo-amm-remove-liquidity,png]
+----
+start
+->who,pool_id,lp_amount,min_amounts;
+:validate assets in min_amounts are part of the pool;
+:pool = get pool from storage by pool_id;
+:balances = get balances for the assets in the pool;
+:lp_total_issuance = get issuance of pool.lp_token;
+if (min_amounts.len() == pool.assets.len()) then (yes)
+    :validate asset amounts are according to pool weight ratios;
+    :amounts_out = [for each asset in min_amounts do
+        constant_product::compute_redeemed_for_lp(
+            lp_total_issuance,
+            lp_amount,
+            // balance in pool for the asset
+            balances[k],
+            1,
+    )];
+else if (assets.len() == 1) then (yes)
+    :amounts_out = constant_product::compute_redeemed_for_lp(
+        lp_total_issuance,
+        lp_amount,
+        // balance in pool for the asset
+        balances[k],
+        // weight for the asset in the pool
+        pool.assets[min_amounts[0].asset_id],
+    );
+else
+    :Unsupported operation;
+    end
+endif
+:validate min_amounts <= amounts_out;
+:burn lp_amount;
+:transfer amounts_out to who;
+stop
+----
+
+=== Fail Safes
+
+Fail safes can be categorized based on the level they act on,
+
+==== At the protocol level, where the entire Pablo protocol in multiple pallets is affected.
+==== At the pallet level, where a particular Pablo pallet is affected.
+==== At the pool type level where all pools of a particular pool type like LBP is affected.
+==== At the individual pool level where a single pool is affected
+
+For LBPs,
+
+. There needs to be a way to pause trading in situations where the trading activity is not favourable for the launch
+
+==== At the functionality level where a particular functionality for example like "removing liquidity" is affected.
+
+== Implementation
+
+=== Stage 1: Cutting Down on Non-useful Parts for Launch
+
+. Remove Stableswap(Curve) implementation together with tests, while keep the interfaces same.
+. Remove LBP implementation together with tests, while keeping the interfaces the same.
+
+=== Stage 2: Consistently Implement the Balancer Based CPP Equations
+
+Implement the equations outlined in the <<_method>> in `code/parachain/frame/composable-maths/src/dex/constant_product.rs`.
+
+. Implement <<_unit_test_updates>>
+. `Out-given-in` with Fee (eq: 2 + <<_algorithm_constant_productout_given_in>>)
+. `In-given-out` with Fee (eq: 3 + <<_algorithm_constant_productcompute_in_given_out>>)
+. `LPT received for deposited liquidity in a single pool asset` (eq: 5 + <<_algorithm_constant_productcompute_deposit_lp>>)
+. `Tokens received for redeemed LPT` (eq: 8 + <<_algorithm_constant_productcompute_redeemed_for_lp>>)
+
+=== Stage 3: Change/Implement Algorithms for CPP
+
+. Implement <<_refactoring_currencypair_usage>>.
+. Implement <<_algorithm_ammcurrency_pair__ammassets>>.
+. Implement <<_algorithm_ammget_exchange_value>>.
+. Implement <<_algorithm_ammexchange__ammswap>>.
+. Implement <<_algorithm_ammbuy>>.
+. Implement <<_algorithm_ammadd_liquidity>>.
+. Implement <<_algorithm_ammremove_liquidity>>.
+. Ensure normalized weights are used everywhere.
+
+=== Stage 4: Front-end Changes
+
+. Remove FE components that were built for LBP.
+. Remove FE components that were built for StableSwap.
+. Re-generate data types for any extrinsic/RPC changes and integrate.
+
+== Quality Assurance
+
+QA could possibly just use the existing test cases and suites build for Uniswap pools in this case. Though more effort needs to be put into coming up with test cases that would cover LPT calculations and fees.
+
+== Audit
+
+Audit can be conducted taking into account the specification of the protocol outlined here according to balancer math. Any weaknesses found on the original balancer protocol should be taken into account in the audit.
+
+== Questions
+
+. Would LBPs need to be converted to normal CPP after the sale has ended?
+.. If so need to combine CPP and LBP data structures
+.. Answer: No, as we can just create a new LP
+
+[#_proof_of_fee_for_in_given_out]
+[appendix]
+== Proof of Fee for "In-given-out"
+
+Fees are calculated on the "way-in" so starting with formula (2) in the "Fee Math" section we have,
+
+stem:[A_o = B_o . (1 - (B_i / (B_i + A_"sent" . (1 - f)))^(w_i / w_o))]
+
+We can arrange this to know how to send(stem:[A_"sent"]) given the out, we can isolate it,
+
+stem:[1 - A_o / B_o = (B_i / (B_i + A_"sent" . (1 - f)))^(w_i / w_o)]
+
+stem:[(1 - A_o / B_o)^(w_o/w_i) = B_i / (B_i + A_"sent" . (1 - f))]
+
+stem:[(1 / (1 - A_o / B_o))^(w_o/w_i) = 1 + A_"sent" . (1 - f) / B_i]
+
+stem:[(1 / (1 - A_o / B_o))^(w_o/w_i) = 1 + A_"sent" . (1 - f) / B_i]
+
+stem:[(B_o / (B_o - A_o))^(w_o/w_i) - 1 = A_"sent" . (1 - f) / B_i]
+
+Now we get equation (3),
+
+stem:[ A_"sent"  = B_o / (1 - f) . (B_o / (B_o - A_o))^(w_o/w_i) - 1]
+
+proven.
+
+[#_proof_of_proportional_lpt_calculation_for_liquidity_added_in_a_single_pool_asset]
+[appendix]
+== Proof of Proportional LPT Calculation for Liquidity Added in a Single Pool Asset
+
+Pool invariant is given by,
+
+stem:[Pi_i B_i^(w_i) = C] <-(a)
+
+Given liquidity provided for the token `k`, We would like to issue stem:[P_"issued"] such that movement of `c` is proportional to it,
+
+stem:[P_"issued" / P_"supply" = (Delta C) / C ] <-(b)
+
+after increasing the balance (deposit) of k by stem:[A_k] using the invariant above we have,
+
+stem:[(B_k + D_k)^(w_k) . Pi_"i!=k" B_i^i = C + Delta C] <-(c)
+
+with (c) / (a), we have,
+
+stem:[(1 + D_k / B_k)^(w_k) = 1 + (Delta C) / C]
+
+Now with (b),
+
+stem:[(1 + D_k / B_k)^(w_k) = 1 + P_"issued" / P_"supply"]
+
+stem:[P_"issued" / P_"supply" = (1 + D_k / B_k)^(w_k) - 1 ]
+
+With fees on the way in, we have,
+
+stem:[P_"issued" / P_"supply" = (1 + ((1 - f) . D_k) / B_k)^(w_k) - 1 ]
+
+Now with rearrangement we have,
+
+stem:[P_"issued" = P_"supply" . (((D_k. (1 - f) + B_k)/ B_k)^(w_k) - 1)]
+
+Thus, this proves equation (5).
+
+[#_proof_of_proportional_lpt_calculation_for_liquidity_added_in_pool_weight_ratio]
+[appendix]
+== Proof of Proportional LPT Calculation for Liquidity Added in Pool Weight Ratio
+
+Pool invariant is given by,
+
+stem:[Pi_i B_i^(w_i) = C] <-(a)
+
+Note that weights are normalized such that,
+
+stem:[Sigma w_i = 1] <-(b)
+
+Given liquidity provided for the token `k`, We would like to issue stem:[P_"issued"] such that movement of `c` is proportional to it,
+
+stem:[P_"issued" / P_"supply" = (Delta C) / C ] <-(c)
+
+With (a) when adding liquidity to all assets proportional to the pool weights we have,
+
+stem:[Pi_i (B_i + D_i)^(w_i) = C + Delta C] <-(d)
+
+With (d) / (a),
+
+stem:[Pi_i (1 + (D_i) / B_i)^(w_i) = 1 + (Delta C) / C]
+
+As the liquidity is deposited in proportion to normalized weights, for all `i`,
+
+stem:[D_i / B_i = k]
+
+Where `k` is some constant. Then applying (b),
+
+stem:[1 + D_i / B_i = 1 + (Delta C) / C]
+
+Then with (c),
+
+stem:[D_i / B_i = P_"issued" / P_"supply"]
+
+Applying fee on the way-in
+
+stem:[D_i . (1 - f) / B_i = P_"issued" / P_"supply"]
+
+With rearrangement,
+
+stem:[P_"issued" = P_"supply" . ((D_k . (1 - f)) / B_k)]
+
+Thus proves equation (4).
+
+
+
+
+
+

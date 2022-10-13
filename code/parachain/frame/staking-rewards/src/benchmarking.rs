@@ -150,7 +150,13 @@ benchmarks! {
 		<Pallet<T>>::stake(RawOrigin::Signed(staker.clone()).into(), asset_id, amount, duration_preset)?;
 	}: _(RawOrigin::Signed(staker.clone()), STAKING_FNFT_COLLECTION_ID.into(), FNFT_INSTANCE_ID_BASE.into(), amount)
 	verify {
-		assert_last_event::<T>(Event::StakeAmountExtended { fnft_collection_id: STAKING_FNFT_COLLECTION_ID.into(), fnft_instance_id: FNFT_INSTANCE_ID_BASE.into(), amount }.into());
+		assert_last_event::<T>(
+			Event::StakeAmountExtended {
+				fnft_collection_id: STAKING_FNFT_COLLECTION_ID.into(),
+				fnft_instance_id: FNFT_INSTANCE_ID_BASE.into(),
+				amount
+			}.into()
+		);
 	}
 
 	unstake {

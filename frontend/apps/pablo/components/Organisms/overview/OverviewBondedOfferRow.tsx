@@ -1,18 +1,18 @@
-import {
-  TableCell,
-  TableRow,
-  Typography,
-} from "@mui/material";
+import { TableCell, TableRow, Typography } from "@mui/material";
 import { BondOffer } from "@/defi/types";
+import {
+  useBondedOfferVestingState,
+  useBondOfferROI,
+} from "@/store/bond/bond.slice";
+import { useUSDPriceByAssetId } from "@/store/assets/hooks";
+import useBondVestingTime from "@/defi/hooks/bonds/useBondVestingTime";
 import useBondOfferPrincipalAsset from "@/defi/hooks/bonds/useBondOfferPrincipalAsset";
 import BondPrincipalAssetIcon from "../bonds/BondPrincipalAssetIcon";
-import { useBondedOfferVestingState, useBondOfferROI } from "@/store/bond/bond.slice";
-import useBondVestingTime from "@/defi/hooks/bonds/useBondVestingTime";
-import { useUSDPriceByAssetId } from "@/store/assets/hooks";
+import { DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils";
 
 export const OverviewBondedOfferRow = ({
   bondOffer,
-  offerId
+  offerId,
 }: {
   offerId: string;
   bondOffer: BondOffer;
@@ -22,9 +22,7 @@ export const OverviewBondedOfferRow = ({
   const vestingTime = useBondVestingTime(bondOffer);
   const rewardAssetPriceUSD = useUSDPriceByAssetId(bondOffer.reward.asset);
 
-  const {
-    claimable
-  } = useBondedOfferVestingState(offerId);
+  const { claimable } = useBondedOfferVestingState(offerId);
 
   return (
     <TableRow>
@@ -32,19 +30,32 @@ export const OverviewBondedOfferRow = ({
         <BondPrincipalAssetIcon principalAsset={principalAsset} />
       </TableCell>
       <TableCell align="left">
-        <Typography variant="body1">{discount.toFixed(2)}%</Typography>
+        <Typography variant="body1">
+          {discount.toFixed(DEFAULT_UI_FORMAT_DECIMALS)}%
+        </Typography>
       </TableCell>
       <TableCell align="left">
-        <Typography variant="body1">{claimable.toFixed(2)}</Typography>
+        <Typography variant="body1">
+          {bondOffer.reward.amount
+            .div(bondOffer.nbOfBonds)
+            .toFixed(DEFAULT_UI_FORMAT_DECIMALS)}
+        </Typography>
       </TableCell>
       <TableCell align="left">
-        <Typography variant="body1">${claimable.times(rewardAssetPriceUSD).toFixed()}</Typography>
+        <Typography variant="body1">
+          $
+          {claimable
+            .times(rewardAssetPriceUSD)
+            .toFixed(DEFAULT_UI_FORMAT_DECIMALS)}
+        </Typography>
       </TableCell>
       <TableCell align="left">
         <Typography variant="body1">{vestingTime}</Typography>
       </TableCell>
       <TableCell align="left">
-        <Typography variant="body1">{0}</Typography>
+        <Typography variant="body1">
+          {claimable.toFixed(DEFAULT_UI_FORMAT_DECIMALS)}
+        </Typography>
       </TableCell>
     </TableRow>
   );

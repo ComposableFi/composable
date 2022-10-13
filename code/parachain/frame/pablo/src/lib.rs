@@ -1384,6 +1384,11 @@ pub mod pallet {
 					Self::exchange(who, pool_id, pair, quote_amount, min_receive, keep_alive)
 				},
 				PoolConfiguration::LiquidityBootstrapping(info) => {
+					// in case of pool quote asset being bought
+					//  1. pair is swapped (base = quote)
+					//  2. out-given-in is used to calculate the pool base amount to exchange
+					//  3. out-given-in excluding fee is used to calculate and send the final pool
+					// TODO Which is a bug as it returns less than what the user wanted to buy.
 					let pair =
 						if asset_id == info.pair.base { info.pair } else { info.pair.swap() };
 					let quote_amount = Self::get_exchange_value(pool_id, asset_id, amount)?;

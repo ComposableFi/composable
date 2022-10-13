@@ -117,9 +117,6 @@ pub struct RewardPool<
 	/// rewards accumulated
 	pub rewards: BoundedBTreeMap<AssetId, Reward<Balance>, MaxRewards>,
 
-	/// Total shares distributed among stakers
-	pub total_shares: Balance,
-
 	/// Already claimed shares by stakers by unstaking
 	pub claimed_shares: Balance,
 
@@ -307,7 +304,7 @@ pub trait Staking {
 		position: Self::PositionId,
 		amount: Self::Balance,
 		keep_alive: bool,
-	) -> Result<Self::PositionId, DispatchError>;
+	) -> DispatchResult;
 
 	/// Unstake an actual staked position, represented by a NFT.
 	///
