@@ -73,7 +73,6 @@ fn create_pool(
 fn get_pool(pool_id: PoolId) -> ConstantProductPoolInfo<AccountId, AssetId> {
 	match Pablo::pools(pool_id).expect("pool not found") {
 		ConstantProduct(pool) => pool,
-		_ => panic!("expected stable_swap pool"),
 	}
 }
 
