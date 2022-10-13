@@ -1,0 +1,40 @@
+name: Deploy Documentation
+
+on:
+  push: 
+    branches: 
+      - main
+
+env:
+  FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2     
+
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '16.4.0'
+
+      - name: Install Rust
+        run: |
+         rustup set profile minimal
+         rustup toolchain install stable
+         rustup default stable
+      - name: Install mdbook
+        run: |
+          mkdir bin
+          curl -sSL https://github.com/rust-lang/mdBook/releases/download/v0.4.14/mdbook-v0.4.14-x86_64-unknown-linux-gnu.tar.gz | tar -xz --directory=bin
+          echo "$(pwd)/bin" >> $GITHUB_PATH
+      - name: Run mdbook
+        run: cd book && mdbook build --dest-dir html
+
+      - name: install firebase
+        run: npm i firebase-tools -g  
+
+      - name: deploy
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: cd book && firebase deploy 
