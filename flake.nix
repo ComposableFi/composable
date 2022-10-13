@@ -697,7 +697,7 @@
               rust-overlay = rust-nightly;
             };
 
-            polkadot-node = pkgs.callPackage ./.nix/polkadot-bin.nix {
+            polkadot-node = pkgs.callPackage ./.nix/polkadot/polkadot-bin.nix {
               inherit rust-nightly;
             };
 
@@ -705,9 +705,10 @@
               inherit crane-nightly rust-nightly;
             };
 
-            mmr-polkadot-node = pkgs.callPackage ./.nix/mmr-polkadot-bin.nix {
-              inherit rust-nightly;
-            };
+            mmr-polkadot-node =
+              pkgs.callPackage ./.nix/polkadot/mmr-polkadot-bin.nix {
+                inherit rust-nightly;
+              };
 
             polkadot-launch =
               callPackage ./scripts/polkadot-launch/polkadot-launch.nix { };
