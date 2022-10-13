@@ -445,7 +445,8 @@
           docs-renders = [ nodejs plantuml graphviz pandoc ];
 
           mkFrontendStatic = { kusamaEndpoint, picassoEndpoint, karuraEndpoint
-            , subsquidEndpoint }: npm-bp.buildYarnPackage {
+            , subsquidEndpoint }:
+            npm-bp.buildYarnPackage {
               nativeBuildInputs = [ pkgs.pkg-config pkgs.vips pkgs.python3 ];
               src = ./frontend;
 
@@ -627,15 +628,18 @@
                 cp -a ./build/. $out
               '';
             };
-            
-            docs-server = let PORT = 8008; in pkgs.writeShellApplication {
+
+            docs-server = let PORT = 8008;
+            in pkgs.writeShellApplication {
               name = "docs-server";
               runtimeInputs = [ pkgs.miniserve ];
               text = ''
-                miniserve -p ${ builtins.toString PORT } --spa --index index.html ${docs-static}
+                miniserve -p ${
+                  builtins.toString PORT
+                } --spa --index index.html ${docs-static}
               '';
             };
-            
+
             docs-dev = pkgs.writeShellApplication {
               name = "docs-dev";
               runtimeInputs = [ pkgs.nodejs ];
@@ -645,7 +649,7 @@
                 npm run start
               '';
             };
-            
+
             xcvm-contract-asset-registry =
               mk-xcvm-contract "xcvm-asset-registry";
             xcvm-contract-router = mk-xcvm-contract "xcvm-router";
