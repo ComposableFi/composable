@@ -77,12 +77,11 @@
         , useGlobalChainSpec ? true, polkadot-launch, composable-node
         , polkadot-node, chain-spec, network-config-path ?
           ./scripts/polkadot-launch/rococo-local-dali-dev.nix
-        , binary-name ? chain-spec, composableParaId ? 2087 }:
+        , binary-name ? chain-spec }:
         let
           original-config = (pkgs.callPackage network-config-path {
             polkadot-bin = polkadot-node;
             composable-bin = composable-node;
-            inherit composableParaId;
           }).result;
 
           patched-config = if useGlobalChainSpec then
@@ -726,7 +725,6 @@
               network-config-path = ./scripts/polkadot-launch/dali-dev-b.nix;
               chain-spec = "dali-dev";
               binary-name = "dali-b";
-              composableParaId = 2137;
             }).script;
 
             # Dali Centauri devnet

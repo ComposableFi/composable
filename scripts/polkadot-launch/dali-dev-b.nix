@@ -1,4 +1,4 @@
-{ pkgs, polkadot-bin, composable-bin, composableParaId ? 2087 }:
+{ pkgs, polkadot-bin, composable-bin, composableParaId ? 2137 }:
 with pkgs;
 let builder = pkgs.callPackage ./network-builder.nix { };
 in {
