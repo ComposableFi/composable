@@ -26,7 +26,7 @@ fn create_curve_amm_pool(
 	assert_ok!(Tokens::mint_into(base, &BOB, amounts[0]));
 	assert_ok!(Tokens::mint_into(quote, &BOB, amounts[1]));
 
-	let init_config = PoolInitConfiguration::ConstantProduct {
+	let init_config = PoolInitConfiguration::DualAssetConstantProduct {
 		owner: ALICE,
 		pair: assets,
 		fee,
@@ -58,7 +58,7 @@ fn create_constant_product_amm_pool(
 	assert_ok!(Tokens::mint_into(base, &BOB, amounts[0]));
 	assert_ok!(Tokens::mint_into(quote, &BOB, amounts[1]));
 
-	let init_config = PoolInitConfiguration::ConstantProduct {
+	let init_config = PoolInitConfiguration::DualAssetConstantProduct {
 		owner: ALICE,
 		pair: assets,
 		fee,
