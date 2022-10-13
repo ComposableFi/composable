@@ -112,8 +112,8 @@ async fn follow_grandpa_justifications() {
 			HostFunctionsProvider,
 		>(client_state.clone(), proof)
 		.expect("Failed to verify parachain headers with grandpa finality_proof");
-        assert!(new_client_state.latest_para_height > client_state.latest_para_height);
-        client_state = new_client_state;
+		assert!(new_client_state.latest_para_height > client_state.latest_para_height);
+		client_state = new_client_state;
 		println!("========= Successfully verified grandpa justification =========");
 	}
 }

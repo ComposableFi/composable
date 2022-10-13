@@ -43,12 +43,11 @@ use crate::utils::{fetch_max_extrinsic_weight, unsafe_cast_to_jsonrpsee_client};
 use primitives::KeyProvider;
 
 use crate::{finality_protocol::FinalityProtocol, signer::ExtrinsicSigner};
-use grandpa_light_client_primitives::ParachainHeadersWithFinalityProof;
 use grandpa_prover::GrandpaProver;
 use ics10_grandpa::client_state::ClientState as GrandpaClientState;
 use jsonrpsee_ws_client::WsClientBuilder;
 use sp_keystore::testing::KeyStore;
-use sp_runtime::traits::{One, Zero};
+use sp_runtime::traits::One;
 use subxt::tx::{SubstrateExtrinsicParamsBuilder, TxPayload};
 
 /// Implements the [`crate::Chain`] trait for parachains.
@@ -239,41 +238,17 @@ where
 		})
 	}
 
-	/// Queries parachain headers that have been finalized by GRANDPA in between the given relay
-	/// chain heights
-	pub async fn query_grandpa_finalized_parachain_headers_between(
-		&self,
-		latest_finalized_block: u32,
-		previous_finalized_block: u32,
-	) -> Result<Option<Vec<T::Header>>, Error>
-	where
-		T::BlockNumber: From<u32>,
-		T: subxt::Config,
-		T::BlockNumber: Ord + Zero,
-		u32: From<T::BlockNumber>,
-	{
+	/// Returns a grandpa proving client.
+	pub fn grandpa_prover(&self) -> GrandpaProver<T> {
 		let relay_ws_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.relay_ws_client) };
 		let para_ws_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_ws_client) };
-		let prover = GrandpaProver {
+		GrandpaProver {
 			relay_client: self.relay_client.clone(),
 			relay_ws_client,
 			para_client: self.para_client.clone(),
 			para_ws_client,
 			para_id: self.para_id,
-		};
-
-		prover
-			.query_latest_finalized_parachain_header(
-				latest_finalized_block,
-				previous_finalized_block,
-			)
-			.await
-			.map_err(|e| {
-				Error::from(format!(
-					"[query_finalized_parachain_headers_between] Failed due to {:?}",
-					e
-				))
-			})
+		}
 	}
 
 	/// Queries parachain headers that have been finalized by BEEFY in between the given relay chain
@@ -305,47 +280,6 @@ where
 			})?;
 
 		Ok(headers)
-	}
-
-	/// Construct the [`ParachainHeadersWithFinalityProof`] for parachain headers with the given
-	/// numbers using the GRANDPA finality proof with the given relay chain heights.
-	pub async fn query_grandpa_finalized_parachain_headers_with_proof(
-		&self,
-		latest_finalized_block: u32,
-		previous_finalized_block: u32,
-		headers: Vec<T::BlockNumber>,
-	) -> Result<ParachainHeadersWithFinalityProof<T::Header>, Error>
-	where
-		T::BlockNumber: Ord + sp_runtime::traits::Zero,
-		T::Header: HeaderT,
-		<T::Header as HeaderT>::Hash: From<T::Hash>,
-		T::BlockNumber: One,
-	{
-		let relay_ws_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.relay_ws_client) };
-		let para_ws_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_ws_client) };
-		let prover = GrandpaProver {
-			relay_client: self.relay_client.clone(),
-			relay_ws_client,
-			para_client: self.para_client.clone(),
-			para_ws_client,
-			para_id: self.para_id,
-		};
-
-		let result = prover
-			.query_finalized_parachain_headers_with_proof(
-				latest_finalized_block,
-				previous_finalized_block,
-				headers,
-			)
-			.await
-			.map_err(|e| {
-				Error::from(format!(
-					"[query_finalized_parachain_headers_with_proof] Failed due to {:?}",
-					e
-				))
-			})?;
-
-		Ok(result)
 	}
 
 	/// Construct the [`ParachainHeadersWithFinalityProof`] for parachain headers with the given

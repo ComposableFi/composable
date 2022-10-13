@@ -207,23 +207,22 @@ async fn test_continuous_update_of_grandpa_client() {
 			continue
 		}
 
-        let finalized_para_header = prover
-			.query_latest_finalized_parachain_header(
-				justification.commit.target_number,
-			)
+		let finalized_para_header = prover
+			.query_latest_finalized_parachain_header(justification.commit.target_number)
 			.await
 			.expect("Failed to fetch finalized parachain headers");
-        // notice the inclusive range
-        let header_numbers = ((client_state.latest_para_height + 1)..=finalized_para_header.number).collect::<Vec<_>>();
+		// notice the inclusive range
+		let header_numbers = ((client_state.latest_para_height + 1)..=finalized_para_header.number)
+			.collect::<Vec<_>>();
 
-        if header_numbers.len() == 0 {
-            continue
-        }
+		if header_numbers.len() == 0 {
+			continue
+		}
 
 		let proof = prover
 			.query_finalized_parachain_headers_with_proof(
 				&(client_state.clone().into()),
-                justification.commit.target_number,
+				justification.commit.target_number,
 				header_numbers,
 			)
 			.await

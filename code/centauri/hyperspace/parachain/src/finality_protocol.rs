@@ -77,7 +77,7 @@ impl FinalityProtocol {
 		<T as Config>::Address: From<<T as Config>::AccountId>,
 		T::Signature: From<MultiSignature>,
 		T::BlockNumber: From<u32> + Display + Ord + sp_runtime::traits::Zero + One,
-		T::Hash: From<sp_core::H256>,
+		T::Hash: From<sp_core::H256> + From<[u8; 32]>,
 		sp_core::H256: From<T::Hash>,
 		FinalityProof<sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256>>:
 			From<FinalityProof<T::Header>>,
@@ -319,7 +319,7 @@ where
 	<T as Config>::Address: From<<T as Config>::AccountId>,
 	T::Signature: From<MultiSignature>,
 	T::BlockNumber: From<u32> + Display + Ord + sp_runtime::traits::Zero + One,
-	T::Hash: From<sp_core::H256>,
+	T::Hash: From<sp_core::H256> + From<[u8; 32]>,
 	sp_core::H256: From<T::Hash>,
 	FinalityProof<sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256>>:
 		From<FinalityProof<T::Header>>,
@@ -358,47 +358,28 @@ where
 		))?
 	}
 
-	// fetch the new parachain headers that have been finalized
-	// If we find missed an updates we want to start querying the relay chain for parachain blocks
-	// blocks from the missed update height instead of the previous light client height
-	// Since we would have fetched parachain headers for the previous light client height while
-	// fetching proofs for the missed update
-    let finalized_para_header = source
-        .query_latest_finalized_parachain_header(
-			justification.commit.target_number,
-		)
-		.await?
-		.ok_or_else(|| {
-			Error::from(
-				"[query_latest_ibc_events_with_grandpa] No parachain headers have been finalized"
-					.to_string(),
-			)
-		})?;
+	let prover = source.grandpa_prover();
 
-    // notice the inclusive range
-    let headers = ((client_state.latest_para_height + 1)..=finalized_para_header.number).collect::<Vec<_>>();
+	// fetch the latest finalized parachain header
+	let finalized_para_header = prover
+		.query_latest_finalized_parachain_header(justification.commit.target_number)
+		.await?;
 
+	// notice the inclusive range
+	let finalized_blocks = ((client_state.latest_para_height + 1)..=
+		u32::from(*finalized_para_header.number()))
+		.collect::<Vec<_>>();
 
 	log::info!(
 		"Fetching events from {} for blocks {}..{}",
 		source.name(),
-		headers[0].number(),
-		headers.last().unwrap().number()
+		finalized_blocks[0],
+		finalized_blocks.last().unwrap(),
 	);
-
-	let finalized_blocks =
-		headers.iter().map(|header| u32::from(*header.number())).collect::<Vec<_>>();
 
 	let finalized_block_numbers = finalized_blocks
 		.iter()
-		.filter_map(|block_number| {
-			if (client_state.latest_height().revision_height as u32) < *block_number {
-				Some(*block_number)
-			} else {
-				None
-			}
-		})
-		.map(|h| BlockNumberOrHash::Number(h))
+		.map(|h| BlockNumberOrHash::Number(*h))
 		.collect::<Vec<_>>();
 
 	// 1. we should query the sink chain for any outgoing packets to the source chain
@@ -451,22 +432,33 @@ where
 		headers_with_events.insert(T::BlockNumber::from(latest_finalized_block));
 	}
 
-	let ParachainHeadersWithFinalityProof { finality_proof, parachain_headers } = source
-		.query_grandpa_finalized_parachain_headers_with_proof(
+	let cs = grandpa_light_client_primitives::ClientState::<T::Hash> {
+		current_authorities: client_state.current_authorities.clone(),
+		current_set_id: client_state.current_set_id,
+		latest_relay_hash: T::Hash::from(client_state.latest_relay_hash.as_fixed_bytes().clone()),
+		latest_relay_height: client_state.latest_relay_height,
+		latest_para_height: client_state.latest_para_height,
+		para_id: client_state.para_id,
+	};
+	let ParachainHeadersWithFinalityProof { finality_proof, parachain_headers } = prover
+		.query_finalized_parachain_headers_with_proof(
+			&cs,
 			justification.commit.target_number.into(),
-			client_state.latest_relay_height,
 			headers_with_events.into_iter().collect(),
 		)
 		.await?;
 
-	let target = source
-		.relay_client
-		.rpc()
-		.header(Some(finality_proof.block.into()))
-		.await?
-		.ok_or_else(|| {
-			Error::from("Could not find relay chain header for justification target".to_string())
-		})?;
+	let target =
+		source
+			.relay_client
+			.rpc()
+			.header(Some(finality_proof.block))
+			.await?
+			.ok_or_else(|| {
+				Error::from(
+					"Could not find relay chain header for justification target".to_string(),
+				)
+			})?;
 
 	let authority_set_changed_scheduled = find_scheduled_change(&target).is_some();
 	// if validator set has changed this is a mandatory update

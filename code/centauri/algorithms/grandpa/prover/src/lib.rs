@@ -191,10 +191,6 @@ where
 		let previous_finalized_height =
 			validation_data.relay_parent_number.min(client_state.latest_relay_height);
 
-		dbg!(&client_state.latest_para_height);
-		dbg!(&previous_finalized_height);
-		dbg!(&header_numbers);
-
 		let session_end = self.session_end_for_block(previous_finalized_height).await?;
 
 		if latest_finalized_height > session_end {

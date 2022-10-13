@@ -347,7 +347,7 @@ where
 	<T as Config>::Address: From<<T as Config>::AccountId>,
 	T::Signature: From<MultiSignature>,
 	T::BlockNumber: From<u32> + Display + Ord + sp_runtime::traits::Zero + One,
-	T::Hash: From<H256>,
+	T::Hash: From<sp_core::H256> + From<[u8; 32]>,
 	H256: From<T::Hash>,
 	FinalityProof<sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256>>:
 		From<FinalityProof<T::Header>>,
