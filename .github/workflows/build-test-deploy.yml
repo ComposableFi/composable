@@ -737,6 +737,7 @@ jobs:
           cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#kusama-picasso-karura-devnet --no-update-lock-file --show-trace -L
 
   cache-devnet-all-dev-local:
+    name: "Package Full Devnet"
     needs:
       - package-polkadot-node
     runs-on:
@@ -766,7 +767,7 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#devnet-all-dev-local --no-update-lock-file --show-trace -L
+          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#devnet-default-program --no-update-lock-file --show-trace -L
 
   package-xcvm-minimal:
     name: "Package XCVM minimal"
@@ -1053,7 +1054,6 @@ jobs:
       - name: Build & Push
         run: |
           cd devnet
-          # TODO: run gsutils and find same json in GOOGLE_APPLICATION_CREDENTIALS path, decide prio and responsible after https://github.com/ComposableFi/composable/issues/1426
           jq --null-input --arg client_email "$GCP_DEVNET_SERVICE_ACCOUNT" --arg project_id "$GCP_PROJECT_ID" --arg key "\"$GCP_DEVNET_SERVICE_ACCOUNT_KEY\"" '{ "project_id": $project_id, "private_key": ($key | fromjson), "client_email": $client_email }' > ops.json
           cd ..
 
@@ -1061,14 +1061,11 @@ jobs:
           then
             gsutil cp $NIXOPS_STATE_URL/$NIXOPS_STATE $NIXOPS_STATE
           else
-            nix develop .#sre --show-trace -L --command cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nixops -- create --deployment devnet-gce --show-trace --option narinfo-cache-negative-ttl 0
+            nix develop .#ci --show-trace -L --command cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nixops -- create --deployment devnet-gce --show-trace --option narinfo-cache-negative-ttl 0 --include composable-devnet-dali-dev composable-devnet-picasso-dev
+
           fi
 
-          nix develop .#sre --show-trace -L --command cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nixops -- deploy --check --confirm --deployment devnet-gce --debug --show-trace --option narinfo-cache-negative-ttl 0
-
-          # TODO: document what happens if Deploy passed, but Store was stopped - how stat reconciled
-          # TODO: consider running state save in same step as it is unseparable from deploy
-          gsutil cp $NIXOPS_STATE $NIXOPS_STATE_URL/
+          nix develop .#ci --show-trace -L --command cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nixops -- deploy --check --confirm --deployment devnet-gce --debug --show-trace --option narinfo-cache-negative-ttl 0 --include composable-devnet-dali-dev composable-devnet-picasso-dev
 
         env:
           NIXOPS_STATE_URL: "gs://composable-state"
@@ -1077,25 +1074,13 @@ jobs:
           GCP_DEVNET_SERVICE_ACCOUNT: ${{ secrets.GCP_DEVNET_SERVICE_ACCOUNT }}
           GCP_DEVNET_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_DEVNET_SERVICE_ACCOUNT_KEY }}
 
-          # TODO: if not main -> dry run else deploy
-          # Traceback (most recent call last):
-          #   File "/nix/store/7dd5vnx14d0j13lsmzy37hdv8dnc0nhf-python3.9-nixops-2.0.0-pre-7220cbd/bin/.nixops-wrapped", line 9, in <module>
-          #     sys.exit(main())
-          #   File "/nix/store/7mglx4qc8hfbl35y2m1m15wwkw0877xz-python3-3.9.13-env/lib/python3.9/site-packages/nixops/__main__.py", line 56, in main
-          #     args.op(args)
-          #   File "/nix/store/7mglx4qc8hfbl35y2m1m15wwkw0877xz-python3-3.9.13-env/lib/python3.9/site-packages/nixops/script_defs.py", line 710, in op_deploy
-          #     with deployment(args, True, "nixops deploy") as depl:
-          #   File "/nix/store/6v602p5l3c05iiq7jx8y0rjwiv2n8hhj-python3-3.9.13/lib/python3.9/contextlib.py", line 119, in __enter__
-          #     return next(self.gen)
-          #   File "/nix/store/7mglx4qc8hfbl35y2m1m15wwkw0877xz-python3-3.9.13-env/lib/python3.9/site-packages/nixops/script_defs.py", line 73, in deployment
-          #     depl = open_deployment(sf, args)
-          #   File "/nix/store/7mglx4qc8hfbl35y2m1m15wwkw0877xz-python3-3.9.13-env/lib/python3.9/site-packages/nixops/script_defs.py", line 236, in open_deployment
-          #     depl = sf.open_deployment(uuid=args.deployment)
-          #   File "/nix/store/7mglx4qc8hfbl35y2m1m15wwkw0877xz-python3-3.9.13-env/lib/python3.9/site-packages/nixops/statefile.py", line 239, in open_deployment
-          #     raise Exception(
-          # Exception: could not find specified deployment in state file ‘/tmp/nix-shell.QuNDXa/tmpd0tvopatnixops/state.nixops’
-          # nix develop .#sre --show-trace -L --command nixops deploy --dry-run --debug --keep-going --show-trace
-
+      - name: Save NixOps State
+        if: always()
+        run: |
+          gsutil cp $NIXOPS_STATE $NIXOPS_STATE_URL/
+        env:
+          NIXOPS_STATE_URL: gs://composable-state
+          NIXOPS_STATE: "deployment.nixops"
 
   frontend-firebase-preview-deploy:
     name: "Firebase Preview channel PR deployment"
@@ -1261,12 +1246,12 @@ jobs:
             nix run "github:ComposableFi/composable/${{ github.event.pull_request.head.sha }}#composable-node" -L
             ```
 
-            #### Spin up a local devnet (Dali + Rococo):
+            #### Spin up a local devnet:
             ```bash
-            nix run "github:ComposableFi/composable/${{ github.event.pull_request.head.sha }}#devnet-up" -L --option sandbox relaxed --show-trace
+            nix run "github:ComposableFi/composable/${{ github.event.pull_request.head.sha }}#devnet" -L --option sandbox relaxed --show-trace
             ```
 
-            #### Spin up a local XCVM devnet (Dali + Rococo + Juno):
+            #### Spin up a local XCVM devnet:
             ```bash
             nix run "github:ComposableFi/composable/${{ github.event.pull_request.head.sha }}#devnet-xcvm-up" -L
             ```

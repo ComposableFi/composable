@@ -1,4 +1,4 @@
-{ pkgs, polkadot-bin, composable-bin, acala-bin, statemine-bin }:
+{ pkgs, chainspec, polkadot-bin, composable-bin, acala-bin, statemine-bin }:
 with pkgs;
 let builder = pkgs.callPackage ./network-builder.nix { };
 in {
@@ -24,8 +24,8 @@ in {
         id = 2087;
         port = 31200;
         wsPort = 9988;
-        count = 2;
-        chain = "dali-dev";
+        count = 3;
+        chain = chainspec;
         bin = "${composable-bin}/bin/composable";
       }
       {
@@ -33,7 +33,7 @@ in {
         port = 31220;
         wsPort = 10008;
         count = 2;
-        chain = "statemine";
+        chain = "";
         bin = "${statemine-bin}/bin/polkadot-parachain";
       }
 
@@ -41,7 +41,7 @@ in {
         id = 2000;
         port = 31210;
         wsPort = 9999;
-        count = 2;
+        count = 1;
         chain = "karura-dev";
         bin = "${acala-bin}/bin/acala";
         flags = [
@@ -51,7 +51,6 @@ in {
           "--ws-external"
           "--rpc-cors=all"
           "--rpc-methods=Unsafe"
-          "--force-authoring"
           "--log=xcm=trace"
           "--"
           "--execution=wasm"
