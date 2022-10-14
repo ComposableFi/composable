@@ -1,7 +1,7 @@
 { region, gce-input, book, devnet, disk-size, machine-name, domain
-, extra-gce ? (args: { }), extra-services ? (args: { })
-, extra-nginx-root ? (args: { }), extra-nginx ? (args: { })
-, extra-nginx-virtual ? (args: { }), extra-nginx-hosts ? (args: { }) }: {
+, extra-gce ? (_args: { }), extra-services ? (_args: { })
+, extra-nginx-root ? (_args: { }), extra-nginx ? (_args: { })
+, extra-nginx-virtual ? (_args: { }), extra-nginx-hosts ? (_args: { }) }: {
   resources.gceNetworks.composable-devnet = gce-input // {
     name = "composable-devnet-network";
     firewall = {
@@ -15,7 +15,7 @@
       };
     };
   };
-  "${machine-name}" = args@{ pkgs, resources, ... }:
+  "${machine-name}" = args@{ resources, ... }:
     ({
       deployment = {
         targetEnv = "gce";

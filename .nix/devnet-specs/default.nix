@@ -128,7 +128,6 @@
 
           "${subsquidGraphqlContainerName}" = mkComposableContainer
             (import ../services/subsquid-graphql.nix {
-              inherit pkgs;
               database = squid-db;
               graphqlPort = squidGraphqlPort;
             });

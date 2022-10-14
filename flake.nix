@@ -66,7 +66,7 @@
 
       composableOverlay = nixpkgs.lib.composeManyExtensions [
         arion-src.overlay
-        (final: prev: {
+        (final: _prev: {
           composable = {
             mkDevnetProgram = final.callPackage mkDevnetProgram { };
           };
@@ -177,7 +177,6 @@
           };
         in with pkgs;
         let
-          trace = pkgs.lib.debug.traceSeq;
           # Stable rust for anything except wasm runtime
           rust-stable = rust-bin.stable.latest.default;
 
@@ -313,8 +312,7 @@
 
           # Build a wasm runtime, unoptimized
           mk-runtime = name: features:
-            let file-name = "${name}_runtime.wasm";
-            in crane-nightly.buildPackage (common-attrs // {
+            crane-nightly.buildPackage (common-attrs // {
               pname = "${name}-runtime";
               cargoArtifacts = common-deps-nightly;
               cargoBuildCommand =
@@ -660,7 +658,7 @@
             runtime-tests = stdenv.mkDerivation {
               name = "runtime-tests";
               src = builtins.filterSource
-                (path: type: baseNameOf path != "node_modules")
+                (path: _type: baseNameOf path != "node_modules")
                 ./code/integration-tests/runtime-tests;
               dontUnpack = true;
               installPhase = ''
@@ -672,7 +670,7 @@
             all-directories-and-files = stdenv.mkDerivation {
               name = "all-directories-and-files";
               src =
-                builtins.filterSource (path: type: baseNameOf path != ".git")
+                builtins.filterSource (path: _type: baseNameOf path != ".git")
                 ./.;
               dontUnpack = true;
               installPhase = ''
@@ -759,7 +757,7 @@
             };
 
             statemine-node = pkgs.callPackage ./.nix/statemine-bin.nix {
-              inherit crane-nightly rust-nightly;
+              inherit rust-nightly;
             };
 
             mmr-polkadot-node =
@@ -965,7 +963,20 @@
                 SRC=$(find ${all-nix-files} -name "*.nix" -type f | tr "\n" " ")
                 echo $SRC
                 nixfmt --check $SRC
-                exit $?
+              '';
+            };
+
+            deadnix-check = stdenv.mkDerivation {
+              name = "deadnix-check";
+              dontUnpack = true;
+
+              buildInputs = [ all-nix-files deadnix ];
+              installPhase = ''
+                mkdir $out
+                deadnix --version
+                SRC=$(find ${all-nix-files} -name "*.nix" -type f | tr "\n" " ")
+                echo $SRC
+                deadnix $SRC
               '';
             };
 
@@ -1323,8 +1334,6 @@
             chain-spec = "picasso-dev";
           };
           book = eachSystemOutputs.packages.x86_64-linux.composable-book;
-          frontend =
-            eachSystemOutputs.packages.x86_64-linux.frontend-static-persistent;
           rev = builtins.getEnv "GITHUB_SHA";
         };
       };
