@@ -14,6 +14,7 @@ version = "3.0.0"
 [dependencies]
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+frame-benchmarking = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", optional = true }
 scale-info = { default-features = false, version = "2.1.1", features = [
   "derive",
 ] }
@@ -24,13 +25,13 @@ sp-runtime = { default-features = false, git = "https://github.com/paritytech/su
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 
 composable-support = { path = "../composable-support", default-features = false }
-cosmwasm-minimal-std = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "298d29c5c37d255dfd69a091843343101362be52", default-features = false, features = [
+cosmwasm-minimal-std = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "d316fe3111421cada40f7819b4864b9bcfe68606", default-features = false, features = [
   "iterator",
 ] }
-cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "298d29c5c37d255dfd69a091843343101362be52", default-features = false, features = [
+cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "d316fe3111421cada40f7819b4864b9bcfe68606", default-features = false, features = [
   "iterator",
 ] }
-cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "298d29c5c37d255dfd69a091843343101362be52", default-features = false, features = [
+cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "d316fe3111421cada40f7819b4864b9bcfe68606", default-features = false, features = [
   "iterator",
 ] }
 log = { version = "0.4.14", default-features = false }
@@ -41,6 +42,20 @@ serde_json = { version = "1.0.82", default-features = false, features = [
 wasm-instrument = { version = "0.2", default-features = false }
 wasmi = { git = "https://github.com/ComposableFi/wasmi", rev = "cd8c0c775a1d197a35ff3d5c7d6cded3d476411b", default-features = false }
 wasmi-validation = { git = "https://github.com/ComposableFi/wasmi", rev = "cd8c0c775a1d197a35ff3d5c7d6cded3d476411b", default-features = false }
+pallet-balances = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sha3 = { version = "0.10", default-features = false }
+sha2 = { version = "0.10", default-features = false }
+hex = { version = "0.4", default-features = false, features = [ "alloc" ] }
+primitives = { path = "../../runtime/primitives", default-features = false }
+pallet-assets = { default-features = false, path = "../assets" }
+
+[dev-dependencies]
+pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "377213f750755cc48e80a3131eaae63b5eda8362" }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "377213f750755cc48e80a3131eaae63b5eda8362" }
+governance-registry = { package = "pallet-governance-registry", path = "../governance-registry" }
+composable-traits = { path = "../composable-traits", default-features = false }
+num-traits = { version = "0.2.14", default-features = false }
 
 [features]
 default = ["std"]
@@ -48,6 +63,7 @@ std = [
   "codec/std",
   "frame-support/std",
   "frame-system/std",
+  "frame-benchmarking/std",
   "sp-runtime/std",
   "sp-io/std",
   "sp-core/std",
@@ -55,9 +71,13 @@ std = [
   "sp-arithmetic/std",
   "composable-support/std",
   "scale-info/std",
+  "primitives/std",
+  "pallet-balances/std",
+  "sha3/std",
+  "hex/std"
 ]
-
 runtime-benchmarks = [
+  "frame-benchmarking",
   "frame-support/runtime-benchmarks",
   "frame-system/runtime-benchmarks",
 ]
