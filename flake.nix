@@ -634,6 +634,11 @@
               extension = "toml";
             };
 
+            all-nix-files = all-such-files {
+              inherit pkgs;
+              extension = "nix";
+            };
+
             price-feed = crane-nightly.buildPackage (common-attrs // {
               pnameSuffix = "-price-feed";
               cargoArtifacts = common-deps;
@@ -938,12 +943,11 @@
               name = "nixfmt-check";
               dontUnpack = true;
 
-              buildInputs = [ all-directories-and-files nixfmt ];
+              buildInputs = [ all-nix-files nixfmt ];
               installPhase = ''
                 mkdir $out
                 nixfmt --version
-                # note, really can just src with filer by .nix, no need all files
-                SRC=$(find ${all-directories-and-files} -name "*.nix" -type f | tr "\n" " ")
+                SRC=$(find ${all-nix-files} -name "*.nix" -type f | tr "\n" " ")
                 echo $SRC
                 nixfmt --check $SRC
                 exit $?
