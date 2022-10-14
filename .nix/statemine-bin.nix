@@ -1,4 +1,4 @@
-{ pkgs, rust-nightly, crane-nightly }:
+{ pkgs, rust-nightly }:
 with pkgs;
 let
   branch = "polkadot-v0.9.27";
