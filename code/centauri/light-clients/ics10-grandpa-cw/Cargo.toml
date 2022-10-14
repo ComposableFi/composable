@@ -49,8 +49,10 @@ schemars = "0.8.10"
 serde = { version = "1.0.145", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.31" }
 
-#[target.'cfg(target_arch = "wasm32")'.dependencies]
-ics10-grandpa = {path = "../ics10-grandpa"}
+
+[target.'cfg(target_arch = "wasm32")'.dependencies.ics10-grandpa]
+path = "../ics10-grandpa"
+
 
 [dev-dependencies]
 cw-multi-test = "0.15.1"
