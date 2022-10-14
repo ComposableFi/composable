@@ -5,18 +5,19 @@ import { callbackGate, fromChainIdUnit, unwrapNumberOrHex } from "shared";
 import { useTransfer } from "@/defi/polkadot/hooks/useTransfer";
 
 export const useExistentialDeposit = () => {
-  const { tokenId, from, balance, to, account, fromProvider } = useTransfer();
+  const { from, balance, to, account, fromProvider } = useTransfer();
 
-  const updateFeeToken = useStore(state => state.transfers.updateFeeToken);
+  const tokenId = useStore((state) => state.transfers.selectedToken);
+  const updateFeeToken = useStore((state) => state.transfers.updateFeeToken);
 
-  const getFeeToken = useStore(state => state.transfers.getFeeToken);
+  const getFeeToken = useStore((state) => state.transfers.getFeeToken);
 
   const { native, assets } = useStore(
     ({ substrateBalances }) => substrateBalances.assets[from]
   );
 
   const { updateExistentialDeposit, existentialDeposit } = useStore(
-    state => state.transfers
+    (state) => state.transfers
   );
 
   const { parachainApi } = fromProvider;
@@ -40,7 +41,7 @@ export const useExistentialDeposit = () => {
             const result: any = await api.query.assetTxPayment.paymentAssets(
               api.createType("AccountId32", address)
             );
-            if (result.isNone) {
+            if (result.isNone && tokenId) {
               // Fetch native asset's ED
               const ed = await api.query.currencyFactory.assetEd(
                 assets[tokenId].meta.supportedNetwork[from]
@@ -64,7 +65,7 @@ export const useExistentialDeposit = () => {
         );
         break;
       case "kusama":
-        callbackGate(async api => {
+        callbackGate(async (api) => {
           const ed = api.consts.balances.existentialDeposit.toString();
           updateExistentialDeposit(fromChainIdUnit(unwrapNumberOrHex(ed)));
           updateFeeToken(Number(1));
@@ -82,7 +83,7 @@ export const useExistentialDeposit = () => {
     parachainApi,
     updateExistentialDeposit,
     updateFeeToken,
-    assets
+    assets,
   ]);
 
   return {
@@ -93,6 +94,6 @@ export const useExistentialDeposit = () => {
     assets,
     native,
     existentialDeposit,
-    feeToken: getFeeToken(from)
+    feeToken: getFeeToken(from),
   };
 };

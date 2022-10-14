@@ -8,6 +8,7 @@ import { toChainIdUnit } from "shared";
 import { CurrencyId } from "defi-interfaces";
 import { XcmVersionedMultiLocation } from "@polkadot/types/lookup";
 import BigNumber from "bignumber.js";
+import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 
 export type TransferHandlerArgs = {
   api: ApiPromise;
@@ -36,17 +37,6 @@ export function availableTargetNetwork(
   }
 }
 
-export function getTransferToken(
-  fromNetwork: string,
-  toNetwork: string
-): "ksm" | "kusd" {
-  if (fromNetwork === "kusama") return "ksm";
-  if (fromNetwork === "karura") return "kusd";
-  if (fromNetwork === "picasso") return getTransferToken(toNetwork, "");
-
-  return "ksm";
-}
-
 export async function getTransferCallKusamaPicasso(
   api: ApiPromise,
   targetChain: number | 0,
@@ -57,9 +47,9 @@ export async function getTransferCallKusamaPicasso(
   const destination = api.createType("XcmVersionedMultiLocation", {
     V0: api.createType("XcmV0MultiLocation", {
       X1: api.createType("XcmV0Junction", {
-        Parachain: api.createType("Compact<u32>", targetChain)
-      })
-    })
+        Parachain: api.createType("Compact<u32>", targetChain),
+      }),
+    }),
   });
 
   // Setting the wallet receiving the funds
@@ -68,10 +58,10 @@ export async function getTransferCallKusamaPicasso(
       X1: api.createType("XcmV0Junction", {
         AccountId32: {
           network: api.createType("XcmV0JunctionNetworkId", "Any"),
-          id: api.createType("AccountId32", targetAccount)
-        }
-      })
-    })
+          id: api.createType("AccountId32", targetAccount),
+        },
+      }),
+    }),
   });
 
   // Setting up the asset & amount
@@ -80,10 +70,10 @@ export async function getTransferCallKusamaPicasso(
       api.createType("XcmV0MultiAsset", {
         ConcreteFungible: {
           id: api.createType("XcmV0MultiLocation", "Null"),
-          amount
-        }
-      })
-    ]
+          amount,
+        },
+      }),
+    ],
   });
 
   // Setting the asset which will be used for fees (0 refers to first in asset list)
@@ -112,16 +102,16 @@ export async function getTransferCallPicassoKarura(
       X3: [
         api.createType("XcmV0Junction", "Parent"),
         api.createType("XcmV0Junction", {
-          Parachain: api.createType("Compact<u32>", targetChain)
+          Parachain: api.createType("Compact<u32>", targetChain),
         }),
         api.createType("XcmV0Junction", {
           AccountId32: {
             network: api.createType("XcmV0JunctionNetworkId", "Any"),
-            id: api.createType("AccountId32", targetAccount)
-          }
-        })
-      ]
-    })
+            id: api.createType("AccountId32", targetAccount),
+          },
+        }),
+      ],
+    }),
   });
 
   // TODO: Refactor this logic to parent
@@ -138,8 +128,8 @@ export async function getTransferCallPicassoKarura(
     [kusdAssetId, amount], // KUSD
     [
       api.createType("u128", feeItemId),
-      api.createType("u128", toChainIdUnit(1).toString())
-    ] // Asset to be used as fees, minFee should be calculated.
+      api.createType("u128", toChainIdUnit(1).toString()),
+    ], // Asset to be used as fees, minFee should be calculated.
   ];
 
   const destWeight = api.createType("u64", 9000000000); // > 9000000000
@@ -171,11 +161,11 @@ export async function getTransferCallPicassoKusama(
         api.createType("XcmV0Junction", {
           AccountId32: {
             network: api.createType("XcmV0JunctionNetworkId", "Any"),
-            id: api.createType("AccountId32", targetAccount)
-          }
-        })
-      ]
-    })
+            id: api.createType("AccountId32", targetAccount),
+          },
+        }),
+      ],
+    }),
   });
 
   // Set dest weight
@@ -186,8 +176,8 @@ export async function getTransferCallPicassoKusama(
     [api.createType("u128", 4), amount], // KSM
     [
       api.createType("u128", feeItemId),
-      api.createType("u128", toChainIdUnit(1).toString())
-    ] // Asset to be used as fees, minFee should be calculated.
+      api.createType("u128", toChainIdUnit(1).toString()),
+    ], // Asset to be used as fees, minFee should be calculated.
   ];
 
   const signer = await getSigner(APP_NAME, signerAddress);
@@ -221,23 +211,23 @@ export async function getTransferCallKaruraPicasso(
         X3: [
           api.createType("XcmV0Junction", "Parent"),
           api.createType("XcmV0Junction", {
-            Parachain: api.createType("Compact<u32>", targetChain)
+            Parachain: api.createType("Compact<u32>", targetChain),
           }),
           api.createType("XcmV0Junction", {
             AccountId32: {
               network: api.createType("XcmV0JunctionNetworkId", "Any"),
-              id: api.createType("AccountId32", targetAccount)
-            }
-          })
-        ]
-      })
+              id: api.createType("AccountId32", targetAccount),
+            },
+          }),
+        ],
+      }),
     }
   );
 
   const currencyId: CurrencyId = api.createType(
     "AcalaPrimitivesCurrencyCurrencyId",
     {
-      Token: api.createType("AcalaPrimitivesCurrencyTokenSymbol", "KUSD")
+      Token: api.createType("AcalaPrimitivesCurrencyTokenSymbol", "KUSD"),
     }
   );
 
@@ -263,7 +253,7 @@ export async function transferPicassoKarura({
   enqueueSnackbar,
   signerAddress,
   hasFeeItem,
-  feeItemId
+  feeItemId,
 }: TransferHandlerArgs) {
   // Set destination. Should have 2 Junctions, first to parent and then to wallet
   const { signer, call } = await getTransferCallPicassoKarura(
@@ -281,27 +271,29 @@ export async function transferPicassoKarura({
     signerAddress,
     api,
     signer,
-    txHash => {
+    (txHash) => {
       enqueueSnackbar("Transfer executed", {
         persist: true,
         description: `Transaction hash: ${txHash}`,
         variant: "info",
-        isCloseable: true
+        isCloseable: true,
+        url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
       });
     },
-    txHash => {
+    (txHash) => {
       enqueueSnackbar("Transfer executed successfully.", {
         persist: true,
         variant: "success",
-        isCloseable: true
+        isCloseable: true,
+        url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
       });
     },
-    err => {
+    (err) => {
       enqueueSnackbar("Transfer failed", {
         persist: true,
         description: `Error: ${err}`,
         variant: "error",
-        isCloseable: true
+        isCloseable: true,
       });
     }
   );
@@ -314,7 +306,7 @@ export async function transferKaruraPicasso({
   amount,
   executor,
   enqueueSnackbar,
-  signerAddress
+  signerAddress,
 }: TransferHandlerArgs) {
   const { signer, call } = await getTransferCallKaruraPicasso(
     api,
@@ -329,27 +321,27 @@ export async function transferKaruraPicasso({
     signerAddress,
     api,
     signer,
-    txHash => {
+    (txHash) => {
       enqueueSnackbar("Transfer executed", {
         persist: true,
         description: `Transaction hash: ${txHash}`,
         variant: "info",
-        isCloseable: true
+        isCloseable: true,
       });
     },
-    txHash => {
+    (txHash) => {
       enqueueSnackbar("Transfer executed successfully.", {
         persist: true,
         variant: "success",
-        isCloseable: true
+        isCloseable: true,
       });
     },
-    err => {
+    (err) => {
       enqueueSnackbar("Transfer failed", {
         persist: true,
         description: `Error: ${err}`,
         variant: "error",
-        isCloseable: true
+        isCloseable: true,
       });
     }
   );
@@ -364,7 +356,7 @@ export async function transferPicassoKusama({
   signerAddress,
   hasFeeItem,
   feeItemId,
-  weight
+  weight,
 }: TransferHandlerArgs) {
   const { signer, call } = await getTransferCallPicassoKusama(
     api,
@@ -380,27 +372,27 @@ export async function transferPicassoKusama({
     signerAddress,
     api,
     signer,
-    txHash => {
+    (txHash) => {
       enqueueSnackbar("Transfer executed", {
         persist: true,
         description: `Transaction hash: ${txHash}`,
         variant: "info",
-        isCloseable: true
+        isCloseable: true,
       });
     },
-    txHash => {
+    (txHash) => {
       enqueueSnackbar("Transfer executed successfully.", {
         persist: true,
         variant: "success",
-        isCloseable: true
+        isCloseable: true,
       });
     },
-    err => {
+    (err) => {
       enqueueSnackbar("Transfer failed", {
         persist: true,
         description: `Error: ${err}`,
         variant: "error",
-        isCloseable: true
+        isCloseable: true,
       });
     }
   );
@@ -413,7 +405,7 @@ export async function transferKusamaPicasso({
   amount,
   executor,
   enqueueSnackbar,
-  signerAddress
+  signerAddress,
 }: TransferHandlerArgs) {
   const { signer, call } = await getTransferCallKusamaPicasso(
     api,
@@ -428,26 +420,26 @@ export async function transferKusamaPicasso({
     signerAddress,
     api,
     signer,
-    txHash => {
+    (txHash) => {
       enqueueSnackbar("Executing transfer...", {
         persist: true,
         variant: "info",
-        timeout: 0
+        timeout: 0,
       });
     },
-    txHash => {
+    (txHash) => {
       enqueueSnackbar("Transfer executed successfully.", {
         persist: true,
         variant: "success",
-        isCloseable: true
+        isCloseable: true,
       });
     },
-    err => {
+    (err) => {
       enqueueSnackbar("Transfer failed", {
         persist: true,
         description: `Error: ${err}`,
         variant: "error",
-        isCloseable: true
+        isCloseable: true,
       });
     }
   );
