@@ -44,6 +44,14 @@ pub mod runtimes;
 pub mod types;
 pub mod weights;
 
+#[cfg(any(feature = "runtime-benchmarks", test))]
+mod benchmarking;
+
+#[cfg(test)]
+mod mock;
+#[cfg(test)]
+mod tests;
+
 #[allow(clippy::too_many_arguments)]
 #[frame_support::pallet]
 pub mod pallet {
@@ -51,7 +59,7 @@ pub mod pallet {
 	use crate::{
 		instrument::gas_and_stack_instrumentation,
 		runtimes::{
-			abstraction::{CosmwasmAccount, Gas, VMPallet},
+			abstraction::{CanonicalCosmwasmAccount, CosmwasmAccount, Gas, VMPallet},
 			wasmi::{
 				CodeValidation, CosmwasmVM, CosmwasmVMCache, CosmwasmVMError, CosmwasmVMShared,
 				ExportRequirement, InitialStorageMutability, ValidationError,
@@ -75,17 +83,20 @@ pub mod pallet {
 	use core::fmt::Debug;
 	use cosmwasm_minimal_std::{
 		Addr, Attribute as CosmwasmEventAttribute, Binary as CosmwasmBinary, BlockInfo, Coin,
-		ContractInfo as CosmwasmContractInfo, Env, Event as CosmwasmEvent, MessageInfo, Timestamp,
-		TransactionInfo,
+		ContractInfo as CosmwasmContractInfo, ContractInfoResponse, Env, Event as CosmwasmEvent,
+		MessageInfo, Timestamp, TransactionInfo,
 	};
 	pub use cosmwasm_minimal_std::{QueryRequest, QueryResponse};
 	use cosmwasm_vm::{
 		executor::{
-			AllocateInput, AsFunctionName, DeallocateInput, ExecuteInput, InstantiateInput,
-			MigrateInput, QueryInput, ReplyInput,
+			cosmwasm_call, AllocateInput, AsFunctionName, DeallocateInput, ExecuteInput,
+			InstantiateInput, MigrateInput, QueryInput, ReplyInput,
 		},
 		memory::PointerOf,
-		system::{cosmwasm_system_entrypoint, cosmwasm_system_query, CosmwasmCodeId},
+		system::{
+			cosmwasm_system_entrypoint, cosmwasm_system_query, cosmwasm_system_run, CosmwasmCodeId,
+			CosmwasmContractMeta,
+		},
 		vm::VmMessageCustomOf,
 	};
 	use cosmwasm_vm_wasmi::{host_functions, new_wasmi_vm, WasmiImportResolver, WasmiVM};
@@ -116,7 +127,7 @@ pub mod pallet {
 	pub(crate) type ContractTrieIdOf<T> = BoundedVec<u8, MaxContractTrieIdSizeOf<T>>;
 	pub(crate) type ContractLabelOf<T> = BoundedVec<u8, MaxContractLabelSizeOf<T>>;
 	pub(crate) type CodeHashOf<T> = <T as frame_system::Config>::Hash;
-	pub(crate) type AccountIdOf<T> = <T as Config>::AccountId;
+	pub(crate) type AccountIdOf<T> = <T as Config>::AccountIdExtended;
 	pub(crate) type MaxCodeSizeOf<T> = <T as Config>::MaxCodeSize;
 	pub(crate) type MaxInstrumentedCodeSizeOf<T> = <T as Config>::MaxInstrumentedCodeSize;
 	pub(crate) type MaxMessageSizeOf<T> = <T as Config>::MaxMessageSize;
@@ -185,7 +196,7 @@ pub mod pallet {
 		#[allow(missing_docs)]
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
-		type AccountId: Parameter
+		type AccountIdExtended: Parameter
 			+ Member
 			+ MaybeSerializeDeserialize
 			+ Debug
@@ -362,7 +373,7 @@ pub mod pallet {
 		/// - `origin` the original dispatching the extrinsic.
 		/// - `code` the actual wasm code.
 		#[transactional]
-		#[pallet::weight(T::WeightInfo::upload(code.len()))]
+		#[pallet::weight(T::WeightInfo::upload(code.len() as u32))]
 		pub fn upload(origin: OriginFor<T>, code: ContractCodeOf<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			Self::do_upload(&who, code)?;
@@ -384,7 +395,7 @@ pub mod pallet {
 		///   export.
 		/// * `gas` the maximum gas to use, the remaining is refunded at the end of the transaction.
 		#[transactional]
-		#[pallet::weight(T::WeightInfo::instantiate(funds.len()).saturating_add(*gas))]
+		#[pallet::weight(T::WeightInfo::instantiate(funds.len() as u32).saturating_add(*gas))]
 		pub fn instantiate(
 			origin: OriginFor<T>,
 			code_id: CosmwasmCodeId,
@@ -425,7 +436,7 @@ pub mod pallet {
 		///   export.
 		/// * `gas` the maximum gas to use, the remaining is refunded at the end of the transaction.
 		#[transactional]
-		#[pallet::weight(T::WeightInfo::execute(funds.len()).saturating_add(*gas))]
+		#[pallet::weight(T::WeightInfo::execute(funds.len() as u32).saturating_add(*gas))]
 		pub fn execute(
 			origin: OriginFor<T>,
 			contract: AccountIdOf<T>,
@@ -664,7 +675,7 @@ pub mod pallet {
 		}
 
 		/// Handy wrapper to set the contract info
-		pub(crate) fn set_contract_meta(
+		pub(crate) fn do_set_contract_meta(
 			contract: &AccountIdOf<T>,
 			code_id: CosmwasmCodeId,
 			admin: Option<AccountIdOf<T>>,
@@ -1117,6 +1128,48 @@ pub mod pallet {
 			})
 		}
 
+		pub(crate) fn do_running_contract_meta(
+			vm: &mut CosmwasmVM<T>,
+		) -> CosmwasmContractMeta<CosmwasmAccount<T>> {
+			CosmwasmContractMeta {
+				code_id: vm.contract_info.code_id,
+				admin: vm.contract_info.admin.clone().map(CosmwasmAccount::new),
+				label: String::from_utf8_lossy(&vm.contract_info.label).into(),
+			}
+		}
+
+		pub(crate) fn do_contract_meta(
+			address: AccountIdOf<T>,
+		) -> Result<CosmwasmContractMeta<CosmwasmAccount<T>>, CosmwasmVMError<T>> {
+			let info = Pallet::<T>::contract_info(&address)?;
+			Ok(CosmwasmContractMeta {
+				code_id: info.code_id,
+				admin: info.admin.clone().map(CosmwasmAccount::new),
+				label: String::from_utf8_lossy(&info.label).into(),
+			})
+		}
+
+		/// Validate a string address
+		pub(crate) fn do_addr_validate(
+			address: String,
+		) -> Result<AccountIdOf<T>, CosmwasmVMError<T>> {
+			Pallet::<T>::cosmwasm_addr_to_account(address)
+		}
+
+		/// Canonicalize a human readable address
+		pub(crate) fn do_addr_canonicalize(
+			address: String,
+		) -> Result<AccountIdOf<T>, CosmwasmVMError<T>> {
+			Pallet::<T>::cosmwasm_addr_to_account(address)
+		}
+
+		/// Humanize a canonical address
+		pub(crate) fn do_addr_humanize(
+			address: &CanonicalCosmwasmAccount<T>,
+		) -> CosmwasmAccount<T> {
+			address.0.clone()
+		}
+
 		/// Retrieve an account balance.
 		pub(crate) fn do_balance(
 			account: &AccountIdOf<T>,
@@ -1243,6 +1296,118 @@ pub mod pallet {
 			};
 
 			sp_io::crypto::ed25519_verify(&signature, message, &public_key)
+		}
+
+		pub(crate) fn do_continue_instantiate<'a>(
+			vm: &'a mut CosmwasmVM<T>,
+			CosmwasmContractMeta { code_id, admin, label }: CosmwasmContractMeta<
+				CosmwasmAccount<T>,
+			>,
+			funds: Vec<Coin>,
+			message: &[u8],
+			event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
+		) -> Result<Option<cosmwasm_minimal_std::Binary>, CosmwasmVMError<T>> {
+			let (contract, info) = Pallet::<T>::do_instantiate_phase1(
+				vm.contract_address.clone().into_inner(),
+				code_id,
+				&[],
+				admin.map(|admin| admin.into_inner()),
+				label
+					.as_bytes()
+					.to_vec()
+					.try_into()
+					.map_err(|_| crate::Error::<T>::LabelTooBig)?,
+				message,
+			)?;
+			Pallet::<T>::cosmwasm_call(
+				vm.shared,
+				vm.contract_address.clone().into_inner(),
+				contract,
+				info,
+				funds,
+				|vm| cosmwasm_system_run::<InstantiateInput, _>(vm, message, event_handler),
+			)
+		}
+
+		pub(crate) fn do_continue_execute<'a>(
+			vm: &'a mut CosmwasmVM<T>,
+			contract: AccountIdOf<T>,
+			funds: Vec<Coin>,
+			message: &[u8],
+			event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
+		) -> Result<Option<cosmwasm_minimal_std::Binary>, CosmwasmVMError<T>> {
+			let sender = vm.contract_address.clone().into_inner();
+			let info = Pallet::<T>::contract_info(&contract)?;
+			Pallet::<T>::cosmwasm_call(vm.shared, sender, contract, info, funds, |vm| {
+				cosmwasm_system_run::<ExecuteInput, _>(vm, message, event_handler)
+			})
+		}
+
+		pub(crate) fn do_continue_migrate<'a>(
+			vm: &'a mut CosmwasmVM<T>,
+			contract: AccountIdOf<T>,
+			message: &[u8],
+			event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
+		) -> Result<Option<cosmwasm_minimal_std::Binary>, CosmwasmVMError<T>> {
+			let sender = vm.contract_address.clone().into_inner();
+			let info = Pallet::<T>::contract_info(&contract)?;
+			Pallet::<T>::cosmwasm_call(
+				vm.shared,
+				sender,
+				contract,
+				info,
+				// Can't move funds in migration.
+				Default::default(),
+				|vm| cosmwasm_system_run::<MigrateInput, _>(vm, message, event_handler),
+			)
+		}
+
+		pub(crate) fn do_query_info(
+			vm: &mut CosmwasmVM<T>,
+			address: AccountIdOf<T>,
+		) -> Result<ContractInfoResponse, CosmwasmVMError<T>> {
+			// TODO: cache or at least check if its current contract and use `self.contract_info`
+			let info = Pallet::<T>::contract_info(&address)?;
+			let code_id = info.code_id;
+			let pinned = vm.shared.cache.code.contains_key(&code_id);
+			Ok(ContractInfoResponse {
+				code_id,
+				creator: CosmwasmAccount::<T>::new(info.instantiator.clone()).into(),
+				admin: info.admin.map(|admin| CosmwasmAccount::<T>::new(admin).into()),
+				pinned,
+				// TODO(hussein-aitlahcen): IBC
+				ibc_port: None,
+			})
+		}
+
+		pub(crate) fn do_query_continuation<'a>(
+			vm: &'a mut CosmwasmVM<T>,
+			contract: AccountIdOf<T>,
+			message: &[u8],
+		) -> Result<cosmwasm_minimal_std::QueryResult, CosmwasmVMError<T>> {
+			log::debug!(target: "runtime::contracts", "query_continuation");
+			let sender = vm.contract_address.clone().into_inner();
+			let info = Pallet::<T>::contract_info(&contract)?;
+			vm.shared.push_readonly();
+			let result = Pallet::<T>::cosmwasm_call(
+				vm.shared,
+				sender,
+				contract,
+				info,
+				Default::default(),
+				|vm| cosmwasm_call::<QueryInput, WasmiVM<CosmwasmVM<T>>>(vm, message),
+			);
+			vm.shared.pop_readonly();
+			result
+		}
+
+		pub(crate) fn do_query_raw<'a>(
+			vm: &'a mut CosmwasmVM<T>,
+			address: AccountIdOf<T>,
+			key: &[u8],
+		) -> Result<Option<Vec<u8>>, CosmwasmVMError<T>> {
+			let info = Pallet::<T>::contract_info(&address)?;
+			Pallet::<T>::do_db_read_other_contract(vm, &info.trie_id, key)
 		}
 	}
 

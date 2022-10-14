@@ -1837,7 +1837,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-minimal-std"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=298d29c5c37d255dfd69a091843343101362be52#298d29c5c37d255dfd69a091843343101362be52"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=d316fe3111421cada40f7819b4864b9bcfe68606#d316fe3111421cada40f7819b4864b9bcfe68606"
 dependencies = [
  "base64 0.13.0",
  "serde",
@@ -1911,7 +1911,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=298d29c5c37d255dfd69a091843343101362be52#298d29c5c37d255dfd69a091843343101362be52"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=d316fe3111421cada40f7819b4864b9bcfe68606#d316fe3111421cada40f7819b4864b9bcfe68606"
 dependencies = [
  "cosmwasm-minimal-std",
  "either",
@@ -1923,14 +1923,16 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm-wasmi"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=298d29c5c37d255dfd69a091843343101362be52#298d29c5c37d255dfd69a091843343101362be52"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=d316fe3111421cada40f7819b4864b9bcfe68606#d316fe3111421cada40f7819b4864b9bcfe68606"
 dependencies = [
  "cosmwasm-minimal-std",
  "cosmwasm-vm",
  "either",
+ "hex",
  "log 0.4.17",
  "serde",
  "serde_json",
+ "wasm-instrument 0.2.0",
  "wasmi 0.11.0",
 ]
 
@@ -7836,16 +7838,29 @@ name = "pallet-cosmwasm"
 version = "0.0.1"
 dependencies = [
  "composable-support",
+ "composable-traits",
  "cosmwasm-minimal-std",
  "cosmwasm-vm",
  "cosmwasm-vm-wasmi",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "hex",
  "log 0.4.17",
+ "num-traits",
+ "orml-tokens",
+ "orml-traits",
+ "pallet-assets 0.0.1",
+ "pallet-balances",
+ "pallet-governance-registry",
+ "pallet-timestamp",
  "parity-scale-codec",
  "parity-wasm 0.45.0",
+ "primitives 0.1.0",
  "scale-info",
  "serde_json",
+ "sha2 0.10.6",
+ "sha3 0.10.5",
  "sp-arithmetic",
  "sp-core",
  "sp-io",
@@ -15800,7 +15815,7 @@ dependencies = [
  "chrono",
  "lazy_static",
  "matchers",
- "parking_lot 0.11.2",
+ "parking_lot 0.9.0",
  "regex",
  "serde",
  "serde_json",
@@ -15992,9 +16007,9 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "digest 0.10.5",
- "rand 0.8.5",
+ "rand 0.6.5",
  "static_assertions",
 ]
 

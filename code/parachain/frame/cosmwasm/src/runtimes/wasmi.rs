@@ -1,17 +1,17 @@
 use super::abstraction::{CanonicalCosmwasmAccount, CosmwasmAccount, Gas};
-use crate::{runtimes::abstraction::GasOutcome, Config, ContractInfoOf, Pallet};
+use crate::{
+	runtimes::abstraction::GasOutcome, weights::WeightInfo, Config, ContractInfoOf, Pallet,
+};
 use alloc::string::String;
 use cosmwasm_minimal_std::{Coin, ContractInfoResponse, Empty, Env, MessageInfo};
 use cosmwasm_vm::{
-	executor::{
-		cosmwasm_call, ExecuteInput, ExecutorError, InstantiateInput, MigrateInput, QueryInput,
-	},
+	executor::ExecutorError,
 	has::Has,
 	memory::{
 		MemoryReadError, MemoryWriteError, Pointable, ReadWriteMemory, ReadableMemory,
 		WritableMemory,
 	},
-	system::{cosmwasm_system_run, CosmwasmCodeId, CosmwasmContractMeta, SystemError},
+	system::{CosmwasmCodeId, CosmwasmContractMeta, SystemError},
 	transaction::Transactional,
 	vm::{VMBase, VmErrorOf, VmGas},
 };
@@ -247,7 +247,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		CosmwasmContractMeta { code_id: new_code_id, admin, label }: Self::ContractMeta,
 	) -> Result<(), Self::Error> {
 		log::debug!(target: "runtime::contracts", "set_contract_meta");
-		Pallet::<T>::set_contract_meta(
+		Pallet::<T>::do_set_contract_meta(
 			&address.into_inner(),
 			new_code_id,
 			admin.map(|admin| admin.into_inner()),
@@ -258,21 +258,12 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 
 	fn running_contract_meta(&mut self) -> Result<Self::ContractMeta, Self::Error> {
 		log::debug!(target: "runtime::contracts", "contract_meta");
-		Ok(CosmwasmContractMeta {
-			code_id: self.contract_info.code_id,
-			admin: self.contract_info.admin.clone().map(CosmwasmAccount::new),
-			label: String::from_utf8_lossy(&self.contract_info.label).into(),
-		})
+		Ok(Pallet::<T>::do_running_contract_meta(self))
 	}
 
 	fn contract_meta(&mut self, address: Self::Address) -> Result<Self::ContractMeta, Self::Error> {
 		log::debug!(target: "runtime::contracts", "code_id");
-		let info = Pallet::<T>::contract_info(address.as_ref())?;
-		Ok(CosmwasmContractMeta {
-			code_id: info.code_id,
-			admin: info.admin.map(CosmwasmAccount::new),
-			label: String::from_utf8_lossy(&info.label.into_inner()).into(),
-		})
+		Pallet::<T>::do_contract_meta(address.into_inner())
 	}
 
 	fn debug(&mut self, message: Vec<u8>) -> Result<(), Self::Error> {
@@ -282,7 +273,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 
 	fn addr_validate(&mut self, input: &str) -> Result<Result<(), Self::Error>, Self::Error> {
 		log::debug!(target: "runtime::contracts", "addr_validate");
-		match Pallet::<T>::cosmwasm_addr_to_account(input.into()) {
+		match Pallet::<T>::do_addr_validate(input.into()) {
 			Ok(_) => Ok(Ok(())),
 			Err(e) => Ok(Err(e)),
 		}
@@ -293,7 +284,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		input: &str,
 	) -> Result<Result<Self::CanonicalAddress, Self::Error>, Self::Error> {
 		log::debug!(target: "runtime::contracts", "addr_canonicalize");
-		let account = match Pallet::<T>::cosmwasm_addr_to_account(input.into()) {
+		let account = match Pallet::<T>::do_addr_canonicalize(input.into()) {
 			Ok(account) => account,
 			Err(e) => return Ok(Err(e)),
 		};
@@ -306,7 +297,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		addr: &Self::CanonicalAddress,
 	) -> Result<Result<Self::Address, Self::Error>, Self::Error> {
 		log::debug!(target: "runtime::contracts", "addr_humanize");
-		Ok(Ok(addr.0.clone()))
+		Ok(Ok(Pallet::<T>::do_addr_humanize(addr)))
 	}
 
 	fn secp256k1_recover_pubkey(
@@ -355,20 +346,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		message: &[u8],
 	) -> Result<cosmwasm_minimal_std::QueryResult, Self::Error> {
 		log::debug!(target: "runtime::contracts", "query_continuation");
-		let sender = self.contract_address.clone().into_inner();
-		let contract = address.into_inner();
-		let info = Pallet::<T>::contract_info(&contract)?;
-		self.shared.push_readonly();
-		let result = Pallet::<T>::cosmwasm_call(
-			self.shared,
-			sender,
-			contract,
-			info,
-			Default::default(),
-			|vm| cosmwasm_call::<QueryInput, WasmiVM<CosmwasmVM<T>>>(vm, message),
-		);
-		self.shared.pop_readonly();
-		result
+		Pallet::<T>::do_query_continuation(self, address.into_inner(), message)
 	}
 
 	fn continue_execute(
@@ -379,43 +357,19 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
 	) -> Result<Option<cosmwasm_minimal_std::Binary>, Self::Error> {
 		log::debug!(target: "runtime::contracts", "continue_execute");
-		let sender = self.contract_address.clone().into_inner();
-		let contract = address.into_inner();
-		let info = Pallet::<T>::contract_info(&contract)?;
-		Pallet::<T>::cosmwasm_call(self.shared, sender, contract, info, funds, |vm| {
-			cosmwasm_system_run::<ExecuteInput, _>(vm, message, event_handler)
-		})
+		Pallet::<T>::do_continue_execute(self, address.into_inner(), funds, message, event_handler)
 	}
 
 	fn continue_instantiate(
 		&mut self,
-		CosmwasmContractMeta { code_id, admin, label }: Self::ContractMeta,
+		contract_meta: Self::ContractMeta,
 		funds: Vec<Coin>,
 		message: &[u8],
 		event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
 	) -> Result<(Self::Address, Option<cosmwasm_minimal_std::Binary>), Self::Error> {
 		log::debug!(target: "runtime::contracts", "continue_instantiate");
-		let (contract, info) = Pallet::<T>::do_instantiate_phase1(
-			self.contract_address.clone().into_inner(),
-			code_id,
-			&[],
-			admin.map(|admin| admin.into_inner()),
-			label
-				.as_bytes()
-				.to_vec()
-				.try_into()
-				.map_err(|_| crate::Error::<T>::LabelTooBig)?,
-			message,
-		)?;
-		Pallet::<T>::cosmwasm_call(
-			self.shared,
-			self.contract_address.clone().into_inner(),
-			contract,
-			info,
-			funds,
-			|vm| cosmwasm_system_run::<InstantiateInput, _>(vm, message, event_handler),
-		)
-		.map(|r| (self.contract_address.clone(), r))
+		Pallet::<T>::do_continue_instantiate(self, contract_meta, funds, message, event_handler)
+			.map(|r| (self.contract_address.clone(), r))
 	}
 
 	fn continue_migrate(
@@ -425,18 +379,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
 	) -> Result<Option<cosmwasm_minimal_std::Binary>, Self::Error> {
 		log::debug!(target: "runtime::contracts", "continue_migrate");
-		let sender = self.contract_address.clone().into_inner();
-		let contract = address.into_inner();
-		let info = Pallet::<T>::contract_info(&contract)?;
-		Pallet::<T>::cosmwasm_call(
-			self.shared,
-			sender,
-			contract,
-			info,
-			// Can't move funds in migration.
-			Default::default(),
-			|vm| cosmwasm_system_run::<MigrateInput, _>(vm, message, event_handler),
-		)
+		Pallet::<T>::do_continue_migrate(self, address.into_inner(), message, event_handler)
 	}
 
 	fn query_custom(
@@ -465,8 +408,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		key: Self::StorageKey,
 	) -> Result<Option<Self::StorageValue>, Self::Error> {
 		log::debug!(target: "runtime::contracts", "query_raw");
-		let info = Pallet::<T>::contract_info(address.as_ref())?;
-		Pallet::<T>::do_db_read_other_contract(self, &info.trie_id, &key)
+		Pallet::<T>::do_query_raw(self, address.into_inner(), &key)
 	}
 
 	fn transfer(&mut self, to: &Self::Address, funds: &[Coin]) -> Result<(), Self::Error> {
@@ -496,18 +438,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 
 	fn query_info(&mut self, address: Self::Address) -> Result<ContractInfoResponse, Self::Error> {
 		log::debug!(target: "runtime::contracts", "query_info");
-		// TODO: cache or at least check if its current contract and use `self.contract_info`
-		let info = Pallet::<T>::contract_info(address.as_ref())?;
-		let code_id = info.code_id;
-		let pinned = self.shared.cache.code.contains_key(&code_id);
-		Ok(ContractInfoResponse {
-			code_id,
-			creator: CosmwasmAccount::<T>::new(info.instantiator.clone()).into(),
-			admin: info.admin.map(|admin| CosmwasmAccount::<T>::new(admin).into()),
-			pinned,
-			// TODO(hussein-aitlahcen): IBC
-			ibc_port: None,
-		})
+		Pallet::<T>::do_query_info(self, address.into_inner())
 	}
 
 	fn db_read(
@@ -571,9 +502,39 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 	fn charge(&mut self, value: VmGas) -> Result<(), Self::Error> {
 		let gas_to_charge = match value {
 			VmGas::Instrumentation { metered } => metered as u64,
-			// TODO(hussein-aitlahcen): benchmarking required to compute _base_ gas for each
-			// operations.
+			VmGas::DbRead => T::WeightInfo::db_read(),
+			VmGas::DbWrite => T::WeightInfo::db_write(),
+			VmGas::DbRemove => T::WeightInfo::db_remove(),
+			VmGas::DbScan => T::WeightInfo::db_scan(),
+			VmGas::DbNext => T::WeightInfo::db_next(),
+			VmGas::Balance => T::WeightInfo::balance(),
+			VmGas::Secp256k1Verify => T::WeightInfo::secp256k1_verify(),
+			VmGas::Secp256k1RecoverPubkey => T::WeightInfo::secp256k1_recover_pubkey(),
+			VmGas::Ed25519Verify => T::WeightInfo::ed25519_verify(),
+			VmGas::Ed25519BatchVerify => T::WeightInfo::ed25519_batch_verify(),
+			VmGas::AddrValidate => T::WeightInfo::addr_validate(),
+			VmGas::AddrCanonicalize => T::WeightInfo::addr_canonicalize(),
+			VmGas::AddrHumanize => T::WeightInfo::addr_humanize(),
+			VmGas::GetContractMeta => T::WeightInfo::contract_meta(),
+			VmGas::Transfer { nb_of_coins } => T::WeightInfo::transfer(nb_of_coins),
+			VmGas::ContinueExecute { nb_of_coins } => T::WeightInfo::continue_execute(nb_of_coins),
+			VmGas::ContinueInstantiate { nb_of_coins } =>
+				T::WeightInfo::continue_instantiate(nb_of_coins),
+			VmGas::ContinueMigrate => T::WeightInfo::continue_migrate(),
+			VmGas::QueryContinuation => T::WeightInfo::query_continuation(),
+			VmGas::QueryRaw => T::WeightInfo::query_raw(),
+			VmGas::QueryInfo => T::WeightInfo::query_info(),
+			// VmGas::Debug is not charged
 			_ => 1_u64,
+			/*
+			-----------------
+			Unsupported operations
+			-----------------
+			VmGas::QueryCustom => todo!(),
+			VmGas::MessageCustom => todo!(),
+			VmGas::Burn => todo!(),
+			VmGas::AllBalance => todo!(),
+			*/
 		};
 		self.charge_raw(gas_to_charge)
 	}
