@@ -9,7 +9,8 @@
 		clippy::panic
 	)
 )]
-#![warn(clippy::unseparated_literal_suffix)]
+// TODO (vim): Remove indexing slicing when cu-2yyx1w9 is done
+#![warn(clippy::unseparated_literal_suffix, clippy::indexing_slicing)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(
 	bad_style,
@@ -31,7 +32,6 @@
 	trivial_numeric_casts,
 	unused_extern_crates
 )]
-#![allow(dead_code)] // TODO: remove when most of the work is completed.
 
 pub use pallet::*;
 
