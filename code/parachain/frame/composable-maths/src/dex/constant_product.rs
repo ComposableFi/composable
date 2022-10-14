@@ -229,6 +229,14 @@ fn decimal_from_per_thing<T: PerThing>(per_thing: T) -> Result<Decimal, Arithmet
 	numerator.safe_div(&denominator)
 }
 
+/// Computes the LP to mint on first deposit.
+///
+/// If `Ok`, returns a tuple containing `(lp_to_mint, fee)`.
+///
+/// Fees are currently always 0. Fees are normally charged to avoid fee-less swaps by adding and
+/// removing liquidity. With the initial deposit, these chances are so low that it is safe to
+/// process without a fee.
+///
 /// Paramaters:
 /// * `lp_token_details` - Vec of tuples containing `(token_deposit, token_balance, token_weight)`
 /// * `f` - Fee
@@ -236,18 +244,22 @@ fn decimal_from_per_thing<T: PerThing>(per_thing: T) -> Result<Decimal, Arithmet
 /// https://github.com/ComposableFi/composable/blob/main/rfcs/0008-pablo-lbp-cpp-restructure.md#42-liquidity-provider-token-lpt-math-updates
 /// Equation 6
 fn compute_first_deposit_lp_<T: PerThing>(
-	lp_token_details: Vec<(u128, u128, T)>,
+	pool_assets: Vec<(u128, u128, T)>,
 	_f: T,
 ) -> Result<(u128, u128), ConstantProductAmmError> {
-	let k: u128 = lp_token_details.len().try_into().map_err(|_| ArithmeticError::Overflow)?;
-	let product = lp_token_details
+	let k: u128 = pool_assets.len().try_into().map_err(|_| ArithmeticError::Overflow)?;
+	let product = pool_assets
 		.iter()
-		.try_fold(1, |product, (_d_i, b_i, _w_i)| product.safe_mul(b_i))?;
+		.try_fold(1, |product, (d_i, _b_i, _w_i)| product.safe_mul(d_i))?;
 
-	// REVIEW: How is fee applied here?
+	// NOTE: Zero fees on first deposit
 	Ok((k.safe_mul(&product)?, 0))
 }
 
+/// Computes the LP to mint on an existing deposit.
+///
+/// If `Ok`, returns a tuple containing `(lp_to_mint, fee)`.
+///
 /// Paramaters:
 /// * `p_supply` -
 /// * `d_k` - Deposit of token `k`
@@ -257,7 +269,7 @@ fn compute_first_deposit_lp_<T: PerThing>(
 ///
 /// https://github.com/ComposableFi/composable/blob/main/rfcs/0008-pablo-lbp-cpp-restructure.md#42-liquidity-provider-token-lpt-math-updates
 /// Equation 5
-fn compute_existing_deposit_lp_<T: PerThing>(
+fn compute_deposit_lp_<T: PerThing>(
 	p_supply: u128,
 	d_k: u128,
 	b_k: u128,
@@ -281,31 +293,4 @@ fn compute_existing_deposit_lp_<T: PerThing>(
 	let fee = d_k.safe_sub(&d_k_left_from_fee)?.to_u128().ok_or(ArithmeticError::Overflow)?;
 
 	Ok((issued, fee))
-}
-
-/// Compute lp to mint for a pool.
-///
-/// If `Ok`, returns a tuple containing (lp_to_mind, fee).
-/// `lp_token_details` must not be empty.
-///
-/// Paramaters:
-/// * `p_supply` - Existing supply of LPT tokens
-/// * `lp_token_details` - Vec of tuples containing `(token_deposit, token_balance, token_weight)`
-/// * `f` - Fee
-pub fn compute_deposit_lp_new<T: PerThing>(
-	p_supply: u128,
-	lp_token_details: Vec<(u128, u128, T)>,
-	f: T,
-) -> Result<(u128, u128), ConstantProductAmmError> {
-	ensure!(!lp_token_details.is_empty(), ConstantProductAmmError::InvalidTokensList);
-
-	let is_first_deposit = p_supply.is_zero();
-
-	if is_first_deposit {
-		compute_first_deposit_lp_(lp_token_details, f)
-	} else {
-		// REVIEW: Should this be done at the scale of `lp_token_details.len()`?
-		let token_k = lp_token_details.last().expect("List is not empty; QED");
-		compute_existing_deposit_lp_(p_supply, token_k.0, token_k.1, token_k.2, f)
-	}
 }
