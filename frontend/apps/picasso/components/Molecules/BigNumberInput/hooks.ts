@@ -2,7 +2,6 @@ import React from "react";
 import { BigNumber } from "bignumber.js";
 
 const FLOAT_NUMBER: RegExp = /^\d+(\.\d+)?$/;
-const NUMBERS_ONE_DOT: RegExp = /^\d+\.$/;
 
 type UseValidationType = {
   initialValue: BigNumber;
@@ -83,13 +82,8 @@ export function useValidation({
       setValid(true);
       setValue(bignr);
     } else {
-      if (eventValue.match(NUMBERS_ONE_DOT) || !eventValue.length) {
-        setStringValue(eventValue);
-        setValid(false);
-      } else {
-        setStringValue(eventValue);
-        setValid(false);
-      }
+      setStringValue(eventValue);
+      setValid(false);
     }
   };
 

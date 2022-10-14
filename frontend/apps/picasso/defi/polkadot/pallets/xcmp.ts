@@ -8,6 +8,7 @@ import { toChainIdUnit } from "shared";
 import { CurrencyId } from "defi-interfaces";
 import { XcmVersionedMultiLocation } from "@polkadot/types/lookup";
 import BigNumber from "bignumber.js";
+import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 
 export type TransferHandlerArgs = {
   api: ApiPromise;
@@ -276,6 +277,7 @@ export async function transferPicassoKarura({
         description: `Transaction hash: ${txHash}`,
         variant: "info",
         isCloseable: true,
+        url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
       });
     },
     (txHash) => {
@@ -283,6 +285,7 @@ export async function transferPicassoKarura({
         persist: true,
         variant: "success",
         isCloseable: true,
+        url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
       });
     },
     (err) => {
