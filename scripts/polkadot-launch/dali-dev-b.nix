@@ -1,10 +1,4 @@
-# definition of parachain
-# TODO: replace with zombienet
-# because it allows to specify more things and tests
-# more structured and portable and officially endorsed by parity
-# so with nix it is easier to build own (nix+curl+websocket)
-
-{ pkgs, polkadot-bin, composable-bin, composableParaId ? 2087 }:
+{ pkgs, polkadot-bin, composable-bin, composableParaId ? 2137 }:
 with pkgs;
 let builder = pkgs.callPackage ./network-builder.nix { };
 in {
@@ -12,8 +6,8 @@ in {
     relaychain = {
       bin = "${polkadot-bin}/bin/polkadot";
       chain = "rococo-local";
-      port = 30444;
-      wsPort = 9944;
+      port = 40444;
+      wsPort = 19944;
       count = 2;
       flags = [
         "--unsafe-ws-external"
@@ -25,8 +19,8 @@ in {
     };
     parachains = [{
       id = composableParaId;
-      port = 31200;
-      wsPort = 9988;
+      port = 41200;
+      wsPort = 19988;
       count = 3;
       chain = "dali-dev";
       bin = "${composable-bin}/bin/composable";

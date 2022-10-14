@@ -76,7 +76,8 @@
       mk-devnet = { pkgs, lib, writeTextFile, writeShellApplication
         , useGlobalChainSpec ? true, polkadot-launch, composable-node
         , polkadot-node, chain-spec, network-config-path ?
-          ./scripts/polkadot-launch/rococo-local-dali-dev.nix }:
+          ./scripts/polkadot-launch/rococo-local-dali-dev.nix
+        , binary-name ? chain-spec }:
         let
           original-config = (pkgs.callPackage network-config-path {
             polkadot-bin = polkadot-node;
@@ -93,7 +94,7 @@
             original-config;
 
           config = writeTextFile {
-            name = "devnet-${chain-spec}-config.json";
+            name = "devnet-${binary-name}-config.json";
             text = builtins.toJSON patched-config;
           };
         in {
@@ -102,7 +103,7 @@
             patched-config.parachains;
           relaychain-nodes = patched-config.relaychain.nodes;
           script = writeShellApplication {
-            name = "run-devnet-${chain-spec}";
+            name = "run-devnet-${binary-name}";
             text = ''
               # ISSUE: for some reason it does not cleans tmp and leads to block not produced
               export RUST_BACKTRACE="full"
@@ -476,17 +477,27 @@
                 '';
                 meta = { mainProgram = "hyperspace"; };
               });
-              config = pkgs.stdenv.lib.makeOverridable
-                (builtins.fromTOML (builtins.readFile ./config.toml));
+              rawConfig = (builtins.fromTOML
+                (builtins.readFile ./code/centauri/hyperspace/config.toml));
+
+              config = pkgs.lib.makeOverridable (result: { result = result; })
+                rawConfig;
+
+              default-config = writeTextFile {
+                name = "hyperspace.local.config.json";
+                text = "${builtins.toJSON (config.override
+                  (self: self // { chain_a = self.chain_a; })).result}";
+              };
 
               default = pkgs.writeShellApplication {
                 name = "default-hyperspace";
                 runtimeInputs = [ pkgs.coreutils pkgs.bash ];
                 text = ''
-                  echo ${config.result} > hyperspace.local.config.toml
+                  ${pkgs.yq}/bin/yq  . ${default-config} --toml-output > hyperspace.local.config.toml
+                  cat hyperspace.local.config.toml
                   ${
                     pkgs.lib.meta.getExe bin
-                  } relay --config hyperspace.local.config.toml 
+                  } relay --config hyperspace.local.config.toml
                 '';
               };
             };
@@ -708,6 +719,14 @@
               chain-spec = "dali-dev";
             }).script;
 
+            devnet-dali-b = (callPackage mk-devnet {
+              inherit pkgs;
+              inherit (packages) polkadot-launch composable-node polkadot-node;
+              network-config-path = ./scripts/polkadot-launch/dali-dev-b.nix;
+              chain-spec = "dali-dev";
+              binary-name = "dali-b";
+            }).script;
+
             # Dali Centauri devnet
             bridge-devnet-dali = (callPackage mk-devnet {
               inherit pkgs;
@@ -720,6 +739,8 @@
             }).script;
 
             hyperspace = hyperspace-template.bin;
+
+            hyperspace-template-default = hyperspace-template.default;
 
             # Picasso devnet
             devnet-picasso = (callPackage mk-devnet {
@@ -740,6 +761,27 @@
                 config = {
                   Entrypoint =
                     [ "${packages.devnet-dali}/bin/run-devnet-dali-dev" ];
+                  WorkingDir = "/home/polkadot-launch";
+                };
+                runAsRoot = ''
+                  mkdir -p /home/polkadot-launch /tmp
+                  chown 1000:1000 /home/polkadot-launch
+                  chmod 777 /tmp
+                '';
+              };
+
+            hyperspace-container =
+              trace "Composable Hyperspace relayer" dockerTools.buildImage {
+                name = "composable-hyperspace-container";
+                tag = "latest";
+                copyToRoot = pkgs.buildEnv {
+                  name = "image-root";
+                  paths = [ curl websocat ] ++ container-tools;
+                  pathsToLink = [ "/bin" ];
+                };
+                config = {
+                  Entrypoint =
+                    [ "${packages.devnet-dali-b}/bin/run-devnet-dali-b" ];
                   WorkingDir = "/home/polkadot-launch";
                 };
                 runAsRoot = ''
@@ -1184,6 +1226,11 @@
               inherit pkgs;
               inherit packages;
             };
+
+            bridge = import ./.nix/devnet-specs/bridge.nix {
+              inherit pkgs;
+              inherit packages;
+            };
           };
 
           apps = let
@@ -1192,6 +1239,9 @@
               devnet-specs.default;
             devnet-xcvm-program =
               pkgs.composable.mkDevnetProgram "devnet-xcvm" devnet-specs.xcvm;
+            devnet-bridge-program =
+              pkgs.composable.mkDevnetProgram "devnet-bridge"
+              devnet-specs.bridge;
           in rec {
             devnet = {
               type = "app";
@@ -1203,9 +1253,19 @@
               program = "${devnet-xcvm-program}/bin/devnet-xcvm";
             };
 
+            devnet-bridge = {
+              type = "app";
+              program = "${devnet-bridge-program}/bin/devnet-bridge";
+            };
+
             devnet-dali = {
               type = "app";
               program = "${packages.devnet-dali}/bin/run-devnet-dali-dev";
+            };
+
+            devnet-dali-b = {
+              type = "app";
+              program = "${packages.devnet-dali-b}/bin/run-devnet-dali-b";
             };
             devnet-picasso = {
               type = "app";
@@ -1255,11 +1315,10 @@
               program = "${packages.junod}/bin/junod";
             };
 
-            hyperspace =
-              trace "runs hyperspace with default local configuration" {
-                type = "app";
-                program = hyperspace-template.default;
-              };
+            hyperspace = {
+              type = "app";
+              program = pkgs.lib.meta.getExe hyperspace-template.default;
+            };
 
             # TODO: move list of chains out of here and do fold
             benchmarks-once-composable = flake-utils.lib.mkApp {
