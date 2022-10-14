@@ -51,11 +51,11 @@ Any remote currency bridged to our parachain is minted in an equal amount to wha
 Remote currency transferred into and out of the parachain is minted and burned in equal amounts.
 
 Remote tokens on our chain can be local or remote on other chains. 
-For example, ETH is remote on Acala and AUSD is local on Acala. Both are remote on this parachain as we consider them to both be from Acala. 
+For example, ETH is remote on Acala and AUSD is local on Acala. Both are remote on this parachain as we consider them to both be from Acala.
 
 In the local consensus, bridged tokens semantically are just protocol tokens with their associated risks.
 
-For details on registry mapping, check the [AssetsRegistry](../frame/assets-registry) pallet. 
+For details on registry mapping, check the [AssetsRegistry](../frame/assets-registry) pallet.
 
 ### Remote currencies equivalence
 
@@ -78,6 +78,8 @@ In this the case DEX (market) would react and skew the price of AETH to be highe
 More mild form of non equivalence would be because of network congestion.
 Imagine Acala transfer prices are several time more of Moonbeam. In this case  AETH will be less liquid than METH, so it price may be lower.
 
+See [other examples here](./xcvm_denominations_tokens.dot))
+
 ### Remote currency identifiers
 
 Any remote currency has a bidirectional map from and to local.
@@ -89,26 +91,19 @@ Remote currencies usually have their respective bridge identifiers attached in t
 
 You may find example in XCM and XCVM documentation.
 
-## Native currencies and gas fees
+## Currencies and gas fees
 
-Users pay fees in the runtime's native currency for the execution, allowing the runtime to earn and prevents spam and DDoS attacks.
-
-A runtime configuration allows mapping amount of execution which can be bought for amount of native currency.
-
-This parachain uses pre-calculated weights to estimate the hardware costs of execution. An amount of weight a native currency can buy is a non-linear dynamic function from currency amount to weight. As the usage of this chain increases towards maximum capacity, the price of a unit of weight increases as well. 
+See [BYOG](./byog.md) for details.
 
 Cross-chain interactions over bridges may involve metered networks which allow setting limits on execution price and calculating the possible number of execution resources in the runtime. For example, Ethereum.
 
-
-Within the protocols built on top of the parachain, there are "native" protocol currencies that are used for governance and revenue distribution, but _cannot_ be used to pay for execution.
+Within the protocols built on top of the parachain, there are "native" protocol currencies that are used for governance and revenue distribution, these may be used to pay gas fees if configured that way.
 
 ### Bridged gas fee (`bring your own gas`)
 
-Users who want to have assets on our chain can either be minted with some native currency governance or be allowed to pay for cross-chain transactions in some non-native currency.
+See [BYOG](./byog.md) for details.
 
-Currently, non-native currencies are mapped to native with some configurable ratio which in turn is mapped to a weight.
-
-Transactions issued by users are likely to swap some remote currencies into native on transfer, to enact the execution of local transactions. 
+Users who want to have assets on our chain can either be issued native currency by some on-chain protocol or be allowed to pay for cross-chain transactions in some non-native currency.
 
 ## Tokenomics
 

@@ -8,9 +8,15 @@ Such mechanisms are built into the runtime on Picasso and [other Dotsama paracha
 
 `On ramps` and [meta (gas less) transactions](https://docs.polygon.technology/docs/category/meta-transactions) handle such possibilities on other chains.
 
+## Context
+
+Users pay fees in the runtime's native currency for the execution, allowing the runtime to earn and prevents spam and DDoS attacks. BYOG extend payments to registered non native currencies.
+
+A runtime configuration allows mapping amount of execution which can be bought for amount of native currency.
+
 ## Current state
 
-Any cross-chain (XCMP) transactions can choose what assets to use to pay for the transaction.
+Any cross-chain XCMP transactions can choose which assets to use to pay for the transaction.
 
 Direct transaction can add header to pick up `payment` asset or accounts can configure default [payment asset](https://github.com/paritytech/substrate/discussions/12055).
 
@@ -22,13 +28,17 @@ Minting, burns, and airdrops are out of the scope of this feature.
 
 Fees are small now, but later we will have a way to show the exact fee for a transaction paid in any possible asset.
 
-## How much does my transaction cost?
+**Example**
+Currently, non-native currencies are mapped to native with some configurable ratio which in turn is mapped to a weight.
 
-When a transaction is executed, its `weight` is known and roughly equal to the computational resources it consumes.
+## How much does my transaction cost in Picasso?
+
+When a transaction is executed, its `weight` is known and roughly equals the computational resources it consumes. Computational resources are benchmarked and updated with each runtime upgrade.
 
 Weight is converted into an appropriate amount of PICA by the polynomial formula.
 
 The formula dynamically changes depending on the desired target load of the network.
+As the usage of this chain increases towards maximum capacity, the price of a unit of weight increases as well.
 
 From this point onwards we say that transactions are paid directly in PICA for simplicity.
 
@@ -67,6 +77,10 @@ Switching configuration is paid in a token to which configuration is switched. T
 If a user tried to pay in a currency that is not `payment currency`, it would be trapped in a binary blob.
 
 If the user overpaid for a transaction, the remaining funds go to the user's account on Picasso. The whole amount goes to the user account if the payment is too small.
+
+## IBC Specific
+
+Packet trying to pay in no payment currency will not be acknowledged.
 
 ## Fee calculator
 
