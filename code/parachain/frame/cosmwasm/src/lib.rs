@@ -373,7 +373,7 @@ pub mod pallet {
 		/// - `origin` the original dispatching the extrinsic.
 		/// - `code` the actual wasm code.
 		#[transactional]
-		#[pallet::weight(T::WeightInfo::upload(code.len()))]
+		#[pallet::weight(T::WeightInfo::upload(code.len() as u32))]
 		pub fn upload(origin: OriginFor<T>, code: ContractCodeOf<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			Self::do_upload(&who, code)?;
@@ -1128,8 +1128,8 @@ pub mod pallet {
 			})
 		}
 
-		pub(crate) fn do_running_contract_meta<'a>(
-			vm: &'a mut CosmwasmVM<T>,
+		pub(crate) fn do_running_contract_meta(
+			vm: &mut CosmwasmVM<T>,
 		) -> CosmwasmContractMeta<CosmwasmAccount<T>> {
 			CosmwasmContractMeta {
 				code_id: vm.contract_info.code_id,
@@ -1138,7 +1138,7 @@ pub mod pallet {
 			}
 		}
 
-		pub(crate) fn do_contract_meta<'a>(
+		pub(crate) fn do_contract_meta(
 			address: AccountIdOf<T>,
 		) -> Result<CosmwasmContractMeta<CosmwasmAccount<T>>, CosmwasmVMError<T>> {
 			let info = Pallet::<T>::contract_info(&address)?;
@@ -1362,8 +1362,8 @@ pub mod pallet {
 			)
 		}
 
-		pub(crate) fn do_query_info<'a>(
-			vm: &'a mut CosmwasmVM<T>,
+		pub(crate) fn do_query_info(
+			vm: &mut CosmwasmVM<T>,
 			address: AccountIdOf<T>,
 		) -> Result<ContractInfoResponse, CosmwasmVMError<T>> {
 			// TODO: cache or at least check if its current contract and use `self.contract_info`
@@ -1407,7 +1407,7 @@ pub mod pallet {
 			key: &[u8],
 		) -> Result<Option<Vec<u8>>, CosmwasmVMError<T>> {
 			let info = Pallet::<T>::contract_info(&address)?;
-			Pallet::<T>::do_db_read_other_contract(vm, &info.trie_id, &key)
+			Pallet::<T>::do_db_read_other_contract(vm, &info.trie_id, key)
 		}
 	}
 

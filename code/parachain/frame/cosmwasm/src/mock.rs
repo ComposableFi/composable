@@ -14,8 +14,8 @@ use primitives::currency::{CurrencyId, ValidateCurrencyId};
 use sp_core::H256;
 use sp_runtime::{
 	generic,
-	traits::{BlakeTwo256, Convert, IdentifyAccount, IdentityLookup, Verify},
-	AccountId32, DispatchError, MultiSignature,
+	traits::{BlakeTwo256, Convert, IdentityLookup},
+	AccountId32, DispatchError,
 };
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
