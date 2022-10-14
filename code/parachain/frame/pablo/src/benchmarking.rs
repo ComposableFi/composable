@@ -19,7 +19,7 @@ fn amm_init_config<T: Config>(
 	let mut assets_weights = BoundedBTreeMap::new();
 	assets_weights.try_insert(pair.base, base_weight).expect("Should work");
 	assets_weights
-		.try_insert(pair.base, base_weight.left_from_one())
+		.try_insert(pair.quote, base_weight.left_from_one())
 		.expect("Should work");
 	PoolInitConfiguration::DualAssetConstantProduct { owner, fee, assets_weights }
 }
