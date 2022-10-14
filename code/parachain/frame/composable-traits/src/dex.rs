@@ -7,9 +7,9 @@ use frame_support::{
 use scale_info::TypeInfo;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
+
 use sp_runtime::{BoundedBTreeMap, DispatchError, Permill};
-use sp_std::{collections::btree_map::BTreeMap, ops::Mul, vec::Vec};
-use std::fmt::Debug;
+use sp_std::{collections::btree_map::BTreeMap, fmt::Debug, ops::Mul, vec::Vec};
 
 /// Trait for automated market maker.
 pub trait Amm {
