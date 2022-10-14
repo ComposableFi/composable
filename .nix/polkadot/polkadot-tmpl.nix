@@ -1,20 +1,13 @@
-{ pkgs, rust-nightly }:
+{ pkgs, rust-nightly, name, version, repo, owner, rev, hash, cargoSha256 }:
 with pkgs;
 rustPlatform.buildRustPackage rec {
   # HACK: break the nix sandbox so we can build the runtimes. This
   # requires Nix to have `sandbox = relaxed` in its config.
   # We don't really care because polkadot is only used for local devnet.
-  name = "polkadot-v${version}";
-  version = "0.9.27";
+  inherit name version cargoSha256;
 
-  src = fetchFromGitHub {
-    repo = "polkadot";
-    owner = "paritytech";
-    rev = "v${version}";
-    hash = "sha256-LEz3OrVgdFTCnVwzU8C6GeEougaOl2qo7jS9qIdMqAM=";
-  };
+  src = fetchFromGitHub { inherit repo owner rev hash; };
 
-  cargoSha256 = "sha256-6y+WK2k1rhqMxMjEJhzJ26WDMKZjXQ+q3ca2hbbeLvA=";
   meta = { mainProgram = "polkadot"; };
 
   # substrate-attrs-node-with-attrs
