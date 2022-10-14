@@ -5362,6 +5362,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "ics10-grandpa-cw"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-schema",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "ics11-beefy"
 version = "0.1.0"
 dependencies = [
