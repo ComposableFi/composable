@@ -8,7 +8,72 @@ mod constant_product {
 	use super::*;
 
 	/// Tests related to the function `compute_first_deposit_lp`
-	mod compute_first_deposit_lp {}
+	mod compute_first_deposit_lp {
+		use super::*;
+
+		#[derive(Debug, Eq, PartialEq, Clone, Copy)]
+		struct Inputs {
+			number_of_assets: u32,
+			f: Permill,
+		}
+
+		prop_compose! {
+			fn first_deposit_range_inputs()
+			(
+				number_of_assets in 1..64_u32,
+			) -> Inputs {
+				Inputs {
+					number_of_assets,
+					f: Permill::zero(),
+				}
+			}
+		}
+
+		fn generate_pool_assets(number_of_assets: u32) -> Vec<(u128, u128, Permill)> {
+			(1..number_of_assets)
+				.map(|_| (100_000_000_000_000, 0, Permill::zero()))
+				.collect()
+		}
+
+		#[test]
+		fn should_return_d_k_if_one_token() {
+			let pool_assets = vec![(128, 0, Permill::zero())];
+			let fee = Permill::zero();
+
+			let res = compute_first_deposit_lp_(pool_assets, fee).expect("Input is valid; QED");
+
+			assert_eq!(128, res.0);
+		}
+
+		#[test]
+		fn should_return_product_time_k_for_multiple_tokens() {
+			let pool_assets = vec![
+				(128, 0, Permill::zero()),
+				(256, 0, Permill::zero()),
+				(512, 0, Permill::zero()),
+				(1024, 0, Permill::zero()),
+			];
+			let fee = Permill::zero();
+
+			let res = compute_first_deposit_lp_(pool_assets, fee).expect("Input is valid; QED");
+
+			// Is equal to 4 * 2^7 * 2^8 * 2^9 * 2^10
+			assert_eq!(68_719_476_736, res.0);
+		}
+
+		proptest! {
+			#![proptest_config(ProptestConfig::with_cases(1))]
+
+			#[test]
+			fn no_unexpected_errors_in_range(input in first_deposit_range_inputs()) {
+				let pool_assets = generate_pool_assets(dbg!(input.number_of_assets));
+
+				let res = compute_first_deposit_lp_(pool_assets, input.f);
+
+				prop_assert!(res.is_ok());
+			}
+		}
+	}
 
 	/// Tests related to the function `compute_deposit_lp`
 	mod compute_deposit_lp {}

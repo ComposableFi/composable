@@ -125,12 +125,8 @@ pub fn compute_out_given_in_new<T: PerThing>(
 
 	let weight_ratio = w_i.safe_div(&w_o)?;
 	// NOTE(connor): Use if to prevent pointless conversions if `f` is zero
-	let left_from_fee = if f.is_zero() {
-		Decimal::ONE
-	} else {
-		Decimal::from(f.left_from_one().deconstruct().into())
-			.safe_div(&Decimal::from(T::one().deconstruct().into()))?
-	};
+	let left_from_fee =
+		if f.is_zero() { Decimal::ONE } else { decimal_from_per_thing(f.left_from_one())? };
 	let a_sent_fee_cut = a_sent.safe_mul(&left_from_fee)?;
 
 	let base = b_i.safe_div(&b_i.safe_add(&a_sent_fee_cut)?)?;
@@ -251,12 +247,8 @@ pub fn compute_in_given_out_new<T: PerThing>(
 
 	let weight_ratio = w_o.safe_div(&w_i)?;
 	// NOTE(connor): Use if to prevent pointless conversions if `f` is zero
-	let left_from_fee = if f.is_zero() {
-		Decimal::ONE
-	} else {
-		Decimal::from(f.left_from_one().deconstruct().into())
-			.safe_div(&Decimal::from(T::one().deconstruct().into()))?
-	};
+	let left_from_fee =
+		if f.is_zero() { Decimal::ONE } else { decimal_from_per_thing(f.left_from_one())? };
 	let b_i_over_fee = b_i.safe_div(&left_from_fee)?;
 	let fee = Decimal::ONE.safe_sub(&left_from_fee)?;
 
@@ -382,7 +374,9 @@ fn decimal_from_per_thing<T: PerThing>(per_thing: T) -> Result<Decimal, Arithmet
 ///
 /// https://github.com/ComposableFi/composable/blob/main/rfcs/0008-pablo-lbp-cpp-restructure.md#42-liquidity-provider-token-lpt-math-updates
 /// Equation 6
-fn compute_first_deposit_lp_<T: PerThing>(
+pub fn compute_first_deposit_lp_<T: PerThing>(
+	// REVIEW: Make this a `Vec<u128>` (deposit only) or keep it extensible if we change our
+	// initial calculations later?
 	pool_assets: Vec<(u128, u128, T)>,
 	_f: T,
 ) -> Result<(u128, u128), ConstantProductAmmError> {
@@ -400,7 +394,7 @@ fn compute_first_deposit_lp_<T: PerThing>(
 /// If `Ok`, returns a tuple containing `(lp_to_mint, fee)`.
 ///
 /// # Parameters
-/// * `p_supply` -
+/// * `p_supply` - Existing supply of LPT tokens
 /// * `d_k` - Deposit of token `k`
 /// * `b_k` - Balance of token `k`
 /// * `w_k` - Weight of token `k`
@@ -408,7 +402,7 @@ fn compute_first_deposit_lp_<T: PerThing>(
 ///
 /// https://github.com/ComposableFi/composable/blob/main/rfcs/0008-pablo-lbp-cpp-restructure.md#42-liquidity-provider-token-lpt-math-updates
 /// Equation 5
-fn compute_deposit_lp_<T: PerThing>(
+pub fn compute_deposit_lp_<T: PerThing>(
 	p_supply: u128,
 	d_k: u128,
 	b_k: u128,
