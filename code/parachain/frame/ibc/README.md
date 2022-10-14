@@ -8,8 +8,8 @@ Pallet IBC is a thin wrapper around [`ibc-rs`](/code/centauri/ibc) that satisfie
 
 ### Dispatchable functions
 
-- `deliver` - Receives a batch of ibc messages and processes them
-- `transfer` - This initiates an ics20 token transfer from the caller to an account on a connected chain via the ICS20 application
+- `deliver` - Receives a batch of ibc transactions and executes them in the same order as they were sent.
+- `transfer` - This initiates an ics20 token transfer from the caller to an account on a connected chain via the ICS20 protocol
 - `set_params` - Sets parameters that determine whether token transfer or receipt is allowed in ICS20
 - `upgrade_client` - Sets the new consensus state and client state for client upgrades to be executed on connected chains
 
@@ -18,7 +18,7 @@ Pallet IBC is a thin wrapper around [`ibc-rs`](/code/centauri/ibc) that satisfie
 Implementing the ibc config trait for a substrate runtime
 ```rust
 parameter_types! {
-	pub const ExpectedBlockTime: u64 = 6000;
+	pub const ExpectedBlockTime: u64 = 12000;
 	pub const RelayChainId: light_client_commomn::RelayChain = light_client_commomn::RelayChain::Rococo;
 }
 
@@ -599,10 +599,10 @@ impl ibc_runtime_api::IbcRuntimeApi<Block> for Runtime {
 
 - [x] ICS02 - Light client implementations  
    **Light clients supported**
-  - [x] Beefy Light Client
-  - [x] Grandpa Light Client
-  - [x] Near Light Client
-  - [x] Tendermint light client
+  - [x] ICS07 - Tendermint Light Client
+  - [x] ICS10 - Grandpa Light Client
+  - [x] ICS11 - Beefy Light Client
+  - [x] ICS13 - Near Light Client
   - [ ] Ethereum Light Client
 - [x] ICS03 - Connections  
 - [x] ICS04 - Channels and Ports  
