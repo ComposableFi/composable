@@ -15,6 +15,7 @@ let
           instanceType = "n2-standard-8";
           rootDiskSize = 500;
           tags = [ "http" "https" ];
+          ipAddress = "persistent-devnet-ip";
         };
       };
       nix = {
