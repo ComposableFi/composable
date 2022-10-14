@@ -117,7 +117,6 @@
           "${gatewayContainerName}" = mkComposableContainer
             (import ../services/subsquid-substrate-gateway.nix {
               database = squid-archive-db;
-              port = gatewayPort;
             });
 
           # NOTE, this one currently seems broken. but it is an optional service anyways.
@@ -128,7 +127,6 @@
 
           "${subsquidGraphqlContainerName}" = mkComposableContainer
             (import ../services/subsquid-graphql.nix {
-              inherit pkgs;
               database = squid-db;
               graphqlPort = squidGraphqlPort;
             });

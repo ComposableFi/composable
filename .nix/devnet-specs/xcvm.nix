@@ -13,7 +13,6 @@
       hasuraGraphqlPort = 8080;
       relaychainPort = 9944;
       parachainPort = 9988;
-      subsquidParachainIndexerPort = 3000;
       subsquidIndexerGateway = 8081;
       subsquidIndexerStatusService = 60291;
       junoRpcPort = 26657;
@@ -220,7 +219,6 @@
               redis = redis-container-name;
               parachain = dali-container-name;
               inherit parachainPort;
-              parachainIndexerPort = subsquidParachainIndexerPort;
             });
           "${subsquid-indexer-gateway-container-name}" = mk-composable-container
             (import ../services/subsquid-indexer-gateway.nix {

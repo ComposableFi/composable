@@ -1,11 +1,11 @@
-{ nixpkgs, devnet-dali, devnet-picasso, book, gce-input, frontend, rev }:
+{ nixpkgs, devnet-dali, devnet-picasso, book, gce-input, rev }:
 let
   region = "europe-central2-c";
   persistent-machine = let
     domain = "persistent.devnets.composablefinance.ninja";
     machine-name = "composable-persistent-devnet";
   in {
-    "${machine-name}" = args@{ pkgs, resources, ... }: {
+    "${machine-name}" = { pkgs, resources, ... }: {
       deployment = {
         targetEnv = "gce";
         gce = gce-input // {

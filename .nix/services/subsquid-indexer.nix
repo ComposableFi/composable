@@ -1,4 +1,4 @@
-{ redis, database, parachain, parachainPort, parachainIndexerPort }: {
+{ redis, database, parachain, parachainPort }: {
   service = {
     name = "hydra-indexer";
     image = "subsquid/hydra-indexer:5";
