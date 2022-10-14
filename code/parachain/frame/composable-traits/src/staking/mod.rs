@@ -111,9 +111,6 @@ pub struct RewardPool<
 > {
 	pub owner: AccountId,
 
-	/// The staked asset id of the reward pool.
-	pub asset_id: AssetId,
-
 	/// rewards accumulated
 	pub rewards: BoundedBTreeMap<AssetId, Reward<Balance>, MaxRewards>,
 
@@ -209,14 +206,10 @@ pub enum RewardPoolConfiguration<
 #[scale_info(skip_type_params(MaxReductions))]
 pub struct Stake<
 	AssetId: Debug + PartialEq + Eq + Clone,
-	ItemId: Debug + PartialEq + Eq + Clone,
 	RewardPoolId: Debug + PartialEq + Eq + Clone,
 	Balance: Debug + PartialEq + Eq + Clone,
 	MaxReductions: Get<u32>,
 > {
-	/// The ItemID is used in conjunction with the fNFT collection ID to identify the stake.
-	pub fnft_instance_id: ItemId,
-
 	/// Reward Pool ID from which pool to allocate rewards for this
 	pub reward_pool_id: RewardPoolId,
 
