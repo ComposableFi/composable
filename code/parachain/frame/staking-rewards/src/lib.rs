@@ -414,7 +414,6 @@ pub mod pallet {
 	/// Abstraction over Stake type
 	pub(crate) type StakeOf<T> = Stake<
 		AssetIdOf<T>,
-		FinancialNftInstanceIdOf<T>,
 		AssetIdOf<T>, // we use AssetId as the reward pool id
 		BalanceOf<T>,
 		<T as Config>::MaxRewardConfigsPerPool,
@@ -486,7 +485,6 @@ pub mod pallet {
 		// TODO (vim): Review these with product
 		let staking_pool: RewardPoolOf<T> = RewardPool {
 			owner: owner.clone(),
-			asset_id: staked_asset_id,
 			rewards: Default::default(),
 			claimed_shares: T::Balance::zero(),
 			start_block: T::BlockNumber::zero(),
@@ -762,7 +760,6 @@ pub mod pallet {
 						pool_asset,
 						RewardPool {
 							owner: owner.clone(),
-							asset_id: pool_asset,
 							rewards,
 							claimed_shares: T::Balance::zero(),
 							start_block,
@@ -841,7 +838,7 @@ pub mod pallet {
 
 			ensure!(
 				matches!(
-					T::Assets::can_withdraw(rewards_pool.asset_id, who, amount),
+					T::Assets::can_withdraw(*pool_id, who, amount),
 					WithdrawConsequence::Success
 				),
 				Error::<T>::NotEnoughAssets
@@ -876,11 +873,10 @@ pub mod pallet {
 					// contracts of existing stakers.
 					unlock_penalty: rewards_pool.lock.unlock_penalty,
 				},
-				fnft_instance_id,
 			};
 
 			// Move staked funds into fNFT asset account & lock the assets
-			Self::transfer_stake(who, amount, rewards_pool.asset_id, &fnft_account, keep_alive)?;
+			Self::transfer_stake(who, amount, *pool_id, &fnft_account, keep_alive)?;
 			Self::mint_shares(rewards_pool.share_asset_id, awarded_shares, &fnft_account)?;
 
 			// Mint the fNFT
@@ -919,7 +915,7 @@ pub mod pallet {
 
 					ensure!(
 						matches!(
-							T::Assets::can_withdraw(rewards_pool.asset_id, who, amount),
+							T::Assets::can_withdraw(stake.reward_pool_id, who, amount),
 							WithdrawConsequence::Success
 						),
 						Error::<T>::NotEnoughAssets
@@ -974,7 +970,7 @@ pub mod pallet {
 					Self::transfer_stake(
 						who,
 						amount,
-						rewards_pool.asset_id,
+						stake.reward_pool_id,
 						&fnft_asset_account,
 						keep_alive,
 					)?;
@@ -1019,9 +1015,16 @@ pub mod pallet {
 					let rewards_pool =
 						rewards_pool.as_mut().ok_or(Error::<T>::RewardsPoolNotFound)?;
 
-					Self::collect_rewards(rewards_pool, &mut stake, who, is_early_unlock)?;
+					Self::collect_rewards(
+						stake.reward_pool_id,
+						rewards_pool,
+						fnft_instance_id,
+						&mut stake,
+						who,
+						is_early_unlock,
+					)?;
 
-					Ok::<_, DispatchError>((rewards_pool.asset_id, rewards_pool.share_asset_id))
+					Ok::<_, DispatchError>((stake.reward_pool_id, rewards_pool.share_asset_id))
 				})?;
 
 			// REVIEW(benluelo): Make this logic a method on Stake
@@ -1180,7 +1183,6 @@ pub mod pallet {
 							reductions: new_reductions,
 							reward_pool_id: existing_position.reward_pool_id,
 							lock: existing_position.lock,
-							fnft_instance_id: new_fnft_instance_id,
 						},
 					))
 				},
@@ -1203,7 +1205,9 @@ pub mod pallet {
 						rewards_pool.as_mut().ok_or(Error::<T>::RewardsPoolNotFound)?;
 
 					Self::collect_rewards(
+						stake.reward_pool_id,
 						rewards_pool,
+						fnft_instance_id,
 						stake,
 						who,
 						false, // claims aren't penalized
@@ -1312,7 +1316,9 @@ pub mod pallet {
 		// smaller functions that can then be used in both claim and unstake.
 		// NOTE: Low priority, this is currently working, just not optimal
 		pub(crate) fn collect_rewards(
+			pool_id: T::AssetId,
 			rewards_pool: &mut RewardPoolOf<T>,
+			fnft_instance_id: &T::FinancialNftInstanceId,
 			stake: &mut StakeOf<T>,
 			owner: &T::AccountId,
 			penalize_for_early_unlock: bool,
@@ -1330,8 +1336,8 @@ pub mod pallet {
 
 					Self::deposit_event(Event::<T>::UnstakeRewardSlashed {
 						owner: owner.clone(),
-						pool_id: rewards_pool.asset_id,
-						fnft_instance_id: stake.fnft_instance_id,
+						pool_id,
+						fnft_instance_id: *fnft_instance_id,
 						reward_asset_id: *reward_asset_id,
 						amount_slashed,
 					});
