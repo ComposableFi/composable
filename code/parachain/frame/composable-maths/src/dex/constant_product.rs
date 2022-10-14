@@ -376,8 +376,8 @@ fn decimal_from_per_thing<T: PerThing>(per_thing: T) -> Result<Decimal, Arithmet
 /// removing liquidity. With the initial deposit, these chances are so low that it is safe to
 /// process without a fee.
 ///
-/// Paramaters:
-/// * `lp_token_details` - Vec of tuples containing `(token_deposit, token_balance, token_weight)`
+/// # Parameters
+/// * `pool_assets` - Vec of tuples containing `(token_deposit, token_balance, token_weight)`
 /// * `f` - Fee
 ///
 /// https://github.com/ComposableFi/composable/blob/main/rfcs/0008-pablo-lbp-cpp-restructure.md#42-liquidity-provider-token-lpt-math-updates
@@ -399,7 +399,7 @@ fn compute_first_deposit_lp_<T: PerThing>(
 ///
 /// If `Ok`, returns a tuple containing `(lp_to_mint, fee)`.
 ///
-/// Paramaters:
+/// # Parameters
 /// * `p_supply` -
 /// * `d_k` - Deposit of token `k`
 /// * `b_k` - Balance of token `k`
