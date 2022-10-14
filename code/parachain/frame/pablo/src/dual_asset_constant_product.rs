@@ -16,6 +16,7 @@ use sp_runtime::{
 	traits::{Convert, One, Zero},
 	BoundedBTreeMap, Permill,
 };
+use sp_std::vec::Vec;
 
 // Balancer V1 Constant Product Pool
 pub(crate) struct DualAssetConstantProduct<T>(PhantomData<T>);
@@ -72,7 +73,8 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		let amount = T::Convert::convert(in_asset_amount);
 		let pool_assets = Self::get_pool_balances(pool, pool_account);
 		// TODO (vim): We have no way of knowing which amount is for which asset (fixed in a later
-		//  stage). For now we assume the pool defined order
+		//  stage). For now we assume the pool defined order which is wrong as the order is based on
+		// Ord
 		let base_asset = pool_assets[0];
 		let quote_asset = pool_assets[1];
 		ensure!(
