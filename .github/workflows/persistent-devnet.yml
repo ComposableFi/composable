@@ -1,0 +1,108 @@
+name: Persistent Devnet
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Release tag, branch name or any revision."
+        required: true
+        type: string
+
+env:
+  NIX_NIXPKGS_CHANNEL: https://nixos.org/channels/nixpkgs-22.05-darwin
+  CACHIX_COMPOSABLE: composable-community
+  CACHIX_COMPRESSION_LEVEL: 3
+  NIXOPS_STATE_URL: gs://composable-state
+  NIXOPS_STATE_FILE: persistent.deployment.nixops
+
+jobs:
+  cache-persistent-devnet:
+    name: "Cache Persistent Devnet"
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    concurrency:
+       group: cache-devnet-persistent
+       cancel-in-progress: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - run: |
+        echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+        echo "sandbox = relaxed" >> /etc/nix/nix.conf
+        echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+    - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+      with:
+        skipPush: true
+        installCommand: |
+          nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+          nix-channel --update
+          nix-env -iA nixpkgs.cachix
+        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        name: ${{  env.CACHIX_COMPOSABLE }}
+    - name: "Build & Upload"
+      run: |
+        cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#devnet-persistent-program --no-update-lock-file --show-trace -L
+
+  deploy-persistent-devnet:
+    needs: cache-persistent-devnet
+    name: "Deploy Persistent Devnet"
+    runs-on: ubuntu-latest
+    concurrency:
+      group: nix-deploy-devnet-persistent
+      cancel-in-progress: false
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        ref: ${{ inputs.revision }}
+        fetch-depth: 0
+    - uses: cachix/install-nix-action@v17
+      with:
+        extra_nix_config: |
+          sandbox = relaxed
+          narinfo-cache-negative-ttl = 0
+    - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+      with:
+        skipPush: true
+        installCommand: |
+          nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+          nix-channel --update
+          nix-env -iA nixpkgs.cachix
+        authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+        name: ${{  env.CACHIX_COMPOSABLE }}
+    - uses: google-github-actions/setup-gcloud@v0.6.0
+      with:
+        service_account_key: ${{ secrets.GCP_CREDENTIALS }}
+        export_default_credentials: true
+        credentials_file_path: ${{ runner.temp }}/credentials
+    - name: Install NixOps
+      run: |
+        nix-env -iA nixpkgs.nixopsUnstable
+    - name: Load NixOps State
+      run: |
+        if gsutil -q stat $NIXOPS_STATE_URL/$NIXOPS_STATE_FILE;
+        then
+          gsutil cp $NIXOPS_STATE_URL/$NIXOPS_STATE_FILE $NIXOPS_STATE
+        else
+          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nixops -- create --deployment devnet-gce --show-trace --option narinfo-cache-negative-ttl 0
+        fi
+      env:
+        NIXOPS_STATE: ${{ runner.temp }}/${{ env.NIXOPS_STATE_FILE }}
+    - name: Deploy
+      run: |
+        # For the love of God can anyone tell me why github runners are not stateless.
+        nixops check --include composable-persistent-devnet
+        nixops deploy --allow-recreate --confirm --deployment devnet-gce --debug --show-trace --option narinfo-cache-negative-ttl 0 --include composable-persistent-devnet
+      env:
+        NIXOPS_STATE: ${{ runner.temp }}/${{ env.NIXOPS_STATE_FILE }}
+    - name: Save NixOps State
+      if: always()
+      run: |
+        gsutil cp $NIXOPS_STATE $NIXOPS_STATE_URL/$NIXOPS_STATE_FILE
+      env:
+        NIXOPS_STATE: ${{ runner.temp }}/${{ env.NIXOPS_STATE_FILE }}

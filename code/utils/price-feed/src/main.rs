@@ -17,8 +17,8 @@ use crate::{
 	backend::{Backend, FeedNotificationAction},
 	cache::ThreadSafePriceCache,
 	feed::{
-		binance::BinanceFeed, composable::ComposableFeed, Exponent, FeedHandle, FeedIdentifier,
-		FeedNotification, FeedStream, TimeStampedPrice,
+		binance::BinanceFeed, composable::ComposableFeed, Exponent, FeedIdentifier,
+		FeedNotification, TimeStampedPrice,
 	},
 	frontend::Frontend,
 	opts::Opts,
@@ -66,7 +66,11 @@ async fn main() {
 		Asset::from_str(&opts.quote_asset).expect("invalid quote asset"),
 	)
 	.await
-	.expect("unable to start binance feed");
+	.map_err(|e| {
+		log::error!("{:?}", e);
+		std::process::exit(1);
+	})
+	.unwrap();
 
 	let composable = ComposableFeed::start(
 		feed_shutdown_receiver,
@@ -74,7 +78,11 @@ async fn main() {
 		&[(Asset::PICA, Asset::USDC)].into_iter().collect(),
 	)
 	.await
-	.expect("unable to start composable feed");
+	.map_err(|e| {
+		log::error!("{:?}", e);
+		std::process::exit(1);
+	})
+	.unwrap();
 
 	/* NOTE(hussein-aitlahcen):
 		 Introducing a new feed is a matter of merge it with the existing ones.
@@ -90,7 +98,11 @@ async fn main() {
 	};
 
 	let backend_shutdown_trigger: Fuse<SignalsInfo> = Signals::new(&[SIGTERM, SIGINT, SIGQUIT])
-		.expect("could not create signals stream")
+		.map_err(|e| {
+			log::error!("{:?}", e);
+			std::process::exit(1);
+		})
+		.unwrap()
 		.fuse();
 
 	let backend = Backend::new::<
@@ -113,10 +125,8 @@ async fn main() {
 
 	backend.shutdown_handle.await.expect("oops, something went wrong");
 
-	// backend_shutdown_trigger.close
-
 	log::info!("backend terminated, notifying feeds of termination");
-	keep_running.store(false, Ordering::Relaxed);
+	keep_running.store(false, Ordering::SeqCst);
 
 	feed_shutdown_sender.send(true).unwrap();
 

@@ -1,4 +1,4 @@
-{ buildGoModule, rustPlatform, fetchFromGitHub, patchelf, system, lib }:
+{ buildGoModule, fetchFromGitHub }:
 buildGoModule {
   name = "gex";
   doCheck = false;

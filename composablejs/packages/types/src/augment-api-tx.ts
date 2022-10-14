@@ -158,6 +158,19 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       [key: string]: SubmittableExtrinsicFunction<ApiType>;
     };
+    assetTxPayment: {
+      /**
+       * Sets or resets payment asset.
+       * 
+       * If `asset_id` is `None`, then native asset is used.
+       * Else new asset is configured and ED is on hold.
+       **/
+      setPaymentAsset: AugmentedSubmittable<(payer: AccountId32 | string | Uint8Array, assetId: Option<u128> | null | Uint8Array | u128 | AnyNumber) => SubmittableExtrinsic<ApiType>, [AccountId32, Option<u128>]>;
+      /**
+       * Generic tx
+       **/
+      [key: string]: SubmittableExtrinsicFunction<ApiType>;
+    };
     authorship: {
       /**
        * Provide a set of uncles.
@@ -272,7 +285,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * parameter.
        * 
        * Emits a `NewBond`.
-       * Possibily Emits a `OfferCompleted`.
+       * Possibly Emits a `OfferCompleted`.
        **/
       bond: AugmentedSubmittable<(offerId: u128 | AnyNumber | Uint8Array, nbOfBonds: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u128, bool]>;
       /**
@@ -368,7 +381,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * Execute a previously instantiated contract.
        * 
        * * Emits an `Executed` event.
-       * * Possibily emit `Emitted` events.
+       * * Possibly emit `Emitted` events.
        * 
        * Arguments
        * 
@@ -385,7 +398,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * 
        * * Emits an `Instantiated` event on success.
        * * Emits an `Executed` event.
-       * * Possibily emit `Emitted` events.
+       * * Possibly emit `Emitted` events.
        * 
        * Arguments
        * 
@@ -644,20 +657,26 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       claim: AugmentedSubmittable<() => SubmittableExtrinsic<ApiType>, []>;
       /**
-       * Initialize the pallet at the current transaction block.
+       * Initialize the pallet at the current timestamp.
        **/
       initialize: AugmentedSubmittable<() => SubmittableExtrinsic<ApiType>, []>;
       /**
-       * Initialize the pallet at the given transaction block.
+       * Initialize the pallet at the given timestamp.
        **/
       initializeAt: AugmentedSubmittable<(at: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u64]>;
       /**
        * Populate pallet by adding more rewards.
-       * Can be called multiple times. If an remote account already has a reward, it will be
-       * replaced by the new reward value.
+       * 
+       * Each index in the rewards vector should contain: `remote_account`, `reward_account`,
+       * `vesting_period`.
+       * 
+       * Can be called multiple times. If an remote account
+       * already has a reward, it will be replaced by the new reward value.
+       * 
        * Can only be called before `initialize`.
        **/
       populate: AugmentedSubmittable<(rewards: Vec<ITuple<[PalletCrowdloanRewardsModelsRemoteAccount, u128, u64]>> | ([PalletCrowdloanRewardsModelsRemoteAccount | { RelayChain: any } | { Ethereum: any } | string | Uint8Array, u128 | AnyNumber | Uint8Array, u64 | AnyNumber | Uint8Array])[]) => SubmittableExtrinsic<ApiType>, [Vec<ITuple<[PalletCrowdloanRewardsModelsRemoteAccount, u128, u64]>>]>;
+      unlockRewardsFor: AugmentedSubmittable<(rewardAccounts: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [Vec<AccountId32>]>;
       /**
        * Generic tx
        **/
@@ -1529,7 +1548,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * Create a new lending market.
        * - `origin` : Sender of this extrinsic. Manager for new market to be created. Can pause
        * borrow operations.
-       * - `input`   : Borrow & deposits of assets, persentages.
+       * - `input`   : Borrow & deposits of assets, percentages.
        * 
        * `origin` irreversibly pays `T::OracleMarketCreationStake`.
        **/
@@ -1555,7 +1574,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * # Parameters
        * 
        * - `origin` : Sender of this extrinsic. (Also the user who repays beneficiary's borrow.)
-       * - `market_id` : [`MarketIndex`] of the market being repaid.
+       * - `market_id` : [`MarketId`] of the market being repaid.
        * - `beneficiary` : [`AccountId`] of the account who is in debt to (has borrowed assets
        * from) the market. This can be same or different from the `origin`, allowing one
        * account to pay off another's debts.
@@ -1579,7 +1598,7 @@ declare module '@polkadot/api-base/types/submittable' {
       [key: string]: SubmittableExtrinsicFunction<ApiType>;
     };
     liquidations: {
-      addLiquidationStrategy: AugmentedSubmittable<(configuraiton: PalletLiquidationsLiquidationStrategyConfiguration | { DutchAuction: any } | { Pablo: any } | { Xcm: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [PalletLiquidationsLiquidationStrategyConfiguration]>;
+      addLiquidationStrategy: AugmentedSubmittable<(configuration: PalletLiquidationsLiquidationStrategyConfiguration | { DutchAuction: any } | { Pablo: any } | { Xcm: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [PalletLiquidationsLiquidationStrategyConfiguration]>;
       sell: AugmentedSubmittable<(order: ComposableTraitsDefiSellCurrencyId | { pair?: any; take?: any } | string | Uint8Array, configuration: Vec<u32> | (u32 | AnyNumber | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [ComposableTraitsDefiSellCurrencyId, Vec<u32>]>;
       /**
        * Generic tx
@@ -1602,7 +1621,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * - Amount must be equal or lower than what the user has locked
        * 
        * # Note
-       * - Reclaim period is not reset if not all the funds are moved; menaing that the clock
+       * - Reclaim period is not reset if not all the funds are moved; meaning that the clock
        * remains ticking for the relayer to pick up the rest of the transaction.
        **/
       acceptTransfer: AugmentedSubmittable<(from: AccountId32 | string | Uint8Array, networkId: u32 | AnyNumber | Uint8Array, remoteAssetId: CommonMosaicRemoteAssetId | { EthereumTokenAddress: any } | string | Uint8Array, amount: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [AccountId32, u32, CommonMosaicRemoteAssetId, u128]>;
@@ -1659,7 +1678,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * 
        * This can only be called by the [`ControlOrigin`].
        * 
-       * [controlorigin]: https://dali.devnets.composablefinance.ninja/doc/pallet_mosaic/pallet/trait.Config.html#associatedtype.ControlOrigin
+       * [`ControlOrigin`]: https://dali.devnets.composablefinance.ninja/doc/pallet_mosaic/pallet/trait.Config.html#associatedtype.ControlOrigin
        **/
       setRelayer: AugmentedSubmittable<(relayer: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [AccountId32]>;
       /**
@@ -1898,7 +1917,7 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       setSigner: AugmentedSubmittable<(signer: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [AccountId32]>;
       /**
-       * Call to submit a price, gas is returned if extrinsic is successfull.
+       * Call to submit a price, gas is returned if extrinsic is successful.
        * Should be called from offchain worker but can be called manually too.
        * 
        * This is an operational transaction.
@@ -1928,7 +1947,8 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       buy: AugmentedSubmittable<(poolId: u128 | AnyNumber | Uint8Array, assetId: u128 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array, minReceive: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u128, u128, u128, bool]>;
       /**
-       * Create a new pool.
+       * Create a new pool. Note that this extrinsic does NOT validate if a pool with the same
+       * assets already exists in the runtime.
        * 
        * Emits `PoolCreated` event when successful.
        **/
@@ -2107,7 +2127,7 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       killAnonymous: AugmentedSubmittable<(spawner: AccountId32 | string | Uint8Array, proxyType: ComposableTraitsAccountProxyProxyType | 'Any' | 'Governance' | 'CancelProxy' | number | Uint8Array, index: u16 | AnyNumber | Uint8Array, height: Compact<u32> | AnyNumber | Uint8Array, extIndex: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [AccountId32, ComposableTraitsAccountProxyProxyType, u16, Compact<u32>, Compact<u32>]>;
       /**
-       * Dispatch the given `call` from an account that the sender is authorised for through
+       * Dispatch the given `call` from an account that the sender is authorized for through
        * `add_proxy`.
        * 
        * Removes any corresponding announcement(s).
@@ -2434,6 +2454,12 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       addToRewardsPot: AugmentedSubmittable<(poolId: u128 | AnyNumber | Uint8Array, assetId: u128 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u128, u128, bool]>;
       /**
+       * Claim a current reward for some position.
+       * 
+       * Emits `Claimed` event when successful.
+       **/
+      claim: AugmentedSubmittable<(fnftCollectionId: u128 | AnyNumber | Uint8Array, fnftInstanceId: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u64]>;
+      /**
        * Create a new reward pool based on the config.
        * 
        * Emits `RewardPoolCreated` event when successful.
@@ -2444,8 +2470,8 @@ declare module '@polkadot/api-base/types/submittable' {
        * 
        * Emits `StakeExtended` event when successful.
        **/
-      extend: AugmentedSubmittable<(position: u128 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u128]>;
-      split: AugmentedSubmittable<(position: u128 | AnyNumber | Uint8Array, ratio: Permill | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, Permill]>;
+      extend: AugmentedSubmittable<(fnftCollectionId: u128 | AnyNumber | Uint8Array, fnftInstanceId: u64 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u64, u128]>;
+      split: AugmentedSubmittable<(fnftCollectionId: u128 | AnyNumber | Uint8Array, fnftInstanceId: u64 | AnyNumber | Uint8Array, ratio: Permill | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u64, Permill]>;
       /**
        * Create a new stake.
        * 
@@ -2457,7 +2483,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * 
        * Emits `Unstaked` event when successful.
        **/
-      unstake: AugmentedSubmittable<(positionId: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128]>;
+      unstake: AugmentedSubmittable<(fnftCollectionId: u128 | AnyNumber | Uint8Array, fnftInstanceId: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u64]>;
       /**
        * Updates the reward pool configuration.
        * 
@@ -3091,7 +3117,7 @@ declare module '@polkadot/api-base/types/submittable' {
     vault: {
       addSurcharge: AugmentedSubmittable<(dest: u64 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u64, u128]>;
       /**
-       * Substracts rent from a vault, rewarding the caller if successful with a small fee and
+       * Subtracts rent from a vault, rewarding the caller if successful with a small fee and
        * possibly tombstoning the vault.
        * 
        * A tombstoned vault still allows for withdrawals but blocks deposits, and requests all

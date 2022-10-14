@@ -1,7 +1,8 @@
-{ pkgs, packages, ... }: {
+{ pkgs, price-feed, devnet, frontend, ... }: {
   modules = [
     (let
-      dali-container-name = "dali-devnet";
+      price-feed-container-name = "price-feed";
+      devnet-container-name = "devnet";
       subsquidGraphqlContainerName = "subsquid-graphql";
       gatewayContainerName = "subsquid-gateway";
 
@@ -25,12 +26,18 @@
         port = 5433;
       };
 
-      relaychainPort = 9944;
-      parachainPort = 9988;
+      rococoPort = 9944;
+      daliAlicePort = 9988;
+      daliBobPort = 9989;
+      daliCharliePort = 9990;
+      karuraPort = 9999;
+      stateminePort = 10008;
       squidGraphqlPort = 4350;
+      frontendPabloPort = 8001;
+      frontendPicassoPort = 8002;
+      priceFeedPort = 8003;
 
-      parachainEndpoint =
-        "ws://${dali-container-name}:${toString parachainPort}";
+      daliEndpoint = "ws://${devnet-container-name}:${toString daliAlicePort}";
 
       network-name = "composable_devnet";
       mkComposableContainer = container:
@@ -68,22 +75,48 @@
               };
             });
 
-          "${dali-container-name}" = mkComposableContainer
-            (import ../services/devnet-dali.nix {
-              inherit pkgs packages parachainPort relaychainPort;
+          "${devnet-container-name}" = mkComposableContainer
+            (import ../services/devnet.nix {
+              inherit pkgs;
+              inherit devnet;
+              ports = [
+                {
+                  host = rococoPort;
+                  container = rococoPort;
+                }
+                {
+                  host = daliAlicePort;
+                  container = daliAlicePort;
+                }
+                {
+                  host = daliBobPort;
+                  container = daliBobPort;
+                }
+                {
+                  host = daliCharliePort;
+                  container = daliCharliePort;
+                }
+                {
+                  host = karuraPort;
+                  container = karuraPort;
+                }
+                {
+                  host = stateminePort;
+                  container = stateminePort;
+                }
+              ];
             });
 
           ingest = mkComposableContainer
             (import ../services/subsquid-substrate-ingest.nix {
               database = squid-archive-db;
-              polkadotEndpoint = parachainEndpoint;
+              polkadotEndpoint = daliEndpoint;
               prometheusPort = 9090;
             });
 
           "${gatewayContainerName}" = mkComposableContainer
             (import ../services/subsquid-substrate-gateway.nix {
               database = squid-archive-db;
-              port = gatewayPort;
             });
 
           # NOTE, this one currently seems broken. but it is an optional service anyways.
@@ -94,7 +127,6 @@
 
           "${subsquidGraphqlContainerName}" = mkComposableContainer
             (import ../services/subsquid-graphql.nix {
-              inherit pkgs;
               database = squid-db;
               graphqlPort = squidGraphqlPort;
             });
@@ -102,19 +134,44 @@
           subsquid-processor = mkComposableContainer
             (import ../services/subsquid-processor-dockerfile.nix {
               inherit subsquidGraphqlContainerName gatewayContainerName
-                gatewayPort parachainEndpoint;
+                gatewayPort;
+              parachainEndpoint = daliEndpoint;
               database = squid-db;
               graphqlPort = squidGraphqlPort;
             });
 
           # NOTE: Ports are currently not configurable for frontend services
           frontend-picasso = mkComposableContainer
-            (import ../services/frontend-picasso.nix {
-              inherit pkgs packages;
+            (import ../services/composable-frontend.nix {
+              inherit pkgs frontend;
+              app = "pablo";
+              port = frontendPabloPort;
             });
 
           frontend-pablo = mkComposableContainer
-            (import ../services/frontend-pablo.nix { inherit pkgs packages; });
+            (import ../services/composable-frontend.nix {
+              inherit pkgs frontend;
+              app = "picasso";
+              port = frontendPicassoPort;
+            });
+
+          "${price-feed-container-name}" = mkComposableContainer
+            (import ../services/program.nix {
+              inherit pkgs;
+              program = price-feed;
+              environment = { RUST_LOG = "debug"; };
+              command = "${
+                  pkgs.lib.meta.getExe price-feed
+                } --quote-asset USDT --listening-address 0.0.0.0:${
+                  toString priceFeedPort
+                } --composable-node ws://${devnet-container-name}:${
+                  toString daliAlicePort
+                }";
+              ports = [{
+                host = priceFeedPort;
+                container = priceFeedPort;
+              }];
+            });
         };
       };
     })
