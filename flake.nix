@@ -110,6 +110,38 @@
           };
         };
 
+      mk-bridge-devnet =
+        { pkgs, packages, polkadot-launch, composable-node, polkadot-node }:
+        (pkgs.callPackage mk-devnet {
+          inherit pkgs;
+          inherit (packages) polkadot-launch composable-node polkadot-node;
+          chain-spec = "dali-dev";
+          network-config-path =
+            ./scripts/polkadot-launch/bridge-rococo-local-dali-dev.nix;
+          useGlobalChainSpec = false;
+        });
+
+      mk-devnet-container = { pkgs, containerName, devNet, container-tools }:
+        pkgs.lib.trace "Run Dali runtime on Composable node"
+        pkgs.dockerTools.buildImage {
+          name = containerName;
+          tag = "latest";
+          copyToRoot = pkgs.buildEnv {
+            name = "image-root";
+            paths = [ pkgs.curl pkgs.websocat ] ++ container-tools;
+            pathsToLink = [ "/bin" ];
+          };
+          config = {
+            Entrypoint = [ "${devNet}/bin/run-devnet-dali-dev" ];
+            WorkingDir = "/home/polkadot-launch";
+          };
+          runAsRoot = ''
+            mkdir -p /home/polkadot-launch /tmp
+            chown 1000:1000 /home/polkadot-launch
+            chmod 777 /tmp
+          '';
+        };
+
       all-such-files = { pkgs, extension }:
         pkgs.stdenv.mkDerivation {
           name = "all-such-files-${extension}";
@@ -654,6 +686,11 @@
               extension = "toml";
             };
 
+            all-nix-files = all-such-files {
+              inherit pkgs;
+              extension = "nix";
+            };
+
             price-feed = crane-nightly.buildPackage (common-attrs // {
               pnameSuffix = "-price-feed";
               cargoArtifacts = common-deps;
@@ -717,7 +754,7 @@
               rust-overlay = rust-nightly;
             };
 
-            polkadot-node = pkgs.callPackage ./.nix/polkadot-bin.nix {
+            polkadot-node = pkgs.callPackage ./.nix/polkadot/polkadot-bin.nix {
               inherit rust-nightly;
             };
 
@@ -725,38 +762,10 @@
               inherit crane-nightly rust-nightly;
             };
 
-            polkadot-centauri-node = rustPlatform.buildRustPackage rec {
-              # HACK: break the nix sandbox so we can build the runtimes. This
-              # requires Nix to have `sandbox = relaxed` in its config.
-              # We don't really care because polkadot is only used for local devnet.
-              __noChroot = true;
-              name = "polkadot-centauri-v${version}";
-              version = "0.9.27";
-              src = fetchFromGitHub {
-                repo = "polkadot";
-                owner = "ComposableFi";
-                rev = "0898082540c42fb241c01fe500715369a33a80de";
-                hash = "sha256-dymuSVQXzdZe8iiMm4ykVXPIjIZd2ZcAOK7TLDGOWcU=";
+            mmr-polkadot-node =
+              pkgs.callPackage ./.nix/polkadot/mmr-polkadot-bin.nix {
+                inherit rust-nightly;
               };
-              cargoSha256 =
-                "sha256-u/hFRxt3OTMDwONGoJ5l7whC4atgpgIQx+pthe2CJXo=";
-              doCheck = false;
-              buildInputs = [ openssl zstd ];
-              nativeBuildInputs = [ rust-nightly clang pkg-config ]
-                ++ lib.optional stdenv.isDarwin
-                (with darwin.apple_sdk.frameworks; [
-                  Security
-                  SystemConfiguration
-                ]);
-              LD_LIBRARY_PATH = lib.strings.makeLibraryPath [
-                stdenv.cc.cc.lib
-                llvmPackages.libclang.lib
-              ];
-              LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
-              PROTOC = "${protobuf}/bin/protoc";
-              ROCKSDB_LIB_DIR = "${rocksdb}/lib";
-              meta = { mainProgram = "polkadot"; };
-            };
 
             polkadot-launch =
               callPackage ./scripts/polkadot-launch/polkadot-launch.nix { };
@@ -768,15 +777,16 @@
               chain-spec = "dali-dev";
             }).script;
 
-            # Dali Centauri devnet
-            bridge-devnet-dali = (callPackage mk-devnet {
-              inherit pkgs;
-              inherit (packages) polkadot-launch composable-node;
-              polkadot-node = polkadot-centauri-node;
-              chain-spec = "dali-dev";
-              network-config-path =
-                ./scripts/polkadot-launch/bridge-rococo-local-dali-dev.nix;
-              useGlobalChainSpec = false;
+            # Dali bridge devnet
+            bridge-devnet-dali = (mk-bridge-devnet {
+              inherit pkgs packages polkadot-launch composable-node
+                polkadot-node;
+            }).script;
+
+            # Dali bridge devnet with mmr-polkadot
+            bridge-mmr-devnet-dali = (mk-bridge-devnet {
+              inherit pkgs packages polkadot-launch composable-node;
+              polkadot-node = mmr-polkadot-node;
             }).script;
 
             # Picasso devnet
@@ -786,46 +796,24 @@
               chain-spec = "picasso-dev";
             }).script;
 
-            devnet-container = trace "Run Dali runtime on Composable node"
-              dockerTools.buildImage {
-                name = "composable-devnet-container";
-                tag = "latest";
-                copyToRoot = pkgs.buildEnv {
-                  name = "image-root";
-                  paths = [ curl websocat ] ++ container-tools;
-                  pathsToLink = [ "/bin" ];
-                };
-                config = {
-                  Entrypoint =
-                    [ "${packages.devnet-dali}/bin/run-devnet-dali-dev" ];
-                  WorkingDir = "/home/polkadot-launch";
-                };
-                runAsRoot = ''
-                  mkdir -p /home/polkadot-launch /tmp
-                  chown 1000:1000 /home/polkadot-launch
-                  chmod 777 /tmp
-                '';
-              };
+            devnet-container = mk-devnet-container {
+              inherit pkgs container-tools;
+              containerName = "composable-devnet-container";
+              devNet = packages.devnet-dali;
+            };
 
-            # Dali Centauri devnet container
-            bridge-devnet-dali-container = dockerTools.buildImage {
-              name = "composable-centauri-devnet-container";
-              tag = "latest";
-              copyToRoot = pkgs.buildEnv {
-                name = "image-root";
-                paths = [ curl websocat ] ++ container-tools;
-                pathsToLink = [ "/bin" ];
-              };
-              config = {
-                Entrypoint =
-                  [ "${packages.bridge-devnet-dali}/bin/run-devnet-dali-dev" ];
-                WorkingDir = "/home/polkadot-launch";
-              };
-              runAsRoot = ''
-                mkdir -p /home/polkadot-launch /tmp
-                chown 1000:1000 /home/polkadot-launch
-                chmod 777 /tmp
-              '';
+            # Dali Bridge devnet container
+            bridge-devnet-dali-container = mk-devnet-container {
+              inherit pkgs container-tools;
+              containerName = "composable-bridge-devnet-container";
+              devNet = packages.bridge-devnet-dali;
+            };
+
+            # Dali Bridge devnet container with mmr-polkadot
+            bridge-mmr-devnet-dali-container = mk-devnet-container {
+              inherit pkgs container-tools;
+              containerName = "composable-bridge-mmr-devnet-container";
+              devNet = packages.bridge-mmr-devnet-dali;
             };
 
             # TODO: inherit and provide script to run all stuff
@@ -970,12 +958,11 @@
               name = "nixfmt-check";
               dontUnpack = true;
 
-              buildInputs = [ all-directories-and-files nixfmt ];
+              buildInputs = [ all-nix-files nixfmt ];
               installPhase = ''
                 mkdir $out
                 nixfmt --version
-                # note, really can just src with filer by .nix, no need all files
-                SRC=$(find ${all-directories-and-files} -name "*.nix" -type f | tr "\n" " ")
+                SRC=$(find ${all-nix-files} -name "*.nix" -type f | tr "\n" " ")
                 echo $SRC
                 nixfmt --check $SRC
                 exit $?
