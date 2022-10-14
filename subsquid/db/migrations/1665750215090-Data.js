@@ -1,5 +1,5 @@
-module.exports = class Data1665425673223 {
-  name = 'Data1665425673223'
+module.exports = class Data1665750215090 {
+  name = 'Data1665750215090'
 
   async up(db) {
     await db.query(`CREATE TABLE "account" ("id" character varying NOT NULL, "event_id" text NOT NULL, CONSTRAINT "PK_54115ee388cdb6d86bb4bf5b2ea" PRIMARY KEY ("id"))`)
@@ -32,7 +32,7 @@ module.exports = class Data1665425673223 {
     await db.query(`CREATE TABLE "reward_pool" ("id" character varying NOT NULL, "event_id" text NOT NULL, "pool_id" text NOT NULL, CONSTRAINT "PK_c88dfa6b514dcbadb05c6956afb" PRIMARY KEY ("id"))`)
     await db.query(`CREATE INDEX "IDX_863db0d97cf58a3f045eddaca4" ON "reward_pool" ("event_id") `)
     await db.query(`CREATE INDEX "IDX_a2320054a632a80a4c6be32a3d" ON "reward_pool" ("pool_id") `)
-    await db.query(`CREATE TABLE "staking_position" ("id" character varying NOT NULL, "fnft_collection_id" text NOT NULL, "fnft_instance_id" text NOT NULL, "owner" text NOT NULL, "asset_id" text NOT NULL, "amount" numeric NOT NULL, "start_timestamp" numeric NOT NULL, "duration" numeric NOT NULL, "end_timestamp" numeric, "reward_multiplier" integer NOT NULL, "source" character varying(16) NOT NULL, "event_id" character varying NOT NULL, CONSTRAINT "REL_3e2e1b465d89dbb2736e70fe5f" UNIQUE ("event_id"), CONSTRAINT "PK_899113a8f0b5ec707171ff4db6b" PRIMARY KEY ("id"))`)
+    await db.query(`CREATE TABLE "staking_position" ("id" character varying NOT NULL, "fnft_collection_id" text NOT NULL, "fnft_instance_id" text NOT NULL, "owner" text NOT NULL, "asset_id" text NOT NULL, "amount" numeric NOT NULL, "start_timestamp" numeric NOT NULL, "duration" numeric NOT NULL, "end_timestamp" numeric, "reward_multiplier" numeric NOT NULL, "source" character varying(16) NOT NULL, "event_id" character varying NOT NULL, CONSTRAINT "REL_3e2e1b465d89dbb2736e70fe5f" UNIQUE ("event_id"), CONSTRAINT "PK_899113a8f0b5ec707171ff4db6b" PRIMARY KEY ("id"))`)
     await db.query(`CREATE UNIQUE INDEX "IDX_3e2e1b465d89dbb2736e70fe5f" ON "staking_position" ("event_id") `)
     await db.query(`CREATE INDEX "IDX_71ba8ca256d4cc74b9440bf2ac" ON "staking_position" ("fnft_instance_id") `)
     await db.query(`CREATE INDEX "IDX_e94373a6b771b4edcaca7950bc" ON "staking_position" ("owner") `)
