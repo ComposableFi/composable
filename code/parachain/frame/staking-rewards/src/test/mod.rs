@@ -1732,7 +1732,7 @@ mod extend_proptests {
 
 		#[test]
 		fn extend_should_work(
-			amount in 0_u128..PICA::units(200),
+			amount in 0_u128..PICA::units(1_000_000),
 		) {
 			new_test_ext().execute_with(|| {
 				System::set_block_number(1);
@@ -1748,7 +1748,7 @@ mod extend_proptests {
 				process_and_progress_blocks::<StakingRewards, Test>(1);
 
 				let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
-				mint_assets([staker], [staked_asset_id], PICA::units(200));
+				mint_assets([staker], [staked_asset_id], PICA::units(1_000_000));
 
 				let original_fnft_instance_id =
 					stake_and_assert::<Test, runtime::Event>(staker, pool_id, staking_amount, duration_preset);
