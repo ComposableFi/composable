@@ -4,13 +4,13 @@
 
 Implementation of the Inter-Blockchain Communication Protocol ([IBC]) in rust.
 
-### Module Structure
+## Project Structure
 
 **Core** contains the traits and handlers that enable the ibc protocol.  
 **Applications** contains sub protocols that are built off the core ibc.  
 **Mock** contains implementations of the core ibc protocol for testing purposes.  
 
-### Architecture
+## Architecture
 
 The design of this crate is geared towards making it as performant as possible and reducing runtime overhead to the bear minimum.  
 This is a major focus because it is expected that this crate will be executed inside blockchain runtimes, which are extremely resource constrained environments  
@@ -20,29 +20,29 @@ requirements for the resource constrained environment that is blockchain runtime
 
 The framework is mostly defined as a set of traits that need to be implemented to make use of the message handling capabilities.
 
-### Terminology
+## Terminology
 
 A couple definitions to help understand the architecture of this framework
 - **Reader** - A `Reader` is a trait that defines methods that provide read access to the underlying storage of the host.
-- **Keeper** - A `Keeper` trait is one that defines methodsa that provide write access to the underlying storage of the host.
+- **Keeper** - A `Keeper` trait is one that defines methods that provide write access to the underlying storage of the host.
 - **Context** - The context is a type that implements all the Reader and Keeper traits that control access to the storage of the underlying host.
 - **Handler** - A handler is a function that handles processing of an ibc message type.
-- **Event** - A struct that which when emitted signifies successful processing of a message.
-- **Router** - A type that helps channel packets to the correct module for handling.
+- **Event** - A struct which when emitted signifies successful processing of a message.
+- **Router** - A type that directss packets to the correct module for handling.
 
-### ICS02 Client Definitions
+## ICS02 Client Definitions
 
 The client module hosts the trait definitions, messages and handlers for light client implementation.
 
-#### Light client
+### Light clients
 
-The Ibc protocol is designed to work on top of light clients, light clients are the foundation on which the protocol is built and frankly.  
-A light client in the simplest terms, is a construct that is able to verify the state of a blockchain using information extracted from a block header.  
+The Ibc protocol is designed to work on top of light clients, light clients are the foundation on which the protocol is built.  
+A light client in simple terms, is a construct that is able to verify the state of a blockchain using information extracted from a block header.  
 For the former to be a possibility, the blockchain whose light client is being constructed  is required to have a finality protocol(a finality protocol is a means by which a blockchain expresses that state transitions within a block are safe and have a very low probability of been reverted)  
 the light client needs to be continuously updated with a stream of finalized block headers, verifying correctness of the state transitions in the  
 headers and extracting information that can be used to verify state proofs.
 
-#### Defining a light client
+### Defining a light client
 A light client in this protocol is required to have a Client definition,  Client state, Consensus state, and Client message.
 
 To define a light client, the following traits need to be implemented for distinct structs
@@ -135,16 +135,32 @@ The events emitted by the connection handlers
 
 ### ICS26 Routing
 
-The routing defines the entry point into the framework
+The routing module defines the entry point into the framework
 
 **Routing Context**
 The `Router` trait defines methods that determine how packets are routed to their destination modules in the host
+**ICS26 Context**
+This trait provides the global context struct access to the router
+**Module Callbacks**
+Ibc applications are sub protocols built on top of the core ibc protocol, ibc applications are required to implement the `Module` trait so  
+they can execute callbacks for processed messages. The callbacks are the means through which the router is able to deliver packets to the right module.
 
 ### Applications
 
-Ibc applications are sub protocols built on top of ibc-core
+Ibc applications are sub protocols built on top of ibc core.
+These applications essentially define how packet data is serialized, deserialized and handled.
 
 #### ICS020 Fungible Token transfer
+
+ICS20 is the protocol that defines a correct way of transferring fungible tokens across chains via ibc.  
+It specifies the data serialization and deserialization standard, the token denomination standard and all the logic required to maintain correctness across multiple chains.  
+
+**Denominations**
+Tokens transferred across chains are given a denomination that combines the port and channel id along with the token's base denomination into the ibc denomination for that token.
+This token format makes it possible for
+
+This module defines the ICS20 protocol, with a couple traits `ICS20Reader`, `ICS20Keeper` and `BankKeepr` trait.  
+These traits define the methods that are required to comply with ICS20, The module callbacks for ICS20 are also defined here.
 
 
 ## Divergence from the Interchain Standards (ICS)
@@ -170,7 +186,7 @@ For more background on this, see [this issue](https://github.com/informalsystems
 ### Port system: transferring and releasing a port
 ICS 5 (Port Allocation) requires the IBC handler to permit [transferring ownership of a port](https://github.com/cosmos/ibc/tree/master/spec/core/ics-005-port-allocation#transferring-ownership-of-a-port) and [releasing a port](https://github.com/cosmos/ibc/tree/master/spec/core/ics-005-port-allocation#releasing-a-port).
 
-We currently support neither.
+We currently support neither because we expect ports to be statically defined.
 
 ## License
 
