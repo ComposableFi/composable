@@ -1,11 +1,12 @@
 import {
   TokenDropdownCombinedInput,
   TokenDropdownCombinedInputProps,
-  TokenSelectProps
+  TokenSelectProps,
 } from "picasso/components";
-import { TOKEN_IDS } from "tokens";
+import { TOKEN_IDS, TOKENS } from "tokens";
 import { Box, SxProps } from "@mui/material";
 import { Story } from "@storybook/react";
+import { AssetId } from "picasso/defi/polkadot/types";
 
 const TokenDropdownCombinedInputsStories = (
   props: TokenDropdownCombinedInputProps
@@ -16,7 +17,7 @@ const TokenDropdownCombinedInputsStories = (
     gap: 2,
     resize: "both",
     overflow: "auto",
-    padding: 2
+    padding: 2,
   };
 
   return (
@@ -30,10 +31,10 @@ const TokenDropdownCombinedInputsStories = (
 };
 export default {
   title: "molecules/TokenDropdownCombinedInput",
-  component: TokenDropdownCombinedInput
+  component: TokenDropdownCombinedInput,
 };
 
-const Template: Story<typeof TokenDropdownCombinedInputsStories> = args => (
+const Template: Story<typeof TokenDropdownCombinedInputsStories> = (args) => (
   <TokenDropdownCombinedInputsStories {...args} />
 );
 
@@ -41,44 +42,49 @@ const mainLabelProps = {
   label: "Label master here",
   TypographyProps: {},
   TooltipProps: {
-    title: "Tooltip master here"
-  }
+    title: "Tooltip master here",
+  },
 };
 
 const balanceLabelProps = {
   label: "Balance:",
   LabelTypographyProps: {},
   balanceText: "435 KSM",
-  BalanceTypographyProps: {}
+  BalanceTypographyProps: {},
 };
 
 const selectProps: TokenSelectProps = {
   value: TOKEN_IDS[0],
-  options: TOKEN_IDS.map(tokenId => ({ tokenId: tokenId }))
+  options: Object.values(TOKENS).map((token) => ({
+    tokenId: token.id as AssetId,
+    icon: token.icon,
+    symbol: token.symbol,
+    disabled: false,
+  })),
 };
 
 export const TokenDropdownCombinedInputs = Template.bind({});
 TokenDropdownCombinedInputs.args = {
   LabelProps: {
-    mainLabelProps: mainLabelProps
+    mainLabelProps: mainLabelProps,
   },
-  CombinedSelectProps: selectProps
+  CombinedSelectProps: selectProps,
 };
 
 export const TokenDropdownCombinedInputsWithButton = Template.bind({});
 TokenDropdownCombinedInputsWithButton.args = {
   LabelProps: {
-    mainLabelProps: mainLabelProps
+    mainLabelProps: mainLabelProps,
   },
   CombinedSelectProps: selectProps,
-  buttonLabel: "Max"
+  buttonLabel: "Max",
 };
 
 export const LabeledTokenDropdownCombinedInputsWithBalance = Template.bind({});
 LabeledTokenDropdownCombinedInputsWithBalance.args = {
   LabelProps: {
     mainLabelProps: mainLabelProps,
-    balanceLabelProps: balanceLabelProps
+    balanceLabelProps: balanceLabelProps,
   },
-  CombinedSelectProps: selectProps
+  CombinedSelectProps: selectProps,
 };

@@ -1,11 +1,7 @@
 import React from "react";
-import { getToken, TokenId } from "tokens";
+import { getToken } from "tokens";
 import { Select, SelectProps } from "./Select";
-
-type TokenOption = {
-  tokenId: TokenId;
-  disabled?: boolean;
-};
+import { TokenOption } from "@/stores/defi/polkadot/transfers/transfers";
 
 export type TokenSelectProps = {
   options?: TokenOption[];
@@ -16,11 +12,11 @@ export const TokenSelect: React.FC<TokenSelectProps> = ({
   ...rest
 }) => {
   const selectOptions = options
-    ? options.map(option => ({
+    ? options.map((option) => ({
         value: option.tokenId,
         icon: getToken(option.tokenId).icon,
         label: getToken(option.tokenId).symbol,
-        disabled: option.disabled
+        disabled: option.disabled,
       }))
     : [];
 

@@ -2,7 +2,7 @@ import {
   callbackGate,
   fromChainIdUnit,
   humanBalance,
-  unwrapNumberOrHex
+  unwrapNumberOrHex,
 } from "shared";
 import { FeeDisplay } from "@/components";
 import React, { useCallback, useEffect, useMemo } from "react";
@@ -15,7 +15,7 @@ import BigNumber from "bignumber.js";
 import {
   getAmountToTransfer,
   getApiCallAndSigner,
-  getDestChainFee
+  getDestChainFee,
 } from "@/defi/polkadot/pallets/Transfer";
 import { useExistentialDeposit } from "@/defi/polkadot/hooks/useExistentialDeposit";
 import { getPaymentAsset } from "@/defi/polkadot/pallets/AssetTxPayment";
@@ -28,17 +28,17 @@ export const TransferFeeDisplay = () => {
   const assets = useStore(
     ({ substrateBalances }) => substrateBalances.assets[from].assets
   );
-  const feeItem = useStore(state => state.transfers.feeItem);
-  const hasFeeItem = useStore(state => state.transfers.hasFeeItem);
-  const setFeeItem = useStore(state => state.transfers.setFeeItem);
+  const feeItem = useStore((state) => state.transfers.feeItem);
+  const hasFeeItem = useStore((state) => state.transfers.hasFeeItem);
+  const setFeeItem = useStore((state) => state.transfers.setFeeItem);
   const selectedRecipient = useStore(
-    state => state.transfers.recipients.selected
+    (state) => state.transfers.recipients.selected
   );
-  const keepAlive = useStore(state => state.transfers.keepAlive);
+  const keepAlive = useStore((state) => state.transfers.keepAlive);
   const { existentialDeposit, feeToken } = useExistentialDeposit();
-  const fee = useStore(state => state.transfers.fee);
+  const fee = useStore((state) => state.transfers.fee);
   const destFee = getDestChainFee(from, to);
-  const updateFee = useStore(state => state.transfers.updateFee);
+  const updateFee = useStore((state) => state.transfers.updateFee);
 
   const symbol = useMemo(() => {
     let out;
@@ -73,7 +73,7 @@ export const TransferFeeDisplay = () => {
           keepAlive,
           api,
           sourceChain: from,
-          targetChain: to
+          targetChain: to,
         });
 
         const signerAddress = acc.address;
@@ -96,7 +96,7 @@ export const TransferFeeDisplay = () => {
           partialFee: fromChainIdUnit(
             unwrapNumberOrHex(info.partialFee.toString())
           ),
-          weight: unwrapNumberOrHex(info.weight.toString())
+          weight: unwrapNumberOrHex(info.weight.toString()),
         } as {
           class: string;
           partialFee: BigNumber;
@@ -116,7 +116,7 @@ export const TransferFeeDisplay = () => {
     feeItemId,
     from,
     fromProvider.parachainApi,
-    to
+    to,
   ]);
 
   useEffect(() => {
@@ -129,12 +129,12 @@ export const TransferFeeDisplay = () => {
         getPaymentAsset({
           api,
           walletAddress,
-          network: from
+          network: from,
         }),
       fromProvider.parachainApi,
       account?.address
     );
-    asset.then(paymentAsset => {
+    asset.then((paymentAsset) => {
       if ("assetId" in paymentAsset) {
         setFeeItem(paymentAsset.assetId);
       }
@@ -148,7 +148,7 @@ export const TransferFeeDisplay = () => {
         label="Fee"
         feeText={`${humanBalance(fee.partialFee)} ${symbol.toUpperCase()}`}
         TooltipProps={{
-          title: "Fee tooltip title"
+          title: "Fee tooltip title",
         }}
       />
       <FeeDisplay
@@ -156,7 +156,7 @@ export const TransferFeeDisplay = () => {
         feeText={`${destFee.fee.toFormat()} ${destFee.symbol.symbol}`}
         TooltipProps={{
           title:
-            "Destination transaction fee is approximate and might change due to network conditions"
+            "Destination transaction fee is approximate and might change due to network conditions",
         }}
       />
     </Stack>

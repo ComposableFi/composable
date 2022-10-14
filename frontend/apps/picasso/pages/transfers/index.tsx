@@ -3,7 +3,7 @@ import { Button, Grid, Typography } from "@mui/material";
 import Default from "@/components/Templates/Default";
 import {
   gridContainerStyle,
-  gridItemStyle
+  gridItemStyle,
 } from "@/components/Organisms/Transfer/transfer-styles";
 import { Header } from "@/components/Organisms/Transfer/Header";
 import { TransferNetworkSelector } from "@/components/Organisms/Transfer/TransferNetworkSelector";
@@ -13,9 +13,16 @@ import { TransferKeepAliveSwitch } from "@/components/Organisms/Transfer/Transfe
 import { TransferExistentialDeposit } from "@/components/Organisms/Transfer/TransferExistentialDeposit";
 import { useTransfer } from "@/defi/polkadot/hooks/useTransfer";
 import { TransferFeeDisplay } from "@/components/Organisms/Transfer/TransferFeeDisplay";
+import { getDestChainFee } from "@/defi/polkadot/pallets/Transfer";
+import { useStore } from "@/stores/root";
 
 const Transfers: NextPage = () => {
   const { transfer, amount, from, balance } = useTransfer();
+  // For now all transactions are done with Picasso target
+  // TODO: change this to get the chainApi from target (to) in store
+  const fee = useStore((state) => state.transfers.fee);
+  const minValue = getDestChainFee(from, "picasso").fee.plus(fee.partialFee);
+  const feeTokenId = useStore((state) => state.transfers.getFeeToken(from));
 
   return (
     <Default>
@@ -52,12 +59,20 @@ const Transfers: NextPage = () => {
           <Button
             variant="contained"
             color="primary"
-            disabled={amount.lte(0) || amount.gt(balance)}
+            disabled={
+              amount.lte(0) || amount.gt(balance) || amount.lte(minValue)
+            }
             fullWidth
             onClick={transfer}
           >
             <Typography variant="button">Transfer</Typography>
           </Button>
+          {amount.lte(minValue) && (
+            <Typography variant="caption" color="error.main">
+              At least {minValue.toFormat(12)} {feeTokenId.symbol.toUpperCase()}{" "}
+              will be spent for gas fees.
+            </Typography>
+          )}
         </Grid>
       </Grid>
     </Default>
