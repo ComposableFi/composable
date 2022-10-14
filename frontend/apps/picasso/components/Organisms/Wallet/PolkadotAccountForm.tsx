@@ -3,7 +3,7 @@ import { useStore } from "@/stores/root";
 import { CheckRounded } from "@mui/icons-material";
 import { alpha, Box, Button, Typography, useTheme } from "@mui/material";
 import Image from "next/image";
-import { useDotSamaContext } from "substrate-react";
+import { SupportedWalletId, useDotSamaContext } from "substrate-react";
 
 export const PolkadotAccountForm: React.FC<{
   onSelectChange?: (accountIndex: number) => void;

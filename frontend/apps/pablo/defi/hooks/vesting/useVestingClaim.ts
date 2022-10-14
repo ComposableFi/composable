@@ -24,8 +24,8 @@ export function useVestingClaim(assetId: string, vestingScheduleId: BigNumber) {
             await executor
               .execute(
                 parachainApi.tx.vesting.claim(
-                    assetId,
-                    { One: vestingScheduleId.toString() }
+                  assetId,
+                  { One: vestingScheduleId.toString() }
                 ),
                 selectedAccount.address,
                 parachainApi,
@@ -52,13 +52,6 @@ export function useVestingClaim(assetId: string, vestingScheduleId: BigNumber) {
         return Promise.reject(new Error("Invalid TX"))
       }
     },
-    [
-      enqueueSnackbar,
-      selectedAccount,
-      executor,
-      parachainApi,
-      assetId,
-      vestingScheduleId
-    ]
+    [parachainApi, signer, selectedAccount, executor, vestingScheduleId, assetId, enqueueSnackbar]
   );
 }

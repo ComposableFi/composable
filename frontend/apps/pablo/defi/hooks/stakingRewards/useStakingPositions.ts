@@ -92,7 +92,7 @@ export function useStakingPositions({ stakedAssetId }: StakingPositionsProps): {
         putStakes(financialNftCollectionId, result);
       })
       .catch(console.error);
-  }, [parachainApi, ownedFinancialNftsHistory]);
+  }, [parachainApi, financialNftCollectionId, ownedFinancialNftsHistory]);
 
   useEffect(() => {
     updateStakes();

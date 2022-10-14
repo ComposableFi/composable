@@ -4,7 +4,6 @@ import { TokenId } from "tokens";
 import { useStore } from "@/stores/root";
 import { ChevronLeft } from "@mui/icons-material";
 import { Box, Button, IconButton, Typography, useTheme } from "@mui/material";
-import Image from "next/image";
 import { useState } from "react";
 import { Select } from "../../Atom";
 import { AccountIndicator } from "../../Molecules/AccountIndicator";
@@ -12,8 +11,22 @@ import { Modal } from "../../Molecules/Modal";
 import { ConnectButton } from "./ConnectButton";
 import { PolkadotAccountForm } from "./PolkadotAccountForm";
 import { humanBalance } from "shared";
-import { useDotSamaContext, useEagerConnect } from "substrate-react";
+import { useDotSamaContext, useEagerConnect, SupportedWalletId } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/polkadot/constants";
+import Image from "next/image";
+
+const WALLETS_SUPPORTED: Array<{ walletId: SupportedWalletId, icon: string, name: string }> = [
+  {
+    walletId: SupportedWalletId.Polkadotjs,
+    icon: "/networks/polkadot_js.svg",
+    name: "Polkadot.js"
+  },
+  {
+    walletId: SupportedWalletId.Talisman,
+    icon: "/logo/talisman.svg",
+    name: "Talisman"
+  },
+];
 
 const Status = () => {
   const { extensionStatus, selectedAccount } = useDotSamaContext();
@@ -86,9 +99,9 @@ export const PolkadotConnect: React.FC<{}> = () => {
   const { closePolkadotModal, openPolkadotModal, isPolkadotModalOpen } =
     useStore(({ ui }) => ui);
 
-  const handleConnectPolkadot = async () => {
+  const handleConnectPolkadot = async (walletId: SupportedWalletId) => {
     if (activate) {
-      await activate();
+      await activate(walletId);
     }
   };
 
@@ -118,7 +131,7 @@ export const PolkadotConnect: React.FC<{}> = () => {
               <Typography variant="body1" color="text.secondary" gutterBottom>
                 Select a wallet to connect with.
               </Typography>
-              <Button
+              {WALLETS_SUPPORTED.map(wallet => (<Button
                 sx={{
                   mt: "4rem",
                 }}
@@ -126,18 +139,18 @@ export const PolkadotConnect: React.FC<{}> = () => {
                 color="primary"
                 size="large"
                 fullWidth
-                onClick={() => handleConnectPolkadot()}
+                onClick={() => handleConnectPolkadot(wallet.walletId)}
               >
                 <Box sx={{ marginRight: theme.spacing(2) }}>
                   <Image
-                    src="/networks/polkadot_js.svg"
+                    src={wallet.icon}
                     width="24"
                     height="24"
-                    alt="Polkadot.js"
+                    alt={wallet.name}
                   />
                 </Box>
-                <Typography variant="button">Polkadot.js</Typography>
-              </Button>
+                <Typography variant="button">{wallet.name}</Typography>
+              </Button>))}
             </>
           )}
 
