@@ -33,7 +33,11 @@ impl<T: Config> DualAssetConstantProduct<T> {
 			weights[0] != Permill::zero() && weights[1] != Permill::zero(),
 			Error::<T>::WeightsMustBeNonZero
 		);
-		ensure!(weights[0] + weights[1] == Permill::one(), Error::<T>::WeightsMustSumToOne);
+		ensure!(
+			weights[0].deconstruct() + weights[1].deconstruct() ==
+				Permill::from_percent(100).deconstruct(),
+			Error::<T>::WeightsMustSumToOne
+		);
 		ensure!(fee_config.fee_rate < Permill::one(), Error::<T>::InvalidFees);
 
 		let lp_token = T::CurrencyFactory::create(RangeId::LP_TOKENS, T::Balance::default())?;
@@ -118,7 +122,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		ensure!(base_amount > T::Balance::zero(), Error::<T>::InvalidAmount);
 		let pool_assets = Self::get_pool_balances(&pool, &pool_account);
 		// TODO (vim): We have no way of knowing which amount is for which asset (fixed in a later
-		// stage). For now we assume the pool defined order
+		//  stage). For now we assume the pool defined order
 		let base_asset = pool_assets[0];
 		let quote_asset = pool_assets[1];
 
@@ -176,15 +180,12 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		let pool_assets = Self::get_pool_balances(&pool, pool_account);
 		// TODO (vim): We have no way of knowing which amount is for which asset (fixed in a later
 		// stage). For now we assume the pool defined order
-		let base_asset = pool_assets[0];
-		let quote_asset = pool_assets[1];
-		ensure!(
-			pool_assets
-				.iter()
-				.find(|(asset_id, _, _)| pair.contains(asset_id.clone()))
-				.is_some(),
-			Error::<T>::PairMismatch
-		);
+		let (base_asset, quote_asset) = if pool_assets[0].0 == pair.base {
+			(pool_assets[0], pool_assets[1])
+		} else {
+			(pool_assets[1], pool_assets[0])
+		};
+		ensure!(CurrencyPair::new(base_asset.0, quote_asset.0) == pair, Error::<T>::PairMismatch);
 
 		let fee = if apply_fees {
 			pool.fee_config.calculate_fees(pair.quote, quote_amount)

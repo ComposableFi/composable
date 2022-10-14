@@ -10,7 +10,7 @@ use crate::{
 };
 use composable_support::math::safe::safe_multiply_by_rational;
 use composable_tests_helpers::{
-	prop_assert_noop, prop_assert_ok,
+	prop_assert_ok,
 	test::helper::{acceptable_computation_error, default_acceptable_computation_error},
 };
 use composable_traits::{
@@ -598,6 +598,22 @@ fn weights_zero() {
 	});
 }
 
+#[test]
+fn weights_sum_to_more_than_one() {
+	new_test_ext().execute_with(|| {
+		let mut asset_weights = BoundedBTreeMap::new();
+		asset_weights.try_insert(BTC, Permill::from_percent(50)).expect("Should work");
+		asset_weights.try_insert(USDT, Permill::from_percent(51)).expect("Should work");
+		let pool_init_config = PoolInitConfiguration::DualAssetConstantProduct {
+			owner: ALICE,
+			assets_weights: asset_weights,
+			fee: Permill::zero(),
+		};
+
+		assert_noop!(Pablo::do_create_pool(pool_init_config), Error::<Test>::WeightsMustSumToOne);
+	});
+}
+
 proptest! {
 	#![proptest_config(ProptestConfig::with_cases(10000))]
 	#[test]
@@ -708,27 +724,6 @@ proptest! {
 	  new_test_ext().execute_with(|| {
 		let pool_init_config = valid_pool_init_config(&ALICE, BTC, Permill::from_percent(base_weight_in_percent), USDT, Permill::zero());
 		  prop_assert_ok!(Pablo::do_create_pool(pool_init_config));
-		  Ok(())
-	  })?;
-  }
-
-	#[test]
-	fn weights_sum_to_more_than_one(
-		_ in 100..u32::MAX,
-	) {
-	  new_test_ext().execute_with(|| {
-
-		let mut asset_weights = BoundedBTreeMap::new();
-		asset_weights.try_insert(BTC, Permill::from_percent(50)).expect("Should work");
-		asset_weights.try_insert(USDT, Permill::from_percent(51)).expect("Should work");
-		  let pool_init_config = PoolInitConfiguration::DualAssetConstantProduct {
-			  owner: ALICE,
-			  assets_weights: asset_weights,
-			fee: Permill::zero(),
-		  };
-
-		  prop_assert_noop!(Pablo::do_create_pool(pool_init_config), Error::<Test>::WeightsMustSumToOne);
-
 		  Ok(())
 	  })?;
   }
