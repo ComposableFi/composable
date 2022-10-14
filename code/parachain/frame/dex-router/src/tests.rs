@@ -10,39 +10,20 @@ use frame_support::{
 	traits::fungibles::{Inspect, Mutate},
 };
 use pallet_pablo::{Error as PabloError, PoolInitConfiguration};
-use sp_runtime::Permill;
+use sp_arithmetic::PerThing;
+use sp_runtime::{traits::ConstU32, BoundedBTreeMap, Permill};
 
-// Create Amm pool with given amounts added as liquidity to the pool.
-fn create_curve_amm_pool(
-	assets: CurrencyPair<AssetId>,
-	amounts: Vec<Balance>,
-	amp_coeff: u16,
-	fee: Permill,
-) -> PoolId {
-	let base = assets.base;
-	let quote = assets.quote;
-	assert_ok!(Tokens::mint_into(base, &ALICE, amounts[0]));
-	assert_ok!(Tokens::mint_into(quote, &ALICE, amounts[1]));
-	assert_ok!(Tokens::mint_into(base, &BOB, amounts[0]));
-	assert_ok!(Tokens::mint_into(quote, &BOB, amounts[1]));
-
-	let init_config = PoolInitConfiguration::DualAssetConstantProduct {
-		owner: ALICE,
-		pair: assets,
-		fee,
-		base_weight: Permill::from_percent(50_u32),
-	};
-	let p = Pablo::do_create_pool(init_config);
-	assert_ok!(&p);
-	let pool_id = p.unwrap();
-	// 1 USDC = 1 USDT
-	assert_ok!(<Pablo as AmmTrait>::add_liquidity(
-		&ALICE, pool_id, amounts[0], amounts[1], 0_u128, true
-	));
-	assert_ok!(<Pablo as AmmTrait>::add_liquidity(
-		&BOB, pool_id, amounts[0], amounts[1], 0_u128, true
-	));
-	pool_id
+pub fn dual_asset_pool_weights(
+	first_asset: AssetId,
+	first_asset_weight: Permill,
+	second_asset: AssetId,
+) -> BoundedBTreeMap<AssetId, Permill, ConstU32<2>> {
+	let mut asset_weights = BoundedBTreeMap::new();
+	asset_weights.try_insert(first_asset, first_asset_weight).expect("Should work");
+	asset_weights
+		.try_insert(second_asset, first_asset_weight.left_from_one())
+		.expect("Should work");
+	asset_weights
 }
 
 // Create Pablo pool with given amounts added as liquidity to the pool.
@@ -60,9 +41,8 @@ fn create_constant_product_amm_pool(
 
 	let init_config = PoolInitConfiguration::DualAssetConstantProduct {
 		owner: ALICE,
-		pair: assets,
+		assets_weights: dual_asset_pool_weights(base, Permill::from_percent(50), quote),
 		fee,
-		base_weight: Permill::from_percent(50),
 	};
 	// Create Pablo pool
 	let p = Pablo::do_create_pool(init_config);
@@ -88,7 +68,7 @@ fn create_usdt_usdc_pool() -> PoolId {
 	let fee = Permill::zero();
 	let assets = CurrencyPair::new(USDT, USDC);
 	let amounts = vec![initial_usdt, initial_usdc];
-	create_curve_amm_pool(assets, amounts, amp_coeff, fee)
+	create_constant_product_amm_pool(assets, amounts, fee)
 }
 
 fn create_usdc_usdt_pool() -> PoolId {
@@ -100,7 +80,7 @@ fn create_usdc_usdt_pool() -> PoolId {
 	let fee = Permill::zero();
 	let assets = CurrencyPair::new(USDC, USDT);
 	let amounts = vec![initial_usdc, initial_usdt];
-	create_curve_amm_pool(assets, amounts, amp_coeff, fee)
+	create_constant_product_amm_pool(assets, amounts, fee)
 }
 
 fn create_usdt_dai_pool() -> PoolId {
@@ -112,7 +92,7 @@ fn create_usdt_dai_pool() -> PoolId {
 	let fee = Permill::zero();
 	let assets = CurrencyPair::new(USDT, DAI);
 	let amounts = vec![initial_usdt, initial_dai];
-	create_curve_amm_pool(assets, amounts, amp_coeff, fee)
+	create_constant_product_amm_pool(assets, amounts, fee)
 }
 
 fn create_usdc_eth_pool() -> PoolId {

@@ -222,10 +222,6 @@ impl pallet_pablo::Config for Test {
 	type PoolId = PoolId;
 	type PalletId = TestPalletID;
 	type LocalAssets = LpTokenFactory;
-	type LbpMinSaleDuration = MinSaleDuration;
-	type LbpMaxSaleDuration = MaxSaleDuration;
-	type LbpMaxInitialWeight = MaxInitialWeight;
-	type LbpMinFinalWeight = MinFinalWeight;
 	type PoolCreationOrigin = EnsureSigned<Self::AccountId>;
 	type EnableTwapOrigin = EnsureRoot<AccountId>;
 	type Time = Timestamp;
