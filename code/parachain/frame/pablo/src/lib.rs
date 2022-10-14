@@ -9,7 +9,7 @@
 		clippy::panic
 	)
 )]
-// TODO (vim): Remove indexing slicing when cu-2yyx1w9 is done
+// TODO (vim): Remove indexing-slicing when cu-2yyx1w9 is done
 #![warn(clippy::unseparated_literal_suffix, clippy::indexing_slicing)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(
