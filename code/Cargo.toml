@@ -128,32 +128,32 @@ sp-trie = { git = "https://github.com/composableFi/substrate", rev = "fd75550a93
 sp-wasm-interface = { git = "https://github.com/composableFi/substrate", rev = "fd75550a935d69b6a4ee4f8a48767557b4c9e801" }
 
 [patch."https://github.com/paritytech/cumulus"]
-cumulus-client-cli = { git = "https://github.com/ComposableFi/cumulus", rev = "f730e6747be173e2d4609381edc7929c8671f4d8" }
-cumulus-client-collator = { git = "https://github.com/ComposableFi/cumulus", rev = "f730e6747be173e2d4609381edc7929c8671f4d8" }
-cumulus-client-consensus-aura = { git = "https://github.com/ComposableFi/cumulus", rev = "f730e6747be173e2d4609381edc7929c8671f4d8" }
-cumulus-client-consensus-common = { git = "https://github.com/ComposableFi/cumulus", rev = "f730e6747be173e2d4609381edc7929c8671f4d8" }
-cumulus-client-network = { git = "https://github.com/ComposableFi/cumulus", rev = "f730e6747be173e2d4609381edc7929c8671f4d8" }
-cumulus-client-pov-recovery = { git = "https://github.com/ComposableFi/cumulus", rev = "f730e6747be173e2d4609381edc7929c8671f4d8" }
-cumulus-client-service = { git = "https://github.com/ComposableFi/cumulus", rev = "f730e6747be173e2d4609381edc7929c8671f4d8" }
-cumulus-pallet-aura-ext = { git = "https://github.com/ComposableFi/cumulus", rev = "f730e6747be173e2d4609381edc7929c8671f4d8" }
-cumulus-pallet-dmp-queue = { git = "https://github.com/ComposableFi/cumulus", rev = "f730e6747be173e2d4609381edc7929c8671f4d8" }
-cumulus-pallet-parachain-system = { git = "https://github.com/ComposableFi/cumulus", rev = "f730e6747be173e2d4609381edc7929c8671f4d8" }
-cumulus-pallet-session-benchmarking = { git = "https://github.com/ComposableFi/cumulus", rev = "f730e6747be173e2d4609381edc7929c8671f4d8" }
-cumulus-pallet-xcm = { git = "https://github.com/ComposableFi/cumulus", rev = "f730e6747be173e2d4609381edc7929c8671f4d8" }
-cumulus-pallet-xcmp-queue = { git = "https://github.com/ComposableFi/cumulus", rev = "f730e6747be173e2d4609381edc7929c8671f4d8" }
-cumulus-primitives-core = { git = "https://github.com/ComposableFi/cumulus", rev = "f730e6747be173e2d4609381edc7929c8671f4d8" }
-cumulus-primitives-parachain-inherent = { git = "https://github.com/ComposableFi/cumulus", rev = "f730e6747be173e2d4609381edc7929c8671f4d8" }
-cumulus-primitives-timestamp = { git = "https://github.com/ComposableFi/cumulus", rev = "f730e6747be173e2d4609381edc7929c8671f4d8" }
-cumulus-primitives-utility = { git = "https://github.com/ComposableFi/cumulus", rev = "f730e6747be173e2d4609381edc7929c8671f4d8" }
-cumulus-relay-chain-inprocess-interface = { git = "https://github.com/ComposableFi/cumulus", rev = "f730e6747be173e2d4609381edc7929c8671f4d8" }
-cumulus-relay-chain-interface = { git = "https://github.com/ComposableFi/cumulus", rev = "f730e6747be173e2d4609381edc7929c8671f4d8" }
-cumulus-relay-chain-rpc-interface = { git = "https://github.com/ComposableFi/cumulus", rev = "f730e6747be173e2d4609381edc7929c8671f4d8" }
-cumulus-test-relay-sproof-builder = { git = "https://github.com/ComposableFi/cumulus", rev = "f730e6747be173e2d4609381edc7929c8671f4d8" }
-pallet-collator-selection = { git = "https://github.com/ComposableFi/cumulus", rev = "f730e6747be173e2d4609381edc7929c8671f4d8" }
-parachains-common = { git = "https://github.com/blasrodri/cumulus", rev = "25d9b64affb4c45b57e0c307bd87c9579228883b" }
-statemine-runtime = { git = "https://github.com/blasrodri/cumulus", rev = "25d9b64affb4c45b57e0c307bd87c9579228883b" }
+cumulus-client-cli = { git = "https://github.com/blasrodri/cumulus", rev = "0914a3927c8361cccc256da5116e9f756aa4570f" }
+cumulus-client-collator = { git = "https://github.com/blasrodri/cumulus", rev = "0914a3927c8361cccc256da5116e9f756aa4570f" }
+cumulus-client-consensus-aura = { git = "https://github.com/blasrodri/cumulus", rev = "0914a3927c8361cccc256da5116e9f756aa4570f" }
+cumulus-client-consensus-common = { git = "https://github.com/blasrodri/cumulus", rev = "0914a3927c8361cccc256da5116e9f756aa4570f" }
+cumulus-client-network = { git = "https://github.com/blasrodri/cumulus", rev = "0914a3927c8361cccc256da5116e9f756aa4570f" }
+cumulus-client-pov-recovery = { git = "https://github.com/blasrodri/cumulus", rev = "0914a3927c8361cccc256da5116e9f756aa4570f" }
+cumulus-client-service = { git = "https://github.com/blasrodri/cumulus", rev = "0914a3927c8361cccc256da5116e9f756aa4570f" }
+cumulus-pallet-aura-ext = { git = "https://github.com/blasrodri/cumulus", rev = "0914a3927c8361cccc256da5116e9f756aa4570f" }
+cumulus-pallet-dmp-queue = { git = "https://github.com/blasrodri/cumulus", rev = "0914a3927c8361cccc256da5116e9f756aa4570f" }
+cumulus-pallet-parachain-system = { git = "https://github.com/blasrodri/cumulus", rev = "0914a3927c8361cccc256da5116e9f756aa4570f" }
+cumulus-pallet-session-benchmarking = { git = "https://github.com/blasrodri/cumulus", rev = "0914a3927c8361cccc256da5116e9f756aa4570f" }
+cumulus-pallet-xcm = { git = "https://github.com/blasrodri/cumulus", rev = "0914a3927c8361cccc256da5116e9f756aa4570f" }
+cumulus-pallet-xcmp-queue = { git = "https://github.com/blasrodri/cumulus", rev = "0914a3927c8361cccc256da5116e9f756aa4570f" }
+cumulus-primitives-core = { git = "https://github.com/blasrodri/cumulus", rev = "0914a3927c8361cccc256da5116e9f756aa4570f" }
+cumulus-primitives-parachain-inherent = { git = "https://github.com/blasrodri/cumulus", rev = "0914a3927c8361cccc256da5116e9f756aa4570f" }
+cumulus-primitives-timestamp = { git = "https://github.com/blasrodri/cumulus", rev = "0914a3927c8361cccc256da5116e9f756aa4570f" }
+cumulus-primitives-utility = { git = "https://github.com/blasrodri/cumulus", rev = "0914a3927c8361cccc256da5116e9f756aa4570f" }
+cumulus-relay-chain-inprocess-interface = { git = "https://github.com/blasrodri/cumulus", rev = "0914a3927c8361cccc256da5116e9f756aa4570f" }
+cumulus-relay-chain-interface = { git = "https://github.com/blasrodri/cumulus", rev = "0914a3927c8361cccc256da5116e9f756aa4570f" }
+cumulus-relay-chain-rpc-interface = { git = "https://github.com/blasrodri/cumulus", rev = "0914a3927c8361cccc256da5116e9f756aa4570f" }
+cumulus-test-relay-sproof-builder = { git = "https://github.com/blasrodri/cumulus", rev = "0914a3927c8361cccc256da5116e9f756aa4570f" }
+pallet-collator-selection = { git = "https://github.com/blasrodri/cumulus", rev = "0914a3927c8361cccc256da5116e9f756aa4570f" }
+parachains-common = { git = "https://github.com/blasrodri/cumulus", rev = "0914a3927c8361cccc256da5116e9f756aa4570f" }
+statemine-runtime = { git = "https://github.com/blasrodri/cumulus", rev = "0914a3927c8361cccc256da5116e9f756aa4570f" }
 
-parachain-info = { git = "https://github.com/ComposableFi/cumulus", rev = "f730e6747be173e2d4609381edc7929c8671f4d8" }
+parachain-info = { git = "https://github.com/blasrodri/cumulus", rev = "0914a3927c8361cccc256da5116e9f756aa4570f" }
 
 [patch.'https://github.com/paritytech/polkadot']
 kusama-runtime = { git = "https://github.com/ComposableFi/polkadot", branch = "release-v0.9.27" }
