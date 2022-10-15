@@ -58,50 +58,17 @@
 /* CitaPro Font */
 @font-face {
   font-family: "CitaPro";
-  src: url('/fonts/CitaPro-Thin.otf') format('truetype');
-  font-weight: 100;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: "CitaPro";
-  src: url('/fonts/CitaPro-ThinItalic.otf') format('truetype');
-  font-weight: 100;
-  font-style: italic;
-}
-
-@font-face {
-  font-family: "CitaPro";
   src: url('/fonts/CitaPro-Regular.otf') format('truetype');
   font-weight: 400; /* normal */
   font-style: normal;
 }
 
-@font-face {
-  font-family: "CitaPro";
-  src: url('/fonts/CitaPro-Italic.otf') format('truetype');
-  font-weight: 400; /* normal */
-  font-style: italic;
-}
-
-@font-face {
-  font-family: "CitaPro";
-  src: url('/fonts/CitaPro-Bold.otf') format('truetype');
-  font-weight: 700; /* bold */
-  font-style: normal;
-}
-
-@font-face {
-  font-family: "CitaPro";
-  src: url('/fonts/CitaPro-BoldItalic.otf') format('truetype');
-  font-weight: 700; /* bold */
-  font-style: italic;
-}
-
 /* source for mapping numbers to files: https://qr.ae/pGVP9G */
 
-
-
+h1, h2, h3, h4 {
+  letter-spacing: 2px;
+  font-weight: 700;
+}
 
 /* You can override the default Infima variables here. */
 :root {
