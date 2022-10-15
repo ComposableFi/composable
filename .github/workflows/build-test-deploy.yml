@@ -267,7 +267,7 @@ jobs:
           cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#spell-check --no-update-lock-file --show-trace -L
 
   docs-check:
-    name: "Mdbook check"
+    name: "Docs check"
     runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-mdbook-check-${{ github.ref }}
