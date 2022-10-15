@@ -1,7 +1,7 @@
 # Codespaces
 
 :::danger
-Codespaces is not yet fully compatile with our new build and developer environment system, [Nix](./nix).
+Codespaces is not yet fully compatible with our new build and developer environment system, [Nix](./nix).
 The recommended approach is to follow our [Nix Guide](./nix) and work locally for now.
 :::
 
