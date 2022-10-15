@@ -266,6 +266,32 @@ jobs:
       - run: |
           cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#spell-check --no-update-lock-file --show-trace -L
 
+  docs-check:
+    name: "Mdbook check"
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-mdbook-check-${{ github.ref }}
+      cancel-in-progress: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+          echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+      - run: |
+          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#docs-static --no-update-lock-file --show-trace -L
+
   hadolint-check:
     name: "Dockerfiles check"
     runs-on:
@@ -1018,6 +1044,7 @@ jobs:
         - check-simnode
         - benchmarks-check
         - spell-check
+        - docs-check
         - hadolint-check
       steps:
         - run: echo "Goblins allow your work to see the light"
