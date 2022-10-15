@@ -1018,7 +1018,6 @@ jobs:
         - check-simnode
         - benchmarks-check
         - spell-check
-        - mdbook-check
         - hadolint-check
       steps:
         - run: echo "Goblins allow your work to see the light"
