@@ -619,7 +619,7 @@
             inherit frontend-static-firebase;
             inherit frontend-pablo-server;
             inherit frontend-picasso-server;
-            
+
             docs-static = npm-bp.buildNpmPackage {
               src = ./docs;
               npmBuild = "npm run build";
