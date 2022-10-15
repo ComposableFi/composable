@@ -4479,6 +4479,7 @@ name = "grandpa-light-client"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "env_logger",
  "finality-grandpa",
  "frame-support",
  "futures 0.3.24",
@@ -4489,6 +4490,7 @@ dependencies = [
  "hex-literal",
  "jsonrpsee-ws-client 0.14.0",
  "light-client-common",
+ "log 0.4.17",
  "parity-scale-codec",
  "polkadot-core-primitives",
  "primitive-types",
@@ -5330,6 +5332,7 @@ dependencies = [
  "anyhow",
  "beefy-prover",
  "derive_more",
+ "env_logger",
  "finality-grandpa",
  "frame-support",
  "futures 0.3.24",
@@ -5343,6 +5346,7 @@ dependencies = [
  "ibc-proto",
  "jsonrpsee-ws-client 0.14.0",
  "light-client-common",
+ "log 0.4.17",
  "parity-scale-codec",
  "primitive-types",
  "prost 0.10.4",

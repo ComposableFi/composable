@@ -278,13 +278,6 @@ where
 		.query_beefy_mmr_update_proof(signed_commitment, &beefy_client_state)
 		.await?;
 
-	for event in events.iter() {
-		if source.sender.send(event.clone()).is_err() {
-			log::trace!("Failed to push {event:?} to stream, no active receiver found");
-			break
-		}
-	}
-
 	let update_header = {
 		let msg = MsgUpdateAnyClient::<LocalClientTypes> {
 			client_id: source.client_id(),
@@ -328,7 +321,7 @@ where
 	<T::ExtrinsicParams as ExtrinsicParams<T::Index, T::Hash>>::OtherParams:
 		From<BaseExtrinsicParamsBuilder<T, AssetTip>> + Send + Sync,
 {
-	let justification = match finality_event {
+	let mut justification = match finality_event {
 		FinalityEvent::Grandpa(justification) => justification,
 		_ => panic!("Expected grandpa finality event"),
 	};
@@ -342,13 +335,19 @@ where
 	let client_state = AnyClientState::try_from(client_state)
 		.map_err(|_| Error::Custom("Failed to decode client state".to_string()))?;
 
-	let client_state = match &client_state {
+	let mut client_state = match client_state {
 		AnyClientState::Grandpa(client_state) => client_state,
 		c => Err(Error::ClientStateRehydration(format!(
 			"Expected AnyClientState::Grandpa found: {:?}",
 			c
 		)))?,
 	};
+
+    client_state.current_authorities.drain(..);
+    dbg!(&client_state);
+    justification.commit.precommits.drain(..);
+    dbg!(&justification.commit);
+
 
 	if justification.commit.target_number <= client_state.latest_relay_height {
 		Err(anyhow!(
@@ -461,6 +460,7 @@ where
 			})?;
 
 	let authority_set_changed_scheduled = find_scheduled_change(&target).is_some();
+    dbg!(&authority_set_changed_scheduled);
 	// if validator set has changed this is a mandatory update
 	let update_type =
 		match authority_set_changed_scheduled || timeout_update_required || is_update_required {
@@ -472,13 +472,6 @@ where
 		finality_proof: finality_proof.into(),
 		parachain_headers: parachain_headers.into(),
 	};
-
-	for event in events.iter() {
-		if source.sender.send(event.clone()).is_err() {
-			log::trace!("Failed to push {event:?} to stream, no active receiver found");
-			break
-		}
-	}
 
 	let update_header = {
 		let msg = MsgUpdateAnyClient::<LocalClientTypes> {

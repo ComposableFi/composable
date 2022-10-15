@@ -188,12 +188,13 @@ where
 			.await
 			.unwrap()
 			.unwrap();
+        dbg!(&validation_data.relay_parent_number);
 		let previous_finalized_height =
 			validation_data.relay_parent_number.min(client_state.latest_relay_height);
 
 		let session_end = self.session_end_for_block(previous_finalized_height).await?;
 
-		if latest_finalized_height > session_end {
+        if client_state.latest_relay_height != session_end && latest_finalized_height > session_end {
 			latest_finalized_height = session_end
 		}
 
@@ -208,11 +209,15 @@ where
 		.ok_or_else(|| anyhow!("No justification found for block: {:?}", latest_finalized_height))?
 		.0;
 		let mut finality_proof = FinalityProof::<H>::decode(&mut &encoded[..])?;
-		let justification =
+		let mut justification =
 			GrandpaJustification::<H>::decode(&mut &finality_proof.justification[..])?;
+        justification.commit.precommits.drain(..);
+
+        dbg!(&justification.commit);
 
 		// sometimes we might get a justification for latest_finalized_height - 1, sigh
 		let latest_finalized_height = u32::from(justification.commit.target_number);
+        finality_proof.block = justification.commit.target_hash;
 
 		let start = self
 			.relay_client

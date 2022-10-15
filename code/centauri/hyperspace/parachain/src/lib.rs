@@ -22,7 +22,6 @@ use beefy_light_client_primitives::{ClientState, MmrUpdateProof};
 use beefy_prover::Prover;
 use ibc::{
 	core::ics24_host::identifier::{ChannelId, ClientId, PortId},
-	events::IbcEvent,
 };
 use ics11_beefy::client_message::ParachainHeader;
 use pallet_mmr_primitives::BatchProof;
@@ -37,7 +36,6 @@ use subxt::{
 	ext::sp_runtime::{generic::Era, traits::Header as HeaderT, MultiSigner},
 	tx::{AssetTip, BaseExtrinsicParamsBuilder, ExtrinsicParams},
 };
-use tokio::sync::broadcast::{self, Sender};
 
 use crate::utils::{fetch_max_extrinsic_weight, unsafe_cast_to_jsonrpsee_client};
 use primitives::KeyProvider;
@@ -81,8 +79,6 @@ pub struct ParachainClient<T: subxt::Config> {
 	pub key_type_id: KeyTypeId,
 	/// used for encoding relayer address.
 	pub ss58_version: Ss58AddressFormat,
-	/// ibc event stream sender
-	pub sender: Sender<IbcEvent>,
 	/// the maximum extrinsic weight allowed by this client
 	pub max_extrinsic_weight: u64,
 	/// Channels cleared for packet relay
@@ -185,7 +181,6 @@ where
 		})
 		.await?;
 
-		let (sender, _) = broadcast::channel(32);
 		let max_extrinsic_weight = fetch_max_extrinsic_weight(&para_client).await?;
 
 		let key_store: SyncCryptoStorePtr = Arc::new(KeyStore::new());
@@ -228,7 +223,6 @@ where
 			public_key,
 			key_store,
 			key_type_id,
-			sender,
 			max_extrinsic_weight,
 			para_ws_client,
 			relay_ws_client,

@@ -21,7 +21,7 @@
 
 extern crate alloc;
 
-use alloc::vec;
+use alloc::{vec, vec::Vec};
 use anyhow::anyhow;
 use codec::{Decode, Encode};
 use finality_grandpa::Chain;
@@ -61,10 +61,14 @@ where
 		.max_by_key(|h| *h.number())
 		.ok_or_else(|| anyhow!("Unknown headers can't be empty!"))?;
 
+	let hashes = finality_proof.unknown_headers.iter().map(|h| h.hash()).collect::<Vec<_>>();
+	log::trace!(target: "grandpa-verifier", "Unknown hashes: {hashes:#?}");
+
 	// this is illegal
 	if target.hash() != finality_proof.block {
 		Err(anyhow!("Latest finalized block should be highest block in unknown_headers"))?;
 	}
+
 	let from = finality_proof
 		.unknown_headers
 		.iter()
@@ -73,13 +77,15 @@ where
 	let finalized = headers
 		.ancestry(from.hash(), target.hash())
 		.map_err(|_| anyhow!("Invalid ancestry!"))?;
+	log::trace!(target: "grandpa-verifier", "finalized: {finalized:#?}");
+	log::trace!(target: "grandpa-verifier", "Parachain headers associated relay chain headers: {:#?}", parachain_headers.keys().collect::<Vec<_>>());
 
 	// 2. verify justification.
 	let justification = GrandpaJustification::<H>::decode(&mut &finality_proof.justification[..])?;
 	justification.verify::<Host>(client_state.current_set_id, &client_state.current_authorities)?;
-	let mut para_heights = vec![];
 
 	// 3. verify state proofs of parachain headers in finalized relay chain headers.
+	let mut para_heights = vec![];
 	for hash in finalized {
 		let relay_chain_header =
 			headers.header(&hash).expect("Headers have been checked by AncestryChain; qed");

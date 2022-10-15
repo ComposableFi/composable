@@ -34,8 +34,12 @@ pub struct JustificationNotification(sp_core::Bytes);
 
 #[tokio::test]
 async fn follow_grandpa_justifications() {
-	let relay_ws_url = std::env::var("NODE_ENDPOINT").unwrap_or("ws://127.0.0.1:9944".to_string());
+	env_logger::builder()
+		.filter_module("grandpa", log::LevelFilter::Trace)
+		.format_module_path(false)
+		.init();
 
+	let relay_ws_url = std::env::var("NODE_ENDPOINT").unwrap_or("ws://127.0.0.1:9944".to_string());
 	let para_ws_url =
 		std::env::var("PARA_NODE_ENDPOINT").unwrap_or("ws://127.0.0.1:9188".to_string());
 
@@ -89,7 +93,6 @@ async fn follow_grandpa_justifications() {
 			continue
 		}
 
-		println!("========= New Justification =========");
 		println!("current_set_id: {}", client_state.current_set_id);
 		println!(
 			"For relay chain header: Hash({:?}), Number({})",

@@ -57,10 +57,13 @@ pub type Justification = GrandpaJustification<RelayChainHeader>;
 
 #[tokio::test]
 async fn test_continuous_update_of_grandpa_client() {
+    env_logger::builder()
+    .filter_module("grandpa", log::LevelFilter::Trace)
+    .format_module_path(false)
+    .init();
+    
 	let client_id = ClientId::new(&ClientState::<HostFunctionsManager>::client_type(), 0).unwrap();
-
 	let chain_start_height = Height::new(1, 11);
-
 	let mut ctx = MockContext::<MockClientTypes>::new(
 		ChainId::new("mockgaiaA".to_string(), 1),
 		MockHostType::Mock,
@@ -268,10 +271,12 @@ async fn test_continuous_update_of_grandpa_client() {
 							ctx.latest_client_states(&client_id).clone()
 						);
 						for height in header_numbers {
-							let cs = ctx.consensus_state(
-								&client_id,
-								Height::new(prover.para_id as u64, height as u64),
-							).ok();
+							let cs = ctx
+								.consensus_state(
+									&client_id,
+									Height::new(prover.para_id as u64, height as u64),
+								)
+								.ok();
 							dbg!((height, cs.is_some()));
 						}
 						println!(
