@@ -96,10 +96,7 @@ pub mod pallet {
 			InstantiateInput, MigrateInput, QueryInput, ReplyInput,
 		},
 		memory::PointerOf,
-		system::{
-			cosmwasm_system_entrypoint, cosmwasm_system_query, cosmwasm_system_run, CosmwasmCodeId,
-			CosmwasmContractMeta,
-		},
+		system::{cosmwasm_system_query, CosmwasmCodeId, CosmwasmContractMeta},
 		vm::VmMessageCustomOf,
 	};
 	use cosmwasm_vm_wasmi::{host_functions, new_wasmi_vm, WasmiImportResolver, WasmiVM};
@@ -425,16 +422,10 @@ pub mod pallet {
 				CodeIdentifier::CodeHash(code_hash) =>
 					CodeHashToId::<T>::try_get(code_hash).map_err(|_| Error::<T>::CodeNotFound)?,
 			};
-			let outcome = Self::do_extrinsic_instantiate(
-				&mut shared,
-				who,
-				code_id,
-				&salt,
-				admin,
-				label,
-				funds,
-				message,
-			)
+			let outcome = EntryPointCaller::<InstantiateInput>::setup(
+				who, code_id, &salt, admin, label, &message,
+			)?
+			.call(&mut shared, funds, message)
 			.map(|_| ());
 			Self::refund_gas(outcome, gas, shared.gas.remaining())
 		}
@@ -463,7 +454,11 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
-			let outcome = Self::do_extrinsic_execute(&mut shared, who, contract, funds, message);
+			let outcome = EntryPointCaller::<ExecuteInput>::setup(who, contract)?.call(
+				&mut shared,
+				funds,
+				message,
+			);
 			Self::refund_gas(outcome, gas, shared.gas.remaining())
 		}
 
@@ -497,7 +492,7 @@ pub mod pallet {
 					CodeHashToId::<T>::try_get(&code_hash).map_err(|_| Error::<T>::CodeNotFound)?,
 			};
 			let outcome = EntryPointCaller::<MigrateInput>::setup(who, contract, new_code_id)?
-				.call(&mut shared, message);
+				.call(&mut shared, Default::default(), message);
 			Self::refund_gas(outcome, gas, shared.gas.remaining())
 		}
 	}
@@ -533,42 +528,6 @@ pub mod pallet {
 			)
 		}
 
-		/// Setup pallet state for a new contract.
-		/// This is called prior to calling the `instantiate` export of the contract.
-		pub(crate) fn do_instantiate_phase1(
-			instantiator: AccountIdOf<T>,
-			code_id: CosmwasmCodeId,
-			salt: &[u8],
-			admin: Option<AccountIdOf<T>>,
-			label: ContractLabelOf<T>,
-			message: &[u8],
-		) -> Result<(AccountIdOf<T>, ContractInfoOf<T>), Error<T>> {
-			let code_hash = CodeIdToInfo::<T>::get(code_id)
-				.ok_or(Error::<T>::CodeNotFound)?
-				.pristine_code_hash;
-			let contract = Self::derive_contract_address(&instantiator, salt, code_hash, message);
-			ensure!(
-				!ContractToInfo::<T>::contains_key(&contract),
-				Error::<T>::ContractAlreadyExists
-			);
-			let nonce = CurrentNonce::<T>::increment().map_err(|_| Error::<T>::NonceOverflow)?;
-			let trie_id = Self::derive_contract_trie_id(&contract, nonce);
-			let contract_info =
-				ContractInfoOf::<T> { instantiator, code_id, trie_id, admin, label };
-			ContractToInfo::<T>::insert(&contract, &contract_info);
-			CodeIdToInfo::<T>::try_mutate(code_id, |entry| -> Result<(), Error<T>> {
-				let code_info = entry.as_mut().ok_or(Error::<T>::CodeNotFound)?;
-				code_info.refcount =
-					code_info.refcount.checked_add(1).ok_or(Error::<T>::RefcountOverflow)?;
-				Ok(())
-			})?;
-			Self::deposit_event(Event::<T>::Instantiated {
-				contract: contract.clone(),
-				info: contract_info.clone(),
-			});
-			Ok((contract, contract_info))
-		}
-
 		/// Create the shared VM state. Including readonly stack, VM depth, gas metering limits and
 		/// code cache.
 		///
@@ -588,55 +547,6 @@ pub mod pallet {
 				gas: Gas::new(T::MaxFrames::get(), gas),
 				cache: CosmwasmVMCache { code: Default::default() },
 			}
-		}
-
-		pub(crate) fn do_extrinsic_instantiate(
-			shared: &mut CosmwasmVMShared,
-			instantiator: AccountIdOf<T>,
-			code_id: CosmwasmCodeId,
-			salt: &[u8],
-			admin: Option<AccountIdOf<T>>,
-			label: ContractLabelOf<T>,
-			funds: FundsOf<T>,
-			message: ContractMessageOf<T>,
-		) -> Result<AccountIdOf<T>, CosmwasmVMError<T>> {
-			let (contract, info) = Self::do_instantiate_phase1(
-				instantiator.clone(),
-				code_id,
-				salt,
-				admin,
-				label,
-				&message,
-			)?;
-			Self::do_extrinsic_dispatch(
-				shared,
-				EntryPoint::Instantiate,
-				instantiator,
-				contract.clone(),
-				info,
-				funds,
-				|vm| cosmwasm_system_entrypoint::<InstantiateInput, _>(vm, &message),
-			)?;
-			Ok(contract)
-		}
-
-		pub(crate) fn do_extrinsic_execute(
-			shared: &mut CosmwasmVMShared,
-			sender: AccountIdOf<T>,
-			contract: AccountIdOf<T>,
-			funds: FundsOf<T>,
-			message: ContractMessageOf<T>,
-		) -> Result<(), CosmwasmVMError<T>> {
-			let info = Self::contract_info(&contract)?;
-			Self::do_extrinsic_dispatch(
-				shared,
-				EntryPoint::Execute,
-				sender,
-				contract,
-				info,
-				funds,
-				|vm| cosmwasm_system_entrypoint::<ExecuteInput, _>(vm, &message),
-			)
 		}
 
 		/// Wrapper around [`Pallet::<T>::cosmwasm_call`] for extrinsics.
@@ -1358,7 +1268,7 @@ pub mod pallet {
 			message: &[u8],
 			event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
 		) -> Result<Option<cosmwasm_minimal_std::Binary>, CosmwasmVMError<T>> {
-			let (contract, info) = Pallet::<T>::do_instantiate_phase1(
+			EntryPointCaller::<InstantiateInput>::setup(
 				vm.contract_address.clone().into_inner(),
 				code_id,
 				&[],
@@ -1369,15 +1279,8 @@ pub mod pallet {
 					.try_into()
 					.map_err(|_| crate::Error::<T>::LabelTooBig)?,
 				message,
-			)?;
-			Pallet::<T>::cosmwasm_call(
-				vm.shared,
-				vm.contract_address.clone().into_inner(),
-				contract,
-				info,
-				funds,
-				|vm| cosmwasm_system_run::<InstantiateInput, _>(vm, message, event_handler),
-			)
+			)?
+			.continue_run(vm.shared, funds, message, event_handler)
 		}
 
 		pub(crate) fn do_continue_execute<'a>(
@@ -1387,11 +1290,11 @@ pub mod pallet {
 			message: &[u8],
 			event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
 		) -> Result<Option<cosmwasm_minimal_std::Binary>, CosmwasmVMError<T>> {
-			let sender = vm.contract_address.clone().into_inner();
-			let info = Pallet::<T>::contract_info(&contract)?;
-			Pallet::<T>::cosmwasm_call(vm.shared, sender, contract, info, funds, |vm| {
-				cosmwasm_system_run::<ExecuteInput, _>(vm, message, event_handler)
-			})
+			EntryPointCaller::<ExecuteInput>::setup(
+				vm.contract_address.clone().into_inner(),
+				contract,
+			)?
+			.continue_run(vm.shared, funds, message, event_handler)
 		}
 
 		pub(crate) fn do_continue_migrate<'a>(
@@ -1400,17 +1303,13 @@ pub mod pallet {
 			message: &[u8],
 			event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
 		) -> Result<Option<cosmwasm_minimal_std::Binary>, CosmwasmVMError<T>> {
-			let sender = vm.contract_address.clone().into_inner();
-			let info = Pallet::<T>::contract_info(&contract)?;
-			Pallet::<T>::cosmwasm_call(
-				vm.shared,
-				sender,
+			let CosmwasmContractMeta { code_id, .. } = Self::do_running_contract_meta(vm);
+			EntryPointCaller::<MigrateInput>::setup(
+				vm.contract_address.clone().into_inner(),
 				contract,
-				info,
-				// Can't move funds in migration.
-				Default::default(),
-				|vm| cosmwasm_system_run::<MigrateInput, _>(vm, message, event_handler),
-			)
+				code_id,
+			)?
+			.continue_run(vm.shared, Default::default(), message, event_handler)
 		}
 
 		pub(crate) fn do_query_info(
@@ -1515,16 +1414,15 @@ pub mod pallet {
 			.try_into()
 			.map_err(|_| CosmwasmVMError::Rpc(String::from("'message' is too large")))?;
 		let mut shared = Pallet::<T>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
-		Pallet::<T>::do_extrinsic_instantiate(
-			&mut shared,
+		EntryPointCaller::<InstantiateInput>::setup(
 			instantiator,
 			code_id,
 			&salt,
 			admin,
 			label,
-			funds,
-			message,
-		)
+			&message,
+		)?
+		.call(&mut shared, funds, message)
 	}
 
 	pub fn execute<T: Config>(
@@ -1535,7 +1433,11 @@ pub mod pallet {
 		message: ContractMessageOf<T>,
 	) -> Result<(), CosmwasmVMError<T>> {
 		let mut shared = Pallet::<T>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
-		Pallet::<T>::do_extrinsic_execute(&mut shared, executor, contract, funds, message)
+		EntryPointCaller::<ExecuteInput>::setup(executor, contract)?.call(
+			&mut shared,
+			funds,
+			message,
+		)
 	}
 
 	impl<T: Config> VMPallet for T {

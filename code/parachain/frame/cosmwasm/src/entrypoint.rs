@@ -1,14 +1,18 @@
 use crate::{
-	runtimes::wasmi::{CosmwasmVMError, CosmwasmVMShared},
+	runtimes::wasmi::{CosmwasmVM, CosmwasmVMError, CosmwasmVMShared},
 	AccountIdOf, CodeHashToId, CodeIdToInfo, Config, ContractInfoOf, ContractLabelOf,
 	ContractMessageOf, ContractToInfo, CurrentNonce, EntryPoint, Error, Event, FundsOf,
 	InstrumentedCode, Pallet, PristineCode,
 };
 use composable_support::abstractions::utils::increment::Increment;
+use core::marker::PhantomData;
+use cosmwasm_minimal_std::Coin;
 use cosmwasm_vm::{
-	executor::{InstantiateInput, MigrateInput},
-	system::{cosmwasm_system_entrypoint, CosmwasmCodeId},
+	executor::{ExecuteInput, InstantiateInput, MigrateInput},
+	system::{cosmwasm_system_entrypoint, cosmwasm_system_run, CosmwasmCallVM, CosmwasmCodeId},
+	vm::VMBase,
 };
+use cosmwasm_vm_wasmi::WasmiVM;
 use frame_support::{
 	ensure,
 	traits::{Get, ReservableCurrency},
@@ -19,25 +23,24 @@ pub struct EntryPointCaller<S: CallerState> {
 	state: S,
 }
 
-pub struct MigrateCall<T: Config> {
-	contract_info: ContractInfoOf<T>,
-	migrator: AccountIdOf<T>,
+pub struct Dispatchable<I, O, T: Config> {
+	sender: AccountIdOf<T>,
 	contract: AccountIdOf<T>,
+	contract_info: ContractInfoOf<T>,
+	entry_point: EntryPoint,
+	output: O,
+	marker: PhantomData<I>,
 }
 
 pub trait CallerState {}
 
 impl CallerState for MigrateInput {}
-impl<T: Config> CallerState for MigrateCall<T> {}
 
 impl CallerState for InstantiateInput {}
-impl<T: Config> CallerState for InstantiateCall<T> {}
 
-pub struct InstantiateCall<T: Config> {
-	instantiator: AccountIdOf<T>,
-	contract: AccountIdOf<T>,
-	contract_info: ContractInfoOf<T>,
-}
+impl CallerState for ExecuteInput {}
+
+impl<I, O, T: Config> CallerState for Dispatchable<I, O, T> {}
 
 impl EntryPointCaller<InstantiateInput> {
 	pub(crate) fn setup<T: Config>(
@@ -47,7 +50,7 @@ impl EntryPointCaller<InstantiateInput> {
 		admin: Option<AccountIdOf<T>>,
 		label: ContractLabelOf<T>,
 		message: &[u8],
-	) -> Result<EntryPointCaller<InstantiateCall<T>>, Error<T>> {
+	) -> Result<EntryPointCaller<Dispatchable<InstantiateInput, AccountIdOf<T>, T>>, Error<T>> {
 		let code_hash = CodeIdToInfo::<T>::get(code_id)
 			.ok_or(Error::<T>::CodeNotFound)?
 			.pristine_code_hash;
@@ -74,11 +77,22 @@ impl EntryPointCaller<InstantiateInput> {
 			contract: contract.clone(),
 			info: contract_info.clone(),
 		});
-		Ok(EntryPointCaller { state: InstantiateCall { instantiator, contract, contract_info } })
+		Ok(EntryPointCaller {
+			state: Dispatchable {
+				sender: instantiator,
+				contract: contract.clone(),
+				contract_info,
+				entry_point: EntryPoint::Instantiate,
+				output: contract,
+				marker: PhantomData,
+			},
+		})
 	}
 }
 
-impl<T> EntryPointCaller<InstantiateCall<T>>
+pub type VmErrorOf<T> = <T as VMBase>::Error;
+
+impl<I, O, T> EntryPointCaller<Dispatchable<I, O, T>>
 where
 	T: Config,
 {
@@ -87,50 +101,70 @@ where
 		shared: &mut CosmwasmVMShared,
 		funds: FundsOf<T>,
 		message: ContractMessageOf<T>,
-	) -> Result<AccountIdOf<T>, CosmwasmVMError<T>> {
-		let contract = self.state.contract;
+	) -> Result<O, CosmwasmVMError<T>>
+	where
+		for<'x> WasmiVM<CosmwasmVM<'x, T>>: CosmwasmCallVM<I>,
+		for<'x> VmErrorOf<WasmiVM<CosmwasmVM<'x, T>>>: Into<CosmwasmVMError<T>>,
+	{
 		Pallet::<T>::do_extrinsic_dispatch(
 			shared,
-			EntryPoint::Instantiate,
-			self.state.instantiator,
-			contract.clone(),
-			self.state.contract_info,
-			funds,
-			|vm| cosmwasm_system_entrypoint::<InstantiateInput, _>(vm, &message),
-		)?;
-		Ok(contract)
-	}
-}
-
-impl<T> EntryPointCaller<MigrateCall<T>>
-where
-	T: Config,
-{
-	pub(crate) fn call(
-		self,
-		shared: &mut CosmwasmVMShared,
-		message: ContractMessageOf<T>,
-	) -> Result<(), CosmwasmVMError<T>> {
-		Pallet::<T>::do_extrinsic_dispatch(
-			shared,
-			EntryPoint::Migrate,
-			self.state.migrator,
+			self.state.entry_point,
+			self.state.sender,
 			self.state.contract,
 			self.state.contract_info,
-			Default::default(),
-			|vm| cosmwasm_system_entrypoint::<MigrateInput, _>(vm, &message),
+			funds,
+			|vm| cosmwasm_system_entrypoint::<I, _>(vm, &message).map_err(Into::into),
+		)?;
+		Ok(self.state.output)
+	}
+
+	pub(crate) fn continue_run(
+		self,
+		shared: &mut CosmwasmVMShared,
+		funds: Vec<Coin>,
+		message: &[u8],
+		event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
+	) -> Result<Option<cosmwasm_minimal_std::Binary>, CosmwasmVMError<T>>
+	where
+		for<'x> WasmiVM<CosmwasmVM<'x, T>>: CosmwasmCallVM<I>,
+		for<'x> VmErrorOf<WasmiVM<CosmwasmVM<'x, T>>>: Into<CosmwasmVMError<T>>,
+	{
+		Pallet::<T>::cosmwasm_call(
+			shared,
+			self.state.sender,
+			self.state.contract,
+			self.state.contract_info,
+			funds,
+			|vm| cosmwasm_system_run::<I, _>(vm, message, event_handler).map_err(Into::into),
 		)
 	}
 }
 
+impl EntryPointCaller<ExecuteInput> {
+	pub(crate) fn setup<T: Config>(
+		executor: AccountIdOf<T>,
+		contract: AccountIdOf<T>,
+	) -> Result<EntryPointCaller<Dispatchable<ExecuteInput, (), T>>, Error<T>> {
+		let contract_info = Pallet::<T>::contract_info(&contract)?;
+		Ok(EntryPointCaller {
+			state: Dispatchable {
+				entry_point: EntryPoint::Execute,
+				sender: executor,
+				contract,
+				contract_info,
+				output: (),
+				marker: PhantomData,
+			},
+		})
+	}
+}
+
 impl EntryPointCaller<MigrateInput> {
-	/// Setup for a contract migration.
-	/// This is called prior to calling the `migrate` export of the contract.
 	pub(crate) fn setup<T: Config>(
 		migrator: AccountIdOf<T>,
 		contract: AccountIdOf<T>,
 		new_code_id: CosmwasmCodeId,
-	) -> Result<EntryPointCaller<MigrateCall<T>>, Error<T>> {
+	) -> Result<EntryPointCaller<Dispatchable<MigrateInput, (), T>>, Error<T>> {
 		CodeIdToInfo::<T>::try_mutate_exists(new_code_id, |entry| -> Result<(), Error<T>> {
 			let code_info = entry.as_mut().ok_or(Error::<T>::CodeNotFound)?;
 			code_info.refcount =
@@ -173,6 +207,15 @@ impl EntryPointCaller<MigrateInput> {
 			to: new_code_id,
 		});
 
-		Ok(EntryPointCaller { state: MigrateCall { contract_info, contract, migrator } })
+		Ok(EntryPointCaller {
+			state: Dispatchable {
+				sender: migrator,
+				contract,
+				contract_info,
+				entry_point: EntryPoint::Migrate,
+				output: (),
+				marker: PhantomData,
+			},
+		})
 	}
 }
