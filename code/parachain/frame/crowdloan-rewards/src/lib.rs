@@ -495,7 +495,7 @@ pub mod pallet {
 							T::LockId::get(),
 							reward_account,
 							reward.claimed,
-							WithdrawReasons::RESERVE,
+							WithdrawReasons::all(),
 						);
 					}
 
