@@ -188,13 +188,16 @@ where
 			.await
 			.unwrap()
 			.unwrap();
-        dbg!(&validation_data.relay_parent_number);
+		// This ensures we don't miss any parachain blocks.
 		let previous_finalized_height =
 			validation_data.relay_parent_number.min(client_state.latest_relay_height);
 
-		let session_end = self.session_end_for_block(previous_finalized_height).await?;
+		// we want to know if we've missed any authority set changes since we last updated the
+		// relay chain on the light client.
+		let session_end = self.session_end_for_block(client_state.latest_relay_height).await?;
 
-        if client_state.latest_relay_height != session_end && latest_finalized_height > session_end {
+		if client_state.latest_relay_height != session_end && latest_finalized_height > session_end
+		{
 			latest_finalized_height = session_end
 		}
 
@@ -209,15 +212,12 @@ where
 		.ok_or_else(|| anyhow!("No justification found for block: {:?}", latest_finalized_height))?
 		.0;
 		let mut finality_proof = FinalityProof::<H>::decode(&mut &encoded[..])?;
-		let mut justification =
+		let justification =
 			GrandpaJustification::<H>::decode(&mut &finality_proof.justification[..])?;
-        justification.commit.precommits.drain(..);
-
-        dbg!(&justification.commit);
 
 		// sometimes we might get a justification for latest_finalized_height - 1, sigh
 		let latest_finalized_height = u32::from(justification.commit.target_number);
-        finality_proof.block = justification.commit.target_hash;
+		finality_proof.block = justification.commit.target_hash;
 
 		let start = self
 			.relay_client
@@ -234,7 +234,7 @@ where
 			.ok_or_else(|| anyhow!("Failed to fetch previous finalized hash + 1"))?;
 
 		let mut unknown_headers = vec![];
-		for height in previous_finalized_height..=latest_finalized_height {
+		for height in previous_finalized_height..=latest_finalized_height {`
 			let hash = self.relay_client.rpc().block_hash(Some(height.into())).await?.ok_or_else(
 				|| anyhow!("Failed to fetch block has for height {previous_finalized_height}"),
 			)?;

@@ -5,6 +5,7 @@ macro_rules! process_finality_event {
 			// stream closed
 			None => break,
 			Some(finality_event) => {
+				log::info!("=======================================================");
 				log::info!("Received finality notification from {}", $source.name());
 				let (msg_update_client, events, update_type) =
 					match $source.query_latest_ibc_events(finality_event, &$sink).await {

@@ -20,9 +20,7 @@ use serde::Deserialize;
 
 use beefy_light_client_primitives::{ClientState, MmrUpdateProof};
 use beefy_prover::Prover;
-use ibc::{
-	core::ics24_host::identifier::{ChannelId, ClientId, PortId},
-};
+use ibc::core::ics24_host::identifier::{ChannelId, ClientId, PortId};
 use ics11_beefy::client_message::ParachainHeader;
 use pallet_mmr_primitives::BatchProof;
 use sp_core::{ecdsa, ed25519, sr25519, Bytes, Pair, H256};

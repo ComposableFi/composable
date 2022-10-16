@@ -106,12 +106,9 @@ pub async fn query_latest_ibc_events_with_beefy<T, C>(
 where
 	T: Config + Send + Sync,
 	C: Chain,
-	u32: From<<<T as Config>::Header as HeaderT>::Number>,
-	u32: From<<T as Config>::BlockNumber>,
-	ParachainClient<T>: Chain,
-	ParachainClient<T>: KeyProvider,
+	u32: From<<<T as Config>::Header as HeaderT>::Number> + From<<T as Config>::BlockNumber>,
+	ParachainClient<T>: Chain + KeyProvider,
 	<T::Signature as Verify>::Signer: From<MultiSigner> + IdentifyAccount<AccountId = T::AccountId>,
-	MultiSigner: From<MultiSigner>,
 	<T as Config>::Address: From<<T as Config>::AccountId>,
 	T::Signature: From<MultiSignature>,
 	T::BlockNumber: From<u32> + Display + Ord + sp_runtime::traits::Zero + One,
@@ -303,12 +300,9 @@ pub async fn query_latest_ibc_events_with_grandpa<T, C>(
 where
 	T: Config + Send + Sync,
 	C: Chain,
-	u32: From<<<T as Config>::Header as HeaderT>::Number>,
-	u32: From<<T as Config>::BlockNumber>,
-	ParachainClient<T>: Chain,
-	ParachainClient<T>: KeyProvider,
+	u32: From<<<T as Config>::Header as HeaderT>::Number> + From<<T as Config>::BlockNumber>,
+	ParachainClient<T>: Chain + KeyProvider,
 	<T::Signature as Verify>::Signer: From<MultiSigner> + IdentifyAccount<AccountId = T::AccountId>,
-	MultiSigner: From<MultiSigner>,
 	<T as Config>::Address: From<<T as Config>::AccountId>,
 	T::Signature: From<MultiSignature>,
 	T::BlockNumber: From<u32> + Display + Ord + sp_runtime::traits::Zero + One,
@@ -321,7 +315,7 @@ where
 	<T::ExtrinsicParams as ExtrinsicParams<T::Index, T::Hash>>::OtherParams:
 		From<BaseExtrinsicParamsBuilder<T, AssetTip>> + Send + Sync,
 {
-	let mut justification = match finality_event {
+	let justification = match finality_event {
 		FinalityEvent::Grandpa(justification) => justification,
 		_ => panic!("Expected grandpa finality event"),
 	};
@@ -335,19 +329,13 @@ where
 	let client_state = AnyClientState::try_from(client_state)
 		.map_err(|_| Error::Custom("Failed to decode client state".to_string()))?;
 
-	let mut client_state = match client_state {
+	let client_state = match client_state {
 		AnyClientState::Grandpa(client_state) => client_state,
 		c => Err(Error::ClientStateRehydration(format!(
 			"Expected AnyClientState::Grandpa found: {:?}",
 			c
 		)))?,
 	};
-
-    client_state.current_authorities.drain(..);
-    dbg!(&client_state);
-    justification.commit.precommits.drain(..);
-    dbg!(&justification.commit);
-
 
 	if justification.commit.target_number <= client_state.latest_relay_height {
 		Err(anyhow!(
@@ -460,7 +448,6 @@ where
 			})?;
 
 	let authority_set_changed_scheduled = find_scheduled_change(&target).is_some();
-    dbg!(&authority_set_changed_scheduled);
 	// if validator set has changed this is a mandatory update
 	let update_type =
 		match authority_set_changed_scheduled || timeout_update_required || is_update_required {

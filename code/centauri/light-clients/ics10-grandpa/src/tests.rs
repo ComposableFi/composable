@@ -57,11 +57,11 @@ pub type Justification = GrandpaJustification<RelayChainHeader>;
 
 #[tokio::test]
 async fn test_continuous_update_of_grandpa_client() {
-    env_logger::builder()
-    .filter_module("grandpa", log::LevelFilter::Trace)
-    .format_module_path(false)
-    .init();
-    
+	env_logger::builder()
+		.filter_module("grandpa", log::LevelFilter::Trace)
+		.format_module_path(false)
+		.init();
+
 	let client_id = ClientId::new(&ClientState::<HostFunctionsManager>::client_type(), 0).unwrap();
 	let chain_start_height = Height::new(1, 11);
 	let mut ctx = MockContext::<MockClientTypes>::new(
