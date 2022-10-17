@@ -24,7 +24,7 @@ and your changes will be reflected live in the browser.
 your Codespace will transparently map the ports to your localhost so that you can access the live book at 
 `localhost:3000`.)
 
-![Book running locally](./book-running-locally.png)
+![Book running locally](/img/codespaces/book-running-locally.png)
 *So meta*
 
 ---
