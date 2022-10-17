@@ -15,7 +15,7 @@ Initially, 20% of Picasso’s native token supply was allocated to the crowdloan
 ## Picasso Crowdloan Bonuses
 
 
-![picasso_contributor_bonus](./picasso-contributor-bonus.png)
+![picasso_contributor_bonus](/img/parachains/picasso-contributor-bonus.png)
 
 
 ### Referral Bonus

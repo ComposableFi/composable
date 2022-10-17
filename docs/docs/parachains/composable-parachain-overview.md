@@ -48,7 +48,7 @@ The Composable Parachain will also integrate Centauri, our Substrate–IBC bridg
 between IBC-enabled blockchains and the Dotsama ecosystem.
 
 
-![composable_parachain_architecture](./composable-parachain-architecture.jpg)
+![composable_parachain_architecture](/img/parachains/composable-parachain-architecture.jpg)
 
 
 ## How the Composable Parachain synergizes with Picasso?
