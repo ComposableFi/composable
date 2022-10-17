@@ -1,34 +1,23 @@
 import type { NextPage } from "next";
 import Default from "@/components/Templates/Default";
-import { Box, Grid, useTheme } from "@mui/material";
+import { Box, useTheme } from "@mui/material";
 import { StakingDisconnected } from "@/components/Organisms/Staking/StakingDisconnected";
-import { useContext } from "react";
-import { ParachainContext } from "@/defi/polkadot/context/ParachainContext";
-import { useConnector } from "@integrations-lib/core";
-import { PageTitle } from "@/components";
 import { StakingConnected } from "@/components/Organisms/Staking/StakingConnected";
+import { StakingPageHeading } from "@/components/Organisms/Staking/StakingPageHeading";
+import { useDotSamaContext } from "substrate-react";
 
 const Staking: NextPage = () => {
   const theme = useTheme();
-  const { extensionStatus } = useContext(ParachainContext);
-  const { isActive } = useConnector("metamask");
-  const isDisconnected = !isActive || extensionStatus !== "connected";
+  const { extensionStatus } = useDotSamaContext();
+  const isDisconnected = extensionStatus !== "connected";
   const standardPageSize = {
-    xs: 12,
+    xs: 12
   };
 
   return (
     <Default>
       <Box flexGrow={1} sx={{ mx: "auto" }} maxWidth={1032} mt={9}>
-        <Grid container>
-          <Grid item {...standardPageSize}>
-            <PageTitle
-              title="Staking"
-              subtitle="Lock PICA to mint CHAOS, the yield bearing governance fNFT."
-              textAlign="center"
-            />
-          </Grid>
-        </Grid>
+        <StakingPageHeading />
         {isDisconnected && (
           <StakingDisconnected gridSize={standardPageSize} theme={theme} />
         )}

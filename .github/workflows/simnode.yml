@@ -10,11 +10,7 @@ on:
 
 jobs:
   simnode:
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.ref }}
       cancel-in-progress: true

@@ -105,7 +105,8 @@
       "@composable/types": ["../types/src"],
       "@composable/types/*": ["../types/src/*"],
       "@polkadot/api/augment": ["../types/src/augment-api.ts"],
-      "@polkadot/types/augment": ["../types/src/augment-types.ts"]
+      "@polkadot/types/augment": ["../types/src/augment-types.ts"],
+      "@polkadot/types/lookup": ["../types/src/types-lookup.ts"]
     },
   },
   "references": [

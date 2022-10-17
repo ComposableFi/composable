@@ -1,5 +1,5 @@
 import { ApiPromise } from "@polkadot/api";
-import { stringToU8a, u8aToHex } from "@polkadot/util";
+import { u8aToHex } from "@polkadot/util";
 import { PALLET_TYPE_ID } from "../constants";
 import { concatU8a } from "../misc";
 
@@ -11,10 +11,9 @@ export function createPabloPoolAccountId(
   parachainApi: ApiPromise,
   poolId: number
 ): any {
-  const palletTypeId = stringToU8a(PALLET_TYPE_ID);
   const palletId = parachainApi.consts.pablo.palletId.toU8a();
   const poolAccountId = parachainApi.createType("([u8; 4], [u8; 8], u64)", [
-    palletTypeId,
+    PALLET_TYPE_ID,
     palletId,
     poolId,
   ]);

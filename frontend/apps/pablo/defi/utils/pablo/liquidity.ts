@@ -1,3 +1,4 @@
+import { PabloTransactions } from "@/defi/subsquid/pools/queries";
 import { ConstantProductPool, StableSwapPool } from "@/defi/types";
 import {
   createPabloPoolAccountId,
@@ -79,18 +80,7 @@ export async function fetchAndUpdatePoolLiquidity(
 }
 
 export function calculateProvidedLiquidity(
-  transactions: {
-    baseAssetId: string;
-    baseAssetAmount: string;
-    quoteAssetAmount: string;
-    quoteAssetId: string;
-    receivedTimestamp: string;
-    transactionType: "ADD_LIQUIDITY" | "REMOVE_LIQUIDITY";
-    who: string;
-    pool: {
-      poolId: string;
-    };
-  }[]
+  transactions: PabloTransactions[]
 ): { baseAmountProvided: BigNumber; quoteAmountProvided: BigNumber } {
   let baseAmountProvided = new BigNumber(0);
   let quoteAmountProvided = new BigNumber(0);
@@ -103,14 +93,14 @@ export function calculateProvidedLiquidity(
   }
 
   transactions.forEach((tx) => {
-    if (tx.transactionType === "ADD_LIQUIDITY") {
+    if (tx.event.eventType === "ADD_LIQUIDITY") {
       baseAmountProvided = baseAmountProvided.plus(
         fromChainUnits(tx.baseAssetAmount)
       );
       quoteAmountProvided = quoteAmountProvided.plus(
         fromChainUnits(tx.quoteAssetAmount)
       );
-    } else if (tx.transactionType === "REMOVE_LIQUIDITY") {
+    } else if (tx.event.eventType === "REMOVE_LIQUIDITY") {
       baseAmountProvided = baseAmountProvided.minus(
         fromChainUnits(tx.baseAssetAmount)
       );

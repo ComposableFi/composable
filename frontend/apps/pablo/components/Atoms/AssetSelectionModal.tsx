@@ -46,7 +46,7 @@ export const AssetSelectionModal: React.FC<AssetSelectionModalProps> = ({
   const theme = useTheme();
   const [keyword, setKeyword] = React.useState<string>("");
 
-  const handleKewordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleKeywordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setKeyword(event.target.value);
   };
 
@@ -135,7 +135,7 @@ export const AssetSelectionModal: React.FC<AssetSelectionModalProps> = ({
                   fullWidth
                   value={keyword}
                   setValue={setKeyword}
-                  onChange={handleKewordChange}
+                  onChange={handleKeywordChange}
                   onKeyDown={(e) => e.stopPropagation()}
                   onClick={(e) => e.stopPropagation()}
                 />

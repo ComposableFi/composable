@@ -6,14 +6,13 @@ import {
 } from "@/defi/utils";
 import BigNumber from "bignumber.js";
 import moment from "moment";
-import { queryPoolTransactionsByType } from "../pools/queries";
-import { query24hOldTransactionByPoolQuoteAsset } from "./queries";
+import { fetchPabloTransactions } from "../auctions/helpers";
+import { querySpotPriceBeforeTimestamp } from "./queries";
 
 export function getChartLabels(
   chartSeries: [number, number][],
   chartRange: ChartRange
 ): string[] {
-
   if (chartSeries.length < MAX_CHART_LABELS) {
     return chartSeries.map((i) =>
       moment(i[0]).format(toMomentChartLabel(chartRange))
@@ -40,28 +39,24 @@ export async function fetchSwapsChart(
   let chartSeries: [number, number][] = [];
 
   try {
-    const { data, error } = await queryPoolTransactionsByType(
+    const { pabloTransactions } = await fetchPabloTransactions(
       poolId,
       "SWAP",
+      "DESC",
       250
     );
-    if (error) throw new Error(error.message);
-    let { pabloTransactions } = data;
 
     let swapTransactions = pabloTransactions.map(
-      (tx: {
-        baseAssetId: string;
-        quoteAssetId: string;
-        receivedTimestamp: string;
-        spotPrice: string;
-      }) => {
-        const { quoteAssetId, spotPrice, receivedTimestamp } = tx;
+      ({ quoteAssetId, spotPrice, pool: { calculatedTimestamp } }) => {
         let _spotPrice = new BigNumber(spotPrice);
         if (quoteAssetId !== selectedQuoteAsset) {
           _spotPrice = new BigNumber(1).div(_spotPrice);
         }
 
-        return [+receivedTimestamp, _spotPrice.toNumber()];
+        return [+calculatedTimestamp, _spotPrice.toNumber()] as [
+          number,
+          number
+        ];
       }
     );
 
@@ -80,13 +75,12 @@ export async function fetch24HourOldPrice(
   let _24HourOldPrice = new BigNumber(0);
 
   try {
-    const { data, error } = await query24hOldTransactionByPoolQuoteAsset(
+    const { data, error } = await querySpotPriceBeforeTimestamp(
       poolId,
-      Number(selectedQuoteAsset),
-      "SWAP",
-      1
+      Number(selectedQuoteAsset)
     );
     if (error) throw new Error(error.message);
+    if (!data) throw new Error("[fetch24HourOldPrice] unable to fetch subsquid data.");
     let { pabloTransactions } = data;
 
     if (pabloTransactions.length > 0) {

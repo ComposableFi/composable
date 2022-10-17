@@ -5,12 +5,13 @@
     "target": "es2020",
     "strict": true,
     "declaration": false,
-    "sourceMap": true,
+    "sourceMap": false,
+    "noEmit": true,
     "esModuleInterop": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "skipLibCheck": true,
-    "paths":{
+    "paths": {
       "@composable/*": [
         "./src/*"
       ],

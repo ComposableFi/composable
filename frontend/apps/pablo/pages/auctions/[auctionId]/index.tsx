@@ -8,117 +8,56 @@ import {
   alpha,
 } from "@mui/material";
 import Default from "@/components/Templates/Default";
-import {
-  AuctionStatusIndicator,
-  Link,
-  TabItem,
-  Tabs,
-  TabPanel,
-} from "@/components";
+import { AuctionStatusIndicator, Link } from "@/components";
 import { AuctionInformation } from "@/components/Organisms/auction/AuctionInformation";
-import { AuctionDetails } from "@/components/Organisms/auction/AuctionDetails";
 import { BuyForm } from "@/components/Organisms/auction/BuyForm";
-import { AuctionHistoriesTable } from "@/components/Organisms/auction/AuctionHistoriesTable";
 import { AuctionPriceChart } from "@/components/Organisms/auction/AuctionPriceChart";
-import { useEffect, useState } from "react";
-import { DEFAULT_NETWORK_ID, fetchSpotPrice } from "@/defi/utils";
+import { useEffect } from "react";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { useParachainApi, useSelectedAccount } from "substrate-react";
-import { useAuctionsChart } from "@/store/hooks/useAuctionsChart";
-import moment from "moment-timezone";
-import useLiquidityBootstrappingPoolStore from "@/store/useStore";
-import { useAsset } from "@/defi/hooks/assets/useAsset";
+import { useAssets } from "@/defi/hooks/assets/useAsset";
 import { useRouter } from "next/router";
+import AuctionDetailTabs from "@/components/Organisms/auction/AuctionDetailTabs";
+import moment from "moment-timezone";
+import {
+  useAuctionsSlice,
+} from "@/store/auctions/auctions.slice";
+import { useAuctionsChart } from "@/defi/hooks";
 
 const Auction: NextPage = () => {
   const theme = useTheme();
   const router = useRouter();
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
-  const {
-    pools: {
-      setLiquidityBootstrappingPoolSpotPrice,
-    },
-    resetActiveLBP,
-    auctions: { activeLBP, activeLBPStats }
-  } = useLiquidityBootstrappingPoolStore();
 
-  const baseAsset = useAsset(activeLBP.pair.base.toString())
-  const quoteAsset = useAsset(activeLBP.pair.quote.toString())
+  const { activePool, activePoolStats } = useAuctionsSlice();
+  const [baseAsset, quoteAsset] = useAssets(
+    activePool.poolId !== -1
+      ? [activePool.pair.base.toString(), activePool.pair.quote.toString()]
+      : []
+  );
 
   useEffect(() => {
     if (!selectedAccount) {
-      router.push('/auctions');
+      router.push("/auctions");
     }
   }, [router, selectedAccount]);
 
-  useEffect(() => {
-    if (parachainApi && activeLBP.poolId !== -1) {
-      const interval = setInterval(() => {
-        const pair = {
-          base: activeLBP.pair.base.toString(),
-          quote: activeLBP.pair.quote.toString()
-        }
-        fetchSpotPrice(parachainApi, pair, activeLBP.poolId).then(
-          (spotPrice) => {
-            setLiquidityBootstrappingPoolSpotPrice(
-              activeLBP.poolId,
-              spotPrice.toFixed(4)
-            );
-          }
-        );
-      }, 1000 * 60);
-
-      return () => clearInterval(interval);
-    }
-  }, [parachainApi, activeLBP.poolId, activeLBP.pair, setLiquidityBootstrappingPoolSpotPrice]);
-
-
-  const [currentTimestamp] = useState<number>(Date.now());
-
-  const isActive: boolean =
-    activeLBP.sale.start <= currentTimestamp &&
-    activeLBP.sale.end >= currentTimestamp;
-  const isEnded: boolean = activeLBP.sale.end < currentTimestamp;
-
-  const [tab, setTab] = useState(0);
-  const tabItems: TabItem[] = [
-    {
-      label: "Auction Details",
-    },
-    {
-      label: "Auction History",
-    },
-  ];
-
-  const {
-    currentPriceSeries,
-    predictedPriceSeries
-  } = useAuctionsChart(activeLBP)
-
-  const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
-    setTab(newValue);
-  };
+  const chartSeries = useAuctionsChart(
+    parachainApi,
+    activePool
+  );
 
   const breadcrumbs = [
     <Link key="pool" underline="none" color="primary" href="/auctions">
-      <Typography key="addliquidity" variant="body1">
+      <Typography key="add-liquidity" variant="body1">
         Auctions
       </Typography>
     </Link>,
-    <Typography key="addliquidity" variant="body1" color="text.primary">
+    <Typography key="add-liquidity" variant="body1" color="text.primary">
       Select Auction
     </Typography>,
   ];
-
-  const getStatusLabel = () => {
-    return isActive ? "Active" : isEnded ? "Ended" : "Starting soon";
-  };
-
-  useEffect(() => {
-    return () => {
-      resetActiveLBP();
-    };
-  }, [resetActiveLBP]);
 
   return (
     <Default breadcrumbs={breadcrumbs}>
@@ -143,9 +82,7 @@ const Auction: NextPage = () => {
                 {baseAsset?.symbol} Token Launch Auction
               </Typography>
               <AuctionStatusIndicator
-                auction={activeLBP}
-                label={getStatusLabel()}
-                LabelProps={{ variant: "subtitle1" }}
+                auction={activePool}
                 padding={theme.spacing(1, 2, 1, 1.5)}
                 borderRadius={1}
                 sx={{
@@ -161,8 +98,8 @@ const Auction: NextPage = () => {
             <AuctionInformation
               baseAsset={baseAsset}
               quoteAsset={quoteAsset}
-              stats={activeLBPStats}
-              auction={activeLBP}
+              stats={activePoolStats}
+              auction={activePool}
               mt={6}
             />
 
@@ -170,9 +107,7 @@ const Auction: NextPage = () => {
               <Grid item md={6} pr={1.75}>
                 <AuctionPriceChart
                   baseAsset={baseAsset}
-                  quoteAsset={quoteAsset}
-                  priceSeries={currentPriceSeries}
-                  predictedPriceSeries={predictedPriceSeries}
+                  chartSeries={chartSeries}
                   height="100%"
                   dateFormat={(timestamp: number | string) => {
                     return moment(timestamp).utc().format("MMM D, h:mm:ss A");
@@ -181,20 +116,12 @@ const Auction: NextPage = () => {
                 />
               </Grid>
               <Grid item md={6} pl={1.75}>
-                <BuyForm auction={activeLBP} />
+                <BuyForm auction={activePool} />
               </Grid>
             </Grid>
           </Box>
 
-          <Box mt={8}>
-            <Tabs items={tabItems} value={tab} onChange={handleTabChange} />
-            <TabPanel value={tab} index={0}>
-              <AuctionDetails stats={activeLBPStats} auction={activeLBP} baseAsset={baseAsset} quoteAsset={quoteAsset} />
-            </TabPanel>
-            <TabPanel value={tab} index={1}>
-              <AuctionHistoriesTable auction={activeLBP} baseAsset={baseAsset} quoteAsset={quoteAsset} />
-            </TabPanel>
-          </Box>
+          <AuctionDetailTabs />
         </Box>
       </Container>
     </Default>

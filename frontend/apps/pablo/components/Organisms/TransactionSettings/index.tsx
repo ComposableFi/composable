@@ -6,25 +6,26 @@ import { closeTransactionSettingsModal } from "@/stores/ui/uiSlice";
 import { validNumber } from "shared";
 import { CloseOutlined } from "@mui/icons-material";
 import {
-  useTheme,
-  Box,
-  Typography,
   alpha,
+  Box,
   Button,
   FormControl,
-  RadioGroup,
   FormControlLabel,
   Radio,
+  RadioGroup,
   Theme,
+  Typography,
+  useTheme,
 } from "@mui/material";
 import BigNumber from "bignumber.js";
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
+import { HighlightBox } from "@/components/Atoms/HighlightBox";
 
 const toleranceSuffix = "     %";
 const toleranceOptions = [0.1, 0.5, 1];
 const containerProps = (theme: Theme) => ({
   p: 4,
-  borderRadius: 2,
+  borderRadius: 1,
   sx: {
     background: theme.palette.gradient.secondary,
     boxShadow: `-1px -1px ${alpha(
@@ -35,10 +36,10 @@ const containerProps = (theme: Theme) => ({
 });
 
 export type TransactionSettingsProps = {
-  showSlippageSelection?: boolean,
-  showTransactionDeadlineSelection?: boolean,
-  applyCallback?: () => void,
-  closeCallback?: () => void,
+  showSlippageSelection?: boolean;
+  showTransactionDeadlineSelection?: boolean;
+  applyCallback?: () => void;
+  closeCallback?: () => void;
 } & Omit<ModalProps, "open">;
 
 export const TransactionSettings: React.FC<TransactionSettingsProps> = ({
@@ -51,41 +52,46 @@ export const TransactionSettings: React.FC<TransactionSettingsProps> = ({
   const theme = useTheme();
   const dispatch = useAppDispatch();
   const {
-    transactionSettings: {tolerance, deadline},
+    transactionSettings: { tolerance, deadline },
     maxTolerance,
     minTolerance,
     maxDeadline,
     minDeadline,
   } = useAppSelector((state) => state.settings);
 
-  const isModalOpen = useAppSelector((state) => (
-    state.ui.isTransactionSettingsModalOpen
-  ));
+  const isModalOpen = useAppSelector(
+    (state) => state.ui.isTransactionSettingsModalOpen
+  );
 
-  const [isToleranceFocussed, setIsToleranceFocussed] = useState<boolean>(false);
+  const [isToleranceFocussed, setIsToleranceFocussed] =
+    useState<boolean>(false);
 
-  const [toleranceStringValue, setToleranceStringValue] = useState<string>(tolerance.toString());
-  const [deadlineStringValue, setDeadlineStringValue] = useState<string>(deadline.toString());
+  const [toleranceStringValue, setToleranceStringValue] = useState<string>(
+    tolerance.toString()
+  );
+  const [deadlineStringValue, setDeadlineStringValue] = useState<string>(
+    deadline.toString()
+  );
 
   const toleranceSelected = (value: number) => {
-    return value === tolerance
+    return value === tolerance;
   };
 
   const onDeadlineChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (validNumber(e.target.value, minDeadline, maxDeadline)){
+    if (validNumber(e.target.value, minDeadline, maxDeadline)) {
       setDeadlineStringValue(e.target.value);
     }
   };
 
   const onToleranceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (validNumber(e.target.value, minTolerance, maxTolerance)){
+    if (validNumber(e.target.value, minTolerance, maxTolerance)) {
       setToleranceStringValue(e.target.value);
     }
   };
 
   const formattedToleranceValue = isToleranceFocussed
-                                    ? toleranceStringValue
-                                    : toleranceStringValue + toleranceSuffix;
+    ? toleranceStringValue
+    : toleranceStringValue + toleranceSuffix;
 
   const onCloseHandler = () => {
     dispatch(closeTransactionSettingsModal());
@@ -110,53 +116,59 @@ export const TransactionSettings: React.FC<TransactionSettingsProps> = ({
       open={isModalOpen}
       {...modalProps}
     >
-      <Box {...containerProps(theme)}>
+      <HighlightBox>
         <Box display="flex" alignItems="center" justifyContent="space-between">
           <Typography variant="h6">Transaction settings</Typography>
-          <CloseOutlined onClick={onCloseHandler} sx={{cursor: "pointer"}} />
+          <CloseOutlined onClick={onCloseHandler} sx={{ cursor: "pointer" }} />
         </Box>
-        {showSlippageSelection && <Box mt={6}>
-          <Input
-            LabelProps={{
-              label: "Slippage Tolerance",
-            }}
-            value={formattedToleranceValue}
-            onChange={onToleranceChange}
-            handleOnFocus={() => setIsToleranceFocussed(true)}
-            handleOnBlur={() => setIsToleranceFocussed(false)}
-            customEndAdorment={
-              <FormControl>
-                <RadioGroup
-                  row
-                  sx={{ gap: 2, pr: 2, color: theme.palette.text.secondary }}
-                  onChange={onToleranceChange}
-                >
-                  {toleranceOptions.map((value) => (
-                    <FormControlLabel
-                      key={value}
-                      value={value.toFixed(2)}
-                      control={<Radio sx={{ display: "none" }} />}
-                      label={`${value.toFixed(1)} %`}
-                      sx={{
-                        color: toleranceSelected(value) ? theme.palette.primary.main : undefined,
-                      }}
-                    />
-                  ))}
-                </RadioGroup>
-              </FormControl>
-            }
-          />
-        </Box>}
-        {showTransactionDeadlineSelection && <Box mt={4}>
-          <Input
-            value={deadlineStringValue}
-            onChange={onDeadlineChange}
-            LabelProps={{
-              label: "Transaction Deadline",
-            }}
-            referenceText="minutes"
-          />
-        </Box>}
+        {showSlippageSelection && (
+          <Box mt={6}>
+            <Input
+              LabelProps={{
+                label: "Slippage Tolerance",
+              }}
+              value={formattedToleranceValue}
+              onChange={onToleranceChange}
+              handleOnFocus={() => setIsToleranceFocussed(true)}
+              handleOnBlur={() => setIsToleranceFocussed(false)}
+              customEndAdornment={
+                <FormControl>
+                  <RadioGroup
+                    row
+                    sx={{ gap: 2, pr: 2, color: theme.palette.text.secondary }}
+                    onChange={onToleranceChange}
+                  >
+                    {toleranceOptions.map((value) => (
+                      <FormControlLabel
+                        key={value}
+                        value={value.toFixed(2)}
+                        control={<Radio sx={{ display: "none" }} />}
+                        label={`${value.toFixed(1)} %`}
+                        sx={{
+                          color: toleranceSelected(value)
+                            ? theme.palette.primary.main
+                            : undefined,
+                        }}
+                      />
+                    ))}
+                  </RadioGroup>
+                </FormControl>
+              }
+            />
+          </Box>
+        )}
+        {showTransactionDeadlineSelection && (
+          <Box mt={4}>
+            <Input
+              value={deadlineStringValue}
+              onChange={onDeadlineChange}
+              LabelProps={{
+                label: "Transaction Deadline",
+              }}
+              referenceText="minutes"
+            />
+          </Box>
+        )}
         <Box mt={4}>
           <Button
             variant="contained"
@@ -167,7 +179,7 @@ export const TransactionSettings: React.FC<TransactionSettingsProps> = ({
             Apply Settings
           </Button>
         </Box>
-      </Box>
+      </HighlightBox>
     </Modal>
   );
 };

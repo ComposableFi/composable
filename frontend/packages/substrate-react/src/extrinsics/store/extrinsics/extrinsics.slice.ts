@@ -1,52 +1,60 @@
-import { StoreSlice } from '../types';
 import {
-  ExtrinsicSlice,
   ExtrinsicMetadata,
+  ExtrinsicSlice,
   ExtrinsicStatus,
-} from './extrinsics.types';
+} from "./extrinsics.types";
 import {
-  putTransactionData,
   putBlockHash,
-  putTrasactionStatus,
+  putTransactionData,
   putTransactionError,
-} from './extrinsics.utils';
+  putTransactionStatus,
+} from "./extrinsics.utils";
+import create from "zustand";
+import { immer } from "zustand/middleware/immer";
+import { devtools } from "zustand/middleware";
 
-const createExtrinsicsSlice: StoreSlice<ExtrinsicSlice> = set => ({
-  extrinsics: {},
-  addExtrinsic: (
-    transactionHash: string,
-    extrinsicCall: Omit<ExtrinsicMetadata, 'dispatchError'>
-  ) =>
-    set((prev: ExtrinsicSlice) => ({
-      extrinsics: putTransactionData(
-        prev.extrinsics,
-        transactionHash,
-        extrinsicCall
-      ),
-    })),
-  addBlockHash: (transactionHash: string, blockHash: string) =>
-    set((prev: ExtrinsicSlice) => ({
-      extrinsics: putBlockHash(prev.extrinsics, transactionHash, blockHash),
-    })),
-  updateExtrinsicStatus: (
-    transactionHash: string,
-    extrinsicStatus: ExtrinsicStatus
-  ) =>
-    set((prev: ExtrinsicSlice) => ({
-      extrinsics: putTrasactionStatus(
-        prev.extrinsics,
-        transactionHash,
-        extrinsicStatus
-      ),
-    })),
-  updateExtrinsicError: (transactionHash: string, errorMessage: string) =>
-    set((prev: ExtrinsicSlice) => ({
-      extrinsics: putTransactionError(
-        prev.extrinsics,
-        transactionHash,
-        errorMessage
-      ),
-    })),
-});
-
-export default createExtrinsicsSlice;
+export const useExtrinsicStore = create<ExtrinsicSlice>()(
+  immer(
+    devtools((set) => ({
+      extrinsics: {},
+      addExtrinsic: (
+        transactionHash: string,
+        extrinsicCall: Omit<ExtrinsicMetadata, "dispatchError">
+      ) =>
+        set((state: ExtrinsicSlice) => {
+          state.extrinsics = putTransactionData(
+            state.extrinsics,
+            transactionHash,
+            extrinsicCall
+          );
+        }),
+      addBlockHash: (transactionHash: string, blockHash: string) =>
+        set((state: ExtrinsicSlice) => {
+          state.extrinsics = putBlockHash(
+            state.extrinsics,
+            transactionHash,
+            blockHash
+          );
+        }),
+      updateExtrinsicStatus: (
+        transactionHash: string,
+        extrinsicStatus: ExtrinsicStatus
+      ) =>
+        set((state: ExtrinsicSlice) => {
+          state.extrinsics = putTransactionStatus(
+            state.extrinsics,
+            transactionHash,
+            extrinsicStatus
+          );
+        }),
+      updateExtrinsicError: (transactionHash: string, errorMessage: string) =>
+        set((state: ExtrinsicSlice) => {
+          state.extrinsics = putTransactionError(
+            state.extrinsics,
+            transactionHash,
+            errorMessage
+          );
+        }),
+    }))
+  )
+);

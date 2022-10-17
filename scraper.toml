@@ -1,4 +1,4 @@
-frame_directory_path = "frame/"
+frame_directory_path = "code/parachain/frame/"
 output_path = "book/src/pallets/"
 
 docs_root_url = "https://dali.devnets.composablefinance.ninja/doc"

@@ -1,35 +1,30 @@
 import { LiquidityBootstrappingPool } from "@/defi/types";
-import { LiquidityBootstrappingPoolStats } from "../pools/pools.types";
-import { StoreSlice } from "../types";
-import { AuctionsSlice, PoolTradeHistory } from "./auctions.types";
-import {
-  putAuctionStatsActiveLBP,
-  setActivePool,
-  putAuctionHistoryLBP
-} from "./auctions.utils";
+import BigNumber from "bignumber.js";
+import create from "zustand";
+import { AuctionsSlice } from "./auctions.types";
 
-const PLACEHOLDER_STATS: LiquidityBootstrappingPoolStats = {
-  totalVolume: "0",
-  liquidity: "0",
-  startBalances: {
-    quote: "0",
-    base: "0",
+const DEFAULT_STATS = {
+  totalVolume: new BigNumber(0),
+  totalLiquidity: new BigNumber(0),
+  liquidity: {
+    baseAmount: new BigNumber(0),
+    quoteAmount: new BigNumber(0),
   },
-  currentBalances: {
-    quote: "0",
-    base: "0",
+  startLiquidity: {
+    baseAmount: new BigNumber(0),
+    quoteAmount: new BigNumber(0),
   },
-  totalSold: "0",
-  totalRaised: "0",
+  totalSold: new BigNumber(0),
+  totalRaised: new BigNumber(0)
 };
 
-const PLACEHOLDER_POOL: LiquidityBootstrappingPool = {
+const DEFAULT_POOL: LiquidityBootstrappingPool = {
   id: "-",
   poolId: -1,
   owner: "-",
   pair: {
-    base: 129,
-    quote: 1,
+    base: -1,
+    quote: -1,
   },
   sale: {
     startBlock: "0",
@@ -49,36 +44,28 @@ const PLACEHOLDER_POOL: LiquidityBootstrappingPool = {
   auctionDescription: [],
 };
 
-const createAuctionsSlice: StoreSlice<AuctionsSlice> = (set) => ({
-  auctions: {
-    activeLBP: PLACEHOLDER_POOL,
-    activeLBPStats: PLACEHOLDER_STATS,
-    activeLBPHistory: [],
-  },
-  setActiveAuctionsPool: (lbPool: LiquidityBootstrappingPool) =>
-    set((prev: AuctionsSlice) => ({
-      auctions: setActivePool(prev.auctions, lbPool),
-    })),
-  putStatsActiveLBP: (stats: Partial<LiquidityBootstrappingPoolStats>) =>
-    set((prev: AuctionsSlice) => ({
-      auctions: putAuctionStatsActiveLBP(prev.auctions, stats),
-    })),
-  putHistoryActiveLBP: (history: PoolTradeHistory[]) =>
-    set((prev: AuctionsSlice) => ({
-      auctions: putAuctionHistoryLBP(prev.auctions, history),
-    })),
-  resetActiveLBP: () =>
-    set((_prev: AuctionsSlice) => ({
-      auctions: {
-        activeLBP: PLACEHOLDER_POOL,
-        activeLBPStats: PLACEHOLDER_STATS,
-        activeLBPHistory: [],
-        activeChart: {
-          price: [],
-          predicted: []
-        }
-      },
-    }))
-});
+export const useAuctionsSlice = create<AuctionsSlice>(() => ({
+  activePool: DEFAULT_POOL,
+  activePoolStats: DEFAULT_STATS,
+  spotPrices: {},
+  activePoolTradeHistory: []
+}));
 
-export default createAuctionsSlice;
+export const setAuctionsSlice = (auctionsState: Partial<AuctionsSlice>) => useAuctionsSlice.setState((state) => ({
+  ...state,
+  ...auctionsState
+}))
+
+export const setAuctionsSpotPrices = (spotPrices: Record<string, BigNumber>) => useAuctionsSlice.setState((state) => ({
+  activePool: state.activePool,
+  activePoolStats: state.activePoolStats,
+  activePoolTradeHistory: state.activePoolTradeHistory,
+  spotPrices: { ... spotPrices }
+}));
+
+export const setAuctionsSpotPrice = (auctionPoolId: string, spotPrice: BigNumber) => useAuctionsSlice.setState((state) => ({
+  activePool: state.activePool,
+  activePoolStats: state.activePoolStats,
+  activePoolTradeHistory: state.activePoolTradeHistory,
+  spotPrices: { ... state.spotPrices, [auctionPoolId]: spotPrice }
+}));

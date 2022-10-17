@@ -4,4 +4,4 @@
 
 ---
 
-{{#include ../../../frame/bonded-finance/README.md:5:}}
+{{#include ../../../code/parachain/frame/bonded-finance/README.md:5:}}

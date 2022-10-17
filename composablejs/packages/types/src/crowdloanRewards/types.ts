@@ -9,24 +9,27 @@ import type { EcdsaSignature, MultiSignature } from '@polkadot/types/interfaces/
 import type { ParachainInherentData, PersistedValidationData } from '@polkadot/types/interfaces/parachains';
 import type { AccountId32, Balance, Permill } from '@polkadot/types/interfaces/runtime';
 
-/** @name BeefyPayloadId */
-export interface BeefyPayloadId extends Null {}
-
-/** @name Codec */
-export interface Codec extends Enum {
-  readonly isIsOk: boolean;
-  readonly asIsOk: bool;
-  readonly type: 'IsOk';
-}
-
 /** @name CommonMosaicRemoteAssetId */
 export interface CommonMosaicRemoteAssetId extends Null {}
 
 /** @name ComposableSupportEthereumAddress */
 export interface ComposableSupportEthereumAddress extends Null {}
 
+/** @name ComposableTraitsAccountProxyProxyDefinition */
+export interface ComposableTraitsAccountProxyProxyDefinition extends Null {}
+
+/** @name ComposableTraitsAccountProxyProxyType */
+export interface ComposableTraitsAccountProxyProxyType extends Null {}
+
 /** @name ComposableTraitsAssetsBasicAssetMetadata */
-export interface ComposableTraitsAssetsBasicAssetMetadata extends Null {}
+export interface ComposableTraitsAssetsBasicAssetMetadata extends Struct {
+  readonly symbol: {
+    readonly inner: Null;
+  } & Struct;
+  readonly name: {
+    readonly inner: Null;
+  } & Struct;
+}
 
 /** @name ComposableTraitsAssetsXcmAssetLocation */
 export interface ComposableTraitsAssetsXcmAssetLocation extends Null {}
@@ -90,7 +93,6 @@ export interface ComposableTraitsDexStableSwapPoolInfo extends Null {}
 export interface ComposableTraitsGovernanceSignedRawOrigin extends Enum {
   readonly isRoot: boolean;
   readonly isSigned: boolean;
-  readonly asSigned: AccountId32;
   readonly isIsSigned: boolean;
   readonly asIsSigned: bool;
   readonly isAsSigned: boolean;
@@ -113,11 +115,20 @@ export interface ComposableTraitsLendingUpdateInput extends Null {}
 /** @name ComposableTraitsOraclePrice */
 export interface ComposableTraitsOraclePrice extends Null {}
 
+/** @name ComposableTraitsOracleRewardTracker */
+export interface ComposableTraitsOracleRewardTracker extends Null {}
+
 /** @name ComposableTraitsStakingRewardPool */
 export interface ComposableTraitsStakingRewardPool extends Null {}
 
 /** @name ComposableTraitsStakingRewardPoolConfiguration */
 export interface ComposableTraitsStakingRewardPoolConfiguration extends Null {}
+
+/** @name ComposableTraitsStakingRewardUpdate */
+export interface ComposableTraitsStakingRewardUpdate extends Null {}
+
+/** @name ComposableTraitsStakingStake */
+export interface ComposableTraitsStakingStake extends Null {}
 
 /** @name ComposableTraitsTimeTimeReleaseFunction */
 export interface ComposableTraitsTimeTimeReleaseFunction extends Null {}
@@ -127,6 +138,12 @@ export interface ComposableTraitsVaultVaultConfig extends Null {}
 
 /** @name ComposableTraitsVestingVestingSchedule */
 export interface ComposableTraitsVestingVestingSchedule extends Null {}
+
+/** @name ComposableTraitsVestingVestingScheduleIdSet */
+export interface ComposableTraitsVestingVestingScheduleIdSet extends Null {}
+
+/** @name ComposableTraitsVestingVestingScheduleInfo */
+export interface ComposableTraitsVestingVestingScheduleInfo extends Null {}
 
 /** @name ComposableTraitsXcmAssetsForeignMetadata */
 export interface ComposableTraitsXcmAssetsForeignMetadata extends Null {}
@@ -209,17 +226,8 @@ export interface OrmlTokensBalanceLock extends Null {}
 /** @name OrmlTokensReserveData */
 export interface OrmlTokensReserveData extends Null {}
 
-/** @name PalletAirdropModelsAirdrop */
-export interface PalletAirdropModelsAirdrop extends Null {}
-
-/** @name PalletAirdropModelsIdentity */
-export interface PalletAirdropModelsIdentity extends Null {}
-
-/** @name PalletAirdropModelsProof */
-export interface PalletAirdropModelsProof extends Null {}
-
-/** @name PalletAirdropModelsRecipientFund */
-export interface PalletAirdropModelsRecipientFund extends Null {}
+/** @name PalletAccountProxyAnnouncement */
+export interface PalletAccountProxyAnnouncement extends Null {}
 
 /** @name PalletAssetsRegistryCandidateStatus */
 export interface PalletAssetsRegistryCandidateStatus extends Null {}
@@ -257,32 +265,11 @@ export interface PalletCrowdloanRewardsModelsReward extends Null {}
 /** @name PalletCrowdloanRewardsReward */
 export interface PalletCrowdloanRewardsReward extends Null {}
 
-/** @name PalletCurrencyFactoryRanges */
-export interface PalletCurrencyFactoryRanges extends Null {}
-
-/** @name PalletCurrencyFactoryRangesRange */
-export interface PalletCurrencyFactoryRangesRange extends Null {}
-
 /** @name PalletDemocracyConviction */
 export interface PalletDemocracyConviction extends Null {}
 
-/** @name PalletDemocracyPreimageStatus */
-export interface PalletDemocracyPreimageStatus extends Null {}
-
-/** @name PalletDemocracyReferendumInfo */
-export interface PalletDemocracyReferendumInfo extends Null {}
-
-/** @name PalletDemocracyReleases */
-export interface PalletDemocracyReleases extends Null {}
-
 /** @name PalletDemocracyVoteAccountVote */
 export interface PalletDemocracyVoteAccountVote extends Null {}
-
-/** @name PalletDemocracyVoteThreshold */
-export interface PalletDemocracyVoteThreshold extends Null {}
-
-/** @name PalletDemocracyVoteVoting */
-export interface PalletDemocracyVoteVoting extends Null {}
 
 /** @name PalletDutchAuctionSellOrder */
 export interface PalletDutchAuctionSellOrder extends Null {}
@@ -369,9 +356,6 @@ export interface PalletOracleWithdraw extends Struct {
   readonly stake: u128;
   readonly unlockBlock: u32;
 }
-
-/** @name PalletPreimageRequestStatus */
-export interface PalletPreimageRequestStatus extends Null {}
 
 /** @name PalletSchedulerReleases */
 export interface PalletSchedulerReleases extends Null {}

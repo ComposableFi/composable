@@ -11,6 +11,7 @@ import Toolbar from "@mui/material/Toolbar";
 import * as React from "react";
 import { NavBar } from "../Organisms";
 import { PolkadotConnect } from "../Organisms/Wallet/PolkadotConnect";
+import { AnimatedCircles } from "@/components/Molecules/AnimatedCircles";
 
 type DefaultLayoutProps = {
   breadcrumbs?: React.ReactNode[];
@@ -31,116 +32,119 @@ export const DefaultLayout: React.FC<DefaultLayoutProps> = (props) => {
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
-
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh" }}>
-      <CssBaseline />
-      <AppBar
-        position="fixed"
-        sx={{
-          width: { md: `calc(100% - ${drawerWidth}px)` },
-          ml: { md: `${drawerWidth}px` },
-          px: {
-            xs: "0",
-            md: theme.spacing(3),
-          },
-        }}
-      >
-        <Toolbar
+    <>
+      <AnimatedCircles />
+      <Box sx={{ display: "flex", minHeight: "100vh" }}>
+        <CssBaseline />
+        <AppBar
+          position="fixed"
           sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            flexDirection: "row-reverse",
-            gap: 3,
+            width: { md: `calc(100% - ${drawerWidth}px)` },
+            ml: { md: `${drawerWidth}px` },
+            px: {
+              xs: "0",
+              md: theme.spacing(3),
+            },
           }}
         >
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { md: "none" } }}
+          <Toolbar
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              flexDirection: "row-reverse",
+              gap: 3,
+            }}
           >
-            <MenuIcon />
-          </IconButton>
-          <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-            {/* TODO: adding other content for toolbar */}
-            <PolkadotConnect />
-          </Box>
-          {!isMobile && breadcrumbs && (
-            <Breadcrumbs
-              separator={<ArrowForwardIosIcon sx={{ fontSize: 14 }} />}
-              aria-label="breadcrumb"
+            <IconButton
+              color="inherit"
+              aria-label="open drawer"
+              edge="start"
+              onClick={handleDrawerToggle}
+              sx={{ mr: 2, display: { md: "none" } }}
             >
-              {breadcrumbs}
-            </Breadcrumbs>
-          )}
-        </Toolbar>
-      </AppBar>
-      <Box
-        component="nav"
-        sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}
-        aria-label="mailbox folders"
-      >
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          anchor="right"
-          onClose={handleDrawerToggle}
-          ModalProps={{
-            keepMounted: true, // Better open performance on mobile.
-          }}
-          sx={{
-            display: { xs: "block", sm: "block", md: "none" },
-            "& .MuiDrawer-paper": {
-              width: drawerWidth,
-            },
-          }}
-        >
-          <NavBar />
-        </Drawer>
-        <Drawer
-          variant="permanent"
-          sx={{
-            display: { sm: "none", md: "block", xs: "none" },
-            "& .MuiDrawer-paper": {
-              width: drawerWidth,
-            },
-          }}
-          open
-        >
-          <NavBar />
-        </Drawer>
-      </Box>
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          display: "flex",
-          flexDirection: "column",
-          padding: theme.spacing(1),
-          [theme.breakpoints.down("sm")]: {
-            padding: theme.spacing(3),
-          },
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-          marginTop: theme.spacing(20),
-        }}
-      >
-        <Box sx={{ flexGrow: 1 }}>{children}</Box>
+              <MenuIcon />
+            </IconButton>
+            <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+              {/* TODO: adding other content for toolbar */}
+              <PolkadotConnect />
+            </Box>
+            {!isMobile && breadcrumbs && (
+              <Breadcrumbs
+                separator={<ArrowForwardIosIcon sx={{ fontSize: 14 }} />}
+                aria-label="breadcrumb"
+              >
+                {breadcrumbs}
+              </Breadcrumbs>
+            )}
+          </Toolbar>
+        </AppBar>
         <Box
+          component="nav"
+          sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}
+          aria-label="mailbox folders"
+        >
+          <Drawer
+            variant="temporary"
+            open={mobileOpen}
+            anchor="right"
+            onClose={handleDrawerToggle}
+            ModalProps={{
+              keepMounted: true, // Better open performance on mobile.
+            }}
+            sx={{
+              display: { xs: "block", sm: "block", md: "none" },
+              "& .MuiDrawer-paper": {
+                width: drawerWidth,
+              },
+            }}
+          >
+            <NavBar />
+          </Drawer>
+          <Drawer
+            variant="permanent"
+            sx={{
+              display: { sm: "none", md: "block", xs: "none" },
+              "& .MuiDrawer-paper": {
+                width: drawerWidth,
+              },
+            }}
+            open
+          >
+            <NavBar />
+          </Drawer>
+        </Box>
+        <Box
+          component="main"
           sx={{
+            flexGrow: 1,
             display: "flex",
-            justifyContent: "flex-end",
-            alignItems: "center",
-            height: theme.spacing(2),
+            flexDirection: "column",
+            padding: theme.spacing(1),
+            [theme.breakpoints.down("sm")]: {
+              padding: theme.spacing(3),
+            },
+            width: { sm: `calc(100% - ${drawerWidth}px)` },
+            marginTop: theme.spacing(20),
+            overflow: "hidden",
           }}
         >
-          <Typography variant="caption">
-            {process.env.WEBSITE_VERSION}
-          </Typography>
+          <Box sx={{ flexGrow: 1 }}>{children}</Box>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "flex-end",
+              alignItems: "center",
+              height: theme.spacing(2),
+            }}
+          >
+            <Typography variant="caption">
+              {process.env.WEBSITE_VERSION}
+            </Typography>
+          </Box>
         </Box>
       </Box>
-    </Box>
+    </>
   );
 };
 

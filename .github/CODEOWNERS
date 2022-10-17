@@ -1,6 +1,8 @@
-# Note, this file is sorted by precedence. Later patterns take precedence over earlier ones
+# NOTE this file is sorted by precedence. Later patterns take precedence over earlier ones
+# NOTE: `<directory> <team1> <team2>` means `<team1> OR <team2> member is enough for review`
 
-## Default reviewers.
+
+## Default reviewers
 
 * @ComposableFi/core  # For anything not owned by a specific team, a core member needs to review or delegate
 
@@ -8,33 +10,36 @@
 
 ## CI and deployment related files
 
-.github/ @ComposableFi/sre
+.github/ @ComposableFi/sre @ComposableFi/core
 .github/CODEOWNERS @ComposableFi/core
-docker/ @ComposableFi/sre
-Makefile @ComposableFi/sre
+docker/ @ComposableFi/sre @ComposableFi/core
+Makefile @ComposableFi/sre @ComposableFi/core
 
 ## Parachain related files
 
-runtime/ @ComposableFi/parachain-leads
+code/parachain/runtime/ @ComposableFi/parachain-leads
 
-node/ @ComposableFi/parachain-leads
-frame/ @ComposableFi/parachain
-integration-tests/ @ComposableFi/parachain @ComposableFi/testers
+code/parachain/node/ @ComposableFi/parachain-leads
+code/parachain/frame/ @ComposableFi/parachain
+code/integration-tests/ @ComposableFi/parachain @ComposableFi/testers
 
-frame/composable-traits/ @ComposableFi/parachain-finance
-frame/pablo/ @ComposableFi/parachain-finance
-frame/dex-router/ @ComposableFi/parachain-finance
-frame/nft/ @ComposableFi/parachain-finance
-frame/staking-rewards/ @ComposableFi/parachain-finance
-frame/oracle/ @ComposableFi/parachain-finance
+code/parachain/frame/composable-traits/ @ComposableFi/parachain-finance
+code/parachain/frame/pablo/ @ComposableFi/parachain-finance
+code/parachain/frame/dex-router/ @ComposableFi/parachain-finance
+code/parachain/frame/nft/ @ComposableFi/parachain-finance
+code/parachain/frame/staking-rewards/ @ComposableFi/parachain-finance
+code/parachain/frame/oracle/ @ComposableFi/parachain-finance
 subsquid/ @ComposableFi/parachain-finance @ComposableFi/blockchain-integrations
-frame/*/rpc/ @ComposableFi/parachain-rpc
-frame/*/runtime-api @ComposableFi/parachain-rpc
+code/parachain/frame/*/rpc/ @ComposableFi/parachain-rpc
+code/parachain/frame/*/runtime-api @ComposableFi/parachain-rpc
+
+code/Cargo.lock @ComposableFi/parachain-leads @ComposableFi/core @ComposableFi/nix
+code/Cargo.toml @ComposableFi/parachain-leads @ComposableFi/core @ComposableFi/nix
 
 ## Public Gitbook
 
-book/ @ComposableFi/technical-writing-reviewers
-README.md @ComposableFi/technical-writing-reviewers @ComposableFi/core @ComposableFi/parachain-leads
+book/ @ComposableFi/technical-writers
+README.md @ComposableFi/technical-writers @ComposableFi/core @ComposableFi/parachain-leads
 
 ## Frontend and Blockchain Integration
 frontend/ @ComposableFi/blockchain-integrations @ComposableFi/parachain-finance
@@ -45,18 +50,24 @@ frontend/ @ComposableFi/blockchain-integrations @ComposableFi/parachain-finance
 
 ## Runtime Integration Tests
 
-integration-tests/runtime-tests/ @ComposableFi/testers
+code/integration-tests/runtime-tests/ @ComposableFi/testers
 
-## Codespaces
+## Developer Infrastructure
 
-.devcontainer/ @ComposableFi/codespacers @ComposableFi/parachain-leads
+.devcontainer/ @ComposableFi/nix
+.nix/ @ComposableFi/nix
+flake.nix @ComposableFi/nix
+flake.lock @ComposableFi/nix
+Dockerfile @ComposableFi/nix
+composable.code-workspace @ComposableFi/nix
+.hadolint.yaml @ComposableFi/sre @ComposableFi/nix
+.envrc @ComposableFi/nix
+.dockerignore @ComposableFi/sre @ComposableFi/nix
+.gitignore @ComposableFi/sre @ComposableFi/nix
 
-## Nix
+rust-toolchain.toml @ComposableFi/nix @ComposableFi/core
 
-.nix/ @dzmitry-lahoda @hussein-aitlahcen @cor
-flake.nix @dzmitry-lahoda @hussein-aitlahcen @cor
-
-# ComposableJS
+## ComposableJS
 composablejs/ @ComposableFi/parachain
 
 ## Dev stuff
@@ -64,14 +75,23 @@ composablejs/ @ComposableFi/parachain
 rfcs/ @ComposableFi/developers
 docs/ @ComposableFi/developers @ComposableFi/technical-writers
 scripts/ @ComposableFi/developers @ComposableFi/sre
-utils/ @ComposableFi/developers @ComposableFi/sre @ComposableFi/testers
-.config/spellcheck.dic @ComposableFi/developers @ComposableFi/technical-writers
-# Oracle Setup Script
+code/utils/ @ComposableFi/developers @ComposableFi/sre @ComposableFi/testers
+.remarkrc @ComposableFi/developers
+.taplo.toml @ComposableFi/nix @ComposableFi/parachain-leads
+Makefile.toml @ComposableFi/developers @ComposableFi/testers
+
+### Spelling
+
+.config/dictionaries/ @ComposableFi/developers @ComposableFi/technical-writers
+cspell.yaml @ComposableFi/technical-writers @ComposableFi/parachain-leads
+frontmatter.json @ComposableFi/technical-writers @ComposableFi/parachain-leads
+
+## Oracle Setup Script
 scripts/oracle-setup @ComposableFi/parachain
 
-# Repository 
-README.md @ComposableFi/technical-writing-reviewers @ComposableFi/core
+## Repository 
+README.md @ComposableFi/technical-writers @ComposableFi/core
 SECURITY.md @ComposableFi/security
 REVIEWERS.md @ComposableFi/core
 ARCHITECTURE.md @ComposableFi/core
-LICENSE @ComposableFi/technical-writing-reviewers @ComposableFi/core
+LICENSE @ComposableFi/technical-writers @ComposableFi/core

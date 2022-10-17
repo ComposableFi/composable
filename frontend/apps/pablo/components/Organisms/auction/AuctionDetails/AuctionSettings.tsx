@@ -5,13 +5,14 @@ import {
   Typography, 
   useTheme, 
 } from "@mui/material";
-import { LiquidityBootstrappingPoolStats } from "@/store/pools/pools.types";
 import { MockedAsset } from "@/store/assets/assets.types";
 import { LiquidityBootstrappingPool } from "@/defi/types";
+import { LiquidityBootstrappingPoolStatistics } from "@/store/auctions/auctions.types";
+import { DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils";
 
 export type AuctionSettingsProps = {
   auction: LiquidityBootstrappingPool,
-  stats: LiquidityBootstrappingPoolStats,
+  stats: LiquidityBootstrappingPoolStatistics,
   baseAsset: MockedAsset | undefined,
   quoteAsset: MockedAsset | undefined,
 } & BoxProps;
@@ -88,7 +89,7 @@ export const AuctionSettings: React.FC<AuctionSettingsProps> = ({
             Total volume 
           </Typography>
           <Typography variant="subtitle1" mt={1}>
-            {`${stats.totalVolume}`}
+            {`${stats.totalVolume.toFixed(DEFAULT_UI_FORMAT_DECIMALS)}`}
           </Typography>
         </Grid>
         <Grid item xs={12} sm={12} md={9}>

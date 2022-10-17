@@ -8,18 +8,16 @@ set -e # fail on any error
 . "$(dirname "${0}")/./common/lib.sh"
 
 VERSIONS_FILES=(
-  "runtime/picasso/src/weights,picasso-dev,picasso"
-  "runtime/dali/src/weights,dali-dev,dali"
-  "runtime/composable/src/weights,composable-dev,composable"
+  "parachain/runtime/picasso/src/weights,picasso-dev,picasso"
+  "parachain/runtime/dali/src/weights,dali-dev,dali"
+  "parachain/runtime/composable/src/weights,composable-dev,composable"
 )
 
 steps=${1:-1}
 repeat=${2:-1}
 
-/home/$(whoami)/.cargo/bin/rustup install nightly
-/home/$(whoami)/.cargo/bin/rustup target add wasm32-unknown-unknown --toolchain nightly
-
 # NOTE: decide prio and responsible for migration to nix after https://github.com/ComposableFi/composable/issues/1426
+cd code
 cargo +nightly build --release -p wasm-optimizer
 cargo +nightly build --release -p composable-runtime-wasm --target wasm32-unknown-unknown --features=runtime-benchmarks
 cargo +nightly build --release -p picasso-runtime-wasm --target wasm32-unknown-unknown --features=runtime-benchmarks
@@ -32,7 +30,7 @@ export PICASSO_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/picass
 export COMPOSABLE_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/composable_runtime.optimized.wasm)
 
 # TODO: use nix
-/home/$(whoami)/.cargo/bin/cargo build --release --package composable --features=runtime-benchmarks --features=builtin-wasm
+cargo build --release --package composable --features=runtime-benchmarks --features=builtin-wasm
 
 run_benchmarks() {
   OUTPUT=$1

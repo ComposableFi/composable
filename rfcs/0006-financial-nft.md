@@ -131,7 +131,7 @@ shows:
 
 <img src="0006-financial-nft/images/images/spec-parts.png" width="766" height="377" alt="spec parts" />
 
-The diagram can be summarised as,
+The diagram can be summarized as,
 
 *A Financial NFT protocol provides access to value owned by a Financial
 NFT that belongs to a collection ID included in the list of collection

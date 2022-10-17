@@ -1,4 +1,5 @@
 import {
+  Box,
   Table,
   TableBody,
   TableCell,
@@ -7,36 +8,25 @@ import {
   TableRow
 } from "@mui/material";
 import { TokenAsset } from "@/components/Atom";
-import { formatNumberWithSymbol, formatNumber } from "shared";
+import { formatNumberWithSymbol } from "shared";
+import BigNumber from "bignumber.js";
+import { APOLLO_ALLOWED_CURRENCIES } from "@/stores/defi/stats/apollo";
+import { useApolloStats } from "@/defi/polkadot/hooks/useApolloStats";
+import { FC } from "react";
 
-type ApolloTableProps = {
-  assets: Array<AssetProps>;
-};
+const tableHeaderTitles = ["Asset", "Binance", "Apollo", "Change (24hr)"];
 
-type AssetProps = {
-  symbol: string;
-  binanceValue: number;
-  pabloValue: number;
-  aggregatedValue: number;
-  apolloValue: number;
-  changeValue: number;
-};
+function formatDiff(diff: BigNumber) {
+  if (diff) {
+    return formatNumberWithSymbol(diff, diff.isGreaterThan(0) ? "+" : "", "%");
+  }
+  return "-";
+}
 
-const tableHeaderTitles = [
-  "Asset",
-  "Binance",
-  "Pablo",
-  "Aggregated",
-  "Apollo",
-  "Change (24hr)"
-];
-
-export const ApolloTable: React.FC<ApolloTableProps> = ({
-  assets,
-  ...rest
-}) => {
+export const ApolloTable: FC = () => {
+  const { binanceAssets, oracleAssets } = useApolloStats();
   return (
-    <TableContainer {...rest}>
+    <TableContainer>
       <Table sx={{ minWidth: 420 }} aria-label="apollo table">
         <TableHead>
           <TableRow>
@@ -48,36 +38,49 @@ export const ApolloTable: React.FC<ApolloTableProps> = ({
           </TableRow>
         </TableHead>
         <TableBody>
-          {assets.map((asset: AssetProps) => {
+          {APOLLO_ALLOWED_CURRENCIES.map(symbol => {
+            const binanceValue = binanceAssets[symbol];
+            const oracleValue = oracleAssets[symbol];
+            const diff = new BigNumber(0); // [todo: subsquid] Replace this with actual value once subsquid is done
             return (
-              <TableRow key={asset.symbol}>
+              <TableRow key={symbol}>
                 <TableCell align="left">
-                  <TokenAsset tokenId={asset.symbol.toLowerCase()} />
+                  <TokenAsset tokenId={symbol.toLowerCase()} />
                 </TableCell>
                 <TableCell align="left">
-                  ${formatNumber(asset.binanceValue)}
+                  <Box
+                    display="flex"
+                    alignItems={"center"}
+                    justifyContent={"start"}
+                  >
+                    {binanceValue.close ? (
+                      <>${binanceValue.close.toFormat().toString()}</>
+                    ) : (
+                      "-"
+                    )}
+                  </Box>
                 </TableCell>
                 <TableCell align="left">
-                  ${formatNumber(asset.pabloValue)}
-                </TableCell>
-                <TableCell align="left">
-                  ${formatNumber(asset.aggregatedValue)}
-                </TableCell>
-                <TableCell align="left">
-                  ${formatNumber(asset.apolloValue)}
+                  {oracleValue.close ? (
+                    <>${oracleValue.close.toFormat().toString()}</>
+                  ) : (
+                    "-"
+                  )}
                 </TableCell>
                 <TableCell
                   align="left"
                   sx={{
-                    color:
-                      asset.changeValue > 0 ? "featured.lemon" : "error.main"
+                    color: () => {
+                      if (!diff) {
+                        return "primary";
+                      } else if (diff.gt(0)) {
+                        return "featured.lemon";
+                      }
+                      return "error.main";
+                    }
                   }}
                 >
-                  {formatNumberWithSymbol(
-                    asset.changeValue,
-                    asset.changeValue > 0 ? "+" : "",
-                    "%"
-                  )}
+                  {formatDiff(diff)}
                 </TableCell>
               </TableRow>
             );

@@ -1,10 +1,10 @@
-import { ParachainId } from "substrate-react/dist/dotsama/types";
+import { ParachainId } from "substrate-react";
 import { AssetId } from "./types";
 
 export interface AssetMetadata {
   decimals: number;
   symbol: string;
-  assetId: AssetId,
+  assetId: AssetId;
   icon: string;
   name: string;
   supportedNetwork: {
@@ -69,5 +69,5 @@ export const Assets: {
       karura: null,
       picasso: 201,
     },
-  }
+  },
 };

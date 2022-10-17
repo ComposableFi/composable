@@ -1,3 +1,5 @@
+import "defi-interfaces";
+
 import * as React from "react";
 import { hotjar } from "react-hotjar";
 import { AppProps } from "next/app";
@@ -8,26 +10,18 @@ import { ColorModeContext } from "@/contexts/ColorMode";
 import { Provider } from "react-redux";
 import { store } from "@/stores/root";
 import { APP_NAME } from "@/defi/polkadot/constants";
-import { ExecutorProvider, DotSamaContextProvider } from "substrate-react";
+import { DotSamaContextProvider, ExecutorProvider } from "substrate-react";
 import "./global.css";
 import Head from "next/head";
 import CssBaseline from "@mui/material/CssBaseline";
 import createEmotionCache from "@/styles/createEmotionCache";
 
-import PoolsUpdater from "@/updaters/pools/Updater";
-import LiquidityUpdater from "@/updaters/liquidity/Updater";
-import LiquidityBootstrappingUpdater from "@/updaters/pools/Updater";
-
-import PoolStatsUpdater from "@/updaters/poolStats/Updater";
-import BalancesUpdater from "@/updaters/assets/balances/Updater";
-import ApolloUpdater from "@/updaters/assets/apollo/Updater";
-import AuctionsUpdater from "@/updaters/auctions/Updater";
-import BondsUpdater from "@/updaters/bonds/Updater";
-
+import BaseUpdater from "@/updaters/BaseUpdater";
 import * as definitions from "defi-interfaces/definitions";
 import { SnackbarProvider } from "notistack";
 import { ThemeResponsiveSnackbar } from "@/components";
 import { SNACKBAR_TIMEOUT_DURATION } from "@/constants";
+import { getEnvironment } from "shared/endpoints";
 
 const rpc = Object.keys(definitions)
   .filter(k => {
@@ -129,24 +123,14 @@ export default function MyApp(props: MyAppProps) {
                 supportedParachains={[
                   {
                     chainId: "picasso",
-                    rpcUrl:
-                      process.env.SUBSTRATE_PROVIDER_URL_KUSAMA_2019 || "",
+                    rpcUrl: getEnvironment("picasso"),
                     rpc,
                     types
                   }
                 ]}
                 appName={APP_NAME}
               >
-                <>
-                  <AuctionsUpdater />
-                  <LiquidityBootstrappingUpdater />
-                  <BalancesUpdater />
-                  <LiquidityUpdater />
-                  <PoolStatsUpdater />
-                  <ApolloUpdater />
-                  <PoolsUpdater />
-                  <BondsUpdater />
-                </>
+                <BaseUpdater />
                 <ExecutorProvider>
                   <Component {...pageProps} />
                 </ExecutorProvider>

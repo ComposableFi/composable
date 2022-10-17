@@ -1,13 +1,14 @@
 import create from "zustand";
 import { ConstantProductPool, StableSwapPool } from "@/defi/types";
+import BigNumber from "bignumber.js";
 
 export interface AddLiquiditySlice {
   pool: StableSwapPool | ConstantProductPool | undefined;
   ui: {
     assetOne: string | "none";
     assetTwo: string | "none";
-    assetOneAmount: string;
-    assetTwoAmount: string;
+    assetOneAmount: BigNumber;
+    assetTwoAmount: BigNumber;
   };
   findPoolManually: boolean;
 }
@@ -17,8 +18,8 @@ export const useAddLiquiditySlice = create<AddLiquiditySlice>(() => ({
   ui: {
     assetOne: "none",
     assetTwo: "none",
-    assetOneAmount: "0",
-    assetTwoAmount: "0",
+    assetOneAmount: new BigNumber(0),
+    assetTwoAmount: new BigNumber(0),
   },
   findPoolManually: true,
 }));
@@ -59,7 +60,7 @@ export const resetAddLiquiditySlice = () =>
     ui: {
       assetOne: "none",
       assetTwo: "none",
-      assetOneAmount: "0",
-      assetTwoAmount: "0",
+      assetOneAmount: new BigNumber(0),
+      assetTwoAmount: new BigNumber(0),
     },
   }));

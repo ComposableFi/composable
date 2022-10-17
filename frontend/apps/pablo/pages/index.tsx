@@ -1,5 +1,5 @@
 import type { NextPage } from "next";
-import { Container, Box } from "@mui/material";
+import { Container, Box, Grid } from "@mui/material";
 import Default from "@/components/Templates/Default";
 import { PageTitle } from "@/components";
 import { useDispatch } from "react-redux";
@@ -10,6 +10,8 @@ import { WalletBreakdownBox } from "@/components/Organisms/overview/WalletBreakd
 import { LiquidityProvidersBox } from "@/components/Organisms/overview/LiquidityProvidersBox";
 import { YourBondsBox } from "@/components/Organisms/overview/YourBondsBox";
 import { XPablosBox } from "@/components/Organisms/XPablosBox";
+import { TVLChart } from "@/components/Organisms/overview/TVLChart";
+import { VolumeChart } from "@/components/Organisms/overview/VolumeChart";
 
 const Home: NextPage = () => {
   const dispatch = useDispatch();
@@ -21,33 +23,41 @@ const Home: NextPage = () => {
       <Container maxWidth="lg">
         <Box mb={25}>
           <Box textAlign="center">
-            <PageTitle
-              title="Overview"
-              subtitle="Stake PABLO for sPABLO"
-            />
+            <PageTitle title="Overview" />
           </Box>
-          <Box mt={8}>
-            <Statistics />
-          </Box>
-          {!connected && (
-            <ConnectWalletFeaturedBox
-              mt={8}
-              p={4}
-              title="Connect wallet"
-              textBelow="To see your portfolio, wallet needs to be connected."
-              ButtonProps={{label: "Connect Wallet", size: "small"}}
-            />
-          )}
+
+          <Grid container>
+            {!connected && <Grid item xs={12}>
+              <ConnectWalletFeaturedBox
+                mt={8}
+                title="Connect wallet"
+                textBelow="To see your portfolio, wallet needs to be connected."
+                ButtonProps={{ label: "Connect Wallet", size: "small" }}
+              />
+            </Grid>}
+            <Grid item xs={12} mt={8}>
+              <Statistics />
+            </Grid>
+            <Grid container spacing={8}>
+              <Grid item xs={12} md={6} mt={8}>
+                <TVLChart />
+              </Grid>
+              <Grid item xs={12} md={6} mt={8}>
+                <VolumeChart />
+              </Grid>
+            </Grid>
+          </Grid>
+
+
 
           {connected && (
             <>
-              <WalletBreakdownBox mt={8} />
-              <LiquidityProvidersBox mt={8} />
-              <YourBondsBox mt={8} />
-              <XPablosBox mt={8} />
+              <WalletBreakdownBox mt={8} key="wallet-breakdown" />
+              <LiquidityProvidersBox mt={8} key="liquidity-provider-box" />
+              <YourBondsBox mt={8} key="your-bond-box" />
+              <XPablosBox financialNftCollectionId="-" mt={8} key="xpablos-box" />
             </>
           )}
-
         </Box>
       </Container>
     </Default>

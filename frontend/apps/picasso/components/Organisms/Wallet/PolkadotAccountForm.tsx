@@ -1,17 +1,21 @@
-import { ParachainContext } from "@/defi/polkadot/context/ParachainContext";
 import { usePicassoProvider } from "@/defi/polkadot/hooks";
 import { useStore } from "@/stores/root";
 import { CheckRounded } from "@mui/icons-material";
 import { alpha, Box, Button, Typography, useTheme } from "@mui/material";
 import Image from "next/image";
-import { useContext } from "react";
+import { SupportedWalletId, useDotSamaContext } from "substrate-react";
 
 export const PolkadotAccountForm: React.FC<{
   onSelectChange?: (accountIndex: number) => void;
 }> = ({ onSelectChange }) => {
-  const { selectedAccount, extensionStatus, setSelectedAccount, deactivate } =
-    useContext(ParachainContext);
+  const {
+    selectedAccount,
+    extensionStatus,
+    setSelectedAccount,
+    deactivate
+  } = useDotSamaContext();
   const { accounts } = usePicassoProvider();
+
   const theme = useTheme();
   const { closePolkadotModal } = useStore(({ ui }) => ui);
 
@@ -34,7 +38,7 @@ export const PolkadotAccountForm: React.FC<{
         display: "flex",
         flexDirection: "column",
         gap: 4,
-        width: "100%",
+        width: "100%"
       }}
     >
       <Box
@@ -45,7 +49,7 @@ export const PolkadotAccountForm: React.FC<{
           display: "flex",
           flexDirection: "column",
           gap: 4,
-          px: 3,
+          px: 3
         }}
       >
         {accounts.map((account, index) => (
@@ -68,7 +72,7 @@ export const PolkadotAccountForm: React.FC<{
                   : "",
               display: "flex",
               alignItems: "center",
-              gap: theme.spacing(2),
+              gap: theme.spacing(2)
             }}
           >
             <Image

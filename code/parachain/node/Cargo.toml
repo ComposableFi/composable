@@ -1,0 +1,140 @@
+[package]
+authors = ["Composable Developers"]
+build = "build.rs"
+edition = "2021"
+homepage = "https://composable.finance"
+name = "composable-node"
+version = "2.3.3"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+clap = "3.1.6"
+codec = { package = "parity-scale-codec", version = "3.0.0" }
+jsonrpsee = { version = "0.14.0", features = ["server", "macros"] }
+log = "0.4.14"
+once_cell = "1.12.0"
+serde = { version = "1.0.136", features = ["derive"] }
+
+# Local Dependencies
+common = { path = "../runtime/common" }
+composable-runtime = { path = "../runtime/composable", optional = true }
+dali-runtime = { path = "../runtime/dali", optional = true }
+ibc-primitives = { path = "../frame/ibc/ibc-primitives" }
+ibc-rpc = { path = "../frame/ibc/ibc-rpc" }
+ibc-runtime-api = { path = "../frame/ibc/ibc-runtime-api" }
+picasso-runtime = { path = "../runtime/picasso" }
+primitives = { path = "../runtime/primitives" }
+
+pallet-assets = { path = "../frame/assets" }
+pallet-crowdloan-rewards = { path = "../frame/crowdloan-rewards" }
+
+assets-rpc = { path = "../frame/assets/rpc" }
+assets-runtime-api = { path = "../frame/assets/runtime-api" }
+cosmwasm-rpc = { path = "../frame/cosmwasm/rpc" }
+cosmwasm-runtime-api = { path = "../frame/cosmwasm/runtime-api" }
+crowdloan-rewards-rpc = { path = "../frame/crowdloan-rewards/rpc" }
+crowdloan-rewards-runtime-api = { path = "../frame/crowdloan-rewards/runtime-api" }
+lending-rpc = { path = "../frame/lending/rpc" }
+lending-runtime-api = { path = "../frame/lending/runtime-api" }
+pablo-rpc = { path = "../frame/pablo/rpc" }
+pablo-runtime-api = { path = "../frame/pablo/runtime-api" }
+
+
+# FRAME Dependencies
+frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+frame-benchmarking-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+pallet-transaction-payment-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+substrate-frame-rpc-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+
+## Substrate Client Dependencies
+grandpa = { package = "sc-finality-grandpa", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-basic-authorship = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-chain-spec = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-consensus-aura = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-consensus-slots = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-rpc-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-service = { git = "https://github.com/paritytech/substrate", features = [
+  "wasmtime",
+], branch = "polkadot-v0.9.27" }
+sc-telemetry = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+
+## Substrate Primitive Dependencies
+sc-transaction-pool-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-block-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-consensus-aura = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-inherents = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-offchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-session = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-storage = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+
+# Cumulus dependencies
+cumulus-client-cli = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.27" }
+cumulus-client-collator = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.27" }
+cumulus-client-consensus-aura = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.27" }
+cumulus-client-consensus-common = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.27" }
+cumulus-client-network = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.27" }
+cumulus-client-service = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.27" }
+cumulus-primitives-core = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.27" }
+cumulus-primitives-parachain-inherent = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.27" }
+cumulus-relay-chain-inprocess-interface = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.27" }
+cumulus-relay-chain-interface = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.27" }
+cumulus-relay-chain-rpc-interface = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.27" }
+
+# Polkadot dependencies
+polkadot-cli = { git = "https://github.com/paritytech/polkadot", features = [
+  "rococo-native",
+], branch = "release-v0.9.27" }
+polkadot-parachain = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.27" }
+polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.27" }
+polkadot-service = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.27" }
+
+[build-dependencies]
+substrate-build-script-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+
+[dev-dependencies]
+hex = "0.4.3"
+
+[features]
+builtin-wasm = [
+  "picasso-runtime/builtin-wasm",
+  "composable-runtime/builtin-wasm",
+  "dali-runtime/builtin-wasm",
+]
+composable = ["composable-runtime"]
+dali = ["dali-runtime"]
+default = []
+ocw = []
+runtime-benchmarks = [
+  "polkadot-service/runtime-benchmarks",
+  "picasso-runtime/runtime-benchmarks",
+  "composable-runtime/runtime-benchmarks",
+  "dali-runtime/runtime-benchmarks",
+]
+std = ["picasso-runtime/std", "composable-runtime/std", "dali-runtime/std"]
+
+
+[package.metadata.cargo-udeps.ignore]
+normal = ["pallet-bonded-finance"]

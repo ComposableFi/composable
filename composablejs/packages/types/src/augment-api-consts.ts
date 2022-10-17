@@ -1,18 +1,32 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
+// import type lookup before we augment - in some environments
+// this is required to allow for ambient/previous definitions
+import '@polkadot/api-base/types/consts';
+
 import type { ApiTypes, AugmentedConst } from '@polkadot/api-base/types';
-import type { Bytes, Option, Vec, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
+import type { Bytes, Option, Text, U8aFixed, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { Codec } from '@polkadot/types-codec/types';
 import type { AccountId32, Perbill, Permill } from '@polkadot/types/interfaces/runtime';
-import type { FrameSupportPalletId, FrameSupportWeightsRuntimeDbWeight, FrameSupportWeightsWeightToFeeCoefficient, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, SpVersionRuntimeVersion, XcmV1MultiLocation } from '@polkadot/types/lookup';
+import type { FrameSupportPalletId, FrameSupportWeightsRuntimeDbWeight, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, SpVersionRuntimeVersion, XcmV1MultiLocation } from '@polkadot/types/lookup';
 
 export type __AugmentedConst<ApiType extends ApiTypes> = AugmentedConst<ApiType>;
 
 declare module '@polkadot/api-base/types/consts' {
-  export interface AugmentedConsts<ApiType extends ApiTypes> {
+  interface AugmentedConsts<ApiType extends ApiTypes> {
     assets: {
       nativeAssetId: u128 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
+    assetTxPayment: {
+      /**
+       * where to allow configuring default asset per user
+       **/
+      useUserConfiguration: bool & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/
@@ -76,6 +90,86 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       [key: string]: Codec;
     };
+    cosmwasm: {
+      /**
+       * Current chain ID. Provided to the contract via the [`Env`].
+       **/
+      chainId: Text & AugmentedConst<ApiType>;
+      /**
+       * Max wasm branch table size limit.
+       **/
+      codeBranchTableSizeLimit: u32 & AugmentedConst<ApiType>;
+      /**
+       * Max wasm globals limit.
+       **/
+      codeGlobalVariableLimit: u32 & AugmentedConst<ApiType>;
+      /**
+       * Max wasm functions parameters limit.
+       **/
+      codeParameterLimit: u32 & AugmentedConst<ApiType>;
+      /**
+       * Max wasm stack size limit.
+       **/
+      codeStackLimit: u32 & AugmentedConst<ApiType>;
+      /**
+       * Price of a byte when uploading new code.
+       * The price is expressed in [`Self::NativeAsset`].
+       * This amount is reserved from the owner and released when the code is destroyed.
+       **/
+      codeStorageByteDeposit: u32 & AugmentedConst<ApiType>;
+      /**
+       * Max wasm table size.
+       **/
+      codeTableSizeLimit: u32 & AugmentedConst<ApiType>;
+      /**
+       * Price of extracting a byte from the storage.
+       **/
+      contractStorageByteReadPrice: u32 & AugmentedConst<ApiType>;
+      /**
+       * Price of writing a byte in the storage.
+       **/
+      contractStorageByteWritePrice: u32 & AugmentedConst<ApiType>;
+      /**
+       * Max accepted code size.
+       **/
+      maxCodeSize: u32 & AugmentedConst<ApiType>;
+      /**
+       * Max contract label size.
+       **/
+      maxContractLabelSize: u32 & AugmentedConst<ApiType>;
+      /**
+       * Max contract trie id size.
+       **/
+      maxContractTrieIdSize: u32 & AugmentedConst<ApiType>;
+      /**
+       * Max number of frames a contract is able to push, a.k.a recursive calls.
+       **/
+      maxFrames: u32 & AugmentedConst<ApiType>;
+      /**
+       * Max assets in a [`FundsOf`] batch.
+       **/
+      maxFundsAssets: u32 & AugmentedConst<ApiType>;
+      /**
+       * Max instantiate salt.
+       **/
+      maxInstantiateSaltSize: u32 & AugmentedConst<ApiType>;
+      /**
+       * Max code size after gas instrumentation.
+       **/
+      maxInstrumentedCodeSize: u32 & AugmentedConst<ApiType>;
+      /**
+       * Max message size.
+       **/
+      maxMessageSize: u32 & AugmentedConst<ApiType>;
+      /**
+       * Pallet unique ID.
+       **/
+      palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
     crowdloanRewards: {
       /**
        * The AccountId of this pallet.
@@ -86,11 +180,23 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       initialPayment: Perbill & AugmentedConst<ApiType>;
       /**
+       * If claimed amounts should be locked by the pallet
+       **/
+      lockByDefault: bool & AugmentedConst<ApiType>;
+      /**
+       * The unique identifier for locks maintained by this pallet.
+       **/
+      lockId: U8aFixed & AugmentedConst<ApiType>;
+      /**
+       * The percentage of excess funds required to trigger the `OverFunded` event.
+       **/
+      overFundedThreshold: Perbill & AugmentedConst<ApiType>;
+      /**
        * The unique identifier of this pallet.
        **/
       palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
       /**
-       * The arbitrary prefix used for the proof
+       * The arbitrary prefix used for the proof.
        **/
       prefix: Bytes & AugmentedConst<ApiType>;
       /**
@@ -107,6 +213,11 @@ declare module '@polkadot/api-base/types/consts' {
        * Period in blocks where an external proposal may not be re-submitted after being vetoed.
        **/
       cooloffPeriod: u32 & AugmentedConst<ApiType>;
+      /**
+       * Runtime unique identifier for locking currency.
+       * May be equivalent to PalletId.
+       **/
+      democracyId: U8aFixed & AugmentedConst<ApiType>;
       /**
        * The period between a proposal being approved and enacted.
        * 
@@ -178,7 +289,7 @@ declare module '@polkadot/api-base/types/consts' {
     dutchAuction: {
       palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
       /**
-       * ED taken to create position. Part of if returned when position is liqudated.
+       * ED taken to create position. Part of if returned when position is liquidated.
        **/
       positionExistentialDeposit: u128 & AugmentedConst<ApiType>;
       /**
@@ -186,7 +297,17 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       [key: string]: Codec;
     };
+    fnft: {
+      palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
     ibc: {
+      /**
+       * Expected blocktime
+       **/
       expectedBlockTime: u64 & AugmentedConst<ApiType>;
       /**
        * Generic const
@@ -322,6 +443,8 @@ declare module '@polkadot/api-base/types/consts' {
     oracle: {
       maxHistory: u32 & AugmentedConst<ApiType>;
       maxPrePrices: u32 & AugmentedConst<ApiType>;
+      msPerBlock: u64 & AugmentedConst<ApiType>;
+      palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
       twapWindow: u16 & AugmentedConst<ApiType>;
       /**
        * Generic const
@@ -345,11 +468,30 @@ declare module '@polkadot/api-base/types/consts' {
        * Minimum duration for a sale.
        **/
       lbpMinSaleDuration: u32 & AugmentedConst<ApiType>;
+      msPerBlock: u32 & AugmentedConst<ApiType>;
       palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
+      /**
+       * AssetId of the PBLO asset
+       **/
+      pbloAssetId: u128 & AugmentedConst<ApiType>;
+      pbloStakeFinancialNftCollectionId: u128 & AugmentedConst<ApiType>;
+      /**
+       * AssetId of the PICA asset
+       **/
+      picaAssetId: u128 & AugmentedConst<ApiType>;
+      picaStakeFinancialNftCollectionId: u128 & AugmentedConst<ApiType>;
       /**
        * The interval between TWAP computations.
        **/
       twapInterval: u64 & AugmentedConst<ApiType>;
+      /**
+       * AssetId of the xToken variant of PBLO asset
+       **/
+      xPbloAssetId: u128 & AugmentedConst<ApiType>;
+      /**
+       * AssetId of the xToken variant of PICA asset
+       **/
+      xPicaAssetId: u128 & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/
@@ -415,6 +557,7 @@ declare module '@polkadot/api-base/types/consts' {
       [key: string]: Codec;
     };
     stakingRewards: {
+      lockId: U8aFixed & AugmentedConst<ApiType>;
       /**
        * Maximum number of reward configurations per pool.
        **/
@@ -424,10 +567,17 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       maxStakingDurationPresets: u32 & AugmentedConst<ApiType>;
       palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
+      pbloAssetId: u128 & AugmentedConst<ApiType>;
+      pbloStakeFinancialNftCollectionId: u128 & AugmentedConst<ApiType>;
+      picaAssetId: u128 & AugmentedConst<ApiType>;
+      picaStakeFinancialNftCollectionId: u128 & AugmentedConst<ApiType>;
       /**
        * the size of batch to take each time trying to release rewards
        **/
       releaseRewardsPoolsBatchSize: u8 & AugmentedConst<ApiType>;
+      treasuryAccount: AccountId32 & AugmentedConst<ApiType>;
+      xPbloAssetId: u128 & AugmentedConst<ApiType>;
+      xPicaAssetId: u128 & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/
@@ -493,10 +643,6 @@ declare module '@polkadot/api-base/types/consts' {
     };
     transactionPayment: {
       /**
-       * The polynomial that is applied in order to derive fee from length.
-       **/
-      lengthToFee: Vec<FrameSupportWeightsWeightToFeeCoefficient> & AugmentedConst<ApiType>;
-      /**
        * A fee mulitplier for `Operational` extrinsics to compute "virtual tip" to boost their
        * `priority`
        * 
@@ -520,10 +666,6 @@ declare module '@polkadot/api-base/types/consts' {
        * transactions.
        **/
       operationalFeeMultiplier: u8 & AugmentedConst<ApiType>;
-      /**
-       * The polynomial that is applied in order to derive fee from weight.
-       **/
-      weightToFee: Vec<FrameSupportWeightsWeightToFeeCoefficient> & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/

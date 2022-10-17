@@ -14,20 +14,21 @@ import {
 } from "@/components";
 import Image from "next/image";
 import { CrowdloanRewardsFeaturedBox } from "@/components/Organisms/CrowdloanRewards/CrowdloanRewardsFeaturedBox";
-import { useContext, useState } from "react";
-import { MyStakingsTable } from "@/components/Molecules/MyStakingsTable";
-import { ParachainContext } from "@/defi/polkadot/context/ParachainContext";
+import { useState } from "react";
+import { MyStakesTable } from "@/components/Molecules/MyStakesTable";
 import { useStore } from "@/stores/root";
-import { SubstrateAsset } from "@/stores/defi/polkadot/balances/slice";
+import { useDotSamaContext } from "substrate-react";
 
 const Overview: NextPage = () => {
-  const { extensionStatus } = useContext(ParachainContext);
-  const assets = useStore((state) => Object.values(state.substrateBalances));
+  const { extensionStatus } = useDotSamaContext();
+  const assets = useStore((state) =>
+    Object.values(state.substrateBalances.assets)
+  );
   const myStakes = useStore((state) => state.polkadot.myStakingAssets);
   const tabs: TabItem[] = [
     { label: "My assets" },
-    { label: "My stakings", disabled: false },
-    { label: "My bondings", disabled: false },
+    { label: "My stakes", disabled: false },
+    { label: "My bonds", disabled: false },
   ];
 
   const [tabValue, setTabValue] = useState(0);
@@ -66,7 +67,7 @@ const Overview: NextPage = () => {
         </Grid>
         {extensionStatus === "connected" && (
           <Chart
-            title="My portoflio"
+            title="My portfolio"
             totalText="$24,587,298"
             changeText="+34%"
             changeTextColor={theme.palette.featured.lemon}
@@ -95,17 +96,17 @@ const Overview: NextPage = () => {
               onChange={(_e, value) => setTabValue(value)}
             />
 
-            {/* My Assets Tab Pannels */}
+            {/* My Assets Tab Panels */}
             <TabPanel value={tabValue} index={0}>
-              <MyAssetsTable assets={assets as SubstrateAsset[]} />
+              <MyAssetsTable assets={assets} />
             </TabPanel>
 
-            {/* My Staking Tab Pannels */}
+            {/* My Staking Tab Panels */}
             <TabPanel value={tabValue} index={1}>
               <Box px={2}>
                 <PageTitle title="Picasso" textAlign="left" fontSize={40} />
               </Box>
-              <MyAssetsTable assets={assets as SubstrateAsset[]} />
+              <MyAssetsTable assets={assets} />
             </TabPanel>
 
             <TabPanel value={tabValue} index={1}>
@@ -117,7 +118,7 @@ const Overview: NextPage = () => {
                   alt="Pablo logo"
                 />
               </Box>
-              <MyStakingsTable assets={myStakes.pablo} />
+              <MyStakesTable assets={myStakes.pablo} />
             </TabPanel>
 
             {/* My Bondings Tab Panels */}

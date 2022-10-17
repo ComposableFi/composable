@@ -1,43 +1,87 @@
-import { Box, Button, Grid } from "@mui/material";
+import { Box, Button, Grid, Typography } from "@mui/material";
 import { Alert } from "@/components/Atoms";
 import { BoxProps } from "@mui/material";
-import { useAppSelector } from "@/hooks/store";
 import { CheckableXPabloItemBox } from "./CheckableXPabloItemBox";
 import { useState } from "react";
 import { UnstakeModal } from "./UnstakeModal";
-import { RenewModal } from "./RenewModal";
-import { XPablo } from "@/defi/types";
+import { PBLO_ASSET_ID, DEFAULT_NETWORK_ID } from "@/defi/utils";
+import { useXTokensList } from "@/defi/hooks";
+import { usePendingExtrinsic, useSelectedAccount } from "substrate-react";
+import { ConfirmingModal } from "../../swap/ConfirmingModal";
+import { useUnstake } from "@/defi/hooks/stakingRewards";
+import { useStakingRewardPoolCollectionId } from "@/store/stakingRewards/stakingRewards.slice";
+import { StakingRewardPool } from "@/defi/types";
+import BigNumber from "bignumber.js";
 
-export const UnstakeForm: React.FC<BoxProps> = ({
-  ...boxProps
-}) => {
+export const UnstakeForm: React.FC<BoxProps & {
+  stakingRewardPool?: StakingRewardPool;
+}> = ({ stakingRewardPool, ...boxProps }) => {
+  const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
 
-  const xPablos = useAppSelector((state) => state.polkadot.yourXPablos);
-  const [selectedXPabloId, setSelectedXPabloId] = useState<number | undefined>();
+  const financialNftCollectionId = useStakingRewardPoolCollectionId(
+    PBLO_ASSET_ID
+  );
 
-  const selectedXPablo = selectedXPabloId
-                          && xPablos.find((item: { id: number; }) => item.id == selectedXPabloId);
+  const xPablos = useXTokensList({
+    stakedAssetId: PBLO_ASSET_ID,
+  });
+  const [selectedXPabloId, setSelectedXPabloId] = useState<
+    string | undefined
+  >();
 
-  const expired = selectedXPablo && selectedXPablo.expiry < new Date().getTime();
+  const hasStakedPositions = xPablos.length > 0;
+  const selectedXPablo =
+    selectedXPabloId && xPablos.find((item) => item.nftId == selectedXPabloId);
+
+  const handleUnstake = useUnstake({
+    financialNftCollectionId: financialNftCollectionId
+      ? BigNumber(financialNftCollectionId)
+      : undefined,
+    financialNftInstanceId: selectedXPablo
+      ? BigNumber(selectedXPablo.nftId)
+      : undefined,
+  });
+
+  const expired = selectedXPablo && selectedXPablo.isExpired;
 
   const [isUnstakeModalOpen, setIsUnstakeModalOpen] = useState<boolean>(false);
-  const [isRenewModalOpen, setIsRenewModalOpen] = useState<boolean>(false);
 
-  const handleUntake = () => {
+  const onSelectUnstake = () => {
     setIsUnstakeModalOpen(true);
   };
 
-  const handleRenew = () => {
-    setIsRenewModalOpen(true);
-  };
+  const inUnstaking = usePendingExtrinsic(
+    "unstake",
+    "stakingRewards",
+    selectedAccount ? selectedAccount.address : "-"
+  );
 
   return (
     <Box {...boxProps}>
-
       <Box display="flex" flexDirection="column" gap={3}>
-        {xPablos.map((xPablo: XPablo) => (
+        {!hasStakedPositions && (
+          <Box>
+            <Typography
+              variant="subtitle1"
+              color="text.primary"
+              textAlign={"center"}
+            >
+              No PBLOs Staked.
+            </Typography>
+            <Typography
+              mt={2}
+              variant="body2"
+              color="text.secondary"
+              textAlign={"center"}
+            >
+              You currently do not have any active PBLO staked positions.
+            </Typography>
+          </Box>
+        )}
+
+        {xPablos.map((xPablo) => (
           <CheckableXPabloItemBox
-            key={xPablo.id}
+            key={xPablo.nftId}
             xPablo={xPablo}
             selectedXPabloId={selectedXPabloId}
             setSelectedXPabloId={setSelectedXPabloId}
@@ -50,26 +94,16 @@ export const UnstakeForm: React.FC<BoxProps> = ({
             severity="warning"
             alertTitle="Slash warning"
             alertText="If you withdraw now you will get rekt with less PICA."
-            AlertTextProps={{color: "text.secondary"}}
+            AlertTextProps={{ color: "text.secondary" }}
           />
         </Box>
       )}
 
       <Box mt={3}>
         <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12}>
             <Button
-              onClick={handleRenew}
-              fullWidth
-              variant="contained"
-              disabled={!selectedXPablo}
-            >
-              Renew
-            </Button>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Button
-              onClick={handleUntake}
+              onClick={onSelectUnstake}
               fullWidth
               variant="contained"
               disabled={!selectedXPablo}
@@ -81,22 +115,22 @@ export const UnstakeForm: React.FC<BoxProps> = ({
       </Box>
 
       {selectedXPablo && (
-        <>
-          <RenewModal
-            dismissible
-            xPablo={selectedXPablo}
-            open={isRenewModalOpen}
-            onClose={() => setIsRenewModalOpen(false)}
-          />
-
-          <UnstakeModal
-            dismissible
-            xPablo={selectedXPablo}
-            open={isUnstakeModalOpen}
-            onClose={() => setIsUnstakeModalOpen(false)}
-          />
-        </>
+        <UnstakeModal
+          dismissible
+          stakingRewardPool={stakingRewardPool}
+          xPablo={selectedXPablo}
+          open={isUnstakeModalOpen}
+          onDismiss={() => {
+            setIsUnstakeModalOpen(false);
+          }}
+          onUnstake={() => {
+            setIsUnstakeModalOpen(false);
+            handleUnstake();
+          }}
+        />
       )}
+
+      <ConfirmingModal open={inUnstaking} />
     </Box>
   );
 };

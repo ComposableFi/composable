@@ -1,23 +1,29 @@
 import type { NextPage } from "next";
-import Default from "@/components/Templates/Default";
 import { Box, Grid, Link, Typography, useTheme } from "@mui/material";
 import { useRouter } from "next/router";
-import Image from "next/image";
-import { useContext, useEffect } from "react";
-import { useStore } from "@/stores/root";
-import { ParachainContext } from "@/defi/polkadot/context/ParachainContext";
+import { useEffect } from "react";
 import { PageTitle, FeaturedBox, SS8WalletHelper } from "@/components";
-import { useConnector } from "@integrations-lib/core";
+import { ConnectorType, useBlockchainProvider, useConnector } from "bi-lib";
+import { useSelectedAccount } from "@/defi/polkadot/hooks";
+import { useDotSamaContext } from "substrate-react";
+import { useCrowdloanRewardsEligibility } from "@/stores/defi/polkadot/crowdloanRewards/hooks";
+import { DEFAULT_EVM_ID } from "@/defi/polkadot/constants";
+import Default from "@/components/Templates/Default";
+import Image from "next/image";
 
 const CrowdloanRewards: NextPage = () => {
   const theme = useTheme();
   const router = useRouter();
-  const userAssociation = useStore(
-    ({ crowdloanRewards }) => crowdloanRewards.associatedWith
-  );
+  const { account } = useBlockchainProvider(DEFAULT_EVM_ID);
+  const selectedAccount = useSelectedAccount();
 
   const breadcrumbs = [
-    <Link key="Overview" underline="none" color="primary" href="/frontend/fe/apps/picasso/pages">
+    <Link
+      key="Overview"
+      underline="none"
+      color="primary"
+      href="/frontend/fe/apps/picasso/pages"
+    >
       Overview
     </Link>,
     <Typography key="claims" color="text.secondary">
@@ -28,18 +34,26 @@ const CrowdloanRewards: NextPage = () => {
     xs: 12,
   };
 
-  const { extensionStatus } = useContext(ParachainContext);
-  const { isActive } = useConnector("metamask");
+  const { extensionStatus } = useDotSamaContext();
+  const { isActive } = useConnector(ConnectorType.MetaMask);
+
+  const { isEthAccountEligible, isPicassoAccountEligible } =
+    useCrowdloanRewardsEligibility(
+      account?.toLowerCase(),
+      selectedAccount?.address
+    );
 
   useEffect(() => {
-    if (userAssociation) {
-      userAssociation === "ethereum"
-        ? router.push("crowdloan-rewards/stablecoin")
-        : router.push("crowdloan-rewards/ksm");
+    if (isEthAccountEligible || isPicassoAccountEligible) {
+      router.push("/crowdloan-rewards/claim");
     }
-    // Only to be called on page load therefore we can omit dependencies.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [
+    router,
+    account,
+    selectedAccount,
+    isEthAccountEligible,
+    isPicassoAccountEligible,
+  ]);
 
   return (
     <Default breadcrumbs={breadcrumbs}>
@@ -89,7 +103,7 @@ const CrowdloanRewards: NextPage = () => {
                 fullWidth: true,
                 disabled: extensionStatus !== "connected",
                 onClick: () => {
-                  router.push("/crowdloan-rewards/ksm");
+                  router.push("/crowdloan-rewards/claim");
                 },
               }}
             />
@@ -136,7 +150,7 @@ const CrowdloanRewards: NextPage = () => {
                 fullWidth: true,
                 variant: "contained",
                 onClick: () => {
-                  router.push("/crowdloan-rewards/stablecoin");
+                  router.push("/crowdloan-rewards/claim");
                 },
               }}
             />

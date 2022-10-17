@@ -11,29 +11,18 @@ import { alpha, Breadcrumbs, Typography, useTheme } from "@mui/material";
 import { useTablet } from "@/hooks/responsive";
 import { PolkadotConnect } from "../Organisms/Wallet/PolkadotConnect";
 import { MetamaskConnect } from "../Organisms/Wallet/MetamaskConnect";
-import { useSnackbar } from "notistack";
-import { useEffect } from "react";
+import { GlobalSettings } from "../Organisms/Settings/GlobalSettings";
 
 type DefaultLayoutProps = {
   breadcrumbs?: React.ReactNode[];
 };
 
-export const DefaultLayout: React.FC<DefaultLayoutProps> = (props) => {
+export const DefaultLayout: React.FC<DefaultLayoutProps> = props => {
   const { children, breadcrumbs } = props;
-  const { enqueueSnackbar } = useSnackbar();
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const isTablet = useTablet();
   const theme = useTheme();
   const drawerWidth = isTablet ? 240 : 320;
-  // useEffect(() => {
-  //   enqueueSnackbar("Hey! ", {
-  //     variant: "info",
-  //     description: "This is a warning message!",
-  //     persist: true,
-  //     isClosable: true,
-  //     url: "https://www.google.com",
-  //   })
-  // });
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -49,10 +38,10 @@ export const DefaultLayout: React.FC<DefaultLayoutProps> = (props) => {
           ml: { md: `${drawerWidth}px` },
           px: {
             xs: "0",
-            md: theme.spacing(3),
+            md: theme.spacing(3)
           },
           backgroundColor: alpha("#0f0904", 0.9),
-          backdropFilter: "blur(32x)",
+          backdropFilter: "blur(32x)"
         }}
       >
         <Toolbar
@@ -60,7 +49,7 @@ export const DefaultLayout: React.FC<DefaultLayoutProps> = (props) => {
             display: "flex",
             justifyContent: "space-between",
             flexDirection: "row-reverse",
-            gap: 3,
+            gap: 3
           }}
         >
           <IconButton
@@ -73,6 +62,7 @@ export const DefaultLayout: React.FC<DefaultLayoutProps> = (props) => {
             <MenuIcon />
           </IconButton>
           <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+            <GlobalSettings />
             <PolkadotConnect />
             <MetamaskConnect />
           </Box>
@@ -94,15 +84,15 @@ export const DefaultLayout: React.FC<DefaultLayoutProps> = (props) => {
           anchor="right"
           onClose={handleDrawerToggle}
           ModalProps={{
-            keepMounted: true, // Better open performance on mobile.
+            keepMounted: true // Better open performance on mobile.
           }}
           sx={{
             display: { xs: "block", sm: "block", md: "none" },
             "& .MuiDrawer-paper": {
               boxSizing: "border-box",
               width: drawerWidth,
-              padding: "0rem",
-            },
+              padding: "0rem"
+            }
           }}
         >
           <NavBar />
@@ -114,8 +104,8 @@ export const DefaultLayout: React.FC<DefaultLayoutProps> = (props) => {
             "& .MuiDrawer-paper": {
               boxSizing: "border-box",
               width: drawerWidth,
-              padding: 0,
-            },
+              padding: 0
+            }
           }}
           open
         >
@@ -125,19 +115,31 @@ export const DefaultLayout: React.FC<DefaultLayoutProps> = (props) => {
       <Box
         component="main"
         sx={{
-          flexGrow: 1,
           p: 3,
           width: { sm: `calc(100% - ${drawerWidth}px)` },
+          background: theme.palette.primary.dark,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "flex-start"
         }}
       >
-        <Toolbar />
-        {children}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "flex-start",
+            flexDirection: "row",
+            flexGrow: 1
+          }}
+        >
+          {children}
+        </Box>
         <Box
           sx={{
             display: "flex",
             justifyContent: "flex-end",
             alignItems: "center",
-            height: theme.spacing(2),
+            height: theme.spacing(2)
           }}
         >
           <Typography variant="caption">

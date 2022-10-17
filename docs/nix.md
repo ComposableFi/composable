@@ -8,7 +8,8 @@ Overview of nix usage and design.
 
 Generally you should check what nix can do for you. There is some list of tools which you may not ned with nix.
 
-`nix` ecosystem replaces fully or partially `cargo install`, `rustup`, `cargo make`, `make`, `docker build`, `sh`, `rust-cache`, `sccache`, `github actions`, `github workflow runs`, `crates.io`, `npmjs.com`, `npx`, etc.
+`nix` ecosystem replaces fully or partially `cargo install`, `rustup`, `cargo make`, `make`, `docker build`, `sh`, `rust-cache`, `sccache`, `github actions`, `github workflow runs`, `github artifacts`, `crates.io`, `npmjs.com`, `npx`, 
+`nvm`, `brew`, `apt`, `devcontainers`, etc.
 
 If to target `nixos` in the cloud, then `ansible`, partially `ssh`, partially `terraform`.
 
@@ -34,9 +35,21 @@ either 3rd party or not in this repo composable or not this revision of repo,
 3rd parties either do not have nix configurations 
 or we need heavily patch them.
 
-Other scrips are located in folders on which they act upon, until scope is multifolder or not scoped.
+Other scrips are located in folders on which they act upon, until scope is multi-folder or not scoped.
 
 This allows for monorepo with codeowners and proper nix caching.
+
+### Should I use `develop` or `run` or `build` or `home-manager` or `devcontainer`?
+
+It should be possible to run things via `nix build/run` and also exec into devcontainer/shell/home and run native tooling build and run commands.
+
+So for each `nix build/run` attribute there should be equivalent "`shell`" to exec into and run native tooling commands.
+
+Examples, you can build `dali node` via `nix build`, so you can `nix shell .#developers` and run `cargo build`.
+
+It means that `home-manager`, `devcontainer`, `apps`, `shells` should share and combine dependencies.
+
+Any `app` or `packages` must be tested by CI by building it or starting it.
 
 ### Naming
 

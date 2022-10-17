@@ -10,7 +10,6 @@ export const tableCellOverrides = (
       border: "none",
       padding: 0,
       paddingLeft: theme.spacing(2),
-      paddingReft: theme.spacing(2),
       fontSize: "1.125rem",
     },
     body: {
@@ -18,12 +17,12 @@ export const tableCellOverrides = (
       background: alpha(theme.palette.common.white, 0.05),
       padding: theme.spacing(2),
       "&:first-of-type": {
-        borderTopLeftRadius: theme.spacing(2.5),
-        borderBottomLeftRadius: theme.spacing(2.5),
+        borderTopLeftRadius: theme.shape.borderRadius,
+        borderBottomLeftRadius: theme.shape.borderRadius,
       },
       "&:last-of-type": {
-        borderTopRightRadius: theme.spacing(2.5),
-        borderBottomRightRadius: theme.spacing(2.5),
+        borderTopRightRadius: theme.shape.borderRadius,
+        borderBottomRightRadius: theme.shape.borderRadius,
       },
     },
   },

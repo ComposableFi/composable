@@ -1,6 +1,5 @@
 import React from "react";
 import {
-  alpha,
   Box,
   BoxProps,
   Button,
@@ -11,6 +10,7 @@ import {
   useTheme,
 } from "@mui/material";
 import Image from "next/image";
+import { HighlightBox } from "@/components/Atoms/HighlightBox";
 
 export type FeaturedBoxProps = BoxProps & {
   variant?: "text" | "outlined" | "contained";
@@ -50,24 +50,9 @@ export const FeaturedBox: React.FC<FeaturedBoxProps> = ({
   const { label: buttonLabel, ...restButtonProps } = ButtonProps || {};
 
   return (
-    <Box
-      padding={isMobile ? [3, 2] : 4}
-      textAlign={horizontalAligned && !isMobile ? undefined : "center"}
-      display={horizontalAligned && !isMobile ? "flex" : undefined}
-      alignItems={horizontalAligned && !isMobile ? "center" : undefined}
-      justifyContent={
-        horizontalAligned && !isMobile ? "space-between" : undefined
-      }
-      bgcolor={
-        !variant || variant == "contained"
-          ? alpha(theme.palette.common.white, theme.custom.opacity.lightest)
-          : undefined
-      }
-      border={`1px solid ${alpha(
-        theme.palette.common.white,
-        theme.custom.opacity.light
-      )}`}
-      borderRadius={isMobile ? undefined : 1}
+    <HighlightBox
+      horizontalAligned={horizontalAligned}
+      variant={variant}
       {...rest}
     >
       <Box>
@@ -143,6 +128,6 @@ export const FeaturedBox: React.FC<FeaturedBoxProps> = ({
           </Button>
         </Box>
       )}
-    </Box>
+    </HighlightBox>
   );
 };

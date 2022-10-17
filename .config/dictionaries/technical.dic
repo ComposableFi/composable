@@ -1,0 +1,374 @@
+# abcdef
+# adoc
+# binance-rs types
+# BN method (javascript)
+# bors
+# code-workspace
+# commands, programs, libs, tools, etc
+# cosmwasm types
+# crates
+# css
+# databases
+# docker
+# dummy currencies
+# environment variables
+# file attributes
+# fonts
+# for the memes
+# frontend stuff
+# GCP
+# git
+# graphviz
+# icons
+# markdown
+# misc technical terms
+# nix
+# not sure where to put these
+# npm
+# parts of hashes
+# substrate types
+# sudo
+# systemctl
+# these should probably be replaced with stakes and bonds respectively
+# various keywords
+# various rust methods and types
+0xsequence
+1ubrf2y
+5C4hrfjw
+aarch
+acala
+ACENT
+ACENTS
+ACOIN
+ACOINS
+adda
+addn
+adduser
+adoc
+AggrTrades
+airdropper
+alice
+apexcharts
+arion
+asciidoctor
+assetinfo
+assetsinfo
+autofetch
+autorenew
+azuretools
+BCENT
+BCENTS
+BCOIN
+BCOINS
+bignr # used frequently throughout the frontend as a shorthand for bignumber
+bignumber
+bignumbers
+binop
+bintools
+bitfield
+bitfields
+bitvec
+bob
+bootnodes
+browserconfig
+bufferutil
+buildpackage
+buildx
+cachix
+cdylib
+charlie
+chevdor
+chrono
+claimunstake
+clickup
+cmake
+cmark
+codegen
+codeowners
+codepaths
+codesandbox
+commonmark # https://commonmark.org/help
+composabletests
+containerd
+containrrr # `containrrr/watchtower` docker image
+contentful
+coreutils
+cosm
+crev # cargo-crev
+dalek
+crowdloaning
+deadnix
+devcontainers
+devel
+dhms # day hour minute second
+dispatchables
+dockerfile
+dotgraphs
+drawio
+eamodio
+ebnf
+edgeware
+endef
+enduml
+endwhile
+ferdie
+fgrep
+findutils
+fnft
+fnfts
+fontconfig
+fontname
+freetype
+fsevenm
+FSIZE
+getrandom
+giga
+GITREPO
+GITUSER
+gnugrep
+gnumake
+gpgsign
+graphviz
+grep
+gsutil
+hadolint
+hasher
+hasura
+hljs
+horiz
+hotjar
+iavl
+idents
+iefix
+ifeq
+imagesdir
+imagesoutdir
+immer
+includeurl
+inprocess
+ipam
+ipetkov # github username
+journalctl
+jsonrpsee
+junod
+keccak
+keccak256
+Konnect
+lastmod
+lcgfmg
+lcov
+LIBCLANG
+libcurl
+libexpat
+libfreetype
+libp2p
+libsecp
+libsecp256k1
+libudev
+libwasmvm
+llvm
+localstorage
+loglevel
+lppicapbloother
+mdbook
+MEMLOCK
+mergify
+messagingxcm
+millify
+miniserve
+minvested
+mochawesome
+msapplication
+Multiaddr
+multiassets
+multihash
+mutantdino
+narinfo
+nettools
+nextjs
+NFTID
+nixfmt
+nixops
+nixos
+nixpkgs
+nixify
+nixified
+nocapture
+nocompile
+noconfirm
+nodedir
+NOFILE
+NOPASSWD
+notistack
+npmjs
+npos
+NPROC
+numtide
+offboarded
+offences
+on_unbalanceds
+oneliner
+oneof
+oneshot
+opentype
+OPTARG
+oraclesetup # script of package.json
+oraclestake
+oxalica # github username
+pacman
+pandoc
+parablock
+paritytech
+patchelf
+pctest
+peasy
+peekable
+peerset
+penwidth
+perbill
+permill
+
+permissionlessly
+perquintill
+perthing
+perthousand
+phragmen
+pkgconf
+pkgconfig
+pkgs
+plantuml
+Pointable
+polkalaunch
+popout
+powd
+powf
+prebaked
+preclaim
+preclaims
+precommit
+precommits
+prevote
+procps
+proptest
+proptests
+prost
+protoc
+PROTOC
+PTRACE
+rebag
+rebagged
+rebond
+reduxjs
+registryaddr
+rekt
+resourcemonitor
+revhash
+rewardaccumulationhook
+rewardtrackerstore
+ripemd
+rlib
+rnix
+rocksdb
+ROCKSDB
+rpath
+rustc
+RUSTC
+RUSTFLAGS
+rustfmt
+RUSTSEC # RUSTSEC-XXXX-XXXX is id of RustSec Advisory Database
+rustup
+sccache
+schemars
+scrollbox
+searchbar
+searchresults
+seccomp
+sectnumlevels
+sectnums
+serayuzgur
+serie
+serokell
+setaf
+shortkey
+skinparam
+smallvec
+snackbars
+sparkline
+sproof
+squeezy
+stakeform
+stakerclaimunstake
+startuml
+statemine
+stdenv
+structopt
+styleguide
+submessage
+Subql
+substituters
+subwasm
+subxt
+supertrait
+svgbob
+svgr
+sysinfo
+tamasfe
+taplo
+tendermint
+TentangNanti
+termcolor
+thiserror
+toc
+toclevels
+tokenvalue
+tomoki
+toolchains
+toolset
+tooltipped
+tooltiptext
+tput
+truetype
+tsconfigs
+tsdx
+tungstenite
+typegen
+typeorm
+udeps
+unbond
+unbonded
+unbonding
+unfound
+unlookup
+unpruned
+unstakeform
+unsubs
+unvouch
+unvouched
+upsert
+uptodate # used throughout our codebase
+urql
+USDCUSDT
+usermod
+vadimcn
+vsicons
+wasmi
+wasmswap
+wasmtime
+wasmvm
+websocat
+websocket
+websockets
+whereis
+WORKDIR
+wscat
+xaxis
+xorriso
+xorshift # rand_xorshift
+xpablo
+xpablos
+xtokens
+yaxis
+yzhang
+zlfzypzcr
+zstd
+zustand

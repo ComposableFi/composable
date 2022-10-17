@@ -1,38 +1,47 @@
 import { alpha, Theme } from "@mui/material";
 import { OverridesStyleRules } from "@mui/material/styles/overrides";
 
-export const cssBaselineOverrides = (theme: Theme): Partial<OverridesStyleRules> => ({
+export const cssBaselineOverrides = (
+  theme: Theme
+): Partial<OverridesStyleRules> => ({
   styleOverrides: `
     @font-face {
-      font-family: "Architects Daughter";
-      font-style: normal;
-      font-display: swap;
-      font-weight: 400;
-      src: local('ArchitectsDaughter-Regular'), local('ArchitectsDaughter-Regular'), url("/static/ArchitectsDaughter-Regular.ttf") format('woff');
-    };
-    @font-face {
-      font-family: "BeVietnamPro";
+      font-family: "CodeNext";
       font-style: normal;
       font-display: swap;
       font-weight: normal;
-      src: local('BeVietnamPro-Regular'), local('BeVietnamPro-Regular'), url("/static/BeVietnamPro-Regular.woff2") format('woff');
+      src: local('CodeNext-Regular'), local('CodeNext-Regular'), url("/static/CodeNext-Regular.woff2") format('woff2');
     };
     @font-face {
-      font-family: "BeVietnamPro";
-      font-style: normal;
-      font-display: swap;
-      font-weight: 300;
-      src: local('BeVietnamPro-Light'), local('BeVietnamPro-Light'), url("/static/BeVietnamPro-Light.woff2") format('woff');
-    };
-    @font-face {
-      font-family: "BeVietnamPro";
+      font-family: "CodeNext";
       font-style: normal;
       font-display: swap;
       font-weight: 600;
-      src: local('BeVietnamPro-SemiBold'), local('BeVietnamPro-SemiBold'), url("/static/BeVietnamPro-SemiBold.ttf") format('woff');
+      src: local('CodeNext-Bold'), local('CodeNext-Bold'), url("/static/CodeNext-Bold.woff2") format('woff2');
+    };
+    @font-face {
+      font-family: "NovaDeco";
+      font-style: normal;
+      font-display: swap;
+      font-weight: normal;
+      src: local('NovaDeco-Medium'), local('NovaDeco-Medium'), url("/static/NovaDeco-Medium.woff2") format('woff2');
+    };
+    @font-face {
+      font-family: "NovaDeco";
+      font-style: normal;
+      font-display: swap;
+      font-weight: 300;
+      src: local('NovaDeco-Medium'), local('NovaDeco-Medium'), url("/static/NovaDeco-Medium.woff2") format('woff2');
+    };
+    @font-face {
+      font-family: "NovaDeco";
+      font-style: normal;
+      font-display: swap;
+      font-weight: 600;
+      src: local('NovaDeco-Bold'), local('NovaDeco-Bold'), url("/static/NovaDeco-Bold.woff2") format('woff2');
     };
     body {
-      background: ${theme.palette.gradient.background};
+      background: ${theme.palette.gradient.grapeBackground};
       min-height: 100vh;
     };
     * {

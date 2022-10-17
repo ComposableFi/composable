@@ -2,30 +2,27 @@ import type { NextPage } from "next";
 import { useRouter } from "next/router";
 import Default from "@/components/Templates/Default";
 import { alpha, Box, Grid, Typography, useTheme } from "@mui/material";
-import { ConnectWalletFeaturedBox, MyBondingsTable, PageTitle, } from "@/components";
-import { ConnectToStakeCover } from "@/components/Molecules/ConnectToStakeCover";
+import { MyBondsTable, PageTitle } from "@/components";
 import { AllBondsTable } from "@/components/Molecules/AllBondsTable";
-import { useContext } from "react";
-import { ParachainContext } from "@/defi/polkadot/context/ParachainContext";
 import { Updater } from "@/stores/defi/polkadot/bonds/PolkadotBondsUpdater";
 import { useActiveBonds } from "@/defi/polkadot/hooks/useActiveBonds";
 import { useStore } from "@/stores/root";
 import { DisconnectedBond } from "@/components/Organisms/Bond/DisconnectedBond";
+import { useDotSamaContext } from "substrate-react";
 
 const standardPageSize = {
-  xs: 12,
+  xs: 12
 };
 
 const Bonds: NextPage = () => {
-  const activeBonds = useActiveBonds();
+  const { activeBonds } = useActiveBonds();
   const theme = useTheme();
   const router = useRouter();
-  const { extensionStatus } = useContext(ParachainContext);
+  const { extensionStatus } = useDotSamaContext();
   const bonds = useStore((state) => state.bonds.bonds);
-
   const handleActiveBondsClick = (offerId: string) => {
     router.push({
-      pathname: `/bonds/${offerId}`,
+      pathname: `/bonds/${offerId}`
     });
   };
 
@@ -36,8 +33,8 @@ const Bonds: NextPage = () => {
         <Grid container spacing={4}>
           <Grid item {...standardPageSize} mt={theme.spacing(9)}>
             <PageTitle
-              title="CHAOS Bonds"
-              subtitle="Bond liquidity to purchase CHAOS at a discount"
+              title="xPICA Bonds"
+              subtitle="Bond liquidity to purchase xPICA at a discount"
               textAlign="center"
             />
           </Grid>
@@ -52,7 +49,7 @@ const Bonds: NextPage = () => {
                   bgcolor={alpha(theme.palette.common.white, 0.02)}
                 >
                   <Typography mb={2}>Your Active Bonds</Typography>
-                  <MyBondingsTable
+                  <MyBondsTable
                     activeBonds={activeBonds}
                     onRowClick={handleActiveBondsClick}
                   />

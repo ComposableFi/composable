@@ -11,11 +11,11 @@ export class PabloPoolAsset {
   @PrimaryColumn_()
   id!: string
 
-  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
-  assetId!: bigint
+  @Column_("text", {nullable: false})
+  assetId!: string
 
   @Index_()
-  @ManyToOne_(() => PabloPool, {nullable: false})
+  @ManyToOne_(() => PabloPool, {nullable: true})
   pool!: PabloPool
 
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
@@ -24,6 +24,7 @@ export class PabloPoolAsset {
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   totalVolume!: bigint
 
+  @Index_()
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   blockNumber!: bigint
 

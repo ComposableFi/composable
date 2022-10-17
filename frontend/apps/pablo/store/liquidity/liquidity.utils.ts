@@ -2,7 +2,7 @@ import BigNumber from "bignumber.js";
 import produce from "immer";
 import { LiquiditySlice } from "./liquidity.types";
 
-export const putLiqudityRecord = (
+export const putLiquidityRecord = (
   liquiditySlice: LiquiditySlice["liquidityInPool"],
   liquidityRecord: Record<string, { baseAmount: BigNumber; quoteAmount: BigNumber; }>
 ) => {

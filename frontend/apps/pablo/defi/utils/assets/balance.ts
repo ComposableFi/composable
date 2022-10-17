@@ -10,10 +10,10 @@ export const fetchBalanceByAssetId = async (
   try {
     // @ts-ignore
     const balance = await api.rpc.assets.balanceOf(
-      api.createType("CurrencyId", assetId),
+      api.createType("CustomRpcCurrencyId", assetId),
       api.createType("AccountId32", accountId)
     );
-    return fromChainUnits(balance).toString();
+    return fromChainUnits(balance.toString()).toString();
   } catch (err: any) {
     return "0";
   }
@@ -27,12 +27,26 @@ export const fetchAssetBalance = async (
   try {
     // @ts-ignore
     const balance = await api.rpc.assets.balanceOf(
-      api.createType("CurrencyId", assetId),
+      api.createType("CustomRpcCurrencyId", assetId),
       api.createType("AccountId32", accountId)
     );
-    return fromChainUnits(balance);
+    return fromChainUnits(balance.toString());
   } catch (err: any) {
     console.error(err);
+    return new BigNumber(0);
+  }
+};
+
+export const fetchTotalIssued = async (
+  api: ApiPromise,
+  assetId: string
+): Promise<BigNumber> => {
+  try {
+    const totalIssued = await api.query.tokens.totalIssuance(
+      api.createType("u128", assetId)
+    );
+    return fromChainUnits(totalIssued.toString());
+  } catch (err: any) {
     return new BigNumber(0);
   }
 };

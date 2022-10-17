@@ -4,4 +4,4 @@
 
 ---
 
-{{#include ../../../frame/democracy/README.md:2:}}
+{{#include ../../../code/parachain/frame/democracy/README.md:2:}}

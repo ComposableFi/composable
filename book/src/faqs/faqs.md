@@ -29,16 +29,14 @@ Composable XCVM.
 
 ### How is Composable funded?
 
-The most recent round of funding for Composable Finance raised a total of over 
-$32 million in our [series A](https://composablefi.medium.com/composable-finance-raises-32-million-in-series-a-39e70aeff23a). 
-This is an incredible step for the company, pushing it into the future and 
-towards new advancements.
+The most recent round of funding for Composable Finance raised a total of over $32 million in our 
+[series A](https://composablefi.medium.com/composable-finance-raises-32-million-in-series-a-39e70aeff23a). 
+This is an incredible step for the company, pushing it into the future and towards new advancements.
 
-The round included notable investors in the space. GSR, Ignite (formerly 
-Tendermint Ventures), Fundamental Labs, Coinbase Ventures, LongHash Ventures, 
-Figment VC, New Form Capital, DFG, Blockchain Capital, 0xVentures, Yunt Capital, 
-Jump Capital, Polytope Capital, NGC Ventures, SOSV, and Spartan Group were among 
-those who participated.
+The round included notable investors in the space. GSR, Ignite (formerly Tendermint Ventures), Fundamental Labs, 
+Coinbase Ventures, LongHash Ventures, 
+Figment VC, New Form Capital, DFG, Blockchain Capital, 0xVentures, Yunt Capital, Jump Capital, Polytope Capital, NGC 
+Ventures, SOSV, and Spartan Group were among those who participated.
 
 
 ### Are there any resources for additional questions, updates, and information about Composable and its operations?
@@ -46,5 +44,9 @@ those who participated.
 To find even more information, stay up to date, and communicate with other users 
 and our team, make sure to follow/join us at:
 
-[Twitter](https://twitter.com/ComposableFin) | [Telegram](https://t.me/composablefinance) | [Discord](https://discord.com/invite/pFZn2GCn65) | [Website](https://www.composable.finance/) | [Medium](https://composablefi.medium.com/about) | [GitHub](https://github.com/ComposableFi) | [LinkedIn](https://www.linkedin.com/company/composable-finance/) | [Youtube](https://www.youtube.com/channel/UCXlKp8ev-8zOpJu0TNcc0uA)
+[Twitter](https://twitter.com/ComposableFin) |[Telegram](https://t.me/composablefinance) | 
+[Discord](http://discord.gg/composable) |[Website](https://www.composable.finance/) | 
+[Medium](https://composablefi.medium.com/about) |[GitHub](https://github.com/ComposableFi) | 
+[LinkedIn](https://www.linkedin.com/company/composable-finance/) |
+[Youtube](https://www.youtube.com/channel/UCXlKp8ev-8zOpJu0TNcc0uA)
 

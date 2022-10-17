@@ -1,5 +1,5 @@
 <!-- AUTOMATICALLY GENERATED -->
-<!-- Generated at 2022-08-15T14:18:26.464367Z -->
+<!-- Generated at 2022-09-05T18:35:35.125864Z -->
 
 # Oracle Pallet Extrinsics
 
@@ -16,6 +16,7 @@ Permissioned call to add an asset
 * `block_interval`: blocks until oracle triggered
 * `reward`: reward amount for correct answer
 * `slash`: slash amount for bad answer
+* `emit_price_changes`: emit PriceChanged event when asset price changes
 
 Emits `DepositEvent` event when successful.
 
@@ -71,7 +72,7 @@ Emits `StakeReclaimed` event when successful.
 
 [`submit_price`](https://dali.devnets.composablefinance.ninja/doc/pallet_oracle/pallet/enum.Call.html#variant.submit_price)
 
-Call to submit a price, gas is returned if extrinsic is successfull.
+Call to submit a price, gas is returned if extrinsic is successful.
 Should be called from offchain worker but can be called manually too.
 
 This is an operational transaction.

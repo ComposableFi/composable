@@ -1,12 +1,7 @@
 cut_body_after = "## Checklist"
 delete_merged_branches = true
 required_approvals = 2
-status = [
-  "Devnet integration tests",
-  "Unit Tests (With Coverage)",
-  "Unit Tests",
-  "Linters",
-]
+status = ["Effect gate, automatically merged if passed"]
 timeout_sec = 7200
 up_to_date_approvals = true
 update_base_for_deletes = true

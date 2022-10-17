@@ -4,4 +4,4 @@ This pallet allows protocols to reward users for staking assets. Stakers are pro
  
 ---
 
-{{#include ../../../frame/staking-rewards/README.md:28:}}
+{{#include ../../../code/parachain/frame/staking-rewards/README.md:28:}}

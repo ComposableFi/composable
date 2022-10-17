@@ -40,7 +40,7 @@ Picasso to ask Statemine to open channel on Kusama encoded as `hrmp`  `0x3c00e80
 
 That should be send from Parachain account from Picasso via next `relayerXcm.send` :
 
-Encoded as `0x2900010100020c0004000000000700e876481713000100000700e876481700060102286bee383c00e8030000e803000000900100`  .
+Encoded as `0x2900010100020c0004000000000700e876481713000100000700e876481700060102286bee383c00e8030000e803000000900100`.
 
 Can be decoded via https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rpc.composable.finance#/extrinsics/decode
 
@@ -64,6 +64,7 @@ The call is is a `batchAll` that accepts open channel request from Picasso, and 
 ### Proposal body
 
 `batchAll` call:
+<!-- cspell:disable -->
 ```json
 calls: [
     {
@@ -108,10 +109,12 @@ calls: [
     }
 ]
 ```
+<!-- cspell:enable -->
 
 #### Decoded proposal
 
 Above encoded call is next XCM message:
+<!-- cspell:disable -->
 ```json
 [
   {
@@ -184,6 +187,7 @@ Above encoded call is next XCM message:
   }
 ]
 ```
+<!-- cspell:enable -->
 
 Where transact [decodes](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fstatemine-rpc.dwellir.com#/extrinsics/decode) by Statemine into:
 

@@ -20,7 +20,6 @@ import useStore from "../useStore";
 
 export function useAssetBalance(chainId: string, assetId: string): BigNumber {
     const { assetBalances } = useStore();
-
     const balance = useMemo(() => {
         return new BigNumber(assetBalances?.[chainId]?.[assetId] || 0);
     }, [assetBalances, chainId, assetId])

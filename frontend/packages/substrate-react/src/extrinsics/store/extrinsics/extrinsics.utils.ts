@@ -15,7 +15,7 @@ export const putTransactionData = (
   });
 };
 
-export const putTrasactionStatus = (
+export const putTransactionStatus = (
   transactions: ExtrinsicSlice['extrinsics'],
   txHash: string,
   status: ExtrinsicStatus

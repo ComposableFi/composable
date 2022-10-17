@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import { FC } from "react";
 import { TokenAsset } from "@/components";
-import { useStore } from "@/stores/root";
+import BigNumber from "bignumber.js";
 
 const boxStyles = (theme: Theme) => ({
   display: "flex",
@@ -24,9 +24,9 @@ const boxStyles = (theme: Theme) => ({
 export const ClaimableRewards: FC<{
   onClaimButtonClick: () => void;
 }> = ({ onClaimButtonClick }) => {
-  const { pica, pablo, angl } = useStore(
-    ({ staking }) => staking.claimableRewards
-  );
+  const pica = new BigNumber(0);
+  const angl = new BigNumber(0);
+  const pablo = new BigNumber(0);
 
   const theme = useTheme();
 

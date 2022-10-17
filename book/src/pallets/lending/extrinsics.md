@@ -1,5 +1,5 @@
 <!-- AUTOMATICALLY GENERATED -->
-<!-- Generated at 2022-08-15T14:18:26.437412Z -->
+<!-- Generated at 2022-09-05T18:35:35.100438Z -->
 
 # Lending Pallet Extrinsics
 
@@ -11,7 +11,7 @@ Create a new lending market.
 
 * `origin` : Sender of this extrinsic. Manager for new market to be created. Can pause
   borrow operations.
-* `input`   : Borrow & deposits of assets, persentages.
+* `input`   : Borrow & deposits of assets, percentages.
 
 `origin` irreversibly pays `T::OracleMarketCreationStake`.
 

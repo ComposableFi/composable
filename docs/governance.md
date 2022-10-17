@@ -40,7 +40,7 @@ Pallets can be configured dependent on protocol needs.
    met)
 - Only members of collective can propose dispatchable (hence it is not `democracy`)
 - Allows to seed initial members via root call
-- Usage [picasso](../book/src/products/the-picasso-parachain/council.md)
+- Usage [picasso](./council.md)
 
  **Ranked collective**:
 
@@ -74,7 +74,7 @@ Pallets can be configured dependent on protocol needs.
 - Allows voting on a setup **collective** of members.
 - Same as used to setup validators
 
-There are other pallets like `Referenda`, `Society`, `Fellowship`, and `Incetives(bribe)`.
+There are other pallets like `Referenda`, `Society`, `Fellowship`, and `Incentives(bribe)`.
 
 ## Composable
 
@@ -84,7 +84,7 @@ There are other pallets like `Referenda`, `Society`, `Fellowship`, and `Incetive
 - Any `democracy` voting using said token will dispatch calls using that origin (native token always dispatches from `root`)
 - Each token can have only one origin
 
- **Bribrye**
+ **Bribe**
 
 Ideated primitive which allows:
 
@@ -95,7 +95,8 @@ Ideated primitive which allows:
 
 ## Tokenomics
 
-See `composable/staking-rewards` and `polkadot/staking`, `substrae/treasury` and other `protocols` pallets on which `governances` can act.
+See `composable/staking-rewards` and `polkadot/staking`, `substrate/treasury`, `sora-xor/sora2-network` and other `protocols` pallets on which `governances` can act in mix of some tokenomics/incentives.
+
 And relevant chapters from the `book` on Angular, Apollo, Pablo, and Cubic.
 
 ## Multi-democracy
@@ -126,6 +127,31 @@ Steps:
 - `simple majority carries referendum` proposed by `ExternalMajorityOrigin`
 - `InstantOrigin`(`collective`, `technical`) fast-track referendum for voting
 - `EnactmentPeriod` is overridden by a period that is set to be small in the previous extrinsic call
+
+### Multisignature proxy setup
+
+Example, imagine we want to get next:
+
+> There is updatable multisignature account with 2 of 3 threshold.
+>
+> Each of these 3 also updated multisignature account of any chosen threshold.
+
+`Seed account` `S` creates 3 anonymous proxies `A`, `B`, and `C`.
+
+`S` creates `2 of 3` multisignature account `ABC`. `S` sets `ABC` as `origin` of some protocol.
+Example, manager of Pablo pool.
+
+`S` does ***proxy*** call on behalf of `A` to delegate to `X`. `X` is arbitrary multisignature.
+`S` removes self from `A` delegates.
+
+If `X` to update self, it creates new multisignature `X'`.
+`X` does ***proxy*** call on behalf of `A` to delegate to `X'`.
+`X` removes self from `A` delegates.
+
+Same of `Y` and `Z` to be delegates of `B` and `C`.
+
+Imagine `X` is `security team`, `Y` is `composable officers` and `Z` is `core developers`.
+This way we can have simplified weaker form of `councils` and `fast track democracy`.
 
 ## References
 

@@ -1,6 +1,4 @@
-import { BaseAsset } from "@/components/Atoms";
-import { TOKENS } from "@/defi/Tokens";
-import { useAppSelector } from "@/hooks/store";
+import { BaseAsset, PairAsset } from "@/components/Atoms";
 import { useLiquidityPoolDetails } from "@/store/hooks/useLiquidityPoolDetails";
 import { useUserProvidedLiquidityByPool } from "@/store/hooks/useUserProvidedLiquidityByPool";
 import {
@@ -16,6 +14,13 @@ import {
 import BigNumber from "bignumber.js";
 import { PoolDetailsProps } from "./index";
 import { BoxWrapper } from "../../BoxWrapper";
+import { useStakingRewardPool } from "@/store/stakingRewards/stakingRewards.slice";
+import { useAssets } from "@/defi/hooks";
+import { MockedAsset } from "@/store/assets/assets.types";
+import { useClaimStakingRewards } from "@/defi/hooks/stakingRewards/useClaimStakingRewards";
+import { ConfirmingModal } from "../../swap/ConfirmingModal";
+import { usePendingExtrinsic, useSelectedAccount } from "substrate-react";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 
 const twoColumnPageSize = {
   sm: 12,
@@ -63,26 +68,30 @@ export const PoolRewardsPanel: React.FC<PoolDetailsProps> = ({
 }) => {
   const theme = useTheme();
 
+  const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const poolDetails = useLiquidityPoolDetails(poolId);
   const userProvidedLiquidity = useUserProvidedLiquidityByPool(poolId);
 
-  const { rewardValue, rewardsLeft } = useAppSelector(
-    (state) => state.pool.selectedPool
-  );
+  const { baseAsset, quoteAsset, pool } = poolDetails;
+  const stakingRewardsPool = useStakingRewardPool(pool ? pool.lpToken : "-");
+  const rewardAssets = useAssets(stakingRewardsPool ? Object.keys(stakingRewardsPool.rewards) : []);
 
-  // WIP
+  // WIP - awaiting Andres' subsquid changes
   const lpDeposit = new BigNumber(0);
+  const handleClaimRewards = useClaimStakingRewards({})
 
-  const handleClaimRewards = () => {
-    // TODO: handle claim rewards
-  };
+  const isPendingClaimStakingRewards = usePendingExtrinsic(
+    "claim",
+    "stakingRewards",
+    selectedAccount ? selectedAccount.address : "-"
+  )
 
   return (
     <BoxWrapper {...boxProps}>
       <Item
         value={`$${lpDeposit}`}
-        intro={`${lpDeposit} ${poolDetails.baseAsset?.symbol}/${
-          poolDetails.quoteAsset?.symbol
+        intro={`${lpDeposit} ${baseAsset?.symbol}/${
+          quoteAsset?.symbol
         }`}
       >
         <Typography variant="h6">Your deposits</Typography>
@@ -91,14 +100,23 @@ export const PoolRewardsPanel: React.FC<PoolDetailsProps> = ({
         value={userProvidedLiquidity.tokenAmounts.baseAmount.toFormat()}
         mt={4.375}
       >
-        {poolDetails.baseAsset && (
-          <BaseAsset
-            icon={poolDetails.baseAsset.icon}
-            label={poolDetails.baseAsset.symbol}
+        {baseAsset && quoteAsset && (
+          <PairAsset 
+          assets={[
+            {
+              icon: baseAsset.icon,
+              label: baseAsset.symbol,
+            },
+            {
+              icon: quoteAsset.icon,
+              label: quoteAsset.symbol,
+            },
+          ]}
+          separator="/"
           />
         )}
       </Item>
-      <Item
+      {/* <Item
         value={userProvidedLiquidity.tokenAmounts.quoteAmount.toFormat()}
         mt={2}
       >
@@ -108,7 +126,7 @@ export const PoolRewardsPanel: React.FC<PoolDetailsProps> = ({
             label={poolDetails.quoteAsset.symbol}
           />
         )}
-      </Item>
+      </Item> */}
 
       <Box mt={4}>
         <Divider
@@ -121,14 +139,14 @@ export const PoolRewardsPanel: React.FC<PoolDetailsProps> = ({
         />
       </Box>
 
-      <Item mt={4} mb={4} value={`$${rewardValue.toFormat()}`}>
+      <Item mt={4} mb={4} value={`$${0}`}>
         <Typography variant="h6">Your rewards</Typography>
       </Item>
-      {rewardsLeft.map(({ tokenId, value }: { tokenId: keyof typeof TOKENS, value: BigNumber}) => (
-        <Item value={value.toFormat()} mt={2} key={tokenId}>
+      {rewardAssets.map(({ name, icon, symbol }: MockedAsset) => (
+        <Item value={new BigNumber(0).toString()} mt={2} key={name}>
           <BaseAsset
-            icon={TOKENS[tokenId].icon}
-            label={TOKENS[tokenId].symbol}
+            icon={icon}
+            label={symbol}
           />
         </Item>
       ))}
@@ -143,6 +161,8 @@ export const PoolRewardsPanel: React.FC<PoolDetailsProps> = ({
           Claim rewards
         </Button>
       </Box>
+
+      <ConfirmingModal open={isPendingClaimStakingRewards} />
     </BoxWrapper>
   );
 };

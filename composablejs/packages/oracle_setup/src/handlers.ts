@@ -21,7 +21,8 @@ import { KeyringPair } from "@polkadot/keyring/types";
  * }
  */
 export async function connect(): Promise<{ api: ApiPromise; keyring: Keyring }> {
-  const { newClient, newKeyring } = await getNewConnection();
+  const endpoint = "ws://" + (process.env.ENDPOINT ?? "127.0.0.1:9988");
+  const { newClient, newKeyring } = await getNewConnection(endpoint);
   const api = newClient;
   const keyring = newKeyring;
   return { api: api, keyring: keyring };
@@ -41,7 +42,7 @@ export async function createOracleForAsset(
     assetID: number;
     threshold: Percent | AnyNumber;
     minAnswers: u32 | AnyNumber;
-    maXAnswers: u32 | AnyNumber;
+    maxAnswers: u32 | AnyNumber;
     blockInterval: u32 | AnyNumber;
     reward: u128 | AnyNumber;
     slash: u128 | AnyNumber;
@@ -56,10 +57,11 @@ export async function createOracleForAsset(
         oracleParameters.assetID,
         oracleParameters.threshold,
         oracleParameters.minAnswers,
-        oracleParameters.maXAnswers,
+        oracleParameters.maxAnswers,
         oracleParameters.blockInterval,
         oracleParameters.reward,
-        oracleParameters.slash
+        oracleParameters.slash,
+        true
       )
     )
   );

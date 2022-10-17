@@ -43,3 +43,5 @@ export type { AssetSelectionModalProps } from "./AssetSelectionModal";
 export { AssetSelectionModal } from "./AssetSelectionModal";
 
 export { CircularProgress } from "./CircularProgress";
+
+export { Checkbox } from "./Checkbox";

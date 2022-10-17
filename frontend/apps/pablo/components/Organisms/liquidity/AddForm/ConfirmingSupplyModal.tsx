@@ -63,7 +63,7 @@ export const ConfirmingSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
             Waiting for confirmation
           </Typography>
           <Typography variant="subtitle1" mt={2} color="text.secondary">
-            Removing {`${assetOneAmount}`} {assetOne?.symbol} and {`${assetTwoAmount}`} {assetTwo?.symbol}
+            Adding {`${assetOneAmount}`} {assetOne?.symbol} and {`${assetTwoAmount}`} {assetTwo?.symbol}
           </Typography>
           <Typography 
             variant="body1" 
@@ -72,8 +72,8 @@ export const ConfirmingSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
               color: alpha(theme.palette.common.white, theme.custom.opacity.main),
             }}
           >
-            Confirm this transaction in your wallet
-          </Typography>       
+            Confirming this transaction in your wallet
+          </Typography>
         </Box>
       )}
 
@@ -101,7 +101,7 @@ export const ConfirmingSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
           </Typography>
           <Box display="flex" justifyContent="center" mt={2} mb={8}>
             <Link target="_blank" href="/frontend/apps/pablo/pages">
-              View on Polacdot {"{.js}"}
+              View on Polkadot {"{.js}"}
             </Link>
           </Box>
           
@@ -118,4 +118,3 @@ export const ConfirmingSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
     </Modal>  
   );
 };
-

@@ -1,6 +1,5 @@
-import { NamedSet } from "zustand/middleware";
 import { StoreSlice } from "../../types";
-import StatsDummyData from "./dummyData";
+import BigNumber from "bignumber.js";
 
 interface ApolloTableData {
   symbol: string;
@@ -11,28 +10,76 @@ interface ApolloTableData {
   changeValue: number;
 }
 
+type PriceHashMap = {
+  [key: string]: { open: BigNumber | null; close: BigNumber | null };
+};
+
 interface ApolloState {
-  assets: Array<ApolloTableData>;
+  binanceAssets: PriceHashMap;
+  oracleAssets: PriceHashMap;
 }
 
+export const APOLLO_ALLOWED_CURRENCIES = ["KSM", "USDC", "PABLO", "PICA"];
+
 const initialState: ApolloState = {
-  assets: StatsDummyData.APOLLO.assets,
+  binanceAssets: APOLLO_ALLOWED_CURRENCIES.reduce((acc, curr) => {
+    acc[curr] = {
+      open: null,
+      close: null,
+    };
+    return acc;
+  }, <PriceHashMap>{}),
+  oracleAssets: APOLLO_ALLOWED_CURRENCIES.reduce((acc, curr) => {
+    acc[curr] = {
+      open: null,
+      close: null,
+    };
+    return acc;
+  }, <PriceHashMap>{}),
 };
 
 export interface StatsApolloSlice {
   statsApollo: ApolloState & {
-    setApolloAssets: (data: ApolloTableData) => void;
+    setBinanceAssets: (
+      symbol: string,
+      open: BigNumber | null,
+      close: BigNumber | null
+    ) => void;
+    setOracleAssets: (
+      symbol: string,
+      open: BigNumber | null,
+      close: BigNumber | null
+    ) => void;
   };
 }
 
-export const createStatsApolloSlice: StoreSlice<StatsApolloSlice> = (
-  set: NamedSet<StatsApolloSlice>
-) => ({
+export const createStatsApolloSlice: StoreSlice<StatsApolloSlice> = (set) => ({
   statsApollo: {
     ...initialState,
-    setApolloAssets: (data: ApolloTableData) => {
+    setBinanceAssets: (
+      symbol: string,
+      open: BigNumber | null,
+      close: BigNumber | null
+    ) => {
       set((state) => {
-        state.statsApollo.assets = { ...state.statsApollo.assets, ...data };
+        state.statsApollo.binanceAssets[symbol] = {
+          open,
+          close,
+        };
+
+        return state;
+      });
+    },
+    setOracleAssets: (
+      symbol: string,
+      open: BigNumber | null,
+      close: BigNumber | null
+    ) => {
+      set((state) => {
+        state.statsApollo.oracleAssets[symbol] = {
+          open,
+          close,
+        };
 
         return state;
       });

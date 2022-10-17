@@ -1,5 +1,5 @@
 import { NamedSet } from "zustand/middleware";
-import { StoreSlice } from "../types";
+import { StoreSlice } from "@/stores/types";
 
 export type Account = {
   address: string;

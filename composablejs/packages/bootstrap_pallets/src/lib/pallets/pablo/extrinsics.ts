@@ -7,10 +7,15 @@ import { sendAndWaitForSuccess, sendAndWaitFor } from "@composable/bootstrap_pal
 
 export async function createLiquidityBootstrappingPool(
   api: ApiPromise,
-  ownerKey: KeyringPair,
+  sudoKey: KeyringPair,
   config: PalletPabloPoolInitConfiguration
 ) {
-  return await sendAndWaitForSuccess(api, ownerKey, api.events.pablo.PoolCreated.is, api.tx.pablo.create(config));
+  return await sendAndWaitForSuccess(
+    api,
+    sudoKey,
+    api.events.pablo.PoolCreated.is,
+    api.tx.sudo.sudo(api.tx.pablo.create(config))
+  );
 }
 
 export async function updateDexRoute(
@@ -33,7 +38,12 @@ export async function createConstantProductPool(
   sudoKey: KeyringPair,
   config: PalletPabloPoolInitConfiguration
 ) {
-  return await sendAndWaitForSuccess(api, sudoKey, api.events.pablo.PoolCreated.is, api.tx.pablo.create(config));
+  return await sendAndWaitForSuccess(
+    api,
+    sudoKey,
+    api.events.pablo.PoolCreated.is,
+    api.tx.sudo.sudo(api.tx.pablo.create(config))
+  );
 }
 
 export async function createStableSwapPool(
@@ -55,7 +65,12 @@ export async function createStableSwapPool(
       fee: api.createType("Permill", feeRate)
     }
   });
-  return await sendAndWaitForSuccess(api, sudoKey, api.events.pablo.PoolCreated.is, api.tx.pablo.create(pool));
+  return await sendAndWaitForSuccess(
+    api,
+    sudoKey,
+    api.events.pablo.PoolCreated.is,
+    api.tx.sudo.sudo(api.tx.pablo.create(pool))
+  );
 }
 
 export async function addLiquidity(

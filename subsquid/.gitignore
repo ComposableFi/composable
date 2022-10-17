@@ -2,11 +2,12 @@
 /lib
 
 /**Versions.json
+/**Versions.jsonl
 
 # IDE files
 /.idea
 
-
+*.env
 # Custom additions
 src/**/**.js
 src/**/**.js.map

@@ -1,11 +1,110 @@
-version: "3"
-
 services:
   db:
-    image: postgres:12
+    image: postgres:14  # CockroachDB cluster might be a better fit for production deployment
+    restart: always
+    volumes:
+      - /var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: squid-archive
+    ports:
+      - 5432:5432
+
+  ingest:
+    depends_on:
+      - db
+    restart: on-failure
+    image: subsquid/substrate-ingest:firesquid
+    command: [
+      # polkadot endpoints -- replace with your wss
+      "-e", "ws://host.docker.internal:9988",
+      "-c", "10", # allow up to 20 pending requests for the above endpoint (default is 5)
+      #  "--start-block", "1000000", # uncomment to specify a non-zero start block
+      "--prom-port", "9090",
+      "--out", "postgres://postgres:postgres@db:5432/squid-archive"
+    ]
+    ports:
+      - "9090:9090" # prometheus port
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  gateway:
+    depends_on:
+      - db
+    image: subsquid/substrate-gateway:firesquid
+    environment:
+      RUST_LOG: "substrate_gateway=info,actix_server=info"
+    command: [
+      "--database-url", "postgres://postgres:postgres@db:5432/squid-archive",
+      "--database-max-connections", "3", # max number of concurrent database connections
+      # "--evm-support" # uncomment for chains with Frontier EVM pallet
+      # (e.g. Moonbeam/Moonriver or Astar/Shiden)
+    ]
+    ports:
+      - "8888:8000"
+
+  # Explorer service is optional.
+  # It provides rich GraphQL API for querying archived data.
+  # Many developers find it very useful for exploration and debugging.
+  explorer:
+    image: subsquid/substrate-explorer:firesquid
+    environment:
+      DB_TYPE: postgres # set to `cockroach` for Cockroach DB
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: "squid-archive"
+      DB_USER: "postgres"
+      DB_PASS: "postgres"
+    ports:
+      - "4010:3000"
+
+  # This DB service is used by squid
+  squid-db:
+    image: postgres:14
+    restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     environment:
       POSTGRES_DB: squid
       POSTGRES_PASSWORD: squid
+
+  graphql-server:
+    build:
+      context: ./
+      dockerfile: graphql.Dockerfile
+    depends_on:
+      squid-db:
+        condition: service_healthy
     ports:
-      - "${DB_PORT}:5432"
-      # command: ["postgres", "-c", "log_statement=all"]
+      - 4350:4000
+    environment:
+      DB_NAME: squid
+      DB_HOST: squid-db
+      DB_PASS: squid
+      DB_PORT_PG: 5432
+    # volumes:
+    #   - ./scripts/init.sh:/init.sh
+    # entrypoint: sh /init.sh
+
+
+  processor:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    depends_on:
+      squid-db:
+        condition: service_healthy
+      graphql-server:
+        condition: service_started
+    environment:
+      DB_HOST: squid-db
+      DB_NAME: squid
+      DB_PASS: squid
+      DB_PORT: 5432
+      GQL_PORT: 4350
+      SUBSQUID_ARCHIVE_URI: "http://gateway:8000/graphql"
+      RELAYCHAIN_URI: "ws://host.docker.internal:9988"

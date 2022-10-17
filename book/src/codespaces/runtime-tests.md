@@ -4,10 +4,11 @@
 
 ## Editing and writing runtime tests
 
-Editting and writing runtime tests is easy because it is already set up for you. Simply scroll down to `integration-tests/runtime-tests` in the sidebar, and start coding away!
+Editing and writing runtime tests is easy because it is already set up for you. 
+Simply scroll down to `integration-tests/runtime-tests` in the sidebar, and start coding away!
 
-![Editting runtime tests](./../editting-runtime-tests.png)
-*Editting runtime tests*
+![Editing runtime tests](./../editing-runtime-tests.png)
+*Editing runtime tests*
 
 ## Running runtime tests
 

@@ -8,7 +8,7 @@ import { keyframes } from "@emotion/react";
 import { MessageAction } from "@/components/Molecules/Snackbar/Action";
 import { Message } from "@/components/Molecules/Snackbar/Message";
 
-const SNACKBAR_TIMEOUT_DURATION = 7000;
+const SNACKBAR_TIMEOUT_DURATION = 30000;
 
 const progress = keyframes([
   {

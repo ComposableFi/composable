@@ -28,7 +28,8 @@ export const StakingConnected: FC<StakingConnectedProps> = () => {
           {stakeTab === 1 && <BurnUnstakeTabContent />}
         </Grid>
         <Grid item xs={12} marginTop={9}>
-          <ClaimableRewards onClaimButtonClick={() => {} /* TODO: */} />
+          <ClaimableRewards onClaimButtonClick={() => {
+          } /* TODO: */} />
         </Grid>
       </Grid>
     </>

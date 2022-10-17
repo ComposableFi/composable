@@ -1,16 +1,7 @@
 import { BaseAsset, Label } from "@/components/Atoms";
 import { Link } from "@/components/Molecules";
 import { FormTitle } from "@/components/Organisms/FormTitle";
-import {
-  Box,
-  Button,
-  useTheme,
-  alpha,
-  BoxProps,
-  Typography,
-  IconButton,
-  Divider,
-} from "@mui/material";
+import { alpha, Box, BoxProps, Button, Divider, IconButton, Typography, useTheme } from "@mui/material";
 import { useMemo, useState } from "react";
 import BigNumber from "bignumber.js";
 import { useDispatch } from "react-redux";
@@ -23,16 +14,15 @@ import moment from "moment-timezone";
 import useStore from "@/store/useStore";
 import { AMMs } from "@/defi/AMMs";
 import { useUSDPriceByAssetId } from "@/store/assets/hooks";
-import {
-  getSigner,
-  useExecutor,
-  useParachainApi,
-  useSelectedAccount,
-} from "substrate-react";
+import { useExecutor, useParachainApi, useSelectedAccount, useSigner } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
-import { APP_NAME } from "@/defi/polkadot/constants";
 import { EventRecord } from "@polkadot/types/interfaces/system/types";
-import { addLiquidityToPoolViaPablo, createConstantProductPool, createStableSwapPool, toChainUnits } from "@/defi/utils";
+import {
+  addLiquidityToPoolViaPablo,
+  createConstantProductPool,
+  createStableSwapPool,
+  toChainUnits
+} from "@/defi/utils";
 import { closeConfirmingModal, openConfirmingModal } from "@/stores/ui/uiSlice";
 import { useAsset } from "@/defi/hooks/assets/useAsset";
 
@@ -46,15 +36,15 @@ const labelProps = (
     mb: 0,
     TypographyProps: {
       variant: "body1",
-      fontWeight: fontWeight,
+      fontWeight: fontWeight
     },
     BalanceProps: {
       balance: balance,
       BalanceTypographyProps: {
         variant: "body1",
-        fontWeight: fontWeight,
-      },
-    },
+        fontWeight: fontWeight
+      }
+    }
   } as const);
 
 const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
@@ -62,6 +52,7 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
   const dispatch = useDispatch();
 
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
+  const signer = useSigner();
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
 
   const {
@@ -74,13 +65,12 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
       ammId,
       weights,
       setSelectable,
-      resetSlice,
-    },
-    supportedAssets
+      resetSlice
+    }
   } = useStore();
 
   const _baseAsset = useAsset(baseAsset);
-  const _quoteAsset = useAsset(quoteAsset)
+  const _quoteAsset = useAsset(quoteAsset);
 
   const executor = useExecutor();
 
@@ -92,7 +82,7 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
     return new BigNumber(liquidity.quoteAmount);
   }, [liquidity.quoteAmount]);
 
-  const [createdAt, setCreatedAt] = useState(-1)
+  const [createdAt, setCreatedAt] = useState(-1);
 
   const baseTokenUSDPrice = useUSDPriceByAssetId(baseAsset);
   const quoteTokenUSDPrice = useUSDPriceByAssetId(quoteAsset);
@@ -126,9 +116,8 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
   };
 
   const addLiquidity = async (poolId: number) => {
-    if (parachainApi && selectedAccount && executor && selectedAccount) {
+    if (parachainApi && signer !== undefined && selectedAccount && executor && selectedAccount) {
       const { address } = selectedAccount;
-      const signer = await getSigner(APP_NAME, address);
 
       const call = addLiquidityToPoolViaPablo(
         parachainApi,
@@ -158,9 +147,9 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
     }
   };
 
-  const onCreateFinalized = (txHash: string, events: EventRecord[]) => {
+  const onCreateFinalized = (txHash: string, events: EventRecord[]): void | undefined => {
     console.log("Pool Creation Finalized", txHash);
-    setCreatedAt(Date.now())
+    setCreatedAt(Date.now());
 
     if (parachainApi) {
       const poolCreatedEvent = events.find((ev) =>
@@ -181,11 +170,10 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
   };
 
   const onButtonClickHandler = async () => {
-    if (executor && parachainApi && selectedAccount) {
+    if (executor && signer !== undefined && parachainApi && selectedAccount) {
       const { address } = selectedAccount;
-      const signer = await getSigner(APP_NAME, address);
 
-      let pair = { base: +baseAsset, quote: +quoteAsset }
+      let pair = { base: +baseAsset, quote: +quoteAsset };
       let permillDecimals = new BigNumber(10).pow(4);
       let fee = new BigNumber(swapFee).times(permillDecimals).toNumber();
 
@@ -194,12 +182,12 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
       let call =
         ammId === "uniswap" || ammId === "balancer"
           ? createConstantProductPool(
-              parachainApi,
-              pair,
-              fee,
-              address,
-              baseWeight.toNumber()
-            )
+            parachainApi,
+            pair,
+            fee,
+            address,
+            baseWeight.toNumber()
+          )
           : createStableSwapPool(parachainApi, pair, fee, address);
 
       executor
@@ -286,7 +274,7 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
             borderColor: alpha(
               theme.palette.common.white,
               theme.custom.opacity.main
-            ),
+            )
           }}
         />
       </Box>

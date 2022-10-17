@@ -7,6 +7,7 @@ import { mintAssetsToWallets } from "../assets/extrinsics";
 import BigNumber from "bignumber.js";
 import { sendAndWaitForSuccess, sendUnsignedAndWaitForSuccess } from "@composable/bootstrap_pallets/lib";
 import { toHexString } from "@composable/bootstrap_pallets/utils";
+import { decodeAddress } from "@polkadot/util-crypto";
 
 export const associateKSM = async (api: ApiPromise, contributorAccount: KeyringPair, rewardAccount: KeyringPair) => {
   const message = `<Bytes>picasso-${toHexString(rewardAccount.publicKey)}</Bytes>`;
@@ -48,62 +49,27 @@ export const initialize = async (api: ApiPromise, sudoAccount: KeyringPair) => {
 export const populate = async (
   api: ApiPromise,
   walletSudo: KeyringPair,
-  relayAccounts: string[],
-  ethAccounts: string[],
-  rewardsPerAccount: string,
-  vestingPeriod: string
+  accounts: [PalletCrowdloanRewardsModelsRemoteAccount, u128, u32][]
 ) => {
-  const _vestingPeriod = api.createType("u32", vestingPeriod);
-  const _rewardsPerAccount = api.createType("u128", rewardsPerAccount);
-
-  const relayContributors = relayAccounts.map(
-    account =>
-      [
-        api.createType("PalletCrowdloanRewardsModelsRemoteAccount", {
-          RelayChain: api.createType("AccountId32", account).toU8a()
-        }),
-        _rewardsPerAccount,
-        _vestingPeriod
-      ] as [PalletCrowdloanRewardsModelsRemoteAccount, u128, u32]
-  );
-
-  const ethereumContributors = ethAccounts.map(
-    account =>
-      [
-        api.createType("PalletCrowdloanRewardsModelsRemoteAccount", {
-          Ethereum: account
-        }),
-        _rewardsPerAccount,
-        _vestingPeriod
-      ] as [PalletCrowdloanRewardsModelsRemoteAccount, u128, u32]
-  );
-
-  const sliced = relayContributors.slice(0, 50).concat(ethereumContributors.slice(0, 50));
-
   return await sendAndWaitForSuccess(
     api,
     walletSudo,
     api.events.sudo.Sudid.is,
-    api.tx.sudo.sudo(api.tx.crowdloanRewards.populate(sliced))
+    api.tx.sudo.sudo(api.tx.crowdloanRewards.populate(accounts))
   );
 };
 
 export const addFundsToCrowdloan = async (
   api: ApiPromise,
   walletSudo: KeyringPair,
-  relayAccounts: Uint8Array[],
-  ethAccounts: string[],
-  rewardsPerAccount: string,
+  amount: u128,
   palletAccountId: string
 ) => {
-  const sliced = relayAccounts.slice(0, 50).length + ethAccounts.slice(0, 50).length;
-  const netRewards = new BigNumber(rewardsPerAccount).times(sliced);
-
-  await mintAssetsToWallets(api, [walletSudo], walletSudo, ["1"], netRewards);
+  await mintAssetsToWallets(api, [walletSudo], walletSudo, ["1"], new BigNumber(amount.toString()));
   await sendAndWaitForSuccess(
     api,
     walletSudo,
     api.events.balances.Transfer.is,
-    api.tx.assets.transfer(1, palletAccountId, api.createType("u128", netRewards), true)
+    api.tx.assets.transfer("1", decodeAddress(palletAccountId), amount, true)
   );
 };

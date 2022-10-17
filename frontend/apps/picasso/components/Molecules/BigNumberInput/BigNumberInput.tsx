@@ -1,16 +1,16 @@
-import React, { FC } from "react";
+import React, { FC, useEffect } from "react";
 import BigNumber from "bignumber.js";
-import { Input } from "../../Atom";
+import { Input, InputProps } from "../../Atom";
 import { Typography, useTheme } from "@mui/material";
-import { InputProps } from "../../Atom";
 import { useValidation } from "./hooks";
 
 type BigNumberInputProps = InputProps & {
   value: BigNumber;
-  isValid: (value: boolean) => any;
+  isValid?: (value: boolean) => any;
   setter: (value: BigNumber) => any;
   maxDecimals?: number;
   maxValue: BigNumber;
+  onChange?: (value: BigNumber) => any;
 };
 
 export const BigNumberInput: FC<BigNumberInputProps> = ({
@@ -31,19 +31,22 @@ export const BigNumberInput: FC<BigNumberInputProps> = ({
       maxValue,
     });
 
-  React.useEffect(() => {
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    validate(event);
+
     isValid?.(!hasError);
-  }, [hasError, isValid]);
+  };
 
-  React.useEffect(() => {
-    setter && setter(bignrValue);
-  }, [bignrValue, setter]);
-
-  React.useEffect(() => {
-    if (value !== bignrValue) {
-      setValue(value);
+  useEffect(() => {
+    if (hasError) {
+      const newValue = stringValue.length
+        ? new BigNumber(stringValue)
+        : new BigNumber(0);
+      !newValue.isNaN() && setter(newValue);
+    } else {
+      setter(bignrValue);
     }
-  }, [value, setValue, bignrValue]);
+  }, [stringValue, hasError, setter, bignrValue]);
 
   return (
     <>
@@ -52,13 +55,13 @@ export const BigNumberInput: FC<BigNumberInputProps> = ({
         variant="outlined"
         value={stringValue}
         setValue={setValue}
-        onChange={validate}
+        onChange={handleChange}
         disabled={disabled}
       />
       {!disabled && hasError && (
         <Typography
           sx={{ color: theme.palette.error.main, mt: 2 }}
-          variant="h6"
+          variant="subtitle1"
         >
           Please insert a correct amount
         </Typography>

@@ -1,0 +1,222 @@
+name: Release Artifacts
+on:
+  push:
+    branches:
+      - release-v[0-9].[0-9].[0-9]
+
+env:
+  GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
+  NIX_NIXPKGS_CHANNEL: https://nixos.org/channels/nixpkgs-22.05-darwin
+  CACHIX_COMPOSABLE: composable-community
+  CACHIX_COMPRESSION_LEVEL: 4
+  DOCKER_REGISTRY_NAME: composablefi
+  DOCKER_USER_OPTION: '$UID:$GID'
+
+jobs:
+  build-runtime:
+    name: "Build runtime"
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    concurrency:
+      group: build-runtime-${{ matrix.runtime }}-${{ github.ref }}
+      cancel-in-progress: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    strategy:
+      matrix:
+        runtime: [dali, picasso, composable]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup nix configuration
+        run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+          echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+
+      - name: Setup cachix
+        uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+
+      - name: Build runtime
+        run: |
+          cachix watch-exec --compression-level $CACHIX_COMPRESSION_LEVEL $CACHIX_COMPOSABLE nix -- build .#${{ matrix.runtime }}-runtime
+
+  build-composable-node:
+    name: "Build Composable node (runtimeless)"
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    concurrency:
+      group: build-composable-node-${{ github.ref }}
+      cancel-in-progress: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup nix configuration
+        run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+          echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+
+      - name: Setup cachix
+        uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+
+      - name: Build Composable node (without runtime)
+        run: |
+          cachix watch-exec --compression-level $CACHIX_COMPRESSION_LEVEL $CACHIX_COMPOSABLE nix -- build .#composable-node-release
+
+  release:
+    name: "Release"
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    needs:
+      - build-runtime
+      - build-composable-node
+    concurrency:
+      group: release-${{ github.ref }}
+      cancel-in-progress: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup nix configuration
+        run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+          echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+
+      - name: Setup cachix
+        uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+
+      - name: Install docker
+        run: nix-env -iA nixpkgs.docker
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Setup Composable version
+        run: |
+          echo "COMPOSABLE_VERSION=$(nix eval --raw .#composable-node-release.version)" >> $GITHUB_ENV
+
+      - name: Download artifacts
+        run: |
+          nix bundle --bundler github:NixOS/bundlers#toDockerImage .#composable-node-release -L --out-link composable-docker-image
+          nix bundle --bundler github:NixOS/bundlers#toRPM .#composable-node-release -L --out-link rpm
+          nix bundle --bundler github:NixOS/bundlers#toDEB .#composable-node-release -L --out-link deb
+
+          nix build .#dali-runtime --out-link dali-runtime
+          nix build .#picasso-runtime --out-link picasso-runtime
+          nix build .#composable-runtime --out-link composable-runtime
+
+          nix build .#subwasm-release-body --out-link subwasm-release
+
+          cp subwasm-release release.txt
+
+          mkdir -p release-artifacts
+
+          cp dali-runtime/lib/runtime.optimized.wasm release-artifacts/dali_runtime.wasm
+          cp picasso-runtime/lib/runtime.optimized.wasm release-artifacts/picasso_runtime.wasm
+          cp composable-runtime/lib/runtime.optimized.wasm release-artifacts/composable_runtime.wasm
+          # RPM Name convention: https://docs.oracle.com/en/database/oracle/oracle-database/19/ladbi/rpm-packages-naming-convention.html
+          cp rpm/*.rpm release-artifacts/composable-node-${{ env.COMPOSABLE_VERSION }}-1.x86_64.rpm
+          # DEB Name convention: https://askubuntu.com/questions/330018/what-is-the-standard-for-naming-deb-file-name
+          cp deb/*.deb release-artifacts/composable-node_${{ env.COMPOSABLE_VERSION }}-1_amd64.deb
+          cd release-artifacts
+          sha256sum * > checksums.txt
+
+      - name: Release docker image
+        run: |
+          docker load --input ./composable-docker-image
+          docker tag composable:latest "${{ env.DOCKER_REGISTRY_NAME }}/composable:v${{ env.COMPOSABLE_VERSION }}"
+          docker push "${{ env.DOCKER_REGISTRY_NAME }}/composable:v${{ env.COMPOSABLE_VERSION }}"
+
+      - name: Get commit
+        id: fetch_commit_sha
+        run: |
+          if [ ${{ github.event_name == 'pull_request' }} ]; then
+            echo "::set-output name=sha::${{ github.event.pull_request.head.sha }}"
+          else
+            echo "::set-output name=sha::${{ github.sha }}"
+          fi
+
+      - name: Generate release body
+        uses: DamianReeves/write-file-action@master
+        with:
+          path: release.txt
+          write-mode: append
+          contents: |
+            ## Nix
+            ```bash
+            # Generate the runtimes
+            nix build github:ComposableFi/composable/v${{ env.COMPOSABLE_VERSION }}#dali-runtime
+            nix build github:ComposableFi/composable/v${{ env.COMPOSABLE_VERSION }}#picasso-runtime
+            nix build github:ComposableFi/composable/v${{ env.COMPOSABLE_VERSION }}#composable-runtime
+
+            # Run the Composable node (release mode) alone
+            nix run github:ComposableFi/composable/v${{ env.COMPOSABLE_VERSION }}#composable-node-release
+
+            # Spin up a local devnet (Dali + Rococo)
+            nix run github:ComposableFi/composable/v${{ env.COMPOSABLE_VERSION }}#devnet-up
+
+            # Spin up a local XCVM devnet (Dali + Rococo + Juno)
+            nix run github:ComposableFi/composable/v${{ env.COMPOSABLE_VERSION }}#devnet-xcvm-up
+
+            # Show all possible apps, shells and packages
+            nix flake show github:ComposableFi/composable/v${{ env.COMPOSABLE_VERSION }} --allow-import-from-derivation
+            ```
+
+      - name: Release artifacts
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: false
+          fail_on_unmatched_files: true
+          generate_release_notes: true
+          body_path: release.txt
+          tag_name: v${{ env.COMPOSABLE_VERSION }}
+          target_commitish: ${{ steps.fetch_commit_sha.outputs.sha }}
+          files: |
+            release-artifacts/*

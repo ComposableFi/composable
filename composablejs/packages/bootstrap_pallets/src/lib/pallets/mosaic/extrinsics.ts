@@ -25,7 +25,7 @@ export const setNetwork = async (api: ApiPromise, relayerAccount: KeyringPair) =
 };
 
 // to-do add dynamic parameters
-// all params are from repo benchamarks
+// all params are from repo benchmarks
 export const setBudget = async (assetId: number, api: ApiPromise, sudoAccount: KeyringPair) => {
   return sendAndWaitForSuccess(
     api,

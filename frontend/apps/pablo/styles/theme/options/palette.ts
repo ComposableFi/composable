@@ -1,16 +1,16 @@
-import { alpha, PaletteOptions } from "@mui/material";
+import { PaletteOptions } from "@mui/material";
 
 export const paletteOptions = {
   dark: {
     primary: {
-      main: "#1731F7",
-      light: "#0085FF",
-      dark: "#01041B",
+      main: "#9C4AED",
+      light: "#9137EB",
+      dark: "#2D0B4F",
     },
     secondary: {
-      main: "#1F2764",
-      light: "#0B1C9A",
-      dark: "#150B00",
+      main: "#540F99",
+      light: "#3B2B4C",
+      dark: "#0D0316",
     },
     info: {
       main: "#0286FF",
@@ -52,6 +52,10 @@ export const paletteOptions = {
       other:
         "linear-gradient(130deg, #fff -2%, rgba(255, 255, 255, 0) 130%), \
               linear-gradient(124deg, #fff 10%, rgba(255, 255, 255, 0) 78%)",
+      grapeBackground: "linear-gradient(90deg, #01032B 0%, #2B0140 100%)",
+    },
+    background: {
+      transparentCharcoal: "rgba(0, 0, 0, 0.3)",
     },
   } as PaletteOptions,
   light: {

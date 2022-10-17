@@ -1,56 +1,26 @@
 type Account @entity {
   "Account address"
   id: ID!
-  balance: BigInt!
-  historicalBalances: [HistoricalBalance!] @derivedFrom(field: "account")
-}
-
-type HistoricalBalance @entity {
-  id: ID!
-  account: Account!
-  balance: BigInt!
-  date: DateTime!
-}
-
-enum PabloTransactionType {
-  ADD_LIQUIDITY,
-  REMOVE_LIQUIDITY,
-  SWAP,
-  CREATE_POOL,
-  DELETE_POOL
-}
-
-type PabloTransaction @entity {
-  "ID of the event that was used to derive this transaction"
-  eventId: ID!
-  pool: PabloPool!
-  who: String!
-  transactionType: PabloTransactionType
-  baseAssetId: BigInt!
-  baseAssetAmount: BigInt!
-  quoteAssetId: BigInt!
-  quoteAssetAmount: BigInt!
-  blockNumber: BigInt!
-  spotPrice: String!
-  "Optional: Only certain transaction types have fees charged by Pablo. Does NOT include the collected extrinsic execution fee."
-  fee: String!
-  "Unix timestamp in ms"
-  receivedTimestamp: BigInt!
+  "Last event involving account"
+  eventId: String!
 }
 
 type PabloPool @entity {
+  id: ID!
   "ID of the last event that was used to derive this entity data"
   eventId: ID!
   "Pool ID"
   poolId: BigInt!
   owner: String!
+  lpIssued: BigInt!
   transactionCount: Int!
   totalLiquidity: String!
   totalVolume: String!
   totalFees: String!
+  baseAssetId: String!
   "Asset used for all quotes in this type"
-  quoteAssetId: BigInt!
-  blockNumber: BigInt!
+  quoteAssetId: String!
+  blockNumber: BigInt! @index
   "Unix timestamp in ms"
   calculatedTimestamp: BigInt!
   poolAssets: [PabloPoolAsset!] @derivedFrom(field: "pool")
@@ -59,23 +29,25 @@ type PabloPool @entity {
 
 type PabloPoolAsset @entity {
   id: ID!
-  assetId: BigInt!
+  assetId: String!
   pool: PabloPool!
   totalLiquidity: BigInt!
   totalVolume: BigInt!
-  blockNumber: BigInt!
+  blockNumber: BigInt! @index
   "Unix timestamp in ms"
   calculatedTimestamp: BigInt!
 }
 
 type BondedFinanceBondOffer @entity {
   id: ID!
-  eventId: String!
-  offerId: String!
+  eventId: String! @index
+  offerId: String! @index
   "Total amount of purchased bonds"
   totalPurchased: BigInt!
   "Beneficiary account for the bond offer"
   beneficiary: String!
+  "True if the offer has been cancelled"
+  cancelled: Boolean!
 }
 
 type ScheduleWindow {
@@ -85,21 +57,152 @@ type ScheduleWindow {
 }
 
 type Schedule {
+  vestingScheduleId: BigInt!
   window: ScheduleWindow!
   periodCount: BigInt!
-  perPeriod:BigInt!
+  perPeriod: BigInt!
+  alreadyClaimed: BigInt!
 }
 
 type VestingSchedule @entity {
   id: ID!
   "account that initiates the schedule"
-  from: String!
+  from: String! @index
   "chain event ID"
-  eventId: String!
-  "{accoundId}-{assetId}"
-  scheduleId: String!
+  eventId: String! @index
+  "Vesting schedule ID from chain"
+  scheduleId: BigInt! @index
   "'To' account for the vesting schedule"
   to: String!
+  "Asset ID"
+  assetId: String!
   "Vesting schedule"
   schedule: Schedule!
+  "Initial locked amount"
+  totalAmount: BigInt!
+  "True if the schedule has been fully claimed"
+  fullyClaimed: Boolean!
+}
+
+type Activity @entity {
+  id: ID!
+  "ID of the event associated with this activity"
+  event: Event! @index
+  "ID of the active account"
+  accountId: String! @index
+  "Timestamp of the block in which this activity occurred"
+  timestamp: BigInt!
+}
+
+type Asset @entity {
+  "ID of the asset in Picasso"
+  id: ID!
+  "ID of the event that added the last price"
+  eventId: String! @index
+  "Latest price in USD"
+  price: BigInt!
+  historicalPrices: [HistoricalAssetPrice!] @derivedFrom(field: "asset")
+}
+
+enum Currency {
+  USD
+}
+
+type HistoricalAssetPrice @entity {
+  id: ID!
+  "ID of the event associated with this activity"
+  eventId: String! @index
+  "ID of the asset"
+  asset: Asset!
+  price: BigInt!
+  timestamp: BigInt!
+  currency: Currency!
+}
+
+type RewardPool @entity {
+  id: ID!
+  eventId: String! @index
+  poolId: String! @index
+}
+
+enum LockedSource {
+  All
+  Pablo
+  StakingRewards
+  VestingSchedules
+}
+
+type StakingPosition @entity @index(fields: ["fnftCollectionId", "fnftInstanceId"], unique: true) {
+  id: ID!
+  event: Event! @unique @index
+  "Unique identifier for the position on chain"
+  fnftCollectionId: String! @index
+  fnftInstanceId: String! @index
+  owner: String! @index
+  assetId: String!
+  amount: BigInt!
+  startTimestamp: BigInt!
+  duration: BigInt!
+  endTimestamp: BigInt
+  rewardMultiplier: BigInt!
+  source: LockedSource!
+}
+
+type HistoricalLockedValue @entity {
+  id: ID!
+  event: Event! @index
+  amount: BigInt!
+  currency: Currency!
+  timestamp: BigInt!
+  source: LockedSource!
+}
+
+type PabloTransaction @entity {
+  id: ID!
+  event: Event! @unique @index
+  pool: PabloPool!
+  baseAssetId: String!
+  baseAssetAmount: BigInt!
+  quoteAssetId: String!
+  quoteAssetAmount: BigInt!
+  spotPrice: String!
+  "Optional: Only certain transaction types have fees charged by Pablo. Does NOT include the collected extrinsic execution fee."
+  fee: String!
+}
+
+enum EventType {
+  ADD_LIQUIDITY,
+  REMOVE_LIQUIDITY,
+  SWAP,
+  CREATE_POOL,
+  DELETE_POOL,
+  BALANCES_TRANSFER,
+  BALANCES_DEPOSIT,
+  BALANCES_WITHDRAW,
+  STAKING_REWARDS_REWARD_POOL_CREATED,
+  STAKING_REWARDS_STAKED,
+  STAKING_REWARDS_STAKE_AMOUNT_EXTENDED,
+  STAKING_REWARDS_UNSTAKE,
+  STAKING_REWARDS_SPLIT_POSITION,
+  BONDED_FINANCE_NEW_OFFER,
+  BONDED_FINANCE_NEW_BOND,
+  BONDED_FINANCE_OFFER_CANCELLED,
+  VESTING_SCHEDULES_VESTING_SCHEDULE_ADDED,
+  VESTING_SCHEDULES_CLAIMED,
+  VESTING_SCHEDULES_VESTING_SCHEDULES_UPDATED,
+}
+
+type Event @entity {
+  id: ID!
+  "ID of account that executed the extrinsic"
+  accountId: String @index
+  "Type of transaction"
+  eventType: EventType!
+  "Block in which transaction was registered"
+  blockNumber: BigInt! @index
+  "Timestamp of the block in which this transaction was registered"
+  timestamp: BigInt!
+  "If this transaction came from Pablo, it will have extra information"
+  pabloTransaction: PabloTransaction @derivedFrom(field: "event")
+  activities: [Activity!] @derivedFrom(field: "event")
 }

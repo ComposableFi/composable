@@ -17,7 +17,7 @@ import { getSelectedChartRangeLimitTimestamp, getNextRangeGivenTimestamp } from 
     if (!data.length) return data;
     /**
      * Creating an array from set to filter out
-     * the retundant data in subsquid response
+     * the redundant data in subsquid response
      * as we only care about the most recent
      * tvl within a timeframe/selected range
      */

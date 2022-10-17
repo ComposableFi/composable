@@ -1,13 +1,13 @@
 import type { NextPage } from "next";
 import {
-  Container,
-  Box,
-  Grid,
-  useTheme,
-  Typography,
   alpha,
+  Box,
   Button,
+  Container,
+  Grid,
   Tooltip,
+  Typography,
+  useTheme,
 } from "@mui/material";
 import Default from "@/components/Templates/Default";
 import { PageTitle } from "@/components";
@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import { useDotSamaContext, useParachainApi } from "substrate-react";
 import { fetchSpotPrice } from "@/defi/utils";
 import useStore from "@/store/useStore";
+import { HighlightBox } from "@/components/Atoms/HighlightBox";
 
 const standardPageSize = {
   xs: 12,
@@ -44,46 +45,40 @@ const Auctions: NextPage = () => {
           fetchSpotPrice(
             parachainApi,
             {
-              base:liquidityBootstrappingPools.verified[pool].pair.base.toString(),
-              quote: liquidityBootstrappingPools.verified[pool].pair.quote.toString(),
+              base: liquidityBootstrappingPools.verified[
+                pool
+              ].pair.base.toString(),
+              quote:
+                liquidityBootstrappingPools.verified[
+                  pool
+                ].pair.quote.toString(),
             },
             liquidityBootstrappingPools.verified[pool].poolId
           ).then((spotPrice) => {
-            setLiquidityBootstrappingPoolSpotPrice(
-              pool,
-              spotPrice.toFixed(4)
-            );
+            setLiquidityBootstrappingPoolSpotPrice(pool, spotPrice.toFixed(4));
           });
         }
       }, 1000 * 60);
 
       return () => clearInterval(interval);
     }
-  }, [parachainApi, liquidityBootstrappingPools, setLiquidityBootstrappingPoolSpotPrice]);
+  }, [
+    parachainApi,
+    liquidityBootstrappingPools,
+    setLiquidityBootstrappingPoolSpotPrice,
+  ]);
 
   return (
     <Default>
       <Container maxWidth="lg">
+        <PageTitle
+          title="Token Launch Auctions"
+          subtitle="Liquidity Bootstrapping Pools for Pablo"
+        />
         <Box mb={25}>
-          <Box display="flex" flexDirection="column" alignItems="center" mb={8}>
-            <PageTitle
-              title="Token Launch Auctions"
-              subtitle="Liquidity Bootstrapping Pools for Pablo"
-            />
-          </Box>
           <Grid container mt={4}>
             <Grid item {...standardPageSize}>
-              <Box
-                padding={4}
-                sx={{
-                  background: theme.palette.gradient.secondary,
-                  borderRadius: 1,
-                }}
-                border={`1px solid ${alpha(
-                  theme.palette.common.white,
-                  theme.custom.opacity.light
-                )}`}
-              >
+              <HighlightBox>
                 <Box
                   display="flex"
                   mb={4}
@@ -94,7 +89,7 @@ const Auctions: NextPage = () => {
                   <Box>
                     <Tooltip
                       title={
-                        extensionStatus !== "connected" ? "Comming soon" : ""
+                        extensionStatus !== "connected" ? "Coming soon" : ""
                       }
                       arrow
                     >
@@ -127,7 +122,7 @@ const Auctions: NextPage = () => {
                   </Box>
                 </Box>
                 <AllAuctionsTable />
-              </Box>
+              </HighlightBox>
             </Grid>
           </Grid>
         </Box>

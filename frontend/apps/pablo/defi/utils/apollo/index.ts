@@ -1,10 +1,10 @@
 import { ApiPromise } from "@polkadot/api";
 import BigNumber from "bignumber.js";
 
-export const fetchApolloPriceByAssetId = async (
+export async function fetchApolloPriceByAssetId (
   api: ApiPromise,
   assetId: string
-): Promise<string> => {
+): Promise<string> {
   try {
     let data = await api.query.oracle.prices(assetId);
     const decoded: any = data.toJSON();
@@ -14,10 +14,10 @@ export const fetchApolloPriceByAssetId = async (
   }
 };
 
-export const fetchApolloPriceByAssetIds = async (
+export async function fetchApolloPriceByAssetIds (
   api: ApiPromise,
   assetIds: string[]
-): Promise<Record<string, BigNumber>> => {
+): Promise<Record<string, BigNumber>> {
   let usdPricesRecord: Record<string, BigNumber> = {};
 
   for (const assetId of assetIds) {

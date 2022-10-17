@@ -1,7 +1,7 @@
 import { render, screen } from "@/tests/utils/base";
 import { composeStories } from "@storybook/testing-react";
 import * as stories from "picasso-storybook/stories/templates/stats.stories";
-import { useConnector } from "@integrations-lib/core";
+import { useConnector } from "bi-lib";
 
 const { StatsPage } = composeStories(stories);
 

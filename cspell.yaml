@@ -1,18 +1,81 @@
 ---
+language: en_US, en_GB
+
+caseSensitive: false
+useGitignore: true
+
 dictionaries:
-- spellcheck
+  - en_US
+
+  - companies
+  - softwareTerms
+  - misc
+
+  - typescript
+  - node
+  - python
+  - html
+  - css
+  - latex
+  - bash
+  - rust
+
+  - fonts
+  - filetypes
+  - npm
+
+  - names
+  - terminology
+  - technical
+
 dictionaryDefinitions:
-- name: spellcheck
-  path: ".config/spellcheck.dic"
-  addWords: true
+  - name: names
+    path: ".config/dictionaries/names.dic"
+    addWords: true
+  - name: terminology
+    path: ".config/dictionaries/terminology.dic"
+    addWords: true
+  - name: technical
+    path: ".config/dictionaries/technical.dic"
+    addWords: true
 
 patterns:
-- name: rust-code-literal
-  pattern: '([`])(?:(?=(\\?))\2.)*?\1+'
-- name: quoted
-  pattern: '(["])(?:(?=(\\?))\2.)*?\1+'
-- name: rust-attributes
-  pattern: '#!\[[a-zA-Z()::_]*]'
+  - name: hash-literal
+    pattern: "[a-zA-Z0-9]{47,66}"
+  - name: shebang
+    pattern: "#!\/nix\/store\/[^\/]+\/bin\/[^\/]+" # e.g. "#!/nix/store/2r9n7fz1rxq088j6mi5s7izxdria6d5f-bash-5.1-p16/bin/bash"
+
 ignoreRegExpList:
-- rust-code-literal
-- quoted
+  - hash-literal
+  - shebang
+
+ignorePaths:
+  - "code/parachain/node/src/res"
+  - "target/"
+  - "**/node_modules/"
+  - "book/book"
+  - "**/*.log"
+  - "**/*.svg"
+  - "composablejs/packages/types/src"
+  - "code/integration-tests/runtime-tests/src/types/interfaces"
+  - "frontend/packages/defi-interfaces"
+  - "code/integration-tests/runtime-tests/mochawesome-report"
+  - "**/*.lock"
+  - "**/*.adoc"
+  - "rfcs/0008-pablo-lbp-cpp-restructure.md"
+  - "frontend/apps/picasso/defi/polkadot/constants/contributions.json"
+  - "frontend/apps/picasso/defi/polkadot/constants/pica-rewards-dev.json"
+  - "frontend/apps/picasso/defi/polkadot/constants/pica-rewards.json"
+  - "code/integration-tests/runtime-tests/test/tests/crowdloanRewards/contributions.json"
+  - "rococo-dev.json"
+  - "code/utils/xcmp/src/generated/dali_parachain.rs"
+  - "code/utils/xcmp/src/generated/rococo_relay_chain.rs"
+  - "code/utils/price-feed/src/feed/composable_api.rs"
+  - "code/xcvm/diagrams"
+  - "subsquid/db/migrations"
+  - "scripts/polkadot-launch/initialization/src/interfaces/"
+  - "scripts/github/picasso/"
+  - "frame/airdrop/index.html"
+  - "code/integration-tests/local-integration-tests/README.md"
+  - "subsquid/src/interfaces"
+  - "code/utils/composable-subxt/src/generated"

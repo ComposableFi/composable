@@ -1,4 +1,10 @@
-import { alpha, createTheme, PaletteMode, ThemeOptions } from "@mui/material";
+import {
+  alpha,
+  CommonColors,
+  createTheme,
+  PaletteMode,
+  ThemeOptions,
+} from "@mui/material";
 import { grey } from "@mui/material/colors";
 import { OverridesStyleRules } from "@mui/material/styles/overrides";
 import { Shadows } from "@mui/material/styles/shadows";
@@ -14,6 +20,10 @@ declare module "@mui/material/styles" {
         lighter: number;
       };
     };
+  }
+
+  interface CommonColors {
+    darkWhite: string;
   }
 
   interface ThemeOptions {
@@ -32,6 +42,7 @@ declare module "@mui/material/styles" {
     featured: {
       lemon: "string";
     };
+    common: CommonColors;
   }
 }
 

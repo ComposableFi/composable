@@ -1,7 +1,7 @@
-import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, ManyToOne as ManyToOne_, Index as Index_} from "typeorm"
+import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, OneToOne as OneToOne_, Index as Index_, JoinColumn as JoinColumn_, ManyToOne as ManyToOne_} from "typeorm"
 import * as marshal from "./marshal"
+import {Event} from "./event.model"
 import {PabloPool} from "./pabloPool.model"
-import {PabloTransactionType} from "./_pabloTransactionType"
 
 @Entity_()
 export class PabloTransaction {
@@ -12,36 +12,26 @@ export class PabloTransaction {
   @PrimaryColumn_()
   id!: string
 
-  /**
-   * ID of the event that was used to derive this transaction
-   */
-  @Column_("text", {nullable: false})
-  eventId!: string
+  @Index_({unique: true})
+  @OneToOne_(() => Event, {nullable: false})
+  @JoinColumn_()
+  event!: Event
 
   @Index_()
-  @ManyToOne_(() => PabloPool, {nullable: false})
+  @ManyToOne_(() => PabloPool, {nullable: true})
   pool!: PabloPool
 
   @Column_("text", {nullable: false})
-  who!: string
-
-  @Column_("varchar", {length: 16, nullable: true})
-  transactionType!: PabloTransactionType | undefined | null
-
-  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
-  baseAssetId!: bigint
+  baseAssetId!: string
 
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   baseAssetAmount!: bigint
 
-  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
-  quoteAssetId!: bigint
+  @Column_("text", {nullable: false})
+  quoteAssetId!: string
 
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   quoteAssetAmount!: bigint
-
-  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
-  blockNumber!: bigint
 
   @Column_("text", {nullable: false})
   spotPrice!: string
@@ -51,10 +41,4 @@ export class PabloTransaction {
    */
   @Column_("text", {nullable: false})
   fee!: string
-
-  /**
-   * Unix timestamp in ms
-   */
-  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
-  receivedTimestamp!: bigint
 }

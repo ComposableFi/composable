@@ -2,15 +2,15 @@ import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { useSnackbar } from "notistack";
 import { useCallback } from "react";
 import {
-  getSigner,
   useExecutor,
   useParachainApi,
   useSelectedAccount,
+  useSigner,
 } from "substrate-react";
-import { APP_NAME } from "@/defi/polkadot/constants";
 import BigNumber from "bignumber.js";
 
 export function usePurchaseBond(offerId: BigNumber, amount: BigNumber) {
+  const signer = useSigner();
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const { enqueueSnackbar } = useSnackbar();
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
@@ -18,10 +18,9 @@ export function usePurchaseBond(offerId: BigNumber, amount: BigNumber) {
 
   const purchaseBond = useCallback(
     async () => {
-      if (parachainApi && selectedAccount && executor) {
+      if (parachainApi && signer !== undefined && selectedAccount && executor) {
         return new Promise(async (res, rej) => {
           try {
-            const signer = await getSigner(APP_NAME, selectedAccount.address);
             await executor
               .execute(
                 parachainApi.tx.bondedFinance.bond(offerId.toNumber(), amount.toString(), false),
@@ -29,15 +28,14 @@ export function usePurchaseBond(offerId: BigNumber, amount: BigNumber) {
                 parachainApi,
                 signer,
                 (txHash: string) => {
-                  console.log('txReady')
-                  enqueueSnackbar("Initiating Transaction on " + txHash);
+                  console.log('txReady ', txHash);
                 },
                 (txHash: string, events) => {
-                  enqueueSnackbar("Transaction Finalized on " + txHash);
+                  enqueueSnackbar("Transaction Finalized: " + txHash, { variant: "success" });
                   res(txHash);
                 },
                 (onTxError) => {
-                  console.log(onTxError)
+                  enqueueSnackbar("Error: " + onTxError, { variant: "error" });
                   rej(onTxError)
                 }
               )
@@ -55,6 +53,7 @@ export function usePurchaseBond(offerId: BigNumber, amount: BigNumber) {
       enqueueSnackbar,
       selectedAccount,
       executor,
+      signer,
       parachainApi,
       offerId,
       amount

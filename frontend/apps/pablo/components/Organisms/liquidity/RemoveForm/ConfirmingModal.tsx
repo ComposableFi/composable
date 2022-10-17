@@ -1,41 +1,38 @@
 import React, { useState } from "react";
-import { ModalProps, Modal } from "@/components/Molecules";
-import { Label, BaseAsset } from "@/components/Atoms";
+import { Modal, ModalProps } from "@/components/Molecules";
+import { BaseAsset, CircularProgress, Label } from "@/components/Atoms";
 import {
   alpha,
   Box,
+  Button,
+  Divider,
   IconButton,
   Typography,
   useTheme,
-  Button,
-  Divider,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 
 import { useDispatch } from "react-redux";
-import {
-  closeConfirmingModal
-} from "@/stores/ui/uiSlice";
+import { closeConfirmingModal } from "@/stores/ui/uiSlice";
 import BigNumber from "bignumber.js";
-import { CircularProgress } from "@/components/Atoms";
 import { useRemoveLiquidityState } from "@/store/removeLiquidity/hooks";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
-import { useParachainApi, useSelectedAccount, useExecutor, getSigner } from "substrate-react";
+import { useParachainApi, useSelectedAccount, useExecutor, getSigner, useSigner } from "substrate-react";
 import { APP_NAME } from "@/defi/polkadot/constants";
 import { useRouter } from "next/router";
 import { MockedAsset } from "@/store/assets/assets.types";
 import { toChainUnits } from "@/defi/utils";
 
 export type ConfirmingModalProps = {
-  baseAsset: MockedAsset,
-  quoteAsset: MockedAsset,
-  price1: BigNumber,
-  price2: BigNumber,
-  amount1: BigNumber,
-  amount2: BigNumber,
-  lpBalance: BigNumber,
-  percentage: BigNumber,
-  setConfirmed?: (confirmed: boolean) => any,
+  baseAsset: MockedAsset;
+  quoteAsset: MockedAsset;
+  price1: BigNumber;
+  price2: BigNumber;
+  amount1: BigNumber;
+  amount2: BigNumber;
+  lpBalance: BigNumber;
+  percentage: BigNumber;
+  setConfirmed?: (confirmed: boolean) => any;
 } & ModalProps;
 
 export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
@@ -52,11 +49,11 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
 }) => {
   // WIP
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
+  const signer = useSigner();
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const router = useRouter();
   const executor = useExecutor();
-  const { poolId } =
-    useRemoveLiquidityState();
+  const { poolId } = useRemoveLiquidityState();
 
   const theme = useTheme();
   const dispatch = useDispatch();
@@ -64,33 +61,38 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
   const [confirming, setConfirming] = useState<boolean>(false);
 
   const onCloseHandler = () => {
-    dispatch(closeConfirmingModal())
+    dispatch(closeConfirmingModal());
   };
 
   const confirmRemoveHandler = async () => {
     // WIP
-    if (parachainApi && executor && baseAsset && quoteAsset && selectedAccount) {
+    if (
+      parachainApi &&
+     signer !== undefined && executor &&
+      baseAsset &&
+      quoteAsset &&
+      selectedAccount
+    ) {
       try {
         const lpRemoveAmount = toChainUnits(lpBalance).times(percentage);
-        const signer = await getSigner(APP_NAME, selectedAccount.address);
         executor.execute(
           parachainApi.tx.pablo.removeLiquidity(
-            parachainApi.createType('u128', poolId), // Pool ID
-            parachainApi.createType('u128', lpRemoveAmount.dp(0).toString()), // LP Receive
-            parachainApi.createType('u128', 0), // Min Base
-            parachainApi.createType('u128', 0) // Min Quote
+            parachainApi.createType("u128", poolId), // Pool ID
+            parachainApi.createType("u128", lpRemoveAmount.dp(0).toString()), // LP Receive
+            parachainApi.createType("u128", 0), // Min Base
+            parachainApi.createType("u128", 0) // Min Quote
           ),
           selectedAccount.address,
           parachainApi,
           signer,
-          (txHash: string) => {
+          (_txHash: string) => {
             setConfirming(true);
           },
           (txHash: string, events) => {
             console.log("Finalized ", txHash);
             dispatch(closeConfirmingModal());
             setConfirming(false);
-            router.push('/pool/select/' + poolId)
+            router.push("/pool/select/" + poolId);
           },
           (txError) => {
             console.log("Error ", txError);
@@ -104,24 +106,24 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
         setConfirming(false);
       }
     }
-  }
+  };
 
   return (
-    <Modal
-      onClose={onCloseHandler}
-      {...rest}
-    >
+    <Modal onClose={onCloseHandler} {...rest}>
       {!confirming && (
         <Box
           sx={{
             background: theme.palette.gradient.secondary,
             width: 550,
-            [theme.breakpoints.down('sm')]: {
-              width: '100%',
+            [theme.breakpoints.down("sm")]: {
+              width: "100%",
             },
             borderRadius: 1,
             padding: theme.spacing(4),
-            boxShadow: `-1px -1px ${alpha(theme.palette.common.white, theme.custom.opacity.light)}`,
+            boxShadow: `-1px -1px ${alpha(
+              theme.palette.common.white,
+              theme.custom.opacity.light
+            )}`,
           }}
         >
           <Box
@@ -129,12 +131,8 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
             alignItems="center"
             justifyContent="space-between"
           >
-            <Typography variant="body1">
-              You will recieve
-            </Typography>
-            <IconButton
-              onClick={onCloseHandler}
-            >
+            <Typography variant="body1">You will receive</Typography>
+            <IconButton onClick={onCloseHandler}>
               <CloseIcon />
             </IconButton>
           </Box>
@@ -143,7 +141,7 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
             mt={4}
             label={`${amount1}`}
             TypographyProps={{
-              variant: 'h6'
+              variant: "h6",
             }}
             BalanceProps={{
               title: <BaseAsset icon={baseAsset.icon} pr={1} />,
@@ -154,13 +152,15 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
             }}
           />
 
-          <Typography variant="h6" mt={2}>+</Typography>
+          <Typography variant="h6" mt={2}>
+            +
+          </Typography>
 
           <Label
             mt={2}
             label={`${amount2}`}
             TypographyProps={{
-              variant: 'h6'
+              variant: "h6",
             }}
             BalanceProps={{
               title: <BaseAsset icon={quoteAsset.icon} pr={1} />,
@@ -172,14 +172,19 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
           />
 
           <Typography variant="body2" mt={4} textAlign="center" paddingX={4.25}>
-            Output is estimated. If the price changes by more than 5% your transaction will revert.
+            Output is estimated. If the price changes by more than 5% your
+            transaction will revert.
           </Typography>
 
           <Box mt={4}>
             <Divider
               sx={{
-                borderColor: alpha(theme.palette.common.white, theme.custom.opacity.main),
-              }} />
+                borderColor: alpha(
+                  theme.palette.common.white,
+                  theme.custom.opacity.main
+                ),
+              }}
+            />
           </Box>
 
           <Label
@@ -222,10 +227,10 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
           textAlign="center"
           sx={{
             width: 550,
-            [theme.breakpoints.down('sm')]: {
-              width: '100%',
+            [theme.breakpoints.down("sm")]: {
+              width: "100%",
             },
-            padding: theme.spacing(3)
+            padding: theme.spacing(3),
           }}
         >
           <Box display="flex" justifyContent="center">
@@ -235,13 +240,17 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
             Waiting for confirmation
           </Typography>
           <Typography variant="subtitle1" mt={2} color="text.secondary">
-            Removing {`${percentage.times(lpBalance)}`} {baseAsset.symbol}/{quoteAsset.symbol}
+            Removing {`${percentage.times(lpBalance)}`} {baseAsset.symbol}/
+            {quoteAsset.symbol}
           </Typography>
           <Typography
             variant="body1"
             mt={2}
             sx={{
-              color: alpha(theme.palette.common.white, theme.custom.opacity.main),
+              color: alpha(
+                theme.palette.common.white,
+                theme.custom.opacity.main
+              ),
             }}
           >
             Confirm this transaction in your wallet
@@ -251,4 +260,3 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
     </Modal>
   );
 };
-

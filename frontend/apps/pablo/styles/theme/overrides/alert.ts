@@ -4,7 +4,7 @@ import { OverridesStyleRules } from "@mui/material/styles/overrides";
 export const alertOverrides = (theme: Theme): Partial<OverridesStyleRules> => ({
   styleOverrides: {
     root: {
-      borderRadius: 9999,
+      borderRadius: theme.shape.borderRadius,
       padding: theme.spacing(1.75, 3),
       backdropFilter: "blur(32px)",
       "& .MuiSvgIcon-root": {

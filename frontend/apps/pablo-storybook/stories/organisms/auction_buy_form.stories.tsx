@@ -1,13 +1,13 @@
+import { useAuctionsSlice } from "@/store/auctions/auctions.slice";
 import { Box } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
 import { BuyForm } from "pablo/components/Organisms/auction/BuyForm";
-import useStore from "pablo/store/useStore";
 
 const BuyFormStories = () => {
-  const {auctions}: any = useStore();
+  const { activePool } = useAuctionsSlice();
   return (
     <Box>
-      <BuyForm auction={auctions.activeLBP} />
+      <BuyForm auction={activePool} />
     </Box>
   );
 };

@@ -28,5 +28,7 @@ export const validNumber = (value: number | string, min?: number, max?: number) 
             && !(max && numberValue > max);
 }
 
-export const humanizedBnToBn = (bn: string) => new BigNumber(bn.replaceAll(",", ""));
+export const humanizedBnToBn = (bn: string | number): BigNumber => {
+  return new BigNumber(typeof bn === "string" ? bn.replaceAll(",", "") : bn)
+};
 export const humanizedPermillToBigNumber = (permill: string) => new BigNumber(permill.replaceAll("%", ""));

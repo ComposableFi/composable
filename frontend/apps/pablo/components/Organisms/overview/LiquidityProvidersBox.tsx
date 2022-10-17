@@ -33,38 +33,35 @@ const tableHeaders: TableHeader[] = [
   },
 ];
 
-export const LiquidityProvidersBox: React.FC<BoxProps> = ({
-  ...boxProps
-}) => {
+export const LiquidityProvidersBox: React.FC<BoxProps> = ({ ...boxProps }) => {
   const pools = usePoolsWithLpBalance();
 
   return (
-    <BoxWrapper
-      title="Liquidity provider positions"
-      {...boxProps}
-    >
+    <BoxWrapper title="Liquidity provider positions" {...boxProps}>
       {pools.length === 0 && (
-        <NoPositionsPlaceholder text={OVERVIEW_ERRORS.NO_BOND} />
+        <NoPositionsPlaceholder text={OVERVIEW_ERRORS.NO_LP} />
       )}
 
-      {pools.length > 0 && <TableContainer>
-        <Table>
-          <TableHead>
-            <TableRow>
-              {
-                tableHeaders.map((th) => (
-                  <TableCell key={th.header} align="left">{th.header}</TableCell>
-                ))
-              }
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {pools.map((pool, index) => (
-              <LiquidityProviderPositionRow pool={pool} key={index} />
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>}
+      {pools.length > 0 && (
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                {tableHeaders.map((th) => (
+                  <TableCell key={th.header} align="left">
+                    {th.header}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {pools.map((pool, index) => (
+                <LiquidityProviderPositionRow pool={pool} key={index} />
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
     </BoxWrapper>
   );
 };

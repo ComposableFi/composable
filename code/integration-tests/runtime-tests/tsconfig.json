@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "ES2022",
+    "moduleResolution": "node",
+    "pretty": true,
+    "experimentalDecorators": true,
+    "noImplicitAny": true,
+    "removeComments": false,
+    "noImplicitReturns": false,
+    "suppressImplicitAnyIndexErrors": true,
+    "allowSyntheticDefaultImports": true,
+    "strictPropertyInitialization": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "strict": true,
+    "resolveJsonModule": true,
+    "sourceMap": true,
+    "sourceRoot": "ts",
+    "baseUrl": "./",
+    "paths": {
+      "@composable/*": ["./src/*"],
+      "@composabletests/*": ["./test/*"],
+      "@polkadot/api/augment": ["./src/types/interfaces/augment-api.ts"],
+      "@polkadot/types/augment": ["./src/types/interfaces/augment-types.ts"]
+    }
+  },
+  "lib": ["esnext"],
+  "ts-node": {
+    "esm": true
+  },
+
+  "include": ["src", "src/**/*.ts", "test", "test/**/*.ts", "@types/**/*.d.ts"],
+  "exclude": ["node_modules", "test/**/*.d.ts", "src/**/*.d.ts"]
+}

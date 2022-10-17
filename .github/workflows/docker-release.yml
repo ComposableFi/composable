@@ -3,6 +3,8 @@ name: "Docker Release"
 on:
   workflow_dispatch:
   push:
+    branches:
+      - test-rollout-chnages
     tags: 
       - '*'
       
@@ -66,13 +68,13 @@ jobs:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }} 
       if: always() 
 
-  dali-client-release:
+  dali-client-canary-release:
     needs: [build-and-publish]
     runs-on: 
         - self-hosted
         - linux
         - X64
-        - ansible-runner
+        - dali-ansible
     concurrency:
       group: client-${{ github.ref }}
       cancel-in-progress: true
@@ -94,7 +96,7 @@ jobs:
     - name: Run ansible playbook
       working-directory: "./.maintain/playbooks"
       run: |
-        ansible-playbook -l _environment_testnet client-upgrade.yml -i gcp.yaml  --user runner -e 'ansible_python_interpreter=/usr/bin/python3'
+        ansible-playbook -l label_node_name_dali_rococo_cl_0 client-upgrade.yml -i dali-rococo.yaml  --user ubuntu -e 'ansible_python_interpreter=/usr/bin/python3'
 
     - uses: 8398a7/action-slack@v3
       with:

@@ -1,14 +1,15 @@
-import React, { useMemo } from 'react';
-import Executor from './Executor';
-import useStore from './store/useStore';
+import React, { useMemo } from "react";
+import { Executor } from "./Executor";
+import { useExtrinsicStore } from "./store/extrinsics";
+
 /**
  * As zustand useStore is a hook
  * we need to create a context and wrap
  * executor in a provider to be able to
  * use useStore methods via executor
  *
- * exectuor would expose execute and executeUnsigned
- * methods to be able to execute extrsinsic calls
+ * executor would expose execute and executeUnsigned
+ * methods to be able to execute extrinsic calls
  */
 const ExecutorContext = React.createContext({
   executor: undefined as Executor | undefined,
@@ -28,7 +29,7 @@ export const ExecutorProvider = ({
     addBlockHash,
     updateExtrinsicStatus,
     updateExtrinsicError,
-  } = useStore();
+  } = useExtrinsicStore();
   /**
    * Create and memoize executor
    */

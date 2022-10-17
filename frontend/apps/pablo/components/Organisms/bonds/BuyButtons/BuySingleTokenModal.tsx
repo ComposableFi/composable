@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { ModalProps, Modal, DropdownCombinedBigNumberInput } from "@/components/Molecules";
+import {
+  DropdownCombinedBigNumberInput,
+  Modal,
+  ModalProps,
+} from "@/components/Molecules";
 import {
   alpha,
   Box,
@@ -16,7 +20,7 @@ import { FormTitle } from "../../FormTitle";
 import { useDispatch } from "react-redux";
 import { openTransactionSettingsModal } from "@/stores/ui/uiSlice";
 import { useMobile } from "@/hooks/responsive";
-import { getToken, getTokenOptions, TOKEN_IDS } from "@/defi/Tokens";
+import { getToken, getTokenOptions } from "@/defi/Tokens";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import { InfoOutlined, SwapVertRounded } from "@mui/icons-material";
 import { BigNumberInput } from "@/components/Atoms";
@@ -24,7 +28,7 @@ import { TransactionSettings } from "../../TransactionSettings";
 
 const containerProps = (theme: Theme) => ({
   p: 4,
-  borderRadius: 2,
+  borderRadius: 1,
   sx: {
     background: theme.palette.gradient.secondary,
     boxShadow: `-1px -1px ${alpha(
@@ -44,7 +48,11 @@ const defaultCombinedSelectProps = (isMobile: boolean) => ({
   searchable: true,
 });
 
-const labelProps = (label: string, balance: BigNumber, showBalance: boolean = true) => ({
+const labelProps = (
+  label: string,
+  balance: BigNumber,
+  showBalance: boolean = true
+) => ({
   label: label,
   BalanceProps: showBalance
     ? {
@@ -65,7 +73,7 @@ const defaultCombinedInputProps = (valid: boolean) => ({
 });
 
 export type BuySingleTokenModalProps = {
-  tokenId: TokenId,
+  tokenId: TokenId;
 } & ModalProps;
 
 export const BuySingleTokenModal: React.FC<BuySingleTokenModalProps> = ({
@@ -99,13 +107,10 @@ export const BuySingleTokenModal: React.FC<BuySingleTokenModalProps> = ({
 
   const onSwapHandler = () => {
     // TODO: swap hander
-  }
+  };
 
   return (
-    <Modal
-      open={open}
-      {...modalProps}
-    >
+    <Modal open={open} {...modalProps}>
       <Box {...containerProps(theme)}>
         <FormTitle
           title="Swap"
@@ -124,8 +129,7 @@ export const BuySingleTokenModal: React.FC<BuySingleTokenModalProps> = ({
             setValue={setAmount1}
             {...defaultCombinedInputProps(validToken1)}
             ReferenceTextProps={{
-              onClick: () =>
-                setAmount1(balance1.multipliedBy(0.5)),
+              onClick: () => setAmount1(balance1.multipliedBy(0.5)),
               sx: {
                 cursor: "pointer",
                 "&:hover": {
@@ -140,7 +144,7 @@ export const BuySingleTokenModal: React.FC<BuySingleTokenModalProps> = ({
               value: tokenId1,
               setValue: setTokenId1,
               options: getTokenOptions("Select"),
-              ...defaultCombinedSelectProps(isMobile)
+              ...defaultCombinedSelectProps(isMobile),
             }}
             LabelProps={labelProps("From", balance1, validToken1)}
           />
@@ -151,7 +155,7 @@ export const BuySingleTokenModal: React.FC<BuySingleTokenModalProps> = ({
             sx={{
               width: 56,
               height: 56,
-              border: `2px solid ${theme.palette.primary.main}`
+              border: `2px solid ${theme.palette.primary.main}`,
             }}
           >
             <SwapVertRounded />
@@ -165,9 +169,7 @@ export const BuySingleTokenModal: React.FC<BuySingleTokenModalProps> = ({
             maxValue={balance2}
             setValid={setValid2}
             EndAdornmentAssetProps={{
-              assets: [
-                { icon: token2.icon, label: "ETH" },
-              ],
+              assets: [{ icon: token2.icon, label: "ETH" }],
               LabelProps: { variant: "body1" },
             }}
             LabelProps={labelProps("To", balance2)}
@@ -185,10 +187,13 @@ export const BuySingleTokenModal: React.FC<BuySingleTokenModalProps> = ({
           {validToken1 && (
             <>
               <Typography variant="body2">
-                1 {token2.symbol} = {price.toFixed()} {getToken(tokenId1).symbol}
+                1 {token2.symbol} = {price.toFixed()}{" "}
+                {getToken(tokenId1).symbol}
               </Typography>
               <Tooltip
-                title={`1 ${token2.symbol} = ${price.toFixed()} ${getToken(tokenId1).symbol}`}
+                title={`1 ${token2.symbol} = ${price.toFixed()} ${
+                  getToken(tokenId1).symbol
+                }`}
                 placement="top"
               >
                 <InfoOutlined sx={{ color: theme.palette.primary.main }} />
@@ -213,4 +218,3 @@ export const BuySingleTokenModal: React.FC<BuySingleTokenModalProps> = ({
     </Modal>
   );
 };
-

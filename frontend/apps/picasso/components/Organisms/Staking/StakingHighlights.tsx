@@ -1,16 +1,13 @@
 import { Grid } from "@mui/material";
 import { HighlightBox } from "@/components/Organisms/Staking/HighlightBox";
 import { FC } from "react";
-import { useStore } from "@/stores/root";
 
 export const StakingHighlights: FC = () => {
-  const {
-    totalPicaLocked,
-    totalChaosAPY,
-    totalChaosMinted,
-    averageLockMultiplier,
-    averageLockTime,
-  } = useStore(({ staking }) => staking.highlights);
+  const totalPicaLocked = "0";
+  const totalChaosAPY = "0";
+  const totalChaosMinted = "0";
+  const averageLockMultiplier = "0";
+  const averageLockTime = "0";
 
   return (
     <Grid container spacing={4} mt={9}>
@@ -23,15 +20,15 @@ export const StakingHighlights: FC = () => {
       </Grid>
       <Grid item xs={6} sm={4}>
         <HighlightBox
-          tooltip={"Total CHAOS APY"}
-          title={"Total CHAOS APY"}
+          tooltip={"Total xPICA APY"}
+          title={"Total xPICA APY"}
           value={totalChaosAPY}
         />
       </Grid>
       <Grid item xs={6} sm={4}>
         <HighlightBox
-          tooltip={"Total CHAOS minted"}
-          title={"Total CHAOS minted"}
+          tooltip={"Total xPICA minted"}
+          title={"Total xPICA minted"}
           value={totalChaosMinted}
         />
       </Grid>

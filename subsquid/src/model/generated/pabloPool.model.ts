@@ -1,4 +1,4 @@
-import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, OneToMany as OneToMany_} from "typeorm"
+import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, Index as Index_, OneToMany as OneToMany_} from "typeorm"
 import * as marshal from "./marshal"
 import {PabloPoolAsset} from "./pabloPoolAsset.model"
 import {PabloTransaction} from "./pabloTransaction.model"
@@ -27,7 +27,10 @@ export class PabloPool {
   @Column_("text", {nullable: false})
   owner!: string
 
-  @Column_("integer", {nullable: false})
+  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
+  lpIssued!: bigint
+
+  @Column_("int4", {nullable: false})
   transactionCount!: number
 
   @Column_("text", {nullable: false})
@@ -39,12 +42,16 @@ export class PabloPool {
   @Column_("text", {nullable: false})
   totalFees!: string
 
+  @Column_("text", {nullable: false})
+  baseAssetId!: string
+
   /**
    * Asset used for all quotes in this type
    */
-  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
-  quoteAssetId!: bigint
+  @Column_("text", {nullable: false})
+  quoteAssetId!: string
 
+  @Index_()
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   blockNumber!: bigint
 

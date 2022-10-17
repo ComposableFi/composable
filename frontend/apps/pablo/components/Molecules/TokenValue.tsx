@@ -1,6 +1,7 @@
 import { Token } from "@/defi/types";
 import { Box, BoxProps, Typography, TypographyProps } from "@mui/material";
 import { BaseAsset } from "@/components/Atoms";
+import { MockedAsset } from "@/store/assets/assets.types";
 
 const defaultFlexBoxProps = {
   display: "flex",
@@ -10,7 +11,7 @@ const defaultFlexBoxProps = {
 }
 
 export type TokenValueProps = {
-  token: Token,
+  token: Token | MockedAsset,
   value: string,
   LabelProps?: TypographyProps,
   ValueProps?: TypographyProps,

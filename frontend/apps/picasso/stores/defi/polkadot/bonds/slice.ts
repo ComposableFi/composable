@@ -1,17 +1,16 @@
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
 import BigNumber from "bignumber.js";
-import { NamedSet } from "zustand/middleware";
 import { StoreSlice } from "@/stores/types";
 
 export interface BondsSlice {
   bonds: {
-    openPositions: Array<ActiveBond>;
+    activeBonds: Array<ActiveBond>;
     bonds: Array<BondOffer>;
     bondOfferCount: number | BigNumber;
     total: number;
     setBonds: (bonds: BondOffer[]) => void;
     setBondOfferCount: (bondOfferCount: number | BigNumber) => void;
-    updateOpenPositions: (openPositions: ActiveBond[]) => void;
+    setActiveBonds: (activeBonds: ActiveBond[]) => void;
   };
 }
 
@@ -28,8 +27,10 @@ export interface VestingSchedule {
 
 export interface ActiveBond {
   bond: BondOffer;
+  alreadyClaimed: number;
   periodCount: BigNumber;
   perPeriod: BigNumber;
+  vestingScheduleId: number;
   window: {
     blockNumberBased: {
       start: BigNumber;
@@ -38,13 +39,11 @@ export interface ActiveBond {
   };
 }
 
-export const createBondsSlice: StoreSlice<BondsSlice> = (
-  set: NamedSet<BondsSlice>
-) => ({
+export const createBondsSlice: StoreSlice<BondsSlice> = (set) => ({
   bonds: {
     bonds: [],
     bondOfferCount: 0,
-    openPositions: [],
+    activeBonds: [],
     total: 0,
     setBonds: (bonds: BondOffer[]) =>
       set((state) => ({
@@ -60,12 +59,13 @@ export const createBondsSlice: StoreSlice<BondsSlice> = (
           bondOfferCount,
         },
       })),
-    updateOpenPositions: (openPositions: ActiveBond[]) =>
+    setActiveBonds: (activeBonds: ActiveBond[]) => {
       set((state) => ({
         bonds: {
           ...state.bonds,
-          openPositions,
+          activeBonds,
         },
-      })),
+      }));
+    },
   },
 });

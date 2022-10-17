@@ -5,16 +5,16 @@ import {
   Typography, 
   useTheme, 
 } from "@mui/material";
-import BigNumber from "bignumber.js";
-import { LiquidityBootstrappingPoolStats } from "@/store/pools/pools.types";
 import { MockedAsset } from "@/store/assets/assets.types";
 import { LiquidityBootstrappingPool } from "@/defi/types";
+import { LiquidityBootstrappingPoolStatistics } from "@/store/auctions/auctions.types";
+import { DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils";
 
 export type AuctionStatisticsProps = {
   auction: LiquidityBootstrappingPool,
   baseAsset: MockedAsset | undefined,
   quoteAsset: MockedAsset | undefined,
-  stats: LiquidityBootstrappingPoolStats,
+  stats: LiquidityBootstrappingPoolStatistics,
 } & BoxProps;
 
 export const AuctionStatistics: React.FC<AuctionStatisticsProps> = ({
@@ -25,8 +25,8 @@ export const AuctionStatistics: React.FC<AuctionStatisticsProps> = ({
   ...rest
 }) => {
   const {
-    currentBalances,
-    startBalances,
+    startLiquidity,
+    liquidity,
   } = stats;
 
   return (
@@ -40,10 +40,10 @@ export const AuctionStatistics: React.FC<AuctionStatisticsProps> = ({
             Start balances
           </Typography>
           <Typography variant="subtitle1" mt={1}>
-            {`${startBalances.base} ${baseAsset?.symbol}`}
+            {`${startLiquidity.baseAmount.toFixed(DEFAULT_UI_FORMAT_DECIMALS)} ${baseAsset?.symbol}`}
           </Typography>
           <Typography variant="subtitle1">
-            {`${startBalances.quote} ${quoteAsset?.symbol}`}
+            {`${startLiquidity.quoteAmount.toFixed(DEFAULT_UI_FORMAT_DECIMALS)} ${quoteAsset?.symbol}`}
           </Typography>
         </Grid>
         <Grid item xs={12} sm={12} md={3}>
@@ -51,10 +51,10 @@ export const AuctionStatistics: React.FC<AuctionStatisticsProps> = ({
             Current balances
           </Typography>
           <Typography variant="subtitle1" mt={1}>
-            {`${currentBalances.base} ${baseAsset?.symbol}`}
+            {`${liquidity.baseAmount.toFixed(DEFAULT_UI_FORMAT_DECIMALS)} ${baseAsset?.symbol}`}
           </Typography>
           <Typography variant="subtitle1">
-            {`${currentBalances.quote} ${quoteAsset?.symbol}`}
+            {`${liquidity.quoteAmount.toFixed(DEFAULT_UI_FORMAT_DECIMALS)} ${quoteAsset?.symbol}`}
           </Typography>
         </Grid>
         <Grid item xs={12} sm={12} md={3}>
@@ -62,7 +62,7 @@ export const AuctionStatistics: React.FC<AuctionStatisticsProps> = ({
             Total sold
           </Typography>
           <Typography variant="subtitle1" mt={1}>
-            {`${new BigNumber(startBalances.base).minus(currentBalances.base).toFixed(4)} ${baseAsset?.symbol}`}
+            {`${startLiquidity.baseAmount.minus(liquidity.baseAmount).toFixed(4)} ${baseAsset?.symbol}`}
           </Typography>
         </Grid>
         <Grid item xs={12} sm={12} md={3}>
@@ -70,7 +70,7 @@ export const AuctionStatistics: React.FC<AuctionStatisticsProps> = ({
             Total raised
           </Typography>
           <Typography variant="subtitle1" mt={1}>
-            {`${new BigNumber(currentBalances.quote).minus(startBalances.quote).toFixed(4)} ${quoteAsset?.symbol}`}
+            {`${liquidity.quoteAmount.minus(startLiquidity.quoteAmount).toFixed(4)} ${quoteAsset?.symbol}`}
           </Typography>
         </Grid>
       </Grid>

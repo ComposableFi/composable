@@ -3,30 +3,33 @@ import { useMobile } from "@/hooks/responsive";
 import {
   Box,
   Button,
+  MenuItem,
+  Select,
+  SelectChangeEvent,
   Typography,
   useTheme,
-  alpha,
-  Select,
-  MenuItem,
-  SelectChangeEvent,
 } from "@mui/material";
 import { useRouter } from "next/router";
 import { FormTitle } from "@/components/Organisms";
 import { Link } from "@/components/Molecules";
-import React, { useContext, useState } from "react";
+import React, { useState } from "react";
 import { Token, TokenId } from "@/defi/types";
 import { BoxProps } from "@mui/system";
 import { useDispatch } from "react-redux";
-import { openPolkadotModal, openTransactionSettingsModal } from "@/stores/ui/uiSlice";
+import {
+  openPolkadotModal,
+  openTransactionSettingsModal,
+} from "@/stores/ui/uiSlice";
 import Image from "next/image";
 import { PairAsset } from "@/components/Atoms";
 import { InfoOutlined } from "@mui/icons-material";
 import { TransactionSettings } from "../TransactionSettings";
 import { useDotSamaContext } from "substrate-react";
+import { HighlightBox } from "@/components/Atoms/HighlightBox";
 
 const options = Object.values(TOKENS);
 export const ImportPool: React.FC<BoxProps> = ({ ...rest }) => {
-  const {extensionStatus} = useDotSamaContext();
+  const { extensionStatus } = useDotSamaContext();
   const isMobile = useMobile();
   const theme = useTheme();
   const router = useRouter();
@@ -44,20 +47,7 @@ export const ImportPool: React.FC<BoxProps> = ({ ...rest }) => {
   };
 
   return (
-    <Box
-      borderRadius={1.33}
-      width={isMobile ? "100%" : 550}
-      margin="auto"
-      padding={theme.spacing(4)}
-      sx={{
-        background: theme.palette.gradient.secondary,
-        boxShadow: `-1px -1px ${alpha(
-          theme.palette.common.white,
-          theme.custom.opacity.light
-        )}`,
-      }}
-      {...rest}
-    >
+    <HighlightBox width={isMobile ? "100%" : 550} margin="auto" {...rest}>
       <FormTitle
         title="Import Pool"
         onBackHandler={onBackHandler}
@@ -100,7 +90,7 @@ export const ImportPool: React.FC<BoxProps> = ({ ...rest }) => {
         <Box
           width={56}
           height={56}
-          borderRadius={9999}
+          borderRadius="50%"
           display="flex"
           border={`2px solid ${theme.palette.primary.main}`}
           justifyContent="center"
@@ -153,37 +143,40 @@ export const ImportPool: React.FC<BoxProps> = ({ ...rest }) => {
           </Button>
         )}
 
-        {extensionStatus === "connected" && token1Value && token2Value && isLiquidityPresent && (
-          <Box mt={6} mb={4}>
-            <Select
-              sx={{
-                backgroundColor: theme.palette.primary.dark,
-                "> .MuiOutlinedInput-notchedOutline": {
-                  border: "none",
-                },
-              }}
-              value={0}
-              fullWidth
-              disabled
-            >
-              <MenuItem value={0}>
-                <PairAsset
-                  assets={[
-                    {
-                      icon: getToken(token1Value).icon,
-                      label: getToken(token1Value).symbol,
-                    },
-                    {
-                      icon: getToken(token2Value).icon,
-                      label: getToken(token2Value).symbol,
-                    },
-                  ]}
-                  separator="/"
-                />
-              </MenuItem>
-            </Select>
-          </Box>
-        )}
+        {extensionStatus === "connected" &&
+          token1Value &&
+          token2Value &&
+          isLiquidityPresent && (
+            <Box mt={6} mb={4}>
+              <Select
+                sx={{
+                  backgroundColor: theme.palette.primary.dark,
+                  "> .MuiOutlinedInput-notchedOutline": {
+                    border: "none",
+                  },
+                }}
+                value={0}
+                fullWidth
+                disabled
+              >
+                <MenuItem value={0}>
+                  <PairAsset
+                    assets={[
+                      {
+                        icon: getToken(token1Value).icon,
+                        label: getToken(token1Value).symbol,
+                      },
+                      {
+                        icon: getToken(token2Value).icon,
+                        label: getToken(token2Value).symbol,
+                      },
+                    ]}
+                    separator="/"
+                  />
+                </MenuItem>
+              </Select>
+            </Box>
+          )}
 
         {extensionStatus === "connected" && isLiquidityPresent && (
           <Button variant="contained" size="large" fullWidth>
@@ -201,7 +194,7 @@ export const ImportPool: React.FC<BoxProps> = ({ ...rest }) => {
             <Box
               width="100%"
               padding={2}
-              borderRadius={2}
+              borderRadius={1}
               sx={{ background: theme.palette.warning.dark }}
               mb={2}
               justifyContent="center"
@@ -229,6 +222,6 @@ export const ImportPool: React.FC<BoxProps> = ({ ...rest }) => {
         )}
         <TransactionSettings />
       </Box>
-    </Box>
+    </HighlightBox>
   );
 };

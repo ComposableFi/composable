@@ -1,2 +1,2 @@
-export * from './extrinsics';
-export * from './dotsama';
+export * from "./extrinsics";
+export * from "./dotsama";

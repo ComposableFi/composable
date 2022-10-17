@@ -36,7 +36,7 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       forceTransferNative: AugmentedSubmittable<(source: MultiAddress | { Id: any } | { Index: any } | { Raw: any } | { Address32: any } | { Address20: any } | string | Uint8Array, dest: MultiAddress | { Id: any } | { Index: any } | { Raw: any } | { Address32: any } | { Address20: any } | string | Uint8Array, value: Compact<u128> | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [MultiAddress, MultiAddress, Compact<u128>, bool]>;
       /**
-       * Creates a new asset, minting `amount` of funds into the `dest` account. Intented to be
+       * Creates a new asset, minting `amount` of funds into the `dest` account. intended to be
        * used for creating wrapped assets, not associated with any project.
        **/
       mintInitialize: AugmentedSubmittable<(amount: Compact<u128> | AnyNumber | Uint8Array, dest: MultiAddress | { Id: any } | { Index: any } | { Raw: any } | { Address32: any } | { Address20: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Compact<u128>, MultiAddress]>;
@@ -201,7 +201,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * appropriate funds.
        * 
        * Emits a `NewBond`.
-       * Possibily Emits a `OfferCompleted`.
+       * Possibly Emits a `OfferCompleted`.
        **/
       bond: AugmentedSubmittable<(offerId: u64 | AnyNumber | Uint8Array, nbOfBonds: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u64, u128]>;
       /**

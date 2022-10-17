@@ -8,10 +8,10 @@ import { ComposableTraitsBondedFinanceBondOffer } from "defi-interfaces";
 import { Option } from "@polkadot/types-codec";
 import { ITuple } from "@polkadot/types-codec/types";
 import { fetchAssetPrice } from "./Oracle";
-import Executor from "substrate-react/dist/extrinsics/Executor";
-import { getSigner } from "substrate-react";
+import { Executor, getSigner } from "substrate-react";
 import { APP_NAME } from "@/defi/polkadot/constants";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
+import { fromChainIdUnit } from "shared";
 
 export function createArrayOfLength(length: number): number[] {
   return Array.from(Array(length).keys());
@@ -36,7 +36,7 @@ export async function fetchBonds(api: ApiPromise) {
     ITuple<[AccountId32, ComposableTraitsBondedFinanceBondOffer]>
   >[] = await Promise.all(
     createArrayOfLength(bondOfferCount.toNumber()).map(
-      index => api.query.bondedFinance.bondOffers(index + 1) // index + 1 is offerId
+      (index) => api.query.bondedFinance.bondOffers(index + 1) // index + 1 is offerId
     )
   );
   const allBonds = await bonds.reduce(
@@ -58,7 +58,7 @@ export async function fetchBonds(api: ApiPromise) {
         ...bondOffer,
         price,
         rewardPrice,
-        offerId: index + 1
+        offerId: index + 1,
       };
 
       return [...prev, bondTransformer(beneficiary, newBondOffer)];
@@ -68,7 +68,7 @@ export async function fetchBonds(api: ApiPromise) {
 
   return {
     bonds: allBonds,
-    bondOfferCount
+    bondOfferCount,
   };
 }
 
@@ -81,7 +81,7 @@ async function fetchBondPrice(
 
   const [assetPriceResult, rewardAssetPriceResult] = await Promise.allSettled([
     fetchAssetPrice(asset, api),
-    fetchAssetPrice(reward_asset, api)
+    fetchAssetPrice(reward_asset, api),
   ]);
 
   const nbOfBonds = stringToBigNumber(bond.nbOfBonds.toString());
@@ -97,7 +97,7 @@ async function fetchBondPrice(
             stringToBigNumber(bond.reward.amount.toString())
           ).dividedBy(nbOfBonds)
         )
-      : new BigNumber(0)
+      : new BigNumber(0),
   ];
 }
 
@@ -109,21 +109,8 @@ function getAssets(asset: string): Token[] | Token {
     : mapped;
 
   return Array.isArray(tokens)
-    ? tokens.map(token => TOKENS[token])
+    ? tokens.map((token) => TOKENS[token])
     : TOKENS[tokens];
-}
-
-export function toChainIdUnit(value: number | BigNumber) {
-  const bigNumberValue =
-    typeof value === "number" ? new BigNumber(value) : value;
-
-  return bigNumberValue.multipliedBy(10 ** 12);
-}
-
-export function fromChainIdUnit(value: number | BigNumber) {
-  return (typeof value === "number" ? new BigNumber(value) : value).dividedBy(
-    10 ** 12
-  );
 }
 
 function bondTransformer(beneficiary: AccountId32, bondOffer: any): BondOffer {
@@ -145,10 +132,10 @@ function bondTransformer(beneficiary: AccountId32, bondOffer: any): BondOffer {
       amount: fromChainIdUnit(
         stringToBigNumber(bondOffer.reward.amount.toString())
       ),
-      maturity: new BigNumber(bondOffer.reward.maturity)
+      maturity: new BigNumber(bondOffer.reward.maturity),
     },
     price: bondOffer.price,
-    rewardPrice: bondOffer.rewardPrice
+    rewardPrice: bondOffer.rewardPrice,
   };
 }
 
@@ -181,31 +168,29 @@ export type PurchaseBond = {
 };
 export type ClaimType = {
   parachainApi: ApiPromise | undefined;
+  vestingScheduleId?: string;
   account: { name: string; address: string } | undefined;
   executor: Executor | undefined;
   assetId: string;
 };
 
 export async function claim(
-  { parachainApi, account, executor, assetId }: ClaimType,
+  { parachainApi, account, executor, assetId, vestingScheduleId }: ClaimType,
   onSuccess: (txHash: string) => void,
   onError: (msg: string) => void,
   onStart: (txHash: string) => void
 ) {
-  if (parachainApi && account && executor) {
-    try {
-      const signer = await getSigner(APP_NAME, account.address);
-      await executor.execute(
-        parachainApi.tx.vesting.claim(assetId),
-        account.address,
-        parachainApi,
-        signer,
-        onStart,
-        onSuccess
-      );
-    } catch (e) {
-      onError(e as any);
-    }
+  if (parachainApi && account && executor && vestingScheduleId) {
+    const signer = await getSigner(APP_NAME, account.address);
+    await executor.execute(
+      parachainApi.tx.vesting.claim(assetId, { One: vestingScheduleId }),
+      account.address,
+      parachainApi,
+      signer,
+      (txHash) => onStart(txHash),
+      (txHash) => onSuccess(txHash),
+      (errorMessage) => onError(errorMessage)
+    );
   }
 }
 
@@ -218,7 +203,7 @@ export async function purchaseBond({
   enqueueSnackbar,
   setOpen,
   setOpen2nd,
-  handleFormReset
+  handleFormReset,
 }: PurchaseBond) {
   if (parachainApi && account && executor) {
     try {
@@ -238,7 +223,7 @@ export async function purchaseBond({
               variant: "info",
               isClosable: true,
               persist: true,
-              url: SUBSTRATE_NETWORKS["kusama-2019"].subscanUrl + txHash
+              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
             });
             setOpen(false);
             setOpen2nd(false);
@@ -248,17 +233,17 @@ export async function purchaseBond({
               variant: "success",
               isClosable: true,
               persist: true,
-              url: SUBSTRATE_NETWORKS["kusama-2019"].subscanUrl + txHash
+              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
             });
             handleFormReset();
           }
         )
-        .catch(err => {
+        .catch((err) => {
           enqueueSnackbar("Bond transaction failed", {
             variant: "error",
             isClosable: true,
             description: err.message,
-            persist: true
+            persist: true,
           });
         });
     } catch (e) {

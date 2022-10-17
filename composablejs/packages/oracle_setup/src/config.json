@@ -15,7 +15,7 @@
     "assetID": 4,
     "threshold": 10,
     "minAnswers": 1,
-    "maXAnswers": 3,
+    "maxAnswers": 3,
     "blockInterval": 10,
     "reward": 10,
     "slash": 10

@@ -2,7 +2,6 @@
 /* eslint-disable */
 
 import type { Null, Struct, Text, u128 } from '@polkadot/types-codec';
-import type {CurrencyId} from "../basilisk/types";
 
 /** @name AssetsBalance */
 export interface AssetsBalance extends u128 {}
@@ -21,6 +20,9 @@ export interface ComposableTraitsXcmCumulusMethodId extends Null {}
 
 /** @name ComposableTraitsXcmXcmSellRequest */
 export interface ComposableTraitsXcmXcmSellRequest extends Null {}
+
+/** @name CurrencyId */
+export interface CurrencyId extends u128 {}
 
 /** @name CustomRpcBalance */
 export interface CustomRpcBalance extends SafeRpcWrapper {}

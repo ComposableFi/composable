@@ -164,7 +164,7 @@ package "2. Financial NFT Protocol Trait" {
 fp o-- f : "Financial NFT Protocol aggregates\nand controls the fNFTs identified\nby `collection_asset_ids()`"
 ----
 
-The diagram can be summarised as,
+The diagram can be summarized as,
 
 _A Financial NFT protocol provides access to value owned by a Financial NFT that belongs to a collection ID included in the list of collection asset IDs it exposes._
 

@@ -1,19 +1,18 @@
 import { ActiveBond } from "@/stores/defi/polkadot/bonds/slice";
 import { getClaimable } from "@/components/Organisms/Bond/utils";
-import { fromChainIdUnit } from "@/defi/polkadot/pallets/BondedFinance";
+import { fromChainIdUnit, humanDate, SHORT_HUMAN_DATE } from "shared";
 import BigNumber from "bignumber.js";
-import { humanDate, SHORT_HUMAN_DATE } from "shared";
 import { useCurrentBlockAndTime } from "@/defi/polkadot/utils";
 import { useBlockInterval, usePicassoProvider } from "@/defi/polkadot/hooks";
 import { findCurrentBond } from "@/stores/defi/polkadot/bonds/utils";
-import { useStore } from "@/stores/root";
+import { useActiveBonds } from "@/defi/polkadot/hooks/useActiveBonds";
 
 export const useClaim = (bondOfferId?: string) => {
-  const openBonds = useStore(store => store.bonds.openPositions);
+  const { activeBonds } = useActiveBonds();
   const interval = useBlockInterval();
   const { parachainApi } = usePicassoProvider();
   const { block } = useCurrentBlockAndTime(parachainApi);
-  const activeBond = openBonds.find((b: ActiveBond) =>
+  const activeBond = activeBonds.find((b: ActiveBond) =>
     findCurrentBond(b, bondOfferId?.toString() ?? "")
   );
 
@@ -25,7 +24,7 @@ export const useClaim = (bondOfferId?: string) => {
       vestedTime: "~",
       pending: new BigNumber(0),
       lastBlock: new BigNumber(0),
-      total: new BigNumber(0)
+      total: new BigNumber(0),
     };
   }
 
@@ -68,6 +67,6 @@ export const useClaim = (bondOfferId?: string) => {
     vestedTime,
     pending,
     lastBlock,
-    total
+    total,
   };
 };

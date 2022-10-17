@@ -6,7 +6,6 @@ import {
 } from "@/defi/types";
 import {
   DEFAULT_NETWORK_ID,
-  fetchAndUpdatePoolLiquidity,
   fetchPoolLiquidity,
 } from "@/defi/utils";
 import useStore from "@/store/useStore";

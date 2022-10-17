@@ -1,7 +1,6 @@
 import BigNumber from "bignumber.js";
 import { useEffect, useState } from "react";
-import { useParachainApi } from "substrate-react";
-import { ParachainId } from "substrate-react/dist/dotsama/types";
+import { ParachainId, useParachainApi } from "substrate-react";
 
 export default function useBlockNumber(parachainId: ParachainId): BigNumber {
   const { parachainApi } = useParachainApi(parachainId);

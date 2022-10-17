@@ -6,5 +6,5 @@ const { StatsTelemetryTabStory } = composeStories(stories);
 
 test("renders Network Tabs", () => {
   render(<StatsTelemetryTabStory />);
-  expect(screen.getByText("Average time")).toBeInTheDocument();
+  expect(screen.getByText("Average Time")).toBeInTheDocument();
 });

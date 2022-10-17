@@ -1,0 +1,51 @@
+# Only the archiver
+services:
+  db:
+    image: postgres:14  # CockroachDB cluster might be a better fit for production deployment
+    restart: always
+    network_mode: host
+    volumes:
+      - /var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: squid-archive
+
+  ingest:
+    restart: on-failure
+    network_mode: host
+    image: subsquid/substrate-ingest:firesquid
+    command: [
+      # polkadot endpoints -- replace with your wss
+      "-e", "ws://localhost:9988",
+      "-c", "10", # allow up to 20 pending requests for the above endpoint (default is 5)
+      #  "--start-block", "1000000", # uncomment to specify a non-zero start block
+      "--prom-port", "9090",
+      "--out", "postgres://postgres:postgres@localhost:5432/squid-archive"
+    ]
+
+  gateway:
+    image: subsquid/substrate-gateway:firesquid
+    network_mode: host
+    environment:
+      RUST_LOG: "substrate_gateway=info,actix_server=info"
+    command: [
+      "--database-url", "postgres://postgres:postgres@localhost:5432/squid-archive",
+      "--database-max-connections", "3", # max number of concurrent database connections
+      # "--evm-support" # uncomment for chains with Frontier EVM pallet
+      # (e.g. Moonbeam/Moonriver or Astar/Shiden)
+    ]
+
+  # Explorer service is optional.
+  # It provides rich GraphQL API for querying archived data.
+  # Many developers find it very useful for exploration and debugging.
+  explorer:
+    image: subsquid/substrate-explorer:firesquid
+    network_mode: host
+    environment:
+      DB_TYPE: postgres # set to `cockroach` for Cockroach DB
+      DB_HOST: localhost
+      DB_PORT: "5432"
+      DB_NAME: "squid-archive"
+      DB_USER: "postgres"
+      DB_PASS: "postgres"

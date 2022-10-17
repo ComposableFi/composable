@@ -1,18 +1,19 @@
 {
-  "bootstrapPools": true,
-  "bootstrapBonds": true,
-  "bootstrapCrowdloanRewards": true,
+  "bootstrapPools": false,
+  "bootstrapBonds": false,
+  "bootstrapCrowdloanRewards": false,
+  "bootstrapRewardPools": true,
   "mintAssetsToWallets": true,
   "bondOffers": [
     {
-      "asset": "4",
+      "asset": "4294967296",
       "bondPrice": "100000000000000",
       "nbOfBonds": "10",
-      "maturity": { "Finite": { "returnIn": "100" } },
+      "maturity": { "Finite": { "returnIn": "1440" } },
       "reward": {
-        "asset": "201",
+        "asset": "5",
         "amount": "1000000000000000",
-        "maturity": "20"
+        "maturity": "100"
       }
     }
   ],
@@ -27,11 +28,11 @@
       },
       "pair": {
         "base": "1",
-        "quote": "129"
+        "quote": "131"
       },
       "sale": {
         "start": "0",
-        "end": "7200",
+        "end": "26800",
         "initialWeight": "750000",
         "finalWeight": "250000"
       },
@@ -52,43 +53,45 @@
       },
       "pair": {
         "base": "4",
-        "quote": "129"
+        "quote": "131"
       },
       "fee": "10000",
       "baseWeight": "500000"
     }
   ],
+  "stakingRewardPools": [
+    {
+      "assetId": "130",
+      "endBlock": "5000",
+      "rewardConfigs": {
+        "131": {
+          "assetId": "131",
+          "maxRewards": "10000000000000000000",
+          "rewardRate": {
+            "period": "PerSecond",
+            "amount": "77160494000"
+          }
+        }
+      },
+      "lock": {
+        "durationPresets": {
+          "86400": "1200000000",
+          "604800": "1500000000"
+        },
+        "unlockPenalty": "10000000"
+      },
+      "financialNftAssetId": "2130",
+      "shareAssetId": "1300",
+      "minimumStakingAmount": "1000000000000"
+    }
+  ],
   "crowdloanRewards": {
     "palletAccountId": "5w3oyasYQg6vkbxZKeMG8Dz2evBw1P7Xr7xhVwk4qwwFkm8u",
-    "rewardsPerAccount": "1000000000000000",
-    "vestingPeriod": "100800",
-    "relayChainContributors": [
-      "5w53mgBc2w2kNQZgFBaYT5h79cQQNfv8vUuoa85zUe5VxBvQ",
-      "5tirEmQwRYbyadq5QrrFvnPNBPf4WLXsh97qHJUqcqMADDQ9",
-      "5z3wa9ojQra3HqeJthg9Q6hQnsRDsUgH6DC7ZXkb7YXofh3m",
-      "5uxGz8eZmbjvVBMpun9nvQ3G8s5cWD5xHnzgU6SHyAnJf9Vy",
-      "5vVWqFFPg258rCUy1HabDSf6z1bnRbKeDWKYF3XrVLvk3nEc",
-      "5vVWqFFPg258rCUy1HabDSf6z1bnRbKeDWKYF3XrVLvk3nEc",
-      "5ygiZBBgoTEjJqu3hpTQAw9oqaoEaz9eSJUBYGoTguG2qsQ3"
-    ],
-    "ethereumContributors": [
-      "0x33Cd07B1ae8485a6090091ee55389237eCB0Aed4",
-      "0xfe302f2D69cAf32d71812587ECcd4fcDF8287E22",
-      "0x38650E1FD89E6bBEfDD2f150190C70da02454b93",
-      "0x98729c03c4d5e820f5e8c45558ae07ae63f97461",
-      "0xf6ce427c29746936c954a30e892e829b65c0b22e",
-      "0x33cd07b1ae8485a6090091ee55389237ecb0aed4",
-      "0xfe302f2d69caf32d71812587eccd4fcdf8287e22",
-      "0x38650e1fd89e6bbefdd2f150190c70da02454b93",
-      "0x8d520d016246f31fe7a676648f1fd5e55ec5562d",
-      "0xd96dc025c835f155534a33a15d24482b257c7652",
-      "0x1af36325e7745cb77afad9f40c831b26d9f0324a",
-      "0x8288ec58506b8ab4137d84a62c85e90c01e9d5aa",
-      "0x6528f1110c293afa7b28aa2ba79eb038194eb182"
-    ]
+    "vestingPeriod": "86400000"
   },
   "mintAssets": [
-    ["5uxGz8eZmbjvVBMpun9nvQ3G8s5cWD5xHnzgU6SHyAnJf9Vy", "1", "50000000000000"],
-    ["5z3wa9ojQra3HqeJthg9Q6hQnsRDsUgH6DC7ZXkb7YXofh3m", "1", "50000000000000"]
-  ] 
+    ["5y4xiEmy4Kp3GPH7hUHDnNwwqeoEHgRbMp6HGW2iRKRu5DG2", "1", "5000000000000000"],
+    ["5y4xiEmy4Kp3GPH7hUHDnNwwqeoEHgRbMp6HGW2iRKRu5DG2", "4", "5000000000000000"],
+    ["5y4xiEmy4Kp3GPH7hUHDnNwwqeoEHgRbMp6HGW2iRKRu5DG2", "131", "5000000000000000"]
+  ]
 }

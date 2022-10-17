@@ -30,16 +30,15 @@ const Bond: NextPage = () => {
   const bondOffer = useStore<BondOffer>(
     (state) => state.bonds.bonds[Number(bond) - 1]
   );
-
   const { isLoading: isLoadingBalances, balances } =
     useBalanceForOffer(bondOffer);
-  const activeBonds = useActiveBonds();
+  const { activeBonds, loading } = useActiveBonds();
   const maxPurchasableBond = getMaxPurchasableBonds(
     bondOffer,
     balances[bondOffer?.assetId]
   );
 
-  if (!bondOffer || !bond) {
+  if (!bondOffer || !bond || loading) {
     return (
       <Default>
         <Updater />

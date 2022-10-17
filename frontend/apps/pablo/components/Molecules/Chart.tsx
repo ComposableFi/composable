@@ -1,12 +1,11 @@
 import {
   Box,
   BoxProps,
-  Typography,
-  useTheme,
-  alpha,
-  TypographyProps,
   Button,
   CircularProgress,
+  Typography,
+  TypographyProps,
+  useTheme,
 } from "@mui/material";
 import { ReactElement } from "react";
 import { AreaChart, AreaChartProps } from "../Atoms";
@@ -52,18 +51,7 @@ export const Chart: React.FC<ChartProps> = ({
   const theme = useTheme();
 
   return (
-    <Box
-      borderRadius={1}
-      padding={4}
-      sx={{
-        background: theme.palette.background.paper,
-      }}
-      border={`1px solid ${alpha(
-        theme.palette.common.white,
-        theme.custom.opacity.light
-      )}`}
-      {...boxProps}
-    >
+    <>
       <Box
         display="flex"
         alignItems={typeof title === "string" ? "center" : "flex-start"}
@@ -148,12 +136,16 @@ export const Chart: React.FC<ChartProps> = ({
           justifyContent="space-between"
         >
           {timeSlots.map((slot, index) => (
-            <Typography key={index} variant="body2">
+            <Typography
+              key={index}
+              variant="caption"
+              sx={{ whiteSpace: "nowrap" }}
+            >
               {slot}
             </Typography>
           ))}
         </Box>
       )}
-    </Box>
+    </>
   );
 };

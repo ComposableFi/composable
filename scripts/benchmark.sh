@@ -11,6 +11,7 @@ chains=(
 steps=50
 repeat=20
 
+cd code
 
 # shellcheck disable=SC2068
 for i in ${chains[@]}; do

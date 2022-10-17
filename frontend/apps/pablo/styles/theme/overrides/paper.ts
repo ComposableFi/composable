@@ -4,6 +4,7 @@ import { OverridesStyleRules } from "@mui/material/styles/overrides";
 export const paperOverrides = (theme: Theme): Partial<OverridesStyleRules> => ({
   styleOverrides: {
     root: {
+      borderRadius: theme.shape.borderRadius,
       padding: theme.spacing(2),
       backgroundImage: theme.palette.gradient.secondary,
       /* width */
@@ -24,7 +25,7 @@ export const paperOverrides = (theme: Theme): Partial<OverridesStyleRules> => ({
       "&::-webkit-scrollbar-thumb": {
         background: theme.palette.common.white,
         border: "7px solid rgb(40 38 56)",
-        borderRadius: 12,
+        borderRadius: theme.shape.borderRadius,
       },
 
       /* Handle on hover */

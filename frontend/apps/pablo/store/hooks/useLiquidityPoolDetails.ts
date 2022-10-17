@@ -6,8 +6,9 @@ import { useLiquidityByPool } from "./useLiquidityByPool";
 import { DailyRewards } from "../poolStats/poolStats.types";
 import { calculatePoolStats, fetchPoolStats } from "@/defi/utils/pablo";
 import { MockedAsset } from "../assets/assets.types";
-import { DEFAULT_NETWORK_ID, matchAssetByPicassoId } from "@/defi/utils";
+import { matchAssetByPicassoId } from "@/defi/utils";
 import useStore from "../useStore";
+import { useStakingRewardPool } from "../stakingRewards/stakingRewards.slice";
 
 export const useLiquidityPoolDetails = (poolId: number) => {
   const { poolStats, poolStatsValue, userLpBalances, putPoolStats, supportedAssets } = useStore();
@@ -16,6 +17,7 @@ export const useLiquidityPoolDetails = (poolId: number) => {
   const [pool, setPool] =
     useState<StableSwapPool | ConstantProductPool | undefined>(undefined);
 
+  const stakingRewardPool = useStakingRewardPool(pool ? pool.lpToken : "-");
   const tokensLocked = useLiquidityByPool(pool);
 
   const [baseAsset, setBaseAsset] =
@@ -90,6 +92,7 @@ export const useLiquidityPoolDetails = (poolId: number) => {
   }, [pool, userLpBalances]);
 
   return {
+    stakingRewardPool,
     baseAsset,
     quoteAsset,
     pool,

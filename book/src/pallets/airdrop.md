@@ -4,4 +4,4 @@
 
 ---
 
-{{#include ../../../frame/airdrop/README.md:5:}}
+{{#include ../../../code/parachain/frame/airdrop/README.md:5:}}

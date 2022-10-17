@@ -1,10 +1,11 @@
 import { LiquidityBootstrappingPool } from "@/defi/types";
 import { LiquidityBootstrappingPoolTrade } from "@/defi/types/auctions";
 import { fromChainUnits } from "@/defi/utils";
-import { transformAuctionsTransaction } from "@/defi/utils/pablo/auctions";
+import { transformPabloTransaction } from "@/defi/utils/pablo/auctions";
 import { PoolTradeHistory } from "@/store/auctions/auctions.types";
 import BigNumber from "bignumber.js";
-import { queryPoolTransactionsByType } from "../pools/queries";
+import { PabloTransactions } from "../pools/queries";
+import { fetchSubsquid } from "../stakingRewards/helpers";
 import { queryAuctionStats } from "./queries";
 
 export async function fetchInitialBalance(
@@ -14,24 +15,13 @@ export async function fetchInitialBalance(
   let quoteBalance = new BigNumber(0);
 
   try {
-    const queryResponse = await queryPoolTransactionsByType(
+    const { pabloTransactions } = await fetchPabloTransactions(
       pool.poolId,
       "ADD_LIQUIDITY"
     );
-    if (queryResponse.error) throw new Error(queryResponse.error.message);
-    if (!queryResponse.data)
-      throw new Error(
-        "[fetchInitialBalance] Unable to retrieve data from query"
-      );
-
-    const { pabloTransactions } = queryResponse.data;
-    if (!pabloTransactions)
-      throw new Error(
-        "[fetchInitialBalance] Unable to retrieve data from query"
-      );
 
     const addLiqTxs: PoolTradeHistory[] = pabloTransactions.map((t: any) =>
-      transformAuctionsTransaction(t, pool.pair.quote)
+      transformPabloTransaction(t, pool.pair.quote)
     );
 
     quoteBalance = addLiqTxs.reduce((agg, i) => {
@@ -56,26 +46,10 @@ export async function fetchAuctionTrades(
   let trades: LiquidityBootstrappingPoolTrade[] = [];
 
   try {
-    const queryResponse = await queryPoolTransactionsByType(
-      pool.poolId,
-      "SWAP"
-    );
-    // map to a function later
-    if (queryResponse.error) throw new Error(queryResponse.error.message);
-    if (!queryResponse.data)
-      throw new Error(
-        "[fetchInitialBalance] Unable to retrieve data from query"
-      );
-
-    const { pabloTransactions } = queryResponse.data;
-    if (!pabloTransactions)
-      throw new Error(
-        "[fetchInitialBalance] Unable to retrieve data from query"
-      );
-
+    const { pabloTransactions } = await fetchPabloTransactions(pool.poolId, "SWAP");
     let poolQuote = pool.pair.quote;
     trades = pabloTransactions.map((i: any) =>
-      transformAuctionsTransaction(i, poolQuote)
+      transformPabloTransaction(i, poolQuote)
     );
   } catch (err) {
     console.error(err);
@@ -84,7 +58,9 @@ export async function fetchAuctionTrades(
   return trades;
 }
 
-export async function fetchLbpStats(pool: LiquidityBootstrappingPool): Promise<{
+export async function fetchAuctionStats(
+  pool: LiquidityBootstrappingPool
+): Promise<{
   totalLiquidity: BigNumber;
   totalVolume: BigNumber;
 }> {
@@ -117,4 +93,43 @@ export async function fetchLbpStats(pool: LiquidityBootstrappingPool): Promise<{
     totalLiquidity,
     totalVolume,
   };
+}
+
+export function fetchPabloTransactions(
+  poolId: number,
+  eventType: "SWAP" | "ADD_LIQUIDITY" | "CREATE_POOL" | "REMOVE_LIQUIDITY",
+  orderBy: "ASC" | "DESC" = "DESC",
+  limit: number = 50
+): Promise<{ pabloTransactions: PabloTransactions[] }> {
+  return fetchSubsquid<{ pabloTransactions: PabloTransactions[] }>(`
+  query pabloTransactions {
+    pabloTransactions (
+      limit: ${limit},
+      where: {
+        pool: {
+          poolId_eq: ${poolId}
+        },
+        event: {
+          eventType_eq: ${eventType}
+        }
+      },
+      orderBy: pool_calculatedTimestamp_${orderBy}
+    ) {
+      id
+      spotPrice
+      baseAssetId
+      baseAssetAmount
+      quoteAssetAmount
+      quoteAssetId
+      fee
+      pool {
+        calculatedTimestamp
+      }
+      event {
+        accountId,
+        blockNumber
+      }
+    }
+  }
+`);
 }

@@ -29,7 +29,7 @@ export const TOKENS: { [key in TokenId]: Token } = {
   },
   usdc: {
     id: "usdc",
-    icon: "/tokens/usd-coin-usdc.svg",
+    icon: "/tokens/usdc.svg",
     symbol: "USDC",
     name: "USDC",
   },
@@ -37,7 +37,7 @@ export const TOKENS: { [key in TokenId]: Token } = {
     id: "dot",
     icon: "/tokens/polkadot.svg",
     symbol: "DOT",
-    name: "Pokadot",
+    name: "Polkadot",
   },
   uni: {
     id: "uni",

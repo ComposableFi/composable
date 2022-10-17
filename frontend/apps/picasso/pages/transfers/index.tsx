@@ -1,94 +1,28 @@
-import React from "react";
 import { NextPage } from "next";
-import { Box, Button, Grid, Theme, Typography } from "@mui/material";
-import { SwapHoriz } from "@mui/icons-material";
-
-import { useStore } from "@/stores/root";
+import { Button, Grid, Typography } from "@mui/material";
 import Default from "@/components/Templates/Default";
 import {
-  FeeDisplay,
-  NetworkSelect,
-  RecipientDropdown,
-  TextSwitch,
-  TokenDropdownCombinedInput
-} from "@/components";
-import { PageTitle } from "@/components";
-import { TokenId } from "tokens";
-import { formatToken } from "shared";
-
-const gridContainerStyle = {
-  mx: "auto"
-};
-
-const gridItemStyle = (pt: string = "2rem") => ({
-  xs: 12,
-  sx: { pt }
-});
-
-const networksStyle = (theme: Theme) =>
-  ({
-    alignItems: "flex-end",
-    flexDirection: "row",
-    gap: "2rem",
-    [theme.breakpoints.down("sm")]: {
-      flexDirection: "column",
-      alignItems: "initial",
-      gap: "1.5rem"
-    },
-    "& > *": { flex: 1 }
-  } as const);
-
-const swapButtonStyle = (theme: Theme) => ({
-  maxWidth: "4rem",
-  minWidth: "4rem",
-  [theme.breakpoints.down("sm")]: {
-    maxWidth: "3.5rem",
-    minWidth: "3.5rem",
-    alignSelf: "center"
-  }
-});
-
-const amountInputStyle = {
-  "& .MuiOutlinedInput-input": {
-    textAlign: "center"
-  }
-};
+  gridContainerStyle,
+  gridItemStyle,
+} from "@/components/Organisms/Transfer/transfer-styles";
+import { Header } from "@/components/Organisms/Transfer/Header";
+import { TransferNetworkSelector } from "@/components/Organisms/Transfer/TransferNetworkSelector";
+import { AmountTokenDropdown } from "@/components/Organisms/Transfer/AmountTokenDropdown";
+import { TransferRecipientDropdown } from "@/components/Organisms/Transfer/TransferRecipientDropdown";
+import { TransferKeepAliveSwitch } from "@/components/Organisms/Transfer/TransferKeepAliveSwitch";
+import { TransferExistentialDeposit } from "@/components/Organisms/Transfer/TransferExistentialDeposit";
+import { useTransfer } from "@/defi/polkadot/hooks/useTransfer";
+import { TransferFeeDisplay } from "@/components/Organisms/Transfer/TransferFeeDisplay";
+import { getDestChainFee } from "@/defi/polkadot/pallets/Transfer";
+import { useStore } from "@/stores/root";
 
 const Transfers: NextPage = () => {
-  const {
-    networks,
-    amount,
-    recipients,
-    keepAlive,
-    fee,
-    flipKeepAlive,
-    updateAmount,
-    updateNetworks,
-    updateRecipient
-  } = useStore(({ transfers }) => transfers);
-
-  const handleSwapClick = () =>
-    updateNetworks({ from: networks.to, to: networks.from });
-
-  const handleUpdateFromValue = (value: string) =>
-    updateNetworks({ ...networks, from: value });
-
-  const handleUpdateToValue = (value: string) =>
-    updateNetworks({ ...networks, to: value });
-
-  const handleAmountChange = (event: React.ChangeEvent<HTMLInputElement>) =>
-    updateAmount({ ...amount, value: +event.target.value });
-
-  const handleTokenChange = (event: React.ChangeEvent<HTMLInputElement>) =>
-    updateAmount({ ...amount, tokenId: event.target.value as TokenId });
-
-  const handleMaxClick = () =>
-    updateAmount({ ...amount, value: amount.balance });
-
-  const handleRecipientChange = (value: string) => updateRecipient(value);
-
-  const handleKeepAliveChange = (_: React.ChangeEvent<HTMLInputElement>) =>
-    flipKeepAlive();
+  const { transfer, amount, from, balance } = useTransfer();
+  // For now all transactions are done with Picasso target
+  // TODO: change this to get the chainApi from target (to) in store
+  const fee = useStore((state) => state.transfers.fee);
+  const minValue = getDestChainFee(from, "picasso").fee.plus(fee.partialFee);
+  const feeTokenId = useStore((state) => state.transfers.getFeeToken(from));
 
   return (
     <Default>
@@ -101,104 +35,44 @@ const Transfers: NextPage = () => {
         justifyContent="center"
       >
         <Grid item {...gridItemStyle("6rem")}>
-          <PageTitle
-            title="Transfers"
-            subtitle="You will be able to move assets on any available Kusama chains."
-            textAlign="center"
-          />
+          <Header />
         </Grid>
         <Grid item {...gridItemStyle()}>
-          <Box display="flex" sx={networksStyle}>
-            <NetworkSelect
-              LabelProps={{ mainLabelProps: { label: "From network" } }}
-              options={networks.options}
-              value={networks.from}
-              searchable
-              substrateNetwork
-              setValue={handleUpdateFromValue}
-            />
-            <Button
-              sx={swapButtonStyle}
-              variant="outlined"
-              size="large"
-              onClick={handleSwapClick}
-            >
-              <SwapHoriz />
-            </Button>
-            <NetworkSelect
-              LabelProps={{ mainLabelProps: { label: "To network" } }}
-              options={networks.options}
-              value={networks.to}
-              searchable
-              substrateNetwork
-              setValue={handleUpdateToValue}
-            />
-          </Box>
+          <TransferNetworkSelector />
         </Grid>
         <Grid item {...gridItemStyle()}>
-          <TokenDropdownCombinedInput
-            buttonLabel="Max"
-            value={amount.value}
-            LabelProps={{
-              mainLabelProps: {
-                label: "Amount"
-              },
-              balanceLabelProps: {
-                label: "Balance:",
-                balanceText: formatToken(amount.balance, amount.tokenId)
-              }
-            }}
-            ButtonProps={{
-              onClick: handleMaxClick
-            }}
-            InputProps={{
-              sx: amountInputStyle
-            }}
-            CombinedSelectProps={{
-              value: amount.tokenId,
-              options: amount.options,
-              onChange: handleTokenChange
-            }}
-            onChange={handleAmountChange}
-          />
+          <AmountTokenDropdown />
         </Grid>
         <Grid item {...gridItemStyle("1.5rem")}>
-          <RecipientDropdown
-            value={recipients.selected}
-            expanded={false}
-            options={recipients.options}
-            setValue={handleRecipientChange}
-          />
+          <TransferRecipientDropdown />
         </Grid>
         <Grid item {...gridItemStyle("1.5rem")}>
-          <FeeDisplay
-            label="Fee"
-            feeText={formatToken(fee, amount.tokenId)}
-            TooltipProps={{
-              title: "Fee tooltip title"
-            }}
-          />
+          <TransferFeeDisplay />
         </Grid>
         <Grid item {...gridItemStyle()}>
-          <TextSwitch
-            label="Keep alive"
-            checked={keepAlive}
-            TooltipProps={{
-              title:
-                "This will prevent account of being removed due to low balance."
-            }}
-            onChange={handleKeepAliveChange}
-          />
+          <TransferKeepAliveSwitch />
+        </Grid>
+        <Grid item {...gridItemStyle()}>
+          <TransferExistentialDeposit network={from} />
         </Grid>
         <Grid item {...gridItemStyle("1.5rem")}>
           <Button
             variant="contained"
             color="primary"
-            disabled={amount.value <= 0 || amount.value > amount.balance}
+            disabled={
+              amount.lte(0) || amount.gt(balance) || amount.lte(minValue)
+            }
             fullWidth
+            onClick={transfer}
           >
             <Typography variant="button">Transfer</Typography>
           </Button>
+          {amount.lte(minValue) && (
+            <Typography variant="caption" color="error.main">
+              At least {minValue.toFormat(12)} {feeTokenId.symbol.toUpperCase()}{" "}
+              will be spent for gas fees.
+            </Typography>
+          )}
         </Grid>
       </Grid>
     </Default>

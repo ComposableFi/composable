@@ -1,5 +1,5 @@
-import { ParachainId } from "substrate-react/dist/dotsama/types";
-import { AssetId } from "./types";
+import { AssetId, SubstrateNetworkId } from "./types";
+import { ParachainId, RelayChainId } from "substrate-react";
 
 export interface AssetMetadata {
   decimals: number;
@@ -8,7 +8,7 @@ export interface AssetMetadata {
   icon: string;
   name: string;
   supportedNetwork: {
-    [networkId in ParachainId]: number | null;
+    [networkId in SubstrateNetworkId]: number | null;
   };
 }
 
@@ -24,6 +24,7 @@ export const Assets: {
     supportedNetwork: {
       karura: null,
       picasso: 1,
+      kusama: null,
     },
   },
   ksm: {
@@ -35,6 +36,7 @@ export const Assets: {
     supportedNetwork: {
       karura: null,
       picasso: 4,
+      kusama: 1,
     },
   },
   kusd: {
@@ -44,8 +46,9 @@ export const Assets: {
     icon: "/tokens/usd-coin-usdc.svg",
     name: "K-USD",
     supportedNetwork: {
-      karura: null,
-      picasso: 129,
+      karura: 129,
+      picasso: 12884901886, // After creating the asset id via assetRegistry, this value could be anything.
+      kusama: null,
     },
   },
   layr: {
@@ -57,6 +60,7 @@ export const Assets: {
     supportedNetwork: {
       karura: null,
       picasso: 2,
+      kusama: null,
     },
   },
   pablo: {
@@ -68,6 +72,55 @@ export const Assets: {
     supportedNetwork: {
       karura: null,
       picasso: 2,
+      kusama: null,
+    },
+  },
+  ausd: {
+    decimals: 12,
+    assetId: "ausd",
+    symbol: "AUSD",
+    icon: "/tokens/ausd.svg",
+    name: "Acala USD",
+    supportedNetwork: {
+      karura: 2,
+      picasso: null,
+      kusama: null,
+    },
+  },
+  kar: {
+    decimals: 12,
+    assetId: "kar",
+    symbol: "KAR",
+    icon: "/tokens/karura.svg",
+    name: "Karura",
+    supportedNetwork: {
+      karura: 1,
+      picasso: null,
+      kusama: null,
+    },
+  },
+  usdc: {
+    decimals: 12,
+    assetId: "usdc",
+    symbol: "USDC",
+    icon: "/tokens/usd-coin-usdc.svg",
+    name: "USDCoin",
+    supportedNetwork: {
+      karura: null,
+      picasso: 100,
+      kusama: null,
+    },
+  },
+  usdt: {
+    decimals: 12,
+    assetId: "usdt",
+    symbol: "USDT",
+    icon: "/tokens/usdt.svg",
+    name: "USDT",
+    supportedNetwork: {
+      karura: null,
+      picasso: null,
+      kusama: null,
     },
   },
 };
@@ -76,14 +129,11 @@ export const AssetsValidForNow: AssetId[] = ["pica", "kusd", "ksm"];
 
 export const getAsset = (assetId: AssetId): AssetMetadata => Assets[assetId];
 export const getAssetById = (
-  network: ParachainId,
+  network: ParachainId | Extract<RelayChainId, "kusama">,
   assetId: number
 ): AssetMetadata | null => {
   for (const asset in Assets) {
-    if (
-      Assets[asset as AssetId].supportedNetwork[network as ParachainId] ===
-      assetId
-    ) {
+    if (Assets[asset as AssetId].supportedNetwork[network] === assetId) {
       return Assets[asset as AssetId];
     }
   }
@@ -91,9 +141,10 @@ export const getAssetById = (
 };
 
 export const getAssetOnChainId = (
-  network: ParachainId,
-  assetId: AssetId
+  network: ParachainId | Extract<RelayChainId, "kusama">,
+  assetId: AssetId | ""
 ): number | null => {
+  if (!assetId) return null;
   return Assets[assetId].supportedNetwork[network];
 };
 

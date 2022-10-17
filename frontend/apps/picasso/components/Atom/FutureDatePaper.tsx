@@ -2,23 +2,13 @@ import { FC, useMemo } from "react";
 import { Paper, Typography } from "@mui/material";
 
 export const FutureDatePaper: FC<{
-  duration: "2w" | "2m" | "1y" | "2y" | undefined;
+  duration: string;
 }> = ({ duration }) => {
   const date = useMemo(() => {
     if (!duration) return null;
     const now = new Date();
-    const target = (() => {
-      switch (duration) {
-        case "2w":
-          return new Date(now.setDate(now.getDate() + 14));
-        case "2m":
-          return new Date(now.setMonth(now.getMonth() + 2));
-        case "1y":
-          return new Date(now.setFullYear(now.getFullYear() + 1));
-        case "2y":
-          return new Date(now.setFullYear(now.getFullYear() + 2));
-      }
-    })();
+    const target = (() =>
+      new Date(now.setSeconds(now.getSeconds() + parseInt(duration))))();
     return (
       target.getDate().toString().padStart(2, "0") +
       "." +

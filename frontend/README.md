@@ -13,7 +13,7 @@ This monorepo uses turborepo with [Yarn](https://classic.yarnpkg.com/lang/en/) a
 - `defi-interfaces`: a collection of types extracted from polkadot chain and defs to use in packages/apps
 - `eslint-config-custom`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
 - `tsconfig`: `tsconfig.json`s used throughout the monorepo
-- `substrate-react`: a colllection of React utilities to be used across Pablo and Picasso
+- `substrate-react`: a collection of React utilities to be used across Pablo and Picasso
 
 Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
 

@@ -23,17 +23,20 @@ import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";
 import { MockedAsset } from "@/store/assets/assets.types";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
+import { PoolTradeHistory } from "@/store/auctions/auctions.types";
 
 export type AuctionHistoriesTableProps = {
   auction: LiquidityBootstrappingPool,
   baseAsset?: MockedAsset,
   quoteAsset?: MockedAsset,
+  history: PoolTradeHistory[],
   historiesTableLimit?: number,
 } & TableContainerProps;
 
 export const AuctionHistoriesTable: React.FC<AuctionHistoriesTableProps> = ({
   historiesTableLimit = 10,
   auction,
+  history,
   baseAsset,
   quoteAsset,
   ...rest
@@ -41,10 +44,9 @@ export const AuctionHistoriesTable: React.FC<AuctionHistoriesTableProps> = ({
   const theme = useTheme();
   const limit = historiesTableLimit;
   const [count, setCount] = useState(limit);
-  const { auctions: { activeLBPHistory } } = useStore();
 
-  const expandable = activeLBPHistory.length > count;
-  const collapsable = !expandable && activeLBPHistory.length > limit;
+  const expandable = history.length > count;
+  const collapsible = !expandable && history.length > limit;
 
   const handleSeeMoreOrLess = () => {
     expandable
@@ -96,7 +98,7 @@ export const AuctionHistoriesTable: React.FC<AuctionHistoriesTableProps> = ({
           </TableRow>
         </TableHead>
         <TableBody>
-          {activeLBPHistory.slice(0, count).map((history, index) => {
+          {history.slice(0, count).map((history, index) => {
             let historyBase = undefined, historyQuote = undefined;
             if (baseAsset && quoteAsset) {
               if(history.quoteAssetId.toString() === quoteAsset.network[DEFAULT_NETWORK_ID]) {
@@ -152,7 +154,7 @@ export const AuctionHistoriesTable: React.FC<AuctionHistoriesTableProps> = ({
         </TableBody>
       </Table>
 
-      {(expandable || collapsable) && (
+      {(expandable || collapsible) && (
         <Box
           onClick={handleSeeMoreOrLess}
           mt={2}

@@ -7,22 +7,30 @@ It accumulates [kusama](https://kusama.network) account balances and serves them
 
 ## Summary
 
-- [Quickstart](#quickly-running-the-sample)
-- [Setup for Parachains](#setup-for-parachains)
-- [Setup for Localnets, Devnets and Testnets](#setup-for-devnets-and-testnets)
-- [Development flow](#dev-flow)
-  - [Database Schema](#1-define-database-schema)
-  - [Entity classes](#2-generate-typeorm-classes)
-  - [DB migrations](#3-generate-database-migration)
-  - [Typegen for Events, Extrinsics and Storage Calls](#4-generate-typescript-definitions-for-substrate-events-and-calls)
-- [Deploy the Squid](#deploy-the-squid)
-- [Conventions](#project-conventions)
-- [Type Bundles](#types-bundle)
+- [Squid template project](#squid-template-project)
+  - [Summary](#summary)
+  - [Prerequisites](#prerequisites)
+  - [Quickly running the sample](#quickly-running-the-sample)
+  - [Setup for parachains](#setup-for-parachains)
+  - [Setup for devnets and testnets](#setup-for-devnets-and-testnets)
+  - [Dev flow](#dev-flow)
+    - [1. Define database schema](#1-define-database-schema)
+      - [Entity Requirements](#entity-requirements)
+    - [2. Generate TypeORM classes](#2-generate-typeorm-classes)
+    - [3. Generate database migration](#3-generate-database-migration)
+    - [4. Generate TypeScript definitions for substrate events and calls](#4-generate-typescript-definitions-for-substrate-events-and-calls)
+  - [Deploy the Squid](#deploy-the-squid)
+  - [Project conventions](#project-conventions)
+  - [Types bundle](#types-bundle)
+  - [Differences from polkadot.js](#differences-from-polkadotjs)
+  - [Graphql server extensions](#graphql-server-extensions)
+  - [Disclaimer](#disclaimer)
 
 ## Prerequisites
 
-* node 16.x
-* docker
+* [Node 16.x](https://nodejs.org/)
+* [Docker](https://docs.docker.com/get-docker/)
+* [GNU Make](https://www.gnu.org/software/make/)
 
 ## Quickly running the sample
 
@@ -33,72 +41,86 @@ npm ci
 # 2. Compile typescript files
 npm run build
 
-# 3. Start target Postgres database
-docker compose up -d
+# 3. Launch postgres and detach
+make up
 
-# 4. Apply database migrations from db/migrations
-npx sqd db create
-npx sqd db migrate
+# 4. Create the database schema and run the processor
+make process
 
-# 5. Now start the processor
-node -r dotenv/config lib/processor.js
-
-# 6. The above command will block the terminal
-#    being busy with fetching the chain data, 
-#    transforming and storing it in the target database.
-#
-#    To start the graphql server open the separate terminal
-#    and run
-npx squid-graphql-server
+# 5. Start the GraphQL server
+#    Open a new terminal and run:
+make serve
 ```
 
-## Setup for parachains
+The GraphQL playground is available at http://localhost:4350/graphql. Open it in a browser and run sample queries by applying filters and data selections in the panel to the left.
 
-Subsquid provides Squid Archive data sources for most parachains. Use `lookupArchive(<network name>)` to lookup the archive endpoint by the network name, e.g.
+[comment]: <> (## Setup for parachains)
 
-```typescript
-processor.setDataSource({
-  archive: lookupArchive("basilisk")[0].url,
-  //...
-});
-```
+[comment]: <> (Subsquid provides Squid Archive data sources for most parachains. Use `lookupArchive&#40;<network name>&#41;` to lookup the archive endpoint by the network name, e.g.)
 
-To make sure you're indexing the right chain one can additionally filter by genesis hash:
+[comment]: <> (```typescript)
 
-```typescript
-processor.setDataSource({
-  archive: lookupArchive("basilisk", undefined, "0xa85cfb9b9fd4d622a5b28289a02347af987d8f73fa3108450e2b4a11c1ce5755")[0].url,
-  //...
-});
-```
+[comment]: <> (processor.setDataSource&#40;{)
 
-If the chain is not yet supported, please fill the [form](https://forms.gle/Vhr3exPs4HrF4Zt36) to submit a request.
+[comment]: <> (  archive: lookupArchive&#40;"basilisk"&#41;[0].url,)
 
-## Setup for devnets and testnets
+[comment]: <> (  //...)
 
-Non-production chains, e.g. Devnets and Testnets are not supported by `lookupArchive` and one has to provide a local Squid Archive as a data source.
+[comment]: <> (}&#41;;)
 
-Inspect `archive/.env` and provide the websocket endpoint for your node. If the network requires custom type bundles (for older versions of Substrate), mount them as volumes in `archive/docker-compose.yml` and uncomment the relevant sections in `archive/.env`.
+[comment]: <> (```)
 
-Then run (in a separate terminal window)
+[comment]: <> (To make sure you're indexing the right chain one can additionally filter by genesis hash:)
 
-```bash
-docker compose -f archive/docker-compose.yml up
-```
+[comment]: <> (```typescript)
 
-Inspect your archive at `http://localhost:4010/console`. Run the processor with
+[comment]: <> (processor.setDataSource&#40;{)
 
-```typescript
-processor.setDataSource({
-  archive: `http://localhost:4010/v1/graphql`,
-  chain: // your network endpoint here
-});
-```
+[comment]: <> (  archive: lookupArchive&#40;"basilisk", undefined, "0xa85cfb9b9fd4d622a5b28289a02347af987d8f73fa3108450e2b4a11c1ce5755"&#41;[0].url,)
 
-To drop the archive, run
-```bash
-docker compose -f archive/docker-compose.yml down -v
-```
+[comment]: <> (  //...)
+
+[comment]: <> (}&#41;;)
+
+[comment]: <> (```)
+
+[comment]: <> (If the chain is not yet supported, please fill the [form]&#40;https://forms.gle/Vhr3exPs4HrF4Zt36&#41; to submit a request.)
+
+[comment]: <> (## Setup for devnets and testnets)
+
+[comment]: <> (Non-production chains, e.g. Devnets and Testnets are not supported by `lookupArchive` and one has to provide a local Squid Archive as a data source.)
+
+[comment]: <> (Inspect `archive/.env` and provide the websocket endpoint for your node. If the network requires custom type bundles &#40;for older versions of Substrate&#41;, mount them as volumes in `archive/docker-compose.yml` and uncomment the relevant sections in `archive/.env`.)
+
+[comment]: <> (Then run &#40;in a separate terminal window&#41;)
+
+[comment]: <> (```bash)
+
+[comment]: <> (docker compose -f archive/docker-compose.yml up)
+
+[comment]: <> (```)
+
+[comment]: <> (Inspect your archive at `http://localhost:4010/console`. Run the processor with)
+
+[comment]: <> (```typescript)
+
+[comment]: <> (processor.setDataSource&#40;{)
+
+[comment]: <> (  archive: `http://localhost:4010/v1/graphql`,)
+
+[comment]: <> (  chain: // your network endpoint here)
+
+[comment]: <> (}&#41;;)
+
+[comment]: <> (```)
+
+[comment]: <> (To drop the archive, run)
+
+[comment]: <> (```bash)
+
+[comment]: <> (docker compose -f archive/docker-compose.yml down -v)
+
+[comment]: <> (```)
 
 
 ## Dev flow
@@ -107,50 +129,45 @@ docker compose -f archive/docker-compose.yml down -v
 
 Start development by defining the schema of the target database via `schema.graphql`.
 Schema definition consists of regular graphql type declarations annotated with custom directives.
-Full description of `schema.graphql` dialect is available [here](https://docs.subsquid.io/schema-spec).
+Full description of `schema.graphql` dialect is available [here](https://docs.subsquid.io/develop-a-squid/schema-file/).
 
 #### Entity Requirements
 
 Entities *must* include the following fields:
-- id: Random UUID for the database
-- eventId: ID associated with the chain (can be obtained from `ctx.event.id`)
-- [unique id associated with the entity]: Any id that can be associated with the on-chain entity. When possible, this must come directly from the chain events (like `offerId` for bond offers). Otherwise, it can be created as a unique concatenation of available data separated by a dash (`-`), like `${accountId}-${assetId}` for vesting schedules.
+- id: Natural key (for example, `ctx.event.id` for `Event` or `accountId` for `Account`) or random UUID. 
+- eventId: ID of the event that triggered the creation/update (can be obtained from `ctx.event.id`)
+
+Optionally, they can also include any other id that can be associated with the on-chain entity. When possible, this must come directly from the chain events (like `offerId` for bond offers). Otherwise, it can be created as a unique concatenation of available data separated by a dash (`-`), like `${accountId}-${assetId}` for vesting schedules.
 
 ### 2. Generate TypeORM classes
 
 Mapping developers use TypeORM [EntityManager](https://typeorm.io/#/working-with-entity-manager)
 to interact with target database during data processing. All necessary entity classes are
-generated by the squid framework from `schema.graphql`. This is done by running `npx sqd codegen`
-command.
-
-### 3. Generate database migration
-
-All database changes are applied through migration files located at `db/migrations`.
-`sqd(1)` tool provides several commands to drive the process.
-It is all [TypeORM](https://typeorm.io/#/migrations) under the hood.
+generated by the squid framework from `schema.graphql`. This is done by running:
 
 ```bash
 # Connect to database, analyze its state and generate migration to match the target schema.
 # The target schema is derived from entity classes generated earlier.
-npx sqd db create-migration
+# Don't forget to compile your entity classes beforehand!
+npx squid-typeorm-migration generate
 
 # Create template file for custom database changes
-npx sqd db new-migration
+npx squid-typeorm-migration create
 
 # Apply database migrations from `db/migrations`
-npx sqd db migrate
+npx squid-typeorm-migration apply
 
 # Revert the last performed migration
-npx sqd db revert
-
-# DROP DATABASE
-npx sqd db drop
-
-# CREATE DATABASE
-npx sqd db create            
+npx squid-typeorm-migration revert 
 ```
 
-### 4. Generate TypeScript definitions for substrate events and calls
+In most cases the simplest way to update the schema is to drop the database and regenerate the migrations from scratch.
+
+1. Update `schema.graphql`
+2. Regenerate the model classes and build the squid with `make rebuild`
+
+
+### 3. Generate TypeScript definitions for substrate events and calls
 
 This is an optional part, but it is very advisable. 
 
@@ -186,7 +203,7 @@ fetch corresponding metadata.
 npx squid-substrate-metadata-explorer \
   --chain wss://dali.devnets.composablefinance.ninja/parachain/alice \
   --archive http://localhost:4010/v1/graphql \
-  --out daliDevVersions.json
+  --out daliDevVersions.jsonl
 ```
 
 In the above command `--archive` parameter is optional, but it speeds up the process
@@ -199,7 +216,7 @@ After chain exploration is complete you can use `squid-substrate-typegen(1)` to 
 required wrappers.
 
 ```bash
-npx squid-substrate-typegen typegen.json
+npx @subsquid/substrate-typegen typegen.json
 ```
 
 Where `typegen.json` config file has the following structure:
@@ -207,10 +224,17 @@ Where `typegen.json` config file has the following structure:
 ```json5
 {
   "outDir": "src/types",
-  "chainVersions": "kusamaVersions.json", // the result of chain exploration
-  "typesBundle": "kusama", // see types bundle section below
-  "events": [ // list of events to generate
-    "balances.Transfer"
+  "chainVersions": "daliDevVersions.jsonl",
+  "specVersions": "daliDevVersions.jsonl",
+  "typesBundle": "kusama",
+  "events": [
+    "Balances.Transfer",
+    "Pablo.PoolCreated",
+    "Pablo.PoolDeleted",
+    "Pablo.LiquidityAdded",
+    "Pablo.LiquidityRemoved",
+    "Pablo.Swapped",
+    "BondedFinance.NewOffer",
   ],
   "calls": [ // list of calls to generate
     "timestamp.set"

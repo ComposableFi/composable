@@ -1,6 +1,6 @@
 import { Token, TOKENS } from "tokens";
 import { NamedSet } from "zustand/middleware";
-import { StoreSlice } from "../types";
+import { StoreSlice } from "@/stores/types";
 
 // TODO: [defi] edit values accordingly to your needs
 export type Account = {
@@ -69,19 +69,19 @@ const initialState: {
       price: 1.43,
       balance: 4534,
       value: 46187,
-      change_24hr: 0.34
+      change_24hr: 0.34,
     },
     {
       token: TOKENS["ksm"],
       price: 189,
       balance: 42,
       value: 984.98,
-      change_24hr: -0.12
-    }
+      change_24hr: -0.12,
+    },
   ],
   myStakingAssets: {
     picasso: [],
-    pablo: []
+    pablo: [],
   },
   staking: {
     deposits: "$0",
@@ -90,8 +90,8 @@ const initialState: {
     balance: 200,
     stakedBalance: 0,
     nextRewardAmount: 0,
-    roi: 8.2
-  }
+    roi: 8.2,
+  },
 };
 
 export interface PolkadotSlice {
@@ -102,6 +102,6 @@ export const createPolkadotSlice: StoreSlice<PolkadotSlice> = (
   set: NamedSet<PolkadotSlice>
 ) => ({
   polkadot: {
-    ...initialState
-  }
+    ...initialState,
+  },
 });

@@ -1,0 +1,48 @@
+name: "Canary Release"
+
+on:
+  workflow_dispatch:
+
+env:
+  DOCKER_USER_OPTION: '$UID:$GID'
+  SCCACHE_GCS_BUCKET: 'composable-build-artefacts'
+  RUSTC_WRAPPER: "/home/runner/.cargo/bin/sccache"
+  SCCACHE_GCS_RW_MODE: "READ_WRITE"
+
+jobs:
+  dali-client-canary-release:
+    runs-on: 
+        - self-hosted
+        - linux
+        - X64
+        - dali-ansible
+    concurrency:
+      group: client-${{ github.ref }}
+      cancel-in-progress: true
+
+    steps:
+    - name: Clean up
+      continue-on-error: true
+      run: |
+        sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+        docker system prune --force --all --volumes
+    - uses: actions/checkout@v2
+      with: 
+        fetch-depth: 0
+
+    - name: Set env
+      run: |
+        echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )" >> $GITHUB_ENV
+
+    - name: Run ansible playbook
+      working-directory: "/opt/ansible/inventory"
+      run: |
+        ansible-playbook -l label_node_name_dali_rococo_rpc_0 /opt/ansible/playbooks/client-upgrade.yml  --user ubuntu -e 'ansible_python_interpreter=/usr/bin/python3' --private-key /home/ubuntu/.ssh/id_rsa
+
+    - uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        fields: repo,message,commit,author,action,eventName,ref,workflow,job,took,pullRequest
+        channel: '#github-action-bot'
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }} 

@@ -12,7 +12,11 @@ const loadEnvironments = () => loadEnvConfig(process.cwd());
 
 loadEnvironments();
 setGlobalConfig(globalConfig);
-jest.mock("@integrations-lib/core", () => ({
+jest.mock("bi-lib", () => ({
+  ConnectorType: {
+    MetaMask: "metamask",
+    Static: "static",
+  },
   useBlockchainProvider: jest.fn(() => ({
     account: "0x0000000000000000000000000000000000000000",
   })),

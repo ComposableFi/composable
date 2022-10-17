@@ -1,14 +1,6 @@
-import {
-  Box,
-  BoxProps,
-  Grid,
-} from "@mui/material";
-import {
-  TabItem,
-  TabPanel,
-  Tabs,
-} from "@/components";
-import { useEffect, useState } from "react";
+import { Box, BoxProps, Grid } from "@mui/material";
+import { TabItem, TabPanel, Tabs } from "@/components";
+import { useEffect, useMemo, useState } from "react";
 import { PoolTVLChart } from "./PoolTVLChart";
 import { PoolStatistics } from "./PoolStatistics";
 import { PoolLiquidityPanel } from "./PoolLiquidityPanel";
@@ -33,17 +25,29 @@ const tabItems: TabItem[] = [
   },
 ];
 
-export type PoolDetailsProps = { poolId: number } & BoxProps
+export type PoolDetailsProps = { poolId: number } & BoxProps;
 
-export const PoolDetails: React.FC<BoxProps> = ({
-  ...boxProps
-}) => {
+export const PoolDetails: React.FC<BoxProps> = ({ ...boxProps }) => {
   const [poolId, setPoolId] = useState(-1);
   const router = useRouter();
 
   useEffect(() => {
-    const { poolId } = router.query;
-    setPoolId(Number(poolId));
+    if (router.isReady) {
+      const { poolId, modal } = router.query;
+      setPoolId(Number(poolId));
+
+      // Switch to a tab on page load based on query string
+      if (modal && !Array.isArray(modal)) {
+        const labels = tabItems.map((tab) => tab.label);
+        const index = labels.findIndex(
+          (label) => label.toLowerCase() === modal.toLowerCase()
+        );
+        if (index > -1) {
+          setTab(index);
+        }
+        router.replace(`/pool/select/${poolId}`, undefined, { shallow: true });
+      }
+    }
   }, [router]);
 
   const [tab, setTab] = useState<number>(0);
@@ -74,7 +78,6 @@ export const PoolDetails: React.FC<BoxProps> = ({
           <PoolRewardsPanel poolId={poolId} />
         </TabPanel>
       </Box>
-
     </Box>
   );
 };

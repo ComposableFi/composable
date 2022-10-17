@@ -4,4 +4,4 @@
 
 ---
 
-{{#include ../../../frame/assets-registry/README.md:6:}}
+{{#include ../../../code/parachain/frame/assets-registry/README.md:6:}}

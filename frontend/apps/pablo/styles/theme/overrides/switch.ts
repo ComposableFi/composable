@@ -1,14 +1,19 @@
 import { alpha, Theme } from "@mui/material";
 import { OverridesStyleRules } from "@mui/material/styles/overrides";
 
-export const switchOverrides = (theme: Theme): Partial<OverridesStyleRules> => ({
+export const switchOverrides = (
+  theme: Theme
+): Partial<OverridesStyleRules> => ({
   styleOverrides: {
     root: {
       width: theme.spacing(8),
       height: theme.spacing(4),
-      borderRadius: 9999,
+      borderRadius: theme.shape.borderRadius,
       padding: 0,
-      border: `1px solid ${alpha(theme.palette.common.white, theme.custom.opacity.light)}`,
+      border: `1px solid ${alpha(
+        theme.palette.common.white,
+        theme.custom.opacity.light
+      )}`,
       "& .MuiSwitch-switchBase": {
         padding: 0,
         marginTop: theme.spacing(0.25),
@@ -19,10 +24,7 @@ export const switchOverrides = (theme: Theme): Partial<OverridesStyleRules> => (
           paddingLeft: 0,
           color: theme.palette.common.white,
           "& + .MuiSwitch-track": {
-            backgroundColor:
-              theme.palette.mode === "dark"
-                ? theme.palette.primary.light
-                : theme.palette.primary.light,
+            backgroundColor: theme.palette.primary.light,
             opacity: 1,
             border: 0,
           },
@@ -32,14 +34,9 @@ export const switchOverrides = (theme: Theme): Partial<OverridesStyleRules> => (
         },
         "&.Mui-disabled": {
           "& .MuiSwitch-thumb": {
-            color: (
-              alpha(
-                theme.palette.common.white,
-                theme.custom.opacity.main
-              )
-            ),
+            color: alpha(theme.palette.common.white, theme.custom.opacity.main),
           },
-        }, 
+        },
         "&.Mui-disabled + .MuiSwitch-track": {
           opacity: theme.custom.opacity.dark,
         },
@@ -51,7 +48,7 @@ export const switchOverrides = (theme: Theme): Partial<OverridesStyleRules> => (
         color: theme.palette.common.white,
       },
       "& .MuiSwitch-track": {
-        backgroundColor: 'transparent',
+        backgroundColor: "transparent",
         opacity: 1,
         transition: theme.transitions.create(["background-color"], {
           duration: 300,

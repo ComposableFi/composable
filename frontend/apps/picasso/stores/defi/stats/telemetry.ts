@@ -1,94 +1,76 @@
-import { NamedSet } from "zustand/middleware";
 import { StoreSlice } from "../../types";
-import StatsDummyData from "./dummyData";
+import BigNumber from "bignumber.js";
 
-const CHART_INTERVAL = ["1h", "24h", "1w", "1m", "1y"];
-
-export type TelemetryDataProps = {
-  name: string;
-  value: number;
-};
+const MAX_AVERAGE_TIME_LIST_LENGTH = 200;
 
 interface TelemetryData {
-  data: Array<TelemetryDataProps>;
-}
-
-interface ChartData {
-  name: string;
-  data: Array<[number, number][]>;
-  interval: Array<string>;
-  pickedInterval: number;
-}
-
-interface TelemetryChartData {
-  data: Array<{ data: ChartData }>;
+  finalizedBlock: BigNumber;
+  lastBlock: BigNumber;
+  averageTime: Array<BigNumber>;
 }
 
 interface TelemetryState {
   telemetryData: TelemetryData;
-  telemetryChartData: TelemetryChartData;
 }
 
 const initialState: TelemetryState = {
   telemetryData: {
-    data: StatsDummyData.TELEMETRY.infoData,
-  },
-  telemetryChartData: {
-    data: [
-      {
-        data: {
-          name: "Mempool & fee growth",
-          interval: CHART_INTERVAL,
-          pickedInterval: 0,
-          data: StatsDummyData.TELEMETRY.chartData.memPool,
-        },
-      },
-    ],
+    finalizedBlock: new BigNumber(0),
+    lastBlock: new BigNumber(0),
+    averageTime: [],
   },
 };
 
 export interface StatsTelemetrySlice {
   statsTelemetry: TelemetryState & {
-    setFinalizedBlock: (data: TelemetryData["data"][0]) => void;
-    setAverageTime: (data: TelemetryData["data"][1]) => void;
-    setLastBlock: (data: TelemetryData["data"][2]) => void;
-    setMemPoolInterval: (data: number) => void;
+    setFinalizedBlock: (data: BigNumber) => void;
+    pushAverageTime: (data: BigNumber) => void;
+    setLastBlock: (data: BigNumber) => void;
+    getBlockAverage: () => BigNumber;
   };
 }
 
 export const createStatsTelemetrySlice: StoreSlice<StatsTelemetrySlice> = (
-  set: NamedSet<StatsTelemetrySlice>
+  set,
+  get
 ) => ({
   statsTelemetry: {
     ...initialState,
-    setFinalizedBlock: (data: TelemetryData["data"][0]) => {
+    setFinalizedBlock: (data: BigNumber) => {
       set((state) => {
-        state.statsTelemetry.telemetryData.data[0] = data;
+        state.statsTelemetry.telemetryData.finalizedBlock = data;
 
         return state;
       });
     },
-    setAverageTime: (data: TelemetryData["data"][1]) => {
+    pushAverageTime: (data: BigNumber) => {
       set((state) => {
-        state.statsTelemetry.telemetryData.data[1] = data;
+        state.statsTelemetry.telemetryData.averageTime.push(data);
+        if (
+          state.statsTelemetry.telemetryData.averageTime.length >
+          MAX_AVERAGE_TIME_LIST_LENGTH
+        ) {
+          state.statsTelemetry.telemetryData.averageTime.shift();
+        }
 
         return state;
       });
     },
-    setLastBlock: (data: TelemetryData["data"][2]) => {
+    setLastBlock: (data: BigNumber) => {
       set((state) => {
-        state.statsTelemetry.telemetryData.data[2] = data;
+        state.statsTelemetry.telemetryData.lastBlock = data;
 
         return state;
       });
     },
-    setMemPoolInterval: (data: number) => {
-      set((state) => {
-        state.statsTelemetry.telemetryChartData.data[0].data.pickedInterval =
-          data;
-
-        return state;
-      });
+    getBlockAverage: () => {
+      const { averageTime } = get().statsTelemetry.telemetryData;
+      if (averageTime.length === 0) {
+        return new BigNumber(0);
+      }
+      return averageTime
+        .reduce((a, b) => a.plus(b), new BigNumber(0))
+        .div(averageTime.length);
     },
   },
 });

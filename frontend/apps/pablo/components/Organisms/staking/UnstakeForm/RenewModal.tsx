@@ -5,19 +5,17 @@ import {
   Typography,
   Button,
 } from "@mui/material";
-
 import { useDispatch } from "react-redux";
-import { XPablo } from "@/defi/types";
 import { Label } from "@/components/Atoms";
 import { TokenValueItem } from "../TokenValueItem";
 import { TOKENS } from "@/defi/Tokens";
-import { setMessage } from "@/stores/ui/uiSlice";
 import { SelectLockPeriod } from "../StakeForm/SelectLockPeriod";
 import { Multiplier } from "../StakeForm";
 import { isNumber } from "lodash";
+import { StakedFinancialNftPosition } from "@/defi/types";
 
 export type RenewModalProps = {
-  xPablo: XPablo,
+  xPablo: StakedFinancialNftPosition,
 } & ModalProps;
 
 export const RenewModal: React.FC<RenewModalProps> = ({
@@ -31,15 +29,7 @@ export const RenewModal: React.FC<RenewModalProps> = ({
 
   const validMultiplier = isNumber(multiplier.value);
 
-  const handleUntake = () => {
-    dispatch(setMessage(
-      {
-        title: "Transaction successfull",
-        text: "Renew staking period confirmed",
-        link: "/",
-        severity: "success",
-      }
-    ));
+  const handleUnstake = () => {
     onClose?.({}, "backdropClick");
   };
 
@@ -64,15 +54,15 @@ export const RenewModal: React.FC<RenewModalProps> = ({
           />
           <TokenValueItem
             token={TOKENS.pablo}
-            value={xPablo.amount.toFormat()}
+            value={xPablo.lockedPrincipalAsset.toFormat()}
             ValueProps={{color: "text.secondary"}}
           />
         </Box>
 
         <SelectLockPeriod
           mt={7}
-          multiplier={multiplier}
-          setMultiplier={setMultiplier}
+          multiplier={0}
+          periodItems={[]}
         />
 
         <Box mt={7}>
@@ -80,7 +70,7 @@ export const RenewModal: React.FC<RenewModalProps> = ({
             variant="contained"
             fullWidth
             size="large"
-            onClick={handleUntake}
+            onClick={handleUnstake}
             disabled={validMultiplier}
           >
             Renew period

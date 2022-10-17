@@ -9,7 +9,7 @@ import {
   ContentCopy,
   OpenInNewRounded,
 } from "@mui/icons-material";
-import { useTheme, Box, Typography, alpha, Button } from "@mui/material";
+import { alpha, Box, Button, Typography, useTheme } from "@mui/material";
 import Image from "next/image";
 import React from "react";
 
@@ -44,7 +44,7 @@ const AccountSettings: React.FC<{}> = () => {
             theme.palette.common.white,
             theme.custom.opacity.light
           )}`,
-          borderRadius: 2,
+          borderRadius: 1,
         }}
       >
         <Box display="flex" alignItems="center" justifyContent="space-between">
@@ -113,7 +113,7 @@ const AccountSettings: React.FC<{}> = () => {
           </Typography>
           <Box
             sx={{
-              background: alpha(theme.palette.common.white, 0.04),
+              background: theme.palette.background.transparentCharcoal,
               borderRadius: 1,
               padding: 4,
               border: `1px solid ${alpha(theme.palette.common.white, 0.1)}`,

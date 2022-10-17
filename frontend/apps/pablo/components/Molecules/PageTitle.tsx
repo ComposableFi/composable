@@ -13,7 +13,7 @@ export const PageTitle: React.FC<PageTitleProps> = ({
   ...props
 }) => {
   const theme = useTheme();
-  const { textAlign, ...rest } = props;
+  const { textAlign = "left", ...rest } = props;
 
   return (
     <>
@@ -23,16 +23,15 @@ export const PageTitle: React.FC<PageTitleProps> = ({
         {...rest}
         sx={{
           marginBottom: theme.spacing(3),
+          fontWeight: "bold",
         }}
       >
         {title}
-        {
-          withDot && (
-            <Box sx={{ display: "inline", color: theme.palette.primary.main }}>
-              .
-            </Box>
-          )
-        }
+        {withDot && (
+          <Box sx={{ display: "inline", color: theme.palette.primary.main }}>
+            .
+          </Box>
+        )}
       </Typography>
       {subtitle && (
         <Typography

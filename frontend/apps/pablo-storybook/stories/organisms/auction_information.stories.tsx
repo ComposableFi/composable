@@ -1,13 +1,13 @@
+import { useAuctionsSlice } from "@/store/auctions/auctions.slice";
 import { Box } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
 import { AuctionInformation } from "pablo/components/Organisms/auction/AuctionInformation";
-import useStore from "pablo/store/useStore";
 
 const AuctionInformationStories = () => {
-  const {auctions}: any = useStore();
+  const { activePool, activePoolStats }: any = useAuctionsSlice();
   return (
     <Box>
-      <AuctionInformation stats={auctions.activeLBPStats} auction={auctions.activeLBP} />
+      <AuctionInformation stats={activePoolStats} auction={activePool} />
     </Box>
   );
 };

@@ -1,5 +1,4 @@
 import { BigNumberInput, Input, Modal } from "@/components";
-import { useStore } from "@/stores/root";
 import {
   Box,
   Button,
@@ -13,58 +12,36 @@ import BigNumber from "bignumber.js";
 import React from "react";
 
 type StablecoinClaimFormProps = {
-  availableToClaim: BigNumber | number;
-  totalPicaVested: BigNumber | number;
-  claimedPICA: BigNumber | number;
-  crowdLoanContribution: BigNumber | number;
-  SS8Address: string;
+  availableToClaim: BigNumber;
+  totalRewards: BigNumber;
+  claimedRewards: BigNumber;
+  amountContributed: BigNumber;
+  picassoAccountName: string;
+  SS58Address: string;
   onClaim: () => void;
   needsApproval?: boolean;
   readonlyAvailableToClaim: boolean;
   readonlyTotalPicaVested: boolean;
   readonlyCrowdLoanContribution: boolean;
   readonlySS8Address: boolean;
-  onChange: (name: string, value: unknown) => void;
+  isClaiming: boolean;
   disabled: boolean | undefined;
 };
 
 export const StablecoinClaimForm: React.FC<StablecoinClaimFormProps> = ({
-  needsApproval,
+  disabled,
   availableToClaim,
-  totalPicaVested,
-  crowdLoanContribution,
-  SS8Address,
+  totalRewards,
+  claimedRewards,
+  amountContributed,
+  SS58Address,
   readonlyAvailableToClaim,
   readonlyTotalPicaVested,
-  claimedPICA,
   readonlyCrowdLoanContribution,
   onClaim,
-  onChange,
-  disabled,
+  isClaiming,
 }) => {
-  const [approved, setApproved] = React.useState<boolean>(
-    needsApproval ? false : true
-  );
   const theme = useTheme();
-
-  const { isClaimingStablecoin, closeKSMClaimModal } = useStore(({ ui }) => ui);
-  const atc =
-    typeof availableToClaim === "number"
-      ? new BigNumber(availableToClaim)
-      : availableToClaim;
-  const totalPicaVestedValue =
-    typeof totalPicaVested === "number"
-      ? new BigNumber(totalPicaVested)
-      : totalPicaVested;
-  const crowdLoanContributionValue =
-    typeof crowdLoanContribution === "number"
-      ? new BigNumber(crowdLoanContribution)
-      : crowdLoanContribution;
-  const claimedPICAValue =
-    typeof claimedPICA === "number" ? new BigNumber(claimedPICA) : claimedPICA;
-  const handleValueChange = (value: unknown, name: string) => {
-    onChange(name, value);
-  };
 
   return (
     <Box>
@@ -78,10 +55,8 @@ export const StablecoinClaimForm: React.FC<StablecoinClaimFormProps> = ({
           <Grid item xs={12} md={6}>
             <BigNumberInput
               noBorder={true}
-              value={atc}
-              setter={(v: BigNumber) =>
-                handleValueChange(v, "availableToClaim")
-              }
+              value={availableToClaim}
+              setter={(v: BigNumber) => {}}
               tokenId="pica"
               tokenDescription={false}
               isValid={(_v: boolean) => {}}
@@ -111,9 +86,9 @@ export const StablecoinClaimForm: React.FC<StablecoinClaimFormProps> = ({
           <Grid item xs={12} md={6}>
             <BigNumberInput
               noBorder={true}
-              value={claimedPICAValue}
-              setter={(v: BigNumber) => handleValueChange(v, "totalPicaVested")}
-              isValid={(_v: boolean) => {}} // TODO: Implement error state
+              value={claimedRewards}
+              setter={(v: BigNumber) => {}}
+              isValid={(_v: boolean) => {}}
               tokenId="pica"
               tokenDescription={false}
               placeholder="0"
@@ -145,9 +120,9 @@ export const StablecoinClaimForm: React.FC<StablecoinClaimFormProps> = ({
           <Grid item xs={12} md={6}>
             <BigNumberInput
               noBorder={true}
-              value={totalPicaVestedValue}
-              setter={(v: BigNumber) => handleValueChange(v, "totalPicaVested")}
-              isValid={(_v: boolean) => {}} // TODO: Implement error state
+              value={totalRewards}
+              setter={(v: BigNumber) => {}}
+              isValid={(_v: boolean) => {}}
               tokenId="pica"
               tokenDescription={false}
               placeholder="0"
@@ -179,11 +154,9 @@ export const StablecoinClaimForm: React.FC<StablecoinClaimFormProps> = ({
           <Grid item xs={12} md={6}>
             <BigNumberInput
               noBorder={true}
-              value={crowdLoanContributionValue}
-              setter={(v: BigNumber) =>
-                handleValueChange(v, "crowdLoanContribution")
-              }
-              isValid={(_v: boolean) => {}} // TODO: Implement error state
+              value={amountContributed}
+              setter={(v: BigNumber) => {}}
+              isValid={(_v: boolean) => {}}
               tokenId="usdc"
               tokenDescription={false}
               placeholder="0"
@@ -213,9 +186,9 @@ export const StablecoinClaimForm: React.FC<StablecoinClaimFormProps> = ({
 
         <Box sx={{ mt: theme.spacing(9) }}>
           <Input
-            value={SS8Address}
-            disabled={approved}
-            onChange={(e) => handleValueChange("SS8Address", e.target.value)}
+            value={SS58Address}
+            disabled={true}
+            onChange={(e) => {}}
             fullWidth
             LabelProps={{
               mainLabelProps: {
@@ -245,17 +218,6 @@ export const StablecoinClaimForm: React.FC<StablecoinClaimFormProps> = ({
             gap: theme.spacing(2),
           }}
         >
-          {!approved && (
-            <Button
-              onClick={() => setApproved(true)}
-              variant="contained"
-              color="primary"
-              fullWidth
-              disabled={approved}
-            >
-              <Typography variant="button">Approve</Typography>
-            </Button>
-          )}
           <Button
             disabled={disabled ? disabled : false}
             onClick={onClaim}
@@ -267,12 +229,7 @@ export const StablecoinClaimForm: React.FC<StablecoinClaimFormProps> = ({
           </Button>
         </Box>
       </Paper>
-      <Modal
-        onClose={() => closeKSMClaimModal()}
-        open={isClaimingStablecoin}
-        maxWidth="md"
-        dismissible
-      >
+      <Modal open={isClaiming} maxWidth="md" dismissible>
         <Box
           sx={{
             display: "flex",

@@ -74,9 +74,7 @@ export interface StatsOverviewSlice {
   };
 }
 
-export const createStatsOverviewSlice: StoreSlice<StatsOverviewSlice> = (
-  set: NamedSet<StatsOverviewSlice>
-) => ({
+export const createStatsOverviewSlice: StoreSlice<StatsOverviewSlice> = (set: NamedSet<StatsOverviewSlice>) => ({
   statsOverview: {
     ...initialState,
     setTVL: (data: OverviewData["data"][0]) => {

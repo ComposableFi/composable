@@ -1,5 +1,5 @@
 <!-- AUTOMATICALLY GENERATED -->
-<!-- Generated at 2022-08-15T14:18:26.494661Z -->
+<!-- Generated at 2022-09-05T18:35:35.10671Z -->
 
 # Dex Router Pallet Extrinsics
 

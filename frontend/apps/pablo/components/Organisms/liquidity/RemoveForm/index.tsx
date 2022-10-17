@@ -24,7 +24,11 @@ import { PreviewDetails } from "./PreviewDetails";
 import { useRemoveLiquidityState } from "@/store/removeLiquidity/hooks";
 import useDebounce from "@/hooks/useDebounce";
 import { useLiquidityPoolDetails } from "@/store/hooks/useLiquidityPoolDetails";
-import { fetchSpotPrice, fromRemoveLiquiditySimulationResult, toChainUnits } from "@/defi/utils";
+import {
+  fetchSpotPrice,
+  fromRemoveLiquiditySimulationResult,
+  toChainUnits,
+} from "@/defi/utils";
 import { useParachainApi, useSelectedAccount } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 
@@ -89,25 +93,27 @@ export const RemoveLiquidityForm = ({ ...rest }) => {
       const b = baseAsset.network[DEFAULT_NETWORK_ID].toString();
       const q = quoteAsset.network[DEFAULT_NETWORK_ID].toString();
 
-      // @ts-ignore
       parachainApi.rpc.pablo
         .simulateRemoveLiquidity(
           parachainApi.createType("AccountId32", selectedAccount.address),
           parachainApi.createType("PalletPabloPoolId", poolId.toString()),
-          selectedLpAmount.dp(0).toString(),
-          {
+          parachainApi.createType(
+            "CustomRpcBalance",
+            selectedLpAmount.dp(0).toString()
+          ),
+          parachainApi.createType("BTreeMap<SafeRpcWrapper, SafeRpcWrapper>", {
             [b]: "0",
             [q]: "0",
-          }
+          })
         )
         .then((response: any) => {
-          const remove = fromRemoveLiquiditySimulationResult(response.toJSON())
-          setExpectedRemoveAmountBase(remove[b])
-          setExpectedRemoveAmountQuote(remove[q])
+          const remove = fromRemoveLiquiditySimulationResult(response.toJSON());
+          setExpectedRemoveAmountBase(remove[b]);
+          setExpectedRemoveAmountQuote(remove[q]);
         })
         .catch((err: any) => {
-          setExpectedRemoveAmountBase(new BigNumber(0))
-          setExpectedRemoveAmountQuote(new BigNumber(0))
+          setExpectedRemoveAmountBase(new BigNumber(0));
+          setExpectedRemoveAmountQuote(new BigNumber(0));
           console.error(err);
         });
     }
@@ -149,7 +155,7 @@ export const RemoveLiquidityForm = ({ ...rest }) => {
 
   return (
     <Box
-      borderRadius={1.33}
+      borderRadius={1}
       margin="auto"
       sx={{
         width: 550,
@@ -213,7 +219,7 @@ export const RemoveLiquidityForm = ({ ...rest }) => {
         <Box
           width={56}
           height={56}
-          borderRadius={9999}
+          borderRadius="50%"
           display="flex"
           border={`2px solid ${theme.palette.primary.main}`}
           justifyContent="center"

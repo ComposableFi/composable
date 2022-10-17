@@ -4,4 +4,4 @@
 
 ---
 
-{{#include ../../../frame/currency-factory/README.md:5:}}
+{{#include ../../../code/parachain/frame/currency-factory/README.md:5:}}

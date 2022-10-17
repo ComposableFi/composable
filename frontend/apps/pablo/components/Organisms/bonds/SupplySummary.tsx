@@ -1,13 +1,13 @@
 import { BaseAsset, PairAsset } from "@/components/Atoms";
 import { ArrowRightAlt } from "@mui/icons-material";
 import {
+  alpha,
   Box,
   BoxProps,
+  Theme,
   Typography,
   TypographyProps,
-  Theme,
   useTheme,
-  alpha,
 } from "@mui/material";
 import TimerOutlinedIcon from "@mui/icons-material/TimerOutlined";
 import { SelectedBondOffer } from "@/defi/hooks/bonds/useBondOffer";
@@ -15,14 +15,15 @@ import { MockedAsset } from "@/store/assets/assets.types";
 import { useUSDPriceByAssetId } from "@/store/assets/hooks";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { useCallback } from "react";
-import { usePrincipalAssetSymbol } from "@/defi/hooks/bonds/usePrincipalAssetSymbol";
+import usePrincipalAssetSymbol from "@/defi/hooks/bonds/usePrincipalAssetSymbol";
+import useBondVestingTime from "@/defi/hooks/bonds/useBondVestingTime";
 
 const containerBoxProps = (theme: Theme) => ({
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
   p: 4,
-  borderRadius: 1.5,
+  borderRadius: 1,
   sx: {
     background: theme.palette.gradient.secondary,
     border: `1px solid ${alpha(
@@ -61,33 +62,34 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
 
   const { lpPrincipalAsset, simplePrincipalAsset } = principalAsset;
   const { baseAsset, quoteAsset } = lpPrincipalAsset;
+  const vestingTime = useBondVestingTime(bond.selectedBondOffer);
 
   const renderIcons = useCallback(() => {
     if (baseAsset && quoteAsset) {
       return (
         <PairAsset
-        assets={[
-          {
-            icon: baseAsset.icon,
-            label: baseAsset.symbol,
-          },
-          {
-            icon: quoteAsset.icon,
-            label: quoteAsset.symbol,
-          },
-        ]}
-        iconOnly
-        iconSize={36}
-      />
+          assets={[
+            {
+              icon: baseAsset.icon,
+              label: baseAsset.symbol,
+            },
+            {
+              icon: quoteAsset.icon,
+              label: quoteAsset.symbol,
+            },
+          ]}
+          iconOnly
+          iconSize={36}
+        />
       );
     } else if (simplePrincipalAsset) {
       return (
         <BaseAsset
-        label={simplePrincipalAsset.symbol}
-        icon={simplePrincipalAsset.icon}
-        LabelProps={{ variant: "h4" }}
-        iconSize={36}
-      />
+          label={simplePrincipalAsset.symbol}
+          icon={simplePrincipalAsset.icon}
+          LabelProps={{ variant: "body1" }}
+          iconSize={36}
+        />
       );
     }
     return null;
@@ -106,9 +108,7 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
         <Box {...itemBoxProps}>
           <Typography {...itemTitleProps}>Supply</Typography>
           {renderIcons()}
-          <Typography variant="body1">
-            {principalAssetSymbol}
-          </Typography>
+          <Typography variant="body1">{principalAssetSymbol}</Typography>
         </Box>
         <ArrowRightAlt sx={{ color: "text.secondary" }} />
         <Box {...itemBoxProps}>
@@ -117,14 +117,14 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
             <BaseAsset
               label={(rewardAsset as MockedAsset).symbol}
               icon={(rewardAsset as MockedAsset).icon}
-              LabelProps={{ variant: "h4" }}
+              LabelProps={{ variant: "body1" }}
               iconSize={36}
             />
           )}
           <Typography variant="body1">
             {rewardAsset && `${rewardAsset.symbol}`}
             <Typography variant="body1" fontWeight="600" component="span">
-              {`${bond.roi}%`}
+              {`${" " + bond.roi}%`}
             </Typography>
           </Typography>
         </Box>
@@ -133,7 +133,7 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
       <Box {...itemBoxProps}>
         <Typography {...itemTitleProps}>Vesting period</Typography>
         <TimerOutlinedIcon sx={{ width: 36, height: 36 }} />
-        <Typography variant="body1">{bond.vestingPeriod}</Typography>
+        <Typography variant="body1">{vestingTime}</Typography>
       </Box>
 
       <Box {...itemBoxProps}>

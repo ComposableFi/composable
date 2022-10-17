@@ -1,4 +1,3 @@
 set -e
-npx sqd codegen
-npm run build
+npx squid-typeorm-codegen
 ./reset-db.sh

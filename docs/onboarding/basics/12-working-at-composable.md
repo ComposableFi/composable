@@ -18,7 +18,7 @@ We hope that the learning during the onboarding was challenging and useful to yo
     - 4SV: an investor in nascent blockchain companies that advances the growth of their transformative technologies.
     - Alameda Research: a leading principal trading firm that uses internally developed technology and their team’s deep crypto expertise to trade thousands of digital asset products.
     - Blockchain Capital: a pioneering blockchain venture firm with 8 years of experience investing in the space.
-    - Cluster: a distributed network of crypto insiders, inﬂuencers, builders, and investors.
+    - Cluster: a distributed network of crypto insiders, influencers, builders, and investors.
     - CMS Holdings: a principal investment firm that focuses on making investments across the crypto asset ecosystem.
     - DFG: an investment and research team empowering blockchain and Web 3.0. 
     - Divergence Ventures: a crypto operator fund with an experimental approach to capital formation.

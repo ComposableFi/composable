@@ -5,7 +5,8 @@ import { useAddLiquiditySlice, setPool, setSelection } from "@/store/addLiquidit
 import { useAllLpTokenRewardingPools } from "@/store/hooks/useAllLpTokenRewardingPools";
 
 /**
- * Updates zustand store with all pools from pablo pallet
+ * Updates zustand store with all 
+ * pools from pablo pallet
  * @returns null
  */
 const Updater = () => {

@@ -1,9 +1,9 @@
 import { calculateProvidedLiquidity } from "@/defi/utils";
-import { liquidityTransactionsByAddressAndPool } from "../pools/queries";
+import { queryUserProvidedLiquidity } from "../pools/queries";
 
 export async function fetchLiquidityProvided(
   accountId: string,
-  poolId: string
+  poolId: number
 ): Promise<
   Record<
     string,
@@ -27,14 +27,17 @@ export async function fetchLiquidityProvided(
   };
 
   try {
-    const response = await liquidityTransactionsByAddressAndPool(
+    const response = await queryUserProvidedLiquidity(
+      poolId,
+      "ASC",
+      1000,
       accountId,
-      poolId
     );
 
     let { data, error } = response;
 
     if (error) throw new Error(error.message);
+    if (!data) throw new Error("[fetchLiquidityProvided] failed to fetch data");
     let { pabloTransactions } = data;
     let liquidityProvided = calculateProvidedLiquidity(pabloTransactions);
 

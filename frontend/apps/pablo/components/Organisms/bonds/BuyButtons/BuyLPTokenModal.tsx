@@ -1,13 +1,6 @@
 import React, { useState } from "react";
-import { ModalProps, Modal } from "@/components/Molecules";
-import {
-  alpha,
-  Box,
-  Button,
-  IconButton,
-  Theme,
-  useTheme,
-} from "@mui/material";
+import { Modal, ModalProps } from "@/components/Molecules";
+import { alpha, Box, Button, IconButton, Theme, useTheme } from "@mui/material";
 import { BondDetails } from "@/defi/types";
 import BigNumber from "bignumber.js";
 import { FormTitle } from "../../FormTitle";
@@ -21,7 +14,7 @@ import { PoolShare } from "../PoolShare";
 
 const containerProps = (theme: Theme) => ({
   p: 4,
-  borderRadius: 2,
+  borderRadius: 1,
   sx: {
     background: theme.palette.gradient.secondary,
     boxShadow: `-1px -1px ${alpha(
@@ -31,7 +24,11 @@ const containerProps = (theme: Theme) => ({
   },
 });
 
-const labelProps = (label: string, balance: BigNumber, showBalance: boolean = true) => ({
+const labelProps = (
+  label: string,
+  balance: BigNumber,
+  showBalance: boolean = true
+) => ({
   label: label,
   BalanceProps: showBalance
     ? {
@@ -42,7 +39,7 @@ const labelProps = (label: string, balance: BigNumber, showBalance: boolean = tr
 });
 
 export type BuyLPTokenModalProps = {
-  bond: BondDetails,
+  bond: BondDetails;
 } & ModalProps;
 
 export const BuyLPTokenModal: React.FC<BuyLPTokenModalProps> = ({
@@ -71,19 +68,15 @@ export const BuyLPTokenModal: React.FC<BuyLPTokenModalProps> = ({
   };
 
   const onBackHandler = () => {
-    onClose?.({}, 'backdropClick');
-  }
+    onClose?.({}, "backdropClick");
+  };
 
   const onApproveHandler = () => {
-    // TODO: approve hander
-  }
+    // TODO: approve handler
+  };
 
   return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      {...modalProps}
-    >
+    <Modal open={open} onClose={onClose} {...modalProps}>
       <Box {...containerProps(theme)}>
         <FormTitle
           title={`Create ${token1.symbol}-${token2.symbol}  LP`}
@@ -98,9 +91,7 @@ export const BuyLPTokenModal: React.FC<BuyLPTokenModalProps> = ({
             maxValue={balance1}
             setValid={setValid1}
             EndAdornmentAssetProps={{
-              assets: [
-                { icon: token1.icon, label: "ETH" },
-              ],
+              assets: [{ icon: token1.icon, label: "ETH" }],
               LabelProps: { variant: "body1" },
             }}
             LabelProps={labelProps(`${token1.symbol} Token`, balance1)}
@@ -116,7 +107,7 @@ export const BuyLPTokenModal: React.FC<BuyLPTokenModalProps> = ({
             sx={{
               width: 56,
               height: 56,
-              border: `2px solid ${theme.palette.primary.main}`
+              border: `2px solid ${theme.palette.primary.main}`,
             }}
           >
             +
@@ -130,9 +121,7 @@ export const BuyLPTokenModal: React.FC<BuyLPTokenModalProps> = ({
             maxValue={balance2}
             setValid={setValid2}
             EndAdornmentAssetProps={{
-              assets: [
-                { icon: token2.icon, label: "ETH" },
-              ],
+              assets: [{ icon: token2.icon, label: "ETH" }],
               LabelProps: { variant: "body1" },
             }}
             LabelProps={labelProps(`${token2.symbol} Token`, balance2)}
@@ -168,4 +157,3 @@ export const BuyLPTokenModal: React.FC<BuyLPTokenModalProps> = ({
     </Modal>
   );
 };
-

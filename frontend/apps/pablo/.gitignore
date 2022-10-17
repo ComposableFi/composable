@@ -42,3 +42,4 @@ public/sw.js
 
 # eslint
 eslint_report.json
+.firebase/

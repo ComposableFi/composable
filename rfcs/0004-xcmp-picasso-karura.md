@@ -7,6 +7,7 @@ This proposal does not covers `paper work` around tech stuff as it is described 
 - [Overview](#overview)
   - [Prerequisites](#prerequisites)
   - [Picasso to Karura](#picasso-to-karura)
+    - [Test Dali to Rococo](#test-dali-to-rococo)
   - [Accept Picasso to Karura](#accept-picasso-to-karura)
   - [Karura to Picasso](#karura-to-picasso)
   - [Accept Karura on Picasso](#accept-karura-on-picasso)
@@ -24,9 +25,11 @@ Create identity on Kusama and Picasso.
 
 **Rococo**
 
+<!-- cspell:disable-next -->
 Root is `5D2cjLGNWibiSsEh4oPXo8MmBTkeptrpuiUdEKRMauUn1TkZ` and make sure it has 20 ROC.
 
-Paracahin is `5Ec4AhNu5P23CC2GdrmsC8HYBKiidqhPnfSfRQPaH9swr2b7` and make sure it has 20 ROC.
+<!-- cspell:disable-next -->
+Parachain is `5Ec4AhNu5P23CC2GdrmsC8HYBKiidqhPnfSfRQPaH9swr2b7` and make sure it has 20 ROC.
 
 Transfer to [dali-rococo] accounts some amounts.
 
@@ -34,7 +37,13 @@ Transfer to [dali-rococo] accounts some amounts.
 
 That to be executed https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkusama-rpc.polkadot.io#/extrinsics/decode/0x3c00d0070000e803000000900100 on behalf of  parachain via next
 
-run https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rpc.composable.finance#/extrinsics/decode/0x2900010100020c0004000000000b0060defb740513000000000b0060defb74050006000700f2052a01383c00d0070000e803000000900100
+run https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rpc.composable.finance#/extrinsics/decode/0x290001010002100004000000000b0060defb740513000000000b0060defb74050006000700f2052a01383c00d0070000e8030000009001000d0100040001009d20
+
+### Test Dali to Rococo
+
+https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Frococo-rpc.polkadot.io#/extrinsics/decode/0x170000080000e803000000900100
+
+https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Frpc.composablefinance.ninja#/extrinsics/decode/0x290001010002100004000000000b0060defb740513000000000b0060defb74050006000700f2052a0138170000080000e8030000009001000d0100040001009d20
 
 ## Accept Picasso to Karura
 
@@ -87,7 +96,7 @@ Need to ensure token exists and on deposit on Karura, register pay your gas fee 
 **On [karura-kusama]**
 
 - Check `system.account` storage you have native token.
-- Check there is `assestRegistry.assetsMetadata` for `ForeignAssetId(7)` and `tokens.totalIssuance` for it is good.
+- Check there is `assetRegistry.assetsMetadata` for `ForeignAssetId(7)` and `tokens.totalIssuance` for it is good.
 - Use `dex.swapWithExactSupply` to make swap onto target asset (may require doing routing over intermediate currency) .
 
 
@@ -105,19 +114,19 @@ Asset Name: Karura Native Token
 Asset Symbol:  KAR
 Decimals:  12
 existentialDeposit: 0.1
-Multiloaction: { parents: 1, interior: { X2: [ {Parachain: 2000}, {GeneralKey: 0x0080} ]}}
+Multilocation: { parents: 1, interior: { X2: [ {Parachain: 2000}, {GeneralKey: 0x0080} ]}}
 
 Asset Name: Acala Dollar
 Asset Symbol:  AUSD
 Decimals:  12
 existentialDeposit: 0.01
-Multiloaction: { parents: 1, interior: { X2: [ {Parachain: 2000}, {GeneralKey: 0x0081} ]}}
+Multilocation: { parents: 1, interior: { X2: [ {Parachain: 2000}, {GeneralKey: 0x0081} ]}}
 
 Asset Name:  Karura Liquid KSM
 Asset Symbol:  LKSM
 Decimals:  12
 existentialDeposit: 0.0005
-Multiloaction: { parents: 1, interior: { X2: [ {Parachain: 2000}, {GeneralKey: 0x0083} ]}}
+Multilocation: { parents: 1, interior: { X2: [ {Parachain: 2000}, {GeneralKey: 0x0083} ]}}
 ```
 
 **On Karura again**

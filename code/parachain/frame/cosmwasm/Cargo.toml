@@ -1,0 +1,83 @@
+[package]
+authors = ["Composable Developers"]
+edition = "2021"
+homepage = "https://composable.finance"
+name = "pallet-cosmwasm"
+version = "0.0.1"
+
+[dependencies.codec]
+default-features = false
+features = ["derive"]
+package = "parity-scale-codec"
+version = "3.0.0"
+
+[dependencies]
+frame-benchmarking = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", optional = true }
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+scale-info = { default-features = false, version = "2.1.1", features = [
+  "derive",
+] }
+sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+
+composable-support = { path = "../composable-support", default-features = false }
+cosmwasm-minimal-std = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "d316fe3111421cada40f7819b4864b9bcfe68606", default-features = false, features = [
+  "iterator",
+] }
+cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "d316fe3111421cada40f7819b4864b9bcfe68606", default-features = false, features = [
+  "iterator",
+] }
+cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "d316fe3111421cada40f7819b4864b9bcfe68606", default-features = false, features = [
+  "iterator",
+] }
+hex = { version = "0.4", default-features = false, features = ["alloc"] }
+log = { version = "0.4.14", default-features = false }
+pallet-assets = { default-features = false, path = "../assets" }
+pallet-balances = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+parity-wasm = { version = "0.45.0", default-features = false }
+primitives = { path = "../../runtime/primitives", default-features = false }
+serde_json = { version = "1.0.82", default-features = false, features = [
+  "alloc",
+] }
+sha2 = { version = "0.10", default-features = false }
+sha3 = { version = "0.10", default-features = false }
+wasm-instrument = { version = "0.2", default-features = false }
+wasmi = { git = "https://github.com/ComposableFi/wasmi", rev = "cd8c0c775a1d197a35ff3d5c7d6cded3d476411b", default-features = false }
+wasmi-validation = { git = "https://github.com/ComposableFi/wasmi", rev = "cd8c0c775a1d197a35ff3d5c7d6cded3d476411b", default-features = false }
+
+[dev-dependencies]
+composable-traits = { path = "../composable-traits", default-features = false }
+governance-registry = { package = "pallet-governance-registry", path = "../governance-registry" }
+num-traits = { version = "0.2.14", default-features = false }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "377213f750755cc48e80a3131eaae63b5eda8362" }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "377213f750755cc48e80a3131eaae63b5eda8362" }
+pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+
+[features]
+default = ["std"]
+runtime-benchmarks = [
+  "frame-benchmarking",
+  "frame-support/runtime-benchmarks",
+  "frame-system/runtime-benchmarks",
+]
+std = [
+  "codec/std",
+  "frame-support/std",
+  "frame-system/std",
+  "frame-benchmarking/std",
+  "sp-runtime/std",
+  "sp-io/std",
+  "sp-core/std",
+  "sp-std/std",
+  "sp-arithmetic/std",
+  "composable-support/std",
+  "scale-info/std",
+  "primitives/std",
+  "pallet-balances/std",
+  "sha3/std",
+  "hex/std",
+]

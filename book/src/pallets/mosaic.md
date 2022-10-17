@@ -2,4 +2,4 @@
 
 *The Mosaic pallet enables cross-chain and cross-layer transfers*
 
-{{#include ../../../frame/mosaic/README.md:5:}}
+{{#include ../../../code/parachain/frame/mosaic/README.md:5:}}

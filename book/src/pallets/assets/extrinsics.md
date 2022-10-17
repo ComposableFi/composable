@@ -1,5 +1,5 @@
 <!-- AUTOMATICALLY GENERATED -->
-<!-- Generated at 2022-08-15T14:18:26.481232Z -->
+<!-- Generated at 2022-09-05T18:35:35.080611Z -->
 
 # Assets Pallet Extrinsics
 
@@ -82,7 +82,7 @@ Transfer all free balance of the native asset from `origin` to `dest`.
 
 [`mint_initialize`](https://dali.devnets.composablefinance.ninja/doc/pallet_assets/pallet/enum.Call.html#variant.mint_initialize)
 
-Creates a new asset, minting `amount` of funds into the `dest` account. Intented to be
+Creates a new asset, minting `amount` of funds into the `dest` account. Intended to be
 used for creating wrapped assets, not associated with any project.
 
 ## Mint Initialize With Governance
@@ -104,4 +104,4 @@ Mints `amount` of `asset_id` into the `dest` account.
 
 [`burn_from`](https://dali.devnets.composablefinance.ninja/doc/pallet_assets/pallet/enum.Call.html#variant.burn_from)
 
-Mints `amount` of `asset_id` into the `dest` account.
+Burns `amount` of `asset_id` into the `dest` account.

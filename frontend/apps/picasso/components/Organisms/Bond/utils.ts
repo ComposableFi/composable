@@ -1,7 +1,7 @@
 import { Token } from "tokens";
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
 import BigNumber from "bignumber.js";
-import { fromChainIdUnit } from "@/defi/polkadot/pallets/BondedFinance";
+import { fromChainIdUnit } from "shared";
 
 export function lpToSymbolPair(acc: string, token: Token) {
   return acc.length > 0 ? acc + "-" + token.symbol : token.symbol;

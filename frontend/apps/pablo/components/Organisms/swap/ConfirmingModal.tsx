@@ -1,11 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { ModalProps, Modal } from "@/components/Molecules";
 import {
   Box,
   Typography,
   useTheme,
 } from "@mui/material";
-
 import { CircularProgress } from "@/components/Atoms";
 
 export const ConfirmingModal: React.FC<ModalProps> = ({
@@ -38,7 +37,7 @@ export const ConfirmingModal: React.FC<ModalProps> = ({
           mt={2}
           color="text.secondary"
         >
-          Confirm this transaction in your wallet.
+          Confirming this transaction in your wallet.
         </Typography>
       </Box>
     </Modal>

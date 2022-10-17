@@ -1,40 +1,38 @@
 import create from "zustand";
-import { devtools } from "zustand/middleware";
 import { createUISlice } from "./ui/ui";
 import {
   createBondsSlice,
-  createCrowdloanRewardsSlice,
   createMetamaskSlice,
   createOracleSlice,
   createPolkadotSlice,
-  createStakingSlice,
+  createStakingRewardsSlice,
   createStatsApolloSlice,
   createStatsOverviewSlice,
   createStatsTelemetrySlice,
-  createStatsTreasurySlice,
   createSubstrateBalancesSlice,
   createTransfersSlice,
 } from "./defi";
 
-import immer from "./middlewares/immer";
 import { AllSlices } from "./types";
+import { immer } from "zustand/middleware/immer";
+import { devtools, subscribeWithSelector } from "zustand/middleware";
 
 export const useStore = create<AllSlices>()(
-  devtools(
-    immer((set, get) => ({
-      ...createUISlice(set, get),
-      ...createTransfersSlice(set, get),
-      ...createPolkadotSlice(set, get),
-      ...createMetamaskSlice(set, get),
-      ...createStakingSlice(set, get),
-      ...createStatsApolloSlice(set, get),
-      ...createStatsOverviewSlice(set, get),
-      ...createStatsTelemetrySlice(set, get),
-      ...createStatsTreasurySlice(set, get),
-      ...createSubstrateBalancesSlice(set, get),
-      ...createCrowdloanRewardsSlice(set, get),
-      ...createBondsSlice(set, get),
-      ...createOracleSlice(set, get),
-    }))
+  subscribeWithSelector(
+    immer(
+      devtools((...a) => ({
+        ...createUISlice(...a),
+        ...createTransfersSlice(...a),
+        ...createPolkadotSlice(...a),
+        ...createMetamaskSlice(...a),
+        ...createStatsApolloSlice(...a),
+        ...createStatsOverviewSlice(...a),
+        ...createStatsTelemetrySlice(...a),
+        ...createSubstrateBalancesSlice(...a),
+        ...createBondsSlice(...a),
+        ...createOracleSlice(...a),
+        ...createStakingRewardsSlice(...a),
+      }))
+    )
   )
 );

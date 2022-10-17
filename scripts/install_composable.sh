@@ -1,37 +1,37 @@
 #!/bin/sh
 # One liner a node operator can use to install and compile the node
 echo "Composable Multiplatform installer"
-myos=$(uname -a)
+my_os=$(uname -a)
 
 # Ubuntu:
-if echo "$myos" | fgrep -q Ubuntu 2>/dev/null ; then
+if echo "$my_os" | fgrep -q Ubuntu 2>/dev/null ; then
 	apt update && apt install -y git clang curl libssl-dev llvm libudev-dev
 # Debian:
-elif echo "$myos" | fgrep -q Debian 2>/dev/null; then
+elif echo "$my_os" | fgrep -q Debian 2>/dev/null; then
 	echo "Debian Detected"
 	apt update && apt install -y git clang curl libssl-dev llvm libudev-dev
 # Fedora
-elif echo "$myos" | fgrep -q fc32 2>/dev/null; then
+elif echo "$my_os" | fgrep -q fc32 2>/dev/null; then
 	echo "Fedora detected"
 	dnf update && dnf install clang curl git openssl-devel
 # Arch
-elif echo "$myos" | fgrep -q Arch 2>/dev/null; then
+elif echo "$my_os" | fgrep -q Arch 2>/dev/null; then
 	pacman -Syu --needed --noconfirm curl git clang
 
 # Nix Os
-elif echo "$myos" | fgrep -q NixOS 2>/dev/null; then
+elif echo "$my_os" | fgrep -q NixOS 2>/dev/null; then
 	nix-env -iA nixpkgs.{git,rustup}
 
 # OpenBSD
-elif echo "$myos" | fgrep -q OpenBSD 2>/dev/null; then
+elif echo "$my_os" | fgrep -q OpenBSD 2>/dev/null; then
 	pkg_add -uv && pkg_add -iv rust rust-gdb rust-clippy rust-rustfmt
 
 # FreeBSD
-elif echo "$myos" | fgrep -q FreeBSD 2>/dev/null; then
+elif echo "$my_os" | fgrep -q FreeBSD 2>/dev/null; then
 	curl https://sh.rustup.rs -sSf | sh
 
 # Darwin
-elif echo "$myos" | fgrep -q Darwin 2>/dev/null; then
+elif echo "$my_os" | fgrep -q Darwin 2>/dev/null; then
 	if ! which brew >/dev/null 2>&1; then
 		/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
 	fi

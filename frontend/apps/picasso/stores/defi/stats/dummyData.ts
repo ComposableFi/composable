@@ -19,7 +19,7 @@ const StatsDummyData = {
       { name: "Total transactions", value: 300550 },
       { name: "Reward distribution", value: 500000 },
       { name: "Total fees", value: 120000 },
-      { name: "Earned staking TVL", value: 25324533 },
+      { name: "Earned staking TVL", value: 25324533 }
     ],
     chartData: {
       tvl: <Array<[number, number][]>>[
@@ -28,7 +28,7 @@ const StatsDummyData = {
           [1644560620928, 40],
           [1644570600000, 35],
           [1644580600000, 60],
-          [1644590600000, 80],
+          [1644590600000, 80]
         ],
         [
           [1644550600000, 20],
@@ -40,7 +40,7 @@ const StatsDummyData = {
           [1644750600000, 20],
           [1644870600000, 35],
           [1644960620928, 40],
-          [1645590600000, 80],
+          [1645590600000, 80]
         ],
         [
           [1644550600000, 20],
@@ -57,7 +57,7 @@ const StatsDummyData = {
           [1664550600000, 20],
           [1674570600000, 35],
           [1684560620928, 40],
-          [1694590600000, 80],
+          [1694590600000, 80]
         ],
         [
           [1644550600000, 20],
@@ -79,7 +79,7 @@ const StatsDummyData = {
           [1714550600000, 20],
           [1724570600000, 35],
           [1734560620928, 40],
-          [1744590600000, 80],
+          [1744590600000, 80]
         ],
         [
           [1644550600000, 20],
@@ -106,8 +106,8 @@ const StatsDummyData = {
           [1724550600000, 20],
           [1734570600000, 35],
           [1744560620928, 40],
-          [1754590600000, 80],
-        ],
+          [1754590600000, 80]
+        ]
       ],
       users: <Array<[number, number][]>>[
         [
@@ -115,7 +115,7 @@ const StatsDummyData = {
           [1644560620928, 40],
           [1644570600000, 35],
           [1644580600000, 60],
-          [1644590600000, 80],
+          [1644590600000, 80]
         ],
         [
           [1644550600000, 20],
@@ -127,7 +127,7 @@ const StatsDummyData = {
           [1644750600000, 20],
           [1644870600000, 35],
           [1644960620928, 40],
-          [1645590600000, 80],
+          [1645590600000, 80]
         ],
         [
           [1644550600000, 20],
@@ -144,7 +144,7 @@ const StatsDummyData = {
           [1664550600000, 20],
           [1674570600000, 35],
           [1684560620928, 40],
-          [1694590600000, 80],
+          [1694590600000, 80]
         ],
         [
           [1644550600000, 20],
@@ -166,7 +166,7 @@ const StatsDummyData = {
           [1714550600000, 20],
           [1724570600000, 35],
           [1734560620928, 40],
-          [1744590600000, 80],
+          [1744590600000, 80]
         ],
         [
           [1644550600000, 20],
@@ -193,16 +193,16 @@ const StatsDummyData = {
           [1724550600000, 20],
           [1734570600000, 35],
           [1744560620928, 40],
-          [1754590600000, 80],
-        ],
-      ],
-    },
+          [1754590600000, 80]
+        ]
+      ]
+    }
   },
   TELEMETRY: {
     infoData: [
       { name: "Finalized block", value: 34521 },
       { name: "Average time", value: 300550 },
-      { name: "Last block", value: 300550 },
+      { name: "Last block", value: 300550 }
     ],
     chartData: {
       memPool: <Array<[number, number][]>>[
@@ -211,7 +211,7 @@ const StatsDummyData = {
           [1644560620928, 40],
           [1644570600000, 35],
           [1644580600000, 60],
-          [1644590600000, 80],
+          [1644590600000, 80]
         ],
         [
           [1644550600000, 20],
@@ -223,7 +223,7 @@ const StatsDummyData = {
           [1644750600000, 20],
           [1644870600000, 35],
           [1644960620928, 40],
-          [1645590600000, 80],
+          [1645590600000, 80]
         ],
         [
           [1644550600000, 20],
@@ -240,7 +240,7 @@ const StatsDummyData = {
           [1664550600000, 20],
           [1674570600000, 35],
           [1684560620928, 40],
-          [1694590600000, 80],
+          [1694590600000, 80]
         ],
         [
           [1644550600000, 20],
@@ -262,7 +262,7 @@ const StatsDummyData = {
           [1714550600000, 20],
           [1724570600000, 35],
           [1734560620928, 40],
-          [1744590600000, 80],
+          [1744590600000, 80]
         ],
         [
           [1644550600000, 20],
@@ -289,35 +289,35 @@ const StatsDummyData = {
           [1724550600000, 20],
           [1734570600000, 35],
           [1744560620928, 40],
-          [1754590600000, 80],
-        ],
-      ],
-    },
+          [1754590600000, 80]
+        ]
+      ]
+    }
   },
   TREASURY: {
     infoData: [
       { name: "Market Cap", value: [1723124], tooltip: "Market Cap" },
       {
-        name: "CHAOS price | Discount",
+        name: "xPICA price | Discount",
         value: [12.3, 9.3],
-        tooltip: "ChaosPrice | Discount",
+        tooltip: "ChaosPrice | Discount"
       },
       {
         name: "Circulating Supply",
         value: [1723124],
-        tooltip: "Circulating Supply",
+        tooltip: "Circulating Supply"
       },
       {
         name: "Treasury Balance",
         value: [323123123],
-        tooltip: "Treasury Balance",
+        tooltip: "Treasury Balance"
       },
       {
-        name: "CHAOS APY | Runway",
+        name: "xPICA APY | Runway",
         value: [43, 8],
-        tooltip: "Chaos APY | Runway",
+        tooltip: "xPICA APY | Runway"
       },
-      { name: "sCHAOS / CHAOS", value: [43], tooltip: "sChaos | CHAOS" },
+      { name: "sCHAOS / xPICA", value: [43], tooltip: "sChaos | xPICA" }
     ],
     chartData: [
       {
@@ -331,10 +331,10 @@ const StatsDummyData = {
               [1644560620928, 40],
               [1644570600000, 35],
               [1644580600000, 60],
-              [1644590600000, 80],
-            ],
-          ],
-        },
+              [1644590600000, 80]
+            ]
+          ]
+        }
       },
       {
         data: {
@@ -347,14 +347,14 @@ const StatsDummyData = {
               [1644560620928, 40],
               [1644570600000, 35],
               [1644580600000, 60],
-              [1644590600000, 80],
-            ],
-          ],
-        },
+              [1644590600000, 80]
+            ]
+          ]
+        }
       },
       {
         data: {
-          name: "% CHAOS staked / Not staked",
+          name: "% xPICA staked / Not staked",
           value: 54653784,
           change: 34,
           data: <Array<[number, number][]>>[
@@ -363,14 +363,14 @@ const StatsDummyData = {
               [1644560620928, 40],
               [1644570600000, 35],
               [1644580600000, 60],
-              [1644590600000, 80],
-            ],
-          ],
-        },
+              [1644590600000, 80]
+            ]
+          ]
+        }
       },
       {
         data: {
-          name: "Treasury holding porportions",
+          name: "Treasury holding proportions",
           value: 54653784,
           change: 34,
           data: <Array<[number, number][]>>[
@@ -379,14 +379,14 @@ const StatsDummyData = {
               [1644560620928, 40],
               [1644570600000, 35],
               [1644580600000, 60],
-              [1644590600000, 80],
-            ],
-          ],
-        },
+              [1644590600000, 80]
+            ]
+          ]
+        }
       },
       {
         data: {
-          name: "CHAOS APY history",
+          name: "xPICA APY history",
           value: 54653784,
           change: 34,
           data: <Array<[number, number][]>>[
@@ -395,10 +395,10 @@ const StatsDummyData = {
               [1644560620928, 40],
               [1644570600000, 35],
               [1644580600000, 60],
-              [1644590600000, 80],
-            ],
-          ],
-        },
+              [1644590600000, 80]
+            ]
+          ]
+        }
       },
       {
         data: {
@@ -411,10 +411,10 @@ const StatsDummyData = {
               [1644560620928, 40],
               [1644570600000, 35],
               [1644580600000, 60],
-              [1644590600000, 80],
-            ],
-          ],
-        },
+              [1644590600000, 80]
+            ]
+          ]
+        }
       },
       {
         data: {
@@ -427,10 +427,10 @@ const StatsDummyData = {
               [1644560620928, 40],
               [1644570600000, 35],
               [1644580600000, 60],
-              [1644590600000, 80],
-            ],
-          ],
-        },
+              [1644590600000, 80]
+            ]
+          ]
+        }
       },
       {
         data: {
@@ -443,58 +443,58 @@ const StatsDummyData = {
               [1644560620928, 40],
               [1644570600000, 35],
               [1644580600000, 60],
-              [1644590600000, 80],
-            ],
-          ],
-        },
-      },
+              [1644590600000, 80]
+            ]
+          ]
+        }
+      }
     ],
     bonding: {
       bond: [
         {
           label: "Your balance",
-          description: `${balance} LP`,
+          description: `${balance} LP`
         },
         {
           label: "You will get",
-          description: `${reward} CHAOS`,
+          description: `${reward} xPICA`
         },
         {
           label: "Max you can buy",
-          description: soldOut ? "--" : `${maxToBuy} CHAOS`,
+          description: soldOut ? "--" : `${maxToBuy} xPICA`
         },
         {
           label: "Vesting term",
-          description: `${vestingPeriod} days`,
+          description: `${vestingPeriod} days`
         },
         {
           label: "ROI",
-          description: soldOut ? "--" : `${roi}%`,
-        },
+          description: soldOut ? "--" : `${roi}%`
+        }
       ],
       claim: [
         {
           label: "Pending Rewards",
-          description: `${balance} LP`,
+          description: `${balance} LP`
         },
         {
           label: "Claimable Rewards",
-          description: `${claimableRewards} CHAOS`,
+          description: `${claimableRewards} xPICA`
         },
         {
           label: "Time until fully vested",
-          description: `${timeRemaining} days`,
+          description: `${timeRemaining} days`
         },
         {
           label: "Vested",
-          description: `${vested} days`,
+          description: `${vested} days`
         },
         {
           label: "ROI",
-          description: `${roi}%`,
-        },
-      ],
-    },
+          description: `${roi}%`
+        }
+      ]
+    }
   },
   APOLLO: {
     assets: [
@@ -504,7 +504,7 @@ const StatsDummyData = {
         pabloValue: 1.43,
         aggregatedValue: 1.43,
         apolloValue: 1.43,
-        changeValue: 34,
+        changeValue: 34
       },
       {
         symbol: "pablo",
@@ -512,7 +512,7 @@ const StatsDummyData = {
         pabloValue: 1.43,
         aggregatedValue: 1.43,
         apolloValue: 1.43,
-        changeValue: 34,
+        changeValue: 34
       },
       {
         symbol: "ksm",
@@ -520,7 +520,7 @@ const StatsDummyData = {
         pabloValue: 1.43,
         aggregatedValue: 1.43,
         apolloValue: 1.43,
-        changeValue: -2.12,
+        changeValue: -2.12
       },
       {
         symbol: "usdc",
@@ -528,10 +528,10 @@ const StatsDummyData = {
         pabloValue: 1.43,
         aggregatedValue: 1.43,
         apolloValue: 1.43,
-        changeValue: -12,
-      },
-    ],
-  },
+        changeValue: -12
+      }
+    ]
+  }
 };
 
 export default StatsDummyData;

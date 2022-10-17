@@ -24,5 +24,5 @@ if [ "$AUTO_UPDATE" = 1 ]; then
         fi
     done
 else
-    echo "No latest update to upstrean"
+    echo "No latest update to upstream"
 fi

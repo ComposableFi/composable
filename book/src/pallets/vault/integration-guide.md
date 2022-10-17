@@ -1,1 +1,1 @@
-{{#include ../../../../frame/vault/INTEGRATION.md}}
+{{#include ../../../../code/parachain/frame/vault/INTEGRATION.md}}

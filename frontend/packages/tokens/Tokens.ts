@@ -21,6 +21,7 @@ const tokenIds = [
   "pablo",
   "angl",
   "chaos",
+  "usdt",
 ]; // important
 
 export const TOKEN_IDS = tokenIds;
@@ -109,5 +110,30 @@ export const TOKENS: { [key in TokenId]: Token } = {
     symbol: "ANGL",
     decimalsToDisplay: 4,
   },
+  kar: {
+    id: "kar",
+    icon: "/tokens/karura.svg",
+    symbol: "KAR",
+    decimalsToDisplay: 6,
+  },
+  ausd: {
+    id: "ausd",
+    icon: "/tokens/ausd.svg",
+    symbol: "AUSD",
+    decimalsToDisplay: 4,
+  },
+  kusd: {
+    id: "kusd",
+    icon: "/tokens/kusd.svg",
+    symbol: "KUSD",
+    decimalsToDisplay: 4,
+  },
+  usdt: {
+    id: "usdt",
+    icon: "/tokens/usdt.svg",
+    symbol: "USDT",
+    decimalsToDisplay: 4,
+  },
 };
-export const getToken = (tokenId: TokenId): Token => TOKENS[tokenId];
+export const getToken = (tokenId: TokenId): Token =>
+  TOKENS[tokenId.toLowerCase()];

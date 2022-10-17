@@ -11,6 +11,7 @@
     "dev": "turbo run dev --parallel",
     "test": "turbo run test",
     "lint": "turbo run lint",
+    "export": "turbo run export",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "lint:report": "turbo run lint:report"
   },
@@ -25,10 +26,11 @@
   },
   "dependencies": {},
   "packageManager": "yarn@1.22.15",
-  "resolutions":  {
-    "@types/react": "17.0.2",
-    "@types/react-dom": "17.0.2",
+  "resolutions": {
+    "@types/react": "17.0.39",
+    "@types/react-dom": "17.0.17",
     "react": "17.0.2",
-    "react-dom": "17.0.2"
+    "react-dom": "^17.0.2",
+    "@polkadot/types": "^8.3.2"
   }
 }

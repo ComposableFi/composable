@@ -1,4 +1,3 @@
-import { BoxProps } from "@mui/material";
 import { TabItem, TabPanel, Tabs } from "@/components/Atoms";
 import { BoxWrapper } from "../../BoxWrapper";
 import { useState } from "react";

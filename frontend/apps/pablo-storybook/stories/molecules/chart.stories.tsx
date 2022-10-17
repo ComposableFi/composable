@@ -68,7 +68,7 @@ const Template: Story<typeof ChartStories> = (args) => (
 
 export const DefaultAreaChart = Template.bind({});
 DefaultAreaChart.args = {
-  title: "My portofolio",
+  title: "My portfolio",
   TitleTypographyProps: {},
   totalText: "$24,587,298",
   TotalTextTypographyProps: {},

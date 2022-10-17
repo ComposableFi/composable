@@ -1,29 +1,42 @@
 import { DEFI_CONFIG } from "@/defi/polkadot/config";
-import { ParachainContext } from "@/defi/polkadot/context/ParachainContext";
 import { usePicassoProvider } from "@/defi/polkadot/hooks";
 import { TokenId } from "tokens";
 import { useStore } from "@/stores/root";
 import { ChevronLeft } from "@mui/icons-material";
 import { Box, Button, IconButton, Typography, useTheme } from "@mui/material";
-import Image from "next/image";
-import { useContext, useEffect, useState } from "react";
+import { useState } from "react";
 import { Select } from "../../Atom";
 import { AccountIndicator } from "../../Molecules/AccountIndicator";
 import { Modal } from "../../Molecules/Modal";
 import { ConnectButton } from "./ConnectButton";
 import { PolkadotAccountForm } from "./PolkadotAccountForm";
+import { humanBalance } from "shared";
+import { useDotSamaContext, useEagerConnect, SupportedWalletId } from "substrate-react";
+import { DEFAULT_NETWORK_ID } from "@/defi/polkadot/constants";
+import Image from "next/image";
+
+const WALLETS_SUPPORTED: Array<{ walletId: SupportedWalletId, icon: string, name: string }> = [
+  {
+    walletId: SupportedWalletId.Polkadotjs,
+    icon: "/networks/polkadot_js.svg",
+    name: "Polkadot.js"
+  },
+  {
+    walletId: SupportedWalletId.Talisman,
+    icon: "/logo/talisman.svg",
+    name: "Talisman"
+  },
+];
 
 const Status = () => {
-  const { extensionStatus, selectedAccount } = useContext(ParachainContext);
+  const { extensionStatus, selectedAccount } = useDotSamaContext();
   const { accounts } = usePicassoProvider();
   const theme = useTheme();
   let label =
     accounts.length && selectedAccount !== -1
       ? accounts[selectedAccount].name
       : "";
-  const substrateBalances = useStore(
-    ({ substrateBalances }) => substrateBalances
-  );
+  const assets = useStore(({ substrateBalances }) => substrateBalances.assets);
   const { openPolkadotModal } = useStore(({ ui }) => ui);
   const [selectedAsset, setSelectedAsset] = useState<TokenId | undefined>(
     "pica"
@@ -36,27 +49,22 @@ const Status = () => {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          gap: theme.spacing(1)
+          gap: theme.spacing(1),
         }}
       >
         <Select
           value={selectedAsset}
           setValue={setSelectedAsset}
-          options={DEFI_CONFIG.networkIds.map(networkId => ({
-            value: substrateBalances[networkId].tokenId,
-            label:
-              Number(substrateBalances[networkId].balance) < 1000
-                ? substrateBalances[networkId].balance
-                : (Number(substrateBalances[networkId].balance) / 1000).toFixed(
-                    1
-                  ) + "K",
-            icon: substrateBalances[networkId].icon
+          options={DEFI_CONFIG.networkIds.map((networkId) => ({
+            value: assets[networkId].native.meta.id,
+            label: humanBalance(assets[networkId].native.balance),
+            icon: assets[networkId].native.meta.icon,
           }))}
           sx={{
             "& .MuiOutlinedInput-root": {
               height: "56px",
-              minWidth: "170px"
-            }
+              minWidth: "170px",
+            },
           }}
         />
         <AccountIndicator
@@ -84,39 +92,18 @@ const Status = () => {
 };
 
 export const PolkadotConnect: React.FC<{}> = () => {
-  const {
-    deactivate,
-    extensionStatus,
-    activate,
-    setSelectedAccount
-  } = useContext(ParachainContext);
+  const { deactivate, extensionStatus, activate, setSelectedAccount } =
+    useDotSamaContext();
   const theme = useTheme();
+  const hasTriedEagerConnect = useEagerConnect(DEFAULT_NETWORK_ID);
+  const { closePolkadotModal, openPolkadotModal, isPolkadotModalOpen } =
+    useStore(({ ui }) => ui);
 
-  const {
-    closePolkadotModal,
-    openPolkadotModal,
-    setHasTriedEagerConnect,
-    isPolkadotModalOpen,
-    hasTriedEagerConnect
-  } = useStore(({ ui }) => ui);
-
-  const handleConnectPolkadot = async () => {
+  const handleConnectPolkadot = async (walletId: SupportedWalletId) => {
     if (activate) {
-      await activate();
+      await activate(walletId);
     }
   };
-
-  useEffect(() => {
-    if (!hasTriedEagerConnect) {
-      setTimeout(() => {
-        openPolkadotModal();
-        setHasTriedEagerConnect();
-        // wait 2P secs
-      }, 1000);
-    }
-    // Only to be called on page load therefore we can omit dependencies.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   return (
     <>
@@ -133,7 +120,7 @@ export const PolkadotConnect: React.FC<{}> = () => {
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            height: "100%"
+            height: "100%",
           }}
         >
           {extensionStatus !== "connecting" && extensionStatus !== "connected" && (
@@ -144,26 +131,26 @@ export const PolkadotConnect: React.FC<{}> = () => {
               <Typography variant="body1" color="text.secondary" gutterBottom>
                 Select a wallet to connect with.
               </Typography>
-              <Button
+              {WALLETS_SUPPORTED.map(wallet => (<Button
                 sx={{
-                  mt: "4rem"
+                  mt: "4rem",
                 }}
                 variant="outlined"
                 color="primary"
                 size="large"
                 fullWidth
-                onClick={() => handleConnectPolkadot()}
+                onClick={() => handleConnectPolkadot(wallet.walletId)}
               >
                 <Box sx={{ marginRight: theme.spacing(2) }}>
                   <Image
-                    src="/networks/polkadot_js.svg"
+                    src={wallet.icon}
                     width="24"
                     height="24"
-                    alt="Polkadot.js"
+                    alt={wallet.name}
                   />
                 </Box>
-                <Typography variant="button">Polkadot.js</Typography>
-              </Button>
+                <Typography variant="button">{wallet.name}</Typography>
+              </Button>))}
             </>
           )}
 
@@ -173,7 +160,7 @@ export const PolkadotConnect: React.FC<{}> = () => {
                 sx={{
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "center"
+                  justifyContent: "center",
                 }}
               >
                 <Typography variant="h5" gutterBottom>
@@ -181,7 +168,7 @@ export const PolkadotConnect: React.FC<{}> = () => {
                 </Typography>
               </Box>
               <PolkadotAccountForm
-                onSelectChange={account => {
+                onSelectChange={(account) => {
                   if (setSelectedAccount) setSelectedAccount(account);
                   // dispatch(setSelectedAccount(account));
                 }}
@@ -194,7 +181,7 @@ export const PolkadotConnect: React.FC<{}> = () => {
                 sx={{
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "center"
+                  justifyContent: "center",
                 }}
               >
                 <IconButton

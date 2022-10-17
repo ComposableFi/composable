@@ -16,7 +16,6 @@ export async function fetchPool(
   try {
     const pool = await parachainApi.query.pablo.pools(poolId);
     const decodedPool: any = pool.toHuman();
-
     if (!decodedPool) throw new Error("Pool with ID not found");
 
     if ("LiquidityBootstrapping" in decodedPool) {
@@ -125,7 +124,7 @@ export async function fetchPools(parachainApi: ApiPromise): Promise<{
     );
     allVerifiedPoolIds = allVerifiedPoolIds.filter((i) => i !== -1);
 
-    let lbpool: LiquidityBootstrappingPool[] = allPools.filter(
+    let lbPool: LiquidityBootstrappingPool[] = allPools.filter(
       (i: any) => !!i.sale
     ) as LiquidityBootstrappingPool[];
     let cpPool: ConstantProductPool[] = allPools.filter(
@@ -135,11 +134,11 @@ export async function fetchPools(parachainApi: ApiPromise): Promise<{
       (i: any) => !!i.amplificationCoefficient
     ) as StableSwapPool[];
 
-    pools.liquidityBootstrapping.verified = lbpool.filter((p) =>
+    pools.liquidityBootstrapping.verified = lbPool.filter((p) =>
       allVerifiedPoolIds.includes(p.poolId)
     );
     // these might be needed in future so not removing
-    // pools.liquidityBootstrapping.unVerified = lbpool.filter(
+    // pools.liquidityBootstrapping.unVerified = lbPool.filter(
     //   (p) => !allVerifiedPoolIds.includes(p.poolId)
     // );
 

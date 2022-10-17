@@ -21,7 +21,7 @@ export async function fetchPoolStats(pool: ConstantProductPool | StableSwapPool)
         if (!response.data) throw new Error("Unable to Fetch Data");
 
         let { pabloPools } = response.data;
-        if (!pabloPools) throw new Error("[fetchPoolStats] Unable to retreive data from query");
+        if (!pabloPools) throw new Error("[fetchPoolStats] Unable to retrieve data from query");
 
         pabloPools = pabloPools.map((poolState: any) => {
             return {

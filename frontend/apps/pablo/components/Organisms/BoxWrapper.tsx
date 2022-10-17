@@ -1,7 +1,8 @@
-import { alpha, Box, BoxProps, Typography, useTheme } from "@mui/material"
+import { BoxProps, Typography } from "@mui/material";
+import { HighlightBox } from "@/components/Atoms/HighlightBox";
 
-export type BoxWrapperProps= {
-  title?: string,
+export type BoxWrapperProps = {
+  title?: string;
 } & BoxProps;
 
 export const BoxWrapper: React.FC<BoxWrapperProps> = ({
@@ -9,22 +10,14 @@ export const BoxWrapper: React.FC<BoxWrapperProps> = ({
   children,
   ...boxProps
 }) => {
-  const theme = useTheme();
   return (
-    <Box
-      border={`1px solid ${alpha(
-        theme.palette.common.white,
-        theme.custom.opacity.light
-      )}`}
-      p={4}
-      borderRadius={0.6666}
-      sx={{background: theme.palette.gradient.secondary}}
-      {...boxProps}
-    >
+    <HighlightBox p={4} {...boxProps} textAlign="left">
       {title && (
-        <Typography variant="h6" mb={4}>{title}</Typography>
+        <Typography variant="h6" mb={4}>
+          {title}
+        </Typography>
       )}
       {children}
-    </Box>
+    </HighlightBox>
   );
 };
