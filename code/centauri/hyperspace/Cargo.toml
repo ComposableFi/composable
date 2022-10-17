@@ -13,6 +13,7 @@ primitives = { path = "primitives", package = "hyperspace-primitives" }
 parachain = { path = "parachain", package = "hyperspace-parachain", optional = true }
 cosmos = { path = "cosmos", package = "hyperspace-cosmos", optional = true }
 #near = { path = "near", package = "hyperspace-near", optional = true }
+metrics = { path = "metrics" }
 
 # crates.io
 anyhow = "1.0.65"
@@ -28,6 +29,7 @@ toml = "0.5.9"
 serde = "1.0.144"
 thiserror = "1.0.31"
 derive_more = { version = "0.99.17", features = ["from"] }
+prometheus = { version = "0.13.0", default-features = false }
 
 # ibc
 ibc = { path = "../ibc/modules", features = [] }
