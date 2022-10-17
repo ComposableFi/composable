@@ -42,3 +42,11 @@ If bug fixes need to be backported to previous releases, a PR through main is al
     - `release-vx.y.1 <- main`
 3. Create a PR to cherry-pick the fix into `release-vx.y.2`.
     - `release-vx.y.2 <- main`
+
+## Security
+
+Tip of the branch from which runtime release is considered should be signed at least by 2 signatures.
+
+These to be owned by Technical committee or by Council members.
+
+Preferable way to [sign tags or notes](https://stackoverflow.com/questions/61481156/can-a-reviewer-add-their-signature-to-a-specific-git-commit)
