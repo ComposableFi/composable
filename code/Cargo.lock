@@ -4475,10 +4475,31 @@ dependencies = [
 ]
 
 [[package]]
-name = "grandpa-light-client"
+name = "grandpa-light-client-primitives"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "derive_more",
+ "finality-grandpa",
+ "frame-support",
+ "hash-db",
+ "light-client-common",
+ "parity-scale-codec",
+ "sp-core",
+ "sp-finality-grandpa",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "sp-storage",
+ "sp-trie",
+]
+
+[[package]]
+name = "grandpa-light-client-verifier"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "env_logger",
  "finality-grandpa",
  "frame-support",
  "futures 0.3.24",
@@ -4506,26 +4527,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "grandpa-light-client-primitives"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "derive_more",
- "finality-grandpa",
- "frame-support",
- "hash-db",
- "light-client-common",
- "parity-scale-codec",
- "sp-core",
- "sp-finality-grandpa",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "sp-storage",
- "sp-trie",
-]
-
-[[package]]
 name = "grandpa-prover"
 version = "0.1.0"
 dependencies = [
@@ -4534,6 +4535,7 @@ dependencies = [
  "color-eyre 0.6.2",
  "derive_more",
  "downcast-rs",
+ "finality-grandpa",
  "grandpa-light-client-primitives",
  "hex",
  "jsonrpsee 0.15.1",
@@ -5052,10 +5054,10 @@ dependencies = [
  "common",
  "derive_more",
  "env_logger",
+ "finality-grandpa",
  "frame-support",
  "frame-system",
  "futures 0.3.24",
- "grandpa-light-client",
  "grandpa-light-client-primitives",
  "grandpa-prover",
  "hex",
@@ -5330,10 +5332,12 @@ dependencies = [
  "anyhow",
  "beefy-prover",
  "derive_more",
+ "env_logger",
+ "finality-grandpa",
  "frame-support",
  "futures 0.3.24",
- "grandpa-light-client",
  "grandpa-light-client-primitives",
+ "grandpa-light-client-verifier",
  "grandpa-prover",
  "hex",
  "hex-literal",
@@ -5342,6 +5346,7 @@ dependencies = [
  "ibc-proto",
  "jsonrpsee-ws-client 0.14.0",
  "light-client-common",
+ "log 0.4.17",
  "parity-scale-codec",
  "primitive-types",
  "prost 0.10.4",

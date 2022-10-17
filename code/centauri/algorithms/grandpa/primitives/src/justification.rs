@@ -173,21 +173,17 @@ where
 		base: H::Hash,
 		block: H::Hash,
 	) -> Result<Vec<H::Hash>, finality_grandpa::Error> {
-		let mut route = Vec::new();
+		let mut route = vec![block];
 		let mut current_hash = block;
-		loop {
-			if current_hash == base {
-				break
-			}
+		while current_hash != base {
 			match self.ancestry.get(&current_hash) {
 				Some(current_header) => {
 					current_hash = *current_header.parent_hash();
 					route.push(current_hash);
 				},
 				_ => return Err(finality_grandpa::Error::NotDescendent),
-			}
+			};
 		}
-		route.pop(); // remove the base
 
 		Ok(route)
 	}
@@ -298,5 +294,43 @@ where
 		Equivocation::Precommit(equivocation) => {
 			check!(equivocation, finality_grandpa::Message::Precommit);
 		},
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use finality_grandpa::Chain;
+	use sp_runtime::{
+		generic::Header,
+		traits::{BlakeTwo256, Header as _},
+	};
+
+	#[test]
+	fn test_ancestry_route() {
+		let mut headers: Vec<Header<u32, BlakeTwo256>> = vec![];
+		for (i, h) in (40u32..=50).enumerate() {
+			let mut header = Header::new(
+				h,
+				Default::default(),
+				Default::default(),
+				Default::default(),
+				Default::default(),
+			);
+			if i != 0 {
+				header.parent_hash = headers[i - 1].hash();
+			}
+			headers.push(header);
+		}
+
+		let slice = &headers[3..=6];
+		let ancestry = AncestryChain::new(&headers);
+
+		let mut route = ancestry.ancestry(slice[0].hash(), slice[3].hash()).unwrap();
+		route.sort();
+		let mut expected = slice.iter().map(|h| h.hash()).collect::<Vec<_>>();
+		expected.sort();
+
+		assert_eq!(route, expected);
 	}
 }
