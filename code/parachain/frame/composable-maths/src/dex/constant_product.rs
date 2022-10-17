@@ -360,6 +360,26 @@ fn decimal_from_per_thing<T: PerThing>(per_thing: T) -> Result<Decimal, Arithmet
 	numerator.safe_div(&denominator)
 }
 
+/// Converts a `u128` fixed point number with 12 decimal places to decimal.
+///
+/// Conducts `number / 10^12`
+fn decimal_from_fixed_point(fixed_point: u128) -> Result<Decimal, ArithmeticError> {
+	let numerator = Decimal::from_u128(fixed_point).ok_or(ArithmeticError::Overflow)?;
+	let denominator = Decimal::from(10)
+		.checked_powd(Decimal::from(12))
+		.ok_or(ArithmeticError::Overflow)?;
+
+	numerator.safe_div(&denominator)
+}
+
+fn fixed_point_from_decimal(decimal: Decimal) -> Result<u128, ArithmeticError> {
+	let rhs = Decimal::from(10)
+		.checked_powd(Decimal::from(12))
+		.ok_or(ArithmeticError::Overflow)?;
+
+	decimal.safe_mul(&rhs)?.to_u128().ok_or(ArithmeticError::Overflow)
+}
+
 /// Computes the LP to mint on first deposit.
 ///
 /// If `Ok`, returns a tuple containing `(lp_to_mint, fee)`.
@@ -368,6 +388,8 @@ fn decimal_from_per_thing<T: PerThing>(per_thing: T) -> Result<Decimal, Arithmet
 /// removing liquidity. With the initial deposit, these chances are so low that it is safe to
 /// process without a fee.
 ///
+/// Balances must be in fixed point 12 decimal representation.
+///
 /// # Parameters
 /// * `pool_assets` - Vec of tuples containing `(token_deposit, token_balance, token_weight)`
 /// * `f` - Fee
@@ -375,18 +397,28 @@ fn decimal_from_per_thing<T: PerThing>(per_thing: T) -> Result<Decimal, Arithmet
 /// https://github.com/ComposableFi/composable/blob/main/rfcs/0008-pablo-lbp-cpp-restructure.md#42-liquidity-provider-token-lpt-math-updates
 /// Equation 6
 pub fn compute_first_deposit_lp_<T: PerThing>(
-	// REVIEW: Make this a `Vec<u128>` (deposit only) or keep it extensible if we change our
-	// initial calculations later?
 	pool_assets: Vec<(u128, u128, T)>,
 	_f: T,
 ) -> Result<(u128, u128), ConstantProductAmmError> {
 	let k: u128 = pool_assets.len().try_into().map_err(|_| ArithmeticError::Overflow)?;
-	let product = pool_assets
-		.iter()
-		.try_fold(1, |product, (d_i, _b_i, _w_i)| product.safe_mul(d_i))?;
+	ensure!(!k.is_zero(), ConstantProductAmmError::InvalidTokensList);
+
+	let product = pool_assets.iter().try_fold::<_, _, Result<_, ArithmeticError>>(
+		Decimal::from(1),
+		|product, (_d_i, b_i, w_i)| {
+			let b_i = decimal_from_fixed_point(*b_i)?;
+			let w_i = decimal_from_per_thing(*w_i)?;
+			let pow = b_i.checked_powd(w_i).ok_or(ArithmeticError::Overflow)?;
+
+			product.safe_mul(&dbg!(pow))
+		},
+	)?;
+
+	let k = Decimal::from_u128(k).ok_or(ArithmeticError::Overflow)?;
+	let product = k.safe_mul(&product)?;
 
 	// NOTE: Zero fees on first deposit
-	Ok((k.safe_mul(&product)?, 0))
+	Ok((fixed_point_from_decimal(product)?, 0))
 }
 
 /// Computes the LP to mint on an existing deposit.

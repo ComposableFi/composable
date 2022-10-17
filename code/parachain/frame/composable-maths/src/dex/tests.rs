@@ -30,35 +30,40 @@ mod constant_product {
 		}
 
 		fn generate_pool_assets(number_of_assets: u32) -> Vec<(u128, u128, Permill)> {
-			(1..number_of_assets)
-				.map(|_| (100_000_000_000_000, 0, Permill::zero()))
+			(0..number_of_assets)
+				.map(|n| {
+					(
+						0,
+						100_000_000_000_000 * (n + 1) as u128,
+						Permill::from_rational(1, number_of_assets),
+					)
+				})
 				.collect()
 		}
 
 		#[test]
-		fn should_return_d_k_if_one_token() {
-			let pool_assets = vec![(128, 0, Permill::zero())];
-			let fee = Permill::zero();
+		fn should_error_when_zero_tokens() {
+			let pool_assets = vec![];
+			let f = Permill::zero();
 
-			let res = compute_first_deposit_lp_(pool_assets, fee).expect("Input is valid; QED");
+			let res = compute_first_deposit_lp_(pool_assets, f);
 
-			assert_eq!(128, res.0);
+			assert_eq!(res, Err(ConstantProductAmmError::InvalidTokensList))
 		}
 
 		#[test]
-		fn should_return_product_time_k_for_multiple_tokens() {
+		fn should_provide_correct_vales_on_fifty_fifty() {
 			let pool_assets = vec![
-				(128, 0, Permill::zero()),
-				(256, 0, Permill::zero()),
-				(512, 0, Permill::zero()),
-				(1024, 0, Permill::zero()),
+				(0, 100_000_000_000_000_000, Permill::from_rational::<u32>(1, 2)),
+				(0, 300_000_000_000_000_000, Permill::from_rational::<u32>(1, 2)),
 			];
-			let fee = Permill::zero();
+			let f = Permill::zero();
 
-			let res = compute_first_deposit_lp_(pool_assets, fee).expect("Input is valid; QED");
+			let res = compute_first_deposit_lp_(pool_assets, f).expect("Inputs are valid; QED");
 
-			// Is equal to 4 * 2^7 * 2^8 * 2^9 * 2^10
-			assert_eq!(68_719_476_736, res.0);
+			// Actual expected 346_410_161_513_775_458
+			// -0.000000000310% Error
+			assert_eq!(res.0, 346_410_161_406_220_453);
 		}
 
 		proptest! {
@@ -70,7 +75,7 @@ mod constant_product {
 
 				let res = compute_first_deposit_lp_(pool_assets, input.f);
 
-				prop_assert!(res.is_ok());
+				prop_assert!(dbg!(res).is_ok());
 			}
 		}
 	}
