@@ -324,6 +324,14 @@ where
 				.into_iter()
 				.filter(|h| route.binary_search(&h.hash()).is_ok())
 				.collect::<Vec<_>>();
+		} else {
+			// in the special case where there's no parachain headers, let's only send the the finality target
+			// and it's parent block. Fishermen should detect any byzantine activity.
+			let len = finality_proof.unknown_headers.len();
+			if len > 2 {
+				finality_proof.unknown_headers = finality_proof
+					.unknown_headers[(len - 2)..].to_owned()
+			}
 		}
 
 		Ok(ParachainHeadersWithFinalityProof {

@@ -54,7 +54,7 @@ where
 	Host: HostFunctions,
 	Host::BlakeTwo256: Hasher<Out = H256>,
 {
-	let ParachainHeadersWithFinalityProof { finality_proof, mut parachain_headers } = proof;
+	let ParachainHeadersWithFinalityProof { finality_proof, parachain_headers } = proof;
 
 	// 1. First validate unknown headers.
 	let headers = AncestryChain::<H>::new(&finality_proof.unknown_headers);
@@ -63,12 +63,6 @@ where
 		.iter()
 		.max_by_key(|h| *h.number())
 		.ok_or_else(|| anyhow!("Unknown headers can't be empty!"))?;
-
-	log::trace!(
-		target: "grandpa-verifier",
-		"Unknown hashes: {:#?}",
-		finality_proof.unknown_headers.iter().map(|h| h.hash()).collect::<Vec<_>>(),
-	);
 
 	// this is illegal
 	if target.hash() != finality_proof.block {
@@ -80,11 +74,10 @@ where
 		.iter()
 		.min_by_key(|h| *h.number())
 		.ok_or_else(|| anyhow!("Unknown headers can't be empty!"))?;
-	let finalized = headers
+	let mut finalized = headers
 		.ancestry(from.hash(), target.hash())
 		.map_err(|_| anyhow!("Invalid ancestry!"))?;
-	log::trace!(target: "grandpa-verifier", "finalized: {finalized:#?}");
-	log::trace!(target: "grandpa-verifier", "Parachain headers associated relay chain headers: {:#?}", parachain_headers.keys().collect::<Vec<_>>());
+	finalized.sort();
 
 	// 2. verify justification.
 	let justification = GrandpaJustification::<H>::decode(&mut &finality_proof.justification[..])?;
@@ -92,37 +85,39 @@ where
 
 	// 3. verify state proofs of parachain headers in finalized relay chain headers.
 	let mut para_heights = vec![];
-	for hash in finalized {
+	for (hash, proofs) in parachain_headers {
+		if finalized.binary_search(&hash).is_err() {
+			// seems relay hash isn't in the finalized chain.
+			continue
+		}
 		let relay_chain_header =
 			headers.header(&hash).expect("Headers have been checked by AncestryChain; qed");
 
-		if let Some(proofs) = parachain_headers.remove(&hash) {
-			let ParachainHeaderProofs { extrinsic_proof, extrinsic, state_proof } = proofs;
-			let proof = StorageProof::new(state_proof);
-			let key = parachain_header_storage_key(client_state.para_id);
-			// verify patricia-merkle state proofs
-			let header = state_machine::read_proof_check::<Host::BlakeTwo256, _>(
-				relay_chain_header.state_root(),
-				proof,
-				&[key.as_ref()],
-			)
-			.map_err(|err| anyhow!("error verifying parachain header state proof: {err}"))?
-			.remove(key.as_ref())
-			.flatten()
-			.ok_or_else(|| anyhow!("Invalid proof, parachain header not found"))?;
-			let parachain_header = H::decode(&mut &header[..])?;
-			para_heights.push(parachain_header.number().clone().into());
-			// Timestamp extrinsic should be the first inherent and hence the first extrinsic
-			// https://github.com/paritytech/substrate/blob/d602397a0bbb24b5d627795b797259a44a5e29e9/primitives/trie/src/lib.rs#L99-L101
-			let key = codec::Compact(0u32).encode();
-			// verify extrinsic proof for timestamp extrinsic
-			sp_trie::verify_trie_proof::<LayoutV0<Host::BlakeTwo256>, _, _, _>(
-				parachain_header.extrinsics_root(),
-				&extrinsic_proof,
-				&vec![(key, Some(&extrinsic[..]))],
-			)
-			.map_err(|_| anyhow!("Invalid extrinsic proof"))?;
-		}
+		let ParachainHeaderProofs { extrinsic_proof, extrinsic, state_proof } = proofs;
+		let proof = StorageProof::new(state_proof);
+		let key = parachain_header_storage_key(client_state.para_id);
+		// verify patricia-merkle state proofs
+		let header = state_machine::read_proof_check::<Host::BlakeTwo256, _>(
+			relay_chain_header.state_root(),
+			proof,
+			&[key.as_ref()],
+		)
+		.map_err(|err| anyhow!("error verifying parachain header state proof: {err}"))?
+		.remove(key.as_ref())
+		.flatten()
+		.ok_or_else(|| anyhow!("Invalid proof, parachain header not found"))?;
+		let parachain_header = H::decode(&mut &header[..])?;
+		para_heights.push(parachain_header.number().clone().into());
+		// Timestamp extrinsic should be the first inherent and hence the first extrinsic
+		// https://github.com/paritytech/substrate/blob/d602397a0bbb24b5d627795b797259a44a5e29e9/primitives/trie/src/lib.rs#L99-L101
+		let key = codec::Compact(0u32).encode();
+		// verify extrinsic proof for timestamp extrinsic
+		sp_trie::verify_trie_proof::<LayoutV0<Host::BlakeTwo256>, _, _, _>(
+			parachain_header.extrinsics_root(),
+			&extrinsic_proof,
+			&vec![(key, Some(&extrinsic[..]))],
+		)
+		.map_err(|_| anyhow!("Invalid extrinsic proof"))?;
 	}
 
 	// 4. set new client state, optionally rotating authorities
