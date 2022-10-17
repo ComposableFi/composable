@@ -19,4 +19,4 @@ This contains utility functions for assembling Grandpa proofs as well as paracha
 
 ## License
 
-Apache-2.0
+Apache-2.0 
