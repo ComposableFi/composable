@@ -8,7 +8,7 @@ descending order of height. For example, an MMR tree with 1,000,000 leaves will 
 heights: 19, 18, 17, 16, 14, 9 and 6:
 
 
-![merkle_mountain_ranges_1](./merkle-mountain-ranges-1.png)
+![merkle_mountain_ranges_1](/img/products/centauri/merkle-mountain-ranges-1.png)
 
 
 A key feature of MMR is the reuse of the previous computations (root hashes) whenever new leaves are added to the tree. 
@@ -17,10 +17,10 @@ pink section and blue section are merged to the hash in blue in the following tw
 subtree per height level:
 
 
-![merkle_mountain_ranges_2](./merkle-mountain-ranges-2.png)
+![merkle_mountain_ranges_2](/img/products/centauri/merkle-mountain-ranges-2.png)
 
 
-![merkle_mountain_ranges_3](./merkle-mountain-ranges-3.png)
+![merkle_mountain_ranges_3](/img/products/centauri/merkle-mountain-ranges-3.png)
 
 
 Merkle Mountain Ranges are also very efficient with proofs where the tree itself is composed of subtrees. Since MMR 
@@ -28,7 +28,7 @@ subtrees are presented in descending height, the first subtree is typically the 
 that, as the list grows, new leaves are actually less expensive to insert and prove.
 
 
-![merkle_mountain_ranges_4](./merkle-mountain-ranges-4.png)
+![merkle_mountain_ranges_4](/img/products/centauri/merkle-mountain-ranges-4.png)
 
 
 In the continued example of the above tree, the subtree that requires the most proof items is the first subtree, 4 + 2 
@@ -36,4 +36,4 @@ In the continued example of the above tree, the subtree that requires the most p
 no need to recalculate the hashes of the first subtree, only the more recent ones:
 
 
-![merkle_mountain_ranges_5](./merkle-mountain-ranges-5.png)
+![merkle_mountain_ranges_5](/img/products/centauri/merkle-mountain-ranges-5.png)

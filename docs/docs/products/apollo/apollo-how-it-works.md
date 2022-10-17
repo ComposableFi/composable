@@ -8,7 +8,7 @@ price and immediately update data. In addition, it is able to provide greater cu
 offers.
 
 
-![apollo_architecture](./apollo-architecture.png)
+![apollo_architecture](/img/products/apollo/apollo-architecture.png)
 
 
 Oracle data providers operate nodes and provide a stake of tokens. This stake is slashed by some amount if the node 
@@ -40,7 +40,7 @@ alert users on price differentials, and not price. In the event a TS is compromi
 still provides an asset price.
 
 
-![price_bonding_apollo](./price-bonding-apollo.png)
+![price_bonding_apollo](/img/products/apollo/price-bonding-apollo.png)
 _Price banding on Apollo_
 
 

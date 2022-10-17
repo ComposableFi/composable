@@ -24,7 +24,7 @@ smart contracts, or even those in centralized finance. This means that funds can
 ecosystems, including Polkadot, its canary network Kusama, Ethereum, and Cosmos. This relationship is depicted below:
 
 
-![how_our_vaults_pallet_powers_our_infrastructure](./cubic/how-cubic-powers-our-infrastructure.jpg)
+![how_our_vaults_pallet_powers_our_infrastructure](/img/products/cubic/how-cubic-powers-our-infrastructure.jpg)
 
 
 ## Use Cases

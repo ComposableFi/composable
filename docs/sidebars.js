@@ -203,7 +203,7 @@ const sidebars = {
           label: 'Parachain Vault Strategy',
           link: {
             type: 'doc',
-            id: 'products/CHAOS-fNFT-overview'
+            id: 'products/parachain-vault-strategy'
           },
           collapsible: true,
           collapsed: true,

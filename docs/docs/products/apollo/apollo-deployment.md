@@ -14,4 +14,4 @@ building applications on the XCVM to leverage Apollo for their protocols.
 If you’re a developer and want to connect your protocol to Apollo, reach out to us on our 
 [discord](https://discord.com/invite/composable).
 
-To operate an oracle on Apollo, check out the **[ set-up guide](../../developer-guides/oracle-set-up-guide.md)**.
+To operate an oracle on Apollo, check out the **[set-up guide](../../developer-guides/oracle-set-up-guide.md)**.

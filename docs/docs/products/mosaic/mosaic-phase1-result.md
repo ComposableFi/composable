@@ -12,7 +12,7 @@ To visualize the PoC transfer data, Composable mapped each supported network as 
 represents transfers between networks.
 
 
-![transfer_network_graph](transfer-network-graph.png)
+![transfer_network_graph](/img/products/mosaic/transfer-network-graph.png)
 
 
 This graph was generated using a ForceAtlas2-based algorithm simulating the nodes and edges of a physical system to 
@@ -32,7 +32,7 @@ To analyze transfer times, Composable looked at transfer time versus transfer si
 denominated in the origin token.
 
 
-![transfer_times_plot](./transfer-times-plot.png)
+![transfer_times_plot](/img/products/mosaic/transfer-times-plot.png)
 
 
 In the figure above, the three horizontal black dashed lines delineated, from low to high, one minute, five minutes, 
@@ -42,7 +42,7 @@ to L1 transfers. For high transaction amounts, the time could be longer, but the
 Then, Composable compared transfer times versus the type of transfer in the form of the origin and destination networks.
 
 
-![transfer_times_vertical](./transfer-times-vertical.png)
+![transfer_times_vertical](/img/products/mosaic/transfer-times-vertical.png)
  
 
 This figure depicts transfer times in seconds for various network transfers irrespective of the token moved. 
@@ -60,7 +60,7 @@ confirmation threshold.
 Transfer amounts per network are shown in the figure below.
 
 
-![transfer_amount_vertical](./transfer-amount-vertical.png)
+![transfer_amount_vertical](/img/products/mosaic/transfer-amount-vertical.png)
 
 
 Composable saw an equivalent distribution of data across all networks. The PoC capped transfers at $20,000, which was 
@@ -73,7 +73,7 @@ subject to the PoC’s cap.
 This graph shows the fee charged versus the transfer amounts as a percent of available liquidity in the origin vault. 
 
 
-![mosaic_fee_model](./mosaic-fee-model.png)
+![mosaic_fee_model](/img/products/mosaic/mosaic-fee-model.png)
 
 
 The following parameters were set:
@@ -97,7 +97,7 @@ The following parameters were set:
 * The minimum fee % to charge: 0.25%
 
 
-![mosaic_fee_model_optimized](mosaic-fee-model-optimized.png)
+![mosaic_fee_model_optimized](/img/products/mosaic/mosaic-fee-model-optimized.png)
 
 
 Using these parameters, Composable found that the optimized fee model ensured that LPs earned 10% APY when contributing 

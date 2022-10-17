@@ -3,7 +3,7 @@
 ---
 
 
-![dynamic_fee_model](./dynamic-fee-model.png)
+![dynamic_fee_model](/img/products/mosaic/dynamic-fee-model.png)
 
 
 Composable has taken different fee models into consideration in order to adopt best practices and ensure fees are 

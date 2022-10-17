@@ -4,7 +4,7 @@
 ---
 
 
-![mural_interface](./mural-interface.png)
+![mural_interface](/img/products/mosaic/mural/mural-interface.png)
 
 
 Composable understands that non-fungible tokens (NFTs) are an exponentially growing part of the DeFi ecosystem. Thus we 

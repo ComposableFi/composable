@@ -56,11 +56,11 @@ In addition to that, we have some special syntax for **image captions** and **H1
 If you want to add a caption to an image, you should add an italics line right below it, like this:
 
 ```md
-![Composable Face](./composable-face.png)
+![Composable Face](/img/general/face-banner.png)
 *Composable Finance: The Face of DeFi's Future*
 ```
 
-![Composable Face](../composable-face.png)
+![Composable Face](/img/general/face-banner.png)
 *Composable Finance: The Face of DeFi's Future*
 
 ### H1 emoji

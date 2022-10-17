@@ -19,7 +19,7 @@ Mosaic V2 comes with the following extra features:
 * Producing additional yield from farming with the unused funds.
 
 
-![chain_transfer_sequence](./chain-transfer-sequence.png)
+![chain_transfer_sequence](/img/products/mosaic/chain-transfer-sequence.png)
 
 
 The following steps are taken whenever a transfer is initiated:
@@ -44,7 +44,7 @@ The following steps are taken whenever a liquidity withdrawal request is initiat
 Mosaic V2 is constructed to be modular. It allows any system to be created or integrated. 
 
 
-![mosaic_integration](./mosaic-integration.png)
+![mosaic_integration](../../../static/img/products/mosaic/mosaic-integration.png)
 
 
 For example, in Aave, we could create a strategy for A and whitelist aUSDC for Mosaic enabling users to stake their 
