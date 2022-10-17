@@ -11,7 +11,7 @@ has demonstrated the need for our solutions within this space. You, the communit
 many ways, particularly by helping us to stake an impressive 115k KSM in the most recent Kusama parachain auction. 
 As a result, [Composable is the 13th project to earn a piece of this highly in-demand technology](https://composablefi.medium.com/celebrating-our-procurement-of-a-kusama-parachain-for-picasso-887eb60d7092).
 
-Read more about the [Picasso Crowdloan strategy](../parachains/picasso/picasso-crowdloan) 
+Read more about the [Picasso Crowdloan strategy](../parachains/picasso/picasso-crowdloan.md) 
 that we implemented to help us achieve this major milestone.
 
 ## The Picasso Vision
@@ -49,7 +49,7 @@ Given that our parachains are the foundational layer that powers our ecosystem, 
 approach to adding products directly in the runtime of our parachains. We will offer projects the ability to deploy as 
 pallets on our chain, with governance having the ability to upgrade these pallets into the runtime of our chains:
 
-![pallets image](../../static/img/misc/picasso-pallet-graphic.png)
+![pallets image](/img/developer-guides/pallet-integrations.png)
 
 ### Advantages
 

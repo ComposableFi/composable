@@ -43,7 +43,7 @@ Users can provide liquidity for yield through LAYR LP pairs on the Pablo DEX.
 The total supply of 100 million LAYR tokens are intended to be distributed and released according to the following:
 
 
-![LAYR_distribution_diagram](../../../static/img/parachains/LAYR-distribution-diagram.png)
+![LAYR_distribution_diagram](/img/parachains/LAYR-distribution-diagram.png)
 
 
 ## Release schedule
