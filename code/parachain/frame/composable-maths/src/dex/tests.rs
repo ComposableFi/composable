@@ -247,6 +247,23 @@ mod constant_product {
 			assert_eq!(res, Err(ConstantProductAmmError::CannotTakeMoreThanAvailable))
 		}
 
+		#[test]
+		fn should_have_correctness_with_fixed_point_values() {
+			let w_i = Permill::from_rational::<u32>(1, 2);
+			let w_o = Permill::from_rational::<u32>(1, 2);
+			let b_i = 512_000_000_000_000_000;
+			let b_o = 512_000_000_000_000_000;
+			let a_out = 256_000_000_000_000;
+			let f = Permill::zero();
+
+			let res =
+				compute_in_given_out_new(w_i, w_o, b_i, b_o, a_out, f).expect("Inputs are valid");
+
+			// Actual expected 256_128_000_000_000
+			// +0.000000250000 Error
+			assert_eq!(res.0, 256_128_064_032_017);
+		}
+
 		proptest! {
 			#![proptest_config(ProptestConfig::with_cases(CHECKED_I_AND_O_LIST.len() as u32))]
 
@@ -430,6 +447,23 @@ mod constant_product {
 			let res = compute_out_given_in_new(w_i, w_o, b_i, b_o, a_sent, fee);
 
 			assert_eq!(res, Err(sp_runtime::ArithmeticError::DivisionByZero));
+		}
+
+		#[test]
+		fn should_have_correctness_with_fixed_point_numbers() {
+			let w_i = Permill::from_rational::<u32>(1, 2);
+			let w_o = Permill::from_rational::<u32>(1, 2);
+			let b_i = 512_000_000_000_000_000;
+			let b_o = 512_000_000_000_000_000;
+			let a_sent = 256_000_000_000_000;
+			let fee = Permill::zero();
+
+			let res = compute_out_given_in_new(w_i, w_o, b_i, b_o, a_sent, fee)
+				.expect("Valid input; QED");
+
+			// Actual expected 255_872_000_000_000
+			// +0.000000250000% Error
+			assert_eq!(res.0, 255_872_063_968_015);
 		}
 
 		proptest! {
