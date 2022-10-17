@@ -4510,7 +4510,6 @@ dependencies = [
  "hex-literal",
  "jsonrpsee-ws-client 0.14.0",
  "light-client-common",
- "log 0.4.17",
  "parity-scale-codec",
  "polkadot-core-primitives",
  "primitive-types",

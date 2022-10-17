@@ -220,6 +220,7 @@ pub mod pallet {
 		const CONNECTION_PREFIX: &'static [u8];
 		/// This is the key under the global state trie, where this pallet will
 		/// incrementally build the ICS23 commitment trie
+		/// must be the same as the connection prefix
 		const CHILD_TRIE_KEY: &'static [u8];
 		/// Light client protocol this chain is operating
 		const LIGHT_CLIENT_PROTOCOL: LightClientProtocol;

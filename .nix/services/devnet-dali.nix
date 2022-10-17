@@ -1,20 +1,23 @@
-{ pkgs, packages, relaychainPort, parachainPort }: {
+{ pkgs, packages, relaychainPort, parachainPort, packageName ? "devnet-dali"
+, binaryName ? "devnet-dali-dev" }: {
   image = {
-    contents = [ pkgs.coreutils packages.devnet-dali ];
+    contents = [ pkgs.coreutils packages.${packageName} ];
     enableRecommendedContents = true;
   };
+  #devnet-dali-b
   service = {
     restart = "always";
     command = [
       "sh"
       "-c"
       ''
-        ${packages.devnet-dali}/bin/run-devnet-dali-dev
+        ${packages.${packageName}}/bin/run-${binaryName}
       ''
     ];
-    ports =
-      [ "${toString relaychainPort}:9944" "${toString parachainPort}:9988" ];
+    ports = [
+      "${toString relaychainPort}:${toString relaychainPort}"
+      "${toString parachainPort}:${toString parachainPort}"
+    ];
     stop_signal = "SIGINT";
   };
 }
-
