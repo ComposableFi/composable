@@ -50,14 +50,14 @@ scale-info = { version = "2.1.1", default-features = false, features = [
 ] }
 
 # misc
-ecdsa = { version = "^0.13", default-features = false, features = ["alloc"] }
+ecdsa = { version = "^0.14", default-features = false, features = ["alloc"] }
 hex = { version = "0.4", default-features = false, features = ["alloc"] }
 multihash = { version = "0.16.2", default-features = false, features = [
   "multihash-impl",
   "sha2",
   "sha3",
 ] }
-p256 = { version = "0.10.1", default-features = false, features = [
+p256 = { version = "0.11.1", default-features = false, features = [
   "ecdsa",
   "ecdsa-core",
 ] }
