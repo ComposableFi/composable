@@ -35,7 +35,7 @@ ibc = { path = "../../ibc/modules", default-features = false }
 ibc-proto = { path = "../../ibc/proto", default-features = false }
 
 # local deps
-grandpa-client = { package = "grandpa-light-client", path = "../../algorithms/grandpa/verifier",  default-features = false }
+grandpa-client = { package = "grandpa-light-client-verifier", path = "../../algorithms/grandpa/verifier",  default-features = false }
 grandpa-client-primitives = { package = "grandpa-light-client-primitives", path = "../../algorithms/grandpa/primitives", default-features = false }
 light-client-common = { path = "../common", default-features = false }
 

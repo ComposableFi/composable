@@ -24,11 +24,13 @@ use beefy_prover::helpers::{
 	fetch_timestamp_extrinsic_with_proof, unsafe_arc_cast, TimeStampExtWithProof,
 };
 use codec::{Decode, Encode};
+use finality_grandpa::Chain;
 use finality_grandpa_rpc::GrandpaApiClient;
 use jsonrpsee::{async_client::Client, ws_client::WsClientBuilder};
 use primitives::{
-	justification::GrandpaJustification, parachain_header_storage_key, ClientState, FinalityProof,
-	ParachainHeaderProofs, ParachainHeadersWithFinalityProof,
+	justification::{AncestryChain, GrandpaJustification},
+	parachain_header_storage_key, ClientState, FinalityProof, ParachainHeaderProofs,
+	ParachainHeadersWithFinalityProof,
 };
 use serde::{Deserialize, Serialize};
 use sp_core::H256;
@@ -172,6 +174,7 @@ where
 		u32: From<H::Number>,
 		H::Hash: From<T::Hash>,
 		T::Hash: From<H::Hash>,
+		H::Number: finality_grandpa::BlockNumberOps,
 		T::BlockNumber: One,
 	{
 		let previous_para_hash = self
@@ -234,7 +237,7 @@ where
 			.ok_or_else(|| anyhow!("Failed to fetch previous finalized hash + 1"))?;
 
 		let mut unknown_headers = vec![];
-		for height in previous_finalized_height..=latest_finalized_height {`
+		for height in previous_finalized_height..=latest_finalized_height {
 			let hash = self.relay_client.rpc().block_hash(Some(height.into())).await?.ok_or_else(
 				|| anyhow!("Failed to fetch block has for height {previous_finalized_height}"),
 			)?;
@@ -262,7 +265,9 @@ where
 			.query_storage(keys.clone(), start, Some(latest_finalized_hash))
 			.await?;
 
-		let mut parachain_headers = BTreeMap::<H::Hash, ParachainHeaderProofs>::default();
+		let mut parachain_headers_with_proof =
+			BTreeMap::<H::Hash, ParachainHeaderProofs>::default();
+		let mut para_headers = vec![];
 
 		for changes in change_set {
 			let header = self
@@ -288,6 +293,7 @@ where
 			if para_block_number == Zero::zero() || !header_numbers.contains(&para_block_number) {
 				continue
 			}
+			para_headers.push((header.hash(), para_header.clone()));
 
 			let state_proof = self
 				.relay_client
@@ -304,10 +310,26 @@ where
 					.await
 					.map_err(|err| anyhow!("Error fetching timestamp with proof: {err:?}"))?;
 			let proofs = ParachainHeaderProofs { state_proof, extrinsic, extrinsic_proof };
-			parachain_headers.insert(header.hash().into(), proofs);
+			parachain_headers_with_proof.insert(header.hash().into(), proofs);
 		}
 
-		Ok(ParachainHeadersWithFinalityProof { finality_proof, parachain_headers })
+		// now to prune useless unknown headers, we only need the unknown_headers for the relay
+		// chain header for the least parachain height up to the latest finalized relay chain block.
+		if let Some((relay_hash, _)) = para_headers.into_iter().min_by_key(|(_, h)| *h.number()) {
+			let ancestry = AncestryChain::new(&finality_proof.unknown_headers);
+			let mut route = ancestry.ancestry(relay_hash.into(), finality_proof.block)?;
+			route.sort();
+			finality_proof.unknown_headers = finality_proof
+				.unknown_headers
+				.into_iter()
+				.filter(|h| route.binary_search(&h.hash()).is_ok())
+				.collect::<Vec<_>>();
+		}
+
+		Ok(ParachainHeadersWithFinalityProof {
+			finality_proof,
+			parachain_headers: parachain_headers_with_proof,
+		})
 	}
 
 	// Queries the block at which the epoch for the given block belongs to ends.

@@ -144,14 +144,15 @@ where
 			.min_by_key(|h| *h.number())
 			.ok_or_else(|| Error::Custom(format!("Unknown headers can't be empty!")))?;
 
-		let finalized = ancestry
+		let mut finalized = ancestry
 			.ancestry(from.hash(), header.finality_proof.block)
 			.map_err(|_| Error::Custom(format!("Invalid ancestry!")))?;
+		finalized.sort();
 
 		for (relay_hash, parachain_header_proof) in header.parachain_headers {
 			// we really shouldn't set consensus states for parachain headers not in the finalized
 			// chain.
-			if !finalized.contains(&relay_hash) {
+			if finalized.binary_search(&relay_hash).is_err() {
 				continue
 			}
 

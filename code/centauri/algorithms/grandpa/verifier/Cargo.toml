@@ -1,5 +1,5 @@
 [package]
-name = "grandpa-light-client"
+name = "grandpa-light-client-verifier"
 version = "0.1.0"
 edition = "2021"
 authors = ["Seun Lanlege <seunlanlege@gmail.com>"]

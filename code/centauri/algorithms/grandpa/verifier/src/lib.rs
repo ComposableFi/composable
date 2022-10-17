@@ -40,7 +40,10 @@ use sp_trie::{LayoutV0, StorageProof};
 #[cfg(test)]
 mod tests;
 
-/// Verify a new grandpa justification, given the old state.
+/// This function verifies the GRANDPA finality proof for relay chain headers.
+///
+/// Next, we prove the finality of parachain headers, by verifying patricia-merkle trie state proofs
+/// of these headers, stored at the recently finalized relay chain heights.
 pub fn verify_parachain_headers_with_grandpa_finality_proof<H, Host>(
 	mut client_state: ClientState<H::Hash>,
 	proof: ParachainHeadersWithFinalityProof<H>,
@@ -61,8 +64,11 @@ where
 		.max_by_key(|h| *h.number())
 		.ok_or_else(|| anyhow!("Unknown headers can't be empty!"))?;
 
-	let hashes = finality_proof.unknown_headers.iter().map(|h| h.hash()).collect::<Vec<_>>();
-	log::trace!(target: "grandpa-verifier", "Unknown hashes: {hashes:#?}");
+	log::trace!(
+		target: "grandpa-verifier",
+		"Unknown hashes: {:#?}",
+		finality_proof.unknown_headers.iter().map(|h| h.hash()).collect::<Vec<_>>(),
+	);
 
 	// this is illegal
 	if target.hash() != finality_proof.block {
@@ -94,6 +100,7 @@ where
 			let ParachainHeaderProofs { extrinsic_proof, extrinsic, state_proof } = proofs;
 			let proof = StorageProof::new(state_proof);
 			let key = parachain_header_storage_key(client_state.para_id);
+			// verify patricia-merkle state proofs
 			let header = state_machine::read_proof_check::<Host::BlakeTwo256, _>(
 				relay_chain_header.state_root(),
 				proof,
@@ -108,6 +115,7 @@ where
 			// Timestamp extrinsic should be the first inherent and hence the first extrinsic
 			// https://github.com/paritytech/substrate/blob/d602397a0bbb24b5d627795b797259a44a5e29e9/primitives/trie/src/lib.rs#L99-L101
 			let key = codec::Compact(0u32).encode();
+			// verify extrinsic proof for timestamp extrinsic
 			sp_trie::verify_trie_proof::<LayoutV0<Host::BlakeTwo256>, _, _, _>(
 				parachain_header.extrinsics_root(),
 				&extrinsic_proof,
