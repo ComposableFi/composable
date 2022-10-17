@@ -12,7 +12,7 @@ const config = {
   baseUrl: '/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
-  favicon: 'img/favicon.ico',
+  favicon: 'img/general/favicon.ico',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
@@ -56,7 +56,7 @@ const config = {
         title: 'Composable Finance',
         logo: {
           alt: 'Composable Finance Logo',
-          src: 'img/logo.svg',
+          src: 'img/general/logo.svg',
         },
         items: [
           {
