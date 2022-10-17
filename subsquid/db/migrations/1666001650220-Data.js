@@ -1,5 +1,10 @@
+<<<<<<<< HEAD:subsquid/db/migrations/1665750215090-Data.js
 module.exports = class Data1665750215090 {
   name = 'Data1665750215090'
+========
+module.exports = class Data1666001650220 {
+  name = 'Data1666001650220'
+>>>>>>>> d1ae750e9 (wip: store total volume changes and handle resolver):subsquid/db/migrations/1666001650220-Data.js
 
   async up(db) {
     await db.query(`CREATE TABLE "account" ("id" character varying NOT NULL, "event_id" text NOT NULL, CONSTRAINT "PK_54115ee388cdb6d86bb4bf5b2ea" PRIMARY KEY ("id"))`)
@@ -39,6 +44,8 @@ module.exports = class Data1665750215090 {
     await db.query(`CREATE UNIQUE INDEX "IDX_69e08176f6778a2a276720109d" ON "staking_position" ("fnft_collection_id", "fnft_instance_id") `)
     await db.query(`CREATE TABLE "historical_locked_value" ("id" character varying NOT NULL, "amount" numeric NOT NULL, "currency" character varying(3) NOT NULL, "timestamp" numeric NOT NULL, "source" character varying(16) NOT NULL, "event_id" character varying, CONSTRAINT "PK_39755ccbc61547e8b814bf28188" PRIMARY KEY ("id"))`)
     await db.query(`CREATE INDEX "IDX_e16f52796ccae0d99cb8d6e404" ON "historical_locked_value" ("event_id") `)
+    await db.query(`CREATE TABLE "historical_volume" ("id" character varying NOT NULL, "amount" numeric NOT NULL, "currency" character varying(3) NOT NULL, "timestamp" numeric NOT NULL, "asset_id" text NOT NULL, "event_id" character varying, CONSTRAINT "PK_7f5775a1b43be10057e93cad992" PRIMARY KEY ("id"))`)
+    await db.query(`CREATE INDEX "IDX_eceb392fe7bbe48cb21e1d8b5a" ON "historical_volume" ("event_id") `)
     await db.query(`ALTER TABLE "pablo_pool_asset" ADD CONSTRAINT "FK_7fd4cdb45620476d1de745a2658" FOREIGN KEY ("pool_id") REFERENCES "pablo_pool"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
     await db.query(`ALTER TABLE "activity" ADD CONSTRAINT "FK_c2c1e9fdda754a6bf7f664d7e04" FOREIGN KEY ("event_id") REFERENCES "event"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
     await db.query(`ALTER TABLE "pablo_transaction" ADD CONSTRAINT "FK_0118a010cf1571fc5cb70b90a73" FOREIGN KEY ("event_id") REFERENCES "event"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
@@ -46,6 +53,7 @@ module.exports = class Data1665750215090 {
     await db.query(`ALTER TABLE "historical_asset_price" ADD CONSTRAINT "FK_e5b6c7a8a991d63c9670391daaf" FOREIGN KEY ("asset_id") REFERENCES "asset"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
     await db.query(`ALTER TABLE "staking_position" ADD CONSTRAINT "FK_3e2e1b465d89dbb2736e70fe5f1" FOREIGN KEY ("event_id") REFERENCES "event"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
     await db.query(`ALTER TABLE "historical_locked_value" ADD CONSTRAINT "FK_e16f52796ccae0d99cb8d6e4040" FOREIGN KEY ("event_id") REFERENCES "event"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
+    await db.query(`ALTER TABLE "historical_volume" ADD CONSTRAINT "FK_eceb392fe7bbe48cb21e1d8b5a5" FOREIGN KEY ("event_id") REFERENCES "event"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
   }
 
   async down(db) {
@@ -86,6 +94,8 @@ module.exports = class Data1665750215090 {
     await db.query(`DROP INDEX "public"."IDX_69e08176f6778a2a276720109d"`)
     await db.query(`DROP TABLE "historical_locked_value"`)
     await db.query(`DROP INDEX "public"."IDX_e16f52796ccae0d99cb8d6e404"`)
+    await db.query(`DROP TABLE "historical_volume"`)
+    await db.query(`DROP INDEX "public"."IDX_eceb392fe7bbe48cb21e1d8b5a"`)
     await db.query(`ALTER TABLE "pablo_pool_asset" DROP CONSTRAINT "FK_7fd4cdb45620476d1de745a2658"`)
     await db.query(`ALTER TABLE "activity" DROP CONSTRAINT "FK_c2c1e9fdda754a6bf7f664d7e04"`)
     await db.query(`ALTER TABLE "pablo_transaction" DROP CONSTRAINT "FK_0118a010cf1571fc5cb70b90a73"`)
@@ -93,5 +103,6 @@ module.exports = class Data1665750215090 {
     await db.query(`ALTER TABLE "historical_asset_price" DROP CONSTRAINT "FK_e5b6c7a8a991d63c9670391daaf"`)
     await db.query(`ALTER TABLE "staking_position" DROP CONSTRAINT "FK_3e2e1b465d89dbb2736e70fe5f1"`)
     await db.query(`ALTER TABLE "historical_locked_value" DROP CONSTRAINT "FK_e16f52796ccae0d99cb8d6e4040"`)
+    await db.query(`ALTER TABLE "historical_volume" DROP CONSTRAINT "FK_eceb392fe7bbe48cb21e1d8b5a5"`)
   }
 }

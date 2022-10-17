@@ -12,6 +12,7 @@ import {
   Event,
   EventType,
   HistoricalLockedValue,
+  HistoricalVolume,
   LockedSource,
   PabloPool,
 } from "./model";
@@ -249,6 +250,60 @@ export async function storeHistoricalLockedValue(
 }
 
 /**
+ * Stores a new HistoricalVolume for the specified quote asset
+ * @param ctx
+ * @param quoteAssetId
+ * @param amount
+ */
+export async function storeHistoricaVolume(
+  ctx: EventHandlerContext<Store>,
+  quoteAssetId: string,
+  amount: bigint
+): Promise<void> {
+  const wsProvider = new WsProvider(chain());
+  const api = await ApiPromise.create({ provider: wsProvider });
+  let assetPrice = 0n;
+
+  try {
+    const oraclePrice = await api.query.oracle.prices(quoteAssetId);
+    console.log(oraclePrice);
+    if (!oraclePrice?.price) {
+      // TODO: handle missing oracle price
+      // NOTE: should we look at the latest known price for this asset?
+      return;
+    }
+    assetPrice = BigInt(oraclePrice.price.toString());
+  } catch (error) {
+    console.error(error);
+    return;
+  }
+
+  // TODO: get decimals for this asset
+  // NOTE: normalize to 12 decimals for historical values?
+
+  const volume = amount * assetPrice;
+
+  const lastVolume = await getLastVolume(ctx, quoteAssetId);
+
+  const event = await ctx.store.get(Event, { where: { id: ctx.event.id } });
+
+  if (!event) {
+    return Promise.reject(new Error("Event not found"));
+  }
+
+  const historicalVolume = new HistoricalVolume({
+    id: randomUUID(),
+    event,
+    amount: lastVolume + volume,
+    currency: Currency.USD,
+    assetId: quoteAssetId,
+    timestamp: BigInt(new Date(ctx.block.timestamp).valueOf()),
+  });
+
+  await ctx.store.save(historicalVolume);
+}
+
+/**
  * Get latest locked value
  */
 export async function getLastLockedValue(
@@ -258,7 +313,24 @@ export async function getLastLockedValue(
   const lastLockedValue = await ctx.store.find(HistoricalLockedValue, {
     where: { source },
     order: { timestamp: "DESC" },
+    relations: { event: true },
   });
 
   return BigInt(lastLockedValue.length > 0 ? lastLockedValue[0].amount : 0);
+}
+
+/**
+ * Get latest volume
+ */
+export async function getLastVolume(
+  ctx: EventHandlerContext<Store>,
+  assetId: string
+): Promise<bigint> {
+  const lastVolume = await ctx.store.find(HistoricalVolume, {
+    where: { assetId },
+    order: { timestamp: "DESC" },
+    relations: { event: true },
+  });
+
+  return BigInt(lastVolume.length > 0 ? lastVolume[0].amount : 0);
 }
