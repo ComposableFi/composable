@@ -18,7 +18,7 @@ parameter while minimizing ecosystem-specific decision making.
 We do not aim to create a new standard for cross-chain communication, which is already the object of numerous projects. 
 Instead, the XCVM will serve as the orchestration layer for existing bridging protocols, as depicted below:
 
-![composable_technical_stack](/img/techstack/composable-technical-stack.png)
+![composable_technical_stack](/img/products/techstack/composable-technical-stack.png)
 *Features and order execution within a XCVM environment*
 
 ---
