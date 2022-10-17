@@ -21,7 +21,7 @@
 
 extern crate alloc;
 
-use alloc::{vec, vec::Vec};
+use alloc::vec;
 use anyhow::anyhow;
 use codec::{Decode, Encode};
 use finality_grandpa::Chain;
