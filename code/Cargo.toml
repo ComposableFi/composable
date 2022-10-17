@@ -71,6 +71,7 @@ members = [
   "centauri/light-clients/common",
   "centauri/light-clients/ics07-tendermint",
   "centauri/light-clients/ics10-grandpa",
+  "centauri/light-clients/ics10-grandpa-cw",
   "centauri/light-clients/ics11-beefy",
   "centauri/light-clients/ics13-near",
 
