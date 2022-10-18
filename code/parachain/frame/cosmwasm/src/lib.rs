@@ -635,7 +635,13 @@ pub mod pallet {
 			}
 		}
 
-		/// Handy wrapper to set the contract info
+		/// Set the contract info and update the state accordingly.
+		///
+		/// This function will update the state if the `code_id` is changing:
+		/// 1. Refcount of the new `code_id` is incremented.
+		/// 2. Refcount of the old `code_id` is decremented.
+		/// 3. Delete every entry related to old `code_id` if
+		///    the refcount is 0. And unreserve the bonded funds.
 		pub(crate) fn do_set_contract_meta(
 			contract: &AccountIdOf<T>,
 			code_id: CosmwasmCodeId,
@@ -643,6 +649,47 @@ pub mod pallet {
 			label: String,
 		) -> Result<(), Error<T>> {
 			let mut info = Self::contract_info(contract)?;
+			if info.code_id != code_id {
+				// Increase the refcount of `new_code_id`.
+				CodeIdToInfo::<T>::try_mutate_exists(code_id, |entry| -> Result<(), Error<T>> {
+					let code_info = entry.as_mut().ok_or(Error::<T>::CodeNotFound)?;
+					code_info.refcount =
+						code_info.refcount.checked_add(1).ok_or(Error::<T>::RefcountOverflow)?;
+					Ok(())
+				})?;
+
+				// Modify the exising `code_id`'s states and unreserve the bonded funds.
+				CodeIdToInfo::<T>::try_mutate_exists(
+					info.code_id,
+					|entry| -> Result<(), Error<T>> {
+						// Decrement the refcount
+						let code_info = entry.as_mut().ok_or(Error::<T>::CodeNotFound)?;
+						code_info.refcount = code_info
+							.refcount
+							.checked_sub(1)
+							.ok_or(Error::<T>::RefcountOverflow)?;
+						if code_info.refcount == 0 {
+							// Unreserve the bonded funds for this code
+							let code = PristineCode::<T>::try_get(code_id)
+								.map_err(|_| Error::<T>::CodeNotFound)?;
+							let deposit =
+								code.len().saturating_mul(T::CodeStorageByteDeposit::get() as _);
+							let _ = T::NativeAsset::unreserve(
+								&code_info.creator,
+								deposit.saturated_into(),
+							);
+							let code_hash = T::Hashing::hash(&code);
+							PristineCode::<T>::remove(code_id);
+							InstrumentedCode::<T>::remove(code_id);
+							CodeHashToId::<T>::remove(code_hash);
+							// Code is unused after this point, so it can be removed
+							*entry = None;
+						}
+						Ok(())
+					},
+				)?;
+			}
+
 			info.code_id = code_id;
 			info.admin = admin;
 			info.label = label
@@ -677,16 +724,23 @@ pub mod pallet {
 			&'static [parity_wasm::elements::ValueType],
 		)] = &[
 			// We support v1+
-			(ExportRequirement::Mandatory, "interface_version_8", &[]),
+			(
+				ExportRequirement::Mandatory,
+				// 	extern "C" fn interface_version_8() -> () {}
+				"interface_version_8",
+				&[],
+			),
 			// Memory related exports.
 			(
 				ExportRequirement::Mandatory,
 				AllocateInput::<PointerOf<CosmwasmVM<T>>>::NAME,
+				// extern "C" fn allocate(size: usize) -> u32;
 				&[parity_wasm::elements::ValueType::I32],
 			),
 			(
 				ExportRequirement::Mandatory,
 				DeallocateInput::<PointerOf<CosmwasmVM<T>>>::NAME,
+				// extern "C" fn deallocate(pointer: u32);
 				&[parity_wasm::elements::ValueType::I32],
 			),
 			// Contract execution exports.

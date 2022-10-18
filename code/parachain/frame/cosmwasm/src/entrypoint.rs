@@ -1,8 +1,7 @@
 use crate::{
 	runtimes::wasmi::{CosmwasmVM, CosmwasmVMError, CosmwasmVMShared},
-	AccountIdOf, CodeHashToId, CodeIdToInfo, Config, ContractInfoOf, ContractLabelOf,
-	ContractMessageOf, ContractToInfo, CurrentNonce, EntryPoint, Error, Event, FundsOf,
-	InstrumentedCode, Pallet, PristineCode,
+	AccountIdOf, CodeIdToInfo, Config, ContractInfoOf, ContractLabelOf, ContractMessageOf,
+	ContractToInfo, CurrentNonce, EntryPoint, Error, Event, FundsOf, Pallet,
 };
 use composable_support::abstractions::utils::increment::Increment;
 use core::marker::PhantomData;
@@ -13,21 +12,22 @@ use cosmwasm_vm::{
 	vm::VMBase,
 };
 use cosmwasm_vm_wasmi::WasmiVM;
-use frame_support::{
-	ensure,
-	traits::{Get, ReservableCurrency},
-};
-use sp_runtime::{traits::Hash, SaturatedConversion};
+use frame_support::ensure;
 
+pub type VmErrorOf<T> = <T as VMBase>::Error;
+
+/// State machine for entrypoint calls like `instantiate`, `migrate`, etc.
 pub struct EntryPointCaller<S: CallerState> {
 	state: S,
 }
 
+/// Generic ready-to-call state for all input types
 pub struct Dispatchable<I, O, T: Config> {
 	sender: AccountIdOf<T>,
 	contract: AccountIdOf<T>,
 	contract_info: ContractInfoOf<T>,
 	entry_point: EntryPoint,
+	/// Output of the dispatch call, () can be used in case it is irrelevant
 	output: O,
 	marker: PhantomData<I>,
 }
@@ -42,7 +42,11 @@ impl CallerState for ExecuteInput {}
 
 impl<I, O, T: Config> CallerState for Dispatchable<I, O, T> {}
 
+/// Setup state for `instantiate` entrypoint.
 impl EntryPointCaller<InstantiateInput> {
+	/// Prepares for `instantiate` entrypoint call.
+	///
+	/// * `instantiator` - Address of the account that calls this entrypoint.
 	pub(crate) fn setup<T: Config>(
 		instantiator: AccountIdOf<T>,
 		code_id: CosmwasmCodeId,
@@ -56,6 +60,7 @@ impl EntryPointCaller<InstantiateInput> {
 			.pristine_code_hash;
 		let contract =
 			Pallet::<T>::derive_contract_address(&instantiator, salt, code_hash, message);
+		// Make sure that contract address does not already exist
 		ensure!(!ContractToInfo::<T>::contains_key(&contract), Error::<T>::ContractAlreadyExists);
 		let nonce = CurrentNonce::<T>::increment().map_err(|_| Error::<T>::NonceOverflow)?;
 		let trie_id = Pallet::<T>::derive_contract_trie_id(&contract, nonce);
@@ -90,57 +95,12 @@ impl EntryPointCaller<InstantiateInput> {
 	}
 }
 
-pub type VmErrorOf<T> = <T as VMBase>::Error;
-
-impl<I, O, T> EntryPointCaller<Dispatchable<I, O, T>>
-where
-	T: Config,
-{
-	pub(crate) fn call(
-		self,
-		shared: &mut CosmwasmVMShared,
-		funds: FundsOf<T>,
-		message: ContractMessageOf<T>,
-	) -> Result<O, CosmwasmVMError<T>>
-	where
-		for<'x> WasmiVM<CosmwasmVM<'x, T>>: CosmwasmCallVM<I>,
-		for<'x> VmErrorOf<WasmiVM<CosmwasmVM<'x, T>>>: Into<CosmwasmVMError<T>>,
-	{
-		Pallet::<T>::do_extrinsic_dispatch(
-			shared,
-			self.state.entry_point,
-			self.state.sender,
-			self.state.contract,
-			self.state.contract_info,
-			funds,
-			|vm| cosmwasm_system_entrypoint::<I, _>(vm, &message).map_err(Into::into),
-		)?;
-		Ok(self.state.output)
-	}
-
-	pub(crate) fn continue_run(
-		self,
-		shared: &mut CosmwasmVMShared,
-		funds: Vec<Coin>,
-		message: &[u8],
-		event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
-	) -> Result<Option<cosmwasm_minimal_std::Binary>, CosmwasmVMError<T>>
-	where
-		for<'x> WasmiVM<CosmwasmVM<'x, T>>: CosmwasmCallVM<I>,
-		for<'x> VmErrorOf<WasmiVM<CosmwasmVM<'x, T>>>: Into<CosmwasmVMError<T>>,
-	{
-		Pallet::<T>::cosmwasm_call(
-			shared,
-			self.state.sender,
-			self.state.contract,
-			self.state.contract_info,
-			funds,
-			|vm| cosmwasm_system_run::<I, _>(vm, message, event_handler).map_err(Into::into),
-		)
-	}
-}
-
+/// Setup state for `execute` entrypoint.
 impl EntryPointCaller<ExecuteInput> {
+	/// Prepares for `execute` entrypoint call.
+	///
+	/// * `executor` - Address of the account that calls this entrypoint.
+	/// * `contract` - Address of the contract to be called.
 	pub(crate) fn setup<T: Config>(
 		executor: AccountIdOf<T>,
 		contract: AccountIdOf<T>,
@@ -159,48 +119,19 @@ impl EntryPointCaller<ExecuteInput> {
 	}
 }
 
+/// Setup state for `migrate` entrypoint.
 impl EntryPointCaller<MigrateInput> {
+	/// Prepares for `migrate` entrypoint call.
+	///
+	/// * `migrator` - Address of the account that calls this entrypoint.
+	/// * `contract` - Address of the contract to be called.
+	/// * `new_code_id` - New code id that the contract will point to (or use).
 	pub(crate) fn setup<T: Config>(
 		migrator: AccountIdOf<T>,
 		contract: AccountIdOf<T>,
 		new_code_id: CosmwasmCodeId,
 	) -> Result<EntryPointCaller<Dispatchable<MigrateInput, (), T>>, Error<T>> {
-		CodeIdToInfo::<T>::try_mutate_exists(new_code_id, |entry| -> Result<(), Error<T>> {
-			let code_info = entry.as_mut().ok_or(Error::<T>::CodeNotFound)?;
-			code_info.refcount =
-				code_info.refcount.checked_add(1).ok_or(Error::<T>::RefcountOverflow)?;
-			Ok(())
-		})?;
-
-		let (contract_info, code_id) = ContractToInfo::<T>::try_mutate(
-			&contract,
-			|entry| -> Result<(ContractInfoOf<T>, u64), Error<T>> {
-				let info = entry.as_mut().ok_or(Error::<T>::ContractNotFound)?;
-				ensure!(info.admin.as_ref() == Some(&migrator), Error::<T>::NotAuthorized);
-				let old_code_id = info.code_id;
-				info.code_id = new_code_id;
-				Ok((info.clone(), old_code_id))
-			},
-		)?;
-
-		CodeIdToInfo::<T>::try_mutate_exists(code_id, |entry| -> Result<(), Error<T>> {
-			let code_info = entry.as_mut().ok_or(Error::<T>::CodeNotFound)?;
-			code_info.refcount =
-				code_info.refcount.checked_sub(1).ok_or(Error::<T>::RefcountOverflow)?;
-			if code_info.refcount == 0 {
-				// Code is unused after this point, so it can be removed
-				*entry = None;
-				let code =
-					PristineCode::<T>::try_get(code_id).map_err(|_| Error::<T>::CodeNotFound)?;
-				let deposit = code.len().saturating_mul(T::CodeStorageByteDeposit::get() as _);
-				let _ = T::NativeAsset::unreserve(&migrator, deposit.saturated_into());
-				let code_hash = T::Hashing::hash(&code);
-				PristineCode::<T>::remove(code_id);
-				InstrumentedCode::<T>::remove(code_id);
-				CodeHashToId::<T>::remove(code_hash);
-			}
-			Ok(())
-		})?;
+		let contract_info = Pallet::<T>::contract_info(&contract)?;
 
 		Pallet::<T>::deposit_event(Event::<T>::Migrated {
 			contract: contract.clone(),
@@ -217,5 +148,73 @@ impl EntryPointCaller<MigrateInput> {
 				marker: PhantomData,
 			},
 		})
+	}
+}
+
+/// Dispatch state for all `Input`s
+impl<I, O, T> EntryPointCaller<Dispatchable<I, O, T>>
+where
+	T: Config,
+{
+	/// Start a cosmwasm transaction by calling an entrypoint.
+	///
+	/// * `shared` - Shared state of the Cosmwasm VM.
+	/// * `funds` - Funds to be transferred before execution.
+	/// * `message` - Message to be passed to the entrypoint.
+	pub(crate) fn call(
+		self,
+		shared: &mut CosmwasmVMShared,
+		funds: FundsOf<T>,
+		message: ContractMessageOf<T>,
+	) -> Result<O, CosmwasmVMError<T>>
+	where
+		for<'x> WasmiVM<CosmwasmVM<'x, T>>: CosmwasmCallVM<I>,
+		for<'x> VmErrorOf<WasmiVM<CosmwasmVM<'x, T>>>: Into<CosmwasmVMError<T>>,
+	{
+		Pallet::<T>::do_extrinsic_dispatch(
+			shared,
+			self.state.entry_point,
+			self.state.sender,
+			self.state.contract,
+			self.state.contract_info,
+			funds,
+			// `cosmwasm_system_entrypoint` is called instead of `cosmwasm_system_run`
+			// to start a transaction.
+			|vm| cosmwasm_system_entrypoint::<I, _>(vm, &message).map_err(Into::into),
+		)?;
+		Ok(self.state.output)
+	}
+
+	/// Continue the execution by running an entrypoint. This is used for running
+	/// submessages.
+	///
+	/// * `shared` - Shared state of the Cosmwasm VM.
+	/// * `funds` - Funds to be transferred before execution.
+	/// * `message` - Message to be passed to the entrypoint.
+	/// * `event_handler` - Event handler that is passed by the VM.
+	pub(crate) fn continue_run(
+		self,
+		shared: &mut CosmwasmVMShared,
+		funds: Vec<Coin>,
+		message: &[u8],
+		event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
+	) -> Result<Option<cosmwasm_minimal_std::Binary>, CosmwasmVMError<T>>
+	where
+		for<'x> WasmiVM<CosmwasmVM<'x, T>>: CosmwasmCallVM<I>,
+		for<'x> VmErrorOf<WasmiVM<CosmwasmVM<'x, T>>>: Into<CosmwasmVMError<T>>,
+	{
+		// Call `cosmwasm_call` to transfer funds and create the vm instance before
+		// calling the callback.
+		Pallet::<T>::cosmwasm_call(
+			shared,
+			self.state.sender,
+			self.state.contract,
+			self.state.contract_info,
+			funds,
+			// `cosmwasm_system_run` is called instead of `cosmwasm_system_entrypoint` here
+			// because here, we want to continue running the transaction with the given
+			// entrypoint, not create a new transaction.
+			|vm| cosmwasm_system_run::<I, _>(vm, message, event_handler).map_err(Into::into),
+		)
 	}
 }
