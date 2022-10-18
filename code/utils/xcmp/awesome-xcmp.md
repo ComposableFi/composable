@@ -70,29 +70,13 @@ XCMP can be upward (parachain to relay), downward(relay to parachain) and siblin
 - <https://medium.com/composable-finance/trustless-bridging-438a6e5c917a>
 - <https://research.csiro.au/blockchainpatterns/general-patterns/blockchain-payment-patterns/token-swap/>
 
-### Operations
-
-https://www.youtube.com/watch?v=rygXb21YCDo
-
-<https://docs.substrate.io/reference/how-to-guides/parachains/add-hrmp-channels/>
-- https://substrate.stackexchange.com/questions/tagged/xcm
-
-Sends KSM from Picasso to Kusama to specified account:
-
-https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rpc.composable.finance#/extrinsics/decode/0x29020101000100010100b8e39e87c0fec96f7d012d31a4c27b44bfb504ab359662112e4270e380c8434101040000000002c2eb0b00000000
-
-### Examples of XCM messages
-
-
-https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Frococo-rpc.polkadot.io#/extrinsics/decode/0x630101000100a10f01000101002aa47c41b763a16946b6cc7e051174877b14fafe5d8daf075b0e39e2398c8e4c0104000000000b00a0724e180900000000 - teleport transfer KSM from Rococo to statemine
-
 
 You
 10:12 AM
 https://github.com/ComposableFi/composable/blob/main/rfcs/0003-xcmp-picasso-statemine.md#make-price-for-usdt
 You
 10:16 AM
-https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rpc.composable.finance#/extrinsics/decode/0x3b00010300a10f043206400b0000000000000000000000000000000a000000000000000000000000000000010000c16ff286230000000000000000000104000000
+
 You
 10:20 AM
 https://tether.to/en/tether-token-usdt-launches-on-kusama/
