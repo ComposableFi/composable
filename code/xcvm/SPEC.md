@@ -200,12 +200,15 @@ Absolute     ::= u128
 Unit         ::= u128 Ratio
 Ratio        ::= u128 u128
 Account      ::= bytes
-Assets       ::= { AssetId : Balance }
+AssetAmount  ::= assetId Ratio | Unit 
+Asset        ::= AssetId Balance
+Assets       ::= [ asset ]
 Transfer     ::= Account Assets  |  Relayer Assets 
 Call         ::= Payload Bindings
 Payload      ::= bytes
-Bindings     ::= { u16 : BindingValue }
-BindingValue ::= Self | Relayer | Result | Balance | AssetId
+Binding      ::= u16 BindingValue
+Bindings     ::= [ Binding ]
+BindingValue ::= Self | Relayer | Result | AssetAmount | AssetId
 Spawn        ::= Network BridgeSecurity Salt Program Assets
 Query        ::= Network Salt
 Account      ::= bytes
@@ -234,6 +237,8 @@ sequenceDiagram
 
 The call instruction supports bindings values on the executing side of the program by specifying the `Bindings`. This allows us to construct a program that uses data only available on the executing side. For example, the swap call of the following smart contract snippet expects a `to` address to receive the funds after a trade.
 
+```
+
 ```rust
 fn swap(amount: u256, pair: (u128, u128), to: AccountId) { ... } 
 ```
@@ -249,9 +254,9 @@ Call {
 
 On the executing interpreter, `BindingValue::Self` will be interpolated at byte index 13  of the payload before being executed, the final payload then becomes `swap(10,(1,2), BindingValue::Self)`, where `BindingValue::Self` is the canonical address of the interpreter on the destination side.
 
-Besides accessing the `Self` register, `BindingValue` allows for lazy lookups of AssetId conversions, by using `BindingValue::AssetId(GlobalId)`, or lazily converting decimal points depending on the chain using the `Balance` type.
+Besides accessing the `Self` register, `BindingValue` allows for lazy lookups of AssetId conversions, by using `BindingValue::AssetId(GlobalId)`, or lazily converting amount value depending on the chain using the `AssetAmount` type.
 
-Bindings do not support non byte aligned encodings.
+Bindings do not support non byte aligned encodings. To correctly bind values in the execution layer, the binding values should be ordered by their position index(u16) respectively since to process them interpreters will iterate over the bindings in sequence, after each iteration, the original payload will be updated with the new binding value and the next binding value position will be shifted by the length of the binding value. 
 
 #### Handling Balances
 
