@@ -26,8 +26,12 @@ use sp_runtime::traits::{Header, Zero};
 use std::collections::{BTreeMap, BTreeSet};
 use subxt::{rpc::rpc_params, Config, OnlineClient};
 
+/// This contains the leaf indices of the relay chain blocks and a map of relay chain heights to a
+/// map of all parachain headers at those heights Used for generating [`ParaHeadsProof`]
 pub struct FinalizedParaHeads {
+	/// Leaf indices
 	pub leaf_indices: Vec<u32>,
+	/// Map of relay chain heights to map of para ids and parachain headers SCALE-encoded
 	pub raw_finalized_heads: BTreeMap<u64, BTreeMap<u32, Vec<u8>>>,
 }
 
@@ -169,6 +173,7 @@ pub async fn fetch_mmr_leaf_proof<T: Config>(
 	Ok(proof)
 }
 
+/// This returns the storage key under which the parachain header with a given para_id is stored.
 pub fn parachain_header_storage_key(para_id: u32) -> StorageKey {
 	let mut storage_key = frame_support::storage::storage_prefix(b"Paras", b"Heads").to_vec();
 	let encoded_para_id = para_id.encode();

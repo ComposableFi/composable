@@ -2,9 +2,10 @@ use crate::{
 	parachain, parachain::api, polkadot, signer::ExtrinsicSigner,
 	utils::unsafe_cast_to_jsonrpsee_client, Error, GrandpaClientState, ParachainClient,
 };
-use beefy_prover::ClientWrapper;
+use beefy_prover::Prover;
 use codec::Decode;
 use common::AccountId;
+use finality_grandpa::BlockNumberOps;
 use futures::{Stream, StreamExt};
 use grandpa_light_client_primitives::{FinalityProof, ParachainHeaderProofs};
 use grandpa_prover::GrandpaProver;
@@ -84,7 +85,7 @@ where
 		use ibc::core::ics24_host::identifier::ChainId;
 		let api = self.relay_client.storage();
 		let para_client_api = self.para_client.storage();
-		let client_wrapper = ClientWrapper {
+		let client_wrapper = Prover {
 			relay_client: self.relay_client.clone(),
 			para_client: self.para_client.clone(),
 			beefy_activation_block,
@@ -350,8 +351,8 @@ where
 	<T::Signature as Verify>::Signer: From<MultiSigner> + IdentifyAccount<AccountId = T::AccountId>,
 	<T as Config>::Address: From<<T as Config>::AccountId>,
 	T::Signature: From<MultiSignature>,
-	T::BlockNumber: From<u32> + Display + Ord + sp_runtime::traits::Zero + One,
-	T::Hash: From<H256>,
+	T::BlockNumber: BlockNumberOps + From<u32> + Display + Ord + sp_runtime::traits::Zero + One,
+	T::Hash: From<sp_core::H256> + From<[u8; 32]>,
 	H256: From<T::Hash>,
 	FinalityProof<sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256>>:
 		From<FinalityProof<T::Header>>,

@@ -44,6 +44,7 @@ use sp_core::H256;
 
 use crate::finality_protocol::FinalityEvent;
 use beefy_prover::helpers::fetch_timestamp_extrinsic_with_proof;
+use finality_grandpa::BlockNumberOps;
 use futures::{future::ready, stream, Stream, StreamExt};
 use grandpa_light_client_primitives::{FinalityProof, ParachainHeaderProofs};
 use ibc_proto::ibc::core::connection::v1::IdentifiedConnection;
@@ -51,6 +52,7 @@ use ics11_beefy::client_state::ClientState as BeefyClientState;
 use pallet_ibc::{
 	events::IbcEvent as RawIbcEvent, light_clients::HostFunctionsManager, HostConsensusProof,
 };
+
 use sp_runtime::traits::One;
 use std::{collections::BTreeMap, pin::Pin, str::FromStr, time::Duration};
 use subxt::events::Phase;
@@ -65,8 +67,8 @@ where
 	MultiSigner: From<MultiSigner>,
 	<T as subxt::Config>::Address: From<<T as subxt::Config>::AccountId>,
 	T::Signature: From<MultiSignature>,
-	T::BlockNumber: From<u32> + Display + Ord + sp_runtime::traits::Zero + One,
-	T::Hash: From<sp_core::H256>,
+	T::BlockNumber: BlockNumberOps + From<u32> + Display + Ord + sp_runtime::traits::Zero + One,
+	T::Hash: From<sp_core::H256> + From<[u8; 32]>,
 	sp_core::H256: From<T::Hash>,
 	FinalityProof<sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256>>:
 		From<FinalityProof<T::Header>>,

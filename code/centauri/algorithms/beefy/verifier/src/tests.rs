@@ -22,7 +22,7 @@ use beefy_primitives::{
 	mmr::{BeefyNextAuthoritySet, MmrLeaf},
 	Payload,
 };
-use beefy_prover::{ClientWrapper, Crypto};
+use beefy_prover::{Crypto, Prover};
 use futures::stream::StreamExt;
 use pallet_mmr_primitives::Proof;
 use serde_json::Value;
@@ -40,7 +40,7 @@ async fn test_verify_mmr_with_proof() {
 	let para_client =
 		subxt::client::OnlineClient::<PolkadotConfig>::from_url(para_url).await.unwrap();
 
-	let mut client_state = ClientWrapper::get_initial_client_state(Some(&client)).await;
+	let mut client_state = Prover::get_initial_client_state(Some(&client)).await;
 	let subscription: Subscription<String> = client
 		.rpc()
 		.subscribe(
@@ -51,12 +51,8 @@ async fn test_verify_mmr_with_proof() {
 		.await
 		.unwrap();
 
-	let parachain_client = ClientWrapper {
-		relay_client: client,
-		para_client,
-		beefy_activation_block: 0,
-		para_id: 2000,
-	};
+	let parachain_client =
+		Prover { relay_client: client, para_client, beefy_activation_block: 0, para_id: 2000 };
 
 	let mut subscription_stream = subscription.enumerate().take(100);
 	while let Some((count, Ok(commitment))) = subscription_stream.next().await {
@@ -136,7 +132,7 @@ async fn should_fail_with_incomplete_signature_threshold() {
 	};
 
 	let res = crate::verify_mmr_root_with_proof::<Crypto>(
-		ClientWrapper::<PolkadotConfig>::get_initial_client_state(None).await,
+		Prover::<PolkadotConfig>::get_initial_client_state(None).await,
 		mmr_update,
 	);
 
@@ -175,7 +171,7 @@ async fn should_fail_with_invalid_validator_set_id() {
 	};
 
 	let res = crate::verify_mmr_root_with_proof::<Crypto>(
-		ClientWrapper::<PolkadotConfig>::get_initial_client_state(None).await,
+		Prover::<PolkadotConfig>::get_initial_client_state(None).await,
 		mmr_update,
 	);
 	match res {
@@ -205,7 +201,7 @@ async fn verify_parachain_headers() {
 	let para_client =
 		subxt::client::OnlineClient::<PolkadotConfig>::from_url(para_url).await.unwrap();
 
-	let mut client_state = ClientWrapper::get_initial_client_state(Some(&client)).await;
+	let mut client_state = Prover::get_initial_client_state(Some(&client)).await;
 	let subscription: Subscription<String> = client
 		.rpc()
 		.subscribe(
@@ -221,12 +217,8 @@ async fn verify_parachain_headers() {
 	block_sub.take(2).collect::<Vec<_>>().await;
 	println!("Parachain has started producing blocks");
 
-	let parachain_client = ClientWrapper {
-		relay_client: client,
-		para_client,
-		beefy_activation_block: 0,
-		para_id: 2000,
-	};
+	let parachain_client =
+		Prover { relay_client: client, para_client, beefy_activation_block: 0, para_id: 2000 };
 
 	let mut subscription_stream = subscription.enumerate().take(100);
 	while let Some((count, Ok(commitment))) = subscription_stream.next().await {

@@ -22,6 +22,7 @@ use crate::client_message::{ClientMessage, RelayChainHeader};
 use alloc::{format, string::ToString, vec, vec::Vec};
 use codec::Decode;
 use core::marker::PhantomData;
+use finality_grandpa::Chain;
 use grandpa_client_primitives::{
 	justification::{check_equivocation_proof, find_scheduled_change, AncestryChain},
 	ParachainHeadersWithFinalityProof,
@@ -54,6 +55,7 @@ use light_client_common::{
 	state_machine, verify_delay_passed, verify_membership, verify_non_membership,
 };
 use primitive_types::H256;
+use sp_runtime::traits::Header as _;
 use sp_trie::StorageProof;
 use tendermint_proto::Protobuf;
 
@@ -84,18 +86,11 @@ where
 					finality_proof: header.finality_proof,
 					parachain_headers: header.parachain_headers,
 				};
-				let client_state = grandpa_client_primitives::ClientState {
-					current_authorities: client_state.current_authorities,
-					current_set_id: client_state.current_set_id,
-					latest_relay_hash: client_state.latest_relay_hash,
-					latest_relay_height: client_state.latest_relay_height,
-					para_id: client_state.para_id,
-				};
 
 				grandpa_client::verify_parachain_headers_with_grandpa_finality_proof::<
 					RelayChainHeader,
 					H,
-				>(client_state, headers_with_finality_proof)
+				>(client_state.into(), headers_with_finality_proof)
 				.map_err(Error::GrandpaPrimitives)?;
 			},
 			ClientMessage::Misbehaviour(misbehavior) => {
@@ -142,7 +137,25 @@ where
 			AncestryChain::<RelayChainHeader>::new(&header.finality_proof.unknown_headers);
 		let mut consensus_states = vec![];
 
+		let from = header
+			.finality_proof
+			.unknown_headers
+			.iter()
+			.min_by_key(|h| *h.number())
+			.ok_or_else(|| Error::Custom(format!("Unknown headers can't be empty!")))?;
+
+		let mut finalized = ancestry
+			.ancestry(from.hash(), header.finality_proof.block)
+			.map_err(|_| Error::Custom(format!("Invalid ancestry!")))?;
+		finalized.sort();
+
 		for (relay_hash, parachain_header_proof) in header.parachain_headers {
+			// we really shouldn't set consensus states for parachain headers not in the finalized
+			// chain.
+			if finalized.binary_search(&relay_hash).is_err() {
+				continue
+			}
+
 			let header = ancestry.header(&relay_hash).ok_or_else(|| {
 				Error::Custom(format!("No relay chain header found for hash: {relay_hash:?}"))
 			})?;

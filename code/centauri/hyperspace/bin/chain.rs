@@ -1,6 +1,5 @@
 #![allow(unused_variables, unreachable_patterns, unreachable_code)]
 
-use crate::AnyConfig;
 use async_trait::async_trait;
 use derive_more::From;
 use futures::Stream;
@@ -33,6 +32,9 @@ use ibc_proto::{
 use pallet_ibc::light_clients::AnyClientMessage;
 #[cfg(feature = "testing")]
 use pallet_ibc::Timeout;
+use serde::Deserialize;
+use thiserror::Error;
+
 #[cfg(feature = "parachain")]
 use parachain::ParachainClient;
 use primitives::{
@@ -58,6 +60,26 @@ impl subxt::Config for DefaultConfig {
 	type Extrinsic = sp_runtime::OpaqueExtrinsic;
 	type ExtrinsicParams = SubstrateExtrinsicParams<Self>;
 }
+
+#[derive(Deserialize)]
+pub struct Config {
+	pub chain_a: AnyConfig,
+	pub chain_b: AnyConfig,
+	pub core: CoreConfig,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum AnyConfig {
+	#[cfg(feature = "parachain")]
+	Parachain(parachain::ParachainClientConfig),
+}
+
+#[derive(Deserialize)]
+pub struct CoreConfig {
+	pub prometheus_endpoint: String,
+}
+
 #[derive(Clone)]
 pub enum AnyChain {
 	#[cfg(feature = "parachain")]

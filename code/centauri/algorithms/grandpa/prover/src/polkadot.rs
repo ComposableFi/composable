@@ -13,4 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-include!(concat!(env!("OUT_DIR"), "/runtime.rs"));
+//! Contains subxt generated types for the relay chain
+
+#![allow(missing_docs)]
+
+include!(concat!(env!("OUT_DIR"), "/polkadot.rs"));

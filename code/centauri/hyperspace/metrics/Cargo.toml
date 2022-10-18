@@ -1,0 +1,18 @@
+[package]
+name = "metrics"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+futures-util = { version = "0.3.19", default-features = false, features = ["io"] }
+hyper = { version = "0.14.16", default-features = false, features = ["http1", "server", "tcp"] }
+log = "0.4.17"
+prometheus = { version = "0.13.0", default-features = false }
+thiserror = "1.0"
+tokio = { version = "1.17.0", features = ["parking_lot"] }
+anyhow = "1.0.65"
+
+# ibc
+ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "9a959faabb8f2869e88327ea65a49f5697dcadf6", features = [] }
+ibc-proto = { git = "https://github.com/composableFi/ibc-rs", rev = "9a959faabb8f2869e88327ea65a49f5697dcadf6" }
+tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8" }

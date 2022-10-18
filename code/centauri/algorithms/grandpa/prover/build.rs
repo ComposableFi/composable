@@ -15,6 +15,7 @@
 
 #[tokio::main]
 async fn main() -> color_eyre::Result<()> {
-	subxt_codegen::build_script("ws://127.0.0.1:9944", "runtime").await?;
+	subxt_codegen::build_script("ws://127.0.0.1:9944", "polkadot").await?;
+	subxt_codegen::build_script("ws://127.0.0.1:9188", "parachain").await?;
 	Ok(())
 }

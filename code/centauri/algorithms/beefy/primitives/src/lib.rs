@@ -13,10 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Primitive types used in the library
+//! Primitive BEEFY types used by verifier and prover
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::all)]
+#![deny(missing_docs)]
 
 pub mod error;
 use beefy_primitives::mmr::MmrLeafVersion;

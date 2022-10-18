@@ -15,6 +15,7 @@
 
 use derive_more::{Display, From};
 
+///
 #[derive(From, Debug, Display)]
 pub enum Error {
 	/// Anyhow error

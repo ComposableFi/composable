@@ -27,7 +27,7 @@ use crate::{
 use beefy_light_client_primitives::{NodesUtils, PartialMmrLeaf};
 use beefy_prover::{
 	helpers::{fetch_timestamp_extrinsic_with_proof, TimeStampExtWithProof},
-	runtime, ClientWrapper,
+	runtime, Prover,
 };
 use codec::{Decode, Encode};
 use futures::stream::StreamExt;
@@ -81,7 +81,7 @@ async fn test_continuous_update_of_beefy_client() {
 			std::env::var("PARA_NODE_ENDPOINT").unwrap_or("ws://127.0.0.1:9188".to_string());
 		subxt::client::OnlineClient::<PolkadotConfig>::from_url(para_url).await.unwrap()
 	};
-	let client_wrapper = ClientWrapper {
+	let client_wrapper = Prover {
 		relay_client: relay_client.clone(),
 		para_client: para_client.clone(),
 		beefy_activation_block: 0,

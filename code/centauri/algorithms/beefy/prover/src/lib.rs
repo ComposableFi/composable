@@ -16,10 +16,15 @@
 //! BEEFY prover utilities
 
 #![allow(clippy::all)]
+#![deny(missing_docs)]
 
+/// Errors that can be encountered by the prover
 pub mod error;
+/// Helper functions and types
 pub mod helpers;
+/// Methods for querying the relay chain
 pub mod relay_chain_queries;
+/// Metadata generated code for interacting with the relay chain
 pub mod runtime;
 
 use beefy_light_client_primitives::{
@@ -53,6 +58,7 @@ use relay_chain_queries::{
 	fetch_finalized_parachain_heads, fetch_mmr_leaf_proof, FinalizedParaHeads,
 };
 
+/// Host function implementation for beefy light client.
 #[derive(Clone, PartialEq, Eq, Debug, Default)]
 pub struct Crypto;
 
@@ -75,17 +81,23 @@ impl HostFunctions for Crypto {
 	}
 }
 
-pub struct ClientWrapper<T: Config> {
+/// This contains methods for fetching BEEFY proofs for parachain headers.
+pub struct Prover<T: Config> {
+	/// Subxt client for the relay chain
 	pub relay_client: OnlineClient<T>,
+	/// Subxt client for the parachain
 	pub para_client: OnlineClient<T>,
+	/// Block at which beefy was activated
 	pub beefy_activation_block: u32,
+	/// Para Id for the associated parachain.
 	pub para_id: u32,
 }
 
-impl<T: Config> ClientWrapper<T>
+impl<T: Config> Prover<T>
 where
 	u32: From<<T as subxt::Config>::BlockNumber>,
 {
+	/// Returns the initial state for bootstrapping a BEEFY light client.
 	pub async fn get_initial_client_state(client: Option<&OnlineClient<T>>) -> ClientState {
 		if client.is_none() {
 			return ClientState {
@@ -210,6 +222,8 @@ where
 		Ok(headers)
 	}
 
+	/// This will query the finalized parachain headers between the given relay chain blocks
+	/// Only including the given parachain headers into the [`MmrBatchProof`]
 	pub async fn query_finalized_parachain_headers_with_proof(
 		&self,
 		commitment_block_number: u32,
@@ -288,6 +302,8 @@ where
 		Ok((parachain_headers, batch_proof))
 	}
 
+	/// This will fetch the latest leaf in the mmr as well as a proof for this leaf in the latest
+	/// mmr root hash.
 	pub async fn fetch_mmr_update_proof_for(
 		&self,
 		signed_commitment: beefy_primitives::SignedCommitment<

@@ -19,11 +19,8 @@ use error::Error;
 use serde::Deserialize;
 
 use beefy_light_client_primitives::{ClientState, MmrUpdateProof};
-use beefy_prover::ClientWrapper;
-use ibc::{
-	core::ics24_host::identifier::{ChannelId, ClientId, PortId},
-	events::IbcEvent,
-};
+use beefy_prover::Prover;
+use ibc::core::ics24_host::identifier::{ChannelId, ClientId, PortId};
 use ics11_beefy::client_message::ParachainHeader;
 use pallet_mmr_primitives::BatchProof;
 use sp_core::{ecdsa, ed25519, sr25519, Bytes, Pair, H256};
@@ -37,18 +34,16 @@ use subxt::{
 	ext::sp_runtime::{generic::Era, traits::Header as HeaderT, MultiSigner},
 	tx::{AssetTip, BaseExtrinsicParamsBuilder, ExtrinsicParams},
 };
-use tokio::sync::broadcast::{self, Sender};
 
 use crate::utils::{fetch_max_extrinsic_weight, unsafe_cast_to_jsonrpsee_client};
 use primitives::KeyProvider;
 
 use crate::{finality_protocol::FinalityProtocol, signer::ExtrinsicSigner};
-use grandpa_light_client_primitives::ParachainHeadersWithFinalityProof;
 use grandpa_prover::GrandpaProver;
 use ics10_grandpa::client_state::ClientState as GrandpaClientState;
 use jsonrpsee_ws_client::WsClientBuilder;
 use sp_keystore::testing::KeyStore;
-use sp_runtime::traits::{One, Zero};
+use sp_runtime::traits::One;
 use subxt::tx::{SubstrateExtrinsicParamsBuilder, TxPayload};
 
 /// Implements the [`crate::Chain`] trait for parachains.
@@ -82,8 +77,6 @@ pub struct ParachainClient<T: subxt::Config> {
 	pub key_type_id: KeyTypeId,
 	/// used for encoding relayer address.
 	pub ss58_version: Ss58AddressFormat,
-	/// ibc event stream sender
-	pub sender: Sender<IbcEvent>,
 	/// the maximum extrinsic weight allowed by this client
 	pub max_extrinsic_weight: u64,
 	/// Channels cleared for packet relay
@@ -186,7 +179,6 @@ where
 		})
 		.await?;
 
-		let (sender, _) = broadcast::channel(32);
 		let max_extrinsic_weight = fetch_max_extrinsic_weight(&para_client).await?;
 
 		let key_store: SyncCryptoStorePtr = Arc::new(KeyStore::new());
@@ -229,7 +221,6 @@ where
 			public_key,
 			key_store,
 			key_type_id,
-			sender,
 			max_extrinsic_weight,
 			para_ws_client,
 			relay_ws_client,
@@ -239,41 +230,17 @@ where
 		})
 	}
 
-	/// Queries parachain headers that have been finalized by GRANDPA in between the given relay
-	/// chain heights
-	pub async fn query_grandpa_finalized_parachain_headers_between(
-		&self,
-		latest_finalized_block: u32,
-		previous_finalized_block: u32,
-	) -> Result<Option<Vec<T::Header>>, Error>
-	where
-		T::BlockNumber: From<u32>,
-		T: subxt::Config,
-		T::BlockNumber: Ord + Zero,
-		u32: From<T::BlockNumber>,
-	{
+	/// Returns a grandpa proving client.
+	pub fn grandpa_prover(&self) -> GrandpaProver<T> {
 		let relay_ws_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.relay_ws_client) };
 		let para_ws_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_ws_client) };
-		let prover = GrandpaProver {
+		GrandpaProver {
 			relay_client: self.relay_client.clone(),
 			relay_ws_client,
 			para_client: self.para_client.clone(),
 			para_ws_client,
 			para_id: self.para_id,
-		};
-
-		prover
-			.query_finalized_parachain_headers_between(
-				latest_finalized_block,
-				previous_finalized_block,
-			)
-			.await
-			.map_err(|e| {
-				Error::from(format!(
-					"[query_finalized_parachain_headers_between] Failed due to {:?}",
-					e
-				))
-			})
+		}
 	}
 
 	/// Queries parachain headers that have been finalized by BEEFY in between the given relay chain
@@ -287,7 +254,7 @@ where
 		u32: From<T::BlockNumber>,
 		T::BlockNumber: From<u32>,
 	{
-		let client_wrapper = ClientWrapper {
+		let client_wrapper = Prover {
 			relay_client: self.relay_client.clone(),
 			para_client: self.para_client.clone(),
 			beefy_activation_block: client_state.beefy_activation_block,
@@ -308,47 +275,6 @@ where
 	}
 
 	/// Construct the [`ParachainHeadersWithFinalityProof`] for parachain headers with the given
-	/// numbers using the GRANDPA finality proof with the given relay chain heights.
-	pub async fn query_grandpa_finalized_parachain_headers_with_proof(
-		&self,
-		latest_finalized_block: u32,
-		previous_finalized_block: u32,
-		headers: Vec<T::BlockNumber>,
-	) -> Result<ParachainHeadersWithFinalityProof<T::Header>, Error>
-	where
-		T::BlockNumber: Ord + sp_runtime::traits::Zero,
-		T::Header: HeaderT,
-		<T::Header as HeaderT>::Hash: From<T::Hash>,
-		T::BlockNumber: One,
-	{
-		let relay_ws_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.relay_ws_client) };
-		let para_ws_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_ws_client) };
-		let prover = GrandpaProver {
-			relay_client: self.relay_client.clone(),
-			relay_ws_client,
-			para_client: self.para_client.clone(),
-			para_ws_client,
-			para_id: self.para_id,
-		};
-
-		let result = prover
-			.query_finalized_parachain_headers_with_proof(
-				latest_finalized_block,
-				previous_finalized_block,
-				headers,
-			)
-			.await
-			.map_err(|e| {
-				Error::from(format!(
-					"[query_finalized_parachain_headers_with_proof] Failed due to {:?}",
-					e
-				))
-			})?;
-
-		Ok(result)
-	}
-
-	/// Construct the [`ParachainHeadersWithFinalityProof`] for parachain headers with the given
 	/// numbers using the BEEFY finality proof with the given relay chain heights.
 	pub async fn query_beefy_finalized_parachain_headers_with_proof(
 		&self,
@@ -359,7 +285,7 @@ where
 	where
 		T::BlockNumber: Ord + sp_runtime::traits::Zero,
 	{
-		let client_wrapper = ClientWrapper {
+		let client_wrapper = Prover {
 			relay_client: self.relay_client.clone(),
 			para_client: self.para_client.clone(),
 			beefy_activation_block: client_state.beefy_activation_block,
@@ -404,7 +330,7 @@ where
 		>,
 		client_state: &ClientState,
 	) -> Result<MmrUpdateProof, Error> {
-		let prover = ClientWrapper {
+		let prover = Prover {
 			relay_client: self.relay_client.clone(),
 			para_client: self.para_client.clone(),
 			beefy_activation_block: client_state.beefy_activation_block,

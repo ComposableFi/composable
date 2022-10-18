@@ -13,8 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//! Primitive types and traits used by the GRANDPA prover & verifier.
+
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::all)]
+#![deny(missing_docs)]
 
 extern crate alloc;
 extern crate core;
@@ -28,7 +31,9 @@ use sp_runtime::traits::Header;
 use sp_std::prelude::*;
 use sp_storage::StorageKey;
 
+/// GRANPA errors
 pub mod error;
+/// GRANDPA justification utilities
 pub mod justification;
 
 /// A commit message for this chain's block type.
@@ -53,16 +58,19 @@ pub struct FinalityProof<H: Header> {
 }
 
 /// Previous light client state.
+#[derive(Clone)]
 pub struct ClientState<H> {
-	// Current authority set
+	/// Current authority set
 	pub current_authorities: AuthorityList,
-	// Id of the current authority set.
+	/// Id of the current authority set.
 	pub current_set_id: u64,
-	// latest finalized height on the relay chain.
+	/// latest finalized height on the relay chain.
 	pub latest_relay_height: u32,
-	// latest finalized hash on the relay chain.
+	/// latest finalized height on the parachain.
+	pub latest_para_height: u32,
+	/// latest finalized hash on the relay chain.
 	pub latest_relay_hash: H,
-	// para_id of associated parachain
+	/// para_id of associated parachain
 	pub para_id: u32,
 }
 
@@ -78,6 +86,7 @@ pub struct ParachainHeaderProofs {
 }
 
 /// Parachain headers with a Grandpa finality proof.
+#[derive(Clone)]
 pub struct ParachainHeadersWithFinalityProof<H: Header> {
 	/// The grandpa finality proof: contains relay chain headers from the
 	/// last known finalized grandpa block.

@@ -31,6 +31,7 @@ thiserror = "1.0.31"
 itertools = "0.10.3"
 jsonrpsee = "0.15.1"
 jsonrpsee-ws-client = "0.14.0"
+finality-grandpa = "0.16.0"
 
 # substrate
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", features = ["full_crypto"] }
@@ -71,7 +72,6 @@ beefy-gadget-rpc = { git = "https://github.com/paritytech/substrate", branch = "
 
 # Grandpa
 grandpa-prover = { path = "../../algorithms/grandpa/prover" }
-grandpa-light-client = { path = "../../algorithms/grandpa/verifier" }
 grandpa-light-client-primitives = { path = "../../algorithms/grandpa/primitives" }
 ics10-grandpa = { path = "../../light-clients/ics10-grandpa" }
 finality-grandpa-rpc = { package = "sc-finality-grandpa-rpc", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
