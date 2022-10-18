@@ -63,26 +63,20 @@ where
 	// 2. Properly upload the code (so that the necessary storage items are modified)
 	Cosmwasm::<T>::do_upload(&origin, wasm_module.code.try_into().unwrap()).unwrap();
 	// 3. Create the shared vm (inner vm)
-	let shared =
-		Cosmwasm::<T>::do_create_vm_shared(100_000_000u64, InitialStorageMutability::ReadOnly);
-
-	let code_hash = CodeIdToInfo::<T>::get(1).unwrap().pristine_code_hash;
-	let contract_addr = Pallet::<T>::derive_contract_address(
-		&origin,
-		"salt".as_bytes(),
-		code_hash,
-		"message".as_bytes(),
-	);
+	let mut shared =
+		Cosmwasm::<T>::do_create_vm_shared(100_000_000u64, InitialStorageMutability::ReadWrite);
 
 	// 4. Instantiate the contract and get the contract address
-	EntryPointCaller::<InstantiateInput>::setup::<T>(
+	let contract_addr = EntryPointCaller::<InstantiateInput>::setup::<T>(
 		origin.clone(),
 		1,
 		"salt".as_bytes(),
-		None,
+		Some(origin),
 		vec![0x41_u8].try_into().unwrap(),
 		"message".as_bytes(),
 	)
+	.unwrap()
+	.call(&mut shared, Default::default(), b"message".to_vec().try_into().unwrap())
 	.unwrap();
 
 	let contract_info = ContractToInfo::<T>::get(&contract_addr).unwrap();
@@ -245,7 +239,27 @@ benchmarks! {
 		assert_eq!(InstrumentedCode::<T>::contains_key(1), false);
 		assert_eq!(CodeHashToId::<T>::contains_key(pristine_code_hash), false);
 		// Make sure contract points to the new code
-		assert_eq!(ContractToInfo::<T>::get(&contract).unwrap().code_id, 1);
+		assert_eq!(ContractToInfo::<T>::get(&contract).unwrap().code_id, 2);
+	}
+
+	update_admin {
+		let origin = create_funded_account::<T>("origin");
+		let new_admin = account::<<T as Config>::AccountIdExtended>("new_admin", 0, 0xCAFEBABE);
+		let (_, contract, _info) = create_instantiated_contract::<T>(origin.clone());
+
+	}: _(RawOrigin::Signed(origin), contract.clone(), new_admin.clone(), 100_000_000u64)
+	verify {
+		// Make sure contract points to the new code
+		assert_eq!(ContractToInfo::<T>::get(&contract).unwrap().admin, Some(new_admin));
+	}
+
+	clear_admin {
+		let origin = create_funded_account::<T>("origin");
+		let (_, contract, _info) = create_instantiated_contract::<T>(origin.clone());
+	}: _(RawOrigin::Signed(origin), contract.clone(), 100_000_000u64)
+	verify {
+		// Make sure contract points to the new code
+		assert_eq!(ContractToInfo::<T>::get(&contract).unwrap().admin, None);
 	}
 
 	db_read {

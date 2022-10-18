@@ -135,7 +135,7 @@ impl EntryPointCaller<MigrateInput> {
 		contract: AccountIdOf<T>,
 		new_code_id: CosmwasmCodeId,
 	) -> Result<EntryPointCaller<Dispatchable<MigrateInput, (), T>>, Error<T>> {
-		let contract_info = Pallet::<T>::contract_info(&contract)?;
+		let mut contract_info = Pallet::<T>::contract_info(&contract)?;
 		// If the contract is already migrated (which is the case for `continue_migrate`) don't try
 		// to migrate again.
 		if contract_info.code_id != new_code_id {
@@ -145,6 +145,7 @@ impl EntryPointCaller<MigrateInput> {
 				contract_info.admin.clone(),
 				String::from_utf8_lossy(&contract_info.label).to_string(),
 			)?;
+			contract_info.code_id = new_code_id;
 		}
 
 		Pallet::<T>::deposit_event(Event::<T>::Migrated {

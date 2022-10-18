@@ -35,6 +35,8 @@ pub trait WeightInfo {
 	fn instantiate(n: u32, ) -> Weight;
 	fn execute(n: u32, ) -> Weight;
 	fn migrate() -> Weight;
+	fn update_admin() -> Weight;
+	fn clear_admin() -> Weight;
 	fn db_read() -> Weight;
 	fn db_read_other_contract() -> Weight;
 	fn db_write() -> Weight;
@@ -72,7 +74,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Cosmwasm CodeIdToInfo (r:0 w:1)
 	/// The range of component `n` is `[1, 514288]`.
 	fn upload(n: u32, ) -> Weight {
-		(339_075_000 as Weight)
+		(252_606_000 as Weight)
 			// Standard Error: 0
 			.saturating_add((44_000 as Weight).saturating_mul(n as Weight))
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
@@ -88,9 +90,9 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Tokens Accounts (r:2 w:2)
 	/// The range of component `n` is `[0, 17]`.
 	fn instantiate(n: u32, ) -> Weight {
-		(1_130_508_000 as Weight)
-			// Standard Error: 684_000
-			.saturating_add((27_820_000 as Weight).saturating_mul(n as Weight))
+		(1_097_476_000 as Weight)
+			// Standard Error: 56_000
+			.saturating_add((24_249_000 as Weight).saturating_mul(n as Weight))
 			.saturating_add(T::DbWeight::get().reads(6 as Weight))
 			.saturating_add(T::DbWeight::get().reads((2 as Weight).saturating_mul(n as Weight)))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
@@ -105,120 +107,124 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Tokens Accounts (r:2 w:2)
 	/// The range of component `n` is `[0, 17]`.
 	fn execute(n: u32, ) -> Weight {
-		(1_109_656_000 as Weight)
-			// Standard Error: 186_000
-			.saturating_add((25_213_000 as Weight).saturating_mul(n as Weight))
+		(1_080_899_000 as Weight)
+			// Standard Error: 51_000
+			.saturating_add((25_029_000 as Weight).saturating_mul(n as Weight))
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().reads((2 as Weight).saturating_mul(n as Weight)))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes((2 as Weight).saturating_mul(n as Weight)))
 	}
-	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
+	// Storage: Cosmwasm ContractToInfo (r:1 w:1)
+	// Storage: Cosmwasm CodeIdToInfo (r:2 w:2)
+	// Storage: Cosmwasm PristineCode (r:1 w:1)
+	// Storage: System Account (r:1 w:1)
+	// Storage: Cosmwasm InstrumentedCode (r:1 w:1)
+	// Storage: Timestamp Now (r:1 w:0)
+	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
+	// Storage: Cosmwasm CodeHashToId (r:0 w:1)
+	fn migrate() -> Weight {
+		(944_084_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(8 as Weight))
+			.saturating_add(T::DbWeight::get().writes(7 as Weight))
+	}
+	// Storage: Cosmwasm ContractToInfo (r:1 w:1)
 	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
 	// Storage: Cosmwasm InstrumentedCode (r:1 w:0)
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
-	fn migrate() -> Weight {
-		(934_281_000 as Weight)
+	fn update_admin() -> Weight {
+		(229_458_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
+	// Storage: Cosmwasm ContractToInfo (r:1 w:1)
 	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
 	// Storage: Cosmwasm InstrumentedCode (r:1 w:0)
+	// Storage: Timestamp Now (r:1 w:0)
+	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
+	fn clear_admin() -> Weight {
+		(228_833_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(5 as Weight))
+			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+	}
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: unknown [0xe9a804b2e527fd3601d2ffc0bb023cd668656c6c6f20776f726c64] (r:1 w:0)
 	fn db_read() -> Weight {
-		(222_790_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(5 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		(199_750_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 	}
-	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
-	// Storage: Cosmwasm InstrumentedCode (r:1 w:0)
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: unknown [0xe9a804b2e527fd3601d2ffc0bb023cd668656c6c6f20776f726c64] (r:1 w:0)
 	fn db_read_other_contract() -> Weight {
-		(222_956_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(5 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		(199_667_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 	}
-	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
-	// Storage: Cosmwasm InstrumentedCode (r:1 w:0)
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: unknown [0x46fb7408d4f285228f4af516ea25851b68656c6c6f] (r:1 w:1)
 	fn db_write() -> Weight {
-		(223_580_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(5 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+		(200_916_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(3 as Weight))
+			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
-	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
-	// Storage: Cosmwasm InstrumentedCode (r:1 w:0)
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	fn db_scan() -> Weight {
-		(219_122_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(4 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		(195_542_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 	}
-	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
-	// Storage: Cosmwasm InstrumentedCode (r:1 w:0)
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: unknown [0x] (r:1 w:0)
 	fn db_next() -> Weight {
-		(233_373_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(5 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		(225_834_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 	}
-	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
-	// Storage: Cosmwasm InstrumentedCode (r:1 w:0)
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: unknown [0x46fb7408d4f285228f4af516ea25851b68656c6c6f] (r:1 w:1)
 	fn db_remove() -> Weight {
-		(227_205_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(5 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+		(201_166_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(3 as Weight))
+			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Tokens Accounts (r:1 w:0)
 	fn balance() -> Weight {
-		(2_750_000 as Weight)
+		(2_917_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 	}
 	// Storage: System Account (r:2 w:2)
 	// Storage: Tokens Accounts (r:2 w:2)
 	/// The range of component `n` is `[0, 17]`.
 	fn transfer(n: u32, ) -> Weight {
-		(11_581_000 as Weight)
-			// Standard Error: 50_000
-			.saturating_add((21_673_000 as Weight).saturating_mul(n as Weight))
+		(9_479_000 as Weight)
+			// Standard Error: 45_000
+			.saturating_add((22_662_000 as Weight).saturating_mul(n as Weight))
 			.saturating_add(T::DbWeight::get().reads((2 as Weight).saturating_mul(n as Weight)))
 			.saturating_add(T::DbWeight::get().writes((2 as Weight).saturating_mul(n as Weight)))
 	}
 	// Storage: Cosmwasm ContractToInfo (r:1 w:1)
 	fn set_contract_meta() -> Weight {
-		(5_542_000 as Weight)
+		(5_583_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
-	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
-	// Storage: Cosmwasm InstrumentedCode (r:1 w:0)
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	fn running_contract_meta() -> Weight {
-		(218_914_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(4 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		(195_334_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 	}
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	fn contract_meta() -> Weight {
-		(3_542_000 as Weight)
+		(3_750_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 	}
 	fn addr_validate() -> Weight {
-		(834_000 as Weight)
+		(833_000 as Weight)
 	}
 	fn addr_canonicalize() -> Weight {
 		(792_000 as Weight)
@@ -227,88 +233,73 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		(167_000 as Weight)
 	}
 	fn secp256k1_recover_pubkey() -> Weight {
-		(33_792_000 as Weight)
+		(33_916_000 as Weight)
 	}
 	fn secp256k1_verify() -> Weight {
-		(208_000 as Weight)
+		(209_000 as Weight)
 	}
 	fn ed25519_verify() -> Weight {
-		(37_374_000 as Weight)
+		(37_333_000 as Weight)
 	}
 	fn ed25519_batch_verify() -> Weight {
-		(74_082_000 as Weight)
+		(74_000_000 as Weight)
 	}
-	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
-	// Storage: Cosmwasm InstrumentedCode (r:1 w:0)
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
+	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
 	// Storage: Cosmwasm ContractToInfo (r:1 w:1)
 	// Storage: Cosmwasm CurrentNonce (r:1 w:1)
 	// Storage: System Account (r:2 w:2)
 	// Storage: Tokens Accounts (r:2 w:2)
 	/// The range of component `n` is `[0, 17]`.
 	fn continue_instantiate(n: u32, ) -> Weight {
-		(1_305_840_000 as Weight)
-			// Standard Error: 206_000
-			.saturating_add((24_066_000 as Weight).saturating_mul(n as Weight))
-			.saturating_add(T::DbWeight::get().reads(6 as Weight))
+		(1_273_992_000 as Weight)
+			// Standard Error: 203_000
+			.saturating_add((22_212_000 as Weight).saturating_mul(n as Weight))
+			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().reads((2 as Weight).saturating_mul(n as Weight)))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes((2 as Weight).saturating_mul(n as Weight)))
 	}
-	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
-	// Storage: Cosmwasm InstrumentedCode (r:1 w:0)
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	/// The range of component `n` is `[0, 17]`.
 	fn continue_execute(n: u32, ) -> Weight {
-		(1_290_622_000 as Weight)
-			// Standard Error: 390_000
-			.saturating_add((2_615_000 as Weight).saturating_mul(n as Weight))
-			.saturating_add(T::DbWeight::get().reads(5 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		(1_236_165_000 as Weight)
+			// Standard Error: 84_000
+			.saturating_add((415_000 as Weight).saturating_mul(n as Weight))
+			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 	}
-	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
-	// Storage: Cosmwasm InstrumentedCode (r:1 w:0)
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	fn continue_migrate() -> Weight {
-		(1_132_362_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(5 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		(1_076_041_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 	}
-	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
-	// Storage: Cosmwasm InstrumentedCode (r:1 w:0)
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	fn query_info() -> Weight {
-		(228_872_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(5 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		(198_875_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 	}
-	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
-	// Storage: Cosmwasm InstrumentedCode (r:1 w:0)
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	fn query_continuation() -> Weight {
-		(1_111_487_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(5 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		(1_062_292_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 	}
-	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
-	// Storage: Cosmwasm InstrumentedCode (r:1 w:0)
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	// Storage: unknown [0x46fb7408d4f285228f4af516ea25851b68656c6c6f] (r:1 w:1)
 	fn query_raw() -> Weight {
-		(230_331_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(6 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+		(205_833_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(4 as Weight))
+			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 }
 
@@ -322,7 +313,7 @@ impl WeightInfo for () {
 	// Storage: Cosmwasm CodeIdToInfo (r:0 w:1)
 	/// The range of component `n` is `[1, 514288]`.
 	fn upload(n: u32, ) -> Weight {
-		(339_075_000 as Weight)
+		(252_606_000 as Weight)
 			// Standard Error: 0
 			.saturating_add((44_000 as Weight).saturating_mul(n as Weight))
 			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
@@ -338,9 +329,9 @@ impl WeightInfo for () {
 	// Storage: Tokens Accounts (r:2 w:2)
 	/// The range of component `n` is `[0, 17]`.
 	fn instantiate(n: u32, ) -> Weight {
-		(1_130_508_000 as Weight)
-			// Standard Error: 684_000
-			.saturating_add((27_820_000 as Weight).saturating_mul(n as Weight))
+		(1_097_476_000 as Weight)
+			// Standard Error: 56_000
+			.saturating_add((24_249_000 as Weight).saturating_mul(n as Weight))
 			.saturating_add(RocksDbWeight::get().reads(6 as Weight))
 			.saturating_add(RocksDbWeight::get().reads((2 as Weight).saturating_mul(n as Weight)))
 			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
@@ -355,120 +346,124 @@ impl WeightInfo for () {
 	// Storage: Tokens Accounts (r:2 w:2)
 	/// The range of component `n` is `[0, 17]`.
 	fn execute(n: u32, ) -> Weight {
-		(1_109_656_000 as Weight)
-			// Standard Error: 186_000
-			.saturating_add((25_213_000 as Weight).saturating_mul(n as Weight))
+		(1_080_899_000 as Weight)
+			// Standard Error: 51_000
+			.saturating_add((25_029_000 as Weight).saturating_mul(n as Weight))
 			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
 			.saturating_add(RocksDbWeight::get().reads((2 as Weight).saturating_mul(n as Weight)))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 			.saturating_add(RocksDbWeight::get().writes((2 as Weight).saturating_mul(n as Weight)))
 	}
-	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
+	// Storage: Cosmwasm ContractToInfo (r:1 w:1)
+	// Storage: Cosmwasm CodeIdToInfo (r:2 w:2)
+	// Storage: Cosmwasm PristineCode (r:1 w:1)
+	// Storage: System Account (r:1 w:1)
+	// Storage: Cosmwasm InstrumentedCode (r:1 w:1)
+	// Storage: Timestamp Now (r:1 w:0)
+	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
+	// Storage: Cosmwasm CodeHashToId (r:0 w:1)
+	fn migrate() -> Weight {
+		(944_084_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(8 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(7 as Weight))
+	}
+	// Storage: Cosmwasm ContractToInfo (r:1 w:1)
 	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
 	// Storage: Cosmwasm InstrumentedCode (r:1 w:0)
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
-	fn migrate() -> Weight {
-		(934_281_000 as Weight)
+	fn update_admin() -> Weight {
+		(229_458_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
 	}
+	// Storage: Cosmwasm ContractToInfo (r:1 w:1)
 	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
 	// Storage: Cosmwasm InstrumentedCode (r:1 w:0)
+	// Storage: Timestamp Now (r:1 w:0)
+	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
+	fn clear_admin() -> Weight {
+		(228_833_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
+	}
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: unknown [0xe9a804b2e527fd3601d2ffc0bb023cd668656c6c6f20776f726c64] (r:1 w:0)
 	fn db_read() -> Weight {
-		(222_790_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+		(199_750_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 	}
-	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
-	// Storage: Cosmwasm InstrumentedCode (r:1 w:0)
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: unknown [0xe9a804b2e527fd3601d2ffc0bb023cd668656c6c6f20776f726c64] (r:1 w:0)
 	fn db_read_other_contract() -> Weight {
-		(222_956_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+		(199_667_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 	}
-	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
-	// Storage: Cosmwasm InstrumentedCode (r:1 w:0)
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: unknown [0x46fb7408d4f285228f4af516ea25851b68656c6c6f] (r:1 w:1)
 	fn db_write() -> Weight {
-		(223_580_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
+		(200_916_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
-	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
-	// Storage: Cosmwasm InstrumentedCode (r:1 w:0)
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	fn db_scan() -> Weight {
-		(219_122_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+		(195_542_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
 	}
-	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
-	// Storage: Cosmwasm InstrumentedCode (r:1 w:0)
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: unknown [0x] (r:1 w:0)
 	fn db_next() -> Weight {
-		(233_373_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+		(225_834_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 	}
-	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
-	// Storage: Cosmwasm InstrumentedCode (r:1 w:0)
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: unknown [0x46fb7408d4f285228f4af516ea25851b68656c6c6f] (r:1 w:1)
 	fn db_remove() -> Weight {
-		(227_205_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
+		(201_166_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Tokens Accounts (r:1 w:0)
 	fn balance() -> Weight {
-		(2_750_000 as Weight)
+		(2_917_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 	}
 	// Storage: System Account (r:2 w:2)
 	// Storage: Tokens Accounts (r:2 w:2)
 	/// The range of component `n` is `[0, 17]`.
 	fn transfer(n: u32, ) -> Weight {
-		(11_581_000 as Weight)
-			// Standard Error: 50_000
-			.saturating_add((21_673_000 as Weight).saturating_mul(n as Weight))
+		(9_479_000 as Weight)
+			// Standard Error: 45_000
+			.saturating_add((22_662_000 as Weight).saturating_mul(n as Weight))
 			.saturating_add(RocksDbWeight::get().reads((2 as Weight).saturating_mul(n as Weight)))
 			.saturating_add(RocksDbWeight::get().writes((2 as Weight).saturating_mul(n as Weight)))
 	}
 	// Storage: Cosmwasm ContractToInfo (r:1 w:1)
 	fn set_contract_meta() -> Weight {
-		(5_542_000 as Weight)
+		(5_583_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
-	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
-	// Storage: Cosmwasm InstrumentedCode (r:1 w:0)
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	fn running_contract_meta() -> Weight {
-		(218_914_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+		(195_334_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
 	}
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	fn contract_meta() -> Weight {
-		(3_542_000 as Weight)
+		(3_750_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 	}
 	fn addr_validate() -> Weight {
-		(834_000 as Weight)
+		(833_000 as Weight)
 	}
 	fn addr_canonicalize() -> Weight {
 		(792_000 as Weight)
@@ -477,87 +472,72 @@ impl WeightInfo for () {
 		(167_000 as Weight)
 	}
 	fn secp256k1_recover_pubkey() -> Weight {
-		(33_792_000 as Weight)
+		(33_916_000 as Weight)
 	}
 	fn secp256k1_verify() -> Weight {
-		(208_000 as Weight)
+		(209_000 as Weight)
 	}
 	fn ed25519_verify() -> Weight {
-		(37_374_000 as Weight)
+		(37_333_000 as Weight)
 	}
 	fn ed25519_batch_verify() -> Weight {
-		(74_082_000 as Weight)
+		(74_000_000 as Weight)
 	}
-	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
-	// Storage: Cosmwasm InstrumentedCode (r:1 w:0)
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
+	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
 	// Storage: Cosmwasm ContractToInfo (r:1 w:1)
 	// Storage: Cosmwasm CurrentNonce (r:1 w:1)
 	// Storage: System Account (r:2 w:2)
 	// Storage: Tokens Accounts (r:2 w:2)
 	/// The range of component `n` is `[0, 17]`.
 	fn continue_instantiate(n: u32, ) -> Weight {
-		(1_305_840_000 as Weight)
-			// Standard Error: 206_000
-			.saturating_add((24_066_000 as Weight).saturating_mul(n as Weight))
-			.saturating_add(RocksDbWeight::get().reads(6 as Weight))
+		(1_273_992_000 as Weight)
+			// Standard Error: 203_000
+			.saturating_add((22_212_000 as Weight).saturating_mul(n as Weight))
+			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
 			.saturating_add(RocksDbWeight::get().reads((2 as Weight).saturating_mul(n as Weight)))
 			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
 			.saturating_add(RocksDbWeight::get().writes((2 as Weight).saturating_mul(n as Weight)))
 	}
-	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
-	// Storage: Cosmwasm InstrumentedCode (r:1 w:0)
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	/// The range of component `n` is `[0, 17]`.
 	fn continue_execute(n: u32, ) -> Weight {
-		(1_290_622_000 as Weight)
-			// Standard Error: 390_000
-			.saturating_add((2_615_000 as Weight).saturating_mul(n as Weight))
-			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+		(1_236_165_000 as Weight)
+			// Standard Error: 84_000
+			.saturating_add((415_000 as Weight).saturating_mul(n as Weight))
+			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 	}
-	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
-	// Storage: Cosmwasm InstrumentedCode (r:1 w:0)
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	fn continue_migrate() -> Weight {
-		(1_132_362_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+		(1_076_041_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 	}
-	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
-	// Storage: Cosmwasm InstrumentedCode (r:1 w:0)
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	fn query_info() -> Weight {
-		(228_872_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+		(198_875_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 	}
-	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
-	// Storage: Cosmwasm InstrumentedCode (r:1 w:0)
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	fn query_continuation() -> Weight {
-		(1_111_487_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+		(1_062_292_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 	}
-	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
-	// Storage: Cosmwasm InstrumentedCode (r:1 w:0)
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	// Storage: unknown [0x46fb7408d4f285228f4af516ea25851b68656c6c6f] (r:1 w:1)
 	fn query_raw() -> Weight {
-		(230_331_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(6 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
+		(205_833_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 }

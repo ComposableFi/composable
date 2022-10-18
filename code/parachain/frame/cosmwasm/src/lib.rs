@@ -161,12 +161,42 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		Uploaded { code_hash: CodeHashOf<T>, code_id: CosmwasmCodeId },
-		Instantiated { contract: AccountIdOf<T>, info: ContractInfoOf<T> },
-		Executed { contract: AccountIdOf<T>, entrypoint: EntryPoint, data: Option<Vec<u8>> },
-		ExecutionFailed { contract: AccountIdOf<T>, entrypoint: EntryPoint, error: Vec<u8> },
-		Emitted { contract: AccountIdOf<T>, ty: Vec<u8>, attributes: Vec<(Vec<u8>, Vec<u8>)> },
-		Migrated { contract: AccountIdOf<T>, to: CosmwasmCodeId },
+		Uploaded {
+			code_hash: CodeHashOf<T>,
+			code_id: CosmwasmCodeId,
+		},
+		Instantiated {
+			contract: AccountIdOf<T>,
+			info: ContractInfoOf<T>,
+		},
+		Executed {
+			contract: AccountIdOf<T>,
+			entrypoint: EntryPoint,
+			data: Option<Vec<u8>>,
+		},
+		ExecutionFailed {
+			contract: AccountIdOf<T>,
+			entrypoint: EntryPoint,
+			error: Vec<u8>,
+		},
+		Emitted {
+			contract: AccountIdOf<T>,
+			ty: Vec<u8>,
+			attributes: Vec<(Vec<u8>, Vec<u8>)>,
+		},
+		Migrated {
+			contract: AccountIdOf<T>,
+			to: CosmwasmCodeId,
+		},
+		AdminUpdated {
+			contract: AccountIdOf<T>,
+			old_admin: Option<AccountIdOf<T>>,
+			new_admin: AccountIdOf<T>,
+		},
+		AdminCleared {
+			contract: AccountIdOf<T>,
+			old_admin: Option<AccountIdOf<T>>,
+		},
 	}
 
 	#[pallet::error]
@@ -495,6 +525,90 @@ pub mod pallet {
 				.call(&mut shared, Default::default(), message);
 			Self::refund_gas(outcome, gas, shared.gas.remaining())
 		}
+
+		/// Update the admin of a contract.
+		///
+		/// * Emits a `AdminUpdated` event on success.
+		///
+		/// Arguments
+		///
+		/// * `origin` the origin dispatching the extrinsic.
+		/// * `contract` the address of the contract that we want to migrate.
+		/// * `new_admin` new admin of the contract that we want to update to.
+		/// * `gas` the maximum gas to use, the remaining is refunded at the end of the transaction.
+		#[transactional]
+		#[pallet::weight(T::WeightInfo::update_admin().saturating_add(*gas))]
+		pub fn update_admin(
+			origin: OriginFor<T>,
+			contract: AccountIdOf<T>,
+			new_admin: AccountIdOf<T>,
+			gas: u64,
+		) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
+			let info = Self::contract_info(&contract)?;
+			let outcome = Self::cosmwasm_call(
+				&mut shared,
+				who.clone(),
+				contract.clone(),
+				info.clone(),
+				Default::default(),
+				|vm| {
+					cosmwasm_vm::system::update_admin(
+						vm,
+						&Addr::unchecked(Self::account_to_cosmwasm_addr(who)),
+						CosmwasmAccount::new(contract.clone()),
+						Some(CosmwasmAccount::new(new_admin.clone())),
+					)
+					.map_err(Into::into)
+				},
+			);
+			Self::deposit_event(Event::<T>::AdminUpdated {
+				contract,
+				old_admin: info.admin,
+				new_admin,
+			});
+			Self::refund_gas(outcome, gas, shared.gas.remaining())
+		}
+
+		/// Clear the admin of a contract.
+		///
+		/// * Emits a `AdminCleared` event on success.
+		///
+		/// Arguments
+		///
+		/// * `origin` the origin dispatching the extrinsic.
+		/// * `contract` the address of the contract that we want to migrate.
+		/// * `gas` the maximum gas to use, the remaining is refunded at the end of the transaction.
+		#[transactional]
+		#[pallet::weight(T::WeightInfo::clear_admin().saturating_add(*gas))]
+		pub fn clear_admin(
+			origin: OriginFor<T>,
+			contract: AccountIdOf<T>,
+			gas: u64,
+		) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
+			let info = Self::contract_info(&contract)?;
+			let outcome = Self::cosmwasm_call(
+				&mut shared,
+				who.clone(),
+				contract.clone(),
+				info.clone(),
+				Default::default(),
+				|vm| {
+					cosmwasm_vm::system::update_admin(
+						vm,
+						&Addr::unchecked(Self::account_to_cosmwasm_addr(who)),
+						CosmwasmAccount::new(contract.clone()),
+						None,
+					)
+					.map_err(Into::into)
+				},
+			);
+			Self::deposit_event(Event::<T>::AdminCleared { contract, old_admin: info.admin });
+			Self::refund_gas(outcome, gas, shared.gas.remaining())
+		}
 	}
 
 	impl<T: Config> Pallet<T> {
@@ -659,7 +773,7 @@ pub mod pallet {
 					Ok(())
 				})?;
 
-				// Modify the exising `code_id`'s states and unreserve the bonded funds.
+				// Modify the existing `code_id`'s states and unreserve the bonded funds.
 				CodeIdToInfo::<T>::try_mutate_exists(
 					info.code_id,
 					|entry| -> Result<(), Error<T>> {
@@ -671,7 +785,7 @@ pub mod pallet {
 							.ok_or(Error::<T>::RefcountOverflow)?;
 						if code_info.refcount == 0 {
 							// Unreserve the bonded funds for this code
-							let code = PristineCode::<T>::try_get(code_id)
+							let code = PristineCode::<T>::try_get(info.code_id)
 								.map_err(|_| Error::<T>::CodeNotFound)?;
 							let deposit =
 								code.len().saturating_mul(T::CodeStorageByteDeposit::get() as _);
@@ -680,8 +794,8 @@ pub mod pallet {
 								deposit.saturated_into(),
 							);
 							let code_hash = T::Hashing::hash(&code);
-							PristineCode::<T>::remove(code_id);
-							InstrumentedCode::<T>::remove(code_id);
+							PristineCode::<T>::remove(info.code_id);
+							InstrumentedCode::<T>::remove(info.code_id);
 							CodeHashToId::<T>::remove(code_hash);
 							// Code is unused after this point, so it can be removed
 							*entry = None;

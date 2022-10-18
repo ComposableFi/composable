@@ -1837,7 +1837,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-minimal-std"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=d316fe3111421cada40f7819b4864b9bcfe68606#d316fe3111421cada40f7819b4864b9bcfe68606"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=24d22367af7602aecc84da390f6f22f88f35b6bb#24d22367af7602aecc84da390f6f22f88f35b6bb"
 dependencies = [
  "base64 0.13.0",
  "serde",
@@ -1911,7 +1911,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=d316fe3111421cada40f7819b4864b9bcfe68606#d316fe3111421cada40f7819b4864b9bcfe68606"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=24d22367af7602aecc84da390f6f22f88f35b6bb#24d22367af7602aecc84da390f6f22f88f35b6bb"
 dependencies = [
  "cosmwasm-minimal-std",
  "either",
@@ -1923,7 +1923,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm-wasmi"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=d316fe3111421cada40f7819b4864b9bcfe68606#d316fe3111421cada40f7819b4864b9bcfe68606"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=24d22367af7602aecc84da390f6f22f88f35b6bb#24d22367af7602aecc84da390f6f22f88f35b6bb"
 dependencies = [
  "cosmwasm-minimal-std",
  "cosmwasm-vm",
