@@ -22,7 +22,7 @@ const CrowdloanRewards: NextPage = () => {
       key="Overview"
       underline="none"
       color="primary"
-      href="/frontend/fe/apps/picasso/pages"
+      href="/"
     >
       Overview
     </Link>,
