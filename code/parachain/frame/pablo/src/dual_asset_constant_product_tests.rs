@@ -178,12 +178,11 @@ fn valid_pool_init_config(
 	second_asset: AssetId,
 	fee: Permill,
 ) -> PoolInitConfiguration<AccountId, AssetId> {
-	let pool_init_config = PoolInitConfiguration::DualAssetConstantProduct {
-		owner: owner.clone(),
+	PoolInitConfiguration::DualAssetConstantProduct {
+		owner: *owner,
 		assets_weights: dual_asset_pool_weights(first_asset, first_asset_weight, second_asset),
 		fee,
-	};
-	pool_init_config
+	}
 }
 
 #[test]
@@ -436,8 +435,8 @@ fn fees() {
 			pool_id,
 			BTC,
 			USDT,
-			1 * unit,
-		).unwrap();
+			unit,
+		).expect("success");
 		assert_eq!(price.spot_price, 46_326_729_585_161_862);
 		let btc_balance = Tokens::balance(BTC, &BOB);
         sp_std::if_std! {
@@ -719,7 +718,7 @@ proptest! {
 
 	#[test]
 	fn weights_sum_to_one(
-		base_weight_in_percent in 1..100u32,
+		base_weight_in_percent in 1..100_u32,
 	) {
 	  new_test_ext().execute_with(|| {
 		let pool_init_config = valid_pool_init_config(&ALICE, BTC, Permill::from_percent(base_weight_in_percent), USDT, Permill::zero());
@@ -780,7 +779,7 @@ mod twap {
 			run_to_block(TWAP_INTERVAL + 1);
 			// execute a swap to invoke update_twap() however it will only update price_cumulative
 			// and not twap as elapsed time is < TWAPInterval
-			let usdt_value = 1_u128 * unit;
+			let usdt_value = unit;
 			assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_value));
 			assert_ok!(Pablo::swap(
 				Origin::signed(BOB),
@@ -836,13 +835,11 @@ mod twap {
 			let mut max_quote_price = Rate::from_float(0.0);
 			let mut update_min_max_price = || {
 				let base_price =
-					Pablo::do_get_exchange_rate(pool_identifier, crate::PriceRatio::NotSwapped);
-				assert_ok!(base_price);
-				let base_price = base_price.unwrap();
+					Pablo::do_get_exchange_rate(pool_identifier, crate::PriceRatio::NotSwapped)
+						.expect("success");
 				let quote_price =
-					Pablo::do_get_exchange_rate(pool_identifier, crate::PriceRatio::Swapped);
-				assert_ok!(quote_price);
-				let quote_price = quote_price.unwrap();
+					Pablo::do_get_exchange_rate(pool_identifier, crate::PriceRatio::Swapped)
+						.expect("success");
 				min_base_price = sp_std::cmp::min(base_price, min_base_price);
 				min_quote_price = sp_std::cmp::min(quote_price, min_quote_price);
 				max_base_price = sp_std::cmp::max(base_price, max_base_price);
@@ -866,7 +863,7 @@ mod twap {
 			let run_to_block_and_swap = |block_number: BlockNumber| {
 				run_to_block(block_number);
 				// execute a swap to invoke update_twap() on given block_number
-				let usdt_value = 1_u128 * unit;
+				let usdt_value = unit;
 				assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_value));
 				assert_ok!(Pablo::swap(
 					Origin::signed(BOB),
