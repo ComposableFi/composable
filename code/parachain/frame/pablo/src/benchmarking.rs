@@ -1,5 +1,5 @@
 use super::*;
-use crate::{Pallet as Pablo, PoolConfiguration::ConstantProduct};
+use crate::{Pallet as Pablo, PoolConfiguration::DualAssetConstantProduct};
 use composable_traits::{defi::CurrencyPair, dex::Amm};
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::{
@@ -7,7 +7,8 @@ use frame_support::{
 	traits::fungibles::{Inspect, Mutate},
 };
 use frame_system::RawOrigin;
-use sp_arithmetic::Permill;
+use sp_arithmetic::{PerThing, Permill};
+use sp_runtime::BoundedBTreeMap;
 
 fn amm_init_config<T: Config>(
 	owner: T::AccountId,
@@ -15,23 +16,24 @@ fn amm_init_config<T: Config>(
 	base_weight: Permill,
 	fee: Permill,
 ) -> PoolInitConfigurationOf<T> {
-	PoolInitConfiguration::ConstantProduct { owner, pair, fee, base_weight }
+	let mut assets_weights = BoundedBTreeMap::new();
+	assets_weights.try_insert(pair.base, base_weight).expect("Should work");
+	assets_weights
+		.try_insert(pair.quote, base_weight.left_from_one())
+		.expect("Should work");
+	PoolInitConfiguration::DualAssetConstantProduct { owner, fee, assets_weights }
 }
 
 fn create_amm_pool<T: Config>(owner: T::AccountId, pair: CurrencyPair<T::AssetId>) -> T::PoolId {
-	let swap_pool_init = amm_init_config::<T>(
-		owner.clone(),
-		pair,
-		Permill::from_percent(50),
-		Permill::from_percent(1),
-	);
+	let swap_pool_init =
+		amm_init_config::<T>(owner, pair, Permill::from_percent(50), Permill::from_percent(1));
 	Pablo::<T>::do_create_pool(swap_pool_init).expect("impossible; qed;")
 }
 
 fn get_lp_token<T: Config>(pool_id: T::PoolId) -> T::AssetId {
 	let pool_info = Pablo::<T>::get_pool(pool_id).expect("impossible; qed;");
 	match pool_info {
-		ConstantProduct(pool) => pool.lp_token,
+		DualAssetConstantProduct(pool) => pool.lp_token,
 	}
 }
 
@@ -44,7 +46,7 @@ benchmarks! {
 		let pair = CurrencyPair::new(usdc, usdt);
 		let fee = Permill::from_percent(1);
 		let protocol_fee = Permill::from_percent(1);
-		let stable_swap_pool_init = amm_init_config::<T>(owner.clone(), pair, Permill::from_percent(50_u32), fee);
+		let stable_swap_pool_init = amm_init_config::<T>(owner, pair, Permill::from_percent(50_u32), fee);
 	  } : _(RawOrigin::Root, stable_swap_pool_init)
 
 	add_liquidity {

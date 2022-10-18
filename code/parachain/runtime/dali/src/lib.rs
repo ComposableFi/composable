@@ -1077,10 +1077,6 @@ impl pablo::Config for Runtime {
 	type PoolId = PoolId;
 	type PalletId = PabloId;
 	type LocalAssets = CurrencyFactory;
-	type LbpMinSaleDuration = LbpMinSaleDuration;
-	type LbpMaxSaleDuration = LbpMaxSaleDuration;
-	type LbpMaxInitialWeight = LbpMaxInitialWeight;
-	type LbpMinFinalWeight = LbpMinFinalWeight;
 	type PoolCreationOrigin = EnsureRootOrHalfNativeCouncil;
 	// TODO: consider making it is own origin
 	type EnableTwapOrigin = EnsureRootOrHalfNativeCouncil;

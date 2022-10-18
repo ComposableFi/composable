@@ -1,21 +1,21 @@
-use crate::uniswap::Uniswap;
 #[cfg(test)]
 use crate::{
 	common_test_functions::*,
+	dual_asset_constant_product::DualAssetConstantProduct as DACP,
 	mock,
 	mock::{Pablo, *},
 	pallet, Error,
-	PoolConfiguration::ConstantProduct,
+	PoolConfiguration::DualAssetConstantProduct,
 	PoolInitConfiguration,
 };
 use composable_support::math::safe::safe_multiply_by_rational;
 use composable_tests_helpers::{
-	prop_assert_noop, prop_assert_ok,
+	prop_assert_ok,
 	test::helper::{acceptable_computation_error, default_acceptable_computation_error},
 };
 use composable_traits::{
 	defi::CurrencyPair,
-	dex::{Amm, ConstantProductPoolInfo, FeeConfig},
+	dex::{Amm, BasicPoolInfo, FeeConfig},
 };
 use frame_support::{
 	assert_noop, assert_ok,
@@ -25,7 +25,10 @@ use frame_support::{
 	},
 };
 use proptest::prelude::*;
-use sp_runtime::{traits::IntegerSquareRoot, DispatchError, Perbill, Permill};
+use sp_runtime::{
+	traits::{ConstU32, IntegerSquareRoot},
+	BoundedBTreeMap, DispatchError, Perbill, Permill,
+};
 use sp_std::collections::btree_map::BTreeMap;
 
 fn create_pool(
@@ -37,15 +40,15 @@ fn create_pool(
 	protocol_fee: Permill,
 ) -> PoolId {
 	System::set_block_number(1);
-	let actual_pool_id = Uniswap::<Test>::do_create_pool(
+	let asset_weights = dual_asset_pool_weights(base_asset, Permill::from_percent(50), quote_asset);
+	let actual_pool_id = DACP::<Test>::do_create_pool(
 		&ALICE,
-		CurrencyPair::new(base_asset, quote_asset),
 		FeeConfig {
 			fee_rate: lp_fee,
 			owner_fee_rate: protocol_fee,
 			protocol_fee_rate: Permill::zero(),
 		},
-		Permill::from_percent(50),
+		asset_weights,
 	)
 	.expect("pool creation failed");
 
@@ -70,21 +73,22 @@ fn create_pool(
 	actual_pool_id
 }
 
-fn get_pool(pool_id: PoolId) -> ConstantProductPoolInfo<AccountId, AssetId> {
+fn get_pool(pool_id: PoolId) -> BasicPoolInfo<AccountId, AssetId, ConstU32<2>> {
 	match Pablo::pools(pool_id).expect("pool not found") {
-		ConstantProduct(pool) => pool,
+		DualAssetConstantProduct(pool) => pool,
 	}
 }
 
 #[test]
 fn test() {
 	new_test_ext().execute_with(|| {
-		let pool_init_config = PoolInitConfiguration::ConstantProduct {
-			owner: ALICE,
-			pair: CurrencyPair::new(BTC, USDT),
-			fee: Permill::zero(),
-			base_weight: Permill::from_percent(50),
-		};
+		let pool_init_config = valid_pool_init_config(
+			&ALICE,
+			BTC,
+			Permill::from_percent(50_u32),
+			USDT,
+			Permill::zero(),
+		);
 		let pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
 
 		let pool = get_pool(pool_id);
@@ -167,15 +171,30 @@ fn test() {
 	});
 }
 
+fn valid_pool_init_config(
+	owner: &AccountId,
+	first_asset: AssetId,
+	first_asset_weight: Permill,
+	second_asset: AssetId,
+	fee: Permill,
+) -> PoolInitConfiguration<AccountId, AssetId> {
+	PoolInitConfiguration::DualAssetConstantProduct {
+		owner: *owner,
+		assets_weights: dual_asset_pool_weights(first_asset, first_asset_weight, second_asset),
+		fee,
+	}
+}
+
 #[test]
 fn test_redeemable_assets() {
 	new_test_ext().execute_with(|| {
-		let pool_init_config = PoolInitConfiguration::ConstantProduct {
-			owner: ALICE,
-			pair: CurrencyPair::new(BTC, USDT),
-			fee: Permill::zero(),
-			base_weight: Permill::from_percent(50),
-		};
+		let pool_init_config = valid_pool_init_config(
+			&ALICE,
+			BTC,
+			Permill::from_percent(50_u32),
+			USDT,
+			Permill::zero(),
+		);
 		let pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
 
 		let pool = get_pool(pool_id);
@@ -224,12 +243,13 @@ fn test_redeemable_assets() {
 #[test]
 fn add_remove_lp() {
 	new_test_ext().execute_with(|| {
-		let pool_init_config = PoolInitConfiguration::ConstantProduct {
-			owner: ALICE,
-			pair: CurrencyPair::new(BTC, USDT),
-			fee: Permill::zero(),
-			base_weight: Permill::from_percent(50),
-		};
+		let pool_init_config = valid_pool_init_config(
+			&ALICE,
+			BTC,
+			Permill::from_percent(50_u32),
+			USDT,
+			Permill::zero(),
+		);
 		let unit = 1_000_000_000_000_u128;
 		let initial_btc = 1_00_u128 * unit;
 		let btc_price = 45_000_u128;
@@ -294,12 +314,13 @@ fn test_add_liquidity_with_disproportionate_amount() {
 #[test]
 fn add_lp_with_min_mint_amount() {
 	new_test_ext().execute_with(|| {
-		let pool_init_config = PoolInitConfiguration::ConstantProduct {
-			owner: ALICE,
-			pair: CurrencyPair::new(BTC, USDT),
-			fee: Permill::zero(),
-			base_weight: Permill::from_percent(50),
-		};
+		let pool_init_config = valid_pool_init_config(
+			&ALICE,
+			BTC,
+			Permill::from_percent(50_u32),
+			USDT,
+			Permill::zero(),
+		);
 		let unit = 1_000_000_000_000_u128;
 		let initial_btc = 1_00_u128 * unit;
 		let btc_price = 45_000_u128;
@@ -328,12 +349,13 @@ fn add_lp_with_min_mint_amount() {
 #[test]
 fn remove_lp_failure() {
 	new_test_ext().execute_with(|| {
-		let pool_init_config = PoolInitConfiguration::ConstantProduct {
-			owner: ALICE,
-			pair: CurrencyPair::new(BTC, USDT),
-			fee: Permill::zero(),
-			base_weight: Permill::from_percent(50),
-		};
+		let pool_init_config = valid_pool_init_config(
+			&ALICE,
+			BTC,
+			Permill::from_percent(50_u32),
+			USDT,
+			Permill::zero(),
+		);
 		let unit = 1_000_000_000_000_u128;
 		let initial_btc = 1_00_u128 * unit;
 		let btc_price = 45_000_u128;
@@ -353,12 +375,13 @@ fn exchange_failure() {
 		let initial_btc = 1_00_u128 * unit;
 		let btc_price = 45_000_u128;
 		let initial_usdt = initial_btc * btc_price;
-		let pool_init_config = PoolInitConfiguration::ConstantProduct {
-			owner: ALICE,
-			pair: CurrencyPair::new(BTC, USDT),
-			fee: Permill::zero(),
-			base_weight: Permill::from_percent(50),
-		};
+		let pool_init_config = valid_pool_init_config(
+			&ALICE,
+			BTC,
+			Permill::from_percent(50_u32),
+			USDT,
+			Permill::zero(),
+		);
 		let exchange_base_amount = 100 * unit;
 		common_exchange_failure(pool_init_config, initial_usdt, initial_btc, exchange_base_amount)
 	});
@@ -412,8 +435,8 @@ fn fees() {
 			pool_id,
 			BTC,
 			USDT,
-			1 * unit,
-		).unwrap();
+			unit,
+		).expect("success");
 		assert_eq!(price.spot_price, 46_326_729_585_161_862);
 		let btc_balance = Tokens::balance(BTC, &BOB);
         sp_std::if_std! {
@@ -439,12 +462,7 @@ fn staking_pool_test() {
 		let initial_btc = 1_00_u128 * unit;
 		let btc_price = 45_000_u128;
 		let initial_usdt = initial_btc * btc_price;
-		let pool_init_config = PoolInitConfiguration::ConstantProduct {
-			owner: ALICE,
-			pair: CurrencyPair::new(BTC, USDT),
-			fee: Permill::from_float(0.05),
-			base_weight: Permill::from_percent(50),
-		};
+		let pool_init_config = valid_pool_init_config(&ALICE, BTC, Permill::from_percent(50_u32), USDT, Permill::from_float(0.05));
 
 		let pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
 		// Mint the tokens
@@ -490,12 +508,8 @@ fn avoid_exchange_without_liquidity() {
 	new_test_ext().execute_with(|| {
 		let unit = 1_000_000_000_000_u128;
 		let lp_fee = Permill::from_float(0.05);
-		let pool_init_config = PoolInitConfiguration::ConstantProduct {
-			owner: ALICE,
-			pair: CurrencyPair::new(BTC, USDT),
-			fee: lp_fee,
-			base_weight: Permill::from_percent(50),
-		};
+		let pool_init_config =
+			valid_pool_init_config(&ALICE, BTC, Permill::from_percent(50_u32), USDT, lp_fee);
 		System::set_block_number(1);
 		let pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
 		let bob_usdt = 45_000_u128 * unit;
@@ -512,12 +526,8 @@ fn cannot_swap_between_wrong_pairs() {
 	new_test_ext().execute_with(|| {
 		let unit = 1_000_000_000_000_u128;
 		let lp_fee = Permill::from_float(0.05);
-		let pool_init_config = PoolInitConfiguration::ConstantProduct {
-			owner: ALICE,
-			pair: CurrencyPair::new(BTC, USDT),
-			fee: lp_fee,
-			base_weight: Permill::from_percent(50),
-		};
+		let pool_init_config =
+			valid_pool_init_config(&ALICE, BTC, Permill::from_percent(50_u32), USDT, lp_fee);
 		System::set_block_number(1);
 		let pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
 		let base_amount = 100_000_u128 * unit;
@@ -553,12 +563,8 @@ fn cannot_get_exchange_value_for_wrong_asset() {
 	new_test_ext().execute_with(|| {
 		let unit = 1_000_000_000_000_u128;
 		let lp_fee = Permill::from_float(0.05);
-		let pool_init_config = PoolInitConfiguration::ConstantProduct {
-			owner: ALICE,
-			pair: CurrencyPair::new(BTC, USDT),
-			fee: lp_fee,
-			base_weight: Permill::from_percent(50),
-		};
+		let pool_init_config =
+			valid_pool_init_config(&ALICE, BTC, Permill::from_percent(50_u32), USDT, lp_fee);
 		System::set_block_number(1);
 		let pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
 		let base_amount = 100_000_u128 * unit;
@@ -585,13 +591,25 @@ fn cannot_get_exchange_value_for_wrong_asset() {
 #[test]
 fn weights_zero() {
 	new_test_ext().execute_with(|| {
-		let pool_init_config = PoolInitConfiguration::ConstantProduct {
-			owner: ALICE,
-			pair: CurrencyPair::new(BTC, USDT),
-			fee: Permill::zero(),
-			base_weight: Permill::zero(),
-		};
+		let pool_init_config =
+			valid_pool_init_config(&ALICE, BTC, Permill::zero(), USDT, Permill::zero());
 		assert_noop!(Pablo::do_create_pool(pool_init_config), Error::<Test>::WeightsMustBeNonZero);
+	});
+}
+
+#[test]
+fn weights_sum_to_more_than_one() {
+	new_test_ext().execute_with(|| {
+		let mut asset_weights = BoundedBTreeMap::new();
+		asset_weights.try_insert(BTC, Permill::from_percent(50)).expect("Should work");
+		asset_weights.try_insert(USDT, Permill::from_percent(51)).expect("Should work");
+		let pool_init_config = PoolInitConfiguration::DualAssetConstantProduct {
+			owner: ALICE,
+			assets_weights: asset_weights,
+			fee: Permill::zero(),
+		};
+
+		assert_noop!(Pablo::do_create_pool(pool_init_config), Error::<Test>::WeightsMustSumToOne);
 	});
 }
 
@@ -700,39 +718,11 @@ proptest! {
 
 	#[test]
 	fn weights_sum_to_one(
-		base_weight_in_percent in 1..100u32,
+		base_weight_in_percent in 1..100_u32,
 	) {
 	  new_test_ext().execute_with(|| {
-		  let pool_init_config = PoolInitConfiguration::ConstantProduct {
-			  owner: ALICE,
-			  pair: CurrencyPair::new(BTC, USDT),
-			fee: Permill::zero(),
-			  base_weight: Permill::from_percent(base_weight_in_percent),
-		  };
-		  let pool_id = Pablo::do_create_pool(pool_init_config).expect("pool is valid");
-
-		  let pool = get_pool(pool_id);
-
-		  prop_assert_eq!(Permill::one(), pool.base_weight + pool.quote_weight);
-
-		  Ok(())
-	  })?;
-  }
-
-	#[test]
-	fn weights_sum_to_more_than_one(
-		base_weight_in_percent in 100..u32::MAX,
-	) {
-	  new_test_ext().execute_with(|| {
-		  let pool_init_config = PoolInitConfiguration::ConstantProduct {
-			  owner: ALICE,
-			  pair: CurrencyPair::new(BTC, USDT),
-			fee: Permill::zero(),
-			  base_weight: Permill::from_percent(base_weight_in_percent),
-		  };
-
-		  prop_assert_noop!(Pablo::do_create_pool(pool_init_config), Error::<Test>::WeightsMustSumToOne);
-
+		let pool_init_config = valid_pool_init_config(&ALICE, BTC, Permill::from_percent(base_weight_in_percent), USDT, Permill::zero());
+		  prop_assert_ok!(Pablo::do_create_pool(pool_init_config));
 		  Ok(())
 	  })?;
   }
@@ -789,7 +779,7 @@ mod twap {
 			run_to_block(TWAP_INTERVAL + 1);
 			// execute a swap to invoke update_twap() however it will only update price_cumulative
 			// and not twap as elapsed time is < TWAPInterval
-			let usdt_value = 1_u128 * unit;
+			let usdt_value = unit;
 			assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_value));
 			assert_ok!(Pablo::swap(
 				Origin::signed(BOB),
@@ -845,13 +835,11 @@ mod twap {
 			let mut max_quote_price = Rate::from_float(0.0);
 			let mut update_min_max_price = || {
 				let base_price =
-					Pablo::do_get_exchange_rate(pool_identifier, crate::PriceRatio::NotSwapped);
-				assert_ok!(base_price);
-				let base_price = base_price.unwrap();
+					Pablo::do_get_exchange_rate(pool_identifier, crate::PriceRatio::NotSwapped)
+						.expect("success");
 				let quote_price =
-					Pablo::do_get_exchange_rate(pool_identifier, crate::PriceRatio::Swapped);
-				assert_ok!(quote_price);
-				let quote_price = quote_price.unwrap();
+					Pablo::do_get_exchange_rate(pool_identifier, crate::PriceRatio::Swapped)
+						.expect("success");
 				min_base_price = sp_std::cmp::min(base_price, min_base_price);
 				min_quote_price = sp_std::cmp::min(quote_price, min_quote_price);
 				max_base_price = sp_std::cmp::max(base_price, max_base_price);
@@ -875,7 +863,7 @@ mod twap {
 			let run_to_block_and_swap = |block_number: BlockNumber| {
 				run_to_block(block_number);
 				// execute a swap to invoke update_twap() on given block_number
-				let usdt_value = 1_u128 * unit;
+				let usdt_value = unit;
 				assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_value));
 				assert_ok!(Pablo::swap(
 					Origin::signed(BOB),
