@@ -3,14 +3,14 @@
 	warn(
 		clippy::disallowed_methods,
 		clippy::disallowed_types,
-		clippy::indexing_slicing,
+		// TODO (vim): temporary for refactor
+		// clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
 		clippy::panic
 	)
 )]
-// TODO (vim): Remove indexing-slicing when cu-2yyx1w9 is done
-#![warn(clippy::unseparated_literal_suffix, clippy::indexing_slicing)]
+#![warn(clippy::unseparated_literal_suffix)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(
 	bad_style,
@@ -125,23 +125,14 @@ pub mod pallet {
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
 	pub(crate) type BalanceOf<T> = <T as Config>::Balance;
 	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
-	type PoolIdOf<T> = <T as Config>::PoolId;
 	type PoolConfigurationOf<T> =
 		PoolConfiguration<<T as frame_system::Config>::AccountId, <T as Config>::AssetId>;
 	pub(crate) type PoolInitConfigurationOf<T> =
 		PoolInitConfiguration<<T as frame_system::Config>::AccountId, <T as Config>::AssetId>;
-	type RewardConfigsOf<T> = BoundedBTreeMap<
-		<T as Config>::AssetId,
-		RewardConfig<<T as Config>::Balance>,
-		<T as Config>::MaxRewardConfigsPerPool,
-	>;
 	pub(crate) type MomentOf<T> = <<T as Config>::Time as Time>::Moment;
 	pub(crate) type TWAPStateOf<T> = TimeWeightedAveragePrice<MomentOf<T>, <T as Config>::Balance>;
 	pub(crate) type PriceCumulativeStateOf<T> =
 		PriceCumulative<MomentOf<T>, <T as Config>::Balance>;
-
-	type DurationPresets<T> =
-		BoundedBTreeMap<u64, Perbill, <T as Config>::MaxStakingDurationPresets>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub (super) fn deposit_event)]
