@@ -5,7 +5,7 @@ use frame_support::{
 	ord_parameter_types,
 	pallet_prelude::GenesisBuild,
 	parameter_types,
-	traits::{EnsureOneOf, Everything},
+	traits::{EitherOfDiverse, Everything},
 	PalletId,
 };
 use frame_system::{self as system, EnsureRoot, EnsureSignedBy};
@@ -25,7 +25,6 @@ pub type Moment = composable_traits::time::Timestamp;
 pub const BTC: AssetId = 0;
 pub const USDT: CurrencyId = 2;
 pub const USDC: CurrencyId = 4;
-pub const PROJECT_TOKEN: AssetId = 1;
 pub const TWAP_INTERVAL: Moment = 10;
 pub const MILLISECS_PER_BLOCK: u64 = 12000;
 
@@ -103,7 +102,6 @@ pub type Balance = u128;
 pub type AssetId = u128;
 pub type Amount = i128;
 pub type PoolId = u128;
-pub type PositionId = u128;
 
 parameter_type_with_key! {
 	pub ExistentialDeposits: |_currency_id: AssetId| -> Balance {
@@ -210,7 +208,7 @@ impl pablo::Config for Test {
 	type PoolId = PoolId;
 	type PalletId = TestPalletID;
 	type LocalAssets = LpTokenFactory;
-	type PoolCreationOrigin = EnsureOneOf<
+	type PoolCreationOrigin = EitherOfDiverse<
 		EnsureSignedBy<RootAccount, AccountId>, // for tests
 		EnsureRoot<AccountId>,                  // for benchmarks
 	>;
@@ -234,9 +232,10 @@ impl pablo::Config for Test {
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let mut storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	let mut storage =
+		frame_system::GenesisConfig::default().build_storage::<Test>().expect("success");
 	pallet_staking_rewards::GenesisConfig::<Test>::default()
 		.assimilate_storage(&mut storage)
-		.unwrap();
+		.expect("success");
 	storage.into()
 }
