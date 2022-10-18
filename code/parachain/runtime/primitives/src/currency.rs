@@ -1,7 +1,7 @@
 //! CurrencyId implementation
 use codec::{CompactAs, Decode, Encode, MaxEncodedLen};
 use composable_support::validation::Validate;
-use composable_traits::{assets::Asset, currency::Exponent};
+use composable_traits::{assets::Asset, currency::Exponent, xcm::assets::XcmAssetLocation};
 use core::{fmt::Display, ops::Div, str::FromStr};
 use scale_info::TypeInfo;
 use sp_runtime::{
@@ -89,9 +89,24 @@ macro_rules! list_assets {
 			}
 		}
 
-		pub fn list_assets() -> Vec<Asset> {
+		const RELAY_NATIVE_CURRENCIES: [CurrencyId; 1] = [CurrencyId::KSM];
+
+		fn known_location(id: CurrencyId) -> Option<XcmAssetLocation> {
+			if Self::RELAY_NATIVE_CURRENCIES.contains(&id) {
+				return Some(XcmAssetLocation::RELAY_NATIVE)
+			}
+			// Note: add other known locations
+			None
+		}
+
+		pub fn list_assets() -> Vec<Asset<XcmAssetLocation>> {
 			[
-				$(Asset { id: CurrencyId::$NAME.0 as u64, name: stringify!($NAME).as_bytes().to_vec() },)*
+				$(Asset {
+					id: CurrencyId::$NAME.0 as u128,
+					name: Some(stringify!($NAME).as_bytes().to_vec()),
+					decimals: 12_u8.into(),
+					foreign_id: Self::known_location(CurrencyId::$NAME)
+				},)*
 			]
 			.to_vec()
 		}
