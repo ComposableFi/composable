@@ -304,6 +304,7 @@ stdenv
 structopt
 styleguide
 submessage
+submessages
 Subql
 substituters
 subwasm
