@@ -49,4 +49,21 @@ Tip of the branch from which runtime release is considered should be signed at l
 
 These to be owned by Technical committee or by Council members.
 
-Preferable way to [sign tags or notes](https://stackoverflow.com/questions/61481156/can-a-reviewer-add-their-signature-to-a-specific-git-commit)
+### Examples
+
+```shell
+ # Alice and Bob are signers
+ # Charlie is verifier
+ 
+ # All
+ git switch release-vx.y.3
+ 
+ # Alice signs
+ git tag --sign "release-vx.y.3/alice" --message "release"
+ 
+ # Bob signs
+ git tag --sign "release-vx.y.3/bob" --message "release"
+ 
+ # Charlie looks that each tag is signed and references relevant commit
+ git tag --list | grep release-vx.y.3 | xargs git tag --verify 
+ ```
