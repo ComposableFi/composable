@@ -3034,7 +3034,7 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "hex",
  "hex-literal",
- "ibc",
+ "ibc 0.15.0",
  "ibc-primitives",
  "ibc-runtime-api",
  "lending-runtime-api",
@@ -5005,16 +5005,18 @@ dependencies = [
  "hyperspace-cosmos",
  "hyperspace-parachain",
  "hyperspace-primitives",
- "ibc",
- "ibc-proto",
+ "ibc 0.15.0",
+ "ibc-proto 0.18.0",
  "ibc-rpc",
  "ics10-grandpa",
  "ics11-beefy",
  "ics13-near",
  "light-client-common",
  "log 0.4.17",
+ "metrics",
  "pallet-ibc",
  "parity-scale-codec",
+ "prometheus",
  "prost 0.10.4",
  "sc-keystore",
  "serde",
@@ -5063,9 +5065,9 @@ dependencies = [
  "hex",
  "hex-literal",
  "hyperspace-primitives",
- "ibc",
+ "ibc 0.15.0",
  "ibc-primitives",
- "ibc-proto",
+ "ibc-proto 0.18.0",
  "ibc-rpc",
  "ics10-grandpa",
  "ics11-beefy",
@@ -5114,8 +5116,8 @@ dependencies = [
  "async-trait",
  "futures 0.3.24",
  "hex",
- "ibc",
- "ibc-proto",
+ "ibc 0.15.0",
+ "ibc-proto 0.18.0",
  "ibc-rpc",
  "pallet-ibc",
  "parity-scale-codec",
@@ -5132,8 +5134,8 @@ dependencies = [
  "hyperspace",
  "hyperspace-parachain",
  "hyperspace-primitives",
- "ibc",
- "ibc-proto",
+ "ibc 0.15.0",
+ "ibc-proto 0.18.0",
  "log 0.4.17",
  "pallet-ibc",
  "serde_json",
@@ -5167,8 +5169,8 @@ dependencies = [
  "derive_more",
  "env_logger",
  "flex-error",
- "ibc-derive",
- "ibc-proto",
+ "ibc-derive 0.1.0",
+ "ibc-proto 0.18.0",
  "ics23",
  "modelator",
  "num-traits",
@@ -5197,8 +5199,49 @@ dependencies = [
 ]
 
 [[package]]
+name = "ibc"
+version = "0.15.0"
+source = "git+https://github.com/composableFi/ibc-rs?rev=9a959faabb8f2869e88327ea65a49f5697dcadf6#9a959faabb8f2869e88327ea65a49f5697dcadf6"
+dependencies = [
+ "borsh",
+ "derive_more",
+ "flex-error",
+ "ibc-derive 0.1.0 (git+https://github.com/composableFi/ibc-rs?rev=9a959faabb8f2869e88327ea65a49f5697dcadf6)",
+ "ibc-proto 0.18.0 (git+https://github.com/composableFi/ibc-rs?rev=9a959faabb8f2869e88327ea65a49f5697dcadf6)",
+ "ics23",
+ "num-traits",
+ "parity-scale-codec",
+ "primitive-types",
+ "prost 0.10.4",
+ "prost-types 0.10.1",
+ "safe-regex",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "subtle-encoding",
+ "tendermint",
+ "tendermint-proto",
+ "tendermint-rpc",
+ "time 0.3.15",
+ "tracing",
+ "uint",
+]
+
+[[package]]
 name = "ibc-derive"
 version = "0.1.0"
+dependencies = [
+ "convert_case 0.6.0",
+ "proc-macro-crate 1.2.1",
+ "proc-macro2 1.0.46",
+ "quote 1.0.21",
+ "syn 1.0.101",
+]
+
+[[package]]
+name = "ibc-derive"
+version = "0.1.0"
+source = "git+https://github.com/composableFi/ibc-rs?rev=9a959faabb8f2869e88327ea65a49f5697dcadf6#9a959faabb8f2869e88327ea65a49f5697dcadf6"
 dependencies = [
  "convert_case 0.6.0",
  "proc-macro-crate 1.2.1",
@@ -5216,7 +5259,7 @@ dependencies = [
  "composable-traits",
  "frame-support",
  "hex",
- "ibc",
+ "ibc 0.15.0",
  "parity-scale-codec",
  "ripemd",
  "scale-info",
@@ -5247,6 +5290,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "ibc-proto"
+version = "0.18.0"
+source = "git+https://github.com/composableFi/ibc-rs?rev=9a959faabb8f2869e88327ea65a49f5697dcadf6#9a959faabb8f2869e88327ea65a49f5697dcadf6"
+dependencies = [
+ "base64 0.13.0",
+ "bytes 1.2.1",
+ "prost 0.10.4",
+ "prost-types 0.10.1",
+ "serde",
+ "tendermint-proto",
+ "tonic",
+]
+
+[[package]]
 name = "ibc-proto-compiler"
 version = "0.2.0"
 dependencies = [
@@ -5265,10 +5322,10 @@ version = "0.1.0"
 dependencies = [
  "frame-system",
  "hex-literal",
- "ibc",
- "ibc-derive",
+ "ibc 0.15.0",
+ "ibc-derive 0.1.0",
  "ibc-primitives",
- "ibc-proto",
+ "ibc-proto 0.18.0",
  "ibc-runtime-api",
  "jsonrpsee 0.14.0",
  "pallet-ibc",
@@ -5302,9 +5359,9 @@ dependencies = [
  "bytes 1.2.1",
  "env_logger",
  "flex-error",
- "ibc",
- "ibc-derive",
- "ibc-proto",
+ "ibc 0.15.0",
+ "ibc-derive 0.1.0",
+ "ibc-proto 0.18.0",
  "ics23",
  "log 0.4.17",
  "modelator",
@@ -5341,9 +5398,9 @@ dependencies = [
  "grandpa-prover",
  "hex",
  "hex-literal",
- "ibc",
- "ibc-derive",
- "ibc-proto",
+ "ibc 0.15.0",
+ "ibc-derive 0.1.0",
+ "ibc-proto 0.18.0",
  "jsonrpsee-ws-client 0.14.0",
  "light-client-common",
  "log 0.4.17",
@@ -5379,9 +5436,9 @@ dependencies = [
  "derive_more",
  "frame-support",
  "futures 0.3.24",
- "ibc",
- "ibc-derive",
- "ibc-proto",
+ "ibc 0.15.0",
+ "ibc-derive 0.1.0",
+ "ibc-proto 0.18.0",
  "light-client-common",
  "parity-scale-codec",
  "primitive-types",
@@ -5411,9 +5468,9 @@ dependencies = [
  "derive_more",
  "env_logger",
  "flex-error",
- "ibc",
- "ibc-derive",
- "ibc-proto",
+ "ibc 0.15.0",
+ "ibc-derive 0.1.0",
+ "ibc-proto 0.18.0",
  "ics23",
  "modelator",
  "num-traits",
@@ -6892,7 +6949,7 @@ dependencies = [
  "anyhow",
  "derive_more",
  "hash-db",
- "ibc",
+ "ibc 0.15.0",
  "parity-scale-codec",
  "primitive-types",
  "serde",
@@ -7264,6 +7321,22 @@ dependencies = [
  "keccak",
  "rand_core 0.5.1",
  "zeroize",
+]
+
+[[package]]
+name = "metrics"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "futures-util",
+ "hyper 0.14.20",
+ "ibc 0.15.0 (git+https://github.com/composableFi/ibc-rs?rev=9a959faabb8f2869e88327ea65a49f5697dcadf6)",
+ "ibc-proto 0.18.0 (git+https://github.com/composableFi/ibc-rs?rev=9a959faabb8f2869e88327ea65a49f5697dcadf6)",
+ "log 0.4.17",
+ "prometheus",
+ "tendermint-proto",
+ "thiserror",
+ "tokio",
 ]
 
 [[package]]
@@ -8809,10 +8882,10 @@ dependencies = [
  "grandpa-light-client-primitives",
  "hex",
  "hex-literal",
- "ibc",
- "ibc-derive",
+ "ibc 0.15.0",
+ "ibc-derive 0.1.0",
  "ibc-primitives",
- "ibc-proto",
+ "ibc-proto 0.18.0",
  "ics07-tendermint",
  "ics10-grandpa",
  "ics11-beefy",
@@ -8855,7 +8928,7 @@ version = "0.0.1"
 dependencies = [
  "frame-support",
  "frame-system",
- "ibc",
+ "ibc 0.15.0",
  "ibc-primitives",
  "log 0.4.17",
  "parity-scale-codec",
