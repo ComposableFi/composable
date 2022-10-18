@@ -857,6 +857,57 @@ jobs:
           fi;
           docker push --all-tags "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}"
 
+  hyperspace-container-publish:
+    needs:
+      - effects-gate
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    concurrency:
+      group: ${{ github.workflow }}-hyperspace-container-${{ github.ref }}
+      cancel-in-progress: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+          echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix nixpkgs.docker nixpkgs.docker-buildx
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+      - uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+      - run: |
+          # enable required features (see https://github.com/cachix/install-nix-action/issues/19)
+          mkdir -p ~/.config/nix
+          echo "system-features = kvm" >> ~/.config/nix/nix.conf
+      - run: |
+          CONTAINER_PACKAGE_NAME=hyperspace-container
+          LOCAL_CONTAINER_NAME=composable-hyperspace-container
+          REMOTE_CONTAINER_NAME=composable-hyperspace:latest
+          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#${CONTAINER_PACKAGE_NAME} --no-update-lock-file --show-trace -L
+          docker load --input ./result
+          # update soon https://github.com/actions/checkout/issues/760
+          git config --global --add safe.directory /__w/composable/composable
+          SHA256=$(sha256sum ./result | cut --delimiter " " --fields 1)
+          COMMIT_SHA=$(git rev-parse HEAD)
+          docker image tag $LOCAL_CONTAINER_NAME "${{ env.DOCKER_REGISTRY_NAME }}/${REMOTE_CONTAINER_NAME}:${COMMIT_SHA}"
+          docker image tag $LOCAL_CONTAINER_NAME "${{ env.DOCKER_REGISTRY_NAME }}/${REMOTE_CONTAINER_NAME}:${SHA256}"
+          if [ $(git symbolic-ref HEAD) = "refs/heads/main" ]; then
+            docker image tag $LOCAL_CONTAINER_NAME "${{ env.DOCKER_REGISTRY_NAME }}/${REMOTE_CONTAINER_NAME}:latest"
+          fi;
+          docker push --all-tags "${{ env.DOCKER_REGISTRY_NAME }}/${REMOTE_CONTAINER_NAME}"
+
+
   composable-centauri-publish:
     if: ${{ github.ref == 'refs/heads/centauri' }}
     name: "Docker composable-centauri"
@@ -1287,6 +1338,15 @@ jobs:
             # runs non configured hyperspace
             nix shell --command "github:ComposableFi/composable/${{ github.event.pull_request.head.sha }}#hyperspace
             ````
+
+            ```shell
+            # runs bridge connected to parachains
+            nix run "github:ComposableFi/composable/${{ github.event.pull_request.head.sha }}#devnet-bridge
+            ````
+
+            Bridge is published as OSI image too.
+
+            #### Notes
 
             Note that the initial build may take about one hour if it has not been cached by our CI yet. Once it is cached, builds should take about one minute. We currently do not provide build caches for ARM machines such as M1 Macs, but building on ARM is supported.
 

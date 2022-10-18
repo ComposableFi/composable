@@ -60,7 +60,7 @@ async fn setup_clients() -> (ParachainClient<DefaultConfig>, ParachainClient<Def
 
 	// Create client configurations
 	let config_a = ParachainClientConfig {
-		name: format!("ParaId({})", args.para_id_a),
+		name: format!("127.0.0.1:9988"),
 		para_id: args.para_id_a,
 		parachain_rpc_url: args.chain_a,
 		relay_chain_rpc_url: args.relay_chain.clone(),
@@ -73,7 +73,7 @@ async fn setup_clients() -> (ParachainClient<DefaultConfig>, ParachainClient<Def
 		key_type: "sr25519".to_string(),
 	};
 	let config_b = ParachainClientConfig {
-		name: format!("ParaId({})", args.para_id_b),
+		name: format!("127.0.0.1:9188"),
 		para_id: args.para_id_b,
 		parachain_rpc_url: args.chain_b,
 		relay_chain_rpc_url: args.relay_chain,
@@ -98,7 +98,7 @@ async fn setup_clients() -> (ParachainClient<DefaultConfig>, ParachainClient<Def
 		.await
 		.unwrap()
 		.filter_map(|result| futures::future::ready(result.ok()))
-		.skip_while(|h| futures::future::ready(h.number < 210))
+		.skip_while(|h| futures::future::ready(h.number < 90))
 		.take(1)
 		.collect::<Vec<_>>()
 		.await;

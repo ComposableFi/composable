@@ -23,6 +23,7 @@ std = [
     "sp-runtime/std",
     "sp-trie/std",
     "sp-finality-grandpa/std",
+    "finality-grandpa/std",
 ]
 
 [build-dependencies]
@@ -34,7 +35,7 @@ ibc = { path = "../../ibc/modules", default-features = false }
 ibc-proto = { path = "../../ibc/proto", default-features = false }
 
 # local deps
-grandpa-client = { package = "grandpa-light-client", path = "../../algorithms/grandpa/verifier",  default-features = false }
+grandpa-client = { package = "grandpa-light-client-verifier", path = "../../algorithms/grandpa/verifier",  default-features = false }
 grandpa-client-primitives = { package = "grandpa-light-client-primitives", path = "../../algorithms/grandpa/primitives", default-features = false }
 light-client-common = { path = "../common", default-features = false }
 
@@ -53,6 +54,7 @@ sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
 sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
 sp-finality-grandpa = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
+finality-grandpa = { version = "0.16.0", default-features = false }
 
 [dependencies.tendermint]
 git = "https://github.com/composableFi/tendermint-rs"
@@ -66,7 +68,9 @@ default-features = false
 
 [dev-dependencies]
 hex = "0.4.3"
+log = "0.4"
 futures = "0.3.24"
+env_logger = "0.9.0"
 serde = { version = "1.0.144", features = ["derive"] }
 beefy-prover = { path = "../../algorithms/beefy/prover" }
 grandpa-prover = { path = "../../algorithms/grandpa/prover" }

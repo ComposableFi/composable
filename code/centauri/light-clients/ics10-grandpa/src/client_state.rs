@@ -57,6 +57,19 @@ pub struct ClientState<H> {
 	pub(crate) _phantom: PhantomData<H>,
 }
 
+impl<H> From<ClientState<H>> for grandpa_client_primitives::ClientState<H256> {
+	fn from(client_state: ClientState<H>) -> grandpa_client_primitives::ClientState<H256> {
+		grandpa_client_primitives::ClientState {
+			current_authorities: client_state.current_authorities,
+			current_set_id: client_state.current_set_id,
+			latest_relay_hash: client_state.latest_relay_hash,
+			latest_relay_height: client_state.latest_relay_height,
+			latest_para_height: client_state.latest_para_height,
+			para_id: client_state.para_id,
+		}
+	}
+}
+
 impl<H: Clone> Protobuf<RawClientState> for ClientState<H> {}
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
