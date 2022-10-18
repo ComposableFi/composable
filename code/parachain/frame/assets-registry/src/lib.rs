@@ -42,9 +42,10 @@ pub mod pallet {
 		dispatch::DispatchResultWithPostInfo, pallet_prelude::*, traits::EnsureOrigin,
 	};
 
+	use composable_traits::assets::Asset;
 	use frame_system::pallet_prelude::*;
 	use scale_info::TypeInfo;
-	use sp_std::{fmt::Debug, str};
+	use sp_std::{fmt::Debug, str, vec, vec::Vec};
 
 	/// The module configuration trait.
 	#[pallet::config]
@@ -91,8 +92,13 @@ pub mod pallet {
 	/// Mapping local asset to foreign asset.
 	#[pallet::storage]
 	#[pallet::getter(fn from_local_asset)]
-	pub type LocalToForeign<T: Config> =
-		StorageMap<_, Twox128, T::LocalAssetId, ForeignMetadata<T::ForeignAssetId>, OptionQuery>;
+	pub type LocalToForeign<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		T::LocalAssetId,
+		ForeignMetadata<T::ForeignAssetId>,
+		OptionQuery,
+	>;
 
 	/// Mapping foreign asset to local asset.
 	#[pallet::storage]
@@ -308,6 +314,23 @@ pub mod pallet {
 			remote_asset_id: Self::AssetNativeLocation,
 		) -> Option<Self::Balance> {
 			<MinFeeAmounts<T>>::get(parachain_id, remote_asset_id)
+		}
+
+		fn get_foreign_assets_list() -> Result<Vec<Asset>, DispatchError> {
+			let assets = LocalToForeign::<T>::iter()
+				.map(|(local_id, foreign_metadata)| {
+					let decimals = match foreign_metadata.decimals {
+						Some(d) => d,
+						_ => 12_u32.into(),
+					};
+					let _location = foreign_metadata.location;
+
+					let name = vec![2_u8];
+					Asset { name, id: 15_u64, decimals, foreign_id: 8_u64 }
+				})
+				.collect::<Vec<_>>();
+
+			Ok(assets)
 		}
 	}
 

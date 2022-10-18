@@ -501,6 +501,17 @@ impl assets::Config for Runtime {
 	type CurrencyValidator = ValidateCurrencyId;
 }
 
+// impl assets_registry::Config for Runtime {
+// 	type Event = Event;
+// 	type LocalAssetId = CurrencyId;
+// 	type ForeignAssetId = CurrencyId;
+// 	type UpdateAssetRegistryOrigin = EnsureOrigin<AccountId>;
+// 	type ParachainOrGovernanceOrigin = EnsureOrigin<AccountId>;
+// 	type WeightInfo = ();
+// 	type Balance = Balance;
+// 	type CurrencyFactory = CurrencyFactory;
+// }
+
 parameter_type_with_key! {
 	// TODO:
 	pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
@@ -813,6 +824,7 @@ construct_runtime!(
 		CrowdloanRewards: crowdloan_rewards = 56,
 		Assets: assets = 57,
 		GovernanceRegistry: governance_registry = 58,
+		// AssetsRegistry: assets_registry: 59,
 	}
 );
 
@@ -883,6 +895,8 @@ impl_runtime_apis! {
 		}
 
 		fn list_assets() -> Vec<Asset> {
+			// let _foreign_assets_list = AssetsRegistry::get_foreign_assets_list();
+			//asd
 			CurrencyId::list_assets()
 		}
 	}

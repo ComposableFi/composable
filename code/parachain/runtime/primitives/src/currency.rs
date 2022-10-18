@@ -91,7 +91,7 @@ macro_rules! list_assets {
 
 		pub fn list_assets() -> Vec<Asset> {
 			[
-				$(Asset { id: CurrencyId::$NAME.0 as u64, name: stringify!($NAME).as_bytes().to_vec() },)*
+				$(Asset { id: CurrencyId::$NAME.0 as u64, name: stringify!($NAME).as_bytes().to_vec(), decimals: 6_u8.into(), foreign_id: 10_u64 },)*
 			]
 			.to_vec()
 		}
