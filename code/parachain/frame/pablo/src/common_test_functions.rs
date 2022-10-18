@@ -5,7 +5,7 @@ use crate::{
 	PoolConfiguration::DualAssetConstantProduct,
 	PoolInitConfiguration,
 };
-use composable_traits::defi::CurrencyPair;
+use composable_traits::{defi::CurrencyPair, dex::AssetAmount};
 use frame_support::{
 	assert_noop, assert_ok,
 	traits::fungibles::{Inspect, Mutate},
@@ -14,6 +14,7 @@ use frame_system::EventRecord;
 use sp_arithmetic::{PerThing, Permill};
 use sp_core::H256;
 use sp_runtime::{traits::ConstU32, BoundedBTreeMap, TokenError};
+use sp_std::collections::btree_map::BTreeMap;
 
 pub fn dual_asset_pool_weights(
 	first_asset: AssetId,
@@ -53,8 +54,7 @@ pub fn common_add_remove_lp(
 	assert_ok!(Pablo::add_liquidity(
 		Origin::signed(ALICE),
 		actual_pool_id,
-		first_asset_amount,
-		second_asset_amount,
+		BTreeMap::from([(pair[0], first_asset_amount), (pair[1], second_asset_amount)]),
 		0,
 		false
 	));
@@ -83,8 +83,7 @@ pub fn common_add_remove_lp(
 	assert_ok!(Pablo::add_liquidity(
 		Origin::signed(BOB),
 		actual_pool_id,
-		next_first_asset_amount,
-		next_second_asset_amount,
+		BTreeMap::from([(pair[0], next_first_asset_amount), (pair[1], next_second_asset_amount)]),
 		0,
 		false
 	));
@@ -98,7 +97,12 @@ pub fn common_add_remove_lp(
 	});
 	let lp = Tokens::balance(lp_token, &BOB);
 	assert!(expected_lp_check(next_first_asset_amount, next_second_asset_amount, lp));
-	assert_ok!(Pablo::remove_liquidity(Origin::signed(BOB), actual_pool_id, lp, 0, 0));
+	assert_ok!(Pablo::remove_liquidity(
+		Origin::signed(BOB),
+		actual_pool_id,
+		lp,
+		BTreeMap::from([(pair[0], 0_u128), (pair[1], 0_u128)]),
+	));
 	let lp = Tokens::balance(lp_token, &BOB);
 	// all lp tokens must have been burnt
 	assert_eq!(lp, 0_u128);
@@ -133,8 +137,7 @@ pub fn common_add_lp_with_min_mint_amount(
 	assert_ok!(Pablo::add_liquidity(
 		Origin::signed(ALICE),
 		pool_id,
-		init_first_asset_amount,
-		init_second_asset_amount,
+		BTreeMap::from([(pair[0], init_first_asset_amount), (pair[1], init_second_asset_amount)]),
 		0,
 		false
 	));
@@ -162,8 +165,7 @@ pub fn common_add_lp_with_min_mint_amount(
 		Pablo::add_liquidity(
 			Origin::signed(BOB),
 			pool_id,
-			first_asset_amount,
-			second_asset_amount,
+			BTreeMap::from([(pair[0], first_asset_amount), (pair[1], second_asset_amount)]),
 			min_mint_amount + 1,
 			false
 		),
@@ -173,8 +175,7 @@ pub fn common_add_lp_with_min_mint_amount(
 	assert_ok!(Pablo::add_liquidity(
 		Origin::signed(BOB),
 		pool_id,
-		first_asset_amount,
-		second_asset_amount,
+		BTreeMap::from([(pair[0], first_asset_amount), (pair[1], second_asset_amount)]),
 		min_mint_amount,
 		false
 	));
@@ -197,8 +198,7 @@ pub fn common_remove_lp_failure(
 	assert_ok!(Pablo::add_liquidity(
 		Origin::signed(ALICE),
 		pool_id,
-		init_base_amount,
-		init_quote_amount,
+		BTreeMap::from([(pair[0], init_base_amount), (pair[1], init_quote_amount)]),
 		0,
 		false
 	));
@@ -217,15 +217,19 @@ pub fn common_remove_lp_failure(
 	assert_ok!(Pablo::add_liquidity(
 		Origin::signed(BOB),
 		pool_id,
-		base_amount,
-		quote_amount,
+		BTreeMap::from([(pair[0], base_amount), (pair[1], quote_amount)]),
 		0,
 		false
 	));
 	let lp = Tokens::balance(lp_token, &BOB);
 	// error as trying to redeem more tokens than lp
 	assert_noop!(
-		Pablo::remove_liquidity(Origin::signed(BOB), pool_id, lp + 1, 0, 0),
+		Pablo::remove_liquidity(
+			Origin::signed(BOB),
+			pool_id,
+			lp + 1,
+			BTreeMap::from([(pair[0], 0), (pair[1], 0)])
+		),
 		TokenError::NoFunds
 	);
 	let min_expected_base_amount = base_amount + 1;
@@ -236,8 +240,10 @@ pub fn common_remove_lp_failure(
 			Origin::signed(BOB),
 			pool_id,
 			lp,
-			min_expected_base_amount,
-			min_expected_quote_amount,
+			BTreeMap::from([
+				(pair[0], min_expected_base_amount),
+				(pair[1], min_expected_quote_amount)
+			])
 		),
 		crate::Error::<Test>::CannotRespectMinimumRequested
 	);
@@ -259,8 +265,7 @@ pub fn common_exchange_failure(
 	assert_ok!(Pablo::add_liquidity(
 		Origin::signed(ALICE),
 		pool_id,
-		init_base_amount,
-		init_quote_amount,
+		BTreeMap::from([(pair[0], init_base_amount), (pair[1], init_quote_amount)]),
 		0,
 		false
 	));
@@ -270,7 +275,13 @@ pub fn common_exchange_failure(
 	// error as trying to swap more value than balance
 	let swapped_pair = CurrencyPair::new(pair[1], pair[0]);
 	assert_noop!(
-		Pablo::swap(Origin::signed(BOB), pool_id, swapped_pair, exchange_base_amount + 1, 0, false),
+		Pablo::swap(
+			Origin::signed(BOB),
+			pool_id,
+			AssetAmount::new(pair[1], exchange_base_amount + 1),
+			AssetAmount::new(pair[0], 0),
+			false
+		),
 		orml_tokens::Error::<Test>::BalanceTooLow
 	);
 	let expected_value = exchange_base_amount + 1;
@@ -279,9 +290,8 @@ pub fn common_exchange_failure(
 		Pablo::swap(
 			Origin::signed(BOB),
 			pool_id,
-			swapped_pair,
-			exchange_base_amount,
-			expected_value,
+			AssetAmount::new(pair[1], exchange_base_amount),
+			AssetAmount::new(pair[0], expected_value),
 			false
 		),
 		crate::Error::<Test>::CannotRespectMinimumRequested

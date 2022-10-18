@@ -100,7 +100,6 @@ where
 		&owner,
 		pica_ksm,
 		pica_amount.into(),
-		ksm_amount.into(),
 		0_u128.into(),
 		false,
 	)
@@ -125,7 +124,6 @@ where
 		&owner,
 		ksm_eth,
 		ksm_amount.into(),
-		eth_amount.into(),
 		0_u128.into(),
 		false,
 	)
@@ -151,7 +149,6 @@ where
 		&owner,
 		eth_usdc,
 		eth_amount.into(),
-		usdc_amount.into(),
 		0_u128.into(),
 		false,
 	)
@@ -180,7 +177,6 @@ where
 		&owner,
 		usdc_usdt,
 		usdc_amount.into(),
-		usdt_amount.into(),
 		0_u128.into(),
 		false,
 	)
