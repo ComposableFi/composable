@@ -227,7 +227,7 @@ pub fn ethereum_address(secret: &EthKey) -> EthereumAddress {
 	res
 }
 
-pub fn relay_generate(count: u64) -> Vec<(AccountId, ClaimKey)> {
+pub fn relay_generate(count: u64) -> Vec<(AccountId, ed25519::Pair)> {
 	let seed: u128 = 12345678901234567890123456789012;
 	(0..count)
 		.map(|i| {
@@ -237,9 +237,9 @@ pub fn relay_generate(count: u64) -> Vec<(AccountId, ClaimKey)> {
 				.expect("Account ID is valid; QED");
 			(
 				AccountId::new(account_id),
-				ClaimKey::Relay(ed25519::Pair::from_seed(&keccak_256(
+				ed25519::Pair::from_seed(&keccak_256(
 					&[(seed + i as u128).to_le_bytes(), (seed + i as u128).to_le_bytes()].concat(),
-				))),
+				)),
 			)
 		})
 		.collect()
@@ -265,6 +265,7 @@ pub fn ethereum_generate(count: u64) -> Vec<(AccountId, ClaimKey)> {
 pub fn generate_accounts(count: u64) -> Vec<(AccountId, ClaimKey)> {
 	let mut x = relay_generate(count / 2);
 	let mut y = ethereum_generate(count / 2);
-	x.append(&mut y);
-	x
+	todo!()
+	// x.append(&mut y);
+	// x
 }

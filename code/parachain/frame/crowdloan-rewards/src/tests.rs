@@ -13,7 +13,7 @@ use composable_support::types::{EcdsaSignature, EthereumAddress};
 use composable_tests_helpers::test::helper::assert_event_with;
 use frame_support::{
 	assert_noop, assert_ok,
-	traits::{fungible::Transfer, Currency},
+	traits::{Currency, OriginTrait},
 };
 use hex_literal::hex;
 use sp_core::{ed25519, storage::StateVersion, Pair};
@@ -50,7 +50,10 @@ fn with_rewards_default<R>(
 	with_rewards(DEFAULT_NB_OF_CONTRIBUTORS, DEFAULT_REWARD, DEFAULT_VESTING_PERIOD, execute)
 }
 
-mod unlock_rewards_for {
+pub mod unlock_rewards_for {
+
+	use frame_system::pallet_prelude::OriginFor;
+	use sp_runtime::traits::StaticLookup;
 
 	use super::*;
 
@@ -72,33 +75,86 @@ mod unlock_rewards_for {
 	}
 
 	#[test]
-	fn should_unlock_reward_assets_for_accounts() {
-		with_rewards_default(|_bugs_bugs_bugs, accounts| {
-			assert_ok!(CrowdloanRewards::initialize(Origin::root()));
+	fn test_should_unlock_reward_assets_for_accounts() {
+		should_unlock_reward_assets_for_accounts::<Test>();
+	}
+
+	pub fn should_unlock_reward_assets_for_accounts<Runtime>()
+	where
+		Runtime: pallet_balances::Config
+			+ crate::Config<RelayChainAccountId = [u8; 32]>
+			+ pallet_timestamp::Config,
+		<Runtime as pallet_balances::Config>::Balance: From<u128>,
+		<Runtime as crate::Config>::Balance: From<u128>,
+		<Runtime as pallet_timestamp::Config>::Moment: From<u64>,
+		<Runtime as crate::Config>::Moment: From<u64>,
+		<<Runtime as frame_system::Config>::Origin as OriginTrait>::AccountId: From<AccountId>,
+		<<Runtime as frame_system::Config>::Lookup as StaticLookup>::Source: From<AccountId>,
+		<Runtime as frame_system::Config>::AccountId: From<AccountId>,
+	{
+		let accounts = generate_accounts(DEFAULT_NB_OF_CONTRIBUTORS as _);
+
+		let rewards = accounts
+			.iter()
+			.map(|(_, account)| {
+				(
+					account.as_remote_public(),
+					<Runtime as crate::Config>::Balance::from(DEFAULT_REWARD),
+					<Runtime as crate::Config>::Moment::from(DEFAULT_VESTING_PERIOD),
+				)
+			})
+			.collect();
+
+		ExtBuilder::default().build().execute_with(|| {
+			System::set_block_number(0xDEADC0DE);
+			let random_moment_start: u64 = 0xCAFEBABE;
+
+			pallet_timestamp::Pallet::<Runtime>::set_timestamp(random_moment_start.into());
+			pallet_balances::Pallet::<Runtime>::make_free_balance_be(
+				&crate::Pallet::<Runtime>::account_id(),
+				(DEFAULT_REWARD * DEFAULT_NB_OF_CONTRIBUTORS).into(),
+			);
+
+			assert_ok!(crate::Pallet::<Runtime>::populate(OriginFor::<Runtime>::root(), rewards));
+			assert_ok!(crate::Pallet::<Runtime>::initialize(OriginFor::<Runtime>::root()));
 
 			for (picasso_account, remote_account) in accounts.clone().into_iter() {
 				assert_ok!(remote_account.associate(picasso_account));
 			}
 
 			assert_noop!(
-				<Balances as Transfer<AccountId>>::transfer(
-					&accounts[0].0,
-					&accounts[1].0,
-					DEFAULT_REWARD / 10,
-					false,
+				pallet_balances::Pallet::<Runtime>::transfer(
+					OriginFor::<Runtime>::signed(
+						<<Runtime as frame_system::Config>::Origin as OriginTrait>::AccountId::from(
+							accounts[0].0.clone()
+						)
+					),
+					<<Runtime as frame_system::Config>::Lookup as StaticLookup>::Source::from(
+						accounts[1].0.clone()
+					),
+					(DEFAULT_REWARD / 10).into(),
 				),
-				pallet_balances::pallet::Error::<Test>::LiquidityRestrictions
+				pallet_balances::pallet::Error::<Runtime>::LiquidityRestrictions
 			);
 
 			let accounts: Vec<AccountId> =
 				accounts.into_iter().map(|(account, _claim_key)| account).collect();
-			assert_ok!(CrowdloanRewards::unlock_rewards_for(Origin::root(), accounts.clone()));
 
-			assert_ok!(<Balances as Transfer<AccountId>>::transfer(
-				&accounts[0],
-				&accounts[1],
-				DEFAULT_REWARD / 10,
-				false,
+			assert_ok!(crate::Pallet::<Runtime>::unlock_rewards_for(
+				OriginFor::<Runtime>::root(),
+				accounts
+					.iter()
+					.cloned()
+					.map(<Runtime as frame_system::Config>::AccountId::from)
+					.collect()
+			));
+
+			assert_ok!(pallet_balances::Pallet::<Runtime>::transfer(
+				OriginFor::<Runtime>::signed(accounts[0].clone().into()),
+				<<Runtime as frame_system::Config>::Lookup as StaticLookup>::Source::from(
+					accounts[1].clone()
+				),
+				(DEFAULT_REWARD / 10).into(),
 			));
 		})
 	}

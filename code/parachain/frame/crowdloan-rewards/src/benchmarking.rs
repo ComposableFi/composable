@@ -1,13 +1,19 @@
 use crate::*;
 
-use crate::models::{Proof, RemoteAccount};
+use crate::{
+	models::{Proof, RemoteAccount},
+	tests::unlock_rewards_for::should_unlock_reward_assets_for_accounts,
+};
 use composable_support::types::{EcdsaSignature, EthereumAddress};
 use ed25519_dalek::{Keypair, Signer};
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite};
-use frame_support::{pallet_prelude::*, traits::fungible::Mutate};
+use frame_support::{
+	pallet_prelude::*,
+	traits::{fungible::Mutate, OriginTrait},
+};
 use frame_system::RawOrigin;
 use sp_io::hashing::keccak_256;
-use sp_runtime::AccountId32;
+use sp_runtime::{traits::StaticLookup, AccountId32};
 use sp_std::prelude::*;
 
 type RelayKey = [u8; 32];
@@ -148,6 +154,10 @@ benchmarks! {
 				AccountId = AccountId,
 				Time = pallet_timestamp::Pallet<T>,
 			>,
+			T: pallet_balances::Config<Balance = u128>,
+			<<T as frame_system::Config>::Origin as OriginTrait>::AccountId: From<AccountId>,
+			<<T as frame_system::Config>::Lookup as StaticLookup>::Source: From<AccountId>,
+			<T as frame_system::Config>::AccountId: From<AccountId>,
 	}
 
 	populate {
@@ -245,6 +255,14 @@ benchmarks! {
 
 		let reward_accounts = accounts.into_iter().map(|(account_id, _)| account_id).collect();
 	}: _(RawOrigin::Root, reward_accounts)
-}
 
-impl_benchmark_test_suite!(Pallet, crate::mocks::ExtBuilder::default().build(), crate::mocks::Test,);
+	test {
+		should_unlock_reward_assets_for_accounts::<T>();
+	}: {}
+
+	impl_benchmark_test_suite!(
+		Pallet,
+		crate::mocks::ExtBuilder::default().build(),
+		crate::mocks::Test
+	);
+}
