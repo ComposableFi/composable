@@ -93,7 +93,7 @@ where
 
 /// Compute the amount of the output token given the amount of the input token.
 ///
-/// If `Ok`, returns a tuple containing `(a_out, fee)`.
+/// If `Ok`, returns a `ConstantProductAmmValueFeePair` containing the `a_out` and the `fee`.
 /// To get `a_out` without accounting for the fee, set `f = 0`.
 /// Amount out, round down results.
 ///
@@ -210,7 +210,7 @@ where
 
 /// Compute the amount of the input token given the amount of the output token.
 ///
-/// If `Ok`, returns a tuple containing `(a_sent, fee)`.
+/// If `Ok`, returns a `ConstantProductAmmValueFeePair` containing the `a_sent` and the `fee`.
 /// To get `a_sent` without accounting for the fee, set `f = 0`.
 /// Amount in, round up results.
 ///
@@ -395,7 +395,7 @@ fn fixed_point_from_decimal(decimal: Decimal) -> Result<u128, ArithmeticError> {
 
 /// Computes the LP to mint on first deposit.
 ///
-/// If `Ok`, returns a tuple containing `(lp_to_mint, fee)`.
+/// If `Ok`, returns a `ConstantProductAmmValueFeePair` containing the `lp_to_mint` and the `fee`.
 ///
 /// Fees are currently always 0. Fees are normally charged to avoid fee-less swaps by adding and
 /// removing liquidity. With the initial deposit, these chances are so low that it is safe to
@@ -436,7 +436,7 @@ pub fn compute_first_deposit_lp_<T: PerThing>(
 
 /// Computes the LP to mint on an existing deposit.
 ///
-/// If `Ok`, returns a tuple containing `(lp_to_mint, fee)`.
+/// If `Ok`, returns a `ConstantProductAmmValueFeePair` containing the `lp_to_mint` and the `fee`.
 ///
 /// # Parameters
 /// * `p_supply` - Existing supply of LPT tokens
@@ -468,7 +468,11 @@ pub fn compute_deposit_lp_<T: PerThing>(
 	let ratio = power.safe_sub(&Decimal::ONE)?;
 
 	let issued = p_supply.safe_mul(&ratio)?.to_u128().ok_or(ArithmeticError::Overflow)?;
-	let fee = d_k.safe_sub(&d_k_left_from_fee)?.to_u128().ok_or(ArithmeticError::Overflow)?;
+	let fee = d_k
+		.safe_sub(&d_k_left_from_fee)?
+		.round_up()
+		.to_u128()
+		.ok_or(ArithmeticError::Overflow)?;
 
 	Ok(ConstantProductAmmValueFeePair { value: issued, fee })
 }
