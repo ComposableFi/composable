@@ -78,7 +78,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		let base_asset = pool_assets[0];
 		let quote_asset = pool_assets[1];
 		ensure!(
-			pool_assets.iter().find(|(_, _, balance)| balance.is_zero()).is_none(),
+			!pool_assets.iter().any(|(_, _, balance)| balance.is_zero()),
 			Error::<T>::NotEnoughLiquidity
 		);
 
@@ -100,9 +100,9 @@ impl<T: Config> DualAssetConstantProduct<T> {
 			.iter()
 			.map(|(asset_id, weight)| {
 				(
-					asset_id.clone(),
-					weight.clone(),
-					T::Convert::convert(T::Assets::balance(asset_id.clone(), pool_account)),
+					*asset_id,
+					*weight,
+					T::Convert::convert(T::Assets::balance(*asset_id, pool_account)),
 				)
 			})
 			// TODO (vim): Make a map here later when the out_asset is provided.
@@ -179,7 +179,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		quote_amount: T::Balance,
 		apply_fees: bool,
 	) -> Result<(T::Balance, T::Balance, Fee<T::AssetId, T::Balance>), DispatchError> {
-		let pool_assets = Self::get_pool_balances(&pool, pool_account);
+		let pool_assets = Self::get_pool_balances(pool, pool_account);
 		// TODO (vim): We have no way of knowing which amount is for which asset (fixed in a later
 		// stage). For now we assume the pool defined order
 		let (base_asset, quote_asset) = if pool_assets[0].0 == pair.base {

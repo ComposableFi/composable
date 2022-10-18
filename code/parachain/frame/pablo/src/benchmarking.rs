@@ -25,12 +25,8 @@ fn amm_init_config<T: Config>(
 }
 
 fn create_amm_pool<T: Config>(owner: T::AccountId, pair: CurrencyPair<T::AssetId>) -> T::PoolId {
-	let swap_pool_init = amm_init_config::<T>(
-		owner.clone(),
-		pair,
-		Permill::from_percent(50),
-		Permill::from_percent(1),
-	);
+	let swap_pool_init =
+		amm_init_config::<T>(owner, pair, Permill::from_percent(50), Permill::from_percent(1));
 	Pablo::<T>::do_create_pool(swap_pool_init).expect("impossible; qed;")
 }
 
@@ -50,7 +46,7 @@ benchmarks! {
 		let pair = CurrencyPair::new(usdc, usdt);
 		let fee = Permill::from_percent(1);
 		let protocol_fee = Permill::from_percent(1);
-		let stable_swap_pool_init = amm_init_config::<T>(owner.clone(), pair, Permill::from_percent(50_u32), fee);
+		let stable_swap_pool_init = amm_init_config::<T>(owner, pair, Permill::from_percent(50_u32), fee);
 	  } : _(RawOrigin::Root, stable_swap_pool_init)
 
 	add_liquidity {
