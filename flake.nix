@@ -547,6 +547,48 @@
             '';
           };
 
+          mkQAStateInitialize = url: parachainIds:
+            let
+              lease-period-prolongator = npm-bp.buildYarnPackage {
+                nativeBuildInputs = [
+                  pkgs.pkg-config
+                  pkgs.python3
+                  pkgs.nodePackages.node-gyp-build
+                  pkgs.nodePackages.node-gyp
+                  pkgs.nodePackages.typescript
+                ];
+                src = ./scripts/lease-period-prolongator;
+                buildPhase = ''
+                  yarn
+                  ${pkgs.nodePackages.typescript}/bin/tsc
+                '';
+              };
+              composablejs = npm-bp.buildYarnPackage {
+                nativeBuildInputs = [
+                  pkgs.pkg-config
+                  pkgs.python3
+                  pkgs.nodePackages.node-gyp-build
+                  pkgs.nodePackages.node-gyp
+                  pkgs.nodePackages.typescript
+                ];
+                src = ./composablejs;
+                buildPhase = ''
+                  yarn
+                '';
+              };
+            in pkgs.writeShellApplication {
+              name = "qa-state-initialize";
+              runtimeInputs = [ pkgs.nodejs ];
+              text = ''
+                PARACHAIN_ENDPOINT=ws://localhost:9988 ${pkgs.nodejs}/bin/npm run --prefix ${composablejs} start -w packages/devnet-setup
+                ${builtins.concatStringsSep "\n" (builtins.map (parachainId:
+                  "NODE_URL=${url} PARA_ID=${
+                    toString parachainId
+                  } ${pkgs.nodejs}/bin/node ${lease-period-prolongator}/dist/index.js")
+                  parachainIds)}
+              '';
+            };
+
           frontend-static = mkFrontendStatic {
             subsquidEndpoint = "http://localhost:4350/graphql";
             picassoEndpoint = "ws://localhost:9988";
@@ -619,6 +661,9 @@
             inherit frontend-static-firebase;
             inherit frontend-pablo-server;
             inherit frontend-picasso-server;
+
+            qa-state-initialize-local =
+              mkQAStateInitialize "ws://localhost:9944" [ 1000 2000 2087 ];
 
             docs-static = npm-bp.buildNpmPackage {
               src = ./docs;
@@ -1307,6 +1352,8 @@
               flake-utils.lib.mkApp { drv = run-simnode-tests "picasso"; };
             simnode-tests-dali-rococo =
               flake-utils.lib.mkApp { drv = run-simnode-tests "dali-rococo"; };
+            qa-state-initialize-local =
+              makeApp packages.qa-state-initialize-local;
             default = devnet-dali;
           };
         });
