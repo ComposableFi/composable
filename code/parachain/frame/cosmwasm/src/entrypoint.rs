@@ -3,7 +3,10 @@ use crate::{
 	AccountIdOf, CodeIdToInfo, Config, ContractInfoOf, ContractLabelOf, ContractMessageOf,
 	ContractToInfo, CurrentNonce, EntryPoint, Error, Event, FundsOf, Pallet,
 };
-use alloc::vec::Vec;
+use alloc::{
+	string::{String, ToString},
+	vec::Vec,
+};
 use composable_support::abstractions::utils::increment::Increment;
 use core::marker::PhantomData;
 use cosmwasm_minimal_std::Coin;
@@ -133,6 +136,16 @@ impl EntryPointCaller<MigrateInput> {
 		new_code_id: CosmwasmCodeId,
 	) -> Result<EntryPointCaller<Dispatchable<MigrateInput, (), T>>, Error<T>> {
 		let contract_info = Pallet::<T>::contract_info(&contract)?;
+		// If the contract is already migrated (which is the case for `continue_migrate`) don't try
+		// to migrate again.
+		if contract_info.code_id != new_code_id {
+			Pallet::<T>::do_set_contract_meta(
+				&contract,
+				new_code_id,
+				contract_info.admin.clone(),
+				String::from_utf8_lossy(&contract_info.label).to_string(),
+			)?;
+		}
 
 		Pallet::<T>::deposit_event(Event::<T>::Migrated {
 			contract: contract.clone(),
