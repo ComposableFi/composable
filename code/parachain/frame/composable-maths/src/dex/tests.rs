@@ -46,7 +46,7 @@ mod constant_product {
 			let pool_assets = vec![];
 			let f = Permill::zero();
 
-			let res = compute_first_deposit_lp_(pool_assets, f);
+			let res = compute_first_deposit_lp_(&pool_assets, f);
 
 			assert_eq!(res, Err(ConstantProductAmmError::InvalidTokensList))
 		}
@@ -59,11 +59,11 @@ mod constant_product {
 			];
 			let f = Permill::zero();
 
-			let res = compute_first_deposit_lp_(pool_assets, f).expect("Inputs are valid; QED");
+			let res = compute_first_deposit_lp_(&pool_assets, f).expect("Inputs are valid; QED");
 
 			// Actual expected 346_410_161_513_775_458
 			// -0.000000000310% Error
-			assert_eq!(res.0, 346_410_161_406_220_453);
+			assert_eq!(res.value, 346_410_161_406_220_453);
 		}
 
 		proptest! {
@@ -73,7 +73,7 @@ mod constant_product {
 			fn no_unexpected_errors_in_range(input in first_deposit_range_inputs()) {
 				let pool_assets = generate_pool_assets(dbg!(input.number_of_assets));
 
-				let res = compute_first_deposit_lp_(pool_assets, input.f);
+				let res = compute_first_deposit_lp_(&pool_assets, input.f);
 
 				prop_assert!(dbg!(res).is_ok());
 			}
@@ -202,7 +202,7 @@ mod constant_product {
 			let res = compute_in_given_out_new(w_i, w_o, b_i, b_o, a_out, f)
 				.expect("Input is valid; QED");
 
-			assert_eq!(res.1, 0);
+			assert_eq!(res.fee, 0);
 		}
 
 		#[test]
@@ -261,7 +261,7 @@ mod constant_product {
 
 			// Actual expected 256_128_000_000_000
 			// +0.000000250000 Error
-			assert_eq!(res.0, 256_128_064_032_017);
+			assert_eq!(res.value, 256_128_064_032_017);
 		}
 
 		proptest! {
@@ -278,8 +278,8 @@ mod constant_product {
 					i_and_o.f)
 				.expect("Input is valid; QED");
 
-				prop_assert_eq!(res.0, i_and_o.a_sent);
-				prop_assert_eq!(res.1, i_and_o.fee);
+				prop_assert_eq!(res.value, i_and_o.a_sent);
+				prop_assert_eq!(res.fee, i_and_o.fee);
 			}
 		}
 
@@ -418,7 +418,7 @@ mod constant_product {
 			let res = compute_out_given_in_new(w_i, w_o, b_i, b_o, a_sent, fee)
 				.expect("Valid input; QED");
 
-			assert_eq!(res.1, 0);
+			assert_eq!(res.fee, 0);
 		}
 
 		#[test]
@@ -432,7 +432,7 @@ mod constant_product {
 
 			let res = compute_out_given_in_new(w_i, w_o, b_i, b_o, a_sent, fee);
 
-			assert_eq!(res, Err(sp_runtime::ArithmeticError::DivisionByZero));
+			assert_eq!(res, Err(ConstantProductAmmError::from(ArithmeticError::DivisionByZero)));
 		}
 
 		#[test]
@@ -446,7 +446,7 @@ mod constant_product {
 
 			let res = compute_out_given_in_new(w_i, w_o, b_i, b_o, a_sent, fee);
 
-			assert_eq!(res, Err(sp_runtime::ArithmeticError::DivisionByZero));
+			assert_eq!(res, Err(ConstantProductAmmError::from(ArithmeticError::DivisionByZero)));
 		}
 
 		#[test]
@@ -463,7 +463,7 @@ mod constant_product {
 
 			// Actual expected 255_872_000_000_000
 			// +0.000000250000% Error
-			assert_eq!(res.0, 255_872_063_968_015);
+			assert_eq!(res.value, 255_872_063_968_015);
 		}
 
 		proptest! {
@@ -481,8 +481,8 @@ mod constant_product {
 				)
 				.expect("Valid input; QED");
 
-				prop_assert_eq!(res.0, i_and_o.a_out);
-				prop_assert_eq!(res.1, i_and_o.fee);
+				prop_assert_eq!(res.value, i_and_o.a_out);
+				prop_assert_eq!(res.fee, i_and_o.fee);
 			}
 		}
 

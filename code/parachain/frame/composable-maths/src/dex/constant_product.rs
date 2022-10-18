@@ -116,7 +116,7 @@ pub fn compute_out_given_in_new<T: PerThing>(
 	b_o: u128,
 	a_sent: u128,
 	f: T,
-) -> Result<(u128, u128), ArithmeticError> {
+) -> ConstantProductAmmResult<ConstantProductAmmValueFeePair> {
 	let w_i = Decimal::from_u128(w_i.deconstruct().into()).ok_or(ArithmeticError::Overflow)?;
 	let w_o = Decimal::from_u128(w_o.deconstruct().into()).ok_or(ArithmeticError::Overflow)?;
 	let b_i = Decimal::from_u128(b_i).ok_or(ArithmeticError::Overflow)?;
@@ -140,7 +140,7 @@ pub fn compute_out_given_in_new<T: PerThing>(
 		.to_u128()
 		.ok_or(ArithmeticError::Overflow)?;
 
-	Ok((a_out, fee))
+	Ok(ConstantProductAmmValueFeePair { value: a_out, fee })
 }
 
 trait RoundingDecimal {
@@ -237,7 +237,7 @@ pub fn compute_in_given_out_new<T: PerThing>(
 	b_o: u128,
 	a_out: u128,
 	f: T,
-) -> Result<(u128, u128), ConstantProductAmmError> {
+) -> ConstantProductAmmResult<ConstantProductAmmValueFeePair> {
 	ensure!(a_out <= b_o, ConstantProductAmmError::CannotTakeMoreThanAvailable);
 	let w_i = Decimal::from_u128(w_i.deconstruct().into()).ok_or(ArithmeticError::Overflow)?;
 	let w_o = Decimal::from_u128(w_o.deconstruct().into()).ok_or(ArithmeticError::Overflow)?;
@@ -259,7 +259,20 @@ pub fn compute_in_given_out_new<T: PerThing>(
 	let a_sent = b_i_over_fee.safe_mul(&ratio)?.round_up();
 	let fee = a_sent.safe_mul(&fee)?.round_up().to_u128().ok_or(ArithmeticError::Overflow)?;
 
-	Ok((a_sent.to_u128().ok_or(ArithmeticError::Overflow)?, fee))
+	Ok(ConstantProductAmmValueFeePair {
+		value: a_sent.to_u128().ok_or(ArithmeticError::Overflow)?,
+		fee,
+	})
+}
+
+pub type ConstantProductAmmResult<T> = Result<T, ConstantProductAmmError>;
+
+/// Many math functions for constant product return a some output value and a fee. This struct
+/// contains both.
+#[derive(Debug, Eq, PartialEq)]
+pub struct ConstantProductAmmValueFeePair {
+	pub value: u128,
+	pub fee: u128,
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -397,9 +410,9 @@ fn fixed_point_from_decimal(decimal: Decimal) -> Result<u128, ArithmeticError> {
 /// https://github.com/ComposableFi/composable/blob/main/rfcs/0008-pablo-lbp-cpp-restructure.md#42-liquidity-provider-token-lpt-math-updates
 /// Equation 6
 pub fn compute_first_deposit_lp_<T: PerThing>(
-	pool_assets: Vec<(u128, u128, T)>,
+	pool_assets: &[(u128, u128, T)],
 	_f: T,
-) -> Result<(u128, u128), ConstantProductAmmError> {
+) -> ConstantProductAmmResult<ConstantProductAmmValueFeePair> {
 	let k: u128 = pool_assets.len().try_into().map_err(|_| ArithmeticError::Overflow)?;
 	ensure!(!k.is_zero(), ConstantProductAmmError::InvalidTokensList);
 
@@ -418,7 +431,7 @@ pub fn compute_first_deposit_lp_<T: PerThing>(
 	let product = k.safe_mul(&product)?;
 
 	// NOTE: Zero fees on first deposit
-	Ok((fixed_point_from_decimal(product)?, 0))
+	Ok(ConstantProductAmmValueFeePair { value: fixed_point_from_decimal(product)?, fee: 0 })
 }
 
 /// Computes the LP to mint on an existing deposit.
@@ -440,7 +453,7 @@ pub fn compute_deposit_lp_<T: PerThing>(
 	b_k: u128,
 	w_k: T,
 	f: T,
-) -> Result<(u128, u128), ConstantProductAmmError> {
+) -> ConstantProductAmmResult<ConstantProductAmmValueFeePair> {
 	let p_supply = Decimal::from_u128(p_supply).ok_or(ArithmeticError::Overflow)?;
 	let d_k = Decimal::from_u128(d_k).ok_or(ArithmeticError::Overflow)?;
 	let b_k = Decimal::from_u128(b_k).ok_or(ArithmeticError::Overflow)?;
@@ -457,5 +470,5 @@ pub fn compute_deposit_lp_<T: PerThing>(
 	let issued = p_supply.safe_mul(&ratio)?.to_u128().ok_or(ArithmeticError::Overflow)?;
 	let fee = d_k.safe_sub(&d_k_left_from_fee)?.to_u128().ok_or(ArithmeticError::Overflow)?;
 
-	Ok((issued, fee))
+	Ok(ConstantProductAmmValueFeePair { value: issued, fee })
 }
