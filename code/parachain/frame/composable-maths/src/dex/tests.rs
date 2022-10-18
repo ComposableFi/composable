@@ -63,7 +63,7 @@ mod constant_product {
 			let res = compute_first_deposit_lp_(&pool_assets, f).expect("Inputs are valid; QED");
 
 			// Actual expected 346_410_161_513_775_458
-			// -0.000000000310% Error
+			// -000000000310% Error
 			assert!(
 				default_acceptable_computation_error(res.value, 346_410_161_513_775_458).is_ok()
 			);
@@ -418,7 +418,7 @@ mod constant_product {
 				compute_in_given_out_new(w_i, w_o, b_i, b_o, a_out, f).expect("Inputs are valid");
 
 			// Actual expected 256_128_000_000_000
-			// +0.000000250000 Error
+			// +000000250000% Error
 			assert!(default_acceptable_computation_error(res.value, 256_128_000_000_000).is_ok());
 			assert_eq!(res.value, 256_128_064_032_017);
 		}
@@ -621,7 +621,7 @@ mod constant_product {
 				.expect("Valid input; QED");
 
 			// Actual expected 255_872_000_000_000
-			// +0.000000250000% Error
+			// +000000250000% Error
 			assert!(default_acceptable_computation_error(res.value, 255_872_000_000_000).is_ok());
 			assert_eq!(res.value, 255_872_063_968_015);
 		}
