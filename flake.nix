@@ -551,7 +551,7 @@
             subsquidEndpoint = "http://localhost:4350/graphql";
             picassoEndpoint = "ws://localhost:9988";
             kusamaEndpoint = "ws://localhost:9944";
-            karuraEndpoint = "ws://localhost:9998";
+            karuraEndpoint = "ws://localhost:9999";
           };
 
           frontend-static-persistent = mkFrontendStatic {
