@@ -483,6 +483,13 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
         },
       },
     },
+    MuiList: {
+      styleOverrides: {
+        root: {
+          padding: theme.spacing(0,3)
+        }
+      }
+    },
     MuiListItem: {
       styleOverrides: {
         root: {
@@ -490,8 +497,13 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
           paddingLeft: "1.5rem",
           paddingRight: "1rem",
           height: "5rem",
+          borderRadius: theme.spacing(1.5),
           "&.Mui-selected": {
-            backgroundColor: alpha(brandPalette.primary.light, 0.05),
+            backgroundColor: alpha(brandPalette.primary.main, 0.1 ),
+            filter: "drop-shadow(0px 4px 4px rgba(0, 0, 0, 0.25))",
+            "& .MuiListItemText-primary": {
+              color: theme.palette.common.white,
+            }
           },
         },
       },
@@ -507,6 +519,7 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
       styleOverrides: {
         primary: {
           fontSize: "1.125rem",
+          color: alpha(theme.palette.common.white, 0.6),
         },
       },
     },
