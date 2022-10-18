@@ -117,30 +117,92 @@ pub fn compute_out_given_in_new<T: PerThing>(
 	a_sent: u128,
 	f: T,
 ) -> ConstantProductAmmResult<ConstantProductAmmValueFeePair> {
-	let w_i = Decimal::from_u128(w_i.deconstruct().into()).ok_or(ArithmeticError::Overflow)?;
-	let w_o = Decimal::from_u128(w_o.deconstruct().into()).ok_or(ArithmeticError::Overflow)?;
-	let b_i = Decimal::from_u128(b_i).ok_or(ArithmeticError::Overflow)?;
-	let b_o = Decimal::from_u128(b_o).ok_or(ArithmeticError::Overflow)?;
-	let a_sent = Decimal::from_u128(a_sent).ok_or(ArithmeticError::Overflow)?;
+	let w_i = Decimal::safe_from_u128(w_i.deconstruct().into())?;
+	let w_o = Decimal::safe_from_u128(w_o.deconstruct().into())?;
+	let b_i = Decimal::safe_from_u128(b_i)?;
+	let b_o = Decimal::safe_from_u128(b_o)?;
+	let a_sent = Decimal::safe_from_u128(a_sent)?;
 
 	let weight_ratio = w_i.safe_div(&w_o)?;
 	// NOTE(connor): Use if to prevent pointless conversions if `f` is zero
 	let left_from_fee =
-		if f.is_zero() { Decimal::ONE } else { decimal_from_per_thing(f.left_from_one())? };
+		if f.is_zero() { Decimal::ONE } else { Decimal::safe_from_per_thing(f.left_from_one())? };
 	let a_sent_fee_cut = a_sent.safe_mul(&left_from_fee)?;
 
 	let base = b_i.safe_div(&b_i.safe_add(&a_sent_fee_cut)?)?;
 	let power = base.checked_powd(weight_ratio).ok_or(ArithmeticError::Overflow)?;
 	let ratio = Decimal::ONE.safe_sub(&power)?;
 
-	let a_out = b_o.safe_mul(&ratio)?.round_down().to_u128().ok_or(ArithmeticError::Overflow)?;
-	let fee = a_sent
-		.safe_sub(&a_sent_fee_cut)?
-		.round_up()
-		.to_u128()
-		.ok_or(ArithmeticError::Overflow)?;
+	let a_out = b_o.safe_mul(&ratio)?.round_down().safe_to_u128()?;
+	let fee = a_sent.safe_sub(&a_sent_fee_cut)?.round_up().safe_to_u128()?;
 
 	Ok(ConstantProductAmmValueFeePair { value: a_out, fee })
+}
+
+trait SafeDecimalConversions {
+	/// Safely converts a `u128` to a decimal value.
+	fn safe_from_u128(num: u128) -> Result<Self, ArithmeticError>
+	where
+		Self: Sized;
+
+	/// Safely converts a decimal value to a `u128`.
+	fn safe_to_u128(self) -> Result<u128, ArithmeticError>;
+
+	/// Converts a `u128` fixed point number with 12 decimal places to decimal.
+	///
+	/// Conducts `number / 10^12`.
+	fn safe_from_fixed_point(num: u128) -> Result<Self, ArithmeticError>
+	where
+		Self: Sized;
+
+	/// Safely convert to a fixed-point `u128` with 12 decimals.
+	fn safe_to_fixed_point(self) -> Result<u128, ArithmeticError>;
+
+	/// Computes the decimal value of a a `PerThing` by taking the deconstructed parts of a
+	/// `PerThing` and dividing them by `PerThing::one()`.
+	///
+	/// # Example
+	/// ```rust,ignore
+	/// let per_thing = PerMill::from_percent(10);
+	/// assert_eq!(decimal_from_per_thing(per_thing), Decimal::new(10, 2));
+	/// ```
+	fn safe_from_per_thing<T: PerThing>(per_thing: T) -> Result<Self, ArithmeticError>
+	where
+		Self: Sized;
+}
+
+impl SafeDecimalConversions for Decimal {
+	fn safe_from_u128(num: u128) -> Result<Self, ArithmeticError> {
+		Decimal::from_u128(num).ok_or(ArithmeticError::Overflow)
+	}
+
+	fn safe_to_u128(self) -> Result<u128, ArithmeticError> {
+		self.to_u128().ok_or(ArithmeticError::Overflow)
+	}
+
+	fn safe_from_fixed_point(fixed_point: u128) -> Result<Self, ArithmeticError> {
+		let numerator = Decimal::safe_from_u128(fixed_point)?;
+		let denominator = Decimal::from(10)
+			.checked_powd(Decimal::from(12))
+			.ok_or(ArithmeticError::Overflow)?;
+
+		numerator.safe_div(&denominator)
+	}
+
+	fn safe_to_fixed_point(self) -> Result<u128, ArithmeticError> {
+		let rhs = Decimal::from(10)
+			.checked_powd(Decimal::from(12))
+			.ok_or(ArithmeticError::Overflow)?;
+
+		self.safe_mul(&rhs)?.to_u128().ok_or(ArithmeticError::Overflow)
+	}
+
+	fn safe_from_per_thing<T: PerThing>(per_thing: T) -> Result<Self, ArithmeticError> {
+		let numerator = Decimal::safe_from_u128(per_thing.deconstruct().into())?;
+		let denominator = Decimal::safe_from_u128(T::one().deconstruct().into())?;
+
+		numerator.safe_div(&denominator)
+	}
 }
 
 trait RoundingDecimal {
@@ -239,16 +301,16 @@ pub fn compute_in_given_out_new<T: PerThing>(
 	f: T,
 ) -> ConstantProductAmmResult<ConstantProductAmmValueFeePair> {
 	ensure!(a_out <= b_o, ConstantProductAmmError::CannotTakeMoreThanAvailable);
-	let w_i = Decimal::from_u128(w_i.deconstruct().into()).ok_or(ArithmeticError::Overflow)?;
-	let w_o = Decimal::from_u128(w_o.deconstruct().into()).ok_or(ArithmeticError::Overflow)?;
-	let b_i = Decimal::from_u128(b_i).ok_or(ArithmeticError::Overflow)?;
-	let b_o = Decimal::from_u128(b_o).ok_or(ArithmeticError::Overflow)?;
-	let a_out = Decimal::from_u128(a_out).ok_or(ArithmeticError::Overflow)?;
+	let w_i = Decimal::safe_from_u128(w_i.deconstruct().into())?;
+	let w_o = Decimal::safe_from_u128(w_o.deconstruct().into())?;
+	let b_i = Decimal::safe_from_u128(b_i)?;
+	let b_o = Decimal::safe_from_u128(b_o)?;
+	let a_out = Decimal::safe_from_u128(a_out)?;
 
 	let weight_ratio = w_o.safe_div(&w_i)?;
 	// NOTE(connor): Use if to prevent pointless conversions if `f` is zero
 	let left_from_fee =
-		if f.is_zero() { Decimal::ONE } else { decimal_from_per_thing(f.left_from_one())? };
+		if f.is_zero() { Decimal::ONE } else { Decimal::safe_from_per_thing(f.left_from_one())? };
 	let b_i_over_fee = b_i.safe_div(&left_from_fee)?;
 	let fee = Decimal::ONE.safe_sub(&left_from_fee)?;
 
@@ -257,12 +319,9 @@ pub fn compute_in_given_out_new<T: PerThing>(
 	let ratio = power.safe_sub(&Decimal::ONE)?;
 
 	let a_sent = b_i_over_fee.safe_mul(&ratio)?.round_up();
-	let fee = a_sent.safe_mul(&fee)?.round_up().to_u128().ok_or(ArithmeticError::Overflow)?;
+	let fee = a_sent.safe_mul(&fee)?.round_up().safe_to_u128()?;
 
-	Ok(ConstantProductAmmValueFeePair {
-		value: a_sent.to_u128().ok_or(ArithmeticError::Overflow)?,
-		fee,
-	})
+	Ok(ConstantProductAmmValueFeePair { value: a_sent.safe_to_u128()?, fee })
 }
 
 pub type ConstantProductAmmResult<T> = Result<T, ConstantProductAmmError>;
@@ -296,7 +355,8 @@ impl From<ConstantProductAmmError> for DispatchError {
 				DispatchError::from(
 					"`a_out` must not be greater than `b_o` (can't take out more than what's available)!"
 				),
-			ConstantProductAmmError::InvalidTokensList => DispatchError::from("Must provide non-empty tokens list!"),
+			ConstantProductAmmError::InvalidTokensList => 
+				DispatchError::from("Must provide non-empty tokens list!"),
 		}
 	}
 }
@@ -356,43 +416,6 @@ pub fn compute_deposit_lp(
 	}
 }
 
-/// Computes the decimal value of a a `PerThing` by taking the deconstructed parts of a `PerThing`
-/// and dividing them by `PerThing::one()`.
-///
-/// # Example
-/// ```rust,ignore
-/// let per_thing = PerMill::from_percent(10);
-/// assert_eq!(decimal_from_per_thing(per_thing), Decimal::new(10, 2));
-/// ```
-fn decimal_from_per_thing<T: PerThing>(per_thing: T) -> Result<Decimal, ArithmeticError> {
-	let numerator =
-		Decimal::from_u128(per_thing.deconstruct().into()).ok_or(ArithmeticError::Overflow)?;
-	let denominator =
-		Decimal::from_u128(T::one().deconstruct().into()).ok_or(ArithmeticError::Overflow)?;
-
-	numerator.safe_div(&denominator)
-}
-
-/// Converts a `u128` fixed point number with 12 decimal places to decimal.
-///
-/// Conducts `number / 10^12`
-fn decimal_from_fixed_point(fixed_point: u128) -> Result<Decimal, ArithmeticError> {
-	let numerator = Decimal::from_u128(fixed_point).ok_or(ArithmeticError::Overflow)?;
-	let denominator = Decimal::from(10)
-		.checked_powd(Decimal::from(12))
-		.ok_or(ArithmeticError::Overflow)?;
-
-	numerator.safe_div(&denominator)
-}
-
-fn fixed_point_from_decimal(decimal: Decimal) -> Result<u128, ArithmeticError> {
-	let rhs = Decimal::from(10)
-		.checked_powd(Decimal::from(12))
-		.ok_or(ArithmeticError::Overflow)?;
-
-	decimal.safe_mul(&rhs)?.to_u128().ok_or(ArithmeticError::Overflow)
-}
-
 /// Computes the LP to mint on first deposit.
 ///
 /// If `Ok`, returns a `ConstantProductAmmValueFeePair` containing the `lp_to_mint` and the `fee`.
@@ -419,19 +442,19 @@ pub fn compute_first_deposit_lp_<T: PerThing>(
 	let product = pool_assets.iter().try_fold::<_, _, Result<_, ArithmeticError>>(
 		Decimal::from(1),
 		|product, (_d_i, b_i, w_i)| {
-			let b_i = decimal_from_fixed_point(*b_i)?;
-			let w_i = decimal_from_per_thing(*w_i)?;
+			let b_i = Decimal::safe_from_fixed_point(*b_i)?;
+			let w_i = Decimal::safe_from_per_thing(*w_i)?;
 			let pow = b_i.checked_powd(w_i).ok_or(ArithmeticError::Overflow)?;
 
 			product.safe_mul(&dbg!(pow))
 		},
 	)?;
 
-	let k = Decimal::from_u128(k).ok_or(ArithmeticError::Overflow)?;
+	let k = Decimal::safe_from_u128(k)?;
 	let product = k.safe_mul(&product)?;
 
 	// NOTE: Zero fees on first deposit
-	Ok(ConstantProductAmmValueFeePair { value: fixed_point_from_decimal(product)?, fee: 0 })
+	Ok(ConstantProductAmmValueFeePair { value: product.safe_to_fixed_point()?, fee: 0 })
 }
 
 /// Computes the LP to mint on an existing deposit.
@@ -454,25 +477,21 @@ pub fn compute_deposit_lp_<T: PerThing>(
 	w_k: T,
 	f: T,
 ) -> ConstantProductAmmResult<ConstantProductAmmValueFeePair> {
-	let p_supply = Decimal::from_u128(p_supply).ok_or(ArithmeticError::Overflow)?;
-	let d_k = Decimal::from_u128(d_k).ok_or(ArithmeticError::Overflow)?;
-	let b_k = Decimal::from_u128(b_k).ok_or(ArithmeticError::Overflow)?;
-	let w_k = decimal_from_per_thing(w_k)?;
+	let p_supply = Decimal::safe_from_u128(p_supply)?;
+	let d_k = Decimal::safe_from_u128(d_k)?;
+	let b_k = Decimal::safe_from_u128(b_k)?;
+	let w_k = Decimal::safe_from_per_thing(w_k)?;
 
 	let left_from_fee =
-		if f.is_zero() { Decimal::ONE } else { decimal_from_per_thing(f.left_from_one())? };
+		if f.is_zero() { Decimal::ONE } else { Decimal::safe_from_per_thing(f.left_from_one())? };
 	let d_k_left_from_fee = d_k.safe_mul(&left_from_fee)?;
 
 	let base = d_k_left_from_fee.safe_add(&b_k)?.safe_div(&b_k)?;
 	let power = base.checked_powd(w_k).ok_or(ArithmeticError::Overflow)?;
 	let ratio = power.safe_sub(&Decimal::ONE)?;
 
-	let issued = p_supply.safe_mul(&ratio)?.to_u128().ok_or(ArithmeticError::Overflow)?;
-	let fee = d_k
-		.safe_sub(&d_k_left_from_fee)?
-		.round_up()
-		.to_u128()
-		.ok_or(ArithmeticError::Overflow)?;
+	let issued = p_supply.safe_mul(&ratio)?.safe_to_u128()?;
+	let fee = d_k.safe_sub(&d_k_left_from_fee)?.round_up().safe_to_u128()?;
 
 	Ok(ConstantProductAmmValueFeePair { value: issued, fee })
 }
