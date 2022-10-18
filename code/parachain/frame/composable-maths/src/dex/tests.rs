@@ -1,4 +1,5 @@
 use crate::dex::constant_product::*;
+use composable_tests_helpers::test::helper::default_acceptable_computation_error;
 use proptest::prelude::*;
 use rust_decimal::prelude::*;
 use sp_runtime::{ArithmeticError, Permill};
@@ -63,6 +64,9 @@ mod constant_product {
 
 			// Actual expected 346_410_161_513_775_458
 			// -0.000000000310% Error
+			assert!(
+				default_acceptable_computation_error(res.value, 346_410_161_513_775_458).is_ok()
+			);
 			assert_eq!(res.value, 346_410_161_406_220_453);
 		}
 
@@ -197,6 +201,7 @@ mod constant_product {
 
 			// Actual expected 127_984_003_998_750
 			// -000000010411% Error
+			assert!(default_acceptable_computation_error(res.value, 127_984_003_998_750).is_ok());
 			assert_eq!(res.value, 127_984_002_666_333);
 		}
 
@@ -414,6 +419,7 @@ mod constant_product {
 
 			// Actual expected 256_128_000_000_000
 			// +0.000000250000 Error
+			assert!(default_acceptable_computation_error(res.value, 256_128_000_000_000).is_ok());
 			assert_eq!(res.value, 256_128_064_032_017);
 		}
 
@@ -616,6 +622,7 @@ mod constant_product {
 
 			// Actual expected 255_872_000_000_000
 			// +0.000000250000% Error
+			assert!(default_acceptable_computation_error(res.value, 255_872_000_000_000).is_ok());
 			assert_eq!(res.value, 255_872_063_968_015);
 		}
 
