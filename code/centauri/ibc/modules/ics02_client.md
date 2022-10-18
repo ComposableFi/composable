@@ -203,3 +203,154 @@ The chain undergoing the upgrade should then commit the upgraded client and cons
 
 The `MsgUpgradeClient` can now be submitted with the proof for the upgrade.
 
+### Supporting Multiple Light Client Types
+
+The code below describes how to allow support for multiple light client types using the macros provided in `ibc-derive` crate.
+
+```rust
+#[derive(Clone, Debug, PartialEq, Eq, ibc_derive::ClientDef)]
+pub enum AnyClient {
+	Grandpa(ics10_grandpa::client_def::GrandpaClient),
+	Beefy(ics11_beefy::client_def::BeefyClient),
+	Tendermint(ics07_tendermint::client_def::TendermintClient),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum AnyUpgradeOptions {
+	Grandpa(ics10_grandpa::client_state::UpgradeOptions),
+	Beefy(ics11_beefy::client_state::UpgradeOptions),
+	Tendermint(ics07_tendermint::client_state::UpgradeOptions),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, ibc_derive::ClientState, ibc_derive::Protobuf)]
+pub enum AnyClientState {
+	#[ibc(proto_url = "GRANDPA_CLIENT_STATE_TYPE_URL")]
+	Grandpa(ics10_grandpa::client_state::ClientState<HostFunctionsManager>),
+	#[ibc(proto_url = "BEEFY_CLIENT_STATE_TYPE_URL")]
+	Beefy(ics11_beefy::client_state::ClientState<HostFunctionsManager>),
+	#[ibc(proto_url = "TENDERMINT_CLIENT_STATE_TYPE_URL")]
+	Tendermint(ics07_tendermint::client_state::ClientState<HostFunctionsManager>),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, ibc_derive::ConsensusState, ibc_derive::Protobuf)]
+pub enum AnyConsensusState {
+	#[ibc(proto_url = "GRANDPA_CONSENSUS_STATE_TYPE_URL")]
+	Grandpa(ics10_grandpa::consensus_state::ConsensusState),
+	#[ibc(proto_url = "BEEFY_CONSENSUS_STATE_TYPE_URL")]
+	Beefy(ics11_beefy::consensus_state::ConsensusState),
+	#[ibc(proto_url = "TENDERMINT_CONSENSUS_STATE_TYPE_URL")]
+	Tendermint(ics07_tendermint::consensus_state::ConsensusState),
+}
+
+#[derive(Clone, Debug, ibc_derive::ClientMessage)]
+#[allow(clippy::large_enum_variant)]
+pub enum AnyClientMessage {
+	#[ibc(proto_url = "GRANDPA_CLIENT_MESSAGE_TYPE_URL")]
+	Grandpa(ics10_grandpa::client_message::ClientMessage),
+	#[ibc(proto_url = "BEEFY_CLIENT_MESSAGE_TYPE_URL")]
+	Beefy(ics11_beefy::client_message::ClientMessage),
+	#[ibc(proto_url = "TENDERMINT_CLIENT_MESSAGE_TYPE_URL")]
+	Tendermint(ics07_tendermint::client_message::ClientMessage),
+}
+
+impl Protobuf<Any> for AnyClientMessage {}
+
+impl TryFrom<Any> for AnyClientMessage {
+	type Error = ics02_client::error::Error;
+
+	fn try_from(value: Any) -> Result<Self, Self::Error> {
+		match value.type_url.as_str() {
+			GRANDPA_CLIENT_MESSAGE_TYPE_URL => Ok(Self::Grandpa(
+				ics10_grandpa::client_message::ClientMessage::decode_vec(&value.value)
+					.map_err(ics02_client::error::Error::decode_raw_header)?,
+			)),
+			BEEFY_CLIENT_MESSAGE_TYPE_URL => Ok(Self::Beefy(
+				ics11_beefy::client_message::ClientMessage::decode_vec(&value.value)
+					.map_err(ics02_client::error::Error::decode_raw_header)?,
+			)),
+			TENDERMINT_CLIENT_MESSAGE_TYPE_URL => Ok(Self::Tendermint(
+				ics07_tendermint::client_message::ClientMessage::decode_vec(&value.value)
+					.map_err(ics02_client::error::Error::decode_raw_header)?,
+			)),
+			_ => Err(ics02_client::error::Error::unknown_consensus_state_type(value.type_url)),
+		}
+	}
+}
+
+impl From<AnyClientMessage> for Any {
+	fn from(client_msg: AnyClientMessage) -> Self {
+		match client_msg {
+			AnyClientMessage::Grandpa(msg) => Any {
+				type_url: GRANDPA_CLIENT_MESSAGE_TYPE_URL.to_string(),
+				value: msg.encode_vec(),
+			},
+			AnyClientMessage::Beefy(msg) =>
+				Any { type_url: BEEFY_CLIENT_MESSAGE_TYPE_URL.to_string(), value: msg.encode_vec() },
+			AnyClientMessage::Tendermint(msg) => Any {
+				type_url: TENDERMINT_CLIENT_MESSAGE_TYPE_URL.to_string(),
+				value: msg.encode_vec(),
+			}
+		}
+	}
+}
+
+```
+
+### Host Consensus state verification
+
+It is a requirement of the ibc protocol for the host machine to verify its own consensus state during the connection handshake.  
+This becomes an issue when the host machine cannot access its own consensus state.  
+For consensus verification to be possible in such host machine, a couple apis must be available
+- The host must provide access to a mapping of block numbers to block hash for at least the 256 most recent blocks.
+- The Connection Proof should be encoded such that apart from the proof, it contains the block header that was used to generate the consensus state being verified, along ide the timestamp with a proof.
+
+With these criteria met it becomes trivial for the host machine to verify its own consensus state.  
+The way that is done involves, getting the hash of the header decoded from the proof and verifying that the host has such a blockhash stored in its map of block numbers to block hashes.  
+Also the timestamp provided  with its proof should be verified with information present in the block header.  
+After both checks are done, the host can freely reconstruct the Consensus state from the block header and return it as the result of the function call.  
+The following pseudocode describes how this could be achieved
+
+```rust
+    impl ClientReader for Context {
+
+        fn host_consensus_state(
+		    &self,
+		    height: Height,
+		    proof: Option<Vec<u8>>,
+	    ) -> Result<AnyConsensusState, ICS02Error> {
+		    let proof = proof.ok_or_else(|| {
+			    ICS02Error::implementation_specific(format!("No host proof supplied"))
+		     })?;
+		
+		    let block_number = u32::try_from(height.revision_height).map_err(|_| {
+			    ICS02Error::implementation_specific(format!(
+				    "[host_consensus_state]: Can't fit height: {} in u32",
+				    height
+			    ))
+		    })?;
+		    let header_hash = some_host_function_to_get_block_hash(block_number);
+		    // we don't even have the hash for this height (anymore?)
+		    if header_hash == Default::default() {
+			    Err(ICS02Error::implementation_specific(format!(
+				    "[host_consensus_state]: Unknown height {}",
+				    height
+			    )))?
+		    }
+
+		    let connection_proof: HostConsensusProof = decode_proof(proof)?;
+		    let header = decode_header(connection_proof.header)?;
+		    if hash(header) != header_hash {
+			    Err(ICS02Error::implementation_specific(format!(
+				    "[host_consensus_state]: Incorrect host consensus state for height {}",
+				    height
+			    )))?
+		    }
+		    let timestamp = verify_timestamp(connection_proof.timestamp, connection_proof.timestamp_proof, connection_proof.header)?;
+
+		    // now this header can be trusted
+		    let consensus_state = consnensus_state_from_header(connection_proof.header, timestamp)?;
+		    Ok(consensus_state)
+	    }
+	
+    }
+```
