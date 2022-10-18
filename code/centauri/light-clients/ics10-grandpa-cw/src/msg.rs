@@ -4,11 +4,28 @@ use cosmwasm_schema::{cw_serde, QueryResponses};
 pub struct InstantiateMsg {}
 
 #[cw_serde]
-pub enum ExecuteMsg {}
+pub enum ExecuteMsg {
+	ValidateMsg(ValidateMsg),
+	StatusMsg(StatusMsg),
+	ExportedMetadataMsg(ExportedMetadataMsg),
+	ZeroCustomFieldsMsg(ZeroCustomFieldsMsg),
+	GetTimestampAtHeightMsg(GetTimestampAtHeightMsg),
+	InitializeMsg(InitializeMsg),
+	VerifyMembershipMsg(VerifyMembershipMsg),
+	VerifyClientMessage(VerifyClientMessage),
+	CheckForMisbehaviourMsg(CheckForMisbehaviourMsg),
+	UpdateStateOnMisbehaviourMsg(UpdateStateOnMisbehaviourMsg),
+	UpdateStateMsg(UpdateStateMsg),
+	CheckSubstituteAndUpdateStateMsg(CheckSubstituteAndUpdateStateMsg),
+	VerifyUpgradeAndUpdateStateMsg(VerifyUpgradeAndUpdateStateMsg),
+}
 
 #[cw_serde]
 #[derive(QueryResponses)]
-pub enum QueryMsg {}
+pub enum QueryMsg {
+	ClientTypeMsg(ClientTypeMsg),
+	GetLatestHeightsMsg(GetLatestHeightsMsg),
+}
 
 // ClientState interface related messages
 // Reference: https://github.com/cosmos/ibc-go/blob/main/modules/core/exported/client.go#L36

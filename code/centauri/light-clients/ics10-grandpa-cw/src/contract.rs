@@ -29,14 +29,31 @@ pub fn execute(
 	_deps: DepsMut,
 	_env: Env,
 	_info: MessageInfo,
-	_msg: ExecuteMsg,
+	msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
-	unimplemented!()
+	match msg {
+		ExecuteMsg::ValidateMsg(_) => todo!(),
+		ExecuteMsg::StatusMsg(_) => todo!(),
+		ExecuteMsg::ExportedMetadataMsg(_) => todo!(),
+		ExecuteMsg::ZeroCustomFieldsMsg(_) => todo!(),
+		ExecuteMsg::GetTimestampAtHeightMsg(_) => todo!(),
+		ExecuteMsg::InitializeMsg(_) => todo!(),
+		ExecuteMsg::VerifyMembershipMsg(_) => todo!(),
+		ExecuteMsg::VerifyClientMessage(_) => todo!(),
+		ExecuteMsg::CheckForMisbehaviourMsg(_) => todo!(),
+		ExecuteMsg::UpdateStateOnMisbehaviourMsg(_) => todo!(),
+		ExecuteMsg::UpdateStateMsg(_) => todo!(),
+		ExecuteMsg::CheckSubstituteAndUpdateStateMsg(_) => todo!(),
+		ExecuteMsg::VerifyUpgradeAndUpdateStateMsg(_) => todo!(),
+	}
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> StdResult<Binary> {
-	unimplemented!()
+pub fn query(_deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+	match msg {
+		QueryMsg::ClientTypeMsg(_) => todo!(),
+		QueryMsg::GetLatestHeightsMsg(_) => todo!(),
+	}
 }
 
 #[cfg(test)]
