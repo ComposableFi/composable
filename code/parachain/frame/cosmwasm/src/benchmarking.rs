@@ -8,8 +8,9 @@ use crate::{
 };
 use alloc::{collections::BTreeMap, format, string::String, vec, vec::Vec};
 use cosmwasm_minimal_std::Coin;
-use cosmwasm_vm::system::CosmwasmContractMeta;
+use cosmwasm_vm::{executor::InstantiateInput, system::CosmwasmContractMeta};
 use cosmwasm_vm_wasmi::code_gen::{self, WasmModule};
+use entrypoint::*;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_support::traits::{fungible, fungibles, fungibles::Mutate, Get};
 use frame_system::RawOrigin;
@@ -30,6 +31,8 @@ const ED25519_MESSAGE2_HEX: &str = "72";
 const ED25519_SIGNATURE2_HEX: &str = "92a009a9f0d4cab8720e820b5f642540a2b27b5416503f8fb3762223ebdb69da085ac1e43e15996e458f3613d0f11d8c387b2eaeb4302aeeb00d291612bb0c00";
 const ED25519_PUBLIC_KEY2_HEX: &str =
 	"3d4017c3e843895a92b70aa74d1b7ebc9c982ccf2ec4968cc0cd55f12af4660c";
+
+const BASE_ADDITIONAL_BINARY_SIZE: usize = 10;
 
 fn create_funded_account<T: Config + pallet_balances::Config + pallet_assets::Config>(
 	key: &'static str,
@@ -55,14 +58,24 @@ where
 	<T as pallet_balances::Config>::Balance: From<u128>,
 {
 	// 1. Generate a wasm code
-	let wasm_module: WasmModule = code_gen::ModuleDefinition::new(10).unwrap().into();
+	let wasm_module: WasmModule =
+		code_gen::ModuleDefinition::new(BASE_ADDITIONAL_BINARY_SIZE).unwrap().into();
 	// 2. Properly upload the code (so that the necessary storage items are modified)
 	Cosmwasm::<T>::do_upload(&origin, wasm_module.code.try_into().unwrap()).unwrap();
 	// 3. Create the shared vm (inner vm)
 	let shared =
 		Cosmwasm::<T>::do_create_vm_shared(100_000_000u64, InitialStorageMutability::ReadOnly);
+
+	let code_hash = CodeIdToInfo::<T>::get(1).unwrap().pristine_code_hash;
+	let contract_addr = Pallet::<T>::derive_contract_address(
+		&origin,
+		"salt".as_bytes(),
+		code_hash,
+		"message".as_bytes(),
+	);
+
 	// 4. Instantiate the contract and get the contract address
-	let (contract_addr, contract_info) = Cosmwasm::<T>::do_instantiate_phase1(
+	EntryPointCaller::<InstantiateInput>::setup::<T>(
 		origin.clone(),
 		1,
 		"salt".as_bytes(),
@@ -71,6 +84,8 @@ where
 		"message".as_bytes(),
 	)
 	.unwrap();
+
+	let contract_info = ContractToInfo::<T>::get(&contract_addr).unwrap();
 
 	(shared, contract_addr, contract_info)
 }
@@ -147,7 +162,9 @@ benchmarks! {
 	instantiate {
 		let n in 0..CurrencyId::list_assets().len().try_into().unwrap();
 		let origin = create_funded_account::<T>("origin");
-		let wasm_module: WasmModule = code_gen::ModuleDefinition::new(10).unwrap().into();
+		// BASE_ADDITIONAL_BINARY_SIZE + 1 to make a different code so that it doesn't already exist
+		// in `PristineCode` and we don't get an error back.
+		let wasm_module: WasmModule = code_gen::ModuleDefinition::new(BASE_ADDITIONAL_BINARY_SIZE + 1).unwrap().into();
 		Cosmwasm::<T>::do_upload(&origin, wasm_module.code.try_into().unwrap()).unwrap();
 		let salt = vec![1].try_into().unwrap();
 		let label = vec![65].try_into().unwrap();
@@ -164,7 +181,7 @@ benchmarks! {
 			.unwrap();
 			funds.insert(currency_id.into(), (1_000_000_000_000_000_000u128.into(), false));
 		}
-	}: _(RawOrigin::Signed(origin), 1, salt, None, label, funds.try_into().unwrap(), 100_000_000u64, message)
+	}: _(RawOrigin::Signed(origin), CodeIdentifier::CodeId(1), salt, None, label, funds.try_into().unwrap(), 100_000_000u64, message)
 
 	execute {
 		let n in 0..CurrencyId::list_assets().len().try_into().unwrap();
@@ -184,6 +201,18 @@ benchmarks! {
 			funds.insert(currency_id.into(), (1_000_000_000_000_000_000u128.into(), false));
 		}
 	}: _(RawOrigin::Signed(origin), contract, funds.try_into().unwrap(), 100_000_000u64, message)
+
+	migrate {
+		let origin = create_funded_account::<T>("origin");
+		let (_, contract, _info) = create_instantiated_contract::<T>(origin.clone());
+		{
+			// Upload the second contract but do not instantiate it, this will get `code_id = 2`
+			let wasm_module: WasmModule = code_gen::ModuleDefinition::new(12).unwrap().into();
+			Cosmwasm::<T>::do_upload(&origin, wasm_module.code.try_into().unwrap()).unwrap();
+		}
+		let message = b"{}".to_vec().try_into().unwrap();
+		let assets = CurrencyId::list_assets();
+	}: _(RawOrigin::Signed(origin), contract, CodeIdentifier::CodeId(2), 100_000_000u64, message)
 
 	db_read {
 		let sender = create_funded_account::<T>("origin");

@@ -3,6 +3,7 @@ use crate::{
 	AccountIdOf, CodeIdToInfo, Config, ContractInfoOf, ContractLabelOf, ContractMessageOf,
 	ContractToInfo, CurrentNonce, EntryPoint, Error, Event, FundsOf, Pallet,
 };
+use alloc::vec::Vec;
 use composable_support::abstractions::utils::increment::Increment;
 use core::marker::PhantomData;
 use cosmwasm_minimal_std::Coin;
