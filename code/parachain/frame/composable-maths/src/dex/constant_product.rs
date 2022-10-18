@@ -355,7 +355,7 @@ impl From<ConstantProductAmmError> for DispatchError {
 				DispatchError::from(
 					"`a_out` must not be greater than `b_o` (can't take out more than what's available)!"
 				),
-			ConstantProductAmmError::InvalidTokensList => 
+			ConstantProductAmmError::InvalidTokensList =>
 				DispatchError::from("Must provide non-empty tokens list!"),
 		}
 	}
