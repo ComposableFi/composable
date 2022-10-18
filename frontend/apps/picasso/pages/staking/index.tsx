@@ -1,9 +1,9 @@
-import type { NextPage } from "next";
+import { StakingConnected } from "@/components/Organisms/Staking/StakingConnected";
+import { StakingDisconnected } from "@/components/Organisms/Staking/StakingDisconnected";
+import { StakingPageHeading } from "@/components/Organisms/Staking/StakingPageHeading";
 import Default from "@/components/Templates/Default";
 import { Box, useTheme } from "@mui/material";
-import { StakingDisconnected } from "@/components/Organisms/Staking/StakingDisconnected";
-import { StakingConnected } from "@/components/Organisms/Staking/StakingConnected";
-import { StakingPageHeading } from "@/components/Organisms/Staking/StakingPageHeading";
+import type { NextPage } from "next";
 import { useDotSamaContext } from "substrate-react";
 
 const Staking: NextPage = () => {
@@ -11,7 +11,7 @@ const Staking: NextPage = () => {
   const { extensionStatus } = useDotSamaContext();
   const isDisconnected = extensionStatus !== "connected";
   const standardPageSize = {
-    xs: 12
+    xs: 12,
   };
 
   return (
@@ -21,7 +21,11 @@ const Staking: NextPage = () => {
         {isDisconnected && (
           <StakingDisconnected gridSize={standardPageSize} theme={theme} />
         )}
-        {!isDisconnected && <StakingConnected />}
+        {!isDisconnected && (
+          <Box>
+            <StakingConnected />
+          </Box>
+        )}
       </Box>
     </Default>
   );
