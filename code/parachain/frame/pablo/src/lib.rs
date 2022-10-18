@@ -95,7 +95,10 @@ pub mod pallet {
 	use composable_maths::dex::{
 		constant_product::compute_deposit_lp, price::compute_initial_price_cumulative,
 	};
-	use composable_traits::{currency::BalanceLike, dex::FeeConfig};
+	use composable_traits::{
+		currency::BalanceLike,
+		dex::{AssetAmount, FeeConfig, SwapResult},
+	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use sp_runtime::{
 		traits::{AccountIdConversion, BlockNumberProvider, Convert, One, Zero},
@@ -411,30 +414,12 @@ pub mod pallet {
 		pub fn buy(
 			origin: OriginFor<T>,
 			pool_id: T::PoolId,
-			asset_id: T::AssetId,
-			amount: T::Balance,
-			min_receive: T::Balance,
+			in_asset_id: T::AssetId,
+			out_asset: AssetAmount<T::AssetId, T::Balance>,
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as Amm>::buy(&who, pool_id, asset_id, amount, min_receive, keep_alive)?;
-			Ok(())
-		}
-
-		/// Execute a sell order on pool.
-		///
-		/// Emits `Swapped` event when successful.
-		#[pallet::weight(T::WeightInfo::sell())]
-		pub fn sell(
-			origin: OriginFor<T>,
-			pool_id: T::PoolId,
-			asset_id: T::AssetId,
-			amount: T::Balance,
-			min_receive: T::Balance,
-			keep_alive: bool,
-		) -> DispatchResult {
-			let who = ensure_signed(origin)?;
-			let _ = <Self as Amm>::sell(&who, pool_id, asset_id, amount, min_receive, keep_alive)?;
+			let _ = <Self as Amm>::buy(&who, pool_id, in_asset_id, out_asset, keep_alive)?;
 			Ok(())
 		}
 
@@ -447,20 +432,12 @@ pub mod pallet {
 		pub fn swap(
 			origin: OriginFor<T>,
 			pool_id: T::PoolId,
-			pair: CurrencyPair<T::AssetId>,
-			quote_amount: T::Balance,
-			min_receive: T::Balance,
+			in_asset: AssetAmount<T::AssetId, T::Balance>,
+			min_receive: AssetAmount<T::AssetId, T::Balance>,
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as Amm>::exchange(
-				&who,
-				pool_id,
-				pair,
-				quote_amount,
-				min_receive,
-				keep_alive,
-			)?;
+			let _ = <Self as Amm>::do_swap(&who, pool_id, in_asset, min_receive, keep_alive)?;
 			Ok(())
 		}
 
@@ -471,20 +448,12 @@ pub mod pallet {
 		pub fn add_liquidity(
 			origin: OriginFor<T>,
 			pool_id: T::PoolId,
-			base_amount: T::Balance,
-			quote_amount: T::Balance,
+			assets: BTreeMap<T::AssetId, T::Balance>,
 			min_mint_amount: T::Balance,
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			<Self as Amm>::add_liquidity(
-				&who,
-				pool_id,
-				base_amount,
-				quote_amount,
-				min_mint_amount,
-				keep_alive,
-			)?;
+			<Self as Amm>::add_liquidity(&who, pool_id, assets, min_mint_amount, keep_alive)?;
 			Ok(())
 		}
 
@@ -496,17 +465,10 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			pool_id: T::PoolId,
 			lp_amount: T::Balance,
-			min_base_amount: T::Balance,
-			min_quote_amount: T::Balance,
+			min_receive: BTreeMap<T::AssetId, T::Balance>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			<Self as Amm>::remove_liquidity(
-				&who,
-				pool_id,
-				lp_amount,
-				min_base_amount,
-				min_quote_amount,
-			)?;
+			<Self as Amm>::remove_liquidity(&who, pool_id, lp_amount, min_receive)?;
 			Ok(())
 		}
 
@@ -576,13 +538,13 @@ pub mod pallet {
 				if result.is_ok() {
 					weight += 1;
 					if let Some(updated_twap) = TWAPState::<T>::get(pool_id) {
-						if let Ok(currency_pair) = Self::currency_pair(pool_id) {
+						if let Ok(assets) = Self::pool_ordered_pair(pool_id) {
 							Self::deposit_event(Event::<T>::TwapUpdated {
 								pool_id,
 								timestamp: updated_twap.timestamp,
 								twaps: BTreeMap::from([
-									(currency_pair.base, updated_twap.base_twap),
-									(currency_pair.quote, updated_twap.quote_twap),
+									(assets.base, updated_twap.base_twap),
+									(assets.quote, updated_twap.quote_twap),
 								]),
 							});
 						}
@@ -703,7 +665,7 @@ pub mod pallet {
 			pool_id: T::PoolId,
 			price_ratio: PriceRatio,
 		) -> Result<Rate, DispatchError> {
-			let pair = Self::currency_pair(pool_id)?;
+			let pair = Self::pool_ordered_pair(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
 			let pair = match price_ratio {
 				PriceRatio::NotSwapped => pair,
@@ -729,7 +691,7 @@ pub mod pallet {
 		}
 
 		fn update_twap(pool_id: T::PoolId) -> Result<(), DispatchError> {
-			let currency_pair = Self::currency_pair(pool_id)?; // update price cumulatives
+			let currency_pair = Self::pool_ordered_pair(pool_id)?; // update price cumulatives
 			let (base_price_cumulative, quote_price_cumulative) =
 				PriceCumulativeState::<T>::try_mutate(
 					pool_id,
@@ -847,6 +809,22 @@ pub mod pallet {
 				},
 			}
 		}
+
+		#[deprecated(note = "This is a temporary function for refactoring/migration purposes")]
+		fn pool_ordered_pair(
+			pool_id: T::PoolId,
+		) -> Result<CurrencyPair<T::AssetId>, DispatchError> {
+			let pool = Self::get_pool(pool_id)?;
+			match pool {
+				PoolConfiguration::DualAssetConstantProduct(info) => {
+					let assets = info.assets_weights.keys().copied().collect::<Vec<_>>();
+					ensure!(assets.len() == 2, Error::<T>::PairMismatch);
+					let base_asset = assets.get(0).ok_or(Error::<T>::PairMismatch)?;
+					let quote_asset = assets.get(1).ok_or(Error::<T>::PairMismatch)?;
+					Ok(CurrencyPair::new(*base_asset, *quote_asset))
+				},
+			}
+		}
 	}
 
 	impl<T: Config> Amm for Pallet<T> {
@@ -859,15 +837,11 @@ pub mod pallet {
 			Pools::<T>::contains_key(pool_id)
 		}
 
-		fn currency_pair(
-			pool_id: Self::PoolId,
-		) -> Result<CurrencyPair<Self::AssetId>, DispatchError> {
+		fn assets(pool_id: Self::PoolId) -> Result<Vec<Self::AssetId>, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			match pool {
-				PoolConfiguration::DualAssetConstantProduct(info) => {
-					let assets = info.assets_weights.keys().copied().collect::<Vec<_>>();
-					Ok(CurrencyPair::new(assets[0], assets[1]))
-				},
+				PoolConfiguration::DualAssetConstantProduct(info) =>
+					Ok(info.assets_weights.keys().copied().collect::<Vec<_>>()),
 			}
 		}
 
@@ -885,7 +859,7 @@ pub mod pallet {
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
-			let currency_pair = Self::currency_pair(pool_id)?;
+			let currency_pair = Self::pool_ordered_pair(pool_id)?;
 			ensure!(amounts.len() < 3, Error::<T>::MoreThanTwoAssetsNotYetSupported);
 			let base_amount = *amounts.get(&currency_pair.base).ok_or(Error::<T>::MissingAmount)?;
 			let quote_amount =
@@ -909,7 +883,7 @@ pub mod pallet {
 		) -> Result<RedeemableAssets<Self::AssetId, Self::Balance>, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
-			let currency_pair = Self::currency_pair(pool_id)?;
+			let currency_pair = Self::pool_ordered_pair(pool_id)?;
 			ensure!(min_expected_amounts.len() < 3, Error::<T>::MoreThanTwoAssetsNotYetSupported);
 			let min_base_amount = *min_expected_amounts
 				.get(&currency_pair.base)
@@ -919,6 +893,8 @@ pub mod pallet {
 				.ok_or(Error::<T>::MissingMinExpectedAmount)?;
 			match pool {
 				PoolConfiguration::DualAssetConstantProduct(BasicPoolInfo { lp_token, .. }) => {
+					// TODO (vim): This function must call the relevant calculation through
+					// dual_asset_constant_product.rs. Then most of the logic is removed here.
 					let pool_base_aum =
 						T::Convert::convert(T::Assets::balance(currency_pair.base, &pool_account));
 					let pool_quote_aum =
@@ -959,7 +935,7 @@ pub mod pallet {
 			let redeemable_assets =
 				Self::redeemable_assets_for_lp_tokens(pool_id, lp_amount, min_expected_amounts)?;
 			let pool = Self::get_pool(pool_id)?;
-			let currency_pair = Self::currency_pair(pool_id)?;
+			let currency_pair = Self::pool_ordered_pair(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
 			match pool {
 				PoolConfiguration::DualAssetConstantProduct(BasicPoolInfo { lp_token, .. }) => {
@@ -999,11 +975,11 @@ pub mod pallet {
 			}
 		}
 
-		fn get_exchange_value(
+		fn get_swap_value(
 			pool_id: Self::PoolId,
-			asset_id: Self::AssetId,
-			quote_amount: Self::Balance,
-		) -> Result<Self::Balance, DispatchError> {
+			in_asset: AssetAmount<Self::AssetId, Self::Balance>,
+			out_asset_id: Self::AssetId,
+		) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
 			match pool {
@@ -1011,8 +987,8 @@ pub mod pallet {
 					DualAssetConstantProduct::<T>::get_exchange_value(
 						&info,
 						&pool_account,
-						asset_id,
-						quote_amount,
+						in_asset,
+						out_asset_id,
 					),
 			}
 		}
@@ -1021,8 +997,7 @@ pub mod pallet {
 		fn add_liquidity(
 			who: &Self::AccountId,
 			pool_id: Self::PoolId,
-			base_amount: Self::Balance,
-			quote_amount: Self::Balance,
+			assets: BTreeMap<Self::AssetId, Self::Balance>,
 			min_mint_amount: Self::Balance,
 			keep_alive: bool,
 		) -> Result<(), DispatchError> {
@@ -1034,8 +1009,7 @@ pub mod pallet {
 						who,
 						info,
 						pool_account,
-						base_amount,
-						quote_amount,
+						assets,
 						min_mint_amount,
 						keep_alive,
 					)?,
@@ -1056,30 +1030,25 @@ pub mod pallet {
 			who: &Self::AccountId,
 			pool_id: Self::PoolId,
 			lp_amount: Self::Balance,
-			min_base_amount: Self::Balance,
-			min_quote_amount: Self::Balance,
+			min_receive: BTreeMap<Self::AssetId, Self::Balance>,
 		) -> Result<(), DispatchError> {
-			let currency_pair = Self::currency_pair(pool_id)?;
-			let redeemable_assets = Self::redeemable_assets_for_lp_tokens(
-				pool_id,
-				lp_amount,
-				BTreeMap::from([
-					(currency_pair.base, min_base_amount),
-					(currency_pair.quote, min_quote_amount),
-				]),
-			)?;
+			let redeemable_assets =
+				Self::redeemable_assets_for_lp_tokens(pool_id, lp_amount, min_receive)?;
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
-			let currency_pair = Self::currency_pair(pool_id)?;
+
 			match pool {
 				PoolConfiguration::DualAssetConstantProduct(info) => {
-					let base_amount = *redeemable_assets
+					let currency_pair = Self::assets(pool_id)?;
+					let first_currency = currency_pair[0];
+					let second_currency = currency_pair[1];
+					let first_asset_amount = *redeemable_assets
 						.assets
-						.get(&currency_pair.base)
+						.get(&first_currency)
 						.ok_or(Error::<T>::InvalidAsset)?;
-					let quote_amount = *redeemable_assets
+					let second_asset_amount = *redeemable_assets
 						.assets
-						.get(&currency_pair.quote)
+						.get(&second_currency)
 						.ok_or(Error::<T>::InvalidAsset)?;
 					let (base_amount, quote_amount, updated_lp) =
 						DualAssetConstantProduct::<T>::remove_liquidity(
@@ -1087,8 +1056,10 @@ pub mod pallet {
 							info,
 							pool_account,
 							lp_amount,
-							base_amount,
-							quote_amount,
+							BTreeMap::from([
+								(first_currency, first_asset_amount),
+								(second_currency, second_asset_amount),
+							]),
 						)?;
 					Self::update_twap(pool_id)?;
 					Self::deposit_event(Event::<T>::LiquidityRemoved {
@@ -1104,14 +1075,13 @@ pub mod pallet {
 		}
 
 		#[transactional]
-		fn exchange(
+		fn do_swap(
 			who: &Self::AccountId,
 			pool_id: Self::PoolId,
-			pair: CurrencyPair<Self::AssetId>,
-			quote_amount: Self::Balance,
-			min_receive: Self::Balance,
+			in_asset: AssetAmount<Self::AssetId, Self::Balance>,
+			min_receive: AssetAmount<Self::AssetId, Self::Balance>,
 			keep_alive: bool,
-		) -> Result<Self::Balance, DispatchError> {
+		) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
 			let (base_amount, owner, fees) = match pool {
@@ -1121,22 +1091,30 @@ pub mod pallet {
 						DualAssetConstantProduct::<T>::do_compute_swap(
 							&info,
 							&pool_account,
-							pair,
-							quote_amount,
+							in_asset,
+							min_receive,
 							true,
 						)?;
 
-					ensure!(base_amount >= min_receive, Error::<T>::CannotRespectMinimumRequested);
+					ensure!(
+						base_amount >= min_receive.amount,
+						Error::<T>::CannotRespectMinimumRequested
+					);
 
 					T::Assets::transfer(
-						pair.quote,
+						in_asset.asset_id,
 						who,
 						&pool_account,
 						quote_amount_excluding_lp_fee,
 						keep_alive,
 					)?;
-					// NOTE(hussein-aitlahcen): no need to keep alive the pool account
-					T::Assets::transfer(pair.base, &pool_account, who, base_amount, false)?;
+					T::Assets::transfer(
+						min_receive.asset_id,
+						&pool_account,
+						who,
+						base_amount,
+						false,
+					)?;
 					(base_amount, info.owner, fees)
 				},
 			};
@@ -1145,44 +1123,25 @@ pub mod pallet {
 			Self::deposit_event(Event::<T>::Swapped {
 				pool_id,
 				who: who.clone(),
-				base_asset: pair.base,
-				quote_asset: pair.quote,
+				base_asset: min_receive.asset_id,
+				quote_asset: in_asset.asset_id,
 				base_amount,
-				quote_amount,
+				quote_amount: in_asset.amount,
 				fee: fees,
 			});
-			Ok(base_amount)
+			Ok(SwapResult::new(min_receive.asset_id, base_amount, fees.asset_id, fees.fee))
 		}
 
 		#[transactional]
 		fn buy(
 			who: &Self::AccountId,
 			pool_id: Self::PoolId,
-			asset_id: Self::AssetId,
-			amount: Self::Balance,
-			min_receive: Self::Balance,
+			in_asset_id: Self::AssetId,
+			out_asset: AssetAmount<Self::AssetId, Self::Balance>,
 			keep_alive: bool,
-		) -> Result<Self::Balance, DispatchError> {
-			let currency_pair = Self::currency_pair(pool_id)?;
-			let pair =
-				if asset_id == currency_pair.base { currency_pair } else { currency_pair.swap() };
-			let quote_amount = Self::get_exchange_value(pool_id, asset_id, amount)?;
-			Self::exchange(who, pool_id, pair, quote_amount, min_receive, keep_alive)
-		}
-
-		#[transactional]
-		fn sell(
-			who: &Self::AccountId,
-			pool_id: Self::PoolId,
-			asset_id: Self::AssetId,
-			amount: Self::Balance,
-			min_receive: Self::Balance,
-			keep_alive: bool,
-		) -> Result<Self::Balance, DispatchError> {
-			let currency_pair = Self::currency_pair(pool_id)?;
-			let pair =
-				if asset_id == currency_pair.base { currency_pair.swap() } else { currency_pair };
-			Self::exchange(who, pool_id, pair, amount, min_receive, keep_alive)
+		) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError> {
+			let in_asset = Self::get_swap_value(pool_id, out_asset, in_asset_id)?;
+			Self::do_swap(who, pool_id, in_asset.value, out_asset, keep_alive)
 		}
 	}
 
@@ -1196,7 +1155,16 @@ pub mod pallet {
 	) -> Result<PriceAggregate<T::PoolId, T::AssetId, T::Balance>, DispatchError> {
 		// quote_asset_id is always known given the base as no multi-asset pool support is
 		// implemented as of now.
-		let spot_price = <Pallet<T> as Amm>::get_exchange_value(pool_id, base_asset_id, amount)?;
-		Ok(PriceAggregate { pool_id, base_asset_id, quote_asset_id, spot_price })
+		let spot_price = <Pallet<T> as Amm>::get_swap_value(
+			pool_id,
+			AssetAmount::new(base_asset_id, amount),
+			quote_asset_id,
+		)?;
+		Ok(PriceAggregate {
+			pool_id,
+			base_asset_id,
+			quote_asset_id,
+			spot_price: spot_price.value.amount,
+		})
 	}
 }

@@ -32,7 +32,10 @@ pub mod pallet {
 	use composable_support::math::safe::SafeArithmetic;
 	use composable_traits::{
 		defi::CurrencyPair,
-		dex::{Amm, DexRoute, DexRouter, RedeemableAssets, RemoveLiquiditySimulationResult},
+		dex::{
+			Amm, AssetAmount, DexRoute, DexRouter, RedeemableAssets,
+			RemoveLiquiditySimulationResult, SwapResult,
+		},
 	};
 	use core::fmt::Debug;
 	use frame_support::{pallet_prelude::*, transactional, PalletId};
@@ -180,7 +183,7 @@ pub mod pallet {
 			min_receive: T::Balance,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			<Self as Amm>::exchange(&who, asset_pair, asset_pair, amount, min_receive, false)?;
+			<Self as Amm>::do_swap(&who, asset_pair, asset_pair, min_receive, false)?;
 			Ok(())
 		}
 
@@ -220,7 +223,6 @@ pub mod pallet {
 				asset_pair,
 				asset_pair.base, /* will be ignored */
 				amount,
-				min_receive,
 				false,
 			)?;
 			Ok(())
@@ -242,7 +244,6 @@ pub mod pallet {
 				&who,
 				asset_pair,
 				base_amount,
-				quote_amount,
 				min_mint_amount,
 				keep_alive,
 			)?;
@@ -260,13 +261,7 @@ pub mod pallet {
 			min_quote_amount: T::Balance,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			<Self as Amm>::remove_liquidity(
-				&who,
-				asset_pair,
-				lp_amount,
-				min_base_amount,
-				min_quote_amount,
-			)?;
+			<Self as Amm>::remove_liquidity(&who, asset_pair, lp_amount, min_base_amount)?;
 			Ok(())
 		}
 	}
@@ -282,18 +277,16 @@ pub mod pallet {
 				// starting with asset_pair.quote, make sure current node's quote
 				// matches with previous node's base
 				.try_fold(asset_pair.quote, |val, iter| {
-					T::Pablo::currency_pair(*iter).and_then(
-						|pair| -> Result<T::AssetId, DispatchError> {
-							if !pair_set.insert(pair) {
-								return Err(Error::<T>::LoopSuspectedInRouteUpdate.into())
-							}
-							if pair.quote == val {
-								Ok(pair.base)
-							} else {
-								Err(Error::<T>::UnexpectedNodeFoundWhileValidation.into())
-							}
-						},
-					)
+					T::Pablo::assets(*iter).and_then(|pair| -> Result<T::AssetId, DispatchError> {
+						if !pair_set.insert(pair) {
+							return Err(Error::<T>::LoopSuspectedInRouteUpdate.into())
+						}
+						if pair.quote == val {
+							Ok(pair.base)
+						} else {
+							Err(Error::<T>::UnexpectedNodeFoundWhileValidation.into())
+						}
+					})
 				})
 				// last node's base asset matches asset_pair's base
 				.and_then(|val| -> Result<(), DispatchError> {
@@ -392,9 +385,7 @@ pub mod pallet {
 				DexRoutes::<T>::contains_key(pool_id.quote, pool_id.base)
 		}
 
-		fn currency_pair(
-			pool_id: Self::PoolId,
-		) -> Result<CurrencyPair<Self::AssetId>, DispatchError> {
+		fn assets(pool_id: Self::PoolId) -> Result<Vec<Self::AssetId>, DispatchError> {
 			if Self::pool_exists(pool_id) {
 				Ok(pool_id)
 			} else {
@@ -410,14 +401,14 @@ pub mod pallet {
 			}
 		}
 
-		fn get_exchange_value(
+		fn get_swap_value(
 			pool_id: Self::PoolId,
-			asset_id: Self::AssetId,
-			amount: Self::Balance,
-		) -> Result<Self::Balance, DispatchError> {
+			in_asset: AssetAmount<Self::AssetId, Self::Balance>,
+			out_asset_id: Self::AssetId,
+		) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError> {
 			let (route, _reverse) = Self::get_route(pool_id).ok_or(Error::<T>::NoRouteFound)?;
 			match route[..] {
-				[pool_id] => T::Pablo::get_exchange_value(pool_id, asset_id, amount),
+				[pool_id] => T::Pablo::get_swap_value(pool_id, in_asset, out_asset_id),
 				_ => Err(Error::<T>::UnsupportedOperation.into()),
 			}
 		}
@@ -469,15 +460,16 @@ pub mod pallet {
 		}
 
 		#[transactional]
-		fn exchange(
+		fn do_swap(
 			who: &Self::AccountId,
-			_pool_id: Self::PoolId,
-			asset_pair: CurrencyPair<Self::AssetId>,
-			quote_amount: Self::Balance,
-			min_receive: Self::Balance,
+			pool_id: Self::PoolId,
+			in_asset: AssetAmount<Self::AssetId, Self::Balance>,
+			min_receive: AssetAmount<Self::AssetId, Self::Balance>,
 			keep_alive: bool,
-		) -> Result<Self::Balance, DispatchError> {
-			let (route, reverse) = Self::get_route(asset_pair).ok_or(Error::<T>::NoRouteFound)?;
+		) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError> {
+			let currency_pair = CurrencyPair::new(min_receive.asset_id, in_asset.asset_id);
+			let (route, reverse) =
+				Self::get_route(currency_pair).ok_or(Error::<T>::NoRouteFound)?;
 			let mut dx_t = quote_amount;
 			let mut dy_t = T::Balance::zero();
 			let mut forward_iter;
@@ -490,18 +482,11 @@ pub mod pallet {
 				&mut backward_iter
 			};
 			for pool_id in route_iter {
-				let mut currency_pair = T::Pablo::currency_pair(*pool_id)?;
+				let mut currency_pair = T::Pablo::assets(*pool_id)?;
 				if reverse {
 					currency_pair = currency_pair.swap();
 				}
-				dy_t = T::Pablo::exchange(
-					who,
-					*pool_id,
-					currency_pair,
-					dx_t,
-					T::Balance::zero(),
-					keep_alive,
-				)?;
+				dy_t = T::Pablo::do_swap(who, *pool_id, in_asset, min_receive, keep_alive)?;
 				dx_t = dy_t;
 			}
 			ensure!(dy_t >= min_receive, Error::<T>::CanNotRespectMinAmountRequested);
@@ -509,28 +494,15 @@ pub mod pallet {
 		}
 
 		#[transactional]
-		fn sell(
-			who: &Self::AccountId,
-			pool_id: Self::PoolId,
-			_asset_id: Self::AssetId,
-			amount: Self::Balance,
-			min_receive: Self::Balance,
-			keep_alive: bool,
-		) -> Result<Self::Balance, DispatchError> {
-			<Self as Amm>::exchange(who, pool_id, pool_id, amount, min_receive, keep_alive)
-		}
-
-		#[transactional]
 		fn buy(
 			who: &Self::AccountId,
 			pool_id: Self::PoolId,
-			_asset_id: Self::AssetId,
-			amount: Self::Balance,
-			min_receive: Self::Balance,
+			in_asset_id: Self::AssetId,
+			out_asset: AssetAmount<Self::AssetId, Self::Balance>,
 			keep_alive: bool,
-		) -> Result<Self::Balance, DispatchError> {
+		) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError> {
 			let (route, reverse) = Self::get_route(pool_id).ok_or(Error::<T>::NoRouteFound)?;
-			let mut dy_t = amount;
+			let mut dy_t = out_asset;
 			let mut dx_t = T::Balance::zero();
 			let mut forward_iter;
 			let mut backward_iter;
@@ -542,11 +514,11 @@ pub mod pallet {
 				&mut forward_iter
 			};
 			for pool_id in route_iter {
-				let mut currency_pair = T::Pablo::currency_pair(*pool_id)?;
+				let mut currency_pair = T::Pablo::assets(*pool_id)?;
 				if reverse {
 					currency_pair = currency_pair.swap();
 				}
-				dx_t = T::Pablo::get_exchange_value(*pool_id, currency_pair.base, dy_t)?;
+				dx_t = T::Pablo::get_swap_value(*pool_id, currency_pair.base, dy_t)?;
 				dy_t = dx_t;
 			}
 			let route_iter: &mut dyn Iterator<Item = &T::PoolId> = if !reverse {
@@ -557,15 +529,14 @@ pub mod pallet {
 				&mut backward_iter
 			};
 			for pool_id in route_iter {
-				let mut currency_pair = T::Pablo::currency_pair(*pool_id)?;
+				let mut currency_pair = T::Pablo::assets(*pool_id)?;
 				if reverse {
 					currency_pair = currency_pair.swap();
 				}
-				let dy_t = T::Pablo::exchange(
+				let dy_t = T::Pablo::do_swap(
 					who,
 					*pool_id,
 					currency_pair,
-					dx_t,
 					T::Balance::zero(),
 					keep_alive,
 				)?;
@@ -579,42 +550,28 @@ pub mod pallet {
 		fn add_liquidity(
 			who: &Self::AccountId,
 			pool_id: Self::PoolId,
-			base_amount: Self::Balance,
-			quote_amount: Self::Balance,
+			assets: BTreeMap<Self::AssetId, Self::Balance>,
 			min_mint_amount: Self::Balance,
 			keep_alive: bool,
 		) -> Result<(), DispatchError> {
 			let (route, _reverse) = Self::get_route(pool_id).ok_or(Error::<T>::NoRouteFound)?;
 			match route[..] {
-				[pool_id] => T::Pablo::add_liquidity(
-					who,
-					pool_id,
-					base_amount,
-					quote_amount,
-					min_mint_amount,
-					keep_alive,
-				),
+				[pool_id] =>
+					T::Pablo::add_liquidity(who, pool_id, assets, min_mint_amount, keep_alive),
 				_ => Err(Error::<T>::UnsupportedOperation.into()),
 			}
 		}
 
 		#[transactional]
 		fn remove_liquidity(
-			who: &T::AccountId,
+			who: &Self::AccountId,
 			pool_id: Self::PoolId,
 			lp_amount: Self::Balance,
-			min_base_amount: Self::Balance,
-			min_quote_amount: Self::Balance,
+			min_receive: BTreeMap<Self::AssetId, Self::Balance>,
 		) -> Result<(), DispatchError> {
 			let (route, _reverse) = Self::get_route(pool_id).ok_or(Error::<T>::NoRouteFound)?;
 			match route[..] {
-				[pool_id] => T::Pablo::remove_liquidity(
-					who,
-					pool_id,
-					lp_amount,
-					min_base_amount,
-					min_quote_amount,
-				),
+				[pool_id] => T::Pablo::remove_liquidity(who, pool_id, lp_amount, min_receive),
 				_ => Err(Error::<T>::UnsupportedOperation.into()),
 			}
 		}
