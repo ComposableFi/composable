@@ -166,9 +166,9 @@ benchmarks! {
 		// in `PristineCode` and we don't get an error back.
 		let wasm_module: WasmModule = code_gen::ModuleDefinition::new(BASE_ADDITIONAL_BINARY_SIZE + 1).unwrap().into();
 		Cosmwasm::<T>::do_upload(&origin, wasm_module.code.try_into().unwrap()).unwrap();
-		let salt = vec![1].try_into().unwrap();
-		let label = vec![65].try_into().unwrap();
-		let message = vec![b'{', b'}'].try_into().unwrap();
+		let salt: ContractSaltOf<T> = vec![1].try_into().unwrap();
+		let label: ContractLabelOf<T> = "label".as_bytes().to_vec().try_into().unwrap();
+		let message: ContractMessageOf<T> = "{}".as_bytes().to_vec().try_into().unwrap();
 		let mut funds = BTreeMap::new();
 		let assets = CurrencyId::list_assets();
 		for i in 0..n {
@@ -181,7 +181,28 @@ benchmarks! {
 			.unwrap();
 			funds.insert(currency_id.into(), (1_000_000_000_000_000_000u128.into(), false));
 		}
-	}: _(RawOrigin::Signed(origin), CodeIdentifier::CodeId(1), salt, None, label, funds.try_into().unwrap(), 100_000_000u64, message)
+	}: _(RawOrigin::Signed(origin.clone()), CodeIdentifier::CodeId(1), salt.clone(), None, label.clone(), funds.try_into().unwrap(), 100_000_000u64, message.clone())
+	verify {
+		// Make sure refcount is increased
+		assert_eq!(CodeIdToInfo::<T>::get(1).unwrap().refcount, 1);
+		// Make sure contract address is derived correctly
+		let code_hash = CodeIdToInfo::<T>::get(1).unwrap().pristine_code_hash;
+		let contract_addr =
+			Pallet::<T>::derive_contract_address(&origin, &salt, code_hash, &message);
+		// Make sure trie_id is derived correctly
+		let nonce = CurrentNonce::<T>::get();
+		let trie_id = Pallet::<T>::derive_contract_trie_id(&contract_addr, nonce);
+		// Make sure contract info is inserted
+		let info = Pallet::<T>::contract_info(&contract_addr).unwrap();
+
+		assert_eq!(ContractInfoOf::<T> {
+			code_id: 1,
+			trie_id,
+			instantiator: origin,
+			admin: None,
+			label
+		}, info);
+	}
 
 	execute {
 		let n in 0..CurrencyId::list_assets().len().try_into().unwrap();
@@ -212,7 +233,20 @@ benchmarks! {
 		}
 		let message = b"{}".to_vec().try_into().unwrap();
 		let assets = CurrencyId::list_assets();
-	}: _(RawOrigin::Signed(origin), contract, CodeIdentifier::CodeId(2), 100_000_000u64, message)
+		let CodeInfoOf::<T> {
+			pristine_code_hash,
+			..
+		} = CodeIdToInfo::<T>::get(1).unwrap();
+	}: _(RawOrigin::Signed(origin), contract.clone(), CodeIdentifier::CodeId(2), 100_000_000u64, message)
+	verify {
+		// Make sure code id doesn't exist
+		assert_eq!(CodeIdToInfo::<T>::contains_key(1), false);
+		assert_eq!(PristineCode::<T>::contains_key(1), false);
+		assert_eq!(InstrumentedCode::<T>::contains_key(1), false);
+		assert_eq!(CodeHashToId::<T>::contains_key(pristine_code_hash), false);
+		// Make sure contract points to the new code
+		assert_eq!(ContractToInfo::<T>::get(&contract).unwrap().code_id, 1);
+	}
 
 	db_read {
 		let sender = create_funded_account::<T>("origin");

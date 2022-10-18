@@ -649,6 +649,7 @@ pub mod pallet {
 			label: String,
 		) -> Result<(), Error<T>> {
 			let mut info = Self::contract_info(contract)?;
+
 			if info.code_id != code_id {
 				// Increase the refcount of `new_code_id`.
 				CodeIdToInfo::<T>::try_mutate_exists(code_id, |entry| -> Result<(), Error<T>> {
@@ -697,6 +698,7 @@ pub mod pallet {
 				.to_vec()
 				.try_into()
 				.map_err(|_| crate::Error::<T>::LabelTooBig)?;
+
 			Self::set_contract_info(contract, info);
 			Ok(())
 		}
