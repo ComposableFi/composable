@@ -226,9 +226,6 @@ impl xcm_executor::Config for XcmConfig {
 
 parameter_types! {
 	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::parachain_id().into())));
-	/// set same is in Acala, sending more will require more weight for message, like:
-	/// weigh >= xtokens::WeightInfo::receive() * count
-	pub const MaxAssetsForTransfer: usize = 2;
 }
 
 parameter_type_with_key! {
@@ -261,7 +258,7 @@ impl orml_xtokens::Config for Runtime {
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
 	type BaseXcmWeight = BaseXcmWeight;
 	type LocationInverter = LocationInverter<Ancestry>;
-	type MaxAssetsForTransfer = MaxAssetsForTransfer;
+	type MaxAssetsForTransfer = XcmMaxAssetsForTransfer;
 	type MinXcmFee = ParachainMinFee;
 	type MultiLocationsFilter = Everything;
 	type ReserveProvider = AbsoluteReserveProvider;
