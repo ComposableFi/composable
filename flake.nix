@@ -1364,6 +1364,10 @@
         in import ./.nix/devnet.nix {
           inherit nixpkgs;
           inherit gce-input;
+          rev = if self ? rev then
+            self.rev
+          else
+            builtins.abort "Unable to deploy in a dirty state.";
           devnet-dali = pkgs.callPackage mk-devnet {
             inherit pkgs;
             inherit (eachSystemOutputs.packages.x86_64-linux)
