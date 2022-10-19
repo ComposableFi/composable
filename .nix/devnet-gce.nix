@@ -1,4 +1,4 @@
-{ region, gce-input, book, devnet, disk-size, machine-name, domain
+{ region, gce-input, docs, devnet, disk-size, machine-name, domain
 , extra-gce ? (_args: { }), extra-services ? (_args: { })
 , extra-nginx-root ? (_args: { }), extra-nginx ? (_args: { })
 , extra-nginx-virtual ? (_args: { }), extra-nginx-hosts ? (_args: { }) }: {
@@ -64,7 +64,7 @@
           enableACME = true;
           forceSSL = true;
           locations = builtins.foldl' (x: y: x // y)
-            ({ "/" = { root = "${book}/book"; }; } // (extra-nginx-root args))
+            ({ "/" = { root = "${docs}/"; }; } // (extra-nginx-root args))
             (map (node: {
               "/${node.name}" = {
                 proxyPass = "http://127.0.0.1:${builtins.toString node.wsPort}";

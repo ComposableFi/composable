@@ -1,4 +1,4 @@
-{ nixpkgs, devnet-dali, devnet-picasso, book, gce-input, rev }:
+{ nixpkgs, devnet-dali, devnet-picasso, gce-input, docs, rev }:
 let
   region = "europe-central2-c";
   persistent-machine = let
@@ -48,7 +48,7 @@ let
           LimitNOFILE = 1048576;
           # If docker compose is killed prematurely, it will exit with 255.
           # Allow for arion to SIGKILL docker compose with success, hence avoiding an issue when deploying (deployment would fail if 255 is considered as error code).
-          SuccessExitStatus = "255";
+          SuccessExitStatus = "1 255";
           ExecStart = "${
               pkgs.writeShellApplication {
                 name = "run-devnet";
@@ -57,7 +57,6 @@ let
                   "nix run github:ComposableFi/Composable/${rev}#devnet-persistent -L";
               }
             }/bin/run-devnet";
-          Restart = "always";
         };
       };
       security.acme = {
@@ -97,7 +96,7 @@ let
           locations = proxyChain "dali" 9988 // proxyChain "dali/bob" 9989
             // proxyChain "dali/charlie" 9990 // proxyChain "rococo" 9944
             // proxyChain "karura" 9999 // proxyChain "statemine" 10008 // {
-              "/" = { root = "${book}/book"; };
+              "/" = { root = "${docs}/"; };
               "/subsquid/" = { proxyPass = "http://127.0.0.1:4350/"; };
               "/price-feed/" = { proxyPass = "http://127.0.0.1:8003/"; };
             };
@@ -115,7 +114,7 @@ in builtins.foldl' (machines: devnet:
       inherit region;
       inherit gce-input;
       inherit devnet;
-      inherit book;
+      inherit docs;
       disk-size = 200;
       machine-name = "composable-devnet-${devnet.chain-spec}";
       domain = let prefix = nixpkgs.lib.removeSuffix "-dev" devnet.chain-spec;
