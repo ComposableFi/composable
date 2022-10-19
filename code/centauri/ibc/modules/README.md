@@ -27,7 +27,7 @@ A couple definitions to help understand the architecture of this framework
 - **Reader** - A `Reader` is a trait that defines methods that provide read access to the underlying storage of the host.
 - **Keeper** - A `Keeper` trait is one that defines methods that provide write access to the underlying storage of the host.
 - **Context** - The context is a type that implements all the Reader, Keeper and Routing traits that govern access to the storage of the host and module callbacks.
-- **Handler** - A handler is a function that handles processing of an ibc message type.
+- **Handler** - A handler is a function that handles processing of an ibc message type and returns a result.
 - **Event** - A struct which when emitted signifies successful processing of a message.
 - **Router** - A type that channels packets to the correct module for handling.
 
@@ -136,7 +136,7 @@ The events emitted by the channel handlers
 
 ### ICS26 Routing
 
-The routing module defines the entry point into the framework
+The routing module defines the entry point into the framework through the [`deliver`](/code/centauri/ibc/modules/src/core/ics26_routing/handler.rs#L40) function .
 
 **Routing Context**
 The `Router` trait defines methods that determine how packets are routed to their destination modules in the host
@@ -145,6 +145,17 @@ This trait defines how the router is accessed by the Context object
 **Module Callbacks**
 Ibc applications are sub protocols built on top of the core ibc protocol, ibc applications are required to implement the `Module` trait, so  
 they can execute callbacks for processed messages. The callbacks are the means through which the router is able to deliver packets to the right module.
+
+**Message Handling**
+The `deliver` acts as the topmost message handler, it accepts an ibc message of type protobuf `Any` alongside a mutable reference to the Context.  
+The message is decoded and dispatched to the appropriate message handler using a [`dispatch`](/code/centauri/ibc/modules/src/core/ics26_routing/handler.rs#L70) function.  
+Message handlers take a read only context alongside the message as parameters, the message handler is expected to return a result type depending on the message category being handled.  
+Client message handlers return a [`ClientResult`](/code/centauri/ibc/modules/src/core/ics02_client/handler.rs#l17).  
+Connection message handlers return a [`ConnectionResult`](/code/centauri/ibc/modules/src/core/ics03_connection/handler.rs#32).  
+Channel message handlers return a [`ChannelResult`](/code/centauri/ibc/modules/src/core/ics04_channel/handler.rs#L46).  
+Packet message handlers return a [`PacketResult`](/code/centauri/ibc/modules/src/core/ics04_channel/packet.rs#L35).  
+
+The dispatcher takes the result returned from the handler and writes the state changes contained within to storage using its mutable access to the Context.
 
 ### Applications
 

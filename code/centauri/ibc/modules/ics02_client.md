@@ -328,7 +328,7 @@ The following pseudocode describes how this could be achieved
 				    height
 			    ))
 		    })?;
-		    let header_hash = some_host_function_to_get_block_hash(block_number);
+		    let header_hash = some_host_function_to_get_block_hash(block_number); 
 		    // we don't even have the hash for this height (anymore?)
 		    if header_hash == Default::default() {
 			    Err(ICS02Error::implementation_specific(format!(
