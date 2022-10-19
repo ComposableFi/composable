@@ -642,7 +642,7 @@ jobs:
       - x64
       - sre
     concurrency:
-      group: packagesimnodetests-${{ matrix.runtime }}-${{ github.ref }}
+      group: package-simnode-tests-${{ matrix.runtime }}-${{ github.ref }}
       cancel-in-progress: true
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
@@ -673,7 +673,7 @@ jobs:
       - x64
       - sre
     concurrency:
-      group: packagecomposablenode-${{ github.ref }}
+      group: ${{ github.workflow }}-package-composable-node-${{ github.ref }}
       cancel-in-progress: true
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
@@ -703,7 +703,7 @@ jobs:
       - x64
       - sre
     concurrency:
-      group: packagecomposablebenchnode-${{ github.ref }}
+      group: ${{ github.workflow }}-package-composable-bench-node-${{ github.ref }}
       cancel-in-progress: true
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
@@ -733,7 +733,7 @@ jobs:
       - x64
       - sre
     concurrency:
-      group: packagepolkadotnode-${{ github.ref }}
+      group: ${{ github.workflow }}-package-polkadot-node-${{ github.ref }}
       cancel-in-progress: true
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
@@ -754,6 +754,66 @@ jobs:
           name: composable-community
       - run: |
           cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#polkadot-node --no-update-lock-file --show-trace -L
+
+  package-statemine-node:
+    name: "Package Statemine node"
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    concurrency:
+      group: ${{ github.workflow }}-package-statemine-node-${{ github.ref }}
+      cancel-in-progress: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+          echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+      - run: |
+          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#statemine-node --no-update-lock-file --show-trace -L
+
+  package-acala-node:
+    name: "Package Acala node"
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    concurrency:
+      group: ${{ github.workflow }}-package-acala-node-${{ github.ref }}
+      cancel-in-progress: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+          echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+      - run: |
+          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#acala-node --no-update-lock-file --show-trace -L
 
   cache-kusama-parachains-devnet:
     name: "Package kusama parachains devnet"
@@ -792,6 +852,8 @@ jobs:
     name: "Package Full Devnet"
     needs:
       - package-polkadot-node
+      - package-acala-node
+      - package-statemine-node
     runs-on:
       - self-hosted
       - linux
