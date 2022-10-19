@@ -51,6 +51,7 @@
     "substrate-react": "*",
     "tokens": "*",
     "zustand": "^4.0.0",
+    "wallet": "*",
     "endpoints": "*"
   },
   "devDependencies": {

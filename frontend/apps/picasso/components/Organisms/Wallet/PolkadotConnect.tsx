@@ -10,7 +10,7 @@ import { ConnectButton } from "./ConnectButton";
 import { humanBalance } from "shared";
 import { useDotSamaContext, useEagerConnect, SupportedWalletId, useParachainApi, ConnectedAccount } from "substrate-react";
 import { DEFAULT_EVM_ID, DEFAULT_NETWORK_ID } from "@/defi/polkadot/constants";
-import { ConnectWalletModal, NetworkId } from "polkadot-wallet";
+import { ConnectWalletModal, NetworkId } from "wallet";
 import { ConnectorType, useBlockchainProvider, useConnector } from "bi-lib";
 
 const BLOCKCHAIN_NETWORKS_SUPPORTED = [

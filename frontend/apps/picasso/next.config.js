@@ -13,7 +13,7 @@ const withTM = require("next-transpile-modules")([
     "tokens",
     "bi-lib",
     "defi-interfaces",
-    "polkadot-wallet",
+    "wallet",
     "endpoints"
 ]);
 

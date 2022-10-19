@@ -1,5 +1,5 @@
 {
-    "name": "polkadot-wallet",
+    "name": "wallet",
     "version": "1.0.0",
     "dependencies": {
       "@polkadot/react-identicon": "^2.9.12"
