@@ -170,6 +170,7 @@ export const PolkadotConnect: React.FC<{}> = () => {
         isEthereumWalletActive={biLibConnector.isActive ? biLibConnector.isActive : false}
         dotsamaExtensionStatus={extensionStatus}
         polkadotSelectedAccount={connectedAccount}
+        onDisconnectEthereum={biLibConnector.deactivate}
         onSelectPolkadotAccount={(account: ConnectedAccount) => {
           const index = accounts.findIndex(_account => account.address === _account.address);
           if (index >= 0 && setSelectedAccount) {

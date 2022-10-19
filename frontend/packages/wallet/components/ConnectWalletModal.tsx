@@ -1,6 +1,6 @@
 import { ConnectedAccount, DotSamaExtensionStatus, SupportedWalletId } from "substrate-react";
-import { alpha, Box, Button, IconButton, Typography, useTheme } from "@mui/material";
-import { useState, useCallback, useMemo } from "react";
+import { alpha, Box, Button, IconButton, Input, Typography, useTheme } from "@mui/material";
+import { useState, useCallback } from "react";
 import { ConnectorType } from "bi-lib";
 import { ChevronLeft } from "@mui/icons-material";
 import { Modal } from "./Modal";
@@ -95,6 +95,40 @@ const PolkadotAccount = ({ account, onSelect, isSelected, identiconTheme = "polk
     )
 }
 
+const MetamaskAccountConnected = ({
+    connectedAddress,
+    handleEthereumDisconnect
+}: { handleEthereumDisconnect: () => void; connectedAddress: string }) => {
+    return (
+        <Box width="100%">
+              <Input
+                value={connectedAddress.toLowerCase()}
+                disabled
+                fullWidth
+                sx={{
+                  mt: 8,
+                }}
+                inputProps={{
+                  inputProps: {
+                    sx: {
+                      textAlign: "center",
+                    },
+                  },
+                }}
+              />
+              <Button
+                fullWidth
+                variant="text"
+                size="large"
+                onClick={() => handleEthereumDisconnect()}
+                sx={{ mt: 4 }}
+              >
+                Disconnect wallet
+              </Button>
+        </Box>
+    )
+}
+
 const PolkadotAccounts = ({ accounts, onSelect, selectedAccount }: {
     accounts: ConnectedAccount[];
     onSelect: (account: ConnectedAccount) => void;
@@ -118,6 +152,7 @@ const PolkadotAccounts = ({ accounts, onSelect, selectedAccount }: {
             >
                 {accounts.map((account) => (
                     <PolkadotAccount
+                        key={account.address}
                         account={account}
                         onSelect={setSelectedActiveAccount}
                         isSelected={selectedActiveAccount ? selectedActiveAccount.address === account.address : false}
@@ -125,7 +160,7 @@ const PolkadotAccounts = ({ accounts, onSelect, selectedAccount }: {
                 ))}
 
             </Box>
-            <Box sx={{width: "100%", marginTop: theme.spacing(2) }}>
+            <Box sx={{ width: "100%", marginTop: theme.spacing(2) }}>
                 <Button onClick={() => {
                     if (selectedActiveAccount) {
                         onSelect(selectedActiveAccount)
@@ -143,6 +178,7 @@ type WalletConnectModalProps = {
     onConnectPolkadotWallet: (walletId?: SupportedWalletId, selectedDefaultAccount?: boolean) => Promise<any[] | undefined>;
     onConnectEthereumWallet: (walletId: ConnectorType) => Promise<any>;
     onSelectPolkadotAccount: (account: ConnectedAccount) => void;
+    onDisconnectEthereum: (...args: unknown[]) => Promise<void> | void;
     supportedPolkadotWallets: Array<{ walletId: SupportedWalletId, icon: string, name: string }>;
     supportedEthereumWallets: Array<{ walletId: ConnectorType, icon: string, name: string }>;
     networks: Array<{ icon: string, name: string; networkId: NetworkId }>;
@@ -154,11 +190,48 @@ type WalletConnectModalProps = {
     isEthereumWalletActive: boolean;
 }
 
+function getTitle(walletStep: WalletConnectStep): string {
+    switch (walletStep) {
+        case WalletConnectStep.SelectNetwork:
+            return "Wallets";
+        case WalletConnectStep.SelectedDotsamaWallet:
+            return "Connect Dotsama";
+        case WalletConnectStep.SelectEthereumWallet:
+            return "Connect EVM";
+        case WalletConnectStep.SelectDotsamaAccount:
+            return "Select Account";
+    }
+}
+
+function getDescription(walletStep: WalletConnectStep): string {
+    switch (walletStep) {
+        case WalletConnectStep.SelectNetwork:
+            return "Select a network to continue";
+        case WalletConnectStep.SelectedDotsamaWallet:
+        case WalletConnectStep.SelectEthereumWallet:
+        case WalletConnectStep.SelectDotsamaAccount:
+            return "Select a wallet to connect with";
+    }
+}
+
+function takeOneStepBack(walletStep: WalletConnectStep): WalletConnectStep {
+    switch (walletStep) {
+        case WalletConnectStep.SelectNetwork:
+            return WalletConnectStep.SelectNetwork;
+        case WalletConnectStep.SelectDotsamaAccount:
+            return WalletConnectStep.SelectedDotsamaWallet;
+        case WalletConnectStep.SelectedDotsamaWallet:
+        case WalletConnectStep.SelectEthereumWallet:
+            return WalletConnectStep.SelectNetwork;
+    }
+}
+
 export const ConnectWalletModal: React.FC<WalletConnectModalProps> = ({
     closeWalletConnectModal,
     onConnectPolkadotWallet,
     onConnectEthereumWallet,
     onSelectPolkadotAccount,
+    onDisconnectEthereum,
     ethereumSelectedAccount,
     isEthereumWalletActive,
     dotsamaExtensionStatus,
@@ -175,6 +248,7 @@ export const ConnectWalletModal: React.FC<WalletConnectModalProps> = ({
     const networksList = useCallback(() => {
         return networks.map(network => (
             <ConnectListItem
+                key={network.networkId}
                 id={network.networkId}
                 name={network.name}
                 icon={network.icon}
@@ -189,6 +263,7 @@ export const ConnectWalletModal: React.FC<WalletConnectModalProps> = ({
     const polkadotWalletsList = useCallback(() => {
         return supportedPolkadotWallets.map(wallet => (
             <ConnectListItem
+                key={wallet.walletId}
                 onClick={(walletId: SupportedWalletId) => {
                     onConnectPolkadotWallet(walletId).then((walletConnected) => {
                         setWalletConnectStep(WalletConnectStep.SelectDotsamaAccount);
@@ -204,6 +279,7 @@ export const ConnectWalletModal: React.FC<WalletConnectModalProps> = ({
     const ethereumWalletsList = useCallback(() => {
         return supportedEthereumWallets.map(wallet => (
             <ConnectListItem
+                key={wallet.walletId}
                 onClick={(walletId: ConnectorType) => {
                     onConnectEthereumWallet(walletId);
                 }}
@@ -214,41 +290,8 @@ export const ConnectWalletModal: React.FC<WalletConnectModalProps> = ({
         ))
     }, [supportedEthereumWallets, onConnectEthereumWallet])
 
-    const title = useMemo(() => {
-        switch (walletConnectStep) {
-            case WalletConnectStep.SelectNetwork:
-                return "Wallets";
-            case WalletConnectStep.SelectedDotsamaWallet:
-                return "Connect Dotsama";
-            case WalletConnectStep.SelectEthereumWallet:
-                return "Connect EVM";
-            case WalletConnectStep.SelectDotsamaAccount:
-                return "Select Account";
-        }
-    }, [walletConnectStep]);
-
-    const description = useMemo(() => {
-        switch (walletConnectStep) {
-            case WalletConnectStep.SelectNetwork:
-                return "Select a network to continue";
-            case WalletConnectStep.SelectedDotsamaWallet:
-            case WalletConnectStep.SelectEthereumWallet:
-            case WalletConnectStep.SelectDotsamaAccount:
-                return "Select a wallet to connect with";
-        }
-    }, [walletConnectStep]);
-
-    const takeOneStepBack = useCallback(() => {
-        switch (walletConnectStep) {
-            case WalletConnectStep.SelectDotsamaAccount:
-                setWalletConnectStep(WalletConnectStep.SelectedDotsamaWallet);
-                break;
-            case WalletConnectStep.SelectedDotsamaWallet:
-            case WalletConnectStep.SelectEthereumWallet:
-                setWalletConnectStep(WalletConnectStep.SelectNetwork);
-                break;
-        }
-    }, [walletConnectStep]);
+    const title = getTitle(walletConnectStep);
+    const description = getDescription(walletConnectStep);
 
     return (
         <Modal
@@ -275,7 +318,9 @@ export const ConnectWalletModal: React.FC<WalletConnectModalProps> = ({
                     }}
                 >
                     {walletConnectStep !== WalletConnectStep.SelectNetwork &&
-                        <IconButton sx={{ marginRight: "1rem" }} color="primary" onClick={takeOneStepBack}>
+                        <IconButton sx={{ marginRight: "1rem" }} color="primary" onClick={() => {
+                            setWalletConnectStep(takeOneStepBack(walletConnectStep))
+                        }}>
                             <ChevronLeft />
                         </IconButton>}
 
@@ -293,7 +338,14 @@ export const ConnectWalletModal: React.FC<WalletConnectModalProps> = ({
                 {/* We connection is needed */}
                 {walletConnectStep === WalletConnectStep.SelectEthereumWallet && !isEthereumWalletActive ? ethereumWalletsList() : null}
                 {/* We account is available, TODO: show ETH account and disconnection */}
-                {walletConnectStep === WalletConnectStep.SelectEthereumWallet && isEthereumWalletActive ? null : null}
+                {walletConnectStep === WalletConnectStep.SelectEthereumWallet && ethereumSelectedAccount ? <MetamaskAccountConnected 
+                    connectedAddress={ethereumSelectedAccount}
+                    handleEthereumDisconnect={() => {
+                        if (onDisconnectEthereum) {
+                            onDisconnectEthereum(ConnectorType.MetaMask);
+                        }
+                    }}
+                /> : null}
 
                 {/* Polkadot Steps */}
                 {/* We connection is needed */}
