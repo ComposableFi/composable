@@ -500,8 +500,8 @@ pub mod pallet {
 						false,
 					)?;
 
-					// IMPORTANT: Order of execution of this lock is important for proper locking of
-					// funds.Refer https://app.clickup.com/t/33e4tdu
+					// IMPORTANT: Order of execution of this lock matters for proper locking of
+					// funds. Refer https://app.clickup.com/t/33e4tdu
 					if T::LockByDefault::get() && !RemoveRewardLocks::<T>::exists() {
 						T::RewardAsset::set_lock(
 							T::LockId::get(),
