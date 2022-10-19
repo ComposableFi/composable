@@ -140,8 +140,8 @@ fn this_chain_side(fee_amount: u128, foreign_asset_id_on_this: CurrencyId) {
 			Origin::signed(BOB.into()),
 			// statemine sends and receives only its ids from u32 range, which is our foreign
 			// range,
-			vec![(CurrencyId::RELAY_NATIVE, fee_amount), (foreign_asset_id_on_this, UNIT),],
-			0, //1,
+			vec![(foreign_asset_id_on_this, UNIT), (CurrencyId::RELAY_NATIVE, fee_amount)],
+			1,
 			Box::new(
 				MultiLocation::new(
 					1,
@@ -166,14 +166,21 @@ fn this_chain_side(fee_amount: u128, foreign_asset_id_on_this: CurrencyId) {
 	});
 }
 
-
-
-fn statemine_setup_assets(native_for_alice: Balance, native_for_bob: Balance, statemine_asset_id: CommonAssetId, other_ed: Balance, other_total: Balance, foreign_chain_account: AccountId, this_parachain_account_init_amount: Balance) -> Balance {
+fn statemine_setup_assets(
+	native_for_alice: Balance,
+	native_for_bob: Balance,
+	statemine_asset_id: CommonAssetId,
+	other_ed: Balance,
+	other_total: Balance,
+	foreign_chain_account: AccountId,
+	this_parachain_account_init_amount: Balance,
+) -> () {
 	use statemine_runtime::*;
 	let target_parachain: AccountId =
 		polkadot_parachain::primitives::Sibling::from(THIS_PARA_ID).into_account_truncating();
-	Statemine::execute_with( || {
+	Statemine::execute_with(|| {
 		let origin = Origin::signed(ALICE.into());
+		let alice_before = Balances::free_balance(&ALICE.into());
 		Balances::make_free_balance_be(&ALICE.into(), native_for_alice);
 		Balances::make_free_balance_be(&BOB.into(), native_for_bob);
 
@@ -184,7 +191,12 @@ fn statemine_setup_assets(native_for_alice: Balance, native_for_bob: Balance, st
 			MultiAddress::Id(ALICE.into()),
 			other_ed,
 		));
-		assert_eq!(9 * UNIT, Balances::free_balance(&AccountId::from(ALICE)));
+
+		assert_eq!(
+			native_for_alice,
+			Balances::free_balance(&AccountId::from(ALICE)) +
+				Balances::reserved_balance(&AccountId::from(ALICE))
+		);
 
 		assert_ok!(Assets::mint(
 			origin.clone(),
@@ -194,10 +206,8 @@ fn statemine_setup_assets(native_for_alice: Balance, native_for_bob: Balance, st
 		));
 
 		// need to have some KSM to be able to receive user assets
-		Balances::make_free_balance_be(&foreign_chain_account, this_parachain_account_init_amount);		
+		Balances::make_free_balance_be(&foreign_chain_account, this_parachain_account_init_amount);
 	});
-
-	return Balance::default();
 }
 
 // transfer custom asset from Statemine to This
@@ -208,30 +218,18 @@ fn statemine_side(
 	use statemine_runtime::*;
 	let target_parachain: AccountId =
 		polkadot_parachain::primitives::Sibling::from(THIS_PARA_ID).into_account_truncating();
-	
+	statemine_setup_assets(
+		TEN,
+		UNIT,
+		statemine_asset_id,
+		UNIT / 100,
+		1000 * UNIT,
+		target_parachain.clone(),
+		this_parachain_account_init_amount,
+	);
+
 	Statemine::execute_with(|| {
 		let origin = Origin::signed(ALICE.into());
-		Balances::make_free_balance_be(&ALICE.into(), TEN);
-		Balances::make_free_balance_be(&BOB.into(), UNIT);
-
-		// create custom asset cost 1 KSM
-		assert_ok!(Assets::create(
-			origin.clone(),
-			statemine_asset_id,
-			MultiAddress::Id(ALICE.into()),
-			UNIT / 100
-		));
-		assert_eq!(9 * UNIT, Balances::free_balance(&AccountId::from(ALICE)));
-
-		assert_ok!(Assets::mint(
-			origin.clone(),
-			statemine_asset_id,
-			MultiAddress::Id(ALICE.into()),
-			1000 * UNIT
-		));
-
-		// need to have some KSM to be able to receive user assets
-		Balances::make_free_balance_be(&target_parachain, this_parachain_account_init_amount);
 
 		assert_ok!(PolkadotXcm::reserve_transfer_assets(
 			origin.clone(),
