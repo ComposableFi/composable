@@ -6407,6 +6407,7 @@ dependencies = [
  "polkadot-primitives",
  "polkadot-runtime-parachains",
  "primitives 0.1.0",
+ "rococo-runtime",
  "scale-info",
  "smallvec 1.9.0",
  "sp-api",
