@@ -47,7 +47,7 @@ use relay_chain_queries::{fetch_beefy_justification, fetch_mmr_batch_proof};
 use sp_core::{hexdisplay::AsBytesRef, keccak_256, H256};
 use sp_io::crypto;
 use sp_runtime::traits::{BlakeTwo256, Header as HeaderT};
-use subxt::{rpc::rpc_params, Config, OnlineClient};
+use subxt::{rpc::rpc_params, Config, OnlineClient, PolkadotConfig};
 
 use crate::{
 	relay_chain_queries::parachain_header_storage_key,
@@ -84,7 +84,7 @@ impl HostFunctions for Crypto {
 /// This contains methods for fetching BEEFY proofs for parachain headers.
 pub struct Prover<T: Config> {
 	/// Subxt client for the relay chain
-	pub relay_client: OnlineClient<T>,
+	pub relay_client: OnlineClient<PolkadotConfig>,
 	/// Subxt client for the parachain
 	pub para_client: OnlineClient<T>,
 	/// Block at which beefy was activated
@@ -232,10 +232,11 @@ where
 	) -> Result<(Vec<ParachainHeader>, BatchProof<H256>), Error>
 	where
 		T::BlockNumber: Ord + sp_runtime::traits::Zero,
+		u32: From<T::BlockNumber>,
 	{
-		let header_numbers = header_numbers.into_iter().collect();
+		let header_numbers = header_numbers.into_iter().map(From::from).collect();
 		let FinalizedParaHeads { leaf_indices, raw_finalized_heads: finalized_blocks } =
-			fetch_finalized_parachain_heads(
+			fetch_finalized_parachain_heads::<PolkadotConfig>(
 				&self.relay_client,
 				commitment_block_number,
 				latest_beefy_height,

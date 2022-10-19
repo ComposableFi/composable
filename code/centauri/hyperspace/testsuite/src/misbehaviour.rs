@@ -34,7 +34,12 @@ use sp_trie::{
 	generate_trie_proof, LayoutV0, MemoryDB, PrefixedMemoryDB, StorageProof, TrieDB, TrieDBMut,
 	TrieMut,
 };
-use std::{collections::BTreeMap, convert::identity, sync::Arc, time::Duration};
+use std::{
+	collections::BTreeMap,
+	convert::identity,
+	sync::Arc,
+	time::{Duration, Instant, SystemTime, UNIX_EPOCH},
+};
 use tendermint_proto::Protobuf;
 use tokio::time::{sleep, timeout};
 
@@ -48,9 +53,23 @@ where
 	B::FinalityEvent: Send + Sync,
 	B::Error: From<A::Error>,
 {
+	let client_message =
+	AnyClientMessage::decode(&*hex::decode("0a2a2f6962632e6c69676874636c69656e74732e6772616e6470612e76312e436c69656e744d657373616765128c0d0a890d0a96080a20d1403a42825a94d1c13dff7cf6c677f5629b00674397134ef557f037629d656d12c2051c00000000000000d1403a42825a94d1c13dff7cf6c677f5629b00674397134ef557f037629d656db600000014d1403a42825a94d1c13dff7cf6c677f5629b00674397134ef557f037629d656db6000000f574b707ea4fa2dd168e9f4f509570d3286dcc04f0c4fee1037ddbd4748017724d353eef261f07839c84a4d01a4216bee9ec98090be4f6be4a085fbff2a4b608d17c2d7823ebf260fd138f2d7e27d114c0145d968b5ff5006125f2414fadae69d1403a42825a94d1c13dff7cf6c677f5629b00674397134ef557f037629d656db60000004f9df0805ffd973d805fbbe3b878b12ba0c32cc7b3f876e27801bc73cae73f53cadd864ac8e2079c9b1819ef0cda7bf0448bca6c1bba79db93027a5ac99fae03439660b36c6c03afafca027b910b4fecf99801834c62a5e6006f27d978de234fd1403a42825a94d1c13dff7cf6c677f5629b00674397134ef557f037629d656db6000000882a256a9951e59a98de302867418d8a232bc7222df3805415ab90ebd2c7ddd1cb320e991cb8b5c98389faf4b068cd82984c594f90b6d66ee80e6c4a1cceb6075e639b43e0052c47447dac87d6fd2b6ec50bdd4d0f614e4299c665249bbd09d9d1403a42825a94d1c13dff7cf6c677f5629b00674397134ef557f037629d656db600000020ad97159c1bad1292061c25b479e824af117646b383afe979a537db563ed1450c2e2a2e3ebb6f9dff9a384b88e3f45300515ec5b2aa49dd1ac379dd20eb7f031dfe3e22cc0d45c70779c1095f7489a8ef3cf52d62fbd8c2fa38c9f1723502b5d1403a42825a94d1c13dff7cf6c677f5629b00674397134ef557f037629d656db600000092cc16b11e816180ced68f70bd602bc41b23a581a830ceb58b295383347deec6db6bac901c6949504f54f171402c1c26ecbe47c8141f20778b4a32f4fb6acc0d568cb4a574c6d178feb39c27dfc8b3f789e5f5423e19c71633c748b9acf086b5001a63ac5425ac07d54a128d365f50d624a3a69aac74f024b1e701372823be0911d6b1d102efea6b99636a902f18d716e5528bef11376025625ebc3fcdcff3b30c98f9082b0000000000000000000000000000000000000000000000000000000000000000001a6380edea8fbccb6ce8b22a80daf53a06d4a7c417d54a61983a0c9c5bdb7d1178fcd502efea6b99636a902f18d716e5528bef11376025625ebc3fcdcff3b30c98f9082b0000000000000000000000000000000000000000000000000000000000000000001a630a0186eb7471e469c26a1e494c34870541f103f34b46dbb2f6fff4d4d2786ddfd902efea6b99636a902f18d716e5528bef11376025625ebc3fcdcff3b30c98f9082b00000000000000000000000000000000000000000000000000000000000000000012cd010a200a0186eb7471e469c26a1e494c34870541f103f34b46dbb2f6fff4d4d2786ddf12a8010a95017f19cd710b30bd2eab0352ddcc26417aa1941b3c252fcb29d88eff4f3de5de4476c363f5a4efb16ffa83d007000095018d0100000000000000000000000000000000000000000000000000000000000000000d0100000000000000000000000000000000000000000000000000000000000000002b37ea19fa04c994bb96c72f9b69c42fba07d1374dd55d3ff9884776f7c0b551001209000001000312b64f631a0342000012cd010a2080edea8fbccb6ce8b22a80daf53a06d4a7c417d54a61983a0c9c5bdb7d1178fc12a8010a95017f19cd710b30bd2eab0352ddcc26417aa1941b3c252fcb29d88eff4f3de5de4476c363f5a4efb16ffa83d007000095018d0100000000000000000000000000000000000000000000000000000000000000000d0100000000000000000000000000000000000000000000000000000000000000002b37ea19fa04c994bb96c72f9b69c42fba07d1374dd55d3ff9884776f7c0b551001209000001000312b64f631a0342000012cd010a20d1403a42825a94d1c13dff7cf6c677f5629b00674397134ef557f037629d656d12a8010a95017f19cd710b30bd2eab0352ddcc26417aa1941b3c252fcb29d88eff4f3de5de4476c363f5a4efb16ffa83d007000095018d0100000000000000000000000000000000000000000000000000000000000000000d0100000000000000000000000000000000000000000000000000000000000000002b37ea19fa04c994bb96c72f9b69c42fba07d1374dd55d3ff9884776f7c0b551001209000001000312b64f631a03420000").unwrap()).unwrap();
+	match client_message {
+		AnyClientMessage::Grandpa(ClientMessage::Header(header)) => {
+			let justification = GrandpaJustification::<RelayChainHeader>::decode(
+				&mut header.finality_proof.justification.as_slice(),
+			)
+			.unwrap();
+			panic!("{}", justification.round);
+		},
+		_ => {},
+	}
+
 	let (handle, channel_id, channel_b, _connection_id) =
 		setup_connection_and_channel(chain_a, chain_b, Duration::from_secs(60 * 2)).await;
 	handle.abort();
+	// chain_b.check_for_misbehaviour(chain_a, client_message).await.unwrap();
 
 	let client_a_clone = chain_a.clone();
 	let client_b_clone = chain_b.clone();
@@ -84,7 +103,7 @@ where
 		AnyClientState::Grandpa(cs) => cs,
 		_ => panic!("unexpected client state"),
 	};
-	log::info!("Latest client height: {}", client_state.latest_relay_height);
+	// log::info!("Latest client height: {}", client_state.latest_relay_height);
 
 	let mut finality_event = chain_b.finality_notifications().await.next().await.expect("no event");
 	let set_id = client_state.current_set_id;
@@ -93,7 +112,9 @@ where
 	let mut para_db = MemoryDB::<BlakeTwo256>::default();
 
 	// TODO: how to construct timestamp extrinsic via metadata?
-	let mut timestamp_extrinsic = (1u8, 0u8, Compact(1u64)).encode();
+	let mut timestamp_extrinsic =
+		(1u8, 0u8, Compact(SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs()))
+			.encode();
 	timestamp_extrinsic.insert(0, 0);
 	timestamp_extrinsic.insert(0, 0);
 	let key = Compact(0u32).encode();
@@ -145,7 +166,62 @@ where
 	let header_hash = header.hash();
 	let precommit = Precommit { target_hash: header_hash, target_number: header.number };
 	let message = finality_grandpa::Message::Precommit(precommit.clone());
-	let round = 1;
+
+	let (update_client_msg, _, _) = chain_b
+		.query_latest_ibc_events(finality_event, chain_a)
+		.await
+		.expect("no event");
+	let mut msg =
+		MsgUpdateAnyClient::<LocalClientTypes>::decode(&mut update_client_msg.value.as_slice())
+			.unwrap();
+	let round = match &mut msg.client_message {
+		AnyClientMessage::Grandpa(ClientMessage::Header(header)) => {
+			header.finality_proof.block = H256::from_low_u64_be(1337);
+			let mut justification = GrandpaJustification::<RelayChainHeader>::decode(
+				&mut &*header.finality_proof.justification,
+			)
+			.unwrap();
+
+			justification.round
+			// let mut precommit = justification.commit.precommits.iter().for_each(|x| {
+			// 	dbg!(&x.precommit);
+			// });
+			//
+			// let mut precommit = justification
+			// 	.commit
+			// 	.precommits
+			// 	.iter()
+			// 	.map(|x| x.precommit.clone())
+			// 	.next()
+			// 	.unwrap();
+			//
+			// precommit.target_hash = H256::from_low_u64_be(precommit.target_number as u64);
+			// justification.commit.target_hash = precommit.target_hash;
+			// let message = finality_grandpa::Message::Precommit(precommit.clone());
+			// justification.commit.precommits = relaychain_authorities
+			// 	.iter()
+			// 	.map(|id| {
+			// 		let key = id.pair();
+			// 		let encoded = sp_finality_grandpa::localized_payload(
+			// 			justification.round,
+			// 			set_id,
+			// 			&message,
+			// 		);
+			// 		let signature = AuthoritySignature::from(key.sign(&encoded));
+			// 		SignedPrecommit {
+			// 			precommit: precommit.clone(),
+			// 			signature,
+			// 			id: AuthorityId::from(key.public()),
+			// 		}
+			// 	})
+			// 	.collect();
+			// header.finality_proof.justification = justification.encode();
+		},
+		_ => panic!("unexpected client message"),
+	};
+	log::info!("round");
+
+	// let round = 1;
 	// sign pre-commits by the authorities to vote for the highest block in the chain
 	let precommits = relaychain_authorities
 		.iter()
@@ -169,7 +245,7 @@ where
 	// 	dbg!(x.parent_hash, x.hash());
 	// });
 	let justification =
-		GrandpaJustification::<RelayChainHeader> { round: 1, commit, votes_ancestries: vec![] };
+		GrandpaJustification::<RelayChainHeader> { round, commit, votes_ancestries: vec![] };
 	let finality_proof = FinalityProof {
 		block: header_hash,
 		justification: justification.encode(),
@@ -245,57 +321,7 @@ where
 	// )
 	// .unwrap();
 	let client_message = AnyClientMessage::Grandpa(ClientMessage::Header(grandpa_header));
-	let (update_client_msg, _, _) = chain_b
-		.query_latest_ibc_events(finality_event, chain_a)
-		.await
-		.expect("no event");
-	let mut msg =
-		MsgUpdateAnyClient::<LocalClientTypes>::decode(&mut update_client_msg.value.as_slice())
-			.unwrap();
-	// match &mut msg.client_message {
-	// 	AnyClientMessage::Grandpa(ClientMessage::Header(header)) => {
-	// 		header.finality_proof.block = H256::from_low_u64_be(1337);
-	// 		let mut justification = GrandpaJustification::<RelayChainHeader>::decode(
-	// 			&mut &*header.finality_proof.justification,
-	// 		)
-	// 		.unwrap();
-	//
-	// 		let mut precommit = justification.commit.precommits.iter().for_each(|x| {
-	// 			dbg!(&x.precommit);
-	// 		});
-	//
-	// 		let mut precommit = justification
-	// 			.commit
-	// 			.precommits
-	// 			.iter()
-	// 			.map(|x| x.precommit.clone())
-	// 			.next()
-	// 			.unwrap();
-	//
-	// 		precommit.target_hash = H256::from_low_u64_be(precommit.target_number as u64);
-	// 		justification.commit.target_hash = precommit.target_hash;
-	// 		let message = finality_grandpa::Message::Precommit(precommit.clone());
-	// 		justification.commit.precommits = relaychain_authorities
-	// 			.iter()
-	// 			.map(|id| {
-	// 				let key = id.pair();
-	// 				let encoded = sp_finality_grandpa::localized_payload(
-	// 					justification.round,
-	// 					set_id,
-	// 					&message,
-	// 				);
-	// 				let signature = AuthoritySignature::from(key.sign(&encoded));
-	// 				SignedPrecommit {
-	// 					precommit: precommit.clone(),
-	// 					signature,
-	// 					id: AuthorityId::from(key.public()),
-	// 				}
-	// 			})
-	// 			.collect();
-	// 		header.finality_proof.justification = justification.encode();
-	// 	},
-	// 	_ => panic!("unexpected client message"),
-	// }
+
 	log::info!("{} = {}, {}", msg.client_id, chain_a.client_id(), chain_b.client_id());
 	log::info!("{:?} = {:?}, {:?}", msg.signer, chain_a.account_id(), chain_b.account_id());
 	let msg =

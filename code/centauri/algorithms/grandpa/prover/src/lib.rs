@@ -38,7 +38,7 @@ use sp_runtime::traits::{Header, Zero};
 use std::{collections::BTreeMap, sync::Arc};
 use subxt::{
 	ext::{sp_core::hexdisplay::AsBytesRef, sp_runtime::traits::One},
-	Config, OnlineClient,
+	Config, OnlineClient, PolkadotConfig,
 };
 
 /// Host function implementation for the verifier
@@ -51,7 +51,7 @@ pub mod polkadot;
 /// Contains methods useful for proving parachain header finality using GRANDPA
 pub struct GrandpaProver<T: Config> {
 	/// Subxt client for the relay chain
-	pub relay_client: OnlineClient<T>,
+	pub relay_client: OnlineClient<PolkadotConfig>,
 	/// Relay chain jsonrpsee client for typed rpc requests, which subxt lacks support for.
 	pub relay_ws_client: Arc<Client>,
 	/// Subxt client for the parachain
@@ -79,7 +79,7 @@ where
 		para_id: u32,
 	) -> Result<Self, anyhow::Error> {
 		let relay_ws_client = Arc::new(WsClientBuilder::default().build(relay_ws_url).await?);
-		let relay_client = OnlineClient::<T>::from_rpc_client(relay_ws_client.clone()).await?;
+		let relay_client = OnlineClient::from_rpc_client(relay_ws_client.clone()).await?;
 		let para_ws_client = Arc::new(WsClientBuilder::default().build(para_ws_url).await?);
 		let para_client = OnlineClient::<T>::from_rpc_client(para_ws_client.clone()).await?;
 
@@ -87,7 +87,7 @@ where
 	}
 
 	/// Construct the inital client state.
-	pub async fn initialize_client_state(&self) -> Result<ClientState<T::Hash>, anyhow::Error> {
+	pub async fn initialize_client_state(&self) -> Result<ClientState<H256>, anyhow::Error> {
 		use sp_finality_grandpa::AuthorityList;
 
 		let current_set_id = {
@@ -122,7 +122,7 @@ where
 			.header(Some(latest_relay_hash))
 			.await?
 			.ok_or_else(|| anyhow!("Header not found for hash: {latest_relay_hash:?}"))?;
-		let latest_relay_height = u32::from(*header.number());
+		let latest_relay_height = *header.number();
 		let finalized_para_header =
 			self.query_latest_finalized_parachain_header(latest_relay_height).await?;
 
@@ -174,6 +174,7 @@ where
 		u32: From<H::Number>,
 		H::Hash: From<T::Hash>,
 		T::Hash: From<H::Hash>,
+		T::Hash: From<H256>,
 		H::Number: finality_grandpa::BlockNumberOps,
 		T::BlockNumber: One,
 	{
@@ -287,13 +288,14 @@ where
 					.0
 			};
 
+			let header_hash = T::Hash::from(header.hash());
 			let para_header: T::Header = Decode::decode(&mut &parachain_header_bytes[..])?;
 			let para_block_number = *para_header.number();
 			// skip genesis header or any unknown headers
 			if para_block_number == Zero::zero() || !header_numbers.contains(&para_block_number) {
 				continue
 			}
-			para_headers.push((header.hash(), para_header.clone()));
+			para_headers.push((header_hash, para_header.clone()));
 
 			let state_proof = self
 				.relay_client
@@ -310,7 +312,7 @@ where
 					.await
 					.map_err(|err| anyhow!("Error fetching timestamp with proof: {err:?}"))?;
 			let proofs = ParachainHeaderProofs { state_proof, extrinsic, extrinsic_proof };
-			parachain_headers_with_proof.insert(header.hash().into(), proofs);
+			parachain_headers_with_proof.insert(header_hash.into(), proofs);
 		}
 
 		// now to prune useless unknown headers, we only need the unknown_headers for the relay

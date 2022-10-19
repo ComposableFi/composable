@@ -4,7 +4,7 @@ use crate::{error::Error, ParachainClient};
 use anyhow::anyhow;
 use beefy_light_client_primitives::{ClientState as BeefyPrimitivesClientState, NodesUtils};
 use codec::{Decode, Encode};
-use finality_grandpa::BlockNumberOps;
+use grandpa::BlockNumberOps;
 use grandpa_light_client_primitives::{
 	justification::find_scheduled_change, FinalityProof, ParachainHeaderProofs,
 	ParachainHeadersWithFinalityProof,
@@ -307,8 +307,8 @@ where
 	<T as Config>::Address: From<<T as Config>::AccountId>,
 	T::Signature: From<MultiSignature>,
 	T::BlockNumber: BlockNumberOps + From<u32> + Display + Ord + sp_runtime::traits::Zero + One,
-	T::Hash: From<sp_core::H256> + From<[u8; 32]>,
-	sp_core::H256: From<T::Hash>,
+	T::Hash: From<H256> + From<[u8; 32]>,
+	H256: From<T::Hash>,
 	FinalityProof<sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256>>:
 		From<FinalityProof<T::Header>>,
 	BTreeMap<H256, ParachainHeaderProofs>:
@@ -436,17 +436,14 @@ where
 		)
 		.await?;
 
-	let target =
-		source
-			.relay_client
-			.rpc()
-			.header(Some(finality_proof.block))
-			.await?
-			.ok_or_else(|| {
-				Error::from(
-					"Could not find relay chain header for justification target".to_string(),
-				)
-			})?;
+	let target = source
+		.relay_client
+		.rpc()
+		.header(Some(H256::from(finality_proof.block)))
+		.await?
+		.ok_or_else(|| {
+			Error::from("Could not find relay chain header for justification target".to_string())
+		})?;
 
 	let authority_set_changed_scheduled = find_scheduled_change(&target).is_some();
 	// if validator set has changed this is a mandatory update

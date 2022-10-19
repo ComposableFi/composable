@@ -31,7 +31,8 @@ sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkad
 parachain = { path = "../parachain", package = "hyperspace-parachain", features = ["testing"] }
 sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 light-client-common = { path = "../../light-clients/common" }
-grandpa-light-client = { path = "../../algorithms/grandpa/verifier" }
+grandpa-light-client = { path = "../../algorithms/grandpa/verifier", package = "grandpa-light-client-verifier" }
+hex = "0.4.3"
 
 [dev-dependencies]
 # substrate

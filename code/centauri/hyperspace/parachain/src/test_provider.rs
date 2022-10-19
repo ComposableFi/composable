@@ -5,8 +5,8 @@ use crate::{
 use beefy_prover::Prover;
 use codec::Decode;
 use common::AccountId;
-use finality_grandpa::BlockNumberOps;
 use futures::{Stream, StreamExt};
+use grandpa::BlockNumberOps;
 use grandpa_light_client_primitives::{FinalityProof, ParachainHeaderProofs};
 use grandpa_prover::GrandpaProver;
 use ibc::{
@@ -243,7 +243,7 @@ where
 			type_url: msg.type_url,
 			value: msg.value,
 		}]);
-		let (ext_hash, block_hash) = self.submit_call(call, &self.para_client).await?;
+		let (ext_hash, block_hash) = self.submit_call(call).await?;
 
 		// Query newly created client Id
 		let identified_client_state = IbcApiClient::<u32, H256>::query_newly_created_client(
@@ -289,7 +289,7 @@ where
 			amount.into(),
 		);
 
-		self.submit_call(call, &self.para_client).await?;
+		self.submit_call(call).await?;
 
 		Ok(())
 	}
@@ -393,7 +393,7 @@ where
 
 		let call = api::tx().ibc_ping().send_ping(params);
 
-		self.submit_call(call, &self.para_client).await.map(|_| ())
+		self.submit_call(call).await.map(|_| ())
 	}
 
 	async fn subscribe_blocks(&self) -> Pin<Box<dyn Stream<Item = u64> + Send + Sync>> {
@@ -412,10 +412,13 @@ where
 	}
 
 	async fn subscribe_relaychain_blocks(&self) -> Pin<Box<dyn Stream<Item = u32>>> {
-		let stream =
-			self.relay_client.rpc().subscribe_finalized_blocks().await.unwrap().filter_map(
-				|result| futures::future::ready(result.ok().map(|x| u32::from(*x.number()))),
-			);
+		let stream = self
+			.relay_client
+			.rpc()
+			.subscribe_finalized_blocks()
+			.await
+			.unwrap()
+			.filter_map(|result| futures::future::ready(result.ok().map(|x| *x.number())));
 		Box::pin(Box::new(stream))
 	}
 

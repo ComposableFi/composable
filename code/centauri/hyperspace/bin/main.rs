@@ -2,6 +2,7 @@ use anyhow::Result;
 use clap::Parser;
 use hyperspace::logging;
 use metrics::{data::Metrics, handler::MetricsHandler, init_prometheus};
+use primitives::Chain;
 use prometheus::Registry;
 use std::path::PathBuf;
 
@@ -43,8 +44,8 @@ impl RelayCmd {
 		let registry =
 			Registry::new_custom(None, None).expect("this can only fail if the prefix is empty");
 		let addr = config.core.prometheus_endpoint.parse().unwrap();
-		let metrics_a = Metrics::register(any_config_a.name(), &registry)?;
-		let metrics_b = Metrics::register(any_config_b.name(), &registry)?;
+		let metrics_a = Metrics::register(any_chain_a.name(), &registry)?;
+		let metrics_b = Metrics::register(any_chain_b.name(), &registry)?;
 		let mut metrics_handler_a = MetricsHandler::new(registry.clone(), metrics_a);
 		let mut metrics_handler_b = MetricsHandler::new(registry.clone(), metrics_b);
 		metrics_handler_a.link_with_counterparty(&mut metrics_handler_b);

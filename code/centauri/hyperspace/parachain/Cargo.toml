@@ -31,7 +31,6 @@ thiserror = "1.0.31"
 itertools = "0.10.3"
 jsonrpsee = "0.15.1"
 jsonrpsee-ws-client = "0.14.0"
-finality-grandpa = "0.16.0"
 
 # substrate
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", features = ["full_crypto"] }
@@ -51,6 +50,7 @@ frame-system = { git = "https://github.com/paritytech/substrate", branch = "polk
 transaction-payment-rpc = { package = "pallet-transaction-payment-rpc", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 transaction-payment-runtime-api = { package = "pallet-transaction-payment-rpc-runtime-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 
 # composable
 ibc = { path = "../../ibc/modules", features = [] }
@@ -80,7 +80,6 @@ sp-finality-grandpa = { git = "https://github.com/paritytech/substrate", branch 
 grandpa = { package = "finality-grandpa", version = "0.16.0", default-features = false, features = ["derive-codec"] }
 
 [dev-dependencies]
-sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 derive_more = "0.99.17"
 clap = {version = "3.2.0", features = ["derive"]}
 state-machine = { package = "sp-state-machine", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }

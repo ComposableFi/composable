@@ -49,7 +49,7 @@ where
 	let client_b_clone = chain_b.clone();
 	// Start relayer loop
 	let handle = tokio::task::spawn(async move {
-		hyperspace::relay(client_a_clone, client_b_clone).await.unwrap()
+		hyperspace::relay(client_a_clone, client_b_clone, None, None).await.unwrap()
 	});
 	// check if an open transfer channel exists
 	let (latest_height, ..) = chain_a.latest_height_and_timestamp().await.unwrap();
@@ -536,7 +536,7 @@ pub async fn ibc_messaging_packet_height_timeout_with_connection_delay<A, B>(
 	let client_a_clone = chain_a.clone();
 	let client_b_clone = chain_b.clone();
 	let handle = tokio::task::spawn(async move {
-		hyperspace::relay(client_a_clone, client_b_clone).await.unwrap()
+		hyperspace::relay(client_a_clone, client_b_clone, None, None).await.unwrap()
 	});
 	send_packet_and_assert_height_timeout(chain_a, chain_b, channel_id).await;
 	handle.abort()
@@ -563,7 +563,7 @@ pub async fn ibc_messaging_packet_timestamp_timeout_with_connection_delay<A, B>(
 	let client_a_clone = chain_a.clone();
 	let client_b_clone = chain_b.clone();
 	let handle = tokio::task::spawn(async move {
-		hyperspace::relay(client_a_clone, client_b_clone).await.unwrap()
+		hyperspace::relay(client_a_clone, client_b_clone, None, None).await.unwrap()
 	});
 	send_packet_and_assert_timestamp_timeout(chain_a, chain_b, channel_id).await;
 	handle.abort()
@@ -589,7 +589,7 @@ where
 	let client_a_clone = chain_a.clone();
 	let client_b_clone = chain_b.clone();
 	let handle = tokio::task::spawn(async move {
-		hyperspace::relay(client_a_clone, client_b_clone).await.unwrap()
+		hyperspace::relay(client_a_clone, client_b_clone, None, None).await.unwrap()
 	});
 	send_packet_with_connection_delay(chain_a, chain_b, channel_id).await;
 	handle.abort()
@@ -614,7 +614,7 @@ where
 	let client_a_clone = chain_a.clone();
 	let client_b_clone = chain_b.clone();
 	let handle = tokio::task::spawn(async move {
-		hyperspace::relay(client_a_clone, client_b_clone).await.unwrap()
+		hyperspace::relay(client_a_clone, client_b_clone, None, None).await.unwrap()
 	});
 	send_channel_close_init_and_assert_channel_close_confirm(chain_a, chain_b, channel_id).await;
 	handle.abort()
@@ -639,7 +639,7 @@ where
 	let client_a_clone = chain_a.clone();
 	let client_b_clone = chain_b.clone();
 	let handle = tokio::task::spawn(async move {
-		hyperspace::relay(client_a_clone, client_b_clone).await.unwrap()
+		hyperspace::relay(client_a_clone, client_b_clone, None, None).await.unwrap()
 	});
 	send_packet_and_assert_timeout_on_channel_close(chain_a, chain_b, channel_id).await;
 	handle.abort()
