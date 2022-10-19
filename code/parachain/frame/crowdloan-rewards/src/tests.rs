@@ -1,11 +1,11 @@
 use crate::{
 	ethereum_recover,
 	mocks::{
-		ethereum_address, generate_accounts, AccountId, Balance, Balances, ClaimKey,
-		CrowdloanRewards, EthKey, ExtBuilder, Moment, Origin, System, Test, Timestamp, ALICE,
-		INITIAL_PAYMENT, PROOF_PREFIX, VESTING_STEP,
+		AccountId, Balance, Balances, CrowdloanRewards, EthKey, ExtBuilder, Moment, Origin, System,
+		Test, Timestamp, ALICE, INITIAL_PAYMENT, PROOF_PREFIX, VESTING_STEP,
 	},
 	models::{Proof, RemoteAccount},
+	test_utils::{ethereum_address, generate_accounts, ClaimKey},
 	Error, Event, RemoteAccountOf, RewardAmountOf, VestingPeriodOf,
 };
 use codec::Encode;
@@ -24,10 +24,10 @@ fn with_rewards<R>(
 	vesting_period: Moment,
 	execute: impl FnOnce(&dyn Fn(Moment), Vec<(AccountId, ClaimKey)>) -> R,
 ) -> R {
-	let accounts = generate_accounts(count as _);
+	let accounts = generate_accounts::<Test>(count as _);
 	let rewards = accounts
 		.iter()
-		.map(|(_, account)| (account.as_remote_public(), reward, vesting_period))
+		.map(|(_, account)| (account.as_remote_public::<Test>(), reward, vesting_period))
 		.collect();
 	ExtBuilder::default().build().execute_with(|| {
 		System::set_block_number(0xDEADC0DE);
@@ -63,7 +63,7 @@ pub mod unlock_rewards_for {
 			assert_ok!(CrowdloanRewards::initialize(Origin::root()));
 
 			for (picasso_account, remote_account) in accounts.clone().into_iter() {
-				assert_ok!(remote_account.associate(picasso_account));
+				assert_ok!(remote_account.associate::<Test>(picasso_account));
 			}
 
 			assert!(CrowdloanRewards::remove_reward_locks().is_none());
@@ -76,96 +76,22 @@ pub mod unlock_rewards_for {
 
 	#[test]
 	fn test_should_unlock_reward_assets_for_accounts() {
-		should_unlock_reward_assets_for_accounts::<Test>();
-	}
-
-	pub fn should_unlock_reward_assets_for_accounts<Runtime>()
-	where
-		Runtime: pallet_balances::Config
-			+ crate::Config<RelayChainAccountId = [u8; 32]>
-			+ pallet_timestamp::Config,
-		<Runtime as pallet_balances::Config>::Balance: From<u128>,
-		<Runtime as crate::Config>::Balance: From<u128>,
-		<Runtime as pallet_timestamp::Config>::Moment: From<u64>,
-		<Runtime as crate::Config>::Moment: From<u64>,
-		<<Runtime as frame_system::Config>::Origin as OriginTrait>::AccountId: From<AccountId>,
-		<<Runtime as frame_system::Config>::Lookup as StaticLookup>::Source: From<AccountId>,
-		<Runtime as frame_system::Config>::AccountId: From<AccountId>,
-	{
-		let accounts = generate_accounts(DEFAULT_NB_OF_CONTRIBUTORS as _);
-
-		let rewards = accounts
-			.iter()
-			.map(|(_, account)| {
-				(
-					account.as_remote_public(),
-					<Runtime as crate::Config>::Balance::from(DEFAULT_REWARD),
-					<Runtime as crate::Config>::Moment::from(DEFAULT_VESTING_PERIOD),
-				)
-			})
-			.collect();
-
-		ExtBuilder::default().build().execute_with(|| {
-			System::set_block_number(0xDEADC0DE);
-			let random_moment_start: u64 = 0xCAFEBABE;
-
-			pallet_timestamp::Pallet::<Runtime>::set_timestamp(random_moment_start.into());
-			pallet_balances::Pallet::<Runtime>::make_free_balance_be(
-				&crate::Pallet::<Runtime>::account_id(),
-				(DEFAULT_REWARD * DEFAULT_NB_OF_CONTRIBUTORS).into(),
-			);
-
-			assert_ok!(crate::Pallet::<Runtime>::populate(OriginFor::<Runtime>::root(), rewards));
-			assert_ok!(crate::Pallet::<Runtime>::initialize(OriginFor::<Runtime>::root()));
-
-			for (picasso_account, remote_account) in accounts.clone().into_iter() {
-				assert_ok!(remote_account.associate(picasso_account));
-			}
-
-			assert_noop!(
-				pallet_balances::Pallet::<Runtime>::transfer(
-					OriginFor::<Runtime>::signed(
-						<<Runtime as frame_system::Config>::Origin as OriginTrait>::AccountId::from(
-							accounts[0].0.clone()
-						)
-					),
-					<<Runtime as frame_system::Config>::Lookup as StaticLookup>::Source::from(
-						accounts[1].0.clone()
-					),
-					(DEFAULT_REWARD / 10).into(),
-				),
-				pallet_balances::pallet::Error::<Runtime>::LiquidityRestrictions
-			);
-
-			let accounts: Vec<AccountId> =
-				accounts.into_iter().map(|(account, _claim_key)| account).collect();
-
-			assert_ok!(crate::Pallet::<Runtime>::unlock_rewards_for(
-				OriginFor::<Runtime>::root(),
-				accounts
-					.iter()
-					.cloned()
-					.map(<Runtime as frame_system::Config>::AccountId::from)
-					.collect()
-			));
-
-			assert_ok!(pallet_balances::Pallet::<Runtime>::transfer(
-				OriginFor::<Runtime>::signed(accounts[0].clone().into()),
-				<<Runtime as frame_system::Config>::Lookup as StaticLookup>::Source::from(
-					accounts[1].clone()
-				),
-				(DEFAULT_REWARD / 10).into(),
-			));
-		})
+		crate::test_utils::should_unlock_reward_assets_for_accounts::<Test>(
+			ExtBuilder::default().build(),
+			pallet_balances::Error::<Test>::LiquidityRestrictions.into(),
+			DEFAULT_REWARD,
+			DEFAULT_NB_OF_CONTRIBUTORS as u64,
+			DEFAULT_VESTING_PERIOD,
+		);
 	}
 }
 
 #[test]
 fn test_populate_rewards_not_funded() {
 	let gen = |c, r| -> Vec<(RemoteAccountOf<Test>, RewardAmountOf<Test>, VestingPeriodOf<Test>)> {
-		generate_accounts(c)
+		generate_accounts::<Test>(c)
 			.into_iter()
-			.map(|(_, account)| (account.as_remote_public(), r, DEFAULT_VESTING_PERIOD))
+			.map(|(_, account)| (account.as_remote_public::<Test>(), r, DEFAULT_VESTING_PERIOD))
 			.collect()
 	};
 	ExtBuilder::default().build().execute_with(|| {
@@ -177,9 +103,9 @@ fn test_populate_rewards_not_funded() {
 #[test]
 fn test_incremental_populate() {
 	let gen = |c, r| -> Vec<(RemoteAccountOf<Test>, RewardAmountOf<Test>, VestingPeriodOf<Test>)> {
-		generate_accounts(c)
+		generate_accounts::<Test>(c)
 			.into_iter()
-			.map(|(_, account)| (account.as_remote_public(), r, DEFAULT_VESTING_PERIOD))
+			.map(|(_, account)| (account.as_remote_public::<Test>(), r, DEFAULT_VESTING_PERIOD))
 			.collect()
 	};
 	ExtBuilder::default().build().execute_with(|| {
@@ -206,9 +132,9 @@ fn test_incremental_populate() {
 #[test]
 fn test_populate_ok() {
 	let gen = |c, r| -> Vec<(RemoteAccountOf<Test>, RewardAmountOf<Test>, VestingPeriodOf<Test>)> {
-		generate_accounts(c)
+		generate_accounts::<Test>(c)
 			.into_iter()
-			.map(|(_, account)| (account.as_remote_public(), r, DEFAULT_VESTING_PERIOD))
+			.map(|(_, account)| (account.as_remote_public::<Test>(), r, DEFAULT_VESTING_PERIOD))
 			.collect()
 	};
 	ExtBuilder::default().build().execute_with(|| {
@@ -247,9 +173,9 @@ fn test_populate_ok() {
 #[test]
 fn populate_should_overwrite_existing_rewards_with_new_values() {
 	let gen = |c, r| -> Vec<(RemoteAccountOf<Test>, RewardAmountOf<Test>, VestingPeriodOf<Test>)> {
-		generate_accounts(c)
+		generate_accounts::<Test>(c)
 			.into_iter()
-			.map(|(_, account)| (account.as_remote_public(), r, DEFAULT_VESTING_PERIOD))
+			.map(|(_, account)| (account.as_remote_public::<Test>(), r, DEFAULT_VESTING_PERIOD))
 			.collect()
 	};
 	ExtBuilder::default().build().execute_with(|| {
@@ -315,15 +241,18 @@ fn test_invalid_early_at_claim() {
 
 		for (picasso_account, remote_account) in accounts.clone().into_iter() {
 			assert_noop!(
-				remote_account.associate(picasso_account.clone()),
+				remote_account.associate::<Test>(picasso_account.clone()),
 				Error::<Test>::NotClaimableYet
 			);
-			assert_noop!(remote_account.claim(picasso_account), Error::<Test>::NotAssociated);
+			assert_noop!(
+				remote_account.claim::<Test>(picasso_account),
+				Error::<Test>::NotAssociated
+			);
 		}
 
 		set_moment(11);
 		for (picasso_account, remote_account) in accounts.into_iter() {
-			assert_ok!(remote_account.associate(picasso_account.clone()),);
+			assert_ok!(remote_account.associate::<Test>(picasso_account.clone()),);
 		}
 	});
 }
@@ -343,7 +272,10 @@ fn test_initialize_once() {
 fn test_not_initialized() {
 	with_rewards_default(|_, accounts| {
 		for (picasso_account, remote_account) in accounts.into_iter() {
-			assert_noop!(remote_account.associate(picasso_account), Error::<Test>::NotInitialized);
+			assert_noop!(
+				remote_account.associate::<Test>(picasso_account),
+				Error::<Test>::NotInitialized
+			);
 		}
 	});
 }
@@ -394,7 +326,7 @@ fn test_initial_payment() {
 	with_rewards_default(|_, accounts| {
 		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
 		for (picasso_account, remote_account) in accounts.into_iter() {
-			assert_ok!(remote_account.associate(picasso_account.clone()));
+			assert_ok!(remote_account.associate::<Test>(picasso_account.clone()));
 			assert_eq!(Balances::total_balance(&picasso_account), INITIAL_PAYMENT * DEFAULT_REWARD);
 		}
 		assert_eq!(
@@ -409,8 +341,11 @@ fn test_invalid_early_claim() {
 	with_rewards_default(|_, accounts| {
 		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
 		for (picasso_account, remote_account) in accounts.into_iter() {
-			assert_ok!(remote_account.associate(picasso_account.clone()));
-			assert_noop!(remote_account.claim(picasso_account), Error::<Test>::NothingToClaim);
+			assert_ok!(remote_account.associate::<Test>(picasso_account.clone()));
+			assert_noop!(
+				remote_account.claim::<Test>(picasso_account),
+				Error::<Test>::NothingToClaim
+			);
 		}
 	});
 }
@@ -422,7 +357,7 @@ fn test_not_a_contributor() {
 		for account in 0..100 {
 			assert_noop!(
 				ClaimKey::Relay(ed25519::Pair::from_seed(&[account as u8; 32]))
-					.associate(AccountId::new([account as u8; 32])),
+					.associate::<Test>(AccountId::new([account as u8; 32])),
 				Error::<Test>::InvalidProof
 			);
 		}
@@ -434,7 +369,7 @@ fn test_association_ok() {
 	with_rewards_default(|_, accounts| {
 		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
 		for (picasso_account, remote_account) in accounts.into_iter() {
-			assert_ok!(remote_account.associate(picasso_account));
+			assert_ok!(remote_account.associate::<Test>(picasso_account));
 		}
 	});
 }
@@ -444,7 +379,10 @@ fn test_association_ko() {
 	with_rewards_default(|_, accounts| {
 		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
 		for (picasso_account, remote_account) in accounts.into_iter() {
-			assert_noop!(remote_account.claim(picasso_account), Error::<Test>::NotAssociated);
+			assert_noop!(
+				remote_account.claim::<Test>(picasso_account),
+				Error::<Test>::NotAssociated
+			);
 		}
 	});
 }
@@ -454,15 +392,18 @@ fn test_invalid_less_than_a_week() {
 	with_rewards_default(|set_moment, accounts| {
 		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
 		for (picasso_account, remote_account) in accounts.clone().into_iter() {
-			assert_ok!(remote_account.associate(picasso_account));
+			assert_ok!(remote_account.associate::<Test>(picasso_account));
 		}
 		set_moment(VESTING_STEP - 1);
 		for (picasso_account, remote_account) in accounts.clone().into_iter() {
-			assert_noop!(remote_account.claim(picasso_account), Error::<Test>::NothingToClaim);
+			assert_noop!(
+				remote_account.claim::<Test>(picasso_account),
+				Error::<Test>::NothingToClaim
+			);
 		}
 		set_moment(VESTING_STEP);
 		for (picasso_account, remote_account) in accounts.into_iter() {
-			assert_ok!(remote_account.claim(picasso_account));
+			assert_ok!(remote_account.claim::<Test>(picasso_account));
 		}
 	});
 }
@@ -476,13 +417,13 @@ fn test_valid_claim_full() {
 		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
 		// Initial payment
 		for (picasso_account, remote_account) in accounts.clone().into_iter() {
-			assert_ok!(remote_account.associate(picasso_account));
+			assert_ok!(remote_account.associate::<Test>(picasso_account));
 		}
 		assert_eq!(CrowdloanRewards::claimed_rewards(), total_initial_reward);
 		for i in 1..(nb_of_vesting_step + 1) {
 			set_moment(i * VESTING_STEP);
 			for (picasso_account, remote_account) in accounts.clone().into_iter() {
-				assert_ok!(remote_account.claim(picasso_account));
+				assert_ok!(remote_account.claim::<Test>(picasso_account));
 			}
 			assert_eq!(
 				CrowdloanRewards::claimed_rewards(),
@@ -490,7 +431,10 @@ fn test_valid_claim_full() {
 			);
 		}
 		for (picasso_account, remote_account) in accounts.into_iter() {
-			assert_noop!(remote_account.claim(picasso_account), Error::<Test>::NothingToClaim);
+			assert_noop!(
+				remote_account.claim::<Test>(picasso_account),
+				Error::<Test>::NothingToClaim
+			);
 		}
 		assert_eq!(CrowdloanRewards::claimed_rewards(), CrowdloanRewards::total_rewards());
 	});
@@ -502,7 +446,7 @@ fn test_valid_claim_no_vesting() {
 		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
 		// Initial payment = full reward
 		for (picasso_account, remote_account) in accounts.into_iter() {
-			assert_ok!(remote_account.associate(picasso_account));
+			assert_ok!(remote_account.associate::<Test>(picasso_account));
 		}
 		assert_eq!(CrowdloanRewards::claimed_rewards(), CrowdloanRewards::total_rewards());
 	});
@@ -554,7 +498,7 @@ mod test_prevalidate_association {
 		DEFAULT_VESTING_PERIOD,
 	};
 	use crate::{
-		mocks::{CrowdloanRewards, Origin},
+		mocks::{CrowdloanRewards, Origin, Test},
 		ValidityError,
 	};
 	use frame_support::{
@@ -565,7 +509,7 @@ mod test_prevalidate_association {
 	use sp_runtime::{transaction_validity::TransactionSource, AccountId32};
 
 	fn setup_call(remote_account: ClaimKey, reward_account: &AccountId32) -> TransactionValidity {
-		let proof = remote_account.proof(reward_account.clone());
+		let proof = remote_account.proof::<Test>(reward_account.clone());
 		let call = crate::Call::associate { reward_account: reward_account.clone(), proof };
 		CrowdloanRewards::validate_unsigned(TransactionSource::External, &call)
 	}
@@ -579,7 +523,7 @@ mod test_prevalidate_association {
 				assert_ok!(CrowdloanRewards::associate(
 					Origin::none(),
 					reward_account.clone(),
-					remote_account.proof(reward_account.clone()),
+					remote_account.proof::<Test>(reward_account.clone()),
 				));
 			}
 

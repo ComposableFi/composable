@@ -7885,6 +7885,7 @@ dependencies = [
  "hex-literal",
  "libsecp256k1",
  "pallet-balances",
+ "pallet-crowdloan-rewards",
  "pallet-timestamp",
  "parity-scale-codec",
  "rustc-hex",

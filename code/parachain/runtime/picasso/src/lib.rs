@@ -1109,3 +1109,26 @@ cumulus_pallet_parachain_system::register_validate_block!(
 	BlockExecutor = cumulus_pallet_aura_ext::BlockExecutor::<Runtime, Executive>,
 	CheckInherents = CheckInherents,
 );
+
+#[cfg(test)]
+mod test {
+	use crowdloan_rewards::test_utils::should_unlock_reward_assets_for_accounts;
+
+	const DEFAULT_NB_OF_CONTRIBUTORS: u128 = 100;
+	const DEFAULT_VESTING_PERIOD: u64 = 3600 * 24 * 7 * 10;
+	const DEFAULT_REWARD: u128 = 10_000 * 10_u128.pow(12);
+
+	#[test]
+	fn test_crowdloan_locking() {
+		should_unlock_reward_assets_for_accounts::<crate::Runtime>(
+			frame_system::GenesisConfig::default()
+				.build_storage::<crate::Runtime>()
+				.expect("QED")
+				.into(),
+			balances::pallet::Error::<crate::Runtime>::LiquidityRestrictions.into(),
+			DEFAULT_REWARD,
+			DEFAULT_NB_OF_CONTRIBUTORS as u64,
+			DEFAULT_VESTING_PERIOD,
+		);
+	}
+}

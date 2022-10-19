@@ -1943,121 +1943,25 @@ cumulus_pallet_parachain_system::register_validate_block!(
 	CheckInherents = CheckInherents,
 );
 
-/*#[cfg(test)]
+#[cfg(test)]
 mod test {
-	use frame_support::traits::OriginTrait;
-	use sp_core::{ed25519, keccak_256, Pair};
-	use sp_runtime::{traits::StaticLookup, AccountId32};
+	use crowdloan_rewards::test_utils::should_unlock_reward_assets_for_accounts;
 
 	const DEFAULT_NB_OF_CONTRIBUTORS: u128 = 100;
 	const DEFAULT_VESTING_PERIOD: u64 = 3600 * 24 * 7 * 10;
-	const DEFAULT_REWARD: u128 = 10_000;
-
-	pub fn relay_generate(count: u64) -> Vec<(AccountId32, ed25519::Pair)> {
-		let seed: u128 = 12345678901234567890123456789012;
-		(0..count)
-			.map(|i| {
-				let account_id = [[0_u8; 16], (i as u128 + 1).to_le_bytes()]
-					.concat()
-					.try_into()
-					.expect("Account ID is valid; QED");
-				(
-					AccountId32::new(account_id),
-					ed25519::Pair::from_seed(&keccak_256(
-						&[(seed + i as u128).to_le_bytes(), (seed + i as u128).to_le_bytes()]
-							.concat(),
-					)),
-				)
-			})
-			.collect()
-	}
+	const DEFAULT_REWARD: u128 = 10_000 * 10_u128.pow(12);
 
 	#[test]
 	fn test_crowdloan_locking() {
-		pub fn should_unlock_reward_assets_for_accounts<Runtime>()
-		where
-			Runtime: balances::Config
-				+ crowdloan_rewards::Config<RelayChainAccountId = [u8; 32]>
-				+ timestamp::Config,
-			<Runtime as balances::Config>::Balance: From<u128>,
-			<Runtime as crowdloan_rewards::Config>::Balance: From<u128>,
-			<Runtime as timestamp::Config>::Moment: From<u64>,
-			<Runtime as crowdloan_rewards::Config>::Moment: From<u64>,
-			<<Runtime as frame_system::Config>::Origin as OriginTrait>::AccountId:
-				From<AccountId32>,
-			<<Runtime as frame_system::Config>::Lookup as StaticLookup>::Source: From<AccountId32>,
-			<Runtime as frame_system::Config>::AccountId: From<AccountId32>,
-		{
-			let accounts = relay_generate(DEFAULT_NB_OF_CONTRIBUTORS as _);
-
-			let rewards = accounts
-				.iter()
-				.map(|(_, account)| {
-					(
-						account.as_remote_public(),
-						<Runtime as crate::Config>::Balance::from(DEFAULT_REWARD),
-						<Runtime as crate::Config>::Moment::from(DEFAULT_VESTING_PERIOD),
-					)
-				})
-				.collect();
-
-			ExtBuilder::default().build().execute_with(|| {
-				System::set_block_number(0xDEADC0DE);
-				let random_moment_start: u64 = 0xCAFEBABE;
-
-				timestamp::Pallet::<Runtime>::set_timestamp(random_moment_start.into());
-				balances::Pallet::<Runtime>::make_free_balance_be(
-					&crate::Pallet::<Runtime>::account_id(),
-					(DEFAULT_REWARD * DEFAULT_NB_OF_CONTRIBUTORS).into(),
-				);
-
-				assert_ok!(crate::Pallet::<Runtime>::populate(
-					OriginFor::<Runtime>::root(),
-					rewards
-				));
-				assert_ok!(crate::Pallet::<Runtime>::initialize(OriginFor::<Runtime>::root()));
-
-				for (picasso_account, remote_account) in accounts.clone().into_iter() {
-					assert_ok!(remote_account.associate(picasso_account));
-				}
-
-				assert_noop!(
-				balances::Pallet::<Runtime>::transfer(
-					OriginFor::<Runtime>::signed(
-						<<Runtime as frame_system::Config>::Origin as OriginTrait>::AccountId::from(
-							accounts[0].0.clone()
-						)
-					),
-					<<Runtime as frame_system::Config>::Lookup as StaticLookup>::Source::from(
-						accounts[1].0.clone()
-					),
-					(DEFAULT_REWARD / 10).into(),
-				),
-				balances::pallet::Error::<Runtime>::LiquidityRestrictions
-			);
-
-				let accounts: Vec<AccountId> =
-					accounts.into_iter().map(|(account, _claim_key)| account).collect();
-
-				assert_ok!(crate::Pallet::<Runtime>::unlock_rewards_for(
-					OriginFor::<Runtime>::root(),
-					accounts
-						.iter()
-						.cloned()
-						.map(<Runtime as frame_system::Config>::AccountId::from)
-						.collect()
-				));
-
-				assert_ok!(balances::Pallet::<Runtime>::transfer(
-					OriginFor::<Runtime>::signed(accounts[0].clone().into()),
-					<<Runtime as frame_system::Config>::Lookup as StaticLookup>::Source::from(
-						accounts[1].clone()
-					),
-					(DEFAULT_REWARD / 10).into(),
-				));
-			})
-		}
-
-		should_unlock_reward_assets_for_accounts::<Runtime>();
+		should_unlock_reward_assets_for_accounts::<crate::Runtime>(
+			frame_system::GenesisConfig::default()
+				.build_storage::<crate::Runtime>()
+				.expect("QED")
+				.into(),
+			balances::pallet::Error::<crate::Runtime>::LiquidityRestrictions.into(),
+			DEFAULT_REWARD,
+			DEFAULT_NB_OF_CONTRIBUTORS as u64,
+			DEFAULT_VESTING_PERIOD,
+		);
 	}
-}*/
+}

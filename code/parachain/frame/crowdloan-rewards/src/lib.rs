@@ -52,6 +52,9 @@ Reference for proof mechanism: https://github.com/paritytech/polkadot/blob/maste
 	unused_extern_crates
 )]
 
+#[cfg(feature = "test-utils")]
+pub mod test_utils;
+
 pub use pallet::*;
 
 pub mod models;
@@ -102,6 +105,7 @@ pub mod pallet {
 	pub type VestingPeriodOf<T> = MomentOf<T>;
 	pub type RewardAmountOf<T> = <T as Config>::Balance;
 	pub type ProofOf<T> = Proof<<T as Config>::RelayChainAccountId>;
+	pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -369,6 +373,8 @@ pub mod pallet {
 
 			let available_funds = T::RewardAsset::balance(&Self::account_id());
 			let total_rewards = TotalRewards::<T>::get();
+			dbg!(total_rewards);
+			dbg!(available_funds);
 			let excess_funds = available_funds
 				.checked_sub(&total_rewards)
 				.ok_or(Error::<T>::RewardsNotFunded)?;

@@ -1,9 +1,6 @@
 use crate::*;
 
-use crate::{
-	models::{Proof, RemoteAccount},
-	tests::unlock_rewards_for::should_unlock_reward_assets_for_accounts,
-};
+use crate::models::{Proof, RemoteAccount};
 use composable_support::types::{EcdsaSignature, EthereumAddress};
 use ed25519_dalek::{Keypair, Signer};
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite};
@@ -256,9 +253,9 @@ benchmarks! {
 		let reward_accounts = accounts.into_iter().map(|(account_id, _)| account_id).collect();
 	}: _(RawOrigin::Root, reward_accounts)
 
-	test {
-		should_unlock_reward_assets_for_accounts::<T>();
-	}: {}
+	// test {
+	// 	should_unlock_reward_assets_for_accounts::<T>();
+	// }: {}
 
 	impl_benchmark_test_suite!(
 		Pallet,

@@ -22,11 +22,15 @@ frame-benchmarking = { default-features = false, git = "https://github.com/parit
 hex-literal = "0.3.3"
 libsecp256k1 = { version = "0.7.0" }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+pallet-crowdloan-rewards = { path = ".", features = ["test-utils"] }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 serde = { version = '1.0.136' }
 sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 
 [dependencies]
+# test-utils
+pallet-balances = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+
 ed25519-dalek = { version = "1.0.1", default-features = false, optional = true, features = [
   "u64_backend",
   "alloc",
@@ -63,7 +67,7 @@ serde = { version = '1.0.136', optional = true }
 composable-support = { path = "../composable-support", default-features = false }
 
 [features]
-default = ["std"]
+default = ["std", "test-utils"]
 
 std = [
   "codec/std",
@@ -77,6 +81,8 @@ std = [
   "scale-info/std",
   "serde/std",
 ]
+
+test-utils = ["pallet-balances", "pallet-timestamp", "libsecp256k1"]
 
 runtime-benchmarks = [
   "libsecp256k1",
