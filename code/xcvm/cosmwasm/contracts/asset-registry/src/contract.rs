@@ -1,6 +1,6 @@
 use crate::{
 	error::ContractError,
-	msg::{ExecuteMsg, GetAssetContractResponse, InstantiateMsg, QueryMsg},
+	msg::{ExecuteMsg, GetAssetContractResponse, InstantiateMsg, MigrateMsg, QueryMsg},
 	state::{XcvmAssetId, ASSETS},
 };
 #[cfg(not(feature = "library"))]
@@ -8,15 +8,21 @@ use cosmwasm_std::entry_point;
 use cosmwasm_std::{
 	to_binary, Binary, Deps, DepsMut, Env, Event, MessageInfo, Response, StdResult,
 };
+use cw2::set_contract_version;
+use cw_utils::ensure_from_older_version;
 use std::collections::BTreeMap;
+
+const CONTRACT_NAME: &str = "composable:xcvm-asset-registry";
+const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
-	_deps: DepsMut,
+	deps: DepsMut,
 	_env: Env,
 	_info: MessageInfo,
 	_msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
+	set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 	Ok(Response::default().add_event(Event::new("xcvm.registry.instantiated")))
 }
 
@@ -30,6 +36,12 @@ pub fn execute(
 	match msg {
 		ExecuteMsg::SetAssets(asset) => handle_set_assets(deps, asset),
 	}
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
+	let _ = ensure_from_older_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+	Ok(Response::default())
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -73,7 +85,7 @@ mod tests {
 	use cosmwasm_std::{
 		from_binary,
 		testing::{mock_dependencies, mock_env, mock_info},
-		Addr, Order, Storage,
+		Addr, Order,
 	};
 
 	#[test]
@@ -85,9 +97,6 @@ mod tests {
 
 		let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 		assert_eq!(0, res.messages.len());
-
-		// Make sure that the storage is empty
-		assert_eq!(deps.storage.range(None, None, Order::Ascending).next(), None);
 	}
 
 	#[test]
