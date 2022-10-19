@@ -26,8 +26,8 @@ mod weights;
 mod xcmp;
 use common::{
 	impls::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
-	Hash, Moment, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT,
-	MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	ForeignAssetId, Hash, Moment, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS,
+	MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_traits::assets::Asset;
 use orml_traits::parameter_type_with_key;
@@ -492,6 +492,7 @@ impl assets::Config for Runtime {
 	type NativeAssetId = NativeAssetId;
 	type GenerateCurrencyId = CurrencyFactory;
 	type AssetId = CurrencyId;
+	type ForeignAssetId = composable_traits::xcm::assets::XcmAssetLocation;
 	type Balance = Balance;
 	type NativeCurrency = Balances;
 	type MultiCurrency = Tokens;
@@ -500,17 +501,6 @@ impl assets::Config for Runtime {
 	type GovernanceRegistry = GovernanceRegistry;
 	type CurrencyValidator = ValidateCurrencyId;
 }
-
-// impl assets_registry::Config for Runtime {
-// 	type Event = Event;
-// 	type LocalAssetId = CurrencyId;
-// 	type ForeignAssetId = CurrencyId;
-// 	type UpdateAssetRegistryOrigin = EnsureOrigin<AccountId>;
-// 	type ParachainOrGovernanceOrigin = EnsureOrigin<AccountId>;
-// 	type WeightInfo = ();
-// 	type Balance = Balance;
-// 	type CurrencyFactory = CurrencyFactory;
-// }
 
 parameter_type_with_key! {
 	// TODO:
@@ -824,7 +814,7 @@ construct_runtime!(
 		CrowdloanRewards: crowdloan_rewards = 56,
 		Assets: assets = 57,
 		GovernanceRegistry: governance_registry = 58,
-		// AssetsRegistry: assets_registry: 59,
+		// AssetsRegistry: assets_registry = 59,
 	}
 );
 
@@ -889,14 +879,12 @@ mod benches {
 }
 
 impl_runtime_apis! {
-	impl assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance> for Runtime {
+	impl assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance, ForeignAssetId> for Runtime {
 		fn balance_of(SafeRpcWrapper(asset_id): SafeRpcWrapper<CurrencyId>, account_id: AccountId) -> SafeRpcWrapper<Balance> /* Balance */ {
 			SafeRpcWrapper(<Assets as frame_support::traits::fungibles::Inspect::<AccountId>>::balance(asset_id, &account_id))
 		}
 
-		fn list_assets() -> Vec<Asset> {
-			// let _foreign_assets_list = AssetsRegistry::get_foreign_assets_list();
-			//asd
+		fn list_assets() -> Vec<Asset<ForeignAssetId>> {
 			CurrencyId::list_assets()
 		}
 	}

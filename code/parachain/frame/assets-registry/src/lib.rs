@@ -30,6 +30,7 @@ pub mod pallet {
 	pub use crate::weights::WeightInfo;
 	use codec::FullCodec;
 	use composable_traits::{
+		assets::Asset,
 		currency::{BalanceLike, CurrencyFactory, Exponent, RangeId},
 		defi::Ratio,
 		xcm::assets::{
@@ -41,8 +42,6 @@ pub mod pallet {
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo, pallet_prelude::*, traits::EnsureOrigin,
 	};
-
-	use composable_traits::assets::Asset;
 	use frame_system::pallet_prelude::*;
 	use scale_info::TypeInfo;
 	use sp_std::{fmt::Debug, str, vec, vec::Vec};
@@ -63,6 +62,7 @@ pub mod pallet {
 			+ Into<u128>
 			+ Debug
 			+ Default
+			+ Ord
 			+ TypeInfo;
 
 		/// Identifier for the class of foreign asset.
@@ -316,17 +316,25 @@ pub mod pallet {
 			<MinFeeAmounts<T>>::get(parachain_id, remote_asset_id)
 		}
 
-		fn get_foreign_assets_list() -> Result<Vec<Asset>, DispatchError> {
+		fn get_foreign_assets_list() -> Result<Vec<Asset<Self::AssetNativeLocation>>, DispatchError>
+		{
 			let assets = LocalToForeign::<T>::iter()
 				.map(|(local_id, foreign_metadata)| {
 					let decimals = match foreign_metadata.decimals {
 						Some(d) => d,
 						_ => 12_u32.into(),
 					};
-					let _location = foreign_metadata.location;
+					// let foreign_id: u64 = 8_u64; // (foreign_metadata.location as
+					// T::ForeignAssetId).into();
+					let foreign_id = foreign_metadata.location;
 
-					let name = vec![2_u8];
-					Asset { name, id: 15_u64, decimals, foreign_id: 8_u64 }
+					let name = vec![2_u8]; // TODO: use proper name
+					Asset {
+						name,
+						id: local_id.into() as u64,
+						decimals,
+						foreign_id: Some(foreign_id.into()),
+					}
 				})
 				.collect::<Vec<_>>();
 

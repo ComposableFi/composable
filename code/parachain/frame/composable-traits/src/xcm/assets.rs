@@ -90,7 +90,8 @@ pub trait RemoteAssetRegistryInspect {
 	// common basic fee for sure fn min_xcm_native_in_fee(parachain_id: Id) ->
 	// Option<Self::Balance>;
 
-	fn get_foreign_assets_list() -> Result<Vec<Asset>, DispatchError>;
+	// TODO: add description
+	fn get_foreign_assets_list() -> Result<Vec<Asset<Self::AssetNativeLocation>>, DispatchError>;
 }
 
 /// Used in tandem with `CurrencyFactory` trait

@@ -103,6 +103,8 @@ mod types {
 	pub type NftInstanceId = u128;
 
 	pub type PositionId = u128;
+
+	pub type ForeignAssetId = composable_traits::xcm::assets::XcmAssetLocation;
 }
 
 /// Common constants of statemint and statemine
