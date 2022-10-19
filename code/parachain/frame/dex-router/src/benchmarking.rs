@@ -4,8 +4,26 @@ use composable_traits::{defi::CurrencyPair, dex::Amm};
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::traits::fungibles::Mutate;
 use frame_system::RawOrigin;
-use sp_arithmetic::Permill;
+use pallet_pablo::PoolInitConfiguration;
+use sp_arithmetic::{PerThing, Permill};
+use sp_runtime::{traits::ConstU32, BoundedBTreeMap};
 use sp_std::{vec, vec::Vec};
+
+pub fn dual_asset_pool_weights<T>(
+	first_asset: <T as pallet_pablo::Config>::AssetId,
+	first_asset_weight: Permill,
+	second_asset: <T as pallet_pablo::Config>::AssetId,
+) -> BoundedBTreeMap<<T as pallet_pablo::Config>::AssetId, Permill, ConstU32<2>>
+where
+	T: pallet_pablo::Config,
+{
+	let mut asset_weights = BoundedBTreeMap::new();
+	asset_weights.try_insert(first_asset, first_asset_weight).expect("Should work");
+	asset_weights
+		.try_insert(second_asset, first_asset_weight.left_from_one())
+		.expect("Should work");
+	asset_weights
+}
 
 fn create_single_node_pool<T>() -> (
 	CurrencyPair<<T as pallet_dex_router::Config>::AssetId>,
@@ -23,11 +41,10 @@ where
 	let usdc: <T as pallet_pablo::Config>::AssetId = 100_u128.into();
 	let usdt: <T as pallet_pablo::Config>::AssetId = 104_u128.into();
 	let owner: <T as frame_system::Config>::AccountId = whitelisted_caller();
-	let usdc_usdt_config = pallet_pablo::PoolInitConfiguration::ConstantProduct {
+	let usdc_usdt_config = PoolInitConfiguration::DualAssetConstantProduct {
 		owner: owner.clone(),
-		pair: CurrencyPair::new(usdc, usdt),
 		fee: Permill::zero(),
-		base_weight: Permill::from_percent(50_u32),
+		assets_weights: dual_asset_pool_weights::<T>(usdc, Permill::from_percent(50), usdt),
 	};
 	let usdc_usdt = pallet_pablo::Pallet::<T>::do_create_pool(usdc_usdt_config).unwrap();
 	sp_std::if_std! {
@@ -66,11 +83,10 @@ where
 	let eth: <T as pallet_pablo::Config>::AssetId = 102_u128.into();
 	let usdc: <T as pallet_pablo::Config>::AssetId = 103_u128.into();
 	let usdt: <T as pallet_pablo::Config>::AssetId = 104_u128.into();
-	let pica_ksm_config = pallet_pablo::PoolInitConfiguration::ConstantProduct {
+	let pica_ksm_config = pallet_pablo::PoolInitConfiguration::DualAssetConstantProduct {
 		owner: owner.clone(),
-		pair: CurrencyPair::new(pica, ksm),
 		fee: Permill::zero(),
-		base_weight: Permill::from_percent(50),
+		assets_weights: dual_asset_pool_weights::<T>(pica, Permill::from_percent(50), ksm),
 	};
 	let pica_ksm = pallet_pablo::Pallet::<T>::do_create_pool(pica_ksm_config).unwrap();
 	// 100 pica == 1 ksm
@@ -92,11 +108,10 @@ where
 	sp_std::if_std! {
 		println!(" pica_ksm {:?}", pica_ksm);
 	}
-	let ksm_eth_config = pallet_pablo::PoolInitConfiguration::ConstantProduct {
+	let ksm_eth_config = pallet_pablo::PoolInitConfiguration::DualAssetConstantProduct {
 		owner: owner.clone(),
-		pair: CurrencyPair::new(ksm, eth),
 		fee: Permill::zero(),
-		base_weight: Permill::from_percent(50),
+		assets_weights: dual_asset_pool_weights::<T>(ksm, Permill::from_percent(50), eth),
 	};
 	let ksm_eth = pallet_pablo::Pallet::<T>::do_create_pool(ksm_eth_config).unwrap();
 	// 10 ksm == 1 eth
@@ -119,11 +134,10 @@ where
 		println!(" ksm_eth {:?}", ksm_eth);
 	}
 
-	let eth_usdc_config = pallet_pablo::PoolInitConfiguration::ConstantProduct {
+	let eth_usdc_config = pallet_pablo::PoolInitConfiguration::DualAssetConstantProduct {
 		owner: owner.clone(),
-		pair: CurrencyPair::new(eth, usdc),
 		fee: Permill::zero(),
-		base_weight: Permill::from_percent(50),
+		assets_weights: dual_asset_pool_weights::<T>(eth, Permill::from_percent(50), usdc),
 	};
 	let eth_usdc = pallet_pablo::Pallet::<T>::do_create_pool(eth_usdc_config).unwrap();
 	// 1 eth = 200 usdc
@@ -146,11 +160,10 @@ where
 	sp_std::if_std! {
 		println!(" eth_usdc {:?}", eth_usdc);
 	}
-	let usdc_usdt_config = pallet_pablo::PoolInitConfiguration::ConstantProduct {
+	let usdc_usdt_config = pallet_pablo::PoolInitConfiguration::DualAssetConstantProduct {
 		owner: owner.clone(),
-		pair: CurrencyPair::new(usdc, usdt),
 		fee: Permill::zero(),
-		base_weight: Permill::from_percent(50_u32),
+		assets_weights: dual_asset_pool_weights::<T>(usdc, Permill::from_percent(50), usdt),
 	};
 	let usdc_usdt = pallet_pablo::Pallet::<T>::do_create_pool(usdc_usdt_config).unwrap();
 	sp_std::if_std! {
