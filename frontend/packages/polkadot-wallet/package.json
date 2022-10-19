@@ -1,0 +1,13 @@
+{
+    "name": "polkadot-wallet",
+    "version": "1.0.0",
+    "dependencies": {
+      "@polkadot/react-identicon": "^2.9.12"
+    },
+    "devDependencies": {
+      "@mui/material": "*",
+      "shared": "*",
+      "eslint-config-custom": "*"
+    }
+  }
+  
