@@ -150,7 +150,7 @@ mod constant_product {
 					i_and_o.w_k
 				);
 
-				prop_assert!(dbg!(res).is_ok());
+				prop_assert!(res.is_ok());
 			}
 		}
 	}
