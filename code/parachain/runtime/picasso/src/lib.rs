@@ -245,6 +245,7 @@ impl assets::Config for Runtime {
 	type NativeAssetId = NativeAssetId;
 	type GenerateCurrencyId = CurrencyFactory;
 	type AssetId = CurrencyId;
+	type ForeignAssetId = composable_traits::xcm::assets::XcmAssetLocation;
 	type Balance = Balance;
 	type NativeCurrency = Balances;
 	type MultiCurrency = Tokens;
