@@ -40,7 +40,7 @@ fn initiate_reserver_withdraw_on_relay() {
 		let origin = MultiLocation::new(
 			0,
 			X1(AccountId32 {
-				id: crate::kusama_test_net::ALICE,
+				id: ALICE,
 				// it assumes that above account public key was used on all networks by bob, not
 				// mapping, so it will match any
 				network: NetworkId::Any,
@@ -119,24 +119,23 @@ fn withdraw_and_deposit_back_on_same_chain() {
 
 	KusamaRelay::execute_with(|| {
 		assert_eq!(
-			kusama_runtime::Balances::free_balance(para_account_id(THIS_PARA_ID)),
+			relay_runtime::Balances::free_balance(para_account_id(THIS_PARA_ID)),
 			PICASSO_RELAY_BALANCE - send_amount
 		);
 	});
 }
 
-/// source: Acala
 #[test]
 fn relay_chain_subscribe_version_notify_of_para_chain() {
 	KusamaRelay::execute_with(|| {
-		let r = pallet_xcm::Pallet::<kusama_runtime::Runtime>::force_subscribe_version_notify(
-			kusama_runtime::Origin::root(),
+		let r = pallet_xcm::Pallet::<relay_runtime::Runtime>::force_subscribe_version_notify(
+			relay_runtime::Origin::root(),
 			Box::new(Parachain(THIS_PARA_ID).into().into()),
 		);
 		assert_ok!(r);
 	});
 	KusamaRelay::execute_with(|| {
-		kusama_runtime::System::assert_has_event(kusama_runtime::Event::XcmPallet(
+		relay_runtime::System::assert_has_event(relay_runtime::Event::XcmPallet(
 			pallet_xcm::Event::SupportedVersionChanged(
 				MultiLocation { parents: 0, interior: X1(Parachain(THIS_PARA_ID)) },
 				2,

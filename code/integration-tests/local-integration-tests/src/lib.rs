@@ -1,45 +1,51 @@
-#![cfg_attr(
-	not(any(test, feature = "runtime-benchmarks")),
-	deny(
-		clippy::disallowed_methods,
-		clippy::disallowed_types,
-		clippy::indexing_slicing,
-		clippy::todo,
-		clippy::unwrap_used,
-		clippy::panic
-	)
-)] // allow in tests
+// #![cfg_attr(
+// 	not(any(test, feature = "runtime-benchmarks")),
+// 	deny(
+// 		clippy::disallowed_methods,
+// 		clippy::disallowed_types,
+// 		clippy::indexing_slicing,
+// 		clippy::todo,
+// 		clippy::unwrap_used,
+// 		clippy::panic
+// 	)
+// )] // allow in tests
 #![warn(clippy::unseparated_literal_suffix)]
 #![cfg_attr(not(feature = "std"), no_std)]
-#![deny(
-	unused_imports,
-	clippy::useless_conversion,
-	bad_style,
-	bare_trait_objects,
-	const_err,
-	improper_ctypes,
-	non_shorthand_field_patterns,
-	no_mangle_generic_items,
-	overflowing_literals,
-	path_statements,
-	patterns_in_fns_without_body,
-	private_in_public,
-	unconditional_recursion,
-	unused_allocation,
-	unused_comparisons,
-	unused_parens,
-	while_true,
-	trivial_casts,
-	trivial_numeric_casts,
-	unused_extern_crates,
-	dead_code,
-	unused_must_use
-)]
+// #![deny(
+// 	unused_imports,
+// 	clippy::useless_conversion,
+// 	bad_style,
+// 	bare_trait_objects,
+// 	const_err,
+// 	improper_ctypes,
+// 	non_shorthand_field_patterns,
+// 	no_mangle_generic_items,
+// 	overflowing_literals,
+// 	path_statements,
+// 	patterns_in_fns_without_body,
+// 	private_in_public,
+// 	unconditional_recursion,
+// 	unused_allocation,
+// 	unused_comparisons,
+// 	unused_parens,
+// 	while_true,
+// 	trivial_casts,
+// 	trivial_numeric_casts,
+// 	unused_extern_crates,
+// 	dead_code,
+// 	unused_must_use
+// )]
 
-/// this must be singleton
 #[cfg(test)]
 pub fn env_logger_init() {
-	let _ = env_logger::builder().is_test(true).try_init();
+	use std::sync::Once;
+	static START: Once = Once::new();
+	START.call_once(|| {
+		let _ = env_logger::builder()
+			.is_test(true)
+			.try_init()
+			.expect("test log runs in env it can run");
+	});
 }
 
 #[cfg(test)]
@@ -65,4 +71,4 @@ mod relaychain;
 mod transact_calls;
 
 #[cfg(test)]
-mod statemine;
+mod common_goods_assets;

@@ -7,16 +7,16 @@
 //pallet_xcm::Event::AssetsTrapped
 
 use crate::{
+	assert_lt_by,
 	helpers::*,
 	kusama_test_net::{
-		KusamaRelay, Sibling, This, ALICE, ALICE_PARACHAIN_KSM, BOB, CHARLIE, PICA,
-		SIBLING_PARA_ID, THIS_PARA_ID,
+		KusamaRelay, Sibling, This, ALICE_PARACHAIN_KSM, PICA, SIBLING_PARA_ID, THIS_PARA_ID,
 	},
 	prelude::*,
 };
 use codec::Encode;
 use common::{AccountId, Balance};
-use composable_traits::defi::Ratio;
+use composable_traits::{currency::RangeId, defi::Ratio};
 
 use frame_system::RawOrigin;
 use this_runtime::{
@@ -71,12 +71,12 @@ fn reserve_transfer(from: [u8; 32], to: [u8; 32]) {
 	let before =
 		This::execute_with(|| this_runtime::Assets::free_balance(CurrencyId::KSM, to_account));
 	KusamaRelay::execute_with(|| {
-		let _ = <kusama_runtime::Balances as frame_support::traits::Currency<_>>::deposit_creating(
+		let _ = <relay_runtime::Balances as frame_support::traits::Currency<_>>::deposit_creating(
 			from_account,
 			balance,
 		);
-		let result = kusama_runtime::XcmPallet::reserve_transfer_assets(
-			kusama_runtime::Origin::signed(from.into()),
+		let result = relay_runtime::XcmPallet::reserve_transfer_assets(
+			relay_runtime::Origin::signed(from.into()),
 			Box::new(Parachain(THIS_PARA_ID).into().into()),
 			Box::new(Junction::AccountId32 { id: to, network: NetworkId::Any }.into().into()),
 			Box::new((Here, balance).into()),
@@ -98,11 +98,17 @@ fn reserve_transfer(from: [u8; 32], to: [u8; 32]) {
 #[test]
 fn transfer_to_relay_chain() {
 	simtest();
+	let transfer_amount = 3 * RELAY_NATIVE_UNIT;
+	let limit = 4_600_000_000;
+	assert_eq!(
+		KusamaRelay::execute_with(|| relay_runtime::Balances::balance(&AccountId::from(BOB))),
+		0
+	);
 	This::execute_with(|| {
 		let transferred = this_runtime::XTokens::transfer(
 			this_runtime::Origin::signed(ALICE.into()),
 			CurrencyId::KSM,
-			3 * PICA,
+			transfer_amount,
 			Box::new(
 				MultiLocation::new(
 					1,
@@ -110,7 +116,7 @@ fn transfer_to_relay_chain() {
 				)
 				.into(),
 			),
-			4_600_000_000,
+			limit,
 		);
 
 		assert_ok!(transferred);
@@ -118,15 +124,16 @@ fn transfer_to_relay_chain() {
 		let remaining =
 			this_runtime::Assets::free_balance(CurrencyId::KSM, &AccountId::from(ALICE));
 
-		assert_eq!(remaining, ALICE_PARACHAIN_KSM - 3 * PICA);
+		assert_eq!(remaining, ALICE_PARACHAIN_KSM - transfer_amount);
 	});
 
 	KusamaRelay::execute_with(|| {
-		//old value 2999893333340
-		assert_eq!(
-			kusama_runtime::Balances::free_balance(&AccountId::from(BOB)),
-			2999988476752 // 3 * PICA - fee
-		);
+		assert_lt_by!(
+			relay_runtime::Balances::balance(&AccountId::from(BOB)),
+			transfer_amount,
+			ORDER_OF_FEE_ESTIMATE_ERROR * (THIS_CHAIN_NATIVE_FEE + RELAY_CHAIN_NATIVE_FEE) +
+				ORDER_OF_FEE_ESTIMATE_ERROR * limit as u128
+		)
 	});
 }
 
@@ -137,7 +144,7 @@ fn transfer_from_this_to_sibling() {
 		assert_ok!(this_runtime::AssetsRegistry::update_asset(
 			RawOrigin::Root.into(),
 			CurrencyId::PICA,
-			composable_traits::xcm::assets::XcmAssetLocation(MultiLocation::new(
+			XcmAssetLocation(MultiLocation::new(
 				1,
 				X2(
 					Parachain(SIBLING_PARA_ID),
@@ -267,7 +274,6 @@ fn transfer_insufficient_amount_should_fail() {
 #[ignore = "until fixed sibling trust map"]
 fn transfer_to_sibling() {
 	simtest();
-	let _other_currency = CurrencyId::KSM;
 
 	fn this_native_reserve_account() -> AccountId {
 		use sp_runtime::traits::AccountIdConversion;
@@ -370,7 +376,7 @@ fn transfer_from_relay_chain_deposit_to_treasury_if_below_ed() {
 	});
 
 	KusamaRelay::execute_with(|| {
-		use kusama_runtime::*;
+		use relay_runtime::*;
 		assert_ok!(XcmPallet::reserve_transfer_assets(
 			Origin::signed(ALICE.into()),
 			Box::new(Parachain(THIS_PARA_ID).into().into()),
@@ -412,7 +418,7 @@ fn xcm_transfer_execution_barrier_trader_works() {
 		DepositAsset { assets: All.into(), max_assets: 1, beneficiary: Here.into() },
 	]);
 	KusamaRelay::execute_with(|| {
-		use kusama_runtime::*;
+		use relay_runtime::*;
 		let r = pallet_xcm::Pallet::<Runtime>::send_xcm(
 			X1(Junction::AccountId32 { network: NetworkId::Any, id: ALICE.into() }),
 			Parachain(THIS_PARA_ID).into(),
@@ -452,33 +458,6 @@ fn xcm_transfer_execution_barrier_trader_works() {
 		assert_eq!(r, Outcome::Error(XcmError::Barrier));
 	});
 
-	// trader inside BuyExecution have TooExpensive error if payment less than calculated weight
-	// amount. the minimum of calculated weight amount(`FixedRateOfFungible<KsmPerSecond>`) is
-	let ksm_per_second = UnitWeightCost::get() as u128 / 50 - 1_000; // TODO: define all calculation somehow in runtime as in Acala
-	let message = Xcm::<this_runtime::Call>(vec![
-		ReserveAssetDeposited((Parent, ksm_per_second).into()),
-		BuyExecution {
-			fees: (Parent, ksm_per_second).into(),
-			weight_limit: Limited(expect_weight_limit),
-		},
-		DepositAsset { assets: All.into(), max_assets: 1, beneficiary: Here.into() },
-	]);
-	This::execute_with(|| {
-		let r = XcmExecutor::<this_runtime::XcmConfig>::execute_xcm(
-			Parent,
-			message,
-			expect_weight_limit,
-		);
-		assert_eq!(
-			r,
-			Outcome::Incomplete(
-				unit_instruction_weight * 2 * 50, /* so here we have report in PICA, while we
-				                                   * allowed to pay in KSM */
-				XcmError::TooExpensive
-			)
-		);
-	});
-
 	// all situation fulfilled, execute success
 	let total = (unit_instruction_weight * MaxInstructions::get() as u64) as u128;
 	let message = Xcm::<this_runtime::Call>(vec![
@@ -492,127 +471,156 @@ fn xcm_transfer_execution_barrier_trader_works() {
 			message,
 			expect_weight_limit,
 		);
-		assert_eq!(r, Outcome::Complete(unit_instruction_weight * 3 * 50));
+		assert_eq!(r, Outcome::Complete(this_runtime::xcmp::xcm_fee_estimator(3)));
+	});
+}
+
+#[test]
+fn payment_with_foreign_asset_under_fee_reports_required() {
+	let ksm_minimal_amount = 1;
+	let weight_limit = this_runtime::xcmp::xcm_fee_estimator(2 + 1);
+	let message = Xcm::<this_runtime::Call>(vec![
+		ReserveAssetDeposited((Parent, ksm_minimal_amount).into()),
+		BuyExecution {
+			fees: (Parent, ksm_minimal_amount).into(),
+			weight_limit: Limited(weight_limit),
+		},
+		DepositAsset { assets: All.into(), max_assets: 1, beneficiary: Here.into() },
+	]);
+	This::execute_with(|| {
+		let result =
+			XcmExecutor::<this_runtime::XcmConfig>::execute_xcm(Parent, message, weight_limit);
+		assert_eq!(
+			result,
+			Outcome::Incomplete(this_runtime::xcmp::xcm_fee_estimator(2), XcmError::TooExpensive)
+		);
 	});
 }
 
 #[test]
 fn unspent_xcm_fee_is_returned_correctly() {
+	simtest();
 	let parachain_account: AccountId = This::execute_with(|| {
 		this_runtime::ParachainInfo::parachain_id().into_account_truncating()
 	});
 	let some_account: AccountId = AccountId::from(CHARLIE);
 
+	let charlie_on_kusama_amount = 1_000 * CurrencyId::unit::<Balance>();
+	let (original_parachain, original_bob) = KusamaRelay::execute_with(|| {
+		(
+			relay_runtime::Balances::balance(&parachain_account.clone()),
+			relay_runtime::Balances::balance(&AccountId::from(BOB)),
+		)
+	});
+	let parachain_on_kusama_amount = 1_000 * CurrencyId::unit::<Balance>();
 	KusamaRelay::execute_with(|| {
-		assert_ok!(kusama_runtime::Balances::transfer(
-			kusama_runtime::Origin::signed(ALICE.into()),
+		log::info!("============ RELAY");
+		assert_ok!(relay_runtime::Balances::transfer(
+			relay_runtime::Origin::signed(ALICE.into()),
 			MultiAddress::Id(some_account.clone()),
-			1_000 * CurrencyId::unit::<Balance>()
+			charlie_on_kusama_amount,
 		));
-		assert_ok!(kusama_runtime::Balances::transfer(
-			kusama_runtime::Origin::signed(ALICE.into()),
+		assert_ok!(relay_runtime::Balances::transfer(
+			relay_runtime::Origin::signed(ALICE.into()),
 			MultiAddress::Id(parachain_account.clone()),
-			1_000 * CurrencyId::unit::<Balance>()
+			parachain_on_kusama_amount,
 		));
 		assert_eq!(
-			kusama_runtime::Balances::free_balance(&AccountId::from(ALICE)),
+			relay_runtime::Balances::free_balance(&AccountId::from(ALICE)),
 			2 * CurrencyId::unit::<Balance>()
 		);
+		assert_eq!(relay_runtime::Balances::free_balance(&some_account), charlie_on_kusama_amount);
+		assert_eq!(relay_runtime::Balances::free_balance(&AccountId::from(BOB)), Balance::zero());
 		assert_eq!(
-			kusama_runtime::Balances::free_balance(&some_account),
-			1_000 * CurrencyId::unit::<Balance>()
-		);
-		assert_eq!(kusama_runtime::Balances::free_balance(&AccountId::from(BOB)), 0);
-		assert_eq!(
-			kusama_runtime::Balances::free_balance(&parachain_account.clone()),
-			1_010 * CurrencyId::unit::<Balance>()
+			relay_runtime::Balances::free_balance(&parachain_account.clone()),
+			original_parachain + parachain_on_kusama_amount,
 		);
 	});
 
+	let transfer_in_transact_amount: u128 = CurrencyId::unit();
+	let payment_into_holder = transfer_in_transact_amount;
+	let weight_limit = 10_000_000_000;
 	This::execute_with(|| {
+		log::info!("============ THIS");
 		// Construct a transfer XCM call with returning the deposit
-		let transfer_call = crate::relaychain::balances_transfer_keep_alive::<Runtime>(
-			AccountId::from(BOB),
-			CurrencyId::unit(),
-		);
-		let batch_call = crate::relaychain::utility_as_derivative_call::<Runtime>(transfer_call, 0);
-		let weight = 10_000_000_000; // Fee to transfer into the hold register
+		let transfer_call = relay_runtime::Call::Balances(relay_runtime::BalancesCall::transfer {
+			dest: <relay_runtime::Runtime as frame_system::Config>::Lookup::unlookup(
+				AccountId::from(BOB),
+			),
+			value: transfer_in_transact_amount,
+		});
+
 		let asset = MultiAsset {
 			id: Concrete(MultiLocation::here()),
-			fun: Fungibility::Fungible(CurrencyId::unit()),
+			fun: Fungibility::Fungible(payment_into_holder),
 		};
 		let xcm_msg = Xcm(vec![
 			WithdrawAsset(asset.clone().into()),
 			BuyExecution { fees: asset, weight_limit: Unlimited },
 			Transact {
 				origin_type: OriginKind::SovereignAccount,
-				require_weight_at_most: weight,
-				call: batch_call.encode().into(),
+				require_weight_at_most: weight_limit,
+				call: transfer_call.encode().into(),
 			},
 		]);
 
-		let res = this_runtime::RelayerXcm::send_xcm(Here, Parent, xcm_msg);
-		assert!(res.is_ok());
+		assert_ok!(this_runtime::RelayerXcm::send_xcm(Here, Parent, xcm_msg));
 	});
 
-	KusamaRelay::execute_with(|| {
-		// 1 dollar is transferred to BOB
+	let parachain_balance = KusamaRelay::execute_with(|| {
+		log::info!("============ RELAY");
 		assert_eq!(
-			kusama_runtime::Balances::free_balance(&some_account),
-			1000 * CurrencyId::unit::<Balance>()
+			relay_runtime::Balances::balance(&AccountId::from(BOB)),
+			transfer_in_transact_amount,
+			"because of Transact called transfer"
 		);
-		// ISSUE: ported from Acala, not clear how BOB at all got s amount as we never transfer that
-		//there is no transfer of KSM at all
-		// assert_eq!(
-		// 	kusama_runtime::Balances::free_balance(&AccountId::from(BOB)),
-		// 	CurrencyId::unit::<Balance>()
-		// );
-		// 1 dollar is given to Hold Register for XCM call and never returned.
+
+		let new_balance = relay_runtime::Balances::balance(&parachain_account.clone());
 		assert_eq!(
-			kusama_runtime::Balances::free_balance(&parachain_account.clone()),
-			1_009 * CurrencyId::unit::<Balance>()
+			new_balance,
+			original_parachain + parachain_on_kusama_amount - payment_into_holder -  transfer_in_transact_amount ,
+			"Parachain payed fee (remainder not deposited back) and transferred to Bob from Parachain Treasury"
 		);
+		new_balance
 	});
 
 	This::execute_with(|| {
-		// Construct a transfer using the RelaychainCallBuilder
-		let transfer_call = crate::relaychain::balances_transfer_keep_alive::<Runtime>(
-			AccountId::from(BOB),
-			CurrencyId::unit(),
-		);
-		let batch_call = crate::relaychain::utility_as_derivative_call::<Runtime>(transfer_call, 0);
+		log::info!("============ THIS");
+		let transfer_call =
+			relay_runtime::Call::Balances(relay_runtime::BalancesCall::transfer_keep_alive {
+				dest: <relay_runtime::Runtime as frame_system::Config>::Lookup::unlookup(
+					some_account.clone(),
+				),
+				value: transfer_in_transact_amount,
+			});
+
 		let finalized_call = crate::relaychain::finalize_call_into_xcm_message::<Runtime>(
-			batch_call,
-			CurrencyId::unit(),
-			10_000_000_000,
+			transfer_call,
+			payment_into_holder,
+			weight_limit,
+			this_runtime::ParachainInfo::parachain_id(),
 		);
 
-		let res = this_runtime::RelayerXcm::send_xcm(Here, Parent, finalized_call);
-		assert!(res.is_ok());
+		assert_ok!(this_runtime::RelayerXcm::send_xcm(Here, Parent, finalized_call));
 	});
 
 	KusamaRelay::execute_with(|| {
-		// 1 dollar is transferred to BOB
 		assert_eq!(
-			kusama_runtime::Balances::free_balance(&some_account),
-			1_000 * CurrencyId::unit::<Balance>()
+			relay_runtime::Balances::balance(&some_account),
+			charlie_on_kusama_amount + transfer_in_transact_amount
 		);
-		// ISSUE: ported from Acala, not clear how BOB at all got s amount as we never transfer that
-		// there is no transfer of KSM at all
-		// assert_eq!(
-		// 	kusama_runtime::Balances::free_balance(&AccountId::from(BOB)),
-		// 	2 * CurrencyId::unit::<Balance>()
-		// );
-		// Unspent fund from the 1 dollar XCM fee is returned to the sovereign account.
-		//old value 8_999_626_666_690
-		assert_eq!(
-			kusama_runtime::Balances::free_balance(&parachain_account.clone()),
-			1_000 * CurrencyId::unit::<Balance>() + 8_999_601_908_850
+		let possible_fee =
+			ORDER_OF_FEE_ESTIMATE_ERROR * (RELAY_CHAIN_NATIVE_FEE + THIS_CHAIN_NATIVE_FEE);
+		assert_lt!(possible_fee, payment_into_holder,);
+		// still not clear why fee is so big
+		assert_lt_by!(
+			relay_runtime::Balances::balance(&parachain_account.clone()),
+			parachain_balance - transfer_in_transact_amount,
+			payment_into_holder - possible_fee
 		);
 	});
 }
 
-// from Acala
 #[test]
 fn trap_assets_larger_than_ed_works() {
 	simtest();
@@ -660,7 +668,7 @@ fn trap_assets_larger_than_ed_works() {
 					.into(),
 			),
 		];
-		assert_ok!(pallet_xcm::Pallet::<kusama_runtime::Runtime>::send_xcm(
+		assert_ok!(pallet_xcm::Pallet::<relay_runtime::Runtime>::send_xcm(
 			Here,
 			Parachain(THIS_PARA_ID).into(),
 			Xcm(xcm),
@@ -734,7 +742,7 @@ fn trap_assets_lower_than_existential_deposit_works() {
 			),
 			//two asset left in holding register, they both lower than ED, so goes to treasury.
 		];
-		assert_ok!(pallet_xcm::Pallet::<kusama_runtime::Runtime>::send_xcm(
+		assert_ok!(pallet_xcm::Pallet::<relay_runtime::Runtime>::send_xcm(
 			Here,
 			Parachain(THIS_PARA_ID).into(),
 			Xcm(xcm),
@@ -768,7 +776,6 @@ fn trap_assets_lower_than_existential_deposit_works() {
 	});
 }
 
-// From Acala
 #[test]
 fn sibling_trap_assets_works() {
 	simtest();
@@ -776,7 +783,6 @@ fn sibling_trap_assets_works() {
 	let any_asset = CurrencyId::kUSD;
 	// TODO: create  foreign asset via factory
 	// TODO: set key for it to allow transfer
-	// TODO: parametrize test. ISSUE: how to solve DEX swap paying for transfer?
 
 	let some_native_amount = 1_000_000_000;
 	let this_liveness_native_amount = enough_weight();
@@ -877,5 +883,103 @@ fn sibling_trap_assets_works() {
 			this_runtime::Balances::free_balance(&this_runtime::TreasuryAccount::get()),
 			some_native_amount + this_native_treasury_amount,
 		);
+	});
+}
+
+#[test]
+fn sibling_shib_to_transfer() {
+	simtest();
+	let this_parachain_account: AccountId =
+		polkadot_parachain::primitives::Sibling::from(THIS_PARA_ID).into_account_truncating();
+	let sibling_parachain_account: AccountId =
+		ParaId::from(SIBLING_PARA_ID).into_account_truncating();
+	let total_issuance = 3_500_000_000_000_000;
+	let transfer_amount = 1_000_000_000_000;
+	let sibling_asset_id = Sibling::execute_with(|| {
+		log::info!(target: "bdd", "Given SHIB on sibling registered");
+		use sibling_runtime::*;
+		let sibling_asset_id = CurrencyFactory::create(RangeId::TOKENS, 42).unwrap();
+
+		log::info!(target: "bdd", "	and Bob has a lot SHIB on sibling");
+		let root = frame_system::RawOrigin::Root;
+		Tokens::set_balance(
+			root.into(),
+			MultiAddress::Id(BOB.into()),
+			sibling_asset_id,
+			total_issuance,
+			0,
+		)
+		.unwrap();
+		sibling_asset_id
+	});
+
+	let remote_sibling_asset_id = This::execute_with(|| {
+		log::info!(target: "bdd", "	and USD on Dali registered");
+		use this_runtime::*;
+		let root = frame_system::RawOrigin::Root;
+		let location = XcmAssetLocation(MultiLocation::new(
+			1,
+			X2(
+				Parachain(SIBLING_PARA_ID),
+				GeneralKey(WeakBoundedVec::force_from(sibling_asset_id.encode(), None)),
+			),
+		));
+		AssetsRegistry::register_asset(
+			root.into(),
+			location.clone(),
+			1000,
+			Ratio::checked_from_integer::<u128>(1),
+			Some(12),
+		)
+		.unwrap();
+		System::events()
+			.iter()
+			.find_map(|x| match x.event {
+				Event::AssetsRegistry(assets_registry::Event::<Runtime>::AssetRegistered {
+					asset_id,
+					location: _,
+				}) => Some(asset_id),
+				_ => None,
+			})
+			.unwrap()
+	});
+	log::info!(target: "bdd", "{:?}", remote_sibling_asset_id);
+	Sibling::execute_with(|| {
+		log::info!(target: "bdd", "When Bob transfers some {:?} SHIB from from sibling to Dali", transfer_amount);
+		use sibling_runtime::*;
+		let origin = Origin::signed(BOB.into());
+		assert_ok!(RelayerXcm::limited_reserve_transfer_assets(
+			origin.clone(),
+			Box::new(
+				VersionedMultiLocation::V1(MultiLocation::new(1, X1(Parachain(THIS_PARA_ID))))
+					.into()
+			),
+			Box::new(Junction::AccountId32 { id: BOB, network: NetworkId::Any }.into().into()),
+			Box::new(
+				(
+					X1(GeneralKey(WeakBoundedVec::force_from(sibling_asset_id.encode(), None)),),
+					transfer_amount
+				)
+					.into()
+			),
+			0,
+			WeightLimit::Unlimited,
+		));
+		assert_eq!(
+			<Tokens as frame_support::traits::fungibles::Inspect<AccountId>>::balance(
+				sibling_asset_id,
+				&AccountId::from(BOB)
+			),
+			total_issuance - transfer_amount
+		);
+	});
+
+	This::execute_with(|| {
+		use this_runtime::*;
+		log::info!(target: "bdd", "Then Bob gets some SHIB on Dali");
+		let fee = this_runtime::xcmp::xcm_asset_fee_estimator(5, remote_sibling_asset_id);
+		assert_gt!(transfer_amount, fee);
+		let balance = Tokens::free_balance(remote_sibling_asset_id, &AccountId::from(BOB));
+		assert_lt_by!(balance, transfer_amount, fee);
 	});
 }

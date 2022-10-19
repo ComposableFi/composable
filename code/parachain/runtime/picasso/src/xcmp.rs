@@ -3,7 +3,7 @@
 #![allow(unused_imports)] // allow until v2 xcm released (instead creating 2 runtimes)
 use super::*; // recursive dependency onto runtime
 use codec::{Decode, Encode};
-use common::{xcmp::*, PriceConverter};
+use common::{topology, xcmp::*, PriceConverter};
 use composable_traits::{
 	defi::Ratio,
 	oracle::MinimalOracle,
@@ -20,7 +20,7 @@ use frame_support::{
 		DispatchClass, IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
 		WeightToFeePolynomial,
 	},
-	PalletId, RuntimeDebug,
+	PalletId, RuntimeDebug, WeakBoundedVec,
 };
 use orml_traits::{
 	location::{AbsoluteReserveProvider, RelativeReserveProvider, Reserve},
@@ -122,23 +122,64 @@ pub type XcmOriginToTransactDispatchOrigin = (
 
 pub struct StaticAssetsMap;
 
-pub mod parachains {
-	pub mod karura {
-		pub const ID: u32 = 3000;
-		pub const KUSD_KEY: &[u8] = &[0, 129];
-	}
-}
-
 impl XcmpAssets for StaticAssetsMap {
 	fn remote_to_local(location: MultiLocation) -> Option<CurrencyId> {
 		match location {
 			MultiLocation { parents: 1, interior: X2(Parachain(para_id), GeneralKey(key)) } =>
 				match (para_id, &key[..]) {
-					(parachains::karura::ID, parachains::karura::KUSD_KEY) =>
-						Some(CurrencyId::kUSD),
-					_ => None,
+					(topology::karura::ID, topology::karura::KUSD_KEY) => Some(CurrencyId::kUSD),
+					_ => panic!("ASD"),
 				},
-			_ => None,
+			MultiLocation {
+				parents: 1,
+				interior: X3(Parachain(para_id), PalletInstance(pallet_instance), GeneralIndex(key)),
+			} =>
+				return match (para_id, pallet_instance, key) {
+					(
+						topology::common_good_assets::ID,
+						topology::statemine::ASSETS,
+						topology::statemine::USDT,
+					) => Some(CurrencyId::USDT),
+					_ => panic!("ASD"),
+				},
+			_ => panic!("ASD"),
+		}
+	}
+
+	fn local_to_remote(id: CurrencyId, this_para_id: u32) -> Option<MultiLocation> {
+		match id {
+			CurrencyId::NATIVE => Some(MultiLocation::new(
+				1,
+				X2(
+					Parachain(this_para_id),
+					GeneralKey(
+						frame_support::storage::weak_bounded_vec::WeakBoundedVec::force_from(
+							id.encode(),
+							None,
+						),
+					),
+				),
+			)),
+			CurrencyId::RELAY_NATIVE => Some(MultiLocation::parent()),
+			CurrencyId::kUSD => Some(MultiLocation {
+				parents: 1,
+				interior: X2(
+					Parachain(topology::karura::ID),
+					GeneralKey(WeakBoundedVec::force_from(
+						topology::karura::KUSD_KEY.to_vec(),
+						None,
+					)),
+				),
+			}),
+			CurrencyId::USDT => Some(MultiLocation {
+				parents: 1,
+				interior: X3(
+					Parachain(topology::common_good_assets::ID),
+					PalletInstance(topology::common_good_assets::ASSETS),
+					GeneralIndex(topology::common_good_assets::USDT),
+				),
+			}),
+			_ => panic!("ASD"),
 		}
 	}
 }
@@ -254,14 +295,11 @@ parameter_type_with_key! {
 		match (location.parents, location.first_interior()) {
 			// relay KSM
 			(1, None) => Some(400_000_000_000),
-
-			// if amount is not enough, it should be trapped by target chain or discarded as spam, so bear the risk
-			// we use Acala's team XTokens which are opinionated - PANIC in case of zero
 			(1, Some(Parachain(id)))  =>  {
 				let location = XcmAssetLocation::new(location.clone());
-				AssetsRegistry::min_xcm_fee(ParaId::from(*id), location).or(Some(u128::MAX))
+				AssetsRegistry::min_xcm_fee(ParaId::from(*id), location).unwrap() //.or(Some(u128::MAX))
 			},
-			_ => Some(u128::MAX),
+			_ => panic!("ASD"), //Some(u128::MAX),
 		}
 	};
 }
@@ -295,12 +333,24 @@ parameter_types! {
 	pub const MaxInstructions: u32 = 100;
 }
 
+pub fn xcm_asset_fee_estimator(instructions: u8, asset_id: CurrencyId) -> Balance {
+	assert!((instructions as u32) <= MaxInstructions::get());
+	let total_weight = UnitWeightCost::get() * instructions as u64;
+	Trader::weight_to_asset(total_weight, asset_id)
+		.expect("use only in simulator")
+		.1
+}
+
+pub fn xcm_fee_estimator(instructions: u8) -> Weight {
+	assert!((instructions as u32) <= MaxInstructions::get());
+	UnitWeightCost::get() * instructions as u64
+}
+
 impl pallet_xcm::Config for Runtime {
 	type Event = Event;
 	type SendXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
-	/// https://medium.com/kusama-network/kusamas-governance-thwarts-would-be-attacker-9023180f6fb
 	type XcmExecuteFilter = Nothing;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type XcmTeleportFilter = Everything;
@@ -337,6 +387,7 @@ impl<Origin: OriginTrait> ConvertOrigin<Origin> for SystemParachainAsSuperuser<O
 			) {
 			Ok(Origin::root())
 		} else {
+			log::trace!(target: "xcmp::convert_origin", "failed to covert origin");
 			Err(origin)
 		}
 	}

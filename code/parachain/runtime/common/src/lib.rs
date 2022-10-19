@@ -14,17 +14,18 @@
 
 pub mod governance;
 pub mod impls;
+pub mod topology;
 pub mod xcmp;
+
 use core::marker::PhantomData;
 
-use composable_support::math::safe::SafeDiv;
 use composable_traits::{defi::Ratio, oracle::MinimalOracle, xcm::assets::AssetRatioInspect};
 pub use constants::*;
-use frame_support::parameter_types;
+use frame_support::{log, parameter_types};
 use num_traits::CheckedMul;
 use primitives::currency::CurrencyId;
 use scale_info::TypeInfo;
-use sp_runtime::{DispatchError, FixedPointNumber};
+use sp_runtime::DispatchError;
 pub use types::*;
 
 /// Common types of statemint and statemine and dali and picasso and composable.
@@ -139,6 +140,7 @@ mod constants {
 	pub const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 2;
 }
 
+/// helps to value native token to others in fee
 #[derive(Default)]
 pub struct PriceConverter<AssetsRegistry>(PhantomData<AssetsRegistry>);
 
@@ -172,25 +174,32 @@ impl<AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>> MinimalOracle
 			CurrencyId::PICA => Ok(amount),
 			_ =>
 				if let Some(ratio) = AssetsRegistry::get_ratio(asset_id) {
-					if let Some(amount) = Ratio::checked_from_integer(amount) {
-						if let Some(payment) = ratio.checked_mul(&amount) {
-							payment.into_inner().safe_div(&Ratio::accuracy()).map_err(Into::into)
-						} else {
-							Err(DispatchError::Other(
-								cross_chain_errors::AMOUNT_OF_ASSET_IS_MORE_THAN_MAX_POSSIBLE,
-							))
-						}
+					let amount = Ratio::from_inner(amount);
+					if let Some(payment) = ratio.checked_mul(&amount) {
+						frame_support::log::error!(
+							"============== {:?} {:?} {:?} {:?}",
+							asset_id,
+							ratio,
+							amount,
+							payment
+						);
+						Ok(payment.into_inner())
 					} else {
+						panic!("ASD");
 						Err(DispatchError::Other(
 							cross_chain_errors::AMOUNT_OF_ASSET_IS_MORE_THAN_MAX_POSSIBLE,
 						))
 					}
-				// TODO: waiting values from product
+				// harcoded assets -> hardcoded initial prices
 				} else if asset_id == CurrencyId::KSM {
-					Ok(amount / 123)
-				} else if asset_id == CurrencyId::kUSD {
-					Ok(amount / 13)
+					Ok(amount / 2667)
+				} else if asset_id == CurrencyId::kUSD ||
+					asset_id == CurrencyId::USDT ||
+					asset_id == CurrencyId::USDC
+				{
+					Ok(amount / 67)
 				} else {
+					log::error!("===================================================================================== {:?}", asset_id);
 					Err(DispatchError::Other(cross_chain_errors::ASSET_IS_NOT_PRICEABLE))
 				},
 		}
@@ -228,11 +237,8 @@ pub fn multi_existential_deposits<AssetsRegistry: AssetRatioInspect<AssetId = Cu
 		NativeExistentialDeposit::get(),
 	)
 	// TODO:
-	// 1. ask approved DEX pair for price  (is it enough performance? or should we allow pay in
-	// ED PICA for other asset account?)
-	// 2. ask CurrencyFactory
-	// 3. use hardcoded values
-	// 4. else 1_000_000_u128
+	// 1. ask CurrencyFactory
+	// 2. use hardcoded values
 	.unwrap_or(1_000_000_u128)
 }
 

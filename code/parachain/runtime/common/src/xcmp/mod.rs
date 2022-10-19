@@ -1,6 +1,6 @@
 //! proposed shared XCM setup parameters and impl
 use crate::{AccountId, Balance};
-use codec::{Decode, Encode};
+use codec::Decode;
 use composable_traits::{
 	oracle::MinimalOracle,
 	xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation},
@@ -99,6 +99,25 @@ impl<
 		PriceConverter: MinimalOracle<AssetId = CurrencyId, Balance = Balance>,
 		Treasury: TakeRevenue,
 		WeightToFeeConverter: WeightToFeePolynomial<Balance = Balance> + WeightToFee<Balance = Balance>,
+	> TransactionFeePoolTrader<AssetConverter, PriceConverter, Treasury, WeightToFeeConverter>
+{
+	pub fn weight_to_asset(
+		weight: Weight,
+		asset_id: CurrencyId,
+	) -> Result<(Balance, Balance), XcmError> {
+		let fee = WeightToFeeConverter::weight_to_fee(&weight);
+		log::trace!(target : "xcmp::buy_weight", "required payment in native token is: {:?}", fee );
+		let price =
+			PriceConverter::get_price_inverse(asset_id, fee).map_err(|_| XcmError::TooExpensive)?;
+		log::trace!(target : "xcmp::buy_weight", "amount of priceable token to pay fee {:?}", price );
+		return Ok((fee, price))
+	}
+}
+impl<
+		AssetConverter: Convert<MultiLocation, Option<CurrencyId>>,
+		PriceConverter: MinimalOracle<AssetId = CurrencyId, Balance = Balance>,
+		Treasury: TakeRevenue,
+		WeightToFeeConverter: WeightToFeePolynomial<Balance = Balance> + WeightToFee<Balance = Balance>,
 	> WeightTrader
 	for TransactionFeePoolTrader<AssetConverter, PriceConverter, Treasury, WeightToFeeConverter>
 {
@@ -113,8 +132,6 @@ impl<
 	}
 
 	fn buy_weight(&mut self, weight: Weight, payment: Assets) -> Result<Assets, XcmError> {
-		// this is for trusted chains origin, see `f` if any
-		// TODO: discuss if we need payments from Relay chain or common goods chains?
 		if weight.is_zero() {
 			return Ok(payment)
 		}
@@ -128,15 +145,7 @@ impl<
 
 		if let AssetId::Concrete(ref multi_location) = xcmp_asset_id.clone() {
 			if let Some(asset_id) = AssetConverter::convert(multi_location.clone()) {
-				// NOTE: we have so many traces cause TooExpensive (as in Acala)
-				// NOTE: no suitable error for now. Could repurpose Trap(u64), but that will violate
-				// documentation
-				let fee = WeightToFeeConverter::weight_to_fee(&weight);
-				log::trace!(target : "xcmp::buy_weight", "required payment in native token is: {:?}", fee );
-				let price = PriceConverter::get_price_inverse(asset_id, fee)
-					.map_err(|_| XcmError::TooExpensive)?;
-				log::trace!(target : "xcmp::buy_weight", "amount of priceable token to pay fee{:?}", price );
-
+				let (fee, price) = Self::weight_to_asset(weight, asset_id)?;
 				let required =
 					MultiAsset { id: xcmp_asset_id.clone(), fun: Fungibility::Fungible(price) };
 
@@ -146,6 +155,7 @@ impl<
 				self.fee = self.fee.saturating_add(fee);
 				self.price = self.price.saturating_add(price);
 				self.asset_location = Some(multi_location.clone());
+				log::error!(target : "xcmp::buy_weight", "before {:?} {:?} {:?} {:?}", &self.fee, &self.price, &self.asset_location, &unused);
 				return Ok(unused)
 			}
 		}
@@ -184,10 +194,13 @@ impl<
 			log::info!(target: "xcmp::take_revenue", "{:?} {:?}", &location, amount);
 			if let Some(currency_id) = AssetsConverter::convert(location) {
 				let account = &Treasury::get();
+				log::info!(target: "xcmp::take_revenue", "{:?} {:?} {:?}", &currency_id, &account, amount);
 				match <Assets>::deposit(currency_id, account, amount) {
 					Ok(_) => {},
-					Err(err) => log::error!(target: "xcmp", "{:?}", err),
+					Err(err) => log::error!(target: "xcmp::take_revenue", "{:?}", err),
 				};
+			} else {
+				log::error!(target: "xcmp::take_revenue", "failed to convert revenue currency");
 			}
 		}
 	}
@@ -206,6 +219,7 @@ impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 /// well know XCMP origin
 pub trait XcmpAssets {
 	fn remote_to_local(location: MultiLocation) -> Option<CurrencyId>;
+	fn local_to_remote(id: CurrencyId, this_para_id: u32) -> Option<MultiLocation>;
 }
 
 /// Converts currency to and from local and remote
@@ -219,40 +233,25 @@ impl<
 		AssetRegistry: RemoteAssetRegistryInspect<AssetId = CurrencyId, AssetNativeLocation = XcmAssetLocation>,
 		WellKnown: WellKnownCurrency,
 		ThisParaId: Get<Id>,
-		WellKnownXcmpAssets,
+		WellKnownXcmpAssets: XcmpAssets,
 	> sp_runtime::traits::Convert<CurrencyId, Option<MultiLocation>>
 	for CurrencyIdConvert<AssetRegistry, WellKnown, ThisParaId, WellKnownXcmpAssets>
 {
 	fn convert(id: CurrencyId) -> Option<MultiLocation> {
-		match id {
-			CurrencyId::NATIVE => Some(MultiLocation::new(
-				1,
-				X2(
-					Parachain(ThisParaId::get().into()),
-					GeneralKey(
-						frame_support::storage::weak_bounded_vec::WeakBoundedVec::force_from(
-							id.encode(),
-							None,
-						),
-					),
-				),
-			)),
-			CurrencyId::RELAY_NATIVE => Some(MultiLocation::parent()),
-			_ => {
-				if let Some(location) =
-					AssetRegistry::asset_to_remote(id).map(|x| x.location.into())
-				{
-					Some(location)
-				} else {
-					log::trace!(
-						target: "xcmp:convert",
-						"mapping for {:?} on {:?} parachain not found",
-						id,
-						ThisParaId::get()
-					);
-					None
-				}
-			},
+		if let Some(location) = WellKnownXcmpAssets::local_to_remote(id, ThisParaId::get().into()) {
+			Some(location)
+		} else if let Some(location) = AssetRegistry::asset_to_remote(id).map(|x| x.location.into())
+		{
+			Some(location)
+		} else {
+			panic!("ASD");
+			log::trace!(
+				target: "xcmp:convert",
+				"mapping for {:?} on {:?} parachain not found",
+				id,
+				ThisParaId::get()
+			);
+			None
 		}
 	}
 }
@@ -285,33 +284,11 @@ impl<
 		match location {
 			MultiLocation { parents, interior: X2(Parachain(id), GeneralKey(key)) }
 				if parents == 1 && Id::from(id) == ThisParaId::get() =>
-			{
-				if let Ok(currency_id) = CurrencyId::decode(&mut &key[..]) {
-					if let CurrencyId::NATIVE = currency_id {
-						Some(CurrencyId::NATIVE)
-					} else {
-						log::error!(target: "xcmp", "currency {:?} is not yet handled", currency_id);
-						None
-					}
-				} else {
-					log::error!(target: "xcmp", "currency {:?} is not yet handled", &key);
-					None
-				}
-			},
-			RELAY_LOCATION => {
-				// TODO: support DOT via abstracting CurrencyId
-				Some(CurrencyId::RELAY_NATIVE)
-			},
+				CurrencyId::decode(&mut &key[..]).ok(),
+			MultiLocation { parents: 0, interior: X1(GeneralKey(key)) } =>
+				CurrencyId::decode(&mut &key[..]).ok(),
+			RELAY_LOCATION => Some(CurrencyId::RELAY_NATIVE),
 			ThisChain::<ThisParaId>::SELF_RECURSIVE => Some(CurrencyId::NATIVE),
-			MultiLocation { parents: 0, interior: X1(GeneralKey(key)) } => {
-				// adapt for reanchor canonical location: https://github.com/paritytech/polkadot/pull/4470
-				let currency_id = CurrencyId::decode(&mut &key[..]).ok()?;
-				match currency_id {
-					CurrencyId::NATIVE => Some(CurrencyId::NATIVE),
-					_ => None,
-				}
-			},
-			// delegate to asset-registry
 			_ =>
 				if let Some(currency_id) = WellKnownXcmpAssets::remote_to_local(location.clone()) {
 					Some(currency_id)
@@ -319,9 +296,13 @@ impl<
 					log::trace!(target: "xcmp", "using assets registry for {:?}", location);
 					let result = AssetsRegistry::location_to_asset(XcmAssetLocation(location))
 						.map(Into::into);
-					if result.is_none() {
+					if let Some(result) = result {
+						log::error!(target: "xcmp", "mapped remote to {:?} local", result);
+					} else {
+						panic!("ASD");
 						log::error!(target: "xcmp", "failed converting currency");
 					}
+
 					result
 				},
 		}
@@ -343,6 +324,7 @@ impl<
 			<Self as Convert<MultiLocation, Option<CurrencyId>>>::convert(location)
 		} else {
 			log::error!(target: "xcmp", "failed to find remote asset");
+			panic!("ASD");
 			None
 		}
 	}
@@ -372,5 +354,3 @@ impl<X, Y, Treasury: TakeRevenue, Z> Drop for TransactionFeePoolTrader<X, Y, Tre
 		}
 	}
 }
-
-pub const STATEMINE_PARA_ID: u32 = 1000;

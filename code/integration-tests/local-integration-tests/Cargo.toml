@@ -125,15 +125,18 @@ picasso-runtime = { package = "picasso-runtime", path = "../../parachain/runtime
 base58 = "0.2"
 env_logger = "0.9.0"
 hex = "0.4.3"
+more-asserts = "0.3.1"
 
 [features]
-dali = ["std", "develop", "local-integration-tests"]
+dali = ["std", "develop", "local-integration-tests", "rococo"]
 default = ["std", "develop", "local-integration-tests", "dali"]
 local-integration-tests = [
   "dali-runtime/local-integration-tests",
   "picasso-runtime/local-integration-tests",
 ]
-picasso = ["std", "develop", "local-integration-tests"]
+picasso = ["std", "develop", "local-integration-tests", "kusama"]
+rococo = []
+kusama = []
 std = [
   "codec/std",
   "sp-api/std",

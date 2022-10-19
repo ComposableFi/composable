@@ -6393,6 +6393,7 @@ dependencies = [
  "hex",
  "hex-literal",
  "kusama-runtime",
+ "more-asserts 0.3.1",
  "num-traits",
  "orml-tokens",
  "orml-traits",
@@ -6768,6 +6769,12 @@ name = "more-asserts"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7843ec2de400bcbc6a6328c958dc38e5359da6e93e72e37bc5246bf1ae776389"
+
+[[package]]
+name = "more-asserts"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1fafa6961cabd9c63bcd77a45d7e3b7f3b552b70417831fb0f56db717e72407e"
 
 [[package]]
 name = "multiaddr"
@@ -16594,7 +16601,7 @@ dependencies = [
  "cranelift-wasm",
  "gimli",
  "log 0.4.17",
- "more-asserts",
+ "more-asserts 0.2.2",
  "object 0.28.4",
  "target-lexicon",
  "thiserror",
@@ -16613,7 +16620,7 @@ dependencies = [
  "gimli",
  "indexmap",
  "log 0.4.17",
- "more-asserts",
+ "more-asserts 0.2.2",
  "object 0.28.4",
  "serde",
  "target-lexicon",
@@ -16675,7 +16682,7 @@ dependencies = [
  "mach",
  "memfd",
  "memoffset",
- "more-asserts",
+ "more-asserts 0.2.2",
  "rand 0.8.5",
  "region",
  "rustix 0.33.7",
