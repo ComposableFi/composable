@@ -389,7 +389,6 @@
               PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
               COMPOSABLE_RUNTIME =
                 "${composable-runtime}/lib/runtime.optimized.wasm";
-              SUBSTRATE_CLI_GIT_COMMIT_HASH = self.rev or "dirty";
               installPhase = ''
                 mkdir -p $out/bin
                 cp target/release/composable $out/bin/composable
