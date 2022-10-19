@@ -547,7 +547,7 @@
             '';
           };
 
-          mkQAStateInitialize = url: parachainIds:
+          mkDevnetInitializeScript = url: parachainIds:
             let
               lease-period-prolongator = npm-bp.buildYarnPackage {
                 nativeBuildInputs = [
@@ -662,8 +662,8 @@
             inherit frontend-pablo-server;
             inherit frontend-picasso-server;
 
-            qa-state-initialize-local =
-              mkQAStateInitialize "ws://localhost:9944" [ 1000 2000 2087 ];
+            devnet-initialize-script =
+              mkDevnetInitializeScript "ws://localhost:9944" [ 1000 2000 2087 ];
 
             docs-static = npm-bp.buildNpmPackage {
               src = ./docs;
@@ -1352,8 +1352,8 @@
               flake-utils.lib.mkApp { drv = run-simnode-tests "picasso"; };
             simnode-tests-dali-rococo =
               flake-utils.lib.mkApp { drv = run-simnode-tests "dali-rococo"; };
-            qa-state-initialize-local =
-              makeApp packages.qa-state-initialize-local;
+            devnet-initialize-script =
+              makeApp packages.devnet-initialize-script;
             default = devnet-dali;
           };
         });
