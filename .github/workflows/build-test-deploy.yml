@@ -566,7 +566,11 @@ jobs:
   check-simnode:
     name: "Simnode"
     needs: package-simnode-tests
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
     concurrency:
       group: check-simnode-${{ matrix.runtime }}-${{ github.ref }}
       cancel-in-progress: true
