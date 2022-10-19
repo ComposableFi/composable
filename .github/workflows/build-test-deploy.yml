@@ -1040,6 +1040,9 @@ jobs:
           cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#bridge-devnet-dali-container --no-update-lock-file --show-trace -L
           docker load --input ./result
 
+          # update soon https://github.com/actions/checkout/issues/760
+          git config --global --add safe.directory /__w/composable/composable
+
           SHA256=$(sha256sum ./result | cut --delimiter " " --fields 1)
           COMMIT_SHA=$(git rev-parse HEAD)
           CONTAINER_NAME="composable-bridge-devnet"
