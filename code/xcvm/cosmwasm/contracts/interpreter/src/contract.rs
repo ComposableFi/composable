@@ -66,11 +66,6 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
 }
 
 /// Interpret an XCVM program
-/// Yields `xcvm.interpreter.executed` with attributes:
-/// 		- `program`: `program.tag`
-/// Fails if:
-/// 	* Program tag is not a valid utf-8
-/// 	* Interpretation of any instruction fails
 pub fn interpret_program(
 	mut deps: DepsMut,
 	env: Env,
