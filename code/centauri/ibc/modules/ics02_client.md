@@ -15,7 +15,7 @@ To define a light client, there are a few things that must be available
 
 
 **Sample Proto file**
-```text
+```proto
     syntax = "proto3";  
 
     package ibc.lightclients.test.v1;  

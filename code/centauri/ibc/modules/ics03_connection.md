@@ -17,7 +17,7 @@ implement the [`ConnectionReader`](/code/centauri/ibc/modules/src/core/ics03_con
 
 There are four messages that describe the connection handshake process.  
 
-**MsgOpenInitConnection**
+**MsgConnectionOpenInit**
 
 This message is submitted to start the connection handshake process, there's nothing to prove at this point, so it requires no proof.  
 This message contains the connection parameters such as delay period, client_id, optional version parameter and some counterparty parameters
@@ -35,7 +35,7 @@ This message is processed by the [`conn_open_init`](/code/centauri/ibc/modules/s
 The `OpenInitConnection` event is emitted on successful processing of the event.
 
 
-**MsgOpenTryConnection**
+**MsgConnectionOpenTry**
 
 This message is submitted to a chain after `MsgConnectionOpenInit` has been executed on its counterparty, this message requires a connection proof that indicates that the connection was  
 initialized on the counterparty and committed to it's state tree, it also requires a consensus proof so the host chain can verify that the counterparty has a valid consensus state   
@@ -57,7 +57,7 @@ This message is processed by the [`conn_open_try`](/code/centauri/ibc/modules/sr
 The `OpenTryConnection` event is emitted on successful processing of the event.
 
 
-**MsgOpenAckConnection**
+**MsgConnectionOpenAck**
 
 This message is submitted to a chain after `MsgConnectionOpenTry` has been executed on its counterparty, this message requires a connection proof that indicates that the connection was  
 initialized with a state of `TryOpen` on the counterparty and committed to it's state tree, it also requires a consensus proof so the host chain can verify that the counterparty has a valid consensus state   
@@ -78,7 +78,7 @@ This message is processed by the [`conn_open_ack`](/code/centauri/ibc/modules/sr
 The `OpenAckConnection` event is emitted on successful processing of the event.  
 The connection becomes open if this message is processed successfully.
 
-**MsgOpenConfirmConnection**
+**MsgConnectionOpenConfirm**
 
 This message is submitted to a chain after `MsgConnectionOpenAck` has been executed on its counterparty, this message requires a connection proof that indicates that the connection is `Open` on the counterparty.  
 it does not require a consensus proof.
