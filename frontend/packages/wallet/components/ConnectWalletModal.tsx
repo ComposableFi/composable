@@ -162,7 +162,7 @@ const PolkadotAccounts = ({ accounts, onSelect, selectedAccount, disconnectWalle
                         key={account.address}
                         account={account}
                         onSelect={setSelectedActiveAccount}
-                        isSelected={selectedActiveAccount ? selectedActiveAccount.address === account.address : false}
+                        isSelected={!!selectedActiveAccount?.address ?? false}
                     />
                 ))}
 
