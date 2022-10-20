@@ -137,6 +137,8 @@ pub mod pallet {
 	pub(crate) type PriceCumulativeStateOf<T> =
 		PriceCumulative<MomentOf<T>, <T as Config>::Balance>;
 
+	// TODO (vim): Modify events to remove base/quote asset naming and replace with just a map of
+	// 	asset->value. Also introduce a  new event for "buy" operation as swap is different.
 	#[pallet::event]
 	#[pallet::generate_deposit(pub (super) fn deposit_event)]
 	pub enum Event<T: Config> {
@@ -419,7 +421,7 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as Amm>::buy(&who, pool_id, in_asset_id, out_asset, keep_alive)?;
+			let _ = <Self as Amm>::do_buy(&who, pool_id, in_asset_id, out_asset, keep_alive)?;
 			Ok(())
 		}
 
@@ -975,21 +977,24 @@ pub mod pallet {
 			}
 		}
 
-		fn get_swap_value(
+		fn spot_price(
 			pool_id: Self::PoolId,
-			in_asset: AssetAmount<Self::AssetId, Self::Balance>,
-			out_asset_id: Self::AssetId,
+			out_asset: AssetAmount<Self::AssetId, Self::Balance>,
+			in_asset_id: Self::AssetId,
 		) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
 			match pool {
-				PoolConfiguration::DualAssetConstantProduct(info) =>
-					DualAssetConstantProduct::<T>::get_exchange_value(
+				PoolConfiguration::DualAssetConstantProduct(info) => {
+					let res = DualAssetConstantProduct::<T>::do_buy(
 						&info,
 						&pool_account,
-						in_asset,
-						out_asset_id,
-					),
+						out_asset,
+						in_asset_id,
+						false,
+					)?;
+					Ok(SwapResult::new(in_asset_id, res.1, res.2.asset_id, res.2.fee))
+				},
 			}
 		}
 
@@ -1088,7 +1093,7 @@ pub mod pallet {
 				PoolConfiguration::DualAssetConstantProduct(info) => {
 					// NOTE: lp_fees includes owner_fees.
 					let (base_amount, quote_amount_excluding_lp_fee, fees) =
-						DualAssetConstantProduct::<T>::do_compute_swap(
+						DualAssetConstantProduct::<T>::do_swap(
 							&info,
 							&pool_account,
 							in_asset,
@@ -1133,15 +1138,58 @@ pub mod pallet {
 		}
 
 		#[transactional]
-		fn buy(
+		fn do_buy(
 			who: &Self::AccountId,
 			pool_id: Self::PoolId,
 			in_asset_id: Self::AssetId,
 			out_asset: AssetAmount<Self::AssetId, Self::Balance>,
 			keep_alive: bool,
 		) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError> {
-			let in_asset = Self::get_swap_value(pool_id, out_asset, in_asset_id)?;
-			Self::do_swap(who, pool_id, in_asset.value, out_asset, keep_alive)
+			let pool = Self::get_pool(pool_id)?;
+			let pool_account = Self::account_id(&pool_id);
+			let (quote_amount, owner, fees) = match pool {
+				PoolConfiguration::DualAssetConstantProduct(info) => {
+					// NOTE: lp_fees includes owner_fees.
+					let (base_amount, quote_amount_including_lp_fee, fees) =
+						DualAssetConstantProduct::<T>::do_buy(
+							&info,
+							&pool_account,
+							out_asset,
+							in_asset_id,
+							true,
+						)?;
+
+					T::Assets::transfer(
+						in_asset_id,
+						who,
+						&pool_account,
+						quote_amount_including_lp_fee,
+						keep_alive,
+					)?;
+					T::Assets::transfer(
+						out_asset.asset_id,
+						&pool_account,
+						who,
+						base_amount,
+						false,
+					)?;
+					(quote_amount_including_lp_fee, info.owner, fees)
+				},
+			};
+			Self::disburse_fees(who, &pool_id, &owner, &fees)?;
+			Self::update_twap(pool_id)?;
+			// TODO (vim): Emit a Buy event
+			Self::deposit_event(Event::<T>::Swapped {
+				pool_id,
+				who: who.clone(),
+				base_asset: out_asset.asset_id,
+				quote_asset: in_asset_id,
+				base_amount: out_asset.amount,
+				quote_amount,
+				fee: fees,
+			});
+			// TODO (vim): Return a BuyResult type
+			Ok(SwapResult::new(out_asset.asset_id, out_asset.amount, fees.asset_id, fees.fee))
 		}
 	}
 
@@ -1155,7 +1203,7 @@ pub mod pallet {
 	) -> Result<PriceAggregate<T::PoolId, T::AssetId, T::Balance>, DispatchError> {
 		// quote_asset_id is always known given the base as no multi-asset pool support is
 		// implemented as of now.
-		let spot_price = <Pallet<T> as Amm>::get_swap_value(
+		let spot_price = <Pallet<T> as Amm>::spot_price(
 			pool_id,
 			AssetAmount::new(base_asset_id, amount),
 			quote_asset_id,

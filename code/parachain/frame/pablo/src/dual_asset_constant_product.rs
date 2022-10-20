@@ -5,7 +5,7 @@ use composable_maths::dex::constant_product::{
 use composable_support::math::safe::{SafeAdd, SafeSub};
 use composable_traits::{
 	currency::{CurrencyFactory, RangeId},
-	dex::{AssetAmount, BasicPoolInfo, Fee, FeeConfig, SwapResult},
+	dex::{AssetAmount, BasicPoolInfo, Fee, FeeConfig},
 };
 use frame_support::{
 	pallet_prelude::*,
@@ -60,30 +60,6 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		Ok(pool_id)
 	}
 
-	pub(crate) fn get_exchange_value(
-		pool: &BasicPoolInfo<T::AccountId, T::AssetId, ConstU32<2>>,
-		pool_account: &T::AccountId,
-		in_asset_amount: AssetAmount<T::AssetId, T::Balance>,
-		out_asset_id: T::AssetId,
-	) -> Result<SwapResult<T::AssetId, T::Balance>, DispatchError> {
-		let pool_assets = Self::get_pool_balances(pool, pool_account);
-		let base_asset = pool_assets.get(&out_asset_id).ok_or(Error::<T>::InvalidAsset)?;
-		let quote_asset =
-			pool_assets.get(&in_asset_amount.asset_id).ok_or(Error::<T>::InvalidAsset)?;
-		ensure!(!quote_asset.1.is_zero(), Error::<T>::NotEnoughLiquidity);
-
-		// TODO (vim): Apply fee
-		let amount = T::Convert::convert(in_asset_amount.amount);
-		let exchange_amount =
-			compute_out_given_in(quote_asset.0, base_asset.0, quote_asset.1, base_asset.1, amount)?;
-		Ok(SwapResult::new(
-			out_asset_id,
-			T::Convert::convert(exchange_amount),
-			out_asset_id,
-			T::Balance::zero(),
-		))
-	}
-
 	fn get_pool_balances(
 		pool: &BasicPoolInfo<T::AccountId, T::AssetId, ConstU32<2>>,
 		pool_account: &T::AccountId,
@@ -117,7 +93,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 			assets.values().find(|balance| balance.is_zero()).is_none(),
 			Error::<T>::InvalidAmount
 		);
-		let mut pool_assets = Self::get_pool_balances(&pool, &pool_account);
+		let pool_assets = Self::get_pool_balances(&pool, &pool_account);
 		let assets_vec = pool_assets.keys().copied().collect::<Vec<_>>();
 		// This function currently expects liquidity to be provided in all assets in weight ratio
 		ensure!(assets_vec == assets.keys().copied().collect::<Vec<_>>(), Error::<T>::PairMismatch);
@@ -173,7 +149,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		Ok((*first_asset_amount, *second_asset_amount, lp_issued.safe_sub(&lp_amount)?))
 	}
 
-	pub(crate) fn do_compute_swap(
+	pub(crate) fn do_swap(
 		pool: &BasicPoolInfo<T::AccountId, T::AssetId, ConstU32<2>>,
 		pool_account: &T::AccountId,
 		in_asset: AssetAmount<T::AssetId, T::Balance>,
@@ -183,6 +159,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		let pool_assets = Self::get_pool_balances(&pool, pool_account);
 		let base_asset = pool_assets.get(&min_receive.asset_id).ok_or(Error::<T>::PairMismatch)?;
 		let quote_asset = pool_assets.get(&in_asset.asset_id).ok_or(Error::<T>::PairMismatch)?;
+		ensure!(base_asset.1 > 0 && quote_asset.1 > 0, Error::<T>::NotEnoughLiquidity);
 
 		// TODO (vim): Fees refactored later
 		let fee = if apply_fees {
@@ -193,7 +170,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		// Charging fees "on the way in"
 		// https://balancer.gitbook.io/balancer/core-concepts/protocol/index#out-given-in
 		let quote_amount_excluding_lp_fee =
-			T::Convert::convert(min_receive.amount.safe_sub(&fee.fee)?);
+			T::Convert::convert(in_asset.amount.safe_sub(&fee.fee)?);
 		let base_amount = compute_out_given_in(
 			quote_asset.0,
 			base_asset.0,
@@ -207,6 +184,34 @@ impl<T: Config> DualAssetConstantProduct<T> {
 			T::Convert::convert(base_amount),
 			T::Convert::convert(quote_amount_excluding_lp_fee),
 			fee,
+		))
+	}
+
+	pub(crate) fn do_buy(
+		pool: &BasicPoolInfo<T::AccountId, T::AssetId, ConstU32<2>>,
+		pool_account: &T::AccountId,
+		out_asset: AssetAmount<T::AssetId, T::Balance>,
+		in_asset_id: T::AssetId,
+		_apply_fees: bool,
+	) -> Result<(T::Balance, T::Balance, Fee<T::AssetId, T::Balance>), DispatchError> {
+		let pool_assets = Self::get_pool_balances(&pool, pool_account);
+		let base_asset = pool_assets.get(&out_asset.asset_id).ok_or(Error::<T>::PairMismatch)?;
+		let quote_asset = pool_assets.get(&in_asset_id).ok_or(Error::<T>::PairMismatch)?;
+
+		// TODO (vim): Fees refactored later
+		let base_amount = T::Convert::convert(out_asset.amount);
+		let quote_amount = compute_in_given_out(
+			quote_asset.0,
+			base_asset.0,
+			quote_asset.1,
+			base_asset.1,
+			base_amount,
+		)?;
+
+		Ok((
+			T::Convert::convert(base_amount),
+			T::Convert::convert(quote_amount),
+			Fee::zero(in_asset_id),
 		))
 	}
 }

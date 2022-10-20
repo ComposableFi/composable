@@ -100,7 +100,7 @@ pub trait Amm {
 	/// `pool_id` the pool containing the `asset_id`.
 	/// `in_asset` the amount of `asset_id` the user wants to swap.
 	/// `out_asset_id` the asset the user is interested in.
-	fn get_swap_value(
+	fn spot_price(
 		pool_id: Self::PoolId,
 		in_asset: AssetAmount<Self::AssetId, Self::Balance>,
 		out_asset_id: Self::AssetId,
@@ -108,7 +108,7 @@ pub trait Amm {
 
 	/// Buy given `amount` of given asset from the pool.
 	/// In buy user does not know how much assets he/she has to exchange to get desired amount.
-	fn buy(
+	fn do_buy(
 		who: &Self::AccountId,
 		pool_id: Self::PoolId,
 		in_asset_id: Self::AssetId,

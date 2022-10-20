@@ -218,7 +218,7 @@ pub mod pallet {
 			min_receive: T::Balance,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			<Self as Amm>::buy(
+			<Self as Amm>::do_buy(
 				&who,
 				asset_pair,
 				asset_pair.base, /* will be ignored */
@@ -401,14 +401,14 @@ pub mod pallet {
 			}
 		}
 
-		fn get_swap_value(
+		fn spot_price(
 			pool_id: Self::PoolId,
 			in_asset: AssetAmount<Self::AssetId, Self::Balance>,
 			out_asset_id: Self::AssetId,
 		) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError> {
 			let (route, _reverse) = Self::get_route(pool_id).ok_or(Error::<T>::NoRouteFound)?;
 			match route[..] {
-				[pool_id] => T::Pablo::get_swap_value(pool_id, in_asset, out_asset_id),
+				[pool_id] => T::Pablo::spot_price(pool_id, in_asset, out_asset_id),
 				_ => Err(Error::<T>::UnsupportedOperation.into()),
 			}
 		}
@@ -494,7 +494,7 @@ pub mod pallet {
 		}
 
 		#[transactional]
-		fn buy(
+		fn do_buy(
 			who: &Self::AccountId,
 			pool_id: Self::PoolId,
 			in_asset_id: Self::AssetId,
@@ -518,7 +518,7 @@ pub mod pallet {
 				if reverse {
 					currency_pair = currency_pair.swap();
 				}
-				dx_t = T::Pablo::get_swap_value(*pool_id, currency_pair.base, dy_t)?;
+				dx_t = T::Pablo::spot_price(*pool_id, currency_pair.base, dy_t)?;
 				dy_t = dx_t;
 			}
 			let route_iter: &mut dyn Iterator<Item = &T::PoolId> = if !reverse {

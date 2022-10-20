@@ -111,7 +111,7 @@ benchmarks! {
 			  false
 		));
 		let user = account("user", 0, 0);
-		assert_ok!(T::Assets::mint_into(usdt, &user, (1000_u128 * unit).into()));
+		assert_ok!(T::Assets::mint_into(usdt, &user, (1001_u128 * unit).into()));
 		// buy 1000 USDC
 	 }: _(RawOrigin::Signed(user), pool_id, usdt, AssetAmount::new(usdc, (1000_u128 * unit).into()), false)
 
@@ -139,7 +139,7 @@ benchmarks! {
 		let user = account("user", 0, 0);
 		assert_ok!(T::Assets::mint_into(usdt, &user, (1000_u128 * unit).into()));
 		// swap 1000 USDC
-	 }: _(RawOrigin::Signed(user), pool_id, AssetAmount::new(usdc, (1000_u128 * unit).into()), AssetAmount::new(usdt, 0.into()), false)
+	 }: _(RawOrigin::Signed(user), pool_id, AssetAmount::new(usdt, (1000_u128 * unit).into()), AssetAmount::new(usdc, 0.into()), false)
 }
 
 impl_benchmark_test_suite!(Pablo, crate::mock::new_test_ext(), crate::mock::Test);
