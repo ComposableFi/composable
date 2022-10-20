@@ -29,7 +29,7 @@ the lock, users will have the option to renew, or burn their CHAOS fNFTs to retu
 CHAOS holders will be continuously earning rewards throughout the lock period of their locked PICA.
 
 
-![how_to_CHAOS](./how-to-CHAOS.png)
+![how_to_CHAOS](../../static/img/products/chaos/how-to-chaos.png)
 
 
 ## Building deep protocol-owned-liquidity
@@ -65,4 +65,4 @@ CHAOS holders receive returns from multiple different streams. They earn yield d
 earn revenue from the Picasso treasury, and earn yield from transaction fees on the Picasso network.
 
 
-![CHAOS_architecture](./CHAOS-architecture.png)
+![CHAOS_architecture](../../static/img/products/chaos/architecture
