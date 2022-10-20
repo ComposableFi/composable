@@ -154,10 +154,10 @@ export async function verifyPositionSplitting(
   const stakeInfo2After = <Option<ComposableTraitsStakingStake>>(
     await api.query.stakingRewards.stakes(splitAIndex, splitBIndex)
   );
-  const expectedStakeAmount1 = stakeInfoBefore.unwrap().stake.muln(splitA);
-  const expectedShareAmount1 = stakeInfoBefore.unwrap().stake.muln(splitA);
-  const expectedStakeAmount2 = stakeInfoBefore.unwrap().stake.muln(splitB);
-  const expectedShareAmount2 = stakeInfoBefore.unwrap().stake.muln(splitB);
+  const expectedStakeAmount1 = stakeInfoBefore.unwrap().stake.mul(new BN(splitA));
+  const expectedShareAmount1 = stakeInfoBefore.unwrap().stake.mul(new BN(splitA));
+  const expectedStakeAmount2 = stakeInfoBefore.unwrap().stake.mul(new BN(splitB));
+  const expectedShareAmount2 = stakeInfoBefore.unwrap().stake.mul(new BN(splitB));
   expect(stakeInfo1After.unwrap().stake).to.be.bignumber.closeTo(
     expectedStakeAmount1,
     expectedStakeAmount1.div(new BN(1000))
