@@ -1,10 +1,10 @@
 # References
----
+
 Below you'll find all content referenced in the onboarding basics. Feel free to explore the sources and content creators listed here if you want to deep dive into a topic.
 
 
 ## Consensus and Blockchain
----
+
 ### Reading Materials
 - [header data](https://www.oreilly.com/library/view/mastering-bitcoin/9781491902639/ch07.html)
 - [linked list](https://www.geeksforgeeks.org/data-structures/linked-list/).

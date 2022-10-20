@@ -2,8 +2,6 @@
 
 *Additional details will be published here and on our socials as new products and tools launch.*
 
----
-
 ## Team
 
 ### Where can I find more information about the Composable Team?
@@ -14,7 +12,6 @@ tab, you can find more information using the resources below:
 * Our Founder and CEO 0xbrainjar, can be followed on [Twitter](https://twitter.com/0xbrainjar) 
 and [Medium](https://0xbrainjar.medium.com/).
 
----
 
 ## Company Information
 

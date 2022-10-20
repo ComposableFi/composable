@@ -1,7 +1,5 @@
 # Light Clients
 
----
-
 Light clients are programs that connect to full nodes to interact with a blockchain. Highly efficient light client 
 protocols are crucial in enabling the decentralization and mainstream adoption of blockchain protocols. Light clients 
 are also what make bridges on the IBC possible; the IBC Protocol bridges to other chains by having light clients on 

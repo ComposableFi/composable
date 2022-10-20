@@ -1,8 +1,6 @@
-
 # Running Nix packages
-*Locations and packages*
 
----
+*Locations and packages*
 
 Now you can run Nix packages! In order to run one, you need both a **location** and a **package**.
 

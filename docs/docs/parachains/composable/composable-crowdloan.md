@@ -1,7 +1,5 @@
 # The Composable Crowdloan
 
----
-
 Our crowdloan on Polkadot was critical in allowing us to successfully obtain the 8th Polkadot parachain slot during the 
 7th round of auctions of these parachains. Over 9 thousand users participated in our crowdloan, depositing a total of 
 6,075,485 DOT (a value of over $163 million at the time).

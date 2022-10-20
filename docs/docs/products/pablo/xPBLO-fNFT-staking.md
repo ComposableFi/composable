@@ -1,7 +1,5 @@
 # xPBLO fNFTs (staking)
 
----
-
 Users are able to stake their PBLO native token in order to earn yield. 20% of the total trading fees on Pablo will be 
 distributed to xPBLO stakers. In addition to trading fees, xPBLO holders will receive rewards in the form of additional 
 PBLO and other incentives.

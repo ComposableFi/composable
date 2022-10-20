@@ -1,7 +1,5 @@
 # Technical Stack Overview
 
----
-
 ## Simplicity at Our Core: Our Guiding Principle
 
 **Composable Finance is dedicated to eliminating the complexity that current DeFi users experience, abstracting 

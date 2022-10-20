@@ -1,7 +1,5 @@
 # Expanding the IBC Protocol
 
----
-
 In addition to bridging Kusama and Cosmos via the IBC, we are working on expanding the 
 [Inter-Blockchain Communication (IBC) Protocol](https://ibcprotocol.org/) to become the primary digital asset transport 
 layer across different chains. The IBC Protocol allows for the trustless passing of arbitrary data in opaque packets 

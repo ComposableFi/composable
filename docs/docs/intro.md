@@ -11,8 +11,6 @@ slug: /
 ![composable_finance](./composable-face-banner.png)
 *Composable Finance: The interoperable infrastructure for Modular DeFi*
 
----
-
 ## The Vision
 
 **We are crafting a fully interoperable and seamless future for DeFi.**
@@ -22,8 +20,6 @@ ecosystems and protocols, regardless of where their assets lie. That’s why our
 [Composable Finance](https://www.composable.finance/) 
 is on a mission to build a **fully interoperable future** offering developers and end-users alike 
 **seamless experiences and utilities** - while also **enabling new and valuable opportunities** in the space.
-
----
 
 ## The Problem
 
@@ -50,8 +46,6 @@ It is clear that we are approaching a world in which the future of DeFi will be 
 In other words, the solution to the current fragmentation in DeFi is not more of the same bridges being built between 
 one chain to another. Instead, it is the unification of all ecosystems via a natively cross-chain infrastructure.
 
----
-
 ## Limitations in Current Approaches
 
 Current approaches to solving these problems are limited by at least one of the below:
@@ -63,8 +57,6 @@ Current approaches to solving these problems are limited by at least one of the 
 * They do not provide a framework for users to navigate these different ecosystems
 * They do not focus on the cross-ecosystem user experience (UX)
 
-
----
 
 
 ## The Composable Solution

@@ -1,7 +1,5 @@
 # PICA Tokenomics
 
----
-
 ## PICA use cases
 
 PICA is fundamental to governance, user dynamics, and network usage on the Picasso parachain. 

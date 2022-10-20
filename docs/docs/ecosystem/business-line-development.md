@@ -1,7 +1,5 @@
 # Business Line Development
 
----
-
 Composable makes it easy for other innovative projects to join our ecosystem and build with our technology. 
 This allows other developers in the space to make their own applications interoperable and more intuitive, 
 vastly improving the cross- ecosystem user experience.

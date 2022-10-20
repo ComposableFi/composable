@@ -1,7 +1,5 @@
 # Cross-chain DEX
 
----
-
 **Pablo is a cross-chain DEX that sits on the natively interoperable Picasso ecosystem.**
 
 Composable uses a dual para-chain approach. It has a Polkadot parachain, the Composable Parachain and a Kusama 

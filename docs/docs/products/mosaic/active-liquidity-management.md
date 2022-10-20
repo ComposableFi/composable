@@ -1,7 +1,5 @@
 # Active Liquidity Management
 
----
-
 ![active_liquidity_management](./active-liquidity-management.png)
 
 

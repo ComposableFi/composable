@@ -2,8 +2,6 @@
 
 *Incentivized pathway selection to allow for users to perform actions, in an ecosystem agnostic manner.*
 
----
-
 Our Routing Layer will assess all of the possibilities for a given action (i.e. taking out a loan of 1000 USDC) across 
 all potential layers and chains, and selects the optimal pathway for a user. This layer will be crypto-economically 
 secured, with incentives provided for actors to properly select the best routes for user actions. Thus, this will act as

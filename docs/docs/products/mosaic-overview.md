@@ -1,7 +1,5 @@
 # Mosaic Overview
 
----
-
 Mosaic is Composable Finance’s cross-chain transfer availability layer that combines a 
 [dynamic fee model](https://medium.com/composable-finance/the-dynamic-fee-model-powering-mosaics-transfer-availability-layer-f91011309592), 
 [liquidity forecasting](https://medium.com/composable-finance/liquidity-forecasting-in-mosaic-part-iv-machine-learning-based-methods-17e8f2e5de14), 

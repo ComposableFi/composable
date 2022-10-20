@@ -1,7 +1,5 @@
 # How it works
 
----
-
 Apollo is a permissionless, decentralized DeFi oracle. As a pallet, Apollo is built directly into the base of the 
 parachain. As a result, it can use blockchain hooks on either side of the development of a block to find the median 
 price and immediately update data. In addition, it is able to provide greater customization in the level of security it 
