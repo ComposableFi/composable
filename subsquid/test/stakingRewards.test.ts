@@ -7,7 +7,7 @@ import { BOB, createCtx } from "../src/utils";
 import {
   createRewardPool,
   createStakingPosition,
-  extendStakingPosition,
+  updateStakingPositionAmount,
   splitStakingPosition,
 } from "../src/processors/stakingRewards";
 
@@ -131,7 +131,7 @@ describe("Staking rewards", () => {
       "3",
       BOB,
       100n,
-      "new-event-id",
+      "event-id",
       EventType.STAKING_REWARDS_SPLIT_POSITION,
       10n,
       456
@@ -165,7 +165,7 @@ describe("Staking rewards", () => {
       ),
       1662133770000n
     );
-    extendStakingPosition(
+    updateStakingPositionAmount(
       position,
       150n,
       createMockEvent(

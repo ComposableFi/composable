@@ -29,7 +29,6 @@ type KSMClaimFormProps = {
 export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
   disabled,
   availableToClaim,
-  totalRewards,
   claimedRewards,
   amountContributed,
   picassoAccountName,
@@ -120,7 +119,7 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
             <Grid item xs={12} md={6}>
               <BigNumberInput
                 noBorder={true}
-                value={totalRewards}
+                value={claimedRewards.plus(availableToClaim)}
                 setter={(v: BigNumber) => {}}
                 isValid={(_v: boolean) => {}}
                 tokenId="pica"
@@ -131,7 +130,7 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
                 disabled={readonlyTotalPicaVested}
                 LabelProps={{
                   mainLabelProps: {
-                    label: "Total PICA rewards (unvested)",
+                    label: "Unvested",
                     TypographyProps: {
                       fontSize: 16,
                     },

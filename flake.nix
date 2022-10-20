@@ -175,6 +175,7 @@
               ];
             };
           };
+          npm-bp = pkgs.callPackage npm-buildpackage { };
         in with pkgs;
         let
           # Stable rust for anything except wasm runtime
@@ -388,7 +389,6 @@
               PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
               COMPOSABLE_RUNTIME =
                 "${composable-runtime}/lib/runtime.optimized.wasm";
-              SUBSTRATE_CLI_GIT_COMMIT_HASH = self.rev or "dirty";
               installPhase = ''
                 mkdir -p $out/bin
                 cp target/release/composable $out/bin/composable
@@ -441,12 +441,11 @@
               --steps=1 \
               --repeat=1
             '';
-          docs-renders = [ mdbook plantuml graphviz pandoc ];
+          docs-renders = [ nodejs plantuml graphviz pandoc ];
 
           mkFrontendStatic = { kusamaEndpoint, picassoEndpoint, karuraEndpoint
             , subsquidEndpoint }:
-            let bp = pkgs.callPackage npm-buildpackage { };
-            in bp.buildYarnPackage {
+            npm-bp.buildYarnPackage {
               nativeBuildInputs = [ pkgs.pkg-config pkgs.vips pkgs.python3 ];
               src = ./frontend;
 
@@ -547,11 +546,53 @@
             '';
           };
 
+          mkDevnetInitializeScript = url: parachainIds:
+            let
+              lease-period-prolongator = npm-bp.buildYarnPackage {
+                nativeBuildInputs = [
+                  pkgs.pkg-config
+                  pkgs.python3
+                  pkgs.nodePackages.node-gyp-build
+                  pkgs.nodePackages.node-gyp
+                  pkgs.nodePackages.typescript
+                ];
+                src = ./scripts/lease-period-prolongator;
+                buildPhase = ''
+                  yarn
+                  ${pkgs.nodePackages.typescript}/bin/tsc
+                '';
+              };
+              composablejs = npm-bp.buildYarnPackage {
+                nativeBuildInputs = [
+                  pkgs.pkg-config
+                  pkgs.python3
+                  pkgs.nodePackages.node-gyp-build
+                  pkgs.nodePackages.node-gyp
+                  pkgs.nodePackages.typescript
+                ];
+                src = ./composablejs;
+                buildPhase = ''
+                  yarn
+                '';
+              };
+            in pkgs.writeShellApplication {
+              name = "qa-state-initialize";
+              runtimeInputs = [ pkgs.nodejs ];
+              text = ''
+                PARACHAIN_ENDPOINT=ws://localhost:9988 ${pkgs.nodejs}/bin/npm run --prefix ${composablejs} start -w packages/devnet-setup
+                ${builtins.concatStringsSep "\n" (builtins.map (parachainId:
+                  "NODE_URL=${url} PARA_ID=${
+                    toString parachainId
+                  } ${pkgs.nodejs}/bin/node ${lease-period-prolongator}/dist/index.js")
+                  parachainIds)}
+              '';
+            };
+
           frontend-static = mkFrontendStatic {
             subsquidEndpoint = "http://localhost:4350/graphql";
             picassoEndpoint = "ws://localhost:9988";
             kusamaEndpoint = "ws://localhost:9944";
-            karuraEndpoint = "ws://localhost:9998";
+            karuraEndpoint = "ws://localhost:9999";
           };
 
           frontend-static-persistent = mkFrontendStatic {
@@ -619,6 +660,39 @@
             inherit frontend-static-firebase;
             inherit frontend-pablo-server;
             inherit frontend-picasso-server;
+
+            devnet-initialize-script =
+              mkDevnetInitializeScript "ws://localhost:9944" [ 1000 2000 2087 ];
+
+            docs-static = npm-bp.buildNpmPackage {
+              src = ./docs;
+              npmBuild = "npm run build";
+              installPhase = ''
+                mkdir -p $out
+                cp -a ./build/. $out
+              '';
+            };
+
+            docs-server = let PORT = 8008;
+            in pkgs.writeShellApplication {
+              name = "docs-server";
+              runtimeInputs = [ pkgs.miniserve ];
+              text = ''
+                miniserve -p ${
+                  builtins.toString PORT
+                } --spa --index index.html ${docs-static}
+              '';
+            };
+
+            docs-dev = pkgs.writeShellApplication {
+              name = "docs-dev";
+              runtimeInputs = [ pkgs.nodejs ];
+              text = ''
+                cd docs
+                npm install
+                npm run start
+              '';
+            };
 
             xcvm-contract-asset-registry =
               mk-xcvm-contract "xcvm-asset-registry";
@@ -726,12 +800,6 @@
               '';
             };
 
-            serve-book = pkgs.writeShellApplication {
-              name = "serve-book";
-              runtimeInputs = [ pkgs.mdbook ];
-              text = "mdbook serve ./book";
-            };
-
             docker-wipe-system =
               pkgs.writeShellScriptBin "docker-wipe-system" ''
                 echo "Wiping all docker containers, images, and volumes";
@@ -740,12 +808,6 @@
                 docker rmi -f $(docker images -a -q)
                 docker volume prune -f
               '';
-
-            composable-book = import ./book/default.nix {
-              crane = crane-stable;
-              inherit cargo stdenv;
-              inherit mdbook;
-            };
 
             # NOTE: crane can't be used because of how it vendors deps, which is incompatible with some packages in polkadot, an issue must be raised to the repo
             acala-node = pkgs.callPackage ./.nix/acala-bin.nix {
@@ -1024,28 +1086,6 @@
               '';
             };
 
-            mdbook-check = stdenv.mkDerivation {
-              name = "mdbook-check";
-              dontUnpack = true;
-              buildInputs = [ all-directories-and-files mdbook ];
-              installPhase = ''
-                mkdir -p $out/book
-                chmod 777 $out/book
-                cd ${all-directories-and-files}/book
-                mdbook --version
-
-                # `mdbook test` is most strict than `mdbook build`,
-                # it catches code blocks without a language tag,
-                # but it doesn't work with nix.
-                TMPDIR=$out/book mdbook build --dest-dir=$out/book 2>&1 | tee $out/log
-                if [ -z "$(cat $out/log | grep ERROR)" ]; then
-                  true
-                else
-                  exit 1
-                fi
-              '';
-            };
-
             hadolint-check = stdenv.mkDerivation {
               name = "hadolint-check";
               dontUnpack = true;
@@ -1190,7 +1230,7 @@
 
             docs = base-shell.overrideAttrs (base: {
               buildInputs = base.buildInputs
-                ++ (with packages; [ python3 nodejs mdbook ]);
+                ++ (with packages; [ python3 nodejs ]);
             });
 
             developers-minimal = base-shell.overrideAttrs (base:
@@ -1224,7 +1264,6 @@
                   llvmPackages_latest.bintools
                   llvmPackages_latest.lld
                   llvmPackages_latest.llvm
-                  mdbook
                   nix-tree
                   nixpkgs-fmt
                   openssl
@@ -1241,6 +1280,8 @@
                   nixfmt
                   rnix-lsp
                   subxt
+                  pkgs.nodePackages.typescript
+                  pkgs.nodePackages.typescript-language-server
                 ] ++ docs-renders;
             });
 
@@ -1310,6 +1351,8 @@
               flake-utils.lib.mkApp { drv = run-simnode-tests "picasso"; };
             simnode-tests-dali-rococo =
               flake-utils.lib.mkApp { drv = run-simnode-tests "dali-rococo"; };
+            devnet-initialize-script =
+              makeApp packages.devnet-initialize-script;
             default = devnet-dali;
           };
         });
@@ -1333,8 +1376,6 @@
               polkadot-launch composable-node polkadot-node;
             chain-spec = "picasso-dev";
           };
-          book = eachSystemOutputs.packages.x86_64-linux.composable-book;
-          rev = builtins.getEnv "GITHUB_SHA";
         };
       };
       homeConfigurations = let

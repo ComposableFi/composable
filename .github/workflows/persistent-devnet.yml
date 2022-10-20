@@ -31,6 +31,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with:
+        ref: ${{ inputs.revision }}
         fetch-depth: 0
     - run: |
         echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
@@ -96,8 +97,8 @@ jobs:
     - name: Deploy
       run: |
         # For the love of God can anyone tell me why github runners are not stateless.
-        nixops check --include composable-persistent-devnet
-        nixops deploy --allow-recreate --confirm --deployment devnet-gce --debug --show-trace --option narinfo-cache-negative-ttl 0 --include composable-persistent-devnet
+        nixops check --include composable-persistent-devnet || true
+        nixops deploy --allow-recreate --allow-reboot --confirm --deployment devnet-gce --debug --show-trace --option narinfo-cache-negative-ttl 0 --include composable-persistent-devnet
       env:
         NIXOPS_STATE: ${{ runner.temp }}/${{ env.NIXOPS_STATE_FILE }}
     - name: Save NixOps State

@@ -79,8 +79,10 @@ cdylib
 charlie
 chevdor
 chrono
+cita
 claimunstake
 clickup
+clsx
 cmake
 cmark
 codegen
@@ -117,6 +119,7 @@ findutils
 fnft
 fnfts
 fontconfig
+fontname
 freetype
 fsevenm
 FSIZE
@@ -143,6 +146,8 @@ ifeq
 imagesdir
 imagesoutdir
 immer
+includeurl
+infima
 inprocess
 ipam
 ipetkov # github username
@@ -222,6 +227,7 @@ pctest
 peasy
 peekable
 peerset
+penwidth
 perbill
 permill
 
@@ -301,6 +307,8 @@ stdenv
 structopt
 styleguide
 submessage
+submessages
+Subql
 substituters
 subwasm
 subxt
@@ -368,3 +376,4 @@ yzhang
 zlfzypzcr
 zstd
 zustand
+DACP

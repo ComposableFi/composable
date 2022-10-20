@@ -1077,10 +1077,6 @@ impl pablo::Config for Runtime {
 	type PoolId = PoolId;
 	type PalletId = PabloId;
 	type LocalAssets = CurrencyFactory;
-	type LbpMinSaleDuration = LbpMinSaleDuration;
-	type LbpMaxSaleDuration = LbpMaxSaleDuration;
-	type LbpMaxInitialWeight = LbpMaxInitialWeight;
-	type LbpMinFinalWeight = LbpMinFinalWeight;
 	type PoolCreationOrigin = EnsureRootOrHalfNativeCouncil;
 	// TODO: consider making it is own origin
 	type EnableTwapOrigin = EnsureRootOrHalfNativeCouncil;
@@ -1254,7 +1250,7 @@ parameter_types! {
 
 impl cosmwasm::Config for Runtime {
 	type Event = Event;
-	type AccountId = AccountId;
+	type AccountIdExtended = AccountId;
 	type PalletId = CosmwasmPalletId;
 	type MaxFrames = MaxFrames;
 	type MaxCodeSize = MaxCodeSize;
@@ -1281,7 +1277,7 @@ impl cosmwasm::Config for Runtime {
 	type ContractStorageByteWritePrice = ContractStorageByteWritePrice;
 	type UnixTime = Timestamp;
 	// TODO: proper weights
-	type WeightInfo = ();
+	type WeightInfo = cosmwasm::weights::SubstrateWeight<Runtime>;
 }
 
 construct_runtime!(
@@ -1440,6 +1436,7 @@ mod benches {
 		[pallet_staking_rewards, StakingRewards]
 		[pallet_account_proxy, Proxy]
 		[dex_router, DexRouter]
+		[cosmwasm, Cosmwasm]
 	// TODO: Broken
 		// [pallet_ibc, Ibc]
 		// [ibc_transfer, Transfer]

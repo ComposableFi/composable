@@ -1,25 +1,46 @@
 digraph arion_xcvm {
-    Dali [shape = diamond]
-    Rococo [shape = diamond]
-    Juno [shape = diamond]
-    Hasura [shape = trapezium]    
-    SubqlQuery [shape = trapezium]
-    SubsquidGateway [shape = trapezium]
-    Postgres [shape = cylinder]
-    Redis [shape = cylinder]
-    PicassoFrontend [shape=hexagon]
+    graph [fontname = "Handlee"];
+    node [fontname = "Handlee"];
+    edge [fontname = "Handlee"];    
+    Dali [shape = box3d; label = "Dali B";];
+    Rococo [shape = box3d;];
+    Juno [shape = box3d;];
+    sibling [shape = box3d;label = "Dali A";];
+    Hasura [shape = trapezium;];
+    SubqlQuery [shape = trapezium;];
+    SubsquidGateway [shape = trapezium;];
+    Postgres [shape = cylinder;];
+    Redis [shape = cylinder;];
+    dali_frontend [shape = octagon;label = "Dali Frontend";];
+    hyperspace [shape = rectangle;label = "Hyperspace(IBC Rust Relayer)";];
     
-    PicassoFrontend -> Dali [label = "get data" arrowhead = inv]
-    PicassoFrontend -> SubsquidGateway [label = "get data" arrowhead = inv]
-    Hasura -> Postgres [label = "get data"]
-    SubqlIndexer -> Juno [label = "get data" arrowhead = inv]
-    SubsquidIndexer -> Redis
-    SubsquidIndexer -> Postgres [label = "add data"]
-    SubsquidIndexer -> Dali [label = "get data" arrowhead = inv]
-    SubqlIndexer -> Postgres [label = "add data"]
-    SubqlQuery -> Postgres [label = "get data" arrowhead = inv]
-    SubqlQuery -> SubqlIndexer [style = dashed label = "get metadata" arrowhead = inv]
-    SubsquidGateway -> Postgres [label = "get data" arrowhead = inv]
-    Dali -> Rococo
-    Rococo -> Dali 
+    dali_frontend -> Dali [label = "get data"; arrowhead = inv;];
+    dali_frontend -> SubsquidGateway [label = "get data"; arrowhead = inv;];
+    Hasura -> Postgres [label = "get data"; arrowhead = inv;];
+    SubqlIndexer -> Juno [label = "get data"; arrowhead = inv;];
+    SubsquidIndexer -> Redis;
+    SubsquidIndexer -> Postgres [label = "add data";];
+    SubsquidIndexer -> Dali [label = "get data"; arrowhead = inv;];
+    SubqlIndexer -> Postgres [label = "add data";];
+    SubqlQuery -> Postgres [label = "get data"; arrowhead = inv;];
+    SubqlQuery -> SubqlIndexer [style = dashed; label = "get metadata"; arrowhead = inv;];
+    SubsquidGateway -> Postgres [label = "get data"; arrowhead = inv;];
+    Dali -> Rococo;
+    Rococo -> Dali;
+    Rococo -> sibling;
+    sibling -> Rococo;
+    
+    hyperspace -> Dali [label = "syncronize"; arrowhead = tee;];
+    hyperspace -> sibling [label = "syncronize"; arrowhead = tee;];
+    hyperspace -> Rococo [label = "finality proofs"; arrowhead = tee;];
+    
+    ibc_test [shape = hexagon;label = "ibc-rs-test";];    
+    
+    ibc_test -> Dali [label = "configure"; style = dotted;];
+    ibc_test -> sibling [label = "configure"; style = dotted;];
+
+    zombient  -> Dali [label = "configure"; style = dotted;];
+    zombient  [shape = hexagon;label = "polka-launcher";];    
+    zombient -> sibling [label = "configure"; style = dotted;];
+    zombient -> Rococo [label = "configure"; style = dotted;];
 }

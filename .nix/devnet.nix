@@ -12,9 +12,10 @@ let
           inherit region;
           machineName = machine-name;
           network = resources.gceNetworks.composable-devnet;
-          instanceType = "n2-standard-4";
-          rootDiskSize = 200;
+          instanceType = "n2-standard-8";
+          rootDiskSize = 500;
           tags = [ "http" "https" ];
+          ipAddress = "persistent-devnet-ip";
         };
       };
       nix = {
@@ -62,6 +63,11 @@ let
       security.acme = {
         acceptTerms = true;
         defaults = { email = "hussein@composable.finance"; };
+      };
+      services.journald = {
+        extraConfig = ''
+          SystemMaxUse=100M
+        '';
       };
       services.nginx = {
         enable = true;

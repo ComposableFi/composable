@@ -490,14 +490,6 @@ pub mod pallet {
 					ensure!(available_to_claim > T::Balance::zero(), Error::<T>::NothingToClaim);
 
 					reward.claimed = available_to_claim.saturating_add(reward.claimed);
-					if T::LockByDefault::get() && !RemoveRewardLocks::<T>::exists() {
-						T::RewardAsset::set_lock(
-							T::LockId::get(),
-							reward_account,
-							reward.claimed,
-							WithdrawReasons::RESERVE,
-						);
-					}
 
 					let funds_account = Self::account_id();
 					// No need to keep the pallet account alive.
@@ -507,6 +499,17 @@ pub mod pallet {
 						available_to_claim,
 						false,
 					)?;
+
+					// IMPORTANT: Order of execution of this lock matters for proper locking of
+					// funds. Refer https://app.clickup.com/t/33e4tdu
+					if T::LockByDefault::get() && !RemoveRewardLocks::<T>::exists() {
+						T::RewardAsset::set_lock(
+							T::LockId::get(),
+							reward_account,
+							reward.claimed,
+							WithdrawReasons::TRANSFER,
+						);
+					}
 
 					ClaimedRewards::<T>::mutate(|x| *x = x.saturating_add(available_to_claim));
 

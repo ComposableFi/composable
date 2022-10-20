@@ -1,0 +1,89 @@
+digraph ics_xcvm {
+    graph [fontname = "Handlee";];
+    node [fontname = "Handlee";];
+    edge [fontname = "Handlee";];
+    
+    FinalityProof [shape = box3d;];
+    ConsensusProof [shape = box3d;];
+    StateProof [shape = box3d;];
+    StateRoot [shape = box3d;];
+    SignaturesFromAuthoritySet [shape = box3d;];
+    
+    FinalityProof -> ConsensusProof [label = "contains";];
+    FinalityProof -> StateProof [label = "contains";];
+    ConsensusProof -> SignaturesFromAuthoritySet [label = "contains";];
+    StateProof -> StateRoot [label = "contains";];
+    
+    Relayer [shape = record;color = red;label = "Hyperspace IBC Relayer";];
+    Packet [shape = box3d;color = red;];
+    HandshakeProtocol [shape = record;color = red;];
+    
+    ICS002_Client [shape = folder;color = grey;style = dashed;];
+    ICS007_Tendermint [shape = folder;color = grey;style = dashed;];
+    ICS010_Grandpa [shape = folder;color = grey;style = dashed;];
+    ICS011_Beefy [shape = folder;color = grey;style = dashed;label = "ICS011 BEEFY(next release)";];
+    ICS026_Routing [shape = folder;color = grey;style = dashed;];
+    ICS003_Connection [shape = folder;color = grey;style = dashed;];
+    ICS004_Channel [shape = folder;color = grey;style = dashed;];
+    ICS005_Port [shape = folder;color = grey;style = dashed;];
+    ICS018_Relayer [shape = folder;color = grey;style = dashed;];
+    ICS023_VectorCommitments [shape = folder;color = grey;style = dashed;];
+    
+    subgraph cluster_picasso {
+        label = "Kusama Picasso Substrate";
+        RPC
+        TendermintLightClient [shape = component;];
+        SubstrateIbcPalletInPicasso [shape = component;label = "ibc-pallet";];
+        JunoConnection [shape = cylinder;];
+        ChannelXcvmOnPicasso [label = "XCVM Gateway(IBC Channel)";shape = cylinder;];
+        ChannelXcvmOnPicasso -> JunoConnection [label = "relies on";];
+        SubstrateIbcPalletInPicasso -> TendermintLightClient [label = "verify";];
+        SubstrateIbcPalletInPicasso -> ChannelXcvmOnPicasso [label = "callbacks";];
+    }
+    
+    
+    
+    subgraph cluster_juno {
+        label = "Cosmos Juno";
+        
+        BeefyLightClient [shape = component;];
+        CosmosIbcModule [shape = component;];
+        PicassoConnection [shape = cylinder;];
+        ChannelXcvmOnJuno [label = "XCVM Gateway(IBC Channel)";shape = cylinder;];
+        
+        ChannelXcvmOnJuno -> PicassoConnection [label = "relies on";];
+        CosmosIbcModule -> BeefyLightClient [label = "verify";];
+        CosmosIbcModule -> ChannelXcvmOnJuno [label = "callbacks";];
+    }
+    
+    ICS018_Relayer -> Relayer [style = dashed; arrowhead = none;];
+    TendermintLightClient -> ICS002_Client [style = dashed;];
+    BeefyLightClient -> ICS002_Client [style = dashed;];
+    ICS007_Tendermint -> TendermintLightClient [style = dashed; arrowhead = none;];
+    ICS010_Grandpa -> BeefyLightClient [style = dashed; arrowhead = none;];
+    ICS026_Routing -> SubstrateIbcPalletInPicasso [style = dashed; arrowhead = none;];
+    ICS026_Routing -> CosmosIbcModule [style = dashed; arrowhead = none;];
+    ICS003_Connection -> JunoConnection [style = dashed; arrowhead = none;];
+    ICS003_Connection -> PicassoConnection [style = dashed; arrowhead = none;];
+    ICS004_Channel -> ChannelXcvmOnJuno [style = dashed; arrowhead = none;];
+    ICS004_Channel -> ChannelXcvmOnPicasso [style = dashed; arrowhead = none;];
+    ICS005_Port -> ChannelXcvmOnPicasso [style = dashed; arrowhead = none;];
+    ICS005_Port -> ChannelXcvmOnJuno [style = dashed; arrowhead = none;];
+    ICS023_VectorCommitments -> FinalityProof [style = dashed; arrowhead = none;];
+    
+    
+    Relayer -> SubstrateIbcPalletInPicasso [label = "Get events"; arrowhead = inv; color = red;];
+    Relayer -> CosmosIbcModule [label = "Get events"; arrowhead = inv; color = red;];
+    Relayer -> SubstrateIbcPalletInPicasso [label = "Write messages"; color = red;];
+    Relayer -> CosmosIbcModule [label = "Write messages"; color = red;];
+    Relayer -> RPC [label = "Finality proofs"; color = red;];
+    
+    
+    ChannelXcvmOnJuno -> ChannelXcvmOnPicasso [arrowhead = none; penwidth = 10; color = green;];
+    
+    Packet -> FinalityProof [label = "contains";];
+    Relayer -> Packet [label = "transfers"; color = red;];
+    Relayer -> HandshakeProtocol [label = "runs"; color = red;];
+    ICS007_Tendermint -> FinalityProof [style = dashed; arrowhead = none;];
+    ICS010_Grandpa -> FinalityProof [style = dashed; arrowhead = none;];
+}

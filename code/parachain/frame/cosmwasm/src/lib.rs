@@ -44,14 +44,25 @@ pub mod runtimes;
 pub mod types;
 pub mod weights;
 
+mod entrypoint;
+
+#[cfg(any(feature = "runtime-benchmarks", test))]
+mod benchmarking;
+
+#[cfg(test)]
+mod mock;
+#[cfg(test)]
+mod tests;
+
 #[allow(clippy::too_many_arguments)]
 #[frame_support::pallet]
 pub mod pallet {
 	const SUBSTRATE_ECDSA_SIGNATURE_LEN: usize = 65;
 	use crate::{
+		entrypoint::*,
 		instrument::gas_and_stack_instrumentation,
 		runtimes::{
-			abstraction::{CosmwasmAccount, Gas, VMPallet},
+			abstraction::{CanonicalCosmwasmAccount, CosmwasmAccount, Gas, VMPallet},
 			wasmi::{
 				CodeValidation, CosmwasmVM, CosmwasmVMCache, CosmwasmVMError, CosmwasmVMShared,
 				ExportRequirement, InitialStorageMutability, ValidationError,
@@ -75,17 +86,17 @@ pub mod pallet {
 	use core::fmt::Debug;
 	use cosmwasm_minimal_std::{
 		Addr, Attribute as CosmwasmEventAttribute, Binary as CosmwasmBinary, BlockInfo, Coin,
-		ContractInfo as CosmwasmContractInfo, Env, Event as CosmwasmEvent, MessageInfo, Timestamp,
-		TransactionInfo,
+		ContractInfo as CosmwasmContractInfo, ContractInfoResponse, Env, Event as CosmwasmEvent,
+		MessageInfo, Timestamp, TransactionInfo,
 	};
 	pub use cosmwasm_minimal_std::{QueryRequest, QueryResponse};
 	use cosmwasm_vm::{
 		executor::{
-			AllocateInput, AsFunctionName, DeallocateInput, ExecuteInput, InstantiateInput,
-			MigrateInput, QueryInput, ReplyInput,
+			cosmwasm_call, AllocateInput, AsFunctionName, DeallocateInput, ExecuteInput,
+			InstantiateInput, MigrateInput, QueryInput, ReplyInput,
 		},
 		memory::PointerOf,
-		system::{cosmwasm_system_entrypoint, cosmwasm_system_query, CosmwasmCodeId},
+		system::{cosmwasm_system_query, CosmwasmCodeId, CosmwasmContractMeta},
 		vm::VmMessageCustomOf,
 	};
 	use cosmwasm_vm_wasmi::{host_functions, new_wasmi_vm, WasmiImportResolver, WasmiVM};
@@ -116,7 +127,7 @@ pub mod pallet {
 	pub(crate) type ContractTrieIdOf<T> = BoundedVec<u8, MaxContractTrieIdSizeOf<T>>;
 	pub(crate) type ContractLabelOf<T> = BoundedVec<u8, MaxContractLabelSizeOf<T>>;
 	pub(crate) type CodeHashOf<T> = <T as frame_system::Config>::Hash;
-	pub(crate) type AccountIdOf<T> = <T as Config>::AccountId;
+	pub(crate) type AccountIdOf<T> = <T as Config>::AccountIdExtended;
 	pub(crate) type MaxCodeSizeOf<T> = <T as Config>::MaxCodeSize;
 	pub(crate) type MaxInstrumentedCodeSizeOf<T> = <T as Config>::MaxInstrumentedCodeSize;
 	pub(crate) type MaxMessageSizeOf<T> = <T as Config>::MaxMessageSize;
@@ -140,14 +151,52 @@ pub mod pallet {
 		Query,
 	}
 
+	#[derive(Copy, Clone, PartialEq, Eq, Encode, Decode, TypeInfo, Debug)]
+	#[scale_info(skip_type_params(T))]
+	pub enum CodeIdentifier<T: Config> {
+		CodeId(CosmwasmCodeId),
+		CodeHash(CodeHashOf<T>),
+	}
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		Uploaded { code_hash: CodeHashOf<T>, code_id: CosmwasmCodeId },
-		Instantiated { contract: AccountIdOf<T>, info: ContractInfoOf<T> },
-		Executed { contract: AccountIdOf<T>, entrypoint: EntryPoint, data: Option<Vec<u8>> },
-		ExecutionFailed { contract: AccountIdOf<T>, entrypoint: EntryPoint, error: Vec<u8> },
-		Emitted { contract: AccountIdOf<T>, ty: Vec<u8>, attributes: Vec<(Vec<u8>, Vec<u8>)> },
+		Uploaded {
+			code_hash: CodeHashOf<T>,
+			code_id: CosmwasmCodeId,
+		},
+		Instantiated {
+			contract: AccountIdOf<T>,
+			info: ContractInfoOf<T>,
+		},
+		Executed {
+			contract: AccountIdOf<T>,
+			entrypoint: EntryPoint,
+			data: Option<Vec<u8>>,
+		},
+		ExecutionFailed {
+			contract: AccountIdOf<T>,
+			entrypoint: EntryPoint,
+			error: Vec<u8>,
+		},
+		Emitted {
+			contract: AccountIdOf<T>,
+			ty: Vec<u8>,
+			attributes: Vec<(Vec<u8>, Vec<u8>)>,
+		},
+		Migrated {
+			contract: AccountIdOf<T>,
+			to: CosmwasmCodeId,
+		},
+		AdminUpdated {
+			contract: AccountIdOf<T>,
+			old_admin: Option<AccountIdOf<T>>,
+			new_admin: AccountIdOf<T>,
+		},
+		AdminCleared {
+			contract: AccountIdOf<T>,
+			old_admin: Option<AccountIdOf<T>>,
+		},
 	}
 
 	#[pallet::error]
@@ -178,6 +227,7 @@ pub mod pallet {
 		SignatureVerificationError,
 		IteratorIdOverflow,
 		IteratorNotFound,
+		NotAuthorized,
 	}
 
 	#[pallet::config]
@@ -185,7 +235,7 @@ pub mod pallet {
 		#[allow(missing_docs)]
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
-		type AccountId: Parameter
+		type AccountIdExtended: Parameter
 			+ Member
 			+ MaybeSerializeDeserialize
 			+ Debug
@@ -362,7 +412,7 @@ pub mod pallet {
 		/// - `origin` the original dispatching the extrinsic.
 		/// - `code` the actual wasm code.
 		#[transactional]
-		#[pallet::weight(T::WeightInfo::upload(code.len()))]
+		#[pallet::weight(T::WeightInfo::upload(code.len() as u32))]
 		pub fn upload(origin: OriginFor<T>, code: ContractCodeOf<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			Self::do_upload(&who, code)?;
@@ -384,10 +434,10 @@ pub mod pallet {
 		///   export.
 		/// * `gas` the maximum gas to use, the remaining is refunded at the end of the transaction.
 		#[transactional]
-		#[pallet::weight(T::WeightInfo::instantiate(funds.len()).saturating_add(*gas))]
+		#[pallet::weight(T::WeightInfo::instantiate(funds.len() as u32).saturating_add(*gas))]
 		pub fn instantiate(
 			origin: OriginFor<T>,
-			code_id: CosmwasmCodeId,
+			code_identifier: CodeIdentifier<T>,
 			salt: ContractSaltOf<T>,
 			admin: Option<AccountIdOf<T>>,
 			label: ContractLabelOf<T>,
@@ -397,16 +447,15 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
-			let outcome = Self::do_extrinsic_instantiate(
-				&mut shared,
-				who,
-				code_id,
-				&salt,
-				admin,
-				label,
-				funds,
-				message,
-			)
+			let code_id = match code_identifier {
+				CodeIdentifier::CodeId(code_id) => code_id,
+				CodeIdentifier::CodeHash(code_hash) =>
+					CodeHashToId::<T>::try_get(code_hash).map_err(|_| Error::<T>::CodeNotFound)?,
+			};
+			let outcome = EntryPointCaller::<InstantiateInput>::setup(
+				who, code_id, &salt, admin, label, &message,
+			)?
+			.call(&mut shared, funds, message)
 			.map(|_| ());
 			Self::refund_gas(outcome, gas, shared.gas.remaining())
 		}
@@ -425,7 +474,7 @@ pub mod pallet {
 		///   export.
 		/// * `gas` the maximum gas to use, the remaining is refunded at the end of the transaction.
 		#[transactional]
-		#[pallet::weight(T::WeightInfo::execute(funds.len()).saturating_add(*gas))]
+		#[pallet::weight(T::WeightInfo::execute(funds.len() as u32).saturating_add(*gas))]
 		pub fn execute(
 			origin: OriginFor<T>,
 			contract: AccountIdOf<T>,
@@ -435,7 +484,129 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
-			let outcome = Self::do_extrinsic_execute(&mut shared, who, contract, funds, message);
+			let outcome = EntryPointCaller::<ExecuteInput>::setup(who, contract)?.call(
+				&mut shared,
+				funds,
+				message,
+			);
+			Self::refund_gas(outcome, gas, shared.gas.remaining())
+		}
+
+		/// Migrate a previously instantiated contract.
+		///
+		/// * Emits a `Migrated` event on success.
+		/// * Emits an `Executed` event.
+		/// * Possibly emit `Emitted` events.
+		///
+		/// Arguments
+		///
+		/// * `origin` the origin dispatching the extrinsic.
+		/// * `contract` the address of the contract that we want to migrate
+		/// * `new_code_identifier` the code identifier that we want to switch to.
+		/// * `gas` the maximum gas to use, the remaining is refunded at the end of the transaction.
+		/// * `message` MigrateMsg, that will be passed to the contract.
+		#[transactional]
+		#[pallet::weight(T::WeightInfo::migrate().saturating_add(*gas))]
+		pub fn migrate(
+			origin: OriginFor<T>,
+			contract: AccountIdOf<T>,
+			new_code_identifier: CodeIdentifier<T>,
+			gas: u64,
+			message: ContractMessageOf<T>,
+		) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
+			let new_code_id = match new_code_identifier {
+				CodeIdentifier::CodeId(code_id) => code_id,
+				CodeIdentifier::CodeHash(code_hash) =>
+					CodeHashToId::<T>::try_get(&code_hash).map_err(|_| Error::<T>::CodeNotFound)?,
+			};
+			let outcome = EntryPointCaller::<MigrateInput>::setup(who, contract, new_code_id)?
+				.call(&mut shared, Default::default(), message);
+			Self::refund_gas(outcome, gas, shared.gas.remaining())
+		}
+
+		/// Update the admin of a contract.
+		///
+		/// * Emits a `AdminUpdated` event on success.
+		///
+		/// Arguments
+		///
+		/// * `origin` the origin dispatching the extrinsic.
+		/// * `contract` the address of the contract that we want to migrate.
+		/// * `new_admin` new admin of the contract that we want to update to.
+		/// * `gas` the maximum gas to use, the remaining is refunded at the end of the transaction.
+		#[transactional]
+		#[pallet::weight(T::WeightInfo::update_admin().saturating_add(*gas))]
+		pub fn update_admin(
+			origin: OriginFor<T>,
+			contract: AccountIdOf<T>,
+			new_admin: AccountIdOf<T>,
+			gas: u64,
+		) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
+			let info = Self::contract_info(&contract)?;
+			let outcome = Self::cosmwasm_call(
+				&mut shared,
+				who.clone(),
+				contract.clone(),
+				info.clone(),
+				Default::default(),
+				|vm| {
+					cosmwasm_vm::system::update_admin(
+						vm,
+						&Addr::unchecked(Self::account_to_cosmwasm_addr(who)),
+						CosmwasmAccount::new(contract.clone()),
+						Some(CosmwasmAccount::new(new_admin.clone())),
+					)
+					.map_err(Into::into)
+				},
+			);
+			Self::deposit_event(Event::<T>::AdminUpdated {
+				contract,
+				old_admin: info.admin,
+				new_admin,
+			});
+			Self::refund_gas(outcome, gas, shared.gas.remaining())
+		}
+
+		/// Clear the admin of a contract.
+		///
+		/// * Emits a `AdminCleared` event on success.
+		///
+		/// Arguments
+		///
+		/// * `origin` the origin dispatching the extrinsic.
+		/// * `contract` the address of the contract that we want to migrate.
+		/// * `gas` the maximum gas to use, the remaining is refunded at the end of the transaction.
+		#[transactional]
+		#[pallet::weight(T::WeightInfo::clear_admin().saturating_add(*gas))]
+		pub fn clear_admin(
+			origin: OriginFor<T>,
+			contract: AccountIdOf<T>,
+			gas: u64,
+		) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
+			let info = Self::contract_info(&contract)?;
+			let outcome = Self::cosmwasm_call(
+				&mut shared,
+				who.clone(),
+				contract.clone(),
+				info.clone(),
+				Default::default(),
+				|vm| {
+					cosmwasm_vm::system::update_admin(
+						vm,
+						&Addr::unchecked(Self::account_to_cosmwasm_addr(who)),
+						CosmwasmAccount::new(contract.clone()),
+						None,
+					)
+					.map_err(Into::into)
+				},
+			);
+			Self::deposit_event(Event::<T>::AdminCleared { contract, old_admin: info.admin });
 			Self::refund_gas(outcome, gas, shared.gas.remaining())
 		}
 	}
@@ -471,42 +642,6 @@ pub mod pallet {
 			)
 		}
 
-		/// Setup pallet state for a new contract.
-		/// This is called prior to calling the `instantiate` export of the contract.
-		pub(crate) fn do_instantiate_phase1(
-			instantiator: AccountIdOf<T>,
-			code_id: CosmwasmCodeId,
-			salt: &[u8],
-			admin: Option<AccountIdOf<T>>,
-			label: ContractLabelOf<T>,
-			message: &[u8],
-		) -> Result<(AccountIdOf<T>, ContractInfoOf<T>), Error<T>> {
-			let code_hash = CodeIdToInfo::<T>::get(code_id)
-				.ok_or(Error::<T>::CodeNotFound)?
-				.pristine_code_hash;
-			let contract = Self::derive_contract_address(&instantiator, salt, code_hash, message);
-			ensure!(
-				!ContractToInfo::<T>::contains_key(&contract),
-				Error::<T>::ContractAlreadyExists
-			);
-			let nonce = CurrentNonce::<T>::increment().map_err(|_| Error::<T>::NonceOverflow)?;
-			let trie_id = Self::derive_contract_trie_id(&contract, nonce);
-			let contract_info =
-				ContractInfoOf::<T> { instantiator, code_id, trie_id, admin, label };
-			ContractToInfo::<T>::insert(&contract, &contract_info);
-			CodeIdToInfo::<T>::try_mutate(code_id, |entry| -> Result<(), Error<T>> {
-				let code_info = entry.as_mut().ok_or(Error::<T>::CodeNotFound)?;
-				code_info.refcount =
-					code_info.refcount.checked_add(1).ok_or(Error::<T>::RefcountOverflow)?;
-				Ok(())
-			})?;
-			Self::deposit_event(Event::<T>::Instantiated {
-				contract: contract.clone(),
-				info: contract_info.clone(),
-			});
-			Ok((contract, contract_info))
-		}
-
 		/// Create the shared VM state. Including readonly stack, VM depth, gas metering limits and
 		/// code cache.
 		///
@@ -526,55 +661,6 @@ pub mod pallet {
 				gas: Gas::new(T::MaxFrames::get(), gas),
 				cache: CosmwasmVMCache { code: Default::default() },
 			}
-		}
-
-		pub(crate) fn do_extrinsic_instantiate(
-			shared: &mut CosmwasmVMShared,
-			instantiator: AccountIdOf<T>,
-			code_id: CosmwasmCodeId,
-			salt: &[u8],
-			admin: Option<AccountIdOf<T>>,
-			label: ContractLabelOf<T>,
-			funds: FundsOf<T>,
-			message: ContractMessageOf<T>,
-		) -> Result<AccountIdOf<T>, CosmwasmVMError<T>> {
-			let (contract, info) = Self::do_instantiate_phase1(
-				instantiator.clone(),
-				code_id,
-				salt,
-				admin,
-				label,
-				&message,
-			)?;
-			Self::do_extrinsic_dispatch(
-				shared,
-				EntryPoint::Instantiate,
-				instantiator,
-				contract.clone(),
-				info,
-				funds,
-				|vm| cosmwasm_system_entrypoint::<InstantiateInput, _>(vm, &message),
-			)?;
-			Ok(contract)
-		}
-
-		pub(crate) fn do_extrinsic_execute(
-			shared: &mut CosmwasmVMShared,
-			sender: AccountIdOf<T>,
-			contract: AccountIdOf<T>,
-			funds: FundsOf<T>,
-			message: ContractMessageOf<T>,
-		) -> Result<(), CosmwasmVMError<T>> {
-			let info = Self::contract_info(&contract)?;
-			Self::do_extrinsic_dispatch(
-				shared,
-				EntryPoint::Execute,
-				sender,
-				contract,
-				info,
-				funds,
-				|vm| cosmwasm_system_entrypoint::<ExecuteInput, _>(vm, &message),
-			)
 		}
 
 		/// Wrapper around [`Pallet::<T>::cosmwasm_call`] for extrinsics.
@@ -663,14 +749,62 @@ pub mod pallet {
 			}
 		}
 
-		/// Handy wrapper to set the contract info
-		pub(crate) fn set_contract_meta(
+		/// Set the contract info and update the state accordingly.
+		///
+		/// This function will update the state if the `code_id` is changing:
+		/// 1. Refcount of the new `code_id` is incremented.
+		/// 2. Refcount of the old `code_id` is decremented.
+		/// 3. Delete every entry related to old `code_id` if
+		///    the refcount is 0. And unreserve the bonded funds.
+		pub(crate) fn do_set_contract_meta(
 			contract: &AccountIdOf<T>,
 			code_id: CosmwasmCodeId,
 			admin: Option<AccountIdOf<T>>,
 			label: String,
 		) -> Result<(), Error<T>> {
 			let mut info = Self::contract_info(contract)?;
+
+			if info.code_id != code_id {
+				// Increase the refcount of `new_code_id`.
+				CodeIdToInfo::<T>::try_mutate_exists(code_id, |entry| -> Result<(), Error<T>> {
+					let code_info = entry.as_mut().ok_or(Error::<T>::CodeNotFound)?;
+					code_info.refcount =
+						code_info.refcount.checked_add(1).ok_or(Error::<T>::RefcountOverflow)?;
+					Ok(())
+				})?;
+
+				// Modify the existing `code_id`'s states and unreserve the bonded funds.
+				CodeIdToInfo::<T>::try_mutate_exists(
+					info.code_id,
+					|entry| -> Result<(), Error<T>> {
+						// Decrement the refcount
+						let code_info = entry.as_mut().ok_or(Error::<T>::CodeNotFound)?;
+						code_info.refcount = code_info
+							.refcount
+							.checked_sub(1)
+							.ok_or(Error::<T>::RefcountOverflow)?;
+						if code_info.refcount == 0 {
+							// Unreserve the bonded funds for this code
+							let code = PristineCode::<T>::try_get(info.code_id)
+								.map_err(|_| Error::<T>::CodeNotFound)?;
+							let deposit =
+								code.len().saturating_mul(T::CodeStorageByteDeposit::get() as _);
+							let _ = T::NativeAsset::unreserve(
+								&code_info.creator,
+								deposit.saturated_into(),
+							);
+							let code_hash = T::Hashing::hash(&code);
+							PristineCode::<T>::remove(info.code_id);
+							InstrumentedCode::<T>::remove(info.code_id);
+							CodeHashToId::<T>::remove(code_hash);
+							// Code is unused after this point, so it can be removed
+							*entry = None;
+						}
+						Ok(())
+					},
+				)?;
+			}
+
 			info.code_id = code_id;
 			info.admin = admin;
 			info.label = label
@@ -678,6 +812,7 @@ pub mod pallet {
 				.to_vec()
 				.try_into()
 				.map_err(|_| crate::Error::<T>::LabelTooBig)?;
+
 			Self::set_contract_info(contract, info);
 			Ok(())
 		}
@@ -705,16 +840,23 @@ pub mod pallet {
 			&'static [parity_wasm::elements::ValueType],
 		)] = &[
 			// We support v1+
-			(ExportRequirement::Mandatory, "interface_version_8", &[]),
+			(
+				ExportRequirement::Mandatory,
+				// 	extern "C" fn interface_version_8() -> () {}
+				"interface_version_8",
+				&[],
+			),
 			// Memory related exports.
 			(
 				ExportRequirement::Mandatory,
 				AllocateInput::<PointerOf<CosmwasmVM<T>>>::NAME,
+				// extern "C" fn allocate(size: usize) -> u32;
 				&[parity_wasm::elements::ValueType::I32],
 			),
 			(
 				ExportRequirement::Mandatory,
 				DeallocateInput::<PointerOf<CosmwasmVM<T>>>::NAME,
+				// extern "C" fn deallocate(pointer: u32);
 				&[parity_wasm::elements::ValueType::I32],
 			),
 			// Contract execution exports.
@@ -1117,6 +1259,48 @@ pub mod pallet {
 			})
 		}
 
+		pub(crate) fn do_running_contract_meta(
+			vm: &mut CosmwasmVM<T>,
+		) -> CosmwasmContractMeta<CosmwasmAccount<T>> {
+			CosmwasmContractMeta {
+				code_id: vm.contract_info.code_id,
+				admin: vm.contract_info.admin.clone().map(CosmwasmAccount::new),
+				label: String::from_utf8_lossy(&vm.contract_info.label).into(),
+			}
+		}
+
+		pub(crate) fn do_contract_meta(
+			address: AccountIdOf<T>,
+		) -> Result<CosmwasmContractMeta<CosmwasmAccount<T>>, CosmwasmVMError<T>> {
+			let info = Pallet::<T>::contract_info(&address)?;
+			Ok(CosmwasmContractMeta {
+				code_id: info.code_id,
+				admin: info.admin.clone().map(CosmwasmAccount::new),
+				label: String::from_utf8_lossy(&info.label).into(),
+			})
+		}
+
+		/// Validate a string address
+		pub(crate) fn do_addr_validate(
+			address: String,
+		) -> Result<AccountIdOf<T>, CosmwasmVMError<T>> {
+			Pallet::<T>::cosmwasm_addr_to_account(address)
+		}
+
+		/// Canonicalize a human readable address
+		pub(crate) fn do_addr_canonicalize(
+			address: String,
+		) -> Result<AccountIdOf<T>, CosmwasmVMError<T>> {
+			Pallet::<T>::cosmwasm_addr_to_account(address)
+		}
+
+		/// Humanize a canonical address
+		pub(crate) fn do_addr_humanize(
+			address: &CanonicalCosmwasmAccount<T>,
+		) -> CosmwasmAccount<T> {
+			address.0.clone()
+		}
+
 		/// Retrieve an account balance.
 		pub(crate) fn do_balance(
 			account: &AccountIdOf<T>,
@@ -1244,6 +1428,107 @@ pub mod pallet {
 
 			sp_io::crypto::ed25519_verify(&signature, message, &public_key)
 		}
+
+		pub(crate) fn do_continue_instantiate<'a>(
+			vm: &'a mut CosmwasmVM<T>,
+			CosmwasmContractMeta { code_id, admin, label }: CosmwasmContractMeta<
+				CosmwasmAccount<T>,
+			>,
+			funds: Vec<Coin>,
+			message: &[u8],
+			event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
+		) -> Result<Option<cosmwasm_minimal_std::Binary>, CosmwasmVMError<T>> {
+			EntryPointCaller::<InstantiateInput>::setup(
+				vm.contract_address.clone().into_inner(),
+				code_id,
+				&[],
+				admin.map(|admin| admin.into_inner()),
+				label
+					.as_bytes()
+					.to_vec()
+					.try_into()
+					.map_err(|_| crate::Error::<T>::LabelTooBig)?,
+				message,
+			)?
+			.continue_run(vm.shared, funds, message, event_handler)
+		}
+
+		pub(crate) fn do_continue_execute<'a>(
+			vm: &'a mut CosmwasmVM<T>,
+			contract: AccountIdOf<T>,
+			funds: Vec<Coin>,
+			message: &[u8],
+			event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
+		) -> Result<Option<cosmwasm_minimal_std::Binary>, CosmwasmVMError<T>> {
+			EntryPointCaller::<ExecuteInput>::setup(
+				vm.contract_address.clone().into_inner(),
+				contract,
+			)?
+			.continue_run(vm.shared, funds, message, event_handler)
+		}
+
+		pub(crate) fn do_continue_migrate<'a>(
+			vm: &'a mut CosmwasmVM<T>,
+			contract: AccountIdOf<T>,
+			message: &[u8],
+			event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
+		) -> Result<Option<cosmwasm_minimal_std::Binary>, CosmwasmVMError<T>> {
+			let CosmwasmContractMeta { code_id, .. } = Self::do_running_contract_meta(vm);
+			EntryPointCaller::<MigrateInput>::setup(
+				vm.contract_address.clone().into_inner(),
+				contract,
+				code_id,
+			)?
+			.continue_run(vm.shared, Default::default(), message, event_handler)
+		}
+
+		pub(crate) fn do_query_info(
+			vm: &mut CosmwasmVM<T>,
+			address: AccountIdOf<T>,
+		) -> Result<ContractInfoResponse, CosmwasmVMError<T>> {
+			// TODO: cache or at least check if its current contract and use `self.contract_info`
+			let info = Pallet::<T>::contract_info(&address)?;
+			let code_id = info.code_id;
+			let pinned = vm.shared.cache.code.contains_key(&code_id);
+			Ok(ContractInfoResponse {
+				code_id,
+				creator: CosmwasmAccount::<T>::new(info.instantiator.clone()).into(),
+				admin: info.admin.map(|admin| CosmwasmAccount::<T>::new(admin).into()),
+				pinned,
+				// TODO(hussein-aitlahcen): IBC
+				ibc_port: None,
+			})
+		}
+
+		pub(crate) fn do_query_continuation<'a>(
+			vm: &'a mut CosmwasmVM<T>,
+			contract: AccountIdOf<T>,
+			message: &[u8],
+		) -> Result<cosmwasm_minimal_std::QueryResult, CosmwasmVMError<T>> {
+			log::debug!(target: "runtime::contracts", "query_continuation");
+			let sender = vm.contract_address.clone().into_inner();
+			let info = Pallet::<T>::contract_info(&contract)?;
+			vm.shared.push_readonly();
+			let result = Pallet::<T>::cosmwasm_call(
+				vm.shared,
+				sender,
+				contract,
+				info,
+				Default::default(),
+				|vm| cosmwasm_call::<QueryInput, WasmiVM<CosmwasmVM<T>>>(vm, message),
+			);
+			vm.shared.pop_readonly();
+			result
+		}
+
+		pub(crate) fn do_query_raw<'a>(
+			vm: &'a mut CosmwasmVM<T>,
+			address: AccountIdOf<T>,
+			key: &[u8],
+		) -> Result<Option<Vec<u8>>, CosmwasmVMError<T>> {
+			let info = Pallet::<T>::contract_info(&address)?;
+			Pallet::<T>::do_db_read_other_contract(vm, &info.trie_id, key)
+		}
 	}
 
 	/// Query cosmwasm contracts
@@ -1299,16 +1584,15 @@ pub mod pallet {
 			.try_into()
 			.map_err(|_| CosmwasmVMError::Rpc(String::from("'message' is too large")))?;
 		let mut shared = Pallet::<T>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
-		Pallet::<T>::do_extrinsic_instantiate(
-			&mut shared,
+		EntryPointCaller::<InstantiateInput>::setup(
 			instantiator,
 			code_id,
 			&salt,
 			admin,
 			label,
-			funds,
-			message,
-		)
+			&message,
+		)?
+		.call(&mut shared, funds, message)
 	}
 
 	pub fn execute<T: Config>(
@@ -1319,7 +1603,11 @@ pub mod pallet {
 		message: ContractMessageOf<T>,
 	) -> Result<(), CosmwasmVMError<T>> {
 		let mut shared = Pallet::<T>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
-		Pallet::<T>::do_extrinsic_execute(&mut shared, executor, contract, funds, message)
+		EntryPointCaller::<ExecuteInput>::setup(executor, contract)?.call(
+			&mut shared,
+			funds,
+			message,
+		)
 	}
 
 	impl<T: Config> VMPallet for T {
