@@ -1,6 +1,9 @@
 use crate::*;
 
-use composable_traits::currency::{CurrencyFactory, RangeId};
+use composable_traits::{
+	currency::{CurrencyFactory, RangeId},
+	xcm::assets::XcmAssetLocation,
+};
 use frame_support::{
 	parameter_types,
 	traits::{Everything, GenesisBuild},
@@ -97,6 +100,7 @@ impl Config for Test {
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type CurrencyValidator = ValidateCurrencyId;
+	type ForeignAssetId = XcmAssetLocation;
 }
 
 parameter_types! {
