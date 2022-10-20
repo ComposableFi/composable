@@ -1,5 +1,8 @@
 use crate::Program;
-use alloc::{collections::VecDeque, vec::Vec};
+use alloc::{
+	collections::{BTreeMap, VecDeque},
+	vec::Vec,
+};
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
@@ -20,6 +23,9 @@ pub enum BindingValue {
 
 /// Bindings: (Index, Binding)
 pub type Bindings = Vec<(u32, BindingValue)>;
+
+/// Ordered Bindings: (Index, Binding)
+pub type OrderedBindings = BTreeMap<u32, BindingValue>;
 
 /// Base XCVM instructions.
 /// This set will remain as small as possible, expressiveness must come on `top` of the base

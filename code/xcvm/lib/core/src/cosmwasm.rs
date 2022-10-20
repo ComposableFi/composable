@@ -1,6 +1,8 @@
+use crate::OrderedBindings;
+
 use super::{BindingValue, Bindings};
 use alloc::{fmt::Debug, string::String, vec::Vec};
-use cosmwasm_std::{Coin, CosmosMsg};
+use cosmwasm_std::{BankMsg, Coin, CosmosMsg};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -18,6 +20,8 @@ pub enum FlatCosmosMsg<T>
 where
 	T: Serialize + Clone + Debug,
 {
+	// Flat inner type is not necessary since `BankMsg` doesn't have a payload
+	Bank(BankMsg),
 	Wasm(FlatWasmMsg<T>),
 }
 
@@ -85,7 +89,7 @@ where
 /// Then the binding is `(26, BindingValue::This)`
 pub enum IndexedBinding<T> {
 	None(T),
-	Some((Bindings, T)),
+	Some((OrderedBindings, T)),
 }
 
 /// Static bindings that are used for typed and fixed types.
@@ -107,12 +111,47 @@ impl LateCall {
 }
 
 impl LateCall {
+	/// Wrapper for `CosmosMsg::Bank(BankMsg::Send)`
+	pub fn bank_send<T: Serialize + Clone + Debug>(
+		to_address: StaticBinding<String>,
+		amount: Vec<Coin>,
+	) -> Result<Self, ()> {
+		let send_msg = BankMsg::Send {
+			to_address: match &to_address {
+				StaticBinding::Some(_) => Default::default(),
+				StaticBinding::None(data) => data.clone(),
+			},
+			amount,
+		};
+
+		let serialized_data =
+			serde_json::to_string(&FlatCosmosMsg::<()>::Bank(send_msg.clone())).map_err(|_| ())?;
+
+		let mut total_bindings = Bindings::new();
+
+		if let StaticBinding::Some(binding) = to_address {
+			let offset = find_key_offset("\"to_address\"", &serialized_data).ok_or(())?;
+			total_bindings.push((offset, binding));
+		}
+
+		Ok(LateCall::new(total_bindings, serialized_data.into()))
+	}
+
+	/// Wrapper for `CosmosMsg::Bank(BankMsg::Burn)`
+	pub fn bank_burn(amount: Vec<Coin>) -> Result<Self, ()> {
+		Ok(LateCall::new(
+			Bindings::new(),
+			serde_json::to_vec(&FlatCosmosMsg::<()>::Bank(BankMsg::Burn { amount }))
+				.map_err(|_| ())?,
+		))
+	}
+
+	/// Wrapper for `CosmosMsg::Wasm(WasmMsg::Execute)`
 	pub fn wasm_execute<T: Serialize + Clone + Debug>(
 		contract_addr: StaticBinding<String>,
 		msg: IndexedBinding<T>,
 		funds: Vec<Coin>,
 	) -> Result<Self, ()> {
-		// TODO: Check uniqueness
 		let execute_msg = FlatWasmMsg::<T>::Execute {
 			contract_addr: match &contract_addr {
 				StaticBinding::Some(_) => Default::default(),
@@ -145,6 +184,7 @@ impl LateCall {
 		Ok(LateCall::new(total_bindings, serialized_data.into()))
 	}
 
+	/// Wrapper for `CosmosMsg::Wasm(WasmMsg::Instantiate)`
 	pub fn wasm_instantiate<T: Serialize + Clone + Debug>(
 		admin: Option<StaticBinding<String>>,
 		code_id: u64,
@@ -187,6 +227,7 @@ impl LateCall {
 		Ok(LateCall::new(total_bindings, serialized_data.into()))
 	}
 
+	/// Wrapper for `CosmosMsg::Wasm(WasmMsg::Migrate)`
 	pub fn wasm_migrate<T: Serialize + Clone + Debug>(
 		// Note that we don't use `StaticBinding` here because users can't migrate
 		// any of the binding contracts.
@@ -218,6 +259,7 @@ impl LateCall {
 		Ok(LateCall::new(total_bindings, serialized_data.into()))
 	}
 
+	/// Wrapper for `CosmosMsg::Wasm(WasmMsg::UpdateAdmin)`
 	pub fn wasm_update_admin<T: Serialize + Clone + Debug>(
 		// Note that we don't use `StaticBinding` here because users can't update
 		// any of the binding contracts.
@@ -245,6 +287,7 @@ impl LateCall {
 		Ok(LateCall::new(total_bindings, serialized_data.into()))
 	}
 
+	/// Wrapper for `CosmosMsg::Wasm(WasmMsg::ClearAdmin)`
 	pub fn wasm_clear_admin<T: Serialize + Clone + Debug>(
 		// Note that we don't use `StaticBinding` here because users can't clear
 		// any of the binding contracts.
@@ -290,45 +333,53 @@ where
 				CosmosMsg::Wasm(cosmwasm_std::WasmMsg::UpdateAdmin { contract_addr, admin }),
 			FlatCosmosMsg::Wasm(FlatWasmMsg::ClearAdmin { contract_addr }) =>
 				CosmosMsg::Wasm(cosmwasm_std::WasmMsg::ClearAdmin { contract_addr }),
-			_ => todo!(),
+			FlatCosmosMsg::Bank(msg) => CosmosMsg::Bank(msg),
 		};
 		Ok(m)
 	}
 }
 
-#[test]
-fn test_late_binding() {
-	#[derive(Debug, Clone, Serialize, Deserialize, Default)]
-	struct TestMsg {
-		part1: String,
-		part2: String,
-		part3: String,
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use alloc::vec;
+
+	#[test]
+	fn test_late_binding() {
+		#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+		struct TestMsg {
+			part1: String,
+			part2: String,
+			part3: String,
+		}
+
+		// {"part1":"","part2":"hello","part3":""}
+
+		let test_msg =
+			TestMsg { part1: String::new(), part2: String::from("hello"), part3: String::new() };
+		let msg = LateCall::wasm_execute(
+			StaticBinding::Some(BindingValue::Ip),
+			IndexedBinding::Some((
+				[(9, BindingValue::This), (36, BindingValue::Relayer)].into(),
+				test_msg.clone(),
+			)),
+			Vec::new(),
+		)
+		.unwrap();
+
+		assert_eq!(
+			msg.bindings,
+			vec![(36, BindingValue::Ip), (54, BindingValue::This), (81, BindingValue::Relayer)]
+		);
+
+		assert_eq!(
+			msg.encoded_call,
+			serde_json::to_vec(&FlatCosmosMsg::Wasm(FlatWasmMsg::Execute {
+				contract_addr: String::new(),
+				msg: test_msg,
+				funds: Vec::new()
+			}))
+			.unwrap()
+		);
 	}
-
-	// {"part1":"","part2":"hello","part3":""}
-
-	let test_msg =
-		TestMsg { part1: String::new(), part2: String::from("hello"), part3: String::new() };
-	let msg = LateCall::execute(
-		StaticBinding::Some(BindingValue::Ip),
-		IndexedBinding::Some((
-			vec![(9, BindingValue::This), (36, BindingValue::Relayer)],
-			test_msg.clone(),
-		)),
-	)
-	.unwrap();
-
-	assert_eq!(
-		msg.bindings,
-		vec![(28, BindingValue::Ip), (46, BindingValue::This), (73, BindingValue::Relayer)]
-	);
-
-	assert_eq!(
-		msg.encoded_call,
-		serde_json::to_vec(&FlatCosmosMsg::Execute(ExecuteMsg {
-			contract_addr: String::new(),
-			msg: test_msg
-		}))
-		.unwrap()
-	);
 }
