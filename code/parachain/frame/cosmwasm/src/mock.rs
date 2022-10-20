@@ -1,6 +1,9 @@
 use crate::*;
 
-use composable_traits::currency::{CurrencyFactory, RangeId};
+use composable_traits::{
+	currency::{CurrencyFactory, RangeId},
+	xcm::assets::XcmAssetLocation,
+};
 use frame_support::{
 	pallet_prelude::ConstU32,
 	parameter_types,
@@ -153,6 +156,7 @@ impl pallet_assets::Config for Test {
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type CurrencyValidator = ValidateCurrencyId;
+	type ForeignAssetId = XcmAssetLocation;
 }
 
 impl pallet_timestamp::Config for Test {
