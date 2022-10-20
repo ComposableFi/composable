@@ -106,38 +106,39 @@ const MetamaskAccountConnected = ({
 }: { handleEthereumDisconnect: () => void; connectedAddress: string }) => {
     return (
         <Box width="100%">
-              <Input
+            <Input
                 value={connectedAddress.toLowerCase()}
                 disabled
                 fullWidth
                 sx={{
-                  mt: 8,
+                    mt: 8,
                 }}
                 inputProps={{
-                  inputProps: {
-                    sx: {
-                      textAlign: "center",
+                    inputProps: {
+                        sx: {
+                            textAlign: "center",
+                        },
                     },
-                  },
                 }}
-              />
-              <Button
+            />
+            <Button
                 fullWidth
                 variant="text"
                 size="large"
                 onClick={() => handleEthereumDisconnect()}
                 sx={{ mt: 4 }}
-              >
+            >
                 Disconnect wallet
-              </Button>
+            </Button>
         </Box>
     )
 }
 
-const PolkadotAccounts = ({ accounts, onSelect, selectedAccount }: {
+const PolkadotAccounts = ({ accounts, onSelect, selectedAccount, disconnectWallet }: {
     accounts: ConnectedAccount[];
     onSelect: (account: ConnectedAccount) => void;
     selectedAccount?: ConnectedAccount;
+    disconnectWallet: (() => Promise<void>) | undefined
 }) => {
     const theme = useTheme();
     const [selectedActiveAccount, setSelectedActiveAccount] = useState<ConnectedAccount | undefined>(selectedAccount)
@@ -165,15 +166,22 @@ const PolkadotAccounts = ({ accounts, onSelect, selectedAccount }: {
                 ))}
 
             </Box>
-            <Box sx={{ width: "100%", marginTop: theme.spacing(2) }}>
-                <Button onClick={() => {
-                    if (selectedActiveAccount) {
-                        onSelect(selectedActiveAccount)
-                    }
-                }} fullWidth variant="contained" disabled={selectedAccount && selectedActiveAccount && selectedAccount.address === selectedActiveAccount.address}>
-                    Confirm Account
-                </Button>
-            </Box>
+
+            <Button onClick={() => {
+                if (selectedActiveAccount) {
+                    onSelect(selectedActiveAccount)
+                }
+            }} sx={{ marginTop: theme.spacing(2) }} fullWidth variant="contained" disabled={selectedAccount && selectedActiveAccount && selectedAccount.address === selectedActiveAccount.address}>
+                Confirm Account
+            </Button>
+            <Button onClick={() => {
+                if (disconnectWallet) {
+                    disconnectWallet();
+                }
+            }} sx={{ marginTop: theme.spacing(2) }} fullWidth>
+                Disconnect
+            </Button>
+
         </>
     )
 }
@@ -345,7 +353,7 @@ export const ConnectWalletModal: React.FC<WalletConnectModalProps> = ({
                 {/* When Ethereum connection is needed */}
                 {walletConnectStep === WalletConnectStep.SelectEthereumWallet && !isEthereumWalletActive ? ethereumWalletsList() : null}
                 {/* When account is available */}
-                {walletConnectStep === WalletConnectStep.SelectEthereumWallet && ethereumSelectedAccount ? <MetamaskAccountConnected 
+                {walletConnectStep === WalletConnectStep.SelectEthereumWallet && ethereumSelectedAccount ? <MetamaskAccountConnected
                     connectedAddress={ethereumSelectedAccount}
                     handleEthereumDisconnect={() => {
                         if (onDisconnectEthereum) {
@@ -359,7 +367,7 @@ export const ConnectWalletModal: React.FC<WalletConnectModalProps> = ({
                 {dotsamaExtensionStatus !== "connected" && walletConnectStep === WalletConnectStep.SelectedDotsamaWallet ? polkadotWalletsList() : null}
                 {/* We wallet selection is needed */}
                 {dotsamaExtensionStatus === "connected" && walletConnectStep === WalletConnectStep.SelectedDotsamaWallet ?
-                    <PolkadotAccounts accounts={polkadotAccounts}
+                    <PolkadotAccounts disconnectWallet={onDisconnectDotsamaWallet} accounts={polkadotAccounts}
                         selectedAccount={polkadotSelectedAccount}
                         onSelect={onSelectPolkadotAccount} /> : null}
 

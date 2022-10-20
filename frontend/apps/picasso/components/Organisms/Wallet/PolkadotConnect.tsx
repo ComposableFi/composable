@@ -1,14 +1,13 @@
 import { DEFI_CONFIG } from "@/defi/polkadot/config";
-import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
+import { useSelectedAccount } from "@/defi/polkadot/hooks";
 import { TokenId } from "tokens";
 import { useStore } from "@/stores/root";
 import { Box, useTheme } from "@mui/material";
 import { useState } from "react";
 import { Select } from "../../Atom";
 import { AccountIndicator } from "../../Molecules/AccountIndicator";
-import { ConnectButton } from "./ConnectButton";
 import { humanBalance } from "shared";
-import { useDotSamaContext, useEagerConnect, SupportedWalletId, useParachainApi, ConnectedAccount } from "substrate-react";
+import { useDotSamaContext, useEagerConnect, SupportedWalletId, useParachainApi, ConnectedAccount, DotSamaExtensionStatus } from "substrate-react";
 import { DEFAULT_EVM_ID, DEFAULT_NETWORK_ID } from "@/defi/polkadot/constants";
 import { ConnectWalletModal, NetworkId } from "wallet";
 import { ConnectorType, useBlockchainProvider, useConnector } from "bi-lib";
@@ -35,67 +34,50 @@ const ETHEREUM_WALLETS_SUPPORTED = [
   { name: "Metamask", icon: "/networks/metamask_wallet.svg", walletId: ConnectorType.MetaMask }
 ];
 
-const Status = () => {
-  const { extensionStatus, selectedAccount } = useDotSamaContext();
-  const { accounts } = usePicassoProvider();
+const Status = ({ label, isPolkadotActive, isEthereumActive }: { label: string; isPolkadotActive: boolean; isEthereumActive: boolean }) => {
   const theme = useTheme();
-  let label =
-    accounts.length && selectedAccount !== -1
-      ? accounts[selectedAccount].name
-      : "";
+
   const assets = useStore(({ substrateBalances }) => substrateBalances.assets);
   const { openPolkadotModal } = useStore(({ ui }) => ui);
   const [selectedAsset, setSelectedAsset] = useState<TokenId | undefined>(
     "pica"
   );
 
-  if (extensionStatus === "connected") {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: theme.spacing(1),
-        }}
-      >
-        <Select
-          value={selectedAsset}
-          setValue={setSelectedAsset}
-          options={DEFI_CONFIG.networkIds.map((networkId) => ({
-            value: assets[networkId].native.meta.id,
-            label: humanBalance(assets[networkId].native.balance),
-            icon: assets[networkId].native.meta.icon,
-          }))}
-          sx={{
-            "& .MuiOutlinedInput-root": {
-              height: "56px",
-              minWidth: "170px",
-            },
-          }}
-        />
-        <AccountIndicator
-          onClick={() => {
-            openPolkadotModal();
-          }}
-          network="polkadot"
-          label={label}
-        />
-      </Box>
-    );
-  }
-
   return (
-    <ConnectButton
-      onClick={() => {
-        openPolkadotModal();
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: theme.spacing(1),
       }}
-      imageSrc="/networks/dotsama_polkadot_not_connected.svg"
-      imageAlt="DotSama Polkadot"
     >
-      Connect DotSama
-    </ConnectButton>
+      {isPolkadotActive && <Select
+        value={selectedAsset}
+        setValue={setSelectedAsset}
+        options={DEFI_CONFIG.networkIds.map((networkId) => ({
+          value: assets[networkId].native.meta.id,
+          label: humanBalance(assets[networkId].native.balance),
+          icon: assets[networkId].native.meta.icon,
+        }))}
+        sx={{
+          "& .MuiOutlinedInput-root": {
+            height: "56px",
+            minWidth: "170px",
+          },
+        }}
+      />}
+      <AccountIndicator
+        isEthereumConnected={isEthereumActive}
+        onClick={() => {
+          openPolkadotModal();
+        }}
+        isPolkadotConnected={isPolkadotActive}
+        label={label}
+      />
+    </Box>
   );
+
 };
 
 
@@ -109,9 +91,13 @@ export const PolkadotConnect: React.FC<{}> = () => {
   const biLibConnector = useConnector(ConnectorType.MetaMask);
   useEagerConnect(DEFAULT_NETWORK_ID);
 
+  const isEthereumActive = biLibConnector.isActive ?? false
+  const isPolkadotActive = extensionStatus === "connected"
+  const label = isEthereumActive || isPolkadotActive ? "Connected" : "Wallets"
+
   return (
     <>
-      <Status />
+      <Status label={label} isEthereumActive={biLibConnector.isActive ?? false} isPolkadotActive={extensionStatus === "connected"} />
       {/* <MetamaskStatus /> */}
       <ConnectWalletModal
         onDisconnectDotsamaWallet={deactivate}
