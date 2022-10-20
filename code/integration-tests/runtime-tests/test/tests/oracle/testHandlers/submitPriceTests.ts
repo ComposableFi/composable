@@ -6,6 +6,8 @@ import { AssertionError, expect } from "chai";
 import { FrameSystemEventRecord } from "@polkadot/types/lookup";
 import { AnyNumber } from "@polkadot/types-codec/types";
 import BN from "bn.js";
+import { IEvent } from "@polkadot/types/types";
+import { AccountId32 } from "@polkadot/types/interfaces";
 
 /**
  * Tests tx.oracle.submitPrice with provided parameters that should succeed.
@@ -38,7 +40,7 @@ export async function txOracleSubmitPriceSuccessTestHandler(
   if (slashablePrice)
     slashedStakeBalanceBefore = <Option<u128>>await api.query.oracle.oracleStake(signers[0].publicKey);
 
-  const transactions: any[] = [];
+  const transactions: Promise<IEvent<[AccountId32, u128, u128], unknown>>[] = [];
   signers.forEach(function (signer, i) {
     if (i == 1 && slashablePrice) {
       transactions.push(
