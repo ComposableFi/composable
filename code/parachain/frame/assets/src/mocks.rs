@@ -100,6 +100,7 @@ impl Config for Test {
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type CurrencyValidator = ValidateCurrencyId;
+	type ForeignAssetId = XcmAssetLocation;
 }
 
 parameter_types! {
