@@ -90,7 +90,7 @@ pub mod pallet {
 		},
 		transactional, BoundedBTreeMap, PalletId, RuntimeDebug,
 	};
-	use sp_arithmetic::fixed_point::FixedU64;
+	use sp_arithmetic::{fixed_point::FixedU64, FixedPointOperand};
 
 	use composable_maths::dex::{
 		constant_product::compute_deposit_lp, price::compute_initial_price_cumulative,
@@ -256,7 +256,7 @@ pub mod pallet {
 			+ Ord;
 
 		/// Type representing the Balance of an account.
-		type Balance: BalanceLike + SafeSub;
+		type Balance: BalanceLike + SafeSub + Zero + FixedPointOperand;
 
 		/// An isomorphism: Balance<->u128
 		type Convert: Convert<u128, BalanceOf<Self>> + Convert<BalanceOf<Self>, u128>;
@@ -709,10 +709,8 @@ pub mod pallet {
 				PriceRatio::NotSwapped => pair,
 				PriceRatio::Swapped => pair.swap(),
 			};
-			let pool_base_asset_under_management =
-				T::Convert::convert(T::Assets::balance(pair.base, &pool_account));
-			let pool_quote_asset_under_management =
-				T::Convert::convert(T::Assets::balance(pair.quote, &pool_account));
+			let pool_base_asset_under_management = T::Assets::balance(pair.base, &pool_account);
+			let pool_quote_asset_under_management = T::Assets::balance(pair.quote, &pool_account);
 
 			ensure!(
 				pool_base_asset_under_management > Zero::zero(),
