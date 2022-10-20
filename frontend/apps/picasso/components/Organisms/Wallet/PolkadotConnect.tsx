@@ -99,65 +99,22 @@ const Status = () => {
 };
 
 
-const MetamaskStatus = () => {
-  const { openMetamaskModal } = useStore(({ ui }) => ui);
-  const { isActive } = useConnector(ConnectorType.MetaMask);
-  const { account } = useBlockchainProvider(DEFAULT_EVM_ID);
-  const address = account
-    ? account.slice(0, 6) + "..." + account.slice(-4)
-    : "-";
-
-  const theme = useTheme();
-  if (isActive) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: theme.spacing(1),
-        }}
-      >
-        <AccountIndicator
-          onClick={() => {
-            openMetamaskModal();
-          }}
-          network="metamask"
-          label={address}
-        />
-      </Box>
-    );
-  }
-
-  return (
-    <ConnectButton
-      onClick={() => {
-        openMetamaskModal();
-      }}
-      imageSrc="/networks/mainnet_not_connected.svg"
-      imageAlt="Ethereum Mainnet"
-    >
-      Connect EVM
-    </ConnectButton>
-  );
-};
-
 export const PolkadotConnect: React.FC<{}> = () => {
+  const theme = useTheme();
   const { deactivate, extensionStatus, activate, setSelectedAccount } = useDotSamaContext();
+  const { closePolkadotModal, isPolkadotModalOpen } = useStore(({ ui }) => ui);
   const { accounts } = useParachainApi(DEFAULT_NETWORK_ID);
+  const { account } = useBlockchainProvider(DEFAULT_EVM_ID);
   const connectedAccount = useSelectedAccount();
   const biLibConnector = useConnector(ConnectorType.MetaMask);
-  const { account } = useBlockchainProvider(DEFAULT_EVM_ID);
-  const theme = useTheme();
-  const hasTriedEagerConnect = useEagerConnect(DEFAULT_NETWORK_ID);
-  const { closePolkadotModal, isPolkadotModalOpen } =
-    useStore(({ ui }) => ui);
+  useEagerConnect(DEFAULT_NETWORK_ID);
 
   return (
     <>
       <Status />
       {/* <MetamaskStatus /> */}
       <ConnectWalletModal
+        onDisconnectDotsamaWallet={deactivate}
         onConnectPolkadotWallet={activate as any}
         networks={BLOCKCHAIN_NETWORKS_SUPPORTED}
         supportedPolkadotWallets={POLKADOT_WALLETS_SUPPORTED}

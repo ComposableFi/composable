@@ -20,7 +20,12 @@ export enum NetworkId {
     Ethereum
 }
 
-const ConnectListItem = ({ icon, name, onClick, id }: { id: SupportedWalletId | ConnectorType | NetworkId, icon: string; name: string; onClick?: Function }) => {
+const ConnectListItem = ({ icon, name, onClick, id }: {
+    id: SupportedWalletId | ConnectorType | NetworkId;
+    icon: string;
+    name: string;
+    onClick?: Function
+}) => {
     const theme = useTheme();
     return (<Button
         sx={{
@@ -179,6 +184,7 @@ type WalletConnectModalProps = {
     onConnectEthereumWallet: (walletId: ConnectorType) => Promise<any>;
     onSelectPolkadotAccount: (account: ConnectedAccount) => void;
     onDisconnectEthereum: (...args: unknown[]) => Promise<void> | void;
+    onDisconnectDotsamaWallet: (() => Promise<void>) | undefined;
     supportedPolkadotWallets: Array<{ walletId: SupportedWalletId, icon: string, name: string }>;
     supportedEthereumWallets: Array<{ walletId: ConnectorType, icon: string, name: string }>;
     networks: Array<{ icon: string, name: string; networkId: NetworkId }>;
@@ -232,6 +238,7 @@ export const ConnectWalletModal: React.FC<WalletConnectModalProps> = ({
     onConnectEthereumWallet,
     onSelectPolkadotAccount,
     onDisconnectEthereum,
+    onDisconnectDotsamaWallet,
     ethereumSelectedAccount,
     isEthereumWalletActive,
     dotsamaExtensionStatus,
@@ -335,9 +342,9 @@ export const ConnectWalletModal: React.FC<WalletConnectModalProps> = ({
                 {walletConnectStep === WalletConnectStep.SelectNetwork ? networksList() : null}
 
                 {/* Ethereum Steps */}
-                {/* We connection is needed */}
+                {/* When Ethereum connection is needed */}
                 {walletConnectStep === WalletConnectStep.SelectEthereumWallet && !isEthereumWalletActive ? ethereumWalletsList() : null}
-                {/* We account is available, TODO: show ETH account and disconnection */}
+                {/* When account is available */}
                 {walletConnectStep === WalletConnectStep.SelectEthereumWallet && ethereumSelectedAccount ? <MetamaskAccountConnected 
                     connectedAddress={ethereumSelectedAccount}
                     handleEthereumDisconnect={() => {
