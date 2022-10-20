@@ -1,5 +1,4 @@
 import { SettingsModal } from "@/components/Organisms/Settings/SettingsModal";
-import * as React from "react";
 import { useState } from "react";
 import { Settings } from "@mui/icons-material";
 import { Button } from "@mui/material";

@@ -3,11 +3,11 @@ import { DotsamaContext } from "../DotSamaContext";
 import { ParachainId } from "../types";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 
-export const useSelectedAccount = (
+export const useConnectedAccounts = (
   parachainId: ParachainId
-): InjectedAccountWithMeta | undefined => {
-  const { selectedAccount, connectedAccounts } =
+): InjectedAccountWithMeta[] => {
+  const { connectedAccounts } =
     React.useContext(DotsamaContext);
 
-  return selectedAccount !== -1 ? connectedAccounts[parachainId][selectedAccount] : undefined;
+  return connectedAccounts[parachainId] ? connectedAccounts[parachainId] : [];
 };

@@ -16,6 +16,7 @@ import { crowdLoanSignableMessage } from "@/utils/crowdloanRewards";
 import { useRouter } from "next/router";
 import { ConnectorType, useBlockchainProvider, useConnector } from "bi-lib";
 import {
+  useConnectedAccounts,
   useDotSamaContext,
   useExecutor,
   usePendingExtrinsic,
@@ -36,7 +37,7 @@ import {
   useCrowdloanRewardsEthereumAddressAssociatedAccount,
   useCrowdloanRewardsHasStarted,
 } from "@/stores/defi/polkadot/crowdloanRewards/hooks";
-import { DEFAULT_EVM_ID, APP_NAME } from "@/defi/polkadot/constants";
+import { DEFAULT_EVM_ID, APP_NAME, DEFAULT_NETWORK_ID } from "@/defi/polkadot/constants";
 
 const ERROR_MESSAGES = {
   KSM_WALLET_NOT_CONNECTED: {
@@ -61,7 +62,8 @@ export const ClaimLoanPage = () => {
   const { isActive } = useConnector(ConnectorType.MetaMask);
   const { signer, account } = useBlockchainProvider(DEFAULT_EVM_ID);
   const { extensionStatus } = useDotSamaContext();
-  const { parachainApi, accounts } = usePicassoProvider();
+  const { parachainApi } = usePicassoProvider();
+  const accounts = useConnectedAccounts(DEFAULT_NETWORK_ID);
   const { initialPayment } = useCrowdloanRewardsSlice();
   const executor = useExecutor();
   const selectedAccount = useSelectedAccount();
@@ -319,7 +321,7 @@ export const ClaimLoanPage = () => {
                 isClaiming={isPendingAssociate || isPendingClaim}
                 SS58Address={
                   ethAssociatedOrSelectedAccount
-                    ? `${ethAssociatedOrSelectedAccount.address} (${ethAssociatedOrSelectedAccount.name})`
+                    ? `${ethAssociatedOrSelectedAccount.address} (${ethAssociatedOrSelectedAccount.meta.name ?? ""})`
                     : "-"
                 }
                 disabled={
@@ -335,7 +337,7 @@ export const ClaimLoanPage = () => {
                 readonlyAvailableToClaim
                 readonlyTotalPicaVested
                 picassoAccountName={
-                  selectedAccount ? selectedAccount.name : "-"
+                  selectedAccount && selectedAccount.meta.name  ? selectedAccount.meta.name : "-"
                 }
                 readonlySS8Address
                 onClaim={operation}
@@ -356,7 +358,7 @@ export const ClaimLoanPage = () => {
                 readonlyAvailableToClaim
                 readonlyTotalPicaVested
                 picassoAccountName={
-                  selectedAccount ? selectedAccount.name : "-"
+                  selectedAccount && selectedAccount.meta.name ? selectedAccount.meta.name : "-"
                 }
                 readonlySS8Address
                 onClaim={operation}

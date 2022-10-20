@@ -7,11 +7,11 @@ import { useState } from "react";
 import { Select } from "../../Atom";
 import { AccountIndicator } from "../../Molecules/AccountIndicator";
 import { humanBalance } from "shared";
-import { useDotSamaContext, useEagerConnect, SupportedWalletId, useParachainApi, ConnectedAccount, DotSamaExtensionStatus } from "substrate-react";
+import { useDotSamaContext, useEagerConnect, SupportedWalletId, useConnectedAccounts } from "substrate-react";
 import { DEFAULT_EVM_ID, DEFAULT_NETWORK_ID } from "@/defi/polkadot/constants";
 import { ConnectWalletModal, NetworkId } from "wallet";
 import { ConnectorType, useBlockchainProvider, useConnector } from "bi-lib";
-
+import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 const BLOCKCHAIN_NETWORKS_SUPPORTED = [
   { name: "Polkadot", icon: "/networks/polkadot_js.svg", networkId: NetworkId.Polkadot },
   { name: "Ethereum", icon: "/networks/mainnet.svg", networkId: NetworkId.Ethereum }
@@ -85,7 +85,7 @@ export const PolkadotConnect: React.FC<{}> = () => {
   const theme = useTheme();
   const { deactivate, extensionStatus, activate, setSelectedAccount } = useDotSamaContext();
   const { closePolkadotModal, isPolkadotModalOpen } = useStore(({ ui }) => ui);
-  const { accounts } = useParachainApi(DEFAULT_NETWORK_ID);
+  const accounts = useConnectedAccounts(DEFAULT_NETWORK_ID);
   const { account } = useBlockchainProvider(DEFAULT_EVM_ID);
   const connectedAccount = useSelectedAccount();
   const biLibConnector = useConnector(ConnectorType.MetaMask);
@@ -114,7 +114,7 @@ export const PolkadotConnect: React.FC<{}> = () => {
         dotsamaExtensionStatus={extensionStatus}
         polkadotSelectedAccount={connectedAccount}
         onDisconnectEthereum={biLibConnector.deactivate}
-        onSelectPolkadotAccount={(account: ConnectedAccount) => {
+        onSelectPolkadotAccount={(account: InjectedAccountWithMeta) => {
           const index = accounts.findIndex(_account => account.address === _account.address);
           if (index >= 0 && setSelectedAccount) {
             setSelectedAccount(index)

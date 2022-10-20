@@ -1,9 +1,7 @@
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { SubstrateNetworkId } from "@/defi/polkadot/types";
 import { callbackGate, getExistentialDeposit, toTokenUnitsBN } from "shared";
-
 import { useCallback, useEffect } from "react";
-
 import { useStore } from "@/stores/root";
 import { ApiPromise } from "@polkadot/api";
 import {
@@ -11,7 +9,7 @@ import {
   subscribePicassoBalanceByAssetId
 } from "@/defi/polkadot/pallets/Balance";
 import BigNumber from "bignumber.js";
-import { useDotSamaContext, useEagerConnect } from "substrate-react";
+import { ParachainId, RelayChainId, useDotSamaContext, useEagerConnect } from "substrate-react";
 
 export async function subscribeNativeBalance(
   account: string,
@@ -99,7 +97,8 @@ const PolkadotBalancesUpdater = () => {
     extensionStatus,
     selectedAccount,
     parachainProviders,
-    relaychainProviders
+    relaychainProviders,
+    connectedAccounts
   } = useDotSamaContext();
 
   const picassoBalanceSubscriber = useCallback(
@@ -133,9 +132,9 @@ const PolkadotBalancesUpdater = () => {
     if (selectedAccount !== -1) {
       Object.entries({ ...parachainProviders, ...relaychainProviders }).forEach(
         ([chainId, chain]) => {
-          if (chain.accounts[selectedAccount] && chain.parachainApi) {
+          if (connectedAccounts[chainId as ParachainId | RelayChainId] && chain.parachainApi) {
             subscribeNativeBalance(
-              chain.accounts[selectedAccount].address,
+              connectedAccounts[chainId as ParachainId | RelayChainId][selectedAccount].address,
               chain.parachainApi,
               chainId,
               updateBalance
@@ -169,10 +168,10 @@ const PolkadotBalancesUpdater = () => {
                 picassoBalanceSubscriber(chain, asset, chainId);
                 break;
               case "karura":
-                if (chain.accounts[selectedAccount]) {
+                if (connectedAccounts[chainId][selectedAccount]) {
                   fetchKaruraBalanceByAssetId(
                     api,
-                    chain.accounts[selectedAccount].address,
+                    connectedAccounts[chainId][selectedAccount].address,
                     String(asset.meta.symbol)
                   ).then(balance => {
                     updateAssetBalance({

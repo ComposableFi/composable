@@ -1,4 +1,4 @@
-import { ConnectedAccount, DotSamaExtensionStatus, SupportedWalletId } from "substrate-react";
+import { DotSamaExtensionStatus, SupportedWalletId } from "substrate-react";
 import { alpha, Box, Button, IconButton, Input, Typography, useTheme } from "@mui/material";
 import { useState, useCallback } from "react";
 import { ConnectorType } from "bi-lib";
@@ -7,6 +7,7 @@ import { Modal } from "./Modal";
 import Identicon from '@polkadot/react-identicon';
 import Image from "next/image";
 import React from "react";
+import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 
 enum WalletConnectStep {
     SelectNetwork,
@@ -55,8 +56,8 @@ const ConnectListItem = ({ icon, name, onClick, id }: {
 }
 
 const PolkadotAccount = ({ account, onSelect, isSelected, identiconTheme = "polkadot" }: {
-    account: ConnectedAccount;
-    onSelect: (account: ConnectedAccount) => void;
+    account: InjectedAccountWithMeta;
+    onSelect: (account: InjectedAccountWithMeta) => void;
     isSelected: boolean;
     identiconTheme?: "substrate" | "polkadot" | "ethereum" | "jdenticon"
 }) => {
@@ -91,7 +92,7 @@ const PolkadotAccount = ({ account, onSelect, isSelected, identiconTheme = "polk
                 />
             </Box>
             <Box>
-                <Typography textAlign={"left"}>{account.name}</Typography>
+                <Typography textAlign={"left"}>{account.meta.name ?? account.address}</Typography>
                 <Typography sx={{ display: { xs: 'none', sm: 'block' } }} textAlign={"left"} variant="inputLabel" color="text.secondary">
                     {account.address}
                 </Typography>
@@ -135,13 +136,13 @@ const MetamaskAccountConnected = ({
 }
 
 const PolkadotAccounts = ({ accounts, onSelect, selectedAccount, disconnectWallet }: {
-    accounts: ConnectedAccount[];
-    onSelect: (account: ConnectedAccount) => void;
-    selectedAccount?: ConnectedAccount;
+    accounts: InjectedAccountWithMeta[];
+    onSelect: (account: InjectedAccountWithMeta) => void;
+    selectedAccount?: InjectedAccountWithMeta;
     disconnectWallet: (() => Promise<void>) | undefined
 }) => {
     const theme = useTheme();
-    const [selectedActiveAccount, setSelectedActiveAccount] = useState<ConnectedAccount | undefined>(selectedAccount)
+    const [selectedActiveAccount, setSelectedActiveAccount] = useState<InjectedAccountWithMeta | undefined>(selectedAccount)
     return (
         <>
             <Box
@@ -190,14 +191,14 @@ type WalletConnectModalProps = {
     closeWalletConnectModal: () => void;
     onConnectPolkadotWallet: (walletId?: SupportedWalletId, selectedDefaultAccount?: boolean) => Promise<any[] | undefined>;
     onConnectEthereumWallet: (walletId: ConnectorType) => Promise<any>;
-    onSelectPolkadotAccount: (account: ConnectedAccount) => void;
+    onSelectPolkadotAccount: (account: InjectedAccountWithMeta) => void;
     onDisconnectEthereum: (...args: unknown[]) => Promise<void> | void;
     onDisconnectDotsamaWallet: (() => Promise<void>) | undefined;
     supportedPolkadotWallets: Array<{ walletId: SupportedWalletId, icon: string, name: string }>;
     supportedEthereumWallets: Array<{ walletId: ConnectorType, icon: string, name: string }>;
     networks: Array<{ icon: string, name: string; networkId: NetworkId }>;
-    polkadotAccounts: Array<ConnectedAccount>;
-    polkadotSelectedAccount: ConnectedAccount | undefined;
+    polkadotAccounts: Array<InjectedAccountWithMeta>;
+    polkadotSelectedAccount: InjectedAccountWithMeta | undefined;
     ethereumSelectedAccount?: string;
     isOpen: boolean;
     dotsamaExtensionStatus: DotSamaExtensionStatus;
@@ -228,12 +229,12 @@ function getDescription(walletStep: WalletConnectStep): string {
     }
 }
 
-function takeOneStepBack(walletStep: WalletConnectStep): WalletConnectStep {
+function takeOneStepBack(walletStep: WalletConnectStep, dotsamaExtensionStatus: DotSamaExtensionStatus): WalletConnectStep {
     switch (walletStep) {
         case WalletConnectStep.SelectNetwork:
             return WalletConnectStep.SelectNetwork;
         case WalletConnectStep.SelectDotsamaAccount:
-            return WalletConnectStep.SelectedDotsamaWallet;
+            return dotsamaExtensionStatus === "connected" ? WalletConnectStep.SelectNetwork : WalletConnectStep.SelectedDotsamaWallet;
         case WalletConnectStep.SelectedDotsamaWallet:
         case WalletConnectStep.SelectEthereumWallet:
             return WalletConnectStep.SelectNetwork;
@@ -269,11 +270,12 @@ export const ConnectWalletModal: React.FC<WalletConnectModalProps> = ({
                 icon={network.icon}
                 onClick={(networkId: NetworkId) => {
                     networkId === NetworkId.Ethereum ? setWalletConnectStep(WalletConnectStep.SelectEthereumWallet) :
+                        dotsamaExtensionStatus === "connected" ? setWalletConnectStep(WalletConnectStep.SelectDotsamaAccount) : 
                         setWalletConnectStep(WalletConnectStep.SelectedDotsamaWallet)
                 }}
             />
         ))
-    }, [networks]);
+    }, [networks, dotsamaExtensionStatus]);
 
     const polkadotWalletsList = useCallback(() => {
         return supportedPolkadotWallets.map(wallet => (
@@ -334,7 +336,7 @@ export const ConnectWalletModal: React.FC<WalletConnectModalProps> = ({
                 >
                     {walletConnectStep !== WalletConnectStep.SelectNetwork &&
                         <IconButton sx={{ marginRight: "1rem" }} color="primary" onClick={() => {
-                            setWalletConnectStep(takeOneStepBack(walletConnectStep))
+                            setWalletConnectStep(takeOneStepBack(walletConnectStep, dotsamaExtensionStatus))
                         }}>
                             <ChevronLeft />
                         </IconButton>}
@@ -366,8 +368,14 @@ export const ConnectWalletModal: React.FC<WalletConnectModalProps> = ({
                 {/* We connection is needed */}
                 {dotsamaExtensionStatus !== "connected" && walletConnectStep === WalletConnectStep.SelectedDotsamaWallet ? polkadotWalletsList() : null}
                 {/* We wallet selection is needed */}
-                {dotsamaExtensionStatus === "connected" && walletConnectStep === WalletConnectStep.SelectedDotsamaWallet ?
-                    <PolkadotAccounts disconnectWallet={onDisconnectDotsamaWallet} accounts={polkadotAccounts}
+                {dotsamaExtensionStatus === "connected" && (walletConnectStep === WalletConnectStep.SelectedDotsamaWallet || walletConnectStep === WalletConnectStep.SelectDotsamaAccount) ?
+                    <PolkadotAccounts disconnectWallet={async () => {
+                        if (onDisconnectDotsamaWallet) {
+                            onDisconnectDotsamaWallet().then((_x) => {
+                                setWalletConnectStep(WalletConnectStep.SelectedDotsamaWallet)
+                            })
+                        }
+                    }} accounts={polkadotAccounts}
                         selectedAccount={polkadotSelectedAccount}
                         onSelect={onSelectPolkadotAccount} /> : null}
 
