@@ -4,7 +4,7 @@ use crate::{
 	weights::SubstrateWeight,
 };
 
-use composable_traits::defi::DeFiComposableConfig;
+use composable_traits::{defi::DeFiComposableConfig, xcm::assets::XcmAssetLocation};
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{ConstU32, EnsureOneOf, Everything},
@@ -156,6 +156,7 @@ impl pallet_assets::Config for Runtime {
 	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
 	type GovernanceRegistry = GovernanceRegistry;
 	type CurrencyValidator = ValidateCurrencyId;
+	type ForeignAssetId = XcmAssetLocation;
 }
 
 impl pallet_currency_factory::Config for Runtime {
