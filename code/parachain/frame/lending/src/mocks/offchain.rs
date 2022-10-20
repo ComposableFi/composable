@@ -37,6 +37,7 @@ use sp_runtime::{
 };
 
 use super::authority_id_wrapper::*;
+use composable_traits::xcm::assets::XcmAssetLocation;
 use sp_runtime::testing::{Block, Digest, Header as HeaderType, TestSignature, TestXt, H256};
 
 pub struct CustomOnRuntimeUpgrade;
@@ -257,6 +258,7 @@ impl pallet_assets::Config for Runtime {
 	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
 	type GovernanceRegistry = NoopRegistry;
 	type CurrencyValidator = ValidateCurrencyId;
+	type ForeignAssetId = XcmAssetLocation;
 }
 
 parameter_types! {

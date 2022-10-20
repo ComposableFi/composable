@@ -161,6 +161,7 @@ impl pallet_assets::Config for Runtime {
 	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
 	type GovernanceRegistry = GovernanceRegistry;
 	type CurrencyValidator = ValidateCurrencyId;
+	type ForeignAssetId = XcmAssetLocation;
 }
 
 impl pallet_currency_factory::Config for Runtime {
