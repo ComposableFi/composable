@@ -1550,9 +1550,8 @@ mod stake_proptests {
 
 				process_and_progress_blocks::<StakingRewards, Test>(1);
 
-				let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
 				let mint_amount = amount + existential_deposit;
-				mint_assets([staker], [staked_asset_id], mint_amount);
+				mint_assets([staker], [PICA::ID], mint_amount);
 
 				prop_assert_ok!(StakingRewards::stake(
 					owner,
@@ -1583,9 +1582,8 @@ mod stake_proptests {
 				let pool_id = PICA::ID;
 				let duration_preset = ONE_HOUR;
 
-				let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
 				let mint_amount = amount * 2 + existential_deposit;
-				mint_assets([staker], [staked_asset_id], mint_amount);
+				mint_assets([staker], [PICA::ID], mint_amount);
 
 				prop_assert_noop!(
 					StakingRewards::stake(
@@ -1629,8 +1627,7 @@ mod split_proptests {
 
 				process_and_progress_blocks::<StakingRewards, Test>(1);
 
-				let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
-				mint_assets([staker], [staked_asset_id], PICA::units(200));
+				mint_assets([staker], [PICA::ID], PICA::units(200));
 
 				let original_fnft_instance_id =
 					stake_and_assert::<Test, runtime::Event>(staker, pool_id, staking_amount, duration_preset);
@@ -1664,8 +1661,7 @@ mod split_proptests {
 
 				process_and_progress_blocks::<StakingRewards, Test>(1);
 
-				let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
-				mint_assets([staker], [staked_asset_id], PICA::units(200));
+				mint_assets([staker], [PICA::ID], PICA::units(200));
 
 				let original_fnft_instance_id =
 					stake_and_assert::<Test, runtime::Event>(staker, pool_id, staking_amount, duration_preset);
@@ -1702,8 +1698,7 @@ mod split_proptests {
 
 				process_and_progress_blocks::<StakingRewards, Test>(1);
 
-				let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
-				mint_assets([staker], [staked_asset_id], PICA::units(200));
+				mint_assets([staker], [PICA::ID], PICA::units(200));
 
 				let original_fnft_instance_id =
 					stake_and_assert::<Test, runtime::Event>(staker, pool_id, staking_amount, duration_preset);
@@ -1747,8 +1742,7 @@ mod extend_proptests {
 
 				process_and_progress_blocks::<StakingRewards, Test>(1);
 
-				let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
-				mint_assets([staker], [staked_asset_id], PICA::units(1_000_000));
+				mint_assets([staker], [PICA::ID], PICA::units(1_000_000));
 
 				let original_fnft_instance_id =
 					stake_and_assert::<Test, runtime::Event>(staker, pool_id, staking_amount, duration_preset);
