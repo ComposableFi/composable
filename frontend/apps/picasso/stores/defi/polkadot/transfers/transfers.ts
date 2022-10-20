@@ -167,7 +167,7 @@ export const createTransfersSlice: StoreSlice<TransfersSlice> = (set, get) => ({
     getFeeToken: (): TokenMetadata => {
       const tokens = get().substrateTokens.tokens;
       const tokenId = get().transfers.feeToken;
-      return tokens[tokenId]
+      return tokens[tokenId];
     },
     getTransferTokenBalance: () => {
       const from = get().transfers.networks.from;
