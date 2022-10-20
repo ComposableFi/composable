@@ -46,7 +46,7 @@
 //! Note that `1` is the identifier of the asset `PICA`. Then, users will call
 //! `WasmMsg::Execute` wrapper `wasm_execute` to create the correct payload to pass to
 //! use in the `Call` instruction:
-//! ```no_run
+//! ```ignore
 //! let payload_bindings: OrderedBindings = [(13, BindingValue::This)].into();
 //! let cw20_transfer_msg = Cw20ExecuteMsg::Transfer {
 //!     // Make sure to leave late-binded fields empty
@@ -176,10 +176,7 @@ impl LateCall {
 
 impl LateCall {
 	/// Wrapper for `CosmosMsg::Bank(BankMsg::Send)`
-	pub fn bank_send<T: Serialize + Clone + Debug>(
-		to_address: StaticBinding<String>,
-		amount: Vec<Coin>,
-	) -> Result<Self, ()> {
+	pub fn bank_send(to_address: StaticBinding<String>, amount: Vec<Coin>) -> Result<Self, ()> {
 		let send_msg = BankMsg::Send {
 			to_address: match &to_address {
 				StaticBinding::Some(_) => Default::default(),
@@ -324,13 +321,13 @@ impl LateCall {
 	}
 
 	/// Wrapper for `CosmosMsg::Wasm(WasmMsg::UpdateAdmin)`
-	pub fn wasm_update_admin<T: Serialize + Clone + Debug>(
+	pub fn wasm_update_admin(
 		// Note that we don't use `StaticBinding` here because users can't update
 		// any of the binding contracts.
 		contract_addr: String,
 		admin: StaticBinding<String>,
 	) -> Result<Self, ()> {
-		let migrate_msg = FlatWasmMsg::<T>::UpdateAdmin {
+		let migrate_msg = FlatWasmMsg::<()>::UpdateAdmin {
 			contract_addr,
 			admin: match &admin {
 				StaticBinding::Some(_) => Default::default(),
@@ -352,12 +349,12 @@ impl LateCall {
 	}
 
 	/// Wrapper for `CosmosMsg::Wasm(WasmMsg::ClearAdmin)`
-	pub fn wasm_clear_admin<T: Serialize + Clone + Debug>(
+	pub fn wasm_clear_admin(
 		// Note that we don't use `StaticBinding` here because users can't clear
 		// any of the binding contracts.
 		contract_addr: String,
 	) -> Result<Self, ()> {
-		let clear_admin_msg = FlatWasmMsg::<T>::ClearAdmin { contract_addr };
+		let clear_admin_msg = FlatWasmMsg::<()>::ClearAdmin { contract_addr };
 
 		let serialized_data =
 			serde_json::to_string(&FlatCosmosMsg::Wasm(clear_admin_msg)).map_err(|_| ())?;
@@ -408,25 +405,33 @@ mod tests {
 	use super::*;
 	use alloc::vec;
 
-	#[test]
-	fn test_late_binding() {
-		#[derive(Debug, Clone, Serialize, Deserialize, Default)]
-		struct TestMsg {
-			part1: String,
-			part2: String,
-			part3: String,
-		}
+	#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+	struct TestMsg {
+		part1: String,
+		part2: String,
+		part3: String,
+	}
 
+	fn create_dummy_data() -> (TestMsg, IndexedBinding<TestMsg>) {
 		// {"part1":"","part2":"hello","part3":""}
-
 		let test_msg =
 			TestMsg { part1: String::new(), part2: String::from("hello"), part3: String::new() };
-		let msg = LateCall::wasm_execute(
-			StaticBinding::Some(BindingValue::Ip),
+
+		(
+			test_msg.clone(),
 			IndexedBinding::Some((
 				[(9, BindingValue::This), (36, BindingValue::Relayer)].into(),
-				test_msg.clone(),
+				test_msg,
 			)),
+		)
+	}
+
+	#[test]
+	fn test_execute() {
+		let (test_msg, payload_bindings) = create_dummy_data();
+		let msg = LateCall::wasm_execute(
+			StaticBinding::Some(BindingValue::Ip),
+			payload_bindings,
 			Vec::new(),
 		)
 		.unwrap();
@@ -442,6 +447,125 @@ mod tests {
 				contract_addr: String::new(),
 				msg: test_msg,
 				funds: Vec::new()
+			}))
+			.unwrap()
+		);
+	}
+
+	#[test]
+	fn test_instantiate() {
+		let (test_msg, payload_bindings) = create_dummy_data();
+		let msg = LateCall::wasm_instantiate(
+			Some(StaticBinding::Some(BindingValue::Asset(1))),
+			1,
+			payload_bindings,
+			Vec::new(),
+			"cool label".into(),
+		)
+		.unwrap();
+
+		assert_eq!(
+			msg.bindings,
+			vec![
+				(32, BindingValue::Asset(1)),
+				(62, BindingValue::This),
+				(89, BindingValue::Relayer)
+			]
+		);
+
+		assert_eq!(
+			msg.encoded_call,
+			serde_json::to_vec(&FlatCosmosMsg::Wasm(FlatWasmMsg::Instantiate {
+				admin: Some(Default::default()),
+				code_id: 1,
+				msg: test_msg,
+				funds: Vec::new(),
+				label: "cool label".into()
+			}))
+			.unwrap()
+		);
+	}
+
+	#[test]
+	fn test_migrate() {
+		let (test_msg, payload_bindings) = create_dummy_data();
+		let msg = LateCall::wasm_migrate("migrate_addr".into(), 2, payload_bindings).unwrap();
+
+		assert_eq!(msg.bindings, vec![(82, BindingValue::This), (109, BindingValue::Relayer)]);
+
+		assert_eq!(
+			msg.encoded_call,
+			serde_json::to_vec(&FlatCosmosMsg::Wasm(FlatWasmMsg::Migrate {
+				contract_addr: "migrate_addr".into(),
+				new_code_id: 2,
+				msg: test_msg
+			}))
+			.unwrap()
+		);
+	}
+
+	#[test]
+	fn test_update_admin() {
+		let msg = LateCall::wasm_update_admin(
+			"contract_addr".into(),
+			StaticBinding::Some(BindingValue::This),
+		)
+		.unwrap();
+
+		assert_eq!(msg.bindings, vec![(65, BindingValue::This)]);
+
+		assert_eq!(
+			msg.encoded_call,
+			serde_json::to_vec(&FlatCosmosMsg::<()>::Wasm(FlatWasmMsg::UpdateAdmin {
+				contract_addr: "contract_addr".into(),
+				admin: Default::default()
+			}))
+			.unwrap()
+		);
+	}
+
+	#[test]
+	fn test_clear_admin() {
+		let msg = LateCall::wasm_clear_admin("contract_addr".into()).unwrap();
+
+		assert!(msg.bindings.is_empty());
+
+		assert_eq!(
+			msg.encoded_call,
+			serde_json::to_vec(&FlatCosmosMsg::<()>::Wasm(FlatWasmMsg::ClearAdmin {
+				contract_addr: "contract_addr".into(),
+			}))
+			.unwrap()
+		);
+	}
+
+	#[test]
+	fn test_bank_send() {
+		let msg = LateCall::bank_send(StaticBinding::Some(BindingValue::This), Default::default())
+			.unwrap();
+
+		assert_eq!(msg.bindings, vec![(30, BindingValue::This)]);
+
+		assert_eq!(
+			msg.encoded_call,
+			serde_json::to_vec(&FlatCosmosMsg::<()>::Bank(BankMsg::Send {
+				to_address: Default::default(),
+				amount: Default::default()
+			}))
+			.unwrap()
+		);
+	}
+
+	#[test]
+	fn test_bank_burn() {
+		let msg = LateCall::bank_burn(Default::default()).unwrap();
+
+		assert!(msg.bindings.is_empty());
+
+		assert_eq!(
+			msg.encoded_call,
+			serde_json::to_vec(&FlatCosmosMsg::<()>::Bank(BankMsg::Burn {
+				amount: Default::default()
 			}))
 			.unwrap()
 		);
