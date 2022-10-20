@@ -154,26 +154,19 @@ export async function verifyPositionSplitting(
   const stakeInfo2After = <Option<ComposableTraitsStakingStake>>(
     await api.query.stakingRewards.stakes(splitAIndex, splitBIndex)
   );
-  const expectedStakeAmount1 = stakeInfoBefore.unwrap().stake.mul(new BN(splitA));
-  const expectedShareAmount1 = stakeInfoBefore.unwrap().stake.mul(new BN(splitA));
-  const expectedStakeAmount2 = stakeInfoBefore.unwrap().stake.mul(new BN(splitB));
-  const expectedShareAmount2 = stakeInfoBefore.unwrap().stake.mul(new BN(splitB));
-  expect(stakeInfo1After.unwrap().stake).to.be.bignumber.closeTo(
-    expectedStakeAmount1,
-    expectedStakeAmount1.div(new BN(1000))
-  ); // within .1%
-  expect(stakeInfo1After.unwrap().share).to.be.bignumber.closeTo(
-    expectedShareAmount1,
-    expectedShareAmount1.div(new BN(1000))
-  );
-  expect(stakeInfo2After.unwrap().stake).to.be.bignumber.closeTo(
-    expectedStakeAmount2,
-    expectedStakeAmount2.div(new BN(1000))
-  ); // within .1%
-  expect(stakeInfo2After.unwrap().share).to.be.bignumber.closeTo(
-    expectedShareAmount2,
-    expectedShareAmount2.div(new BN(1000))
-  );
+  const expectedStakeAmount1 = stakeInfoBefore.unwrap().stake.muln(splitA);
+  const expectedShareAmount1 = stakeInfoBefore.unwrap().stake.muln(splitA);
+  const expectedStakeAmount2 = stakeInfoBefore.unwrap().stake.muln(splitB);
+  const expectedShareAmount2 = stakeInfoBefore.unwrap().stake.muln(splitB);
+
+  const stakeRange1 = expectedStakeAmount1.div(new BN(1000)); // within .1%
+  const shareRange1 = expectedShareAmount1.div(new BN(1000));
+  const stakeRange2 = expectedStakeAmount2.div(new BN(1000));
+  const shareRange2 = expectedShareAmount2.div(new BN(1000));
+  expect(stakeInfo1After.unwrap().stake).to.be.bignumber.closeTo(expectedStakeAmount1, stakeRange1);
+  expect(stakeInfo1After.unwrap().share).to.be.bignumber.closeTo(expectedShareAmount1, shareRange1);
+  expect(stakeInfo2After.unwrap().stake).to.be.bignumber.closeTo(expectedStakeAmount2, stakeRange2);
+  expect(stakeInfo2After.unwrap().share).to.be.bignumber.closeTo(expectedShareAmount2, shareRange2);
 }
 
 export async function verifyPositionUnstaking(
