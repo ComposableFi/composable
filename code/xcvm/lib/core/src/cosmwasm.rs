@@ -1,6 +1,70 @@
-use crate::OrderedBindings;
+//! XCVM SDK for CosmWasm
+//!
+//! # Introduction
+//!
+//! XCVM uses what we call `late bindings` which gives users ability to,
+//! specify addresses that are not known to them yet. For example, an
+//! interpreter instance is created upon execution. If so, how will users
+//! transfer funds to interpreter without knowing their address? Although
+//! we solved this problem in our `pallet-cosmwasm` by deterministically
+//! calculating contract addresses prior to execution, we cannot guarantee
+//! this on every chain that XCVM is supported. And also, late binding supports
+//! some non-address bindings as well. Hence, `late bindings` can be used for
+//! situations like this.
+//!
+//! # Examples
+//!
+//! We have two types of bindings, `IndexedBinding` and `StaticBinding`.
+//! `StaticBinding` is used for the fields with static indices.a
+//!
+//! Let's assume that we wan't to send `WasmMsg::Execute`:
+//! ```json
+//! {
+//! 	"contract_addr": "",
+//! 	"msg": "SOME PAYLOAD",
+//! 	"funds": []
+//! }
+//! ```
+//! In this case, we know that `contract_addr` is a static `String`, not
+//! a dynamic field like the payload `msg`. Users don't have to know the index
+//! of the `contract_addr` in the serialized `msg`. Hence, we use `StaticBinding`
+//! for fields like this.
+//!
+//! But it is totally up to users what to send in `msg` field, therefore they need to
+//! provide indices by themselves. But again for simplicity's sake, indices are provided
+//! by users relative to the payload, not the whole message.
+//!
+//! As a complete example, let's say that I want to use `cw20` contract of `PICA` and
+//! send the interpreter some coins. First, I need to find the indices in the payload.
+//! ```json
+//! {"recipient":"","amount":"10000"}
+//! ```
+//! Index of the value of `recipient` is `13` and the binding that I want to use is
+//! `BindingValue::This`, which is the interpreter.
+//!
+//! And the contract that I want to use is `cw20` for `PICA`, which is `BindingValue::Asset(1)`.
+//! Note that `1` is the identifier of the asset `PICA`. Then, users will call
+//! `WasmMsg::Execute` wrapper `wasm_execute` to create the correct payload to pass to
+//! use in the `Call` instruction:
+//! ```no_run
+//! let payload_bindings: OrderedBindings = [(13, BindingValue::This)].into();
+//! let cw20_transfer_msg = Cw20ExecuteMsg::Transfer {
+//!     // Make sure to leave late-binded fields empty
+//! 	recipient: String::new(),
+//!     amount: 10000,
+//! };
+//!
+//! let payload = LateCall::wasm_execute(
+//! 	StaticBinding::Some(BindingValue::Asset(1)),
+//!     IndexedBinding::Some((payload_bindings, cw20_transfer_msg)),
+//!     Vec::new()
+//! );
+//! ```
+//! Note that if you don't need `IndexedBinding` or `StaticBinding`, you can always use `None`
+//! variants of both of them.
 
 use super::{BindingValue, Bindings};
+use crate::OrderedBindings;
 use alloc::{fmt::Debug, string::String, vec::Vec};
 use cosmwasm_std::{BankMsg, Coin, CosmosMsg};
 use serde::{Deserialize, Serialize};
