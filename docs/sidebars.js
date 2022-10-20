@@ -83,7 +83,7 @@ const sidebars = {
           collapsed: true,
           items: [
             'products/xcvm/writing-smart-contracts-with-cosmwasm',
-            'products/xcvm/how-the-xcvm-works',
+            'products/xcvm/how-xcvm-works',
             'products/xcvm/routing-layer',
             'products/xcvm/routing-layer-libraries'
           ],
@@ -154,7 +154,7 @@ const sidebars = {
           label: 'CHAOS fNFTs',
           link: {
             type: 'doc',
-            id: 'products/CHAOS-fNFT-overview'
+            id: 'products/chaos-overview'
           },
           collapsible: true,
           collapsed: true,
