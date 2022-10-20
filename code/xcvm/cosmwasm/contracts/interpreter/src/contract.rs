@@ -17,7 +17,7 @@ use cw2::set_contract_version;
 use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg};
 use cw_utils::ensure_from_older_version;
 use num::Zero;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use std::collections::VecDeque;
 use xcvm_asset_registry::msg::{GetAssetContractResponse, QueryMsg as AssetRegistryQueryMsg};
 use xcvm_core::{cosmwasm::*, BindingValue, Displayed, Funds, Instruction, NetworkId};
@@ -130,7 +130,7 @@ pub fn interpret_call(
 	response: Response,
 ) -> Result<Response, ContractError> {
 	let LateCall { bindings, encoded_call } =
-		serde_json::from_slice(&encoded).map_err(|_| ContractError::InvalidCallPayload)?;
+		serde_json_wasm::from_slice(&encoded).map_err(|_| ContractError::InvalidCallPayload)?;
 	// We don't know the type of the payload, so we use `serde_json::Value`
 	let cosmwasm_msg: FlatCosmosMsg<serde_json::Value> = if !bindings.is_empty() {
 		let Config { user_id, registry_address, .. } = CONFIG.load(deps.storage)?;
@@ -362,15 +362,14 @@ pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> StdResult<Binary> {
 
 #[cfg(test)]
 mod tests {
-	use std::collections::BTreeMap;
-
-	use crate::msg::XCVMInstruction;
-
 	use super::*;
+	use crate::msg::XCVMInstruction;
 	use cosmwasm_std::{
 		testing::{mock_dependencies, mock_env, mock_info, MockQuerier},
 		Addr, ContractResult, QuerierResult, SystemResult, WasmMsg,
 	};
+	use serde::Deserialize;
+	use std::collections::BTreeMap;
 	use xcvm_core::{Amount, AssetId, Picasso, ETH, PICA};
 
 	const CW20_ADDR: &str = "cw20addr";
