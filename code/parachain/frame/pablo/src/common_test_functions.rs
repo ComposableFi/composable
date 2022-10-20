@@ -5,7 +5,7 @@ use crate::{
 	PoolConfiguration::DualAssetConstantProduct,
 	PoolInitConfiguration,
 };
-use composable_traits::{defi::CurrencyPair, dex::AssetAmount};
+use composable_traits::dex::AssetAmount;
 use frame_support::{
 	assert_noop, assert_ok,
 	traits::fungibles::{Inspect, Mutate},
@@ -251,47 +251,48 @@ pub fn common_remove_lp_failure(
 
 pub fn common_exchange_failure(
 	init_config: PoolInitConfiguration<AccountId, AssetId>,
-	init_base_amount: Balance,
-	init_quote_amount: Balance,
-	exchange_base_amount: Balance,
+	init_first_amount: AssetAmount<AssetId, Balance>,
+	init_second_amount: AssetAmount<AssetId, Balance>,
+	exchange_first_amount: AssetAmount<AssetId, Balance>,
 ) {
 	let pool_id = Pablo::do_create_pool(init_config.clone()).expect("pool creation failed");
-	let pair = get_pair(init_config);
 	// Mint the tokens
-	assert_ok!(Tokens::mint_into(pair[0], &ALICE, init_base_amount));
-	assert_ok!(Tokens::mint_into(pair[1], &ALICE, init_quote_amount));
+	assert_ok!(Tokens::mint_into(init_first_amount.asset_id, &ALICE, init_first_amount.amount));
+	assert_ok!(Tokens::mint_into(init_second_amount.asset_id, &ALICE, init_second_amount.amount));
 
 	// Add the liquidity
 	assert_ok!(Pablo::add_liquidity(
 		Origin::signed(ALICE),
 		pool_id,
-		BTreeMap::from([(pair[0], init_base_amount), (pair[1], init_quote_amount)]),
+		BTreeMap::from([
+			(init_first_amount.asset_id, init_first_amount.amount),
+			(init_second_amount.asset_id, init_second_amount.amount)
+		]),
 		0,
 		false
 	));
 
 	// Mint the tokens
-	assert_ok!(Tokens::mint_into(pair[0], &BOB, exchange_base_amount));
+	assert_ok!(Tokens::mint_into(init_first_amount.asset_id, &BOB, exchange_first_amount.amount));
 	// error as trying to swap more value than balance
-	let swapped_pair = CurrencyPair::new(pair[1], pair[0]);
 	assert_noop!(
 		Pablo::swap(
 			Origin::signed(BOB),
 			pool_id,
-			AssetAmount::new(pair[1], exchange_base_amount + 1),
-			AssetAmount::new(pair[0], 0),
+			AssetAmount::new(exchange_first_amount.asset_id, exchange_first_amount.amount + 1),
+			AssetAmount::new(init_second_amount.asset_id, 0),
 			false
 		),
 		orml_tokens::Error::<Test>::BalanceTooLow
 	);
-	let expected_value = exchange_base_amount + 1;
+	let expected_value = exchange_first_amount.amount + 1;
 	// error as expected_value is more that input
 	assert_noop!(
 		Pablo::swap(
 			Origin::signed(BOB),
 			pool_id,
-			AssetAmount::new(pair[1], exchange_base_amount),
-			AssetAmount::new(pair[0], expected_value),
+			AssetAmount::new(exchange_first_amount.asset_id, exchange_first_amount.amount),
+			AssetAmount::new(init_second_amount.asset_id, expected_value),
 			false
 		),
 		crate::Error::<Test>::CannotRespectMinimumRequested
