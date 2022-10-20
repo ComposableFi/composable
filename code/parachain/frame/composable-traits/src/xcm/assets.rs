@@ -36,7 +36,7 @@ impl Default for XcmAssetLocation {
 impl Display for XcmAssetLocation {
 	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
 		// TODO: implement properly?
-		// NOTE(Andrés): How can we not include this implementation?
+		// NOTE: How can we not include this implementation?
 		write!(f, "")
 	}
 }
@@ -45,7 +45,7 @@ impl FromStr for XcmAssetLocation {
 	type Err = ();
 	fn from_str(_s: &str) -> Result<Self, Self::Err> {
 		// TODO: implement properly?
-		// NOTE(Andrés): How can we not include this implementation?
+		// NOTE: How can we not include this implementation?
 		Ok(XcmAssetLocation::default())
 	}
 }
