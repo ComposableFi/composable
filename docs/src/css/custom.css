@@ -68,6 +68,11 @@
 h1, h2, h3, h4 {
   letter-spacing: 2px;
   font-weight: 700;
+  margin-bottom: 0 !important;
+}
+
+p {
+  margin-bottom: 10px !important;
 }
 
 /* You can override the default Infima variables here. */
