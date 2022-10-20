@@ -2041,7 +2041,7 @@ describe("tx.stakingRewards Tests", function () {
   });
 
   describe("7. Unstaking positions.", function () {
-    it("7.1  [SHORT] I can unstake my staking position before my lock period has ended and get slashed.", async function () {
+    it("7.1  I can unstake my staking position before my lock period has ended and get slashed.", async function () {
       this.timeout(2 * 60 * 1000);
       // Getting user funds before
       const userFundsBefore = await api.rpc.assets.balanceOf(POOL_12_BASE_ASSET_ID.toString(), walletStaker2.publicKey);
@@ -2082,7 +2082,7 @@ describe("tx.stakingRewards Tests", function () {
       );
     });
 
-    it("7.2  I can unstake my staking position after the locking period has ended without getting slashed.", async function () {
+    it("7.2  [SHORT] I can unstake my staking position after the locking period has ended without getting slashed.", async function () {
       this.timeout(4 * 60 * 1000);
 
       // ToDo: Bugged!
