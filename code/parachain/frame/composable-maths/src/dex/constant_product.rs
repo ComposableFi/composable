@@ -147,6 +147,72 @@ pub fn compute_out_given_in_new<T: PerThing>(
 	Ok((a_out, fee))
 }
 
+trait SafeDecimalConversions {
+	/// Safely converts a `u128` to a decimal value.
+	fn safe_from_u128(num: u128) -> Result<Self, ArithmeticError>
+	where
+		Self: Sized;
+
+	/// Safely converts a decimal value to a `u128`.
+	fn safe_to_u128(self) -> Result<u128, ArithmeticError>;
+
+	/// Converts a `u128` fixed point number with 12 decimal places to decimal.
+	///
+	/// Conducts `number / 10^12`.
+	fn safe_from_fixed_point(num: u128) -> Result<Self, ArithmeticError>
+	where
+		Self: Sized;
+
+	/// Safely convert to a fixed-point `u128` with 12 decimals.
+	fn safe_to_fixed_point(self) -> Result<u128, ArithmeticError>;
+
+	/// Computes the decimal value of a a `PerThing` by taking the deconstructed parts of a
+	/// `PerThing` and dividing them by `PerThing::one()`.
+	///
+	/// # Example
+	/// ```rust,ignore
+	/// let per_thing = PerMill::from_percent(10);
+	/// assert_eq!(decimal_from_per_thing(per_thing), Decimal::new(10, 2));
+	/// ```
+	fn safe_from_per_thing<T: PerThing>(per_thing: T) -> Result<Self, ArithmeticError>
+	where
+		Self: Sized;
+}
+
+impl SafeDecimalConversions for Decimal {
+	fn safe_from_u128(num: u128) -> Result<Self, ArithmeticError> {
+		Decimal::from_u128(num).ok_or(ArithmeticError::Overflow)
+	}
+
+	fn safe_to_u128(self) -> Result<u128, ArithmeticError> {
+		self.to_u128().ok_or(ArithmeticError::Overflow)
+	}
+
+	fn safe_from_fixed_point(fixed_point: u128) -> Result<Self, ArithmeticError> {
+		let numerator = Decimal::safe_from_u128(fixed_point)?;
+		let denominator = Decimal::from(10)
+			.checked_powd(Decimal::from(12))
+			.ok_or(ArithmeticError::Overflow)?;
+
+		numerator.safe_div(&denominator)
+	}
+
+	fn safe_to_fixed_point(self) -> Result<u128, ArithmeticError> {
+		let rhs = Decimal::from(10)
+			.checked_powd(Decimal::from(12))
+			.ok_or(ArithmeticError::Overflow)?;
+
+		self.safe_mul(&rhs)?.to_u128().ok_or(ArithmeticError::Overflow)
+	}
+
+	fn safe_from_per_thing<T: PerThing>(per_thing: T) -> Result<Self, ArithmeticError> {
+		let numerator = Decimal::safe_from_u128(per_thing.deconstruct().into())?;
+		let denominator = Decimal::safe_from_u128(T::one().deconstruct().into())?;
+
+		numerator.safe_div(&denominator)
+	}
+}
+
 trait RoundingDecimal {
 	/// Round a decimal value to the next whole number with a given `RoundingStrategy`
 	fn round_to_whole_with_strategy(&self, rounding_strategy: RoundingStrategy) -> Self;
@@ -268,6 +334,39 @@ pub fn compute_in_given_out_new<T: PerThing>(
 	let fee = a_sent.safe_mul(&fee)?.round_up().to_u128().ok_or(ArithmeticError::Overflow)?;
 
 	Ok((a_sent.to_u128().ok_or(ArithmeticError::Overflow)?, fee))
+}
+
+/// Calculates `a_k` when redeeming
+///
+/// **NOTE**: May overflow when `w_k` is below 25%
+///
+/// # Parameters
+/// * `p_supply` - Existing supply of LPT
+/// * `p_redeemed` - Redeemed LPT tokens
+/// * `b_k` - balance of token `k`
+/// * `w_k` - weight of token `k`
+///
+/// From https://github.com/ComposableFi/composable/blob/main/rfcs/0008-pablo-lbp-cpp-restructure.md#42-liquidity-provider-token-lpt-math-updates
+/// Equation 8
+pub fn compute_redeemed_for_lp<T: PerThing>(
+	p_supply: u128,
+	p_redeemed: u128,
+	b_k: u128,
+	w_k: T,
+) -> Result<u128, ConstantProductAmmError> {
+	let p_supply = Decimal::safe_from_u128(p_supply)?;
+	let p_redeemed = Decimal::safe_from_u128(p_redeemed)?;
+	let b_k = Decimal::safe_from_u128(b_k)?;
+	let w_k = Decimal::safe_from_per_thing(w_k)?;
+
+	let weight_ratio = Decimal::ONE.safe_div(&w_k)?;
+	let base = Decimal::ONE.safe_sub(&p_redeemed.safe_div(&p_supply)?)?;
+	let power = base.checked_powd(weight_ratio).ok_or(ArithmeticError::Overflow)?;
+	let ratio = Decimal::ONE.safe_sub(&power)?;
+
+	let a_k = b_k.safe_mul(&ratio)?;
+
+	Ok(a_k.safe_to_u128()?)
 }
 
 #[derive(Debug, Eq, PartialEq)]
