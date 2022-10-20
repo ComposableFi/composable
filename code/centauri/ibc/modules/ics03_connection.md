@@ -4,7 +4,7 @@ IBC connections are direct links between chains, it is recommended to have only 
 
 ### Connection Context
 
-The connection context encapsulates all the storage requirements for connections in the context object,  
+The connection context encapsulates all the storage requirements for connections in the context object.    
 implement the [`ConnectionReader`](/code/centauri/ibc/modules/src/core/ics03_connection/context.rs#L21) and [`ConnectionKeeper`](/code/centauri/ibc/modules/src/core/ics03_connection/context.rs#L51) for the context object
 
 ```text

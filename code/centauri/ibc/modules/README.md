@@ -35,13 +35,12 @@ A couple definitions to help understand the architecture of this framework
 
 The client module hosts the trait definitions, messages and handlers for light client implementation.
 
-### Light clients
+### On chain Light clients
 
 The Ibc protocol is designed to work on top of light clients, light clients are the foundation on which the protocol is built.  
-A light client in simple terms, is a construct that is able to verify the state of a blockchain using information extracted from a block header.  
+A light client in simple terms allows a resource constrained environment to follow the consensus of a blockchain, it is able to verify statements concerning the state of the blockchain using information extracted from a block header.  
 For this to be a possibility, the blockchain whose light client is being constructed  is required to have a finality protocol(a finality protocol is a means by which a blockchain expresses that state transitions within a block are safe and have a very low probability of been reverted),   
-the light client needs to be continuously updated with a stream of finalized block headers, verifying correctness of the state transitions in the  
-headers and extracting information that can be used to verify state proofs.
+the light client needs to be continuously updated with a stream of finalized block headers, verifying correctness of the headers and extracting information that can be used to verify state proofs.
 
 ### Defining a light client
 A light client in this protocol is required to have a Client definition,  Client state, Consensus state, and Client message.
@@ -147,7 +146,7 @@ Ibc applications are sub protocols built on top of the core ibc protocol, ibc ap
 they can execute callbacks for processed messages. The callbacks are the means through which the router is able to deliver packets to the right module.
 
 **Message Handling**
-The `deliver` acts as the topmost message handler, it accepts an ibc message of type protobuf `Any` alongside a mutable reference to the Context.  
+`deliver` acts as the topmost message handler, it accepts an ibc message of type protobuf `Any` alongside a mutable reference to the Context.  
 The message is decoded and dispatched to the appropriate message handler using a [`dispatch`](/code/centauri/ibc/modules/src/core/ics26_routing/handler.rs#L70) function.  
 Message handlers take a read only context alongside the message as parameters, the message handler is expected to return a result type depending on the message category being handled.  
 Client message handlers return a [`ClientResult`](/code/centauri/ibc/modules/src/core/ics02_client/handler.rs#l17).  

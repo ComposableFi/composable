@@ -294,6 +294,15 @@ impl From<AnyClientMessage> for Any {
 	}
 }
 
+// Then we can go ahead and use them like this
+
+impl<T: Config> ClientTypes for Context<T> {
+    type AnyClientMessage = AnyClientMessage;
+    type AnyClientState = AnyClientState;
+    type AnyConsensusState = AnyConsensusState;
+    type ClientDef = AnyClient;
+}
+
 ```
 
 ### Host Consensus state verification
@@ -302,7 +311,7 @@ It is a requirement of the ibc protocol for the host machine to verify its own c
 This becomes an issue when the host machine cannot access its own consensus state.  
 For consensus verification to be possible in such host machine, a couple apis must be available
 - The host must provide access to a mapping of block numbers to block hash for at least the 256 most recent blocks.
-- The Connection Proof should be encoded such that apart from the proof, it contains the block header that was used to generate the consensus state being verified, along ide the timestamp with a proof.
+- The Consensus Proof should be encoded such that apart from the proof, it contains the block header that was used to generate the consensus state being verified, alongside the timestamp with a proof.
 
 With these criteria met it becomes trivial for the host machine to verify its own consensus state.  
 The way that is done involves, getting the hash of the header decoded from the proof and verifying that the host has such a blockhash stored in its map of block numbers to block hashes.  
@@ -316,9 +325,9 @@ The following pseudocode describes how this could be achieved
         fn host_consensus_state(
 		    &self,
 		    height: Height,
-		    proof: Option<Vec<u8>>,
+		    consensus_proof: Option<Vec<u8>>,
 	    ) -> Result<AnyConsensusState, ICS02Error> {
-		    let proof = proof.ok_or_else(|| {
+		    let consensus_proof = consensus_proof.ok_or_else(|| {
 			    ICS02Error::implementation_specific(format!("No host proof supplied"))
 		     })?;
 		
@@ -337,18 +346,18 @@ The following pseudocode describes how this could be achieved
 			    )))?
 		    }
 
-		    let connection_proof: HostConsensusProof = decode_proof(proof)?;
-		    let header = decode_header(connection_proof.header)?;
+		    let consensus_proof: HostConsensusProof = decode_proof(consensus_proof)?;
+		    let header = decode_header(consensus_proof.header)?;
 		    if hash(header) != header_hash {
 			    Err(ICS02Error::implementation_specific(format!(
 				    "[host_consensus_state]: Incorrect host consensus state for height {}",
 				    height
 			    )))?
 		    }
-		    let timestamp = verify_timestamp(connection_proof.timestamp, connection_proof.timestamp_proof, connection_proof.header)?;
+		    let timestamp = verify_timestamp(consensus_proof.timestamp, consensus_proof.timestamp_proof, consensus_proof.header)?;
 
 		    // now this header can be trusted
-		    let consensus_state = consnensus_state_from_header(connection_proof.header, timestamp)?;
+		    let consensus_state = consnensus_state_from_header(consensus_proof.header, timestamp)?;
 		    Ok(consensus_state)
 	    }
 	
