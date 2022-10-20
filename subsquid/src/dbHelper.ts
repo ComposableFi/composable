@@ -255,7 +255,7 @@ export async function storeHistoricalLockedValue(
  * @param quoteAssetId
  * @param amount
  */
-export async function storeHistoricaVolume(
+export async function storeHistoricalVolume(
   ctx: EventHandlerContext<Store>,
   quoteAssetId: string,
   amount: bigint

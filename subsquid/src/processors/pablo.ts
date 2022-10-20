@@ -14,7 +14,7 @@ import {
   getLatestPoolByPoolId,
   getOrCreate,
   storeHistoricalLockedValue,
-  storeHistoricaVolume,
+  storeHistoricalVolume,
 } from "../dbHelper";
 import {
   Event,
@@ -552,7 +552,11 @@ export async function processSwappedEvent(
     await ctx.store.save(eventEntity);
     await ctx.store.save(pabloTransaction);
 
-    await storeHistoricaVolume(ctx, quoteAsset.assetId, swappedEvt.quoteAmount);
+    await storeHistoricalVolume(
+      ctx,
+      quoteAsset.assetId,
+      swappedEvt.quoteAmount
+    );
   } else {
     throw new Error("Pool not found");
   }
