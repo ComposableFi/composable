@@ -64,19 +64,20 @@
           enableACME = true;
           forceSSL = true;
           locations = builtins.foldl' (x: y: x // y)
-            ({ "/" = { root = "${docs}/"; }; } // (extra-nginx-root args))
-            (map (node: {
-              "/${node.name}" = {
-                proxyPass = "http://127.0.0.1:${builtins.toString node.wsPort}";
-                proxyWebsockets = true;
-                extraConfig = ''
-                  proxy_set_header Origin "";
-                  proxy_set_header Host 127.0.0.1:${
-                    builtins.toString node.wsPort
-                  };
-                '';
-              };
-            }) routified-nodes);
+            ({ "/" = { root = "${docs}/"; }; } // (extra-nginx-root args)) (map
+              (node: {
+                "/${node.name}" = {
+                  proxyPass =
+                    "http://127.0.0.1:${builtins.toString node.wsPort}";
+                  proxyWebsockets = true;
+                  extraConfig = ''
+                    proxy_set_header Origin "";
+                    proxy_set_header Host 127.0.0.1:${
+                      builtins.toString node.wsPort
+                    };
+                  '';
+                };
+              }) routified-nodes);
         } // (extra-nginx-virtual args);
       in {
         enable = true;
