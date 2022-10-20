@@ -1,10 +1,5 @@
-<<<<<<<< HEAD:subsquid/db/migrations/1665750215090-Data.js
-module.exports = class Data1665750215090 {
-  name = 'Data1665750215090'
-========
-module.exports = class Data1666001650220 {
-  name = 'Data1666001650220'
->>>>>>>> d1ae750e9 (wip: store total volume changes and handle resolver):subsquid/db/migrations/1666001650220-Data.js
+module.exports = class Data1666263690230 {
+  name = 'Data1666263690230'
 
   async up(db) {
     await db.query(`CREATE TABLE "account" ("id" character varying NOT NULL, "event_id" text NOT NULL, CONSTRAINT "PK_54115ee388cdb6d86bb4bf5b2ea" PRIMARY KEY ("id"))`)
