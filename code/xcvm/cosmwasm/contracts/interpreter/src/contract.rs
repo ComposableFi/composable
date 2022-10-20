@@ -80,7 +80,7 @@ pub fn interpret_program(
 			Instruction::Call { encoded } => {
 				if index >= instruction_len - 1 {
 					// If the call is the final instruction, do not yield execution
-					interpret_call(deps.as_ref(), &env, encoded, response)?
+					interpret_call(deps.as_ref(), &env, encoded, index, response)?
 				} else {
 					// If the call is not the final instruction:
 					// 1. interpret the call: this will add the call to the response's
@@ -89,7 +89,7 @@ pub fn interpret_program(
 					//    rest of the instructions as XCVM program. This will make sure that
 					//    previous call instruction will run first, then the rest of the program
 					//    will run.
-					let response = interpret_call(deps.as_ref(), &env, encoded, response)?;
+					let response = interpret_call(deps.as_ref(), &env, encoded, index, response)?;
 					let instructions: VecDeque<XCVMInstruction> =
 						instruction_iter.map(|(_, instr)| instr).collect();
 					let program = XCVMProgram { tag: program.tag, instructions };
@@ -122,6 +122,7 @@ pub fn interpret_call(
 	deps: Deps,
 	env: &Env,
 	encoded: Vec<u8>,
+	ip: usize,
 	response: Response,
 ) -> Result<Response, ContractError> {
 	let LateCall { bindings, encoded_call } =
@@ -191,7 +192,7 @@ pub fn interpret_call(
 
 					Cow::Owned(response.addr.into_string().into())
 				},
-				BindingValue::Ip => return Err(ContractError::InvalidBindings),
+				BindingValue::Ip => Cow::Owned(format!("{}", ip).into()),
 			};
 
 			formatted_call[binding_index + offset + 1..=binding_index + offset + data.len()]
