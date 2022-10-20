@@ -50,7 +50,7 @@ where
 	AssetId: Send + Sync + 'static + Codec + FromStr + Display,
 	AccountId: Send + Sync + 'static + Codec + FromStr + Display,
 	Balance: Send + Sync + 'static + Codec + FromStr + Display,
-	ForeignAssetId: Send + Sync + 'static + Codec + FromStr + Display,
+	ForeignAssetId: Send + Sync + 'static + Codec,
 	C: Send + Sync + 'static,
 	C: ProvideRuntimeApi<Block>,
 	C: HeaderBackend<Block>,

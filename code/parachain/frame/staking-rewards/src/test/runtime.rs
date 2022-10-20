@@ -184,7 +184,6 @@ impl pallet_assets::Config for Test {
 	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
 	type GovernanceRegistry = NoopRegistry;
 	type CurrencyValidator = primitives::currency::ValidateCurrencyId;
-	type ForeignAssetId = XcmAssetLocation;
 }
 
 parameter_types! {

@@ -85,7 +85,6 @@ pub mod weights;
 #[frame_support::pallet]
 pub mod pallet {
 	use crate::weights::WeightInfo;
-	use codec::FullCodec;
 	use composable_support::validation::Validate;
 	use composable_traits::{
 		currency::{AssetIdLike, BalanceLike, CurrencyFactory, RangeId},
@@ -108,7 +107,6 @@ pub mod pallet {
 	use orml_traits::GetByKey;
 	use primitives::currency::ValidateCurrencyId;
 	use sp_runtime::DispatchError;
-	use sp_std::fmt::Debug;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -118,15 +116,6 @@ pub mod pallet {
 		#[pallet::constant]
 		type NativeAssetId: Get<Self::AssetId>;
 		type GenerateCurrencyId: CurrencyFactory<AssetId = Self::AssetId, Balance = Self::Balance>;
-		/// Identifier for the class of foreign asset.
-		type ForeignAssetId: FullCodec
-			+ Eq
-			+ PartialEq
-			+ MaybeSerializeDeserialize
-			+ Debug
-			+ Clone
-			+ Default
-			+ TypeInfo;
 		type NativeCurrency;
 		type MultiCurrency;
 		type GovernanceRegistry: GetByKey<Self::AssetId, Result<SignedRawOrigin<Self::AccountId>, DispatchError>>

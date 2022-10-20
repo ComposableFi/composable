@@ -1,12 +1,11 @@
 //! Interfaces to managed assets
 use codec::{Decode, Encode, MaxEncodedLen};
-use core::fmt::Display;
 use frame_support::{dispatch::DispatchResult, pallet_prelude::ConstU32, WeakBoundedVec};
 use polkadot_parachain::primitives::Id;
 use scale_info::TypeInfo;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
-use sp_std::{str::FromStr, vec::Vec};
+use sp_std::vec::Vec;
 use xcm::latest::MultiLocation;
 
 use crate::{assets::Asset, currency::Exponent, defi::Ratio};
@@ -30,23 +29,6 @@ impl XcmAssetLocation {
 impl Default for XcmAssetLocation {
 	fn default() -> Self {
 		XcmAssetLocation(xcm::latest::MultiLocation::here())
-	}
-}
-
-impl Display for XcmAssetLocation {
-	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-		// TODO: implement properly?
-		// NOTE: How can we not include this implementation?
-		write!(f, "")
-	}
-}
-
-impl FromStr for XcmAssetLocation {
-	type Err = ();
-	fn from_str(_s: &str) -> Result<Self, Self::Err> {
-		// TODO: implement properly?
-		// NOTE: How can we not include this implementation?
-		Ok(XcmAssetLocation::default())
 	}
 }
 
