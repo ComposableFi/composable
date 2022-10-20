@@ -49,7 +49,7 @@
 //! ```ignore
 //! let payload_bindings: OrderedBindings = [(13, BindingValue::This)].into();
 //! let cw20_transfer_msg = Cw20ExecuteMsg::Transfer {
-//!     // Make sure to leave late-binded fields empty
+//!     // Make sure to leave fields that uses late-bindings empty
 //! 	recipient: String::new(),
 //!     amount: 10000,
 //! };
@@ -120,7 +120,7 @@ where
 		/// msg is the JSON-encoded InstantiateMsg struct (as raw Binary)
 		msg: T,
 		funds: Vec<Coin>,
-		/// A human-readbale label for the contract
+		/// A human-readable label for the contract
 		label: String,
 	},
 	/// Migrates a given contracts to use new wasm code. Passes a MigrateMsg to allow us to
