@@ -246,7 +246,6 @@ impl pallet_assets::Config for Runtime {
 	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
 	type GovernanceRegistry = NoopRegistry;
 	type CurrencyValidator = ValidateCurrencyId;
-	type ForeignAssetId = XcmAssetLocation;
 }
 
 parameter_types! {

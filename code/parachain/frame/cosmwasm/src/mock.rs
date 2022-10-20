@@ -156,7 +156,6 @@ impl pallet_assets::Config for Test {
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type CurrencyValidator = ValidateCurrencyId;
-	type ForeignAssetId = XcmAssetLocation;
 }
 
 impl pallet_timestamp::Config for Test {
