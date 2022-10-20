@@ -1383,14 +1383,14 @@ jobs:
             ```bash
             nix run "github:ComposableFi/composable/${{ github.event.pull_request.head.sha }}#devnet-xcvm-up" -L
             ```
-
-            #### Are you on **macOS**, or do you not have [Nix](https://nixos.org/) installed? No worries, you can also run these commands in Docker like this:
-            _(you only need to run the first command once on your machine)_
+           
+            ### View the docs:
             ```bash
-            docker volume create nix
-
-            docker run --privileged --rm -v nix:/nix  -v /var/run/docker.sock:/var/run/docker.sock -it nixos/nix bash -c "nix-env -iA nixpkgs.cachix && cachix use composable-community && nix run github:ComposableFi/composable/${{ github.event.pull_request.head.sha }}#devnet-up -L --option cores 8 --extra-experimental-features nix-command --extra-experimental-features flakes"
+            nix run ".#docs-server"
             ```
+
+            _For more info on how to use Nix, check out our [Nix docs](https://docs.composable.finance/nix.html)_
+           ```
 
             Note that the initial build may take about one hour if it has not been cached by our CI yet. Once it is cached, builds should take about one minute. We currently do not provide build caches for ARM machines such as M1 Macs, but building on ARM is supported.
 
