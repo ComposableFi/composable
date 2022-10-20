@@ -6,7 +6,7 @@ The transferal of an NFT from the source to destination locations involves the f
 screenshot of Composable's Mural NFT transferal interface:
 
 
-![NFT_transfer](./NFT-transfer.png)
+![NFT_transfer](../../../../static/img/products/mosaic/NFT-transfer.png)
 _The "Transfer NFT" page of Composable's Mural NFT transferal system interface._
 
 
@@ -20,7 +20,7 @@ _The "Transfer NFT" page of Composable's Mural NFT transferal system interface._
 ## Transfer Details
 
 
-![transfer_details](./transfer-details.png)
+![transfer_details](../../../../static/img/products/mosaic/transfer-details.png)
 
 
 The "Transfer Details" page of Composable's Mural NFT transferal system interface.

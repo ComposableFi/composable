@@ -1,6 +1,7 @@
 # Active Liquidity Management
 
-![active_liquidity_management](./active-liquidity-management.png)
+![active_liquidity_management](../../../static/img/products/mosaic/active-liquidity-management.png)
+
 
 
 ## Passive vs Active Liquidity
@@ -46,7 +47,7 @@ A user can configure a JIT liquidity bot using a free public RPC endpoint for in
 paid-for custom RPC endpoint. A JIT liquidity bot can be initialized using the active liquidity SDK. 
 
 
-![liquidity-bot-sequence-diagram](./liquidity-bot-sequence-diagram.png)
+![liquidity-bot-sequence-diagram](../../../static/img/products/mosaic/liquidity-bot-sequence-diagram.png)
 
 
 By using highly familiar tools like [Node.js](https://nodejs.org/), [Typescript](https://www.typescriptlang.org/), and 

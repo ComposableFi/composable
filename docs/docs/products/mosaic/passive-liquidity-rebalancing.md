@@ -1,6 +1,6 @@
 # Passive Liquidity Rebalancing
 
-![passive_liquidity_allocation](./passive-liquidity-allocation.png)
+![passive_liquidity_allocation](../../../static/img/products/mosaic/passive-liquidity-allocation.png)
 
 It is possible that a transfer on Mosaic may be initiated that exceeds the available liquidity in Mosaic’s passive 
 liquidity vaults. The transfer need can be met by proactive rebalancing of the Mosaic vaults.
