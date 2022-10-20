@@ -44,7 +44,7 @@ pub mod pallet {
 	};
 	use frame_system::pallet_prelude::*;
 	use scale_info::TypeInfo;
-	use sp_std::{fmt::Debug, str, vec, vec::Vec};
+	use sp_std::{fmt::Debug, str, vec::Vec};
 
 	/// The module configuration trait.
 	#[pallet::config]
@@ -324,16 +324,14 @@ pub mod pallet {
 						Some(d) => d,
 						_ => 12_u32.into(),
 					};
-					// let foreign_id: u64 = 8_u64; // (foreign_metadata.location as
-					// T::ForeignAssetId).into();
+
 					let foreign_id = foreign_metadata.location;
 
-					let name = vec![2_u8]; // TODO: use proper name
 					Asset {
-						name,
+						name: None,
 						id: local_id.into() as u64,
 						decimals,
-						foreign_id: Some(foreign_id.into()),
+						foreign_id: Some(foreign_id),
 					}
 				})
 				.collect::<Vec<_>>();
