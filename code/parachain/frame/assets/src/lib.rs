@@ -108,7 +108,7 @@ pub mod pallet {
 	use orml_traits::GetByKey;
 	use primitives::currency::ValidateCurrencyId;
 	use sp_runtime::DispatchError;
-	use std::fmt::Debug;
+	use sp_std::fmt::Debug;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
