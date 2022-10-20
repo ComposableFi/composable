@@ -9,7 +9,7 @@ use sp_core::{
 	H256,
 };
 
-use composable_traits::fnft::FnftAccountProxyType;
+use composable_traits::{fnft::FnftAccountProxyType, xcm::assets::XcmAssetLocation};
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{Everything, InstanceFilter},
@@ -196,6 +196,7 @@ impl pallet_assets::Config for Test {
 	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
 	type GovernanceRegistry = NoopRegistry;
 	type CurrencyValidator = primitives::currency::ValidateCurrencyId;
+	type ForeignAssetId = XcmAssetLocation;
 }
 
 parameter_types! {
