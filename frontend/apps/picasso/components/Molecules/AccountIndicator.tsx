@@ -1,3 +1,4 @@
+import { WalletViewModal } from "wallet";
 import { Add } from "@mui/icons-material";
 import {
   Box,

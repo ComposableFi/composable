@@ -9,7 +9,7 @@ import { AccountIndicator } from "../../Molecules/AccountIndicator";
 import { humanBalance } from "shared";
 import { useDotSamaContext, useEagerConnect, SupportedWalletId, useConnectedAccounts } from "substrate-react";
 import { DEFAULT_EVM_ID, DEFAULT_NETWORK_ID } from "@/defi/polkadot/constants";
-import { ConnectWalletModal, NetworkId } from "wallet";
+import { ConnectWalletModal, NetworkId, WalletViewModal } from "wallet";
 import { ConnectorType, useBlockchainProvider, useConnector } from "bi-lib";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 const BLOCKCHAIN_NETWORKS_SUPPORTED = [
