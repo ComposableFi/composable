@@ -20,7 +20,7 @@ import {
   verifyPositionSplitting,
   verifyPositionUnstaking
 } from "@composabletests/tests/stakingRewards/testHandlers/stakingRewardsTestHelper";
-import { ISubmittableResult, ITuple } from "@polkadot/types/types";
+import { ITuple } from "@polkadot/types/types";
 import { SubmittableExtrinsic } from "@polkadot/api/types";
 
 /**
@@ -719,10 +719,7 @@ describe("tx.stakingRewards Tests", function () {
               }
             }
           }),
-          lock: {
-            durationPresets: durationPreset,
-            unlockPenalty: unlockPenalty
-          },
+          lock: lock,
           shareAssetId: shareAssetId,
           financialNftAssetId: financialNftAssetId,
           minimumStakingAmount: minimumStakingAmount
@@ -800,10 +797,7 @@ describe("tx.stakingRewards Tests", function () {
               }
             }
           }),
-          lock: {
-            durationPresets: durationPreset,
-            unlockPenalty: unlockPenalty
-          },
+          lock: lock,
           shareAssetId: shareAssetId,
           financialNftAssetId: financialNftAssetId,
           minimumStakingAmount: minimumStakingAmount
@@ -855,7 +849,7 @@ describe("tx.stakingRewards Tests", function () {
 
       // If the rewards pot is empty, and we query `rewardsPotIsEmpty`, we should get an empty object as result,
       // which is not to be confused with `None` type.
-      const poolInfoBefore = <Option<any>>await api.query.stakingRewards.rewardsPotIsEmpty(poolId, assetId);
+      const poolInfoBefore = await api.query.stakingRewards.rewardsPotIsEmpty(poolId, assetId);
       expect(poolInfoBefore.isNone).to.be.false;
 
       // Transaction
@@ -889,15 +883,15 @@ describe("tx.stakingRewards Tests", function () {
       const keepAlive = true;
 
       // Transaction
-      const transactions: SubmittableExtrinsic<"promise", ISubmittableResult>[] = [];
+      const transactions: SubmittableExtrinsic<"promise">[] = [];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const walletBalanceFunctions: Promise<any>[] = [];
       assetIds.forEach(function (asset) {
         transactions.push(api.tx.stakingRewards.addToRewardsPot(poolId, asset, amount, keepAlive));
         walletBalanceFunctions.push(api.rpc.assets.balanceOf(asset.toString(), walletPoolOwner.publicKey));
       });
       const walletBalancesBefore = await Promise.all(walletBalanceFunctions);
-      await waitForBlocks(api);
-      const result = await sendWithBatchAndWaitForSuccess(
+      await sendWithBatchAndWaitForSuccess(
         api,
         walletPoolOwner,
         api.events.stakingRewards.RewardsPotIncreased.is,
@@ -921,25 +915,20 @@ describe("tx.stakingRewards Tests", function () {
       this.timeout(2 * 60 * 1000);
       // Parameters
       const poolIds = [stakingPoolId3, stakingPoolId6, stakingPoolId7];
-      const assetIds = [
-        POOL_13_REWARD_ASSET_ID,
-        //POOL_14_REWARD_ASSET_ID,
-        POOL_16_REWARD_ASSET_ID,
-        POOL_17_REWARD_ASSET_ID
-      ];
+      const assetIds = [POOL_13_REWARD_ASSET_ID, POOL_16_REWARD_ASSET_ID, POOL_17_REWARD_ASSET_ID];
       const amount = 100 * Math.pow(10, 12);
       const keepAlive = false;
 
       // Transaction
-      const transactions: SubmittableExtrinsic<"promise", ISubmittableResult>[] = [];
+      const transactions: SubmittableExtrinsic<"promise">[] = [];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const walletBalanceFunctions: Promise<any>[] = [];
       assetIds.forEach(function (asset, i) {
         transactions.push(api.tx.stakingRewards.addToRewardsPot(poolIds[i], asset, amount, keepAlive));
         walletBalanceFunctions.push(api.rpc.assets.balanceOf(asset.toString(), walletPoolOwner.publicKey));
       });
       const walletBalancesBefore = await Promise.all(walletBalanceFunctions);
-      await waitForBlocks(api);
-      const result = await sendWithBatchAndWaitForSuccess(
+      await sendWithBatchAndWaitForSuccess(
         api,
         walletPoolOwner,
         api.events.stakingRewards.RewardsPotIncreased.is,
@@ -947,7 +936,6 @@ describe("tx.stakingRewards Tests", function () {
           api.tx.stakingRewards.addToRewardsPot(poolIds[0], assetIds[0], amount, keepAlive),
           api.tx.stakingRewards.addToRewardsPot(poolIds[1], assetIds[1], amount, keepAlive),
           api.tx.stakingRewards.addToRewardsPot(poolIds[2], assetIds[2], amount, keepAlive)
-          //api.tx.stakingRewards.addToRewardsPot(poolIds[3], assetIds[3], amount, keepAlive)
         ],
         false
       );
