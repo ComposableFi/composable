@@ -321,7 +321,7 @@ pub mod pallet {
 				.map(|(local_id, foreign_metadata)| {
 					let decimals = match foreign_metadata.decimals {
 						Some(exponent) => exponent,
-						_ => 12_u32.into(),
+						_ => 12_u32,
 					};
 
 					Asset {
