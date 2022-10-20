@@ -142,7 +142,6 @@ pub fn interpret_call(
 			max_size * bindings.len() + encoded_call.len()
 		};
 
-		println!("original string is: {}", String::from_utf8_lossy(&encoded_call));
 		let mut formatted_call = vec![0; new_len];
 		// Current index of the unformatted call
 		let mut original_index: usize = 0;
