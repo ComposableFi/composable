@@ -40,7 +40,7 @@ export async function txOracleSubmitPriceSuccessTestHandler(
   if (slashablePrice)
     slashedStakeBalanceBefore = <Option<u128>>await api.query.oracle.oracleStake(signers[0].publicKey);
 
-  const transactions: Promise<IEvent<[AccountId32, u128, u128], unknown>>[] = [];
+  const transactions: Promise<IEvent<[AccountId32, u128, u128]>>[] = [];
   signers.forEach(function (signer, i) {
     if (i == 1 && slashablePrice) {
       transactions.push(
