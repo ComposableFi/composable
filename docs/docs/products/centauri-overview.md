@@ -31,7 +31,7 @@ use of Merkle Mountain Ranges to produce finality proofs for parachains in a mor
 These components are highlighted in the sub sections for Centauri.
 
 
-![overview_centauri_progress](./overview-centauri-progress.png)
+![overview_centauri_progress](../../static/img/products/centauri/overview-centauri-progress.png)
 
 
 To create the proof of concept (PoC) of Centauri, we are working with a variety of projects in the Cosmos ecosystem. 

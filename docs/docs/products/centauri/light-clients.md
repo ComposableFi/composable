@@ -13,14 +13,14 @@ state. Light clients instead track block headers as opposed to tracking the full
 arrive at the latest state. It is important to note that blocks are simply composed of the header and transactions:
 
 
-![header_transactions](./header-transactions.png)
+![header_transactions](../../../static/img/products/centauri/header-transactions.png)
 
 
 _The size of the transactions in a block might vary, but headers have a fixed size (usually no more than 1kb) and 
 contain the following:_
 
 
-![header_overview](./header-overview.png)
+![header_overview](../../../static/img/products/centauri/header-overview.png)
 
 
 Light client protocols consist of a combination of transaction Merkle proofs, state proofs, consensus proofs, and 
@@ -35,7 +35,7 @@ kind of cryptographic compression that allow trustless verification in the event
 data that was compressed by a Merkle proof, illustrated below:
 
 
-![transactions_root](./transactions-root.png)
+![transactions_root](../../../static/img/products/centauri/transactions-root.png)
 
 
 The Merkle proof required to check if some element was included in the root would be log2(n) hashes, which are usually 
@@ -54,7 +54,7 @@ can be seen as the compression of a list of keys and values.
 Take, for example, the Ethereum state tree architecture:
 
 
-![state_root](./state-root.png)
+![state_root](../../../static/img/products/centauri/state-root.png)
 
 
 Hence, the keys and values are the data stored on the blockchain by contracts or core blockchain subsystems, like the 
@@ -70,7 +70,7 @@ consensus protocol of the blockchain. For proof-of-work (PoW) systems, the conse
 equation:
 
 
-![consensus_proofs_1](./consensus-proofs-1.png)
+![consensus_proofs_1](../../../static/img/products/centauri/consensus-proofs-1.png)
 
 
 As seen above, finding a value that satisfies this equation would require a significant amount of computation as the 
@@ -80,7 +80,7 @@ Meanwhile, the consensus proof for a proof-of-stake (PoS) protocol is usually th
 where:
 
 
-![consensus_proofs_2](./consensus-proofs-2.png)
+![consensus_proofs_2](../../../static/img/products/centauri/consensus-proofs-2.png)
 
 
 Most blockchain protocols’ consensus mechanisms usually only guarantee liveness, hence verifying these consensus proofs 
