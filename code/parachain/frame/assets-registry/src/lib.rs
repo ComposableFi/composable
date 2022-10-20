@@ -326,7 +326,7 @@ pub mod pallet {
 
 					Asset {
 						name: None,
-						id: local_id.into() as u64,
+						id: local_id.into(),
 						decimals,
 						foreign_id: Some(foreign_metadata.location),
 					}

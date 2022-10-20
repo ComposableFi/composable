@@ -28,7 +28,7 @@ impl BasicAssetMetadata {
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct Asset<ForeignId> {
 	pub name: Option<Vec<u8>>,
-	pub id: u64,
+	pub id: u128,
 	pub decimals: Exponent,
 	pub foreign_id: Option<ForeignId>,
 }
