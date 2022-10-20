@@ -316,27 +316,22 @@ pub mod pallet {
 			<MinFeeAmounts<T>>::get(parachain_id, remote_asset_id)
 		}
 
-		fn get_foreign_assets_list() -> Result<Vec<Asset<Self::AssetNativeLocation>>, DispatchError>
-		{
-			let assets = LocalToForeign::<T>::iter()
+		fn get_foreign_assets_list() -> Vec<Asset<Self::AssetNativeLocation>> {
+			LocalToForeign::<T>::iter()
 				.map(|(local_id, foreign_metadata)| {
 					let decimals = match foreign_metadata.decimals {
-						Some(d) => d,
+						Some(exponent) => exponent,
 						_ => 12_u32.into(),
 					};
-
-					let foreign_id = foreign_metadata.location;
 
 					Asset {
 						name: None,
 						id: local_id.into() as u64,
 						decimals,
-						foreign_id: Some(foreign_id),
+						foreign_id: Some(foreign_metadata.location),
 					}
 				})
-				.collect::<Vec<_>>();
-
-			Ok(assets)
+				.collect::<Vec<_>>()
 		}
 	}
 

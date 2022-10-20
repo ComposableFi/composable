@@ -1,6 +1,7 @@
 use crate::{runtime::*, Error};
 use codec::{Decode, Encode};
 use composable_traits::{
+	assets::Asset,
 	defi::Ratio,
 	xcm::assets::{
 		AssetRatioInspect, ForeignMetadata, RemoteAssetRegistryInspect, XcmAssetLocation,
@@ -8,6 +9,7 @@ use composable_traits::{
 };
 use frame_support::{assert_noop, assert_ok};
 use frame_system::RawOrigin;
+use xcm::{latest::Junctions, v2::MultiLocation};
 
 #[test]
 fn negative_get_metadata() {
@@ -161,6 +163,46 @@ fn set_min_fee() {
 		assert_eq!(
 			AssetsRegistry::minimal_amount(target_parachain_id, foreign_asset_id),
 			Some(balance)
+		);
+	})
+}
+
+#[test]
+fn get_foreign_assets_list_should_work() {
+	new_test_ext().execute_with(|| {
+		let location = <Runtime as crate::Config>::ForeignAssetId::decode(
+			&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..],
+		)
+		.unwrap();
+		let ed = 42_u64.into();
+		let ratio = Ratio::from_inner(123);
+		let decimals = 3;
+
+		let foreign_assets = AssetsRegistry::get_foreign_assets_list();
+
+		assert_eq!(foreign_assets, vec![]);
+
+		assert_ok!(AssetsRegistry::register_asset(
+			Origin::root(),
+			location.clone(),
+			ed,
+			Some(ratio),
+			Some(decimals)
+		));
+
+		let foreign_assets = AssetsRegistry::get_foreign_assets_list();
+
+		assert_eq!(
+			foreign_assets,
+			vec![Asset {
+				name: None,
+				id: 12884901886,
+				decimals: 3,
+				foreign_id: Some(XcmAssetLocation::new(MultiLocation {
+					parents: 1,
+					interior: Junctions::Here
+				}))
+			}]
 		);
 	})
 }

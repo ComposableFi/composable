@@ -1463,13 +1463,9 @@ impl_runtime_apis! {
 		}
 
 		fn list_assets() -> Vec<Asset<ForeignAssetId>> {
-			let mut assets = match assets_registry::Pallet::<Runtime>::get_foreign_assets_list() {
-				Ok(assets) => assets,
-				_ => vec!(),
-			};
-
-			let mut list_assets = CurrencyId::list_assets();
-			assets.append(&mut list_assets);
+			let mut assets = CurrencyId::list_assets();
+			let mut foreign_assets = assets_registry::Pallet::<Runtime>::get_foreign_assets_list();
+			assets.append(&mut foreign_assets);
 
 			assets
 		}

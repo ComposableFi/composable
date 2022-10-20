@@ -6,7 +6,6 @@ use polkadot_parachain::primitives::Id;
 use scale_info::TypeInfo;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
-use sp_runtime::DispatchError;
 use sp_std::{str::FromStr, vec::Vec};
 use xcm::latest::MultiLocation;
 
@@ -108,8 +107,8 @@ pub trait RemoteAssetRegistryInspect {
 	// common basic fee for sure fn min_xcm_native_in_fee(parachain_id: Id) ->
 	// Option<Self::Balance>;
 
-	// TODO: add description
-	fn get_foreign_assets_list() -> Result<Vec<Asset<Self::AssetNativeLocation>>, DispatchError>;
+	/// Return information about foreign assets stored on assets registry
+	fn get_foreign_assets_list() -> Vec<Asset<Self::AssetNativeLocation>>;
 }
 
 /// Used in tandem with `CurrencyFactory` trait
