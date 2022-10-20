@@ -20,10 +20,7 @@ use num::Zero;
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
 use xcvm_asset_registry::msg::{GetAssetContractResponse, QueryMsg as AssetRegistryQueryMsg};
-use xcvm_core::{
-	BindingValue, Displayed, Funds, IndexedBinding, Instruction, LateCall, NetworkId,
-	StaticBinding, TypedCosmosMsg,
-};
+use xcvm_core::{cosmwasm::*, BindingValue, Displayed, Funds, Instruction, NetworkId};
 
 const CONTRACT_NAME: &str = "composable:xcvm-interpreter";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -68,6 +65,12 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
 	Ok(Response::default())
 }
 
+/// Interpret an XCVM program
+/// Yields `xcvm.interpreter.executed` with attributes:
+/// 		- `program`: `program.tag`
+/// Fails if:
+/// 	* Program tag is not a valid utf-8
+/// 	* Interpretation of any instruction fails
 pub fn interpret_program(
 	mut deps: DepsMut,
 	env: Env,
@@ -79,10 +82,18 @@ pub fn interpret_program(
 	let mut instruction_iter = program.instructions.into_iter().enumerate();
 	while let Some((index, instruction)) = instruction_iter.next() {
 		response = match instruction {
-			Instruction::Call { encoded } =>
+			Instruction::Call { encoded } => {
 				if index >= instruction_len - 1 {
+					// If the call is the final instruction, do not yield execution
 					interpret_call(deps.as_ref(), &env, encoded, response)?
 				} else {
+					// If the call is not the final instruction:
+					// 1. interpret the call: this will add the call to the response's
+					//    submessages.
+					// 2. yield the execution by adding a call to the interpreter with the
+					//    rest of the instructions as XCVM program. This will make sure that
+					//    previous call instruction will run first, then the rest of the program
+					//    will run.
 					let response = interpret_call(deps.as_ref(), &env, encoded, response)?;
 					let instructions: VecDeque<XCVMInstruction> =
 						instruction_iter.map(|(_, instr)| instr).collect();
@@ -92,7 +103,8 @@ pub fn interpret_program(
 						&ExecuteMsg::Execute { program },
 						vec![],
 					)?))
-				},
+				}
+			},
 			Instruction::Spawn { network, salt, assets, program } =>
 				interpret_spawn(&deps, &env, network, salt, assets, program, response)?,
 			Instruction::Transfer { to, assets } =>
@@ -106,9 +118,11 @@ pub fn interpret_program(
 	)))
 }
 
-// TODO(aeryz): We should either have a `Call` instruction which will have two variants
-// `Raw | Late`, or have two seperate instructions `RawCall | LateCall`. Because even if
-// users specify no bindings, they still need to pay for conversion to `CosmosMsg`
+/// Interpret the `Call` instruction
+/// * `encoded`: JSON-encoded `LateCall` as bytes
+///
+/// Late-bindings are actually done in this function. If our XCVM SDK is not used,
+/// make sure that indices in the `LateCall` is sorted in an ascending order.
 pub fn interpret_call(
 	deps: Deps,
 	env: &Env,
@@ -117,8 +131,12 @@ pub fn interpret_call(
 ) -> Result<Response, ContractError> {
 	let LateCall { bindings, encoded_call } =
 		serde_json::from_slice(&encoded).map_err(|_| ContractError::InvalidCallPayload)?;
-	let cosmwasm_msg: TypedCosmosMsg<serde_json::Value> = if !bindings.is_empty() {
+	// We don't know the type of the payload, so we use `serde_json::Value`
+	let cosmwasm_msg: FlatCosmosMsg<serde_json::Value> = if !bindings.is_empty() {
 		let Config { user_id, registry_address, .. } = CONFIG.load(deps.storage)?;
+		// `user_id` is the ID that comes from the origin chain. We don't know the length
+		// of this. Hence, the maximum length of the output call, will be:
+		// `max(len(user_id), len(contract_address)) * len(bindings)`
 		let new_len = {
 			let max_size = max(user_id.len(), env.contract.address.as_bytes().len());
 			max_size * bindings.len() + encoded_call.len()
@@ -129,35 +147,39 @@ pub fn interpret_call(
 		// Current index of the unformatted call
 		let mut original_index: usize = 0;
 		// This stores the amount of shifting we caused because of the data insertion. For example,
-		// inserting a contract address "addr1234" causes 8 chars shift. Which means index 'X' in
+		// inserting a contract address "addr1234" causes 8 chars of shift. Which means index 'X' in
 		// the unformatted call, will be equal to 'X + 8' in the output call.
 		let mut offset: usize = 0;
 		for binding in bindings {
 			let (binding_index, binding) = (binding.0 as usize, binding.1);
 			// Current index of the output call
 			let shifted_index = original_index + offset;
-			println!(
-				"handling: {:?}, original index: {}, binding index: {}, shifted_index: {}",
-				binding, original_index, binding_index, shifted_index
-			);
 
 			// Check for overflow
-			if original_index > binding_index {
+			// * No need to check if `shifted_index` > `binding_index + offset` because
+			//   `original_index > binding_index` already guarantees that
+			// * No need to check if `shifted_index < formatted_call.len()` because initial
+			//   allocation of `formatted_call` guarantees that even the max length can fit in.
+			// * No need to check if `original_index < encoded_call.len()` because `original_index`
+			//   is already less or equals to `binding_index` and we check if `binding_index` is
+			//   in-bounds.
+			if original_index > binding_index || binding_index + 1 >= encoded_call.len() {
 				return Err(ContractError::InvalidBindings)
 			}
 
-			// Copy everything until the index of where binding happens from encoded to formatted
-			// call. Eg.
+			// Copy everything until the index of where binding happens from original call
+			// to formatted call. Eg.
 			// Formatted call: `{ "hello": "" }`
 			// Output call supposed to be: `{ "hello": "contract_addr" }`
 			// In the first iteration, this will copy `{ "hello": "` to the formatted call.
+			// SAFETY:
+			//     - Two slices are in the same size for sure because `shifted_index` is
+			//		 `original_index + offset` and `binding_index + offset - (shifted_index)`
+			//       equals to `binding_index - original_index`.
+			//     - Index accesses should not fail because we check if all indices are inbounds and
+			//       also if `shifted` and `original` indices are greater than `binding_index`
 			formatted_call[shifted_index..=binding_index + offset]
 				.copy_from_slice(&encoded_call[original_index..=binding_index]);
-
-			println!(
-				"Current state of formatted_call: {}",
-				String::from_utf8_lossy(&formatted_call)
-			);
 
 			let data: Cow<[u8]> = match binding {
 				BindingValue::Relayer => Cow::Borrowed(&user_id),
@@ -178,13 +200,6 @@ pub fn interpret_call(
 				BindingValue::Ip => return Err(ContractError::InvalidBindings),
 			};
 
-			println!(
-				"Inserting data {} with size {} to {}",
-				String::from_utf8_lossy(&data),
-				data.len(),
-				shifted_index
-			);
-
 			formatted_call[binding_index + offset + 1..=binding_index + offset + data.len()]
 				.copy_from_slice(&data);
 			offset += data.len();
@@ -200,11 +215,11 @@ pub fn interpret_call(
 		serde_json_wasm::from_slice(&formatted_call)
 			.map_err(|_| ContractError::InvalidCallPayload)?
 	} else {
+		// We don't have any binding, just deserialize the data
 		serde_json_wasm::from_slice(&encoded_call).map_err(|_| ContractError::InvalidCallPayload)?
 	};
 
 	let cosmos_msg: CosmosMsg = cosmwasm_msg.try_into().unwrap();
-
 	Ok(response.add_message(cosmos_msg))
 }
 
@@ -355,7 +370,7 @@ mod tests {
 	use super::*;
 	use cosmwasm_std::{
 		testing::{mock_dependencies, mock_env, mock_info, MockQuerier},
-		wasm_execute, Addr, ContractResult, QuerierResult, SystemResult, WasmMsg,
+		Addr, ContractResult, QuerierResult, SystemResult, WasmMsg,
 	};
 	use xcvm_core::{Amount, AssetId, Picasso, ETH, PICA};
 
@@ -469,8 +484,12 @@ mod tests {
 		)
 		.unwrap();
 
-		let out_msg_1: CosmosMsg =
-			wasm_execute("1234", &"hello world".to_string(), vec![]).unwrap().into();
+		let out_msg_1 = LateCall::wasm_execute(
+			StaticBinding::None(String::from("1234")),
+			IndexedBinding::None(&"hello world".to_string()),
+			vec![],
+		)
+		.unwrap();
 		let msg = serde_json_wasm::to_string(&out_msg_1).unwrap();
 		let instructions = vec![
 			XCVMInstruction::Call { encoded: msg.as_bytes().into() },
@@ -485,23 +504,28 @@ mod tests {
 		];
 
 		let program = XCVMProgram { tag: vec![], instructions: instructions.clone().into() };
-		let out_msg_2: CosmosMsg = wasm_execute(
-			"cosmos2contract",
-			&ExecuteMsg::Execute {
-				program: XCVMProgram {
-					tag: vec![],
-					instructions: instructions[1..].to_owned().into(),
-				},
-			},
-			vec![],
-		)
-		.unwrap()
-		.into();
+		let execute_msg = ExecuteMsg::Execute {
+			program: XCVMProgram { tag: vec![], instructions: instructions[1..].to_owned().into() },
+		};
 
 		let res = execute(deps.as_mut(), mock_env(), info.clone(), ExecuteMsg::Execute { program })
 			.unwrap();
-		assert_eq!(res.messages[0].msg, out_msg_1);
-		assert_eq!(res.messages[1].msg, out_msg_2);
+		assert_eq!(
+			res.messages[0].msg,
+			CosmosMsg::Wasm(WasmMsg::Execute {
+				contract_addr: "1234".into(),
+				msg: to_binary(&"hello world").unwrap(),
+				funds: Vec::new(),
+			})
+		);
+		assert_eq!(
+			res.messages[1].msg,
+			CosmosMsg::Wasm(WasmMsg::Execute {
+				contract_addr: "cosmos2contract".into(),
+				msg: to_binary(&execute_msg).unwrap(),
+				funds: Vec::new(),
+			})
+		);
 		assert_eq!(res.messages.len(), 2);
 	}
 
@@ -565,16 +589,17 @@ mod tests {
 			part3: String,
 		}
 
-		let msg = LateCall::execute(
+		let msg = LateCall::wasm_execute(
 			StaticBinding::Some(BindingValue::This),
 			IndexedBinding::Some((
-				vec![(9, BindingValue::This), (36, BindingValue::Relayer)],
+				[(9, BindingValue::This), (36, BindingValue::Relayer)].into(),
 				TestMsg {
 					part1: String::new(),
 					part2: String::from("hello"),
 					part3: String::new(),
 				},
 			)),
+			Vec::new(),
 		)
 		.unwrap();
 
