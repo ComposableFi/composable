@@ -56,7 +56,7 @@ const config = {
         title: 'Composable Finance',
         logo: {
           alt: 'Composable Finance Logo',
-          src: 'img/logo.svg',
+          src: 'img/general/logo.svg',
         },
         items: [
           {

@@ -106,6 +106,41 @@ const sidebars = {
         },
         {
           type: 'category',
+          label: 'Mosaic',
+          link: {
+            type: 'doc',
+            id: 'products/mosaic-overview'
+          },
+          collapsible: true,
+          collapsed: true,
+          items: [
+            'products/mosaic/dynamic-fee-model',
+            'products/mosaic/liquidity-forecasting',
+            'products/mosaic/passive-liquidity-rebalancing',
+            'products/mosaic/active-liquidity-management',
+            'products/mosaic/single-sided-staking',
+            'products/mosaic/additional-use-cases',
+            'products/mosaic/mosaic-integrations',
+            'products/mosaic/mosaic-pallet',
+            'products/mosaic/mosaic-phase1-result',
+            {
+              type: 'category',
+              label: 'Mural: NFT Transfers on Mosaic via the Summoner Vault',
+              link: {
+                type: 'doc',
+                id: 'products/mosaic/mural-nft-transfers/transfers-overview'
+              },
+              collapsible: true,
+              collapsed: true,
+              items: [
+                'products/mosaic/mural-nft-transfers/transfer-flow',
+                'products/mosaic/mural-nft-transfers/contract-details'
+              ],
+            },
+          ],
+        },
+        {
+          type: 'category',
           label: 'Apollo',
           link: {
             type: 'doc',
@@ -208,8 +243,8 @@ const sidebars = {
           collapsible: true,
           collapsed: true,
           items: [
-            'products/parachain-vault-strategy/vault-process-in-detail/vault-process-in-detail',
-            'products/parachain-vault-strategy/contracts-technical-details/contracts-technical-details',
+            'products/parachain-vault-strategy/vault-process-in-detail',
+            'products/parachain-vault-strategy/contracts-technical-details',
           ],
         }
       ]
