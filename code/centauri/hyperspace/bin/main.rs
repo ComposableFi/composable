@@ -57,7 +57,7 @@ struct NetworkSetupInput {
 impl FromStr for NetworkSetupInput {
 	type Err = String;
 	fn from_str(input: &str) -> Result<Self, Self::Err> {
-			serde_json::from_str(input).expect("failed to parse NetworkSetupInput. Provide url + network in JSON")
+			Ok(serde_json::from_str(input).expect("failed to parse NetworkSetupInput. Provide url + network in JSON"))
 	
 	}
 }
