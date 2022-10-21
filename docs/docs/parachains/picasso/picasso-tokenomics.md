@@ -42,7 +42,7 @@ Users can provide liquidity for PICA-USDC, PICA-KSM pairs on the Pablo DEX for y
 The total supply of PICA is 10 billion tokens. PICA Token distribution is intended as follows:
 
 
-![supply_distribution_diagram](./supply-distribution-diagram.png)
+![supply_distribution_diagram](../../../static/img/parachains/picasso/supply-distribution-diagram.png)
 
 
 **Crowdloan**: 30% of Picasso token supply will be allocated to crowdloan stakers. The crowdloan stakers will earn 50% of their PICA upon TGE, with the remainder being released linearly within 48 weeks. The full balance can be used to participate in governance and other activities besides transferring.
