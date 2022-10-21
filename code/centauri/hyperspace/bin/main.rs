@@ -54,12 +54,16 @@ pub struct Cmd {
 	#[clap(long)]
 	config: String,
 	/// Port id for channel creation
+	#[clap(long)]
 	port_id: Option<String>,
 	/// Connection delay period in seconds
+	#[clap(long)]#[clap(long)]
 	delay_period: Option<u32>,
 	/// Channel order
+	#[clap(long)]
 	order: Option<String>,
 	/// Channel version
+	#[clap(long)]
 	version: Option<String>
 }
 

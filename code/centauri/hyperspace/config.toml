@@ -6,10 +6,12 @@ parachain_rpc_url = "ws://127.0.0.1:9988"
 relay_chain_rpc_url = "ws://127.0.0.1:9944"
 client_id = "10-grandpa-0"
 connection_id = "connection-0"
+channel_whitelist = []
 commitment_prefix = "0x6962632f"
 private_key = "//Alice"
 ss58_version = 49
 key_type = "sr25519"
+finality_protocol = "Grandpa"
 
 [chain_b]
 type = "parachain"
@@ -19,10 +21,12 @@ parachain_rpc_url = "ws://127.0.0.1:9188"
 relay_chain_rpc_url = "ws://127.0.0.1:9944"
 client_id = "10-grandpa-0"
 connection_id = "connection-0"
+channel_whitelist = []
 commitment_prefix = "0x6962632f"
 private_key = "//Alice"
 ss58_version = 49
 key_type = "sr25519"
+finality_protocol = "Grandpa"
 
 [core]
 prometheus_endpoint = "https://127.0.0.1"
