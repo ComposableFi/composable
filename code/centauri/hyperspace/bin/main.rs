@@ -5,6 +5,7 @@ use metrics::{data::Metrics, handler::MetricsHandler, init_prometheus};
 use primitives::Chain;
 use prometheus::Registry;
 use serde::Deserialize;
+use tokio::fs;
 use std::{path::PathBuf, str::FromStr};
 
 mod chain;
@@ -41,10 +42,15 @@ pub struct RelayCmd {
 )]
 
 /// Accepts a set of [`NetworkSetupInput`] in order to perform the
-/// code generation neede to interact with different substrate nodes
+/// code generation neede to interact with different substrate nodes.
+/// It copies the file generated in source_path into destination_path
 pub struct NetworkSetupCmd {
 	#[clap(long)]
 	input: Vec<NetworkSetupInput>,
+	#[clap(long)]
+	pub source_path: String,
+	#[clap(long)]
+	pub destination_path: String,
 }
 
 /// Describes the url and network to which Hyperspace will connect to
@@ -101,6 +107,7 @@ impl NetworkSetupCmd {
 			.await
 			.unwrap();
 		}
+		fs::copy(self.source_path.clone(), self.destination_path.clone()).await?;
 		Ok(())
 	}
 }
