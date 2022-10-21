@@ -8,7 +8,6 @@ use composable_traits::{
 	oracle::Price,
 };
 
-use composable_traits::xcm::assets::XcmAssetLocation;
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{ConstU32, Everything, GenesisBuild},
