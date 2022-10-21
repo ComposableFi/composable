@@ -1,3 +1,4 @@
+import { TokenAsset } from "@/components";
 import {
   alpha,
   Box,
@@ -8,9 +9,8 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { FC } from "react";
-import { TokenAsset } from "@/components";
 import BigNumber from "bignumber.js";
+import { FC } from "react";
 
 const boxStyles = (theme: Theme) => ({
   display: "flex",
@@ -64,6 +64,7 @@ export const ClaimableRewards: FC<{
           variant="outlined"
           color="primary"
           fullWidth
+          disabled // remove this state one staking is enabled
           onClick={onClaimButtonClick}
         >
           Claim all
