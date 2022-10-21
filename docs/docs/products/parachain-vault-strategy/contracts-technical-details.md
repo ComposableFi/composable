@@ -15,7 +15,7 @@ _Our options for vault strategies were as follows:_
 
 _The contracts being used to power the vaults are as follows, with definitions below:_
 
-![contracts_technical_details](contracts-technical-details.png)
+![contracts_technical_details](../../../static/img/products/parachain-vault-strategy/contracts-technical-details.png)
 
 * **_HarvestBase_** _- base contract for all strategies using Harvest as the underlying strategy_
 * **_IHarvest_** _- interface for Harvest strategies_

@@ -15,7 +15,7 @@ that the information in italicized text below is outdated for this reason:**
 
 ### Deposit
 
-![general_vault_flow_deposit](general-vault-flow-deposit.png)
+![general_vault_flow_deposit](../../../static/img/products/parachain-vault-strategy/general-vault-flow-deposit.png)
 
 _The diagram above illustrates the generic flow of all the vault strategies. The user first invests ETH or a specific 
 stablecoin and gets back pAT. The investment is routed to specific yield farming strategies that have shown to be stable 
@@ -27,7 +27,7 @@ _For each one of the strategies, the detailed flow can be seen later on this pag
 ### Withdrawal
 
 
-![general_vault-flow-withdrawal](general-vault-flow-withdrawal.png)
+![general_vault-flow-withdrawal](../../../static/img/products/parachain-vault-strategy/general-vault-flow-withdrawal.png)
 
 
 The above flow illustrates the generic withdrawal flow of all the strategies. The user returns either a portion of his 
@@ -48,7 +48,7 @@ period.
 
 #### Deposit
 
-![harvest_vault-flow_deposit](harvest-vault-flow-deposit.png)
+![harvest_vault-flow_deposit](../../../static/img/products/parachain-vault-strategy/harvest-vault-flow-deposit.png)
 
 
 The above diagram illustrates the summarized flow for “deposit” action of what happens internally in the case of a 
@@ -60,7 +60,7 @@ Harvest strategy is 409684. Strategies that we will release initially are Harves
 
 The “withdraw” action is a bit more complex, as you can see in the diagram below:
 
-![harvest_vault-flow_withdrawal](harvest-vault-flow-withdrawal.png)
+![harvest_vault-flow_withdrawal](../../../static/img/products/parachain-vault-strategy/harvest-vault-flow-withdrawal.png)
 
 
 In the case of Harvest, when you withdraw from the Harvest Pool, you get back your fToken as well as Farm tokens. Also, 
