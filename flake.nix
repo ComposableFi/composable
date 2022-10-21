@@ -616,9 +616,12 @@
           frontend-static-firebase = mkFrontendStatic {
             subsquidEndpoint =
               "https://persistent.devnets.composablefinance.ninja/subsquid/graphql";
-            picassoEndpoint = "wss://persistent.devnets.composablefinance.ninja/chain/dali";
-            kusamaEndpoint = "wss://persistent.devnets.composablefinance.ninja/chain/rococo";
-            karuraEndpoint = "wss://persistent.devnets.composablefinance.ninja/chain/karura";
+            picassoEndpoint =
+              "wss://persistent.devnets.composablefinance.ninja/chain/dali";
+            kusamaEndpoint =
+              "wss://persistent.devnets.composablefinance.ninja/chain/rococo";
+            karuraEndpoint =
+              "wss://persistent.devnets.composablefinance.ninja/chain/karura";
           };
 
           frontend-pablo-server = let PORT = 8002;
