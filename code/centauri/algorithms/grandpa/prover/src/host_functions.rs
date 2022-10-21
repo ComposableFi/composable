@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::H256;
+use ics10_grandpa::client_message::RelayChainHeader;
 use primitives::HostFunctions;
 use sp_core::ed25519::{Public, Signature};
 use sp_runtime::{app_crypto::RuntimePublic, traits::BlakeTwo256};
@@ -27,7 +29,17 @@ impl light_client_common::HostFunctions for HostFunctionsProvider {
 }
 
 impl HostFunctions for HostFunctionsProvider {
+	type Header = RelayChainHeader;
+
 	fn ed25519_verify(sig: &Signature, msg: &[u8], pubkey: &Public) -> bool {
 		pubkey.verify(&msg, sig)
+	}
+
+	fn add_relaychain_headers(header: &Self::Header) {
+		todo!()
+	}
+
+	fn get_relaychain_headers(hash: H256) -> Option<Self::Header> {
+		todo!()
 	}
 }

@@ -69,13 +69,9 @@ where
 		Err(anyhow!("Latest finalized block should be highest block in unknown_headers"))?;
 	}
 
-	let from = finality_proof
-		.unknown_headers
-		.iter()
-		.min_by_key(|h| *h.number())
-		.ok_or_else(|| anyhow!("Unknown headers can't be empty!"))?;
+	let from = client_state.latest_relay_hash;
 	let mut finalized = headers
-		.ancestry(from.hash(), target.hash())
+		.ancestry(from, target.hash())
 		.map_err(|_| anyhow!("Invalid ancestry! 1"))?;
 	finalized.sort();
 

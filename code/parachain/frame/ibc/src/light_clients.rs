@@ -7,14 +7,15 @@ use ibc_derive::{ClientDef, ClientMessage, ClientState, ConsensusState, Protobuf
 use ibc_primitives::runtime_interface;
 use ibc_proto::google::protobuf::Any;
 use ics10_grandpa::{
-	client_message::GRANDPA_CLIENT_MESSAGE_TYPE_URL, client_state::GRANDPA_CLIENT_STATE_TYPE_URL,
+	client_message::{RelayChainHeader, GRANDPA_CLIENT_MESSAGE_TYPE_URL},
+	client_state::GRANDPA_CLIENT_STATE_TYPE_URL,
 	consensus_state::GRANDPA_CONSENSUS_STATE_TYPE_URL,
 };
 use ics11_beefy::{
 	client_message::BEEFY_CLIENT_MESSAGE_TYPE_URL, client_state::BEEFY_CLIENT_STATE_TYPE_URL,
 	consensus_state::BEEFY_CONSENSUS_STATE_TYPE_URL,
 };
-use sp_core::ed25519;
+use sp_core::{ed25519, H256};
 use sp_runtime::{app_crypto::RuntimePublic, traits::BlakeTwo256};
 use tendermint_proto::Protobuf;
 
@@ -76,8 +77,18 @@ impl tendermint_light_client_verifier::host_functions::HostFunctionsProvider
 impl ics07_tendermint::HostFunctionsProvider for HostFunctionsManager {}
 
 impl grandpa_client_primitives::HostFunctions for HostFunctionsManager {
+	type Header = RelayChainHeader;
+
 	fn ed25519_verify(sig: &ed25519::Signature, msg: &[u8], pub_key: &ed25519::Public) -> bool {
 		pub_key.verify(&msg, sig)
+	}
+
+	fn add_relaychain_headers(header: &Self::Header) {
+		todo!()
+	}
+
+	fn get_relaychain_headers(hash: H256) -> Option<Self::Header> {
+		todo!()
 	}
 }
 

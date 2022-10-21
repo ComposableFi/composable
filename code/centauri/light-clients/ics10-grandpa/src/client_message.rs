@@ -55,6 +55,8 @@ pub struct Misbehaviour {
 	/// If there are equivocations for at least 1/3 of the validator set, then we  have to freeze
 	/// the client as the byzantine resistance for GRANDPA requires 2/3+1 honest majority
 	pub equivocations: Vec<Equivocation<H256, u32>>,
+	pub first_finality_proof: FinalityProof<RelayChainHeader>,
+	pub second_finality_proof: FinalityProof<RelayChainHeader>,
 }
 
 /// [`ClientMessage`] for Ics10-GRANDPA
@@ -150,6 +152,8 @@ impl TryFrom<RawClientMessage> for ClientMessage {
 				ClientMessage::Misbehaviour(Misbehaviour {
 					set_id: raw_misbehaviour.set_id,
 					equivocations,
+					first_finality_proof: todo!(),
+					second_finality_proof: todo!(),
 				})
 			},
 		};

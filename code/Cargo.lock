@@ -4538,6 +4538,7 @@ dependencies = [
  "finality-grandpa",
  "grandpa-light-client-primitives",
  "hex",
+ "ics10-grandpa",
  "jsonrpsee 0.15.1",
  "jsonrpsee-ws-client 0.14.0",
  "light-client-common",

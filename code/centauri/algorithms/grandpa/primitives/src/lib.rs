@@ -25,7 +25,7 @@ extern crate core;
 use alloc::collections::BTreeMap;
 use codec::{Decode, Encode};
 use core::fmt::Debug;
-use sp_core::{ed25519, sp_std};
+use sp_core::{ed25519, sp_std, H256};
 use sp_finality_grandpa::{AuthorityId, AuthorityList, AuthoritySignature};
 use sp_runtime::traits::Header;
 use sp_std::prelude::*;
@@ -99,8 +99,15 @@ pub struct ParachainHeadersWithFinalityProof<H: Header> {
 
 /// Host functions that allow the light client perform cryptographic operations in native.
 pub trait HostFunctions: light_client_common::HostFunctions + 'static {
+	/// TODO: docs
+	type Header: Header;
+
 	/// Verify an ed25519 signature
 	fn ed25519_verify(sig: &ed25519::Signature, msg: &[u8], pub_key: &ed25519::Public) -> bool;
+	/// TODO: docs
+	fn add_relaychain_headers(header: &Self::Header);
+	/// TODO: docs
+	fn get_relaychain_headers(hash: H256) -> Option<Self::Header>;
 }
 
 /// This returns the storage key for a parachain header on the relay chain.

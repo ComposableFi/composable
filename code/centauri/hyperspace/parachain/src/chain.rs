@@ -263,6 +263,8 @@ where
 					let misbehaviour = ClientMessage::Misbehaviour(Misbehaviour {
 						set_id: current_set_id,
 						equivocations,
+						first_finality_proof: todo!(),
+						second_finality_proof: todo!(),
 					});
 
 					let batch_call = polkadot::api::tx().utility().batch(equivocation_calls);

@@ -67,7 +67,7 @@ pub struct GrandpaClient<T>(PhantomData<T>);
 
 impl<H> ClientDef for GrandpaClient<H>
 where
-	H: grandpa_client_primitives::HostFunctions,
+	H: grandpa_client_primitives::HostFunctions<Header = RelayChainHeader>,
 {
 	type ClientMessage = ClientMessage;
 	type ClientState = ClientState<H>;
@@ -137,15 +137,10 @@ where
 			AncestryChain::<RelayChainHeader>::new(&header.finality_proof.unknown_headers);
 		let mut consensus_states = vec![];
 
-		let from = header
-			.finality_proof
-			.unknown_headers
-			.iter()
-			.min_by_key(|h| *h.number())
-			.ok_or_else(|| Error::Custom(format!("Unknown headers can't be empty!")))?;
+		let from = client_state.latest_relay_hash;
 
 		let mut finalized = ancestry
-			.ancestry(from.hash(), header.finality_proof.block)
+			.ancestry(from, header.finality_proof.block)
 			.map_err(|_| Error::Custom(format!("Invalid ancestry!")))?;
 		finalized.sort();
 
@@ -207,6 +202,11 @@ where
 		if let Some(scheduled_change) = find_scheduled_change(target) {
 			client_state.current_set_id += 1;
 			client_state.current_authorities = scheduled_change.next_authorities;
+		}
+
+		for header in &finalized {
+			let header = ancestry.header(header).expect("finalized headers are in ancestry; qed");
+			H::add_relaychain_headers(header);
 		}
 
 		Ok((client_state, ConsensusUpdateResult::Batch(consensus_states)))

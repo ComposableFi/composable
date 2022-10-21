@@ -15,6 +15,7 @@
 
 use crate::{
 	client_def::GrandpaClient,
+	client_message::RelayChainHeader,
 	error::Error,
 	proto::{Authority as RawAuthority, ClientState as RawClientState},
 };
@@ -30,6 +31,7 @@ use primitive_types::H256;
 use serde::{Deserialize, Serialize};
 use sp_core::ed25519::Public;
 use sp_finality_grandpa::AuthorityList;
+use sp_runtime::testing::Header;
 use tendermint_proto::Protobuf;
 
 /// Protobuf type url for GRANDPA ClientState
@@ -134,7 +136,7 @@ impl<H> ClientState<H> {
 
 impl<H> ibc::core::ics02_client::client_state::ClientState for ClientState<H>
 where
-	H: grandpa_client_primitives::HostFunctions,
+	H: grandpa_client_primitives::HostFunctions<Header = RelayChainHeader>,
 {
 	type UpgradeOptions = UpgradeOptions;
 	type ClientDef = GrandpaClient<H>;
