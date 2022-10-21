@@ -192,7 +192,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		pool_account: &T::AccountId,
 		out_asset: AssetAmount<T::AssetId, T::Balance>,
 		in_asset_id: T::AssetId,
-		_apply_fees: bool,
+		apply_fees: bool,
 	) -> Result<(T::Balance, T::Balance, Fee<T::AssetId, T::Balance>), DispatchError> {
 		let pool_assets = Self::get_pool_balances(&pool, pool_account);
 		let base_asset = pool_assets.get(&out_asset.asset_id).ok_or(Error::<T>::PairMismatch)?;

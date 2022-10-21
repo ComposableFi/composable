@@ -839,11 +839,13 @@ pub mod pallet {
 			Pools::<T>::contains_key(pool_id)
 		}
 
-		fn assets(pool_id: Self::PoolId) -> Result<Vec<Self::AssetId>, DispatchError> {
+		fn assets(
+			pool_id: Self::PoolId,
+		) -> Result<BTreeMap<Self::AssetId, Permill>, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			match pool {
 				PoolConfiguration::DualAssetConstantProduct(info) =>
-					Ok(info.assets_weights.keys().copied().collect::<Vec<_>>()),
+					Ok(info.assets_weights.into_inner()),
 			}
 		}
 
@@ -896,7 +898,7 @@ pub mod pallet {
 			match pool {
 				PoolConfiguration::DualAssetConstantProduct(BasicPoolInfo { lp_token, .. }) => {
 					// TODO (vim): This function must call the relevant calculation through
-					// dual_asset_constant_product.rs. Then most of the logic is removed here.
+					//  dual_asset_constant_product.rs. Then most of the logic is removed here.
 					let pool_base_aum =
 						T::Convert::convert(T::Assets::balance(currency_pair.base, &pool_account));
 					let pool_quote_aum =
@@ -979,8 +981,8 @@ pub mod pallet {
 
 		fn spot_price(
 			pool_id: Self::PoolId,
-			out_asset: AssetAmount<Self::AssetId, Self::Balance>,
-			in_asset_id: Self::AssetId,
+			base_asset: AssetAmount<Self::AssetId, Self::Balance>,
+			quote_asset_id: Self::AssetId,
 		) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
@@ -989,11 +991,11 @@ pub mod pallet {
 					let res = DualAssetConstantProduct::<T>::do_buy(
 						&info,
 						&pool_account,
-						out_asset,
-						in_asset_id,
+						base_asset,
+						quote_asset_id,
 						false,
 					)?;
-					Ok(SwapResult::new(in_asset_id, res.1, res.2.asset_id, res.2.fee))
+					Ok(SwapResult::new(quote_asset_id, res.1, res.2.asset_id, res.2.fee))
 				},
 			}
 		}
@@ -1041,30 +1043,15 @@ pub mod pallet {
 				Self::redeemable_assets_for_lp_tokens(pool_id, lp_amount, min_receive)?;
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
-
 			match pool {
 				PoolConfiguration::DualAssetConstantProduct(info) => {
-					let currency_pair = Self::assets(pool_id)?;
-					let first_currency = currency_pair[0];
-					let second_currency = currency_pair[1];
-					let first_asset_amount = *redeemable_assets
-						.assets
-						.get(&first_currency)
-						.ok_or(Error::<T>::InvalidAsset)?;
-					let second_asset_amount = *redeemable_assets
-						.assets
-						.get(&second_currency)
-						.ok_or(Error::<T>::InvalidAsset)?;
 					let (base_amount, quote_amount, updated_lp) =
 						DualAssetConstantProduct::<T>::remove_liquidity(
 							who,
 							info,
 							pool_account,
 							lp_amount,
-							BTreeMap::from([
-								(first_currency, first_asset_amount),
-								(second_currency, second_asset_amount),
-							]),
+							redeemable_assets.assets,
 						)?;
 					Self::update_twap(pool_id)?;
 					Self::deposit_event(Event::<T>::LiquidityRemoved {
