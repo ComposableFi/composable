@@ -101,6 +101,10 @@ stem:[P_"redeemed"] : Redeemed LPT tokens
 
 stem:[D_k] : Deposit (`D`) of token `k`.
 
+stem:[B_k] : Balance (`B`) of token `k`.
+
+stem:[w_k] : Weight (`w`) of token `k`.
+
 As per the requirement of having differentially weighted pools for Pablo, the LPT math needs to be corrected as follows.
 
 . LPT received for deposited liquidity in each pool asset according to the weight ratio (must be validated in code),
@@ -121,8 +125,8 @@ stem:[P_"issued" = P_"supply" . (((D_k. (1 - f) + B_k)/ B_k)^(w_k) - 1)] <- (5)
 One could see this formula is a generalization of the formula (4) when stem:[w_k = 1] (sum of all weights). Therefore, equation (5) can be used for both cases to get the amount of LPT issued.
 . A sensible default must be derived for the issued LPT for the initial deposit in a pool as otherwise it would always be zero according to above formulae. Here https://github.com/balancer-labs/balancer-v2-monorepo/blob/master/pkg/pool-weighted/contracts/BaseWeightedPool.sol#L192[balancer uses] the following formula which keeps the LPT supply consistent across pools.
 +
-stem:[P_"issued" = k . Pi_"i=0"^k B_i] <- (6)
-+
+stem:[P_"issued" = k . Pi_"i=0"^k B_i^wi] <- (6)
+u+
 The https://github.com/ComposableFi/composable/blob/main/code/parachain/frame/composable-maths/src/dex/constant_product.rs#L131[current implementation] based on Uniswap must be adjusted to be consistent here.
 . Tokens received in each of the assets when withdrawing each type of asset available in a pool
 +
@@ -238,24 +242,27 @@ These are the modifications to be made to the existing https://github.com/Compos
 
 [source,rust]
 ----
-pub fn compute_deposit_lp<T: PerThing>(
-    lp_total_issuance: u128,
-    num_asset_types_in_pool: u128,
-    d_k: u128,
-    b_k: u128,
+fn compute_deposit_lp_<T: PerThing>(
+	p_supply: u128,
+	d_k: u128,
+	b_k: u128,
     // w_k = 1 when providing liquidity in pool weight ratio for all assets
-    w_k: T,
-    // f=0 for getting "in" without taking into account the fee
-    f: T
-) -> Result<(/*LPT*/ u128, /*fee*/ u128), ArithmeticError> {
-    let first_deposit = lp_total_issuance.is_zero();
-    if first_deposit {
-        // Calculate `lp_to_mint` according to section 4.2 Eqn: 6
-        Ok(lp_to_mint, fee)
-    } else {
-        // Calculate `lp_to_mint` according to section 4.2 Eqn: 5
-        Ok(lp_to_mint, fee)
-    }
+	w_k: T,
+    // f=0 for getting `lp_to_mint` without taking into account the fee
+	f: T,
+) -> Result<(/*lp_to_mint*/ u128, /*fee*/ u128), ConstantProductAmmError> {
+    // Calculate `lp_to_mint` according to section 4.2 Eqn: 5
+    Ok(lp_to_mint, fee)
+}
+
+fn compute_first_deposit_lp_<T: PerThing>(
+    // Vec<(token_deposit, token_balance, token_weight)>
+	pool_assets: Vec<(u128, u128, T)>,
+    // Fees are always 0 on first deposit
+	_f: T,
+) -> Result<(/*lp_to_mint*/ u128, /*fee*/ u128), ConstantProductAmmError> {
+    // Calculate `lp_to_mint` according to section 4.2 Eqn: 6
+    Ok(lp_to_mint, fee)
 }
 ----
 
@@ -625,7 +632,22 @@ QA could possibly just use the existing test cases and suites build for Uniswap 
 
 == Audit
 
-Audit can be conducted taking into account the specification of the protocol outlined here according to balancer math. Any weaknesses found on the original balancer protocol should be taken into account in the audit.
+Audit can be conducted taking into account the specification of the protocol 
+outlined here according to balancer math. Any weaknesses found on the original 
+balancer protocol should be taken into account in the audit.
+
+=== Notes on Mathematical Functions
+
+. Until the backing math functions move to fixed point math, functions will not 
+  produce results accurate to 12 decimal places.
+.. Currently, the threshold of acceptance for the output of these math functions 
+   is an error less than 0.0001%
+. Any math functions relying on the crate `rust-decimal` must not, at any point, 
+  produce values greater than `2^96` while values are in `Decimal` form while 
+  processing expected input.
+. While preforming calculations with a fee bounded inclusively between 0% - 1%, 
+  the function `compute_in_given_out` can not be ensured to function with a 
+  `b_i` greater than `1_960_897_022_228_042_355_440_212_770_816 / 25`
 
 == Questions
 

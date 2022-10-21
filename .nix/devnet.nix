@@ -1,4 +1,4 @@
-{ nixpkgs, devnet-dali, devnet-picasso, book, gce-input, rev }:
+{ nixpkgs, devnet-dali, devnet-picasso, gce-input, docs, rev }:
 let
   region = "europe-central2-c";
   persistent-machine = let
@@ -12,19 +12,20 @@ let
           inherit region;
           machineName = machine-name;
           network = resources.gceNetworks.composable-devnet;
-          instanceType = "n2-standard-4";
-          rootDiskSize = 200;
+          instanceType = "n2-standard-8";
+          rootDiskSize = 500;
           tags = [ "http" "https" ];
+          ipAddress = "persistent-devnet-ip";
         };
       };
       nix = {
         enable = true;
+        package = pkgs.nix;
         gc.automatic = true;
         settings = {
           auto-optimise-store = true;
           experimental-features = [ "nix-command" "flakes" ];
         };
-        package = pkgs.nixUnstable;
         useSandbox = "relaxed";
         binaryCaches = [
           "https://nix-community.cachix.org/"
@@ -35,8 +36,11 @@ let
           "composable-community.cachix.org-1:GG4xJNpXJ+J97I8EyJ4qI5tRTAJ4i7h+NK2Z32I8sK8="
         ];
       };
-      networking = { firewall.allowedTCPPorts = [ 80 443 ]; };
-      virtualisation.docker.enable = true;
+      networking = {
+        firewall.allowedTCPPorts = [ 80 443 ];
+        dhcpcd.denyInterfaces = [ "veth*" "docker0" "br-*" ];
+      };
+      virtualisation.docker = { enable = true; };
       systemd.services.devnet = {
         wantedBy = [ "multi-user.target" ];
         after = [ "network.target" ];
@@ -45,23 +49,24 @@ let
           Type = "simple";
           User = "root";
           LimitNOFILE = 1048576;
-          # If docker compose is killed prematurely, it will exit with 255.
-          # Allow for arion to SIGKILL docker compose with success, hence avoiding an issue when deploying (deployment would fail if 255 is considered as error code).
-          SuccessExitStatus = "255";
           ExecStart = "${
               pkgs.writeShellApplication {
-                name = "run-devnet";
-                runtimeInputs = [ pkgs.nixUnstable pkgs.git ];
+                name = "start";
+                runtimeInputs = [ pkgs.nix pkgs.git ];
                 text =
                   "nix run github:ComposableFi/Composable/${rev}#devnet-persistent -L";
               }
-            }/bin/run-devnet";
-          Restart = "always";
+            }/bin/start";
         };
       };
       security.acme = {
         acceptTerms = true;
         defaults = { email = "hussein@composable.finance"; };
+      };
+      services.journald = {
+        extraConfig = ''
+          SystemMaxUse=100M
+        '';
       };
       services.nginx = {
         enable = true;
@@ -91,7 +96,7 @@ let
           locations = proxyChain "dali" 9988 // proxyChain "dali/bob" 9989
             // proxyChain "dali/charlie" 9990 // proxyChain "rococo" 9944
             // proxyChain "karura" 9999 // proxyChain "statemine" 10008 // {
-              "/" = { root = "${book}/book"; };
+              "/" = { root = "${docs}/"; };
               "/subsquid/" = { proxyPass = "http://127.0.0.1:4350/"; };
               "/price-feed/" = { proxyPass = "http://127.0.0.1:8003/"; };
             };
@@ -109,7 +114,7 @@ in builtins.foldl' (machines: devnet:
       inherit region;
       inherit gce-input;
       inherit devnet;
-      inherit book;
+      inherit docs;
       disk-size = 200;
       machine-name = "composable-devnet-${devnet.chain-spec}";
       domain = let prefix = nixpkgs.lib.removeSuffix "-dev" devnet.chain-spec;

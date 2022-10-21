@@ -2,7 +2,7 @@
 
 Resources which allows to grasp  XCM. General understanding how bridges work will help too.
 
-## Terminology
+## Basics
 
 XCM - Cross Chain Message.
 
@@ -10,11 +10,13 @@ XCMP - XCM passing.
 
 XCMP can be upward (parachain to relay), downward(relay to parachain) and sibling(lateral, parachain to parachain).
 
+[Moonbeam: Cross-Consensus Messaging (XCM)](https://docs.moonbeam.network/builders/xcm/overview/)
+
 ## Conceptual
 
-<https://www.youtube.com/watch?v=XU6dAAQD9UE> - trust and XCMP
+[Polkadot's Cross-chain Message Passing Protocol: Shared Security and Polkadot's Design](https://www.youtube.com/watch?v=XU6dAAQD9UE)
 
-<https://docs.moonbeam.network/builders/xcm/overview/>
+[How XCM will actually be used with XCMP](https://forum.polkadot.network/t/how-xcm-will-actually-be-used-with-xcmp/190)
 
 ## How to setup XCMP
 
