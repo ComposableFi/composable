@@ -436,10 +436,10 @@
               meta = { mainProgram = "composable"; };
             });
 
-          run-with-benchmarks = chain:
+          benchmarks-run-once = chainspec:
             pkgs.writeShellScriptBin "run-benchmarks-once" ''
               ${composable-bench-node}/bin/composable benchmark pallet \
-              --chain="${chain}" \
+              --chain="${chainspec}" \
               --execution=wasm \
               --wasm-execution=compiled \
               --wasm-instantiation-strategy=legacy-instance-reuse \
@@ -448,6 +448,21 @@
               --steps=1 \
               --repeat=1
             '';
+
+          generate-benchmarks = chain:
+            pkgs.writeShellScriptBin "generate-benchmarks" ''
+              ${composable-bench-node}/bin/composable benchmark pallet \
+              --chain="${chain}-dev" \
+              --execution=wasm \
+              --wasm-execution=compiled \
+              --wasm-instantiation-strategy=legacy-instance-reuse \
+              --pallet="*" \
+              --extrinsic="*" \
+              --steps=50 \
+              --repeat=20 \
+              --output=code/parachain/runtime/${chain}/src/weights
+            '';
+
           docs-renders = with pkgs; [ nodejs plantuml graphviz pandoc ];
 
           mkFrontendStatic = { kusamaEndpoint, picassoEndpoint, karuraEndpoint
@@ -931,10 +946,10 @@
               };
             };
 
-            check-dali-dev-benchmarks = run-with-benchmarks "dali-dev";
-            check-picasso-dev-benchmarks = run-with-benchmarks "picasso-dev";
+            check-dali-dev-benchmarks = benchmarks-run-once "dali-dev";
+            check-picasso-dev-benchmarks = benchmarks-run-once "picasso-dev";
             check-composable-dev-benchmarks =
-              run-with-benchmarks "composable-dev";
+              benchmarks-run-once "composable-dev";
 
             check-picasso-integration-tests = crane-nightly.cargoBuild
               (common-attrs // {
@@ -1361,13 +1376,22 @@
             junod = makeApp packages.junod;
             # TODO: move list of chains out of here and do fold
             benchmarks-once-composable = flake-utils.lib.mkApp {
-              drv = run-with-benchmarks "composable-dev";
+              drv = benchmarks-run-once "composable-dev";
             };
             benchmarks-once-dali =
-              flake-utils.lib.mkApp { drv = run-with-benchmarks "dali-dev"; };
+              flake-utils.lib.mkApp { drv = benchmarks-run-once "dali-dev"; };
 
             benchmarks-once-picasso = flake-utils.lib.mkApp {
-              drv = run-with-benchmarks "picasso-dev";
+              drv = benchmarks-run-once "picasso-dev";
+            };
+            benchmarks-generate-dali = flake-utils.lib.mkApp {
+              drv = generate-benchmarks "dali";
+            };
+            benchmarks-generate-picasso = flake-utils.lib.mkApp {
+              drv = generate-benchmarks "picasso";
+            };
+            benchmarks-generate-composable = flake-utils.lib.mkApp {
+              drv = generate-benchmarks "composable";
             };
             simnode-tests = makeApp packages.simnode-tests;
             simnode-tests-composable =
