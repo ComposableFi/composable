@@ -31,7 +31,7 @@ High-velocity bots provide an additional layer of transfer support to enable liq
 manner in case passive liquidity rebalancing fails.
 
 
-![mosaic_architecture](./mosaic-architecture.png)
+![mosaic_architecture](../../static/img/products/mosaic/mosaic-architecture.png)
 *High level view of Mosaic architecture*
 
 
