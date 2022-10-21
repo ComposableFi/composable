@@ -4,11 +4,6 @@ version = "0.1.0"
 edition = "2021"
 authors = ["Seun Lanlege <seunlanlege@gmail.com>", "David Salami <david.salami@gmail.com>"]
 
-[build-dependencies]
-color-eyre = "0.6.2"
-tokio = { version = "1.19.2", features = ["macros", "rt-multi-thread"] }
-subxt-codegen = { path = "../../../utils/subxt-codegen" }
-
 [dependencies]
 primitives = { path = "../primitives", package = "hyperspace-primitives" }
 

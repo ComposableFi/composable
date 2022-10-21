@@ -3,6 +3,7 @@ use clap::Parser;
 use hyperspace::logging;
 use metrics::{data::Metrics, handler::MetricsHandler, init_prometheus};
 use prometheus::Registry;
+use serde::Deserialize;
 use std::path::PathBuf;
 
 mod chain;
@@ -19,6 +20,7 @@ pub struct Cli {
 #[derive(Debug, Parser)]
 pub enum Subcommand {
 	Relay(RelayCmd),
+	NetworkSetup(),
 }
 
 /// The `relay` command
@@ -28,6 +30,21 @@ pub struct RelayCmd {
 	/// Relayer config path.
 	#[clap(long)]
 	config: String,
+}
+
+/// The `relay` command
+#[derive(Debug, Clone, Parser)]
+#[clap(name = "network setup command", about = "Performs code generation to interact with the substrate node")]
+pub struct NetworkSetupCmd {
+	/// Network inputs
+	#[clap(long)]
+	input: Vec<NetworkSetupInput>,
+}
+
+#[derive(Debug, Deserialize)]
+struct NetworkSetupInput {
+	pub url: String,
+	pub network: String,
 }
 
 impl RelayCmd {
@@ -59,12 +76,23 @@ impl RelayCmd {
 	}
 }
 
+impl NetworkSetupCmd {
+	pub async fn setup(&self) -> Result<()> {
+		for network_setup_input in self.input {
+			subxt_codegen::build_script(network_setup_input.url, network_setup_input.network).await?;
+		}
+		Ok(())
+	}
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
 	logging::setup_logging();
 	let cli = Cli::parse();
 
 	match &cli.subcommand {
-		Subcommand::Relay(cmd) => cmd.run().await,
+		Subcommand::Relay(cmd) => cmd.run().await?,
+    	Subcommand::NetworkSetup(network_setup) => network_setup.setup().await?,
 	}
+	Ok(())
 }
