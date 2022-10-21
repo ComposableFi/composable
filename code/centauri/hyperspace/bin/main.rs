@@ -2,6 +2,7 @@ use anyhow::Result;
 use clap::Parser;
 use hyperspace::logging;
 use metrics::{data::Metrics, handler::MetricsHandler, init_prometheus};
+use primitives::Chain;
 use prometheus::Registry;
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -12,9 +13,8 @@ use tendermint_proto::Protobuf;
 mod chain;
 
 use chain::Config;
-use ibc::applications::transfer::VERSION;
 use ibc::core::ics02_client::msgs::create_client::MsgCreateAnyClient;
-use ibc::core::{ics03_connection, ics04_channel};
+use ibc::core::{ics04_channel};
 use ibc::core::ics03_connection::connection::Counterparty;
 use ibc::core::ics03_connection::msgs::conn_open_init::MsgConnectionOpenInit;
 use ibc::core::ics04_channel::channel;
@@ -24,7 +24,7 @@ use ibc::core::ics24_host::identifier::PortId;
 use ibc::events::IbcEvent;
 use ibc::tx_msg::Msg;
 use ibc_proto::google::protobuf::Any;
-use primitives::{Chain, IbcProvider, KeyProvider};
+use primitives::{IbcProvider, KeyProvider};
 use primitives::mock::LocalClientTypes;
 use primitives::utils::timeout_future;
 use futures::StreamExt;
@@ -196,9 +196,9 @@ impl Cmd {
 	}
 
 	pub async fn create_channel(&self) -> Result<()> {
-		let port_id = PortId::from_str(self.port_id.expect("port_id must be specified when creating a channel")).expect("Port id was invalid");
-		let version = self.version.expect("version must be specified when creating a channel");
-		let order = self.order.expect("order must be specified when creating a channel, expected one of 'ordered' or 'unordered'");
+		let port_id = PortId::from_str(self.port_id.as_ref().expect("port_id must be specified when creating a channel").as_str()).expect("Port id was invalid");
+		let version = self.version.as_ref().expect("version must be specified when creating a channel").clone();
+		let order = self.order.as_ref().expect("order must be specified when creating a channel, expected one of 'ordered' or 'unordered'").as_str();
 		let path: PathBuf = self.config.parse()?;
 		let file_content = tokio::fs::read_to_string(path).await?;
 		let config: Config = toml::from_str(&file_content)?;
@@ -219,7 +219,7 @@ impl Cmd {
 
 		let channel = ChannelEnd::new(
 			State::Init,
-			Order::from_str(&order).expect("Expected one of 'ordered' or 'unordered'"),
+			Order::from_str(order).expect("Expected one of 'ordered' or 'unordered'"),
 			channel::Counterparty::new(port_id.clone(), None),
 			vec![any_chain_a.connection_id()],
 			ics04_channel::Version::new(version),
@@ -271,6 +271,8 @@ async fn main() -> Result<()> {
 
 	match &cli.subcommand {
 		Subcommand::Relay(cmd) => cmd.run().await,
-		_ => unimplemented!()
+		Subcommand::CreateClients(cmd) => cmd.create_clients().await,
+		Subcommand::CreateConnection(cmd) => cmd.create_connection().await,
+		Subcommand::CreateChannel(cmd) => cmd.create_channel().await
 	}
 }

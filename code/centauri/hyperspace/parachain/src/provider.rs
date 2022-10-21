@@ -112,9 +112,11 @@ where
 					.event
 					.events
 					.into_iter()
-					.map(|ev| {
-						IbcEvent::try_from(RawIbcEvent::from(ev))
-							.map_err(|e| subxt::Error::Other(e.to_string()))
+					.filter_map(|ev| {
+						ev.ok().map(|ev| {
+							IbcEvent::try_from(RawIbcEvent::from(ev))
+								.map_err(|e| subxt::Error::Other(e.to_string()))
+						})
 					})
 					.collect::<Result<Vec<_>, _>>();
 
