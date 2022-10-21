@@ -30,7 +30,7 @@ make functions modular. Our infrastructure enabled ease of pallet composition an
 stack provides each new innovation with **modular composability**.
 
 
-![technical_stack_overview](./composable-technical-stack.png)
+![technical_stack_overview](../../static/img/techstack/composable-technical-stack.png)
 *Similar to how the DTCC acted as a reconciliation layer that enabled traditional markets to communicate with one 
 another such as HFT, Darkpools and other financial instruments, 
 Composable is set to take DeFi along a similar evolution by allowing innovators to roll out the next generation of 
