@@ -14,6 +14,7 @@ use prometheus::{Histogram, Registry};
 use std::{
 	cell::Cell,
 	collections::HashMap,
+	ops::DerefMut,
 	sync::{Arc, Mutex},
 	time::Instant,
 };
@@ -44,7 +45,7 @@ pub struct MetricsHandler {
 	last_sent_packet_time: PacketMap,
 	last_sent_acknowledgment_time: PacketMap,
 	last_sent_timeout_packet_time: PacketMap,
-	last_update_client_time: Cell<Option<Instant>>,
+	last_update_client_time: Arc<Mutex<Option<Instant>>>,
 
 	counterparty_last_sent_packet_time: Option<PacketMap>,
 	counterparty_last_sent_acknowledgment_time: Option<PacketMap>,
@@ -59,7 +60,7 @@ impl MetricsHandler {
 			last_sent_packet_time: Arc::new(Mutex::new(HashMap::new())),
 			last_sent_acknowledgment_time: Arc::new(Mutex::new(HashMap::new())),
 			last_sent_timeout_packet_time: Arc::new(Mutex::new(HashMap::new())),
-			last_update_client_time: Cell::new(None),
+			last_update_client_time: Arc::new(Mutex::new(None)),
 			counterparty_last_sent_packet_time: None,
 			counterparty_last_sent_acknowledgment_time: None,
 			counterparty_last_sent_timeout_packet_time: None,
@@ -107,10 +108,9 @@ impl MetricsHandler {
 					);
 				},
 				IbcEvent::UpdateClient(update) => {
-					observe_delta_time(
-						&self.last_update_client_time,
-						&self.metrics.sent_update_client_time,
-					);
+					let mut guard = self.last_update_client_time.lock().unwrap();
+					observe_delta_time(guard.deref_mut(), &self.metrics.sent_update_client_time);
+					drop(guard);
 					self.metrics.update_light_client_height(
 						&update.common.client_id,
 						update.common.consensus_height,
@@ -198,14 +198,13 @@ impl MetricsHandler {
 	}
 }
 
-fn observe_delta_time(cell: &Cell<Option<Instant>>, time_metrics: &Histogram) {
+fn observe_delta_time(maybe_time: &mut Option<Instant>, time_metrics: &Histogram) {
 	let now = Instant::now();
-	let time = cell.get();
-	if let Some(last_time) = time {
-		let elapsed = now - last_time;
-		cell.set(Some(now));
+	if let Some(last_time) = maybe_time {
+		let elapsed = now - *last_time;
+		*last_time = now;
 		time_metrics.observe(elapsed.as_millis() as f64);
 	} else {
-		cell.set(Some(now));
+		*maybe_time = Some(now);
 	}
 }
