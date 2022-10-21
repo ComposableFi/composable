@@ -7,7 +7,7 @@ export const PolkadotAccountListItem = ({ account, onSelect, isSelected, identic
     account: InjectedAccountWithMeta;
     onSelect: (account: InjectedAccountWithMeta) => void;
     isSelected: boolean;
-    identiconTheme?: "substrate" | "polkadot" | "ethereum" | "jdenticon"
+    identiconTheme?: "substrate" | "polkadot" | "ethereum"
 }) => {
     const theme = useTheme();
     return (
