@@ -5,7 +5,7 @@ accomplishes this through automated market maker (AMM) pools, which also act as 
 liquidity providers.
 
 
-![swaps_trading_graph](./swaps-trading-graph.png)
+![swaps_trading_graph](../../../static/img/products/pablo/swaps-trading-graph.png)
 
 
 Pablo is distinct from other DEXs, however, in that it allows users to select between different pools which all use 

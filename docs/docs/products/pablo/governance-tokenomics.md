@@ -27,7 +27,7 @@ The total supply of $PBLO, its distribution and vesting schedule:
 | LBP                           | 7.5%         |
 
 
-![PBLO_distribution](./PBLO-distribution.png)
+![PBLO_distribution](../../../static/img/products/pablo/PBLO-distribution.png)
 
 
 ##### $PBLO token use-cases and utility
@@ -42,7 +42,7 @@ The $PBLO token has several uses which incentivizes its ownership:
 * In addition to existing governance, xPBLO holders will be able to participate in bribes and liquidity gauges
 
 
-![PBLO_circulating_supply](./PBLO-circulating-supply.png)
+![PBLO_circulating_supply](../../../static/img/products/pablo/PBLO-circulating-supply.png)
 
 
 Pablo undergoes continuous security audits, which will be published alongside any fix logs (if required) on the 

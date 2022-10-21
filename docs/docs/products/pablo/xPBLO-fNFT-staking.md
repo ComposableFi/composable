@@ -10,7 +10,7 @@ ecosystems. Users can then burn their xPBLO tokens at the end of their lock peri
 assets.
 
 
-![pablo_architecture](./pablo-architecture.png)
+![pablo_architecture](../../../static/img/products/pablo/architecture.png)
 _High level overview of Pablo_
 
 
