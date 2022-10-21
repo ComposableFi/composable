@@ -21,7 +21,7 @@ Below is a high level diagram that shows the interactions between the components
 ## High level architecture
 
 
-![oracle_architecture](./oracle-set-up-guide/oracle-architecture.jpg)
+![oracle_architecture](../../static/img/developer-guides/oracle-architecture.jpg)
 
 
 1. Apollo off-chain worker monitors on-chain price requests.
@@ -188,11 +188,11 @@ Please note that port 9944 doesn't have pallet functionality; it is a relay node
 
 Make sure you have connected to the right port. 
 
-![polkadotjs_web_interface](./oracle-set-up-guide/polkadotjs-web-interface.png)
+![polkadotjs_web_interface](../../static/img/developer-guides/polkadotjs-web-interface.png)
 
 You should see the block explorer:
 
-![block_explorer](./oracle-set-up-guide/block-explorer.png)
+![block_explorer](../../static/img/developer-guides/block-explorer.png)
 
 In this web UI we will run extrinsics & RPCs, to attach the price feed to the node.
 
@@ -247,7 +247,7 @@ Currently only the price for KSM is supported, which can be accessed using the f
 [http://127.0.0.1:3001/price/4](http://127.0.0.1:3001/price/4)
 
 
-![price_feed_output](./oracle-set-up-guide/price-feed-output.png)
+![price_feed_output](../../static/img/developer-guides/price-feed-output.png)
 
 
 price-feed output should look like this.
@@ -395,14 +395,14 @@ suri: bottom drive obey lake curtain smoke basket hold race lonely fit walk//Ali
 publicKey: 5yNZjX24n2eg7W6EVamaTXNQbWCwchhThEaSWB7V3GRjtHeL
 ```
 
-![register_offchain_worker](./oracle-set-up-guide/register-offchain-worker.png)
+![register_offchain_worker](../../static/img/developer-guides/register-offchain-worker.png)
 
 
 After successfully following these steps, you should see the blockchain successfully getting prices submitted, every few
 blocks.
 
 
-![successful_price_submitted](./oracle-set-up-guide/successful-price-submitted.png)
+![successful_price_submitted](../../static/img/developer-guides/successful-price-submitted.png)
 
 
 ### 2. Manual Setup
@@ -430,7 +430,7 @@ To do this go to:
 _Developer menu -> RPC calls -> offchain -> **localStorageSet**_ \
 
 
-![manual_register_price_feed](./oracle-set-up-guide/manual-register-price-feed.png)
+![manual_register_price_feed](../../static/img/developer-guides/manual-register-price-feed.png)
 
 
 **Register offchain worker**
@@ -442,7 +442,7 @@ _Developer menu -> RPC calls -> author -> **insertKey**_
 And enter the details above, as seen in the screenshot and press: “Submit RPC call”.
 
 
-![register_offchain_worker](./oracle-set-up-guide/register-offchain-worker.png)
+![register_offchain_worker](../../static/img/developer-guides/register-offchain-worker.png)
 
 
 **Setting signer**
@@ -463,7 +463,7 @@ submitting prices.
 _Developer -> extrinsics -> Oracle -> setSinger_
 
 
-![manual_set_signer](./oracle-set-up-guide/manual-set-signer.png)
+![manual_set_signer](../../static/img/developer-guides/manual-set-signer.png)
 
 
 **Create oracle for asset**
@@ -483,17 +483,17 @@ _Developer -> Sudo -> Oracle **-> addAssetAndInfo	**_
 * reward: 10000
 * slash: 10000
 
-![create_oracle_for_asset](./oracle-set-up-guide/create-oracle-for-asset.png)
+![create_oracle_for_asset](../../static/img/developer-guides/create-oracle-for-asset.png)
 
 
-![authorize_transaction](./oracle-set-up-guide/authorize-transaction.png)
+![authorize_transaction](../../static/img/developer-guides/authorize-transaction.png)
 
 
 After successfully following these steps, you should see the blockchain successfully getting prices submitted, every few
 blocks.
 
 
-![successful_price_submitted](./oracle-set-up-guide/successful-price-submitted.png)
+![successful_price_submitted](../../static/img/developer-guides/successful-price-submitted.png)
 
 
 ____
