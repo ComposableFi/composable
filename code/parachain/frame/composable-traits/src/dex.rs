@@ -62,7 +62,8 @@ pub trait Amm {
 
 	fn pool_exists(pool_id: Self::PoolId) -> bool;
 
-	fn assets(pool_id: Self::PoolId) -> Result<Vec<Self::AssetId>, DispatchError>;
+	/// Retrieves the pool assets and their weights.
+	fn assets(pool_id: Self::PoolId) -> Result<BTreeMap<Self::AssetId, Permill>, DispatchError>;
 
 	fn lp_token(pool_id: Self::PoolId) -> Result<Self::AssetId, DispatchError>;
 
@@ -102,8 +103,8 @@ pub trait Amm {
 	/// `out_asset_id` the asset the user is interested in.
 	fn spot_price(
 		pool_id: Self::PoolId,
-		in_asset: AssetAmount<Self::AssetId, Self::Balance>,
-		out_asset_id: Self::AssetId,
+		base_asset: AssetAmount<Self::AssetId, Self::Balance>,
+		quote_asset_id: Self::AssetId,
 	) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError>;
 
 	/// Buy given `amount` of given asset from the pool.
