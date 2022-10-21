@@ -22,7 +22,7 @@ Developers and projects hold the ability to deploy as pallets on our chain,
 with governance having the ability to upgrade these pallets into the runtime of our chains:
 
 
-![pallet_integrations](./pallet-integrations.png)
+![pallet_integrations](../../static/img/developer-guides/pallet-integrations.png)
 
 
 ## Advantages:
