@@ -553,7 +553,8 @@
             '';
           };
 
-          mkDevnetInitializeScript = url: parachainIds:
+          mkDevnetInitializeScript =
+            { polkadotUrl, composableUrl, parachainIds }:
             let
               lease-period-prolongator = npm-bp.buildYarnPackage {
                 nativeBuildInputs = [
@@ -586,9 +587,9 @@
               name = "qa-state-initialize";
               runtimeInputs = [ pkgs.nodejs ];
               text = ''
-                PARACHAIN_ENDPOINT=ws://localhost:9988 ${pkgs.nodejs}/bin/npm run --prefix ${composablejs} start -w packages/devnet-setup
+                PARACHAIN_ENDPOINT=${composableUrl} ${pkgs.nodejs}/bin/npm run --prefix ${composablejs} start -w packages/devnet-setup
                 ${builtins.concatStringsSep "\n" (builtins.map (parachainId:
-                  "NODE_URL=${url} PARA_ID=${
+                  "NODE_URL=${polkadotUrl} PARA_ID=${
                     toString parachainId
                   } ${pkgs.nodejs}/bin/node ${lease-period-prolongator}/dist/index.js")
                   parachainIds)}
@@ -668,8 +669,19 @@
             inherit frontend-pablo-server;
             inherit frontend-picasso-server;
 
-            devnet-initialize-script =
-              mkDevnetInitializeScript "ws://localhost:9944" [ 1000 2000 2087 ];
+            devnet-initialize-script-local = mkDevnetInitializeScript {
+              polkadotUrl = "ws://localhost:9944";
+              composableUrl = "ws://localhost:9988";
+              parachainIds = [ 1000 2000 2087 ];
+            };
+
+            devnet-initialize-script-persistent = mkDevnetInitializeScript {
+              polkadotUrl =
+                "wss://persistent.devnets.composablefinance.ninja/chain/rococo";
+              composableUrl =
+                "wss://persistent.devnets.composablefinance.ninja/chain/dali";
+              parachainIds = [ 1000 2000 2087 ];
+            };
 
             docs-static = npm-bp.buildNpmPackage {
               src = ./docs;
@@ -1364,8 +1376,10 @@
               flake-utils.lib.mkApp { drv = run-simnode-tests "picasso"; };
             simnode-tests-dali-rococo =
               flake-utils.lib.mkApp { drv = run-simnode-tests "dali-rococo"; };
-            devnet-initialize-script =
-              makeApp packages.devnet-initialize-script;
+            devnet-initialize-script-local =
+              makeApp packages.devnet-initialize-script-local;
+            devnet-initialize-script-persistent =
+              makeApp packages.devnet-initialize-script-persistent;
             default = devnet-dali;
           };
         });
@@ -1389,6 +1403,8 @@
               polkadot-launch composable-node polkadot-node;
             chain-spec = "picasso-dev";
           };
+          docs = eachSystemOutputs.packages.x86_64-linux.docs-static;
+          rev = builtins.getEnv "GITHUB_SHA";
         };
       };
       homeConfigurations = let
