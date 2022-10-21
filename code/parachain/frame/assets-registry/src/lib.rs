@@ -92,13 +92,8 @@ pub mod pallet {
 	/// Mapping local asset to foreign asset.
 	#[pallet::storage]
 	#[pallet::getter(fn from_local_asset)]
-	pub type LocalToForeign<T: Config> = StorageMap<
-		_,
-		Blake2_128Concat,
-		T::LocalAssetId,
-		ForeignMetadata<T::ForeignAssetId>,
-		OptionQuery,
-	>;
+	pub type LocalToForeign<T: Config> =
+		StorageMap<_, Twox128, T::LocalAssetId, ForeignMetadata<T::ForeignAssetId>, OptionQuery>;
 
 	/// Mapping foreign asset to local asset.
 	#[pallet::storage]
@@ -317,8 +312,10 @@ pub mod pallet {
 		}
 
 		fn get_foreign_assets_list() -> Vec<Asset<Self::AssetNativeLocation>> {
-			LocalToForeign::<T>::iter()
-				.map(|(local_id, foreign_metadata)| {
+			ForeignToLocal::<T>::iter()
+				.map(|(_, asset_id)| {
+					let foreign_metadata = LocalToForeign::<T>::get(asset_id)
+						.expect("Must exist, as it does in ForeignToLocal");
 					let decimals = match foreign_metadata.decimals {
 						Some(exponent) => exponent,
 						_ => 12_u32,
@@ -326,7 +323,7 @@ pub mod pallet {
 
 					Asset {
 						name: None,
-						id: local_id.into(),
+						id: asset_id.into(),
 						decimals,
 						foreign_id: Some(foreign_metadata.location),
 					}
