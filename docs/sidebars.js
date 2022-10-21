@@ -77,7 +77,7 @@ const sidebars = {
           label: 'XCVM',
           link: {
             type: 'doc',
-            id: 'products/xcvm'
+            id: 'products/xcvm-overview'
           },
           collapsible: true,
           collapsed: true,

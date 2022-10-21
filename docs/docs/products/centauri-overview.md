@@ -5,7 +5,7 @@ bridge built on Picasso, and marks the first connection between the DotSama and 
 Centauri enables the trustless and cost-effective exchange and transfer of assets between the two ecosystems. 
 This trustlessness is achieved through light clients and finality proofs. We are connecting the IBC Protocol to chains 
 in other ecosystems that support light clients. Centauri can be leveraged by other pallets on Picasso and act as a 
-transport layer for the [Composable XCVM](./xcvm.md), facilitating cross-chain movement of 
+transport layer for the [Composable XCVM](./xcvm-overview.md), facilitating cross-chain movement of 
 information and assets.
 
 ## How it works

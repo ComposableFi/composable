@@ -29,4 +29,4 @@ Onboarding new layers, chains, and their associated validators into our ecosyste
 
 ### Building modular applications with the Composable XCVM:
 
-Onboarding developers to use the [Composable Cross-Chain VM (XCVM)](../products/xcvm.md).
+Onboarding developers to use the [Composable Cross-Chain VM (XCVM)](../products/xcvm-overview.md).

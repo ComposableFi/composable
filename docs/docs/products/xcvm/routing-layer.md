@@ -17,7 +17,7 @@ requirements, abbreviated KYC/AML). Therefore, the routing process would be both
 intensive. Our pathway execution layer will make this process simple for users and enable them to customize which 
 parameter they want to optimize for when completing a given transaction.
 
-Upon instruction and orchestration by the [Composable XCVM](../xcvm.md) the routing layer selects
+Upon instruction and orchestration by the [Composable XCVM](../xcvm-overview.md) the routing layer selects
 the most optimal route for the user’s desired outcome, which propagates communications cross-ecosystem, and to our to 
 the dApp transport module, Mosaic, which then facilitates asset transfers, with settlement being recognized on the 
 parachain.

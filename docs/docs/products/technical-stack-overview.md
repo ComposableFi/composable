@@ -47,7 +47,7 @@ cross-chain applications, by using the CosmWasm framework for smart contracts.
 
 ### The Composable Cross-Chain Virtual Machine
 
-The [Composable Cross-Chain Virtual Machine (XCVM)](./xcvm.md) is a top-level orchestration layer
+The [Composable Cross-Chain Virtual Machine (XCVM)](./xcvm-overview.md) is a top-level orchestration layer
 for deploying protocols that can communicate across multiple chains at once.
 The XCVM will abstract away complexity by enabling cross-chain smart contracts that leverage the power of the entire 
 DeFi ecosystem for end users and DeFi developers. 
