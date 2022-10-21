@@ -2,9 +2,16 @@
     "name": "wallet",
     "version": "1.0.0",
     "dependencies": {
-      "@polkadot/react-identicon": "^2.9.12"
+      "@polkadot/react-identicon": "^2.9.12",
+      "notistack": "3.0.0-alpha.2"
     },
     "devDependencies": {
+      "substrate-react": "*",
+      "bi-lib": "*",
+      "@polkadot/api": "*",
+      "@polkadot/extension-dapp": "*",
+      "bignumber.js": "*",
+      "react": "*",
       "@mui/material": "*",
       "shared": "*",
       "eslint-config-custom": "*"

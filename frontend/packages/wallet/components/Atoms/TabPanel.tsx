@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Card, useTheme, Box, Typography } from "@mui/material";
+import { Card, useTheme, Box } from "@mui/material";
 
 export interface TabPanelProps {
   children?: React.ReactNode;

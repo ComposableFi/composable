@@ -9,9 +9,12 @@ import { AccountIndicator } from "../../Molecules/AccountIndicator";
 import { humanBalance } from "shared";
 import { useDotSamaContext, useEagerConnect, SupportedWalletId, useConnectedAccounts } from "substrate-react";
 import { DEFAULT_EVM_ID, DEFAULT_NETWORK_ID } from "@/defi/polkadot/constants";
-import { ConnectWalletModal, NetworkId, WalletViewModal } from "wallet";
+import { Wallet } from "wallet";
 import { ConnectorType, useBlockchainProvider, useConnector } from "bi-lib";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
+import { NetworkId } from "wallet";
+import BigNumber from "bignumber.js";
+
 const BLOCKCHAIN_NETWORKS_SUPPORTED = [
   { name: "Polkadot", icon: "/networks/polkadot_js.svg", networkId: NetworkId.Polkadot },
   { name: "Ethereum", icon: "/networks/mainnet.svg", networkId: NetworkId.Ethereum }
@@ -84,34 +87,26 @@ const Status = ({ label, isPolkadotActive, isEthereumActive }: { label: string; 
 export const PolkadotConnect: React.FC<{}> = () => {
   const theme = useTheme();
   const { deactivate, extensionStatus, activate, setSelectedAccount } = useDotSamaContext();
-  const { closePolkadotModal, isPolkadotModalOpen } = useStore(({ ui }) => ui);
   const accounts = useConnectedAccounts(DEFAULT_NETWORK_ID);
   const { account } = useBlockchainProvider(DEFAULT_EVM_ID);
   const connectedAccount = useSelectedAccount();
   const biLibConnector = useConnector(ConnectorType.MetaMask);
   useEagerConnect(DEFAULT_NETWORK_ID);
 
-  const isEthereumActive = biLibConnector.isActive ?? false
-  const isPolkadotActive = extensionStatus === "connected"
-  const label = isEthereumActive || isPolkadotActive ? "Connected" : "Wallets"
-
   return (
     <>
-      <Status label={label} isEthereumActive={biLibConnector.isActive ?? false} isPolkadotActive={extensionStatus === "connected"} />
-      {/* <MetamaskStatus /> */}
-      <ConnectWalletModal
+      <Wallet
+        connectedAccountNativeBalance={new BigNumber(0)}
         onDisconnectDotsamaWallet={deactivate}
         onConnectPolkadotWallet={activate as any}
-        networks={BLOCKCHAIN_NETWORKS_SUPPORTED}
+        blockchainNetworksSupported={BLOCKCHAIN_NETWORKS_SUPPORTED}
         supportedPolkadotWallets={POLKADOT_WALLETS_SUPPORTED}
         supportedEthereumWallets={ETHEREUM_WALLETS_SUPPORTED}
-        isOpen={isPolkadotModalOpen}
-        closeWalletConnectModal={closePolkadotModal}
         polkadotAccounts={accounts}
-        ethereumSelectedAccount={account}
+        ethereumConnectedAccount={account}
         onConnectEthereumWallet={biLibConnector.activate as any}
         isEthereumWalletActive={biLibConnector.isActive ? biLibConnector.isActive : false}
-        dotsamaExtensionStatus={extensionStatus}
+        polkadotExtensionStatus={extensionStatus}
         polkadotSelectedAccount={connectedAccount}
         onDisconnectEthereum={biLibConnector.deactivate}
         onSelectPolkadotAccount={(account: InjectedAccountWithMeta) => {

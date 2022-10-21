@@ -9,15 +9,17 @@ import {
 } from "@mui/material";
 import Image from "next/image";
 import { useCallback } from "react";
+import React from "react";
+import "../styles/theme.d.ts";
 
-type AccountIndicatorProps = {
+type ConnectionButtonProps = {
   label: string;
   onClick: () => void;
   isEthereumConnected: boolean;
   isPolkadotConnected: boolean;
 };
 
-export const AccountIndicator: React.FC<AccountIndicatorProps> = ({
+export const WalletIndicator: React.FC<ConnectionButtonProps> = ({
   label,
   onClick,
   isEthereumConnected = false,

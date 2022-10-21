@@ -11,7 +11,6 @@ import { alpha, Breadcrumbs, Typography, useTheme } from "@mui/material";
 import { useTablet } from "@/hooks/responsive";
 import { PolkadotConnect } from "../Organisms/Wallet/PolkadotConnect";
 import { GlobalSettings } from "../Organisms/Settings/GlobalSettings";
-import { WalletViewModal } from "wallet";
 
 type DefaultLayoutProps = {
   breadcrumbs?: React.ReactNode[];
@@ -64,7 +63,6 @@ export const DefaultLayout: React.FC<DefaultLayoutProps> = props => {
           <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
             <GlobalSettings />
             <PolkadotConnect />
-            <WalletViewModal open={true} nativeIcon="/tokens/pica_bg_white.svg" />
           </Box>
           {breadcrumbs && (
             <Breadcrumbs separator="›" aria-label="breadcrumb">
