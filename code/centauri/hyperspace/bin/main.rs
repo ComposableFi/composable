@@ -33,18 +33,21 @@ pub struct RelayCmd {
 	config: String,
 }
 
-/// The `relay` command
+/// The `network` command
 #[derive(Debug, Clone, Parser)]
 #[clap(
 	name = "network setup command", 
 	about = "Performs code generation to interact with the substrate node"
 )]
+
+/// Accepts a set of [`NetworkSetupInput`] in order to perform the 
+/// code generation neede to interact with different substrate nodes
 pub struct NetworkSetupCmd {
-	/// Network inputs
 	#[clap(long)]
 	input: Vec<NetworkSetupInput>,
 }
 
+/// Describes the url and network to which Hyperspace will connect to
 #[derive(Debug, Deserialize, Clone)]
 struct NetworkSetupInput {
 	pub url: String,
