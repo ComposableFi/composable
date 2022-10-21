@@ -36,11 +36,11 @@ pub struct RelayCmd {
 /// The `network` command
 #[derive(Debug, Clone, Parser)]
 #[clap(
-	name = "network setup command", 
+	name = "network setup command",
 	about = "Performs code generation to interact with the substrate node"
 )]
 
-/// Accepts a set of [`NetworkSetupInput`] in order to perform the 
+/// Accepts a set of [`NetworkSetupInput`] in order to perform the
 /// code generation neede to interact with different substrate nodes
 pub struct NetworkSetupCmd {
 	#[clap(long)]
@@ -57,11 +57,10 @@ struct NetworkSetupInput {
 impl FromStr for NetworkSetupInput {
 	type Err = String;
 	fn from_str(input: &str) -> Result<Self, Self::Err> {
-			Ok(serde_json::from_str(input).expect("failed to parse NetworkSetupInput. Provide url + network in JSON"))
-	
+		Ok(serde_json::from_str(input)
+			.expect("failed to parse NetworkSetupInput. Provide url + network in JSON"))
 	}
 }
-
 
 impl RelayCmd {
 	/// Run the command
@@ -95,7 +94,12 @@ impl RelayCmd {
 impl NetworkSetupCmd {
 	pub async fn setup(&self) -> Result<()> {
 		for network_setup_input in &self.input {
-			subxt_codegen::build_script(network_setup_input.url.clone(), network_setup_input.network.clone()).await.unwrap();
+			subxt_codegen::build_script(
+				network_setup_input.url.clone(),
+				network_setup_input.network.clone(),
+			)
+			.await
+			.unwrap();
 		}
 		Ok(())
 	}
@@ -108,7 +112,7 @@ async fn main() -> Result<()> {
 
 	match &cli.subcommand {
 		Subcommand::Relay(cmd) => cmd.run().await?,
-    	Subcommand::NetworkSetup(network_setup) => network_setup.setup().await?,
+		Subcommand::NetworkSetup(network_setup) => network_setup.setup().await?,
 	}
 	Ok(())
 }
