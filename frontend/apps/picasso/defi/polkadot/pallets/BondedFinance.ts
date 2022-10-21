@@ -34,6 +34,7 @@ export async function fetchBonds(api: ApiPromise) {
   const bondOfferCount = await fetchBondOfferCount(api);
   // @ts-ignore
   const bonds: Option<
+    // @ts-ignore
     ITuple<[AccountId32, ComposableTraitsBondedFinanceBondOffer]>
   >[] = await Promise.all(
     createArrayOfLength(bondOfferCount.toNumber()).map(
@@ -44,6 +45,7 @@ export async function fetchBonds(api: ApiPromise) {
     async (
       acc: Promise<BondOffer[]>,
       bond: Option<
+        // @ts-ignore
         ITuple<[AccountId32, ComposableTraitsBondedFinanceBondOffer]>
       >,
       index
