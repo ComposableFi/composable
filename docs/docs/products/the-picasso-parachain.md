@@ -47,7 +47,7 @@ Given that our parachains are the foundational layer that powers our ecosystem, 
 approach to adding products directly in the runtime of our parachains. We will offer projects the ability to deploy as 
 pallets on our chain, with governance having the ability to upgrade these pallets into the runtime of our chains:
 
-![pallets image](./picasso-pallet-graphic.png)
+![pallets image](../../static/img/parachains/picasso/picasso-pallet-graphic.png)
 
 ### Advantages
 
