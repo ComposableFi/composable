@@ -42,7 +42,7 @@ The following steps are taken whenever a liquidity withdrawal request is initiat
 Mosaic V2 is constructed to be modular. It allows any system to be created or integrated. 
 
 
-![mosaic_integration](../../../static/img/products/mosaic/mosaic-integration.png)
+![mosaic_integration](../../../static/img/products/mosaic/integration.png)
 
 
 For example, in Aave, we could create a strategy for A and whitelist aUSDC for Mosaic enabling users to stake their 

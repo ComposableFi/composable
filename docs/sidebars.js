@@ -238,7 +238,7 @@ const sidebars = {
           label: 'Parachain Vault Strategy (Discontinued)',
           link: {
             type: 'doc',
-            id: 'products/parachain-vault-strategy'
+            id: 'products/parachain-vault-strategy-overview'
           },
           collapsible: true,
           collapsed: true,
@@ -264,7 +264,7 @@ const sidebars = {
           label: 'Nix',
           link: {
             type: 'doc',
-            id: 'nix'
+            id: 'nix-overview'
           },
           collapsible: true,
           collapsed: true,
@@ -283,7 +283,7 @@ const sidebars = {
           label: 'Codespaces',
           link: {
             type: 'doc',
-            id: 'codespaces'
+            id: 'codespaces-overview'
           },
           collapsible: true,
           collapsed: true,

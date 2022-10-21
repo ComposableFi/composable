@@ -1,5 +1,5 @@
 {
-  # see ./docs/nix.md for design guidelines of nix organization
+  # see ./docs/nix-overview.md for design guidelines of nix organization
   description = "Composable Finance systems, tools and releases";
   # when flake runs, ask for interactive answers first time
   # nixConfig.sandbox = "relaxed";

@@ -71,7 +71,7 @@ subject to the PoC’s cap.
 This graph shows the fee charged versus the transfer amounts as a percent of available liquidity in the origin vault. 
 
 
-![mosaic_fee_model](../../../static/img/products/mosaic/mosaic-fee-model.png)
+![mosaic_fee_model](../../../static/img/products/mosaic/fee-model.png)
 
 
 The following parameters were set:
@@ -95,7 +95,7 @@ The following parameters were set:
 * The minimum fee % to charge: 0.25%
 
 
-![mosaic_fee_model_optimized](../../../static/img/products/mosaic/mosaic-fee-model-optimized.png)
+![mosaic_fee_model_optimized](../../../static/img/products/mosaic/fee-model-optimized.png)
 
 
 Using these parameters, Composable found that the optimized fee model ensured that LPs earned 10% APY when contributing 
