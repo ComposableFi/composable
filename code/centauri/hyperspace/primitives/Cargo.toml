@@ -11,6 +11,7 @@ futures = "0.3.21"
 async-trait = "0.1.53"
 hex = "0.4.3"
 codec = { package = "parity-scale-codec", version = "3.0.0", features = ["derive"] }
+tokio = { version = "1.19.2", features = ["macros", "sync", "time"] }
 thiserror = "1.0.31"
 
 # substrate
@@ -21,9 +22,6 @@ ibc = { path = "../../ibc/modules", features = [] }
 ibc-proto = { path = "../../ibc/proto" }
 pallet-ibc = { path = "../../../parachain/frame/ibc" }
 ibc-rpc = { path = "../../../parachain/frame/ibc/rpc" }
-
-[dev-dependencies]
-tokio = { version = "1.19.2", features = ["macros", "sync"] }
 
 [features]
 testing = []

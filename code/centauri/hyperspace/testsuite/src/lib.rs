@@ -48,7 +48,7 @@ where
 	let client_b_clone = chain_b.clone();
 	// Start relayer loop
 	let handle = tokio::task::spawn(async move {
-		hyperspace::relay(client_a_clone, client_b_clone).await.unwrap()
+		hyperspace::relay(client_a_clone, client_b_clone, None, None).await.unwrap()
 	});
 	// check if an open transfer channel exists
 	let (latest_height, ..) = chain_a.latest_height_and_timestamp().await.unwrap();

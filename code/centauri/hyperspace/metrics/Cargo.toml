@@ -13,6 +13,6 @@ tokio = { version = "1.17.0", features = ["parking_lot"] }
 anyhow = "1.0.65"
 
 # ibc
-ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "9a959faabb8f2869e88327ea65a49f5697dcadf6", features = [] }
-ibc-proto = { git = "https://github.com/composableFi/ibc-rs", rev = "9a959faabb8f2869e88327ea65a49f5697dcadf6" }
+ibc = { path = "../../ibc/modules", features = [] }
+ibc-proto = { path = "../../ibc/proto" }
 tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8" }
