@@ -186,7 +186,7 @@ impl Cmd {
 			.await;
 
 		let (connection_id_b, connection_id_a) = match events.pop() {
-			Some(IbcEvent::OpenConfirmConnection(conn)) => (conn.connection_id().unwrap().clone(), conn.attributes().counterparty_connection_id.unwrap()),
+			Some(IbcEvent::OpenConfirmConnection(conn)) => (conn.connection_id().unwrap().clone(), conn.attributes().counterparty_connection_id.as_ref().unwrap().clone()),
 			got => panic!("Last event should be OpenConfirmConnection: {got:?}"),
 		};
 		log::info!("ConnectionId on Chain {}: {}",  any_chain_a.name(), connection_id_a);
@@ -259,7 +259,7 @@ impl Cmd {
 
 		log::info!("ChannelId on Chain {}: {}",  any_chain_a.name(), channel_id_a);
 		log::info!("ChannelId on Chain {}: {}", any_chain_b.name(), channel_id_b);
-
+		handle.abort();
 		Ok(())
 	}
 }

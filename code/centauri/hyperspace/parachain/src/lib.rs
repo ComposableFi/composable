@@ -36,6 +36,13 @@ use subxt::{Config, ext::sp_runtime::{generic::Era, traits::Header as HeaderT, M
 
 use crate::utils::{fetch_max_extrinsic_weight, unsafe_cast_to_jsonrpsee_client};
 use primitives::KeyProvider;
+use crate::parachain::api;
+use ics10_grandpa::consensus_state::ConsensusState as GrandpaConsensusState;
+use ics11_beefy::{
+	client_state::ClientState as BeefyClientState,
+	consensus_state::ConsensusState as BeefyConsensusState,
+};
+use codec::Decode;
 
 use crate::{finality_protocol::FinalityProtocol, signer::ExtrinsicSigner};
 use grandpa_prover::GrandpaProver;
@@ -229,6 +236,7 @@ where
 			client_id: config.client_id,
 			commitment_prefix: config.commitment_prefix.0,
 			connection_id: config.connection_id,
+			beefy_activation_block: config.beefy_activation_block,
 			public_key,
 			key_store,
 			key_type_id,

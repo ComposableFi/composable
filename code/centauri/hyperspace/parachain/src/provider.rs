@@ -113,10 +113,8 @@ where
 					.events
 					.into_iter()
 					.filter_map(|ev| {
-						ev.ok().map(|ev| {
-							IbcEvent::try_from(RawIbcEvent::from(ev))
-								.map_err(|e| subxt::Error::Other(e.to_string()))
-						})
+							Some(IbcEvent::try_from(RawIbcEvent::from(ev))
+								.map_err(|e| subxt::Error::Other(e.to_string())))
 					})
 					.collect::<Result<Vec<_>, _>>();
 
@@ -512,7 +510,7 @@ where
 	}
 
 	fn connection_id(&self) -> ConnectionId {
-		self.connection_id.expect("Connection id should be defined")
+		self.connection_id.as_ref().expect("Connection id should be defined").clone()
 	}
 
 	fn client_type(&self) -> ClientType {
