@@ -6,7 +6,7 @@ Simply scroll to the pallet you want to edit in the `frame/` directory, and star
 `rust-analyzer` may need a few minutes to index (progress can be seen in the bottom status bar), 
 and then you should have nice code analysis.
 
-![Substrate pallet development](./substrate-pallet-development.png)
+![Substrate pallet development](../../static/img/codespaces/substrate-pallet-development.png)
 *Substrate pallet development*
 
 ---

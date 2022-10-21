@@ -14,7 +14,7 @@ and make sure you use a strong password, *preferably by using [a password manage
 Then, make sure that you are part of the _Composable Finance Organization_. 
 You check this by going to [github.com/orgs/ComposableFi/people](https://github.com/orgs/ComposableFi/people).
 
-![GitHub Organization Check](./github-organization-check.png)
+![GitHub Organization Check](../../static/img/codespaces/github-organization-check.png)
 *Search for your own GitHub username*
 
 **If you are not yet part of the ComposableFi GitHub organization, send a message to `@cor` in the composable Slack 
@@ -24,7 +24,7 @@ When you are part of the ComposableFi organization, you need to configure GPG si
 settings. Go to [github.com/settings/codespaces](https://github.com/settings/codespaces). 
 set **GPG verification to "All repositories"** and **Editor preference to "Visual Studio Code"**.
 
-![GPG verification and Editor preference](./gpg-verification-and-editor-preference.png)
+![GPG verification and Editor preference](../../static/img/codespaces/gpg-verification-and-editor-preference.png)
 *Setting up GPG verification and Editor preference*
 
 ## Setting up Visual Studio Code
@@ -32,7 +32,7 @@ set **GPG verification to "All repositories"** and **Editor preference to "Visua
 Simply install [Visual Studio Code](https://code.visualstudio.com/) on your computer, 
 and add the [GitHub Codespaces plugin](https://marketplace.visualstudio.com/items?itemName=GitHub.codespaces).
 
-![Visual Studio Code GitHub Codespaces plugin](./vscode-codespaces-plugin.png)
+![Visual Studio Code GitHub Codespaces plugin](../../static/img/codespaces/vscode-codespaces-plugin.png)
 *Installing the GitHub Codespaces plugin*
 
 You are now ready to [start using Codespaces](./using-codespaces)!
