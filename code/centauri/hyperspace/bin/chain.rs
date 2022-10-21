@@ -39,6 +39,9 @@ use parachain::ParachainClient;
 use primitives::{Chain, IbcProvider, KeyProvider, UpdateType};
 use std::{pin::Pin, time::Duration};
 #[cfg(feature = "parachain")]
+use subxt::tx::SubstrateExtrinsicParams;
+
+#[cfg(feature = "parachain")]
 #[derive(Debug, Clone)]
 pub enum DefaultConfig {}
 
@@ -53,6 +56,7 @@ impl subxt::Config for DefaultConfig {
 	type Header = sp_runtime::generic::Header<Self::BlockNumber, sp_runtime::traits::BlakeTwo256>;
 	type Signature = sp_runtime::MultiSignature;
 	type Extrinsic = sp_runtime::OpaqueExtrinsic;
+	type ExtrinsicParams = SubstrateExtrinsicParams<Self>;
 }
 
 #[derive(Deserialize)]
@@ -564,7 +568,7 @@ impl Chain for AnyChain {
 	}
 }
 
-#[cfg(feature = "testing")]
+#[cfg(any(test, feature = "testing"))]
 #[async_trait]
 impl primitives::TestProvider for AnyChain {
 	async fn send_transfer(&self, params: MsgTransfer<PrefixedCoin>) -> Result<(), Self::Error> {
