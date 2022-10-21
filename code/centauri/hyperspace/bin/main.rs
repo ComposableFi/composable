@@ -34,7 +34,10 @@ pub struct RelayCmd {
 
 /// The `relay` command
 #[derive(Debug, Clone, Parser)]
-#[clap(name = "network setup command", about = "Performs code generation to interact with the substrate node")]
+#[clap(
+	name = "network setup command", 
+	about = "Performs code generation to interact with the substrate node"
+)]
 pub struct NetworkSetupCmd {
 	/// Network inputs
 	#[clap(long)]
@@ -46,6 +49,13 @@ struct NetworkSetupInput {
 	pub url: String,
 	pub network: String,
 }
+
+impl From<String> for NetworkSetupInput {
+    fn from(input: String) -> Self {
+        serde_json::from_str(input.as_ref()).expect("failed to parse NetworkSetupInput. Provide url + network in JSON")
+    }
+}
+
 
 impl RelayCmd {
 	/// Run the command
