@@ -334,6 +334,39 @@ pub struct ConstantProductAmmValueFeePair {
 	pub fee: u128,
 }
 
+/// Calculates `a_k` when redeeming
+///
+/// **NOTE**: May overflow when `w_k` is below 25%
+///
+/// # Parameters
+/// * `p_supply` - Existing supply of LPT
+/// * `p_redeemed` - Redeemed LPT tokens
+/// * `b_k` - balance of token `k`
+/// * `w_k` - weight of token `k`
+///
+/// From https://github.com/ComposableFi/composable/blob/main/rfcs/0008-pablo-lbp-cpp-restructure.md#42-liquidity-provider-token-lpt-math-updates
+/// Equation 8
+pub fn compute_redeemed_for_lp<T: PerThing>(
+	p_supply: u128,
+	p_redeemed: u128,
+	b_k: u128,
+	w_k: T,
+) -> Result<u128, ConstantProductAmmError> {
+	let p_supply = Decimal::safe_from_u128(p_supply)?;
+	let p_redeemed = Decimal::safe_from_u128(p_redeemed)?;
+	let b_k = Decimal::safe_from_u128(b_k)?;
+	let w_k = Decimal::safe_from_per_thing(w_k)?;
+
+	let weight_ratio = Decimal::ONE.safe_div(&w_k)?;
+	let base = Decimal::ONE.safe_sub(&p_redeemed.safe_div(&p_supply)?)?;
+	let power = base.checked_powd(weight_ratio).ok_or(ArithmeticError::Overflow)?;
+	let ratio = Decimal::ONE.safe_sub(&power)?;
+
+	let a_k = b_k.safe_mul(&ratio)?;
+
+	Ok(a_k.safe_to_u128()?)
+}
+
 #[derive(Debug, Eq, PartialEq)]
 pub enum ConstantProductAmmError {
 	ArithmeticError(ArithmeticError),
