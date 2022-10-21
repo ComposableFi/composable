@@ -13,9 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use std::env;
+
 #[tokio::main]
 async fn main() -> color_eyre::Result<()> {
-	subxt_codegen::build_script("ws://127.0.0.1:9944", "polkadot").await?;
-	subxt_codegen::build_script("ws://127.0.0.1:9188", "parachain").await?;
+	// only trigger the subxt code generation in case it's requested
+	// through an environment variable.
+	if env::var("SUBXT_CODEGEN").is_ok() {
+		subxt_codegen::build_script("ws://127.0.0.1:9944", "polkadot").await?;
+		subxt_codegen::build_script("ws://127.0.0.1:9188", "parachain").await?;
+	}
 	Ok(())
 }
