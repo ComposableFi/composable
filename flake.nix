@@ -1380,19 +1380,15 @@
             };
             benchmarks-once-dali =
               flake-utils.lib.mkApp { drv = benchmarks-run-once "dali-dev"; };
-
             benchmarks-once-picasso = flake-utils.lib.mkApp {
               drv = benchmarks-run-once "picasso-dev";
             };
-            benchmarks-generate-dali = flake-utils.lib.mkApp {
-              drv = generate-benchmarks "dali";
-            };
-            benchmarks-generate-picasso = flake-utils.lib.mkApp {
-              drv = generate-benchmarks "picasso";
-            };
-            benchmarks-generate-composable = flake-utils.lib.mkApp {
-              drv = generate-benchmarks "composable";
-            };
+            benchmarks-generate-dali =
+              flake-utils.lib.mkApp { drv = generate-benchmarks "dali"; };
+            benchmarks-generate-picasso =
+              flake-utils.lib.mkApp { drv = generate-benchmarks "picasso"; };
+            benchmarks-generate-composable =
+              flake-utils.lib.mkApp { drv = generate-benchmarks "composable"; };
             simnode-tests = makeApp packages.simnode-tests;
             simnode-tests-composable =
               flake-utils.lib.mkApp { drv = run-simnode-tests "composable"; };
