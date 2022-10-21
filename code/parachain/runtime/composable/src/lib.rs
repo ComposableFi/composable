@@ -813,7 +813,6 @@ construct_runtime!(
 		CrowdloanRewards: crowdloan_rewards = 56,
 		Assets: assets = 57,
 		GovernanceRegistry: governance_registry = 58,
-		// AssetsRegistry: assets_registry = 59,
 	}
 );
 
