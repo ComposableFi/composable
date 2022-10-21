@@ -166,7 +166,7 @@ export const ClaimLoanPage = () => {
       enqueueSnackbar(err.message, { variant: "error" });
       return Promise.reject(new Error(err.message));
     }
-  }, [selectedAccount, parachainApi, enqueueSnackbar]);
+  }, [selectedAccount, polkaSigner, parachainApi, enqueueSnackbar]);
 
   const signEthereum = useCallback(async (): Promise<string> => {
     try {
