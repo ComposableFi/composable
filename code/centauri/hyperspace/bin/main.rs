@@ -5,7 +5,7 @@ use metrics::{data::Metrics, handler::MetricsHandler, init_prometheus};
 use primitives::Chain;
 use prometheus::Registry;
 use serde::Deserialize;
-use std::path::PathBuf;
+use std::{path::PathBuf, str::FromStr};
 
 mod chain;
 
@@ -21,7 +21,7 @@ pub struct Cli {
 #[derive(Debug, Parser)]
 pub enum Subcommand {
 	Relay(RelayCmd),
-	NetworkSetup(),
+	NetworkSetup(NetworkSetupCmd),
 }
 
 /// The `relay` command
@@ -45,16 +45,18 @@ pub struct NetworkSetupCmd {
 	input: Vec<NetworkSetupInput>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 struct NetworkSetupInput {
 	pub url: String,
 	pub network: String,
 }
 
-impl From<String> for NetworkSetupInput {
-    fn from(input: String) -> Self {
-        serde_json::from_str(input.as_ref()).expect("failed to parse NetworkSetupInput. Provide url + network in JSON")
-    }
+impl FromStr for NetworkSetupInput {
+	type Err = String;
+	fn from_str(input: &str) -> Result<Self, Self::Err> {
+			serde_json::from_str(input).expect("failed to parse NetworkSetupInput. Provide url + network in JSON")
+	
+	}
 }
 
 
@@ -89,8 +91,8 @@ impl RelayCmd {
 
 impl NetworkSetupCmd {
 	pub async fn setup(&self) -> Result<()> {
-		for network_setup_input in self.input {
-			subxt_codegen::build_script(network_setup_input.url, network_setup_input.network).await?;
+		for network_setup_input in &self.input {
+			subxt_codegen::build_script(network_setup_input.url.clone(), network_setup_input.network.clone()).await.unwrap();
 		}
 		Ok(())
 	}

@@ -46,7 +46,7 @@ fn codegen<I: Input>(encoded: &mut I) -> color_eyre::Result<String> {
 
 /// This will generate the relevant subxt code for the given rpc url and write it to
 /// $OUT_DIR/filename.
-pub async fn build_script(url: String, file_name: &'static str) -> color_eyre::Result<()> {
+pub async fn build_script(url: String, file_name: String) -> color_eyre::Result<()> {
 	let metadata = fetch_metadata_ws(url).await?;
 	let code = codegen(&mut &metadata[..])?;
 	let out_dir = env::var_os("OUT_DIR").unwrap();
