@@ -41,7 +41,7 @@ export const useEagerConnect = (chainId: ParachainId): boolean => {
         selectedAccount.address
       );
     }
-  }, [selectedAccount]);
+  }, [selectedAccount, chainId]);
 
   useEffect(() => {
     if (
@@ -62,6 +62,7 @@ export const useEagerConnect = (chainId: ParachainId): boolean => {
       setHasTriedEagerConnect(true);
     }
   }, [
+    chainId,
     hasTriedEagerConnect,
     parachainApi,
     connectedAccounts,
