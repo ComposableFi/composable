@@ -5,8 +5,8 @@ use metrics::{data::Metrics, handler::MetricsHandler, init_prometheus};
 use primitives::Chain;
 use prometheus::Registry;
 use serde::Deserialize;
-use tokio::fs;
 use std::{path::PathBuf, str::FromStr};
+use tokio::fs;
 
 mod chain;
 
