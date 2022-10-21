@@ -8,6 +8,7 @@ on:
 
 env:
   NIX_NIXPKGS_CHANNEL: https://nixos.org/channels/nixpkgs-22.05-darwin
+  CACHIX_COMPOSABLE: composable-community
 
 jobs:
   update_benchmarks_weights:
@@ -36,27 +37,27 @@ jobs:
 
       - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
         with:
+          name: ${{ env.CACHIX_COMPOSABLE }}
           skipPush: true
           installCommand: |
             nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
-          name: ${{  env.CACHIX_COMPOSABLE }}
+
+      - name: Generate weights
+        run: |
+          nix run .#benchmarks-generate-dali -L
+          nix run .#benchmarks-generate-picasso -L
+          nix run .#benchmarks-generate-composable -L
 
       - name: Get branch name
         id: branch-name
         uses: tj-actions/branch-names@v5.1
 
-      - name: Generate weights
-        run: |
-          nix run .#benchmarks-gen-dali -L
-          nix run .#benchmarks-gen-picasso -L
-          nix run .#benchmarks-gen-composable -L
-
       - name: Push generated weights
         uses: EndBug/add-and-commit@v9
         with:
           add: "code/parachain/runtime"
-          message: "Update benchmarking weights"
+          message: "chore(benchmarking): update benchmarking weights"
           push: "true"
           new_branch: ${{ steps.branch-name.outputs.current_branch }}
