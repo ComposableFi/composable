@@ -5,7 +5,7 @@ import { ConnectionModal } from "./ConnectionModal";
 import { WalletViewModal } from "./WalletViewModal";
 import { ConnectorType } from "bi-lib";
 import { DotSamaExtensionStatus, SupportedWalletId } from "substrate-react";
-import { NetworkId, WalletConnectStep } from "../types";
+import { BlockchainNetwork, EthereumWallet, NetworkId, PolkadotWallet, WalletConnectStep } from "../types";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import BigNumber from "bignumber.js";
 
@@ -18,26 +18,15 @@ export type WalletProps = {
   onDisconnectEthereum: (...args: unknown[]) => Promise<void> | void;
   onDisconnectDotsamaWallet: (() => Promise<void>) | undefined;
   onSelectPolkadotAccount: (account: InjectedAccountWithMeta) => void;
-  blockchainNetworksSupported: Array<{
-    icon: string;
-    name: string;
-    networkId: NetworkId;
-  }>;
+  blockchainNetworksSupported: Array<BlockchainNetwork>;
   ethereumConnectedAccount?: string;
+  ethereumConnectorInUse?: ConnectorType;
   isEthereumWalletActive: boolean;
   polkadotAccounts: Array<InjectedAccountWithMeta>;
   polkadotExtensionStatus: DotSamaExtensionStatus;
-  polkadotSelectedAccount: InjectedAccountWithMeta | undefined;
-  supportedEthereumWallets: Array<{
-    walletId: ConnectorType;
-    icon: string;
-    name: string;
-  }>;
-  supportedPolkadotWallets: Array<{
-    walletId: SupportedWalletId;
-    icon: string;
-    name: string;
-  }>;
+  selectedPolkadotAccount: InjectedAccountWithMeta | undefined;
+  supportedEthereumWallets: Array<EthereumWallet>;
+  supportedPolkadotWallets: Array<PolkadotWallet>;
   connectedAccountNativeBalance: BigNumber;
 };
 
@@ -52,10 +41,11 @@ export const Wallet: React.FC<WalletProps> = ({
   isEthereumWalletActive,
   polkadotAccounts,
   polkadotExtensionStatus,
-  polkadotSelectedAccount,
+  selectedPolkadotAccount,
   supportedPolkadotWallets,
   supportedEthereumWallets,
   connectedAccountNativeBalance,
+  ethereumConnectorInUse
 }) => {
   const label =
     isEthereumWalletActive || polkadotExtensionStatus === "connected"
@@ -66,6 +56,14 @@ export const Wallet: React.FC<WalletProps> = ({
   const [walletConnectStep, setWalletConnectStep] = useState(
     WalletConnectStep.SelectNetwork
   );
+
+  const selectedPolkadotWallet = supportedPolkadotWallets.find(x => {
+    return x.walletId === localStorage.getItem("wallet-id")
+  });
+
+  const selectedEthereumWallet = supportedEthereumWallets.find(x => {
+    return x.walletId === ethereumConnectorInUse
+  })
 
   return (
     <>
@@ -104,16 +102,22 @@ export const Wallet: React.FC<WalletProps> = ({
         onConnectEthereumWallet={onConnectEthereumWallet}
         isEthereumWalletActive={isEthereumWalletActive}
         polkadotExtensionStatus={polkadotExtensionStatus}
-        polkadotSelectedAccount={polkadotSelectedAccount}
+        selectedPolkadotAccount={selectedPolkadotAccount}
         onDisconnectEthereum={onDisconnectEthereum}
         onSelectPolkadotAccount={onSelectPolkadotAccount}
       />
 
       <WalletViewModal
+        selectedEthereumWallet={selectedEthereumWallet}
+        selectedPolkadotWallet={selectedPolkadotWallet}
         onDisconnectDotsamaWallet={onDisconnectDotsamaWallet}
         onDisconnectEthereum={onDisconnectEthereum}
-        ethereumExplorerUrl="https://etherscan.io/"
-        polkadotExplorerUrl="https://picasso.subscan.io/"
+        ethereumNetwork={blockchainNetworksSupported.find(x => {
+          return x.networkId === NetworkId.Ethereum
+        })}
+        polkadotNetwork={blockchainNetworksSupported.find(x => {
+          return x.networkId === NetworkId.Polkadot
+        })}
         onConnectPolkadot={() => {
           setWalletConnectStep(WalletConnectStep.SelectedDotsamaWallet);
           setIsOpenWalletViewModal(false);
@@ -130,14 +134,13 @@ export const Wallet: React.FC<WalletProps> = ({
           setIsOpenConnectionModal(true);
         }}
         balance={connectedAccountNativeBalance}
-        ethConnectedAccount={ethereumConnectedAccount}
-        polkadotSelectedAccount={polkadotSelectedAccount}
+        connectedEthereumAccount={ethereumConnectedAccount}
+        selectedPolkadotAccount={selectedPolkadotAccount}
         open={isOpenWalletViewModal}
         onClose={(evt, reason) => {
-          console.log(reason);
           setIsOpenWalletViewModal(false);
         }}
-        nativeCurrencyIconUrl="/tokens/pica_bg_white.svg"
+
       />
     </>
   );

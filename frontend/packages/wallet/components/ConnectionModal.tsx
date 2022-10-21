@@ -72,7 +72,7 @@ export const ConnectionModal: React.FC<ConnectionModalProps> = ({
   polkadotExtensionStatus,
   supportedPolkadotWallets,
   supportedEthereumWallets,
-  polkadotSelectedAccount,
+  selectedPolkadotAccount,
   polkadotAccounts,
   walletConnectStep,
   setWalletConnectStep,
@@ -237,7 +237,7 @@ export const ConnectionModal: React.FC<ConnectionModalProps> = ({
               }
             }}
             accounts={polkadotAccounts}
-            selectedAccount={polkadotSelectedAccount}
+            selectedAccount={selectedPolkadotAccount}
             onSelect={onSelectPolkadotAccount}
           />
         ) : null}
