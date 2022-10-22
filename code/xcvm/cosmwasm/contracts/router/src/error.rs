@@ -9,4 +9,7 @@ pub enum ContractError {
 
 	#[error("Expected at least {0:?}, got {1:?}")]
 	InsufficientBridgeSecurity(BridgeSecurity, BridgeSecurity),
+
+	#[error("Caller is not authorized to take this action")]
+	NotAuthorized,
 }

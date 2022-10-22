@@ -20,8 +20,8 @@ use serde::{Deserialize, Serialize};
 	Serialize,
 	Deserialize,
 )]
+#[repr(u8)]
 pub enum BridgeSecurity {
-	Local = 0,
 	Deterministic = 1,
 	Probabilistic = 2,
 	Optimistic = 3,
@@ -42,30 +42,31 @@ pub enum BridgeSecurity {
 	Serialize,
 	Deserialize,
 )]
-pub enum MessageOrigin {
-	Local,
+#[repr(u8)]
+pub enum BridgeProtocol {
 	IBC,
 	XCM,
 	// TODO(aeryz): Spec defines (OTP bytes BridgeSecurity), is this "bytes",
 	// is used to identify the protocol?
-	OTP(BridgeSecurity),
+	OTP,
 }
 
-impl MessageOrigin {
-	pub fn assert_security(&self, bridge_security: BridgeSecurity) -> Result<(), BridgeSecurity> {
-		let security = self.security();
-		if bridge_security <= security {
-			Ok(())
-		} else {
-			Err(security)
-		}
-	}
-
-	pub fn security(&self) -> BridgeSecurity {
-		match self {
-			MessageOrigin::Local => BridgeSecurity::Local,
-			MessageOrigin::IBC | MessageOrigin::XCM => BridgeSecurity::Deterministic,
-			MessageOrigin::OTP(bridge_security) => *bridge_security,
-		}
-	}
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(
+	Copy,
+	Clone,
+	PartialEq,
+	Eq,
+	PartialOrd,
+	Ord,
+	Debug,
+	Encode,
+	Decode,
+	TypeInfo,
+	Serialize,
+	Deserialize,
+)]
+pub struct Bridge {
+	pub protocol: BridgeProtocol,
+	pub security: BridgeSecurity,
 }

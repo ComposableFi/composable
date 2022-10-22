@@ -64,10 +64,22 @@
 //! variants of both of them.
 
 use super::{BindingValue, Bindings};
-use crate::OrderedBindings;
+use crate::{Bridge, OrderedBindings};
 use alloc::{fmt::Debug, string::String, vec::Vec};
 use cosmwasm_std::{BankMsg, Coin, CosmosMsg};
+use cw_storage_plus::{Key, PrimaryKey};
 use serde::{Deserialize, Serialize};
+
+impl<'a> PrimaryKey<'a> for Bridge {
+	type Prefix = u8;
+	type SubPrefix = ();
+	type Suffix = u8;
+	type SuperSuffix = (u8, u8);
+
+	fn key(&self) -> Vec<Key> {
+		vec![Key::Val16([self.security as u8, self.protocol as u8])]
+	}
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LateCall {

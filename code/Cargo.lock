@@ -16585,6 +16585,7 @@ name = "xcvm-core"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-std",
+ "cw-storage-plus 0.14.0",
  "fixed",
  "num",
  "parity-scale-codec",

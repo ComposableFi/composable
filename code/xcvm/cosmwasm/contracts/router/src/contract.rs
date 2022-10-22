@@ -1,19 +1,19 @@
 use crate::{
 	error::ContractError,
 	msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg},
-	state::{Config, UserId, CONFIG, INTERPRETERS},
+	state::{Config, UserId, ADMIN, BRIDGES, CONFIG, INTERPRETERS},
 };
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-	from_binary, to_binary, wasm_execute, Addr, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo,
-	Reply, Response, StdError, StdResult, SubMsg, WasmMsg, WasmQuery,
+	from_binary, to_binary, wasm_execute, Addr, Binary, CosmosMsg, Deps, DepsMut, Env, Event,
+	MessageInfo, Reply, Response, StdError, StdResult, SubMsg, WasmMsg, WasmQuery,
 };
 use cw2::set_contract_version;
 use cw20::{Cw20Contract, Cw20ExecuteMsg};
 use cw_utils::ensure_from_older_version;
 use xcvm_asset_registry::msg::{GetAssetContractResponse, QueryMsg as AssetRegistryQueryMsg};
-use xcvm_core::{BridgeSecurity, Displayed, Funds, MessageOrigin, NetworkId};
+use xcvm_core::{Bridge, BridgeSecurity, Displayed, Funds, NetworkId};
 use xcvm_interpreter::msg::{
 	ExecuteMsg as InterpreterExecuteMsg, InstantiateMsg as InterpreterInstantiateMsg,
 };
@@ -26,11 +26,12 @@ const INSTANTIATE_REPLY_ID: u64 = 1;
 pub fn instantiate(
 	deps: DepsMut,
 	_env: Env,
-	_info: MessageInfo,
+	info: MessageInfo,
 	msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
 	set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 	let addr = deps.api.addr_validate(&msg.registry_address)?;
+	ADMIN.save(deps.storage, &info.sender)?;
 	CONFIG.save(
 		deps.storage,
 		&Config {
@@ -46,20 +47,28 @@ pub fn instantiate(
 pub fn execute(
 	deps: DepsMut,
 	env: Env,
-	_info: MessageInfo,
+	info: MessageInfo,
 	msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
 	match msg {
-		ExecuteMsg::Run { network_id, user_id, interpreter_execute_msg, funds, message_origin } =>
-			handle_run(
-				deps,
-				env,
-				network_id,
-				user_id,
-				interpreter_execute_msg,
-				funds,
-				message_origin,
-			),
+		ExecuteMsg::Run { network_id, user_id, interpreter_execute_msg, funds, bridge } =>
+			handle_run(deps, env, network_id, user_id, interpreter_execute_msg, funds, bridge),
+		ExecuteMsg::RegisterBridge { bridge } => {
+			ensure_admin(deps.as_ref(), &info.sender)?;
+			register_bridge(deps, bridge)?;
+			Ok(Response::default().add_event(
+				Event::new("xcvm.router")
+					.add_attribute("bridge_registered", format!("{:?}", bridge)),
+			))
+		},
+		ExecuteMsg::UnregisterBridge { bridge } => {
+			ensure_admin(deps.as_ref(), &info.sender)?;
+			unregister_bridge(deps, bridge);
+			Ok(Response::default().add_event(
+				Event::new("xcvm.router")
+					.add_attribute("bridge_unregistered", format!("{:?}", bridge)),
+			))
+		},
 	}
 }
 
@@ -69,6 +78,14 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
 	Ok(Response::default())
 }
 
+pub fn register_bridge(deps: DepsMut, bridge: Bridge) -> Result<(), ContractError> {
+	BRIDGES.save(deps.storage, bridge, &()).map_err(Into::into)
+}
+
+pub fn unregister_bridge(deps: DepsMut, bridge: Bridge) {
+	BRIDGES.remove(deps.storage, bridge)
+}
+
 pub fn handle_run(
 	deps: DepsMut,
 	env: Env,
@@ -76,7 +93,7 @@ pub fn handle_run(
 	user_id: UserId,
 	interpreter_execute_msg: InterpreterExecuteMsg,
 	funds: Funds<Displayed<u128>>,
-	message_origin: MessageOrigin,
+	bridge: Bridge,
 ) -> Result<Response, ContractError> {
 	match INTERPRETERS.load(deps.storage, (network_id.0, user_id.clone())) {
 		Ok(interpreter_address) => {
@@ -91,9 +108,7 @@ pub fn handle_run(
 			let Config { registry_address, interpreter_code_id, network_id: router_network_id } =
 				CONFIG.load(deps.storage)?;
 			if network_id != router_network_id {
-				message_origin.assert_security(BridgeSecurity::Deterministic).map_err(|got| {
-					ContractError::InsufficientBridgeSecurity(BridgeSecurity::Deterministic, got)
-				})?;
+				assert_bridge_security(bridge, BridgeSecurity::Deterministic)?;
 			}
 			let instantiate_msg: CosmosMsg = WasmMsg::Instantiate {
 				admin: Some(env.contract.address.clone().into_string()),
@@ -102,7 +117,6 @@ pub fn handle_run(
 					registry_address: registry_address.into_string(),
 					network_id,
 					user_id: user_id.clone(),
-					message_origin,
 				})?,
 				funds: vec![],
 				label: format!("xcvm-interpreter-{}-{}", network_id.0, hex::encode(&user_id)),
@@ -112,13 +126,7 @@ pub fn handle_run(
 			let submessage = SubMsg::reply_on_success(instantiate_msg, INSTANTIATE_REPLY_ID);
 			let wasm_msg: CosmosMsg = wasm_execute(
 				env.contract.address,
-				&ExecuteMsg::Run {
-					network_id,
-					user_id,
-					interpreter_execute_msg,
-					funds,
-					message_origin,
-				},
+				&ExecuteMsg::Run { network_id, user_id, interpreter_execute_msg, funds, bridge },
 				vec![],
 			)?
 			.into();
@@ -156,6 +164,14 @@ fn send_funds_to_interpreter(
 		})?);
 	}
 	Ok(response)
+}
+
+fn ensure_admin(deps: Deps, addr: &Addr) -> Result<(), ContractError> {
+	if ADMIN.load(deps.storage)? == *addr {
+		Ok(())
+	} else {
+		Err(ContractError::NotAuthorized)
+	}
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -210,6 +226,17 @@ fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 	INTERPRETERS.save(deps.storage, (router_reply.0, router_reply.1), &interpreter_address)?;
 
 	Ok(Response::new())
+}
+
+fn assert_bridge_security(
+	bridge: Bridge,
+	expected_security: BridgeSecurity,
+) -> Result<(), ContractError> {
+	if bridge.security <= expected_security {
+		Ok(())
+	} else {
+		Err(ContractError::InsufficientBridgeSecurity(expected_security, bridge.security))
+	}
 }
 
 #[cfg(test)]

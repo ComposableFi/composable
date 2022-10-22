@@ -1,7 +1,7 @@
 use crate::state::UserId;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use xcvm_core::{Displayed, Funds, MessageOrigin, NetworkId};
+use xcvm_core::{Bridge, Displayed, Funds, NetworkId};
 use xcvm_interpreter::msg::ExecuteMsg as InterpreterExecuteMsg;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -19,7 +19,13 @@ pub enum ExecuteMsg {
 		user_id: UserId,
 		interpreter_execute_msg: InterpreterExecuteMsg,
 		funds: Funds<Displayed<u128>>,
-		message_origin: MessageOrigin,
+		bridge: Bridge,
+	},
+	RegisterBridge {
+		bridge: Bridge,
+	},
+	UnregisterBridge {
+		bridge: Bridge,
 	},
 }
 
