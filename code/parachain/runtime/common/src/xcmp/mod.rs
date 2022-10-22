@@ -155,7 +155,6 @@ impl<
 				self.fee = self.fee.saturating_add(fee);
 				self.price = self.price.saturating_add(price);
 				self.asset_location = Some(multi_location.clone());
-				log::error!(target : "xcmp::buy_weight", "before {:?} {:?} {:?} {:?}", &self.fee, &self.price, &self.asset_location, &unused);
 				return Ok(unused)
 			}
 		}
@@ -244,7 +243,6 @@ impl<
 		{
 			Some(location)
 		} else {
-			panic!("ASD");
 			log::trace!(
 				target: "xcmp:convert",
 				"mapping for {:?} on {:?} parachain not found",
@@ -297,10 +295,9 @@ impl<
 					let result = AssetsRegistry::location_to_asset(XcmAssetLocation(location))
 						.map(Into::into);
 					if let Some(result) = result {
-						log::error!(target: "xcmp", "mapped remote to {:?} local", result);
+						log::trace!(target: "xcmp", "mapped remote to {:?} local", result);
 					} else {
-						panic!("ASD");
-						log::error!(target: "xcmp", "failed converting currency");
+						log::trace!(target: "xcmp", "failed converting currency");
 					}
 
 					result
@@ -324,7 +321,6 @@ impl<
 			<Self as Convert<MultiLocation, Option<CurrencyId>>>::convert(location)
 		} else {
 			log::error!(target: "xcmp", "failed to find remote asset");
-			panic!("ASD");
 			None
 		}
 	}

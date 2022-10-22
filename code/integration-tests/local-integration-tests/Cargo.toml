@@ -130,13 +130,13 @@ more-asserts = "0.3.1"
 [features]
 dali = ["std", "develop", "local-integration-tests", "rococo"]
 default = ["std", "develop", "local-integration-tests", "dali"]
+kusama = []
 local-integration-tests = [
   "dali-runtime/local-integration-tests",
   "picasso-runtime/local-integration-tests",
 ]
 picasso = ["std", "develop", "local-integration-tests", "kusama"]
 rococo = []
-kusama = []
 std = [
   "codec/std",
   "sp-api/std",

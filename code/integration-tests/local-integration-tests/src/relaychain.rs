@@ -1,17 +1,4 @@
 //! utilities to work with relay chain and XCM transact calls into it
-
-use crate::prelude::*;
-
-use frame_support::RuntimeDebug;
-use xcm::latest::{
-	Junction::Parachain, Junctions::X1, MultiAsset, MultiLocation, OriginKind,
-	WeightLimit::Unlimited, Xcm,
-};
-
-use frame_system::Config;
-use sp_runtime::traits::StaticLookup;
-
-pub type RelayBalance = u64;
 pub use kusama::*;
 
 mod kusama {

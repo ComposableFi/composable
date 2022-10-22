@@ -1,6 +1,6 @@
 # Overview
 
-Resources which allows to grasp  XCM. 
+Resources which allows to grasp  XCM.  For concrete message examples relevant for Composable look [here](./xcm-examples.md)
 
 ## Basics
 
@@ -78,11 +78,6 @@ Relevant blockchain links to be be able to understand and debug cross chain.
 - <https://medium.com/composable-finance/trustless-bridging-438a6e5c917a>
 - <https://research.csiro.au/blockchainpatterns/general-patterns/blockchain-payment-patterns/token-swap/>
 
-### Operations
+### Security
 
-<https://docs.substrate.io/reference/how-to-guides/parachains/add-hrmp-channels/>
-
-
-Sends KSM from Picasso to Kusama to specified account:
-
-https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rpc.composable.finance#/extrinsics/decode/0x29020101000100010100b8e39e87c0fec96f7d012d31a4c27b44bfb504ab359662112e4270e380c8434101040000000002c2eb0b00000000
+[Kusama’s Governance Thwarts Would-be Attacker!](https://medium.com/kusama-network/kusamas-governance-thwarts-would-be-attacker-9023180f6fb)

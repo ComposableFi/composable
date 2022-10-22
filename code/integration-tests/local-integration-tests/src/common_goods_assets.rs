@@ -321,7 +321,7 @@ fn this_chain_statemine_transfers_back_and_forth_work() {
 
 		let statemine_native_this_balance_2 = Balances::balance(&this_parachain_account);
 
-		#[cfg(not(feature = "rococo"))]
+		//	#[cfg(not(feature = "rococo"))]
 		assert_lt!(
 			statemine_native_this_balance_1,
 			statemine_native_this_balance_2,
@@ -350,7 +350,6 @@ fn this_chain_side(relay_native_asset_amount: u128, foreign_asset_id_on_this: Cu
 
 		let bob_statemine_asset_amount =
 			Tokens::free_balance(foreign_asset_id_on_this, &AccountId::from(BOB));
-		// approx. TEN - fee
 		assert!(
 			bob_statemine_asset_amount < TEN &&
 				bob_statemine_asset_amount > TEN - FEE_NATIVE_STATEMINE - FEE_WEIGHT_THIS,
@@ -466,8 +465,6 @@ fn statemine_side(this_parachain_account_init_amount: u128, statemine_asset_id: 
 			),
 			0
 		));
-
-		log::info!(target : "xcmp::test", "!@#@!&#*!@(#&@!*(#&@!(*#&@!#(*@!&#@(!* PARA {:?}", Balances::reserved_balance(&target_parachain));
 
 		// assets was not transferred to local account for sure
 		assert_eq!(0, Assets::balance(statemine_asset_id, &AccountId::from(BOB)));

@@ -297,9 +297,9 @@ parameter_type_with_key! {
 			(1, None) => Some(400_000_000_000),
 			(1, Some(Parachain(id)))  =>  {
 				let location = XcmAssetLocation::new(location.clone());
-				AssetsRegistry::min_xcm_fee(ParaId::from(*id), location).unwrap() //.or(Some(u128::MAX))
+				AssetsRegistry::min_xcm_fee(ParaId::from(*id), location).or(Some(u128::MAX))
 			},
-			_ => panic!("ASD"), //Some(u128::MAX),
+			_ => Some(u128::MAX),
 		}
 	};
 }

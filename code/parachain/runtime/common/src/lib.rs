@@ -21,7 +21,7 @@ use core::marker::PhantomData;
 
 use composable_traits::{defi::Ratio, oracle::MinimalOracle, xcm::assets::AssetRatioInspect};
 pub use constants::*;
-use frame_support::{log, parameter_types};
+use frame_support::parameter_types;
 use num_traits::CheckedMul;
 use primitives::currency::CurrencyId;
 use scale_info::TypeInfo;
@@ -140,7 +140,6 @@ mod constants {
 	pub const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 2;
 }
 
-/// helps to value native token to others in fee
 #[derive(Default)]
 pub struct PriceConverter<AssetsRegistry>(PhantomData<AssetsRegistry>);
 
@@ -176,21 +175,13 @@ impl<AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>> MinimalOracle
 				if let Some(ratio) = AssetsRegistry::get_ratio(asset_id) {
 					let amount = Ratio::from_inner(amount);
 					if let Some(payment) = ratio.checked_mul(&amount) {
-						frame_support::log::error!(
-							"============== {:?} {:?} {:?} {:?}",
-							asset_id,
-							ratio,
-							amount,
-							payment
-						);
 						Ok(payment.into_inner())
 					} else {
-						panic!("ASD");
 						Err(DispatchError::Other(
 							cross_chain_errors::AMOUNT_OF_ASSET_IS_MORE_THAN_MAX_POSSIBLE,
 						))
 					}
-				// harcoded assets -> hardcoded initial prices
+				// hardcoded assets -> hardcoded initial prices
 				} else if asset_id == CurrencyId::KSM {
 					Ok(amount / 2667)
 				} else if asset_id == CurrencyId::kUSD ||
@@ -199,7 +190,6 @@ impl<AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>> MinimalOracle
 				{
 					Ok(amount / 67)
 				} else {
-					log::error!("===================================================================================== {:?}", asset_id);
 					Err(DispatchError::Other(cross_chain_errors::ASSET_IS_NOT_PRICEABLE))
 				},
 		}
