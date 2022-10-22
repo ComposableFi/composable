@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 import { Box, Grid, Link, Typography, useTheme } from "@mui/material";
 import { TabPanel } from "../Atoms/TabPanel";
 import { WalletViewTabs } from "../WalletViewModal";
@@ -14,6 +14,13 @@ export const TransactionsPanel = ({
   transactions,
 }: TransactionsPanelProps) => {
   const theme = useTheme();
+
+  const [lastClearedTimestamp, setLastClearedTimestamp] = useState(0);
+  const filtered = useMemo(() => {
+    return transactions.filter(tx => {
+      tx.timestamp > lastClearedTimestamp
+    });
+  }, [lastClearedTimestamp, transactions])
 
   return (
     <TabPanel value={activePanel} index={WalletViewTabs.Transactions}>
@@ -35,7 +42,7 @@ export const TransactionsPanel = ({
               overflowY: "scroll",
             }}
           >
-            {transactions.map((tx) => {
+            {filtered.map((tx) => {
               return (
                 <>
                   <Typography variant="caption">{tx.title}</Typography>

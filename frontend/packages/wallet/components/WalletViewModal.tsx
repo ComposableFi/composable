@@ -52,6 +52,7 @@ export type WalletViewProps = {
   selectedPolkadotAccount?: InjectedAccountWithMeta;
   selectedPolkadotWallet?: PolkadotWallet;
   selectedEthereumWallet?: EthereumWallet;
+  connectedWalletTransactions: Array<{ title: string; timestamp: number; }>;
 
   onDisconnectEthereum: (...args: unknown[]) => Promise<void> | void;
   onDisconnectDotsamaWallet: (() => Promise<void>) | undefined;
@@ -72,6 +73,7 @@ export const WalletViewModal: React.FC<WalletViewProps> = ({
   onDisconnectDotsamaWallet,
   onDisconnectEthereum,
   onConnectPolkadot,
+  connectedWalletTransactions,
   open,
   onConnectEVM,
   ...props
@@ -241,7 +243,7 @@ export const WalletViewModal: React.FC<WalletViewProps> = ({
             </Box>
           )}
 
-          <TransactionsPanel activePanel={activePanel} transactions={[]} />
+          <TransactionsPanel activePanel={activePanel} transactions={connectedWalletTransactions} />
         </Grid>
       </Grid>
     </Dialog>

@@ -17,7 +17,7 @@ export type ConnectionModalProps = {
   walletConnectStep: WalletConnectStep;
   setWalletConnectStep: React.Dispatch<WalletConnectStep>;
   isOpenConnectionModal: boolean;
-} & Omit<WalletProps, "connectedAccountNativeBalance">;
+} & Omit<WalletProps, "connectedAccountNativeBalance" | "connectedWalletTransactions">;
 
 function getTitle(walletStep: WalletConnectStep): string {
   switch (walletStep) {

@@ -5,13 +5,14 @@ import {
   useEagerConnect,
   SupportedWalletId,
   useConnectedAccounts,
+  useTransactions,
 } from "substrate-react";
 import { DEFAULT_EVM_ID, DEFAULT_NETWORK_ID } from "@/defi/polkadot/constants";
 import { Wallet } from "wallet";
 import { ConnectorType, useBlockchainProvider, useConnector } from "bi-lib";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import { NetworkId } from "wallet";
-import BigNumber from "bignumber.js";
+import { useStore } from "@/stores/root";
 
 const BLOCKCHAIN_NETWORKS_SUPPORTED = [
   {
@@ -65,10 +66,22 @@ export const PolkadotConnect: React.FC<{}> = () => {
   const biLibConnector = useConnector(ConnectorType.MetaMask);
   useEagerConnect(DEFAULT_NETWORK_ID);
 
+  const native = useStore(
+    ({ substrateBalances }) => substrateBalances.assets.picasso.native
+  );
+
+  const transactions = useTransactions(connectedAccount?.address ?? "-");
+
   return (
     <Wallet
+      connectedWalletTransactions={transactions.map((tx) => {
+        return {
+          title: `${tx.section} ${tx.method}`,
+          timestamp: tx.timestamp,
+        };
+      })}
       ethereumConnectorInUse={connectorType}
-      connectedAccountNativeBalance={new BigNumber(0)}
+      connectedAccountNativeBalance={native.balance}
       onDisconnectDotsamaWallet={deactivate}
       onConnectPolkadotWallet={activate as any}
       blockchainNetworksSupported={BLOCKCHAIN_NETWORKS_SUPPORTED}

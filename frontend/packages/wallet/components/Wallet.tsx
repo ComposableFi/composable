@@ -24,6 +24,7 @@ export type WalletProps = {
   isEthereumWalletActive: boolean;
   polkadotAccounts: Array<InjectedAccountWithMeta>;
   polkadotExtensionStatus: DotSamaExtensionStatus;
+  connectedWalletTransactions: Array<{ title: string; timestamp: number; }>;
   selectedPolkadotAccount: InjectedAccountWithMeta | undefined;
   supportedEthereumWallets: Array<EthereumWallet>;
   supportedPolkadotWallets: Array<PolkadotWallet>;
@@ -45,6 +46,7 @@ export const Wallet: React.FC<WalletProps> = ({
   supportedPolkadotWallets,
   supportedEthereumWallets,
   connectedAccountNativeBalance,
+  connectedWalletTransactions,
   ethereumConnectorInUse
 }) => {
   const label =
@@ -108,6 +110,7 @@ export const Wallet: React.FC<WalletProps> = ({
       />
 
       <WalletViewModal
+        connectedWalletTransactions={connectedWalletTransactions}
         selectedEthereumWallet={selectedEthereumWallet}
         selectedPolkadotWallet={selectedPolkadotWallet}
         onDisconnectDotsamaWallet={onDisconnectDotsamaWallet}
