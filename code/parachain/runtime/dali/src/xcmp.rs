@@ -1,7 +1,6 @@
 //! Setup of XCMP for parachain to allow cross chain transfers and other operations.
 //! Very similar to https://github.com/galacticcouncil/Basilisk-node/blob/master/runtime/basilisk/src/xcm.rs
 use super::*;
-use codec::Decode;
 use common::{
 	governance::native::EnsureRootOrHalfNativeTechnical, topology, xcmp::*, PriceConverter,
 };

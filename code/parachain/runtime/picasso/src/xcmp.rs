@@ -128,7 +128,7 @@ impl XcmpAssets for StaticAssetsMap {
 			MultiLocation { parents: 1, interior: X2(Parachain(para_id), GeneralKey(key)) } =>
 				match (para_id, &key[..]) {
 					(topology::karura::ID, topology::karura::KUSD_KEY) => Some(CurrencyId::kUSD),
-					_ => panic!("ASD"),
+					_ => None,
 				},
 			MultiLocation {
 				parents: 1,
@@ -140,9 +140,9 @@ impl XcmpAssets for StaticAssetsMap {
 						topology::statemine::ASSETS,
 						topology::statemine::USDT,
 					) => Some(CurrencyId::USDT),
-					_ => panic!("ASD"),
+					_ => None,
 				},
-			_ => panic!("ASD"),
+			_ => None,
 		}
 	}
 
@@ -179,7 +179,7 @@ impl XcmpAssets for StaticAssetsMap {
 					GeneralIndex(topology::common_good_assets::USDT),
 				),
 			}),
-			_ => panic!("ASD"),
+			_ => None,
 		}
 	}
 }

@@ -101,7 +101,6 @@ fn transfer_usdt_from_statemine_to_this() {
 	simtest();
 	let bob_on_statemine_original =
 		Statemine::execute_with(|| statemine_runtime::Balances::balance(&AccountId::from(BOB)));
-	let amount = RELAY_NATIVE_UNIT;
 
 	let statemine_asset_id = 1984;
 	let remote_statemine_asset_id = CurrencyId::USDT;
@@ -262,10 +261,12 @@ fn rockmine_shib_to_dali_transfer() {
 	});
 
 	This::execute_with(|| {
-		log::info!(target: "bdd", "Then Bob gets some SHIB on Dali");
 		use this_runtime::*;
+		log::info!(target: "bdd", "Then Bob gets some SHIB on Dali");
+		let fee = this_runtime::xcmp::xcm_asset_fee_estimator(5, remote_statemine_asset_id);
+		assert_gt!(transfer_amount, fee);
 		let balance = Tokens::free_balance(remote_statemine_asset_id, &AccountId::from(BOB));
-		assert_eq!(balance, transfer_amount,);
+		assert_lt_by!(balance, transfer_amount, fee);
 	});
 }
 
@@ -320,13 +321,6 @@ fn this_chain_statemine_transfers_back_and_forth_work() {
 		);
 
 		let statemine_native_this_balance_2 = Balances::balance(&this_parachain_account);
-
-		//	#[cfg(not(feature = "rococo"))]
-		assert_lt!(
-			statemine_native_this_balance_1,
-			statemine_native_this_balance_2,
-			"we transferred "
-		);
 
 		let hops = 2;
 		assert_eq_error_rate!(
