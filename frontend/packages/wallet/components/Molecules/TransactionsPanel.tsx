@@ -28,7 +28,9 @@ export const TransactionsPanel = ({
         <Grid item xs={12} display="flex" justifyContent={"space-between"}>
           <Typography variant="inputLabel">Recent Transactions</Typography>
           <Typography variant="inputLabel">
-            <Link>Clear All</Link>
+            <Link onClick={(evt) => {
+              setLastClearedTimestamp(Date.now())
+            }}>Clear All</Link>
           </Typography>
         </Grid>
 
