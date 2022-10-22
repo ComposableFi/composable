@@ -1,5 +1,6 @@
 use cosmwasm_std::StdError;
 use thiserror::Error;
+use xcvm_core::BridgeSecurity;
 
 #[derive(Error, Debug)]
 pub enum ContractError {
@@ -17,4 +18,10 @@ pub enum ContractError {
 
 	#[error("Bindings are invalid")]
 	InvalidBindings,
+
+	#[error("Expected bridge security to be at least {0:?}, got {1:?}")]
+	InsufficientBridgeSecurity(BridgeSecurity, BridgeSecurity),
+
+	#[error("Caller is not authenticated to take the action")]
+	NotAuthorized,
 }

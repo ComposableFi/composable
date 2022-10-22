@@ -3,14 +3,14 @@ extern crate alloc;
 use crate::{
 	error::ContractError,
 	msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, XCVMInstruction, XCVMProgram},
-	state::{Config, CONFIG},
+	state::{Config, MessageFilter, CONFIG, MESSAGE_FILTER, OWNERS},
 };
 use alloc::borrow::Cow;
 use core::cmp::max;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-	to_binary, wasm_execute, Binary, CosmosMsg, Deps, DepsMut, Env, Event, MessageInfo,
+	to_binary, wasm_execute, Addr, Binary, CosmosMsg, Deps, DepsMut, Env, Event, MessageInfo,
 	QueryRequest, Response, StdError, StdResult, WasmQuery,
 };
 use cw2::set_contract_version;
@@ -20,7 +20,10 @@ use num::Zero;
 use serde::Serialize;
 use std::collections::VecDeque;
 use xcvm_asset_registry::msg::{GetAssetContractResponse, QueryMsg as AssetRegistryQueryMsg};
-use xcvm_core::{cosmwasm::*, BindingValue, Displayed, Funds, Instruction, NetworkId};
+use xcvm_core::{
+	cosmwasm::*, BindingValue, BridgeSecurity, Displayed, Funds, Instruction, MessageOrigin,
+	NetworkId,
+};
 
 const CONTRACT_NAME: &str = "composable:xcvm-interpreter";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -29,15 +32,20 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 pub fn instantiate(
 	deps: DepsMut,
 	_env: Env,
-	_info: MessageInfo,
+	info: MessageInfo,
 	msg: InstantiateMsg,
-) -> Result<Response, StdError> {
+) -> Result<Response, ContractError> {
+	assert_bridge_security(msg.message_origin, BridgeSecurity::Deterministic)?;
+
 	set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
 	let registry_address = deps.api.addr_validate(&msg.registry_address)?;
 	let config =
 		Config { registry_address, network_id: msg.network_id, user_id: msg.user_id.clone() };
 	CONFIG.save(deps.storage, &config)?;
+	MESSAGE_FILTER
+		.save(deps.storage, &MessageFilter { bridge_security: BridgeSecurity::Deterministic })?;
+	OWNERS.save(deps.storage, info.sender, &())?;
 
 	Ok(Response::new().add_event(
 		Event::new("xcvm.interpreter.instantiated").add_attribute(
@@ -54,14 +62,46 @@ pub fn execute(
 	info: MessageInfo,
 	msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
+	assert_owner(deps.as_ref(), &info.sender)?;
 	match msg {
-		ExecuteMsg::Execute { program } => interpret_program(deps, env, info, program),
+		ExecuteMsg::Execute { program, message_origin } =>
+			interpret_program(deps, env, info, message_origin, program),
+		ExecuteMsg::SetMessageFilter { bridge_security } =>
+			set_bridge_security(deps, info, bridge_security),
 	}
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
+	// Already only callable by the admin of the contract, so no need to `assert_owner`
 	let _ = ensure_from_older_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+	Ok(Response::default())
+}
+
+fn assert_bridge_security(
+	message_origin: MessageOrigin,
+	bridge_security: BridgeSecurity,
+) -> Result<(), ContractError> {
+	message_origin
+		.assert_security(bridge_security)
+		.map_err(|got| ContractError::InsufficientBridgeSecurity(bridge_security, got))
+}
+
+fn assert_owner(deps: Deps, owner: &Addr) -> Result<(), ContractError> {
+	if OWNERS.has(deps.storage, owner.clone()) {
+		Ok(())
+	} else {
+		Err(ContractError::NotAuthorized)
+	}
+}
+
+pub fn set_bridge_security(
+	deps: DepsMut,
+	info: MessageInfo,
+	bridge_security: BridgeSecurity,
+) -> Result<Response, ContractError> {
+	assert_owner(deps.as_ref(), &info.sender)?;
+	MESSAGE_FILTER.save(deps.storage, &MessageFilter { bridge_security })?;
 	Ok(Response::default())
 }
 
@@ -70,8 +110,12 @@ pub fn interpret_program(
 	mut deps: DepsMut,
 	env: Env,
 	_info: MessageInfo,
+	message_origin: MessageOrigin,
 	program: XCVMProgram,
 ) -> Result<Response, ContractError> {
+	let MessageFilter { bridge_security } = MESSAGE_FILTER.load(deps.storage)?;
+	assert_bridge_security(message_origin, bridge_security)?;
+
 	let mut response = Response::new();
 	let instruction_len = program.instructions.len();
 	let mut instruction_iter = program.instructions.into_iter().enumerate();
@@ -95,7 +139,7 @@ pub fn interpret_program(
 					let program = XCVMProgram { tag: program.tag, instructions };
 					return Ok(response.add_message(wasm_execute(
 						env.contract.address,
-						&ExecuteMsg::Execute { program },
+						&ExecuteMsg::Execute { program, message_origin },
 						vec![],
 					)?))
 				}

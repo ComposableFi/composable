@@ -13,7 +13,7 @@ use cw2::set_contract_version;
 use cw20::{Cw20Contract, Cw20ExecuteMsg};
 use cw_utils::ensure_from_older_version;
 use xcvm_asset_registry::msg::{GetAssetContractResponse, QueryMsg as AssetRegistryQueryMsg};
-use xcvm_core::{Displayed, Funds, NetworkId};
+use xcvm_core::{BridgeSecurity, Displayed, Funds, MessageOrigin, NetworkId};
 use xcvm_interpreter::msg::{
 	ExecuteMsg as InterpreterExecuteMsg, InstantiateMsg as InterpreterInstantiateMsg,
 };
@@ -33,7 +33,11 @@ pub fn instantiate(
 	let addr = deps.api.addr_validate(&msg.registry_address)?;
 	CONFIG.save(
 		deps.storage,
-		&Config { registry_address: addr, interpreter_code_id: msg.interpreter_code_id },
+		&Config {
+			registry_address: addr,
+			interpreter_code_id: msg.interpreter_code_id,
+			network_id: msg.network_id,
+		},
 	)?;
 	Ok(Response::default())
 }
@@ -46,8 +50,16 @@ pub fn execute(
 	msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
 	match msg {
-		ExecuteMsg::Run { network_id, user_id, interpreter_execute_msg, funds } =>
-			handle_run(deps, env, network_id, user_id, interpreter_execute_msg, funds),
+		ExecuteMsg::Run { network_id, user_id, interpreter_execute_msg, funds, message_origin } =>
+			handle_run(
+				deps,
+				env,
+				network_id,
+				user_id,
+				interpreter_execute_msg,
+				funds,
+				message_origin,
+			),
 	}
 }
 
@@ -64,6 +76,7 @@ pub fn handle_run(
 	user_id: UserId,
 	interpreter_execute_msg: InterpreterExecuteMsg,
 	funds: Funds<Displayed<u128>>,
+	message_origin: MessageOrigin,
 ) -> Result<Response, ContractError> {
 	match INTERPRETERS.load(deps.storage, (network_id.0, user_id.clone())) {
 		Ok(interpreter_address) => {
@@ -73,7 +86,15 @@ pub fn handle_run(
 			Ok(response.add_message(wasm_msg))
 		},
 		Err(_) => {
-			let Config { registry_address, interpreter_code_id } = CONFIG.load(deps.storage)?;
+			// There is no interpreter, so the bridge security must be at least `Deterministic`
+			// or the message should be coming from a local origin
+			let Config { registry_address, interpreter_code_id, network_id: router_network_id } =
+				CONFIG.load(deps.storage)?;
+			if network_id != router_network_id {
+				message_origin.assert_security(BridgeSecurity::Deterministic).map_err(|got| {
+					ContractError::InsufficientBridgeSecurity(BridgeSecurity::Deterministic, got)
+				})?;
+			}
 			let instantiate_msg: CosmosMsg = WasmMsg::Instantiate {
 				admin: Some(env.contract.address.clone().into_string()),
 				code_id: interpreter_code_id,
@@ -81,6 +102,7 @@ pub fn handle_run(
 					registry_address: registry_address.into_string(),
 					network_id,
 					user_id: user_id.clone(),
+					message_origin,
 				})?,
 				funds: vec![],
 				label: format!("xcvm-interpreter-{}-{}", network_id.0, hex::encode(&user_id)),
@@ -90,7 +112,13 @@ pub fn handle_run(
 			let submessage = SubMsg::reply_on_success(instantiate_msg, INSTANTIATE_REPLY_ID);
 			let wasm_msg: CosmosMsg = wasm_execute(
 				env.contract.address,
-				&ExecuteMsg::Run { network_id, user_id, interpreter_execute_msg, funds },
+				&ExecuteMsg::Run {
+					network_id,
+					user_id,
+					interpreter_execute_msg,
+					funds,
+					message_origin,
+				},
 				vec![],
 			)?
 			.into();
