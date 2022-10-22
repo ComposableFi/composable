@@ -110,7 +110,7 @@ impl<
 		let price =
 			PriceConverter::get_price_inverse(asset_id, fee).map_err(|_| XcmError::TooExpensive)?;
 		log::trace!(target : "xcmp::buy_weight", "amount of priceable token to pay fee {:?}", price );
-		return Ok((fee, price))
+		Ok((fee, price))
 	}
 }
 impl<
