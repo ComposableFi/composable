@@ -18,6 +18,8 @@ pub struct InstantiateMsg {
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
 	Execute { program: XCVMProgram },
+	// Only meant for to be used by the interpreter itself
+	_SelfExecute { program: XCVMProgram },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

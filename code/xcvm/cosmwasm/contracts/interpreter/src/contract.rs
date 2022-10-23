@@ -3,7 +3,7 @@ extern crate alloc;
 use crate::{
 	error::ContractError,
 	msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, XCVMInstruction, XCVMProgram},
-	state::{Config, CONFIG, OWNERS},
+	state::{Config, CONFIG, OWNERS, RESULT_REGISTER},
 };
 use alloc::borrow::Cow;
 use core::cmp::max;
@@ -11,7 +11,7 @@ use core::cmp::max;
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
 	to_binary, wasm_execute, Addr, Binary, CosmosMsg, Deps, DepsMut, Env, Event, MessageInfo,
-	QueryRequest, Response, StdError, StdResult, WasmQuery,
+	QueryRequest, Reply, Response, StdError, StdResult, SubMsg, WasmQuery,
 };
 use cw2::set_contract_version;
 use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg};
@@ -24,6 +24,8 @@ use xcvm_core::{cosmwasm::*, BindingValue, Displayed, Funds, Instruction, Networ
 
 const CONTRACT_NAME: &str = "composable:xcvm-interpreter";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+const CALL_ID: u64 = 1;
+const SELF_CALL_ID: u64 = 2;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -38,6 +40,7 @@ pub fn instantiate(
 	let config =
 		Config { registry_address, network_id: msg.network_id, user_id: msg.user_id.clone() };
 	CONFIG.save(deps.storage, &config)?;
+	// Save the caller as owner, in this case it is `router`
 	OWNERS.save(deps.storage, info.sender, &())?;
 
 	Ok(Response::new().add_event(
@@ -57,7 +60,14 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
 	assert_owner(deps.as_ref(), &info.sender)?;
 	match msg {
-		ExecuteMsg::Execute { program } => interpret_program(deps, env, info, program),
+		ExecuteMsg::Execute { program } => initiate_execution(env, program),
+		ExecuteMsg::_SelfExecute { program } =>
+		// _SelfExecute should be called by interpreter itself
+			if env.contract.address != info.sender {
+				Err(ContractError::NotAuthorized)
+			} else {
+				interpret_program(deps, env, info, program)
+			},
 	}
 }
 
@@ -74,6 +84,13 @@ fn assert_owner(deps: Deps, owner: &Addr) -> Result<(), ContractError> {
 	} else {
 		Err(ContractError::NotAuthorized)
 	}
+}
+
+pub fn initiate_execution(env: Env, program: XCVMProgram) -> Result<Response, ContractError> {
+	Ok(Response::default().add_submessage(SubMsg::reply_on_error(
+		wasm_execute(env.contract.address, &ExecuteMsg::_SelfExecute { program }, Vec::new())?,
+		SELF_CALL_ID,
+	)))
 }
 
 /// Interpret an XCVM program
@@ -226,7 +243,7 @@ pub fn interpret_call(
 	};
 
 	let cosmos_msg: CosmosMsg = cosmwasm_msg.try_into().unwrap();
-	Ok(response.add_message(cosmos_msg))
+	Ok(response.add_submessage(SubMsg::reply_on_success(cosmos_msg, CALL_ID)))
 }
 
 pub fn interpret_spawn(
@@ -365,6 +382,34 @@ pub fn interpret_transfer(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> StdResult<Binary> {
 	Err(StdError::generic_err("not implemented"))
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> StdResult<Response> {
+	match msg.id {
+		CALL_ID => handle_call_result(deps, msg),
+		SELF_CALL_ID => handle_self_call_result(deps, msg),
+		id => Err(StdError::generic_err(format!("Unknown reply id: {}", id))),
+	}
+}
+
+fn handle_self_call_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
+	match msg.result.into_result() {
+		Ok(_) => Err(StdError::generic_err("Returned OK from a reply that is called with `reply_on_error`. This should never happen")),
+		Err(e) => {
+			// Save the result that is returned from the sub-interpreter
+			// this way, only the `RESULT_REGISTER` is persisted. All 
+			// other state changes are reverted.
+			RESULT_REGISTER.save(deps.storage, &Err(e))?;
+			Ok(Response::default())
+		}
+	}
+}
+
+fn handle_call_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
+	let response = msg.result.into_result().map_err(StdError::generic_err)?;
+	RESULT_REGISTER.save(deps.storage, &Ok(response.clone()))?;
+	Ok(Response::default().add_events(response.events))
 }
 
 #[cfg(test)]
