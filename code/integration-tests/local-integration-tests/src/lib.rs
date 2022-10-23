@@ -72,3 +72,4 @@ mod transact_calls;
 
 #[cfg(test)]
 mod common_goods_assets;
+pub mod testing;

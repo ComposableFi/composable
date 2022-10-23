@@ -32,7 +32,7 @@ fn transfer_native_from_relay_chain_to_statemine() {
 	simtest();
 	let bob_on_statemine_original =
 		Statemine::execute_with(|| statemine_runtime::Balances::balance(&AccountId::from(BOB)));
-	let amount = RELAY_NATIVE_UNIT;
+	let amount = RELAY_NATIVE::ONE;
 	KusamaRelay::execute_with(|| {
 		use relay_runtime::*;
 		assert_ok!(XcmPallet::teleport_assets(
@@ -58,7 +58,7 @@ fn transfer_native_from_statemine_to_this() {
 	simtest();
 	let bob_on_statemine_original =
 		Statemine::execute_with(|| statemine_runtime::Balances::balance(&AccountId::from(BOB)));
-	let amount = RELAY_NATIVE_UNIT;
+	let amount = RELAY_NATIVE::ONE;
 	KusamaRelay::execute_with(|| {
 		use relay_runtime::*;
 		assert_ok!(XcmPallet::teleport_assets(
@@ -82,7 +82,6 @@ fn transfer_native_from_statemine_to_this() {
 					.into()
 			),
 			Box::new(Junction::AccountId32 { id: BOB, network: NetworkId::Any }.into().into()),
-			// statemine knows only its asset ids an sends them to others to decode
 			Box::new((MultiLocation::new(1, Here), bob_balance).into()),
 			0,
 		));
@@ -102,9 +101,9 @@ fn transfer_usdt_from_statemine_to_this() {
 	let bob_on_statemine_original =
 		Statemine::execute_with(|| statemine_runtime::Balances::balance(&AccountId::from(BOB)));
 
-	let statemine_asset_id = 1984;
+	let statemine_asset_id = USDT::ID;
 	let remote_statemine_asset_id = CurrencyId::USDT;
-	let usdt_transfer_amount = 1_000_000_000_000;
+	let usdt_transfer_amount = USDT::ONE;
 	let total_issuance = 3_500_000_000_000;
 	Statemine::execute_with(|| {
 		log::info!(target: "bdd", "Given USDT on Statemine registered");
@@ -113,7 +112,7 @@ fn transfer_usdt_from_statemine_to_this() {
 
 		Assets::force_create(
 			root.clone().into(),
-			statemine_asset_id,
+			statemine_asset_id as u32,
 			MultiAddress::Id(ALICE.into()),
 			true,
 			1000,
@@ -122,7 +121,7 @@ fn transfer_usdt_from_statemine_to_this() {
 		log::info!(target: "bdd", "	and Bob has a lot USDT on Statemine");
 		Assets::mint(
 			Origin::signed(ALICE.into()),
-			statemine_asset_id,
+			statemine_asset_id as u32,
 			MultiAddress::Id(BOB.into()),
 			total_issuance,
 		)
@@ -141,17 +140,14 @@ fn transfer_usdt_from_statemine_to_this() {
 			),
 			Box::new(Junction::AccountId32 { id: BOB, network: NetworkId::Any }.into().into()),
 			Box::new(
-				(
-					X2(PalletInstance(50), GeneralIndex(statemine_asset_id as u128)),
-					usdt_transfer_amount
-				)
+				(X2(PalletInstance(50), GeneralIndex(statemine_asset_id)), usdt_transfer_amount)
 					.into()
 			),
 			0,
 			WeightLimit::Unlimited,
 		));
 		assert_eq!(
-			Assets::balance(statemine_asset_id, &AccountId::from(BOB)),
+			Assets::balance(statemine_asset_id as u32, &AccountId::from(BOB)),
 			total_issuance - usdt_transfer_amount
 		);
 	});
@@ -201,7 +197,7 @@ fn rockmine_shib_to_dali_transfer() {
 	});
 
 	let remote_statemine_asset_id = This::execute_with(|| {
-		log::info!(target: "bdd", "	and USD on Dali registered");
+		log::info!(target: "bdd", "	and USDT on Dali registered");
 		use this_runtime::*;
 		let root = frame_system::RawOrigin::Root;
 		let location = XcmAssetLocation::new(
@@ -263,6 +259,112 @@ fn rockmine_shib_to_dali_transfer() {
 	This::execute_with(|| {
 		use this_runtime::*;
 		log::info!(target: "bdd", "Then Bob gets some SHIB on Dali");
+		let fee = this_runtime::xcmp::xcm_asset_fee_estimator(5, remote_statemine_asset_id);
+		assert_gt!(transfer_amount, fee);
+		let balance = Tokens::free_balance(remote_statemine_asset_id, &AccountId::from(BOB));
+		assert_lt_by!(balance, transfer_amount, fee);
+	});
+}
+
+#[test]
+fn rockmine_stable_to_dali_transfer() {
+	simtest();
+	let this_parachain_account: AccountId =
+		polkadot_parachain::primitives::Sibling::from(THIS_PARA_ID).into_account_truncating();
+	let statemine_parachain_account: AccountId =
+		ParaId::from(topology::common_good_assets::ID).into_account_truncating();
+	let statemine_asset_id = STABLE::ID as u32;
+	let total_issuance = 3_500_000_000_000;
+	let transfer_amount = STABLE::RESERVE_ONE;
+	Statemine::execute_with(|| {
+		log::info!(target: "bdd", "Given STABLE on Statemine registered");
+		use statemine_runtime::*;
+		let root = frame_system::RawOrigin::Root;
+
+		Assets::force_create(
+			root.clone().into(),
+			statemine_asset_id,
+			MultiAddress::Id(ALICE.into()),
+			true,
+			1000,
+		)
+		.unwrap();
+		log::info!(target: "bdd", "	and Bob has a lot STABLE on Statemine");
+		Assets::mint(
+			Origin::signed(ALICE.into()),
+			statemine_asset_id,
+			MultiAddress::Id(BOB.into()),
+			total_issuance,
+		)
+		.unwrap();
+	});
+
+	let remote_statemine_asset_id = This::execute_with(|| {
+		log::info!(target: "bdd", "	and STABLE on Dali registered");
+		use this_runtime::*;
+		let root = frame_system::RawOrigin::Root;
+		let location = XcmAssetLocation::new(
+			MultiLocation::new(
+				1,
+				X3(
+					Parachain(topology::common_good_assets::ID),
+					PalletInstance(50),
+					GeneralIndex(STABLE::ID),
+				),
+			)
+			.into(),
+		);
+		let product = Ratio::from_rational(15, 1000);
+		let technical = Ratio::from_rational(STABLE::RESERVE_ONE, PICA::ONE);
+		let ratio = product * technical;
+
+		AssetsRegistry::register_asset(
+			root.into(),
+			location.clone(),
+			1,
+			Some(ratio),
+			Some(STABLE::RESERVE_EXPONENT as u32),
+		)
+		.unwrap();
+		System::events()
+			.iter()
+			.find_map(|x| match x.event {
+				Event::AssetsRegistry(assets_registry::Event::<Runtime>::AssetRegistered {
+					asset_id,
+					location: _,
+				}) => Some(asset_id),
+				_ => None,
+			})
+			.unwrap()
+	});
+	log::info!(target: "bdd", "{:?}", remote_statemine_asset_id);
+	Statemine::execute_with(|| {
+		log::info!(target: "bdd", "When Bob transfers some {:?} STABLE from from Statemine to Dali", transfer_amount);
+		use statemine_runtime::*;
+		let origin = Origin::signed(BOB.into());
+		assert_ok!(PolkadotXcm::limited_reserve_transfer_assets(
+			origin.clone(),
+			Box::new(
+				VersionedMultiLocation::V1(MultiLocation::new(1, X1(Parachain(THIS_PARA_ID))))
+					.into()
+			),
+			Box::new(Junction::AccountId32 { id: BOB, network: NetworkId::Any }.into().into()),
+			Box::new(
+				(X2(PalletInstance(50), GeneralIndex(statemine_asset_id as u128)), transfer_amount)
+					.into()
+			),
+			0,
+			WeightLimit::Unlimited,
+		));
+		assert_eq!(
+			Assets::balance(statemine_asset_id, &AccountId::from(BOB)),
+			total_issuance - transfer_amount
+		);
+	});
+
+	This::execute_with(|| {
+		use this_runtime::*;
+		log::info!(target: "bdd", "Then Bob gets some STABLE on Dali");
 		let fee = this_runtime::xcmp::xcm_asset_fee_estimator(5, remote_statemine_asset_id);
 		assert_gt!(transfer_amount, fee);
 		let balance = Tokens::free_balance(remote_statemine_asset_id, &AccountId::from(BOB));
@@ -453,7 +555,6 @@ fn statemine_side(this_parachain_account_init_amount: u128, statemine_asset_id: 
 					.into()
 			),
 			Box::new(Junction::AccountId32 { id: BOB, network: NetworkId::Any }.into().into()),
-			// statemine knows only its asset ids an sends them to others to decode
 			Box::new(
 				(X2(PalletInstance(50), GeneralIndex(statemine_asset_id as u128)), TEN).into()
 			),

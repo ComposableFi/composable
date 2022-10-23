@@ -1,5 +1,8 @@
 //! proposed shared XCM setup parameters and impl
-use crate::{AccountId, Balance};
+use crate::{
+	topology::{self, SELF_RECURSIVE},
+	AccountId, Balance,
+};
 use codec::Decode;
 use composable_traits::{
 	oracle::MinimalOracle,
@@ -11,7 +14,7 @@ use frame_support::{
 	traits::{Contains, Get},
 	weights::{WeightToFee, WeightToFeePolynomial},
 };
-use num_traits::Zero;
+use num_traits::{One, Zero};
 use orml_traits::location::{AbsoluteReserveProvider, Reserve};
 use polkadot_primitives::v2::Id;
 use primitives::currency::{CurrencyId, WellKnownCurrency};
@@ -51,7 +54,6 @@ impl ShouldExecute for XcmpDebug {
 pub struct ThisChain<T>(PhantomData<T>);
 
 impl<T: Get<Id>> ThisChain<T> {
-	pub const SELF_RECURSIVE: MultiLocation = MultiLocation { parents: 0, interior: Here };
 	pub fn self_parent() -> MultiLocation {
 		MultiLocation { parents: 1, interior: X1(Parachain(T::get().into())) }
 	}
@@ -59,7 +61,7 @@ impl<T: Get<Id>> ThisChain<T> {
 
 impl<T: Get<Id>> Contains<MultiLocation> for ThisChain<T> {
 	fn contains(origin: &MultiLocation) -> bool {
-		origin == &Self::SELF_RECURSIVE || origin == &Self::self_parent()
+		origin == &SELF_RECURSIVE || origin == &Self::self_parent()
 	}
 }
 
@@ -106,10 +108,11 @@ impl<
 		asset_id: CurrencyId,
 	) -> Result<(Balance, Balance), XcmError> {
 		let fee = WeightToFeeConverter::weight_to_fee(&weight);
-		log::trace!(target : "xcmp::buy_weight", "required payment in native token is: {:?}", fee );
+		log::trace!(target : "xcmp::weight_to_asset", "required payment in native token is: {:?}", fee );
 		let price =
 			PriceConverter::get_price_inverse(asset_id, fee).map_err(|_| XcmError::TooExpensive)?;
-		log::trace!(target : "xcmp::buy_weight", "amount of priceable token to pay fee {:?}", price );
+		let price = price.max(Balance::one());
+		log::trace!(target : "xcmp::weight_to_asset", "amount of priceable token to pay fee {:?}", price );
 		Ok((fee, price))
 	}
 }
@@ -148,7 +151,6 @@ impl<
 				let (fee, price) = Self::weight_to_asset(weight, asset_id)?;
 				let required =
 					MultiAsset { id: xcmp_asset_id.clone(), fun: Fungibility::Fungible(price) };
-
 				log::trace!(target : "xcmp::buy_weight", "required priceable token {:?}; provided payment:{:?} ", required, payment );
 				let unused = payment.checked_sub(required).map_err(|_| XcmError::TooExpensive)?;
 
@@ -226,8 +228,6 @@ pub struct CurrencyIdConvert<AssetRegistry, WellKnownCurrency, ThisParaId, WellK
 	PhantomData<(AssetRegistry, WellKnownCurrency, ThisParaId, WellKnownXcmpAssets)>,
 );
 
-/// converts local currency into remote,
-/// native currency is built in
 impl<
 		AssetRegistry: RemoteAssetRegistryInspect<AssetId = CurrencyId, AssetNativeLocation = XcmAssetLocation>,
 		WellKnown: WellKnownCurrency,
@@ -254,21 +254,6 @@ impl<
 	}
 }
 
-// must be a non-associated const to allow for pattern matching
-pub const RELAY_LOCATION: MultiLocation = MultiLocation { parents: 1, interior: Here };
-
-/// converts remote asset to local
-/// 1. if remote is origin without key(some identifiers), than it is native token
-/// 2. if origin is parent of this consensus, than this is relay
-/// 2. if origin is this consensus, than it is this native token
-/// 3. if origin is some well know chain and key(asset id) is exactly same as binary value on remote
-/// chain, that we map to local currency 4. if origin is mapped by sender to include our mapped id
-/// into our chain, than we also map that
-///
-/// so:
-/// 1. in some cases origin leads to asset id
-/// 2. in some well know cases remote asset id is statically typed into here (so it is okay to send
-/// their id to us) 3. and in other cases they must map on us, and than send our id to here
 impl<
 		AssetsRegistry: RemoteAssetRegistryInspect<AssetId = CurrencyId, AssetNativeLocation = XcmAssetLocation>,
 		WellKnown: WellKnownCurrency,
@@ -280,13 +265,13 @@ impl<
 	fn convert(location: MultiLocation) -> Option<CurrencyId> {
 		log::trace!(target: "xcmp::convert", "converting {:?} on {:?}", &location, ThisParaId::get());
 		match location {
+			topology::relay::LOCATION => Some(CurrencyId::RELAY_NATIVE),
+			SELF_RECURSIVE => Some(CurrencyId::NATIVE),
 			MultiLocation { parents, interior: X2(Parachain(id), GeneralKey(key)) }
 				if parents == 1 && Id::from(id) == ThisParaId::get() =>
 				CurrencyId::decode(&mut &key[..]).ok(),
 			MultiLocation { parents: 0, interior: X1(GeneralKey(key)) } =>
 				CurrencyId::decode(&mut &key[..]).ok(),
-			RELAY_LOCATION => Some(CurrencyId::RELAY_NATIVE),
-			ThisChain::<ThisParaId>::SELF_RECURSIVE => Some(CurrencyId::NATIVE),
 			_ =>
 				if let Some(currency_id) = WellKnownXcmpAssets::remote_to_local(location.clone()) {
 					Some(currency_id)

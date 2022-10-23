@@ -22,3 +22,11 @@ pub mod common_good_assets {
 	pub const ASSETS: u8 = 50;
 	pub const USDT: u128 = 1984;
 }
+
+pub mod relay {
+	use xcm::latest::prelude::*;
+	pub const LOCATION: MultiLocation = MultiLocation { parents: 1, interior: Here };
+}
+
+use xcm::latest::prelude::*;
+pub const SELF_RECURSIVE: MultiLocation = MultiLocation { parents: 0, interior: Here };

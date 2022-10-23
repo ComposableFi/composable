@@ -6372,6 +6372,7 @@ version = "0.1.0"
 dependencies = [
  "base58",
  "common",
+ "composable-tests-helpers",
  "composable-traits",
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
@@ -6443,6 +6444,7 @@ dependencies = [
  "sp-core",
  "sp-inherents",
  "sp-io",
+ "sp-keyring",
  "sp-offchain",
  "sp-runtime",
  "sp-session",

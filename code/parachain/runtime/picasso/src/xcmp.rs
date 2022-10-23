@@ -3,7 +3,11 @@
 #![allow(unused_imports)] // allow until v2 xcm released (instead creating 2 runtimes)
 use super::*; // recursive dependency onto runtime
 use codec::{Decode, Encode};
-use common::{topology, xcmp::*, PriceConverter};
+use common::{
+	topology::{self, SELF_RECURSIVE},
+	xcmp::*,
+	PriceConverter,
+};
 use composable_traits::{
 	defi::Ratio,
 	oracle::MinimalOracle,
@@ -148,18 +152,7 @@ impl XcmpAssets for StaticAssetsMap {
 
 	fn local_to_remote(id: CurrencyId, this_para_id: u32) -> Option<MultiLocation> {
 		match id {
-			CurrencyId::NATIVE => Some(MultiLocation::new(
-				1,
-				X2(
-					Parachain(this_para_id),
-					GeneralKey(
-						frame_support::storage::weak_bounded_vec::WeakBoundedVec::force_from(
-							id.encode(),
-							None,
-						),
-					),
-				),
-			)),
+			CurrencyId::NATIVE => Some(SELF_RECURSIVE),
 			CurrencyId::RELAY_NATIVE => Some(MultiLocation::parent()),
 			CurrencyId::kUSD => Some(MultiLocation {
 				parents: 1,

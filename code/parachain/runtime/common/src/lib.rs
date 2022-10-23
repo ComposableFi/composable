@@ -184,11 +184,10 @@ impl<AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>> MinimalOracle
 				// hardcoded assets -> hardcoded initial prices
 				} else if asset_id == CurrencyId::KSM {
 					Ok(amount / 2667)
-				} else if asset_id == CurrencyId::kUSD ||
-					asset_id == CurrencyId::USDT ||
-					asset_id == CurrencyId::USDC
-				{
+				} else if asset_id == CurrencyId::kUSD {
 					Ok(amount / 67)
+				} else if asset_id == CurrencyId::USDT || asset_id == CurrencyId::USDC {
+					Ok(amount * 1_000_000 / 67_000_000_000_000)
 				} else {
 					Err(DispatchError::Other(cross_chain_errors::ASSET_IS_NOT_PRICEABLE))
 				},
