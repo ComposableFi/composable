@@ -133,9 +133,9 @@ impl grandpa_client_primitives::HostFunctions for HostFunctionsManager {
 					match hashes.try_push(*hash) {
 						Ok(_) => {},
 						Err(_) => {
-							let hash = hashes.remove(0);
-							hashes_set.remove(&hash);
-							let _ = hashes.try_push(hash);
+							let old_hash = hashes.remove(0);
+							hashes_set.remove(&old_hash);
+							let _ = hashes.try_push(*hash);
 						},
 					}
 					match hashes_set.try_insert(*hash) {
