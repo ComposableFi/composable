@@ -1,8 +1,6 @@
 #![allow(clippy::all)]
 
-use std::{str::FromStr, sync::Arc};
-use std::collections::BTreeMap;
-use std::time::Duration;
+use std::{collections::BTreeMap, str::FromStr, sync::Arc, time::Duration};
 
 pub mod chain;
 pub mod error;
@@ -32,28 +30,34 @@ use sp_runtime::{
 	KeyTypeId, MultiSignature,
 };
 use ss58_registry::Ss58AddressFormat;
-use subxt::{Config, ext::sp_runtime::{generic::Era, traits::Header as HeaderT, MultiSigner}, tx::{AssetTip, BaseExtrinsicParamsBuilder, ExtrinsicParams}};
+use subxt::{
+	ext::sp_runtime::{generic::Era, traits::Header as HeaderT, MultiSigner},
+	tx::{AssetTip, BaseExtrinsicParamsBuilder, ExtrinsicParams},
+	Config,
+};
 
-use crate::utils::{fetch_max_extrinsic_weight, unsafe_cast_to_jsonrpsee_client};
-use primitives::KeyProvider;
-use crate::parachain::api;
+use crate::{
+	parachain::api,
+	utils::{fetch_max_extrinsic_weight, unsafe_cast_to_jsonrpsee_client},
+};
+use codec::Decode;
 use ics10_grandpa::consensus_state::ConsensusState as GrandpaConsensusState;
 use ics11_beefy::{
 	client_state::ClientState as BeefyClientState,
 	consensus_state::ConsensusState as BeefyConsensusState,
 };
-use codec::Decode;
+use primitives::KeyProvider;
 
 use crate::{finality_protocol::FinalityProtocol, signer::ExtrinsicSigner};
+use grandpa_light_client_primitives::{FinalityProof, ParachainHeaderProofs};
 use grandpa_prover::GrandpaProver;
+use ibc::timestamp::Timestamp;
 use ics10_grandpa::client_state::ClientState as GrandpaClientState;
 use jsonrpsee_ws_client::WsClientBuilder;
+use pallet_ibc::light_clients::{AnyClientState, AnyConsensusState, HostFunctionsManager};
 use sp_keystore::testing::KeyStore;
 use sp_runtime::traits::One;
 use subxt::tx::{SubstrateExtrinsicParamsBuilder, TxPayload};
-use grandpa_light_client_primitives::{FinalityProof, ParachainHeaderProofs};
-use ibc::timestamp::Timestamp;
-use pallet_ibc::light_clients::{AnyClientState, AnyConsensusState, HostFunctionsManager};
 
 /// Implements the [`crate::Chain`] trait for parachains.
 /// This is responsible for:
@@ -368,10 +372,7 @@ where
 	///
 	/// We retry sending the transaction up to 5 times in the case where the transaction pool might
 	/// reject the transaction because of conflicting nonces.
-	pub async fn submit_call<C: TxPayload>(
-		&self,
-		call: C,
-	) -> Result<(T::Hash, T::Hash), Error> {
+	pub async fn submit_call<C: TxPayload>(&self, call: C) -> Result<(T::Hash, T::Hash), Error> {
 		let signer = ExtrinsicSigner::<T, Self>::new(
 			self.key_store.clone(),
 			self.key_type_id.clone(),
@@ -416,41 +417,41 @@ where
 	}
 }
 
-
 impl<T: Config + Send + Sync> ParachainClient<T>
-	where
-		u32: From<<<T as Config>::Header as HeaderT>::Number>,
-		Self: KeyProvider,
-		<T::Signature as Verify>::Signer: From<MultiSigner> + IdentifyAccount<AccountId = T::AccountId>,
-		MultiSigner: From<MultiSigner>,
-		<T as Config>::Address: From<<T as Config>::AccountId>,
-		T::Signature: From<MultiSignature>,
-		H256: From<T::Hash>,
-		<T::ExtrinsicParams as ExtrinsicParams<T::Index, T::Hash>>::OtherParams:
+where
+	u32: From<<<T as Config>::Header as HeaderT>::Number>,
+	Self: KeyProvider,
+	<T::Signature as Verify>::Signer: From<MultiSigner> + IdentifyAccount<AccountId = T::AccountId>,
+	MultiSigner: From<MultiSigner>,
+	<T as Config>::Address: From<<T as Config>::AccountId>,
+	T::Signature: From<MultiSignature>,
+	H256: From<T::Hash>,
+	<T::ExtrinsicParams as ExtrinsicParams<T::Index, T::Hash>>::OtherParams:
 		From<BaseExtrinsicParamsBuilder<T, AssetTip>>,
-		T::BlockNumber: Ord + sp_runtime::traits::Zero + One,
-		T::Header: HeaderT,
-		<T::Header as HeaderT>::Hash: From<T::Hash>,
-		T::BlockNumber: From<u32>,
-		FinalityProof<sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256>>:
+	T::BlockNumber: Ord + sp_runtime::traits::Zero + One,
+	T::Header: HeaderT,
+	<T::Header as HeaderT>::Hash: From<T::Hash>,
+	T::BlockNumber: From<u32>,
+	FinalityProof<sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256>>:
 		From<FinalityProof<T::Header>>,
-		BTreeMap<H256, ParachainHeaderProofs>:
+	BTreeMap<H256, ParachainHeaderProofs>:
 		From<BTreeMap<<T as Config>::Hash, ParachainHeaderProofs>>,
 {
 	/// Construct a beefy client state to be submitted to the counterparty chain
 	pub async fn construct_beefy_client_state(
-		&self
+		&self,
 	) -> Result<(AnyClientState, AnyConsensusState), Error>
-		where
-			Self: KeyProvider,
-			<T::Signature as Verify>::Signer:
+	where
+		Self: KeyProvider,
+		<T::Signature as Verify>::Signer:
 			From<MultiSigner> + IdentifyAccount<AccountId = T::AccountId>,
-			MultiSigner: From<MultiSigner>,
-			<T as Config>::Address: From<<T as Config>::AccountId>,
-			u32: From<<T as Config>::BlockNumber>,
+		MultiSigner: From<MultiSigner>,
+		<T as Config>::Address: From<<T as Config>::AccountId>,
+		u32: From<<T as Config>::BlockNumber>,
 	{
 		use ibc::core::ics24_host::identifier::ChainId;
-		let beefy_activation_block = self.beefy_activation_block.expect("beefy_activation_block was not defined");
+		let beefy_activation_block =
+			self.beefy_activation_block.expect("beefy_activation_block was not defined");
 		let api = self.relay_client.storage();
 		let para_client_api = self.para_client.storage();
 		let client_wrapper = Prover {
@@ -526,13 +527,13 @@ impl<T: Config + Send + Sync> ParachainClient<T>
 	pub async fn construct_grandpa_client_state(
 		&self,
 	) -> Result<(AnyClientState, AnyConsensusState), Error>
-		where
-			Self: KeyProvider,
-			<T::Signature as Verify>::Signer:
+	where
+		Self: KeyProvider,
+		<T::Signature as Verify>::Signer:
 			From<MultiSigner> + IdentifyAccount<AccountId = T::AccountId>,
-			MultiSigner: From<MultiSigner>,
-			<T as Config>::Address: From<<T as Config>::AccountId>,
-			u32: From<<T as Config>::BlockNumber>,
+		MultiSigner: From<MultiSigner>,
+		<T as Config>::Address: From<<T as Config>::AccountId>,
+		u32: From<<T as Config>::BlockNumber>,
 	{
 		let relay_ws_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.relay_ws_client) };
 		let para_ws_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_ws_client) };
@@ -605,6 +606,4 @@ impl<T: Config + Send + Sync> ParachainClient<T>
 			return Ok((AnyClientState::Grandpa(client_state), consensus_state))
 		}
 	}
-
 }
-

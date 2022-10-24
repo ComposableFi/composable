@@ -1,8 +1,7 @@
 use crate::StreamExt;
 use futures::future;
-use hyperspace_primitives::TestProvider;
+use hyperspace_primitives::{utils::timeout_future, TestProvider};
 use ibc::events::IbcEvent;
-use hyperspace_primitives::utils::timeout_future;
 
 pub fn parse_amount(amount: String) -> u128 {
 	str::parse::<u128>(&amount).expect("Failed to parse as u128")

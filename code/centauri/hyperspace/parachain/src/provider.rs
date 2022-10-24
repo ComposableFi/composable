@@ -48,9 +48,9 @@ use pallet_ibc::{light_clients::HostFunctionsManager, HostConsensusProof};
 use finality_grandpa::BlockNumberOps;
 use futures::Stream;
 use ibc_proto::{google::protobuf::Any, ibc::core::connection::v1::IdentifiedConnection};
+use pallet_ibc::light_clients::{AnyClientState, AnyConsensusState};
 use sp_runtime::traits::One;
 use std::{collections::BTreeMap, pin::Pin, str::FromStr, time::Duration};
-use pallet_ibc::light_clients::{AnyClientState, AnyConsensusState};
 
 #[async_trait::async_trait]
 impl<T: Config + Send + Sync> IbcProvider for ParachainClient<T>
@@ -113,8 +113,10 @@ where
 					.events
 					.into_iter()
 					.filter_map(|ev| {
-							Some(IbcEvent::try_from(RawIbcEvent::from(ev))
-								.map_err(|e| subxt::Error::Other(e.to_string())))
+						Some(
+							IbcEvent::try_from(RawIbcEvent::from(ev))
+								.map_err(|e| subxt::Error::Other(e.to_string())),
+						)
 					})
 					.collect::<Result<Vec<_>, _>>();
 
@@ -592,28 +594,34 @@ where
 		latest_height - latest_client_height_on_counterparty >= refresh_period
 	}
 
-	async fn construct_client_state(&self) -> Result<(AnyClientState, AnyConsensusState), Self::Error> {
+	async fn initialize_client_state(
+		&self,
+	) -> Result<(AnyClientState, AnyConsensusState), Self::Error> {
 		match self.finality_protocol {
 			FinalityProtocol::Grandpa => {
 				let res = self.construct_grandpa_client_state().await?;
 				Ok(res)
-			}
+			},
 			FinalityProtocol::Beefy => {
 				let res = self.construct_beefy_client_state().await?;
 				Ok(res)
-			}
+			},
 		}
 	}
 
-	async fn query_client_id_from_tx_hash(&self, tx_hash: H256, block_hash: Option<H256>) -> Result<ClientId, Self::Error> {
+	async fn query_client_id_from_tx_hash(
+		&self,
+		tx_hash: H256,
+		block_hash: Option<H256>,
+	) -> Result<ClientId, Self::Error> {
 		// Query newly created client Id
 		let identified_client_state = IbcApiClient::<u32, H256>::query_newly_created_client(
 			&*self.para_ws_client,
 			block_hash.expect("Block hash should be available"),
 			tx_hash,
 		)
-			.await
-			.map_err(|e| Error::from(format!("Rpc Error {:?}", e)))?;
+		.await
+		.map_err(|e| Error::from(format!("Rpc Error {:?}", e)))?;
 
 		let client_id = ClientId::from_str(&identified_client_state.client_id)
 			.expect("Should have a valid client id");

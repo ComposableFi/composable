@@ -3,7 +3,6 @@
 use std::{pin::Pin, str::FromStr, time::Duration};
 
 use futures::Stream;
-use subxt::ext::sp_core;
 use ibc_proto::{
 	google::protobuf::Any,
 	ibc::core::{
@@ -16,6 +15,7 @@ use ibc_proto::{
 		connection::v1::QueryConnectionResponse,
 	},
 };
+use subxt::ext::sp_core;
 
 use crate::error::Error;
 #[cfg(feature = "testing")]
@@ -298,11 +298,17 @@ pub trait IbcProvider {
 		latest_client_height_on_counterparty: u64,
 	) -> bool;
 
-	/// Should construct and return a valid client and consensus state for this chain
-	async fn construct_client_state(&self) -> Result<(AnyClientState, AnyConsensusState), Self::Error>;
+	/// This should return a subjectively chosen client and consensus state for this chain.
+	async fn initialize_client_state(
+		&self,
+	) -> Result<(AnyClientState, AnyConsensusState), Self::Error>;
 
 	/// Should find client id that was created in this transaction
-	async fn query_client_id_from_tx_hash(&self, tx_hash: sp_core::H256, block_hash: Option<sp_core::H256>) -> Result<ClientId, Self::Error>;
+	async fn query_client_id_from_tx_hash(
+		&self,
+		tx_hash: sp_core::H256,
+		block_hash: Option<sp_core::H256>,
+	) -> Result<ClientId, Self::Error>;
 }
 
 /// Provides an interface that allows us run the hyperspace-testsuite
@@ -354,8 +360,12 @@ pub trait Chain: IbcProvider + KeyProvider + Send + Sync {
 
 	/// This should be used to submit new messages [`Vec<Any>`] from a counterparty chain to this
 	/// chain.
-	/// Should return a tuple of transaction hash and optionally block hash where the transaction was executed
-	async fn submit(&self, messages: Vec<Any>) -> Result<(sp_core::H256, Option<sp_core::H256>), Self::Error>;
+	/// Should return a tuple of transaction hash and optionally block hash where the transaction
+	/// was executed
+	async fn submit(
+		&self,
+		messages: Vec<Any>,
+	) -> Result<(sp_core::H256, Option<sp_core::H256>), Self::Error>;
 }
 
 /// Returns undelivered packet sequences that have been sent out from

@@ -1,6 +1,7 @@
 #![allow(clippy::all)]
 
-use crate::utils::{assert_timeout_packet, parse_amount, timeout_future};
+use crate::utils::{assert_timeout_packet, parse_amount};
+use hyperspace_primitives::utils::timeout_future;
 use futures::{future, StreamExt};
 use hyperspace::send_packet_relay::set_relay_status;
 use hyperspace_primitives::TestProvider;

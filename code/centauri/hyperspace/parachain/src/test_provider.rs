@@ -75,7 +75,7 @@ where
 		// Query newly created client Id
 		let identified_client_state = IbcApiClient::<u32, H256>::query_newly_created_client(
 			&*self.para_ws_client,
-			block_hash.unwrap().into(),
+			block_hash.into(),
 			ext_hash.into(),
 		)
 		.await

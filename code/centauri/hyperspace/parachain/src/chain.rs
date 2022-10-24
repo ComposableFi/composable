@@ -166,7 +166,10 @@ where
 		}
 	}
 
-	async fn submit(&self, messages: Vec<Any>) -> Result<(sp_core::H256, Option<sp_core::H256>), Error> {
+	async fn submit(
+		&self,
+		messages: Vec<Any>,
+	) -> Result<(sp_core::H256, Option<sp_core::H256>), Error> {
 		let messages = messages
 			.into_iter()
 			.map(|msg| RawAny { type_url: msg.type_url.as_bytes().to_vec(), value: msg.value })
