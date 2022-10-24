@@ -1,12 +1,12 @@
+import { Assets, getAssetById } from "@/defi/polkadot/Assets";
+import { APP_NAME } from "@/defi/polkadot/constants";
 import { ApiPromise } from "@polkadot/api";
 import {
   Executor,
   getSigner,
   ParachainId,
-  RelayChainId
+  RelayChainId,
 } from "substrate-react";
-import { APP_NAME } from "@/defi/polkadot/constants";
-import { Assets, getAssetById } from "@/defi/polkadot/Assets";
 
 export type SetPaymentAssetArgs = {
   api: ApiPromise;
@@ -25,13 +25,13 @@ export async function setPaymentAsset({
   executor,
   onSuccess,
   onError,
-  onReady
+  onReady,
 }: SetPaymentAssetArgs) {
   const signer = await getSigner(APP_NAME, walletAddress);
   return executor.execute(
     api.tx.assetTxPayment.setPaymentAsset(
       api.createType("AccountId32", walletAddress),
-      api.createType("u128", assetId)
+      Number(assetId) === 1 ? null : api.createType("u128", assetId)
     ),
     walletAddress,
     api,
@@ -51,7 +51,7 @@ export type GetPaymentAssetArgs = {
 export async function getPaymentAsset({
   api,
   walletAddress,
-  network
+  network,
 }: GetPaymentAssetArgs) {
   if ("assetTxPayment" in api.query) {
     const result: any = await api.query.assetTxPayment.paymentAssets(

@@ -1,28 +1,39 @@
 import { SettingsModal } from "@/components/Organisms/Settings/SettingsModal";
-import * as React from "react";
-import { useState } from "react";
-import { Settings } from "@mui/icons-material";
-import { Button } from "@mui/material";
 import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
+import { AssetId } from "@/defi/polkadot/types";
+import * as React from "react";
+import { useRef, useState } from "react";
+import { GasFeeDropdown } from "../GasFeeDropdown";
 
 export const GlobalSettings = () => {
   const [settingsModal, setSettingsModal] = useState<boolean>(false);
   const account = useSelectedAccount();
   const picassoProvider = usePicassoProvider();
+  const targetFeeItem = useRef<AssetId>("pica");
+
+  const setTargetFeeItem = (feeItem: AssetId) => {
+    targetFeeItem.current = feeItem;
+  };
 
   const toggleSettingsModal = () => {
-    setSettingsModal(s => !s);
+    setSettingsModal((s) => !s);
   };
+
   if (picassoProvider.apiStatus !== "connected" && !account) {
     return null;
   }
 
   return (
     <>
-      <Button variant="outlined" onClick={toggleSettingsModal}>
-        <Settings />
-      </Button>
-      <SettingsModal state={settingsModal} onClose={toggleSettingsModal} />
+      <GasFeeDropdown
+        toggleModal={toggleSettingsModal}
+        setTargetFeeItem={setTargetFeeItem}
+      />
+      <SettingsModal
+        state={settingsModal}
+        onClose={toggleSettingsModal}
+        targetFeeItem={targetFeeItem.current}
+      />
     </>
   );
 };
