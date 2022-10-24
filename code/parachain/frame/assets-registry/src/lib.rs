@@ -30,7 +30,9 @@ pub mod pallet {
 	pub use crate::weights::WeightInfo;
 	use codec::FullCodec;
 	use composable_traits::{
-		currency::{BalanceLike, CurrencyFactory, Exponent, RangeId},
+		currency::{
+			AssetExistentialDepositInspect, BalanceLike, CurrencyFactory, Exponent, RangeId,
+		},
 		defi::Ratio,
 		xcm::assets::{
 			AssetRatioInspect, ForeignMetadata, RemoteAssetRegistryInspect,
@@ -80,7 +82,8 @@ pub mod pallet {
 		type ParachainOrGovernanceOrigin: EnsureOrigin<Self::Origin>;
 		type WeightInfo: WeightInfo;
 		type Balance: BalanceLike;
-		type CurrencyFactory: CurrencyFactory<AssetId = Self::LocalAssetId, Balance = Self::Balance>;
+		type CurrencyFactory: CurrencyFactory<AssetId = Self::LocalAssetId, Balance = Self::Balance>
+			+ AssetExistentialDepositInspect<AssetId = Self::LocalAssetId, Balance = Self::Balance>;
 	}
 
 	#[pallet::pallet]
@@ -315,6 +318,15 @@ pub mod pallet {
 		type AssetId = T::LocalAssetId;
 		fn get_ratio(asset_id: Self::AssetId) -> Option<composable_traits::defi::Ratio> {
 			AssetRatio::<T>::get(asset_id)
+		}
+	}
+
+	impl<T: Config> AssetExistentialDepositInspect for Pallet<T> {
+		type AssetId = T::LocalAssetId;
+		type Balance = T::Balance;
+
+		fn existential_deposit(asset_id: Self::AssetId) -> Result<Self::Balance, DispatchError> {
+			T::CurrencyFactory::existential_deposit(asset_id)
 		}
 	}
 }

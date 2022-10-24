@@ -55,7 +55,10 @@ pub mod pallet {
 	};
 	use composable_traits::{
 		assets::BasicAssetMetadata,
-		currency::{AssetIdLike, BalanceLike, CurrencyFactory, Exponent, LocalAssets},
+		currency::{
+			AssetExistentialDepositInspect, AssetIdLike, BalanceLike, CurrencyFactory, Exponent,
+			LocalAssets,
+		},
 	};
 	use frame_support::{pallet_prelude::*, traits::EnsureOrigin, transactional, PalletId};
 	use frame_system::pallet_prelude::*;
@@ -195,6 +198,15 @@ pub mod pallet {
 		fn unique_asset_id_to_protocol_asset_id(unique_asset_id: Self::AssetId) -> u32 {
 			u32::try_from(unique_asset_id.into() % u32::MAX as u128)
 				.expect("u128 is made of u32 chunks")
+		}
+	}
+
+	impl<T: Config> AssetExistentialDepositInspect for Pallet<T> {
+		type AssetId = T::AssetId;
+		type Balance = T::Balance;
+
+		fn existential_deposit(asset_id: Self::AssetId) -> Result<Self::Balance, DispatchError> {
+			AssetEd::<T>::get(asset_id).ok_or_else(|| Error::<T>::AssetNotFound.into())
 		}
 	}
 

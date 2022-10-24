@@ -18,6 +18,8 @@ pub mod xcmp;
 use core::marker::PhantomData;
 
 use composable_support::math::safe::SafeDiv;
+#[cfg(not(feature = "runtime-benchmarks"))]
+use composable_traits::currency::AssetExistentialDepositInspect;
 use composable_traits::{defi::Ratio, oracle::MinimalOracle, xcm::assets::AssetRatioInspect};
 pub use constants::*;
 use frame_support::parameter_types;
@@ -217,21 +219,24 @@ pub fn multi_existential_deposits<AssetsRegistry>(_currency_id: &CurrencyId) -> 
 	Balance::zero()
 }
 
+/// Given a `currency_id`, returns the existential deposit of a MultiAsset.
+/// Returns `1_000_000` as the existential deposit if unable to get an existential deposit for the
+/// given `currency_id`.
 #[cfg(not(feature = "runtime-benchmarks"))]
-pub fn multi_existential_deposits<AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>>(
+pub fn multi_existential_deposits<
+	AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>
+		+ AssetExistentialDepositInspect<AssetId = CurrencyId, Balance = Balance>,
+>(
 	currency_id: &CurrencyId,
 ) -> Balance {
-	PriceConverter::<AssetsRegistry>::get_price_inverse(
-		*currency_id,
-		NativeExistentialDeposit::get(),
-	)
-	// TODO:
-	// 1. ask approved DEX pair for price  (is it enough performance? or should we allow pay in
-	// ED PICA for other asset account?)
-	// 2. ask CurrencyFactory
-	// 3. use hardcoded values
-	// 4. else 1_000_000_u128
-	.unwrap_or(1_000_000_u128)
+	if let Ok(existential_deposit) = AssetsRegistry::existential_deposit(*currency_id)
+		.and_then(|ed| PriceConverter::<AssetsRegistry>::get_price_inverse(*currency_id, ed))
+	{
+		existential_deposit
+	} else {
+		// TODO: Add hard-coded existential deposit values
+		1_000_000
+	}
 }
 
 parameter_types! {
