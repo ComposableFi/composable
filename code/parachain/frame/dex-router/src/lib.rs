@@ -482,7 +482,10 @@ pub mod pallet {
 			};
 			// Iterate and swap until we obtain the required asset in the `min_receive.asset_id`
 			let mut in_asset_itr = in_asset;
-			let mut swap_result: SwapResult<T::AssetId, T::Balance> = Default::default();
+			let mut swap_result: SwapResult<T::AssetId, T::Balance> = SwapResult {
+				value: in_asset_itr,
+				fee: AssetAmount { asset_id: in_asset_itr.asset_id, amount: T::Balance::zero() },
+			};
 			for pool_id in route_iter {
 				let mut assets = T::Pablo::assets(*pool_id)?;
 				// We only allow dual asset pools in routes, therefore taking the remaining asset
@@ -532,8 +535,11 @@ pub mod pallet {
 				forward_iter = route.iter();
 				&mut forward_iter
 			};
-			let mut in_asset: SwapResult<T::AssetId, T::Balance> = Default::default();
 			let mut in_asset_itr = out_asset;
+			let mut in_asset: SwapResult<T::AssetId, T::Balance> = SwapResult {
+				value: in_asset_itr,
+				fee: AssetAmount { asset_id: in_asset_itr.asset_id, amount: T::Balance::zero() },
+			};
 			for pool_id in route_iter {
 				let assets = T::Pablo::assets(*pool_id)?;
 				// We only allow dual asset pools in routes, therefore taking the remaining asset
