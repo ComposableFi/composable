@@ -1,16 +1,16 @@
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
+import {
+  subscribeKaruraBalance,
+  subscribePicassoBalanceByAssetId,
+} from "@/defi/polkadot/pallets/Balance";
 import { SubstrateNetworkId } from "@/defi/polkadot/types";
-import { callbackGate, getExistentialDeposit, toTokenUnitsBN } from "shared";
-
-import { useCallback, useEffect } from "react";
 
 import { useStore } from "@/stores/root";
 import { ApiPromise } from "@polkadot/api";
-import {
-  fetchKaruraBalanceByAssetId,
-  subscribePicassoBalanceByAssetId
-} from "@/defi/polkadot/pallets/Balance";
 import BigNumber from "bignumber.js";
+
+import { useCallback, useEffect } from "react";
+import { callbackGate, getExistentialDeposit, toTokenUnitsBN } from "shared";
 import { useDotSamaContext, useEagerConnect } from "substrate-react";
 
 export async function subscribeNativeBalance(
@@ -27,11 +27,11 @@ export async function subscribeNativeBalance(
   // create AccountId32 type byte array
   // and retrieve balances
   const accountId = api.createType("AccountId32", account);
-  await api.query.system.account(accountId, result => {
+  await api.query.system.account(accountId, (result) => {
     const blObject: any = result.toJSON();
 
     const {
-      data: { free }
+      data: { free },
     } = blObject;
 
     const { decimals } = SUBSTRATE_NETWORKS[chainId as SubstrateNetworkId];
@@ -42,7 +42,7 @@ export async function subscribeNativeBalance(
     updateBalance({
       substrateNetworkId: chainId as SubstrateNetworkId,
       balance: bnBalance.toString(),
-      existentialDeposit
+      existentialDeposit,
     });
   });
 }
@@ -65,7 +65,7 @@ export async function updateBalances(
   const blObject: any = queryResult.toJSON();
 
   const {
-    data: { free }
+    data: { free },
   } = blObject;
 
   const { decimals } = SUBSTRATE_NETWORKS[chainId as SubstrateNetworkId];
@@ -76,7 +76,7 @@ export async function updateBalances(
   updateBalance({
     substrateNetworkId: chainId as SubstrateNetworkId,
     balance: bnBalance.toString(),
-    existentialDeposit
+    existentialDeposit,
   });
 }
 
@@ -99,22 +99,22 @@ const PolkadotBalancesUpdater = () => {
     extensionStatus,
     selectedAccount,
     parachainProviders,
-    relaychainProviders
+    relaychainProviders,
   } = useDotSamaContext();
 
   const picassoBalanceSubscriber = useCallback(
     async (chain, asset, chainId) => {
-      callbackGate(
+      return callbackGate(
         async (chain, asset, chainId, account) => {
           await subscribePicassoBalanceByAssetId(
             chain.parachainApi!,
             account.address,
             String(asset.meta.supportedNetwork[chainId as SubstrateNetworkId]),
-            balance => {
+            (balance) => {
               updateAssetBalance({
                 substrateNetworkId: chainId as SubstrateNetworkId,
                 assetId: asset.meta.assetId,
-                balance
+                balance,
               });
             }
           );
@@ -139,7 +139,7 @@ const PolkadotBalancesUpdater = () => {
               chain.parachainApi,
               chainId,
               updateBalance
-            ).catch(err => {
+            ).catch((err) => {
               console.error(err);
             });
           }
@@ -153,34 +153,38 @@ const PolkadotBalancesUpdater = () => {
 
   // Subscribe non-native token balances
   useEffect(() => {
+    let unsubList: any[];
+    unsubList = [];
     if (extensionStatus !== "connected" || selectedAccount === -1) {
       return () => {};
     }
 
     Object.entries(parachainProviders).forEach(([chainId, chain]) =>
-      callbackGate(api => {
+      callbackGate((api) => {
         Object.values(assets[chainId as SubstrateNetworkId].assets).forEach(
-          asset => {
+          (asset) => {
             if (!asset.meta.supportedNetwork[chainId as SubstrateNetworkId]) {
               return;
             }
             switch (chainId) {
               case "picasso":
-                picassoBalanceSubscriber(chain, asset, chainId);
+                unsubList.push(picassoBalanceSubscriber(chain, asset, chainId));
                 break;
               case "karura":
                 if (chain.accounts[selectedAccount]) {
-                  fetchKaruraBalanceByAssetId(
-                    api,
-                    chain.accounts[selectedAccount].address,
-                    String(asset.meta.symbol)
-                  ).then(balance => {
-                    updateAssetBalance({
-                      substrateNetworkId: chainId as SubstrateNetworkId,
-                      assetId: asset.meta.assetId,
-                      balance
-                    });
-                  });
+                  unsubList.push(
+                    subscribeKaruraBalance(
+                      api,
+                      chain.accounts[selectedAccount].address,
+                      String(asset.meta.symbol),
+                      (balance: BigNumber) =>
+                        updateAssetBalance({
+                          substrateNetworkId: chainId as SubstrateNetworkId,
+                          assetId: asset.meta.assetId,
+                          balance,
+                        })
+                    )
+                  );
                 }
                 break;
               default:
@@ -188,6 +192,12 @@ const PolkadotBalancesUpdater = () => {
             }
           }
         );
+
+        return function cleanUp() {
+          unsubList.forEach((unsub) => {
+            unsub.then((call: any) => call?.());
+          });
+        };
       }, chain.parachainApi)
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
