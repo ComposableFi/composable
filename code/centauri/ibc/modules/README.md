@@ -38,8 +38,10 @@ The client module hosts the trait definitions, messages and handlers for light c
 ### On chain Light clients
 
 The Ibc protocol is designed to work on top of light clients, light clients are the foundation on which the protocol is built.  
-A light client in simple terms allows a resource constrained environment to follow the consensus of a blockchain, it is able to verify statements concerning the state of the blockchain using information extracted from a block header.  
-For this to be a possibility, the blockchain whose light client is being constructed  is required to have a finality protocol(a finality protocol is a means by which a blockchain expresses that state transitions within a block are safe and have a very low probability of been reverted),   
+A light client in simple terms allows a resource constrained environment to follow the consensus of a blockchain,  
+it is able to verify statements concerning the state of the blockchain using information extracted from a block header.  
+For this to be a possibility, the blockchain whose light client is being constructed  is required to have a finality protocol  
+(a finality protocol is a means by which a blockchain expresses that state transitions within a block are safe and have a very low probability of been reverted),   
 the light client needs to be continuously updated with a stream of finalized block headers, verifying correctness of the headers and extracting information that can be used to verify state proofs.
 
 ### Defining a light client
@@ -142,19 +144,23 @@ The `Router` trait defines methods that determine how packets are routed to thei
 **ICS26 Context**
 This trait defines how the router is accessed by the Context object
 **Module Callbacks**
-Ibc applications are sub protocols built on top of the core ibc protocol, ibc applications are required to implement the `Module` trait, so  
-they can execute callbacks for processed messages. The callbacks are the means through which the router is able to deliver packets to the right module.
+Ibc applications are sub protocols built on top of the core ibc protocol,  
+ibc applications are required to implement the `Module` trait, so they can execute callbacks for processed messages.  
+The callbacks are the means through which the router is able to deliver packets to the right module.
 
 **Message Handling**
-`deliver` acts as the topmost message handler, it accepts an ibc message of type protobuf `Any` alongside a mutable reference to the Context.  
+`deliver` acts as the topmost message handler, it accepts an ibc message of type protobuf `Any` alongside a mutable  
+reference to the Context.  
 The message is decoded and dispatched to the appropriate message handler using a [`dispatch`](/code/centauri/ibc/modules/src/core/ics26_routing/handler.rs#L70) function.  
-Message handlers take a read only context alongside the message as parameters, the message handler is expected to return a result type depending on the message category being handled.  
+Message handlers take a read only context alongside the message as parameters,  
+the message handler is expected to return a result type depending on the message category being handled.  
 Client message handlers return a [`ClientResult`](/code/centauri/ibc/modules/src/core/ics02_client/handler.rs#l17).  
 Connection message handlers return a [`ConnectionResult`](/code/centauri/ibc/modules/src/core/ics03_connection/handler.rs#32).  
 Channel message handlers return a [`ChannelResult`](/code/centauri/ibc/modules/src/core/ics04_channel/handler.rs#L46).  
 Packet message handlers return a [`PacketResult`](/code/centauri/ibc/modules/src/core/ics04_channel/packet.rs#L35).  
 
-The dispatcher takes the result returned from the handler and writes the state changes contained within to storage using its mutable access to the Context.
+The dispatcher takes the result returned from the handler and writes the state changes  
+contained within to storage using its mutable access to the Context.
 
 ### Applications
 
@@ -164,10 +170,12 @@ These applications essentially define how packet data is serialized, deserialize
 #### ICS020 Fungible Token transfer
 
 ICS20 is the protocol that defines a correct way of transferring fungible tokens across chains via ibc.  
-It specifies the data serialization and deserialization standard, the token denomination standard and all the logic required to maintain correctness across multiple chains.
+It specifies the data serialization and deserialization standard, the token denomination standard  
+and all the logic required to maintain correctness across multiple chains.
 
 **Denominations**
-Tokens transferred across chains are given a denomination that combines the port and channel id along with the token's base denomination into the ibc denomination for that token.  
+Tokens transferred across chains are given a denomination that combines the port  
+and channel id along with the token's base denomination into the ibc denomination for that token.  
 This denomination format makes it possible for the token to be traced back to its source even when it has hopped through multiple chains.  
 
 This module defines the ICS20 protocol, with a couple traits `ICS20Reader`, `ICS20Keeper` and `BankKeepr` trait.  
@@ -178,11 +186,13 @@ These traits define the methods that are required to comply with ICS20, The modu
 This crate diverges from the [ICS specification](https://github.com/cosmos/ibc) in a number of ways. See below for more details.
 
 ### Module system: no support for untrusted modules
-ICS 24 (Host Requirements) gives the [following requirement](https://github.com/cosmos/ibc/blob/master/spec/core/ics-024-host-requirements/README.md#module-system) about the module system that the host state machine must support:
+ICS 24 (Host Requirements) gives the [following requirement](https://github.com/cosmos/ibc/blob/master/spec/core/ics-024-host-requirements/README.md#module-system)  
+about the module system that the host state machine must support:
 
 > The host state machine must support a module system, whereby self-contained, potentially mutually distrusted packages of code can safely execute on the same ledger [...].
 
-**This crate currently does not support mutually distrusted packages**. That is, modules on the host state machine are assumed to be fully trusted. In practice, this means that every module has either been written by the host state machine developers, or fully vetted by them.
+**This crate currently does not support mutually distrusted packages**.  
+That is, modules on the host state machine are assumed to be fully trusted. In practice, this means that every module has either been written by the host state machine developers, or fully vetted by them.
 
 ### Port system: No object capability system
 ICS 5 (Port Allocation) requires the host system to support either object-capability reference or source authentication for modules.
@@ -190,7 +200,8 @@ ICS 5 (Port Allocation) requires the host system to support either object-capabi
 > In the former object-capability case, the IBC handler must have the ability to generate object-capabilities, unique, opaque references which can be passed to a module and will not be duplicable by other modules. [...]
 > In the latter source authentication case, the IBC handler must have the ability to securely read the source identifier of the calling module, a unique string for each module in the host state machine, which cannot be altered by the module or faked by another module.
 
-**This crate currently requires neither of the host system**. Since modules are assumed to be trusted, there is no need for this object capability system that protects resources for potentially malicious modules.
+**This crate currently requires neither of the host system**. Since modules are assumed to be trusted,  
+there is no need for this object capability system that protects resources for potentially malicious modules.
 
 For more background on this, see [this issue](https://github.com/informalsystems/ibc-rs/issues/2159).
 
@@ -207,7 +218,8 @@ Licensed under the Apache License, Version 2.0 (the "License"); you may not use 
 
     https://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 
 [//]: # (badges)
 
