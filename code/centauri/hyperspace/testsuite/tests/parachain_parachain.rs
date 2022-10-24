@@ -11,6 +11,7 @@ use ibc::{core::ics02_client::msgs::create_client::MsgCreateAnyClient, tx_msg::M
 use parachain::{finality_protocol::FinalityProtocol, ParachainClient, ParachainClientConfig};
 use subxt::tx::SubstrateExtrinsicParams;
 
+use hyperspace_primitives::utils::create_clients;
 use tendermint_proto::Protobuf;
 
 #[derive(Debug, Clone)]
@@ -124,52 +125,9 @@ async fn setup_clients() -> (ParachainClient<DefaultConfig>, ParachainClient<Def
 	res_1.unwrap();
 	res_2.unwrap();
 
-	{
-		// Get initial beefy state
-		let (client_state, consensus_state) =
-			chain_b.construct_grandpa_client_state().await.unwrap();
-
-		// Create client message is the same for both chains
-		let msg_create_client = MsgCreateAnyClient::<LocalClientTypes> {
-			client_state: client_state.clone(),
-			consensus_state,
-			signer: chain_a.account_id(),
-		};
-
-		let msg = pallet_ibc::Any {
-			type_url: msg_create_client.type_url().as_bytes().to_vec(),
-			value: msg_create_client.encode_vec(),
-		};
-		let client_id_b_on_a = chain_a
-			.submit_create_client_msg(msg.clone())
-			.await
-			.expect("Client was not created successfully");
-		chain_b.set_client_id(client_id_b_on_a.clone());
-	};
-
-	{
-		// Get initial beefy state
-		let (client_state, consensus_state) =
-			chain_a.construct_grandpa_client_state().await.unwrap();
-
-		// Create client message is the same for both chains
-		let msg_create_client = MsgCreateAnyClient::<LocalClientTypes> {
-			client_state: client_state.clone(),
-			consensus_state,
-			signer: chain_a.account_id(),
-		};
-
-		let msg = pallet_ibc::Any {
-			type_url: msg_create_client.type_url().as_bytes().to_vec(),
-			value: msg_create_client.encode_vec(),
-		};
-		let client_id_a_on_b = chain_b
-			.submit_create_client_msg(msg)
-			.await
-			.expect("Client was not created successfully");
-		chain_a.set_client_id(client_id_a_on_b.clone());
-	};
-
+	let (client_a, client_b) = create_clients(&chain_a, &chain_b).await.unwrap();
+	chain_a.set_client_id(client_a);
+	chain_b.set_client_id(client_b);
 	(chain_a, chain_b)
 }
 

@@ -5119,6 +5119,7 @@ dependencies = [
  "ibc",
  "ibc-proto",
  "ibc-rpc",
+ "log 0.4.17",
  "pallet-ibc",
  "parity-scale-codec",
  "subxt 0.24.0",

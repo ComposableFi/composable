@@ -1,30 +1,18 @@
 use crate::{
-	parachain::api, polkadot, signer::ExtrinsicSigner, utils::unsafe_cast_to_jsonrpsee_client,
-	Error, GrandpaClientState, ParachainClient,
+	parachain::api, signer::ExtrinsicSigner, utils::unsafe_cast_to_jsonrpsee_client, Error,
+	ParachainClient,
 };
-use beefy_prover::Prover;
-use codec::Decode;
 use common::AccountId;
 use finality_grandpa::BlockNumberOps;
 use futures::{Stream, StreamExt};
 use grandpa_light_client_primitives::{FinalityProof, ParachainHeaderProofs};
-use grandpa_prover::GrandpaProver;
 use ibc::{
 	applications::transfer::{msgs::transfer::MsgTransfer, PrefixedCoin},
 	core::ics24_host::identifier::{ChannelId, ClientId, PortId},
-	timestamp::Timestamp,
 };
 use ibc_rpc::IbcApiClient;
-use ics10_grandpa::consensus_state::ConsensusState as GrandpaConsensusState;
-use ics11_beefy::{
-	client_state::ClientState as BeefyClientState,
-	consensus_state::ConsensusState as BeefyConsensusState,
-};
 use jsonrpsee::core::client::SubscriptionClientT;
-use pallet_ibc::{
-	light_clients::{AnyClientState, AnyConsensusState, HostFunctionsManager},
-	MultiAddress, Timeout, TransferParams,
-};
+use pallet_ibc::{MultiAddress, Timeout, TransferParams};
 use primitives::{KeyProvider, TestProvider};
 use sp_core::{
 	crypto::{AccountId32, Ss58Codec},
@@ -35,7 +23,7 @@ use sp_runtime::{
 	traits::{Header as HeaderT, IdentifyAccount, One, Verify},
 	MultiSignature, MultiSigner,
 };
-use std::{collections::BTreeMap, fmt::Display, pin::Pin, str::FromStr, time::Duration};
+use std::{collections::BTreeMap, fmt::Display, pin::Pin, str::FromStr};
 use subxt::{
 	tx::{AssetTip, BaseExtrinsicParamsBuilder, ExtrinsicParams, SubstrateExtrinsicParamsBuilder},
 	Config,

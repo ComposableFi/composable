@@ -12,7 +12,6 @@ use ibc::{
 use ibc_proto::google::protobuf::Any;
 use prometheus::{Histogram, Registry};
 use std::{
-	cell::Cell,
 	collections::HashMap,
 	ops::DerefMut,
 	sync::{Arc, Mutex},

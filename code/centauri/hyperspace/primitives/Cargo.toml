@@ -13,6 +13,7 @@ hex = "0.4.3"
 codec = { package = "parity-scale-codec", version = "3.0.0", features = ["derive"] }
 tokio = { version = "1.19.2", features = ["macros", "sync", "time"] }
 thiserror = "1.0.31"
+log = "0.4.17"
 
 # substrate
 subxt = { git = "https://github.com/paritytech/subxt", rev = "51179a8b72472d0b43c91cda75a1ddc3fddb9555" }

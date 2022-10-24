@@ -28,7 +28,11 @@ use ibc::{
 	tx_msg::Msg,
 };
 use ibc_proto::google::protobuf::Any;
-use primitives::{mock::LocalClientTypes, utils::timeout_future, IbcProvider, KeyProvider};
+use primitives::{
+	mock::LocalClientTypes,
+	utils::{create_channel, create_clients, create_connection, timeout_future},
+	IbcProvider, KeyProvider,
+};
 
 #[derive(Debug, Parser)]
 pub struct Cli {
@@ -104,32 +108,8 @@ impl Cmd {
 		let any_chain_a = config.chain_a.into_client().await?;
 		let any_chain_b = config.chain_b.into_client().await?;
 
-		let (client_state_a, cs_state_a) = any_chain_a.initialize_client_state().await?;
-		let (client_state_b, cs_state_b) = any_chain_b.initialize_client_state().await?;
-
-		let msg = MsgCreateAnyClient::<LocalClientTypes> {
-			client_state: client_state_b,
-			consensus_state: cs_state_b,
-			signer: any_chain_a.account_id(),
-		};
-
-		let msg = Any { type_url: msg.type_url(), value: msg.encode_vec() };
-
-		let (tx_hash, block_hash) = any_chain_a.submit(vec![msg]).await?;
-		let client_id_b_on_a =
-			any_chain_a.query_client_id_from_tx_hash(tx_hash, block_hash).await?;
-
-		let msg = MsgCreateAnyClient::<LocalClientTypes> {
-			client_state: client_state_a,
-			consensus_state: cs_state_a,
-			signer: any_chain_b.account_id(),
-		};
-
-		let msg = Any { type_url: msg.type_url(), value: msg.encode_vec() };
-
-		let (tx_hash, block_hash) = any_chain_b.submit(vec![msg]).await?;
-		let client_id_a_on_b =
-			any_chain_b.query_client_id_from_tx_hash(tx_hash, block_hash).await?;
+		let (client_id_a_on_b, client_id_b_on_a) =
+			create_clients(&any_chain_a, &any_chain_b).await?;
 		log::info!(
 			"ClientId for Chain {} on Chain {}: {}",
 			any_chain_b.name(),
@@ -164,46 +144,8 @@ impl Cmd {
 				.unwrap();
 		});
 
-		let msg = MsgConnectionOpenInit {
-			client_id: any_chain_a.client_id(),
-			counterparty: Counterparty::new(
-				any_chain_b.client_id(),
-				None,
-				any_chain_b.connection_prefix(),
-			),
-			version: Some(Default::default()),
-			delay_period: delay,
-			signer: any_chain_a.account_id(),
-		};
-
-		let msg = Any { type_url: msg.type_url(), value: msg.encode_vec() };
-
-		any_chain_a.submit(vec![msg]).await?;
-
-		log::info!(target: "hyperspace", "============= Wait till both chains have completed connection handshake =============");
-
-		// wait till both chains have completed connection handshake
-		let future = any_chain_b
-			.ibc_events()
-			.await
-			.skip_while(|ev| future::ready(!matches!(ev, IbcEvent::OpenConfirmConnection(_))))
-			.take(1)
-			.collect::<Vec<_>>();
-
-		let mut events = timeout_future(
-			future,
-			15 * 60,
-			format!("Didn't see OpenConfirmConnection on {}", any_chain_b.name()),
-		)
-		.await;
-
-		let (connection_id_b, connection_id_a) = match events.pop() {
-			Some(IbcEvent::OpenConfirmConnection(conn)) => (
-				conn.connection_id().unwrap().clone(),
-				conn.attributes().counterparty_connection_id.as_ref().unwrap().clone(),
-			),
-			got => panic!("Last event should be OpenConfirmConnection: {got:?}"),
-		};
+		let (connection_id_a, connection_id_b) =
+			create_connection(&any_chain_a, &any_chain_b, delay).await?;
 		log::info!("ConnectionId on Chain {}: {}", any_chain_a.name(), connection_id_a);
 		log::info!("ConnectionId on Chain {}: {}", any_chain_b.name(), connection_id_b);
 		handle.abort();
@@ -238,43 +180,16 @@ impl Cmd {
 				.unwrap();
 		});
 
-		let channel = ChannelEnd::new(
-			State::Init,
-			Order::from_str(order).expect("Expected one of 'ordered' or 'unordered'"),
-			channel::Counterparty::new(port_id.clone(), None),
-			vec![any_chain_a.connection_id()],
-			ics04_channel::Version::new(version),
-		);
-
-		// open the transfer channel
-		let msg = MsgChannelOpenInit::new(port_id.clone(), channel, any_chain_a.account_id());
-
-		let msg = Any { type_url: msg.type_url(), value: msg.encode_vec() };
-
-		any_chain_a.submit(vec![msg]).await?;
-
-		log::info!(target: "hyperspace", "============= Wait till both chains have completed channel handshake =============");
-
-		let future = any_chain_b
-			.ibc_events()
-			.await
-			.skip_while(|ev| future::ready(!matches!(ev, IbcEvent::OpenConfirmChannel(_))))
-			.take(1)
-			.collect::<Vec<_>>();
-
-		let mut events = timeout_future(
-			future,
-			15 * 60,
-			format!("Didn't see OpenConfirmChannel on {}", any_chain_b.name()),
+		let order = Order::from_str(order).expect("Expected one of 'ordered' or 'unordered'");
+		let (channel_id_a, channel_id_b) = create_channel(
+			&any_chain_a,
+			&any_chain_b,
+			any_chain_a.connection_id(),
+			port_id,
+			version,
+			order,
 		)
-		.await;
-
-		let (channel_id_a, channel_id_b) = match events.pop() {
-			Some(IbcEvent::OpenConfirmChannel(chan)) =>
-				(chan.counterparty_channel_id.unwrap(), chan.channel_id().unwrap().clone()),
-			got => panic!("Last event should be OpenConfirmChannel: {got:?}"),
-		};
-
+		.await?;
 		log::info!("ChannelId on Chain {}: {}", any_chain_a.name(), channel_id_a);
 		log::info!("ChannelId on Chain {}: {}", any_chain_b.name(), channel_id_b);
 		handle.abort();
