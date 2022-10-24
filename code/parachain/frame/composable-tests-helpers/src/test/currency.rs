@@ -2,7 +2,6 @@ pub type CurrencyId = u128;
 
 use core::marker::PhantomData;
 
-use sp_runtime::traits::Zero;
 use sp_std::ops::Deref;
 
 use codec::{Decode, Encode, MaxEncodedLen};
