@@ -99,7 +99,7 @@ pub struct ParachainHeadersWithFinalityProof<H: Header> {
 
 /// Host functions that allow the light client perform cryptographic operations in native.
 pub trait HostFunctions: light_client_common::HostFunctions + 'static {
-	/// TODO: docs
+	/// RelayChain header type.
 	type Header: Header;
 
 	/// Verify an ed25519 signature

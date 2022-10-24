@@ -146,8 +146,14 @@ where
 				)
 				.map_err(|_| Error::Custom("Could not decode second justification".to_string()))?;
 
-				// TODO: should we compare misbehavior.first_finality_proof.block
-				// and first_justification.commit.target_hash?
+				if first_proof.block != first_justification.commit.target_hash ||
+					second_proof.block != second_justification.commit.target_hash
+				{
+					Err(Error::Custom(
+						"First or second finality proof block hash does not match justification target hash"
+							.to_string(),
+					))?
+				}
 
 				let first_valid = first_justification
 					.verify::<H>(client_state.current_set_id, &client_state.current_authorities)
