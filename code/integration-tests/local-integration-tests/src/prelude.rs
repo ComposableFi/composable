@@ -5,7 +5,7 @@ pub use common::{topology, AccountId};
 pub use composable_traits::{currency::CurrencyFactory, xcm::assets::XcmAssetLocation};
 pub use cumulus_primitives_core::ParaId;
 pub use frame_support::{
-	assert_err, assert_err_ignore_postinfo, assert_ok, traits::fungible::Inspect, RuntimeDebug,
+	assert_err, assert_err_ignore_postinfo, assert_ok, log, traits::fungible::Inspect, RuntimeDebug,
 };
 pub use frame_system::{pallet_prelude::*, Config};
 use primitives::currency::CurrencyId;

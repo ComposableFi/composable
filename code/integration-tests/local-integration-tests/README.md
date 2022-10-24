@@ -27,3 +27,5 @@ In each reserver transfer test ensure sibling accounts, para accounts are set up
 Remove all usage of XTokens as these violate XCM guidlines and do not work well.
 
 Ensure that assets from pallets encoded like (parent = 0, pallet = 44, index = 1232132).
+
+Run attacks which try to spend parachain account, spend other person amount.

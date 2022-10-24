@@ -1,11 +1,3 @@
-// TODO:
-// Withdraw assets and trap it via polka xcm trap- if will fail always
-// let does_not_exists= u128::MAX-1;
-// (0, GeneralKey(does_not_exists.encode())),
-// Because Convert  will not find assets and execution will never reach to AssetsTrapped
-// cannot handle it because of ORML design
-//pallet_xcm::Event::AssetsTrapped
-
 use crate::{
 	assert_lt_by,
 	helpers::*,
@@ -29,7 +21,6 @@ use orml_traits::currency::MultiCurrency;
 use frame_support::{
 	assert_ok, log,
 	sp_runtime::{DispatchError, ModuleError},
-	WeakBoundedVec,
 };
 use primitives::currency::*;
 use sp_runtime::{assert_eq_error_rate, traits::AccountIdConversion, MultiAddress};
@@ -196,10 +187,7 @@ fn transfer_non_native_reserver_asset_from_this_to_sibling() {
 			CurrencyId::PBLO,
 			composable_traits::xcm::assets::XcmAssetLocation(MultiLocation::new(
 				1,
-				X2(
-					Parachain(THIS_PARA_ID),
-					GeneralKey(WeakBoundedVec::force_from(CurrencyId::PBLO.encode(), None))
-				)
+				X2(Parachain(THIS_PARA_ID), GeneralIndex(CurrencyId::PBLO.into()),)
 			)),
 			Some(Ratio::saturating_from_rational(1, 1)),
 			None,
@@ -218,33 +206,11 @@ fn transfer_non_native_reserver_asset_from_this_to_sibling() {
 					.into()
 			),
 			Box::new(Junction::AccountId32 { id: BOB, network: NetworkId::Any }.into().into()),
-			Box::new(
-				(
-					X1(GeneralKey(WeakBoundedVec::force_from(CurrencyId::PBLO.encode(), None)),),
-					3 * PICA
-				)
-					.into()
-			),
+			Box::new((X1(GeneralIndex(CurrencyId::PBLO.into()),), 3 * PICA).into()),
 			0,
 			WeightLimit::Limited(399_600_000_000),
 		));
 
-		// assert_ok!(XTokens::transfer(
-		// 	Origin::signed(ALICE.into()),
-		// 	CurrencyId::PBLO,
-		// 	3 * PICA,
-		// 	Box::new(
-		// 		MultiLocation::new(
-		// 			1,
-		// 			X2(
-		// 				Junction::Parachain(SIBLING_PARA_ID),
-		// 				Junction::AccountId32 { id: BOB, network: NetworkId::Any }
-		// 			)
-		// 		)
-		// 		.into()
-		// 	),
-		// 	399_600_000_000
-		// ));
 		let after = Assets::free_balance(CurrencyId::PBLO, &AccountId::from(ALICE));
 		assert_eq!(after, 7 * PICA,);
 	});
@@ -683,13 +649,7 @@ fn trap_assets_larger_than_ed_works() {
 				fees: assets,
 				weight_limit: Limited(CurrencyId::unit::<Balance>() as u64),
 			},
-			WithdrawAsset(
-				(
-					(0, GeneralKey(WeakBoundedVec::force_from(CurrencyId::PICA.encode(), None))),
-					native_asset_amount,
-				)
-					.into(),
-			),
+			WithdrawAsset(((0, GeneralIndex(CurrencyId::PICA.into())), native_asset_amount).into()),
 		];
 		assert_ok!(pallet_xcm::Pallet::<relay_runtime::Runtime>::send_xcm(
 			Here,
@@ -712,7 +672,6 @@ fn trap_assets_larger_than_ed_works() {
 	});
 }
 
-// from Acala
 #[test]
 fn trap_assets_lower_than_existential_deposit_works() {
 	simtest();
@@ -749,16 +708,7 @@ fn trap_assets_lower_than_existential_deposit_works() {
 			BuyExecution { fees: assets, weight_limit: Limited(other_non_native_amount as u64) },
 			WithdrawAsset(
 				(
-					(
-						Parent,
-						X2(
-							Parachain(THIS_PARA_ID),
-							GeneralKey(WeakBoundedVec::force_from(
-								this_native_asset.encode(),
-								None,
-							)),
-						),
-					),
+					(Parent, X2(Parachain(THIS_PARA_ID), GeneralIndex(this_native_asset.into()))),
 					some_native_amount,
 				)
 					.into(),
@@ -832,10 +782,7 @@ fn sibling_trap_assets_works() {
 			);
 		let remote = composable_traits::xcm::assets::XcmAssetLocation(MultiLocation::new(
 			1,
-			X2(
-				Parachain(SIBLING_PARA_ID),
-				GeneralKey(WeakBoundedVec::force_from(any_asset.encode(), None)),
-			),
+			X2(Parachain(SIBLING_PARA_ID), GeneralIndex(any_asset.into())),
 		));
 		assert_ok!(this_runtime::AssetsRegistry::update_asset(
 			RawOrigin::Root.into(),
@@ -850,13 +797,7 @@ fn sibling_trap_assets_works() {
 	// buy execution via native token, and try withdraw on this some amount
 	Sibling::execute_with(|| {
 		let assets: MultiAsset = (
-			(
-				Parent,
-				X2(
-					Parachain(THIS_PARA_ID),
-					GeneralKey(WeakBoundedVec::force_from(this_native_asset.encode(), None)),
-				),
-			),
+			(Parent, X2(Parachain(THIS_PARA_ID), GeneralIndex(this_native_asset.into()))),
 			some_native_amount,
 		)
 			.into();
@@ -870,13 +811,7 @@ fn sibling_trap_assets_works() {
 			},
 			WithdrawAsset(
 				(
-					(
-						Parent,
-						X2(
-							Parachain(SIBLING_PARA_ID),
-							GeneralKey(WeakBoundedVec::force_from(any_asset.encode(), None)),
-						),
-					),
+					(Parent, X2(Parachain(SIBLING_PARA_ID), GeneralIndex(any_asset.into()))),
 					sibling_non_native_amount,
 				) // withdraw into VM holder asset, and do nothing...
 					.into(),
@@ -942,10 +877,7 @@ fn sibling_shib_to_transfer() {
 		let root = frame_system::RawOrigin::Root;
 		let location = XcmAssetLocation(MultiLocation::new(
 			1,
-			X2(
-				Parachain(SIBLING_PARA_ID),
-				GeneralKey(WeakBoundedVec::force_from(sibling_asset_id.encode(), None)),
-			),
+			X2(Parachain(SIBLING_PARA_ID), GeneralIndex(sibling_asset_id.into())),
 		));
 		AssetsRegistry::register_asset(
 			root.into(),
@@ -978,13 +910,7 @@ fn sibling_shib_to_transfer() {
 					.into()
 			),
 			Box::new(Junction::AccountId32 { id: BOB, network: NetworkId::Any }.into().into()),
-			Box::new(
-				(
-					X1(GeneralKey(WeakBoundedVec::force_from(sibling_asset_id.encode(), None)),),
-					transfer_amount
-				)
-					.into()
-			),
+			Box::new((X1(GeneralIndex(sibling_asset_id.into()),), transfer_amount).into()),
 			0,
 			WeightLimit::Unlimited,
 		));

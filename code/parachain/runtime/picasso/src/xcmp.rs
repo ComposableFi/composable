@@ -150,7 +150,7 @@ impl XcmpAssets for StaticAssetsMap {
 		}
 	}
 
-	fn local_to_remote(id: CurrencyId, this_para_id: u32) -> Option<MultiLocation> {
+	fn local_to_remote(id: CurrencyId, _this_para_id: u32) -> Option<MultiLocation> {
 		match id {
 			CurrencyId::NATIVE => Some(SELF_RECURSIVE),
 			CurrencyId::RELAY_NATIVE => Some(MultiLocation::parent()),

@@ -3,7 +3,6 @@ use crate::{
 	topology::{self, SELF_RECURSIVE},
 	AccountId, Balance,
 };
-use codec::Decode;
 use composable_traits::{
 	oracle::MinimalOracle,
 	xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation},
@@ -267,11 +266,11 @@ impl<
 		match location {
 			topology::relay::LOCATION => Some(CurrencyId::RELAY_NATIVE),
 			SELF_RECURSIVE => Some(CurrencyId::NATIVE),
-			MultiLocation { parents, interior: X2(Parachain(id), GeneralKey(key)) }
+			MultiLocation { parents, interior: X2(Parachain(id), GeneralIndex(index)) }
 				if parents == 1 && Id::from(id) == ThisParaId::get() =>
-				CurrencyId::decode(&mut &key[..]).ok(),
-			MultiLocation { parents: 0, interior: X1(GeneralKey(key)) } =>
-				CurrencyId::decode(&mut &key[..]).ok(),
+				Some(CurrencyId(index)),
+			MultiLocation { parents: 0, interior: X1(GeneralIndex(index)) } =>
+				Some(CurrencyId(index)),
 			_ =>
 				if let Some(currency_id) = WellKnownXcmpAssets::remote_to_local(location.clone()) {
 					Some(currency_id)
