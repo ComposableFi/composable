@@ -77,6 +77,11 @@ where
 
 	// 2. verify justification.
 	let justification = GrandpaJustification::<H>::decode(&mut &finality_proof.justification[..])?;
+
+	if justification.commit.target_hash != finality_proof.block {
+		Err(anyhow!("Justification target hash and finality proof block hash mismatch"))?;
+	}
+
 	justification.verify::<Host>(client_state.current_set_id, &client_state.current_authorities)?;
 
 	// 3. verify state proofs of parachain headers in finalized relay chain headers.

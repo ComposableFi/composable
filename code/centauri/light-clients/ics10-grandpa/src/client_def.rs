@@ -99,9 +99,6 @@ where
 			ClientMessage::Misbehaviour(misbehavior) => {
 				let first_proof = misbehavior.first_finality_proof;
 				let second_proof = misbehavior.second_finality_proof;
-				if first_proof.block == second_proof.block {
-					Err(Error::Custom("Both finality proofs are for the same block".to_string()))?
-				}
 
 				let first_header = first_proof.unknown_headers.first().ok_or_else(|| {
 					Error::Custom("No headers in first finality proof".to_string())
@@ -110,12 +107,6 @@ where
 				let second_header = second_proof.unknown_headers.first().ok_or_else(|| {
 					Error::Custom("No headers in second finality proof".to_string())
 				})?;
-
-				if first_header.number != second_header.number {
-					Err(Error::Custom(
-						"First and second finality proofs are for different blocks".to_string(),
-					))?
-				}
 
 				let first_parent = first_header.parent_hash;
 				let second_parent = second_header.parent_hash;
@@ -135,10 +126,10 @@ where
 				check_canonicity(&second_proof.unknown_headers, second_parent)?;
 
 				// TODO: should we handle genesis block here somehow?
-				let known_first = H::get_relaychain_header(first_parent);
-				let known_second = H::get_relaychain_header(second_parent);
+				let exists_first = H::exists_relaychain_header_hash(first_parent);
+				let exists_second = H::exists_relaychain_header_hash(second_parent);
 
-				if known_first.is_none() || known_second.is_none() {
+				if !exists_first || !exists_second {
 					Err(Error::Custom(
 						"Could not find known headers for first or second finality proof"
 							.to_string(),
@@ -259,11 +250,7 @@ where
 			client_state.current_authorities = scheduled_change.next_authorities;
 		}
 
-		let headers = finalized
-			.into_iter()
-			.map(|h| ancestry.header(&h).expect("finalized headers are in ancestry; qed").clone())
-			.collect::<Vec<_>>();
-		H::add_relaychain_headers(&headers);
+		H::add_relaychain_header_hashes(&finalized);
 
 		Ok((client_state, ConsensusUpdateResult::Batch(consensus_states)))
 	}

@@ -1,8 +1,7 @@
 use alloc::{borrow::ToOwned, format, string::ToString, vec::Vec};
 use frame_support::{
-	pallet_prelude::{OptionQuery, StorageMap},
+	pallet_prelude::{StorageValue, ValueQuery},
 	traits::StorageInstance,
-	Twox64Concat,
 };
 use ibc::core::{
 	ics02_client,
@@ -23,7 +22,8 @@ use ics11_beefy::{
 use sp_core::{ed25519, H256};
 use sp_runtime::{
 	app_crypto::RuntimePublic,
-	traits::{BlakeTwo256, Header},
+	traits::{BlakeTwo256, ConstU32, Header},
+	BoundedBTreeSet, BoundedVec,
 };
 use tendermint_proto::Protobuf;
 
@@ -84,16 +84,19 @@ impl tendermint_light_client_verifier::host_functions::HostFunctionsProvider
 
 impl ics07_tendermint::HostFunctionsProvider for HostFunctionsManager {}
 
-pub struct GrandpaBlockHashStorageInstance;
-impl StorageInstance for GrandpaBlockHashStorageInstance {
+pub struct GrandpaBlockHashesStorageInstance;
+impl StorageInstance for GrandpaBlockHashesStorageInstance {
 	fn pallet_prefix() -> &'static str {
 		"ibc.lightclients.grandpa"
 	}
 
-	const STORAGE_PREFIX: &'static str = "BlockHash";
+	const STORAGE_PREFIX: &'static str = "HeaderHashes";
 }
-pub type GrandpaBlockHashStorage =
-	StorageMap<GrandpaBlockHashStorageInstance, Twox64Concat, u32, H256, OptionQuery>;
+pub type GrandpaHeaderHashesStorage = StorageValue<
+	GrandpaBlockHashesStorageInstance,
+	BoundedVec<H256, ConstU32<GRANDPA_BLOCK_HASHES_CACHE_SIZE>>,
+	ValueQuery,
+>;
 
 pub struct GrandpaHeaderStorageInstance;
 impl StorageInstance for GrandpaHeaderStorageInstance {
@@ -101,10 +104,13 @@ impl StorageInstance for GrandpaHeaderStorageInstance {
 		"ibc.lightclients.grandpa"
 	}
 
-	const STORAGE_PREFIX: &'static str = "Header";
+	const STORAGE_PREFIX: &'static str = "HeaderHashesSet";
 }
-pub type GrandpaHeaderStorage =
-	StorageMap<GrandpaHeaderStorageInstance, Twox64Concat, H256, RelayChainHeader, OptionQuery>;
+pub type GrandpaHeaderHashesSetStorage = StorageValue<
+	GrandpaBlockHashesStorageInstance,
+	BoundedBTreeSet<H256, ConstU32<GRANDPA_BLOCK_HASHES_CACHE_SIZE>>,
+	ValueQuery,
+>;
 
 /// Maximum number of block number to block hash mappings to keep (oldest pruned first).
 const GRANDPA_BLOCK_HASHES_CACHE_SIZE: u32 = 500;
@@ -116,41 +122,35 @@ impl grandpa_client_primitives::HostFunctions for HostFunctionsManager {
 		pub_key.verify(&msg, sig)
 	}
 
-	fn add_relaychain_headers(headers: &[Self::Header]) {
-		if headers.is_empty() {
+	fn add_relaychain_header_hashes(new_hashes: &[<Self::Header as Header>::Hash]) {
+		if new_hashes.is_empty() {
 			return
 		}
 
-		for header in headers {
-			let hash = header.hash();
-			GrandpaBlockHashStorage::insert(header.number, hash);
-			GrandpaHeaderStorage::insert(hash, header);
-		}
-
-		let last_header = headers.last().unwrap();
-
-		// prune old headers
-		let to_remove_to = last_header
-			.number
-			.saturating_sub(GRANDPA_BLOCK_HASHES_CACHE_SIZE)
-			.saturating_sub(1);
-		let to_remove_from = to_remove_to.saturating_sub(headers.len() as u32);
-		for i in to_remove_from..=to_remove_to {
-			if let Some(hash) = GrandpaBlockHashStorage::get(i) {
-				GrandpaBlockHashStorage::remove(i);
-				GrandpaHeaderStorage::remove(hash);
-			}
-		}
+		GrandpaHeaderHashesSetStorage::mutate(|hashes_set| {
+			GrandpaHeaderHashesStorage::mutate(|hashes| {
+				for hash in new_hashes {
+					match hashes.try_push(*hash) {
+						Ok(_) => {},
+						Err(_) => {
+							let hash = hashes.remove(0);
+							hashes_set.remove(&hash);
+							let _ = hashes.try_push(hash);
+						},
+					}
+					match hashes_set.try_insert(*hash) {
+						Ok(_) => {},
+						Err(_) => {
+							log::warn!("duplicated value in GrandpaHeaderHashesStorage or the storage is corrupted");
+						},
+					}
+				}
+			});
+		});
 	}
 
-	fn get_relaychain_hash(
-		number: <Self::Header as Header>::Number,
-	) -> Option<<Self::Header as Header>::Hash> {
-		GrandpaBlockHashStorage::get(number)
-	}
-
-	fn get_relaychain_header(hash: <Self::Header as Header>::Hash) -> Option<Self::Header> {
-		GrandpaHeaderStorage::get(hash)
+	fn exists_relaychain_header_hash(hash: <Self::Header as Header>::Hash) -> bool {
+		GrandpaHeaderHashesSetStorage::get().contains(&hash)
 	}
 }
 
