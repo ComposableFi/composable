@@ -135,7 +135,9 @@ impl grandpa_client_primitives::HostFunctions for HostFunctionsManager {
 						Err(_) => {
 							let old_hash = hashes.remove(0);
 							hashes_set.remove(&old_hash);
-							let _ = hashes.try_push(*hash);
+							hashes.try_push(*hash).expect(
+								"we just removed an element, so there is space for this one; qed",
+							);
 						},
 					}
 					match hashes_set.try_insert(*hash) {

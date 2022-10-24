@@ -100,6 +100,10 @@ where
 				let first_proof = misbehavior.first_finality_proof;
 				let second_proof = misbehavior.second_finality_proof;
 
+				if first_proof.block == second_proof.block {
+					return Err(Error::Custom("Misbehaviour proofs are for the same block".into()))
+				}
+
 				let first_header = first_proof.unknown_headers.first().ok_or_else(|| {
 					Error::Custom("No headers in first finality proof".to_string())
 				})?;
