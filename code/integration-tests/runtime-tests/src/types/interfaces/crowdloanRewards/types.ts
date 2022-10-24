@@ -115,18 +115,6 @@ export interface ComposableTraitsOraclePrice extends Null {}
 /** @name ComposableTraitsOracleRewardTracker */
 export interface ComposableTraitsOracleRewardTracker extends Null {}
 
-/** @name ComposableTraitsStakingRewardPool */
-export interface ComposableTraitsStakingRewardPool extends Null {}
-
-/** @name ComposableTraitsStakingRewardPoolConfiguration */
-export interface ComposableTraitsStakingRewardPoolConfiguration extends Null {}
-
-/** @name ComposableTraitsStakingRewardUpdate */
-export interface ComposableTraitsStakingRewardUpdate extends Null {}
-
-/** @name ComposableTraitsStakingStake */
-export interface ComposableTraitsStakingStake extends Null {}
-
 /** @name ComposableTraitsTimeTimeReleaseFunction */
 export interface ComposableTraitsTimeTimeReleaseFunction extends Null {}
 
@@ -371,9 +359,6 @@ export interface PalletSchedulerScheduledV2 extends Null {}
 
 /** @name PalletSchedulerScheduledV3 */
 export interface PalletSchedulerScheduledV3 extends Null {}
-
-/** @name PalletStakingRewardsRewardAccumulationHookError */
-export interface PalletStakingRewardsRewardAccumulationHookError extends Null {}
 
 /** @name PalletTreasuryProposal */
 export interface PalletTreasuryProposal extends Null {}
