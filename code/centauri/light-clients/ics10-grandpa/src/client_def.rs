@@ -22,9 +22,12 @@ use crate::client_message::{ClientMessage, RelayChainHeader};
 use alloc::{format, string::ToString, vec, vec::Vec};
 use codec::Decode;
 use core::marker::PhantomData;
-use finality_grandpa::Chain;
+use finality_grandpa::{Chain, Message};
 use grandpa_client_primitives::{
-	justification::{check_equivocation_proof, find_scheduled_change, AncestryChain},
+	justification::{
+		check_equivocation_proof, check_message_signature, find_scheduled_change, AncestryChain,
+		GrandpaJustification,
+	},
 	ParachainHeadersWithFinalityProof,
 };
 use ibc::{
@@ -94,24 +97,76 @@ where
 				.map_err(Error::GrandpaPrimitives)?;
 			},
 			ClientMessage::Misbehaviour(misbehavior) => {
-				// first off is the number of equivocations >= 1/3?
-				if misbehavior.equivocations.len() < (client_state.current_authorities.len() / 3) {
+				let first_proof = misbehavior.first_finality_proof;
+				let second_proof = misbehavior.second_finality_proof;
+				if first_proof.block == second_proof.block {
+					Err(Error::Custom("Both finality proofs are for the same block".to_string()))?
+				}
+
+				let first_header = first_proof.unknown_headers.first().ok_or_else(|| {
+					Error::Custom("No headers in first finality proof".to_string())
+				})?;
+
+				let second_header = second_proof.unknown_headers.first().ok_or_else(|| {
+					Error::Custom("No headers in second finality proof".to_string())
+				})?;
+
+				if first_header.number != second_header.number {
 					Err(Error::Custom(
-						"Not enough equivocations to warrant a misbehavior".to_string(),
+						"First and second finality proofs are for different blocks".to_string(),
 					))?
 				}
 
-				misbehavior
-					.equivocations
-					.into_iter()
-					.map(|equivocation| {
-						check_equivocation_proof::<H, _, _>(
-							client_state.current_set_id,
-							equivocation,
-						)
-					})
-					.collect::<Result<(), _>>()
-					.map_err(Error::Anyhow)?;
+				let first_parent = first_header.parent_hash;
+				let second_parent = second_header.parent_hash;
+
+				let check_canonicity = |chain: &[RelayChainHeader], init: H256| {
+					let mut last_hash = first_parent;
+					for header in chain {
+						if header.hash() != last_hash {
+							return Err(Error::Custom("Chain is not canonical".to_string()))
+						}
+						last_hash = header.parent_hash;
+					}
+					Ok(())
+				};
+
+				check_canonicity(&first_proof.unknown_headers, first_parent)?;
+				check_canonicity(&second_proof.unknown_headers, second_parent)?;
+
+				// TODO: should we handle genesis block here somehow?
+				let known_first = H::get_relaychain_headers(first_parent);
+				let known_second = H::get_relaychain_headers(second_parent);
+
+				if known_first.is_none() || known_second.is_none() {
+					Err(Error::Custom(
+						"Could not find known headers for first or second finality proof"
+							.to_string(),
+					))?
+				}
+
+				let first_justification = GrandpaJustification::<RelayChainHeader>::decode(
+					&mut &first_proof.justification[..],
+				)
+				.map_err(|_| Error::Custom("Could not decode first justification".to_string()))?;
+
+				let second_justification = GrandpaJustification::<RelayChainHeader>::decode(
+					&mut &second_proof.justification[..],
+				)
+				.map_err(|_| Error::Custom("Could not decode second justification".to_string()))?;
+
+				// TODO: should we compare misbehavior.first_finality_proof.block
+				// and first_justification.commit.target_hash?
+
+				let first_valid = first_justification
+					.verify::<H>(client_state.current_set_id, &client_state.current_authorities)
+					.is_ok();
+				let second_valid = second_justification
+					.verify::<H>(client_state.current_set_id, &client_state.current_authorities)
+					.is_ok();
+				if !first_valid || !second_valid {
+					Err(Error::Custom("Invalid justification".to_string()))?
+				}
 
 				// whoops equivocation is valid.
 			},
