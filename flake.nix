@@ -1413,12 +1413,6 @@
               buildInputs = [ pkgs.nixopsUnstable ];
               NIX_PATH = "nixpkgs=${pkgs.path}";
             };
-
-            xcvm = import ./.nix/devnet-specs/xcvm.nix {
-              inherit pkgs;
-              inherit packages;
-              inherit (packages) devnet-dali;
-            };
           };
 
           apps = let
