@@ -3319,10 +3319,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dotsama-subxt"
-version = "0.1.0"
-
-[[package]]
 name = "downcast-rs"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -15917,6 +15913,18 @@ dependencies = [
  "scale-info",
  "subxt-metadata 0.24.0",
  "syn 1.0.101",
+]
+
+[[package]]
+name = "subxt-exports"
+version = "0.1.0"
+dependencies = [
+ "color-eyre 0.6.2",
+ "parity-scale-codec",
+ "serde",
+ "subxt 0.24.0",
+ "subxt-codegen 0.1.0",
+ "tokio",
 ]
 
 [[package]]
