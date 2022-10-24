@@ -264,20 +264,24 @@ pub mod pallet {
 				.iter()
 				// starting with asset_pair.quote, make sure current node's quote
 				// matches with previous node's base
-				.try_fold(asset_pair.quote, |val, iter| {
-					T::Pablo::assets(*iter).and_then(
+				.try_fold(asset_pair.quote, |val, pool| {
+					T::Pablo::assets(*pool).and_then(
 						|assets| -> Result<T::AssetId, DispatchError> {
 							ensure!(assets.len() == 2, Error::<T>::OnlyDualAssetPoolsSupported);
-							let second_asset_id = assets
-								.keys()
-								.copied()
-								.find(|a| *a != val)
-								.ok_or(Error::<T>::UnexpectedNodeFoundWhileValidation)?;
-							let pair = pool_id_pair::<T>(val, second_asset_id);
+							let keys = assets.into_keys().collect::<Vec<T::AssetId>>();
+							let first_asset = keys.get(0).copied().expect("Must exist");
+							let second_asset = keys.get(1).copied().expect("Must exist");
+							let pair = CurrencyPair::new(second_asset, first_asset);
 							if !pair_set.insert(pair) {
 								return Err(Error::<T>::LoopSuspectedInRouteUpdate.into())
 							}
-							Ok(pair.base)
+							if pair.quote == val {
+								Ok(pair.base)
+							} else if pair.base == val {
+								Ok(pair.quote)
+							} else {
+								Err(Error::<T>::UnexpectedNodeFoundWhileValidation.into())
+							}
 						},
 					)
 				})
@@ -567,12 +571,12 @@ pub mod pallet {
 					keep_alive,
 				)?;
 			}
-			ensure!(
-				out_asset_itr.value.amount >= out_asset.amount,
-				Error::<T>::CanNotRespectMinAmountRequested
-			);
+			// ensure!(
+			// 	out_asset_itr.value.amount >= out_asset.amount,
+			// 	Error::<T>::CanNotRespectMinAmountRequested
+			// );
 			// TODO (vim): Final fee amount is not correct as the fee need to be incremented with
-			// each swap fee when iterating.
+			//  each swap fee when iterating.
 			Ok(out_asset_itr)
 		}
 
