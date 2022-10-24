@@ -81,6 +81,9 @@ members = [
   "centauri/hyperspace/cosmos",
   "centauri/hyperspace/testsuite",
   "centauri/hyperspace/metrics",
+
+  # DotSama subxt
+  "dotsama-subxt",
 ]
 # **IMPORTANT: DO NOT REMOVE OR SUFFER IN DEPENDENCY RESOLUTION HELL**
 resolver = "2"
