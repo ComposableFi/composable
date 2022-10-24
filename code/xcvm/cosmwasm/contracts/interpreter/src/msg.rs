@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
-use xcvm_core::{Funds, Instruction, NetworkId, Program};
+use xcvm_core::{Funds, Instruction, NetworkId, Program, Register};
 
 pub type XCVMInstruction = Instruction<NetworkId, Vec<u8>, String, Funds>;
 pub type XCVMProgram = Program<VecDeque<XCVMInstruction>>;
@@ -26,4 +26,6 @@ pub enum ExecuteMsg {
 pub struct MigrateMsg {}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub enum QueryMsg {}
+pub enum QueryMsg {
+	Register(Register),
+}

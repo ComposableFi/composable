@@ -40,14 +40,14 @@
 //! {"recipient":"","amount":"10000"}
 //! ```
 //! Index of the value of `recipient` is `13` and the binding that I want to use is
-//! `BindingValue::This`, which is the interpreter.
+//! `BindingValue::Register(Register::This)`, which is the interpreter.
 //!
 //! And the contract that I want to use is `cw20` for `PICA`, which is `BindingValue::Asset(1)`.
 //! Note that `1` is the identifier of the asset `PICA`. Then, users will call
 //! `WasmMsg::Execute` wrapper `wasm_execute` to create the correct payload to pass to
 //! use in the `Call` instruction:
 //! ```ignore
-//! let payload_bindings: OrderedBindings = [(13, BindingValue::This)].into();
+//! let payload_bindings: OrderedBindings = [(13, BindingValue::Register(Register::This))].into();
 //! let cw20_transfer_msg = Cw20ExecuteMsg::Transfer {
 //!     // Make sure to leave fields that uses late-bindings empty
 //! 	recipient: String::new(),
@@ -65,7 +65,7 @@
 
 use super::{BindingValue, Bindings};
 use crate::{Bridge, OrderedBindings};
-use alloc::{fmt::Debug, string::String, vec::Vec};
+use alloc::{fmt::Debug, string::String, vec, vec::Vec};
 use cosmwasm_std::{BankMsg, Coin, CosmosMsg};
 use cw_storage_plus::{Key, PrimaryKey};
 use serde::{Deserialize, Serialize};
@@ -162,7 +162,7 @@ where
 /// Eg. Let's say we want to do late binding in the `to` field in the
 /// following payload and want to put the interpreter's address:
 /// `{"from":"helloworld","to":""}`
-/// Then the binding is `(26, BindingValue::This)`
+/// Then the binding is `(26, BindingValue::Register(Register::This))`
 pub enum IndexedBinding<T> {
 	None(T),
 	Some((OrderedBindings, T)),
@@ -432,7 +432,11 @@ mod tests {
 		(
 			test_msg.clone(),
 			IndexedBinding::Some((
-				[(9, BindingValue::This), (36, BindingValue::Relayer)].into(),
+				[
+					(9, BindingValue::Register(Register::This)),
+					(36, BindingValue::Register(Register::Relayer)),
+				]
+				.into(),
 				test_msg,
 			)),
 		)
@@ -442,7 +446,7 @@ mod tests {
 	fn test_execute() {
 		let (test_msg, payload_bindings) = create_dummy_data();
 		let msg = LateCall::wasm_execute(
-			StaticBinding::Some(BindingValue::Ip),
+			StaticBinding::Some(BindingValue::Register(Register::Ip)),
 			payload_bindings,
 			Vec::new(),
 		)
@@ -450,7 +454,11 @@ mod tests {
 
 		assert_eq!(
 			msg.bindings,
-			vec![(36, BindingValue::Ip), (54, BindingValue::This), (81, BindingValue::Relayer)]
+			vec![
+				(36, BindingValue::Register(Register::Ip)),
+				(54, BindingValue::Register(Register::This)),
+				(81, BindingValue::Register(Register::Relayer))
+			]
 		);
 
 		assert_eq!(
@@ -480,8 +488,8 @@ mod tests {
 			msg.bindings,
 			vec![
 				(32, BindingValue::Asset(1)),
-				(62, BindingValue::This),
-				(89, BindingValue::Relayer)
+				(62, BindingValue::Register(Register::This)),
+				(89, BindingValue::Register(Register::Relayer)),
 			]
 		);
 

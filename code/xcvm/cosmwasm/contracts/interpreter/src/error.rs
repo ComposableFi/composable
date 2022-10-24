@@ -24,4 +24,7 @@ pub enum ContractError {
 
 	#[error("Caller is not authenticated to take the action")]
 	NotAuthorized,
+
+	#[error("Instruction {0} is not supported")]
+	InstructionNotSupported(String),
 }

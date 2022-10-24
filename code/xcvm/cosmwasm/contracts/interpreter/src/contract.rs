@@ -3,7 +3,7 @@ extern crate alloc;
 use crate::{
 	error::ContractError,
 	msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, XCVMInstruction, XCVMProgram},
-	state::{Config, CONFIG, OWNERS, RESULT_REGISTER},
+	state::{Config, CONFIG, IP_REGISTER, OWNERS, RESULT_REGISTER},
 };
 use alloc::borrow::Cow;
 use core::cmp::max;
@@ -20,7 +20,7 @@ use num::Zero;
 use serde::Serialize;
 use std::collections::VecDeque;
 use xcvm_asset_registry::msg::{GetAssetContractResponse, QueryMsg as AssetRegistryQueryMsg};
-use xcvm_core::{cosmwasm::*, BindingValue, Displayed, Funds, Instruction, NetworkId};
+use xcvm_core::{cosmwasm::*, BindingValue, Displayed, Funds, Instruction, NetworkId, Register};
 
 const CONTRACT_NAME: &str = "composable:xcvm-interpreter";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -60,7 +60,7 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
 	assert_owner(deps.as_ref(), &info.sender)?;
 	match msg {
-		ExecuteMsg::Execute { program } => initiate_execution(env, program),
+		ExecuteMsg::Execute { program } => initiate_execution(deps, env, program),
 		ExecuteMsg::_SelfExecute { program } =>
 		// _SelfExecute should be called by interpreter itself
 			if env.contract.address != info.sender {
@@ -86,7 +86,12 @@ fn assert_owner(deps: Deps, owner: &Addr) -> Result<(), ContractError> {
 	}
 }
 
-pub fn initiate_execution(env: Env, program: XCVMProgram) -> Result<Response, ContractError> {
+pub fn initiate_execution(
+	deps: DepsMut,
+	env: Env,
+	program: XCVMProgram,
+) -> Result<Response, ContractError> {
+	IP_REGISTER.save(deps.storage, &0)?;
 	Ok(Response::default().add_submessage(SubMsg::reply_on_error(
 		wasm_execute(env.contract.address, &ExecuteMsg::_SelfExecute { program }, Vec::new())?,
 		SELF_CALL_ID,
@@ -103,12 +108,13 @@ pub fn interpret_program(
 	let mut response = Response::new();
 	let instruction_len = program.instructions.len();
 	let mut instruction_iter = program.instructions.into_iter().enumerate();
+	let mut ip = IP_REGISTER.load(deps.storage)?;
 	while let Some((index, instruction)) = instruction_iter.next() {
 		response = match instruction {
 			Instruction::Call { encoded } => {
 				if index >= instruction_len - 1 {
 					// If the call is the final instruction, do not yield execution
-					interpret_call(deps.as_ref(), &env, encoded, index, response)?
+					interpret_call(deps.as_ref(), &env, encoded, ip as usize, response)?
 				} else {
 					// If the call is not the final instruction:
 					// 1. interpret the call: this will add the call to the response's
@@ -132,8 +138,12 @@ pub fn interpret_program(
 				interpret_spawn(&deps, &env, network, salt, assets, program, response)?,
 			Instruction::Transfer { to, assets } =>
 				interpret_transfer(&mut deps, &env, to, assets, response)?,
+			instr => return Err(ContractError::InstructionNotSupported(format!("{:?}", instr))),
 		};
+		ip += 1;
 	}
+
+	IP_REGISTER.save(deps.storage, &ip)?;
 
 	Ok(response.add_event(Event::new("xcvm.interpreter.executed").add_attribute(
 		"program",
@@ -205,8 +215,9 @@ pub fn interpret_call(
 				.copy_from_slice(&encoded_call[original_index..=binding_index]);
 
 			let data: Cow<[u8]> = match binding {
-				BindingValue::Relayer => Cow::Borrowed(&user_id),
-				BindingValue::This => Cow::Borrowed(env.contract.address.as_bytes()),
+				BindingValue::Register(Register::Relayer) => Cow::Borrowed(&user_id),
+				BindingValue::Register(Register::This) =>
+					Cow::Borrowed(env.contract.address.as_bytes()),
 				BindingValue::Asset(asset_id) => {
 					let query_msg = AssetRegistryQueryMsg::GetAssetContract(asset_id.into());
 
@@ -220,7 +231,11 @@ pub fn interpret_call(
 
 					Cow::Owned(response.addr.into_string().into())
 				},
-				BindingValue::Ip => Cow::Owned(format!("{}", ip).into()),
+				BindingValue::Register(Register::Ip) => Cow::Owned(format!("{}", ip).into()),
+				BindingValue::Register(Register::Result) => Cow::Owned(
+					serde_json_wasm::to_vec(&RESULT_REGISTER.load(deps.storage)?)
+						.map_err(|_| ContractError::DataSerializationError)?,
+				),
 			};
 
 			formatted_call[binding_index + offset + 1..=binding_index + offset + data.len()]
@@ -380,8 +395,17 @@ pub fn interpret_transfer(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> StdResult<Binary> {
-	Err(StdError::generic_err("not implemented"))
+pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
+	match msg {
+		QueryMsg::Register(Register::Ip) => Ok(to_binary(&IP_REGISTER.load(deps.storage)?)?),
+		QueryMsg::Register(Register::Result) =>
+			Ok(to_binary(&RESULT_REGISTER.load(deps.storage)?)?),
+		QueryMsg::Register(Register::This) => Ok(to_binary(&env.contract.address)?),
+		QueryMsg::Register(Register::Relayer) => {
+			let Config { user_id, .. } = CONFIG.load(deps.storage)?;
+			Ok(to_binary(&user_id)?)
+		},
+	}
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -640,9 +664,9 @@ mod tests {
 		}
 
 		let msg = LateCall::wasm_execute(
-			StaticBinding::Some(BindingValue::This),
+			StaticBinding::Some(BindingValue::Register(Register::This)),
 			IndexedBinding::Some((
-				[(9, BindingValue::This), (36, BindingValue::Relayer)].into(),
+				[(9, BindingValue::This), (36, BindingValue::Register(Register::Relayer))].into(),
 				TestMsg {
 					part1: String::new(),
 					part2: String::from("hello"),

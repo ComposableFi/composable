@@ -11,14 +11,23 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, PartialEq, Eq, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum BindingValue {
+	Register(Register),
+	/// Asset's address
+	Asset(u32),
+}
+
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Clone, PartialEq, Eq, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Register {
 	/// Instruction pointer
 	Ip,
 	/// Relayer's address
 	Relayer,
 	/// Interpreter's address
 	This,
-	/// Asset's address
-	Asset(u32),
+	/// Result of the last executed instruction
+	Result,
 }
 
 /// Bindings: (Index, Binding)
@@ -54,4 +63,7 @@ pub enum Instruction<Network, Payload, Account, Assets> {
 	/// The salt is used to track the program when events are dispatched in the network.
 	#[serde(rename_all = "snake_case")]
 	Spawn { network: Network, salt: Vec<u8>, assets: Assets, program: Program<VecDeque<Self>> },
+	/// Query the state of a contract
+	#[serde(rename_all = "snake_case")]
+	Query { network: Network, salt: Vec<u8> },
 }
