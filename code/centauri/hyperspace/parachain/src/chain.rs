@@ -91,7 +91,6 @@ where
 		client_message: AnyClientMessage,
 	) -> Result<(), anyhow::Error> {
 		use tendermint_proto::Protobuf;
-		log::info!("counterparty: {}", counterparty.client_id());
 		log::info!("client_msg: {}", hex::encode(client_message.encode_vec()));
 		match client_message {
 			AnyClientMessage::Grandpa(ClientMessage::Header(header)) => {
@@ -125,6 +124,7 @@ where
 				// dbg!(&trusted_finality_proof);
 				if header.finality_proof.block != trusted_finality_proof.block {
 					log::info!("block mismatch");
+					/*
 					let trusted_justification = GrandpaJustification::decode(
 						&mut trusted_finality_proof.justification.as_slice(),
 					)?;
@@ -166,6 +166,9 @@ where
 							}
 						}
 					}
+					// if fraud_precommits.is_empty() {
+					// 	log::error!("no misbehaviour found");
+					// }
 
 					let mut equivocations = Vec::new();
 					let mut equivocation_calls = Vec::new();
@@ -220,16 +223,16 @@ where
 								equivocation: polkadot_equivocation,
 							};
 
-						if !sp_finality_grandpa::check_equivocation_proof(
-							sp_finality_grandpa::EquivocationProof::new(
-								current_set_id,
-								equivocation.clone(),
-							),
-						) {
-							log::error!("Equivocation proof is invalid: {:?}", equivocation);
-						} else {
-							log::info!("Equivocation proof is valid {:?}", equivocation);
-						}
+						// if !sp_finality_grandpa::check_equivocation_proof(
+						// 	sp_finality_grandpa::EquivocationProof::new(
+						// 		current_set_id,
+						// 		equivocation.clone(),
+						// 	),
+						// ) {
+						// 	log::error!("Equivocation proof is invalid: {:?}", equivocation);
+						// } else {
+						// 	log::info!("Equivocation proof is valid {:?}", equivocation);
+						// }
 						// for sid in 0..100 {
 						// 	match &equivocation {
 						// 		Equivocation::Precommit(eq) => {
@@ -262,7 +265,6 @@ where
 
 					let misbehaviour = ClientMessage::Misbehaviour(Misbehaviour {
 						set_id: current_set_id,
-						equivocations,
 						first_finality_proof: todo!(),
 						second_finality_proof: todo!(),
 					});
@@ -292,6 +294,25 @@ where
 							as Pin<Box<dyn Future<Output = ()> + Send>>,
 					)
 					.await;
+					log::info!("submitted misbehaviour");
+
+					 */
+					let misbehaviour = ClientMessage::Misbehaviour(Misbehaviour {
+						set_id: 0,
+						first_finality_proof: header.finality_proof,
+						second_finality_proof: trusted_finality_proof,
+					});
+					let misbehaviour_report_future = counterparty
+						.submit(vec![MsgUpdateAnyClient::<LocalClientTypes>::new(
+							self.client_id(),
+							AnyClientMessage::Grandpa(misbehaviour.clone()),
+							counterparty.account_id(),
+						)
+						.to_any()])
+						.map_err(|e| log::error!("Failed to submit misbehaviour report: {:?}", e))
+						.map(|res| {
+							log::info!("misbehaviour report submitted: {:?}", res,);
+						});
 					log::info!("submitted misbehaviour");
 				}
 			},
