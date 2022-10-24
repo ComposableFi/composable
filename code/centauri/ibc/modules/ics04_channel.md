@@ -208,3 +208,12 @@ received on the counterparty and that the channel has been closed.
 This packet is handled by the function defined here [`here`](/code/centauri/ibc/modules/src/core/ics04_channel/handler/timeout_on_close.rs#L29)    
 After verifying the validity of this packet, the top level dispatch function calls the `on_timeout_packet` module callback through the router using the source port id defined in the packet.  
 A `TimeoutOnClose` event is emitted after a successful execution.
+
+### Ports
+
+PortIds and ModuleIds are unique strings used to identify modules, the former is only used locally within the framework,  
+while the latter is part of the ICS specification.  
+For this implementation of ibc, the port requirements are defined by the [`PortReader`](/code/centauri/ibc/modules/src/core/ics05_port/context.rs#L10)  
+trait to be implemented on the `Context` object and provide a way for ports to map to ModuleIds.
+
+Ports and ModuleIds should be statically defined.  
