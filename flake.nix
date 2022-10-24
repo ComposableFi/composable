@@ -93,13 +93,8 @@
           else
             original-config;
 
-<<<<<<< HEAD
           config = writeTextFile {
             name = "devnet-${binary-name}-config.json";
-=======
-          config = pkgs.writeTextFile {
-            name = "devnet-${chain-spec}-config.json";
->>>>>>> main
             text = builtins.toJSON patched-config;
           };
         in {
@@ -107,13 +102,8 @@
           parachain-nodes = builtins.concatMap (parachain: parachain.nodes)
             patched-config.parachains;
           relaychain-nodes = patched-config.relaychain.nodes;
-<<<<<<< HEAD
           script = writeShellApplication {
             name = "run-devnet-${binary-name}";
-=======
-          script = pkgs.writeShellApplication {
-            name = "run-devnet-${chain-spec}";
->>>>>>> main
             text = ''
               rm -rf /tmp/polkadot-launch
               ${polkadot-launch}/bin/polkadot-launch ${config} --verbose
@@ -560,7 +550,7 @@
               config = pkgs.lib.makeOverridable (result: { result = result; })
                 rawConfig;
 
-              default-config = writeTextFile {
+              default-config = pkgs.writeTextFile {
                 name = "hyperspace.local.config.json";
                 text = "${builtins.toJSON (config.override
                   (self: self // { chain_a = self.chain_a; })).result}";
@@ -902,15 +892,13 @@
               pkgs.callPackage ./scripts/polkadot-launch/polkadot-launch.nix
               { };
 
-            # Dali devnet
             devnet-dali = (pkgs.callPackage mk-devnet {
               inherit pkgs;
               inherit (packages) polkadot-launch composable-node polkadot-node;
               chain-spec = "dali-dev";
             }).script;
 
-<<<<<<< HEAD
-            devnet-dali-b = (callPackage mk-devnet {
+            devnet-dali-b = (pkgs.callPackage mk-devnet {
               inherit pkgs;
               inherit (packages) polkadot-launch composable-node polkadot-node;
               network-config-path = ./scripts/polkadot-launch/dali-dev-b.nix;
@@ -918,69 +906,49 @@
               binary-name = "dali-b";
             }).script;
 
-            # Dali Centauri devnet
-            bridge-devnet-dali = (callPackage mk-devnet {
+            bridge-devnet-dali-same-relay = (pkgs.callPackage mk-devnet {
               inherit pkgs;
               inherit (packages) polkadot-launch composable-node;
-              polkadot-node = polkadot-centauri-node;
+              polkadot-node = packages.polkadot-centauri-node;
               chain-spec = "dali-dev";
               network-config-path =
                 ./scripts/polkadot-launch/bridge-rococo-local-dali-dev.nix;
               useGlobalChainSpec = false;
-=======
-            # Dali bridge devnet
+              }).script;
+
             bridge-devnet-dali = (mk-bridge-devnet {
               inherit pkgs packages polkadot-launch composable-node
                 polkadot-node;
             }).script;
 
-            # Dali bridge devnet with mmr-polkadot
-            bridge-mmr-devnet-dali = (mk-bridge-devnet {
+            bridge-mmr-devnet-dali-same-relay = (mk-bridge-devnet {
               inherit pkgs packages polkadot-launch composable-node;
               polkadot-node = mmr-polkadot-node;
->>>>>>> main
             }).script;
 
             hyperspace = hyperspace-template.bin;
 
             hyperspace-template-default = hyperspace-template.default;
 
-            # Picasso devnet
             devnet-picasso = (pkgs.callPackage mk-devnet {
               inherit pkgs;
               inherit (packages) polkadot-launch composable-node polkadot-node;
               chain-spec = "picasso-dev";
             }).script;
 
-<<<<<<< HEAD
-            devnet-container = trace "Run Dali runtime on Composable node"
-              dockerTools.buildImage {
-                name = "composable-devnet-container";
-                tag = "latest";
-                copyToRoot = pkgs.buildEnv {
-                  name = "image-root";
-                  paths = [ curl websocat ] ++ container-tools;
-                  pathsToLink = [ "/bin" ];
-                };
-                config = {
-                  Entrypoint =
-                    [ "${packages.devnet-dali}/bin/run-devnet-dali-dev" ];
-                  WorkingDir = "/home/polkadot-launch";
-                };
-                runAsRoot = ''
-                  mkdir -p /home/polkadot-launch /tmp
-                  chown 1000:1000 /home/polkadot-launch
-                  chmod 777 /tmp
-                '';
-              };
+          devnet-container = mk-devnet-container {
+              inherit pkgs container-tools;
+              containerName = "composable-devnet-container";
+              devNet = packages.devnet-dali;
+            };
 
             hyperspace-container =
-              trace "Composable Hyperspace relayer" dockerTools.buildImage {
+             pkgs.lib.trace "Composable Hyperspace relayer" (pkgs.dockerTools.buildImage {
                 name = "composable-hyperspace-container";
                 tag = "latest";
                 copyToRoot = pkgs.buildEnv {
                   name = "image-root";
-                  paths = [ curl websocat ] ++ container-tools;
+                  paths = with pkgs; [ curl websocat ] ++ container-tools;
                   pathsToLink = [ "/bin" ];
                 };
                 config = {
@@ -993,54 +961,20 @@
                   chown 1000:1000 /home/polkadot-launch
                   chmod 777 /tmp
                 '';
-              };
+              });
 
-            # Dali Centauri devnet container
-            bridge-devnet-dali-container = dockerTools.buildImage {
-              name = "composable-centauri-devnet-container";
-              tag = "latest";
-              copyToRoot = pkgs.buildEnv {
-                name = "image-root";
-                paths = [ curl websocat ] ++ container-tools;
-                pathsToLink = [ "/bin" ];
-              };
-              config = {
-                Entrypoint =
-                  [ "${packages.bridge-devnet-dali}/bin/run-devnet-dali-dev" ];
-                WorkingDir = "/home/polkadot-launch";
-              };
-              runAsRoot = ''
-                mkdir -p /home/polkadot-launch /tmp
-                chown 1000:1000 /home/polkadot-launch
-                chmod 777 /tmp
-              '';
-=======
-            devnet-container = mk-devnet-container {
-              inherit pkgs container-tools;
-              containerName = "composable-devnet-container";
-              devNet = packages.devnet-dali;
->>>>>>> main
-            };
-
-            # Dali Bridge devnet container
+        
             bridge-devnet-dali-container = mk-devnet-container {
               inherit pkgs container-tools;
               containerName = "composable-bridge-devnet-container";
               devNet = packages.bridge-devnet-dali;
             };
 
-            # Dali Bridge devnet container with mmr-polkadot
             bridge-mmr-devnet-dali-container = mk-devnet-container {
               inherit pkgs container-tools;
               containerName = "composable-bridge-mmr-devnet-container";
               devNet = packages.bridge-mmr-devnet-dali;
             };
-
-            # TODO: inherit and provide script to run all stuff
-
-            # devnet-container-xcvm
-            # NOTE: The devcontainer is currently broken for aarch64.
-            # Please use the developers devShell instead
 
             devcontainer = pkgs.dockerTools.buildLayeredImage {
               name = "composable-devcontainer";
@@ -1388,241 +1322,237 @@
             default = packages.composable-node;
           };
 
-          devShells = rec {
+          # devShells = rec {
 
-            base-shell = pkgs.mkShell {
-              buildInputs = [ helix.packages.${pkgs.system}.default ];
-              NIX_PATH = "nixpkgs=${pkgs.path}";
-            };
+          #   base-shell = pkgs.mkShell {
+          #     buildInputs = [ helix.packages.${pkgs.system}.default ];
+          #     NIX_PATH = "nixpkgs=${pkgs.path}";
+          #   };
 
-            docs = base-shell.overrideAttrs (base: {
-              buildInputs = base.buildInputs ++ (with pkgs; [ python3 nodejs ]);
-            });
+          #   docs = base-shell.overrideAttrs (base: {
+          #     buildInputs = base.buildInputs ++ (with pkgs; [ python3 nodejs ]);
+          #   });
 
-            developers-minimal = base-shell.overrideAttrs (base:
-              common-attrs // {
-                buildInputs = base.buildInputs ++ [
-                  pkgs.clang
-                  packages.rust-nightly
-                  packages.subwasm
-                  pkgs.nodejs
-                  pkgs.python3
-                  pkgs.yarn
-                ];
-                LD_LIBRARY_PATH = pkgs.lib.strings.makeLibraryPath [
-                  pkgs.stdenv.cc.cc.lib
-                  pkgs.llvmPackages.libclang.lib
-                ];
-                LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
-                PROTOC = "${pkgs.protobuf}/bin/protoc";
-                ROCKSDB_LIB_DIR = "${pkgs.rocksdb}/lib";
-                NIX_PATH = "nixpkgs=${pkgs.path}";
-              });
+          #   developers-minimal = base-shell.overrideAttrs (base:
+          #     common-attrs // {
+          #       buildInputs = base.buildInputs ++ [
+          #         pkgs.clang
+          #         packages.rust-nightly
+          #         packages.subwasm
+          #         pkgs.nodejs
+          #         pkgs.python3
+          #         pkgs.yarn
+          #       ];
+          #       LD_LIBRARY_PATH = pkgs.lib.strings.makeLibraryPath [
+          #         pkgs.stdenv.cc.cc.lib
+          #         pkgs.llvmPackages.libclang.lib
+          #       ];
+          #       LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
+          #       PROTOC = "${pkgs.protobuf}/bin/protoc";
+          #       ROCKSDB_LIB_DIR = "${pkgs.rocksdb}/lib";
+          #       NIX_PATH = "nixpkgs=${pkgs.path}";
+          #     });
 
-            developers = developers-minimal.overrideAttrs (base: {
-              buildInputs = with packages;
-                base.buildInputs ++ [
-                  pkgs.bacon
-                  pkgs.google-cloud-sdk
-                  pkgs.grub2
-                  pkgs.jq
-                  pkgs.lldb
-                  pkgs.llvmPackages_latest.bintools
-                  pkgs.llvmPackages_latest.lld
-                  pkgs.llvmPackages_latest.llvm
-                  pkgs.nix-tree
-                  pkgs.nixpkgs-fmt
-                  pkgs.openssl
-                  pkgs.openssl.dev
-                  pkgs.pkg-config
-                  pkgs.qemu
-                  pkgs.rnix-lsp
-                  pkgs.taplo
-                  pkgs.xorriso
-                  pkgs.zlib.out
-                  pkgs.nix-tree
-                  pkgs.nixfmt
-                  pkgs.rnix-lsp
-                  pkgs.subxt
-                  pkgs.nodePackages.typescript
-                  pkgs.nodePackages.typescript-language-server
-                  packages.rust-nightly
-                  packages.wasm-optimizer
-                ] ++ docs-renders;
-            });
+          #   developers = developers-minimal.overrideAttrs (base: {
+          #     buildInputs = with packages;
+          #       base.buildInputs ++ [
+          #         pkgs.bacon
+          #         pkgs.google-cloud-sdk
+          #         pkgs.grub2
+          #         pkgs.jq
+          #         pkgs.lldb
+          #         pkgs.llvmPackages_latest.bintools
+          #         pkgs.llvmPackages_latest.lld
+          #         pkgs.llvmPackages_latest.llvm
+          #         pkgs.nix-tree
+          #         pkgs.nixpkgs-fmt
+          #         pkgs.openssl
+          #         pkgs.openssl.dev
+          #         pkgs.pkg-config
+          #         pkgs.qemu
+          #         pkgs.rnix-lsp
+          #         pkgs.taplo
+          #         pkgs.xorriso
+          #         pkgs.zlib.out
+          #         pkgs.nix-tree
+          #         pkgs.nixfmt
+          #         pkgs.rnix-lsp
+          #         pkgs.subxt
+          #         pkgs.nodePackages.typescript
+          #         pkgs.nodePackages.typescript-language-server
+          #         packages.rust-nightly
+          #         packages.wasm-optimizer
+          #       ] ++ docs-renders;
+          #   });
 
-            developers-xcvm = developers.overrideAttrs (base: {
-              buildInputs = with packages;
-                base.buildInputs ++ [ junod gex ] ++ pkgs.lib.lists.optional
-                (pkgs.lib.strings.hasSuffix "linux" system) arion;
-              shellHook = ''
-                echo ""
-                echo ""
-                echo ""
-                echo "==================================================================================================="
-                echo " /!\ Generating alice key, junod will abort if the key is already present (everything is fine.) /!\ "
-                echo "==================================================================================================="
-                echo ""
-                echo ""
-                echo ""
-                echo "clip hire initial neck maid actor venue client foam budget lock catalog sweet steak waste crater broccoli pipe steak sister coyote moment obvious choose" | junod keys add alice --recover --keyring-backend test || true
-              '';
-            });
+          #   developers-xcvm = developers.overrideAttrs (base: {
+          #     buildInputs = with packages;
+          #       base.buildInputs ++ [ junod gex ] ++ pkgs.lib.lists.optional
+          #       (pkgs.lib.strings.hasSuffix "linux" system) arion;
+          #     shellHook = ''
+          #       echo ""
+          #       echo ""
+          #       echo ""
+          #       echo "==================================================================================================="
+          #       echo " /!\ Generating alice key, junod will abort if the key is already present (everything is fine.) /!\ "
+          #       echo "==================================================================================================="
+          #       echo ""
+          #       echo ""
+          #       echo ""
+          #       echo "clip hire initial neck maid actor venue client foam budget lock catalog sweet steak waste crater broccoli pipe steak sister coyote moment obvious choose" | junod keys add alice --recover --keyring-backend test || true
+          #     '';
+          #   });
 
-            ci = pkgs.mkShell {
-              buildInputs = [ pkgs.nixopsUnstable ];
-              NIX_PATH = "nixpkgs=${pkgs.path}";
-            };
+          #   ci = pkgs.mkShell {
+          #     buildInputs = [ pkgs.nixopsUnstable ];
+          #     NIX_PATH = "nixpkgs=${pkgs.path}";
+          #   };
 
-<<<<<<< HEAD
-            xcvm = import ./.nix/devnet-specs/xcvm.nix {
-              inherit pkgs;
-              inherit packages;
-            };
+          #   xcvm = import ./.nix/devnet-specs/xcvm.nix {
+          #     inherit pkgs;
+          #     inherit packages;
+          #   };
 
-            bridge = import ./.nix/devnet-specs/bridge.nix {
-              inherit pkgs;
-              inherit packages;
-            };
-          };
+          #   bridge = import ./.nix/devnet-specs/bridge.nix {
+          #     inherit pkgs;
+          #     inherit packages;
+          #   };
+          # };
 
-          apps = let
-            devnet-default-program =
-              pkgs.composable.mkDevnetProgram "devnet-default"
-              devnet-specs.default;
-            devnet-xcvm-program =
-              pkgs.composable.mkDevnetProgram "devnet-xcvm" devnet-specs.xcvm;
-            devnet-bridge-program =
-              pkgs.composable.mkDevnetProgram "devnet-bridge"
-              devnet-specs.bridge;
-          in rec {
-            devnet = {
-              type = "app";
-              program = "${devnet-default-program}/bin/devnet-default";
-            };
+          # apps = let
+          #   devnet-default-program =
+          #     pkgs.composable.mkDevnetProgram "devnet-default"
+          #     devnet-specs.default;
+          #   devnet-xcvm-program =
+          #     pkgs.composable.mkDevnetProgram "devnet-xcvm" devnet-specs.xcvm;
+          #   devnet-bridge-program =
+          #     pkgs.composable.mkDevnetProgram "devnet-bridge"
+          #     devnet-specs.bridge;
+          # in rec {
+          #   devnet = {
+          #     type = "app";
+          #     program = "${devnet-default-program}/bin/devnet-default";
+          #   };
 
-            devnet-xcvm = {
-              type = "app";
-              program = "${devnet-xcvm-program}/bin/devnet-xcvm";
-            };
+          #   devnet-xcvm = {
+          #     type = "app";
+          #     program = "${devnet-xcvm-program}/bin/devnet-xcvm";
+          #   };
 
-            devnet-bridge = {
-              type = "app";
-              program = "${devnet-bridge-program}/bin/devnet-bridge";
-            };
+          #   devnet-bridge = {
+          #     type = "app";
+          #     program = "${devnet-bridge-program}/bin/devnet-bridge";
+          #   };
 
-            devnet-dali = {
-=======
-            default = developers;
-          };
+          #   devnet-dali = {
 
-          apps = let
-            makeApp = p: {
->>>>>>> main
-              type = "app";
-              program = pkgs.lib.meta.getExe p;
-            };
-<<<<<<< HEAD
+          #   default = developers;
+          # };
 
-            devnet-dali-b = {
-              type = "app";
-              program = "${packages.devnet-dali-b}/bin/run-devnet-dali-b";
-            };
-            devnet-picasso = {
-              type = "app";
-              program = "${packages.devnet-picasso}/bin/run-devnet-picasso-dev";
-            };
+          #   apps = let
+          #     makeApp = p: {
+          #       type = "app";
+          #       program = pkgs.lib.meta.getExe p;
+          #     };
 
-            devnet-kusama-picasso-karura = {
-              type = "app";
-              program =
-                "${packages.kusama-picasso-karura-devnet}/bin/kusama-picasso-karura";
-            };
+          #     devnet-dali-b = {
+          #       type = "app";
+          #       program = "${packages.devnet-dali-b}/bin/run-devnet-dali-b";
+          #     };
+          #     devnet-picasso = {
+          #       type = "app";
+          #       program = "${packages.devnet-picasso}/bin/run-devnet-picasso-dev";
+          #     };
 
-            # OBSOLETE
-            devnet-kusama-dali-karura =
-              trace "#OBSOLETE: use ` devnet-native-all`" {
-                type = "app";
-                program =
-                  "${packages.kusama-dali-karura-devnet}/bin/kusama-dali-karura";
-              };
+          #     devnet-kusama-picasso-karura = {
+          #       type = "app";
+          #       program =
+          #         "${packages.kusama-picasso-karura-devnet}/bin/kusama-picasso-karura";
+          #     };
 
-            devnet-native-all = trace
-              "biggest native(not container) devnet with all things possible to run native" {
-                type = "app";
-                program =
-                  "${packages.devnet-all-dev-local}/bin/kusama-dali-karura";
-              };
+          #     # OBSOLETE
+          #     devnet-kusama-dali-karura =
+          #      pkgs.lib.trace "#OBSOLETE: use ` devnet-native-all`" {
+          #         type = "app";
+          #         program =
+          #           "${packages.kusama-dali-karura-devnet}/bin/kusama-dali-karura";
+          #       };
 
-            price-feed = {
-              type = "app";
-              program = "${packages.price-feed}/bin/price-feed";
-            };
-            composable = {
-              type = "app";
-              program = "${packages.composable-node}/bin/composable";
-            };
-            acala = {
-              type = "app";
-              program = "${packages.acala-node}/bin/acala";
-            };
-            polkadot = {
-              type = "app";
-              program = "${packages.polkadot-node}/bin/polkadot";
-            };
+          #     devnet-native-all = trace
+          #       "biggest native(not container) devnet with all things possible to run native" {
+          #         type = "app";
+          #         program =
+          #           "${packages.devnet-all-dev-local}/bin/kusama-dali-karura";
+          #       };
 
-            junod = {
-              type = "app";
-              program = "${packages.junod}/bin/junod";
-            };
+          #     price-feed = {
+          #       type = "app";
+          #       program = "${packages.price-feed}/bin/price-feed";
+          #     };
+          #     composable = {
+          #       type = "app";
+          #       program = "${packages.composable-node}/bin/composable";
+          #     };
+          #     acala = {
+          #       type = "app";
+          #       program = "${packages.acala-node}/bin/acala";
+          #     };
+          #     polkadot = {
+          #       type = "app";
+          #       program = "${packages.polkadot-node}/bin/polkadot";
+          #     };
 
-            hyperspace = {
-              type = "app";
-              program = pkgs.lib.meta.getExe hyperspace-template.default;
-            };
+          #     junod = {
+          #       type = "app";
+          #       program = "${packages.junod}/bin/junod";
+          #     };
 
-=======
-          in rec {
-            devnet = makeApp packages.devnet-default-program;
-            devnet-persistent = makeApp packages.devnet-persistent-program;
-            devnet-xcvm = makeApp packages.devnet-xcvm-program;
-            devnet-dali = makeApp packages.devnet-dali;
-            devnet-picasso = makeApp packages.devnet-picasso;
-            devnet-kusama-picasso-karura =
-              makeApp packages.kusama-picasso-karura-devnet;
-            devnet-rococo-dali-karura =
-              makeApp packages.devnet-rococo-dali-karura;
-            devnet-picasso-complete = makeApp packages.devnet-picasso-complete;
-            devnet-dali-complete = makeApp packages.devnet-dali-complete;
-            price-feed = makeApp packages.price-feed;
-            composable = makeApp packages.composable-node;
-            acala = makeApp packages.acala-node;
-            polkadot = makeApp packages.polkadot-node;
-            junod = makeApp packages.junod;
->>>>>>> main
-            # TODO: move list of chains out of here and do fold
-            benchmarks-once-composable = flake-utils.lib.mkApp {
-              drv = run-with-benchmarks "composable-dev";
-            };
-            benchmarks-once-dali =
-              flake-utils.lib.mkApp { drv = run-with-benchmarks "dali-dev"; };
+          #     hyperspace = {
+          #       type = "app";
+          #       program = pkgs.lib.meta.getExe hyperspace-template.default;
+          #     };
 
-            benchmarks-once-picasso = flake-utils.lib.mkApp {
-              drv = run-with-benchmarks "picasso-dev";
-            };
-            simnode-tests = makeApp packages.simnode-tests;
-            simnode-tests-composable =
-              flake-utils.lib.mkApp { drv = run-simnode-tests "composable"; };
-            simnode-tests-picasso =
-              flake-utils.lib.mkApp { drv = run-simnode-tests "picasso"; };
-            simnode-tests-dali-rococo =
-              flake-utils.lib.mkApp { drv = run-simnode-tests "dali-rococo"; };
-            devnet-initialize-script-local =
-              makeApp packages.devnet-initialize-script-local;
-            devnet-initialize-script-persistent =
-              makeApp packages.devnet-initialize-script-persistent;
-            default = devnet-dali;
-          };
+          #   in rec {
+          #     devnet = makeApp packages.devnet-default-program;
+          #     devnet-persistent = makeApp packages.devnet-persistent-program;
+          #     devnet-xcvm = makeApp packages.devnet-xcvm-program;
+          #     devnet-dali = makeApp packages.devnet-dali;
+          #     devnet-picasso = makeApp packages.devnet-picasso;
+          #     devnet-kusama-picasso-karura =
+          #       makeApp packages.kusama-picasso-karura-devnet;
+          #     devnet-rococo-dali-karura =
+          #       makeApp packages.devnet-rococo-dali-karura;
+          #     devnet-picasso-complete = makeApp packages.devnet-picasso-complete;
+          #     devnet-dali-complete = makeApp packages.devnet-dali-complete;
+          #     price-feed = makeApp packages.price-feed;
+          #     composable = makeApp packages.composable-node;
+          #     acala = makeApp packages.acala-node;
+          #     polkadot = makeApp packages.polkadot-node;
+          #     junod = makeApp packages.junod;
+          #     # TODO: move list of chains out of here and do fold
+          #     benchmarks-once-composable = flake-utils.lib.mkApp {
+          #       drv = run-with-benchmarks "composable-dev";
+          #     };
+          #     benchmarks-once-dali =
+          #       flake-utils.lib.mkApp { drv = run-with-benchmarks "dali-dev"; };
+
+          #     benchmarks-once-picasso = flake-utils.lib.mkApp {
+          #       drv = run-with-benchmarks "picasso-dev";
+          #     };
+          #     simnode-tests = makeApp packages.simnode-tests;
+          #     simnode-tests-composable =
+          #       flake-utils.lib.mkApp { drv = run-simnode-tests "composable"; };
+          #     simnode-tests-picasso =
+          #       flake-utils.lib.mkApp { drv = run-simnode-tests "picasso"; };
+          #     simnode-tests-dali-rococo =
+          #       flake-utils.lib.mkApp { drv = run-simnode-tests "dali-rococo"; };
+          #     devnet-initialize-script-local =
+          #       makeApp packages.devnet-initialize-script-local;
+          #     devnet-initialize-script-persistent =
+          #       makeApp packages.devnet-initialize-script-persistent;
+          #     default = devnet-dali;
+          #   };
+          # };    
         });
     in eachSystemOutputs // {
 
