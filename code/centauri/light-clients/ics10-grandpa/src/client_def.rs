@@ -107,10 +107,26 @@ where
 				let first_header = first_proof.unknown_headers.first().ok_or_else(|| {
 					Error::Custom("No headers in first finality proof".to_string())
 				})?;
-
 				let second_header = second_proof.unknown_headers.first().ok_or_else(|| {
 					Error::Custom("No headers in second finality proof".to_string())
 				})?;
+
+				let first_last_header = first_proof
+					.unknown_headers
+					.last()
+					.expect("first finality proof has at least one header; qed");
+				let second_last_header = second_proof
+					.unknown_headers
+					.last()
+					.expect("second finality proof has at least one header; qed");
+
+				if first_last_header != first_proof.block ||
+					second_last_header != second_proof.block
+				{
+					return Err(Error::Custom(
+						"Misbehaviour proofs are not for the same chain".into(),
+					))
+				}
 
 				let first_parent = first_header.parent_hash;
 				let second_parent = second_header.parent_hash;
@@ -144,7 +160,6 @@ where
 					&mut &first_proof.justification[..],
 				)
 				.map_err(|_| Error::Custom("Could not decode first justification".to_string()))?;
-
 				let second_justification = GrandpaJustification::<RelayChainHeader>::decode(
 					&mut &second_proof.justification[..],
 				)
@@ -165,6 +180,7 @@ where
 				let second_valid = second_justification
 					.verify::<H>(client_state.current_set_id, &client_state.current_authorities)
 					.is_ok();
+
 				if !first_valid || !second_valid {
 					Err(Error::Custom("Invalid justification".to_string()))?
 				}
