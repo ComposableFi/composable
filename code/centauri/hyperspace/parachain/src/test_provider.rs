@@ -1,30 +1,18 @@
 use crate::{
-	parachain::api, polkadot, signer::ExtrinsicSigner, utils::unsafe_cast_to_jsonrpsee_client,
-	Error, GrandpaClientState, ParachainClient,
+	parachain::api, signer::ExtrinsicSigner, utils::unsafe_cast_to_jsonrpsee_client, Error,
+	ParachainClient,
 };
-use beefy_prover::Prover;
-use codec::Decode;
 use common::AccountId;
 use finality_grandpa::BlockNumberOps;
 use futures::{Stream, StreamExt};
 use grandpa_light_client_primitives::{FinalityProof, ParachainHeaderProofs};
-use grandpa_prover::GrandpaProver;
 use ibc::{
 	applications::transfer::{msgs::transfer::MsgTransfer, PrefixedCoin},
 	core::ics24_host::identifier::{ChannelId, ClientId, PortId},
-	timestamp::Timestamp,
 };
 use ibc_rpc::IbcApiClient;
-use ics10_grandpa::consensus_state::ConsensusState as GrandpaConsensusState;
-use ics11_beefy::{
-	client_state::ClientState as BeefyClientState,
-	consensus_state::ConsensusState as BeefyConsensusState,
-};
 use jsonrpsee::core::client::SubscriptionClientT;
-use pallet_ibc::{
-	light_clients::{AnyClientState, AnyConsensusState, HostFunctionsManager},
-	MultiAddress, Timeout, TransferParams,
-};
+use pallet_ibc::{MultiAddress, Timeout, TransferParams};
 use primitives::{KeyProvider, TestProvider};
 use sp_core::{
 	crypto::{AccountId32, Ss58Codec},
@@ -35,7 +23,7 @@ use sp_runtime::{
 	traits::{Header as HeaderT, IdentifyAccount, One, Verify},
 	MultiSignature, MultiSigner,
 };
-use std::{collections::BTreeMap, fmt::Display, pin::Pin, str::FromStr, time::Duration};
+use std::{collections::BTreeMap, fmt::Display, pin::Pin, str::FromStr};
 use subxt::{
 	tx::{AssetTip, BaseExtrinsicParamsBuilder, ExtrinsicParams, SubstrateExtrinsicParamsBuilder},
 	Config,
@@ -65,175 +53,6 @@ where
 		self.client_id = Some(client_id)
 	}
 
-	/// Construct a beefy client state to be submitted to the counterparty chain
-	pub async fn construct_beefy_client_state(
-		&self,
-		beefy_activation_block: u32,
-	) -> Result<(AnyClientState, AnyConsensusState), Error>
-	where
-		Self: KeyProvider,
-		<T::Signature as Verify>::Signer:
-			From<MultiSigner> + IdentifyAccount<AccountId = T::AccountId>,
-		MultiSigner: From<MultiSigner>,
-		<T as Config>::Address: From<<T as Config>::AccountId>,
-		u32: From<<T as Config>::BlockNumber>,
-	{
-		use ibc::core::ics24_host::identifier::ChainId;
-		let api = self.relay_client.storage();
-		let para_client_api = self.para_client.storage();
-		let client_wrapper = Prover {
-			relay_client: self.relay_client.clone(),
-			para_client: self.para_client.clone(),
-			beefy_activation_block,
-			para_id: self.para_id,
-		};
-		loop {
-			let beefy_state = client_wrapper
-				.construct_beefy_client_state(beefy_activation_block)
-				.await
-				.map_err(|e| {
-					Error::from(format!("[construct_beefy_client_state] Failed due to {:?}", e))
-				})?;
-
-			let subxt_block_number: subxt::rpc::BlockNumber =
-				beefy_state.latest_beefy_height.into();
-			let block_hash = self.relay_client.rpc().block_hash(Some(subxt_block_number)).await?;
-			let heads_addr = polkadot::api::storage().paras().heads(
-				&polkadot::api::runtime_types::polkadot_parachain::primitives::Id(self.para_id),
-			);
-			let head_data = api.fetch(&heads_addr, block_hash).await?.ok_or_else(|| {
-				Error::Custom(format!(
-					"Couldn't find header for ParaId({}) at relay block {:?}",
-					self.para_id, block_hash
-				))
-			})?;
-			let decoded_para_head = sp_runtime::generic::Header::<
-				u32,
-				sp_runtime::traits::BlakeTwo256,
-			>::decode(&mut &*head_data.0)?;
-			let block_number = decoded_para_head.number;
-			let client_state = BeefyClientState::<HostFunctionsManager> {
-				chain_id: ChainId::new("relay-chain".to_string(), 0),
-				relay_chain: Default::default(),
-				mmr_root_hash: beefy_state.mmr_root_hash,
-				latest_beefy_height: beefy_state.latest_beefy_height,
-				frozen_height: None,
-				beefy_activation_block: beefy_state.beefy_activation_block,
-				latest_para_height: block_number,
-				para_id: self.para_id,
-				authority: beefy_state.current_authorities,
-				next_authority_set: beefy_state.next_authorities,
-				_phantom: Default::default(),
-			};
-			// we can't use the genesis block to construct the initial state.
-			if block_number == 0 {
-				continue
-			}
-			let subxt_block_number: subxt::rpc::BlockNumber = block_number.into();
-			let block_hash =
-				self.para_client.rpc().block_hash(Some(subxt_block_number)).await.unwrap();
-			let timestamp_addr = api::storage().timestamp().now();
-			let unix_timestamp_millis = para_client_api
-				.fetch(&timestamp_addr, block_hash)
-				.await?
-				.expect("Timestamp should exist");
-			let timestamp_nanos = Duration::from_millis(unix_timestamp_millis).as_nanos() as u64;
-
-			let consensus_state = AnyConsensusState::Beefy(BeefyConsensusState {
-				timestamp: Timestamp::from_nanoseconds(timestamp_nanos)
-					.unwrap()
-					.into_tm_time()
-					.unwrap(),
-				root: decoded_para_head.state_root.as_bytes().to_vec().into(),
-			});
-
-			return Ok((AnyClientState::Beefy(client_state), consensus_state))
-		}
-	}
-
-	pub async fn construct_grandpa_client_state(
-		&self,
-	) -> Result<(AnyClientState, AnyConsensusState), Error>
-	where
-		Self: KeyProvider,
-		<T::Signature as Verify>::Signer:
-			From<MultiSigner> + IdentifyAccount<AccountId = T::AccountId>,
-		MultiSigner: From<MultiSigner>,
-		<T as Config>::Address: From<<T as Config>::AccountId>,
-		u32: From<<T as Config>::BlockNumber>,
-	{
-		let relay_ws_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.relay_ws_client) };
-		let para_ws_client = unsafe { unsafe_cast_to_jsonrpsee_client(&self.para_ws_client) };
-		let prover = GrandpaProver {
-			relay_client: self.relay_client.clone(),
-			relay_ws_client,
-			para_client: self.para_client.clone(),
-			para_ws_client,
-			para_id: self.para_id,
-		};
-		let api = self.relay_client.storage();
-		let para_client_api = self.para_client.storage();
-		loop {
-			let light_client_state = prover
-				.initialize_client_state()
-				.await
-				.map_err(|_| Error::from("Error constructing client state".to_string()))?;
-
-			let heads_addr = polkadot::api::storage().paras().heads(
-				&polkadot::api::runtime_types::polkadot_parachain::primitives::Id(self.para_id),
-			);
-			let head_data = api
-				.fetch(&heads_addr, Some(light_client_state.latest_relay_hash))
-				.await?
-				.ok_or_else(|| {
-					Error::Custom(format!(
-						"Couldn't find header for ParaId({}) at relay block {:?}",
-						self.para_id, light_client_state.latest_relay_hash
-					))
-				})?;
-			let decoded_para_head = sp_runtime::generic::Header::<
-				u32,
-				sp_runtime::traits::BlakeTwo256,
-			>::decode(&mut &*head_data.0)?;
-			let block_number = decoded_para_head.number;
-			// we can't use the genesis block to construct the initial state.
-			if block_number == 0 {
-				continue
-			}
-
-			let mut client_state = GrandpaClientState::<HostFunctionsManager>::default();
-
-			client_state.relay_chain = Default::default();
-			client_state.current_authorities = light_client_state.current_authorities;
-			client_state.current_set_id = light_client_state.current_set_id;
-			client_state.latest_relay_hash = light_client_state.latest_relay_hash.into();
-			client_state.frozen_height = None;
-			client_state.latest_para_height = block_number;
-			client_state.para_id = self.para_id;
-			client_state.latest_relay_height = light_client_state.latest_relay_height;
-
-			let subxt_block_number: subxt::rpc::BlockNumber = block_number.into();
-			let block_hash =
-				self.para_client.rpc().block_hash(Some(subxt_block_number)).await.unwrap();
-			let timestamp_addr = api::storage().timestamp().now();
-			let unix_timestamp_millis = para_client_api
-				.fetch(&timestamp_addr, block_hash)
-				.await?
-				.expect("Timestamp should exist");
-			let timestamp_nanos = Duration::from_millis(unix_timestamp_millis).as_nanos() as u64;
-
-			let consensus_state = AnyConsensusState::Grandpa(GrandpaConsensusState {
-				timestamp: Timestamp::from_nanoseconds(timestamp_nanos)
-					.unwrap()
-					.into_tm_time()
-					.unwrap(),
-				root: decoded_para_head.state_root.as_bytes().to_vec().into(),
-			});
-
-			return Ok((AnyClientState::Grandpa(client_state), consensus_state))
-		}
-	}
-
 	pub async fn submit_create_client_msg(&self, msg: pallet_ibc::Any) -> Result<ClientId, Error> {
 		let call = api::tx().ibc().deliver(vec![api::runtime_types::pallet_ibc::Any {
 			type_url: msg.type_url,
@@ -244,7 +63,7 @@ where
 		// Query newly created client Id
 		let identified_client_state = IbcApiClient::<u32, H256>::query_newly_created_client(
 			&*self.para_ws_client,
-			block_hash.unwrap().into(),
+			block_hash.into(),
 			ext_hash.into(),
 		)
 		.await

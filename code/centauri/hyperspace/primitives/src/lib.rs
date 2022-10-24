@@ -15,6 +15,7 @@ use ibc_proto::{
 		connection::v1::QueryConnectionResponse,
 	},
 };
+use subxt::ext::sp_core;
 
 use crate::error::Error;
 #[cfg(feature = "testing")]
@@ -47,6 +48,7 @@ use pallet_ibc::light_clients::{AnyClientState, AnyConsensusState};
 
 pub mod error;
 pub mod mock;
+pub mod utils;
 
 pub enum UpdateMessage {
 	Single(Any),
@@ -266,6 +268,9 @@ pub trait IbcProvider {
 	/// Return the host chain's light client id on counterparty chain
 	fn client_id(&self) -> ClientId;
 
+	/// Return the connection id on this chain
+	fn connection_id(&self) -> ConnectionId;
+
 	/// Returns the client type of this chain.
 	fn client_type(&self) -> ClientType;
 
@@ -292,6 +297,18 @@ pub trait IbcProvider {
 		latest_height: u64,
 		latest_client_height_on_counterparty: u64,
 	) -> bool;
+
+	/// This should return a subjectively chosen client and consensus state for this chain.
+	async fn initialize_client_state(
+		&self,
+	) -> Result<(AnyClientState, AnyConsensusState), Self::Error>;
+
+	/// Should find client id that was created in this transaction
+	async fn query_client_id_from_tx_hash(
+		&self,
+		tx_hash: sp_core::H256,
+		block_hash: Option<sp_core::H256>,
+	) -> Result<ClientId, Self::Error>;
 }
 
 /// Provides an interface that allows us run the hyperspace-testsuite
@@ -343,7 +360,12 @@ pub trait Chain: IbcProvider + KeyProvider + Send + Sync {
 
 	/// This should be used to submit new messages [`Vec<Any>`] from a counterparty chain to this
 	/// chain.
-	async fn submit(&self, messages: Vec<Any>) -> Result<(), Self::Error>;
+	/// Should return a tuple of transaction hash and optionally block hash where the transaction
+	/// was executed
+	async fn submit(
+		&self,
+		messages: Vec<Any>,
+	) -> Result<(sp_core::H256, Option<sp_core::H256>), Self::Error>;
 }
 
 /// Returns undelivered packet sequences that have been sent out from

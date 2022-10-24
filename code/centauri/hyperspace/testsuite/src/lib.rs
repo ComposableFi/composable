@@ -1,19 +1,18 @@
 #![allow(clippy::all)]
 
-use crate::utils::{assert_timeout_packet, parse_amount, timeout_future};
+use crate::utils::{assert_timeout_packet, parse_amount};
 use futures::{future, StreamExt};
 use hyperspace::send_packet_relay::set_relay_status;
-use hyperspace_primitives::TestProvider;
+use hyperspace_primitives::{
+	utils::{create_channel, create_connection, timeout_future},
+	TestProvider,
+};
 use ibc::{
 	applications::transfer::{msgs::transfer::MsgTransfer, Amount, PrefixedCoin, VERSION},
 	core::{
-		ics03_connection::{
-			self, connection::Counterparty, msgs::conn_open_init::MsgConnectionOpenInit,
-		},
 		ics04_channel::{
-			self, channel,
 			channel::{ChannelEnd, Order, State},
-			msgs::{chan_close_init::MsgChannelCloseInit, chan_open_init::MsgChannelOpenInit},
+			msgs::chan_close_init::MsgChannelCloseInit,
 		},
 		ics24_host::identifier::{ChannelId, ConnectionId, PortId},
 	},
@@ -48,7 +47,7 @@ where
 	let client_b_clone = chain_b.clone();
 	// Start relayer loop
 	let handle = tokio::task::spawn(async move {
-		hyperspace::relay(client_a_clone, client_b_clone).await.unwrap()
+		hyperspace::relay(client_a_clone, client_b_clone, None, None).await.unwrap()
 	});
 	// check if an open transfer channel exists
 	let (latest_height, ..) = chain_a.latest_height_and_timestamp().await.unwrap();
@@ -106,82 +105,25 @@ where
 		}
 	}
 
-	// Both clients have been updated, we can now start connection handshake
-	let msg = MsgConnectionOpenInit {
-		client_id: chain_a.client_id(),
-		counterparty: Counterparty::new(chain_b.client_id(), None, chain_b.connection_prefix()),
-		version: Some(ics03_connection::version::Version::default()),
-		delay_period: connection_delay,
-		signer: chain_a.account_id(),
-	};
-	let msg = Any { type_url: msg.type_url(), value: msg.encode_vec() };
-	chain_a.submit(vec![msg]).await.expect("Connection creation failed");
-
-	log::info!(target: "hyperspace", "============= Wait till both chains have completed connection handshake =============");
-
-	// wait till both chains have completed connection handshake
-	let future = chain_b
-		.ibc_events()
-		.await
-		.skip_while(|ev| future::ready(!matches!(ev, IbcEvent::OpenConfirmConnection(_))))
-		.take(1)
-		.collect::<Vec<_>>();
-
-	let mut events = timeout_future(
-		future,
-		15 * 60,
-		format!("Didn't see OpenConfirmConnection on {}", chain_b.name()),
-	)
-	.await;
-
-	let connection_id = match events.pop() {
-		Some(IbcEvent::OpenConfirmConnection(conn)) => conn.connection_id().unwrap().clone(),
-		got => panic!("Last event should be OpenConfirmConnection: {got:?}"),
-	};
+	let (connection_id, ..) = create_connection(chain_a, chain_b, connection_delay).await.unwrap();
 
 	log::info!(target: "hyperspace", "============ Connection handshake completed: ConnectionId({connection_id}) ============");
 	log::info!(target: "hyperspace", "=========================== Starting channel handshake ===========================");
 
-	let channel = ChannelEnd::new(
-		State::Init,
+	let (channel_id_a, channel_id_b) = create_channel(
+		chain_a,
+		chain_b,
+		connection_id.clone(),
+		PortId::transfer(),
+		VERSION.to_string(),
 		Order::Unordered,
-		channel::Counterparty::new(PortId::transfer(), None),
-		vec![connection_id.clone()],
-		ics04_channel::Version::new(VERSION.to_string()),
-	);
-
-	// open the transfer channel
-	let msg = MsgChannelOpenInit::new(PortId::transfer(), channel, chain_a.account_id());
-	let msg = Any { type_url: msg.type_url(), value: msg.encode_vec() };
-
-	chain_a.submit(vec![msg]).await.expect("Connection creation failed");
-
-	// wait till both chains have completed channel handshake
-	log::info!(target: "hyperspace", "============= Wait till both chains have completed channel handshake =============");
-	let future = chain_b
-		.ibc_events()
-		.await
-		.skip_while(|ev| future::ready(!matches!(ev, IbcEvent::OpenConfirmChannel(_))))
-		.take(1)
-		.collect::<Vec<_>>();
-
-	let mut events = timeout_future(
-		future,
-		15 * 60,
-		format!("Didn't see OpenConfirmChannel on {}", chain_b.name()),
 	)
-	.await;
-
-	let (channel_id, chain_b_channel_id) = match events.pop() {
-		Some(IbcEvent::OpenConfirmChannel(chan)) =>
-			(chan.counterparty_channel_id.unwrap(), chan.channel_id().unwrap().clone()),
-		got => panic!("Last event should be OpenConfirmConnection: {got:?}"),
-	};
-
+	.await
+	.unwrap();
 	// channel handshake completed
-	log::info!(target: "hyperspace", "============ Channel handshake completed: ChannelId({channel_id}) ============");
+	log::info!(target: "hyperspace", "============ Channel handshake completed: ChannelId({channel_id_a}) ============");
 
-	(handle, channel_id, chain_b_channel_id, connection_id)
+	(handle, channel_id_a, channel_id_b, connection_id)
 }
 
 /// Attempts to send 20% of funds of chain_a's signer to chain b's signer.
@@ -517,7 +459,7 @@ pub async fn ibc_messaging_packet_height_timeout_with_connection_delay<A, B>(
 	let client_a_clone = chain_a.clone();
 	let client_b_clone = chain_b.clone();
 	let handle = tokio::task::spawn(async move {
-		hyperspace::relay(client_a_clone, client_b_clone).await.unwrap()
+		hyperspace::relay(client_a_clone, client_b_clone, None, None).await.unwrap()
 	});
 	send_packet_and_assert_height_timeout(chain_a, chain_b, channel_id).await;
 	handle.abort()
@@ -544,7 +486,7 @@ pub async fn ibc_messaging_packet_timestamp_timeout_with_connection_delay<A, B>(
 	let client_a_clone = chain_a.clone();
 	let client_b_clone = chain_b.clone();
 	let handle = tokio::task::spawn(async move {
-		hyperspace::relay(client_a_clone, client_b_clone).await.unwrap()
+		hyperspace::relay(client_a_clone, client_b_clone, None, None).await.unwrap()
 	});
 	send_packet_and_assert_timestamp_timeout(chain_a, chain_b, channel_id).await;
 	handle.abort()
@@ -570,7 +512,7 @@ where
 	let client_a_clone = chain_a.clone();
 	let client_b_clone = chain_b.clone();
 	let handle = tokio::task::spawn(async move {
-		hyperspace::relay(client_a_clone, client_b_clone).await.unwrap()
+		hyperspace::relay(client_a_clone, client_b_clone, None, None).await.unwrap()
 	});
 	send_packet_with_connection_delay(chain_a, chain_b, channel_id).await;
 	handle.abort()
@@ -595,7 +537,7 @@ where
 	let client_a_clone = chain_a.clone();
 	let client_b_clone = chain_b.clone();
 	let handle = tokio::task::spawn(async move {
-		hyperspace::relay(client_a_clone, client_b_clone).await.unwrap()
+		hyperspace::relay(client_a_clone, client_b_clone, None, None).await.unwrap()
 	});
 	send_channel_close_init_and_assert_channel_close_confirm(chain_a, chain_b, channel_id).await;
 	handle.abort()
@@ -620,7 +562,7 @@ where
 	let client_a_clone = chain_a.clone();
 	let client_b_clone = chain_b.clone();
 	let handle = tokio::task::spawn(async move {
-		hyperspace::relay(client_a_clone, client_b_clone).await.unwrap()
+		hyperspace::relay(client_a_clone, client_b_clone, None, None).await.unwrap()
 	});
 	send_packet_and_assert_timeout_on_channel_close(chain_a, chain_b, channel_id).await;
 	handle.abort()

@@ -5013,8 +5013,10 @@ dependencies = [
  "ics13-near",
  "light-client-common",
  "log 0.4.17",
+ "metrics",
  "pallet-ibc",
  "parity-scale-codec",
+ "prometheus",
  "prost 0.10.4",
  "sc-keystore",
  "serde",
@@ -5117,6 +5119,7 @@ dependencies = [
  "ibc",
  "ibc-proto",
  "ibc-rpc",
+ "log 0.4.17",
  "pallet-ibc",
  "parity-scale-codec",
  "subxt 0.24.0",
@@ -7264,6 +7267,22 @@ dependencies = [
  "keccak",
  "rand_core 0.5.1",
  "zeroize",
+]
+
+[[package]]
+name = "metrics"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "futures-util",
+ "hyper 0.14.20",
+ "ibc",
+ "ibc-proto",
+ "log 0.4.17",
+ "prometheus",
+ "tendermint-proto",
+ "thiserror",
+ "tokio",
 ]
 
 [[package]]
