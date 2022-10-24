@@ -1,26 +1,30 @@
-import React from "react";
+import CheckIcon from "@mui/icons-material/Check";
+import CloseIcon from "@mui/icons-material/Close";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
   alpha,
+  Box,
   ListSubheader,
   MenuItem,
-  useTheme,
-  useMediaQuery,
   Typography,
-  Box,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
-import { InputProps, Input } from "./Input";
+import React, { ReactNode } from "react";
 import { BaseAsset } from "./BaseAsset";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import ExpandLessIcon from "@mui/icons-material/ExpandLess";
-import CheckIcon from "@mui/icons-material/Check";
+import { Input, InputProps } from "./Input";
 import { SearchInput } from "./SearchInput";
-import CloseIcon from "@mui/icons-material/Close";
 
-export type Option = {
+export type RequiredOption = {
   value: any;
   label?: string;
   icon?: string;
   disabled?: boolean;
+};
+
+export type Option = RequiredOption & {
+  [key: string]: any;
 };
 
 export type SelectProps = {
@@ -32,6 +36,7 @@ export type SelectProps = {
   mobileWidth?: number;
   searchable?: boolean;
   centeredLabel?: boolean;
+  renderValue?: (v: any) => ReactNode | undefined;
 } & InputProps;
 
 export const Select: React.FC<SelectProps> = ({
@@ -43,6 +48,7 @@ export const Select: React.FC<SelectProps> = ({
   mobileWidth,
   searchable,
   centeredLabel,
+  renderValue,
   ...rest
 }) => {
   const theme = useTheme();
@@ -103,6 +109,9 @@ export const Select: React.FC<SelectProps> = ({
         },
         IconComponent: open ? ExpandLessIcon : ExpandMoreIcon,
         renderValue: (v: any) => {
+          if (typeof renderValue === "function") {
+            return renderValue(v);
+          }
           const option = options!.find((option) => option.value == v);
           return (
             option && (
@@ -139,23 +148,23 @@ export const Select: React.FC<SelectProps> = ({
       {...rest}
     >
       {isMobile && (
-        <ListSubheader>
-          <Box textAlign="right">
-            <CloseIcon
-              sx={{
-                color: theme.palette.primary.main,
-              }}
-              onClick={() => setOpen(false)}
-            />
-          </Box>
-        </ListSubheader>
-      )}
-      {isMobile && (
-        <ListSubheader>
-          <Typography variant="h6" color="text.primary" textAlign="center">
-            Select option
-          </Typography>
-        </ListSubheader>
+        <>
+          <ListSubheader>
+            <Box textAlign="right">
+              <CloseIcon
+                sx={{
+                  color: theme.palette.primary.main,
+                }}
+                onClick={() => setOpen(false)}
+              />
+            </Box>
+          </ListSubheader>
+          <ListSubheader>
+            <Typography variant="h6" color="text.primary" textAlign="center">
+              Select option
+            </Typography>
+          </ListSubheader>
+        </>
       )}
       {searchable && (
         <ListSubheader>
