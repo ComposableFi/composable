@@ -41,7 +41,7 @@ members = [
   "parachain/runtime/composable-wasm",
   "utils/price-feed",
   "utils/collator-sidecar",
-  "utils/subxt-codegen",
+  "utils/subxt-exports",
   "utils/composable-subxt",
   "utils/xcmp",
   "utils/wasm-optimizer",

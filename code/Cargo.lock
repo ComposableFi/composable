@@ -15916,6 +15916,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "subxt-exports"
+version = "0.1.0"
+dependencies = [
+ "color-eyre 0.6.2",
+ "parity-scale-codec",
+ "serde",
+ "subxt 0.24.0",
+ "subxt-codegen 0.1.0",
+ "tokio",
+]
+
+[[package]]
 name = "subxt-macro"
 version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
