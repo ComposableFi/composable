@@ -30,6 +30,7 @@ export interface PalletPabloPoolConfiguration extends Enum {
   readonly asConstantProduct: {
     readonly owner: AccountId32;
     readonly pair: ComposableTraitsDefiCurrencyPairCurrencyId;
+    readonly lpToken: u128;
     readonly fee: Permill;
     readonly baseWeight: Permill;
   } & Struct;

@@ -184,21 +184,16 @@ export default {
     PalletIbcEventsIbcEvent: "Null",
     PalletIbcErrorsIbcError: "Null",
     PalletMosaicAmmSwapInfo: "Null",
-    ComposableTraitsStakingRewardPool: "Null",
-    ComposableTraitsStakingRewardPoolConfiguration: "Null",
     IbcTransferPalletParams: "Null",
     IbcTransferTransferParams: "Null",
     ComposableTraitsOracleRewardTracker: "Null",
-    ComposableTraitsStakingStake: "Null",
     ComposableTraitsVestingVestingScheduleInfo: "Null",
     ComposableTraitsVestingVestingScheduleIdSet: "Null",
-    ComposableTraitsStakingRewardUpdate: "Null",
     ComposableTraitsAccountProxyProxyType: "Null",
     ComposableTraitsAccountProxyProxyDefinition: "Null",
     PalletAccountProxyAnnouncement: "Null",
     PalletCosmwasmContractInfo: "Null",
     PalletCosmwasmCodeInfo: "Null",
-    PalletCosmwasmEntryPoint: "Null",
-    PalletStakingRewardsRewardAccumulationHookError: "Null"
+    PalletCosmwasmEntryPoint: "Null"
   }
 };
