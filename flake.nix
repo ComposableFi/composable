@@ -404,6 +404,23 @@
             meta = { mainProgram = "composable"; };
           });
 
+          metadata = trace "Metadata used by clients to call nodes" {
+            composable-dali-dev-metadata =
+              trace "Outputs scale encoded API for given node and runtime"
+              stdenv.mkDerivation rec {
+                name = "composable-dali-local-metadata";
+                buildInputs = with packages; [ composable-node ];
+                src = rust-src;
+                buildPhase = ''
+                  ${composable-node}/bin/composable metadata --chain=dali-dev >  ${name}.scale
+                '';
+                installPhase = ''
+                  mkdir --parents $out
+                  cp ${name}.scale $out/
+                '';
+              };
+          };
+
           composable-node-release = crane-nightly.buildPackage (common-attrs
             // {
               name = "composable";
@@ -810,6 +827,7 @@
                 npm run start
               '';
             };
+            inherit (metadata) composable-dali-dev-metadata;
 
             xcvm-contract-asset-registry =
               mk-xcvm-contract "xcvm-asset-registry";
