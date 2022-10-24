@@ -101,7 +101,9 @@ where
 				let second_proof = misbehavior.second_finality_proof;
 
 				if first_proof.block == second_proof.block {
-					return Err(Error::Custom("Misbehaviour proofs are for the same block".into()))
+					return Err(
+						Error::Custom("Misbehaviour proofs are for the same block".into()).into()
+					)
 				}
 
 				let first_header = first_proof.unknown_headers.first().ok_or_else(|| {
@@ -111,21 +113,22 @@ where
 					Error::Custom("No headers in second finality proof".to_string())
 				})?;
 
-				let first_last_header = first_proof
+				let first_last_hash = first_proof
 					.unknown_headers
 					.last()
-					.expect("first finality proof has at least one header; qed");
-				let second_last_header = second_proof
+					.expect("first finality proof has at least one header; qed")
+					.hash();
+				let second_last_hash = second_proof
 					.unknown_headers
 					.last()
-					.expect("second finality proof has at least one header; qed");
+					.expect("second finality proof has at least one header; qed")
+					.hash();
 
-				if first_last_header != first_proof.block ||
-					second_last_header != second_proof.block
-				{
+				if first_last_hash != first_proof.block || second_last_hash != second_proof.block {
 					return Err(Error::Custom(
 						"Misbehaviour proofs are not for the same chain".into(),
-					))
+					)
+					.into())
 				}
 
 				let first_parent = first_header.parent_hash;
