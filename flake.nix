@@ -1307,7 +1307,7 @@
             devnet-xcvm-program = pkgs.composable.mkDevnetProgram "devnet-xcvm"
               (import ./.nix/devnet-specs/xcvm.nix {
                 inherit pkgs;
-                inherit devnet-dali;
+                inherit (packages) devnet-dali;
               });
 
             devnet-bridge-program =
