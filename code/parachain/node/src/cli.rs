@@ -2,6 +2,8 @@ use crate::chain_spec;
 use clap::Parser;
 use std::path::PathBuf;
 
+mod metadata;
+
 /// Sub-commands supported by the collator.
 #[derive(Debug, Parser)]
 pub enum Subcommand {
@@ -31,6 +33,9 @@ pub enum Subcommand {
 
 	/// Revert the chain to a previous state.
 	Revert(sc_cli::RevertCmd),
+
+	/// Writes the specified runtime's metadata to stdout.
+	Metadata(metadata::MetadataCmd),
 
 	/// Key management cli utilities
 	#[clap(subcommand)]
