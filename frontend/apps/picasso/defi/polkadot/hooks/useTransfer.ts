@@ -1,13 +1,11 @@
 import { useSnackbar } from "notistack";
 import { useStore } from "@/stores/root";
-import { useMemo } from "react";
 import {
-  getTransferToken,
   TransferHandlerArgs,
   transferKaruraPicasso,
   transferKusamaPicasso,
   transferPicassoKarura,
-  transferPicassoKusama
+  transferPicassoKusama,
 } from "@/defi/polkadot/pallets/xcmp";
 import { useSelectedAccount } from "@/defi/polkadot/hooks/index";
 import { useAllParachainProviders } from "@/defi/polkadot/context/hooks";
@@ -18,41 +16,36 @@ import { AssetId } from "@/defi/polkadot/types";
 
 export const useTransfer = () => {
   const allProviders = useAllParachainProviders();
-  const from = useStore(state => state.transfers.networks.from);
+  const from = useStore((state) => state.transfers.networks.from);
   const fromProvider = allProviders[from];
-  const to = useStore(state => state.transfers.networks.to);
+  const to = useStore((state) => state.transfers.networks.to);
   const toProvider = allProviders[to];
 
   const { enqueueSnackbar } = useSnackbar();
 
   const selectedRecipient = useStore(
-    state => state.transfers.recipients.selected
-  );
-
-  const assets = useStore(
-    ({ substrateBalances }) => substrateBalances.assets[from].assets
+    (state) => state.transfers.recipients.selected
   );
 
   const { hasFeeItem, feeItem } = useStore(({ transfers }) => transfers);
-  const weight = useStore(state => state.transfers.fee.weight);
-  const native = useStore(
-    ({ substrateBalances }) => substrateBalances.assets[from].native
-  );
-  const keepAlive = useStore(state => state.transfers.keepAlive);
+  const weight = useStore((state) => state.transfers.fee.weight);
+
+  const keepAlive = useStore((state) => state.transfers.keepAlive);
   const existentialDeposit = useStore(
     ({ substrateBalances }) =>
       substrateBalances.assets[from].native.existentialDeposit
   );
-  const isTokenNative = useMemo(() => {
-    return assets[getTransferToken(from, to)].meta.supportedNetwork[from] === 1;
-  }, [from, to, assets]);
-  const amount = useStore(state => state.transfers.amount);
-  const tokenId = useStore(state => state.transfers.tokenId);
-  const balance = isTokenNative ? native.balance : assets[tokenId].balance;
 
+  const amount = useStore((state) => state.transfers.amount);
   const account = useSelectedAccount();
   const providers = useAllParachainProviders();
   const executor = useExecutor();
+  const assets = useStore(
+    ({ substrateBalances }) => substrateBalances.assets[from].assets
+  );
+  const getBalance = useStore(
+    (state) => state.transfers.getTransferTokenBalance
+  );
 
   const prepareAndCall = async (
     transferHandler: (args: TransferHandlerArgs) => Promise<void>
@@ -63,7 +56,7 @@ export const useTransfer = () => {
       console.error("No API or Executor or account", {
         api,
         executor,
-        account
+        account,
       });
       return;
     }
@@ -74,13 +67,13 @@ export const useTransfer = () => {
     const TARGET_PARACHAIN_ID = SUBSTRATE_NETWORKS[to].parachainId;
     // Set amount to transfer
     const amountToTransfer = getAmountToTransfer({
-      balance,
+      balance: getBalance(),
       amount,
       existentialDeposit,
       keepAlive,
       api,
       targetChain: to,
-      sourceChain: from
+      sourceChain: from,
     });
 
     const feeItemId =
@@ -100,7 +93,7 @@ export const useTransfer = () => {
       signerAddress,
       hasFeeItem,
       feeItemId,
-      weight
+      weight,
     });
   };
 
@@ -130,11 +123,9 @@ export const useTransfer = () => {
     amount,
     from,
     to,
-    balance,
+    balance: getBalance(),
     account,
     fromProvider,
     toProvider,
-    isTokenNative,
-    tokenId
   };
 };

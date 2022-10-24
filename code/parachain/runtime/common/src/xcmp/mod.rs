@@ -27,6 +27,7 @@ use xcm_executor::{
 parameter_types! {
 	// similar to what Acala/Hydra has
 	pub const BaseXcmWeight: Weight = 100_000_000;
+	pub const XcmMaxAssetsForTransfer: usize = 2;
 }
 
 /// this is debug struct implementing as many XCMP interfaces as possible

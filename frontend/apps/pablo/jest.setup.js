@@ -95,13 +95,27 @@ jest.mock("@/defi/subsquid/auctions/helpers", () => {
 })
 
 jest.mock("@/store/hooks/usePoolTvlChart", () => ({
-    usePoolTvlChart: jest.fn().mockImplementation(() => ({
-      seriesIntervals: [],
-      chartSeries: [],
-      selectedInterval: "24h",
-      setSelectedInterval: jest.fn()
-    }))
+  usePoolTvlChart: jest.fn().mockImplementation(() => ({
+    seriesIntervals: [],
+    chartSeries: [],
+    selectedInterval: "24h",
+    setSelectedInterval: jest.fn()
+  }))
 }))
+
+jest.mock("@/defi/subsquid/stakingRewards/helpers", () => {
+  return {
+    fetchSubsquid: jest.fn().mockImplementation(() => Promise.resolve({
+      pabloOverviewStats: {
+        averageLockMultiplier: 1,
+        averageLockTime: 1,
+        totalValueLocked: "1"
+      },
+      stakingPositions: [],
+      pabloTransactions: []
+    }))
+  }
+})
 
 jest.mock("@/defi/subsquid/bonds/helpers", () => ({
   fetchTotalPurchasedBondsByOfferIds: jest.fn().mockImplementation(() => (Promise.resolve({})))

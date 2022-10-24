@@ -37,7 +37,7 @@ export function getEnvironment(target: AvailableEndpoints) {
   return cacheAndFetch(target);
 }
 
-export type EndpointPreset = "rococo" | "local";
+export type EndpointPreset = "rococo" | "local" | "persistentDevnet";
 export type EndpointPresets = {
   [key in EndpointPreset]: {
     [key in AvailableEndpoints]: string;
@@ -48,14 +48,21 @@ export const endpointPresets: EndpointPresets = {
     picasso: "wss://rpc.composablefinance.ninja",
     kusama: "wss://rococo-rpc.polkadot.io",
     karura: "",
-    subsquid: ""
+    subsquid: "",
   },
   local: {
     picasso: "ws://127.0.0.1:9988",
     karura: "ws://127.0.0.1:9999",
     kusama: "ws://127.0.0.1:9944",
-    subsquid: "http://localhost:4350/graphql"
-  }
+    subsquid: "http://localhost:4350/graphql",
+  },
+  persistentDevnet: {
+    picasso: "wss://persistent.devnets.composablefinance.ninja/chain/dali",
+    karura: "wss://persistent.devnets.composablefinance.ninja/chain/karura",
+    kusama: "wss://persistent.devnets.composablefinance.ninja/chain/rococo",
+    subsquid:
+      "https://persistent.devnets.composablefinance.ninja/subsquid/graphql",
+  },
 };
 
 export function setEndpointPreset(endpointPreset: EndpointPreset) {

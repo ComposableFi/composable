@@ -24,8 +24,8 @@ export const Assets: {
     supportedNetwork: {
       karura: null,
       picasso: 1,
-      kusama: null
-    }
+      kusama: null,
+    },
   },
   ksm: {
     decimals: 12,
@@ -36,8 +36,8 @@ export const Assets: {
     supportedNetwork: {
       karura: null,
       picasso: 4,
-      kusama: 1
-    }
+      kusama: 1,
+    },
   },
   kusd: {
     decimals: 12,
@@ -48,8 +48,8 @@ export const Assets: {
     supportedNetwork: {
       karura: 129,
       picasso: 12884901886, // After creating the asset id via assetRegistry, this value could be anything.
-      kusama: null
-    }
+      kusama: null,
+    },
   },
   layr: {
     decimals: 12,
@@ -60,8 +60,8 @@ export const Assets: {
     supportedNetwork: {
       karura: null,
       picasso: 2,
-      kusama: null
-    }
+      kusama: null,
+    },
   },
   pablo: {
     decimals: 12,
@@ -72,8 +72,8 @@ export const Assets: {
     supportedNetwork: {
       karura: null,
       picasso: 2,
-      kusama: null
-    }
+      kusama: null,
+    },
   },
   ausd: {
     decimals: 12,
@@ -84,8 +84,8 @@ export const Assets: {
     supportedNetwork: {
       karura: 2,
       picasso: null,
-      kusama: null
-    }
+      kusama: null,
+    },
   },
   kar: {
     decimals: 12,
@@ -96,8 +96,8 @@ export const Assets: {
     supportedNetwork: {
       karura: 1,
       picasso: null,
-      kusama: null
-    }
+      kusama: null,
+    },
   },
   usdc: {
     decimals: 12,
@@ -108,9 +108,21 @@ export const Assets: {
     supportedNetwork: {
       karura: null,
       picasso: 100,
-      kusama: null
-    }
-  }
+      kusama: null,
+    },
+  },
+  usdt: {
+    decimals: 12,
+    assetId: "usdt",
+    symbol: "USDT",
+    icon: "/tokens/usdt.svg",
+    name: "USDT",
+    supportedNetwork: {
+      karura: null,
+      picasso: null,
+      kusama: null,
+    },
+  },
 };
 
 export const AssetsValidForNow: AssetId[] = ["pica", "kusd", "ksm"];
@@ -144,14 +156,14 @@ export const getAssetOptions = (noneTokenLabel?: string) => [
           label: noneTokenLabel,
           icon: undefined,
           disabled: true,
-          hidden: true
-        }
+          hidden: true,
+        },
       ]
     : []),
-  ...Object.values(Assets).map(asset => ({
+  ...Object.values(Assets).map((asset) => ({
     value: asset.assetId,
     label: asset.name,
     shortLabel: asset.symbol,
-    icon: asset.icon
-  }))
+    icon: asset.icon,
+  })),
 ];

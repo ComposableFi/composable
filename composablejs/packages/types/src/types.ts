@@ -8,3 +8,5 @@ export * from './common/types';
 export * from './pablo/types';
 export * from './currencyFactory/types';
 export * from './democracy/types';
+export * from './cosmwasm/types';
+export * from './stakingRewards/types';

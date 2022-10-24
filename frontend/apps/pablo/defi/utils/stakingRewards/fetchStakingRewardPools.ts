@@ -21,7 +21,8 @@ export async function fetchStakingRewardPools(
         stakingRewardPoolAtIndex = stakingRewardPoolAtIndex.toJSON();
 
         if (stakingRewardPoolAtIndex == null) {
-          throw new Error(`[AssetId: ${assetId}] Staking Reward Pool does not exist`);
+          continue;
+          // throw new Error(`[AssetId: ${assetId}] Staking Reward Pool does not exist`);
         }
 
         const _decoded = decodeStakingRewardPool(

@@ -1605,10 +1605,12 @@ name = "composable-maths"
 version = "0.0.1"
 dependencies = [
  "composable-support",
+ "composable-tests-helpers",
  "composable-traits",
  "frame-support",
  "frame-system",
  "parity-scale-codec",
+ "proptest",
  "rust_decimal",
  "scale-info",
  "sp-arithmetic",
@@ -2020,7 +2022,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-minimal-std"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=298d29c5c37d255dfd69a091843343101362be52#298d29c5c37d255dfd69a091843343101362be52"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=24d22367af7602aecc84da390f6f22f88f35b6bb#24d22367af7602aecc84da390f6f22f88f35b6bb"
 dependencies = [
  "base64 0.13.0",
  "serde",
@@ -2094,7 +2096,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=298d29c5c37d255dfd69a091843343101362be52#298d29c5c37d255dfd69a091843343101362be52"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=24d22367af7602aecc84da390f6f22f88f35b6bb#24d22367af7602aecc84da390f6f22f88f35b6bb"
 dependencies = [
  "cosmwasm-minimal-std",
  "either",
@@ -2106,14 +2108,16 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm-wasmi"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=298d29c5c37d255dfd69a091843343101362be52#298d29c5c37d255dfd69a091843343101362be52"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=24d22367af7602aecc84da390f6f22f88f35b6bb#24d22367af7602aecc84da390f6f22f88f35b6bb"
 dependencies = [
  "cosmwasm-minimal-std",
  "cosmwasm-vm",
  "either",
+ "hex",
  "log 0.4.17",
  "serde",
  "serde_json",
+ "wasm-instrument 0.2.0",
  "wasmi 0.11.0",
 ]
 
@@ -2985,22 +2989,47 @@ dependencies = [
 ]
 
 [[package]]
-name = "cw-utils"
-version = "0.13.4"
+name = "cw-storage-plus"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9dbaecb78c8e8abfd6b4258c7f4fbeb5c49a5e45ee4d910d3240ee8e1d714e1b"
+checksum = "1c8b264257c4f44c49b7ce09377af63aa040768ecd3fd7bdd2d48a09323a1e90"
 dependencies = [
  "cosmwasm-std",
  "schemars",
+ "serde",
+]
+
+[[package]]
+name = "cw-utils"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "414b91f3d7a619bb26c835119d7095804596a1382ddc1d184c33c1d2c17f6c5e"
+dependencies = [
+ "cosmwasm-std",
+ "cw2",
+ "schemars",
+ "semver 1.0.14",
  "serde",
  "thiserror",
 ]
 
 [[package]]
-name = "cw20"
-version = "0.13.4"
+name = "cw2"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4cb782b8f110819a4eb5dbbcfed25ffba49ec16bbe32b4ad8da50a5ce68fec05"
+checksum = "aa74c324af8e3506fd8d50759a265bead3f87402e413c840042af5d2808463d6"
+dependencies = [
+ "cosmwasm-std",
+ "cw-storage-plus 0.14.0",
+ "schemars",
+ "serde",
+]
+
+[[package]]
+name = "cw20"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4f446f59c519fbac5ab8b9f6c7f8dcaa05ee761703971406b28221ea778bb737"
 dependencies = [
  "cosmwasm-std",
  "cw-utils",
@@ -7025,6 +7054,7 @@ dependencies = [
  "polkadot-primitives",
  "polkadot-runtime-parachains",
  "primitives",
+ "rococo-runtime",
  "scale-info",
  "smallvec 1.10.0",
  "sp-api",
@@ -8512,16 +8542,29 @@ name = "pallet-cosmwasm"
 version = "0.0.1"
 dependencies = [
  "composable-support",
+ "composable-traits",
  "cosmwasm-minimal-std",
  "cosmwasm-vm",
  "cosmwasm-vm-wasmi",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "hex",
  "log 0.4.17",
+ "num-traits",
+ "orml-tokens",
+ "orml-traits",
+ "pallet-assets 0.0.1",
+ "pallet-balances",
+ "pallet-governance-registry",
+ "pallet-timestamp",
  "parity-scale-codec",
  "parity-wasm 0.45.0",
+ "primitives",
  "scale-info",
  "serde_json",
+ "sha2 0.10.6",
+ "sha3 0.10.5",
  "sp-arithmetic",
  "sp-core",
  "sp-io",
@@ -18269,7 +18312,9 @@ version = "0.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-storage-plus",
+ "cw-storage-plus 0.14.0",
+ "cw-utils",
+ "cw2",
  "schemars",
  "serde",
  "thiserror",
@@ -18293,7 +18338,9 @@ version = "0.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-storage-plus",
+ "cw-storage-plus 0.13.4",
+ "cw-utils",
+ "cw2",
  "cw20",
  "num",
  "schemars",
@@ -18311,7 +18358,9 @@ version = "0.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-storage-plus",
+ "cw-storage-plus 0.14.0",
+ "cw-utils",
+ "cw2",
  "cw20",
  "hex",
  "schemars",

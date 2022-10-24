@@ -37,6 +37,7 @@ import {
   useCrowdloanRewardsHasStarted,
 } from "@/stores/defi/polkadot/crowdloanRewards/hooks";
 import { DEFAULT_EVM_ID, APP_NAME } from "@/defi/polkadot/constants";
+import { KsmAndEthAssociationInfoBox } from "@/components/Organisms/CrowdloanRewards/KsmAndEthAssociationInfoBox";
 
 const ERROR_MESSAGES = {
   KSM_WALLET_NOT_CONNECTED: {
@@ -120,6 +121,8 @@ export const ClaimLoanPage = () => {
       account?.toLowerCase(),
       selectedAccount?.address
     );
+
+  const isEligibleForBothAddresses = isEthAccountEligible && isPicassoAccountEligible;
 
   const { contributedAmount, totalRewards } =
     useCrowdloanRewardsContributionAndRewards(
@@ -297,7 +300,7 @@ export const ClaimLoanPage = () => {
         justifyContent="center"
         pb={9}
       >
-        <Grid item {...standardPageSize} mt={theme.spacing(9)}>
+        <Grid item {...standardPageSize} mt={theme.spacing(14)}>
           <PageTitle
             title={isStable ? "Stablecoin Contribution." : "KSM Contribution"}
             textAlign="center"
@@ -305,15 +308,15 @@ export const ClaimLoanPage = () => {
           />
         </Grid>
         {hasNothingToClaim && (
-          <Grid item {...standardPageSize} mt={theme.spacing(9)}>
+          <Grid item {...standardPageSize}>
             <NoEligibleWalletFeaturedBox
               title={ineligibleText.title}
               textBelow={ineligibleText.textBelow}
             />
           </Grid>
         )}
-        {!hasNothingToClaim && (
-          <Grid item {...standardPageSize} mt={theme.spacing(9)}>
+        {!hasNothingToClaim && !isEligibleForBothAddresses && (
+          <Grid item {...standardPageSize} mt={theme.spacing(2)}>
             {isStable ? (
               <StablecoinClaimForm
                 isClaiming={isPendingAssociate || isPendingClaim}
@@ -364,6 +367,11 @@ export const ClaimLoanPage = () => {
             )}
           </Grid>
         )}
+
+        {isEligibleForBothAddresses && <Grid item {...standardPageSize} mt={theme.spacing(2)} >
+          <KsmAndEthAssociationInfoBox connectedAccount={selectedAccount} isEligibleForBothAddresses />
+        </Grid>}
+
         <Grid item {...standardPageSize}>
           <SS8WalletHelper />
         </Grid>
