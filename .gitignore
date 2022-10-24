@@ -38,6 +38,7 @@ node_modules
 .*.swp
 
 .idea
+.fleet
 
 # ignore user vscode sttings
 .vscode/*

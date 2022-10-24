@@ -1,0 +1,65 @@
+digraph xcvm_denominations_tokens {
+    graph [fontname = "Handlee"];
+    node [fontname = "Handlee"];
+    edge [fontname = "Handlee"];
+
+    subgraph cluster_legend {
+        label = "Legend";
+        color = yellow;
+        "Token/Asset" [shape = diamond;];
+        "Relayed Token" [shape = diamond;style = dashed;];
+        "Consensus/Chain" [shape = box3d;];
+        "Consensus/Chain" -> "Token/Asset" [arrowhead = diamond; label = "issues/mints";];
+        "Relayer" [shape = record;];
+    }
+    
+    subgraph cluster_release {
+        label = "Release";
+        dot [shape = diamond;label = "DOT";];
+        ksm [shape = diamond;label = "KSM";];
+        vksm [shape = diamond;label = "vKSM";];
+        bnc [shape = diamond;label = "BNC";];
+        kusama_ksm [shape = diamond;label = "KUSAMA(KSM)";style = dashed;];
+        polkadot_dot [shape = diamond;label = "POLKADOT(DOT)";style = dashed;];
+        ibc_polkadot_dot [shape = diamond;label = "IBC(POLKADOT(DOT))";style = dashed;];
+        ibc_polkadot_bnc [shape = diamond;label = "IBC(POLKADOT(BNC))";style = dashed;];
+        
+        bifrost_kusama [shape = box3d;label = "Bifrost";];
+        picasso [shape = box3d;label = "Picasso";];
+        kusama [shape = box3d;label = "Kusama";];
+        polkadot [shape = box3d;label = "Polkadot";];
+        composable [shape = box3d;label = "Composable";];
+        ibc_relayer [shape = record;label = "Hyperspace IBC Relayer(IBC)";];
+        kusama_relayer [shape = record;label = "Kusama HRMP Relayer(KUSAMA)";];
+        polkadot_relayer [shape = record;label = "Polkadot HRMP Relayer(POLKADOT)";];
+        
+        kusama_relayer -> kusama [shape = bidirectional;];
+        kusama_relayer -> picasso [shape = bidirectional;];
+        kusama_relayer -> bifrost_kusama [shape = bidirectional;];
+        
+        polkadot_relayer -> composable [shape = bidirectional;];
+        polkadot_relayer -> bifrost_kusama [shape = bidirectional;];
+        polkadot_relayer -> polkadot [shape = bidirectional;];
+        
+        ibc_relayer -> composable;
+        ibc_relayer -> picasso;
+        
+        kusama -> ksm [arrowhead = diamond; label = "issuer";];
+        picasso -> kusama_ksm [arrowhead = diamond;];
+        kusama_ksm -> ksm [arrowhead = none; style = dashed; label = "wraps";];
+        
+        bifrost_kusama -> bnc [arrowhead = diamond; label = "issuer";];
+        bifrost_kusama -> vksm [arrowhead = diamond; label = "issuer";];
+        
+        polkadot -> dot [arrowhead = diamond; label = "issuer";];
+        composable -> polkadot_dot [arrowhead = diamond;];
+        polkadot_dot -> dot [arrowhead = none; style = dashed; label = "wraps";];
+        
+        picasso -> ibc_polkadot_bnc [arrowhead = diamond;];
+        picasso -> ibc_polkadot_dot [arrowhead = diamond;];
+        
+        ibc_polkadot_bnc -> bnc [arrowhead = none; style = dashed; label = "wraps";];
+        
+        ibc_polkadot_dot -> dot [arrowhead = none; style = dashed; label = "wraps";];
+    }
+}

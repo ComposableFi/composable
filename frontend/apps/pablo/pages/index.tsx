@@ -25,31 +25,30 @@ const Home: NextPage = () => {
           <Box textAlign="center">
             <PageTitle title="Overview" />
           </Box>
-          {!connected && (
-            <>
-              <Grid container>
-                <Grid item xs={12}>
-                  <ConnectWalletFeaturedBox
-                    mt={8}
-                    title="Connect wallet"
-                    textBelow="To see your portfolio, wallet needs to be connected."
-                    ButtonProps={{ label: "Connect Wallet", size: "small" }}
-                  />
-                </Grid>
-                <Grid item xs={12} mt={8}>
-                  <Statistics />
-                </Grid>
-                <Grid container spacing={8}>
-                  <Grid item xs={12} md={6} mt={8}>
-                    <TVLChart />
-                  </Grid>
-                  <Grid item xs={12} md={6} mt={8}>
-                    <VolumeChart />
-                  </Grid>
-                </Grid>
+
+          <Grid container>
+            {!connected && <Grid item xs={12}>
+              <ConnectWalletFeaturedBox
+                mt={8}
+                title="Connect wallet"
+                textBelow="To see your portfolio, wallet needs to be connected."
+                ButtonProps={{ label: "Connect Wallet", size: "small" }}
+              />
+            </Grid>}
+            <Grid item xs={12} mt={8}>
+              <Statistics />
+            </Grid>
+            <Grid container spacing={8}>
+              <Grid item xs={12} md={6} mt={8}>
+                <TVLChart />
               </Grid>
-            </>
-          )}
+              <Grid item xs={12} md={6} mt={8}>
+                <VolumeChart />
+              </Grid>
+            </Grid>
+          </Grid>
+
+
 
           {connected && (
             <>

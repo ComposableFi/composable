@@ -2,7 +2,9 @@ import { ColorModeContext } from "picasso/contexts/ColorMode";
 import { getDesignTokens } from "picasso/styles/theme";
 import { ThemeProvider as EmotionThemeProvider } from "@emotion/react";
 import { Box, createTheme, CssBaseline, ThemeProvider } from "@mui/material";
-import { FC, useState, useMemo } from "react";
+import { FC, useMemo, useState } from "react";
+import { client as apolloClient } from "picasso/apollo/apolloGraphql";
+import { ApolloProvider } from "@apollo/client";
 
 export const MUIDecorator: FC = ({ children }) => {
   const [mode, setMode] = useState<"light" | "dark">("dark");
@@ -10,25 +12,29 @@ export const MUIDecorator: FC = ({ children }) => {
     () => ({
       toggleColorMode: () => {
         setMode((prevMode) => (prevMode === "light" ? "dark" : "light"));
-      },
+      }
     }),
     []
   );
+
+
   return (
     <Box
       sx={{
-        position: "relative",
+        position: "relative"
       }}
     >
-      <ColorModeContext.Provider value={colorMode}>
-        <EmotionThemeProvider theme={createTheme(getDesignTokens(mode))}>
-          <ThemeProvider theme={createTheme(getDesignTokens(mode))}>
-            {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
-            <CssBaseline/>
-            {children}
-          </ThemeProvider>
-        </EmotionThemeProvider>
-      </ColorModeContext.Provider>
+      <ApolloProvider client={apolloClient}>
+        <ColorModeContext.Provider value={colorMode}>
+          <EmotionThemeProvider theme={createTheme(getDesignTokens(mode))}>
+            <ThemeProvider theme={createTheme(getDesignTokens(mode))}>
+              {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
+              <CssBaseline />
+              {children}
+            </ThemeProvider>
+          </EmotionThemeProvider>
+        </ColorModeContext.Provider>
+      </ApolloProvider>
     </Box>
   );
 };

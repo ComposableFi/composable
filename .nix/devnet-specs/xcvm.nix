@@ -1,4 +1,4 @@
-{ pkgs, packages, ... }: {
+{ pkgs, devnet-dali, ... }: {
   modules = [
     (let
       db-container-name = "db";
@@ -13,7 +13,6 @@
       hasuraGraphqlPort = 8080;
       relaychainPort = 9944;
       parachainPort = 9988;
-      subsquidParachainIndexerPort = 3000;
       subsquidIndexerGateway = 8081;
       subsquidIndexerStatusService = 60291;
       junoRpcPort = 26657;
@@ -200,11 +199,19 @@
 
           # ============== POLKADOT ==============
           "${dali-container-name}" = mk-composable-container
-            (import ../services/devnet-dali.nix {
+            (import ../services/devnet.nix {
               inherit pkgs;
-              inherit packages;
-              inherit relaychainPort;
-              inherit parachainPort;
+              devnet = devnet-dali;
+              ports = [
+                {
+                  host = relaychainPort;
+                  container = 9944;
+                }
+                {
+                  host = parachainPort;
+                  container = 9988;
+                }
+              ];
             });
           subsquid-indexer = mk-composable-container
             (import ../services/subsquid-indexer.nix {
@@ -212,7 +219,6 @@
               redis = redis-container-name;
               parachain = dali-container-name;
               inherit parachainPort;
-              parachainIndexerPort = subsquidParachainIndexerPort;
             });
           "${subsquid-indexer-gateway-container-name}" = mk-composable-container
             (import ../services/subsquid-indexer-gateway.nix {

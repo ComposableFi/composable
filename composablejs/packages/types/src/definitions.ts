@@ -5,3 +5,5 @@ export { default as common } from "./common/definitions";
 export { default as pablo } from "./pablo/definitions";
 export { default as currencyFactory } from "./currencyFactory/definitions";
 export { default as democracy } from "./democracy/definitions";
+export { default as cosmwasm } from "./cosmwasm/definitions";
+export { default as stakingRewards } from "./stakingRewards/definitions";

@@ -7,7 +7,7 @@ import {
   ResolverInterface,
 } from "type-graphql";
 import type { EntityManager } from "typeorm";
-import { Event, Account, Activity, HistoricalLockedValue } from "../../model";
+import { Account, HistoricalLockedValue } from "../../model";
 
 @ObjectType()
 export class PabloOverviewStats {
@@ -46,6 +46,7 @@ export class PabloOverviewStatsResolver
         SELECT
           amount
         FROM historical_locked_value
+        WHERE source = 'Pablo'
         ORDER BY timestamp DESC
         LIMIT 1
       `
@@ -77,6 +78,7 @@ export class PabloOverviewStatsResolver
         SELECT
             avg(reward_multiplier) as average_reward_multiplier
         FROM staking_position
+        WHERE asset_id = '5'
       `
       );
 
@@ -96,6 +98,7 @@ export class PabloOverviewStatsResolver
         SELECT
             avg(duration) as average_duration
         FROM staking_position
+        WHERE asset_id = '5'
       `
       );
 

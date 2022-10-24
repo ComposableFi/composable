@@ -13,7 +13,12 @@ export const DEFI_CONFIG = {
     "movr",
     "ksm",
     "xPICA",
-    "pablo"
+    "pablo",
   ] as const, // important
-  ammIds: ["uniswap", "sushiswap", "quickswap"] as const
+  ammIds: ["uniswap", "sushiswap", "quickswap"] as const,
+};
+export const TRANSFER_ASSET_LIST = {
+  kusama: ["ksm"],
+  karura: ["kusd", "kar"],
+  picasso: ["pica"],
 };

@@ -790,7 +790,6 @@ pub(crate) fn check_rewards(expected: &[CheckRewards<'_>]) {
 			.expect(&format!("pool {pool_asset_id} not present in RewardPools"));
 
 		assert_eq!(pool.owner, *owner, "error at pool {pool_asset_id}");
-		assert_eq!(pool.asset_id, *pool_asset_id, "error at pool {pool_asset_id}");
 
 		let pool_account = StakingRewards::pool_account_id(pool_asset_id);
 

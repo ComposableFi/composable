@@ -1,5 +1,5 @@
 # outputs /lib/wasmswap.wasm
-{ buildGoModule, crane, fetchFromGitHub, patchelf, system, lib }:
+{ crane, fetchFromGitHub }:
 crane.buildPackage {
   name = "wasmswap";
   src = fetchFromGitHub {

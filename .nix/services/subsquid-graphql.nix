@@ -1,4 +1,4 @@
-{ database, pkgs, graphqlPort, ... }: {
+{ database, graphqlPort, ... }: {
   service = {
     build.context = "${../../subsquid}";
     depends_on = {
