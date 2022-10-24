@@ -1,37 +1,19 @@
 use anyhow::Result;
 use clap::Parser;
-use futures::future;
 use hyperspace::logging;
 use metrics::{data::Metrics, handler::MetricsHandler, init_prometheus};
 use primitives::Chain;
 use prometheus::Registry;
 use std::{path::PathBuf, str::FromStr, time::Duration};
-use tendermint_proto::Protobuf;
 
 mod chain;
 
 use chain::Config;
-use futures::StreamExt;
-use ibc::{
-	core::{
-		ics02_client::msgs::create_client::MsgCreateAnyClient,
-		ics03_connection::{connection::Counterparty, msgs::conn_open_init::MsgConnectionOpenInit},
-		ics04_channel,
-		ics04_channel::{
-			channel,
-			channel::{ChannelEnd, Order, State},
-			msgs::chan_open_init::MsgChannelOpenInit,
-		},
-		ics24_host::identifier::PortId,
-	},
-	events::IbcEvent,
-	tx_msg::Msg,
-};
-use ibc_proto::google::protobuf::Any;
+use ibc::core::ics04_channel::channel::Order;
+use ibc::core::ics24_host::identifier::PortId;
 use primitives::{
-	mock::LocalClientTypes,
-	utils::{create_channel, create_clients, create_connection, timeout_future},
-	IbcProvider, KeyProvider,
+	utils::{create_channel, create_clients, create_connection},
+	IbcProvider,
 };
 
 #[derive(Debug, Parser)]
