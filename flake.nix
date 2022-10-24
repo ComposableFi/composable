@@ -1417,6 +1417,7 @@
             xcvm = import ./.nix/devnet-specs/xcvm.nix {
               inherit pkgs;
               inherit packages;
+              inherit (packages) devnet-dali;
             };
           };
 
