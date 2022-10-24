@@ -214,15 +214,16 @@ where
 
 		let from = client_state.latest_relay_hash;
 
-		let mut finalized = ancestry
+		let finalized = ancestry
 			.ancestry(from, header.finality_proof.block)
 			.map_err(|_| Error::Custom(format!("Invalid ancestry!")))?;
-		finalized.sort();
+		let mut finalized_sorted = finalized.clone();
+		finalized_sorted.sort();
 
 		for (relay_hash, parachain_header_proof) in header.parachain_headers {
 			// we really shouldn't set consensus states for parachain headers not in the finalized
 			// chain.
-			if finalized.binary_search(&relay_hash).is_err() {
+			if finalized_sorted.binary_search(&relay_hash).is_err() {
 				continue
 			}
 
