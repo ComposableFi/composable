@@ -145,8 +145,6 @@ pub trait Amm {
 	) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError>;
 }
 
-// TODO: Perhaps we need a way to not have a max reward for a pool.
-pub const MAX_REWARDS: u128 = 100_000_000_000_000_000_000_000_u128;
 pub const REWARD_PERCENTAGE: u32 = 10;
 
 /// Pool Fees

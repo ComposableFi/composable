@@ -676,10 +676,7 @@ mod extend {
 					end_block: current_block_number + 100_001,
 					reward_configs: btree_map([(
 						USDT::ID,
-						RewardConfig {
-							max_rewards: USDT::units(100_000),
-							reward_rate: RewardRate::per_second(USDT::units(1)),
-						},
+						RewardConfig { reward_rate: RewardRate::per_second(USDT::units(1)) },
 					)]),
 					lock: LockConfig {
 						duration_presets: btree_map([
@@ -704,6 +701,7 @@ mod extend {
 				},
 			);
 
+			// This block the reward pot is "paused", so these rewards will not accumulate
 			process_and_progress_blocks::<StakingRewards, Test>(1);
 
 			mint_assets([ALICE], [USDT::ID], USDT::units(100_000));
@@ -760,10 +758,11 @@ mod extend {
 						staked_amount + extended_amount
 					)
 					.expect("boosted amount calculation should not fail"),
-					// 5 units already staked, 6 more units added, 11 blocks worth of rewards
+					// 5 units already staked, 6 more units added, 10 blocks worth of rewards
+					// (as during one of the blocks the reward accumulation was paused)
 					// already accumulated at 1 unit per second,, this is the resulting inflation:
-					// (66*10^12) * ((6*10^12) * 1.01) / ((5*10^12) * 1.01)
-					reductions: btree_map([(USDT::ID, 79_200_000_000_000)]),
+					// (60*10^12) * ((6*10^12) * 1.01) / ((5*10^12) * 1.01)
+					reductions: btree_map([(USDT::ID, 72_000_000_000_000)]),
 					lock: Lock {
 						started_at: <<Test as crate::Config>::UnixTime as UnixTime>::now()
 							.as_secs(),
@@ -790,10 +789,7 @@ mod extend {
 					end_block: current_block_number + 100_001,
 					reward_configs: btree_map([(
 						USDT::ID,
-						RewardConfig {
-							max_rewards: USDT::units(100_000),
-							reward_rate: RewardRate::per_second(USDT::units(1)),
-						},
+						RewardConfig { reward_rate: RewardRate::per_second(USDT::units(1)) },
 					)]),
 					lock: LockConfig {
 						duration_presets: btree_map([
@@ -1264,10 +1260,7 @@ fn unstake_should_work() {
 			end_block: 100_000,
 			reward_configs: [(
 				USDT::ID,
-				RewardConfig {
-					max_rewards: USDT::units(1_000_000),
-					reward_rate: RewardRate::per_second(USDT::units(1)),
-				},
+				RewardConfig { reward_rate: RewardRate::per_second(USDT::units(1)) },
 			)]
 			.into_iter()
 			.try_collect()
@@ -1868,13 +1861,10 @@ fn default_lock_config() -> LockConfig<MaxStakingDurationPresets> {
 }
 
 fn default_reward_config() -> BoundedBTreeMap<u128, RewardConfig<u128>, MaxRewardConfigsPerPool> {
-	[(
-		USDT::ID,
-		RewardConfig { max_rewards: 100_u128, reward_rate: RewardRate::per_second(10_u128) },
-	)]
-	.into_iter()
-	.try_collect()
-	.unwrap()
+	[(USDT::ID, RewardConfig { reward_rate: RewardRate::per_second(10_u128) })]
+		.into_iter()
+		.try_collect()
+		.unwrap()
 }
 
 pub fn assert_last_event<T, F>(matcher: F)
