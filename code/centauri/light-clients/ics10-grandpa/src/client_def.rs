@@ -135,8 +135,8 @@ where
 				check_canonicity(&second_proof.unknown_headers, second_parent)?;
 
 				// TODO: should we handle genesis block here somehow?
-				let known_first = H::get_relaychain_headers(first_parent);
-				let known_second = H::get_relaychain_headers(second_parent);
+				let known_first = H::get_relaychain_header(first_parent);
+				let known_second = H::get_relaychain_header(second_parent);
 
 				if known_first.is_none() || known_second.is_none() {
 					Err(Error::Custom(
@@ -259,10 +259,11 @@ where
 			client_state.current_authorities = scheduled_change.next_authorities;
 		}
 
-		for header in &finalized {
-			let header = ancestry.header(header).expect("finalized headers are in ancestry; qed");
-			H::add_relaychain_headers(header);
-		}
+		let headers = finalized
+			.into_iter()
+			.map(|h| ancestry.header(&h).expect("finalized headers are in ancestry; qed").clone())
+			.collect::<Vec<_>>();
+		H::add_relaychain_headers(&headers);
 
 		Ok((client_state, ConsensusUpdateResult::Batch(consensus_states)))
 	}

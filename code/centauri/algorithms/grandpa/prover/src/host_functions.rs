@@ -17,7 +17,10 @@ use crate::H256;
 use ics10_grandpa::client_message::RelayChainHeader;
 use primitives::HostFunctions;
 use sp_core::ed25519::{Public, Signature};
-use sp_runtime::{app_crypto::RuntimePublic, traits::BlakeTwo256};
+use sp_runtime::{
+	app_crypto::RuntimePublic,
+	traits::{BlakeTwo256, Header},
+};
 use std::fmt::Debug;
 
 /// Only holds implementations for the relevant Host Functions for the verifier
@@ -35,11 +38,17 @@ impl HostFunctions for HostFunctionsProvider {
 		pubkey.verify(&msg, sig)
 	}
 
-	fn add_relaychain_headers(header: &Self::Header) {
+	fn add_relaychain_headers(headers: &[Self::Header]) {
 		todo!()
 	}
 
-	fn get_relaychain_headers(hash: H256) -> Option<Self::Header> {
+	fn get_relaychain_hash(
+		number: <Self::Header as Header>::Number,
+	) -> Option<<Self::Header as Header>::Hash> {
+		todo!()
+	}
+
+	fn get_relaychain_header(hash: <Self::Header as Header>::Hash) -> Option<Self::Header> {
 		todo!()
 	}
 }

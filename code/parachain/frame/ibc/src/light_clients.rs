@@ -1,4 +1,9 @@
 use alloc::{borrow::ToOwned, format, string::ToString, vec::Vec};
+use frame_support::{
+	pallet_prelude::{OptionQuery, StorageMap},
+	traits::StorageInstance,
+	Twox64Concat,
+};
 use ibc::core::{
 	ics02_client,
 	ics02_client::{client_consensus::ConsensusState, client_state::ClientState},
@@ -16,7 +21,10 @@ use ics11_beefy::{
 	consensus_state::BEEFY_CONSENSUS_STATE_TYPE_URL,
 };
 use sp_core::{ed25519, H256};
-use sp_runtime::{app_crypto::RuntimePublic, traits::BlakeTwo256};
+use sp_runtime::{
+	app_crypto::RuntimePublic,
+	traits::{BlakeTwo256, Header},
+};
 use tendermint_proto::Protobuf;
 
 pub const TENDERMINT_CLIENT_STATE_TYPE_URL: &str = "/ibc.lightclients.tendermint.v1.ClientState";
@@ -76,6 +84,31 @@ impl tendermint_light_client_verifier::host_functions::HostFunctionsProvider
 
 impl ics07_tendermint::HostFunctionsProvider for HostFunctionsManager {}
 
+pub struct GrandpaBlockHashStorageInstance;
+impl StorageInstance for GrandpaBlockHashStorageInstance {
+	fn pallet_prefix() -> &'static str {
+		"ibc.lightclients.grandpa"
+	}
+
+	const STORAGE_PREFIX: &'static str = "BlockHash";
+}
+pub type GrandpaBlockHashStorage =
+	StorageMap<GrandpaBlockHashStorageInstance, Twox64Concat, u32, H256, OptionQuery>;
+
+pub struct GrandpaHeaderStorageInstance;
+impl StorageInstance for GrandpaHeaderStorageInstance {
+	fn pallet_prefix() -> &'static str {
+		"ibc.lightclients.grandpa"
+	}
+
+	const STORAGE_PREFIX: &'static str = "Header";
+}
+pub type GrandpaHeaderStorage =
+	StorageMap<GrandpaHeaderStorageInstance, Twox64Concat, H256, RelayChainHeader, OptionQuery>;
+
+/// Maximum number of block number to block hash mappings to keep (oldest pruned first).
+const GRANDPA_BLOCK_HASHES_CACHE_SIZE: u32 = 500;
+
 impl grandpa_client_primitives::HostFunctions for HostFunctionsManager {
 	type Header = RelayChainHeader;
 
@@ -83,12 +116,41 @@ impl grandpa_client_primitives::HostFunctions for HostFunctionsManager {
 		pub_key.verify(&msg, sig)
 	}
 
-	fn add_relaychain_headers(header: &Self::Header) {
-		todo!()
+	fn add_relaychain_headers(headers: &[Self::Header]) {
+		if headers.is_empty() {
+			return
+		}
+
+		for header in headers {
+			let hash = header.hash();
+			GrandpaBlockHashStorage::insert(header.number, hash);
+			GrandpaHeaderStorage::insert(hash, header);
+		}
+
+		let last_header = headers.last().unwrap();
+
+		// prune old headers
+		let to_remove_to = last_header
+			.number
+			.saturating_sub(GRANDPA_BLOCK_HASHES_CACHE_SIZE)
+			.saturating_sub(1);
+		let to_remove_from = to_remove_to.saturating_sub(headers.len() as u32);
+		for i in to_remove_from..=to_remove_to {
+			if let Some(hash) = GrandpaBlockHashStorage::get(i) {
+				GrandpaBlockHashStorage::remove(i);
+				GrandpaHeaderStorage::remove(hash);
+			}
+		}
 	}
 
-	fn get_relaychain_headers(hash: H256) -> Option<Self::Header> {
-		todo!()
+	fn get_relaychain_hash(
+		number: <Self::Header as Header>::Number,
+	) -> Option<<Self::Header as Header>::Hash> {
+		GrandpaBlockHashStorage::get(number)
+	}
+
+	fn get_relaychain_header(hash: <Self::Header as Header>::Hash) -> Option<Self::Header> {
+		GrandpaHeaderStorage::get(hash)
 	}
 }
 

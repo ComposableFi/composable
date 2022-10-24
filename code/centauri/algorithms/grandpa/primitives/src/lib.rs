@@ -104,10 +104,14 @@ pub trait HostFunctions: light_client_common::HostFunctions + 'static {
 
 	/// Verify an ed25519 signature
 	fn ed25519_verify(sig: &ed25519::Signature, msg: &[u8], pub_key: &ed25519::Public) -> bool;
-	/// TODO: docs
-	fn add_relaychain_headers(header: &Self::Header);
-	/// TODO: docs
-	fn get_relaychain_headers(hash: H256) -> Option<Self::Header>;
+	/// Stores a slice of RelayChain headers in the light client's storage.
+	fn add_relaychain_headers(headers: &[Self::Header]);
+	/// Retrieves a RelayChain header hash by its number from the light client's storage.
+	fn get_relaychain_hash(
+		number: <Self::Header as Header>::Number,
+	) -> Option<<Self::Header as Header>::Hash>;
+	/// Retrieves a RelayChain header by hash from the light client's storage.
+	fn get_relaychain_header(hash: <Self::Header as Header>::Hash) -> Option<Self::Header>;
 }
 
 /// This returns the storage key for a parachain header on the relay chain.
