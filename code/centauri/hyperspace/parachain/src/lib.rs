@@ -84,7 +84,7 @@ pub struct ParachainClient<T: subxt::Config> {
 	pub client_id: Option<ClientId>,
 	/// Connection Id
 	pub connection_id: Option<ConnectionId>,
-	/// Commitment prefix
+	/// ICS-23 provable store commitment prefix
 	pub commitment_prefix: Vec<u8>,
 	/// Public key for relayer on chain
 	pub public_key: MultiSigner,
@@ -98,7 +98,7 @@ pub struct ParachainClient<T: subxt::Config> {
 	pub max_extrinsic_weight: u64,
 	/// Channels cleared for packet relay
 	pub channel_whitelist: Vec<(ChannelId, PortId)>,
-	/// Finality protocol
+	/// Finality protocol to use, eg Beefy, Grandpa
 	pub finality_protocol: FinalityProtocol,
 }
 
