@@ -1526,7 +1526,7 @@ impl_runtime_apis! {
 			let min_expected_amounts: BTreeMap<_, _> = min_expected_amounts.iter().map(|(k, v)| (k.0, v.0)).collect();
 			let default_removed_assets = min_expected_amounts.iter().map(|(k, _)| (CurrencyId(k.0), 0_u128)).collect::<BTreeMap<_,_>>();
 			let simulate_remove_liquidity_result = <Pablo as Amm>::simulate_remove_liquidity(&who.0, pool_id.0, lp_amount.0, min_expected_amounts)
-				.unwrap_or_else(|_|
+				.unwrap_or(
 					RemoveLiquiditySimulationResult{
 						assets: default_removed_assets
 					}
