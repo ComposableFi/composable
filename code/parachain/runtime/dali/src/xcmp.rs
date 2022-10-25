@@ -1,7 +1,6 @@
 //! Setup of XCMP for parachain to allow cross chain transfers and other operations.
 //! Very similar to https://github.com/galacticcouncil/Basilisk-node/blob/master/runtime/basilisk/src/xcm.rs
 use super::*;
-use codec::Decode;
 use common::{
 	governance::native::EnsureRootOrHalfNativeTechnical, topology, xcmp::*, PriceConverter,
 };
@@ -14,10 +13,9 @@ use frame_support::{
 	log, parameter_types,
 	traits::{Everything, Nothing},
 	weights::Weight,
-	WeakBoundedVec,
 };
 use orml_traits::{
-	location::{AbsoluteReserveProvider, Reserve},
+	location::{AbsoluteReserveProvider, RelativeReserveProvider, Reserve},
 	parameter_type_with_key,
 };
 use orml_xcm_support::{
@@ -25,7 +23,6 @@ use orml_xcm_support::{
 };
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
-use primitives::currency::WellKnownCurrency;
 use sp_runtime::traits::{Convert, Zero};
 use sp_std::{marker::PhantomData, prelude::*};
 use xcm::{latest::prelude::*, v1::Junction::PalletInstance};
@@ -107,7 +104,7 @@ pub type XcmOriginToTransactDispatchOrigin = (
 );
 
 pub struct StaticAssetsMap;
-impl XcmpAssets for StaticAssetsMap{}
+impl XcmpAssets for StaticAssetsMap {}
 
 pub type LocalAssetTransactor = MultiCurrencyAdapter<
 	crate::Assets,
@@ -209,10 +206,6 @@ impl xcm_executor::Config for XcmConfig {
 	type AssetTrap = CaptureAssetTrap;
 }
 
-parameter_types! {
-	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::parachain_id().into())));
-}
-
 parameter_type_with_key! {
 	pub ParachainMinFee: |location: MultiLocation| -> Option<Balance> {
 		#[allow(clippy::match_ref_pats)] // false positive
@@ -235,7 +228,7 @@ impl orml_xtokens::Config for Runtime {
 	type CurrencyId = CurrencyId;
 	type CurrencyIdConvert = AssetsIdConverter;
 	type AccountIdToMultiLocation = AccountIdToMultiLocation;
-	type SelfLocation = SelfLocation;
+	type SelfLocation = topology::this::Local;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
 	type BaseXcmWeight = BaseXcmWeight;
@@ -243,7 +236,7 @@ impl orml_xtokens::Config for Runtime {
 	type MaxAssetsForTransfer = XcmMaxAssetsForTransfer;
 	type MinXcmFee = ParachainMinFee;
 	type MultiLocationsFilter = Everything;
-	type ReserveProvider = AbsoluteReserveProvider;
+	type ReserveProvider = RelativeReserveProvider;
 }
 
 impl orml_unknown_tokens::Config for Runtime {

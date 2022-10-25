@@ -4,7 +4,7 @@
 use super::*; // recursive dependency onto runtime
 use codec::{Decode, Encode};
 use common::{
-	topology::{self, SELF_RECURSIVE},
+	topology::{self},
 	xcmp::*,
 	PriceConverter,
 };
@@ -125,6 +125,7 @@ pub type XcmOriginToTransactDispatchOrigin = (
 );
 
 pub struct StaticAssetsMap;
+impl XcmpAssets for StaticAssetsMap {}
 
 pub type LocalAssetTransactor = MultiCurrencyAdapter<
 	crate::Assets,
@@ -206,7 +207,7 @@ impl xcm_executor::Config for XcmConfig {
 	type AssetTransactor = LocalAssetTransactor;
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
 	type IsReserve = IsReserveAssetLocationFilter;
-	type IsTeleporter = (); // <- should be enough to allow teleportation of PICA
+	type IsTeleporter = ();
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
@@ -219,13 +220,11 @@ impl xcm_executor::Config for XcmConfig {
 	type AssetTrap = CaptureAssetTrap;
 }
 
-
 parameter_type_with_key! {
-	pub ParachainMinFee: |location: MultiLocation| -> Option<Balance> {
+	pub OutgoingParachainMinFee: |location: MultiLocation| -> Option<Balance> {
 		#[allow(clippy::match_ref_pats)] // false positive
 		#[allow(clippy::match_single_binding)]
 		match (location.parents, location.first_interior()) {
-			// relay KSM
 			(1, None) => Some(400_000_000_000),
 			(1, Some(Parachain(id)))  =>  {
 				let location = XcmAssetLocation::new(location.clone());
@@ -248,7 +247,7 @@ impl orml_xtokens::Config for Runtime {
 	type BaseXcmWeight = BaseXcmWeight;
 	type LocationInverter = LocationInverter<Ancestry>;
 	type MaxAssetsForTransfer = XcmMaxAssetsForTransfer;
-	type MinXcmFee = ParachainMinFee;
+	type MinXcmFee = OutgoingParachainMinFee;
 	type MultiLocationsFilter = Everything;
 	type ReserveProvider = RelativeReserveProvider;
 }

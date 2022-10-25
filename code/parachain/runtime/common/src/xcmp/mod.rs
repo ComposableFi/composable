@@ -1,6 +1,6 @@
 //! proposed shared XCM setup parameters and impl
 use crate::{
-	topology::{self,},
+	topology::{self},
 	AccountId, Balance,
 };
 use composable_traits::{
@@ -217,7 +217,6 @@ impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 	}
 }
 
-
 pub trait XcmpAssets {
 	fn remote_to_local(location: MultiLocation) -> Option<CurrencyId> {
 		match location {
@@ -245,6 +244,10 @@ pub trait XcmpAssets {
 	fn local_to_remote(id: CurrencyId, _this_para_id: u32) -> Option<MultiLocation> {
 		match id {
 			CurrencyId::NATIVE => Some(topology::this::Local::get()),
+			CurrencyId::PBLO => Some(MultiLocation {
+				parents: 0,
+				interior: X1(GeneralIndex((CurrencyId::PBLO.into()))),
+			}),
 			CurrencyId::RELAY_NATIVE => Some(MultiLocation::parent()),
 			CurrencyId::kUSD => Some(MultiLocation {
 				parents: 1,
@@ -268,7 +271,6 @@ pub trait XcmpAssets {
 		}
 	}
 }
-
 
 /// Converts currency to and from local and remote
 pub struct CurrencyIdConvert<AssetRegistry, WellKnownCurrency, ThisParaId, WellKnownXcmpAssets>(

@@ -178,6 +178,57 @@ fn transfer_native_of_this_to_sibling() {
 }
 
 #[test]
+fn transfer_native_of_this_to_sibling_by_local_id() {
+	simtest();
+
+	Sibling::execute_with(|| {
+		assert_ok!(this_runtime::AssetsRegistry::update_asset(
+			RawOrigin::Root.into(),
+			CurrencyId::PICA,
+			composable_traits::xcm::assets::XcmAssetLocation(MultiLocation::new(
+				1,
+				X1(Parachain(THIS_PARA_ID),)
+			)),
+			Some(Ratio::saturating_from_rational(1, 1)),
+			None,
+		));
+	});
+
+	This::execute_with(|| {
+		use this_runtime::*;
+		let before = Balances::balance(&sibling_account(SIBLING_PARA_ID));
+
+		assert_ok!(XTokens::transfer(
+			Origin::signed(ALICE.into()),
+			CurrencyId::PICA,
+			3 * PICA,
+			Box::new(
+				MultiLocation::new(
+					1,
+					X2(
+						Junction::Parachain(SIBLING_PARA_ID),
+						Junction::AccountId32 { id: BOB, network: NetworkId::Any }
+					)
+				)
+				.into()
+			),
+			399_600_000_000
+		));
+
+		let after = Balances::balance(&sibling_account(SIBLING_PARA_ID));
+		assert_eq!(Balances::free_balance(&AccountId::from(ALICE)), 200 * PICA - 3 * PICA);
+		assert_gt!(after, before);
+		assert_eq!(after, 3 * PICA);
+	});
+
+	Sibling::execute_with(|| {
+		let balance =
+			sibling_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(BOB));
+		assert_eq_error_rate!(balance, 3 * PICA, (UnitWeightCost::get() * 10) as u128);
+	});
+}
+
+#[test]
 fn transfer_non_native_reserver_asset_from_this_to_sibling() {
 	simtest();
 
@@ -209,6 +260,57 @@ fn transfer_non_native_reserver_asset_from_this_to_sibling() {
 			Box::new((X1(GeneralIndex(CurrencyId::PBLO.into()),), 3 * PICA).into()),
 			0,
 			WeightLimit::Limited(399_600_000_000),
+		));
+
+		let after = Assets::free_balance(CurrencyId::PBLO, &AccountId::from(ALICE));
+		assert_eq!(after, 7 * PICA,);
+	});
+
+	Sibling::execute_with(|| {
+		use sibling_runtime::*;
+		let balance = Assets::free_balance(CurrencyId::PBLO, &AccountId::from(BOB));
+		assert_eq_error_rate!(balance, 3 * PICA, (UnitWeightCost::get() * 10) as u128);
+	});
+}
+
+#[test]
+fn transfer_non_native_reserver_asset_from_this_to_sibling_by_local_id() {
+	simtest();
+
+	Sibling::execute_with(|| {
+		assert_ok!(this_runtime::AssetsRegistry::update_asset(
+			RawOrigin::Root.into(),
+			CurrencyId::PBLO,
+			composable_traits::xcm::assets::XcmAssetLocation(MultiLocation::new(
+				1,
+				X2(Parachain(THIS_PARA_ID), GeneralIndex(CurrencyId::PBLO.into()),)
+			)),
+			Some(Ratio::saturating_from_rational(1, 1)),
+			None,
+		));
+	});
+
+	This::execute_with(|| {
+		use this_runtime::*;
+
+		assert_ok!(Assets::deposit(CurrencyId::PBLO, &AccountId::from(ALICE), 10 * PICA));
+		let before = Assets::free_balance(CurrencyId::PBLO, &AccountId::from(ALICE));
+
+		assert_ok!(XTokens::transfer(
+			Origin::signed(ALICE.into()),
+			CurrencyId::PBLO,
+			3 * PICA,
+			Box::new(
+				MultiLocation::new(
+					1,
+					X2(
+						Junction::Parachain(SIBLING_PARA_ID),
+						Junction::AccountId32 { id: BOB, network: NetworkId::Any }
+					)
+				)
+				.into()
+			),
+			399_600_000_000
 		));
 
 		let after = Assets::free_balance(CurrencyId::PBLO, &AccountId::from(ALICE));

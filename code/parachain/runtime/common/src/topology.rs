@@ -32,12 +32,11 @@ pub mod this {
 	use frame_support::parameter_types;
 	use xcm::latest::prelude::*;
 	pub const LOCAL: MultiLocation = MultiLocation { parents: 0, interior: Here };
-	parameter_types! {	
+	parameter_types! {
 		pub const Local: MultiLocation = LOCAL;
 	}
 
-	pub fn sibling(para_id: u32) -> MultiLocation{
+	pub fn sibling(para_id: u32) -> MultiLocation {
 		MultiLocation::new(1, X1(Parachain(para_id)))
 	}
-	
 }
