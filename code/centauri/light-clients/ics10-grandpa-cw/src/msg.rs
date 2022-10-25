@@ -1,5 +1,7 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 
+use crate::types::Height;
+
 #[cw_serde]
 pub struct InstantiateMsg {}
 
@@ -69,7 +71,7 @@ pub struct VerifyMembershipMsg {
 
 #[cw_serde]
 pub struct VerifyNonMembershipMsg {
-	height: Height,
+	height: u64,
 	delayTimePeriod: u64,
 	delayBlockPeriod: u64,
 	proof: Vec<u8>,
@@ -79,33 +81,33 @@ pub struct VerifyNonMembershipMsg {
 
 #[cw_serde]
 pub struct VerifyClientMessage {
-	client_msg: ClientMessage,
+	client_msg: Vec<u8>,
 }
 
 #[cw_serde]
 pub struct CheckForMisbehaviourMsg {
-	client_msg: ClientMessage,
+	client_msg: Vec<u8>,
 }
 
 #[cw_serde]
 pub struct UpdateStateOnMisbehaviourMsg {
-	client_msg: ClientMessage,
+	client_msg: Vec<u8>,
 }
 
 #[cw_serde]
 pub struct UpdateStateMsg {
-	client_msg: ClientMessage,
+	client_msg: Vec<u8>,
 }
 
 #[cw_serde]
 pub struct CheckSubstituteAndUpdateStateMsg {
-	substitute_client_msg: ClientMessage,
+	substitute_client_msg: Vec<u8>,
 }
 
 #[cw_serde]
 pub struct VerifyUpgradeAndUpdateStateMsg {
-	new_client: ClientState,
-	new_cons_state: ConsensusState,
+	new_client: Vec<u8>,
+	new_cons_state: Vec<u8>,
 	proof_upgrade_client: Vec<u8>,
 	proof_upgrade_cons_state: Vec<u8>,
 }

@@ -4,8 +4,10 @@ use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult}
 // use cw2::set_contract_version;
 
 use crate::{
+	client_state::validate_client_state,
 	error::ContractError,
 	msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
+	state::get_client_state,
 };
 
 /*
@@ -26,13 +28,17 @@ pub fn instantiate(
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
-	_deps: DepsMut,
+	deps: DepsMut,
 	_env: Env,
 	_info: MessageInfo,
 	msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
 	match msg {
-		ExecuteMsg::ValidateMsg(_) => todo!(),
+		ExecuteMsg::ValidateMsg(validate_msg) => {
+			let client_state = get_client_state(deps.as_ref())?;
+			validate_client_state(&client_state, height)?;
+			Ok(Response::default())
+		},
 		ExecuteMsg::StatusMsg(_) => todo!(),
 		ExecuteMsg::ExportedMetadataMsg(_) => todo!(),
 		ExecuteMsg::ZeroCustomFieldsMsg(_) => todo!(),

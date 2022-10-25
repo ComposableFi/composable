@@ -92,7 +92,7 @@ pub trait ClientReader: ClientKeeper {
 pub trait ClientTypes: 'static {
 	type AnyClientMessage: ClientMessage;
 	type AnyClientState: ClientState<ClientDef = Self::ClientDef> + Eq;
-	type AnyConsensusState: ConsensusState + Eq + 'static;
+	type AnyConsensusState: ConsensusState + Eq;
 
 	/// Client definition type (used for verification)
 	type ClientDef: ClientDef<
