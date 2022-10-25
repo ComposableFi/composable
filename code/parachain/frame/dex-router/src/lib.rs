@@ -487,7 +487,7 @@ pub mod pallet {
 				fee: AssetAmount { asset_id: in_asset_itr.asset_id, amount: T::Balance::zero() },
 			};
 			for pool_id in route_iter {
-				let mut assets = T::Pablo::assets(*pool_id)?;
+				let assets = T::Pablo::assets(*pool_id)?;
 				// We only allow dual asset pools in routes, therefore taking the remaining asset
 				// other than `in_assset_itr.asset_id` gives us the out_asset_id
 				let out_asset_id = assets
@@ -563,7 +563,7 @@ pub mod pallet {
 			};
 			let mut out_asset_itr = in_asset;
 			for pool_id in route_iter {
-				let mut assets = T::Pablo::assets(*pool_id)?;
+				let assets = T::Pablo::assets(*pool_id)?;
 				let out_asset_id = assets
 					.keys()
 					.copied()
@@ -577,10 +577,6 @@ pub mod pallet {
 					keep_alive,
 				)?;
 			}
-			// ensure!(
-			// 	out_asset_itr.value.amount >= out_asset.amount,
-			// 	Error::<T>::CanNotRespectMinAmountRequested
-			// );
 			// TODO (vim): Final fee amount is not correct as the fee need to be incremented with
 			//  each swap fee when iterating.
 			Ok(out_asset_itr)
