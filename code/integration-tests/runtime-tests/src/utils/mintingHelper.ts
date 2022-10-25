@@ -2,6 +2,7 @@ import { sendWithBatchAndWaitForSuccess } from "@composable/utils/polkadotjs";
 import { expect } from "chai";
 import { KeyringPair } from "@polkadot/keyring/types";
 import { ApiPromise } from "@polkadot/api";
+import BN from "bn.js";
 
 /***
  * This mints a specific `amount` to all specified `assetIDs` to a defined `wallet`.
@@ -17,7 +18,7 @@ export async function mintAssetsToWallet(
   wallet: KeyringPair,
   sudoKey: KeyringPair,
   assetIDs: number[],
-  amount = Pica(900000000)
+  amount: bigint | BN = Pica(900000000)
 ) {
   const tx = [];
   const balancesBefore = [];

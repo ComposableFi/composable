@@ -20,11 +20,16 @@ export default {
   },
   types: {
     ComposableTraitsAssetsXcmAssetLocation: "Null",
-    PalletCrowdloanRewardsModelsReward: "Null",
+    PalletCrowdloanRewardsModelsReward: {
+      total: "u128",
+      claimed: "u128",
+      vestingPeriod: "u64"
+    },
     PalletCrowdloanRewardsModelsRemoteAccount: {
       _enum: {
         RelayChain: "AccountId32",
-        Ethereum: "EthereumAccountId"
+        Ethereum: "EthereumAccountId",
+        Registry: "Null"
       }
     },
     ComposableTraitsCallFilterCallFilterEntry: "Null",
@@ -199,6 +204,8 @@ export default {
     PalletCosmwasmContractInfo: "Null",
     PalletCosmwasmCodeInfo: "Null",
     PalletCosmwasmEntryPoint: "Null",
-    PalletStakingRewardsRewardAccumulationHookError: "Null"
+    PalletCosmwasmCodeIdentifier: "Null",
+    PalletStakingRewardsRewardAccumulationHookError:"Null",
+    ComposableTraitsDexAssetAmount:"Null"
   }
 };
