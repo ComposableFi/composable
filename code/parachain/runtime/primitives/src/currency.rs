@@ -95,6 +95,7 @@ macro_rules! list_assets {
 			if Self::RELAY_NATIVE_CURRENCIES.contains(&id) {
 				return Some(XcmAssetLocation::RELAY_NATIVE)
 			}
+			// Note: add other known locations
 			None
 		}
 
