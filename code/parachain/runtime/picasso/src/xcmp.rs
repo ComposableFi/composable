@@ -69,9 +69,7 @@ parameter_types! {
 pub type Barrier = (
 	XcmpDebug,
 	//DebugAllowUnpaidExecutionFrom<WellKnownsChains>,
-	// Expected responses are OK.
 	AllowKnownQueryResponses<RelayerXcm>,
-	// Subscriptions for version tracking are OK.
 	AllowSubscriptionsFrom<Everything>,
 	AllowTopLevelPaidExecutionFrom<Everything>,
 	TakeWeightCredit,
