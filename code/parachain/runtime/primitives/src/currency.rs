@@ -89,9 +89,23 @@ macro_rules! list_assets {
 			}
 		}
 
+		const RELAY_NATIVE_CURRENCIES: [CurrencyId; 1] = [CurrencyId::KSM];
+
+		fn known_location(id: CurrencyId) -> Option<XcmAssetLocation> {
+			if Self::RELAY_NATIVE_CURRENCIES.contains(&id) {
+				return Some(XcmAssetLocation::RELAY_NATIVE)
+			}
+			None
+		}
+
 		pub fn list_assets() -> Vec<Asset<XcmAssetLocation>> {
 			[
-				$(Asset { id: CurrencyId::$NAME.0 as u128, name: Some(stringify!($NAME).as_bytes().to_vec()), decimals: 12_u8.into(), foreign_id: None },)*
+				$(Asset {
+					id: CurrencyId::$NAME.0 as u128,
+					name: Some(stringify!($NAME).as_bytes().to_vec()),
+					decimals: 12_u8.into(),
+					foreign_id: Self::known_location(CurrencyId(5))
+				},)*
 			]
 			.to_vec()
 		}
