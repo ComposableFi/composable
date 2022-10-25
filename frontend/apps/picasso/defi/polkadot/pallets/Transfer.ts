@@ -5,7 +5,7 @@ import {
   getTransferCallKaruraPicasso,
   getTransferCallKusamaPicasso,
   getTransferCallPicassoKarura,
-  getTransferCallPicassoKusama
+  getTransferCallPicassoKusama,
 } from "@/defi/polkadot/pallets/xcmp";
 import { fromChainIdUnit, toChainIdUnit } from "shared";
 import BigNumber from "bignumber.js";
@@ -22,7 +22,7 @@ export async function getApiCallAndSigner(
   from: SubstrateNetworkId,
   to: SubstrateNetworkId,
   hasFeeItem: boolean,
-  token: AssetId,
+  token: AssetId
 ) {
   switch (`${from}-${to}`) {
     case "picasso-kusama":
@@ -100,7 +100,8 @@ export function getAmountToTransfer({
   const sendAmount = destinationFee.fee.gt(0)
     ? calculatedAmount.plus(destinationFee.fee)
     : calculatedAmount;
-  return api.createType("u128", toChainIdUnit(sendAmount).toString());
+
+  return api.createType("u128", toChainIdUnit(sendAmount, 12).toString());
 }
 
 export function getDestChainFee(
@@ -112,42 +113,42 @@ export function getDestChainFee(
     case "kusama=>picasso":
       return {
         fee: fromChainIdUnit(new BigNumber("7536750")),
-        symbol: Assets.ksm
+        symbol: Assets.ksm,
       };
     case "karura=>picasso":
       if (tokenId === "kusd") {
         return {
           fee: fromChainIdUnit(new BigNumber("927020325")),
-          symbol: Assets.kusd
+          symbol: Assets.kusd,
         };
       }
       if (tokenId === "kar") {
         return {
           fee: fromChainIdUnit(new BigNumber("927020325")),
-          symbol: Assets.kar
-        }
+          symbol: Assets.kar,
+        };
       }
 
       if (tokenId === "ksm") {
         return {
           fee: fromChainIdUnit(new BigNumber("927020325")),
-          symbol: Assets.ksm
-        }
+          symbol: Assets.ksm,
+        };
       }
     case "picasso=>karura":
       return {
         fee: fromChainIdUnit(new BigNumber("74592000000")),
-        symbol: Assets.kusd
+        symbol: Assets.kusd,
       };
     case "picasso=>kusama":
       return {
         fee: fromChainIdUnit(new BigNumber("51105801784")),
-        symbol: Assets.ksm
+        symbol: Assets.ksm,
       };
     default:
       return {
         fee: new BigNumber(0),
-        symbol: Assets.pica
+        symbol: Assets.pica,
       };
   }
 }

@@ -29,7 +29,6 @@ export const useTransfer = () => {
 
   const { hasFeeItem, feeItem } = useStore(({ transfers }) => transfers);
   const weight = useStore((state) => state.transfers.fee.weight);
-  const selectedToken = useStore(state => state.transfers.selectedToken);
   const keepAlive = useStore((state) => state.transfers.keepAlive);
   const existentialDeposit = useStore(
     ({ substrateBalances }) =>
