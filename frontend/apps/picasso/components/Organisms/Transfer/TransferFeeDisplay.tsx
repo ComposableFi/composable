@@ -37,7 +37,7 @@ export const TransferFeeDisplay = () => {
   const keepAlive = useStore((state) => state.transfers.keepAlive);
   const { existentialDeposit, feeToken } = useExistentialDeposit();
   const fee = useStore((state) => state.transfers.fee);
-  const selectedToken = useStore(state =>state.transfers.selectedToken);
+  const selectedToken = useStore(state => state.transfers.selectedToken);
   const destFee = getDestChainFee(from, to, selectedToken);
   const updateFee = useStore((state) => state.transfers.updateFee);
 
