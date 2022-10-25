@@ -25,7 +25,7 @@ use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
 use sp_runtime::traits::{Convert, Zero};
 use sp_std::{marker::PhantomData, prelude::*};
-use xcm::{latest::prelude::*, v1::Junction::PalletInstance};
+use xcm::latest::prelude::*;
 use xcm_builder::{
 	AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
 	AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, EnsureXcmOrigin, FixedWeightBounds,
