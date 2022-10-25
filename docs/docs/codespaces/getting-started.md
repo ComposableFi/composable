@@ -2,7 +2,7 @@
 
 *Quick and simple*
 
-Getting started with [Codespaces](../codespaces) is super easy. 
+Getting started with Codespaces is super easy. 
 We'll just have to configure your **GitHub account** and set up **Visual Studio Code**.
 
 ## Setting up your GitHub account

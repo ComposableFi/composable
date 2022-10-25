@@ -4,7 +4,8 @@ We have a few guidelines and requirements to ensure correct workflows are follow
 
 ## First Things First
 Before contributing, go through the documentation found in `~/docs/`.  Specifically:  
-* [legacy/rust-setup.md](./legacy/rust-setup) ― A LEGACY walkthrough for installing and configuring Rust and other tools in your development environment. **Use [Nix](../nix) instead!**
+* [legacy/rust-setup.md](./legacy/rust-setup) ― A LEGACY walkthrough for installing and configuring Rust and other 
+  tools in your development environment. **Use [Nix](../nix-overview.md) instead!**
 * [proptest.md](./proptest) ― A guide to our approach and philosophy for automated testing  
 * [benchmarking.md](./benchmarking) ― A guide for benchmarking pallet changes  
 

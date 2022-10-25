@@ -1,8 +1,8 @@
 # Codespaces
 
 :::danger
-Codespaces is not yet fully compatible with our new build and developer environment system, [Nix](./nix).
-The recommended approach is to follow our [Nix Guide](./nix) and work locally for now.
+Codespaces is not yet fully compatible with our new build and developer environment system, [Nix](./nix-overview.md).
+The recommended approach is to follow our [Nix Guide](./nix-overview) and work locally for now.
 :::
 
 At Composable Finance, we use [Codespaces](https://github.com/features/codespaces) in order to provide 
