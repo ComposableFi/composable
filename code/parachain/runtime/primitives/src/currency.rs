@@ -104,7 +104,7 @@ macro_rules! list_assets {
 					id: CurrencyId::$NAME.0 as u128,
 					name: Some(stringify!($NAME).as_bytes().to_vec()),
 					decimals: 12_u8.into(),
-					foreign_id: Self::known_location(CurrencyId(5))
+					foreign_id: Self::known_location(CurrencyId::$NAME)
 				},)*
 			]
 			.to_vec()
