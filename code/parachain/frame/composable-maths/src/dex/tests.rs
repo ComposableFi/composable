@@ -8,6 +8,154 @@ use sp_runtime::{ArithmeticError, Permill};
 mod constant_product {
 	use super::*;
 
+	/// Tests related to the function `compute_redeemed_for_lp`
+	mod compute_redeemed_for_lp {
+		use super::*;
+
+		#[derive(Debug, Eq, PartialEq, Clone, Copy)]
+		struct InputsAndOutputs {
+			p_supply: u128,
+			p_redeemed: u128,
+			b_k: u128,
+			w_k: Permill,
+			a_k: u128,
+		}
+
+		const CHECKED_I_AND_O_LIST: [InputsAndOutputs; 5] = [
+			InputsAndOutputs {
+				p_supply: 512,
+				p_redeemed: 128,
+				b_k: 2048,
+				w_k: Permill::from_percent(50),
+				a_k: 896,
+			},
+			InputsAndOutputs {
+				p_supply: 512,
+				p_redeemed: 128,
+				b_k: 2048,
+				w_k: Permill::from_percent(80),
+				a_k: 618,
+			},
+			InputsAndOutputs {
+				p_supply: 512,
+				p_redeemed: 128,
+				b_k: 2048,
+				w_k: Permill::from_percent(20),
+				a_k: 1562,
+			},
+			InputsAndOutputs {
+				p_supply: 512,
+				p_redeemed: 128,
+				b_k: 2048,
+				w_k: Permill::from_percent(66),
+				a_k: 723,
+			},
+			InputsAndOutputs {
+				p_supply: 512,
+				p_redeemed: 128,
+				b_k: 2048,
+				w_k: Permill::from_percent(34),
+				a_k: 1169,
+			},
+		];
+
+		prop_compose! {
+			fn checked_inputs_and_outputs()
+			(x in 0..CHECKED_I_AND_O_LIST.len()) -> InputsAndOutputs {
+				CHECKED_I_AND_O_LIST[x]
+			}
+		}
+
+		prop_compose! {
+			#[allow(clippy::useless_conversion)]
+			fn range_inputs()
+			(
+				p_supply in 2_048_000_000_000_000..16_384_000_000_000_000_u128,
+				p_redeemed in 128_000_000_000_000..2_048_000_000_000_000_u128,
+				b_k in 16_384_000_000_000_000..Decimal::MAX.to_u128().expect("Decimal::MAX fits in u128"),
+				w_k in 25..100_u32,
+			)
+			-> InputsAndOutputs {
+				InputsAndOutputs {
+					p_supply,
+					p_redeemed,
+					b_k,
+					w_k: Permill::from_percent(w_k),
+					a_k: 0, // Not used in range tests
+				}
+			}
+		}
+
+		#[test]
+		fn should_error_when_p_supply_is_zero() {
+			let p_supply = 0;
+			let p_redeemed = 128;
+			let b_k = 256;
+			let w_k = Permill::from_percent(50);
+
+			let res = compute_redeemed_for_lp(p_supply, p_redeemed, b_k, w_k);
+
+			assert_eq!(res, Err(ConstantProductAmmError::from(ArithmeticError::DivisionByZero)));
+		}
+
+		#[test]
+		fn should_error_when_w_k_is_zero() {
+			let p_supply = 256;
+			let p_redeemed = 128;
+			let b_k = 512;
+			let w_k = Permill::zero();
+
+			let res = compute_redeemed_for_lp(p_supply, p_redeemed, b_k, w_k);
+
+			assert_eq!(res, Err(ConstantProductAmmError::from(ArithmeticError::DivisionByZero)));
+		}
+
+		#[test]
+		fn should_have_correctness_with_fixed_point_numbers() {
+			let p_supply = 512_000_000_000_000;
+			let p_redeemed = 128_000_000_000_000;
+			let b_k = 2_048_000_000_000_000;
+			let w_k = Permill::from_percent(50);
+
+			let res = compute_redeemed_for_lp(p_supply, p_redeemed, b_k, w_k)
+				.expect("Inputs are valid; QED");
+
+			assert_eq!(res, 896_000_000_000_000);
+		}
+
+		proptest! {
+			#![proptest_config(ProptestConfig::with_cases(CHECKED_I_AND_O_LIST.len() as u32))]
+
+			#[test]
+			fn should_pass_with_expected_values(i_and_o in checked_inputs_and_outputs()) {
+			let res = compute_redeemed_for_lp(
+					i_and_o.p_supply,
+					i_and_o.p_redeemed,
+					i_and_o.b_k,
+					i_and_o.w_k
+				).expect("Input is valid; QED");
+
+				prop_assert_eq!(res, i_and_o.a_k);
+			}
+		}
+
+		proptest! {
+			#![proptest_config(ProptestConfig::with_cases(10_000))]
+
+			#[test]
+			fn no_unexpected_errors_in_range(i_and_o in range_inputs()) {
+			let res = compute_redeemed_for_lp(
+					i_and_o.p_supply,
+					i_and_o.p_redeemed,
+					i_and_o.b_k,
+					i_and_o.w_k
+				);
+
+				prop_assert!(res.is_ok());
+			}
+		}
+	}
+
 	/// Tests related to the function `compute_first_deposit_lp`
 	mod compute_first_deposit_lp {
 		use super::*;

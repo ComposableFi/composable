@@ -180,11 +180,23 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       initialPayment: Perbill & AugmentedConst<ApiType>;
       /**
+       * If claimed amounts should be locked by the pallet
+       **/
+      lockByDefault: bool & AugmentedConst<ApiType>;
+      /**
+       * The unique identifier for locks maintained by this pallet.
+       **/
+      lockId: U8aFixed & AugmentedConst<ApiType>;
+      /**
+       * The percentage of excess funds required to trigger the `OverFunded` event.
+       **/
+      overFundedThreshold: Perbill & AugmentedConst<ApiType>;
+      /**
        * The unique identifier of this pallet.
        **/
       palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
       /**
-       * The arbitrary prefix used for the proof
+       * The arbitrary prefix used for the proof.
        **/
       prefix: Bytes & AugmentedConst<ApiType>;
       /**
@@ -563,6 +575,7 @@ declare module '@polkadot/api-base/types/consts' {
        * the size of batch to take each time trying to release rewards
        **/
       releaseRewardsPoolsBatchSize: u8 & AugmentedConst<ApiType>;
+      treasuryAccount: AccountId32 & AugmentedConst<ApiType>;
       xPbloAssetId: u128 & AugmentedConst<ApiType>;
       xPicaAssetId: u128 & AugmentedConst<ApiType>;
       /**
