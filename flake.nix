@@ -1019,13 +1019,14 @@
                   pathsToLink = [ "/bin" ];
                 };
                 config = {
-                  Entrypoint =
-                    [ "${packages.devnet-dali-b}/bin/run-devnet-dali-b" ];
-                  WorkingDir = "/home/polkadot-launch";
+                  Entrypoint = [
+                    "${packages.hyperspace-template-default}/bin/default-hyperspace"
+                  ];
+                  WorkingDir = "/home/user";
                 };
                 runAsRoot = ''
-                  mkdir -p /home/polkadot-launch /tmp
-                  chown 1000:1000 /home/polkadot-launch
+                  mkdir -p /home/user /tmp
+                  chown 1000:1000 /home/user
                   chmod 777 /tmp
                 '';
               });
