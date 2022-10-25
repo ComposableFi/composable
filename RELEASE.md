@@ -45,7 +45,7 @@ If bug fixes need to be backported to previous releases, a PR through main is al
 
 ## Security
 
-Tip of the branch from which runtime release is considered should be signed at least by 2 signatures.
+Tip of the branch from which runtime release is considered should be signed by at least 2 keys owned by Technical committee or by Council members.
 
 These to be owned by Technical committee or by Council members.
 
