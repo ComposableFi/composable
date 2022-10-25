@@ -224,6 +224,34 @@ pub fn run() -> Result<()> {
 				cmd.run(&*spec)
 			})
 		},
+		Some(Subcommand::Metadata(cmd)) => {
+			let runner = cli.create_runner(cmd)?;
+			runner.sync_run(|config| {
+				match config.chain_spec.id() {
+					id if id.contains("picasso") => {
+						let partials =
+							new_partial::<picasso_runtime::RuntimeApi, PicassoExecutor>(&config)?;
+						cmd.run(partials.client)?;
+					},
+					#[cfg(feature = "dali")]
+					id if id.contains("dali") => {
+						let partials =
+							new_partial::<dali_runtime::RuntimeApi, DaliExecutor>(&config)?;
+						cmd.run(partials.client)?;
+					},
+					#[cfg(feature = "composable")]
+					id if id.contains("composable") => {
+						let partials = new_partial::<
+							composable_runtime::RuntimeApi,
+							ComposableExecutor,
+						>(&config)?;
+						cmd.run(partials.client)?;
+					},
+					id => panic!("Unknown Chain: {}", id),
+				};
+				Ok(())
+			})
+		},
 		Some(Subcommand::Benchmark(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 

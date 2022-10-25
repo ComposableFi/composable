@@ -41,7 +41,7 @@ members = [
   "parachain/runtime/composable-wasm",
   "utils/price-feed",
   "utils/collator-sidecar",
-  "utils/subxt-codegen",
+  "utils/subxt-exports",
   "utils/composable-subxt",
   "utils/xcmp",
   "utils/wasm-optimizer",
@@ -80,6 +80,7 @@ members = [
   "centauri/hyperspace/parachain",
   "centauri/hyperspace/cosmos",
   "centauri/hyperspace/testsuite",
+  "centauri/hyperspace/metrics",
 ]
 # **IMPORTANT: DO NOT REMOVE OR SUFFER IN DEPENDENCY RESOLUTION HELL**
 resolver = "2"

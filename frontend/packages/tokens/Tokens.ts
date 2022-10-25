@@ -135,4 +135,5 @@ export const TOKENS: { [key in TokenId]: Token } = {
     decimalsToDisplay: 4,
   },
 };
-export const getToken = (tokenId: TokenId): Token => TOKENS[tokenId];
+export const getToken = (tokenId: TokenId): Token =>
+  TOKENS[tokenId.toLowerCase()];

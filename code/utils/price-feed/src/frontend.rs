@@ -15,11 +15,7 @@ use std::{
 	sync::{Arc, RwLock},
 };
 use tokio::task::JoinHandle;
-use warp::{
-	hyper::StatusCode,
-	reply::{self, Json, WithStatus},
-	Filter,
-};
+use warp::{hyper::StatusCode, reply, Filter, Rejection, Reply};
 
 #[derive(PartialEq, Eq, Serialize, Copy, Clone, Debug)]
 #[repr(transparent)]
@@ -37,13 +33,24 @@ impl Frontend {
 		cache_duration: Duration,
 		expected_exponent: Exponent,
 	) -> Self {
-		let get_asset_id_endpoint =
-			warp::path!("asset_id" / Asset).and(warp::get()).map(get_asset_id);
+		let get_asset_id_endpoint = warp::path!("asset_id" / Asset)
+			.and(warp::get())
+			.and_then(move |asset_id| async move { get_asset_id(asset_id) });
 
 		let get_price_endpoint =
-			warp::path!("price" / CurrencyId).and(warp::get()).map(move |currency_index| {
-				get_price(prices_cache.clone(), currency_index, cache_duration, expected_exponent)
-			});
+			warp::path!("price" / CurrencyId)
+				.and(warp::get())
+				.and_then(move |currency_index| {
+					let prices_cache_clone = prices_cache.clone();
+					async move {
+						get_price(
+							prices_cache_clone,
+							currency_index,
+							cache_duration,
+							expected_exponent,
+						)
+					}
+				});
 
 		let (shutdown_trigger, shutdown) = oneshot::channel::<()>();
 		let (_, server) = warp::serve(get_price_endpoint.or(get_asset_id_endpoint))
@@ -60,10 +67,10 @@ impl Frontend {
 	}
 }
 
-fn get_asset_id(x: Asset) -> WithStatus<Json> {
+fn get_asset_id(x: Asset) -> Result<impl Reply, Rejection> {
 	match CurrencyId::try_from(x) {
-		Ok(currency_index) => reply::with_status(reply::json(&currency_index), StatusCode::OK),
-		Err(_) => reply::with_status(reply::json(&()), StatusCode::NOT_FOUND),
+		Ok(currency_index) => Ok(reply::with_status(reply::json(&currency_index), StatusCode::OK)),
+		Err(_) => Err(warp::reject::not_found()),
 	}
 }
 
@@ -72,7 +79,7 @@ fn get_price(
 	currency_index: CurrencyId,
 	cache_duration: Duration,
 	expected_exponent: Exponent,
-) -> WithStatus<Json> {
+) -> Result<impl Reply, Rejection> {
 	match Asset::try_from(currency_index).and_then(|asset| {
 		let now = TimeStamp::now();
 
@@ -81,19 +88,26 @@ fn get_price(
 			.and_then(|timestamped_price| {
 				ensure_uptodate_price(&cache_duration, &now, &timestamped_price)
 			})
-			.map(|x| normalize_price(expected_exponent, x))
+			.map(|(x, elapsed)| (normalize_price(expected_exponent, x), elapsed))
 			.ok_or(())
 	}) {
 		// The oracle is expecting an object with the asset as key and it's price as value.
-		Ok(normalized_price) => reply::with_status(
-			reply::json(
-				&[(format!("{}", currency_index), normalized_price)]
-					.into_iter()
-					.collect::<HashMap<_, _>>(),
+		Ok((normalized_price, elapsed)) => Ok(reply::with_header(
+			reply::with_header(
+				reply::with_status(
+					reply::json(&HashMap::from([(
+						format!("{}", currency_index),
+						normalized_price,
+					)])),
+					StatusCode::OK,
+				),
+				"x-composable-cache-elapsed",
+				format!("{}", elapsed),
 			),
-			StatusCode::OK,
-		),
-		Err(_) => reply::with_status(reply::json(&()), StatusCode::NOT_FOUND),
+			"x-composable-cache-duration",
+			format!("{}", cache_duration),
+		)),
+		Err(_) => Err(warp::reject::not_found()),
 	}
 }
 
@@ -102,10 +116,10 @@ fn ensure_uptodate_price(
 	&max_cache_duration: &Duration,
 	current_timestamp: &TimeStamp,
 	timestamped_price: &TimeStampedPrice,
-) -> Option<(Price, Exponent)> {
+) -> Option<((Price, Exponent), Duration)> {
 	let elapsed = current_timestamp.elapsed_since(&timestamped_price.timestamp);
 	if elapsed < max_cache_duration {
-		Some(timestamped_price.value)
+		Some((timestamped_price.value, elapsed))
 	} else {
 		None
 	}
@@ -118,10 +132,11 @@ fn normalize_price(
 ) -> NormalizedPrice {
 	// NOTE(hussein-aitlahcen): we want to go from x*10^q to x*10^expected_exponent
 	let dt = expected_exponent - q;
+	let power = u64::pow(10_u64, dt.abs() as u32);
 	let normalized_price = match dt.signum() {
 		0 => p,
-		1 => p * u64::pow(10_u64, dt as u32),
-		-1 => p / u64::pow(10_u64, dt.abs() as u32),
+		1 => p * power,
+		-1 => p / power,
 		_ => unreachable!(),
 	};
 	NormalizedPrice(normalized_price)
@@ -162,7 +177,7 @@ mod tests {
 					TimeStamp(20),
 					TimeStamped { value, timestamp: TimeStamp(1) },
 				),
-				Some(value),
+				Some((value, Duration::seconds(19))),
 			),
 			(
 				(
@@ -170,7 +185,7 @@ mod tests {
 					TimeStamp(14),
 					TimeStamped { value, timestamp: TimeStamp(5) },
 				),
-				Some(value),
+				Some((value, Duration::seconds(9))),
 			),
 		]
 		.iter()

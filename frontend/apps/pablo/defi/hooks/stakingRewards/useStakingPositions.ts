@@ -9,9 +9,11 @@ import {
   useStakingRewardPool,
   useStakedPositionHistory,
   useStakingRewardPoolCollectionId,
+  putStakes,
+  useStakes,
 } from "@/store/stakingRewards/stakingRewards.slice";
 import { useParachainApi } from "substrate-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { decodeStake } from "@/defi/utils/stakingRewards";
 import BigNumber from "bignumber.js";
 
@@ -24,6 +26,7 @@ export function useStakingPositions({ stakedAssetId }: StakingPositionsProps): {
   ownedFinancialNftsHistory: StakingPositionHistory[];
   stakes: Stake[];
   xTokenBalances: Record<string, BigNumber>;
+  updateStakes: () => void;
 } {
   const ownedFinancialNfts = useOwnedFinancialNfts();
   const stakingRewardPool = useStakingRewardPool(
@@ -68,7 +71,6 @@ export function useStakingPositions({ stakedAssetId }: StakingPositionsProps): {
     });
   }, [userStakingEvents, ownedFinancialNfts, financialNftCollectionId]);
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
-  const [stakes, setStakes] = useState<Array<Stake>>([]);
   /**
    * Here we query the `stakes`
    * storage from chain w.r.t
@@ -76,21 +78,25 @@ export function useStakingPositions({ stakedAssetId }: StakingPositionsProps): {
    * this is only used to show
    * xToken multiplier on UI
    */
-  useEffect(() => {
-    if (!parachainApi || ownedFinancialNftsHistory.length <= 0) return;
+   const updateStakes = useCallback(() => {
+    if (!parachainApi || !financialNftCollectionId || ownedFinancialNftsHistory.length <= 0) return;
     let allPromises = ownedFinancialNftsHistory.map((stake) =>
       parachainApi.query.stakingRewards.stakes(
         parachainApi.createType("u128", stake.fnftCollectionId),
-        parachainApi.createType("u128", stake.fnftInstanceId)
+        parachainApi.createType("u64", stake.fnftInstanceId)
       )
     );
     Promise.all(allPromises)
       .then((response) => {
         const result = response.map((stake) => decodeStake(stake));
-        setStakes(result);
+        putStakes(financialNftCollectionId, result);
       })
       .catch(console.error);
-  }, [parachainApi, ownedFinancialNftsHistory]);
+  }, [parachainApi, financialNftCollectionId, ownedFinancialNftsHistory]);
+
+  useEffect(() => {
+    updateStakes();
+  }, [updateStakes]);
   /**
    * This effect will be used to store
    * xTokens balances, currently not
@@ -129,10 +135,13 @@ export function useStakingPositions({ stakedAssetId }: StakingPositionsProps): {
     financialNftCollectionId ? financialNftCollectionId : "-"
   );
 
+  const stakes = useStakes(financialNftCollectionId ?? "-");
+
   return {
     xTokenBalances,
     stakingRewardPool,
     ownedFinancialNftsHistory,
     stakes,
+    updateStakes
   };
 }

@@ -11,6 +11,7 @@ use ibc::{core::ics02_client::msgs::create_client::MsgCreateAnyClient, tx_msg::M
 use parachain::{finality_protocol::FinalityProtocol, ParachainClient, ParachainClientConfig};
 use subxt::tx::SubstrateExtrinsicParams;
 
+use hyperspace_primitives::utils::create_clients;
 use tendermint_proto::Protobuf;
 
 #[derive(Debug, Clone)]
@@ -60,11 +61,13 @@ async fn setup_clients() -> (ParachainClient<DefaultConfig>, ParachainClient<Def
 
 	// Create client configurations
 	let config_a = ParachainClientConfig {
-		name: format!("ParaId({})", args.para_id_a),
+		name: format!("127.0.0.1:9988"),
 		para_id: args.para_id_a,
 		parachain_rpc_url: args.chain_a,
 		relay_chain_rpc_url: args.relay_chain.clone(),
 		client_id: None,
+		beefy_activation_block: None,
+		connection_id: None,
 		commitment_prefix: args.connection_prefix_b.as_bytes().to_vec().into(),
 		ss58_version: 49,
 		channel_whitelist: vec![],
@@ -73,11 +76,13 @@ async fn setup_clients() -> (ParachainClient<DefaultConfig>, ParachainClient<Def
 		key_type: "sr25519".to_string(),
 	};
 	let config_b = ParachainClientConfig {
-		name: format!("ParaId({})", args.para_id_b),
+		name: format!("127.0.0.1:9188"),
 		para_id: args.para_id_b,
 		parachain_rpc_url: args.chain_b,
 		relay_chain_rpc_url: args.relay_chain,
 		client_id: None,
+		beefy_activation_block: None,
+		connection_id: None,
 		commitment_prefix: args.connection_prefix_b.as_bytes().to_vec().into(),
 		private_key: "//Alice".to_string(),
 		ss58_version: 49,
@@ -98,7 +103,7 @@ async fn setup_clients() -> (ParachainClient<DefaultConfig>, ParachainClient<Def
 		.await
 		.unwrap()
 		.filter_map(|result| futures::future::ready(result.ok()))
-		.skip_while(|h| futures::future::ready(h.number < 210))
+		.skip_while(|h| futures::future::ready(h.number < 90))
 		.take(1)
 		.collect::<Vec<_>>()
 		.await;
@@ -120,52 +125,9 @@ async fn setup_clients() -> (ParachainClient<DefaultConfig>, ParachainClient<Def
 	res_1.unwrap();
 	res_2.unwrap();
 
-	{
-		// Get initial beefy state
-		let (client_state, consensus_state) =
-			chain_b.construct_grandpa_client_state().await.unwrap();
-
-		// Create client message is the same for both chains
-		let msg_create_client = MsgCreateAnyClient::<LocalClientTypes> {
-			client_state: client_state.clone(),
-			consensus_state,
-			signer: chain_a.account_id(),
-		};
-
-		let msg = pallet_ibc::Any {
-			type_url: msg_create_client.type_url().as_bytes().to_vec(),
-			value: msg_create_client.encode_vec(),
-		};
-		let client_id_b_on_a = chain_a
-			.submit_create_client_msg(msg.clone())
-			.await
-			.expect("Client was not created successfully");
-		chain_b.set_client_id(client_id_b_on_a.clone());
-	};
-
-	{
-		// Get initial beefy state
-		let (client_state, consensus_state) =
-			chain_a.construct_grandpa_client_state().await.unwrap();
-
-		// Create client message is the same for both chains
-		let msg_create_client = MsgCreateAnyClient::<LocalClientTypes> {
-			client_state: client_state.clone(),
-			consensus_state,
-			signer: chain_a.account_id(),
-		};
-
-		let msg = pallet_ibc::Any {
-			type_url: msg_create_client.type_url().as_bytes().to_vec(),
-			value: msg_create_client.encode_vec(),
-		};
-		let client_id_a_on_b = chain_b
-			.submit_create_client_msg(msg)
-			.await
-			.expect("Client was not created successfully");
-		chain_a.set_client_id(client_id_a_on_b.clone());
-	};
-
+	let (client_a, client_b) = create_clients(&chain_a, &chain_b).await.unwrap();
+	chain_a.set_client_id(client_a);
+	chain_b.set_client_id(client_b);
 	(chain_a, chain_b)
 }
 

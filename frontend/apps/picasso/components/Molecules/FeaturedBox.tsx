@@ -11,7 +11,7 @@ import {
   Typography,
   TypographyProps,
   useMediaQuery,
-  useTheme,
+  useTheme
 } from "@mui/material";
 import Image from "next/image";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
@@ -39,8 +39,8 @@ export type FeaturedBoxProps = BoxProps & {
 const infoIconStyle = (theme: Theme) => ({
   color: theme.palette.primary.light,
   "&:hover": {
-    color: theme.palette.secondary.main,
-  },
+    color: theme.palette.secondary.main
+  }
 });
 
 export const FeaturedBox: React.FC<FeaturedBoxProps> = ({
@@ -79,9 +79,9 @@ export const FeaturedBox: React.FC<FeaturedBoxProps> = ({
       border={
         variant == "outlined"
           ? `1px solid ${alpha(
-              theme.palette.common.white,
-              theme.custom.opacity.light
-            )}`
+            theme.palette.common.white,
+            theme.custom.opacity.light
+          )}`
           : undefined
       }
       borderRadius={isMobile ? undefined : 1}
@@ -154,7 +154,7 @@ export const FeaturedBox: React.FC<FeaturedBoxProps> = ({
               color: "text.secondary",
               mb: 2,
               component: "div",
-              ...TextBelowProps,
+              ...TextBelowProps
             }}
           >
             {textBelow}
@@ -172,7 +172,7 @@ export const FeaturedBox: React.FC<FeaturedBoxProps> = ({
             size={isMobile ? "small" : "medium"}
             fullWidth={isMobile}
             sx={{
-              px: 4,
+              px: 4
             }}
             {...restButtonProps}
           >

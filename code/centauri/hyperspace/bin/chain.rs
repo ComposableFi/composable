@@ -1,6 +1,5 @@
 #![allow(unused_variables, unreachable_patterns, unreachable_code)]
 
-use crate::AnyConfig;
 use async_trait::async_trait;
 use derive_more::From;
 use futures::Stream;
@@ -32,10 +31,19 @@ use ibc_proto::{
 };
 #[cfg(feature = "testing")]
 use pallet_ibc::Timeout;
+use serde::Deserialize;
+use thiserror::Error;
+
+use pallet_ibc::light_clients::{AnyClientState, AnyConsensusState};
 #[cfg(feature = "parachain")]
 use parachain::ParachainClient;
 use primitives::{Chain, IbcProvider, KeyProvider, UpdateType};
+use sp_core::H256;
 use std::{pin::Pin, time::Duration};
+
+#[cfg(feature = "parachain")]
+use subxt::tx::SubstrateExtrinsicParams;
+
 #[cfg(feature = "parachain")]
 #[derive(Debug, Clone)]
 pub enum DefaultConfig {}
@@ -51,7 +59,28 @@ impl subxt::Config for DefaultConfig {
 	type Header = sp_runtime::generic::Header<Self::BlockNumber, sp_runtime::traits::BlakeTwo256>;
 	type Signature = sp_runtime::MultiSignature;
 	type Extrinsic = sp_runtime::OpaqueExtrinsic;
+	type ExtrinsicParams = SubstrateExtrinsicParams<Self>;
 }
+
+#[derive(Deserialize)]
+pub struct Config {
+	pub chain_a: AnyConfig,
+	pub chain_b: AnyConfig,
+	pub core: CoreConfig,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum AnyConfig {
+	#[cfg(feature = "parachain")]
+	Parachain(parachain::ParachainClientConfig),
+}
+
+#[derive(Deserialize)]
+pub struct CoreConfig {
+	pub prometheus_endpoint: String,
+}
+
 #[derive(Clone)]
 pub enum AnyChain {
 	#[cfg(feature = "parachain")]
@@ -425,6 +454,14 @@ impl IbcProvider for AnyChain {
 		}
 	}
 
+	fn connection_id(&self) -> ConnectionId {
+		match self {
+			#[cfg(feature = "parachain")]
+			AnyChain::Parachain(chain) => chain.connection_id(),
+			_ => unreachable!(),
+		}
+	}
+
 	fn client_type(&self) -> ClientType {
 		match self {
 			#[cfg(feature = "parachain")]
@@ -482,6 +519,30 @@ impl IbcProvider for AnyChain {
 			_ => unreachable!(),
 		}
 	}
+	async fn initialize_client_state(
+		&self,
+	) -> Result<(AnyClientState, AnyConsensusState), Self::Error> {
+		match self {
+			#[cfg(feature = "parachain")]
+			Self::Parachain(chain) => chain.initialize_client_state().await.map_err(Into::into),
+			_ => unreachable!(),
+		}
+	}
+
+	async fn query_client_id_from_tx_hash(
+		&self,
+		tx_hash: H256,
+		block_hash: Option<H256>,
+	) -> Result<ClientId, Self::Error> {
+		match self {
+			#[cfg(feature = "parachain")]
+			Self::Parachain(chain) => chain
+				.query_client_id_from_tx_hash(tx_hash, block_hash)
+				.await
+				.map_err(Into::into),
+			_ => unreachable!(),
+		}
+	}
 }
 
 impl KeyProvider for AnyChain {
@@ -533,7 +594,10 @@ impl Chain for AnyChain {
 		}
 	}
 
-	async fn submit(&self, messages: Vec<Any>) -> Result<(), Self::Error> {
+	async fn submit(
+		&self,
+		messages: Vec<Any>,
+	) -> Result<(sp_core::H256, Option<sp_core::H256>), Self::Error> {
 		match self {
 			#[cfg(feature = "parachain")]
 			Self::Parachain(chain) => chain.submit(messages).await.map_err(Into::into),
@@ -542,7 +606,7 @@ impl Chain for AnyChain {
 	}
 }
 
-#[cfg(feature = "testing")]
+#[cfg(any(test, feature = "testing"))]
 #[async_trait]
 impl primitives::TestProvider for AnyChain {
 	async fn send_transfer(&self, params: MsgTransfer<PrefixedCoin>) -> Result<(), Self::Error> {

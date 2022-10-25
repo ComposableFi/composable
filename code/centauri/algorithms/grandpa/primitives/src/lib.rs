@@ -57,6 +57,7 @@ pub struct FinalityProof<H: Header> {
 }
 
 /// Previous light client state.
+#[derive(Clone)]
 pub struct ClientState<H> {
 	/// Current authority set
 	pub current_authorities: AuthorityList,
@@ -64,6 +65,8 @@ pub struct ClientState<H> {
 	pub current_set_id: u64,
 	/// latest finalized height on the relay chain.
 	pub latest_relay_height: u32,
+	/// latest finalized height on the parachain.
+	pub latest_para_height: u32,
 	/// latest finalized hash on the relay chain.
 	pub latest_relay_hash: H,
 	/// para_id of associated parachain
@@ -82,6 +85,7 @@ pub struct ParachainHeaderProofs {
 }
 
 /// Parachain headers with a Grandpa finality proof.
+#[derive(Clone)]
 pub struct ParachainHeadersWithFinalityProof<H: Header> {
 	/// The grandpa finality proof: contains relay chain headers from the
 	/// last known finalized grandpa block.

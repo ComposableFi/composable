@@ -14,6 +14,7 @@ import {
   getLatestPoolByPoolId,
   getOrCreate,
   storeHistoricalLockedValue,
+  storeHistoricalVolume,
 } from "../dbHelper";
 import {
   Event,
@@ -23,7 +24,7 @@ import {
   PabloPoolAsset,
   PabloTransaction,
 } from "../model";
-import { CurrencyPair, Fee } from "../types/v2401";
+import { CurrencyPair, Fee } from "../types/v2402";
 import { encodeAccount } from "../utils";
 
 function createEvent(
@@ -87,7 +88,7 @@ interface PoolCreatedEvent {
 }
 
 function getPoolCreatedEvent(event: PabloPoolCreatedEvent): PoolCreatedEvent {
-  const { owner, poolId, assets } = event.asV2401;
+  const { owner, poolId, assets } = event.asV2402;
   return { owner, poolId, assets };
 }
 
@@ -118,7 +119,6 @@ export async function processPoolCreatedEvent(
 
     let tx = await ctx.store.get(Event, ctx.event.id);
     if (tx != undefined) {
-      console.log("qwe");
       console.error("Unexpected event in db", tx);
       throw new Error("Unexpected event in db");
     }
@@ -197,7 +197,7 @@ interface LiquidityAddedEvent {
 function getLiquidityAddedEvent(
   event: PabloLiquidityAddedEvent
 ): LiquidityAddedEvent {
-  const { who, poolId, baseAmount, quoteAmount, mintedLp } = event.asV2401;
+  const { who, poolId, baseAmount, quoteAmount, mintedLp } = event.asV2402;
   return { who, poolId, baseAmount, quoteAmount, mintedLp };
 }
 
@@ -305,7 +305,7 @@ interface LiquidityRemovedEvent {
 function getLiquidityRemovedEvent(
   event: PabloLiquidityRemovedEvent
 ): LiquidityRemovedEvent {
-  const { who, poolId, baseAmount, quoteAmount, totalIssuance } = event.asV2401;
+  const { who, poolId, baseAmount, quoteAmount, totalIssuance } = event.asV2402;
   return { who, poolId, baseAmount, quoteAmount, totalIssuance };
 }
 
@@ -416,7 +416,7 @@ interface SwappedEvent {
 
 function getSwappedEvent(event: PabloSwappedEvent): SwappedEvent {
   const { poolId, who, baseAsset, quoteAsset, baseAmount, quoteAmount, fee } =
-    event.asV2401;
+    event.asV2402;
   return {
     poolId,
     who,
@@ -551,6 +551,12 @@ export async function processSwappedEvent(
     await ctx.store.save(quoteAsset);
     await ctx.store.save(eventEntity);
     await ctx.store.save(pabloTransaction);
+
+    await storeHistoricalVolume(
+      ctx,
+      quoteAsset.assetId,
+      swappedEvt.quoteAmount
+    );
   } else {
     throw new Error("Pool not found");
   }
@@ -563,7 +569,7 @@ interface PoolDeletedEvent {
 }
 
 function getPoolDeletedEvent(event: PabloPoolDeletedEvent): PoolDeletedEvent {
-  const { poolId, baseAmount, quoteAmount } = event.asV2401;
+  const { poolId, baseAmount, quoteAmount } = event.asV2402;
   return { poolId, baseAmount, quoteAmount };
 }
 
@@ -571,7 +577,6 @@ export async function processPoolDeletedEvent(
   ctx: EventHandlerContext<Store, { event: true }>,
   event: PabloPoolDeletedEvent
 ): Promise<void> {
-  console.debug("processing LiquidityAddedEvent", ctx.event.id);
   const poolDeletedEvent = getPoolDeletedEvent(event);
   const pool = await getLatestPoolByPoolId(ctx.store, poolDeletedEvent.poolId);
   // only set values if the owner was missing, i.e a new pool

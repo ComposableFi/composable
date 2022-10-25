@@ -38,6 +38,7 @@ node_modules
 .*.swp
 
 .idea
+.fleet
 
 # ignore user vscode sttings
 .vscode/*
@@ -59,3 +60,5 @@ node_modules/
 result
 
 **/.asciidoctor
+
+**/.fleet

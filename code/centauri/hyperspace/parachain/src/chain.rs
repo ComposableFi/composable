@@ -2,6 +2,7 @@ use codec::Decode;
 use std::{collections::BTreeMap, fmt::Display, pin::Pin};
 
 use beefy_gadget_rpc::BeefyApiClient;
+use finality_grandpa::BlockNumberOps;
 use futures::{Stream, StreamExt};
 use grandpa_light_client_primitives::{FinalityProof, ParachainHeaderProofs};
 use ibc_proto::google::protobuf::Any;
@@ -46,8 +47,8 @@ where
 	MultiSigner: From<MultiSigner>,
 	<T as subxt::Config>::Address: From<<T as subxt::Config>::AccountId>,
 	T::Signature: From<MultiSignature>,
-	T::BlockNumber: From<u32> + Display + Ord + sp_runtime::traits::Zero + One,
-	T::Hash: From<sp_core::H256>,
+	T::BlockNumber: BlockNumberOps + From<u32> + Display + Ord + sp_runtime::traits::Zero + One,
+	T::Hash: From<sp_core::H256> + From<[u8; 32]>,
 	FinalityProof<sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256>>:
 		From<FinalityProof<T::Header>>,
 	BTreeMap<sp_core::H256, ParachainHeaderProofs>:
@@ -165,15 +166,18 @@ where
 		}
 	}
 
-	async fn submit(&self, messages: Vec<Any>) -> Result<(), Error> {
+	async fn submit(
+		&self,
+		messages: Vec<Any>,
+	) -> Result<(sp_core::H256, Option<sp_core::H256>), Error> {
 		let messages = messages
 			.into_iter()
 			.map(|msg| RawAny { type_url: msg.type_url.as_bytes().to_vec(), value: msg.value })
 			.collect::<Vec<_>>();
 
 		let call = api::tx().ibc().deliver(messages);
-		self.submit_call(call).await?;
+		let (ext_hash, block_hash) = self.submit_call(call).await?;
 
-		Ok(())
+		Ok((ext_hash.into(), Some(block_hash.into())))
 	}
 }
