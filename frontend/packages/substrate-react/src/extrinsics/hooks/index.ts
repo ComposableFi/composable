@@ -38,7 +38,7 @@ export const usePendingExtrinsic = (
     }
 
     return false;
-  }, [extrinsics]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [extrinsics, section, method, sender]);
 };
 
 export const useExtrinsicCalls = (
@@ -61,5 +61,25 @@ export const useExtrinsicCalls = (
     }
 
     return calls;
-  }, [extrinsics]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [extrinsics, section, method, sender]);
+};
+
+
+export const useTransactions = (
+  sender: string
+): ExtrinsicMetadata[] => {
+  const extrinsics = useExtrinsicStore((state) => state.extrinsics);
+  return useMemo(() => {
+    let calls = [];
+
+    for (const tx of Object.values(extrinsics)) {
+      if (
+        tx.sender === sender
+      ) {
+        calls.push({ ...tx });
+      }
+    }
+
+    return calls;
+  }, [extrinsics, sender]);
 };

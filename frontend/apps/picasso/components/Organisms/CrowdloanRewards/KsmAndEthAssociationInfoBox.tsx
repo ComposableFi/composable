@@ -1,10 +1,10 @@
 import { Box, Button, Grid, Typography, useTheme } from "@mui/material";
 import { AlertBox, Input, Link } from "@/components";
-import { ConnectedAccount } from "substrate-react";
+import { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import { useStore } from "@/stores/root";
 
 type KsmAndEthAssociationInfoBoxProps = {
-    connectedAccount?: ConnectedAccount;
+    connectedAccount?: InjectedAccountWithMeta;
     isEligibleForBothAddresses?: boolean
 }
 

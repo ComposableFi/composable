@@ -1,5 +1,4 @@
 import { APOLLO_UPDATE_BLOCKS, DEFAULT_NETWORK_ID } from "@/defi/utils";
-import { useOnChainAssetIds } from "@/store/hooks/useOnChainAssetsIds";
 import { useParachainApi } from "substrate-react";
 import { useCallback, useEffect, useRef } from "react";
 import BigNumber from "bignumber.js";
