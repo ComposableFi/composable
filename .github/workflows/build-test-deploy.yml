@@ -1357,6 +1357,8 @@ jobs:
         with:
           message: |
             ### Nix commands for this PR
+            **NOTE: You can also run our Nix commands in Docker. See the bottom of this comment.**
+
 
             #### Make sure you have setup the Composable community cache:
             _(you only need to run it once on your machine)_
@@ -1388,9 +1390,14 @@ jobs:
             ```bash
             nix run ".#docs-server"
             ```
+  
+            ### Run this without Nix in Docker.
+            ```bash
+            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v nix:/nix -it nixos/nix bash -c "nix-env -iA nixpkgs.cachix && cachix use composable-community && nix run github:ComposableFi/Composable/${{ github.event.pull_request.head.sha }}#devnet-dali -L --extra-experimental-features nix-command --extra-experimental-features flakes
+            ```
+            _NOTE: You can swap `devnet-dali` in the command above with any Nix package_
 
             _For more info on how to use Nix, check out our [Nix docs](https://docs.composable.finance/nix.html)_
-           ```
 
             Note that the initial build may take about one hour if it has not been cached by our CI yet. Once it is cached, builds should take about one minute. We currently do not provide build caches for ARM machines such as M1 Macs, but building on ARM is supported.
 
