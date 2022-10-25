@@ -1,4 +1,4 @@
-# Parachain Vault Strategy
+# Parachain Vault Strategy (Discontinued)
 
 ---
 
