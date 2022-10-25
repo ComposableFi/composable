@@ -1,18 +1,11 @@
-{ pkgs, packages, ... }: {
+{ pkgs, packages, config, ... }: {
   modules = [
     (let
       # more secured parachain allows only tokens originated on it self
       hyperspace = "dali-a-devnet-ibc-dali-b-devnet";
 
-      more-secured-parachain = "dali-a-devnet";
-      securedRelaychainPort = 9944;
-      securedParachainPort = 9988;
-
-      less-secured-parachain = "dali-b-devnet";
-      lessSecuredRelaychainPort = 19944;
-      lessSecuredParachainPort = 19988;
-
-      hyperspaceMetrics = 31328;
+      inherit config;
+      hyperspaceMetricsPort = 31328;
 
       network-name = "composable_bridge_devnet";
       mk-composable-container = container:
@@ -24,19 +17,19 @@
         project.name = "composable_xcvm_devnet";
         networks."${network-name}" = { };
         services = {
-          "${more-secured-parachain}" = mk-composable-container
+          "${config.moreSecuredParachain}" = mk-composable-container
             (import ../services/devnet-dali.nix {
               inherit pkgs;
               inherit packages;
-              relaychainPort = securedRelaychainPort;
-              parachainPort = securedParachainPort;
+              relaychainPort = config.moreSecuredRelaychainPort;
+              parachainPort = config.moreSecuredParachainPort;
             });
-          "${less-secured-parachain}" = mk-composable-container
+          "${config.lessSecuredParachain}" = mk-composable-container
             (import ../services/devnet-dali.nix {
               inherit pkgs;
               inherit packages;
-              relaychainPort = lessSecuredRelaychainPort;
-              parachainPort = lessSecuredParachainPort;
+              relaychainPort = config.lessSecuredRelaychainPort;
+              parachainPort = config.lessSecuredParachainPort;
               packageName = "devnet-dali-b";
               binaryName = "devnet-dali-b";
             });
@@ -44,7 +37,7 @@
             (import ../services/hyperspace.nix {
               inherit pkgs;
               inherit packages;
-              metricsPort = hyperspaceMetrics;
+              metricsPort = hyperspaceMetricsPort;
             });
         };
       };

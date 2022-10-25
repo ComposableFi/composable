@@ -531,46 +531,92 @@
             meta = { mainProgram = "subwasm"; };
           };
 
-          hyperspace-template = let
-            builder = { }: rec {
-              bin = crane-nightly.buildPackage (common-attrs // {
-                name = "hyperspace";
-                pname = "hyperspace";
-                cargoArtifacts = common-deps;
-                cargoExtraArgs = "--package hyperspace";
-                installPhase = ''
-                  mkdir --parents $out/bin
-                  cp target/release/hyperspace $out/bin/hyperspace
-                '';
-                meta = { mainProgram = "hyperspace"; };
-              });
-              rawConfig = (builtins.fromTOML
-                (builtins.readFile ./code/centauri/hyperspace/config.toml));
+          hyperspace-template = { relaychainHostA ? "127.0.0.1"
+            , relaychainPortA ? 9944, parachainHostA ? "127.0.0.1"
+            , parachainPortA ? 9988, paraIdA ? 2001
+            , commitmentPrefixesA ? "0x6962632f", clientIdA ? "11-beefy-0"
 
-              config = pkgs.lib.makeOverridable (result: { result = result; })
-                rawConfig;
+            , relaychainHostB ? "127.0.0.1", relaychainPortB ? 9944
+            , parachainHostB ? "127.0.0.1", parachainPortB ? 9188
+            , paraIdB ? 2000, commitmentPrefixesB ? "0x6962632f"
+            , clientIdB ? "11-beefy-0", }:
+            let
+              builder = { }: rec {
+                bin = crane-nightly.buildPackage (common-attrs // {
+                  name = "hyperspace";
+                  pname = "hyperspace";
+                  cargoArtifacts = common-deps;
+                  cargoExtraArgs = "--package hyperspace";
+                  installPhase = ''
+                    mkdir --parents $out/bin
+                    cp target/release/hyperspace $out/bin/hyperspace
+                  '';
+                  meta = { mainProgram = "hyperspace"; };
+                });
+                rawConfig = (builtins.fromTOML
+                  (builtins.readFile ./code/centauri/hyperspace/config.toml));
 
-              default-config = pkgs.writeTextFile {
-                name = "hyperspace.local.config.json";
-                text = "${builtins.toJSON (config.override
-                  (self: self // { chain_a = self.chain_a; })).result}";
+                config = pkgs.lib.makeOverridable (result: { result = result; })
+                  rawConfig;
+
+                toStr = builtins.toString;
+
+                configureChain = { self, relaychainHost, relaychainPort
+                  , parachainHost, parachainPort, paraId, commitmentPrefixes
+                  , clientId }:
+                  (self // {
+                    "parachain_rpc_url" =
+                      "ws://${relaychainHost}:${toStr relaychainPort}";
+                    "relay_chain_rpc_url" =
+                      "ws://${parachainHost}:${toStr parachainPort}";
+                    "para_id" = paraId;
+                    "commitment_prefix" = commitmentPrefixes;
+                    "client_id" = clientId;
+                  });
+
+                default-config = pkgs.writeTextFile {
+                  name = "hyperspace.local.config.json";
+                  text = "${builtins.toJSON (config.override (self:
+                    self // {
+                      chain_a = configureChain {
+                        self = self.chain_a;
+                        relaychainHost = relaychainHostA;
+                        relaychainPort = relaychainPortA;
+                        parachainHost = parachainHostA;
+                        parachainPort = parachainPortA;
+                        paraId = paraIdA;
+                        commitmentPrefixes = commitmentPrefixesA;
+                        clientId = clientIdA;
+                      };
+
+                      chain_b = configureChain {
+                        self = self.chain_b;
+                        relaychainHost = relaychainHostB;
+                        relaychainPort = relaychainPortB;
+                        parachainHost = parachainHostB;
+                        parachainPort = parachainPortB;
+                        paraId = paraIdB;
+                        commitmentPrefixes = commitmentPrefixesB;
+                        clientId = clientIdB;
+                      };
+                    })).result}";
+                };
+
+                default = pkgs.writeShellApplication {
+                  name = "default-hyperspace";
+                  runtimeInputs = [ pkgs.coreutils pkgs.bash ];
+                  text = ''
+                    ${pkgs.yq}/bin/yq  . ${default-config} --toml-output > hyperspace.local.config.toml
+                    cat hyperspace.local.config.toml
+                    ${
+                      pkgs.lib.meta.getExe bin
+                    } relay --config hyperspace.local.config.toml
+                  '';
+                };
               };
-
-              default = pkgs.writeShellApplication {
-                name = "default-hyperspace";
-                runtimeInputs = [ pkgs.coreutils pkgs.bash ];
-                text = ''
-                  ${pkgs.yq}/bin/yq  . ${default-config} --toml-output > hyperspace.local.config.toml
-                  cat hyperspace.local.config.toml
-                  ${
-                    pkgs.lib.meta.getExe bin
-                  } relay --config hyperspace.local.config.toml
-                '';
-              };
+            in builder {
+              # not parametrized yet
             };
-          in builder {
-            # not parametrized yet
-          };
 
           subwasm-release-body = let
             subwasm-call = runtime:
@@ -593,6 +639,16 @@
               ${subwasm-call composable-runtime}
               ```
             '';
+          };
+
+          bridge-config = {
+            moreSecuredParachain = "dali-a-devnet";
+            moreSecuredRelaychainPort = 9944;
+            moreSecuredParachainPort = 9988;
+
+            lessSecuredParachain = "dali-b-devnet";
+            lessSecuredRelaychainPort = 19944;
+            lessSecuredParachainPort = 19988;
           };
 
           mkDevnetInitializeScript =
@@ -926,9 +982,19 @@
               polkadot-node = mmr-polkadot-node;
             }).script;
 
-            hyperspace = hyperspace-template.bin;
+            hyperspace = (hyperspace-template { }).bin;
 
-            hyperspace-template-default = hyperspace-template.default;
+            hyperspace-template-default = (hyperspace-template {
+              relaychainHostA = bridge-config.moreSecuredParachain;
+              relaychainPortA = bridge-config.moreSecuredRelaychainPort;
+              parachainHostA = bridge-config.moreSecuredParachain;
+              parachainPortA = bridge-config.moreSecuredParachainPort;
+
+              relaychainHostB = bridge-config.lessSecuredParachain;
+              relaychainPortB = bridge-config.lessSecuredRelaychainPort;
+              parachainHostB = bridge-config.lessSecuredParachain;
+              parachainPortB = bridge-config.lessSecuredParachainPort;
+            }).default;
 
             devnet-picasso = (pkgs.callPackage mk-devnet {
               inherit pkgs;
@@ -953,13 +1019,14 @@
                   pathsToLink = [ "/bin" ];
                 };
                 config = {
-                  Entrypoint =
-                    [ "${packages.devnet-dali-b}/bin/run-devnet-dali-b" ];
-                  WorkingDir = "/home/polkadot-launch";
+                  Entrypoint = [
+                    "${packages.hyperspace-template-default}/bin/default-hyperspace"
+                  ];
+                  WorkingDir = "/home/user";
                 };
                 runAsRoot = ''
-                  mkdir -p /home/polkadot-launch /tmp
-                  chown 1000:1000 /home/polkadot-launch
+                  mkdir -p /home/user /tmp
+                  chown 1000:1000 /home/user
                   chmod 777 /tmp
                 '';
               });
@@ -1315,6 +1382,7 @@
               (import ./.nix/devnet-specs/bridge.nix {
                 inherit pkgs;
                 inherit packages;
+                config = bridge-config;
               });
 
             devnet-persistent-program =
