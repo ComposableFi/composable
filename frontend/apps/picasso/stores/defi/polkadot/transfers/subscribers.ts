@@ -1,8 +1,12 @@
-import { useStore } from "@/stores/root";
 import { TRANSFER_ASSET_LIST } from "@/defi/config";
-import { getDefaultToken } from "@/stores/defi/polkadot/transfers/utils";
-import { TokenOption } from "@/stores/defi/polkadot/transfers/transfers";
+import { getAssetOnChainId } from "@/defi/polkadot/Assets";
 import { SubstrateNetworkId } from "@/defi/polkadot/types";
+import { TokenOption } from "@/stores/defi/polkadot/transfers/transfers";
+import { getDefaultToken } from "@/stores/defi/polkadot/transfers/utils";
+import { useStore } from "@/stores/root";
+import { ApiPromise } from "@polkadot/api";
+import BigNumber from "bignumber.js";
+import { fromChainIdUnit } from "shared";
 
 function extractOptions(from: SubstrateNetworkId): TokenOption[] {
   const list = useStore.getState().substrateBalances.assets[from];
@@ -90,6 +94,35 @@ export const subscribeDefaultTransferToken = () => {
     },
     {
       fireImmediately: true,
+    }
+  );
+};
+
+export const subscribeFeeItemEd = async (api: ApiPromise) => {
+  return useStore.subscribe(
+    (store) => store.transfers.feeItem,
+    (feeItem) => {
+      const assetId = getAssetOnChainId("picasso", feeItem);
+
+      if (!assetId) {
+        return;
+      }
+
+      const ed = api.query.currencyFactory.assetEd(assetId);
+
+      const existentialString = ed.toString();
+      const existentialValue = fromChainIdUnit(
+        new BigNumber(existentialString)
+      );
+      useStore.setState({
+        ...useStore.getState(),
+        transfers: {
+          ...useStore.getState().transfers,
+          feeItemEd: existentialValue.isNaN()
+            ? new BigNumber(0)
+            : existentialValue,
+        },
+      });
     }
   );
 };

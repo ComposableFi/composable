@@ -157,6 +157,15 @@ type HistoricalLockedValue @entity {
   source: LockedSource!
 }
 
+type HistoricalVolume @entity {
+  id: ID!
+  event: Event! @index
+  amount: BigInt!
+  currency: Currency!
+  timestamp: BigInt!
+  assetId: String!
+}
+
 type PabloTransaction @entity {
   id: ID!
   event: Event! @unique @index

@@ -1,4 +1,4 @@
-import { ConnectedAccount } from "substrate-react";
+import { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { ApiPromise } from "@polkadot/api";
 import { encodeAddress } from "@polkadot/util-crypto";
@@ -215,9 +215,9 @@ export const useCrowdloanRewardsEligibility = (
  */
 export const useCrowdloanRewardsEthereumAddressAssociatedAccount = (
   ethereumAccount?: string,
-  connectedPicassoAccount?: ConnectedAccount,
-  connectedPicassoAccounts?: ConnectedAccount[]
-): ConnectedAccount | undefined => {
+  connectedPicassoAccount?: InjectedAccountWithMeta,
+  connectedPicassoAccounts?: InjectedAccountWithMeta[]
+): InjectedAccountWithMeta | undefined => {
   const { onChainAssociations } = useCrowdloanRewardsSlice();
 
   return useMemo(() => {
@@ -248,7 +248,15 @@ export const useCrowdloanRewardsEthereumAddressAssociatedAccount = (
         if (connectedKsmHasOtherAssociation && connectedKsmHasOtherAssociation[1] === null) {
           return connectedPicassoAccount;
         } else {
-          return { name: connectedKsmHasOtherAssociation?.[1] ? connectedKsmHasOtherAssociation?.[1] : "-", address: "DOT Wallet is associated with" }
+          return {
+            address: "DOT Wallet is associated with",
+            meta: {
+              genesisHash: null,
+              name: connectedKsmHasOtherAssociation?.[1] ? connectedKsmHasOtherAssociation?.[1] : "-",
+              source: "none"
+            },
+            type: "ethereum"
+          }
         }
       }
     }
