@@ -104,7 +104,7 @@ export default function MyApp(props: MyAppProps) {
             supportedRelaychains={[
               {
                 chainId: "kusama",
-                rpcUrl: process.env.SUBSTRATE_PROVIDER_URL_KUSAMA || "",
+                rpcUrl: getEnvironment("kusama"),
                 rpc: {},
                 types: {}
               }
