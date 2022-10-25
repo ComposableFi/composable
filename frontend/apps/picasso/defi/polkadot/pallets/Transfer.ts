@@ -1,6 +1,6 @@
 import { ApiPromise } from "@polkadot/api";
 import { u128 } from "@polkadot/types-codec";
-import { SubstrateNetworkId } from "@/defi/polkadot/types";
+import { AssetId, SubstrateNetworkId } from "@/defi/polkadot/types";
 import {
   getTransferCallKaruraPicasso,
   getTransferCallKusamaPicasso,
@@ -71,8 +71,10 @@ export function getAmountToTransfer({
   keepAlive,
   api,
   sourceChain,
-  targetChain
+  targetChain,
+  tokenId,
 }: {
+  tokenId: AssetId;
   balance: BigNumber;
   amount: BigNumber;
   existentialDeposit: BigNumber;
@@ -88,7 +90,7 @@ export function getAmountToTransfer({
     keepAlive &&
     isExistentialDepositImportant &&
     amount.minus(existentialDeposit).lte(0);
-  const destinationFee = getDestChainFee(sourceChain, targetChain);
+  const destinationFee = getDestChainFee(sourceChain, targetChain, tokenId);
   const calculatedAmount =
     keepAlive && isExistentialDepositImportant && !isZeroAmount
       ? amount.minus(existentialDeposit)
@@ -101,7 +103,8 @@ export function getAmountToTransfer({
 
 export function getDestChainFee(
   sourceChain: ParachainId | RelayChainId,
-  targetChain: ParachainId | RelayChainId
+  targetChain: ParachainId | RelayChainId,
+  tokenId: AssetId
 ) {
   switch (`${sourceChain}=>${targetChain}`) {
     case "kusama=>picasso":
@@ -110,10 +113,25 @@ export function getDestChainFee(
         symbol: Assets.ksm
       };
     case "karura=>picasso":
-      return {
-        fee: fromChainIdUnit(new BigNumber("927020325")),
-        symbol: Assets.kusd
-      };
+      if (tokenId === "kusd") {
+        return {
+          fee: fromChainIdUnit(new BigNumber("927020325")),
+          symbol: Assets.kusd
+        };
+      }
+      if (tokenId === "kar") {
+        return {
+          fee: fromChainIdUnit(new BigNumber("927020325")),
+          symbol: Assets.kar
+        }
+      }
+
+      if (tokenId === "ksm") {
+        return {
+          fee: fromChainIdUnit(new BigNumber("927020325")),
+          symbol: Assets.ksm
+        }
+      }
     case "picasso=>karura":
       return {
         fee: fromChainIdUnit(new BigNumber("74592000000")),
