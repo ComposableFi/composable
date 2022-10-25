@@ -572,7 +572,7 @@ jobs:
       - x64
       - sre
     concurrency:
-      group: ${{ github.workflow }}-test-running-of-pallet-benchmarks-${{ matrix.runtime }}-${{ github.ref }}
+      group: ${{ github.workflow }}-test-benchmarks-compile-${{ matrix.runtime }}-${{ github.ref }}
       cancel-in-progress: true
     strategy:
       matrix:
@@ -596,6 +596,7 @@ jobs:
           name: composable-community
       - run: |
           cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- run .#benchmarks-generate-quick-${{ matrix.runtime }} --no-update-lock-file --show-trace -L
+          cat code/parachain/runtime/dali/src/weights/pablo.rs
           nix build .#composable-bench-node
 
   check-simnode:
