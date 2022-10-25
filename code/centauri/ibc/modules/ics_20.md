@@ -25,11 +25,12 @@ The standard format for a sample json serialized ics20 data is as shown below
         "receiver": "EyhghTgxjajIkjht"
     }
 ```
+The rust equivalent of the ics20 packet data is defined by [`PacketData`](/code/centauri/ibc/modules/src/applications/transfer/packet.rs#L11)
 
 ### Acknowledgement
 
 Ics20 requires an acknowledgement packet to be sent and defines an acknowledgement success type.  
-A successful acknowledgement is defined by the string `AQ==`, any other acknowledgement value is interpreted as an error.
+A successful acknowledgement is defined by the string [`AQ==`](/code/centauri/ibc/modules/src/applications/transfer/acknowledgement.rs#L10), any other acknowledgement value is interpreted as an error.
 
 ### ICS20 Context
 
@@ -49,3 +50,8 @@ Correct execution of the Ics20 protocol hinges on the correct implementation of 
 
 ### ICS20 Callbacks
 
+Ics20 callbacks contain the logic to handle different stages of the packet flow from send to acknowledgement.
+The module callback logic for ICS20 is fully implemented [`here`](/code/centauri/ibc/modules/src/applications/transfer/context.rs#L162).  
+
+To initialize an ics20 transfer, the [`send_transfer`](/code/centauri/ibc/modules/src/applications/transfer/relay/send_transfer.rs) method should be called. 
+However, the caller should take care to revert all changes made by this call in case of a failed execution.

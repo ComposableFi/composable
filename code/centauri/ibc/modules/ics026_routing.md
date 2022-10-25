@@ -64,3 +64,8 @@ The internal dispatch mechanism will decode the protobuf message and route it to
     deliver(&mut ctx, message)?;
 ```
 
+**Ics26Envelope**
+
+The [`Ics26Envelope`](/code/centauri/ibc/modules/src/core/ics26_routing/msgs.rs#L33) enum implements the `TryFrom<Any>`  
+and it is what helps us convert the protobuf `Any` into a concrete ibc message.  
+Ibc messages have a unique `type_url`, which is a string that helps us identify what concrete message type to decode the raw protobuf bytes into.
