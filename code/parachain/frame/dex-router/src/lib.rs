@@ -489,7 +489,7 @@ pub mod pallet {
 			for pool_id in route_iter {
 				let assets = T::Pablo::assets(*pool_id)?;
 				// We only allow dual asset pools in routes, therefore taking the remaining asset
-				// other than `in_assset_itr.asset_id` gives us the out_asset_id
+				// other than `in_asset_itr.asset_id` gives us the out_asset_id
 				let out_asset_id = assets
 					.keys()
 					.copied()
@@ -543,7 +543,7 @@ pub mod pallet {
 			for pool_id in route_iter {
 				let assets = T::Pablo::assets(*pool_id)?;
 				// We only allow dual asset pools in routes, therefore taking the remaining asset
-				// other than `in_assset_itr.asset_id` gives us the out_asset_id
+				// other than `in_asset_itr.asset_id` gives us the out_asset_id
 				let quote_asset_id = assets
 					.keys()
 					.copied()
