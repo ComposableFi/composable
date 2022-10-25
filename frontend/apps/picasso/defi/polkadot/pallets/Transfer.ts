@@ -21,7 +21,8 @@ export async function getApiCallAndSigner(
   targetParachainId: number,
   from: SubstrateNetworkId,
   to: SubstrateNetworkId,
-  hasFeeItem: boolean
+  hasFeeItem: boolean,
+  token: AssetId,
 ) {
   switch (`${from}-${to}`) {
     case "picasso-kusama":
@@ -57,7 +58,8 @@ export async function getApiCallAndSigner(
         targetParachainId,
         targetAccountAddress,
         signerAddress,
-        amountToTransfer
+        amountToTransfer,
+        token
       );
     default:
       throw new Error("Invalid network");

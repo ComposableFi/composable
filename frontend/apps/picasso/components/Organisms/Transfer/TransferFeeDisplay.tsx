@@ -40,6 +40,7 @@ export const TransferFeeDisplay = () => {
   const selectedToken = useStore(state => state.transfers.selectedToken);
   const destFee = getDestChainFee(from, to, selectedToken);
   const updateFee = useStore((state) => state.transfers.updateFee);
+  const token = useStore(state => state.transfers.selectedToken);
 
   const symbol = useMemo(() => {
     let out;
@@ -89,7 +90,8 @@ export const TransferFeeDisplay = () => {
           TARGET_PARACHAIN_ID,
           from,
           to,
-          hasFeeItem
+          hasFeeItem,
+          token
         );
 
         const info = await exec.paymentInfo(call, acc.address, signer);

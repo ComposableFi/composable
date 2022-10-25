@@ -35,6 +35,7 @@ export const useTransfer = () => {
     ({ substrateBalances }) =>
       substrateBalances.assets[from].native.existentialDeposit
   );
+  const selectedToken = useStore(state => state.transfers.selectedToken);
 
   const amount = useStore((state) => state.transfers.amount);
   const account = useSelectedAccount();
@@ -95,6 +96,7 @@ export const useTransfer = () => {
       hasFeeItem,
       feeItemId,
       weight,
+      token: selectedToken
     });
   };
 

@@ -9,6 +9,7 @@ import { CurrencyId } from "defi-interfaces";
 import { XcmVersionedMultiLocation } from "@polkadot/types/lookup";
 import BigNumber from "bignumber.js";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
+import { AssetId } from "@/defi/polkadot/types";
 
 export type TransferHandlerArgs = {
   api: ApiPromise;
@@ -21,6 +22,7 @@ export type TransferHandlerArgs = {
   hasFeeItem: boolean;
   feeItemId: number | null;
   weight: BigNumber;
+  token: AssetId
 };
 
 export function availableTargetNetwork(
@@ -201,8 +203,12 @@ export async function getTransferCallKaruraPicasso(
   targetChain: number | 0,
   targetAccount: string,
   signerAddress: string,
-  amount: u128
+  amount: u128,
+  token: AssetId
 ) {
+  if (!token) {
+    throw new Error("Token not selected");
+  }
   // Set destination. Should have 2 Junctions, first to parent and then to wallet
   const destination: XcmVersionedMultiLocation = api.createType(
     "XcmVersionedMultiLocation",
@@ -224,10 +230,11 @@ export async function getTransferCallKaruraPicasso(
     }
   );
 
+  const tokenParam = token ? token.toUpperCase() : "KUSD"; // defaulting to KUSD if no token is selected
   const currencyId: CurrencyId = api.createType(
     "AcalaPrimitivesCurrencyCurrencyId",
     {
-      Token: api.createType("AcalaPrimitivesCurrencyTokenSymbol", "KUSD"),
+      Token: api.createType("AcalaPrimitivesCurrencyTokenSymbol", tokenParam),
     }
   );
 
@@ -254,6 +261,7 @@ export async function transferPicassoKarura({
   signerAddress,
   hasFeeItem,
   feeItemId,
+  token,
 }: TransferHandlerArgs) {
   // Set destination. Should have 2 Junctions, first to parent and then to wallet
   const { signer, call } = await getTransferCallPicassoKarura(
@@ -307,13 +315,15 @@ export async function transferKaruraPicasso({
   executor,
   enqueueSnackbar,
   signerAddress,
+  token,
 }: TransferHandlerArgs) {
   const { signer, call } = await getTransferCallKaruraPicasso(
     api,
     targetChain,
     targetAccount,
     signerAddress,
-    amount
+    amount,
+    token,
   );
 
   await executor.execute(
