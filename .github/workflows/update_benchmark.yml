@@ -21,12 +21,12 @@ jobs:
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     concurrency:
-      group: update-benchmarking${{ matrix.runtime }}-${{ github.ref }}
+      group: update-benchmarking-${{ matrix.runtime }}-${{ github.ref }}
       cancel-in-progress: true
     strategy:
       matrix:
         runtime: [dali, picasso, composable]
-    if: github.event.pull_request.draft == false && contains(github.event.pull_request.labels.*.name, 'needs-benchmarks')
+    if: contains(github.event.pull_request.labels.*.name, 'needs-benchmarks')
     steps:
       - uses: actions/checkout@v3
         with:
@@ -55,7 +55,8 @@ jobs:
         id: branch-name
         uses: tj-actions/branch-names@v5.1
 
-      - run: |
+      - name: Fixup dubious ownership
+        run: |
           # No clue why the next action fail without this otherwise.
           git config --global --add safe.directory /__w/composable/composable
 
