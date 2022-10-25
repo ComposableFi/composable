@@ -1,9 +1,9 @@
-import { StoreSlice } from "../../../types";
-import BigNumber from "bignumber.js";
-import { AssetId, SubstrateNetworkId } from "@/defi/polkadot/types";
-import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { AssetMetadata } from "@/defi/polkadot/Assets";
+import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
+import { AssetId, SubstrateNetworkId } from "@/defi/polkadot/types";
+import BigNumber from "bignumber.js";
 import { Token } from "tokens";
+import { StoreSlice } from "../../../types";
 
 export interface TokenOption {
   tokenId: AssetId;
@@ -30,6 +30,7 @@ interface TransfersState {
   recipients: Recipients;
   keepAlive: boolean;
   feeItem: AssetId;
+  feeItemEd: BigNumber;
   hasFeeItem: boolean;
   existentialDeposit: BigNumber;
   feeToken: number;
@@ -59,6 +60,7 @@ const initialState: TransfersState = {
   },
   hasFeeItem: false,
   feeItem: "pica",
+  feeItemEd: new BigNumber(0),
   keepAlive: true,
   existentialDeposit: new BigNumber(0),
   feeToken: 0,

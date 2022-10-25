@@ -14,6 +14,7 @@ import {
   getLatestPoolByPoolId,
   getOrCreate,
   storeHistoricalLockedValue,
+  storeHistoricalVolume,
 } from "../dbHelper";
 import {
   Event,
@@ -118,7 +119,6 @@ export async function processPoolCreatedEvent(
 
     let tx = await ctx.store.get(Event, ctx.event.id);
     if (tx != undefined) {
-      console.log("qwe");
       console.error("Unexpected event in db", tx);
       throw new Error("Unexpected event in db");
     }
@@ -551,6 +551,12 @@ export async function processSwappedEvent(
     await ctx.store.save(quoteAsset);
     await ctx.store.save(eventEntity);
     await ctx.store.save(pabloTransaction);
+
+    await storeHistoricalVolume(
+      ctx,
+      quoteAsset.assetId,
+      swappedEvt.quoteAmount
+    );
   } else {
     throw new Error("Pool not found");
   }
@@ -571,7 +577,6 @@ export async function processPoolDeletedEvent(
   ctx: EventHandlerContext<Store, { event: true }>,
   event: PabloPoolDeletedEvent
 ): Promise<void> {
-  console.debug("processing LiquidityAddedEvent", ctx.event.id);
   const poolDeletedEvent = getPoolDeletedEvent(event);
   const pool = await getLatestPoolByPoolId(ctx.store, poolDeletedEvent.poolId);
   // only set values if the owner was missing, i.e a new pool

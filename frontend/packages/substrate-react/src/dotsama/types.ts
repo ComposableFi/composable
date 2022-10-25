@@ -1,7 +1,7 @@
 import { ApiPromise } from "@polkadot/api";
 import { DEFI_CONFIG } from "./config";
 import type { Signer as InjectedSigner } from "@polkadot/api/types";
-
+import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 export type TokenId = typeof DEFI_CONFIG.tokenIds[number];
 export type ParachainId = typeof DEFI_CONFIG.parachainIds[number];
 export type RelayChainId = typeof DEFI_CONFIG.relayChainIds[number];
@@ -22,16 +22,10 @@ export type DotSamaExtensionStatus =
   | "no_extension"
   | "error";
 
-export interface ConnectedAccount {
-  address: string;
-  name: string;
-}
-
 export interface SubstrateChainApi {
   parachainApi: ApiPromise | undefined;
   apiStatus: SubstrateChainApiStatus;
   prefix: number;
-  accounts: ConnectedAccount[];
 }
 
 export interface ParachainApi extends SubstrateChainApi {
@@ -42,6 +36,8 @@ export interface RelaychainApi extends SubstrateChainApi {
   chainId: RelayChainId;
 }
 
+export type ConnectedAccounts = Record<RelayChainId | ParachainId, InjectedAccountWithMeta[]>;
+
 export interface DotSamaContext {
   signer: InjectedSigner | undefined;
   parachainProviders: { [chainId in ParachainId]: ParachainApi };
@@ -51,6 +47,7 @@ export interface DotSamaContext {
   deactivate?: () => Promise<void>;
   selectedAccount: number;
   setSelectedAccount?: (account: number) => void;
+  connectedAccounts: ConnectedAccounts
 }
 
 export interface SubstrateNetwork {

@@ -1,4 +1,4 @@
-import { Circle } from "@mui/icons-material";
+import { Add } from "@mui/icons-material";
 import {
   Box,
   Paper,
@@ -8,36 +8,68 @@ import {
   alpha,
 } from "@mui/material";
 import Image from "next/image";
+import { useCallback } from "react";
 
 type AccountIndicatorProps = {
-  network: "polkadot" | "metamask";
   label: string;
   onClick: () => void;
+  isEthereumConnected: boolean;
+  isPolkadotConnected: boolean;
 };
 
 export const AccountIndicator: React.FC<AccountIndicatorProps> = ({
-  network,
   label,
   onClick,
+  isEthereumConnected = false,
+  isPolkadotConnected
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const icon =
-    network === "polkadot"
-      ? "/networks/polkadot_js_wallet.svg"
-      : "/networks/mainnet.svg";
+  const polkaIcon = "/networks/polkadot_js.svg";
+  const ethIcon = "/networks/mainnet.svg";
+
+  const networkIcons = useCallback(() => {
+    if (isEthereumConnected && isPolkadotConnected) {
+      return (
+        <>
+          <Box sx={{ display: "flex" }}>
+            <Image src={polkaIcon} width="24" height="24" alt="Account" />
+          </Box>
+          <Box sx={{ display: "flex", marginLeft: -1.5 }}>
+            <Image src={ethIcon} width="24" height="24" alt="Account" />
+          </Box>
+        </>
+      )
+    } else if (isEthereumConnected || isPolkadotConnected) {
+      const icon = isEthereumConnected ? ethIcon : polkaIcon;
+      return (
+        <Box sx={{ display: "flex" }}>
+          <Image src={icon} width="24" height="24" alt="Account" />
+        </Box>
+      )
+    } else {
+      return (
+        <>
+          <Box sx={{ display: "flex" }}>
+            <Image style={{ filter: "grayscale(100%)" }}  src={polkaIcon} width="24" height="24" alt="Account" />
+          </Box>
+          <Box sx={{ display: "flex" }}>
+            <Image style={{ filter: "grayscale(100%)" }} src={ethIcon} width="24" height="24" alt="Account" />
+          </Box>
+        </>
+      )
+    }
+
+  }, [isEthereumConnected, isPolkadotConnected]);
 
   return (
     <Paper
       onClick={onClick}
       sx={{
-        display: "grid",
-        justifyItems: "center",
+        display: "flex",
         alignContent: "center",
-        gridTemplateColumns: "24px auto 24px",
         gap: theme.spacing(2),
         flexShrink: 0,
-        minWidth: theme.spacing(31.25),
         background: alpha(
           theme.palette.primary.main,
           theme.custom.opacity.light
@@ -51,14 +83,17 @@ export const AccountIndicator: React.FC<AccountIndicatorProps> = ({
         },
       }}
     >
-      <Box sx={{ width: theme.spacing(3), height: theme.spacing(3) }}>
-        <Image src={icon} width="24" height="24" alt="Account" />
+      <Box sx={{ height: theme.spacing(3), display: "flex", flexGrow: isMobile ? 1 : undefined, justifyContent: isMobile ? "center" : undefined }}>
+        {networkIcons()}
       </Box>
-      {isMobile ? (
-        <Circle fontSize="large" sx={{ fontSize: 28 }} />
-      ) : (
-        <Typography variant="body2">{label}</Typography>
-      )}
+
+      {!isMobile ? (
+        <>
+          <Typography variant="body2">{label}</Typography>
+          {!isEthereumConnected && isPolkadotConnected ? <Add /> : null}
+        </>
+      ) : null}
+
     </Paper>
   );
 };

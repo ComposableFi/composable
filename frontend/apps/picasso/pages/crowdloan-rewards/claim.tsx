@@ -16,6 +16,7 @@ import { crowdLoanSignableMessage } from "@/utils/crowdloanRewards";
 import { useRouter } from "next/router";
 import { ConnectorType, useBlockchainProvider, useConnector } from "bi-lib";
 import {
+  useConnectedAccounts,
   useDotSamaContext,
   useExecutor,
   usePendingExtrinsic,
@@ -36,7 +37,8 @@ import {
   useCrowdloanRewardsEthereumAddressAssociatedAccount,
   useCrowdloanRewardsHasStarted,
 } from "@/stores/defi/polkadot/crowdloanRewards/hooks";
-import { DEFAULT_EVM_ID, APP_NAME } from "@/defi/polkadot/constants";
+import { DEFAULT_EVM_ID, DEFAULT_NETWORK_ID } from "@/defi/polkadot/constants";
+import { KsmAndEthAssociationInfoBox } from "@/components/Organisms/CrowdloanRewards/KsmAndEthAssociationInfoBox";
 
 const ERROR_MESSAGES = {
   KSM_WALLET_NOT_CONNECTED: {
@@ -60,8 +62,9 @@ export const ClaimLoanPage = () => {
   const { enqueueSnackbar } = useSnackbar();
   const { isActive } = useConnector(ConnectorType.MetaMask);
   const { signer, account } = useBlockchainProvider(DEFAULT_EVM_ID);
-  const { extensionStatus } = useDotSamaContext();
-  const { parachainApi, accounts } = usePicassoProvider();
+  const { extensionStatus, signer: polkaSigner } = useDotSamaContext();
+  const { parachainApi } = usePicassoProvider();
+  const accounts = useConnectedAccounts(DEFAULT_NETWORK_ID);
   const { initialPayment } = useCrowdloanRewardsSlice();
   const executor = useExecutor();
   const selectedAccount = useSelectedAccount();
@@ -121,6 +124,8 @@ export const ClaimLoanPage = () => {
       selectedAccount?.address
     );
 
+  const isEligibleForBothAddresses = isEthAccountEligible && isPicassoAccountEligible;
+
   const { contributedAmount, totalRewards } =
     useCrowdloanRewardsContributionAndRewards(
       nextStep,
@@ -141,22 +146,16 @@ export const ClaimLoanPage = () => {
 
   const signPolkadotJs = useCallback(async (): Promise<string> => {
     try {
-      const {
-        web3FromAddress,
-        web3Enable,
-      } = require("@polkadot/extension-dapp");
-      await web3Enable(APP_NAME);
-      if (!selectedAccount || !parachainApi)
+      if (!selectedAccount || !parachainApi || !polkaSigner)
         throw new Error("Missing Connection");
-      const injector = await web3FromAddress(selectedAccount.address);
-      if (!injector.signer.signRaw) throw new Error("Missing Connection");
+      if (!polkaSigner.signRaw) throw new Error("Missing Connection");
       if (!parachainApi || !selectedAccount)
         throw new Error("Missing Connection");
       const accId32 = parachainApi.createType(
         "AccountId32",
         selectedAccount.address
       );
-      const { signature } = await injector.signer.signRaw({
+      const { signature } = await polkaSigner.signRaw({
         address: selectedAccount.address,
         data: stringToHex(crowdLoanSignableMessage(accId32)),
         type: "bytes",
@@ -167,7 +166,7 @@ export const ClaimLoanPage = () => {
       enqueueSnackbar(err.message, { variant: "error" });
       return Promise.reject(new Error(err.message));
     }
-  }, [selectedAccount, parachainApi, enqueueSnackbar]);
+  }, [selectedAccount, polkaSigner, parachainApi, enqueueSnackbar]);
 
   const signEthereum = useCallback(async (): Promise<string> => {
     try {
@@ -297,7 +296,7 @@ export const ClaimLoanPage = () => {
         justifyContent="center"
         pb={9}
       >
-        <Grid item {...standardPageSize} mt={theme.spacing(9)}>
+        <Grid item {...standardPageSize} mt={theme.spacing(14)}>
           <PageTitle
             title={isStable ? "Stablecoin Contribution." : "KSM Contribution"}
             textAlign="center"
@@ -305,21 +304,21 @@ export const ClaimLoanPage = () => {
           />
         </Grid>
         {hasNothingToClaim && (
-          <Grid item {...standardPageSize} mt={theme.spacing(9)}>
+          <Grid item {...standardPageSize}>
             <NoEligibleWalletFeaturedBox
               title={ineligibleText.title}
               textBelow={ineligibleText.textBelow}
             />
           </Grid>
         )}
-        {!hasNothingToClaim && (
-          <Grid item {...standardPageSize} mt={theme.spacing(9)}>
+        {!hasNothingToClaim && !isEligibleForBothAddresses && (
+          <Grid item {...standardPageSize} mt={theme.spacing(2)}>
             {isStable ? (
               <StablecoinClaimForm
                 isClaiming={isPendingAssociate || isPendingClaim}
                 SS58Address={
                   ethAssociatedOrSelectedAccount
-                    ? `${ethAssociatedOrSelectedAccount.address} (${ethAssociatedOrSelectedAccount.name})`
+                    ? `${ethAssociatedOrSelectedAccount.address} (${ethAssociatedOrSelectedAccount.meta.name ?? ""})`
                     : "-"
                 }
                 disabled={
@@ -335,7 +334,7 @@ export const ClaimLoanPage = () => {
                 readonlyAvailableToClaim
                 readonlyTotalPicaVested
                 picassoAccountName={
-                  selectedAccount ? selectedAccount.name : "-"
+                  selectedAccount && selectedAccount.meta.name  ? selectedAccount.meta.name : "-"
                 }
                 readonlySS8Address
                 onClaim={operation}
@@ -356,7 +355,7 @@ export const ClaimLoanPage = () => {
                 readonlyAvailableToClaim
                 readonlyTotalPicaVested
                 picassoAccountName={
-                  selectedAccount ? selectedAccount.name : "-"
+                  selectedAccount && selectedAccount.meta.name ? selectedAccount.meta.name : "-"
                 }
                 readonlySS8Address
                 onClaim={operation}
@@ -364,6 +363,11 @@ export const ClaimLoanPage = () => {
             )}
           </Grid>
         )}
+
+        {isEligibleForBothAddresses && <Grid item {...standardPageSize} mt={theme.spacing(2)} >
+          <KsmAndEthAssociationInfoBox connectedAccount={selectedAccount} isEligibleForBothAddresses />
+        </Grid>}
+
         <Grid item {...standardPageSize}>
           <SS8WalletHelper />
         </Grid>

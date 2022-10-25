@@ -1,4 +1,3 @@
-
 <br />
 <br />
 
@@ -36,4 +35,4 @@ To learn more about our ecosystem, vision, and product specifics - visit our [bo
 
 ## Nix
 
-We use [`nix`](https://nixos.org/) in order to reproducibly build all of our packages. [Check out our Nix docs here in order to build our packages](https://docs.composable.finance/nix).
+We use [`nix`](https://nixos.org/) in order to reproducibly build all of our packages. [Check out our Nix docs here in order to build our packages](https://docs.composable.finance/nix.html).

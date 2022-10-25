@@ -79,8 +79,10 @@ cdylib
 charlie
 chevdor
 chrono
+cita
 claimunstake
 clickup
+clsx
 cmake
 cmark
 codegen
@@ -145,6 +147,7 @@ imagesdir
 imagesoutdir
 immer
 includeurl
+infima
 inprocess
 ipam
 ipetkov # github username
@@ -296,6 +299,7 @@ snackbars
 sparkline
 sproof
 squeezy
+Stackexchange
 stakeform
 stakerclaimunstake
 startuml
@@ -304,6 +308,7 @@ stdenv
 structopt
 styleguide
 submessage
+submessages
 Subql
 substituters
 subwasm
@@ -372,3 +377,4 @@ yzhang
 zlfzypzcr
 zstd
 zustand
+DACP

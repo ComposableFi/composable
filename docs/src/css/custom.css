@@ -1,0 +1,100 @@
+/**
+ * Any CSS included here will be global. The classic template
+ * bundles Infima by default. Infima is a CSS framework designed to
+ * work well for content-centric websites.
+ */
+
+/* EkMukta Font */
+@font-face {
+  font-family: "EkMukta";
+  src: url('/fonts/EkMukta-ExtraLight.ttf') format('truetype');
+  font-weight: 200; /* normal */
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "EkMukta";
+  src: url('/fonts/EkMukta-Light.ttf') format('truetype');
+  font-weight: 300; /* normal */
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "EkMukta";
+  src: url('/fonts/EkMukta-Regular.ttf') format('truetype');
+  font-weight: 400; /* normal */
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "EkMukta";
+  src: url('/fonts/EkMukta-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "EkMukta";
+  src: url('/fonts/EkMukta-SemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "EkMukta";
+  src: url('/fonts/EkMukta-Bold.ttf') format('truetype');
+  font-weight: 700; /* bold */
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "EkMukta";
+  src: url('/fonts/EkMukta-ExtraBold.ttf') format('truetype');
+  font-weight: 800;
+  font-style: normal;
+}
+
+
+/* CitaPro Font */
+@font-face {
+  font-family: "CitaPro";
+  src: url('/fonts/CitaPro-Regular.otf') format('truetype');
+  font-weight: 400; /* normal */
+  font-style: normal;
+}
+
+/* source for mapping numbers to files: https://qr.ae/pGVP9G */
+
+h1, h2, h3, h4 {
+  letter-spacing: 2px;
+  font-weight: 700;
+}
+
+/* You can override the default Infima variables here. */
+:root {
+  --ifm-color-primary: #5C57A2;
+  --ifm-color-primary-dark: #534e92;
+  --ifm-color-primary-darker: #4e4a8a;
+  --ifm-color-primary-darkest: #403d71;
+  --ifm-color-primary-light: #6a65ad;
+  --ifm-color-primary-lighter: #726db1;
+  --ifm-color-primary-lightest: #8a86be;
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+  /* --ifm-font-family-monospace: "JetBrains Mono Regular"; */
+  --ifm-heading-font-family:"CitaPro", system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';  
+  --ifm-font-family-base: "EkMukta", system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+  --ifm-heading-font-weight: 700;
+}
+
+/* For readability concerns, you should choose a lighter palette in dark mode. */
+[data-theme='dark'] {
+  --ifm-color-primary: #726db1;
+  --ifm-color-primary-dark: #605aa7;
+  --ifm-color-primary-darker: #5a559e;
+  --ifm-color-primary-darkest: #4a4682;
+  --ifm-color-primary-light: #8480bb;
+  --ifm-color-primary-lighter: #8d89c0;
+  --ifm-color-primary-lightest: #a8a5cf;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+}
