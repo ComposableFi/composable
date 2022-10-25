@@ -1,3 +1,4 @@
+export * from "./useConnectedAccounts";
 export * from "./useDotSamaContext";
 export * from "./useEagerConnect";
 export * from "./useParachainApi";

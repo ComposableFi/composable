@@ -6,6 +6,7 @@ import { Executor, getSigner } from "substrate-react";
 import { AnyComponentMap, EnqueueSnackbar, SnackbarKey } from "notistack";
 import { APP_NAME } from "@/defi/polkadot/constants";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
+import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 
 export async function fetchStakingRewardPosition(
   api: ApiPromise,
@@ -88,7 +89,7 @@ export function stake({
 }: {
   executor: Executor | undefined,
   parachainApi: ApiPromise | undefined,
-  account: { name: string; address: string } | undefined,
+  account: InjectedAccountWithMeta | undefined,
   assetId: number,
   lockablePICA: BigNumber,
   lockPeriod: string,

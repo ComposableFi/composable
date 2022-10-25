@@ -1,7 +1,6 @@
 import { SettingsModal } from "@/components/Organisms/Settings/SettingsModal";
 import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
 import { AssetId } from "@/defi/polkadot/types";
-import * as React from "react";
 import { useRef, useState } from "react";
 import { GasFeeDropdown } from "../GasFeeDropdown";
 
