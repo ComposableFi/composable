@@ -3,8 +3,6 @@
 	warn(
 		clippy::disallowed_methods,
 		clippy::disallowed_types,
-		// TODO (vim): temporary for refactor
-		// clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
 		clippy::panic
@@ -32,7 +30,6 @@
 	trivial_numeric_casts,
 	unused_extern_crates
 )]
-
 pub use pallet::*;
 
 #[cfg(test)]
@@ -540,6 +537,7 @@ pub mod pallet {
 				if result.is_ok() {
 					weight += 1;
 					if let Some(updated_twap) = TWAPState::<T>::get(pool_id) {
+						#[allow(deprecated)]
 						if let Ok(assets) = Self::pool_ordered_pair(pool_id) {
 							Self::deposit_event(Event::<T>::TwapUpdated {
 								pool_id,
@@ -667,6 +665,7 @@ pub mod pallet {
 			pool_id: T::PoolId,
 			price_ratio: PriceRatio,
 		) -> Result<Rate, DispatchError> {
+			#[allow(deprecated)]
 			let pair = Self::pool_ordered_pair(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
 			let pair = match price_ratio {
@@ -693,6 +692,7 @@ pub mod pallet {
 		}
 
 		fn update_twap(pool_id: T::PoolId) -> Result<(), DispatchError> {
+			#[allow(deprecated)]
 			let currency_pair = Self::pool_ordered_pair(pool_id)?; // update price cumulatives
 			let (base_price_cumulative, quote_price_cumulative) =
 				PriceCumulativeState::<T>::try_mutate(
@@ -812,7 +812,9 @@ pub mod pallet {
 			}
 		}
 
-		#[deprecated(note = "This is a temporary function for refactoring/migration purposes")]
+		#[deprecated(
+			note = "This is a temporary function for refactoring/migration purposes. Use `Amm::assets` instead."
+		)]
 		fn pool_ordered_pair(
 			pool_id: T::PoolId,
 		) -> Result<CurrencyPair<T::AssetId>, DispatchError> {
@@ -863,6 +865,7 @@ pub mod pallet {
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
+			#[allow(deprecated)]
 			let currency_pair = Self::pool_ordered_pair(pool_id)?;
 			ensure!(amounts.len() < 3, Error::<T>::MoreThanTwoAssetsNotYetSupported);
 			let base_amount = *amounts.get(&currency_pair.base).ok_or(Error::<T>::MissingAmount)?;
@@ -887,6 +890,7 @@ pub mod pallet {
 		) -> Result<RedeemableAssets<Self::AssetId, Self::Balance>, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
+			#[allow(deprecated)]
 			let currency_pair = Self::pool_ordered_pair(pool_id)?;
 			ensure!(min_expected_amounts.len() < 3, Error::<T>::MoreThanTwoAssetsNotYetSupported);
 			let min_base_amount = *min_expected_amounts
@@ -939,6 +943,7 @@ pub mod pallet {
 			let redeemable_assets =
 				Self::redeemable_assets_for_lp_tokens(pool_id, lp_amount, min_expected_amounts)?;
 			let pool = Self::get_pool(pool_id)?;
+			#[allow(deprecated)]
 			let currency_pair = Self::pool_ordered_pair(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
 			match pool {

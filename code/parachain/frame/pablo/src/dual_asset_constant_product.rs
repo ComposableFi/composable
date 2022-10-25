@@ -68,11 +68,8 @@ impl<T: Config> DualAssetConstantProduct<T> {
 			.iter()
 			.map(|(asset_id, weight)| {
 				(
-					asset_id.clone(),
-					(
-						weight.clone(),
-						T::Convert::convert(T::Assets::balance(asset_id.clone(), pool_account)),
-					),
+					*asset_id,
+					(*weight, T::Convert::convert(T::Assets::balance(*asset_id, pool_account))),
 				)
 			})
 			.collect::<BTreeMap<_, _>>()
@@ -89,10 +86,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		// TODO (vim): Pool weight validation is missing, which would cause the received LP tokens
 		//  to be higher than expected if the base token has more than what is allowed by the pool
 		//  weight.
-		ensure!(
-			assets.values().find(|balance| balance.is_zero()).is_none(),
-			Error::<T>::InvalidAmount
-		);
+		ensure!(!assets.values().any(|balance| balance.is_zero()), Error::<T>::InvalidAmount);
 		let pool_assets = Self::get_pool_balances(&pool, &pool_account);
 		let assets_vec = pool_assets.keys().copied().collect::<Vec<_>>();
 		// This function currently expects liquidity to be provided in all assets in weight ratio
@@ -156,7 +150,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		min_receive: AssetAmount<T::AssetId, T::Balance>,
 		apply_fees: bool,
 	) -> Result<(T::Balance, T::Balance, Fee<T::AssetId, T::Balance>), DispatchError> {
-		let pool_assets = Self::get_pool_balances(&pool, pool_account);
+		let pool_assets = Self::get_pool_balances(pool, pool_account);
 		let base_asset = pool_assets.get(&min_receive.asset_id).ok_or(Error::<T>::PairMismatch)?;
 		let quote_asset = pool_assets.get(&in_asset.asset_id).ok_or(Error::<T>::PairMismatch)?;
 		ensure!(base_asset.1 > 0 && quote_asset.1 > 0, Error::<T>::NotEnoughLiquidity);
@@ -192,9 +186,9 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		pool_account: &T::AccountId,
 		out_asset: AssetAmount<T::AssetId, T::Balance>,
 		in_asset_id: T::AssetId,
-		apply_fees: bool,
+		_apply_fees: bool,
 	) -> Result<(T::Balance, T::Balance, Fee<T::AssetId, T::Balance>), DispatchError> {
-		let pool_assets = Self::get_pool_balances(&pool, pool_account);
+		let pool_assets = Self::get_pool_balances(pool, pool_account);
 		let base_asset = pool_assets.get(&out_asset.asset_id).ok_or(Error::<T>::PairMismatch)?;
 		let quote_asset = pool_assets.get(&in_asset_id).ok_or(Error::<T>::PairMismatch)?;
 
