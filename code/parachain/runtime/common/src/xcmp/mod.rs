@@ -1,6 +1,6 @@
 //! proposed shared XCM setup parameters and impl
 use crate::{
-	topology::{self, SELF_RECURSIVE},
+	topology::{self,},
 	AccountId, Balance,
 };
 use composable_traits::{
@@ -12,6 +12,7 @@ use frame_support::{
 	ensure, log, parameter_types,
 	traits::{Contains, Get},
 	weights::{WeightToFee, WeightToFeePolynomial},
+	WeakBoundedVec,
 };
 use num_traits::{One, Zero};
 use orml_traits::location::{AbsoluteReserveProvider, Reserve};
@@ -54,13 +55,13 @@ pub struct ThisChain<T>(PhantomData<T>);
 
 impl<T: Get<Id>> ThisChain<T> {
 	pub fn self_parent() -> MultiLocation {
-		MultiLocation { parents: 1, interior: X1(Parachain(T::get().into())) }
+		topology::this::sibling(T::get().into())
 	}
 }
 
 impl<T: Get<Id>> Contains<MultiLocation> for ThisChain<T> {
 	fn contains(origin: &MultiLocation) -> bool {
-		origin == &SELF_RECURSIVE || origin == &Self::self_parent()
+		origin == &topology::this::Local::get() || origin == &Self::self_parent()
 	}
 }
 
@@ -216,11 +217,58 @@ impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 	}
 }
 
-/// well know XCMP origin
+
 pub trait XcmpAssets {
-	fn remote_to_local(location: MultiLocation) -> Option<CurrencyId>;
-	fn local_to_remote(id: CurrencyId, this_para_id: u32) -> Option<MultiLocation>;
+	fn remote_to_local(location: MultiLocation) -> Option<CurrencyId> {
+		match location {
+			MultiLocation { parents: 1, interior: X2(Parachain(para_id), GeneralKey(key)) } =>
+				match (para_id, &key[..]) {
+					(topology::karura::ID, topology::karura::KUSD_KEY) => Some(CurrencyId::kUSD),
+					_ => None,
+				},
+			MultiLocation {
+				parents: 1,
+				interior: X3(Parachain(para_id), PalletInstance(pallet_instance), GeneralIndex(key)),
+			} =>
+				return match (para_id, pallet_instance, key) {
+					(
+						topology::common_good_assets::ID,
+						topology::statemine::ASSETS,
+						topology::statemine::USDT,
+					) => Some(CurrencyId::USDT),
+					_ => None,
+				},
+			_ => None,
+		}
+	}
+
+	fn local_to_remote(id: CurrencyId, _this_para_id: u32) -> Option<MultiLocation> {
+		match id {
+			CurrencyId::NATIVE => Some(topology::this::Local::get()),
+			CurrencyId::RELAY_NATIVE => Some(MultiLocation::parent()),
+			CurrencyId::kUSD => Some(MultiLocation {
+				parents: 1,
+				interior: X2(
+					Parachain(topology::karura::ID),
+					GeneralKey(WeakBoundedVec::force_from(
+						topology::karura::KUSD_KEY.to_vec(),
+						None,
+					)),
+				),
+			}),
+			CurrencyId::USDT => Some(MultiLocation {
+				parents: 1,
+				interior: X3(
+					Parachain(topology::common_good_assets::ID),
+					PalletInstance(topology::common_good_assets::ASSETS),
+					GeneralIndex(topology::common_good_assets::USDT),
+				),
+			}),
+			_ => None,
+		}
+	}
 }
+
 
 /// Converts currency to and from local and remote
 pub struct CurrencyIdConvert<AssetRegistry, WellKnownCurrency, ThisParaId, WellKnownXcmpAssets>(
@@ -265,7 +313,7 @@ impl<
 		log::trace!(target: "xcmp::convert", "converting {:?} on {:?}", &location, ThisParaId::get());
 		match location {
 			topology::relay::LOCATION => Some(CurrencyId::RELAY_NATIVE),
-			SELF_RECURSIVE => Some(CurrencyId::NATIVE),
+			topology::this::LOCAL => Some(CurrencyId::NATIVE),
 			MultiLocation { parents, interior: X2(Parachain(id), GeneralIndex(index)) }
 				if parents == 1 && Id::from(id) == ThisParaId::get() =>
 				Some(CurrencyId(index)),

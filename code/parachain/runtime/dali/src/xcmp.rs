@@ -107,57 +107,7 @@ pub type XcmOriginToTransactDispatchOrigin = (
 );
 
 pub struct StaticAssetsMap;
-
-impl XcmpAssets for StaticAssetsMap {
-	fn remote_to_local(location: MultiLocation) -> Option<CurrencyId> {
-		match location {
-			MultiLocation { parents: 1, interior: X2(Parachain(para_id), GeneralKey(key)) } =>
-				match (para_id, &key[..]) {
-					(topology::karura::ID, topology::karura::KUSD_KEY) => Some(CurrencyId::kUSD),
-					_ => None,
-				},
-			MultiLocation {
-				parents: 1,
-				interior: X3(Parachain(para_id), PalletInstance(pallet_instance), GeneralIndex(key)),
-			} => match (para_id, pallet_instance, key) {
-				(
-					topology::common_good_assets::ID,
-					topology::statemine::ASSETS,
-					topology::statemine::USDT,
-				) => Some(CurrencyId::USDT),
-				_ => None,
-			},
-			_ => None,
-		}
-	}
-
-	fn local_to_remote(id: CurrencyId, this_para_id: u32) -> Option<MultiLocation> {
-		match id {
-			CurrencyId::NATIVE => Some(topology::SELF_RECURSIVE),
-			CurrencyId::RELAY_NATIVE => Some(MultiLocation::parent()),
-			CurrencyId::kUSD => Some(MultiLocation {
-				parents: 1,
-				interior: X2(
-					Parachain(topology::karura::ID),
-					GeneralKey(WeakBoundedVec::force_from(
-						topology::karura::KUSD_KEY.to_vec(),
-						None,
-					)),
-				),
-			}),
-			CurrencyId::USDT => Some(MultiLocation {
-				parents: 1,
-				interior: X3(
-					Parachain(topology::common_good_assets::ID),
-					PalletInstance(topology::common_good_assets::ASSETS),
-					GeneralIndex(topology::common_good_assets::USDT),
-				),
-			}),
-
-			_ => None,
-		}
-	}
-}
+impl XcmpAssets for StaticAssetsMap{}
 
 pub type LocalAssetTransactor = MultiCurrencyAdapter<
 	crate::Assets,

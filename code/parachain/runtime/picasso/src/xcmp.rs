@@ -126,57 +126,6 @@ pub type XcmOriginToTransactDispatchOrigin = (
 
 pub struct StaticAssetsMap;
 
-impl XcmpAssets for StaticAssetsMap {
-	fn remote_to_local(location: MultiLocation) -> Option<CurrencyId> {
-		match location {
-			MultiLocation { parents: 1, interior: X2(Parachain(para_id), GeneralKey(key)) } =>
-				match (para_id, &key[..]) {
-					(topology::karura::ID, topology::karura::KUSD_KEY) => Some(CurrencyId::kUSD),
-					_ => None,
-				},
-			MultiLocation {
-				parents: 1,
-				interior: X3(Parachain(para_id), PalletInstance(pallet_instance), GeneralIndex(key)),
-			} =>
-				return match (para_id, pallet_instance, key) {
-					(
-						topology::common_good_assets::ID,
-						topology::statemine::ASSETS,
-						topology::statemine::USDT,
-					) => Some(CurrencyId::USDT),
-					_ => None,
-				},
-			_ => None,
-		}
-	}
-
-	fn local_to_remote(id: CurrencyId, _this_para_id: u32) -> Option<MultiLocation> {
-		match id {
-			CurrencyId::NATIVE => Some(SELF_RECURSIVE),
-			CurrencyId::RELAY_NATIVE => Some(MultiLocation::parent()),
-			CurrencyId::kUSD => Some(MultiLocation {
-				parents: 1,
-				interior: X2(
-					Parachain(topology::karura::ID),
-					GeneralKey(WeakBoundedVec::force_from(
-						topology::karura::KUSD_KEY.to_vec(),
-						None,
-					)),
-				),
-			}),
-			CurrencyId::USDT => Some(MultiLocation {
-				parents: 1,
-				interior: X3(
-					Parachain(topology::common_good_assets::ID),
-					PalletInstance(topology::common_good_assets::ASSETS),
-					GeneralIndex(topology::common_good_assets::USDT),
-				),
-			}),
-			_ => None,
-		}
-	}
-}
-
 pub type LocalAssetTransactor = MultiCurrencyAdapter<
 	crate::Assets,
 	UnknownTokens,
@@ -191,8 +140,6 @@ pub type LocalAssetTransactor = MultiCurrencyAdapter<
 pub struct RelayReserveFromParachain;
 impl FilterAssetLocation for RelayReserveFromParachain {
 	fn filter_asset_location(asset: &MultiAsset, origin: &MultiLocation) -> bool {
-		// NOTE: In Acala there is not such thing
-		// if asset is KSM and send from some parachain then allow for  that
 		AbsoluteReserveProvider::reserve(asset) == Some(MultiLocation::parent()) &&
 			matches!(origin, MultiLocation { parents: 1, interior: X1(Parachain(_)) })
 	}
@@ -217,11 +164,6 @@ pub struct CaptureDropAssets<
 	AssetConverter: Convert<MultiLocation, Option<CurrencyId>>,
 >(PhantomData<(Treasury, PriceConverter, AssetConverter)>);
 
-/// if asset  put  into Holding Registry of XCM VM, but did nothing to this
-/// or if  too small to pay weight,
-/// it will get here
-/// if asset location and origin is known, put into treasury,  
-/// else if asset location and origin not know, hash it until it will be added
 impl<
 		Treasury: TakeRevenue,
 		PriceConverter: MinimalOracle,
@@ -277,9 +219,6 @@ impl xcm_executor::Config for XcmConfig {
 	type AssetTrap = CaptureAssetTrap;
 }
 
-parameter_types! {
-	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::parachain_id().into())));
-}
 
 parameter_type_with_key! {
 	pub ParachainMinFee: |location: MultiLocation| -> Option<Balance> {
@@ -303,7 +242,7 @@ impl orml_xtokens::Config for Runtime {
 	type CurrencyId = CurrencyId;
 	type CurrencyIdConvert = AssetsIdConverter;
 	type AccountIdToMultiLocation = AccountIdToMultiLocation;
-	type SelfLocation = SelfLocation;
+	type SelfLocation = topology::this::Local;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
 	type BaseXcmWeight = BaseXcmWeight;
@@ -311,7 +250,7 @@ impl orml_xtokens::Config for Runtime {
 	type MaxAssetsForTransfer = XcmMaxAssetsForTransfer;
 	type MinXcmFee = ParachainMinFee;
 	type MultiLocationsFilter = Everything;
-	type ReserveProvider = AbsoluteReserveProvider;
+	type ReserveProvider = RelativeReserveProvider;
 }
 
 impl orml_unknown_tokens::Config for Runtime {
