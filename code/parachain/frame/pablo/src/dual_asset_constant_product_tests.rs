@@ -15,7 +15,7 @@ use composable_tests_helpers::{
 };
 use composable_traits::dex::{Amm, AssetAmount, BasicPoolInfo, FeeConfig};
 use frame_support::{
-	assert_err, assert_noop, assert_ok,
+	assert_noop, assert_ok,
 	traits::{
 		fungibles::{Inspect, Mutate},
 		Hooks,
