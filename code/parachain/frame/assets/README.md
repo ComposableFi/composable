@@ -75,14 +75,18 @@ An example response will look like this:
         "name": [80, 73, 67, 65],
         "id": 1,
         "decimals": 12,
-        "foreign_id": null // foreign_id will be null for local assets
+        "foreign_id": null // foreign_id will be null for local
+        // assets, unless the XCM location is know and hardcoded
     },
-    // Local asset
+    // Local asset with a known location
     {
-        "name": [76, 65, 89, 82],
-        "id": 2,
+        "name": [75, 83, 77],
+        "id": 4,
         "decimals": 12,
-        "foreign_id": null
+        "foreign_id": { // location is hardcoded for KSM
+            "parents": 0,
+            "interior": "Here"
+        }
     },
     // Foreign asset
     {
