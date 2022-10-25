@@ -48,7 +48,7 @@ use common::{
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
 	assets::Asset,
-	defi::{CurrencyPair, Rate},
+	defi::Rate,
 	dex::{Amm, PriceAggregate, RemoveLiquiditySimulationResult},
 };
 use primitives::currency::{CurrencyId, ValidateCurrencyId};
@@ -1524,11 +1524,11 @@ impl_runtime_apis! {
 			min_expected_amounts: BTreeMap<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>>,
 		) -> RemoveLiquiditySimulationResult<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>> {
 			let min_expected_amounts: BTreeMap<_, _> = min_expected_amounts.iter().map(|(k, v)| (k.0, v.0)).collect();
-			let lp_token = <Pablo as Amm>::lp_token(pool_id.0).unwrap_or(CurrencyId::INVALID);
+			let default_removed_assets = min_expected_amounts.iter().map(|(k, _)| (CurrencyId(k.0), 0_u128)).collect::<BTreeMap<_,_>>();
 			let simulate_remove_liquidity_result = <Pablo as Amm>::simulate_remove_liquidity(&who.0, pool_id.0, lp_amount.0, min_expected_amounts)
 				.unwrap_or_else(|_|
 					RemoveLiquiditySimulationResult{
-						assets: min_expected_amounts.iter().map(|(k, _)| (CurrencyId(k.0), 0_u128)).collect::<BTreeMap<_,_>>()
+						assets: default_removed_assets
 					}
 				);
 			let mut new_map = BTreeMap::new();
