@@ -449,7 +449,7 @@
               --repeat=1
             '';
 
-          generate-benchmarks = chain:
+          generate-benchmarks = { chain, steps, repeat }:
             pkgs.writeShellScriptBin "generate-benchmarks" ''
               ${composable-bench-node}/bin/composable benchmark pallet \
               --chain="${chain}-dev" \
@@ -458,8 +458,8 @@
               --wasm-instantiation-strategy=legacy-instance-reuse \
               --pallet="*" \
               --extrinsic="*" \
-              --steps=50 \
-              --repeat=20 \
+              --steps=${builtins.toString steps} \
+              --repeat=${builtins.toString repeat} \
               --output=code/parachain/runtime/${chain}/src/weights
             '';
 
@@ -1383,12 +1383,48 @@
             benchmarks-once-picasso = flake-utils.lib.mkApp {
               drv = benchmarks-run-once "picasso-dev";
             };
-            benchmarks-generate-dali =
-              flake-utils.lib.mkApp { drv = generate-benchmarks "dali"; };
-            benchmarks-generate-picasso =
-              flake-utils.lib.mkApp { drv = generate-benchmarks "picasso"; };
-            benchmarks-generate-composable =
-              flake-utils.lib.mkApp { drv = generate-benchmarks "composable"; };
+            benchmarks-generate-dali = flake-utils.lib.mkApp {
+              drv = generate-benchmarks {
+                chain = "dali";
+                steps = 50;
+                repeat = 10;
+              };
+            };
+            benchmarks-generate-picasso = flake-utils.lib.mkApp {
+              drv = generate-benchmarks {
+                chain = "picasso";
+                steps = 50;
+                repeat = 10;
+              };
+            };
+            benchmarks-generate-composable = flake-utils.lib.mkApp {
+              drv = generate-benchmarks {
+                chain = "composable";
+                steps = 50;
+                repeat = 10;
+              };
+            };
+            benchmarks-generate-quick-dali = flake-utils.lib.mkApp {
+              drv = generate-benchmarks {
+                chain = "dali";
+                steps = 1;
+                repeat = 1;
+              };
+            };
+            benchmarks-generate-quick-picasso = flake-utils.lib.mkApp {
+              drv = generate-benchmarks {
+                chain = "picasso";
+                steps = 1;
+                repeat = 1;
+              };
+            };
+            benchmarks-generate-quick-composable = flake-utils.lib.mkApp {
+              drv = generate-benchmarks {
+                chain = "composable";
+                steps = 1;
+                repeat = 1;
+              };
+            };
             simnode-tests = makeApp packages.simnode-tests;
             simnode-tests-composable =
               flake-utils.lib.mkApp { drv = run-simnode-tests "composable"; };
