@@ -21,9 +21,12 @@ jobs:
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     concurrency:
-      group: bench-${{ github.ref }}
+      group: update-benchmarking-${{ matrix.runtime }}-${{ github.ref }}
       cancel-in-progress: true
-    if: github.event.pull_request.draft == false && contains(github.event.pull_request.labels.*.name, 'needs-benchmarks')
+    strategy:
+      matrix:
+        runtime: [dali, picasso, composable]
+    if: contains(github.event.pull_request.labels.*.name, 'needs-benchmarks')
     steps:
       - uses: actions/checkout@v3
         with:
@@ -46,18 +49,21 @@ jobs:
 
       - name: Generate weights
         run: |
-          nix run .#benchmarks-generate-dali -L
-          nix run .#benchmarks-generate-picasso -L
-          nix run .#benchmarks-generate-composable -L
+          nix run .#benchmarks-generate-${{ matrix.runtime }} -L
 
       - name: Get branch name
         id: branch-name
         uses: tj-actions/branch-names@v5.1
 
+      - name: Fixup dubious ownership
+        run: |
+          # No clue why the next action fail without this otherwise.
+          git config --global --add safe.directory /__w/composable/composable
+
       - name: Push generated weights
         uses: EndBug/add-and-commit@v9
         with:
           add: "code/parachain/runtime"
-          message: "chore(benchmarking): update benchmarking weights"
+          message: "chore(benchmarking): update ${{ matrix.runtime }} benchmarking weights"
           push: "true"
           new_branch: ${{ steps.branch-name.outputs.current_branch }}
