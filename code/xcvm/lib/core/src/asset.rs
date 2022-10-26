@@ -1,5 +1,5 @@
 use crate::abstraction::IndexOf;
-use alloc::{collections::BTreeMap, string::ToString};
+use alloc::string::ToString;
 use codec::{Decode, Encode};
 use core::ops::Add;
 use fixed::{types::extra::U16, FixedU128};
@@ -26,16 +26,16 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 	Deserialize,
 )]
 #[repr(transparent)]
-pub struct AssetId(pub u128);
+pub struct AssetId(pub u64);
 
-impl From<AssetId> for u128 {
+impl From<AssetId> for u64 {
 	fn from(val: AssetId) -> Self {
 		val.0
 	}
 }
 
-impl From<u128> for AssetId {
-	fn from(asset: u128) -> Self {
+impl From<u64> for AssetId {
+	fn from(asset: u64) -> Self {
 		AssetId(asset)
 	}
 }
@@ -80,19 +80,19 @@ pub trait Asset {
 }
 
 impl Asset for PICA {
-	const ID: AssetId = AssetId(<Assets as IndexOf<Self, _>>::INDEX as u128);
+	const ID: AssetId = AssetId(<Assets as IndexOf<Self, _>>::INDEX as u64);
 }
 
 impl Asset for ETH {
-	const ID: AssetId = AssetId(<Assets as IndexOf<Self, _>>::INDEX as u128);
+	const ID: AssetId = AssetId(<Assets as IndexOf<Self, _>>::INDEX as u64);
 }
 
 impl Asset for USDT {
-	const ID: AssetId = AssetId(<Assets as IndexOf<Self, _>>::INDEX as u128);
+	const ID: AssetId = AssetId(<Assets as IndexOf<Self, _>>::INDEX as u64);
 }
 
 impl Asset for USDC {
-	const ID: AssetId = AssetId(<Assets as IndexOf<Self, _>>::INDEX as u128);
+	const ID: AssetId = AssetId(<Assets as IndexOf<Self, _>>::INDEX as u64);
 }
 
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
@@ -210,22 +210,22 @@ impl Amount {
 	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
 )]
 #[repr(transparent)]
-pub struct Funds<T = Amount>(pub BTreeMap<AssetId, T>);
+pub struct Funds<T = Amount>(pub Vec<(AssetId, T)>);
 
 impl<T> Funds<T> {
 	#[inline]
 	pub fn empty() -> Self {
-		Funds(BTreeMap::new())
+		Funds(Vec::new())
 	}
 }
 
-impl<T, U, V> From<BTreeMap<U, V>> for Funds<T>
+impl<T, U, V> From<Vec<(U, V)>> for Funds<T>
 where
 	U: Into<AssetId>,
 	V: Into<T>,
 {
 	#[inline]
-	fn from(assets: BTreeMap<U, V>) -> Self {
+	fn from(assets: Vec<(U, V)>) -> Self {
 		Funds(
 			assets
 				.into_iter()
@@ -246,7 +246,7 @@ where
 	}
 }
 
-impl<T> From<Funds<T>> for BTreeMap<u128, T> {
+impl<T> From<Funds<T>> for Vec<(u64, T)> {
 	#[inline]
 	fn from(Funds(assets): Funds<T>) -> Self {
 		assets.into_iter().map(|(AssetId(asset), amount)| (asset, amount)).collect()

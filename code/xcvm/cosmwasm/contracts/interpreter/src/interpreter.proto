@@ -1,0 +1,145 @@
+syntax = "proto3";
+
+package interpreter;
+
+message Uint128 {
+  uint64 highBits = 1;
+  uint64 lowBits = 2;
+}
+
+message Program {
+  Instructions instructions = 1;
+}
+
+message Instructions {
+  repeated Instruction instructions = 1;
+}
+
+message Instruction {
+  oneof instruction {
+    Transfer transfer = 1;
+    Spawn spawn = 2;
+    Call call = 3;
+    Query query = 4;
+  }
+}
+
+
+message Ratio {
+  Uint128 nominator = 1;
+  Uint128 denominator = 2;
+}
+
+message Unit {
+  Uint128 integer = 1;
+  Ratio ratio = 2;
+}
+
+message Absolute {
+  Uint128 value = 1;
+}
+
+message Balance {
+  oneof balance_type {
+    Ratio ratio = 1;
+    Absolute absolute = 2;
+    Unit unit = 3;
+  }
+}
+
+message Account {
+  bytes account = 1;
+}
+
+message AssetId {
+  uint64 assetId = 1;
+}
+
+message Asset {
+  AssetId assetId = 1;
+  Balance balance = 2;
+}
+
+message Self {
+  uint32 self = 1;
+}
+
+message Relayer {
+  uint32 id = 1;
+}
+
+message Result {
+  uint32 result = 1;
+}
+
+
+message AssetAmount {
+  AssetId assetId = 1;
+  oneof balance_type {
+    Ratio ratio = 2;
+    Unit unit = 3;
+  }
+}
+
+
+message BindingValue {
+  oneof type {
+    Self self = 1;
+    Relayer relayer = 2;
+    uint32 result = 3;
+    AssetAmount assetAmount = 4;
+    AssetId assetId = 5;
+  }
+}
+
+message Binding {
+  uint32 position = 1;
+  BindingValue bindingValue = 2;
+}
+
+message Bindings {
+  repeated Binding bindings = 1;
+}
+
+message Transfer {
+  oneof account_type{
+    Account account = 1;
+    Relayer relayer = 2;
+  }
+  repeated Asset assets = 3;
+}
+
+message Salt {
+  uint64 salt = 1;
+}
+
+message Network {
+  uint32 networkId = 1;
+}
+
+enum BridgeSecurity {
+  none = 0;
+  deterministic = 1;
+  probabilistic = 2;
+  optimistic = 3;
+}
+
+message Spawn {
+  Network network = 1;
+  BridgeSecurity security = 2;
+  Salt salt = 3;
+  Program program = 4;
+  repeated Asset assets = 5;
+}
+
+message Query {
+  Network network = 1;
+  Salt salt = 3;
+}
+
+message Call {
+  bytes payload = 1;
+  Bindings bindings = 2;
+}
+
+

@@ -17,15 +17,33 @@ use cw2::set_contract_version;
 use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg};
 use cw_utils::ensure_from_older_version;
 use num::Zero;
+use prost::Message;
 use serde::Serialize;
 use std::collections::VecDeque;
 use xcvm_asset_registry::msg::{GetAssetContractResponse, QueryMsg as AssetRegistryQueryMsg};
-use xcvm_core::{cosmwasm::*, BindingValue, Displayed, Funds, Instruction, NetworkId, Register};
+use xcvm_core::{
+	cosmwasm::*, Amount, BindingValue, Bindings, BridgeSecurity, Displayed, Funds, Instruction,
+	NetworkId, Register,
+};
 
 const CONTRACT_NAME: &str = "composable:xcvm-interpreter";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const CALL_ID: u64 = 1;
 const SELF_CALL_ID: u64 = 2;
+
+mod proto {
+	use super::{Amount, ContractError};
+
+	include!(concat!(env!("OUT_DIR"), "/interpreter.rs"));
+
+	impl TryFrom<Balance> for Amount {
+		type Error = ContractError;
+
+		fn try_from(value: Balance) -> core::result::Result<Self, Self::Error> {
+			todo!()
+		}
+	}
+}
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -66,6 +84,8 @@ pub fn execute(
 			if env.contract.address != info.sender {
 				Err(ContractError::NotAuthorized)
 			} else {
+				let program =
+					proto::Program::decode(program).map_err(|_| ContractError::InvalidProgram)?;
 				interpret_program(deps, env, info, program)
 			},
 	}
@@ -89,7 +109,7 @@ fn assert_owner(deps: Deps, owner: &Addr) -> Result<(), ContractError> {
 pub fn initiate_execution(
 	deps: DepsMut,
 	env: Env,
-	program: XCVMProgram,
+	program: VecDeque<u8>,
 ) -> Result<Response, ContractError> {
 	IP_REGISTER.save(deps.storage, &0)?;
 	Ok(Response::default().add_submessage(SubMsg::reply_on_error(
@@ -103,18 +123,28 @@ pub fn interpret_program(
 	mut deps: DepsMut,
 	env: Env,
 	_info: MessageInfo,
-	program: XCVMProgram,
+	program: proto::Program,
 ) -> Result<Response, ContractError> {
 	let mut response = Response::new();
-	let instruction_len = program.instructions.len();
-	let mut instruction_iter = program.instructions.into_iter().enumerate();
+	let instructions = program.instructions.ok_or(ContractError::InvalidProgram)?.instructions;
+	let instruction_len = instructions.len();
+	let mut instruction_iter = instructions.into_iter().enumerate();
 	let mut ip = IP_REGISTER.load(deps.storage)?;
 	while let Some((index, instruction)) = instruction_iter.next() {
+		let instruction = instruction.instruction.ok_or(ContractError::InvalidProgram)?;
 		response = match instruction {
-			Instruction::Call { encoded } => {
+			proto::instruction::Instruction::Call(proto::Call { payload, bindings }) => {
+				let bindings = bindings.ok_or(ContractError::InvalidProgram)?;
 				if index >= instruction_len - 1 {
 					// If the call is the final instruction, do not yield execution
-					interpret_call(deps.as_ref(), &env, encoded, ip as usize, response)?
+					interpret_call(
+						deps.as_ref(),
+						&env,
+						bindings.bindings,
+						payload,
+						ip as usize,
+						response,
+					)?
 				} else {
 					// If the call is not the final instruction:
 					// 1. interpret the call: this will add the call to the response's
@@ -123,7 +153,17 @@ pub fn interpret_program(
 					//    rest of the instructions as XCVM program. This will make sure that
 					//    previous call instruction will run first, then the rest of the program
 					//    will run.
-					let response = interpret_call(deps.as_ref(), &env, encoded, index, response)?;
+					let response = interpret_call(
+						deps.as_ref(),
+						&env,
+						bindings.bindings,
+						payload,
+						index,
+						response,
+					)?;
+
+					// TODO(aeryz): Build proto here
+					/*
 					let instructions: VecDeque<XCVMInstruction> =
 						instruction_iter.map(|(_, instr)| instr).collect();
 					let program = XCVMProgram { tag: program.tag, instructions };
@@ -132,12 +172,16 @@ pub fn interpret_program(
 						&ExecuteMsg::Execute { program },
 						vec![],
 					)?))
+					*/
+					todo!()
 				}
 			},
-			Instruction::Spawn { network, salt, assets, program } =>
-				interpret_spawn(&deps, &env, network, salt, assets, program, response)?,
-			Instruction::Transfer { to, assets } =>
-				interpret_transfer(&mut deps, &env, to, assets, response)?,
+			proto::instruction::Instruction::Spawn(ctx) =>
+				interpret_spawn(&deps, &env, ctx, response)?,
+			proto::instruction::Instruction::Transfer(proto::Transfer { assets, account_type }) => {
+				let account_type = account_type.ok_or(ContractError::InvalidProgram)?;
+				interpret_transfer(&mut deps, &env, account_type, assets, response)?
+			},
 			instr => return Err(ContractError::InstructionNotSupported(format!("{:?}", instr))),
 		};
 		ip += 1;
@@ -147,7 +191,9 @@ pub fn interpret_program(
 
 	Ok(response.add_event(Event::new("xcvm.interpreter.executed").add_attribute(
 		"program",
-		core::str::from_utf8(&program.tag).map_err(|_| ContractError::InvalidProgramTag)?,
+		"tag", /* TODO(aeryz): tag
+		       * core::str::from_utf8(&program.tag).map_err(|_|
+		       * ContractError::InvalidProgramTag)?, */
 	)))
 }
 
@@ -159,12 +205,11 @@ pub fn interpret_program(
 pub fn interpret_call(
 	deps: Deps,
 	env: &Env,
-	encoded: Vec<u8>,
+	bindings: Vec<proto::Binding>,
+	payload: Vec<u8>,
 	ip: usize,
 	response: Response,
 ) -> Result<Response, ContractError> {
-	let LateCall { bindings, encoded_call } =
-		serde_json_wasm::from_slice(&encoded).map_err(|_| ContractError::InvalidCallPayload)?;
 	// We don't know the type of the payload, so we use `serde_json::Value`
 	let cosmwasm_msg: FlatCosmosMsg<serde_json::Value> = if !bindings.is_empty() {
 		let Config { user_id, registry_address, .. } = CONFIG.load(deps.storage)?;
@@ -173,7 +218,7 @@ pub fn interpret_call(
 		// `max(len(user_id), len(contract_address)) * len(bindings)`
 		let new_len = {
 			let max_size = max(user_id.len(), env.contract.address.as_bytes().len());
-			max_size * bindings.len() + encoded_call.len()
+			max_size * bindings.len() + payload.len()
 		};
 
 		let mut formatted_call = vec![0; new_len];
@@ -184,7 +229,12 @@ pub fn interpret_call(
 		// the unformatted call, will be equal to 'X + 8' in the output call.
 		let mut offset: usize = 0;
 		for binding in bindings {
-			let (binding_index, binding) = (binding.0 as usize, binding.1);
+			let binding_index = binding.position as usize;
+			let binding = binding
+				.binding_value
+				.ok_or(ContractError::InvalidProgram)?
+				.r#type
+				.ok_or(ContractError::InvalidProgram)?;
 			// Current index of the output call
 			let shifted_index = original_index + offset;
 
@@ -196,7 +246,7 @@ pub fn interpret_call(
 			// * No need to check if `original_index < encoded_call.len()` because `original_index`
 			//   is already less or equals to `binding_index` and we check if `binding_index` is
 			//   in-bounds.
-			if original_index > binding_index || binding_index + 1 >= encoded_call.len() {
+			if original_index > binding_index || binding_index + 1 >= payload.len() {
 				return Err(ContractError::InvalidBindings)
 			}
 
@@ -212,13 +262,13 @@ pub fn interpret_call(
 			//     - Index accesses should not fail because we check if all indices are inbounds and
 			//       also if `shifted` and `original` indices are greater than `binding_index`
 			formatted_call[shifted_index..=binding_index + offset]
-				.copy_from_slice(&encoded_call[original_index..=binding_index]);
+				.copy_from_slice(&payload[original_index..=binding_index]);
 
 			let data: Cow<[u8]> = match binding {
-				BindingValue::Register(Register::Relayer) => Cow::Borrowed(&user_id),
-				BindingValue::Register(Register::This) =>
+				proto::binding_value::Type::Relayer(_) => Cow::Borrowed(&user_id),
+				proto::binding_value::Type::Self_(_) =>
 					Cow::Borrowed(env.contract.address.as_bytes()),
-				BindingValue::Asset(asset_id) => {
+				proto::binding_value::Type::AssetId(proto::AssetId { asset_id }) => {
 					let query_msg = AssetRegistryQueryMsg::GetAssetContract(asset_id.into());
 
 					let response: GetAssetContractResponse = deps.querier.query(
@@ -231,11 +281,11 @@ pub fn interpret_call(
 
 					Cow::Owned(response.addr.into_string().into())
 				},
-				BindingValue::Register(Register::Ip) => Cow::Owned(format!("{}", ip).into()),
-				BindingValue::Register(Register::Result) => Cow::Owned(
+				proto::binding_value::Type::Result(_) => Cow::Owned(
 					serde_json_wasm::to_vec(&RESULT_REGISTER.load(deps.storage)?)
 						.map_err(|_| ContractError::DataSerializationError)?,
 				),
+				_ => return Err(ContractError::InvalidBindings),
 			};
 
 			formatted_call[binding_index + offset + 1..=binding_index + offset + data.len()]
@@ -244,17 +294,17 @@ pub fn interpret_call(
 			original_index = binding_index + 1;
 		}
 		// Copy the rest of the data to the output data
-		if original_index < encoded_call.len() {
-			formatted_call[original_index + offset..encoded_call.len() + offset]
-				.copy_from_slice(&encoded_call[original_index..]);
+		if original_index < payload.len() {
+			formatted_call[original_index + offset..payload.len() + offset]
+				.copy_from_slice(&payload[original_index..]);
 		}
 		// Get rid of the final 0's.
-		formatted_call.truncate(encoded_call.len() + offset);
+		formatted_call.truncate(payload.len() + offset);
 		serde_json_wasm::from_slice(&formatted_call)
 			.map_err(|_| ContractError::InvalidCallPayload)?
 	} else {
 		// We don't have any binding, just deserialize the data
-		serde_json_wasm::from_slice(&encoded_call).map_err(|_| ContractError::InvalidCallPayload)?
+		serde_json_wasm::from_slice(&payload).map_err(|_| ContractError::InvalidCallPayload)?
 	};
 
 	let cosmos_msg: CosmosMsg = cosmwasm_msg.try_into().unwrap();
@@ -264,25 +314,28 @@ pub fn interpret_call(
 pub fn interpret_spawn(
 	deps: &DepsMut,
 	env: &Env,
-	network: NetworkId,
-	salt: Vec<u8>,
-	assets: Funds,
-	program: XCVMProgram,
+	ctx: proto::Spawn,
 	mut response: Response,
 ) -> Result<Response, ContractError> {
 	#[derive(Serialize)]
 	struct SpawnEvent {
-		network: NetworkId,
-		salt: Vec<u8>,
+		network: u32,
+		salt: u64,
 		assets: Funds<Displayed<u128>>,
-		program: XCVMProgram,
+		program: Vec<u8>,
 	}
 
 	let config = CONFIG.load(deps.storage)?;
 	let registry_addr = config.registry_address.into_string();
 	let mut normalized_funds = Funds::<Displayed<u128>>::empty();
 
-	for (asset_id, amount) in assets.0 {
+	for asset in ctx.assets {
+		let asset_id = asset.asset_id.ok_or(ContractError::InvalidProgram)?.asset_id;
+		let amount: Amount = asset
+			.balance
+			.ok_or(ContractError::InvalidProgram)?
+			.try_into()
+			.map_err(|_| ContractError::InvalidProgram)?;
 		if amount.is_zero() {
 			// We ignore zero amounts
 			continue
@@ -312,7 +365,7 @@ pub fn interpret_spawn(
 		};
 
 		if amount.0 > 0 {
-			normalized_funds.0.insert(asset_id, amount.into());
+			normalized_funds.0.push((asset_id.into(), amount.into()));
 		}
 	}
 
@@ -329,7 +382,20 @@ pub fn interpret_spawn(
 			response.add_message(contract.call(Cw20ExecuteMsg::Burn { amount: amount.0.into() })?);
 	}
 
-	let data = SpawnEvent { network, salt, assets: normalized_funds, program };
+	let serialized_program = {
+		let mut buf = Vec::new();
+		let program = ctx.program.ok_or(ContractError::InvalidProgram)?;
+		buf.reserve(program.encoded_len());
+		program.encode(&mut buf).unwrap();
+		buf
+	};
+
+	let data = SpawnEvent {
+		network: ctx.network.ok_or(ContractError::InvalidProgram)?.network_id,
+		salt: ctx.salt.ok_or(ContractError::InvalidProgram)?.salt,
+		assets: normalized_funds,
+		program: serialized_program,
+	};
 
 	Ok(response.add_event(
 		Event::new("xcvm.interpreter.spawn")
@@ -354,14 +420,23 @@ pub fn interpret_spawn(
 pub fn interpret_transfer(
 	deps: &mut DepsMut,
 	env: &Env,
-	to: String,
-	assets: Funds,
+	to: proto::transfer::AccountType,
+	assets: Vec<proto::Asset>,
 	mut response: Response,
 ) -> Result<Response, ContractError> {
 	let config = CONFIG.load(deps.storage)?;
 	let registry_addr = config.registry_address.into_string();
 
-	for (asset_id, amount) in assets.0 {
+	let recipient = match to {
+		proto::transfer::AccountType::Account(proto::Account { account }) =>
+			String::from_utf8(account).map_err(|_| ContractError::InvalidAddress)?,
+		proto::transfer::AccountType::Relayer(_) => todo!(),
+	};
+
+	for asset in assets {
+		let asset_id = asset.asset_id.ok_or(ContractError::InvalidProgram)?.asset_id;
+		let amount: Amount = asset.balance.ok_or(ContractError::InvalidProgram)?.try_into()?;
+
 		let query_msg = AssetRegistryQueryMsg::GetAssetContract(asset_id.into());
 
 		let cw20_address: GetAssetContractResponse = deps.querier.query(
@@ -386,7 +461,7 @@ pub fn interpret_transfer(
 		};
 
 		response = response.add_message(contract.call(Cw20ExecuteMsg::Transfer {
-			recipient: to.clone(),
+			recipient: recipient.clone(),
 			amount: transfer_amount.into(),
 		})?);
 	}

@@ -8,7 +8,7 @@ use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
 
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-#[derive(Clone, PartialEq, Eq, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum BindingValue {
 	Register(Register),
@@ -17,7 +17,7 @@ pub enum BindingValue {
 }
 
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-#[derive(Clone, PartialEq, Eq, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Register {
 	/// Instruction pointer
@@ -56,7 +56,7 @@ pub enum Instruction<Network, Payload, Account, Assets> {
 	/// For most of the network in fact, we need to provide the target address along the payload,
 	/// which can be encoded inside this single payload.
 	#[serde(rename_all = "snake_case")]
-	Call { encoded: Payload },
+	Call { bindings: Bindings, encoded: Payload },
 	/// Spawn a sub-program on the target `network`.
 	///
 	/// The program will be spawned with the desired [`Assets`].

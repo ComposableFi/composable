@@ -13,6 +13,9 @@ pub enum ContractError {
 	#[error("Data cannot be serialized")]
 	DataSerializationError,
 
+	#[error("XCVM program is invalid")]
+	InvalidProgram,
+
 	#[error("A program tag must be a correct utf8 encoded string")]
 	InvalidProgramTag,
 
@@ -27,4 +30,10 @@ pub enum ContractError {
 
 	#[error("Instruction {0} is not supported")]
 	InstructionNotSupported(String),
+
+	#[error("Address is invalid")]
+	InvalidAddress,
+
+	#[error("Unsupported")]
+	Unsupported,
 }

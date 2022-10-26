@@ -20,8 +20,9 @@ use serde::{Deserialize, Serialize};
 	Serialize,
 	Deserialize,
 )]
-#[repr(u8)]
+#[repr(i32)]
 pub enum BridgeSecurity {
+	None,
 	Deterministic = 1,
 	Probabilistic = 2,
 	Optimistic = 3,

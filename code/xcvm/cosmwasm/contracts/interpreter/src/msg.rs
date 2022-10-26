@@ -1,10 +1,12 @@
+extern crate alloc;
+
+use alloc::{collections::VecDeque, string::String, vec::Vec};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::collections::VecDeque;
-use xcvm_core::{Funds, Instruction, NetworkId, Program, Register};
+use xcvm_core::{Funds, Instruction, NetworkId, Register};
 
 pub type XCVMInstruction = Instruction<NetworkId, Vec<u8>, String, Funds>;
-pub type XCVMProgram = Program<VecDeque<XCVMInstruction>>;
+pub type XCVMProgram = xcvm_core::Program<VecDeque<XCVMInstruction>>;
 pub type UserId = Vec<u8>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -17,9 +19,9 @@ pub struct InstantiateMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
-	Execute { program: XCVMProgram },
+	Execute { program: VecDeque<u8> },
 	// Only meant for to be used by the interpreter itself
-	_SelfExecute { program: XCVMProgram },
+	_SelfExecute { program: VecDeque<u8> },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

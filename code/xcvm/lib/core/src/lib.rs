@@ -70,7 +70,8 @@ where
 
 	#[inline]
 	pub fn call_raw(mut self, encoded: CurrentNetwork::EncodedCall) -> Self {
-		self.instructions.push_back(Instruction::Call { encoded: encoded.into() });
+		self.instructions
+			.push_back(Instruction::Call { bindings: Vec::new(), encoded: encoded.into() });
 		self
 	}
 
@@ -167,7 +168,7 @@ mod tests {
 				tag: "Main program".as_bytes().to_vec(),
 				instructions: VecDeque::from([
 					// Protocol 1 on picasso
-					Instruction::Call { encoded: vec![202, 254, 190, 239] },
+					Instruction::Call { bindings: vec![], encoded: vec![202, 254, 190, 239] },
 					// Move to ethereum
 					Instruction::Spawn {
 						network: Ethereum::ID,
@@ -177,9 +178,15 @@ mod tests {
 							tag: Default::default(),
 							instructions: VecDeque::from([
 								// Protocol 2 on eth
-								Instruction::Call { encoded: vec![222, 173, 192, 222] },
+								Instruction::Call {
+									bindings: vec![],
+									encoded: vec![222, 173, 192, 222]
+								},
 								// Protocol 1 on eth, different encoding than on previous network
-								Instruction::Call { encoded: vec![192, 222, 192, 222] },
+								Instruction::Call {
+									bindings: vec![],
+									encoded: vec![192, 222, 192, 222]
+								},
 								Instruction::Transfer {
 									to: (),
 									assets: Funds::from(BTreeMap::from([(PICA::ID, u128::MAX)]))

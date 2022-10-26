@@ -70,6 +70,7 @@ use cosmwasm_std::{BankMsg, Coin, CosmosMsg};
 use cw_storage_plus::{Key, PrimaryKey};
 use serde::{Deserialize, Serialize};
 
+/// Make `Bridge` usable in `cw-storage-plus`
 impl<'a> PrimaryKey<'a> for Bridge {
 	type Prefix = u8;
 	type SubPrefix = ();
