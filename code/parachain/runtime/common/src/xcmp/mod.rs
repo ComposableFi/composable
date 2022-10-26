@@ -228,15 +228,14 @@ pub trait XcmpAssets {
 			MultiLocation {
 				parents: 1,
 				interior: X3(Parachain(para_id), PalletInstance(pallet_instance), GeneralIndex(key)),
-			} =>
-				return match (para_id, pallet_instance, key) {
-					(
-						topology::common_good_assets::ID,
-						topology::statemine::ASSETS,
-						topology::statemine::USDT,
-					) => Some(CurrencyId::USDT),
-					_ => None,
-				},
+			} => match (para_id, pallet_instance, key) {
+				(
+					topology::common_good_assets::ID,
+					topology::statemine::ASSETS,
+					topology::statemine::USDT,
+				) => Some(CurrencyId::USDT),
+				_ => None,
+			},
 			_ => None,
 		}
 	}
@@ -246,7 +245,7 @@ pub trait XcmpAssets {
 			CurrencyId::NATIVE => Some(topology::this::Local::get()),
 			CurrencyId::PBLO => Some(MultiLocation {
 				parents: 0,
-				interior: X1(GeneralIndex((CurrencyId::PBLO.into()))),
+				interior: X1(GeneralIndex(CurrencyId::PBLO.into())),
 			}),
 			CurrencyId::RELAY_NATIVE => Some(MultiLocation::parent()),
 			CurrencyId::kUSD => Some(MultiLocation {
