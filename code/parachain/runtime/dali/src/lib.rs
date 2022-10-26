@@ -645,7 +645,6 @@ impl orml_tokens::Config for Runtime {
 
 parameter_types! {
 	pub const LiquidRewardId: PalletId = PalletId(*b"Liquided");
-	pub const CrowdloanCurrencyId: CurrencyId = CurrencyId::CROWD_LOAN;
 	/// total contributed to our crowdloan.
 	pub const TokenTotal: Balance = 200_000_000_000_000_000;
 }

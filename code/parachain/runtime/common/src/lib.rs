@@ -229,18 +229,23 @@ pub fn multi_existential_deposits<
 >(
 	currency_id: &CurrencyId,
 ) -> Balance {
+	// Check AssetRegistry/CurrencyFactory to see if we define ED for the token there
 	AssetsRegistry::existential_deposit(*currency_id)
 		.and_then(|ed| PriceConverter::<AssetsRegistry>::get_price_inverse(*currency_id, ed))
 		.unwrap_or(match *currency_id {
-			// TODO: Add KAR, BNC, vKSM, MOVR
+			// If not found in AssetRegistry/CurrencyFactory, use hard-coded values
+			// TODO: Confirm values of ED
 			CurrencyId::USDT => 100_000_000_000, // USDT: 0.1
+			CurrencyId::KAR => 100_000_000_000,  // KAR: 0.1
 			CurrencyId::kUSD => 10_000_000_000,  // kUSD: 0.01
-			CurrencyId::KSM => PriceConverter::<AssetsRegistry>::get_price_inverse(
-				*currency_id,
-				NativeExistentialDeposit::get(),
-			)
-			.expect(""), // KSM: 0.0001
-			_ => 100_000_000_000,                // Unkown: 0.1
+			CurrencyId::KSM => 100_000_000,      // KSM: 0.0001
+			CurrencyId::BNC => 100_000_000_000,  // BNC: 0.1
+			CurrencyId::vKSM => 100_000_000_000, // vKSM: 0.1
+			CurrencyId::MOVR => 100_000_000_000, // MOVR: 0.1
+			// REVIEW(connor): In Acala, they set ED of unreconized tokens to `Balance::MAX` to
+			// ensure they don't create balances for unkown tokens. I suggest we do this as well but
+			// would like more insight on the implications for the rest of our repo.
+			_ => 100_000_000_000, // Unkown: 0.1
 		})
 }
 
