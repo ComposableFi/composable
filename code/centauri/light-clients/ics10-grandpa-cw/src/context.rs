@@ -1,21 +1,43 @@
+use std::{fmt, rc::Rc};
+
 use cosmwasm_std::{DepsMut, Storage};
 use ibc::core::ics02_client::context::{ClientKeeper, ClientTypes};
 
 use crate::types::{AnyClient, AnyClientMessage, AnyClientState, AnyConsensusState};
 
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Context {
-	storage: Box<dyn Storage>,
+#[derive(Clone)]
+pub struct Context<'a> {
+	deps: Rc<DepsMut<'a>>,
 }
 
-impl ClientTypes for Context {
+// TODO: validate whether there is any risk in introducing this manually
+// I do not see another way of doing it, since [`DepsMut`] isn't Eq or PartialEq
+impl<'a> PartialEq for Context<'a> {
+	fn eq(&self, other: &Self) -> bool {
+		true
+	}
+
+	fn ne(&self, other: &Self) -> bool {
+		false
+	}
+}
+
+impl<'a> fmt::Debug for Context<'a> {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		write!(f, "Context")
+	}
+}
+
+impl<'a> Eq for Context<'a> {}
+
+impl<'a> ClientTypes for Context<'a> {
 	type AnyClientMessage = AnyClientMessage;
 	type AnyClientState = AnyClientState;
 	type AnyConsensusState = AnyConsensusState;
 	type ClientDef = AnyClient;
 }
 
-impl ClientKeeper for Context
+impl<'a> ClientKeeper for Context<'a>
 where
 	Self: Clone + std::fmt::Debug + Eq,
 {

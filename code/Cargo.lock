@@ -5453,6 +5453,7 @@ dependencies = [
  "cw-multi-test",
  "cw-storage-plus 0.15.1",
  "cw2",
+ "grandpa-light-client-primitives",
  "ibc",
  "ics10-grandpa",
  "schemars",

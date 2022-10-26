@@ -50,7 +50,8 @@ serde = { version = "1.0.145", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.31" }
 
 ibc = { path = "../../ibc/modules", default-features = false }
-ics10-grandpa = { path = "../ics10-grandpa" }
+ics10-grandpa = { path = "../ics10-grandpa", default-features = false }
+grandpa-client-primitives = { package = "grandpa-light-client-primitives", path = "../../algorithms/grandpa/primitives", default-features = false }
 
 [dev-dependencies]
 cw-multi-test = "0.15.1"
