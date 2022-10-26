@@ -235,7 +235,7 @@ where
 			.ok_or_else(|| anyhow!("Failed to fetch previous finalized hash + 1"))?;
 
 		let mut unknown_headers = vec![];
-		for height in client_state.latest_relay_height..=latest_finalized_height {
+		for height in previous_finalized_height..=latest_finalized_height {
 			let hash = self.relay_client.rpc().block_hash(Some(height.into())).await?.ok_or_else(
 				|| anyhow!("Failed to fetch block has for height {previous_finalized_height}"),
 			)?;
