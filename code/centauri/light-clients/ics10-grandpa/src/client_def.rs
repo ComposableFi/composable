@@ -102,6 +102,13 @@ where
 					)
 				}
 
+				let first_header = first_proof.unknown_headers.first().ok_or_else(|| {
+					Error::Custom("No headers in first finality proof".to_string())
+				})?;
+				let second_header = second_proof.unknown_headers.first().ok_or_else(|| {
+					Error::Custom("No headers in second finality proof".to_string())
+				})?;
+
 				let first_last_hash = first_proof
 					.unknown_headers
 					.last()
@@ -119,13 +126,6 @@ where
 					)
 					.into())
 				}
-
-				let first_header = first_proof.unknown_headers.first().ok_or_else(|| {
-					Error::Custom("No headers in first finality proof".to_string())
-				})?;
-				let second_header = second_proof.unknown_headers.first().ok_or_else(|| {
-					Error::Custom("No headers in second finality proof".to_string())
-				})?;
 
 				let check_canonicity = |chain: &[RelayChainHeader]| {
 					if chain.len() < 2 {

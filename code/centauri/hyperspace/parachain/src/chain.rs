@@ -100,6 +100,7 @@ where
 					})?
 					.0;
 
+				// TODO: sometimes `unknown_blocks` don't contain any blocks. Investigate why
 				let trusted_finality_proof =
 					FinalityProof::<RelayChainHeader>::decode(&mut &encoded[..])?;
 
