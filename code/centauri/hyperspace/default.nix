@@ -1,6 +1,6 @@
-{ pkgs, packages, crane, common-attrs, common-deps }: {
+{ pkgs, crane, common-attrs, common-deps }: {
 
-  hyperspace-template = { relaychainHostA ? "127.0.0.1", relaychainPortA ? 9944
+  template = { relaychainHostA ? "127.0.0.1", relaychainPortA ? 9944
     , parachainHostA ? "127.0.0.1", parachainPortA ? 9988, paraIdA ? 2001
     , commitmentPrefixesA ? "0x6962632f", clientIdA ? "11-beefy-0"
 
