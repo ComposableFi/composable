@@ -38,7 +38,8 @@ use thiserror::Error;
 #[cfg(feature = "parachain")]
 use parachain::ParachainClient;
 use primitives::{
-	error::Error, Chain, IbcProvider, KeyProvider, MisbehaviourHandler, TransactionId, UpdateType,
+	error::Error, BalancesAccountData, Chain, IbcProvider, KeyProvider, MisbehaviourHandler,
+	TransactionId, UpdateType,
 };
 use std::{pin::Pin, time::Duration};
 use subxt::tx::SubstrateExtrinsicParams;
@@ -129,14 +130,6 @@ impl IbcProvider for AnyChain {
 					chain.query_latest_ibc_events(finality_event, counterparty).await?;
 				Ok((client_msg, events, update_type))
 			},
-			_ => unreachable!(),
-		}
-	}
-
-	async fn ibc_events(&self) -> Pin<Box<dyn Stream<Item = IbcEvent>>> {
-		match self {
-			#[cfg(feature = "parachain")]
-			Self::Parachain(chain) => chain.ibc_events().await,
 			_ => unreachable!(),
 		}
 	}
@@ -513,26 +506,13 @@ impl IbcProvider for AnyChain {
 
 	async fn ibc_events(
 		&self,
-	) -> Pin<Box<dyn Stream<Item = (TransactionId, Vec<Option<IbcEvent>>)>>> {
+	) -> Pin<Box<dyn Stream<Item = (TransactionId, Vec<Option<IbcEvent>>)> + Send + 'static>> {
 		match self {
 			#[cfg(feature = "parachain")]
 			Self::Parachain(chain) => {
 				use futures::StreamExt;
 				Box::pin(chain.ibc_events().await.map(|x| x.into()))
 			},
-			_ => unreachable!(),
-		}
-	}
-
-	async fn query_connection_using_client(
-		&self,
-		height: u32,
-		client_id: String,
-	) -> Result<Vec<IdentifiedConnection>, Self::Error> {
-		match self {
-			#[cfg(feature = "parachain")]
-			Self::Parachain(chain) =>
-				chain.query_connection_using_client(height, client_id).await.map_err(Into::into),
 			_ => unreachable!(),
 		}
 	}
@@ -661,6 +641,18 @@ impl primitives::TestProvider for AnyChain {
 			Self::Parachain(chain) => chain.subscribe_blocks().await,
 			_ => unreachable!(),
 		}
+	}
+
+	async fn subscribe_relaychain_blocks(&self) -> Pin<Box<dyn Stream<Item = u32>>> {
+		todo!()
+	}
+
+	async fn current_set_id(&self) -> u64 {
+		todo!()
+	}
+
+	async fn query_relaychain_balance(&self) -> Result<BalancesAccountData, Self::Error> {
+		todo!()
 	}
 }
 

@@ -1,6 +1,6 @@
 #![allow(clippy::all)]
 
-use std::{ops::Deref, pin::Pin, str::FromStr, time::Duration};
+use std::{pin::Pin, str::FromStr, time::Duration};
 
 use futures::Stream;
 use ibc_proto::{

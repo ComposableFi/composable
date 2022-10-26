@@ -24,13 +24,11 @@ use beefy_prover::helpers::{
 	fetch_timestamp_extrinsic_with_proof, unsafe_arc_cast, TimeStampExtWithProof,
 };
 use codec::{Decode, Encode};
-use finality_grandpa::Chain;
 use finality_grandpa_rpc::GrandpaApiClient;
 use jsonrpsee::{async_client::Client, ws_client::WsClientBuilder};
 use primitives::{
-	justification::{AncestryChain, GrandpaJustification},
-	parachain_header_storage_key, ClientState, FinalityProof, ParachainHeaderProofs,
-	ParachainHeadersWithFinalityProof,
+	justification::GrandpaJustification, parachain_header_storage_key, ClientState, FinalityProof,
+	ParachainHeaderProofs, ParachainHeadersWithFinalityProof,
 };
 use serde::{Deserialize, Serialize};
 use sp_core::H256;

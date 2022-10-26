@@ -1,6 +1,6 @@
 #![warn(unused_variables)]
 
-use futures::{future::ready, StreamExt};
+use futures::StreamExt;
 use ibc::events::IbcEvent;
 use primitives::Chain;
 use std::time::Duration;

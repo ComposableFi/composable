@@ -1,12 +1,6 @@
 use futures::StreamExt;
 use hyperspace::logging;
 use hyperspace_primitives::{mock::LocalClientTypes, IbcProvider, KeyProvider};
-use hyperspace_testsuite::{
-	ibc_channel_close, ibc_messaging_packet_height_timeout_with_connection_delay,
-	ibc_messaging_packet_timeout_on_channel_close,
-	ibc_messaging_packet_timestamp_timeout_with_connection_delay,
-	ibc_messaging_with_connection_delay,
-};
 use ibc::{core::ics02_client::msgs::create_client::MsgCreateAnyClient, tx_msg::Msg};
 use parachain::{finality_protocol::FinalityProtocol, ParachainClient, ParachainClientConfig};
 use subxt::tx::SubstrateExtrinsicParams;

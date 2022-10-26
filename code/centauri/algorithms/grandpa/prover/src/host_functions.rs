@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::H256;
 use ics10_grandpa::client_message::RelayChainHeader;
 use primitives::HostFunctions;
 use sp_core::ed25519::{Public, Signature};
@@ -38,11 +37,11 @@ impl HostFunctions for HostFunctionsProvider {
 		pubkey.verify(&msg, sig)
 	}
 
-	fn add_relaychain_header_hashes(headers: &[<Self::Header as Header>::Hash]) {
+	fn add_relaychain_header_hashes(_headers: &[<Self::Header as Header>::Hash]) {
 		todo!()
 	}
 
-	fn exists_relaychain_header_hash(hash: <Self::Header as Header>::Hash) -> bool {
+	fn exists_relaychain_header_hash(_hash: <Self::Header as Header>::Hash) -> bool {
 		todo!()
 	}
 }

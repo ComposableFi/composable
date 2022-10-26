@@ -44,7 +44,7 @@ use sp_core::H256;
 
 use crate::finality_protocol::FinalityEvent;
 use beefy_prover::helpers::fetch_timestamp_extrinsic_with_proof;
-use futures::{future::ready, stream, Stream, StreamExt};
+use futures::{Stream, StreamExt};
 use grandpa::BlockNumberOps;
 use grandpa_light_client_primitives::{FinalityProof, ParachainHeaderProofs};
 use ibc_proto::ibc::core::connection::v1::IdentifiedConnection;

@@ -16,8 +16,8 @@
 use crate::{
 	error::Error,
 	proto::{
-		self, client_message, ClientMessage as RawClientMessage, FinalityProof as RawFinalityProof,
-		Header as RawHeader, Misbehaviour as RawMisbehaviour,
+		self, client_message, ClientMessage as RawClientMessage, Header as RawHeader,
+		Misbehaviour as RawMisbehaviour,
 	},
 };
 use alloc::{collections::BTreeMap, vec::Vec};
@@ -25,8 +25,7 @@ use anyhow::anyhow;
 use codec::{Decode, Encode};
 use grandpa_client_primitives::{FinalityProof, ParachainHeaderProofs};
 use primitive_types::H256;
-use sp_finality_grandpa::Equivocation;
-use sp_runtime::traits::{BlakeTwo256, Header as HeaderT};
+use sp_runtime::traits::BlakeTwo256;
 use tendermint_proto::Protobuf;
 
 /// Protobuf type url for GRANDPA header

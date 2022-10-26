@@ -33,7 +33,7 @@ use ss58_registry::Ss58AddressFormat;
 use subxt::{
 	ext::sp_runtime::{generic::Era, traits::Header as HeaderT, MultiSigner},
 	tx::{AssetTip, BaseExtrinsicParamsBuilder, ExtrinsicParams},
-	Config, PolkadotConfig, SubstrateConfig,
+	PolkadotConfig,
 };
 
 use crate::utils::{fetch_max_extrinsic_weight, unsafe_cast_to_jsonrpsee_client};
@@ -46,12 +46,9 @@ use jsonrpsee_ws_client::WsClientBuilder;
 use sp_keyring::AccountKeyring;
 use sp_keystore::testing::KeyStore;
 use sp_runtime::traits::One;
-use subxt::{
-	config::WithExtrinsicParams,
-	tx::{
-		BaseExtrinsicParams, PairSigner, PlainTip, PolkadotExtrinsicParamsBuilder,
-		SubstrateExtrinsicParamsBuilder, TxPayload,
-	},
+use subxt::tx::{
+	PairSigner, PlainTip, PolkadotExtrinsicParamsBuilder, SubstrateExtrinsicParamsBuilder,
+	TxPayload,
 };
 
 /// Implements the [`crate::Chain`] trait for parachains.

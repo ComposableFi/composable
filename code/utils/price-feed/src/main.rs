@@ -17,8 +17,8 @@ use crate::{
 	backend::{Backend, FeedNotificationAction},
 	cache::ThreadSafePriceCache,
 	feed::{
-		binance::BinanceFeed, composable::ComposableFeed, Exponent, FeedHandle, FeedIdentifier,
-		FeedNotification, FeedStream, TimeStampedPrice,
+		binance::BinanceFeed, composable::ComposableFeed, Exponent, FeedIdentifier,
+		FeedNotification, TimeStampedPrice,
 	},
 	frontend::Frontend,
 	opts::Opts,

@@ -22,12 +22,9 @@ use crate::client_message::{ClientMessage, RelayChainHeader};
 use alloc::{format, string::ToString, vec, vec::Vec};
 use codec::Decode;
 use core::marker::PhantomData;
-use finality_grandpa::{Chain, Message};
+use finality_grandpa::Chain;
 use grandpa_client_primitives::{
-	justification::{
-		check_equivocation_proof, check_message_signature, find_scheduled_change, AncestryChain,
-		GrandpaJustification,
-	},
+	justification::{find_scheduled_change, AncestryChain, GrandpaJustification},
 	ParachainHeadersWithFinalityProof,
 };
 use ibc::{
@@ -58,7 +55,6 @@ use light_client_common::{
 	state_machine, verify_delay_passed, verify_membership, verify_non_membership,
 };
 use primitive_types::H256;
-use sp_runtime::traits::Header as _;
 use sp_trie::StorageProof;
 use tendermint_proto::Protobuf;
 
@@ -106,13 +102,6 @@ where
 					)
 				}
 
-				let first_header = first_proof.unknown_headers.first().ok_or_else(|| {
-					Error::Custom("No headers in first finality proof".to_string())
-				})?;
-				let second_header = second_proof.unknown_headers.first().ok_or_else(|| {
-					Error::Custom("No headers in second finality proof".to_string())
-				})?;
-
 				let first_last_hash = first_proof
 					.unknown_headers
 					.last()
@@ -131,22 +120,32 @@ where
 					.into())
 				}
 
-				let first_parent = first_header.parent_hash;
-				let second_parent = second_header.parent_hash;
+				let first_header = first_proof.unknown_headers.first().ok_or_else(|| {
+					Error::Custom("No headers in first finality proof".to_string())
+				})?;
+				let second_header = second_proof.unknown_headers.first().ok_or_else(|| {
+					Error::Custom("No headers in second finality proof".to_string())
+				})?;
 
-				let check_canonicity = |chain: &[RelayChainHeader], init: H256| {
-					let mut last_hash = first_parent;
-					for header in chain {
-						if header.hash() != last_hash {
+				let check_canonicity = |chain: &[RelayChainHeader]| {
+					if chain.len() < 2 {
+						return Ok(())
+					}
+					let mut base = chain[0].hash();
+					for header in &chain[1..] {
+						if header.parent_hash != base {
 							return Err(Error::Custom("Chain is not canonical".to_string()))
 						}
-						last_hash = header.parent_hash;
+						base = header.hash();
 					}
 					Ok(())
 				};
 
-				check_canonicity(&first_proof.unknown_headers, first_parent)?;
-				check_canonicity(&second_proof.unknown_headers, second_parent)?;
+				check_canonicity(&first_proof.unknown_headers)?;
+				check_canonicity(&second_proof.unknown_headers)?;
+
+				let first_parent = first_header.parent_hash;
+				let second_parent = second_header.parent_hash;
 
 				// TODO: should we handle genesis block here somehow?
 				let exists_first = H::exists_relaychain_header_hash(first_parent);

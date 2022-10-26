@@ -108,7 +108,7 @@ async fn handle_twap_updated_event(
 ) -> Result<(), FeedError> {
 	let event: TwapUpdated = twap_updated_details.event;
 	let (base_asset, base_price) = &event.twaps[0];
-	let (quote_asset, quote_price) = &event.twaps[1];
+	let (quote_asset, _quote_price) = &event.twaps[1];
 	let base_asset = primitives::currency::CurrencyId(base_asset.0)
 		.try_into()
 		.map_err(|_| FeedError::NetworkFailure)?;
