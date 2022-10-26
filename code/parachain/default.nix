@@ -1,1 +1,5 @@
-{ }: { chain-specs = [ "dali-dev" "picasso-dev" "composable-dev" ]; }
+{ }: { chain-specs = [
+   "dali-dev"
+    #"picasso-dev"
+     #"composable-dev"
+      ]; }

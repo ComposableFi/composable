@@ -408,7 +408,7 @@
             pkgs.lib.trace
             "Outputs scale encoded API for given node and runtime"
             pkgs.stdenv.mkDerivation rec {
-              name = "${dotsama-node.name}-${genesis-name}-local-metadata";
+              name = "${dotsama-node.name}-${genesis-name}-metadata";
               buildInputs = [ dotsama-node ];
               src = rust-src;
               buildPhase = ''
@@ -683,8 +683,24 @@
             };
           };
 
+          metadatas = let
+            polkadots = builtins.map (genesis-name:
+              mk-metadata {
+                inherit genesis-name;
+                dotsama-node = polkadot-node;
+              }) (pkgs.callPackage ./.nix/polkadot/default.nix { }).chain-specs;
+            composables = builtins.map (genesis-name:
+              mk-metadata {
+                inherit genesis-name;
+                dotsama-node = composable-node;
+              })
+              (pkgs.callPackage ./code/parachain/default.nix { }).chain-specs;
+          in 
+            builtins.map (generator: { ${generator.name} = generator; }) (composables ++ polkadots);
+
         in rec {
-          packages = rec {
+          packages = metadatas // rec {
+
             inherit wasm-optimizer;
             inherit common-deps;
             inherit common-bench-deps;
@@ -751,8 +767,6 @@
                 npm run start
               '';
             };
-            composable-dali-dev-metadata = mk-metadata { dotsama-node = composable-node; genesis-name = "dali-dev"; };
-            composable-dali-dev-metadata = mk-metadata { dotsama-node = composable-node; genesis-name = "dali-dev"; };
 
             xcvm-contract-asset-registry =
               mk-xcvm-contract "xcvm-asset-registry";
