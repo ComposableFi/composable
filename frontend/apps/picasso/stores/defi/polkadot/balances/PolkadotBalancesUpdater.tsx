@@ -4,14 +4,12 @@ import {
   subscribePicassoBalanceByAssetId,
 } from "@/defi/polkadot/pallets/Balance";
 import { SubstrateNetworkId } from "@/defi/polkadot/types";
-
+import { callbackGate, getExistentialDeposit, toTokenUnitsBN } from "shared";
+import { useCallback, useEffect } from "react";
 import { useStore } from "@/stores/root";
 import { ApiPromise } from "@polkadot/api";
 import BigNumber from "bignumber.js";
-
-import { useCallback, useEffect } from "react";
-import { callbackGate, getExistentialDeposit, toTokenUnitsBN } from "shared";
-import { useDotSamaContext, useEagerConnect } from "substrate-react";
+import { ParachainId, RelayChainId, useDotSamaContext, useEagerConnect } from "substrate-react";
 
 export async function subscribeNativeBalance(
   account: string,
@@ -100,6 +98,7 @@ const PolkadotBalancesUpdater = () => {
     selectedAccount,
     parachainProviders,
     relaychainProviders,
+    connectedAccounts
   } = useDotSamaContext();
 
   const picassoBalanceSubscriber = useCallback(
@@ -133,9 +132,9 @@ const PolkadotBalancesUpdater = () => {
     if (selectedAccount !== -1) {
       Object.entries({ ...parachainProviders, ...relaychainProviders }).forEach(
         ([chainId, chain]) => {
-          if (chain.accounts[selectedAccount] && chain.parachainApi) {
+          if (connectedAccounts[chainId as ParachainId | RelayChainId] && chain.parachainApi) {
             subscribeNativeBalance(
-              chain.accounts[selectedAccount].address,
+              connectedAccounts[chainId as ParachainId | RelayChainId][selectedAccount].address,
               chain.parachainApi,
               chainId,
               updateBalance
@@ -171,11 +170,11 @@ const PolkadotBalancesUpdater = () => {
                 unsubList.push(picassoBalanceSubscriber(chain, asset, chainId));
                 break;
               case "karura":
-                if (chain.accounts[selectedAccount]) {
+                if (connectedAccounts.karura[selectedAccount]) {
                   unsubList.push(
                     subscribeKaruraBalance(
                       api,
-                      chain.accounts[selectedAccount].address,
+                      connectedAccounts.karura[selectedAccount].address,
                       String(asset.meta.symbol),
                       (balance: BigNumber) =>
                         updateAssetBalance({

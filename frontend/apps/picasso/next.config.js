@@ -6,12 +6,14 @@ const withPWA = require("next-pwa")({
 });
 
 const withTM = require("next-transpile-modules")([
+    "@polkadot/react-identicon",
     "substrate-react",
     "@web3-react/core",
     "shared",
     "tokens",
     "bi-lib",
     "defi-interfaces",
+    "wallet",
     "endpoints"
 ]);
 

@@ -41,7 +41,6 @@ export default {
         ConstantProduct: {
           owner: "AccountId32",
           pair: "ComposableTraitsDefiCurrencyPairCurrencyId",
-          lpToken: "u128",
           fee: "Permill",
           baseWeight: "Permill"
         },

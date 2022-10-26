@@ -1,5 +1,7 @@
-import { useSnackbar } from "notistack";
-import { useStore } from "@/stores/root";
+import { useAllParachainProviders } from "@/defi/polkadot/context/hooks";
+import { useSelectedAccount } from "@/defi/polkadot/hooks/index";
+import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
+import { getAmountToTransfer } from "@/defi/polkadot/pallets/Transfer";
 import {
   TransferHandlerArgs,
   transferKaruraPicasso,
@@ -7,12 +9,11 @@ import {
   transferPicassoKarura,
   transferPicassoKusama,
 } from "@/defi/polkadot/pallets/xcmp";
-import { useSelectedAccount } from "@/defi/polkadot/hooks/index";
-import { useAllParachainProviders } from "@/defi/polkadot/context/hooks";
-import { useExecutor } from "substrate-react";
-import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
-import { getAmountToTransfer } from "@/defi/polkadot/pallets/Transfer";
 import { AssetId } from "@/defi/polkadot/types";
+import { useStore } from "@/stores/root";
+import BigNumber from "bignumber.js";
+import { useSnackbar } from "notistack";
+import { useExecutor } from "substrate-react";
 
 export const useTransfer = () => {
   const allProviders = useAllParachainProviders();
@@ -20,13 +21,10 @@ export const useTransfer = () => {
   const fromProvider = allProviders[from];
   const to = useStore((state) => state.transfers.networks.to);
   const toProvider = allProviders[to];
-
   const { enqueueSnackbar } = useSnackbar();
-
   const selectedRecipient = useStore(
     (state) => state.transfers.recipients.selected
   );
-
   const { hasFeeItem, feeItem } = useStore(({ transfers }) => transfers);
   const weight = useStore((state) => state.transfers.fee.weight);
   const keepAlive = useStore((state) => state.transfers.keepAlive);
@@ -35,8 +33,8 @@ export const useTransfer = () => {
       substrateBalances.assets[from].native.existentialDeposit
   );
   const selectedToken = useStore(state => state.transfers.selectedToken);
-
   const amount = useStore((state) => state.transfers.amount);
+  const setAmount = useStore((state) => state.transfers.updateAmount);
   const account = useSelectedAccount();
   const providers = useAllParachainProviders();
   const executor = useExecutor();
@@ -97,6 +95,9 @@ export const useTransfer = () => {
       weight,
       token: selectedToken
     });
+
+    // clear amount after
+    setAmount(new BigNumber(0));
   };
 
   const transfer = async () => {
