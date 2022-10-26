@@ -1,12 +1,11 @@
 { pkgs, crane, common-attrs, common-deps }: {
-
   template = { relaychainHostA ? "127.0.0.1", relaychainPortA ? 9944
     , parachainHostA ? "127.0.0.1", parachainPortA ? 9988, paraIdA ? 2001
     , commitmentPrefixesA ? "0x6962632f", clientIdA ? "11-beefy-0"
 
     , relaychainHostB ? "127.0.0.1", relaychainPortB ? 9944
     , parachainHostB ? "127.0.0.1", parachainPortB ? 9188, paraIdB ? 2000
-    , commitmentPrefixesB ? "0x6962632f", clientIdB ? "11-beefy-0", }: {
+    , commitmentPrefixesB ? "0x6962632f", clientIdB ? "11-beefy-0", }: rec {
       bin = crane.buildPackage (common-attrs // {
         name = "hyperspace";
         pname = "hyperspace";
@@ -19,7 +18,7 @@
         meta = { mainProgram = "hyperspace"; };
       });
       rawConfig = (builtins.fromTOML
-        (builtins.readFile ./code/centauri/hyperspace/config.toml));
+        (builtins.readFile ./config.toml));
 
       config =
         pkgs.lib.makeOverridable (result: { result = result; }) rawConfig;

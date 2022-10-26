@@ -404,15 +404,15 @@
             meta = { mainProgram = "composable"; };
           });
 
-          metadata = pkgs.lib.trace "Metadata used by clients to call nodes" {
-            composable-dali-dev-metadata =
-              pkgs.lib.trace "Outputs scale encoded API for given node and runtime"
+          mk-metadata = {node, genesis-name} : pkgs.lib.trace "Metadata used by clients to call nodes" {
+            composable-dali-dev-metadata = pkgs.lib.trace
+              "Outputs scale encoded API for given node and runtime"
               pkgs.stdenv.mkDerivation rec {
-                name = "composable-dali-local-metadata";
+                name = "composable-${runtime-name}-local-metadata";
                 buildInputs = [ composable-node ];
                 src = rust-src;
                 buildPhase = ''
-                  ${composable-node}/bin/composable metadata --chain=dali-dev >  ${name}.scale
+                  ${composable-node}/bin/composable metadata --chain=${genesis-name} >  ${name}.scale
                 '';
                 installPhase = ''
                   mkdir --parents $out
@@ -674,12 +674,11 @@
 
           code = {
             centauri = {
-              hyperspace = {
-                  template = pkgs.callPackage "./code/centauri/hyperspace/default.nix" {
-                    inherit common-attrs common-deps;
-                    crane = crane-nightly;                    
-                   };
-              };
+              hyperspace =
+                pkgs.callPackage ./code/centauri/hyperspace/default.nix {
+                  inherit common-attrs common-deps;
+                  crane = crane-nightly;
+                };
             };
           };
 
@@ -1477,7 +1476,8 @@
 
             hyperspace = {
               type = "app";
-              program = pkgs.lib.meta.getExe code.centauri.hyperspace.template.default;
+              program =
+                pkgs.lib.meta.getExe code.centauri.hyperspace.template.default;
             };
 
           in rec {
