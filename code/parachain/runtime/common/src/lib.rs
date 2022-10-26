@@ -220,8 +220,8 @@ pub fn multi_existential_deposits<AssetsRegistry>(_currency_id: &CurrencyId) -> 
 }
 
 /// Given a `currency_id`, returns the existential deposit of a MultiAsset.
-/// Returns `1_000_000` as the existential deposit if unable to get an existential deposit for the
-/// given `currency_id`.
+/// Returns `1_000_000_000_000` as the existential deposit if unable to get an existential deposit
+/// for the given `currency_id`.
 #[cfg(not(feature = "runtime-benchmarks"))]
 pub fn multi_existential_deposits<
 	AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>
@@ -229,14 +229,19 @@ pub fn multi_existential_deposits<
 >(
 	currency_id: &CurrencyId,
 ) -> Balance {
-	if let Ok(existential_deposit) = AssetsRegistry::existential_deposit(*currency_id)
+	AssetsRegistry::existential_deposit(*currency_id)
 		.and_then(|ed| PriceConverter::<AssetsRegistry>::get_price_inverse(*currency_id, ed))
-	{
-		existential_deposit
-	} else {
-		// TODO: Add hard-coded existential deposit values
-		1_000_000
-	}
+		.unwrap_or(match *currency_id {
+			// TODO: Add KAR, BNC, vKSM, MOVR
+			CurrencyId::USDT => 100_000_000_000, // USDT: 0.1
+			CurrencyId::kUSD => 10_000_000_000,  // kUSD: 0.01
+			CurrencyId::KSM => PriceConverter::<AssetsRegistry>::get_price_inverse(
+				*currency_id,
+				NativeExistentialDeposit::get(),
+			)
+			.expect(""), // KSM: 0.0001
+			_ => 100_000_000_000,                // Unkown: 0.1
+		})
 }
 
 parameter_types! {

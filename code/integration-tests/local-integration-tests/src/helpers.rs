@@ -1,5 +1,10 @@
-use common::{multi_existential_deposits, xcmp::BaseXcmWeight, AccountId, Balance};
-use composable_traits::{currency::AssetExistentialDepositInspect, xcm::assets::AssetRatioInspect};
+use common::{
+	multi_existential_deposits, xcmp::BaseXcmWeight, AccountId, Balance, NativeExistentialDeposit,
+	PriceConverter,
+};
+use composable_traits::{
+	currency::AssetExistentialDepositInspect, oracle::MinimalOracle, xcm::assets::AssetRatioInspect,
+};
 use cumulus_primitives_core::ParaId;
 
 use frame_support::log;
@@ -27,7 +32,7 @@ pub fn under_existential_deposit<
 	asset_id: LocalAssetId,
 	_instruction_count: usize,
 ) -> Balance {
-	multi_existential_deposits::<AssetsRegistry>(&asset_id) / 2_u128
+	multi_existential_deposits::<AssetsRegistry>(&asset_id) / 2
 }
 
 /// dumps events for debugging
@@ -51,14 +56,17 @@ pub fn sibling_account() -> AccountId {
 }
 
 /// assert amount is supported deposit amount and is above it
-pub fn assert_above_deposit<
-	AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>
-		+ AssetExistentialDepositInspect<AssetId = CurrencyId, Balance = Balance>,
->(
+pub fn assert_above_deposit<AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>>(
 	asset_id: CurrencyId,
 	amount: Balance,
 ) -> Balance {
-	assert!(multi_existential_deposits::<AssetsRegistry>(&asset_id) <= amount);
+	assert!(
+		PriceConverter::<AssetsRegistry>::get_price_inverse(
+			asset_id,
+			NativeExistentialDeposit::get()
+		)
+		.unwrap() <= amount
+	);
 	amount
 }
 

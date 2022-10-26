@@ -303,7 +303,7 @@ fn transfer_to_sibling() {
 					1,
 					X2(
 						Parachain(SIBLING_PARA_ID),
-						Junction::AccountId32 { network: NetworkId::Any, id: BOB.into() }
+						Junction::AccountId32 { network: NetworkId::Any, id: BOB }
 					)
 				)
 				.into()
@@ -332,7 +332,7 @@ fn transfer_to_sibling() {
 					1,
 					X2(
 						Parachain(THIS_PARA_ID),
-						Junction::AccountId32 { network: NetworkId::Any, id: ALICE.into() }
+						Junction::AccountId32 { network: NetworkId::Any, id: ALICE }
 					)
 				)
 				.into()
@@ -355,8 +355,8 @@ fn transfer_to_sibling() {
 	});
 }
 
-/// if Bob sends amount of his tokens and these are above weight but less than ED,
-/// than our treasury takes that amount, sorry Bob
+/// if Alice sends amount of his tokens and these are above weight but less than ED,
+/// than our treasury takes that amount, sorry Alice
 /// from: Acala
 #[test]
 fn transfer_from_relay_chain_deposit_to_treasury_if_below_ed() {
@@ -414,7 +414,7 @@ fn xcm_transfer_execution_barrier_trader_works() {
 	KusamaRelay::execute_with(|| {
 		use kusama_runtime::*;
 		let r = pallet_xcm::Pallet::<Runtime>::send_xcm(
-			X1(Junction::AccountId32 { network: NetworkId::Any, id: ALICE.into() }),
+			X1(Junction::AccountId32 { network: NetworkId::Any, id: ALICE }),
 			Parachain(THIS_PARA_ID).into(),
 			message,
 		);
