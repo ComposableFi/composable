@@ -17,6 +17,6 @@ use std::io::Result;
 
 fn main() -> Result<()> {
 	// compile our proto files
-	prost_build::compile_protos(&["src/proto/grandpa.proto"], &["src/"])?;
+	prost_build::compile_protos(&["src/proto/grandpa.proto", "--experimental_allow_proto3_optional"], &["src/"])?;
 	Ok(())
 }
