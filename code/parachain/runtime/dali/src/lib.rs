@@ -40,7 +40,7 @@ use common::{
 	},
 	impls::DealWithFees,
 	multi_existential_deposits, AccountId, AccountIndex, Address, Amount, AuraId, Balance,
-	BlockNumber, BondOfferId, FinancialNftInstanceId, Hash, MaxStringSize, Moment,
+	BlockNumber, BondOfferId, FinancialNftInstanceId, ForeignAssetId, Hash, MaxStringSize, Moment,
 	MosaicRemoteAssetId, NativeExistentialDeposit, PoolId, PriceConverter, Signature,
 	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
@@ -50,6 +50,7 @@ use composable_traits::{
 	assets::Asset,
 	defi::Rate,
 	dex::{Amm, PriceAggregate, RemoveLiquiditySimulationResult},
+	xcm::assets::RemoteAssetRegistryInspect,
 };
 use primitives::currency::{CurrencyId, ValidateCurrencyId};
 use sp_api::impl_runtime_apis;
@@ -1455,13 +1456,17 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance> for Runtime {
+	impl assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance, ForeignAssetId> for Runtime {
 		fn balance_of(SafeRpcWrapper(asset_id): SafeRpcWrapper<CurrencyId>, account_id: AccountId) -> SafeRpcWrapper<Balance> /* Balance */ {
 			SafeRpcWrapper(<Assets as fungibles::Inspect::<AccountId>>::balance(asset_id, &account_id))
 		}
 
-		fn list_assets() -> Vec<Asset> {
-			CurrencyId::list_assets()
+		fn list_assets() -> Vec<Asset<ForeignAssetId>> {
+			let mut assets = CurrencyId::list_assets();
+			let mut foreign_assets = assets_registry::Pallet::<Runtime>::get_foreign_assets_list();
+			assets.append(&mut foreign_assets);
+
+			assets
 		}
 	}
 

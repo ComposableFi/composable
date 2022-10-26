@@ -31,9 +31,10 @@ use governance::*;
 
 use common::{
 	governance::native::*, impls::DealWithFees, multi_existential_deposits, AccountId,
-	AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, BondOfferId, Hash, MaxStringSize,
-	Moment, NativeExistentialDeposit, PriceConverter, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS,
-	HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, BondOfferId, ForeignAssetId, Hash,
+	MaxStringSize, Moment, NativeExistentialDeposit, PriceConverter, Signature,
+	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
+	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 
 use composable_traits::assets::Asset;
@@ -868,12 +869,12 @@ mod benches {
 }
 
 impl_runtime_apis! {
-	impl assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance> for Runtime {
+	impl assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance, ForeignAssetId> for Runtime {
 		fn balance_of(SafeRpcWrapper(asset_id): SafeRpcWrapper<CurrencyId>, account_id: AccountId) -> SafeRpcWrapper<Balance> /* Balance */ {
 			SafeRpcWrapper(<Assets as fungibles::Inspect::<AccountId>>::balance(asset_id, &account_id))
 		}
 
-		fn list_assets() -> Vec<Asset> {
+		fn list_assets() -> Vec<Asset<ForeignAssetId>> {
 			CurrencyId::list_assets()
 		}
 	}
