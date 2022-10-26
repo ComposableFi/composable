@@ -404,22 +404,23 @@
             meta = { mainProgram = "composable"; };
           });
 
-          mk-metadata = {node, genesis-name} : pkgs.lib.trace "Metadata used by clients to call nodes" {
-            composable-dali-dev-metadata = pkgs.lib.trace
-              "Outputs scale encoded API for given node and runtime"
-              pkgs.stdenv.mkDerivation rec {
-                name = "composable-${runtime-name}-local-metadata";
-                buildInputs = [ composable-node ];
-                src = rust-src;
-                buildPhase = ''
-                  ${composable-node}/bin/composable metadata --chain=${genesis-name} >  ${name}.scale
-                '';
-                installPhase = ''
-                  mkdir --parents $out
-                  cp ${name}.scale $out/
-                '';
-              };
-          };
+          mk-metadata = { dotsama-node, genesis-name }:
+            pkgs.lib.trace
+            "Outputs scale encoded API for given node and runtime"
+            pkgs.stdenv.mkDerivation rec {
+              name = "${dotsama-node.name}-${genesis-name}-local-metadata";
+              buildInputs = [ dotsama-node ];
+              src = rust-src;
+              buildPhase = ''
+                ${
+                  pkgs.lib.meta.getExe dotsama-node
+                } metadata --chain=${genesis-name} >  ${name}.scale
+              '';
+              installPhase = ''
+                mkdir --parents $out
+                cp ${name}.scale $out/
+              '';
+            };
 
           composable-node-release = crane-nightly.buildPackage (common-attrs
             // {
@@ -750,7 +751,7 @@
                 npm run start
               '';
             };
-            inherit (metadata) composable-dali-dev-metadata;
+            composable-dali-dev-metadata = mk-metadata { dotsama-node = composable-node; genesis-name = "dali-dev"; };
 
             xcvm-contract-asset-registry =
               mk-xcvm-contract "xcvm-asset-registry";
