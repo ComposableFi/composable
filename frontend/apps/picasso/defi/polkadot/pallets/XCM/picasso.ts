@@ -5,12 +5,29 @@ import { XcmVersionedMultiLocation } from "@acala-network/types/interfaces/types
 import { CurrencyId } from "defi-interfaces";
 import BigNumber from "bignumber.js";
 
+/**
+ * Make a Transfer or a MultiCurrencyTransfer call
+ * on Picasso via xTokens Pallet
+ * @param api Connected to Picasso Chain
+ * @param destination XcmVersionedMultiLocation => Parachain or RelayChain
+ * @param currencyId Asset Id of currency that needs to be transferred
+ * @param amount Amount of tokens
+ * @param hasFeeToken BYOG (need to validate and confirm)
+ * @param feeTokenId Asset Id of token that will be used as fee
+ * @param destinationWeight Need to confirm (hardcoded so far)
+ * @returns XCM Transfer Call
+ */
 export const getXTokenTransferCallOriginPicasso = (
     api: ApiPromise,
     destination: XcmVersionedMultiLocation,
     currencyId: BigNumber,
     amount: u128,
     hasFeeToken: boolean,
+    /**
+     * Token Id is BigNumber because
+     * Assets are identified by numeric
+     * id on dali
+     */
     feeTokenId: BigNumber | null,
     destinationWeight: number = 9000000000
 ) => {

@@ -2,13 +2,12 @@ import { TokenId } from "tokens";
 import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
 import { ApiPromise } from "@polkadot/api";
 import { Signer } from "@polkadot/api/types";
-import BigNumber from "bignumber.js";
 import {
   Executor,
   ParachainId,
   RelayChainId,
 } from "substrate-react";
-import { extractTokenByNetworkIdentifier } from "./Assets";
+import { extractTokenByNetworkIdentifier } from "../Assets";
 
 export type SetPaymentAssetArgs = {
   api: ApiPromise;
