@@ -8,7 +8,7 @@ import {
   useDotSamaContext,
   useEagerConnect,
 } from "substrate-react";
-import { listAssets } from "@/defi/polkadot/pallets/Assets";
+
 import {
   subscribeKaruraBalance,
   subscribeNativeBalance,
@@ -16,12 +16,15 @@ import {
 } from "@/defi/polkadot/pallets/Balances";
 import { TokenMetadata } from "../tokens/slice";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
+import { karuraAssetsList, picassoAssetsList } from "@/defi/polkadot/pallets/Assets";
 
 const PolkadotBalancesUpdater = () => {
   useEagerConnect("picasso");
   useEagerConnect("karura");
 
-  const updateTokens = useStore(({ substrateTokens }) => substrateTokens.updateTokens);
+  const updateTokens = useStore(
+    ({ substrateTokens }) => substrateTokens.updateTokens
+  );
   const tokens = useStore(({ substrateTokens }) => substrateTokens.tokens);
 
   const updateBalance = useStore(
@@ -40,12 +43,26 @@ const PolkadotBalancesUpdater = () => {
     connectedAccounts,
   } = useDotSamaContext();
 
+  /**
+   * This effect fetches
+   * metadata for tokens and
+   * should be called almost 
+   * after API creation
+   */
   useEffect(() => {
-    if (!parachainProviders.picasso.parachainApi) return;
-    listAssets(parachainProviders.picasso.parachainApi).then((list) => {
-      updateTokens(list);
-    });
-  }, [parachainProviders, updateTokens]);
+    callbackGate(
+      async (_picaApi, _karApi) => {
+        const picaAssetMetadataList = await picassoAssetsList(_picaApi);
+        const karuraAssetMetadataList = await karuraAssetsList(_karApi);
+        updateTokens(
+          picaAssetMetadataList,
+          karuraAssetMetadataList
+        )
+      },
+      parachainProviders.picasso.parachainApi,
+      parachainProviders.karura.parachainApi,
+    )
+  }, [parachainProviders, updateTokens])
 
   const picassoBalanceSubscriber = useCallback(
     async (chain, tokenMetadata: TokenMetadata, chainId) => {
