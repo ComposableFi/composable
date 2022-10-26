@@ -3,8 +3,6 @@
 use futures::StreamExt;
 use ibc::events::IbcEvent;
 use primitives::Chain;
-use std::time::Duration;
-use tokio::time::timeout;
 
 pub mod events;
 pub mod logging;
@@ -13,6 +11,7 @@ pub mod packets;
 pub mod queue;
 
 use events::{has_packet_events, parse_events};
+use ibc::core::ics24_host::identifier::ClientId;
 use metrics::handler::MetricsHandler;
 
 /// Core relayer loop, waits for new finality events and forwards any new [`ibc::IbcEvents`]
@@ -58,52 +57,51 @@ where
 	// TODO: use block subscription to retrieve events and extrinsics simultaneously
 	let (mut chain_a_client_updates, mut chain_b_client_updates) =
 		(chain_a.ibc_events().await, chain_b.ibc_events().await);
+
+	let filter_events = |events: Vec<Option<IbcEvent>>, counterparty_client_id: ClientId| {
+		events.into_iter().enumerate().filter(move |(_, event)| match event {
+			Some(IbcEvent::UpdateClient(client_update)) =>
+				*client_update.client_id() == counterparty_client_id,
+			_ => false,
+		})
+	};
+
 	// loop forever
 	loop {
 		tokio::select! {
 			// new finality event from chain A
 			result = chain_a_client_updates.next() => {
-				match result {
+				let (transaction_id, events) = match result {
 					// stream closed
 					None => break,
-					Some((transaction_id, events)) => {
-						for (i, event) in events.into_iter().enumerate() {
-							if let Some(IbcEvent::UpdateClient(client_update)) = event {
-								if *client_update.client_id() != chain_b.client_id() {
-									continue;
-								}
-								let message = timeout(Duration::from_secs(20), chain_a.query_client_message(
-									transaction_id.block_hash,
-									transaction_id.tx_index,
-									i,
-								)).await??;
-								chain_b.check_for_misbehaviour(&chain_a, message).await?;
-							}
-						}
-					}
+					Some(val) => val,
 				};
+
+				for (i, _event) in filter_events(events, chain_b.client_id()) {
+					let message = chain_a.query_client_message(
+						transaction_id.block_hash,
+						transaction_id.tx_index as usize,
+						i,
+					).await?;
+					chain_b.check_for_misbehaviour(&chain_a, message).await?;
+				}
 			}
 			// new finality event from chain B
 			result = chain_b_client_updates.next() => {
-				match result {
+				let (transaction_id, events) = match result {
 					// stream closed
 					None => break,
-					Some((transaction_id, events)) => {
-						for (i, event) in events.into_iter().enumerate() {
-							if let Some(IbcEvent::UpdateClient(client_update)) = event {
-								if *client_update.client_id() != chain_a.client_id() {
-									continue;
-								}
-								let message = timeout(Duration::from_secs(20), chain_b.query_client_message(
-									transaction_id.block_hash,
-									transaction_id.tx_index,
-									i,
-								)).await??;
-								chain_a.check_for_misbehaviour(&chain_b, message).await?;
-							}
-						}
-					}
+					Some(val) => val,
 				};
+
+				for (i, _event) in filter_events(events, chain_a.client_id()) {
+					let message = chain_b.query_client_message(
+						transaction_id.block_hash,
+						transaction_id.tx_index as usize,
+						i,
+					).await?;
+					chain_a.check_for_misbehaviour(&chain_a, message).await?;
+				}
 			}
 		}
 	}

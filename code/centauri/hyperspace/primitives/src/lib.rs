@@ -366,12 +366,12 @@ pub trait Chain: IbcProvider + MisbehaviourHandler + KeyProvider + Send + Sync {
 	/// Returns an [`AnyClientMessage`] that triggered an [`IbcEvent`] at index `event_index`
 	/// on this chain.
 	///
-	/// Parameters `host_block_hash` and `transaction_id` identify the transaction that triggered
+	/// Parameters `host_block_hash` and `transaction_index` identify the transaction that triggered
 	/// the event.
 	async fn query_client_message(
 		&self,
 		host_block_hash: [u8; 32],
-		transaction_id: u32,
+		transaction_index: usize,
 		event_index: usize,
 	) -> Result<AnyClientMessage, Error>;
 }

@@ -593,13 +593,13 @@ impl Chain for AnyChain {
 	async fn query_client_message(
 		&self,
 		host_block_hash: [u8; 32],
-		transaction_id: u32,
+		transaction_index: usize,
 		event_index: usize,
 	) -> Result<AnyClientMessage, Error> {
 		match self {
 			#[cfg(feature = "parachain")]
 			Self::Parachain(chain) => chain
-				.query_client_message(host_block_hash, transaction_id, event_index)
+				.query_client_message(host_block_hash, transaction_index, event_index)
 				.await
 				.map_err(Into::into),
 			_ => unreachable!(),

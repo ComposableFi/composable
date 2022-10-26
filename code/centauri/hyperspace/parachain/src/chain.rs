@@ -279,7 +279,7 @@ where
 	async fn query_client_message(
 		&self,
 		host_block_hash: [u8; 32],
-		transaction_id: u32,
+		transaction_index: usize,
 		event_index: usize,
 	) -> Result<AnyClientMessage, primitives::error::Error> {
 		use api::runtime_types::{
@@ -287,7 +287,7 @@ where
 		};
 
 		let hash = H256(host_block_hash);
-		log::debug!("Querying extrinsic data at {:?} {}", hash, transaction_id);
+		log::debug!("Querying extrinsic data at {:?} {}", hash, transaction_index);
 
 		let now = Instant::now();
 		// There is no way to query a specific extrinsic on substrate directly, so block
@@ -309,11 +309,8 @@ where
 				},
 			}
 		};
-		let extrinsic_opaque = block
-			.block
-			.extrinsics
-			.get(transaction_id as usize)
-			.expect("Extrinsic not found");
+		let extrinsic_opaque =
+			block.block.extrinsics.get(transaction_index).expect("Extrinsic not found");
 
 		let unchecked_extrinsic = UncheckedExtrinsic::<T>::decode(&mut &*extrinsic_opaque.encode())
 			.map_err(|e| {
