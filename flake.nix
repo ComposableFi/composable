@@ -1298,35 +1298,36 @@
               });
 
             developers = developers-minimal.overrideAttrs (base: {
-              buildInputs = with packages;
-                base.buildInputs ++ [
-                  pkgs.bacon
-                  pkgs.google-cloud-sdk
-                  pkgs.grub2
-                  pkgs.jq
-                  pkgs.lldb
-                  pkgs.llvmPackages_latest.bintools
-                  pkgs.llvmPackages_latest.lld
-                  pkgs.llvmPackages_latest.llvm
-                  pkgs.nix-tree
-                  pkgs.nixpkgs-fmt
-                  pkgs.openssl
-                  pkgs.openssl.dev
-                  pkgs.pkg-config
-                  pkgs.qemu
-                  pkgs.rnix-lsp
-                  pkgs.taplo
-                  pkgs.xorriso
-                  pkgs.zlib.out
-                  pkgs.nix-tree
-                  pkgs.nixfmt
-                  pkgs.rnix-lsp
-                  pkgs.subxt
-                  pkgs.nodePackages.typescript
-                  pkgs.nodePackages.typescript-language-server
-                  packages.rust-nightly
-                  packages.wasm-optimizer
-                ] ++ docs-renders;
+              buildInputs = base.buildInputs ++ [
+                pkgs.bacon
+                pkgs.google-cloud-sdk
+                pkgs.grub2
+                pkgs.jq
+                pkgs.lldb
+                pkgs.llvmPackages_latest.bintools
+                pkgs.llvmPackages_latest.lld
+                pkgs.llvmPackages_latest.llvm
+                pkgs.nix-tree
+                pkgs.nixpkgs-fmt
+                pkgs.openssl
+                pkgs.openssl.dev
+                pkgs.pkg-config
+                pkgs.qemu
+                pkgs.rnix-lsp
+                pkgs.taplo
+                pkgs.xorriso
+                pkgs.zlib.out
+                pkgs.nix-tree
+                pkgs.nixfmt
+                pkgs.rnix-lsp
+                pkgs.nodePackages.typescript
+                pkgs.nodePackages.typescript-language-server
+                packages.subxt
+              ] ++ docs-renders;
+            });
+
+            developers-with-wasm-optimizer = developers.overrideAttrs (base: {
+              buildInputs = base.buildInputs ++ [ packages.wasm-optimizer ];
             });
 
             developers-xcvm = developers.overrideAttrs (base: {
