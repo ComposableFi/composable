@@ -70,6 +70,16 @@ where
 	}
 
 	let from = client_state.latest_relay_hash;
+
+	let base = finality_proof
+		.unknown_headers
+		.iter()
+		.min_by_key(|h| *h.number())
+		.ok_or_else(|| anyhow!("Unknown headers can't be empty!"))?;
+	headers.ancestry(base.hash(), client_state.latest_relay_hash).map_err(|_| {
+		anyhow!("[verify_parachain_headers_with_grandpa_finality_proof] Invalid ancestry (base -> latest relay block)!")
+	})?;
+
 	let mut finalized = headers.ancestry(from, target.hash()).map_err(|_| {
 		anyhow!("[verify_parachain_headers_with_grandpa_finality_proof] Invalid ancestry!")
 	})?;
