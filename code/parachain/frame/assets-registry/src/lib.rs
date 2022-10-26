@@ -230,8 +230,8 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Minimal amount of asset_id required to send message to other network.
-		/// Target network may or may not accept payment.
+		/// Minimal amount of `foreign_asset_id` required to send message to other network.
+		/// Target network may or may not accept payment `amount`.
 		/// Assumed this is maintained up to date by technical team.
 		/// Mostly UI hint and fail fast solution.
 		/// In theory can be updated by parachain sovereign account too.

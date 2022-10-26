@@ -27,7 +27,7 @@ extern crate alloc;
 
 mod governance;
 mod weights;
-mod xcmp;
+pub mod xcmp;
 
 use lending::MarketId;
 use orml_traits::{parameter_type_with_key, LockIdentifier};
