@@ -1,6 +1,7 @@
 mod client_state;
 mod context;
 pub mod contract;
+mod host_functions;
 mod error;
 pub mod helpers;
 pub mod msg;

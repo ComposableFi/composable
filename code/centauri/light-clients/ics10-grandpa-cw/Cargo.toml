@@ -50,6 +50,8 @@ serde = { version = "1.0.145", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.31" }
 
 ibc = { path = "../../ibc/modules", default-features = false }
+ibc-derive = { path = "../../ibc/derive" }
+ics23 = { git = "https://github.com/composablefi/ics23", rev = "b500a5c6068eb53c83c4c6c13bd9d8c25e0bf927", default-features = false }
 ics10-grandpa = { path = "../ics10-grandpa"}
 # grandpa-client-primitives = { package = "grandpa-light-client-primitives", path = "../../algorithms/grandpa/primitives", default-features = false }
 

@@ -2,8 +2,7 @@ use std::{fmt, rc::Rc};
 
 use cosmwasm_std::{DepsMut, Storage};
 use ibc::core::ics02_client::context::{ClientKeeper, ClientTypes};
-
-use crate::types::{AnyClient, AnyClientMessage, AnyClientState, AnyConsensusState};
+use ics10_grandpa::client_def::GrandpaClient;
 
 #[derive(Clone)]
 pub struct Context<'a> {
@@ -34,7 +33,7 @@ impl<'a> ClientTypes for Context<'a> {
 	type AnyClientMessage = AnyClientMessage;
 	type AnyClientState = AnyClientState;
 	type AnyConsensusState = AnyConsensusState;
-	type ClientDef = AnyClient;
+	type ClientDef = GrandpaClient<H>;
 }
 
 impl<'a> ClientKeeper for Context<'a>
