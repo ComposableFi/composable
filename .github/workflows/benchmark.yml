@@ -34,6 +34,11 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
 
+      - name: Fix dubious ownership
+        run: |
+          git config --global --add safe.directory /__w/composable/composable
+          git config --add safe.directory /__w/composable/composable
+
       - name: Get branch name
         id: branch-name
         uses: tj-actions/branch-names@v5.1
