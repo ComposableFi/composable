@@ -5,7 +5,7 @@ import {
   getTransferCallKaruraPicasso,
   getTransferCallKusamaPicasso,
   getTransferCallPicassoKarura,
-  getTransferCallPicassoKusama,
+  getTransferCallPicassoKusama
 } from "@/defi/polkadot/pallets/xcmp";
 import { fromChainIdUnit, toChainIdUnit } from "shared";
 import { ParachainId, RelayChainId } from "substrate-react";
@@ -19,9 +19,11 @@ export type XCMTransferCallArgs = {
   amountToTransfer: u128,
   feeToken: TokenMetadata,
   transferToken: TokenMetadata,
+  signerAddress: string,
   targetParachainId: number,
   from: SubstrateNetworkId,
   to: SubstrateNetworkId,
+  hasFeeItem: boolean
 }
 
 export async function getXCMTransferCall({
@@ -30,15 +32,18 @@ export async function getXCMTransferCall({
   amountToTransfer,
   feeToken,
   transferToken,
+  signerAddress,
   targetParachainId,
   from,
-  to
+  to,
+  hasFeeItem
 }: XCMTransferCallArgs) {
   switch (`${from}-${to}`) {
     case "picasso-kusama":
       return getTransferCallPicassoKusama(
         api,
         targetAccountAddress,
+        hasFeeItem,
         transferToken,
         amountToTransfer,
         feeToken.picassoId
@@ -48,6 +53,7 @@ export async function getXCMTransferCall({
         api,
         targetParachainId,
         targetAccountAddress,
+        hasFeeItem,
         transferToken,
         amountToTransfer,
         feeToken.picassoId
@@ -64,7 +70,7 @@ export async function getXCMTransferCall({
         api,
         targetParachainId,
         targetAccountAddress,
-        transferToken.karuraId,
+        signerAddress,
         amountToTransfer
       );
     default:
@@ -82,7 +88,6 @@ export function getAmountToTransfer({
   targetChain,
   tokens
 }: {
-  tokenId: TokenId;
   balance: BigNumber;
   amount: BigNumber;
   existentialDeposit: BigNumber;
@@ -107,8 +112,7 @@ export function getAmountToTransfer({
   const sendAmount = destinationFee.fee.gt(0)
     ? calculatedAmount.plus(destinationFee.fee)
     : calculatedAmount;
-
-  return api.createType("u128", toChainIdUnit(sendAmount, 12).toString());
+  return api.createType("u128", toChainIdUnit(sendAmount).toString());
 }
 
 export function getDestChainFee(

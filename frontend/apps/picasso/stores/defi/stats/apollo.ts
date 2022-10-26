@@ -2,7 +2,7 @@ import { StoreSlice } from "../../types";
 import BigNumber from "bignumber.js";
 import { TOKENS } from "tokens";
 
-export type PriceHashMap = {
+type PriceHashMap = {
   [key: string]: { open: BigNumber | null; close: BigNumber | null };
 };
 

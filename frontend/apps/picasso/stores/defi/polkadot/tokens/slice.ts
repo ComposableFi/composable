@@ -2,7 +2,28 @@ import { SubstrateNetworkId } from "@/defi/polkadot/types";
 import { StoreSlice } from "@/stores/types";
 import { Token, TokenId, TOKENS } from "tokens";
 import BigNumber from "bignumber.js";
-import { HumanizedKaruraAssetMetadata, PicassoRpcAsset } from "@/defi/polkadot/pallets/Assets";
+
+const ACALA_IDENTIFIERS: { [tokenId in TokenId]: string | null } =  {
+  "eth": null,
+  "matic": null,
+  "avax": null,
+  "weth": null,
+  "usdc": null,
+  "dot": null,
+  "uni": null,
+  "ftm": null,
+  "pica": null,
+  "movr": null,
+  "ksm": "KSM",
+  "pblo": null,
+  "angl": null,
+  "chaos": null,
+  "usdt": null,
+  "kar": null,
+  "ausd": "AUSD",
+  "kusd": "KUSD",
+}
+
 
 export type TokenMetadata = Token & {
   picassoId: BigNumber | null;
@@ -23,7 +44,7 @@ const initialState: InitialState["tokens"] = Object.keys(TOKENS).reduce(
         ...TOKENS[tokenId as TokenId],
         picassoId: null,
         kusamaId: null,
-        karuraId: null,
+        karuraId: ACALA_IDENTIFIERS[tokenId as TokenId],
         decimals: {
           kusama: null,
           picasso: 12,
@@ -37,8 +58,12 @@ const initialState: InitialState["tokens"] = Object.keys(TOKENS).reduce(
 
 interface TokensSliceReducers {
   updateTokens: (
-    picassoList: Array<PicassoRpcAsset>,
-    karuraList: Array<HumanizedKaruraAssetMetadata>
+    list: Array<{
+      name: string;
+      id: BigNumber;
+      foreignId?: string;
+      decimals?: number;
+    }>
   ) => void;
 }
 
@@ -49,34 +74,12 @@ export interface TokensSlice {
 export const createTokensSlice: StoreSlice<TokensSlice> = (set) => ({
   substrateTokens: {
     tokens: initialState,
-    updateTokens: (picassoList, karuraList) => {
+    updateTokens: (list) => {
       set((state) => {
-        picassoList.forEach(listItem => {
-          /**
-           * Here identifier is lowercased
-           * name mapped as token id
-           * might change later
-           * update decimals and id
-           */
-          const identifier = listItem.name.toLowerCase();
-          if (state.substrateTokens.tokens[identifier as TokenId]) {
-            console.log('[Picasso] Found Supported Asset', identifier);
-            state.substrateTokens.tokens[identifier as TokenId].decimals.picasso = listItem.decimals ?? 12;
-            state.substrateTokens.tokens[identifier as TokenId].picassoId = listItem.id;
-          }
-        });
-        karuraList.forEach(listItem => {
-          /**
-           * Here identifier is lowercased
-           * symbol mapped as token id
-           * might change later
-           * update decimals and id
-           */
-          const identifier = listItem.symbol.toLowerCase();
-          if (state.substrateTokens.tokens[identifier as TokenId]) {
-            console.log('[KARURA] Found Supported Asset', listItem.symbol);
-            state.substrateTokens.tokens[identifier as TokenId].decimals.picasso = listItem.decimals ?? 12;
-            state.substrateTokens.tokens[identifier as TokenId].karuraId = listItem.symbol;
+        list.forEach(asset => {
+          const assetId = asset.name.toLowerCase();
+          if (state.substrateTokens.tokens[assetId as TokenId]) {
+            state.substrateTokens.tokens[assetId as TokenId].picassoId = asset.id;
           }
         });
         return state;

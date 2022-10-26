@@ -21,17 +21,13 @@ export type TransferHandlerArgs = {
   api: ApiPromise;
   targetChain: number | 0;
   transferToken: TokenMetadata;
-  /**
-   * This is needed when transfers 
-   * are initiated from Picasso
-   * (at least to my knowledge)
-   */
-  feeToken: TokenMetadata | null;
+  feeToken: TokenMetadata;
   targetAccount: string;
   amount: u128;
   executor: Executor;
   enqueueSnackbar: EnqueueSnackbar<AnyComponentMap>;
   signerAddress: string;
+  hasFeeItem: boolean;
   signer: Signer;
   weight: BigNumber;
 };
@@ -76,6 +72,7 @@ export function getTransferCallPicassoKarura(
   api: ApiPromise,
   targetChain: number | 0,
   targetAccount: string,
+  hasFeeToken: boolean,
   transferToken: TokenMetadata,
   amount: u128,
   feeTokenId: BigNumber | null
@@ -93,6 +90,7 @@ export function getTransferCallPicassoKarura(
     destination as XcmVersionedMultiLocation,
     transferToken.picassoId,
     amount,
+    hasFeeToken,
     feeTokenId
   );
 
@@ -102,6 +100,7 @@ export function getTransferCallPicassoKarura(
 export function getTransferCallPicassoKusama(
   api: ApiPromise,
   targetAccount: string,
+  hasFeeToken: boolean,
   transferToken: TokenMetadata,
   amount: u128,
   feeTokenId: BigNumber | null
@@ -118,6 +117,7 @@ export function getTransferCallPicassoKusama(
     destination as XcmVersionedMultiLocation,
     transferToken.picassoId,
     amount,
+    hasFeeToken,
     feeTokenId
   );
 
@@ -157,16 +157,17 @@ export async function transferPicassoKarura({
   executor,
   enqueueSnackbar,
   signerAddress,
+  hasFeeItem,
   feeToken,
   transferToken,
   signer,
 }: TransferHandlerArgs) {
-  if (!feeToken || !feeToken.picassoId) throw new Error('Transfer from Picasso requires a valid fee token');
   // Set destination. Should have 2 Junctions, first to parent and then to wallet
   const call = getTransferCallPicassoKarura(
     api,
     targetChain,
     targetAccount,
+    hasFeeItem,
     transferToken,
     amount,
     feeToken.picassoId
@@ -262,16 +263,15 @@ export async function transferPicassoKusama({
   executor,
   enqueueSnackbar,
   signerAddress,
-
+  hasFeeItem,
   feeToken,
   transferToken,
   signer,
 }: TransferHandlerArgs) {
-  if (!feeToken || !feeToken.picassoId) throw new Error('Transfer from Picasso requires a valid fee token');
-
   const call = await getTransferCallPicassoKusama(
     api,
     targetAccount,
+    hasFeeItem,
     transferToken,
     amount,
     feeToken.picassoId

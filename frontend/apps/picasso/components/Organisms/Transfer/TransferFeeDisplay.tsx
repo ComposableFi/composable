@@ -18,19 +18,20 @@ import {
 } from "@/defi/polkadot/pallets/Transfer";
 import { useExistentialDeposit } from "@/defi/polkadot/hooks/useExistentialDeposit";
 import { getPaymentAsset } from "@/defi/polkadot/pallets/AssetTxPayment";
+import BigNumber from "bignumber.js";
 import { Stack } from "@mui/material";
 import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
-import BigNumber from "bignumber.js";
 
 export const TransferFeeDisplay = () => {
+  const { amount, from, to, balance, account, fromProvider, transferToken } = useTransfer();
   const signer = useSigner();
   const executor = useExecutor();
+
   const tokens = useStore(({ substrateTokens }) => substrateTokens.tokens);
+
   const feeItem = useStore((state) => state.transfers.feeItem);
-
+  const hasFeeItem = useStore((state) => state.transfers.hasFeeItem);
   const setFeeItem = useStore((state) => state.transfers.setFeeItem);
-
-  const { amount, from, to, balance, account, fromProvider, transferToken } = useTransfer();
   const selectedRecipient = useStore(
     (state) => state.transfers.recipients.selected
   );
@@ -39,12 +40,11 @@ export const TransferFeeDisplay = () => {
   const fee = useStore((state) => state.transfers.fee);
   const destFee = getDestChainFee(from, to, tokens);
   const updateFee = useStore((state) => state.transfers.updateFee);
-  const token = useStore(state => state.transfers.selectedToken);
 
 
   const calculateFee = useCallback(() => {
     callbackGate(
-      async (api, exec, acc, _signer) => {
+      async (api, exec, acc, hasFeeItem, _signer) => {
         const TARGET_ACCOUNT_ADDRESS = selectedRecipient.length
           ? selectedRecipient
           : acc.address;
@@ -60,42 +60,41 @@ export const TransferFeeDisplay = () => {
           api,
           sourceChain: from,
           targetChain: to,
-          tokens,
-          tokenId: token
+          tokens
         });
-        
-        try {
-          const call = await getXCMTransferCall({
-            api,
-            targetAccountAddress: TARGET_ACCOUNT_ADDRESS,
-            amountToTransfer,
-            feeToken,
-            transferToken: transferToken,
-            targetParachainId: TARGET_PARACHAIN_ID,
-            from,
-            to
-          });
-  
-          const info = await exec.paymentInfo(call, acc.address, _signer);
-          updateFee({
-            class: info.class.toString(),
-            partialFee: fromChainIdUnit(
-              unwrapNumberOrHex(info.partialFee.toString())
-            ),
-            weight: unwrapNumberOrHex(info.weight.toString()),
-          } as {
-            class: string;
-            partialFee: BigNumber;
-            weight: BigNumber;
-          });
-        } catch (err) {
-          console.error('[TransferFeeDisplay] ', err);
-        }
+
+        const signerAddress = acc.address;
+
+        const call = await getXCMTransferCall({
+          api,
+          targetAccountAddress: TARGET_ACCOUNT_ADDRESS,
+          amountToTransfer,
+          feeToken,
+          transferToken: transferToken,
+          signerAddress,
+          targetParachainId: TARGET_PARACHAIN_ID,
+          from,
+          to,
+          hasFeeItem
+        });
+
+        const info = await exec.paymentInfo(call, acc.address, _signer);
+        updateFee({
+          class: info.class.toString(),
+          partialFee: fromChainIdUnit(
+            unwrapNumberOrHex(info.partialFee.toString())
+          ),
+          weight: unwrapNumberOrHex(info.weight.toString()),
+        } as {
+          class: string;
+          partialFee: BigNumber;
+          weight: BigNumber;
+        });
       },
       fromProvider.parachainApi,
       executor,
       account,
-
+      hasFeeItem && feeItem.length === 0,
       signer
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps

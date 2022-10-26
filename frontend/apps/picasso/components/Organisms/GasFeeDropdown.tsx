@@ -7,6 +7,7 @@ import {
   getPaymentAsset,
   setPaymentAsset,
 } from "@/defi/polkadot/pallets/AssetTxPayment";
+
 import { subscribeFeeItemEd } from "@/stores/defi/polkadot/transfers/subscribers";
 import { useStore } from "@/stores/root";
 import { ErrorOutline, LocalGasStation } from "@mui/icons-material";
@@ -50,7 +51,7 @@ export const GasFeeDropdown: FC<Props> = ({
 
   const options = useMemo(() => {
     return Object.values(tokens).map((token) => ({
-      value: token.id,
+      value: token.symbol,
       label: token.symbol,
       icon: token.icon,
       disabled: balances["picasso"][token.id].balance.isZero(),

@@ -1,12 +1,5 @@
 import { ApiPromise } from "@polkadot/api";
-/**
- * Build parachain XCM Destination arg given chain id
- * and account from a parachain
- * @param api Origin Chain API
- * @param targetChain numeric u32 parachain id
- * @param targetAccount account id (could be ethereum account?)
- * @returns {XcmVersionedMultiLocation}
- */
+
 export const buildParachainToParachainAccountDestination = (
   api: ApiPromise,
   targetChain: number,
@@ -28,13 +21,7 @@ export const buildParachainToParachainAccountDestination = (
       ],
     }),
   });
-/**
- * Build Relaychain XCM Destination arg given chain id
- * and account from a parachain
- * @param api Origin Chain API
- * @param targetAccount account id (could be ethereum account?)
- * @returns {XcmVersionedMultiLocation}
- */
+
 export const buildParachainToRelaychainAccountDestination = (
   api: ApiPromise,
   targetAccount: string
@@ -52,3 +39,4 @@ export const buildParachainToRelaychainAccountDestination = (
       ],
     }),
   });
+

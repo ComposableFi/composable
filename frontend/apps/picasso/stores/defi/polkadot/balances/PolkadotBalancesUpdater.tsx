@@ -8,7 +8,7 @@ import {
   useDotSamaContext,
   useEagerConnect,
 } from "substrate-react";
-
+import { listAssets } from "@/defi/polkadot/pallets/Assets";
 import {
   subscribeKaruraBalance,
   subscribeNativeBalance,
@@ -16,19 +16,12 @@ import {
 } from "@/defi/polkadot/pallets/Balances";
 import { TokenMetadata } from "../tokens/slice";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
-import {
-  karuraAssetsList,
-  picassoAssetsList,
-} from "@/defi/polkadot/pallets/Assets";
-import { VoidFn } from "@polkadot/api/types";
 
 const PolkadotBalancesUpdater = () => {
   useEagerConnect("picasso");
   useEagerConnect("karura");
 
-  const updateTokens = useStore(
-    ({ substrateTokens }) => substrateTokens.updateTokens
-  );
+  const updateTokens = useStore(({ substrateTokens }) => substrateTokens.updateTokens);
   const tokens = useStore(({ substrateTokens }) => substrateTokens.tokens);
 
   const updateBalance = useStore(
@@ -47,22 +40,11 @@ const PolkadotBalancesUpdater = () => {
     connectedAccounts,
   } = useDotSamaContext();
 
-  /**
-   * This effect fetches
-   * metadata for tokens and
-   * should be called almost
-   * after API creation
-   */
   useEffect(() => {
-    callbackGate(
-      async (_picaApi, _karApi) => {
-        const picaAssetMetadataList = await picassoAssetsList(_picaApi);
-        const karuraAssetMetadataList = await karuraAssetsList(_karApi);
-        updateTokens(picaAssetMetadataList, karuraAssetMetadataList);
-      },
-      parachainProviders.picasso.parachainApi,
-      parachainProviders.karura.parachainApi
-    );
+    if (!parachainProviders.picasso.parachainApi) return;
+    listAssets(parachainProviders.picasso.parachainApi).then((list) => {
+      updateTokens(list);
+    });
   }, [parachainProviders, updateTokens]);
 
   const picassoBalanceSubscriber = useCallback(
@@ -94,8 +76,6 @@ const PolkadotBalancesUpdater = () => {
   // Subscribe for native balance changes
   useEffect(() => {
     if (selectedAccount !== -1) {
-      let subscriptionList: Array<VoidFn | undefined> = [];
-
       Object.entries({ ...parachainProviders, ...relaychainProviders }).forEach(
         ([chainId, chain]) => {
           if (
@@ -110,30 +90,17 @@ const PolkadotBalancesUpdater = () => {
               chainId,
               SUBSTRATE_NETWORKS[chainId as SubstrateNetworkId].tokenId,
               updateBalance
-            ).then((subscription) => {
-              subscriptionList.push(subscription);
+            ).catch((err) => {
+              console.error(err);
             });
           }
         }
       );
-
-      return function unsubNativeBalances() {
-        console.log("Clearing Native Subscriptions. ", subscriptionList.length);
-        return subscriptionList.forEach((x) => {
-          x?.();
-        });
-      };
     } else if (selectedAccount === -1) {
       clearBalance();
     }
-  }, [
-    parachainProviders,
-    relaychainProviders,
-    selectedAccount,
-    connectedAccounts,
-    updateBalance,
-    clearBalance,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [parachainProviders, relaychainProviders, selectedAccount]);
 
   // Subscribe non-native token balances
   useEffect(() => {
