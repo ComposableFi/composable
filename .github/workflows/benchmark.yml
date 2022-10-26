@@ -49,9 +49,7 @@ jobs:
           GITHUB_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
         id: check_runtime
         if: contains(github.event.pull_request.labels.*.name, 'needs-benchmarks')
-        run: |
-          git config --global --add safe.directory /__w/composable/composable
-          .maintain/check_runtime.sh
+        run: .maintain/check_runtime.sh
 
       # TODO: use nix
       - name: Benchmark Test
@@ -60,9 +58,7 @@ jobs:
           GITHUB_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
         if: env.RUNTIME_CHECK == 1
         id: run_benchmarks
-        run: |
-          git config --global --add safe.directory /__w/composable/composable
-          .maintain/run_benchmarks.sh 50 20
+        run: .maintain/run_benchmarks.sh 50 20
 
       - uses: EndBug/add-and-commit@v9
         with: 
