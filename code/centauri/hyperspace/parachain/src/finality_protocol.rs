@@ -436,14 +436,17 @@ where
 		)
 		.await?;
 
-	let target = source
-		.relay_client
-		.rpc()
-		.header(Some(H256::from(finality_proof.block)))
-		.await?
-		.ok_or_else(|| {
-			Error::from("Could not find relay chain header for justification target".to_string())
-		})?;
+	let target =
+		source
+			.relay_client
+			.rpc()
+			.header(Some(finality_proof.block))
+			.await?
+			.ok_or_else(|| {
+				Error::from(
+					"Could not find relay chain header for justification target".to_string(),
+				)
+			})?;
 
 	let authority_set_changed_scheduled = find_scheduled_change(&target).is_some();
 	// if validator set has changed this is a mandatory update

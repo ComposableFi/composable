@@ -33,7 +33,6 @@ use ss58_registry::Ss58AddressFormat;
 use subxt::{
 	ext::sp_runtime::{generic::Era, traits::Header as HeaderT, MultiSigner},
 	tx::{AssetTip, BaseExtrinsicParamsBuilder, ExtrinsicParams},
-	PolkadotConfig,
 };
 
 use crate::utils::{fetch_max_extrinsic_weight, unsafe_cast_to_jsonrpsee_client};
@@ -43,13 +42,9 @@ use crate::{finality_protocol::FinalityProtocol, signer::ExtrinsicSigner};
 use grandpa_prover::GrandpaProver;
 use ics10_grandpa::client_state::ClientState as GrandpaClientState;
 use jsonrpsee_ws_client::WsClientBuilder;
-use sp_keyring::AccountKeyring;
 use sp_keystore::testing::KeyStore;
 use sp_runtime::traits::One;
-use subxt::tx::{
-	PairSigner, PlainTip, PolkadotExtrinsicParamsBuilder, SubstrateExtrinsicParamsBuilder,
-	TxPayload,
-};
+use subxt::tx::{SubstrateExtrinsicParamsBuilder, TxPayload};
 
 /// Implements the [`crate::Chain`] trait for parachains.
 /// This is responsible for:
@@ -61,7 +56,7 @@ pub struct ParachainClient<T: subxt::Config> {
 	/// Chain name
 	pub name: String,
 	/// Relay chain rpc client
-	pub relay_client: subxt::OnlineClient<PolkadotConfig>,
+	pub relay_client: subxt::OnlineClient<T>,
 	/// Parachain rpc client
 	pub para_client: subxt::OnlineClient<T>,
 	/// Relay chain ws client
@@ -384,47 +379,6 @@ where
 					&call,
 					&signer,
 					tx_params.tip(AssetTip::new(count * tip)).into(),
-				)
-				.await;
-			match res {
-				Ok(progress) => break progress,
-				Err(e) => {
-					log::warn!("Failed to submit extrinsic: {:?}. Retrying...", e);
-					count += 1;
-				},
-			}
-		};
-
-		let tx_in_block = progress.wait_for_in_block().await?;
-		tx_in_block.wait_for_success().await?;
-		Ok((tx_in_block.extrinsic_hash(), Some(tx_in_block.block_hash())))
-	}
-
-	pub async fn submit_call_relaychain<C: TxPayload>(
-		&self,
-		call: C,
-	) -> Result<(H256, Option<H256>), Error> {
-		let signer = PairSigner::new(AccountKeyring::Alice.pair());
-
-		// Submit extrinsic to relaychain node
-		let tip = 100_000u128;
-		// Try extrinsic submission five times in case of failures
-		let mut count = 0;
-		let progress = loop {
-			if count == 5 {
-				Err(Error::Custom("Failed to submit extrinsic after 5 tries".to_string()))?
-			}
-
-			let tx_params = PolkadotExtrinsicParamsBuilder::new()
-				.era(Era::Immortal, self.relay_client.genesis_hash());
-
-			let res = self
-				.relay_client
-				.tx()
-				.sign_and_submit_then_watch(
-					&call,
-					&signer,
-					tx_params.tip(PlainTip::new(count * tip)),
 				)
 				.await;
 			match res {
