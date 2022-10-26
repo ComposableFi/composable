@@ -1,13 +1,13 @@
-## ICS_20 - Fungible Token Transfer
+## ICS20 - Fungible Token Transfer
 
 Ics20 is an ibc application protocol that facilitates cross chain fungible token transfer.  
 Ics20 requires that the host chain has a means to dynamically issue new tokens.  
 Ics20 tokens are created on demand based on channel and port combinations, so the host chains must provide a means to  
 mint tokens with arbitrary denominations.
 
-### Ics20 Denoms
+### Ics20 Denominations
 
-Denoms are a way to represent a unique cross chain token, to allow tracking of a token's flow, across multiple chains.   
+Denominations, also called denoms for short are a way to represent a unique cross chain token, to allow tracking of a token's flow across multiple chains.   
 denoms are created by appending the destination channel and port to the base token denomination. Say a token with a base denomination of `Mars`  
 is transferred from chain A on channelA, port transfer to channelB on chain B, port transfer, the token denomination  
 on receipt at chain b becomes `channelB/transfer/Mars`.  
@@ -15,14 +15,14 @@ on receipt at chain b becomes `channelB/transfer/Mars`.
 ### Packet Data
 
 Ics20 has a standard format for packet data, ics20 data must be serialized to json before sending.  
-The standard format for a sample json serialized ics20 data is as shown below
-
+The standard format for a sample json serialized ics20 data is as shown below  
+`sender` and `receiver` strings should be any format that can be deserialized by the destination chain
 ```json
     {
         "denom": "channelB/transfer/Mars",
         "amount": "22000",
-        "sender": "EyhghTgxjajIkjht",
-        "receiver": "EyhghTgxjajIkjht"
+        "sender": "5F3sa2TJAWMqDhXG6jhV4N8ko9SxwGy8TpaNS1repo5EYjQX",
+        "receiver": "5F3sa2TJAWMqDhXG6jhV4N8ko9SxwGy8TpaNS1repo5EYjQX"
     }
 ```
 The rust equivalent of the ics20 packet data is defined by [`PacketData`](/code/centauri/ibc/modules/src/applications/transfer/packet.rs#L11)
@@ -58,6 +58,8 @@ However, the caller should take care to revert all changes made by this call in 
 
 **Implementing ICS20 as an on-chain module**
 ```rust
+// Context should have been defined at this point
+
 impl Ics20Reader for Context {
     type AccountId = AccountId;
 
