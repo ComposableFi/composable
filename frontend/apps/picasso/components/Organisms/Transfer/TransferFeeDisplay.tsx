@@ -40,6 +40,7 @@ export const TransferFeeDisplay = () => {
   const fee = useStore((state) => state.transfers.fee);
   const destFee = getDestChainFee(from, to, tokens);
   const updateFee = useStore((state) => state.transfers.updateFee);
+  const token = useStore(state => state.transfers.selectedToken);
 
 
   const calculateFee = useCallback(() => {

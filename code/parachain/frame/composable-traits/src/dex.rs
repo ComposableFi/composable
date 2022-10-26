@@ -11,6 +11,40 @@ use serde::{Deserialize, Serialize};
 use sp_runtime::{BoundedBTreeMap, DispatchError, Permill};
 use sp_std::{collections::btree_map::BTreeMap, fmt::Debug, ops::Mul, vec::Vec};
 
+/// Specifies and amount together with the asset ID of the amount.
+#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, PartialEq, Eq, Copy, RuntimeDebug)]
+pub struct AssetAmount<AssetId, Balance> {
+	pub asset_id: AssetId,
+	pub amount: Balance,
+}
+
+impl<AssetId, Balance> AssetAmount<AssetId, Balance> {
+	pub fn new(asset_id: AssetId, amount: Balance) -> Self {
+		Self { asset_id, amount }
+	}
+}
+
+/// The (expected or executed) result of a swap operation.
+#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, PartialEq, Eq, Copy, RuntimeDebug)]
+pub struct SwapResult<AssetId, Balance> {
+	pub value: AssetAmount<AssetId, Balance>,
+	pub fee: AssetAmount<AssetId, Balance>,
+}
+
+impl<AssetId, Balance> SwapResult<AssetId, Balance> {
+	pub fn new(
+		value_asset_id: AssetId,
+		value: Balance,
+		fee_asset_id: AssetId,
+		fee: Balance,
+	) -> Self {
+		Self {
+			value: AssetAmount::new(value_asset_id, value),
+			fee: AssetAmount::new(fee_asset_id, fee),
+		}
+	}
+}
+
 /// Trait for automated market maker.
 pub trait Amm {
 	/// The asset ID type
@@ -24,7 +58,8 @@ pub trait Amm {
 
 	fn pool_exists(pool_id: Self::PoolId) -> bool;
 
-	fn currency_pair(pool_id: Self::PoolId) -> Result<CurrencyPair<Self::AssetId>, DispatchError>;
+	/// Retrieves the pool assets and their weights.
+	fn assets(pool_id: Self::PoolId) -> Result<BTreeMap<Self::AssetId, Permill>, DispatchError>;
 
 	fn lp_token(pool_id: Self::PoolId) -> Result<Self::AssetId, DispatchError>;
 
@@ -58,39 +93,25 @@ pub trait Amm {
 	where
 		Self::AssetId: sp_std::cmp::Ord;
 
-	/// Get pure exchange value for given units of given asset. (Note this does not include fees.)
+	/// Get pure exchange value for given units of "in" given asset.
 	/// `pool_id` the pool containing the `asset_id`.
-	/// `asset_id` the asset the user is interested in.
-	/// `amount` the amount of `asset_id` the user want to obtain.
-	/// Return the amount of quote asset if `asset_id` is base asset, otherwise the amount of base
-	/// asset.
-	fn get_exchange_value(
+	/// `in_asset` the amount of `asset_id` the user wants to swap.
+	/// `out_asset_id` the asset the user is interested in.
+	fn spot_price(
 		pool_id: Self::PoolId,
-		asset_id: Self::AssetId,
-		amount: Self::Balance,
-	) -> Result<Self::Balance, DispatchError>;
+		base_asset: AssetAmount<Self::AssetId, Self::Balance>,
+		quote_asset_id: Self::AssetId,
+	) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError>;
 
 	/// Buy given `amount` of given asset from the pool.
 	/// In buy user does not know how much assets he/she has to exchange to get desired amount.
-	fn buy(
+	fn do_buy(
 		who: &Self::AccountId,
 		pool_id: Self::PoolId,
-		asset_id: Self::AssetId,
-		amount: Self::Balance,
-		min_receive: Self::Balance,
+		in_asset_id: Self::AssetId,
+		out_asset: AssetAmount<Self::AssetId, Self::Balance>,
 		keep_alive: bool,
-	) -> Result<Self::Balance, DispatchError>;
-
-	/// Sell given `amount` of given asset to the pool.
-	/// In sell user specifies `amount` of asset he/she wants to exchange to get other asset.
-	fn sell(
-		who: &Self::AccountId,
-		pool_id: Self::PoolId,
-		asset_id: Self::AssetId,
-		amount: Self::Balance,
-		min_receive: Self::Balance,
-		keep_alive: bool,
-	) -> Result<Self::Balance, DispatchError>;
+	) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError>;
 
 	/// Deposit coins into the pool
 	/// `amounts` - list of amounts of coins to deposit,
@@ -98,8 +119,7 @@ pub trait Amm {
 	fn add_liquidity(
 		who: &Self::AccountId,
 		pool_id: Self::PoolId,
-		base_amount: Self::Balance,
-		quote_amount: Self::Balance,
+		assets: BTreeMap<Self::AssetId, Self::Balance>,
 		min_mint_amount: Self::Balance,
 		keep_alive: bool,
 	) -> Result<(), DispatchError>;
@@ -112,22 +132,17 @@ pub trait Amm {
 		who: &Self::AccountId,
 		pool_id: Self::PoolId,
 		lp_amount: Self::Balance,
-		min_base_amount: Self::Balance,
-		min_quote_amount: Self::Balance,
+		min_receive: BTreeMap<Self::AssetId, Self::Balance>,
 	) -> Result<(), DispatchError>;
 
-	/// Perform an exchange.
-	/// This operation is a buy order on the provided `pair`, effectively trading the quote asset
-	/// against the base one. The pair can be swapped to execute a sell order.
-	/// Implementor must check the pair.
-	fn exchange(
+	/// Perform an exchange effectively trading the in_asset against the min_receive one.
+	fn do_swap(
 		who: &Self::AccountId,
 		pool_id: Self::PoolId,
-		pair: CurrencyPair<Self::AssetId>,
-		quote_amount: Self::Balance,
-		min_receive: Self::Balance,
+		in_asset: AssetAmount<Self::AssetId, Self::Balance>,
+		min_receive: AssetAmount<Self::AssetId, Self::Balance>,
 		keep_alive: bool,
-	) -> Result<Self::Balance, DispatchError>;
+	) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError>;
 }
 
 // TODO: Perhaps we need a way to not have a max reward for a pool.

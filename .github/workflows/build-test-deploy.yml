@@ -1119,8 +1119,7 @@ jobs:
 
   effects-gate:
       name: "Effect gate, automatically merged if passed"
-      runs-on:
-        - ubuntu-latest
+      runs-on: ubuntu-latest
       needs:
         - check-nix
         - devnet-integration-tests

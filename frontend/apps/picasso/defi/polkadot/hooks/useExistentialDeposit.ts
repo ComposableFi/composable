@@ -42,7 +42,6 @@ export const useExistentialDeposit = () => {
               address,
               _picaId
             );
-
             const asset = extractTokenByNetworkIdentifier(
               tokens,
               "picasso",

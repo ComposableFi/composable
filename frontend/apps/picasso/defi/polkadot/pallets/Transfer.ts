@@ -5,7 +5,7 @@ import {
   getTransferCallKaruraPicasso,
   getTransferCallKusamaPicasso,
   getTransferCallPicassoKarura,
-  getTransferCallPicassoKusama
+  getTransferCallPicassoKusama,
 } from "@/defi/polkadot/pallets/xcmp";
 import { fromChainIdUnit, toChainIdUnit } from "shared";
 import { ParachainId, RelayChainId } from "substrate-react";
@@ -112,7 +112,8 @@ export function getAmountToTransfer({
   const sendAmount = destinationFee.fee.gt(0)
     ? calculatedAmount.plus(destinationFee.fee)
     : calculatedAmount;
-  return api.createType("u128", toChainIdUnit(sendAmount).toString());
+
+  return api.createType("u128", toChainIdUnit(sendAmount, 12).toString());
 }
 
 export function getDestChainFee(
