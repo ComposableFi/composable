@@ -30,8 +30,8 @@ code/parachain/frame/nft/ @ComposableFi/parachain-finance
 code/parachain/frame/staking-rewards/ @ComposableFi/parachain-finance
 code/parachain/frame/oracle/ @ComposableFi/parachain-finance
 subsquid/ @ComposableFi/parachain-finance @ComposableFi/blockchain-integrations
-code/parachain/frame/*/rpc/ @ComposableFi/parachain-rpc
-code/parachain/frame/*/runtime-api @ComposableFi/parachain-rpc
+code/parachain/frame/*/rpc/ @ComposableFi/parachain-finance
+code/parachain/frame/*/runtime-api @ComposableFi/parachain-finance
 
 code/Cargo.lock @ComposableFi/parachain-leads @ComposableFi/core @ComposableFi/nix
 code/Cargo.toml @ComposableFi/parachain-leads @ComposableFi/core @ComposableFi/nix
