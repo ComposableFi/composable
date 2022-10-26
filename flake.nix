@@ -752,6 +752,7 @@
               '';
             };
             composable-dali-dev-metadata = mk-metadata { dotsama-node = composable-node; genesis-name = "dali-dev"; };
+            composable-dali-dev-metadata = mk-metadata { dotsama-node = composable-node; genesis-name = "dali-dev"; };
 
             xcvm-contract-asset-registry =
               mk-xcvm-contract "xcvm-asset-registry";
