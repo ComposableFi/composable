@@ -1283,8 +1283,7 @@
               });
 
             developers = developers-minimal.overrideAttrs (base: {
-              buildInputs = with packages;
-                base.buildInputs ++ [
+              buildInputs = base.buildInputs ++ [
                   pkgs.bacon
                   pkgs.google-cloud-sdk
                   pkgs.grub2
@@ -1306,13 +1305,16 @@
                   pkgs.nix-tree
                   pkgs.nixfmt
                   pkgs.rnix-lsp
-                  pkgs.subxt
                   pkgs.nodePackages.typescript
                   pkgs.nodePackages.typescript-language-server
-                  packages.rust-nightly
-                  packages.wasm-optimizer
+                  packages.subxt
                 ] ++ docs-renders;
             });
+            
+            developers-with-wasm-optimizer = developers.overrideAttrs (base: {
+              buildInputs = base.buildInputs ++ [ packages.wasm-optimizer ];
+            });
+            
 
             developers-xcvm = developers.overrideAttrs (base: {
               buildInputs = with packages;
