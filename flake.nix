@@ -683,6 +683,10 @@
             };
           };
 
+          polkadot-node = pkgs.callPackage ./.nix/polkadot/polkadot-bin.nix {
+            inherit rust-nightly;
+          };
+
           metadatas = let
             polkadots = builtins.map (genesis-name:
               mk-metadata {
@@ -695,12 +699,15 @@
                 dotsama-node = composable-node;
               })
               (pkgs.callPackage ./code/parachain/default.nix { }).chain-specs;
-          in 
-            builtins.map (generator: { ${generator.name} = generator; }) (composables ++ polkadots);
+            all = builtins.map (meta: {
+              name = meta.name;
+              value = meta;
+            }) (composables ++ polkadots);
+          in builtins.listToAttrs all;
 
         in rec {
           packages = metadatas // rec {
-
+            inherit polkadot-node;
             inherit wasm-optimizer;
             inherit common-deps;
             inherit common-bench-deps;
@@ -886,10 +893,6 @@
             # NOTE: crane can't be used because of how it vendors deps, which is incompatible with some packages in polkadot, an issue must be raised to the repo
             acala-node = pkgs.callPackage ./.nix/acala-bin.nix {
               rust-overlay = rust-nightly;
-            };
-
-            polkadot-node = pkgs.callPackage ./.nix/polkadot/polkadot-bin.nix {
-              inherit rust-nightly;
             };
 
             statemine-node = pkgs.callPackage ./.nix/statemine-bin.nix {
