@@ -37,11 +37,11 @@ impl HostFunctions for HostFunctionsProvider {
 		pubkey.verify(&msg, sig)
 	}
 
-	fn add_relaychain_header_hashes(_headers: &[<Self::Header as Header>::Hash]) {
+	fn insert_relay_header_hashes(_headers: &[<Self::Header as Header>::Hash]) {
 		unimplemented!()
 	}
 
-	fn exists_relaychain_header_hash(_hash: <Self::Header as Header>::Hash) -> bool {
+	fn contains_relay_header_hash(_hash: <Self::Header as Header>::Hash) -> bool {
 		unimplemented!()
 	}
 }

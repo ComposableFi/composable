@@ -122,7 +122,7 @@ impl grandpa_client_primitives::HostFunctions for HostFunctionsManager {
 		pub_key.verify(&msg, sig)
 	}
 
-	fn add_relaychain_header_hashes(new_hashes: &[<Self::Header as Header>::Hash]) {
+	fn insert_relay_header_hashes(new_hashes: &[<Self::Header as Header>::Hash]) {
 		if new_hashes.is_empty() {
 			return
 		}
@@ -151,7 +151,7 @@ impl grandpa_client_primitives::HostFunctions for HostFunctionsManager {
 		});
 	}
 
-	fn exists_relaychain_header_hash(hash: <Self::Header as Header>::Hash) -> bool {
+	fn contains_relay_header_hash(hash: <Self::Header as Header>::Hash) -> bool {
 		GrandpaHeaderHashesSetStorage::get().contains(&hash)
 	}
 }

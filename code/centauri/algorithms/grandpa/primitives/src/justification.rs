@@ -111,8 +111,7 @@ where
 				&signed.signature,
 				self.round,
 				set_id,
-			)
-			.map_err(|x| anyhow!("{} {:?}", x, (message.encode(), self.round, set_id)))?;
+			)?;
 
 			if base_hash == signed.precommit.target_hash {
 				continue

@@ -148,8 +148,8 @@ where
 				let second_parent = second_header.parent_hash;
 
 				// TODO: should we handle genesis block here somehow?
-				let exists_first = H::exists_relaychain_header_hash(first_parent);
-				let exists_second = H::exists_relaychain_header_hash(second_parent);
+				let exists_first = H::contains_relay_header_hash(first_parent);
+				let exists_second = H::contains_relay_header_hash(second_parent);
 
 				if !exists_first || !exists_second {
 					Err(Error::Custom(
@@ -279,7 +279,7 @@ where
 			client_state.current_authorities = scheduled_change.next_authorities;
 		}
 
-		H::add_relaychain_header_hashes(&finalized);
+		H::insert_relay_header_hashes(&finalized);
 
 		Ok((client_state, ConsensusUpdateResult::Batch(consensus_states)))
 	}
