@@ -20,6 +20,7 @@ export const buildRelaychainToParachainDestination = (
   });
 
 /**
+ * Required XCM Pallet args
  * Beneficiary of relay to para transfer
  * @param api Api
  * @param destinationAccount string
@@ -41,6 +42,7 @@ export const buildRelaychainToParachainBeneficiary = (
   });
 
 /**
+ * Required XCM Pallet args
  * Transferrable Asset Param Via XCM
  * Only configured for KSM
  * @param api Api
