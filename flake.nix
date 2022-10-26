@@ -614,6 +614,17 @@
               "wss://persistent.devnets.composablefinance.ninja/chain/karura";
           };
 
+          frontend-static-picasso-persistent = mkFrontendStatic {
+            subsquidEndpoint =
+              "https://persistent.picasso.devnets.composablefinance.ninja/subsquid/graphql";
+            picassoEndpoint =
+              "wss://persistent.picasso.devnets.composablefinance.ninja/chain/picasso";
+            kusamaEndpoint =
+              "wss://persistent.picasso.devnets.composablefinance.ninja/chain/rococo";
+            karuraEndpoint =
+              "wss://persistent.picasso.devnets.composablefinance.ninja/chain/karura";
+          };
+
           frontend-static-firebase = mkFrontendStatic {
             subsquidEndpoint =
               "https://persistent.devnets.composablefinance.ninja/subsquid/graphql";
@@ -668,6 +679,7 @@
             inherit subwasm-release-body;
             inherit frontend-static;
             inherit frontend-static-persistent;
+            inherit frontend-static-picasso-persistent;
             inherit frontend-static-firebase;
             inherit frontend-pablo-server;
             inherit frontend-picasso-server;
@@ -1188,7 +1200,7 @@
                 text = "${builtins.toJSON config}";
               };
             in pkgs.writeShellApplication {
-              name = "kusama-dali-karura";
+              name = "devnet-picasso-complete";
               text = ''
                 cat ${config-file}
                 rm -rf /tmp/polkadot-launch
@@ -1210,7 +1222,7 @@
                 text = "${builtins.toJSON config}";
               };
             in pkgs.writeShellApplication {
-              name = "kusama-dali-karura";
+              name = "devnet-dali-complete";
               text = ''
                 cat ${config-file}
                 rm -rf /tmp/polkadot-launch
@@ -1246,6 +1258,15 @@
                 inherit price-feed;
                 devnet = devnet-dali-complete;
                 frontend = frontend-static-persistent;
+              });
+
+            devnet-picasso-persistent-program =
+              pkgs.composable.mkDevnetProgram "devnet-persistent"
+              (import ./.nix/devnet-specs/default.nix {
+                inherit pkgs;
+                inherit price-feed;
+                devnet = devnet-picasso-complete;
+                frontend = frontend-static-picasso-persistent;
               });
 
             default = packages.composable-node;
@@ -1348,6 +1369,8 @@
           in rec {
             devnet = makeApp packages.devnet-default-program;
             devnet-persistent = makeApp packages.devnet-persistent-program;
+            devnet-picasso-persistent =
+              makeApp packages.devnet-picasso-persistent-program;
             devnet-xcvm = makeApp packages.devnet-xcvm-program;
             devnet-dali = makeApp packages.devnet-dali;
             devnet-picasso = makeApp packages.devnet-picasso;
