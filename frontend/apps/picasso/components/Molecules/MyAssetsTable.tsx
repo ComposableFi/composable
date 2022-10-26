@@ -13,7 +13,6 @@ import {
 import { TokenAsset } from "../Atom";
 import BigNumber from "bignumber.js";
 import { NoAssetsCover } from "./NoAssetsCover";
-import { SubstrateAsset } from "@/stores/defi/polkadot/balances/slice";
 
 export type MyAssetsTableProps = TableContainerProps & {
   assets?: any;

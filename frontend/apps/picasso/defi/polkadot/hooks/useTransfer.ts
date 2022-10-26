@@ -9,37 +9,46 @@ import {
   transferPicassoKarura,
   transferPicassoKusama,
 } from "@/defi/polkadot/pallets/xcmp";
-import { AssetId } from "@/defi/polkadot/types";
 import { useStore } from "@/stores/root";
-import BigNumber from "bignumber.js";
 import { useSnackbar } from "notistack";
-import { useExecutor } from "substrate-react";
+import { useExecutor, useSigner } from "substrate-react";
+import { TokenId } from "tokens";
+import BigNumber from "bignumber.js";
 
 export const useTransfer = () => {
   const allProviders = useAllParachainProviders();
+  
   const from = useStore((state) => state.transfers.networks.from);
   const fromProvider = allProviders[from];
+
   const to = useStore((state) => state.transfers.networks.to);
   const toProvider = allProviders[to];
+  
+  
+  const signer = useSigner();
   const { enqueueSnackbar } = useSnackbar();
   const selectedRecipient = useStore(
     (state) => state.transfers.recipients.selected
   );
-  const { hasFeeItem, feeItem } = useStore(({ transfers }) => transfers);
-  const weight = useStore((state) => state.transfers.fee.weight);
-  const keepAlive = useStore((state) => state.transfers.keepAlive);
+  
+  
+  const { keepAlive, fee: { weight }, tokenId, hasFeeItem, feeItem, amount, updateAmount: setAmount } = useStore(({ transfers }) => transfers);
+
+
   const existentialDeposit = useStore(
     ({ substrateBalances }) =>
-      substrateBalances.assets[from].native.existentialDeposit
+      substrateBalances.balances[from][SUBSTRATE_NETWORKS[from].tokenId].existentialDeposit
   );
-  const amount = useStore((state) => state.transfers.amount);
-  const setAmount = useStore((state) => state.transfers.updateAmount);
   const account = useSelectedAccount();
   const providers = useAllParachainProviders();
   const executor = useExecutor();
-  const assets = useStore(
-    ({ substrateBalances }) => substrateBalances.assets[from].assets
+
+  const tokens = useStore(
+    ({ substrateTokens }) => substrateTokens.tokens
   );
+
+  const transferToken = tokens[tokenId];
+
   const getBalance = useStore(
     (state) => state.transfers.getTransferTokenBalance
   );
@@ -49,7 +58,7 @@ export const useTransfer = () => {
   ) => {
     const api = providers[from].parachainApi;
 
-    if (!api || !executor || !account || (hasFeeItem && feeItem.length === 0)) {
+    if (!signer || !api || !executor || !account || (hasFeeItem && feeItem.length === 0)) {
       console.error("No API or Executor or account", {
         api,
         executor,
@@ -71,27 +80,37 @@ export const useTransfer = () => {
       api,
       targetChain: to,
       sourceChain: from,
+      tokens
     });
 
-    const feeItemId =
+    const idKey = from === "karura" ? "karuraId" : from === "kusama" ? "kusamaId" : "picassoId"
+    const feeToken =
       hasFeeItem && feeItem.length > 0
-        ? assets[feeItem as AssetId].meta.supportedNetwork[from]
+        ? tokens[feeItem as TokenId][idKey] ? tokens[feeItem] : null
         : null;
 
-    const signerAddress = account.address;
+    if (feeToken) {
+      const transferHandlerArgs: TransferHandlerArgs = {
+        api,
+        targetChain: TARGET_PARACHAIN_ID,
+        targetAccount: TARGET_ACCOUNT_ADDRESS,
+        amount: amountToTransfer,
+        enqueueSnackbar,
+        executor,
+        signer,
+        weight,
+        feeToken,
+        hasFeeItem,
+        transferToken: tokens[tokenId],
+        signerAddress: account.address
+      }
 
-    await transferHandler({
-      api,
-      targetChain: TARGET_PARACHAIN_ID,
-      targetAccount: TARGET_ACCOUNT_ADDRESS,
-      amount: amountToTransfer,
-      executor,
-      enqueueSnackbar,
-      signerAddress,
-      hasFeeItem,
-      feeItemId,
-      weight,
-    });
+      try {
+        await transferHandler(transferHandlerArgs);
+      } catch (err) {
+        console.error(err)
+      }
+    }
 
     // clear amount after
     setAmount(new BigNumber(0));
@@ -127,5 +146,6 @@ export const useTransfer = () => {
     account,
     fromProvider,
     toProvider,
+    transferToken
   };
 };

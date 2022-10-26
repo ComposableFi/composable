@@ -1,15 +1,18 @@
-import { Assets, getAssetById } from "@/defi/polkadot/Assets";
-import { APP_NAME } from "@/defi/polkadot/constants";
+import { TokenId } from "tokens";
+import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
 import { ApiPromise } from "@polkadot/api";
+import { Signer } from "@polkadot/api/types";
+import BigNumber from "bignumber.js";
 import {
   Executor,
-  getSigner,
   ParachainId,
   RelayChainId,
 } from "substrate-react";
+import { extractTokenByNetworkIdentifier } from "./Assets";
 
 export type SetPaymentAssetArgs = {
   api: ApiPromise;
+  signer: Signer;
   walletAddress: string;
   assetId: string | number;
   executor: Executor;
@@ -20,6 +23,7 @@ export type SetPaymentAssetArgs = {
 
 export async function setPaymentAsset({
   api,
+  signer,
   walletAddress,
   assetId,
   executor,
@@ -27,7 +31,6 @@ export async function setPaymentAsset({
   onError,
   onReady,
 }: SetPaymentAssetArgs) {
-  const signer = await getSigner(APP_NAME, walletAddress);
   return executor.execute(
     api.tx.assetTxPayment.setPaymentAsset(
       api.createType("AccountId32", walletAddress),
@@ -46,25 +49,49 @@ export type GetPaymentAssetArgs = {
   api: ApiPromise;
   walletAddress: string;
   network: ParachainId | Extract<"kusama", RelayChainId>;
+  tokens: Record<TokenId, TokenMetadata>;
 };
 
 export async function getPaymentAsset({
   api,
   walletAddress,
   network,
+  tokens,
 }: GetPaymentAssetArgs) {
   if ("assetTxPayment" in api.query) {
+    /**
+     * Identify behavior on
+     * all chains the 
+     * we would support
+     */
     const result: any = await api.query.assetTxPayment.paymentAssets(
       api.createType("AccountId32", walletAddress)
     );
 
     if (result.isSome) {
+      /**
+       * TODO
+       * This can cause weird behavior
+       * we need to address the types returned
+       * by paymentAssets
+       * for picasso assetId type is BigNumber
+       * for karura its symbol in string
+       * for kusama its js number
+       */
       const [assetId, _] = result.toJSON();
-      return getAssetById(network, assetId);
+      if (assetId) {
+        /**
+         * Needs to change
+         * Not a good approach
+         */
+        const asset = extractTokenByNetworkIdentifier(tokens, network, assetId);
+        if (asset) {
+          return asset;
+        }
+      }
     }
-
-    return Assets.pica;
+    return tokens.pica;
   }
 
-  return Assets.pica;
+  return tokens.pica;
 }

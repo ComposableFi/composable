@@ -3,7 +3,6 @@ import { amountInputStyle } from "@/components/Organisms/Transfer/transfer-style
 import { useStore } from "@/stores/root";
 import { humanBalance } from "shared";
 import { useExistentialDeposit } from "@/defi/polkadot/hooks/useExistentialDeposit";
-import { useTransfer } from "@/defi/polkadot/hooks";
 import {
   subscribeDefaultTransferToken,
   subscribeTokenOptions,
@@ -17,7 +16,7 @@ export const AmountTokenDropdown = () => {
   const updateAmount = useStore((state) => state.transfers.updateAmount);
   const amount = useStore((state) => state.transfers.amount);
   const { balance, tokenId } = useExistentialDeposit();
-  const { from } = useTransfer();
+
   const tokenOptions = useStore((state) => state.transfers.tokenOptions);
   const selectedToken = useStore((state) => state.transfers.selectedToken);
   const updateSelectedToken = useStore(

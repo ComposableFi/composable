@@ -1,14 +1,6 @@
 import { StoreSlice } from "../../types";
 import BigNumber from "bignumber.js";
-
-interface ApolloTableData {
-  symbol: string;
-  binanceValue: number;
-  pabloValue: number;
-  aggregatedValue: number;
-  apolloValue: number;
-  changeValue: number;
-}
+import { TOKENS } from "tokens";
 
 type PriceHashMap = {
   [key: string]: { open: BigNumber | null; close: BigNumber | null };
@@ -19,18 +11,21 @@ interface ApolloState {
   oracleAssets: PriceHashMap;
 }
 
-export const APOLLO_ALLOWED_CURRENCIES = ["KSM", "USDC", "PABLO", "PICA"];
+export const APOLLO_ALLOWED_IDS = ["ksm", "usdc", "pblo", "pica"];
+export const APOLLO_ALLOWED_CURRENCIES = Object.values(TOKENS).filter((token) => {
+  return APOLLO_ALLOWED_IDS.includes(token.id)
+});
 
 const initialState: ApolloState = {
   binanceAssets: APOLLO_ALLOWED_CURRENCIES.reduce((acc, curr) => {
-    acc[curr] = {
+    acc[curr.symbol] = {
       open: null,
       close: null,
     };
     return acc;
   }, <PriceHashMap>{}),
   oracleAssets: APOLLO_ALLOWED_CURRENCIES.reduce((acc, curr) => {
-    acc[curr] = {
+    acc[curr.symbol] = {
       open: null,
       close: null,
     };
