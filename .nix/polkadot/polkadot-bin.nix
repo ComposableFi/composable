@@ -1,7 +1,7 @@
 { pkgs, rust-nightly }:
 pkgs.callPackage ./polkadot-tmpl.nix rec {
   inherit pkgs rust-nightly;
-  name = "polkadot-v${version}";
+  name = "polkadot";
   version = "0.9.27";
   repo = "polkadot";
   owner = "paritytech";
