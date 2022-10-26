@@ -103,12 +103,10 @@ message Header {
 
 // GRANDPA misbehaviour type
 message Misbehaviour {
-  // The set_id of the equivocations
-  uint64 set_id = 1;
   // First SCALE-encoded finality proof.
-  bytes first_finality_proof = 2;
+  bytes first_finality_proof = 1;
   // Second SCALE-encoded finality proof.
-  bytes second_finality_proof = 3;
+  bytes second_finality_proof = 2;
 }
 
 // ClientMessage for ics10-GRANDPA

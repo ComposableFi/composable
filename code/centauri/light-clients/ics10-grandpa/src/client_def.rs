@@ -215,7 +215,7 @@ where
 
 		let finalized = ancestry
 			.ancestry(from, header.finality_proof.block)
-			.map_err(|_| Error::Custom(format!("Invalid ancestry!")))?;
+			.map_err(|_| Error::Custom(format!("[update_state] Invalid ancestry!")))?;
 		let mut finalized_sorted = finalized.clone();
 		finalized_sorted.sort();
 

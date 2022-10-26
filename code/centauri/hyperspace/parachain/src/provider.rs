@@ -142,7 +142,6 @@ where
 					},
 				};
 				futures::future::ready(Some(events))
-				// futures::future::ready(Some(stream::iter(events)))
 			});
 
 		Box::pin(Box::new(stream))

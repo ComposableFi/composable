@@ -313,28 +313,6 @@ where
 			parachain_headers_with_proof.insert(header_hash.into(), proofs);
 		}
 
-		// now to prune useless unknown headers, we only need the unknown_headers for the relay
-		// chain header for the least parachain height up to the latest finalized relay chain block.
-		// if let Some((relay_hash, _)) = para_headers.into_iter().min_by_key(|(_, h)| *h.number())
-		// { 	let ancestry = AncestryChain::new(&finality_proof.unknown_headers);
-		// 	let mut route = ancestry.ancestry(relay_hash.into(), finality_proof.block)?;
-		// 	route.sort();
-		// 	finality_proof.unknown_headers = finality_proof
-		// 		.unknown_headers
-		// 		.into_iter()
-		// 		.filter(|h| route.binary_search(&h.hash()).is_ok())
-		// 		.collect::<Vec<_>>();
-		// } else {
-		// 	// in the special case where there's no parachain headers, let's only send the the
-		// 	// finality target and it's parent block. Fishermen should detect any byzantine
-		// 	// activity.
-		// 	let len = finality_proof.unknown_headers.len();
-		// 	if len > 2 {
-		// 		finality_proof.unknown_headers =
-		// 			finality_proof.unknown_headers[(len - 2)..].to_owned()
-		// 	}
-		// }
-
 		Ok(ParachainHeadersWithFinalityProof {
 			finality_proof,
 			parachain_headers: parachain_headers_with_proof,

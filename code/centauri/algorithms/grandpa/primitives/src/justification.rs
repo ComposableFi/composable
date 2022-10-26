@@ -77,7 +77,9 @@ where
 		match finality_grandpa::validate_commit(&self.commit, voters, &ancestry_chain) {
 			Ok(ref result) if result.is_valid() => {},
 			err => {
-				let result = err.map_err(|_| anyhow!("Invalid ancestry! 2"))?;
+				let result = err.map_err(|_| {
+					anyhow!("[verify_with_voter_set] Invalid ancestry while validating commit!")
+				})?;
 				Err(anyhow!("invalid commit in grandpa justification: {result:?}"))?
 			},
 		}
@@ -118,7 +120,7 @@ where
 
 			let route = ancestry_chain
 				.ancestry(base_hash, signed.precommit.target_hash)
-				.map_err(|_| anyhow!("Invalid ancestry! 3"))?;
+				.map_err(|_| anyhow!("[verify_with_voter_set] Invalid ancestry!"))?;
 			// ancestry starts from parent hash but the precommit target hash has been
 			// visited
 			visited_hashes.insert(signed.precommit.target_hash);
@@ -241,7 +243,7 @@ where
 	let buf = (message, round, set_id).encode();
 
 	if !Host::ed25519_verify(signature.as_ref(), &buf, id.as_ref()) {
-		Err(anyhow!("invalid signature for precommit in grandpa justification",))?
+		Err(anyhow!("invalid signature for precommit in grandpa justification"))?
 	}
 
 	Ok(())

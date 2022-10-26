@@ -70,9 +70,9 @@ where
 	}
 
 	let from = client_state.latest_relay_hash;
-	let mut finalized = headers
-		.ancestry(from, target.hash())
-		.map_err(|_| anyhow!("Invalid ancestry! 1"))?;
+	let mut finalized = headers.ancestry(from, target.hash()).map_err(|_| {
+		anyhow!("[verify_parachain_headers_with_grandpa_finality_proof] Invalid ancestry!")
+	})?;
 	finalized.sort();
 
 	// 2. verify justification.

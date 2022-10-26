@@ -38,8 +38,7 @@ use thiserror::Error;
 #[cfg(feature = "parachain")]
 use parachain::ParachainClient;
 use primitives::{
-	error::Error, BalancesAccountData, Chain, IbcProvider, KeyProvider, MisbehaviourHandler,
-	TransactionId, UpdateType,
+	error::Error, Chain, IbcProvider, KeyProvider, MisbehaviourHandler, TransactionId, UpdateType,
 };
 use std::{pin::Pin, time::Duration};
 use subxt::tx::SubstrateExtrinsicParams;
@@ -641,18 +640,6 @@ impl primitives::TestProvider for AnyChain {
 			Self::Parachain(chain) => chain.subscribe_blocks().await,
 			_ => unreachable!(),
 		}
-	}
-
-	async fn subscribe_relaychain_blocks(&self) -> Pin<Box<dyn Stream<Item = u32>>> {
-		todo!()
-	}
-
-	async fn current_set_id(&self) -> u64 {
-		todo!()
-	}
-
-	async fn query_relaychain_balance(&self) -> Result<BalancesAccountData, Self::Error> {
-		todo!()
 	}
 }
 

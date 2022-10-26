@@ -25,12 +25,11 @@ use pallet_ibc::{
 	light_clients::{AnyClientState, AnyConsensusState, HostFunctionsManager},
 	MultiAddress, Timeout, TransferParams,
 };
-use primitives::{BalancesAccountData, KeyProvider, TestProvider};
+use primitives::{KeyProvider, TestProvider};
 use sp_core::{
 	crypto::{AccountId32, Ss58Codec},
 	H256,
 };
-use sp_finality_grandpa::SetId;
 use sp_runtime::{
 	generic::Era,
 	traits::{Header as HeaderT, IdentifyAccount, One, Verify},
@@ -409,48 +408,7 @@ where
 		Box::pin(Box::new(stream))
 	}
 
-	async fn subscribe_relaychain_blocks(&self) -> Pin<Box<dyn Stream<Item = u32>>> {
-		let stream = self
-			.relay_client
-			.rpc()
-			.subscribe_finalized_blocks()
-			.await
-			.unwrap()
-			.filter_map(|result| futures::future::ready(result.ok().map(|x| *x.number())));
-		Box::pin(Box::new(stream))
-	}
-
-	async fn current_set_id(&self) -> SetId {
-		let api = self.relay_client.storage();
-		let current_set_id_addr = polkadot::api::storage().grandpa().current_set_id();
-		api.fetch(&current_set_id_addr, None)
-			.await
-			.ok()
-			.flatten()
-			.expect("Failed to fetch current set id")
-	}
-
 	fn set_channel_whitelist(&mut self, channel_whitelist: Vec<(ChannelId, PortId)>) {
 		self.channel_whitelist = channel_whitelist;
-	}
-
-	async fn query_relaychain_balance(&self) -> Result<BalancesAccountData, Self::Error> {
-		let account = self.public_key.clone().into_account();
-		log::info!("{:?}", account);
-		let api = self.relay_client.storage();
-		let addr = polkadot::api::storage().system().account(&account);
-		let data = api
-			.fetch(&addr, None)
-			.await
-			.ok()
-			.flatten()
-			.expect("Failed to fetch relaychain balance")
-			.data;
-		Ok(BalancesAccountData {
-			free: data.free,
-			reserved: data.reserved,
-			misc_frozen: data.misc_frozen,
-			fee_frozen: data.fee_frozen,
-		})
 	}
 }

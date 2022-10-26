@@ -115,7 +115,6 @@ where
 					);
 
 					let misbehaviour = ClientMessage::Misbehaviour(Misbehaviour {
-						set_id: 0,
 						first_finality_proof: header.finality_proof,
 						second_finality_proof: trusted_finality_proof,
 					});
@@ -287,12 +286,14 @@ where
 			dali_runtime::Call as RuntimeCall, pallet_ibc::pallet::Call as IbcCall,
 		};
 
-		let h256 = H256(host_block_hash);
-		log::info!("Querying extrinsic data at {:?} {}", h256, transaction_id);
+		let hash = H256(host_block_hash);
+		log::debug!("Querying extrinsic data at {:?} {}", hash, transaction_id);
 
 		let now = Instant::now();
+		// There is no way to query a specific extrinsic on substrate directly, so block
+		// query used instead.
 		let block = loop {
-			let maybe_block = self.para_client.rpc().block(Some(h256.into())).await?;
+			let maybe_block = self.para_client.rpc().block(Some(hash.into())).await?;
 			match maybe_block {
 				Some(block) => {
 					log::info!("block query took {}", now.elapsed().as_millis());

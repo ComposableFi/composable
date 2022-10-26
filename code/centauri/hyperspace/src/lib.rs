@@ -68,20 +68,10 @@ where
 					None => break,
 					Some((transaction_id, events)) => {
 						for (i, event) in events.into_iter().enumerate() {
-							log::info!("got event 2: {:?}", event);
 							if let Some(IbcEvent::UpdateClient(client_update)) = event {
-
 								if *client_update.client_id() != chain_b.client_id() {
 									continue;
 								}
-								// log::info!("chain_b");
-								// let message = timeout(Duration::from_secs(20), chain_b.query_client_message(
-								// 	transaction_id.block_hash,
-								// 	transaction_id.tx_index,
-								// 	i,
-								// )).await;
-								// dbg!(message);
-								log::info!("chain_a");
 								let message = timeout(Duration::from_secs(20), chain_a.query_client_message(
 									transaction_id.block_hash,
 									transaction_id.tx_index,
@@ -100,19 +90,10 @@ where
 					None => break,
 					Some((transaction_id, events)) => {
 						for (i, event) in events.into_iter().enumerate() {
-							log::info!("got event 3: {:?}", event);
 							if let Some(IbcEvent::UpdateClient(client_update)) = event {
 								if *client_update.client_id() != chain_a.client_id() {
 									continue;
 								}
-								// log::info!("chain_a");
-								// let message = timeout(Duration::from_secs(20), chain_a.query_client_message(
-								// 	transaction_id.block_hash,
-								// 	transaction_id.tx_index,
-								// 	i,
-								// )).await;
-								// dbg!(message);
-								log::info!("chain_b");
 								let message = timeout(Duration::from_secs(20), chain_b.query_client_message(
 									transaction_id.block_hash,
 									transaction_id.tx_index,
@@ -128,20 +109,4 @@ where
 	}
 
 	Ok(())
-}
-
-#[cfg(feature = "testing")]
-pub mod send_packet_relay {
-	use std::sync::atomic::{AtomicBool, Ordering};
-	static RELAY_PACKETS: AtomicBool = AtomicBool::new(true);
-
-	/// Returns status of send packet relay
-	pub fn packet_relay_status() -> bool {
-		RELAY_PACKETS.load(Ordering::SeqCst)
-	}
-
-	/// Sets packet relay status
-	pub fn set_relay_status(status: bool) {
-		RELAY_PACKETS.store(status, Ordering::SeqCst);
-	}
 }

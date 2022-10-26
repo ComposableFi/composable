@@ -2,7 +2,6 @@
 
 use crate::utils::{assert_timeout_packet, parse_amount, timeout_future};
 use futures::{future, StreamExt};
-use hyperspace::send_packet_relay::set_relay_status;
 use hyperspace_primitives::TestProvider;
 use ibc::{
 	applications::transfer::{msgs::transfer::MsgTransfer, Amount, PrefixedCoin, VERSION},
@@ -22,6 +21,7 @@ use ibc::{
 };
 use ibc_proto::google::protobuf::Any;
 use pallet_ibc::Timeout;
+use send_packet_relay::set_relay_status;
 use std::{str::FromStr, time::Duration};
 use tendermint_proto::Protobuf;
 use tokio::task::JoinHandle;
@@ -29,6 +29,21 @@ use tokio::task::JoinHandle;
 pub mod misbehaviour;
 pub mod ordered_channels;
 mod utils;
+
+pub mod send_packet_relay {
+	use std::sync::atomic::{AtomicBool, Ordering};
+	static RELAY_PACKETS: AtomicBool = AtomicBool::new(true);
+
+	/// Returns status of send packet relay
+	pub fn packet_relay_status() -> bool {
+		RELAY_PACKETS.load(Ordering::SeqCst)
+	}
+
+	/// Sets packet relay status
+	pub fn set_relay_status(status: bool) {
+		RELAY_PACKETS.store(status, Ordering::SeqCst);
+	}
+}
 
 /// This will set up a connection and ics20 channel in-between the two chains.
 /// `connection_delay` should be in seconds.

@@ -38,10 +38,10 @@ impl HostFunctions for HostFunctionsProvider {
 	}
 
 	fn add_relaychain_header_hashes(_headers: &[<Self::Header as Header>::Hash]) {
-		todo!()
+		unimplemented!()
 	}
 
 	fn exists_relaychain_header_hash(_hash: <Self::Header as Header>::Hash) -> bool {
-		todo!()
+		unimplemented!()
 	}
 }

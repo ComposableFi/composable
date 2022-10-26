@@ -1,6 +1,7 @@
-use crate::{assert_timeout_packet, timeout_future, StreamExt};
+use crate::{
+	assert_timeout_packet, send_packet_relay::set_relay_status, timeout_future, StreamExt,
+};
 use futures::future;
-use hyperspace::send_packet_relay::set_relay_status;
 use hyperspace_primitives::TestProvider;
 use ibc::{
 	core::{

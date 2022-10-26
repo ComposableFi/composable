@@ -14,8 +14,8 @@ ibc = { path = "../../ibc/modules" }
 ibc-proto = { path = "../../ibc/proto" }
 tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8" }
 
-hyperspace = { path = "../", features = ["testing"] }
-hyperspace-primitives = { path = "../primitives", features = ["testing"] }
+hyperspace = { path = "../." }
+hyperspace-primitives = { path = "../primitives" }
 pallet-ibc = { path = "../../../parachain/frame/ibc" }
 ics10-grandpa = { path = "../../light-clients/ics10-grandpa" }
 

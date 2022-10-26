@@ -51,8 +51,6 @@ pub struct Header {
 /// the main one)
 #[derive(Clone, Debug)]
 pub struct Misbehaviour {
-	/// set id for these misbehaviours
-	pub set_id: u64,
 	/// first proof of misbehaviour
 	pub first_finality_proof: FinalityProof<RelayChainHeader>,
 	/// second proof of misbehaviour
@@ -139,7 +137,6 @@ impl TryFrom<RawClientMessage> for ClientMessage {
 			},
 			client_message::Message::Misbehaviour(raw_misbehaviour) =>
 				ClientMessage::Misbehaviour(Misbehaviour {
-					set_id: raw_misbehaviour.set_id,
 					first_finality_proof: Decode::decode(
 						&mut &*raw_misbehaviour.first_finality_proof,
 					)?,
@@ -189,7 +186,6 @@ impl From<ClientMessage> for RawClientMessage {
 			},
 			ClientMessage::Misbehaviour(misbehaviior) => RawClientMessage {
 				message: Some(client_message::Message::Misbehaviour(RawMisbehaviour {
-					set_id: misbehaviior.set_id,
 					first_finality_proof: misbehaviior.first_finality_proof.encode(),
 					second_finality_proof: misbehaviior.second_finality_proof.encode(),
 				})),
