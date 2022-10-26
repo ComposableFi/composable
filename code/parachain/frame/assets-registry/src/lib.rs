@@ -30,6 +30,7 @@ pub mod pallet {
 	pub use crate::weights::WeightInfo;
 	use codec::FullCodec;
 	use composable_traits::{
+		assets::Asset,
 		currency::{BalanceLike, CurrencyFactory, Exponent, RangeId},
 		defi::Ratio,
 		xcm::assets::{
@@ -41,10 +42,9 @@ pub mod pallet {
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo, pallet_prelude::*, traits::EnsureOrigin,
 	};
-
 	use frame_system::pallet_prelude::*;
 	use scale_info::TypeInfo;
-	use sp_std::{fmt::Debug, str};
+	use sp_std::{fmt::Debug, str, vec::Vec};
 
 	/// The module configuration trait.
 	#[pallet::config]
@@ -62,6 +62,7 @@ pub mod pallet {
 			+ Into<u128>
 			+ Debug
 			+ Default
+			+ Ord
 			+ TypeInfo;
 
 		/// Identifier for the class of foreign asset.
@@ -308,6 +309,26 @@ pub mod pallet {
 			remote_asset_id: Self::AssetNativeLocation,
 		) -> Option<Self::Balance> {
 			<MinFeeAmounts<T>>::get(parachain_id, remote_asset_id)
+		}
+
+		fn get_foreign_assets_list() -> Vec<Asset<Self::AssetNativeLocation>> {
+			ForeignToLocal::<T>::iter()
+				.map(|(_, asset_id)| {
+					let foreign_metadata = LocalToForeign::<T>::get(asset_id)
+						.expect("Must exist, as it does in ForeignToLocal");
+					let decimals = match foreign_metadata.decimals {
+						Some(exponent) => exponent,
+						_ => 12_u32,
+					};
+
+					Asset {
+						name: None,
+						id: asset_id.into(),
+						decimals,
+						foreign_id: Some(foreign_metadata.location),
+					}
+				})
+				.collect::<Vec<_>>()
 		}
 	}
 

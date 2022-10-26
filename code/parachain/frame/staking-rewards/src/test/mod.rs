@@ -1421,8 +1421,6 @@ mod claim {
 			));
 
 			let staked_asset_id = PICA::ID;
-			let rewards_pool =
-				StakingRewards::pools(staked_asset_id).expect("rewards_pool expected. QED");
 
 			// far more than is necessary
 			mint_assets([CHARLIE], [USDT::ID], USDT::units(100_000_000));

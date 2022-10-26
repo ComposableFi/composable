@@ -4,7 +4,7 @@ use crate::{
 	weights::SubstrateWeight,
 };
 
-use composable_traits::defi::DeFiComposableConfig;
+use composable_traits::{defi::DeFiComposableConfig, xcm::assets::XcmAssetLocation};
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{ConstU32, Everything, GenesisBuild},
