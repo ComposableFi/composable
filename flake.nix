@@ -1407,22 +1407,22 @@
             benchmarks-generate-quick-dali = flake-utils.lib.mkApp {
               drv = generate-benchmarks {
                 chain = "dali";
-                steps = 1;
-                repeat = 1;
+                steps = 2;
+                repeat = 2;
               };
             };
             benchmarks-generate-quick-picasso = flake-utils.lib.mkApp {
               drv = generate-benchmarks {
                 chain = "picasso";
-                steps = 1;
-                repeat = 1;
+                steps = 2;
+                repeat = 2;
               };
             };
             benchmarks-generate-quick-composable = flake-utils.lib.mkApp {
               drv = generate-benchmarks {
                 chain = "composable";
-                steps = 1;
-                repeat = 1;
+                steps = 2;
+                repeat = 2;
               };
             };
             simnode-tests = makeApp packages.simnode-tests;

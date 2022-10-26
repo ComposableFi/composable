@@ -563,42 +563,6 @@ jobs:
       - run: |
           cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- run .#benchmarks-once-${{ matrix.runtime }} --no-update-lock-file --show-trace -L
 
-  test-benchmarks-compile:
-    name: "Test benchmarks compile"
-    needs: package-composable-bench-node
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: ${{ github.workflow }}-test-benchmarks-compile-${{ matrix.runtime }}-${{ github.ref }}
-      cancel-in-progress: true
-    strategy:
-      matrix:
-        runtime: [dali, picasso, composable]
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
-        with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- run .#benchmarks-generate-quick-${{ matrix.runtime }} --no-update-lock-file --show-trace -L
-          cat code/parachain/runtime/dali/src/weights/pablo.rs
-          nix build .#composable-bench-node
-
   check-simnode:
     name: "Simnode"
     needs: package-simnode-tests
@@ -1162,7 +1126,6 @@ jobs:
         - package-polkadot-node
         - package-composable-node
         - test-running-of-pallet-benchmarks
-        - test-benchmarks-compile
         - local-integration-tests
         - unit-tests
         - cargo-udeps-check
