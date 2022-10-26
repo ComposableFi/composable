@@ -616,10 +616,13 @@
 
           frontend-static-firebase = mkFrontendStatic {
             subsquidEndpoint =
-              "https://dali-subsquid.composable.finance/graphql";
-            picassoEndpoint = "wss://dali-cluster-fe.composablefinance.ninja/";
-            kusamaEndpoint = "wss://kusama-rpc.polkadot.io";
-            karuraEndpoint = "wss://karura.api.onfinality.io/public-ws";
+              "https://persistent.devnets.composablefinance.ninja/subsquid/graphql";
+            picassoEndpoint =
+              "wss://persistent.devnets.composablefinance.ninja/chain/dali";
+            kusamaEndpoint =
+              "wss://persistent.devnets.composablefinance.ninja/chain/rococo";
+            karuraEndpoint =
+              "wss://persistent.devnets.composablefinance.ninja/chain/karura";
           };
 
           frontend-pablo-server = let PORT = 8002;
