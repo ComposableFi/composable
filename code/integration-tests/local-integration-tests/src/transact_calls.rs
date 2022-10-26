@@ -6,7 +6,6 @@ use crate::{
 	prelude::*,
 };
 use composable_traits::defi::Sell;
-use frame_support::{assert_ok, log, WeakBoundedVec};
 use frame_system::EventRecord;
 use orml_traits::currency::MultiCurrency;
 use primitives::currency::CurrencyId;
@@ -61,18 +60,19 @@ fn dex() {
 			assert_above_deposit::<this_runtime::AssetsRegistry>(any_asset, 100_000_000_000);
 		assert_ok!(this_runtime::Assets::deposit(
 			any_asset,
-			&sibling_account(),
+			&sibling_account(SIBLING_PARA_ID),
 			sibling_non_native_amount
 		));
-		log::error!("{:?}", &sibling_account());
+		log::error!("{:?}", &sibling_account(SIBLING_PARA_ID));
 		let _ = <balances::Pallet<this_runtime::Runtime> as frame_support::traits::Currency<
 			AccountId,
 		>>::deposit_creating(
-			&sibling_account(), this_liveness_native_amount * 1_000_000_000_000
+			&sibling_account(SIBLING_PARA_ID),
+			this_liveness_native_amount * 1_000_000_000_000,
 		);
 		let _ = <assets::Pallet<this_runtime::Runtime> as MultiCurrency<AccountId>>::deposit(
 			CurrencyId::kUSD,
-			&sibling_account(),
+			&sibling_account(SIBLING_PARA_ID),
 			this_liveness_native_amount,
 		);
 		let _ =
@@ -102,13 +102,7 @@ fn dex() {
 
 	Sibling::execute_with(|| {
 		let assets: MultiAsset = (
-			(
-				Parent,
-				X2(
-					Parachain(THIS_PARA_ID),
-					GeneralKey(WeakBoundedVec::force_from(this_native_asset.encode(), None)),
-				),
-			),
+			(Parent, X2(Parachain(THIS_PARA_ID), GeneralIndex(this_native_asset.into()))),
 			some_native_amount,
 		)
 			.into();
@@ -146,13 +140,7 @@ fn dex() {
 
 	Sibling::execute_with(|| {
 		let assets: MultiAsset = (
-			(
-				Parent,
-				X2(
-					Parachain(THIS_PARA_ID),
-					GeneralKey(WeakBoundedVec::force_from(this_native_asset.encode(), None)),
-				),
-			),
+			(Parent, X2(Parachain(THIS_PARA_ID), GeneralIndex(this_native_asset.0))),
 			some_native_amount,
 		)
 			.into();

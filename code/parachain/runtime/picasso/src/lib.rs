@@ -23,7 +23,7 @@ pub const WASM_BINARY_V2: Option<&[u8]> = None;
 
 pub mod governance;
 mod weights;
-mod xcmp;
+pub mod xcmp;
 
 pub use xcmp::{MaxInstructions, UnitWeightCost, XcmConfig};
 
