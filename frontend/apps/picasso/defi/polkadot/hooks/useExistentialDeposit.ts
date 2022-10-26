@@ -56,9 +56,12 @@ export const useExistentialDeposit = () => {
             );
             if (result.isNone && tokenId) {
               // Fetch native asset's ED
-              const ed = await api.query.currencyFactory.assetEd(
-                assets[tokenId].meta.supportedNetwork[from]
-              );
+              const ed =
+                tokenId !== "pica"
+                  ? await api.query.currencyFactory.assetEd(
+                      assets[tokenId].meta.supportedNetwork[from]
+                    )
+                  : api.consts.balances.existentialDeposit;
               const existentialString = ed.toString();
               const existentialValue = fromChainIdUnit(
                 new BigNumber(existentialString)
