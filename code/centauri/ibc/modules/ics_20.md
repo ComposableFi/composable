@@ -55,3 +55,177 @@ The module callback logic for ICS20 is fully implemented [`here`](/code/centauri
 
 To initialize an ics20 transfer, the [`send_transfer`](/code/centauri/ibc/modules/src/applications/transfer/relay/send_transfer.rs) method should be called. 
 However, the caller should take care to revert all changes made by this call in case of a failed execution.
+
+**Implementing ICS20 as an on-chain module**
+```rust
+impl Ics20Reader for Context {
+    type AccountId = AccountId;
+
+    fn get_channel_escrow_address(
+        &self,
+        port_id: &PortId,
+        channel_id: ChannelId,
+    ) -> Result<<Self as Ics20Reader>::AccountId, Ics20Error> {
+        // Add logic for deriving account Id from port and channel Id
+    }
+
+    fn get_port(&self) -> Result<ibc::core::ics24_host::identifier::PortId, Ics20Error> {Ok(PortId::transfer())}
+
+    fn is_receive_enabled(&self) -> bool {
+        // Add logic that determines if token receipt is allowed 
+        false
+    }
+
+    fn is_send_enabled(&self) -> bool {
+        // Add logic that determines if token transfer is allowed 
+        false
+    }
+}
+
+impl Ics20Keeper for Context {
+    type AccountId = AccountId;
+}
+
+impl Ics20Context for Context {
+    type AccountId = AccountId;
+}
+
+impl BankKeeper for Context {
+    type AccountId = AccountId;
+    fn mint_coins(
+        &mut self,
+        account: &Self::AccountId,
+        amt: &ibc::applications::transfer::PrefixedCoin,
+    ) -> Result<(), Ics20Error> {
+        // Add chain specific logic for issuing new tokens
+        Ok(())
+    }
+
+    fn burn_coins(
+        &mut self,
+        account: &Self::AccountId,
+        amt: &ibc::applications::transfer::PrefixedCoin,
+    ) -> Result<(), Ics20Error> {
+        // Add chain specific logic for burning tokens
+        Ok(())
+    }
+
+    fn send_coins(
+        &mut self,
+        from: &Self::AccountId,
+        to: &Self::AccountId,
+        amt: &ibc::applications::transfer::PrefixedCoin,
+    ) -> Result<(), Ics20Error> {
+        // Add chain specific logic for transferring tokens
+        Ok(())
+    }
+}
+
+#[derive(Default, Debug)]
+pub struct Ics20CallbackHandler;
+
+// Implement the Module trait and call the callback functions defined in /code/centauri/ibc/modules/src/applications/transfer/context.rs#L162 appropriately
+impl Module for Ics20CallbackHandler {
+    fn on_chan_open_init(
+        &mut self,
+        output: &mut ModuleOutputBuilder,
+        order: Order,
+        connection_hops: &[ConnectionId],
+        port_id: &PortId,
+        channel_id: &ChannelId,
+        counterparty: &Counterparty,
+        version: &Version,
+    ) -> Result<(), Ics04Error> {
+        let mut ctx = Context::default();
+        on_chan_open_init(&mut ctx, output, order, connection_hops, port_id, channel_id, counterparty, version)
+    }
+
+    fn on_chan_open_try(
+        &mut self,
+        output: &mut ModuleOutputBuilder,
+        order: Order,
+        connection_hops: &[ConnectionId],
+        port_id: &PortId,
+        channel_id: &ChannelId,
+        counterparty: &Counterparty,
+        version: &Version,
+        counterparty_version: &Version,
+    ) -> Result<Version, Ics04Error> {
+        let mut ctx = Context::default();
+        on_chan_open_try(&mut ctx, output, order, connection_hops, port_id, channel_id, counterparty, version, counterparty_version)
+    }
+
+    fn on_chan_open_ack(
+        &mut self,
+        output: &mut ModuleOutputBuilder,
+        port_id: &PortId,
+        channel_id: &ChannelId,
+        counterparty_version: &Version,
+    ) -> Result<(), Ics04Error> {
+        let mut ctx = Context::default();
+        on_chan_open_ack(&mut ctx, output, port_id, channel_id, counterparty_version)
+    }
+
+    fn on_chan_open_confirm(
+        &mut self,
+        output: &mut ModuleOutputBuilder,
+        port_id: &PortId,
+        channel_id: &ChannelId,
+    ) -> Result<(), Ics04Error> {
+        let mut ctx = Context::default();
+        on_chan_open_confirm(&mut ctx, output, port_id, channel_id)
+    }
+
+    fn on_chan_close_init(
+        &mut self,
+        output: &mut ModuleOutputBuilder,
+        port_id: &PortId,
+        channel_id: &ChannelId,
+    ) -> Result<(), Ics04Error> {
+        let mut ctx = Context::default();
+        on_chan_close_init(&mut ctx, output, port_id, channel_id)
+    }
+
+    fn on_chan_close_confirm(
+        &mut self,
+        output: &mut ModuleOutputBuilder,
+        port_id: &PortId,
+        channel_id: &ChannelId,
+    ) -> Result<(), Ics04Error> {
+        let mut ctx = Context::default();
+        on_chan_close_confirm(&mut ctx, output, port_id, channel_id) 
+    }
+
+    fn on_recv_packet(
+        &self,
+        output: &mut ModuleOutputBuilder,
+        packet: &Packet,
+        relayer: &Signer,
+    ) -> OnRecvPacketAck {
+        let mut ctx = Context::default();
+        on_recv_packet(&mut ctx, output, packet, relayer)
+    }
+
+    fn on_acknowledgement_packet(
+        &mut self,
+        output: &mut ModuleOutputBuilder,
+        packet: &Packet,
+        acknowledgement: &Acknowledgement,
+        _relayer: &Signer,
+    ) -> Result<(), Ics04Error> {
+        let mut ctx = Context::default();
+        on_acknowledgement_packet(&mut ctx, output, packet, acknowledgement, relayer)
+    }
+
+    fn on_timeout_packet(
+        &mut self,
+        output: &mut ModuleOutputBuilder,
+        packet: &Packet,
+        relayer: &Signer,
+    ) -> Result<(), Ics04Error> {
+        let mut ctx = Context::default();
+        on_timeout_packet(&mut ctx, output, packet, relayer)
+    }
+}
+    
+```
