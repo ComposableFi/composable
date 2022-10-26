@@ -81,52 +81,6 @@ fn reserve_transfer(from: [u8; 32], to: [u8; 32]) {
 }
 
 #[test]
-fn transfer_from_relay_native_from_this_to_relay_chain_by_local_id() {
-	simtest();
-	let transfer_amount = 3 * RELAY_NATIVE::ONE;
-	let limit = 4_600_000_000;
-
-	mint_relay_native_on_parachain(transfer_amount * 2, &AccountId::from(alice()), THIS_PARA_ID);
-
-	KusamaRelay::execute_with(|| {
-		assert_eq!(relay_runtime::Balances::balance(&AccountId::from(bob())), 0);
-	});
-
-	log::info!(target: "bdd", "Alice transfer from this to Relay");
-	This::execute_with(|| {
-		let before = this_runtime::Assets::free_balance(CurrencyId::KSM, &alice().into());
-		let transferred = this_runtime::XTokens::transfer(
-			this_runtime::Origin::signed(alice().into()),
-			CurrencyId::KSM,
-			transfer_amount,
-			Box::new(
-				MultiLocation::new(
-					1,
-					X1(Junction::AccountId32 { id: bob(), network: NetworkId::Any }),
-				)
-				.into(),
-			),
-			limit,
-		);
-
-		assert_ok!(transferred);
-
-		let after = this_runtime::Assets::free_balance(CurrencyId::KSM, &alice().into());
-
-		assert_eq!(before - after, transfer_amount);
-	});
-
-	KusamaRelay::execute_with(|| {
-		assert_lt_by!(
-			relay_runtime::Balances::balance(&AccountId::from(bob())),
-			transfer_amount,
-			ORDER_OF_FEE_ESTIMATE_ERROR * (THIS_CHAIN_NATIVE_FEE + RELAY_CHAIN_NATIVE_FEE) +
-				ORDER_OF_FEE_ESTIMATE_ERROR * limit as u128
-		)
-	});
-}
-
-#[test]
 fn transfer_this_native_to_sibling_overridden() {
 	simtest();
 
@@ -157,7 +111,6 @@ fn transfer_this_native_to_sibling_overridden() {
 			Origin::signed(alice().into()),
 			Box::new(
 				VersionedMultiLocation::V1(MultiLocation::new(1, X1(Parachain(SIBLING_PARA_ID))))
-					.into()
 			),
 			Box::new(Junction::AccountId32 { id: bob(), network: NetworkId::Any }.into().into()),
 			Box::new((Here, 3 * PICA).into()),
@@ -199,12 +152,11 @@ fn transfer_non_native_reserve_asset_from_this_to_sibling() {
 		use this_runtime::*;
 
 		assert_ok!(Assets::deposit(CurrencyId::PBLO, &alice().into(), 10 * PICA));
-		let before = Assets::free_balance(CurrencyId::PBLO, &alice().into());
+		let _before = Assets::free_balance(CurrencyId::PBLO, &alice().into());
 		assert_ok!(RelayerXcm::limited_reserve_transfer_assets(
 			Origin::signed(alice().into()),
 			Box::new(
 				VersionedMultiLocation::V1(MultiLocation::new(1, X1(Parachain(SIBLING_PARA_ID))))
-					.into()
 			),
 			Box::new(Junction::AccountId32 { id: bob(), network: NetworkId::Any }.into().into()),
 			Box::new((X1(GeneralIndex(CurrencyId::PBLO.into()),), 3 * PICA).into()),
@@ -244,7 +196,7 @@ fn transfer_non_native_reserve_asset_from_this_to_sibling_by_local_id_overridden
 		use this_runtime::*;
 
 		assert_ok!(Tokens::deposit(CurrencyId::PBLO, &alice().into(), 10 * PICA));
-		let before = Assets::free_balance(CurrencyId::PBLO, &alice().into());
+		let _before = Assets::free_balance(CurrencyId::PBLO, &alice().into());
 
 		assert_ok!(XTokens::transfer(
 			Origin::signed(alice().into()),
@@ -389,7 +341,7 @@ fn transfer_relay_native_from_this_to_sibling_by_local_id() {
 		use sibling_runtime::*;
 		Tokens::free_balance(CurrencyId::KSM, &sibling_account(THIS_PARA_ID))
 	});
-	let original_bob_on_sibling = Sibling::execute_with(|| {
+	let _original_bob_on_sibling = Sibling::execute_with(|| {
 		use sibling_runtime::*;
 		Tokens::free_balance(CurrencyId::KSM, &AccountId::from(bob()))
 	});
@@ -402,7 +354,7 @@ fn transfer_relay_native_from_this_to_sibling_by_local_id() {
 
 	let sibling_parachain_reserve_account_on_relay: AccountId =
 		ParaId::from(SIBLING_PARA_ID).into_account_truncating();
-	let sibling_reserve_amount_on_original = KusamaRelay::execute_with(|| {
+	let _sibling_reserve_amount_on_original = KusamaRelay::execute_with(|| {
 		use relay_runtime::*;
 		Balances::balance(&sibling_parachain_reserve_account_on_relay)
 	});
@@ -419,7 +371,7 @@ fn transfer_relay_native_from_this_to_sibling_by_local_id() {
 					1,
 					X2(
 						Parachain(SIBLING_PARA_ID),
-						Junction::AccountId32 { network: NetworkId::Any, id: bob().into() }
+						Junction::AccountId32 { network: NetworkId::Any, id: bob() }
 					)
 				)
 				.into()
@@ -468,7 +420,7 @@ fn transfer_relay_native_from_this_to_sibling_by_local_id() {
 					1,
 					X2(
 						Parachain(THIS_PARA_ID),
-						Junction::AccountId32 { network: NetworkId::Any, id: alice().into() }
+						Junction::AccountId32 { network: NetworkId::Any, id: alice() }
 					)
 				)
 				.into()
@@ -533,7 +485,7 @@ fn transfer_relay_native_from_this_to_sibling_by_local_id() {
 fn one_chain_cannot_print_relay_native_reserve_tokens_on_us() {
 	simtest();
 
-	let original_bob_on_sibling = This::execute_with(|| {
+	let _original_bob_on_sibling = This::execute_with(|| {
 		use this_runtime::*;
 		assert_ok!(Tokens::deposit(CurrencyId::KSM, &alice().into(), 100_000_000_000_000));
 		Tokens::free_balance(CurrencyId::KSM, &alice().into())
@@ -546,7 +498,7 @@ fn one_chain_cannot_print_relay_native_reserve_tokens_on_us() {
 	});
 
 	let alice_from_amount = alice_original / 10;
-	let alice_remaining = alice_original - alice_from_amount;
+	let _alice_remaining = alice_original - alice_from_amount;
 	let weight_to_pay = (alice_from_amount / 2) as u64;
 
 	This::execute_with(|| {
@@ -560,7 +512,7 @@ fn one_chain_cannot_print_relay_native_reserve_tokens_on_us() {
 					1,
 					X2(
 						Parachain(SIBLING_PARA_ID),
-						Junction::AccountId32 { network: NetworkId::Any, id: bob().into() }
+						Junction::AccountId32 { network: NetworkId::Any, id: bob() }
 					)
 				)
 				.into()
@@ -595,7 +547,7 @@ fn xcm_transfer_execution_barrier_trader_works() {
 	KusamaRelay::execute_with(|| {
 		use relay_runtime::*;
 		let r = pallet_xcm::Pallet::<Runtime>::send_xcm(
-			X1(Junction::AccountId32 { network: NetworkId::Any, id: alice().into() }),
+			X1(Junction::AccountId32 { network: NetworkId::Any, id: alice() }),
 			Parachain(THIS_PARA_ID).into(),
 			message,
 		);
@@ -1107,10 +1059,9 @@ fn sibling_shib_to_transfer() {
 		use sibling_runtime::*;
 		let origin = Origin::signed(bob().into());
 		assert_ok!(RelayerXcm::limited_reserve_transfer_assets(
-			origin.clone(),
+			origin,
 			Box::new(
 				VersionedMultiLocation::V1(MultiLocation::new(1, X1(Parachain(THIS_PARA_ID))))
-					.into()
 			),
 			Box::new(Junction::AccountId32 { id: bob(), network: NetworkId::Any }.into().into()),
 			Box::new((X1(GeneralIndex(sibling_asset_id.into()),), transfer_amount).into()),

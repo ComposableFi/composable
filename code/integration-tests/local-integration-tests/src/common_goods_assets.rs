@@ -44,7 +44,7 @@ fn transfer_native_from_relay_chain_to_statemine() {
 		));
 	});
 
-	let bob_balance = Statemine::execute_with(|| {
+	let _bob_balance = Statemine::execute_with(|| {
 		use statemine_runtime::*;
 		let bob_balance = Balances::free_balance(&AccountId::from(BOB));
 		assert_gt!(bob_balance, bob_on_statemine_original,);
@@ -56,7 +56,7 @@ fn transfer_native_from_relay_chain_to_statemine() {
 #[test]
 fn transfer_native_from_statemine_to_this() {
 	simtest();
-	let bob_on_statemine_original =
+	let _bob_on_statemine_original =
 		Statemine::execute_with(|| statemine_runtime::Balances::balance(&AccountId::from(BOB)));
 	let amount = RELAY_NATIVE::ONE;
 	KusamaRelay::execute_with(|| {
@@ -76,10 +76,9 @@ fn transfer_native_from_statemine_to_this() {
 		let origin = Origin::signed(BOB.into());
 
 		assert_ok!(PolkadotXcm::reserve_transfer_assets(
-			origin.clone(),
+			origin,
 			Box::new(
 				VersionedMultiLocation::V1(MultiLocation::new(1, X1(Parachain(THIS_PARA_ID))))
-					.into()
 			),
 			Box::new(Junction::AccountId32 { id: BOB, network: NetworkId::Any }.into().into()),
 			Box::new((MultiLocation::new(1, Here), bob_balance).into()),
@@ -98,7 +97,7 @@ fn transfer_native_from_statemine_to_this() {
 #[test]
 fn transfer_usdt_from_statemine_to_this() {
 	simtest();
-	let bob_on_statemine_original =
+	let _bob_on_statemine_original =
 		Statemine::execute_with(|| statemine_runtime::Balances::balance(&AccountId::from(BOB)));
 
 	let statemine_asset_id = USDT::ID;
@@ -111,7 +110,7 @@ fn transfer_usdt_from_statemine_to_this() {
 		let root = frame_system::RawOrigin::Root;
 
 		Assets::force_create(
-			root.clone().into(),
+			root.into(),
 			statemine_asset_id as u32,
 			MultiAddress::Id(ALICE.into()),
 			true,
@@ -133,10 +132,9 @@ fn transfer_usdt_from_statemine_to_this() {
 		use statemine_runtime::*;
 		let origin = Origin::signed(BOB.into());
 		assert_ok!(PolkadotXcm::limited_reserve_transfer_assets(
-			origin.clone(),
+			origin,
 			Box::new(
 				VersionedMultiLocation::V1(MultiLocation::new(1, X1(Parachain(THIS_PARA_ID))))
-					.into()
 			),
 			Box::new(Junction::AccountId32 { id: BOB, network: NetworkId::Any }.into().into()),
 			Box::new(
@@ -167,9 +165,9 @@ fn transfer_usdt_from_statemine_to_this() {
 #[test]
 fn rockmine_shib_to_dali_transfer() {
 	simtest();
-	let this_parachain_account: AccountId =
+	let _this_parachain_account: AccountId =
 		polkadot_parachain::primitives::Sibling::from(THIS_PARA_ID).into_account_truncating();
-	let statemine_parachain_account: AccountId =
+	let _statemine_parachain_account: AccountId =
 		ParaId::from(topology::common_good_assets::ID).into_account_truncating();
 	let statemine_asset_id = 100500;
 	let total_issuance = 3_500_000_000_000;
@@ -179,7 +177,7 @@ fn rockmine_shib_to_dali_transfer() {
 		let root = frame_system::RawOrigin::Root;
 
 		Assets::force_create(
-			root.clone().into(),
+			root.into(),
 			statemine_asset_id,
 			MultiAddress::Id(ALICE.into()),
 			true,
@@ -208,8 +206,7 @@ fn rockmine_shib_to_dali_transfer() {
 					PalletInstance(50),
 					GeneralIndex(statemine_asset_id as u128),
 				),
-			)
-			.into(),
+			),
 		);
 		AssetsRegistry::register_asset(
 			root.into(),
@@ -237,10 +234,9 @@ fn rockmine_shib_to_dali_transfer() {
 		use statemine_runtime::*;
 		let origin = Origin::signed(BOB.into());
 		assert_ok!(PolkadotXcm::limited_reserve_transfer_assets(
-			origin.clone(),
+			origin,
 			Box::new(
 				VersionedMultiLocation::V1(MultiLocation::new(1, X1(Parachain(THIS_PARA_ID))))
-					.into()
 			),
 			Box::new(Junction::AccountId32 { id: BOB, network: NetworkId::Any }.into().into()),
 			Box::new(
@@ -269,9 +265,9 @@ fn rockmine_shib_to_dali_transfer() {
 #[test]
 fn rockmine_stable_to_dali_transfer() {
 	simtest();
-	let this_parachain_account: AccountId =
+	let _this_parachain_account: AccountId =
 		polkadot_parachain::primitives::Sibling::from(THIS_PARA_ID).into_account_truncating();
-	let statemine_parachain_account: AccountId =
+	let _statemine_parachain_account: AccountId =
 		ParaId::from(topology::common_good_assets::ID).into_account_truncating();
 	let statemine_asset_id = STABLE::ID as u32;
 	let total_issuance = 3_500_000_000_000;
@@ -282,7 +278,7 @@ fn rockmine_stable_to_dali_transfer() {
 		let root = frame_system::RawOrigin::Root;
 
 		Assets::force_create(
-			root.clone().into(),
+			root.into(),
 			statemine_asset_id,
 			MultiAddress::Id(ALICE.into()),
 			true,
@@ -311,8 +307,7 @@ fn rockmine_stable_to_dali_transfer() {
 					PalletInstance(50),
 					GeneralIndex(STABLE::ID),
 				),
-			)
-			.into(),
+			),
 		);
 		let ratio = Rational64::from(STABLE::ONE as u64 * 15, 1000 * PICA::ONE as u64);
 
@@ -341,10 +336,9 @@ fn rockmine_stable_to_dali_transfer() {
 		use statemine_runtime::*;
 		let origin = Origin::signed(BOB.into());
 		assert_ok!(PolkadotXcm::limited_reserve_transfer_assets(
-			origin.clone(),
+			origin,
 			Box::new(
 				VersionedMultiLocation::V1(MultiLocation::new(1, X1(Parachain(THIS_PARA_ID))))
-					.into()
 			),
 			Box::new(Junction::AccountId32 { id: BOB, network: NetworkId::Any }.into().into()),
 			Box::new(
@@ -468,7 +462,7 @@ fn this_chain_side(relay_native_asset_amount: u128, foreign_asset_id_on_this: Cu
 					1,
 					X2(
 						Parachain(topology::common_good_assets::ID),
-						Junction::AccountId32 { network: NetworkId::Any, id: BOB.into() }
+						Junction::AccountId32 { network: NetworkId::Any, id: BOB }
 					)
 				)
 				.into()
@@ -495,7 +489,7 @@ fn statemine_setup_assets(
 	other_total: Balance,
 	foreign_chain_account: AccountId,
 	this_parachain_account_init_amount: Balance,
-) -> () {
+) {
 	use statemine_runtime::*;
 	Statemine::execute_with(|| {
 		let origin = Origin::signed(ALICE.into());
@@ -513,7 +507,7 @@ fn statemine_setup_assets(
 		assert_eq!(native_for_alice, Balances::balance(&AccountId::from(ALICE)),);
 
 		assert_ok!(Assets::mint(
-			origin.clone(),
+			origin,
 			statemine_asset_id,
 			MultiAddress::Id(ALICE.into()),
 			other_total
@@ -544,10 +538,9 @@ fn statemine_side(this_parachain_account_init_amount: u128, statemine_asset_id: 
 		let origin = Origin::signed(ALICE.into());
 
 		assert_ok!(PolkadotXcm::reserve_transfer_assets(
-			origin.clone(),
+			origin,
 			Box::new(
 				VersionedMultiLocation::V1(MultiLocation::new(1, X1(Parachain(THIS_PARA_ID))))
-					.into()
 			),
 			Box::new(Junction::AccountId32 { id: BOB, network: NetworkId::Any }.into().into()),
 			Box::new(
@@ -579,8 +572,7 @@ fn register_statemine_asset(remote_asset_id: CommonAssetId, ratio: Rational64) -
 					PalletInstance(50),
 					GeneralIndex(remote_asset_id as u128),
 				),
-			)
-			.into(),
+			),
 		);
 		AssetsRegistry::register_asset(
 			frame_system::RawOrigin::Root.into(),
@@ -590,7 +582,7 @@ fn register_statemine_asset(remote_asset_id: CommonAssetId, ratio: Rational64) -
 		)
 		.unwrap();
 		let location = XcmAssetLocation::new(
-			MultiLocation::new(1, X1(Parachain(topology::common_good_assets::ID))).into(),
+			MultiLocation::new(1, X1(Parachain(topology::common_good_assets::ID))),
 		);
 		AssetsRegistry::set_min_fee(
 			frame_system::RawOrigin::Root.into(),

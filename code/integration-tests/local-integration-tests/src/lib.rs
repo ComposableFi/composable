@@ -40,7 +40,7 @@ pub fn env_logger_init() {
 	use std::sync::Once;
 	static START: Once = Once::new();
 	START.call_once(|| {
-		let _ = env_logger::builder()
+		env_logger::builder()
 			.is_test(true)
 			.try_init()
 			.expect("test log runs in env it can run");
@@ -74,3 +74,5 @@ mod common_goods_assets;
 #[cfg(test)]
 mod errors;
 pub mod testing;
+#[cfg(test)]
+mod relay_transfer;
