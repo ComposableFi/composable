@@ -11,17 +11,9 @@ in pkgs.rustPlatform.buildRustPackage rec {
     name = "subxt-src";
     url = subxt-dep.git;
     rev = subxt-dep.rev;
-    sha256 = "sha256-eRz1MtgGaJ3PZ6rNddAkE0OuGyP4TaUH+d29bO8x6Sg=";
+    sha256 = "sha256-C5BYvXA6jRx3Dhwp14se/LcqzfvADhg4pU6Ysmz37Sw=";
   };
-  cargoLock = {
-    lockFile = lockFilePath;
-    outputHashes = { "beefy-gadget-4.0.0-dev" = "sha256-roQ1fAHT9pdzeaLjedStg+C8voDnj8gbo/R0zloXZlo="; };
 
-  };
-  postPatch = ''
-    echo ${lockFilePath}
-    cp ${lockFilePath} Cargo.lock
-  '';
   cargoHash = "sha256-roQ1fAHT9pdzeaLjedStg+C8voDnj8gbo/R0zloXZlo=";
   cargoDepsName = pname;
 }
