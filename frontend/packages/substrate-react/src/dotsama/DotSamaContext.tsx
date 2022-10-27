@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useEffect, useMemo, useState } from "react";
 import {
+  ConnectedAccounts,
   DotSamaContext,
   DotSamaExtensionStatus,
   ParachainApi,
@@ -13,24 +14,14 @@ import type { InjectedAccount, InjectedAccountWithMeta, InjectedExtension } from
 import { decodeAddress, encodeAddress } from "@polkadot/util-crypto";
 import { createParachainApis, createRelaychainApis } from "./utils";
 
-const truncate_regex = /^([a-zA-Z0-9]{4})[a-zA-Z0-9]+([a-zA-Z0-9]{4})$/;
+// const truncate_regex = /^([a-zA-Z0-9]{4})[a-zA-Z0-9]+([a-zA-Z0-9]{4})$/;
 
-function getAccounts(
-  accounts: any
-) {
-  return (accounts).map(
-    (x: any) => {
-      const regexMatch = x.address.match(truncate_regex);
-      const nameFallback = regexMatch
-        ? `${regexMatch[1]}...${regexMatch[2]}`
-        : x.address;
-      return {
-        address: x.address,
-        name: x.meta.name ?? nameFallback
-      };
-    }
-  );
-}
+const DEFAULT_ACCOUNTS: ConnectedAccounts = {
+  picasso: [],
+  karura: [],
+  kusama: [],
+  polkadot: []
+};
 
 function mapAccounts(
   source: string,
@@ -93,7 +84,8 @@ export const DotsamaContext = createContext<DotSamaContext>({
   relaychainProviders: RELAYCHAIN_PROVIDERS_DEFAULT,
   extensionStatus: "initializing",
   activate: undefined,
-  selectedAccount: -1
+  selectedAccount: -1,
+  connectedAccounts: DEFAULT_ACCOUNTS
 });
 
 export const DotSamaContextProvider = ({
@@ -124,6 +116,7 @@ export const DotSamaContextProvider = ({
     [chainId in RelayChainId]: RelaychainApi;
   }>(RELAYCHAIN_PROVIDERS_DEFAULT);
 
+  const [connectedAccounts, setConnectedAccounts] = useState<ConnectedAccounts>(DEFAULT_ACCOUNTS);
   const [extensionInjected, setInjectedExtension] = useState<InjectedExtension | undefined>(undefined);
   const [extensionStatus, setExtensionStatus] =
     useState<DotSamaExtensionStatus>("initializing");
@@ -155,6 +148,8 @@ export const DotSamaContextProvider = ({
     setExtensionStatus("connected");
     localStorage.setItem("wallet-id", walletId);
     setInjectedExtension(injectedExtension as InjectedExtension);
+
+    let accountMap: ConnectedAccounts = DEFAULT_ACCOUNTS;
     for (const element of supportedParachains) {
       const { chainId } = element;
       const { prefix } = ParachainNetworks[chainId];
@@ -167,11 +162,7 @@ export const DotSamaContextProvider = ({
         if (accounts === undefined)
           throw new Error("Unable to fetch accounts from extension.");
 
-        setParachainProviders((s) => {
-          s[chainId].accounts = getAccounts(accounts);
-
-          return { ...s };
-        });
+        accountMap = { ...accountMap, [chainId]: accounts }
 
         if (selectDefaultAccount) {
           setSelectedAccount(accounts.length ? 0 : -1);
@@ -189,13 +180,11 @@ export const DotSamaContextProvider = ({
           throw new Error("Unable to fetch accounts from extension.");
         accounts = mapAccounts(walletId, accounts, prefix);
 
-        setRelayChainProviders((s: { kusama: RelaychainApi; polkadot: RelaychainApi }): { kusama: RelaychainApi; polkadot: RelaychainApi } => {
-          s[chainId].accounts = getAccounts(accounts);
-
-          return { ...s };
-        });
+        accountMap = { ...accountMap, [chainId]: accounts }
       }
     }
+
+    setConnectedAccounts(accountMap);
 
     return injectedExtension;
   }, [appName, supportedParachains, supportedRelaychains]);
@@ -238,7 +227,8 @@ export const DotSamaContextProvider = ({
         selectedAccount,
         activate,
         deactivate,
-        extensionStatus
+        extensionStatus,
+        connectedAccounts
       }}
     >
       {children}

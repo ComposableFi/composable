@@ -1,16 +1,6 @@
 //! Setup of Picasso running as if it is on Kusama relay
-use common::{xcmp::STATEMINE_PARA_ID, AccountId, Balance};
+use common::{AccountId, Balance};
 use cumulus_primitives_core::ParaId;
-
-#[cfg(feature = "dali")]
-use dali_runtime as sibling_runtime;
-#[cfg(feature = "dali")]
-use dali_runtime as other_runtime;
-
-#[cfg(feature = "picasso")]
-use picasso_runtime as sibling_runtime;
-#[cfg(feature = "picasso")]
-use picasso_runtime as other_runtime;
 
 use frame_support::traits::GenesisBuild;
 use polkadot_primitives::v2::{BlockNumber, MAX_CODE_SIZE, MAX_POV_SIZE};
@@ -19,10 +9,7 @@ use primitives::currency::CurrencyId;
 use sp_runtime::traits::AccountIdConversion;
 use xcm_emulator::{decl_test_network, decl_test_parachain, decl_test_relay_chain, XCM_VERSION};
 
-pub const ALICE: [u8; 32] = [4_u8; 32];
-pub const BOB: [u8; 32] = [5_u8; 32];
-pub const CHARLIE: [u8; 32] = [6_u8; 32];
-
+use crate::prelude::*;
 pub const PICA: Balance = 1_000_000_000_000;
 
 // keep in sync with parachains, as macro does not allows for names
@@ -35,16 +22,16 @@ decl_test_parachain! {
 		Origin = statemine_runtime::Origin,
 		XcmpMessageHandler = statemine_runtime::XcmpQueue,
 		DmpMessageHandler = statemine_runtime::DmpQueue,
-		new_ext = para_ext(STATEMINE_PARA_ID),
+		new_ext = para_ext(common::topology::statemine::ID),
 	}
 }
 
 decl_test_parachain! {
 	pub struct This {
-		Runtime = sibling_runtime::Runtime,
-		Origin = sibling_runtime::Origin,
-		XcmpMessageHandler = sibling_runtime::XcmpQueue,
-		DmpMessageHandler = sibling_runtime::DmpQueue,
+		Runtime = this_runtime::Runtime,
+		Origin = this_runtime::Origin,
+		XcmpMessageHandler = this_runtime::XcmpQueue,
+		DmpMessageHandler = this_runtime::DmpQueue,
 		new_ext = picasso_ext(THIS_PARA_ID),
 	}
 }
@@ -53,18 +40,18 @@ decl_test_parachain! {
 // and then decide how to imitate hydra
 decl_test_parachain! {
 	pub struct Sibling {
-		Runtime = other_runtime::Runtime,
-		Origin = other_runtime::Origin,
-		XcmpMessageHandler = other_runtime::XcmpQueue,
-		DmpMessageHandler = other_runtime::DmpQueue,
+		Runtime = sibling_runtime::Runtime,
+		Origin = sibling_runtime::Origin,
+		XcmpMessageHandler = sibling_runtime::XcmpQueue,
+		DmpMessageHandler = sibling_runtime::DmpQueue,
 		new_ext = picasso_ext(SIBLING_PARA_ID),
 	}
 }
 
 decl_test_relay_chain! {
 	pub struct KusamaRelay {
-		Runtime = kusama_runtime::Runtime,
-		XcmConfig = kusama_runtime::xcm_config::XcmConfig,
+		Runtime = relay_runtime::Runtime,
+		XcmConfig = relay_runtime::xcm_config::XcmConfig,
 		new_ext = kusama_ext(),
 	}
 }
@@ -122,7 +109,7 @@ pub const ALICE_RELAY_BALANCE: u128 = 2002 * PICA;
 pub const PICASSO_RELAY_BALANCE: u128 = 10 * PICA;
 
 pub fn kusama_ext() -> sp_io::TestExternalities {
-	use kusama_runtime::{Runtime, System};
+	use relay_runtime::{Runtime, System};
 	let mut storage = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
 	// TODO: remove implicit assets and mint these directly in test
 	balances::GenesisConfig::<Runtime> {
@@ -150,9 +137,9 @@ pub fn kusama_ext() -> sp_io::TestExternalities {
 	externalities
 }
 
-pub const ALICE_PARACHAIN_BALANCE: u128 = 200 * 1_000_000_000_000;
-pub const ALICE_PARACHAIN_PICA: u128 = 200 * 1_000_000_000_000;
-pub const ALICE_PARACHAIN_KSM: u128 = 13 * 1_000_000_000_000;
+pub const ALICE_PARACHAIN_BALANCE: u128 = 200 * PICA::ONE;
+pub const ALICE_PARACHAIN_PICA: u128 = 200 * PICA::ONE;
+pub const ALICE_PARACHAIN_KSM: u128 = 13 * RELAY_NATIVE::ONE;
 
 pub fn picasso_ext(parachain_id: u32) -> sp_io::TestExternalities {
 	let parachain_id = parachain_id.into();

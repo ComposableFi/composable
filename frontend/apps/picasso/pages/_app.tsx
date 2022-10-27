@@ -1,28 +1,28 @@
+import { client as apolloClient } from "@/apollo/apolloGraphql";
+import { ThemeResponsiveSnackbar } from "@/components/Molecules/Snackbar";
+import { ColorModeContext } from "@/contexts/ColorMode";
+import { NETWORKS } from "@/defi/Networks";
+import { APP_NAME } from "@/defi/polkadot/constants";
+import SubstrateBalancesUpdater from "@/stores/defi/polkadot/balances/PolkadotBalancesUpdater";
+import CrowdloanRewardsUpdater from "@/stores/defi/polkadot/crowdloanRewards/CrowdloanRewardsUpdater";
+import createEmotionCache from "@/styles/createEmotionCache";
+import { getDesignTokens } from "@/styles/theme";
+import { rpc as acalaRpc, types as acalaTypes } from "@acala-network/types";
+import { ApolloProvider } from "@apollo/client";
+import { CacheProvider, EmotionCache } from "@emotion/react";
+import CssBaseline from "@mui/material/CssBaseline";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { BlockchainProvider } from "bi-lib";
 import "defi-interfaces";
+import * as definitions from "defi-interfaces/definitions";
+import { AppProps } from "next/app";
+import Head from "next/head";
+import { SnackbarProvider } from "notistack";
 
 import * as React from "react";
 import { hotjar } from "react-hotjar";
-import Head from "next/head";
-import { AppProps } from "next/app";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
-import CssBaseline from "@mui/material/CssBaseline";
-import { CacheProvider, EmotionCache } from "@emotion/react";
-import createEmotionCache from "@/styles/createEmotionCache";
-import { getDesignTokens } from "@/styles/theme";
-import { ColorModeContext } from "@/contexts/ColorMode";
-import SubstrateBalancesUpdater from "@/stores/defi/polkadot/balances/PolkadotBalancesUpdater";
-import CrowdloanRewardsUpdater from "@/stores/defi/polkadot/crowdloanRewards/CrowdloanRewardsUpdater";
-import { SnackbarProvider } from "notistack";
-import { ThemeResponsiveSnackbar } from "@/components/Molecules/Snackbar";
-import { DotSamaContextProvider, ExecutorProvider } from "substrate-react";
-import { ApolloProvider } from "@apollo/client";
-import { client as apolloClient } from "@/apollo/apolloGraphql";
-import * as definitions from "defi-interfaces/definitions";
-import { APP_NAME } from "@/defi/polkadot/constants";
-import { BlockchainProvider } from "bi-lib";
-import { NETWORKS } from "@/defi/Networks";
 import { getEnvironment } from "shared/endpoints";
-import { rpc as acalaRpc, types as acalaTypes } from "@acala-network/types";
+import { DotSamaContextProvider, ExecutorProvider } from "substrate-react";
 // Client-side cache, shared for the whole session of the user in the browser.
 const clientSideEmotionCache = createEmotionCache();
 
@@ -50,7 +50,7 @@ const initializeHotjar = () => {
   }
 };
 const rpc = Object.keys(definitions)
-  .filter(k => {
+  .filter((k) => {
     if (!(definitions as any)[k].rpc) {
       return false;
     } else {
@@ -65,7 +65,7 @@ const rpc = Object.keys(definitions)
     {}
   );
 const types = Object.keys(definitions)
-  .filter(key => Object.keys((definitions as any)[key].types).length > 0)
+  .filter((key) => Object.keys((definitions as any)[key].types).length > 0)
   .reduce(
     (accumulator, key) => ({
       ...accumulator,
@@ -79,7 +79,7 @@ export default function MyApp(props: MyAppProps) {
   const colorMode = React.useMemo(
     () => ({
       toggleColorMode: () => {
-        setMode(prevMode => (prevMode === "light" ? "dark" : "light"));
+        setMode((prevMode) => (prevMode === "light" ? "dark" : "light"));
       },
     }),
     []
@@ -104,10 +104,10 @@ export default function MyApp(props: MyAppProps) {
             supportedRelaychains={[
               {
                 chainId: "kusama",
-                rpcUrl: process.env.SUBSTRATE_PROVIDER_URL_KUSAMA || "",
+                rpcUrl: getEnvironment("kusama"),
                 rpc: {},
-                types: {}
-              }
+                types: {},
+              },
             ]}
             supportedParachains={[
               {
@@ -120,8 +120,8 @@ export default function MyApp(props: MyAppProps) {
                 chainId: "karura",
                 rpcUrl: getEnvironment("karura"),
                 rpc: acalaRpc,
-                types: acalaTypes
-              }
+                types: acalaTypes,
+              },
             ]}
             appName={APP_NAME}
           >
@@ -134,14 +134,14 @@ export default function MyApp(props: MyAppProps) {
               })}
             >
               <ApolloProvider client={apolloClient}>
-                  <SubstrateBalancesUpdater />
-                  <CrowdloanRewardsUpdater />
-                  <SnackbarProvider
-                    Components={{
-                      info: ThemeResponsiveSnackbar,
-                      success: ThemeResponsiveSnackbar,
-                      error: ThemeResponsiveSnackbar,
-                      warning: ThemeResponsiveSnackbar,
+                <SubstrateBalancesUpdater />
+                <CrowdloanRewardsUpdater />
+                <SnackbarProvider
+                  Components={{
+                    info: ThemeResponsiveSnackbar,
+                    success: ThemeResponsiveSnackbar,
+                    error: ThemeResponsiveSnackbar,
+                    warning: ThemeResponsiveSnackbar,
                   }}
                   autoHideDuration={null}
                   maxSnack={4}

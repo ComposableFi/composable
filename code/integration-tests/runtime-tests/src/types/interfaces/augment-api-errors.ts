@@ -694,80 +694,84 @@ declare module '@polkadot/api-base/types/errors' {
       [key: string]: AugmentedError<ApiType>;
     };
     lending: {
+      AssetPriceNotFound: AugmentedError<ApiType>;
       /**
-       * Account did not deposit any collateral to particular market.
-       **/
-      AccountCollateralAbsent: AugmentedError<ApiType>;
-      /**
-       * Borrow and repay in the same block are not allowed.
-       * Flashloans are not supported by the pallet.
+       * Borrow and repay in the same block (flashloans) are not allowed.
        **/
       BorrowAndRepayInSameBlockIsNotSupported: AugmentedError<ApiType>;
       /**
-       * User tried to repay non-existent loan.
+       * Only assets that have a known price are supported.
        **/
+      BorrowAssetNotSupportedByOracle: AugmentedError<ApiType>;
       BorrowDoesNotExist: AugmentedError<ApiType>;
-      /**
-       * Borrow limit for particular borrower was not calculated
-       * due to arithmetic error.
-       **/
-      BorrowLimitCalculationFailed: AugmentedError<ApiType>;
-      /**
-       * Account did not pay any rent to particular market.
-       **/
+      BorrowerDataCalculationFailed: AugmentedError<ApiType>;
+      BorrowIndexDoesNotExist: AugmentedError<ApiType>;
+      BorrowRateDoesNotExist: AugmentedError<ApiType>;
       BorrowRentDoesNotExist: AugmentedError<ApiType>;
       CannotBorrowFromMarketWithUnbalancedVault: AugmentedError<ApiType>;
       /**
-       * Borrow rate can not be calculated.
+       * Can't allow amount 0 as collateral.
        **/
-      CannotCalculateBorrowRate: AugmentedError<ApiType>;
+      CannotDepositZeroCollateral: AugmentedError<ApiType>;
       CannotIncreaseCollateralFactorOfOpenMarket: AugmentedError<ApiType>;
+      CannotRepayMoreThanBorrowAmount: AugmentedError<ApiType>;
       /**
-       * Cannot repay more than total amount of debt when partially repaying.
+       * Repaying more than once in the same block is not allowed.
+       **/
+      CannotRepayMoreThanOnceInSameBlock: AugmentedError<ApiType>;
+      /**
+       * Cannot repay the total amount of debt when partially repaying.
        **/
       CannotRepayMoreThanTotalDebt: AugmentedError<ApiType>;
       /**
        * A market with a borrow balance of `0` was attempted to be repaid.
        **/
       CannotRepayZeroBalance: AugmentedError<ApiType>;
+      CannotWithdrawFromProvidedBorrowAccount: AugmentedError<ApiType>;
       /**
-       * Market can not be created since
-       * allowed number of markets was exceeded.
+       * Only assets that have a known price are supported.
        **/
+      CollateralAssetNotSupportedByOracle: AugmentedError<ApiType>;
+      CollateralDepositFailed: AugmentedError<ApiType>;
+      /**
+       * The collateral factor for a market must be more than one.
+       **/
+      CollateralFactorMustBeMoreThanOne: AugmentedError<ApiType>;
       ExceedLendingCount: AugmentedError<ApiType>;
-      /**
-       * Market manager has to deposit initial amount of borrow asset into the market account.
-       * Initial amount is denominated in normalized currency and calculated based on data
-       * from Oracle. The error is emitted if calculated amount is incorrect.
-       **/
-      InitialMarketVolumeIncorrect: AugmentedError<ApiType>;
-      /**
-       * Invalid collateral factor was provided.
-       * Collateral factor value must be more than one.
-       **/
-      InvalidCollateralFactor: AugmentedError<ApiType>;
       InvalidTimestampOnBorrowRequest: AugmentedError<ApiType>;
+      LiquidationFailed: AugmentedError<ApiType>;
+      MarketAndAccountPairNotFound: AugmentedError<ApiType>;
+      MarketCollateralWasNotDepositedByAccount: AugmentedError<ApiType>;
       /**
-       * The market could not be found.
+       * The market could not be found
        **/
       MarketDoesNotExist: AugmentedError<ApiType>;
       MarketIsClosing: AugmentedError<ApiType>;
-      /**
-       * User has provided not sufficient amount of collateral.
-       **/
+      MaxLiquidationBatchSizeExceeded: AugmentedError<ApiType>;
+      NotEnoughBorrowAsset: AugmentedError<ApiType>;
       NotEnoughCollateralToBorrow: AugmentedError<ApiType>;
       /**
-       * When user try to withdraw money beyond what is available.
+       * Attempted to withdraw more collateral than the account has in the market.
        **/
       NotEnoughCollateralToWithdraw: AugmentedError<ApiType>;
+      NotEnoughRent: AugmentedError<ApiType>;
+      Overflow: AugmentedError<ApiType>;
       /**
-       * Block number of provided price is out of allowed tolerance.
+       * borrow assets should have enough value as per oracle
        **/
+      PriceOfInitialBorrowVaultShouldBeGreaterThanZero: AugmentedError<ApiType>;
       PriceTooOld: AugmentedError<ApiType>;
+      RepayAmountMustBeGreaterThanZero: AugmentedError<ApiType>;
+      TransferFailed: AugmentedError<ApiType>;
       /**
        * Attempted to update a market owned by someone else.
        **/
       Unauthorized: AugmentedError<ApiType>;
+      Underflow: AugmentedError<ApiType>;
+      /**
+       * vault provided does not exist
+       **/
+      VaultNotFound: AugmentedError<ApiType>;
       /**
        * The market would go under collateralized if the requested amount of collateral was
        * withdrawn.
@@ -1242,34 +1246,30 @@ declare module '@polkadot/api-base/types/errors' {
     stakingRewards: {
       BackToTheFuture: AugmentedError<ApiType>;
       /**
-       * The duration provided was not valid for the pool.
-       **/
-      DurationPresetNotFound: AugmentedError<ApiType>;
-      /**
        * Invalid end block number provided for creating a pool.
        **/
-      EndBlockMustBeAfterStartBlock: AugmentedError<ApiType>;
+      EndBlockMustBeInTheFuture: AugmentedError<ApiType>;
       FnftNotFound: AugmentedError<ApiType>;
-      /**
-       * AssetId is invalid, asset IDs must be greater than 0
-       **/
-      InvalidAssetId: AugmentedError<ApiType>;
       /**
        * Reward's max limit reached.
        **/
       MaxRewardLimitReached: AugmentedError<ApiType>;
       /**
-       * No duration presets were provided upon pool creation.
+       * No duration presets configured.
        **/
-      NoDurationPresetsProvided: AugmentedError<ApiType>;
+      NoDurationPresetsConfigured: AugmentedError<ApiType>;
       /**
        * Not enough assets for a stake.
        **/
       NotEnoughAssets: AugmentedError<ApiType>;
       /**
+       * Only pool owner can add new reward asset.
+       **/
+      OnlyPoolOwnerCanAddNewReward: AugmentedError<ApiType>;
+      /**
        * only the owner of stake can unstake it
        **/
-      OnlyStakeOwnerCanInteractWithStake: AugmentedError<ApiType>;
+      OnlyStakeOwnerCanUnstake: AugmentedError<ApiType>;
       /**
        * Error when creating reduction configs.
        **/
@@ -1287,10 +1287,6 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       RewardsPoolAlreadyExists: AugmentedError<ApiType>;
       /**
-       * Rewards pool has not started.
-       **/
-      RewardsPoolHasNotStarted: AugmentedError<ApiType>;
-      /**
        * Rewards pool not found.
        **/
       RewardsPoolNotFound: AugmentedError<ApiType>;
@@ -1299,29 +1295,9 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       RewardsPotEmpty: AugmentedError<ApiType>;
       /**
-       * Slashed amount of minimum reward is less than existential deposit
-       **/
-      SlashedAmountTooLow: AugmentedError<ApiType>;
-      /**
-       * Slashed amount of minimum staking amount is less than existential deposit
-       **/
-      SlashedMinimumStakingAmountTooLow: AugmentedError<ApiType>;
-      /**
-       * Staked amount is less than the minimum staking amount for the pool.
-       **/
-      StakedAmountTooLow: AugmentedError<ApiType>;
-      /**
-       * Staked amount after split is less than the minimum staking amount for the pool.
-       **/
-      StakedAmountTooLowAfterSplit: AugmentedError<ApiType>;
-      /**
        * No stake found for given id.
        **/
       StakeNotFound: AugmentedError<ApiType>;
-      /**
-       * Invalid start block number provided for creating a pool.
-       **/
-      StartBlockMustBeAfterCurrentBlock: AugmentedError<ApiType>;
       /**
        * Too many rewarded asset types per pool violating the storage allowed.
        **/
