@@ -1,7 +1,6 @@
 # Nix
 *Reproducible builds, developer environments, service orchestrations, CI checks, and more!*
  
----
 
 At Composable, we use [Nix](https://nixos.org/) to build all of our products and services with a single tool. This ensures that our builds are **reproducible**, **declarative**, and **reliable**.
 

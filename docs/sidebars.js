@@ -240,7 +240,7 @@ const sidebars = {
             'nix/running-checks',
             'nix/defining-your-own-packages',
             'nix/composing-services-with-arion',
-            'nix/editing-book',
+            'nix/editing-docs',
           ],
         },
         {
@@ -254,7 +254,6 @@ const sidebars = {
           collapsed: true,
           items: [
             'codespaces/getting-started',
-            'codespaces/using-codespaces',
             {
               type: 'category',
               label: 'Using Codespaces',

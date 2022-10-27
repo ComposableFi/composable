@@ -1,7 +1,5 @@
 # Mosaic Phase 1 Result
 
----
-
 The following information in this section is related to the design of Mosaic v1 and outdated. Composable’s data team 
 extracted Proof of Concept (PoC) preprocessed on-chain data and ran the following analyses:
 

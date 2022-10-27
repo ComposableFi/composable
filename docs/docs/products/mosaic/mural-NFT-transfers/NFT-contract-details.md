@@ -1,7 +1,5 @@
 # NFT Contract Details
 
----
-
 ## Functions
 
 ```markdown
@@ -14,7 +12,6 @@ function transferERC721ToLayer(
     address feeToken
 )
 ```
-
 
 This function emits `TransferInitiated` with `isRelease == true` if the NFT is to be released on the destination 
 network. This is a special case when the original network of the NFT is equal to the destination network. On receiving 
@@ -59,8 +56,6 @@ summonNFT(
 
 This method is called to create/transfer a MosaicNFT on the destination network.
 
-
----
 
 
 ## NFT Transfer Flow

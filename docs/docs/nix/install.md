@@ -1,7 +1,7 @@
 # Install Nix
+
 *On Linux and macOS*.
 
---- 
 
 ## Installing Nix
 

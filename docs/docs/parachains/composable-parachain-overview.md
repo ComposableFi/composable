@@ -1,7 +1,5 @@
 # The Composable Parachain
 
----
-
 ## What is the Composable Parachain?
 
 The Composable Parachain is a Polkadot parachain bolstered by the Polkadot relay chain and thus, leverages Polkadot’s 

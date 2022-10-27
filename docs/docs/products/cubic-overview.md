@@ -1,7 +1,5 @@
 # Cubic: The Vault Pallet
 
----
-
 Cubic is Composable’s vault pallet and is part of the primary pallet core infrastructure that forms our DeFi 
 infrastructure. Currently, no vault infrastructure exists on Substrate. Therefore, the hope is that Cubic will set the 
 standard for what vaults will be in the Polkadot and Kusama ecosystems, which are a commonly used primitive in Ethereum 
