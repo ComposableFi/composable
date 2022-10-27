@@ -1,6 +1,6 @@
 # Running Checks
 
-_Cut your check-fix feedback-loop by not waiting on CI runners._
+*Cut your check-fix feedback-loop by not waiting on CI runners.*
 
 We've all been there. You're working on a PR, submit it for review, ping your colleagues to review it on Slack, only to notice that checks are suddenly failing in CI.
 
