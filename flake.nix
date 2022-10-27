@@ -422,19 +422,14 @@
               '';
             };
 
-          #  mk-subxt-client  = let
-          #   foobar = 24;
-          #   in pkgs.writeShellApplication {
-          #     name = "run-rococo-dali-karura";
-          #     text = ''
-          #       cat ${config-file}
-          #       rm -rf /tmp/polkadot-launch
-          #       ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
-          #     '';
-          #   };subxt codegen --file=dali.metadata | rustfmt --edition=2018 --emit=stdout > dali.rs
-
-            #  ./code/target/release/composable metadata --chain=dali-dev > ./dali.metadata
-#  subxt codegen --file=dali.metadata | rustfmt --edition=2018 --emit=stdout > dali.rs            
+           mk-subxt-client = metadata : let
+            foobar = 24;
+            in pkgs.writeShellApplication {
+              name = "subxt-codegen";
+              text = ''
+                ${subxt}/bin subxt codegen --file=${metadata} | rustfmt --edition=2021 --emit=stdout > subxt-codegen.rs
+              '';
+            };
 
           composable-node-release = crane-nightly.buildPackage (common-attrs
             // {
