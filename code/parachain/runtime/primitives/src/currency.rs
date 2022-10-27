@@ -242,15 +242,9 @@ impl From<u128> for CurrencyId {
 	}
 }
 
-/// maps id to junction generic key,
-/// unfortunately it is the best way to encode currency id as of now in XCM
-#[cfg(feature = "develop")]
 impl From<CurrencyId> for xcm::latest::Junction {
 	fn from(this: CurrencyId) -> Self {
-		xcm::latest::Junction::GeneralKey(sp_runtime::WeakBoundedVec::force_from(
-			this.encode(),
-			None,
-		))
+		xcm::latest::Junction::GeneralIndex(this.0)
 	}
 }
 

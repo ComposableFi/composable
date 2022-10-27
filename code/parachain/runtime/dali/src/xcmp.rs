@@ -1,7 +1,9 @@
 //! Setup of XCMP for parachain to allow cross chain transfers and other operations.
 //! Very similar to https://github.com/galacticcouncil/Basilisk-node/blob/master/runtime/basilisk/src/xcm.rs
 use super::*;
-use common::{governance::native::EnsureRootOrHalfNativeTechnical, xcmp::*, PriceConverter};
+use common::{
+	governance::native::EnsureRootOrHalfNativeTechnical, topology, xcmp::*, PriceConverter,
+};
 use composable_traits::{
 	oracle::MinimalOracle,
 	xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation},
@@ -13,7 +15,7 @@ use frame_support::{
 	weights::Weight,
 };
 use orml_traits::{
-	location::{AbsoluteReserveProvider, Reserve},
+	location::{AbsoluteReserveProvider, RelativeReserveProvider, Reserve},
 	parameter_type_with_key,
 };
 use orml_xcm_support::{
@@ -102,27 +104,7 @@ pub type XcmOriginToTransactDispatchOrigin = (
 );
 
 pub struct StaticAssetsMap;
-
-pub mod parachains {
-	pub mod karura {
-		pub const ID: u32 = 3000;
-		pub const KUSD_KEY: &[u8] = &[0, 129];
-	}
-}
-
-impl XcmpAssets for StaticAssetsMap {
-	fn remote_to_local(location: MultiLocation) -> Option<CurrencyId> {
-		match location {
-			MultiLocation { parents: 1, interior: X2(Parachain(para_id), GeneralKey(key)) } =>
-				match (para_id, &key[..]) {
-					(parachains::karura::ID, parachains::karura::KUSD_KEY) =>
-						Some(CurrencyId::kUSD),
-					_ => None,
-				},
-			_ => None,
-		}
-	}
-}
+impl XcmpAssets for StaticAssetsMap {}
 
 pub type LocalAssetTransactor = MultiCurrencyAdapter<
 	crate::Assets,
@@ -224,10 +206,6 @@ impl xcm_executor::Config for XcmConfig {
 	type AssetTrap = CaptureAssetTrap;
 }
 
-parameter_types! {
-	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::parachain_id().into())));
-}
-
 parameter_type_with_key! {
 	pub ParachainMinFee: |location: MultiLocation| -> Option<Balance> {
 		#[allow(clippy::match_ref_pats)] // false positive
@@ -235,9 +213,6 @@ parameter_type_with_key! {
 		match (location.parents, location.first_interior()) {
 			// relay KSM
 			(1, None) => Some(400_000_000_000),
-
-			// if amount is not enough, it should be trapped by target chain or discarded as spam, so bear the risk
-			// we use Acala's team XTokens which are opinionated - PANIC in case of zero
 			(1, Some(Parachain(id)))  =>  {
 				let location = XcmAssetLocation::new(location.clone());
 				AssetsRegistry::min_xcm_fee(ParaId::from(*id), location).or(Some(u128::MAX))
@@ -253,7 +228,7 @@ impl orml_xtokens::Config for Runtime {
 	type CurrencyId = CurrencyId;
 	type CurrencyIdConvert = AssetsIdConverter;
 	type AccountIdToMultiLocation = AccountIdToMultiLocation;
-	type SelfLocation = SelfLocation;
+	type SelfLocation = topology::this::Local;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
 	type BaseXcmWeight = BaseXcmWeight;
@@ -261,7 +236,7 @@ impl orml_xtokens::Config for Runtime {
 	type MaxAssetsForTransfer = XcmMaxAssetsForTransfer;
 	type MinXcmFee = ParachainMinFee;
 	type MultiLocationsFilter = Everything;
-	type ReserveProvider = AbsoluteReserveProvider;
+	type ReserveProvider = RelativeReserveProvider;
 }
 
 impl orml_unknown_tokens::Config for Runtime {
@@ -274,6 +249,19 @@ parameter_types! {
 	// One XCM operation is 200_000_000 weight, cross-chain transfer ~= 2x of transfer.
 	pub const UnitWeightCost: Weight = 200_000_000;
 	pub const MaxInstructions: u32 = 100;
+}
+
+pub fn xcm_asset_fee_estimator(instructions: u8, asset_id: CurrencyId) -> Balance {
+	assert!((instructions as u32) <= MaxInstructions::get());
+	let total_weight = UnitWeightCost::get() * instructions as u64;
+	Trader::weight_to_asset(total_weight, asset_id)
+		.expect("use only in simulator")
+		.1
+}
+
+pub fn xcm_fee_estimator(instructions: u8) -> Weight {
+	assert!((instructions as u32) <= MaxInstructions::get());
+	UnitWeightCost::get() * instructions as u64
 }
 
 impl pallet_xcm::Config for Runtime {

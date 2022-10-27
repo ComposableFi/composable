@@ -36,10 +36,16 @@
 	unused_must_use
 )]
 
-/// this must be singleton
 #[cfg(test)]
 pub fn env_logger_init() {
-	let _ = env_logger::builder().is_test(true).try_init();
+	use std::sync::Once;
+	static START: Once = Once::new();
+	START.call_once(|| {
+		let _ = env_logger::builder()
+			.is_test(true)
+			.try_init()
+			.expect("test log runs in env it can run");
+	});
 }
 
 #[cfg(test)]
@@ -65,4 +71,5 @@ mod relaychain;
 mod transact_calls;
 
 #[cfg(test)]
-mod statemine;
+mod common_goods_assets;
+pub mod testing;

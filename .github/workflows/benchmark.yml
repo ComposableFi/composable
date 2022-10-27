@@ -1,0 +1,68 @@
+name: Run Benchmarks
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [labeled, synchronize, opened, reopened]
+    branches:
+      - main
+      - releases
+
+jobs:
+  benchmark:
+    name: Benchmark
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - bmark
+    container:
+      image: composablefi/ci-linux:2022-08-06
+    concurrency:
+      group: bench-${{ github.ref }}
+      cancel-in-progress: true
+    if: github.event.pull_request.draft == false
+    steps:
+      - name: Clean up
+        continue-on-error: true
+        run: |
+          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+          docker system prune --force --all --volumes
+
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Fix dubious ownership
+        run: |
+          git config --global --add safe.directory /__w/composable/composable
+          git config --add safe.directory /__w/composable/composable
+
+      - name: Get branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v5.1
+
+      - name: Check for runtime changes
+        env:
+          BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+          GITHUB_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
+        id: check_runtime
+        if: contains(github.event.pull_request.labels.*.name, 'needs-benchmarks')
+        run: .maintain/check_runtime.sh
+
+      # TODO: use nix
+      - name: Benchmark Test
+        env:
+          BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+          GITHUB_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
+        if: env.RUNTIME_CHECK == 1
+        id: run_benchmarks
+        run: .maintain/run_benchmarks.sh 50 20
+
+      - uses: EndBug/add-and-commit@v9
+        with: 
+          add: 'code/parachain/runtime'
+          message: 'Pushing benchmark changes'
+          push: "true"
+          new_branch: ${{ steps.branch-name.outputs.current_branch }}
