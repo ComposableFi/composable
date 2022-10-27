@@ -134,7 +134,7 @@ message Spawn {
 
 message Query {
   Network network = 1;
-  Salt salt = 3;
+  Salt salt = 2;
 }
 
 message Call {
