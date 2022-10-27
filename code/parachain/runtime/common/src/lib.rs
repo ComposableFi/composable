@@ -221,7 +221,7 @@ pub fn multi_existential_deposits<AssetsRegistry>(_currency_id: &CurrencyId) -> 
 
 /// Given a `currency_id`, returns the existential deposit of a MultiAsset in the native asset.
 /// Returns `Balance::MAX` as the existential deposit if unable to get an existential deposit
-/// for the given `currency_id`, this will prune unkown asset balances.
+/// for the given `currency_id`, this will prune unknown asset balances.
 #[cfg(not(feature = "runtime-benchmarks"))]
 pub fn multi_existential_deposits<
 	AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>
@@ -249,7 +249,7 @@ pub fn multi_existential_deposits<
 			CurrencyId::vKSM => 100_000_000_000,
 			// TODO: MOVR: ?
 			CurrencyId::MOVR => 100_000_000_000,
-			// Unkown: Prune unkown balances
+			// Unknown: Prune unkown balances
 			_ => Balance::MAX,
 		})
 }
