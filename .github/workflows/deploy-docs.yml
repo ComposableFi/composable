@@ -1,10 +1,10 @@
-name: Deploy Documentation
+name: Deploy Docs to docs.composable.finance via Firebase
 
 on:
   push: 
     branches: 
       - main
-      - cor/xcvm-architecture-docs
+
 env:
   NIX_NIXPKGS_CHANNEL: https://nixos.org/channels/nixpkgs-22.05-darwin
   NIX_CONTAINER_IMAGE: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
@@ -46,15 +46,3 @@ jobs:
           projectId: composable-docs
           entrypoint: docs/
           channelId: live
-
-
-      # - name: Run mdbook
-      #   run: nix build ".#composable-book"
-
-      # - name: install firebase
-      #   run: npm i firebase-tools -g  
-
-      # - name: deploy
-      #   env:
-      #     FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-      #   run: cd book && firebase deploy 
