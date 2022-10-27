@@ -249,7 +249,7 @@ pub fn multi_existential_deposits<
 			CurrencyId::vKSM => 100_000_000_000,
 			// TODO: MOVR: ?
 			CurrencyId::MOVR => 100_000_000_000,
-			// Unknown: Prune unkown balances
+			// Unknown: Prune unknown balances
 			_ => Balance::MAX,
 		})
 }
