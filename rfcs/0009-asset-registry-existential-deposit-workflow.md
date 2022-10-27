@@ -10,7 +10,7 @@ from a code and SUDO/Governance prospective.
 ## Background
 ---
 
-Existential Deposits are the minimum value required of a balance to exists on
+Existential Deposits are the minimum balance required of an account to exist on
 our chains. Given that different tokens will have different values, its 
 necessary to have different Existential Deposit values for different tokens.
 
@@ -18,12 +18,9 @@ necessary to have different Existential Deposit values for different tokens.
 ---
 
 * Be able to define different Existential Deposit values for different
-  tokens.
-* Have a predefined collection of well-known tokens that each have their
-  own Existential Deposit.
+  tokens in the native currency.
 * SUDO/Governance must be able to overwrite the predefined Existential Deposit
   values without modifying the code.
-* Be able to add Existential Deposit for new tokens recognized by the chain.
 
 ## Implementation
 ---
@@ -64,12 +61,15 @@ the following algorithm:
   Given some token ID, `currency_id`
 
   1. Query Currency Factory for the ED of `currency_id`
+		a. Given the ED of a token, convert that into the native asset with either 
+			 the ratio from Asset Registry or hard-coded, per-token, math.
 
   2. If not found in 1, attempt to match `currency_id` to our hard-coded ED 
      values
     
   3. If not found in 1 or 2, return the maximum value of the `Balance` type so
-     that unknown assets balances are not tracked
+     that unknown assets balances are not tracked as ED would be an impossible 
+		 amount to have in an account.
     
 The following implementation accomplishes this:
 
