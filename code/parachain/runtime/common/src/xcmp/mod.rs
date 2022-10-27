@@ -406,3 +406,18 @@ impl FilterAssetLocation for RelayReserveFromParachain {
 			matches!(origin, MultiLocation { parents: 1, interior: X1(Parachain(_)) })
 	}
 }
+
+parameter_type_with_key! {
+	pub OutgoingParachainMinFee: |location: MultiLocation| -> Option<Balance> {
+		#[allow(clippy::match_ref_pats)] // false positive
+		#[allow(clippy::match_single_binding)]
+		match (location.parents, location.first_interior()) {
+			(1, None) => Some(400_000_000_000),
+			(1, Some(Parachain(id)))  =>  {
+				let location = XcmAssetLocation::new(location.clone());
+				AssetsRegistry::min_xcm_fee(ParaId::from(*id), location).or(Some(u128::MAX))
+			},
+			_ => Some(u128::MAX),
+		}
+	};
+}

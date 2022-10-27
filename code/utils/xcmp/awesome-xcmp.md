@@ -36,7 +36,8 @@ XCMP can be upward (parachain to relay), downward(relay to parachain) and siblin
 
 ## XCMP design
 
-- <https://www.youtube.com/watch?v=cS8GvPGMLS0>
+- [Substrate Builders Program Office Hours: XCM AMA(video)](https://www.youtube.com/watch?v=cS8GvPGMLS0)
+- [Shawn Tabrizi: XCM - The Backbone Of A Multichain Future | Polkadot Decoded 2022(video)](https://www.youtube.com/watch?v=2tmspefsygQ)
 - <https://www.youtube.com/watch?v=5cgq5jOZx9g>
 - <https://substrate.stackexchange.com/questions/37/how-can-i-transfer-assets-using-xcm>
 - <https://www.youtube.com/watch?v=wrA9vlPjVPE>
