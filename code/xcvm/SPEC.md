@@ -200,7 +200,7 @@ Absolute     ::= u128
 Unit         ::= u128 Ratio
 Ratio        ::= u128 u128
 Account      ::= bytes
-AssetAmount  ::= assetId Ratio | Unit 
+AssetAmount  ::= AssetId Ratio | Unit 
 Asset        ::= AssetId Balance
 Assets       ::= [ asset ]
 Transfer     ::= Account Assets  |  Relayer Assets 
@@ -237,7 +237,6 @@ sequenceDiagram
 
 The call instruction supports bindings values on the executing side of the program by specifying the `Bindings`. This allows us to construct a program that uses data only available on the executing side. For example, the swap call of the following smart contract snippet expects a `to` address to receive the funds after a trade.
 
-```
 
 ```rust
 fn swap(amount: u256, pair: (u128, u128), to: AccountId) { ... } 
@@ -256,7 +255,7 @@ On the executing interpreter, `BindingValue::Self` will be interpolated at byte 
 
 Besides accessing the `Self` register, `BindingValue` allows for lazy lookups of AssetId conversions, by using `BindingValue::AssetId(GlobalId)`, or lazily converting amount value depending on the chain using the `AssetAmount` type.
 
-Bindings do not support non byte aligned encodings. To correctly bind values in the execution layer, the binding values should be ordered by their position index(u16) respectively since to process them interpreters will iterate over the bindings in sequence, after each iteration, the original payload will be updated with the new binding value and the next binding value position will be shifted by the length of the binding value. 
+Bindings do not support non-byte-aligned encodings. To correctly bind values in the execution layer, the binding values should be ordered by their position index(u16) respectively. Because to process them, interpreters will iterate over the bindings in sequence. After each iteration, the original payload will be updated with the new `BindingValue` and the next `BindingValue` position will be shifted by the length of the `BindingValue`. 
 
 #### Handling Balances
 

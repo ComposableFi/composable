@@ -10,7 +10,7 @@ interface IGateway {
     }
 
     enum BridgeSecurity {
-        Disabiled,
+        Disabled,
         Deterministic,
         Probabilistic,
         Optimistic

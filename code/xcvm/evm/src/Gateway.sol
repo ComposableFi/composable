@@ -12,7 +12,7 @@ contract Gateway is Ownable, IGateway {
     mapping(uint256 => mapping(bytes => address)) public userInterpreter;
 
     mapping(address => Bridge) public bridgesInfo;
-    // TODO ? do we have only one bridgge per network and security
+    // TODO ? do we have only one bridge per network and security
     mapping(uint256 => mapping(BridgeSecurity => address)) public bridges;
     mapping(uint256 => address) public assets;
 
