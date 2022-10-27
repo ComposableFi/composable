@@ -703,6 +703,8 @@
               name = meta.name;
               value = meta;
             }) (composables ++ polkadots);
+
+            
           in builtins.listToAttrs all;
 
         in rec {
