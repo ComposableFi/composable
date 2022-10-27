@@ -2,7 +2,7 @@ extern crate alloc;
 
 use crate::{
 	error::ContractError,
-	msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, XCVMInstruction, XCVMProgram},
+	msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg},
 	state::{Config, CONFIG, IP_REGISTER, OWNERS, RESULT_REGISTER},
 };
 use alloc::borrow::Cow;
@@ -21,29 +21,13 @@ use prost::Message;
 use serde::Serialize;
 use std::collections::VecDeque;
 use xcvm_asset_registry::msg::{GetAssetContractResponse, QueryMsg as AssetRegistryQueryMsg};
-use xcvm_core::{
-	cosmwasm::*, Amount, BindingValue, Bindings, BridgeSecurity, Displayed, Funds, Instruction,
-	NetworkId, Register,
-};
+use xcvm_core::{cosmwasm::*, Amount, Displayed, Funds, Register};
+use xcvm_proto as proto;
 
 const CONTRACT_NAME: &str = "composable:xcvm-interpreter";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const CALL_ID: u64 = 1;
 const SELF_CALL_ID: u64 = 2;
-
-mod proto {
-	use super::{Amount, ContractError};
-
-	include!(concat!(env!("OUT_DIR"), "/interpreter.rs"));
-
-	impl TryFrom<Balance> for Amount {
-		type Error = ContractError;
-
-		fn try_from(value: Balance) -> core::result::Result<Self, Self::Error> {
-			todo!()
-		}
-	}
-}
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -153,7 +137,7 @@ pub fn interpret_program(
 					//    rest of the instructions as XCVM program. This will make sure that
 					//    previous call instruction will run first, then the rest of the program
 					//    will run.
-					let response = interpret_call(
+					let _response = interpret_call(
 						deps.as_ref(),
 						&env,
 						bindings.bindings,
@@ -207,7 +191,7 @@ pub fn interpret_call(
 	env: &Env,
 	bindings: Vec<proto::Binding>,
 	payload: Vec<u8>,
-	ip: usize,
+	_ip: usize,
 	response: Response,
 ) -> Result<Response, ContractError> {
 	// We don't know the type of the payload, so we use `serde_json::Value`
@@ -435,7 +419,11 @@ pub fn interpret_transfer(
 
 	for asset in assets {
 		let asset_id = asset.asset_id.ok_or(ContractError::InvalidProgram)?.asset_id;
-		let amount: Amount = asset.balance.ok_or(ContractError::InvalidProgram)?.try_into()?;
+		let amount: Amount = asset
+			.balance
+			.ok_or(ContractError::InvalidProgram)?
+			.try_into()
+			.map_err(|_| ContractError::InvalidProgram)?;
 
 		let query_msg = AssetRegistryQueryMsg::GetAssetContract(asset_id.into());
 

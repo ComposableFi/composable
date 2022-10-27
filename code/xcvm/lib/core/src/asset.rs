@@ -1,5 +1,5 @@
 use crate::abstraction::IndexOf;
-use alloc::string::ToString;
+use alloc::{string::ToString, vec::Vec};
 use codec::{Decode, Encode};
 use core::ops::Add;
 use fixed::{types::extra::U16, FixedU128};
@@ -142,6 +142,11 @@ pub struct Amount {
 }
 
 impl Amount {
+	#[inline]
+	pub fn new(intercept: u128, slope: u128) -> Self {
+		Self { intercept: Displayed(intercept), slope: Displayed(slope) }
+	}
+
 	/// An absolute amount
 	#[inline]
 	pub fn absolute(value: u128) -> Self {

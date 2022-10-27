@@ -33,13 +33,9 @@ serde-json-wasm = { git = "https://github.com/hussein-aitlahcen/serde-json-wasm"
 serde_json = "1"
 thiserror = { version = "1.0.31" }
 xcvm-asset-registry = { path = "../asset-registry", features = ["library"] }
-xcvm-core = { path = "../../../lib/core", features = ["std"] }
-prost = { version = "0.10", default-features = false, features = ["prost-derive"]}
-# Only necessary if using Protobuf well-known types:
-prost-types = { version = "0.10", default-features = false }
+xcvm-core = { path = "../../../lib/core", features = ["cosmwasm", "std"] }
+xcvm-proto = { path = "../../../lib/proto" }
+prost = { version = "0.11", default-features = false, features = ["prost-derive"]}
 
 [dev-dependencies]
 cosmwasm-schema = "1.0.0"
-
-[build-dependencies]
-prost-build = "0.10"

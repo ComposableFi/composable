@@ -5,6 +5,7 @@ extern crate alloc;
 mod abstraction;
 mod asset;
 mod bridge;
+#[cfg(feature = "cosmwasm")]
 pub mod cosmwasm;
 mod instruction;
 mod network;
@@ -189,7 +190,7 @@ mod tests {
 								},
 								Instruction::Transfer {
 									to: (),
-									assets: Funds::from(BTreeMap::from([(PICA::ID, u128::MAX)]))
+									assets: Funds::from(vec![(PICA::ID, u128::MAX)])
 								}
 							])
 						}

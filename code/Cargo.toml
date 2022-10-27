@@ -47,7 +47,7 @@ members = [
   "simnode/common",
   "utils/xcmp",
   "utils/wasm-optimizer",
-  "xcvm/lib/core",
+  "xcvm/lib/*",
   "xcvm/cosmwasm/contracts/*",
 ]
 
