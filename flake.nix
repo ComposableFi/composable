@@ -422,6 +422,29 @@
               '';
             };
 
+          #  devnet-rococo-dali-karura = let
+          #     config = (pkgs.callPackage
+          #       ./scripts/polkadot-launch/kusama-local-dali-dev-karura-dev.nix {
+          #         polkadot-bin = polkadot-node;
+          #         composable-bin = composable-node;
+          #         acala-bin = acala-node;
+          #       }).result;
+          #     config-file = pkgs.writeTextFile {
+          #       name = "kusama-local-dali-dev-karura-dev.json";
+          #       text = "${builtins.toJSON config}";
+          #     };
+          #   in pkgs.writeShellApplication {
+          #     name = "run-rococo-dali-karura";
+          #     text = ''
+          #       cat ${config-file}
+          #       rm -rf /tmp/polkadot-launch
+          #       ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
+          #     '';
+          #   };
+
+            #  ./code/target/release/composable metadata --chain=dali-dev > ./dali.metadata
+#  subxt codegen --file=dali.metadata | rustfmt --edition=2018 --emit=stdout > dali.rs            
+
           composable-node-release = crane-nightly.buildPackage (common-attrs
             // {
               name = "composable";
@@ -702,8 +725,7 @@
             all = builtins.map (meta: {
               name = meta.name;
               value = meta;
-            }) (composables ++ polkadots);
-
+            }) (composables ++ polkadots);        
             
           in builtins.listToAttrs all;
 
@@ -782,7 +804,7 @@
             xcvm-contract-router = mk-xcvm-contract "xcvm-router";
             xcvm-contract-interpreter = mk-xcvm-contract "xcvm-interpreter";
             subxt =
-              pkgs.callPackage ./code/utils/subxt-codegen/subxt.nix { lockFilePath = ./code/Cargo.lock; };
+              pkgs.callPackage ./code/utils/subxt-codegen/subxt.nix { };
 
             subsquid-processor = let
               processor = pkgs.buildNpmPackage {
