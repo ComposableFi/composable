@@ -2,8 +2,6 @@
 
 *easy peasy lemon squeezy*
 
----
-
 Once you're [ready to get started](./getting-started), using Codespaces is very easy. 
 Simply go to our monorepo at [github.com/ComposableFi/composable](https://github.com/ComposableFi/composable) 
 and click on the **"Create codespace on main"** button:

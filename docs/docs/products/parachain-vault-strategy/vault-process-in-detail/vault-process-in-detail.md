@@ -1,7 +1,5 @@
 # Vault Process in Detail
 
----
-
 **For transparency, we are continuing to publicize the parachain vault approach we took when bidding for our Kusama and 
 Polkadot parachains, as well as the infrastructure used in this process. For our Polkadot crowdloan, participation was 
 capped at 25 million DOT and for our Kusama crowdloan, participation was capped at 200,000 KSM.**

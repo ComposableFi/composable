@@ -1,7 +1,5 @@
 # Routing Layer Libraries 
 
----
-
 Routing Layer libraries on the XCVM allow for easier development and programming on the Composable infrastructure.
 
 The XCVM will offer routing layer libraries for every generalized function of the Composable Routing Layer, such as a 

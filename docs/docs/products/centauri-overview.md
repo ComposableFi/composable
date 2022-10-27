@@ -1,7 +1,5 @@
 # Centauri
 
----
-
 Centauri is our commitment to trustless light-client based bridging. Encompassing Centauri is the first IBC-Substrate 
 bridge built on Picasso, and marks the first connection between the DotSama and Cosmos ecosystems. 
 Centauri enables the trustless and cost-effective exchange and transfer of assets between the two ecosystems. 
@@ -9,7 +7,6 @@ This trustlessness is achieved through light clients and finality proofs. We are
 in other ecosystems that support light clients. Centauri can be leveraged by other pallets on Picasso and act as a 
 transport layer for the [Composable XCVM](./cross-chain-virtual-machine.md), facilitating cross-chain movement of 
 information and assets.
-
 
 ## How it works
 

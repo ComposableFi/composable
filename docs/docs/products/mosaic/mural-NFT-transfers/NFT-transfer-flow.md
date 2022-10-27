@@ -1,7 +1,5 @@
 # NFT Transfer Flow
 
----
-
 ## General Transfer Flow
 
 The transferal of an NFT from the source to destination locations involves the following steps, referencing the blow 
@@ -32,8 +30,6 @@ linked to Mosaic as well. In other words, the Mosaic NFT on a particular destina
 Summoner Vault there, and then a new Mosaic NFT will be minted onto another destination layer.
 
 Moving the NFT back to the source layer involves the opposite process:
-
-
 
 1. The creators of the NFT (the gaming platform, artist, etc.) can create a contract within Mosaic that allows the 
    NFT to maintain usability in their game (or other platform). The creator will maintain possession over this contract.
