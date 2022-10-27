@@ -83,7 +83,7 @@ contract Interpreter is IInterpreter {
         require(success, "decode embedded message failed");
     }
 
-    function _handelAccount(bytes calldata program, uint64 pos) internal returns (address account, uint64 newPos) {
+    function _handleAccount(bytes calldata program, uint64 pos) internal returns (address account, uint64 newPos) {
         // read account info
         uint64 size;
         (size, pos) = _getMessageLength(program, pos);
@@ -301,7 +301,7 @@ contract Interpreter is IInterpreter {
         // account
         address account;
         if (field == 1) {
-            (account, pos) = _handelAccount(program, pos);
+            (account, pos) = _handleAccount(program, pos);
         } else if (field == 2) {
             //TODO relayer NOT implemented
         } else {
