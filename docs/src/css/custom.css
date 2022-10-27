@@ -66,7 +66,6 @@
 /* source for mapping numbers to files: https://qr.ae/pGVP9G */
 
 h1, h2, h3, h4 {
-  letter-spacing: 2px;
   font-weight: 700;
   margin-bottom: 0 !important;
 }
@@ -87,7 +86,7 @@ p {
   --ifm-code-font-size: 95%;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
   /* --ifm-font-family-monospace: "JetBrains Mono Regular"; */
-  --ifm-heading-font-family:"CitaPro", system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';  
+  --ifm-heading-font-family:"EkMukta", system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';  
   --ifm-font-family-base: "EkMukta", system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
   --ifm-heading-font-weight: 700;
 }
