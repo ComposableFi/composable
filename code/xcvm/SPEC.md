@@ -237,7 +237,6 @@ sequenceDiagram
 
 The call instruction supports bindings values on the executing side of the program by specifying the `Bindings`. This allows us to construct a program that uses data only available on the executing side. For example, the swap call of the following smart contract snippet expects a `to` address to receive the funds after a trade.
 
-```
 
 ```rust
 fn swap(amount: u256, pair: (u128, u128), to: AccountId) { ... } 
