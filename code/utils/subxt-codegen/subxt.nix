@@ -1,22 +1,13 @@
-{ pkgs, }:
-let
-  cargo-toml = (builtins.fromTOML (builtins.readFile ./Cargo.toml));
-  subxt-dep = cargo-toml.dependencies.subxt-codegen;
-in pkgs.rustPlatform.buildRustPackage rec {
-
-  name = "subxt-cli";
+{ pkgs }:
+pkgs.rustPlatform.buildRustPackage rec {
   pname = "subxt-cli";
-  cargoBuildHook = ''
-    cargo build --package subxt-cli
-  '';
-  src = pkgs.fetchgit {
-    name = "subxt-src";
-    url = subxt-dep.git;
-    rev = subxt-dep.rev;
-    sha256 = "sha256-C5BYvXA6jRx3Dhwp14se/LcqzfvADhg4pU6Ysmz37Sw=";
+  version = "0.24.0";
+
+  src = pkgs.fetchCrate {
+    inherit pname version;
+    sha256 = "sha256-Dqbrv2rVZWXxWe+UJ10yZWhmaCVCU6QpfLjGu3xKE90=";
   };
-  doCheck = false;
-  cargoHash = "sha256-2PYLB59fI6gFrmj7UQetpu0f98C3IuFyGwWssN1E7q4=";
+
+  cargoHash = "sha256-biQEE8SRIRHPtpRyActrT4UXK81ObsrZjW9Vqd15dr8=";
   cargoDepsName = pname;
-  checkPhase = "true";
 }

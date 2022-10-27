@@ -422,17 +422,8 @@
               '';
             };
 
-          #  devnet-rococo-dali-karura = let
-          #     config = (pkgs.callPackage
-          #       ./scripts/polkadot-launch/kusama-local-dali-dev-karura-dev.nix {
-          #         polkadot-bin = polkadot-node;
-          #         composable-bin = composable-node;
-          #         acala-bin = acala-node;
-          #       }).result;
-          #     config-file = pkgs.writeTextFile {
-          #       name = "kusama-local-dali-dev-karura-dev.json";
-          #       text = "${builtins.toJSON config}";
-          #     };
+          #  mk-subxt-client  = let
+          #   foobar = 24;
           #   in pkgs.writeShellApplication {
           #     name = "run-rococo-dali-karura";
           #     text = ''
@@ -440,7 +431,7 @@
           #       rm -rf /tmp/polkadot-launch
           #       ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
           #     '';
-          #   };
+          #   };subxt codegen --file=dali.metadata | rustfmt --edition=2018 --emit=stdout > dali.rs
 
             #  ./code/target/release/composable metadata --chain=dali-dev > ./dali.metadata
 #  subxt codegen --file=dali.metadata | rustfmt --edition=2018 --emit=stdout > dali.rs            
