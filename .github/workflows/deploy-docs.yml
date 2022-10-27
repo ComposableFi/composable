@@ -38,6 +38,11 @@ jobs:
       - name: Build docs-static
         run: |
           cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#docs-static --no-update-lock-file --show-trace -L
+      - name: List docs-static
+        run: |
+          pwd
+          ls -la result
+          tree
 
 
       # - name: Run mdbook
