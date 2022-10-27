@@ -4,7 +4,7 @@
 ---
 
 This document is a review of the implementation and usage of Existential Deposit
-values within our runtimes. This will review this maintainmance of ED values
+values within our runtimes. This will review this maintenance of ED values
 from a code and SUDO/Governance prospective.
 
 ## Background
@@ -23,7 +23,7 @@ necessary to have different Existential Deposit values for different tokens.
   own Existential Deposit.
 * SUDO/Governance must be able to overwrite the predefined Existential Deposit
   values without modifying the code.
-* Be able to add Existential Deposit for new tokens reconized by the chain.
+* Be able to add Existential Deposit for new tokens recognized by the chain.
 
 ## Implementation
 ---
@@ -47,7 +47,7 @@ pub trait AssetExistentialDepositInspect {
 }
 ```
 
-To minimize current and future refactoring, this trait is also implimented onto
+To minimize current and future refactoring, this trait is also implemented onto
 Asset Registry as it acts as an interface for Currency Factory.
 
 ### Function `multi_existential_deposits`
@@ -55,15 +55,15 @@ Asset Registry as it acts as an interface for Currency Factory.
 We currently use the function `multi_existential_deposits` to get the ED of any
 given token. In its current implementation, it will attempt to convert the ED of
 our native token (`0.1` or `100_000_000_000`) and convert that into the 
-equivilant value in the necessary token useing 
+equivalent value in the necessary token using 
 `PriceConverter::get_price_inverse`.
 
-Instead of the current implimentation we want to resolve the ED of a token with 
-the following alogrithim:
+Instead of the current implementation we want to resolve the ED of a token with 
+the following algorithm:
 
   Given some token ID, `currency_id`
 
-  1. Querey Currency Factory for the ED of `currency_id`
+  1. Query Currency Factory for the ED of `currency_id`
 
   2. If not found in 1, attempt to match `currency_id` to our hard-coded ED 
      values
@@ -71,7 +71,7 @@ the following alogrithim:
   3. If not found in 1 or 2, return the maximum value of the `Balance` type so
      that unknown assets balances are not tracked
     
-The following implimentation acomplishes this:
+The following implementation accomplishes this:
 
 `code/parachain/runtime/common/src/lib.rs`
 
