@@ -54,6 +54,7 @@ XCMP can be upward (parachain to relay), downward(relay to parachain) and siblin
 
 - <https://www.youtube.com/watch?v=5mspUoK1aIE>
 - <https://docs.moonbeam.network/builders/xcm/xc20/overview/>
+- [Statemine XCMP configuration](https://github.com/paritytech/cumulus/blob/master/parachains/runtimes/assets/statemine/src/xcm_config.rs)
 
 ## Solution and integrations
 

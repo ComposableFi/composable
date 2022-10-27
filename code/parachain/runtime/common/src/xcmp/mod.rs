@@ -397,3 +397,12 @@ impl<X, Y, Treasury: TakeRevenue, Z> Drop for TransactionFeePoolTrader<X, Y, Tre
 		}
 	}
 }
+
+
+pub struct RelayReserveFromParachain;
+impl FilterAssetLocation for RelayReserveFromParachain {
+	fn filter_asset_location(asset: &MultiAsset, origin: &MultiLocation) -> bool {
+		AbsoluteReserveProvider::reserve(asset) == Some(MultiLocation::parent()) &&
+			matches!(origin, MultiLocation { parents: 1, interior: X1(Parachain(_)) })
+	}
+}

@@ -515,14 +515,6 @@ where
 	type Extrinsic = UncheckedExtrinsic;
 }
 
-// Parachain stuff.
-// See https://github.com/paritytech/cumulus/blob/polkadot-v0.9.8/polkadot-parachains/rococo/src/lib.rs for details.
-parameter_types! {
-	/// 1/4 of block weight is reserved for XCMP
-	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
-	/// 1/4 of block weight is reserved for handling Downward messages
-	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
-}
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
 	type Event = Event;
