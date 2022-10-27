@@ -21,7 +21,7 @@ export async function subscribeNativeBalance(
   // create AccountId32 type byte array
   // and retrieve balances
   const accountId = api.createType("AccountId32", account);
-  await api.query.system.account(accountId, (result) => {
+  const subscription = await api.query.system.account(accountId, (result) => {
     const blObject: any = result.toJSON();
 
     const {
@@ -40,4 +40,6 @@ export async function subscribeNativeBalance(
       existentialDeposit,
     });
   });
+
+  return subscription;
 }

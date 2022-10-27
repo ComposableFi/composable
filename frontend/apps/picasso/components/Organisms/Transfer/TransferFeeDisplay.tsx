@@ -18,20 +18,19 @@ import {
 } from "@/defi/polkadot/pallets/Transfer";
 import { useExistentialDeposit } from "@/defi/polkadot/hooks/useExistentialDeposit";
 import { getPaymentAsset } from "@/defi/polkadot/pallets/AssetTxPayment";
-import BigNumber from "bignumber.js";
 import { Stack } from "@mui/material";
 import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
+import BigNumber from "bignumber.js";
 
 export const TransferFeeDisplay = () => {
-  const { amount, from, to, balance, account, fromProvider, transferToken } = useTransfer();
   const signer = useSigner();
   const executor = useExecutor();
-
   const tokens = useStore(({ substrateTokens }) => substrateTokens.tokens);
-
   const feeItem = useStore((state) => state.transfers.feeItem);
   const hasFeeItem = useStore((state) => state.transfers.hasFeeItem);
   const setFeeItem = useStore((state) => state.transfers.setFeeItem);
+
+  const { amount, from, to, balance, account, fromProvider, transferToken } = useTransfer();
   const selectedRecipient = useStore(
     (state) => state.transfers.recipients.selected
   );
@@ -62,34 +61,35 @@ export const TransferFeeDisplay = () => {
           targetChain: to,
           tokens
         });
-
-        const signerAddress = acc.address;
-
-        const call = await getXCMTransferCall({
-          api,
-          targetAccountAddress: TARGET_ACCOUNT_ADDRESS,
-          amountToTransfer,
-          feeToken,
-          transferToken: transferToken,
-          signerAddress,
-          targetParachainId: TARGET_PARACHAIN_ID,
-          from,
-          to,
-          hasFeeItem
-        });
-
-        const info = await exec.paymentInfo(call, acc.address, _signer);
-        updateFee({
-          class: info.class.toString(),
-          partialFee: fromChainIdUnit(
-            unwrapNumberOrHex(info.partialFee.toString())
-          ),
-          weight: unwrapNumberOrHex(info.weight.toString()),
-        } as {
-          class: string;
-          partialFee: BigNumber;
-          weight: BigNumber;
-        });
+        
+        try {
+          const call = await getXCMTransferCall({
+            api,
+            targetAccountAddress: TARGET_ACCOUNT_ADDRESS,
+            amountToTransfer,
+            feeToken,
+            transferToken: transferToken,
+            targetParachainId: TARGET_PARACHAIN_ID,
+            from,
+            to,
+            hasFeeItem
+          });
+  
+          const info = await exec.paymentInfo(call, acc.address, _signer);
+          updateFee({
+            class: info.class.toString(),
+            partialFee: fromChainIdUnit(
+              unwrapNumberOrHex(info.partialFee.toString())
+            ),
+            weight: unwrapNumberOrHex(info.weight.toString()),
+          } as {
+            class: string;
+            partialFee: BigNumber;
+            weight: BigNumber;
+          });
+        } catch (err) {
+          console.error('[TransferFeeDisplay] ', err);
+        }
       },
       fromProvider.parachainApi,
       executor,

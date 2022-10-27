@@ -22,7 +22,6 @@ export const getXTokenTransferCallOriginPicasso = (
     destination: XcmVersionedMultiLocation,
     currencyId: BigNumber,
     amount: u128,
-    hasFeeToken: boolean,
     /**
      * Token Id is BigNumber because
      * Assets are identified by numeric
@@ -34,7 +33,7 @@ export const getXTokenTransferCallOriginPicasso = (
     let _currencyId = api.createType("CurrencyId", currencyId.toString());
     const destWeight = api.createType("u64", destinationWeight);
 
-    const amountParams = hasFeeToken ? [
+    const amountParams = feeTokenId ? [
         [
             _currencyId,
             amount
@@ -45,7 +44,7 @@ export const getXTokenTransferCallOriginPicasso = (
         ]
     ] : _currencyId;
 
-    return !hasFeeToken ? api.tx.xTokens.transfer(
+    return !feeTokenId ? api.tx.xTokens.transfer(
         amountParams as CurrencyId,
         amount,
         destination,

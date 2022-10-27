@@ -19,7 +19,6 @@ export type XCMTransferCallArgs = {
   amountToTransfer: u128,
   feeToken: TokenMetadata,
   transferToken: TokenMetadata,
-  signerAddress: string,
   targetParachainId: number,
   from: SubstrateNetworkId,
   to: SubstrateNetworkId,
@@ -32,7 +31,6 @@ export async function getXCMTransferCall({
   amountToTransfer,
   feeToken,
   transferToken,
-  signerAddress,
   targetParachainId,
   from,
   to,
@@ -43,7 +41,6 @@ export async function getXCMTransferCall({
       return getTransferCallPicassoKusama(
         api,
         targetAccountAddress,
-        hasFeeItem,
         transferToken,
         amountToTransfer,
         feeToken.picassoId
@@ -53,7 +50,6 @@ export async function getXCMTransferCall({
         api,
         targetParachainId,
         targetAccountAddress,
-        hasFeeItem,
         transferToken,
         amountToTransfer,
         feeToken.picassoId
@@ -70,7 +66,7 @@ export async function getXCMTransferCall({
         api,
         targetParachainId,
         targetAccountAddress,
-        signerAddress,
+        transferToken.karuraId,
         amountToTransfer
       );
     default:
