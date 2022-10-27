@@ -422,12 +422,18 @@
               '';
             };
 
-           mk-subxt-client = metadata : let
-            foobar = 24;
-            in pkgs.writeShellApplication {
-              name = "subxt-codegen";
-              text = ''
-                ${subxt}/bin subxt codegen --file=${metadata} | rustfmt --edition=2021 --emit=stdout > subxt-codegen.rs
+          subxt = pkgs.callPackage ./code/utils/subxt-codegen/subxt.nix { };
+
+          mk-subxt-client = metadata:
+            let foobar = 24;
+            in pkgs.stdenv.mkDerivation {
+              name = "generate-${metadata.name}";
+              dontUnpack = true;
+              buildInputs = [ metadata rust-nightly];
+              installPhase = ''
+                 mkdir $out
+                 ls ${metadata}
+                 ${subxt}/bin/subxt codegen --file=${metadata}/${metadata.name}.scale | rustfmt --edition=2021 --emit=stdout > $out/${metadata.name}.rs
               '';
             };
 
@@ -708,15 +714,23 @@
                 dotsama-node = composable-node;
               })
               (pkgs.callPackage ./code/parachain/default.nix { }).chain-specs;
-            all = builtins.map (meta: {
+            all-metadatas = builtins.map (meta: {
               name = meta.name;
               value = meta;
-            }) (composables ++ polkadots);        
-            
-          in builtins.listToAttrs all;
+            }) (composables ++ polkadots);
+            all-generators = builtins.map (meta: {
+              name = meta.name;
+              value = meta;
+            }) (builtins.map mk-subxt-client composables);
+
+          in rec {
+            encodings = builtins.listToAttrs all-metadatas;
+            generators = builtins.listToAttrs all-generators;
+          };
 
         in rec {
-          packages = metadatas // rec {
+          packages = metadatas.encodings // metadatas.generators // rec {
+            inherit subxt;
             inherit polkadot-node;
             inherit wasm-optimizer;
             inherit common-deps;
@@ -789,8 +803,6 @@
               mk-xcvm-contract "xcvm-asset-registry";
             xcvm-contract-router = mk-xcvm-contract "xcvm-router";
             xcvm-contract-interpreter = mk-xcvm-contract "xcvm-interpreter";
-            subxt =
-              pkgs.callPackage ./code/utils/subxt-codegen/subxt.nix { };
 
             subsquid-processor = let
               processor = pkgs.buildNpmPackage {
@@ -1421,9 +1433,9 @@
                   pkgs.nix-tree
                   pkgs.nixfmt
                   pkgs.rnix-lsp
-                  pkgs.subxt
                   pkgs.nodePackages.typescript
                   pkgs.nodePackages.typescript-language-server
+                  packages.subxt
                   packages.rust-nightly
                   packages.wasm-optimizer
                 ] ++ docs-renders;
