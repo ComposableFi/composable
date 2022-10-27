@@ -17,7 +17,7 @@
 [build-badge]: https://github.com/composablefi/composable/actions/workflows/check.yml/badge.svg
 
 [discord-badge]: https://img.shields.io/badge/Discord-gray?logo=discord
-[discord-url]: https://discord.com/invite/pFZn2GCn65
+[discord-url]: https://discord.gg/composable
 
 [mergify]: https://dashboard.mergify.com/github/ComposableFi/repo/composable/queues
 [mergify-status]: https://img.shields.io/endpoint.svg?url=https://api.mergify.com/v1/badges/ComposableFi/composable&style=flat
