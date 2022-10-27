@@ -106,8 +106,8 @@ Below you'll find all content referenced in the onboarding basics. Feel free to 
 - [Polkadot Wiki](https://wiki.polkadot.network/docs/learn-accounts)
 - [Pablo](https://dali.devnets.composablefinance.ninja/products/pablo-overview.html)
 - [Centauri](https://dali.devnets.composablefinance.ninja/products/centauri-overview.html)
-- [Composable's-XCVM](https://dali.devnets.composablefinance.ninja/products/cross-chain-virtual-machine.html)
-- [CosmwasmVM](https://dali.devnets.composablefinance.ninja/products/cross-chain-virtual-machine/writing-smart-contracts-with-cosmwasm.html)
+- [XCVM](https://dali.devnets.composablefinance.ninja/products/xcvm.html)
+- [CosmWasmVM](https://dali.devnets.composablefinance.ninja/products/xcvm/writing-smart-contracts-with-cosmwasm.html)
 - [Moonbeam Wiki](https://docs.moonbeam.network/builders/)
 
 #### Further Reading

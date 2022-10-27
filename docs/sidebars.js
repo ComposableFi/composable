@@ -74,18 +74,18 @@ const sidebars = {
       items: [
         {
           type: 'category',
-          label: 'Composable\'s Cross-Chain Virtual Machine',
+          label: 'XCVM',
           link: {
             type: 'doc',
-            id: 'products/cross-chain-virtual-machine'
+            id: 'products/xcvm'
           },
           collapsible: true,
           collapsed: true,
           items: [
-            'products/cross-chain-virtual-machine/writing-smart-contracts-with-cosmwasm',
-            'products/cross-chain-virtual-machine/how-the-xcvm-works',
-            'products/cross-chain-virtual-machine/routing-layer',
-            'products/cross-chain-virtual-machine/routing-layer-libraries'
+            'products/xcvm/writing-smart-contracts-with-cosmwasm',
+            'products/xcvm/how-the-xcvm-works',
+            'products/xcvm/routing-layer',
+            'products/xcvm/routing-layer-libraries'
           ],
         },
         {
