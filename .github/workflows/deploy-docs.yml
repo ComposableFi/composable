@@ -7,6 +7,8 @@ on:
       - cor/xcvm-architecture-docs
 env:
   FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+  CACHIX_COMPOSABLE: composable-community
+  CACHIX_COMPRESSION_LEVEL: 3
 
 jobs:
   build:
@@ -14,8 +16,8 @@ jobs:
     container:
         image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
-      - uses: actions/checkout@v3     
-      - name: Configure `nix.conf`
+      - uses: actions/checkout@v3  
+      - name: Configure nix.conf
         run: |
           echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
           echo "sandbox = relaxed" >> /etc/nix/nix.conf
@@ -27,9 +29,9 @@ jobs:
             nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
-          name: ${{  env.CACHIX_COMPOSABLE }}
+          name: ${{ env.CACHIX_COMPOSABLE }}
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-      - name: Build `docs-static`
+      - name: Build docs-static
         run: |
           cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#docs-static --no-update-lock-file --show-trace -L
 
