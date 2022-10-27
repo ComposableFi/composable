@@ -21,10 +21,6 @@ import { useDotSamaContext } from "substrate-react";
 
 const Overview: NextPage = () => {
   const { extensionStatus } = useDotSamaContext();
-  const tokens = useStore((state) =>
-    state.substrateTokens.tokens
-  );
-  const balances = useStore((state) => state.substrateBalances.balances)
   const myStakes = useStore((state) => state.polkadot.myStakingAssets);
   const tabs: TabItem[] = [
     { label: "My assets" },
@@ -98,8 +94,11 @@ const Overview: NextPage = () => {
             />
 
             {/* My Assets Tab Panels */}
+            {/* Pass in more token ids to show here */}
             <TabPanel value={tabValue} index={0}>
-              {/* <MyAssetsTable assets={assets} /> */}
+              <MyAssetsTable tokensToList={[
+                "pica"
+              ]} />
             </TabPanel>
 
             {/* My Staking Tab Panels */}
@@ -107,7 +106,9 @@ const Overview: NextPage = () => {
               <Box px={2}>
                 <PageTitle title="Picasso" textAlign="left" fontSize={40} />
               </Box>
-              {/* <MyAssetsTable assets={assets} /> */}
+              <MyAssetsTable tokensToList={[
+                "pica"
+              ]} />
             </TabPanel>
 
             <TabPanel value={tabValue} index={1}>

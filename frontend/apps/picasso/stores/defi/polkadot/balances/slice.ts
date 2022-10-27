@@ -4,7 +4,7 @@ import { StoreSlice } from "@/stores/types";
 import { TokenId, TOKENS } from "tokens";
 import BigNumber from "bignumber.js";
 
-type TokenBalance = {
+export type TokenBalance = {
   balance: BigNumber;
   existentialDeposit: BigNumber;
 };
