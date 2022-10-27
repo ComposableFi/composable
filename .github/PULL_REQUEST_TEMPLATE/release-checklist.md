@@ -14,7 +14,7 @@ In the PR description,
 - [ ] Make sure proper logic/storage migrations are included as necessary
 - [ ] Verify documentation has been updated.
 
-## Action
+## Act
 
 - [ ] Generate weights, i.e run `benchmark`
 - [ ] Runtime [versioning](https://docs.substrate.io/build/upgrade-the-runtime/) updates
