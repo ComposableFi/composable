@@ -782,7 +782,7 @@
             xcvm-contract-router = mk-xcvm-contract "xcvm-router";
             xcvm-contract-interpreter = mk-xcvm-contract "xcvm-interpreter";
             subxt =
-              pkgs.callPackage ./code/utils/composable-subxt/subxt.nix { };
+              pkgs.callPackage ./code/utils/subxt-codegen/subxt.nix { lockFilePath = ./code/Cargo.lock; };
 
             subsquid-processor = let
               processor = pkgs.buildNpmPackage {
