@@ -51,7 +51,7 @@ export const GasFeeDropdown: FC<Props> = ({
 
   const options = useMemo(() => {
     return Object.values(tokens).map((token) => ({
-      value: token.symbol,
+      value: token.id,
       label: token.symbol,
       icon: token.icon,
       disabled: balances["picasso"][token.id].balance.isZero(),

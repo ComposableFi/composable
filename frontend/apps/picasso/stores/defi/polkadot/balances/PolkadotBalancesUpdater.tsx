@@ -16,7 +16,11 @@ import {
 } from "@/defi/polkadot/pallets/Balances";
 import { TokenMetadata } from "../tokens/slice";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
-import { karuraAssetsList, picassoAssetsList } from "@/defi/polkadot/pallets/Assets";
+import {
+  karuraAssetsList,
+  picassoAssetsList,
+} from "@/defi/polkadot/pallets/Assets";
+import { VoidFn } from "@polkadot/api/types";
 
 const PolkadotBalancesUpdater = () => {
   useEagerConnect("picasso");
@@ -46,7 +50,7 @@ const PolkadotBalancesUpdater = () => {
   /**
    * This effect fetches
    * metadata for tokens and
-   * should be called almost 
+   * should be called almost
    * after API creation
    */
   useEffect(() => {
@@ -54,15 +58,12 @@ const PolkadotBalancesUpdater = () => {
       async (_picaApi, _karApi) => {
         const picaAssetMetadataList = await picassoAssetsList(_picaApi);
         const karuraAssetMetadataList = await karuraAssetsList(_karApi);
-        updateTokens(
-          picaAssetMetadataList,
-          karuraAssetMetadataList
-        )
+        updateTokens(picaAssetMetadataList, karuraAssetMetadataList);
       },
       parachainProviders.picasso.parachainApi,
-      parachainProviders.karura.parachainApi,
-    )
-  }, [parachainProviders, updateTokens])
+      parachainProviders.karura.parachainApi
+    );
+  }, [parachainProviders, updateTokens]);
 
   const picassoBalanceSubscriber = useCallback(
     async (chain, tokenMetadata: TokenMetadata, chainId) => {
@@ -93,6 +94,8 @@ const PolkadotBalancesUpdater = () => {
   // Subscribe for native balance changes
   useEffect(() => {
     if (selectedAccount !== -1) {
+      let subscriptionList: Array<VoidFn | undefined> = [];
+
       Object.entries({ ...parachainProviders, ...relaychainProviders }).forEach(
         ([chainId, chain]) => {
           if (
@@ -107,17 +110,30 @@ const PolkadotBalancesUpdater = () => {
               chainId,
               SUBSTRATE_NETWORKS[chainId as SubstrateNetworkId].tokenId,
               updateBalance
-            ).catch((err) => {
-              console.error(err);
+            ).then((subscription) => {
+              subscriptionList.push(subscription);
             });
           }
         }
       );
+
+      return function unsubNativeBalances() {
+        console.log("Clearing Native Subscriptions. ", subscriptionList.length);
+        return subscriptionList.forEach((x) => {
+          x?.();
+        });
+      };
     } else if (selectedAccount === -1) {
       clearBalance();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [parachainProviders, relaychainProviders, selectedAccount]);
+  }, [
+    parachainProviders,
+    relaychainProviders,
+    selectedAccount,
+    connectedAccounts,
+    updateBalance,
+    clearBalance,
+  ]);
 
   // Subscribe non-native token balances
   useEffect(() => {
