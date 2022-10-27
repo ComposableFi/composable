@@ -255,7 +255,7 @@ On the executing interpreter, `BindingValue::Self` will be interpolated at byte 
 
 Besides accessing the `Self` register, `BindingValue` allows for lazy lookups of AssetId conversions, by using `BindingValue::AssetId(GlobalId)`, or lazily converting amount value depending on the chain using the `AssetAmount` type.
 
-Bindings do not support non byte aligned encodings. To correctly bind values in the execution layer, the binding values should be ordered by their position index(u16) respectively since to process them interpreters will iterate over the bindings in sequence, after each iteration, the original payload will be updated with the new binding value and the next binding value position will be shifted by the length of the binding value. 
+Bindings do not support non-byte-aligned encodings. To correctly bind values in the execution layer, the binding values should be ordered by their position index(u16) respectively. Because to process them, interpreters will iterate over the bindings in sequence. After each iteration, the original payload will be updated with the new `BindingValue` and the next `BindingValue` position will be shifted by the length of the `BindingValue`. 
 
 #### Handling Balances
 
