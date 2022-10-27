@@ -91,7 +91,7 @@ const config = {
               },
               {
                 label: 'Discord',
-                href: 'https://discord.com/invite/pFZn2GCn65',
+                href: 'https://discord.gg/composable',
               },
               {
                 label: 'LinkedIn',
