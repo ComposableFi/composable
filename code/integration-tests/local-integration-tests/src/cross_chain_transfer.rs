@@ -360,7 +360,6 @@ fn transfer_insufficient_amount_should_fail() {
 }
 
 #[test]
-#[ignore = "until fixed sibling trust map"]
 fn transfer_to_sibling() {
 	simtest();
 
@@ -409,8 +408,6 @@ fn transfer_to_sibling() {
 		assert_eq!(Tokens::free_balance(CurrencyId::KSM, &AccountId::from(ALICE)), alice_remaining);
 	});
 
-	// TODO: also XCM not fails, it really fails with not enough balance, not clear so what balance
-	// is needed to transfer
 	Sibling::execute_with(|| {
 		assert_eq!(
 			Tokens::free_balance(CurrencyId::KSM, &this_native_reserve_account()),
@@ -948,6 +945,8 @@ fn sibling_trap_assets_works() {
 
 #[test]
 fn sibling_shib_to_transfer() {
+	// #WIP Ensure that assets from pallets encoded like (parent = 0, pallet = 44, index = 1232132).
+
 	simtest();
 	let total_issuance = 3_500_000_000_000_000;
 	let transfer_amount = SHIB::ONE;

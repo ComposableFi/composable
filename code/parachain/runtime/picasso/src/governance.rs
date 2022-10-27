@@ -141,7 +141,6 @@ parameter_types! {
 	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 }
 
-// NOTE: making it multi via module_cdp_treasury seems fails other pallets
 impl treasury::Config<NativeTreasury> for Runtime {
 	type PalletId = TreasuryPalletId;
 	type Currency = Balances;

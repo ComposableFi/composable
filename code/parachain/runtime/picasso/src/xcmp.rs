@@ -66,11 +66,11 @@ parameter_types! {
 	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
 }
 
+
 pub type Barrier = (
 	XcmpDebug,
-	//DebugAllowUnpaidExecutionFrom<WellKnownsChains>,
 	AllowKnownQueryResponses<RelayerXcm>,
-	AllowSubscriptionsFrom<Everything>,
+	AllowSubscriptionsFrom<ParentOrSiblings>,
 	AllowTopLevelPaidExecutionFrom<Everything>,
 	TakeWeightCredit,
 );
@@ -81,7 +81,7 @@ pub type LocalOriginToLocation = SignedToAccountId32<Origin, AccountId, RelayNet
 /// queues.
 pub type XcmRouter = (
 	// Two routers - use UMP to communicate with the relay chain:
-	cumulus_primitives_utility::ParentAsUmp<ParachainSystem, ()>,
+	cumulus_primitives_utility::ParentAsUmp<ParachainSystem, RelayerXcm>,
 	// ..and XCMP to communicate with the sibling chains.
 	XcmpQueue,
 );
@@ -209,10 +209,8 @@ impl xcm_executor::Config for XcmConfig {
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
-
 	type Trader = Trader;
 	type ResponseHandler = RelayerXcm;
-
 	type SubscriptionService = RelayerXcm;
 	type AssetClaims = RelayerXcm;
 	type AssetTrap = CaptureAssetTrap;
@@ -269,7 +267,7 @@ pub fn xcm_fee_estimator(instructions: u8) -> Weight {
 
 impl pallet_xcm::Config for Runtime {
 	type Event = Event;
-	type SendXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
+	type SendXcmOrigin = EnsureXcmOrigin<Origin, ()>;
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
 	type XcmExecuteFilter = Nothing;
@@ -281,7 +279,7 @@ impl pallet_xcm::Config for Runtime {
 	type Origin = Origin;
 	type Call = Call;
 
-	const VERSION_DISCOVERY_QUEUE_SIZE: u32 = 100;
+	const VERSION_DISCOVERY_QUEUE_SIZE: u32 = VERSION_DISCOVERY_QUEUE_SIZE;
 	type AdvertisedXcmVersion = pallet_xcm::CurrentXcmVersion;
 }
 
