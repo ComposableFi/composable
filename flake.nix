@@ -425,15 +425,17 @@
           subxt = pkgs.callPackage ./code/utils/subxt-codegen/subxt.nix { };
 
           mk-subxt-client = metadata:
-            let foobar = 24;
+            let scale-path = "${metadata}/${metadata.name}.scale";
             in pkgs.stdenv.mkDerivation {
               name = "generate-${metadata.name}";
               dontUnpack = true;
-              buildInputs = [ metadata rust-nightly];
+              buildInputs = [ metadata rust-nightly ];
               installPhase = ''
-                 mkdir $out
-                 ls ${metadata}
-                 ${subxt}/bin/subxt codegen --file=${metadata}/${metadata.name}.scale | rustfmt --edition=2021 --emit=stdout > $out/${metadata.name}.rs
+                mkdir $out
+                ls ${metadata}
+                ${subxt}/bin/subxt codegen --file=${scale-path} | rustfmt --edition=2021 --emit=stdout > $out/${
+                  builtins.replaceStrings [ "-metadata" "-" ] [ "" "_" ] metadata.name
+                }.rs
               '';
             };
 
@@ -717,20 +719,31 @@
             all-metadatas = builtins.map (meta: {
               name = meta.name;
               value = meta;
-            }) (composables ++ polkadots);
+            }) (composables);
             all-generators = builtins.map (meta: {
               name = meta.name;
               value = meta;
-            }) (builtins.map mk-subxt-client composables);
+            }) (builtins.map mk-subxt-client (composables));
+            consumer = "./code/utils/subxt-exports/src/generated";
+            subxt-export = pkgs.writeShellApplication {
+              name = "subxt-export";
 
+              text = ''
+                ${pkgs.lib.lists.foldl
+
+                (acc: el: acc + "\n" + "cp ${el.value}/* ${consumer}")
+                "echo 'Copy into ${consumer}'" all-generators}
+              '';
+            };
           in rec {
             encodings = builtins.listToAttrs all-metadatas;
             generators = builtins.listToAttrs all-generators;
+            inherit subxt-export;
           };
 
         in rec {
           packages = metadatas.encodings // metadatas.generators // rec {
-            inherit subxt;
+            inherit subxt;          
             inherit polkadot-node;
             inherit wasm-optimizer;
             inherit common-deps;
@@ -1522,6 +1535,8 @@
             };
 
           in rec {
+            subxt-export = makeApp metadatas.subxt-export;
+
             devnet = makeApp packages.devnet-default-program;
             devnet-persistent = makeApp packages.devnet-persistent-program;
             devnet-xcvm = makeApp packages.devnet-xcvm-program;

@@ -5,7 +5,7 @@ edition = "2021"
 authors = ["Seun Lanlege <seunlanlege@gmail.com>"]
 
 [dependencies]
-subxt-codegen = { git = "https://github.com/dzmitry-lahoda-forks/subxt", rev = "a52e960c371f8e8a87c286e09ea1ddf1fb8a4ef2" }
+subxt-codegen = { git = "https://github.com/paritytech/subxt", rev = "51179a8b72472d0b43c91cda75a1ddc3fddb9555" }
 jsonrpsee = { version = "0.14.0", features = ["async-client", "client-ws-transport", "http-client"] }
 frame-metadata = { version = "15.0.0", features = ["v14", "std"] }
 syn = "1.0.98"
