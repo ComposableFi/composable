@@ -37,8 +37,9 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
       - name: Build docs-static
         working-directory: ./docs
-        run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#docs-static --no-update-lock-file --show-trace -L
+        run: cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#docs-static --no-update-lock-file --show-trace -L
+      - name: Use nodejs in the env for Firebase
+        run: nix-env -iA nixpkgs.nodejs
       - uses: FirebaseExtended/action-hosting-deploy@0f248036885ae672f78587669fa2923f0ef6cac2
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
