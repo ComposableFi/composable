@@ -254,14 +254,6 @@ impl orml_unknown_tokens::Config for Runtime {
 	type Event = Event;
 }
 
-// make setup as in Acala, max instructions seems reasonable, for weight may consider to  settle
-// with our PICA
-parameter_types! {
-	// One XCM operation is 200_000_000 weight, cross-chain transfer ~= 2x of transfer.
-	pub const UnitWeightCost: Weight = 200_000_000;
-	pub const MaxInstructions: u32 = 100;
-}
-
 pub fn xcm_asset_fee_estimator(instructions: u8, asset_id: CurrencyId) -> Balance {
 	assert!((instructions as u32) <= MaxInstructions::get());
 	let total_weight = UnitWeightCost::get() * instructions as u64;

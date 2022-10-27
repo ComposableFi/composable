@@ -11,7 +11,7 @@ use composable_traits::{
 use cumulus_primitives_core::ParaId;
 use frame_support::{
 	log, parameter_types,
-	traits::{Everything, Nothing},
+	traits::{Everything, Nothing, PalletInfoAccess},
 	weights::Weight,
 };
 use orml_traits::{
@@ -39,10 +39,10 @@ use xcm_executor::{
 };
 
 parameter_types! {
-	pub KsmLocation: MultiLocation = MultiLocation::parent();
 	pub const RelayNetwork: NetworkId = NetworkId::Kusama;
-	pub RelayOrigin: Origin = cumulus_pallet_xcm::Origin::Relay.into();
 	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
+	pub AssetsPalletLocation: MultiLocation =
+		PalletInstance(<Assets as PalletInfoAccess>::index() as u8).into();
 }
 
 pub type Barrier = (

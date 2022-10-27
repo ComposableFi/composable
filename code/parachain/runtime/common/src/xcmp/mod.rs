@@ -33,6 +33,21 @@ parameter_types! {
 	pub const XcmMaxAssetsForTransfer: usize = 2;
 }
 
+parameter_types! {
+	pub RelayNativeLocation: MultiLocation = MultiLocation::parent();
+	pub RelayOrigin: Origin = cumulus_pallet_xcm::Origin::Relay.into();
+}
+
+
+
+// make setup as in Acala, max instructions seems reasonable, for weight may consider to  settle
+// with our PICA
+parameter_types! {
+	// One XCM operation is 200_000_000 weight, cross-chain transfer ~= 2x of transfer.
+	pub const UnitWeightCost: Weight = 200_000_000;
+	pub const MaxInstructions: u32 = 100;
+}
+
 /// this is debug struct implementing as many XCMP interfaces as possible
 /// it just dumps content, no modification.
 /// returns default expected
