@@ -235,6 +235,10 @@ pub fn multi_existential_deposits<
 		.unwrap_or(match *currency_id {
 			// If not found in AssetRegistry/CurrencyFactory, use hard-coded values
 			// TODO: Confirm values of ED
+			// PICA: 0.1 or 100_000_000_000
+			CurrencyId::PICA => 100_000_000_000,
+			// PICA: 0.1 or 100_000_000_000
+			CurrencyId::PBLO => 100_000_000_000,
 			// USDT: 100_000_000_000 * 1_000_000 / 67_000_000_000_000 = 1492 + 36/67
 			CurrencyId::USDT => 1492,
 			// //TODO: KAR: ?

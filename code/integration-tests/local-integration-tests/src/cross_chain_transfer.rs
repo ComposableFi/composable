@@ -956,6 +956,19 @@ fn sibling_shib_to_transfer() {
 		use sibling_runtime::*;
 		let sibling_asset_id =
 			CurrencyFactory::create(RangeId::TOKENS, 42).expect("Valid range and ED; QED");
+		let root = frame_system::RawOrigin::Root;
+		let location = XcmAssetLocation(MultiLocation::new(
+			1,
+			X2(Parachain(SIBLING_PARA_ID), GeneralIndex(sibling_asset_id.into())),
+		));
+		AssetsRegistry::update_asset(
+			root.into(),
+			sibling_asset_id,
+			location,
+			Ratio::checked_from_integer::<u128>(1),
+			Some(SHIB::RESERVE_EXPONENT as u32),
+		)
+		.expect("Asset already in Currency Factory; QED");
 
 		log::info!(target: "bdd", "	and Bob has a lot SHIB on sibling");
 		let root = frame_system::RawOrigin::Root;
