@@ -154,10 +154,10 @@ fn transfer_native_of_this_to_sibling() {
 		let before = Balances::balance(&sibling_account(SIBLING_PARA_ID));
 		assert_ok!(RelayerXcm::limited_reserve_transfer_assets(
 			Origin::signed(ALICE.into()),
-			Box::new(
-				VersionedMultiLocation::V1(MultiLocation::new(1, X1(Parachain(SIBLING_PARA_ID))))
-					.into()
-			),
+			Box::new(VersionedMultiLocation::V1(MultiLocation::new(
+				1,
+				X1(Parachain(SIBLING_PARA_ID))
+			))),
 			Box::new(Junction::AccountId32 { id: BOB, network: NetworkId::Any }.into().into()),
 			Box::new((Here, 3 * PICA).into()),
 			0,
@@ -249,13 +249,12 @@ fn transfer_non_native_reserver_asset_from_this_to_sibling() {
 		use this_runtime::*;
 
 		assert_ok!(Assets::deposit(CurrencyId::PBLO, &AccountId::from(ALICE), 10 * PICA));
-		let before = Assets::free_balance(CurrencyId::PBLO, &AccountId::from(ALICE));
 		assert_ok!(RelayerXcm::limited_reserve_transfer_assets(
 			Origin::signed(ALICE.into()),
-			Box::new(
-				VersionedMultiLocation::V1(MultiLocation::new(1, X1(Parachain(SIBLING_PARA_ID))))
-					.into()
-			),
+			Box::new(VersionedMultiLocation::V1(MultiLocation::new(
+				1,
+				X1(Parachain(SIBLING_PARA_ID))
+			))),
 			Box::new(Junction::AccountId32 { id: BOB, network: NetworkId::Any }.into().into()),
 			Box::new((X1(GeneralIndex(CurrencyId::PBLO.into()),), 3 * PICA).into()),
 			0,
@@ -294,7 +293,6 @@ fn transfer_non_native_reserver_asset_from_this_to_sibling_by_local_id() {
 		use this_runtime::*;
 
 		assert_ok!(Assets::deposit(CurrencyId::PBLO, &AccountId::from(ALICE), 10 * PICA));
-		let before = Assets::free_balance(CurrencyId::PBLO, &AccountId::from(ALICE));
 
 		assert_ok!(XTokens::transfer(
 			Origin::signed(ALICE.into()),
@@ -452,7 +450,7 @@ fn transfer_to_sibling() {
 	});
 }
 
-/// if Alice sends amount of his tokens and these are above weight but less than ED,
+/// if Alice sends amount of their tokens and these are above weight but less than ED,
 /// than our treasury takes that amount, sorry Alice
 /// from: Acala
 #[test]
@@ -597,7 +595,7 @@ fn unspent_xcm_fee_is_returned_correctly() {
 	let some_account: AccountId = charlie().into();
 
 	let charlie_on_kusama_amount = 1_000 * CurrencyId::unit::<Balance>();
-	let (original_parachain, original_bob) = KusamaRelay::execute_with(|| {
+	let (original_parachain, _original_bob) = KusamaRelay::execute_with(|| {
 		(
 			relay_runtime::Balances::balance(&parachain_account.clone()),
 			relay_runtime::Balances::balance(&AccountId::from(BOB)),
@@ -719,7 +717,8 @@ fn trap_assets_larger_than_ed_works() {
 	let mut native_treasury_amount = 0;
 	let (ksm_asset_amount, native_asset_amount) =
 		(3 * CurrencyId::unit::<Balance>(), 2 * CurrencyId::unit::<Balance>());
-	let parent_account: AccountId = ParentIsPreset::<AccountId>::convert(Parent.into()).unwrap();
+	let parent_account: AccountId =
+		ParentIsPreset::<AccountId>::convert(Parent.into()).expect("Conversion into is safe; QED");
 	This::execute_with(|| {
 		assert_ok!(Tokens::deposit(
 			CurrencyId::KSM,
@@ -783,7 +782,8 @@ fn trap_assets_lower_than_existential_deposit_works() {
 	let any_asset = CurrencyId::KSM;
 	let this_native_asset = CurrencyId::PICA;
 
-	let parent_account: AccountId = ParentIsPreset::<AccountId>::convert(Parent.into()).unwrap();
+	let parent_account: AccountId =
+		ParentIsPreset::<AccountId>::convert(Parent.into()).expect("Conversion into is safe; QED");
 
 	let (this_treasury_amount, other_treasury_amount) = This::execute_with(|| {
 		assert_ok!(Assets::deposit(any_asset, &parent_account, other_non_native_amount));
@@ -949,16 +949,13 @@ fn sibling_trap_assets_works() {
 #[test]
 fn sibling_shib_to_transfer() {
 	simtest();
-	let this_parachain_account: AccountId =
-		polkadot_parachain::primitives::Sibling::from(THIS_PARA_ID).into_account_truncating();
-	let sibling_parachain_account: AccountId =
-		ParaId::from(SIBLING_PARA_ID).into_account_truncating();
 	let total_issuance = 3_500_000_000_000_000;
 	let transfer_amount = SHIB::ONE;
 	let sibling_asset_id = Sibling::execute_with(|| {
 		log::info!(target: "bdd", "Given SHIB on sibling registered");
 		use sibling_runtime::*;
-		let sibling_asset_id = CurrencyFactory::create(RangeId::TOKENS, 42).unwrap();
+		let sibling_asset_id =
+			CurrencyFactory::create(RangeId::TOKENS, 42).expect("Valid range and ED; QED");
 
 		log::info!(target: "bdd", "	and Bob has a lot SHIB on sibling");
 		let root = frame_system::RawOrigin::Root;
@@ -969,7 +966,7 @@ fn sibling_shib_to_transfer() {
 			total_issuance,
 			0,
 		)
-		.unwrap();
+		.expect("Balance is valid; QED");
 		sibling_asset_id
 	});
 
@@ -983,12 +980,12 @@ fn sibling_shib_to_transfer() {
 		));
 		AssetsRegistry::register_asset(
 			root.into(),
-			location.clone(),
+			location,
 			1000,
 			Ratio::checked_from_integer::<u128>(1),
 			Some(SHIB::RESERVE_EXPONENT as u32),
 		)
-		.unwrap();
+		.expect("Asset details are valid; QED");
 		System::events()
 			.iter()
 			.find_map(|x| match x.event {
@@ -998,7 +995,7 @@ fn sibling_shib_to_transfer() {
 				}) => Some(asset_id),
 				_ => None,
 			})
-			.unwrap()
+			.expect("Map exists; QED")
 	});
 	log::info!(target: "bdd", "{:?}", remote_sibling_asset_id);
 	Sibling::execute_with(|| {
@@ -1006,11 +1003,11 @@ fn sibling_shib_to_transfer() {
 		use sibling_runtime::*;
 		let origin = Origin::signed(BOB.into());
 		assert_ok!(RelayerXcm::limited_reserve_transfer_assets(
-			origin.clone(),
-			Box::new(
-				VersionedMultiLocation::V1(MultiLocation::new(1, X1(Parachain(THIS_PARA_ID))))
-					.into()
-			),
+			origin,
+			Box::new(VersionedMultiLocation::V1(MultiLocation::new(
+				1,
+				X1(Parachain(THIS_PARA_ID))
+			))),
 			Box::new(Junction::AccountId32 { id: BOB, network: NetworkId::Any }.into().into()),
 			Box::new((X1(GeneralIndex(sibling_asset_id.into()),), transfer_amount).into()),
 			0,
