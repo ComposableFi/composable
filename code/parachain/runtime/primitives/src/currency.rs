@@ -131,9 +131,9 @@ impl CurrencyId {
 		// Non-Native Tokens (101 - 1000)
 		/// Karura KAR
 		pub const KAR: CurrencyId = CurrencyId(101);
-		/// Bitfrost BNC
+		/// BIFROST BNC
 		pub const BNC: CurrencyId = CurrencyId(102);
-		/// Bitfrost vKSM
+		/// BIFROST vKSM
 		#[allow(non_upper_case_globals)]
 		pub const vKSM: CurrencyId = CurrencyId(103);
 		/// Moonriver MOVR
