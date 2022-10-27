@@ -698,6 +698,15 @@
               parachainIds = [ 1000 2000 2087 ];
             };
 
+            devnet-initialize-script-picasso-persistent =
+              mkDevnetInitializeScript {
+                polkadotUrl =
+                  "wss://persistent.picasso.devnets.composablefinance.ninja/chain/rococo";
+                composableUrl =
+                  "wss://persistent.picasso.devnets.composablefinance.ninja/chain/picasso";
+                parachainIds = [ 1000 2000 2087 ];
+              };
+
             docs-static = npm-bp.buildNpmPackage {
               src = ./docs;
               npmBuild = "npm run build";
@@ -1406,6 +1415,8 @@
               makeApp packages.devnet-initialize-script-local;
             devnet-initialize-script-persistent =
               makeApp packages.devnet-initialize-script-persistent;
+            devnet-initialize-script-picasso-persistent =
+              makeApp packages.devnet-initialize-script-picasso-persistent;
             default = devnet-dali;
           };
         });

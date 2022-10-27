@@ -7,8 +7,6 @@ on:
         description: "Release tag, branch name or any revision."
         required: true
         type: string
-  push:
-    branch: devnet-picasso-persistent
 
 env:
   NIX_NIXPKGS_CHANNEL: https://nixos.org/channels/nixpkgs-22.05-darwin
@@ -36,7 +34,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with:
-        # ref: ${{ inputs.revision }}
+        ref: ${{ inputs.revision }}
         fetch-depth: 0
     - run: |
         echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
@@ -71,7 +69,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with:
-        # ref: ${{ inputs.revision }}
+        ref: ${{ inputs.revision }}
         fetch-depth: 0
     - run: |
         echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
@@ -109,9 +107,9 @@ jobs:
       run: |
         mkdir -p /root/.ssh
         echo "Host *\n\tStrictHostKeyChecking no" > /root/.ssh/config
-        # nixops ssh composable-persistent-devnet -vvv -o PasswordAuthentication=no -o StrictHostKeyChecking=no || true
         nixops ssh picasso-composable-persistent-devnet -vvv -o PasswordAuthentication=no -o StrictHostKeyChecking=no || true
-        nixops deploy --allow-recreate --allow-reboot --confirm --deployment devnet-gce --debug --show-trace --option narinfo-cache-negative-ttl 0 --include picasso-composable-persistent-devnet
+        nixops ssh composable-persistent-devnet -vvv -o PasswordAuthentication=no -o StrictHostKeyChecking=no || true
+        nixops deploy --allow-recreate --allow-reboot --confirm --deployment devnet-gce --debug --show-trace --option narinfo-cache-negative-ttl 0 --include composable-persistent-devnet --include picasso-composable-persistent-devnet
       env:
         NIXOPS_STATE: ${{ runner.temp }}/${{ env.NIXOPS_STATE_FILE }}
     - name: Save NixOps State
