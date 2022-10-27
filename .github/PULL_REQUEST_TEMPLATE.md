@@ -8,5 +8,5 @@
 
 ## Checklist
 
-- [ ] I have updated the cargo docs to reflect changes made by this PR.
-- [ ] I have updated the `docs/` to reflect changes made by this PR.
+- [ ] Updated the rust/typescript docs.
+- [ ] Updated the `docs/`.
