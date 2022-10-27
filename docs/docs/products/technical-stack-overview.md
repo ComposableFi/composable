@@ -47,7 +47,7 @@ cross-chain applications, by using the CosmWasm framework for smart contracts.
 
 ### The Composable Cross-Chain Virtual Machine
 
-The [Composable Cross-Chain Virtual Machine (XCVM)](./cross-chain-virtual-machine.md) is a top-level orchestration layer
+The [Composable Cross-Chain Virtual Machine (XCVM)](./xcvm.md) is a top-level orchestration layer
 for deploying protocols that can communicate across multiple chains at once.
 The XCVM will abstract away complexity by enabling cross-chain smart contracts that leverage the power of the entire 
 DeFi ecosystem for end users and DeFi developers. 
@@ -57,7 +57,7 @@ architect applications with farther reach than ever before.
 
 ### The Composable Routing Layer
 
-The [Routing Layer](./cross-chain-virtual-machine/routing-layer.md) is our pathway execution layer that assesses all of 
+The [Routing Layer](./xcvm/routing-layer.md) is our pathway execution layer that assesses all of 
 the possibilities for a given action (e.g taking out a loan of 1,000 USDC) across all potential layers and chains and 
 selects the optimal pathway for a user. This layer will be crypto-economically secured, with incentives provided for 
 actors to properly select the best routes for user actions. Thus, this layer will act as a function aggregator, 

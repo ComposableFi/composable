@@ -1,4 +1,4 @@
-# Composable’s Cross-Chain Virtual Machine
+# XCVM
 
 The Composable XCVM allows for cross-ecosystem communication enabled through cross-chain smart contracts.
 
