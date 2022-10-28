@@ -4,8 +4,6 @@ import { WebsocketClient } from "binance";
 import BigNumber from "bignumber.js";
 import { useEffect } from "react";
 import { callbackGate, fromChainIdUnit, unwrapNumberOrHex } from "shared";
-import { Assets } from "@/defi/polkadot/Assets";
-import { AssetId } from "@/defi/polkadot/types";
 import { BN } from "@polkadot/util";
 import { ComposableTraitsOraclePrice } from "defi-interfaces";
 
@@ -22,6 +20,7 @@ export const useApolloStats = () => {
   const { parachainApi } = usePicassoProvider();
   const binanceAssets = useStore((state) => state.statsApollo.binanceAssets);
   const oracleAssets = useStore((state) => state.statsApollo.oracleAssets);
+  const tokens =  useStore((state) => state.substrateTokens.tokens);
   const setBinanceAssets = useStore(
     (state) => state.statsApollo.setBinanceAssets
   );
@@ -29,6 +28,7 @@ export const useApolloStats = () => {
     (state) => state.statsApollo.setOracleAssets
   );
 
+  // move out from here
   const setupBinancePricePull = () => {
     const wsClient = new WebsocketClient({
       beautify: true,
@@ -77,16 +77,17 @@ export const useApolloStats = () => {
     const unsub = setupBinancePricePull();
 
     return unsub;
+    
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Pulls prices from oracle for the allowed_list
   useEffect(() => {
     const unsubscribes: Array<Promise<any>> = [];
     Object.keys(oracleAssets).forEach((symbol) => {
-      const unsubPromise: Promise<() => void> = callbackGate((api) => {
-        const asset = Assets[symbol.toLowerCase() as AssetId];
+      const unsubPromise: Promise<() => void> = callbackGate((api, picaId) => {
         return api.query.oracle.prices(
-          asset.supportedNetwork.picasso,
+          picaId.toString(),
           (response: ComposableTraitsOraclePrice) => {
             const { price }: { price: BN } = response.toJSON() as any;
             setOracleAssets(
@@ -96,7 +97,7 @@ export const useApolloStats = () => {
             );
           }
         );
-      }, parachainApi);
+      }, parachainApi, tokens.pica.picassoId);
       unsubscribes.push(unsubPromise);
     });
 
@@ -105,7 +106,8 @@ export const useApolloStats = () => {
         unsubs.forEach((unsub) => unsub())
       );
     };
-  }, []);
+  }, [oracleAssets, parachainApi, setOracleAssets, tokens.pica.picassoId]);
+
   return {
     binanceAssets,
     oracleAssets

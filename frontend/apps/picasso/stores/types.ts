@@ -1,7 +1,7 @@
 import { StateCreator } from "zustand";
 
 import {
-  MetamaskSlice,
+  TokensSlice,
   OracleSlice,
   PolkadotSlice,
   StakingRewardsSlice,
@@ -26,7 +26,7 @@ export type StoreSlice<T> = StateCreator<
 >;
 export type AllSlices = PolkadotSlice &
   UISlice &
-  MetamaskSlice &
+  TokensSlice &
   TransfersSlice &
   StatsApolloSlice &
   StatsOverviewSlice &

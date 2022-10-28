@@ -1,6 +1,6 @@
+import { TokenId } from "tokens";
 import { SettingsModal } from "@/components/Organisms/Settings/SettingsModal";
 import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
-import { AssetId } from "@/defi/polkadot/types";
 import { useRef, useState } from "react";
 import { GasFeeDropdown } from "../GasFeeDropdown";
 
@@ -8,9 +8,9 @@ export const GlobalSettings = () => {
   const [settingsModal, setSettingsModal] = useState<boolean>(false);
   const account = useSelectedAccount();
   const picassoProvider = usePicassoProvider();
-  const targetFeeItem = useRef<AssetId>("pica");
+  const targetFeeItem = useRef<TokenId>("pica");
 
-  const setTargetFeeItem = (feeItem: AssetId) => {
+  const setTargetFeeItem = (feeItem: TokenId) => {
     targetFeeItem.current = feeItem;
   };
 
