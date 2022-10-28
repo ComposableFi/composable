@@ -1,6 +1,9 @@
 { pkgs, rust-nightly, name, version, repo, owner, rev, hash, cargoSha256 }:
 with pkgs;
 rustPlatform.buildRustPackage rec {
+  # HACK: break the nix sandbox so we can build the runtimes. This
+  # requires Nix to have `sandbox = relaxed` in its config.
+  # We don't really care because polkadot is only used for local devnet.
   inherit name version cargoSha256;
 
   src = fetchFromGitHub { inherit repo owner rev hash; };

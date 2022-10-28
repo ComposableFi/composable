@@ -59,3 +59,58 @@ The `governance_origin` can be any `origin` registered in the `GovernanceRegistr
 - multi signature
 
 Using the functionality to `burn_from` we can burn an `amount` of `asset_id` from `dest` account.
+
+#### RPCs
+`assets_listAssets`
+
+This RPC will return a list of all the registered assets, including
+both local and foreign ones.
+
+An example response will look like this:
+
+```javascript
+[
+    // Local asset
+    {
+        "name": [80, 73, 67, 65],
+        "id": 1,
+        "decimals": 12,
+        "foreign_id": null // foreign_id will be null for local
+        // assets, unless the XCM location is know and hardcoded
+    },
+    // Local asset with a known location
+    {
+        "name": [75, 83, 77],
+        "id": 4,
+        "decimals": 12,
+        "foreign_id": { // location is hardcoded for KSM
+            "parents": 0,
+            "interior": "Here"
+        }
+    },
+    // Foreign asset
+    {
+        "name": null, // name will be null for foreign assets
+        "id": 12884901886,
+        "decimals": 6,
+        "foreign_id": {
+            "parents": 8,
+            "interior": "Here"
+        }
+    },
+    // Foreign asset
+    {
+        "name": null,
+        "id": 12884901887,
+        "decimals": 10,
+        "foreign_id": {
+            "parents": 123,
+            "interior": {
+                "X1": {
+                    "Parachain": 123
+                }
+            }
+        }
+    }
+]
+```

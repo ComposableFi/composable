@@ -34,6 +34,11 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
 
+      - name: Fix dubious ownership
+        run: |
+          git config --global --add safe.directory /__w/composable/composable
+          git config --add safe.directory /__w/composable/composable
+
       - name: Get branch name
         id: branch-name
         uses: tj-actions/branch-names@v5.1
@@ -44,9 +49,7 @@ jobs:
           GITHUB_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
         id: check_runtime
         if: contains(github.event.pull_request.labels.*.name, 'needs-benchmarks')
-        run: |
-          git config --global --add safe.directory /__w/composable/composable
-          .maintain/check_runtime.sh
+        run: .maintain/check_runtime.sh
 
       # TODO: use nix
       - name: Benchmark Test

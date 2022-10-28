@@ -1,7 +1,7 @@
 import { RecipientDropdown } from "@/components";
 import React, { useEffect } from "react";
 import { useStore } from "@/stores/root";
-import { useKusamaProvider, usePicassoProvider } from "@/defi/polkadot/hooks";
+import { useKusamaAccounts, usePicassoAccounts } from "@/defi/polkadot/hooks";
 
 function attachNetworkIconToItems(network: "kusama" | "picasso") {
   return (items: any[]) => {
@@ -35,8 +35,8 @@ export const TransferRecipientDropdown = () => {
     recipients,
     networks: { to: toNetwork }
   } = useStore(({ transfers }) => transfers);
-  const { accounts: picassoAccounts } = usePicassoProvider();
-  const { accounts: kusamaAccounts } = useKusamaProvider();
+  const picassoAccounts = usePicassoAccounts();
+  const kusamaAccounts = useKusamaAccounts();
   const options =
     toNetwork === "kusama"
       ? composeOptions(attachNetworkIconToItems("kusama")(kusamaAccounts))

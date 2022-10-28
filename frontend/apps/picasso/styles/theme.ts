@@ -714,9 +714,9 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
             },
           },
           "&.MuiInputBase-adornedStart": {
-            paddingLeft: theme.spacing(3),
+            paddingLeft: theme.spacing(2),
             [theme.breakpoints.down("sm")]: {
-              paddingLeft: theme.spacing(2),
+              paddingLeft: theme.spacing(1),
             },
           },
           "& .MuiSelect-select": {
@@ -737,6 +737,9 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
             fontSize: 16,
             padding: theme.spacing(1.875, 2),
           },
+        },
+        inputSizeSmall: {
+          padding: theme.spacing(1.75, 0),
         },
         notchedOutline: {
           borderColor: `${alpha(
@@ -762,6 +765,13 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
           background: brandPalette.background.paper,
           paddingTop: theme.spacing(1),
           paddingBottom: theme.spacing(1),
+        },
+      },
+    },
+    MuiMenu: {
+      styleOverrides: {
+        list: {
+          minWidth: theme.spacing(22),
         },
       },
     },

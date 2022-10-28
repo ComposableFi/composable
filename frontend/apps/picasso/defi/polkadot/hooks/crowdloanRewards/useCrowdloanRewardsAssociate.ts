@@ -3,7 +3,8 @@ import { APP_NAME } from "../../constants";
 import { SUBSTRATE_NETWORKS } from "../../Networks";
 import { useSnackbar } from "notistack";
 import { useCallback } from "react";
-import { ConnectedAccount, Executor } from "substrate-react";
+import { Executor } from "substrate-react";
+import { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import { fetchAssociations } from "@/stores/defi/polkadot/crowdloanRewards/crowdloanRewards";
 import { setCrowdloanRewardsState } from "@/stores/defi/polkadot/crowdloanRewards/crowdloanRewards.slice";
 
@@ -12,7 +13,7 @@ export type AssociateProps = {
   executor: Executor | undefined;
   selectedPicassoAddress: string | undefined;
   associateMode?: "ethereum" | "kusama";
-  connectedAccounts: ConnectedAccount[];
+  connectedAccounts: InjectedAccountWithMeta[];
 };
 
 function createSignatureParam(
