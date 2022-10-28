@@ -9,8 +9,7 @@ use std::{path::PathBuf, str::FromStr, time::Duration};
 mod chain;
 
 use chain::Config;
-use ibc::core::ics04_channel::channel::Order;
-use ibc::core::ics24_host::identifier::PortId;
+use ibc::core::{ics04_channel::channel::Order, ics24_host::identifier::PortId};
 use primitives::{
 	utils::{create_channel, create_clients, create_connection},
 	IbcProvider,
