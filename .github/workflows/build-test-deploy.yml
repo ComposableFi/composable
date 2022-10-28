@@ -34,7 +34,7 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}-common-deps-${{ github.ref }}
       cancel-in-progress: true
-    runs-on: ubuntu-latest
+    runs-on: buildjet-64vcpu-ubuntu-2204
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
@@ -61,7 +61,7 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}-build-common-test-deps-${{ github.ref }}
       cancel-in-progress: true
-    runs-on: ubuntu-latest
+    runs-on: buildjet-64vcpu-ubuntu-2204
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
@@ -86,7 +86,7 @@ jobs:
   check-nix:
     name: "Check nix"
     continue-on-error: false
-    runs-on: ubuntu-latest
+    runs-on: buildjet-64vcpu-ubuntu-2204
     concurrency:
       group: ${{ github.workflow }}-check-nix-${{ github.ref }}
       cancel-in-progress: true
@@ -112,7 +112,7 @@ jobs:
 
   cargo-fmt-check:
     name: "Cargo fmt check"
-    runs-on: ubuntu-latest
+    runs-on: buildjet-64vcpu-ubuntu-2204
     concurrency:
       group: ${{ github.workflow }}-cargo-fmt-check-${{ github.ref }}
       cancel-in-progress: true
@@ -138,7 +138,7 @@ jobs:
 
   taplo-cli-check:
     name: "Taplo cli check"
-    runs-on: ubuntu-latest
+    runs-on: buildjet-64vcpu-ubuntu-2204
     concurrency:
       group: ${{ github.workflow }}-taplo-cli-check-${{ github.ref }}
       cancel-in-progress: true
@@ -164,7 +164,7 @@ jobs:
 
   prettier-check:
     name: "Prettier check"
-    runs-on: ubuntu-latest
+    runs-on: buildjet-64vcpu-ubuntu-2204
     concurrency:
       group: ${{ github.workflow }}-prettier-check-${{ github.ref }}
       cancel-in-progress: true
@@ -190,7 +190,7 @@ jobs:
 
   nixfmt-check:
     name: "Nixfmt check"
-    runs-on: ubuntu-latest
+    runs-on: buildjet-64vcpu-ubuntu-2204
     concurrency:
       group: ${{ github.workflow }}-nixfmt-check-${{ github.ref }}
       cancel-in-progress: true
@@ -216,7 +216,7 @@ jobs:
 
   deadnix-check:
     name: "Deadnix check"
-    runs-on: ubuntu-latest
+    runs-on: buildjet-64vcpu-ubuntu-2204
     concurrency:
       group: ${{ github.workflow }}-deadnix-check-${{ github.ref }}
       cancel-in-progress: true
@@ -242,7 +242,7 @@ jobs:
 
   spell-check:
     name: "Spelling check"
-    runs-on: ubuntu-latest
+    runs-on: buildjet-64vcpu-ubuntu-2204
     concurrency:
       group: ${{ github.workflow }}-spell-check-${{ github.ref }}
       cancel-in-progress: true
@@ -268,7 +268,7 @@ jobs:
 
   docs-check:
     name: "Docs check"
-    runs-on: ubuntu-latest
+    runs-on: buildjet-64vcpu-ubuntu-2204
     concurrency:
       group: ${{ github.workflow }}-docs-check-${{ github.ref }}
       cancel-in-progress: true
@@ -294,7 +294,7 @@ jobs:
 
   frontend-check:
     name: "Frontend check"
-    runs-on: ubuntu-latest
+    runs-on: buildjet-64vcpu-ubuntu-2204
     concurrency:
       group: ${{ github.workflow }}-frontend-check-${{ github.ref }}
       cancel-in-progress: true
@@ -320,11 +320,7 @@ jobs:
 
   hadolint-check:
     name: "Dockerfiles check"
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: buildjet-64vcpu-ubuntu-2204
     concurrency:
       group: ${{ github.workflow }}-hadolint-check-${{ github.ref }}
       cancel-in-progress: true
@@ -351,7 +347,7 @@ jobs:
   cargo-clippy-check:
     name: "Cargo clippy check"
     needs: common-deps
-    runs-on: ubuntu-latest
+    runs-on: buildjet-64vcpu-ubuntu-2204
     concurrency:
       group: ${{ github.workflow }}-cargo-clippy-check-${{ github.ref }}
       cancel-in-progress: true
@@ -378,7 +374,7 @@ jobs:
   cargo-deny-check:
     name: "Cargo deny check"
     needs: common-deps
-    runs-on: ubuntu-latest
+    runs-on: buildjet-64vcpu-ubuntu-2204
     concurrency:
       group: ${{ github.workflow }}-cargo-deny-check-${{ github.ref }}
       cancel-in-progress: true
@@ -405,7 +401,7 @@ jobs:
   cargo-udeps-check:
     name: "Cargo udeps"
     needs: common-deps
-    runs-on: ubuntu-latest
+    runs-on: buildjet-64vcpu-ubuntu-2204
     concurrency:
       group: ${{ github.workflow }}-cargo-udeps-check-${{ github.ref }}
       cancel-in-progress: true
@@ -432,11 +428,7 @@ jobs:
   benchmarks-check:
     name: "Benchmarks check"
     needs: common-deps
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: buildjet-64vcpu-ubuntu-2204
     concurrency:
       group: ${{ github.workflow }}-benchmarks-check-${{ github.ref }}
       cancel-in-progress: true
@@ -464,11 +456,7 @@ jobs:
     name: "Unit Tests"
     needs:
       - build-common-test-deps
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: buildjet-64vcpu-ubuntu-2204
     concurrency:
       group: ${{ github.workflow }}-unittests-${{ github.ref }}
       cancel-in-progress: true
@@ -495,11 +483,7 @@ jobs:
   unit-tests-with-coverage:
     name: "Unit Tests with coverage"
     needs: common-deps
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: buildjet-64vcpu-ubuntu-2204
     concurrency:
       group: ${{ github.workflow }}-unittests-with-coverage-${{ github.ref }}
       cancel-in-progress: true
@@ -532,11 +516,7 @@ jobs:
   test-running-of-pallet-benchmarks:
     name: "Test running of pallet benchmarks"
     needs: package-composable-bench-node
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: buildjet-64vcpu-ubuntu-2204
     concurrency:
       group: ${{ github.workflow }}-test-running-of-pallet-benchmarks-${{ matrix.runtime }}-${{ github.ref }}
       cancel-in-progress: true
@@ -566,11 +546,7 @@ jobs:
   check-simnode:
     name: "Simnode"
     needs: package-simnode-tests
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: buildjet-64vcpu-ubuntu-2204
     concurrency:
       group: check-simnode-${{ matrix.runtime }}-${{ github.ref }}
       cancel-in-progress: true
@@ -607,11 +583,7 @@ jobs:
 
   local-integration-tests:
     name: "Local integration tests"
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: buildjet-64vcpu-ubuntu-2204
     concurrency:
       group: local-integration-tests-${{ matrix.runtime }}-${{ github.ref }}
       cancel-in-progress: true
@@ -640,11 +612,7 @@ jobs:
 
   package-simnode-tests:
     name: "Package Simnode Tests"
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: buildjet-64vcpu-ubuntu-2204
     concurrency:
       group: package-simnode-tests-${{ matrix.runtime }}-${{ github.ref }}
       cancel-in-progress: true
@@ -671,11 +639,7 @@ jobs:
   package-composable-node:
     name: "Package Composable node"
     needs: common-deps
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: buildjet-64vcpu-ubuntu-2204
     concurrency:
       group: ${{ github.workflow }}-package-composable-node-${{ github.ref }}
       cancel-in-progress: true
@@ -701,11 +665,7 @@ jobs:
 
   package-composable-bench-node:
     name: "Package Composable bench node"
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: buildjet-64vcpu-ubuntu-2204
     concurrency:
       group: ${{ github.workflow }}-package-composable-bench-node-${{ github.ref }}
       cancel-in-progress: true
@@ -731,11 +691,7 @@ jobs:
 
   package-polkadot-node:
     name: "Package Polkadot node"
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: buildjet-64vcpu-ubuntu-2204
     concurrency:
       group: ${{ github.workflow }}-package-polkadot-node-${{ github.ref }}
       cancel-in-progress: true
@@ -761,11 +717,7 @@ jobs:
 
   package-statemine-node:
     name: "Package Statemine node"
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: buildjet-64vcpu-ubuntu-2204
     concurrency:
       group: ${{ github.workflow }}-package-statemine-node-${{ github.ref }}
       cancel-in-progress: true
@@ -791,11 +743,7 @@ jobs:
 
   package-acala-node:
     name: "Package Acala node"
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: buildjet-64vcpu-ubuntu-2204
     concurrency:
       group: ${{ github.workflow }}-package-acala-node-${{ github.ref }}
       cancel-in-progress: true
@@ -823,11 +771,7 @@ jobs:
     name: "Package kusama parachains devnet"
     needs:
       - package-polkadot-node
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: buildjet-64vcpu-ubuntu-2204
     concurrency:
       group: ${{ github.workflow }}-cache-kusama-parachains-devnet-${{ github.ref }}
       cancel-in-progress: true
@@ -858,11 +802,7 @@ jobs:
       - package-polkadot-node
       - package-acala-node
       - package-statemine-node
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: buildjet-64vcpu-ubuntu-2204
     concurrency:
       group: ${{ github.workflow }}-cache-devnet-all-dev-local-${{ github.ref }}
       cancel-in-progress: true
@@ -889,7 +829,7 @@ jobs:
 
   package-xcvm-minimal:
     name: "Package XCVM minimal"
-    runs-on: ubuntu-latest
+    runs-on: buildjet-64vcpu-ubuntu-2204
     concurrency:
       group: ${{ github.workflow }}-package-xcvm-${{ github.ref }}
       cancel-in-progress: true
@@ -919,11 +859,7 @@ jobs:
 
   package-price-feed:
     needs: common-deps
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: buildjet-64vcpu-ubuntu-2204
     concurrency:
       group: packagepricefeed-${{ github.ref }}
       cancel-in-progress: true
@@ -950,11 +886,7 @@ jobs:
   composable-sandbox-container-publish:
     needs:
       - effects-gate
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: buildjet-64vcpu-ubuntu-2204
     concurrency:
       group: ${{ github.workflow }}-composable-sandbox-container-${{ github.ref }}
       cancel-in-progress: true
@@ -1003,11 +935,7 @@ jobs:
     name: "Docker composable-bridge-devnet"
     needs:
       - effects-gate
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: buildjet-64vcpu-ubuntu-2204
     concurrency:
       group: ${{ github.workflow }}-composable-bridge-devnet-container-${{ github.ref }}
       cancel-in-progress: true
@@ -1061,7 +989,7 @@ jobs:
         - package-polkadot-node
         - package-composable-node
         - check-nix
-      runs-on: ubuntu-latest
+      runs-on: buildjet-64vcpu-ubuntu-2204
       timeout-minutes: 120
       concurrency:
         group: ${{ github.workflow }}-devnet-integration-tests-${{ github.ref }}
@@ -1119,7 +1047,7 @@ jobs:
 
   effects-gate:
       name: "Effect gate, automatically merged if passed"
-      runs-on: ubuntu-latest
+      runs-on: buildjet-64vcpu-ubuntu-2204
       needs:
         - check-nix
         - devnet-integration-tests
@@ -1149,7 +1077,7 @@ jobs:
       if: github.event_name == 'push' && github.ref_name == 'main'
       needs:
         - effects-gate
-      runs-on: ubuntu-latest
+      runs-on: buildjet-64vcpu-ubuntu-2204
       # ISSUE: SSH on container image nixos hangs, so we do not use it - need some customization
       concurrency:
         group: nix-deploy-devnet
@@ -1213,11 +1141,7 @@ jobs:
   frontend-firebase-preview-deploy:
     name: "Firebase Preview channel PR deployment"
     needs: common-deps
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: buildjet-64vcpu-ubuntu-2204
     concurrency:
       group: $${github.workflow }}-frontend-nix-deploy-firebase-${{ github.ref }}
       cancel-in-progress: true
@@ -1286,11 +1210,7 @@ jobs:
     name: "Firebase Live channel staging deployment"
     needs:
       - effects-gate
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: buildjet-64vcpu-ubuntu-2204
     concurrency:
       group: $${github.workflow }}-frontend-nix-deploy-firebase-${{ github.ref }}
       cancel-in-progress: true
@@ -1342,7 +1262,7 @@ jobs:
           channelId: live
 
   nix-command-pr-comments:
-    runs-on: ubuntu-latest
+    runs-on: buildjet-64vcpu-ubuntu-2204
     needs:
       - check-nix
     name: "Nix command PR comments"
