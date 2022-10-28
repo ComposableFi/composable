@@ -1,7 +1,5 @@
 # Contracts - Technical Details
 
----
-
 **For transparency, we are continuing to publicize the parachain vault approach we took when bidding for our Kusama and 
 Polkadot parachains, as well as the contracts used in this process. This strategy is no longer being implemented to 
 support parachain procurement, as this milestone has already been achieved. Please note that the information in 

@@ -1,7 +1,5 @@
 # Writing Smart Contracts with CosmWasm
 
----
-
 ## CosmWasm’s Advantages
 
 Composable selected CosmWasm as the developer framework for smart contract deployment on the XCVM as it offers 

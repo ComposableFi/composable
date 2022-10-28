@@ -1,7 +1,5 @@
 # The 11-BEEFY COSMOS-IBC Light Client
 
----
-
 The final pieces of technology contributing to the construction of Centauri leverage [Parity](https://www.parity.io/)’s 
 Bridge Efficiency Enabling Finality Yielder (BEEFY) and its novel consensus gadget that enables DotSama to be bridged to
 additional chains via very efficient finality proofs. Parachains get their finality from the Kusama relay chain, and 

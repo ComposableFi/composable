@@ -16,8 +16,8 @@ Some products that we are building and deploying on Picasso and Composable inclu
 
 - [Pablo](https://dali.devnets.composablefinance.ninja/products/pablo-overview.html)
 - [Centauri](https://dali.devnets.composablefinance.ninja/products/centauri-overview.html)
-- [Composable's-XCVM](https://dali.devnets.composablefinance.ninja/products/cross-chain-virtual-machine.html)
-- [CosmwasmVM](https://dali.devnets.composablefinance.ninja/products/cross-chain-virtual-machine/writing-smart-contracts-with-cosmwasm.html)
+- [XCVM](https://dali.devnets.composablefinance.ninja/products/xcvm.html)
+- [CosmWasmVM](https://dali.devnets.composablefinance.ninja/products/xcvm/writing-smart-contracts-with-cosmwasm.html)
 
 
 

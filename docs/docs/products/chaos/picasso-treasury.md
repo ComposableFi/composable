@@ -1,7 +1,5 @@
 # Picasso Treasury
 
----
-
 ## The Picasso treasury’s different revenue streams
 
 The Picasso treasury functions as a broad representative of the Picasso ecosystem. This is because the projects

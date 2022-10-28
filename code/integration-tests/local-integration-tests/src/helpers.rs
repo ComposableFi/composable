@@ -1,5 +1,10 @@
-use common::{xcmp::BaseXcmWeight, AccountId, Balance, NativeExistentialDeposit, PriceConverter};
-use composable_traits::{oracle::MinimalOracle, xcm::assets::AssetRatioInspect};
+use common::{
+	multi_existential_deposits, xcmp::BaseXcmWeight, AccountId, Balance, NativeExistentialDeposit,
+	PriceConverter,
+};
+use composable_traits::{
+	currency::AssetExistentialDepositInspect, oracle::MinimalOracle, xcm::assets::AssetRatioInspect,
+};
 use cumulus_primitives_core::ParaId;
 
 use frame_support::log;
@@ -32,13 +37,14 @@ pub fn deposit_all_one<Call>(beneficiary: impl Into<MultiLocation>) -> Instructi
 }
 
 /// under ED, but above Weight
-pub fn under_existential_deposit<AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>>(
+pub fn under_existential_deposit<
+	AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>
+		+ AssetExistentialDepositInspect<AssetId = CurrencyId, Balance = Balance>,
+>(
 	asset_id: LocalAssetId,
 	_instruction_count: usize,
 ) -> Balance {
-	PriceConverter::<AssetsRegistry>::get_price_inverse(asset_id, NativeExistentialDeposit::get())
-		.unwrap() /
-		Balance::from(2_u128)
+	multi_existential_deposits::<AssetsRegistry>(&asset_id) / 2
 }
 
 /// dumps events for debugging
@@ -74,7 +80,6 @@ pub fn assert_above_deposit<AssetsRegistry: AssetRatioInspect<AssetId = Currency
 
 /// weigh enough to handle any XCMP message
 pub fn enough_weight() -> u128 {
-	let this_liveness_native_amount = BaseXcmWeight::get() as u128 +
-		100 * UnitWeightCost::get() as Balance * MaxInstructions::get() as Balance;
-	this_liveness_native_amount
+	BaseXcmWeight::get() as u128 +
+		100 * UnitWeightCost::get() as Balance * MaxInstructions::get() as Balance
 }

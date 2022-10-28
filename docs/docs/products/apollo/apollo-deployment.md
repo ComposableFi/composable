@@ -1,7 +1,5 @@
 # Apollo Deployment
 
----
-
 Apollo can be used in smart contracts or in any other form of DeFi module which requires information on external assets.
 Composable sits at an interoperable intersection of multiple ecosystems and Apollo’s functionality is central to any 
 DeFi activity within most DeFi applications in the Composable ecosystem. 

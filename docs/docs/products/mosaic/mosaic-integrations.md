@@ -1,7 +1,5 @@
 # Integrating with Mosaic using the Composable SDK
 
----
-
 Composable SDK allows developers to embed the Mosaic infrastructure in the dApps they are building. This enables new functions, such as:
 
 * Providing unused capital to Mosaic’s vaults for additional yield. For example, the integration of Mosaic with Crocswap 

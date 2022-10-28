@@ -1,7 +1,5 @@
 # Audit Results, Recommendations, and Remediations
 
----
-
 Composable Finance coding has been audited by the following renowned security auditing firms:
 
 * [Trail of Bits](https://www.trailofbits.com/): This near-decade-old cybersecurity auditing firm has worked to secure some of the most prominent and highly targeted software products and technology organizations.

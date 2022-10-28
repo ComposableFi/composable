@@ -1,10 +1,8 @@
 { nixpkgs, devnet-dali, devnet-picasso, gce-input, docs, rev }:
 let
   region = "europe-central2-c";
-  persistent-machine = let
-    domain = "persistent.devnets.composablefinance.ninja";
-    machine-name = "composable-persistent-devnet";
-  in {
+
+  mkPersistentMachine = { domain, machine-name, ip, package, chain }: {
     "${machine-name}" = { pkgs, resources, ... }: {
       deployment = {
         targetEnv = "gce";
@@ -15,7 +13,7 @@ let
           instanceType = "n2-standard-8";
           rootDiskSize = 500;
           tags = [ "http" "https" ];
-          ipAddress = "persistent-devnet-ip";
+          ipAddress = ip;
         };
       };
       nix = {
@@ -54,7 +52,7 @@ let
                 name = "start";
                 runtimeInputs = [ pkgs.nix pkgs.git ];
                 text =
-                  "nix run github:ComposableFi/Composable/${rev}#devnet-persistent -L";
+                  "nix run github:ComposableFi/Composable/${rev}#${package} -L";
               }
             }/bin/start";
         };
@@ -93,8 +91,8 @@ let
           };
           # I agree, the hardcoded ports are a shame
         in mkDomain domain ({
-          locations = proxyChain "dali" 9988 // proxyChain "dali/bob" 9989
-            // proxyChain "dali/charlie" 9990 // proxyChain "rococo" 9944
+          locations = proxyChain chain 9988 // proxyChain "${chain}/bob" 9989
+            // proxyChain "${chain}/charlie" 9990 // proxyChain "rococo" 9944
             // proxyChain "karura" 9999 // proxyChain "statemine" 10008 // {
               "/" = { root = "${docs}/"; };
               "/subsquid/" = { proxyPass = "http://127.0.0.1:4350/"; };
@@ -108,6 +106,23 @@ let
       };
     };
   };
+
+  dali-persistent-machine = mkPersistentMachine {
+    domain = "persistent.devnets.composablefinance.ninja";
+    machine-name = "composable-persistent-devnet";
+    ip = "persistent-devnet-ip";
+    package = "devnet-persistent";
+    chain = "dali";
+  };
+
+  picasso-persistent-machine = mkPersistentMachine {
+    domain = "persistent.picasso.devnets.composablefinance.ninja";
+    machine-name = "picasso-composable-persistent-devnet";
+    ip = "picasso-persistent-devnet-ip";
+    package = "devnet-picasso-persistent";
+    chain = "picasso";
+  };
+
 in builtins.foldl' (machines: devnet:
   let
     machine = import ./devnet-gce.nix {
@@ -126,4 +141,7 @@ in builtins.foldl' (machines: devnet:
       description = "Composable Devnet";
       storage.legacy = { };
     };
-  } // persistent-machine) [ devnet-dali devnet-picasso ]
+  } // (dali-persistent-machine // picasso-persistent-machine)) [
+    devnet-dali
+    devnet-picasso
+  ]

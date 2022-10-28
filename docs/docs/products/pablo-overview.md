@@ -1,7 +1,5 @@
 # Pablo: The Decentralized Exchange
 
----
-
 Pablo is the native decentralized exchange (DEX) of Picasso. It is a DeFi primitive, in that it fulfills a fundamental 
 basic need of any DeFi ecosystem. In this case that function is token swaps whilst incorporating novel innovations to 
 provide a complete suite of features that together form a protocol that is greater than the sum of its parts. 

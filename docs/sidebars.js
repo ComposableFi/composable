@@ -74,18 +74,18 @@ const sidebars = {
       items: [
         {
           type: 'category',
-          label: 'Composable\'s Cross-Chain Virtual Machine',
+          label: 'XCVM',
           link: {
             type: 'doc',
-            id: 'products/cross-chain-virtual-machine'
+            id: 'products/xcvm'
           },
           collapsible: true,
           collapsed: true,
           items: [
-            'products/cross-chain-virtual-machine/writing-smart-contracts-with-cosmwasm',
-            'products/cross-chain-virtual-machine/how-the-xcvm-works',
-            'products/cross-chain-virtual-machine/routing-layer',
-            'products/cross-chain-virtual-machine/routing-layer-libraries'
+            'products/xcvm/writing-smart-contracts-with-cosmwasm',
+            'products/xcvm/how-the-xcvm-works',
+            'products/xcvm/routing-layer',
+            'products/xcvm/routing-layer-libraries'
           ],
         },
         {
@@ -102,41 +102,6 @@ const sidebars = {
             'products/centauri/merkle-mountain-ranges',
             'products/centauri/cosmos11-BEEFY-COSMOS-IBC-light-client',
             'products/centauri/expanding-ibc-protocol'
-          ],
-        },
-        {
-          type: 'category',
-          label: 'Mosaic',
-          link: {
-            type: 'doc',
-            id: 'products/mosaic-overview'
-          },
-          collapsible: true,
-          collapsed: true,
-          items: [
-            'products/mosaic/dynamic-fee-model',
-            'products/mosaic/liquidity-forecasting',
-            'products/mosaic/passive-liquidity-rebalancing',
-            'products/mosaic/active-liquidity-management',
-            'products/mosaic/single-sided-staking',
-            'products/mosaic/additional-use-cases',
-            'products/mosaic/mosaic-integrations',
-            'products/mosaic/mosaic-pallet',
-            'products/mosaic/mosaic-phase1-result',
-            {
-              type: 'category',
-              label: 'Mural: NFT Transfers on Mosaic via the Summoner Vault',
-              link: {
-                type: 'doc',
-                id: 'products/mosaic/mural-NFT-transfers/mural-NFT-transfers'
-              },
-              collapsible: true,
-              collapsed: true,
-              items: [
-                'products/mosaic/mural-NFT-transfers/NFT-transfer-flow',
-                'products/mosaic/mural-NFT-transfers/NFT-contract-details'
-              ],
-            },
           ],
         },
         {
@@ -200,10 +165,45 @@ const sidebars = {
         },
         {
           type: 'category',
-          label: 'Parachain Vault Strategy',
+          label: 'Mosaic (Discontinued)',
           link: {
             type: 'doc',
-            id: 'products/CHAOS-fNFT-overview'
+            id: 'products/mosaic-overview'
+          },
+          collapsible: true,
+          collapsed: true,
+          items: [
+            'products/mosaic/dynamic-fee-model',
+            'products/mosaic/liquidity-forecasting',
+            'products/mosaic/passive-liquidity-rebalancing',
+            'products/mosaic/active-liquidity-management',
+            'products/mosaic/single-sided-staking',
+            'products/mosaic/additional-use-cases',
+            'products/mosaic/mosaic-integrations',
+            'products/mosaic/mosaic-pallet',
+            'products/mosaic/mosaic-phase1-result',
+            {
+              type: 'category',
+              label: 'Mural: NFT Transfers on Mosaic via the Summoner Vault',
+              link: {
+                type: 'doc',
+                id: 'products/mosaic/mural-NFT-transfers/mural-NFT-transfers'
+              },
+              collapsible: true,
+              collapsed: true,
+              items: [
+                'products/mosaic/mural-NFT-transfers/NFT-transfer-flow',
+                'products/mosaic/mural-NFT-transfers/NFT-contract-details'
+              ],
+            },
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Parachain Vault Strategy (Discontinued)',
+          link: {
+            type: 'doc',
+            id: 'products/parachain-vault-strategy'
           },
           collapsible: true,
           collapsed: true,
@@ -240,7 +240,7 @@ const sidebars = {
             'nix/running-checks',
             'nix/defining-your-own-packages',
             'nix/composing-services-with-arion',
-            'nix/editing-book',
+            'nix/editing-docs',
           ],
         },
         {
@@ -254,7 +254,6 @@ const sidebars = {
           collapsed: true,
           items: [
             'codespaces/getting-started',
-            'codespaces/using-codespaces',
             {
               type: 'category',
               label: 'Using Codespaces',
