@@ -109,7 +109,7 @@ jobs:
         echo "Host *\n\tStrictHostKeyChecking no" > /root/.ssh/config
         nixops ssh picasso-composable-persistent-devnet -vvv -o PasswordAuthentication=no -o StrictHostKeyChecking=no || true
         nixops ssh composable-persistent-devnet -vvv -o PasswordAuthentication=no -o StrictHostKeyChecking=no || true
-        nixops deploy --allow-recreate --allow-reboot --confirm --deployment devnet-gce --debug --show-trace --option narinfo-cache-negative-ttl 0 --include composable-persistent-devnet --include picasso-composable-persistent-devnet
+        nixops deploy --allow-recreate --allow-reboot --confirm --deployment devnet-gce --debug --show-trace --option narinfo-cache-negative-ttl 0 --include composable-persistent-devnet picasso-composable-persistent-devnet
       env:
         NIXOPS_STATE: ${{ runner.temp }}/${{ env.NIXOPS_STATE_FILE }}
     - name: Save NixOps State
