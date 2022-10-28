@@ -59,7 +59,7 @@ export const endpointPresets: EndpointPresets = {
   },
   picassoStage: {
     picasso:
-      "wss://persistent.picasso.devnets.composablefinance.ninja/chain/dali",
+      "wss://persistent.picasso.devnets.composablefinance.ninja/chain/picasso",
     karura:
       "wss://persistent.picasso.devnets.composablefinance.ninja/chain/karura",
     kusama:
