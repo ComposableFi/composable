@@ -224,12 +224,8 @@ fn test_accumulate_rewards_pool_empty_refill() {
 
 		progress_to_block(current_block + 1, &mut current_block);
 
-		// Reward pot should become empty on the next block, once it adds the remaining rewards
-		check_events([crate::Event::<Test>::RewardAccumulationHookError {
-			pool_id: A::ID,
-			asset_id: A::ID,
-			error: RewardAccumulationHookError::RewardsPotEmpty,
-		}]);
+		// Note: reward pot for A_B should become empty, once it adds the remaining rewards.
+		// Should we emit some event on the pallet? If yes, it should be asserted here.
 	});
 }
 
@@ -479,11 +475,8 @@ fn test_accumulate_rewards_hook() {
 				},
 			]);
 
-			check_events([crate::Event::<Test>::RewardAccumulationHookError {
-				pool_id: C::ID,
-				asset_id: E::ID,
-				error: RewardAccumulationHookError::RewardsPotEmpty,
-			}]);
+			// Note: reward pot for C_E should become empty. Should we emit some event? If yes, it
+			// should be asserted here.
 		}
 
 		{
@@ -534,11 +527,8 @@ fn test_accumulate_rewards_hook() {
 				},
 			]);
 
-			check_events([crate::Event::<Test>::RewardAccumulationHookError {
-				pool_id: C::ID,
-				asset_id: D::ID,
-				error: RewardAccumulationHookError::RewardsPotEmpty,
-			}]);
+			// Note: reward pot for D_E should become empty. Should we emit some event? If yes,
+			// it should be asserted here.
 		}
 
 		// add a new, zero-reward pool
@@ -613,13 +603,9 @@ fn test_accumulate_rewards_hook() {
 				},
 			]);
 
-			check_events([crate::Event::<Test>::RewardAccumulationHookError {
-				pool_id: A::ID,
-				asset_id: B::ID,
-				error: RewardAccumulationHookError::RewardsPotEmpty,
-			}]);
+			// Note: reward pot for A_B should become empty.
+			// Should we emit some event on the pallet? If yes, it should be asserted here.
 		}
-
 		{
 			progress_to_block(STARTING_BLOCK + 8334, &mut current_block);
 
@@ -672,11 +658,8 @@ fn test_accumulate_rewards_hook() {
 				},
 			]);
 
-			check_events([crate::Event::<Test>::RewardAccumulationHookError {
-				pool_id: A::ID,
-				asset_id: A::ID,
-				error: RewardAccumulationHookError::RewardsPotEmpty,
-			}]);
+			// Note: reward pot for A_A should become empty.
+			// Should we emit some event on the pallet? If yes, it should be asserted here.
 		}
 	});
 }
@@ -787,11 +770,8 @@ fn test_pause_in_reward_accumulation_hook() {
 				],
 			}]);
 
-			check_events([crate::Event::<Test>::RewardAccumulationHookError {
-				pool_id: A::ID,
-				asset_id: B::ID,
-				error: RewardAccumulationHookError::RewardsPotEmpty,
-			}]);
+			// Note: reward pot for A_B should become empty.
+			// Should we emit some event on the pallet? If yes, it should be asserted here.
 		}
 
 		{
@@ -895,11 +875,8 @@ fn test_pause_in_reward_accumulation_hook() {
 				],
 			}]);
 
-			check_events([crate::Event::<Test>::RewardAccumulationHookError {
-				pool_id: A::ID,
-				asset_id: A::ID,
-				error: RewardAccumulationHookError::RewardsPotEmpty,
-			}]);
+			// Note: reward pot for A_A should become empty.
+			// Should we emit some event on the pallet? If yes, it should be asserted here.
 		}
 	});
 }

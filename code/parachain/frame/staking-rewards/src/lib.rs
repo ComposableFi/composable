@@ -1465,7 +1465,13 @@ pub mod pallet {
 
 			let pool_account = Self::pool_account_id(&pool_id);
 
-			match do_reward_accumulation::<T>(reward_asset_id, reward, &pool_account, now_seconds) {
+			match do_reward_accumulation::<T>(
+				pool_id,
+				reward_asset_id,
+				reward,
+				&pool_account,
+				now_seconds,
+			) {
 				Ok(()) => {},
 				Err(BackToTheFuture) => {
 					Self::deposit_event(Event::<T>::RewardAccumulationHookError {
@@ -1628,7 +1634,8 @@ fn update_rewards_pool<T: Config>(
 
 		for (asset_id, update) in reward_updates {
 			let reward = pool.rewards.get_mut(&asset_id).ok_or(Error::<T>::RewardAssetNotFound)?;
-			match do_reward_accumulation::<T>(asset_id, reward, &pool_account, now_seconds) {
+			match do_reward_accumulation::<T>(pool_id, asset_id, reward, &pool_account, now_seconds)
+			{
 				Ok(()) => {},
 				Err(RewardAccumulationCalculationError::BackToTheFuture) =>
 					return Err(Error::<T>::BackToTheFuture.into()),
@@ -1647,6 +1654,7 @@ fn update_rewards_pool<T: Config>(
 
 /// Calculates the update to the reward and unlocks the accumulated rewards from the pool account.
 pub(crate) fn do_reward_accumulation<T: Config>(
+	pool_id: T::AssetId,
 	asset_id: T::AssetId,
 	reward: &mut Reward<T::Balance>,
 	pool_account: &T::AccountId,
@@ -1698,12 +1706,10 @@ pub(crate) fn do_reward_accumulation<T: Config>(
 		);
 
 		if !total_locked_rewards.is_zero() {
-			let amount_to_unlock = new_total_rewards.saturating_sub(reward.total_rewards.into());
-
 			T::Assets::release(
 				asset_id,
 				pool_account,
-				amount_to_unlock.into(),
+				newly_accumulated_rewards.into(),
 				false, // not best effort, entire amount must be released
 			)
 			// Note: will this always be Ok or need to handle error?
@@ -1715,7 +1721,7 @@ pub(crate) fn do_reward_accumulation<T: Config>(
 			let new_balance_on_hold = T::Assets::balance_on_hold(asset_id, pool_account);
 
 			if new_balance_on_hold.into().is_zero() {
-				return Err(RewardAccumulationCalculationError::RewardsPotEmpty)
+				RewardsPotIsEmpty::<T>::insert(pool_id, asset_id, ());
 			}
 
 			Ok(())
