@@ -3,7 +3,7 @@ use codec::{Decode, Encode};
 use common::{
 	topology::{self},
 	xcmp::*,
-	PriceConverter,
+	PriceConverter, fees::WeightToFeeConverter,
 };
 use composable_traits::{
 	defi::Ratio,
@@ -65,7 +65,6 @@ parameter_types! {
 
 
 pub type Barrier = (
-	XcmpDebug,
 	AllowKnownQueryResponses<RelayerXcm>,
 	AllowSubscriptionsFrom<ParentOrSiblings>,
 	AllowTopLevelPaidExecutionFrom<Everything>,
@@ -136,7 +135,7 @@ pub type LocalAssetTransactor = MultiCurrencyAdapter<
 
 
 type IsReserveAssetLocationFilter =
-	(DebugMultiNativeAsset, MultiNativeAsset<AbsoluteReserveProvider>, RelayReserveFromParachain);
+	(MultiNativeAsset<AbsoluteReserveProvider>, RelayReserveFromParachain);
 
 type AssetsIdConverter =
 	CurrencyIdConvert<AssetsRegistry, CurrencyId, ParachainInfo, StaticAssetsMap>;
@@ -145,7 +144,7 @@ pub type Trader = TransactionFeePoolTrader<
 	AssetsIdConverter,
 	PriceConverter<AssetsRegistry>,
 	ToTreasury<AssetsIdConverter, crate::Assets, TreasuryAccount>,
-	WeightToFee,
+	WeightToFeeConverter,
 >;
 
 pub struct CaptureDropAssets<
@@ -207,6 +206,11 @@ impl xcm_executor::Config for XcmConfig {
 	type AssetTrap = CaptureAssetTrap;
 }
 
+parameter_type_with_key! {
+	pub ParachainMinFee: |location: MultiLocation| -> Option<Balance> {
+		OutgoingFee::<AssetsRegistry>::outgoing_fee(location)
+	};
+}
 
 
 impl orml_xtokens::Config for Runtime {
@@ -216,13 +220,13 @@ impl orml_xtokens::Config for Runtime {
 	type CurrencyIdConvert = AssetsIdConverter;
 	type AccountIdToMultiLocation = AccountIdToMultiLocation;
 	type SelfLocation = topology::this::Local;
+	type MinXcmFee = ParachainMinFee;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
+	type MultiLocationsFilter = Everything;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
 	type BaseXcmWeight = BaseXcmWeight;
 	type LocationInverter = LocationInverter<Ancestry>;
 	type MaxAssetsForTransfer = XcmMaxAssetsForTransfer;
-	type MinXcmFee = OutgoingParachainMinFee;
-	type MultiLocationsFilter = Everything;
 	type ReserveProvider = RelativeReserveProvider;
 }
 

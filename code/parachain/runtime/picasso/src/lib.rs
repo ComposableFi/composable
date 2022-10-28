@@ -25,7 +25,8 @@ pub mod governance;
 mod weights;
 pub mod xcmp;
 
-pub use xcmp::{MaxInstructions, UnitWeightCost, XcmConfig};
+use xcmp::XcmConfig;
+pub use common::xcmp::{MaxInstructions, UnitWeightCost};
 
 use governance::*;
 
@@ -34,7 +35,7 @@ use common::{
 	AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, BondOfferId, ForeignAssetId, Hash,
 	MaxStringSize, Moment, NativeExistentialDeposit, PriceConverter, Signature,
 	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
-	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	NORMAL_DISPATCH_RATIO, SLOT_DURATION, ReservedDmpWeight, ReservedXcmpWeight, fees::WeightToFeeConverter,
 };
 
 use composable_traits::assets::Asset;
@@ -365,7 +366,7 @@ impl transaction_payment::Config for Runtime {
 	type Event = Event;
 	type OnChargeTransaction =
 		transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime, NativeTreasury>>;
-	type WeightToFee = WeightToFee;
+	type WeightToFee = WeightToFeeConverter;
 	type FeeMultiplierUpdate =
 		TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;

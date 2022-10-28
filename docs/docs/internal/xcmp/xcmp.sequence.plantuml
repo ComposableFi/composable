@@ -1,5 +1,6 @@
 @startuml
 
+sibling-asset-transfer.sequence
 box Picasso #LightYellow
     participant Pallet as pallet
     participant XTokens as xtokens
@@ -29,4 +30,17 @@ end note
 sibling_xcm_queue -> sibling_xcm_executor: Receive message
 sibling_xcm_executor -> sibling_assets: Dispatch to call relevant pallet for accepting foreign assets
 
+@enduml
+
+
+@startuml
+' pure Cumulus/Polkadot, not ORML flow
+"cumulus:DmpMessageHandler"  -> "cumulus:DmpMessageHandler": handle_dmp_messages
+"cumulus:DmpMessageHandler"  -> "cumulus:DmpMessageHandler": try_service_message
+"cumulus:DmpMessageHandler" -> XcmExecutor: execute_xcm_in_credit
+XcmExecutor -> Weigher : weight is computable and under limit
+XcmExecutor -> Barrier : should execute
+XcmExecutor -> vm : execute
+XcmExecutor  -> process_instruction: for each instruction in message 
+XcmExecutor -> vm : either accrue weight while there are messages or call error handler
 @enduml

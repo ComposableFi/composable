@@ -12,7 +12,7 @@ use frame_support::{
  	log, parameter_types,
 	traits::{Contains, Get},
 	weights::{WeightToFee, WeightToFeePolynomial},
-	WeakBoundedVec,
+	WeakBoundedVec, match_types,
 };
 use num_traits::{One, Zero};
 use orml_traits::location::{AbsoluteReserveProvider, Reserve};
@@ -30,6 +30,14 @@ use cumulus_primitives_core::ParaId;
 
 pub const VERSION_DISCOVERY_QUEUE_SIZE: u32 = 100;
 	
+
+match_types! {
+	pub type ParentOrSiblings: impl Contains<MultiLocation> = {
+		MultiLocation { parents: 1, interior: Here } |
+		MultiLocation { parents: 1, interior: X1(_) }
+	};
+}
+
 parameter_types! {
 	pub const BaseXcmWeight: Weight = 100_000_000;
 	pub const XcmMaxAssetsForTransfer: usize = 2;
