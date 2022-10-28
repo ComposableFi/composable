@@ -1,3 +1,7 @@
+use frame_support::weights::constants::ExtrinsicBaseWeight;
+
+use crate::Balance;
+
 pub struct WeightToFee;
 impl WeightToFeePolynomial for WeightToFee {
 	type Balance = Balance;

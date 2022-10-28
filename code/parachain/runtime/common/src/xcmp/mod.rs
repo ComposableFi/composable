@@ -9,7 +9,7 @@ use composable_traits::{
 };
 use frame_support::{
 	dispatch::Weight,
-	ensure, log, parameter_types,
+ 	log, parameter_types,
 	traits::{Contains, Get},
 	weights::{WeightToFee, WeightToFeePolynomial},
 	WeakBoundedVec,
@@ -23,48 +23,21 @@ use sp_std::marker::PhantomData;
 use xcm::{latest::MultiAsset, prelude::*};
 use xcm_builder::*;
 use xcm_executor::{
-	traits::{FilterAssetLocation, ShouldExecute, WeightTrader},
+	traits::{FilterAssetLocation, WeightTrader},
 	*,
 };
+use cumulus_primitives_core::ParaId; 
 
-const VERSION_DISCOVERY_QUEUE_SIZE: u32 = 100;
+pub const VERSION_DISCOVERY_QUEUE_SIZE: u32 = 100;
 	
-
 parameter_types! {
-	// similar to what Acala/Hydra has
 	pub const BaseXcmWeight: Weight = 100_000_000;
 	pub const XcmMaxAssetsForTransfer: usize = 2;
-}
-
-parameter_types! {
 	pub RelayNativeLocation: MultiLocation = MultiLocation::parent();
-	pub RelayOrigin: Origin = cumulus_pallet_xcm::Origin::Relay.into();
-}
-
-
-
-// make setup as in Acala, max instructions seems reasonable, for weight may consider to  settle
-// with our PICA
-parameter_types! {
-	// One XCM operation is 200_000_000 weight, cross-chain transfer ~= 2x of transfer.
+	pub RelayOrigin: cumulus_pallet_xcm::Origin = cumulus_pallet_xcm::Origin::Relay;
 	pub const UnitWeightCost: Weight = 200_000_000;
 	pub const MaxInstructions: u32 = 100;
 }
-pub struct XcmpDebug;
-
-impl ShouldExecute for XcmpDebug {
-	fn should_execute<Call>(
-		origin: &MultiLocation,
-		message: &mut Xcm<Call>,
-		max_weight: Weight,
-		weight_credit: &mut Weight,
-	) -> Result<(), ()> {
-		log::trace!(target: "xcmp::should_execute", "{:?} {:?} {:?} {:?}", origin, message, max_weight, weight_credit);
-		Err(())
-	}
-}
-
-/// is used to represent this chain in various APIS
 pub struct ThisChain<T>(PhantomData<T>);
 
 impl<T: Get<Id>> ThisChain<T> {
@@ -76,25 +49,6 @@ impl<T: Get<Id>> ThisChain<T> {
 impl<T: Get<Id>> Contains<MultiLocation> for ThisChain<T> {
 	fn contains(origin: &MultiLocation) -> bool {
 		origin == &topology::this::Local::get() || origin == &Self::self_parent()
-	}
-}
-
-/// NOTE: there could be payments taken on other side, so cannot rely on this to work end to end
-pub struct DebugAllowUnpaidExecutionFrom<T>(PhantomData<T>);
-impl<T: Contains<MultiLocation>> ShouldExecute for DebugAllowUnpaidExecutionFrom<T> {
-	fn should_execute<Call>(
-		origin: &MultiLocation,
-		_message: &mut Xcm<Call>,
-		_max_weight: Weight,
-		_weight_credit: &mut Weight,
-	) -> Result<(), ()> {
-		log::trace!(
-			target: "xcm::barriers",
-			"AllowUnpaidExecutionFrom origin: {:?}, message: {:?}, max_weight: {:?}, weight_credit: {:?}, contains: {:?}",
-			origin, _message, _max_weight, _weight_credit, T::contains(origin),
-		);
-		ensure!(T::contains(origin), ());
-		Ok(())
 	}
 }
 
@@ -285,10 +239,13 @@ pub trait XcmpAssets {
 	}
 }
 
-/// Converts currency to and from local and remote
+
+/// Converts currency to and from local and remote.
+/// Checks compile time and runtime assets mapping.
 pub struct CurrencyIdConvert<AssetRegistry, WellKnownCurrency, ThisParaId, WellKnownXcmpAssets>(
 	PhantomData<(AssetRegistry, WellKnownCurrency, ThisParaId, WellKnownXcmpAssets)>,
 );
+
 
 impl<
 		AssetRegistry: RemoteAssetRegistryInspect<AssetId = CurrencyId, AssetNativeLocation = XcmAssetLocation>,
@@ -373,20 +330,6 @@ impl<
 	}
 }
 
-pub struct DebugMultiNativeAsset;
-impl FilterAssetLocation for DebugMultiNativeAsset {
-	fn filter_asset_location(asset: &MultiAsset, origin: &MultiLocation) -> bool {
-		log::trace!(
-			target: "xcmp::filter_asset_location",
-			"asset: {:?}; origin: {:?}; reserve: {:?};",
-			&asset,
-			&origin,
-			AbsoluteReserveProvider::reserve(&asset.clone()),
-		);
-		false
-	}
-}
-
 impl<X, Y, Treasury: TakeRevenue, Z> Drop for TransactionFeePoolTrader<X, Y, Treasury, Z> {
 	fn drop(&mut self) {
 		log::info!(target : "xcmp::take_revenue", "{:?} {:?}", &self.asset_location, self.fee);
@@ -397,8 +340,6 @@ impl<X, Y, Treasury: TakeRevenue, Z> Drop for TransactionFeePoolTrader<X, Y, Tre
 		}
 	}
 }
-
-
 pub struct RelayReserveFromParachain;
 impl FilterAssetLocation for RelayReserveFromParachain {
 	fn filter_asset_location(asset: &MultiAsset, origin: &MultiLocation) -> bool {
@@ -407,17 +348,22 @@ impl FilterAssetLocation for RelayReserveFromParachain {
 	}
 }
 
-parameter_type_with_key! {
-	pub OutgoingParachainMinFee: |location: MultiLocation| -> Option<Balance> {
-		#[allow(clippy::match_ref_pats)] // false positive
-		#[allow(clippy::match_single_binding)]
+
+/// Estimates outgoing fees on target chain 
+pub struct OutgoingFee<Registry :RemoteAssetRegistryInspect> {
+	_marker: PhantomData<Registry>,
+}
+
+
+impl<Registry :RemoteAssetRegistryInspect< AssetId = CurrencyId, AssetNativeLocation = XcmAssetLocation, Balance = Balance>> OutgoingFee<Registry> {
+	pub fn outgoing_fee(location: &MultiLocation) -> Option<Balance> {
 		match (location.parents, location.first_interior()) {
 			(1, None) => Some(400_000_000_000),
 			(1, Some(Parachain(id)))  =>  {
 				let location = XcmAssetLocation::new(location.clone());
-				AssetsRegistry::min_xcm_fee(ParaId::from(*id), location).or(Some(u128::MAX))
+				Registry::min_xcm_fee(ParaId::from(*id), location).or(Some(u128::MAX))
 			},
-			_ => Some(u128::MAX),
+			_ => None,
 		}
-	};
+	}
 }

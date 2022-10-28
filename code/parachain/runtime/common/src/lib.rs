@@ -16,6 +16,7 @@ pub mod governance;
 pub mod impls;
 pub mod topology;
 pub mod xcmp;
+pub mod fees;
 
 use core::marker::PhantomData;
 
@@ -23,7 +24,7 @@ use core::marker::PhantomData;
 use composable_traits::currency::AssetExistentialDepositInspect;
 use composable_traits::{defi::Ratio, oracle::MinimalOracle, xcm::assets::AssetRatioInspect};
 pub use constants::*;
-use frame_support::parameter_types;
+use frame_support::{parameter_types, weights::Weight};
 use num_traits::CheckedMul;
 use primitives::currency::CurrencyId;
 use scale_info::TypeInfo;

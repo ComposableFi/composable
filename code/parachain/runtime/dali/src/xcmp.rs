@@ -1,8 +1,6 @@
-//! Setup of XCMP for parachain to allow cross chain transfers and other operations.
-//! Very similar to https://github.com/galacticcouncil/Basilisk-node/blob/master/runtime/basilisk/src/xcm.rs
 use super::*;
 use common::{
-	governance::native::EnsureRootOrHalfNativeTechnical, topology, xcmp::*, PriceConverter,
+	governance::native::EnsureRootOrHalfNativeTechnical, topology, xcmp::*, PriceConverter, fees::WeightToFee,
 };
 use composable_traits::{
 	oracle::MinimalOracle,
@@ -12,7 +10,7 @@ use cumulus_primitives_core::ParaId;
 use frame_support::{
 	log, parameter_types,
 	traits::{Everything, Nothing, PalletInfoAccess},
-	weights::Weight,
+	weights::{Weight}
 };
 use orml_traits::{
 	location::{AbsoluteReserveProvider, RelativeReserveProvider, Reserve},
@@ -42,15 +40,12 @@ parameter_types! {
 	pub const RelayNetwork: NetworkId = NetworkId::Kusama;
 	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
 	pub AssetsPalletLocation: MultiLocation =
-		PalletInstance(<Assets as PalletInfoAccess>::index() as u8).into();
+		PalletInstance(<super::Assets as PalletInfoAccess>::index() as u8).into();
 }
 
 pub type Barrier = (
-	XcmpDebug,
 	AllowUnpaidExecutionFrom<ThisChain<ParachainInfo>>,
-	// Expected responses are OK.
 	AllowKnownQueryResponses<RelayerXcm>,
-	// Subscriptions for version tracking are OK.
 	AllowSubscriptionsFrom<Everything>,
 	AllowTopLevelPaidExecutionFrom<Everything>,
 	TakeWeightCredit,
@@ -125,7 +120,7 @@ impl FilterAssetLocation for RelayReserveFromParachain {
 }
 
 type IsReserveAssetLocationFilter =
-	(DebugMultiNativeAsset, MultiNativeAsset<AbsoluteReserveProvider>, RelayReserveFromParachain);
+	(MultiNativeAsset<AbsoluteReserveProvider>, RelayReserveFromParachain);
 
 type AssetsIdConverter =
 	CurrencyIdConvert<AssetsRegistry, CurrencyId, ParachainInfo, StaticAssetsMap>;
@@ -205,17 +200,7 @@ impl xcm_executor::Config for XcmConfig {
 
 parameter_type_with_key! {
 	pub ParachainMinFee: |location: MultiLocation| -> Option<Balance> {
-		#[allow(clippy::match_ref_pats)] // false positive
-		#[allow(clippy::match_single_binding)]
-		match (location.parents, location.first_interior()) {
-			// relay KSM
-			(1, None) => Some(400_000_000_000),
-			(1, Some(Parachain(id)))  =>  {
-				let location = XcmAssetLocation::new(location.clone());
-				AssetsRegistry::min_xcm_fee(ParaId::from(*id), location).or(Some(u128::MAX))
-			},
-			_ => Some(u128::MAX),
-		}
+		OutgoingFee::<AssetsRegistry>::outgoing_fee(location)
 	};
 }
 
@@ -275,7 +260,7 @@ impl pallet_xcm::Config for Runtime {
 	type Origin = Origin;
 	type Call = Call;
 
-	const VERSION_DISCOVERY_QUEUE_SIZE: VERSION_DISCOVERY_QUEUE_SIZE = 100;
+	const VERSION_DISCOVERY_QUEUE_SIZE: u32 = VERSION_DISCOVERY_QUEUE_SIZE;
 	type AdvertisedXcmVersion = pallet_xcm::CurrentXcmVersion;
 }
 
