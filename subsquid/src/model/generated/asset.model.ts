@@ -27,6 +27,12 @@ export class Asset {
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   price!: bigint
 
+  /**
+   * Defaults to 12 when not specified
+   */
+  @Column_("int4", {nullable: true})
+  decimals!: number | undefined | null
+
   @OneToMany_(() => HistoricalAssetPrice, e => e.asset)
   historicalPrices!: HistoricalAssetPrice[]
 }

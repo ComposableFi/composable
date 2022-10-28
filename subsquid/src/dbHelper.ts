@@ -4,10 +4,11 @@ import { randomUUID } from "crypto";
 import { ApiPromise, WsProvider } from "@polkadot/api";
 import { hexToU8a } from "@polkadot/util";
 import { chain } from "./config";
-import { encodeAccount } from "./utils";
+import { encodeAccount, getNormalizedAmount } from "./utils";
 import {
   Account,
   Activity,
+  Asset,
   Currency,
   Event,
   EventType,
@@ -200,6 +201,17 @@ export async function storeHistoricalLockedValue(
   const wsProvider = new WsProvider(chain());
   const api = await ApiPromise.create({ provider: wsProvider });
   const oraclePrices: Record<string, bigint> = {};
+  const assetDecimals: Record<string, number> = {};
+
+  for (const assetId of Object.keys(amountsLocked)) {
+    const asset = await ctx.store.get(Asset, {
+      where: {
+        id: assetId,
+      },
+    });
+
+    assetDecimals[assetId] = asset?.decimals || 12;
+  }
 
   try {
     for (const assetId of Object.keys(amountsLocked)) {
@@ -215,7 +227,9 @@ export async function storeHistoricalLockedValue(
   }
 
   const netLockedValue = Object.keys(oraclePrices).reduce((agg, assetId) => {
-    const lockedValue = oraclePrices[assetId] * amountsLocked[assetId];
+    const lockedValue =
+      oraclePrices[assetId] *
+      getNormalizedAmount(amountsLocked[assetId], assetDecimals[assetId]);
     return BigInt(agg) + lockedValue;
   }, BigInt(0));
 

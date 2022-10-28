@@ -101,6 +101,8 @@ type Asset @entity {
   eventId: String! @index
   "Latest price in USD"
   price: BigInt!
+  "Defaults to 12 when not specified"
+  decimals: Int
   historicalPrices: [HistoricalAssetPrice!] @derivedFrom(field: "asset")
 }
 
