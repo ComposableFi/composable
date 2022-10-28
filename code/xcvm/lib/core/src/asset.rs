@@ -26,16 +26,16 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 	Deserialize,
 )]
 #[repr(transparent)]
-pub struct AssetId(pub u64);
+pub struct AssetId(pub u128);
 
-impl From<AssetId> for u64 {
+impl From<AssetId> for u128 {
 	fn from(val: AssetId) -> Self {
 		val.0
 	}
 }
 
-impl From<u64> for AssetId {
-	fn from(asset: u64) -> Self {
+impl From<u128> for AssetId {
+	fn from(asset: u128) -> Self {
 		AssetId(asset)
 	}
 }
@@ -80,19 +80,19 @@ pub trait Asset {
 }
 
 impl Asset for PICA {
-	const ID: AssetId = AssetId(<Assets as IndexOf<Self, _>>::INDEX as u64);
+	const ID: AssetId = AssetId(<Assets as IndexOf<Self, _>>::INDEX as u128);
 }
 
 impl Asset for ETH {
-	const ID: AssetId = AssetId(<Assets as IndexOf<Self, _>>::INDEX as u64);
+	const ID: AssetId = AssetId(<Assets as IndexOf<Self, _>>::INDEX as u128);
 }
 
 impl Asset for USDT {
-	const ID: AssetId = AssetId(<Assets as IndexOf<Self, _>>::INDEX as u64);
+	const ID: AssetId = AssetId(<Assets as IndexOf<Self, _>>::INDEX as u128);
 }
 
 impl Asset for USDC {
-	const ID: AssetId = AssetId(<Assets as IndexOf<Self, _>>::INDEX as u64);
+	const ID: AssetId = AssetId(<Assets as IndexOf<Self, _>>::INDEX as u128);
 }
 
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
@@ -251,7 +251,7 @@ where
 	}
 }
 
-impl<T> From<Funds<T>> for Vec<(u64, T)> {
+impl<T> From<Funds<T>> for Vec<(u128, T)> {
 	#[inline]
 	fn from(Funds(assets): Funds<T>) -> Self {
 		assets.into_iter().map(|(AssetId(asset), amount)| (asset, amount)).collect()

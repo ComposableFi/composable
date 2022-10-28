@@ -6,7 +6,6 @@ use crate::{
 	state::{Config, CONFIG, IP_REGISTER, OWNERS, RESULT_REGISTER},
 };
 use alloc::borrow::Cow;
-use core::cmp::max;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
@@ -19,9 +18,8 @@ use cw_utils::ensure_from_older_version;
 use num::Zero;
 use prost::Message;
 use serde::Serialize;
-use std::collections::VecDeque;
 use xcvm_asset_registry::msg::{GetAssetContractResponse, QueryMsg as AssetRegistryQueryMsg};
-use xcvm_core::{cosmwasm::*, Amount, Displayed, Funds, Register};
+use xcvm_core::{cosmwasm::*, Amount, AssetId, Displayed, Funds, Register};
 use xcvm_proto as proto;
 
 const CONTRACT_NAME: &str = "composable:xcvm-interpreter";
@@ -39,8 +37,13 @@ pub fn instantiate(
 	set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
 	let registry_address = deps.api.addr_validate(&msg.registry_address)?;
-	let config =
-		Config { registry_address, network_id: msg.network_id, user_id: msg.user_id.clone() };
+	let relayer_address = deps.api.addr_validate(&msg.relayer_address)?;
+	let config = Config {
+		registry_address,
+		relayer_address,
+		network_id: msg.network_id,
+		user_id: msg.user_id.clone(),
+	};
 	CONFIG.save(deps.storage, &config)?;
 	// Save the caller as owner, in this case it is `router`
 	OWNERS.save(deps.storage, info.sender, &())?;
@@ -68,10 +71,12 @@ pub fn execute(
 			if env.contract.address != info.sender {
 				Err(ContractError::NotAuthorized)
 			} else {
-				let program =
-					proto::Program::decode(program).map_err(|_| ContractError::InvalidProgram)?;
+				let program = proto::Program::decode(&program[..])
+					.map_err(|_| ContractError::InvalidProgram)?;
 				interpret_program(deps, env, info, program)
 			},
+		ExecuteMsg::AddOwners { owners } => add_owners(deps, owners),
+		ExecuteMsg::RemoveOwners { owners } => Ok(remove_owners(deps, owners)),
 	}
 }
 
@@ -93,7 +98,7 @@ fn assert_owner(deps: Deps, owner: &Addr) -> Result<(), ContractError> {
 pub fn initiate_execution(
 	deps: DepsMut,
 	env: Env,
-	program: VecDeque<u8>,
+	program: Vec<u8>,
 ) -> Result<Response, ContractError> {
 	IP_REGISTER.save(deps.storage, &0)?;
 	Ok(Response::default().add_submessage(SubMsg::reply_on_error(
@@ -102,7 +107,24 @@ pub fn initiate_execution(
 	)))
 }
 
-/// Interpret an XCVM program
+pub fn add_owners(deps: DepsMut, owners: Vec<Addr>) -> Result<Response, ContractError> {
+	let mut event = Event::new("xcvm.interpreter.add_owners");
+	for owner in owners {
+		event = event.add_attribute(format!("{}", owner), "");
+		OWNERS.save(deps.storage, owner, &())?;
+	}
+	Ok(Response::default().add_event(event))
+}
+
+pub fn remove_owners(deps: DepsMut, owners: Vec<Addr>) -> Response {
+	let mut event = Event::new("xcvm.interpreter.remove_owners");
+	for owner in owners {
+		event = event.add_attribute(format!("{}", owner), "");
+		OWNERS.remove(deps.storage, owner);
+	}
+	Response::default().add_event(event)
+}
+
 pub fn interpret_program(
 	mut deps: DepsMut,
 	env: Env,
@@ -137,7 +159,7 @@ pub fn interpret_program(
 					//    rest of the instructions as XCVM program. This will make sure that
 					//    previous call instruction will run first, then the rest of the program
 					//    will run.
-					let _response = interpret_call(
+					let response = interpret_call(
 						deps.as_ref(),
 						&env,
 						bindings.bindings,
@@ -146,18 +168,22 @@ pub fn interpret_program(
 						response,
 					)?;
 
-					// TODO(aeryz): Build proto here
-					/*
-					let instructions: VecDeque<XCVMInstruction> =
-						instruction_iter.map(|(_, instr)| instr).collect();
-					let program = XCVMProgram { tag: program.tag, instructions };
+					let program = {
+						let instructions: Vec<proto::Instruction> =
+							instruction_iter.map(|(_, instr)| instr).collect();
+						let program = proto::Program {
+							instructions: Some(proto::Instructions { instructions }),
+						};
+						let mut buf = Vec::new();
+						buf.reserve(program.encoded_len());
+						program.encode(&mut buf).unwrap();
+						buf
+					};
 					return Ok(response.add_message(wasm_execute(
 						env.contract.address,
 						&ExecuteMsg::Execute { program },
 						vec![],
 					)?))
-					*/
-					todo!()
 				}
 			},
 			proto::instruction::Instruction::Spawn(ctx) =>
@@ -196,16 +222,10 @@ pub fn interpret_call(
 ) -> Result<Response, ContractError> {
 	// We don't know the type of the payload, so we use `serde_json::Value`
 	let cosmwasm_msg: FlatCosmosMsg<serde_json::Value> = if !bindings.is_empty() {
-		let Config { user_id, registry_address, .. } = CONFIG.load(deps.storage)?;
-		// `user_id` is the ID that comes from the origin chain. We don't know the length
-		// of this. Hence, the maximum length of the output call, will be:
-		// `max(len(user_id), len(contract_address)) * len(bindings)`
-		let new_len = {
-			let max_size = max(user_id.len(), env.contract.address.as_bytes().len());
-			max_size * bindings.len() + payload.len()
-		};
-
-		let mut formatted_call = vec![0; new_len];
+		let Config { registry_address, relayer_address, .. } = CONFIG.load(deps.storage)?;
+		// Len here is the maximum possible length
+		let mut formatted_call =
+			vec![0; env.contract.address.as_bytes().len() * bindings.len() + payload.len()];
 		// Current index of the unformatted call
 		let mut original_index: usize = 0;
 		// This stores the amount of shifting we caused because of the data insertion. For example,
@@ -249,11 +269,14 @@ pub fn interpret_call(
 				.copy_from_slice(&payload[original_index..=binding_index]);
 
 			let data: Cow<[u8]> = match binding {
-				proto::binding_value::Type::Relayer(_) => Cow::Borrowed(&user_id),
+				proto::binding_value::Type::Relayer(_) => Cow::Borrowed(relayer_address.as_bytes()),
 				proto::binding_value::Type::Self_(_) =>
 					Cow::Borrowed(env.contract.address.as_bytes()),
 				proto::binding_value::Type::AssetId(proto::AssetId { asset_id }) => {
-					let query_msg = AssetRegistryQueryMsg::GetAssetContract(asset_id.into());
+					let asset_id = asset_id.ok_or(ContractError::InvalidProgram)?;
+					let query_msg = AssetRegistryQueryMsg::GetAssetContract(
+						asset_id.try_into().map_err(|_| ContractError::InvalidProgram)?,
+					);
 
 					let response: GetAssetContractResponse = deps.querier.query(
 						&WasmQuery::Smart {
@@ -269,6 +292,8 @@ pub fn interpret_call(
 					serde_json_wasm::to_vec(&RESULT_REGISTER.load(deps.storage)?)
 						.map_err(|_| ContractError::DataSerializationError)?,
 				),
+				proto::binding_value::Type::Ip(_) =>
+					Cow::Owned(format!("{}", IP_REGISTER.load(deps.storage)?).into()),
 				_ => return Err(ContractError::InvalidBindings),
 			};
 
@@ -314,7 +339,11 @@ pub fn interpret_spawn(
 	let mut normalized_funds = Funds::<Displayed<u128>>::empty();
 
 	for asset in ctx.assets {
-		let asset_id = asset.asset_id.ok_or(ContractError::InvalidProgram)?.asset_id;
+		let asset_id = asset
+			.asset_id
+			.ok_or(ContractError::InvalidProgram)?
+			.asset_id
+			.ok_or(ContractError::InvalidProgram)?;
 		let amount: Amount = asset
 			.balance
 			.ok_or(ContractError::InvalidProgram)?
@@ -329,7 +358,9 @@ pub fn interpret_spawn(
 			// No need to get balance from cw20 contract
 			amount.intercept
 		} else {
-			let query_msg = AssetRegistryQueryMsg::GetAssetContract(asset_id.into());
+			let query_msg = AssetRegistryQueryMsg::GetAssetContract(
+				asset_id.clone().try_into().map_err(|_| ContractError::InvalidProgram)?,
+			);
 
 			let cw20_address: GetAssetContractResponse = deps.querier.query(
 				&WasmQuery::Smart {
@@ -349,7 +380,10 @@ pub fn interpret_spawn(
 		};
 
 		if amount.0 > 0 {
-			normalized_funds.0.push((asset_id.into(), amount.into()));
+			normalized_funds.0.push((
+				AssetId(asset_id.try_into().map_err(|_| ContractError::InvalidProgram)?),
+				amount.into(),
+			));
 		}
 	}
 
@@ -414,18 +448,24 @@ pub fn interpret_transfer(
 	let recipient = match to {
 		proto::transfer::AccountType::Account(proto::Account { account }) =>
 			String::from_utf8(account).map_err(|_| ContractError::InvalidAddress)?,
-		proto::transfer::AccountType::Relayer(_) => todo!(),
+		proto::transfer::AccountType::Relayer(_) => config.relayer_address.into_string(),
 	};
 
 	for asset in assets {
-		let asset_id = asset.asset_id.ok_or(ContractError::InvalidProgram)?.asset_id;
+		let asset_id = asset
+			.asset_id
+			.ok_or(ContractError::InvalidProgram)?
+			.asset_id
+			.ok_or(ContractError::InvalidProgram)?;
 		let amount: Amount = asset
 			.balance
 			.ok_or(ContractError::InvalidProgram)?
 			.try_into()
 			.map_err(|_| ContractError::InvalidProgram)?;
 
-		let query_msg = AssetRegistryQueryMsg::GetAssetContract(asset_id.into());
+		let query_msg = AssetRegistryQueryMsg::GetAssetContract(
+			asset_id.try_into().map_err(|_| ContractError::InvalidProgram)?,
+		);
 
 		let cw20_address: GetAssetContractResponse = deps.querier.query(
 			&WasmQuery::Smart { contract_addr: registry_addr.clone(), msg: to_binary(&query_msg)? }

@@ -11,6 +11,7 @@ use xcvm_core::NetworkId;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Config {
 	pub registry_address: Addr,
+	pub relayer_address: Addr,
 	pub network_id: NetworkId,
 	pub user_id: UserId,
 }

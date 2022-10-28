@@ -52,7 +52,7 @@ message Account {
 }
 
 message AssetId {
-  uint64 assetId = 1;
+  Uint128 assetId = 1;
 }
 
 message Asset {
@@ -89,7 +89,12 @@ message BindingValue {
     uint32 result = 3;
     AssetAmount assetAmount = 4;
     AssetId assetId = 5;
+    Ip ip = 6;
   }
+}
+
+message Ip {
+  uint32 id = 1;
 }
 
 message Binding {
