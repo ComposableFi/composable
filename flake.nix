@@ -948,10 +948,6 @@
               rust-overlay = rust-nightly;
             };
 
-            polkadot-node = pkgs.callPackage ./.nix/polkadot/polkadot-bin.nix {
-              inherit rust-nightly;
-            };
-
             statemine-node = pkgs.callPackage ./.nix/statemine-bin.nix {
               inherit rust-nightly;
             };
@@ -988,11 +984,6 @@
               network-config-path =
                 ./scripts/polkadot-launch/bridge-rococo-local-dali-dev.nix;
               useGlobalChainSpec = false;
-            }).script;
-
-            bridge-devnet-dali = (mk-bridge-devnet {
-              inherit pkgs packages polkadot-launch composable-node
-                polkadot-node;
             }).script;
 
             bridge-mmr-devnet-dali-same-relay = (mk-bridge-devnet {
