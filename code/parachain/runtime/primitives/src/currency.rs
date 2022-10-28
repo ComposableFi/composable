@@ -122,16 +122,28 @@ impl CurrencyId {
 		pub const PICA: CurrencyId = CurrencyId(1);
 		/// Runtime native token Polkadot
 		pub const LAYR: CurrencyId = CurrencyId(2);
-		pub const CROWD_LOAN: CurrencyId = CurrencyId(3);
+		// NOTE: CurrencyId 3 is empty, fill as needed
 
 		/// Kusama native token
 		pub const KSM: CurrencyId = CurrencyId(4);
 		pub const PBLO: CurrencyId = CurrencyId(5);
 
 		// Non-Native Tokens (101 - 1000)
+		/// Karura KAR
+		pub const KAR: CurrencyId = CurrencyId(101);
+		/// BIFROST BNC
+		pub const BNC: CurrencyId = CurrencyId(102);
+		/// BIFROST vKSM
+		#[allow(non_upper_case_globals)]
+		pub const vKSM: CurrencyId = CurrencyId(103);
+		/// Moonriver MOVR
+		pub const MOVR: CurrencyId = CurrencyId(104);
+		// NOTE: Empty CurrencyId slots starting with 105
+
 		/// Karura stable coin(Karura Dollar), not native.
 		#[allow(non_upper_case_globals)]
 		pub const kUSD: CurrencyId = CurrencyId(129);
+		/// Statemine USDT
 		pub const USDT: CurrencyId = CurrencyId(130);
 		pub const USDC: CurrencyId = CurrencyId(131);
 		/// Wrapped BTC
