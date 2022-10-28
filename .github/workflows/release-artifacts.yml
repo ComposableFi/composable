@@ -112,13 +112,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup nix configuration
+      - name: Setup Nix configuration
         run: |
           echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
           echo "sandbox = relaxed" >> /etc/nix/nix.conf
           echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
 
-      - name: Setup cachix
+      - name: Setup Cachix
         uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
         with:
           skipPush: true
@@ -129,7 +129,7 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
 
-      - name: Install docker
+      - name: Install Docker
         run: nix-env -iA nixpkgs.docker
 
       - name: Login to DockerHub
@@ -138,39 +138,13 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-      - name: Setup Composable version
-        run: |
-          echo "COMPOSABLE_VERSION=$(nix eval --raw .#composable-node-release.version)" >> $GITHUB_ENV
-
       - name: Download artifacts
         run: |
-          nix bundle --bundler github:NixOS/bundlers#toDockerImage .#composable-node-release -L --out-link composable-docker-image
-          nix bundle --bundler github:NixOS/bundlers#toRPM .#composable-node-release -L --out-link rpm
-          nix bundle --bundler github:NixOS/bundlers#toDEB .#composable-node-release -L --out-link deb
+          nix run .#generate-release-artifacts -L
 
-          nix build .#dali-runtime --out-link dali-runtime
-          nix build .#picasso-runtime --out-link picasso-runtime
-          nix build .#composable-runtime --out-link composable-runtime
-
-          nix build .#subwasm-release-body --out-link subwasm-release
-
-          cp subwasm-release release.txt
-
-          mkdir -p release-artifacts
-
-          cp dali-runtime/lib/runtime.optimized.wasm release-artifacts/dali_runtime.wasm
-          cp picasso-runtime/lib/runtime.optimized.wasm release-artifacts/picasso_runtime.wasm
-          cp composable-runtime/lib/runtime.optimized.wasm release-artifacts/composable_runtime.wasm
-          # RPM Name convention: https://docs.oracle.com/en/database/oracle/oracle-database/19/ladbi/rpm-packages-naming-convention.html
-          cp rpm/*.rpm release-artifacts/composable-node-${{ env.COMPOSABLE_VERSION }}-1.x86_64.rpm
-          # DEB Name convention: https://askubuntu.com/questions/330018/what-is-the-standard-for-naming-deb-file-name
-          cp deb/*.deb release-artifacts/composable-node_${{ env.COMPOSABLE_VERSION }}-1_amd64.deb
-          cd release-artifacts
-          sha256sum * > checksums.txt
-
-      - name: Release docker image
+      - name: Release Docker image
         run: |
-          docker load --input ./composable-docker-image
+          docker load --input release-artifacts/composable-docker-image
           docker tag composable:latest "${{ env.DOCKER_REGISTRY_NAME }}/composable:v${{ env.COMPOSABLE_VERSION }}"
           docker push "${{ env.DOCKER_REGISTRY_NAME }}/composable:v${{ env.COMPOSABLE_VERSION }}"
 
@@ -183,40 +157,14 @@ jobs:
             echo "::set-output name=sha::${{ github.sha }}"
           fi
 
-      - name: Generate release body
-        uses: DamianReeves/write-file-action@master
-        with:
-          path: release.txt
-          write-mode: append
-          contents: |
-            ## Nix
-            ```bash
-            # Generate the Wasm runtimes
-            nix build github:ComposableFi/composable/v${{ env.COMPOSABLE_VERSION }}#dali-runtime
-            nix build github:ComposableFi/composable/v${{ env.COMPOSABLE_VERSION }}#picasso-runtime
-            nix build github:ComposableFi/composable/v${{ env.COMPOSABLE_VERSION }}#composable-runtime
-
-            # Run the Composable node (release mode) alone
-            nix run github:ComposableFi/composable/v${{ env.COMPOSABLE_VERSION }}#composable-node-release
-
-            # Spin up a local devnet (Dali + Rococo)
-            nix run github:ComposableFi/composable/v${{ env.COMPOSABLE_VERSION }}#devnet
-
-            # Spin up a local XCVM devnet (Dali + Rococo + Juno)
-            nix run github:ComposableFi/composable/v${{ env.COMPOSABLE_VERSION }}#devnet-xcvm
-
-            # Show all possible apps, shells and packages
-            nix flake show github:ComposableFi/composable/v${{ env.COMPOSABLE_VERSION }} --allow-import-from-derivation
-            ```
-
       - name: Release artifacts
         uses: softprops/action-gh-release@v1
         with:
           draft: false
           fail_on_unmatched_files: true
           generate_release_notes: true
-          body_path: release.txt
+          body_path: release-artifacts/release.txt
           tag_name: v${{ env.COMPOSABLE_VERSION }}
           target_commitish: ${{ steps.fetch_commit_sha.outputs.sha }}
           files: |
-            release-artifacts/*
+            release-artifacts/to-upload/*
