@@ -24,7 +24,7 @@ parachain.
 
 Our Routing Layer includes the following components:
 
-![Routing Layer](./routing-layer.png)
+![Routing Layer](../../../static/img/products/xcvm/routing-layer.png)
 *Our Routing Layer leverages indexer and routing nodes.*
 
 **Indexer** nodes to regularly cache The Graph data (quick to compute route).

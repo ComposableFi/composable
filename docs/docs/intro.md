@@ -72,7 +72,7 @@ The result is that DeFi users will be able to have their actions reduced to para
 automated cross-chain transactions to achieve their objectives instead of requiring users to navigate each step in the 
 process themselves:
 
-![routing](../static/img/products/xcvm/XCVM-flow.png)
+![routing](../static/img/products/xcvm/xcvm-flow.png)
 
 Together with our interoperable infrastructure, we will usher in an era of modular DeFi functionality, unlike anything before it. The basis of modular functionality is that a program, or in this case a decentralized application, can be separated into interchangeable modules capable of functioning independently. This environment will enable a new host of services to be offered to users that abstract complexity away to focus on needs: users will be able to get the best interest rates across lending pools, the best swaps across chains, and allow for a range of other possibilities across new pool types, arbitrage opportunities, and onboarding portals to DeFi. In concise terms, Composable Finance is orchestrating interoperability for modular functionality, to enable composability. 
 

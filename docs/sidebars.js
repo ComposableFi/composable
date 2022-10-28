@@ -222,13 +222,13 @@ const sidebars = {
               label: 'Mural: NFT Transfers on Mosaic via the Summoner Vault',
               link: {
                 type: 'doc',
-                id: 'products/mosaic/mural-NFT-transfers/mural-NFT-transfers'
+                id: 'products/mosaic/mural-nft-transfers/transfers-overview'
               },
               collapsible: true,
               collapsed: true,
               items: [
-                'products/mosaic/mural-NFT-transfers/NFT-transfer-flow',
-                'products/mosaic/mural-NFT-transfers/NFT-contract-details'
+                'products/mosaic/mural-nft-transfers/transfer-flow',
+                'products/mosaic/mural-nft-transfers/contract-details'
               ],
             },
           ],
@@ -345,10 +345,13 @@ const sidebars = {
     {
       type: 'category',
       label: 'FAQs',
+      link: {
+        type: 'doc',
+        id: 'faqs/faqs'
+      },
       collapsible: false,
       items: [
-        'faqs/faqs',
-        'faqs/risks-disclosures'
+        'faqs/risks-disclosures',
       ]
     },
   ],
