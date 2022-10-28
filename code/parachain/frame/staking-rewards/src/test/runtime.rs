@@ -4,7 +4,7 @@ use composable_traits::{
 	governance::{GovernanceRegistry, SignedRawOrigin},
 };
 
-use composable_traits::{fnft::FnftAccountProxyType, xcm::assets::XcmAssetLocation};
+use composable_traits::fnft::FnftAccountProxyType;
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{Everything, InstanceFilter},

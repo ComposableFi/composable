@@ -2,12 +2,14 @@
 /* eslint-disable */
 
 import type { Bytes, Struct, u32, u64 } from '@polkadot/types-codec';
-import { MultiLocation } from '@polkadot/types/interfaces';
+import { ComposableTraitsAssetsXcmAssetLocation } from '../types';
 
 /** @name Asset */
 export interface Asset extends Struct {
   readonly name: Bytes;
   readonly id: u64;
+  readonly decimals: u32;
+  readonly foreignId: ComposableTraitsAssetsXcmAssetLocation
 }
 
 export type PHANTOM_ASSETS = 'assets';
