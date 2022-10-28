@@ -1,7 +1,5 @@
 # Apollo
 
----
-
 ## An Overview of Apollo
 
 Apollo is a primary pallet built on the Picasso parachain that functions as the ecosystem’s native oracle. 
@@ -27,8 +25,6 @@ With the use of substrate blockchain on_initialize hook in Apollo, the order of 
 i.e when a block initializes, the price of an asset is guaranteed a slot into the block. 
 Apollo also implements an algorithm that instead of trusting one oracle for the price, 
 it takes the median price from different oracles which significantly limits the ability of oracle manipulation.
-
----
 
 [Pallet Documentation](../pallets/oracle.md)
 

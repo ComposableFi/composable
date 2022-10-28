@@ -1,7 +1,5 @@
 # Parachain Vault Strategy (Discontinued)
 
----
-
 Composable initially developed its parachain vault strategy for procuring its Kusama parachain, Picasso. 
 This strategy was then revamped for procuring our eponymous Polkadot parachain, Composable. Now, this strategy has been
 repurposed again, and upon the launch of Mosaic phase 2, users will be able to migrate their staked funds to Mosaic, 

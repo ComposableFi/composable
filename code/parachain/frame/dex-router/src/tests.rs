@@ -1,8 +1,8 @@
 use crate::{mock::*, Error};
-use composable_tests_helpers::test::helper::acceptable_computation_error;
+use composable_tests_helpers::test::{currency::USDT, helper::acceptable_computation_error};
 use composable_traits::{
 	defi::CurrencyPair,
-	dex::{Amm as AmmTrait, DexRouter as DexRouterTrait},
+	dex::{Amm as AmmTrait, AssetAmount, DexRouter as DexRouterTrait},
 };
 use frame_support::{
 	assert_noop, assert_ok,
@@ -12,6 +12,7 @@ use frame_support::{
 use pallet_pablo::{Error as PabloError, PoolInitConfiguration};
 use sp_arithmetic::PerThing;
 use sp_runtime::{traits::ConstU32, BoundedBTreeMap, Permill};
+use std::collections::BTreeMap;
 
 pub fn dual_asset_pool_weights(
 	first_asset: AssetId,
@@ -50,11 +51,19 @@ fn create_constant_product_amm_pool(
 	let pool_id = p.unwrap();
 	// Add liquidity from ALICE's account to pool
 	assert_ok!(<Pablo as AmmTrait>::add_liquidity(
-		&ALICE, pool_id, amounts[0], amounts[1], 0_u128, true
+		&ALICE,
+		pool_id,
+		BTreeMap::from([(base, amounts[0]), (quote, amounts[1])]),
+		0_u128,
+		true
 	));
 	// Add liquidity from BOB's account to pool
 	assert_ok!(<Pablo as AmmTrait>::add_liquidity(
-		&BOB, pool_id, amounts[0], amounts[1], 0_u128, true
+		&BOB,
+		pool_id,
+		BTreeMap::from([(base, amounts[0]), (quote, amounts[1])]),
+		0_u128,
+		true
 	));
 	pool_id
 }
@@ -64,7 +73,6 @@ fn create_usdt_usdc_pool() -> PoolId {
 	// usdc usdt have same price which is 1 USD
 	let initial_usdc = 1_000_000_000 * unit;
 	let initial_usdt = 1_000_000_000 * unit;
-	let amp_coeff = 100;
 	let fee = Permill::zero();
 	let assets = CurrencyPair::new(USDT, USDC);
 	let amounts = vec![initial_usdt, initial_usdc];
@@ -76,7 +84,6 @@ fn create_usdc_usdt_pool() -> PoolId {
 	// usdc usdt have same price which is 1 USD
 	let initial_usdc = 1_000_000_000 * unit;
 	let initial_usdt = 1_000_000_000 * unit;
-	let amp_coeff = 100;
 	let fee = Permill::zero();
 	let assets = CurrencyPair::new(USDC, USDT);
 	let amounts = vec![initial_usdc, initial_usdt];
@@ -284,12 +291,11 @@ fn exchange_tests() {
 		));
 		assert_ok!(Tokens::mint_into(ETH, &CHARLIE, 10_u128 * unit));
 		// exchange ETH for USDT
-		let dy = <DexRouter as AmmTrait>::exchange(
+		let dy = <DexRouter as AmmTrait>::do_swap(
 			&CHARLIE,
 			currency_pair,
-			currency_pair,
-			1_u128 * unit,
-			2998_000_000_000_00_u128,
+			AssetAmount::new(currency_pair.quote, unit),
+			AssetAmount::new(currency_pair.base, 2_999_u128 * unit),
 			false,
 		);
 		assert_ok!(dy);
@@ -297,29 +303,37 @@ fn exchange_tests() {
 		let expected_value = 3000 * unit;
 		let precision = 100;
 		let epsilon = 1;
-		assert_ok!(acceptable_computation_error(dy, expected_value, precision, epsilon));
+		assert_ok!(acceptable_computation_error(
+			dy.value.amount,
+			expected_value,
+			precision,
+			epsilon
+		));
 		assert_ok!(Tokens::mint_into(USDT, &CHARLIE, 6000_u128 * unit));
 		// exchange USDT for ETH
-		let dy = <DexRouter as AmmTrait>::exchange(
+		let dy = <DexRouter as AmmTrait>::do_swap(
 			&CHARLIE,
-			currency_pair.swap(),
-			currency_pair.swap(),
-			3000_u128 * unit,
-			980000000000_u128,
+			currency_pair,
+			AssetAmount::new(currency_pair.base, 3000_u128 * unit),
+			AssetAmount::new(currency_pair.quote, 1_u128 * unit),
 			false,
 		);
 		assert_ok!(dy);
 		let dy = dy.unwrap();
 		let expected_value = unit;
-		assert_ok!(acceptable_computation_error(dy, expected_value, precision, epsilon));
+		assert_ok!(acceptable_computation_error(
+			dy.value.amount,
+			expected_value,
+			precision,
+			epsilon
+		));
 		// exchange USDT for ETH but expect high value
 		assert_noop!(
-			<DexRouter as AmmTrait>::exchange(
+			<DexRouter as AmmTrait>::do_swap(
 				&CHARLIE,
 				currency_pair.swap(),
-				currency_pair.swap(),
-				3000_u128 * unit,
-				1100000007962_u128,
+				AssetAmount::new(currency_pair.base, 3000_u128 * unit),
+				AssetAmount::new(currency_pair.quote, 1_100_000_007_962_u128),
 				false,
 			),
 			Error::<Test>::CanNotRespectMinAmountRequested
@@ -343,12 +357,11 @@ fn buy_test() {
 		));
 		assert_ok!(Tokens::mint_into(ETH, &CHARLIE, 2_u128 * unit));
 		// buy 3000 USDT
-		let dy = <DexRouter as AmmTrait>::buy(
+		let dy = <DexRouter as AmmTrait>::do_buy(
 			&CHARLIE,
 			currency_pair,
-			currency_pair.base, /* will be ignored */
-			3000_u128 * unit,
-			0_u128,
+			currency_pair.quote,
+			AssetAmount::new(currency_pair.base, 3000_u128 * unit),
 			false,
 		);
 		assert_ok!(dy);
@@ -356,15 +369,19 @@ fn buy_test() {
 		let expected_value = 3000 * unit;
 		let precision = 100;
 		let epsilon = 1;
-		assert_ok!(acceptable_computation_error(dy, expected_value, precision, epsilon));
+		assert_ok!(acceptable_computation_error(
+			dy.value.amount,
+			expected_value,
+			precision,
+			epsilon
+		));
 		assert_ok!(Tokens::mint_into(USDT, &CHARLIE, 6100_u128 * unit));
 		// buy 1 ETH
-		let dy = <DexRouter as AmmTrait>::buy(
+		let dy = <DexRouter as AmmTrait>::do_buy(
 			&CHARLIE,
-			currency_pair.swap(),
+			currency_pair,
 			currency_pair.base, /* will be ignored */
-			1_u128 * unit,
-			980000000000_u128,
+			AssetAmount::new(currency_pair.quote, 1_u128 * unit),
 			false,
 		);
 		assert_ok!(dy);
@@ -372,19 +389,12 @@ fn buy_test() {
 		let expected_value = 1_u128 * unit;
 		let precision = 100;
 		let epsilon = 1;
-		assert_ok!(acceptable_computation_error(dy, expected_value, precision, epsilon));
-		// buy 1 ETH but expect 1.0005
-		assert_noop!(
-			<DexRouter as AmmTrait>::buy(
-				&CHARLIE,
-				currency_pair.swap(),
-				currency_pair.base, /* will be ignored */
-				1_u128 * unit,
-				1_000_500_000_000_u128,
-				false,
-			),
-			Error::<Test>::CanNotRespectMinAmountRequested
-		);
+		assert_ok!(acceptable_computation_error(
+			dy.value.amount,
+			expected_value,
+			precision,
+			epsilon
+		));
 	});
 }
 
@@ -412,15 +422,19 @@ fn unsupported_operation_test() {
 			<DexRouter as AmmTrait>::add_liquidity(
 				&EVE,
 				currency_pair.swap(),
-				eth_amount,
-				usdt_amount,
+				BTreeMap::from([(ETH, eth_amount), (USDT, usdt_amount)]),
 				0_u128,
 				false
 			),
 			Error::<Test>::UnsupportedOperation
 		);
 		assert_noop!(
-			<DexRouter as AmmTrait>::remove_liquidity(&EVE, currency_pair, unit, 0_u128, 0_u128,),
+			<DexRouter as AmmTrait>::remove_liquidity(
+				&EVE,
+				currency_pair,
+				unit,
+				BTreeMap::from([(ETH, 0), (USDT, 0)]),
+			),
 			Error::<Test>::UnsupportedOperation
 		);
 	});
@@ -440,12 +454,11 @@ fn single_pool_route_test() {
 		));
 		assert_ok!(Tokens::mint_into(ETH, &CHARLIE, 3_u128 * unit));
 		// buy 3000 USDC
-		let dy = <DexRouter as AmmTrait>::buy(
+		let dy = <DexRouter as AmmTrait>::do_buy(
 			&CHARLIE,
 			currency_pair,
-			currency_pair.base, /* will be ignored */
-			3000_u128 * unit,
-			0_u128,
+			ETH,
+			AssetAmount::new(USDC, 3000_u128 * unit),
 			false,
 		);
 		assert_ok!(dy);
@@ -453,14 +466,18 @@ fn single_pool_route_test() {
 		let expected_value = 3000 * unit;
 		let precision = 100;
 		let epsilon = 1;
-		assert_ok!(acceptable_computation_error(dy, expected_value, precision, epsilon));
+		assert_ok!(acceptable_computation_error(
+			dy.value.amount,
+			expected_value,
+			precision,
+			epsilon
+		));
 		// exchange ETH for USDT
-		let dy = <DexRouter as AmmTrait>::exchange(
+		let dy = <DexRouter as AmmTrait>::do_swap(
 			&CHARLIE,
 			currency_pair,
-			currency_pair,
-			1_u128 * unit,
-			2998_000_000_000_00_u128,
+			AssetAmount::new(currency_pair.quote, unit),
+			AssetAmount::new(currency_pair.base, 2998_000_000_000_00_u128),
 			false,
 		);
 		assert_ok!(dy);
@@ -468,7 +485,12 @@ fn single_pool_route_test() {
 		let expected_value = 3000 * unit;
 		let precision = 100;
 		let epsilon = 1;
-		assert_ok!(acceptable_computation_error(dy, expected_value, precision, epsilon));
+		assert_ok!(acceptable_computation_error(
+			dy.value.amount,
+			expected_value,
+			precision,
+			epsilon
+		));
 
 		let pool_id = dex_route[0];
 		let lp_token = Pablo::lp_token(pool_id);
@@ -482,9 +504,7 @@ fn single_pool_route_test() {
 		// base, quote amount should match currency_pair's base quote asset
 		assert_ok!(DexRouter::add_liquidity(
 			Origin::signed(EVE),
-			currency_pair.swap(),
-			eth_amount,
-			usdc_amount,
+			BTreeMap::from([(ETH, eth_amount), (USDC, usdc_amount)]),
 			0_u128,
 			false
 		));
@@ -492,10 +512,8 @@ fn single_pool_route_test() {
 		// min_base_amount, min_quote_amount should match currency_pair's base quote asset
 		assert_ok!(DexRouter::remove_liquidity(
 			Origin::signed(EVE),
-			currency_pair,
 			lp_amount,
-			0_u128,
-			0_u128
+			BTreeMap::from([(ETH, 0), (USDC, 0)]),
 		));
 		let bob_eth_amount = Tokens::balance(ETH, &EVE);
 		let bob_usdc_amount = Tokens::balance(USDC, &EVE);

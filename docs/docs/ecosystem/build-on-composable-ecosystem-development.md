@@ -4,8 +4,6 @@
 Composable Labs actively supports developers building projects with our technology. 
 This includes projects using pallets on our Picasso parachain and those building with our cross-chain technology.*
 
----
-
 ## Composable Ecosystem
 
 [The Composable Labs team](https://medium.com/@ComposableLabs/introducing-composable-labs-our-approach-to-building-and-developing-a-substrate-focused-605415f8ac79) 
@@ -120,7 +118,7 @@ facilitating the development of cross-layer dApp projects. Once an Ethereum proj
 development, Composable’s team can also help port it to 
 [Rust pallets](https://substrate.dev/docs/en/knowledgebase/runtime/pallets) 
 and deploy them on our parachain. Once the 
-[Cross-Chain Virtual Machine (XCVM)](https://dali.devnets.composablefinance.ninja/products/cross-chain-virtual-machine.html) 
+[Cross-Chain Virtual Machine (XCVM)](https://dali.devnets.composablefinance.ninja/products/xcvm.html) 
 launches, this technology will also be available for developers to capitalize upon.
 
 

@@ -9,11 +9,6 @@ use xcm::latest::prelude::*;
 use xcm_emulator::TestExt;
 use xcm_executor::XcmExecutor;
 
-// Helper function for forming buy execution message
-fn buy_execution<C>(fees: impl Into<MultiAsset>) -> Instruction<C> {
-	BuyExecution { fees: fees.into(), weight_limit: Unlimited }
-}
-
 /// as per documentation is way to throw exception with specific error code as Trap, and that should
 /// be handled
 #[test]
@@ -34,13 +29,13 @@ fn throw_exception() {
 
 /// when it starts, it captures amounts in holder registry
 #[test]
-fn initiate_reserver_withdraw_on_relay() {
+fn initiate_reserve_withdraw_on_relay() {
 	simtest();
 	This::execute_with(|| {
 		let origin = MultiLocation::new(
 			0,
 			X1(AccountId32 {
-				id: crate::kusama_test_net::ALICE,
+				id: ALICE,
 				// it assumes that above account public key was used on all networks by bob, not
 				// mapping, so it will match any
 				network: NetworkId::Any,
@@ -100,14 +95,14 @@ fn send_remark() {
 }
 
 #[test]
-fn withdraw_and_deposit_back_on_same_chain() {
+fn this_withdraws_and_deposit_back_on_relay() {
 	simtest();
 	let send_amount = 10;
 
 	This::execute_with(|| {
 		let message = Xcm(vec![
 			WithdrawAsset((Here, send_amount).into()),
-			buy_execution((Here, send_amount)),
+			buy_execution_unlimited((Here, send_amount)),
 			DepositAsset {
 				assets: All.into(),
 				max_assets: 1,
@@ -119,24 +114,23 @@ fn withdraw_and_deposit_back_on_same_chain() {
 
 	KusamaRelay::execute_with(|| {
 		assert_eq!(
-			kusama_runtime::Balances::free_balance(para_account_id(THIS_PARA_ID)),
+			relay_runtime::Balances::free_balance(para_account_id(THIS_PARA_ID)),
 			PICASSO_RELAY_BALANCE - send_amount
 		);
 	});
 }
 
-/// source: Acala
 #[test]
 fn relay_chain_subscribe_version_notify_of_para_chain() {
 	KusamaRelay::execute_with(|| {
-		let r = pallet_xcm::Pallet::<kusama_runtime::Runtime>::force_subscribe_version_notify(
-			kusama_runtime::Origin::root(),
+		let r = pallet_xcm::Pallet::<relay_runtime::Runtime>::force_subscribe_version_notify(
+			relay_runtime::Origin::root(),
 			Box::new(Parachain(THIS_PARA_ID).into().into()),
 		);
 		assert_ok!(r);
 	});
 	KusamaRelay::execute_with(|| {
-		kusama_runtime::System::assert_has_event(kusama_runtime::Event::XcmPallet(
+		relay_runtime::System::assert_has_event(relay_runtime::Event::XcmPallet(
 			pallet_xcm::Event::SupportedVersionChanged(
 				MultiLocation { parents: 0, interior: X1(Parachain(THIS_PARA_ID)) },
 				2,
@@ -165,7 +159,6 @@ fn para_chain_subscribe_version_notify_of_relay_chain() {
 	});
 }
 
-/// source: Acala
 #[test]
 fn para_chain_subscribe_version_notify_of_sibling_chain() {
 	simtest();
@@ -203,8 +196,25 @@ fn fungibles_creation() {
 	let _: MultiAssets = (MultiLocation::new(1, X1(Parachain(1000))), asset_amount).into();
 }
 
-// TODO: make versioning and noop tests separate
-//let noop : Xcm<Call> = Xcm(vec![]);
-// let tests = <PolkadotXcm as xcm::WrapVersion>::wrap_version(&MultiLocation::new(1,
-// X1(Parachain(THIS_PARA_ID))).into(), noop.clone()); assert_ok!(tests);
-// PolkadotXcm::execute(origin.clone(), Box::new(xcm::VersionedXcm::V2(noop.into())), 42);
+#[test]
+fn withdraw_and_deposit_here_native() {
+	simtest();
+	let send_amount = 10;
+
+	This::execute_with(|| {
+		let message = Xcm(vec![
+			WithdrawAsset((Here, send_amount).into()),
+			buy_execution_unlimited((Here, send_amount)),
+			deposit_all_one(Parachain(THIS_PARA_ID)),
+		]);
+
+		assert!(matches!(
+			this_runtime::RelayerXcm::send_xcm(
+				Here,
+				MultiLocation { parents: 0, interior: Junctions::Here },
+				message,
+			),
+			Err(SendError::CannotReachDestination { .. })
+		));
+	});
+}

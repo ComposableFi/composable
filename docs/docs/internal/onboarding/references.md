@@ -1,10 +1,10 @@
 # References
----
+
 Below you'll find all content referenced in the onboarding basics. Feel free to explore the sources and content creators listed here if you want to deep dive into a topic.
 
 
 ## Consensus and Blockchain
----
+
 ### Reading Materials
 - [header data](https://www.oreilly.com/library/view/mastering-bitcoin/9781491902639/ch07.html)
 - [linked list](https://www.geeksforgeeks.org/data-structures/linked-list/).
@@ -106,8 +106,8 @@ Below you'll find all content referenced in the onboarding basics. Feel free to 
 - [Polkadot Wiki](https://wiki.polkadot.network/docs/learn-accounts)
 - [Pablo](https://dali.devnets.composablefinance.ninja/products/pablo-overview.html)
 - [Centauri](https://dali.devnets.composablefinance.ninja/products/centauri-overview.html)
-- [Composable's-XCVM](https://dali.devnets.composablefinance.ninja/products/cross-chain-virtual-machine.html)
-- [CosmwasmVM](https://dali.devnets.composablefinance.ninja/products/cross-chain-virtual-machine/writing-smart-contracts-with-cosmwasm.html)
+- [XCVM](https://dali.devnets.composablefinance.ninja/products/xcvm.html)
+- [CosmWasmVM](https://dali.devnets.composablefinance.ninja/products/xcvm/writing-smart-contracts-with-cosmwasm.html)
 - [Moonbeam Wiki](https://docs.moonbeam.network/builders/)
 
 #### Further Reading

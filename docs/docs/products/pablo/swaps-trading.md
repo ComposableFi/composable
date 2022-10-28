@@ -1,7 +1,5 @@
 # Swaps/Trading
 
----
-
 Pablo’s primary function is token exchange, to enable users to trade and exchange assets. Like other DEXs, Pablo 
 accomplishes this through automated market maker (AMM) pools, which also act as a yield generation opportunity for 
 liquidity providers.

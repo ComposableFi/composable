@@ -27,7 +27,7 @@ extern crate alloc;
 
 mod governance;
 mod weights;
-mod xcmp;
+pub mod xcmp;
 
 use lending::MarketId;
 use orml_traits::{parameter_type_with_key, LockIdentifier};
@@ -40,7 +40,7 @@ use common::{
 	},
 	impls::DealWithFees,
 	multi_existential_deposits, AccountId, AccountIndex, Address, Amount, AuraId, Balance,
-	BlockNumber, BondOfferId, FinancialNftInstanceId, Hash, MaxStringSize, Moment,
+	BlockNumber, BondOfferId, FinancialNftInstanceId, ForeignAssetId, Hash, MaxStringSize, Moment,
 	MosaicRemoteAssetId, NativeExistentialDeposit, PoolId, PriceConverter, Signature,
 	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
@@ -48,8 +48,9 @@ use common::{
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
 	assets::Asset,
-	defi::{CurrencyPair, Rate},
+	defi::Rate,
 	dex::{Amm, PriceAggregate, RemoveLiquiditySimulationResult},
+	xcm::assets::RemoteAssetRegistryInspect,
 };
 use primitives::currency::{CurrencyId, ValidateCurrencyId};
 use sp_api::impl_runtime_apis;
@@ -1455,13 +1456,17 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance> for Runtime {
+	impl assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance, ForeignAssetId> for Runtime {
 		fn balance_of(SafeRpcWrapper(asset_id): SafeRpcWrapper<CurrencyId>, account_id: AccountId) -> SafeRpcWrapper<Balance> /* Balance */ {
 			SafeRpcWrapper(<Assets as fungibles::Inspect::<AccountId>>::balance(asset_id, &account_id))
 		}
 
-		fn list_assets() -> Vec<Asset> {
-			CurrencyId::list_assets()
+		fn list_assets() -> Vec<Asset<ForeignAssetId>> {
+			let mut assets = CurrencyId::list_assets();
+			let mut foreign_assets = assets_registry::Pallet::<Runtime>::get_foreign_assets_list();
+			assets.append(&mut foreign_assets);
+
+			assets
 		}
 	}
 
@@ -1524,16 +1529,11 @@ impl_runtime_apis! {
 			min_expected_amounts: BTreeMap<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>>,
 		) -> RemoveLiquiditySimulationResult<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>> {
 			let min_expected_amounts: BTreeMap<_, _> = min_expected_amounts.iter().map(|(k, v)| (k.0, v.0)).collect();
-			let currency_pair = <Pablo as Amm>::currency_pair(pool_id.0).unwrap_or_else(|_| CurrencyPair::new(CurrencyId::INVALID, CurrencyId::INVALID));
-			let lp_token = <Pablo as Amm>::lp_token(pool_id.0).unwrap_or(CurrencyId::INVALID);
+			let default_removed_assets = min_expected_amounts.iter().map(|(k, _)| (CurrencyId(k.0), 0_u128)).collect::<BTreeMap<_,_>>();
 			let simulate_remove_liquidity_result = <Pablo as Amm>::simulate_remove_liquidity(&who.0, pool_id.0, lp_amount.0, min_expected_amounts)
-				.unwrap_or_else(|_|
+				.unwrap_or(
 					RemoveLiquiditySimulationResult{
-						assets: BTreeMap::from([
-									(currency_pair.base, Zero::zero()),
-									(currency_pair.quote, Zero::zero()),
-									(lp_token, Zero::zero())
-						])
+						assets: default_removed_assets
 					}
 				);
 			let mut new_map = BTreeMap::new();

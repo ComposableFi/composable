@@ -436,10 +436,10 @@
               meta = { mainProgram = "composable"; };
             });
 
-          run-with-benchmarks = chain:
+          benchmarks-run-once = chainspec:
             pkgs.writeShellScriptBin "run-benchmarks-once" ''
               ${composable-bench-node}/bin/composable benchmark pallet \
-              --chain="${chain}" \
+              --chain="${chainspec}" \
               --execution=wasm \
               --wasm-execution=compiled \
               --wasm-instantiation-strategy=legacy-instance-reuse \
@@ -448,6 +448,21 @@
               --steps=1 \
               --repeat=1
             '';
+
+          generate-benchmarks = { chain, steps, repeat }:
+            pkgs.writeShellScriptBin "generate-benchmarks" ''
+              ${composable-bench-node}/bin/composable benchmark pallet \
+              --chain="${chain}-dev" \
+              --execution=wasm \
+              --wasm-execution=compiled \
+              --wasm-instantiation-strategy=legacy-instance-reuse \
+              --pallet="*" \
+              --extrinsic="*" \
+              --steps=${builtins.toString steps} \
+              --repeat=${builtins.toString repeat} \
+              --output=code/parachain/runtime/${chain}/src/weights
+            '';
+
           docs-renders = with pkgs; [ nodejs plantuml graphviz pandoc ];
 
           mkFrontendStatic = { kusamaEndpoint, picassoEndpoint, karuraEndpoint
@@ -614,12 +629,26 @@
               "wss://persistent.devnets.composablefinance.ninja/chain/karura";
           };
 
+          frontend-static-picasso-persistent = mkFrontendStatic {
+            subsquidEndpoint =
+              "https://persistent.picasso.devnets.composablefinance.ninja/subsquid/graphql";
+            picassoEndpoint =
+              "wss://persistent.picasso.devnets.composablefinance.ninja/chain/picasso";
+            kusamaEndpoint =
+              "wss://persistent.picasso.devnets.composablefinance.ninja/chain/rococo";
+            karuraEndpoint =
+              "wss://persistent.picasso.devnets.composablefinance.ninja/chain/karura";
+          };
+
           frontend-static-firebase = mkFrontendStatic {
             subsquidEndpoint =
-              "https://dali-subsquid.composable.finance/graphql";
-            picassoEndpoint = "wss://dali-cluster-fe.composablefinance.ninja/";
-            kusamaEndpoint = "wss://kusama-rpc.polkadot.io";
-            karuraEndpoint = "wss://karura.api.onfinality.io/public-ws";
+              "https://persistent.devnets.composablefinance.ninja/subsquid/graphql";
+            picassoEndpoint =
+              "wss://persistent.devnets.composablefinance.ninja/chain/dali";
+            kusamaEndpoint =
+              "wss://persistent.devnets.composablefinance.ninja/chain/rococo";
+            karuraEndpoint =
+              "wss://persistent.devnets.composablefinance.ninja/chain/karura";
           };
 
           frontend-pablo-server = let PORT = 8002;
@@ -665,6 +694,7 @@
             inherit subwasm-release-body;
             inherit frontend-static;
             inherit frontend-static-persistent;
+            inherit frontend-static-picasso-persistent;
             inherit frontend-static-firebase;
             inherit frontend-pablo-server;
             inherit frontend-picasso-server;
@@ -682,6 +712,15 @@
                 "wss://persistent.devnets.composablefinance.ninja/chain/dali";
               parachainIds = [ 1000 2000 2087 ];
             };
+
+            devnet-initialize-script-picasso-persistent =
+              mkDevnetInitializeScript {
+                polkadotUrl =
+                  "wss://persistent.picasso.devnets.composablefinance.ninja/chain/rococo";
+                composableUrl =
+                  "wss://persistent.picasso.devnets.composablefinance.ninja/chain/picasso";
+                parachainIds = [ 1000 2000 2087 ];
+              };
 
             docs-static = npm-bp.buildNpmPackage {
               src = ./docs;
@@ -931,10 +970,10 @@
               };
             };
 
-            check-dali-dev-benchmarks = run-with-benchmarks "dali-dev";
-            check-picasso-dev-benchmarks = run-with-benchmarks "picasso-dev";
+            check-dali-dev-benchmarks = benchmarks-run-once "dali-dev";
+            check-picasso-dev-benchmarks = benchmarks-run-once "picasso-dev";
             check-composable-dev-benchmarks =
-              run-with-benchmarks "composable-dev";
+              benchmarks-run-once "composable-dev";
 
             check-picasso-integration-tests = crane-nightly.cargoBuild
               (common-attrs // {
@@ -1185,7 +1224,7 @@
                 text = "${builtins.toJSON config}";
               };
             in pkgs.writeShellApplication {
-              name = "kusama-dali-karura";
+              name = "devnet-picasso-complete";
               text = ''
                 cat ${config-file}
                 rm -rf /tmp/polkadot-launch
@@ -1207,7 +1246,7 @@
                 text = "${builtins.toJSON config}";
               };
             in pkgs.writeShellApplication {
-              name = "kusama-dali-karura";
+              name = "devnet-dali-complete";
               text = ''
                 cat ${config-file}
                 rm -rf /tmp/polkadot-launch
@@ -1245,6 +1284,15 @@
                 frontend = frontend-static-persistent;
               });
 
+            devnet-picasso-persistent-program =
+              pkgs.composable.mkDevnetProgram "devnet-persistent"
+              (import ./.nix/devnet-specs/default.nix {
+                inherit pkgs;
+                inherit price-feed;
+                devnet = devnet-picasso-complete;
+                frontend = frontend-static-picasso-persistent;
+              });
+
             default = packages.composable-node;
           };
 
@@ -1280,35 +1328,36 @@
               });
 
             developers = developers-minimal.overrideAttrs (base: {
-              buildInputs = with packages;
-                base.buildInputs ++ [
-                  pkgs.bacon
-                  pkgs.google-cloud-sdk
-                  pkgs.grub2
-                  pkgs.jq
-                  pkgs.lldb
-                  pkgs.llvmPackages_latest.bintools
-                  pkgs.llvmPackages_latest.lld
-                  pkgs.llvmPackages_latest.llvm
-                  pkgs.nix-tree
-                  pkgs.nixpkgs-fmt
-                  pkgs.openssl
-                  pkgs.openssl.dev
-                  pkgs.pkg-config
-                  pkgs.qemu
-                  pkgs.rnix-lsp
-                  pkgs.taplo
-                  pkgs.xorriso
-                  pkgs.zlib.out
-                  pkgs.nix-tree
-                  pkgs.nixfmt
-                  pkgs.rnix-lsp
-                  pkgs.subxt
-                  pkgs.nodePackages.typescript
-                  pkgs.nodePackages.typescript-language-server
-                  packages.rust-nightly
-                  packages.wasm-optimizer
-                ] ++ docs-renders;
+              buildInputs = base.buildInputs ++ [
+                pkgs.bacon
+                pkgs.google-cloud-sdk
+                pkgs.grub2
+                pkgs.jq
+                pkgs.lldb
+                pkgs.llvmPackages_latest.bintools
+                pkgs.llvmPackages_latest.lld
+                pkgs.llvmPackages_latest.llvm
+                pkgs.nix-tree
+                pkgs.nixpkgs-fmt
+                pkgs.openssl
+                pkgs.openssl.dev
+                pkgs.pkg-config
+                pkgs.qemu
+                pkgs.rnix-lsp
+                pkgs.taplo
+                pkgs.xorriso
+                pkgs.zlib.out
+                pkgs.nix-tree
+                pkgs.nixfmt
+                pkgs.rnix-lsp
+                pkgs.nodePackages.typescript
+                pkgs.nodePackages.typescript-language-server
+                packages.subxt
+              ] ++ docs-renders;
+            });
+
+            developers-with-wasm-optimizer = developers.overrideAttrs (base: {
+              buildInputs = base.buildInputs ++ [ packages.wasm-optimizer ];
             });
 
             developers-xcvm = developers.overrideAttrs (base: {
@@ -1345,6 +1394,8 @@
           in rec {
             devnet = makeApp packages.devnet-default-program;
             devnet-persistent = makeApp packages.devnet-persistent-program;
+            devnet-picasso-persistent =
+              makeApp packages.devnet-picasso-persistent-program;
             devnet-xcvm = makeApp packages.devnet-xcvm-program;
             devnet-dali = makeApp packages.devnet-dali;
             devnet-picasso = makeApp packages.devnet-picasso;
@@ -1361,13 +1412,54 @@
             junod = makeApp packages.junod;
             # TODO: move list of chains out of here and do fold
             benchmarks-once-composable = flake-utils.lib.mkApp {
-              drv = run-with-benchmarks "composable-dev";
+              drv = benchmarks-run-once "composable-dev";
             };
             benchmarks-once-dali =
-              flake-utils.lib.mkApp { drv = run-with-benchmarks "dali-dev"; };
-
+              flake-utils.lib.mkApp { drv = benchmarks-run-once "dali-dev"; };
             benchmarks-once-picasso = flake-utils.lib.mkApp {
-              drv = run-with-benchmarks "picasso-dev";
+              drv = benchmarks-run-once "picasso-dev";
+            };
+            benchmarks-generate-dali = flake-utils.lib.mkApp {
+              drv = generate-benchmarks {
+                chain = "dali";
+                steps = 50;
+                repeat = 10;
+              };
+            };
+            benchmarks-generate-picasso = flake-utils.lib.mkApp {
+              drv = generate-benchmarks {
+                chain = "picasso";
+                steps = 50;
+                repeat = 10;
+              };
+            };
+            benchmarks-generate-composable = flake-utils.lib.mkApp {
+              drv = generate-benchmarks {
+                chain = "composable";
+                steps = 50;
+                repeat = 10;
+              };
+            };
+            benchmarks-generate-quick-dali = flake-utils.lib.mkApp {
+              drv = generate-benchmarks {
+                chain = "dali";
+                steps = 2;
+                repeat = 2;
+              };
+            };
+            benchmarks-generate-quick-picasso = flake-utils.lib.mkApp {
+              drv = generate-benchmarks {
+                chain = "picasso";
+                steps = 2;
+                repeat = 2;
+              };
+            };
+            benchmarks-generate-quick-composable = flake-utils.lib.mkApp {
+              drv = generate-benchmarks {
+                chain = "composable";
+                steps = 2;
+                repeat = 2;
+              };
             };
             simnode-tests = makeApp packages.simnode-tests;
             simnode-tests-composable =
@@ -1380,6 +1472,8 @@
               makeApp packages.devnet-initialize-script-local;
             devnet-initialize-script-persistent =
               makeApp packages.devnet-initialize-script-persistent;
+            devnet-initialize-script-picasso-persistent =
+              makeApp packages.devnet-initialize-script-picasso-persistent;
             default = devnet-dali;
           };
         });

@@ -1,7 +1,5 @@
 # The Composable Team
 
----
-
 The Composable Finance team is made up of individuals dedicated to realizing a seamless cross-chain user experience and 
 a blockchain-agnostic future of DeFi. There are around 80 people on the Composable team; 40 developers, 12 on Product 
 and QA, 8 on Growth and HR, and 18 on design, marketing, and community. Select biographies of our core members are below.

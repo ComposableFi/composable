@@ -1,7 +1,5 @@
 # Substrate
 
----
-
 ## Editing pallets
 
 Simply scroll to the pallet you want to edit in the `frame/` directory, and start editing it. 

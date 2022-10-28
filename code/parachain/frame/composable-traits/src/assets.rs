@@ -4,6 +4,7 @@ use composable_support::collections::vec::bounded::BiBoundedVec;
 use scale_info::TypeInfo;
 use sp_std::vec::Vec;
 
+use crate::currency::Exponent;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
@@ -25,7 +26,9 @@ impl BasicAssetMetadata {
 
 #[derive(Decode, Encode, Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub struct Asset {
-	pub name: Vec<u8>,
-	pub id: u64,
+pub struct Asset<ForeignId> {
+	pub name: Option<Vec<u8>>,
+	pub id: u128,
+	pub decimals: Exponent,
+	pub foreign_id: Option<ForeignId>,
 }

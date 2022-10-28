@@ -1,7 +1,5 @@
 # Auctions & Bonding
 
----
-
 ## Auctions
 
 A liquidity bootstrapping protocol (LBP) is a type of token launch designed to ensure the market decides the final price

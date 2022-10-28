@@ -1,7 +1,5 @@
 # CHAOS
 
----
-
 ## Introduction
 
 CHAOS is a financial NFT (fNFT) that represents the locked yield-bearing version of PICA. Users will lock their PICA for

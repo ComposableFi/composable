@@ -1,7 +1,5 @@
 # Use cases
 
----
-
 # fNFT use cases
 
 CHAOS fNFTs, through their composability, allow the underlying assets to remain locked, but allow the representative 

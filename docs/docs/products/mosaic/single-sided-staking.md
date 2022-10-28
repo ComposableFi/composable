@@ -1,7 +1,5 @@
 # Single-Sided Staking
 
----
-
 Mosaic allows for ‘single-sided staking’, where users earn yield by providing liquidity for one type of asset, in 
 contrast to liquidity provisioning on AMMs which requires a pair of assets. Mosaic’s rebalancing mechanism can move 
 liquidity across chains using bridges, thereby allowing users to gain from transfers outside of the chains they 

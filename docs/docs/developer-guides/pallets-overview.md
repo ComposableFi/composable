@@ -2,8 +2,6 @@
 
 *Please note; the pallets presented are in active development and may not be production ready.*
 
----
-
 # Pallets & Integration
 
 The world of DeFi (primitives, core and applications) continues to edge towards interoperability 

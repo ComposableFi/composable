@@ -107,7 +107,7 @@ where
 	let mut funds: Vec<Coin> = Vec::new();
 	let assets = CurrencyId::list_assets();
 	for i in 0..n {
-		let currency_id = assets[i as usize].id as u128;
+		let currency_id = assets[i as usize].id;
 		// We need to fund all accounts first
 		for account in &accounts {
 			<pallet_assets::Pallet<T> as Mutate<T::AccountId>>::mint_into(
@@ -166,7 +166,7 @@ benchmarks! {
 		let mut funds = BTreeMap::new();
 		let assets = CurrencyId::list_assets();
 		for i in 0..n {
-			let currency_id = assets[i as usize].id as u128;
+			let currency_id = assets[i as usize].id;
 			<pallet_assets::Pallet<T> as Mutate<T::AccountId>>::mint_into(
 				currency_id.into(),
 				&origin,
@@ -206,7 +206,7 @@ benchmarks! {
 		let mut funds = BTreeMap::new();
 		let assets = CurrencyId::list_assets();
 		for i in 0..n {
-			let currency_id = assets[i as usize].id as u128;
+			let currency_id = assets[i as usize].id;
 			<pallet_assets::Pallet<T> as Mutate<T::AccountId>>::mint_into(
 				currency_id.into(),
 				&origin,
