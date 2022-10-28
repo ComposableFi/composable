@@ -34,6 +34,14 @@ pub trait CurrencyFactory {
 	fn unique_asset_id_to_protocol_asset_id(unique_asset_id: Self::AssetId) -> u32;
 }
 
+pub trait AssetExistentialDepositInspect {
+	type AssetId;
+	type Balance;
+
+	/// Given an asset ID, returns the existential_deposit of an asset as a `Balance`
+	fn existential_deposit(asset_id: Self::AssetId) -> Result<Self::Balance, DispatchError>;
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Encode, Decode, TypeInfo)]
 pub struct RangeId(u32);
 
