@@ -422,6 +422,23 @@
               '';
             };
 
+          subxt = pkgs.callPackage ./code/utils/subxt-codegen/subxt.nix { };
+
+          mk-subxt-client = metadata:
+            let scale-path = "${metadata}/${metadata.name}.scale";
+            in pkgs.stdenv.mkDerivation {
+              name = "generate-${metadata.name}";
+              dontUnpack = true;
+              buildInputs = [ metadata rust-nightly ];
+              installPhase = ''
+                mkdir $out
+                ls ${metadata}
+                ${subxt}/bin/subxt codegen --file=${scale-path} | rustfmt --edition=2021 --emit=stdout > $out/${
+                  builtins.replaceStrings [ "-metadata" "-" ] [ "" "_" ] metadata.name
+                }.rs
+              '';
+            };
+
           composable-node-release = crane-nightly.buildPackage (common-attrs
             // {
               name = "composable";
@@ -717,14 +734,34 @@
                 dotsama-node = composable-node;
               })
               (pkgs.callPackage ./code/parachain/default.nix { }).chain-specs;
-            all = builtins.map (meta: {
+            all-metadatas = builtins.map (meta: {
               name = meta.name;
               value = meta;
-            }) (composables ++ polkadots);
-          in builtins.listToAttrs all;
+            }) (composables);
+            all-generators = builtins.map (meta: {
+              name = meta.name;
+              value = meta;
+            }) (builtins.map mk-subxt-client (composables));
+            consumer = "./code/utils/subxt-exports/src/generated";
+            subxt-export = pkgs.writeShellApplication {
+              name = "subxt-export";
+
+              text = ''
+                ${pkgs.lib.lists.foldl
+
+                (acc: el: acc + "\n" + "cp ${el.value}/* ${consumer}")
+                "echo 'Copy into ${consumer}'" all-generators}
+              '';
+            };
+          in rec {
+            encodings = builtins.listToAttrs all-metadatas;
+            generators = builtins.listToAttrs all-generators;
+            inherit subxt-export;
+          };
 
         in rec {
-          packages = metadatas // rec {
+          packages = metadatas.encodings // metadatas.generators // rec {
+            inherit subxt;          
             inherit polkadot-node;
             inherit wasm-optimizer;
             inherit common-deps;
@@ -797,8 +834,6 @@
               mk-xcvm-contract "xcvm-asset-registry";
             xcvm-contract-router = mk-xcvm-contract "xcvm-router";
             xcvm-contract-interpreter = mk-xcvm-contract "xcvm-interpreter";
-            subxt =
-              pkgs.callPackage ./code/utils/composable-subxt/subxt.nix { };
 
             subsquid-processor = let
               processor = pkgs.buildNpmPackage {
@@ -1549,6 +1584,8 @@
             };
 
           in rec {
+            subxt-export = makeApp metadatas.subxt-export;
+
             devnet = makeApp packages.devnet-default-program;
             devnet-persistent = makeApp packages.devnet-persistent-program;
             devnet-xcvm = makeApp packages.devnet-xcvm-program;
