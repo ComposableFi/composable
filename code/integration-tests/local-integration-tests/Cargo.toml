@@ -111,7 +111,6 @@ xcm-executor = { git = "https://github.com/paritytech/polkadot", default-feature
 
 # added on top of runtime for emulation of network
 kusama-runtime = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.27" }
-rococo-runtime = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.27" }
 parachains-common = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.27" }
 paste = "1.0.6"
 polkadot-core-primitives = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.27" }
