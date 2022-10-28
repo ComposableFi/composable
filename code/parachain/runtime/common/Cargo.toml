@@ -45,6 +45,7 @@ primitives = { path = "../primitives", default-features = false }
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
+smallvec = "1.7.0"
 
 [dev-dependencies]
 authorship = { package = "pallet-authorship", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }

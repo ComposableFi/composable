@@ -1301,6 +1301,8 @@ version = "0.8.30"
 dependencies = [
  "composable-support",
  "composable-traits",
+ "cumulus-pallet-xcm",
+ "cumulus-primitives-core",
  "frame-support",
  "frame-system",
  "num-traits",
@@ -1317,6 +1319,7 @@ dependencies = [
  "primitives",
  "scale-info",
  "serde",
+ "smallvec 1.9.0",
  "sp-consensus-aura",
  "sp-core",
  "sp-io",

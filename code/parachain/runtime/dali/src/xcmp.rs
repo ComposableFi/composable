@@ -1,6 +1,10 @@
 use super::*;
 use common::{
-	governance::native::EnsureRootOrHalfNativeTechnical, topology, xcmp::*, PriceConverter, fees::WeightToFee,
+	fees::WeightToFeeConverter,
+	governance::native::{EnsureRootOrHalfNativeTechnical, NativeCouncilCollective},
+	topology,
+	xcmp::*,
+	PriceConverter,
 };
 use composable_traits::{
 	oracle::MinimalOracle,
@@ -10,7 +14,7 @@ use cumulus_primitives_core::ParaId;
 use frame_support::{
 	log, parameter_types,
 	traits::{Everything, Nothing, PalletInfoAccess},
-	weights::{Weight}
+	weights::Weight,
 };
 use orml_traits::{
 	location::{AbsoluteReserveProvider, RelativeReserveProvider, Reserve},
@@ -29,7 +33,7 @@ use xcm_builder::{
 	AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, EnsureXcmOrigin, FixedWeightBounds,
 	LocationInverter, ParentIsPreset, RelayChainAsNative, SiblingParachainAsNative,
 	SiblingParachainConvertsVia, SignedAccountId32AsNative, SignedToAccountId32,
-	SovereignSignedViaLocation, TakeRevenue, TakeWeightCredit,
+	SovereignSignedViaLocation, TakeRevenue, TakeWeightCredit, BackingToPlurality,
 };
 use xcm_executor::{
 	traits::{DropAssets, FilterAssetLocation},
@@ -129,7 +133,7 @@ pub type Trader = TransactionFeePoolTrader<
 	AssetsIdConverter,
 	PriceConverter<AssetsRegistry>,
 	ToTreasury<AssetsIdConverter, crate::Assets, TreasuryAccount>,
-	WeightToFee,
+	WeightToFeeConverter,
 >;
 
 pub struct CaptureDropAssets<
@@ -246,9 +250,23 @@ pub fn xcm_fee_estimator(instructions: u8) -> Weight {
 	UnitWeightCost::get() * instructions as u64
 }
 
+parameter_types! {
+	pub const CollectiveBodyId: BodyId = BodyId::Unit;
+}
+
+parameter_types! {
+	pub const CouncilBodyId: BodyId = BodyId::Executive;
+}
+
+pub type CouncilToPlurality = BackingToPlurality<
+	Origin,
+	collective::Origin<Runtime, NativeCouncilCollective>,
+	CouncilBodyId,
+>;
+
 impl pallet_xcm::Config for Runtime {
 	type Event = Event;
-	type SendXcmOrigin = EnsureXcmOrigin<EnsureRootOrHalfNativeTechnical, LocalOriginToLocation>;
+	type SendXcmOrigin = EnsureXcmOrigin<Origin, CouncilToPlurality>;
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
 	type XcmExecuteFilter = Nothing;

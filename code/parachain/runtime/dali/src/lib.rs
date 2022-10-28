@@ -44,6 +44,7 @@ use common::{
 	MosaicRemoteAssetId, NativeExistentialDeposit, PoolId, PriceConverter, Signature,
 	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	fees::WeightToFeeConverter,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
@@ -360,7 +361,7 @@ impl transaction_payment::Config for Runtime {
 	type OnChargeTransaction =
 		transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime, NativeTreasury>>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
-	type WeightToFee = WeightToFee;
+	type WeightToFee = WeightToFeeConverter;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type FeeMultiplierUpdate =
 		TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
@@ -1051,7 +1052,7 @@ impl lending::Config for Runtime {
 	type PalletId = LendingPalletId;
 	type NativeCurrency = Balances;
 	type MaxLiquidationBatchSize = MaxLiquidationBatchSize;
-	type WeightToFee = WeightToFee;
+	type WeightToFee = WeightToFeeConverter;
 }
 
 parameter_types! {
