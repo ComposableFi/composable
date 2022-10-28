@@ -27,6 +27,13 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const CALL_ID: u64 = 1;
 const SELF_CALL_ID: u64 = 2;
 
+/// Used for unwrapping must-have fields in protobuf
+macro_rules! must_ok {
+	($opt:expr) => {
+		$opt.ok_or(ContractError::InvalidProgram)
+	};
+}
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
 	deps: DepsMut,
@@ -132,15 +139,15 @@ pub fn interpret_program(
 	program: proto::Program,
 ) -> Result<Response, ContractError> {
 	let mut response = Response::new();
-	let instructions = program.instructions.ok_or(ContractError::InvalidProgram)?.instructions;
+	let instructions = must_ok!(program.instructions)?.instructions;
 	let instruction_len = instructions.len();
 	let mut instruction_iter = instructions.into_iter().enumerate();
 	let mut ip = IP_REGISTER.load(deps.storage)?;
 	while let Some((index, instruction)) = instruction_iter.next() {
-		let instruction = instruction.instruction.ok_or(ContractError::InvalidProgram)?;
+		let instruction = must_ok!(instruction.instruction)?;
 		response = match instruction {
 			proto::instruction::Instruction::Call(proto::Call { payload, bindings }) => {
-				let bindings = bindings.ok_or(ContractError::InvalidProgram)?;
+				let bindings = must_ok!(bindings)?;
 				if index >= instruction_len - 1 {
 					// If the call is the final instruction, do not yield execution
 					interpret_call(
@@ -188,10 +195,8 @@ pub fn interpret_program(
 			},
 			proto::instruction::Instruction::Spawn(ctx) =>
 				interpret_spawn(&deps, &env, ctx, response)?,
-			proto::instruction::Instruction::Transfer(proto::Transfer { assets, account_type }) => {
-				let account_type = account_type.ok_or(ContractError::InvalidProgram)?;
-				interpret_transfer(&mut deps, &env, account_type, assets, response)?
-			},
+			proto::instruction::Instruction::Transfer(proto::Transfer { assets, account_type }) =>
+				interpret_transfer(&mut deps, &env, must_ok!(account_type)?, assets, response)?,
 			instr => return Err(ContractError::InstructionNotSupported(format!("{:?}", instr))),
 		};
 		ip += 1;
@@ -221,7 +226,7 @@ pub fn interpret_call(
 	response: Response,
 ) -> Result<Response, ContractError> {
 	// We don't know the type of the payload, so we use `serde_json::Value`
-	let cosmwasm_msg: FlatCosmosMsg<serde_json::Value> = if !bindings.is_empty() {
+	let flat_cosmos_msg: FlatCosmosMsg<serde_json::Value> = if !bindings.is_empty() {
 		let Config { registry_address, relayer_address, .. } = CONFIG.load(deps.storage)?;
 		// Len here is the maximum possible length
 		let mut formatted_call =
@@ -234,11 +239,7 @@ pub fn interpret_call(
 		let mut offset: usize = 0;
 		for binding in bindings {
 			let binding_index = binding.position as usize;
-			let binding = binding
-				.binding_value
-				.ok_or(ContractError::InvalidProgram)?
-				.r#type
-				.ok_or(ContractError::InvalidProgram)?;
+			let binding = must_ok!(must_ok!(binding.binding_value)?.r#type)?;
 			// Current index of the output call
 			let shifted_index = original_index + offset;
 
@@ -273,10 +274,8 @@ pub fn interpret_call(
 				proto::binding_value::Type::Self_(_) =>
 					Cow::Borrowed(env.contract.address.as_bytes()),
 				proto::binding_value::Type::AssetId(proto::AssetId { asset_id }) => {
-					let asset_id = asset_id.ok_or(ContractError::InvalidProgram)?;
-					let query_msg = AssetRegistryQueryMsg::GetAssetContract(
-						asset_id.try_into().map_err(|_| ContractError::InvalidProgram)?,
-					);
+					let asset_id = must_ok!(asset_id)?;
+					let query_msg = AssetRegistryQueryMsg::GetAssetContract(asset_id.into());
 
 					let response: GetAssetContractResponse = deps.querier.query(
 						&WasmQuery::Smart {
@@ -316,7 +315,8 @@ pub fn interpret_call(
 		serde_json_wasm::from_slice(&payload).map_err(|_| ContractError::InvalidCallPayload)?
 	};
 
-	let cosmos_msg: CosmosMsg = cosmwasm_msg.try_into().unwrap();
+	let cosmos_msg: CosmosMsg =
+		flat_cosmos_msg.try_into().map_err(|_| ContractError::DataSerializationError)?;
 	Ok(response.add_submessage(SubMsg::reply_on_success(cosmos_msg, CALL_ID)))
 }
 
@@ -339,16 +339,8 @@ pub fn interpret_spawn(
 	let mut normalized_funds = Funds::<Displayed<u128>>::empty();
 
 	for asset in ctx.assets {
-		let asset_id = asset
-			.asset_id
-			.ok_or(ContractError::InvalidProgram)?
-			.asset_id
-			.ok_or(ContractError::InvalidProgram)?;
-		let amount: Amount = asset
-			.balance
-			.ok_or(ContractError::InvalidProgram)?
-			.try_into()
-			.map_err(|_| ContractError::InvalidProgram)?;
+		let asset_id = must_ok!(must_ok!(asset.asset_id)?.asset_id)?;
+		let amount: Amount = must_ok!(asset.balance)?.try_into()?;
 		if amount.is_zero() {
 			// We ignore zero amounts
 			continue
@@ -358,9 +350,7 @@ pub fn interpret_spawn(
 			// No need to get balance from cw20 contract
 			amount.intercept
 		} else {
-			let query_msg = AssetRegistryQueryMsg::GetAssetContract(
-				asset_id.clone().try_into().map_err(|_| ContractError::InvalidProgram)?,
-			);
+			let query_msg = AssetRegistryQueryMsg::GetAssetContract(asset_id.clone().into());
 
 			let cw20_address: GetAssetContractResponse = deps.querier.query(
 				&WasmQuery::Smart {
@@ -380,10 +370,7 @@ pub fn interpret_spawn(
 		};
 
 		if amount.0 > 0 {
-			normalized_funds.0.push((
-				AssetId(asset_id.try_into().map_err(|_| ContractError::InvalidProgram)?),
-				amount.into(),
-			));
+			normalized_funds.0.push((AssetId(asset_id.into()), amount.into()));
 		}
 	}
 
@@ -402,15 +389,15 @@ pub fn interpret_spawn(
 
 	let serialized_program = {
 		let mut buf = Vec::new();
-		let program = ctx.program.ok_or(ContractError::InvalidProgram)?;
+		let program = must_ok!(ctx.program)?;
 		buf.reserve(program.encoded_len());
 		program.encode(&mut buf).unwrap();
 		buf
 	};
 
 	let data = SpawnEvent {
-		network: ctx.network.ok_or(ContractError::InvalidProgram)?.network_id,
-		salt: ctx.salt.ok_or(ContractError::InvalidProgram)?.salt,
+		network: must_ok!(ctx.network)?.network_id,
+		salt: must_ok!(ctx.salt)?.salt,
 		assets: normalized_funds,
 		program: serialized_program,
 	};
@@ -452,20 +439,10 @@ pub fn interpret_transfer(
 	};
 
 	for asset in assets {
-		let asset_id = asset
-			.asset_id
-			.ok_or(ContractError::InvalidProgram)?
-			.asset_id
-			.ok_or(ContractError::InvalidProgram)?;
-		let amount: Amount = asset
-			.balance
-			.ok_or(ContractError::InvalidProgram)?
-			.try_into()
-			.map_err(|_| ContractError::InvalidProgram)?;
+		let asset_id = must_ok!(must_ok!(asset.asset_id)?.asset_id)?;
+		let amount: Amount = must_ok!(asset.balance)?.try_into()?;
 
-		let query_msg = AssetRegistryQueryMsg::GetAssetContract(
-			asset_id.try_into().map_err(|_| ContractError::InvalidProgram)?,
-		);
+		let query_msg = AssetRegistryQueryMsg::GetAssetContract(asset_id.into());
 
 		let cw20_address: GetAssetContractResponse = deps.querier.query(
 			&WasmQuery::Smart { contract_addr: registry_addr.clone(), msg: to_binary(&query_msg)? }

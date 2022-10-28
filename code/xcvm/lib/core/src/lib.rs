@@ -93,7 +93,7 @@ where
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use alloc::{collections::BTreeMap, vec};
+	use alloc::vec;
 
 	struct DummyProtocol1;
 	#[derive(Debug)]

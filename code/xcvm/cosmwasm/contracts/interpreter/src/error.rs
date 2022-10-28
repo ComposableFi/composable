@@ -2,6 +2,12 @@ use cosmwasm_std::StdError;
 use thiserror::Error;
 use xcvm_core::BridgeSecurity;
 
+impl From<()> for ContractError {
+	fn from(_: ()) -> Self {
+		ContractError::InvalidProgram
+	}
+}
+
 #[derive(Error, Debug)]
 pub enum ContractError {
 	#[error("{0}")]

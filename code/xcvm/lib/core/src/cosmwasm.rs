@@ -413,10 +413,10 @@ where
 	}
 }
 
-// #[cfg(test)]
-/*
+#[cfg(test)]
 mod tests {
 	use super::*;
+	use crate::Register;
 	use alloc::vec;
 
 	#[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -513,7 +513,13 @@ mod tests {
 		let (test_msg, payload_bindings) = create_dummy_data();
 		let msg = LateCall::wasm_migrate("migrate_addr".into(), 2, payload_bindings).unwrap();
 
-		assert_eq!(msg.bindings, vec![(82, BindingValue::This), (109, BindingValue::Relayer)]);
+		assert_eq!(
+			msg.bindings,
+			vec![
+				(82, BindingValue::Register(Register::This)),
+				(109, BindingValue::Register(Register::Relayer))
+			]
+		);
 
 		assert_eq!(
 			msg.encoded_call,
@@ -530,11 +536,11 @@ mod tests {
 	fn test_update_admin() {
 		let msg = LateCall::wasm_update_admin(
 			"contract_addr".into(),
-			StaticBinding::Some(BindingValue::This),
+			StaticBinding::Some(BindingValue::Register(Register::This)),
 		)
 		.unwrap();
 
-		assert_eq!(msg.bindings, vec![(65, BindingValue::This)]);
+		assert_eq!(msg.bindings, vec![(65, BindingValue::Register(Register::This))]);
 
 		assert_eq!(
 			msg.encoded_call,
@@ -563,10 +569,13 @@ mod tests {
 
 	#[test]
 	fn test_bank_send() {
-		let msg = LateCall::bank_send(StaticBinding::Some(BindingValue::This), Default::default())
-			.unwrap();
+		let msg = LateCall::bank_send(
+			StaticBinding::Some(BindingValue::Register(Register::This)),
+			Default::default(),
+		)
+		.unwrap();
 
-		assert_eq!(msg.bindings, vec![(30, BindingValue::This)]);
+		assert_eq!(msg.bindings, vec![(30, BindingValue::Register(Register::This))]);
 
 		assert_eq!(
 			msg.encoded_call,
@@ -593,4 +602,3 @@ mod tests {
 		);
 	}
 }
-*/
