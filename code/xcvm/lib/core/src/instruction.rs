@@ -1,4 +1,4 @@
-use crate::Program;
+use crate::{AssetId, Program};
 use alloc::{
 	collections::{BTreeMap, VecDeque},
 	vec::Vec,
@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 pub enum BindingValue {
 	Register(Register),
 	/// Asset's address
-	Asset(u32),
+	Asset(AssetId),
 }
 
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
@@ -36,6 +36,14 @@ pub type Bindings = Vec<(u32, BindingValue)>;
 /// Ordered Bindings: (Index, Binding)
 pub type OrderedBindings = BTreeMap<u32, BindingValue>;
 
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Clone, PartialEq, Eq, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Destination<Account> {
+	Account(Account),
+	Relayer,
+}
+
 /// Base XCVM instructions.
 /// This set will remain as small as possible, expressiveness must come on `top` of the base
 /// instructions.
@@ -45,7 +53,7 @@ pub type OrderedBindings = BTreeMap<u32, BindingValue>;
 pub enum Instruction<Network, Payload, Account, Assets> {
 	/// Transfer some [`Assets`] from the current program to the [`to`] account.
 	#[serde(rename_all = "snake_case")]
-	Transfer { to: Account, assets: Assets },
+	Transfer { to: Destination<Account>, assets: Assets },
 	/// Arbitrary payload representing a raw call inside the current [`Network`].
 	///
 	/// On picasso, this will be a SCALE encoded dispatch call.

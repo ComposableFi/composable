@@ -8,7 +8,8 @@ message Uint128 {
 }
 
 message Program {
-  Instructions instructions = 1;
+  bytes tag = 1;
+  Instructions instructions = 2;
 }
 
 message Instructions {
@@ -115,7 +116,7 @@ message Transfer {
 }
 
 message Salt {
-  uint64 salt = 1;
+  bytes salt = 1;
 }
 
 message Network {

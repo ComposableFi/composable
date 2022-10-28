@@ -35,7 +35,7 @@ where
 	}
 
 	#[inline]
-	pub fn transfer(mut self, to: Account, assets: Assets) -> Self {
+	pub fn transfer(mut self, to: Destination<Account>, assets: Assets) -> Self {
 		self.instructions.push_back(Instruction::Transfer { to, assets });
 		self
 	}

@@ -179,6 +179,7 @@ pub fn interpret_program(
 						let instructions: Vec<proto::Instruction> =
 							instruction_iter.map(|(_, instr)| instr).collect();
 						let program = proto::Program {
+							tag: program.tag.clone(),
 							instructions: Some(proto::Instructions { instructions }),
 						};
 						let mut buf = Vec::new();
@@ -206,9 +207,7 @@ pub fn interpret_program(
 
 	Ok(response.add_event(Event::new("xcvm.interpreter.executed").add_attribute(
 		"program",
-		"tag", /* TODO(aeryz): tag
-		       * core::str::from_utf8(&program.tag).map_err(|_|
-		       * ContractError::InvalidProgramTag)?, */
+		core::str::from_utf8(&program.tag).map_err(|_| ContractError::InvalidProgramTag)?,
 	)))
 }
 
@@ -329,7 +328,7 @@ pub fn interpret_spawn(
 	#[derive(Serialize)]
 	struct SpawnEvent {
 		network: u32,
-		salt: u64,
+		salt: Vec<u8>,
 		assets: Funds<Displayed<u128>>,
 		program: Vec<u8>,
 	}
@@ -526,17 +525,19 @@ mod tests {
 	};
 	use serde::Deserialize;
 	use std::collections::BTreeMap;
-	use xcvm_core::{Amount, AssetId, Picasso, ETH, PICA};
+	use xcvm_core::{Amount, AssetId, BindingValue, Picasso, ETH, PICA};
 
-	const CW20_ADDR: &str = "cw20addr";
-	const REGISTRY_ADDR: &str = "registryaddr";
+	const CW20_ADDR: &str = "cw20_addr";
+	const REGISTRY_ADDR: &str = "registry_addr";
+	const RELAYER_ADDR: &str = "relayer_addr";
 
 	#[test]
 	fn proper_instantiation() {
 		let mut deps = mock_dependencies();
 
 		let msg = InstantiateMsg {
-			registry_address: "addr".to_string(),
+			registry_address: REGISTRY_ADDR.to_string(),
+			relayer_address: RELAYER_ADDR.to_string(),
 			network_id: Picasso.into(),
 			user_id: vec![],
 		};
@@ -549,7 +550,8 @@ mod tests {
 		assert_eq!(
 			CONFIG.load(&deps.storage).unwrap(),
 			Config {
-				registry_address: Addr::unchecked("addr"),
+				registry_address: Addr::unchecked(REGISTRY_ADDR),
+				relayer_address: Addr::unchecked(RELAYER_ADDR),
 				network_id: Picasso.into(),
 				user_id: vec![]
 			}
@@ -588,6 +590,7 @@ mod tests {
 			info.clone(),
 			InstantiateMsg {
 				registry_address: REGISTRY_ADDR.into(),
+				relayer_address: RELAYER_ADDR.into(),
 				network_id: Picasso.into(),
 				user_id: vec![],
 			},
@@ -631,7 +634,8 @@ mod tests {
 			mock_env(),
 			info.clone(),
 			InstantiateMsg {
-				registry_address: "addr".into(),
+				registry_address: REGISTRY_ADDR.into(),
+				relayer_address: RELAYER_ADDR.into(),
 				network_id: Picasso.into(),
 				user_id: vec![],
 			},
@@ -693,7 +697,8 @@ mod tests {
 			mock_env(),
 			info.clone(),
 			InstantiateMsg {
-				registry_address: "addr".into(),
+				registry_address: REGISTRY_ADDR.into(),
+				relayer_address: RELAYER_ADDR.into(),
 				network_id: Picasso.into(),
 				user_id: vec![],
 			},
@@ -705,7 +710,7 @@ mod tests {
 			instructions: vec![XCVMInstruction::Spawn {
 				network: Picasso.into(),
 				salt: vec![],
-				assets: Funds(BTreeMap::new()),
+				assets: Funds::empty(),
 				program: XCVMProgram {
 					tag: vec![],
 					instructions: vec![XCVMInstruction::Call { encoded: vec![] }].into(),
@@ -729,7 +734,8 @@ mod tests {
 			mock_env(),
 			info.clone(),
 			InstantiateMsg {
-				registry_address: "addr".into(),
+				registry_address: REGISTRY_ADDR.into(),
+				relayer_address: RELAYER_ADDR.into(),
 				network_id: Picasso.into(),
 				user_id: vec![65, 65],
 			},
@@ -746,7 +752,11 @@ mod tests {
 		let msg = LateCall::wasm_execute(
 			StaticBinding::Some(BindingValue::Register(Register::This)),
 			IndexedBinding::Some((
-				[(9, BindingValue::This), (36, BindingValue::Register(Register::Relayer))].into(),
+				[
+					(9, BindingValue::Register(Register::This)),
+					(36, BindingValue::Register(Register::Relayer)),
+				]
+				.into(),
 				TestMsg {
 					part1: String::new(),
 					part2: String::from("hello"),
