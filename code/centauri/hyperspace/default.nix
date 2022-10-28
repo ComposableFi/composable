@@ -17,8 +17,7 @@
         '';
         meta = { mainProgram = "hyperspace"; };
       });
-      rawConfig = (builtins.fromTOML
-        (builtins.readFile ./config.toml));
+      rawConfig = (builtins.fromTOML (builtins.readFile ./config.toml));
 
       config =
         pkgs.lib.makeOverridable (result: { result = result; }) rawConfig;

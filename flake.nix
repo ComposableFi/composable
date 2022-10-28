@@ -434,7 +434,8 @@
                 mkdir $out
                 ls ${metadata}
                 ${subxt}/bin/subxt codegen --file=${scale-path} | rustfmt --edition=2021 --emit=stdout > $out/${
-                  builtins.replaceStrings [ "-metadata" "-" ] [ "" "_" ] metadata.name
+                  builtins.replaceStrings [ "-metadata" "-" ] [ "" "_" ]
+                  metadata.name
                 }.rs
               '';
             };
@@ -761,7 +762,7 @@
 
         in rec {
           packages = metadatas.encodings // metadatas.generators // rec {
-            inherit subxt;          
+            inherit subxt;
             inherit polkadot-node;
             inherit wasm-optimizer;
             inherit common-deps;
