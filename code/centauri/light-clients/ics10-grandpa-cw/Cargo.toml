@@ -53,7 +53,11 @@ ibc = { path = "../../ibc/modules", default-features = false }
 ibc-derive = { path = "../../ibc/derive" }
 ics23 = { git = "https://github.com/composablefi/ics23", rev = "b500a5c6068eb53c83c4c6c13bd9d8c25e0bf927", default-features = false }
 ics10-grandpa = { path = "../ics10-grandpa"}
-# grandpa-client-primitives = { package = "grandpa-light-client-primitives", path = "../../algorithms/grandpa/primitives", default-features = false }
+grandpa-light-client-primitives = { path = "../../algorithms/grandpa/primitives" }
+light-client-common = { path = "../../light-clients/common" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
 
 [dev-dependencies]
 cw-multi-test = "0.15.1"

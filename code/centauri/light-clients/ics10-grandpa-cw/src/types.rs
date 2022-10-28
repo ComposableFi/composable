@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::host_functions::HostFunctionsManager;
 
-
+/*
 #[derive(Clone, Debug, PartialEq, Eq, ClientDef)]
 pub enum AnyClient {
 	Grandpa(GrandpaClient<HostFunctionsManager>),
@@ -24,9 +24,9 @@ pub enum AnyConsensusState {
 	#[ibc(proto_url = "MOCK_CONSENSUS_STATE_TYPE_URL")]
 	Mock(MockConsensusState),
 }
+*/
 
-
-#[derive(Debug,Clone, Deserialize, Serialize, JsonSchema, PartialEq)]
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema, PartialEq)]
 // #[cw_serde]
 pub struct Height {
 	/// Previously known as "epoch"
@@ -36,12 +36,8 @@ pub struct Height {
 	pub revision_height: u64,
 }
 
-impl Deref for Height {
-	type Target = ibc::Height;
-	fn deref(&self) -> &Self::Target {
-		&ibc::Height {
-			revision_number: self.revision_number,
-			revision_height: self.revision_height,
-		}
+impl From<Height> for ibc::Height {
+	fn from(value: Height) -> Self {
+		Self { revision_number: value.revision_number, revision_height: value.revision_height }
 	}
 }

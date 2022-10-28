@@ -5453,12 +5453,17 @@ dependencies = [
  "cw-multi-test",
  "cw-storage-plus 0.15.1",
  "cw2",
+ "grandpa-light-client-primitives",
  "ibc",
  "ibc-derive",
  "ics10-grandpa",
  "ics23",
+ "light-client-common",
  "schemars",
  "serde",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
  "thiserror",
 ]
 

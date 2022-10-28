@@ -25,7 +25,9 @@ pub enum ExecuteMsg {
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
+	#[returns(String)]
 	ClientTypeMsg(ClientTypeMsg),
+	#[returns(Height)]
 	GetLatestHeightsMsg(GetLatestHeightsMsg),
 }
 
