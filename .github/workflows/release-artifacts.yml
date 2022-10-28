@@ -191,7 +191,7 @@ jobs:
           contents: |
             ## Nix
             ```bash
-            # Generate the runtimes
+            # Generate the Wasm runtimes
             nix build github:ComposableFi/composable/v${{ env.COMPOSABLE_VERSION }}#dali-runtime
             nix build github:ComposableFi/composable/v${{ env.COMPOSABLE_VERSION }}#picasso-runtime
             nix build github:ComposableFi/composable/v${{ env.COMPOSABLE_VERSION }}#composable-runtime
@@ -200,10 +200,10 @@ jobs:
             nix run github:ComposableFi/composable/v${{ env.COMPOSABLE_VERSION }}#composable-node-release
 
             # Spin up a local devnet (Dali + Rococo)
-            nix run github:ComposableFi/composable/v${{ env.COMPOSABLE_VERSION }}#devnet-up
+            nix run github:ComposableFi/composable/v${{ env.COMPOSABLE_VERSION }}#devnet
 
             # Spin up a local XCVM devnet (Dali + Rococo + Juno)
-            nix run github:ComposableFi/composable/v${{ env.COMPOSABLE_VERSION }}#devnet-xcvm-up
+            nix run github:ComposableFi/composable/v${{ env.COMPOSABLE_VERSION }}#devnet-xcvm
 
             # Show all possible apps, shells and packages
             nix flake show github:ComposableFi/composable/v${{ env.COMPOSABLE_VERSION }} --allow-import-from-derivation
