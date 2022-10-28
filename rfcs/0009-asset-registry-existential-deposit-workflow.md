@@ -4,8 +4,8 @@
 ---
 
 This document is a review of the implementation and usage of Existential Deposit
-values within our runtimes. This will review this maintenance of ED values
-from a code and SUDO/Governance prospective.
+values within our runtimes. This will review the maintenance of ED values
+from a code and SUDO/Governance perspective.
 
 ## Background
 ---
