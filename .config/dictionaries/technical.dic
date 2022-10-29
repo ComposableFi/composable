@@ -81,8 +81,10 @@ cdylib
 charlie
 chevdor
 chrono
+cita
 claimunstake
 clickup
+clsx
 cmake
 cmark
 codegen
@@ -151,6 +153,7 @@ imagesdir
 imagesoutdir
 immer
 includeurl
+infima
 inprocess
 ipam
 ipetkov # github username
@@ -255,6 +258,7 @@ plantuml
 Pointable
 polkalaunch
 popout
+postinfo
 powd
 powf
 prebaked
@@ -320,6 +324,7 @@ sparkline
 sproof
 squeezy
 sstore
+Stackexchange
 stakeform
 stakerclaimunstake
 startuml
@@ -328,6 +333,7 @@ stdenv
 structopt
 styleguide
 submessage
+submessages
 Subql
 substituters
 submod
@@ -399,3 +405,4 @@ yzhang
 zlfzypzcr
 zstd
 zustand
+DACP

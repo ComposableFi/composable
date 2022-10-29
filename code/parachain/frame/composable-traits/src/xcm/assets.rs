@@ -5,9 +5,10 @@ use polkadot_parachain::primitives::Id;
 use scale_info::TypeInfo;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
+use sp_std::vec::Vec;
 use xcm::latest::MultiLocation;
 
-use crate::{currency::Exponent, defi::Ratio};
+use crate::{assets::Asset, currency::Exponent, defi::Ratio};
 
 /// works only with concrete assets
 #[derive(Debug, Encode, Decode, Clone, PartialEq, Eq, TypeInfo)]
@@ -87,6 +88,9 @@ pub trait RemoteAssetRegistryInspect {
 	// other networks regardless of what they use for payments as of now any XCM message pays shared
 	// common basic fee for sure fn min_xcm_native_in_fee(parachain_id: Id) ->
 	// Option<Self::Balance>;
+
+	/// Return information about foreign assets stored on assets registry
+	fn get_foreign_assets_list() -> Vec<Asset<Self::AssetNativeLocation>>;
 }
 
 /// Used in tandem with `CurrencyFactory` trait

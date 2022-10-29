@@ -1,5 +1,7 @@
-import * as React from "react";
-import { FC } from "react";
+import { getTokenString } from "@/components/Organisms/Bond/utils";
+import { ActiveBond } from "@/stores/defi/polkadot/bonds/slice";
+import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
+import { useClaim } from "@/stores/defi/polkadot/bonds/useClaim";
 import {
   Table,
   TableBody,
@@ -8,15 +10,13 @@ import {
   TableContainerProps,
   TableHead,
   TableRow,
-  Typography
+  Typography,
 } from "@mui/material";
+import * as React from "react";
+import { FC } from "react";
+import { humanBalance } from "shared";
 import { BaseAsset, TokenAsset, TokenPairAsset } from "../Atom";
 import { NoAssetsCover } from "./NoAssetsCover";
-import { getTokenString } from "@/components/Organisms/Bond/utils";
-import { humanBalance } from "shared";
-import { useClaim } from "@/stores/defi/polkadot/bonds/useClaim";
-import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
-import { ActiveBond } from "@/stores/defi/polkadot/bonds/slice";
 
 export type MyBondsTableProps = TableContainerProps & {
   onRowClick?: (offerId: string) => void;
@@ -32,8 +32,8 @@ export const BondTableRow: FC<{
     <TableRow
       sx={{
         "&:hover": {
-          cursor: "pointer"
-        }
+          cursor: "pointer",
+        },
       }}
       key={getTokenString(bond.reward.asset)}
       onClick={() => onRowClick(bond.bondOfferId)}
@@ -81,8 +81,7 @@ export const BondTableRow: FC<{
 
 export const MyBondsTable: React.FC<MyBondsTableProps> = ({
   activeBonds,
-  onRowClick = () => {
-  },
+  onRowClick = () => {},
   ...rest
 }) => {
   if (activeBonds.length > 0) {

@@ -1,7 +1,7 @@
 //! CurrencyId implementation
 use codec::{CompactAs, Decode, Encode, MaxEncodedLen};
 use composable_support::validation::Validate;
-use composable_traits::{assets::Asset, currency::Exponent};
+use composable_traits::{assets::Asset, currency::Exponent, xcm::assets::XcmAssetLocation};
 use core::{fmt::Display, ops::Div, str::FromStr};
 use scale_info::TypeInfo;
 use sp_runtime::{
@@ -89,9 +89,24 @@ macro_rules! list_assets {
 			}
 		}
 
-		pub fn list_assets() -> Vec<Asset> {
+		const RELAY_NATIVE_CURRENCIES: [CurrencyId; 1] = [CurrencyId::KSM];
+
+		fn known_location(id: CurrencyId) -> Option<XcmAssetLocation> {
+			if Self::RELAY_NATIVE_CURRENCIES.contains(&id) {
+				return Some(XcmAssetLocation::RELAY_NATIVE)
+			}
+			// Note: add other known locations
+			None
+		}
+
+		pub fn list_assets() -> Vec<Asset<XcmAssetLocation>> {
 			[
-				$(Asset { id: CurrencyId::$NAME.0 as u64, name: stringify!($NAME).as_bytes().to_vec() },)*
+				$(Asset {
+					id: CurrencyId::$NAME.0 as u128,
+					name: Some(stringify!($NAME).as_bytes().to_vec()),
+					decimals: 12_u8.into(),
+					foreign_id: Self::known_location(CurrencyId::$NAME)
+				},)*
 			]
 			.to_vec()
 		}
@@ -107,16 +122,28 @@ impl CurrencyId {
 		pub const PICA: CurrencyId = CurrencyId(1);
 		/// Runtime native token Polkadot
 		pub const LAYR: CurrencyId = CurrencyId(2);
-		pub const CROWD_LOAN: CurrencyId = CurrencyId(3);
+		// NOTE: CurrencyId 3 is empty, fill as needed
 
 		/// Kusama native token
 		pub const KSM: CurrencyId = CurrencyId(4);
 		pub const PBLO: CurrencyId = CurrencyId(5);
 
 		// Non-Native Tokens (101 - 1000)
+		/// Karura KAR
+		pub const KAR: CurrencyId = CurrencyId(101);
+		/// BIFROST BNC
+		pub const BNC: CurrencyId = CurrencyId(102);
+		/// BIFROST vKSM
+		#[allow(non_upper_case_globals)]
+		pub const vKSM: CurrencyId = CurrencyId(103);
+		/// Moonriver MOVR
+		pub const MOVR: CurrencyId = CurrencyId(104);
+		// NOTE: Empty CurrencyId slots starting with 105
+
 		/// Karura stable coin(Karura Dollar), not native.
 		#[allow(non_upper_case_globals)]
 		pub const kUSD: CurrencyId = CurrencyId(129);
+		/// Statemine USDT
 		pub const USDT: CurrencyId = CurrencyId(130);
 		pub const USDC: CurrencyId = CurrencyId(131);
 		/// Wrapped BTC
@@ -227,15 +254,9 @@ impl From<u128> for CurrencyId {
 	}
 }
 
-/// maps id to junction generic key,
-/// unfortunately it is the best way to encode currency id as of now in XCM
-#[cfg(feature = "develop")]
 impl From<CurrencyId> for xcm::latest::Junction {
 	fn from(this: CurrencyId) -> Self {
-		xcm::latest::Junction::GeneralKey(sp_runtime::WeakBoundedVec::force_from(
-			this.encode(),
-			None,
-		))
+		xcm::latest::Junction::GeneralIndex(this.0)
 	}
 }
 

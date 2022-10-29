@@ -1,4 +1,4 @@
-import { OpenInNew } from "@mui/icons-material";
+import {OpenInNew} from "@mui/icons-material";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import {
   Accordion,
@@ -15,9 +15,9 @@ import {
 } from "@mui/material";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { NextRouter, useRouter } from "next/router";
-import { Logo } from "../Atom";
-import { FC } from "react";
+import {NextRouter, useRouter} from "next/router";
+import {Logo} from "../Atom";
+import {FC} from "react";
 
 type MenuItem = {
   label: string;
@@ -53,13 +53,6 @@ const RoutesConfig: ConfigType[] = [
     matches: ["/transfers"],
   },
   {
-    label: "Governance",
-    path: "/governance",
-    icon: dynamic(() => import("@mui/icons-material/HowToVoteRounded")),
-    status: "active",
-    matches: ["/governance"],
-  },
-  {
     label: "Stats",
     path: "/stats",
     icon: dynamic(() => import("@mui/icons-material/EqualizerRounded")),
@@ -81,25 +74,26 @@ const RoutesConfig: ConfigType[] = [
     matches: ["/bonds"],
   },
   {
+    label: "Governance",
+    path: "",
+    icon: dynamic(() => import("@mui/icons-material/HowToVoteRounded")),
+    status: "active",
+    matches: [],
+    endAdornment: (
+        <Link href="https://polkassembly.io/" passHref>
+          <IconButton>
+            <OpenInNew />
+          </IconButton>
+        </Link>
+    ),
+  },
+  {
     label: "Pablo Exchange",
     path: "/pablo-exchange",
     icon: dynamic(() => import("@mui/icons-material/Autorenew")),
     status: "inactive",
     endAdornment: (
       <Link href="@/components/Molecules/NavBar#" passHref>
-        <IconButton>
-          <OpenInNew />
-        </IconButton>
-      </Link>
-    ),
-  },
-  {
-    label: "Mosaic Bridge",
-    path: "/mosaic-bridge",
-    icon: dynamic(() => import("@mui/icons-material/JoinInner")),
-    status: "inactive",
-    endAdornment: (
-      <Link href="@/components/Molecules/NavBar#">
         <IconButton>
           <OpenInNew />
         </IconButton>
@@ -115,8 +109,10 @@ type NavItemProps = {
 };
 const NavItem: FC<NavItemProps> = ({ router, config, theme, isSubItem }) => {
   const handleClick = () => {
-    if (config.status === "active") {
+    if (config.status === "active" && !config.path.startsWith("http")) {
       router.push(config.path);
+    } else {
+      window.open(config.path, "_blank");
     }
   };
 
@@ -128,7 +124,9 @@ const NavItem: FC<NavItemProps> = ({ router, config, theme, isSubItem }) => {
       sx={{ paddingLeft: isSubItem ? "3rem" : "1.5rem" }}
       onClick={handleClick}
     >
-      <ListItemIcon>
+      <ListItemIcon sx={{
+        color: config?.matches?.includes(router.pathname) ? theme.palette.primary.main : undefined
+      }}>
         <config.icon />
       </ListItemIcon>
       <ListItemText primary={config.label} />

@@ -8,7 +8,7 @@ export const NoEligibleWalletFeaturedBox: React.FC<{
 }> = ({ title, textBelow }) => {
   const theme = useTheme();
   return (
-    <Grid item xs={12} mt={theme.spacing(9)}>
+    <Grid item xs={12} mt={theme.spacing(2)}>
       <FeaturedBox
         textAbove={title}
         TextAboveProps={{

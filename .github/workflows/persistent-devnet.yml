@@ -16,21 +16,25 @@ env:
   NIXOPS_STATE_FILE: persistent.deployment.nixops
 
 jobs:
-  cache-persistent-devnet:
-    name: "Cache Persistent Devnet"
+  cache:
+    name: "Cache"
     runs-on:
       - self-hosted
       - linux
       - x64
       - sre
     concurrency:
-       group: cache-devnet-persistent
+       group: cache-${{ matrix.package }}
        cancel-in-progress: true
+    strategy:
+      matrix:
+        package: [devnet-persistent-program, devnet-picasso-persistent-program]
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
     - uses: actions/checkout@v3
       with:
+        ref: ${{ inputs.revision }}
         fetch-depth: 0
     - run: |
         echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
@@ -47,25 +51,30 @@ jobs:
         name: ${{  env.CACHIX_COMPOSABLE }}
     - name: "Build & Upload"
       run: |
-        cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#devnet-persistent-program --no-update-lock-file --show-trace -L
+        cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#${{ matrix.package }} --no-update-lock-file --show-trace -L
 
-  deploy-persistent-devnet:
-    needs: cache-persistent-devnet
+  deploy:
+    needs: cache
     name: "Deploy Persistent Devnet"
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
     concurrency:
       group: nix-deploy-devnet-persistent
       cancel-in-progress: false
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
     - uses: actions/checkout@v3
       with:
         ref: ${{ inputs.revision }}
         fetch-depth: 0
-    - uses: cachix/install-nix-action@v17
-      with:
-        extra_nix_config: |
-          sandbox = relaxed
-          narinfo-cache-negative-ttl = 0
+    - run: |
+        echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+        echo "sandbox = relaxed" >> /etc/nix/nix.conf
+        echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
     - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
       with:
         skipPush: true
@@ -73,7 +82,7 @@ jobs:
           nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
           nix-channel --update
           nix-env -iA nixpkgs.cachix
-        authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
         name: ${{  env.CACHIX_COMPOSABLE }}
     - uses: google-github-actions/setup-gcloud@v0.6.0
       with:
@@ -83,21 +92,24 @@ jobs:
     - name: Install NixOps
       run: |
         nix-env -iA nixpkgs.nixopsUnstable
+
     - name: Load NixOps State
       run: |
         if gsutil -q stat $NIXOPS_STATE_URL/$NIXOPS_STATE_FILE;
         then
           gsutil cp $NIXOPS_STATE_URL/$NIXOPS_STATE_FILE $NIXOPS_STATE
         else
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nixops -- create --deployment devnet-gce --show-trace --option narinfo-cache-negative-ttl 0
+          nixops create --deployment devnet-gce --show-trace --option narinfo-cache-negative-ttl 0
         fi
       env:
         NIXOPS_STATE: ${{ runner.temp }}/${{ env.NIXOPS_STATE_FILE }}
     - name: Deploy
       run: |
-        # For the love of God can anyone tell me why github runners are not stateless.
-        nixops check --include composable-persistent-devnet
-        nixops deploy --allow-recreate --confirm --deployment devnet-gce --debug --show-trace --option narinfo-cache-negative-ttl 0 --include composable-persistent-devnet
+        mkdir -p /root/.ssh
+        echo "Host *\n\tStrictHostKeyChecking no" > /root/.ssh/config
+        nixops ssh picasso-composable-persistent-devnet -vvv -o PasswordAuthentication=no -o StrictHostKeyChecking=no || true
+        nixops ssh composable-persistent-devnet -vvv -o PasswordAuthentication=no -o StrictHostKeyChecking=no || true
+        nixops deploy --allow-recreate --allow-reboot --confirm --deployment devnet-gce --debug --show-trace --option narinfo-cache-negative-ttl 0 --include composable-persistent-devnet --include picasso-composable-persistent-devnet
       env:
         NIXOPS_STATE: ${{ runner.temp }}/${{ env.NIXOPS_STATE_FILE }}
     - name: Save NixOps State

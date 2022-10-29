@@ -11,6 +11,7 @@ import { fetchAssetPrice } from "./Oracle";
 import { Executor, getSigner } from "substrate-react";
 import { APP_NAME } from "@/defi/polkadot/constants";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
+import { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import { fromChainIdUnit } from "shared";
 
 export function createArrayOfLength(length: number): number[] {
@@ -33,6 +34,7 @@ export async function fetchBonds(api: ApiPromise) {
   const bondOfferCount = await fetchBondOfferCount(api);
   // @ts-ignore
   const bonds: Option<
+    // @ts-ignore
     ITuple<[AccountId32, ComposableTraitsBondedFinanceBondOffer]>
   >[] = await Promise.all(
     createArrayOfLength(bondOfferCount.toNumber()).map(
@@ -43,6 +45,7 @@ export async function fetchBonds(api: ApiPromise) {
     async (
       acc: Promise<BondOffer[]>,
       bond: Option<
+        // @ts-ignore
         ITuple<[AccountId32, ComposableTraitsBondedFinanceBondOffer]>
       >,
       index
@@ -157,7 +160,7 @@ export function getROI(
 
 export type PurchaseBond = {
   parachainApi: ApiPromise | undefined;
-  account: { name: string; address: string } | undefined;
+  account: InjectedAccountWithMeta | undefined;
   executor: Executor | undefined;
   offerId: string;
   bondInput: BigNumber;
@@ -169,7 +172,7 @@ export type PurchaseBond = {
 export type ClaimType = {
   parachainApi: ApiPromise | undefined;
   vestingScheduleId?: string;
-  account: { name: string; address: string } | undefined;
+  account: InjectedAccountWithMeta | undefined;
   executor: Executor | undefined;
   assetId: string;
 };

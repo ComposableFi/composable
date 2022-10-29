@@ -9,6 +9,7 @@ version = "0.0.1"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dev-dependencies]
+composable-tests-helpers = { path = "../composable-tests-helpers" }
 proptest = "1.0"
 
 [dependencies]

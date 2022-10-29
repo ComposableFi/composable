@@ -1,6 +1,9 @@
 use crate::*;
 
-use composable_traits::currency::{CurrencyFactory, RangeId};
+use composable_traits::{
+	currency::{CurrencyFactory, RangeId},
+	xcm::assets::XcmAssetLocation,
+};
 use frame_support::{
 	pallet_prelude::ConstU32,
 	parameter_types,

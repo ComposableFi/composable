@@ -63,6 +63,7 @@ assets = { package = "pallet-assets", path = "../../parachain/frame/assets", def
 assets-registry = { package = "pallet-assets-registry", path = "../../parachain/frame/assets-registry", default-features = false, optional = true }
 call-filter = { package = "pallet-call-filter", path = "../../parachain/frame/call-filter", default-features = false }
 common = { path = "../../parachain/runtime/common", default-features = false }
+composable-tests-helpers = { path = "../../parachain/frame/composable-tests-helpers", default-features = false }
 composable-traits = { path = "../../parachain/frame/composable-traits", default-features = false }
 currency-factory = { package = "pallet-currency-factory", path = "../../parachain/frame/currency-factory", default-features = false }
 governance-registry = { package = "pallet-governance-registry", path = "../../parachain/frame/governance-registry", default-features = false, optional = true }
@@ -102,6 +103,7 @@ scale-info = { version = "2.1.1", default-features = false, features = [
 ] }
 session-benchmarking = { package = "cumulus-pallet-session-benchmarking", git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.27" }
 sp-io = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", default-features = false }
 xcm = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.27" }
 xcm-builder = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.27" }
 xcm-executor = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.27" }
@@ -114,6 +116,7 @@ paste = "1.0.6"
 polkadot-core-primitives = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.27" }
 polkadot-primitives = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.27" }
 polkadot-runtime-parachains = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.27" }
+rococo-runtime = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.27" }
 statemine-runtime = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.27" }
 xcm-emulator = { git = "https://github.com/shaunxw/xcm-simulator", rev = "ab5cd6c5fabe6ddda52ed6803ee1bf54c258fefe", default-features = false }
 
@@ -124,15 +127,18 @@ picasso-runtime = { package = "picasso-runtime", path = "../../parachain/runtime
 base58 = "0.2"
 env_logger = "0.9.0"
 hex = "0.4.3"
+more-asserts = "0.3.1"
 
 [features]
-dali = ["std", "develop", "local-integration-tests"]
+dali = ["std", "develop", "local-integration-tests", "rococo"]
 default = ["std", "develop", "local-integration-tests", "dali"]
+kusama = []
 local-integration-tests = [
   "dali-runtime/local-integration-tests",
   "picasso-runtime/local-integration-tests",
 ]
-picasso = ["std", "develop", "local-integration-tests"]
+picasso = ["std", "develop", "local-integration-tests", "kusama"]
+rococo = []
 std = [
   "codec/std",
   "sp-api/std",
@@ -189,6 +195,7 @@ std = [
   "sp-consensus-aura/std",
   "scale-info/std",
   "kusama-runtime/std",
+  "rococo-runtime/std",
   "polkadot-core-primitives/std",
   "polkadot-primitives/std",
   "polkadot-runtime-parachains/std",
@@ -220,6 +227,7 @@ runtime-benchmarks = [
   "democracy/runtime-benchmarks",
   "utility/runtime-benchmarks",
   "kusama-runtime/runtime-benchmarks",
+  "rococo-runtime/runtime-benchmarks",
   "dali-runtime/runtime-benchmarks",
   "picasso-runtime/runtime-benchmarks",
   "polkadot-primitives/runtime-benchmarks",
