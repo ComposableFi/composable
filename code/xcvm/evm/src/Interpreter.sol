@@ -24,6 +24,7 @@ contract Interpreter is IInterpreter {
     }
     address public creator;
     address public routerAddress;
+    mapping(address => bool) public owners;
     IRouter.Origin origin;
 
     enum BindingValueType {
@@ -41,14 +42,29 @@ contract Interpreter is IInterpreter {
     }
 
     modifier onlyOwnerOrCreator() {
-        require(keccak256(abi.encodePacked(msg.sender)) == keccak256(origin.account) || msg.sender == creator);
+        require(keccak256(abi.encodePacked(msg.sender)) == keccak256(origin.account) || owners[msg.sender]);
         _;
     }
 
     constructor(IRouter.Origin memory _origin, address _routerAddress) {
+        owners[msg.sender] = true;
         creator = msg.sender;
         routerAddress = _routerAddress;
         origin = _origin;
+    }
+
+    function addOwners(address[] calldata newOwners) external onlyOwnerOrCreator {
+        for(uint256 i=0; i<newOwners.length; i++) {
+            require(newOwners[i] != address(0), "Interpreter: invalid address");
+            owners[newOwners[i]] = true;
+        }
+    }
+
+    function removeOwners(address[] calldata newOwners) external onlyOwnerOrCreator {
+        for(uint256 i=0; i<newOwners.length; i++) {
+            require(newOwners[i] != address(0), "Interpreter: invalid address");
+            owners[newOwners[i]] = false;
+        }
     }
 
     receive() external payable {}
