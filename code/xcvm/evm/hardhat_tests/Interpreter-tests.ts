@@ -84,7 +84,7 @@ describe("Interpreter", function () {
             xcvm.createTransfer(xcvm.createAccount(owner.address), [
               xcvm.createAsset(
                 xcvm.createAssetId(1),
-                xcvm.createBalance(xcvm.createAbsolut("1000000000000000000000000000"))
+                xcvm.createBalance(xcvm.createAbsolute("1000000000000000000000000000"))
               ),
             ])
           ),
@@ -136,7 +136,7 @@ describe("Interpreter", function () {
               payload,
               xcvm.createBindings([
                 xcvm.createBinding(0, xcvm.createBindingValue(xcvm.createAssetId(1))),
-                // bingdingValuePosition(1 byte) + function signature (4bytes) + address(32bytes, its encoded) = 37 => balanceValuePosition
+                // bindingValuePosition(1 byte) + function signature (4bytes) + address(32bytes, its encoded) = 37 => balanceValuePosition
                 xcvm.createBinding(
                   37,
                   xcvm.createBindingValue(xcvm.createAssetAmount(xcvm.createAssetId(1), xcvm.createRatio(1, 2)))
@@ -161,7 +161,7 @@ describe("Interpreter", function () {
         xcvm.createInstructions([
           xcvm.createInstruction(
             xcvm.createTransfer(xcvm.createAccount(owner.address), [
-              xcvm.createAsset(xcvm.createAssetId(1), xcvm.createBalance(xcvm.createAbsolut("100"))),
+              xcvm.createAsset(xcvm.createAssetId(1), xcvm.createBalance(xcvm.createAbsolute("100"))),
             ])
           ),
         ])
@@ -172,7 +172,7 @@ describe("Interpreter", function () {
         xcvm.createInstructions([
           xcvm.createInstruction(
             xcvm.createSpawn(xcvm.createNetwork(1), xcvm.createSalt("0x11"), 1, programMessage, [
-              xcvm.createAsset(xcvm.createAssetId(1), xcvm.createBalance(xcvm.createAbsolut(200))),
+              xcvm.createAsset(xcvm.createAssetId(1), xcvm.createBalance(xcvm.createAbsolute(200))),
             ])
           ),
         ])
@@ -196,7 +196,7 @@ describe("Interpreter", function () {
       const abiCoder = ethers.utils.defaultAbiCoder;
 
       let functionSignature = erc20.interface.getSighash("transfer(address,uint256)");
-      // placehold 1 and 2
+      // placeholder 1 and 2
       const payload = ethers.utils.concat([
         ethers.utils.arrayify("0x01"),
         ethers.utils.arrayify(functionSignature),
@@ -212,7 +212,7 @@ describe("Interpreter", function () {
               payload,
               xcvm.createBindings([
                 xcvm.createBinding(0, xcvm.createBindingValue(xcvm.createAssetId(1))),
-                // bingdingValuePosition(1 byte) + function signature (4bytes) + address(32bytes, its encoded) = 37 => balanceValuePosition
+                // bindingValuePosition(1 byte) + function signature (4bytes) + address(32bytes, its encoded) = 37 => balanceValuePosition
                 xcvm.createBinding(
                   37,
                   xcvm.createBindingValue(xcvm.createAssetAmount(xcvm.createAssetId(1), xcvm.createRatio(1, 2)))

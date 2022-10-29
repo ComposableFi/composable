@@ -110,8 +110,8 @@ export class XCVM {
     return this.UnitMessage.create({integer: this.convertUint128(integer), ratio: ratioMessage})
   }
 
-  public createAbsolut(absolutValue: Number | string): Message<{}> {
-    return this.AbsoluteMessage.create({value: this.convertUint128(absolutValue)})
+  public createAbsolute(absoluteValue: Number | string): Message<{}> {
+    return this.AbsoluteMessage.create({value: this.convertUint128(absoluteValue)})
   }
 
   public createBalance(balanceTypeMessage: Message): Message<{}> {

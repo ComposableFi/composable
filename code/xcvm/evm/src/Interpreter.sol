@@ -273,7 +273,7 @@ contract Interpreter is IInterpreter {
         uint64 size;
         (size, pos) = _getMessageLength(program, pos);
         uint256 totalAssetsLength = pos + size;
-        // TODO HARDCOCDED ARRAY to 10
+        // TODO HARDCODED ARRAY to 10
         assetAddresses = new address[](10);
         amounts = new uint256[](10);
         uint256 count;
@@ -351,7 +351,7 @@ contract Interpreter is IInterpreter {
             (asset, newPos) = _handleAssetId(program, pos);
             valueToReplace = abi.encode(asset);
         } else {
-            revert("woring binding value type");
+            revert("wrong binding value type");
         }
     }
 
@@ -435,7 +435,7 @@ contract Interpreter is IInterpreter {
             bytes memory spawnedProgram
         )
     {
-        // reading spawm instruction
+        // reading spawn instruction
         uint64 size;
         (size, pos) = _getMessageLength(program, pos);
         maxPos = pos + size;

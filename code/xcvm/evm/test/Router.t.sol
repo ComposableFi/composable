@@ -64,7 +64,7 @@ contract test_Router is Test {
         router.registerBridge(bridge1, Gateway.BridgeSecurity(1), 1);
     }
 
-    function testUnregisterBrigdgeFailed() public {
+    function testUnregisterBridgeFailed() public {
         vm.expectRevert("Ownable: caller is not the owner");
         router.unregisterBridge(bridge1);
     }
@@ -85,7 +85,7 @@ contract test_Router is Test {
         vm.stopPrank();
     }
 
-    function testRegisterAseetAddress(uint128 assetId) public {
+    function testRegisterAssetAddress(uint128 assetId) public {
         vm.prank(owner);
         router.registerAsset(address(assetToken1), assetId);
         assertEq(router.assets(assetId), address(assetToken1));

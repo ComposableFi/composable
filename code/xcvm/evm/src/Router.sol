@@ -83,7 +83,7 @@ contract Router is Ownable, IRouter {
     ) internal {
         require(
             erc20AssetList.length == amounts.length,
-            "Router: asset list size shuold be equal to amount list size"
+            "Router: asset list size should be equal to amount list size"
         );
         if (msg.value > 0) {
             bool sent = interpreterAddress.send(msg.value);
