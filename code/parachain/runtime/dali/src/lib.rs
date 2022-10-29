@@ -1313,8 +1313,8 @@ construct_runtime!(
 		IbcPing: pallet_ibc_ping = 151,
 		Ibc: pallet_ibc = 152,
 
-		//   // Cosmwasm support
-		//   Cosmwasm: cosmwasm = 180
+		// Cosmwasm support
+		Cosmwasm: cosmwasm = 180
 	}
 );
 
