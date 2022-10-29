@@ -44,13 +44,6 @@ impl XcmAssetLocation {
 	}
 }
 
-// ration of any asset to native
-pub trait AssetRatioInspect {
-	type AssetId;
-	/// How much of foreign assets I have to pay for unit of native asset
-	fn get_ratio(asset_id: Self::AssetId) -> Option<Ratio>;
-}
-
 pub trait RemoteAssetRegistryInspect {
 	/// Local asset id.
 	/// Each implemented of this trait must hedge common id space for well known local assets

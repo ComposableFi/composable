@@ -33,6 +33,8 @@
 	trivial_numeric_casts,
 	unused_extern_crates
 )]
+#![feature(associated_type_defaults)]
+
 
 pub mod account_proxy;
 pub mod airdrop;

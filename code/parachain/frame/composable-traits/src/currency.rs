@@ -9,6 +9,8 @@ use sp_std::fmt::Debug;
 
 use composable_support::math::safe::{SafeAdd, SafeDiv, SafeMul, SafeSub};
 
+use crate::defi::Ratio;
+
 /// really u8, but easy to do math operations
 pub type Exponent = u32;
 
@@ -38,8 +40,15 @@ pub trait AssetExistentialDepositInspect {
 	type AssetId;
 	type Balance;
 
-	/// Given an asset ID, returns the existential_deposit of an asset as a `Balance`
+	/// Given an `asset_id`, returns the existential deposit of an asset in asset currency.
 	fn existential_deposit(asset_id: Self::AssetId) -> Result<Self::Balance, DispatchError>;
+}
+
+/// ration of any asset to native
+pub trait AssetRatioInspect {
+	type AssetId;
+	/// How much of foreign assets I have to pay for unit of native asset
+	fn get_ratio(asset_id: Self::AssetId) -> Option<Ratio>;
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Encode, Decode, TypeInfo)]

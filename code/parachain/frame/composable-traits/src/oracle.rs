@@ -27,24 +27,6 @@ pub struct RewardTracker<Balance, Timestamp> {
 	pub total_reward_weight: Balance,
 }
 
-/// oracle that only works with single asset to some normalized asset at latest block in local
-/// consensus usually normalized asset is stable coin or native currency
-/// fallback in `Oracle` or `Market`(DEXes) lacks trusted prices
-/// (or initial values before there is market)
-//TODO: integrate with BalanceConversion
-pub trait MinimalOracle {
-	type AssetId: Copy;
-	type Balance: From<u64>;
-
-	/// Given `asset_id` and `amount` of price asset.
-	/// Returns what amount of  `asset_id` will be required to be same price as `amount` of
-	/// some normalized currency
-	fn get_price_inverse(
-		asset_id: Self::AssetId,
-		amount: Self::Balance,
-	) -> Result<Self::Balance, DispatchError>;
-}
-
 /// An object that is able to provide an asset price.
 /// Important: the current price-feed is providing prices in USDT only.
 pub trait Oracle {

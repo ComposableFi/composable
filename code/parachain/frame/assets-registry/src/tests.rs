@@ -1,10 +1,10 @@
-use crate::{runtime::*, Error};
+use crate::{runtime::*, Error, prelude::*};
 use codec::{Decode, Encode};
 use composable_traits::{
 	assets::Asset,
 	defi::Ratio,
 	xcm::assets::{
-		AssetRatioInspect, ForeignMetadata, RemoteAssetRegistryInspect, XcmAssetLocation,
+		ForeignMetadata, RemoteAssetRegistryInspect, XcmAssetLocation,
 	},
 };
 use frame_support::{assert_noop, assert_ok};

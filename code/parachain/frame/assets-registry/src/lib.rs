@@ -23,22 +23,19 @@ mod runtime;
 #[cfg(test)]
 mod tests;
 
+mod prelude;
+
 pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use crate::prelude::*;
 	pub use crate::weights::WeightInfo;
 	use codec::FullCodec;
 	use composable_traits::{
-		assets::Asset,
 		currency::{
-			AssetExistentialDepositInspect, BalanceLike, CurrencyFactory, Exponent, RangeId,
-		},
-		defi::Ratio,
-		xcm::assets::{
-			AssetRatioInspect, ForeignMetadata, RemoteAssetRegistryInspect,
-			RemoteAssetRegistryMutate,
-		},
+			CurrencyFactory, RangeId,
+		},		
 	};
 	use cumulus_primitives_core::ParaId;
 	use frame_support::{
