@@ -1705,7 +1705,7 @@ pub(crate) fn do_reward_accumulation<T: Config>(
 				.saturating_mul(releasable_periods_surpassed.saturated_into::<u64>()),
 		);
 
-		if !total_locked_rewards.is_zero() {
+		if !total_locked_rewards.is_zero() && !newly_accumulated_rewards.is_zero() {
 			T::Assets::release(
 				asset_id,
 				pool_account,
