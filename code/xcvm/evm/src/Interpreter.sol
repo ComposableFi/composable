@@ -5,7 +5,7 @@ import "@lazyledger/protobuf3-solidity-lib/contracts/ProtobufLib.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "./interfaces/IInterpreter.sol";
-import "./interfaces/IGateway.sol";
+import "./interfaces/IRouter.sol";
 import "./BytesLib.sol";
 
 /**
@@ -23,8 +23,8 @@ contract Interpreter is IInterpreter {
         QUERY
     }
     address public creator;
-    address public gatewayAddress;
-    IGateway.Origin origin;
+    address public routerAddress;
+    IRouter.Origin origin;
 
     enum BindingValueType {
         NONE,
@@ -45,9 +45,9 @@ contract Interpreter is IInterpreter {
         _;
     }
 
-    constructor(IGateway.Origin memory _origin, address _gatewayAddress) {
+    constructor(IRouter.Origin memory _origin, address _routerAddress) {
         creator = msg.sender;
-        gatewayAddress = _gatewayAddress;
+        routerAddress = _routerAddress;
         origin = _origin;
     }
 
@@ -237,7 +237,7 @@ contract Interpreter is IInterpreter {
         (success, newPos, assetId) = ProtobufLib.decode_uint64(pos, program);
         require(success, "decode key failed");
 
-        asset = IGateway(gatewayAddress).getAsset(uint256(assetId));
+        asset = IRouter(routerAddress).getAsset(uint256(assetId));
         require(asset != address(0), "asset not registered");
     }
 
@@ -393,14 +393,14 @@ contract Interpreter is IInterpreter {
 
     function _handleSecurity(bytes calldata program, uint64 pos)
         internal
-        returns (IGateway.BridgeSecurity security, uint64 newPos)
+        returns (IRouter.BridgeSecurity security, uint64 newPos)
     {
         // reading network
         bool success;
         int32 value;
         (success, newPos, value) = ProtobufLib.decode_enum(pos, program);
         require(success, "decode key failed");
-        security = IGateway.BridgeSecurity(uint32(value));
+        security = IRouter.BridgeSecurity(uint32(value));
     }
 
     function _handleSalt(bytes calldata program, uint64 pos) internal returns (uint64 salt, uint64 newPos) {
@@ -430,7 +430,7 @@ contract Interpreter is IInterpreter {
             uint64 newPos,
             uint256 maxPos,
             uint256 networkId,
-            IGateway.BridgeSecurity security,
+            IRouter.BridgeSecurity security,
             uint256 salt,
             bytes memory spawnedProgram
         )
@@ -460,11 +460,11 @@ contract Interpreter is IInterpreter {
             uint64 pos,
             uint256 maxPos,
             uint256 networkId,
-            IGateway.BridgeSecurity security,
+            IRouter.BridgeSecurity security,
             uint256 salt,
             bytes memory spawnedProgram
         ) = _handleSpawnParams(program, pos);
-        address bridgeAddress = IGateway(gatewayAddress).getBridge(networkId, security);
+        address bridgeAddress = IRouter(routerAddress).getBridge(networkId, security);
         // TODO The fund should be pulled by the Bridge or sent from here??? which is more secure??
         pos = _checkField(program, 5, ProtobufLib.WireType.LengthDelimited, pos);
 
@@ -473,7 +473,7 @@ contract Interpreter is IInterpreter {
         if (pos < maxPos) {
             (newPos, assetAddresses, amounts) = _handleAssets(program, pos, bridgeAddress);
         }
-        IGateway(gatewayAddress).emitSpawn(
+        IRouter(routerAddress).emitSpawn(
             origin.account,
             networkId,
             security,

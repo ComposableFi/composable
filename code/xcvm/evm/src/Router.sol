@@ -6,9 +6,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./Interpreter.sol";
-import "./interfaces/IGateway.sol";
+import "./interfaces/IRouter.sol";
 
-contract Gateway is Ownable, IGateway {
+contract Router is Ownable, IRouter {
     mapping(uint256 => mapping(bytes => address)) public userInterpreter;
 
     mapping(address => Bridge) public bridgesInfo;
@@ -46,7 +46,7 @@ contract Gateway is Ownable, IGateway {
     }
 
     function registerAsset(address assetAddress, uint128 assetId) external onlyOwner {
-        require(assetAddress != address(0), "Gateway: invalid address");
+        require(assetAddress != address(0), "Router: invalid address");
         assets[assetId] = assetAddress;
     }
 
@@ -59,17 +59,17 @@ contract Gateway is Ownable, IGateway {
         BridgeSecurity security,
         uint256 networkId
     ) external onlyOwner {
-        require(bridges[networkId][security] == address(0), "Gateway: this type of bridge already registered");
-        require(bridgeAddress != address(0), "Gateway: invalid address");
-        require(bridgesInfo[bridgeAddress].security == BridgeSecurity(0), "Gateway: bridge already enabled");
-        require(security != BridgeSecurity(0), "Gateway: should not disable bridge while registering bridge");
+        require(bridges[networkId][security] == address(0), "Router: this type of bridge already registered");
+        require(bridgeAddress != address(0), "Router: invalid address");
+        require(bridgesInfo[bridgeAddress].security == BridgeSecurity(0), "Router: bridge already enabled");
+        require(security != BridgeSecurity(0), "Router: should not disable bridge while registering bridge");
         bridgesInfo[bridgeAddress].security = security;
         bridgesInfo[bridgeAddress].networkId = networkId;
         bridges[networkId][security] = bridgeAddress;
     }
 
     function unregisterBridge(address bridgeAddress) external onlyOwner {
-        require(bridgesInfo[bridgeAddress].security != BridgeSecurity(0), "Gateway: bridge already disabled");
+        require(bridgesInfo[bridgeAddress].security != BridgeSecurity(0), "Router: bridge already disabled");
         delete bridges[bridgesInfo[bridgeAddress].networkId][bridgesInfo[bridgeAddress].security];
         bridgesInfo[bridgeAddress].security = BridgeSecurity(0);
         bridgesInfo[bridgeAddress].networkId = 0;
@@ -83,7 +83,7 @@ contract Gateway is Ownable, IGateway {
     ) internal {
         require(
             erc20AssetList.length == amounts.length,
-            "Gateway: asset list size shuold be equal to amount list size"
+            "Router: asset list size shuold be equal to amount list size"
         );
         if (msg.value > 0) {
             bool sent = interpreterAddress.send(msg.value);
@@ -139,7 +139,7 @@ contract Gateway is Ownable, IGateway {
         uint256[] memory amounts
     ) external {
         address payable interpreterAddress = _getOrCreateInterpreter(Origin(uint32(networkId), account));
-        require(interpreterAddress == msg.sender, "Gateway: sender is not an interpreter address");
+        require(interpreterAddress == msg.sender, "Router: sender is not an interpreter address");
         emit Spawn(account, networkId, security, salt, spawnedProgram, assetAddresses, amounts);
     }
 }

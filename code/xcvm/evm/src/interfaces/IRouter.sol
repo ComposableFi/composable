@@ -2,7 +2,7 @@
 pragma solidity ^0.8.14;
 pragma experimental ABIEncoderV2;
 
-interface IGateway {
+interface IRouter {
     struct Bridge {
         uint256 networkId;
         BridgeSecurity security;

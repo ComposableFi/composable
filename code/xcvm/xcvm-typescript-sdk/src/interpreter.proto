@@ -8,7 +8,8 @@ message Uint128 {
 }
 
 message Program {
-  Instructions instructions = 1;
+  bytes tag = 1;
+  Instructions instructions = 2;
 }
 
 message Instructions {
@@ -52,7 +53,7 @@ message Account {
 }
 
 message AssetId {
-  uint64 assetId = 1;
+  Uint128 assetId = 1;
 }
 
 message Asset {
@@ -81,6 +82,9 @@ message AssetAmount {
   }
 }
 
+message IpRegister {
+  uint64 ip = 1;
+}
 
 message BindingValue {
   oneof type {
@@ -89,6 +93,7 @@ message BindingValue {
     uint32 result = 3;
     AssetAmount assetAmount = 4;
     AssetId assetId = 5;
+    IpRegister ipRegister = 6;
   }
 }
 

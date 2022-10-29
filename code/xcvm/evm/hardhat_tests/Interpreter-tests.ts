@@ -5,7 +5,7 @@ import { XCVM } from "xcvm-typescript-sdk";
 const protobuf = require("protobufjs");
 
 describe("Interpreter", function () {
-  let gateway: any;
+  let router: any;
   let interpreter: any;
   let owner: any;
   let user1: any;
@@ -17,19 +17,19 @@ describe("Interpreter", function () {
     accounts = await ethers.getSigners();
     [owner, user1, user2] = accounts;
     const Interpreter = await ethers.getContractFactory("Interpreter");
-    const Gateway = await ethers.getContractFactory("Gateway");
-    gateway = await Gateway.deploy();
+    const Router = await ethers.getContractFactory("Router");
+    router = await Router.deploy();
     //register owner as the bridge
-    await gateway.registerBridge(owner.address, 1, 1);
+    await router.registerBridge(owner.address, 1, 1);
 
-    await gateway.createInterpreter({
+    await router.createInterpreter({
       networkId: 1,
       account: owner.address,
     });
-    interpreterAddress = await gateway.userInterpreter(1, owner.address);
+    interpreterAddress = await router.userInterpreter(1, owner.address);
     const ERC20Mock = await ethers.getContractFactory("ERC20Mock");
     erc20 = await ERC20Mock.deploy("test", "test", interpreterAddress, ethers.utils.parseEther("10000000000000000"));
-    await gateway.registerAsset(erc20.address, 1);
+    await router.registerAsset(erc20.address, 1);
   });
 
   describe("interpreter with protobuf", function () {
@@ -50,7 +50,7 @@ describe("Interpreter", function () {
           ),
         ])
       );
-      await gateway.runProgram({ networkId: 1, account: owner.address }, xcvm.encodeMessage(data), [], []);
+      await router.runProgram({ networkId: 1, account: owner.address }, xcvm.encodeMessage(data), [], []);
       // 1.5 units
       expect((await erc20.balanceOf(owner.address)).toString()).to.be.equal("1500000000000000000");
     });
@@ -69,7 +69,7 @@ describe("Interpreter", function () {
           ),
         ])
       );
-      await gateway.runProgram({ networkId: 1, account: owner.address }, xcvm.encodeMessage(data), [], []);
+      await router.runProgram({ networkId: 1, account: owner.address }, xcvm.encodeMessage(data), [], []);
       expect((await erc20.balanceOf(owner.address)).toString()).to.be.equal("5000000000000000000000000000000000");
     });
 
@@ -88,7 +88,7 @@ describe("Interpreter", function () {
         ])
       );
       let cc = xcvm.ProgramMessage.decode(xcvm.encodeMessage(data));
-      await gateway.runProgram({ networkId: 1, account: owner.address }, xcvm.encodeMessage(data), [], []);
+      await router.runProgram({ networkId: 1, account: owner.address }, xcvm.encodeMessage(data), [], []);
       expect((await erc20.balanceOf(owner.address)).toString()).to.be.equal("1000000000000000000000000000");
     });
 
@@ -108,7 +108,7 @@ describe("Interpreter", function () {
       );
 
       let encodedProgram = xcvm.encodeMessage(programMessage);
-      await gateway.runProgram({ networkId: 1, account: owner.address }, encodedProgram, [], []);
+      await router.runProgram({ networkId: 1, account: owner.address }, encodedProgram, [], []);
       expect((await erc20.balanceOf(user1.address)).toString()).to.be.equal(ethers.utils.parseEther("100").toString());
     });
 
@@ -143,7 +143,7 @@ describe("Interpreter", function () {
       );
 
       let encodedProgram = xcvm.encodeMessage(programMessage);
-      await gateway.runProgram({ networkId: 1, account: owner.address }, encodedProgram, [], []);
+      await router.runProgram({ networkId: 1, account: owner.address }, encodedProgram, [], []);
       expect((await erc20.balanceOf(user1.address)).toString()).to.be.equal(
         ethers.utils.parseEther("5000000000000000").toString()
       );
@@ -171,8 +171,8 @@ describe("Interpreter", function () {
         ])
       );
 
-      await expect(gateway.runProgram({ networkId: 1, account: owner.address }, xcvm.encodeMessage(data), [], []))
-        .to.emit(gateway, "Spawn")
+      await expect(router.runProgram({ networkId: 1, account: owner.address }, xcvm.encodeMessage(data), [], []))
+        .to.emit(router, "Spawn")
         .withArgs(
           owner.address.toLowerCase(),
           1,
@@ -227,7 +227,7 @@ describe("Interpreter", function () {
       );
 
       let encodedProgram = xcvm.encodeMessage(programMessage);
-      await gateway.runProgram({ networkId: 1, account: owner.address }, encodedProgram, [], []);
+      await router.runProgram({ networkId: 1, account: owner.address }, encodedProgram, [], []);
       expect((await erc20.balanceOf(user1.address)).toString()).to.be.equal(
         ethers.utils.parseEther("5000000000000000").toString()
       );
