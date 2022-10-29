@@ -1541,10 +1541,10 @@ pub mod api {
             use super::runtime_types;
             pub struct ConstantsApi;
             impl ConstantsApi {
-                #[doc = " A fee mulitplier for `Operational` extrinsics to compute \"virtual tip\" to boost their"]
+                #[doc = " A fee multiplier for `Operational` extrinsics to compute \"virtual tip\" to boost their"]
                 #[doc = " `priority`"]
                 #[doc = ""]
-                #[doc = " This value is multipled by the `final_fee` to obtain a \"virtual tip\" that is later"]
+                #[doc = " This value is multiplied by the `final_fee` to obtain a \"virtual tip\" that is later"]
                 #[doc = " added to a tip component in regular `priority` calculations."]
                 #[doc = " It means that a `Normal` transaction can front-run a similarly-sized `Operational`"]
                 #[doc = " extrinsic (with no tip), by including a tip value greater than the virtual tip."]
@@ -3825,7 +3825,7 @@ pub mod api {
                         ],
                     )
                 }
-                #[doc = " Maxmimum number of registrars allowed in the system. Needed to bound the complexity"]
+                #[doc = " Maximum number of registrars allowed in the system. Needed to bound the complexity"]
                 #[doc = " of, e.g., updating judgements."]
                 pub fn max_registrars(
                     &self,
@@ -8550,7 +8550,7 @@ pub mod api {
             #[derive(
                 :: subxt :: ext :: codec :: Decode, :: subxt :: ext :: codec :: Encode, Debug,
             )]
-            #[doc = "An account has secconded a proposal"]
+            #[doc = "An account has seconded a proposal"]
             pub struct Seconded {
                 pub seconder: ::subxt::ext::sp_core::crypto::AccountId32,
                 pub prop_index: ::core::primitive::u32,
@@ -14702,7 +14702,7 @@ pub mod api {
                 #[doc = ""]
                 #[doc = "- `dest`: The recipient of the transfer."]
                 #[doc = "- `currency_id`: currency type."]
-                #[doc = "- `amount`: free balance amount to tranfer."]
+                #[doc = "- `amount`: free balance amount to transfer."]
                 pub fn transfer(
                     &self,
                     dest: ::subxt::ext::sp_runtime::MultiAddress<
@@ -14782,7 +14782,7 @@ pub mod api {
                 #[doc = ""]
                 #[doc = "- `dest`: The recipient of the transfer."]
                 #[doc = "- `currency_id`: currency type."]
-                #[doc = "- `amount`: free balance amount to tranfer."]
+                #[doc = "- `amount`: free balance amount to transfer."]
                 pub fn transfer_keep_alive(
                     &self,
                     dest: ::subxt::ext::sp_runtime::MultiAddress<
@@ -14815,7 +14815,7 @@ pub mod api {
                 #[doc = "- `source`: The sender of the transfer."]
                 #[doc = "- `dest`: The recipient of the transfer."]
                 #[doc = "- `currency_id`: currency type."]
-                #[doc = "- `amount`: free balance amount to tranfer."]
+                #[doc = "- `amount`: free balance amount to transfer."]
                 pub fn force_transfer(
                     &self,
                     source: ::subxt::ext::sp_runtime::MultiAddress<
@@ -27715,7 +27715,7 @@ pub mod api {
                     #[doc = ""]
                     #[doc = "- `dest`: The recipient of the transfer."]
                     #[doc = "- `currency_id`: currency type."]
-                    #[doc = "- `amount`: free balance amount to tranfer."]
+                    #[doc = "- `amount`: free balance amount to transfer."]
                     transfer {
                         dest: ::subxt::ext::sp_runtime::MultiAddress<
                             ::subxt::ext::sp_core::crypto::AccountId32,
@@ -27764,7 +27764,7 @@ pub mod api {
                     #[doc = ""]
                     #[doc = "- `dest`: The recipient of the transfer."]
                     #[doc = "- `currency_id`: currency type."]
-                    #[doc = "- `amount`: free balance amount to tranfer."]
+                    #[doc = "- `amount`: free balance amount to transfer."]
                     transfer_keep_alive {
                         dest: ::subxt::ext::sp_runtime::MultiAddress<
                             ::subxt::ext::sp_core::crypto::AccountId32,
@@ -27783,7 +27783,7 @@ pub mod api {
                     #[doc = "- `source`: The sender of the transfer."]
                     #[doc = "- `dest`: The recipient of the transfer."]
                     #[doc = "- `currency_id`: currency type."]
-                    #[doc = "- `amount`: free balance amount to tranfer."]
+                    #[doc = "- `amount`: free balance amount to transfer."]
                     force_transfer {
                         source: ::subxt::ext::sp_runtime::MultiAddress<
                             ::subxt::ext::sp_core::crypto::AccountId32,
@@ -28218,7 +28218,7 @@ pub mod api {
                     #[doc = "The fee is zero."]
                     ZeroFee,
                     #[codec(index = 13)]
-                    #[doc = "The transfering asset amount is zero."]
+                    #[doc = "The transferring asset amount is zero."]
                     ZeroAmount,
                     #[codec(index = 14)]
                     #[doc = "The number of assets to be sent is over the maximum."]
@@ -30621,7 +30621,7 @@ pub mod api {
                         >,
                     },
                     #[codec(index = 18)]
-                    #[doc = "An account has secconded a proposal"]
+                    #[doc = "An account has seconded a proposal"]
                     Seconded {
                         seconder: ::subxt::ext::sp_core::crypto::AccountId32,
                         prop_index: ::core::primitive::u32,
