@@ -1,6 +1,6 @@
 import { useSelectedAccount } from "@/defi/polkadot/hooks";
 import { useStore } from "@/stores/root";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useQuery } from "@apollo/client";
 import {
   GET_STAKING_POSITIONS,
@@ -23,6 +23,8 @@ export const useStakingRewards = () => {
   // const assetId = 130; // Set this to fetch proper asset from config (from bootstrap_pallet)
 
   const account = useSelectedAccount();
+
+  const pica = useStore(({ substrateTokens }) => substrateTokens.tokens.pica);
   const { parachainApi } = useParachainApi("picasso");
 
   const rewardPools = useStore((state) => state.rewardPools);
@@ -45,20 +47,16 @@ export const useStakingRewards = () => {
       pollInterval: 30000,
     }
   );
-  const { meta } = useStore(
-    (state) => state.substrateBalances.assets.picasso.assets.pica
-  );
-  const assetId = meta.supportedNetwork.picasso || 1;
+
+  const assetId = pica.picassoId?.toNumber() || 1;
   const hasRewardPools =
     Object.values(rewardPools).length > 0 && rewardPools[assetId]; // PICA reward pool is necessary
 
   const balance = useStore(
-    (state) => state.substrateBalances.assets.picasso.native.balance
+    (state) => state.substrateBalances.balances.picasso.pica.balance
   );
   const setRewardPool = useStore((state) => state.setRewardPool);
-
   const picaRewardPool = useStore((state) => state.rewardPools[assetId]);
-
   const executor = useExecutor();
 
   useEffect(() => {
@@ -135,7 +133,7 @@ export const useStakingRewards = () => {
   return {
     picaRewardPool,
     balance,
-    meta,
+    pica,
     executor,
     parachainApi,
     assetId,

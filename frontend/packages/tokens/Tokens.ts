@@ -1,4 +1,3 @@
-export type TokenId = typeof tokenIds[number];
 export type Token = {
   id: TokenId;
   icon: string;
@@ -18,13 +17,17 @@ const tokenIds = [
   "pica",
   "movr",
   "ksm",
-  "pablo",
+  "pblo",
   "angl",
   "chaos",
   "usdt",
-]; // important
+  "kar",
+  "ausd",
+  "kusd"
+] as const; // important
 
 export const TOKEN_IDS = tokenIds;
+export type TokenId = typeof tokenIds[number];
 export const TOKENS: { [key in TokenId]: Token } = {
   eth: {
     id: "eth",
@@ -98,10 +101,10 @@ export const TOKENS: { [key in TokenId]: Token } = {
     symbol: "CHAOS",
     decimalsToDisplay: 4,
   },
-  pablo: {
-    id: "pablo",
+  pblo: {
+    id: "pblo",
     icon: "/tokens/pablo.svg",
-    symbol: "PABLO",
+    symbol: "PBLO",
     decimalsToDisplay: 4,
   },
   angl: {
@@ -135,5 +138,5 @@ export const TOKENS: { [key in TokenId]: Token } = {
     decimalsToDisplay: 4,
   },
 };
-export const getToken = (tokenId: TokenId): Token =>
-  TOKENS[tokenId.toLowerCase()];
+
+export const getToken = (tokenId: TokenId): Token =>TOKENS[tokenId];

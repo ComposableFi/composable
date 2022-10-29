@@ -1,17 +1,17 @@
 import BigNumber from "bignumber.js";
-import { Token, TOKENS } from "tokens";
 import { AccountId32 } from "@polkadot/types/interfaces/runtime";
 import { ApiPromise } from "@polkadot/api";
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
-import { currencyIdToAssetMap } from "@/stores/defi/polkadot/bonds/constants";
 import { ComposableTraitsBondedFinanceBondOffer } from "defi-interfaces";
 import { Option } from "@polkadot/types-codec";
 import { ITuple } from "@polkadot/types-codec/types";
 import { fetchAssetPrice } from "./Oracle";
-import { Executor, getSigner } from "substrate-react";
+import { Executor, getSigner, TokenId } from "substrate-react";
 import { APP_NAME } from "@/defi/polkadot/constants";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
+import { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import { fromChainIdUnit } from "shared";
+import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
 
 export function createArrayOfLength(length: number): number[] {
   return Array.from(Array(length).keys());
@@ -28,11 +28,12 @@ export async function fetchBondOfferCount(api: ApiPromise) {
   return new BigNumber(countBondOffers.toHuman());
 }
 
-export async function fetchBonds(api: ApiPromise) {
+export async function fetchBonds(api: ApiPromise, tokens: Record<TokenId, TokenMetadata>) {
   // Count bonded offers
   const bondOfferCount = await fetchBondOfferCount(api);
   // @ts-ignore
   const bonds: Option<
+    // @ts-ignore
     ITuple<[AccountId32, ComposableTraitsBondedFinanceBondOffer]>
   >[] = await Promise.all(
     createArrayOfLength(bondOfferCount.toNumber()).map(
@@ -43,6 +44,7 @@ export async function fetchBonds(api: ApiPromise) {
     async (
       acc: Promise<BondOffer[]>,
       bond: Option<
+        // @ts-ignore
         ITuple<[AccountId32, ComposableTraitsBondedFinanceBondOffer]>
       >,
       index
@@ -61,7 +63,7 @@ export async function fetchBonds(api: ApiPromise) {
         offerId: index + 1,
       };
 
-      return [...prev, bondTransformer(beneficiary, newBondOffer)];
+      return [...prev, bondTransformer(beneficiary, newBondOffer, tokens)];
     },
     Promise.resolve<BondOffer[]>([])
   );
@@ -101,24 +103,26 @@ async function fetchBondPrice(
   ];
 }
 
-function getAssets(asset: string): Token[] | Token {
-  const mapped = currencyIdToAssetMap[asset];
+function getAssets(asset: string, tokens: Record<TokenId, TokenMetadata>): TokenMetadata[] {
+  let assets = [];
 
-  const tokens = Array.isArray(mapped)
-    ? mapped.flatMap((tokenId: string) => currencyIdToAssetMap[tokenId])
-    : mapped;
+  for (const token in tokens) {
+    if (tokens[token as TokenId].picassoId && tokens[token as TokenId].picassoId?.toString() === asset) {
+      assets.push({
+        ... tokens[token as TokenId]
+      })
+    }
+  }
 
-  return Array.isArray(tokens)
-    ? tokens.map((token) => TOKENS[token])
-    : TOKENS[tokens];
+  return assets
 }
 
-function bondTransformer(beneficiary: AccountId32, bondOffer: any): BondOffer {
+function bondTransformer(beneficiary: AccountId32, bondOffer: any, tokens: Record<TokenId, TokenMetadata>): BondOffer {
   return {
     bondOfferId: bondOffer.offerId,
     beneficiary,
     assetId: bondOffer.asset.toString(),
-    asset: getAssets(bondOffer.asset),
+    asset: getAssets(bondOffer.asset, tokens),
     bondPrice: fromChainIdUnit(
       stringToBigNumber(bondOffer.bondPrice.toString())
     ),
@@ -128,7 +132,7 @@ function bondTransformer(beneficiary: AccountId32, bondOffer: any): BondOffer {
       : "Infinite",
     reward: {
       assetId: bondOffer.reward.asset.toString(),
-      asset: getAssets(bondOffer.reward.asset),
+      asset: getAssets(bondOffer.reward.asset, tokens),
       amount: fromChainIdUnit(
         stringToBigNumber(bondOffer.reward.amount.toString())
       ),
@@ -157,7 +161,7 @@ export function getROI(
 
 export type PurchaseBond = {
   parachainApi: ApiPromise | undefined;
-  account: { name: string; address: string } | undefined;
+  account: InjectedAccountWithMeta | undefined;
   executor: Executor | undefined;
   offerId: string;
   bondInput: BigNumber;
@@ -169,7 +173,7 @@ export type PurchaseBond = {
 export type ClaimType = {
   parachainApi: ApiPromise | undefined;
   vestingScheduleId?: string;
-  account: { name: string; address: string } | undefined;
+  account: InjectedAccountWithMeta | undefined;
   executor: Executor | undefined;
   assetId: string;
 };

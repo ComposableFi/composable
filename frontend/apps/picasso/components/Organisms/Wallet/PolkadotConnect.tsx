@@ -1,210 +1,109 @@
-import { DEFI_CONFIG } from "@/defi/polkadot/config";
-import { usePicassoProvider } from "@/defi/polkadot/hooks";
-import { TokenId } from "tokens";
+import { useSelectedAccount } from "@/defi/polkadot/hooks";
+import { useTheme } from "@mui/material";
+import {
+  useDotSamaContext,
+  useEagerConnect,
+  SupportedWalletId,
+  useConnectedAccounts,
+  useTransactions,
+} from "substrate-react";
+import { DEFAULT_EVM_ID, DEFAULT_NETWORK_ID } from "@/defi/polkadot/constants";
+import { Wallet } from "wallet";
+import { ConnectorType, useBlockchainProvider, useConnector } from "bi-lib";
+import { NetworkId } from "wallet";
 import { useStore } from "@/stores/root";
-import { ChevronLeft } from "@mui/icons-material";
-import { Box, Button, IconButton, Typography, useTheme } from "@mui/material";
-import { useState } from "react";
-import { Select } from "../../Atom";
-import { AccountIndicator } from "../../Molecules/AccountIndicator";
-import { Modal } from "../../Molecules/Modal";
-import { ConnectButton } from "./ConnectButton";
-import { PolkadotAccountForm } from "./PolkadotAccountForm";
-import { humanBalance } from "shared";
-import { useDotSamaContext, useEagerConnect, SupportedWalletId } from "substrate-react";
-import { DEFAULT_NETWORK_ID } from "@/defi/polkadot/constants";
-import Image from "next/image";
+import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 
-const WALLETS_SUPPORTED: Array<{ walletId: SupportedWalletId, icon: string, name: string }> = [
+const BLOCKCHAIN_NETWORKS_SUPPORTED = [
   {
-    walletId: SupportedWalletId.Polkadotjs,
+    name: "Polkadot",
     icon: "/networks/polkadot_js.svg",
-    name: "Polkadot.js"
+    networkId: NetworkId.Polkadot,
+    explorerUrl: "https://picasso.subscan.io",
+    nativeCurrencyIcon: "/logos/picasso.svg",
   },
   {
-    walletId: SupportedWalletId.Talisman,
-    icon: "/logo/talisman.svg",
-    name: "Talisman"
+    name: "Ethereum",
+    icon: "/networks/mainnet.svg",
+    networkId: NetworkId.Ethereum,
+    explorerUrl: "https://etherscan.io/",
+    nativeCurrencyIcon: "/logos/ethereum.svg",
   },
 ];
 
-const Status = () => {
-  const { extensionStatus, selectedAccount } = useDotSamaContext();
-  const { accounts } = usePicassoProvider();
-  const theme = useTheme();
-  let label =
-    accounts.length && selectedAccount !== -1
-      ? accounts[selectedAccount].name
-      : "";
-  const assets = useStore(({ substrateBalances }) => substrateBalances.assets);
-  const { openPolkadotModal } = useStore(({ ui }) => ui);
-  const [selectedAsset, setSelectedAsset] = useState<TokenId | undefined>(
-    "pica"
-  );
+const POLKADOT_WALLETS_SUPPORTED: Array<{
+  walletId: SupportedWalletId;
+  icon: string;
+  name: string;
+}> = [
+  {
+    walletId: SupportedWalletId.Polkadotjs,
+    icon: "/logos/polkadotjs.svg",
+    name: "Polkadot.js",
+  },
+  {
+    walletId: SupportedWalletId.Talisman,
+    icon: "/logos/talisman.svg",
+    name: "Talisman",
+  },
+];
 
-  if (extensionStatus === "connected") {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: theme.spacing(1),
-        }}
-      >
-        <Select
-          value={selectedAsset}
-          setValue={setSelectedAsset}
-          options={DEFI_CONFIG.networkIds.map((networkId) => ({
-            value: assets[networkId].native.meta.id,
-            label: humanBalance(assets[networkId].native.balance),
-            icon: assets[networkId].native.meta.icon,
-          }))}
-          sx={{
-            "& .MuiOutlinedInput-root": {
-              height: "56px",
-              minWidth: "170px",
-            },
-          }}
-        />
-        <AccountIndicator
-          onClick={() => {
-            openPolkadotModal();
-          }}
-          network="polkadot"
-          label={label}
-        />
-      </Box>
-    );
-  }
-
-  return (
-    <ConnectButton
-      onClick={() => {
-        openPolkadotModal();
-      }}
-      imageSrc="/networks/dotsama_polkadot_not_connected.svg"
-      imageAlt="DotSama Polkadot"
-    >
-      Connect DotSama
-    </ConnectButton>
-  );
-};
+const ETHEREUM_WALLETS_SUPPORTED = [
+  {
+    name: "Metamask",
+    icon: "/logos/metamask.svg",
+    walletId: ConnectorType.MetaMask,
+  },
+];
 
 export const PolkadotConnect: React.FC<{}> = () => {
+  const theme = useTheme();
   const { deactivate, extensionStatus, activate, setSelectedAccount } =
     useDotSamaContext();
-  const theme = useTheme();
-  const hasTriedEagerConnect = useEagerConnect(DEFAULT_NETWORK_ID);
-  const { closePolkadotModal, openPolkadotModal, isPolkadotModalOpen } =
-    useStore(({ ui }) => ui);
+  const accounts = useConnectedAccounts(DEFAULT_NETWORK_ID);
+  const { account, connectorType } = useBlockchainProvider(DEFAULT_EVM_ID);
+  const connectedAccount = useSelectedAccount();
+  const biLibConnector = useConnector(ConnectorType.MetaMask);
+  useEagerConnect(DEFAULT_NETWORK_ID);
 
-  const handleConnectPolkadot = async (walletId: SupportedWalletId) => {
-    if (activate) {
-      await activate(walletId);
-    }
-  };
+  const balance = useStore(
+    ({ substrateBalances }) => substrateBalances.balances.picasso.pica.balance
+  );
+
+  const transactions = useTransactions(connectedAccount?.address ?? "-");
 
   return (
-    <>
-      <Status />
-      <Modal
-        onClose={() => closePolkadotModal()}
-        open={isPolkadotModalOpen}
-        maxWidth="sm"
-        dismissible
-      >
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            height: "100%",
-          }}
-        >
-          {extensionStatus !== "connecting" && extensionStatus !== "connected" && (
-            <>
-              <Typography variant="h5" gutterBottom>
-                Connect wallet
-              </Typography>
-              <Typography variant="body1" color="text.secondary" gutterBottom>
-                Select a wallet to connect with.
-              </Typography>
-              {WALLETS_SUPPORTED.map(wallet => (<Button
-                sx={{
-                  mt: "4rem",
-                }}
-                variant="outlined"
-                color="primary"
-                size="large"
-                fullWidth
-                onClick={() => handleConnectPolkadot(wallet.walletId)}
-              >
-                <Box sx={{ marginRight: theme.spacing(2) }}>
-                  <Image
-                    src={wallet.icon}
-                    width="24"
-                    height="24"
-                    alt={wallet.name}
-                  />
-                </Box>
-                <Typography variant="button">{wallet.name}</Typography>
-              </Button>))}
-            </>
-          )}
-
-          {extensionStatus === "connected" && (
-            <>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Typography variant="h5" gutterBottom>
-                  Your accounts
-                </Typography>
-              </Box>
-              <PolkadotAccountForm
-                onSelectChange={(account) => {
-                  if (setSelectedAccount) setSelectedAccount(account);
-                  // dispatch(setSelectedAccount(account));
-                }}
-              />
-            </>
-          )}
-          {extensionStatus === "connecting" && (
-            <>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <IconButton
-                  color="primary"
-                  onClick={() => {
-                    if (deactivate) deactivate();
-                  }}
-                >
-                  <ChevronLeft />
-                </IconButton>
-
-                <Typography variant="h5" gutterBottom>
-                  Select account
-                </Typography>
-              </Box>
-              <Typography variant="body1" color="text.secondary">
-                Choose an account to connect with
-              </Typography>
-              <PolkadotAccountForm />
-            </>
-          )}
-        </Box>
-      </Modal>
-    </>
+    <Wallet
+      connectedWalletTransactions={transactions.map((tx) => {
+        return {
+          title: `${tx.section} ${tx.method}`,
+          timestamp: tx.timestamp,
+        };
+      })}
+      ethereumConnectorInUse={connectorType}
+      connectedAccountNativeBalance={balance}
+      onDisconnectDotsamaWallet={deactivate}
+      onConnectPolkadotWallet={activate as any}
+      blockchainNetworksSupported={BLOCKCHAIN_NETWORKS_SUPPORTED}
+      supportedPolkadotWallets={POLKADOT_WALLETS_SUPPORTED}
+      supportedEthereumWallets={ETHEREUM_WALLETS_SUPPORTED}
+      polkadotAccounts={accounts}
+      ethereumConnectedAccount={account}
+      onConnectEthereumWallet={biLibConnector.activate as any}
+      isEthereumWalletActive={
+        biLibConnector.isActive ? biLibConnector.isActive : false
+      }
+      polkadotExtensionStatus={extensionStatus}
+      selectedPolkadotAccount={connectedAccount}
+      onDisconnectEthereum={biLibConnector.deactivate}
+      onSelectPolkadotAccount={(account: InjectedAccountWithMeta) => {
+        const index = accounts.findIndex(
+          (_account) => account.address === _account.address
+        );
+        if (index >= 0 && setSelectedAccount) {
+          setSelectedAccount(index);
+        }
+      }}
+    />
   );
 };

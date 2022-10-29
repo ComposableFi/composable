@@ -3,7 +3,6 @@ import { Box, Button, Paper, Stack, Typography } from "@mui/material";
 import { TextWithTooltip } from "@/components/Molecules/TextWithTooltip";
 import { FC, useMemo } from "react";
 import { callbackGate, formatNumber } from "shared";
-import BigNumber from "bignumber.js";
 import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
 import { getSigner, useExecutor } from "substrate-react";
 import { APP_NAME } from "@/defi/polkadot/constants";
@@ -12,10 +11,6 @@ import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { useStakingRewards } from "@/defi/polkadot/hooks/useStakingRewards";
 import { useExpiredPortfolio } from "@/components/Organisms/Staking/useExpiredPortfolio";
 
-// TODO: positionId should be fetched from subsquid or other sources
-const positionId = new BigNumber(4);
-
-function setPosition() {}
 
 export const BurnModal: FC<{
   open: boolean;

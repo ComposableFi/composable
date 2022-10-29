@@ -1,27 +1,28 @@
-import { NextPage } from "next";
-import { Button, Grid, Typography } from "@mui/material";
-import Default from "@/components/Templates/Default";
+import { AmountTokenDropdown } from "@/components/Organisms/Transfer/AmountTokenDropdown";
+import { Header } from "@/components/Organisms/Transfer/Header";
 import {
   gridContainerStyle,
   gridItemStyle,
 } from "@/components/Organisms/Transfer/transfer-styles";
-import { Header } from "@/components/Organisms/Transfer/Header";
-import { TransferNetworkSelector } from "@/components/Organisms/Transfer/TransferNetworkSelector";
-import { AmountTokenDropdown } from "@/components/Organisms/Transfer/AmountTokenDropdown";
-import { TransferRecipientDropdown } from "@/components/Organisms/Transfer/TransferRecipientDropdown";
-import { TransferKeepAliveSwitch } from "@/components/Organisms/Transfer/TransferKeepAliveSwitch";
 import { TransferExistentialDeposit } from "@/components/Organisms/Transfer/TransferExistentialDeposit";
-import { useTransfer } from "@/defi/polkadot/hooks/useTransfer";
 import { TransferFeeDisplay } from "@/components/Organisms/Transfer/TransferFeeDisplay";
+import { TransferKeepAliveSwitch } from "@/components/Organisms/Transfer/TransferKeepAliveSwitch";
+import { TransferNetworkSelector } from "@/components/Organisms/Transfer/TransferNetworkSelector";
+import { TransferRecipientDropdown } from "@/components/Organisms/Transfer/TransferRecipientDropdown";
+import Default from "@/components/Templates/Default";
+import { useTransfer } from "@/defi/polkadot/hooks/useTransfer";
 import { getDestChainFee } from "@/defi/polkadot/pallets/Transfer";
 import { useStore } from "@/stores/root";
+import { Button, Grid, Typography } from "@mui/material";
+import { NextPage } from "next";
 
 const Transfers: NextPage = () => {
   const { transfer, amount, from, balance } = useTransfer();
   // For now all transactions are done with Picasso target
   // TODO: change this to get the chainApi from target (to) in store
+  const tokens = useStore((state) => state.substrateTokens.tokens)
   const fee = useStore((state) => state.transfers.fee);
-  const minValue = getDestChainFee(from, "picasso").fee.plus(fee.partialFee);
+  const minValue = getDestChainFee(from, "picasso", tokens).fee.plus(fee.partialFee);
   const feeTokenId = useStore((state) => state.transfers.getFeeToken(from));
 
   return (
@@ -67,7 +68,7 @@ const Transfers: NextPage = () => {
           >
             <Typography variant="button">Transfer</Typography>
           </Button>
-          {amount.lte(minValue) && (
+          {!amount.eq(0) && amount.lte(minValue) && (
             <Typography variant="caption" color="error.main">
               At least {minValue.toFormat(12)} {feeTokenId.symbol.toUpperCase()}{" "}
               will be spent for gas fees.

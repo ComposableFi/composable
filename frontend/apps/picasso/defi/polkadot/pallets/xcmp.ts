@@ -1,25 +1,38 @@
 import { ApiPromise } from "@polkadot/api";
-import { Executor, getSigner } from "substrate-react";
+import { Executor } from "substrate-react";
 import { u128 } from "@polkadot/types-codec";
 import { AnyComponentMap, EnqueueSnackbar } from "notistack";
-import { Assets } from "@/defi/polkadot/Assets";
-import { APP_NAME } from "@/defi/polkadot/constants";
-import { toChainIdUnit } from "shared";
-import { CurrencyId } from "defi-interfaces";
 import { XcmVersionedMultiLocation } from "@polkadot/types/lookup";
-import BigNumber from "bignumber.js";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
+import {
+  buildParachainToParachainAccountDestination,
+  buildParachainToRelaychainAccountDestination,
+  buildRelaychainToParachainBeneficiary,
+  buildRelaychainToParachainDestination,
+  buildXCMAssetOriginKsm,
+  getParachainDestinationCallOriginKarura,
+  getXTokenTransferCallOriginPicasso,
+} from "./XCM";
+import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
+import { Signer } from "@polkadot/api/types";
+import BigNumber from "bignumber.js";
 
 export type TransferHandlerArgs = {
   api: ApiPromise;
   targetChain: number | 0;
+  transferToken: TokenMetadata;
+  /**
+   * This is needed when transfers 
+   * are initiated from Picasso
+   * (at least to my knowledge)
+   */
+  feeToken: TokenMetadata | null;
   targetAccount: string;
   amount: u128;
   executor: Executor;
   enqueueSnackbar: EnqueueSnackbar<AnyComponentMap>;
   signerAddress: string;
-  hasFeeItem: boolean;
-  feeItemId: number | null;
+  signer: Signer;
   weight: BigNumber;
 };
 
@@ -37,211 +50,103 @@ export function availableTargetNetwork(
   }
 }
 
-export async function getTransferCallKusamaPicasso(
+export function getTransferCallKusamaPicasso(
   api: ApiPromise,
   targetChain: number | 0,
   targetAccount: string,
-  amount: u128,
-  signerAddress: string
+  amount: u128
 ) {
-  const destination = api.createType("XcmVersionedMultiLocation", {
-    V0: api.createType("XcmV0MultiLocation", {
-      X1: api.createType("XcmV0Junction", {
-        Parachain: api.createType("Compact<u32>", targetChain),
-      }),
-    }),
-  });
-
+  const destination = buildRelaychainToParachainDestination(api, targetChain);
   // Setting the wallet receiving the funds
-  const beneficiary = api.createType("XcmVersionedMultiLocation", {
-    V0: api.createType("XcmV0MultiLocation", {
-      X1: api.createType("XcmV0Junction", {
-        AccountId32: {
-          network: api.createType("XcmV0JunctionNetworkId", "Any"),
-          id: api.createType("AccountId32", targetAccount),
-        },
-      }),
-    }),
-  });
-
+  const beneficiary = buildRelaychainToParachainBeneficiary(api, targetAccount);
   // Setting up the asset & amount
-  const assets = api.createType("XcmVersionedMultiAssets", {
-    V0: [
-      api.createType("XcmV0MultiAsset", {
-        ConcreteFungible: {
-          id: api.createType("XcmV0MultiLocation", "Null"),
-          amount,
-        },
-      }),
-    ],
-  });
-
+  const assets = buildXCMAssetOriginKsm(api, amount);
   // Setting the asset which will be used for fees (0 refers to first in asset list)
   const feeAssetItem = api.createType("u32", 0);
-  const signer = await getSigner(APP_NAME, signerAddress);
-  const call = api.tx.xcmPallet.reserveTransferAssets(
+
+  return api.tx.xcmPallet.reserveTransferAssets(
     destination,
     beneficiary,
     assets,
     feeAssetItem
   );
-  return { signer, call };
 }
 
-export async function getTransferCallPicassoKarura(
+export function getTransferCallPicassoKarura(
   api: ApiPromise,
   targetChain: number | 0,
   targetAccount: string,
-  hasFeeItem: boolean,
-  signerAddress: string,
+  transferToken: TokenMetadata,
   amount: u128,
-  feeItemId: number | null
+  feeTokenId: BigNumber | null
 ) {
-  const destination = api.createType("XcmVersionedMultiLocation", {
-    V0: api.createType("XcmV0MultiLocation", {
-      X3: [
-        api.createType("XcmV0Junction", "Parent"),
-        api.createType("XcmV0Junction", {
-          Parachain: api.createType("Compact<u32>", targetChain),
-        }),
-        api.createType("XcmV0Junction", {
-          AccountId32: {
-            network: api.createType("XcmV0JunctionNetworkId", "Any"),
-            id: api.createType("AccountId32", targetAccount),
-          },
-        }),
-      ],
-    }),
-  });
+  if (!transferToken.picassoId) throw new Error("Unsupported transfer");
 
-  // TODO: Refactor this logic to parent
-  const transferFunction = !hasFeeItem
-    ? api.tx.xTokens.transfer
-    : api.tx.xTokens.transferMulticurrencies;
-
-  const kusdAssetId = api.createType(
-    "CurrencyId",
-    Assets.kusd.supportedNetwork.picasso
+  const destination = buildParachainToParachainAccountDestination(
+    api,
+    targetChain,
+    targetAccount
   );
 
-  const feeItemAssetID = [
-    [kusdAssetId, amount], // KUSD
-    [
-      api.createType("u128", feeItemId),
-      api.createType("u128", toChainIdUnit(1).toString()),
-    ], // Asset to be used as fees, minFee should be calculated.
-  ];
+  const call = getXTokenTransferCallOriginPicasso(
+    api,
+    destination as XcmVersionedMultiLocation,
+    transferToken.picassoId,
+    amount,
+    feeTokenId
+  );
 
-  const destWeight = api.createType("u64", 9000000000); // > 9000000000
-
-  const signer = await getSigner(APP_NAME, signerAddress);
-
-  const args = !hasFeeItem
-    ? [kusdAssetId, amount, destination, destWeight]
-    : [feeItemAssetID, api.createType("u32", 1), destination, destWeight];
-
-  // @ts-ignore
-  const call = transferFunction(...args);
-  return { signer, call };
+  return call;
 }
 
-export async function getTransferCallPicassoKusama(
+export function getTransferCallPicassoKusama(
   api: ApiPromise,
   targetAccount: string,
+  transferToken: TokenMetadata,
   amount: u128,
-  feeItemId: number | null,
-  signerAddress: string,
-  hasFeeItem: boolean
+  feeTokenId: BigNumber | null
 ) {
-  // Set destination. Should have 2 Junctions, first to parent and then to wallet
-  const destination = api.createType("XcmVersionedMultiLocation", {
-    V0: api.createType("XcmV0MultiLocation", {
-      X2: [
-        api.createType("XcmV0Junction", "Parent"),
-        api.createType("XcmV0Junction", {
-          AccountId32: {
-            network: api.createType("XcmV0JunctionNetworkId", "Any"),
-            id: api.createType("AccountId32", targetAccount),
-          },
-        }),
-      ],
-    }),
-  });
+  if (!transferToken.picassoId) throw new Error("Unsupported Transfer");
 
-  // Set dest weight
-  const destWeight = api.createType("u64", 9000000000);
-  const ksmAssetID = api.createType("SafeRpcWrapper", 4);
+  const destination = buildParachainToRelaychainAccountDestination(
+    api,
+    targetAccount
+  );
 
-  const feeItemAssetID = [
-    [api.createType("u128", 4), amount], // KSM
-    [
-      api.createType("u128", feeItemId),
-      api.createType("u128", toChainIdUnit(1).toString()),
-    ], // Asset to be used as fees, minFee should be calculated.
-  ];
+  const call = getXTokenTransferCallOriginPicasso(
+    api,
+    destination as XcmVersionedMultiLocation,
+    transferToken.picassoId,
+    amount,
+    feeTokenId
+  );
 
-  const signer = await getSigner(APP_NAME, signerAddress);
-
-  // TODO: Refactor this logic to parent
-  const transferFunction = !hasFeeItem
-    ? api.tx.xTokens.transfer
-    : api.tx.xTokens.transferMulticurrencies;
-
-  const args = !hasFeeItem
-    ? [ksmAssetID, amount, destination, destWeight]
-    : [feeItemAssetID, api.createType("u32", 1), destination, destWeight];
-
-  // @ts-ignore
-  const call = transferFunction(...args);
-  return { signer, call };
+  return call;
 }
 
-export async function getTransferCallKaruraPicasso(
+export function getTransferCallKaruraPicasso(
   api: ApiPromise,
   targetChain: number | 0,
   targetAccount: string,
-  signerAddress: string,
+  currency: string | null,
   amount: u128
 ) {
-  // Set destination. Should have 2 Junctions, first to parent and then to wallet
-  const destination: XcmVersionedMultiLocation = api.createType(
-    "XcmVersionedMultiLocation",
-    {
-      V0: api.createType("XcmV0MultiLocation", {
-        X3: [
-          api.createType("XcmV0Junction", "Parent"),
-          api.createType("XcmV0Junction", {
-            Parachain: api.createType("Compact<u32>", targetChain),
-          }),
-          api.createType("XcmV0Junction", {
-            AccountId32: {
-              network: api.createType("XcmV0JunctionNetworkId", "Any"),
-              id: api.createType("AccountId32", targetAccount),
-            },
-          }),
-        ],
-      }),
-    }
+  if (!currency) throw new Error("Unsupported transfer");
+
+  const destination = buildParachainToParachainAccountDestination(
+    api,
+    targetChain,
+    targetAccount
   );
 
-  const currencyId: CurrencyId = api.createType(
-    "AcalaPrimitivesCurrencyCurrencyId",
-    {
-      Token: api.createType("AcalaPrimitivesCurrencyTokenSymbol", "KUSD"),
-    }
+  const call = getParachainDestinationCallOriginKarura(
+    api,
+    destination as XcmVersionedMultiLocation,
+    currency,
+    amount
   );
 
-  const destWeight = api.createType("u64", 20000000000000); // > 9000000000
-
-  const signer = await getSigner(APP_NAME, signerAddress);
-
-  const call = api.tx.xTokens.transfer(
-    currencyId,
-    amount,
-    destination,
-    destWeight
-  );
-  return { signer, call };
+  return call;
 }
 
 export async function transferPicassoKarura({
@@ -252,18 +157,19 @@ export async function transferPicassoKarura({
   executor,
   enqueueSnackbar,
   signerAddress,
-  hasFeeItem,
-  feeItemId,
+  feeToken,
+  transferToken,
+  signer,
 }: TransferHandlerArgs) {
+  if (!feeToken || !feeToken.picassoId) throw new Error('Transfer from Picasso requires a valid fee token');
   // Set destination. Should have 2 Junctions, first to parent and then to wallet
-  const { signer, call } = await getTransferCallPicassoKarura(
+  const call = getTransferCallPicassoKarura(
     api,
     targetChain,
     targetAccount,
-    hasFeeItem,
-    signerAddress,
+    transferToken,
     amount,
-    feeItemId
+    feeToken.picassoId
   );
 
   await executor.execute(
@@ -302,17 +208,19 @@ export async function transferPicassoKarura({
 export async function transferKaruraPicasso({
   api,
   targetChain,
+  transferToken,
   targetAccount,
   amount,
   executor,
   enqueueSnackbar,
   signerAddress,
+  signer,
 }: TransferHandlerArgs) {
-  const { signer, call } = await getTransferCallKaruraPicasso(
+  const call = getTransferCallKaruraPicasso(
     api,
     targetChain,
     targetAccount,
-    signerAddress,
+    transferToken.karuraId,
     amount
   );
 
@@ -354,17 +262,19 @@ export async function transferPicassoKusama({
   executor,
   enqueueSnackbar,
   signerAddress,
-  hasFeeItem,
-  feeItemId,
-  weight,
+
+  feeToken,
+  transferToken,
+  signer,
 }: TransferHandlerArgs) {
-  const { signer, call } = await getTransferCallPicassoKusama(
+  if (!feeToken || !feeToken.picassoId) throw new Error('Transfer from Picasso requires a valid fee token');
+
+  const call = await getTransferCallPicassoKusama(
     api,
     targetAccount,
+    transferToken,
     amount,
-    feeItemId,
-    signerAddress,
-    hasFeeItem
+    feeToken.picassoId
   );
 
   await executor.execute(
@@ -401,18 +311,18 @@ export async function transferPicassoKusama({
 export async function transferKusamaPicasso({
   api,
   targetChain,
+  signer,
   targetAccount,
   amount,
   executor,
   enqueueSnackbar,
   signerAddress,
 }: TransferHandlerArgs) {
-  const { signer, call } = await getTransferCallKusamaPicasso(
+  const call = await getTransferCallKusamaPicasso(
     api,
     targetChain,
     targetAccount,
-    amount,
-    signerAddress
+    amount
   );
 
   await executor.execute(
