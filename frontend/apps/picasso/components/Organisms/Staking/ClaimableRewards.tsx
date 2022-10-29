@@ -49,7 +49,7 @@ export const ClaimableRewards: FC<{
           </Box>
           <Box sx={boxStyles} gap={2} width="100%">
             <div>
-              <TokenAsset tokenId={"pablo"} label="PABLO" />
+              <TokenAsset tokenId={"pblo"} label="PABLO" />
             </div>
             <Typography variant="body2">{pablo.toFixed()}</Typography>
           </Box>

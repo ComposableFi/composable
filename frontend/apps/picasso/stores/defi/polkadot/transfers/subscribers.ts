@@ -1,38 +1,35 @@
 import { TRANSFER_ASSET_LIST } from "@/defi/config";
-import { getAssetOnChainId } from "@/defi/polkadot/Assets";
+
 import { SubstrateNetworkId } from "@/defi/polkadot/types";
 import { TokenOption } from "@/stores/defi/polkadot/transfers/transfers";
 import { getDefaultToken } from "@/stores/defi/polkadot/transfers/utils";
 import { useStore } from "@/stores/root";
 import { ApiPromise } from "@polkadot/api";
-import BigNumber from "bignumber.js";
 import { fromChainIdUnit } from "shared";
+import BigNumber from "bignumber.js";
+import { getSubstrateNetworkAssetIdentifierKey } from "@/defi/polkadot/pallets/Assets";
 
 function extractOptions(from: SubstrateNetworkId): TokenOption[] {
-  const list = useStore.getState().substrateBalances.assets[from];
-  const options = Object.values(list.assets).reduce(
+  const list = useStore.getState().substrateTokens.tokens;
+  const balances = useStore.getState().substrateBalances.balances;
+  const options = Object.values(list).reduce(
     (previousValue, currentValue) => {
       // no duplicates
       if (
         previousValue.find(
-          (value: any) => value.tokenId === currentValue.meta.symbol
+          (value: any) => value.tokenId === currentValue.symbol
         )
       ) {
         return previousValue;
       }
 
       // calculate balance for token
-      const isNative =
-        "supportedNetwork" in currentValue.meta &&
-        currentValue.meta.supportedNetwork[from] === 1;
-      const balance = isNative
-        ? useStore.getState().substrateBalances.assets[from].native.balance
-        : currentValue.balance;
+      const balance = balances[from][currentValue.id].balance
 
       // only include allowed assets
       if (
         !TRANSFER_ASSET_LIST[from].includes(
-          currentValue.meta.symbol.toLowerCase()
+          currentValue.symbol.toLowerCase()
         )
       ) {
         return previousValue;
@@ -41,11 +38,11 @@ function extractOptions(from: SubstrateNetworkId): TokenOption[] {
       return [
         ...previousValue,
         {
-          tokenId: currentValue.meta.assetId,
-          symbol: currentValue.meta.symbol,
-          icon: currentValue.meta.icon,
-          // disabled: balance.lte(0),
-          // balance: balance,
+          tokenId: currentValue.id,
+          symbol: currentValue.symbol,
+          icon: currentValue.icon,
+          disabled: balance.lte(0),
+          balance: balance,
         },
       ];
     },
@@ -101,14 +98,15 @@ export const subscribeDefaultTransferToken = () => {
 export const subscribeFeeItemEd = async (api: ApiPromise) => {
   return useStore.subscribe(
     (store) => store.transfers.feeItem,
-    (feeItem) => {
-      const assetId = getAssetOnChainId("picasso", feeItem);
+    async (feeItem) => {
+      const network = getSubstrateNetworkAssetIdentifierKey("picasso");
+      const assetId = useStore.getState().substrateTokens.tokens[feeItem][network];
 
       if (!assetId) {
         return;
       }
 
-      const ed = api.query.currencyFactory.assetEd(assetId);
+      const ed = await api.query.currencyFactory.assetEd(assetId);
 
       const existentialString = ed.toString();
       const existentialValue = fromChainIdUnit(

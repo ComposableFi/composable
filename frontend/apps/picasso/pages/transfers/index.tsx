@@ -20,9 +20,9 @@ const Transfers: NextPage = () => {
   const { transfer, amount, from, balance } = useTransfer();
   // For now all transactions are done with Picasso target
   // TODO: change this to get the chainApi from target (to) in store
+  const tokens = useStore((state) => state.substrateTokens.tokens)
   const fee = useStore((state) => state.transfers.fee);
-  const tokenId = useStore(state => state.transfers.selectedToken);
-  const minValue = getDestChainFee(from, "picasso", tokenId).fee.plus(fee.partialFee);
+  const minValue = getDestChainFee(from, "picasso", tokens).fee.plus(fee.partialFee);
   const feeTokenId = useStore((state) => state.transfers.getFeeToken(from));
 
   return (
