@@ -1048,7 +1048,6 @@ pub mod pallet {
 				Self::redeemable_assets_for_lp_tokens(pool_id, lp_amount, min_receive)?;
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
-			let currency_pair = Self::currency_pair(pool_id)?;
 			match pool {
 				PoolConfiguration::DualAssetConstantProduct(info) => {
 					let (base_amount, quote_amount, updated_lp) =
