@@ -7,13 +7,11 @@ use composable_traits::{
 };
 use cumulus_primitives_core::ParaId;
 
-use frame_support::log;
 use primitives::currency::CurrencyId;
 use sp_runtime::traits::AccountIdConversion;
 
-use crate::{env_logger_init, prelude::*};
+use crate::{env_logger_init, prelude::*, kusama_test_net::KusamaRelay};
 
-// TODO: make macro of it
 pub fn simtest() {
 	crate::kusama_test_net::KusamaNetwork::reset();
 	env_logger_init();
@@ -82,4 +80,22 @@ pub fn assert_above_deposit<AssetsRegistry: AssetRatioInspect<AssetId = Currency
 pub fn enough_weight() -> u128 {
 	BaseXcmWeight::get() as u128 +
 		100 * UnitWeightCost::get() as Balance * MaxInstructions::get() as Balance
+}
+
+
+pub fn mint_relay_native_on_parachain(amount: Balance, to: &AccountId, para_id : u32 ) {
+	KusamaRelay::execute_with(|| {
+		use kusama_runtime::*;
+		let _ = <Balances as frame_support::traits::Currency<_>>::deposit_creating(
+			to,
+			amount,
+		);
+		XcmPallet::reserve_transfer_assets(
+			Origin::signed(to.to_owned().into()),
+			Box::new(Parachain(para_id).into().into()),
+			Box::new(Junction::AccountId32 { id: to.to_owned().into(), network: NetworkId::Any }.into().into()),
+			Box::new((Here, amount).into()),
+			0,
+		).unwrap();
+	});
 }

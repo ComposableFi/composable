@@ -11,9 +11,6 @@ use common::{AccountId, Balance};
 use composable_traits::{currency::RangeId, defi::Ratio};
 
 use frame_system::RawOrigin;
-use this_runtime::{
-	Assets, MaxInstructions, Origin, Runtime, System, Tokens, UnitWeightCost, XTokens,
-};
 
 use num_traits::Zero;
 use orml_traits::currency::MultiCurrency;
@@ -21,6 +18,7 @@ use orml_traits::currency::MultiCurrency;
 use frame_support::{
 	assert_ok, log,
 	sp_runtime::{DispatchError, ModuleError},
+	weights::constants::WEIGHT_PER_MILLIS,
 };
 use primitives::currency::*;
 use sp_runtime::{assert_eq_error_rate, traits::AccountIdConversion, MultiAddress};
@@ -29,50 +27,31 @@ use xcm_builder::ParentIsPreset;
 use xcm_emulator::TestExt;
 use xcm_executor::{traits::Convert, XcmExecutor};
 
+use frame_support::traits::fungibles::Inspect as MultiInspect;
+
 #[test]
 fn reserve_transfer_from_relay_alice_bob() {
 	simtest();
-	let from = ALICE;
-	let to = BOB;
+	let from = alice();
+	let to = bob();
 	reserve_transfer(from, to);
 }
 
 #[test]
 fn reserve_transfer_from_relay_alice_alice() {
 	simtest();
-	let from = ALICE;
-	let to = ALICE;
+	let from = alice();
+	let to = alice();
 	reserve_transfer(from, to);
 }
 
 #[test]
 fn reserve_transfer_from_relay_map() {
 	simtest();
-	let from = ALICE;
-	let to = BOB;
+	let from = alice();
+	let to = bob();
 	reserve_transfer(from, to);
 }
-
-
-fn mint_relay_native_on_parachain(amount: Balance) {
-	KusamaRelay::execute_with(|| {
-		use relay_runtime::*;
-		let _ = <Balances as frame_support::traits::Currency<_>>::deposit_creating(
-			from_account,
-			balance,
-		);
-		let result = XcmPallet::reserve_transfer_assets(
-			Origin::signed(from_account.into()),
-			Box::new(Parachain(destination).into().into()),
-			Box::new(Junction::AccountId32 { id: to, network: NetworkId::Any }.into().into()),
-			Box::new((Here, balance).into()),
-			0,
-		);
-		assert_ok!(result);
-	});
-
-}
-
 
 fn reserve_transfer(from: [u8; 32], to: [u8; 32]) {
 	let from_account = &AccountId::from(from);
@@ -88,7 +67,7 @@ fn reserve_transfer(from: [u8; 32], to: [u8; 32]) {
 			balance,
 		);
 		let result = XcmPallet::reserve_transfer_assets(
-			Origin::signed(from_account.into()),
+			Origin::signed(from.into()),
 			Box::new(Parachain(destination).into().into()),
 			Box::new(Junction::AccountId32 { id: to, network: NetworkId::Any }.into().into()),
 			Box::new((Here, balance).into()),
@@ -113,18 +92,18 @@ fn transfer_to_relay_chain() {
 	let transfer_amount = 3 * RELAY_NATIVE::ONE;
 	let limit = 4_600_000_000;
 	assert_eq!(
-		KusamaRelay::execute_with(|| relay_runtime::Balances::balance(&AccountId::from(BOB))),
+		KusamaRelay::execute_with(|| relay_runtime::Balances::balance(&AccountId::from(bob()))),
 		0
 	);
 	This::execute_with(|| {
 		let transferred = this_runtime::XTokens::transfer(
-			this_runtime::Origin::signed(ALICE.into()),
+			this_runtime::Origin::signed(alice().into()),
 			CurrencyId::KSM,
 			transfer_amount,
 			Box::new(
 				MultiLocation::new(
 					1,
-					X1(Junction::AccountId32 { id: BOB, network: NetworkId::Any }),
+					X1(Junction::AccountId32 { id: bob(), network: NetworkId::Any }),
 				)
 				.into(),
 			),
@@ -133,15 +112,14 @@ fn transfer_to_relay_chain() {
 
 		assert_ok!(transferred);
 
-		let remaining =
-			this_runtime::Assets::free_balance(CurrencyId::KSM, &AccountId::from(ALICE));
+		let remaining = this_runtime::Assets::free_balance(CurrencyId::KSM, &alice().into());
 
 		assert_eq!(remaining, ALICE_PARACHAIN_KSM - transfer_amount);
 	});
 
 	KusamaRelay::execute_with(|| {
 		assert_lt_by!(
-			relay_runtime::Balances::balance(&AccountId::from(BOB)),
+			relay_runtime::Balances::balance(&AccountId::from(bob())),
 			transfer_amount,
 			ORDER_OF_FEE_ESTIMATE_ERROR * (THIS_CHAIN_NATIVE_FEE + RELAY_CHAIN_NATIVE_FEE) +
 				ORDER_OF_FEE_ESTIMATE_ERROR * limit as u128
@@ -170,26 +148,26 @@ fn transfer_native_of_this_to_sibling() {
 		use this_runtime::*;
 		let before = Balances::balance(&sibling_account(SIBLING_PARA_ID));
 		assert_ok!(RelayerXcm::limited_reserve_transfer_assets(
-			Origin::signed(ALICE.into()),
-			Box::new(VersionedMultiLocation::V1(MultiLocation::new(
-				1,
-				X1(Parachain(SIBLING_PARA_ID))
-			))),
-			Box::new(Junction::AccountId32 { id: BOB, network: NetworkId::Any }.into().into()),
+			Origin::signed(alice().into()),
+			Box::new(
+				VersionedMultiLocation::V1(MultiLocation::new(1, X1(Parachain(SIBLING_PARA_ID))))
+					.into()
+			),
+			Box::new(Junction::AccountId32 { id: bob(), network: NetworkId::Any }.into().into()),
 			Box::new((Here, 3 * PICA).into()),
 			0,
 			WeightLimit::Limited(399_600_000_000),
 		));
 
 		let after = Balances::balance(&sibling_account(SIBLING_PARA_ID));
-		assert_eq!(Balances::free_balance(&AccountId::from(ALICE)), 200 * PICA - 3 * PICA);
+		assert_eq!(Balances::free_balance(&alice().into()), 200 * PICA - 3 * PICA);
 		assert_gt!(after, before);
 		assert_eq!(after, 3 * PICA);
 	});
 
 	Sibling::execute_with(|| {
 		let balance =
-			sibling_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(BOB));
+			sibling_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(bob()));
 		assert_eq_error_rate!(balance, 3 * PICA, (UnitWeightCost::get() * 10) as u128);
 	});
 }
@@ -216,7 +194,7 @@ fn transfer_native_of_this_to_sibling_by_local_id() {
 		let before = Balances::balance(&sibling_account(SIBLING_PARA_ID));
 
 		assert_ok!(XTokens::transfer(
-			Origin::signed(ALICE.into()),
+			Origin::signed(alice().into()),
 			CurrencyId::PICA,
 			3 * PICA,
 			Box::new(
@@ -224,7 +202,7 @@ fn transfer_native_of_this_to_sibling_by_local_id() {
 					1,
 					X2(
 						Junction::Parachain(SIBLING_PARA_ID),
-						Junction::AccountId32 { id: BOB, network: NetworkId::Any }
+						Junction::AccountId32 { id: bob(), network: NetworkId::Any }
 					)
 				)
 				.into()
@@ -233,14 +211,14 @@ fn transfer_native_of_this_to_sibling_by_local_id() {
 		));
 
 		let after = Balances::balance(&sibling_account(SIBLING_PARA_ID));
-		assert_eq!(Balances::free_balance(&AccountId::from(ALICE)), 200 * PICA - 3 * PICA);
+		assert_eq!(Balances::free_balance(&alice().into()), 200 * PICA - 3 * PICA);
 		assert_gt!(after, before);
 		assert_eq!(after, 3 * PICA);
 	});
 
 	Sibling::execute_with(|| {
 		let balance =
-			sibling_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(BOB));
+			sibling_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(bob()));
 		assert_eq_error_rate!(balance, 3 * PICA, (UnitWeightCost::get() * 10) as u128);
 	});
 }
@@ -265,26 +243,27 @@ fn transfer_non_native_reserver_asset_from_this_to_sibling() {
 	This::execute_with(|| {
 		use this_runtime::*;
 
-		assert_ok!(Assets::deposit(CurrencyId::PBLO, &AccountId::from(ALICE), 10 * PICA));
+		assert_ok!(Assets::deposit(CurrencyId::PBLO, &alice().into(), 10 * PICA));
+		let before = Assets::free_balance(CurrencyId::PBLO, &alice().into());
 		assert_ok!(RelayerXcm::limited_reserve_transfer_assets(
-			Origin::signed(ALICE.into()),
-			Box::new(VersionedMultiLocation::V1(MultiLocation::new(
-				1,
-				X1(Parachain(SIBLING_PARA_ID))
-			))),
-			Box::new(Junction::AccountId32 { id: BOB, network: NetworkId::Any }.into().into()),
+			Origin::signed(alice().into()),
+			Box::new(
+				VersionedMultiLocation::V1(MultiLocation::new(1, X1(Parachain(SIBLING_PARA_ID))))
+					.into()
+			),
+			Box::new(Junction::AccountId32 { id: bob(), network: NetworkId::Any }.into().into()),
 			Box::new((X1(GeneralIndex(CurrencyId::PBLO.into()),), 3 * PICA).into()),
 			0,
 			WeightLimit::Limited(399_600_000_000),
 		));
 
-		let after = Assets::free_balance(CurrencyId::PBLO, &AccountId::from(ALICE));
+		let after = Assets::free_balance(CurrencyId::PBLO, &alice().into());
 		assert_eq!(after, 7 * PICA,);
 	});
 
 	Sibling::execute_with(|| {
 		use sibling_runtime::*;
-		let balance = Assets::free_balance(CurrencyId::PBLO, &AccountId::from(BOB));
+		let balance = Assets::free_balance(CurrencyId::PBLO, &AccountId::from(bob()));
 		assert_eq_error_rate!(balance, 3 * PICA, (UnitWeightCost::get() * 10) as u128);
 	});
 }
@@ -309,10 +288,11 @@ fn transfer_non_native_reserver_asset_from_this_to_sibling_by_local_id() {
 	This::execute_with(|| {
 		use this_runtime::*;
 
-		assert_ok!(Assets::deposit(CurrencyId::PBLO, &AccountId::from(ALICE), 10 * PICA));
+		assert_ok!(Assets::deposit(CurrencyId::PBLO, &alice().into(), 10 * PICA));
+		let before = Assets::free_balance(CurrencyId::PBLO, &alice().into());
 
 		assert_ok!(XTokens::transfer(
-			Origin::signed(ALICE.into()),
+			Origin::signed(alice().into()),
 			CurrencyId::PBLO,
 			3 * PICA,
 			Box::new(
@@ -320,7 +300,7 @@ fn transfer_non_native_reserver_asset_from_this_to_sibling_by_local_id() {
 					1,
 					X2(
 						Junction::Parachain(SIBLING_PARA_ID),
-						Junction::AccountId32 { id: BOB, network: NetworkId::Any }
+						Junction::AccountId32 { id: bob(), network: NetworkId::Any }
 					)
 				)
 				.into()
@@ -328,13 +308,13 @@ fn transfer_non_native_reserver_asset_from_this_to_sibling_by_local_id() {
 			399_600_000_000
 		));
 
-		let after = Assets::free_balance(CurrencyId::PBLO, &AccountId::from(ALICE));
+		let after = Assets::free_balance(CurrencyId::PBLO, &alice().into());
 		assert_eq!(after, 7 * PICA,);
 	});
 
 	Sibling::execute_with(|| {
 		use sibling_runtime::*;
-		let balance = Assets::free_balance(CurrencyId::PBLO, &AccountId::from(BOB));
+		let balance = Assets::free_balance(CurrencyId::PBLO, &AccountId::from(bob()));
 		assert_eq_error_rate!(balance, 3 * PICA, (UnitWeightCost::get() * 10) as u128);
 	});
 }
@@ -345,7 +325,7 @@ fn transfer_insufficient_amount_should_fail() {
 	Sibling::execute_with(|| {
 		assert!(matches!(
 			sibling_runtime::XTokens::transfer(
-				sibling_runtime::Origin::signed(ALICE.into()),
+				sibling_runtime::Origin::signed(alice().into()),
 				CurrencyId::PICA,
 				1_000_000 - 1,
 				Box::new(
@@ -353,7 +333,7 @@ fn transfer_insufficient_amount_should_fail() {
 						1,
 						X2(
 							Junction::Parachain(THIS_PARA_ID),
-							Junction::AccountId32 { id: BOB, network: NetworkId::Any }
+							Junction::AccountId32 { id: bob(), network: NetworkId::Any }
 						)
 					)
 					.into()
@@ -362,10 +342,7 @@ fn transfer_insufficient_amount_should_fail() {
 			),
 			Err(DispatchError::Module(ModuleError { .. }))
 		));
-		assert_eq!(
-			sibling_runtime::Balances::free_balance(&AccountId::from(ALICE)),
-			200000000000000
-		);
+		assert_eq!(sibling_runtime::Balances::free_balance(&alice().into()), 200000000000000);
 	});
 
 	This::execute_with(|| {
@@ -380,31 +357,38 @@ fn transfer_insufficient_amount_should_fail() {
 fn transfer_relay_native_to_sibling_by_token_id() {
 	simtest();
 
-	
+	let ksm = 100_000_000_000_000;
+	mint_relay_native_on_parachain(ksm, &alice().into(), THIS_PARA_ID);
 
 	let alice_original = This::execute_with(|| {
-		assert_ok!(Tokens::deposit(CurrencyId::KSM, &AccountId::from(ALICE), 100_000_000_000_000));
-		Tokens::free_balance(CurrencyId::KSM, &AccountId::from(ALICE))
+		use this_runtime::*;
+		Tokens::free_balance(CurrencyId::KSM, &alice().into())
 	});
 
 	let alice_from_amount = alice_original / 10;
 	let alice_remaining = alice_original - alice_from_amount;
-	let weight_to_pay = (alice_from_amount / 2) as u64;
+	let weight_to_pay = 4 * WEIGHT_PER_MILLIS;
 
-	let picasso_on_sibling = Sibling::execute_with(|| {
-		assert_ok!(Tokens::deposit(
-			CurrencyId::KSM,
-			&this_native_reserve_account(),
-			100 * CurrencyId::unit::<Balance>(),
-		));
-		Tokens::free_balance(CurrencyId::KSM, &this_native_reserve_account())
+	let this_on_sibling = Sibling::execute_with(|| {
+		use sibling_runtime::*;
+		Tokens::free_balance(CurrencyId::KSM, &sibling_account(THIS_PARA_ID))
+	});
+	let original_bob_on_sibling = Sibling::execute_with(|| {
+		use sibling_runtime::*;
+		Tokens::free_balance(CurrencyId::KSM, &AccountId::from(bob()))
 	});
 
-	assert_ne!(picasso_on_sibling, Balance::zero());
+	assert_eq!(
+		this_on_sibling,
+		Balance::zero(),
+		"basic amount of this parachain on sibling is zero"
+	);
 
 	This::execute_with(|| {
+		log::info!(target: "bdd", "When Alice sends from this to Bob on sibling");
+		use this_runtime::*;
 		assert_ok!(XTokens::transfer(
-			Origin::signed(ALICE.into()),
+			Origin::signed(alice().into()),
 			CurrencyId::KSM,
 			alice_from_amount,
 			Box::new(
@@ -412,7 +396,7 @@ fn transfer_relay_native_to_sibling_by_token_id() {
 					1,
 					X2(
 						Parachain(SIBLING_PARA_ID),
-						Junction::AccountId32 { network: NetworkId::Any, id: BOB }
+						Junction::AccountId32 { network: NetworkId::Any, id: bob().into() }
 					)
 				)
 				.into()
@@ -420,26 +404,41 @@ fn transfer_relay_native_to_sibling_by_token_id() {
 			weight_to_pay,
 		));
 
-		assert_eq!(Tokens::free_balance(CurrencyId::KSM, &AccountId::from(ALICE)), alice_remaining);
+		assert_eq!(Tokens::free_balance(CurrencyId::KSM, &alice().into()), alice_remaining);
 	});
 
 	Sibling::execute_with(|| {
+		log::info!(target: "bdd", "Then Bob on sibling receives amounts");
+		use sibling_runtime::*;
 		assert_eq!(
-			Tokens::free_balance(CurrencyId::KSM, &this_native_reserve_account()),
-			picasso_on_sibling
+			Tokens::free_balance(CurrencyId::KSM, &sibling_account(THIS_PARA_ID)),
+			this_on_sibling
 		);
-		assert_eq!(Tokens::free_balance(CurrencyId::KSM, &AccountId::from(BOB)), 9_989_760_000_000);
+
+		let treasury =
+			<Tokens as MultiInspect<_>>::balance(CurrencyId::KSM, &TreasuryAccount::get());
+		assert_lt!(
+			treasury,
+			ORDER_OF_FEE_ESTIMATE_ERROR * xcmp::xcm_asset_fee_estimator(4, CurrencyId::KSM)
+		);
+		let new_bob_on_sibling =
+			<Tokens as MultiInspect<_>>::balance(CurrencyId::KSM, &AccountId::from(bob()));
+		assert_lt_by!(
+			new_bob_on_sibling,
+			alice_from_amount,
+			ORDER_OF_FEE_ESTIMATE_ERROR * xcmp::xcm_asset_fee_estimator(50, CurrencyId::KSM)
+		);
 
 		assert_ok!(XTokens::transfer(
-			Origin::signed(BOB.into()),
+			Origin::signed(bob().into()),
 			CurrencyId::KSM,
-			5_000_000_000_000,
+			new_bob_on_sibling,
 			Box::new(
 				MultiLocation::new(
 					1,
 					X2(
 						Parachain(THIS_PARA_ID),
-						Junction::AccountId32 { network: NetworkId::Any, id: ALICE }
+						Junction::AccountId32 { network: NetworkId::Any, id: alice().into() }
 					)
 				)
 				.into()
@@ -448,107 +447,66 @@ fn transfer_relay_native_to_sibling_by_token_id() {
 		));
 
 		assert_eq!(
-			Tokens::free_balance(CurrencyId::KSM, &this_native_reserve_account()),
+			Tokens::free_balance(CurrencyId::KSM, &sibling_account(THIS_PARA_ID)),
 			95_000_000_000_000
 		);
-		assert_eq!(Tokens::free_balance(CurrencyId::KSM, &AccountId::from(BOB)), 4_989_760_000_000);
+		assert_eq!(Tokens::free_balance(CurrencyId::KSM, &AccountId::from(bob())), 4_989_760_000_000);
 	});
 
 	This::execute_with(|| {
-		assert_eq!(
-			Tokens::free_balance(CurrencyId::KSM, &AccountId::from(ALICE)),
-			94_989_760_000_000
-		);
+		use this_runtime::*;
+		assert_eq!(Tokens::free_balance(CurrencyId::KSM, &alice().into()), 94_989_760_000_000);
 	});
 }
 
 // if Alice sends amount of their tokens and these are above weight but less than ED,
 // than our treasury takes that amount, sorry Alice
 
+#[test]
+fn one_chain_cannot_print_relay_native_reserve_tokens_on_us() {
+	simtest();
 
-// #[test]
-// fn transfer_relay_native_to_sibling_by_token_id() {
-// 	simtest();
+	let original_bob_on_sibling = This::execute_with(|| {
+		use this_runtime::*;
+		assert_ok!(Tokens::deposit(CurrencyId::KSM, &alice().into(), 100_000_000_000_000));
+		Tokens::free_balance(CurrencyId::KSM, &alice().into())
+	});
 
-// 	let alice_original = This::execute_with(|| {
-// 		assert_ok!(Tokens::deposit(CurrencyId::KSM, &AccountId::from(ALICE), 100_000_000_000_000));
-// 		Tokens::free_balance(CurrencyId::KSM, &AccountId::from(ALICE))
-// 	});
-	
-// 	let alice_from_amount = alice_original / 10;
-// 	let alice_remaining = alice_original - alice_from_amount;
-// 	let weight_to_pay = (alice_from_amount / 2) as u64;
+	let alice_original = This::execute_with(|| {
+		use this_runtime::*;
+		assert_ok!(Tokens::deposit(CurrencyId::KSM, &alice().into(), 100_000_000_000_000));
+		Tokens::free_balance(CurrencyId::KSM, &alice().into())
+	});
 
-// 	let picasso_on_sibling = Sibling::execute_with(|| {
-// 		assert_ok!(Tokens::deposit(
-// 			CurrencyId::KSM,
-// 			&this_native_reserve_account(),
-// 			100 * CurrencyId::unit::<Balance>(),
-// 		));
-// 		Tokens::free_balance(CurrencyId::KSM, &this_native_reserve_account())
-// 	});
+	let alice_from_amount = alice_original / 10;
+	let alice_remaining = alice_original - alice_from_amount;
+	let weight_to_pay = (alice_from_amount / 2) as u64;
 
-// 	assert_ne!(picasso_on_sibling, Balance::zero());
+	This::execute_with(|| {
+		use this_runtime::*;
+		assert_ok!(XTokens::transfer(
+			Origin::signed(alice().into()),
+			CurrencyId::KSM,
+			alice_from_amount,
+			Box::new(
+				MultiLocation::new(
+					1,
+					X2(
+						Parachain(SIBLING_PARA_ID),
+						Junction::AccountId32 { network: NetworkId::Any, id: bob().into() }
+					)
+				)
+				.into()
+			),
+			weight_to_pay,
+		));
+	});
 
-// 	This::execute_with(|| {
-// 		assert_ok!(XTokens::transfer(
-// 			Origin::signed(ALICE.into()),
-// 			CurrencyId::KSM,
-// 			alice_from_amount,
-// 			Box::new(
-// 				MultiLocation::new(
-// 					1,
-// 					X2(
-// 						Parachain(SIBLING_PARA_ID),
-// 						Junction::AccountId32 { network: NetworkId::Any, id: BOB.into() }
-// 					)
-// 				)
-// 				.into()
-// 			),
-// 			weight_to_pay,
-// 		));
-
-// 		assert_eq!(Tokens::free_balance(CurrencyId::KSM, &AccountId::from(ALICE)), alice_remaining);
-// 	});
-
-// 	Sibling::execute_with(|| {
-// 		assert_eq!(
-// 			Tokens::free_balance(CurrencyId::KSM, &this_native_reserve_account()),
-// 			picasso_on_sibling
-// 		);
-// 		assert_eq!(Tokens::free_balance(CurrencyId::KSM, &AccountId::from(BOB)), 9_989_760_000_000);
-
-// 		assert_ok!(XTokens::transfer(
-// 			Origin::signed(BOB.into()),
-// 			CurrencyId::KSM,
-// 			5_000_000_000_000,
-// 			Box::new(
-// 				MultiLocation::new(
-// 					1,
-// 					X2(
-// 						Parachain(THIS_PARA_ID),
-// 						Junction::AccountId32 { network: NetworkId::Any, id: ALICE.into() }
-// 					)
-// 				)
-// 				.into()
-// 			),
-// 			1_000_000_000,
-// 		));
-
-// 		assert_eq!(
-// 			Tokens::free_balance(CurrencyId::KSM, &this_native_reserve_account()),
-// 			95_000_000_000_000
-// 		);
-// 		assert_eq!(Tokens::free_balance(CurrencyId::KSM, &AccountId::from(BOB)), 4_989_760_000_000);
-// 	});
-
-// 	This::execute_with(|| {
-// 		assert_eq!(
-// 			Tokens::free_balance(CurrencyId::KSM, &AccountId::from(ALICE)),
-// 			94_989_760_000_000
-// 		);
-// 	});
-// }
+	Sibling::execute_with(|| {
+		use sibling_runtime::*;
+		assert_eq!(Tokens::free_balance(CurrencyId::KSM, &AccountId::from(bob())), 0);
+	});
+}
 
 /// if Bob sends amount of his tokens and these are above weight but less than ED,
 /// than our treasury takes that amount, sorry Bob
@@ -566,7 +524,7 @@ fn transfer_from_relay_chain_deposit_to_treasury_if_below_ed() {
 	KusamaRelay::execute_with(|| {
 		use relay_runtime::*;
 		assert_ok!(XcmPallet::reserve_transfer_assets(
-			Origin::signed(ALICE.into()),
+			Origin::signed(alice().into()),
 			Box::new(Parachain(THIS_PARA_ID).into().into()),
 			Box::new(Junction::AccountId32 { id: receiver, network: NetworkId::Any }.into().into()),
 			Box::new((Here, under_ed).into()),
@@ -608,7 +566,7 @@ fn xcm_transfer_execution_barrier_trader_works() {
 	KusamaRelay::execute_with(|| {
 		use relay_runtime::*;
 		let r = pallet_xcm::Pallet::<Runtime>::send_xcm(
-			X1(Junction::AccountId32 { network: NetworkId::Any, id: ALICE }),
+			X1(Junction::AccountId32 { network: NetworkId::Any, id: alice().into() }),
 			Parachain(THIS_PARA_ID).into(),
 			message,
 		);
@@ -697,28 +655,28 @@ fn unspent_xcm_fee_is_returned_correctly() {
 	let (original_parachain, _original_bob) = KusamaRelay::execute_with(|| {
 		(
 			relay_runtime::Balances::balance(&parachain_account.clone()),
-			relay_runtime::Balances::balance(&AccountId::from(BOB)),
+			relay_runtime::Balances::balance(&AccountId::from(bob())),
 		)
 	});
 	let parachain_on_kusama_amount = 1_000 * CurrencyId::unit::<Balance>();
 	KusamaRelay::execute_with(|| {
 		log::info!("============ RELAY");
 		assert_ok!(relay_runtime::Balances::transfer(
-			relay_runtime::Origin::signed(ALICE.into()),
+			relay_runtime::Origin::signed(alice().into()),
 			MultiAddress::Id(some_account.clone()),
 			charlie_on_kusama_amount,
 		));
 		assert_ok!(relay_runtime::Balances::transfer(
-			relay_runtime::Origin::signed(ALICE.into()),
+			relay_runtime::Origin::signed(alice().into()),
 			MultiAddress::Id(parachain_account.clone()),
 			parachain_on_kusama_amount,
 		));
 		assert_eq!(
-			relay_runtime::Balances::free_balance(&AccountId::from(ALICE)),
+			relay_runtime::Balances::free_balance(&alice().into()),
 			2 * CurrencyId::unit::<Balance>()
 		);
 		assert_eq!(relay_runtime::Balances::free_balance(&some_account), charlie_on_kusama_amount);
-		assert_eq!(relay_runtime::Balances::free_balance(&AccountId::from(BOB)), Balance::zero());
+		assert_eq!(relay_runtime::Balances::free_balance(&AccountId::from(bob())), Balance::zero());
 		assert_eq!(
 			relay_runtime::Balances::free_balance(&parachain_account.clone()),
 			original_parachain + parachain_on_kusama_amount,
@@ -733,7 +691,7 @@ fn unspent_xcm_fee_is_returned_correctly() {
 		// Construct a transfer XCM call with returning the deposit
 		let transfer_call = relay_runtime::Call::Balances(relay_runtime::BalancesCall::transfer {
 			dest: <relay_runtime::Runtime as frame_system::Config>::Lookup::unlookup(
-				AccountId::from(BOB),
+				AccountId::from(bob()),
 			),
 			value: transfer_in_transact_amount,
 		});
@@ -758,7 +716,7 @@ fn unspent_xcm_fee_is_returned_correctly() {
 	let parachain_balance = KusamaRelay::execute_with(|| {
 		log::info!("============ RELAY");
 		assert_eq!(
-			relay_runtime::Balances::balance(&AccountId::from(BOB)),
+			relay_runtime::Balances::balance(&AccountId::from(bob())),
 			transfer_in_transact_amount,
 			"because of Transact called transfer"
 		);
@@ -774,6 +732,7 @@ fn unspent_xcm_fee_is_returned_correctly() {
 
 	This::execute_with(|| {
 		log::info!("============ THIS");
+		use this_runtime::*;
 		let transfer_call =
 			relay_runtime::Call::Balances(relay_runtime::BalancesCall::transfer_keep_alive {
 				dest: <relay_runtime::Runtime as frame_system::Config>::Lookup::unlookup(
@@ -789,7 +748,7 @@ fn unspent_xcm_fee_is_returned_correctly() {
 			this_runtime::ParachainInfo::parachain_id(),
 		);
 
-		assert_ok!(this_runtime::RelayerXcm::send_xcm(Here, Parent, finalized_call));
+		assert_ok!(RelayerXcm::send_xcm(Here, Parent, finalized_call));
 	});
 
 	KusamaRelay::execute_with(|| {
@@ -819,6 +778,7 @@ fn trap_assets_larger_than_ed_works() {
 	let parent_account: AccountId =
 		ParentIsPreset::<AccountId>::convert(Parent.into()).expect("Conversion into is safe; QED");
 	This::execute_with(|| {
+		use this_runtime::*;
 		assert_ok!(Tokens::deposit(
 			CurrencyId::KSM,
 			&parent_account,
@@ -859,6 +819,7 @@ fn trap_assets_larger_than_ed_works() {
 	});
 
 	This::execute_with(|| {
+		use this_runtime::*;
 		assert_eq!(
 			3 * CurrencyId::unit::<Balance>(),
 			Assets::free_balance(CurrencyId::KSM, &this_runtime::TreasuryAccount::get())
@@ -885,6 +846,7 @@ fn trap_assets_lower_than_existential_deposit_works() {
 		ParentIsPreset::<AccountId>::convert(Parent.into()).expect("Conversion into is safe; QED");
 
 	let (this_treasury_amount, other_treasury_amount) = This::execute_with(|| {
+		use this_runtime::*;
 		assert_ok!(Assets::deposit(any_asset, &parent_account, other_non_native_amount));
 		let _ = <this_runtime::Balances as frame_support::traits::Currency<AccountId>>::deposit_creating(
 			&parent_account,
@@ -924,6 +886,7 @@ fn trap_assets_lower_than_existential_deposit_works() {
 	});
 
 	This::execute_with(|| {
+		use this_runtime::*;
 		assert_eq!(
 			System::events().iter().find(|r| matches!(
 				r.event,
@@ -959,6 +922,7 @@ fn sibling_trap_assets_works() {
 	let this_native_asset = CurrencyId::PICA;
 
 	let (this_native_treasury_amount, sibling_non_native_amount) = This::execute_with(|| {
+		use this_runtime::*;
 		let sibling_non_native_amount =
 			assert_above_deposit::<this_runtime::AssetsRegistry>(any_asset, 100_000_000_000);
 
@@ -1026,6 +990,7 @@ fn sibling_trap_assets_works() {
 	});
 
 	This::execute_with(|| {
+		use this_runtime::*;
 		assert_eq!(
 			System::events().iter().find(|r| matches!(
 				r.event,
@@ -1034,12 +999,12 @@ fn sibling_trap_assets_works() {
 			None // non of assets trapped by hash, because all are known
 		);
 		assert_eq!(
-			this_runtime::Assets::free_balance(any_asset, &this_runtime::TreasuryAccount::get()),
+			Assets::free_balance(any_asset, &TreasuryAccount::get()),
 			sibling_non_native_amount
 		);
 
 		assert_eq!(
-			this_runtime::Balances::free_balance(&this_runtime::TreasuryAccount::get()),
+			Balances::free_balance(&TreasuryAccount::get()),
 			some_native_amount + this_native_treasury_amount,
 		);
 	});
@@ -1075,7 +1040,7 @@ fn sibling_shib_to_transfer() {
 		let root = frame_system::RawOrigin::Root;
 		Tokens::set_balance(
 			root.into(),
-			MultiAddress::Id(BOB.into()),
+			MultiAddress::Id(bob().into()),
 			sibling_asset_id,
 			total_issuance,
 			0,
@@ -1116,23 +1081,20 @@ fn sibling_shib_to_transfer() {
 	Sibling::execute_with(|| {
 		log::info!(target: "bdd", "When Bob transfers some {:?} SHIB from from sibling to Dali", transfer_amount);
 		use sibling_runtime::*;
-		let origin = Origin::signed(BOB.into());
+		let origin = Origin::signed(bob().into());
 		assert_ok!(RelayerXcm::limited_reserve_transfer_assets(
-			origin,
-			Box::new(VersionedMultiLocation::V1(MultiLocation::new(
-				1,
-				X1(Parachain(THIS_PARA_ID))
-			))),
-			Box::new(Junction::AccountId32 { id: BOB, network: NetworkId::Any }.into().into()),
+			origin.clone(),
+			Box::new(
+				VersionedMultiLocation::V1(MultiLocation::new(1, X1(Parachain(THIS_PARA_ID))))
+					.into()
+			),
+			Box::new(Junction::AccountId32 { id: bob(), network: NetworkId::Any }.into().into()),
 			Box::new((X1(GeneralIndex(sibling_asset_id.into()),), transfer_amount).into()),
 			0,
 			WeightLimit::Unlimited,
 		));
 		assert_eq!(
-			<Tokens as frame_support::traits::fungibles::Inspect<AccountId>>::balance(
-				sibling_asset_id,
-				&AccountId::from(BOB)
-			),
+			<Tokens as MultiInspect<_>>::balance(sibling_asset_id, &AccountId::from(bob())),
 			total_issuance - transfer_amount
 		);
 	});
@@ -1142,7 +1104,7 @@ fn sibling_shib_to_transfer() {
 		log::info!(target: "bdd", "Then Bob gets some SHIB on Dali");
 		let fee = this_runtime::xcmp::xcm_asset_fee_estimator(5, remote_sibling_asset_id);
 		assert_gt!(transfer_amount, fee);
-		let balance = Tokens::free_balance(remote_sibling_asset_id, &AccountId::from(BOB));
+		let balance = Tokens::free_balance(remote_sibling_asset_id, &AccountId::from(bob()));
 		assert_lt_by!(balance, transfer_amount, fee);
 	});
 }

@@ -176,13 +176,13 @@ impl<AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>> MinimalOracle
 	type Balance = Balance;
 	fn get_price_inverse(
 		asset_id: Self::AssetId,
-		amount: Self::Balance,
+		native_amount: Self::Balance,
 	) -> Result<Self::Balance, sp_runtime::DispatchError> {
 		match asset_id {
-			CurrencyId::PICA => Ok(amount),
+			CurrencyId::PICA => Ok(native_amount),
 			_ =>
 				if let Some(ratio) = AssetsRegistry::get_ratio(asset_id) {
-					let amount = Ratio::from_inner(amount);
+					let amount = Ratio::from_inner(native_amount);
 					if let Some(payment) = ratio.checked_mul(&amount) {
 						Ok(payment.into_inner())
 					} else {
@@ -190,13 +190,12 @@ impl<AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>> MinimalOracle
 							cross_chain_errors::AMOUNT_OF_ASSET_IS_MORE_THAN_MAX_POSSIBLE,
 						))
 					}
-				// hardcoded assets -> hardcoded initial prices
 				} else if asset_id == CurrencyId::KSM {
-					Ok(amount / 2667)
+					Ok(native_amount / 2667)
 				} else if asset_id == CurrencyId::kUSD {
-					Ok(amount / 67)
+					Ok(native_amount / 67)
 				} else if asset_id == CurrencyId::USDT || asset_id == CurrencyId::USDC {
-					Ok(amount * 1_000_000 / 67_000_000_000_000)
+					Ok(native_amount / 67_000_000)
 				} else {
 					Err(DispatchError::Other(cross_chain_errors::ASSET_IS_NOT_PRICEABLE))
 				},

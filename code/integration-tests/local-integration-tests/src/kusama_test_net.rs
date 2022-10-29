@@ -156,12 +156,8 @@ pub fn picasso_ext(parachain_id: u32) -> sp_io::TestExternalities {
 		&mut storage,
 	)
 	.unwrap();
-	// TODO: remove implicit assets and mint these directly in test
 	orml_tokens::GenesisConfig::<Runtime> {
-		balances: vec![
-			(AccountId::from(ALICE), CurrencyId::PICA, ALICE_PARACHAIN_PICA),
-			(AccountId::from(ALICE), CurrencyId::KSM, ALICE_PARACHAIN_KSM),
-		],
+		balances: vec![(AccountId::from(ALICE), CurrencyId::PICA, ALICE_PARACHAIN_PICA)],
 	}
 	.assimilate_storage(&mut storage)
 	.unwrap();
@@ -187,7 +183,10 @@ pub fn para_ext(parachain_id: u32) -> sp_io::TestExternalities {
 	use statemine_runtime::{Runtime, System};
 	let mut storage = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
 	balances::GenesisConfig::<Runtime> {
-		balances: vec![(AccountId::from(ALICE), ALICE_PARACHAIN_BALANCE)],
+		balances: vec![
+			(AccountId::from(ALICE), ALICE_PARACHAIN_BALANCE),
+			(AccountId::from(alice()), ALICE_PARACHAIN_BALANCE),
+		],
 	}
 	.assimilate_storage(&mut storage)
 	.unwrap();

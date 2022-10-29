@@ -357,7 +357,7 @@ impl FilterAssetLocation for RelayReserveFromParachain {
 }
 
 
-/// Estimates outgoing fees on target chain 
+/// Estimates outgoing fees on target chain in transferred token
 pub struct OutgoingFee<Registry :RemoteAssetRegistryInspect> {
 	_marker: PhantomData<Registry>,
 }
