@@ -360,18 +360,14 @@ fn transfer_insufficient_amount_should_fail() {
 }
 
 #[test]
-fn transfer_to_sibling() {
+fn transfer_relay_native_to_sibling_by_token_id() {
 	simtest();
-
-	fn this_native_reserve_account() -> AccountId {
-		use sp_runtime::traits::AccountIdConversion;
-		polkadot_parachain::primitives::Sibling::from(THIS_PARA_ID).into_account_truncating()
-	}
 
 	let alice_original = This::execute_with(|| {
 		assert_ok!(Tokens::deposit(CurrencyId::KSM, &AccountId::from(ALICE), 100_000_000_000_000));
 		Tokens::free_balance(CurrencyId::KSM, &AccountId::from(ALICE))
 	});
+	
 	let alice_from_amount = alice_original / 10;
 	let alice_remaining = alice_original - alice_from_amount;
 	let weight_to_pay = (alice_from_amount / 2) as u64;

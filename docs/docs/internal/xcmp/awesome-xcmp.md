@@ -33,7 +33,7 @@ XCMP can be upward (parachain to relay), downward(relay to parachain) and siblin
 - [The XCM executor(reference source)](https://github.com/paritytech/polkadot/blob/master/xcm/xcm-executor/src/lib.rs)
 - [Cross-Consensus Message Format (XCM)](https://wiki.polkadot.network/docs/learn-xcm)
 - [pallet-xcm(official public extrinsics for users)](https://github.com/paritytech/polkadot/blob/master/xcm/pallet-xcm/src/lib.rs)
-- [Gavin Wood: XCM V3 | Polkadot Decoded 2022(video)](https://www.youtube.com/watch?v=ccfhYX3AimU)
+- [Gavin Wood: XCM V3: Building a Heterogeneous Sharded Ecosystem | Polkadot Decoded 2022(video)](https://www.youtube.com/watch?v=ccfhYX3AimU)
 
 ## XCMP design
 
