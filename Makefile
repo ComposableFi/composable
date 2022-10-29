@@ -61,14 +61,6 @@ udeps:
 	cd code
 	SKIP_WASM_BUILD=1 cargo +nightly udeps -q --all-targets
 
-# run as `make open=y run-book` to open as well
-run-book:
-	bash -c "(trap 'kill 0' SIGINT; cargo run --manifest-path code/utils/extrinsics-docs-scraper/Cargo.toml --release -- --config-file-path=scraper.toml -vvv --watch & mdbook serve --hostname 0.0.0.0 book/ $(if $(filter y,${open}),'--open'))"
-
-build-book:
-	cargo run --manifest-path code/utils/extrinsics-docs-scraper/Cargo.toml --release -- --config-file-path=scraper.toml
-	mdbook build book/
-
 .PHONY: version
 version:
 	@if [ ${RELEASE_VERSION} ]; then \

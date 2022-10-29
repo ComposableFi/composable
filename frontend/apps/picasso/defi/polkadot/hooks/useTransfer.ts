@@ -88,6 +88,7 @@ export const useTransfer = () => {
       targetChain: to,
       sourceChain: from,
       tokens,
+      tokenId: transferToken.id
     });
 
     const transferHandlerArgs: TransferHandlerArgs = {

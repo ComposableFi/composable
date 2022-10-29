@@ -22,7 +22,6 @@ export type XCMTransferCallArgs = {
   targetParachainId: number,
   from: SubstrateNetworkId,
   to: SubstrateNetworkId,
-  hasFeeItem: boolean
 }
 
 export async function getXCMTransferCall({
@@ -33,8 +32,7 @@ export async function getXCMTransferCall({
   transferToken,
   targetParachainId,
   from,
-  to,
-  hasFeeItem
+  to
 }: XCMTransferCallArgs) {
   switch (`${from}-${to}`) {
     case "picasso-kusama":
@@ -84,6 +82,7 @@ export function getAmountToTransfer({
   targetChain,
   tokens
 }: {
+  tokenId: TokenId;
   balance: BigNumber;
   amount: BigNumber;
   existentialDeposit: BigNumber;

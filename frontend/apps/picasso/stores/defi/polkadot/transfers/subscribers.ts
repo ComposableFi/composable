@@ -1,5 +1,4 @@
 import { TRANSFER_ASSET_LIST } from "@/defi/config";
-
 import { SubstrateNetworkId } from "@/defi/polkadot/types";
 import { TokenOption } from "@/stores/defi/polkadot/transfers/transfers";
 import { getDefaultToken } from "@/stores/defi/polkadot/transfers/utils";

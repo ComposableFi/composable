@@ -266,11 +266,11 @@ jobs:
       - run: |
           cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#spell-check --no-update-lock-file --show-trace -L
 
-  mdbook-check:
-    name: "Mdbook check"
+  docs-check:
+    name: "Docs check"
     runs-on: ubuntu-latest
     concurrency:
-      group: ${{ github.workflow }}-mdbook-check-${{ github.ref }}
+      group: ${{ github.workflow }}-docs-check-${{ github.ref }}
       cancel-in-progress: true
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
@@ -290,7 +290,33 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#mdbook-check --no-update-lock-file --show-trace -L
+          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#docs-static --no-update-lock-file --show-trace -L
+
+  frontend-check:
+    name: "Frontend check"
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-frontend-check-${{ github.ref }}
+      cancel-in-progress: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+          echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+      - run: |
+          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#frontend-static --no-update-lock-file --show-trace -L
 
   hadolint-check:
     name: "Dockerfiles check"
@@ -540,7 +566,11 @@ jobs:
   check-simnode:
     name: "Simnode"
     needs: package-simnode-tests
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
     concurrency:
       group: check-simnode-${{ matrix.runtime }}-${{ github.ref }}
       cancel-in-progress: true
@@ -616,7 +646,7 @@ jobs:
       - x64
       - sre
     concurrency:
-      group: packagesimnodetests-${{ matrix.runtime }}-${{ github.ref }}
+      group: package-simnode-tests-${{ matrix.runtime }}-${{ github.ref }}
       cancel-in-progress: true
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
@@ -647,7 +677,7 @@ jobs:
       - x64
       - sre
     concurrency:
-      group: packagecomposablenode-${{ github.ref }}
+      group: ${{ github.workflow }}-package-composable-node-${{ github.ref }}
       cancel-in-progress: true
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
@@ -677,7 +707,7 @@ jobs:
       - x64
       - sre
     concurrency:
-      group: packagecomposablebenchnode-${{ github.ref }}
+      group: ${{ github.workflow }}-package-composable-bench-node-${{ github.ref }}
       cancel-in-progress: true
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
@@ -707,7 +737,7 @@ jobs:
       - x64
       - sre
     concurrency:
-      group: packagepolkadotnode-${{ github.ref }}
+      group: ${{ github.workflow }}-package-polkadot-node-${{ github.ref }}
       cancel-in-progress: true
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
@@ -728,6 +758,66 @@ jobs:
           name: composable-community
       - run: |
           cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#polkadot-node --no-update-lock-file --show-trace -L
+
+  package-statemine-node:
+    name: "Package Statemine node"
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    concurrency:
+      group: ${{ github.workflow }}-package-statemine-node-${{ github.ref }}
+      cancel-in-progress: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+          echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+      - run: |
+          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#statemine-node --no-update-lock-file --show-trace -L
+
+  package-acala-node:
+    name: "Package Acala node"
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    concurrency:
+      group: ${{ github.workflow }}-package-acala-node-${{ github.ref }}
+      cancel-in-progress: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+          echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+      - run: |
+          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#acala-node --no-update-lock-file --show-trace -L
 
   cache-kusama-parachains-devnet:
     name: "Package kusama parachains devnet"
@@ -766,6 +856,8 @@ jobs:
     name: "Package Full Devnet"
     needs:
       - package-polkadot-node
+      - package-acala-node
+      - package-statemine-node
     runs-on:
       - self-hosted
       - linux
@@ -948,6 +1040,9 @@ jobs:
           cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#bridge-devnet-dali-container --no-update-lock-file --show-trace -L
           docker load --input ./result
 
+          # update soon https://github.com/actions/checkout/issues/760
+          git config --global --add safe.directory /__w/composable/composable
+
           SHA256=$(sha256sum ./result | cut --delimiter " " --fields 1)
           COMMIT_SHA=$(git rev-parse HEAD)
           CONTAINER_NAME="composable-bridge-devnet"
@@ -1024,8 +1119,7 @@ jobs:
 
   effects-gate:
       name: "Effect gate, automatically merged if passed"
-      runs-on:
-        - ubuntu-latest
+      runs-on: ubuntu-latest
       needs:
         - check-nix
         - devnet-integration-tests
@@ -1044,8 +1138,9 @@ jobs:
         - check-simnode
         - benchmarks-check
         - spell-check
-        - mdbook-check
+        - docs-check
         - hadolint-check
+        - frontend-check
       steps:
         - run: echo "Goblins allow your work to see the light"
 
@@ -1262,6 +1357,8 @@ jobs:
         with:
           message: |
             ### Nix commands for this PR
+            **NOTE: You can also run our Nix commands in Docker. See the bottom of this comment.**
+
 
             #### Make sure you have setup the Composable community cache:
             _(you only need to run it once on your machine)_
@@ -1288,14 +1385,19 @@ jobs:
             ```bash
             nix run "github:ComposableFi/composable/${{ github.event.pull_request.head.sha }}#devnet-xcvm-up" -L
             ```
-
-            #### Are you on **macOS**, or do you not have [Nix](https://nixos.org/) installed? No worries, you can also run these commands in Docker like this:
-            _(you only need to run the first command once on your machine)_
+           
+            ### View the docs:
             ```bash
-            docker volume create nix
-
-            docker run --privileged --rm -v nix:/nix  -v /var/run/docker.sock:/var/run/docker.sock -it nixos/nix bash -c "nix-env -iA nixpkgs.cachix && cachix use composable-community && nix run github:ComposableFi/composable/${{ github.event.pull_request.head.sha }}#devnet-up -L --option cores 8 --extra-experimental-features nix-command --extra-experimental-features flakes"
+            nix run ".#docs-server"
             ```
+  
+            ### Run this without Nix in Docker.
+            ```bash
+            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v nix:/nix -it nixos/nix bash -c "nix-env -iA nixpkgs.cachix && cachix use composable-community && nix run github:ComposableFi/Composable/${{ github.event.pull_request.head.sha }}#devnet-dali -L --extra-experimental-features nix-command --extra-experimental-features flakes"
+            ```
+            _NOTE: You can swap `devnet-dali` in the command above with any Nix package_
+
+            _For more info on how to use Nix, check out our [Nix docs](https://docs.composable.finance/nix.html)_
 
             Note that the initial build may take about one hour if it has not been cached by our CI yet. Once it is cached, builds should take about one minute. We currently do not provide build caches for ARM machines such as M1 Macs, but building on ARM is supported.
 

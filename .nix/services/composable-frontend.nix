@@ -1,6 +1,5 @@
 { pkgs, port, frontend, app, ... }: {
-  image.contents = [ pkgs.bash pkgs.coreutils ];
-  service.useHostStore = true;
+  image.contents = [ pkgs.bash pkgs.coreutils pkgs.miniserve frontend ];
   service.command = [
     "bash"
     "-c"

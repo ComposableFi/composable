@@ -50,6 +50,7 @@ ignoreRegExpList:
   - shebang
 
 ignorePaths:
+  - "docs/static/fonts"
   - "code/parachain/node/src/res"
   - "target/"
   - "**/node_modules/"
@@ -79,3 +80,6 @@ ignorePaths:
   - "code/integration-tests/local-integration-tests/README.md"
   - "subsquid/src/interfaces"
   - "code/utils/composable-subxt/src/generated"
+  - "code/parachain/runtime/dali/src/weights/*"
+  - "code/parachain/runtime/picasso/src/weights/*"
+  - "code/parachain/runtime/composable/src/weights/*"

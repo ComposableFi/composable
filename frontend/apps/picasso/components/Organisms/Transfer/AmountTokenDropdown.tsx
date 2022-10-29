@@ -56,6 +56,7 @@ export const AmountTokenDropdown = () => {
         sourceChain: from,
         targetChain: "picasso",
         tokens,
+        tokenId: selectedToken
       });
       const amount = fromChainIdUnit(
         unwrapNumberOrHex(amountToTransfer.toString())

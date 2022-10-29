@@ -3,7 +3,11 @@
 #![allow(unused_imports)] // allow until v2 xcm released (instead creating 2 runtimes)
 use super::*; // recursive dependency onto runtime
 use codec::{Decode, Encode};
-use common::{xcmp::*, PriceConverter};
+use common::{
+	topology::{self},
+	xcmp::*,
+	PriceConverter,
+};
 use composable_traits::{
 	defi::Ratio,
 	oracle::MinimalOracle,
@@ -20,7 +24,7 @@ use frame_support::{
 		DispatchClass, IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
 		WeightToFeePolynomial,
 	},
-	PalletId, RuntimeDebug,
+	PalletId, RuntimeDebug, WeakBoundedVec,
 };
 use orml_traits::{
 	location::{AbsoluteReserveProvider, RelativeReserveProvider, Reserve},
@@ -65,9 +69,7 @@ parameter_types! {
 pub type Barrier = (
 	XcmpDebug,
 	//DebugAllowUnpaidExecutionFrom<WellKnownsChains>,
-	// Expected responses are OK.
 	AllowKnownQueryResponses<RelayerXcm>,
-	// Subscriptions for version tracking are OK.
 	AllowSubscriptionsFrom<Everything>,
 	AllowTopLevelPaidExecutionFrom<Everything>,
 	TakeWeightCredit,
@@ -121,27 +123,7 @@ pub type XcmOriginToTransactDispatchOrigin = (
 );
 
 pub struct StaticAssetsMap;
-
-pub mod parachains {
-	pub mod karura {
-		pub const ID: u32 = 3000;
-		pub const KUSD_KEY: &[u8] = &[0, 129];
-	}
-}
-
-impl XcmpAssets for StaticAssetsMap {
-	fn remote_to_local(location: MultiLocation) -> Option<CurrencyId> {
-		match location {
-			MultiLocation { parents: 1, interior: X2(Parachain(para_id), GeneralKey(key)) } =>
-				match (para_id, &key[..]) {
-					(parachains::karura::ID, parachains::karura::KUSD_KEY) =>
-						Some(CurrencyId::kUSD),
-					_ => None,
-				},
-			_ => None,
-		}
-	}
-}
+impl XcmpAssets for StaticAssetsMap {}
 
 pub type LocalAssetTransactor = MultiCurrencyAdapter<
 	crate::Assets,
@@ -157,8 +139,6 @@ pub type LocalAssetTransactor = MultiCurrencyAdapter<
 pub struct RelayReserveFromParachain;
 impl FilterAssetLocation for RelayReserveFromParachain {
 	fn filter_asset_location(asset: &MultiAsset, origin: &MultiLocation) -> bool {
-		// NOTE: In Acala there is not such thing
-		// if asset is KSM and send from some parachain then allow for  that
 		AbsoluteReserveProvider::reserve(asset) == Some(MultiLocation::parent()) &&
 			matches!(origin, MultiLocation { parents: 1, interior: X1(Parachain(_)) })
 	}
@@ -183,11 +163,6 @@ pub struct CaptureDropAssets<
 	AssetConverter: Convert<MultiLocation, Option<CurrencyId>>,
 >(PhantomData<(Treasury, PriceConverter, AssetConverter)>);
 
-/// if asset  put  into Holding Registry of XCM VM, but did nothing to this
-/// or if  too small to pay weight,
-/// it will get here
-/// if asset location and origin is known, put into treasury,  
-/// else if asset location and origin not know, hash it until it will be added
 impl<
 		Treasury: TakeRevenue,
 		PriceConverter: MinimalOracle,
@@ -230,7 +205,7 @@ impl xcm_executor::Config for XcmConfig {
 	type AssetTransactor = LocalAssetTransactor;
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
 	type IsReserve = IsReserveAssetLocationFilter;
-	type IsTeleporter = (); // <- should be enough to allow teleportation of PICA
+	type IsTeleporter = ();
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
@@ -243,22 +218,12 @@ impl xcm_executor::Config for XcmConfig {
 	type AssetTrap = CaptureAssetTrap;
 }
 
-parameter_types! {
-	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::parachain_id().into())));
-	// safe value to start to transfer 1 asset only in one message (as in Acala)
-	pub const MaxAssetsForTransfer: usize = 1;
-}
-
 parameter_type_with_key! {
-	pub ParachainMinFee: |location: MultiLocation| -> Option<Balance> {
+	pub OutgoingParachainMinFee: |location: MultiLocation| -> Option<Balance> {
 		#[allow(clippy::match_ref_pats)] // false positive
 		#[allow(clippy::match_single_binding)]
 		match (location.parents, location.first_interior()) {
-			// relay KSM
 			(1, None) => Some(400_000_000_000),
-
-			// if amount is not enough, it should be trapped by target chain or discarded as spam, so bear the risk
-			// we use Acala's team XTokens which are opinionated - PANIC in case of zero
 			(1, Some(Parachain(id)))  =>  {
 				let location = XcmAssetLocation::new(location.clone());
 				AssetsRegistry::min_xcm_fee(ParaId::from(*id), location).or(Some(u128::MAX))
@@ -274,15 +239,15 @@ impl orml_xtokens::Config for Runtime {
 	type CurrencyId = CurrencyId;
 	type CurrencyIdConvert = AssetsIdConverter;
 	type AccountIdToMultiLocation = AccountIdToMultiLocation;
-	type SelfLocation = SelfLocation;
+	type SelfLocation = topology::this::Local;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
 	type BaseXcmWeight = BaseXcmWeight;
 	type LocationInverter = LocationInverter<Ancestry>;
-	type MaxAssetsForTransfer = MaxAssetsForTransfer;
-	type MinXcmFee = ParachainMinFee;
+	type MaxAssetsForTransfer = XcmMaxAssetsForTransfer;
+	type MinXcmFee = OutgoingParachainMinFee;
 	type MultiLocationsFilter = Everything;
-	type ReserveProvider = AbsoluteReserveProvider;
+	type ReserveProvider = RelativeReserveProvider;
 }
 
 impl orml_unknown_tokens::Config for Runtime {
@@ -297,12 +262,24 @@ parameter_types! {
 	pub const MaxInstructions: u32 = 100;
 }
 
+pub fn xcm_asset_fee_estimator(instructions: u8, asset_id: CurrencyId) -> Balance {
+	assert!((instructions as u32) <= MaxInstructions::get());
+	let total_weight = UnitWeightCost::get() * instructions as u64;
+	Trader::weight_to_asset(total_weight, asset_id)
+		.expect("use only in simulator")
+		.1
+}
+
+pub fn xcm_fee_estimator(instructions: u8) -> Weight {
+	assert!((instructions as u32) <= MaxInstructions::get());
+	UnitWeightCost::get() * instructions as u64
+}
+
 impl pallet_xcm::Config for Runtime {
 	type Event = Event;
 	type SendXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
-	/// https://medium.com/kusama-network/kusamas-governance-thwarts-would-be-attacker-9023180f6fb
 	type XcmExecuteFilter = Nothing;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type XcmTeleportFilter = Everything;
@@ -339,6 +316,7 @@ impl<Origin: OriginTrait> ConvertOrigin<Origin> for SystemParachainAsSuperuser<O
 			) {
 			Ok(Origin::root())
 		} else {
+			log::trace!(target: "xcmp::convert_origin", "failed to covert origin");
 			Err(origin)
 		}
 	}

@@ -27,7 +27,7 @@ export const TransferFeeDisplay = () => {
   const executor = useExecutor();
   const tokens = useStore(({ substrateTokens }) => substrateTokens.tokens);
   const feeItem = useStore((state) => state.transfers.feeItem);
-  const hasFeeItem = useStore((state) => state.transfers.hasFeeItem);
+
   const setFeeItem = useStore((state) => state.transfers.setFeeItem);
 
   const { amount, from, to, balance, account, fromProvider, transferToken } = useTransfer();
@@ -39,11 +39,12 @@ export const TransferFeeDisplay = () => {
   const fee = useStore((state) => state.transfers.fee);
   const destFee = getDestChainFee(from, to, tokens);
   const updateFee = useStore((state) => state.transfers.updateFee);
+  const token = useStore(state => state.transfers.selectedToken);
 
 
   const calculateFee = useCallback(() => {
     callbackGate(
-      async (api, exec, acc, hasFeeItem, _signer) => {
+      async (api, exec, acc, _signer) => {
         const TARGET_ACCOUNT_ADDRESS = selectedRecipient.length
           ? selectedRecipient
           : acc.address;
@@ -59,7 +60,8 @@ export const TransferFeeDisplay = () => {
           api,
           sourceChain: from,
           targetChain: to,
-          tokens
+          tokens,
+          tokenId: token
         });
         
         try {
@@ -71,8 +73,7 @@ export const TransferFeeDisplay = () => {
             transferToken: transferToken,
             targetParachainId: TARGET_PARACHAIN_ID,
             from,
-            to,
-            hasFeeItem
+            to
           });
   
           const info = await exec.paymentInfo(call, acc.address, _signer);
@@ -94,7 +95,7 @@ export const TransferFeeDisplay = () => {
       fromProvider.parachainApi,
       executor,
       account,
-      hasFeeItem && feeItem.length === 0,
+
       signer
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps

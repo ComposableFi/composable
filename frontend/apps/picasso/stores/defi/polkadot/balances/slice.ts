@@ -91,5 +91,8 @@ export const createSubstrateBalancesSlice: StoreSlice<
     getBalance: (token: TokenId, network: SubstrateNetworkId): BigNumber => {
       return get().substrateBalances.balances[network][token].balance;
     },
+    getAssetBalance: (tokenId: TokenId, network: SubstrateNetworkId) => {
+      return get().substrateBalances.balances[network][tokenId].balance
+    },
   },
 });
