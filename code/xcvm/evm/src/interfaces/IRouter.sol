@@ -28,7 +28,7 @@ interface IRouter {
         bytes memory account,
         uint256 networkId,
         BridgeSecurity security,
-        uint256 salt,
+        bytes memory salt,
         bytes memory spawnedProgram,
         address[] memory assetAddresses,
         uint256[] memory amounts

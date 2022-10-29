@@ -127,7 +127,7 @@ export class XCVM {
   }
 
   public createAssetId(id: Number): Message<{}> {
-    return this.AssetIdMessage.create({assetId: id});
+    return this.AssetIdMessage.create({assetId: this.convertUint128(id)});
   }
 
   public createAsset(assetIdMessage: Message, balanceMessage: Message): Message<{}> {
@@ -192,11 +192,12 @@ export class XCVM {
     return this.InstructionsMessage.create({instructions: instructionsMessage})
   }
 
-  public createProgram(instructionsMessage: Message) {
+  public createProgram(tag: string, instructionsMessage: Message) {
     if (instructionsMessage.$type.name != "Instructions") {
       throw this.getTypeError("instructionsMessage", "Instructions")
     }
     return this.ProgramMessage.create({
+      tag: utils.arrayify(tag),
       instructions: instructionsMessage,
     });
   }
@@ -206,8 +207,8 @@ export class XCVM {
     return this.NetworkMessage.create({networkId: networkId});
   }
 
-  public createSalt(salt: Number): Message<{}> {
-    return this.SaltMessage.create({salt: salt});
+  public createSalt(salt: string): Message<{}> {
+    return this.SaltMessage.create({salt: utils.arrayify(salt)});
   }
 
   //public createBridgeSecurity(security: Number): Enum {

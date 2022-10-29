@@ -36,6 +36,7 @@ describe("Interpreter", function () {
     it("test program using sdk: transfer unit", async function () {
       let xcvm = new XCVM();
       let data = xcvm.createProgram(
+        "0x01",
         xcvm.createInstructions([
           xcvm.createInstruction(
             xcvm.createTransfer(xcvm.createAccount(owner.address), [
@@ -58,6 +59,7 @@ describe("Interpreter", function () {
     it("test program using sdk: transfer ratio", async function () {
       let xcvm = new XCVM();
       let data = xcvm.createProgram(
+        "0x01",
         xcvm.createInstructions([
           xcvm.createInstruction(
             xcvm.createTransfer(xcvm.createAccount(owner.address), [
@@ -76,6 +78,7 @@ describe("Interpreter", function () {
     it("test program using sdk: transfer absolut", async function () {
       let xcvm = new XCVM();
       let data = xcvm.createProgram(
+        "0x01",
         xcvm.createInstructions([
           xcvm.createInstruction(
             xcvm.createTransfer(xcvm.createAccount(owner.address), [
@@ -104,6 +107,7 @@ describe("Interpreter", function () {
       ]);
       let xcvm = new XCVM();
       let programMessage = xcvm.createProgram(
+        "0x01",
         xcvm.createInstructions([xcvm.createInstruction(xcvm.createCall(payload, xcvm.createBindings([])))])
       );
 
@@ -125,6 +129,7 @@ describe("Interpreter", function () {
       ]);
       let xcvm = new XCVM();
       let programMessage = xcvm.createProgram(
+        "0x01",
         xcvm.createInstructions([
           xcvm.createInstruction(
             xcvm.createCall(
@@ -152,6 +157,7 @@ describe("Interpreter", function () {
     it("test spawn program using sdk", async function () {
       let xcvm = new XCVM();
       let programMessage = xcvm.createProgram(
+        "0x01",
         xcvm.createInstructions([
           xcvm.createInstruction(
             xcvm.createTransfer(xcvm.createAccount(owner.address), [
@@ -162,9 +168,10 @@ describe("Interpreter", function () {
       );
 
       let data = xcvm.createProgram(
+        "0x01",
         xcvm.createInstructions([
           xcvm.createInstruction(
-            xcvm.createSpawn(xcvm.createNetwork(1), xcvm.createSalt(1), 1, programMessage, [
+            xcvm.createSpawn(xcvm.createNetwork(1), xcvm.createSalt("0x11"), 1, programMessage, [
               xcvm.createAsset(xcvm.createAssetId(1), xcvm.createBalance(xcvm.createAbsolut(200))),
             ])
           ),
@@ -177,7 +184,7 @@ describe("Interpreter", function () {
           owner.address.toLowerCase(),
           1,
           1,
-          1,
+          "0x11",
           ethers.utils.hexlify(xcvm.encodeMessage(programMessage)),
           [erc20.address],
           [200]
@@ -198,6 +205,7 @@ describe("Interpreter", function () {
       ]);
       let xcvm = new XCVM();
       let programMessage = xcvm.createProgram(
+        "0x01",
         xcvm.createInstructions([
           xcvm.createInstruction(
             xcvm.createCall(

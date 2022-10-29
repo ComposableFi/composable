@@ -22,7 +22,7 @@ contract Router is Ownable, IRouter {
         bytes account,
         uint256 networkId,
         BridgeSecurity security,
-        uint256 salt,
+        bytes salt,
         bytes spawnedProgram,
         address[] assetAddresses,
         uint256[] amounts
@@ -133,7 +133,7 @@ contract Router is Ownable, IRouter {
         bytes memory account,
         uint256 networkId,
         BridgeSecurity security,
-        uint256 salt,
+        bytes memory salt,
         bytes memory spawnedProgram,
         address[] memory assetAddresses,
         uint256[] memory amounts

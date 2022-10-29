@@ -230,12 +230,11 @@ contract Interpreter is IInterpreter {
         // read asset message body
         (size, pos) = _getMessageLength(program, pos);
         // reading asset message
-        pos = _checkField(program, 1, ProtobufLib.WireType.Varint, pos);
+        pos = _checkField(program, 1, ProtobufLib.WireType.LengthDelimited, pos);
         // decode asset id
-        uint64 assetId;
+        uint128 assetId;
         bool success;
-        (success, newPos, assetId) = ProtobufLib.decode_uint64(pos, program);
-        require(success, "decode key failed");
+        (assetId, newPos) =_handleUint128(program, pos);
 
         asset = IRouter(routerAddress).getAsset(uint256(assetId));
         require(asset != address(0), "asset not registered");
@@ -403,14 +402,15 @@ contract Interpreter is IInterpreter {
         security = IRouter.BridgeSecurity(uint32(value));
     }
 
-    function _handleSalt(bytes calldata program, uint64 pos) internal returns (uint64 salt, uint64 newPos) {
+    function _handleSalt(bytes calldata program, uint64 pos) internal returns (bytes memory salt, uint64 newPos) {
         // reading salt
         bool success;
         uint64 size;
         (size, pos) = _getMessageLength(program, pos);
-        pos = _checkField(program, 1, ProtobufLib.WireType.Varint, pos);
-        (success, newPos, salt) = ProtobufLib.decode_uint64(pos, program);
-        require(success, "decode value failed");
+        pos = _checkField(program, 1, ProtobufLib.WireType.LengthDelimited, pos);
+        (size, pos) = _getMessageLength(program, pos);
+        newPos = pos + size;
+        salt = program[pos: newPos];
     }
 
     function _handleProgram(bytes calldata program, uint64 pos)
@@ -431,7 +431,7 @@ contract Interpreter is IInterpreter {
             uint256 maxPos,
             uint256 networkId,
             IRouter.BridgeSecurity security,
-            uint256 salt,
+            bytes memory salt,
             bytes memory spawnedProgram
         )
     {
@@ -461,7 +461,7 @@ contract Interpreter is IInterpreter {
             uint256 maxPos,
             uint256 networkId,
             IRouter.BridgeSecurity security,
-            uint256 salt,
+            bytes memory salt,
             bytes memory spawnedProgram
         ) = _handleSpawnParams(program, pos);
         address bridgeAddress = IRouter(routerAddress).getBridge(networkId, security);
@@ -545,9 +545,15 @@ contract Interpreter is IInterpreter {
      * @param program program encoded in bytes
      */
     function interpret(bytes calldata program) public onlyOwnerOrCreator {
-        // reading program message
+        // reading program tag message
         uint64 pos = _checkField(program, 1, ProtobufLib.WireType.LengthDelimited, 0);
         uint64 size;
+        (size, pos) = _getMessageLength(program, pos);
+        bytes memory tag = program[pos:pos + size];
+        pos = pos + size;
+
+        // reading program message
+        pos = _checkField(program, 2, ProtobufLib.WireType.LengthDelimited, pos);
         (size, pos) = _getMessageLength(program, pos);
         uint64 totalInstructionsLength = pos + size;
         while (pos < totalInstructionsLength) {
