@@ -44,3 +44,11 @@ XcmExecutor -> vm : execute
 XcmExecutor  -> process_instruction: for each instruction in message 
 XcmExecutor -> vm : either accrue weight while there are messages or call error handler
 @enduml
+
+
+/// how it works:
+/// top level ReserveTransfer instruction is interpreted first on sending chain
+/// it transfers amount from sender account to target chain account on sending chain
+/// send it cut of wrapper part of XCM message, and sends remaining with deposit
+/// target chain sees deposit amount and mints appreciate amount
+/// validate origin of reserve (must be relay)

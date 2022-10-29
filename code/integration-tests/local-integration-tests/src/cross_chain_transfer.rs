@@ -53,33 +53,50 @@ fn reserve_transfer_from_relay_map() {
 	reserve_transfer(from, to);
 }
 
-/// how it works:
-/// top level ReserveTransfer instruction is interpreted first on sending chain
-/// it transfers amount from sender account to target chain account on sending chain
-/// send it cut of wrapper part of XCM message, and sends remaining with deposit
-/// target chain sees deposit amount and mints appreciate amount
-/// validate origin of reserve (must be relay)
-fn reserve_transfer(from: [u8; 32], to: [u8; 32]) {
-	let from_account = &AccountId::from(from);
-	let to_account = &AccountId::from(to);
-	let balance = enough_weight();
-	let before =
-		This::execute_with(|| this_runtime::Assets::free_balance(CurrencyId::KSM, to_account));
+
+fn mint_relay_native_on_parachain(amount: Balance) {
 	KusamaRelay::execute_with(|| {
-		let _ = <relay_runtime::Balances as frame_support::traits::Currency<_>>::deposit_creating(
+		use relay_runtime::*;
+		let _ = <Balances as frame_support::traits::Currency<_>>::deposit_creating(
 			from_account,
 			balance,
 		);
-		let result = relay_runtime::XcmPallet::reserve_transfer_assets(
-			relay_runtime::Origin::signed(from.into()),
-			Box::new(Parachain(THIS_PARA_ID).into().into()),
+		let result = XcmPallet::reserve_transfer_assets(
+			Origin::signed(from_account.into()),
+			Box::new(Parachain(destination).into().into()),
 			Box::new(Junction::AccountId32 { id: to, network: NetworkId::Any }.into().into()),
 			Box::new((Here, balance).into()),
 			0,
 		);
 		assert_ok!(result);
-		relay_dump_events();
 	});
+
+}
+
+
+fn reserve_transfer(from: [u8; 32], to: [u8; 32]) {
+	let from_account = &AccountId::from(from);
+	let to_account = &AccountId::from(to);
+	let balance = enough_weight();
+	let destination = THIS_PARA_ID;
+	let before =
+		This::execute_with(|| this_runtime::Assets::free_balance(CurrencyId::KSM, to_account));
+	KusamaRelay::execute_with(|| {
+		use relay_runtime::*;
+		let _ = <Balances as frame_support::traits::Currency<_>>::deposit_creating(
+			from_account,
+			balance,
+		);
+		let result = XcmPallet::reserve_transfer_assets(
+			Origin::signed(from_account.into()),
+			Box::new(Parachain(destination).into().into()),
+			Box::new(Junction::AccountId32 { id: to, network: NetworkId::Any }.into().into()),
+			Box::new((Here, balance).into()),
+			0,
+		);
+		assert_ok!(result);
+	});
+
 	This::execute_with(|| {
 		let new_balance = this_runtime::Assets::free_balance(CurrencyId::KSM, to_account);
 		dump_events();
@@ -363,11 +380,13 @@ fn transfer_insufficient_amount_should_fail() {
 fn transfer_relay_native_to_sibling_by_token_id() {
 	simtest();
 
+	
+
 	let alice_original = This::execute_with(|| {
 		assert_ok!(Tokens::deposit(CurrencyId::KSM, &AccountId::from(ALICE), 100_000_000_000_000));
 		Tokens::free_balance(CurrencyId::KSM, &AccountId::from(ALICE))
 	});
-	
+
 	let alice_from_amount = alice_original / 10;
 	let alice_remaining = alice_original - alice_from_amount;
 	let weight_to_pay = (alice_from_amount / 2) as u64;
@@ -443,9 +462,96 @@ fn transfer_relay_native_to_sibling_by_token_id() {
 	});
 }
 
-/// if Alice sends amount of their tokens and these are above weight but less than ED,
-/// than our treasury takes that amount, sorry Alice
-/// from: Acala
+// if Alice sends amount of their tokens and these are above weight but less than ED,
+// than our treasury takes that amount, sorry Alice
+
+
+// #[test]
+// fn transfer_relay_native_to_sibling_by_token_id() {
+// 	simtest();
+
+// 	let alice_original = This::execute_with(|| {
+// 		assert_ok!(Tokens::deposit(CurrencyId::KSM, &AccountId::from(ALICE), 100_000_000_000_000));
+// 		Tokens::free_balance(CurrencyId::KSM, &AccountId::from(ALICE))
+// 	});
+	
+// 	let alice_from_amount = alice_original / 10;
+// 	let alice_remaining = alice_original - alice_from_amount;
+// 	let weight_to_pay = (alice_from_amount / 2) as u64;
+
+// 	let picasso_on_sibling = Sibling::execute_with(|| {
+// 		assert_ok!(Tokens::deposit(
+// 			CurrencyId::KSM,
+// 			&this_native_reserve_account(),
+// 			100 * CurrencyId::unit::<Balance>(),
+// 		));
+// 		Tokens::free_balance(CurrencyId::KSM, &this_native_reserve_account())
+// 	});
+
+// 	assert_ne!(picasso_on_sibling, Balance::zero());
+
+// 	This::execute_with(|| {
+// 		assert_ok!(XTokens::transfer(
+// 			Origin::signed(ALICE.into()),
+// 			CurrencyId::KSM,
+// 			alice_from_amount,
+// 			Box::new(
+// 				MultiLocation::new(
+// 					1,
+// 					X2(
+// 						Parachain(SIBLING_PARA_ID),
+// 						Junction::AccountId32 { network: NetworkId::Any, id: BOB.into() }
+// 					)
+// 				)
+// 				.into()
+// 			),
+// 			weight_to_pay,
+// 		));
+
+// 		assert_eq!(Tokens::free_balance(CurrencyId::KSM, &AccountId::from(ALICE)), alice_remaining);
+// 	});
+
+// 	Sibling::execute_with(|| {
+// 		assert_eq!(
+// 			Tokens::free_balance(CurrencyId::KSM, &this_native_reserve_account()),
+// 			picasso_on_sibling
+// 		);
+// 		assert_eq!(Tokens::free_balance(CurrencyId::KSM, &AccountId::from(BOB)), 9_989_760_000_000);
+
+// 		assert_ok!(XTokens::transfer(
+// 			Origin::signed(BOB.into()),
+// 			CurrencyId::KSM,
+// 			5_000_000_000_000,
+// 			Box::new(
+// 				MultiLocation::new(
+// 					1,
+// 					X2(
+// 						Parachain(THIS_PARA_ID),
+// 						Junction::AccountId32 { network: NetworkId::Any, id: ALICE.into() }
+// 					)
+// 				)
+// 				.into()
+// 			),
+// 			1_000_000_000,
+// 		));
+
+// 		assert_eq!(
+// 			Tokens::free_balance(CurrencyId::KSM, &this_native_reserve_account()),
+// 			95_000_000_000_000
+// 		);
+// 		assert_eq!(Tokens::free_balance(CurrencyId::KSM, &AccountId::from(BOB)), 4_989_760_000_000);
+// 	});
+
+// 	This::execute_with(|| {
+// 		assert_eq!(
+// 			Tokens::free_balance(CurrencyId::KSM, &AccountId::from(ALICE)),
+// 			94_989_760_000_000
+// 		);
+// 	});
+// }
+
+/// if Bob sends amount of his tokens and these are above weight but less than ED,
+/// than our treasury takes that amount, sorry Bob
 #[test]
 fn transfer_from_relay_chain_deposit_to_treasury_if_below_ed() {
 	simtest();
