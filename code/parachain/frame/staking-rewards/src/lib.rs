@@ -1712,7 +1712,6 @@ pub(crate) fn do_reward_accumulation<T: Config>(
 				newly_accumulated_rewards.into(),
 				false, // not best effort, entire amount must be released
 			)
-			// Note: will this always be Ok or need to handle error?
 			.expect("funds should be available to release based on previous check; qed;");
 
 			reward.total_rewards = new_total_rewards.into();

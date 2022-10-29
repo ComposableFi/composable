@@ -137,16 +137,12 @@ fn test_accumulate_rewards_pool_empty_refill() {
 
 		progress_to_block(STARTING_BLOCK, &mut current_block);
 
-		// 0.000_02 A per second, capped at 0.1 A
-		// cap will be hit after 5_000 seconds (834 blocks)
+		// 0.000_02 A per second
 		const A_A_REWARD_RATE: u128 = A::units(2) / 100_000;
-		const A_A_MAX_REWARDS: u128 = A::units(1) / 10;
-		const A_A_AMOUNT_TO_ADD: u128 = A_A_REWARD_RATE * block_seconds(4);
+		const A_A_AMOUNT_TO_ADD_TO_REWARDS_POT: u128 = A_A_REWARD_RATE * block_seconds(4);
 
-		// 0.000_02 B per second, capped at 0.05 B
-		// cap will be hit after 2_500 seconds (417 blocks)
+		// 0.000_02 B per second
 		const A_B_REWARD_RATE: u128 = B::units(2) / 100_000;
-		const A_B_MAX_REWARDS: u128 = B::units(5) / 100;
 
 		mint_assets([ALICE], [A::ID], A::units(10_000));
 		mint_assets([ALICE], [B::ID], B::units(10_000));
@@ -189,7 +185,7 @@ fn test_accumulate_rewards_pool_empty_refill() {
 		// RewardsPotEmpty event should only be emitted once, not every block
 		check_events([]);
 
-		add_to_rewards_pot_and_assert::<Test>(ALICE, A::ID, A::ID, A_A_AMOUNT_TO_ADD);
+		add_to_rewards_pot_and_assert(ALICE, A::ID, A::ID, A_A_AMOUNT_TO_ADD_TO_REWARDS_POT);
 
 		check_events([crate::Event::<Test>::RewardsPotIncreased {
 			pool_id: A::ID,
@@ -206,7 +202,8 @@ fn test_accumulate_rewards_pool_empty_refill() {
 				PoolRewards {
 					reward_asset_id: A::ID,
 					expected_total_rewards: A_A_REWARD_RATE * block_seconds(3),
-					expected_locked_balance: A_A_AMOUNT_TO_ADD - A_A_REWARD_RATE * block_seconds(3),
+					expected_locked_balance: A_A_AMOUNT_TO_ADD_TO_REWARDS_POT -
+						A_A_REWARD_RATE * block_seconds(3),
 					expected_unlocked_balance: A_A_REWARD_RATE * block_seconds(3),
 				},
 				PoolRewards {
@@ -240,23 +237,23 @@ fn test_accumulate_rewards_hook() {
 
 		progress_to_block(STARTING_BLOCK, &mut current_block);
 
-		// 0.000_002 A per second, capped at 0.1 A
-		// cap will be hit after 50_000 seconds (8334 blocks)
+		// 0.000_002 A per second
+		// initial amount will be fully rewarded after 50_000 seconds (8334 blocks)
 		const A_A_REWARD_RATE: u128 = A::units(2) / 1_000_000;
 		const A_A_INITIAL_AMOUNT: u128 = A::units(1) / 10;
 
-		// 0.000_002 B per second, capped at 0.05 B
-		// cap will be hit after 25_000 seconds (4167 blocks)
+		// 0.000_002 B per second
+		// initial amount will be fully rewarded after 25_000 seconds (4167 blocks)
 		const A_B_REWARD_RATE: u128 = B::units(2) / 1_000_000;
 		const A_B_INITIAL_AMOUNT: u128 = A::units(5) / 100;
 
-		// 2 D per second, capped at 100k D
-		// cap will be hit after 5_000 seconds (834 blocks)
+		// 2 D per second
+		// initial amount will be fully rewarded after 5_000 seconds (834 blocks)
 		const C_D_REWARD_RATE: u128 = D::units(2);
 		const C_D_INITIAL_AMOUNT: u128 = A::units(10_000);
 
-		// 0.005 E per second, capped at 10 E
-		// cap will be hit after 2_000 seconds (334 blocks)
+		// 0.005 E per second
+		// initial amount will be fully rewarded after 2_000 seconds (334 blocks)
 		const C_E_REWARD_RATE: u128 = E::units(5) / 1_000;
 		const C_E_INITIAL_AMOUNT: u128 = A::units(10);
 
@@ -673,15 +670,15 @@ fn test_pause_in_reward_accumulation_hook() {
 
 		progress_to_block(STARTING_BLOCK, &mut current_block);
 
-		// 0.000_002 A per second, capped at 0.1 A
-		// cap will be hit after 50_000 seconds (8334 blocks)
+		// 0.000_002 A per second
+		// initial amount will be fully rewarded after 50_000 seconds (8334 blocks)
 		const A_A_REWARD_RATE: u128 = A::units(2) / 1_000_000;
 		const A_A_INITIAL_AMOUNT: u128 = A::units(1) / 10;
 		const A_A_REFUNDING_AMOUNT: u128 = A::units(1);
 		const A_A_PAUSED_BLOCKS: u64 = 250;
 
-		// 0.000_002 B per second, capped at 0.05 B
-		// cap will be hit after 25_000 seconds (4167 blocks)
+		// 0.000_002 B per second
+		// initial amount will be fully rewarded after 25_000 seconds (4167 blocks)
 		const A_B_REWARD_RATE: u128 = B::units(2) / 1_000_000;
 		const A_B_INITIAL_AMOUNT: u128 = A::units(5) / 100;
 		const A_B_REFUNDING_AMOUNT: u128 = A::units(5);
