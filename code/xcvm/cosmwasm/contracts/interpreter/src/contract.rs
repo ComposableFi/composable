@@ -15,10 +15,10 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg};
 use cw_utils::ensure_from_older_version;
+use cw_xcvm_asset_registry::msg::{GetAssetContractResponse, QueryMsg as AssetRegistryQueryMsg};
 use num::Zero;
 use prost::Message;
 use serde::Serialize;
-use xcvm_asset_registry::msg::{GetAssetContractResponse, QueryMsg as AssetRegistryQueryMsg};
 use xcvm_core::{cosmwasm::*, Amount, AssetId, Displayed, Funds, Register};
 use xcvm_proto as proto;
 
@@ -70,7 +70,7 @@ pub fn execute(
 	info: MessageInfo,
 	msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
-	assert_owner(deps.as_ref(), &info.sender)?;
+	assert_owner(deps.as_ref(), &env.contract.address, &info.sender)?;
 	match msg {
 		ExecuteMsg::Execute { program } => initiate_execution(deps, env, program),
 		ExecuteMsg::_SelfExecute { program } =>
@@ -94,8 +94,8 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
 	Ok(Response::default())
 }
 
-fn assert_owner(deps: Deps, owner: &Addr) -> Result<(), ContractError> {
-	if OWNERS.has(deps.storage, owner.clone()) {
+fn assert_owner(deps: Deps, self_addr: &Addr, owner: &Addr) -> Result<(), ContractError> {
+	if owner == self_addr || OWNERS.has(deps.storage, owner.clone()) {
 		Ok(())
 	} else {
 		Err(ContractError::NotAuthorized)
@@ -189,7 +189,7 @@ pub fn interpret_program(
 					};
 					return Ok(response.add_message(wasm_execute(
 						env.contract.address,
-						&ExecuteMsg::Execute { program },
+						&ExecuteMsg::_SelfExecute { program },
 						vec![],
 					)?))
 				}
@@ -329,6 +329,7 @@ pub fn interpret_spawn(
 	struct SpawnEvent {
 		network: u32,
 		salt: Vec<u8>,
+		security: i32,
 		assets: Funds<Displayed<u128>>,
 		program: Vec<u8>,
 	}
@@ -397,6 +398,7 @@ pub fn interpret_spawn(
 	let data = SpawnEvent {
 		network: must_ok!(ctx.network)?.network_id,
 		salt: must_ok!(ctx.salt)?.salt,
+		security: ctx.security,
 		assets: normalized_funds,
 		program: serialized_program,
 	};
@@ -518,14 +520,17 @@ fn handle_call_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use crate::msg::XCVMInstruction;
 	use cosmwasm_std::{
-		testing::{mock_dependencies, mock_env, mock_info, MockQuerier},
-		Addr, ContractResult, QuerierResult, SystemResult, WasmMsg,
+		testing::{mock_dependencies, mock_env, mock_info, MockQuerier, MOCK_CONTRACT_ADDR},
+		Addr, CanonicalAddr, ContractResult, QuerierResult, SystemResult, WasmMsg,
 	};
 	use serde::Deserialize;
-	use std::collections::BTreeMap;
-	use xcvm_core::{Amount, AssetId, BindingValue, Picasso, ETH, PICA};
+	use xcvm_core::{
+		Amount, AssetId, BindingValue, BridgeSecurity, Destination, Picasso, ETH, PICA,
+	};
+
+	type XCVMProgram = proto::XCVMProgram<CanonicalAddr>;
+	type XCVMInstruction = proto::XCVMInstruction<CanonicalAddr>;
 
 	const CW20_ADDR: &str = "cw20_addr";
 	const REGISTRY_ADDR: &str = "registry_addr";
@@ -558,6 +563,13 @@ mod tests {
 		);
 	}
 
+	fn encode_protobuf(program: proto::Program) -> Vec<u8> {
+		let mut buf = Vec::new();
+		buf.reserve(program.encoded_len());
+		program.encode(&mut buf).unwrap();
+		buf
+	}
+
 	fn wasm_querier(query: &WasmQuery) -> QuerierResult {
 		match query {
 			WasmQuery::Smart { contract_addr, .. } if contract_addr.as_str() == CW20_ADDR =>
@@ -566,7 +578,7 @@ mod tests {
 				)),
 			WasmQuery::Smart { contract_addr, .. } if contract_addr.as_str() == REGISTRY_ADDR =>
 				SystemResult::Ok(ContractResult::Ok(
-					to_binary(&xcvm_asset_registry::msg::GetAssetContractResponse {
+					to_binary(&cw_xcvm_asset_registry::msg::GetAssetContractResponse {
 						addr: Addr::unchecked(CW20_ADDR),
 					})
 					.unwrap(),
@@ -583,7 +595,7 @@ mod tests {
 		querier.update_wasm(wasm_querier);
 		deps.querier = querier;
 
-		let info = mock_info("sender", &vec![]);
+		let info = mock_info(MOCK_CONTRACT_ADDR, &vec![]);
 		let _ = instantiate(
 			deps.as_mut(),
 			mock_env(),
@@ -597,38 +609,49 @@ mod tests {
 		)
 		.unwrap();
 
+		IP_REGISTER.save(deps.as_mut().storage, &0).unwrap();
+
 		let program = XCVMProgram {
 			tag: vec![],
 			instructions: vec![XCVMInstruction::Transfer {
-				to: "asset".into(),
+				to: Destination::Relayer,
 				assets: Funds::from([
 					(Into::<AssetId>::into(PICA), Amount::absolute(1)),
 					(ETH.into(), Amount::absolute(2)),
 				]),
 			}]
 			.into(),
-		};
+		}
+		.into();
 
-		let res = execute(deps.as_mut(), mock_env(), info.clone(), ExecuteMsg::Execute { program })
-			.unwrap();
+		let program = encode_protobuf(program);
+		let res =
+			execute(deps.as_mut(), mock_env(), info.clone(), ExecuteMsg::_SelfExecute { program })
+				.unwrap();
 		let contract = Cw20Contract(Addr::unchecked(CW20_ADDR));
 		let messages = vec![
 			contract
-				.call(Cw20ExecuteMsg::Transfer { recipient: "asset".into(), amount: 1_u128.into() })
+				.call(Cw20ExecuteMsg::Transfer {
+					recipient: RELAYER_ADDR.into(),
+					amount: 1_u128.into(),
+				})
 				.unwrap(),
 			contract
-				.call(Cw20ExecuteMsg::Transfer { recipient: "asset".into(), amount: 2_u128.into() })
+				.call(Cw20ExecuteMsg::Transfer {
+					recipient: RELAYER_ADDR.into(),
+					amount: 2_u128.into(),
+				})
 				.unwrap(),
 		];
 
-		assert_eq!(res.messages.iter().map(|msg| msg.msg.clone()).collect::<Vec<_>>(), messages);
+		assert_eq!(res.messages.into_iter().map(|msg| msg.msg).collect::<Vec<_>>(), messages);
 	}
 
 	#[test]
 	fn execute_call() {
 		let mut deps = mock_dependencies();
 
-		let info = mock_info("sender", &vec![]);
+		let info = mock_info(MOCK_CONTRACT_ADDR, &vec![]);
 		let _ = instantiate(
 			deps.as_mut(),
 			mock_env(),
@@ -642,32 +665,49 @@ mod tests {
 		)
 		.unwrap();
 
-		let out_msg_1 = LateCall::wasm_execute(
+		IP_REGISTER.save(deps.as_mut().storage, &0).unwrap();
+
+		let late_call = LateCall::wasm_execute(
 			StaticBinding::None(String::from("1234")),
 			IndexedBinding::None(&"hello world".to_string()),
 			vec![],
 		)
 		.unwrap();
-		let msg = serde_json_wasm::to_string(&out_msg_1).unwrap();
+
 		let instructions = vec![
-			XCVMInstruction::Call { encoded: msg.as_bytes().into() },
-			XCVMInstruction::Transfer { to: "1234".into(), assets: Funds::empty() },
-			XCVMInstruction::Call { encoded: msg.as_bytes().into() },
+			XCVMInstruction::Call {
+				bindings: late_call.bindings.clone(),
+				encoded: late_call.encoded_call.clone(),
+			},
+			XCVMInstruction::Transfer { to: Destination::Relayer, assets: Funds::empty() },
+			XCVMInstruction::Call {
+				bindings: late_call.bindings.clone(),
+				encoded: late_call.encoded_call.clone(),
+			},
 			XCVMInstruction::Spawn {
 				network: Picasso.into(),
 				salt: vec![],
+				bridge_security: BridgeSecurity::Deterministic,
 				assets: Funds::empty(),
 				program: XCVMProgram { tag: vec![], instructions: vec![].into() },
 			},
 		];
 
 		let program = XCVMProgram { tag: vec![], instructions: instructions.clone().into() };
-		let execute_msg = ExecuteMsg::Execute {
-			program: XCVMProgram { tag: vec![], instructions: instructions[1..].to_owned().into() },
+		let execute_msg = ExecuteMsg::_SelfExecute {
+			program: encode_protobuf(
+				XCVMProgram { tag: vec![], instructions: instructions[1..].to_owned().into() }
+					.into(),
+			),
 		};
 
-		let res = execute(deps.as_mut(), mock_env(), info.clone(), ExecuteMsg::Execute { program })
-			.unwrap();
+		let res = execute(
+			deps.as_mut(),
+			mock_env(),
+			info.clone(),
+			ExecuteMsg::_SelfExecute { program: encode_protobuf(program.into()) },
+		)
+		.unwrap();
 		assert_eq!(
 			res.messages[0].msg,
 			CosmosMsg::Wasm(WasmMsg::Execute {
@@ -679,7 +719,7 @@ mod tests {
 		assert_eq!(
 			res.messages[1].msg,
 			CosmosMsg::Wasm(WasmMsg::Execute {
-				contract_addr: "cosmos2contract".into(),
+				contract_addr: MOCK_CONTRACT_ADDR.into(),
 				msg: to_binary(&execute_msg).unwrap(),
 				funds: Vec::new(),
 			})
@@ -691,7 +731,7 @@ mod tests {
 	fn execute_spawn() {
 		let mut deps = mock_dependencies();
 
-		let info = mock_info("sender", &vec![]);
+		let info = mock_info(MOCK_CONTRACT_ADDR, &vec![]);
 		let _ = instantiate(
 			deps.as_mut(),
 			mock_env(),
@@ -705,30 +745,50 @@ mod tests {
 		)
 		.unwrap();
 
+		IP_REGISTER.save(deps.as_mut().storage, &0).unwrap();
+
+		let inner_program = XCVMProgram {
+			tag: vec![],
+			instructions: vec![XCVMInstruction::Call { bindings: vec![], encoded: vec![] }].into(),
+		};
+
 		let program = XCVMProgram {
 			tag: vec![],
 			instructions: vec![XCVMInstruction::Spawn {
 				network: Picasso.into(),
 				salt: vec![],
+				bridge_security: BridgeSecurity::Deterministic,
 				assets: Funds::empty(),
-				program: XCVMProgram {
-					tag: vec![],
-					instructions: vec![XCVMInstruction::Call { encoded: vec![] }].into(),
-				},
+				program: inner_program.clone(),
 			}]
 			.into(),
-		};
-
-		let res = execute(deps.as_mut(), mock_env(), info.clone(), ExecuteMsg::Execute { program })
-			.unwrap();
-		assert_eq!(res.events[0], Event::new("xcvm.interpreter.spawn").add_attribute("origin_network_id", "1").add_attribute("origin_user_id", "[]").add_attribute("program", r#"{"network":1,"salt":[],"assets":{},"program":{"tag":[],"instructions":[{"call":{"encoded":[]}}]}}"#.to_string()));
+		}
+		.into();
+		let program = encode_protobuf(program);
+		let inner_program = encode_protobuf(inner_program.into());
+		let res =
+			execute(deps.as_mut(), mock_env(), info.clone(), ExecuteMsg::_SelfExecute { program })
+				.unwrap();
+		assert_eq!(
+			res.events[0],
+			Event::new("xcvm.interpreter.spawn")
+				.add_attribute("origin_network_id", "1")
+				.add_attribute("origin_user_id", "[]")
+				.add_attribute(
+					"program",
+					format!(
+						r#"{{"network":1,"salt":[],"security":1,"assets":[],"program":{}}}"#,
+						serde_json::to_string(&inner_program).unwrap()
+					)
+				)
+		);
 	}
 
 	#[test]
 	fn late_bindings() {
 		let mut deps = mock_dependencies();
 
-		let info = mock_info("sender", &vec![]);
+		let info = mock_info(MOCK_CONTRACT_ADDR, &vec![]);
 		let _ = instantiate(
 			deps.as_mut(),
 			mock_env(),
@@ -742,6 +802,8 @@ mod tests {
 		)
 		.unwrap();
 
+		IP_REGISTER.save(deps.as_mut().storage, &0).unwrap();
+
 		#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 		struct TestMsg {
 			part1: String,
@@ -749,7 +811,7 @@ mod tests {
 			part3: String,
 		}
 
-		let msg = LateCall::wasm_execute(
+		let late_call = LateCall::wasm_execute(
 			StaticBinding::Some(BindingValue::Register(Register::This)),
 			IndexedBinding::Some((
 				[
@@ -767,19 +829,26 @@ mod tests {
 		)
 		.unwrap();
 
-		let msg = serde_json_wasm::to_string(&msg).unwrap();
-		let instructions = vec![XCVMInstruction::Call { encoded: msg.as_bytes().into() }];
+		let instructions = vec![XCVMInstruction::Call {
+			bindings: late_call.bindings.clone(),
+			encoded: late_call.encoded_call.clone(),
+		}];
 		let program = XCVMProgram { tag: vec![], instructions: instructions.clone().into() };
-		let res = execute(deps.as_mut(), mock_env(), info.clone(), ExecuteMsg::Execute { program })
-			.unwrap();
+		let res = execute(
+			deps.as_mut(),
+			mock_env(),
+			info.clone(),
+			ExecuteMsg::_SelfExecute { program: encode_protobuf(program.into()) },
+		)
+		.unwrap();
 		let final_test_msg = TestMsg {
-			part1: String::from("cosmos2contract"),
-			part2: String::from("hello"),
-			part3: String::from("AA"),
+			part1: MOCK_CONTRACT_ADDR.into(),
+			part2: "hello".into(),
+			part3: RELAYER_ADDR.into(),
 		};
 		assert_eq!(
 			CosmosMsg::Wasm(WasmMsg::Execute {
-				contract_addr: String::from("cosmos2contract"),
+				contract_addr: MOCK_CONTRACT_ADDR.into(),
 				msg: cosmwasm_std::Binary(serde_json::to_vec(&final_test_msg).unwrap()),
 				funds: Vec::new()
 			}),

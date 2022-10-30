@@ -151,6 +151,13 @@ where
 		Ok(XCVMInstruction::Spawn {
 			network,
 			salt,
+			bridge_security: match spawn.security {
+				0 => xcvm_core::BridgeSecurity::None,
+				1 => xcvm_core::BridgeSecurity::Deterministic,
+				2 => xcvm_core::BridgeSecurity::Probabilistic,
+				3 => xcvm_core::BridgeSecurity::Optimistic,
+				_ => return Err(()),
+			},
 			assets: Funds(
 				spawn
 					.assets
@@ -259,6 +266,153 @@ impl TryFrom<Balance> for Amount {
 					),
 				))
 			},
+		}
+	}
+}
+
+// XCVM types to Protobuf conversion
+
+impl From<Amount> for Balance {
+	fn from(amount: Amount) -> Self {
+		// Note that although functionally nothing changes, there is no guarantee of getting the
+		// same protobuf when you convert protobuf to XCVM types and convert back again. Because
+		// `intercept = 0 & ratio = 0` is always converted to `Absolute`. But this can be also
+		// expressed with `Ratio` and `Unit` as well. Also, since the ratio is expanded to use
+		// denomitor `MAX_PARTS`, it also won't be the same.
+		let balance_type = if amount.is_absolute() {
+			balance::BalanceType::Absolute(Absolute { value: Some(amount.intercept.0.into()) })
+		} else if amount.is_ratio() {
+			balance::BalanceType::Ratio(Ratio {
+				nominator: Some(amount.slope.0.into()),
+				denominator: Some(MAX_PARTS.into()),
+			})
+		} else {
+			balance::BalanceType::Unit(Unit {
+				integer: Some(amount.intercept.0.into()),
+				ratio: Some(Ratio {
+					nominator: Some(amount.slope.0.into()),
+					denominator: Some(MAX_PARTS.into()),
+				}),
+			})
+		};
+		Balance { balance_type: Some(balance_type) }
+	}
+}
+
+impl From<xcvm_core::AssetId> for AssetId {
+	fn from(asset_id: xcvm_core::AssetId) -> Self {
+		AssetId { asset_id: Some(asset_id.0.into()) }
+	}
+}
+
+impl From<(xcvm_core::AssetId, xcvm_core::Amount)> for Asset {
+	fn from((asset_id, amount): (xcvm_core::AssetId, xcvm_core::Amount)) -> Self {
+		Asset { asset_id: Some(asset_id.into()), balance: Some(amount.into()) }
+	}
+}
+
+impl From<xcvm_core::BindingValue> for binding_value::Type {
+	fn from(binding_value: xcvm_core::BindingValue) -> Self {
+		match binding_value {
+			xcvm_core::BindingValue::Register(xcvm_core::Register::Ip) =>
+				binding_value::Type::Ip(Ip { id: 0 }),
+			xcvm_core::BindingValue::Register(xcvm_core::Register::Relayer) =>
+				binding_value::Type::Relayer(Relayer { id: 0 }),
+			xcvm_core::BindingValue::Register(xcvm_core::Register::Result) =>
+				binding_value::Type::Result(Result { result: 0 }),
+			xcvm_core::BindingValue::Register(xcvm_core::Register::This) =>
+				binding_value::Type::Self_(Self_ { self_: 0 }),
+			xcvm_core::BindingValue::Asset(asset_id) =>
+				binding_value::Type::AssetId(asset_id.into()),
+		}
+	}
+}
+
+impl From<xcvm_core::BindingValue> for BindingValue {
+	fn from(binding_value: xcvm_core::BindingValue) -> Self {
+		BindingValue { r#type: Some(binding_value.into()) }
+	}
+}
+
+impl From<xcvm_core::NetworkId> for Network {
+	fn from(network_id: xcvm_core::NetworkId) -> Self {
+		Network { network_id: network_id.0 as u32 }
+	}
+}
+
+impl<Account_> From<xcvm_core::Destination<Account_>> for transfer::AccountType
+where
+	Vec<u8>: From<Account_>,
+{
+	fn from(destination: xcvm_core::Destination<Account_>) -> Self {
+		match destination {
+			Destination::Account(account) =>
+				transfer::AccountType::Account(Account { account: account.into() }),
+			Destination::Relayer => transfer::AccountType::Relayer(Relayer { id: 0 }),
+		}
+	}
+}
+
+impl From<(u32, xcvm_core::BindingValue)> for Binding {
+	fn from((position, binding_value): (u32, xcvm_core::BindingValue)) -> Self {
+		Binding { position, binding_value: Some(binding_value.into()) }
+	}
+}
+
+impl<Account> From<XCVMInstruction<Account>> for instruction::Instruction
+where
+	Vec<u8>: From<Account>,
+{
+	fn from(instruction: XCVMInstruction<Account>) -> Self {
+		match instruction {
+			xcvm_core::Instruction::Transfer { to, assets } =>
+				instruction::Instruction::Transfer(Transfer {
+					assets: assets.0.into_iter().map(|asset| asset.into()).collect(),
+					account_type: Some(to.into()),
+				}),
+			xcvm_core::Instruction::Call { bindings, encoded } =>
+				instruction::Instruction::Call(Call {
+					payload: encoded,
+					bindings: Some(Bindings {
+						bindings: bindings.into_iter().map(|binding| binding.into()).collect(),
+					}),
+				}),
+			xcvm_core::Instruction::Spawn { network, bridge_security, salt, assets, program } =>
+				instruction::Instruction::Spawn(Spawn {
+					network: Some(network.into()),
+					security: bridge_security as i32,
+					salt: Some(Salt { salt }),
+					program: Some(program.into()),
+					assets: assets.0.into_iter().map(|asset| asset.into()).collect(),
+				}),
+			xcvm_core::Instruction::Query { network, salt } =>
+				instruction::Instruction::Query(Query {
+					network: Some(network.into()),
+					salt: Some(Salt { salt }),
+				}),
+		}
+	}
+}
+
+impl<Account> From<XCVMInstruction<Account>> for Instruction
+where
+	Vec<u8>: From<Account>,
+{
+	fn from(instruction: XCVMInstruction<Account>) -> Self {
+		Instruction { instruction: Some(instruction.into()) }
+	}
+}
+
+impl<Account> From<XCVMProgram<Account>> for Program
+where
+	Vec<u8>: From<Account>,
+{
+	fn from(program: XCVMProgram<Account>) -> Self {
+		Program {
+			tag: program.tag,
+			instructions: Some(Instructions {
+				instructions: program.instructions.into_iter().map(|instr| instr.into()).collect(),
+			}),
 		}
 	}
 }

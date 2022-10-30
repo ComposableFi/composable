@@ -1,7 +1,7 @@
 [package]
 authors = ["Composable Developers"]
 edition = "2021"
-name = "xcvm-router"
+name = "cw-xcvm-router"
 version = "0.1.0"
 
 exclude = [
@@ -27,9 +27,9 @@ hex = "0.4"
 schemars = "0.8.8"
 serde = { version = "1.0.137", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.31" }
-xcvm-asset-registry = { path = "../asset-registry", features = ["library"] }
+cw-xcvm-asset-registry = { path = "../asset-registry", features = ["library"] }
 xcvm-core = { path = "../../../lib/core", features = ["std"] }
-xcvm-interpreter = { path = "../interpreter", features = ["library"] }
+cw-xcvm-interpreter = { path = "../interpreter", features = ["library"] }
 
 [dev-dependencies]
 cosmwasm-schema = "1.0.0"

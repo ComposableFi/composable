@@ -152,10 +152,23 @@ impl Amount {
 	pub fn absolute(value: u128) -> Self {
 		Self { intercept: Displayed(value), slope: Displayed(0) }
 	}
+
 	/// A ratio amount, expressed in u128 parts (x / u128::MAX)
 	#[inline]
 	pub fn ratio(parts: u128) -> Self {
 		Self { intercept: Displayed(0), slope: Displayed(parts) }
+	}
+
+	/// Helper function to see if the amount is absolute
+	#[inline]
+	pub fn is_absolute(&self) -> bool {
+		self.slope.0 == 0
+	}
+
+	/// Helper function to see if the amount is ratio
+	#[inline]
+	pub fn is_ratio(&self) -> bool {
+		self.intercept.0 == 0
 	}
 }
 

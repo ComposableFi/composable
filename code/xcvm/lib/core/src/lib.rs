@@ -45,6 +45,7 @@ where
 		self,
 		tag: Vec<u8>,
 		salt: Vec<u8>,
+		bridge_security: BridgeSecurity,
 		assets: Assets,
 		f: F,
 	) -> Result<ProgramBuilder<FinalNetwork, Account, Assets>, E>
@@ -61,6 +62,7 @@ where
 		let mut builder =
 			ProgramBuilder { tag: self.tag, instructions: self.instructions, _marker: PhantomData };
 		builder.instructions.push_back(Instruction::Spawn {
+			bridge_security,
 			salt,
 			assets,
 			network: SpawningNetwork::ID,

@@ -87,7 +87,7 @@ message BindingValue {
   oneof type {
     Self self = 1;
     Relayer relayer = 2;
-    uint32 result = 3;
+    Result result = 3;
     AssetAmount assetAmount = 4;
     AssetId assetId = 5;
     Ip ip = 6;

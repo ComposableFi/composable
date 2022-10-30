@@ -3,7 +3,7 @@ authors = ["Composable Developers"]
 description = "XCVM interpreter contract"
 edition = "2021"
 license = "Apache-2.0"
-name = "xcvm-interpreter"
+name = "cw-xcvm-interpreter"
 repository = "https://github.com/ComposableFi/composable"
 version = "0.1.0"
 
@@ -32,7 +32,7 @@ serde = { version = "1.0.137", default-features = false, features = ["derive"] }
 serde-json-wasm = { git = "https://github.com/hussein-aitlahcen/serde-json-wasm", rev = "1608a13d2a2ba90605d9626a51ff6667aca5a2d6" }
 serde_json = "1"
 thiserror = { version = "1.0.31" }
-xcvm-asset-registry = { path = "../asset-registry", features = ["library"] }
+cw-xcvm-asset-registry = { path = "../asset-registry", features = ["library"] }
 xcvm-core = { path = "../../../lib/core", features = ["cosmwasm", "std"] }
 xcvm-proto = { path = "../../../lib/proto" }
 prost = { version = "0.11", default-features = false, features = ["prost-derive"]}
