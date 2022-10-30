@@ -34,21 +34,24 @@
 	clippy::disallowed_types
 )]
 
-#[cfg(any(feature = "runtime-benchmarks", test))]
+#[cfg(any(test, feature = "runtime-benchmarks"))]
 mod benchmarking;
-mod prelude;
+
+#[cfg(test)]
+pub(crate) mod runtime;
+
 #[cfg(test)]
 mod test;
+#[cfg(any(feature = "runtime-benchmarks", test))]
+pub(crate) mod test_helpers;
+
 mod validation;
+
+pub mod prelude;
 pub mod weights;
 
-use sp_runtime::{traits::Saturating, SaturatedConversion};
-use sp_std::{
-	cmp,
-	ops::{Div, Sub},
-};
-
 use crate::prelude::*;
+
 use composable_support::math::safe::{SafeDiv, SafeMul, SafeSub};
 use composable_traits::staking::{Reward, RewardUpdate};
 use frame_support::{
@@ -59,6 +62,11 @@ use frame_support::{
 	transactional, BoundedBTreeMap,
 };
 pub use pallet::*;
+use sp_runtime::{traits::Saturating, SaturatedConversion};
+use sp_std::{
+	cmp,
+	ops::{Div, Sub},
+};
 
 #[frame_support::pallet]
 pub mod pallet {

@@ -1,8 +1,8 @@
 #![allow(clippy::expect_fun_call)] // dumb lint for tests
 
-use core::fmt::Debug;
+use core::{clone::Clone, cmp::PartialEq, fmt::Debug, iter::FlatMap};
 
-use frame_support::{assert_ok, pallet_prelude::Member, Parameter};
+use frame_support::{assert_ok, pallet_prelude::Member, traits::OriginTrait, Parameter};
 use frame_system::{Config, EventRecord};
 use sp_runtime::{DispatchError, FixedPointNumber, FixedU128};
 
@@ -41,186 +41,188 @@ pub fn default_acceptable_computation_error(x: u128, y: u128) -> Result<(), Fixe
 	acceptable_computation_error(x, y, DEFAULT_PRECISION, DEFAULT_EPSILON)
 }
 
-/// Asserts that the last event in the runtime is the expected event.
-pub fn assert_last_event<Runtime: Config>(generic_event: <Runtime as Config>::Event) {
-	let events = frame_system::Pallet::<Runtime>::events();
-	let system_event: <Runtime as frame_system::Config>::Event = generic_event;
-	// compare to the last event record
-	let EventRecord { event, .. } = &events.last().expect("No events present!");
-	assert_eq!(event, &system_event);
-}
+type EventRecordOf<T> =
+	EventRecord<<T as frame_system::Config>::Event, <T as frame_system::Config>::Hash>;
 
-/// Asserts that the last event in the runtime is the expected event.
-///
-/// Useful if not all of the information in the event needs to be checked:
-///
-/// ```rust,ignore
-/// assert_last_event_with::<Runtime, _>(
-///     Pallet::extrinsic(),
-///     |event| matches!(
-///         event,
-///         pallet::Event::<Runtime>::SomethingHappened {
-///             field,
-///             ..
-///         } if field == expected_field
-///     ).then_some(())
-/// )
-/// ```
-///
-/// It is also possible to return a value from the provided function, for example to retrieve a
-/// generated id for later use:
-///
-/// ```rust,ignore
-/// assert_last_event_with::<Runtime, _>(
-///     Pallet::extrinsic(),
-///     |event| if let pallet::Event::<Runtime>::SomethingHappened {
-///         field,
-///         generated_id,
-///     } = event {
-///         assert!(field);
-///         Some(generated_id)
-///     } else {
-///         None
-///     },
-/// )
-/// ```
-pub fn assert_last_event_with<Runtime, RuntimeEvent, PalletEvent, R>(
-	f: impl FnOnce(PalletEvent) -> Option<R>,
-) -> R
+// NOTE/FIXME(benluelo): These trait bounds can be simplified quite a bit once this issue is
+// resolved: https://github.com/rust-lang/rust/issues/20671#issuecomment-529752828
+pub trait RuntimeTrait<PalletEvent>: Config
 where
-	Runtime: Config<Event = RuntimeEvent>,
-	PalletEvent: sp_std::fmt::Debug + Clone,
-	RuntimeEvent: TryInto<PalletEvent> + Parameter + Member + Debug + Clone,
-	<RuntimeEvent as TryInto<PalletEvent>>::Error: sp_std::fmt::Debug,
+	<Self as frame_system::Config>::Event:
+		Parameter + Member + Debug + Clone + TryInto<PalletEvent> + From<PalletEvent>,
+	<<Self as frame_system::Config>::Event as TryInto<PalletEvent>>::Error: Debug,
+	<Self as frame_system::Config>::Origin:
+		OriginTrait<AccountId = <Self as frame_system::Config>::AccountId>,
+	PalletEvent: Clone + Debug + PartialEq,
 {
-	// compare to the last event record
-	let EventRecord { event, .. } =
-		frame_system::Pallet::<Runtime>::events().pop().expect("No events present!");
-
-	match event.clone().try_into() {
-		Ok(pallet_event) => match f(pallet_event.clone()) {
-			Some(r) => r,
-			None => panic!("expected event was not found; found {pallet_event:#?}"),
-		},
-		Err(_) => panic!(
-			r#"last event was not from this pallet
-found {event:#?}"#
-		),
+	/// Asserts that the last event in the runtime is the expected event.
+	fn assert_last_event(pallet_event: PalletEvent) {
+		let events = frame_system::Pallet::<Self>::events();
+		// compare to the last event record
+		let EventRecord { event, .. } = &events.last().expect("No events present!");
+		assert_eq!(event, &pallet_event.into());
 	}
-}
 
-/// Asserts the event wasn't dispatched.
-pub fn assert_no_event<Runtime: Config>(event: <Runtime as Config>::Event) {
-	assert!(
-		frame_system::Pallet::<Runtime>::events()
-			.iter()
-			.all(|record| record.event != event),
-		"Provided event was dispatched unexpectedly!\n\nEvent checked: {event:#?}"
-	);
-}
+	/// Asserts that the last event in the runtime is the expected event.
+	///
+	/// Useful if not all of the information in the event needs to be checked:
+	///
+	/// ```rust,ignore
+	/// assert_last_event_with::<Runtime, _>(
+	///     Pallet::extrinsic(),
+	///     |event| matches!(
+	///         event,
+	///         pallet::Event::<Runtime>::SomethingHappened {
+	///             field,
+	///             ..
+	///         } if field == expected_field
+	///     ).then_some(())
+	/// )
+	/// ```
+	///
+	/// It is also possible to return a value from the provided function, for example to retrieve a
+	/// generated id for later use:
+	///
+	/// ```rust,ignore
+	/// assert_last_event_with::<Runtime, _>(
+	///     Pallet::extrinsic(),
+	///     |event| if let pallet::Event::<Runtime>::SomethingHappened {
+	///         field,
+	///         generated_id,
+	///     } = event {
+	///         assert!(field);
+	///         Some(generated_id)
+	///     } else {
+	///         None
+	///     },
+	/// )
+	/// ```
+	fn assert_last_event_with<R>(f: impl FnOnce(PalletEvent) -> Option<R>) -> R {
+		// compare to the last event record
+		let EventRecord { event, .. } =
+			frame_system::Pallet::<Self>::events().pop().expect("No events present!");
 
-/// Asserts that the outcome of an extrinsic is `Ok`, and that the last event is the specified
-/// event.
-///
-/// # Example
-///
-/// ```rust,ignore
-/// assert_extrinsic_event::<Runtime>(
-///     Pallet::extrinsic(),
-///     pallet::Event::<Runtime>::SomethingHappened {
-///         ..
-///     },
-/// );
-pub fn assert_extrinsic_event<Runtime, RuntimeEvent, PalletEvent, T, E>(
-	result: sp_std::result::Result<T, E>,
-	event: PalletEvent,
-) where
-	Runtime: Config<Event = RuntimeEvent>,
-	PalletEvent: sp_std::fmt::Debug + Clone,
-	RuntimeEvent: Parameter + Member + Debug + Clone + From<PalletEvent>,
-	RuntimeEvent: TryInto<PalletEvent>,
-	<RuntimeEvent as TryInto<PalletEvent>>::Error: sp_std::fmt::Debug,
-	T: Debug,
-	E: Into<DispatchError> + Debug,
-{
-	assert_ok!(result);
-	assert_last_event::<Runtime>(event.into());
-}
+		match event.clone().try_into() {
+			Ok(pallet_event) => match f(pallet_event.clone()) {
+				Some(r) => r,
+				None => panic!("expected event was not found; found {pallet_event:#?}"),
+			},
+			Err(_) => panic!(
+				r#"
+last event was not from this pallet
+found {event:#?}"#
+			),
+		}
+	}
 
-/// Asserts that the outcome of an extrinsic is `Ok`, and that the last event is the specified
-/// event.
-///
-/// # Example
-///
-/// ```rust,ignore
-/// assert_extrinsic_event::<Runtime>(
-///     Pallet::extrinsic(),
-///     pallet::Event::<Runtime>::SomethingHappened {
-///         ..
-///     },
-/// );
-pub fn assert_extrinsic_event_with<Runtime, RuntimeEvent, PalletEvent, T, E, R>(
-	result: sp_std::result::Result<T, E>,
-	f: impl FnOnce(PalletEvent) -> Option<R>,
-) -> R
-where
-	Runtime: Config<Event = RuntimeEvent>,
-	PalletEvent: sp_std::fmt::Debug + Clone,
-	RuntimeEvent: Parameter + Member + Debug + Clone,
-	RuntimeEvent: TryInto<PalletEvent>,
-	<RuntimeEvent as TryInto<PalletEvent>>::Error: sp_std::fmt::Debug,
-	T: Debug,
-	E: Into<DispatchError> + Debug,
-{
-	assert_ok!(result);
-	assert_last_event_with::<Runtime, RuntimeEvent, PalletEvent, R>(f)
-}
+	/// Asserts the event wasn't dispatched.
+	fn assert_no_event(event: PalletEvent) {
+		assert!(
+			Self::pallet_events().all(|e| e != event),
+			"Provided event was dispatched unexpectedly!\n\nEvent checked: {event:#?}"
+		);
+	}
 
-/// Iterates over all of the events currently in the runtime and calls the provided function on all
-/// of the `PalletEvent` events, returning an iterator over the the returned values of all of the
-/// found events.
-pub fn assert_event_with<Runtime, RuntimeEvent, PalletEvent, R>(
-	f: impl FnMut(PalletEvent) -> Option<R>,
-) -> impl Iterator<Item = R>
-where
-	Runtime: Config<Event = RuntimeEvent>,
-	RuntimeEvent: Parameter + Member + Debug + Clone,
-	RuntimeEvent: TryInto<PalletEvent>,
-	<RuntimeEvent as TryInto<PalletEvent>>::Error: sp_std::fmt::Debug,
-{
-	pallet_events::<Runtime, RuntimeEvent, PalletEvent>().flat_map(f)
-}
+	/// Asserts that the outcome of an extrinsic is `Ok`, and that the last event is the specified
+	/// event.
+	///
+	/// # Example
+	///
+	/// ```rust,ignore
+	/// assert_extrinsic_event::<Runtime>(
+	///     Pallet::extrinsic(),
+	///     pallet::Event::<Runtime>::SomethingHappened {
+	///         ..
+	///     },
+	/// );
+	fn assert_extrinsic_event<T, E>(result: sp_std::result::Result<T, E>, event: PalletEvent)
+	where
+		T: Debug,
+		E: Into<DispatchError> + Debug,
+	{
+		assert_ok!(result);
 
-pub fn pallet_events<Runtime, RuntimeEvent, PalletEvent>() -> impl Iterator<Item = PalletEvent>
-where
-	Runtime: Config<Event = RuntimeEvent>,
-	RuntimeEvent: Parameter + Member + Debug + Clone,
-	RuntimeEvent: TryInto<PalletEvent>,
-	<RuntimeEvent as TryInto<PalletEvent>>::Error: sp_std::fmt::Debug,
-{
-	frame_system::Pallet::<Runtime>::events()
-		.into_iter()
-		.flat_map(|EventRecord { event, .. }| event.try_into().ok())
-}
+		let events = frame_system::Pallet::<Self>::events();
+		let event_record = events.last().expect("No events present!");
 
-/// Iterates over all of the events currently in the runtime and calls the provided function on all
-/// of the `PalletEvent` events, returning an iterator over the the returned values of all of the
-/// found events.
-pub fn assert_event<Runtime, RuntimeEvent, PalletEvent>(pallet_event: PalletEvent)
-where
-	Runtime: Config<Event = RuntimeEvent>,
-	RuntimeEvent: Parameter + Member + Debug + Clone,
-	RuntimeEvent: TryInto<PalletEvent>,
-	<RuntimeEvent as TryInto<PalletEvent>>::Error: sp_std::fmt::Debug,
-	PalletEvent: PartialEq + sp_std::fmt::Debug,
-{
-	match pallet_events::<Runtime, RuntimeEvent, PalletEvent>().find(|e| e == &pallet_event) {
-		Some(_) => {},
-		None => panic!(
-			r#"
+		assert_eq!(event_record.event, event.into());
+	}
+
+	/// Asserts that the outcome of an extrinsic is `Ok`, and that the last event is the specified
+	/// event.
+	///
+	/// # Example
+	///
+	/// ```rust,ignore
+	/// assert_extrinsic_event::<Runtime>(
+	///     Pallet::extrinsic(),
+	///     pallet::Event::<Runtime>::SomethingHappened {
+	///         ..
+	///     },
+	/// );
+	fn assert_extrinsic_event_with<T, E, R>(
+		result: sp_std::result::Result<T, E>,
+		f: impl FnOnce(PalletEvent) -> Option<R>,
+	) -> R
+	where
+		T: Debug,
+		E: Into<DispatchError> + Debug,
+	{
+		assert_ok!(result);
+		Self::assert_last_event_with::<R>(f)
+	}
+
+	/// Iterates over all of the events currently in the runtime and calls the provided function on
+	/// all of the `PalletEvent` events, returning an iterator over the the returned values of all
+	/// of the found events.
+	fn assert_event(pallet_event: PalletEvent) {
+		match Self::pallet_events().find(|e| e == &pallet_event) {
+			Some(_) => {},
+			None => panic!(
+				r#"
 expected event wasn't emitted
 event checked: {pallet_event:#?}
 "#
-		),
+			),
+		}
 	}
+
+	/// Iterates over all of the events currently in the runtime and calls the provided function on
+	/// all of the `PalletEvent` events, returning an iterator over the the returned values of all
+	/// of the found events.
+	fn assert_event_with<R, F: FnMut(PalletEvent) -> Option<R>>(
+		f: F,
+	) -> FlatMap<
+		FlatMap<
+			sp_std::vec::IntoIter<EventRecordOf<Self>>,
+			Option<PalletEvent>,
+			fn(EventRecordOf<Self>) -> Option<PalletEvent>,
+		>,
+		Option<R>,
+		F,
+	> {
+		Self::pallet_events().flat_map(f)
+	}
+
+	fn pallet_events() -> FlatMap<
+		sp_std::vec::IntoIter<EventRecordOf<Self>>,
+		Option<PalletEvent>,
+		fn(EventRecordOf<Self>) -> Option<PalletEvent>,
+	> {
+		frame_system::Pallet::<Self>::events()
+			.into_iter()
+			.flat_map(|EventRecord { event, .. }| event.try_into().ok())
+	}
+}
+
+impl<Runtime, PalletEvent> RuntimeTrait<PalletEvent> for Runtime
+where
+	Runtime: Config, /* <Event = RuntimeEvent> */
+	<Runtime as frame_system::Config>::Event:
+		Parameter + Member + Debug + Clone + TryInto<PalletEvent> + From<PalletEvent>,
+	<<Runtime as Config>::Event as TryInto<PalletEvent>>::Error: Debug,
+	<Runtime as frame_system::Config>::Origin:
+		OriginTrait<AccountId = <Runtime as frame_system::Config>::AccountId>,
+	PalletEvent: Clone + Debug + PartialEq,
+{
 }

@@ -31,7 +31,7 @@ use composable_tests_helpers::{
 };
 use proptest::prelude::*;
 
-use composable_tests_helpers::test::{block::process_and_progress_blocks, helper::assert_no_event};
+use composable_tests_helpers::test::{block::process_and_progress_blocks, helper::RuntimeTrait};
 use composable_traits::{oracle::RewardTracker, time::MS_PER_YEAR_NAIVE};
 use sp_core::H256;
 
@@ -43,7 +43,7 @@ prop_compose! {
 			min_answers in 1..MaxAnswerBound::get(),
 			max_answers in 1..MaxAnswerBound::get(),
 			block_interval in (StalePrice::get()+1)..(BlockNumber::MAX/16),
-			threshold in 0..100u8,
+			threshold in 0..100_u8,
 			reward in 0..u128::MAX,
 			slash in 0..u128::MAX,
 		) -> AssetInfo<Percent, BlockNumber, Balance> {
@@ -272,7 +272,7 @@ mod add_asset_and_info {
 
 				// If the following check fails, that means that the mock.rs was changed,
 				// and therefore this test should also be changed.
-				prop_assert_eq!(MaxAssetsCount::get(), 2u32);
+				prop_assert_eq!(MaxAssetsCount::get(), 2_u32);
 
 				prop_assert_ok!(Oracle::add_asset_and_info(
 					Origin::signed(root_account),
@@ -1417,7 +1417,7 @@ fn update_price() {
 		do_price_update(4, 2);
 
 		// `PriceChanged` Event should NOT be emitted.
-		assert_no_event::<Test>(Event::Oracle(crate::Event::PriceChanged(0, 101)));
+		Test::assert_no_event(Event::Oracle(crate::Event::PriceChanged(0, 101)));
 
 		// Add PICA info.
 		assert_ok!(Oracle::add_asset_and_info(
@@ -1450,7 +1450,7 @@ fn update_price() {
 
 		// `PriceChanged` event for last price (100) should NOT be emitted, as prices didn't
 		// change
-		assert_no_event::<Test>(Event::Oracle(crate::Event::PriceChanged(1, 100)));
+		Test::assert_no_event(Event::Oracle(crate::Event::PriceChanged(1, 100)));
 	});
 }
 

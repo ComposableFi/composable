@@ -1,7 +1,12 @@
-use crate::test::prelude::*;
+use composable_tests_helpers::test::currency::PICA;
 use composable_traits::{
 	account_proxy::ProxyType,
 	governance::{GovernanceRegistry, SignedRawOrigin},
+};
+use frame_support::pallet_prelude::*;
+use sp_core::{
+	sr25519::{Public, Signature},
+	H256,
 };
 
 use composable_traits::fnft::FnftAccountProxyType;
@@ -11,13 +16,14 @@ use frame_support::{
 	PalletId,
 };
 use frame_system::{EnsureRoot, EnsureSignedBy};
-use hex_literal::hex;
 use orml_traits::{parameter_type_with_key, GetByKey, LockIdentifier};
 use sp_core::sr25519;
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup},
+	traits::{BlakeTwo256, IdentifyAccount, IdentityLookup, Verify},
 };
+
+pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -26,14 +32,20 @@ pub type Balance = u128;
 pub type Amount = i128;
 pub type FinancialNftInstanceId = u64;
 
-pub static ALICE: Public =
-	Public(hex!("0000000000000000000000000000000000000000000000000000000000000000"));
-pub static BOB: Public =
-	Public(hex!("0000000000000000000000000000000000000000000000000000000000000001"));
-pub static CHARLIE: Public =
-	Public(hex!("0000000000000000000000000000000000000000000000000000000000000002"));
-pub static DAVE: Public =
-	Public(hex!("0000000000000000000000000000000000000000000000000000000000000003"));
+type CurrencyId = u128;
+
+pub const ALICE: Public = Public([
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+]);
+pub const BOB: Public = Public([
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+]);
+pub const CHARLIE: Public = Public([
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2,
+]);
+pub const DAVE: Public = Public([
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
+]);
 
 ord_parameter_types! {
 	pub const RootAccount: AccountId = ALICE;
