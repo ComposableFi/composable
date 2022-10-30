@@ -100,7 +100,7 @@ where
 
 	<FullClient<RuntimeApi, Executor> as ProvideRuntimeApi<OpaqueBlock>>::Api::extend_with_ibc_api(
 		&mut io,
-		deps.clone(),
+		deps,
 	)?;
 
 	// <FullClient<RuntimeApi, Executor> as
