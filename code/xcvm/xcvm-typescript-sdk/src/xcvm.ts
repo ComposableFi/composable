@@ -96,7 +96,7 @@ export class XCVM {
         highbits = BigNumber.from("0").toString()
         lowbits = BigNumber.from("0x" + hexbytes).toString();
       }
-      return this.UnitMessage.create({highBits: highbits, lowBits: lowbits});
+      return this.Uint128Message.create({highBits: highbits, lowBits: lowbits});
   }
 
   public createRatio(nominator: Number | string, denominator: Number | string): Message<{}> {

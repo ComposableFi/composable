@@ -73,6 +73,10 @@ message Result {
   uint32 result = 1;
 }
 
+message Result {
+  uint32 result = 1;
+}
+
 
 message AssetAmount {
   AssetId assetId = 1;
@@ -90,7 +94,7 @@ message BindingValue {
   oneof type {
     Self self = 1;
     Relayer relayer = 2;
-    uint32 result = 3;
+    Result result = 3;
     AssetAmount assetAmount = 4;
     AssetId assetId = 5;
     IpRegister ipRegister = 6;
