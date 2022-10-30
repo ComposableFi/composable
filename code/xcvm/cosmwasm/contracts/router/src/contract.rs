@@ -12,11 +12,11 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 use cw20::{Cw20Contract, Cw20ExecuteMsg};
 use cw_utils::ensure_from_older_version;
-use xcvm_asset_registry::msg::{GetAssetContractResponse, QueryMsg as AssetRegistryQueryMsg};
-use xcvm_core::{Bridge, BridgeSecurity, Displayed, Funds, NetworkId};
-use xcvm_interpreter::msg::{
+use cw_xcvm_asset_registry::msg::{GetAssetContractResponse, QueryMsg as AssetRegistryQueryMsg};
+use cw_xcvm_interpreter::msg::{
 	ExecuteMsg as InterpreterExecuteMsg, InstantiateMsg as InterpreterInstantiateMsg,
 };
+use xcvm_core::{Bridge, BridgeSecurity, Displayed, Funds, NetworkId};
 
 const CONTRACT_NAME: &str = "composable:xcvm-router";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -30,12 +30,13 @@ pub fn instantiate(
 	msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
 	set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-	let addr = deps.api.addr_validate(&msg.registry_address)?;
+	let registry_address = deps.api.addr_validate(&msg.registry_address)?;
 	ADMIN.save(deps.storage, &info.sender)?;
 	CONFIG.save(
 		deps.storage,
 		&Config {
-			registry_address: addr,
+			registry_address,
+			relayer_address: info.sender,
 			interpreter_code_id: msg.interpreter_code_id,
 			network_id: msg.network_id,
 		},
@@ -105,8 +106,12 @@ pub fn handle_run(
 		Err(_) => {
 			// There is no interpreter, so the bridge security must be at least `Deterministic`
 			// or the message should be coming from a local origin
-			let Config { registry_address, interpreter_code_id, network_id: router_network_id } =
-				CONFIG.load(deps.storage)?;
+			let Config {
+				registry_address,
+				relayer_address,
+				interpreter_code_id,
+				network_id: router_network_id,
+			} = CONFIG.load(deps.storage)?;
 			if network_id != router_network_id {
 				assert_bridge_security(bridge, BridgeSecurity::Deterministic)?;
 			}
@@ -115,6 +120,7 @@ pub fn handle_run(
 				code_id: interpreter_code_id,
 				msg: to_binary(&InterpreterInstantiateMsg {
 					registry_address: registry_address.into_string(),
+					relayer_address: relayer_address.into_string(),
 					network_id,
 					user_id: user_id.clone(),
 				})?,
@@ -246,18 +252,25 @@ mod tests {
 		testing::{mock_dependencies, mock_env, mock_info, MockQuerier, MOCK_CONTRACT_ADDR},
 		wasm_execute, Addr, ContractResult, QuerierResult, SystemResult,
 	};
-	use xcvm_core::{Amount, AssetId, Picasso, ETH, PICA};
-	use xcvm_interpreter::msg::{XCVMInstruction, XCVMProgram};
+	use prost::Message;
+	use proto::{XCVMInstruction, XCVMProgram};
+	use xcvm_core::{Amount, AssetId, BridgeProtocol, Destination, Picasso, ETH, PICA};
+	use xcvm_proto as proto;
 
 	const CW20_ADDR: &str = "cw20addr";
 	const REGISTRY_ADDR: &str = "registryaddr";
+	const RELAYER_ADDR: &str = "relayeraddr";
 
 	#[test]
 	fn proper_instantiation() {
 		let mut deps = mock_dependencies();
 
-		let msg = InstantiateMsg { registry_address: "addr".to_string(), interpreter_code_id: 1 };
-		let info = mock_info("sender", &vec![]);
+		let msg = InstantiateMsg {
+			registry_address: REGISTRY_ADDR.to_string(),
+			interpreter_code_id: 1,
+			network_id: Picasso.into(),
+		};
+		let info = mock_info(RELAYER_ADDR, &vec![]);
 
 		let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 		assert_eq!(0, res.messages.len());
@@ -265,7 +278,12 @@ mod tests {
 		// Make sure that the storage is empty
 		assert_eq!(
 			CONFIG.load(&deps.storage).unwrap(),
-			Config { registry_address: Addr::unchecked("addr"), interpreter_code_id: 1 }
+			Config {
+				registry_address: Addr::unchecked(REGISTRY_ADDR),
+				relayer_address: Addr::unchecked(RELAYER_ADDR),
+				interpreter_code_id: 1,
+				network_id: Picasso.into()
+			}
 		);
 	}
 
@@ -277,7 +295,7 @@ mod tests {
 				)),
 			WasmQuery::Smart { contract_addr, .. } if contract_addr.as_str() == REGISTRY_ADDR =>
 				SystemResult::Ok(ContractResult::Ok(
-					to_binary(&xcvm_asset_registry::msg::GetAssetContractResponse {
+					to_binary(&cw_xcvm_asset_registry::msg::GetAssetContractResponse {
 						addr: Addr::unchecked(CW20_ADDR),
 					})
 					.unwrap(),
@@ -287,6 +305,13 @@ mod tests {
 		}
 	}
 
+	fn encode_protobuf(program: proto::Program) -> Vec<u8> {
+		let mut buf = Vec::new();
+		buf.reserve(program.encoded_len());
+		program.encode(&mut buf).unwrap();
+		buf
+	}
+
 	#[test]
 	fn execute_run_phase1() {
 		let mut deps = mock_dependencies();
@@ -294,19 +319,23 @@ mod tests {
 		querier.update_wasm(wasm_querier);
 		deps.querier = querier;
 
-		let info = mock_info("sender", &vec![]);
+		let info = mock_info(RELAYER_ADDR, &vec![]);
 		let _ = instantiate(
 			deps.as_mut(),
 			mock_env(),
 			info.clone(),
-			InstantiateMsg { registry_address: REGISTRY_ADDR.into(), interpreter_code_id: 1 },
+			InstantiateMsg {
+				registry_address: REGISTRY_ADDR.into(),
+				interpreter_code_id: 1,
+				network_id: Picasso.into(),
+			},
 		)
 		.unwrap();
 
 		let program = XCVMProgram {
 			tag: vec![],
 			instructions: vec![XCVMInstruction::Transfer {
-				to: "asset".into(),
+				to: Destination::<Vec<u8>>::Relayer,
 				assets: Funds::from([
 					(Into::<AssetId>::into(PICA), Amount::absolute(1)),
 					(ETH.into(), Amount::absolute(2)),
@@ -314,7 +343,9 @@ mod tests {
 			}]
 			.into(),
 		};
-		let interpreter_execute_msg = InterpreterExecuteMsg::Execute { program };
+
+		let interpreter_execute_msg =
+			InterpreterExecuteMsg::Execute { program: encode_protobuf(program.into()) };
 
 		let funds =
 			Funds::<Displayed<u128>>::from([(Into::<AssetId>::into(PICA), Displayed(1000_u128))]);
@@ -324,6 +355,10 @@ mod tests {
 			user_id: vec![1],
 			interpreter_execute_msg,
 			funds: funds.clone(),
+			bridge: Bridge {
+				security: BridgeSecurity::Deterministic,
+				protocol: BridgeProtocol::IBC,
+			},
 		};
 
 		let res = execute(deps.as_mut(), mock_env(), info.clone(), run_msg.clone()).unwrap();
@@ -333,6 +368,7 @@ mod tests {
 			code_id: 1,
 			msg: to_binary(&InterpreterInstantiateMsg {
 				registry_address: REGISTRY_ADDR.to_string(),
+				relayer_address: RELAYER_ADDR.to_string(),
 				network_id: Picasso.into(),
 				user_id: vec![1],
 			})
@@ -363,7 +399,11 @@ mod tests {
 			deps.as_mut(),
 			mock_env(),
 			info.clone(),
-			InstantiateMsg { registry_address: REGISTRY_ADDR.into(), interpreter_code_id: 1 },
+			InstantiateMsg {
+				registry_address: REGISTRY_ADDR.into(),
+				interpreter_code_id: 1,
+				network_id: Picasso.into(),
+			},
 		)
 		.unwrap();
 
@@ -378,7 +418,7 @@ mod tests {
 		let program = XCVMProgram {
 			tag: vec![],
 			instructions: vec![XCVMInstruction::Transfer {
-				to: "asset".into(),
+				to: Destination::<Vec<u8>>::Relayer,
 				assets: Funds::from([
 					(Into::<AssetId>::into(PICA), Amount::absolute(1)),
 					(ETH.into(), Amount::absolute(2)),
@@ -386,7 +426,8 @@ mod tests {
 			}]
 			.into(),
 		};
-		let interpreter_execute_msg = InterpreterExecuteMsg::Execute { program };
+		let interpreter_execute_msg =
+			InterpreterExecuteMsg::Execute { program: encode_protobuf(program.into()) };
 
 		let funds = Funds::<Displayed<u128>>::from([
 			(Into::<AssetId>::into(PICA), Displayed(1000_u128)),
@@ -398,6 +439,10 @@ mod tests {
 			user_id: vec![],
 			interpreter_execute_msg: interpreter_execute_msg.clone(),
 			funds: funds.clone(),
+			bridge: Bridge {
+				protocol: BridgeProtocol::IBC,
+				security: BridgeSecurity::Deterministic,
+			},
 		};
 
 		let res = execute(deps.as_mut(), mock_env(), info.clone(), run_msg.clone()).unwrap();

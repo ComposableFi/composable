@@ -322,7 +322,7 @@ pub fn interpret_call(
 pub fn interpret_spawn(
 	deps: &DepsMut,
 	env: &Env,
-	ctx: proto::Spawn,
+	mut ctx: proto::Spawn,
 	mut response: Response,
 ) -> Result<Response, ContractError> {
 	#[derive(Serialize)]
@@ -336,7 +336,7 @@ pub fn interpret_spawn(
 
 	let config = CONFIG.load(deps.storage)?;
 	let registry_addr = config.registry_address.into_string();
-	let mut normalized_funds = Funds::<Displayed<u128>>::empty();
+	let mut normalized_funds: Vec<proto::Asset> = Vec::new();
 
 	for asset in ctx.assets {
 		let asset_id = must_ok!(must_ok!(asset.asset_id)?.asset_id)?;
@@ -348,7 +348,7 @@ pub fn interpret_spawn(
 
 		let amount = if amount.slope.0 == 0 {
 			// No need to get balance from cw20 contract
-			amount.intercept
+			Amount::absolute(amount.intercept.0)
 		} else {
 			let query_msg = AssetRegistryQueryMsg::GetAssetContract(asset_id.clone().into());
 
@@ -366,41 +366,35 @@ pub fn interpret_spawn(
 						address: env.contract.address.clone().into_string(),
 					})?,
 				}))?;
-			amount.apply(response.balance.into()).into()
+			Amount::absolute(amount.apply(response.balance.into()).into())
 		};
 
-		if amount.0 > 0 {
-			normalized_funds.0.push((AssetId(asset_id.into()), amount.into()));
+		if !amount.is_zero() {
+			let asset_id: u128 = asset_id.into();
+			let burn_amount = amount.intercept.0;
+			normalized_funds.push((AssetId(asset_id), amount).into());
+			// TODO(probably call the router via a Cw20 `send` to spawn the program and do w/e
+			// required with the funds)
+			let query_msg = AssetRegistryQueryMsg::GetAssetContract(asset_id);
+			let cw20_address: GetAssetContractResponse = deps.querier.query(
+				&WasmQuery::Smart {
+					contract_addr: registry_addr.clone(),
+					msg: to_binary(&query_msg)?,
+				}
+				.into(),
+			)?;
+			let contract = Cw20Contract(cw20_address.addr);
+			response = response
+				.add_message(contract.call(Cw20ExecuteMsg::Burn { amount: burn_amount.into() })?);
 		}
 	}
 
-	// TODO(probably call the router via a Cw20 `send` to spawn the program and do w/e required with
-	// the funds)
-	for (asset_id, amount) in normalized_funds.clone().0 {
-		let query_msg = AssetRegistryQueryMsg::GetAssetContract(asset_id.into());
-		let cw20_address: GetAssetContractResponse = deps.querier.query(
-			&WasmQuery::Smart { contract_addr: registry_addr.clone(), msg: to_binary(&query_msg)? }
-				.into(),
-		)?;
-		let contract = Cw20Contract(cw20_address.addr);
-		response =
-			response.add_message(contract.call(Cw20ExecuteMsg::Burn { amount: amount.0.into() })?);
-	}
-
-	let serialized_program = {
+	let encoded_spawn = {
+		ctx.assets = normalized_funds.into();
 		let mut buf = Vec::new();
-		let program = must_ok!(ctx.program)?;
-		buf.reserve(program.encoded_len());
-		program.encode(&mut buf).unwrap();
+		buf.reserve(ctx.encoded_len());
+		ctx.encode(&mut buf).map_err(|_| ContractError::DataSerializationError)?;
 		buf
-	};
-
-	let data = SpawnEvent {
-		network: must_ok!(ctx.network)?.network_id,
-		salt: must_ok!(ctx.salt)?.salt,
-		security: ctx.security,
-		assets: normalized_funds,
-		program: serialized_program,
 	};
 
 	Ok(response.add_event(
@@ -415,11 +409,7 @@ pub fn interpret_spawn(
 				serde_json_wasm::to_string(&config.user_id)
 					.map_err(|_| ContractError::DataSerializationError)?,
 			)
-			.add_attribute(
-				"program",
-				serde_json_wasm::to_string(&data)
-					.map_err(|_| ContractError::DataSerializationError)?,
-			),
+			.add_attribute("program", Binary(encoded_spawn).to_base64()),
 	))
 }
 
@@ -567,6 +557,13 @@ mod tests {
 		let mut buf = Vec::new();
 		buf.reserve(program.encoded_len());
 		program.encode(&mut buf).unwrap();
+		buf
+	}
+
+	fn encode_spawn(spawn: proto::Spawn) -> Vec<u8> {
+		let mut buf = Vec::new();
+		buf.reserve(spawn.encoded_len());
+		spawn.encode(&mut buf).unwrap();
 		buf
 	}
 
@@ -752,35 +749,33 @@ mod tests {
 			instructions: vec![XCVMInstruction::Call { bindings: vec![], encoded: vec![] }].into(),
 		};
 
-		let program = XCVMProgram {
-			tag: vec![],
-			instructions: vec![XCVMInstruction::Spawn {
-				network: Picasso.into(),
-				salt: vec![],
-				bridge_security: BridgeSecurity::Deterministic,
-				assets: Funds::empty(),
-				program: inner_program.clone(),
-			}]
-			.into(),
-		}
-		.into();
+		let spawn = XCVMInstruction::Spawn {
+			network: Picasso.into(),
+			salt: vec![],
+			bridge_security: BridgeSecurity::Deterministic,
+			assets: Funds::empty(),
+			program: inner_program.clone(),
+		};
+
+		let program = XCVMProgram { tag: vec![], instructions: vec![spawn.clone()].into() }.into();
 		let program = encode_protobuf(program);
-		let inner_program = encode_protobuf(inner_program.into());
 		let res =
 			execute(deps.as_mut(), mock_env(), info.clone(), ExecuteMsg::_SelfExecute { program })
 				.unwrap();
+		let spawn = proto::Spawn {
+			network: Some(Into::<xcvm_core::NetworkId>::into(Picasso).into()),
+			salt: Some(xcvm_proto::Salt { salt: vec![] }),
+			security: 1,
+			program: Some(inner_program.into()),
+			assets: Vec::new(),
+		};
+
 		assert_eq!(
 			res.events[0],
 			Event::new("xcvm.interpreter.spawn")
 				.add_attribute("origin_network_id", "1")
 				.add_attribute("origin_user_id", "[]")
-				.add_attribute(
-					"program",
-					format!(
-						r#"{{"network":1,"salt":[],"security":1,"assets":[],"program":{}}}"#,
-						serde_json::to_string(&inner_program).unwrap()
-					)
-				)
+				.add_attribute("program", Binary(encode_spawn(spawn)).to_base64())
 		);
 	}
 

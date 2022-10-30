@@ -2870,11 +2870,13 @@ dependencies = [
  "cw2",
  "cw20",
  "hex",
+ "prost 0.11.0",
  "schemars",
  "serde",
  "serde-json-wasm",
  "thiserror",
  "xcvm-core",
+ "xcvm-proto",
 ]
 
 [[package]]
