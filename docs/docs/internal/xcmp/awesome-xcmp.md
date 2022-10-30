@@ -8,7 +8,7 @@ XCM - Cross Chain Message.
 
 XCMP - XCM passing.
 
-XCMP can be upward (parachain to relay), downward(relay to parachain) and sibling(lateral, parachain to parachain).
+XCMP can be upward (parachain to relay), downward(relay to parachain, parachain to smart contract) and sibling(lateral, parachain to parachain) and anything in v3.
 
 [Moonbeam: Cross-Consensus Messaging (XCM)](https://docs.moonbeam.network/builders/xcm/overview/)
 
@@ -54,9 +54,10 @@ XCMP can be upward (parachain to relay), downward(relay to parachain) and siblin
 
 ## Other parachains usage
 
-- <https://www.youtube.com/watch?v=5mspUoK1aIE>
+- [Substrate Seminar: Extending XCM to the off chain world](https://www.youtube.com/watch?v=5mspUoK1aIE)
 - <https://docs.moonbeam.network/builders/xcm/xc20/overview/>
 - [Statemine XCMP configuration](https://github.com/paritytech/cumulus/blob/master/parachains/runtimes/assets/statemine/src/xcm_config.rs)
+- [Bridging parachains to other ecosystems with Phala's SubBridge](https://www.youtube.com/watch?v=K5i_BpuZAnE)
 
 ## Solution and integrations
 

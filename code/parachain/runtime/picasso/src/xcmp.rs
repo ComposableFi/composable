@@ -1,12 +1,12 @@
 use super::*;
 use codec::{Decode, Encode};
 use common::{
+	fees::{PriceConverter, WeightToFeeConverter},
 	topology::{self},
 	xcmp::*,
-	fees::{PriceConverter, WeightToFeeConverter},
 };
 use composable_traits::{
-	defi::Ratio,	
+	defi::Ratio,
 	xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation},
 };
 use cumulus_primitives_core::{IsSystem, ParaId};
@@ -61,7 +61,6 @@ parameter_types! {
 	pub RelayOrigin: Origin = cumulus_pallet_xcm::Origin::Relay.into();
 	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
 }
-
 
 pub type Barrier = (
 	AllowKnownQueryResponses<RelayerXcm>,
@@ -130,8 +129,6 @@ pub type LocalAssetTransactor = MultiCurrencyAdapter<
 	AssetsIdConverter,
 	DepositToAlternative<TreasuryAccount, Tokens, CurrencyId, AccountId, Balance>,
 >;
-
-
 
 type IsReserveAssetLocationFilter =
 	(MultiNativeAsset<AbsoluteReserveProvider>, RelayReserveFromParachain);
@@ -210,7 +207,6 @@ parameter_type_with_key! {
 		OutgoingFee::<AssetsRegistry>::outgoing_fee(location)
 	};
 }
-
 
 impl orml_xtokens::Config for Runtime {
 	type Event = Event;

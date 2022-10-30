@@ -6,7 +6,7 @@ use composable_traits::{
 };
 
 use frame_support::{
-	traits::{ConstU128, Get},
+	traits::ConstU128,
 	weights::{
 		constants::ExtrinsicBaseWeight, WeightToFeeCoefficient, WeightToFeeCoefficients,
 		WeightToFeePolynomial,
@@ -14,7 +14,7 @@ use frame_support::{
 };
 use num_traits::One;
 use primitives::currency::CurrencyId;
-use sp_runtime::{helpers_128bit::multiply_by_rational_with_rounding, Perbill};
+use sp_runtime::Perbill;
 use sp_std::marker::PhantomData;
 
 pub const NATIVE_EXISTENTIAL_DEPOSIT: NativeBalance = 100_000_000_000;

@@ -31,7 +31,7 @@ pub mod weights;
 pub mod pallet {
 	use crate::prelude::*;
 	pub use crate::weights::WeightInfo;
-	use composable_traits::currency::{CurrencyFactory, RangeId, ForeignByNative};
+	use composable_traits::currency::{CurrencyFactory, ForeignByNative, RangeId};
 	use cumulus_primitives_core::ParaId;
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo, pallet_prelude::*, traits::EnsureOrigin,
@@ -111,8 +111,7 @@ pub mod pallet {
 	/// How much of asset amount is needed to pay for one unit of native token.
 	#[pallet::storage]
 	#[pallet::getter(fn asset_ratio)]
-	pub type AssetRatio<T: Config> =
-		StorageMap<_, Twox128, T::LocalAssetId, Rational, OptionQuery>;
+	pub type AssetRatio<T: Config> = StorageMap<_, Twox128, T::LocalAssetId, Rational, OptionQuery>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config>(sp_std::marker::PhantomData<T>);
@@ -181,7 +180,8 @@ pub mod pallet {
 		///
 		/// `decimals` - `human` number of decimals
 		///
-		/// `ed` - same meaning as in for foreign asset account (if None, then asset is not sufficient)
+		/// `ed` - same meaning as in for foreign asset account (if None, then asset is not
+		/// sufficient)
 		#[pallet::weight(<T as Config>::WeightInfo::register_asset())]
 		pub fn register_asset(
 			origin: OriginFor<T>,

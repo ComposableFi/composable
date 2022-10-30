@@ -24,18 +24,21 @@ pub const WASM_BINARY_V2: Option<&[u8]> = None;
 pub mod governance;
 mod weights;
 pub mod xcmp;
-
-use xcmp::XcmConfig;
 pub use common::xcmp::{MaxInstructions, UnitWeightCost};
+use xcmp::XcmConfig;
 
 use governance::*;
 
 use common::{
-	governance::native::*, rewards::DealWithFees, fees::{multi_existential_deposits,  NativeExistentialDeposit, PriceConverter}, AccountId,
-	AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, BondOfferId, ForeignAssetId, Hash,
-	MaxStringSize, Moment, Signature,
+	fees::{
+		multi_existential_deposits, NativeExistentialDeposit, PriceConverter, WeightToFeeConverter,
+	},
+	governance::native::*,
+	rewards::DealWithFees,
+	AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, BondOfferId,
+	ForeignAssetId, Hash, MaxStringSize, Moment, ReservedDmpWeight, ReservedXcmpWeight, Signature,
 	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
-	NORMAL_DISPATCH_RATIO, SLOT_DURATION, ReservedDmpWeight, ReservedXcmpWeight, fees::WeightToFeeConverter,
+	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 
 use composable_traits::assets::Asset;
@@ -500,7 +503,6 @@ where
 	type OverarchingCall = Call;
 	type Extrinsic = UncheckedExtrinsic;
 }
-
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
 	type Event = Event;

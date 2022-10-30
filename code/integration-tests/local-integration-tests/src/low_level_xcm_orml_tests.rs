@@ -219,5 +219,4 @@ fn withdraw_and_deposit_here_native() {
 	});
 }
 
-
 // #WIP Run attacks which try to spend parachain account, spend other person amount.

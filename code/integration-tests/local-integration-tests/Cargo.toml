@@ -114,9 +114,9 @@ parachains-common = { git = "https://github.com/paritytech/cumulus", branch = "p
 paste = "1.0.6"
 polkadot-core-primitives = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.27" }
 polkadot-primitives = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.27" }
+polkadot-runtime = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.27" }
 polkadot-runtime-parachains = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.27" }
 rococo-runtime = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.27" }
-polkadot-runtime = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.27" }
 statemine-runtime = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.27" }
 xcm-emulator = { git = "https://github.com/shaunxw/xcm-simulator", rev = "ab5cd6c5fabe6ddda52ed6803ee1bf54c258fefe", default-features = false }
 
@@ -133,12 +133,12 @@ more-asserts = "0.3.1"
 dali = ["std", "develop", "local-integration-tests", "rococo"]
 default = ["std", "develop", "local-integration-tests", "dali"]
 kusama = []
-polkadot = []
 local-integration-tests = [
   "dali-runtime/local-integration-tests",
   "picasso-runtime/local-integration-tests",
 ]
 picasso = ["std", "develop", "local-integration-tests", "kusama"]
+polkadot = []
 rococo = []
 std = [
   "codec/std",

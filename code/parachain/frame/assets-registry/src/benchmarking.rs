@@ -7,7 +7,7 @@ use crate::{self as pallet_assets_registry, prelude::*};
 #[allow(unused_imports)]
 use crate::Pallet as AssetsRegistry;
 
-use composable_traits::{xcm::assets::XcmAssetLocation};
+use composable_traits::xcm::assets::XcmAssetLocation;
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite};
 use frame_system::RawOrigin;
 use sp_std::prelude::*;

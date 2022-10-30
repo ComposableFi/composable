@@ -1,16 +1,6 @@
 # Overview
 
 List of useful to have XCM messages working for testing and playbooks.
-
-General flow for XCM is:
-
-1. Open channels
-2. Register foreign assets or from genesis
-3. Obtain assets (mint or swap on DEX)
-4. Execute XCM transactions
-
-If any of these steps is missing, parachain XCM messages will not work. 
-
 ## Transfer
 
 [Transfer ROC from Rococo to Rockmine](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Frococo-rpc.polkadot.io#/extrinsics/decode/0x630901000100a10f0100010100b8e39e87c0fec96f7d012d31a4c27b44bfb504ab359662112e4270e380c84341010400000000070010a5d4e80000000000)

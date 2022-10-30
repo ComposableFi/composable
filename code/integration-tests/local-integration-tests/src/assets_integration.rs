@@ -1,7 +1,6 @@
 ///! tests that various assets integration scenarios work well
 use crate::{helpers::*, kusama_test_net::This, prelude::*};
-use common::PriceConverter;
-use composable_traits::{defi::Ratio, oracle::MinimalOracle, xcm::assets::XcmAssetLocation};
+use composable_traits::{defi::Ratio, xcm::assets::XcmAssetLocation};
 
 use frame_system::RawOrigin;
 use primitives::currency::*;

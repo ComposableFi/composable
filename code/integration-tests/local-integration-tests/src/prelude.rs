@@ -1,7 +1,7 @@
 //! prelude for pallet Rust level work (not low level storage code neither for IPC calls)
 pub use crate::testing::*;
 pub use codec::{Decode, Encode};
-pub use common::{topology, AccountId};
+pub use common::{topology, AccountId, fees::{PriceConverter, multi_existential_deposits, NativeExistentialDeposit}};
 pub use composable_traits::{currency::CurrencyFactory, xcm::assets::XcmAssetLocation};
 pub use cumulus_primitives_core::ParaId;
 pub use frame_support::{

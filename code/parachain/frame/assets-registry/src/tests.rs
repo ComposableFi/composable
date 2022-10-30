@@ -1,10 +1,8 @@
-use crate::{runtime::*, Error, prelude::*};
+use crate::{prelude::*, runtime::*, Error};
 use codec::{Decode, Encode};
 use composable_traits::{
-	assets::Asset,	
-	xcm::assets::{
-		ForeignMetadata, RemoteAssetRegistryInspect, XcmAssetLocation,
-	},
+	assets::Asset,
+	xcm::assets::{ForeignMetadata, RemoteAssetRegistryInspect, XcmAssetLocation},
 };
 use frame_support::{assert_noop, assert_ok};
 use frame_system::RawOrigin;

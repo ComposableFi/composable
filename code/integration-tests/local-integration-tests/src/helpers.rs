@@ -1,16 +1,11 @@
-use common::{
-	multi_existential_deposits, xcmp::BaseXcmWeight, AccountId, Balance, NativeExistentialDeposit,
-	PriceConverter,
-};
-use composable_traits::{
-	currency::AssetExistentialDepositInspect, oracle::MinimalOracle, xcm::assets::AssetRatioInspect,
-};
+use common::{xcmp::BaseXcmWeight, AccountId, Balance};
+use composable_traits::currency::{AssetExistentialDepositInspect, AssetRatioInspect};
 use cumulus_primitives_core::ParaId;
 
 use primitives::currency::CurrencyId;
 use sp_runtime::traits::AccountIdConversion;
 
-use crate::{env_logger_init, prelude::*, kusama_test_net::KusamaRelay};
+use crate::{env_logger_init, kusama_test_net::KusamaRelay, prelude::*};
 
 pub fn simtest() {
 	crate::kusama_test_net::KusamaNetwork::reset();
@@ -82,20 +77,21 @@ pub fn enough_weight() -> u128 {
 		100 * UnitWeightCost::get() as Balance * MaxInstructions::get() as Balance
 }
 
-
-pub fn mint_relay_native_on_parachain(amount: Balance, to: &AccountId, para_id : u32 ) {
+pub fn mint_relay_native_on_parachain(amount: Balance, to: &AccountId, para_id: u32) {
 	KusamaRelay::execute_with(|| {
 		use kusama_runtime::*;
-		let _ = <Balances as frame_support::traits::Currency<_>>::deposit_creating(
-			to,
-			amount,
-		);
+		let _ = <Balances as frame_support::traits::Currency<_>>::deposit_creating(to, amount);
 		XcmPallet::reserve_transfer_assets(
 			Origin::signed(to.to_owned().into()),
 			Box::new(Parachain(para_id).into().into()),
-			Box::new(Junction::AccountId32 { id: to.to_owned().into(), network: NetworkId::Any }.into().into()),
+			Box::new(
+				Junction::AccountId32 { id: to.to_owned().into(), network: NetworkId::Any }
+					.into()
+					.into(),
+			),
 			Box::new((Here, amount).into()),
 			0,
-		).unwrap();
+		)
+		.unwrap();
 	});
 }

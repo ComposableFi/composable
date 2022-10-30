@@ -8,6 +8,17 @@ alt simple
   picasso -> picasso : register incoming asset `(Parent(Kusama), Parachain(Karura), Key(KUSD))`
   karura -> karura : register incoming asset `(Parent(Kusama), Parachain(Picasso), Key(PICA))`
   
+
+'   General flow for XCM is:
+
+' 1. Opened channels
+' 2. Register foreign assets or from genesis
+' 3. Obtain assets (mint or swap on DEX)
+' 4. Execute XCM transactions
+
+' If any of these steps is missing, parachain XCM messages will not work. 
+
+
 else real
   picasso --> karura : request open half channel
   karura --\ picasso : accept open half channel

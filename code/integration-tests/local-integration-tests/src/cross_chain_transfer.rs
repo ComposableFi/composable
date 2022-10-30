@@ -450,7 +450,10 @@ fn transfer_relay_native_to_sibling_by_token_id() {
 			Tokens::free_balance(CurrencyId::KSM, &sibling_account(THIS_PARA_ID)),
 			95_000_000_000_000
 		);
-		assert_eq!(Tokens::free_balance(CurrencyId::KSM, &AccountId::from(bob())), 4_989_760_000_000);
+		assert_eq!(
+			Tokens::free_balance(CurrencyId::KSM, &AccountId::from(bob())),
+			4_989_760_000_000
+		);
 	});
 
 	This::execute_with(|| {

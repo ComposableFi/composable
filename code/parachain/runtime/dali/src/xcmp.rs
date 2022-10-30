@@ -1,13 +1,11 @@
 use super::*;
 use common::{
-	fees::{WeightToFeeConverter, PriceConverter},
+	fees::{PriceConverter, WeightToFeeConverter},
 	governance::native::{EnsureRootOrHalfNativeTechnical, NativeCouncilCollective},
 	topology,
-	xcmp::*,	
+	xcmp::*,
 };
-use composable_traits::{	
-	xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation},
-};
+use composable_traits::xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation};
 use cumulus_primitives_core::ParaId;
 use frame_support::{
 	log, parameter_types,

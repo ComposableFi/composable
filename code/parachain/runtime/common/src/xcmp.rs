@@ -1,18 +1,17 @@
 //! proposed shared XCM setup parameters and impl
 use crate::{
+	fees::NativeBalance,
 	topology::{self},
 	AccountId, Balance,
-	fees::NativeBalance,
 };
-use composable_traits::{
-	xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation},
-};
+use composable_traits::xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation};
+use cumulus_primitives_core::ParaId;
 use frame_support::{
 	dispatch::Weight,
- 	log, parameter_types,
-	traits::{Contains, Get, tokens::BalanceConversion},
+	log, match_types, parameter_types,
+	traits::{tokens::BalanceConversion, Contains, Get},
 	weights::{WeightToFee, WeightToFeePolynomial},
-	WeakBoundedVec, match_types,
+	WeakBoundedVec,
 };
 use num_traits::{One, Zero};
 use orml_traits::location::{AbsoluteReserveProvider, Reserve};
@@ -26,10 +25,8 @@ use xcm_executor::{
 	traits::{FilterAssetLocation, WeightTrader},
 	*,
 };
-use cumulus_primitives_core::ParaId; 
 
 pub const VERSION_DISCOVERY_QUEUE_SIZE: u32 = 100;
-	
 
 match_types! {
 	pub type ParentOrSiblings: impl Contains<MultiLocation> = {
@@ -74,7 +71,7 @@ pub struct TransactionFeePoolTrader<
 
 impl<
 		AssetConverter: Convert<MultiLocation, Option<CurrencyId>>,
-		PriceConverter: BalanceConversion<NativeBalance,CurrencyId, Balance>,
+		PriceConverter: BalanceConversion<NativeBalance, CurrencyId, Balance>,
 		Treasury: TakeRevenue,
 		WeightToFeeConverter: WeightToFeePolynomial<Balance = Balance> + WeightToFee<Balance = Balance>,
 	> TransactionFeePoolTrader<AssetConverter, PriceConverter, Treasury, WeightToFeeConverter>
@@ -94,7 +91,7 @@ impl<
 }
 impl<
 		AssetConverter: Convert<MultiLocation, Option<CurrencyId>>,
-		PriceConverter: BalanceConversion<NativeBalance,CurrencyId, Balance>,
+		PriceConverter: BalanceConversion<NativeBalance, CurrencyId, Balance>,
 		Treasury: TakeRevenue,
 		WeightToFeeConverter: WeightToFeePolynomial<Balance = Balance> + WeightToFee<Balance = Balance>,
 	> WeightTrader
@@ -247,13 +244,11 @@ pub trait XcmpAssets {
 	}
 }
 
-
 /// Converts currency to and from local and remote.
 /// Checks compile time and runtime assets mapping.
 pub struct CurrencyIdConvert<AssetRegistry, WellKnownCurrency, ThisParaId, WellKnownXcmpAssets>(
 	PhantomData<(AssetRegistry, WellKnownCurrency, ThisParaId, WellKnownXcmpAssets)>,
 );
-
 
 impl<
 		AssetRegistry: RemoteAssetRegistryInspect<AssetId = CurrencyId, AssetNativeLocation = XcmAssetLocation>,
@@ -356,18 +351,23 @@ impl FilterAssetLocation for RelayReserveFromParachain {
 	}
 }
 
-
 /// Estimates outgoing fees on target chain in transferred token
-pub struct OutgoingFee<Registry :RemoteAssetRegistryInspect> {
+pub struct OutgoingFee<Registry: RemoteAssetRegistryInspect> {
 	_marker: PhantomData<Registry>,
 }
 
-
-impl<Registry :RemoteAssetRegistryInspect< AssetId = CurrencyId, AssetNativeLocation = XcmAssetLocation, Balance = Balance>> OutgoingFee<Registry> {
+impl<
+		Registry: RemoteAssetRegistryInspect<
+			AssetId = CurrencyId,
+			AssetNativeLocation = XcmAssetLocation,
+			Balance = Balance,
+		>,
+	> OutgoingFee<Registry>
+{
 	pub fn outgoing_fee(location: &MultiLocation) -> Option<Balance> {
 		match (location.parents, location.first_interior()) {
 			(1, None) => Some(400_000_000_000),
-			(1, Some(Parachain(id)))  =>  {
+			(1, Some(Parachain(id))) => {
 				let location = XcmAssetLocation::new(location.clone());
 				Registry::min_xcm_fee(ParaId::from(*id), location).or(Some(u128::MAX))
 			},

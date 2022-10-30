@@ -47,7 +47,6 @@ pub trait AssetExistentialDepositInspect {
 	}
 }
 
-
 /// foreign_amount / native_amount
 pub type ForeignByNative = Rational64;
 

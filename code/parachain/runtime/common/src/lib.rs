@@ -10,27 +10,18 @@
 	)
 )]
 #![deny(clippy::unseparated_literal_suffix, unused_imports, non_snake_case, dead_code)]
-
 #![cfg_attr(not(feature = "std"), no_std)]
 
+pub mod fees;
 pub mod governance;
+mod prelude;
 pub mod rewards;
 pub mod topology;
 pub mod xcmp;
-pub mod fees;
-mod prelude;
 
-use core::marker::PhantomData;
-
-#[cfg(not(feature = "runtime-benchmarks"))]
-use composable_traits::currency::AssetExistentialDepositInspect;
-use composable_traits::{defi::Ratio, };
 pub use constants::*;
 use frame_support::{parameter_types, weights::Weight};
-use num_traits::CheckedMul;
-use primitives::currency::CurrencyId;
 use scale_info::TypeInfo;
-use sp_runtime::DispatchError;
 pub use types::*;
 
 /// Common types of statemint and statemine and dali and picasso and composable.
@@ -149,7 +140,6 @@ parameter_types! {
 	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
 	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
 }
-
 
 parameter_types! {
 	/// NOTE: do not reduce, as it will tell that some already stored vectors has smaller range of values
