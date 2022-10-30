@@ -214,6 +214,10 @@ impl Rational64 {
 	pub fn new(numer: u64, denom: u64) -> Self {
 		Rational64 { numer, denom }
 	}
+
+	pub fn one() -> Self {
+		Rational64::new(1, 1)
+	}
 }
 
 impl const From<Rational64> for FixedU128 {

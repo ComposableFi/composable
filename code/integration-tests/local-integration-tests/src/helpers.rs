@@ -1,4 +1,4 @@
-use common::{xcmp::BaseXcmWeight, AccountId, Balance};
+use common::{fees::NATIVE_EXISTENTIAL_DEPOSIT, xcmp::BaseXcmWeight, AccountId, Balance};
 use composable_traits::currency::{AssetExistentialDepositInspect, AssetRatioInspect};
 use cumulus_primitives_core::ParaId;
 
@@ -62,11 +62,8 @@ pub fn assert_above_deposit<AssetsRegistry: AssetRatioInspect<AssetId = Currency
 	amount: Balance,
 ) -> Balance {
 	assert!(
-		PriceConverter::<AssetsRegistry>::get_price_inverse(
-			asset_id,
-			NativeExistentialDeposit::get()
-		)
-		.unwrap() <= amount
+		PriceConverter::<AssetsRegistry>::to_asset_balance(NATIVE_EXISTENTIAL_DEPOSIT, asset_id,)
+			.unwrap() <= amount
 	);
 	amount
 }

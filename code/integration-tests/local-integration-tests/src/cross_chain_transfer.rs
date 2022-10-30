@@ -8,7 +8,7 @@ use crate::{
 };
 use codec::Encode;
 use common::{AccountId, Balance};
-use composable_traits::{currency::RangeId, defi::Ratio};
+use composable_traits::{currency::RangeId, rational};
 
 use frame_system::RawOrigin;
 
@@ -139,7 +139,7 @@ fn transfer_native_of_this_to_sibling() {
 				1,
 				X1(Parachain(THIS_PARA_ID),)
 			)),
-			Some(Ratio::saturating_from_rational(1, 1)),
+			Some(rational!(1 / 1)),
 			None,
 		));
 	});
@@ -184,7 +184,7 @@ fn transfer_native_of_this_to_sibling_by_local_id() {
 				1,
 				X1(Parachain(THIS_PARA_ID),)
 			)),
-			Some(Ratio::saturating_from_rational(1, 1)),
+			Some(Rational64::one()),
 			None,
 		));
 	});
@@ -235,7 +235,7 @@ fn transfer_non_native_reserver_asset_from_this_to_sibling() {
 				1,
 				X2(Parachain(THIS_PARA_ID), GeneralIndex(CurrencyId::PBLO.into()),)
 			)),
-			Some(Ratio::saturating_from_rational(1, 1)),
+			Some(Rational64::one()),
 			None,
 		));
 	});
@@ -280,7 +280,7 @@ fn transfer_non_native_reserver_asset_from_this_to_sibling_by_local_id() {
 				1,
 				X2(Parachain(THIS_PARA_ID), GeneralIndex(CurrencyId::PBLO.into()),)
 			)),
-			Some(Ratio::saturating_from_rational(1, 1)),
+			Some(Rational64::one()),
 			None,
 		));
 	});
@@ -956,7 +956,7 @@ fn sibling_trap_assets_works() {
 			RawOrigin::Root.into(),
 			any_asset,
 			remote,
-			Ratio::checked_from_integer::<u128>(1),
+			Some(Rational64::one()),
 			None
 		));
 		(balance, sibling_non_native_amount)
@@ -1034,8 +1034,8 @@ fn sibling_shib_to_transfer() {
 			root.into(),
 			sibling_asset_id,
 			location,
-			Ratio::checked_from_integer::<u128>(1),
-			Some(SHIB::RESERVE_EXPONENT as u32),
+			Some(Rational64::one()),
+			Some(SHIB::RESERVE_EXPONENT),
 		)
 		.expect("Asset already in Currency Factory; QED");
 
@@ -1064,8 +1064,8 @@ fn sibling_shib_to_transfer() {
 			root.into(),
 			location,
 			1000,
-			Ratio::checked_from_integer::<u128>(1),
-			Some(SHIB::RESERVE_EXPONENT as u32),
+			Some(Rational64::one()),
+			Some(SHIB::RESERVE_EXPONENT),
 		)
 		.expect("Asset details are valid; QED");
 		System::events()
