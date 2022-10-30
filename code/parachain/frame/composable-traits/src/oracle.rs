@@ -85,7 +85,7 @@ pub trait Oracle {
 	/// oracle.
 	fn is_supported(asset: Self::AssetId) -> Result<bool, DispatchError> {
 		let exponent = Self::LocalAssets::decimals(asset)?;
-		let unit: Self::Balance = 10_u64.pow(exponent).into();
+		let unit: Self::Balance = 10_u64.pow(exponent as u32).into();
 		Self::get_price(asset, unit).map(|_| true)
 	}
 

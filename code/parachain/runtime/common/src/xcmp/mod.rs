@@ -2,15 +2,15 @@
 use crate::{
 	topology::{self},
 	AccountId, Balance,
+	fees::NativeBalance,
 };
 use composable_traits::{
-	oracle::MinimalOracle,
 	xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation},
 };
 use frame_support::{
 	dispatch::Weight,
  	log, parameter_types,
-	traits::{Contains, Get},
+	traits::{Contains, Get, tokens::BalanceConversion},
 	weights::{WeightToFee, WeightToFeePolynomial},
 	WeakBoundedVec, match_types,
 };
@@ -74,7 +74,7 @@ pub struct TransactionFeePoolTrader<
 
 impl<
 		AssetConverter: Convert<MultiLocation, Option<CurrencyId>>,
-		PriceConverter: MinimalOracle<AssetId = CurrencyId, Balance = Balance>,
+		PriceConverter: BalanceConversion<NativeBalance,CurrencyId, Balance>,
 		Treasury: TakeRevenue,
 		WeightToFeeConverter: WeightToFeePolynomial<Balance = Balance> + WeightToFee<Balance = Balance>,
 	> TransactionFeePoolTrader<AssetConverter, PriceConverter, Treasury, WeightToFeeConverter>
@@ -86,7 +86,7 @@ impl<
 		let fee = WeightToFeeConverter::weight_to_fee(&weight);
 		log::trace!(target : "xcmp::weight_to_asset", "required payment in native token is: {:?}", fee );
 		let price =
-			PriceConverter::get_price_inverse(asset_id, fee).map_err(|_| XcmError::TooExpensive)?;
+			PriceConverter::to_asset_balance(fee, asset_id).map_err(|_| XcmError::TooExpensive)?;
 		let price = price.max(Balance::one());
 		log::trace!(target : "xcmp::weight_to_asset", "amount of priceable token to pay fee {:?}", price );
 		Ok((fee, price))
@@ -94,7 +94,7 @@ impl<
 }
 impl<
 		AssetConverter: Convert<MultiLocation, Option<CurrencyId>>,
-		PriceConverter: MinimalOracle<AssetId = CurrencyId, Balance = Balance>,
+		PriceConverter: BalanceConversion<NativeBalance,CurrencyId, Balance>,
 		Treasury: TakeRevenue,
 		WeightToFeeConverter: WeightToFeePolynomial<Balance = Balance> + WeightToFee<Balance = Balance>,
 	> WeightTrader

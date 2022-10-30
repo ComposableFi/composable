@@ -183,7 +183,7 @@ impl CurrencyId {
 	}
 
 	pub fn unit<T: From<u64>>() -> T {
-		T::from(10_u64.pow(Self::decimals()))
+		T::from(10_u64.pow(Self::decimals().into()))
 	}
 
 	pub fn milli<T: From<u64> + Div<Output = T>>() -> T {

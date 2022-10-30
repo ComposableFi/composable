@@ -1,15 +1,18 @@
-use crate::Balance;
+use crate::{prelude::*, Balance};
+use composable_traits::currency::{AssetExistentialDepositInspect, AssetRatioInspect};
+
 use frame_support::weights::{
 	constants::ExtrinsicBaseWeight, WeightToFeeCoefficient, WeightToFeeCoefficients,
 	WeightToFeePolynomial,
 };
+use num_traits::One;
 use primitives::currency::CurrencyId;
 use sp_runtime::Perbill;
+use sp_std::marker::PhantomData;
 
 parameter_types! {
 	pub NativeExistentialDeposit: Balance = native_existential_deposit();
 }
-
 
 pub struct WeightToFeeConverter;
 impl WeightToFeePolynomial for WeightToFeeConverter {
@@ -38,6 +41,14 @@ pub fn multi_existential_deposits<AssetsRegistry>(_currency_id: &CurrencyId) -> 
 	Balance::zero()
 }
 
+// trait MultiExistentialDeposits<
+// 	AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>
+// 		+ AssetExistentialDepositInspect<AssetId = CurrencyId, Balance = Balance>,
+// >
+// {
+
+// }
+
 /// Given a `currency_id`, returns the existential deposit of a MultiAsset in the native asset.
 /// Returns `Balance::MAX` as the existential deposit if unable to get an existential deposit
 /// for the given `currency_id`, this will prune unknown asset balances.
@@ -48,8 +59,10 @@ pub fn multi_existential_deposits<
 >(
 	currency_id: &CurrencyId,
 ) -> Balance {
+    use frame_support::traits::tokens::BalanceConversion;
+
 	AssetsRegistry::existential_deposit(*currency_id)
-		.and_then(|ed| PriceConverter::<AssetsRegistry>::get_price_inverse(*currency_id, ed))
+		.and_then(|ed| PriceConverter::<AssetsRegistry>::to_asset_balance(ed, *currency_id))
 		.unwrap_or(match *currency_id {
 			CurrencyId::PICA => native_existential_deposit(),
 			// PICA: 0.1 or 100_000_000_000
@@ -73,9 +86,6 @@ pub fn multi_existential_deposits<
 		})
 }
 
-
-
-#[derive(Default)]
 pub struct PriceConverter<AssetsRegistry>(PhantomData<AssetsRegistry>);
 
 pub mod cross_chain_errors {
@@ -84,47 +94,53 @@ pub mod cross_chain_errors {
 		"Amount of asset is more than max possible";
 }
 
+pub struct WellKnownPriceConverter;
+
+impl WellKnownPriceConverter {
+	
+	// pub fn to_balance(native_amount: NativeBalance, asset_id: CurrencyId) -> Option<Balance> {
+	// 	match asset_id {
+	// 		CurrencyId::KSM => Some(native_amount / 2267),
+	// 		CurrencyId::kUSD => Som(native_amount / 67),
+	// 		CurrencyId::USDT | CurrencyId::USDC => Som(native_amount / 67_000_000),
+	// 		_ => None,
+	// 	}
+	// 	.map(|x| x.max(Balance::one()))
+	// }
+}
+
+pub type NativeBalance = Balance;
+
 impl<AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>>
-	frame_support::traits::tokens::BalanceConversion<Balance, CurrencyId, Balance>
+	frame_support::traits::tokens::BalanceConversion<NativeBalance, CurrencyId, Balance>
 	for PriceConverter<AssetsRegistry>
 {
 	type Error = sp_runtime::DispatchError;
 
-	fn to_asset_balance(balance: Balance, asset_id: CurrencyId) -> Result<Balance, Self::Error> {
-		Self::get_price_inverse(asset_id, balance)
-	}
-}
-
-impl<AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>> MinimalOracle
-	for PriceConverter<AssetsRegistry>
-{
-	type AssetId = CurrencyId;
-	type Balance = Balance;
-	fn get_price_inverse(
-		asset_id: Self::AssetId,
-		native_amount: Self::Balance,
-	) -> Result<Self::Balance, sp_runtime::DispatchError> {
+	fn to_asset_balance(
+		native_amount: NativeBalance,
+		asset_id: CurrencyId,
+	) -> Result<Balance, Self::Error> {
 		match asset_id {
 			CurrencyId::PICA => Ok(native_amount),
 			_ =>
-				if let Some(ratio) = AssetsRegistry::get_ratio(asset_id) {
-					let amount = Ratio::from_inner(native_amount);
-					if let Some(payment) = ratio.checked_mul(&amount) {
-						Ok(payment.into_inner())
-					} else {
-						Err(DispatchError::Other(
-							cross_chain_errors::AMOUNT_OF_ASSET_IS_MORE_THAN_MAX_POSSIBLE,
-						))
-					}
-				} else if asset_id == CurrencyId::KSM {
-					Ok(native_amount / 2667)
-				} else if asset_id == CurrencyId::kUSD {
-					Ok(native_amount / 67)
-				} else if asset_id == CurrencyId::USDT || asset_id == CurrencyId::USDC {
-					Ok(native_amount / 67_000_000)
-				} else {
-					Err(DispatchError::Other(cross_chain_errors::ASSET_IS_NOT_PRICEABLE))
-				},
+				panic!()
+				// if let Some(ratio) = AssetsRegistry::get_ratio(asset_id) {
+				// 	let amount = Ratio::from_inner(native_amount);
+				// 	if let Some(payment) = ratio.checked_mul(&amount) {
+				// 		Ok(payment.into_inner())
+				// 	} else {
+				// 		Err(DispatchError::Other(
+				// 			cross_chain_errors::AMOUNT_OF_ASSET_IS_MORE_THAN_MAX_POSSIBLE,
+				// 		))
+				// 	}
+				// } else if let Some(amount) =
+				// 	WellKnownPriceConverter::to_balance(native_amount, asset_id)
+				// {
+				// 	Ok(amount)
+				// } else {
+				// 	Err(DispatchError::Other(cross_chain_errors::ASSET_IS_NOT_PRICEABLE))
+				// },
 		}
 	}
 }
@@ -134,14 +150,10 @@ fn native_existential_deposit() -> Balance {
 	100 * CurrencyId::milli::<Balance>()
 }
 
-
 #[cfg(test)]
 mod commons_sence {
 	use super::WeightToFeeConverter;
-	use frame_support::weights::{
-		constants::{WEIGHT_PER_SECOND},
-		WeightToFee,
-	};
+	use frame_support::weights::{constants::WEIGHT_PER_SECOND, WeightToFee};
 
 	#[test]
 	fn reasonable_fee() {

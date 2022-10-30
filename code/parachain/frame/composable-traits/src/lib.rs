@@ -34,7 +34,9 @@
 	unused_extern_crates
 )]
 #![feature(associated_type_defaults)]
-
+#![feature(trait_alias)]
+#![feature(const_trait_impl)]
+#![feature(const_convert)]
 
 pub mod account_proxy;
 pub mod airdrop;

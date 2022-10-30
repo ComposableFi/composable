@@ -31,12 +31,7 @@ pub mod weights;
 pub mod pallet {
 	use crate::prelude::*;
 	pub use crate::weights::WeightInfo;
-	use codec::FullCodec;
-	use composable_traits::{
-		currency::{
-			CurrencyFactory, RangeId,
-		},		
-	};
+	use composable_traits::currency::{CurrencyFactory, RangeId};
 	use cumulus_primitives_core::ParaId;
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo, pallet_prelude::*, traits::EnsureOrigin,
@@ -116,7 +111,8 @@ pub mod pallet {
 	/// How much of asset amount is needed to pay for one unit of native token.
 	#[pallet::storage]
 	#[pallet::getter(fn asset_ratio)]
-	pub type AssetRatio<T: Config> = StorageMap<_, Twox128, T::LocalAssetId, Ratio, OptionQuery>;
+	pub type AssetRatio<T: Config> =
+		StorageMap<_, Twox128, T::LocalAssetId, Rational, OptionQuery>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config>(sp_std::marker::PhantomData<T>);
@@ -176,7 +172,6 @@ pub mod pallet {
 		/// `ratio` -  allows `bring you own gas` fees.
 		/// Set to `None` to prevent payment in this asset, only transferring.
 		/// Setting to some will NOT start minting tokens with specified ratio.
-		/// Foreign assets will be put into parachain treasury as is.
 		///
 		/// ```python
 		/// # if cross chain message wants to pay tx fee with non native token
@@ -184,11 +179,9 @@ pub mod pallet {
 		/// amount_of_native_token = amount_of_foreign_token * ratio
 		/// ```
 		///
-		/// Examples:
-		///  
-		/// - One to one conversion is 10^18 integer.
-		///
-		/// - 10*10^18 will tell that for 1 foreign asset can `buy` 10 local native.
+		/// Example:
+		/// - (42, 123) will mean that amount of native token is equal `(amount_of_foreign * 42) /
+		///   123
 		///
 		/// `decimals` - remote number of decimals on other(remote) chain
 		///
@@ -198,7 +191,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			location: T::ForeignAssetId,
 			ed: T::Balance,
-			ratio: Option<Ratio>,
+			ratio: Option<Rational>,
 			decimals: Option<Exponent>,
 		) -> DispatchResultWithPostInfo {
 			T::UpdateAssetRegistryOrigin::ensure_origin(origin)?;
@@ -220,7 +213,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			asset_id: T::LocalAssetId,
 			location: T::ForeignAssetId,
-			ratio: Option<Ratio>,
+			ratio: Option<Rational>,
 			decimals: Option<Exponent>,
 		) -> DispatchResultWithPostInfo {
 			T::UpdateAssetRegistryOrigin::ensure_origin(origin)?;
@@ -236,6 +229,7 @@ pub mod pallet {
 		/// Target network may or may not accept payment `amount`.
 		/// Assumed this is maintained up to date by technical team.
 		/// Mostly UI hint and fail fast solution.
+		/// Messages sending smaller fee will not be sent.
 		/// In theory can be updated by parachain sovereign account too.
 		/// If None, than it is well known cannot pay with that asset on target_parachain_id.
 		/// If Some(0), than price can be anything greater or equal to zero.
@@ -271,7 +265,7 @@ pub mod pallet {
 		fn set_reserve_location(
 			asset_id: Self::AssetId,
 			location: Self::AssetNativeLocation,
-			ratio: Option<Ratio>,
+			ratio: Option<Rational>,
 			decimals: Option<Exponent>,
 		) -> DispatchResult {
 			ForeignToLocal::<T>::insert(&location, asset_id);
@@ -282,7 +276,7 @@ pub mod pallet {
 
 		fn update_ratio(
 			location: Self::AssetNativeLocation,
-			ratio: Option<Ratio>,
+			ratio: Option<Rational>,
 		) -> DispatchResult {
 			let asset_id =
 				ForeignToLocal::<T>::try_get(location).map_err(|_| Error::<T>::AssetNotFound)?;
@@ -320,7 +314,7 @@ pub mod pallet {
 						.expect("Must exist, as it does in ForeignToLocal");
 					let decimals = match foreign_metadata.decimals {
 						Some(exponent) => exponent,
-						_ => 12_u32,
+						_ => 12_u8,
 					};
 
 					Asset {
@@ -336,8 +330,8 @@ pub mod pallet {
 
 	impl<T: Config> AssetRatioInspect for Pallet<T> {
 		type AssetId = T::LocalAssetId;
-		fn get_ratio(asset_id: Self::AssetId) -> Option<composable_traits::defi::Ratio> {
-			AssetRatio::<T>::get(asset_id)
+		fn get_ratio(asset_id: Self::AssetId) -> Option<Rational> {
+			AssetRatio::<T>::get(asset_id).map(Into::into)
 		}
 	}
 

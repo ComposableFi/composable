@@ -1,15 +1,16 @@
-#![cfg_attr(
-	not(test),
-	deny(
-		clippy::disallowed_methods,
-		clippy::disallowed_types,
-		clippy::indexing_slicing,
-		clippy::todo,
-		clippy::unwrap_used,
-		clippy::panic
-	)
-)]
-#![deny(clippy::unseparated_literal_suffix, unused_imports, non_snake_case, dead_code)]
+// #![cfg_attr(
+// 	not(test),
+// 	deny(
+// 		clippy::disallowed_methods,
+// 		clippy::disallowed_types,
+// 		clippy::indexing_slicing,
+// 		clippy::todo,
+// 		clippy::unwrap_used,
+// 		clippy::panic
+// 	)
+// )]
+// #![deny(clippy::unseparated_literal_suffix, unused_imports, non_snake_case, dead_code)]
+
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod governance;
@@ -17,12 +18,13 @@ pub mod impls;
 pub mod topology;
 pub mod xcmp;
 pub mod fees;
+mod prelude;
 
 use core::marker::PhantomData;
 
 #[cfg(not(feature = "runtime-benchmarks"))]
 use composable_traits::currency::AssetExistentialDepositInspect;
-use composable_traits::{defi::Ratio, oracle::MinimalOracle, xcm::assets::AssetRatioInspect};
+use composable_traits::{defi::Ratio, };
 pub use constants::*;
 use frame_support::{parameter_types, weights::Weight};
 use num_traits::CheckedMul;

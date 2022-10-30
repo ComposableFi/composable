@@ -1,18 +1,16 @@
 use codec::FullCodec;
 use frame_support::pallet_prelude::*;
 use scale_info::TypeInfo;
+use sp_arithmetic::fixed_point::FixedU64;
 use sp_runtime::{
 	traits::{AtLeast32BitUnsigned, Zero},
-	ArithmeticError,
+	ArithmeticError, FixedU128, Rational128,
 };
 use sp_std::fmt::Debug;
 
 use composable_support::math::safe::{SafeAdd, SafeDiv, SafeMul, SafeSub};
 
-use crate::defi::Ratio;
-
-/// really u8, but easy to do math operations
-pub type Exponent = u32;
+pub type Exponent = u8;
 
 /// Creates a new asset, compatible with [`MultiCurrency`](https://docs.rs/orml-traits/0.4.0/orml_traits/currency/trait.MultiCurrency.html).
 /// The implementor should ensure that a new `CurrencyId` is created and collisions are avoided.
@@ -44,11 +42,11 @@ pub trait AssetExistentialDepositInspect {
 	fn existential_deposit(asset_id: Self::AssetId) -> Result<Self::Balance, DispatchError>;
 }
 
-/// ration of any asset to native
+/// ratio of any asset to native
 pub trait AssetRatioInspect {
 	type AssetId;
 	/// How much of foreign assets I have to pay for unit of native asset
-	fn get_ratio(asset_id: Self::AssetId) -> Option<Ratio>;
+	fn get_ratio(asset_id: Self::AssetId) -> Option<Rational64>;
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Encode, Decode, TypeInfo)]
@@ -85,7 +83,7 @@ pub trait LocalAssets<MayBeAssetId> {
 	/// Amount reasonably higher than minimal tradeable amount or minimal trading step on DEX.
 	fn unit<T: From<u64>>(currency_id: MayBeAssetId) -> Result<T, DispatchError> {
 		let exponent = Self::decimals(currency_id)?;
-		Ok(10_u64.checked_pow(exponent).ok_or(ArithmeticError::Overflow)?.into())
+		Ok(10_u64.checked_pow(exponent as u32).ok_or(ArithmeticError::Overflow)?.into())
 	}
 }
 
@@ -151,13 +149,56 @@ impl<
 {
 }
 
-// hack to imitate type alias until it is in stable
-// named with like implying it is`like` is is necessary to be `AssetId`, but may be not enough (if
-// something is `AssetIdLike` than it is not always asset)
+pub trait AssetIdLike = FullCodec + MaxEncodedLen + Copy + Eq + PartialEq + Debug + TypeInfo;
 
-// FIXME(hussein-aitlahcen): this trait already exists in frame_support, named `AssetId`
-pub trait AssetIdLike:
-	FullCodec + MaxEncodedLen + Copy + Eq + PartialEq + Debug + TypeInfo
-{
+#[derive(
+	RuntimeDebug,
+	Copy,
+	Clone,
+	PartialEq,
+	Eq,
+	PartialOrd,
+	Ord,
+	Encode,
+	Decode,
+	MaxEncodedLen,
+	TypeInfo,
+)]
+pub struct Rational64 {
+	pub numer: u64,
+	pub denom: u64,
 }
-impl<T: FullCodec + MaxEncodedLen + Copy + Eq + PartialEq + Debug + TypeInfo> AssetIdLike for T {}
+
+impl Rational64 {
+	pub fn new(numer: u64, denom: u64) -> Self {
+		Rational64 { numer, denom }
+	}
+}
+
+impl const From<Rational64> for FixedU128 {
+	fn from(this: Rational64) -> Self {
+		Self::from_rational(this.numer.into(), this.denom.into())
+	}
+}
+
+impl const From<(u64, u64)> for Rational64 {
+	fn from(this: (u64, u64)) -> Self {
+		{
+			let numer = this.0;
+			let denom = this.1;
+			Rational64 { numer, denom }
+		}
+	}
+}
+
+impl const From<Rational64> for FixedU64 {
+	fn from(this: Rational64) -> Self {
+		Self::from_rational(this.numer.into(), this.denom.into())
+	}
+}
+
+impl From<Rational64> for Rational128 {
+	fn from(this: Rational64) -> Self {
+		Self::from(this.numer.into(), this.denom.into())
+	}
+}
