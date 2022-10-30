@@ -8817,8 +8817,6 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "hex-literal",
- "once_cell",
  "orml-tokens",
  "orml-traits",
  "pallet-account-proxy",

@@ -1,8 +1,8 @@
-use crate::RewardAccumulationHookError;
-use composable_tests_helpers::test::{
-	block::process_and_progress_blocks,
-	helper::{assert_last_event, assert_no_event},
+use crate::{
+	test_helpers::{add_to_rewards_pot_and_assert, create_rewards_pool_and_assert},
+	RewardAccumulationHookError,
 };
+use composable_tests_helpers::test::{block::process_and_progress_blocks, helper::RuntimeTrait};
 use frame_support::traits::{fungibles::InspectHold, TryCollect, UnixTime};
 
 use crate::test::prelude::*;
@@ -37,7 +37,7 @@ fn test_reward_update_calculation() {
 		// just mint a whole bunch of pica
 		mint_assets([ALICE], [PICA::ID], PICA::units(10_000));
 
-		create_rewards_pool_and_assert::<Test, runtime::Event>(RewardRateBasedIncentive {
+		create_rewards_pool_and_assert::<Test>(RewardRateBasedIncentive {
 			owner: ALICE,
 			asset_id: PICA::ID,
 			start_block: 2,
@@ -49,7 +49,7 @@ fn test_reward_update_calculation() {
 			minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
 		});
 
-		add_to_rewards_pot_and_assert(ALICE, PICA::ID, PICA::ID, PICA::units(10_000));
+		add_to_rewards_pot_and_assert::<Test>(ALICE, PICA::ID, PICA::ID, PICA::units(10_000));
 
 		// the expected total_rewards amount for each block surpassed
 		let expected = [
@@ -82,7 +82,7 @@ fn test_reward_update_calculation() {
 				RewardAccumulationHookError::BackToTheFuture,
 				RewardAccumulationHookError::RewardsPotEmpty,
 			] {
-				assert_no_event::<Test>(Event::StakingRewards(
+				Test::assert_no_event(Event::StakingRewards(
 					crate::Event::<Test>::RewardAccumulationHookError {
 						pool_id: PICA::ID,
 						asset_id: PICA::ID,
@@ -91,12 +91,10 @@ fn test_reward_update_calculation() {
 				));
 			}
 
-			assert_no_event::<Test>(Event::StakingRewards(
-				crate::Event::<Test>::MaxRewardsAccumulated {
-					pool_id: PICA::ID,
-					asset_id: PICA::ID,
-				},
-			));
+			Test::assert_no_event(crate::Event::<Test>::MaxRewardsAccumulated {
+				pool_id: PICA::ID,
+				asset_id: PICA::ID,
+			});
 
 			assert_eq!(
 				reward.total_rewards, expected_total_rewards,
@@ -120,9 +118,10 @@ fn test_reward_update_calculation() {
 		assert_eq!(reward.total_rewards, MAX_REWARDS);
 
 		// should report an error since the max was hit
-		assert_last_event::<Test>(Event::StakingRewards(
-			crate::Event::<Test>::MaxRewardsAccumulated { pool_id: PICA::ID, asset_id: PICA::ID },
-		));
+		Test::assert_last_event(crate::Event::<Test>::MaxRewardsAccumulated {
+			pool_id: PICA::ID,
+			asset_id: PICA::ID,
+		});
 	})
 }
 
@@ -157,37 +156,35 @@ fn test_accumulate_rewards_pool_empty_refill() {
 		mint_assets([ALICE], [A::ID], A::units(10_000));
 		mint_assets([ALICE], [B::ID], B::units(10_000));
 
-		create_rewards_pool_and_assert::<Test, runtime::Event>(
-			RewardPoolConfiguration::RewardRateBasedIncentive {
-				owner: ALICE,
-				asset_id: A::ID,
-				start_block: current_block + 1,
-				end_block: current_block + ONE_YEAR_OF_BLOCKS + 1,
-				reward_configs: [
-					(
-						A::ID,
-						RewardConfig {
-							max_rewards: A_A_MAX_REWARDS,
-							reward_rate: RewardRate::per_second(A_A_REWARD_RATE),
-						},
-					),
-					(
-						B::ID,
-						RewardConfig {
-							max_rewards: A_B_MAX_REWARDS,
-							reward_rate: RewardRate::per_second(A_B_REWARD_RATE),
-						},
-					),
-				]
-				.into_iter()
-				.try_collect()
-				.unwrap(),
-				lock: default_lock_config(),
-				share_asset_id: XA::ID,
-				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
-				minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
-			},
-		);
+		create_rewards_pool_and_assert::<Test>(RewardPoolConfiguration::RewardRateBasedIncentive {
+			owner: ALICE,
+			asset_id: A::ID,
+			start_block: current_block + 1,
+			end_block: current_block + ONE_YEAR_OF_BLOCKS + 1,
+			reward_configs: [
+				(
+					A::ID,
+					RewardConfig {
+						max_rewards: A_A_MAX_REWARDS,
+						reward_rate: RewardRate::per_second(A_A_REWARD_RATE),
+					},
+				),
+				(
+					B::ID,
+					RewardConfig {
+						max_rewards: A_B_MAX_REWARDS,
+						reward_rate: RewardRate::per_second(A_B_REWARD_RATE),
+					},
+				),
+			]
+			.into_iter()
+			.try_collect()
+			.unwrap(),
+			lock: default_lock_config(),
+			share_asset_id: XA::ID,
+			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+			minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
+		});
 
 		progress_to_block(current_block + 1, &mut current_block);
 
@@ -209,7 +206,12 @@ fn test_accumulate_rewards_pool_empty_refill() {
 		// RewardsPotEmpty event should only be emitted once, not every block
 		check_events([]);
 
-		add_to_rewards_pot_and_assert(ALICE, A::ID, A::ID, A_A_REWARD_RATE * block_seconds(5));
+		add_to_rewards_pot_and_assert::<Test>(
+			ALICE,
+			A::ID,
+			A::ID,
+			A_A_REWARD_RATE * block_seconds(5),
+		);
 
 		check_events([crate::Event::<Test>::RewardsPotIncreased {
 			pool_id: A::ID,
@@ -289,81 +291,77 @@ fn test_accumulate_rewards_hook() {
 
 		const ALICES_POOL_ID: u128 = A::ID;
 
-		create_rewards_pool_and_assert::<Test, runtime::Event>(
-			RewardPoolConfiguration::RewardRateBasedIncentive {
-				owner: ALICE,
-				asset_id: ALICES_POOL_ID,
-				start_block: current_block + 1,
-				end_block: current_block + ONE_YEAR_OF_BLOCKS + 1,
-				reward_configs: [
-					(
-						A::ID,
-						RewardConfig {
-							max_rewards: A_A_MAX_REWARDS,
-							reward_rate: RewardRate::per_second(A_A_REWARD_RATE),
-						},
-					),
-					(
-						B::ID,
-						RewardConfig {
-							max_rewards: A_B_MAX_REWARDS,
-							reward_rate: RewardRate::per_second(A_B_REWARD_RATE),
-						},
-					),
-				]
-				.into_iter()
-				.try_collect()
-				.unwrap(),
-				lock: default_lock_config(),
-				share_asset_id: XA::ID,
-				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
-				minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
-			},
-		);
+		create_rewards_pool_and_assert::<Test>(RewardPoolConfiguration::RewardRateBasedIncentive {
+			owner: ALICE,
+			asset_id: ALICES_POOL_ID,
+			start_block: current_block + 1,
+			end_block: current_block + ONE_YEAR_OF_BLOCKS + 1,
+			reward_configs: [
+				(
+					A::ID,
+					RewardConfig {
+						max_rewards: A_A_MAX_REWARDS,
+						reward_rate: RewardRate::per_second(A_A_REWARD_RATE),
+					},
+				),
+				(
+					B::ID,
+					RewardConfig {
+						max_rewards: A_B_MAX_REWARDS,
+						reward_rate: RewardRate::per_second(A_B_REWARD_RATE),
+					},
+				),
+			]
+			.into_iter()
+			.try_collect()
+			.unwrap(),
+			lock: default_lock_config(),
+			share_asset_id: XA::ID,
+			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+			minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
+		});
 
 		mint_assets([ALICE], [A::ID], A_A_INITIAL_AMOUNT);
-		add_to_rewards_pot_and_assert(ALICE, ALICES_POOL_ID, A::ID, A_A_INITIAL_AMOUNT);
+		add_to_rewards_pot_and_assert::<Test>(ALICE, ALICES_POOL_ID, A::ID, A_A_INITIAL_AMOUNT);
 		mint_assets([ALICE], [B::ID], A_B_INITIAL_AMOUNT);
-		add_to_rewards_pot_and_assert(ALICE, ALICES_POOL_ID, B::ID, A_B_INITIAL_AMOUNT);
+		add_to_rewards_pot_and_assert::<Test>(ALICE, ALICES_POOL_ID, B::ID, A_B_INITIAL_AMOUNT);
 
 		const BOBS_POOL_ID: u128 = C::ID;
 
-		create_rewards_pool_and_assert::<Test, runtime::Event>(
-			RewardPoolConfiguration::RewardRateBasedIncentive {
-				owner: BOB,
-				asset_id: BOBS_POOL_ID,
-				start_block: current_block + 1,
-				end_block: current_block + ONE_YEAR_OF_BLOCKS + 1,
-				reward_configs: [
-					(
-						D::ID,
-						RewardConfig {
-							max_rewards: C_D_MAX_REWARDS,
-							reward_rate: RewardRate::per_second(C_D_REWARD_RATE),
-						},
-					),
-					(
-						E::ID,
-						RewardConfig {
-							max_rewards: C_E_MAX_REWARDS,
-							reward_rate: RewardRate::per_second(C_E_REWARD_RATE),
-						},
-					),
-				]
-				.into_iter()
-				.try_collect()
-				.unwrap(),
-				lock: default_lock_config(),
-				share_asset_id: XC::ID,
-				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID + 1,
-				minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
-			},
-		);
+		create_rewards_pool_and_assert::<Test>(RewardPoolConfiguration::RewardRateBasedIncentive {
+			owner: BOB,
+			asset_id: BOBS_POOL_ID,
+			start_block: current_block + 1,
+			end_block: current_block + ONE_YEAR_OF_BLOCKS + 1,
+			reward_configs: [
+				(
+					D::ID,
+					RewardConfig {
+						max_rewards: C_D_MAX_REWARDS,
+						reward_rate: RewardRate::per_second(C_D_REWARD_RATE),
+					},
+				),
+				(
+					E::ID,
+					RewardConfig {
+						max_rewards: C_E_MAX_REWARDS,
+						reward_rate: RewardRate::per_second(C_E_REWARD_RATE),
+					},
+				),
+			]
+			.into_iter()
+			.try_collect()
+			.unwrap(),
+			lock: default_lock_config(),
+			share_asset_id: XC::ID,
+			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID + 1,
+			minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
+		});
 
 		mint_assets([ALICE], [D::ID], C_D_INITIAL_AMOUNT);
-		add_to_rewards_pot_and_assert(ALICE, BOBS_POOL_ID, D::ID, C_D_INITIAL_AMOUNT);
+		add_to_rewards_pot_and_assert::<Test>(ALICE, BOBS_POOL_ID, D::ID, C_D_INITIAL_AMOUNT);
 		mint_assets([ALICE], [E::ID], C_E_INITIAL_AMOUNT);
-		add_to_rewards_pot_and_assert(ALICE, BOBS_POOL_ID, E::ID, C_E_INITIAL_AMOUNT);
+		add_to_rewards_pot_and_assert::<Test>(ALICE, BOBS_POOL_ID, E::ID, C_E_INITIAL_AMOUNT);
 
 		{
 			progress_to_block(STARTING_BLOCK + 2, &mut current_block);
@@ -592,28 +590,26 @@ fn test_accumulate_rewards_hook() {
 
 		// add a new, zero-reward pool
 		// nothing needs to be added to the rewards pot as there are no rewards
-		create_rewards_pool_and_assert::<Test, runtime::Event>(
-			RewardPoolConfiguration::RewardRateBasedIncentive {
-				owner: CHARLIE,
-				asset_id: F::ID,
-				start_block: current_block + 1,
-				end_block: current_block + ONE_YEAR_OF_BLOCKS + 1,
-				reward_configs: [(
-					F::ID,
-					RewardConfig {
-						max_rewards: F::units(0xDEADC0DE),
-						reward_rate: RewardRate::per_second(0_u128),
-					},
-				)]
-				.into_iter()
-				.try_collect()
-				.unwrap(),
-				lock: default_lock_config(),
-				share_asset_id: XF::ID,
-				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID + 2,
-				minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
-			},
-		);
+		create_rewards_pool_and_assert::<Test>(RewardPoolConfiguration::RewardRateBasedIncentive {
+			owner: CHARLIE,
+			asset_id: F::ID,
+			start_block: current_block + 1,
+			end_block: current_block + ONE_YEAR_OF_BLOCKS + 1,
+			reward_configs: [(
+				F::ID,
+				RewardConfig {
+					max_rewards: F::units(0xDEADC0DE),
+					reward_rate: RewardRate::per_second(0_u128),
+				},
+			)]
+			.into_iter()
+			.try_collect()
+			.unwrap(),
+			lock: default_lock_config(),
+			share_asset_id: XF::ID,
+			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID + 2,
+			minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
+		});
 
 		{
 			progress_to_block(STARTING_BLOCK + 4167, &mut current_block);
@@ -740,16 +736,13 @@ fn check_events(expected_events: impl IntoIterator<Item = crate::Event<Test>>) {
 	// dbg!(System::events());
 	let mut expected_events = expected_events.into_iter().collect::<Vec<_>>();
 	for record in System::events() {
-		match record.event {
-			Event::StakingRewards(staking_event) => {
-				let idx = expected_events
-					.iter()
-					.position(|e| e.eq(&&staking_event))
-					.expect(&format!("unexpected event: {staking_event:#?}"));
+		if let Event::StakingRewards(staking_event) = record.event {
+			let idx = expected_events
+				.iter()
+				.position(|e| e.eq(&&staking_event))
+				.expect(&format!("unexpected event: {staking_event:#?}"));
 
-				expected_events.remove(idx);
-			},
-			_ => {},
+			expected_events.remove(idx);
 		}
 	}
 
