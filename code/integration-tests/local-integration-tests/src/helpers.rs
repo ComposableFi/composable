@@ -37,7 +37,7 @@ pub fn under_existential_deposit<
 	asset_id: LocalAssetId,
 	_instruction_count: usize,
 ) -> Balance {
-	multi_existential_deposits::<AssetsRegistry>(&asset_id) / 2
+	multi_existential_deposits::<AssetsRegistry>(&asset_id) - 1
 }
 
 /// dumps events for debugging

@@ -511,10 +511,8 @@ fn one_chain_cannot_print_relay_native_reserve_tokens_on_us() {
 	});
 }
 
-/// if Bob sends amount of his tokens and these are above weight but less than ED,
-/// than our treasury takes that amount, sorry Bob
 #[test]
-fn transfer_from_relay_chain_deposit_to_treasury_if_below_ed() {
+fn transfer_native_from_relay_enough_for_fee_but_not_enough_for_ed_ends_up_in_treasury() {
 	simtest();
 	let receiver = charlie();
 	let (picasso_treasury, under_ed) = This::execute_with(|| {
@@ -526,6 +524,11 @@ fn transfer_from_relay_chain_deposit_to_treasury_if_below_ed() {
 
 	KusamaRelay::execute_with(|| {
 		use relay_runtime::*;
+		let _ = <Balances as frame_support::traits::fungible::Balanced<AccountId>>::deposit(
+			&AccountId::from(alice()),
+			under_ed * 10000,
+		)
+		.unwrap();
 		assert_ok!(XcmPallet::reserve_transfer_assets(
 			Origin::signed(alice().into()),
 			Box::new(Parachain(THIS_PARA_ID).into().into()),

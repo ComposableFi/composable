@@ -39,7 +39,7 @@ XCMP can be upward (parachain to relay), downward(relay to parachain, parachain 
 - [Gavin Wood: XCM V3: Building a Heterogeneous Sharded Ecosystem | Polkadot Decoded 2022(video)](https://www.youtube.com/watch?v=ccfhYX3AimU)
 - [Substrate Builders Program Office Hours: XCM AMA(video)](https://www.youtube.com/watch?v=cS8GvPGMLS0)
 - [Shawn Tabrizi: XCM - The Backbone Of A Multichain Future | Polkadot Decoded 2022(video)](https://www.youtube.com/watch?v=2tmspefsygQ)
-- <https://www.youtube.com/watch?v=5cgq5jOZx9g>
+- [Sub0 Online: Getting Started with XCM - Your First Cross Chain Messages](https://www.youtube.com/watch?v=5cgq5jOZx9g)
 - <https://substrate.stackexchange.com/questions/37/how-can-i-transfer-assets-using-xcm>
 - <https://www.youtube.com/watch?v=wrA9vlPjVPE>
 - <https://research.web3.foundation/en/latest/polkadot/XCMP/Opening_closing%20XCMP%20Channel.html>
