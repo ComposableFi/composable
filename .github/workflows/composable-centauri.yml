@@ -62,5 +62,5 @@ jobs:
       - run: |
           cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#bridge-devnet-dali-container --no-update-lock-file --show-trace -L
           docker load --input ./result
-          docker tag composable-centauri-devnet-container:latest "${{ env.DOCKER_REGISTRY_NAME }}/composable-centauri:latest"
+          docker tag "composable-bridge-devnet-container:latest" "${{ env.DOCKER_REGISTRY_NAME }}/composable-centauri:latest"
           docker push "${{ env.DOCKER_REGISTRY_NAME }}/composable-centauri:latest"
