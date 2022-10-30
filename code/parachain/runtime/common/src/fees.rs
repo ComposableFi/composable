@@ -4,18 +4,20 @@ use composable_traits::{
 	rational,
 };
 
-use frame_support::weights::{
-	constants::ExtrinsicBaseWeight, WeightToFeeCoefficient, WeightToFeeCoefficients,
-	WeightToFeePolynomial,
+use frame_support::{
+	traits::{ConstU128, Get},
+	weights::{
+		constants::ExtrinsicBaseWeight, WeightToFeeCoefficient, WeightToFeeCoefficients,
+		WeightToFeePolynomial,
+	},
 };
 use num_traits::One;
 use primitives::currency::CurrencyId;
-use sp_runtime::Perbill;
+use sp_runtime::{helpers_128bit::multiply_by_rational_with_rounding, Perbill};
 use sp_std::marker::PhantomData;
 
-parameter_types! {
-	pub NativeExistentialDeposit: Balance = native_existential_deposit();
-}
+pub const NATIVE_EXISTENTIAL_DEPOSIT: NativeBalance = 100_000_000_000;
+pub type NativeExistentialDeposit = ConstU128<NATIVE_EXISTENTIAL_DEPOSIT>;
 
 pub struct WeightToFeeConverter;
 impl WeightToFeePolynomial for WeightToFeeConverter {
@@ -104,16 +106,22 @@ impl WellKnownPriceConverter {
 		match asset_id {
 			CurrencyId::KSM => Some(rational!(375 / 1_000_000)),
 			CurrencyId::ibcDOT => Some(rational!(2143 / 1_000_000)),
-			CurrencyId::USDT | CurrencyId::USDC => Some(rational!(015 / 1_000_000_000)),
-			CurrencyId::aUSD | CurrencyId::kUSD => Some(rational!(015 / 1_000)),
+			CurrencyId::USDT | CurrencyId::USDC => Some(rational!(15 / 1_000_000_000)),
+			CurrencyId::aUSD | CurrencyId::kUSD => Some(rational!(15 / 1_000)),
 			_ => None,
 		}
 	}
 
 	pub fn existential_deposit(asset_id: CurrencyId) -> Option<Balance> {
-		
+		Self::to_asset_balance(NATIVE_EXISTENTIAL_DEPOSIT, asset_id)
 	}
 
+	pub fn to_asset_balance(fee: NativeBalance asset_id: CurrencyId) -> Option<Balance> {
+		Self::get_ratio(asset_id).map(|x| {
+			safe_multiply_by_rational(fee, x.numer.into(), x.denom.into())
+				.unwrap_or(Balance::one())
+		})
+	}
 }
 
 pub type NativeBalance = Balance;
@@ -150,11 +158,6 @@ impl<AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>>
 				// },
 		}
 	}
-}
-
-//  cannot be zero as in benches it fails Invalid input: InsufficientBalance
-fn native_existential_deposit() -> Balance {
-	100 * CurrencyId::milli::<Balance>()
 }
 
 #[cfg(test)]
