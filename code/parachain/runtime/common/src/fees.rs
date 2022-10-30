@@ -1,5 +1,8 @@
 use crate::{prelude::*, Balance};
-use composable_traits::currency::{AssetExistentialDepositInspect, AssetRatioInspect};
+use composable_traits::{
+	currency::{AssetExistentialDepositInspect, AssetRatioInspect, Rational64},
+	rational,
+};
 
 use frame_support::weights::{
 	constants::ExtrinsicBaseWeight, WeightToFeeCoefficient, WeightToFeeCoefficients,
@@ -59,7 +62,7 @@ pub fn multi_existential_deposits<
 >(
 	currency_id: &CurrencyId,
 ) -> Balance {
-    use frame_support::traits::tokens::BalanceConversion;
+	use frame_support::traits::tokens::BalanceConversion;
 
 	AssetsRegistry::existential_deposit(*currency_id)
 		.and_then(|ed| PriceConverter::<AssetsRegistry>::to_asset_balance(ed, *currency_id))
@@ -97,16 +100,20 @@ pub mod cross_chain_errors {
 pub struct WellKnownPriceConverter;
 
 impl WellKnownPriceConverter {
-	
-	// pub fn to_balance(native_amount: NativeBalance, asset_id: CurrencyId) -> Option<Balance> {
-	// 	match asset_id {
-	// 		CurrencyId::KSM => Some(native_amount / 2267),
-	// 		CurrencyId::kUSD => Som(native_amount / 67),
-	// 		CurrencyId::USDT | CurrencyId::USDC => Som(native_amount / 67_000_000),
-	// 		_ => None,
-	// 	}
-	// 	.map(|x| x.max(Balance::one()))
-	// }
+	pub fn get_ratio(asset_id: CurrencyId) -> Option<Rational64> {
+		match asset_id {
+			CurrencyId::KSM => Some(rational!(375 / 1_000_000)),
+			CurrencyId::ibcDOT => Some(rational!(2143 / 1_000_000)),
+			CurrencyId::USDT | CurrencyId::USDC => Some(rational!(015 / 1_000_000_000)),
+			CurrencyId::aUSD | CurrencyId::kUSD => Some(rational!(015 / 1_000)),
+			_ => None,
+		}
+	}
+
+	pub fn existential_deposit(asset_id: CurrencyId) -> Option<Balance> {
+		
+	}
+
 }
 
 pub type NativeBalance = Balance;

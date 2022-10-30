@@ -14,7 +14,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod governance;
-pub mod impls;
+pub mod rewards;
 pub mod topology;
 pub mod xcmp;
 pub mod fees;

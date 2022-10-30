@@ -169,6 +169,13 @@ pub struct Rational64 {
 	pub denom: u64,
 }
 
+#[macro_export]
+macro_rules! rational {
+	($numer:literal / $denom: literal) => {
+		Rational64 { numer : $numer, denom: $denom }
+	};
+}
+
 impl Rational64 {
 	pub fn new(numer: u64, denom: u64) -> Self {
 		Rational64 { numer, denom }

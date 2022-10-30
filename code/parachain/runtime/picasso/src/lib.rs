@@ -31,7 +31,7 @@ pub use common::xcmp::{MaxInstructions, UnitWeightCost};
 use governance::*;
 
 use common::{
-	governance::native::*, impls::DealWithFees, multi_existential_deposits, AccountId,
+	governance::native::*, rewards::DealWithFees, multi_existential_deposits, AccountId,
 	AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, BondOfferId, ForeignAssetId, Hash,
 	MaxStringSize, Moment, NativeExistentialDeposit, PriceConverter, Signature,
 	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,

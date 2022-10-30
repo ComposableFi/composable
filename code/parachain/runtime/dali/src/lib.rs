@@ -38,7 +38,7 @@ use common::{
 	governance::native::{
 		EnsureRootOrHalfNativeCouncil, EnsureRootOrOneThirdNativeTechnical, NativeTreasury,
 	},
-	impls::DealWithFees,
+	rewards::DealWithFees,
 	multi_existential_deposits, AccountId, AccountIndex, Address, Amount, AuraId, Balance,
 	BlockNumber, BondOfferId, FinancialNftInstanceId, ForeignAssetId, Hash, MaxStringSize, Moment,
 	MosaicRemoteAssetId, NativeExistentialDeposit, PoolId, PriceConverter, Signature,

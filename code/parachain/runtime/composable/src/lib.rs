@@ -25,7 +25,7 @@ pub const WASM_BINARY_V2: Option<&[u8]> = None;
 mod weights;
 mod xcmp;
 use common::{
-	impls::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
+	rewards::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
 	ForeignAssetId, Hash, Moment, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS,
 	MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
