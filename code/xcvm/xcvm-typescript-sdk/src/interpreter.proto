@@ -73,10 +73,6 @@ message Result {
   uint32 result = 1;
 }
 
-message Result {
-  uint32 result = 1;
-}
-
 
 message AssetAmount {
   AssetId assetId = 1;
