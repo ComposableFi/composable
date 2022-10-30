@@ -42,7 +42,9 @@ pub trait AssetExistentialDepositInspect {
 	type Balance;
 
 	/// Given an `asset_id`, returns the existential deposit of an asset in asset currency.
-	fn existential_deposit(asset_id: Self::AssetId) -> Result<Self::Balance, DispatchError>;
+	fn existential_deposit(asset_id: Self::AssetId) -> Result<Self::Balance, DispatchError> {
+		Err(DispatchError::Other("unimplemented!"))
+	}
 }
 
 
@@ -51,7 +53,9 @@ pub type ForeignByNative = Rational64;
 
 pub trait AssetRatioInspect {
 	type AssetId;
-	fn get_ratio(asset_id: Self::AssetId) -> Option<ForeignByNative>;
+	fn get_ratio(asset_id: Self::AssetId) -> Option<ForeignByNative> {
+		None
+	}
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Encode, Decode, TypeInfo)]

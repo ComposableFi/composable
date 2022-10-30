@@ -116,12 +116,46 @@ impl<AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>>
 
 #[cfg(test)]
 mod commons_sense {
-	use super::WeightToFeeConverter;
+	use crate::fees::WellKnownPriceConverter;
+
+	use super::*;
+	use composable_traits::currency::AssetRatioInspect;
 	use frame_support::weights::{constants::WEIGHT_PER_SECOND, WeightToFee};
+	use primitives::currency::CurrencyId;
 
 	#[test]
 	fn reasonable_fee() {
 		let converted = WeightToFeeConverter::weight_to_fee(&WEIGHT_PER_SECOND);
 		assert_eq!(converted, 1_158_775_406_000);
+	}
+
+	struct Dummy {}
+	impl AssetRatioInspect for Dummy {
+		type AssetId = CurrencyId;
+	}
+	impl AssetExistentialDepositInspect for Dummy {
+		type AssetId = CurrencyId;
+		type Balance = Balance;
+	}
+
+	#[cfg(not(feature = "runtime-benchmarks"))]
+	#[test]
+	fn usdt() {
+		let converted_static =
+			WellKnownPriceConverter::to_asset_balance(1_000_000_000, CurrencyId::USDT).unwrap();
+		let converted_dynamic =
+			PriceConverter::<Dummy>::to_asset_balance(1_000_000_000, CurrencyId::USDT).unwrap();
+		assert_eq!(converted_static, converted_dynamic);
+		assert_eq!(converted_static, 15);
+	}
+
+	#[cfg(not(feature = "runtime-benchmarks"))]
+	#[test]
+	fn ksm() {
+		let converted_static =
+			WellKnownPriceConverter::existential_deposit(CurrencyId::KSM).unwrap();
+		let converted_dynamic = multi_existential_deposits::<Dummy>(&CurrencyId::KSM);
+		assert_eq!(converted_static, converted_dynamic);
+		assert_eq!(converted_static, 37500000);
 	}
 }

@@ -1,13 +1,11 @@
 use super::*;
 use common::{
-	fees::WeightToFeeConverter,
+	fees::{WeightToFeeConverter, PriceConverter},
 	governance::native::{EnsureRootOrHalfNativeTechnical, NativeCouncilCollective},
 	topology,
-	xcmp::*,
-	PriceConverter,
+	xcmp::*,	
 };
-use composable_traits::{
-	oracle::MinimalOracle,
+use composable_traits::{	
 	xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation},
 };
 use cumulus_primitives_core::ParaId;
@@ -138,7 +136,7 @@ pub type Trader = TransactionFeePoolTrader<
 
 pub struct CaptureDropAssets<
 	Treasury: TakeRevenue,
-	PriceConverter: MinimalOracle,
+	PriceConverter,
 	AssetConverter: Convert<MultiLocation, Option<CurrencyId>>,
 >(PhantomData<(Treasury, PriceConverter, AssetConverter)>);
 
@@ -149,7 +147,7 @@ pub struct CaptureDropAssets<
 /// else if asset location and origin not know, hash it until it will be added
 impl<
 		Treasury: TakeRevenue,
-		PriceConverter: MinimalOracle,
+		PriceConverter,
 		AssetConverter: Convert<MultiLocation, Option<CurrencyId>>,
 	> DropAssets for CaptureDropAssets<Treasury, PriceConverter, AssetConverter>
 {

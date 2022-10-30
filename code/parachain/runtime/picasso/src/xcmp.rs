@@ -3,11 +3,10 @@ use codec::{Decode, Encode};
 use common::{
 	topology::{self},
 	xcmp::*,
-	PriceConverter, fees::WeightToFeeConverter,
+	fees::{PriceConverter, WeightToFeeConverter},
 };
 use composable_traits::{
-	defi::Ratio,
-	oracle::MinimalOracle,
+	defi::Ratio,	
 	xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation},
 };
 use cumulus_primitives_core::{IsSystem, ParaId};
@@ -149,13 +148,13 @@ pub type Trader = TransactionFeePoolTrader<
 
 pub struct CaptureDropAssets<
 	Treasury: TakeRevenue,
-	PriceConverter: MinimalOracle,
+	PriceConverter,
 	AssetConverter: Convert<MultiLocation, Option<CurrencyId>>,
 >(PhantomData<(Treasury, PriceConverter, AssetConverter)>);
 
 impl<
 		Treasury: TakeRevenue,
-		PriceConverter: MinimalOracle,
+		PriceConverter,
 		AssetConverter: Convert<MultiLocation, Option<CurrencyId>>,
 	> DropAssets for CaptureDropAssets<Treasury, PriceConverter, AssetConverter>
 {

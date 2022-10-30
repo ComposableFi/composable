@@ -31,9 +31,9 @@ pub use common::xcmp::{MaxInstructions, UnitWeightCost};
 use governance::*;
 
 use common::{
-	governance::native::*, rewards::DealWithFees, multi_existential_deposits, AccountId,
+	governance::native::*, rewards::DealWithFees, fees::{multi_existential_deposits,  NativeExistentialDeposit, PriceConverter}, AccountId,
 	AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, BondOfferId, ForeignAssetId, Hash,
-	MaxStringSize, Moment, NativeExistentialDeposit, PriceConverter, Signature,
+	MaxStringSize, Moment, Signature,
 	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION, ReservedDmpWeight, ReservedXcmpWeight, fees::WeightToFeeConverter,
 };
@@ -412,7 +412,7 @@ impl asset_tx_payment::Config for Runtime {
 
 	type ConfigurationOrigin = EnsureRootOrHalfNativeCouncil;
 
-	type ConfigurationExistentialDeposit = common::NativeExistentialDeposit;
+	type ConfigurationExistentialDeposit = common::fees::NativeExistentialDeposit;
 
 	type PayableCall = Call;
 

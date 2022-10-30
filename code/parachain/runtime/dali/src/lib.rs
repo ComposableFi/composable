@@ -39,9 +39,9 @@ use common::{
 		EnsureRootOrHalfNativeCouncil, EnsureRootOrOneThirdNativeTechnical, NativeTreasury,
 	},
 	rewards::DealWithFees,
-	multi_existential_deposits, AccountId, AccountIndex, Address, Amount, AuraId, Balance,
+	fees::{multi_existential_deposits,  NativeExistentialDeposit, PriceConverter}, AccountId, AccountIndex, Address, Amount, AuraId, Balance,
 	BlockNumber, BondOfferId, FinancialNftInstanceId, ForeignAssetId, Hash, MaxStringSize, Moment,
-	MosaicRemoteAssetId, NativeExistentialDeposit, PoolId, PriceConverter, Signature,
+	MosaicRemoteAssetId, PoolId, Signature,
 	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 	fees::WeightToFeeConverter,
@@ -331,7 +331,7 @@ impl balances::Config for Runtime {
 	/// The ubiquitous event type.
 	type Event = Event;
 	type DustRemoval = Treasury;
-	type ExistentialDeposit = common::NativeExistentialDeposit;
+	type ExistentialDeposit = NativeExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = weights::balances::WeightInfo<Runtime>;
 }
@@ -406,7 +406,7 @@ impl asset_tx_payment::Config for Runtime {
 
 	type ConfigurationOrigin = EnsureRootOrHalfNativeCouncil;
 
-	type ConfigurationExistentialDeposit = common::NativeExistentialDeposit;
+	type ConfigurationExistentialDeposit = NativeExistentialDeposit;
 
 	type PayableCall = Call;
 
