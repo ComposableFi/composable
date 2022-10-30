@@ -37,6 +37,7 @@
 #![feature(trait_alias)]
 #![feature(const_trait_impl)]
 #![feature(const_convert)]
+#![feature(adt_const_params)]
 
 pub mod account_proxy;
 pub mod airdrop;

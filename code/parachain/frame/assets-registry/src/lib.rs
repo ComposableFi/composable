@@ -31,7 +31,7 @@ pub mod weights;
 pub mod pallet {
 	use crate::prelude::*;
 	pub use crate::weights::WeightInfo;
-	use composable_traits::currency::{CurrencyFactory, RangeId};
+	use composable_traits::currency::{CurrencyFactory, RangeId, ForeignByNative};
 	use cumulus_primitives_core::ParaId;
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo, pallet_prelude::*, traits::EnsureOrigin,
@@ -169,23 +169,19 @@ pub mod pallet {
 		///
 		/// # Parameters:
 		///
-		/// `ratio` -  allows `bring you own gas` fees.
+		/// `ratio` -  
+		/// Allows `bring you own gas` fees.
 		/// Set to `None` to prevent payment in this asset, only transferring.
 		/// Setting to some will NOT start minting tokens with specified ratio.
 		///
 		/// ```python
-		/// # if cross chain message wants to pay tx fee with non native token
-		/// # then amount of native token would be:
-		/// amount_of_native_token = amount_of_foreign_token * ratio
+		///  ratio = foreign_token / native_token
+		///  amount_of_foreign_asset = amount_of_native_asset * ratio
 		/// ```
 		///
-		/// Example:
-		/// - (42, 123) will mean that amount of native token is equal `(amount_of_foreign * 42) /
-		///   123
+		/// `decimals` - `human` number of decimals
 		///
-		/// `decimals` - remote number of decimals on other(remote) chain
-		///
-		/// `ed` - same meaning as in `CurrencyFactory`
+		/// `ed` - same meaning as in for foreign asset account (if None, then asset is not sufficient)
 		#[pallet::weight(<T as Config>::WeightInfo::register_asset())]
 		pub fn register_asset(
 			origin: OriginFor<T>,
@@ -330,7 +326,7 @@ pub mod pallet {
 
 	impl<T: Config> AssetRatioInspect for Pallet<T> {
 		type AssetId = T::LocalAssetId;
-		fn get_ratio(asset_id: Self::AssetId) -> Option<Rational> {
+		fn get_ratio(asset_id: Self::AssetId) -> Option<ForeignByNative> {
 			AssetRatio::<T>::get(asset_id).map(Into::into)
 		}
 	}

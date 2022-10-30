@@ -1,14 +1,17 @@
+use core::primitive;
+
 use codec::FullCodec;
 use frame_support::pallet_prelude::*;
+use polkadot_parachain::primitives;
 use scale_info::TypeInfo;
 use sp_arithmetic::fixed_point::FixedU64;
 use sp_runtime::{
 	traits::{AtLeast32BitUnsigned, Zero},
 	ArithmeticError, FixedU128, Rational128,
 };
-use sp_std::fmt::Debug;
 
 use composable_support::math::safe::{SafeAdd, SafeDiv, SafeMul, SafeSub};
+use sp_std::fmt::Debug;
 
 pub type Exponent = u8;
 
@@ -42,11 +45,13 @@ pub trait AssetExistentialDepositInspect {
 	fn existential_deposit(asset_id: Self::AssetId) -> Result<Self::Balance, DispatchError>;
 }
 
-/// ratio of any asset to native
+
+/// foreign_amount / native_amount
+pub type ForeignByNative = Rational64;
+
 pub trait AssetRatioInspect {
 	type AssetId;
-	/// How much of foreign assets I have to pay for unit of native asset
-	fn get_ratio(asset_id: Self::AssetId) -> Option<Rational64>;
+	fn get_ratio(asset_id: Self::AssetId) -> Option<ForeignByNative>;
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Encode, Decode, TypeInfo)]
@@ -172,9 +177,35 @@ pub struct Rational64 {
 #[macro_export]
 macro_rules! rational {
 	($numer:literal / $denom: literal) => {
-		Rational64 { numer : $numer, denom: $denom }
+		Rational64 { numer: $numer, denom: $denom }
 	};
 }
+
+macro_rules! impl_const_get {
+	($name:ident, $t:ty) => {
+		#[doc = "Const getter for a basic type."]
+		#[derive(RuntimeDebug)]
+		pub struct $name<const T: $t>;
+		impl<const T: $t> Get<$t> for $name<T> {
+			fn get() -> $t {
+				T
+			}
+		}
+		impl<const T: $t> Get<Option<$t>> for $name<T> {
+			fn get() -> Option<$t> {
+				Some(T)
+			}
+		}
+		impl<const T: $t> TypedGet for $name<T> {
+			type Type = $t;
+			fn get() -> $t {
+				T
+			}
+		}
+	};
+}
+
+impl_const_get!(ConstRational64, Rational64);
 
 impl Rational64 {
 	pub fn new(numer: u64, denom: u64) -> Self {
