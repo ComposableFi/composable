@@ -28,22 +28,6 @@ where
 	asset_weights
 }
 
-pub fn dual_asset_pool_weights<T>(
-	first_asset: <T as pallet_pablo::Config>::AssetId,
-	first_asset_weight: Permill,
-	second_asset: <T as pallet_pablo::Config>::AssetId,
-) -> BoundedBTreeMap<<T as pallet_pablo::Config>::AssetId, Permill, ConstU32<2>>
-where
-	T: pallet_pablo::Config,
-{
-	let mut asset_weights = BoundedBTreeMap::new();
-	asset_weights.try_insert(first_asset, first_asset_weight).expect("Should work");
-	asset_weights
-		.try_insert(second_asset, first_asset_weight.left_from_one())
-		.expect("Should work");
-	asset_weights
-}
-
 fn create_single_node_pool<T>() -> (
 	CurrencyPair<<T as pallet_dex_router::Config>::AssetId>,
 	Vec<<T as pallet_dex_router::Config>::PoolId>,
