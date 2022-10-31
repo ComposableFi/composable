@@ -1425,8 +1425,7 @@ mod claim {
 
 			mint_assets([ALICE], [PICA::ID], PICA::units(100_000_000));
 
-			let fnft_instance_id =
-				stake_and_assert::<Test>(ALICE, staked_asset_id, AMOUNT, DURATION);
+			stake_and_assert::<Test>(ALICE, staked_asset_id, AMOUNT, DURATION);
 
 			assert_eq!(balance(staked_asset_id, &ALICE), PICA::units(100_000_000) - AMOUNT);
 

@@ -62,11 +62,8 @@ use frame_support::{
 	transactional, BoundedBTreeMap,
 };
 pub use pallet::*;
-use sp_runtime::{traits::Saturating, SaturatedConversion};
-use sp_std::{
-	cmp,
-	ops::{Div, Sub},
-};
+use sp_runtime::SaturatedConversion;
+use sp_std::{cmp, ops::Div};
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -214,6 +211,7 @@ pub mod pallet {
 	pub enum RewardAccumulationHookError {
 		BackToTheFuture,
 		RewardsPotEmpty,
+		ArithmeticError,
 	}
 
 	#[pallet::error]
@@ -266,6 +264,8 @@ pub mod pallet {
 		StakedAmountTooLow,
 		/// Staked amount after split is less than the minimum staking amount for the pool.
 		StakedAmountTooLowAfterSplit,
+		/// Some operation resulted in an arithmetic overflow.
+		ArithmeticError,
 	}
 
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
@@ -1490,6 +1490,13 @@ pub mod pallet {
 						});
 					}
 				},
+				Err(ArithmeticError) => {
+					Self::deposit_event(Event::<T>::RewardAccumulationHookError {
+						pool_id,
+						asset_id: reward_asset_id,
+						error: RewardAccumulationHookError::ArithmeticError,
+					});
+				},
 			}
 		}
 
@@ -1641,6 +1648,8 @@ fn update_rewards_pool<T: Config>(
 					return Err(Error::<T>::BackToTheFuture.into()),
 				Err(RewardAccumulationCalculationError::RewardsPotEmpty) =>
 					return Err(Error::<T>::RewardsPotEmpty.into()),
+				Err(RewardAccumulationCalculationError::ArithmeticError) =>
+					return Err(Error::<T>::ArithmeticError.into()),
 			}
 
 			reward.reward_rate = update.reward_rate;
@@ -1691,12 +1700,12 @@ pub(crate) fn do_reward_accumulation<T: Config>(
 		let releasable_periods_surpassed =
 			cmp::min(maximum_releasable_periods, periods_surpassed.into());
 
-		// saturating is safe here since these values are checked against max_rewards anyways, which
-		// is <= u128::MAX
-		let newly_accumulated_rewards =
-			u128::saturating_mul(releasable_periods_surpassed, reward.reward_rate.amount.into());
-		let new_total_rewards =
-			newly_accumulated_rewards.saturating_add(reward.total_rewards.into());
+		let newly_accumulated_rewards = releasable_periods_surpassed
+			.safe_mul(&reward.reward_rate.amount.into())
+			.map_err(|_| RewardAccumulationCalculationError::ArithmeticError)?;
+		let new_total_rewards = newly_accumulated_rewards
+			.safe_add(&reward.total_rewards.into())
+			.map_err(|_| RewardAccumulationCalculationError::ArithmeticError)?;
 
 		// u64::MAX is roughly 584.9 billion years in the future, so saturating at that should be ok
 		let last_updated_timestamp = reward.last_updated_timestamp.saturating_add(
@@ -1736,6 +1745,8 @@ pub(crate) enum RewardAccumulationCalculationError {
 	/// The rewards pot (held balance) for this pool is empty or doesn't have enough held balance
 	/// to release for the rewards accumulated.
 	RewardsPotEmpty,
+	/// Some operation resulted in an arithmetic error.
+	ArithmeticError,
 }
 
 pub(crate) fn claim_of_stake<T: Config>(
