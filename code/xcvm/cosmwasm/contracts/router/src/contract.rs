@@ -1,7 +1,7 @@
 use crate::{
 	error::ContractError,
 	msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg},
-	state::{Config, UserId, ADMIN, BRIDGES, CONFIG, INTERPRETERS},
+	state::{Config, Interpreter, UserId, ADMIN, BRIDGES, CONFIG, INTERPRETERS},
 };
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
@@ -21,6 +21,7 @@ use xcvm_core::{Bridge, BridgeSecurity, Displayed, Funds, NetworkId};
 const CONTRACT_NAME: &str = "composable:xcvm-router";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const INSTANTIATE_REPLY_ID: u64 = 1;
+const EVENT_PREFIX: &str = "xcvm.router";
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -31,6 +32,8 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
 	set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 	let registry_address = deps.api.addr_validate(&msg.registry_address)?;
+	// Admin, when called by the relayer will be the relayer. And relayers,
+	// will be using only the routers that are called by themselves.
 	ADMIN.save(deps.storage, &info.sender)?;
 	CONFIG.save(
 		deps.storage,
@@ -54,11 +57,17 @@ pub fn execute(
 	match msg {
 		ExecuteMsg::Run { network_id, user_id, interpreter_execute_msg, funds, bridge } =>
 			handle_run(deps, env, network_id, user_id, interpreter_execute_msg, funds, bridge),
+		ExecuteMsg::SetInterpreterSecurity { network_id, user_id, bridge_security } => {
+			ensure_admin(deps.as_ref(), &info.sender)?;
+			set_interpreter_security(deps, network_id, user_id, bridge_security)?;
+			// TODO(aeryz): see if we need an event here
+			Ok(Response::default())
+		},
 		ExecuteMsg::RegisterBridge { bridge } => {
 			ensure_admin(deps.as_ref(), &info.sender)?;
 			register_bridge(deps, bridge)?;
 			Ok(Response::default().add_event(
-				Event::new("xcvm.router")
+				Event::new(EVENT_PREFIX)
 					.add_attribute("bridge_registered", format!("{:?}", bridge)),
 			))
 		},
@@ -66,7 +75,7 @@ pub fn execute(
 			ensure_admin(deps.as_ref(), &info.sender)?;
 			unregister_bridge(deps, bridge);
 			Ok(Response::default().add_event(
-				Event::new("xcvm.router")
+				Event::new(EVENT_PREFIX)
 					.add_attribute("bridge_unregistered", format!("{:?}", bridge)),
 			))
 		},
@@ -79,15 +88,36 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
 	Ok(Response::default())
 }
 
-pub fn register_bridge(deps: DepsMut, bridge: Bridge) -> Result<(), ContractError> {
+fn register_bridge(deps: DepsMut, bridge: Bridge) -> Result<(), ContractError> {
 	BRIDGES.save(deps.storage, bridge, &()).map_err(Into::into)
 }
 
-pub fn unregister_bridge(deps: DepsMut, bridge: Bridge) {
+fn unregister_bridge(deps: DepsMut, bridge: Bridge) {
 	BRIDGES.remove(deps.storage, bridge)
 }
 
-pub fn handle_run(
+fn set_interpreter_security(
+	deps: DepsMut,
+	network_id: NetworkId,
+	user_id: UserId,
+	security: BridgeSecurity,
+) -> Result<(), ContractError> {
+	match INTERPRETERS.load(deps.storage, (network_id.0, user_id.clone())) {
+		Ok(Interpreter { address, .. }) => INTERPRETERS.save(
+			deps.storage,
+			(network_id.0, user_id),
+			&Interpreter { address, security },
+		),
+		Err(_) => INTERPRETERS.save(
+			deps.storage,
+			(network_id.0, user_id),
+			&Interpreter { address: None, security },
+		),
+	}
+	.map_err(Into::into)
+}
+
+fn handle_run(
 	deps: DepsMut,
 	env: Env,
 	network_id: NetworkId,
@@ -97,25 +127,31 @@ pub fn handle_run(
 	bridge: Bridge,
 ) -> Result<Response, ContractError> {
 	match INTERPRETERS.load(deps.storage, (network_id.0, user_id.clone())) {
-		Ok(interpreter_address) => {
+		Ok(Interpreter { address: Some(interpreter_address), security }) => {
+			// There is already an interpreter instance, so all we do is fund the interpreter, then
+			// add a callback to it
+			assert_bridge_security(bridge, security)?;
 			let response =
 				send_funds_to_interpreter(deps.as_ref(), interpreter_address.clone(), funds)?;
 			let wasm_msg = wasm_execute(interpreter_address, &interpreter_execute_msg, vec![])?;
 			Ok(response.add_message(wasm_msg))
 		},
-		Err(_) => {
-			// There is no interpreter, so the bridge security must be at least `Deterministic`
-			// or the message should be coming from a local origin
+		_ => {
 			let Config {
 				registry_address,
 				relayer_address,
 				interpreter_code_id,
 				network_id: router_network_id,
 			} = CONFIG.load(deps.storage)?;
+			// There is no interpreter, so the bridge security must be at least `Deterministic`
+			// or the message should be coming from a local origin
 			if network_id != router_network_id {
 				assert_bridge_security(bridge, BridgeSecurity::Deterministic)?;
 			}
+			// First, add a callback to instantiate an interpreter (which we later get the result
+			// and save it)
 			let instantiate_msg: CosmosMsg = WasmMsg::Instantiate {
+				// router is the default admin of a contract
 				admin: Some(env.contract.address.clone().into_string()),
 				code_id: interpreter_code_id,
 				msg: to_binary(&InterpreterInstantiateMsg {
@@ -129,14 +165,19 @@ pub fn handle_run(
 			}
 			.into();
 
-			let submessage = SubMsg::reply_on_success(instantiate_msg, INSTANTIATE_REPLY_ID);
-			let wasm_msg: CosmosMsg = wasm_execute(
+			let interpreter_instantiate_submessage =
+				SubMsg::reply_on_success(instantiate_msg, INSTANTIATE_REPLY_ID);
+			// Secondly, call itself again with the same parameters, so that this functions goes
+			// into `Ok` state and properly executes the interpreter
+			let self_call_message: CosmosMsg = wasm_execute(
 				env.contract.address,
 				&ExecuteMsg::Run { network_id, user_id, interpreter_execute_msg, funds, bridge },
 				vec![],
 			)?
 			.into();
-			Ok(Response::new().add_submessage(submessage).add_message(wasm_msg))
+			Ok(Response::new()
+				.add_submessage(interpreter_instantiate_submessage)
+				.add_message(self_call_message))
 		},
 	}
 }
@@ -150,6 +191,10 @@ fn send_funds_to_interpreter(
 	let registry_address = CONFIG.load(deps.storage)?.registry_address.into_string();
 	let interpreter_address = interpreter_address.into_string();
 	for (asset_id, amount) in funds.0 {
+		// We ignore zero amounts
+		if amount.0 == 0 {
+			continue
+		}
 		let query_msg = AssetRegistryQueryMsg::GetAssetContract(asset_id.into());
 		let cw20_address: GetAssetContractResponse = deps.querier.query(
 			&WasmQuery::Smart {
@@ -159,11 +204,7 @@ fn send_funds_to_interpreter(
 			.into(),
 		)?;
 		let contract = Cw20Contract(cw20_address.addr.clone());
-
-		if amount.0 == 0 {
-			continue
-		}
-
+		// Adding callbacks to transfer funds to the interpreter prior to execution
 		response = response.add_message(contract.call(Cw20ExecuteMsg::Transfer {
 			recipient: interpreter_address.clone(),
 			amount: amount.0.into(),
@@ -196,6 +237,8 @@ pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> StdResult<Binary> {
 fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 	let response = msg.result.into_result().map_err(StdError::generic_err)?;
 	let interpreter_address = {
+		// Catch the default `instantiate` event which contains `_contract_address` attribute that
+		// has the instantiated contract's address
 		let instantiate_event = response
 			.events
 			.iter()
@@ -212,12 +255,18 @@ fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 	};
 
 	let router_reply = {
+		// Interpreter provides `user_id, network_id` pair as an event for the router to know which
+		// pair is instantiated
 		let interpreter_event = response
 			.events
 			.iter()
 			.find(|event| event.ty == "wasm-xcvm.interpreter.instantiated")
 			.ok_or(StdError::not_found("interpreter event not found"))?;
 
+		// TODO(aeryz): This heavily depends on how the interpreter formats the data. This either be
+		// a decoding function and a type in the interpreter contract or an encoding function in the
+		// router. But the interpreter option seems to be better because other contracts might wanna
+		// use this.
 		from_binary::<(u8, UserId)>(&Binary::from_base64(
 			interpreter_event
 				.attributes
@@ -229,7 +278,21 @@ fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 		)?)?
 	};
 
-	INTERPRETERS.save(deps.storage, (router_reply.0, router_reply.1), &interpreter_address)?;
+	match INTERPRETERS.load(deps.storage, (router_reply.0, router_reply.1.clone())) {
+		Ok(Interpreter { security, .. }) => INTERPRETERS.save(
+			deps.storage,
+			(router_reply.0, router_reply.1),
+			&Interpreter { address: Some(interpreter_address), security },
+		)?,
+		Err(_) => INTERPRETERS.save(
+			deps.storage,
+			(router_reply.0, router_reply.1),
+			&Interpreter {
+				security: BridgeSecurity::Deterministic,
+				address: Some(interpreter_address),
+			},
+		)?,
+	}
 
 	Ok(Response::new())
 }
