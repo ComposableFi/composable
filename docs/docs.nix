@@ -1,19 +1,15 @@
 { self, ... }:
 {
   perSystem = { config, self', inputs', pkgs, system, ... }:
-    let
-      # we do not use pkgs or self', because we need to add
-      # the npm-buildpackage overlay.
-      pkgs' = import self.inputs.nixpkgs {
-        inherit system;
-        overlays = [
-          self.inputs.npm-buildpackage.overlays.default
-        ];
-      };
-    in
     {
+      # Add the npm-buildpackage overlay to the perSystem's pkgs
+      _module.args.pkgs = import self.inputs.nixpkgs {
+        inherit system;
+        overlays = [ self.inputs.npm-buildpackage.overlays.default ];
+      };
+
       packages = rec {
-        docs-static = pkgs'.buildNpmPackage {
+        docs-static = pkgs.buildNpmPackage {
           src = ./.;
           npmBuild = "npm run build";
           installPhase = ''
