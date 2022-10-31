@@ -33,20 +33,5 @@
             '';
           });
       };
-
-      apps = {
-        docs-dev = {
-          type = "app";
-          program = pkgs.writeShellApplication {
-            name = "docs-dev";
-            runtimeInputs = [ pkgs.nodejs ];
-            text = ''
-              cd docs
-              npm install
-              npm run start
-            '';
-          };
-        };
-      };
     };
 }
