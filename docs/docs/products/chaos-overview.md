@@ -65,4 +65,4 @@ CHAOS holders receive returns from multiple different streams. They earn yield d
 earn revenue from the Picasso treasury, and earn yield from transaction fees on the Picasso network.
 
 
-![CHAOS_architecture](../../static/img/products/chaos/architecture
+![CHAOS_architecture](../../static/img/products/chaos/architecture.png)
