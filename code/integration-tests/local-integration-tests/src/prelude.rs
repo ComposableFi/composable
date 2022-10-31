@@ -17,10 +17,11 @@ pub use frame_support::{
 };
 pub use frame_system::{pallet_prelude::*, Config};
 use primitives::currency::CurrencyId;
-pub use sp_runtime::{traits::StaticLookup, FixedPointNumber, FixedU128};
+pub use sp_runtime::{traits::StaticLookup, FixedPointNumber, FixedU128, DispatchError, ModuleError};
 pub use xcm::{latest::prelude::*, VersionedMultiLocation};
 pub use xcm_emulator::TestExt;
 pub use xcm_executor::XcmExecutor;
+
 
 #[cfg(test)]
 pub use more_asserts::*;

@@ -17,7 +17,6 @@ use orml_traits::currency::MultiCurrency;
 
 use frame_support::{
 	assert_ok, log,
-	sp_runtime::{DispatchError, ModuleError},
 	weights::constants::WEIGHT_PER_MILLIS,
 };
 use primitives::currency::*;
@@ -98,7 +97,7 @@ fn transfer_from_relay_native_from_this_to_relay_chain_by_local_id() {
 		assert_eq!(relay_runtime::Balances::balance(&AccountId::from(bob())), 0);
 	});
 
-	
+	log::info!(target: "bdd", "Alice transfer from this to Relay");
 	This::execute_with(|| {
 		let before = this_runtime::Assets::free_balance(CurrencyId::KSM, &alice().into());
 		let transferred = this_runtime::XTokens::transfer(
@@ -325,14 +324,78 @@ fn transfer_non_native_reserver_asset_from_this_to_sibling_by_local_id() {
 }
 
 #[test]
-fn transfer_insufficient_amount_should_fail() {
+fn this_native_transferred_from_sibling_to_native_is_not_enough() {
 	simtest();
-	Sibling::execute_with(|| {
-		assert!(matches!(
-			sibling_runtime::XTokens::transfer(
-				sibling_runtime::Origin::signed(alice().into()),
+
+	let remote_this_asset_id = Sibling::execute_with(|| {
+		log::info!(target: "bdd", "Remote PICA registered on sibling");
+		use sibling_runtime::*;
+		let root = frame_system::RawOrigin::Root;
+		let location = XcmAssetLocation::new(
+			MultiLocation::new(
+				1,
+				X1(
+					Parachain(THIS_PARA_ID),
+				),
+			)
+			.into(),
+		);
+		AssetsRegistry::register_asset(
+			root.into(),
+			location.clone(),
+			1000,
+			Some(Rational64::one()),
+			None,
+		)
+		.unwrap();
+		System::events()
+			.iter()
+			.find_map(|x| match x.event {
+				Event::AssetsRegistry(assets_registry::Event::<Runtime>::AssetRegistered {
+					asset_id,
+					location: _,
+				}) => Some(asset_id),
+				_ => None,
+			})
+			.unwrap()
+	});
+
+	
+	This::execute_with(|| {
+		use this_runtime::*;
+		let _ = <balances::Pallet<Runtime> as frame_support::traits::Currency<AccountId>>::deposit_creating(
+			&alice().into(),
+			200_000_000_000_000,
+		);
+
+		assert_ok!(
+			XTokens::transfer(
+				Origin::signed(alice().into()),
 				CurrencyId::PICA,
-				1_000_000 - 1,
+				100_000_000_000_000,
+				Box::new(
+					MultiLocation::new(
+						1,
+						X2(
+							Junction::Parachain(SIBLING_PARA_ID),
+							Junction::AccountId32 { id: alice(), network: NetworkId::Any }
+						)
+					)
+					.into()
+				),
+				399_600_000_000
+			)
+		);
+		log::info!(target: "bdd", "Alice transferred PICA from this to her on sibling");
+	});
+
+	Sibling::execute_with(|| {
+		use sibling_runtime::*;
+		assert_ok!(
+			XTokens::transfer(
+				Origin::signed(alice().into()),
+				remote_this_asset_id,
+				1_000,
 				Box::new(
 					MultiLocation::new(
 						1,
@@ -345,15 +408,15 @@ fn transfer_insufficient_amount_should_fail() {
 				),
 				399_600_000_000
 			),
-			Err(DispatchError::Module(ModuleError { .. }))
-		));
-		assert_eq!(sibling_runtime::Balances::free_balance(&alice().into()), 200000000000000);
+		);
+		log::info!(target: "bdd", "Alice sent too few PICA from sibling to Bob on this");
 	});
 
 	This::execute_with(|| {
 		assert_eq!(
 			this_runtime::Tokens::free_balance(CurrencyId::PICA, &AccountId::from(bob())),
-			0
+			0,
+			"Bob has nothing in his pocket on this"
 		);
 	});
 }
