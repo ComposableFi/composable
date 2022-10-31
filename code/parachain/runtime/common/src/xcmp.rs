@@ -244,8 +244,6 @@ pub trait XcmpAssets {
 	}
 }
 
-/// Converts currency to and from local and remote.
-/// Checks compile time and runtime assets mapping.
 pub struct CurrencyIdConvert<AssetRegistry, WellKnownCurrency, ThisParaId, WellKnownXcmpAssets>(
 	PhantomData<(AssetRegistry, WellKnownCurrency, ThisParaId, WellKnownXcmpAssets)>,
 );
@@ -313,7 +311,6 @@ impl<
 	}
 }
 
-/// covert remote to local, usually when receiving transfer
 impl<
 		T: RemoteAssetRegistryInspect<AssetId = CurrencyId, AssetNativeLocation = XcmAssetLocation>,
 		WellKnown: WellKnownCurrency,

@@ -139,7 +139,6 @@ pub fn kusama_ext() -> sp_io::TestExternalities {
 
 pub const ALICE_PARACHAIN_BALANCE: u128 = 200 * PICA::ONE;
 pub const ALICE_PARACHAIN_PICA: u128 = 200 * PICA::ONE;
-pub const ALICE_PARACHAIN_KSM: u128 = 13 * RELAY_NATIVE::ONE;
 
 pub fn picasso_ext(parachain_id: u32) -> sp_io::TestExternalities {
 	let parachain_id = parachain_id.into();

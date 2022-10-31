@@ -106,15 +106,13 @@ pub type XcmOriginToTransactDispatchOrigin = (
 	// Native converter for sibling Parachains; will convert to a `SiblingPara` origin when
 	// recognized.
 	SiblingParachainAsNative<cumulus_pallet_xcm::Origin, Origin>,
-	// Superuser converter for the Relay-chain (Parent) location. This will allow it to issue a
-	// transaction from the Root origin.
-	xcm_builder::ParentAsSuperuser<Origin>,
 	// Native signed account converter; this just converts an `AccountId32` origin into a normal
 	// `Origin::Signed` origin of the same 32-byte value.
 	SignedAccountId32AsNative<RelayNetwork, Origin>,
 	// Xcm origins can be represented natively under the Xcm pallet's Xcm origin.
 	XcmPassthrough<Origin>,
 );
+
 
 pub struct StaticAssetsMap;
 impl XcmpAssets for StaticAssetsMap {}
@@ -196,10 +194,11 @@ impl xcm_executor::Config for XcmConfig {
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
 	type Trader = Trader;
+	type AssetTrap = CaptureAssetTrap;
+
 	type ResponseHandler = RelayerXcm;
 	type SubscriptionService = RelayerXcm;
 	type AssetClaims = RelayerXcm;
-	type AssetTrap = CaptureAssetTrap;
 }
 
 parameter_type_with_key! {
@@ -249,7 +248,7 @@ impl pallet_xcm::Config for Runtime {
 	type ExecuteXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
 	type XcmExecuteFilter = Nothing;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type XcmTeleportFilter = Everything;
+	type XcmTeleportFilter = Nothing;
 	type XcmReserveTransferFilter = Everything;
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
@@ -295,8 +294,6 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type ChannelInfo = ParachainSystem;
 	type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;
 	type WeightInfo = cumulus_pallet_xcmp_queue::weights::SubstrateWeight<Self>;
-
-	/// NOTE: is is more relaxed than in Statemine. We may consider make it more strict (later)
 	type ControllerOrigin = EnsureRootOrHalfNativeTechnical;
 	type ExecuteOverweightOrigin = EnsureRootOrHalfNativeTechnical;
 }

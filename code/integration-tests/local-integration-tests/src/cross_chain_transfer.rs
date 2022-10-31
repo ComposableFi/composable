@@ -2,7 +2,7 @@ use crate::{
 	assert_lt_by,
 	helpers::*,
 	kusama_test_net::{
-		KusamaRelay, Sibling, This, ALICE_PARACHAIN_KSM, PICA, SIBLING_PARA_ID, THIS_PARA_ID,
+		KusamaRelay, Sibling, This, PICA, SIBLING_PARA_ID, THIS_PARA_ID,
 	},
 	prelude::*,
 };
@@ -87,15 +87,20 @@ fn reserve_transfer(from: [u8; 32], to: [u8; 32]) {
 }
 
 #[test]
-fn transfer_to_relay_chain() {
+fn transfer_from_relay_native_from_this_to_relay_chain_by_local_id() {
 	simtest();
 	let transfer_amount = 3 * RELAY_NATIVE::ONE;
 	let limit = 4_600_000_000;
-	assert_eq!(
-		KusamaRelay::execute_with(|| relay_runtime::Balances::balance(&AccountId::from(bob()))),
-		0
-	);
+
+	mint_relay_native_on_parachain(transfer_amount*2, &AccountId::from(alice()), THIS_PARA_ID);
+
+	KusamaRelay::execute_with(|| {
+		assert_eq!(relay_runtime::Balances::balance(&AccountId::from(bob())), 0);
+	});
+
+	
 	This::execute_with(|| {
+		let before = this_runtime::Assets::free_balance(CurrencyId::KSM, &alice().into());
 		let transferred = this_runtime::XTokens::transfer(
 			this_runtime::Origin::signed(alice().into()),
 			CurrencyId::KSM,
@@ -112,9 +117,9 @@ fn transfer_to_relay_chain() {
 
 		assert_ok!(transferred);
 
-		let remaining = this_runtime::Assets::free_balance(CurrencyId::KSM, &alice().into());
+		let after = this_runtime::Assets::free_balance(CurrencyId::KSM, &alice().into());
 
-		assert_eq!(remaining, ALICE_PARACHAIN_KSM - transfer_amount);
+		assert_eq!(before - after, transfer_amount);
 	});
 
 	KusamaRelay::execute_with(|| {
