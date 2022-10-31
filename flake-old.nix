@@ -143,20 +143,6 @@
           '';
         };
 
-      all-such-files = { pkgs, extension }:
-        pkgs.stdenv.mkDerivation {
-          name = "all-such-files-${extension}";
-          src = builtins.filterSource (path: type:
-            (type == "directory" && baseNameOf path != ".git") || (type
-              == "regular" && pkgs.lib.strings.hasSuffix ".${extension}" path))
-            ./.;
-          dontUnpack = true;
-          installPhase = ''
-            mkdir $out/
-            cp -r $src/. $out/
-          '';
-        };
-
       eachSystemOutputs = flake-utils.lib.eachDefaultSystem (system:
         let
           pkgs = import nixpkgs {
@@ -808,16 +794,6 @@
               '';
             };
 
-            all-toml-files = all-such-files {
-              inherit pkgs;
-              extension = "toml";
-            };
-
-            all-nix-files = all-such-files {
-              inherit pkgs;
-              extension = "nix";
-            };
-
             price-feed = crane-nightly.buildPackage (common-attrs // {
               pnameSuffix = "-price-feed";
               cargoArtifacts = common-deps;
@@ -1015,45 +991,6 @@
               cargoExtraArgs = "--all --check --verbose";
             });
 
-            taplo-cli-check = pkgs.stdenv.mkDerivation {
-              name = "taplo-cli-check";
-              dontUnpack = true;
-              buildInputs = [ all-toml-files pkgs.taplo-cli ];
-              installPhase = ''
-                mkdir $out
-                cd ${all-toml-files}
-                taplo check --verbose
-              '';
-            };
-
-
-            nixfmt-check = pkgs.stdenv.mkDerivation {
-              name = "nixfmt-check";
-              dontUnpack = true;
-
-              buildInputs = [ all-nix-files pkgs.nixfmt ];
-              installPhase = ''
-                mkdir $out
-                nixfmt --version
-                SRC=$(find ${all-nix-files} -name "*.nix" -type f | tr "\n" " ")
-                echo $SRC
-                nixfmt --check $SRC
-              '';
-            };
-
-            deadnix-check = pkgs.stdenv.mkDerivation {
-              name = "deadnix-check";
-              dontUnpack = true;
-
-              buildInputs = [ all-nix-files pkgs.deadnix ];
-              installPhase = ''
-                mkdir $out
-                deadnix --version
-                SRC=$(find ${all-nix-files} -name "*.nix" -type f | tr "\n" " ")
-                echo $SRC
-                deadnix $SRC
-              '';
-            };
 
             cargo-clippy-check = crane-nightly.cargoBuild (common-attrs // {
               cargoArtifacts = common-deps-nightly;
