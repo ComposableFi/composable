@@ -2,7 +2,7 @@
 {
   perSystem = { config, self', inputs', pkgs, system, ... }:
     {
-      packages = rec {
+      packages = {
         subsquid-processor =
           let
             processor = pkgs.buildNpmPackage {
