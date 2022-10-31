@@ -75,6 +75,7 @@ const Transfers: NextPage = () => {
       // Clear form and reset everything on page change
       setAmount(new BigNumber(0));
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
