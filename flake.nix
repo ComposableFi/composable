@@ -723,7 +723,7 @@
             inherit rust-nightly;
           };
 
-          metadatas = let
+          chains-metadata = let
             polkadots = builtins.map (genesis-name:
               mk-metadata {
                 inherit genesis-name;
@@ -735,7 +735,7 @@
                 dotsama-node = composable-node;
               })
               (pkgs.callPackage ./code/parachain/default.nix { }).chain-specs;
-            all-metadatas = builtins.map (meta: {
+            all-metadata = builtins.map (meta: {
               name = meta.name;
               value = meta;
             }) (composables);
@@ -755,678 +755,685 @@
               '';
             };
           in rec {
-            encodings = builtins.listToAttrs all-metadatas;
+            encodings = builtins.listToAttrs all-metadata;
             generators = builtins.listToAttrs all-generators;
             inherit subxt-export;
           };
 
         in rec {
-          packages = metadatas.encodings // metadatas.generators // rec {
-            inherit subxt;
-            inherit polkadot-node;
-            inherit wasm-optimizer;
-            inherit common-deps;
-            inherit common-bench-deps;
-            inherit common-test-deps;
-            inherit dali-runtime;
-            inherit picasso-runtime;
-            inherit composable-runtime;
-            inherit dali-bench-runtime;
-            inherit picasso-bench-runtime;
-            inherit composable-bench-runtime;
-            inherit composable-node;
-            inherit composable-node-release;
-            inherit composable-bench-node;
-            inherit rust-nightly;
-            inherit simnode-tests;
-            inherit subwasm;
-            inherit subwasm-release-body;
-            inherit frontend-static;
-            inherit frontend-static-persistent;
-            inherit frontend-static-firebase;
-            inherit frontend-pablo-server;
-            inherit frontend-picasso-server;
-
-            devnet-initialize-script-local = mkDevnetInitializeScript {
-              polkadotUrl = "ws://localhost:9944";
-              composableUrl = "ws://localhost:9988";
-              parachainIds = [ 1000 2000 2087 ];
-            };
-
-            devnet-initialize-script-persistent = mkDevnetInitializeScript {
-              polkadotUrl =
-                "wss://persistent.devnets.composablefinance.ninja/chain/rococo";
-              composableUrl =
-                "wss://persistent.devnets.composablefinance.ninja/chain/dali";
-              parachainIds = [ 1000 2000 2087 ];
-            };
-
-            docs-static = npm-bp.buildNpmPackage {
-              src = ./docs;
-              npmBuild = "npm run build";
-              installPhase = ''
-                mkdir -p $out
-                cp -a ./build/. $out
-              '';
-            };
-
-            docs-server = let PORT = 8008;
-            in pkgs.writeShellApplication {
-              name = "docs-server";
-              runtimeInputs = [ pkgs.miniserve ];
-              text = ''
-                miniserve -p ${
-                  builtins.toString PORT
-                } --spa --index index.html ${docs-static}
-              '';
-            };
-
-            docs-dev = pkgs.writeShellApplication {
-              name = "docs-dev";
-              runtimeInputs = [ pkgs.nodejs ];
-              text = ''
-                cd docs
-                npm install
-                npm run start
-              '';
-            };
-
-            xcvm-contract-asset-registry =
-              mk-xcvm-contract "xcvm-asset-registry";
-            xcvm-contract-router = mk-xcvm-contract "xcvm-router";
-            xcvm-contract-interpreter = mk-xcvm-contract "xcvm-interpreter";
-
-            subsquid-processor = let
-              processor = pkgs.buildNpmPackage {
-                extraNodeModulesArgs = {
-                  buildInputs = with pkgs; [
-                    pkg-config
-                    python3
-                    nodePackages.node-gyp-build
-                    nodePackages.node-gyp
-                  ];
-                  extraEnvVars = { npm_config_nodedir = "${pkgs.nodejs}"; };
-                };
-                src = ./subsquid;
-                npmBuild = "npm run build";
-                preInstall = ''
-                  mkdir $out
-                  mv lib $out/
-                '';
-                dontNpmPrune = true;
-              };
-            in (pkgs.writeShellApplication {
-              name = "run-subsquid-processor";
-              text = ''
-                cd ${processor}
-                ${pkgs.nodejs}/bin/npx sqd db migrate
-                ${pkgs.nodejs}/bin/node lib/processor.js
-              '';
-            });
-
-            runtime-tests = pkgs.stdenv.mkDerivation {
-              name = "runtime-tests";
-              src = builtins.filterSource
-                (path: _type: baseNameOf path != "node_modules")
-                ./code/integration-tests/runtime-tests;
-              dontUnpack = true;
-              installPhase = ''
-                mkdir $out/
-                cp -r $src/. $out/
-              '';
-            };
-
-            all-directories-and-files = pkgs.stdenv.mkDerivation {
-              name = "all-directories-and-files";
-              src =
-                builtins.filterSource (path: _type: baseNameOf path != ".git")
-                ./.;
-              dontUnpack = true;
-              installPhase = ''
-                mkdir $out/
-                cp -r $src/. $out/
-              '';
-            };
-
-            all-toml-files = all-such-files {
-              inherit pkgs;
-              extension = "toml";
-            };
-
-            all-nix-files = all-such-files {
-              inherit pkgs;
-              extension = "nix";
-            };
-
-            price-feed = crane-nightly.buildPackage (common-attrs // {
-              pnameSuffix = "-price-feed";
-              cargoArtifacts = common-deps;
-              cargoBuildCommand = "cargo build --release -p price-feed";
-              meta = { mainProgram = "price-feed"; };
-            });
-
-            fmt = pkgs.writeShellApplication {
-              name = "fmt-composable";
-
-              runtimeInputs = with pkgs; [
-                nixfmt
-                coreutils
-                rust-nightly
-                taplo
-                nodePackages.prettier
-              ];
-
-              text = ''
-                  # .nix
-                	find . -name "*.nix" -type f -print0 | xargs -0 nixfmt;
-
-                  # .toml
-                  taplo fmt
-
-                  # .rs
-                	find . -path ./code/target -prune -o -name "*.rs" -type f -print0 | xargs -0 rustfmt --edition 2021;
-
-                  # .js .ts .tsx
-                  prettier \
-                    --config="./code/integration-tests/runtime-tests/.prettierrc" \
-                    --write \
-                    --ignore-path="./code/integration-tests/runtime-tests/.prettierignore" \
-                    ./code/integration-tests/runtime-tests/
-              '';
-            };
-
-            docker-wipe-system =
-              pkgs.writeShellScriptBin "docker-wipe-system" ''
-                echo "Wiping all docker containers, images, and volumes";
-                docker stop $(docker ps -q)
-                docker system prune -f
-                docker rmi -f $(docker images -a -q)
-                docker volume prune -f
-              '';
-
-            # NOTE: crane can't be used because of how it vendors deps, which is incompatible with some packages in polkadot, an issue must be raised to the repo
-            acala-node = pkgs.callPackage ./.nix/acala-bin.nix {
-              rust-overlay = rust-nightly;
-            };
-
-            statemine-node = pkgs.callPackage ./.nix/statemine-bin.nix {
+          packages = chains-metadata.encodings // chains-metadata.generators
+            // rec {
+              inherit subxt;
+              inherit polkadot-node;
+              inherit wasm-optimizer;
+              inherit common-deps;
+              inherit common-bench-deps;
+              inherit common-test-deps;
+              inherit dali-runtime;
+              inherit picasso-runtime;
+              inherit composable-runtime;
+              inherit dali-bench-runtime;
+              inherit picasso-bench-runtime;
+              inherit composable-bench-runtime;
+              inherit composable-node;
+              inherit composable-node-release;
+              inherit composable-bench-node;
               inherit rust-nightly;
-            };
+              inherit simnode-tests;
+              inherit subwasm;
+              inherit subwasm-release-body;
+              inherit frontend-static;
+              inherit frontend-static-persistent;
+              inherit frontend-static-firebase;
+              inherit frontend-pablo-server;
+              inherit frontend-picasso-server;
 
-            mmr-polkadot-node =
-              pkgs.callPackage ./.nix/polkadot/mmr-polkadot-bin.nix {
+              devnet-initialize-script-local = mkDevnetInitializeScript {
+                polkadotUrl = "ws://localhost:9944";
+                composableUrl = "ws://localhost:9988";
+                parachainIds = [ 1000 2000 2087 ];
+              };
+
+              devnet-initialize-script-persistent = mkDevnetInitializeScript {
+                polkadotUrl =
+                  "wss://persistent.devnets.composablefinance.ninja/chain/rococo";
+                composableUrl =
+                  "wss://persistent.devnets.composablefinance.ninja/chain/dali";
+                parachainIds = [ 1000 2000 2087 ];
+              };
+
+              docs-static = npm-bp.buildNpmPackage {
+                src = ./docs;
+                npmBuild = "npm run build";
+                installPhase = ''
+                  mkdir -p $out
+                  cp -a ./build/. $out
+                '';
+              };
+
+              docs-server = let PORT = 8008;
+              in pkgs.writeShellApplication {
+                name = "docs-server";
+                runtimeInputs = [ pkgs.miniserve ];
+                text = ''
+                  miniserve -p ${
+                    builtins.toString PORT
+                  } --spa --index index.html ${docs-static}
+                '';
+              };
+
+              docs-dev = pkgs.writeShellApplication {
+                name = "docs-dev";
+                runtimeInputs = [ pkgs.nodejs ];
+                text = ''
+                  cd docs
+                  npm install
+                  npm run start
+                '';
+              };
+
+              xcvm-contract-asset-registry =
+                mk-xcvm-contract "xcvm-asset-registry";
+              xcvm-contract-router = mk-xcvm-contract "xcvm-router";
+              xcvm-contract-interpreter = mk-xcvm-contract "xcvm-interpreter";
+
+              subsquid-processor = let
+                processor = pkgs.buildNpmPackage {
+                  extraNodeModulesArgs = {
+                    buildInputs = with pkgs; [
+                      pkg-config
+                      python3
+                      nodePackages.node-gyp-build
+                      nodePackages.node-gyp
+                    ];
+                    extraEnvVars = { npm_config_nodedir = "${pkgs.nodejs}"; };
+                  };
+                  src = ./subsquid;
+                  npmBuild = "npm run build";
+                  preInstall = ''
+                    mkdir $out
+                    mv lib $out/
+                  '';
+                  dontNpmPrune = true;
+                };
+              in (pkgs.writeShellApplication {
+                name = "run-subsquid-processor";
+                text = ''
+                  cd ${processor}
+                  ${pkgs.nodejs}/bin/npx sqd db migrate
+                  ${pkgs.nodejs}/bin/node lib/processor.js
+                '';
+              });
+
+              runtime-tests = pkgs.stdenv.mkDerivation {
+                name = "runtime-tests";
+                src = builtins.filterSource
+                  (path: _type: baseNameOf path != "node_modules")
+                  ./code/integration-tests/runtime-tests;
+                dontUnpack = true;
+                installPhase = ''
+                  mkdir $out/
+                  cp -r $src/. $out/
+                '';
+              };
+
+              all-directories-and-files = pkgs.stdenv.mkDerivation {
+                name = "all-directories-and-files";
+                src =
+                  builtins.filterSource (path: _type: baseNameOf path != ".git")
+                  ./.;
+                dontUnpack = true;
+                installPhase = ''
+                  mkdir $out/
+                  cp -r $src/. $out/
+                '';
+              };
+
+              all-toml-files = all-such-files {
+                inherit pkgs;
+                extension = "toml";
+              };
+
+              all-nix-files = all-such-files {
+                inherit pkgs;
+                extension = "nix";
+              };
+
+              price-feed = crane-nightly.buildPackage (common-attrs // {
+                pnameSuffix = "-price-feed";
+                cargoArtifacts = common-deps;
+                cargoBuildCommand = "cargo build --release -p price-feed";
+                meta = { mainProgram = "price-feed"; };
+              });
+
+              fmt = pkgs.writeShellApplication {
+                name = "fmt-composable";
+
+                runtimeInputs = with pkgs; [
+                  nixfmt
+                  coreutils
+                  rust-nightly
+                  taplo
+                  nodePackages.prettier
+                ];
+
+                text = ''
+                    # .nix
+                  	find . -name "*.nix" -type f -print0 | xargs -0 nixfmt;
+
+                    # .toml
+                    taplo fmt
+
+                    # .rs
+                  	find . -path ./code/target -prune -o -name "*.rs" -type f -print0 | xargs -0 rustfmt --edition 2021;
+
+                    # .js .ts .tsx
+                    prettier \
+                      --config="./code/integration-tests/runtime-tests/.prettierrc" \
+                      --write \
+                      --ignore-path="./code/integration-tests/runtime-tests/.prettierignore" \
+                      ./code/integration-tests/runtime-tests/
+                '';
+              };
+
+              docker-wipe-system =
+                pkgs.writeShellScriptBin "docker-wipe-system" ''
+                  echo "Wiping all docker containers, images, and volumes";
+                  docker stop $(docker ps -q)
+                  docker system prune -f
+                  docker rmi -f $(docker images -a -q)
+                  docker volume prune -f
+                '';
+
+              # NOTE: crane can't be used because of how it vendors deps, which is incompatible with some packages in polkadot, an issue must be raised to the repo
+              acala-node = pkgs.callPackage ./.nix/acala-bin.nix {
+                rust-overlay = rust-nightly;
+              };
+
+              statemine-node = pkgs.callPackage ./.nix/statemine-bin.nix {
                 inherit rust-nightly;
               };
 
-            polkadot-launch =
-              pkgs.callPackage ./scripts/polkadot-launch/polkadot-launch.nix
-              { };
-
-            # Dali devnet
-            devnet-dali = (pkgs.callPackage mk-devnet {
-              inherit pkgs;
-              inherit (packages) polkadot-launch composable-node polkadot-node;
-              chain-spec = "dali-dev";
-            }).script;
-
-            devnet-dali-b = (pkgs.callPackage mk-devnet {
-              inherit pkgs;
-              inherit (packages) polkadot-launch composable-node polkadot-node;
-              network-config-path = ./scripts/polkadot-launch/dali-dev-b.nix;
-              chain-spec = "dali-dev";
-              binary-name = "dali-b";
-            }).script;
-
-            bridge-devnet-dali-same-relay = (pkgs.callPackage mk-devnet {
-              inherit pkgs;
-              inherit (packages) polkadot-launch composable-node;
-              polkadot-node = packages.polkadot-centauri-node;
-              chain-spec = "dali-dev";
-              network-config-path =
-                ./scripts/polkadot-launch/bridge-rococo-local-dali-dev.nix;
-              useGlobalChainSpec = false;
-            }).script;
-
-            bridge-mmr-devnet-dali-same-relay = (mk-bridge-devnet {
-              inherit pkgs packages polkadot-launch composable-node;
-              polkadot-node = mmr-polkadot-node;
-            }).script;
-
-            hyperspace = (code.centauri.hyperspace.template { }).bin;
-
-            hyperspace-template-default = (code.centauri.hyperspace.template {
-              relaychainHostA = bridge-config.moreSecuredParachain;
-              relaychainPortA = bridge-config.moreSecuredRelaychainPort;
-              parachainHostA = bridge-config.moreSecuredParachain;
-              parachainPortA = bridge-config.moreSecuredParachainPort;
-
-              relaychainHostB = bridge-config.lessSecuredParachain;
-              relaychainPortB = bridge-config.lessSecuredRelaychainPort;
-              parachainHostB = bridge-config.lessSecuredParachain;
-              parachainPortB = bridge-config.lessSecuredParachainPort;
-            }).default;
-
-            # Dali bridge devnet
-            bridge-devnet-dali = (mk-bridge-devnet {
-              inherit pkgs packages polkadot-launch composable-node
-                polkadot-node;
-            }).script;
-
-            # Dali bridge devnet with mmr-polkadot
-            bridge-mmr-devnet-dali = (mk-bridge-devnet {
-              inherit pkgs packages polkadot-launch composable-node;
-              polkadot-node = mmr-polkadot-node;
-            }).script;
-
-            # Picasso devnet
-            devnet-picasso = (pkgs.callPackage mk-devnet {
-              inherit pkgs;
-              inherit (packages) polkadot-launch composable-node polkadot-node;
-              chain-spec = "picasso-dev";
-            }).script;
-
-            devnet-container = mk-devnet-container {
-              inherit pkgs container-tools;
-              containerName = "composable-devnet-container";
-              devNet = packages.devnet-dali;
-            };
-
-            hyperspace-container =
-              pkgs.lib.trace "Composable Hyperspace relayer"
-              (pkgs.dockerTools.buildImage {
-                name = "composable-hyperspace-container";
-                tag = "latest";
-                copyToRoot = pkgs.buildEnv {
-                  name = "image-root";
-                  paths = with pkgs; [ curl websocat ] ++ container-tools;
-                  pathsToLink = [ "/bin" ];
+              mmr-polkadot-node =
+                pkgs.callPackage ./.nix/polkadot/mmr-polkadot-bin.nix {
+                  inherit rust-nightly;
                 };
-                config = {
-                  Entrypoint = [
-                    "${packages.hyperspace-template-default}/bin/default-hyperspace"
-                  ];
-                  WorkingDir = "/home/user";
-                };
-                runAsRoot = ''
-                  mkdir -p /home/user /tmp
-                  chown 1000:1000 /home/user
-                  chmod 777 /tmp
+
+              polkadot-launch =
+                pkgs.callPackage ./scripts/polkadot-launch/polkadot-launch.nix
+                { };
+
+              # Dali devnet
+              devnet-dali = (pkgs.callPackage mk-devnet {
+                inherit pkgs;
+                inherit (packages)
+                  polkadot-launch composable-node polkadot-node;
+                chain-spec = "dali-dev";
+              }).script;
+
+              devnet-dali-b = (pkgs.callPackage mk-devnet {
+                inherit pkgs;
+                inherit (packages)
+                  polkadot-launch composable-node polkadot-node;
+                network-config-path = ./scripts/polkadot-launch/dali-dev-b.nix;
+                chain-spec = "dali-dev";
+                binary-name = "dali-b";
+              }).script;
+
+              bridge-devnet-dali-same-relay = (pkgs.callPackage mk-devnet {
+                inherit pkgs;
+                inherit (packages) polkadot-launch composable-node;
+                polkadot-node = packages.polkadot-centauri-node;
+                chain-spec = "dali-dev";
+                network-config-path =
+                  ./scripts/polkadot-launch/bridge-rococo-local-dali-dev.nix;
+                useGlobalChainSpec = false;
+              }).script;
+
+              bridge-mmr-devnet-dali-same-relay = (mk-bridge-devnet {
+                inherit pkgs packages polkadot-launch composable-node;
+                polkadot-node = mmr-polkadot-node;
+              }).script;
+
+              hyperspace = (code.centauri.hyperspace.template { }).bin;
+
+              hyperspace-template-default = (code.centauri.hyperspace.template {
+                relaychainHostA = bridge-config.moreSecuredParachain;
+                relaychainPortA = bridge-config.moreSecuredRelaychainPort;
+                parachainHostA = bridge-config.moreSecuredParachain;
+                parachainPortA = bridge-config.moreSecuredParachainPort;
+
+                relaychainHostB = bridge-config.lessSecuredParachain;
+                relaychainPortB = bridge-config.lessSecuredRelaychainPort;
+                parachainHostB = bridge-config.lessSecuredParachain;
+                parachainPortB = bridge-config.lessSecuredParachainPort;
+              }).default;
+
+              # Dali bridge devnet
+              bridge-devnet-dali = (mk-bridge-devnet {
+                inherit pkgs packages polkadot-launch composable-node
+                  polkadot-node;
+              }).script;
+
+              # Dali bridge devnet with mmr-polkadot
+              bridge-mmr-devnet-dali = (mk-bridge-devnet {
+                inherit pkgs packages polkadot-launch composable-node;
+                polkadot-node = mmr-polkadot-node;
+              }).script;
+
+              # Picasso devnet
+              devnet-picasso = (pkgs.callPackage mk-devnet {
+                inherit pkgs;
+                inherit (packages)
+                  polkadot-launch composable-node polkadot-node;
+                chain-spec = "picasso-dev";
+              }).script;
+
+              devnet-container = mk-devnet-container {
+                inherit pkgs container-tools;
+                containerName = "composable-devnet-container";
+                devNet = packages.devnet-dali;
+              };
+
+              hyperspace-container =
+                pkgs.lib.trace "Composable Hyperspace relayer"
+                (pkgs.dockerTools.buildImage {
+                  name = "composable-hyperspace-container";
+                  tag = "latest";
+                  copyToRoot = pkgs.buildEnv {
+                    name = "image-root";
+                    paths = with pkgs; [ curl websocat ] ++ container-tools;
+                    pathsToLink = [ "/bin" ];
+                  };
+                  config = {
+                    Entrypoint = [
+                      "${packages.hyperspace-template-default}/bin/default-hyperspace"
+                    ];
+                    WorkingDir = "/home/user";
+                  };
+                  runAsRoot = ''
+                    mkdir -p /home/user /tmp
+                    chown 1000:1000 /home/user
+                    chmod 777 /tmp
+                  '';
+                });
+
+              # Dali Bridge devnet container
+              bridge-devnet-dali-container = mk-devnet-container {
+                inherit pkgs container-tools;
+                containerName = "composable-bridge-devnet-container";
+                devNet = packages.bridge-devnet-dali;
+              };
+
+              # Dali Bridge devnet container with mmr-polkadot
+              bridge-mmr-devnet-dali-container = mk-devnet-container {
+                inherit pkgs container-tools;
+                containerName = "composable-bridge-mmr-devnet-container";
+                devNet = packages.bridge-mmr-devnet-dali;
+              };
+
+              # TODO: inherit and provide script to run all stuff
+
+              # devnet-container-xcvm
+              # NOTE: The devcontainer is currently broken for aarch64.
+              # Please use the developers devShell instead
+
+              devcontainer = pkgs.dockerTools.buildLayeredImage {
+                name = "composable-devcontainer";
+                fromImage = devcontainer-root-image;
+                contents = [ composable-node ];
+                # substituters, same as next script, but without internet access
+                # ${pkgs.cachix}/bin/cachix use composable-community
+                # to run root in buildImage needs qemu/kvm shell
+                # non root extraCommands (in both methods) do not have permissions
+                # not clear if using ENV or replace ENTRYPOINT will allow to setup
+                # from nixos docker.nix - they build derivation which outputs into $out/etc/nix.conf
+                # (and any other stuff like /etc/group)
+                fakeRootCommands = ''
+                  mkdir --parents /etc/nix
+                  cat <<EOF >> /etc/nix/nix.conf
+                  sandbox = relaxed
+                  experimental-features = nix-command flakes
+                  narinfo-cache-negative-ttl = 30
+                  substituters = https://cache.nixos.org https://composable-community.cachix.org
+                  # TODO: move it separate file with flow of `cachix -> get keys -> output -> fail derivation if hash != key changed
+                  # // cspell: disable-next-line
+                  trusted-public-keys = cache.nixos.org-1:6nchdd59x431o0gwypbmraurkbj16zpmqfgspcdshjy= composable-community.cachix.org-1:GG4xJNpXJ+J97I8EyJ4qI5tRTAJ4i7h+NK2Z32I8sK8=
+                  EOF
                 '';
-              });
-
-            # Dali Bridge devnet container
-            bridge-devnet-dali-container = mk-devnet-container {
-              inherit pkgs container-tools;
-              containerName = "composable-bridge-devnet-container";
-              devNet = packages.bridge-devnet-dali;
-            };
-
-            # Dali Bridge devnet container with mmr-polkadot
-            bridge-mmr-devnet-dali-container = mk-devnet-container {
-              inherit pkgs container-tools;
-              containerName = "composable-bridge-mmr-devnet-container";
-              devNet = packages.bridge-mmr-devnet-dali;
-            };
-
-            # TODO: inherit and provide script to run all stuff
-
-            # devnet-container-xcvm
-            # NOTE: The devcontainer is currently broken for aarch64.
-            # Please use the developers devShell instead
-
-            devcontainer = pkgs.dockerTools.buildLayeredImage {
-              name = "composable-devcontainer";
-              fromImage = devcontainer-root-image;
-              contents = [ composable-node ];
-              # substituters, same as next script, but without internet access
-              # ${pkgs.cachix}/bin/cachix use composable-community
-              # to run root in buildImage needs qemu/kvm shell
-              # non root extraCommands (in both methods) do not have permissions
-              # not clear if using ENV or replace ENTRYPOINT will allow to setup
-              # from nixos docker.nix - they build derivation which outputs into $out/etc/nix.conf
-              # (and any other stuff like /etc/group)
-              fakeRootCommands = ''
-                mkdir --parents /etc/nix
-                cat <<EOF >> /etc/nix/nix.conf
-                sandbox = relaxed
-                experimental-features = nix-command flakes
-                narinfo-cache-negative-ttl = 30
-                substituters = https://cache.nixos.org https://composable-community.cachix.org
-                # TODO: move it separate file with flow of `cachix -> get keys -> output -> fail derivation if hash != key changed
-                # // cspell: disable-next-line
-                trusted-public-keys = cache.nixos.org-1:6nchdd59x431o0gwypbmraurkbj16zpmqfgspcdshjy= composable-community.cachix.org-1:GG4xJNpXJ+J97I8EyJ4qI5tRTAJ4i7h+NK2Z32I8sK8=
-                EOF
-              '';
-              config = {
-                User = "vscode";
-                # TODO: expose ports and other stuff done in base here too
+                config = {
+                  User = "vscode";
+                  # TODO: expose ports and other stuff done in base here too
+                };
               };
-            };
 
-            check-dali-dev-benchmarks = benchmarks-run-once "dali-dev";
-            check-picasso-dev-benchmarks = benchmarks-run-once "picasso-dev";
-            check-composable-dev-benchmarks =
-              benchmarks-run-once "composable-dev";
+              check-dali-dev-benchmarks = benchmarks-run-once "dali-dev";
+              check-picasso-dev-benchmarks = benchmarks-run-once "picasso-dev";
+              check-composable-dev-benchmarks =
+                benchmarks-run-once "composable-dev";
 
-            check-picasso-integration-tests = crane-nightly.cargoBuild
-              (common-attrs // {
-                pname = "picasso-local-integration-tests";
+              check-picasso-integration-tests = crane-nightly.cargoBuild
+                (common-attrs // {
+                  pname = "picasso-local-integration-tests";
+                  doInstallCargoArtifacts = false;
+                  cargoArtifacts = common-test-deps;
+                  cargoBuildCommand =
+                    "cargo test --package local-integration-tests";
+                  cargoExtraArgs =
+                    "--features=local-integration-tests,picasso,std --no-default-features --verbose";
+                });
+              check-dali-integration-tests = crane-nightly.cargoBuild
+                (common-attrs // {
+                  pname = "dali-local-integration-tests";
+                  doInstallCargoArtifacts = false;
+                  cargoArtifacts = common-test-deps;
+                  cargoBuildCommand =
+                    "cargo test --package local-integration-tests";
+                  cargoExtraArgs =
+                    "--features=local-integration-tests,dali,std --no-default-features --verbose";
+                });
+
+              unit-tests = crane-nightly.cargoBuild (common-attrs // {
+                pnameSuffix = "-tests";
                 doInstallCargoArtifacts = false;
                 cargoArtifacts = common-test-deps;
-                cargoBuildCommand =
-                  "cargo test --package local-integration-tests";
-                cargoExtraArgs =
-                  "--features=local-integration-tests,picasso,std --no-default-features --verbose";
-              });
-            check-dali-integration-tests = crane-nightly.cargoBuild
-              (common-attrs // {
-                pname = "dali-local-integration-tests";
-                doInstallCargoArtifacts = false;
-                cargoArtifacts = common-test-deps;
-                cargoBuildCommand =
-                  "cargo test --package local-integration-tests";
-                cargoExtraArgs =
-                  "--features=local-integration-tests,dali,std --no-default-features --verbose";
-              });
-
-            unit-tests = crane-nightly.cargoBuild (common-attrs // {
-              pnameSuffix = "-tests";
-              doInstallCargoArtifacts = false;
-              cargoArtifacts = common-test-deps;
-              # NOTE: do not add --features=runtime-benchmarks because it force multi ED to be 0 because of dependencies
-              # NOTE: in order to run benchmarks as tests, just make `any(test, feature = "runtime-benchmarks")
-              cargoBuildCommand =
-                "cargo test --workspace --release --locked --verbose --exclude local-integration-tests";
-            });
-
-            cargo-llvm-cov = pkgs.rustPlatform.buildRustPackage rec {
-              pname = "cargo-llvm-cov";
-              version = "0.3.3";
-              src = pkgs.fetchFromGitHub {
-                owner = "andor0";
-                repo = pname;
-                rev = "v${version}";
-                sha256 = "sha256-e2MQWOCIj0GKeyOI6OfLnXkxUWbu85eX4Smc/A6eY2w";
-              };
-              cargoSha256 =
-                "sha256-1fxqIQr8hol2QEKz8IZfndIsSTjP2ACdnBpwyjG4UT0=";
-              doCheck = false;
-              meta = {
-                description =
-                  "Cargo subcommand to easily use LLVM source-based code coverage";
-                homepage = "https://github.com/taiki-e/cargo-llvm-cov";
-                license = "Apache-2.0 OR MIT";
-              };
-            };
-
-            unit-tests-with-coverage = crane-nightly.cargoBuild (common-attrs
-              // {
-                pnameSuffix = "-tests-with-coverage";
-                buildInputs = with pkgs; [ cargo-llvm-cov ];
-                cargoArtifacts = common-deps-nightly;
                 # NOTE: do not add --features=runtime-benchmarks because it force multi ED to be 0 because of dependencies
                 # NOTE: in order to run benchmarks as tests, just make `any(test, feature = "runtime-benchmarks")
-                cargoBuildCommand = "cargo llvm-cov";
-                cargoExtraArgs =
-                  "--workspace --release --locked --verbose --lcov --output-path lcov.info";
+                cargoBuildCommand =
+                  "cargo test --workspace --release --locked --verbose --exclude local-integration-tests";
+              });
+
+              cargo-llvm-cov = pkgs.rustPlatform.buildRustPackage rec {
+                pname = "cargo-llvm-cov";
+                version = "0.3.3";
+                src = pkgs.fetchFromGitHub {
+                  owner = "andor0";
+                  repo = pname;
+                  rev = "v${version}";
+                  sha256 = "sha256-e2MQWOCIj0GKeyOI6OfLnXkxUWbu85eX4Smc/A6eY2w";
+                };
+                cargoSha256 =
+                  "sha256-1fxqIQr8hol2QEKz8IZfndIsSTjP2ACdnBpwyjG4UT0=";
+                doCheck = false;
+                meta = {
+                  description =
+                    "Cargo subcommand to easily use LLVM source-based code coverage";
+                  homepage = "https://github.com/taiki-e/cargo-llvm-cov";
+                  license = "Apache-2.0 OR MIT";
+                };
+              };
+
+              unit-tests-with-coverage = crane-nightly.cargoBuild (common-attrs
+                // {
+                  pnameSuffix = "-tests-with-coverage";
+                  buildInputs = with pkgs; [ cargo-llvm-cov ];
+                  cargoArtifacts = common-deps-nightly;
+                  # NOTE: do not add --features=runtime-benchmarks because it force multi ED to be 0 because of dependencies
+                  # NOTE: in order to run benchmarks as tests, just make `any(test, feature = "runtime-benchmarks")
+                  cargoBuildCommand = "cargo llvm-cov";
+                  cargoExtraArgs =
+                    "--workspace --release --locked --verbose --lcov --output-path lcov.info";
+                  installPhase = ''
+                    mkdir -p $out/lcov
+                    mv lcov.info $out/lcov
+                  '';
+                });
+
+              cargo-fmt-check = crane-nightly.cargoFmt (common-attrs // {
+                cargoArtifacts = common-deps-nightly;
+                cargoExtraArgs = "--all --check --verbose";
+              });
+
+              taplo-cli-check = pkgs.stdenv.mkDerivation {
+                name = "taplo-cli-check";
+                dontUnpack = true;
+                buildInputs = [ all-toml-files pkgs.taplo-cli ];
                 installPhase = ''
-                  mkdir -p $out/lcov
-                  mv lcov.info $out/lcov
+                  mkdir $out
+                  cd ${all-toml-files}
+                  taplo check --verbose
                 '';
-              });
-
-            cargo-fmt-check = crane-nightly.cargoFmt (common-attrs // {
-              cargoArtifacts = common-deps-nightly;
-              cargoExtraArgs = "--all --check --verbose";
-            });
-
-            taplo-cli-check = pkgs.stdenv.mkDerivation {
-              name = "taplo-cli-check";
-              dontUnpack = true;
-              buildInputs = [ all-toml-files pkgs.taplo-cli ];
-              installPhase = ''
-                mkdir $out
-                cd ${all-toml-files}
-                taplo check --verbose
-              '';
-            };
-
-            prettier-check = pkgs.stdenv.mkDerivation {
-              name = "prettier-check";
-              dontUnpack = true;
-              buildInputs = [ pkgs.nodePackages.prettier runtime-tests ];
-              installPhase = ''
-                mkdir $out
-                prettier \
-                --config="${runtime-tests}/.prettierrc" \
-                --ignore-path="${runtime-tests}/.prettierignore" \
-                --check \
-                --loglevel=debug \
-                ${runtime-tests}
-              '';
-            };
-
-            nixfmt-check = pkgs.stdenv.mkDerivation {
-              name = "nixfmt-check";
-              dontUnpack = true;
-
-              buildInputs = [ all-nix-files pkgs.nixfmt ];
-              installPhase = ''
-                mkdir $out
-                nixfmt --version
-                SRC=$(find ${all-nix-files} -name "*.nix" -type f | tr "\n" " ")
-                echo $SRC
-                nixfmt --check $SRC
-              '';
-            };
-
-            deadnix-check = pkgs.stdenv.mkDerivation {
-              name = "deadnix-check";
-              dontUnpack = true;
-
-              buildInputs = [ all-nix-files pkgs.deadnix ];
-              installPhase = ''
-                mkdir $out
-                deadnix --version
-                SRC=$(find ${all-nix-files} -name "*.nix" -type f | tr "\n" " ")
-                echo $SRC
-                deadnix $SRC
-              '';
-            };
-
-            cargo-clippy-check = crane-nightly.cargoBuild (common-attrs // {
-              cargoArtifacts = common-deps-nightly;
-              cargoBuildCommand = "cargo clippy";
-              cargoExtraArgs = "--all-targets --tests -- -D warnings";
-            });
-
-            cargo-deny-check = crane-nightly.cargoBuild (common-attrs // {
-              buildInputs = with pkgs; [ cargo-deny ];
-              cargoArtifacts = common-deps;
-              cargoBuildCommand = "cargo deny";
-              cargoExtraArgs =
-                "--manifest-path ./parachain/frame/composable-support/Cargo.toml check ban";
-            });
-
-            cargo-udeps-check = crane-nightly.cargoBuild (common-attrs // {
-              DALI_RUNTIME = "${dali-runtime}/lib/runtime.optimized.wasm";
-              PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
-              COMPOSABLE_RUNTIME =
-                "${composable-runtime}/lib/runtime.optimized.wasm";
-              buildInputs = with pkgs; [
-                cargo-udeps
-                expat
-                freetype
-                fontconfig
-                openssl
-              ];
-              cargoArtifacts = common-deps-nightly;
-              cargoBuildCommand = "cargo udeps";
-              cargoExtraArgs =
-                "--workspace --exclude local-integration-tests --all-features";
-            });
-
-            benchmarks-check = crane-nightly.cargoBuild (common-attrs // {
-              cargoArtifacts = common-deps-nightly;
-              cargoBuildCommand = "cargo check";
-              cargoExtraArgs = "--benches --all --features runtime-benchmarks";
-            });
-
-            spell-check = pkgs.stdenv.mkDerivation {
-              name = "cspell-check";
-              dontUnpack = true;
-              buildInputs =
-                [ all-directories-and-files pkgs.nodePackages.cspell ];
-              installPhase = ''
-                mkdir $out
-                echo "cspell version: $(cspell --version)"
-                cd ${all-directories-and-files}
-                cspell lint --config cspell.yaml --no-progress "**"
-              '';
-            };
-
-            hadolint-check = pkgs.stdenv.mkDerivation {
-              name = "hadolint-check";
-              dontUnpack = true;
-              buildInputs = [ all-directories-and-files pkgs.hadolint ];
-              installPhase = ''
-                mkdir -p $out
-
-                hadolint --version
-                total_exit_code=0
-                for file in $(find ${all-directories-and-files} -name "Dockerfile" -or -name "*.dockerfile"); do
-                  echo "=== $file ==="
-                  hadolint --config ${all-directories-and-files}/.hadolint.yaml $file || total_exit_code=$?
-                  echo ""
-                done
-                exit $total_exit_code
-              '';
-            };
-
-            kusama-picasso-karura-devnet = let
-              config = (pkgs.callPackage
-                ./scripts/polkadot-launch/kusama-local-picasso-dev-karura-dev.nix {
-                  polkadot-bin = polkadot-node;
-                  composable-bin = composable-node;
-                  acala-bin = acala-node;
-                }).result;
-              config-file = pkgs.writeTextFile {
-                name = "kusama-local-picasso-dev-karura-dev.json";
-                text = "${builtins.toJSON config}";
               };
-            in pkgs.writeShellApplication {
-              name = "kusama-picasso-karura";
-              text = ''
-                cat ${config-file}
-                rm -rf /tmp/polkadot-launch
-                ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
-              '';
-            };
 
-            devnet-rococo-dali-karura = let
-              config = (pkgs.callPackage
-                ./scripts/polkadot-launch/kusama-local-dali-dev-karura-dev.nix {
-                  polkadot-bin = polkadot-node;
-                  composable-bin = composable-node;
-                  acala-bin = acala-node;
-                }).result;
-              config-file = pkgs.writeTextFile {
-                name = "kusama-local-dali-dev-karura-dev.json";
-                text = "${builtins.toJSON config}";
+              prettier-check = pkgs.stdenv.mkDerivation {
+                name = "prettier-check";
+                dontUnpack = true;
+                buildInputs = [ pkgs.nodePackages.prettier runtime-tests ];
+                installPhase = ''
+                  mkdir $out
+                  prettier \
+                  --config="${runtime-tests}/.prettierrc" \
+                  --ignore-path="${runtime-tests}/.prettierignore" \
+                  --check \
+                  --loglevel=debug \
+                  ${runtime-tests}
+                '';
               };
-            in pkgs.writeShellApplication {
-              name = "run-rococo-dali-karura";
-              text = ''
-                cat ${config-file}
-                rm -rf /tmp/polkadot-launch
-                ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
-              '';
-            };
 
-            devnet-picasso-complete = let
-              config =
-                (pkgs.callPackage ./scripts/polkadot-launch/all-dev-local.nix {
-                  chainspec = "picasso-dev";
-                  polkadot-bin = polkadot-node;
-                  composable-bin = composable-node;
-                  statemine-bin = statemine-node;
-                  acala-bin = acala-node;
-                }).result;
-              config-file = pkgs.writeTextFile {
-                name = "all-dev-local.json";
-                text = "${builtins.toJSON config}";
+              nixfmt-check = pkgs.stdenv.mkDerivation {
+                name = "nixfmt-check";
+                dontUnpack = true;
+
+                buildInputs = [ all-nix-files pkgs.nixfmt ];
+                installPhase = ''
+                  mkdir $out
+                  nixfmt --version
+                  SRC=$(find ${all-nix-files} -name "*.nix" -type f | tr "\n" " ")
+                  echo $SRC
+                  nixfmt --check $SRC
+                '';
               };
-            in pkgs.writeShellApplication {
-              name = "kusama-dali-karura";
-              text = ''
-                cat ${config-file}
-                rm -rf /tmp/polkadot-launch
-                ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
-              '';
-            };
 
-            devnet-dali-complete = let
-              config =
-                (pkgs.callPackage ./scripts/polkadot-launch/all-dev-local.nix {
-                  chainspec = "dali-dev";
-                  polkadot-bin = polkadot-node;
-                  composable-bin = composable-node;
-                  statemine-bin = statemine-node;
-                  acala-bin = acala-node;
-                }).result;
-              config-file = pkgs.writeTextFile {
-                name = "all-dev-local.json";
-                text = "${builtins.toJSON config}";
+              deadnix-check = pkgs.stdenv.mkDerivation {
+                name = "deadnix-check";
+                dontUnpack = true;
+
+                buildInputs = [ all-nix-files pkgs.deadnix ];
+                installPhase = ''
+                  mkdir $out
+                  deadnix --version
+                  SRC=$(find ${all-nix-files} -name "*.nix" -type f | tr "\n" " ")
+                  echo $SRC
+                  deadnix $SRC
+                '';
               };
-            in pkgs.writeShellApplication {
-              name = "kusama-dali-karura";
-              text = ''
-                cat ${config-file}
-                rm -rf /tmp/polkadot-launch
-                ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
-              '';
+
+              cargo-clippy-check = crane-nightly.cargoBuild (common-attrs // {
+                cargoArtifacts = common-deps-nightly;
+                cargoBuildCommand = "cargo clippy";
+                cargoExtraArgs = "--all-targets --tests -- -D warnings";
+              });
+
+              cargo-deny-check = crane-nightly.cargoBuild (common-attrs // {
+                buildInputs = with pkgs; [ cargo-deny ];
+                cargoArtifacts = common-deps;
+                cargoBuildCommand = "cargo deny";
+                cargoExtraArgs =
+                  "--manifest-path ./parachain/frame/composable-support/Cargo.toml check ban";
+              });
+
+              cargo-udeps-check = crane-nightly.cargoBuild (common-attrs // {
+                DALI_RUNTIME = "${dali-runtime}/lib/runtime.optimized.wasm";
+                PICASSO_RUNTIME =
+                  "${picasso-runtime}/lib/runtime.optimized.wasm";
+                COMPOSABLE_RUNTIME =
+                  "${composable-runtime}/lib/runtime.optimized.wasm";
+                buildInputs = with pkgs; [
+                  cargo-udeps
+                  expat
+                  freetype
+                  fontconfig
+                  openssl
+                ];
+                cargoArtifacts = common-deps-nightly;
+                cargoBuildCommand = "cargo udeps";
+                cargoExtraArgs =
+                  "--workspace --exclude local-integration-tests --all-features";
+              });
+
+              benchmarks-check = crane-nightly.cargoBuild (common-attrs // {
+                cargoArtifacts = common-deps-nightly;
+                cargoBuildCommand = "cargo check";
+                cargoExtraArgs =
+                  "--benches --all --features runtime-benchmarks";
+              });
+
+              spell-check = pkgs.stdenv.mkDerivation {
+                name = "cspell-check";
+                dontUnpack = true;
+                buildInputs =
+                  [ all-directories-and-files pkgs.nodePackages.cspell ];
+                installPhase = ''
+                  mkdir $out
+                  echo "cspell version: $(cspell --version)"
+                  cd ${all-directories-and-files}
+                  cspell lint --config cspell.yaml --no-progress "**"
+                '';
+              };
+
+              hadolint-check = pkgs.stdenv.mkDerivation {
+                name = "hadolint-check";
+                dontUnpack = true;
+                buildInputs = [ all-directories-and-files pkgs.hadolint ];
+                installPhase = ''
+                  mkdir -p $out
+
+                  hadolint --version
+                  total_exit_code=0
+                  for file in $(find ${all-directories-and-files} -name "Dockerfile" -or -name "*.dockerfile"); do
+                    echo "=== $file ==="
+                    hadolint --config ${all-directories-and-files}/.hadolint.yaml $file || total_exit_code=$?
+                    echo ""
+                  done
+                  exit $total_exit_code
+                '';
+              };
+
+              kusama-picasso-karura-devnet = let
+                config = (pkgs.callPackage
+                  ./scripts/polkadot-launch/kusama-local-picasso-dev-karura-dev.nix {
+                    polkadot-bin = polkadot-node;
+                    composable-bin = composable-node;
+                    acala-bin = acala-node;
+                  }).result;
+                config-file = pkgs.writeTextFile {
+                  name = "kusama-local-picasso-dev-karura-dev.json";
+                  text = "${builtins.toJSON config}";
+                };
+              in pkgs.writeShellApplication {
+                name = "kusama-picasso-karura";
+                text = ''
+                  cat ${config-file}
+                  rm -rf /tmp/polkadot-launch
+                  ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
+                '';
+              };
+
+              devnet-rococo-dali-karura = let
+                config = (pkgs.callPackage
+                  ./scripts/polkadot-launch/kusama-local-dali-dev-karura-dev.nix {
+                    polkadot-bin = polkadot-node;
+                    composable-bin = composable-node;
+                    acala-bin = acala-node;
+                  }).result;
+                config-file = pkgs.writeTextFile {
+                  name = "kusama-local-dali-dev-karura-dev.json";
+                  text = "${builtins.toJSON config}";
+                };
+              in pkgs.writeShellApplication {
+                name = "run-rococo-dali-karura";
+                text = ''
+                  cat ${config-file}
+                  rm -rf /tmp/polkadot-launch
+                  ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
+                '';
+              };
+
+              devnet-picasso-complete = let
+                config = (pkgs.callPackage
+                  ./scripts/polkadot-launch/all-dev-local.nix {
+                    chainspec = "picasso-dev";
+                    polkadot-bin = polkadot-node;
+                    composable-bin = composable-node;
+                    statemine-bin = statemine-node;
+                    acala-bin = acala-node;
+                  }).result;
+                config-file = pkgs.writeTextFile {
+                  name = "all-dev-local.json";
+                  text = "${builtins.toJSON config}";
+                };
+              in pkgs.writeShellApplication {
+                name = "kusama-dali-karura";
+                text = ''
+                  cat ${config-file}
+                  rm -rf /tmp/polkadot-launch
+                  ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
+                '';
+              };
+
+              devnet-dali-complete = let
+                config = (pkgs.callPackage
+                  ./scripts/polkadot-launch/all-dev-local.nix {
+                    chainspec = "dali-dev";
+                    polkadot-bin = polkadot-node;
+                    composable-bin = composable-node;
+                    statemine-bin = statemine-node;
+                    acala-bin = acala-node;
+                  }).result;
+                config-file = pkgs.writeTextFile {
+                  name = "all-dev-local.json";
+                  text = "${builtins.toJSON config}";
+                };
+              in pkgs.writeShellApplication {
+                name = "kusama-dali-karura";
+                text = ''
+                  cat ${config-file}
+                  rm -rf /tmp/polkadot-launch
+                  ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
+                '';
+              };
+
+              junod = pkgs.callPackage ./code/xcvm/cosmos/junod.nix { };
+              gex = pkgs.callPackage ./code/xcvm/cosmos/gex.nix { };
+              wasmswap = pkgs.callPackage ./code/xcvm/cosmos/wasmswap.nix {
+                crane = crane-nightly;
+              };
+
+              devnet-default-program =
+                pkgs.composable.mkDevnetProgram "devnet-default"
+                (import ./.nix/devnet-specs/default.nix {
+                  inherit pkgs;
+                  inherit price-feed;
+                  devnet = devnet-dali-complete;
+                  frontend = frontend-static;
+                });
+
+              devnet-xcvm-program =
+                pkgs.composable.mkDevnetProgram "devnet-xcvm"
+                (import ./.nix/devnet-specs/xcvm.nix {
+                  inherit pkgs;
+                  inherit (packages) devnet-dali;
+                });
+
+              devnet-bridge-program =
+                pkgs.composable.mkDevnetProgram "devnet-bridge"
+                (import ./.nix/devnet-specs/bridge.nix {
+                  inherit pkgs;
+                  inherit packages;
+                  config = bridge-config;
+                });
+
+              devnet-persistent-program =
+                pkgs.composable.mkDevnetProgram "devnet-persistent"
+                (import ./.nix/devnet-specs/default.nix {
+                  inherit pkgs;
+                  inherit price-feed;
+                  devnet = devnet-dali-complete;
+                  frontend = frontend-static-persistent;
+                });
+
+              default = packages.composable-node;
             };
-
-            junod = pkgs.callPackage ./code/xcvm/cosmos/junod.nix { };
-            gex = pkgs.callPackage ./code/xcvm/cosmos/gex.nix { };
-            wasmswap = pkgs.callPackage ./code/xcvm/cosmos/wasmswap.nix {
-              crane = crane-nightly;
-            };
-
-            devnet-default-program =
-              pkgs.composable.mkDevnetProgram "devnet-default"
-              (import ./.nix/devnet-specs/default.nix {
-                inherit pkgs;
-                inherit price-feed;
-                devnet = devnet-dali-complete;
-                frontend = frontend-static;
-              });
-
-            devnet-xcvm-program = pkgs.composable.mkDevnetProgram "devnet-xcvm"
-              (import ./.nix/devnet-specs/xcvm.nix {
-                inherit pkgs;
-                inherit (packages) devnet-dali;
-              });
-
-            devnet-bridge-program =
-              pkgs.composable.mkDevnetProgram "devnet-bridge"
-              (import ./.nix/devnet-specs/bridge.nix {
-                inherit pkgs;
-                inherit packages;
-                config = bridge-config;
-              });
-
-            devnet-persistent-program =
-              pkgs.composable.mkDevnetProgram "devnet-persistent"
-              (import ./.nix/devnet-specs/default.nix {
-                inherit pkgs;
-                inherit price-feed;
-                devnet = devnet-dali-complete;
-                frontend = frontend-static-persistent;
-              });
-
-            default = packages.composable-node;
-          };
 
           devShells = rec {
             base-shell = pkgs.mkShell {
@@ -1576,7 +1583,7 @@
             };
 
           in rec {
-            subxt-export = makeApp metadatas.subxt-export;
+            subxt-export = makeApp chains-metadata.subxt-export;
 
             devnet = makeApp packages.devnet-default-program;
             devnet-persistent = makeApp packages.devnet-persistent-program;
