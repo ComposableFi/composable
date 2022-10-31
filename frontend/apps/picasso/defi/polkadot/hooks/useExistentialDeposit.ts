@@ -1,22 +1,17 @@
 import { useStore } from "@/stores/root";
 import { useEffect } from "react";
-import BigNumber from "bignumber.js";
 import { callbackGate, fromChainIdUnit, unwrapNumberOrHex } from "shared";
 import { useTransfer } from "@/defi/polkadot/hooks/useTransfer";
-import { getAssetOnChainId } from "@/defi/polkadot/Assets";
+import { getKaruraExistentialDeposit } from "../pallets/Assets/ExistentialDeposits/karura";
+import { fetchAccountExistentialDeposit } from "../pallets/Assets/ExistentialDeposits/picasso";
+import { extractTokenByNetworkIdentifier } from "../pallets/Assets";
 
 export const useExistentialDeposit = () => {
   const { from, balance, to, account, fromProvider } = useTransfer();
-
   const tokenId = useStore((state) => state.transfers.selectedToken);
   const updateFeeToken = useStore((state) => state.transfers.updateFeeToken);
-
   const getFeeToken = useStore((state) => state.transfers.getFeeToken);
-
-  const { native, assets } = useStore(
-    ({ substrateBalances }) => substrateBalances.assets[from]
-  );
-
+  const tokens = useStore(({ substrateTokens }) => substrateTokens.tokens);
   const { updateExistentialDeposit, existentialDeposit } = useStore(
     (state) => state.transfers
   );
@@ -32,59 +27,42 @@ export const useExistentialDeposit = () => {
   useEffect(() => {
     switch (from) {
       case "karura":
-        // @see https://wiki.acala.network/get-started/get-started/karura-account
-        const karuraEdMap: {
-          [key in string] : BigNumber
-        } = {
-          "kusd": new BigNumber(0.01),
-          "ausd": new BigNumber(0.01),
-          "kar": new BigNumber(0.1),
-          "ksm": new BigNumber(0.0001),
-        };
-        const ed = tokenId in karuraEdMap ? karuraEdMap[tokenId] : new BigNumber(1);
-        const assetOnChain = getAssetOnChainId("karura", tokenId);
+        const ed = getKaruraExistentialDeposit(tokenId);
+        const assetOnChain = tokens[tokenId].karuraId;
         if (assetOnChain) {
-          updateFeeToken(assetOnChain);
+          updateFeeToken(tokenId);
         }
         updateExistentialDeposit(ed);
         break;
       case "picasso":
         callbackGate(
-          async function updateTransferFeeRequirements(api, address) {
-            const result: any = await api.query.assetTxPayment.paymentAssets(
-              api.createType("AccountId32", address)
+          async function updateTransferFeeRequirements(api, address, _picaId) {
+            const paymentAsset = await fetchAccountExistentialDeposit(
+              api,
+              address,
+              _picaId
             );
-            if (result.isNone && tokenId) {
-              // Fetch native asset's ED
-              const ed =
-                tokenId !== "pica"
-                  ? await api.query.currencyFactory.assetEd(
-                      assets[tokenId].meta.supportedNetwork[from]
-                    )
-                  : api.consts.balances.existentialDeposit;
-              const existentialString = ed.toString();
-              const existentialValue = fromChainIdUnit(
-                new BigNumber(existentialString)
-              );
-              updateExistentialDeposit(
-                existentialValue.isNaN() ? new BigNumber(0) : existentialValue
-              );
-              updateFeeToken(1);
-              return;
+            const asset = extractTokenByNetworkIdentifier(
+              tokens,
+              "picasso",
+              paymentAsset.assetId
+            );
+
+            updateExistentialDeposit(paymentAsset.existentialDeposit);
+            if (asset) {
+              updateFeeToken(asset.id);
             }
-            const [assetId, ed] = result.toJSON();
-            updateExistentialDeposit(fromChainIdUnit(unwrapNumberOrHex(ed)));
-            updateFeeToken(Number(assetId));
           },
           parachainApi,
-          account?.address
+          account?.address,
+          tokens.pica.picassoId
         );
         break;
       case "kusama":
         callbackGate(async (api) => {
           const ed = api.consts.balances.existentialDeposit.toString();
           updateExistentialDeposit(fromChainIdUnit(unwrapNumberOrHex(ed)));
-          updateFeeToken(Number(1));
+          updateFeeToken("ksm");
         }, parachainApi);
         break;
       default:
@@ -99,7 +77,7 @@ export const useExistentialDeposit = () => {
     parachainApi,
     updateExistentialDeposit,
     updateFeeToken,
-    assets,
+    tokens,
   ]);
 
   return {
@@ -107,8 +85,6 @@ export const useExistentialDeposit = () => {
     tokenId,
     from,
     to,
-    assets,
-    native,
     existentialDeposit,
     feeToken: getFeeToken(from),
   };

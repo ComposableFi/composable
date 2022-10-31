@@ -9,11 +9,10 @@ import {
   transferPicassoKarura,
   transferPicassoKusama,
 } from "@/defi/polkadot/pallets/xcmp";
-import { AssetId } from "@/defi/polkadot/types";
 import { useStore } from "@/stores/root";
-import BigNumber from "bignumber.js";
 import { useSnackbar } from "notistack";
-import { useExecutor } from "substrate-react";
+import { useExecutor, useSigner } from "substrate-react";
+import BigNumber from "bignumber.js";
 
 export const useTransfer = () => {
   const allProviders = useAllParachainProviders();
@@ -21,26 +20,35 @@ export const useTransfer = () => {
   const fromProvider = allProviders[from];
   const to = useStore((state) => state.transfers.networks.to);
   const toProvider = allProviders[to];
+  const signer = useSigner();
   const { enqueueSnackbar } = useSnackbar();
   const selectedRecipient = useStore(
     (state) => state.transfers.recipients.selected
   );
-  const { hasFeeItem, feeItem } = useStore(({ transfers }) => transfers);
-  const weight = useStore((state) => state.transfers.fee.weight);
-  const keepAlive = useStore((state) => state.transfers.keepAlive);
+
+  const {
+    keepAlive,
+    fee: { weight },
+    tokenId,
+    hasFeeItem,
+    feeItem,
+    amount,
+    updateAmount: setAmount,
+  } = useStore(({ transfers }) => transfers);
+
   const existentialDeposit = useStore(
     ({ substrateBalances }) =>
-      substrateBalances.assets[from].native.existentialDeposit
+      substrateBalances.balances[from][SUBSTRATE_NETWORKS[from].tokenId]
+        .existentialDeposit
   );
-  const selectedToken = useStore(state => state.transfers.selectedToken);
-  const amount = useStore((state) => state.transfers.amount);
-  const setAmount = useStore((state) => state.transfers.updateAmount);
   const account = useSelectedAccount();
   const providers = useAllParachainProviders();
   const executor = useExecutor();
-  const assets = useStore(
-    ({ substrateBalances }) => substrateBalances.assets[from].assets
-  );
+
+  const tokens = useStore(({ substrateTokens }) => substrateTokens.tokens);
+
+  const transferToken = tokens[tokenId];
+
   const getBalance = useStore(
     (state) => state.transfers.getTransferTokenBalance
   );
@@ -50,7 +58,13 @@ export const useTransfer = () => {
   ) => {
     const api = providers[from].parachainApi;
 
-    if (!api || !executor || !account || (hasFeeItem && feeItem.length === 0)) {
+    if (
+      !signer ||
+      !api ||
+      !executor ||
+      !account ||
+      (hasFeeItem && feeItem.length === 0)
+    ) {
       console.error("No API or Executor or account", {
         api,
         executor,
@@ -58,6 +72,7 @@ export const useTransfer = () => {
       });
       return;
     }
+    const feeToken = tokens[feeItem]
     const TARGET_ACCOUNT_ADDRESS = selectedRecipient.length
       ? selectedRecipient
       : account.address;
@@ -72,32 +87,32 @@ export const useTransfer = () => {
       api,
       targetChain: to,
       sourceChain: from,
-      tokenId: selectedToken
+      tokens,
+      tokenId: transferToken.id
     });
 
-    const feeItemId =
-      hasFeeItem && feeItem.length > 0
-        ? assets[feeItem as AssetId].meta.supportedNetwork[from]
-        : null;
-
-    const signerAddress = account.address;
-
-    await transferHandler({
+    const transferHandlerArgs: TransferHandlerArgs = {
       api,
       targetChain: TARGET_PARACHAIN_ID,
       targetAccount: TARGET_ACCOUNT_ADDRESS,
       amount: amountToTransfer,
-      executor,
       enqueueSnackbar,
-      signerAddress,
-      hasFeeItem,
-      feeItemId,
+      executor,
+      signer,
       weight,
-      token: selectedToken
-    });
+      feeToken,
+      transferToken: tokens[tokenId],
+      signerAddress: account.address,
+    };
 
-    // clear amount after
-    setAmount(new BigNumber(0));
+    try {
+      await transferHandler(transferHandlerArgs);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      // clear amount after
+      setAmount(new BigNumber(0));
+    }
   };
 
   const transfer = async () => {
@@ -130,5 +145,6 @@ export const useTransfer = () => {
     account,
     fromProvider,
     toProvider,
+    transferToken,
   };
 };

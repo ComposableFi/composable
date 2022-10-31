@@ -8,7 +8,6 @@ import {
   unwrapNumberOrHex,
 } from "shared";
 import { useExistentialDeposit } from "@/defi/polkadot/hooks/useExistentialDeposit";
-import { useTransfer } from "@/defi/polkadot/hooks";
 import {
   subscribeDefaultTransferToken,
   subscribeTokenOptions,
@@ -21,9 +20,11 @@ import {
   getAmountToTransfer,
   getDestChainFee,
 } from "@/defi/polkadot/pallets/Transfer";
+import { useTransfer } from "@/defi/polkadot/hooks";
 
 export const AmountTokenDropdown = () => {
   const updateAmount = useStore((state) => state.transfers.updateAmount);
+  const tokens = useStore((state) => state.substrateTokens.tokens);
   const amount = useStore((state) => state.transfers.amount);
   const { balance, tokenId } = useExistentialDeposit();
   const { from, fromProvider } = useTransfer();
@@ -54,7 +55,8 @@ export const AmountTokenDropdown = () => {
         keepAlive: keepAlive,
         sourceChain: from,
         targetChain: "picasso",
-        tokenId: selectedToken,
+        tokens,
+        tokenId: selectedToken
       });
       const amount = fromChainIdUnit(
         unwrapNumberOrHex(amountToTransfer.toString())

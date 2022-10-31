@@ -76,10 +76,6 @@ export const ClaimLoanPage = () => {
     textBelow: ERROR_MESSAGES.KSM_WALLET_NOT_CONNECTED.message,
   });
 
-  const updateBalance = useStore(
-    ({ substrateBalances }) => substrateBalances.updateBalance
-  );
-
   const isPendingClaim = usePendingExtrinsic(
     "claim",
     "crowdloanRewards",

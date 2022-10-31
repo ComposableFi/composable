@@ -1,7 +1,7 @@
+import { TokenId } from "tokens";
 import { TokenOption } from "@/stores/defi/polkadot/transfers/transfers";
-import { AssetId } from "@/defi/polkadot/types";
 
-export function getDefaultToken(tokenOptions: Array<TokenOption>): AssetId {
+export function getDefaultToken(tokenOptions: Array<TokenOption>): TokenId {
   const found = tokenOptions.find((token) => !token.disabled);
   if (found) {
     return found.tokenId;
