@@ -1,8 +1,9 @@
 {
-  description = "Description for the project";
+  description = "Composable Finance";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    flake-parts.url = "github:hercules-ci/flake-parts";
   };
 
   outputs = { self, flake-parts, ... }:
