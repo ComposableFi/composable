@@ -16,6 +16,7 @@
         # 3. Add here: foo.flakeModule
         ./docs/docs.nix
         ./subsquid/subsquid.nix
+        ./code/integration-tests/runtime-tests/runtime-tests.nix
       ];
       systems = [ "x86_64-linux" "aarch64-linux" ];
       perSystem = { config, self', inputs', pkgs, system, ... }: {
