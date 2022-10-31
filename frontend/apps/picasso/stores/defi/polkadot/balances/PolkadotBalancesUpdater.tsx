@@ -3,6 +3,7 @@ import { callbackGate } from "shared";
 import { useCallback, useEffect } from "react";
 import { useStore } from "@/stores/root";
 import {
+  ParachainApi,
   ParachainId,
   RelayChainId,
   useDotSamaContext,
@@ -25,6 +26,8 @@ import { VoidFn } from "@polkadot/api/types";
 const PolkadotBalancesUpdater = () => {
   useEagerConnect("picasso");
   useEagerConnect("karura");
+
+  const isLoaded = useStore((state) => state.substrateTokens.isLoaded);
 
   const updateTokens = useStore(
     ({ substrateTokens }) => substrateTokens.updateTokens
@@ -58,6 +61,10 @@ const PolkadotBalancesUpdater = () => {
       async (_picaApi, _karApi) => {
         const picaAssetMetadataList = await picassoAssetsList(_picaApi);
         const karuraAssetMetadataList = await karuraAssetsList(_karApi);
+        console.log(
+          "karura asset meta dataa",
+          JSON.stringify(karuraAssetMetadataList, null, 2)
+        );
         updateTokens(picaAssetMetadataList, karuraAssetMetadataList);
       },
       parachainProviders.picasso.parachainApi,
@@ -66,11 +73,16 @@ const PolkadotBalancesUpdater = () => {
   }, [parachainProviders, updateTokens]);
 
   const picassoBalanceSubscriber = useCallback(
-    async (chain, tokenMetadata: TokenMetadata, chainId) => {
+    async (
+      chain: ParachainApi,
+      tokenMetadata: TokenMetadata,
+      chainId,
+      accounts
+    ) => {
       callbackGate(
-        async (chain, tokenMetadata, chainId, account) => {
+        async (api, tokenMetadata, chainId, account) => {
           await subscribePicassoBalanceByAssetId(
-            chain.parachainApi!,
+            api,
             account.address,
             tokenMetadata,
             (balance) => {
@@ -82,10 +94,10 @@ const PolkadotBalancesUpdater = () => {
             }
           );
         },
-        chain,
+        chain.parachainApi,
         tokenMetadata,
         chainId,
-        chain.accounts[selectedAccount]
+        accounts[selectedAccount]
       );
     },
     [selectedAccount, updateBalance]
@@ -139,7 +151,11 @@ const PolkadotBalancesUpdater = () => {
   useEffect(() => {
     let unsubList: any[];
     unsubList = [];
-    if (extensionStatus !== "connected" || selectedAccount === -1) {
+    if (
+      extensionStatus !== "connected" ||
+      selectedAccount === -1 ||
+      !isLoaded
+    ) {
       return () => {};
     }
 
@@ -148,7 +164,12 @@ const PolkadotBalancesUpdater = () => {
         Object.values(tokens).forEach((asset) => {
           switch (chainId) {
             case "picasso":
-              picassoBalanceSubscriber(chain, asset, chainId);
+              picassoBalanceSubscriber(
+                chain,
+                asset,
+                chainId,
+                connectedAccounts[chainId]
+              );
               break;
             case "karura":
               if (connectedAccounts.karura[selectedAccount]) {
@@ -171,7 +192,7 @@ const PolkadotBalancesUpdater = () => {
           }
         });
 
-        return function cleanUp() {
+        return () => {
           unsubList.forEach((unsub) => {
             unsub.then((call: any) => call?.());
           });
@@ -179,7 +200,7 @@ const PolkadotBalancesUpdater = () => {
       }, chain.parachainApi)
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [extensionStatus, selectedAccount, parachainProviders]);
+  }, [extensionStatus, selectedAccount, parachainProviders, isLoaded]);
 
   return null;
 };

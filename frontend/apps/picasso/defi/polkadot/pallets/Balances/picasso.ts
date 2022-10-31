@@ -28,12 +28,15 @@ export const subscribePicassoBalanceByAssetId = async (
   callback: (balance: BigNumber) => void
 ) => {
   const uAccount = api.createType("AccountId32", accountId);
-  let unsubscribe = () => {};
+  let unsubscribe: () => void = () => {};
   try {
-    if (!tokenMetadata.picassoId) throw new Error('Unsupported Token');
+    if (!tokenMetadata.chainId.picasso) {
+      return new Promise(unsubscribe);
+    }
+
     unsubscribe = await api.query.tokens.accounts(
       uAccount,
-      api.createType("u128", tokenMetadata.picassoId.toString()),
+      api.createType("u128", tokenMetadata.chainId.picasso.toString()),
       (balance: OrmlTokensAccountData) => {
         callback(fromChainIdUnit(new BigNumber(balance.free.toString())));
       }

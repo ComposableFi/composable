@@ -10,7 +10,7 @@ import { ComposableTraitsOraclePrice } from "defi-interfaces";
 export function binanceMapPairToSourceSymbol(pair: string) {
   const out = {
     KSMUSDT: "KSM",
-    USDCUSDT: "USDC"
+    USDCUSDT: "USDC",
   }[pair];
 
   return out ?? "";
@@ -20,7 +20,7 @@ export const useApolloStats = () => {
   const { parachainApi } = usePicassoProvider();
   const binanceAssets = useStore((state) => state.statsApollo.binanceAssets);
   const oracleAssets = useStore((state) => state.statsApollo.oracleAssets);
-  const tokens =  useStore((state) => state.substrateTokens.tokens);
+  const tokens = useStore((state) => state.substrateTokens.tokens);
   const setBinanceAssets = useStore(
     (state) => state.statsApollo.setBinanceAssets
   );
@@ -33,7 +33,7 @@ export const useApolloStats = () => {
     const wsClient = new WebsocketClient({
       beautify: true,
       pingInterval: 60_000_000,
-      disableHeartbeat: true
+      disableHeartbeat: true,
     });
     let wsKey: string;
 
@@ -77,27 +77,31 @@ export const useApolloStats = () => {
     const unsub = setupBinancePricePull();
 
     return unsub;
-    
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Pulls prices from oracle for the allowed_list
   useEffect(() => {
     const unsubscribes: Array<Promise<any>> = [];
     Object.keys(oracleAssets).forEach((symbol) => {
-      const unsubPromise: Promise<() => void> = callbackGate((api, picaId) => {
-        return api.query.oracle.prices(
-          picaId.toString(),
-          (response: ComposableTraitsOraclePrice) => {
-            const { price }: { price: BN } = response.toJSON() as any;
-            setOracleAssets(
-              symbol,
-              null,
-              fromChainIdUnit(unwrapNumberOrHex(price.toString()))
-            );
-          }
-        );
-      }, parachainApi, tokens.pica.picassoId);
+      const unsubPromise: Promise<() => void> = callbackGate(
+        (api, picaId) => {
+          return api.query.oracle.prices(
+            picaId.toString(),
+            (response: ComposableTraitsOraclePrice) => {
+              const { price }: { price: BN } = response.toJSON() as any;
+              setOracleAssets(
+                symbol,
+                null,
+                fromChainIdUnit(unwrapNumberOrHex(price.toString()))
+              );
+            }
+          );
+        },
+        parachainApi,
+        tokens.pica.chainId.picasso
+      );
       unsubscribes.push(unsubPromise);
     });
 
@@ -106,10 +110,15 @@ export const useApolloStats = () => {
         unsubs.forEach((unsub) => unsub())
       );
     };
-  }, [oracleAssets, parachainApi, setOracleAssets, tokens.pica.picassoId]);
+  }, [
+    oracleAssets,
+    parachainApi,
+    setOracleAssets,
+    tokens.pica.chainId.picasso,
+  ]);
 
   return {
     binanceAssets,
-    oracleAssets
+    oracleAssets,
   };
 };

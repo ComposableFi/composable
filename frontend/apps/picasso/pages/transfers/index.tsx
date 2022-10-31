@@ -15,15 +15,67 @@ import { getDestChainFee } from "@/defi/polkadot/pallets/Transfer";
 import { useStore } from "@/stores/root";
 import { Button, Grid, Typography } from "@mui/material";
 import { NextPage } from "next";
+import { useEffect } from "react";
+import {
+  subscribeDestinationMultiLocation,
+  subscribeMultiAsset,
+  subscribeTransferApiCall,
+} from "@/stores/defi/polkadot/transfers/subscribers";
+import { useSelectedAccount } from "@/defi/polkadot/hooks";
+import { useAllParachainProviders } from "@/defi/polkadot/context/hooks";
+import BigNumber from "bignumber.js";
+import { usePendingExtrinsic } from "substrate-react";
 
 const Transfers: NextPage = () => {
-  const { transfer, amount, from, balance } = useTransfer();
-  // For now all transactions are done with Picasso target
-  // TODO: change this to get the chainApi from target (to) in store
-  const tokens = useStore((state) => state.substrateTokens.tokens)
+  const { amount, setAmount, from, balance, transfer, to } = useTransfer();
+  const allProviders = useAllParachainProviders();
+
+  const tokens = useStore((state) => state.substrateTokens.tokens);
+  const isLoaded = useStore((state) => state.substrateTokens.isLoaded);
   const fee = useStore((state) => state.transfers.fee);
-  const minValue = getDestChainFee(from, "picasso", tokens).fee.plus(fee.partialFee);
+  const minValue = getDestChainFee(from, to, tokens).fee.plus(fee.partialFee);
   const feeTokenId = useStore((state) => state.transfers.getFeeToken(from));
+  const selectedAccount = useSelectedAccount();
+  const hasPendingXcmTransfer = usePendingExtrinsic(
+    "reserveTransferAssets",
+    "xcmPallet",
+    selectedAccount ? selectedAccount.address : "-"
+  );
+  const hasPendingXTokensTransfer = usePendingExtrinsic(
+    "transfer",
+    "xTokens",
+    selectedAccount ? selectedAccount.address : "-"
+  );
+
+  const hasPendingTransfer = hasPendingXcmTransfer || hasPendingXTokensTransfer;
+
+  useEffect(() => {
+    if (
+      allProviders[from].parachainApi &&
+      selectedAccount &&
+      allProviders[from].apiStatus === "connected" &&
+      isLoaded
+    ) {
+      let subscriptions: Array<Promise<() => void>> = [];
+      subscriptions.push(
+        subscribeDestinationMultiLocation(allProviders, selectedAccount.address)
+      );
+      subscriptions.push(subscribeMultiAsset(allProviders));
+
+      subscriptions.push(subscribeTransferApiCall(allProviders));
+
+      return () => {
+        subscriptions.forEach((sub) => sub.then((call) => call()));
+      };
+    }
+  }, [allProviders, from, selectedAccount, isLoaded]);
+
+  useEffect(() => {
+    return () => {
+      // Clear form and reset everything on page change
+      setAmount(new BigNumber(0));
+    };
+  }, []);
 
   return (
     <Default>
@@ -39,10 +91,10 @@ const Transfers: NextPage = () => {
           <Header />
         </Grid>
         <Grid item {...gridItemStyle()}>
-          <TransferNetworkSelector />
+          <TransferNetworkSelector disabled={hasPendingTransfer} />
         </Grid>
         <Grid item {...gridItemStyle()}>
-          <AmountTokenDropdown />
+          <AmountTokenDropdown disabled={hasPendingTransfer} />
         </Grid>
         <Grid item {...gridItemStyle("1.5rem")}>
           <TransferRecipientDropdown />
@@ -54,14 +106,17 @@ const Transfers: NextPage = () => {
           <TransferKeepAliveSwitch />
         </Grid>
         <Grid item {...gridItemStyle()}>
-          <TransferExistentialDeposit network={from} />
+          <TransferExistentialDeposit />
         </Grid>
         <Grid item {...gridItemStyle("1.5rem")}>
           <Button
             variant="contained"
             color="primary"
             disabled={
-              amount.lte(0) || amount.gt(balance) || amount.lte(minValue)
+              amount.lte(0) ||
+              amount.gt(balance) ||
+              amount.lte(minValue) ||
+              hasPendingTransfer
             }
             fullWidth
             onClick={transfer}

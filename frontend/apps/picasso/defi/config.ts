@@ -19,6 +19,6 @@ export const DEFI_CONFIG = {
 };
 export const TRANSFER_ASSET_LIST = {
   kusama: ["ksm"],
-  karura: ["kusd", "kar"],
-  picasso: ["pica"],
+  karura: ["ksm", "kusd", "kar"],
+  picasso: ["ksm", "kusd", "kar"],
 };

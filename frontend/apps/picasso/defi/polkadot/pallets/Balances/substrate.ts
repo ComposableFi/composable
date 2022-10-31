@@ -1,4 +1,4 @@
-import { toTokenUnitsBN, getExistentialDeposit } from "shared";
+import { getExistentialDeposit, toTokenUnitsBN } from "shared";
 import { TokenId } from "tokens";
 import { ApiPromise } from "@polkadot/api";
 import { SUBSTRATE_NETWORKS } from "../../Networks";

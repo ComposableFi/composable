@@ -12,19 +12,17 @@ import {
   subscribeDefaultTransferToken,
   subscribeTokenOptions,
 } from "@/stores/defi/polkadot/transfers/subscribers";
-import { useEffect, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { useValidation } from "@/components/Molecules/BigNumberInput/hooks";
 import BigNumber from "bignumber.js";
 import { Typography } from "@mui/material";
-import {
-  getAmountToTransfer,
-  getDestChainFee,
-} from "@/defi/polkadot/pallets/Transfer";
+import { getAmountToTransfer } from "@/defi/polkadot/pallets/Transfer";
 import { useTransfer } from "@/defi/polkadot/hooks";
 
-export const AmountTokenDropdown = () => {
+export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
+  disabled,
+}) => {
   const updateAmount = useStore((state) => state.transfers.updateAmount);
-  const tokens = useStore((state) => state.substrateTokens.tokens);
   const amount = useStore((state) => state.transfers.amount);
   const { balance, tokenId } = useExistentialDeposit();
   const { from, fromProvider } = useTransfer();
@@ -55,8 +53,6 @@ export const AmountTokenDropdown = () => {
         keepAlive: keepAlive,
         sourceChain: from,
         targetChain: "picasso",
-        tokens,
-        tokenId: selectedToken
       });
       const amount = fromChainIdUnit(
         unwrapNumberOrHex(amountToTransfer.toString())
@@ -105,9 +101,11 @@ export const AmountTokenDropdown = () => {
         }}
         ButtonProps={{
           onClick: handleMaxClick,
+          disabled,
         }}
         InputProps={{
           sx: amountInputStyle,
+          disabled,
         }}
         CombinedSelectProps={{
           options: tokenOptions.map((token) => ({
@@ -116,6 +114,7 @@ export const AmountTokenDropdown = () => {
           })),
           value: selectedToken,
           setValue: updateSelectedToken,
+          disabled,
         }}
       />
       {hasError && (

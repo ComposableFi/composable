@@ -50,8 +50,6 @@ export const TotalValueLockedChart: FC = () => {
     if (first && last) {
       const firstValue = first[1];
       const lastValue = last[1];
-      console.log(firstValue, lastValue);
-
       const percentageDifference =
         ((firstValue - lastValue) / firstValue) * 100;
       return {
