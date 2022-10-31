@@ -13,14 +13,28 @@ import {
 import { TokenAsset } from "../Atom";
 import BigNumber from "bignumber.js";
 import { NoAssetsCover } from "./NoAssetsCover";
-import { SubstrateAsset } from "@/stores/defi/polkadot/balances/slice";
+import { TokenId } from "tokens";
+import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
+import { useStore } from "@/stores/root";
+import { PriceHashMap } from "@/stores/defi/stats/apollo";
 
 export type MyAssetsTableProps = TableContainerProps & {
-  assets?: any;
+  tokensToList: TokenId[]
 };
 
-export const MyAssetsTable: React.FC<MyAssetsTableProps> = ({ assets }) => {
-  if (assets && assets.length > 0) {
+function getPrice(map: PriceHashMap, token: TokenMetadata, key: "open" | "close"): BigNumber {
+  return !!map[token.symbol] && !!map[token.symbol][key] ? map[token.symbol][key] as BigNumber : new BigNumber(0)
+}
+
+export const MyAssetsTable: React.FC<MyAssetsTableProps> = ({ tokensToList }) => {
+  const tokens = useStore(({ substrateTokens }) => substrateTokens.tokens);
+  const tokenList = Object.values(tokens).filter((x) => (tokensToList.includes(x.id)));
+  const balances = useStore(({ substrateBalances }) => substrateBalances.balances.picasso);
+  // dont know whether to use binance or our oracle here
+  // for now using oracle
+  const { binanceAssets, oracleAssets } = useStore(({ statsApollo }) => statsApollo)
+  
+  if (tokenList && tokenList.length > 0) {
     return (
       <TableContainer>
         <Table sx={{ minWidth: 420 }} aria-label="simple table">
@@ -34,17 +48,21 @@ export const MyAssetsTable: React.FC<MyAssetsTableProps> = ({ assets }) => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {assets.map((row: any) => {
+            {tokenList.map((row: TokenMetadata) => {
+              const openPrice = getPrice(oracleAssets, row, "open");
+              const closePrice = getPrice(oracleAssets, row, "open");
+              const change_24hr = openPrice.minus(closePrice).div(openPrice).toNumber()
+              const balance = balances[row.id].balance;
               if (row.symbol) {
                 return (
                   <TableRow key={row.symbol}>
                     <TableCell align="left">
-                      <TokenAsset tokenId={row.tokenId} />
+                      <TokenAsset tokenId={row.id} />
                     </TableCell>
                     <TableCell align="left">
+                      {/* Needs work */}
                       <Typography variant="body2">
-                        $
-                        {new BigNumber(row.price).toFormat(
+                        $ {openPrice.toFormat(
                           row.decimalsToDisplay
                         )}
                       </Typography>
@@ -52,12 +70,12 @@ export const MyAssetsTable: React.FC<MyAssetsTableProps> = ({ assets }) => {
                     <TableCell align="left">
                       <Box sx={{ display: "flex" }}>
                         <TokenAsset
-                          tokenId={row.tokenId}
+                          tokenId={row.id}
                           iconOnly
                           sx={{ width: 36 }}
                         />
                         <Typography variant="body2">
-                          {new BigNumber(row.balance).toFormat(
+                          {balance.toFormat(
                             row.decimalsToDisplay
                           )}
                           &nbsp;
@@ -68,20 +86,21 @@ export const MyAssetsTable: React.FC<MyAssetsTableProps> = ({ assets }) => {
                     <TableCell align="left">
                       <Typography variant="body2">
                         $
-                        {new BigNumber(row.value).toFormat(
+                        {balance.times(openPrice).toFormat(
                           row.decimalsToDisplay
                         )}
                       </Typography>
                     </TableCell>
                     <TableCell align="left">
+                      {/* Needs work */}
                       <Typography
                         variant="body2"
                         color={
-                          row.change_24hr < 0 ? "error.main" : "featured.lemon"
+                          change_24hr < 0 ? "error.main" : "featured.lemon"
                         }
                       >
-                        {row.change_24hr > 0 ? "+" : ""}
-                        {new BigNumber(row.change_24hr * 100).toFormat(
+                        {change_24hr > 0 ? "+" : ""}
+                        {new BigNumber(change_24hr * 100).toFormat(
                           row.decimalsToDisplay
                         )}
                         %
