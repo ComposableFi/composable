@@ -474,7 +474,10 @@ mod tests {
 			.save(
 				&mut deps.storage,
 				(Into::<NetworkId>::into(Picasso).0, vec![]),
-				&Addr::unchecked("interpreter"),
+				&Interpreter {
+					address: Some(Addr::unchecked("interpreter")),
+					security: BridgeSecurity::Deterministic,
+				},
 			)
 			.unwrap();
 
@@ -530,13 +533,5 @@ mod tests {
 		messages.into_iter().enumerate().for_each(|(i, msg)| {
 			assert_eq!(res.messages[i].msg, msg);
 		})
-
-		/*
-		let execute_msg = WasmMsg::Execute {
-			contract_addr: MOCK_CONTRACT_ADDR.to_string(),
-			msg: to_binary(&run_msg).unwrap(),
-			funds: vec![],
-		};
-		*/
 	}
 }

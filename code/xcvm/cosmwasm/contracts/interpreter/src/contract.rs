@@ -354,10 +354,7 @@ pub fn interpret_spawn(
 			continue
 		}
 
-		let amount = if amount.slope.0 == 0 {
-			// No need to get balance from cw20 contract
-			Amount::absolute(amount.intercept.0)
-		} else {
+		let amount = {
 			let query_msg = AssetRegistryQueryMsg::GetAssetContract(asset_id.clone().into());
 
 			let cw20_address: GetAssetContractResponse = deps.querier.query(
@@ -438,20 +435,18 @@ pub fn interpret_transfer(
 	};
 
 	for asset in assets {
-		let asset_id = must_ok!(must_ok!(asset.asset_id)?.asset_id)?;
 		let amount: Amount = must_ok!(asset.balance)?.try_into()?;
+		if amount.is_zero() {
+			continue
+		}
 
+		let asset_id = must_ok!(must_ok!(asset.asset_id)?.asset_id)?;
 		let query_msg = AssetRegistryQueryMsg::GetAssetContract(asset_id.into());
-
 		let cw20_address: GetAssetContractResponse = deps.querier.query(
 			&WasmQuery::Smart { contract_addr: registry_addr.clone(), msg: to_binary(&query_msg)? }
 				.into(),
 		)?;
 		let contract = Cw20Contract(cw20_address.addr.clone());
-
-		if amount.is_zero() {
-			continue
-		}
 
 		let transfer_amount = {
 			let response =
@@ -524,11 +519,12 @@ mod tests {
 	use super::*;
 	use cosmwasm_std::{
 		testing::{mock_dependencies, mock_env, mock_info, MockQuerier, MOCK_CONTRACT_ADDR},
-		Addr, CanonicalAddr, ContractResult, QuerierResult, SystemResult, WasmMsg,
+		Addr, CanonicalAddr, ContractResult, Order, QuerierResult, SystemResult, WasmMsg,
 	};
 	use serde::Deserialize;
 	use xcvm_core::{
-		Amount, AssetId, BindingValue, BridgeSecurity, Destination, Picasso, ETH, PICA,
+		Amount, AssetId, BindingValue, BridgeSecurity, Destination, Picasso, ETH, MAX_PARTS, PICA,
+		USDT,
 	};
 
 	type XCVMProgram = proto::XCVMProgram<CanonicalAddr>;
@@ -537,6 +533,32 @@ mod tests {
 	const CW20_ADDR: &str = "cw20_addr";
 	const REGISTRY_ADDR: &str = "registry_addr";
 	const RELAYER_ADDR: &str = "relayer_addr";
+	const BALANCE: u128 = 10_000;
+
+	fn encode_protobuf<E: prost::Message>(encodable: E) -> Vec<u8> {
+		let mut buf = Vec::new();
+		buf.reserve(encodable.encoded_len());
+		encodable.encode(&mut buf).unwrap();
+		buf
+	}
+
+	fn wasm_querier(query: &WasmQuery) -> QuerierResult {
+		match query {
+			WasmQuery::Smart { contract_addr, .. } if contract_addr.as_str() == CW20_ADDR =>
+				SystemResult::Ok(ContractResult::Ok(
+					to_binary(&cw20::BalanceResponse { balance: BALANCE.into() }).unwrap(),
+				)),
+			WasmQuery::Smart { contract_addr, .. } if contract_addr.as_str() == REGISTRY_ADDR =>
+				SystemResult::Ok(ContractResult::Ok(
+					to_binary(&cw_xcvm_asset_registry::msg::GetAssetContractResponse {
+						addr: Addr::unchecked(CW20_ADDR),
+					})
+					.unwrap(),
+				))
+				.into(),
+			_ => panic!("Unhandled query"),
+		}
+	}
 
 	#[test]
 	fn proper_instantiation() {
@@ -563,38 +585,144 @@ mod tests {
 				user_id: vec![]
 			}
 		);
+
+		// Make sure that the sender is added as an owner
+		assert!(OWNERS.has(&deps.storage, Addr::unchecked("sender")));
 	}
 
-	fn encode_protobuf(program: proto::Program) -> Vec<u8> {
-		let mut buf = Vec::new();
-		buf.reserve(program.encoded_len());
-		program.encode(&mut buf).unwrap();
-		buf
-	}
+	#[test]
+	fn execute_initiation() {
+		let mut deps = mock_dependencies();
 
-	fn encode_spawn(spawn: proto::Spawn) -> Vec<u8> {
-		let mut buf = Vec::new();
-		buf.reserve(spawn.encoded_len());
-		spawn.encode(&mut buf).unwrap();
-		buf
-	}
+		let info = mock_info(MOCK_CONTRACT_ADDR, &vec![]);
+		let _ = instantiate(
+			deps.as_mut(),
+			mock_env(),
+			info.clone(),
+			InstantiateMsg {
+				registry_address: REGISTRY_ADDR.into(),
+				relayer_address: RELAYER_ADDR.into(),
+				network_id: Picasso.into(),
+				user_id: vec![],
+			},
+		)
+		.unwrap();
 
-	fn wasm_querier(query: &WasmQuery) -> QuerierResult {
-		match query {
-			WasmQuery::Smart { contract_addr, .. } if contract_addr.as_str() == CW20_ADDR =>
-				SystemResult::Ok(ContractResult::Ok(
-					to_binary(&cw20::BalanceResponse { balance: 100000_u128.into() }).unwrap(),
-				)),
-			WasmQuery::Smart { contract_addr, .. } if contract_addr.as_str() == REGISTRY_ADDR =>
-				SystemResult::Ok(ContractResult::Ok(
-					to_binary(&cw_xcvm_asset_registry::msg::GetAssetContractResponse {
-						addr: Addr::unchecked(CW20_ADDR),
-					})
+		let program: proto::Program =
+			XCVMProgram { tag: vec![], instructions: vec![].into() }.into();
+		let program = encode_protobuf(program);
+		let res = execute(
+			deps.as_mut(),
+			mock_env(),
+			info,
+			ExecuteMsg::Execute { program: program.clone() },
+		)
+		.unwrap();
+
+		// Make sure IP_REGISTER is reset
+		assert_eq!(IP_REGISTER.load(&deps.storage).unwrap(), 0);
+		// Make sure that the correct submessage is added with the correct reply handler
+		assert_eq!(
+			res.messages[0],
+			SubMsg::reply_on_error(
+				wasm_execute(MOCK_CONTRACT_ADDR, &ExecuteMsg::_SelfExecute { program }, Vec::new())
 					.unwrap(),
-				))
-				.into(),
-			_ => panic!("Unhandled query"),
+				SELF_CALL_ID,
+			)
+		);
+	}
+
+	#[test]
+	fn owner_controls_work() {
+		let mut deps = mock_dependencies();
+		const GARBAGE_SENDER: &str = "garbage_sender";
+
+		let garbage_info = mock_info(GARBAGE_SENDER, &vec![]);
+		let legit_info = mock_info(MOCK_CONTRACT_ADDR, &vec![]);
+		let _ = instantiate(
+			deps.as_mut(),
+			mock_env(),
+			legit_info.clone(),
+			InstantiateMsg {
+				registry_address: REGISTRY_ADDR.into(),
+				relayer_address: RELAYER_ADDR.into(),
+				network_id: Picasso.into(),
+				user_id: vec![],
+			},
+		)
+		.unwrap();
+
+		let program: proto::Program =
+			XCVMProgram { tag: vec![], instructions: vec![].into() }.into();
+		let program = encode_protobuf(program);
+		// This needs to fail
+		let res = execute(
+			deps.as_mut(),
+			mock_env(),
+			garbage_info.clone(),
+			ExecuteMsg::Execute { program: program.clone() },
+		)
+		.unwrap_err();
+		// The error type needs to be authorization
+		match res {
+			ContractError::NotAuthorized => {},
+			res => panic!("Expected ContractError::NotAuthorized, found: {:?}", res),
 		}
+		// We add the garbage sender to be an owner with a legit sender, this should work
+		let _ = execute(
+			deps.as_mut(),
+			mock_env(),
+			legit_info.clone(),
+			ExecuteMsg::AddOwners { owners: vec![Addr::unchecked(GARBAGE_SENDER)] },
+		)
+		.unwrap();
+		// Now this should work as well
+		let _ = execute(
+			deps.as_mut(),
+			mock_env(),
+			garbage_info.clone(),
+			ExecuteMsg::Execute { program: program.clone() },
+		)
+		.unwrap();
+	}
+
+	#[test]
+	fn migrate_works() {
+		let mut deps = mock_dependencies();
+
+		let info = mock_info(MOCK_CONTRACT_ADDR, &vec![]);
+		let _ = instantiate(
+			deps.as_mut(),
+			mock_env(),
+			info.clone(),
+			InstantiateMsg {
+				registry_address: REGISTRY_ADDR.into(),
+				relayer_address: RELAYER_ADDR.into(),
+				network_id: Picasso.into(),
+				user_id: vec![],
+			},
+		)
+		.unwrap();
+
+		// Now the contract has no owner
+		let _ = execute(
+			deps.as_mut(),
+			mock_env(),
+			info.clone(),
+			ExecuteMsg::RemoveOwners { owners: vec![Addr::unchecked(MOCK_CONTRACT_ADDR)] },
+		)
+		.unwrap();
+		// Verify there is no owner
+		assert_eq!(OWNERS.keys(&deps.storage, None, None, Order::Ascending).next(), None);
+
+		let _ = migrate(
+			deps.as_mut(),
+			mock_env(),
+			MigrateMsg { owners: vec![Addr::unchecked(MOCK_CONTRACT_ADDR)] },
+		)
+		.unwrap();
+		// Verify migrate adds the new owners
+		assert!(OWNERS.has(&deps.storage, Addr::unchecked(MOCK_CONTRACT_ADDR)));
 	}
 
 	#[test]
@@ -620,15 +748,22 @@ mod tests {
 
 		IP_REGISTER.save(deps.as_mut().storage, &0).unwrap();
 
-		let program = XCVMProgram {
+		let program: proto::Program = XCVMProgram {
 			tag: vec![],
-			instructions: vec![XCVMInstruction::Transfer {
-				to: Destination::Relayer,
-				assets: Funds::from([
-					(Into::<AssetId>::into(PICA), Amount::absolute(1)),
-					(ETH.into(), Amount::absolute(2)),
-				]),
-			}]
+			instructions: vec![
+				XCVMInstruction::Transfer {
+					to: Destination::Relayer,
+					assets: Funds::from([
+						(Into::<AssetId>::into(PICA), Amount::absolute(1)),
+						(ETH.into(), Amount::absolute(2)),
+						(USDT.into(), Amount::ratio(MAX_PARTS / 2)),
+					]),
+				},
+				XCVMInstruction::Transfer {
+					to: Destination::Account(b"recipient".as_slice().into()),
+					assets: Funds::from([(Into::<AssetId>::into(PICA), Amount::absolute(1))]),
+				},
+			]
 			.into(),
 		}
 		.into();
@@ -649,6 +784,18 @@ mod tests {
 				.call(Cw20ExecuteMsg::Transfer {
 					recipient: RELAYER_ADDR.into(),
 					amount: 2_u128.into(),
+				})
+				.unwrap(),
+			contract
+				.call(Cw20ExecuteMsg::Transfer {
+					recipient: RELAYER_ADDR.into(),
+					amount: (BALANCE / 2).into(),
+				})
+				.unwrap(),
+			contract
+				.call(Cw20ExecuteMsg::Transfer {
+					recipient: "recipient".into(),
+					amount: 1_u128.into(),
 				})
 				.unwrap(),
 		];
@@ -702,19 +849,20 @@ mod tests {
 			},
 		];
 
-		let program = XCVMProgram { tag: vec![], instructions: instructions.clone().into() };
+		let program: proto::Program =
+			XCVMProgram { tag: vec![], instructions: instructions.clone().into() }.into();
 		let execute_msg = ExecuteMsg::_SelfExecute {
-			program: encode_protobuf(
-				XCVMProgram { tag: vec![], instructions: instructions[1..].to_owned().into() }
-					.into(),
-			),
+			program: encode_protobuf(Into::<proto::Program>::into(XCVMProgram {
+				tag: vec![],
+				instructions: instructions[1..].to_owned().into(),
+			})),
 		};
 
 		let res = execute(
 			deps.as_mut(),
 			mock_env(),
 			info.clone(),
-			ExecuteMsg::_SelfExecute { program: encode_protobuf(program.into()) },
+			ExecuteMsg::_SelfExecute { program: encode_protobuf(program) },
 		)
 		.unwrap();
 		assert_eq!(
@@ -739,6 +887,9 @@ mod tests {
 	#[test]
 	fn execute_spawn() {
 		let mut deps = mock_dependencies();
+		let mut querier = MockQuerier::default();
+		querier.update_wasm(wasm_querier);
+		deps.querier = querier;
 
 		let info = mock_info(MOCK_CONTRACT_ADDR, &vec![]);
 		let _ = instantiate(
@@ -761,33 +912,44 @@ mod tests {
 			instructions: vec![XCVMInstruction::Call { bindings: vec![], encoded: vec![] }].into(),
 		};
 
-		let spawn = XCVMInstruction::Spawn {
+		let funds = Funds::from([(Into::<AssetId>::into(PICA), Amount::absolute(1))]);
+
+		let xcvm_spawn = XCVMInstruction::Spawn {
 			network: Picasso.into(),
 			salt: vec![],
 			bridge_security: BridgeSecurity::Deterministic,
-			assets: Funds::empty(),
+			assets: funds.clone(),
 			program: inner_program.clone(),
 		};
 
-		let program = XCVMProgram { tag: vec![], instructions: vec![spawn.clone()].into() }.into();
-		let program = encode_protobuf(program);
-		let res =
-			execute(deps.as_mut(), mock_env(), info.clone(), ExecuteMsg::_SelfExecute { program })
-				.unwrap();
-		let spawn = proto::Spawn {
+		let proto_spawn = proto::Spawn {
 			network: Some(Into::<xcvm_core::NetworkId>::into(Picasso).into()),
 			salt: Some(xcvm_proto::Salt { salt: vec![] }),
 			security: 1,
 			program: Some(inner_program.into()),
-			assets: Vec::new(),
+			assets: funds.0.into_iter().map(|asset| asset.into()).collect(),
 		};
+
+		let program: proto::Program =
+			XCVMProgram { tag: vec![], instructions: vec![xcvm_spawn.clone()].into() }.into();
+		let program = encode_protobuf(program);
+		let res =
+			execute(deps.as_mut(), mock_env(), info.clone(), ExecuteMsg::_SelfExecute { program })
+				.unwrap();
 
 		assert_eq!(
 			res.events[0],
 			Event::new("xcvm.interpreter.spawn")
 				.add_attribute("origin_network_id", "1")
 				.add_attribute("origin_user_id", "[]")
-				.add_attribute("program", Binary(encode_spawn(spawn)).to_base64())
+				.add_attribute("program", Binary(encode_protobuf(proto_spawn)).to_base64())
+		);
+
+		// Check if burn callback is added
+		let contract = Cw20Contract(Addr::unchecked(CW20_ADDR));
+		assert_eq!(
+			res.messages[0].msg,
+			contract.call(Cw20ExecuteMsg::Burn { amount: 1_u128.into() }).unwrap()
 		);
 	}
 
@@ -840,12 +1002,13 @@ mod tests {
 			bindings: late_call.bindings.clone(),
 			encoded: late_call.encoded_call.clone(),
 		}];
-		let program = XCVMProgram { tag: vec![], instructions: instructions.clone().into() };
+		let program: proto::Program =
+			XCVMProgram { tag: vec![], instructions: instructions.clone().into() }.into();
 		let res = execute(
 			deps.as_mut(),
 			mock_env(),
 			info.clone(),
-			ExecuteMsg::_SelfExecute { program: encode_protobuf(program.into()) },
+			ExecuteMsg::_SelfExecute { program: encode_protobuf(program) },
 		)
 		.unwrap();
 		let final_test_msg = TestMsg {
