@@ -3,11 +3,6 @@
   perSystem = { config, self', inputs', pkgs, system, ... }:
     {
       # Add the npm-buildpackage overlay to the perSystem's pkgs
-      _module.args.pkgs = import self.inputs.nixpkgs {
-        inherit system;
-        overlays = [ self.inputs.npm-buildpackage.overlays.default ];
-      };
-
       packages = rec {
         docs-static = pkgs.buildNpmPackage {
           src = ./.;

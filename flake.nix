@@ -15,6 +15,7 @@
         # 2. Add foo as a parameter to the outputs function
         # 3. Add here: foo.flakeModule
         ./docs/docs.nix
+        ./subsquid/subsquid.nix
       ];
       systems = [ "x86_64-linux" "aarch64-linux" ];
       perSystem = { config, self', inputs', pkgs, system, ... }: {
@@ -24,6 +25,12 @@
 
         # Equivalent to  inputs'.nixpkgs.legacyPackages.hello;
         # packages.default = pkgs.hello;
+
+        # Add the npm-buildpackage overlay to the perSystem's pkgs
+        _module.args.pkgs = import self.inputs.nixpkgs {
+          inherit system;
+          overlays = [ self.inputs.npm-buildpackage.overlays.default ];
+        };
       };
       flake = {
         # The usual flake attributes can be defined here, including system-
