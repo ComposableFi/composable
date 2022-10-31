@@ -78,10 +78,15 @@ process themselves:
 ![routing](./XCVM-flow.png)
 
 
-Together with our interoperable infrastructure, we will usher in an era of modular DeFi functionality, unlike anything before it. The basis of modular functionality is that a program, or in this case a decentralized application, can be separated into interchangeable modules capable of functioning independently. This environment will enable a new host of services to be offered to users that abstract complexity away to focus on needs: users will be able to get the best interest rates across lending pools, the best swaps across chains, and allow for a range of other possibilities across new pool types, arbitrage opportunities, and onboarding portals to DeFi. In concise terms, Composable Finance is orchestrating interoperability for modular functionality, to enable composability. 
+Together with our interoperable infrastructure, we will usher in an era of modular DeFi functionality, 
+unlike anything before it. The basis of modular functionality is that a program, or in this case a decentralized 
+application, can be separated into interchangeable modules capable of functioning independently. 
+This environment will enable a new host of services to be offered to users that abstract complexity away to focus on 
+needs: users will be able to get the best interest rates across lending pools, the best swaps across chains, and 
+allow for a range of other possibilities across new pool types, arbitrage opportunities, and onboarding portals to DeFi. 
+In concise terms, Composable Finance is orchestrating interoperability for modular functionality, to enable composability.
 
 We are accomplishing these goals through a multifaceted [technical stack](./products/technical-stack-overview.md) 
-
 where we begin by bridging gaps between today’s isolated blockchains and layer 2 scaling solutions in order to create a
 single and unified access point that is the 
 [Composable Cross-Chain VM (XCVM)](https://medium.com/composable-finance/composable-finance-emerging-as-the-first-cross-chain-smart-contracting-l1-4e837b8bd57e) 
