@@ -78,6 +78,7 @@ impl WellKnownPriceConverter {
 			CurrencyId::USDT | CurrencyId::USDC => Some(rational!(15 / 1_000_000_000)),
 			CurrencyId::aUSD | CurrencyId::kUSD => Some(rational!(15 / 1_000)),
 			CurrencyId::PICA => Some(rational!(1 / 1)),
+			CurrencyId::PBLO => Some(rational!(1 / 1)),
 			_ => None,
 		}
 	}

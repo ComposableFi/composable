@@ -1,9 +1,7 @@
 use crate::{
 	assert_lt_by,
 	helpers::*,
-	kusama_test_net::{
-		KusamaRelay, Sibling, This, PICA, SIBLING_PARA_ID, THIS_PARA_ID,
-	},
+	kusama_test_net::{KusamaRelay, Sibling, This, PICA, SIBLING_PARA_ID, THIS_PARA_ID},
 	prelude::*,
 };
 use codec::Encode;
@@ -15,10 +13,7 @@ use frame_system::RawOrigin;
 use num_traits::Zero;
 use orml_traits::currency::MultiCurrency;
 
-use frame_support::{
-	assert_ok, log,
-	weights::constants::WEIGHT_PER_MILLIS,
-};
+use frame_support::{assert_ok, log, weights::constants::WEIGHT_PER_MILLIS};
 use primitives::currency::*;
 use sp_runtime::{assert_eq_error_rate, traits::AccountIdConversion, MultiAddress};
 use xcm::latest::prelude::*;
@@ -91,7 +86,7 @@ fn transfer_from_relay_native_from_this_to_relay_chain_by_local_id() {
 	let transfer_amount = 3 * RELAY_NATIVE::ONE;
 	let limit = 4_600_000_000;
 
-	mint_relay_native_on_parachain(transfer_amount*2, &AccountId::from(alice()), THIS_PARA_ID);
+	mint_relay_native_on_parachain(transfer_amount * 2, &AccountId::from(alice()), THIS_PARA_ID);
 
 	KusamaRelay::execute_with(|| {
 		assert_eq!(relay_runtime::Balances::balance(&AccountId::from(bob())), 0);
@@ -132,11 +127,13 @@ fn transfer_from_relay_native_from_this_to_relay_chain_by_local_id() {
 }
 
 #[test]
-fn transfer_native_of_this_to_sibling() {
+fn transfer_this_native_to_sibling_overridden() {
 	simtest();
 
 	Sibling::execute_with(|| {
-		assert_ok!(this_runtime::AssetsRegistry::update_asset(
+		log::info!(target: "bdd", "Sibling overrides some well known asset to this");
+		use sibling_runtime::*;
+		assert_ok!(AssetsRegistry::update_asset(
 			RawOrigin::Root.into(),
 			CurrencyId::PICA,
 			composable_traits::xcm::assets::XcmAssetLocation(MultiLocation::new(
@@ -150,7 +147,12 @@ fn transfer_native_of_this_to_sibling() {
 
 	This::execute_with(|| {
 		use this_runtime::*;
+		let _ = <balances::Pallet<Runtime> as frame_support::traits::Currency<AccountId>>::deposit_creating(
+			&alice().into(),
+			4 * PICA,
+		);
 		let before = Balances::balance(&sibling_account(SIBLING_PARA_ID));
+		let alice_before = Balances::balance(&alice().into());
 		assert_ok!(RelayerXcm::limited_reserve_transfer_assets(
 			Origin::signed(alice().into()),
 			Box::new(
@@ -164,60 +166,9 @@ fn transfer_native_of_this_to_sibling() {
 		));
 
 		let after = Balances::balance(&sibling_account(SIBLING_PARA_ID));
-		assert_eq!(Balances::free_balance(&alice().into()), 200 * PICA - 3 * PICA);
+		assert_eq!(alice_before - Balances::free_balance(&alice().into()), 3 * PICA);
 		assert_gt!(after, before);
-		assert_eq!(after, 3 * PICA);
-	});
-
-	Sibling::execute_with(|| {
-		let balance =
-			sibling_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(bob()));
-		assert_eq_error_rate!(balance, 3 * PICA, (UnitWeightCost::get() * 10) as u128);
-	});
-}
-
-#[test]
-fn transfer_native_of_this_to_sibling_by_local_id() {
-	simtest();
-
-	Sibling::execute_with(|| {
-		assert_ok!(this_runtime::AssetsRegistry::update_asset(
-			RawOrigin::Root.into(),
-			CurrencyId::PICA,
-			composable_traits::xcm::assets::XcmAssetLocation(MultiLocation::new(
-				1,
-				X1(Parachain(THIS_PARA_ID),)
-			)),
-			Some(Rational64::one()),
-			None,
-		));
-	});
-
-	This::execute_with(|| {
-		use this_runtime::*;
-		let before = Balances::balance(&sibling_account(SIBLING_PARA_ID));
-
-		assert_ok!(XTokens::transfer(
-			Origin::signed(alice().into()),
-			CurrencyId::PICA,
-			3 * PICA,
-			Box::new(
-				MultiLocation::new(
-					1,
-					X2(
-						Junction::Parachain(SIBLING_PARA_ID),
-						Junction::AccountId32 { id: bob(), network: NetworkId::Any }
-					)
-				)
-				.into()
-			),
-			399_600_000_000
-		));
-
-		let after = Balances::balance(&sibling_account(SIBLING_PARA_ID));
-		assert_eq!(Balances::free_balance(&alice().into()), 200 * PICA - 3 * PICA);
-		assert_gt!(after, before);
-		assert_eq!(after, 3 * PICA);
+		assert_eq!(after, 3 * PICA, "bdd: Sibling reserver account gets amount locked");
 	});
 
 	Sibling::execute_with(|| {
@@ -273,7 +224,7 @@ fn transfer_non_native_reserver_asset_from_this_to_sibling() {
 }
 
 #[test]
-fn transfer_non_native_reserver_asset_from_this_to_sibling_by_local_id() {
+fn transfer_non_native_reserve_asset_from_this_to_sibling_by_local_id_overridden() {
 	simtest();
 
 	Sibling::execute_with(|| {
@@ -292,7 +243,7 @@ fn transfer_non_native_reserver_asset_from_this_to_sibling_by_local_id() {
 	This::execute_with(|| {
 		use this_runtime::*;
 
-		assert_ok!(Assets::deposit(CurrencyId::PBLO, &alice().into(), 10 * PICA));
+		assert_ok!(Tokens::deposit(CurrencyId::PBLO, &alice().into(), 10 * PICA));
 		let before = Assets::free_balance(CurrencyId::PBLO, &alice().into());
 
 		assert_ok!(XTokens::transfer(
@@ -331,15 +282,8 @@ fn this_native_transferred_from_sibling_to_native_is_not_enough() {
 		log::info!(target: "bdd", "Remote PICA registered on sibling");
 		use sibling_runtime::*;
 		let root = frame_system::RawOrigin::Root;
-		let location = XcmAssetLocation::new(
-			MultiLocation::new(
-				1,
-				X1(
-					Parachain(THIS_PARA_ID),
-				),
-			)
-			.into(),
-		);
+		let location =
+			XcmAssetLocation::new(MultiLocation::new(1, X1(Parachain(THIS_PARA_ID))).into());
 		AssetsRegistry::register_asset(
 			root.into(),
 			location.clone(),
@@ -360,7 +304,6 @@ fn this_native_transferred_from_sibling_to_native_is_not_enough() {
 			.unwrap()
 	});
 
-	
 	This::execute_with(|| {
 		use this_runtime::*;
 		let _ = <balances::Pallet<Runtime> as frame_support::traits::Currency<AccountId>>::deposit_creating(
@@ -368,47 +311,43 @@ fn this_native_transferred_from_sibling_to_native_is_not_enough() {
 			200_000_000_000_000,
 		);
 
-		assert_ok!(
-			XTokens::transfer(
-				Origin::signed(alice().into()),
-				CurrencyId::PICA,
-				100_000_000_000_000,
-				Box::new(
-					MultiLocation::new(
-						1,
-						X2(
-							Junction::Parachain(SIBLING_PARA_ID),
-							Junction::AccountId32 { id: alice(), network: NetworkId::Any }
-						)
+		assert_ok!(XTokens::transfer(
+			Origin::signed(alice().into()),
+			CurrencyId::PICA,
+			100_000_000_000_000,
+			Box::new(
+				MultiLocation::new(
+					1,
+					X2(
+						Junction::Parachain(SIBLING_PARA_ID),
+						Junction::AccountId32 { id: alice(), network: NetworkId::Any }
 					)
-					.into()
-				),
-				399_600_000_000
-			)
-		);
+				)
+				.into()
+			),
+			399_600_000_000
+		));
 		log::info!(target: "bdd", "Alice transferred PICA from this to her on sibling");
 	});
 
 	Sibling::execute_with(|| {
 		use sibling_runtime::*;
-		assert_ok!(
-			XTokens::transfer(
-				Origin::signed(alice().into()),
-				remote_this_asset_id,
-				1_000,
-				Box::new(
-					MultiLocation::new(
-						1,
-						X2(
-							Junction::Parachain(THIS_PARA_ID),
-							Junction::AccountId32 { id: bob(), network: NetworkId::Any }
-						)
+		assert_ok!(XTokens::transfer(
+			Origin::signed(alice().into()),
+			remote_this_asset_id,
+			1_000,
+			Box::new(
+				MultiLocation::new(
+					1,
+					X2(
+						Junction::Parachain(THIS_PARA_ID),
+						Junction::AccountId32 { id: bob(), network: NetworkId::Any }
 					)
-					.into()
-				),
-				399_600_000_000
+				)
+				.into()
 			),
-		);
+			399_600_000_000
+		),);
 		log::info!(target: "bdd", "Alice sent too few PICA from sibling to Bob on this");
 	});
 
@@ -422,19 +361,19 @@ fn this_native_transferred_from_sibling_to_native_is_not_enough() {
 }
 
 #[test]
-fn transfer_relay_native_to_sibling_by_token_id() {
+fn transfer_relay_native_from_this_to_sibling_by_local_id() {
 	simtest();
 
 	let ksm = 100_000_000_000_000;
 	mint_relay_native_on_parachain(ksm, &alice().into(), THIS_PARA_ID);
 
-	let alice_original = This::execute_with(|| {
+	let alice_this_original = This::execute_with(|| {
 		use this_runtime::*;
 		Tokens::free_balance(CurrencyId::KSM, &alice().into())
 	});
 
-	let alice_from_amount = alice_original / 10;
-	let alice_remaining = alice_original - alice_from_amount;
+	let alice_from_amount = alice_this_original / 10;
+	let alice_remaining = alice_this_original - alice_from_amount;
 	let weight_to_pay = 4 * WEIGHT_PER_MILLIS;
 
 	let this_on_sibling = Sibling::execute_with(|| {
@@ -576,47 +515,6 @@ fn one_chain_cannot_print_relay_native_reserve_tokens_on_us() {
 	Sibling::execute_with(|| {
 		use sibling_runtime::*;
 		assert_eq!(Tokens::free_balance(CurrencyId::KSM, &AccountId::from(bob())), 0);
-	});
-}
-
-#[test]
-fn transfer_native_from_relay_enough_for_fee_but_not_enough_for_ed_ends_up_in_treasury() {
-	simtest();
-	let receiver = charlie();
-	let (picasso_treasury, under_ed) = This::execute_with(|| {
-		use this_runtime::*;
-		let under_ed = under_existential_deposit::<AssetsRegistry>(LocalAssetId::KSM, 3);
-		assert_eq!(Tokens::free_balance(CurrencyId::KSM, &AccountId::from(receiver)), 0,);
-		(Tokens::free_balance(CurrencyId::KSM, &this_runtime::TreasuryAccount::get()), under_ed)
-	});
-
-	KusamaRelay::execute_with(|| {
-		use relay_runtime::*;
-		let _ = <Balances as frame_support::traits::fungible::Balanced<AccountId>>::deposit(
-			&AccountId::from(alice()),
-			under_ed * 10000,
-		)
-		.unwrap();
-		assert_ok!(XcmPallet::reserve_transfer_assets(
-			Origin::signed(alice().into()),
-			Box::new(Parachain(THIS_PARA_ID).into().into()),
-			Box::new(Junction::AccountId32 { id: receiver, network: NetworkId::Any }.into().into()),
-			Box::new((Here, under_ed).into()),
-			0
-		));
-	});
-
-	This::execute_with(|| {
-		use this_runtime::*;
-		assert_eq!(
-			Tokens::free_balance(CurrencyId::KSM, &AccountId::from(receiver)),
-			0,
-			"assets did not get to recipient as it is not enough to pay ED"
-		);
-		assert_eq!(
-			Tokens::free_balance(CurrencyId::KSM, &TreasuryAccount::get()),
-			under_ed - picasso_treasury
-		);
 	});
 }
 

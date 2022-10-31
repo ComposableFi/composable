@@ -1,7 +1,3 @@
-//! Basic simple XCM setup and usage sanity checks on low level (not involving too much of
-//! Cumulus/ORML abstractions) Partially ported from articles and examples of https://github.com/paritytech/polkadot/blob/master/xcm/xcm-simulator/example/src/lib.rs
-//! Cannot port QueryHold because it is not implemented
-
 use crate::{helpers::*, kusama_test_net::*, prelude::*};
 
 use frame_support::assert_ok;
@@ -27,21 +23,14 @@ fn throw_exception() {
 	});
 }
 
-/// when it starts, it captures amounts in holder registry
 #[test]
-fn initiate_reserve_withdraw_on_relay() {
+fn initiate_withdraw_of_this_native_to_relay_with_no_reserve_errors_locally() {
 	simtest();
 	This::execute_with(|| {
-		let origin = MultiLocation::new(
-			0,
-			X1(AccountId32 {
-				id: ALICE,
-				// it assumes that above account public key was used on all networks by bob, not
-				// mapping, so it will match any
-				network: NetworkId::Any,
-			}),
-		);
-		let asset_id = AssetId::Concrete(MultiLocation::parent());
+		use this_runtime::*;
+		let origin =
+			MultiLocation::new(0, X1(AccountId32 { id: alice(), network: NetworkId::Any }));
+		let asset_id = AssetId::Concrete((1, Here).into());
 		let assets = MultiAsset { fun: Fungible(42), id: asset_id };
 		let xcm = Xcm(vec![
 			WithdrawAsset(assets.into()),
@@ -53,12 +42,15 @@ fn initiate_reserve_withdraw_on_relay() {
 		]);
 		let units = xcm.len() as u64;
 
-		let executed = <this_runtime::Runtime as cumulus_pallet_xcmp_queue::Config>::XcmExecutor::execute_xcm_in_credit(origin, xcm, 10000000000, 10000000000);
+		let executed =
+			<Runtime as cumulus_pallet_xcmp_queue::Config>::XcmExecutor::execute_xcm_in_credit(
+				origin,
+				xcm,
+				10000000000,
+				10000000000,
+			);
 
-		match executed {
-			Outcome::Complete(weight) if weight == UnitWeightCost::get() * units => {},
-			_ => unreachable!("{:?}", executed),
-		}
+		assert!(matches!(executed, Outcome::Incomplete(200000000, ..)));
 	});
 }
 
