@@ -13,13 +13,19 @@ export async function subscribeKaruraBalance(
 ): Promise<() => void> {
   let unsub: UnsubscribePromise = new Promise(() => {});
   try {
-    if (!tokenMetadata.karuraId) throw new Error("Unsupported assets");
+    if (!tokenMetadata.chainId.karura) {
+      return new Promise(() => {});
+    }
+
     const uAccount = api.createType("AccountId32", accountId);
     // @ts-ignore
     unsub = await api.query.tokens.accounts(
       uAccount,
       api.createType("AcalaPrimitivesCurrencyCurrencyId", {
-        token: api.createType("AcalaPrimitivesCurrencyTokenSymbol", tokenMetadata.karuraId),
+        token: api.createType(
+          "AcalaPrimitivesCurrencyTokenSymbol",
+          tokenMetadata.chainId.karura
+        ),
       }),
       (result: OrmlTokensAccountData) => {
         const { free } = result.toJSON() as any;

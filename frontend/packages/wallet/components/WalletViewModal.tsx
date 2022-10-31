@@ -1,6 +1,4 @@
-import {
-  Lock,
-} from "@mui/icons-material";
+import { Lock } from "@mui/icons-material";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import {
   alpha,
@@ -52,7 +50,7 @@ export type WalletViewProps = {
   selectedPolkadotAccount?: InjectedAccountWithMeta;
   selectedPolkadotWallet?: PolkadotWallet;
   selectedEthereumWallet?: EthereumWallet;
-  connectedWalletTransactions: Array<{ title: string; timestamp: number; }>;
+  connectedWalletTransactions: Array<{ title: string; timestamp: number }>;
 
   onDisconnectEthereum: (...args: unknown[]) => Promise<void> | void;
   onDisconnectDotsamaWallet: (() => Promise<void>) | undefined;
@@ -102,7 +100,7 @@ export const WalletViewModal: React.FC<WalletViewProps> = ({
       open={open}
       {...props}
     >
-      <Grid container xs={12}>
+      <Grid container>
         <Grid item xs={12} textAlign={"center"}>
           <Box
             sx={{
@@ -111,12 +109,14 @@ export const WalletViewModal: React.FC<WalletViewProps> = ({
               marginTop: theme.spacing(2),
             }}
           >
-            {polkadotNetwork && <Image
-              src={polkadotNetwork.nativeCurrencyIcon}
-              width="24"
-              height="24"
-              alt={"icon"}
-            />}
+            {polkadotNetwork && (
+              <Image
+                src={polkadotNetwork.nativeCurrencyIcon}
+                width="24"
+                height="24"
+                alt={"icon"}
+              />
+            )}
           </Box>
           <Box
             sx={{
@@ -193,7 +193,9 @@ export const WalletViewModal: React.FC<WalletViewProps> = ({
               selectedPolkadotWallet={selectedPolkadotWallet}
               onChangeAccount={onChangePolkadotAccount}
               onDisconnectWallet={onDisconnectDotsamaWallet}
-              subscanUrl={polkadotNetwork?.explorerUrl ?? "http://picasso.subscan.io/"}
+              subscanUrl={
+                polkadotNetwork?.explorerUrl ?? "http://picasso.subscan.io/"
+              }
               activePanel={activePanel}
             />
           )}
@@ -203,7 +205,9 @@ export const WalletViewModal: React.FC<WalletViewProps> = ({
               selectedEthereumWallet={selectedEthereumWallet}
               onDisconnectWallet={onDisconnectEthereum}
               activePanel={activePanel}
-              etherscanUrl={ethereumNetwork?.explorerUrl ?? "http://etherscan.io/"}
+              etherscanUrl={
+                ethereumNetwork?.explorerUrl ?? "http://etherscan.io/"
+              }
             />
           )}
 
@@ -243,7 +247,10 @@ export const WalletViewModal: React.FC<WalletViewProps> = ({
             </Box>
           )}
 
-          <TransactionsPanel activePanel={activePanel} transactions={connectedWalletTransactions} />
+          <TransactionsPanel
+            activePanel={activePanel}
+            transactions={connectedWalletTransactions}
+          />
         </Grid>
       </Grid>
     </Dialog>

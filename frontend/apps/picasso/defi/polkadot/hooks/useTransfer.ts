@@ -1,14 +1,6 @@
 import { useAllParachainProviders } from "@/defi/polkadot/context/hooks";
 import { useSelectedAccount } from "@/defi/polkadot/hooks/index";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
-import { getAmountToTransfer } from "@/defi/polkadot/pallets/Transfer";
-import {
-  TransferHandlerArgs,
-  transferKaruraPicasso,
-  transferKusamaPicasso,
-  transferPicassoKarura,
-  transferPicassoKusama,
-} from "@/defi/polkadot/pallets/xcmp";
 import { useStore } from "@/stores/root";
 import { useSnackbar } from "notistack";
 import { useExecutor, useSigner } from "substrate-react";
@@ -25,46 +17,28 @@ export const useTransfer = () => {
   const selectedRecipient = useStore(
     (state) => state.transfers.recipients.selected
   );
-
-  const {
-    keepAlive,
-    fee: { weight },
-    tokenId,
-    hasFeeItem,
-    feeItem,
-    amount,
-    updateAmount: setAmount,
-  } = useStore(({ transfers }) => transfers);
-
-  const existentialDeposit = useStore(
-    ({ substrateBalances }) =>
-      substrateBalances.balances[from][SUBSTRATE_NETWORKS[from].tokenId]
-        .existentialDeposit
-  );
+  const feeToken = useStore(({ transfers }) => transfers.feeToken);
+  const amount = useStore((state) => state.transfers.amount);
+  const setAmount = useStore((state) => state.transfers.updateAmount);
   const account = useSelectedAccount();
   const providers = useAllParachainProviders();
   const executor = useExecutor();
 
-  const tokens = useStore(({ substrateTokens }) => substrateTokens.tokens);
-
-  const transferToken = tokens[tokenId];
-
   const getBalance = useStore(
     (state) => state.transfers.getTransferTokenBalance
   );
+  const makeTransferCall = useStore(
+    (state) => state.transfers.makeTransferCall
+  );
 
-  const prepareAndCall = async (
-    transferHandler: (args: TransferHandlerArgs) => Promise<void>
-  ) => {
+  const TARGET_ACCOUNT_ADDRESS = selectedRecipient.length
+    ? selectedRecipient
+    : account?.address;
+
+  const transfer = async () => {
     const api = providers[from].parachainApi;
 
-    if (
-      !signer ||
-      !api ||
-      !executor ||
-      !account ||
-      (hasFeeItem && feeItem.length === 0)
-    ) {
+    if (!signer || !api || !executor || !account || feeToken.length === 0) {
       console.error("No API or Executor or account", {
         api,
         executor,
@@ -72,67 +46,47 @@ export const useTransfer = () => {
       });
       return;
     }
-    const feeToken = tokens[feeItem]
-    const TARGET_ACCOUNT_ADDRESS = selectedRecipient.length
-      ? selectedRecipient
-      : account.address;
 
-    const TARGET_PARACHAIN_ID = SUBSTRATE_NETWORKS[to].parachainId;
-    // Set amount to transfer
-    const amountToTransfer = getAmountToTransfer({
-      balance: getBalance(),
-      amount,
-      existentialDeposit,
-      keepAlive,
-      api,
-      targetChain: to,
-      sourceChain: from,
-      tokens,
-    });
+    const signerAddress = account.address;
+    const call = makeTransferCall(api, TARGET_ACCOUNT_ADDRESS);
+    if (!call) {
+      console.log(call);
+      console.error("Could not make transfer extrinsic");
+      return;
+    }
 
-    const transferHandlerArgs: TransferHandlerArgs = {
+    await executor.execute(
+      call,
+      signerAddress,
       api,
-      targetChain: TARGET_PARACHAIN_ID,
-      targetAccount: TARGET_ACCOUNT_ADDRESS,
-      amount: amountToTransfer,
-      enqueueSnackbar,
-      executor,
       signer,
-      weight,
-      feeToken,
-      transferToken: tokens[tokenId],
-      signerAddress: account.address,
-    };
-
-    try {
-      await transferHandler(transferHandlerArgs);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      // clear amount after
-      setAmount(new BigNumber(0));
-    }
-  };
-
-  const transfer = async () => {
-    let networkSpecificHandler = (_args: TransferHandlerArgs) =>
-      Promise.resolve();
-    switch (`${from}-${to}`) {
-      case "kusama-picasso":
-        networkSpecificHandler = transferKusamaPicasso;
-        break;
-      case "picasso-kusama":
-        networkSpecificHandler = transferPicassoKusama;
-        break;
-      case "karura-picasso":
-        networkSpecificHandler = transferKaruraPicasso;
-        break;
-      case "picasso-karura":
-        networkSpecificHandler = transferPicassoKarura;
-        break;
-    }
-
-    return prepareAndCall(networkSpecificHandler);
+      (txHash) => {
+        enqueueSnackbar("Transfer executed", {
+          persist: true,
+          description: `Transaction hash: ${txHash}`,
+          variant: "info",
+          isCloseable: true,
+          url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
+        });
+      },
+      (txHash) => {
+        enqueueSnackbar("Transfer executed successfully.", {
+          persist: true,
+          variant: "success",
+          isCloseable: true,
+          url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
+        });
+        setAmount(new BigNumber(0));
+      },
+      (err) => {
+        enqueueSnackbar("Transfer failed", {
+          persist: true,
+          description: `Error: ${err}`,
+          variant: "error",
+          isCloseable: true,
+        });
+      }
+    );
   };
 
   return {
@@ -143,7 +97,8 @@ export const useTransfer = () => {
     balance: getBalance(),
     account,
     fromProvider,
+    setAmount,
     toProvider,
-    transferToken,
+    TARGET_ACCOUNT_ADDRESS,
   };
 };

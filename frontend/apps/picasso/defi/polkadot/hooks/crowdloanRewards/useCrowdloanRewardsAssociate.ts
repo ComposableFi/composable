@@ -76,9 +76,7 @@ export function useCrowdloanRewardsAssociate({
         isClosable: true,
       });
     },
-    [
-      enqueueSnackbar,
-    ]
+    [enqueueSnackbar]
   );
 
   return useCallback(

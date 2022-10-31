@@ -1,117 +1,41 @@
-import {
-  callbackGate,
-  fromChainIdUnit,
-  humanBalance,
-  unwrapNumberOrHex,
-} from "shared";
+import { humanBalance } from "shared";
 import { FeeDisplay } from "@/components";
-import { useCallback, useEffect } from "react";
+import { useEffect } from "react";
 import { useStore } from "@/stores/root";
-import { useExecutor, useSigner } from "substrate-react";
+import { useExecutor } from "substrate-react";
 import { useTransfer } from "@/defi/polkadot/hooks";
-import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 
-import {
-  getAmountToTransfer,
-  getXCMTransferCall,
-  getDestChainFee,
-} from "@/defi/polkadot/pallets/Transfer";
-import { useExistentialDeposit } from "@/defi/polkadot/hooks/useExistentialDeposit";
+import { getDestChainFee } from "@/defi/polkadot/pallets/Transfer";
 import { getPaymentAsset } from "@/defi/polkadot/pallets/AssetTxPayment";
 import { Stack } from "@mui/material";
 import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
-import BigNumber from "bignumber.js";
+import { useAllParachainProviders } from "@/defi/polkadot/context/hooks";
+import { subscribeTransactionFee } from "@/stores/defi/polkadot/transfers/subscribers";
 
 export const TransferFeeDisplay = () => {
-  const signer = useSigner();
   const executor = useExecutor();
   const tokens = useStore(({ substrateTokens }) => substrateTokens.tokens);
-  const feeItem = useStore((state) => state.transfers.feeItem);
-  const hasFeeItem = useStore((state) => state.transfers.hasFeeItem);
-  const setFeeItem = useStore((state) => state.transfers.setFeeItem);
+  const setFeeToken = useStore((state) => state.transfers.setFeeToken);
+  const feeToken = useStore((state) => state.transfers.feeToken);
 
-  const { amount, from, to, balance, account, fromProvider, transferToken } = useTransfer();
-  const selectedRecipient = useStore(
-    (state) => state.transfers.recipients.selected
-  );
-  const keepAlive = useStore((state) => state.transfers.keepAlive);
-  const { existentialDeposit, feeToken } = useExistentialDeposit();
+  const { from, to, account, fromProvider } = useTransfer();
   const fee = useStore((state) => state.transfers.fee);
   const destFee = getDestChainFee(from, to, tokens);
-  const updateFee = useStore((state) => state.transfers.updateFee);
-
-
-  const calculateFee = useCallback(() => {
-    callbackGate(
-      async (api, exec, acc, hasFeeItem, _signer) => {
-        const TARGET_ACCOUNT_ADDRESS = selectedRecipient.length
-          ? selectedRecipient
-          : acc.address;
-
-        const TARGET_PARACHAIN_ID = SUBSTRATE_NETWORKS[to].parachainId;
-
-        // Set amount to transfer
-        const amountToTransfer = getAmountToTransfer({
-          balance,
-          amount,
-          existentialDeposit,
-          keepAlive,
-          api,
-          sourceChain: from,
-          targetChain: to,
-          tokens
-        });
-        
-        try {
-          const call = await getXCMTransferCall({
-            api,
-            targetAccountAddress: TARGET_ACCOUNT_ADDRESS,
-            amountToTransfer,
-            feeToken,
-            transferToken: transferToken,
-            targetParachainId: TARGET_PARACHAIN_ID,
-            from,
-            to,
-            hasFeeItem
-          });
-  
-          const info = await exec.paymentInfo(call, acc.address, _signer);
-          updateFee({
-            class: info.class.toString(),
-            partialFee: fromChainIdUnit(
-              unwrapNumberOrHex(info.partialFee.toString())
-            ),
-            weight: unwrapNumberOrHex(info.weight.toString()),
-          } as {
-            class: string;
-            partialFee: BigNumber;
-            weight: BigNumber;
-          });
-        } catch (err) {
-          console.error('[TransferFeeDisplay] ', err);
-        }
-      },
-      fromProvider.parachainApi,
-      executor,
-      account,
-      hasFeeItem && feeItem.length === 0,
-      signer
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    account,
-    amount,
-    feeItem,
-    tokens,
-    from,
-    fromProvider.parachainApi,
-    to,
-    signer
-  ]);
+  const allProviders = useAllParachainProviders();
 
   useEffect(() => {
-    calculateFee();
-  }, [calculateFee, amount, from]);
+    if (executor && account) {
+      const unsub = subscribeTransactionFee(
+        allProviders,
+        account.address,
+        executor
+      );
+
+      return () => {
+        unsub.then((call) => call());
+      };
+    }
+  }, [executor, allProviders, account]);
 
   useEffect(() => {
     if (fromProvider.parachainApi && account) {
@@ -119,10 +43,10 @@ export const TransferFeeDisplay = () => {
         api: fromProvider.parachainApi,
         walletAddress: account.address,
         network: from,
-        tokens
+        tokens,
       }).then((token: TokenMetadata) => {
-        setFeeItem(token.id);
-      })
+        setFeeToken(token.id);
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fromProvider.parachainApi, account?.address, from]);
@@ -131,7 +55,7 @@ export const TransferFeeDisplay = () => {
     <Stack direction="column" gap={4}>
       <FeeDisplay
         label="Fee"
-        feeText={`${humanBalance(fee.partialFee)} ${tokens[feeItem].symbol}`}
+        feeText={`${humanBalance(fee.partialFee)} ${tokens[feeToken].symbol}`}
         TooltipProps={{
           title: "Fee tooltip title",
         }}

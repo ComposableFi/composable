@@ -8,14 +8,14 @@ import { u128 } from "@polkadot/types";
  * @param amount u128
  * @returns XcmVersionedMultiAssets
  */
- export const buildXCMAssetOriginKsm = (api: ApiPromise, amount: u128) =>
- api.createType("XcmVersionedMultiAssets", {
-   V0: [
-     api.createType("XcmV0MultiAsset", {
-       ConcreteFungible: {
-         id: api.createType("XcmV0MultiLocation", "Null"),
-         amount,
-       },
-     }),
-   ],
- });
+export const buildXCMAssetOriginKsm = (api: ApiPromise, amount: u128) =>
+  api.createType("XcmVersionedMultiAssets", {
+    V0: [
+      api.createType("XcmV0MultiAsset", {
+        ConcreteFungible: {
+          id: api.createType("XcmV0MultiLocation", "Null"),
+          amount,
+        },
+      }),
+    ],
+  });
