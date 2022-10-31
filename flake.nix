@@ -5,6 +5,10 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
     npm-buildpackage.url = "github:serokell/nix-npm-buildpackage";
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = { self, flake-parts, ... }:
@@ -14,6 +18,7 @@
         # 1. Add foo to inputs
         # 2. Add foo as a parameter to the outputs function
         # 3. Add here: foo.flakeModule
+        ./fmt.nix
         ./docs/docs.nix
         ./subsquid/subsquid.nix
         ./code/integration-tests/runtime-tests/runtime-tests.nix
@@ -30,7 +35,10 @@
         # Add the npm-buildpackage overlay to the perSystem's pkgs
         _module.args.pkgs = import self.inputs.nixpkgs {
           inherit system;
-          overlays = [ self.inputs.npm-buildpackage.overlays.default ];
+          overlays = with self.inputs; [
+            npm-buildpackage.overlays.default
+            rust-overlay.overlays.default
+          ];
         };
       };
       flake = {
