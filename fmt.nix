@@ -4,6 +4,19 @@
     let
       rust-nightly = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
 
+      allDirectoriesAndFiles = pkgs.stdenv.mkDerivation {
+        name = "allDirectoriesAndFiles";
+        src =
+          builtins.filterSource (path: _type: baseNameOf path != ".git")
+          ./.;
+        dontUnpack = true;
+        installPhase = ''
+          mkdir $out/
+          cp -r $src/. $out/
+        '';
+      };
+
+
       filesWithExtension = extension:
         pkgs.stdenv.mkDerivation {
           name = "files-with-extension-${extension}";
@@ -93,6 +106,38 @@
             taplo check --verbose
           '';
         };
+
+        hadolint-check = pkgs.stdenv.mkDerivation {
+          name = "hadolint-check";
+          dontUnpack = true;
+          buildInputs = [ allDirectoriesAndFiles pkgs.hadolint ];
+          installPhase = ''
+            mkdir -p $out
+
+            hadolint --version
+            total_exit_code=0
+            for file in $(find ${allDirectoriesAndFiles} -name "Dockerfile" -or -name "*.dockerfile"); do
+              echo "=== $file ==="
+              hadolint --config ${allDirectoriesAndFiles}/.hadolint.yaml $file || total_exit_code=$?
+              echo ""
+            done
+            exit $total_exit_code
+          '';
+        };
+
+        spell-check = pkgs.stdenv.mkDerivation {
+          name = "cspell-check";
+          dontUnpack = true;
+          buildInputs =
+            [ allDirectoriesAndFiles pkgs.nodePackages.cspell ];
+          installPhase = ''
+            mkdir $out
+            echo "cspell version: $(cspell --version)"
+            cd ${allDirectoriesAndFiles}
+            cspell lint --config cspell.yaml --no-progress "**"
+          '';
+        };
+
       };
     };
 }

@@ -781,19 +781,6 @@
             subxt =
               pkgs.callPackage ./code/utils/composable-subxt/subxt.nix { };
 
-
-            all-directories-and-files = pkgs.stdenv.mkDerivation {
-              name = "all-directories-and-files";
-              src =
-                builtins.filterSource (path: _type: baseNameOf path != ".git")
-                ./.;
-              dontUnpack = true;
-              installPhase = ''
-                mkdir $out/
-                cp -r $src/. $out/
-              '';
-            };
-
             price-feed = crane-nightly.buildPackage (common-attrs // {
               pnameSuffix = "-price-feed";
               cargoArtifacts = common-deps;
@@ -1029,37 +1016,6 @@
               cargoBuildCommand = "cargo check";
               cargoExtraArgs = "--benches --all --features runtime-benchmarks";
             });
-
-            spell-check = pkgs.stdenv.mkDerivation {
-              name = "cspell-check";
-              dontUnpack = true;
-              buildInputs =
-                [ all-directories-and-files pkgs.nodePackages.cspell ];
-              installPhase = ''
-                mkdir $out
-                echo "cspell version: $(cspell --version)"
-                cd ${all-directories-and-files}
-                cspell lint --config cspell.yaml --no-progress "**"
-              '';
-            };
-
-            hadolint-check = pkgs.stdenv.mkDerivation {
-              name = "hadolint-check";
-              dontUnpack = true;
-              buildInputs = [ all-directories-and-files pkgs.hadolint ];
-              installPhase = ''
-                mkdir -p $out
-
-                hadolint --version
-                total_exit_code=0
-                for file in $(find ${all-directories-and-files} -name "Dockerfile" -or -name "*.dockerfile"); do
-                  echo "=== $file ==="
-                  hadolint --config ${all-directories-and-files}/.hadolint.yaml $file || total_exit_code=$?
-                  echo ""
-                done
-                exit $total_exit_code
-              '';
-            };
 
             kusama-picasso-karura-devnet = let
               config = (pkgs.callPackage
