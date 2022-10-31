@@ -788,36 +788,6 @@
                 parachainIds = [ 1000 2000 2087 ];
               };
 
-            docs-static = npm-bp.buildNpmPackage {
-              src = ./docs;
-              npmBuild = "npm run build";
-              installPhase = ''
-                mkdir -p $out
-                cp -a ./build/. $out
-              '';
-            };
-
-            docs-server = let PORT = 8008;
-            in pkgs.writeShellApplication {
-              name = "docs-server";
-              runtimeInputs = [ pkgs.miniserve ];
-              text = ''
-                miniserve -p ${
-                  builtins.toString PORT
-                } --spa --index index.html ${docs-static}
-              '';
-            };
-
-            docs-dev = pkgs.writeShellApplication {
-              name = "docs-dev";
-              runtimeInputs = [ pkgs.nodejs ];
-              text = ''
-                cd docs
-                npm install
-                npm run start
-              '';
-            };
-
             xcvm-contract-asset-registry =
               mk-xcvm-contract "xcvm-asset-registry";
             xcvm-contract-router = mk-xcvm-contract "xcvm-router";
@@ -825,33 +795,6 @@
             subxt =
               pkgs.callPackage ./code/utils/composable-subxt/subxt.nix { };
 
-            subsquid-processor = let
-              processor = pkgs.buildNpmPackage {
-                extraNodeModulesArgs = {
-                  buildInputs = with pkgs; [
-                    pkg-config
-                    python3
-                    nodePackages.node-gyp-build
-                    nodePackages.node-gyp
-                  ];
-                  extraEnvVars = { npm_config_nodedir = "${pkgs.nodejs}"; };
-                };
-                src = ./subsquid;
-                npmBuild = "npm run build";
-                preInstall = ''
-                  mkdir $out
-                  mv lib $out/
-                '';
-                dontNpmPrune = true;
-              };
-            in (pkgs.writeShellApplication {
-              name = "run-subsquid-processor";
-              text = ''
-                cd ${processor}
-                ${pkgs.nodejs}/bin/npx sqd db migrate
-                ${pkgs.nodejs}/bin/node lib/processor.js
-              '';
-            });
 
             runtime-tests = pkgs.stdenv.mkDerivation {
               name = "runtime-tests";
