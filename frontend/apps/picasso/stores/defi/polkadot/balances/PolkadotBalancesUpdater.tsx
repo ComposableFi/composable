@@ -61,10 +61,6 @@ const PolkadotBalancesUpdater = () => {
       async (_picaApi, _karApi) => {
         const picaAssetMetadataList = await picassoAssetsList(_picaApi);
         const karuraAssetMetadataList = await karuraAssetsList(_karApi);
-        console.log(
-          "karura asset meta dataa",
-          JSON.stringify(karuraAssetMetadataList, null, 2)
-        );
         updateTokens(picaAssetMetadataList, karuraAssetMetadataList);
       },
       parachainProviders.picasso.parachainApi,
