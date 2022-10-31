@@ -52,7 +52,7 @@ pub fn instantiate(
 		user_id: msg.user_id.clone(),
 	};
 	CONFIG.save(deps.storage, &config)?;
-	// Save the caller as owner, in this case it is `router`
+	// Save the caller as owner, in most cases, it is the `XCVM router`
 	OWNERS.save(deps.storage, info.sender, &())?;
 
 	Ok(Response::new().add_event(
@@ -70,6 +70,7 @@ pub fn execute(
 	info: MessageInfo,
 	msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
+	// Only owners can execute entrypoints of the interpreter
 	assert_owner(deps.as_ref(), &env.contract.address, &info.sender)?;
 	match msg {
 		ExecuteMsg::Execute { program } => initiate_execution(deps, env, program),
@@ -88,12 +89,14 @@ pub fn execute(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
+pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
 	// Already only callable by the admin of the contract, so no need to `assert_owner`
 	let _ = ensure_from_older_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+	let _ = add_owners(deps, msg.owners)?;
 	Ok(Response::default())
 }
 
+/// Check if the caller is the interpreter itself, or one of the owners
 fn assert_owner(deps: Deps, self_addr: &Addr, owner: &Addr) -> Result<(), ContractError> {
 	if owner == self_addr || OWNERS.has(deps.storage, owner.clone()) {
 		Ok(())
@@ -102,7 +105,10 @@ fn assert_owner(deps: Deps, self_addr: &Addr, owner: &Addr) -> Result<(), Contra
 	}
 }
 
-pub fn initiate_execution(
+/// Initiate an execution by adding a `_SelfExecute` callback. This is used to be able to prepare an
+/// execution by resetting the necessary registers as well as being able to catch any failures and
+/// store it in the `RESULT_REGISTER`
+fn initiate_execution(
 	deps: DepsMut,
 	env: Env,
 	program: Vec<u8>,
@@ -114,7 +120,8 @@ pub fn initiate_execution(
 	)))
 }
 
-pub fn add_owners(deps: DepsMut, owners: Vec<Addr>) -> Result<Response, ContractError> {
+/// Add owners who can execute entrypoints other than `_SelfExecute`
+fn add_owners(deps: DepsMut, owners: Vec<Addr>) -> Result<Response, ContractError> {
 	let mut event = Event::new("xcvm.interpreter.add_owners");
 	for owner in owners {
 		event = event.add_attribute(format!("{}", owner), "");
@@ -123,7 +130,7 @@ pub fn add_owners(deps: DepsMut, owners: Vec<Addr>) -> Result<Response, Contract
 	Ok(Response::default().add_event(event))
 }
 
-pub fn remove_owners(deps: DepsMut, owners: Vec<Addr>) -> Response {
+fn remove_owners(deps: DepsMut, owners: Vec<Addr>) -> Response {
 	let mut event = Event::new("xcvm.interpreter.remove_owners");
 	for owner in owners {
 		event = event.add_attribute(format!("{}", owner), "");
@@ -132,6 +139,7 @@ pub fn remove_owners(deps: DepsMut, owners: Vec<Addr>) -> Response {
 	Response::default().add_event(event)
 }
 
+/// Interpret an XCVM program
 pub fn interpret_program(
 	mut deps: DepsMut,
 	env: Env,
@@ -174,7 +182,6 @@ pub fn interpret_program(
 						index,
 						response,
 					)?;
-
 					let program = {
 						let instructions: Vec<proto::Instruction> =
 							instruction_iter.map(|(_, instr)| instr).collect();
@@ -187,6 +194,7 @@ pub fn interpret_program(
 						program.encode(&mut buf).unwrap();
 						buf
 					};
+					IP_REGISTER.save(deps.storage, &ip)?;
 					return Ok(response.add_message(wasm_execute(
 						env.contract.address,
 						&ExecuteMsg::_SelfExecute { program },
@@ -489,6 +497,7 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> StdResult<Response> {
 }
 
 fn handle_self_call_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
+	// TODO(aeryz): we can have an intermediate data type to bundle all errors with the IP_REGISTER
 	match msg.result.into_result() {
 		Ok(_) => Err(StdError::generic_err("Returned OK from a reply that is called with `reply_on_error`. This should never happen")),
 		Err(e) => {
@@ -496,6 +505,9 @@ fn handle_self_call_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 			// this way, only the `RESULT_REGISTER` is persisted. All 
 			// other state changes are reverted.
 			RESULT_REGISTER.save(deps.storage, &Err(e))?;
+			// Ip register should be incremented by one
+			let ip_register = IP_REGISTER.load(deps.storage)?;
+			IP_REGISTER.save(deps.storage, &(ip_register + 1))?;
 			Ok(Response::default())
 		}
 	}
