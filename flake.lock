@@ -1,17 +1,15 @@
 {
   "nodes": {
-    "arion-src": {
+    "flake-parts": {
       "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
+        "nixpkgs-lib": "nixpkgs-lib"
       },
       "locked": {
-        "lastModified": 1654878283,
-        "narHash": "sha256-JWdKBMzEibS2neY0nEs9E8kn4zRepEbwSw7HzxbEiAg=",
+        "lastModified": 1666885127,
+        "narHash": "sha256-uXA/3lhLhwOTBMn9a5zJODKqaRT+SuL5cpEmOz2ULoo=",
         "owner": "hercules-ci",
-        "repo": "arion",
-        "rev": "e5fb978143240f8d293e6e5acc9691acf472928d",
+        "repo": "flake-parts",
+        "rev": "0e101dbae756d35a376a5e1faea532608e4a4b9a",
         "type": "github"
       },
       "original": {
@@ -285,6 +283,8 @@
         "owner": "yusdacra",
         "repo": "nix-cargo-integration",
         "type": "github"
+        "id": "flake-parts",
+        "type": "indirect"
       }
     },
     "nix-bundle": {
@@ -360,33 +360,31 @@
         "narHash": "sha256-A7GzG9HA7MJs/OQlg5F0jeHCv91PeQVTwjznVgYK2sM=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "aaa1c973c8c189195e1b1a702d3b74dbcde91538",
+        "rev": "412b9917cea092f3d39f9cd5dead4effd5bc4053",
         "type": "github"
       },
       "original": {
         "owner": "NixOS",
-        "ref": "nixpkgs-unstable",
+        "ref": "nixos-unstable",
         "repo": "nixpkgs",
         "type": "github"
       }
     },
-    "npm-buildpackage": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
+    "nixpkgs-lib": {
       "locked": {
-        "lastModified": 1654787802,
-        "narHash": "sha256-53wPtqRsiaR8e3njRHZbO4lPX1W9hHdTarHEx6gE/s0=",
-        "owner": "serokell",
-        "repo": "nix-npm-buildpackage",
-        "rev": "ec9a825ad4a6f1fb2d6bb8371be827c9c8bf5b80",
+        "dir": "lib",
+        "lastModified": 1665349835,
+        "narHash": "sha256-UK4urM3iN80UXQ7EaOappDzcisYIuEURFRoGQ/yPkug=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "34c5293a71ffdb2fe054eb5288adc1882c1eb0b1",
         "type": "github"
       },
       "original": {
-        "owner": "serokell",
-        "repo": "nix-npm-buildpackage",
+        "dir": "lib",
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
         "type": "github"
       }
     },
