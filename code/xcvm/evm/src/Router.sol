@@ -18,6 +18,10 @@ contract Router is Ownable, IRouter {
 
     event InstanceCreated(uint256 networkId, bytes user, address instance);
 
+    event AddOwners(address sender, uint256 networkId, BridgeSecurity security, address[] owners);
+
+    event RemoveOwners(address sender, uint256 networkId, BridgeSecurity security, address[] owners);
+
     event Spawn(
         bytes account,
         uint256 networkId,
@@ -137,9 +141,33 @@ contract Router is Ownable, IRouter {
         bytes memory spawnedProgram,
         address[] memory assetAddresses,
         uint256[] memory amounts
-    ) external {
+    ) override external {
         address payable interpreterAddress = _getOrCreateInterpreter(Origin(uint32(networkId), account));
         require(interpreterAddress == msg.sender, "Router: sender is not an interpreter address");
         emit Spawn(account, networkId, security, salt, spawnedProgram, assetAddresses, amounts);
+    }
+
+    function emitAddOwners(uint256 networkId, BridgeSecurity security, address[] calldata owners) override external {
+        emit AddOwners(msg.sender, networkId, security, owners);
+    }
+
+    function emitRemoveOwners(uint256 networkId, BridgeSecurity security, address[] calldata owners) override external {
+        emit RemoveOwners(msg.sender, networkId, security, owners);
+    }
+
+    function addOwners(
+        Origin memory origin,
+        address[] calldata owners) 
+    external onlyBridge {
+        address payable interpreterAddress = _getOrCreateInterpreter(origin);
+        IInterpreter(interpreterAddress).addOwners(owners);
+    }
+
+    function removeOwners(
+        Origin memory origin,
+        address[] calldata owners) 
+    external onlyBridge {
+        address payable interpreterAddress = _getOrCreateInterpreter(origin);
+        IInterpreter(interpreterAddress).addOwners(owners);
     }
 }
