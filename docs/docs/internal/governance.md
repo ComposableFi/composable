@@ -88,8 +88,8 @@ There are other pallets like `Referenda`, `Society`, `Fellowship`, and `Incentiv
 
 Ideated primitive which allows:
 
-- Users can rent/borrow governance tokens to use in democracy for a specified amount of other tokens. Users can also delegate tokens from fNFT staking to receive governance tokens. [bribe]
-- Users can deposit incentives of other tokens for specific votes, which voters can claim after the `right` decision passes [bribe]
+- Users can rent/borrow governance tokens to use in democracy for a specified amount of other tokens. Users can also delegate tokens from fNFT staking to receive governance tokens. (bribe)
+- Users can deposit incentives of other tokens for specific votes, which voters can claim after the `right` decision passes (bribe)
 
 `bribe` will be composable with `democracy`
 
@@ -170,4 +170,4 @@ This way we can have simplified weaker form of `councils` and `fast track democr
 - <https://vitalik.ca/general/2019/12/07/quadratic.html>
 - <https://vitalik.ca/general/2021/08/16/voting3.html>
 
-[bribe]: https://bribe.gitbook.io/bribe/
+
