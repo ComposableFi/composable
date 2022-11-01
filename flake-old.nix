@@ -520,38 +520,6 @@
               meta = { mainProgram = "price-feed"; };
             });
 
-
-            docker-wipe-system =
-              pkgs.writeShellScriptBin "docker-wipe-system" ''
-                echo "Wiping all docker containers, images, and volumes";
-                docker stop $(docker ps -q)
-                docker system prune -f
-                docker rmi -f $(docker images -a -q)
-                docker volume prune -f
-              '';
-
-            # NOTE: crane can't be used because of how it vendors deps, which is incompatible with some packages in polkadot, an issue must be raised to the repo
-            acala-node = pkgs.callPackage ./.nix/acala-bin.nix {
-              rust-overlay = rust-nightly;
-            };
-
-            polkadot-node = pkgs.callPackage ./.nix/polkadot/polkadot-bin.nix {
-              inherit rust-nightly;
-            };
-
-            statemine-node = pkgs.callPackage ./.nix/statemine-bin.nix {
-              inherit rust-nightly;
-            };
-
-            mmr-polkadot-node =
-              pkgs.callPackage ./.nix/polkadot/mmr-polkadot-bin.nix {
-                inherit rust-nightly;
-              };
-
-            polkadot-launch =
-              pkgs.callPackage ./scripts/polkadot-launch/polkadot-launch.nix
-              { };
-
             # Dali devnet
             devnet-dali = (pkgs.callPackage mk-devnet {
               inherit pkgs;

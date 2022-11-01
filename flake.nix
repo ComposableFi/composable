@@ -83,31 +83,56 @@
           wasmswap = pkgs.callPackage ./code/xcvm/cosmos/wasmswap.nix {
             crane = crane.nightly;
           };
+
+          # NOTE: crane can't be used because of how it vendors deps, which is incompatible with some packages in polkadot, an issue must be raised to the repo
+          acala-node = pkgs.callPackage ./.nix/acala-bin.nix {
+            rust-overlay= self'.packages.rust-nightly;
+          };
+
+          polkadot-node = pkgs.callPackage ./.nix/polkadot/polkadot-bin.nix {
+            rust-nightly = self'.packages.rust-nightly;
+          };
+
+          statemine-node = pkgs.callPackage ./.nix/statemine-bin.nix {
+            rust-nightly = self'.packages.rust-nightly;
+          };
+
+          mmr-polkadot-node =
+            pkgs.callPackage ./.nix/polkadot/mmr-polkadot-bin.nix {
+              rust-nightly = self'.packages.rust-nightly;
+            };
+
+          polkadot-launch =
+            pkgs.callPackage ./scripts/polkadot-launch/polkadot-launch.nix
+              { };
+
         };
       };
       flake = {
         overlays = {
-          default = let
-            mkDevnetProgram = { pkgs }:
-              name: spec:
-              pkgs.writeShellApplication {
-                inherit name;
-                runtimeInputs =
-                  [ pkgs.arion pkgs.docker pkgs.coreutils pkgs.bash ];
-                text = ''
-                  arion --prebuilt-file ${
-                    pkgs.arion.build spec
-                  } up --build --force-recreate -V --always-recreate-deps --remove-orphans
-                '';
-              };
-          in self.inputs.nixpkgs.lib.composeManyExtensions [
-            self.inputs.arion-src.overlay
-            (final: _prev: {
-              composable = {
-                mkDevnetProgram = final.callPackage mkDevnetProgram { };
-              };
-            })
-          ];
+          default =
+            let
+              mkDevnetProgram = { pkgs }:
+                name: spec:
+                  pkgs.writeShellApplication {
+                    inherit name;
+                    runtimeInputs =
+                      [ pkgs.arion pkgs.docker pkgs.coreutils pkgs.bash ];
+                    text = ''
+                      arion --prebuilt-file ${
+                        pkgs.arion.build spec
+                      } up --build --force-recreate -V --always-recreate-deps --remove-orphans
+                    '';
+                  };
+            in
+            self.inputs.nixpkgs.lib.composeManyExtensions [
+              self.inputs.arion-src.overlay
+              (final: _prev: {
+                composable = {
+                  mkDevnetProgram = final.callPackage mkDevnetProgram { };
+                };
+              })
+            ];
         };
         # The usual flake attributes can be defined here, including system-
         # agnostic ones like nixosModule and system-enumerating ones, although
