@@ -32,7 +32,7 @@
         # 3. Add here: foo.flakeModule
         ./fmt.nix
         ./docker.nix
-        # ./subwasm.nix
+        ./subwasm.nix
         ./dev-shells.nix
         ./docs/docs.nix
         ./subsquid/subsquid.nix
