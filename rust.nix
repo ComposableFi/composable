@@ -62,6 +62,33 @@
         cargoExtraArgs = "--benches --all --features runtime-benchmarks";
       });
 
+      unit-tests = crane.nightly.cargoBuild (systemCommonRust.common-attrs // {
+        pnameSuffix = "-tests";
+        doInstallCargoArtifacts = false;
+        cargoArtifacts = self'.packages.common-test-deps;
+        # NOTE: do not add --features=runtime-benchmarks because it force multi ED to be 0 because of dependencies
+        # NOTE: in order to run benchmarks as tests, just make `any(test, feature = "runtime-benchmarks")
+        cargoBuildCommand =
+          "cargo test --workspace --release --locked --verbose --exclude local-integration-tests";
+      });
+
+
+      unit-tests-with-coverage = crane.nightly.cargoBuild (systemCommonRust.common-attrs
+        // {
+        pnameSuffix = "-tests-with-coverage";
+        buildInputs = with pkgs; [ cargo-llvm-cov ];
+        cargoArtifacts = self'.packages.common-deps-nightly;
+        # NOTE: do not add --features=runtime-benchmarks because it force multi ED to be 0 because of dependencies
+        # NOTE: in order to run benchmarks as tests, just make `any(test, feature = "runtime-benchmarks")
+        cargoBuildCommand = "cargo llvm-cov";
+        cargoExtraArgs =
+          "--workspace --release --locked --verbose --lcov --output-path lcov.info";
+        installPhase = ''
+          mkdir -p $out/lcov
+          mv lcov.info $out/lcov
+        '';
+      });
+
     };
   };
 }

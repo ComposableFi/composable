@@ -598,39 +598,7 @@
             check-picasso-dev-benchmarks = benchmarks-run-once "picasso-dev";
             check-composable-dev-benchmarks =
               benchmarks-run-once "composable-dev";
-
-            check-picasso-integration-tests = crane-nightly.cargoBuild
-              (common-attrs // {
-                pname = "picasso-local-integration-tests";
-                doInstallCargoArtifacts = false;
-                cargoArtifacts = common-test-deps;
-                cargoBuildCommand =
-                  "cargo test --package local-integration-tests";
-                cargoExtraArgs =
-                  "--features=local-integration-tests,picasso,std --no-default-features --verbose";
-              });
-            check-dali-integration-tests = crane-nightly.cargoBuild
-              (common-attrs // {
-                pname = "dali-local-integration-tests";
-                doInstallCargoArtifacts = false;
-                cargoArtifacts = common-test-deps;
-                cargoBuildCommand =
-                  "cargo test --package local-integration-tests";
-                cargoExtraArgs =
-                  "--features=local-integration-tests,dali,std --no-default-features --verbose";
-              });
-
-            unit-tests = crane-nightly.cargoBuild (common-attrs // {
-              pnameSuffix = "-tests";
-              doInstallCargoArtifacts = false;
-              cargoArtifacts = common-test-deps;
-              # NOTE: do not add --features=runtime-benchmarks because it force multi ED to be 0 because of dependencies
-              # NOTE: in order to run benchmarks as tests, just make `any(test, feature = "runtime-benchmarks")
-              cargoBuildCommand =
-                "cargo test --workspace --release --locked --verbose --exclude local-integration-tests";
-            });
-
-            cargo-llvm-cov = pkgs.rustPlatform.buildRustPackage rec {
+           cargo-llvm-cov = pkgs.rustPlatform.buildRustPackage rec {
               pname = "cargo-llvm-cov";
               version = "0.3.3";
               src = pkgs.fetchFromGitHub {
@@ -649,22 +617,6 @@
                 license = "Apache-2.0 OR MIT";
               };
             };
-
-            unit-tests-with-coverage = crane-nightly.cargoBuild (common-attrs
-              // {
-                pnameSuffix = "-tests-with-coverage";
-                buildInputs = with pkgs; [ cargo-llvm-cov ];
-                cargoArtifacts = common-deps-nightly;
-                # NOTE: do not add --features=runtime-benchmarks because it force multi ED to be 0 because of dependencies
-                # NOTE: in order to run benchmarks as tests, just make `any(test, feature = "runtime-benchmarks")
-                cargoBuildCommand = "cargo llvm-cov";
-                cargoExtraArgs =
-                  "--workspace --release --locked --verbose --lcov --output-path lcov.info";
-                installPhase = ''
-                  mkdir -p $out/lcov
-                  mv lcov.info $out/lcov
-                '';
-              });
             kusama-picasso-karura-devnet = let
               config = (pkgs.callPackage
                 ./scripts/polkadot-launch/kusama-local-picasso-dev-karura-dev.nix {

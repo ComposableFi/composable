@@ -39,6 +39,7 @@
         ./docs/docs.nix
         ./subsquid/subsquid.nix
         ./code/common-deps.nix
+        ./code/integration-tests.nix
         ./code/runtimes.nix
         ./code/composable-nodes.nix
         ./code/integration-tests/runtime-tests/runtime-tests.nix
