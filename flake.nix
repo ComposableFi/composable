@@ -25,7 +25,9 @@
         ./fmt.nix
         ./docs/docs.nix
         ./subsquid/subsquid.nix
-        ./code/composable.nix
+        ./code/common-deps.nix
+        ./code/runtimes.nix
+        ./code/composable-nodes.nix
         ./code/integration-tests/runtime-tests/runtime-tests.nix
       ];
       systems = [ "x86_64-linux" "aarch64-linux" ];
@@ -48,6 +50,9 @@
         
         # System-specific lib to be used accross flake parts
         _module.args.systemLib = rec {
+        
+        
+          # TODO: Find a way to define these in flake parts
           rust-stable = pkgs.rust-bin.stable.latest.default;
           rust-nightly = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
           # Crane lib instantiated with current nixpkgs

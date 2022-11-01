@@ -280,7 +280,6 @@
           common-bench-deps =
             crane-nightly.buildDepsOnly (common-bench-attrs // { });
 
-
           devcontainer-base-image =
             pkgs.callPackage ./.devcontainer/devcontainer-base-image.nix {
               inherit system;
@@ -659,7 +658,6 @@
               meta = { mainProgram = "price-feed"; };
             });
 
-
             docker-wipe-system =
               pkgs.writeShellScriptBin "docker-wipe-system" ''
                 echo "Wiping all docker containers, images, and volumes";
@@ -848,7 +846,6 @@
               cargoArtifacts = common-deps-nightly;
               cargoExtraArgs = "--all --check --verbose";
             });
-
 
             cargo-clippy-check = crane-nightly.cargoBuild (common-attrs // {
               cargoArtifacts = common-deps-nightly;
