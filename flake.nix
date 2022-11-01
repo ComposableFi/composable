@@ -17,6 +17,10 @@
       url = "github:hercules-ci/arion";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    helix = {
+      url = "github:helix-editor/helix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = { self, flake-parts, ... }:
@@ -28,6 +32,8 @@
         # 3. Add here: foo.flakeModule
         ./fmt.nix
         ./docker.nix
+        # ./subwasm.nix
+        ./dev-shells.nix
         ./docs/docs.nix
         ./subsquid/subsquid.nix
         ./code/common-deps.nix
@@ -55,20 +61,21 @@
         };
 
         # System-specific lib to be used accross flake parts
-        _module.args.systemLib = rec {
+        _module.args.crane = rec {
 
-          # TODO: Find a way to define these in flake parts
-          rust-stable = pkgs.rust-bin.stable.latest.default;
-          rust-nightly =
-            pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
           # Crane lib instantiated with current nixpkgs
-          crane-lib = self.inputs.crane.mkLib pkgs;
-
           # Crane pinned to stable Rust
-          crane-stable = crane-lib.overrideToolchain rust-stable;
+          lib = self.inputs.crane.mkLib pkgs;
+
+          stable = lib.overrideToolchain self'.packages.rust-stable;
 
           # Crane pinned to nightly Rust
-          crane-nightly = crane-lib.overrideToolchain rust-nightly;
+          nightly = lib.overrideToolchain self'.packages.rust-nightly;
+        };
+        
+        packages = {
+          rust-stable = pkgs.rust-bin.stable.latest.default;
+          rust-nightly = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
         };
       };
       flake = {

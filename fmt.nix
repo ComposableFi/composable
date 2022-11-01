@@ -1,9 +1,6 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, system, ... }:
     let
-      rust-nightly =
-        pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
-
       allDirectoriesAndFiles = pkgs.stdenv.mkDerivation {
         name = "allDirectoriesAndFiles";
         src =
@@ -38,7 +35,7 @@
 
           runtimeInputs = with pkgs;
             [ nixfmt coreutils taplo nodePackages.prettier ]
-            ++ [ rust-nightly ];
+            ++ [ self'.packages.rust-nightly ];
 
           text = ''
               # .nix

@@ -1,5 +1,5 @@
 { self, ... }: {
-  perSystem = { config, self', inputs', pkgs, system, systemLib
+  perSystem = { config, self', inputs', pkgs, system, crane
     , systemCommonRust, ... }: {
       _module.args.systemCommonRust = rec {
 
@@ -91,16 +91,16 @@
       };
       # Add the npm-buildpackage overlay to the perSystem's pkgs
       packages = rec {
-        common-deps = systemLib.crane-nightly.buildDepsOnly
+        common-deps = crane.nightly.buildDepsOnly
           (systemCommonRust.common-attrs // { });
-        common-deps-nightly = systemLib.crane-nightly.buildDepsOnly
+        common-deps-nightly = crane.nightly.buildDepsOnly
           (systemCommonRust.common-attrs // { });
-        common-bench-deps = systemLib.crane-nightly.buildDepsOnly
+        common-bench-deps = crane.nightly.buildDepsOnly
           (systemCommonRust.common-bench-attrs // { });
-        common-test-deps = systemLib.crane-nightly.buildDepsOnly
+        common-test-deps = crane.nightly.buildDepsOnly
           (systemCommonRust.common-test-deps-attrs // { });
 
-        wasm-optimizer = systemLib.crane-stable.buildPackage
+        wasm-optimizer = crane.stable.buildPackage
           (systemCommonRust.common-attrs // {
             cargoCheckCommand = "true";
             pname = "wasm-optimizer";

@@ -1,10 +1,10 @@
 { self, ... }: {
   perSystem =
-    { config, self', inputs', pkgs, system, systemLib, systemCommonRust, ... }:
+    { config, self', inputs', pkgs, system, crane, systemCommonRust, ... }:
     let
       # Build a wasm runtime, unoptimized
       mkRuntime = name: features:
-        systemLib.crane-nightly.buildPackage (systemCommonRust.common-attrs // {
+        crane.nightly.buildPackage (systemCommonRust.common-attrs // {
           pname = "${name}-runtime";
           cargoArtifacts = self'.packages.common-deps-nightly;
           cargoBuildCommand =

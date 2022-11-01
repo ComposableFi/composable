@@ -1,9 +1,8 @@
 { self, ... }: {
-  perSystem = { config, self', inputs', pkgs, system, systemLib
-    , systemCommonRust, ... }: {
+  perSystem = { config, self', inputs', pkgs, system, crane, systemCommonRust, ... }: {
       # Add the npm-buildpackage overlay to the perSystem's pkgs
       packages = rec {
-        composable-node = systemLib.crane-nightly.buildPackage
+        composable-node = crane.nightly.buildPackage
           (systemCommonRust.common-attrs // {
             name = "composable";
             cargoArtifacts = self'.packages.common-deps;
@@ -22,7 +21,7 @@
             meta = { mainProgram = "composable"; };
           });
 
-        composable-node-release = systemLib.crane-nightly.buildPackage
+        composable-node-release = crane.nightly.buildPackage
           (systemCommonRust.common-attrs // {
             name = "composable";
             cargoArtifacts = systemCommonRust.common-deps;
@@ -38,7 +37,7 @@
             meta = { mainProgram = "composable"; };
           });
 
-        composable-bench-node = systemLib.crane-nightly.cargoBuild
+        composable-bench-node = crane.nightly.cargoBuild
           (systemCommonRust.common-bench-attrs // {
             name = "composable";
             cargoArtifacts = self'.packages.common-bench-deps;
