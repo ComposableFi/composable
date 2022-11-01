@@ -45,6 +45,20 @@
             rust-overlay.overlays.default
           ];
         };
+        
+        # System-specific lib to be used accross flake parts
+        _module.args.systemLib = rec {
+          rust-stable = pkgs.rust-bin.stable.latest.default;
+          rust-nightly = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
+          # Crane lib instantiated with current nixpkgs
+          crane-lib = self.inputs.crane.mkLib pkgs;
+
+          # Crane pinned to stable Rust
+          crane-stable = crane-lib.overrideToolchain rust-stable;
+
+          # Crane pinned to nightly Rust
+          crane-nightly = crane-lib.overrideToolchain rust-nightly;
+        };
       };
       flake = {
         # The usual flake attributes can be defined here, including system-

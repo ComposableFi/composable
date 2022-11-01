@@ -1,6 +1,6 @@
 { self, ... }:
 {
-  perSystem = { config, self', inputs', pkgs, system, ... }:
+  perSystem = { config, self', inputs', pkgs, system, systemLib, ... }:
     let
       rust-src =
         let
@@ -49,23 +49,10 @@
           };
         };
 
-
-      rust-stable = pkgs.rust-bin.stable.latest.default;
-      rust-nightly = pkgs.rust-bin.fromRustupToolchainFile ../rust-toolchain.toml;
-
-      # Crane lib instantiated with current nixpkgs
-      crane-lib = self.inputs.crane.mkLib pkgs;
-
-      # Crane pinned to stable Rust
-      crane-stable = crane-lib.overrideToolchain rust-stable;
-
-      # Crane pinned to nightly Rust
-      crane-nightly = crane-lib.overrideToolchain rust-nightly;
-
-      common-deps = crane-nightly.buildDepsOnly (common-attrs // { });
-      common-deps-nightly = crane-nightly.buildDepsOnly (common-attrs // { });
+      common-deps = systemLib.crane-nightly.buildDepsOnly (common-attrs // { });
+      common-deps-nightly = systemLib.crane-nightly.buildDepsOnly (common-attrs // { });
       common-bench-attrs = common-attrs // { cargoExtraArgs = "--features=builtin-wasm,runtime-benchmarks"; };
-      common-bench-deps = crane-nightly.buildDepsOnly (common-bench-attrs // { });
+      common-bench-deps = systemLib.crane-nightly.buildDepsOnly (common-bench-attrs // { });
 
 
       substrate-attrs = {
@@ -78,7 +65,7 @@
         ROCKSDB_LIB_DIR = "${pkgs.rocksdb}/lib";
       };
 
-      wasm-optimizer = crane-stable.buildPackage (common-attrs // {
+      wasm-optimizer = systemLib.crane-stable.buildPackage (common-attrs // {
         cargoCheckCommand = "true";
         pname = "wasm-optimizer";
         cargoArtifacts = common-deps;
@@ -106,8 +93,8 @@
       };
 
       # Build a wasm runtime, unoptimized
-      mk-runtime = name: features:
-        crane-nightly.buildPackage (common-attrs // {
+      mkRuntime = name: features:
+        systemLib.crane-nightly.buildPackage (common-attrs // {
           pname = "${name}-runtime";
           cargoArtifacts = common-deps-nightly;
           cargoBuildCommand =
@@ -120,8 +107,8 @@
         });
 
       # Derive an optimized wasm runtime from a prebuilt one, garbage collection + compression
-      mk-optimized-runtime = { name, features ? "" }:
-        let runtime = mk-runtime name features;
+      mkOptimizedRuntime = { name, features ? "" }:
+        let runtime = mkRuntime name features;
         in
         pkgs.stdenv.mkDerivation {
           name = "${runtime.name}-optimized";
@@ -134,36 +121,37 @@
           '';
         };
 
-
-      dali-runtime = mk-optimized-runtime {
-        name = "dali";
-        features = "";
-      };
-      picasso-runtime = mk-optimized-runtime {
-        name = "picasso";
-        features = "";
-      };
-      composable-runtime = mk-optimized-runtime {
-        name = "composable";
-        features = "";
-      };
-      dali-bench-runtime = mk-optimized-runtime {
-        name = "dali";
-        features = "runtime-benchmarks";
-      };
-      picasso-bench-runtime = mk-optimized-runtime {
-        name = "picasso";
-        features = "runtime-benchmarks";
-      };
-      composable-bench-runtime = mk-optimized-runtime {
-        name = "composable";
-        features = "runtime-benchmarks";
-      };
     in
     {
       # Add the npm-buildpackage overlay to the perSystem's pkgs
       packages = rec {
-        composable-node = crane-nightly.buildPackage (common-attrs // {
+        inherit wasm-optimizer;
+
+        dali-runtime = mkOptimizedRuntime {
+          name = "dali";
+          features = "";
+        };
+        picasso-runtime = mkOptimizedRuntime {
+          name = "picasso";
+          features = "";
+        };
+        composable-runtime = mkOptimizedRuntime {
+          name = "composable";
+          features = "";
+        };
+        dali-bench-runtime = mkOptimizedRuntime {
+          name = "dali";
+          features = "runtime-benchmarks";
+        };
+        picasso-bench-runtime = mkOptimizedRuntime {
+          name = "picasso";
+          features = "runtime-benchmarks";
+        };
+        composable-bench-runtime = mkOptimizedRuntime {
+          name = "composable";
+          features = "runtime-benchmarks";
+        };
+        composable-node = systemLib.crane-nightly.buildPackage (common-attrs // {
           name = "composable";
           cargoArtifacts = common-deps;
           cargoBuildCommand =
@@ -179,7 +167,7 @@
           meta = { mainProgram = "composable"; };
         });
 
-        composable-node-release = crane-nightly.buildPackage (common-attrs
+        composable-node-release = systemLib.crane-nightly.buildPackage (common-attrs
           // {
           name = "composable";
           cargoArtifacts = common-deps;
@@ -196,7 +184,7 @@
           meta = { mainProgram = "composable"; };
         });
 
-        composable-bench-node = crane-nightly.cargoBuild (common-bench-attrs
+        composable-bench-node = systemLib.crane-nightly.cargoBuild (common-bench-attrs
           // {
           name = "composable";
           cargoArtifacts = common-bench-deps;
