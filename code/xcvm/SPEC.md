@@ -1,6 +1,6 @@
 ```
 Composable Finance
-Karel L. Kubat, Hussein Alt Laichen
+Karel L. Kubat, Hussein Ait Lahcen
 2022-11-01
 ```
 
@@ -314,9 +314,13 @@ The self-register contains the `Account` of the interpreter. Most implementation
 <SelfRegister> ::= <Account>
 ```
 
-### 2.4.5 Execution Semantics
+### 2.4.5 Program Execution Semantics
 
-Implementors MUST execute each instruction in the provided order. After each instruction is executed, the result register MUST be set to the return value of the instruction. The interpreter SHOULD NOT mangle the return values but store them as returned. If an error is encountered by executing an instruction, the defined transactional behavior for that instruction should be abided by. All instructions defined in this document require the transaction to be aborted on failure, however, subsequent addendums may define new instructions with different behavior. 
+Execution of a program is a two-stage process. First, the virtual machine MUST verify that the caller is allowed to execute programs for that specific instance, by verifying that the caller is one of the owners. See section XYZ for ownership semantics. Second, the RelayerRegister must be set. Third, the instructions are iterated over and executed. Implementors MUST execute each instruction in the provided order and MUST update the IP register after each instruction is executed. After each instruction is executed, the result register MUST be set to the return value of the instruction. The interpreter SHOULD NOT mangle the return values but store them as returned. Because the return values are chain specific, the actual structure is left *undefined*. 
+
+If an error is encountered by executing an instruction, the defined transactional behavior for that instruction should be abided by. All instructions defined in this document require the transaction to be aborted on failure, however, subsequent addendums may define new instructions with different behavior. 
+
+After the final instruction has been executed and registers are set, the executions stops and the transaction ends.
 
 # X. Security considerations
 
