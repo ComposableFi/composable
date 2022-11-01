@@ -1686,8 +1686,7 @@ pub(crate) fn do_reward_accumulation<T: Config>(
 	if periods_surpassed.is_zero() {
 		Ok(())
 	} else {
-		let balance_on_hold = T::Assets::balance_on_hold(asset_id, pool_account);
-		let total_locked_rewards: u128 = balance_on_hold.into();
+		let total_locked_rewards: u128 = T::Assets::balance_on_hold(asset_id, pool_account).into();
 
 		// the maximum amount repayable given the reward rate.
 		// i.e. if total locked is 50, and the reward rate is 15, then this would be 3
@@ -1700,9 +1699,8 @@ pub(crate) fn do_reward_accumulation<T: Config>(
 		let releasable_periods_surpassed =
 			cmp::min(maximum_releasable_periods, periods_surpassed.into());
 
-		let newly_accumulated_rewards = releasable_periods_surpassed
-			.safe_mul(&reward.reward_rate.amount.into())
-			.map_err(|_| RewardAccumulationCalculationError::ArithmeticError)?;
+		let newly_accumulated_rewards =
+			releasable_periods_surpassed.saturating_mul(reward.reward_rate.amount.into());
 		let new_total_rewards = newly_accumulated_rewards
 			.safe_add(&reward.total_rewards.into())
 			.map_err(|_| RewardAccumulationCalculationError::ArithmeticError)?;
@@ -1714,7 +1712,7 @@ pub(crate) fn do_reward_accumulation<T: Config>(
 				.saturating_mul(releasable_periods_surpassed.saturated_into::<u64>()),
 		);
 
-		if !total_locked_rewards.is_zero() && !newly_accumulated_rewards.is_zero() {
+		if !newly_accumulated_rewards.is_zero() {
 			T::Assets::release(
 				asset_id,
 				pool_account,
