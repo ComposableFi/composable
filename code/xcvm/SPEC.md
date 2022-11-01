@@ -1,224 +1,179 @@
-# Summary
+```
+Composable Finance
+Karel L. Kubat, Hussein Alt Laichen
+2022-11-01
+```
 
-`XCVM` is a specification outlining an application-level messaging protocol for smart contracts (and other execution environments). It allows for a more sophisticated mechanism for cross-chain communication compared to message passing, by defining an interpreter-based communication interface between chains.
+# Abstract
 
-The combined set of contracts and bridges across chains achieve the following properties:
+Cross-chain Virtual Machine (XCVM) is a specification outlining an application-level messaging protocol between state machines and other execution environments. It allows for a more sophisticated mechanism for cross-chain communication compared to message passing, by defining an interpreter-based communication interface between chains.
 
 - Turing-Complete Interactions: Complicated business logic can be dynamically dispatched to other chains, without the need for developers to deploy contracts on the destination chain.
 - Configurable Security Levels: Developers can opt-in to use less secure transports, with the advantage of cheaper and faster execution.
-- Coincidence of Wants: Developers can opt-in to having their cross-chain operations canceled if an off-chain actor can fulfill the end state directly.
 
 Most of all, `XCVM` has been designed in a very extensible way, building up small functionalities and by combining them, allows for immense complexity.
 
-> **Note**
-> This document is still subject to change.
+# Status of This Memo
 
-## Terminology
+This is a Composable Finance Protocol Specification document. It has not received public audits nor is the specification frozen. It is a product of the entire XCVM team.
 
-- Origin: the contract or user creating the `XCVM` program from the `source` chain.
-- Relayer: initiator of the destination side transaction, paying for the execution fees.
-- Opaque Contract: any smart contract.
-- Chain: a blockchain with its own consensus and execution environment, but may also refer to rollups.
+# Copyright Notice
 
-## Development Phases
+Copyright (c) 2022 Composable Finance and the persons identified as the
+document authors. All rights reserved.
 
-The roadmap for `XCVM` looks approximately like so:
+# Table of Contents
 
-- [X] Basic instructions (Transfer, Spawn, Call).
-- [X] Registers
-- [ ] Extended instructions (Swap, LP, Jump, If)
-- [ ] IBC based transports.
-- [ ] Optimistic transports.
-- [ ] XCM based transports.
-- [ ] CoWs
+<!-- From this section onward, number each header -->
+# 1. Overview
 
-> **Note**
-The priority of features may change. Items are additive in functionality and will not break semantic version guarantees.
+## 1.1. Document Structure
 
-## Overview
+<!-- 
 
-The `XCVM` refers to both a set of on-chain contracts, orchestrating the bridging operations, ownership, and execution, as well as the interchain system of bridges and relayers. This document mainly specifies the logic within a single chain.
+Describe each section of the ToC in 1 sentence, optionally grouping sections with a single sentence describing the sections:
 
-Although execution environments change depending on the chain, the `XCVM` protocol is generic over the differences and provides an abstract target for smart contracts to interact with. We describe components as separate contracts, but depending on the environment, they might be a pallet, Cosmos SDK module, or a single contract as opposed to many. Here the choice is based made on gas optimizations, engineering standards, and security practices.
+*  Streams are the basic service abstraction that QUIC provides.
 
-```mermaid
-sequenceDiagram
-    participant IBC
-    participant Gateway
-    participant Router
-    participant XCVM Interpreter
-    IBC->>Gateway: Pass program.
-    Gateway->>Router: Add bridging info and transfer funds.
-    Router->>XCVM Interpreter: Instantiate VM and transfer funds.
-    loop Program
-        XCVM Interpreter-->XCVM Interpreter: Execute instructions and interact with contracts.
-    end
-    XCVM Interpreter-->>Gateway: Send bridge agnostic program.
-    Gateway->>IBC: Route through IBC.
-```
+    -  Section 2 describes core concepts related to streams,
 
-The `XCVM` is bridge agnostic, as long as the underlying bridging protocol is capable of transmitting bytes across chains. Developers can opt-in to their usages for each interpreter instance. We highly recommend `IBC` if available, and by default only allow communication across trustless bridges.
+    -  Section 3 provides a reference model for stream states, and
 
-## Specification
+    -  Section 4 outlines the operation of flow control.
+-->
 
-In this document, we specify the `XCVM` format, router, interpreter, and state. Transport requirements may be briefly touched upon, but are not the main focus.
+## 1.2. Terms and Definitions
 
-Each chain within the `XCVM` ecosystem has a set of contracts to enable the execution of `XCVM` instructions. Depending on the chain and ecosystem, these may be very differently implemented to account for different contract models.
+The keywords "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
 
-### Encoding
+Commonly used terms in this document are described below.
 
-Different chains may choose to accept different encoding as the main entry point for contract calls. Such encodings can include but are not limited to `scale`, `ethabi`, or `bors`. Chain-to-chain calls are always in a single encoding: `protobuf`, which is used within the transport.
+`Transaction`: A (reversible) operation on a chain.
 
-`protobuf` is generally not deterministic. XCVM restricts encoders and decoders to a deterministic subset of protobuf.
+`Transfer`: Changing the ownership of an asset (token, NFT, etc) from one account to another.
 
-### Gateway
+`Identity`: An entity that has an address. Note that identities may not have a public/private key, as they can be contracts.
 
-Each chain contains a bridge aggregator contract (`Gateway`), which connects incoming and outgoing channels over different transports.
+`Cross Chain Transfer`: The bridging of funds between two chains.
 
-The `Gateway` is configured to label bridges with different security levels, using oracle-based, disputable governance. We define three security levels as of now:
+`Cross Chain Transaction`: Two or more transactions on two or more chains. Note that a cross-chain transaction is not `transactional`.
+
+`XCVM Transaction`: A cross-chain transaction defined as XCVM instructions, being handled by interpreters. Technically an XCVM transaction can be single chain only, although the use case for that seems non-existent.
+
+`Message Passing`: Sending bytes from one chain to another.
+
+`Event`: A message emitted by a contract/module/pallet during transaction execution.
+
+`XCVM Event`: An event emitted by part of the XCVM contracts.
+
+## 1.3.  Notational Conventions
+
+This document makes ample usage of a pseudo-Backus-Naur form to describe the format of messages and instructions without yet specifying the exact encoding. 
+
+### 1.3.1. Types
+A type is defined using `::=` and referenced using angle brackets `<>`, unless it is a primitive type:
 
 ```
-BridgeSecurity ::= 
-    Deterministic 
-    | Probabilistic 
-    | Optimistic 
+<T> ::= u128
+<A> ::= bytes
 ```
 
-- `Deterministic` bridges are light client based using a consensus protocol that has deterministic finality. (IBC with tendermint)
-- `Probabilistic` bridges are still light client-based, but use a consensus protocol that at most has probabilistic finality. (IBC with a PoW chain)
-- `Optimistic` bridges do not use proofs, but instead, have disputing mechanisms associated. (Nomad, Mosaic)
-
-Outgoing messages are routed based on bridge security, or by specifying the bridge contract directly.
-
-Each XCVM execution has access to its message `MessageOrigin` and can be configured to deny execution depending on the address or security level:
-
+### 1.3.2. Unions
 ```
-MessageOrigin ::=
-    IBC
-    | XCM
-    | (OTP bytes BridgeSecurity)
+<T> ::= <A> | <B>
 ```
 
-The `Gateway` allows for third parties to add their bridges as well, using our open transport protocol (`OTP`), although this is a feature that we will only later make public. `OTP` provides the following functionality
-
-- Registration of bridges.
-- Deregistration.
-- Pausing.
-
-`OTP` will later be extended to handle more granular black/whitelisting of beneficiaries, assets, and message filters.
-
-### Router
-
-Each program arriving through the `Gateway` is passed to the `Router`, which receives the provided `Assets` as well as instantiates an `Interpreter` instance. The router then transfers funds to the `Interpreter` instance.
-
-Subsequent calls by the same `Origin` will not result in an instantiation, but instead in a re-use of the `Interpreter` instance. This allows foreign Origins to maintain state across different protocols, such as managing LP positions.
-
-If no interpreter instance has been created for a given caller, the call to the router must either come from the `IBC`, `XCM`, `OTP` with `Deterministic` security, or a local origin. After the instance has been created, it can be configured to accept other origins by the caller.
-
-### Interpreter
-
-The `XCVM` interpreter is a bytecode interpreter, very similar to the `XCM` interpreter used in `Polkadot` based chains, but tailored to handle application logic.
-
-#### Interface
-
-The `XCVM` is callable by the router and owners.
-
-Depending on the implementation, the XCVM may accept a typed `Program`, or a `protobuf` encoded program. The typed interface is the most performant for most ecosystems, although unavailable for EVM implementations for now.
-
-#### State and Registers
-
-Each instance of the `XCVM` keeps track of certain persistent states, such as the `MessageFilter`, which determines which `MessageOrigins` are accepted. Note that `IBC` and `XCM` are accepted by default.
-
-Each `Interpreter` instance keeps track of a set of owners, which may configure and operate on behalf of the instance.
-`Router` is in set of owners of `Interpreter` instance.
-
-##### Registers
-
-Each interpreter keeps track of persistent states during and across executions, which are stored in different registers.
-
-- `Result Register`: Contains the result of the last executed instruction.
+The above defines the message `T`, which is either `A` or `B` through the union `|` operator. In the Rust programming language, this would be modeled as
 
 ```
-Result ::= 
-    Error 
-    | Value
-
-Error ::= 
-    CallError 
-    | TransferError
-    | SpawnError
-    | BridgeError
-    | QueryError
-    | CommitError
-
-CallError ::= bytes
+enum T {
+    A(A),
+    B(B)
+}
 ```
 
-- `IP Register`: Contains the instruction pointer. Querying for the `IP` and `Result` can be used to compute the state of the interpreter on another chain.
-- `Relayer Register`: Contains the `Account` of the account triggering the initial execution.
-- `Self Register`: Contains the `Account` of the interpreter
-
-As we add conditionals, such as the `If` instructions, the coercion of the `Result` registry will be defined. Note that the `Result` of the `Call` instruction can never be coerced into a `boolean`, and thus the execution of the following program is always undefined:
+### 1.3.3. Sums
+Sum types are defined without any operators.
 
 ```
-Call 0x1337
-If 
-    Transfer
-Else
-    Abort
+<A> ::= <C> <D>
 ```
 
-However, it will be possible to mutate the value of the result registry by calling a contract on the executing chain to perform the coercion:
+The above defines the message `A`, consisting of `C` and `D`. In Rust, this would be
 
 ```
-Call 0x1337 // Perform the actual call.
-Call 0x9999 // A contract deployed locally, which will:
-            // 1. Get the value in the `Result` register.
-            // 2. Coerce the value into a `bool`.
-            // 3. Return the value to be stored in the register.
-If 
-    Transfer
-Else
-    Abort b'abortion message'       
+struct A (C, D)
 ```
 
-Specialized instructions, such as `Transfer`, `Swap`, etc will always be coercible.
-
-#### Instruction Set
+### 1.3.4. Mappings
+Mappings are defined using braces:
 
 ```
-Program      ::= Tag [Instruction]
-
-Instruction  ::= 
-    Transfer
-    | Call
-    | Spawn
-    | Query
-   
-Balance      ::= Ratio | Absolute | Unit
-Absolute     ::= u128
-Unit         ::= u128 Ratio
-Ratio        ::= u128 u128
-Account      ::= bytes
-Assets       ::= { AssetId : Balance }
-Transfer     ::= Account Assets  |  Relayer Assets 
-Call         ::= Payload Bindings
-Payload      ::= bytes
-Bindings     ::= { u16 : BindingValue }
-BindingValue ::= Self | Relayer | Result | Balance | AssetId
-Spawn        ::= Network BridgeSecurity Salt Program Assets
-Query        ::= Network Salt
-Account      ::= bytes
-Tag          ::= bytes
-Salt         ::= bytes
+<Map> ::= {K: V}
 ```
 
-- `Transfer`: Transfers funds within a chain between accounts.
-- `Call`: Executes a payload within the execution context of the chain, such as an extrinsic or smart contract invocation.
-- `Spawn`: Sends a `Program` to another chain to be executed asynchronously. The calling program is not informed of the execution state, but must `Query` explicitly.
-- `Query`: Queries register values of an `XCVM` contract across chains. The provided `Salt` is used to look up the interpreter instance. It sets the current `Result Register` to `QueryResult`.
+The above defines a message `Map`, which is a map of `K -> V`. In Rust, this would be
 
-For each instruction, this diagram approximately displays what happens:
+```
+struct Map(HashMap<K, V>)
+```
+
+### 1.3.5. Sequences
+Sequences (lists) are defined using square brackets:
+
+```
+<T> ::= [<A>]
+```
+
+The above defines the message `T`, which consists of 0 or more `A`s
+
+### 1.3.6. Sets
+Sequences containing unique items are defined using braces, omitting the key definition:
+
+```
+<T> ::= {<A>}
+```
+
+### 1.3.7. Primitive types
+Different primitive types are used:
+
+| Type  | Description      | Rust type |
+|-------|------------------|-----------|
+| u128  | Unsigned Integer | u128      |
+| bytes | Sequence of bits | Vec<u8>   |
+| u32   | Unsigned Integer | u32       |
+
+
+# 2. XCVM
+
+The `XCVM` refers to both a set of on-chain contracts, orchestrating the bridging operations, ownership, and execution, as well as the interchain system of bridges and relayers. This document mainly specifies the logic within a single chain, and how implementors MUST execute messages and maintain state.
+
+Although execution environments change depending on the chain, the `XCVM` protocol is generic over the differences and provides an abstract target for smart contracts to interact with. We describe components as separate contracts, but implementors MAY be a pallet, Cosmos SDK module, or a single contract as opposed to many. Here the choice is based made on gas optimizations, engineering standards, and security practices.
+
+`XCVM` is bridge agnostic, as long as the underlying bridging protocol is capable of generic message passing. Developers can opt-in to their usages for each interpreter instance. We highly recommend `IBC` if available, and by default only allow communication across trustless bridges.
+
+## 2.1. Versioning
+
+`XCVM` protocol versions and implementations use [semantic versioning](https://semver.org/spec/v2.0.0.html) to identify capabilities and backward compatibility.
+
+## 2.2. Instruction Set
+
+Messages executed by the `XCVM` follow the `Program` format. 
+
+```
+<Program> ::= <Tag> [<Instruction>]
+
+<Tag> ::= bytes
+<Instruction> ::= 
+    <Transfer>
+    | <Call>
+    | <Spawn>
+    | <Query>
+```
+
+Each instruction is executed by the on-chain interpreter in sequence. The execution semantics are defined in section 2.4.5.
+
+The following sequence shows possible high-level implementations for each instruction.
 
 ```mermaid
 sequenceDiagram
@@ -226,11 +181,38 @@ sequenceDiagram
     XCVM Interpreter->>Opaque Contract: Call
     XCVM Interpreter->>Gateway: Spawn
     XCVM Interpreter->>Gateway: Query
-    XCVM Interpreter->>XCVM Interpreter: Commit
-    XCVM Interpreter->>XCVM Interpreter: Abort
 ```
 
-##### Call Instruction and Late Bindings
+### 2.2.1. Transfer
+
+Transfers funds within a chain between accounts.
+
+```
+<Transfer>     ::= <Account> <Assets> | <Relayer> <Assets>
+
+<Account>      ::= bytes
+<Assets>       ::= { <AssetId> : <Balance> }
+<AssetId>      ::= <GlobalId> | <LocalId>
+<GlobalId>     ::= u128
+<LocalId>      ::= bytes 
+<Balance>      ::= <Ratio> | <Absolute> | <Unit>
+<Absolute>     ::= u128
+<Unit>         ::= u128 Ratio
+<Ratio>        ::= u128 u128
+```
+
+### 2.2.2. Call
+
+Executes a payload within the execution context of the chain, such as an extrinsic or smart contract invocation. Call is guaranteed to execute on the specified `Network` of the `Spawn` context.
+
+```
+<Call>         ::= <Payload> <Bindings>
+<Payload>      ::= bytes
+<Bindings>     ::= { u16 : <BindingValue> }
+<BindingValue> ::= <Self> | <Relayer> | <Result> | <Balance> | <GlobalId>
+```
+
+### 2.2.2.1. Late Bindings
 
 The call instruction supports bindings values on the executing side of the program by specifying the `Bindings`. This allows us to construct a program that uses data only available on the executing side. For example, the swap call of the following smart contract snippet expects a `to` address to receive the funds after a trade.
 
@@ -238,154 +220,114 @@ The call instruction supports bindings values on the executing side of the progr
 fn swap(amount: u256, pair: (u128, u128), to: AccountId) { ... } 
 ```
 
-If we want to swap funds from the interpreter account and receive the funds into the interpreter account, we need to specify the BindingValue `Self`, using the index of the `to` field for the serialized data being passed to the smart contract. For the `Call` instruction of `swap(10, (1, 2), ${UNKNOWN})`, we then serialize it into the following struct:
+If the caller wants to swap funds from the interpreter account and receive the funds into the interpreter account, we need to specify the BindingValue `Self`, using the index of the `to` field for the serialized data being passed to the smart contract.
 
-```
-Call {
-    payload: encode(swap(10,(1,2))),
-    bindings: [(13, BindingValue::Self)],
-}
-```
-
-On the executing interpreter, `BindingValue::Self` will be interpolated at byte index 13  of the payload before being executed, the final payload then becomes `swap(10,(1,2), BindingValue::Self)`, where `BindingValue::Self` is the canonical address of the interpreter on the destination side.
+On the executing instance, `BindingValue::Self` will be interpolated at byte index 13  of the payload before being executed, the final payload then becomes `swap(10,(1,2), BindingValue::Self)`, where `BindingValue::Self` is the canonical address of the interpreter on the destination side.
 
 Besides accessing the `Self` register, `BindingValue` allows for lazy lookups of AssetId conversions, by using `BindingValue::AssetId(GlobalId)`, or lazily converting decimal points depending on the chain using the `Balance` type.
 
-Bindings do not support non byte aligned encodings.
+Bindings do not support non-byte aligned encodings.
 
-#### Handling Balances
+### 2.2.3 Spawn
+
+Sends a `Program` to another chain to be executed asynchronously. It is only guaranteed to execute on the specified `Network` if its `Program` contains an instruction that is guaranteed to execute on the `Network` of the `Spawn` context. 
+
+```
+<Spawn>      ::= <Network> <BridgeSecurity> <Salt> <Program> <Assets>
+
+<Network>    ::= u128
+<Salt>       ::= bytes
+```
+
+### 2.2.4. Query
+
+Queries register values of an `XCVM` instance across chains. It sets the current `Result Register` to `QueryResult`. See section 3. on the semantics of registers and `RegisterValues`.
+
+```
+<Query>        ::= <Network> <Account>
+<QueryResult>  ::= {<RegisterValues>}
+```
+
+## 2.3. Balances
 
 Amounts of assets can be specified using the `Balance` type. This allows foreign programs to specify sending a part of the total amount of funds using `Ratio`, or express the amounts in the canonical unit of the asset: `Unit`,  or if the caller is aware of the number of decimals of the assets on the destination side: `Absolute`.
 
-#### Querying 
+## 2.4. Abstract Virtual Machine 
 
-Registers are persisted after `Program` invocations and `Query`able from other chains. Querying does not alter the registry state, so multiple `Query` invocations will always return the same `IP` and `Result`.  
+Each `XCVM` instance is a bytecode interpreter with a limited set of specialized registers. 
 
-A query returns a `QueryResult`:
+### 2.4.1 Registers
 
-```
-QueryResult ::= Header Data
-Header ::= Hash Number
-Data ::= 
-    Assets
-    | (Result IP)
-    | bytes
-```
-
-To inspect a Query result from an XCVM program, use `Call` to a contract with the capabilities to handle it properly.
+Each interpreter keeps track of persistent states during and across executions, which are stored in different registers. Register values are always updated during execution and can be observed by other contracts.
 
 ```
-Query Ethereum 1                    // Pauses execution, which will be resumed once the 
-                                    // result values have been loaded.
-Call 0xmy_contract_on_this_chain    // my_contract_on_this_chain can inspect the Result Register of his
-                                    // instance and do something with the actual result
+<RegisterValues> ::= {<RegisterValue>}
+<RegisterValue>  ::= <ResultRegister> | <IPRegister> | <RelayerRegister> | <SelfRegister>
 ```
 
-### Fees
+#### 2.4.1.1 Result Register
 
-There are three different components to the fees charged for interacting with the `XCVM`:
-
-1. Gas fees on the origin chain, are used to pay for local submission and partial execution.
-2. Bridging fees (optional): Some bridges charge a dynamic fee based on the number of assets sent. If possible, fees are folded into 1., otherwise charged during transmission.
-3. Execution fees (optional): A reward added by the instruction author to reward the relayer for paying for the execution on the destination chain.
-
-#### Execution Fees
-
-Gas and Bridging fees are handled during the invocation and at the `Router` level, however, Execution fees are opt-in and paid by the user by using the `Relayer` registry value. The following example program performs an operation, and rewards the relayer:
+The result register contains the result of the last executed instruction.
 
 ```
-Call 0x13371337...
-Transfer Relayer { USDC: 15000000000000 }
+<ResultRegister> ::= 
+    <Error> 
+    | <ExecutionResult><
+
+<Error ::= 
+    <CallError> 
+    | <TransferError>
+    | <SpawnError>
+    | <QueryError>
+
+<ExecutionResult> ::= 
+    <Ok> | bytes
+<Ok> ::= '0'
+
+<CallError> ::= bytes
+<TransferError> ::= bytes
+<SpawnError> ::= bytes
+<QueryError> ::= bytes
 ```
 
-This model is very much like Bitcoin's UTXOs, where the difference between inputs and outputs defines the mining fee. Here we are more explicit with the actual fee, which allows for more fine-grained control. Together with branching (to be implemented later), this fee model can be used to incentivize the relayer to precompute the outcome, and only submit the program if it were to succeed.
+#### 2.4.1.2 IP Register
 
-### Identities and Ownership
-
-Within the `XCVM`, we define an `Identity` as a global, unique identifier of an on-chain account.
+The instruction pointer register contains the instruction pointer of the last executed program and is updated during program execution. Querying for the `IP` and `Result` can be used to compute the state of the interpreter on another chain.
 
 ```
-Identity ::= Network Account
+<IPRegister> ::= u32
 ```
 
-On initial instantiation of the `XCVM` interpreter, the calling `Identity` is the owner. This can be a local or foreign account, depending on the origin. The owning `Identity` has total control of the interpreter instance and the funds held and can make delegate calls from the instance's account.
+#### 2.4.1.3 Relayer Register
 
-Oftentimes, multiple `Identities` represent a single real-world entity, such as a cross-chain protocol or a user. To accommodate for shared/global ownership of resources, each interpreter keeps track of a set of `Identities`, which share ownership of the interpreter. Each owning `Identity` has full permissions on the interpreter instance.
-
-Owners may be added by having the interpreter call the appropriate setters. We will consider adding specialized instructions later.
-
-### Composable Name Service
-
-The `CNS` provides an abstraction on top of the `Identity` system, allowing developers and users to use a single name across interpreter instances. Each `XCVM` chain contains a `CNS` registry, which maps `Identity` to `Name`. On bridge relays, the calling program can specify to use an associated `Name` instead of its `Identity`. The `XCVM` interpreter has to be configured to accept the `CNS` as an owner. 
+The relayer register contains the `Account` of the account triggering the initial execution. This can be the IBC relayer or any other entity. By definition, the relayer is the account paying the fees for interpreter execution.
 
 ```
-Name ::= string 
+<RelayerRegister> ::= u32
 ```
 
-We will later elaborate on using alternative name registries such as [`ENS`](https://ens.domains/).
+#### 2.4.1.4 Self Register
 
-### Asset Registries
-
-Assets are identified using a global asset identifier.
+The self-register contains the `Account` of the interpreter. Most implementations will not need to use storage but have access to special keywords, such as `this` in Solidity.
 
 ```
-AssetId ::= u128
+<SelfRegister> ::= <Account>
 ```
 
-Each chain contains a registry contract, which maps assets to their local representations, such as erc20 addresses. The `Transfer` instruction uses this registry to look up the correct identifiers. Interpreter instances can be reconfigured by the owner to use alternative registries.
+### 2.4.5 Execution Semantics
 
-Propagating updates across registries is handled by the `XCVM` too. We will go more in-depth on how we bootstrap this system in a later publication.
+Implementors MUST execute each instruction in the provided order. After each instruction is executed, the result register MUST be set to the return value of the instruction. The interpreter SHOULD NOT mangle the return values but store them as returned. If an error is encountered by executing an instruction, the defined transactional behavior for that instruction should be abided by. All instructions defined in this document require the transaction to be aborted on failure, however, subsequent addendums may define new instructions with different behavior. 
 
-## NFTs
+# X. Security considerations
 
-The design specification currently does not take NFTs into account. We have chosen to not (yet) specify NFTs as part of `Assets` due to the complexity of owning and value accruing NFTs. We do however intend to update the specification once the approach has been finalized.
+<!-- Define security-related considerations to USERS and IMPLEMENTORS -->
 
-## Examples
+# X+1. References
 
-### Cross-chain borrowing
+# X+2. Appendix
 
-A concrete example of using the XCVM protocol is to transfer funds to a different chain, use them as collateral in a loan, transmit funds back to the source chain, and use them there. For this example, we'll omit querying for current account `health` and repayments.
+<!-- Pseudocode etc goes here -->
 
-Concretely, we want to execute the following operations:
+# X+3. Contributors
 
-- Transfer funds to chain XYZ.
-- Call a smart contract to take out a loan.
-- Reward the relayer, to incentivize execution.
-- Send funds back.
-
-Since we might not know the current interest rates, we'll use relative values for fund transfers, instead of absolute ones. 
-
-For this example, we have the source initiator be a regular user, however, a smart contract is capable of executing the same operations.
-
-```mermaid
-sequenceDiagram
-    User->>XCVM Interpreter ABC: Submit Program
-    XCVM Interpreter ABC->>Router ABC: Spawn Program
-    Router ABC->>Gateway ABC: Submit Program
-    Gateway ABC->>Gateway XYZ: Relay Program
-    Gateway XYZ->>Router XYZ: Instantiate VM
-    Router XYZ->>XCVM Interpreter XYZ: Execute Spawn
-    XCVM Interpreter XYZ->>Lender: Call 0x1337 (Borrow USDC for DOT)
-    Lender->>XCVM Interpreter XYZ: Transfer USDC
-    XCVM Interpreter XYZ->>Relayer: Transfer USDC fee to Relayer
-    XCVM Interpreter XYZ->>Router XYZ: Spawn Program
-    Router XYZ->>Gateway XYZ: Submit Program
-    Gateway XYZ->>Gateway ABC: Relay Program
-    Gateway ABC->>Router ABC: Instantiate VM
-    Router ABC->>XCVM Interpreter ABC: Execute Spawn
-    XCVM Interpreter ABC->>Relayer: Transfer USDC fee to Relayer
-    XCVM Interpreter ABC->>User: Transfer USDC
-```
-
-Although these operations are quite complicated to code by hand, using the XCVM protocol, we can very succinctly express them:
-
-```
-Spawn XYZ BridgeSecurity::Deterministic 0 [
-   Call 0x1337,                                 //chain-specific encoding to make a smart contract call.
-   Transfer Relayer USDC Unit 50,               // 50 bucks for the fee. The relayer earns this if the inner spawn is dispatched.
-   Spawn HOME BridgeSecurity::Deterministic 0 [
-       Transfer Relayer USDC Unit 50            // Another 50 bucks fee for the operation, but now reverse direction.
-       Transfer USER { USDC: Ratio::ALL }       // On ABC, we transfer all USDC to the user. 
-       ] { USDC: ALL },                         // We send over all our USDC back to ABC.
-   ] { DOT: UNIT 100 },                         // We send over 100 DOT from ABC to XYZ.
-```
+<!-- Who has worked on this RFC -->
