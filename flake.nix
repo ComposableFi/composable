@@ -42,7 +42,7 @@
         ./code/integration-tests/runtime-tests/runtime-tests.nix
       ];
       systems = [ "x86_64-linux" "aarch64-linux" ];
-      perSystem = { config, self', inputs', pkgs, system, ... }: {
+      perSystem = { config, self', inputs', pkgs, system, crane, ... }: {
         # Per-system attributes can be defined here. The self' and inputs'
         # module parameters provide easy access to attributes of the same
         # system.
@@ -76,6 +76,12 @@
         packages = {
           rust-stable = pkgs.rust-bin.stable.latest.default;
           rust-nightly = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
+          subxt = pkgs.callPackage ./code/utils/composable-subxt/subxt.nix { };
+          junod = pkgs.callPackage ./code/xcvm/cosmos/junod.nix { };
+          gex = pkgs.callPackage ./code/xcvm/cosmos/gex.nix { };
+          wasmswap = pkgs.callPackage ./code/xcvm/cosmos/wasmswap.nix {
+            crane = crane.nightly;
+          };
         };
       };
       flake = {

@@ -512,8 +512,6 @@
               mk-xcvm-contract "xcvm-asset-registry";
             xcvm-contract-router = mk-xcvm-contract "xcvm-router";
             xcvm-contract-interpreter = mk-xcvm-contract "xcvm-interpreter";
-            subxt =
-              pkgs.callPackage ./code/utils/composable-subxt/subxt.nix { };
 
             price-feed = crane-nightly.buildPackage (common-attrs // {
               pnameSuffix = "-price-feed";
@@ -835,11 +833,6 @@
               '';
             };
 
-            junod = pkgs.callPackage ./code/xcvm/cosmos/junod.nix { };
-            gex = pkgs.callPackage ./code/xcvm/cosmos/gex.nix { };
-            wasmswap = pkgs.callPackage ./code/xcvm/cosmos/wasmswap.nix {
-              crane = crane-nightly;
-            };
 
             devnet-default-program =
               pkgs.composable.mkDevnetProgram "devnet-default"
@@ -877,90 +870,6 @@
             default = packages.composable-node;
           };
 
-          devShells = rec {
-            base-shell = pkgs.mkShell {
-              buildInputs = [ helix.packages.${pkgs.system}.default ];
-              NIX_PATH = "nixpkgs=${pkgs.path}";
-            };
-
-            developers-minimal = base-shell.overrideAttrs (base:
-              common-attrs // {
-                buildInputs = base.buildInputs ++ [
-                  pkgs.clang
-                  packages.rust-nightly
-                  packages.subwasm
-                  pkgs.nodejs
-                  pkgs.python3
-                  pkgs.yarn
-                ];
-                LD_LIBRARY_PATH = pkgs.lib.strings.makeLibraryPath [
-                  pkgs.stdenv.cc.cc.lib
-                  pkgs.llvmPackages.libclang.lib
-                ];
-                LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
-                PROTOC = "${pkgs.protobuf}/bin/protoc";
-                ROCKSDB_LIB_DIR = "${pkgs.rocksdb}/lib";
-                NIX_PATH = "nixpkgs=${pkgs.path}";
-              });
-
-            developers = developers-minimal.overrideAttrs (base: {
-              buildInputs = base.buildInputs ++ [
-                pkgs.bacon
-                pkgs.google-cloud-sdk
-                pkgs.grub2
-                pkgs.jq
-                pkgs.lldb
-                pkgs.llvmPackages_latest.bintools
-                pkgs.llvmPackages_latest.lld
-                pkgs.llvmPackages_latest.llvm
-                pkgs.nix-tree
-                pkgs.nixpkgs-fmt
-                pkgs.openssl
-                pkgs.openssl.dev
-                pkgs.pkg-config
-                pkgs.qemu
-                pkgs.rnix-lsp
-                pkgs.taplo
-                pkgs.xorriso
-                pkgs.zlib.out
-                pkgs.nix-tree
-                pkgs.nixfmt
-                pkgs.rnix-lsp
-                pkgs.nodePackages.typescript
-                pkgs.nodePackages.typescript-language-server
-                packages.subxt
-              ]; 
-            });
-
-            developers-with-wasm-optimizer = developers.overrideAttrs (base: {
-              buildInputs = base.buildInputs ++ [ packages.wasm-optimizer ];
-            });
-
-            developers-xcvm = developers.overrideAttrs (base: {
-              buildInputs = with packages;
-                base.buildInputs ++ [ junod gex ] ++ pkgs.lib.lists.optional
-                (pkgs.lib.strings.hasSuffix "linux" system) arion;
-              shellHook = ''
-                echo ""
-                echo ""
-                echo ""
-                echo "==================================================================================================="
-                echo " /!\ Generating alice key, junod will abort if the key is already present (everything is fine.) /!\ "
-                echo "==================================================================================================="
-                echo ""
-                echo ""
-                echo ""
-                echo "clip hire initial neck maid actor venue client foam budget lock catalog sweet steak waste crater broccoli pipe steak sister coyote moment obvious choose" | junod keys add alice --recover --keyring-backend test || true
-              '';
-            });
-
-            ci = pkgs.mkShell {
-              buildInputs = [ pkgs.nixopsUnstable ];
-              NIX_PATH = "nixpkgs=${pkgs.path}";
-            };
-
-            default = developers;
-          };
 
           apps = let
             makeApp = p: {
