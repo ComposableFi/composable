@@ -3,9 +3,7 @@ import {
   closeConfirmSupplyModal,
   openConfirmingSupplyModal,
 } from "@/stores/ui/uiSlice";
-import { Executor, ConnectedAccount } from "substrate-react";
-import BigNumber from "bignumber.js";
-import router from "next/router";
+import { Executor } from "substrate-react";
 import { ApiPromise } from "@polkadot/api";
 import { ConstantProductPool, StableSwapPool } from "@/defi/types";
 import { toChainUnits } from "@/defi/utils";
@@ -14,7 +12,9 @@ import { useSnackbar, VariantType } from "notistack";
 import { useDispatch } from "react-redux";
 import { Signer } from "@polkadot/api/types";
 import { useCallback, useMemo } from "react";
-
+import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
+import BigNumber from "bignumber.js";
+import router from "next/router";
 const TxOrigin = "Add Liquidity";
 
 export function transactionStatusSnackbarMessage(
@@ -46,7 +46,7 @@ export const useAddLiquidity = ({
   pool,
   signer,
 }: {
-  selectedAccount: ConnectedAccount | undefined;
+  selectedAccount: InjectedAccountWithMeta | undefined;
   executor: Executor | undefined;
   parachainApi: ApiPromise | undefined;
   assetOne: string | undefined;

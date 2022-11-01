@@ -109,7 +109,7 @@ transaction-payment-rpc-runtime-api = { package = "pallet-transaction-payment-rp
 
 # local RPCs
 assets-runtime-api = { path = '../../frame/assets/runtime-api', default-features = false }
-# cosmwasm-runtime-api = { path = '../../frame/cosmwasm/runtime-api', default-features = false }
+cosmwasm-runtime-api = { path = '../../frame/cosmwasm/runtime-api', default-features = false }
 crowdloan-rewards-runtime-api = { path = '../../frame/crowdloan-rewards/runtime-api', default-features = false }
 lending-runtime-api = { path = '../../frame/lending/runtime-api', default-features = false }
 pablo-runtime-api = { path = '../../frame/pablo/runtime-api', default-features = false }
@@ -215,7 +215,7 @@ runtime-benchmarks = [
   "common/runtime-benchmarks",
   "pallet-ibc/runtime-benchmarks",
   "pallet-staking-rewards/runtime-benchmarks",
-  # "cosmwasm/runtime-benchmarks",
+  "cosmwasm/runtime-benchmarks",
   "asset-tx-payment/runtime-benchmarks",
 ]
 std = [
@@ -305,8 +305,8 @@ std = [
   "xcm-builder/std",
   "xcm-executor/std",
   "xcm/std",
-  # "cosmwasm/std",
-  # "cosmwasm-runtime-api/std",
+  "cosmwasm/std",
+  "cosmwasm-runtime-api/std",
   "asset-tx-payment/std",
   "light-client-common/std",
 ]

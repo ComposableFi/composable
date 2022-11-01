@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import BigNumber from "bignumber.js";
 import { callbackGate, fromChainIdUnit, unwrapNumberOrHex } from "shared";
 import { useTransfer } from "@/defi/polkadot/hooks/useTransfer";
+import { getAssetOnChainId } from "@/defi/polkadot/Assets";
 
 export const useExistentialDeposit = () => {
   const { from, balance, to, account, fromProvider } = useTransfer();
@@ -31,9 +32,21 @@ export const useExistentialDeposit = () => {
   useEffect(() => {
     switch (from) {
       case "karura":
-        if (["kusd", "ausd"].includes(tokenId)) {
-          updateExistentialDeposit(new BigNumber(1));
+        // @see https://wiki.acala.network/get-started/get-started/karura-account
+        const karuraEdMap: {
+          [key in string] : BigNumber
+        } = {
+          "kusd": new BigNumber(0.01),
+          "ausd": new BigNumber(0.01),
+          "kar": new BigNumber(0.1),
+          "ksm": new BigNumber(0.0001),
+        };
+        const ed = tokenId in karuraEdMap ? karuraEdMap[tokenId] : new BigNumber(1);
+        const assetOnChain = getAssetOnChainId("karura", tokenId);
+        if (assetOnChain) {
+          updateFeeToken(assetOnChain);
         }
+        updateExistentialDeposit(ed);
         break;
       case "picasso":
         callbackGate(
@@ -43,9 +56,12 @@ export const useExistentialDeposit = () => {
             );
             if (result.isNone && tokenId) {
               // Fetch native asset's ED
-              const ed = await api.query.currencyFactory.assetEd(
-                assets[tokenId].meta.supportedNetwork[from]
-              );
+              const ed =
+                tokenId !== "pica"
+                  ? await api.query.currencyFactory.assetEd(
+                      assets[tokenId].meta.supportedNetwork[from]
+                    )
+                  : api.consts.balances.existentialDeposit;
               const existentialString = ed.toString();
               const existentialValue = fromChainIdUnit(
                 new BigNumber(existentialString)

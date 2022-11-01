@@ -1,5 +1,5 @@
 use clap::Parser;
-use sc_cli::{CliConfiguration, ImportParams, SharedParams, Error};
+use sc_cli::{CliConfiguration, Error, ImportParams, SharedParams};
 use sp_api::{Metadata, ProvideRuntimeApi};
 use sp_blockchain::HeaderBackend;
 use sp_runtime::generic::BlockId;

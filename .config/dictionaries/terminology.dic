@@ -1,5 +1,6 @@
 # Parity/Substrate
 polkadot
+polkadots
 kusama
 rococo
 wococo
@@ -148,6 +149,7 @@ localchain
 hashset
 arweave
 pricehistory
+saft
 
 
 # just words, consider a separate dictionary
@@ -322,6 +324,9 @@ Currency
 unignore
 modularly
 admined
+absentation
+absentations
+sufficients
 
 coeff # coefficient
 recvs # recieves
@@ -332,6 +337,7 @@ modlpy
 twox
 liquidat # liquidate
 direnv
+notifs # notifications
 
 # palletId's
 democrac # democracy
@@ -348,6 +354,7 @@ plmosaic
 liqdatns
 liqiudat
 modl # pallet type id
+cfund # pallet ID for pallet-crowdloan
 
 # can't have apostrophies in identifiers
 doesnt
@@ -362,6 +369,7 @@ pblo
 pica
 layr
 сomposable
+composables
 composablejs
 
 # crypto acronyms
@@ -381,3 +389,10 @@ pica
 pblo
 picapblo # PICA/PBLO
 vksm
+SHIB # SHIBU coin
+
+# programming
+foldl
+
+# composable-subxt typos
+multipled

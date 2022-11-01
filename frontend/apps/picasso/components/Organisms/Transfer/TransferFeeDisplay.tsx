@@ -37,8 +37,10 @@ export const TransferFeeDisplay = () => {
   const keepAlive = useStore((state) => state.transfers.keepAlive);
   const { existentialDeposit, feeToken } = useExistentialDeposit();
   const fee = useStore((state) => state.transfers.fee);
-  const destFee = getDestChainFee(from, to);
+  const selectedToken = useStore(state => state.transfers.selectedToken);
+  const destFee = getDestChainFee(from, to, selectedToken);
   const updateFee = useStore((state) => state.transfers.updateFee);
+  const token = useStore(state => state.transfers.selectedToken);
 
   const symbol = useMemo(() => {
     let out;
@@ -74,6 +76,7 @@ export const TransferFeeDisplay = () => {
           api,
           sourceChain: from,
           targetChain: to,
+          tokenId: selectedToken
         });
 
         const signerAddress = acc.address;
@@ -87,7 +90,8 @@ export const TransferFeeDisplay = () => {
           TARGET_PARACHAIN_ID,
           from,
           to,
-          hasFeeItem
+          hasFeeItem,
+          token
         );
 
         const info = await exec.paymentInfo(call, acc.address, signer);

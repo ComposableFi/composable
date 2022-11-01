@@ -19,7 +19,7 @@ Implementing the ibc config trait for a substrate runtime
 ```rust
 parameter_types! {
 	pub const ExpectedBlockTime: u64 = 12000;
-	pub const RelayChainId: light_client_commomn::RelayChain = light_client_commomn::RelayChain::Rococo;
+	pub const RelayChainId: light_client_common::RelayChain = light_client_common::RelayChain::Rococo;
 }
 
 impl pallet_ibc::Config for Runtime {
@@ -120,7 +120,7 @@ This pallet provides a public interface behind the [`IbcHandler`] trait, that al
 It provides methods for: 
 - Opening channels `IbcHandler::open_channel`
 - Registering a Send packet `IbcHandler::send_packet`
-- Writing Acknowledgements `IbcHandler::write_acknowledgemnent`
+- Writing Acknowledgements `IbcHandler::write_acknowledgement`
 
 **Defining an example ibc compliant pallet**
 ```rust
@@ -175,7 +175,7 @@ It provides methods for:
 
    // All these callbacks should be benchmarked
    impl<T: Config + Send + Sync> Module for IbcModule<T> {
-       /// This is called when a channel init message is processe/// If this callback fails the counterparty will not receive the channel_open_try message
+       /// This is called when a channel init message is processed/// If this callback fails the counterparty will not receive the channel_open_try message
        fn on_chan_open_init(
            &mut self,
            _output: &mut ModuleOutputBuilder,
@@ -193,7 +193,7 @@ It provides methods for:
        /// This is called after a channel_open_try message
        /// has been processed successfully, at this point, this module
        /// should verify that the counterparty's channel order, version and port matches what is expected 
-       /// If this callback fails the counterparty will not recieve the channel_open_ack message
+       /// If this callback fails the counterparty will not receive the channel_open_ack message
        fn on_chan_open_try(
            &mut self,
            _output: &mut ModuleOutputBuilder,
@@ -226,7 +226,7 @@ It provides methods for:
 
        /// This is called after channel open acknowledgement is processed
        /// Execute any pallet specific logic that requires channel to be open
-       /// If this callback fails the counterparty will not recieve the channel_open_confirm message
+       /// If this callback fails the counterparty will not receive the channel_open_confirm message
        fn on_chan_open_ack(
            &mut self,
            _output: &mut ModuleOutputBuilder,
@@ -249,7 +249,7 @@ It provides methods for:
            Ok(())
        }
 
-       /// Callled after channel close init messages is processed successfully
+       /// Called after channel close init messages is processed successfully
        /// If it fails channel close confirm will not be seen on the counterparty
        fn on_chan_close_init(
            &mut self,
@@ -295,7 +295,7 @@ It provides methods for:
            )
        }
 
-       /// Called after acknowledgement message is  susccessfully processed  
+       /// Called after acknowledgement message is  successfully processed
        /// Decode and handle acknowledgement for both success or error cases  
        fn on_acknowledgement_packet(
            &mut self,
@@ -445,7 +445,7 @@ The pseudocode below describes roughly how the benchmark should look like
 - Create the light client and add it to storage using the context APIs
 - Add the necessary values to storage that are required for the benchmark to pass
 - Create a mock state tree for the counterparty chain and commit the values needed to prove the message type that is being benchmarked
-  - In case of tendermint client the mock state tree will be an AVL tree, for Grandpa client the mock state tree will be a patricia merke trie etc.
+  - In case of tendermint client the mock state tree will be an AVL tree, for Grandpa client the mock state tree will be a patricia merkle tree etc.
 - Extract the root for this tree
 - Store a consensus state for the light client created above with this extracted root as the commitment root
 - Construct the ibc message with a proof extracted from the mock state tree

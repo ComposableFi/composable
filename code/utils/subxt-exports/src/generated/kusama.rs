@@ -2948,10 +2948,10 @@ pub mod api {
 			use super::runtime_types;
 			pub struct ConstantsApi;
 			impl ConstantsApi {
-				#[doc = " A fee mulitplier for `Operational` extrinsics to compute \"virtual tip\" to boost their"]
+				#[doc = " A fee multiplier for `Operational` extrinsics to compute \"virtual tip\" to boost their"]
 				#[doc = " `priority`"]
 				#[doc = ""]
-				#[doc = " This value is multipled by the `final_fee` to obtain a \"virtual tip\" that is later"]
+				#[doc = " This value is multiplied by the `final_fee` to obtain a \"virtual tip\" that is later"]
 				#[doc = " added to a tip component in regular `priority` calculations."]
 				#[doc = " It means that a `Normal` transaction can front-run a similarly-sized `Operational`"]
 				#[doc = " extrinsic (with no tip), by including a tip value greater than the virtual tip."]
@@ -6463,7 +6463,7 @@ pub mod api {
 				#[doc = ""]
 				#[doc = "This will trigger a forced authority set change at the beginning of the next session, to"]
 				#[doc = "be enacted `delay` blocks after that. The `delay` should be high enough to safely assume"]
-				#[doc = "that the block signalling the forced change will not be re-orged e.g. 1000 blocks."]
+				#[doc = "that the block signalling the forced change will not be re-organized e.g. 1000 blocks."]
 				#[doc = "The block production rate (which may be slowed down because of finality lagging) should"]
 				#[doc = "be taken into account when choosing the `delay`. The GRANDPA voters based on the new"]
 				#[doc = "authority will start voting on top of `best_finalized_block_number` for new finalized"]
@@ -8087,7 +8087,7 @@ pub mod api {
 			#[derive(
 				:: subxt :: ext :: codec :: Decode, :: subxt :: ext :: codec :: Encode, Debug,
 			)]
-			#[doc = "An account has secconded a proposal"]
+			#[doc = "An account has seconded a proposal"]
 			pub struct Seconded {
 				pub seconder: ::subxt::ext::sp_core::crypto::AccountId32,
 				pub prop_index: ::core::primitive::u32,
@@ -13335,7 +13335,7 @@ pub mod api {
 						],
 					)
 				}
-				#[doc = " Maxmimum number of registrars allowed in the system. Needed to bound the complexity"]
+				#[doc = " Maximum number of registrars allowed in the system. Needed to bound the complexity"]
 				#[doc = " of, e.g., updating judgements."]
 				pub fn max_registrars(
 					&self,
@@ -33265,7 +33265,7 @@ pub mod api {
 						>,
 					},
 					#[codec(index = 18)]
-					#[doc = "An account has secconded a proposal"]
+					#[doc = "An account has seconded a proposal"]
 					Seconded {
 						seconder: ::subxt::ext::sp_core::crypto::AccountId32,
 						prop_index: ::core::primitive::u32,
@@ -34040,7 +34040,7 @@ pub mod api {
 					#[doc = ""]
 					#[doc = "This will trigger a forced authority set change at the beginning of the next session, to"]
 					#[doc = "be enacted `delay` blocks after that. The `delay` should be high enough to safely assume"]
-					#[doc = "that the block signalling the forced change will not be re-orged e.g. 1000 blocks."]
+					#[doc = "that the block signalling the forced change will not be re-organized e.g. 1000 blocks."]
 					#[doc = "The block production rate (which may be slowed down because of finality lagging) should"]
 					#[doc = "be taken into account when choosing the `delay`. The GRANDPA voters based on the new"]
 					#[doc = "authority will start voting on top of `best_finalized_block_number` for new finalized"]
