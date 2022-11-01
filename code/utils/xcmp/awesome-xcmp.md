@@ -14,11 +14,7 @@ XCMP can be upward (parachain to relay), downward(relay to parachain) and siblin
 
 ## Conceptual
 
-<<<<<<< HEAD
-[Polkadot's Cross-chain Message Passing Protocol: Shared Security and Polkadot's Design](https://www.youtube.com/watch?v=XU6dAAQD9UE)
-=======
 [Polkadot's Cross-chain Message Passing Protocol: Shared Security and Polkadot's Design(video)](https://www.youtube.com/watch?v=XU6dAAQD9UE)
->>>>>>> main
 
 [How XCM will actually be used with XCMP](https://forum.polkadot.network/t/how-xcm-will-actually-be-used-with-xcmp/190)
 

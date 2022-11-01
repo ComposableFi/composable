@@ -4,7 +4,7 @@ In memory tests running several parachains and relay chain.
 
 ## TODO
 
-Test Assets TX payments 
+Test Assets TX payments
 https://github.com/AcalaNetwork/Acala/commit/88193d6b3f636e483a916a355e1db7a89d38a60b#diff-79521dd3ae35d7e19dff40c49b325850fbad442c1f09d742cf8f03306ef77188
 
 Ensure trapped assets are to claim
@@ -18,14 +18,14 @@ Run not only Kusama spec, but polkadot too
 
 https://github.com/AcalaNetwork/Acala/commit/c4f40d1bfba1405c775ba87f57dd17d309290403#diff-9514ad9ceca0c0b988d2614e422ce1366ae94b403f6e1513a47315b7fcb9c21a
 
-Unignore all tests and fix them (broken on some upgrade). 
+Unignore all tests and fix them (broken on some upgrade).
 
-Make all tests using calculated fees our of types, not hardcoded (can be used in future to build RPC for fee calculator).
+Make all tests using calculated fees of our types instead of hardcoded ones. (can be used in the future to build an RPC for fee calculator).
 
-In each reserver transfer test ensure sibling accounts, para accounts are set up well and total supplys always same in the end.
+In each reserved transfer test, ensure sibling and para accounts are set up properly and the total supplies are always the same in the end.
 
-Remove all usage of XTokens as these violate XCM guidlines and do not work well.
+Remove all usage of XTokens, as these violate XCM guidelines and do not work well.
 
-Ensure that assets from pallets encoded like (parent = 0, pallet = 44, index = 1232132).
+Ensure that all pallet assets are encoded like this (parent = 0, pallet = 44, index = 1232132).
 
-Run attacks which try to spend parachain account, spend other person amount.
+Run attacks that try to spend funds from the parachain account or spend another user's funds.
