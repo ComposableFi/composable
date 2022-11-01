@@ -672,51 +672,6 @@
                   mv lcov.info $out/lcov
                 '';
               });
-
-            cargo-fmt-check = crane-nightly.cargoFmt (common-attrs // {
-              cargoArtifacts = common-deps-nightly;
-              cargoExtraArgs = "--all --check --verbose";
-            });
-
-
-            cargo-clippy-check = crane-nightly.cargoBuild (common-attrs // {
-              cargoArtifacts = common-deps-nightly;
-              cargoBuildCommand = "cargo clippy";
-              cargoExtraArgs = "--all-targets --tests -- -D warnings";
-            });
-
-            cargo-deny-check = crane-nightly.cargoBuild (common-attrs // {
-              buildInputs = with pkgs; [ cargo-deny ];
-              cargoArtifacts = common-deps;
-              cargoBuildCommand = "cargo deny";
-              cargoExtraArgs =
-                "--manifest-path ./parachain/frame/composable-support/Cargo.toml check ban";
-            });
-
-            cargo-udeps-check = crane-nightly.cargoBuild (common-attrs // {
-              DALI_RUNTIME = "${dali-runtime}/lib/runtime.optimized.wasm";
-              PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
-              COMPOSABLE_RUNTIME =
-                "${composable-runtime}/lib/runtime.optimized.wasm";
-              buildInputs = with pkgs; [
-                cargo-udeps
-                expat
-                freetype
-                fontconfig
-                openssl
-              ];
-              cargoArtifacts = common-deps-nightly;
-              cargoBuildCommand = "cargo udeps";
-              cargoExtraArgs =
-                "--workspace --exclude local-integration-tests --all-features";
-            });
-
-            benchmarks-check = crane-nightly.cargoBuild (common-attrs // {
-              cargoArtifacts = common-deps-nightly;
-              cargoBuildCommand = "cargo check";
-              cargoExtraArgs = "--benches --all --features runtime-benchmarks";
-            });
-
             kusama-picasso-karura-devnet = let
               config = (pkgs.callPackage
                 ./scripts/polkadot-launch/kusama-local-picasso-dev-karura-dev.nix {

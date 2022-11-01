@@ -31,6 +31,7 @@
         # 2. Add foo as a parameter to the outputs function
         # 3. Add here: foo.flakeModule
         ./fmt.nix
+        ./rust.nix
         ./docker.nix
         ./subwasm.nix
         ./dev-shells.nix
@@ -59,24 +60,7 @@
             rust-overlay.overlays.default
           ];
         };
-
-        # System-specific lib to be used accross flake parts
-        _module.args.crane = rec {
-
-          # Crane lib instantiated with current nixpkgs
-          # Crane pinned to stable Rust
-          lib = self.inputs.crane.mkLib pkgs;
-
-          stable = lib.overrideToolchain self'.packages.rust-stable;
-
-          # Crane pinned to nightly Rust
-          nightly = lib.overrideToolchain self'.packages.rust-nightly;
-        };
-
         packages = {
-          rust-stable = pkgs.rust-bin.stable.latest.default;
-          rust-nightly =
-            pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
           subxt = pkgs.callPackage ./code/utils/composable-subxt/subxt.nix { };
           junod = pkgs.callPackage ./code/xcvm/cosmos/junod.nix { };
           gex = pkgs.callPackage ./code/xcvm/cosmos/gex.nix { };
