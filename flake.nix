@@ -34,6 +34,7 @@
         ./rust.nix
         ./docker.nix
         ./subwasm.nix
+        ./price-feed.nix
         ./dev-shells.nix
         ./docs/docs.nix
         ./subsquid/subsquid.nix
@@ -89,6 +90,7 @@
           polkadot-launch =
             pkgs.callPackage ./scripts/polkadot-launch/polkadot-launch.nix
               { };
+
 
         };
       };

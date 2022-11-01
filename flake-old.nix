@@ -513,13 +513,6 @@
             xcvm-contract-router = mk-xcvm-contract "xcvm-router";
             xcvm-contract-interpreter = mk-xcvm-contract "xcvm-interpreter";
 
-            price-feed = crane-nightly.buildPackage (common-attrs // {
-              pnameSuffix = "-price-feed";
-              cargoArtifacts = common-deps;
-              cargoBuildCommand = "cargo build --release -p price-feed";
-              meta = { mainProgram = "price-feed"; };
-            });
-
             # Dali devnet
             devnet-dali = (pkgs.callPackage mk-devnet {
               inherit pkgs;
@@ -813,7 +806,6 @@
               makeApp packages.devnet-rococo-dali-karura;
             devnet-picasso-complete = makeApp packages.devnet-picasso-complete;
             devnet-dali-complete = makeApp packages.devnet-dali-complete;
-            price-feed = makeApp packages.price-feed;
             composable = makeApp packages.composable-node;
             acala = makeApp packages.acala-node;
             polkadot = makeApp packages.polkadot-node;
@@ -929,76 +921,6 @@
           docs = eachSystemOutputs.packages.x86_64-linux.docs-static;
           rev = builtins.getEnv "GITHUB_SHA";
         };
-      };
-      homeConfigurations = let
-        mk-docker-in-docker = pkgs: [
-          # TODO: this home works well in VS Devcontainer launcher as it injects low-level Dockerd
-          # For manual runs need tuning to setup it (need to mount docker links to root and do they executable)
-          # INFO[2022-09-06T13:14:43.437764897Z] Starting up
-          # dockerd needs to be started with root privileges. To run dockerd in rootless mode as an unprivileged user, see https://docs.docker.com/go/rootless/ dockerd-rootless-setuptool.sh install
-          pkgs.docker
-          pkgs.docker-buildx
-          pkgs.docker-compose
-        ];
-        mk-containers-tools-minimal = pkgs: [
-          pkgs.acl
-          pkgs.direnv
-          pkgs.cachix
-        ];
-      in {
-
-        # minimal means we do not build in composable devnets and tooling, but allow to build or nix these
-        vscode-minimal.x86_64-linux =
-          let pkgs = nixpkgs.legacyPackages.x86_64-linux;
-          in with pkgs;
-          home-manager.lib.homeManagerConfiguration {
-            inherit pkgs;
-            modules = [{
-              home = {
-                username = "vscode";
-                homeDirectory = "/home/vscode";
-                stateVersion = "22.05";
-                packages =
-                  [ eachSystemOutputs.packages.x86_64-linux.rust-nightly subxt ]
-                  ++ (mk-containers-tools-minimal pkgs)
-                  ++ (mk-docker-in-docker pkgs);
-              };
-              programs = {
-                home-manager.enable = true;
-                direnv = {
-                  enable = true;
-                  nix-direnv = { enable = true; };
-                };
-              };
-            }];
-          };
-
-        vscode-minimal.aarch64-linux =
-          let pkgs = nixpkgs.legacyPackages.aarch64-linux;
-          in with pkgs;
-          home-manager.lib.homeManagerConfiguration {
-            inherit pkgs;
-            modules = [{
-              home = {
-                username = "vscode";
-                homeDirectory = "/home/vscode";
-                stateVersion = "22.05";
-                packages = [
-                  eachSystemOutputs.packages.aarch64-linux.rust-nightly
-                  subxt
-                ] ++ (mk-containers-tools-minimal pkgs)
-                  ++ (mk-docker-in-docker pkgs);
-              };
-              programs = {
-                home-manager.enable = true;
-                direnv = {
-                  enable = true;
-                  nix-direnv = { enable = true; };
-                };
-              };
-            }];
-          };
-
       };
     };
 }
