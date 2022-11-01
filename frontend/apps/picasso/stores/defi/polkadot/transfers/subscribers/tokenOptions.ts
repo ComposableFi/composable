@@ -3,37 +3,39 @@ import { TRANSFER_ASSET_LIST } from "@/defi/config";
 import { SubstrateNetworkId } from "@/defi/polkadot/types";
 import { TokenOption } from "@/stores/defi/polkadot/transfers/transfers";
 import { useStore } from "@/stores/root";
+import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
 
 function extractOptions(from: SubstrateNetworkId): TokenOption[] {
   const list = useStore.getState().substrateTokens.tokens;
   const balances = useStore.getState().substrateBalances.balances;
-  return Object.values(list).reduce((previousValue, currentValue) => {
-    if (
-      previousValue.find((value: any) => value.tokenId === currentValue.symbol)
-    ) {
-      return previousValue;
-    }
-    // calculate balance for token
-    const balance = balances[from][currentValue.id].balance;
+  return Object.values(list).reduce(
+    (previousValue, currentValue: TokenMetadata) => {
+      if (
+        previousValue.find((value: any) => value.tokenId === currentValue.id)
+      ) {
+        return previousValue;
+      }
+      // calculate balance for token
+      const balance = balances[from][currentValue.id].balance;
 
-    // only include allowed assets
-    if (
-      !TRANSFER_ASSET_LIST[from].includes(currentValue.symbol.toLowerCase())
-    ) {
-      return previousValue;
-    }
+      // only include allowed assets
+      if (!TRANSFER_ASSET_LIST[from].includes(currentValue.id)) {
+        return previousValue;
+      }
 
-    return [
-      ...previousValue,
-      {
-        tokenId: currentValue.id,
-        symbol: currentValue.symbol,
-        icon: currentValue.icon,
-        disabled: balance.lte(0),
-        balance: balance,
-      },
-    ];
-  }, [] as TokenOption[]);
+      return [
+        ...previousValue,
+        {
+          tokenId: currentValue.id,
+          symbol: currentValue.symbol,
+          icon: currentValue.icon,
+          disabled: balance.lte(0),
+          balance: balance,
+        },
+      ];
+    },
+    [] as TokenOption[]
+  );
 }
 
 function setOptions(options: TokenOption[]) {
