@@ -23,6 +23,7 @@
         # 2. Add foo as a parameter to the outputs function
         # 3. Add here: foo.flakeModule
         ./fmt.nix
+        ./docker.nix
         ./docs/docs.nix
         ./subsquid/subsquid.nix
         ./code/common-deps.nix
