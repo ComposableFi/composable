@@ -3,6 +3,7 @@ import { callbackGate } from "shared";
 import { useCallback, useEffect } from "react";
 import { useStore } from "@/stores/root";
 import {
+  ParachainApi,
   ParachainId,
   RelayChainId,
   useDotSamaContext,
@@ -21,10 +22,27 @@ import {
   picassoAssetsList,
 } from "@/defi/polkadot/pallets/Assets";
 import { VoidFn } from "@polkadot/api/types";
+import { AcalaPrimitivesCurrencyCurrencyId } from "@acala-network/types/interfaces/types-lookup";
+import { ApiPromise } from "@polkadot/api";
+
+/**
+ * Get Native Token symbol for Karura
+ *
+ * @param {ApiPromise} api
+ * @returns {string} NATIVE token symbol, or empty string
+ */
+function getKaruraNativeToken(api: ApiPromise) {
+  const nativeToken: AcalaPrimitivesCurrencyCurrencyId =
+    api.consts.currencies.getNativeCurrencyId;
+
+  return (nativeToken.toHuman() as { Token: string }).Token ?? "";
+}
 
 const PolkadotBalancesUpdater = () => {
   useEagerConnect("picasso");
   useEagerConnect("karura");
+
+  const isLoaded = useStore((state) => state.substrateTokens.isLoaded);
 
   const updateTokens = useStore(
     ({ substrateTokens }) => substrateTokens.updateTokens
@@ -66,11 +84,21 @@ const PolkadotBalancesUpdater = () => {
   }, [parachainProviders, updateTokens]);
 
   const picassoBalanceSubscriber = useCallback(
-    async (chain, tokenMetadata: TokenMetadata, chainId) => {
+    async (
+      chain: ParachainApi,
+      tokenMetadata: TokenMetadata,
+      chainId,
+      accounts
+    ) => {
+      console.log(
+        chainId,
+        tokenMetadata.symbol,
+        tokenMetadata.chainId.picasso?.toString()
+      );
       callbackGate(
-        async (chain, tokenMetadata, chainId, account) => {
+        async (api, tokenMetadata, chainId, account) => {
           await subscribePicassoBalanceByAssetId(
-            chain.parachainApi!,
+            api,
             account.address,
             tokenMetadata,
             (balance) => {
@@ -82,10 +110,10 @@ const PolkadotBalancesUpdater = () => {
             }
           );
         },
-        chain,
+        chain.parachainApi,
         tokenMetadata,
         chainId,
-        chain.accounts[selectedAccount]
+        accounts[selectedAccount]
       );
     },
     [selectedAccount, updateBalance]
@@ -139,7 +167,11 @@ const PolkadotBalancesUpdater = () => {
   useEffect(() => {
     let unsubList: any[];
     unsubList = [];
-    if (extensionStatus !== "connected" || selectedAccount === -1) {
+    if (
+      extensionStatus !== "connected" ||
+      selectedAccount === -1 ||
+      !isLoaded
+    ) {
       return () => {};
     }
 
@@ -148,10 +180,21 @@ const PolkadotBalancesUpdater = () => {
         Object.values(tokens).forEach((asset) => {
           switch (chainId) {
             case "picasso":
-              picassoBalanceSubscriber(chain, asset, chainId);
+              picassoBalanceSubscriber(
+                chain,
+                asset,
+                chainId,
+                connectedAccounts[chainId]
+              );
               break;
             case "karura":
-              if (connectedAccounts.karura[selectedAccount]) {
+              // Ignore native token since for that we need to fetch system
+              const nativeTokenSymbol = getKaruraNativeToken(api);
+
+              if (
+                connectedAccounts.karura[selectedAccount] &&
+                nativeTokenSymbol !== asset.symbol
+              ) {
                 subscribeKaruraBalance(
                   api,
                   connectedAccounts.karura[selectedAccount].address,
@@ -171,7 +214,7 @@ const PolkadotBalancesUpdater = () => {
           }
         });
 
-        return function cleanUp() {
+        return () => {
           unsubList.forEach((unsub) => {
             unsub.then((call: any) => call?.());
           });
@@ -179,7 +222,7 @@ const PolkadotBalancesUpdater = () => {
       }, chain.parachainApi)
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [extensionStatus, selectedAccount, parachainProviders]);
+  }, [extensionStatus, selectedAccount, parachainProviders, isLoaded]);
 
   return null;
 };

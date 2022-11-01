@@ -1,10 +1,10 @@
 import { ApiPromise } from "@polkadot/api";
 
 export type HumanizedKaruraAssetMetadata = {
-    name: string;
-    symbol: string;
-    decimals: number;
-    minimalBalance: string;
+  name: string;
+  symbol: string;
+  decimals: number;
+  minimalBalance: string;
 };
 
 /**
@@ -15,15 +15,18 @@ export type HumanizedKaruraAssetMetadata = {
  * @param api ApiPromise
  * @returns {HumanizedKaruraAssetMetadata}
  */
-export async function karuraAssetsList(api: ApiPromise): Promise<Array<HumanizedKaruraAssetMetadata>> {
-    try {
-        // @ts-ignore
-        const assetMetadata = await api.query.assetRegistry.assetMetadatas.entries();
-        return assetMetadata.map(meta => {
-            return meta[1].toHuman() as HumanizedKaruraAssetMetadata
-        })
-    } catch (err) {
-        console.error('[karuraAssetsList] ', err);
-        return [] as HumanizedKaruraAssetMetadata[];
-    }
+export async function karuraAssetsList(
+  api: ApiPromise
+): Promise<Array<HumanizedKaruraAssetMetadata>> {
+  try {
+    // @ts-ignore
+    const assetMetadata =
+      await api.query.assetRegistry.assetMetadatas.entries();
+    return assetMetadata.map((meta) => {
+      return meta[1].toHuman() as HumanizedKaruraAssetMetadata;
+    });
+  } catch (err) {
+    console.error("[√] ", err);
+    return [] as HumanizedKaruraAssetMetadata[];
+  }
 }

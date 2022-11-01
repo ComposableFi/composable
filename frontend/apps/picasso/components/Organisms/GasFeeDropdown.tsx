@@ -25,6 +25,8 @@ import React, { FC, useCallback, useEffect, useMemo, useRef } from "react";
 import { callbackGate } from "shared";
 import { useDotSamaContext, useExecutor } from "substrate-react";
 import { Signer } from "@polkadot/api/types";
+import { useAllParachainProviders } from "@/defi/polkadot/context/hooks";
+
 type Props = {
   toggleModal: () => void;
   setTargetFeeItem: (feeItem: TokenId) => void;
@@ -40,23 +42,22 @@ export const GasFeeDropdown: FC<Props> = ({
   const setFeeItem = useStore((state) => state.transfers.setFeeItem);
   const feeItemEd = useStore((state) => state.transfers.feeItemEd);
   const { signer } = useDotSamaContext();
-  const { parachainApi } = usePicassoProvider();
-  const tokens = useStore(
-    ({ substrateTokens }) => substrateTokens.tokens
-  );
+  const tokens = useStore(({ substrateTokens }) => substrateTokens.tokens);
   const balances = useStore(
     ({ substrateBalances }) => substrateBalances.balances
   );
 
   const options = useMemo(() => {
-    return Object.values(tokens).map((token) => ({
-      value: token.id,
-      label: token.symbol,
-      icon: token.icon,
-      disabled: balances["picasso"][token.id].balance.isZero(),
-      selected: feeItem === token.id,
-      tokenId: token.id,
-    }));
+    return Object.values(tokens)
+      .filter((token) => !!token.chainId.picasso)
+      .map((token) => ({
+        value: token.id,
+        label: token.symbol,
+        icon: token.icon,
+        disabled: balances["picasso"][token.id].balance.isZero(),
+        selected: feeItem === token.id,
+        tokenId: token.id,
+      }));
   }, [feeItem, balances, tokens]);
   const handleChangeItem = (item: React.ChangeEvent<HTMLInputElement>) => {
     const selectedAssetId = item.target.value as TokenId;
@@ -66,15 +67,15 @@ export const GasFeeDropdown: FC<Props> = ({
     setTargetFeeItem(selectedAssetId);
     applyTokenChange(selectedAssetId);
   };
-
   const picassoProvider = usePicassoProvider();
+  useAllParachainProviders();
   const account = useSelectedAccount();
   const executor = useExecutor();
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
   const applyTokenChange = useCallback(
     (tokenId: TokenId) => {
-      const onChainId = tokens[tokenId].picassoId;
+      const onChainId = tokens[tokenId].chainId.picasso;
       return callbackGate(
         async (api, walletAddress, exec, onChainAssetId) => {
           let snackbarId: SnackbarKey | undefined;
@@ -140,15 +141,18 @@ export const GasFeeDropdown: FC<Props> = ({
       setFeeItem,
       toggleModal,
       tokens,
-      signer
+      signer,
     ]
   );
 
   useEffect(() => {
     let unsub: Array<() => void>;
     unsub = [];
-    if (parachainApi) {
-      subscribeFeeItemEd(parachainApi).then((unsubscribe) => {
+    if (
+      picassoProvider.parachainApi &&
+      picassoProvider.apiStatus === "connected"
+    ) {
+      subscribeFeeItemEd(picassoProvider.parachainApi).then((unsubscribe) => {
         unsub.push(unsubscribe);
       });
     }
@@ -156,27 +160,25 @@ export const GasFeeDropdown: FC<Props> = ({
     return () => {
       unsub.forEach((call) => call());
     };
-  }, [parachainApi]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [picassoProvider]);
   useEffect(() => {
     callbackGate(
       async (api, walletAddress) => {
-        if (!mountRef.current) {
-          const result = await getPaymentAsset({
-            api,
-            walletAddress,
-            network: "picasso",
-            tokens
-          });
-          if (result) {
-            setFeeItem(result.id);
-            mountRef.current = true;
-          }
+        const result = await getPaymentAsset({
+          api,
+          walletAddress,
+          network: "picasso",
+          tokens,
+        });
+        if (result) {
+          setFeeItem(result.id);
         }
       },
-      parachainApi,
+      picassoProvider.parachainApi,
       account?.address
     );
-  }, [parachainApi, account, setFeeItem, tokens]);
+  }, [picassoProvider.parachainApi, account, setFeeItem, tokens]);
 
   return (
     <Select
@@ -186,13 +188,11 @@ export const GasFeeDropdown: FC<Props> = ({
       size="small"
       onChange={handleChangeItem}
       renderValue={(value) => {
-        if (!parachainApi) return null;
-        if (!mountRef.current) return <CircularProgress size={24} />;
+        if (!picassoProvider.parachainApi) return null;
         const option = options.find((option) => option.value == value);
         const optionBalance = option
           ? balances.picasso[option.tokenId].balance
           : new BigNumber(0);
-
         if (!option || optionBalance.lte(feeItemEd) || optionBalance.eq(0)) {
           let reason: string;
           reason = optionBalance.lte(feeItemEd)

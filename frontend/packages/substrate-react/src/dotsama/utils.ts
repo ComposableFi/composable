@@ -3,7 +3,7 @@ import {
   ParachainApi,
   ParachainId,
   RelaychainApi,
-  RelayChainId
+  RelayChainId,
 } from "./types";
 
 export const getSigner = async (
@@ -32,8 +32,8 @@ export async function createParachainApis(
     return {
       ...acc,
       [curr]: {
-        ...substrateApi[curr as ParachainId]
-      }
+        ...substrateApi[curr as ParachainId],
+      },
     };
   }, {} as { [chainId in ParachainId]: ParachainApi });
 
@@ -48,7 +48,7 @@ export async function createParachainApis(
           const parachainApi = new ApiPromise({
             provider: wsProvider,
             rpc,
-            types
+            types,
           });
 
           await parachainApi.isReadyOrError;
@@ -88,8 +88,8 @@ export async function createRelaychainApis(
     return {
       ...acc,
       [curr]: {
-        ...substrateApi[curr as RelayChainId]
-      }
+        ...substrateApi[curr as RelayChainId],
+      },
     };
   }, {} as { [chainId in RelayChainId]: RelaychainApi });
 
@@ -104,7 +104,7 @@ export async function createRelaychainApis(
           const parachainApi = new ApiPromise({
             provider: wsProvider,
             rpc,
-            types
+            types,
           });
 
           await parachainApi.isReadyOrError;

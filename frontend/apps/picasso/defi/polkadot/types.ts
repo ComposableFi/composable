@@ -1,5 +1,6 @@
 import { TokenId } from "tokens";
 import { DEFI_CONFIG } from "./config";
+
 export type SubstrateNetworkId = typeof DEFI_CONFIG.networkIds[number];
 export type SubstrateNetwork = {
   relayChain: "polkadot" | "kusama";

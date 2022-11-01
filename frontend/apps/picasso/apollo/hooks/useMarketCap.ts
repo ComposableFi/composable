@@ -13,17 +13,24 @@ export const useMarketCap = () => {
   const [picaPrice, setPicaPrice] = useState<BigNumber>(new BigNumber(0));
   const { parachainApi } = usePicassoProvider();
   useEffect(() => {
-    callbackGate((api, picassoId) => {
-      api.query.oracle.prices(
-        picassoId.toString(),
-        (result: ComposableTraitsOraclePrice) => {
-          if (!result.isEmpty) {
-            const { price, block } = result.toJSON() as any;
-            setPicaPrice(fromChainIdUnit(unwrapNumberOrHex(price)));
+    callbackGate(
+      (api, picassoId) => {
+        api.query.oracle.prices(
+          picassoId.toString(),
+          (result: ComposableTraitsOraclePrice) => {
+            if (!result.isEmpty) {
+              setPicaPrice(
+                fromChainIdUnit(
+                  unwrapNumberOrHex((result as any).price.toString())
+                )
+              );
+            }
           }
-        }
-      );
-    }, parachainApi, tokens.pica.picassoId);
+        );
+      },
+      parachainApi,
+      tokens.pica.chainId.picasso
+    );
   }, [parachainApi, tokens]);
 
   return circulatingSupply.multipliedBy(picaPrice);
