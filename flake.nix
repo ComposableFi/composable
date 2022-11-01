@@ -13,6 +13,10 @@
       url = "github:ipetkov/crane";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    arion-src = {
+      url = "github:hercules-ci/arion";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = { self, flake-parts, ... }:
@@ -44,6 +48,7 @@
         _module.args.pkgs = import self.inputs.nixpkgs {
           inherit system;
           overlays = with self.inputs; [
+            self.overlays.default
             npm-buildpackage.overlays.default
             rust-overlay.overlays.default
           ];
@@ -67,6 +72,30 @@
         };
       };
       flake = {
+        overlays = {
+          default =
+            let
+              mkDevnetProgram = { pkgs }:
+                name: spec:
+                  pkgs.writeShellApplication {
+                    inherit name;
+                    runtimeInputs = [ pkgs.arion pkgs.docker pkgs.coreutils pkgs.bash ];
+                    text = ''
+                      arion --prebuilt-file ${
+                        pkgs.arion.build spec
+                      } up --build --force-recreate -V --always-recreate-deps --remove-orphans
+                    '';
+                  };
+            in
+            self.inputs.nixpkgs.lib.composeManyExtensions [
+              self.inputs.arion-src.overlay
+              (final: _prev: {
+                composable = {
+                  mkDevnetProgram = final.callPackage mkDevnetProgram { };
+                };
+              })
+            ];
+        };
         # The usual flake attributes can be defined here, including system-
         # agnostic ones like nixosModule and system-enumerating ones, although
         # those are more easily expressed in perSystem.

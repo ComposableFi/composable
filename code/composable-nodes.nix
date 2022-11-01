@@ -6,7 +6,7 @@
         composable-node = systemLib.crane-nightly.buildPackage
           (systemCommonRust.common-attrs // {
             name = "composable";
-            cargoArtifacts = systemCommonRust.common-deps;
+            cargoArtifacts = self'.packages.common-deps;
             cargoBuildCommand =
               "cargo build --release --package composable --features=builtin-wasm";
             DALI_RUNTIME =

@@ -53,17 +53,6 @@
 
       gce-input = gce-to-nix service-account-credential-key-file-input;
 
-      mkDevnetProgram = { pkgs }:
-        name: spec:
-        pkgs.writeShellApplication {
-          inherit name;
-          runtimeInputs = [ pkgs.arion pkgs.docker pkgs.coreutils pkgs.bash ];
-          text = ''
-            arion --prebuilt-file ${
-              pkgs.arion.build spec
-            } up --build --force-recreate -V --always-recreate-deps --remove-orphans
-          '';
-        };
 
       composableOverlay = nixpkgs.lib.composeManyExtensions [
         arion-src.overlay
