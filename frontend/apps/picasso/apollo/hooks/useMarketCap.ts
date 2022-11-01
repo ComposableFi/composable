@@ -19,8 +19,11 @@ export const useMarketCap = () => {
           picassoId.toString(),
           (result: ComposableTraitsOraclePrice) => {
             if (!result.isEmpty) {
-              const { price } = result.toJSON() as any;
-              setPicaPrice(fromChainIdUnit(unwrapNumberOrHex(price)));
+              setPicaPrice(
+                fromChainIdUnit(
+                  unwrapNumberOrHex((result as any).price.toString())
+                )
+              );
             }
           }
         );
