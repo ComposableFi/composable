@@ -49,37 +49,29 @@ describe("[SHORT] rpc.assets Tests", function () {
   it("rpc.assets.listAssets Tests", async function () {
     if (!testConfiguration.enabledTests.rpc.listAssets__success) this.skip();
     const result = await RpcAssetsTests.rpcListAssetsTest(api);
-    expect(result).to.have.lengthOf(20);
     result.every(i => expect(i).to.have.all.keys("id", "name", "decimals", "foreignId"));
     expect(result.map(e => e.id.toNumber())).to.include.members([
-      1, 2, 4, 5, 101, 102, 103, 104, 129, 130, 131, 132, 133, 134, 1001, 1002, 1004, 1005, 2001, 2005
+      // These are the assets to be included on the first release
+      1, 4, 5, 129, 130, 131
     ]);
     expect(result.map(e => hex_to_ascii(e.name.toString()))).to.include.members([
+      // These are the assets to be included on the first release
       "PICA",
-      "LAYR",
       "KSM",
       "PBLO",
-      "KAR",
-      "BNC",
-      "vKSM",
-      "MOVR",
       "kUSD",
       "USDT",
-      "USDC",
-      "wBTC",
-      "wETH",
-      "aUSD",
-      "xPICA",
-      "xLAYR",
-      "xKSM",
-      "xPBLO",
-      "PICA_STAKE_FNFT_COLLECTION",
-      "PBLO_STAKE_FNFT_COLLECTION"
+      "USDC"
     ]);
     result
       .map(e => e.foreignId.toHuman())
       .filter(Boolean)
       .every(i => expect(i).to.have.all.keys("parents", "interior"));
+    // These assets will exist as checked before
+    const PICA = result.find(e => hex_to_ascii(e.name.toString()) === "PICA")!;
+    const KSM = result.find(e => hex_to_ascii(e.name.toString()) === "KSM")!;
+    expect(PICA.id.toNumber()).to.equal(1);
+    expect(KSM.id.toNumber()).to.equal(4);
   });
 });
 
