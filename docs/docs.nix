@@ -1,6 +1,5 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, system, ... }: {
-    # Add the npm-buildpackage overlay to the perSystem's pkgs
     packages = rec {
       docs-static = pkgs.buildNpmPackage {
         src = ./.;
