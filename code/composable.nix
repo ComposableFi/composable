@@ -2,7 +2,7 @@
 {
   perSystem = { config, self', inputs', pkgs, system, systemLib, ... }:
     let
-      rust-src =
+      rustSrc =
         let
           directoryBlacklist = [ "runtime-tests" ];
           fileBlacklist = [
@@ -78,7 +78,7 @@
 
       # Common env required to build the node
       common-attrs = substrate-attrs // {
-        src = rust-src;
+        src = rustSrc;
         buildInputs = with pkgs; [ openssl zstd ];
         nativeBuildInputs = with pkgs;
           [ clang openssl pkg-config ] ++ pkgs.lib.optional stdenv.isDarwin
@@ -126,6 +126,9 @@
       # Add the npm-buildpackage overlay to the perSystem's pkgs
       packages = rec {
         inherit wasm-optimizer;
+        inherit common-deps;
+        inherit common-deps-nightly;
+        inherit common-bench-deps;
 
         dali-runtime = mkOptimizedRuntime {
           name = "dali";

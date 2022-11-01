@@ -162,32 +162,6 @@
               ];
             };
           };
-          npm-bp = pkgs.callPackage npm-buildpackage { };
-
-          # Stable rust for anything except wasm runtime
-          rust-stable = pkgs.rust-bin.stable.latest.default;
-
-          rust-nightly =
-            pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
-
-          # Crane lib instantiated with current nixpkgs
-          crane-lib = crane.mkLib pkgs;
-
-          # Crane pinned to stable Rust
-          crane-stable = crane-lib.overrideToolchain rust-stable;
-
-          # Crane pinned to nightly Rust
-          crane-nightly = crane-lib.overrideToolchain rust-nightly;
-
-          wasm-optimizer = crane-stable.buildPackage (common-attrs // {
-            cargoCheckCommand = "true";
-            pname = "wasm-optimizer";
-            cargoArtifacts = common-deps;
-            cargoBuildCommand =
-              "cargo build --release --package wasm-optimizer";
-            version = "0.1.0";
-            # NOTE: we copy more then needed, but tht is simpler to setup, we depend on substrate for sure so
-          });
 
           # for containers which are intended for testing, debug and development (including running isolated runtime)
           docker-in-docker = with pkgs; [ docker docker-buildx docker-compose ];
@@ -306,33 +280,6 @@
           common-bench-deps =
             crane-nightly.buildDepsOnly (common-bench-attrs // { });
 
-          # Build a wasm runtime, unoptimized
-          mk-runtime = name: features:
-            crane-nightly.buildPackage (common-attrs // {
-              pname = "${name}-runtime";
-              cargoArtifacts = common-deps-nightly;
-              cargoBuildCommand =
-                "cargo build --release -p ${name}-runtime-wasm --target wasm32-unknown-unknown"
-                + pkgs.lib.strings.optionalString (features != "")
-                (" --features=${features}");
-              # From parity/wasm-builder
-              RUSTFLAGS =
-                "-Clink-arg=--export=__heap_base -Clink-arg=--import-memory";
-            });
-
-          # Derive an optimized wasm runtime from a prebuilt one, garbage collection + compression
-          mk-optimized-runtime = { name, features ? "" }:
-            let runtime = mk-runtime name features;
-            in pkgs.stdenv.mkDerivation {
-              name = "${runtime.name}-optimized";
-              phases = [ "installPhase" ];
-              installPhase = ''
-                mkdir -p $out/lib
-                ${wasm-optimizer}/bin/wasm-optimizer \
-                --input ${runtime}/lib/${name}_runtime.wasm \
-                --output $out/lib/runtime.optimized.wasm
-              '';
-            };
 
           devcontainer-base-image =
             pkgs.callPackage ./.devcontainer/devcontainer-base-image.nix {
@@ -346,82 +293,6 @@
             contents = [ rust-nightly ] ++ containers-tools-minimal
               ++ docker-in-docker;
           };
-
-          dali-runtime = mk-optimized-runtime {
-            name = "dali";
-            features = "";
-          };
-          picasso-runtime = mk-optimized-runtime {
-            name = "picasso";
-            features = "";
-          };
-          composable-runtime = mk-optimized-runtime {
-            name = "composable";
-            features = "";
-          };
-          dali-bench-runtime = mk-optimized-runtime {
-            name = "dali";
-            features = "runtime-benchmarks";
-          };
-          picasso-bench-runtime = mk-optimized-runtime {
-            name = "picasso";
-            features = "runtime-benchmarks";
-          };
-          composable-bench-runtime = mk-optimized-runtime {
-            name = "composable";
-            features = "runtime-benchmarks";
-          };
-
-          # NOTE: with docs, non nightly fails but nightly fails too...
-          # /nix/store/523zlfzypzcr969p058i6lcgfmg889d5-stdenv-linux/setup: line 1393: --message-format: command not found
-          composable-node = crane-nightly.buildPackage (common-attrs // {
-            name = "composable";
-            cargoArtifacts = common-deps;
-            cargoBuildCommand =
-              "cargo build --release --package composable --features=builtin-wasm";
-            DALI_RUNTIME = "${dali-runtime}/lib/runtime.optimized.wasm";
-            PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
-            COMPOSABLE_RUNTIME =
-              "${composable-runtime}/lib/runtime.optimized.wasm";
-            installPhase = ''
-              mkdir -p $out/bin
-              cp target/release/composable $out/bin/composable
-            '';
-            meta = { mainProgram = "composable"; };
-          });
-
-          composable-node-release = crane-nightly.buildPackage (common-attrs
-            // {
-              name = "composable";
-              cargoArtifacts = common-deps;
-              cargoBuildCommand = "cargo build --release --package composable";
-              SUBSTRATE_CLI_GIT_COMMIT_HASH = if self ? rev then
-                self.rev
-              else
-                builtins.abort "Cannot build the release node in a dirty repo.";
-              installPhase = ''
-                mkdir -p $out/bin
-                cp target/release/composable $out/bin/composable
-              '';
-              meta = { mainProgram = "composable"; };
-            });
-
-          composable-bench-node = crane-nightly.cargoBuild (common-bench-attrs
-            // {
-              name = "composable";
-              cargoArtifacts = common-bench-deps;
-              cargoBuildCommand = "cargo build --release --package composable";
-              DALI_RUNTIME = "${dali-bench-runtime}/lib/runtime.optimized.wasm";
-              PICASSO_RUNTIME =
-                "${picasso-bench-runtime}/lib/runtime.optimized.wasm";
-              COMPOSABLE_RUNTIME =
-                "${composable-bench-runtime}/lib/runtime.optimized.wasm";
-              installPhase = ''
-                mkdir -p $out/bin
-                cp target/release/composable $out/bin/composable
-              '';
-              meta = { mainProgram = "composable"; };
-            });
 
           benchmarks-run-once = chainspec:
             pkgs.writeShellScriptBin "run-benchmarks-once" ''
