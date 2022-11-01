@@ -78,6 +78,21 @@
           # Don't build any wasm as we do it ourselves
           SKIP_WASM_BUILD = "1";
         };
+
+        # TODO: refactor as mkOverride common-attrs
+        common-test-deps-attrs = substrate-attrs // {
+          src = rustSrc;
+          buildInputs = with pkgs; [ openssl zstd ];
+          nativeBuildInputs = with pkgs;
+            [ clang openssl pkg-config ] ++ pkgs.lib.optional stdenv.isDarwin
+            (with darwin.apple_sdk.frameworks; [
+              Security
+              SystemConfiguration
+            ]);
+          doCheck = true;
+          SKIP_WASM_BUILD = "1";
+        };
+
         common-bench-attrs = common-attrs // { cargoExtraArgs = "--features=builtin-wasm,runtime-benchmarks"; };
 
       };
@@ -86,6 +101,7 @@
         common-deps = systemLib.crane-nightly.buildDepsOnly (systemCommonRust.common-attrs // { });
         common-deps-nightly = systemLib.crane-nightly.buildDepsOnly (systemCommonRust.common-attrs // { });
         common-bench-deps = systemLib.crane-nightly.buildDepsOnly (systemCommonRust.common-bench-attrs // { });
+        common-test-deps = systemLib.crane-nightly.buildDepsOnly (systemCommonRust.common-test-deps-attrs // { });
 
         wasm-optimizer = systemLib.crane-stable.buildPackage (systemCommonRust.common-attrs // {
           cargoCheckCommand = "true";

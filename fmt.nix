@@ -1,14 +1,13 @@
-{ self, ... }:
-{
+{ self, ... }: {
   perSystem = { config, self', inputs', pkgs, system, ... }:
     let
-      rust-nightly = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
+      rust-nightly =
+        pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
 
       allDirectoriesAndFiles = pkgs.stdenv.mkDerivation {
         name = "allDirectoriesAndFiles";
         src =
-          builtins.filterSource (path: _type: baseNameOf path != ".git")
-          ./.;
+          builtins.filterSource (path: _type: baseNameOf path != ".git") ./.;
         dontUnpack = true;
         installPhase = ''
           mkdir $out/
@@ -16,13 +15,11 @@
         '';
       };
 
-
       filesWithExtension = extension:
         pkgs.stdenv.mkDerivation {
           name = "files-with-extension-${extension}";
-          src = builtins.filterSource
-            (path: type:
-              (type == "directory" && baseNameOf path != ".git") || (type
+          src = builtins.filterSource (path: type:
+            (type == "directory" && baseNameOf path != ".git") || (type
               == "regular" && pkgs.lib.strings.hasSuffix ".${extension}" path))
             ./.;
           dontUnpack = true;
@@ -34,20 +31,14 @@
 
       allNixFiles = filesWithExtension "nix";
       allTomlFiles = filesWithExtension "toml";
-    in
-    {
+    in {
       packages = {
         fmt = pkgs.writeShellApplication {
           name = "fmt-composable";
 
-          runtimeInputs = with pkgs; [
-            nixfmt
-            coreutils
-            taplo
-            nodePackages.prettier
-          ] ++ [
-            rust-nightly
-          ];
+          runtimeInputs = with pkgs;
+            [ nixfmt coreutils taplo nodePackages.prettier ]
+            ++ [ rust-nightly ];
 
           text = ''
               # .nix
@@ -128,8 +119,7 @@
         spell-check = pkgs.stdenv.mkDerivation {
           name = "cspell-check";
           dontUnpack = true;
-          buildInputs =
-            [ allDirectoriesAndFiles pkgs.nodePackages.cspell ];
+          buildInputs = [ allDirectoriesAndFiles pkgs.nodePackages.cspell ];
           installPhase = ''
             mkdir $out
             echo "cspell version: $(cspell --version)"

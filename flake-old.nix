@@ -185,102 +185,7 @@
               procps
             ] ++ containers-tools-minimal;
 
-          # source relevant to build rust only
-          rust-src = let
-            directoryBlacklist = [ "runtime-tests" ];
-            fileBlacklist = [
-              # does not makes sense to black list,
-              # if we changed some version of tooling(seldom), we want to rebuild
-              # so if we changed version of tooling, nix itself will detect invalidation and rebuild
-              # "flake.lock"
-            ];
-          in pkgs.lib.cleanSourceWith {
-            filter = pkgs.lib.cleanSourceFilter;
-            src = pkgs.lib.cleanSourceWith {
-              filter = let
-                isBlacklisted = name: type:
-                  let
-                    blacklist = if type == "directory" then
-                      directoryBlacklist
-                    else if type == "regular" then
-                      fileBlacklist
-                    else
-                      [ ]; # symlink, unknown
-                  in builtins.elem (baseNameOf name) blacklist;
-                isImageFile = name: type:
-                  type == "regular" && pkgs.lib.strings.hasSuffix ".png" name;
-                isPlantUmlFile = name: type:
-                  type == "regular"
-                  && pkgs.lib.strings.hasSuffix ".plantuml" name;
-                isNixFile = name: type:
-                  type == "regular" && pkgs.lib.strings.hasSuffix ".nix" name;
-                customFilter = name: type:
-                  !((isBlacklisted name type) || (isImageFile name type)
-                    || (isPlantUmlFile name type)
-                    # assumption that nix is final builder,
-                    # so there would no be sandwich like  .*.nix <- build.rs <- *.nix
-                    # and if *.nix changed, nix itself will detect only relevant cache invalidations
-                    || (isNixFile name type));
-              in pkgs.nix-gitignore.gitignoreFilterPure customFilter
-              [ ./.gitignore ] ./code;
-              src = ./code;
-            };
-          };
-
-          substrate-attrs = {
-            LD_LIBRARY_PATH = pkgs.lib.strings.makeLibraryPath [
-              pkgs.stdenv.cc.cc.lib
-              pkgs.llvmPackages.libclang.lib
-            ];
-            LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
-            PROTOC = "${pkgs.protobuf}/bin/protoc";
-            ROCKSDB_LIB_DIR = "${pkgs.rocksdb}/lib";
-          };
-
-          # Common env required to build the node
-          common-attrs = substrate-attrs // {
-            src = rust-src;
-            buildInputs = with pkgs; [ openssl zstd ];
-            nativeBuildInputs = with pkgs;
-              [ clang openssl pkg-config ] ++ pkgs.lib.optional stdenv.isDarwin
-              (with darwin.apple_sdk.frameworks; [
-                Security
-                SystemConfiguration
-              ]);
-            doCheck = false;
-            cargoCheckCommand = "true";
-            # Don't build any wasm as we do it ourselves
-            SKIP_WASM_BUILD = "1";
-          };
-
-          # TODO: refactor as mkOverride common-attrs
-          common-test-deps-attrs = substrate-attrs // {
-            src = rust-src;
-            buildInputs = with pkgs; [ openssl zstd ];
-            nativeBuildInputs = with pkgs;
-              [ clang openssl pkg-config ] ++ pkgs.lib.optional stdenv.isDarwin
-              (with darwin.apple_sdk.frameworks; [
-                Security
-                SystemConfiguration
-              ]);
-            doCheck = true;
-            SKIP_WASM_BUILD = "1";
-          };
-
-          # Common dependencies, all dependencies listed that are out of this repo
-          common-deps = crane-nightly.buildDepsOnly (common-attrs // { });
-          common-deps-nightly =
-            crane-nightly.buildDepsOnly (common-attrs // { });
-          common-bench-attrs = common-attrs // {
-            cargoExtraArgs = "--features=builtin-wasm,runtime-benchmarks";
-          };
-          common-test-deps =
-            crane-nightly.buildDepsOnly (common-test-deps-attrs // { });
-
-          common-bench-deps =
-            crane-nightly.buildDepsOnly (common-bench-attrs // { });
-
-          devcontainer-base-image =
+         devcontainer-base-image =
             pkgs.callPackage ./.devcontainer/devcontainer-base-image.nix {
               inherit system;
             };
@@ -509,20 +414,6 @@
 
         in rec {
           packages = rec {
-            inherit wasm-optimizer;
-            inherit common-deps;
-            inherit common-bench-deps;
-            inherit common-test-deps;
-            inherit dali-runtime;
-            inherit picasso-runtime;
-            inherit composable-runtime;
-            inherit dali-bench-runtime;
-            inherit picasso-bench-runtime;
-            inherit composable-bench-runtime;
-            inherit composable-node;
-            inherit composable-node-release;
-            inherit composable-bench-node;
-            inherit rust-nightly;
             inherit simnode-tests;
             inherit subwasm;
             inherit frontend-static;
@@ -657,6 +548,7 @@
               cargoBuildCommand = "cargo build --release -p price-feed";
               meta = { mainProgram = "price-feed"; };
             });
+
 
             docker-wipe-system =
               pkgs.writeShellScriptBin "docker-wipe-system" ''
@@ -846,6 +738,7 @@
               cargoArtifacts = common-deps-nightly;
               cargoExtraArgs = "--all --check --verbose";
             });
+
 
             cargo-clippy-check = crane-nightly.cargoBuild (common-attrs // {
               cargoArtifacts = common-deps-nightly;
@@ -1139,7 +1032,18 @@
                 chain = "dali";
                 steps = 50;
                 repeat = 10;
-              };
+              };sNixFile = name: type:
+                    type == "regular" && pkgs.lib.strings.hasSuffix ".nix" name;
+                  customFilter = name: type:
+                    !((isBlacklisted name type) || (isImageFile name type)
+                      || (isPlantUmlFile name type)
+                      # assumption that nix is final builder,
+                      # so there would no be sandwich like  .*.nix <- build.rs <- *.nix
+                      # and if *.nix changed, nix itself will detect only relevant cache invalidations
+                      || (isNixFile name type));
+                in
+                pkgs.nix-gitignore.gitignoreFilterPure customFilter
+                  [ ../.gitigno
             };
             benchmarks-generate-picasso = flake-utils.lib.mkApp {
               drv = generate-benchmarks {
@@ -1175,7 +1079,18 @@
                 steps = 2;
                 repeat = 2;
               };
-            };
+            };sNixFile = name: type:
+                    type == "regular" && pkgs.lib.strings.hasSuffix ".nix" name;
+                  customFilter = name: type:
+                    !((isBlacklisted name type) || (isImageFile name type)
+                      || (isPlantUmlFile name type)
+                      # assumption that nix is final builder,
+                      # so there would no be sandwich like  .*.nix <- build.rs <- *.nix
+                      # and if *.nix changed, nix itself will detect only relevant cache invalidations
+                      || (isNixFile name type));
+                in
+                pkgs.nix-gitignore.gitignoreFilterPure customFilter
+                  [ ../.gitigno
             simnode-tests = makeApp packages.simnode-tests;
             simnode-tests-composable =
               flake-utils.lib.mkApp { drv = run-simnode-tests "composable"; };

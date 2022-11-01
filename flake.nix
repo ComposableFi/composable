@@ -42,19 +42,19 @@
         # Add the npm-buildpackage overlay to the perSystem's pkgs
         _module.args.pkgs = import self.inputs.nixpkgs {
           inherit system;
-          overlays = with self.inputs; [ 
-            npm-buildpackage.overlays.default 
+          overlays = with self.inputs; [
+            npm-buildpackage.overlays.default
             rust-overlay.overlays.default
           ];
         };
-        
+
         # System-specific lib to be used accross flake parts
         _module.args.systemLib = rec {
-        
-        
+
           # TODO: Find a way to define these in flake parts
           rust-stable = pkgs.rust-bin.stable.latest.default;
-          rust-nightly = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
+          rust-nightly =
+            pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
           # Crane lib instantiated with current nixpkgs
           crane-lib = self.inputs.crane.mkLib pkgs;
 
