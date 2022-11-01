@@ -9,14 +9,14 @@ export type TokenBalance = {
   existentialDeposit: BigNumber;
 };
 
-type InitialState = {
+type SubstrateBalancesState = {
   balances: {
     [chainId in SubstrateNetworkId]: {
       [assetId in TokenId]: TokenBalance;
     };
   };
 };
-const initialState: InitialState = SUBSTRATE_NETWORK_IDS.reduce(
+const initialState: SubstrateBalancesState = SUBSTRATE_NETWORK_IDS.reduce(
   (prev, chain: SubstrateNetworkId) => {
     return {
       balances: {
@@ -32,7 +32,7 @@ const initialState: InitialState = SUBSTRATE_NETWORK_IDS.reduce(
       },
     };
   },
-  {} as InitialState
+  {} as SubstrateBalancesState
 );
 export interface SubstrateBalancesActions {
   updateBalance: (data: {
@@ -46,7 +46,7 @@ export interface SubstrateBalancesActions {
 }
 
 export interface SubstrateBalancesSlice {
-  substrateBalances: InitialState & SubstrateBalancesActions;
+  substrateBalances: SubstrateBalancesState & SubstrateBalancesActions;
 }
 
 export const createSubstrateBalancesSlice: StoreSlice<
@@ -92,7 +92,7 @@ export const createSubstrateBalancesSlice: StoreSlice<
       return get().substrateBalances.balances[network][token].balance;
     },
     getAssetBalance: (tokenId: TokenId, network: SubstrateNetworkId) => {
-      return get().substrateBalances.balances[network][tokenId].balance
+      return get().substrateBalances.balances[network][tokenId].balance;
     },
   },
 });

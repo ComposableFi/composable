@@ -13,9 +13,9 @@ import Default from "@/components/Templates/Default";
 import { useTransfer } from "@/defi/polkadot/hooks/useTransfer";
 import { getDestChainFee } from "@/defi/polkadot/pallets/Transfer";
 import { useStore } from "@/stores/root";
-import { Button, Grid, Typography } from "@mui/material";
+import { Alert, Button, Grid, Typography } from "@mui/material";
 import { NextPage } from "next";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import {
   subscribeDestinationMultiLocation,
   subscribeMultiAsset,
@@ -25,6 +25,7 @@ import { useSelectedAccount } from "@/defi/polkadot/hooks";
 import { useAllParachainProviders } from "@/defi/polkadot/context/hooks";
 import BigNumber from "bignumber.js";
 import { usePendingExtrinsic } from "substrate-react";
+import { DangerousRounded, InfoOutlined } from "@mui/icons-material";
 
 const Transfers: NextPage = () => {
   const { amount, setAmount, from, balance, transfer, to } = useTransfer();
@@ -48,6 +49,7 @@ const Transfers: NextPage = () => {
   );
 
   const hasPendingTransfer = hasPendingXcmTransfer || hasPendingXTokensTransfer;
+  const getBalance = useStore((state) => state.substrateBalances.getBalance);
 
   useEffect(() => {
     if (
@@ -69,6 +71,11 @@ const Transfers: NextPage = () => {
       };
     }
   }, [allProviders, from, selectedAccount, isLoaded]);
+
+  const hasEnoughGasFee = useMemo(() => {
+    const feeBalance = getBalance(feeTokenId.id, from);
+    return feeBalance.gte(fee.partialFee);
+  }, [fee.partialFee, feeTokenId.id, from, getBalance]);
 
   useEffect(() => {
     return () => {
@@ -103,6 +110,20 @@ const Transfers: NextPage = () => {
         <Grid item {...gridItemStyle("1.5rem")}>
           <TransferFeeDisplay />
         </Grid>
+        {!hasEnoughGasFee ? (
+          <Grid item {...gridItemStyle("1.5rem")}>
+            <Alert
+              variant="filled"
+              severity="error"
+              iconMapping={{
+                error: <InfoOutlined color="error" />,
+              }}
+            >
+              You do not have enough gas for this transfer, switch token or top
+              up to complete transfer.
+            </Alert>
+          </Grid>
+        ) : null}
         <Grid item {...gridItemStyle()}>
           <TransferKeepAliveSwitch />
         </Grid>
@@ -117,6 +138,7 @@ const Transfers: NextPage = () => {
               amount.lte(0) ||
               amount.gt(balance) ||
               amount.lte(minValue) ||
+              !hasEnoughGasFee ||
               hasPendingTransfer
             }
             fullWidth

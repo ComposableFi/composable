@@ -22,6 +22,21 @@ import {
   picassoAssetsList,
 } from "@/defi/polkadot/pallets/Assets";
 import { VoidFn } from "@polkadot/api/types";
+import { AcalaPrimitivesCurrencyCurrencyId } from "@acala-network/types/interfaces/types-lookup";
+import { ApiPromise } from "@polkadot/api";
+
+/**
+ * Get Native Token symbol for Karura
+ *
+ * @param {ApiPromise} api
+ * @returns {string} NATIVE token symbol, or empty string
+ */
+function getKaruraNativeToken(api: ApiPromise) {
+  const nativeToken: AcalaPrimitivesCurrencyCurrencyId =
+    api.consts.currencies.getNativeCurrencyId;
+
+  return (nativeToken.toHuman() as { Token: string }).Token ?? "";
+}
 
 const PolkadotBalancesUpdater = () => {
   useEagerConnect("picasso");
@@ -75,6 +90,11 @@ const PolkadotBalancesUpdater = () => {
       chainId,
       accounts
     ) => {
+      console.log(
+        chainId,
+        tokenMetadata.symbol,
+        tokenMetadata.chainId.picasso?.toString()
+      );
       callbackGate(
         async (api, tokenMetadata, chainId, account) => {
           await subscribePicassoBalanceByAssetId(
@@ -168,7 +188,13 @@ const PolkadotBalancesUpdater = () => {
               );
               break;
             case "karura":
-              if (connectedAccounts.karura[selectedAccount]) {
+              // Ignore native token since for that we need to fetch system
+              const nativeTokenSymbol = getKaruraNativeToken(api);
+
+              if (
+                connectedAccounts.karura[selectedAccount] &&
+                nativeTokenSymbol !== asset.symbol
+              ) {
                 subscribeKaruraBalance(
                   api,
                   connectedAccounts.karura[selectedAccount].address,

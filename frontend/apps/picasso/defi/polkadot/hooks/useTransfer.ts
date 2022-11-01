@@ -50,43 +50,53 @@ export const useTransfer = () => {
     const signerAddress = account.address;
     const call = makeTransferCall(api, TARGET_ACCOUNT_ADDRESS);
     if (!call) {
-      console.log(call);
       console.error("Could not make transfer extrinsic");
       return;
     }
-
-    await executor.execute(
-      call,
-      signerAddress,
-      api,
-      signer,
-      (txHash) => {
-        enqueueSnackbar("Transfer executed", {
+    try {
+      await executor.execute(
+        call,
+        signerAddress,
+        api,
+        signer,
+        (txHash) => {
+          enqueueSnackbar("Transfer executed", {
+            persist: true,
+            description: `Transaction hash: ${txHash}`,
+            variant: "info",
+            isCloseable: true,
+            url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
+          });
+        },
+        (txHash) => {
+          enqueueSnackbar("Transfer executed successfully.", {
+            persist: true,
+            variant: "success",
+            isCloseable: true,
+            url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
+          });
+          setAmount(new BigNumber(0));
+        },
+        (err) => {
+          enqueueSnackbar("Transfer failed", {
+            persist: true,
+            description: `Error: ${err}`,
+            variant: "error",
+            isCloseable: true,
+          });
+        }
+      );
+    } catch (e) {
+      if (e instanceof Error) {
+        enqueueSnackbar(e.toString(), {
           persist: true,
-          description: `Transaction hash: ${txHash}`,
-          variant: "info",
-          isCloseable: true,
-          url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
-        });
-      },
-      (txHash) => {
-        enqueueSnackbar("Transfer executed successfully.", {
-          persist: true,
-          variant: "success",
-          isCloseable: true,
-          url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
-        });
-        setAmount(new BigNumber(0));
-      },
-      (err) => {
-        enqueueSnackbar("Transfer failed", {
-          persist: true,
-          description: `Error: ${err}`,
+          description: "",
           variant: "error",
           isCloseable: true,
         });
+        console.warn(e);
       }
-    );
+    }
   };
 
   return {
