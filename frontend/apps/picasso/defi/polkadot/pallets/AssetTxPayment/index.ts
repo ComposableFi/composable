@@ -2,11 +2,7 @@ import { TokenId } from "tokens";
 import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
 import { ApiPromise } from "@polkadot/api";
 import { Signer } from "@polkadot/api/types";
-import {
-  Executor,
-  ParachainId,
-  RelayChainId,
-} from "substrate-react";
+import { Executor, ParachainId, RelayChainId } from "substrate-react";
 import { extractTokenByNetworkIdentifier } from "../Assets";
 
 export type SetPaymentAssetArgs = {
@@ -57,40 +53,34 @@ export async function getPaymentAsset({
   network,
   tokens,
 }: GetPaymentAssetArgs) {
-  if ("assetTxPayment" in api.query) {
-    /**
-     * Identify behavior on
-     * all chains the 
-     * we would support
-     */
-    const result: any = await api.query.assetTxPayment.paymentAssets(
-      api.createType("AccountId32", walletAddress)
-    );
+  if (network === "picasso") {
+    try {
+      const result: any = await api.query.assetTxPayment.paymentAssets(
+        api.createType("AccountId32", walletAddress)
+      );
 
-    if (result.isSome) {
-      /**
-       * TODO
-       * This can cause weird behavior
-       * we need to address the types returned
-       * by paymentAssets
-       * for picasso assetId type is BigNumber
-       * for karura its symbol in string
-       * for kusama its js number
-       */
-      const [assetId, _] = result.toJSON();
-      if (assetId) {
-        /**
-         * Needs to change
-         * Not a good approach
-         */
-        const asset = extractTokenByNetworkIdentifier(tokens, network, assetId);
-        if (asset) {
-          return asset;
+      if (result.isSome) {
+        const [assetId] = result.toJSON();
+        if (assetId) {
+          const asset = extractTokenByNetworkIdentifier(
+            tokens,
+            network,
+            assetId
+          );
+          if (asset) {
+            return asset;
+          }
         }
       }
+      return tokens.pica;
+    } catch (e) {
+      console.error("Error while trying to access assetTxPayment pallet", e);
+      return tokens.pica;
     }
-    return tokens.pica;
+  }
+  if (network === "kusama") {
+    return tokens.ksm;
   }
 
-  return tokens.pica;
+  return tokens.kar;
 }

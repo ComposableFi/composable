@@ -28,7 +28,10 @@ export async function fetchBondOfferCount(api: ApiPromise) {
   return new BigNumber(countBondOffers.toHuman());
 }
 
-export async function fetchBonds(api: ApiPromise, tokens: Record<TokenId, TokenMetadata>) {
+export async function fetchBonds(
+  api: ApiPromise,
+  tokens: Record<TokenId, TokenMetadata>
+) {
   // Count bonded offers
   const bondOfferCount = await fetchBondOfferCount(api);
   // @ts-ignore
@@ -103,21 +106,31 @@ async function fetchBondPrice(
   ];
 }
 
-function getAssets(asset: string, tokens: Record<TokenId, TokenMetadata>): TokenMetadata[] {
+function getAssets(
+  asset: string,
+  tokens: Record<TokenId, TokenMetadata>
+): TokenMetadata[] {
   let assets = [];
 
   for (const token in tokens) {
-    if (tokens[token as TokenId].picassoId && tokens[token as TokenId].picassoId?.toString() === asset) {
+    if (
+      tokens[token as TokenId].chainId.picasso &&
+      tokens[token as TokenId].chainId.picasso?.toString() === asset
+    ) {
       assets.push({
-        ... tokens[token as TokenId]
-      })
+        ...tokens[token as TokenId],
+      });
     }
   }
 
-  return assets
+  return assets;
 }
 
-function bondTransformer(beneficiary: AccountId32, bondOffer: any, tokens: Record<TokenId, TokenMetadata>): BondOffer {
+function bondTransformer(
+  beneficiary: AccountId32,
+  bondOffer: any,
+  tokens: Record<TokenId, TokenMetadata>
+): BondOffer {
   return {
     bondOfferId: bondOffer.offerId,
     beneficiary,
