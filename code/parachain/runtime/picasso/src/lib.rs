@@ -25,7 +25,7 @@ pub mod governance;
 mod weights;
 pub mod xcmp;
 pub use common::xcmp::{MaxInstructions, UnitWeightCost};
-use xcmp::XcmConfig;
+pub use xcmp::XcmConfig;
 
 use governance::*;
 

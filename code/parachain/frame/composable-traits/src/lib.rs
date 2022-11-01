@@ -33,6 +33,7 @@
 	trivial_numeric_casts,
 	unused_extern_crates
 )]
+#![allow(incomplete_features)]
 #![feature(associated_type_defaults)]
 #![feature(trait_alias)]
 #![feature(const_trait_impl)]

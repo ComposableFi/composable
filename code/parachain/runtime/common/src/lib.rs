@@ -1,15 +1,18 @@
 #![cfg_attr(
-	not(test),
+	not(any(test, feature = "runtime-benchmarks")),
 	deny(
 		clippy::disallowed_methods,
 		clippy::disallowed_types,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
-		clippy::panic
+		clippy::panic,
+		clippy::unseparated_literal_suffix,
+		unused_imports,
+		non_snake_case,
+		dead_code
 	)
 )]
-#![deny(clippy::unseparated_literal_suffix, unused_imports, non_snake_case, dead_code)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod fees;
