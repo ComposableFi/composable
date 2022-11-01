@@ -26,3 +26,4 @@ In the PR description,
 - [ ] Update Subsquid version (if necessary to be released)
 - [ ] Consider and list possible proxy filter updates for available calls.
 - [ ] Categorize (and give a title) the release according to the types of changes it does, eg: security patch, bugfix, feature etc.
+- [ ] Run `cargo build` once to update the Cargo.lock file.
