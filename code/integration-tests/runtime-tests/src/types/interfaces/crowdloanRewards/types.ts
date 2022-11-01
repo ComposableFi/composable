@@ -2,7 +2,7 @@
 /* eslint-disable */
 
 import type { ComposableTraitsDefiCurrencyPairCurrencyId, CurrencyId } from '@composable/types/interfaces/common';
-import type { Enum, Null, Struct, bool, u128, u32 } from '@polkadot/types-codec';
+import type { Enum, Null, Struct, bool, u128, u32, u64 } from '@polkadot/types-codec';
 import type { ITuple } from '@polkadot/types-codec/types';
 import type { EthereumAccountId } from '@polkadot/types/interfaces/eth';
 import type { EcdsaSignature, MultiSignature } from '@polkadot/types/interfaces/extrinsics';
@@ -70,6 +70,9 @@ export interface ComposableTraitsDefiSell extends Null {}
 
 /** @name ComposableTraitsDefiTake */
 export interface ComposableTraitsDefiTake extends Null {}
+
+/** @name ComposableTraitsDexAssetAmount */
+export interface ComposableTraitsDexAssetAmount extends Null {}
 
 /** @name ComposableTraitsDexConstantProductPoolInfo */
 export interface ComposableTraitsDexConstantProductPoolInfo extends Struct {
@@ -235,6 +238,9 @@ export interface PalletAssetsRegistryForeignMetadata extends Null {}
 /** @name PalletCollatorSelectionCandidateInfo */
 export interface PalletCollatorSelectionCandidateInfo extends Null {}
 
+/** @name PalletCosmwasmCodeIdentifier */
+export interface PalletCosmwasmCodeIdentifier extends Null {}
+
 /** @name PalletCosmwasmCodeInfo */
 export interface PalletCosmwasmCodeInfo extends Null {}
 
@@ -262,11 +268,16 @@ export interface PalletCrowdloanRewardsModelsRemoteAccount extends Enum {
   readonly asRelayChain: AccountId32;
   readonly isEthereum: boolean;
   readonly asEthereum: EthereumAccountId;
-  readonly type: 'RelayChain' | 'Ethereum';
+  readonly isRegistry: boolean;
+  readonly type: 'RelayChain' | 'Ethereum' | 'Registry';
 }
 
 /** @name PalletCrowdloanRewardsModelsReward */
-export interface PalletCrowdloanRewardsModelsReward extends Null {}
+export interface PalletCrowdloanRewardsModelsReward extends Struct {
+  readonly total: u128;
+  readonly claimed: u128;
+  readonly vestingPeriod: u64;
+}
 
 /** @name PalletCrowdloanRewardsReward */
 export interface PalletCrowdloanRewardsReward extends Null {}
