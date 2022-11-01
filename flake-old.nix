@@ -54,15 +54,6 @@
       gce-input = gce-to-nix service-account-credential-key-file-input;
 
 
-      composableOverlay = nixpkgs.lib.composeManyExtensions [
-        arion-src.overlay
-        (final: _prev: {
-          composable = {
-            mkDevnetProgram = final.callPackage mkDevnetProgram { };
-          };
-        })
-      ];
-
       mk-devnet = { pkgs, lib, writeTextFile, writeShellApplication
         , useGlobalChainSpec ? true, polkadot-launch, composable-node
         , polkadot-node, chain-spec, network-config-path ?
@@ -136,11 +127,6 @@
         let
           pkgs = import nixpkgs {
             inherit system;
-            overlays = [
-              composableOverlay
-              rust-overlay.overlays.default
-              npm-buildpackage.overlays.default
-            ];
             allowUnsupportedSystem = true; # we do not trigger this on mac
             config = {
               permittedInsecurePackages = [
@@ -213,8 +199,6 @@
               --repeat=${builtins.toString repeat} \
               --output=code/parachain/runtime/${chain}/src/weights
             '';
-
-          docs-renders = with pkgs; [ nodejs plantuml graphviz pandoc ];
 
           mkFrontendStatic = { kusamaEndpoint, picassoEndpoint, karuraEndpoint
             , subsquidEndpoint }:
@@ -894,15 +878,10 @@
           };
 
           devShells = rec {
-
             base-shell = pkgs.mkShell {
               buildInputs = [ helix.packages.${pkgs.system}.default ];
               NIX_PATH = "nixpkgs=${pkgs.path}";
             };
-
-            docs = base-shell.overrideAttrs (base: {
-              buildInputs = base.buildInputs ++ (with pkgs; [ python3 nodejs ]);
-            });
 
             developers-minimal = base-shell.overrideAttrs (base:
               common-attrs // {
@@ -950,7 +929,7 @@
                 pkgs.nodePackages.typescript
                 pkgs.nodePackages.typescript-language-server
                 packages.subxt
-              ] ++ docs-renders;
+              ]; 
             });
 
             developers-with-wasm-optimizer = developers.overrideAttrs (base: {
@@ -1098,7 +1077,6 @@
         });
     in eachSystemOutputs // {
 
-      overlays.default = composableOverlay;
       nixopsConfigurations = {
         default = let pkgs = nixpkgs.legacyPackages.x86_64-linux;
         in import ./.nix/devnet.nix {
