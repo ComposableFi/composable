@@ -1,5 +1,6 @@
 { self, ... }: {
-  perSystem = { config, self', inputs', pkgs, system, crane, systemCommonRust, ... }: {
+  perSystem =
+    { config, self', inputs', pkgs, system, crane, systemCommonRust, ... }: {
       # Add the npm-buildpackage overlay to the perSystem's pkgs
       packages = rec {
         composable-node = crane.nightly.buildPackage

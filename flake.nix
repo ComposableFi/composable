@@ -72,10 +72,11 @@
           # Crane pinned to nightly Rust
           nightly = lib.overrideToolchain self'.packages.rust-nightly;
         };
-        
+
         packages = {
           rust-stable = pkgs.rust-bin.stable.latest.default;
-          rust-nightly = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
+          rust-nightly =
+            pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
           subxt = pkgs.callPackage ./code/utils/composable-subxt/subxt.nix { };
           junod = pkgs.callPackage ./code/xcvm/cosmos/junod.nix { };
           gex = pkgs.callPackage ./code/xcvm/cosmos/gex.nix { };
@@ -86,28 +87,27 @@
       };
       flake = {
         overlays = {
-          default =
-            let
-              mkDevnetProgram = { pkgs }:
-                name: spec:
-                  pkgs.writeShellApplication {
-                    inherit name;
-                    runtimeInputs = [ pkgs.arion pkgs.docker pkgs.coreutils pkgs.bash ];
-                    text = ''
-                      arion --prebuilt-file ${
-                        pkgs.arion.build spec
-                      } up --build --force-recreate -V --always-recreate-deps --remove-orphans
-                    '';
-                  };
-            in
-            self.inputs.nixpkgs.lib.composeManyExtensions [
-              self.inputs.arion-src.overlay
-              (final: _prev: {
-                composable = {
-                  mkDevnetProgram = final.callPackage mkDevnetProgram { };
-                };
-              })
-            ];
+          default = let
+            mkDevnetProgram = { pkgs }:
+              name: spec:
+              pkgs.writeShellApplication {
+                inherit name;
+                runtimeInputs =
+                  [ pkgs.arion pkgs.docker pkgs.coreutils pkgs.bash ];
+                text = ''
+                  arion --prebuilt-file ${
+                    pkgs.arion.build spec
+                  } up --build --force-recreate -V --always-recreate-deps --remove-orphans
+                '';
+              };
+          in self.inputs.nixpkgs.lib.composeManyExtensions [
+            self.inputs.arion-src.overlay
+            (final: _prev: {
+              composable = {
+                mkDevnetProgram = final.callPackage mkDevnetProgram { };
+              };
+            })
+          ];
         };
         # The usual flake attributes can be defined here, including system-
         # agnostic ones like nixosModule and system-enumerating ones, although

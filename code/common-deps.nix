@@ -1,6 +1,6 @@
 { self, ... }: {
-  perSystem = { config, self', inputs', pkgs, system, crane
-    , systemCommonRust, ... }: {
+  perSystem =
+    { config, self', inputs', pkgs, system, crane, systemCommonRust, ... }: {
       _module.args.systemCommonRust = rec {
 
         rustSrc = let
@@ -91,10 +91,10 @@
       };
       # Add the npm-buildpackage overlay to the perSystem's pkgs
       packages = rec {
-        common-deps = crane.nightly.buildDepsOnly
-          (systemCommonRust.common-attrs // { });
-        common-deps-nightly = crane.nightly.buildDepsOnly
-          (systemCommonRust.common-attrs // { });
+        common-deps =
+          crane.nightly.buildDepsOnly (systemCommonRust.common-attrs // { });
+        common-deps-nightly =
+          crane.nightly.buildDepsOnly (systemCommonRust.common-attrs // { });
         common-bench-deps = crane.nightly.buildDepsOnly
           (systemCommonRust.common-bench-attrs // { });
         common-test-deps = crane.nightly.buildDepsOnly
