@@ -9,6 +9,10 @@
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    crane = {
+      url = "github:ipetkov/crane";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = { self, flake-parts, ... }:
@@ -21,6 +25,7 @@
         ./fmt.nix
         ./docs/docs.nix
         ./subsquid/subsquid.nix
+        ./code/composable.nix
         ./code/integration-tests/runtime-tests/runtime-tests.nix
       ];
       systems = [ "x86_64-linux" "aarch64-linux" ];
@@ -35,8 +40,8 @@
         # Add the npm-buildpackage overlay to the perSystem's pkgs
         _module.args.pkgs = import self.inputs.nixpkgs {
           inherit system;
-          overlays = with self.inputs; [
-            npm-buildpackage.overlays.default
+          overlays = with self.inputs; [ 
+            npm-buildpackage.overlays.default 
             rust-overlay.overlays.default
           ];
         };
