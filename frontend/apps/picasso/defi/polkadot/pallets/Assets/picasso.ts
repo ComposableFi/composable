@@ -16,6 +16,8 @@ export async function picassoAssetsList(
       return {
         name: asset.name.toUtf8(),
         id: new BigNumber(asset.id.toString()),
+        decimals: asset.id.toNumber(),
+        foreignId: asset.foreignId,
       };
     });
   } catch (err) {

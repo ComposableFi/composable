@@ -89,12 +89,13 @@ export const useApolloStats = () => {
         (api, picaId) => {
           return api.query.oracle.prices(
             picaId.toString(),
-            (response: ComposableTraitsOraclePrice) => {
-              const { price }: { price: BN } = response.toJSON() as any;
+            (prices: ComposableTraitsOraclePrice) => {
               setOracleAssets(
                 symbol,
                 null,
-                fromChainIdUnit(unwrapNumberOrHex(price.toString()))
+                fromChainIdUnit(
+                  unwrapNumberOrHex((prices as any).price.toString())
+                )
               );
             }
           );
