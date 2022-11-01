@@ -127,6 +127,7 @@ impl CurrencyId {
 		/// Kusama native token
 		pub const KSM: CurrencyId = CurrencyId(4);
 		pub const PBLO: CurrencyId = CurrencyId(5);
+		#[allow(non_upper_case_globals)]
 		pub const ibcDOT: CurrencyId = CurrencyId(6);
 
 		// Non-Native Tokens (101 - 1000)

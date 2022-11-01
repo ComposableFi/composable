@@ -2,7 +2,7 @@
 
 List of useful to have XCM messages working for testing and playbooks.
 
-For general flow on how to make XCM and transfer happen, look [here](./ping.plantuml)
+ For details on the general workflow of XCM and transfers [look here](./ping.plantuml)
 
 ## Transfer
 
@@ -14,7 +14,13 @@ For general flow on how to make XCM and transfer happen, look [here](./ping.plan
 
 [Reserve transfer KSM from Picasso to Kusama to specified account](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rpc.composable.finance#/extrinsics/decode/0x29020101000100010100b8e39e87c0fec96f7d012d31a4c27b44bfb504ab359662112e4270e380c8434101040000000002c2eb0b00000000)
 
-[Reserve transfer assets from Kusama to Karura to specified account](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2F1rpc.io%2Fksm#/extrinsics/decode/0x630201000100411f0100010100b8e39e87c0fec96f7d012d31a4c27b44bfb504ab359662112e4270e380c84341010400000000070010a5d4e800000000)
+[Reserve transfer KSM from Kusama to Karura to specified account](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2F1rpc.io%2Fksm#/extrinsics/decode/0x630201000100411f0100010100b8e39e87c0fec96f7d012d31a4c27b44bfb504ab359662112e4270e380c84341010400000000070010a5d4e800000000)
+
+[Reserve transfer KSM from Testnet Rococo to Dali](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Frococo-rpc.polkadot.io#/extrinsics/decode/0x6308010001009d200100010100b8e39e87c0fec96f7d012d31a4c27b44bfb504ab359662112e4270e380c8434101040000000003ba5cbf480000000000)
+
+[Reserve transfer KSM from Dali to Rococo Testnet](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Frpc.composablefinance.ninja#/extrinsics/decode/0x2c00040000000000000000000000000000001bb8a3720000000000000000000000000101010100b8e39e87c0fec96f7d012d31a4c27b44bfb504ab359662112e4270e380c8434100ca9a3b00000000)
+
+[Low level reserve transfer KSM from Dali to Rococo Testnet](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Frpc.composablefinance.ninja#/extrinsics/decode/0x2903020800040001000056346f1d100100000008130001000056346f1d0107006e2e12010d01000400010100b8e39e87c0fec96f7d012d31a4c27b44bfb504ab359662112e4270e380c843410084d71700000000)
 
 ## Local assets, mint and swap
 

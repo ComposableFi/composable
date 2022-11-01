@@ -1,8 +1,5 @@
-use core::primitive;
-
 use codec::FullCodec;
 use frame_support::pallet_prelude::*;
-use polkadot_parachain::primitives;
 use scale_info::TypeInfo;
 use sp_arithmetic::fixed_point::FixedU64;
 use sp_runtime::{
@@ -42,7 +39,7 @@ pub trait AssetExistentialDepositInspect {
 	type Balance;
 
 	/// Given an `asset_id`, returns the existential deposit of an asset in asset currency.
-	fn existential_deposit(asset_id: Self::AssetId) -> Result<Self::Balance, DispatchError> {
+	fn existential_deposit(_asset_id: Self::AssetId) -> Result<Self::Balance, DispatchError> {
 		Err(DispatchError::Other("unimplemented!"))
 	}
 }
@@ -52,7 +49,7 @@ pub type ForeignByNative = Rational64;
 
 pub trait AssetRatioInspect {
 	type AssetId;
-	fn get_ratio(asset_id: Self::AssetId) -> Option<ForeignByNative> {
+	fn get_ratio(_asset_id: Self::AssetId) -> Option<ForeignByNative> {
 		None
 	}
 }

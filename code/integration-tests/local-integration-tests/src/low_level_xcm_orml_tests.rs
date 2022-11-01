@@ -40,7 +40,6 @@ fn initiate_withdraw_of_this_native_to_relay_with_no_reserve_errors_locally() {
 				xcm: Xcm(vec![]),
 			},
 		]);
-		let units = xcm.len() as u64;
 
 		let executed =
 			<Runtime as cumulus_pallet_xcmp_queue::Config>::XcmExecutor::execute_xcm_in_credit(

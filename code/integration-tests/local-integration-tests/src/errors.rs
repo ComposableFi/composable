@@ -1,122 +1,25 @@
-// Ensure trapped assets are to claim
-// https://github.com/AcalaNetwork/Acala/commit/f40e8f9277fe2fabefd4b51d8d2cfd97f088f3b1#diff-4918885dbae3244dd19ee256ec2d575908d8b599007adc761b8651082c4b3288
-
-// Add barrier and ED tests
-
-
-// #[test]
-// fn transfer_insufficient_amount_should_fail() {
-// 	simtest();
-// Sibling::execute_with(|| {
-//     assert!(matches!(
-//         sibling_runtime::XTokens::transfer(
-//             sibling_runtime::Origin::signed(alice().into()),
-//             CurrencyId::PICA,
-//             1_000_000 - 1,
-//             Box::new(
-//                 MultiLocation::new(
-//                     1,
-//                     X2(
-//                         Junction::Parachain(THIS_PARA_ID),
-//                         Junction::AccountId32 { id: bob(), network: NetworkId::Any }
-//                     )
-//                 )
-//                 .into()
-//             ),
-//             399_600_000_000
-//         ),
-//         Err(DispatchError::Module(ModuleError { .. }))
-//     ));
-//     assert_eq!(sibling_runtime::Balances::free_balance(&alice().into()), 200000000000000);
-// });
-
-// This::execute_with(|| {
-//     assert_eq!(
-//         this_runtime::Tokens::free_balance(CurrencyId::PICA, &AccountId::from(bob())),
-//         0
-//     );
-// });
-// }
-
-
-
-// #[test]
-// fn transfer_native_of_this_to_sibling_by_local_id() {
-// 	simtest();
-
-// 	Sibling::execute_with(|| {
-// 		assert_ok!(this_runtime::AssetsRegistry::update_asset(
-// 			RawOrigin::Root.into(),
-// 			CurrencyId::PICA,
-// 			composable_traits::xcm::assets::XcmAssetLocation(MultiLocation::new(
-// 				1,
-// 				X1(Parachain(THIS_PARA_ID),)
-// 			)),
-// 			Some(Rational64::one()),
-// 			None,
-// 		));
-// 	});
-
-// 	This::execute_with(|| {
-// 		use this_runtime::*;
-// 		let before = Balances::balance(&sibling_account(SIBLING_PARA_ID));
-
-// 		assert_ok!(XTokens::transfer(
-// 			Origin::signed(alice().into()),
-// 			CurrencyId::PICA,
-// 			3 * PICA,
-// 			Box::new(
-// 				MultiLocation::new(
-// 					1,
-// 					X2(
-// 						Junction::Parachain(SIBLING_PARA_ID),
-// 						Junction::AccountId32 { id: bob(), network: NetworkId::Any }
-// 					)
-// 				)
-// 				.into()
-// 			),
-// 			399_600_000_000
-// 		));
-
-// 		let after = Balances::balance(&sibling_account(SIBLING_PARA_ID));
-// 		assert_eq!(Balances::free_balance(&alice().into()), 200 * PICA - 3 * PICA);
-// 		assert_gt!(after, before);
-// 		assert_eq!(after, 3 * PICA);
-// 	});
-
-// 	Sibling::execute_with(|| {
-// 		let balance =
-// 			sibling_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(bob()));
-// 		assert_eq_error_rate!(balance, 3 * PICA, (UnitWeightCost::get() * 10) as u128);
-// 	});
-// }
-
-
 use crate::{
-	assert_lt_by,
 	helpers::*,
-	kusama_test_net::{KusamaRelay, Sibling, This, PICA, SIBLING_PARA_ID, THIS_PARA_ID},
+	kusama_test_net::{KusamaRelay, This, THIS_PARA_ID},
 	prelude::*,
 };
-use codec::Encode;
-use common::{AccountId, Balance};
-use composable_traits::{currency::RangeId, rational};
 
-use frame_system::RawOrigin;
+use common::Balance;
+use composable_traits::currency::{AssetExistentialDepositInspect, AssetRatioInspect};
+use orml_traits::MultiCurrency;
 
-use num_traits::Zero;
-use orml_traits::currency::MultiCurrency;
-
-use frame_support::{assert_ok, log, weights::constants::WEIGHT_PER_MILLIS};
-use primitives::currency::*;
-use sp_runtime::{assert_eq_error_rate, traits::AccountIdConversion, MultiAddress};
-use xcm::latest::prelude::*;
-use xcm_builder::ParentIsPreset;
-use xcm_emulator::TestExt;
-use xcm_executor::{traits::Convert, XcmExecutor};
-
-use frame_support::traits::fungibles::Inspect as MultiInspect;
-
+/// under ED, but above Weight
+pub fn under_existential_deposit<
+	AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>
+		+ AssetExistentialDepositInspect<AssetId = CurrencyId, Balance = Balance>,
+>(
+	asset_id: LocalAssetId,
+	_instruction_count: usize,
+) -> Balance {
+	let ed = multi_existential_deposits::<AssetsRegistry>(&asset_id);
+	assert_gt!(ed, Balance::one());
+	ed - Balance::one()
+}
 
 #[test]
 fn transfer_native_from_relay_enough_for_fee_but_not_enough_for_ed_ends_up_in_treasury() {

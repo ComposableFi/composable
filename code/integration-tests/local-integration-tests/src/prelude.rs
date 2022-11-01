@@ -6,22 +6,32 @@ pub use common::{
 	topology, AccountId,
 };
 pub use composable_traits::{
-	currency::{CurrencyFactory, Rational64},
+	currency::{AssetExistentialDepositInspect, AssetRatioInspect, CurrencyFactory, Rational64},
+	rational,
 	xcm::assets::XcmAssetLocation,
 };
 pub use cumulus_primitives_core::ParaId;
 pub use frame_support::{
 	assert_err, assert_err_ignore_postinfo, assert_ok, log,
-	traits::{fungible::Inspect, tokens::BalanceConversion},
+	traits::{
+		fungible::Inspect, fungibles::Inspect as FungiblesInspect, tokens::BalanceConversion,
+	},
+	weights::constants::WEIGHT_PER_MILLIS,
 	RuntimeDebug,
 };
+pub use frame_system::RawOrigin;
+
 pub use frame_system::{pallet_prelude::*, Config};
-use primitives::currency::CurrencyId;
-pub use sp_runtime::{traits::StaticLookup, FixedPointNumber, FixedU128, DispatchError, ModuleError};
+pub use num_traits::{One, Zero};
+pub use primitives::currency::*;
+pub use sp_runtime::{
+	traits::StaticLookup, DispatchError, FixedPointNumber, FixedU128, ModuleError,
+};
 pub use xcm::{latest::prelude::*, VersionedMultiLocation};
 pub use xcm_emulator::TestExt;
 pub use xcm_executor::XcmExecutor;
 
+pub use sp_runtime::{assert_eq_error_rate, traits::AccountIdConversion, MultiAddress};
 
 #[cfg(test)]
 pub use more_asserts::*;

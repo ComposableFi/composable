@@ -113,7 +113,6 @@ pub type XcmOriginToTransactDispatchOrigin = (
 	XcmPassthrough<Origin>,
 );
 
-
 pub struct StaticAssetsMap;
 impl XcmpAssets for StaticAssetsMap {}
 

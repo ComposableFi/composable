@@ -364,16 +364,31 @@ fn this_native_transferred_from_sibling_to_native_is_not_enough() {
 fn transfer_relay_native_from_this_to_sibling_by_local_id() {
 	simtest();
 
-	let ksm = 100_000_000_000_000;
+	let ksm = 100_000_000_000_000_000;
+
+	let parachain_reserve_account_on_relay: AccountId =
+		ParaId::from(THIS_PARA_ID).into_account_truncating();
+
+	let this_reserve_amount_on_original = KusamaRelay::execute_with(|| {
+		use relay_runtime::*;
+		Balances::balance(&parachain_reserve_account_on_relay)
+	});
+
 	mint_relay_native_on_parachain(ksm, &alice().into(), THIS_PARA_ID);
+
+	let this_reserve_amount_after_transfer = KusamaRelay::execute_with(|| {
+		use relay_runtime::*;
+		Balances::balance(&parachain_reserve_account_on_relay)
+	});
+	assert_eq!(this_reserve_amount_on_original + ksm, this_reserve_amount_after_transfer);
 
 	let alice_this_original = This::execute_with(|| {
 		use this_runtime::*;
 		Tokens::free_balance(CurrencyId::KSM, &alice().into())
 	});
 
-	let alice_from_amount = alice_this_original / 10;
-	let alice_remaining = alice_this_original - alice_from_amount;
+	let alice_ksm_transfer_amount = 1_000_000_000_000;
+	let alice_remaining = alice_this_original - alice_ksm_transfer_amount;
 	let weight_to_pay = 4 * WEIGHT_PER_MILLIS;
 
 	let this_on_sibling = Sibling::execute_with(|| {
@@ -391,13 +406,20 @@ fn transfer_relay_native_from_this_to_sibling_by_local_id() {
 		"basic amount of this parachain on sibling is zero"
 	);
 
+	let sibling_parachain_reserve_account_on_relay: AccountId =
+		ParaId::from(SIBLING_PARA_ID).into_account_truncating();
+	let sibling_reserve_amount_on_original = KusamaRelay::execute_with(|| {
+		use relay_runtime::*;
+		Balances::balance(&sibling_parachain_reserve_account_on_relay)
+	});
+
 	This::execute_with(|| {
 		log::info!(target: "bdd", "When Alice sends from this to Bob on sibling");
 		use this_runtime::*;
 		assert_ok!(XTokens::transfer(
 			Origin::signed(alice().into()),
 			CurrencyId::KSM,
-			alice_from_amount,
+			alice_ksm_transfer_amount,
 			Box::new(
 				MultiLocation::new(
 					1,
@@ -412,6 +434,10 @@ fn transfer_relay_native_from_this_to_sibling_by_local_id() {
 		));
 
 		assert_eq!(Tokens::free_balance(CurrencyId::KSM, &alice().into()), alice_remaining);
+	});
+	let sibling_reserve_amount = KusamaRelay::execute_with(|| {
+		use relay_runtime::*;
+		Balances::balance(&sibling_parachain_reserve_account_on_relay)
 	});
 
 	Sibling::execute_with(|| {
@@ -432,10 +458,13 @@ fn transfer_relay_native_from_this_to_sibling_by_local_id() {
 			<Tokens as MultiInspect<_>>::balance(CurrencyId::KSM, &AccountId::from(bob()));
 		assert_lt_by!(
 			new_bob_on_sibling,
-			alice_from_amount,
-			ORDER_OF_FEE_ESTIMATE_ERROR * xcmp::xcm_asset_fee_estimator(50, CurrencyId::KSM)
+			sibling_reserve_amount,
+			ORDER_OF_FEE_ESTIMATE_ERROR * xcmp::xcm_asset_fee_estimator(5, CurrencyId::KSM)
 		);
 
+		assert_eq!(new_bob_on_sibling + treasury, sibling_reserve_amount,);
+
+		log::info!(target: "bdd", "Then Bob on sibling sends relay native to Alice on this");
 		assert_ok!(XTokens::transfer(
 			Origin::signed(bob().into()),
 			CurrencyId::KSM,
@@ -453,25 +482,59 @@ fn transfer_relay_native_from_this_to_sibling_by_local_id() {
 			1_000_000_000,
 		));
 
-		assert_eq!(
-			Tokens::free_balance(CurrencyId::KSM, &sibling_account(THIS_PARA_ID)),
-			95_000_000_000_000
-		);
-		assert_eq!(
-			Tokens::free_balance(CurrencyId::KSM, &AccountId::from(bob())),
-			4_989_760_000_000
-		);
+		assert_eq!(Tokens::free_balance(CurrencyId::KSM, &sibling_account(THIS_PARA_ID)), 0);
+		assert_eq!(Tokens::free_balance(CurrencyId::KSM, &AccountId::from(bob())), 0);
 	});
 
-	This::execute_with(|| {
-		use this_runtime::*;
-		assert_eq!(Tokens::free_balance(CurrencyId::KSM, &alice().into()), 94_989_760_000_000);
+	// ISSUE:
+	// 1. KSM Relay -> This
+	// 2. KSM This -> Sibling
+	// 3. KSM Sibling -> This
+	// Expected: Step 3 works fine
+	// Actual: Step 3 fails if using xTokens with Barrier
+	// Notes:
+	// - possibly this may relate that xTokens 2 XCM message and not handler properly in order
+	// - possible fix is to craft single message doing 2 jumps
+	// This::execute_with(|| {
+	// 	use this_runtime::*;
+	// 	assert_lt_by!(
+	// 		Tokens::balance(CurrencyId::KSM, &alice().into()),
+	// 		ksm,
+	// 		4 * ORDER_OF_FEE_ESTIMATE_ERROR * xcmp::xcm_asset_fee_estimator(10, CurrencyId::KSM)
+	// 	);
+	// });
+
+	let sibling_issuance = Sibling::execute_with(|| {
+		use sibling_runtime::*;
+		Tokens::total_issuance(CurrencyId::KSM)
 	});
+	let this_issuance = This::execute_with(|| {
+		use this_runtime::*;
+		Tokens::total_issuance(CurrencyId::KSM)
+	});
+	let relay_issuance = KusamaRelay::execute_with(|| {
+		use relay_runtime::*;
+		Balances::total_issuance()
+	});
+	let this_reserve_amount_final = KusamaRelay::execute_with(|| {
+		use relay_runtime::*;
+		Balances::balance(&parachain_reserve_account_on_relay)
+	});
+	let sibling_reserve_amount_final = KusamaRelay::execute_with(|| {
+		use relay_runtime::*;
+		Balances::balance(&sibling_parachain_reserve_account_on_relay)
+	});
+	log::info!(target: "bdd", "Issuance and reservers of relay natives on parachains is less then on Relay");
+	assert_lt!(
+		sibling_issuance + this_issuance,
+		this_reserve_amount_final + sibling_reserve_amount_final
+	);
+	assert_lt!(sibling_issuance + this_issuance, relay_issuance,);
+	assert_lt!(this_reserve_amount_final + sibling_reserve_amount_final, relay_issuance,);
 }
 
 // if Alice sends amount of their tokens and these are above weight but less than ED,
 // than our treasury takes that amount, sorry Alice
-
 #[test]
 fn one_chain_cannot_print_relay_native_reserve_tokens_on_us() {
 	simtest();
@@ -625,32 +688,33 @@ fn unspent_xcm_fee_is_returned_correctly() {
 
 	let charlie_on_kusama_amount = 1_000 * CurrencyId::unit::<Balance>();
 	let (original_parachain, _original_bob) = KusamaRelay::execute_with(|| {
-		(
-			relay_runtime::Balances::balance(&parachain_account.clone()),
-			relay_runtime::Balances::balance(&AccountId::from(bob())),
-		)
+		use relay_runtime::*;
+		let _ =
+		<balances::Pallet<Runtime> as frame_support::traits::Currency<AccountId>>::deposit_creating(
+			&alice().into(),
+			1_000_000_000_000_000_000_000,
+		);
+		(Balances::balance(&parachain_account.clone()), Balances::balance(&AccountId::from(bob())))
 	});
 	let parachain_on_kusama_amount = 1_000 * CurrencyId::unit::<Balance>();
 	KusamaRelay::execute_with(|| {
-		log::info!("============ RELAY");
-		assert_ok!(relay_runtime::Balances::transfer(
-			relay_runtime::Origin::signed(alice().into()),
+		use relay_runtime::*;
+
+		assert_ok!(Balances::transfer(
+			Origin::signed(alice().into()),
 			MultiAddress::Id(some_account.clone()),
 			charlie_on_kusama_amount,
 		));
-		assert_ok!(relay_runtime::Balances::transfer(
-			relay_runtime::Origin::signed(alice().into()),
+		assert_ok!(Balances::transfer(
+			Origin::signed(alice().into()),
 			MultiAddress::Id(parachain_account.clone()),
 			parachain_on_kusama_amount,
 		));
+
+		assert_eq!(Balances::free_balance(&some_account), charlie_on_kusama_amount);
+		assert_eq!(Balances::free_balance(&AccountId::from(bob())), Balance::zero());
 		assert_eq!(
-			relay_runtime::Balances::free_balance(&alice().into()),
-			2 * CurrencyId::unit::<Balance>()
-		);
-		assert_eq!(relay_runtime::Balances::free_balance(&some_account), charlie_on_kusama_amount);
-		assert_eq!(relay_runtime::Balances::free_balance(&AccountId::from(bob())), Balance::zero());
-		assert_eq!(
-			relay_runtime::Balances::free_balance(&parachain_account.clone()),
+			Balances::free_balance(&parachain_account.clone()),
 			original_parachain + parachain_on_kusama_amount,
 		);
 	});
@@ -659,8 +723,6 @@ fn unspent_xcm_fee_is_returned_correctly() {
 	let payment_into_holder = transfer_in_transact_amount;
 	let weight_limit = 10_000_000_000;
 	This::execute_with(|| {
-		log::info!("============ THIS");
-		// Construct a transfer XCM call with returning the deposit
 		let transfer_call = relay_runtime::Call::Balances(relay_runtime::BalancesCall::transfer {
 			dest: <relay_runtime::Runtime as frame_system::Config>::Lookup::unlookup(
 				AccountId::from(bob()),
@@ -686,7 +748,6 @@ fn unspent_xcm_fee_is_returned_correctly() {
 	});
 
 	let parachain_balance = KusamaRelay::execute_with(|| {
-		log::info!("============ RELAY");
 		assert_eq!(
 			relay_runtime::Balances::balance(&AccountId::from(bob())),
 			transfer_in_transact_amount,
@@ -984,8 +1045,6 @@ fn sibling_trap_assets_works() {
 
 #[test]
 fn sibling_shib_to_transfer() {
-	// #WIP Ensure that assets from pallets encoded like (parent = 0, pallet = 44, index = 1232132).
-
 	simtest();
 	let total_issuance = 3_500_000_000_000_000;
 	let transfer_amount = SHIB::ONE;

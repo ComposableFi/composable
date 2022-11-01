@@ -1,5 +1,4 @@
 use common::{fees::NATIVE_EXISTENTIAL_DEPOSIT, xcmp::BaseXcmWeight, AccountId, Balance};
-use composable_traits::currency::{AssetExistentialDepositInspect, AssetRatioInspect};
 use cumulus_primitives_core::ParaId;
 
 use primitives::currency::CurrencyId;
@@ -27,17 +26,6 @@ pub fn buy_execution_unlimited<Call>(fees: impl Into<MultiAsset>) -> Instruction
 
 pub fn deposit_all_one<Call>(beneficiary: impl Into<MultiLocation>) -> Instruction<Call> {
 	DepositAsset { assets: All.into(), max_assets: 1, beneficiary: beneficiary.into() }
-}
-
-/// under ED, but above Weight
-pub fn under_existential_deposit<
-	AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>
-		+ AssetExistentialDepositInspect<AssetId = CurrencyId, Balance = Balance>,
->(
-	asset_id: LocalAssetId,
-	_instruction_count: usize,
-) -> Balance {
-	multi_existential_deposits::<AssetsRegistry>(&asset_id) - 1
 }
 
 /// dumps events for debugging

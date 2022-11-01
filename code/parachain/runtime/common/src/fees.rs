@@ -24,6 +24,7 @@ pub struct WeightToFeeConverter;
 impl WeightToFeePolynomial for WeightToFeeConverter {
 	type Balance = Balance;
 	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
+		NativeExistentialDeposit::get();
 		let p = CurrencyId::milli::<Balance>();
 		let q = 10 * Balance::from(ExtrinsicBaseWeight::get());
 		smallvec::smallvec![WeightToFeeCoefficient {
