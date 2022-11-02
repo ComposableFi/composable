@@ -70,7 +70,7 @@ pub mod pallet {
 		defi::{CurrencyPair, Rate},
 		dex::{
 			Amm, BasicPoolInfo, Fee, PriceAggregate, RedeemableAssets,
-			RemoveLiquiditySimulationResult, MAX_REWARDS,
+			RemoveLiquiditySimulationResult,
 		},
 		staking::{
 			lock::LockConfig, ManageStaking, ProtocolStaking, RewardConfig,
@@ -569,12 +569,11 @@ pub mod pallet {
 			>,
 			DispatchError,
 		> {
-			let max_rewards: T::Balance = T::Convert::convert(MAX_REWARDS);
 			// let reward_rate = Perbill::from_percent(REWARD_PERCENTAGE); not sure how this
 			// translates to the new model
 			let reward_rate = RewardRate::per_second(T::Convert::convert(0));
 			let pblo_asset_id: T::AssetId = T::PbloAssetId::get();
-			let reward_configs = [(pblo_asset_id, RewardConfig { max_rewards, reward_rate })]
+			let reward_configs = [(pblo_asset_id, RewardConfig { reward_rate })]
 				.into_iter()
 				.try_collect()
 				.map_err(|_| Error::<T>::StakingPoolConfigError)?;

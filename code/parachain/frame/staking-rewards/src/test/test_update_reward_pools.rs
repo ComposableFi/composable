@@ -37,10 +37,7 @@ fn test_update_reward_pool() {
 			end_block: ONE_YEAR_OF_BLOCKS + 1,
 			reward_configs: [(
 				USDT::ID,
-				RewardConfig {
-					max_rewards: 1_000_u128,
-					reward_rate: RewardRate::per_second(INITIAL_REWARD_RATE_AMOUNT),
-				},
+				RewardConfig { reward_rate: RewardRate::per_second(INITIAL_REWARD_RATE_AMOUNT) },
 			)]
 			.into_iter()
 			.try_collect()
@@ -87,7 +84,6 @@ fn test_update_reward_pool() {
 		assert!(matches!(
 			pool.rewards.get(&USDT::ID).unwrap(),
 			Reward {
-				max_rewards: 1_000,
 				reward_rate: RewardRate {
 					period: RewardRatePeriod::PerSecond,
 					amount: UPDATED_REWARD_RATE_AMOUNT
