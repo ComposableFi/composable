@@ -33,13 +33,11 @@ export const TransferExistentialDeposit: FC = () => {
         decimals !== null && existentialDeposit !== null ? (
           `${existentialDeposit.toFormat(decimals)} ${selectedToken.symbol}`
         ) : (
-          <>
-            <Chip
-              variant="contained"
-              color="error"
-              label="Could not fetch Existential deposit"
-            />
-          </>
+          <Chip
+            variant="filled"
+            color="error"
+            label="Could not fetch Existential deposit"
+          />
         )
       }
       TooltipProps={{
