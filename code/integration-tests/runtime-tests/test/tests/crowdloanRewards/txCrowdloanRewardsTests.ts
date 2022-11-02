@@ -103,7 +103,9 @@ describe("[SHORT] CrowdloanRewards Tests", function () {
       api.tx.sudo.sudo(api.tx.crowdloanRewards.initialize())
     );
     expect(sudoResult.isErr).to.be.true;
+    // @ts-ignore
     expect(sudoResult.asErr.asModule.index).to.be.bignumber.equal(new BN("58"));
+    // @ts-ignore
     expect(sudoResult.asErr.asModule.error.toHex()).to.be.equal("0x03000000"); // Error index 3 == RewardsNotFunded
 
     // Second testing initialization with too little funds.
@@ -117,7 +119,9 @@ describe("[SHORT] CrowdloanRewards Tests", function () {
       api.tx.sudo.sudo(api.tx.crowdloanRewards.initialize())
     );
     expect(sudoResult2.isErr).to.be.true;
+    // @ts-ignore
     expect(sudoResult2.asErr.asModule.index).to.be.bignumber.equal(new BN("58"));
+    // @ts-ignore
     expect(sudoResult2.asErr.asModule.error.toHex()).to.be.equal("0x03000000"); // Error index 3 == RewardsNotFunded
   });
 
