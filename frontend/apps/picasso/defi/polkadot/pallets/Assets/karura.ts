@@ -1,4 +1,5 @@
 import { ApiPromise } from "@polkadot/api";
+import { hexToAscii } from "shared";
 
 export type HumanizedKaruraAssetMetadata = {
   name: string;
@@ -23,7 +24,14 @@ export async function karuraAssetsList(
     const assetMetadata =
       await api.query.assetRegistry.assetMetadatas.entries();
     return assetMetadata.map((meta) => {
-      return meta[1].toHuman() as HumanizedKaruraAssetMetadata;
+      const target = meta[1].toJSON() as HumanizedKaruraAssetMetadata;
+
+      return {
+        name: hexToAscii(target.name),
+        symbol: hexToAscii(target.symbol),
+        decimals: target.decimals,
+        minimalBalance: target.minimalBalance,
+      };
     });
   } catch (err) {
     console.error("[√] ", err);

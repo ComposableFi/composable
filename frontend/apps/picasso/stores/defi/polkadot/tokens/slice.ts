@@ -6,6 +6,8 @@ import {
   HumanizedKaruraAssetMetadata,
   PicassoRpcAsset,
 } from "@/defi/polkadot/pallets/Assets";
+import { fromChainIdUnit, unwrapNumberOrHex } from "shared";
+import { KusamaAsset } from "@/defi/polkadot/pallets/Assets/kusama";
 
 export type TokenMetadata = Token & {
   chainId: {
@@ -13,7 +15,8 @@ export type TokenMetadata = Token & {
     karura: string | null;
     kusama: string | null;
   };
-  decimals: Record<SubstrateNetworkId, number>;
+  decimals: Record<SubstrateNetworkId, number | null>;
+  existentialDeposit: Record<SubstrateNetworkId, BigNumber | null>;
 };
 
 type TokensState = {
@@ -37,6 +40,11 @@ const initialState = {
           picasso: 12,
           karura: null,
         },
+        existentialDeposit: {
+          kusama: null,
+          picasso: null,
+          karura: null,
+        },
       },
     };
   }, {} as Record<TokenId, TokenMetadata>),
@@ -46,7 +54,8 @@ const initialState = {
 interface TokensActions {
   updateTokens: (
     picassoList: Array<PicassoRpcAsset>,
-    karuraList: Array<HumanizedKaruraAssetMetadata>
+    karuraList: Array<HumanizedKaruraAssetMetadata>,
+    kusamaAssetMetadata: KusamaAsset
   ) => void;
 }
 
@@ -58,7 +67,7 @@ export const createTokensSlice: StoreSlice<TokensSlice> = (set) => ({
   substrateTokens: {
     tokens: initialState.tokens,
     isLoaded: initialState.isLoaded,
-    updateTokens: (picassoList, karuraList) => {
+    updateTokens: (picassoList, karuraList, kusamaAssetMetadata) => {
       set((state) => {
         picassoList.forEach((listItem) => {
           /**
@@ -68,16 +77,15 @@ export const createTokensSlice: StoreSlice<TokensSlice> = (set) => ({
            * update decimals and id
            */
           const identifier = listItem.name.toLowerCase();
-          if (state.substrateTokens.tokens[identifier as TokenId]) {
+          const token = state.substrateTokens.tokens[identifier as TokenId];
+          if (token) {
             console.log("[Picasso] Found Supported Asset", identifier);
-            state.substrateTokens.tokens[
-              identifier as TokenId
-            ].decimals.picasso = listItem.decimals ?? 12;
-            state.substrateTokens.tokens[identifier as TokenId].chainId[
-              "picasso"
-            ] = listItem.id;
+            token.decimals.picasso = listItem.decimals ?? 12;
+            token.chainId["picasso"] = listItem.id;
+            token.existentialDeposit["picasso"] = null;
           }
         });
+
         karuraList.forEach((listItem) => {
           /**
            * Here identifier is in lower case
@@ -86,16 +94,25 @@ export const createTokensSlice: StoreSlice<TokensSlice> = (set) => ({
            * update decimals and id
            */
           const identifier = listItem.symbol.toLowerCase();
-          if (state.substrateTokens.tokens[identifier as TokenId]) {
+          const token = state.substrateTokens.tokens[identifier as TokenId];
+          if (token && listItem.decimals) {
             console.log("[KARURA] Found Supported Asset", listItem.symbol);
-            state.substrateTokens.tokens[
-              identifier as TokenId
-            ].decimals.picasso = listItem.decimals ?? 12;
-            state.substrateTokens.tokens[identifier as TokenId].chainId[
-              "karura"
-            ] = listItem.symbol;
+            token.decimals.karura = listItem.decimals;
+            token.chainId.karura = listItem.symbol;
+            token.existentialDeposit.karura = fromChainIdUnit(
+              unwrapNumberOrHex(listItem.minimalBalance),
+              listItem.decimals
+            );
           }
         });
+
+        state.substrateTokens.tokens.ksm.decimals.kusama =
+          kusamaAssetMetadata.decimals;
+        state.substrateTokens.tokens.ksm.chainId.kusama =
+          kusamaAssetMetadata.chainId;
+        state.substrateTokens.tokens.ksm.existentialDeposit.kusama =
+          kusamaAssetMetadata.existentialDeposit;
+
         if (picassoList.length + karuraList.length > 0) {
           state.substrateTokens.isLoaded = true;
         }
