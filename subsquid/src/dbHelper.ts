@@ -210,7 +210,9 @@ export async function storeHistoricalLockedValue(
       },
     });
 
-    assetDecimals[assetId] = asset?.decimals || 12;
+    if (asset?.decimals) {
+      assetDecimals[assetId] = asset?.decimals || 12;
+    }
   }
 
   try {
@@ -227,6 +229,10 @@ export async function storeHistoricalLockedValue(
   }
 
   const netLockedValue = Object.keys(oraclePrices).reduce((agg, assetId) => {
+    if (!assetDecimals[assetId]) {
+      // Ignore assets for which we don't know decimals
+      return agg;
+    }
     const lockedValue =
       oraclePrices[assetId] *
       getNormalizedAmount(amountsLocked[assetId], assetDecimals[assetId]);
@@ -280,7 +286,6 @@ export async function storeHistoricalVolume(
 
   try {
     const oraclePrice = await api.query.oracle.prices(quoteAssetId);
-    console.log(oraclePrice);
     if (!oraclePrice?.price) {
       // TODO: handle missing oracle price
       // NOTE: should we look at the latest known price for this asset?

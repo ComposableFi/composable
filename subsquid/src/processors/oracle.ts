@@ -72,7 +72,6 @@ export async function processOraclePriceChanged(
   if (!asset) {
     asset = new Asset({
       id: assetId.toString(),
-      decimals: 12,
     });
   }
 

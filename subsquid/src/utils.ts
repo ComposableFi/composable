@@ -7,7 +7,6 @@ import { instance, mock } from "ts-mockito";
 import * as ss58 from "@subsquid/ss58";
 import { Store } from "@subsquid/typeorm-store";
 import { randomUUID } from "crypto";
-import { BigInteger } from "@subsquid/graphql-server";
 
 export const BOB = "5woQTSqveJemxVbj4eodiBTSVfC4AAJ8CQS7SoyoyHWW7MA6";
 export const CHARLIE = "5wr4XcyxyJYQb71PbSPxhqujKnsS9UAydBhSypGvFgh2QXBa";
