@@ -6,22 +6,23 @@
 import '@polkadot/api-base/types/events';
 
 import type { ComposableTraitsDefiCurrencyPairCurrencyId } from '@composable/types/interfaces/common';
-import type { CommonMosaicRemoteAssetId, ComposableSupportEthereumAddress, ComposableTraitsAccountProxyProxyType, ComposableTraitsCallFilterCallFilterEntry, ComposableTraitsLendingUpdateInput, ComposableTraitsTimeTimeReleaseFunction, ComposableTraitsXcmAssetsXcmAssetLocation, FrameSupportScheduleLookupError, FrameSupportTokensMiscBalanceStatus, FrameSupportWeightsDispatchInfo, PalletCosmwasmContractInfo, PalletCosmwasmEntryPoint, PalletCrowdloanRewardsModelsRemoteAccount, PalletDemocracyVoteAccountVote, PalletDutchAuctionSellOrder, PalletMosaicAmmSwapInfo, PalletMosaicDecayBudgetPenaltyDecayer, PalletMosaicNetworkInfo, PalletMultisigTimepoint, PalletStakingRewardsRewardAccumulationHookError, SpRuntimeDispatchError, XcmV1MultiAsset, XcmV1MultiLocation, XcmV1MultiassetMultiAssets, XcmV2Response, XcmV2TraitsError, XcmV2TraitsOutcome, XcmV2Xcm, XcmVersionedMultiAssets, XcmVersionedMultiLocation } from '@composable/types/interfaces/crowdloanRewards';
+import type { CommonMosaicRemoteAssetId, ComposableSupportEthereumAddress, ComposableTraitsAccountProxyProxyType, ComposableTraitsCallFilterCallFilterEntry, ComposableTraitsLendingUpdateInput, ComposableTraitsTimeTimeReleaseFunction, ComposableTraitsVestingVestingSchedule, ComposableTraitsVestingVestingScheduleIdSet, ComposableTraitsXcmAssetsXcmAssetLocation, FrameSupportScheduleLookupError, PalletCosmwasmContractInfo, PalletCosmwasmEntryPoint, PalletCrowdloanRewardsModelsRemoteAccount, PalletDemocracyVoteAccountVote, PalletDutchAuctionSellOrder, PalletIbcErrorsIbcError, PalletIbcEventsIbcEvent, PalletMosaicAmmSwapInfo, PalletMosaicDecayBudgetPenaltyDecayer, PalletMosaicNetworkInfo } from '@composable/types/interfaces/crowdloanRewards';
 import type { PalletDemocracyVoteThreshold } from '@composable/types/interfaces/democracy';
 import type { ComposableTraitsDexFee } from '@composable/types/interfaces/pablo';
-import type { ComposableTraitsVestingVestingSchedule, ComposableTraitsVestingVestingScheduleIdSet } from '@composable/types/interfaces/vesting';
+import type { PalletStakingRewardsRewardAccumulationHookError } from '@composable/types/interfaces/stakingRewards';
 import type { ApiTypes, AugmentedEvent } from '@polkadot/api-base/types';
 import type { BTreeMap, Bytes, Null, Option, Result, Struct, U8aFixed, Vec, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { ITuple } from '@polkadot/types-codec/types';
 import type { AccountId32, H256, Percent } from '@polkadot/types/interfaces/runtime';
+import type { FrameSupportTokensMiscBalanceStatus, FrameSupportWeightsDispatchInfo, PalletMultisigTimepoint, SpRuntimeDispatchError, XcmV1MultiAsset, XcmV1MultiLocation, XcmV1MultiassetMultiAssets, XcmV2Response, XcmV2TraitsError, XcmV2TraitsOutcome, XcmV2Xcm, XcmVersionedMultiAssets, XcmVersionedMultiLocation } from '@polkadot/types/lookup';
 
 export type __AugmentedEvent<ApiType extends ApiTypes> = AugmentedEvent<ApiType>;
 
 declare module '@polkadot/api-base/types/events' {
   interface AugmentedEvents<ApiType extends ApiTypes> {
     assetsRegistry: {
-      AssetRegistered: AugmentedEvent<ApiType, [assetId: u128, location: ComposableTraitsXcmAssetsXcmAssetLocation, decimals: Option<u8>], { assetId: u128, location: ComposableTraitsXcmAssetsXcmAssetLocation, decimals: Option<u8> }>;
-      AssetUpdated: AugmentedEvent<ApiType, [assetId: u128, location: ComposableTraitsXcmAssetsXcmAssetLocation, decimals: Option<u8>], { assetId: u128, location: ComposableTraitsXcmAssetsXcmAssetLocation, decimals: Option<u8> }>;
+      AssetRegistered: AugmentedEvent<ApiType, [assetId: u128, location: ComposableTraitsXcmAssetsXcmAssetLocation], { assetId: u128, location: ComposableTraitsXcmAssetsXcmAssetLocation }>;
+      AssetUpdated: AugmentedEvent<ApiType, [assetId: u128, location: ComposableTraitsXcmAssetsXcmAssetLocation], { assetId: u128, location: ComposableTraitsXcmAssetsXcmAssetLocation }>;
       MinFeeUpdated: AugmentedEvent<ApiType, [targetParachainId: u32, foreignAssetId: ComposableTraitsXcmAssetsXcmAssetLocation, amount: Option<u128>], { targetParachainId: u32, foreignAssetId: ComposableTraitsXcmAssetsXcmAssetLocation, amount: Option<u128> }>;
       /**
        * Generic event
@@ -129,7 +130,6 @@ declare module '@polkadot/api-base/types/events' {
       Emitted: AugmentedEvent<ApiType, [contract: AccountId32, ty: Bytes, attributes: Vec<ITuple<[Bytes, Bytes]>>], { contract: AccountId32, ty: Bytes, attributes: Vec<ITuple<[Bytes, Bytes]>> }>;
       Executed: AugmentedEvent<ApiType, [contract: AccountId32, entrypoint: PalletCosmwasmEntryPoint, data: Option<Bytes>], { contract: AccountId32, entrypoint: PalletCosmwasmEntryPoint, data: Option<Bytes> }>;
       ExecutionFailed: AugmentedEvent<ApiType, [contract: AccountId32, entrypoint: PalletCosmwasmEntryPoint, error: Bytes], { contract: AccountId32, entrypoint: PalletCosmwasmEntryPoint, error: Bytes }>;
-      IbcChannelOpen: AugmentedEvent<ApiType, [contract: AccountId32], { contract: AccountId32 }>;
       Instantiated: AugmentedEvent<ApiType, [contract: AccountId32, info: PalletCosmwasmContractInfo], { contract: AccountId32, info: PalletCosmwasmContractInfo }>;
       Migrated: AugmentedEvent<ApiType, [contract: AccountId32, to: u64], { contract: AccountId32, to: u64 }>;
       Uploaded: AugmentedEvent<ApiType, [codeHash: H256, codeId: u64], { codeHash: H256, codeId: u64 }>;
@@ -417,6 +417,34 @@ declare module '@polkadot/api-base/types/events' {
       GrantRoot: AugmentedEvent<ApiType, [assetId: u128], { assetId: u128 }>;
       Remove: AugmentedEvent<ApiType, [assetId: u128], { assetId: u128 }>;
       Set: AugmentedEvent<ApiType, [assetId: u128, value: AccountId32], { assetId: u128, value: AccountId32 }>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    ibc: {
+      /**
+       * Ibc errors
+       **/
+      IbcErrors: AugmentedEvent<ApiType, [errors: Vec<PalletIbcErrorsIbcError>], { errors: Vec<PalletIbcErrorsIbcError> }>;
+      /**
+       * Raw Ibc events
+       **/
+      IbcEvents: AugmentedEvent<ApiType, [events: Vec<PalletIbcEventsIbcEvent>], { events: Vec<PalletIbcEventsIbcEvent> }>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    ibcPing: {
+      /**
+       * A channel has been opened
+       **/
+      ChannelOpened: AugmentedEvent<ApiType, [channelId: Bytes, portId: Bytes], { channelId: Bytes, portId: Bytes }>;
+      /**
+       * A send packet has been registered
+       **/
+      PacketSent: AugmentedEvent<ApiType, []>;
       /**
        * Generic event
        **/
@@ -924,6 +952,7 @@ declare module '@polkadot/api-base/types/events' {
     };
     stakingRewards: {
       Claimed: AugmentedEvent<ApiType, [owner: AccountId32, fnftCollectionId: u128, fnftInstanceId: u64], { owner: AccountId32, fnftCollectionId: u128, fnftInstanceId: u64 }>;
+      MaxRewardsAccumulated: AugmentedEvent<ApiType, [poolId: u128, assetId: u128], { poolId: u128, assetId: u128 }>;
       RewardAccumulationHookError: AugmentedEvent<ApiType, [poolId: u128, assetId: u128, error: PalletStakingRewardsRewardAccumulationHookError], { poolId: u128, assetId: u128, error: PalletStakingRewardsRewardAccumulationHookError }>;
       /**
        * Pool with specified id `T::AssetId` was created successfully by `T::AccountId`.
@@ -996,7 +1025,7 @@ declare module '@polkadot/api-base/types/events' {
        **/
       [key: string]: AugmentedEvent<ApiType>;
     };
-    technicalCommittee: {
+    technicalCollective: {
       /**
        * A motion was approved by the required threshold.
        **/
@@ -1032,7 +1061,7 @@ declare module '@polkadot/api-base/types/events' {
        **/
       [key: string]: AugmentedEvent<ApiType>;
     };
-    technicalCommitteeMembership: {
+    technicalMembership: {
       /**
        * Phantom member, never used.
        **/
@@ -1128,6 +1157,21 @@ declare module '@polkadot/api-base/types/events' {
        * has been paid by `who`.
        **/
       TransactionFeePaid: AugmentedEvent<ApiType, [who: AccountId32, actualFee: u128, tip: u128], { who: AccountId32, actualFee: u128, tip: u128 }>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    transfer: {
+      /**
+       * A channel has been opened
+       **/
+      ChannelOpened: AugmentedEvent<ApiType, [channelId: Bytes, portId: Bytes], { channelId: Bytes, portId: Bytes }>;
+      /**
+       * Pallet params updated
+       **/
+      PalletParamsUpdated: AugmentedEvent<ApiType, [sendEnabled: bool, receiveEnabled: bool], { sendEnabled: bool, receiveEnabled: bool }>;
+      TokenTransferInitiated: AugmentedEvent<ApiType, [from: AccountId32, to: Bytes, amount: u128], { from: AccountId32, to: Bytes, amount: u128 }>;
       /**
        * Generic event
        **/
