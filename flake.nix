@@ -30,19 +30,21 @@
         # 1. Add foo to inputs
         # 2. Add foo as a parameter to the outputs function
         # 3. Add here: foo.flakeModule
-        ./fmt.nix
-        ./rust.nix
-        ./docker.nix
-        ./subwasm.nix
-        ./price-feed.nix
-        ./dev-shells.nix
-        ./docs/docs.nix
-        ./subsquid/subsquid.nix
         ./code/common-deps.nix
-        ./code/integration-tests.nix
-        ./code/runtimes.nix
         ./code/composable-nodes.nix
+        ./code/integration-tests.nix
         ./code/integration-tests/runtime-tests/runtime-tests.nix
+        ./code/runtimes.nix
+        ./dev-shells.nix
+        ./devnet-tools.nix
+        ./docker.nix
+        ./docs/docs.nix
+        ./fmt.nix
+        ./nixops.nix
+        ./price-feed.nix
+        ./rust.nix
+        ./subsquid/subsquid.nix
+        ./subwasm.nix
       ];
       systems = [ "x86_64-linux" "aarch64-linux" ];
       perSystem = { config, self', inputs', pkgs, system, crane, ... }: {
