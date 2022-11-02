@@ -72,6 +72,133 @@
           devNet = packages.bridge-mmr-devnet-dali;
         };
 
+        devnet-rococo-dali-karura =
+          let
+            config = (pkgs.callPackage
+              ./scripts/polkadot-launch/kusama-local-dali-dev-karura-dev.nix
+              {
+                polkadot-bin = packages.polkadot-node;
+                composable-bin = packages.composable-node;
+                acala-bin = packages.acala-node;
+              }).result;
+            config-file = pkgs.writeTextFile {
+              name = "kusama-local-dali-dev-karura-dev.json";
+              text = "${builtins.toJSON config}";
+            };
+          in
+          pkgs.writeShellApplication {
+            name = "run-rococo-dali-karura";
+            text = ''
+              cat ${config-file}
+              rm -rf /tmp/polkadot-launch
+              ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
+            '';
+          };
+
+        devnet-picasso-complete =
+          let
+            config =
+              (pkgs.callPackage ./scripts/polkadot-launch/all-dev-local.nix {
+                chainspec = "picasso-dev";
+                polkadot-bin = packages.polkadot-node;
+                composable-bin = packages.composable-node;
+                statemine-bin = packages.statemine-node;
+                acala-bin = packages.acala-node;
+              }).result;
+            config-file = pkgs.writeTextFile {
+              name = "all-dev-local.json";
+              text = "${builtins.toJSON config}";
+            };
+          in
+          pkgs.writeShellApplication {
+            name = "devnet-picasso-complete";
+            text = ''
+              cat ${config-file}
+              rm -rf /tmp/polkadot-launch
+              ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
+            '';
+          };
+
+        devnet-dali-complete =
+          let
+            config =
+              (pkgs.callPackage ./scripts/polkadot-launch/all-dev-local.nix {
+                chainspec = "dali-dev";
+                polkadot-bin = packages.polkadot-node;
+                composable-bin = packages.composable-node;
+                statemine-bin = packages.statemine-node;
+                acala-bin = packages.acala-node;
+              }).result;
+            config-file = pkgs.writeTextFile {
+              name = "all-dev-local.json";
+              text = "${builtins.toJSON config}";
+            };
+          in
+          pkgs.writeShellApplication {
+            name = "devnet-dali-complete";
+            text = ''
+              cat ${config-file}
+              rm -rf /tmp/polkadot-launch
+              ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
+            '';
+          };
+
+        devnet-default-program =
+          pkgs.composable.mkDevnetProgram "devnet-default"
+            (import ./.nix/devnet-specs/default.nix {
+              inherit pkgs;
+              price-feed = packages.price-feed;
+              devnet = packages.devnet-dali-complete;
+              frontend = packages.frontend-static;
+            });
+
+        devnet-xcvm-program = pkgs.composable.mkDevnetProgram "devnet-xcvm"
+          (import ./.nix/devnet-specs/xcvm.nix {
+            inherit pkgs;
+            inherit devnet-dali;
+          });
+
+        devnet-persistent-program =
+          pkgs.composable.mkDevnetProgram "devnet-persistent"
+            (import ./.nix/devnet-specs/default.nix {
+              inherit pkgs;
+              price-feed = packages.price-feed;
+              devnet = packages.devnet-dali-complete;
+              frontend = packages.frontend-static-persistent;
+            });
+
+        devnet-picasso-persistent-program =
+          pkgs.composable.mkDevnetProgram "devnet-persistent"
+            (import ./.nix/devnet-specs/default.nix {
+              inherit pkgs;
+              price-feed = packages.price-feed;
+              devnet = packages.devnet-picasso-complete;
+              frontend = packages.frontend-static-picasso-persistent;
+            });
+        kusama-picasso-karura-devnet =
+          let
+            config = (pkgs.callPackage
+              ./scripts/polkadot-launch/kusama-local-picasso-dev-karura-dev.nix
+              {
+                polkadot-bin = packages.polkadot-node;
+                composable-bin = packages.composable-node;
+                acala-bin = packages.acala-node;
+              }).result;
+            config-file = pkgs.writeTextFile {
+              name = "kusama-local-picasso-dev-karura-dev.json";
+              text = "${builtins.toJSON config}";
+            };
+          in
+          pkgs.writeShellApplication {
+            name = "kusama-picasso-karura";
+            text = ''
+              cat ${config-file}
+              rm -rf /tmp/polkadot-launch
+              ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
+            '';
+          };
+
+
       };
   };
 }

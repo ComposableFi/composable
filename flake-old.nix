@@ -138,41 +138,6 @@
             };
           };
 
-          # for containers which are intended for testing, debug and development (including running isolated runtime)
-          docker-in-docker = with pkgs; [ docker docker-buildx docker-compose ];
-          containers-tools-minimal = with pkgs; [
-            acl
-            direnv
-            home-manager
-            cachix
-          ];
-          container-tools = with pkgs;
-            [
-              bash
-              bottom
-              coreutils
-              findutils
-              gawk
-              gnugrep
-              less
-              nettools
-              nix
-              procps
-            ] ++ containers-tools-minimal;
-
-         devcontainer-base-image =
-            pkgs.callPackage ./.devcontainer/devcontainer-base-image.nix {
-              inherit system;
-            };
-
-          # we reached limit of 125 for layers and build image cannot do non root ops, so split it
-          devcontainer-root-image = pkgs.dockerTools.buildImage {
-            name = "devcontainer-root-image";
-            fromImage = devcontainer-base-image;
-            contents = [ rust-nightly ] ++ containers-tools-minimal
-              ++ docker-in-docker;
-          };
-
           benchmarks-run-once = chainspec:
             pkgs.writeShellScriptBin "run-benchmarks-once" ''
               ${composable-bench-node}/bin/composable benchmark pallet \
@@ -512,87 +477,8 @@
               mk-xcvm-contract "xcvm-asset-registry";
             xcvm-contract-router = mk-xcvm-contract "xcvm-router";
             xcvm-contract-interpreter = mk-xcvm-contract "xcvm-interpreter";
-
-            # Dali devnet
-            devnet-dali = (pkgs.callPackage mk-devnet {
-              inherit pkgs;
-              inherit (packages) polkadot-launch composable-node polkadot-node;
-              chain-spec = "dali-dev";
-            }).script;
-
-            # Dali bridge devnet
-            bridge-devnet-dali = (mk-bridge-devnet {
-              inherit pkgs packages polkadot-launch composable-node
-                polkadot-node;
-            }).script;
-
-            # Dali bridge devnet with mmr-polkadot
-            bridge-mmr-devnet-dali = (mk-bridge-devnet {
-              inherit pkgs packages polkadot-launch composable-node;
-              polkadot-node = mmr-polkadot-node;
-            }).script;
-
-            # Picasso devnet
-            devnet-picasso = (pkgs.callPackage mk-devnet {
-              inherit pkgs;
-              inherit (packages) polkadot-launch composable-node polkadot-node;
-              chain-spec = "picasso-dev";
-            }).script;
-
-            devnet-container = mk-devnet-container {
-              inherit pkgs container-tools;
-              containerName = "composable-devnet-container";
-              devNet = packages.devnet-dali;
-            };
-
-            # Dali Bridge devnet container
-            bridge-devnet-dali-container = mk-devnet-container {
-              inherit pkgs container-tools;
-              containerName = "composable-bridge-devnet-container";
-              devNet = packages.bridge-devnet-dali;
-            };
-
-            # Dali Bridge devnet container with mmr-polkadot
-            bridge-mmr-devnet-dali-container = mk-devnet-container {
-              inherit pkgs container-tools;
-              containerName = "composable-bridge-mmr-devnet-container";
-              devNet = packages.bridge-mmr-devnet-dali;
-            };
-
             # TODO: inherit and provide script to run all stuff
 
-            # devnet-container-xcvm
-            # NOTE: The devcontainer is currently broken for aarch64.
-            # Please use the developers devShell instead
-
-            devcontainer = pkgs.dockerTools.buildLayeredImage {
-              name = "composable-devcontainer";
-              fromImage = devcontainer-root-image;
-              contents = [ composable-node ];
-              # substituters, same as next script, but without internet access
-              # ${pkgs.cachix}/bin/cachix use composable-community
-              # to run root in buildImage needs qemu/kvm shell
-              # non root extraCommands (in both methods) do not have permissions
-              # not clear if using ENV or replace ENTRYPOINT will allow to setup
-              # from nixos docker.nix - they build derivation which outputs into $out/etc/nix.conf
-              # (and any other stuff like /etc/group)
-              fakeRootCommands = ''
-                mkdir --parents /etc/nix
-                cat <<EOF >> /etc/nix/nix.conf
-                sandbox = relaxed
-                experimental-features = nix-command flakes
-                narinfo-cache-negative-ttl = 30
-                substituters = https://cache.nixos.org https://composable-community.cachix.org
-                # TODO: move it separate file with flow of `cachix -> get keys -> output -> fail derivation if hash != key changed
-                # // cspell: disable-next-line
-                trusted-public-keys = cache.nixos.org-1:6nchdd59x431o0gwypbmraurkbj16zpmqfgspcdshjy= composable-community.cachix.org-1:GG4xJNpXJ+J97I8EyJ4qI5tRTAJ4i7h+NK2Z32I8sK8=
-                EOF
-              '';
-              config = {
-                User = "vscode";
-                # TODO: expose ports and other stuff done in base here too
-              };
-            };
 
             check-dali-dev-benchmarks = benchmarks-run-once "dali-dev";
             check-picasso-dev-benchmarks = benchmarks-run-once "picasso-dev";
@@ -617,124 +503,6 @@
                 license = "Apache-2.0 OR MIT";
               };
             };
-            kusama-picasso-karura-devnet = let
-              config = (pkgs.callPackage
-                ./scripts/polkadot-launch/kusama-local-picasso-dev-karura-dev.nix {
-                  polkadot-bin = polkadot-node;
-                  composable-bin = composable-node;
-                  acala-bin = acala-node;
-                }).result;
-              config-file = pkgs.writeTextFile {
-                name = "kusama-local-picasso-dev-karura-dev.json";
-                text = "${builtins.toJSON config}";
-              };
-            in pkgs.writeShellApplication {
-              name = "kusama-picasso-karura";
-              text = ''
-                cat ${config-file}
-                rm -rf /tmp/polkadot-launch
-                ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
-              '';
-            };
-
-            devnet-rococo-dali-karura = let
-              config = (pkgs.callPackage
-                ./scripts/polkadot-launch/kusama-local-dali-dev-karura-dev.nix {
-                  polkadot-bin = polkadot-node;
-                  composable-bin = composable-node;
-                  acala-bin = acala-node;
-                }).result;
-              config-file = pkgs.writeTextFile {
-                name = "kusama-local-dali-dev-karura-dev.json";
-                text = "${builtins.toJSON config}";
-              };
-            in pkgs.writeShellApplication {
-              name = "run-rococo-dali-karura";
-              text = ''
-                cat ${config-file}
-                rm -rf /tmp/polkadot-launch
-                ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
-              '';
-            };
-
-            devnet-picasso-complete = let
-              config =
-                (pkgs.callPackage ./scripts/polkadot-launch/all-dev-local.nix {
-                  chainspec = "picasso-dev";
-                  polkadot-bin = polkadot-node;
-                  composable-bin = composable-node;
-                  statemine-bin = statemine-node;
-                  acala-bin = acala-node;
-                }).result;
-              config-file = pkgs.writeTextFile {
-                name = "all-dev-local.json";
-                text = "${builtins.toJSON config}";
-              };
-            in pkgs.writeShellApplication {
-              name = "devnet-picasso-complete";
-              text = ''
-                cat ${config-file}
-                rm -rf /tmp/polkadot-launch
-                ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
-              '';
-            };
-
-            devnet-dali-complete = let
-              config =
-                (pkgs.callPackage ./scripts/polkadot-launch/all-dev-local.nix {
-                  chainspec = "dali-dev";
-                  polkadot-bin = polkadot-node;
-                  composable-bin = composable-node;
-                  statemine-bin = statemine-node;
-                  acala-bin = acala-node;
-                }).result;
-              config-file = pkgs.writeTextFile {
-                name = "all-dev-local.json";
-                text = "${builtins.toJSON config}";
-              };
-            in pkgs.writeShellApplication {
-              name = "devnet-dali-complete";
-              text = ''
-                cat ${config-file}
-                rm -rf /tmp/polkadot-launch
-                ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
-              '';
-            };
-
-
-            devnet-default-program =
-              pkgs.composable.mkDevnetProgram "devnet-default"
-              (import ./.nix/devnet-specs/default.nix {
-                inherit pkgs;
-                inherit price-feed;
-                devnet = devnet-dali-complete;
-                frontend = frontend-static;
-              });
-
-            devnet-xcvm-program = pkgs.composable.mkDevnetProgram "devnet-xcvm"
-              (import ./.nix/devnet-specs/xcvm.nix {
-                inherit pkgs;
-                inherit devnet-dali;
-              });
-
-            devnet-persistent-program =
-              pkgs.composable.mkDevnetProgram "devnet-persistent"
-              (import ./.nix/devnet-specs/default.nix {
-                inherit pkgs;
-                inherit price-feed;
-                devnet = devnet-dali-complete;
-                frontend = frontend-static-persistent;
-              });
-
-            devnet-picasso-persistent-program =
-              pkgs.composable.mkDevnetProgram "devnet-persistent"
-              (import ./.nix/devnet-specs/default.nix {
-                inherit pkgs;
-                inherit price-feed;
-                devnet = devnet-picasso-complete;
-                frontend = frontend-static-picasso-persistent;
-              });
-
             default = packages.composable-node;
           };
 
@@ -745,23 +513,6 @@
               program = pkgs.lib.meta.getExe p;
             };
           in rec {
-            devnet = makeApp packages.devnet-default-program;
-            devnet-persistent = makeApp packages.devnet-persistent-program;
-            devnet-picasso-persistent =
-              makeApp packages.devnet-picasso-persistent-program;
-            devnet-xcvm = makeApp packages.devnet-xcvm-program;
-            devnet-dali = makeApp packages.devnet-dali;
-            devnet-picasso = makeApp packages.devnet-picasso;
-            devnet-kusama-picasso-karura =
-              makeApp packages.kusama-picasso-karura-devnet;
-            devnet-rococo-dali-karura =
-              makeApp packages.devnet-rococo-dali-karura;
-            devnet-picasso-complete = makeApp packages.devnet-picasso-complete;
-            devnet-dali-complete = makeApp packages.devnet-dali-complete;
-            composable = makeApp packages.composable-node;
-            acala = makeApp packages.acala-node;
-            polkadot = makeApp packages.polkadot-node;
-            junod = makeApp packages.junod;
             # TODO: move list of chains out of here and do fold
             benchmarks-once-composable = flake-utils.lib.mkApp {
               drv = benchmarks-run-once "composable-dev";
