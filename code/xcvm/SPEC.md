@@ -144,6 +144,9 @@ Commonly used terms in this document are described below.
 
 `Chain`: A blockchain with its consensus and execution environment, but may also refer to rollups.
 
+`User`: A third party user of XCVM contracts. Can be another contract, module, pallet or actual human.
+
+`Implementor`: An entity implementing technology according to the XCVM specification.
 
 
 ## 1.3.  Notational Conventions
@@ -549,9 +552,17 @@ The `CNS` provides an abstraction on top of the `Identity` system, allowing deve
 
 We will later elaborate on using alternative name registries such as [`ENS`](https://ens.domains/).
 
-# 7. Security considerations
+# 7. Security Considerations
 
-<!-- Define security-related considerations to USERS and IMPLEMENTORS -->
+Ensuring that the caller is an owner is an incredibly important check, as the owner can delegate calls through the interpreter, directly owning all state, funds, and possible (financial) positions associated with the interpreter account. Since each interpreter has their own `Identity`, they might own other accounts as well. Thus the owners control more accounts than just the contract storing the owners.
+
+The Call instruction has the same security risks as calling any arbitrary smart contract, such as setting unlimited allowances.
+
+Adding an owner to the set of owners grants them the ability to evict other owners.
+
+Failure to execute an instruction will lead to a transaction being reverted, however, the funds will still be in the interpreter account's control. Ensure that changing ownership is always done atomically (add and remove in the same transaction) to ensure funds are not lost forever.
+
+Using insecure bridges such as LayerZero or Wormhole is equivalent to adding them as owners on your interpreter instance.
 
 # 8. References
 
