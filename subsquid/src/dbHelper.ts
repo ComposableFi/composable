@@ -4,7 +4,7 @@ import { randomUUID } from "crypto";
 import { ApiPromise, WsProvider } from "@polkadot/api";
 import { hexToU8a } from "@polkadot/util";
 import { chain } from "./config";
-import { encodeAccount, getNormalizedAmount } from "./utils";
+import { encodeAccount, getAmountWithoutDecimals } from "./utils";
 import {
   Account,
   Activity,
@@ -235,7 +235,7 @@ export async function storeHistoricalLockedValue(
     }
     const lockedValue =
       oraclePrices[assetId] *
-      getNormalizedAmount(amountsLocked[assetId], assetDecimals[assetId]);
+      getAmountWithoutDecimals(amountsLocked[assetId], assetDecimals[assetId]);
     return BigInt(agg) + lockedValue;
   }, BigInt(0));
 

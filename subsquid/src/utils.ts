@@ -41,19 +41,10 @@ export function encodeAccount(account: Uint8Array): string {
   return ss58.codec("picasso").encode(account);
 }
 
-// Normalize the amount to 12 decimals
-export function getNormalizedAmount(
+// Get amount without decimals
+export function getAmountWithoutDecimals(
   amount: bigint,
-  decimals: number,
-  normalizedDecimals = 12
+  decimals: number
 ): bigint {
-  const additionalDecimals = decimals - normalizedDecimals;
-
-  if (additionalDecimals < 0) {
-    // Note: this condition is needed because BigInt cannot be mixed with decimal
-    // numbers, as would be 10 ** -n
-    return amount * BigInt(10 ** -additionalDecimals);
-  }
-
-  return amount / BigInt(10 ** additionalDecimals);
+  return amount / BigInt(10 ** decimals);
 }
