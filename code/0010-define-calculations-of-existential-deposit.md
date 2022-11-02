@@ -22,15 +22,15 @@ extensibility in the future.
   across our runtime, node, and front-end applications.
 
 * When the ED of token A is swapped into token B, the new balance of token B is
-  substantial for ED. In other words, a user cannot "delete" their balanance 
-  when they convert it into another token.
+  substantial for ED. In other words, a user cannot "delete" their balance when 
+  they convert it into another token.
 
-* The implementation of our ED value retrieval should allow for the overwritting
+* The implementation of our ED value retrieval should allow for the overwriting
   of the standard ED value defined in this document.
 
 ## Method
 
-### Inititial Standard ED Value
+### Initial Standard ED Value
 
 With the following definitions: 
 
@@ -75,9 +75,9 @@ assert(token_a_ed_as_native == token_b_ed_as_native)
 assert(native_as_token_b == token_a_as_token_b)
 ```
 
-### Overwritting & Asset Registry Storage
+### Overwriting & Asset Registry Storage
 
-For a token to have its ED be correctly calculated, and therfore to exists on 
+For a token to have its ED be correctly calculated, and therefore to exists on 
 chain, it should have its `foreign_asset_ratio` defined and stored.
 
 If the need arises, an optional ED value can be provided to an asset within
@@ -94,7 +94,7 @@ The current implementation of `multi_existential_deposits` does the following:
   
   2. **Otherwise, pull a hard-coded ED from a `match` statement**.
   
-  3. If no matches are found, return `Balance::MAX` which will purne unknown
+  3. If no matches are found, return `Balance::MAX` which will prune unknown
      assets.
     
 It should be updated as follows:
@@ -104,7 +104,7 @@ It should be updated as follows:
   2. **If a asset ratio is defined for an asset in Asset Registry, calculate the
      standard ED as defined by this document.**
   
-  3. If no matches are found, return `Balance::MAX` which will purne unknown
+  3. If no matches are found, return `Balance::MAX` which will prune unknown
      assets.
     
 ### Existential Deposit Retrieval
@@ -114,7 +114,7 @@ functionality of `multi_existential_deposits`.
     
 ### Asset Registry
 
-**Note**: If AssetRegistry storage is already in use on Picaso, we will need to
+**Note**: If AssetRegistry storage is already in use on Picasso, we will need to
 perform a storage migration in the next runtime upgrade for all of these changes
 to be possible.
 
@@ -143,7 +143,7 @@ pub fn register_asset(
   assets native chain?
   
 * Can an RPC expose a function that only exists in the runtime? If not, we may
-  need to move `multi_existential_deposits` (or at least its funtionality) into
+  need to move `multi_existential_deposits` (or at least its functionality) into
   Asset Registry.
   
-* Do we already have an in-use storage for AssetRegistry in Picaso?
+* Do we already have an in-use storage for AssetRegistry in Picasso?
