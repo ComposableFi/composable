@@ -104,7 +104,7 @@
         unit-tests-with-coverage = crane.nightly.cargoBuild
           (systemCommonRust.common-attrs // {
             pnameSuffix = "-tests-with-coverage";
-            buildInputs = with pkgs; [ cargo-llvm-cov ];
+            buildInputs = [ self'.packages.cargo-llvm-cov ];
             cargoArtifacts = self'.packages.common-deps-nightly;
             # NOTE: do not add --features=runtime-benchmarks because it force multi ED to be 0 because of dependencies
             # NOTE: in order to run benchmarks as tests, just make `any(test, feature = "runtime-benchmarks")
