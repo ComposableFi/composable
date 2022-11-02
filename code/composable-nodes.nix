@@ -25,7 +25,7 @@
         composable-node-release = crane.nightly.buildPackage
           (systemCommonRust.common-attrs // {
             name = "composable";
-            cargoArtifacts = systemCommonRust.common-deps;
+            cargoArtifacts = self'.packages.common-deps;
             cargoBuildCommand = "cargo build --release --package composable";
             SUBSTRATE_CLI_GIT_COMMIT_HASH = if self ? rev then
               self.rev
