@@ -30,7 +30,7 @@ mod weights;
 pub mod xcmp;
 
 use lending::MarketId;
-use orml_traits::{parameter_type_with_key, LockIdentifier};
+use orml_traits::{parameter_type_with_key, LockIdentifier, MultiCurrency};
 // TODO: consider moving this to shared runtime
 pub use xcmp::{MaxInstructions, UnitWeightCost};
 
@@ -380,11 +380,29 @@ impl transaction_payment::Config for Runtime {
 		TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
 }
 
+/// Struct implementing `asset_tx_payment::HandleCredit` that determines the behavior when fees are
+/// paid in something other than the native token.
 pub struct TransferToTreasuryOrDrop;
 impl asset_tx_payment::HandleCredit<AccountId, Tokens> for TransferToTreasuryOrDrop {
 	fn handle_credit(credit: fungibles::CreditOf<AccountId, Tokens>) {
-		let _ =
-			<Tokens as fungibles::Balanced<AccountId>>::resolve(&TreasuryAccount::get(), credit);
+		// `old_free` is only the `free` balance of an account
+		let old_free = <Tokens as MultiCurrency<AccountId>>::free_balance(
+			credit.asset(),
+			&TreasuryAccount::get(),
+		);
+
+		// `new_free` is `old_free + credit.peek()`
+		let new_free = old_free.saturating_add(credit.peek());
+
+		// NOTE: After our runtime depends on paritytech/substrate PR#12569, this function will need
+		// to be re-evaluated as `set_balance` might not do what it is meant to do when implemented
+		// for pallet balances or orml tokens.
+		// https://github.com/paritytech/substrate/pull/12569
+		let _ = <Tokens as fungibles::Unbalanced<AccountId>>::set_balance(
+			credit.asset(),
+			&TreasuryAccount::get(),
+			new_free,
+		);
 	}
 }
 
