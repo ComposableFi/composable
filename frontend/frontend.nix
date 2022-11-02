@@ -1,11 +1,9 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, system, ... }:
     let
-      npm-bp = pkgs.callPackage self.inputs.npm-buildpackage { };
-
       mkFrontendStatic =
         { kusamaEndpoint, picassoEndpoint, karuraEndpoint, subsquidEndpoint }:
-        npm-bp.buildYarnPackage {
+        pkgs.buildYarnPackage {
           nativeBuildInputs = [ pkgs.pkg-config pkgs.vips pkgs.python3 ];
           src = ./.;
 

@@ -197,49 +197,6 @@
               RUSTFLAGS = "-C link-arg=-s";
             });
 
-          mkDevnetInitializeScript =
-            { polkadotUrl, composableUrl, parachainIds }:
-            let
-              lease-period-prolongator = npm-bp.buildYarnPackage {
-                nativeBuildInputs = [
-                  pkgs.pkg-config
-                  pkgs.python3
-                  pkgs.nodePackages.node-gyp-build
-                  pkgs.nodePackages.node-gyp
-                  pkgs.nodePackages.typescript
-                ];
-                src = ./scripts/lease-period-prolongator;
-                buildPhase = ''
-                  yarn
-                  ${pkgs.nodePackages.typescript}/bin/tsc
-                '';
-              };
-              composablejs = npm-bp.buildYarnPackage {
-                nativeBuildInputs = [
-                  pkgs.pkg-config
-                  pkgs.python3
-                  pkgs.nodePackages.node-gyp-build
-                  pkgs.nodePackages.node-gyp
-                  pkgs.nodePackages.typescript
-                ];
-                src = ./composablejs;
-                buildPhase = ''
-                  yarn
-                '';
-              };
-            in pkgs.writeShellApplication {
-              name = "qa-state-initialize";
-              runtimeInputs = [ pkgs.nodejs ];
-              text = ''
-                PARACHAIN_ENDPOINT=${composableUrl} ${pkgs.nodejs}/bin/npm run --prefix ${composablejs} start -w packages/devnet-setup
-                ${builtins.concatStringsSep "\n" (builtins.map (parachainId:
-                  "NODE_URL=${polkadotUrl} PARA_ID=${
-                    toString parachainId
-                  } ${pkgs.nodejs}/bin/node ${lease-period-prolongator}/dist/index.js")
-                  parachainIds)}
-              '';
-            };
-
         in rec {
           packages = rec {
             inherit simnode-tests;
@@ -331,30 +288,6 @@
                 sha256sum ./* > checksums.txt
               '';
             };
-
-            devnet-initialize-script-local = mkDevnetInitializeScript {
-              polkadotUrl = "ws://localhost:9944";
-              composableUrl = "ws://localhost:9988";
-              parachainIds = [ 1000 2000 2087 ];
-            };
-
-            devnet-initialize-script-persistent = mkDevnetInitializeScript {
-              polkadotUrl =
-                "wss://persistent.devnets.composablefinance.ninja/chain/rococo";
-              composableUrl =
-                "wss://persistent.devnets.composablefinance.ninja/chain/dali";
-              parachainIds = [ 1000 2000 2087 ];
-            };
-
-            devnet-initialize-script-picasso-persistent =
-              mkDevnetInitializeScript {
-                polkadotUrl =
-                  "wss://persistent.picasso.devnets.composablefinance.ninja/chain/rococo";
-                composableUrl =
-                  "wss://persistent.picasso.devnets.composablefinance.ninja/chain/picasso";
-                parachainIds = [ 1000 2000 2087 ];
-              };
-
             xcvm-contract-asset-registry =
               mk-xcvm-contract "xcvm-asset-registry";
             xcvm-contract-router = mk-xcvm-contract "xcvm-router";
