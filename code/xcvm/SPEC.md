@@ -538,11 +538,11 @@ Propagating updates across registries is handled by the `XCVM` too. We will go m
 
 # 6. Further Work
 
-## 6.1 NFTs
+## 6.1. NFTs
 
 The design specification currently does not take NFTs into account. We have chosen to not (yet) specify NFTs as part of `Assets` due to the complexity of owning and value accruing NFTs. We do however intend to update the specification once the approach has been finalized.
 
-## 6.2 Name Service
+## 6.2. Name Service
 
 The `CNS` provides an abstraction on top of the `Identity` system, allowing developers and users to use a single name across interpreter instances. Each `XCVM` chain contains a `CNS` registry, which maps `Identity` to `Name`. On bridge relays, the calling program can specify to use an associated `Name` instead of its `Identity`. The `XCVM` interpreter has to be configured to accept the `CNS` as an owner. 
 
