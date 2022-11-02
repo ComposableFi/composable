@@ -17,6 +17,7 @@ import {
   LockedSource,
   PabloPool,
 } from "./model";
+import BigNumber from "bignumber.js";
 
 export async function get<T extends { id: string }>(
   store: Store,
@@ -233,10 +234,10 @@ export async function storeHistoricalLockedValue(
       // Ignore assets for which we don't know decimals
       return agg;
     }
-    const lockedValue =
-      oraclePrices[assetId] *
-      getAmountWithoutDecimals(amountsLocked[assetId], assetDecimals[assetId]);
-    return BigInt(agg) + lockedValue;
+    const lockedValue = BigNumber(oraclePrices[assetId].toString()).times(
+      getAmountWithoutDecimals(amountsLocked[assetId], assetDecimals[assetId])
+    );
+    return BigInt(agg) + BigInt(lockedValue.toString());
   }, BigInt(0));
 
   const lastLockedValueAll = await getLastLockedValue(ctx, LockedSource.All);
