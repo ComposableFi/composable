@@ -420,7 +420,7 @@ On initial instantiation of the `XCVM` interpreter, the calling `Identity` is th
 
 Oftentimes, multiple `Identities` represent a single real-world entity, such as a cross-chain protocol or a user. To accommodate for shared/global ownership of resources, each interpreter keeps track of a set of `Identities`, which share ownership of the interpreter. Each owning `Identity` has full permissions on the interpreter instance.
 
-Owners may be added by having the interpreter call the appropriate setters. We will consider adding specialized instructions later.
+Owners may be added by having the interpreter call the appropriate setters. We will consider adding specialized instructions later. Owners may be removed by other owners. An XCVM instance MUST always have at least one owner.
 
 # 3. Encoding
 
@@ -489,7 +489,8 @@ We will later elaborate on using alternative name registries such as [`ENS`](htt
 
 ## A.
 ```rust
-fn execute(&mut self, relayer: Account, caller: Identity, instructions: Vec<u8>) {
+fn execute(&mut self, sender: Account, relayer: Account, caller: Identity, instructions: Vec<u8>) {
+    assert_eq!(sender, ROUTER::ACCOUNT);
     assert!(self.owners.contains(&caller))
     
     // reset the IP from the last execution
