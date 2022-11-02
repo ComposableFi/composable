@@ -66,9 +66,9 @@ type Schedule {
 
 type VestingSchedule @entity {
   id: ID!
-  "account that initiates the schedule"
+  "Account that initiates the schedule"
   from: String! @index
-  "chain event ID"
+  "Chain event ID"
   eventId: String! @index
   "Vesting schedule ID from chain"
   scheduleId: BigInt! @index
@@ -95,13 +95,12 @@ type Activity @entity {
 }
 
 type Asset @entity {
-  "ID of the asset in Picasso"
+  "ID of the asset"
   id: ID!
   "ID of the event that added the last price"
   eventId: String! @index
   "Latest price in USD"
   price: BigInt!
-  "Defaults to 12 when not specified"
   decimals: Int
   historicalPrices: [HistoricalAssetPrice!] @derivedFrom(field: "asset")
 }
