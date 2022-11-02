@@ -11,7 +11,7 @@ Cross-chain Virtual Machine (XCVM) is a specification outlining an application-l
 - Turing-Complete Interactions: Complicated business logic can be dynamically dispatched to other chains, without the need for developers to deploy contracts on the destination chain.
 - Configurable Security Levels: Developers can opt-in to use less secure transports, with the advantage of cheaper and faster execution.
 
-Most of all, `XCVM` has been designed in a very extensible way, building up small functionalities and by combining them, allows for immense complexity.
+Most of all, `XCVM` has been designed in a very extensible way, building up small functionalities and by combining them, allowing for immense complexity.
 
 # Status of This Memo
 
@@ -24,23 +24,93 @@ document authors. All rights reserved.
 
 # Table of Contents
 
-<!-- From this section onward, number each header -->
+<!-- 
+generated using https://ecotrust-canada.github.io/markdown-toc/ 
+-->
+
+- [Abstract](#abstract)
+- [Status of This Memo](#status-of-this-memo)
+- [Copyright Notice](#copyright-notice)
+- [Table of Contents](#table-of-contents)
+- [1. Overview](#1-overview)
+  * [1.1. Document Structure](#11-document-structure)
+  * [1.2. Terms and Definitions](#12-terms-and-definitions)
+  * [1.3.  Notational Conventions](#13--notational-conventions)
+    + [1.3.1. Types](#131-types)
+    + [1.3.2. Unions](#132-unions)
+    + [1.3.3. Sums](#133-sums)
+    + [1.3.4. Mappings](#134-mappings)
+    + [1.3.5. Sequences](#135-sequences)
+    + [1.3.6. Sets](#136-sets)
+    + [1.3.7. Primitive types](#137-primitive-types)
+- [2. XCVM](#2-xcvm)
+  * [2.1. Versioning](#21-versioning)
+  * [2.2. Instruction Set](#22-instruction-set)
+    + [2.2.1. Transfer](#221-transfer)
+    + [2.2.2. Call](#222-call)
+    + [2.2.2.1. Late Bindings](#2221-late-bindings)
+    + [2.2.3 Spawn](#223-spawn)
+    + [2.2.4. Query](#224-query)
+  * [2.3. Balances](#23-balances)
+  * [2.4. Abstract Virtual Machine](#24-abstract-virtual-machine)
+    + [2.4.1 Registers](#241-registers)
+      - [2.4.1.1 Result Register](#2411-result-register)
+      - [2.4.1.2 IP Register](#2412-ip-register)
+      - [2.4.1.3 Relayer Register](#2413-relayer-register)
+      - [2.4.1.4 Self Register](#2414-self-register)
+      - [2.4.1.5 Version Register](#2415-version-register)
+    + [2.4.5 Program Execution Semantics](#245-program-execution-semantics)
+  * [2.5. XCVM Execution Semantics](#25-xcvm-execution-semantics)
+    + [2.5.1. Gateway](#251-gateway)
+    + [2.5.2. Router](#252-router)
+    + [2.6. Ownership](#26-ownership)
+- [3. Encoding](#3-encoding)
+  * [3.1. JSON Encoding](#31-json-encoding)
+- [4. Fees](#4-fees)
+  * [4.1. Execution Fees](#41-execution-fees)
+- [5. Asset Registries](#5-asset-registries)
+- [6. Further Work](#6-further-work)
+  * [6.1 NFTs](#61-nfts)
+  * [6.2 Name Service](#62-name-service)
+- [7. Security considerations](#7-security-considerations)
+- [8. References](#8-references)
+- [9. Appendix](#9-appendix)
+  * [A.](#a)
+  * [B.](#b)
+    + [Examples](#examples)
+      - [Cross-chain borrowing](#cross-chain-borrowing)
+- [10. Contributors](#10-contributors)
+
 # 1. Overview
 
 ## 1.1. Document Structure
 
-<!-- 
 
-Describe each section of the ToC in 1 sentence, optionally grouping sections with a single sentence describing the sections:
+* XVCM is a DTCC-like protocol for blockchains.
 
-*  Streams are the basic service abstraction that QUIC provides.
+    - Section 2.1. describes on-chain versioning.
 
-    -  Section 2 describes core concepts related to streams,
+    - Section 2.2. describes the instruction set.
 
-    -  Section 3 provides a reference model for stream states, and
+    - Section 2.3. describes general asset amount handling.
 
-    -  Section 4 outlines the operation of flow control.
--->
+    - Section 2.4. specifies the abstract virtual machine.
+
+    - Section 2.5. outlines the execution semantics of a program.
+
+* Encoding programs is primarily done using protobufs.
+
+* Fees are charged at different stages, for bridging and execution.
+
+* Asset Registries provide ways to deal with ERC20, CW20, or native assets across chains.
+
+* Further work outlines planned extensions to the specification.
+
+    - Section 6.1. elaborates on NFTs.
+
+    - Section 6.2. provides a model for abstracting ownership and identities.
+
+* Security considerations to be made by users and implementors.
 
 ## 1.2. Terms and Definitions
 
@@ -451,7 +521,7 @@ Gas and Bridging fees are handled during the invocation and at the `Router` leve
 
 This model is very much like Bitcoin's UTXOs, where the difference between inputs and outputs defines the tip. Here we are more explicit with the actual fee, which allows for more fine-grained control. Together with branching (to be implemented later), this fee model can be used to incentivize the relayer to precompute the outcome, and only submit the program if it were to succeed at the current state of the destination chain.
 
-## 5. Asset Registries
+# 5. Asset Registries
 
 Assets can be identified using a global asset identifier.
 
@@ -463,13 +533,13 @@ Each chain contains a registry contract, which maps assets to their local repres
 
 Propagating updates across registries is handled by the `XCVM` too. We will go more in-depth on how we bootstrap this system in a later specification.
 
-## 6. Further Work
+# 6. Further Work
 
-### 6.1 NFTs
+## 6.1 NFTs
 
 The design specification currently does not take NFTs into account. We have chosen to not (yet) specify NFTs as part of `Assets` due to the complexity of owning and value accruing NFTs. We do however intend to update the specification once the approach has been finalized.
 
-### 6.2 Name Service
+## 6.2 Name Service
 
 The `CNS` provides an abstraction on top of the `Identity` system, allowing developers and users to use a single name across interpreter instances. Each `XCVM` chain contains a `CNS` registry, which maps `Identity` to `Name`. On bridge relays, the calling program can specify to use an associated `Name` instead of its `Identity`. The `XCVM` interpreter has to be configured to accept the `CNS` as an owner. 
 
@@ -499,7 +569,7 @@ fn execute(&mut self, sender: Account, relayer: Account, caller: Identity, instr
 
     while let Some(instr) = take_next(&mut instructions).unwrap() {
         self.IP += 1;
-	    self.result = self.execute(instr).unwrap();
+        self.result = self.execute(instr).unwrap();
     }
 }
 ```
@@ -565,5 +635,5 @@ Spawn XYZ BridgeSecurity::Deterministic 0 [
 - Sofia de Proença
 - Jiang Qijong 
 - Joon Whang
-- Omar Zaki
+- 0xbrainjar
 - 0xslenderman
