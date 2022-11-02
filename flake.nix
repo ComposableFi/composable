@@ -42,6 +42,7 @@
         ./code/simnode-tests.nix
         ./code/integration-tests/runtime-tests/runtime-tests.nix
         ./code/runtimes.nix
+        ./code/xcvm-contracts.nix
         ./dev-shells.nix
         ./devnet-tools.nix
         ./devnets.nix
@@ -65,7 +66,6 @@
         # Equivalent to  inputs'.nixpkgs.legacyPackages.hello;
         # packages.default = pkgs.hello;
 
-        # Add the npm-buildpackage overlay to the perSystem's pkgs
         _module.args.pkgs = import self.inputs.nixpkgs {
           inherit system;
           overlays = with self.inputs; [
@@ -108,6 +108,10 @@
         };
       };
       flake = {
+        # The usual flake attributes can be defined here, including system-
+        # agnostic ones like nixosModule and system-enumerating ones, although
+        # those are more easily expressed in perSystem.
+
         overlays = {
           default = let
             mkDevnetProgram = { pkgs }:
@@ -131,10 +135,6 @@
             })
           ];
         };
-        # The usual flake attributes can be defined here, including system-
-        # agnostic ones like nixosModule and system-enumerating ones, although
-        # those are more easily expressed in perSystem.
-
       };
     };
 }
