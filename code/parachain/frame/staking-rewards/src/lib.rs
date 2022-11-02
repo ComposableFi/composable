@@ -63,7 +63,10 @@ use frame_support::{
 };
 pub use pallet::*;
 use sp_runtime::SaturatedConversion;
-use sp_std::{cmp, ops::Div};
+use sp_std::{
+	cmp,
+	ops::{Div, Mul},
+};
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -1699,8 +1702,14 @@ pub(crate) fn do_reward_accumulation<T: Config>(
 		let releasable_periods_surpassed =
 			cmp::min(maximum_releasable_periods, periods_surpassed.into());
 
+		// SAFETY: Usage of mul is safe here because newly_accumulated_rewards =
+		//      (    total_locked_rewards            elapsed_time        )
+		//  min ( ------------------------- , -------------------------- )
+		//      ( reward.reward_rate.amount   reward_rate_period_seconds )
+		// If LHS is smaller, this will result in total_locked_rewards, which we know fits in a
+		// u128. If RHS is smaller, this has to be < total_locked_rewards, so it will also fit.
 		let newly_accumulated_rewards =
-			releasable_periods_surpassed.saturating_mul(reward.reward_rate.amount.into());
+			releasable_periods_surpassed.mul(reward.reward_rate.amount.into());
 		let new_total_rewards = newly_accumulated_rewards
 			.safe_add(&reward.total_rewards.into())
 			.map_err(|_| RewardAccumulationCalculationError::ArithmeticError)?;
