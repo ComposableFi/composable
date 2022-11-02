@@ -2,7 +2,7 @@
   perSystem =
     { config, self', inputs', pkgs, system, crane, systemCommonRust, ... }: {
 
-      # System-specific lib to be used accross flake parts
+      # System-specific lib to be used across flake parts
       _module.args.crane = rec {
 
         # Crane lib instantiated with current nixpkgs
