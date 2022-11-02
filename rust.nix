@@ -26,8 +26,7 @@
             rev = "v${version}";
             sha256 = "sha256-e2MQWOCIj0GKeyOI6OfLnXkxUWbu85eX4Smc/A6eY2w";
           };
-          cargoSha256 =
-            "sha256-1fxqIQr8hol2QEKz8IZfndIsSTjP2ACdnBpwyjG4UT0=";
+          cargoSha256 = "sha256-1fxqIQr8hol2QEKz8IZfndIsSTjP2ACdnBpwyjG4UT0=";
           doCheck = false;
           meta = {
             description =
@@ -43,9 +42,9 @@
 
         cargo-fmt-check = crane.nightly.cargoFmt (systemCommonRust.common-attrs
           // {
-          cargoArtifacts = self'.packages.common-deps-nightly;
-          cargoExtraArgs = "--all --check --verbose";
-        });
+            cargoArtifacts = self'.packages.common-deps-nightly;
+            cargoExtraArgs = "--all --check --verbose";
+          });
 
         cargo-clippy-check = crane.nightly.cargoBuild
           (systemCommonRust.common-attrs // {
@@ -93,14 +92,14 @@
 
         unit-tests = crane.nightly.cargoBuild (systemCommonRust.common-attrs
           // {
-          pnameSuffix = "-tests";
-          doInstallCargoArtifacts = false;
-          cargoArtifacts = self'.packages.common-test-deps;
-          # NOTE: do not add --features=runtime-benchmarks because it force multi ED to be 0 because of dependencies
-          # NOTE: in order to run benchmarks as tests, just make `any(test, feature = "runtime-benchmarks")
-          cargoBuildCommand =
-            "cargo test --workspace --release --locked --verbose --exclude local-integration-tests";
-        });
+            pnameSuffix = "-tests";
+            doInstallCargoArtifacts = false;
+            cargoArtifacts = self'.packages.common-test-deps;
+            # NOTE: do not add --features=runtime-benchmarks because it force multi ED to be 0 because of dependencies
+            # NOTE: in order to run benchmarks as tests, just make `any(test, feature = "runtime-benchmarks")
+            cargoBuildCommand =
+              "cargo test --workspace --release --locked --verbose --exclude local-integration-tests";
+          });
 
         unit-tests-with-coverage = crane.nightly.cargoBuild
           (systemCommonRust.common-attrs // {
