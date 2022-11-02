@@ -9,8 +9,8 @@
           cargoArtifacts = self'.packages.common-deps-nightly;
           cargoBuildCommand =
             "cargo build --release -p ${name}-runtime-wasm --target wasm32-unknown-unknown"
-              + pkgs.lib.strings.optionalString (features != "")
-              (" --features=${features}");
+            + pkgs.lib.strings.optionalString (features != "")
+            (" --features=${features}");
           # From parity/wasm-builder
           RUSTFLAGS =
             "-Clink-arg=--export=__heap_base -Clink-arg=--import-memory";
@@ -19,8 +19,7 @@
       # Derive an optimized wasm runtime from a prebuilt one, garbage collection + compression
       mkOptimizedRuntime = { name, features ? "" }:
         let runtime = mkRuntime name features;
-        in
-        pkgs.stdenv.mkDerivation {
+        in pkgs.stdenv.mkDerivation {
           name = "${runtime.name}-optimized";
           phases = [ "installPhase" ];
           installPhase = ''
@@ -31,8 +30,7 @@
           '';
         };
 
-    in
-    {
+    in {
       # Add the npm-buildpackage overlay to the perSystem's pkgs
       packages = rec {
         dali-runtime = mkOptimizedRuntime {
