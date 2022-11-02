@@ -41,6 +41,7 @@
         ./docker.nix
         ./docs/docs.nix
         ./fmt.nix
+        ./frontend.nix
         ./nixops.nix
         ./price-feed.nix
         ./rust.nix
