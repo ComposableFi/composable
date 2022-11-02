@@ -449,11 +449,14 @@ describe("Democracy Tests", function () {
       do {
         const currentEvents = await api.query.system.events();
         currentEvents.forEach(event => {
+          // @ts-ignore
           if (event.event.section.toString() === "democracy") {
+            // @ts-ignore
             if (event.event.method.toString() === "Passed") {
               success = true;
               return;
             }
+            // @ts-ignore
             if (event.event.method.toString() === "NotPassed") throw new Error("Referendum failed");
           }
         });
