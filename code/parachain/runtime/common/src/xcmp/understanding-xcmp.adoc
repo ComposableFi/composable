@@ -1,0 +1,85 @@
+= Understanding XCM, XCMP, VMP and HRMP for Composable Finance
+
+== Abstract
+
+This document tries to summarize cross-consensus messaging format(https://wiki.polkadot.network/docs/learn-xcm[XCM]), cross-chain message passing (https://research.web3.foundation/en/latest/polkadot/XCMP/index.html[XCMP]) and horizontal relay routed message passing (https://wiki.polkadot.network/docs/learn-xcm#hrmp-xcmp-lite[HRMP]) as it relates to how Composable Finance uses it.
+
+== Glossary
+
+Most technical terminology used here can be referred through https://wiki.polkadot.network/docs/glossary[Polkadot glossary]. In addition to those, following are defined here,
+
+...
+
+== Background
+
+A good overview of how various protocol components stack together can be found https://wiki.polkadot.network/docs/learn-xcm#xcm-tech-stack[here]. Following diagram is a conceptual summary of various protocols involved at the architecture level,
+
+
+.XCM Protocols Architecture View
+[plantuml,images/xcm-protocols-architecture,png]
+----
+skinparam interface {
+  backgroundColor RosyBrown
+  borderColor orange
+}
+
+skinparam node {
+  backgroundColor<<parachain>> TECHNOLOGY
+}
+
+skinparam package {
+  backgroundColor LightCyan
+}
+
+skinparam cloud {
+  backgroundColor Azure
+}
+
+skinparam node {
+  backgroundColor<<price-source>> Lavender
+}
+
+skinparam databaseBackgroundColor SkyBlue
+
+cloud "Relay-chain consensus" <<relay-chain+parachains>> {
+    node "Parachain 1 Collator" <<parachain>> {
+        package "Pallet XCM" {
+            Database "Channels"
+        }
+    }
+
+    node "Parachain 2 Collator" <<parachain>> {
+        package "Pallet XCM" {
+            Database "Channels"
+        }
+    }
+
+    Node "Relay-chain Validator" {
+        database "Messages" as pc
+    }
+}
+
+cloud {
+    node "Another Blockchain" {
+    }
+}
+
+----
+
+
+=== Code Modules
+
+
+=== Asset Transfers
+
+
+
+
+
+== References
+
+. Learn XCM: https://wiki.polkadot.network/docs/learn-xcm
+. XCM Format: https://github.com/paritytech/xcm-format
+. XCMP: https://research.web3.foundation/en/latest/polkadot/XCMP
+. HRMP Module: https://paritytech.github.io/polkadot/book/runtime/hrmp.html
+. Opening HRMP Channels: https://wiki.polkadot.network/docs/build-hrmp-channels
