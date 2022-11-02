@@ -40,9 +40,8 @@
         };
 
       mk-bridge-devnet =
-        { pkgs, packages, polkadot-launch, composable-node, polkadot-node }:
+        { packages, polkadot-launch, composable-node, polkadot-node }:
         (pkgs.callPackage mk-devnet {
-          inherit pkgs;
           inherit (packages) polkadot-launch composable-node polkadot-node;
           chain-spec = "dali-dev";
           network-config-path =
@@ -50,7 +49,7 @@
           useGlobalChainSpec = false;
         });
 
-      mk-devnet-container = { pkgs, containerName, devNet, container-tools }:
+      mk-devnet-container = { containerName, devNet, container-tools }:
         pkgs.lib.trace "Run Dali runtime on Composable node"
         pkgs.dockerTools.buildImage {
           name = containerName;

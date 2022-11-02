@@ -37,6 +37,7 @@
         ./code/runtimes.nix
         ./dev-shells.nix
         ./devnet-tools.nix
+        ./devnets.nix
         ./docker.nix
         ./docs/docs.nix
         ./fmt.nix
