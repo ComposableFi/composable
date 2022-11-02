@@ -65,17 +65,21 @@ export async function addFundsToThePool(
   walletId: KeyringPair,
   baseAmount: bigint,
   quoteAmount: bigint
-): Promise<{
+) /*
+    // ToDo (D. Roth): Re- enable after pablo rework!
+    : Promise<{
   returnedLPTokens: u128;
   baseAdded: u128;
   quoteAdded: u128;
   walletIdResult: AccountId32;
-}> {
+}> */ {
   const pool = api.createType("u128", poolId);
   const baseAmountParam = api.createType("u128", baseAmount);
   const quoteAmountParam = api.createType("u128", quoteAmount);
   const keepAliveParam = api.createType("bool", true);
   const minMintAmountParam = api.createType("u128", 0);
+  // ToDo (D. Roth): Re- enable after pablo rework!
+  /*
   const {
     data: [walletIdResult, addedPool, baseAdded, quoteAdded, returnedLPTokens]
   } = await sendAndWaitForSuccess(
@@ -87,7 +91,7 @@ export async function addFundsToThePool(
   mintedLPTokens += BigInt(returnedLPTokens.toString(10));
   baseAmountTotal += BigInt(baseAdded.toString(10));
   quoteAmountTotal += BigInt(quoteAdded.toString(10));
-  return { walletIdResult, baseAdded, quoteAdded, returnedLPTokens };
+  return { walletIdResult, baseAdded, quoteAdded, returnedLPTokens };*/
 }
 
 export async function buyFromPool(
@@ -96,13 +100,15 @@ export async function buyFromPool(
   walletId: KeyringPair,
   assetId: number,
   amountToBuy: bigint
-): Promise<{
+) /*
+    // ToDo (D. Roth): Re- enable after pablo rework!
+  : Promise<{
   accountId: AccountId32;
   ownerFee: u128;
   expectedConversion: bigint;
   quoteAmount: u128;
   baseAmount: u128;
-}> {
+}>*/ {
   const poolIdParam = api.createType("u128", poolId);
   const assetIdParam = api.createType("u128", assetId);
   const amountParam = api.createType("u128", amountToBuy);
@@ -110,6 +116,9 @@ export async function buyFromPool(
   const minMintAmount = api.createType("u128", 0);
   constantProductK = baseAmountTotal * quoteAmountTotal;
   const expectedConversion = constantProductK / (baseAmountTotal - amountToBuy) - quoteAmountTotal;
+
+  // ToDo (D. Roth): Re- enable after pablo rework!
+  /*
   const {
     data: [retPoolId, accountId, baseArg, quoteArg, baseAmount, quoteAmount, ownerFee]
   } = await sendAndWaitForSuccess(
@@ -118,7 +127,7 @@ export async function buyFromPool(
     api.events.pablo.Swapped.is,
     api.tx.pablo.buy(poolIdParam, assetIdParam, amountParam, minMintAmount, keepAlive)
   );
-  return { accountId, baseAmount, quoteAmount, expectedConversion, ownerFee: ownerFee.fee };
+  return { accountId, baseAmount, quoteAmount, expectedConversion, ownerFee: ownerFee.fee };*/
 }
 
 export async function sellToPool(
@@ -149,11 +158,13 @@ export async function removeLiquidityFromPool(
   poolId: number,
   walletId: KeyringPair,
   lpTokens: bigint
-): Promise<{ resultBase: u128; resultQuote: u128 }> {
+) /*ToDo: : Promise<{ resultBase: u128; resultQuote: u128 }> */ {
   const poolIdParam = api.createType("u128", poolId);
   const lpTokenParam = api.createType("u128", lpTokens);
   const minBaseParam = api.createType("u128", 0);
   const minQuoteAmountParam = api.createType("u128", 0);
+  // ToDo (D. Roth): Re- enable after pablo rework!
+  /*
   const {
     data: [resultPoolId, resultWallet, resultBase, resultQuote, remainingLpTokens]
   } = await sendAndWaitForSuccess(
@@ -162,7 +173,7 @@ export async function removeLiquidityFromPool(
     api.events.pablo.LiquidityRemoved.is,
     api.tx.pablo.removeLiquidity(poolIdParam, lpTokenParam, minBaseParam, minQuoteAmountParam)
   );
-  return { resultBase, resultQuote };
+  return { resultBase, resultQuote };*/
 }
 
 export async function swapTokenPairs(
@@ -173,7 +184,7 @@ export async function swapTokenPairs(
   quoteAssetId: number,
   quoteAmount: bigint,
   minReceiveAmount = 0
-): Promise<{ returnedBaseAmount: u128; returnedQuoteAmount: u128 }> {
+) /*ToDo: : Promise<{ returnedBaseAmount: u128; returnedQuoteAmount: u128 }> */ {
   const poolIdParam = api.createType("u128", poolId);
   const currencyPair = api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", {
     base: api.createType("CurrencyId", baseAssetId),
@@ -182,6 +193,8 @@ export async function swapTokenPairs(
   const quoteAmountParam = api.createType("u128", quoteAmount);
   const minReceiveParam = api.createType("u128", minReceiveAmount);
   const keepAliveParam = api.createType("bool", true);
+  // ToDo (D. Roth): Re- enable after pablo rework!
+  /*
   const {
     data: [resultPoolId, resultWallet, baseAsset, quoteAsset, returnedBaseAmount, returnedQuoteAmount, feeInfo]
   } = await sendAndWaitForSuccess(
@@ -190,7 +203,7 @@ export async function swapTokenPairs(
     api.events.pablo.Swapped.is,
     api.tx.pablo.swap(poolIdParam, currencyPair, quoteAmountParam, minReceiveParam, keepAliveParam)
   );
-  return { returnedBaseAmount, returnedQuoteAmount };
+  return { returnedBaseAmount, returnedQuoteAmount };*/
 }
 
 export async function createMultipleCPPools(api: ApiPromise, wallet: KeyringPair) {
@@ -246,12 +259,14 @@ export async function getPoolAddress(
   walletId: KeyringPair,
   baseAmount: bigint,
   quoteAmount: bigint
-): Promise<string> {
+) /*ToDo: : Promise<string> */ {
   const pool = api.createType("u128", poolId);
   const baseAmountParam = api.createType("u128", baseAmount);
   const quoteAmountParam = api.createType("u128", quoteAmount);
   const keepAliveParam = api.createType("bool", true);
   const minMintAmountParam = api.createType("u128", 0);
+  // ToDo (D. Roth): Re- enable after pablo rework!
+  /*
   const {
     data: [, AccountId]
   } = await sendAndWaitForSuccess(
@@ -260,7 +275,7 @@ export async function getPoolAddress(
     api.events.tokens.Endowed.is,
     api.tx.pablo.addLiquidity(pool, baseAmountParam, quoteAmountParam, minMintAmountParam, keepAliveParam)
   );
-  return AccountId.toString();
+  return AccountId.toString();*/
 }
 
 export async function getPoolBalance(api: ApiPromise, poolAddress: string, assetId: number): Promise<u128> {

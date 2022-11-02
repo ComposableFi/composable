@@ -2,216 +2,557 @@ import { expect } from "chai";
 import { KeyringPair } from "@polkadot/keyring/types";
 import testConfiguration from "./test_configuration.json";
 import {
-  ethAccount,
+  getEthProofMessage,
+  getKsmContributorWallet,
+  getKsmProofMessage,
   TxCrowdloanRewardsTests
 } from "@composabletests/tests/crowdloanRewards/testHandlers/crowdloanHandler";
-import { mintAssetsToWallet } from "@composable/utils/mintingHelper";
 import { ApiPromise } from "@polkadot/api";
 import { getNewConnection } from "@composable/utils/connectionHelper";
 import { getDevWallets } from "@composable/utils/walletHelper";
-import { Account } from "web3-core";
+import { sendAndWaitForSuccess, sendUnsignedAndWaitForSuccess } from "@composable/utils/polkadotjs";
+import BN from "bn.js";
+import { Wallet } from "ethers";
+import { mintAssetsToWallet } from "@composable/utils/mintingHelper";
 
-/**
- * Task order list:
- *  1. Provide funds to crowdloan pallet
- *  2. Populate the list of contributors
- *  3. Initialize the crowdloan
- *  4. Associate a Picasso account (which also claims)
- *  5. Claiming more rewards.
- */
-describe("CrowdloanRewards Tests", function () {
+const AMOUNT_CONTRIBUTOR_WALLETS = 11;
+const AMOUNT_ETH_CONTRIBUTOR_WALLETS = 4;
+const TEST_WALLET_PICA_REWARD_AMOUNT = new BN(100);
+const INITIAL_ASSOCIATE_CLAIM_PERCENT = 25;
+
+describe("[SHORT] CrowdloanRewards Tests", function () {
   if (!testConfiguration.enabledTests.tx.enabled) return;
-
+  this.retries(0);
   let api: ApiPromise;
 
-  let walletCharlie: KeyringPair,
-    sudoKey: KeyringPair,
-    contributor: KeyringPair,
-    contributorRewardAccount: KeyringPair,
-    contributorEth: Account,
-    contributorEthRewardAccount: KeyringPair;
+  let sudoKey: KeyringPair;
 
-  let onExistingChain = false;
+  let contributorsRewardAmount: BN;
 
-  /**
-   * We mainly set up some variables here.
-   *
-   * We also identify if this chain had already tests run on it.
-   * And if so, we skip the populate() and initialize() tests.
-   */
+  let contributorRewardWallets: KeyringPair[];
+  let ethContributorWallets: Wallet[];
+  let notContributor: KeyringPair;
+
   before("Setting up tests", async function () {
-    this.timeout(60 * 1000);
+    this.timeout(2 * 60 * 1000);
     const { newClient, newKeyring } = await getNewConnection();
     api = newClient;
-    const { devWalletAlice, devWalletCharlie } = getDevWallets(newKeyring);
-    walletCharlie = devWalletCharlie;
+    const { devWalletAlice } = getDevWallets(newKeyring);
     sudoKey = devWalletAlice;
-    let associationExisting = true;
-    let i = 1;
-    while (associationExisting) {
-      contributor = devWalletCharlie.derive("/contributor-" + i);
-      contributorEth = ethAccount(i);
-      // arbitrary, user defined reward account
-      contributorRewardAccount = contributor.derive("/reward");
-      contributorEthRewardAccount = devWalletCharlie.derive("/reward-eth-" + i);
-      const existingAssociations = await api.query.crowdloanRewards.associations(contributorRewardAccount.publicKey);
-      if (existingAssociations.toString() == "") {
-        associationExisting = false;
-      } else {
-        onExistingChain = true;
-      }
-      i++;
-    }
-    if (onExistingChain)
-      console.info(
-        "tx.crowdloanRewards Tests: Detected already configured chain! " + "Skipping populate() & initialize()."
-      );
-  });
+    notContributor = sudoKey.derive("/test/crowdloan/not-contributor");
 
-  before("Providing funds to Alice & our imaginary contributor wallet", async function () {
-    if (!testConfiguration.enabledTests.tx.setup.provideAssets) this.skip();
-    // 2 minutes timeout
-    this.timeout(60 * 2 * 1000);
-    await mintAssetsToWallet(api, sudoKey, sudoKey, [1], 999_999_999_999_999_999_999_999_999n);
-    await mintAssetsToWallet(api, contributorRewardAccount, sudoKey, [1]);
-    await mintAssetsToWallet(api, contributorEthRewardAccount, sudoKey, [1]);
+    contributorRewardWallets = [];
+    for (let i = 0; i <= AMOUNT_CONTRIBUTOR_WALLETS; i++) {
+      contributorRewardWallets.push(devWalletAlice.derive("/test/crowdloan/contributor" + i));
+    }
+    ethContributorWallets = [];
+    for (let i = 0; i <= AMOUNT_ETH_CONTRIBUTOR_WALLETS; i++) {
+      ethContributorWallets.push(Wallet.createRandom());
+    }
+
+    // Funding the wallets with small initial balance.
+    await mintAssetsToWallet(api, contributorRewardWallets[1], sudoKey, [1], 1_000_000_000_000n); // Test #1.7
+    await mintAssetsToWallet(api, contributorRewardWallets[3], sudoKey, [1], 1_000_000_000_000n); // Test #1.9
+    await mintAssetsToWallet(api, notContributor, sudoKey, [1], 1_000_000_000_000n);
   });
 
   after("Closing the connection", async function () {
     await api.disconnect();
   });
 
-  /**
-   * Here we populate the crowdloan pallet with a random generated list of contributors.
-   *
-   * This is a SUDO call! Though the checks are within the handler function, due to multiple transaction being sent
-   * within a for loop.
-   */
-  it("Can populate the list of contributors", async function () {
-    if (!testConfiguration.enabledTests.tx.populate_success.populate1 || onExistingChain) this.skip();
-    // 5 minutes timeout
-    this.timeout(5 * 60 * 1000);
-    const testContributorRelayChainObject = await TxCrowdloanRewardsTests.txCrowdloanRewardsPopulateTest(
+  it("1.1  I can, as sudo, populate the Crowdloan pallet with the list of contributorRewardWallets.", async function () {
+    this.timeout(10 * 60 * 1000);
+    const { fullRewardAmount, allContributors } = await TxCrowdloanRewardsTests.txCrowdloanRewardsPopulateTest(
       api,
       sudoKey,
-      contributor
+      contributorRewardWallets,
+      ethContributorWallets,
+      TEST_WALLET_PICA_REWARD_AMOUNT,
+      999_999_999_999_999n,
+      [1] // Short vesting period req. for #1.16
     );
-    expect(testContributorRelayChainObject).to.not.be.an("Error");
+    contributorsRewardAmount = fullRewardAmount;
+    await TxCrowdloanRewardsTests.verifyCrowdloanRewardsPopulation(api, allContributors);
   });
 
-  /**
-   * Here we initialize the crowdloan with our populated list of contributors.
-   *
-   * This is a SUDO call and is checked with `.isOk`.
+  /*
+  The following steps occur after the pallet has been populated with contributorRewardWallets.
    */
-  it("Can initialize the crowdloan", async function () {
-    if (!testConfiguration.enabledTests.tx.initialize_success.initialize1 || onExistingChain) this.skip();
-    // 2 minutes timeout
+  it("1.2  I can not associate my KSM contributor wallet before the crowdloan pallet has been initialized.", async function () {
+    this.timeout(2 * 60 * 1000);
+    const rewardAccount = contributorRewardWallets[0];
+    const proofMessage = getKsmProofMessage(api, getKsmContributorWallet(rewardAccount), rewardAccount);
+    await sendUnsignedAndWaitForSuccess(
+      api,
+      api.events.crowdloanRewards.Associated.is,
+      api.tx.crowdloanRewards.associate(rewardAccount.publicKey, proofMessage)
+    ).catch(function (err) {
+      expect(err.toString()).to.contain("Custom error: 3");
+    });
+  });
+
+  it("1.18  I can not, as sudo, initialize the crowdloan pallet without providing at least as many funds as will be rewarded.", async function () {
+    this.timeout(2 * 60 * 1000);
+    // First testing initialization without any funds.
+    const {
+      data: [sudoResult]
+    } = await sendAndWaitForSuccess(
+      api,
+      sudoKey,
+      api.events.sudo.Sudid.is,
+      api.tx.sudo.sudo(api.tx.crowdloanRewards.initialize())
+    );
+    expect(sudoResult.isErr).to.be.true;
+    expect(sudoResult.asErr.asModule.index).to.be.bignumber.equal(new BN("58"));
+    expect(sudoResult.asErr.asModule.error.toHex()).to.be.equal("0x03000000"); // Error index 3 == RewardsNotFunded
+
+    // Second testing initialization with too little funds.
+    await TxCrowdloanRewardsTests.mintAndTransferFundsToCrowdloanPallet(api, sudoKey, Math.pow(10, 12)); // Sending 1 PICA which is not enough.
+    const {
+      data: [sudoResult2]
+    } = await sendAndWaitForSuccess(
+      api,
+      sudoKey,
+      api.events.sudo.Sudid.is,
+      api.tx.sudo.sudo(api.tx.crowdloanRewards.initialize())
+    );
+    expect(sudoResult2.isErr).to.be.true;
+    expect(sudoResult2.asErr.asModule.index).to.be.bignumber.equal(new BN("58"));
+    expect(sudoResult2.asErr.asModule.error.toHex()).to.be.equal("0x03000000"); // Error index 3 == RewardsNotFunded
+  });
+
+  it("1.3  I can, as sudo, initialize the Crowdloan Pallet", async function () {
     this.timeout(60 * 2 * 1000);
+    await TxCrowdloanRewardsTests.mintAndTransferFundsToCrowdloanPallet(
+      api,
+      sudoKey,
+      contributorsRewardAmount.sub(new BN(10).pow(new BN(12)))
+    ); // Subtracting 1 PICA from earlier test #1.17
+
     const {
       data: [result]
     } = await TxCrowdloanRewardsTests.txCrowdloanRewardsInitializeTest(api, sudoKey);
     expect(result.isOk).to.be.true;
   });
 
-  /***
-   * Here we associate our picasso account with our ETH & RelayChain wallets.
-   *
-   * Here we send 2 transactions at the same time, therefore we have 2 results,
-   * though with the exact same result structure.
-   *
-   * Results:
-   * 1. The public key of the remote wallet.
-   * 2. The public key of the transacting wallet.
+  /*
+  The following steps occur after the pallet was populated & initialised.
    */
-  it("Can associate a picasso account", async function () {
-    if (!testConfiguration.enabledTests.tx.associate_success.associate1) this.skip();
-    // 2 minutes timeout
-    this.timeout(60 * 20 * 1000);
+  it("1.4  A user, without initial funds, can associate their contributor KSM wallet with a correct proof & claim 25% of the reward as locked balance.", async function () {
+    this.timeout(2 * 60 * 1000);
+    const rewardAccount = contributorRewardWallets[0];
+    const proofMessage = getKsmProofMessage(api, getKsmContributorWallet(rewardAccount), rewardAccount);
+    const {
+      data: [resultRemoteAccount, resultRewardAccount]
+    } = await sendUnsignedAndWaitForSuccess(
+      api,
+      api.events.crowdloanRewards.Associated.is,
+      api.tx.crowdloanRewards.associate(rewardAccount.publicKey, proofMessage)
+    );
+
+    // Verification
+    await TxCrowdloanRewardsTests.verifyKsmAssociation(
+      api,
+      resultRemoteAccount,
+      resultRewardAccount,
+      rewardAccount,
+      TEST_WALLET_PICA_REWARD_AMOUNT,
+      INITIAL_ASSOCIATE_CLAIM_PERCENT
+    );
+  });
+
+  it("1.5  A user (#1.4) can not transfer their claimed funds.", async function () {
+    this.timeout(2 * 60 * 1000);
+    const wallet = contributorRewardWallets[0];
+    const testAmount = new BN(10).pow(new BN(12)); // 1 PICA
+    const testTransactions = [
+      api.tx.assets.transfer(1, sudoKey.publicKey, testAmount, true),
+      api.tx.assets.transferNative(sudoKey.publicKey, testAmount, true)
+    ];
+    // We can not batch these transactions, due to our default batch transaction function, aborting on failure.
+    await sendAndWaitForSuccess(api, wallet, api.events.balances.Transfer.is, testTransactions[0]).catch(function (
+      err
+    ) {
+      expect(err.toString()).to.contain("balances.LiquidityRestrictions");
+    });
+    await sendAndWaitForSuccess(api, wallet, api.events.balances.Transfer.is, testTransactions[1]).catch(function (
+      err
+    ) {
+      expect(err.toString()).to.contain("balances.LiquidityRestrictions");
+    });
+  });
+
+  it("1.6  A user (#1.4) can claim a second time and pays transaction fees using the claimed, locked balance from earlier.", async function () {
+    this.timeout(2 * 60 * 1000);
+    const wallet = contributorRewardWallets[0];
+    const {
+      data: [resultRemoteAccount, resultRewardAccount, resultAmount]
+    } = await sendAndWaitForSuccess(
+      api,
+      wallet,
+      api.events.crowdloanRewards.Claimed.is,
+      api.tx.crowdloanRewards.claim()
+    );
+    expect(resultRemoteAccount).to.not.be.an("Error");
+    expect(resultRewardAccount.isEmpty).to.be.false;
+    expect(resultAmount).to.be.bignumber.greaterThan(new BN(0));
+  });
+
+  it("1.7  A user, with initial funds, can associate their contributor KSM wallet with a correct proof & claim 25% of the reward as locked balance.", async function () {
+    this.timeout(2 * 60 * 1000);
+    const wallet = contributorRewardWallets[1];
+    const proofMessage = getKsmProofMessage(api, getKsmContributorWallet(wallet), wallet);
+    const {
+      data: [resultRemoteAccount, resultRewardAccount]
+    } = await sendUnsignedAndWaitForSuccess(
+      api,
+      api.events.crowdloanRewards.Associated.is,
+      api.tx.crowdloanRewards.associate(wallet.publicKey, proofMessage)
+    );
+
+    // Verification
+    await TxCrowdloanRewardsTests.verifyKsmAssociation(
+      api,
+      resultRemoteAccount,
+      resultRewardAccount,
+      wallet,
+      TEST_WALLET_PICA_REWARD_AMOUNT,
+      INITIAL_ASSOCIATE_CLAIM_PERCENT,
+      getKsmContributorWallet(wallet).publicKey,
+      true
+    );
+  });
+
+  it("1.8  A user, without initial funds, can associate their contributor ETH wallet with a correct proof & claim 25% of the reward as locked balance.", async function () {
+    this.timeout(2 * 60 * 1000);
+    const wallet = contributorRewardWallets[2];
+    const ethWallet = ethContributorWallets[0];
+    const proofMessage = await getEthProofMessage(api, ethWallet, wallet);
+    const {
+      data: [resultRemoteAccount, resultRewardAccount]
+    } = await sendUnsignedAndWaitForSuccess(
+      api,
+      api.events.crowdloanRewards.Associated.is,
+      api.tx.crowdloanRewards.associate(wallet.publicKey, proofMessage)
+    );
+
+    // Verification
+    await TxCrowdloanRewardsTests.verifyEthAssociation(
+      api,
+      resultRemoteAccount,
+      resultRewardAccount,
+      wallet,
+      TEST_WALLET_PICA_REWARD_AMOUNT,
+      INITIAL_ASSOCIATE_CLAIM_PERCENT,
+      ethWallet
+    );
+  });
+
+  it("1.9  Another user, with initial funds, can associate their contributor ETH wallet with a correct proof & claim 25% of the reward as locked balance.", async function () {
+    this.timeout(2 * 60 * 1000);
+
+    const wallet = contributorRewardWallets[3];
+    const ethWallet = ethContributorWallets[1];
+    const proofMessage = await getEthProofMessage(api, ethWallet, wallet);
+    const {
+      data: [resultRemoteAccount, resultRewardAccount]
+    } = await sendUnsignedAndWaitForSuccess(
+      api,
+      api.events.crowdloanRewards.Associated.is,
+      api.tx.crowdloanRewards.associate(wallet.publicKey, proofMessage)
+    );
+
+    // Verification
+    await TxCrowdloanRewardsTests.verifyEthAssociation(
+      api,
+      resultRemoteAccount,
+      resultRewardAccount,
+      wallet,
+      TEST_WALLET_PICA_REWARD_AMOUNT,
+      INITIAL_ASSOCIATE_CLAIM_PERCENT,
+      ethWallet
+    );
+  });
+
+  it("1.10  When claiming after transferring all initial funds from the account (#1.11), the newly claimed balance will be locked.", async function () {
+    this.timeout(60 * 2 * 1000);
+    const wallet = contributorRewardWallets[3];
+    // Moving all funds from wallet.
+    const {
+      data: [result]
+    } = await sendAndWaitForSuccess(
+      api,
+      wallet,
+      api.events.balances.Transfer.is,
+      api.tx.assets.transferAllNative(sudoKey.publicKey, false)
+    );
+    expect(result).to.not.be.an("Error");
+
+    // Claiming
+    const {
+      data: [resultRemoteAccount, resultRewardAccount, resultAmount]
+    } = await sendAndWaitForSuccess(
+      api,
+      wallet,
+      api.events.crowdloanRewards.Claimed.is,
+      api.tx.crowdloanRewards.claim()
+    );
+    expect(resultRemoteAccount).to.not.be.an("Error");
+    expect(resultRewardAccount.isEmpty).to.be.false;
+    expect(resultAmount).to.be.bignumber.greaterThan(new BN(0));
+    // All remaining available balance should be locked.
+    await sendAndWaitForSuccess(
+      api,
+      wallet,
+      api.events.balances.Transfer.is,
+      api.tx.assets.transferNative(sudoKey.publicKey, 1_000_000_000_000, false)
+    ).catch(function (err) {
+      expect(err.toString()).to.contain("balances.LiquidityRestrictions");
+    });
+  });
+
+  it("1.11  Multiple users can associate successfully, at the same time.", async function () {
+    this.timeout(2 * 60 * 1000);
+    const wallets = [
+      contributorRewardWallets[4],
+      contributorRewardWallets[5],
+      contributorRewardWallets[6],
+      contributorRewardWallets[7]
+    ];
+
+    const txs = [];
+    for (const wallet of wallets) {
+      txs.push(
+        sendUnsignedAndWaitForSuccess(
+          api,
+          api.events.crowdloanRewards.Associated.is,
+          api.tx.crowdloanRewards.associate(
+            wallet.publicKey,
+            getKsmProofMessage(api, getKsmContributorWallet(wallet), wallet)
+          )
+        )
+      );
+    }
+    const results = await Promise.all(txs);
+
+    // Verification
+    for (let i = 0; i < wallets.length; i++) {
+      await TxCrowdloanRewardsTests.verifyKsmAssociation(
+        api,
+        results[i].data[0],
+        results[i].data[1],
+        wallets[i],
+        TEST_WALLET_PICA_REWARD_AMOUNT,
+        INITIAL_ASSOCIATE_CLAIM_PERCENT
+      );
+    }
+  });
+
+  it("1.12  Multiple contributorRewardWallets (#1.12) can claim at the same time.", async function () {
+    this.timeout(2 * 60 * 1000);
+    const wallets = [
+      contributorRewardWallets[4],
+      contributorRewardWallets[5],
+      contributorRewardWallets[6],
+      contributorRewardWallets[7]
+    ];
+
+    const txs = [];
+    for (const wallet of wallets) {
+      txs.push(
+        sendAndWaitForSuccess(api, wallet, api.events.crowdloanRewards.Claimed.is, api.tx.crowdloanRewards.claim())
+      );
+    }
+    const results = await Promise.all(txs);
+    for (let i = 0; i < results.length; i++) {
+      expect(results[i].data[0]).to.not.be.an("Error");
+      expect(results[i].data[2]).to.be.bignumber.greaterThan(new BN(0));
+    }
+  });
+
+  it("1.13  A user can not claim twice within the same block.", async function () {
+    this.timeout(2 * 60 * 1000);
+    const wallet = contributorRewardWallets[0];
     await Promise.all([
-      TxCrowdloanRewardsTests.txCrowdloanRewardsEthAssociateTest(api, contributorEth, contributorEthRewardAccount),
-      TxCrowdloanRewardsTests.txCrowdloanRewardsRelayAssociateTests(api, contributor, contributorRewardAccount)
-    ]).then(function ([
-      {
-        data: [result1Request1, result2Request1]
-      },
-      {
-        data: [result1Request2, result2Request2]
-      }
-    ]) {
-      expect(result1Request1).to.not.be.an("Error");
-      expect(result1Request2).to.not.be.an("Error");
-      expect(result2Request1.toString()).to.be.equal(
-        api.createType("AccountId32", contributorEthRewardAccount.publicKey).toString()
-      );
-      expect(result2Request2.toString()).to.be.equal(
-        api.createType("AccountId32", contributorRewardAccount.publicKey).toString()
-      );
+      TxCrowdloanRewardsTests.sendClaimsWithDelay(api, wallet, 0),
+      TxCrowdloanRewardsTests.sendClaimsWithDelay(api, wallet, 100)
+    ]).catch(function (err) {
+      expect(err.toString()).to.contain("crowdloanRewards.NothingToClaim");
     });
   });
 
-  /**
-   * Can we finally claim the crowdloan reward?
-   * We're gonna find out!
-   *
-   * Results are:
-   * 1. The public key of the remote account.
-   * 2. The public key of the transacting wallet.
-   * 3. The claimed amount.
-   */
-  it("KSM contributor can claim the crowdloan reward", async function () {
-    if (!testConfiguration.enabledTests.tx.claim_success.claim1 || onExistingChain) this.skip();
-    // 2 minutes timeout
-    this.timeout(60 * 2 * 1000);
+  it("1.14  An already associated wallet can not associate again with a different reward type account.", async function () {
+    this.timeout(2 * 60 * 1000);
+    const wallet = contributorRewardWallets[8];
+    const ethWallet = ethContributorWallets[4];
+    const proofMessage = await getEthProofMessage(api, ethWallet, wallet);
     const {
-      data: [resultRemoteAccountId, resultAccountId, resultClaimedAmount]
-    } = await TxCrowdloanRewardsTests.txCrowdloanRewardsClaimTest(api, contributorRewardAccount);
-    expect(resultRemoteAccountId).to.not.be.an("Error");
-    expect(resultClaimedAmount).to.be.a.bignumber;
-    expect(resultClaimedAmount.toNumber()).to.be.greaterThan(0);
-    expect(resultAccountId.toString()).to.be.equal(
-      api.createType("AccountId32", contributorRewardAccount.publicKey).toString()
+      data: [resultRemoteAccount, resultRewardAccount]
+    } = await sendUnsignedAndWaitForSuccess(
+      api,
+      api.events.crowdloanRewards.Associated.is,
+      api.tx.crowdloanRewards.associate(wallet.publicKey, proofMessage)
     );
-  });
 
-  it("ETH contributor can claim the crowdloan reward", async function () {
-    if (!testConfiguration.enabledTests.tx.claim_success.claim1 || onExistingChain) this.skip();
-    // 2 minutes timeout
-    this.timeout(60 * 2 * 1000);
+    // Verification
+    await TxCrowdloanRewardsTests.verifyEthAssociation(
+      api,
+      resultRemoteAccount,
+      resultRewardAccount,
+      wallet,
+      TEST_WALLET_PICA_REWARD_AMOUNT,
+      INITIAL_ASSOCIATE_CLAIM_PERCENT,
+      ethWallet
+    );
+    // One test claim for good measurement.
     const {
-      data: [resultRemoteAccountId, resultAccountId, resultClaimedAmount]
-    } = await TxCrowdloanRewardsTests.txCrowdloanRewardsClaimTest(api, contributorEthRewardAccount);
-    expect(resultRemoteAccountId).to.not.be.an("Error");
-    expect(resultClaimedAmount).to.be.a.bignumber;
-    expect(resultAccountId.toString()).to.be.equal(
-      api.createType("AccountId32", contributorEthRewardAccount.publicKey).toString()
+      data: [result]
+    } = await sendAndWaitForSuccess(
+      api,
+      wallet,
+      api.events.crowdloanRewards.Claimed.is,
+      api.tx.crowdloanRewards.claim()
     );
-  });
+    expect(result).to.not.be.an("Error");
 
-  describe("Crowdloan Failure Tests", function () {
-    if (!testConfiguration.enabledTests.tx.failure_tests.enabled) return;
-    /***
-     * Here we try to re- associate the same contributor wallets,
-     * even though they're already associated.
-     */
-    it("Can not re- associate the same picasso account", async function () {
-      if (!testConfiguration.enabledTests.tx.failure_tests.associate_failure.associate1) this.skip();
-      // 2 minutes timeout
-      this.timeout(60 * 2 * 1000);
-      await Promise.all([
-        TxCrowdloanRewardsTests.txCrowdloanRewardsEthAssociateTest(api, contributorEth, walletCharlie),
-        TxCrowdloanRewardsTests.txCrowdloanRewardsRelayAssociateTests(api, contributor, walletCharlie)
-      ]).then(function ([
-        {
-          data: [result]
-        },
-        {
-          data: [result2]
-        }
-      ]) {
-        expect(result).to.be.an("Error");
-        expect(result2).to.be.an("Error");
-      });
+    // Now we try to re- associate with a different contributor but the same reward wallet.
+    const newProofMessage = getKsmProofMessage(api, getKsmContributorWallet(wallet), wallet);
+    await sendUnsignedAndWaitForSuccess(
+      api,
+      api.events.crowdloanRewards.Associated.is,
+      api.tx.crowdloanRewards.associate(wallet.publicKey, newProofMessage),
+      true
+    ).catch(function (err) {
+      expect(err.toString()).to.contain("Custom error: 2");
     });
+  });
+
+  it("1.15  An already associated wallet can not associate the same reward account type a second time.", async function () {
+    this.timeout(2 * 60 * 1000);
+    const wallet = contributorRewardWallets[9];
+
+    const proofMessage = getKsmProofMessage(api, getKsmContributorWallet(wallet), wallet);
+    const {
+      data: [resultRemoteAccount, resultRewardAccount]
+    } = await sendUnsignedAndWaitForSuccess(
+      api,
+      api.events.crowdloanRewards.Associated.is,
+      api.tx.crowdloanRewards.associate(wallet.publicKey, proofMessage)
+    );
+
+    // Verification
+    await TxCrowdloanRewardsTests.verifyKsmAssociation(
+      api,
+      resultRemoteAccount,
+      resultRewardAccount,
+      wallet,
+      TEST_WALLET_PICA_REWARD_AMOUNT,
+      INITIAL_ASSOCIATE_CLAIM_PERCENT
+    );
+    // One test claim for good measurement.
+    const {
+      data: [result]
+    } = await sendAndWaitForSuccess(
+      api,
+      wallet,
+      api.events.crowdloanRewards.Claimed.is,
+      api.tx.crowdloanRewards.claim()
+    );
+    expect(result).to.not.be.an("Error");
+
+    // ACTUAL TEST #1.15
+    // Now we try to re- associate with a different contributor but the same reward wallet.
+    const newProofMessage = getKsmProofMessage(api, getKsmContributorWallet(wallet), wallet);
+    await sendUnsignedAndWaitForSuccess(
+      api,
+      api.events.crowdloanRewards.Associated.is,
+      api.tx.crowdloanRewards.associate(wallet.publicKey, newProofMessage),
+      true
+    ).catch(function (err) {
+      expect(err.toString()).to.contain("Custom error: 2");
+    });
+  });
+
+  it("1.16  Someone can re- associate their contributor wallet to a different Picasso wallet.", async function () {
+    this.timeout(2 * 60 * 1000);
+    const rewardAccount = contributorRewardWallets[10];
+    const proofMessage = getKsmProofMessage(
+      api,
+      getKsmContributorWallet(contributorRewardWallets[1]),
+      contributorRewardWallets[10]
+    );
+    const {
+      data: [resultRemoteAccount, resultRewardAccount]
+    } = await sendUnsignedAndWaitForSuccess(
+      api,
+      api.events.crowdloanRewards.Associated.is,
+      api.tx.crowdloanRewards.associate(rewardAccount.publicKey, proofMessage)
+    );
+    // Verification
+    await TxCrowdloanRewardsTests.verifyKsmAssociation(
+      api,
+      resultRemoteAccount,
+      resultRewardAccount,
+      rewardAccount,
+      TEST_WALLET_PICA_REWARD_AMOUNT,
+      INITIAL_ASSOCIATE_CLAIM_PERCENT,
+      getKsmContributorWallet(contributorRewardWallets[1]).publicKey
+    );
+  });
+
+  it("1.17  A user can not claim without associating first.", async function () {
+    this.timeout(2 * 60 * 1000);
+    await sendAndWaitForSuccess(
+      api,
+      notContributor,
+      api.events.crowdloanRewards.Claimed.is,
+      api.tx.crowdloanRewards.claim()
+    ).catch(function (err) {
+      expect(err.toString()).to.contain("crowdloanRewards.NotAssociated");
+    });
+  });
+
+  it("1.19  A user can not associate with a KSM wallet which isn't a contributor.", async function () {
+    this.timeout(2 * 60 * 1000);
+    const wallet = notContributor;
+    const proofMessage = getKsmProofMessage(api, getKsmContributorWallet(wallet), wallet);
+    await sendUnsignedAndWaitForSuccess(
+      api,
+      api.events.crowdloanRewards.Associated.is,
+      api.tx.crowdloanRewards.associate(wallet.publicKey, proofMessage)
+    ).catch(function (err) {
+      expect(err.toString()).to.contain("Custom error: 1");
+    });
+  });
+
+  it("1.20  A user can not associate with a wallet which isn't a contributor.", async function () {
+    this.timeout(2 * 60 * 1000);
+    const wallet = notContributor;
+    const ethWallet = Wallet.createRandom();
+    const proofMessage = await getEthProofMessage(api, ethWallet, wallet);
+    await sendUnsignedAndWaitForSuccess(
+      api,
+      api.events.crowdloanRewards.Associated.is,
+      api.tx.crowdloanRewards.associate(wallet.publicKey, proofMessage)
+    ).catch(function (err) {
+      expect(err.toString()).to.contain("Custom error: 1");
+    });
+  });
+
+  it("1.21  I can, as sudo, unlock funds for a wallet.", async function () {
+    this.timeout(2 * 60 * 1000);
+    const wallet = sudoKey;
+    const walletsToBeUnlocked = [contributorRewardWallets[0], contributorRewardWallets[1]];
+    const publicKeysToBeUnlocked = [walletsToBeUnlocked[0].publicKey, walletsToBeUnlocked[1].publicKey];
+    const {
+      data: [result]
+    } = await sendAndWaitForSuccess(
+      api,
+      wallet,
+      api.events.sudo.Sudid.is,
+      api.tx.sudo.sudo(api.tx.crowdloanRewards.unlockRewardsFor(publicKeysToBeUnlocked))
+    );
+    expect(result.isOk).to.be.true;
+    await TxCrowdloanRewardsTests.verifyRewardsUnlock(api, walletsToBeUnlocked, sudoKey.publicKey);
   });
 });
