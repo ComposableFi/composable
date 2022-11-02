@@ -4,6 +4,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
+    flake-utils.url = "github:numtide/flake-utils";
     npm-buildpackage.url = "github:serokell/nix-npm-buildpackage";
     rust-overlay = {
       url = "github:oxalica/rust-overlay";
@@ -33,6 +34,7 @@
         ./code/common-deps.nix
         ./code/composable-nodes.nix
         ./code/integration-tests.nix
+        ./code/simnode-tests.nix
         ./code/integration-tests/runtime-tests/runtime-tests.nix
         ./code/runtimes.nix
         ./dev-shells.nix
@@ -67,6 +69,8 @@
           ];
         };
         packages = {
+          default = self'.packages.devnet-dali;
+
           subxt = pkgs.callPackage ./code/utils/composable-subxt/subxt.nix { };
           junod = pkgs.callPackage ./code/xcvm/cosmos/junod.nix { };
           gex = pkgs.callPackage ./code/xcvm/cosmos/gex.nix { };

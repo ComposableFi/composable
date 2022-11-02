@@ -1,37 +1,6 @@
 {
-  # see ./docs/nix.md for design guidelines of nix organization
   description = "Composable Finance systems, tools and releases";
-  # when flake runs, ask for interactive answers first time
-  # nixConfig.sandbox = "relaxed";
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    flake-utils = { url = "github:numtide/flake-utils"; };
-    rust-overlay = {
-      url = "github:oxalica/rust-overlay";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-utils.follows = "flake-utils";
-    };
-    crane = {
-      url = "github:ipetkov/crane";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-utils.follows = "flake-utils";
-    };
-    npm-buildpackage = {
-      url = "github:serokell/nix-npm-buildpackage";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    home-manager = {
-      url = "github:nix-community/home-manager";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    arion-src = {
-      url = "github:hercules-ci/arion";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    helix = {
-      url = "github:helix-editor/helix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     bundlers = {
       url = "github:NixOS/bundlers";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -44,84 +13,6 @@
       # or just use GOOGLE_APPLICATION_CREDENTIALS env as path to file
       service-account-credential-key-file-input = builtins.fromJSON
         (builtins.readFile (builtins.getEnv "GOOGLE_APPLICATION_CREDENTIALS"));
-
-      gce-to-nix = { project_id, client_email, private_key, ... }: {
-        project = project_id;
-        serviceAccount = client_email;
-        accessKey = private_key;
-      };
-
-      gce-input = gce-to-nix service-account-credential-key-file-input;
-
-
-      mk-devnet = { pkgs, lib, writeTextFile, writeShellApplication
-        , useGlobalChainSpec ? true, polkadot-launch, composable-node
-        , polkadot-node, chain-spec, network-config-path ?
-          ./scripts/polkadot-launch/rococo-local-dali-dev.nix }:
-        let
-          original-config = (pkgs.callPackage network-config-path {
-            polkadot-bin = polkadot-node;
-            composable-bin = composable-node;
-          }).result;
-
-          patched-config = if useGlobalChainSpec then
-            pkgs.lib.recursiveUpdate original-config {
-              parachains = builtins.map
-                (parachain: parachain // { chain = "${chain-spec}"; })
-                original-config.parachains;
-            }
-          else
-            original-config;
-
-          config = pkgs.writeTextFile {
-            name = "devnet-${chain-spec}-config.json";
-            text = builtins.toJSON patched-config;
-          };
-        in {
-          inherit chain-spec;
-          parachain-nodes = builtins.concatMap (parachain: parachain.nodes)
-            patched-config.parachains;
-          relaychain-nodes = patched-config.relaychain.nodes;
-          script = pkgs.writeShellApplication {
-            name = "run-devnet-${chain-spec}";
-            text = ''
-              rm -rf /tmp/polkadot-launch
-              ${polkadot-launch}/bin/polkadot-launch ${config} --verbose
-            '';
-          };
-        };
-
-      mk-bridge-devnet =
-        { pkgs, packages, polkadot-launch, composable-node, polkadot-node }:
-        (pkgs.callPackage mk-devnet {
-          inherit pkgs;
-          inherit (packages) polkadot-launch composable-node polkadot-node;
-          chain-spec = "dali-dev";
-          network-config-path =
-            ./scripts/polkadot-launch/bridge-rococo-local-dali-dev.nix;
-          useGlobalChainSpec = false;
-        });
-
-      mk-devnet-container = { pkgs, containerName, devNet, container-tools }:
-        pkgs.lib.trace "Run Dali runtime on Composable node"
-        pkgs.dockerTools.buildImage {
-          name = containerName;
-          tag = "latest";
-          copyToRoot = pkgs.buildEnv {
-            name = "image-root";
-            paths = [ pkgs.curl pkgs.websocat ] ++ container-tools;
-            pathsToLink = [ "/bin" ];
-          };
-          config = {
-            Entrypoint = [ "${devNet}/bin/run-devnet-dali-dev" ];
-            WorkingDir = "/home/polkadot-launch";
-          };
-          runAsRoot = ''
-            mkdir -p /home/polkadot-launch /tmp
-            chown 1000:1000 /home/polkadot-launch
-            chmod 777 /tmp
-          '';
-        };
 
       eachSystemOutputs = flake-utils.lib.eachDefaultSystem (system:
         let
@@ -164,31 +55,6 @@
               --repeat=${builtins.toString repeat} \
               --output=code/parachain/runtime/${chain}/src/weights
             '';
-
-          simnode-tests = crane-nightly.cargoBuild (common-attrs // {
-            pnameSuffix = "-simnode";
-            cargoArtifacts = common-deps;
-            cargoBuildCommand =
-              "cargo build --release --package simnode-tests --features=builtin-wasm";
-            DALI_RUNTIME = "${dali-runtime}/lib/runtime.optimized.wasm";
-            PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
-            COMPOSABLE_RUNTIME =
-              "${composable-runtime}/lib/runtime.optimized.wasm";
-            installPhase = ''
-              mkdir -p $out/bin
-              cp target/release/simnode-tests $out/bin/simnode-tests
-            '';
-            meta = { mainProgram = "simnode-tests"; };
-          });
-
-          run-simnode-tests = chain:
-            pkgs.writeShellScriptBin "run-simnode-tests-${chain}" ''
-              ${simnode-tests}/bin/simnode-tests --chain=${chain} \
-              --base-path=/tmp/db/var/lib/composable-data/ \
-              --pruning=archive \
-              --execution=wasm
-            '';
-
           mk-xcvm-contract = name:
             crane-nightly.buildPackage (common-attrs // {
               pnameSuffix = name;
@@ -401,44 +267,7 @@
                 in
                 pkgs.nix-gitignore.gitignoreFilterPure customFilter
                   [ ../.gitigno
-            simnode-tests = makeApp packages.simnode-tests;
-            simnode-tests-composable =
-              flake-utils.lib.mkApp { drv = run-simnode-tests "composable"; };
-            simnode-tests-picasso =
-              flake-utils.lib.mkApp { drv = run-simnode-tests "picasso"; };
-            simnode-tests-dali-rococo =
-              flake-utils.lib.mkApp { drv = run-simnode-tests "dali-rococo"; };
-            devnet-initialize-script-local =
-              makeApp packages.devnet-initialize-script-local;
-            devnet-initialize-script-persistent =
-              makeApp packages.devnet-initialize-script-persistent;
-            devnet-initialize-script-picasso-persistent =
-              makeApp packages.devnet-initialize-script-picasso-persistent;
-            default = devnet-dali;
           };
         });
-    in eachSystemOutputs // {
-
-      nixopsConfigurations = {
-        default = let pkgs = nixpkgs.legacyPackages.x86_64-linux;
-        in import ./.nix/devnet.nix {
-          inherit nixpkgs;
-          inherit gce-input;
-          devnet-dali = pkgs.callPackage mk-devnet {
-            inherit pkgs;
-            inherit (eachSystemOutputs.packages.x86_64-linux)
-              polkadot-launch composable-node polkadot-node;
-            chain-spec = "dali-dev";
-          };
-          devnet-picasso = pkgs.callPackage mk-devnet {
-            inherit pkgs;
-            inherit (eachSystemOutputs.packages.x86_64-linux)
-              polkadot-launch composable-node polkadot-node;
-            chain-spec = "picasso-dev";
-          };
-          docs = eachSystemOutputs.packages.x86_64-linux.docs-static;
-          rev = builtins.getEnv "GITHUB_SHA";
-        };
-      };
-    };
+    in eachSystemOutputs // {};
 }
