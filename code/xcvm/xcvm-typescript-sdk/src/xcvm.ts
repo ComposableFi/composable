@@ -25,6 +25,7 @@ export class XCVM {
   BridgeSecurityEnum: Enum;
   BindingValueMessage: Type
   Uint128Message: Type
+  SelfMessage: Type
   messageTypeLookUp: { [k: string]: any } = {};
 
   constructor() {
@@ -49,6 +50,7 @@ export class XCVM {
     this.CallMessage = this.root.lookupType("interpreter.Call");
     this.BindingValueMessage = this.root.lookupType("interpreter.BindingValue");
     this.Uint128Message =  this.root.lookupType("interpreter.Uint128");
+    this.SelfMessage = this.root.lookupType("interpreter.Self");
     this.BridgeSecurityEnum = this.root.lookupEnum("interpreter.BridgeSecurity");
 
     this.messageTypeLookUp['Program'] = this.ProgramMessage;
@@ -71,6 +73,7 @@ export class XCVM {
     this.messageTypeLookUp['Spawn'] = this.SpawnMessage;
     this.messageTypeLookUp['BridgeSecurity'] = this.BridgeSecurityEnum;
     this.messageTypeLookUp['Uint128'] = this.Uint128Message;
+    this.messageTypeLookUp['Self'] = this.SelfMessage;
   }
 
   public encodeMessage(message: Message) {
@@ -211,6 +214,7 @@ export class XCVM {
     return this.SaltMessage.create({salt: utils.arrayify(salt)});
   }
 
+
   //public createBridgeSecurity(security: Number): Enum {
   //  return security;
   //}
@@ -255,6 +259,10 @@ export class XCVM {
       throw this.getTypeError("ratioMessage", "ratio")
     }
     return this.AssetAmountMessage.create({assetId: assetIdMessage, ratio: ratioMessage});
+  }
+
+  public createSelf(): Message<{}> {
+    return this.SelfMessage.create({self: 1});
   }
 
   public createBindingValue(bindingValueType: any): Message<{}> {

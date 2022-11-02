@@ -42,7 +42,7 @@ contract Interpreter is IInterpreter {
     }
 
     modifier onlyOwnerOrCreator() {
-        require(keccak256(abi.encodePacked(msg.sender)) == keccak256(origin.account) || owners[msg.sender]);
+        require(keccak256(abi.encodePacked(msg.sender)) == keccak256(origin.account) || owners[msg.sender] || address(this) == msg.sender);
         _;
     }
 
@@ -53,14 +53,14 @@ contract Interpreter is IInterpreter {
         origin = _origin;
     }
 
-    function addOwners(address[] calldata newOwners) external onlyOwnerOrCreator {
+    function addOwners(address[] memory newOwners) public onlyOwnerOrCreator {
         for(uint256 i=0; i<newOwners.length; i++) {
             require(newOwners[i] != address(0), "Interpreter: invalid address");
             owners[newOwners[i]] = true;
         }
     }
 
-    function removeOwners(address[] calldata newOwners) external onlyOwnerOrCreator {
+    function removeOwners(address[] memory newOwners) public onlyOwnerOrCreator {
         for(uint256 i=0; i<newOwners.length; i++) {
             require(newOwners[i] != address(0), "Interpreter: invalid address");
             owners[newOwners[i]] = false;

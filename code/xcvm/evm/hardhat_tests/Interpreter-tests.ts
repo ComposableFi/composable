@@ -13,10 +13,11 @@ describe("Interpreter", function () {
   let accounts: any;
   let interpreterAddress: any;
   let erc20: any;
+  let Interpreter: any;
   beforeEach(async function () {
     accounts = await ethers.getSigners();
     [owner, user1, user2] = accounts;
-    const Interpreter = await ethers.getContractFactory("Interpreter");
+    Interpreter = await ethers.getContractFactory("Interpreter");
     const Router = await ethers.getContractFactory("Router");
     router = await Router.deploy();
     //register owner as the bridge
@@ -241,5 +242,62 @@ describe("Interpreter", function () {
       );
       expect((await erc20.balanceOf(owner.address)).toString()).to.be.equal(ethers.utils.parseEther("1.5").toString());
     });
+  });
+
+  it("test addOwner and removeOnwer by Call instruction and self later binding", async function () {
+      const abiCoder = ethers.utils.defaultAbiCoder;
+
+      let functionSignature = Interpreter.interface.getSighash("addOwners(address[])");
+      // placeholder 1
+      let payload = ethers.utils.concat([
+        ethers.utils.arrayify("0x01"),
+        ethers.utils.arrayify(functionSignature),
+        abiCoder.encode(["address[]"], [[user1.address]])
+      ]);
+      let xcvm = new XCVM();
+      let programMessage = xcvm.createProgram(
+        "0x01",
+        xcvm.createInstructions([
+          xcvm.createInstruction(
+            xcvm.createCall(
+              payload,
+              xcvm.createBindings([
+                xcvm.createBinding(0, xcvm.createBindingValue(xcvm.createSelf())),
+              ])
+            )
+          )
+        ])
+      );
+
+      let encodedProgram = xcvm.encodeMessage(programMessage);
+      let interpreter = await ethers.getContractAt('Interpreter', interpreterAddress);
+      expect((await interpreter.owners(user1.address)).toString()).to.be.equal("false");
+      await router.runProgram({ networkId: 1, account: owner.address }, encodedProgram, [], []);
+      expect((await interpreter.owners(user1.address)).toString()).to.be.equal("true");
+
+      functionSignature = Interpreter.interface.getSighash("removeOwners(address[])");
+      // placeholder 1
+      payload = ethers.utils.concat([
+        ethers.utils.arrayify("0x01"),
+        ethers.utils.arrayify(functionSignature),
+        abiCoder.encode(["address[]"], [[user1.address]])
+      ]);
+      programMessage = xcvm.createProgram(
+        "0x01",
+        xcvm.createInstructions([
+          xcvm.createInstruction(
+            xcvm.createCall(
+              payload,
+              xcvm.createBindings([
+                xcvm.createBinding(0, xcvm.createBindingValue(xcvm.createSelf())),
+              ])
+            )
+          )
+        ])
+      );
+
+      encodedProgram = xcvm.encodeMessage(programMessage);
+      await router.runProgram({ networkId: 1, account: owner.address }, encodedProgram, [], []);
+      expect((await interpreter.owners(user1.address)).toString()).to.be.equal("false");
   });
 });

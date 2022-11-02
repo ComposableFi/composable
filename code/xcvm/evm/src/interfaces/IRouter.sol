@@ -33,17 +33,4 @@ interface IRouter {
         address[] memory assetAddresses,
         uint256[] memory amounts
     ) external;
-
-    function emitAddOwners(
-        uint256 networkId,
-        BridgeSecurity security,
-        address[] calldata owners
-    ) external;
-
-    function emitRemoveOwners(
-        uint256 networkId,
-        BridgeSecurity security,
-        address[] calldata owners
-    ) external;
-
 }
