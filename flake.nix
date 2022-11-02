@@ -22,6 +22,10 @@
       url = "github:helix-editor/helix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    bundlers = {
+      url = "github:NixOS/bundlers";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = { self, flake-parts, ... }:
@@ -47,6 +51,7 @@
         ./frontend/frontend.nix
         ./nixops.nix
         ./price-feed.nix
+        ./release.nix
         ./rust.nix
         ./subsquid/subsquid.nix
         ./subwasm.nix
