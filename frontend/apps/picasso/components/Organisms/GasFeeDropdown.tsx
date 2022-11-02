@@ -50,6 +50,11 @@ export const GasFeeDropdown: FC<Props> = ({
   const options = useMemo(() => {
     return Object.values(tokens)
       .filter((token) => !!token.chainId.picasso)
+      .filter(
+        (token) =>
+          token.id === SUBSTRATE_NETWORKS.picasso.tokenId ||
+          !balances["picasso"][token.id].balance.isZero()
+      ) // This is for Albula release. We don't show all the options in disabled state, and we show only options where user has some balances
       .map((token) => ({
         value: token.id,
         label: token.symbol,
