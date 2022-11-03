@@ -1130,7 +1130,8 @@ jobs:
         - test-running-of-pallet-benchmarks
         - local-integration-tests
         - unit-tests
-        - cargo-udeps-check
+        # TODO (vim): Decrease lead time until after release 3
+        #- cargo-udeps-check
         - nixfmt-check
         - cargo-clippy-check
         - cargo-deny-check
