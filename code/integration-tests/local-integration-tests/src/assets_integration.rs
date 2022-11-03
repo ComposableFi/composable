@@ -58,6 +58,7 @@ fn registered_assets_with_smaller_than_native_price() {
 				Event::AssetsRegistry(assets_registry::Event::<Runtime>::AssetRegistered {
 					asset_id,
 					location: _,
+					decimals: _,
 				}) => Some(asset_id),
 				_ => None,
 			})
@@ -88,6 +89,7 @@ fn registered_assets_with_larger_than_native_price() {
 				Event::AssetsRegistry(assets_registry::Event::<Runtime>::AssetRegistered {
 					asset_id,
 					location: _,
+					decimals: _,
 				}) => Some(asset_id),
 				_ => None,
 			})

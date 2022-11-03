@@ -2,6 +2,52 @@ import assert from 'assert'
 import {Chain, ChainContext, EventContext, Event, Result} from './support'
 import * as v2402 from './v2402'
 
+export class AssetsRegistryAssetRegisteredEvent {
+  private readonly _chain: Chain
+  private readonly event: Event
+
+  constructor(ctx: EventContext)
+  constructor(ctx: ChainContext, event: Event)
+  constructor(ctx: EventContext, event?: Event) {
+    event = event || ctx.event
+    assert(event.name === 'AssetsRegistry.AssetRegistered')
+    this._chain = ctx._chain
+    this.event = event
+  }
+
+  get isV2402(): boolean {
+    return this._chain.getEventHash('AssetsRegistry.AssetRegistered') === 'ae5a781702a5b7dee0f69f06cfa5c98bbc4a0fc46f19a56b1de73db1f82f1a9c'
+  }
+
+  get asV2402(): {assetId: bigint, location: v2402.XcmAssetLocation, decimals: (number | undefined)} {
+    assert(this.isV2402)
+    return this._chain.decodeEvent(this.event)
+  }
+}
+
+export class AssetsRegistryAssetUpdatedEvent {
+  private readonly _chain: Chain
+  private readonly event: Event
+
+  constructor(ctx: EventContext)
+  constructor(ctx: ChainContext, event: Event)
+  constructor(ctx: EventContext, event?: Event) {
+    event = event || ctx.event
+    assert(event.name === 'AssetsRegistry.AssetUpdated')
+    this._chain = ctx._chain
+    this.event = event
+  }
+
+  get isV2402(): boolean {
+    return this._chain.getEventHash('AssetsRegistry.AssetUpdated') === 'ae5a781702a5b7dee0f69f06cfa5c98bbc4a0fc46f19a56b1de73db1f82f1a9c'
+  }
+
+  get asV2402(): {assetId: bigint, location: v2402.XcmAssetLocation, decimals: (number | undefined)} {
+    assert(this.isV2402)
+    return this._chain.decodeEvent(this.event)
+  }
+}
+
 export class BalancesDepositEvent {
   private readonly _chain: Chain
   private readonly event: Event

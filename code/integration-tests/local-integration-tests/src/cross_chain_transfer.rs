@@ -1005,6 +1005,7 @@ fn sibling_shib_to_transfer() {
 				Event::AssetsRegistry(assets_registry::Event::<Runtime>::AssetRegistered {
 					asset_id,
 					location: _,
+					decimals: _,
 				}) => Some(asset_id),
 				_ => None,
 			})

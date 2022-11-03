@@ -24,7 +24,9 @@
     "StakingRewards.Unstaked",
     "StakingRewards.SplitPosition",
     "BondedFinance.OfferCancelled",
-    "Oracle.PriceChanged"
+    "Oracle.PriceChanged",
+    "AssetsRegistry.AssetRegistered",
+    "AssetsRegistry.AssetUpdated"
   ],
   "calls": []
 }
