@@ -308,7 +308,8 @@ Executes a payload within the execution context of the chain, such as an extrins
 <Call>         ::= <Payload> <Bindings>
 <Payload>      ::= bytes
 <Bindings>     ::= { u16 : <BindingValue> }
-<BindingValue> ::= <Self> | <Relayer> | <Result> | <Balance> | <GlobalId>
+<AssetAmount>  ::= <AssetId> <Balance>
+<BindingValue> ::= <Self> | <Relayer> | <Result> | <AssetAmount> | <GlobalId>
 ```
 
 ### 2.2.2.1. Late Bindings
