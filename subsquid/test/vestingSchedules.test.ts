@@ -154,7 +154,7 @@ function createVestingScheduleAddedEvent(
     scheduleAmount,
   };
 
-  when(eventMock.asV2402).thenReturn(evt);
+  when(eventMock.asV10003).thenReturn(evt);
 
   const event = instance(eventMock);
 
@@ -177,7 +177,7 @@ function createVestingScheduleClaimedEvent(
     claimedAmountPerSchedule,
   };
 
-  when(eventMock.asV2402).thenReturn(evt);
+  when(eventMock.asV10003).thenReturn(evt);
 
   const event = instance(eventMock);
 
@@ -271,7 +271,7 @@ describe("Vesting schedule added", () => {
       ]
     );
 
-    const { claimedAmountPerSchedule } = event.asV2402;
+    const { claimedAmountPerSchedule } = event.asV10003;
 
     for (let i = 0; i < claimedAmountPerSchedule.length; i += 1) {
       const [id, amount] = claimedAmountPerSchedule[i];
@@ -317,7 +317,7 @@ describe("Vesting schedule added", () => {
       [[3n, 100n]]
     );
 
-    const { claimedAmountPerSchedule } = event.asV2402;
+    const { claimedAmountPerSchedule } = event.asV10003;
     const [id, amount] = claimedAmountPerSchedule[0];
 
     const vestingSchedule = createMockVestingSchedule(id, "1");
