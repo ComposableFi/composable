@@ -3,7 +3,7 @@
 This section includes the purchase and sell logs for stablecoin contributors to our Picasso crowdloan.
 
 The following table catalogues all of the Picasso stable coin conversions to KSM via TPS (the OTC desk of 3AC) 
-and contributed to our Picasso crowdloan
+and contributed to our Picasso crowdloan.
  
 | Purchase Date  | Stable Coins (USD Equivalent) | KSM Purchased at USDT          |
 | -------------- |-------------------------------| ------------------------------ |
@@ -23,4 +23,4 @@ and contributed to our Picasso crowdloan
 | October 30th   | 423,157.66                    | 1,114.81057053 at 379.57808587 |
 
 You can find the purchase/sell logs corresponding to the Ethereum address for stablecoin contributors 
-[on our Github.](https://github.com/ComposableFi/composable/tree/main/docs/docs/parachains/picasso/crowdloan-logs/contributors.csv)
+[on our Github.](https://github.com/ComposableFi/composable/tree/main/docs/docs/parachains/picasso/crowdloan-contributors/all-contributors.csv)
