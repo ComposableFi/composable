@@ -44,12 +44,13 @@ pub trait AssetExistentialDepositInspect {
 	}
 }
 
-pub trait MutateAsset {
+pub trait AssetDataMutate {
 	type AssetId;
 	type Balance;
-
-	/// Given an `asset_id`, returns the existential deposit of an asset in asset currency.
-	
+	fn update_existential_deposit(
+		asset_id: Self::AssetId,
+		ed: Option<Self::Balance>,
+	);
 }
 
 /// foreign_amount / native_amount

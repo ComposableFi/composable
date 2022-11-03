@@ -6,7 +6,7 @@ digraph "XCMP runtime" {
     xcm_executor [label = "xcm-executor (interpreter)";];
     orml_xtokens;
     orml_unknown_tokens;
-    pallet_xcm [label = "pallet-xcm (versioning, message formation)";];
+    pallet_xcm [label = "pallet-xcm (versioning, message formation)"; URL = "https://github.com/paritytech/polkadot/blob/master/xcm/pallet-xcm/src/lib.rs"];
     cumulus_primitives_utility;
     cumulus_pallet_xcm;
     cumulus_pallet_dmp_queue;

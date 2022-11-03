@@ -362,6 +362,7 @@ impl<
 	> OutgoingFee<Registry>
 {
 	pub fn outgoing_fee(location: &MultiLocation) -> Option<Balance> {
+		log::error!(target: "xcm::fees", "checking outgoing fee for {:?} ", &location);
 		match (location.parents, location.first_interior()) {
 			// poor man solution until XCM v4 `dynamic fees`
 			(1, None) => Some(400_000_000_000),

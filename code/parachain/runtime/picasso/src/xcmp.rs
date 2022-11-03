@@ -201,8 +201,10 @@ impl xcm_executor::Config for XcmConfig {
 }
 
 parameter_type_with_key! {
-	pub ParachainMinFee: |location: MultiLocation| -> Option<Balance> {
-		OutgoingFee::<AssetsRegistry>::outgoing_fee(location)
+	pub ParachainMinFee: |location: MultiLocation| -> Option<Balance> {		
+		let result = OutgoingFee::<AssetsRegistry>::outgoing_fee(location);
+		log::error!(target: "xcm::fees", "decided via registry for {:?} to be {:?} ", location, &result);
+		result
 	};
 }
 
@@ -213,9 +215,12 @@ impl orml_xtokens::Config for Runtime {
 	type CurrencyIdConvert = AssetsIdConverter;
 	type AccountIdToMultiLocation = AccountIdToMultiLocation;
 	type SelfLocation = topology::this::Local;
-	type MinXcmFee = ParachainMinFee;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
+	
+	type MinXcmFee = ParachainMinFee;
+	// 
 	type MultiLocationsFilter = Everything;
+	
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
 	type BaseXcmWeight = BaseXcmWeight;
 	type LocationInverter = LocationInverter<Ancestry>;

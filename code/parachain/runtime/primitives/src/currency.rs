@@ -67,6 +67,17 @@ macro_rules! list_assets {
 	(
 		$(
 			$(#[$attr:meta])*
+			pub const $NAME:ident: CurrencyId = CurrencyId($id:literal, $location:expr);
+		)*
+	) =>  {
+		$crate::list_assets! {
+			$(#[$attr:meta])*
+			pub const $NAME:ident: CurrencyId = CurrencyId($id:literal);
+		}
+	};
+	(
+		$(
+			$(#[$attr:meta])*
 			pub const $NAME:ident: CurrencyId = CurrencyId($id:literal);
 		)*
 	) => {

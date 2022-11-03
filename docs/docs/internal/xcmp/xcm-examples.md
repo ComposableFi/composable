@@ -40,6 +40,8 @@ https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkarura-rpc-0.aca-api.network#/extr
 
 [Mint USDT on local devnet Rockmine](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A10008#/extrinsics/decode/0x1f03011f00d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d130000e8890423c78a)
 
+TODO: fail channel here
+
 ## Other
 
 [Robonomics and Rockmine examples (video)](https://www.youtube.com/watch?v=rygXb21YCDo) 

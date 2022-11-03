@@ -213,9 +213,6 @@ pub mod pallet {
 			decimals: Option<Exponent>,
 		) -> DispatchResultWithPostInfo {
 			T::UpdateAssetRegistryOrigin::ensure_origin(origin)?;
-			// note: does not validates if assets exists, not clear what is expected in this case
-			// TODO: after compile time well known assets allow to check existence, add ensure
-			// clause for that
 			Self::set_reserve_location(asset_id, location.clone(), ratio, decimals)?;
 			Self::deposit_event(Event::<T>::AssetUpdated { asset_id, location, decimals });
 			Ok(().into())
@@ -265,7 +262,7 @@ pub mod pallet {
 			decimals: Option<Exponent>,
 		) -> DispatchResult {
 			ForeignToLocal::<T>::insert(&location, asset_id);
-			LocalToForeign::<T>::insert(asset_id, ForeignMetadata { decimals, location });
+			LocalToForeign::<T>::insert(asset_id, ForeignMetadata { decimals, location });			
 			AssetRatio::<T>::mutate_exists(asset_id, |x| *x = ratio);
 			Ok(())
 		}
