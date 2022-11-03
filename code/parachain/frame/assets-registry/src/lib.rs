@@ -146,10 +146,12 @@ pub mod pallet {
 		AssetRegistered {
 			asset_id: T::LocalAssetId,
 			location: T::ForeignAssetId,
+			decimals: Option<Exponent>,
 		},
 		AssetUpdated {
 			asset_id: T::LocalAssetId,
 			location: T::ForeignAssetId,
+			decimals: Option<Exponent>,
 		},
 		MinFeeUpdated {
 			target_parachain_id: ParaId,
@@ -209,7 +211,7 @@ pub mod pallet {
 			);
 			let asset_id = T::CurrencyFactory::create(RangeId::FOREIGN_ASSETS, ed)?;
 			Self::set_reserve_location(asset_id, location.clone(), ratio, decimals)?;
-			Self::deposit_event(Event::<T>::AssetRegistered { asset_id, location });
+			Self::deposit_event(Event::<T>::AssetRegistered { asset_id, location, decimals });
 			Ok(().into())
 		}
 
@@ -229,7 +231,7 @@ pub mod pallet {
 			// TODO: after compile time well known assets allow to check existence, add ensure
 			// clause for that
 			Self::set_reserve_location(asset_id, location.clone(), ratio, decimals)?;
-			Self::deposit_event(Event::<T>::AssetUpdated { asset_id, location });
+			Self::deposit_event(Event::<T>::AssetUpdated { asset_id, location, decimals });
 			Ok(().into())
 		}
 
