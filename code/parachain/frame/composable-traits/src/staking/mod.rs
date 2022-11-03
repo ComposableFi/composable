@@ -33,9 +33,6 @@ pub struct Reward<Balance> {
 	/// of all of the stakes in the pool.
 	pub total_dilution_adjustment: Balance,
 
-	/// Upper bound on the `total_rewards - total_dilution_adjustment`.
-	pub max_rewards: Balance,
-
 	/// The rewarding rate that increases the pool `total_reward`
 	/// at a given time.
 	pub reward_rate: RewardRate<Balance>,
@@ -87,7 +84,6 @@ impl<Balance: Zero> Reward<Balance> {
 			total_rewards: Zero::zero(),
 			claimed_rewards: Zero::zero(),
 			total_dilution_adjustment: Zero::zero(),
-			max_rewards: reward_config.max_rewards,
 			reward_rate: reward_config.reward_rate,
 			last_updated_timestamp: now_seconds,
 		}
@@ -136,15 +132,9 @@ pub struct RewardPool<
 	pub minimum_staking_amount: Balance,
 }
 
-/// Default transfer limit on new asset added as rewards.
-pub const DEFAULT_MAX_REWARDS: u128 = 1_000_000_000_000_000_000_u128;
-
 /// Reward configurations for a given asset type.
 #[derive(RuntimeDebug, PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo)]
 pub struct RewardConfig<Balance> {
-	/// Upper bound on the `total_rewards - total_dilution_adjustment`.
-	pub max_rewards: Balance,
-
 	/// The rewarding rate that increases the pool `total_reward`
 	/// at a given time.
 	pub reward_rate: RewardRate<Balance>,

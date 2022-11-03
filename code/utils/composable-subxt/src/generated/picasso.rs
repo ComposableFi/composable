@@ -26459,7 +26459,6 @@ pub mod api {
 					pub total_rewards: _0,
 					pub claimed_rewards: _0,
 					pub total_dilution_adjustment: _0,
-					pub max_rewards: _0,
 					pub reward_rate: runtime_types::composable_traits::staking::RewardRate<_0>,
 					pub last_updated_timestamp: ::core::primitive::u64,
 				}
@@ -26467,7 +26466,6 @@ pub mod api {
 					:: subxt :: ext :: codec :: Decode, :: subxt :: ext :: codec :: Encode, Debug,
 				)]
 				pub struct RewardConfig<_0> {
-					pub max_rewards: _0,
 					pub reward_rate: runtime_types::composable_traits::staking::RewardRate<_0>,
 				}
 				#[derive(
