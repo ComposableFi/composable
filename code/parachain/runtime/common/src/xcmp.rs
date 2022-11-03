@@ -363,6 +363,7 @@ impl<
 {
 	pub fn outgoing_fee(location: &MultiLocation) -> Option<Balance> {
 		match (location.parents, location.first_interior()) {
+			// poo man solution until XCM v4 `dynamic fees`
 			(1, None) => Some(400_000_000_000),
 			(1, Some(Parachain(id))) => {
 				let location = XcmAssetLocation::new(location.clone());

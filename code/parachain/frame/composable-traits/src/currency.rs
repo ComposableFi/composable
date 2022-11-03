@@ -170,14 +170,17 @@ pub trait AssetIdLike = FullCodec + MaxEncodedLen + Copy + Eq + PartialEq + Debu
 	TypeInfo,
 )]
 pub struct Rational64 {
-	pub numer: u64,
-	pub denom: u64,
+	pub n: u64,
+	pub d: u64,
 }
 
 #[macro_export]
 macro_rules! rational {
-	($numer:literal / $denom: literal) => {
-		Rational64 { numer: $numer, denom: $denom }
+	($n:literal / 0) => {
+		panic!("denominator cannot be zero")
+	};
+	($n:literal / $d: literal) => {
+		Rational64 { n: $n, d: $d }
 	};
 }
 
@@ -207,40 +210,59 @@ macro_rules! impl_const_get {
 
 impl_const_get!(ConstRational64, Rational64);
 
+pub trait RationalLike<const N: u64, const D: u64> {
+	fn new() -> Self;
+	const CHECK: bool = if D != 0 { true } else { panic!("denominator cannot be zero") };
+}
+
+impl<const N : u64, const D: u64> RationalLike<N,D> for Rational64 {
+    fn new() -> Self {
+        Self::from_unchecked(N, D)
+    }
+ }
+
 impl Rational64 {
-	pub fn new(numer: u64, denom: u64) -> Self {
-		Rational64 { numer, denom }
+	pub const fn from(n: u64, d: u64) -> Self {
+		Self::from_unchecked(n, d.max(1))
 	}
 
-	pub fn one() -> Self {
-		Rational64::new(1, 1)
+	pub const fn from_unchecked(n: u64, d: u64) -> Self {
+		Self { n, d }
+	}
+
+	pub const fn one() -> Self {
+		Rational64::from(1, 1)
+	}
+
+	pub const fn zero() -> Self {
+		Rational64::from(0, 1)
 	}
 }
 
 impl const From<Rational64> for FixedU128 {
 	fn from(this: Rational64) -> Self {
-		Self::from_rational(this.numer.into(), this.denom.into())
+		Self::from_rational(this.n.into(), this.d.into())
 	}
 }
 
 impl const From<(u64, u64)> for Rational64 {
 	fn from(this: (u64, u64)) -> Self {
 		{
-			let numer = this.0;
-			let denom = this.1;
-			Rational64 { numer, denom }
+			let n = this.0;
+			let d = this.1;
+			Rational64 { n, d }
 		}
 	}
 }
 
 impl const From<Rational64> for FixedU64 {
 	fn from(this: Rational64) -> Self {
-		Self::from_rational(this.numer.into(), this.denom.into())
+		Self::from_rational(this.n.into(), this.d.into())
 	}
 }
 
 impl From<Rational64> for Rational128 {
 	fn from(this: Rational64) -> Self {
-		Self::from(this.numer.into(), this.denom.into())
+		Self::from(this.n.into(), this.d.into())
 	}
 }

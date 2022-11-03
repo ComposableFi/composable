@@ -3,9 +3,10 @@ use frame_support::traits::{Currency, Imbalance, OnUnbalanced};
 pub type NegativeImbalance<T> =
 	<balances::Pallet<T> as Currency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
 
-/// Logic for the author to get a portion of fees.
-pub struct ToStakingPot<R, I>(sp_std::marker::PhantomData<(R, I)>);
-impl<R, I: 'static> OnUnbalanced<NegativeImbalance<R>> for ToStakingPot<R, I>
+// TODO: move here BYOG rewards to authors
+/// Logic for the collators(block authors) and treasury to get a portion of native or foreign fees.
+pub struct StakingPot<R, I>(sp_std::marker::PhantomData<(R, I)>);
+impl<R, I: 'static> OnUnbalanced<NegativeImbalance<R>> for StakingPot<R, I>
 where
 	R: balances::Config
 		+ collator_selection::Config
@@ -30,10 +31,7 @@ where
 	}
 }
 
-/// OnUnbalanced handler for pallet-transaction-payment.
-pub struct DealWithFees<R, I>(sp_std::marker::PhantomData<(R, I)>);
-
-impl<R, I: 'static> OnUnbalanced<NegativeImbalance<R>> for DealWithFees<R, I>
+impl<R, I: 'static> OnUnbalanced<NegativeImbalance<R>> for StakingPot<R, I>
 where
 	R: balances::Config
 		+ collator_selection::Config
@@ -48,7 +46,7 @@ where
 			if let Some(tips) = fees_then_tips.next() {
 				tips.merge_into(&mut fees);
 			}
-			<ToStakingPot<R, I> as OnUnbalanced<_>>::on_unbalanced(fees);
+			<StakingPot<R, I> as OnUnbalanced<_>>::on_unbalanced(fees);
 		}
 	}
 }
