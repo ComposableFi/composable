@@ -90,7 +90,7 @@ impl WellKnownForeignToNativePriceConverter {
 
 	pub fn to_asset_balance(balance: NativeBalance, asset_id: CurrencyId) -> Option<Balance> {
 		Self::get_ratio(asset_id).map(|x| {
-			safe_multiply_by_rational(balance, x.numer.into(), x.denom.into()).unwrap_or(Balance::one())
+			safe_multiply_by_rational(balance, x.n().into(), x.d().into()).unwrap_or(Balance::one())
 		})
 	}
 }
@@ -109,7 +109,7 @@ impl<AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>>
 	) -> Result<Balance, Self::Error> {
 		AssetsRegistry::get_ratio(asset_id)
 			.and_then(|x| {
-				safe_multiply_by_rational(native_amount, x.numer.into(), x.denom.into()).ok()
+				safe_multiply_by_rational(native_amount, x.n().into(), x.d().into()).ok()
 			})
 			.or(WellKnownForeignToNativePriceConverter::to_asset_balance(native_amount, asset_id))
 			.ok_or(DispatchError::Other(cross_chain_errors::ASSET_PRICE_NOT_FOUND))

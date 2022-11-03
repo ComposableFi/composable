@@ -44,6 +44,14 @@ pub trait AssetExistentialDepositInspect {
 	}
 }
 
+pub trait MutateAsset {
+	type AssetId;
+	type Balance;
+
+	/// Given an `asset_id`, returns the existential deposit of an asset in asset currency.
+	
+}
+
 /// foreign_amount / native_amount
 pub type ForeignByNative = Rational64;
 
@@ -215,11 +223,11 @@ pub trait RationalLike<const N: u64, const D: u64> {
 	const CHECK: bool = if D != 0 { true } else { panic!("denominator cannot be zero") };
 }
 
-impl<const N : u64, const D: u64> RationalLike<N,D> for Rational64 {
-    fn new() -> Self {
-        Self::from_unchecked(N, D)
-    }
- }
+impl<const N: u64, const D: u64> RationalLike<N, D> for Rational64 {
+	fn new() -> Self {
+		Self::from_unchecked(N, D)
+	}
+}
 
 impl Rational64 {
 	pub const fn from(n: u64, d: u64) -> Self {
@@ -236,6 +244,14 @@ impl Rational64 {
 
 	pub const fn zero() -> Self {
 		Rational64::from(0, 1)
+	}
+
+	pub const fn n(&self) -> u64 {
+		self.n
+	}
+
+	pub const fn d(&self) -> u64 {
+		self.d
 	}
 }
 

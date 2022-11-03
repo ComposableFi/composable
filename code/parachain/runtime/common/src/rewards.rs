@@ -1,4 +1,5 @@
-use frame_support::traits::{Currency, Imbalance, OnUnbalanced};
+use frame_support::traits::Currency;
+use crate::prelude::*;
 
 pub type NegativeImbalance<T> =
 	<balances::Pallet<T> as Currency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
@@ -28,26 +29,6 @@ where
 		let staking_pot = <collator_selection::Pallet<R>>::account_id();
 		<balances::Pallet<R>>::resolve_creating(&staking_pot, to_collators);
 		<treasury::Pallet<R, I> as OnUnbalanced<_>>::on_unbalanced(to_treasury);
-	}
-}
-
-impl<R, I: 'static> OnUnbalanced<NegativeImbalance<R>> for StakingPot<R, I>
-where
-	R: balances::Config
-		+ collator_selection::Config
-		+ treasury::Config<I, Currency = balances::Pallet<R>>,
-	<R as frame_system::Config>::AccountId: From<polkadot_primitives::v2::AccountId>,
-	<R as frame_system::Config>::AccountId: Into<polkadot_primitives::v2::AccountId>,
-	<R as frame_system::Config>::Event: From<balances::Event<R>>,
-	<R as balances::Config>::Balance: From<u128>,
-{
-	fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = NegativeImbalance<R>>) {
-		if let Some(mut fees) = fees_then_tips.next() {
-			if let Some(tips) = fees_then_tips.next() {
-				tips.merge_into(&mut fees);
-			}
-			<StakingPot<R, I> as OnUnbalanced<_>>::on_unbalanced(fees);
-		}
 	}
 }
 
@@ -267,7 +248,7 @@ mod tests {
 			let fee = Balances::issue(30);
 			let tip = Balances::issue(70);
 
-			DealWithFees::on_unbalanceds(vec![fee, tip].into_iter());
+			StakingPot::on_unbalanceds(vec![fee, tip].into_iter());
 
 			// Author gets 25% of tip and 25% of fee = 25
 			assert_eq!(Balances::free_balance(CollatorSelection::account_id()), 25);
@@ -282,7 +263,7 @@ mod tests {
 			let fee = Balances::issue(0);
 			let tip = Balances::issue(0);
 
-			DealWithFees::on_unbalanceds(vec![fee, tip].into_iter());
+			StakingPot::on_unbalanceds(vec![fee, tip].into_iter());
 
 			// Author gets 50% of tip and 50% of fee = 15
 			assert_eq!(Balances::free_balance(CollatorSelection::account_id()), 0);
@@ -296,7 +277,7 @@ mod tests {
 			let fee = Balances::issue(1);
 			let tip = Balances::issue(1);
 
-			DealWithFees::on_unbalanceds(vec![fee, tip].into_iter());
+			StakingPot::on_unbalanceds(vec![fee, tip].into_iter());
 
 			// Author gets 50% of tip and 50% of fee = 15
 			assert_eq!(Balances::free_balance(CollatorSelection::account_id()), 0);

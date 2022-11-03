@@ -41,7 +41,7 @@ use common::{
 	governance::native::{
 		EnsureRootOrHalfNativeCouncil, EnsureRootOrOneThirdNativeTechnical, NativeTreasury,
 	},
-	rewards::DealWithFees,
+	rewards::StakingPot,
 	AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, BondOfferId,
 	FinancialNftInstanceId, ForeignAssetId, Hash, MaxStringSize, Moment, MosaicRemoteAssetId,
 	PoolId, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT,
@@ -359,7 +359,7 @@ parameter_types! {
 impl transaction_payment::Config for Runtime {
 	type Event = Event;
 	type OnChargeTransaction =
-		transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime, NativeTreasury>>;
+		transaction_payment::CurrencyAdapter<Balances, StakingPot<Runtime, NativeTreasury>>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type WeightToFee = WeightToFeeConverter;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;

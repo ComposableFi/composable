@@ -25,7 +25,7 @@ pub const WASM_BINARY_V2: Option<&[u8]> = None;
 mod weights;
 mod xcmp;
 use common::{
-	rewards::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
+	rewards::StakingPot, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
 	ForeignAssetId, Hash, Moment, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS,
 	MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
@@ -308,7 +308,7 @@ type NativeTreasury = treasury::Instance1;
 impl transaction_payment::Config for Runtime {
 	type Event = Event;
 	type OnChargeTransaction =
-		transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime, NativeTreasury>>;
+		transaction_payment::CurrencyAdapter<Balances, StakingPot<Runtime, NativeTreasury>>;
 	type WeightToFee = WeightToFee;
 	type FeeMultiplierUpdate =
 		TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;

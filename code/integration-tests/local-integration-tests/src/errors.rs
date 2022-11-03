@@ -1,6 +1,6 @@
 use crate::{
 	helpers::*,
-	kusama_test_net::{KusamaRelay, This, THIS_PARA_ID},
+	kusama_test_net::{KusamaRelay, This, SIBLING_PARA_ID, THIS_PARA_ID},
 	prelude::*,
 };
 
@@ -59,5 +59,113 @@ fn transfer_native_from_relay_enough_for_fee_but_not_enough_for_ed_ends_up_in_tr
 			Tokens::free_balance(CurrencyId::KSM, &TreasuryAccount::get()),
 			under_ed - picasso_treasury
 		);
+	});
+}
+
+#[test]
+fn transfer_relay_native_to_non_existing_chain_by_local_id() {
+	simtest();
+	let transfer_amount = 3 * RELAY_NATIVE::ONE;
+	let limit = 4_600_000_000;
+
+	mint_relay_native_on_parachain(transfer_amount * 2, &AccountId::from(alice()), THIS_PARA_ID);
+
+	This::execute_with(|| {
+		use this_runtime::*;
+		let before = Assets::free_balance(CurrencyId::KSM, &alice().into());
+		let transferred = XTokens::transfer(
+			Origin::signed(alice().into()),
+			CurrencyId::KSM,
+			transfer_amount,
+			Box::new(
+				MultiLocation::new(
+					1,
+					X2(
+						Parachain(100500),
+						Junction::AccountId32 { id: bob(), network: NetworkId::Any },
+					),
+				)
+				.into(),
+			),
+			limit,
+		);
+
+		assert_ok!(transferred);
+	});
+}
+
+#[test]
+fn transfer_non_existing_asset_by_local_id() {
+	simtest();
+	let transfer_amount = 3 * RELAY_NATIVE::ONE;
+	let limit = 4_600_000_000;
+
+	mint_relay_native_on_parachain(transfer_amount * 2, &AccountId::from(alice()), THIS_PARA_ID);
+
+	This::execute_with(|| {
+		use this_runtime::*;
+		let before = Assets::free_balance(CurrencyId::KSM, &alice().into());
+		let transferred = XTokens::transfer(
+			Origin::signed(alice().into()),
+			CurrencyId(100500),
+			transfer_amount,
+			Box::new(
+				MultiLocation::new(
+					1,
+					X2(
+						Parachain(SIBLING_PARA_ID),
+						Junction::AccountId32 { id: bob(), network: NetworkId::Any },
+					),
+				)
+				.into(),
+			),
+			limit,
+		);
+
+		assert_ok!(transferred);
+	});
+}
+
+#[test]
+fn transfer_existing_asset_but_with_relevant_outgoing_fee_by_local_id() {
+	simtest();
+	let transfer_amount = 3 * RELAY_NATIVE::ONE;
+	let limit = 4_600_000_000;
+
+	mint_relay_native_on_parachain(transfer_amount * 2, &AccountId::from(alice()), THIS_PARA_ID);
+
+	This::execute_with(|| {
+		use this_runtime::*;
+
+		AssetsRegistry::update_asset(
+			RawOrigin::Root.into(),
+			CurrencyId(100500),
+			XcmAssetLocation(MultiLocation::new(0, X2(Parachain(THIS_PARA_ID), GeneralIndex(100500)))),
+			Some(Rational64::one()),
+			None,
+		)
+		.unwrap();
+
+		assert_ok!(Tokens::deposit(CurrencyId(100500), &alice().into(), 2 * transfer_amount));
+
+		let before = Assets::free_balance(CurrencyId::KSM, &alice().into());
+		let transferred = XTokens::transfer(
+			Origin::signed(alice().into()),
+			CurrencyId(100500),
+			transfer_amount,
+			Box::new(
+				MultiLocation::new(
+					1,
+					X2(
+						Parachain(SIBLING_PARA_ID),
+						Junction::AccountId32 { id: bob(), network: NetworkId::Any },
+					),
+				)
+				.into(),
+			),
+			limit,
+		);
+
+		assert_ok!(transferred);
 	});
 }

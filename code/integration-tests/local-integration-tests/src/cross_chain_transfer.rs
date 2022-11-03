@@ -179,7 +179,7 @@ fn transfer_this_native_to_sibling_overridden() {
 }
 
 #[test]
-fn transfer_non_native_reserver_asset_from_this_to_sibling() {
+fn transfer_non_native_reserve_asset_from_this_to_sibling() {
 	simtest();
 
 	Sibling::execute_with(|| {

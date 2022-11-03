@@ -215,7 +215,7 @@ fn rockmine_shib_to_dali_transfer() {
 			root.into(),
 			location.clone(),
 			1000,
-			Some(Rational64::new(15, 1000)),
+			Some(Rational64::from(15, 1000)),
 			Some(4),
 		)
 		.unwrap();
@@ -315,7 +315,7 @@ fn rockmine_stable_to_dali_transfer() {
 			)
 			.into(),
 		);
-		let ratio = Rational64::new(STABLE::RESERVE_ONE as u64 * 15, 1000 * PICA::ONE as u64);
+		let ratio = Rational64::from(STABLE::RESERVE_ONE as u64 * 15, 1000 * PICA::ONE as u64);
 
 		AssetsRegistry::register_asset(
 			root.into(),
@@ -384,7 +384,7 @@ fn this_chain_statemine_transfers_back_and_forth_work() {
 	let relay_native_asset_amount = 3 * FEE_WEIGHT_THIS + 3 * FEE_NATIVE_KUSAMA;
 	let remote_asset_id = 3451561; // magic number to avoid zero defaults and easy to find
 	let foreign_asset_id_on_this =
-		register_statemine_asset(remote_asset_id, Some(Rational64::new(10, 100)));
+		register_statemine_asset(remote_asset_id, Some(Rational64::from(10, 100)));
 
 	statemine_side(TEN + relay_native_asset_amount, remote_asset_id);
 	let statemine_native_this_balance_1 =
