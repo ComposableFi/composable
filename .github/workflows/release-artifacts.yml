@@ -142,6 +142,10 @@ jobs:
         run: |
           nix run .#generate-release-artifacts -L
 
+      - name: Setup Composable version
+        run: |
+          echo "COMPOSABLE_VERSION=$(nix eval --raw .#composable-node-release.version)" >> $GITHUB_ENV
+
       - name: Release Docker image
         run: |
           docker load --input release-artifacts/composable-docker-image
