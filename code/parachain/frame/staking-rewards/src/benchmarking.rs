@@ -67,13 +67,7 @@ fn reward_config<T: Config>(
 	(0..reward_count)
 		.map(|asset_id| {
 			let asset_id = (asset_id as u128) + BASE_ASSET_ID;
-			(
-				asset_id.into(),
-				RewardConfig {
-					max_rewards: 100_u128.into(),
-					reward_rate: RewardRate::per_second(10_u128),
-				},
-			)
+			(asset_id.into(), RewardConfig { reward_rate: RewardRate::per_second(10_u128) })
 		})
 		.try_collect()
 		.unwrap()
@@ -234,7 +228,6 @@ benchmarks! {
 		let reward_asset_id = 1_u128.into();
 
 		let reward_config = RewardConfig {
-			max_rewards: 1_000_000.into(),
 			reward_rate: RewardRate::per_second(10_000),
 		};
 
