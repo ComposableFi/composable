@@ -22,3 +22,5 @@ and contributed to our Picasso crowdloan.
 | October 28th   | 447,927.98                    | 1,174.36 at 381.42             |
 | October 30th   | 423,157.66                    | 1,114.81057053 at 379.57808587 |
 
+You can find the purchase/sell logs corresponding to the Ethereum address for stablecoin contributors 
+[on our Github.](https://github.com/ComposableFi/composable/tree/main/docs/docs/parachains/picasso/crowdloan-contributors/all-contributors.csv)
