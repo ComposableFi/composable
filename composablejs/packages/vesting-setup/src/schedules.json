@@ -1,0 +1,18 @@
+{
+  "schedules": [
+    {
+      "beneficiary": "5woQTSqveJemxVbj4eodiBTSVfC4AAJ8CQS7SoyoyHWW7MA6",
+      "start": 50,
+      "windowPeriod": 10,
+      "vestingPeriodCount": 10,
+      "perPeriodAmount": 100000000000000
+    },
+    {
+      "beneficiary": "5uE1CpSM5GKgr9LSupWxNgfjP5Ynk8Ay7DnxAEHkzkbize92",
+      "start": 50,
+      "windowPeriod": 10,
+      "vestingPeriodCount": 10,
+      "perPeriodAmount": 3500000000000000
+    }
+  ]
+}
