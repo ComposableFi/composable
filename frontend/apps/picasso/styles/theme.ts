@@ -483,6 +483,13 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
         },
       },
     },
+    MuiList: {
+      styleOverrides: {
+        root: {
+          padding: theme.spacing(0, 3),
+        },
+      },
+    },
     MuiListItem: {
       styleOverrides: {
         root: {
@@ -490,8 +497,13 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
           paddingLeft: "1.5rem",
           paddingRight: "1rem",
           height: "5rem",
+          borderRadius: theme.spacing(1.5),
           "&.Mui-selected": {
-            backgroundColor: alpha(brandPalette.primary.light, 0.05),
+            backgroundColor: alpha(brandPalette.primary.main, 0.1),
+            filter: "drop-shadow(0px 4px 4px rgba(0, 0, 0, 0.25))",
+            "& .MuiListItemText-primary": {
+              color: theme.palette.common.white,
+            },
           },
         },
       },
@@ -507,6 +519,7 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
       styleOverrides: {
         primary: {
           fontSize: "1.125rem",
+          color: alpha(theme.palette.common.white, 0.6),
         },
       },
     },
@@ -701,9 +714,9 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
             },
           },
           "&.MuiInputBase-adornedStart": {
-            paddingLeft: theme.spacing(3),
+            paddingLeft: theme.spacing(2),
             [theme.breakpoints.down("sm")]: {
-              paddingLeft: theme.spacing(2),
+              paddingLeft: theme.spacing(1),
             },
           },
           "& .MuiSelect-select": {
@@ -724,6 +737,9 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
             fontSize: 16,
             padding: theme.spacing(1.875, 2),
           },
+        },
+        inputSizeSmall: {
+          padding: theme.spacing(1.75, 0),
         },
         notchedOutline: {
           borderColor: `${alpha(
@@ -749,6 +765,13 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
           background: brandPalette.background.paper,
           paddingTop: theme.spacing(1),
           paddingBottom: theme.spacing(1),
+        },
+      },
+    },
+    MuiMenu: {
+      styleOverrides: {
+        list: {
+          minWidth: theme.spacing(22),
         },
       },
     },
@@ -867,21 +890,22 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          "& .MuiSvgIcon-root": {
-            fill: brandPalette.common.darkWhite,
-          },
         },
         filledSuccess: {
           background: alpha("#00c68a", 0.1),
+          backdropFilter: "blur(16px)",
         },
         filledError: {
           background: alpha(brandPalette.error.main, 0.1),
+          backdropFilter: "blur(16px)",
         },
         filledInfo: {
           background: alpha(brandPalette.info.main, 0.1),
+          backdropFilter: "blur(16px)",
         },
         filledWarning: {
           background: alpha(brandPalette.warning.main, 0.1),
+          backdropFilter: "blur(16px)",
         },
       },
     },

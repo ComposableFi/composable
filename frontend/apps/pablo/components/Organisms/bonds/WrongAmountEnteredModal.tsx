@@ -2,24 +2,20 @@ import React from "react";
 import { ModalProps, Modal } from "@/components/Molecules";
 import { Box, Typography, useTheme, Button } from "@mui/material";
 import { WarningAmberRounded } from "@mui/icons-material";
-import { useAppDispatch } from "@/hooks/store";
-import {
-  closeWrongAmountEnteredModal,
-  openConfirmingModal,
-} from "@/stores/ui/uiSlice";
+import { setUiState } from "@/store/ui/ui.slice";
 
 export const WrongAmountEnteredModal: React.FC<ModalProps> = (props) => {
   const theme = useTheme();
-  const dispatch = useAppDispatch();
+  
+  const handleCancel = () => {
+    setUiState({isWrongAmountEnteredModalOpen: false })
+  };
 
   const handleConfirm = () => {
     handleCancel();
-    dispatch(openConfirmingModal());
+    setUiState({ isOpenPreviewPurchaseModal: true })
   };
 
-  const handleCancel = () => {
-    dispatch(closeWrongAmountEnteredModal());
-  };
 
   return (
     <Modal {...props} onClose={handleCancel} dismissible>

@@ -9,8 +9,8 @@ import { Link } from "@/components";
 import { RemoveLiquidityForm } from "@/components/Organisms/liquidity/RemoveForm";
 import { useEffect } from "react";
 import { useRouter } from "next/router";
-import useStore from "@/store/useStore";
 import { useDotSamaContext } from "substrate-react";
+import { useUiSlice } from "@/store/ui/ui.slice";
 
 const RemoveLiquidity: NextPage = () => {
 
@@ -24,7 +24,7 @@ const RemoveLiquidity: NextPage = () => {
   ];
 
   const {extensionStatus} = useDotSamaContext();
-  const { ui: { isPolkadotModalOpen } } = useStore();
+  const { isPolkadotModalOpen } = useUiSlice();
   const router = useRouter();
 
   useEffect(() => {

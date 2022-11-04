@@ -4,46 +4,38 @@ import {
   Typography,
 } from "@mui/material";
 import { PairAsset } from "@/components/Atoms";
-import { ConstantProductPool, StableSwapPool } from "@/defi/types";
-import { useAsset } from "@/defi/hooks";
-import { useUSDPriceByAssetId } from "@/store/assets/hooks";
+import { useLpTokenPrice, useLpTokenUserBalance } from "@/defi/hooks";
+import { PabloConstantProductPool } from "shared";
 import BigNumber from "bignumber.js";
-import { ConstantProductPoolWithLpBalance, StableSwapPoolWithLpBalance } from "@/store/hooks/overview/usePoolsWithLpBalance";
 
 const LiquidityProviderPositionRow = ({
   pool,
 }: {
-  pool: StableSwapPoolWithLpBalance | ConstantProductPoolWithLpBalance
+  pool: PabloConstantProductPool
 }) => {
-  const baseAsset = useAsset(pool.pair.base.toString());
-  const quoteAsset = useAsset(pool.pair.quote.toString());
-  const lpPrice = useUSDPriceByAssetId(pool.lpToken);
+  const lpTokenUserBalance = useLpTokenUserBalance(pool);
+  const lpTokenPrice = useLpTokenPrice(pool.getLiquidityProviderToken());
   const apr = new BigNumber(0);
 
   return (
-    <TableRow key={`${baseAsset?.symbol}-${quoteAsset?.symbol}`}>
+    <TableRow key={`${pool.getLiquidityProviderToken().getSymbol()}`}>
       <TableCell align="left">
-        {baseAsset && quoteAsset && (
-          <PairAsset
-            assets={[
-              { icon: baseAsset.icon, label: baseAsset.symbol },
-              { icon: quoteAsset.icon, label: quoteAsset.symbol },
-            ]}
-            separator="/"
-          />
-        )}
+        <PairAsset
+          assets={pool.getLiquidityProviderToken().getUnderlyingAssetJSON()}
+          separator="/"
+        />
       </TableCell>
       <TableCell align="left">
         <Typography variant="body1">
-          ${lpPrice ? lpPrice.toFormat(2) : " - "}
+          ${lpTokenPrice.toFormat(2)}
         </Typography>
       </TableCell>
       <TableCell align="left">
-        <Typography variant="body1">{pool.lpBalance.toFormat(2)}</Typography>
+        <Typography variant="body1">{lpTokenUserBalance.toFormat(2)}</Typography>
       </TableCell>
       <TableCell align="left">
         <Typography variant="body1">
-          ${lpPrice.times(pool.lpBalance).toFormat(2)}
+          ${lpTokenPrice.times(lpTokenUserBalance).toFormat(2)}
         </Typography>
       </TableCell>
       <TableCell align="left">

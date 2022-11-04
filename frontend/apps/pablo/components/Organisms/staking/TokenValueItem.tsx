@@ -1,4 +1,4 @@
-import { Token } from "@/defi/types";
+import { Token } from "tokens";
 import {
   alpha,
   Box,

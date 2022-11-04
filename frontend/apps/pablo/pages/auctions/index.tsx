@@ -13,10 +13,10 @@ import Default from "@/components/Templates/Default";
 import { PageTitle } from "@/components";
 import { AllAuctionsTable } from "@/components/Organisms/AllAuctionsTable";
 import { useEffect, useState } from "react";
-import { useDotSamaContext, useParachainApi } from "substrate-react";
-import { fetchSpotPrice } from "@/defi/utils";
-import useStore from "@/store/useStore";
+import { useDotSamaContext } from "substrate-react";
 import { HighlightBox } from "@/components/Atoms/HighlightBox";
+import { usePoolsSlice } from "@/store/pools/pools.slice";
+import { setAuctionsSpotPrice } from "@/store/auctions/auctions.slice";
 
 const standardPageSize = {
   xs: 12,
@@ -26,46 +26,24 @@ const Auctions: NextPage = () => {
   const theme = useTheme();
   const [enabledCreate] = useState<boolean>(false);
   const { extensionStatus } = useDotSamaContext();
-  const { parachainApi } = useParachainApi("picasso");
   const {
-    pools: {
-      liquidityBootstrappingPools,
-      setLiquidityBootstrappingPoolSpotPrice,
-    },
-  } = useStore();
-
+    liquidityBootstrappingPools
+  } = usePoolsSlice();
   useEffect(() => {
-    if (parachainApi && liquidityBootstrappingPools.verified.length > 0) {
+    if (liquidityBootstrappingPools.length > 0) {
       const interval = setInterval(() => {
-        for (
-          let pool = 0;
-          pool < liquidityBootstrappingPools.verified.length;
-          pool++
-        ) {
-          fetchSpotPrice(
-            parachainApi,
-            {
-              base: liquidityBootstrappingPools.verified[
-                pool
-              ].pair.base.toString(),
-              quote:
-                liquidityBootstrappingPools.verified[
-                  pool
-                ].pair.quote.toString(),
-            },
-            liquidityBootstrappingPools.verified[pool].poolId
-          ).then((spotPrice) => {
-            setLiquidityBootstrappingPoolSpotPrice(pool, spotPrice.toFixed(4));
-          });
+        for (const pool of liquidityBootstrappingPools) {
+          const poolId = pool.getPoolId() as string;
+          pool.getSpotPrice().then(spotPrice => {
+            setAuctionsSpotPrice(poolId, spotPrice)
+          })
         }
       }, 1000 * 60);
 
       return () => clearInterval(interval);
     }
   }, [
-    parachainApi,
     liquidityBootstrappingPools,
-    setLiquidityBootstrappingPoolSpotPrice,
   ]);
 
   return (

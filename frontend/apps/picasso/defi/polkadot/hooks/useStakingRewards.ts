@@ -20,9 +20,9 @@ import {
 } from "@/stores/defi/polkadot/stakingRewards/slice";
 
 export const useStakingRewards = () => {
-  // const assetId = 130; // Set this to fetch proper asset from config (from bootstrap_pallet)
-
   const account = useSelectedAccount();
+
+  const pica = useStore(({ substrateTokens }) => substrateTokens.tokens.pica);
   const { parachainApi } = useParachainApi("picasso");
 
   const rewardPools = useStore((state) => state.rewardPools);
@@ -36,29 +36,22 @@ export const useStakingRewards = () => {
   const isStakingPositionsLoadingState = useStore(
     (state) => state.isStakingPositionsLoadingState
   );
-  const { data, loading, error, refetch } = useQuery<StakingPositions>(
-    GET_STAKING_POSITIONS,
-    {
-      variables: {
-        accountId: account?.address,
-      },
-      pollInterval: 30000,
-    }
-  );
-  const { meta } = useStore(
-    (state) => state.substrateBalances.assets.picasso.assets.pica
-  );
-  const assetId = meta.supportedNetwork.picasso || 1;
+  const { data, loading } = useQuery<StakingPositions>(GET_STAKING_POSITIONS, {
+    variables: {
+      accountId: account?.address,
+    },
+    pollInterval: 30000,
+  });
+
+  const assetId = pica.chainId.picasso?.toNumber() || 1;
   const hasRewardPools =
     Object.values(rewardPools).length > 0 && rewardPools[assetId]; // PICA reward pool is necessary
 
   const balance = useStore(
-    (state) => state.substrateBalances.assets.picasso.native.balance
+    (state) => state.substrateBalances.balances.picasso.pica.balance
   );
   const setRewardPool = useStore((state) => state.setRewardPool);
-
   const picaRewardPool = useStore((state) => state.rewardPools[assetId]);
-
   const executor = useExecutor();
 
   useEffect(() => {
@@ -135,7 +128,7 @@ export const useStakingRewards = () => {
   return {
     picaRewardPool,
     balance,
-    meta,
+    pica,
     executor,
     parachainApi,
     assetId,

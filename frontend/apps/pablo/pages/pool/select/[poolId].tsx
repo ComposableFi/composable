@@ -4,7 +4,7 @@ import Default from "@/components/Templates/Default";
 import { ConnectWalletFeaturedBox, Link, PageTitle } from "@/components";
 import { PoolDetails } from "@/components/Organisms/pool/PoolDetails";
 import { useDotSamaContext } from "substrate-react";
-import { useLiquidityPoolDetails } from "@/store/hooks/useLiquidityPoolDetails";
+import { useLiquidityPoolDetails } from "@/defi/hooks/useLiquidityPoolDetails";
 import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
 
@@ -38,7 +38,7 @@ const PoolDetailsPage: NextPage = () => {
       <Container maxWidth="lg">
         <Box display="flex" flexDirection="column" alignItems="center" mb={8}>
           <PageTitle
-            title={`${baseAsset?.symbol}/${quoteAsset?.symbol}` + " Pool"}
+            title={`${baseAsset?.getSymbol()}/${quoteAsset?.getSymbol()}` + " Pool"}
             subtitle="Earn tokens while adding liquidity."
           />
         </Box>

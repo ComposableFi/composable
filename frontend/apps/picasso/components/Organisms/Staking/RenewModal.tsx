@@ -21,11 +21,15 @@ export const RenewModal: FC<{
   const [extendPeriod, setExtendPeriod] = useState<DurationOption | undefined>(
     undefined
   );
+
+  const pica = useStore(
+    ({ substrateTokens }) => substrateTokens.tokens.pica
+  );
   const native = useStore(
-    ({ substrateBalances }) => substrateBalances.assets.picasso.native
+    ({ substrateBalances }) => substrateBalances.balances.picasso.pica.balance
   );
   const [extendAmount, setExtendAmount] = useState<BigNumber>(new BigNumber(0));
-  const { parachainApi, stakingPortfolio, meta, assetId, refresh } =
+  const { parachainApi, stakingPortfolio, refresh } =
     useStakingRewards();
   const [isValid, setValid] = useState(true);
   const [fnftCollectionId, fnftInstanceId] = selectedToken;
@@ -149,14 +153,14 @@ export const RenewModal: FC<{
             buttonLabel={"Max"}
             ButtonProps={{
               onClick: () => {
-                setExtendAmount(native.balance);
+                setExtendAmount(native);
               },
             }}
             isValid={setValid}
             setter={setExtendAmount}
-            maxValue={native.balance}
+            maxValue={native}
             value={extendAmount}
-            tokenId={meta.assetId}
+            tokenId={pica.id}
             maxDecimals={12}
           />
         </Box>

@@ -1,7 +1,7 @@
 import { StateCreator } from "zustand";
 
 import {
-  MetamaskSlice,
+  TokensSlice,
   OracleSlice,
   PolkadotSlice,
   StakingRewardsSlice,
@@ -16,13 +16,17 @@ import { BondsSlice } from "@/stores/defi/polkadot/bonds/slice";
 
 export type StoreSlice<T> = StateCreator<
   AllSlices,
-  [["zustand/immer", never], ["zustand/devtools", never]],
+  [
+    ["zustand/subscribeWithSelector", never],
+    ["zustand/immer", never],
+    ["zustand/devtools", never]
+  ],
   [],
   T
 >;
 export type AllSlices = PolkadotSlice &
   UISlice &
-  MetamaskSlice &
+  TokensSlice &
   TransfersSlice &
   StatsApolloSlice &
   StatsOverviewSlice &

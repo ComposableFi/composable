@@ -1,5 +1,5 @@
 import { SubsquidVestingScheduleEntity } from "@/defi/subsquid/bonds/queries";
-import { BondOffer, VestingSchedule } from "@/defi/types";
+import { VestingSchedule } from "@/defi/types";
 import { BondedOfferVestingState } from "@/store/bond/bond.slice";
 import { ApiPromise } from "@polkadot/api";
 import { u8aToHex } from "@polkadot/util";
@@ -7,13 +7,14 @@ import { PALLET_TYPE_ID } from "../constants";
 import { compareU8a, concatU8a } from "../misc";
 import { fetchVestingSchedule } from "../vesting";
 import { calculateClaimableAt } from "./vestingTime";
+import { BondOffer } from "shared";
 import BigNumber from "bignumber.js";
 
 /**
  * get BondOfferId from VestingSchedule Account
  * returns -1 if invalid account
  * @param vestingScheduleSubAccount UInt8Array
- * @returns BigNumber
+ * @returns {BigNumber}
  */
 export function getBondOfferIdByVestingScheduleAccount(
   parachainApi: ApiPromise,
@@ -83,10 +84,10 @@ export function createBondOfferIdVestingScheduleIdMap(
     let bondOfferId = curr.bondOfferId.toString();
 
     if (acc[bondOfferId]) {
-      acc[bondOfferId].add(curr.id);
+      acc[bondOfferId].add(curr.scheduleId);
     } else {
       acc[bondOfferId] = new Set();
-      acc[bondOfferId].add(curr.id);
+      acc[bondOfferId].add(curr.scheduleId);
     }
 
     return acc;
@@ -102,16 +103,16 @@ export async function fetchVestingSchedulesByBondOffers(
   let schedulesMap: Record<string, VestingSchedule[]> = {};
 
   bondOffers.forEach((offer) => {
-    const offerId = offer.offerId.toString();
+    const offerId = offer.getBondOfferId() as string;
     schedulesMap[offerId] = [];
   });
 
   for (const offer of bondOffers) {
-    const offerId = offer.offerId.toString();
+    const offerId = offer.getBondOfferId() as string;
     const schedules = await fetchVestingSchedule(
       parachainApi,
       account,
-      offer.reward.asset
+      offer.getRewardAssetId() as string
     );
     schedulesMap[offerId] = schedules.filter((schedule) =>
       bondedOfferScheduleIds[offerId]

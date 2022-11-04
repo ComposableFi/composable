@@ -1,9 +1,26 @@
-import { StoreSlice } from "../../../types";
-import BigNumber from "bignumber.js";
-import { AssetId, SubstrateNetworkId } from "@/defi/polkadot/types";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
-import { AssetMetadata } from "@/defi/polkadot/Assets";
-import { Token } from "tokens";
+import { SubstrateNetworkId } from "@/defi/polkadot/types";
+import BigNumber from "bignumber.js";
+import { TokenId } from "tokens";
+import { StoreSlice } from "@/stores/types";
+import { XcmVersionedMultiLocation } from "@polkadot/types/lookup";
+import {
+  AcalaPrimitivesCurrencyCurrencyId,
+  XcmVersionedMultiAsset,
+} from "@acala-network/types/interfaces/types-lookup";
+import { u128 } from "@polkadot/types-codec";
+import { ApiPromise } from "@polkadot/api";
+import { getAmountToTransfer } from "@/defi/polkadot/pallets/Transfer";
+import { SubmittableExtrinsic } from "@polkadot/api/types";
+import { TokenMetadata } from "../tokens/slice";
+
+export interface TokenOption {
+  tokenId: TokenId;
+  symbol: string;
+  icon: string;
+  disabled?: boolean;
+  // balance: BigNumber;
+}
 
 interface Networks {
   options: { networkId: SubstrateNetworkId }[];
@@ -18,65 +35,96 @@ interface Recipients {
 interface TransfersState {
   networks: Networks;
   amount: BigNumber;
-  tokenId: AssetId;
+  tokenId: TokenId;
   recipients: Recipients;
   keepAlive: boolean;
-  feeItem: AssetId;
-  hasFeeItem: boolean;
+  feeItem: TokenId;
+  feeItemEd: BigNumber;
   existentialDeposit: BigNumber;
-  feeToken: number;
+  feeToken: TokenId;
+  selectedToken: TokenId;
   fee: {
     class: string;
     partialFee: BigNumber;
     weight: BigNumber;
   };
+  tokenOptions: Array<TokenOption>;
+  destinationMultiLocation: XcmVersionedMultiLocation | null;
+  transferExtrinsic: null | ((...args: any[]) => any);
+  multiAsset: SupportedTransferMultiAssets | null;
 }
+export type SupportedTransferMultiAssets =
+  | u128
+  | XcmVersionedMultiAsset
+  | u128[]
+  | u128[][]
+  | AcalaPrimitivesCurrencyCurrencyId;
 
-const networks = Object.keys(SUBSTRATE_NETWORKS).map(networkId => ({
-  networkId: networkId as SubstrateNetworkId
+const networks = Object.keys(SUBSTRATE_NETWORKS).map((networkId) => ({
+  networkId: networkId as SubstrateNetworkId,
 }));
 
 const initialState: TransfersState = {
   networks: {
     options: networks,
     from: networks[0].networkId,
-    to: networks[1].networkId
+    to: networks[1].networkId,
   },
   tokenId: "ksm",
   amount: new BigNumber(0),
   recipients: {
-    selected: ""
+    selected: "",
   },
-  hasFeeItem: false,
   feeItem: "pica",
+  feeItemEd: new BigNumber(0),
   keepAlive: true,
   existentialDeposit: new BigNumber(0),
-  feeToken: 0,
+  feeToken: "pica",
+  tokenOptions: [],
+  selectedToken: "pica",
   fee: {
     class: "Normal",
     partialFee: new BigNumber(0),
-    weight: new BigNumber(0)
-  }
+    weight: new BigNumber(0),
+  },
+  destinationMultiLocation: null,
+  transferExtrinsic: null,
+  multiAsset: null,
 };
 
+interface TransferActions {
+  updateNetworks: (data: Omit<Networks, "options">) => void;
+  updateAmount: (data: BigNumber) => void;
+  updateRecipient: (selected: string) => void;
+  updateTokenId: (data: TokenId) => void;
+  flipKeepAlive: () => void;
+  setFeeItem: (data: TokenId) => void;
+  updateFee: (data: {
+    class: string;
+    weight: BigNumber;
+    partialFee: BigNumber;
+  }) => void;
+  tokenOptions: Array<TokenOption>;
+  updateExistentialDeposit: (data: BigNumber) => void;
+  setFeeToken: (data: TokenId) => void;
+  getFeeToken: (network: SubstrateNetworkId) => TokenMetadata;
+  updateSelectedToken: (token: TokenId) => void;
+  getTransferTokenBalance: () => BigNumber;
+  isTokenBalanceZero: (tokenId: TokenId) => boolean;
+  setDestinationMultiLocation: (
+    destination: XcmVersionedMultiLocation | null
+  ) => void;
+  setTransferExtrinsic: (call: any) => void;
+  setTransferMultiAsset: (asset: SupportedTransferMultiAssets | null) => void;
+  makeTransferCall: (
+    api: ApiPromise,
+    targetAddress: string | undefined
+  ) => SubmittableExtrinsic<"promise"> | undefined;
+  getTransferAmount: (api: ApiPromise) => u128;
+}
+
 export interface TransfersSlice {
-  transfers: TransfersState & {
-    updateNetworks: (data: Omit<Networks, "options">) => void;
-    updateAmount: (data: BigNumber) => void;
-    updateRecipient: (selected: string) => void;
-    updateTokenId: (data: AssetId) => void;
-    flipKeepAlive: () => void;
-    toggleHasFee: () => void;
-    setFeeItem: (data: AssetId) => void;
-    updateFee: (data: {
-      class: string;
-      weight: BigNumber;
-      partialFee: BigNumber;
-    }) => void;
-    updateExistentialDeposit: (data: BigNumber) => void;
-    updateFeeToken: (data: number) => void;
-    getFeeToken: (network: SubstrateNetworkId) => AssetMetadata | Token;
-  };
+  transfers: TransfersState & TransferActions;
 }
 
 export const createTransfersSlice: StoreSlice<TransfersSlice> = (set, get) => ({
@@ -84,44 +132,40 @@ export const createTransfersSlice: StoreSlice<TransfersSlice> = (set, get) => ({
     ...initialState,
 
     updateNetworks: (data: Omit<Networks, "options">) => {
-      set(state => {
+      set((state) => {
         state.transfers.networks = { ...state.transfers.networks, ...data };
       });
     },
     updateAmount: (data: BigNumber) =>
-      set(state => {
+      set((state) => {
         state.transfers.amount = data;
       }),
     updateRecipient: (data: string) => {
-      set(state => {
+      set((state) => {
         state.transfers.recipients.selected = data;
       });
     },
-    updateTokenId: (data: AssetId) => {
-      set(state => {
+    updateTokenId: (data: TokenId) => {
+      set((state) => {
         state.transfers.tokenId = data;
       });
     },
+    updateSelectedToken: (data: TokenId) => {
+      set((state) => {
+        state.transfers.selectedToken = data;
+      });
+    },
     flipKeepAlive: () => {
-      set(state => {
+      set((state) => {
         state.transfers.keepAlive = !state.transfers.keepAlive;
       });
     },
-    setFeeItem: (data: AssetId) =>
-      set(state => {
+    setFeeItem: (data: TokenId) =>
+      set((state) => {
         state.transfers.feeItem = data;
       }),
-    toggleHasFee: () => {
-      set(state => {
-        state.transfers.hasFeeItem = !state.transfers.hasFeeItem;
-
-        if (!state.transfers.hasFeeItem) {
-          state.transfers.feeItem = "pica";
-        }
-      });
-    },
     updateExistentialDeposit: (data: BigNumber) =>
-      set(state => {
+      set((state) => {
         state.transfers.existentialDeposit = data;
       }),
     updateFee: (data: {
@@ -129,23 +173,128 @@ export const createTransfersSlice: StoreSlice<TransfersSlice> = (set, get) => ({
       weight: BigNumber;
       partialFee: BigNumber;
     }) =>
-      set(state => {
+      set((state) => {
         state.transfers.fee = data;
 
         return state;
       }),
-    updateFeeToken: (assetId: number) => {
-      set(state => {
-        state.transfers.feeToken = assetId;
+    setFeeToken: (tokenId: TokenId) => {
+      set((state) => {
+        state.transfers.feeToken = tokenId;
       });
     },
-    getFeeToken: (network: SubstrateNetworkId): AssetMetadata | Token => {
-      const balances = get().substrateBalances.assets[network];
-      const token = Object.values(balances.assets).find(({ meta }) => {
-        return meta.supportedNetwork[network] === get().transfers.feeToken;
-      })?.meta;
+    getFeeToken: (): TokenMetadata => {
+      const tokens = get().substrateTokens.tokens;
+      const tokenId = get().transfers.feeToken;
+      return tokens[tokenId];
+    },
+    getTransferTokenBalance: () => {
+      const from = get().transfers.networks.from;
+      const tokenId = get().transfers.selectedToken;
+      const balances = get().substrateBalances.balances;
 
-      return token ?? balances.native.meta;
-    }
-  }
+      return balances[from][tokenId].balance;
+    },
+    getTransferAmount: (api: ApiPromise) => {
+      return getAmountToTransfer({
+        amount: get().transfers.amount,
+        api,
+        balance: get().transfers.getTransferTokenBalance(),
+        existentialDeposit: get().transfers.existentialDeposit,
+        keepAlive: get().transfers.keepAlive,
+        sourceChain: get().transfers.networks.from,
+        targetChain: get().transfers.networks.to,
+      });
+    },
+    isTokenBalanceZero: (tokenId: TokenId) => {
+      const from = get().transfers.networks.from;
+      const balances = get().substrateBalances.balances;
+      return balances[from][tokenId].balance.eq(0);
+    },
+    setTransferExtrinsic: (call) => {
+      set((state) => {
+        state.transfers.transferExtrinsic = call;
+      });
+    },
+    setDestinationMultiLocation: (
+      destination: XcmVersionedMultiLocation | null
+    ) => {
+      set((state) => {
+        state.transfers.destinationMultiLocation = destination;
+      });
+    },
+    setTransferMultiAsset: (asset: SupportedTransferMultiAssets | null) => {
+      set((state) => {
+        state.transfers.multiAsset = asset;
+      });
+    },
+    makeTransferCall: (api: ApiPromise, targetAddress: string | undefined) => {
+      const transferExtrinsic = get().transfers.transferExtrinsic;
+      const selectedAddress = get().transfers.recipients.selected;
+      const recipient = selectedAddress.length
+        ? selectedAddress
+        : targetAddress;
+      const destWeight = api.createType("u64", 9000000000); // > 9000000000
+      const transferAmount = get().transfers.getTransferAmount(api);
+
+      try {
+        if (
+          get().transfers.multiAsset === null ||
+          transferExtrinsic === null ||
+          get().transfers.destinationMultiLocation === null
+        ) {
+          return; // bail if required params are not available.
+        }
+
+        if (
+          get().transfers.networks.from === "kusama" &&
+          get().transfers.networks.to === "picasso"
+        ) {
+          const feeAssetItem = api.createType("u32", 0); // First item in the list.
+          const beneficiary = api.createType("XcmVersionedMultiLocation", {
+            V0: api.createType("XcmV0MultiLocation", {
+              X1: api.createType("XcmV0Junction", {
+                AccountId32: {
+                  network: api.createType("XcmV0JunctionNetworkId", "Any"),
+                  id: api.createType("AccountId32", recipient),
+                },
+              }),
+            }),
+          });
+
+          const args = [
+            get().transfers.destinationMultiLocation,
+            beneficiary,
+            get().transfers.multiAsset,
+            feeAssetItem,
+          ];
+
+          return transferExtrinsic(...args) as SubmittableExtrinsic<"promise">;
+        }
+
+        if (
+          get().transfers.networks.from === "karura" &&
+          get().transfers.networks.to === "picasso"
+        ) {
+          return transferExtrinsic(
+            get().transfers.multiAsset,
+            transferAmount,
+            get().transfers.destinationMultiLocation,
+            destWeight
+          ) as SubmittableExtrinsic<"promise">;
+        }
+
+        // Else state where from is Picasso
+        const args = [
+          get().transfers.multiAsset,
+          get().transfers.getTransferAmount(api),
+          get().transfers.destinationMultiLocation,
+          destWeight,
+        ];
+        return transferExtrinsic(...args) as SubmittableExtrinsic<"promise">;
+      } catch (e) {
+        return;
+      }
+    },
+  },
 });

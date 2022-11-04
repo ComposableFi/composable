@@ -11,14 +11,15 @@ import {
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import BigNumber from "bignumber.js";
 import { SelectedBondOffer } from "@/defi/hooks/bonds/useBondOffer";
-import useBondVestingTime from "@/defi/hooks/bonds/useBondVestingTime";
-import { DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils";
+import { DEFAULT_NETWORK_ID, DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils";
 import { useVestingClaim } from "@/defi/hooks";
 import {
   useBondedOfferVestingState,
   useBondOfferROI,
 } from "@/store/bond/bond.slice";
 import moment from "moment";
+import { usePendingExtrinsic, useSelectedAccount } from "substrate-react";
+import { ConfirmingModal } from "../swap/ConfirmingModal";
 
 const containerBoxProps = (theme: Theme) => ({
   p: 4,
@@ -51,25 +52,33 @@ export type ClaimFormProps = {
 export const ClaimForm: React.FC<ClaimFormProps> = ({ bond, ...boxProps }) => {
   const theme = useTheme();
   const { rewardAsset } = bond;
-  const vestingTime = useBondVestingTime(bond.selectedBondOffer);
+
+  const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const { claimable, milliSecondsSinceVestingStart, pendingRewards } =
     useBondedOfferVestingState(
-      bond.selectedBondOffer ? bond.selectedBondOffer.offerId.toString() : "-"
+      bond.selectedBondOffer ? bond.selectedBondOffer.getBondOfferId() as string : "-"
     );
   const roi = useBondOfferROI(
-    bond.selectedBondOffer ? bond.selectedBondOffer.offerId.toString() : "-"
+    bond.selectedBondOffer ? bond.selectedBondOffer.getBondOfferId() as string : "-"
   );
 
   const handleClaim = useVestingClaim(
-    bond.selectedBondOffer ? bond.selectedBondOffer.reward.asset : "",
+    bond.selectedBondOffer ? bond.selectedBondOffer.getRewardAssetId() as string : "",
     bond.vestingSchedules.length > 0
       ? bond.vestingSchedules[0].vestingScheduleId
       : new BigNumber(-1)
   );
 
+  const isClaiming = usePendingExtrinsic(
+    "claim",
+    "vesting",
+    selectedAccount?.address ?? "-"
+  )
+
   return (
     <Box {...containerBoxProps(theme)} {...boxProps}>
       <Typography variant="h6">Claim</Typography>
+      <ConfirmingModal open={isClaiming} />
       <Box mt={6}>
         <BigNumberInput
           disabled={true}
@@ -77,7 +86,7 @@ export const ClaimForm: React.FC<ClaimFormProps> = ({ bond, ...boxProps }) => {
           maxValue={claimable}
           EndAdornmentAssetProps={{
             assets: rewardAsset
-              ? [{ icon: rewardAsset.icon, label: rewardAsset.symbol }]
+              ? [{ icon: rewardAsset.getIconUrl(), label: rewardAsset.getSymbol() }]
               : [],
             separator: "/",
             LabelProps: { variant: "body1" },
@@ -87,7 +96,7 @@ export const ClaimForm: React.FC<ClaimFormProps> = ({ bond, ...boxProps }) => {
             BalanceProps: claimable
               ? {
                   title: <AccountBalanceWalletIcon color="primary" />,
-                  balance: `${claimable.toFixed(2)} ${rewardAsset?.symbol}`,
+                  balance: `${claimable.toFixed(2)} ${rewardAsset?.getSymbol()}`,
                 }
               : undefined,
           }}
@@ -108,13 +117,13 @@ export const ClaimForm: React.FC<ClaimFormProps> = ({ bond, ...boxProps }) => {
         <Label
           {...defaultLabelProps(
             "Pending Rewards",
-            `${pendingRewards.toFixed(2)} ${rewardAsset?.symbol}`
+            `${pendingRewards.toFixed(2)} ${rewardAsset?.getSymbol()}`
           )}
         />
         <Label
           {...defaultLabelProps(
             "Claimable Rewards",
-            `${claimable.toFixed(2)} ${rewardAsset?.symbol}`
+            `${claimable.toFixed(2)} ${rewardAsset?.getSymbol()}`
           )}
           mt={2}
         />
@@ -133,7 +142,7 @@ export const ClaimForm: React.FC<ClaimFormProps> = ({ bond, ...boxProps }) => {
         <Label
           {...defaultLabelProps(
             "Vested",
-            `${claimable.toFixed(2)} ${rewardAsset?.symbol}`
+            `${claimable.toFixed(2)} ${rewardAsset?.getSymbol()}`
           )}
           mt={2}
         />

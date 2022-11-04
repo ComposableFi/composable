@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { Box, useTheme } from "@mui/material";
@@ -127,8 +127,12 @@ export const AreaChart: React.FC<AreaChartProps> = ({
 }) => {
   const theme = useTheme();
 
-  let min = Math.min(...data.map((x) => x[1]));
-  let max = Math.max(...data.map((x) => x[1]));
+  let { min, max } = useMemo(() => {
+    let min = data.reduce((agg, [ts, val]) => (val < agg ? val : agg), Infinity)
+    let max = data.reduce((agg, [ts, val]) => (val > agg ? val : agg), -Infinity)
+
+    return { min, max }
+  }, [data]);
 
   min = min - (max - min) * 0.3;
   max = max + max * 0.01;

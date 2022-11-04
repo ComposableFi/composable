@@ -1,96 +1,58 @@
-import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { SubstrateNetworkId } from "@/defi/polkadot/types";
-import { callbackGate, getExistentialDeposit, toTokenUnitsBN } from "shared";
-
+import { callbackGate } from "shared";
 import { useCallback, useEffect } from "react";
-
 import { useStore } from "@/stores/root";
-import { ApiPromise } from "@polkadot/api";
 import {
-  fetchKaruraBalanceByAssetId,
-  subscribePicassoBalanceByAssetId
-} from "@/defi/polkadot/pallets/Balance";
-import BigNumber from "bignumber.js";
-import { useDotSamaContext, useEagerConnect } from "substrate-react";
+  ParachainApi,
+  ParachainId,
+  RelayChainId,
+  useDotSamaContext,
+  useEagerConnect,
+} from "substrate-react";
 
-export async function subscribeNativeBalance(
-  account: string,
-  api: ApiPromise | undefined,
-  chainId: string,
-  updateBalance: (data: {
-    substrateNetworkId: SubstrateNetworkId;
-    balance: string;
-    existentialDeposit: BigNumber;
-  }) => void
-) {
-  if (!api) return;
-  // create AccountId32 type byte array
-  // and retrieve balances
-  const accountId = api.createType("AccountId32", account);
-  await api.query.system.account(accountId, result => {
-    const blObject: any = result.toJSON();
+import {
+  subscribeKaruraBalance,
+  subscribeNativeBalance,
+  subscribePicassoBalanceByAssetId,
+} from "@/defi/polkadot/pallets/Balances";
+import { TokenMetadata } from "../tokens/slice";
+import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
+import {
+  karuraAssetsList,
+  picassoAssetsList,
+} from "@/defi/polkadot/pallets/Assets";
+import { VoidFn } from "@polkadot/api/types";
+import { AcalaPrimitivesCurrencyCurrencyId } from "@acala-network/types/interfaces/types-lookup";
+import { ApiPromise } from "@polkadot/api";
 
-    const {
-      data: { free }
-    } = blObject;
+/**
+ * Get Native Token symbol for Karura
+ *
+ * @param {ApiPromise} api
+ * @returns {string} NATIVE token symbol, or empty string
+ */
+function getKaruraNativeToken(api: ApiPromise) {
+  const nativeToken: AcalaPrimitivesCurrencyCurrencyId =
+    api.consts.currencies.getNativeCurrencyId;
 
-    const { decimals } = SUBSTRATE_NETWORKS[chainId as SubstrateNetworkId];
-    const bnBalance = toTokenUnitsBN(free, decimals);
-
-    const existentialDeposit = getExistentialDeposit(api);
-
-    updateBalance({
-      substrateNetworkId: chainId as SubstrateNetworkId,
-      balance: bnBalance.toString(),
-      existentialDeposit
-    });
-  });
-}
-
-export async function updateBalances(
-  account: string,
-  api: ApiPromise | undefined,
-  chainId: string,
-  updateBalance: (data: {
-    substrateNetworkId: SubstrateNetworkId;
-    balance: string;
-    existentialDeposit: BigNumber;
-  }) => void
-) {
-  if (!api) return;
-  // create AccountId32 type byte array
-  // and retrieve balances
-  const accountId = api.createType("AccountId32", account);
-  const queryResult = await api.query.system.account(accountId);
-  const blObject: any = queryResult.toJSON();
-
-  const {
-    data: { free }
-  } = blObject;
-
-  const { decimals } = SUBSTRATE_NETWORKS[chainId as SubstrateNetworkId];
-  const bnBalance = toTokenUnitsBN(free, decimals);
-
-  const existentialDeposit = getExistentialDeposit(api);
-
-  updateBalance({
-    substrateNetworkId: chainId as SubstrateNetworkId,
-    balance: bnBalance.toString(),
-    existentialDeposit
-  });
+  return (nativeToken.toHuman() as { Token: string }).Token ?? "";
 }
 
 const PolkadotBalancesUpdater = () => {
   useEagerConnect("picasso");
   useEagerConnect("karura");
+
+  const isLoaded = useStore((state) => state.substrateTokens.isLoaded);
+
+  const updateTokens = useStore(
+    ({ substrateTokens }) => substrateTokens.updateTokens
+  );
+  const tokens = useStore(({ substrateTokens }) => substrateTokens.tokens);
+
   const updateBalance = useStore(
     ({ substrateBalances }) => substrateBalances.updateBalance
   );
-  const assets = useStore(({ substrateBalances }) => substrateBalances.assets);
 
-  const updateAssetBalance = useStore(
-    ({ substrateBalances }) => substrateBalances.updateAssetBalance
-  );
   const clearBalance = useStore(
     ({ substrateBalances }) => substrateBalances.clearBalance
   );
@@ -99,99 +61,168 @@ const PolkadotBalancesUpdater = () => {
     extensionStatus,
     selectedAccount,
     parachainProviders,
-    relaychainProviders
+    relaychainProviders,
+    connectedAccounts,
   } = useDotSamaContext();
 
+  /**
+   * This effect fetches
+   * metadata for tokens and
+   * should be called almost
+   * after API creation
+   */
+  useEffect(() => {
+    callbackGate(
+      async (_picaApi, _karApi) => {
+        const picaAssetMetadataList = await picassoAssetsList(_picaApi);
+        const karuraAssetMetadataList = await karuraAssetsList(_karApi);
+        updateTokens(picaAssetMetadataList, karuraAssetMetadataList);
+      },
+      parachainProviders.picasso.parachainApi,
+      parachainProviders.karura.parachainApi
+    );
+  }, [parachainProviders, updateTokens]);
+
   const picassoBalanceSubscriber = useCallback(
-    async (chain, asset, chainId) => {
+    async (
+      chain: ParachainApi,
+      tokenMetadata: TokenMetadata,
+      chainId,
+      accounts
+    ) => {
+      console.log(
+        chainId,
+        tokenMetadata.symbol,
+        tokenMetadata.chainId.picasso?.toString()
+      );
       callbackGate(
-        async (chain, asset, chainId, account) => {
+        async (api, tokenMetadata, chainId, account) => {
           await subscribePicassoBalanceByAssetId(
-            chain.parachainApi!,
+            api,
             account.address,
-            String(asset.meta.supportedNetwork[chainId as SubstrateNetworkId]),
-            balance => {
-              updateAssetBalance({
-                substrateNetworkId: chainId as SubstrateNetworkId,
-                assetId: asset.meta.assetId,
-                balance
+            tokenMetadata,
+            (balance) => {
+              updateBalance({
+                network: chainId as SubstrateNetworkId,
+                tokenId: tokenMetadata.id,
+                balance,
               });
             }
           );
         },
-        chain,
-        asset,
+        chain.parachainApi,
+        tokenMetadata,
         chainId,
-        chain.accounts[selectedAccount]
+        accounts[selectedAccount]
       );
     },
-    [selectedAccount, updateAssetBalance]
+    [selectedAccount, updateBalance]
   );
 
   // Subscribe for native balance changes
   useEffect(() => {
     if (selectedAccount !== -1) {
+      let subscriptionList: Array<VoidFn | undefined> = [];
+
       Object.entries({ ...parachainProviders, ...relaychainProviders }).forEach(
         ([chainId, chain]) => {
-          if (chain.accounts[selectedAccount] && chain.parachainApi) {
+          if (
+            connectedAccounts[chainId as RelayChainId | ParachainId] &&
+            chain.parachainApi
+          ) {
             subscribeNativeBalance(
-              chain.accounts[selectedAccount].address,
+              connectedAccounts[chainId as ParachainId | RelayChainId][
+                selectedAccount
+              ].address,
               chain.parachainApi,
               chainId,
+              SUBSTRATE_NETWORKS[chainId as SubstrateNetworkId].tokenId,
               updateBalance
-            ).catch(err => {
-              console.error(err);
+            ).then((subscription) => {
+              subscriptionList.push(subscription);
             });
           }
         }
       );
+
+      return function unsubNativeBalances() {
+        console.log("Clearing Native Subscriptions. ", subscriptionList.length);
+        return subscriptionList.forEach((x) => {
+          x?.();
+        });
+      };
     } else if (selectedAccount === -1) {
       clearBalance();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [parachainProviders, relaychainProviders, selectedAccount]);
+  }, [
+    parachainProviders,
+    relaychainProviders,
+    selectedAccount,
+    connectedAccounts,
+    updateBalance,
+    clearBalance,
+  ]);
 
   // Subscribe non-native token balances
   useEffect(() => {
-    if (extensionStatus !== "connected" || selectedAccount === -1) {
+    let unsubList: any[];
+    unsubList = [];
+    if (
+      extensionStatus !== "connected" ||
+      selectedAccount === -1 ||
+      !isLoaded
+    ) {
       return () => {};
     }
 
     Object.entries(parachainProviders).forEach(([chainId, chain]) =>
-      callbackGate(api => {
-        Object.values(assets[chainId as SubstrateNetworkId].assets).forEach(
-          asset => {
-            if (!asset.meta.supportedNetwork[chainId as SubstrateNetworkId]) {
-              return;
-            }
-            switch (chainId) {
-              case "picasso":
-                picassoBalanceSubscriber(chain, asset, chainId);
-                break;
-              case "karura":
-                if (chain.accounts[selectedAccount]) {
-                  fetchKaruraBalanceByAssetId(
-                    api,
-                    chain.accounts[selectedAccount].address,
-                    String(asset.meta.symbol)
-                  ).then(balance => {
-                    updateAssetBalance({
-                      substrateNetworkId: chainId as SubstrateNetworkId,
-                      assetId: asset.meta.assetId,
-                      balance
+      callbackGate((api) => {
+        Object.values(tokens).forEach((asset) => {
+          switch (chainId) {
+            case "picasso":
+              picassoBalanceSubscriber(
+                chain,
+                asset,
+                chainId,
+                connectedAccounts[chainId]
+              );
+              break;
+            case "karura":
+              // Ignore native token since for that we need to fetch system
+              const nativeTokenSymbol = getKaruraNativeToken(api);
+
+              if (
+                connectedAccounts.karura[selectedAccount] &&
+                nativeTokenSymbol !== asset.symbol
+              ) {
+                subscribeKaruraBalance(
+                  api,
+                  connectedAccounts.karura[selectedAccount].address,
+                  asset,
+                  (balance) => {
+                    updateBalance({
+                      network: chainId as SubstrateNetworkId,
+                      tokenId: asset.id,
+                      balance,
                     });
-                  });
-                }
-                break;
-              default:
-                break;
-            }
+                  }
+                );
+              }
+              break;
+            default:
+              break;
           }
-        );
+        });
+
+        return () => {
+          unsubList.forEach((unsub) => {
+            unsub.then((call: any) => call?.());
+          });
+        };
       }, chain.parachainApi)
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [extensionStatus, selectedAccount, parachainProviders]);
+  }, [extensionStatus, selectedAccount, parachainProviders, isLoaded]);
 
   return null;
 };

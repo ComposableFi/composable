@@ -1,47 +1,43 @@
+import { Asset, PabloConstantProductPool } from "shared";
 import { Option } from "@/components/types";
-import { ConstantProductPool, StableSwapPool } from "@/defi/types";
 import {
   calculator,
   DEFAULT_NETWORK_ID,
-  fetchSpotPrice,
-  isValidAssetPair,
-  stableSwapCalculator,
 } from "@/defi/utils";
-import { useAppSelector } from "@/hooks/store";
-import { useAsyncEffect } from "@/hooks/useAsyncEffect";
 import { usePrevious } from "@/hooks/usePrevious";
-import { MockedAsset } from "@/store/assets/assets.types";
-import { useAssetBalance, useUSDPriceByAssetId } from "@/store/assets/hooks";
-import { useLiquidityByPool } from "@/store/hooks/useLiquidityByPool";
-import useStore from "@/store/useStore";
-import BigNumber from "bignumber.js";
-import { useSnackbar } from "notistack";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useAppSettingsSlice } from "@/store/appSettings/slice";
+import { useAssetBalance, useAssetIdOraclePrice } from "@/defi/hooks";
+import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from "react";
 import { useParachainApi } from "substrate-react";
 import { useAsset } from "../assets/useAsset";
 import { useFilteredAssetListDropdownOptions } from "../assets/useFilteredAssetListDropdownOptions";
 import { usePriceImpact } from "./usePriceImpact";
+import { useLiquidity } from "../useLiquidity";
+import { usePoolsSlice } from "@/store/pools/pools.slice";
+import useStore from "@/store/useStore";
+import BigNumber from "bignumber.js";
+import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 
-export function useSwaps(): {
+export function useSwaps({ selectedAccount }: { selectedAccount?: InjectedAccountWithMeta; }): {
   balance1: BigNumber;
   balance2: BigNumber;
   changeAsset: (side: "base" | "quote", asset: string | "none") => void;
   selectedAssetOneId: string | "none";
   selectedAssetTwoId: string | "none";
-  selectedAssetOne: MockedAsset | undefined;
-  selectedAssetTwo: MockedAsset | undefined;
+  selectedAssetOne: Asset | undefined;
+  selectedAssetTwo: Asset | undefined;
   assetListOne: Option[];
   assetListTwo: Option[];
   assetOneAmount: BigNumber;
   assetTwoAmount: BigNumber;
-  dexRoute: BigNumber | null;
   onChangeTokenAmount: (
-    sideChange: "base" | "quote",
     amount: BigNumber
   ) => void;
   flipAssetSelection: () => void;
   updateSpotPrice: () => void;
-  pabloPool: ConstantProductPool | StableSwapPool | undefined;
+  inputMode: 1 | 2,
+  setInputMode: Dispatch<SetStateAction<1 | 2>>;
+  pabloPool: PabloConstantProductPool | undefined;
   minimumReceived: BigNumber;
   slippageAmount: BigNumber;
   feeCharged: BigNumber;
@@ -54,22 +50,17 @@ export function useSwaps(): {
   setAssetTwoInputValid: (validity: boolean) => void;
   assetOneInputValid: boolean;
   assetTwoInputValid: boolean;
-  isProcessing: boolean;
   priceImpact: BigNumber;
 } {
-  const slippage = useAppSelector(
-    (state) => state.settings.transactionSettings.tolerance
-  );
+  const slippage = useAppSettingsSlice().transactionSettings.tolerance;
   const previousSlippage = usePrevious(slippage);
 
+  const [inputMode, setInputMode] = useState<1 | 2>(1);
   const [assetOneInputValid, setAssetOneInputValid] = useState(true);
   const [assetTwoInputValid, setAssetTwoInputValid] = useState(true);
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
-  const { enqueueSnackbar } = useSnackbar();
-
   const {
     swaps,
-    pools: { constantProductPools, stableSwapPools },
   } = useStore();
   const {
     tokenAmounts: { assetOneAmount, assetTwoAmount },
@@ -105,109 +96,57 @@ export function useSwaps(): {
     setSelectedAsset(id, "base");
   };
 
-  const asset1PriceUsd = useUSDPriceByAssetId(selectedAssetOneId);
-  const asset2PriceUsd = useUSDPriceByAssetId(selectedAssetTwoId);
-
   const selectedAssetOne = useAsset(selectedAssetOneId);
   const selectedAssetTwo = useAsset(selectedAssetTwoId);
-
+  const asset1PriceUsd = useAssetIdOraclePrice(selectedAssetOneId);
+  const asset2PriceUsd = useAssetIdOraclePrice(selectedAssetTwoId);
+  const balance1 = useAssetBalance(selectedAssetOne, "picasso");
+  const balance2 = useAssetBalance(selectedAssetTwo, "picasso");
   const assetListOne = useFilteredAssetListDropdownOptions(selectedAssetTwoId);
   const assetListTwo = useFilteredAssetListDropdownOptions(selectedAssetOneId);
 
-  const balance1 = useAssetBalance(DEFAULT_NETWORK_ID, selectedAssetOneId);
-  const balance2 = useAssetBalance(DEFAULT_NETWORK_ID, selectedAssetTwoId);
-
-  const fetchDexRoute = useCallback(async (): Promise<BigNumber | null> => {
-    if (
-      parachainApi &&
-      isValidAssetPair(selectedAssetOneId, selectedAssetTwoId)
-    ) {
-      const routePromises = [
-        parachainApi.query.dexRouter.dexRoutes(
-          selectedAssetOneId,
-          selectedAssetTwoId
-        ),
-        parachainApi.query.dexRouter.dexRoutes(
-          selectedAssetTwoId,
-          selectedAssetOneId
-        ),
-      ];
-      const dexRoutes = await Promise.all(routePromises);
-      const [straightRouteResponse, inverseRouteResponse] = dexRoutes;
-      let straightRoute = straightRouteResponse.toJSON();
-      let inverseRoute = inverseRouteResponse.toJSON();
-
-      let dexRoute: any = null;
-      if (!!straightRoute) dexRoute = straightRoute;
-      if (!!inverseRoute) dexRoute = inverseRoute;
-
-      if (dexRoute && dexRoute.direct) {
-        return new BigNumber(dexRoute.direct[0]);
-      } else {
-        return dexRoute;
-      }
-    }
-    return null;
-  }, [selectedAssetOneId, selectedAssetTwoId, parachainApi]);
-
-  const [dexRoute, setDexRoute] = useState<BigNumber | null>(null);
-  useAsyncEffect(async () => {
-    const dexRoute = await fetchDexRoute();
-    if (selectedPool && dexRoute) {
-      if (selectedPool.poolId === dexRoute.toNumber()) {
-        // no need to set the route again if it's the same
-        return;
-      }
-      setDexRoute(dexRoute);
-    }
-    setDexRoute(dexRoute);
-  }, [fetchDexRoute, selectedPool]);
-
-  useEffect(() => {
-    if (!dexRoute) {
-      return setSelectedPool(undefined);
-    }
-
-    const verifiedConstantProductPools = constantProductPools.verified;
-    const verifiedStableSwapPools = stableSwapPools.verified;
-
-    let lpToTrade: StableSwapPool | ConstantProductPool | undefined = undefined;
-    lpToTrade = verifiedConstantProductPools.find(
-      (i) => i.poolId === dexRoute.toNumber()
-    );
-    if (!lpToTrade)
-      lpToTrade = verifiedStableSwapPools.find(
-        (i) => i.poolId === dexRoute.toNumber()
-      );
-
-    setSelectedPool(lpToTrade);
-  }, [dexRoute, constantProductPools, stableSwapPools, setSelectedPool]);
-
   const updateSpotPrice = useCallback(async () => {
-    if (parachainApi && selectedPool) {
-      const { base, quote } = selectedPool.pair;
-      const isInverse = selectedAssetOneId === base.toString();
-      let pair = { base: base.toString(), quote: quote.toString() };
-      const spotPrice = await fetchSpotPrice(
-        parachainApi,
-        pair,
-        selectedPool.poolId
-      );
+    if (selectedPool) {
+      const pair = selectedPool.getPair();
+      const base = pair.getBaseAsset().toString();
+      const isInverse = selectedAssetOneId === base;
+
+      const spotPrice = await selectedPool.getSpotPrice();
       if (isInverse) {
-        setSpotPrice(new BigNumber(1).div(spotPrice).dp(4));
+        setSpotPrice(new BigNumber(1).div(spotPrice));
       } else {
-        setSpotPrice(spotPrice.dp(4));
+        setSpotPrice(spotPrice);
       }
+
     } else {
       setSpotPrice(new BigNumber(0));
     }
-  }, [parachainApi, selectedPool, selectedAssetOneId, setSpotPrice]);
+  }, [selectedPool, selectedAssetOneId, setSpotPrice]);
 
   useEffect(() => {
     if (selectedPool) {
       updateSpotPrice();
     }
   }, [selectedPool, updateSpotPrice]);
+
+  const { constantProductPools } = usePoolsSlice();
+  useEffect(() => {
+    if (constantProductPools.length > 0) {
+      const pool = constantProductPools.find((_constantPool) => {
+        const pair = _constantPool.getPair();
+        const pairBase = pair.getBaseAsset().toString();
+        const pairQuote = pair.getQuoteAsset().toString();
+
+        return (
+          pairBase === selectedAssetOneId && pairQuote === selectedAssetTwoId ||
+          pairBase === selectedAssetTwoId && pairQuote === selectedAssetOneId
+        )
+      });
+      if (pool) {
+        setSelectedPool(pool);
+      }
+    }
+  }, [constantProductPools, selectedAssetOneId, selectedAssetTwoId, setSelectedPool, setSpotPrice])
 
   const [minimumReceived, setMinimumReceived] = useState(new BigNumber(0));
   const [slippageAmount, setSlippageAmount] = useState(new BigNumber(0));
@@ -220,98 +159,52 @@ export function useSwaps(): {
     });
   }, [setTokenAmounts]);
 
-  const [isProcessing, setIsProcessing] = useState(false);
-
-  const unsetProcessingDelayed = () => {
-    setTimeout(() => {
-      setIsProcessing(false);
-    }, 500);
-  };
-
-  const onChangeTokenAmount = async (
-    changedSide: "base" | "quote",
+  const onChangeTokenAmount = (
     amount: BigNumber
   ) => {
-    try {
-      setIsProcessing(true);
-      if (
-        parachainApi &&
-        selectedPool &&
-        isValidAssetPair(selectedAssetOneId, selectedAssetTwoId)
-      ) {
-        const spotPrice = await fetchSpotPrice(
-          parachainApi,
-          { base: selectedAssetTwoId, quote: selectedAssetOneId },
-          selectedPool.poolId
-        );
-
-        const { feeRate } = selectedPool.feeConfig;
-        let feePercentage = new BigNumber(feeRate).toNumber();
-
-        const { minReceive, tokenOutAmount, feeChargedAmount, slippageAmount } =
-          "baseWeight" in selectedPool
-            ? calculator(
-                changedSide,
-                amount,
-                spotPrice,
-                slippage,
-                feePercentage
-              )
-            : stableSwapCalculator(
-                changedSide,
-                amount,
-                spotPrice,
-                slippage,
-                feePercentage
-              );
-
-        if (changedSide === "base" && tokenOutAmount.gt(balance1)) {
-          throw new Error("Insufficient balance.");
-        }
-
-        setTokenAmounts({
-          assetOneAmount: changedSide === "base" ? tokenOutAmount : amount,
-          assetTwoAmount: changedSide === "quote" ? tokenOutAmount : amount,
-        });
-        setMinimumReceived(minReceive);
-        setFeeCharged(feeChargedAmount);
-        setSlippageAmount(slippageAmount);
-      } else {
-        throw new Error("Pool not found.");
-      }
-    } catch (err: any) {
-      resetTokenAmounts();
-      console.error(err.message);
-      enqueueSnackbar(err.message);
-    } finally {
-      unsetProcessingDelayed();
+    if (selectedPool && amount.gt(0)) {
+      const feeRate = selectedPool.getFeeConfig().getFeeRate();
+      let feePercentage = feeRate.toNumber();
+      const { minReceive, tokenOutAmount, feeChargedAmount, slippageAmount } = calculator(
+        inputMode === 1 ? "quote" : "base",
+        amount,
+        spotPrice,
+        slippage,
+        feePercentage
+      )
+      setTokenAmounts({
+        assetOneAmount: inputMode === 2 ? tokenOutAmount : amount,
+        assetTwoAmount: inputMode === 1 ? tokenOutAmount : amount,
+      });
+      setMinimumReceived(minReceive);
+      setFeeCharged(feeChargedAmount);
+      setSlippageAmount(slippageAmount);
     }
   };
 
-  const {
-    tokenAmounts: { baseAmount, quoteAmount },
-  } = useLiquidityByPool(selectedPool);
+  const { baseAmount, quoteAmount } = useLiquidity(selectedPool);
   let poolQuoteBalance = selectedPool
-    ? selectedPool.pair.quote.toString() === selectedAssetOneId
+    ? selectedPool.getPair().getBaseAsset().toString() === selectedAssetOneId
       ? quoteAmount
       : baseAmount
     : new BigNumber(0);
   let poolBaseBalance = selectedPool
-    ? selectedPool.pair.quote.toString() === selectedAssetOneId
+    ? selectedPool.getPair().getQuoteAsset().toString() === selectedAssetOneId
       ? baseAmount
       : quoteAmount
     : new BigNumber(0);
+
   const priceImpact = usePriceImpact({
     tokenInAmount: assetOneAmount,
     tokenOutAmount: assetTwoAmount,
     isConstantProductPool: selectedPool ? "baseWeight" in selectedPool : false,
     baseWeight:
-      selectedPool && "baseWeight" in selectedPool
-        ? new BigNumber(selectedPool.baseWeight)
+      selectedPool && selectedPool instanceof PabloConstantProductPool
+        ? new BigNumber(selectedPool.getBaseWeight())
         : new BigNumber(0),
     quoteBalance: poolQuoteBalance,
     baseBalance: poolBaseBalance,
-    amplificationCoefficient: selectedPool && "amplificationCoefficient" in selectedPool ? new BigNumber(selectedPool.amplificationCoefficient) : new BigNumber(0)
+    // amplificationCoefficient: selectedPool && "amplificationCoefficient" in selectedPool ? new BigNumber(selectedPool.amplificationCoefficient) : new BigNumber(0)
   });
 
   /**
@@ -322,26 +215,20 @@ export function useSwaps(): {
     if (parachainApi && selectedPool) {
       if (previousSlippage != slippage) {
         if (minimumReceived.gt(0)) {
-          const { feeRate } = selectedPool.feeConfig;
+          const feeRate = selectedPool.getFeeConfig().getFeeRate();
           let feePercentage = new BigNumber(feeRate).toNumber();
 
-          const { minReceive } =
-            "baseWeight" in selectedPool
-              ? calculator(
-                  "quote",
-                  assetOneAmount,
-                  spotPrice,
-                  slippage,
-                  feePercentage
-                )
-              : stableSwapCalculator(
-                  "quote",
-                  assetOneAmount,
-                  spotPrice,
-                  slippage,
-                  feePercentage
-                );
-          setMinimumReceived(minReceive);
+          if (selectedPool instanceof PabloConstantProductPool) {
+            const { minReceive } =
+              calculator(
+                "quote",
+                assetOneAmount,
+                spotPrice,
+                slippage,
+                feePercentage
+              );
+            setMinimumReceived(minReceive);
+          }
         }
       }
     }
@@ -361,25 +248,20 @@ export function useSwaps(): {
   ]);
 
   const flipAssets = () => {
-    setIsProcessing(true);
     flipAssetSelection();
-    unsetProcessingDelayed();
   };
 
   const changeAsset = (
     changedSide: "quote" | "base",
     tokenId: string | "none"
   ) => {
-    setIsProcessing(true);
     changedSide === "quote"
       ? setSelectedAssetOne(tokenId)
       : setSelectedAssetTwo(tokenId);
     resetTokenAmounts();
-    unsetProcessingDelayed();
   };
 
   const valid =
-    dexRoute !== null &&
     assetOneInputValid &&
     assetTwoInputValid &&
     !!selectedPool;
@@ -387,6 +269,8 @@ export function useSwaps(): {
   const percentageToSwap = 50;
 
   return {
+    inputMode,
+    setInputMode,
     balance1,
     balance2,
     changeAsset,
@@ -400,7 +284,6 @@ export function useSwaps(): {
     updateSpotPrice,
     assetOneAmount,
     assetTwoAmount,
-    dexRoute,
     pabloPool: selectedPool,
     minimumReceived,
     slippageAmount,
@@ -415,7 +298,6 @@ export function useSwaps(): {
     assetTwoInputValid,
     flipAssetSelection: flipAssets,
     percentageToSwap,
-    isProcessing,
     priceImpact
   };
 }

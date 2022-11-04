@@ -1,4 +1,4 @@
-import { BondOffer } from "@/defi/types";
+import { BondOffer } from "shared";
 import { useMemo } from "react";
 import { AVERAGE_BLOCK_TIME, calculateVestingTime } from "@/defi/utils";
 import { useBlockInterval } from "../useBlockInterval";
@@ -11,16 +11,13 @@ export default function useBondVestingTime(
 
   const vestingTime = useMemo(() => {
     if (bondOffer) {
-      if (bondOffer.maturity === "Infinite") {
-        return bondOffer.maturity;
-      }
 
       const blockInterval = averageBlockTime
         ? new BigNumber(averageBlockTime.toString())
         : new BigNumber(AVERAGE_BLOCK_TIME);
 
       return calculateVestingTime(
-        bondOffer.maturity.Finite.returnIn,
+        bondOffer.getRewardAssetMaturity(true) as BigNumber,
         blockInterval
       );
     }

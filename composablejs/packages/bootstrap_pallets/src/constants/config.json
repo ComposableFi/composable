@@ -1,8 +1,8 @@
 {
-  "bootstrapPools": false,
-  "bootstrapBonds": false,
+  "bootstrapPools": true,
+  "bootstrapBonds": true,
   "bootstrapCrowdloanRewards": false,
-  "bootstrapRewardPools": true,
+  "bootstrapRewardPools": false,
   "mintAssetsToWallets": true,
   "bondOffers": [
     {
@@ -18,31 +18,6 @@
     }
   ],
   "pools": [
-    {
-      "addDexRoute": true,
-      "addLiquidity": true,
-      "enableTwap": true,
-      "liquidityAmount": {
-        "base": "100000000000000000",
-        "quote": "100000000000000000"
-      },
-      "pair": {
-        "base": "1",
-        "quote": "131"
-      },
-      "sale": {
-        "start": "0",
-        "end": "26800",
-        "initialWeight": "750000",
-        "finalWeight": "250000"
-      },
-      "feeConfig": {
-        "feeRate": "10000",
-        "ownerFeeRate": "10000",
-        "protocolFeeRate": "10000"
-      },
-      "startDelay": "25"
-    },
     {
       "addDexRoute": true,
       "addLiquidity": true,

@@ -2,7 +2,6 @@ import type { NextPage } from "next";
 import { Container, Box, Grid } from "@mui/material";
 import Default from "@/components/Templates/Default";
 import { PageTitle } from "@/components";
-import { useDispatch } from "react-redux";
 import { Statistics } from "@/components/Organisms/overview/Statistics";
 import { useDotSamaContext } from "substrate-react";
 import { ConnectWalletFeaturedBox } from "@/components/Organisms/ConnectWalletFeaturedBox";
@@ -14,7 +13,6 @@ import { TVLChart } from "@/components/Organisms/overview/TVLChart";
 import { VolumeChart } from "@/components/Organisms/overview/VolumeChart";
 
 const Home: NextPage = () => {
-  const dispatch = useDispatch();
   const { extensionStatus } = useDotSamaContext();
   const connected = extensionStatus === "connected";
 
@@ -25,31 +23,28 @@ const Home: NextPage = () => {
           <Box textAlign="center">
             <PageTitle title="Overview" />
           </Box>
-          {!connected && (
-            <>
-              <Grid container>
-                <Grid item xs={12}>
-                  <ConnectWalletFeaturedBox
-                    mt={8}
-                    title="Connect wallet"
-                    textBelow="To see your portfolio, wallet needs to be connected."
-                    ButtonProps={{ label: "Connect Wallet", size: "small" }}
-                  />
-                </Grid>
-                <Grid item xs={12} mt={8}>
-                  <Statistics />
-                </Grid>
-                <Grid container spacing={8}>
-                  <Grid item xs={12} md={6} mt={8}>
-                    <TVLChart />
-                  </Grid>
-                  <Grid item xs={12} md={6} mt={8}>
-                    <VolumeChart />
-                  </Grid>
-                </Grid>
+
+          <Grid container>
+            {!connected && <Grid item xs={12}>
+              <ConnectWalletFeaturedBox
+                mt={8}
+                title="Connect wallet"
+                textBelow="To see your portfolio, wallet needs to be connected."
+                ButtonProps={{ label: "Connect Wallet", size: "small" }}
+              />
+            </Grid>}
+            <Grid item xs={12} mt={8}>
+              <Statistics />
+            </Grid>
+            <Grid container spacing={8}>
+              <Grid item xs={12} md={6} mt={8}>
+                <TVLChart />
               </Grid>
-            </>
-          )}
+              <Grid item xs={12} md={6} mt={8}>
+                <VolumeChart />
+              </Grid>
+            </Grid>
+          </Grid>
 
           {connected && (
             <>

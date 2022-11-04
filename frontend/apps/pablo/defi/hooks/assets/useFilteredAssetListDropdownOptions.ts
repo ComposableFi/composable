@@ -1,18 +1,25 @@
-import { DEFAULT_NETWORK_ID, matchAssetByPicassoId } from "@/defi/utils";
+import { AssetDropdownOptions } from "@/defi/types";
 import useStore from "@/store/useStore";
 import { useMemo } from "react";
 
-export function useFilteredAssetListDropdownOptions(assetId: string) {
-    const { supportedAssets } = useStore();
+export function useFilteredAssetListDropdownOptions(
+  assetId: string
+): AssetDropdownOptions {
+  const { substrateTokens } = useStore();
+  const { tokens, hasFetchedTokens } = substrateTokens;
 
-    const assetOptions = useMemo(() => {
-        return supportedAssets.filter(asset => !matchAssetByPicassoId(asset, assetId)).map((asset) => ({
-            value: asset.network[DEFAULT_NETWORK_ID],
-            label: asset.name,
-            shortLabel: asset.symbol,
-            icon: asset.icon,
-          }));
-    }, [supportedAssets, assetId]);
+  const assetOptions = useMemo(() => {
+    if (!hasFetchedTokens) return [];
 
-    return assetOptions;
+    return Object.values(tokens)
+      .filter((asset) => (asset.getPicassoAssetId() as string) === assetId)
+      .map((asset) => ({
+        value: asset.getPicassoAssetId() as string,
+        label: asset.getName(),
+        shortLabel: asset.getSymbol(),
+        icon: asset.getIconUrl(),
+      }));
+  }, [assetId, tokens, hasFetchedTokens]);
+
+  return assetOptions;
 }

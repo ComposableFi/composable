@@ -1,8 +1,8 @@
 import create from "zustand";
 import { createUISlice } from "./ui/ui";
 import {
+  createTokensSlice,
   createBondsSlice,
-  createMetamaskSlice,
   createOracleSlice,
   createPolkadotSlice,
   createStakingRewardsSlice,
@@ -15,22 +15,24 @@ import {
 
 import { AllSlices } from "./types";
 import { immer } from "zustand/middleware/immer";
-import { devtools } from "zustand/middleware";
+import { devtools, subscribeWithSelector } from "zustand/middleware";
 
 export const useStore = create<AllSlices>()(
-  immer(
-    devtools((...a) => ({
-      ...createUISlice(...a),
-      ...createTransfersSlice(...a),
-      ...createPolkadotSlice(...a),
-      ...createMetamaskSlice(...a),
-      ...createStatsApolloSlice(...a),
-      ...createStatsOverviewSlice(...a),
-      ...createStatsTelemetrySlice(...a),
-      ...createSubstrateBalancesSlice(...a),
-      ...createBondsSlice(...a),
-      ...createOracleSlice(...a),
-      ...createStakingRewardsSlice(...a),
-    }))
+  subscribeWithSelector(
+    immer(
+      devtools((...a) => ({
+        ...createUISlice(...a),
+        ...createTokensSlice(...a),
+        ...createTransfersSlice(...a),
+        ...createPolkadotSlice(...a),
+        ...createStatsApolloSlice(...a),
+        ...createStatsOverviewSlice(...a),
+        ...createStatsTelemetrySlice(...a),
+        ...createSubstrateBalancesSlice(...a),
+        ...createBondsSlice(...a),
+        ...createOracleSlice(...a),
+        ...createStakingRewardsSlice(...a),
+      }))
+    )
   )
 );

@@ -4,17 +4,16 @@ import Default from "@/components/Templates/Default";
 import { Link } from "@/components";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
-import useStore from "@/store/useStore";
 import { useDotSamaContext } from "substrate-react";
 import { AddLiquidityForm } from "@/components/Organisms/liquidity/AddForm";
 import AddLiquidityUpdater from "@/updaters/addLiquidity/Updater";
+import { useUiSlice } from "@/store/ui/ui.slice";
 
 const AddLiquidity: NextPage = () => {
   const router = useRouter();
   const { extensionStatus } = useDotSamaContext();
-  const {
-    ui: { isPolkadotModalOpen },
-  } = useStore();
+  const {isPolkadotModalOpen 
+  } = useUiSlice();
 
   const breadcrumbs = [
     <Link key="pool" underline="none" color="primary" href="/pool">

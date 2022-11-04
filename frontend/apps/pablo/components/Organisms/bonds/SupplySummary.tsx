@@ -11,12 +11,10 @@ import {
 } from "@mui/material";
 import TimerOutlinedIcon from "@mui/icons-material/TimerOutlined";
 import { SelectedBondOffer } from "@/defi/hooks/bonds/useBondOffer";
-import { MockedAsset } from "@/store/assets/assets.types";
-import { useUSDPriceByAssetId } from "@/store/assets/hooks";
-import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { useCallback } from "react";
-import usePrincipalAssetSymbol from "@/defi/hooks/bonds/usePrincipalAssetSymbol";
+import { Asset, LiquidityProviderToken } from "shared";
 import useBondVestingTime from "@/defi/hooks/bonds/useBondVestingTime";
+import { useAssetIdOraclePrice } from "@/defi/hooks";
 
 const containerBoxProps = (theme: Theme) => ({
   display: "flex",
@@ -55,47 +53,34 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
   ...boxProps
 }) => {
   const theme = useTheme();
-  const { principalAsset, rewardAsset } = bond;
-  const rewardPriceInUSD = useUSDPriceByAssetId(
-    rewardAsset?.network?.[DEFAULT_NETWORK_ID] || "-"
+  const { bondedAsset_s, rewardAsset } = bond;
+  const rewardPriceInUSD = useAssetIdOraclePrice(
+    rewardAsset?.getPicassoAssetId() as string
   );
 
-  const { lpPrincipalAsset, simplePrincipalAsset } = principalAsset;
-  const { baseAsset, quoteAsset } = lpPrincipalAsset;
   const vestingTime = useBondVestingTime(bond.selectedBondOffer);
-
   const renderIcons = useCallback(() => {
-    if (baseAsset && quoteAsset) {
+    if (bondedAsset_s instanceof LiquidityProviderToken) {
+      const underlyingAssets = bondedAsset_s.getUnderlyingAssetJSON();
       return (
         <PairAsset
-          assets={[
-            {
-              icon: baseAsset.icon,
-              label: baseAsset.symbol,
-            },
-            {
-              icon: quoteAsset.icon,
-              label: quoteAsset.symbol,
-            },
-          ]}
+          assets={underlyingAssets}
           iconOnly
           iconSize={36}
         />
       );
-    } else if (simplePrincipalAsset) {
+    } else if (bondedAsset_s instanceof Asset) {
       return (
         <BaseAsset
-          label={simplePrincipalAsset.symbol}
-          icon={simplePrincipalAsset.icon}
+          label={bondedAsset_s.getSymbol()}
+          icon={bondedAsset_s.getIconUrl()}
           LabelProps={{ variant: "body1" }}
           iconSize={36}
         />
       );
     }
     return null;
-  }, [simplePrincipalAsset, baseAsset, quoteAsset]);
-
-  const principalAssetSymbol = usePrincipalAssetSymbol(principalAsset);
+  }, [bondedAsset_s]);
 
   return (
     <Box {...containerBoxProps(theme)} {...boxProps}>
@@ -108,23 +93,23 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
         <Box {...itemBoxProps}>
           <Typography {...itemTitleProps}>Supply</Typography>
           {renderIcons()}
-          <Typography variant="body1">{principalAssetSymbol}</Typography>
+          <Typography variant="body1">{bondedAsset_s?.getSymbol()}</Typography>
         </Box>
         <ArrowRightAlt sx={{ color: "text.secondary" }} />
         <Box {...itemBoxProps}>
           <Typography {...itemTitleProps}>Receive</Typography>
           {rewardAsset && (
             <BaseAsset
-              label={(rewardAsset as MockedAsset).symbol}
-              icon={(rewardAsset as MockedAsset).icon}
+              label={rewardAsset?.getSymbol()}
+              icon={rewardAsset?.getIconUrl()}
               LabelProps={{ variant: "body1" }}
               iconSize={36}
             />
           )}
           <Typography variant="body1">
-            {rewardAsset && `${rewardAsset.symbol}`}
+            {rewardAsset && `${rewardAsset.getSymbol()}`}&nbsp;
             <Typography variant="body1" fontWeight="600" component="span">
-              {`${bond.roi}%`}
+              {`${" " + bond.roi}%`}
             </Typography>
           </Typography>
         </Box>
@@ -141,7 +126,7 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
         <Box display="flex" justifyContent="center" alignItems="center">
           {`$${rewardPriceInUSD}`}
         </Box>
-        <Typography variant="body1">{rewardAsset?.symbol}</Typography>
+        <Typography variant="body1">{rewardAsset?.getSymbol()}</Typography>
       </Box>
     </Box>
   );

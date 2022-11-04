@@ -13,38 +13,41 @@ import {
 } from "@mui/material";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import useStore from "@/store/useStore";
-import { useDotSamaContext, useParachainApi, SupportedWalletId, useEagerConnect } from "substrate-react";
+import { useDotSamaContext, SupportedWalletId, useEagerConnect, useConnectedAccounts } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { useAssetsWithBalance } from "@/defi/hooks";
 import { useSnackbar } from "notistack";
+import { useUiSlice, setUiState } from "@/store/ui/ui.slice";
 
-const WALLETS_SUPPORTED: Array<{ walletId: SupportedWalletId, icon: string, name: string }> = [
+const WALLETS_SUPPORTED: Array<{
+  walletId: SupportedWalletId;
+  icon: string;
+  name: string;
+}> = [
   {
     walletId: SupportedWalletId.Polkadotjs,
     icon: "/networks/polkadot_js.svg",
-    name: "Polkadot.js"
+    name: "Polkadot.js",
   },
   {
     walletId: SupportedWalletId.Talisman,
     icon: "/logos/talisman.svg",
-    name: "Talisman"
+    name: "Talisman",
   },
 ];
 
 const Status = () => {
   const { extensionStatus, selectedAccount } = useDotSamaContext();
   const theme = useTheme();
-  const assetsWithBalance = useAssetsWithBalance(DEFAULT_NETWORK_ID);
+  const assetsWithBalance = useAssetsWithBalance();
 
-  const { openPolkadotModal } = useStore();
   useEagerConnect(DEFAULT_NETWORK_ID);
-  const { accounts } = useParachainApi(DEFAULT_NETWORK_ID);
+  const accounts = useConnectedAccounts(DEFAULT_NETWORK_ID);
   const [selectedAsset, setSelectedAsset] = useState<string>("");
 
   useEffect(() => {
     if (assetsWithBalance.length > 0) {
-      setSelectedAsset(assetsWithBalance[0].symbol);
+      setSelectedAsset(assetsWithBalance[0].getSymbol());
     }
   }, [assetsWithBalance]);
 
@@ -63,11 +66,11 @@ const Status = () => {
           setValue={setSelectedAsset}
           options={assetsWithBalance.map((asset) => {
             return {
-              value: asset.symbol,
-              label: asset.balance.lte(1000)
-                ? asset.balance.toFixed(2)
-                : asset.balance.div(1000).toFixed(2) + "K",
-              icon: asset.icon,
+              value: asset.getSymbol(),
+              label: asset.getBalance().lte(1000)
+                ? asset.getBalance().toFixed(2)
+                : asset.getBalance().div(1000).toFixed(2) + "K",
+              icon: asset.getIconUrl(),
             };
           })}
           sx={{
@@ -79,12 +82,16 @@ const Status = () => {
         />
         <AccountIndicator
           onClick={() => {
-            openPolkadotModal();
+            setUiState({ isPolkadotModalOpen: true });
           }}
           network="polkadot"
           label={
-            selectedAccount !== -1 && accounts.length
-              ? accounts[selectedAccount].name
+            selectedAccount !== -1 && accounts[selectedAccount]
+              ? (
+                !!accounts[selectedAccount].meta.name ?
+                accounts[selectedAccount].meta.name as string :
+                accounts[selectedAccount].address
+              )
               : "Select account"
           }
         />
@@ -95,7 +102,7 @@ const Status = () => {
   return (
     <Button
       onClick={() => {
-        openPolkadotModal();
+        setUiState({ isPolkadotModalOpen: true });
       }}
       variant="contained"
     >
@@ -107,9 +114,8 @@ const Status = () => {
 export const PolkadotConnect: React.FC<{}> = () => {
   const theme = useTheme();
   const {
-    ui: { isPolkadotModalOpen },
-    closePolkadotModal,
-  } = useStore();
+    isPolkadotModalOpen
+  } = useUiSlice();
   const { extensionStatus, activate } = useDotSamaContext();
   const { enqueueSnackbar } = useSnackbar();
 
@@ -117,8 +123,8 @@ export const PolkadotConnect: React.FC<{}> = () => {
     try {
       if (activate) await activate(walletId);
     } catch (err: any) {
-      console.log('Logged ', err)
-      enqueueSnackbar(err.message, { variant: "error", persist: true } )
+      console.log("Logged ", err);
+      enqueueSnackbar(err.message, { variant: "error", persist: true });
     }
   };
 
@@ -127,7 +133,7 @@ export const PolkadotConnect: React.FC<{}> = () => {
       <Status />
       <Modal
         onClose={() => {
-          closePolkadotModal();
+          setUiState({ isPolkadotModalOpen: false });
         }}
         open={isPolkadotModalOpen}
         maxWidth="sm"
@@ -162,10 +168,9 @@ export const PolkadotConnect: React.FC<{}> = () => {
               >
                 Select a wallet to connect with.
               </Typography>
-              {
-                WALLETS_SUPPORTED.map(({ name, walletId, icon }) => {
-                  return (
-                    <Button
+              {WALLETS_SUPPORTED.map(({ name, walletId, icon }) => {
+                return (
+                  <Button
                     sx={{
                       mt: "4rem",
                     }}
@@ -177,18 +182,12 @@ export const PolkadotConnect: React.FC<{}> = () => {
                     onClick={() => handleConnectPolkadot(walletId)}
                   >
                     <Box sx={{ marginRight: theme.spacing(2) }}>
-                      <Image
-                        src={icon}
-                        width="24"
-                        height="24"
-                        alt={walletId}
-                      />
+                      <Image src={icon} width="24" height="24" alt={walletId} />
                     </Box>
                     <Typography variant="button">{name}</Typography>
                   </Button>
-                  )
-                })
-              }
+                );
+              })}
             </>
           )}
 

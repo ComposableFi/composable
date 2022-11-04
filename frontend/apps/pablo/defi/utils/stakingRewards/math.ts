@@ -41,17 +41,17 @@ export function calculateStakingRewardsPoolApy(
   return num.div(totalValueLocked);
 }
 
-export function calcualteDurationPresetAPR(
-  lockDurationInSecods: BigNumber | undefined,
+export function calculateDurationPresetAPR(
+  lockDurationInSeconds: BigNumber | undefined,
   rewardMultiplier: BigNumber
 ): BigNumber {
-  if (!lockDurationInSecods) {
+  if (!lockDurationInSeconds) {
     return new BigNumber(0);
   }
 
   const SECONDS_IN_YEAR = 31536000;
   const APR = rewardMultiplier.multipliedBy(
-    SECONDS_IN_YEAR / Number(lockDurationInSecods)
+    SECONDS_IN_YEAR / Number(lockDurationInSeconds)
   );
 
   return APR;

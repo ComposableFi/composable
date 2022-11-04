@@ -38,14 +38,15 @@ export const ApolloTable: FC = () => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {APOLLO_ALLOWED_CURRENCIES.map(symbol => {
-            const binanceValue = binanceAssets[symbol];
-            const oracleValue = oracleAssets[symbol];
+          {APOLLO_ALLOWED_CURRENCIES.map(token => {
+            const binanceValue = binanceAssets[token.symbol];
+            const oracleValue = oracleAssets[token.symbol];
+
             const diff = new BigNumber(0); // [todo: subsquid] Replace this with actual value once subsquid is done
             return (
-              <TableRow key={symbol}>
+              <TableRow key={token.symbol}>
                 <TableCell align="left">
-                  <TokenAsset tokenId={symbol.toLowerCase()} />
+                  <TokenAsset tokenId={token.id} />
                 </TableCell>
                 <TableCell align="left">
                   <Box

@@ -1,11 +1,10 @@
 import { alpha, Box, Button, Typography, useTheme } from "@mui/material";
 import { CheckRounded } from "@mui/icons-material";
-import { useDotSamaContext, useParachainApi } from "substrate-react";
+import { useConnectedAccounts, useDotSamaContext } from "substrate-react";
 import Image from "next/image";
-import useStore from "@/store/useStore";
+import { setUiState } from "@/store/ui/ui.slice";
 
 export const PolkadotAccountForm: React.FC<{}> = () => {
-  const { closePolkadotModal } = useStore();
   const {
     deactivate,
     extensionStatus,
@@ -15,14 +14,14 @@ export const PolkadotAccountForm: React.FC<{}> = () => {
   const theme = useTheme();
 
   const handleConfirm = () => {
-    closePolkadotModal();
+    setUiState({isPolkadotModalOpen: false })
   };
 
   const handleDisconnect = () => {
     if (deactivate) deactivate();
   };
 
-  const { accounts } = useParachainApi("picasso");
+  const accounts = useConnectedAccounts("picasso");
 
   return (
     <Box
@@ -38,7 +37,7 @@ export const PolkadotAccountForm: React.FC<{}> = () => {
     >
       {accounts.map((account, index) => (
         <Button
-          key={account.name + index}
+          key={account.address + index}
           variant="outlined"
           color="primary"
           size="large"
@@ -66,9 +65,9 @@ export const PolkadotAccountForm: React.FC<{}> = () => {
             height="24"
             alt="Polkadot.js"
           />
-          <Typography variant="button">{account.name}</Typography>
+          <Typography variant="button">{account.meta.name ?? account.address}</Typography>
           {selectedAccount !== -1 &&
-            account.name === accounts[selectedAccount].name && <CheckRounded />}
+            account.address === accounts[selectedAccount].address && <CheckRounded />}
         </Button>
       ))}
 

@@ -1,7 +1,8 @@
 import { RecipientDropdown } from "@/components";
 import React, { useEffect } from "react";
 import { useStore } from "@/stores/root";
-import { useKusamaProvider, usePicassoProvider } from "@/defi/polkadot/hooks";
+import { useKusamaAccounts, usePicassoAccounts } from "@/defi/polkadot/hooks";
+import { resetRecipient } from "@/stores/defi/polkadot/transfers/subscribers/resetRecipient";
 
 function attachNetworkIconToItems(network: "kusama" | "picasso") {
   return (items: any[]) => {
@@ -11,7 +12,7 @@ function attachNetworkIconToItems(network: "kusama" | "picasso") {
         icon:
           network === "kusama"
             ? "/networks/kusama.svg"
-            : "/networks/picasso.svg"
+            : "/networks/picasso.svg",
       };
     });
   };
@@ -24,29 +25,28 @@ function composeOptions(
     return {
       value: item.address,
       label: item.name,
-      icon: item.icon
+      icon: item.icon,
     };
   });
 }
 
 export const TransferRecipientDropdown = () => {
-  const updateRecipient = useStore(state => state.transfers.updateRecipient);
-  const {
-    recipients,
-    networks: { to: toNetwork }
-  } = useStore(({ transfers }) => transfers);
-  const { accounts: picassoAccounts } = usePicassoProvider();
-  const { accounts: kusamaAccounts } = useKusamaProvider();
+  const recipients = useStore((state) => state.transfers.recipients);
+  const to = useStore((state) => state.transfers.networks.to);
+  const picassoAccounts = usePicassoAccounts();
+  const kusamaAccounts = useKusamaAccounts();
+  const updateRecipient = useStore((state) => state.transfers.updateRecipient);
   const options =
-    toNetwork === "kusama"
+    to === "kusama"
       ? composeOptions(attachNetworkIconToItems("kusama")(kusamaAccounts))
       : composeOptions(attachNetworkIconToItems("picasso")(picassoAccounts));
   const handleRecipientChange = (value: string) => updateRecipient(value);
 
   useEffect(() => {
-    updateRecipient("");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [toNetwork]);
+    const unsub = resetRecipient();
+
+    return () => unsub();
+  }, []);
 
   return (
     <RecipientDropdown

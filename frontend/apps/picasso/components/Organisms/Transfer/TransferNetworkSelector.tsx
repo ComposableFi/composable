@@ -1,19 +1,18 @@
 import { Box, Button } from "@mui/material";
 import {
   networksStyle,
-  swapButtonStyle
+  swapButtonStyle,
 } from "@/components/Organisms/Transfer/transfer-styles";
 import { NetworkSelect } from "@/components";
 import { SwapHoriz } from "@mui/icons-material";
-import React, { useEffect, useMemo } from "react";
+import React, { FC, useMemo } from "react";
 import { useStore } from "@/stores/root";
 import { SubstrateNetworkId } from "@/defi/polkadot/types";
-import {
-  availableTargetNetwork,
-  getTransferToken
-} from "@/defi/polkadot/pallets/xcmp";
+import { availableTargetNetwork } from "@/defi/polkadot/pallets/xcmp";
 
-export const TransferNetworkSelector = () => {
+export const TransferNetworkSelector: FC<{ disabled: boolean }> = ({
+  disabled,
+}) => {
   const { networks, updateNetworks, updateTokenId } = useStore(
     ({ transfers }) => transfers
   );
@@ -27,7 +26,7 @@ export const TransferNetworkSelector = () => {
     updateNetworks({
       ...networks,
       from: value,
-      to: targetNetwork!.networkId
+      to: targetNetwork!.networkId,
     });
   };
 
@@ -48,11 +47,6 @@ export const TransferNetworkSelector = () => {
     [networks.from, networks.options]
   );
 
-  useEffect(() => {
-    const transferableTokenId = getTransferToken(networks.from, networks.to);
-    updateTokenId(transferableTokenId);
-  }, [updateTokenId, networks.from, networks.to]);
-
   return (
     <Box display="flex" sx={networksStyle}>
       <NetworkSelect
@@ -61,6 +55,7 @@ export const TransferNetworkSelector = () => {
         value={networks.from}
         searchable
         substrateNetwork
+        disabled={disabled}
         setValue={handleUpdateFromValue}
       />
       <Button
@@ -68,6 +63,7 @@ export const TransferNetworkSelector = () => {
         variant="outlined"
         size="large"
         onClick={handleSwapClick}
+        disabled={disabled}
       >
         <SwapHoriz />
       </Button>
@@ -77,6 +73,7 @@ export const TransferNetworkSelector = () => {
         value={networks.to}
         searchable
         substrateNetwork
+        disabled={disabled}
         setValue={handleUpdateToValue}
       />
     </Box>

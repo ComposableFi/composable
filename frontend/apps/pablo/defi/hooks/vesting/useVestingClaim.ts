@@ -2,31 +2,30 @@ import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { useSnackbar } from "notistack";
 import { useCallback } from "react";
 import {
-  getSigner,
   useExecutor,
   useParachainApi,
   useSelectedAccount,
+  useSigner,
 } from "substrate-react";
-import { APP_NAME } from "@/defi/polkadot/constants";
 import BigNumber from "bignumber.js";
 
 export function useVestingClaim(assetId: string, vestingScheduleId: BigNumber) {
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const { enqueueSnackbar } = useSnackbar();
+  const signer = useSigner();
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const executor = useExecutor();
 
   return useCallback(
     async () => {
-      if (parachainApi && selectedAccount && executor && vestingScheduleId.gte(0)) {
+      if (parachainApi && signer && selectedAccount && executor && vestingScheduleId.gte(0)) {
         return new Promise(async (res, rej) => {
           try {
-            const signer = await getSigner(APP_NAME, selectedAccount.address);
             await executor
               .execute(
                 parachainApi.tx.vesting.claim(
-                    assetId,
-                    { One: vestingScheduleId.toString() }
+                  assetId,
+                  { One: vestingScheduleId.toString() }
                 ),
                 selectedAccount.address,
                 parachainApi,
@@ -53,13 +52,6 @@ export function useVestingClaim(assetId: string, vestingScheduleId: BigNumber) {
         return Promise.reject(new Error("Invalid TX"))
       }
     },
-    [
-      enqueueSnackbar,
-      selectedAccount,
-      executor,
-      parachainApi,
-      assetId,
-      vestingScheduleId
-    ]
+    [parachainApi, signer, selectedAccount, executor, vestingScheduleId, assetId, enqueueSnackbar]
   );
 }

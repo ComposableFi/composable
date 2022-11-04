@@ -7,7 +7,7 @@ const BuyFormStories = () => {
   const { activePool } = useAuctionsSlice();
   return (
     <Box>
-      <BuyForm auction={activePool} />
+      {activePool && <BuyForm auction={activePool} />}
     </Box>
   );
 };

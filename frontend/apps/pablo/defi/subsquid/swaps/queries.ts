@@ -1,5 +1,5 @@
 import { OperationResult } from "urql";
-import { makeClient } from "../makeClient";
+import { subsquidClient } from "../client";
 import { PabloTransactions } from "../pools/queries";
 
 export function querySpotPriceBeforeTimestamp(
@@ -10,7 +10,7 @@ export function querySpotPriceBeforeTimestamp(
 ): Promise<OperationResult<{
   pabloTransactions: PabloTransactions[]
 }, {}>> {
-  return makeClient().query(`
+  return subsquidClient().query(`
     query pabloTransactions {
       pabloTransactions (
         limit: 1,

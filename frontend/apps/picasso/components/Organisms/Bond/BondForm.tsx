@@ -253,7 +253,7 @@ export const BondForm: FC<{
                 {Array.isArray(bondOffer.asset) ? (
                   <PairAsset assets={bondOffer.asset}/>
                 ) : (
-                  <TokenAsset tokenId={bondOffer.asset.symbol}/>
+                  <TokenAsset tokenId={bondOffer.asset.id}/>
                 )}
               </InputAdornment>
             ),

@@ -1,5 +1,5 @@
-import { SubstrateNetwork, SubstrateNetworkId } from "./types";
 import { getEnvironment } from "shared/endpoints";
+import { SubstrateNetwork, SubstrateNetworkId } from "./types";
 
 export const SUBSTRATE_NETWORKS: {
   [substrateNetworkId in SubstrateNetworkId]: SubstrateNetwork;
@@ -14,7 +14,7 @@ export const SUBSTRATE_NETWORKS: {
     subscanUrl: "",
     decimals: 12,
     symbol: "KSM",
-    logo: "/networks/kusama.svg"
+    logo: "/networks/kusama.svg",
   },
   picasso: {
     relayChain: "kusama",
@@ -26,7 +26,7 @@ export const SUBSTRATE_NETWORKS: {
     subscanUrl: "",
     decimals: 12,
     symbol: "PICA",
-    logo: "/networks/picasso.svg"
+    logo: "/networks/picasso.svg",
   },
   karura: {
     relayChain: "kusama",
@@ -34,12 +34,12 @@ export const SUBSTRATE_NETWORKS: {
     name: "Karura",
     wsUrl: getEnvironment("karura"),
     tokenId: "kar",
-    ss58Format: 49,
+    ss58Format: 8,
     subscanUrl: "",
-    decimals: 18,
+    decimals: 12,
     symbol: "KAR",
-    logo: "/networks/karura.svg"
-  }
+    logo: "/networks/karura.svg",
+  },
 };
 export const SUBSTRATE_NETWORK_IDS: Array<SubstrateNetworkId> = Object.keys(
   SUBSTRATE_NETWORKS

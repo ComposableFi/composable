@@ -1,5 +1,5 @@
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
-import { usePicassoProvider } from "@/defi/polkadot/hooks";
+import { usePicassoAccounts, usePicassoProvider } from "@/defi/polkadot/hooks";
 import { useEffect } from "react";
 import { useBlockchainProvider } from "bi-lib";
 import { fromPerbill } from "shared";
@@ -110,7 +110,8 @@ export const presentInRewards = (
 
 const CrowdloanRewardsUpdater = () => {
   const { account } = useBlockchainProvider(DEFAULT_EVM_ID);
-  const { parachainApi, accounts } = usePicassoProvider();
+  const { parachainApi } = usePicassoProvider();
+  const accounts = usePicassoAccounts();
   /**
    * Update initialPayment
    */

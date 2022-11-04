@@ -1,8 +1,11 @@
 import {
+  useConnectedAccounts,
   useDotSamaContext,
   useParachainApi,
-  useRelayChainApi
+  useRelayChainApi,
 } from "substrate-react";
+import { DEFAULT_NETWORK_ID } from "../constants";
+import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 
 export const usePicassoProvider = () => useParachainApi("picasso");
 
@@ -11,17 +14,22 @@ export const useKaruraProvider = () => useParachainApi("karura");
 export const useKusamaProvider = () => useRelayChainApi("kusama");
 
 export const useSelectedAccount: () =>
-  | { name: string; address: string }
-  | undefined = (): { name: string; address: string } | undefined => {
+  | InjectedAccountWithMeta
+  | undefined = (): InjectedAccountWithMeta | undefined => {
   const { selectedAccount } = useDotSamaContext();
-  const { accounts } = usePicassoProvider();
+  const accounts = useConnectedAccounts(DEFAULT_NETWORK_ID);
   return accounts.length && selectedAccount !== -1
     ? accounts[selectedAccount]
     : undefined;
 };
 
-export const useKusamaAccounts = (): { name: string; address: string }[] => {
-  const { accounts } = useKusamaProvider();
+export const usePicassoAccounts = (): InjectedAccountWithMeta[] => {
+  const accounts = useConnectedAccounts("picasso");
+  return accounts;
+};
+
+export const useKusamaAccounts = (): InjectedAccountWithMeta[] => {
+  const accounts = useConnectedAccounts("karura");
   return accounts;
 };
 

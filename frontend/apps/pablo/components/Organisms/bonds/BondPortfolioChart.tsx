@@ -7,13 +7,15 @@ import { Chart } from "@/components/Molecules";
 import { DEFI_CONFIG } from "@/defi/config";
 import { useState } from "react";
 import { RefreshOutlined } from "@mui/icons-material";
-import { useAppSelector } from "@/hooks/store";
+import BigNumber from "bignumber.js";
 
 export const BondPortfolioChart: React.FC<{}> = ({}) => {
   const theme = useTheme();
-  const {total, change, series} = useAppSelector(
-    (state) => state.polkadot.bondPortfolioChartData
-  );
+  const {total, change, series} = {
+    total: new BigNumber(24546395.04),
+    change: 2,
+    series: [],
+  };
   const intervals = DEFI_CONFIG.bondChartIntervals;
   const [currentInterval, setCurrentInterval] = useState(
     intervals[0].symbol

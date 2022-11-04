@@ -13,7 +13,7 @@ import { BaseAsset } from "@/components/Atoms";
 import React from "react";
 import { TableHeader } from "@/defi/types";
 import { BoxWrapper } from "../BoxWrapper";
-import { useAssetsOverview } from "@/store/hooks/overview/useAssetsOverview";
+import { useAssetsOverview } from "@/defi/hooks/overview/useAssetsOverview";
 import { NoPositionsPlaceholder } from "./NoPositionsPlaceholder";
 import { OVERVIEW_ERRORS } from "./errors";
 
@@ -56,24 +56,24 @@ export const WalletBreakdownBox: React.FC<BoxProps> = ({ ...boxProps }) => {
             <TableBody>
               {assetsOverview.map((asset) => {
                 return (
-                  <TableRow key={asset.name}>
+                  <TableRow key={asset.getName()}>
                     <TableCell align="left">
-                      <BaseAsset label={asset.symbol} icon={asset.icon} />
+                      <BaseAsset label={asset.getSymbol()} icon={asset.getIconUrl()} />
                     </TableCell>
                     <TableCell align="left">
                       <Typography variant="body1">
-                        ${asset.priceUsd.toFixed(2)}
+                        ${asset.getPrice().toFixed(2)}
                       </Typography>
                     </TableCell>
                     <TableCell align="left">
                       <Typography variant="body1">
-                        {asset.balance.toFormat(2)}
+                        {asset.getBalance().toFormat(2)}
                       </Typography>
                     </TableCell>
                     <TableCell align="left">
                       <Typography variant="body1">
                         $
-                        {asset.balance.multipliedBy(asset.priceUsd).toFormat(2)}
+                        {asset.getBalance().multipliedBy(asset.getPrice()).toFormat(2)}
                       </Typography>
                     </TableCell>
                   </TableRow>

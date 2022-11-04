@@ -1,55 +1,43 @@
 import { BaseAsset, PairAsset } from "@/components/Atoms";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
 import { Box, Typography, BoxProps } from "@mui/material";
-import { MockedAsset } from "@/store/assets/assets.types";
-import { BondPrincipalAsset } from "@/defi/types";
 import { useCallback } from "react";
+import { Asset, LiquidityProviderToken } from "shared";
 
 export type PageTitleProps = {
-  principalAsset: BondPrincipalAsset;
-  rewardAsset: MockedAsset | undefined;
+  bondedAsset_s: LiquidityProviderToken | Asset | undefined;
+  rewardAsset: Asset | undefined;
   iconSize?: number;
 } & BoxProps;
 export const PageTitle: React.FC<PageTitleProps> = ({
-  principalAsset,
+  bondedAsset_s,
   rewardAsset,
   iconSize = 67,
   ...boxProps
 }) => {
-  const { lpPrincipalAsset, simplePrincipalAsset } = principalAsset;
-  const { baseAsset, quoteAsset } = lpPrincipalAsset;
-
   const renderIcons = useCallback(() => {
-    if (baseAsset && quoteAsset) {
+    if (bondedAsset_s instanceof LiquidityProviderToken) {
+      const underlyingAssets = bondedAsset_s.getUnderlyingAssetJSON();
       return (
         <PairAsset
-          assets={[
-            {
-              icon: baseAsset.icon,
-              label: baseAsset.symbol,
-            },
-            {
-              icon: quoteAsset.icon,
-              label: quoteAsset.symbol,
-            },
-          ]}
-          label={`LP ${baseAsset.symbol}-${quoteAsset.symbol}`}
+          assets={underlyingAssets}
+          label={`${bondedAsset_s.getSymbol()}`}
           LabelProps={{ variant: "h4" }}
           iconSize={iconSize}
         />
       );
-    } else if (simplePrincipalAsset) {
+    } else if (bondedAsset_s instanceof Asset) {
       return (
         <BaseAsset
-          label={simplePrincipalAsset.symbol}
-          icon={simplePrincipalAsset.icon}
+          label={bondedAsset_s.getSymbol()}
+          icon={bondedAsset_s.getIconUrl()}
           LabelProps={{ variant: "h4" }}
           iconSize={iconSize}
         />
       );
     }
     return null;
-  }, [simplePrincipalAsset, baseAsset, quoteAsset, iconSize]);
+  }, [bondedAsset_s, iconSize]);
 
   return (
     <Box width="100%" {...boxProps}>
@@ -58,9 +46,9 @@ export const PageTitle: React.FC<PageTitleProps> = ({
         <ArrowRightAltIcon sx={{ color: "text.secondary" }} />
         {rewardAsset && (
           <BaseAsset
-            icon={rewardAsset.icon}
+            icon={rewardAsset.getIconUrl()}
             iconSize={67}
-            label={rewardAsset.symbol}
+            label={rewardAsset.getSymbol()}
             LabelProps={{ variant: "h4" }}
           />
         )}
@@ -72,7 +60,7 @@ export const PageTitle: React.FC<PageTitleProps> = ({
         textAlign="center"
         fontWeight="normal"
       >
-        {rewardAsset ? `Buy ${rewardAsset.name} while supplying tokens` : "-"}
+        {rewardAsset ? `Buy ${rewardAsset.getSymbol()} while supplying tokens` : "-"}
       </Typography>
     </Box>
   );
