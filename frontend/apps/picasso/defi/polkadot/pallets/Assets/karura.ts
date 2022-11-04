@@ -1,5 +1,5 @@
 import { ApiPromise } from "@polkadot/api";
-import { hexToAscii } from "shared";
+import { hexToString } from "@polkadot/util";
 
 export type HumanizedKaruraAssetMetadata = {
   name: string;
@@ -27,8 +27,8 @@ export async function karuraAssetsList(
       const target = meta[1].toJSON() as HumanizedKaruraAssetMetadata;
 
       return {
-        name: hexToAscii(target.name),
-        symbol: hexToAscii(target.symbol),
+        name: hexToString(target.name),
+        symbol: hexToString(target.symbol),
         decimals: target.decimals,
         minimalBalance: target.minimalBalance,
       };

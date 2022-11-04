@@ -23,6 +23,15 @@ function anyToBigNumber(value: unknown) {
   return pipe(value, toString, strToBN);
 }
 
+function fetchEd(api: ApiPromise) {
+  return function (a: string | BigNumber) {
+    return TaskEither.tryCatch(
+      async () => await api.query.currencyFactory.assetEd(a.toString()),
+      (reason) => new Error(String(reason))
+    );
+  };
+}
+
 export const subscribeFeeItemEd = async (api: ApiPromise) => {
   return useStore.subscribe(
     (store) => ({
@@ -32,15 +41,6 @@ export const subscribeFeeItemEd = async (api: ApiPromise) => {
     }),
     async ({ feeItem, isLoaded, sourceChain }) => {
       if (!isLoaded) return;
-
-      function fetchEd(api: ApiPromise) {
-        return function (a: string | BigNumber) {
-          return TaskEither.tryCatch(
-            async () => await api.query.currencyFactory.assetEd(a.toString()),
-            (reason) => new Error(String(reason))
-          );
-        };
-      }
 
       pipe(
         Option.fromNullable(
@@ -53,15 +53,11 @@ export const subscribeFeeItemEd = async (api: ApiPromise) => {
           flow(
             TaskEither.map(anyToBigNumber),
             TaskEither.map((existentialValue) => {
-              useStore.setState({
-                ...useStore.getState(),
-                transfers: {
-                  ...useStore.getState().transfers,
-                  feeItemEd: existentialValue.isNaN()
-                    ? new BigNumber(0)
-                    : existentialValue,
-                },
-              });
+              useStore
+                .getState()
+                .transfers.setFeeItemEd(
+                  existentialValue.isNaN() ? new BigNumber(0) : existentialValue
+                );
             })
           )
         )
