@@ -18,12 +18,12 @@ extensibility in the future.
 
 ## Requirements
 
-* ED values for all tokens supported by the chain are available AND consistent
+* ED values for all assets supported by the chain are available AND consistent
   across our runtime, node, and front-end applications.
 
-* When the ED of token A is swapped into token B, the new balance of token B is
+* When the ED of asset A is swapped into asset B, the new balance of asset B is
   substantial for ED. In other words, a user cannot "delete" their balance when 
-  they convert it into another token.
+  they convert it into another asset.
 
 * The implementation of our ED value retrieval should allow for the overwriting
   of the standard ED value defined in this document.
@@ -36,48 +36,48 @@ With the following definitions:
 
 * `local_ed` - The functional ED of a asset on our chain.
 
-* `native_token_ed` - The ED of our chains native asset.
+* `native_asset_ed` - The ED of our chains native asset.
 
 * `foreign_asset_ratio` - The ratio of 'one in the foreign asset' over 'one in 
 our native asset'
 
 The ED of any asset should be defined as follows:
 ```
-local_ed = native_token_ed * foreign_asset_ratio
+local_ed = native_asset_ed * foreign_asset_ratio
 ```
 
 This method of setting ED ensures requirement 2.
 
 Example
 ```
-token_a_local_ed = 100_000_000
-token_a_asset_ratio = Ratio(1_000_000_000, 1_000_000_000_000)
-token_b_local_ed = 100_000
-token_a_asset_ratio = Ratio(1_000_000, 1_000_000_000_000)
-native_token_ed = 100_000_000_000
+asset_a_local_ed = 100_000_000
+asset_a_ratio = Ratio(1_000_000_000, 1_000_000_000_000)
+asset_b_local_ed = 100_000
+asset_a_ratio = Ratio(1_000_000, 1_000_000_000_000)
+native_asset_ed = 100_000_000_000
 
-fn native_to_token(native_balance, token_asset_ratio) {
-  native_balance * token_asset_ratio
+fn native_to_asset(native_balance, asset_ratio) {
+  native_balance * asset_ratio
 }
 
-fn token_to_native(token_balance, token_asset_ratio) {
-  token_balance / token_asset_ratio
+fn asset_to_native(asset_balance, asset_ratio) {
+  asset_balance / asset_ratio
 }
 
-token_a_ed_as_native = token_to_native(token_a_local_ed, token_a_asset_ratio)
-token_b_ed_as_native = token_to_native(token_b_local_ed, token_b_asset_ratio)
-native_as_token_b = native_to_token(native_token_ed, token_b_asset_ratio)
-token_a_as_token_b = native_to_token(token_a_ed_as_native, token_b_asset_ratio)
+asset_a_ed_as_native = asset_to_native(asset_a_local_ed, asset_a_ratio)
+asset_b_ed_as_native = asset_to_native(asset_b_local_ed, asset_b_ratio)
+native_as_asset_b = native_to_asset(native_asset_ed, asset_b_ratio)
+asset_a_as_asset_b = native_to_asset(asset_a_ed_as_native, asset_b_ratio)
 
-assert(token_a_ed_as_native == native_token_ed)
-assert(token_b_ed_as_native == native_token_ed)
-assert(token_a_ed_as_native == token_b_ed_as_native)
-assert(native_as_token_b == token_a_as_token_b)
+assert(asset_a_ed_as_native == native_asset_ed)
+assert(asset_b_ed_as_native == native_asset_ed)
+assert(asset_a_ed_as_native == asset_b_ed_as_native)
+assert(native_as_asset_b == asset_a_as_asset_b)
 ```
 
 ### Overwriting & Asset Registry Storage
 
-For a token to have its ED be correctly calculated, and therefore to exists on 
+For a asset to have its ED be correctly calculated, and therefore to exists on 
 chain, it should have its `foreign_asset_ratio` defined and stored.
 
 If the need arises, an optional ED value can be provided to an asset within
@@ -118,18 +118,32 @@ functionality of `multi_existential_deposits`.
 perform a storage migration in the next runtime upgrade for all of these changes
 to be possible.
 
-The function `AssetRegistry::register_asset` should be updated with the 
-following signature:
+* The function `AssetRegistry::register_asset` should be updated with the 
+  following signature:
 
-```rust
-pub fn register_asset(
-  origin: OriginFor<T>,
-  location: T::ForeignAssetId,
-  ed: Option<T::Balance>, // Used to be required
-  ratio: Ratio, // Used to be optional
-  decimals: Option<Exponent>,
-) -> DispatchResultWithPostInfo;
-```
+  ```rust
+  pub fn register_asset(
+    origin: OriginFor<T>,
+    location: T::ForeignAssetId,
+    ed: Option<T::Balance>, // Used to be required
+    ratio: Ratio, // Used to be optional
+    decimals: Option<Exponent>,
+  ) -> DispatchResultWithPostInfo;
+  ```
+
+* Additionally, Asset Registry needs to support creating assets with a difined
+asset ID. 
+
+  ```rust
+  pub fn register_asset_with_id(
+    origin: OriginFor<T>,
+    asset_id: T::AssetId,
+    location: T::ForeignAssetId,
+    ed: Option<T::Balance>, // Used to be required
+    ratio: Ratio, // Used to be optional
+    decimals: Option<Exponent>,
+  ) -> DispatchResultWithPostInfo;
+  ```
 
 ## Quality Assurance
 
