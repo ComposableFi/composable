@@ -32,7 +32,7 @@
                 polkadot-launch composable-node polkadot-node;
               chain-spec = "picasso-dev";
             };
-            docs = self.packages'.docs-static;
+            docs = self'.packages.docs-static;
             rev = builtins.getEnv "GITHUB_SHA";
           };
         });
