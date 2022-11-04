@@ -1,4 +1,4 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import {
   Box,
   Theme,
@@ -18,7 +18,7 @@ const infoIconStyle = (theme: Theme) => ({
 
 export type FeeDisplayProps = {
   label: string;
-  feeText: string;
+  feeText: string | ReactNode;
   textFirst?: boolean;
   TypographyProps?: TypographyProps;
   TooltipProps?: Omit<TooltipProps, "children">;
@@ -56,9 +56,13 @@ export const FeeDisplay: React.FC<FeeDisplayProps> = ({
           </Tooltip>
         )}
       </Box>
-      <Typography variant="body2" color="text.primary" {...TypographyProps}>
-        {feeText}
-      </Typography>
+      {typeof feeText === "string" ? (
+        <Typography variant="body2" color="text.primary" {...TypographyProps}>
+          {feeText}
+        </Typography>
+      ) : (
+        feeText
+      )}
     </Box>
   );
 };

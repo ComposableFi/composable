@@ -14,7 +14,6 @@ export async function subscribeNativeBalance(
     tokenId: TokenId;
     network: SubstrateNetworkId;
     balance: BigNumber;
-    existentialDeposit: BigNumber;
   }) => void
 ) {
   if (!api) return;
@@ -31,13 +30,10 @@ export async function subscribeNativeBalance(
     const { decimals } = SUBSTRATE_NETWORKS[chainId as SubstrateNetworkId];
     const bnBalance = toTokenUnitsBN(free, decimals);
 
-    const existentialDeposit = getExistentialDeposit(api);
-
     updateBalance({
       network: chainId as SubstrateNetworkId,
       tokenId,
       balance: bnBalance,
-      existentialDeposit,
     });
   });
 
