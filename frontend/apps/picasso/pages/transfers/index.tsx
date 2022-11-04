@@ -139,7 +139,7 @@ const Transfers: NextPage = () => {
             disabled={
               amount.lte(0) ||
               amount.gt(balance) ||
-              amount.lte(minValue) ||
+              amount.lte(minValue ?? 0) ||
               !hasEnoughGasFee ||
               hasPendingTransfer
             }
@@ -148,10 +148,10 @@ const Transfers: NextPage = () => {
           >
             <Typography variant="button">Transfer</Typography>
           </Button>
-          {!amount.eq(0) && amount.lte(minValue) && (
+          {!amount.eq(0) && amount.lte(minValue ?? 0) && (
             <Typography variant="caption" color="error.main">
-              At least {minValue.toFormat(12)} {feeTokenId.symbol.toUpperCase()}{" "}
-              will be spent for gas fees.
+              At least {minValue?.toFormat(12) ?? "0"}{" "}
+              {feeTokenId.symbol.toUpperCase()} will be spent for gas fees.
             </Typography>
           )}
         </Grid>
