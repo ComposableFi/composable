@@ -6,7 +6,6 @@ import BigNumber from "bignumber.js";
 
 export type TokenBalance = {
   balance: BigNumber;
-  existentialDeposit: BigNumber;
 };
 
 type SubstrateBalancesState = {
@@ -24,7 +23,6 @@ const initialState: SubstrateBalancesState = SUBSTRATE_NETWORK_IDS.reduce(
         [chain]: Object.keys(TOKENS).reduce((agg, tokenId) => {
           agg[tokenId as TokenId] = {
             balance: new BigNumber(0),
-            existentialDeposit: new BigNumber(0),
           };
 
           return agg;
@@ -39,7 +37,6 @@ export interface SubstrateBalancesActions {
     network: SubstrateNetworkId;
     tokenId: TokenId;
     balance: BigNumber;
-    existentialDeposit?: BigNumber;
   }) => void;
   clearBalance: () => void;
   getBalance: (token: TokenId, network: SubstrateNetworkId) => BigNumber;
@@ -58,18 +55,13 @@ export const createSubstrateBalancesSlice: StoreSlice<
       network,
       tokenId,
       balance,
-      existentialDeposit,
     }: {
       network: SubstrateNetworkId;
       tokenId: TokenId;
       balance: BigNumber;
-      existentialDeposit?: BigNumber;
     }) => {
       set((state) => {
         state.substrateBalances.balances[network][tokenId].balance = balance;
-        state.substrateBalances.balances[network][tokenId].existentialDeposit =
-          existentialDeposit ??
-          state.substrateBalances.balances[network][tokenId].existentialDeposit;
         return state;
       });
     },
