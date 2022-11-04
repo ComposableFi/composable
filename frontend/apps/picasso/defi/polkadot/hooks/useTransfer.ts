@@ -81,13 +81,14 @@ export const useTransfer = () => {
               txHash
             );
           } else {
-            const outcome = records.find((record) =>
-              api.events.xTokens.TransferredMultiAssets.is(record.event)
-            );
-            if (outcome) {
-              console.log(outcome.event.toJSON());
-            }
-            console.log(JSON.stringify(records));
+            closeSnackbar(snackbarKey);
+            enqueueSnackbar("Transfer is successful", {
+              persist: true,
+              description: "",
+              variant: "success",
+              isCloseable: true,
+              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
+            });
           }
 
           setAmount(new BigNumber(0));

@@ -102,8 +102,9 @@ export function getDestChainFee(
       };
     case "karura=>picasso":
       const fee: BigNumber | undefined = {
-        kusd: fromChainIdUnit(new BigNumber("927020")),
-        kar: fromChainIdUnit(new BigNumber("9269600000")),
+        kusd: fromChainIdUnit(new BigNumber("927020325")),
+        kar: fromChainIdUnit(new BigNumber("927020325")),
+        ksm: fromChainIdUnit(new BigNumber("927020325")),
       }[selectedToken as string];
 
       return {
