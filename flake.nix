@@ -50,7 +50,7 @@
         ./docs/docs.nix
         ./fmt.nix
         ./frontend/frontend.nix
-        ./nixops.nix
+        ./nixops-config.nix
         ./price-feed.nix
         ./release.nix
         ./rust.nix
