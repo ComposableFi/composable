@@ -7,32 +7,7 @@
       "totalRewards_success": true
     },
     "tx": {
-      "enabled": true,
-      "setup": {
-        "provideAssets": true
-      },
-      "populate_success": {
-        "enabled": true,
-        "populate1": true
-      },
-      "initialize_success": {
-        "enabled": true,
-        "initialize1": true
-      },
-      "associate_success": {
-        "enabled": true,
-        "associate1": true
-      },
-      "claim_success": {
-        "enabled": true,
-        "claim1": true
-      },
-      "failure_tests": {
-        "enabled": false,
-        "associate_failure": {
-          "associate1": true
-        }
-      }
+      "enabled": true
     },
     "rpc": {
       "enabled": true,

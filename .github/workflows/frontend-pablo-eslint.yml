@@ -26,21 +26,3 @@ jobs:
       - name: Yarn lint - Lint
         run: yarn --filter=pablo lint
         working-directory: frontend
-      - name: Save Code Linting Report JSON
-        # npm script for ESLint
-        # eslint --output-file eslint_report.json --format json src
-        # See https://eslint.org/docs/user-guide/command-line-interface#options
-        run: yarn --filter=pablo lint:report
-        working-directory: "frontend"
-        # Continue to the next step even if this fails
-        continue-on-error: false
-      - name: Annotate Code Linting Results
-        uses: ataylorme/eslint-annotate-action@1.2.0
-        with:
-          repo-token: "${{ secrets.GITHUB_TOKEN }}"
-          report-json: "frontend/apps/pablo/eslint_report.json"
-      - name: Upload ESLint report
-        uses: actions/upload-artifact@v2
-        with:
-          name: "eslint_report.json"
-          path: "frontend/apps/pablo/eslint_report.json"

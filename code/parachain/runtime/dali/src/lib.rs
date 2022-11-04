@@ -27,10 +27,10 @@ extern crate alloc;
 
 mod governance;
 mod weights;
-mod xcmp;
+pub mod xcmp;
 
 use lending::MarketId;
-use orml_traits::{parameter_type_with_key, LockIdentifier};
+use orml_traits::{parameter_type_with_key, LockIdentifier, MultiCurrency};
 // TODO: consider moving this to shared runtime
 pub use xcmp::{MaxInstructions, UnitWeightCost};
 
@@ -40,7 +40,7 @@ use common::{
 	},
 	impls::DealWithFees,
 	multi_existential_deposits, AccountId, AccountIndex, Address, Amount, AuraId, Balance,
-	BlockNumber, BondOfferId, FinancialNftInstanceId, Hash, MaxStringSize, Moment,
+	BlockNumber, BondOfferId, FinancialNftInstanceId, ForeignAssetId, Hash, MaxStringSize, Moment,
 	MosaicRemoteAssetId, NativeExistentialDeposit, PoolId, PriceConverter, Signature,
 	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
@@ -48,8 +48,9 @@ use common::{
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
 	assets::Asset,
-	defi::{CurrencyPair, Rate},
+	defi::Rate,
 	dex::{Amm, PriceAggregate, RemoveLiquiditySimulationResult},
+	xcm::assets::RemoteAssetRegistryInspect,
 };
 use primitives::currency::{CurrencyId, ValidateCurrencyId};
 use sp_api::impl_runtime_apis;
@@ -379,11 +380,29 @@ impl transaction_payment::Config for Runtime {
 		TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
 }
 
+/// Struct implementing `asset_tx_payment::HandleCredit` that determines the behavior when fees are
+/// paid in something other than the native token.
 pub struct TransferToTreasuryOrDrop;
 impl asset_tx_payment::HandleCredit<AccountId, Tokens> for TransferToTreasuryOrDrop {
 	fn handle_credit(credit: fungibles::CreditOf<AccountId, Tokens>) {
-		let _ =
-			<Tokens as fungibles::Balanced<AccountId>>::resolve(&TreasuryAccount::get(), credit);
+		// `old_free` is only the `free` balance of an account
+		let old_free = <Tokens as MultiCurrency<AccountId>>::free_balance(
+			credit.asset(),
+			&TreasuryAccount::get(),
+		);
+
+		// `new_free` is `old_free + credit.peek()`
+		let new_free = old_free.saturating_add(credit.peek());
+
+		// NOTE: After our runtime depends on paritytech/substrate PR#12569, this function will need
+		// to be re-evaluated as `set_balance` might not do what it is meant to do when implemented
+		// for pallet balances or orml tokens.
+		// https://github.com/paritytech/substrate/pull/12569
+		let _ = <Tokens as fungibles::Unbalanced<AccountId>>::set_balance(
+			credit.asset(),
+			&TreasuryAccount::get(),
+			new_free,
+		);
 	}
 }
 
@@ -645,7 +664,6 @@ impl orml_tokens::Config for Runtime {
 
 parameter_types! {
 	pub const LiquidRewardId: PalletId = PalletId(*b"Liquided");
-	pub const CrowdloanCurrencyId: CurrencyId = CurrencyId::CROWD_LOAN;
 	/// total contributed to our crowdloan.
 	pub const TokenTotal: Balance = 200_000_000_000_000_000;
 }
@@ -1077,10 +1095,6 @@ impl pablo::Config for Runtime {
 	type PoolId = PoolId;
 	type PalletId = PabloId;
 	type LocalAssets = CurrencyFactory;
-	type LbpMinSaleDuration = LbpMinSaleDuration;
-	type LbpMaxSaleDuration = LbpMaxSaleDuration;
-	type LbpMaxInitialWeight = LbpMaxInitialWeight;
-	type LbpMinFinalWeight = LbpMinFinalWeight;
 	type PoolCreationOrigin = EnsureRootOrHalfNativeCouncil;
 	// TODO: consider making it is own origin
 	type EnableTwapOrigin = EnsureRootOrHalfNativeCouncil;
@@ -1254,7 +1268,7 @@ parameter_types! {
 
 impl cosmwasm::Config for Runtime {
 	type Event = Event;
-	type AccountId = AccountId;
+	type AccountIdExtended = AccountId;
 	type PalletId = CosmwasmPalletId;
 	type MaxFrames = MaxFrames;
 	type MaxCodeSize = MaxCodeSize;
@@ -1281,7 +1295,7 @@ impl cosmwasm::Config for Runtime {
 	type ContractStorageByteWritePrice = ContractStorageByteWritePrice;
 	type UnixTime = Timestamp;
 	// TODO: proper weights
-	type WeightInfo = ();
+	type WeightInfo = cosmwasm::weights::SubstrateWeight<Runtime>;
 }
 
 construct_runtime!(
@@ -1440,6 +1454,7 @@ mod benches {
 		[pallet_staking_rewards, StakingRewards]
 		[pallet_account_proxy, Proxy]
 		[dex_router, DexRouter]
+		[cosmwasm, Cosmwasm]
 	// TODO: Broken
 		// [pallet_ibc, Ibc]
 		// [ibc_transfer, Transfer]
@@ -1458,13 +1473,17 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance> for Runtime {
+	impl assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance, ForeignAssetId> for Runtime {
 		fn balance_of(SafeRpcWrapper(asset_id): SafeRpcWrapper<CurrencyId>, account_id: AccountId) -> SafeRpcWrapper<Balance> /* Balance */ {
 			SafeRpcWrapper(<Assets as fungibles::Inspect::<AccountId>>::balance(asset_id, &account_id))
 		}
 
-		fn list_assets() -> Vec<Asset> {
-			CurrencyId::list_assets()
+		fn list_assets() -> Vec<Asset<ForeignAssetId>> {
+			let mut assets = CurrencyId::list_assets();
+			let mut foreign_assets = assets_registry::Pallet::<Runtime>::get_foreign_assets_list();
+			assets.append(&mut foreign_assets);
+
+			assets
 		}
 	}
 
@@ -1527,16 +1546,11 @@ impl_runtime_apis! {
 			min_expected_amounts: BTreeMap<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>>,
 		) -> RemoveLiquiditySimulationResult<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>> {
 			let min_expected_amounts: BTreeMap<_, _> = min_expected_amounts.iter().map(|(k, v)| (k.0, v.0)).collect();
-			let currency_pair = <Pablo as Amm>::currency_pair(pool_id.0).unwrap_or_else(|_| CurrencyPair::new(CurrencyId::INVALID, CurrencyId::INVALID));
-			let lp_token = <Pablo as Amm>::lp_token(pool_id.0).unwrap_or(CurrencyId::INVALID);
+			let default_removed_assets = min_expected_amounts.iter().map(|(k, _)| (CurrencyId(k.0), 0_u128)).collect::<BTreeMap<_,_>>();
 			let simulate_remove_liquidity_result = <Pablo as Amm>::simulate_remove_liquidity(&who.0, pool_id.0, lp_amount.0, min_expected_amounts)
-				.unwrap_or_else(|_|
+				.unwrap_or(
 					RemoveLiquiditySimulationResult{
-						assets: BTreeMap::from([
-									(currency_pair.base, Zero::zero()),
-									(currency_pair.quote, Zero::zero()),
-									(lp_token, Zero::zero())
-						])
+						assets: default_removed_assets
 					}
 				);
 			let mut new_map = BTreeMap::new();

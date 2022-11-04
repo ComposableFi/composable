@@ -1,8 +1,11 @@
 //! Benchmarks
+use core::fmt::Debug;
+
 use crate::*;
 
 use composable_support::validation::TryIntoValidated;
-use composable_tests_helpers::test::helper::assert_extrinsic_event_with;
+use composable_tests_helpers::test::helper::RuntimeTrait;
+// use composable_tests_helpers::test::helper::assert_extrinsic_event_with;
 use composable_traits::{
 	staking::{
 		lock::LockConfig, RewardConfig, RewardPoolConfiguration::RewardRateBasedIncentive,
@@ -12,13 +15,15 @@ use composable_traits::{
 };
 use frame_benchmarking::{account, benchmarks, whitelisted_caller};
 use frame_support::{
-	traits::{fungibles::Mutate, Get, TryCollect, UnixTime},
+	traits::{fungibles::Mutate, Get, OriginTrait, TryCollect, UnixTime},
 	BoundedBTreeMap,
 };
 use frame_system::{EventRecord, RawOrigin};
 use sp_arithmetic::{fixed_point::FixedU64, traits::SaturatedConversion, Perbill, Permill};
 use sp_runtime::traits::{BlockNumberProvider, One};
 use sp_std::collections::btree_map::BTreeMap;
+
+use crate::test_helpers::stake_and_assert;
 
 // PICA as configured in the Test runtime (./frame/staking-rewards/src/test/runtime.rs)
 pub const BASE_ASSET_ID: u128 = 42;
@@ -62,13 +67,7 @@ fn reward_config<T: Config>(
 	(0..reward_count)
 		.map(|asset_id| {
 			let asset_id = (asset_id as u128) + BASE_ASSET_ID;
-			(
-				asset_id.into(),
-				RewardConfig {
-					max_rewards: 100_u128.into(),
-					reward_rate: RewardRate::per_second(10_u128),
-				},
-			)
+			(asset_id.into(), RewardConfig { reward_rate: RewardRate::per_second(10_u128) })
 		})
 		.try_collect()
 		.unwrap()
@@ -88,8 +87,12 @@ benchmarks! {
 			T::BlockNumber: From<u32> + One,
 			T::Balance: From<u128>,
 			T::AssetId: From<u128>,
-			<T as frame_system::Config>::Event: TryInto<crate::Event<T>> + core::fmt::Debug,
-			<<T as frame_system::Config>::Event as TryInto<crate::Event<T>>>::Error: core::fmt::Debug,
+			T: RuntimeTrait<crate::Event<T>> + Config,
+			<T as frame_system::Config>::Event:
+				Parameter + Member + Debug + Clone + TryInto<Event<T>> + From<Event<T>>,
+			<<T as frame_system::Config>::Event as TryInto<Event<T>>>::Error: Debug,
+			<T as frame_system::Config>::Origin:
+				OriginTrait<AccountId = <T as frame_system::Config>::AccountId>,
 	}
 
 	create_reward_pool {
@@ -150,7 +153,13 @@ benchmarks! {
 		<Pallet<T>>::stake(RawOrigin::Signed(staker.clone()).into(), asset_id, amount, duration_preset)?;
 	}: _(RawOrigin::Signed(staker.clone()), STAKING_FNFT_COLLECTION_ID.into(), FNFT_INSTANCE_ID_BASE.into(), amount)
 	verify {
-		assert_last_event::<T>(Event::StakeAmountExtended { fnft_collection_id: STAKING_FNFT_COLLECTION_ID.into(), fnft_instance_id: FNFT_INSTANCE_ID_BASE.into(), amount }.into());
+		assert_last_event::<T>(
+			Event::StakeAmountExtended {
+				fnft_collection_id: STAKING_FNFT_COLLECTION_ID.into(),
+				fnft_instance_id: FNFT_INSTANCE_ID_BASE.into(),
+				amount
+			}.into()
+		);
 	}
 
 	unstake {
@@ -198,27 +207,13 @@ benchmarks! {
 			100_000_000_000.into(),
 		).expect("minting should succeed");
 
-		let instance_id = assert_extrinsic_event_with::<T, <T as frame_system::Config>::Event, crate::Event::<T>, _, _, _>(
-			Pallet::<T>::stake(
-				RawOrigin::Signed(user.clone()).into(),
-				BASE_ASSET_ID.into(),
-				100_000_000.into(),
-				ONE_HOUR,
-			),
-			|event| match event {
-				crate::Event::Staked {
-					pool_id,
-					owner,
-					amount,
-					duration_preset,
-					fnft_collection_id,
-					fnft_instance_id,
-					reward_multiplier,
-					keep_alive
-				} => Some(fnft_instance_id),
-				_ => None,
-			}
+		let instance_id = stake_and_assert::<T>(
+			user.clone(),
+			BASE_ASSET_ID.into(),
+			100_000_000.into(),
+			ONE_HOUR,
 		);
+
 		let ratio = Permill::from_rational(1_u32, 7_u32)
 			.try_into_validated()
 			.unwrap();
@@ -233,7 +228,6 @@ benchmarks! {
 		let reward_asset_id = 1_u128.into();
 
 		let reward_config = RewardConfig {
-			max_rewards: 1_000_000.into(),
 			reward_rate: RewardRate::per_second(10_000),
 		};
 
@@ -313,5 +307,5 @@ benchmarks! {
 
 	}: _(RawOrigin::Signed(user), pool_id,  asset_id, amount, true)
 
-	impl_benchmark_test_suite!(Pallet, crate::test::new_test_ext(), crate::test::Test);
+	impl_benchmark_test_suite!(Pallet, crate::test::new_test_ext(), crate::runtime::Test);
 }

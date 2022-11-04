@@ -30,7 +30,7 @@ in {
         id = 2087;
         port = 31200;
         wsPort = 9988;
-        count = 2;
+        count = 3;
         chain = "dali-dev";
         bin = "${composable-bin}/bin/composable";
       }
@@ -38,7 +38,7 @@ in {
         id = 2000;
         port = 31210;
         wsPort = 9999;
-        count = 2;
+        count = 1;
         chain = "karura-dev";
         bin = "${acala-bin}/bin/acala";
         flags = [
@@ -48,7 +48,6 @@ in {
           "--ws-external"
           "--rpc-cors=all"
           "--rpc-methods=Unsafe"
-          "--force-authoring"
           "--log=xcm=trace"
           "--"
           "--execution=wasm"

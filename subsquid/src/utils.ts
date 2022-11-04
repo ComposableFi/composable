@@ -7,6 +7,7 @@ import { instance, mock } from "ts-mockito";
 import * as ss58 from "@subsquid/ss58";
 import { Store } from "@subsquid/typeorm-store";
 import { randomUUID } from "crypto";
+import BigNumber from "bignumber.js";
 
 export const BOB = "5woQTSqveJemxVbj4eodiBTSVfC4AAJ8CQS7SoyoyHWW7MA6";
 export const CHARLIE = "5wr4XcyxyJYQb71PbSPxhqujKnsS9UAydBhSypGvFgh2QXBa";
@@ -39,4 +40,13 @@ export function createAccount(): Uint8Array {
 
 export function encodeAccount(account: Uint8Array): string {
   return ss58.codec("picasso").encode(account);
+}
+
+// Get amount without decimals
+export function getAmountWithoutDecimals(
+  amount: bigint,
+  decimals: number
+): BigNumber {
+  return BigNumber(amount.toString()).div(BigNumber(10 ** decimals));
+  // return amount / BigInt(10 ** decimals);
 }

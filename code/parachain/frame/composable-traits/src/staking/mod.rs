@@ -33,9 +33,6 @@ pub struct Reward<Balance> {
 	/// of all of the stakes in the pool.
 	pub total_dilution_adjustment: Balance,
 
-	/// Upper bound on the `total_rewards - total_dilution_adjustment`.
-	pub max_rewards: Balance,
-
 	/// The rewarding rate that increases the pool `total_reward`
 	/// at a given time.
 	pub reward_rate: RewardRate<Balance>,
@@ -87,7 +84,6 @@ impl<Balance: Zero> Reward<Balance> {
 			total_rewards: Zero::zero(),
 			claimed_rewards: Zero::zero(),
 			total_dilution_adjustment: Zero::zero(),
-			max_rewards: reward_config.max_rewards,
 			reward_rate: reward_config.reward_rate,
 			last_updated_timestamp: now_seconds,
 		}
@@ -111,14 +107,8 @@ pub struct RewardPool<
 > {
 	pub owner: AccountId,
 
-	/// The staked asset id of the reward pool.
-	pub asset_id: AssetId,
-
 	/// rewards accumulated
 	pub rewards: BoundedBTreeMap<AssetId, Reward<Balance>, MaxRewards>,
-
-	/// Total shares distributed among stakers
-	pub total_shares: Balance,
 
 	/// Already claimed shares by stakers by unstaking
 	pub claimed_shares: Balance,
@@ -142,15 +132,9 @@ pub struct RewardPool<
 	pub minimum_staking_amount: Balance,
 }
 
-/// Default transfer limit on new asset added as rewards.
-pub const DEFAULT_MAX_REWARDS: u128 = 1_000_000_000_000_000_000_u128;
-
 /// Reward configurations for a given asset type.
 #[derive(RuntimeDebug, PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo)]
 pub struct RewardConfig<Balance> {
-	/// Upper bound on the `total_rewards - total_dilution_adjustment`.
-	pub max_rewards: Balance,
-
 	/// The rewarding rate that increases the pool `total_reward`
 	/// at a given time.
 	pub reward_rate: RewardRate<Balance>,
@@ -212,14 +196,10 @@ pub enum RewardPoolConfiguration<
 #[scale_info(skip_type_params(MaxReductions))]
 pub struct Stake<
 	AssetId: Debug + PartialEq + Eq + Clone,
-	ItemId: Debug + PartialEq + Eq + Clone,
 	RewardPoolId: Debug + PartialEq + Eq + Clone,
 	Balance: Debug + PartialEq + Eq + Clone,
 	MaxReductions: Get<u32>,
 > {
-	/// The ItemID is used in conjunction with the fNFT collection ID to identify the stake.
-	pub fnft_instance_id: ItemId,
-
 	/// Reward Pool ID from which pool to allocate rewards for this
 	pub reward_pool_id: RewardPoolId,
 
@@ -307,7 +287,7 @@ pub trait Staking {
 		position: Self::PositionId,
 		amount: Self::Balance,
 		keep_alive: bool,
-	) -> Result<Self::PositionId, DispatchError>;
+	) -> DispatchResult;
 
 	/// Unstake an actual staked position, represented by a NFT.
 	///

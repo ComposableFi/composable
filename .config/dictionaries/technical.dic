@@ -79,8 +79,10 @@ cdylib
 charlie
 chevdor
 chrono
+cita
 claimunstake
 clickup
+clsx
 cmake
 cmark
 codegen
@@ -97,6 +99,7 @@ cosm
 crev # cargo-crev
 dalek
 crowdloaning
+deadnix
 devcontainers
 devel
 dhms # day hour minute second
@@ -116,6 +119,7 @@ findutils
 fnft
 fnfts
 fontconfig
+fontname
 freetype
 fsevenm
 FSIZE
@@ -142,6 +146,8 @@ ifeq
 imagesdir
 imagesoutdir
 immer
+includeurl
+infima
 inprocess
 ipam
 ipetkov # github username
@@ -221,6 +227,7 @@ pctest
 peasy
 peekable
 peerset
+penwidth
 perbill
 permill
 
@@ -236,6 +243,7 @@ plantuml
 Pointable
 polkalaunch
 popout
+postinfo
 powd
 powf
 prebaked
@@ -292,6 +300,7 @@ snackbars
 sparkline
 sproof
 squeezy
+Stackexchange
 stakeform
 stakerclaimunstake
 startuml
@@ -300,6 +309,8 @@ stdenv
 structopt
 styleguide
 submessage
+submessages
+Subql
 substituters
 subwasm
 subxt
@@ -367,3 +378,5 @@ yzhang
 zlfzypzcr
 zstd
 zustand
+DACP
+divn

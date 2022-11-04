@@ -66,9 +66,9 @@ type Schedule {
 
 type VestingSchedule @entity {
   id: ID!
-  "account that initiates the schedule"
+  "Account that initiates the schedule"
   from: String! @index
-  "chain event ID"
+  "Chain event ID"
   eventId: String! @index
   "Vesting schedule ID from chain"
   scheduleId: BigInt! @index
@@ -95,12 +95,13 @@ type Activity @entity {
 }
 
 type Asset @entity {
-  "ID of the asset in Picasso"
+  "ID of the asset"
   id: ID!
   "ID of the event that added the last price"
   eventId: String! @index
   "Latest price in USD"
   price: BigInt!
+  decimals: Int
   historicalPrices: [HistoricalAssetPrice!] @derivedFrom(field: "asset")
 }
 
@@ -144,7 +145,7 @@ type StakingPosition @entity @index(fields: ["fnftCollectionId", "fnftInstanceId
   startTimestamp: BigInt!
   duration: BigInt!
   endTimestamp: BigInt
-  rewardMultiplier: Int!
+  rewardMultiplier: BigInt!
   source: LockedSource!
 }
 
@@ -155,6 +156,15 @@ type HistoricalLockedValue @entity {
   currency: Currency!
   timestamp: BigInt!
   source: LockedSource!
+}
+
+type HistoricalVolume @entity {
+  id: ID!
+  event: Event! @index
+  amount: BigInt!
+  currency: Currency!
+  timestamp: BigInt!
+  assetId: String!
 }
 
 type PabloTransaction @entity {

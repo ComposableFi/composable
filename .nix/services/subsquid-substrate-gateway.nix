@@ -1,4 +1,4 @@
-{ database, port }: {
+{ database }: {
   service = {
     name = "subsquid-substrate-gateway";
     image = "subsquid/substrate-gateway:firesquid";

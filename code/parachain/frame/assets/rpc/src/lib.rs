@@ -14,7 +14,7 @@ use sp_runtime::{generic::BlockId, traits::Block as BlockT};
 use sp_std::{sync::Arc, vec::Vec};
 
 #[rpc(client, server)]
-pub trait AssetsApi<BlockHash, AssetId, AccountId, Balance>
+pub trait AssetsApi<BlockHash, AssetId, AccountId, Balance, ForeignAssetId>
 where
 	AssetId: FromStr + Display,
 	Balance: FromStr + Display,
@@ -28,7 +28,7 @@ where
 	) -> RpcResult<SafeRpcWrapper<Balance>>;
 
 	#[method(name = "assets_listAssets")]
-	fn list_assets(&self, at: Option<BlockHash>) -> RpcResult<Vec<Asset>>;
+	fn list_assets(&self, at: Option<BlockHash>) -> RpcResult<Vec<Asset<ForeignAssetId>>>;
 }
 
 pub struct Assets<C, Block> {
@@ -42,18 +42,19 @@ impl<C, M> Assets<C, M> {
 	}
 }
 
-impl<C, Block, AssetId, AccountId, Balance>
-	AssetsApiServer<<Block as BlockT>::Hash, AssetId, AccountId, Balance>
+impl<C, Block, AssetId, AccountId, Balance, ForeignAssetId>
+	AssetsApiServer<<Block as BlockT>::Hash, AssetId, AccountId, Balance, ForeignAssetId>
 	for Assets<C, (Block, AssetId, AccountId, Balance)>
 where
 	Block: BlockT,
 	AssetId: Send + Sync + 'static + Codec + FromStr + Display,
 	AccountId: Send + Sync + 'static + Codec + FromStr + Display,
 	Balance: Send + Sync + 'static + Codec + FromStr + Display,
+	ForeignAssetId: Send + Sync + 'static + Codec,
 	C: Send + Sync + 'static,
 	C: ProvideRuntimeApi<Block>,
 	C: HeaderBackend<Block>,
-	C::Api: AssetsRuntimeApi<Block, AssetId, AccountId, Balance>,
+	C::Api: AssetsRuntimeApi<Block, AssetId, AccountId, Balance, ForeignAssetId>,
 {
 	fn balance_of(
 		&self,
@@ -79,7 +80,10 @@ where
 		})
 	}
 
-	fn list_assets(&self, at: Option<<Block as BlockT>::Hash>) -> RpcResult<Vec<Asset>> {
+	fn list_assets(
+		&self,
+		at: Option<<Block as BlockT>::Hash>,
+	) -> RpcResult<Vec<Asset<ForeignAssetId>>> {
 		let api = self.client.runtime_api();
 
 		let at = BlockId::hash(at.unwrap_or_else(|| {

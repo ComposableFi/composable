@@ -50,6 +50,7 @@ ignoreRegExpList:
   - shebang
 
 ignorePaths:
+  - "docs/static/fonts"
   - "code/parachain/node/src/res"
   - "target/"
   - "**/node_modules/"
@@ -61,6 +62,8 @@ ignorePaths:
   - "frontend/packages/defi-interfaces"
   - "code/integration-tests/runtime-tests/mochawesome-report"
   - "**/*.lock"
+  - "**/*.adoc"
+  - "rfcs/0008-pablo-lbp-cpp-restructure.md"
   - "frontend/apps/picasso/defi/polkadot/constants/contributions.json"
   - "frontend/apps/picasso/defi/polkadot/constants/pica-rewards-dev.json"
   - "frontend/apps/picasso/defi/polkadot/constants/pica-rewards.json"
@@ -77,3 +80,7 @@ ignorePaths:
   - "code/integration-tests/local-integration-tests/README.md"
   - "subsquid/src/interfaces"
   - "code/utils/composable-subxt/src/generated"
+  - "code/parachain/runtime/dali/src/weights/*"
+  - "code/parachain/runtime/picasso/src/weights/*"
+  - "code/parachain/runtime/composable/src/weights/*"
+  - "frontend/apps/picasso/defi/polkadot/pallets/Assets/karura.ts"
