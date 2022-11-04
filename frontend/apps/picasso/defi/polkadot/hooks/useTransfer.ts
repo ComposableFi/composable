@@ -71,16 +71,24 @@ export const useTransfer = () => {
           });
         },
         (txHash, records) => {
-          // Is for XCM Pallet
-          xcmPalletEventParser(
-            records,
-            api,
-            closeSnackbar,
-            snackbarKey,
-            enqueueSnackbar,
-            txHash
-          );
-          // TODO xTokens
+          if (api.events.xcmPallet) {
+            xcmPalletEventParser(
+              records,
+              api,
+              closeSnackbar,
+              snackbarKey,
+              enqueueSnackbar,
+              txHash
+            );
+          } else {
+            const outcome = records.find((record) =>
+              api.events.xTokens.TransferredMultiAssets.is(record.event)
+            );
+            if (outcome) {
+              console.log(outcome.event.toJSON());
+            }
+            console.log(JSON.stringify(records));
+          }
 
           setAmount(new BigNumber(0));
         },

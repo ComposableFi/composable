@@ -34,7 +34,9 @@ const Transfers: NextPage = () => {
   const tokens = useStore((state) => state.substrateTokens.tokens);
   const isLoaded = useStore((state) => state.substrateTokens.isLoaded);
   const fee = useStore((state) => state.transfers.fee);
-  const minValue = getDestChainFee(from, to, tokens).fee.plus(fee.partialFee);
+  const selectedToken = useStore((state) => state.transfers.selectedToken);
+  const destFee = getDestChainFee(from, to, tokens, selectedToken);
+  const minValue = destFee.fee ? destFee.fee.plus(fee.partialFee) : null;
   const feeTokenId = useStore((state) => state.transfers.getFeeToken(from));
   const selectedAccount = useSelectedAccount();
   const hasPendingXcmTransfer = usePendingExtrinsic(
