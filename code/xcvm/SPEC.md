@@ -454,7 +454,7 @@ Outgoing messages are routed based on bridge security, or by specifying the brid
 Each XCVM execution has access to its message `MessageOrigin` and can be configured to deny execution depending on the address or security level:
 
 ```
-<MessageOrgin> ::=
+<MessageOrigin> ::=
     <IBC>
     | <XCM>
     | <OTP>
