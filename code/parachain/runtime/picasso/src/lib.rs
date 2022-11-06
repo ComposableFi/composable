@@ -119,7 +119,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// The version of the runtime specification. A full node will not attempt to use its native
 	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
-	spec_version: 1401,
+	spec_version: 1402,
 	impl_version: 2,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -132,7 +132,7 @@ pub fn native_version() -> NativeVersion {
 	NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
 }
 
-use orml_traits::{parameter_type_with_key, LockIdentifier};
+use orml_traits::{parameter_type_with_key, LockIdentifier, MultiCurrency};
 parameter_type_with_key! {
 	// Minimum amount an account has to hold to stay in state
 	pub MultiExistentialDeposits: |currency_id: CurrencyId| -> Balance {
@@ -389,11 +389,29 @@ impl transaction_payment::Config for Runtime {
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 }
 
+/// Struct implementing `asset_tx_payment::HandleCredit` that determines the behavior when fees are
+/// paid in something other than the native token.
 pub struct TransferToTreasuryOrDrop;
 impl asset_tx_payment::HandleCredit<AccountId, Tokens> for TransferToTreasuryOrDrop {
 	fn handle_credit(credit: fungibles::CreditOf<AccountId, Tokens>) {
-		let _ =
-			<Tokens as fungibles::Balanced<AccountId>>::resolve(&TreasuryAccount::get(), credit);
+		// `old_free` is only the `free` balance of an account
+		let old_free = <Tokens as MultiCurrency<AccountId>>::free_balance(
+			credit.asset(),
+			&TreasuryAccount::get(),
+		);
+
+		// `new_free` is `old_free + credit.peek()`
+		let new_free = old_free.saturating_add(credit.peek());
+
+		// NOTE: After our runtime depends on paritytech/substrate PR#12569, this function will need
+		// to be re-evaluated as `set_balance` might not do what it is meant to do when implemented
+		// for pallet balances or orml tokens.
+		// https://github.com/paritytech/substrate/pull/12569
+		let _ = <Tokens as fungibles::Unbalanced<AccountId>>::set_balance(
+			credit.asset(),
+			&TreasuryAccount::get(),
+			new_free,
+		);
 	}
 }
 

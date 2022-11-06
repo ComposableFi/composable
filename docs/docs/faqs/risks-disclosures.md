@@ -1,8 +1,7 @@
 # Legal Disclosures
 
----
-
 ©2022 Composable Finance, Ltd. All right reserved.  
+
 This information contains “forward-looking statements”. These statements, identified by words such as “plan,” 
 “anticipate,” “believe,” “estimate,” “should,” “expect”, “will”, “can”, and similar future-looking expressions include 
 our expectations and objectives regarding our future operating results and business strategy. Forward-looking statements 

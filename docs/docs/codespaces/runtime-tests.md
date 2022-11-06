@@ -1,7 +1,5 @@
 # Runtime Tests
 
----
-
 ## Editing and writing runtime tests
 
 Editing and writing runtime tests is easy because it is already set up for you. 

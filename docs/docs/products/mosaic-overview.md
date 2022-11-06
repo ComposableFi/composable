@@ -1,6 +1,13 @@
-# Mosaic Overview
+# Mosaic Overview (Discontinued)
 
 ---
+
+**The initial iterations of the Mosaic bridge focused on aggregating liquidity and facilitating transfer availability
+for the ecosystem, but in order to align with our vision, our bridging solution needs to be optimized for security,
+efficiency, and user design. Therefore, the development of Mosaic has been discontinued.**
+
+**As Mosaic showcased a pioneering design in UX, it will serve as the UX that underpins the trustless bridging
+infrastructure that we’ve built — to Polkadot, NEAR, Cosmos, and many other chains to come**
 
 Mosaic is Composable Finance’s cross-chain transfer availability layer that combines a 
 [dynamic fee model](https://medium.com/composable-finance/the-dynamic-fee-model-powering-mosaics-transfer-availability-layer-f91011309592), 

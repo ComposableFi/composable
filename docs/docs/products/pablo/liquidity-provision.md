@@ -1,7 +1,5 @@
 # Liquidity provision and farming
 
----
-
 Liquidity providers (LPs) are able to provide liquidity to pools to allow traders to swap their tokens, in return for 
 trading fees as well as additional farming incentives. These are two separate things; farming rewards are paid out in 
 the form of either fNFTs or other tokens such as PBLO or PICA, while 80% of trading fees generated are accrued back to 

@@ -1,7 +1,5 @@
 # Additional Vault Pallet Details
 
----
-
 ## Vault Features
 
 Through this infrastructure, some of the overarching functionalities of Cubic include:

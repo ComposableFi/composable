@@ -1,37 +1,30 @@
 <br />
-<br />
 
 <p align="center">
   <img alt="Composable Finance" title="Composable Finance" src="banner.png">
 </p>
 
 <br />
-<br />
 
 ## Monorepo for Composable Finance
 
 [![Latest Release](https://img.shields.io/github/v/tag/composablefi/composable)][latest-url]
 ![Build][build-badge]
-[![Discord][discord-badge]][discord-url]
 [![Mergify Status][mergify-status]][mergify]
-
-
-
+[![Discord][discord-badge]][discord-url]
 
 [latest-url]: https://github.com/composablefi/composable/tags
-
 [build-badge]: https://github.com/composablefi/composable/actions/workflows/check.yml/badge.svg
 
 [discord-badge]: https://img.shields.io/badge/Discord-gray?logo=discord
-[discord-url]: https://discord.gg/pFZn2GCn65
+[discord-url]: https://discord.gg/composable
 
 [mergify]: https://dashboard.mergify.com/github/ComposableFi/repo/composable/queues
 [mergify-status]: https://img.shields.io/endpoint.svg?url=https://api.mergify.com/v1/badges/ComposableFi/composable&style=flat
 
 ## Documentation
 
-To learn more about our ecosystem, vision, and product specifics - visit our [book](https://docs.composable.finance).
-
+Visit our [docs](https://docs.composable.finance) to learn more about our ecosystem, vision, and product specifics.
 
 ## Nix
 

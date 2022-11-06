@@ -225,6 +225,7 @@ fn rockmine_shib_to_dali_transfer() {
 				Event::AssetsRegistry(assets_registry::Event::<Runtime>::AssetRegistered {
 					asset_id,
 					location: _,
+					decimals: _,
 				}) => Some(asset_id),
 				_ => None,
 			})
@@ -332,6 +333,7 @@ fn rockmine_stable_to_dali_transfer() {
 				Event::AssetsRegistry(assets_registry::Event::<Runtime>::AssetRegistered {
 					asset_id,
 					location: _,
+					decimals: _,
 				}) => Some(asset_id),
 				_ => None,
 			})
@@ -611,6 +613,7 @@ fn register_statemine_asset(remote_asset_id: CommonAssetId, ratio: Option<Ratio>
 				Event::AssetsRegistry(assets_registry::Event::<Runtime>::AssetRegistered {
 					asset_id,
 					location: _,
+					decimals: _,
 				}) => Some(asset_id),
 				_ => None,
 			})

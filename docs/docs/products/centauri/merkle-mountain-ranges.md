@@ -1,7 +1,5 @@
 # Merkle Mountain Ranges
 
----
-
 Merkle Mountain Range trees resolve the high computational volume problem by enabling highly efficient ancestry proofs. 
 Merkle Mountain Ranges (MMRs) are a special kind of Merkle tree that is composed of perfectly-sized binary subtrees in 
 descending order of height. For example, an MMR tree with 1,000,000 leaves will be composed of 8 perfect subtrees of 

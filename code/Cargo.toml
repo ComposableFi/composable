@@ -3,7 +3,7 @@ authors = ["Composable Developers"]
 edition = "2021"
 homepage = "https://composable.finance"
 name = "composable"
-version = "2.3.3"
+version = "2.3.4"
 
 [[bin]]
 name = "composable"

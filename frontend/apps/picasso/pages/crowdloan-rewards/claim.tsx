@@ -76,10 +76,6 @@ export const ClaimLoanPage = () => {
     textBelow: ERROR_MESSAGES.KSM_WALLET_NOT_CONNECTED.message,
   });
 
-  const updateBalance = useStore(
-    ({ substrateBalances }) => substrateBalances.updateBalance
-  );
-
   const isPendingClaim = usePendingExtrinsic(
     "claim",
     "crowdloanRewards",
@@ -134,15 +130,14 @@ export const ClaimLoanPage = () => {
     );
 
   const flow = useMemo(() => {
-    const pathNames = router.pathname.split("/");
-    const pathName = pathNames[pathNames.length - 1];
-
-    if (pathName.toLowerCase() === "ksm") {
-      return "KSM";
-    } else {
+    if (isEthAccountEligible && isPicassoAccountEligible) {
+      return "Claim"
+    } else if (isEthAccountEligible && !isPicassoAccountEligible) {
       return "Stable coin";
+    } else {
+      return "KSM";
     }
-  }, [router]);
+  }, [isEthAccountEligible, isPicassoAccountEligible]);
 
   const signPolkadotJs = useCallback(async (): Promise<string> => {
     try {

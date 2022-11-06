@@ -20,11 +20,16 @@ export default {
   },
   types: {
     ComposableTraitsAssetsXcmAssetLocation: "Null",
-    PalletCrowdloanRewardsModelsReward: "Null",
+    PalletCrowdloanRewardsModelsReward: {
+      total: "u128",
+      claimed: "u128",
+      vestingPeriod: "u64"
+    },
     PalletCrowdloanRewardsModelsRemoteAccount: {
       _enum: {
         RelayChain: "AccountId32",
-        Ethereum: "EthereumAccountId"
+        Ethereum: "EthereumAccountId",
+        Registry: "Null"
       }
     },
     ComposableTraitsCallFilterCallFilterEntry: "Null",
@@ -199,6 +204,48 @@ export default {
     PalletCosmwasmContractInfo: "Null",
     PalletCosmwasmCodeInfo: "Null",
     PalletCosmwasmEntryPoint: "Null",
-    PalletStakingRewardsRewardAccumulationHookError: "Null"
+    PalletStakingRewardsRewardAccumulationHookError: "Null",
+    XcmVersionedMultiAssets: "Null",
+    XcmVersionedMultiLocation: "Null",
+    XcmVersionedXcm: "Null",
+    PalletMultisigTimepoint: "Null",
+    XcmV2WeightLimit: "Null",
+    ComposableTraitsDexAssetAmount: "Null",
+    PalletCosmwasmCodeIdentifier: "Null",
+    XcmV1MultiLocation: "Null",
+    XcmV1MultiAsset: "Null",
+    XcmV1MultiassetMultiAssets: "Null",
+    XcmV2TraitsOutcome: "Null",
+    XcmV2Xcm: "Null",
+    SpRuntimeDispatchError: "Null",
+    SpRuntimeHeader: "Null",
+    SpVersionRuntimeVersion: "Null",
+    FrameSystemLimitsBlockWeights: "Null",
+    FrameSystemLimitsBlockLength: "Null",
+    FrameSupportWeightsRuntimeDbWeight: "Null",
+    PalletCollectiveVotes: "Null",
+    FrameSystemLastRuntimeUpgradeInfo: "Null",
+    FrameSystemPhase: "Null",
+    FrameSystemEventRecord: "Null",
+    SpRuntimeDigest: "Null",
+    FrameSupportWeightsPerDispatchClassU64: "Null",
+    SpCoreCryptoKeyTypeId: "Null",
+    PalletXcmQueryStatus: "Null",
+    PalletXcmVersionMigrationStage: "Null",
+    PolkadotCorePrimitivesOutboundHrmpMessage: "Null",
+    PalletBalancesReleases: "Null",
+    PalletBalancesReserveData: "Null",
+    PalletBalancesBalanceLock: {
+      amount: "Null",
+    },
+    PalletBalancesAccountData: "Null",
+    PalletAuthorshipUncleEntryItem: "Null",
+    PalletMultisigMultisig: "Null",
+    PalletTransactionPaymentReleases: "Null",
+    XcmV2TraitsError: "Null",
+    XcmV2Response: "Null",
+    FrameSupportTokensMiscBalanceStatus: "Null",
+    FrameSupportWeightsDispatchInfo: "Null",
+    FrameSupportPalletId: "Null",
   }
 };

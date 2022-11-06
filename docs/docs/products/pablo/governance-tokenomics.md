@@ -1,7 +1,5 @@
 # Governance & Tokenomics
 
----
-
 ## Governance
 
 Users who stake their PBLO tokens are given xPBLO fNFTs. They are able to use xPBLO in order to partake in governance 

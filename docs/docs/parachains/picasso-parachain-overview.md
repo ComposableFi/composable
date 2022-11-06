@@ -1,7 +1,5 @@
 # The Picasso Parachain 
 
----
-
 ## What is Picasso?
 
 Picasso is a custom-built Layer 1 blockchain, with a native token $PICA. It is built on the Kusama network, and as such 
