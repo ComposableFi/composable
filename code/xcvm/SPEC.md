@@ -86,7 +86,7 @@ generated using https://ecotrust-canada.github.io/markdown-toc/
 ## 1.1. Document Structure
 
 
-* XVCM is a DTCC-like protocol for blockchains.
+* XCVM is a DTCC-like protocol for blockchains.
 
     - Section 2.1. describes on-chain versioning.
 
