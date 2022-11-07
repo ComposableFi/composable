@@ -28,8 +28,54 @@
     };
   };
 
-  outputs = { self, flake-parts, ... }:
-    flake-parts.lib.mkFlake { inherit self; } {
+  outputs = { self, nixpkgs, flake-parts, ... }: let 
+      # for packages, apps, devShells, disallow darwin unless on allowlist
+      darwinPackages = [
+        "docs-static"
+     
+      ];
+      
+      darwinApps = [
+        "docs-dev"
+      
+      ];
+      
+      darwinDevShells = [
+        "minimal"
+      ];
+      
+      darwinSystems = [ "x86_64-darwin" "aarch64-darwin" ];
+      isDarwin = x: lib.elem x darwinSystems;
+      
+      lib = nixpkgs.lib;
+      
+      f = entry: n: v: if n == entry.name
+        then lib.mapAttrs (sn: sv: 
+            if isDarwin sn 
+            then lib.filterAttrs (pn: pv: lib.elem pn entry.allowList) sv
+            else sv) v
+        else v;     
+
+      entries = [
+        {
+          name = "packages";
+          allowList = darwinPackages;
+        }
+        {
+          name = "apps";
+          allowList = darwinApps;
+        }
+        {
+          name = "devShells";
+          allowList = darwinDevShells;
+        }
+      ];
+      
+
+      systemFilter = lib.foldl (n: v: ) f ;
+
+    in 
+    systemFilter (flake-parts.lib.mkFlake { inherit self; } {
       imports = [
         # To import a flake module
         # 1. Add foo to inputs
@@ -57,7 +103,7 @@
         ./subsquid/subsquid.nix
         ./subwasm.nix
       ];
-      systems = [ "x86_64-linux" "aarch64-linux" ];
+      systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
       perSystem = { config, self', inputs', pkgs, system, crane, ... }: {
         # Per-system attributes can be defined here. The self' and inputs'
         # module parameters provide easy access to attributes of the same
@@ -136,5 +182,5 @@
           ];
         };
       };
-    };
+    });
 }
