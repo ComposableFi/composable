@@ -333,7 +333,7 @@ contract Interpreter is IInterpreter {
         (newPos, , ) = _handleAssets(program, pos, account);
     }
 
-    function _handleBindingValue(bytes calldata program, uint64 pos)
+    function _handleBindingValue(bytes calldata program, uint64 pos, address relayer)
         internal
         returns (bytes memory valueToReplace, uint64 newPos)
     {
@@ -357,7 +357,10 @@ contract Interpreter is IInterpreter {
             newPos = pos + size;
             valueToReplace = abi.encode(address(this));
         } else if (valueType == 2) {
-            //TODO relayer
+            //self
+            (success, pos, size) = ProtobufLib.decode_embedded_message(pos, program);
+            newPos = pos + size;
+            valueToReplace = abi.encode(address(this));
         } else if (valueType == 3) {
             //TODO result
         } else if (valueType == 4) {
@@ -378,7 +381,8 @@ contract Interpreter is IInterpreter {
     function _handleBinding(
         bytes calldata program,
         uint64 pos,
-        bytes memory payload
+        bytes memory payload,
+        address relayer
     )
         internal
         returns (
@@ -396,7 +400,7 @@ contract Interpreter is IInterpreter {
         require(success, "decode embedded message failed");
 
         pos = _checkField(program, 2, ProtobufLib.WireType.LengthDelimited, pos);
-        (valueToReplace, pos) = _handleBindingValue(program, pos);
+        (valueToReplace, pos) = _handleBindingValue(program, pos, relayer);
         newPos = pos;
     }
 
@@ -525,7 +529,7 @@ contract Interpreter is IInterpreter {
         return temp;
     }
 
-    function _handleCall(bytes calldata program, uint64 pos) internal returns (uint64 newPos) {
+    function _handleCall(bytes calldata program, uint64 pos, address relayer) internal returns (uint64 newPos) {
         // reading call instruction
         uint64 size;
         (size, pos) = _getMessageLength(program, pos);
@@ -545,7 +549,7 @@ contract Interpreter is IInterpreter {
             while (pos < totalBindingsLength) {
                 uint64 position;
                 bytes memory valueToReplace;
-                (position, valueToReplace, pos) = _handleBinding(program, pos, payload);
+                (position, valueToReplace, pos) = _handleBinding(program, pos, payload, relayer);
                 payload = _replaceBytesByPosition(payload, position + positionToRight, valueToReplace);
                 positionToRight += uint64(valueToReplace.length) - 1;
             }
@@ -592,7 +596,7 @@ contract Interpreter is IInterpreter {
             } else if (instruction == uint64(OPERATION.SPAWN)) {
                 pos = _handleSpawn(program, pos);
             } else if (instruction == uint8(OPERATION.CALL)) {
-                pos = _handleCall(program, pos);
+                pos = _handleCall(program, pos, relayer);
             }
         }
     }
