@@ -34,6 +34,29 @@ describe("Interpreter", function () {
   });
 
   describe("interpreter with protobuf", function () {
+    it("test program using sdk: transfer unit to relayer", async function () {
+      let xcvm = new XCVM();
+      let data = xcvm.createProgram(
+        "0x01",
+        xcvm.createInstructions([
+          xcvm.createInstruction(
+            xcvm.createTransfer(xcvm.createRelayer(), [
+              xcvm.createAsset(
+                xcvm.createAssetId(1),
+                xcvm.createBalance(
+                  // 1.5
+                  xcvm.createUnit(1, xcvm.createRatio("1000", "2000"))
+                )
+              ),
+            ])
+          ),
+        ])
+      );
+      await router.runProgram({ networkId: 1, account: owner.address }, xcvm.encodeMessage(data), [], []);
+      // 1.5 units
+      expect((await erc20.balanceOf(owner.address)).toString()).to.be.equal("1500000000000000000");
+    });
+
     it("test program using sdk: transfer unit", async function () {
       let xcvm = new XCVM();
       let data = xcvm.createProgram(
@@ -56,6 +79,7 @@ describe("Interpreter", function () {
       // 1.5 units
       expect((await erc20.balanceOf(owner.address)).toString()).to.be.equal("1500000000000000000");
     });
+
 
     it("test program using sdk: transfer ratio", async function () {
       let xcvm = new XCVM();

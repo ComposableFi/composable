@@ -111,6 +111,7 @@ contract Interpreter is IInterpreter {
         newPos = pos + size;
     }
 
+
     function _handleUint128(bytes calldata program, uint64 pos) internal returns (uint128 value, uint64 newPos) {
         bool success;
         uint64 size;
@@ -301,7 +302,7 @@ contract Interpreter is IInterpreter {
         newPos = pos;
     }
 
-    function _handleTransfer(bytes calldata program, uint64 pos) internal returns (uint64 newPos) {
+    function _handleTransfer(bytes calldata program, uint64 pos, address relayer) internal returns (uint64 newPos) {
         // reading transfer instruction
         uint64 size;
         (size, pos) = _getMessageLength(program, pos);
@@ -318,7 +319,10 @@ contract Interpreter is IInterpreter {
         if (field == 1) {
             (account, pos) = _handleAccount(program, pos);
         } else if (field == 2) {
-            //TODO relayer NOT implemented
+            //self
+            (success, pos, size) = ProtobufLib.decode_embedded_message(pos, program);
+            newPos = pos + size;
+            account = relayer;
         } else {
             revert("no valid field");
         }
@@ -560,7 +564,7 @@ contract Interpreter is IInterpreter {
      * @notice encode and decode program using protobuf
      * @param program program encoded in bytes
      */
-    function interpret(bytes calldata program) public onlyOwnerOrCreator {
+    function interpret(bytes calldata program, address relayer) public onlyOwnerOrCreator {
         // reading program tag message
         uint64 pos = _checkField(program, 1, ProtobufLib.WireType.LengthDelimited, 0);
         uint64 size;
@@ -584,7 +588,7 @@ contract Interpreter is IInterpreter {
             require(success, "decode key failed");
 
             if (instruction == uint64(OPERATION.TRANSFER)) {
-                pos = _handleTransfer(program, pos);
+                pos = _handleTransfer(program, pos, relayer);
             } else if (instruction == uint64(OPERATION.SPAWN)) {
                 pos = _handleSpawn(program, pos);
             } else if (instruction == uint8(OPERATION.CALL)) {

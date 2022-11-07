@@ -2,7 +2,7 @@
 pragma solidity ^0.8.14;
 
 interface IInterpreter {
-    function interpret(bytes calldata program) external;
+    function interpret(bytes calldata program, address relayer) external;
 
     function addOwners(address[] calldata newOwners) external;
 

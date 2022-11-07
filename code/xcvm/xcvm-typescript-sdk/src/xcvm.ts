@@ -26,6 +26,7 @@ export class XCVM {
   BindingValueMessage: Type
   Uint128Message: Type
   SelfMessage: Type
+  RelayerMessage: Type
   messageTypeLookUp: { [k: string]: any } = {};
 
   constructor() {
@@ -51,6 +52,7 @@ export class XCVM {
     this.BindingValueMessage = this.root.lookupType("interpreter.BindingValue");
     this.Uint128Message =  this.root.lookupType("interpreter.Uint128");
     this.SelfMessage = this.root.lookupType("interpreter.Self");
+    this.RelayerMessage = this.root.lookupType("interpreter.Relayer");
     this.BridgeSecurityEnum = this.root.lookupEnum("interpreter.BridgeSecurity");
 
     this.messageTypeLookUp['Program'] = this.ProgramMessage;
@@ -74,6 +76,7 @@ export class XCVM {
     this.messageTypeLookUp['BridgeSecurity'] = this.BridgeSecurityEnum;
     this.messageTypeLookUp['Uint128'] = this.Uint128Message;
     this.messageTypeLookUp['Self'] = this.SelfMessage;
+    this.messageTypeLookUp['Relayer'] = this.RelayerMessage;
   }
 
   public encodeMessage(message: Message) {
@@ -263,6 +266,10 @@ export class XCVM {
 
   public createSelf(): Message<{}> {
     return this.SelfMessage.create({self: 1});
+  }
+
+  public createRelayer(): Message<{}> {
+    return this.RelayerMessage.create({relayer: 1});
   }
 
   public createBindingValue(bindingValueType: any): Message<{}> {

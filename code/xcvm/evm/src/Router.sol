@@ -108,7 +108,7 @@ contract Router is Ownable, IRouter {
         address payable interpreterAddress = _getOrCreateInterpreter(origin);
         _provisionAssets(interpreterAddress, _assets, _amounts);
 
-        IInterpreter(interpreterAddress).interpret(program);
+        IInterpreter(interpreterAddress).interpret(program, msg.sender);
     }
 
     function createInterpreter(Origin memory origin) public {
