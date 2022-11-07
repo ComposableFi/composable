@@ -36,6 +36,8 @@ pub enum CosmwasmVMError<T: Config> {
 	OutOfGas,
 	Unsupported,
 	Rpc(String),
+	#[cfg(feature = "ibc")]
+	Ibc(String),
 }
 
 impl<T: Config> core::fmt::Display for CosmwasmVMError<T> {

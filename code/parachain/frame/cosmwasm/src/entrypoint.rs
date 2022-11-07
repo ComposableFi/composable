@@ -9,12 +9,14 @@ use alloc::{
 };
 use composable_support::abstractions::utils::increment::Increment;
 use core::marker::PhantomData;
-use cosmwasm_minimal_std::Coin;
+use cosmwasm_minimal_std::{Binary, Coin, Event as CosmwasmEvent};
+#[cfg(feature = "ibc")]
+use cosmwasm_vm::executor::ibc::*;
 use cosmwasm_vm::{
 	executor::{ExecuteInput, InstantiateInput, MigrateInput},
 	system::{
-		cosmwasm_system_entrypoint, cosmwasm_system_run, CosmwasmCallVM, CosmwasmCodeId,
-		StargateCosmwasmCallVM,
+		cosmwasm_system_entrypoint, cosmwasm_system_entrypoint_serialize, cosmwasm_system_run,
+		CosmwasmCallVM, CosmwasmCodeId, StargateCosmwasmCallVM,
 	},
 	vm::VmErrorOf,
 };
@@ -44,6 +46,9 @@ impl CallerState for MigrateInput {}
 impl CallerState for InstantiateInput {}
 
 impl CallerState for ExecuteInput {}
+
+#[cfg(feature = "ibc")]
+impl CallerState for IbcChannelOpen {}
 
 impl<I, O, T: Config> CallerState for Dispatchable<I, O, T> {}
 
@@ -100,7 +105,30 @@ impl EntryPointCaller<InstantiateInput> {
 	}
 }
 
-/// Setup state for `execute` entrypoint.
+#[cfg(feature = "ibc")]
+impl EntryPointCaller<IbcChannelOpen> {
+	/// Prepares for `execute` entrypoint call.
+	///
+	/// * `executor` - Address of the account that calls this entrypoint.
+	/// * `contract` - Address of the contract to be called.
+	pub(crate) fn setup<T: Config>(
+		executor: AccountIdOf<T>,
+		contract: AccountIdOf<T>,
+	) -> Result<EntryPointCaller<Dispatchable<IbcChannelOpen, (), T>>, Error<T>> {
+		let contract_info = Pallet::<T>::contract_info(&contract)?;
+		Ok(EntryPointCaller {
+			state: Dispatchable {
+				entry_point: EntryPoint::IbcChannelOpen,
+				sender: executor,
+				contract,
+				contract_info,
+				output: (),
+				marker: PhantomData,
+			},
+		})
+	}
+}
+
 impl EntryPointCaller<ExecuteInput> {
 	/// Prepares for `execute` entrypoint call.
 	///
@@ -187,6 +215,40 @@ where
 		for<'x> WasmiVM<CosmwasmVM<'x, T>>: CosmwasmCallVM<I> + StargateCosmwasmCallVM,
 		for<'x> VmErrorOf<WasmiVM<CosmwasmVM<'x, T>>>: Into<CosmwasmVMError<T>>,
 	{
+		self.call_internal(shared, funds, |vm| {
+			cosmwasm_system_entrypoint::<I, _>(vm, &message).map_err(Into::into)
+		})
+	}
+
+	pub(crate) fn call_json<Message>(
+		self,
+		shared: &mut CosmwasmVMShared,
+		funds: FundsOf<T>,
+		message: Message,
+	) -> Result<O, CosmwasmVMError<T>>
+	where
+		for<'x> WasmiVM<CosmwasmVM<'x, T>>: CosmwasmCallVM<I> + StargateCosmwasmCallVM,
+		for<'x> VmErrorOf<WasmiVM<CosmwasmVM<'x, T>>>: Into<CosmwasmVMError<T>>,
+		Message: serde::Serialize,
+	{
+		self.call_internal(shared, funds, |vm| {
+			cosmwasm_system_entrypoint_serialize::<I, _, Message>(vm, &message).map_err(Into::into)
+		})
+	}
+
+	fn call_internal<F>(
+		self,
+		shared: &mut CosmwasmVMShared,
+		funds: FundsOf<T>,
+		message: F,
+	) -> Result<O, CosmwasmVMError<T>>
+	where
+		for<'x> WasmiVM<CosmwasmVM<'x, T>>: CosmwasmCallVM<I> + StargateCosmwasmCallVM,
+		for<'x> VmErrorOf<WasmiVM<CosmwasmVM<'x, T>>>: Into<CosmwasmVMError<T>>,
+		F: for<'x> FnOnce(
+			&'x mut WasmiVM<CosmwasmVM<'x, T>>,
+		) -> Result<(Option<Binary>, Vec<CosmwasmEvent>), CosmwasmVMError<T>>,
+	{
 		Pallet::<T>::do_extrinsic_dispatch(
 			shared,
 			self.state.entry_point,
@@ -194,9 +256,7 @@ where
 			self.state.contract,
 			self.state.contract_info,
 			funds,
-			// `cosmwasm_system_entrypoint` is called instead of `cosmwasm_system_run`
-			// to start a transaction.
-			|vm| cosmwasm_system_entrypoint::<I, _>(vm, &message).map_err(Into::into),
+			|vm| message(vm).map_err(Into::into),
 		)?;
 		Ok(self.state.output)
 	}

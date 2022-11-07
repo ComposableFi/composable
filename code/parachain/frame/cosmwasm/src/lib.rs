@@ -39,6 +39,7 @@ extern crate alloc;
 
 pub use pallet::*;
 
+#[cfg(feature = "ibc")]
 pub mod ibc;
 pub mod instrument;
 pub mod runtimes;
@@ -148,6 +149,8 @@ pub mod pallet {
 		Reply,
 		Sudo,
 		Query,
+		#[cfg(feature = "ibc")]
+		IbcChannelOpen,
 	}
 
 	#[derive(Copy, Clone, PartialEq, Eq, Encode, Decode, TypeInfo, Debug)]
@@ -196,6 +199,10 @@ pub mod pallet {
 			contract: AccountIdOf<T>,
 			old_admin: Option<AccountIdOf<T>>,
 		},
+		#[cfg(feature = "ibc")]
+		IbcChannelOpen {
+			contract: AccountIdOf<T>,
+		},
 	}
 
 	#[pallet::error]
@@ -228,6 +235,8 @@ pub mod pallet {
 		IteratorNotFound,
 		NotAuthorized,
 		Unsupported,
+		#[cfg(feature = "ibc")]
+		Ibc,
 	}
 
 	#[pallet::config]
@@ -357,6 +366,13 @@ pub mod pallet {
 
 		/// Weight implementation.
 		type WeightInfo: WeightInfo;
+
+		/// account which execute relayer calls IBC exported entry points
+		#[cfg(feature = "ibc")]
+		type IbcRelayerAccount: Get<AccountIdOf<Self>>;
+
+		#[cfg(feature = "ibc")]
+		type IbcRelayer: ibc_primitives::IbcHandler;
 	}
 
 	#[pallet::pallet]
@@ -416,10 +432,9 @@ pub mod pallet {
 		/// - `code` the actual wasm code.
 		#[transactional]
 		#[pallet::weight(T::WeightInfo::upload(code.len() as u32))]
-		pub fn upload(origin: OriginFor<T>, code: ContractCodeOf<T>) -> DispatchResultWithPostInfo {
+		pub fn upload(origin: OriginFor<T>, code: ContractCodeOf<T>) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			Self::do_upload(&who, code)?;
-			Ok(().into())
+			Self::do_upload(&who, code)
 		}
 
 		/// Instantiate a previously uploaded code resulting in a new contract being generated.
@@ -952,14 +967,18 @@ pub mod pallet {
 			Ok(())
 		}
 
+		fn block_env() -> BlockInfo {
+			BlockInfo {
+				height: frame_system::Pallet::<T>::block_number().saturated_into(),
+				time: Timestamp(T::UnixTime::now().as_secs().into()),
+				chain_id: T::ChainId::get().into(),
+			}
+		}
+
 		/// Extract the current environment from the pallet.
 		pub(crate) fn cosmwasm_env(cosmwasm_contract_address: CosmwasmAccount<T>) -> Env {
 			Env {
-				block: BlockInfo {
-					height: frame_system::Pallet::<T>::block_number().saturated_into(),
-					time: Timestamp(T::UnixTime::now().as_secs().into()),
-					chain_id: T::ChainId::get().into(),
-				},
+				block: Self::block_env(),
 				transaction: frame_system::Pallet::<T>::extrinsic_index()
 					.map(|index| TransactionInfo { index }),
 				contract: CosmwasmContractInfo {
