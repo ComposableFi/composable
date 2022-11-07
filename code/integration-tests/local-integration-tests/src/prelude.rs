@@ -3,7 +3,7 @@ pub use crate::testing::*;
 pub use codec::{Decode, Encode};
 pub use common::{
 	fees::{multi_existential_deposits, NativeExistentialDeposit, PriceConverter},
-	topology, AccountId,
+	AccountId,
 };
 pub use composable_traits::{
 	currency::{AssetExistentialDepositInspect, AssetRatioInspect, CurrencyFactory, Rational64},
@@ -23,7 +23,7 @@ pub use frame_system::RawOrigin;
 
 pub use frame_system::{pallet_prelude::*, Config};
 pub use num_traits::{One, Zero};
-pub use primitives::currency::*;
+pub use primitives::{currency::*, topology};
 pub use sp_runtime::{
 	traits::StaticLookup, DispatchError, FixedPointNumber, FixedU128, ModuleError,
 };
@@ -36,26 +36,17 @@ pub use sp_runtime::{assert_eq_error_rate, traits::AccountIdConversion, MultiAdd
 #[cfg(test)]
 pub use more_asserts::*;
 
-pub type XcmCurrency<
-	Consensus,
-	const ID: u128,
-	const EXPONENT: u8 = 12,
-	const RESERVE_EXPONENT: u8 = 12,
-> = composable_tests_helpers::test::currency::ComposableCurrency<
-	Consensus,
-	ID,
-	EXPONENT,
-	RESERVE_EXPONENT,
->;
+pub type XcmCurrency<Consensus, const ID: u128, const EXPONENT: u8 = 12> =
+	composable_tests_helpers::test::currency::ComposableCurrency<Consensus, ID, EXPONENT>;
 
-pub type USDT = XcmCurrency<statemine_runtime::Runtime, 1984, 6, 6>;
+pub type USDT = XcmCurrency<statemine_runtime::Runtime, 1984, 6>;
 
 #[allow(non_camel_case_types)]
-pub type xUSDT = XcmCurrency<this_runtime::Runtime, 1984, 12, 6>;
+pub type xUSDT = XcmCurrency<this_runtime::Runtime, 1984, 6>;
 
-pub type STABLE = XcmCurrency<statemine_runtime::Runtime, 666, 12, 3>;
-pub type PICA = XcmCurrency<this_runtime::Runtime, 1, 12, 12>;
-pub type KSM = XcmCurrency<statemine_runtime::Runtime, 1, 12, 12>;
+pub type STABLE = XcmCurrency<statemine_runtime::Runtime, 666, 3>;
+pub type PICA = XcmCurrency<this_runtime::Runtime, 1, 12>;
+pub type KSM = XcmCurrency<statemine_runtime::Runtime, 1, 12>;
 
 #[allow(non_camel_case_types)]
 pub type RELAY_NATIVE = KSM;

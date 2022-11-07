@@ -3,6 +3,7 @@ use codec::{CompactAs, Decode, Encode, MaxEncodedLen};
 use composable_support::validation::Validate;
 use composable_traits::{assets::Asset, currency::Exponent, xcm::assets::XcmAssetLocation};
 use core::{fmt::Display, ops::Div, str::FromStr};
+use frame_support::WeakBoundedVec;
 use scale_info::TypeInfo;
 use sp_runtime::{
 	sp_std::{ops::Deref, vec::Vec},
@@ -12,6 +13,8 @@ use sp_runtime::{
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
+use crate::topology;
+use xcm::latest::prelude::*;
 /// Trait used to write generalized code over well know currencies
 /// We use const to allow for match on these
 /// Allows to have reuse of code amids runtime and cross relay transfers in future.
@@ -63,22 +66,12 @@ impl WellKnownCurrency for CurrencyId {
 	const RELAY_NATIVE: CurrencyId = CurrencyId::KSM;
 }
 
+#[macro_export]
 macro_rules! list_assets {
 	(
 		$(
 			$(#[$attr:meta])*
 			pub const $NAME:ident: CurrencyId = CurrencyId($id:literal, $location:expr);
-		)*
-	) =>  {
-		$crate::list_assets! {
-			$(#[$attr:meta])*
-			pub const $NAME:ident: CurrencyId = CurrencyId($id:literal);
-		}
-	};
-	(
-		$(
-			$(#[$attr:meta])*
-			pub const $NAME:ident: CurrencyId = CurrencyId($id:literal);
 		)*
 	) => {
 		$(
@@ -100,14 +93,35 @@ macro_rules! list_assets {
 			}
 		}
 
-		const RELAY_NATIVE_CURRENCIES: [CurrencyId; 1] = [CurrencyId::KSM];
-
-		fn known_location(id: CurrencyId) -> Option<XcmAssetLocation> {
-			if Self::RELAY_NATIVE_CURRENCIES.contains(&id) {
-				return Some(XcmAssetLocation::RELAY_NATIVE)
+		pub fn local_to_xcm_reserve(id: CurrencyId) -> Option<xcm::latest::MultiLocation> {
+			$(
+				let $NAME = $location;
+			)*
+            match id {
+				$(
+					CurrencyId::$NAME => $NAME,
+				)*
+				_ => None,
 			}
-			// Note: add other known locations
-			None
+		}
+
+		pub fn xcm_reserve_to_local(remote_id: xcm::latest::MultiLocation) -> Option<CurrencyId> {
+			use lazy_static::lazy_static;
+			use sp_std::collections::btree_map::BTreeMap;
+
+			lazy_static! {
+				static ref XCM_ASSETS: BTreeMap<Vec<u8>, CurrencyId> = {
+					let mut map = BTreeMap::new();
+					$(
+						let xcm_id: Option<xcm::latest::MultiLocation> = $location;
+						if let Some(xcm_id) = xcm_id {
+							map.insert(xcm_id.encode(), CurrencyId::$NAME);
+						}
+					)*
+					map
+				};
+			}
+			XCM_ASSETS.get(&remote_id.encode()).map(|x| *x)
 		}
 
 		pub fn list_assets() -> Vec<Asset<XcmAssetLocation>> {
@@ -116,7 +130,7 @@ macro_rules! list_assets {
 					id: CurrencyId::$NAME.0 as u128,
 					name: Some(stringify!($NAME).as_bytes().to_vec()),
 					decimals: 12_u8.into(),
-					foreign_id: Self::known_location(CurrencyId::$NAME)
+					foreign_id: Self::local_to_xcm_reserve(CurrencyId::$NAME).map(XcmAssetLocation::new)
 				},)*
 			]
 			.to_vec()
@@ -130,64 +144,108 @@ impl CurrencyId {
 	list_assets! {
 		// Native Tokens (1 - 100)
 		/// Runtime native token Kusama
-		pub const PICA: CurrencyId = CurrencyId(1);
+		pub const PICA: CurrencyId = CurrencyId(
+			1,
+			Some(topology::this::LOCAL)
+		);
 		/// Runtime native token Polkadot
-		pub const LAYR: CurrencyId = CurrencyId(2);
+		pub const LAYR: CurrencyId = CurrencyId(2, None);
 		// NOTE: CurrencyId 3 is empty, fill as needed
 
 		/// Kusama native token
-		pub const KSM: CurrencyId = CurrencyId(4);
-		pub const PBLO: CurrencyId = CurrencyId(5);
+		pub const KSM: CurrencyId = CurrencyId(
+			4,
+			Some(MultiLocation::parent())
+		);
+		pub const PBLO: CurrencyId = CurrencyId(
+			5,
+			Some(MultiLocation {
+				parents: 0,
+				interior: X1(GeneralIndex(5)),
+			})
+		);
 		#[allow(non_upper_case_globals)]
-		pub const ibcDOT: CurrencyId = CurrencyId(6);
+		pub const ibcDOT: CurrencyId = CurrencyId(6, None);
 
 		// Non-Native Tokens (101 - 1000)
 		/// Karura KAR
-		pub const KAR: CurrencyId = CurrencyId(101);
+		pub const KAR: CurrencyId = CurrencyId(
+			101,
+			Some(MultiLocation {
+				parents: 1,
+				interior: X2(
+					Parachain(topology::karura::ID),
+					GeneralKey(WeakBoundedVec::force_from(
+						topology::karura::KAR_KEY.to_vec(),
+						None,
+					)),
+				),
+			})
+		);
 		/// BIFROST BNC
-		pub const BNC: CurrencyId = CurrencyId(102);
+		pub const BNC: CurrencyId = CurrencyId(102, None);
 		/// BIFROST vKSM
 		#[allow(non_upper_case_globals)]
-		pub const vKSM: CurrencyId = CurrencyId(103);
+		pub const vKSM: CurrencyId = CurrencyId(103, None);
 		/// Moonriver MOVR
-		pub const MOVR: CurrencyId = CurrencyId(104);
+		pub const MOVR: CurrencyId = CurrencyId(104, None);
 		// NOTE: Empty CurrencyId slots starting with 105
 
-		/// Karura stable coin(Karura Dollar), not native.
+		/// Karura stable coin(Acala Dollar), not native.
 		#[allow(non_upper_case_globals)]
-		pub const kUSD: CurrencyId = CurrencyId(129);
+		pub const kUSD: CurrencyId = CurrencyId(
+			129,
+			Some(MultiLocation {
+				parents: 1,
+				interior: X2(
+					Parachain(topology::karura::ID),
+					GeneralKey(WeakBoundedVec::force_from(
+						topology::karura::AUSD_KEY.to_vec(),
+						None,
+					)),
+				),
+			})
+		);
+
 		/// Statemine USDT
-		pub const USDT: CurrencyId = CurrencyId(130);
-		pub const USDC: CurrencyId = CurrencyId(131);
+		pub const USDT: CurrencyId = CurrencyId(
+			130,
+			Some(MultiLocation {
+				parents: 1,
+				interior: X3(
+					Parachain(topology::common_good_assets::ID),
+					PalletInstance(topology::common_good_assets::ASSETS),
+					GeneralIndex(topology::common_good_assets::USDT),
+				),
+			})
+		);
+		pub const USDC: CurrencyId = CurrencyId(131, None);
 		/// Wrapped BTC
 		#[allow(non_upper_case_globals)]
-		pub const wBTC: CurrencyId = CurrencyId(132);
+		pub const wBTC: CurrencyId = CurrencyId(132, None);
 		/// Wrapped ETH
 		#[allow(non_upper_case_globals)]
-		pub const wETH: CurrencyId = CurrencyId(133);
-		/// Acala Dollar
-		#[allow(non_upper_case_globals)]
-		pub const aUSD: CurrencyId = CurrencyId(134);
+		pub const wETH: CurrencyId = CurrencyId(133, None);
 
 		// Staked asset xTokens (1001 - 2000)
 		/// Staked asset xPICA Token
 		#[allow(non_upper_case_globals)]
-		pub const xPICA: CurrencyId = CurrencyId(1001);
+		pub const xPICA: CurrencyId = CurrencyId(1001, None);
 		/// Staked asset xLAYR Token
 		#[allow(non_upper_case_globals)]
-		pub const xLAYR: CurrencyId = CurrencyId(1002);
+		pub const xLAYR: CurrencyId = CurrencyId(1002, None);
 		/// Staked asset xKSM Token
 		#[allow(non_upper_case_globals)]
-		pub const xKSM: CurrencyId = CurrencyId(1004);
+		pub const xKSM: CurrencyId = CurrencyId(1004, None);
 		/// Staked asset xPBLO Token
 		#[allow(non_upper_case_globals)]
-		pub const xPBLO: CurrencyId = CurrencyId(1005);
+		pub const xPBLO: CurrencyId = CurrencyId(1005, None);
 
 		// fNFT Collection IDs (2001 - 100_000_000_000)
 		/// PICA Stake fNFT Collection
-		pub const PICA_STAKE_FNFT_COLLECTION: CurrencyId = CurrencyId(2001);
+		pub const PICA_STAKE_FNFT_COLLECTION: CurrencyId = CurrencyId(2001, None);
 		/// PBLO Stake fNFT Collection
-		pub const PBLO_STAKE_FNFT_COLLECTION: CurrencyId = CurrencyId(2005);
+		pub const PBLO_STAKE_FNFT_COLLECTION: CurrencyId = CurrencyId(2005, None);
 	}
 
 	#[inline(always)]
@@ -273,6 +331,21 @@ impl From<CurrencyId> for xcm::latest::Junction {
 	}
 }
 
+#[cfg(test)]
+mod common_sense {
+	use super::*;
+	use xcm::latest::prelude::*;
+	#[test]
+	fn no_wrong_map() {
+		assert_eq!(
+			CurrencyId::xcm_reserve_to_local(MultiLocation {
+				parents: 1,
+				interior: X3(Parachain(1000), PalletInstance(50), GeneralIndex(666))
+			}),
+			None
+		);
+	}
+}
 mod ops {
 	use super::CurrencyId;
 	use core::ops::{Add, Mul};

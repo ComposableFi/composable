@@ -14,6 +14,8 @@ codec = { package = "parity-scale-codec", version = "3.0.0", default-features = 
 ] }
 composable-support = { path = "../../frame/composable-support", default-features = false }
 composable-traits = { path = "../../frame/composable-traits", default-features = false }
+frame-support = { package = "frame-support", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
+lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
@@ -32,4 +34,6 @@ std = [
   "composable-support/std",
   "scale-info/std",
   "sp-std/std",
+  "frame-support/std",
+  "xcm/std",
 ]

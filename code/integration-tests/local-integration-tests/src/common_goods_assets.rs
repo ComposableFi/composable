@@ -276,7 +276,7 @@ fn rockmine_stable_to_dali_transfer() {
 		ParaId::from(topology::common_good_assets::ID).into_account_truncating();
 	let statemine_asset_id = STABLE::ID as u32;
 	let total_issuance = 3_500_000_000_000;
-	let transfer_amount = STABLE::RESERVE_ONE;
+	let transfer_amount = STABLE::ONE;
 	Statemine::execute_with(|| {
 		log::info!(target: "bdd", "Given STABLE on Statemine registered");
 		use statemine_runtime::*;
@@ -315,14 +315,14 @@ fn rockmine_stable_to_dali_transfer() {
 			)
 			.into(),
 		);
-		let ratio = Rational64::from(STABLE::RESERVE_ONE as u64 * 15, 1000 * PICA::ONE as u64);
+		let ratio = Rational64::from(STABLE::ONE as u64 * 15, 1000 * PICA::ONE as u64);
 
 		AssetsRegistry::register_asset(
 			root.into(),
 			location.clone(),
 			1,
 			Some(ratio),
-			Some(STABLE::RESERVE_EXPONENT),
+			Some(STABLE::EXPONENT),
 		)
 		.unwrap();
 		System::events()
@@ -455,14 +455,11 @@ fn this_chain_side(relay_native_asset_amount: u128, foreign_asset_id_on_this: Cu
 			bob_statemine_asset_amount,
 			TEN - FEE_NATIVE_STATEMINE - FEE_WEIGHT_THIS
 		);
-		// ensure sender has enough KSM balance to be charged as fee
 		assert_ok!(Tokens::deposit(CurrencyId::RELAY_NATIVE, &AccountId::from(BOB), TEN));
 		assert!(relay_native_asset_amount != 0);
 		log::info!(target: "xcmp::test", "sending assets back to statemine");
 		assert_ok!(XTokens::transfer_multicurrencies(
 			Origin::signed(BOB.into()),
-			// statemine sends and receives only its ids from u32 range, which is our foreign
-			// range,
 			vec![
 				(CurrencyId::RELAY_NATIVE, relay_native_asset_amount),
 				(foreign_asset_id_on_this, UNIT),

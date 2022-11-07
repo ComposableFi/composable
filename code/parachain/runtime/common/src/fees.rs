@@ -24,7 +24,7 @@ pub struct WeightToFeeConverter;
 impl WeightToFeePolynomial for WeightToFeeConverter {
 	type Balance = Balance;
 	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
-		NativeExistentialDeposit::get();
+		NATIVE_EXISTENTIAL_DEPOSIT;
 		let p = CurrencyId::milli::<Balance>();
 		let q = 10 * Balance::from(ExtrinsicBaseWeight::get());
 		smallvec::smallvec![WeightToFeeCoefficient {
@@ -77,7 +77,7 @@ impl WellKnownForeignToNativePriceConverter {
 			CurrencyId::KSM => Some(rational!(375 / 1_000_000)),
 			CurrencyId::ibcDOT => Some(rational!(2143 / 1_000_000)),
 			CurrencyId::USDT | CurrencyId::USDC => Some(rational!(15 / 1_000_000_000)),
-			CurrencyId::aUSD | CurrencyId::kUSD => Some(rational!(15 / 1_000)),
+			CurrencyId::kUSD => Some(rational!(15 / 1_000)),
 			CurrencyId::PICA => Some(rational!(1 / 1)),
 			CurrencyId::PBLO => Some(rational!(1 / 1)),
 			_ => None,
@@ -108,9 +108,7 @@ impl<AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>>
 		asset_id: CurrencyId,
 	) -> Result<Balance, Self::Error> {
 		AssetsRegistry::get_ratio(asset_id)
-			.and_then(|x| {
-				safe_multiply_by_rational(native_amount, x.n().into(), x.d().into()).ok()
-			})
+			.and_then(|x| safe_multiply_by_rational(native_amount, x.n().into(), x.d().into()).ok())
 			.or(WellKnownForeignToNativePriceConverter::to_asset_balance(native_amount, asset_id))
 			.ok_or(DispatchError::Other(cross_chain_errors::ASSET_PRICE_NOT_FOUND))
 	}
@@ -143,8 +141,11 @@ mod commons_sense {
 	#[cfg(not(feature = "runtime-benchmarks"))]
 	#[test]
 	fn usdt() {
-		let converted_static =
-			WellKnownForeignToNativePriceConverter::to_asset_balance(1_000_000_000, CurrencyId::USDT).unwrap();
+		let converted_static = WellKnownForeignToNativePriceConverter::to_asset_balance(
+			1_000_000_000,
+			CurrencyId::USDT,
+		)
+		.unwrap();
 		let converted_dynamic =
 			PriceConverter::<Dummy>::to_asset_balance(1_000_000_000, CurrencyId::USDT).unwrap();
 		assert_eq!(converted_static, converted_dynamic);

@@ -1,5 +1,5 @@
-use frame_support::traits::Currency;
 use crate::prelude::*;
+use frame_support::traits::Currency;
 
 pub type NegativeImbalance<T> =
 	<balances::Pallet<T> as Currency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;

@@ -56,8 +56,8 @@ pub mod pallet {
 	use composable_traits::{
 		assets::BasicAssetMetadata,
 		currency::{
-			AssetDataMutate, AssetExistentialDepositInspect, AssetIdLike, BalanceLike,
-			CurrencyFactory, Exponent, LocalAssets,
+			AssetExistentialDepositInspect, AssetIdLike, BalanceLike, CurrencyFactory, Exponent,
+			LocalAssets,
 		},
 	};
 	use frame_support::{pallet_prelude::*, traits::EnsureOrigin, transactional, PalletId};
@@ -221,8 +221,8 @@ pub mod pallet {
 
 	impl<T: Config> LocalAssets<T::AssetId> for Pallet<T> {
 		// NOTE: it is not true as of now, so we should not rely on chain for this.
-		// NOTE: XCM does not supports decimals and Statemine can have assets without decimals
-		// NOTE: hence we cannot default to 12 decimals robustly 
+		// NOTE: XCM does not support decimals and Statemine can have assets without decimals
+		// NOTE: hence we cannot default to 12 decimals robustly
 		fn decimals(_currency_id: T::AssetId) -> Result<Exponent, DispatchError> {
 			Ok(12)
 		}

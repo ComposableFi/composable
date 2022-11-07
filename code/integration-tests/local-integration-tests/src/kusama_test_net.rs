@@ -22,7 +22,7 @@ decl_test_parachain! {
 		Origin = statemine_runtime::Origin,
 		XcmpMessageHandler = statemine_runtime::XcmpQueue,
 		DmpMessageHandler = statemine_runtime::DmpQueue,
-		new_ext = para_ext(common::topology::statemine::ID),
+		new_ext = para_ext(topology::statemine::ID),
 	}
 }
 
@@ -183,6 +183,7 @@ pub fn para_ext(parachain_id: u32) -> sp_io::TestExternalities {
 	let mut storage = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
 	balances::GenesisConfig::<Runtime> {
 		balances: vec![
+			// remove ALICE when all tests refactored
 			(AccountId::from(ALICE), ALICE_PARACHAIN_BALANCE),
 			(AccountId::from(alice()), ALICE_PARACHAIN_BALANCE),
 		],

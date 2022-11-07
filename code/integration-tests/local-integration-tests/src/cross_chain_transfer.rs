@@ -168,7 +168,7 @@ fn transfer_this_native_to_sibling_overridden() {
 		let after = Balances::balance(&sibling_account(SIBLING_PARA_ID));
 		assert_eq!(alice_before - Balances::free_balance(&alice().into()), 3 * PICA);
 		assert_gt!(after, before);
-		assert_eq!(after, 3 * PICA, "bdd: Sibling reserver account gets amount locked");
+		assert_eq!(after, 3 * PICA, "bdd: Sibling reserve account gets amount locked");
 	});
 
 	Sibling::execute_with(|| {
@@ -297,7 +297,7 @@ fn this_native_transferred_from_sibling_to_native_is_not_enough() {
 			.find_map(|x| match x.event {
 				Event::AssetsRegistry(assets_registry::Event::<Runtime>::AssetRegistered {
 					asset_id,
-					location: _,
+					..
 				}) => Some(asset_id),
 				_ => None,
 			})
@@ -957,7 +957,7 @@ fn sibling_trap_assets_works() {
 	let (this_native_treasury_amount, sibling_non_native_amount) = This::execute_with(|| {
 		use this_runtime::*;
 		let sibling_non_native_amount =
-			assert_above_deposit::<this_runtime::AssetsRegistry>(any_asset, 100_000_000_000);
+			assert_above_deposit::<AssetsRegistry>(any_asset, 100_000_000_000);
 
 		assert_ok!(Assets::deposit(
 			any_asset,
@@ -971,18 +971,18 @@ fn sibling_trap_assets_works() {
 			);
 		let _ =
 			<balances::Pallet<Runtime> as frame_support::traits::Currency<AccountId>>::deposit_creating(
-				&this_runtime::TreasuryAccount::get(),
+				&TreasuryAccount::get(),
 				this_liveness_native_amount,
 			);
 		let balance =
 			<balances::Pallet<Runtime> as frame_support::traits::Currency<AccountId>>::free_balance(
-				&this_runtime::TreasuryAccount::get(),
+				&TreasuryAccount::get(),
 			);
 		let remote = composable_traits::xcm::assets::XcmAssetLocation(MultiLocation::new(
 			1,
 			X2(Parachain(SIBLING_PARA_ID), GeneralIndex(any_asset.into())),
 		));
-		assert_ok!(this_runtime::AssetsRegistry::update_asset(
+		assert_ok!(AssetsRegistry::update_asset(
 			RawOrigin::Root.into(),
 			any_asset,
 			remote,
@@ -1063,7 +1063,7 @@ fn sibling_shib_to_transfer() {
 			sibling_asset_id,
 			location,
 			Some(Rational64::one()),
-			Some(SHIB::RESERVE_EXPONENT),
+			Some(SHIB::EXPONENT),
 		)
 		.expect("Asset already in Currency Factory; QED");
 
@@ -1093,7 +1093,7 @@ fn sibling_shib_to_transfer() {
 			location,
 			1000,
 			Some(Rational64::one()),
-			Some(SHIB::RESERVE_EXPONENT),
+			Some(SHIB::EXPONENT),
 		)
 		.expect("Asset details are valid; QED");
 		System::events()

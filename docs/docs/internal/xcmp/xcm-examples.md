@@ -31,7 +31,6 @@ https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkarura-rpc-0.aca-api.network#/extr
 
 [Mint non payable(not sufficient) asset on Rockmine](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Frococo-rockmine-rpc.polkadot.io#/extrinsics/decode/0x32035222060000b8e39e87c0fec96f7d012d31a4c27b44bfb504ab359662112e4270e380c843410f0000c16ff28623)
 
-
 [Create USDT on local devnet Rockmine](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A10008#/extrinsics/decode/0x02001f1000105553445410555344540600)
 
 [Updated metadata of USDT on local devnet Rockmine](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A10008#/extrinsics/decode/0x02001f1000105553445410555344540600)

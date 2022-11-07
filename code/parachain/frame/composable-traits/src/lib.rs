@@ -34,11 +34,11 @@
 	unused_extern_crates
 )]
 #![allow(incomplete_features)]
-#![feature(associated_type_defaults)]
-#![feature(trait_alias)]
-#![feature(const_trait_impl)]
-#![feature(const_convert)]
-#![feature(adt_const_params)]
+#![feature(associated_type_defaults)] // https://github.com/Rust-for-Linux/linux/issues/2
+#![feature(trait_alias)] // complete
+#![feature(const_trait_impl)] // https://github.com/Rust-for-Linux/linux/issues/2
+#![feature(const_convert)] // that is just const fn for into/from - easy
+#![feature(adt_const_params)] // avoids write own serde and bit shifts for Rational64
 
 pub mod account_proxy;
 pub mod airdrop;

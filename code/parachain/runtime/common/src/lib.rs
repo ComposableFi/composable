@@ -19,7 +19,6 @@ pub mod fees;
 pub mod governance;
 mod prelude;
 pub mod rewards;
-pub mod topology;
 pub mod xcmp;
 
 pub use constants::*;

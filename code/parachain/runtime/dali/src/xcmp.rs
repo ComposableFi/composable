@@ -2,7 +2,6 @@ use super::*;
 use common::{
 	fees::{PriceConverter, WeightToFeeConverter},
 	governance::native::{EnsureRootOrHalfNativeTechnical, NativeCouncilCollective},
-	topology,
 	xcmp::*,
 };
 use composable_traits::xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation};
@@ -199,8 +198,27 @@ impl xcm_executor::Config for XcmConfig {
 }
 
 parameter_type_with_key! {
+	// 1. use configured pessimistic asset min fee for target chain / asset pair
+	// 2. use built int
+	// 3. allow to transfer anyway (let not lock assets on our chain for now)
+	// until XCM v4
 	pub ParachainMinFee: |location: MultiLocation| -> Option<Balance> {
-		OutgoingFee::<AssetsRegistry>::outgoing_fee(location)
+		#[allow(clippy::match_ref_pats)] // false positive
+		#[allow(clippy::match_single_binding)]
+		let parents = location.parents;
+		let interior = location.first_interior();
+
+		let location = XcmAssetLocation::new(location.clone());
+		if let Some(Parachain(id)) = interior {
+			if let Some(amount) = AssetsRegistry::min_xcm_fee(ParaId::from(*id), location) {
+				return Some(amount)
+			}
+		}
+
+		match (parents, interior) {
+			(1, None) => Some(400_000),
+			_ => None,
+		}
 	};
 }
 
@@ -210,7 +228,7 @@ impl orml_xtokens::Config for Runtime {
 	type CurrencyId = CurrencyId;
 	type CurrencyIdConvert = AssetsIdConverter;
 	type AccountIdToMultiLocation = AccountIdToMultiLocation;
-	type SelfLocation = topology::this::Local;
+	type SelfLocation = ThisLocal;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
 	type BaseXcmWeight = BaseXcmWeight;
@@ -225,8 +243,6 @@ impl orml_unknown_tokens::Config for Runtime {
 	type Event = Event;
 }
 
-// make setup as in Acala, max instructions seems reasonable, for weight may consider to  settle
-// with our PICA
 parameter_types! {
 	// One XCM operation is 200_000_000 weight, cross-chain transfer ~= 2x of transfer.
 	pub const UnitWeightCost: Weight = 200_000_000;

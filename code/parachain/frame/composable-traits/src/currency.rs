@@ -47,10 +47,7 @@ pub trait AssetExistentialDepositInspect {
 pub trait AssetDataMutate {
 	type AssetId;
 	type Balance;
-	fn update_existential_deposit(
-		asset_id: Self::AssetId,
-		ed: Option<Self::Balance>,
-	);
+	fn update_existential_deposit(asset_id: Self::AssetId, ed: Option<Self::Balance>);
 }
 
 /// foreign_amount / native_amount
@@ -183,16 +180,23 @@ pub struct Rational64 {
 	pub d: u64,
 }
 
-#[macro_export]
-macro_rules! rational {
-	($n:literal / 0) => {
+pub trait RationalLike<const N: u64, const D: u64> {
+	fn new() -> Self;
+	const CHECK: () = if D == 0 {
 		panic!("denominator cannot be zero")
-	};
-	($n:literal / $d: literal) => {
-		Rational64 { n: $n, d: $d }
 	};
 }
 
+#[macro_export]
+macro_rules! rational {
+	($n:literal / $d: literal) => {
+		<Rational64 as composable_traits::currency::RationalLike<$n, $d>>::new()
+	};
+}
+
+// const struct version of https://paritytech.github.io/substrate/master/src/sp_core/lib.rs.html#422
+// so that it can be used in runtime config
+// ands its private
 macro_rules! impl_const_get {
 	($name:ident, $t:ty) => {
 		#[doc = "Const getter for a basic type."]
@@ -218,11 +222,6 @@ macro_rules! impl_const_get {
 }
 
 impl_const_get!(ConstRational64, Rational64);
-
-pub trait RationalLike<const N: u64, const D: u64> {
-	fn new() -> Self;
-	const CHECK: bool = if D != 0 { true } else { panic!("denominator cannot be zero") };
-}
 
 impl<const N: u64, const D: u64> RationalLike<N, D> for Rational64 {
 	fn new() -> Self {

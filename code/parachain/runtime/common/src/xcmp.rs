@@ -1,9 +1,5 @@
 //! proposed shared XCM setup parameters and impl
-use crate::{
-	fees::NativeBalance,
-	topology::{self},
-	AccountId, Balance,
-};
+use crate::{fees::NativeBalance, prelude::*, AccountId, Balance};
 use composable_traits::xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation};
 use cumulus_primitives_core::ParaId;
 use frame_support::{
@@ -11,7 +7,6 @@ use frame_support::{
 	log, match_types, parameter_types,
 	traits::{tokens::BalanceConversion, Contains, Get},
 	weights::{WeightToFee, WeightToFeePolynomial},
-	WeakBoundedVec,
 };
 use num_traits::{One, Zero};
 use orml_traits::location::{AbsoluteReserveProvider, Reserve};
@@ -53,7 +48,7 @@ impl<T: Get<Id>> ThisChain<T> {
 
 impl<T: Get<Id>> Contains<MultiLocation> for ThisChain<T> {
 	fn contains(origin: &MultiLocation) -> bool {
-		origin == &topology::this::Local::get() || origin == &Self::self_parent()
+		origin == &topology::this::LOCAL || origin == &Self::self_parent()
 	}
 }
 
@@ -192,55 +187,11 @@ impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 
 pub trait XcmpAssets {
 	fn remote_to_local(location: MultiLocation) -> Option<CurrencyId> {
-		match location {
-			MultiLocation { parents: 1, interior: X2(Parachain(para_id), GeneralKey(key)) } =>
-				match (para_id, &key[..]) {
-					(topology::karura::ID, topology::karura::KUSD_KEY) => Some(CurrencyId::kUSD),
-					_ => None,
-				},
-			MultiLocation {
-				parents: 1,
-				interior: X3(Parachain(para_id), PalletInstance(pallet_instance), GeneralIndex(key)),
-			} => match (para_id, pallet_instance, key) {
-				(
-					topology::common_good_assets::ID,
-					topology::statemine::ASSETS,
-					topology::statemine::USDT,
-				) => Some(CurrencyId::USDT),
-				_ => None,
-			},
-			_ => None,
-		}
+		CurrencyId::xcm_reserve_to_local(location)
 	}
 
 	fn local_to_remote(id: CurrencyId, _this_para_id: u32) -> Option<MultiLocation> {
-		match id {
-			CurrencyId::NATIVE => Some(topology::this::Local::get()),
-			CurrencyId::PBLO => Some(MultiLocation {
-				parents: 0,
-				interior: X1(GeneralIndex(CurrencyId::PBLO.into())),
-			}),
-			CurrencyId::RELAY_NATIVE => Some(MultiLocation::parent()),
-			CurrencyId::kUSD => Some(MultiLocation {
-				parents: 1,
-				interior: X2(
-					Parachain(topology::karura::ID),
-					GeneralKey(WeakBoundedVec::force_from(
-						topology::karura::KUSD_KEY.to_vec(),
-						None,
-					)),
-				),
-			}),
-			CurrencyId::USDT => Some(MultiLocation {
-				parents: 1,
-				interior: X3(
-					Parachain(topology::common_good_assets::ID),
-					PalletInstance(topology::common_good_assets::ASSETS),
-					GeneralIndex(topology::common_good_assets::USDT),
-				),
-			}),
-			_ => None,
-		}
+		CurrencyId::local_to_xcm_reserve(id)
 	}
 }
 
@@ -348,29 +299,6 @@ impl FilterAssetLocation for RelayReserveFromParachain {
 	}
 }
 
-/// Estimates outgoing fees on target chain in transferred token
-pub struct OutgoingFee<Registry: RemoteAssetRegistryInspect> {
-	_marker: PhantomData<Registry>,
-}
-
-impl<
-		Registry: RemoteAssetRegistryInspect<
-			AssetId = CurrencyId,
-			AssetNativeLocation = XcmAssetLocation,
-			Balance = Balance,
-		>,
-	> OutgoingFee<Registry>
-{
-	pub fn outgoing_fee(location: &MultiLocation) -> Option<Balance> {
-		log::error!(target: "xcm::fees", "checking outgoing fee for {:?} ", &location);
-		match (location.parents, location.first_interior()) {
-			// poor man solution until XCM v4 `dynamic fees`
-			(1, None) => Some(400_000_000_000),
-			(1, Some(Parachain(id))) => {
-				let location = XcmAssetLocation::new(location.clone());
-				Registry::min_xcm_fee(ParaId::from(*id), location).or(Some(u128::MAX))
-			},
-			_ => None,
-		}
-	}
+parameter_types! {
+	pub const ThisLocal: MultiLocation = primitives::topology::this::LOCAL;
 }

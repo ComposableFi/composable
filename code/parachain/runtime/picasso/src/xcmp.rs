@@ -2,9 +2,9 @@ use super::*;
 use codec::{Decode, Encode};
 use common::{
 	fees::{PriceConverter, WeightToFeeConverter},
-	topology::{self},
 	xcmp::*,
 };
+
 use composable_traits::{
 	defi::Ratio,
 	xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation},
@@ -201,10 +201,27 @@ impl xcm_executor::Config for XcmConfig {
 }
 
 parameter_type_with_key! {
-	pub ParachainMinFee: |location: MultiLocation| -> Option<Balance> {		
-		let result = OutgoingFee::<AssetsRegistry>::outgoing_fee(location);
-		log::error!(target: "xcm::fees", "decided via registry for {:?} to be {:?} ", location, &result);
-		result
+	// 1. use configured pessimistic asset min fee for target chain / asset pair
+	// 2. use built int
+	// 3. allow to transfer anyway (let not lock assets on our chain for now)
+	// until XCM v4
+	pub ParachainMinFee: |location: MultiLocation| -> Option<Balance> {
+		#[allow(clippy::match_ref_pats)] // false positive
+		#[allow(clippy::match_single_binding)]
+		let parents = location.parents;
+		let interior = location.first_interior();
+
+		let location = XcmAssetLocation::new(location.clone());
+		if let Some(Parachain(id)) = interior {
+			if let Some(amount) = AssetsRegistry::min_xcm_fee(ParaId::from(*id), location) {
+				return Some(amount)
+			}
+		}
+
+		match (parents, interior) {
+			(1, None) => Some(400_000),
+			_ => None,
+		}
 	};
 }
 
@@ -214,13 +231,10 @@ impl orml_xtokens::Config for Runtime {
 	type CurrencyId = CurrencyId;
 	type CurrencyIdConvert = AssetsIdConverter;
 	type AccountIdToMultiLocation = AccountIdToMultiLocation;
-	type SelfLocation = topology::this::Local;
+	type SelfLocation = ThisLocal;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
-	
 	type MinXcmFee = ParachainMinFee;
-	// 
 	type MultiLocationsFilter = Everything;
-	
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
 	type BaseXcmWeight = BaseXcmWeight;
 	type LocationInverter = LocationInverter<Ancestry>;

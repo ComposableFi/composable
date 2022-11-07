@@ -262,7 +262,7 @@ pub mod pallet {
 			decimals: Option<Exponent>,
 		) -> DispatchResult {
 			ForeignToLocal::<T>::insert(&location, asset_id);
-			LocalToForeign::<T>::insert(asset_id, ForeignMetadata { decimals, location });			
+			LocalToForeign::<T>::insert(asset_id, ForeignMetadata { decimals, location });
 			AssetRatio::<T>::mutate_exists(asset_id, |x| *x = ratio);
 			Ok(())
 		}
