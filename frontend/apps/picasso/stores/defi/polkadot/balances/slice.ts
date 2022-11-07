@@ -94,10 +94,5 @@ export const createSubstrateBalancesSlice: StoreSlice<
     getAssetBalance: (tokenId: TokenId, network: SubstrateNetworkId) => {
       return get().substrateBalances.balances[network][tokenId].balance;
     },
-    getAssetBalance: (assetId: AssetId, network: SubstrateNetworkId) => {
-      return get().substrateBalances.assets[network].native.meta.id === assetId
-        ? get().substrateBalances.assets[network].native.balance
-        : get().substrateBalances.assets[network].assets[assetId].balance;
-    },
   },
 });
