@@ -53,6 +53,7 @@ interface TransfersState {
   transferExtrinsic: null | ((...args: any[]) => any);
   multiAsset: SupportedTransferMultiAssets | null;
 }
+
 export type SupportedTransferMultiAssets =
   | u128
   | XcmVersionedMultiAsset
@@ -106,6 +107,7 @@ interface TransferActions {
   }) => void;
   tokenOptions: Array<TokenOption>;
   updateExistentialDeposit: (data: BigNumber) => void;
+  setFeeItemEd: (value: BigNumber) => void;
   setFeeToken: (data: TokenId) => void;
   getFeeToken: (network: SubstrateNetworkId) => TokenMetadata;
   updateSelectedToken: (token: TokenId) => void;
@@ -158,6 +160,11 @@ export const createTransfersSlice: StoreSlice<TransfersSlice> = (set, get) => ({
     flipKeepAlive: () => {
       set((state) => {
         state.transfers.keepAlive = !state.transfers.keepAlive;
+      });
+    },
+    setFeeItemEd: (value: BigNumber) => {
+      set((state) => {
+        state.transfers.feeItemEd = value;
       });
     },
     setFeeItem: (data: TokenId) =>

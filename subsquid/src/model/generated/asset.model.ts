@@ -9,7 +9,7 @@ export class Asset {
   }
 
   /**
-   * ID of the asset in Picasso
+   * ID of the asset
    */
   @PrimaryColumn_()
   id!: string
@@ -26,6 +26,9 @@ export class Asset {
    */
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   price!: bigint
+
+  @Column_("int4", {nullable: true})
+  decimals!: number | undefined | null
 
   @OneToMany_(() => HistoricalAssetPrice, e => e.asset)
   historicalPrices!: HistoricalAssetPrice[]

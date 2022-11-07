@@ -777,6 +777,9 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
     },
     MuiMenuItem: {
       styleOverrides: {
+        root: {
+          minWidth: "inherit",
+        },
         gutters: {
           padding: theme.spacing(2.25, 3),
           "&:hover": {
