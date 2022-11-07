@@ -8,21 +8,23 @@ import {
   unwrapNumberOrHex,
 } from "shared";
 import { useExistentialDeposit } from "@/defi/polkadot/hooks/useExistentialDeposit";
-import { useTransfer } from "@/defi/polkadot/hooks";
 import {
   subscribeDefaultTransferToken,
   subscribeTokenOptions,
 } from "@/stores/defi/polkadot/transfers/subscribers";
-import { useEffect, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { useValidation } from "@/components/Molecules/BigNumberInput/hooks";
 import BigNumber from "bignumber.js";
 import { Typography } from "@mui/material";
 import {
+  calculateTransferAmount,
   getAmountToTransfer,
-  getDestChainFee,
 } from "@/defi/polkadot/pallets/Transfer";
+import { useTransfer } from "@/defi/polkadot/hooks";
 
-export const AmountTokenDropdown = () => {
+export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
+  disabled,
+}) => {
   const updateAmount = useStore((state) => state.transfers.updateAmount);
   const amount = useStore((state) => state.transfers.amount);
   const { balance, tokenId } = useExistentialDeposit();
@@ -35,38 +37,45 @@ export const AmountTokenDropdown = () => {
   const isTokenBalanceZero = useStore(
     (state) => state.transfers.isTokenBalanceZero
   );
+  const tokens = useStore((state) => state.substrateTokens.tokens);
+  const existentialDeposit = tokens[selectedToken].existentialDeposit[from];
+  const decimals = tokens[selectedToken].decimals[from] ?? Number(0);
   const keepAlive = useStore((state) => state.transfers.keepAlive);
-  const { existentialDeposit } = useExistentialDeposit();
   const [stringValue, setStringValue] = useState<string>(amount.toString());
   const { validate, hasError } = useValidation({
     maxValue: balance,
     maxDec: 12,
     initialValue: new BigNumber(0),
   });
+  const fee = useStore((state) => state.transfers.fee);
+  const feeToken = useStore((state) => state.transfers.feeToken);
+  const sourceGas = {
+    fee: fee.partialFee,
+    token: feeToken,
+  };
 
   const handleMaxClick = () => {
-    callbackGate((api) => {
-      const amountToTransfer = getAmountToTransfer({
-        amount: balance,
-        api,
-        balance,
-        existentialDeposit,
-        keepAlive: keepAlive,
-        sourceChain: from,
-        targetChain: "picasso",
-        tokenId: selectedToken,
-      });
-      const amount = fromChainIdUnit(
-        unwrapNumberOrHex(amountToTransfer.toString())
-      );
-      updateAmount(amount);
-      setStringValue(amount.toString());
-      validate({
-        target: {
-          value: amount.toString(),
-        },
-      } as any);
-    }, fromProvider.parachainApi);
+    callbackGate(
+      (api, _existentialDeposit) => {
+        const amountToTransfer = calculateTransferAmount({
+          amountToTransfer: balance,
+          balance: balance,
+          keepAlive,
+          selectedToken,
+          sourceExistentialDeposit: _existentialDeposit,
+          sourceGas,
+        });
+        updateAmount(amountToTransfer);
+        setStringValue(amountToTransfer.toString());
+        validate({
+          target: {
+            value: amountToTransfer.toString(),
+          },
+        } as any);
+      },
+      fromProvider.parachainApi,
+      existentialDeposit
+    );
   };
 
   useEffect(() => {
@@ -103,9 +112,11 @@ export const AmountTokenDropdown = () => {
         }}
         ButtonProps={{
           onClick: handleMaxClick,
+          disabled,
         }}
         InputProps={{
           sx: amountInputStyle,
+          disabled,
         }}
         CombinedSelectProps={{
           options: tokenOptions.map((token) => ({
@@ -114,6 +125,7 @@ export const AmountTokenDropdown = () => {
           })),
           value: selectedToken,
           setValue: updateSelectedToken,
+          disabled,
         }}
       />
       {hasError && (

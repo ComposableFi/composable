@@ -142,6 +142,7 @@ mod constant_product {
 		proptest! {
 			#![proptest_config(ProptestConfig::with_cases(10_000))]
 
+			#[ignore]
 			#[test]
 			fn no_unexpected_errors_in_range(i_and_o in range_inputs()) {
 			let res = compute_redeemed_for_lp(

@@ -1,70 +1,11 @@
 import { ApiPromise } from "@polkadot/api";
 import { u128 } from "@polkadot/types-codec";
-import { AssetId, SubstrateNetworkId } from "@/defi/polkadot/types";
-import {
-  getTransferCallKaruraPicasso,
-  getTransferCallKusamaPicasso,
-  getTransferCallPicassoKarura,
-  getTransferCallPicassoKusama,
-} from "@/defi/polkadot/pallets/xcmp";
 import { fromChainIdUnit, toChainIdUnit } from "shared";
-import BigNumber from "bignumber.js";
 import { ParachainId, RelayChainId } from "substrate-react";
-import { Assets } from "@/defi/polkadot/Assets";
-
-export async function getApiCallAndSigner(
-  api: ApiPromise,
-  targetAccountAddress: string,
-  amountToTransfer: u128,
-  feeItemId: number | null,
-  signerAddress: string,
-  targetParachainId: number,
-  from: SubstrateNetworkId,
-  to: SubstrateNetworkId,
-  hasFeeItem: boolean,
-  token: AssetId
-) {
-  switch (`${from}-${to}`) {
-    case "picasso-kusama":
-      return getTransferCallPicassoKusama(
-        api,
-        targetAccountAddress,
-        amountToTransfer,
-        feeItemId,
-        signerAddress,
-        hasFeeItem
-      );
-    case "picasso-karura":
-      return getTransferCallPicassoKarura(
-        api,
-        targetParachainId,
-        targetAccountAddress,
-        hasFeeItem,
-        signerAddress,
-        amountToTransfer,
-        feeItemId
-      );
-    case "kusama-picasso":
-      return getTransferCallKusamaPicasso(
-        api,
-        targetParachainId,
-        targetAccountAddress,
-        amountToTransfer,
-        signerAddress
-      );
-    case "karura-picasso":
-      return getTransferCallKaruraPicasso(
-        api,
-        targetParachainId,
-        targetAccountAddress,
-        signerAddress,
-        amountToTransfer,
-        token
-      );
-    default:
-      throw new Error("Invalid network");
-  }
-}
+import { TokenId } from "tokens";
+import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
+import BigNumber from "bignumber.js";
+import { TRANSFER_ASSET_LIST } from "@/defi/config";
 
 export function getAmountToTransfer({
   balance,
@@ -74,9 +15,7 @@ export function getAmountToTransfer({
   api,
   sourceChain,
   targetChain,
-  tokenId,
 }: {
-  tokenId: AssetId;
   balance: BigNumber;
   amount: BigNumber;
   existentialDeposit: BigNumber;
@@ -92,63 +31,101 @@ export function getAmountToTransfer({
     keepAlive &&
     isExistentialDepositImportant &&
     amount.minus(existentialDeposit).lte(0);
-  const destinationFee = getDestChainFee(sourceChain, targetChain, tokenId);
   const calculatedAmount =
     keepAlive && isExistentialDepositImportant && !isZeroAmount
       ? amount.minus(existentialDeposit)
       : amount;
-  const sendAmount = destinationFee.fee.gt(0)
-    ? calculatedAmount.plus(destinationFee.fee)
-    : calculatedAmount;
 
-  return api.createType("u128", toChainIdUnit(sendAmount, 12).toString());
+  return api.createType("u128", toChainIdUnit(calculatedAmount, 12).toString());
 }
 
+export type CalculateTransferAmount = {
+  sourceGas: {
+    fee: BigNumber;
+    token: TokenId;
+  };
+  amountToTransfer: BigNumber;
+  balance: BigNumber;
+  selectedToken: TokenId;
+  keepAlive: boolean;
+  sourceExistentialDeposit: BigNumber;
+};
+
+export function calculateTransferAmount({
+  sourceGas,
+  amountToTransfer,
+  balance,
+  selectedToken,
+  keepAlive,
+  sourceExistentialDeposit,
+}: CalculateTransferAmount) {
+  const ZERO = new BigNumber(0);
+  const gasTokenEqSelected = selectedToken === sourceGas.token;
+  const amountMinusGas = gasTokenEqSelected
+    ? amountToTransfer.minus(sourceGas.fee)
+    : amountToTransfer;
+  // Is account going to be removed after transfer?
+  const willReap = balance.minus(amountMinusGas).lt(sourceExistentialDeposit);
+
+  // If we should keep alive, deduct existential deposit from the amount to transfer
+  // NOTE: This should happen only if amount is MAX balance.
+  const requiredKeepAliveValue =
+    keepAlive && willReap ? sourceExistentialDeposit : ZERO;
+
+  // If the remainder is not enough to pay the gas fee, deduct the gas fee from amount.
+  // NOTE: This should happen only if transfer token and gas token are the same.
+  const gasPrice = gasTokenEqSelected ? sourceGas.fee : ZERO;
+
+  const output = amountToTransfer.minus(gasPrice).minus(requiredKeepAliveValue);
+  // Don't send values less than zero.
+  return output.lte(ZERO) ? ZERO : output;
+}
+
+/**
+ * TODO: Get the selected token to calculate the dest fee based of that.
+ * @param sourceChain
+ * @param targetChain
+ * @param tokens
+ * @param {TokenId} selectedToken
+ */
 export function getDestChainFee(
   sourceChain: ParachainId | RelayChainId,
   targetChain: ParachainId | RelayChainId,
-  tokenId: AssetId
+  tokens: Record<TokenId, TokenMetadata>,
+  selectedToken: TokenId
 ) {
   switch (`${sourceChain}=>${targetChain}`) {
     case "kusama=>picasso":
       return {
         fee: fromChainIdUnit(new BigNumber("7536750")),
-        symbol: Assets.ksm,
+        token: tokens.ksm,
       };
     case "karura=>picasso":
-      if (tokenId === "kusd") {
-        return {
-          fee: fromChainIdUnit(new BigNumber("927020325")),
-          symbol: Assets.kusd,
-        };
-      }
-      if (tokenId === "kar") {
-        return {
-          fee: fromChainIdUnit(new BigNumber("927020325")),
-          symbol: Assets.kar,
-        };
-      }
+      const fee: BigNumber | undefined = {
+        kusd: fromChainIdUnit(new BigNumber("927020325")),
+        kar: fromChainIdUnit(new BigNumber("927020325")),
+        ksm: fromChainIdUnit(new BigNumber("927020325")),
+      }[selectedToken as string];
 
-      if (tokenId === "ksm") {
-        return {
-          fee: fromChainIdUnit(new BigNumber("927020325")),
-          symbol: Assets.ksm,
-        };
-      }
+      return {
+        fee: fee ?? null,
+        token: fee ? tokens[selectedToken] : null,
+      };
+
     case "picasso=>karura":
       return {
         fee: fromChainIdUnit(new BigNumber("74592000000")),
-        symbol: Assets.kusd,
+        token: tokens.kusd,
       };
     case "picasso=>kusama":
       return {
         fee: fromChainIdUnit(new BigNumber("51105801784")),
-        symbol: Assets.ksm,
+        token: tokens.ksm,
       };
     default:
       return {
         fee: new BigNumber(0),
-        symbol: Assets.pica,
+        token: tokens.pica,
       };
   }
 }

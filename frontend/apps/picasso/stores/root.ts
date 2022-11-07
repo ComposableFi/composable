@@ -1,8 +1,8 @@
 import create from "zustand";
 import { createUISlice } from "./ui/ui";
 import {
+  createTokensSlice,
   createBondsSlice,
-  createMetamaskSlice,
   createOracleSlice,
   createPolkadotSlice,
   createStakingRewardsSlice,
@@ -22,9 +22,9 @@ export const useStore = create<AllSlices>()(
     immer(
       devtools((...a) => ({
         ...createUISlice(...a),
+        ...createTokensSlice(...a),
         ...createTransfersSlice(...a),
         ...createPolkadotSlice(...a),
-        ...createMetamaskSlice(...a),
         ...createStatsApolloSlice(...a),
         ...createStatsOverviewSlice(...a),
         ...createStatsTelemetrySlice(...a),

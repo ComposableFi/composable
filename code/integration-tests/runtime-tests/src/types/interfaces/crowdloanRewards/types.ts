@@ -2,7 +2,7 @@
 /* eslint-disable */
 
 import type { ComposableTraitsDefiCurrencyPairCurrencyId, CurrencyId } from '@composable/types/interfaces/common';
-import type { Enum, Null, Struct, bool, u128, u32 } from '@polkadot/types-codec';
+import type { Enum, Null, Struct, bool, u128, u32, u64 } from '@polkadot/types-codec';
 import type { ITuple } from '@polkadot/types-codec/types';
 import type { EthereumAccountId } from '@polkadot/types/interfaces/eth';
 import type { EcdsaSignature, MultiSignature } from '@polkadot/types/interfaces/extrinsics';
@@ -70,6 +70,9 @@ export interface ComposableTraitsDefiSell extends Null {}
 
 /** @name ComposableTraitsDefiTake */
 export interface ComposableTraitsDefiTake extends Null {}
+
+/** @name ComposableTraitsDexAssetAmount */
+export interface ComposableTraitsDexAssetAmount extends Null {}
 
 /** @name ComposableTraitsDexConstantProductPoolInfo */
 export interface ComposableTraitsDexConstantProductPoolInfo extends Struct {
@@ -181,11 +184,26 @@ export interface DaliRuntimeOpaqueSessionKeys extends Null {}
 /** @name DaliRuntimeOriginCaller */
 export interface DaliRuntimeOriginCaller extends Null {}
 
+/** @name FrameSupportPalletId */
+export interface FrameSupportPalletId extends Null {}
+
 /** @name FrameSupportScheduleLookupError */
 export interface FrameSupportScheduleLookupError extends Null {}
 
 /** @name FrameSupportScheduleMaybeHashed */
 export interface FrameSupportScheduleMaybeHashed extends Null {}
+
+/** @name FrameSupportTokensMiscBalanceStatus */
+export interface FrameSupportTokensMiscBalanceStatus extends Null {}
+
+/** @name FrameSupportWeightsDispatchInfo */
+export interface FrameSupportWeightsDispatchInfo extends Null {}
+
+/** @name FrameSupportWeightsPerDispatchClassU64 */
+export interface FrameSupportWeightsPerDispatchClassU64 extends Null {}
+
+/** @name FrameSupportWeightsRuntimeDbWeight */
+export interface FrameSupportWeightsRuntimeDbWeight extends Null {}
 
 /** @name FrameSystemAccountInfo */
 export interface FrameSystemAccountInfo extends Struct {
@@ -200,6 +218,21 @@ export interface FrameSystemAccountInfo extends Struct {
     readonly feeFrozen: u128;
   } & Struct;
 }
+
+/** @name FrameSystemEventRecord */
+export interface FrameSystemEventRecord extends Null {}
+
+/** @name FrameSystemLastRuntimeUpgradeInfo */
+export interface FrameSystemLastRuntimeUpgradeInfo extends Null {}
+
+/** @name FrameSystemLimitsBlockLength */
+export interface FrameSystemLimitsBlockLength extends Null {}
+
+/** @name FrameSystemLimitsBlockWeights */
+export interface FrameSystemLimitsBlockWeights extends Null {}
+
+/** @name FrameSystemPhase */
+export interface FrameSystemPhase extends Null {}
 
 /** @name IbcTraitOpenChannelParams */
 export interface IbcTraitOpenChannelParams extends Null {}
@@ -232,8 +265,31 @@ export interface PalletAssetsRegistryCandidateStatus extends Null {}
 /** @name PalletAssetsRegistryForeignMetadata */
 export interface PalletAssetsRegistryForeignMetadata extends Null {}
 
+/** @name PalletAuthorshipUncleEntryItem */
+export interface PalletAuthorshipUncleEntryItem extends Null {}
+
+/** @name PalletBalancesAccountData */
+export interface PalletBalancesAccountData extends Null {}
+
+/** @name PalletBalancesBalanceLock */
+export interface PalletBalancesBalanceLock extends Struct {
+  readonly amount: Null;
+}
+
+/** @name PalletBalancesReleases */
+export interface PalletBalancesReleases extends Null {}
+
+/** @name PalletBalancesReserveData */
+export interface PalletBalancesReserveData extends Null {}
+
 /** @name PalletCollatorSelectionCandidateInfo */
 export interface PalletCollatorSelectionCandidateInfo extends Null {}
+
+/** @name PalletCollectiveVotes */
+export interface PalletCollectiveVotes extends Null {}
+
+/** @name PalletCosmwasmCodeIdentifier */
+export interface PalletCosmwasmCodeIdentifier extends Null {}
 
 /** @name PalletCosmwasmCodeInfo */
 export interface PalletCosmwasmCodeInfo extends Null {}
@@ -262,11 +318,16 @@ export interface PalletCrowdloanRewardsModelsRemoteAccount extends Enum {
   readonly asRelayChain: AccountId32;
   readonly isEthereum: boolean;
   readonly asEthereum: EthereumAccountId;
-  readonly type: 'RelayChain' | 'Ethereum';
+  readonly isRegistry: boolean;
+  readonly type: 'RelayChain' | 'Ethereum' | 'Registry';
 }
 
 /** @name PalletCrowdloanRewardsModelsReward */
-export interface PalletCrowdloanRewardsModelsReward extends Null {}
+export interface PalletCrowdloanRewardsModelsReward extends Struct {
+  readonly total: u128;
+  readonly claimed: u128;
+  readonly vestingPeriod: u64;
+}
 
 /** @name PalletCrowdloanRewardsReward */
 export interface PalletCrowdloanRewardsReward extends Null {}
@@ -348,6 +409,12 @@ export interface PalletMosaicRelayerStaleRelayer extends Struct {
   } & Struct;
 }
 
+/** @name PalletMultisigMultisig */
+export interface PalletMultisigMultisig extends Null {}
+
+/** @name PalletMultisigTimepoint */
+export interface PalletMultisigTimepoint extends Null {}
+
 /** @name PalletOracleAssetInfo */
 export interface PalletOracleAssetInfo extends Null {}
 
@@ -375,6 +442,9 @@ export interface PalletSchedulerScheduledV3 extends Null {}
 /** @name PalletStakingRewardsRewardAccumulationHookError */
 export interface PalletStakingRewardsRewardAccumulationHookError extends Null {}
 
+/** @name PalletTransactionPaymentReleases */
+export interface PalletTransactionPaymentReleases extends Null {}
+
 /** @name PalletTreasuryProposal */
 export interface PalletTreasuryProposal extends Null {}
 
@@ -383,6 +453,15 @@ export interface PalletVaultModelsStrategyOverview extends Null {}
 
 /** @name PalletVaultModelsVaultInfo */
 export interface PalletVaultModelsVaultInfo extends Null {}
+
+/** @name PalletXcmQueryStatus */
+export interface PalletXcmQueryStatus extends Null {}
+
+/** @name PalletXcmVersionMigrationStage */
+export interface PalletXcmVersionMigrationStage extends Null {}
+
+/** @name PolkadotCorePrimitivesOutboundHrmpMessage */
+export interface PolkadotCorePrimitivesOutboundHrmpMessage extends Null {}
 
 /** @name PolkadotParachainPrimitivesXcmpMessageFormat */
 export interface PolkadotParachainPrimitivesXcmpMessageFormat extends Null {}
@@ -405,10 +484,58 @@ export interface PolkadotPrimitivesV2UpgradeRestriction extends Null {}
 /** @name SpConsensusAuraSr25519AppSr25519Public */
 export interface SpConsensusAuraSr25519AppSr25519Public extends Null {}
 
+/** @name SpCoreCryptoKeyTypeId */
+export interface SpCoreCryptoKeyTypeId extends Null {}
+
+/** @name SpRuntimeDigest */
+export interface SpRuntimeDigest extends Null {}
+
+/** @name SpRuntimeDispatchError */
+export interface SpRuntimeDispatchError extends Null {}
+
+/** @name SpRuntimeHeader */
+export interface SpRuntimeHeader extends Null {}
+
 /** @name SpTrieStorageProof */
 export interface SpTrieStorageProof extends Null {}
 
+/** @name SpVersionRuntimeVersion */
+export interface SpVersionRuntimeVersion extends Null {}
+
+/** @name XcmV1MultiAsset */
+export interface XcmV1MultiAsset extends Null {}
+
+/** @name XcmV1MultiassetMultiAssets */
+export interface XcmV1MultiassetMultiAssets extends Null {}
+
+/** @name XcmV1MultiLocation */
+export interface XcmV1MultiLocation extends Null {}
+
+/** @name XcmV2Response */
+export interface XcmV2Response extends Null {}
+
+/** @name XcmV2TraitsError */
+export interface XcmV2TraitsError extends Null {}
+
+/** @name XcmV2TraitsOutcome */
+export interface XcmV2TraitsOutcome extends Null {}
+
+/** @name XcmV2WeightLimit */
+export interface XcmV2WeightLimit extends Null {}
+
+/** @name XcmV2Xcm */
+export interface XcmV2Xcm extends Null {}
+
 /** @name XcmVersionedMultiAsset */
 export interface XcmVersionedMultiAsset extends Null {}
+
+/** @name XcmVersionedMultiAssets */
+export interface XcmVersionedMultiAssets extends Null {}
+
+/** @name XcmVersionedMultiLocation */
+export interface XcmVersionedMultiLocation extends Null {}
+
+/** @name XcmVersionedXcm */
+export interface XcmVersionedXcm extends Null {}
 
 export type PHANTOM_CROWDLOANREWARDS = 'crowdloanRewards';

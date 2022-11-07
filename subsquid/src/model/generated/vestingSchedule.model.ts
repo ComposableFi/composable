@@ -12,14 +12,14 @@ export class VestingSchedule {
   id!: string
 
   /**
-   * account that initiates the schedule
+   * Account that initiates the schedule
    */
   @Index_()
   @Column_("text", {nullable: false})
   from!: string
 
   /**
-   * chain event ID
+   * Chain event ID
    */
   @Index_()
   @Column_("text", {nullable: false})

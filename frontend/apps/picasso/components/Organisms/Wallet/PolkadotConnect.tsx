@@ -10,9 +10,9 @@ import {
 import { DEFAULT_EVM_ID, DEFAULT_NETWORK_ID } from "@/defi/polkadot/constants";
 import { Wallet } from "wallet";
 import { ConnectorType, useBlockchainProvider, useConnector } from "bi-lib";
-import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import { NetworkId } from "wallet";
 import { useStore } from "@/stores/root";
+import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 
 const BLOCKCHAIN_NETWORKS_SUPPORTED = [
   {
@@ -66,8 +66,8 @@ export const PolkadotConnect: React.FC<{}> = () => {
   const biLibConnector = useConnector(ConnectorType.MetaMask);
   useEagerConnect(DEFAULT_NETWORK_ID);
 
-  const native = useStore(
-    ({ substrateBalances }) => substrateBalances.assets.picasso.native
+  const balance = useStore(
+    ({ substrateBalances }) => substrateBalances.balances.picasso.pica.balance
   );
 
   const transactions = useTransactions(connectedAccount?.address ?? "-");
@@ -81,7 +81,7 @@ export const PolkadotConnect: React.FC<{}> = () => {
         };
       })}
       ethereumConnectorInUse={connectorType}
-      connectedAccountNativeBalance={native.balance}
+      connectedAccountNativeBalance={balance}
       onDisconnectDotsamaWallet={deactivate}
       onConnectPolkadotWallet={activate as any}
       blockchainNetworksSupported={BLOCKCHAIN_NETWORKS_SUPPORTED}

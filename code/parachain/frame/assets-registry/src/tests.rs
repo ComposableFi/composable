@@ -36,6 +36,7 @@ fn set_metadata() {
 				Event::AssetsRegistry(crate::Event::<Runtime>::AssetRegistered {
 					asset_id,
 					location: _,
+					decimals: _,
 				}) => Some(asset_id),
 				_ => None,
 			})

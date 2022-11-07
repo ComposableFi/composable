@@ -52,17 +52,10 @@ export async function processTransferEvent(
   ctx: EventHandlerContext<Store>
 ): Promise<void> {
   console.log("Process transfer");
-  const signer = ctx?.event?.extrinsic?.signature?.address;
-  console.log(ctx?.event?.name);
-  console.log(">>");
-  console.log("signer", signer);
   const event = new BalancesTransferEvent(ctx);
   const transferEvent = getTransferEvent(event);
   const from = encodeAccount(transferEvent.from);
   const to = encodeAccount(transferEvent.to);
-
-  // TODO: remove once finished using
-  // await mockData(ctx);
 
   await saveAccountAndEvent(ctx, EventType.BALANCES_TRANSFER, [from, to]);
 }

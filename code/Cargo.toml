@@ -3,7 +3,7 @@ authors = ["Composable Developers"]
 edition = "2021"
 homepage = "https://composable.finance"
 name = "composable"
-version = "2.3.3"
+version = "2.3.4"
 
 [[bin]]
 name = "composable"
@@ -43,7 +43,6 @@ members = [
   "utils/price-feed",
   "utils/collator-sidecar",
   "utils/composable-subxt",
-  # "simnode/simnode-node",
   "simnode/simnode-tests",
   "simnode/common",
   "utils/xcmp",

@@ -15,7 +15,7 @@ export const StakeTabContent: FC = () => {
   const theme = useTheme();
   const [lockablePICA, setLockablePICA] = useState<BigNumber>(new BigNumber(0));
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
-  const { hasRewardPools, picaRewardPool, balance, meta, executor, parachainApi, assetId } =
+  const { hasRewardPools, picaRewardPool, balance, pica, executor, parachainApi, assetId } =
     useStakingRewards();
 
   const options = hasRewardPools ? Object.entries(picaRewardPool.lock.durationPresets).reduce(
@@ -65,7 +65,7 @@ export const StakeTabContent: FC = () => {
             </Typography>
             <Typography variant="inputLabel">
               {formatNumber(balance)}&nbsp;
-              {meta.symbol}
+              {pica.symbol}
             </Typography>
           </Box>
         </Box>
@@ -74,7 +74,7 @@ export const StakeTabContent: FC = () => {
           setter={setLockablePICA}
           maxValue={balance}
           value={lockablePICA}
-          tokenId={meta.assetId}
+          tokenId={pica.id}
           maxDecimals={18}
         />
       </Stack>
@@ -137,7 +137,7 @@ export const StakeTabContent: FC = () => {
       <AlertBox status="warning" icon={<WarningAmberRounded color="warning" />}>
         <Typography variant="body2">Warning</Typography>
         <Typography variant="inputLabel" color="text.secondary">
-          Your {meta.symbol} will be locked until the expiry date.
+          Your {pica.symbol} will be locked until the expiry date.
         </Typography>
       </AlertBox>
       <Button

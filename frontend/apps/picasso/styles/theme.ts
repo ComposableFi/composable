@@ -486,9 +486,9 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
     MuiList: {
       styleOverrides: {
         root: {
-          padding: theme.spacing(0,3)
-        }
-      }
+          padding: theme.spacing(0, 3),
+        },
+      },
     },
     MuiListItem: {
       styleOverrides: {
@@ -499,11 +499,11 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
           height: "5rem",
           borderRadius: theme.spacing(1.5),
           "&.Mui-selected": {
-            backgroundColor: alpha(brandPalette.primary.main, 0.1 ),
+            backgroundColor: alpha(brandPalette.primary.main, 0.1),
             filter: "drop-shadow(0px 4px 4px rgba(0, 0, 0, 0.25))",
             "& .MuiListItemText-primary": {
               color: theme.palette.common.white,
-            }
+            },
           },
         },
       },
@@ -777,6 +777,9 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
     },
     MuiMenuItem: {
       styleOverrides: {
+        root: {
+          minWidth: "inherit",
+        },
         gutters: {
           padding: theme.spacing(2.25, 3),
           "&:hover": {
@@ -890,21 +893,22 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          "& .MuiSvgIcon-root": {
-            fill: brandPalette.common.darkWhite,
-          },
         },
         filledSuccess: {
           background: alpha("#00c68a", 0.1),
+          backdropFilter: "blur(16px)",
         },
         filledError: {
           background: alpha(brandPalette.error.main, 0.1),
+          backdropFilter: "blur(16px)",
         },
         filledInfo: {
           background: alpha(brandPalette.info.main, 0.1),
+          backdropFilter: "blur(16px)",
         },
         filledWarning: {
           background: alpha(brandPalette.warning.main, 0.1),
+          backdropFilter: "blur(16px)",
         },
       },
     },

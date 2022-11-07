@@ -14,9 +14,9 @@ let constantProductK: bigint;
 let baseAmountTotal: bigint;
 let quoteAmountTotal: bigint;
 let mintedLPTokens: bigint;
-baseAmountTotal = BigInt(0);
-quoteAmountTotal = BigInt(0);
-mintedLPTokens = BigInt(0);
+// baseAmountTotal = BigInt(0);
+// quoteAmountTotal = BigInt(0);
+// mintedLPTokens = BigInt(0);
 
 /**
  * Creates Constant Product Pool
@@ -59,67 +59,69 @@ export async function createConsProdPool(
   return resultPoolId.toNumber();
 }
 
-export async function addFundsToThePool(
-  api: ApiPromise,
-  poolId: number,
-  walletId: KeyringPair,
-  baseAmount: bigint,
-  quoteAmount: bigint
-): Promise<{
-  returnedLPTokens: u128;
-  baseAdded: u128;
-  quoteAdded: u128;
-  walletIdResult: AccountId32;
-}> {
-  const pool = api.createType("u128", poolId);
-  const baseAmountParam = api.createType("u128", baseAmount);
-  const quoteAmountParam = api.createType("u128", quoteAmount);
-  const keepAliveParam = api.createType("bool", true);
-  const minMintAmountParam = api.createType("u128", 0);
-  const {
-    data: [walletIdResult, addedPool, baseAdded, quoteAdded, returnedLPTokens]
-  } = await sendAndWaitForSuccess(
-    api,
-    walletId,
-    api.events.pablo.LiquidityAdded.is,
-    api.tx.pablo.addLiquidity(pool, baseAmountParam, quoteAmountParam, minMintAmountParam, keepAliveParam)
-  );
-  mintedLPTokens += BigInt(returnedLPTokens.toString(10));
-  baseAmountTotal += BigInt(baseAdded.toString(10));
-  quoteAmountTotal += BigInt(quoteAdded.toString(10));
-  return { walletIdResult, baseAdded, quoteAdded, returnedLPTokens };
-}
+// ToDo (D. Roth): Re- enable after pablo rework!
+// export async function addFundsToThePool(
+//   api: ApiPromise,
+//   poolId: number,
+//   walletId: KeyringPair,
+//   baseAmount: bigint,
+//   quoteAmount: bigint
+// ): Promise<{
+//   returnedLPTokens: u128;
+//   baseAdded: u128;
+//   quoteAdded: u128;
+//   walletIdResult: AccountId32;
+// }> {
+//   const pool = api.createType("u128", poolId);
+//   const baseAmountParam = api.createType("u128", baseAmount);
+//   const quoteAmountParam = api.createType("u128", quoteAmount);
+//   const keepAliveParam = api.createType("bool", true);
+//   const minMintAmountParam = api.createType("u128", 0);
+//   const {
+//     data: [walletIdResult, addedPool, baseAdded, quoteAdded, returnedLPTokens]
+//   } = await sendAndWaitForSuccess(
+//     api,
+//     walletId,
+//     api.events.pablo.LiquidityAdded.is,
+//     api.tx.pablo.addLiquidity(pool, baseAmountParam, quoteAmountParam, minMintAmountParam, keepAliveParam)
+//   );
+//   mintedLPTokens += BigInt(returnedLPTokens.toString(10));
+//   baseAmountTotal += BigInt(baseAdded.toString(10));
+//   quoteAmountTotal += BigInt(quoteAdded.toString(10));
+//   return { walletIdResult, baseAdded, quoteAdded, returnedLPTokens };
+// }
 
-export async function buyFromPool(
-  api: ApiPromise,
-  poolId: number,
-  walletId: KeyringPair,
-  assetId: number,
-  amountToBuy: bigint
-): Promise<{
-  accountId: AccountId32;
-  ownerFee: u128;
-  expectedConversion: bigint;
-  quoteAmount: u128;
-  baseAmount: u128;
-}> {
-  const poolIdParam = api.createType("u128", poolId);
-  const assetIdParam = api.createType("u128", assetId);
-  const amountParam = api.createType("u128", amountToBuy);
-  const keepAlive = api.createType("bool", true);
-  const minMintAmount = api.createType("u128", 0);
-  constantProductK = baseAmountTotal * quoteAmountTotal;
-  const expectedConversion = constantProductK / (baseAmountTotal - amountToBuy) - quoteAmountTotal;
-  const {
-    data: [retPoolId, accountId, baseArg, quoteArg, baseAmount, quoteAmount, ownerFee]
-  } = await sendAndWaitForSuccess(
-    api,
-    walletId,
-    api.events.pablo.Swapped.is,
-    api.tx.pablo.buy(poolIdParam, assetIdParam, amountParam, minMintAmount, keepAlive)
-  );
-  return { accountId, baseAmount, quoteAmount, expectedConversion, ownerFee: ownerFee.fee };
-}
+// ToDo (D. Roth): Re- enable after pablo rework!
+// export async function buyFromPool(
+//   api: ApiPromise,
+//   poolId: number,
+//   walletId: KeyringPair,
+//   assetId: number,
+//   amountToBuy: bigint
+// ): Promise<{
+//   accountId: AccountId32;
+//   ownerFee: u128;
+//   expectedConversion: bigint;
+//   quoteAmount: u128;
+//   baseAmount: u128;
+// }> {
+//   const poolIdParam = api.createType("u128", poolId);
+//   const assetIdParam = api.createType("u128", assetId);
+//   const amountParam = api.createType("u128", amountToBuy);
+//   const keepAlive = api.createType("bool", true);
+//   const minMintAmount = api.createType("u128", 0);
+//   constantProductK = baseAmountTotal * quoteAmountTotal;
+//   const expectedConversion = constantProductK / (baseAmountTotal - amountToBuy) - quoteAmountTotal;
+//   const {
+//     data: [retPoolId, accountId, baseArg, quoteArg, baseAmount, quoteAmount, ownerFee]
+//   } = await sendAndWaitForSuccess(
+//     api,
+//     walletId,
+//     api.events.pablo.Swapped.is,
+//     api.tx.pablo.buy(poolIdParam, assetIdParam, amountParam, minMintAmount, keepAlive)
+//   );
+//   return { accountId, baseAmount, quoteAmount, expectedConversion, ownerFee: ownerFee.fee };
+// }
 
 export async function sellToPool(
   api: ApiPromise,
@@ -144,54 +146,56 @@ export async function sellToPool(
   return ownerAccount;
 }
 
-export async function removeLiquidityFromPool(
-  api: ApiPromise,
-  poolId: number,
-  walletId: KeyringPair,
-  lpTokens: bigint
-): Promise<{ resultBase: u128; resultQuote: u128 }> {
-  const poolIdParam = api.createType("u128", poolId);
-  const lpTokenParam = api.createType("u128", lpTokens);
-  const minBaseParam = api.createType("u128", 0);
-  const minQuoteAmountParam = api.createType("u128", 0);
-  const {
-    data: [resultPoolId, resultWallet, resultBase, resultQuote, remainingLpTokens]
-  } = await sendAndWaitForSuccess(
-    api,
-    walletId,
-    api.events.pablo.LiquidityRemoved.is,
-    api.tx.pablo.removeLiquidity(poolIdParam, lpTokenParam, minBaseParam, minQuoteAmountParam)
-  );
-  return { resultBase, resultQuote };
-}
+// ToDo (D. Roth): Re- enable after pablo rework!
+// export async function removeLiquidityFromPool(
+//   api: ApiPromise,
+//   poolId: number,
+//   walletId: KeyringPair,
+//   lpTokens: bigint
+// ): Promise<{ resultBase: u128; resultQuote: u128 }> {
+//   const poolIdParam = api.createType("u128", poolId);
+//   const lpTokenParam = api.createType("u128", lpTokens);
+//   const minBaseParam = api.createType("u128", 0);
+//   const minQuoteAmountParam = api.createType("u128", 0);
+//   const {
+//     data: [resultPoolId, resultWallet, resultBase, resultQuote, remainingLpTokens]
+//   } = await sendAndWaitForSuccess(
+//     api,
+//     walletId,
+//     api.events.pablo.LiquidityRemoved.is,
+//     api.tx.pablo.removeLiquidity(poolIdParam, lpTokenParam, minBaseParam, minQuoteAmountParam)
+//   );
+//   return { resultBase, resultQuote };
+// }
 
-export async function swapTokenPairs(
-  api: ApiPromise,
-  poolId: number,
-  wallet: KeyringPair,
-  baseAssetId: number,
-  quoteAssetId: number,
-  quoteAmount: bigint,
-  minReceiveAmount = 0
-): Promise<{ returnedBaseAmount: u128; returnedQuoteAmount: u128 }> {
-  const poolIdParam = api.createType("u128", poolId);
-  const currencyPair = api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", {
-    base: api.createType("CurrencyId", baseAssetId),
-    quote: api.createType("CurrencyId", quoteAssetId)
-  });
-  const quoteAmountParam = api.createType("u128", quoteAmount);
-  const minReceiveParam = api.createType("u128", minReceiveAmount);
-  const keepAliveParam = api.createType("bool", true);
-  const {
-    data: [resultPoolId, resultWallet, baseAsset, quoteAsset, returnedBaseAmount, returnedQuoteAmount, feeInfo]
-  } = await sendAndWaitForSuccess(
-    api,
-    wallet,
-    api.events.pablo.Swapped.is,
-    api.tx.pablo.swap(poolIdParam, currencyPair, quoteAmountParam, minReceiveParam, keepAliveParam)
-  );
-  return { returnedBaseAmount, returnedQuoteAmount };
-}
+// ToDo (D. Roth): Re- enable after pablo rework!
+// export async function swapTokenPairs(
+//   api: ApiPromise,
+//   poolId: number,
+//   wallet: KeyringPair,
+//   baseAssetId: number,
+//   quoteAssetId: number,
+//   quoteAmount: bigint,
+//   minReceiveAmount = 0
+// ): Promise<{ returnedBaseAmount: u128; returnedQuoteAmount: u128 }> {
+//   const poolIdParam = api.createType("u128", poolId);
+//   const currencyPair = api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", {
+//     base: api.createType("CurrencyId", baseAssetId),
+//     quote: api.createType("CurrencyId", quoteAssetId)
+//   });
+//   const quoteAmountParam = api.createType("u128", quoteAmount);
+//   const minReceiveParam = api.createType("u128", minReceiveAmount);
+//   const keepAliveParam = api.createType("bool", true);
+//   const {
+//     data: [resultPoolId, resultWallet, baseAsset, quoteAsset, returnedBaseAmount, returnedQuoteAmount, feeInfo]
+//   } = await sendAndWaitForSuccess(
+//     api,
+//     wallet,
+//     api.events.pablo.Swapped.is,
+//     api.tx.pablo.swap(poolIdParam, currencyPair, quoteAmountParam, minReceiveParam, keepAliveParam)
+//   );
+//   return { returnedBaseAmount, returnedQuoteAmount };
+// }
 
 export async function createMultipleCPPools(api: ApiPromise, wallet: KeyringPair) {
   const tx = [];
@@ -242,28 +246,29 @@ export async function rpcPriceFor(
   );
 }
 
-export async function getPoolAddress(
-  api: ApiPromise,
-  poolId: number,
-  walletId: KeyringPair,
-  baseAmount: bigint,
-  quoteAmount: bigint
-): Promise<string> {
-  const pool = api.createType("u128", poolId);
-  const baseAmountParam = api.createType("u128", baseAmount);
-  const quoteAmountParam = api.createType("u128", quoteAmount);
-  const keepAliveParam = api.createType("bool", true);
-  const minMintAmountParam = api.createType("u128", 0);
-  const {
-    data: [, AccountId]
-  } = await sendAndWaitForSuccess(
-    api,
-    walletId,
-    api.events.tokens.Endowed.is,
-    api.tx.pablo.addLiquidity(pool, baseAmountParam, quoteAmountParam, minMintAmountParam, keepAliveParam)
-  );
-  return AccountId.toString();
-}
+// ToDo (D. Roth): Re- enable after pablo rework!
+// export async function getPoolAddress(
+//   api: ApiPromise,
+//   poolId: number,
+//   walletId: KeyringPair,
+//   baseAmount: bigint,
+//   quoteAmount: bigint
+// ): Promise<string> {
+//   const pool = api.createType("u128", poolId);
+//   const baseAmountParam = api.createType("u128", baseAmount);
+//   const quoteAmountParam = api.createType("u128", quoteAmount);
+//   const keepAliveParam = api.createType("bool", true);
+//   const minMintAmountParam = api.createType("u128", 0);
+//   const {
+//     data: [, AccountId]
+//   } = await sendAndWaitForSuccess(
+//     api,
+//     walletId,
+//     api.events.tokens.Endowed.is,
+//     api.tx.pablo.addLiquidity(pool, baseAmountParam, quoteAmountParam, minMintAmountParam, keepAliveParam)
+//   );
+//   return AccountId.toString();
+// }
 
 export async function getPoolBalance(api: ApiPromise, poolAddress: string, assetId: number): Promise<u128> {
   const { free } = await api.query.tokens.accounts(poolAddress, assetId);
