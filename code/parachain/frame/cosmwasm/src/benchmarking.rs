@@ -7,7 +7,9 @@ use crate::{
 	},
 	ContractInfoOf, Pallet as Cosmwasm,
 };
-use alloc::{borrow::ToOwned, collections::BTreeMap, format, string::String, vec, vec::Vec};
+use alloc::{
+	borrow::ToOwned, boxed::Box, collections::BTreeMap, format, string::String, vec, vec::Vec,
+};
 use core::{cell::SyncUnsafeCell, marker::PhantomData};
 use cosmwasm_minimal_std::Coin;
 use cosmwasm_vm::{executor::InstantiateInput, system::CosmwasmContractMeta};
@@ -21,7 +23,9 @@ use primitives::currency::CurrencyId;
 use rand::{rngs::SmallRng, RngCore, SeedableRng};
 use sha2::{Digest, Sha256};
 use sha3::Keccak256;
-use wasm_instrument::parity_wasm::elements::{BlockType, Instruction, Instructions, ValueType};
+use wasm_instrument::parity_wasm::elements::{
+	BlockType, BrTableData, Instruction, Instructions, ValueType,
+};
 
 const SECP256K1_MESSAGE_HEX: &str = "5c868fedb8026979ebd26f1ba07c27eedf4ff6d10443505a96ecaf21ba8c4f0937b3cd23ffdc3dd429d4cd1905fb8dbcceeff1350020e18b58d2ba70887baa3a9b783ad30d3fbf210331cdd7df8d77defa398cdacdfc2e359c7ba4cae46bb74401deb417f8b912a1aa966aeeba9c39c7dd22479ae2b30719dca2f2206c5eb4b7";
 const SECP256K1_SIGNATURE_HEX: &str = "207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4";
@@ -41,7 +45,7 @@ const BASE_ADDITIONAL_BINARY_SIZE: usize = 10;
 const FN_NAME: &str = "raw_fn";
 const INSTRUCTIONS_SAMPLE_COUNT: u32 = 50;
 
-// Substrate's benchmarks are compiled as follows: The upper part and the lower part are seperate
+// Substrate's benchmarks are compiled as follows: The upper part and the lower part are separate
 // functions. The upper part is the setup and the lower part is the actual benchmark which is put
 // in a closure. Hence, the benchmark cannot reference to an object from the setup. Since the
 // closure is defined as `move ||`, it moves when references are used. But in our case, `vm` stores
@@ -104,7 +108,7 @@ fn create_wasm_module(instructions: Vec<Instruction>, repeat: u32) -> wasmi::Mod
 	create_wasm_module_fn(Instruction::Nop, |_| instructions.clone(), repeat)
 }
 
-/// Create a CosmWasm module w additional instructions
+/// Create a CosmWasm module with additional instructions
 fn create_wasm_module_fn<F>(instr: Instruction, instr_fn: F, repeat: u32) -> wasmi::ModuleRef
 where
 	F: Fn(Instruction) -> Vec<Instruction>,
@@ -684,23 +688,9 @@ benchmarks! {
 		wasm_invoke(&mut module);
 	}
 
-	instruction_I64LtU {
-		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::I64LtU, create_binary_instruction_set::<i64>, r);
-	}: {
-		wasm_invoke(&mut module);
-	}
-
 	instruction_I64GtS {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
 		let mut module = create_wasm_module_fn(Instruction::I64GtS, create_binary_instruction_set::<i64>, r);
-	}: {
-		wasm_invoke(&mut module);
-	}
-
-	instruction_I64GtU {
-		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::I64GtU, create_binary_instruction_set::<i64>, r);
 	}: {
 		wasm_invoke(&mut module);
 	}
@@ -715,20 +705,6 @@ benchmarks! {
 	instruction_I64GeS {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
 		let mut module = create_wasm_module_fn(Instruction::I64GeS, create_binary_instruction_set::<i64>, r);
-	}: {
-		wasm_invoke(&mut module);
-	}
-
-	instruction_I64LeU {
-		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::I64LeU, create_binary_instruction_set::<i64>, r);
-	}: {
-		wasm_invoke(&mut module);
-	}
-
-	instruction_I64GeU {
-		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::I64GeU, create_binary_instruction_set::<i64>, r);
 	}: {
 		wasm_invoke(&mut module);
 	}
@@ -789,13 +765,6 @@ benchmarks! {
 		wasm_invoke(&mut module);
 	}
 
-	instruction_I64RemU {
-		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::I64RemU, create_binary_instruction_set::<i64>, r);
-	}: {
-		wasm_invoke(&mut module);
-	}
-
 	instruction_I64And {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
 		let mut module = create_wasm_module_fn(Instruction::I64And, create_binary_instruction_set::<i64>, r);
@@ -824,14 +793,12 @@ benchmarks! {
 		wasm_invoke(&mut module);
 	}
 
-	instruction_I64ShrU {
+	instruction_I64ShrS {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::I64ShrU, create_binary_instruction_set::<i64>, r);
+		let mut module = create_wasm_module_fn(Instruction::I64ShrS, create_binary_instruction_set::<i64>, r);
 	}: {
 		wasm_invoke(&mut module);
 	}
-
-	// TODO(aeryz): ShrS
 
 	instruction_I64Rotl {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
@@ -850,13 +817,6 @@ benchmarks! {
 	instruction_I64ExtendSI32 {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
 		let mut module = create_wasm_module_fn(Instruction::I64ExtendSI32, create_unary_instruction_set::<i32>, r);
-	}: {
-		wasm_invoke(&mut module);
-	}
-
-	instruction_I64ExtendUI32 {
-		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::I64ExtendUI32, create_unary_instruction_set::<i32>, r);
 	}: {
 		wasm_invoke(&mut module);
 	}
@@ -1034,7 +994,7 @@ benchmarks! {
 		wasm_invoke(&mut module);
 	}
 
-	// n_extra_instrs = 0 (`if` instruction will be substracted from this)
+	// n_extra_instrs = 0 (`if` instruction will be subtracted from this)
 	instruction_Else {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
 		let mut module = create_wasm_module(vec![
@@ -1055,7 +1015,7 @@ benchmarks! {
 				.local(1, ValueType::I32)
 				.instructions(vec![Instruction::GetLocal(0), Instruction::Drop])
 				.build(),
-			None)]);
+			Some(r))]);
 	}: {
 		wasm_invoke(&mut module);
 	}
@@ -1068,7 +1028,7 @@ benchmarks! {
 				.local(1, ValueType::I32)
 				.instructions(vec![Instruction::I32Const(99), Instruction::SetLocal(0)])
 				.build(),
-			None)]);
+			Some(r))]);
 	}: {
 		wasm_invoke(&mut module);
 	}
@@ -1086,7 +1046,7 @@ benchmarks! {
 		wasm_invoke(&mut module);
 	}
 
-	// TODO(aeryz): We depend on the existance of the global variable that is used internally by code generator.
+	// TODO(aeryz): We depend on the existence of the global variable that is used internally by code generator.
 	// We could have a field to specify additional globals.
 	// n_extra_instrs = 1
 	instruction_GetGlobal {
@@ -1133,6 +1093,80 @@ benchmarks! {
 			Instruction::GrowMemory(0),
 			Instruction::Drop,
 		], r);
+	}: {
+		wasm_invoke(&mut module);
+	}
+
+	// n_extra_instrs = 0
+	instruction_Br {
+		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
+		let mut module = create_wasm_module(vec![
+			Instruction::Block(BlockType::NoResult),
+			Instruction::Br(0),
+			Instruction::End
+		], r);
+	}: {
+		wasm_invoke(&mut module);
+	}
+
+	// n_extra_instrs = 1
+	instruction_BrIf {
+		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
+		let mut module = create_wasm_module(vec![
+			Instruction::Block(BlockType::NoResult),
+			Instruction::I32Const(1),
+			Instruction::Br(0),
+			Instruction::End
+		], r);
+	}: {
+		wasm_invoke(&mut module);
+	}
+
+	// n_extra_instrs = 1
+	instruction_BrTable {
+		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
+		let mut module = create_wasm_module(vec![
+			Instruction::Block(BlockType::NoResult),
+			Instruction::I32Const(0),
+			Instruction::BrTable(Box::new(BrTableData {
+				table: Box::new([0]),
+				default: 0,
+			})),
+			Instruction::End
+		], r);
+	}: {
+		wasm_invoke(&mut module);
+	}
+
+	// n_extra_instrs = 1
+	instruction_BrTable_per_elem {
+		let s in 1..INSTRUCTIONS_SAMPLE_COUNT;
+		let mut module = create_wasm_module(vec![
+			Instruction::Block(BlockType::NoResult),
+			Instruction::I32Const(0),
+			Instruction::BrTable(Box::new(BrTableData {
+				table: vec![0; s as usize].into_boxed_slice(),
+				default: 0,
+			})),
+			Instruction::End
+		], 1);
+	}: {
+		wasm_invoke(&mut module);
+	}
+
+	// n_extra_instrs = 2
+	instruction_Call {
+		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
+		let mut module = create_wasm_module_with_fns(vec![
+			(FunctionBuilder::new("garbage")
+				.instructions(vec![Instruction::I32Const(99), Instruction::Drop])
+				.build(), None),
+			(FunctionBuilder::new(FN_NAME)
+				// TODO(aeryz): This `7` is the offset of the first user defined function.
+				// code_gen should provide a constant value for this.
+				.instructions(vec![Instruction::Call(7)])
+				.build(),
+			Some(r))]);
 	}: {
 		wasm_invoke(&mut module);
 	}

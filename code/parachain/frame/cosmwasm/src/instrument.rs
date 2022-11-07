@@ -49,16 +49,22 @@ type WeightFn = fn(n: u32) -> Weight;
 /// * additional_instrs: Count of instructions that are used to be able to generate a valid program
 ///   but should be included in the weight calculation
 fn calculate_weight<T: Config>(weight_fn: WeightFn, n_additional_instrs: u32) -> u32 {
-	((weight_fn(1) - weight_fn(0)) as u32 / INSTRUCTIONS_MULTIPLIER) -
-		(((T::WeightInfo::instruction_I64Const(1) - T::WeightInfo::instruction_I64Const(0))
-			as u32 / 100 / 2) *
-			n_additional_instrs)
+	(weight_fn(1).saturating_sub(weight_fn(0)).saturating_sub(
+		T::WeightInfo::instruction_I64Const(1)
+			.saturating_sub(T::WeightInfo::instruction_I64Const(0)) /
+			2,
+	) as u32)
+		.saturating_mul(n_additional_instrs) /
+		INSTRUCTIONS_MULTIPLIER
 }
 
 /// Calculates a weight that is dependent on other weight. Eg. `else` because it cannot
 /// exist without an `if`
 fn calculate_weight_custom<T: Config>(weight_fn: WeightFn, custom_fn: WeightFn) -> u32 {
-	((weight_fn(1) - weight_fn(0)) - (custom_fn(1) - custom_fn(0))) as u32 / INSTRUCTIONS_MULTIPLIER
+	(weight_fn(1)
+		.saturating_sub(weight_fn(0))
+		.saturating_sub(custom_fn(1).saturating_sub(custom_fn(0)) / 2) as u32) /
+		INSTRUCTIONS_MULTIPLIER
 }
 
 #[derive(Encode, Decode, TypeInfo)]
@@ -75,11 +81,8 @@ pub struct CostRules<T: Config> {
 	i64ne: u32,
 	i64lts: u32,
 	i64gts: u32,
-	i64gtu: u32,
 	i64les: u32,
 	i64ges: u32,
-	i64leu: u32,
-	i64geu: u32,
 	i64clz: u32,
 	i64ctz: u32,
 	i64popcnt: u32,
@@ -88,17 +91,15 @@ pub struct CostRules<T: Config> {
 	i64divs: u32,
 	i64divu: u32,
 	i64rems: u32,
-	i64remu: u32,
 	i64and: u32,
 	i64or: u32,
 	i64xor: u32,
 	i64shl: u32,
-	i64shru: u32,
+	i64shrs: u32,
 	i64rotl: u32,
 	i64rotr: u32,
 	i32wrapi64: u32,
 	i64extendsi32: u32,
-	i64extendui32: u32,
 	f64eq: u32,
 	f64ne: u32,
 	f64lt: u32,
@@ -129,6 +130,11 @@ pub struct CostRules<T: Config> {
 	getglobal: u32,
 	currentmemory: u32,
 	growmemory: u32,
+	br: u32,
+	brif: u32,
+	brtable: u32,
+	brtable_per_elem: u32,
+	call: u32,
 	#[codec(skip)]
 	_marker: PhantomData<T>,
 }
@@ -147,11 +153,8 @@ impl<T: Config> Default for CostRules<T> {
 			i64ne: calculate_weight::<T>(T::WeightInfo::instruction_I64Ne, 3),
 			i64lts: calculate_weight::<T>(T::WeightInfo::instruction_I64LtS, 3),
 			i64gts: calculate_weight::<T>(T::WeightInfo::instruction_I64GtS, 3),
-			i64gtu: calculate_weight::<T>(T::WeightInfo::instruction_I64GtU, 3),
 			i64les: calculate_weight::<T>(T::WeightInfo::instruction_I64LeS, 3),
 			i64ges: calculate_weight::<T>(T::WeightInfo::instruction_I64GeS, 3),
-			i64leu: calculate_weight::<T>(T::WeightInfo::instruction_I64LeU, 3),
-			i64geu: calculate_weight::<T>(T::WeightInfo::instruction_I64GeU, 3),
 			i64clz: calculate_weight::<T>(T::WeightInfo::instruction_I64Clz, 3),
 			i64ctz: calculate_weight::<T>(T::WeightInfo::instruction_I64Ctz, 2),
 			i64popcnt: calculate_weight::<T>(T::WeightInfo::instruction_I64Popcnt, 2),
@@ -160,18 +163,15 @@ impl<T: Config> Default for CostRules<T> {
 			i64divs: calculate_weight::<T>(T::WeightInfo::instruction_I64DivS, 3),
 			i64divu: calculate_weight::<T>(T::WeightInfo::instruction_I64DivU, 3),
 			i64rems: calculate_weight::<T>(T::WeightInfo::instruction_I64RemS, 3),
-			i64remu: calculate_weight::<T>(T::WeightInfo::instruction_I64RemU, 3),
 			i64and: calculate_weight::<T>(T::WeightInfo::instruction_I64And, 3),
 			i64or: calculate_weight::<T>(T::WeightInfo::instruction_I64Or, 3),
 			i64xor: calculate_weight::<T>(T::WeightInfo::instruction_I64Xor, 3),
 			i64shl: calculate_weight::<T>(T::WeightInfo::instruction_I64Shl, 3),
-			i64shru: calculate_weight::<T>(T::WeightInfo::instruction_I64ShrU, 3),
-			// TODO(aeryz): I64ShrS
+			i64shrs: calculate_weight::<T>(T::WeightInfo::instruction_I64ShrS, 3),
 			i64rotl: calculate_weight::<T>(T::WeightInfo::instruction_I64Rotl, 3),
 			i64rotr: calculate_weight::<T>(T::WeightInfo::instruction_I64Rotr, 3),
 			i32wrapi64: calculate_weight::<T>(T::WeightInfo::instruction_I32WrapI64, 3),
 			i64extendsi32: calculate_weight::<T>(T::WeightInfo::instruction_I64ExtendSI32, 3),
-			i64extendui32: calculate_weight::<T>(T::WeightInfo::instruction_I64ExtendUI32, 3),
 			f64eq: calculate_weight::<T>(T::WeightInfo::instruction_F64Eq, 3),
 			f64ne: calculate_weight::<T>(T::WeightInfo::instruction_F64Ne, 3),
 			f64lt: calculate_weight::<T>(T::WeightInfo::instruction_F64Lt, 3),
@@ -205,6 +205,11 @@ impl<T: Config> Default for CostRules<T> {
 			setglobal: calculate_weight::<T>(T::WeightInfo::instruction_SetGlobal, 2),
 			currentmemory: calculate_weight::<T>(T::WeightInfo::instruction_CurrentMemory, 2),
 			growmemory: calculate_weight::<T>(T::WeightInfo::instruction_GrowMemory, 2),
+			br: calculate_weight::<T>(T::WeightInfo::instruction_Br, 1),
+			brif: calculate_weight::<T>(T::WeightInfo::instruction_BrIf, 1),
+			brtable: calculate_weight::<T>(T::WeightInfo::instruction_BrTable, 1),
+			brtable_per_elem: calculate_weight::<T>(T::WeightInfo::instruction_BrTable_per_elem, 1),
+			call: calculate_weight::<T>(T::WeightInfo::instruction_Call, 2),
 			_marker: PhantomData,
 		}
 	}
@@ -240,13 +245,22 @@ impl<T: Config> Rules for CostRules<T> {
 			Instruction::I64Eq | Instruction::I32Eq => self.i64eq,
 			Instruction::I64Eqz | Instruction::I32Eqz => self.i64eqz,
 			Instruction::I64Ne | Instruction::I32Ne => self.i64ne,
-			Instruction::I64LtS | Instruction::I32LtS => self.i64lts,
-			Instruction::I64GtS | Instruction::I32GtS => self.i64gts,
-			Instruction::I64GtU | Instruction::I32GtU => self.i64gtu,
-			Instruction::I64LeS | Instruction::I32LeS => self.i64les,
-			Instruction::I64GeS | Instruction::I32GeS => self.i64ges,
-			Instruction::I64LeU | Instruction::I32LeU => self.i64leu,
-			Instruction::I64GeU | Instruction::I32GeU => self.i64geu,
+			Instruction::I64LtS |
+			Instruction::I32LtS |
+			Instruction::I64LtU |
+			Instruction::I32LtU => self.i64lts,
+			Instruction::I64GtS |
+			Instruction::I32GtS |
+			Instruction::I64GtU |
+			Instruction::I32GtU => self.i64gts,
+			Instruction::I64LeS |
+			Instruction::I32LeS |
+			Instruction::I64LeU |
+			Instruction::I32LeU => self.i64les,
+			Instruction::I64GeS |
+			Instruction::I32GeS |
+			Instruction::I64GeU |
+			Instruction::I32GeU => self.i64ges,
 			Instruction::I64Clz | Instruction::I32Clz => self.i64clz,
 			Instruction::I64Ctz | Instruction::I32Ctz => self.i64ctz,
 			Instruction::I64Popcnt | Instruction::I32Popcnt => self.i64popcnt,
@@ -254,20 +268,23 @@ impl<T: Config> Rules for CostRules<T> {
 			Instruction::I64Mul | Instruction::I32Mul => self.i64mul,
 			Instruction::I64DivS | Instruction::I32DivS => self.i64divs,
 			Instruction::I64DivU | Instruction::I32DivU => self.i64divu,
-			Instruction::I64RemS | Instruction::I32RemS => self.i64rems,
-			Instruction::I64RemU | Instruction::I32RemU => self.i64remu,
+			Instruction::I64RemU |
+			Instruction::I32RemU |
+			Instruction::I64RemS |
+			Instruction::I32RemS => self.i64rems,
 			Instruction::I64And | Instruction::I32And => self.i64and,
 			Instruction::I64Or | Instruction::I32Or => self.i64or,
 			Instruction::I64Xor | Instruction::I32Xor => self.i64xor,
 			Instruction::I64Shl | Instruction::I32Shl => self.i64shl,
-			Instruction::I64ShrU | Instruction::I32ShrU => self.i64shru,
-			// TODO(aeryz): I64ShrS
+			Instruction::I64ShrU |
+			Instruction::I32ShrU |
+			Instruction::I64ShrS |
+			Instruction::I32ShrS => self.i64shrs,
 			// TODO(aeryz): I64Sub
 			Instruction::I64Rotl | Instruction::I32Rotl => self.i64rotl,
 			Instruction::I64Rotr | Instruction::I32Rotr => self.i64rotr,
 			Instruction::I32WrapI64 => self.i32wrapi64,
-			Instruction::I64ExtendSI32 => self.i64extendsi32,
-			Instruction::I64ExtendUI32 => self.i64extendui32,
+			Instruction::I64ExtendSI32 | Instruction::I64ExtendUI32 => self.i64extendsi32,
 			Instruction::F64Eq | Instruction::F32Eq => self.f64eq,
 			Instruction::F64Ne | Instruction::F32Ne => self.f64ne,
 			Instruction::F64Lt | Instruction::F32Lt => self.f64lt,
@@ -299,6 +316,15 @@ impl<T: Config> Rules for CostRules<T> {
 			Instruction::SetGlobal(_) => self.setglobal,
 			Instruction::CurrentMemory(_) => self.currentmemory,
 			Instruction::GrowMemory(_) => self.growmemory,
+			Instruction::Br(_) => self.br,
+			Instruction::BrIf(_) => self.brif,
+			Instruction::BrTable(table) => self
+				.brtable
+				.saturating_add(self.brtable_per_elem.saturating_mul(table.table.len() as u32)),
+			Instruction::Call(_) => self.call,
+			// TODO(aeryz): CallIndirect will be implemented after the pallet is upgraded to IBC
+			// compatible VM
+			Instruction::CallIndirect(_, _) => self.call,
 			_ => 1_000,
 		};
 		Some(weight)
