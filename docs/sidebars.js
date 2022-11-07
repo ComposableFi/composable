@@ -9,6 +9,8 @@
  Create as many sidebars as you want.
  */
 
+const isProd = process.env.NODE_ENV === 'production';
+
 // @ts-check
 
 /** @type {import('@docusaurus/plugin-content-docs').SidebarsConfig} */
@@ -318,5 +320,21 @@ const sidebars = {
     },
   ],
 };
+
+if(!isProd) {
+  sidebars.tutorialSidebar.unshift({
+    type: 'category',
+    label: 'test-SCDI',
+    link: {
+      type: 'doc',
+      id: 'testSCDI/entry'
+    },
+    collapsible: true,
+    collapsed: true,
+    items: [
+      'testSCDI/widget-test',
+    ],
+  })
+}
 
 module.exports = sidebars;
