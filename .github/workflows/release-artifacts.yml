@@ -33,10 +33,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Exit if not on a release-* branch
-        if: startsWith(github.ref, 'release-') == false
-        run: exit -1
-
       - name: Setup nix configuration
         run: |
           echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf

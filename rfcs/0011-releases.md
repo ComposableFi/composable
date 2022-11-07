@@ -43,7 +43,7 @@ For Subsquid : `subsquid-v2.5-1.0.1`
 
 etc.
 
-#### 3.1.1. Expected Typical Release Artefact List 
+#### 3.1.1. Expected Typical Release Artifact List 
 
 ```
 - Composable Node v2.5.3
@@ -68,6 +68,6 @@ As the work starts for a `major.minor` (eg: 2.5) release,
 
 1. Create a branch `release-v2.5`.
 2. in order to make/deploy (in staging) a release create a tag `release-v2.5.0` which should trigger a workflow.
-2. QA/Audit happens on these released tag.
-3. Any reported issues must be fixed on `main` and merged/cherry picked to the `release-v2.5` branch. Then a tag should be created for the next round and so on until "release-able" version is found.
-3. Node and runtimes are release together from the same tag while other components(eg: fe) must have their own tag/workflows to release.
+3. QA/Audit happens on these released tag.
+4. Any reported issues must be fixed on `main` and merged/cherry picked to the `release-v2.5` branch. Then a tag should be created for the next round and so on until "release-able" version is found.
+5. Node and runtimes are release together from the same tag while other components(eg: fe) must have their own tag/workflows to release.
