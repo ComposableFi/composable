@@ -20,7 +20,8 @@ export const TransferFeeDisplay = () => {
 
   const { from, to, account, fromProvider } = useTransfer();
   const fee = useStore((state) => state.transfers.fee);
-  const destFee = getDestChainFee(from, to, tokens);
+  const selectedToken = useStore((state) => state.transfers.selectedToken);
+  const destFee = getDestChainFee(from, to, tokens, selectedToken);
   const allProviders = useAllParachainProviders();
 
   useEffect(() => {
@@ -60,14 +61,16 @@ export const TransferFeeDisplay = () => {
           title: "Fee tooltip title",
         }}
       />
-      <FeeDisplay
-        label="Destination chain fee"
-        feeText={`${destFee.fee.toFormat()} ${destFee.token.symbol}`}
-        TooltipProps={{
-          title:
-            "Destination transaction fee is approximate and might change due to network conditions",
-        }}
-      />
+      {destFee.fee !== null && destFee.token !== null ? (
+        <FeeDisplay
+          label="Destination chain fee"
+          feeText={`${destFee.fee.toFormat()} ${destFee.token.symbol}`}
+          TooltipProps={{
+            title:
+              "Destination transaction fee is approximate and might change due to network conditions",
+          }}
+        />
+      ) : null}
     </Stack>
   );
 };

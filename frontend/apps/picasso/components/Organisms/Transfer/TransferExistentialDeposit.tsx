@@ -17,7 +17,6 @@ import { Chip } from "@mui/material";
  * From Karura => Picasso, sending KUSD,
  * Fetch KUSD ed on Karura chain
  */
-
 export const TransferExistentialDeposit: FC = () => {
   const from = useStore((state) => state.transfers.networks.from);
   const selectedToken = useStore(

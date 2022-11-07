@@ -81,8 +81,8 @@ export const createTokensSlice: StoreSlice<TokensSlice> = (set) => ({
           if (token) {
             console.log("[Picasso] Found Supported Asset", identifier);
             token.decimals.picasso = listItem.decimals ?? 12;
-            token.chainId["picasso"] = listItem.id;
-            token.existentialDeposit["picasso"] = null;
+            token.chainId.picasso = listItem.id;
+            token.existentialDeposit.picasso = null;
           }
         });
 
@@ -106,6 +106,8 @@ export const createTokensSlice: StoreSlice<TokensSlice> = (set) => ({
           }
         });
 
+        // This is done only for Kusama chain
+        // If more tokens are imported, this needs a dedicated function
         state.substrateTokens.tokens.ksm.decimals.kusama =
           kusamaAssetMetadata.decimals;
         state.substrateTokens.tokens.ksm.chainId.kusama =

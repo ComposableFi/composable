@@ -2,9 +2,10 @@ import { useAllParachainProviders } from "@/defi/polkadot/context/hooks";
 import { useSelectedAccount } from "@/defi/polkadot/hooks/index";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { useStore } from "@/stores/root";
-import { useSnackbar } from "notistack";
+import { SnackbarKey, useSnackbar } from "notistack";
 import { useExecutor, useSigner } from "substrate-react";
 import BigNumber from "bignumber.js";
+import { xcmPalletEventParser } from "@/defi/polkadot/pallets/XCM/utils";
 
 export const useTransfer = () => {
   const allProviders = useAllParachainProviders();
@@ -13,7 +14,7 @@ export const useTransfer = () => {
   const to = useStore((state) => state.transfers.networks.to);
   const toProvider = allProviders[to];
   const signer = useSigner();
-  const { enqueueSnackbar } = useSnackbar();
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const selectedRecipient = useStore(
     (state) => state.transfers.recipients.selected
   );
@@ -54,13 +55,14 @@ export const useTransfer = () => {
       return;
     }
     try {
+      let snackbarKey: SnackbarKey;
       await executor.execute(
         call,
         signerAddress,
         api,
         signer,
         (txHash) => {
-          enqueueSnackbar("Transfer executed", {
+          snackbarKey = enqueueSnackbar("Transfer executed", {
             persist: true,
             description: `Transaction hash: ${txHash}`,
             variant: "info",
@@ -68,17 +70,31 @@ export const useTransfer = () => {
             url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
           });
         },
-        (txHash) => {
-          enqueueSnackbar("Transfer executed successfully.", {
-            persist: true,
-            variant: "success",
-            isCloseable: true,
-            url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
-          });
+        (txHash, records) => {
+          if (api.events.xcmPallet) {
+            xcmPalletEventParser(
+              records,
+              api,
+              closeSnackbar,
+              snackbarKey,
+              enqueueSnackbar,
+              txHash
+            );
+          } else {
+            closeSnackbar(snackbarKey);
+            enqueueSnackbar("Transfer is successful", {
+              persist: true,
+              description: "",
+              variant: "success",
+              isCloseable: true,
+              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
+            });
+          }
+
           setAmount(new BigNumber(0));
         },
         (err) => {
-          enqueueSnackbar("Transfer failed", {
+          snackbarKey = enqueueSnackbar("Transfer failed", {
             persist: true,
             description: `Error: ${err}`,
             variant: "error",
