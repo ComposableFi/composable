@@ -37,8 +37,9 @@ export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
   const isTokenBalanceZero = useStore(
     (state) => state.transfers.isTokenBalanceZero
   );
-  const balances = useStore((state) => state.substrateBalances.balances);
-  const existentialDeposit = balances[from][selectedToken].existentialDeposit;
+  const tokens = useStore((state) => state.substrateTokens.tokens);
+  const existentialDeposit = tokens[selectedToken].existentialDeposit[from];
+  const decimals = tokens[selectedToken].decimals[from] ?? Number(0);
   const keepAlive = useStore((state) => state.transfers.keepAlive);
   const [stringValue, setStringValue] = useState<string>(amount.toString());
   const { validate, hasError } = useValidation({
@@ -54,23 +55,27 @@ export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
   };
 
   const handleMaxClick = () => {
-    callbackGate((api) => {
-      const amountToTransfer = calculateTransferAmount({
-        amountToTransfer: balance,
-        balance: balance,
-        keepAlive,
-        selectedToken,
-        sourceExistentialDeposit: existentialDeposit,
-        sourceGas,
-      });
-      updateAmount(amountToTransfer);
-      setStringValue(amountToTransfer.toString());
-      validate({
-        target: {
-          value: amountToTransfer.toString(),
-        },
-      } as any);
-    }, fromProvider.parachainApi);
+    callbackGate(
+      (api, _existentialDeposit) => {
+        const amountToTransfer = calculateTransferAmount({
+          amountToTransfer: balance,
+          balance: balance,
+          keepAlive,
+          selectedToken,
+          sourceExistentialDeposit: _existentialDeposit,
+          sourceGas,
+        });
+        updateAmount(amountToTransfer);
+        setStringValue(amountToTransfer.toString());
+        validate({
+          target: {
+            value: amountToTransfer.toString(),
+          },
+        } as any);
+      },
+      fromProvider.parachainApi,
+      existentialDeposit
+    );
   };
 
   useEffect(() => {
