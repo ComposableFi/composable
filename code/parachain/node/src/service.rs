@@ -31,8 +31,8 @@ use crate::{
 	rpc,
 	runtime::{
 		assets::ExtendWithAssetsApi, cosmwasm::ExtendWithCosmwasmApi,
-		crowdloan_rewards::ExtendWithCrowdloanRewardsApi, ibc::ExtendWithIbcApi,
-		lending::ExtendWithLendingApi, pablo::ExtendWithPabloApi, BaseHostRuntimeApis,
+		crowdloan_rewards::ExtendWithCrowdloanRewardsApi, lending::ExtendWithLendingApi,
+		pablo::ExtendWithPabloApi, BaseHostRuntimeApis,
 	},
 };
 
@@ -71,10 +71,7 @@ pub struct DaliExecutor;
 
 #[cfg(feature = "dali")]
 impl sc_executor::NativeExecutionDispatch for DaliExecutor {
-	type ExtendHostFunctions = (
-		frame_benchmarking::benchmarking::HostFunctions,
-		ibc_primitives::runtime_interface::ibc::HostFunctions,
-	);
+	type ExtendHostFunctions = (frame_benchmarking::benchmarking::HostFunctions,);
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
 		dali_runtime::api::dispatch(method, data)
@@ -287,7 +284,6 @@ where
 		+ ExtendWithCrowdloanRewardsApi<RuntimeApi, Executor>
 		+ ExtendWithPabloApi<RuntimeApi, Executor>
 		+ ExtendWithLendingApi<RuntimeApi, Executor>
-		+ ExtendWithIbcApi<RuntimeApi, Executor>
 		+ ExtendWithCosmwasmApi<RuntimeApi, Executor>,
 	StateBackendFor<FullBackend, OpaqueBlock>: StateBackend<BlakeTwo256>,
 	Executor: NativeExecutionDispatch + 'static,
