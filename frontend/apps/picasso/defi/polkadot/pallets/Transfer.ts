@@ -5,6 +5,7 @@ import { ParachainId, RelayChainId } from "substrate-react";
 import { TokenId } from "tokens";
 import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
 import BigNumber from "bignumber.js";
+import { TRANSFER_ASSET_LIST } from "@/defi/config";
 
 export function getAmountToTransfer({
   balance,
@@ -38,10 +39,60 @@ export function getAmountToTransfer({
   return api.createType("u128", toChainIdUnit(calculatedAmount, 12).toString());
 }
 
+export type CalculateTransferAmount = {
+  sourceGas: {
+    fee: BigNumber;
+    token: TokenId;
+  };
+  amountToTransfer: BigNumber;
+  balance: BigNumber;
+  selectedToken: TokenId;
+  keepAlive: boolean;
+  sourceExistentialDeposit: BigNumber;
+};
+
+export function calculateTransferAmount({
+  sourceGas,
+  amountToTransfer,
+  balance,
+  selectedToken,
+  keepAlive,
+  sourceExistentialDeposit,
+}: CalculateTransferAmount) {
+  const ZERO = new BigNumber(0);
+  const gasTokenEqSelected = selectedToken === sourceGas.token;
+  const amountMinusGas = gasTokenEqSelected
+    ? amountToTransfer.minus(sourceGas.fee)
+    : amountToTransfer;
+  // Is account going to be removed after transfer?
+  const willReap = balance.minus(amountMinusGas).lt(sourceExistentialDeposit);
+
+  // If we should keep alive, deduct existential deposit from the amount to transfer
+  // NOTE: This should happen only if amount is MAX balance.
+  const requiredKeepAliveValue =
+    keepAlive && willReap ? sourceExistentialDeposit : ZERO;
+
+  // If the remainder is not enough to pay the gas fee, deduct the gas fee from amount.
+  // NOTE: This should happen only if transfer token and gas token are the same.
+  const gasPrice = gasTokenEqSelected ? sourceGas.fee : ZERO;
+
+  const output = amountToTransfer.minus(gasPrice).minus(requiredKeepAliveValue);
+  // Don't send values less than zero.
+  return output.lte(ZERO) ? ZERO : output;
+}
+
+/**
+ * TODO: Get the selected token to calculate the dest fee based of that.
+ * @param sourceChain
+ * @param targetChain
+ * @param tokens
+ * @param {TokenId} selectedToken
+ */
 export function getDestChainFee(
   sourceChain: ParachainId | RelayChainId,
   targetChain: ParachainId | RelayChainId,
-  tokens: Record<TokenId, TokenMetadata>
+  tokens: Record<TokenId, TokenMetadata>,
+  selectedToken: TokenId
 ) {
   switch (`${sourceChain}=>${targetChain}`) {
     case "kusama=>picasso":
@@ -50,10 +101,17 @@ export function getDestChainFee(
         token: tokens.ksm,
       };
     case "karura=>picasso":
+      const fee: BigNumber | undefined = {
+        kusd: fromChainIdUnit(new BigNumber("927020325")),
+        kar: fromChainIdUnit(new BigNumber("927020325")),
+        ksm: fromChainIdUnit(new BigNumber("927020325")),
+      }[selectedToken as string];
+
       return {
-        fee: fromChainIdUnit(new BigNumber("927020")),
-        token: tokens.kusd,
+        fee: fee ?? null,
+        token: fee ? tokens[selectedToken] : null,
       };
+
     case "picasso=>karura":
       return {
         fee: fromChainIdUnit(new BigNumber("74592000000")),
