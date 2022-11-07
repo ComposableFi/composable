@@ -51,6 +51,8 @@ sha3 = { version = "0.10", default-features = false }
 wasm-instrument = { version = "0.2", default-features = false }
 wasmi = { git = "https://github.com/ComposableFi/wasmi", rev = "cd8c0c775a1d197a35ff3d5c7d6cded3d476411b", default-features = false }
 wasmi-validation = { git = "https://github.com/ComposableFi/wasmi", rev = "cd8c0c775a1d197a35ff3d5c7d6cded3d476411b", default-features = false }
+lazy_static = { version = "1.4.0", optional = true, default-features = false, features = [ "spin_no_std" ]}
+rand= { version = "0.8.5", optional = true, default-features = false, features = [ "alloc", "small_rng" ]}
 
 [dev-dependencies]
 composable-traits = { path = "../composable-traits", default-features = false }
@@ -63,6 +65,8 @@ pallet-timestamp = { default-features = false, git = "https://github.com/parityt
 [features]
 default = ["std"]
 runtime-benchmarks = [
+  "lazy_static",
+  "rand",
   "frame-benchmarking",
   "frame-support/runtime-benchmarks",
   "frame-system/runtime-benchmarks",

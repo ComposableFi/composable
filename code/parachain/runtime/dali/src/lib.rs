@@ -54,6 +54,7 @@ use composable_traits::{
 	dex::{Amm, PriceAggregate, RemoveLiquiditySimulationResult},
 	xcm::assets::RemoteAssetRegistryInspect,
 };
+use cosmwasm::instrument::CostRules;
 use primitives::currency::{CurrencyId, ValidateCurrencyId};
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
@@ -1158,6 +1159,7 @@ parameter_types! {
   pub const CodeStorageByteDeposit: u32 = 1;
   pub const ContractStorageByteReadPrice: u32 = 1;
   pub const ContractStorageByteWritePrice: u32 = 1;
+  pub WasmCostRules: CostRules<Runtime> = Default::default();
 }
 
 impl cosmwasm::Config for Runtime {
@@ -1187,6 +1189,7 @@ impl cosmwasm::Config for Runtime {
 	type CodeStorageByteDeposit = CodeStorageByteDeposit;
 	type ContractStorageByteReadPrice = ContractStorageByteReadPrice;
 	type ContractStorageByteWritePrice = ContractStorageByteWritePrice;
+	type WasmCostRules = WasmCostRules;
 	type UnixTime = Timestamp;
 	// TODO: proper weights
 	type WeightInfo = cosmwasm::weights::SubstrateWeight<Runtime>;
