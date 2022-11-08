@@ -2,6 +2,8 @@ use crate::{prelude::*, runtime::*, Error};
 use codec::{Decode, Encode};
 use composable_traits::{
 	assets::Asset,
+	currency::Rational64,
+	rational,
 	xcm::assets::{ForeignMetadata, RemoteAssetRegistryInspect, XcmAssetLocation},
 };
 use frame_support::{assert_noop, assert_ok};
@@ -24,7 +26,7 @@ fn set_metadata() {
 			RawOrigin::Root.into(),
 			XcmAssetLocation::RELAY_NATIVE,
 			42,
-			Some(Rational::new(42, 123)),
+			Some(rational!(42 / 123)),
 			Some(4)
 		));
 		let asset_id = System::events()
@@ -45,7 +47,7 @@ fn set_metadata() {
 
 		assert_eq!(
 			<AssetsRegistry as AssetRatioInspect>::get_ratio(asset_id),
-			Some(Rational::new(42, 123)),
+			Some(rational!(42 / 123)),
 		);
 
 		assert_eq!(
@@ -65,7 +67,7 @@ fn register_asset() {
 		)
 		.unwrap();
 		let ed = 42_u64.into();
-		let ratio = Rational::new(42, 123);
+		let ratio = rational!(42 / 123);
 		let decimals = 3;
 
 		assert_eq!(AssetsRegistry::from_foreign_asset(location.clone()), None);
@@ -104,7 +106,7 @@ fn update_asset() {
 		)
 		.unwrap();
 		let ed = 42_u64.into();
-		let ratio = Rational::new(42, 123);
+		let ratio = rational!(42 / 123);
 		let decimals = 3;
 
 		assert_ok!(AssetsRegistry::register_asset(
@@ -123,7 +125,7 @@ fn update_asset() {
 		assert_eq!(AssetsRegistry::asset_ratio(local_asset_id), Some(ratio));
 
 		let new_decimals = 12;
-		let new_ratio = Rational::new(42, 123);
+		let new_ratio = rational!(42 / 123);
 		assert_ok!(AssetsRegistry::update_asset(
 			Origin::root(),
 			local_asset_id,
@@ -173,7 +175,7 @@ fn get_foreign_assets_list_should_work() {
 		)
 		.unwrap();
 		let ed = 42_u64.into();
-		let ratio = Rational::new(42, 123);
+		let ratio = rational!(42 / 123);
 		let decimals = 3;
 
 		let foreign_assets = AssetsRegistry::get_foreign_assets_list();
