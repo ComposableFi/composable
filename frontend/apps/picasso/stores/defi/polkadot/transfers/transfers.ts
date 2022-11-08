@@ -329,8 +329,7 @@ export const createTransfersSlice: StoreSlice<TransfersSlice> = (set, get) => ({
           destWeight,
         ];
         return transferExtrinsic(...args) as SubmittableExtrinsic<"promise">;
-      } catch (e) {
-        console.error(e);
+      } catch {
         return;
       }
     },
