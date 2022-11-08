@@ -384,3 +384,6 @@ Origin
 protobufs
 divn
 XCVM
+tmpfs
+nodev
+nosuid
