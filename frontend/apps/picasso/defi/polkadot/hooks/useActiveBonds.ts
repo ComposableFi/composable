@@ -89,10 +89,6 @@ async function fetchAllVestingSchedules(
     return acc;
   }, new Set() as Set<string>);
 
-  console.log({
-    assetIdList: assetIdList,
-  });
-
   type VestingSchedule = {
     alreadyClaimed: number;
     perPeriod: number;

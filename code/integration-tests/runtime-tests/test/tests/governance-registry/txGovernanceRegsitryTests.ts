@@ -8,7 +8,8 @@ import { sendAndWaitForSuccess } from "@composable/utils/polkadotjs";
 import { Null, Result, u128 } from "@polkadot/types-codec";
 import { AccountId32 } from "@polkadot/types/interfaces";
 import { IEvent } from "@polkadot/types/types";
-import { SpRuntimeDispatchError } from "@polkadot/types/lookup";
+// @ts-ignore
+import { SpRuntimeDispatchError } from "@composable/types/interfaces";
 import { mintAssetsToWallet } from "@composable/utils/mintingHelper";
 
 /**

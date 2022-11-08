@@ -2,8 +2,7 @@ import { KeyringPair } from "@polkadot/keyring/types";
 import testConfiguration from "./test_configuration.json";
 import { ApiPromise, WsProvider } from "@polkadot/api";
 import { sendAndWaitForSuccess, waitForBlocks } from "@composable/utils/polkadotjs";
-import { SafeRpcWrapper } from "@composable/types/interfaces";
-import { XcmV2TraitsOutcome, XcmVersionedMultiLocation } from "@polkadot/types/lookup";
+import { SafeRpcWrapper, XcmV2TraitsOutcome, XcmVersionedMultiLocation } from "@composable/types/interfaces";
 import { getNewConnection } from "@composable/utils/connectionHelper";
 import { getDevWallets } from "@composable/utils/walletHelper";
 import { mintAssetsToWallet } from "@composable/utils/mintingHelper";
@@ -138,7 +137,9 @@ describe("[SHORT][LAUNCH] tx.xcmp Tests", function () {
 
       // Verifying Stuff
       const convertedResult: XcmV2TraitsOutcome = relayChainApiClient.createType("XcmV2TraitsOutcome", result);
+      // @ts-ignore
       expect(convertedResult.isComplete).to.be.true;
+      // @ts-ignore
       expect(convertedResult.isError).to.be.false;
 
       // Getting Alice wallet balance after transaction.

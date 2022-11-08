@@ -34,7 +34,9 @@ export default {
   types: {
     Asset: {
       name: "Vec<u8>",
-      id: "u64"
+      id: "u64",
+      decimals: "u32",
+      foreignId: "ComposableTraitsAssetsXcmAssetLocation"
     }
   }
 };

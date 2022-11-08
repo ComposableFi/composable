@@ -3,7 +3,7 @@ mod mint_into {
 	use crate::test::mock::*;
 	use std::collections::{BTreeMap, BTreeSet};
 
-	use composable_tests_helpers::test::helper::assert_last_event;
+	use composable_tests_helpers::test::helper::RuntimeTrait;
 
 	use composable_traits::{
 		account_proxy::{AccountProxy, ProxyType},
@@ -33,7 +33,7 @@ mod mint_into {
 
 			Nft::mint_into(&TEST_COLLECTION_ID, &NEW_NFT_ID, &ALICE).unwrap();
 
-			assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNftCreated {
+			MockRuntime::assert_last_event(Event::Nft(crate::Event::FinancialNftCreated {
 				collection_id: TEST_COLLECTION_ID,
 				instance_id: NEW_NFT_ID,
 			}));
@@ -66,7 +66,7 @@ mod mint_into {
 
 			Nft::mint_into(&TEST_COLLECTION_ID, &NEW_NFT_ID, &ALICE).unwrap();
 
-			assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNftCreated {
+			MockRuntime::assert_last_event(Event::Nft(crate::Event::FinancialNftCreated {
 				collection_id: TEST_COLLECTION_ID,
 				instance_id: NEW_NFT_ID,
 			}));
@@ -184,7 +184,7 @@ mod burn_from {
 	use std::collections::BTreeSet;
 
 	use composable_tests_helpers::test::{
-		block::process_and_progress_blocks, helper::assert_last_event,
+		block::process_and_progress_blocks, helper::RuntimeTrait,
 	};
 	use frame_support::{
 		assert_ok,
@@ -211,7 +211,7 @@ mod burn_from {
 			process_and_progress_blocks::<Pallet<MockRuntime>, MockRuntime>(10);
 
 			assert_ok!(Nft::burn(&TEST_COLLECTION_ID, &nft_to_burn, Some(&ALICE)));
-			assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNftBurned {
+			MockRuntime::assert_last_event(Event::Nft(crate::Event::FinancialNftBurned {
 				collection_id: TEST_COLLECTION_ID,
 				instance_id: nft_to_burn,
 			}));
@@ -238,7 +238,7 @@ mod burn_from {
 			process_and_progress_blocks::<Pallet<MockRuntime>, MockRuntime>(10);
 
 			assert_ok!(Nft::burn(&TEST_COLLECTION_ID, &new_id, Some(&ALICE)));
-			assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNftBurned {
+			MockRuntime::assert_last_event(Event::Nft(crate::Event::FinancialNftBurned {
 				collection_id: TEST_COLLECTION_ID,
 				instance_id: new_id,
 			}));
@@ -261,7 +261,7 @@ mod burn_from {
 	/// specifically.
 	mod not_found {
 		use crate::test::mock::*;
-		use composable_tests_helpers::test::helper::assert_last_event;
+		use composable_tests_helpers::test::helper::RuntimeTrait;
 
 		use frame_support::{
 			assert_noop, assert_ok,
@@ -309,7 +309,7 @@ mod burn_from {
 					mint_many_nfts_and_assert::<10>(ALICE, TEST_COLLECTION_ID);
 
 				assert_ok!(Nft::burn(&TEST_COLLECTION_ID, &nft_to_burn, Some(&ALICE)));
-				assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNftBurned {
+				MockRuntime::assert_last_event(Event::Nft(crate::Event::FinancialNftBurned {
 					collection_id: TEST_COLLECTION_ID,
 					instance_id: nft_to_burn,
 				}));
@@ -328,7 +328,7 @@ mod burn_from {
 				let nft_to_burn = mint_nft_and_assert();
 
 				assert_ok!(Nft::burn(&TEST_COLLECTION_ID, &nft_to_burn, Some(&ALICE)));
-				assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNftBurned {
+				MockRuntime::assert_last_event(Event::Nft(crate::Event::FinancialNftBurned {
 					collection_id: TEST_COLLECTION_ID,
 					instance_id: nft_to_burn,
 				}));

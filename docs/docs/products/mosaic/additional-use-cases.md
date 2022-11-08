@@ -1,7 +1,5 @@
 # Additional Use Cases
 
----
-
 ## Powering Asset Swaps Through Mosaic
 
 Mosaic connects with external systems, such as AMMs, to allow users to directly swap tokens for whatever token they 

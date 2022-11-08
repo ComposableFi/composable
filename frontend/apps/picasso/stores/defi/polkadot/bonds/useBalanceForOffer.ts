@@ -2,7 +2,7 @@ import BigNumber from "bignumber.js";
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
 import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
 import { useEffect, useState } from "react";
-import { fetchBalanceByAssetId } from "@/defi/polkadot/pallets/Balance";
+import { fetchBalanceByAssetId } from "@/defi/polkadot/pallets/Balances";
 
 type BondOfferBalances = {
   [key: string]: BigNumber;

@@ -1,8 +1,5 @@
 # Frontend
 
-
----
-
 ## Serving the frontend
 
 ```bash

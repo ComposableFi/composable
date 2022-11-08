@@ -1,7 +1,5 @@
 # Liquidity Forecasting
 
----
-
 Mosaic has a built-in forecasting mechanism that can predict in advance when a particular liquidity level will be 
 reached for a certain layer and intelligently rebalances. To do this, Mosaic employs 
 [ML-enhanced forecasting](https://medium.com/composable-finance/liquidity-forecasting-in-mosaic-part-iv-machine-learning-based-methods-17e8f2e5de14) 

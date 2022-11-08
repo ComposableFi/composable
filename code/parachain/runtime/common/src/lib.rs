@@ -19,6 +19,8 @@ pub mod xcmp;
 
 use core::marker::PhantomData;
 
+#[cfg(not(feature = "runtime-benchmarks"))]
+use composable_traits::currency::AssetExistentialDepositInspect;
 use composable_traits::{defi::Ratio, oracle::MinimalOracle, xcm::assets::AssetRatioInspect};
 pub use constants::*;
 use frame_support::parameter_types;
@@ -217,18 +219,43 @@ pub fn multi_existential_deposits<AssetsRegistry>(_currency_id: &CurrencyId) -> 
 	Balance::zero()
 }
 
+/// Given a `currency_id`, returns the existential deposit of a MultiAsset in the native asset.
+/// Returns `Balance::MAX` as the existential deposit if unable to get an existential deposit
+/// for the given `currency_id`, this will prune unknown asset balances.
 #[cfg(not(feature = "runtime-benchmarks"))]
-pub fn multi_existential_deposits<AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>>(
+pub fn multi_existential_deposits<
+	AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>
+		+ AssetExistentialDepositInspect<AssetId = CurrencyId, Balance = Balance>,
+>(
 	currency_id: &CurrencyId,
 ) -> Balance {
-	PriceConverter::<AssetsRegistry>::get_price_inverse(
-		*currency_id,
-		NativeExistentialDeposit::get(),
-	)
-	// TODO:
-	// 1. ask CurrencyFactory
-	// 2. use hardcoded values
-	.unwrap_or(1_000_000_u128)
+	// Check AssetRegistry/CurrencyFactory to see if we define ED for the token there
+	AssetsRegistry::existential_deposit(*currency_id)
+		.and_then(|ed| PriceConverter::<AssetsRegistry>::get_price_inverse(*currency_id, ed))
+		.unwrap_or(match *currency_id {
+			// If not found in AssetRegistry/CurrencyFactory, use hard-coded values
+			// TODO: Confirm values of ED
+			// PICA: 0.1 or 100_000_000_000
+			CurrencyId::PICA => 100_000_000_000,
+			// PICA: 0.1 or 100_000_000_000
+			CurrencyId::PBLO => 100_000_000_000,
+			// USDT: 100_000_000_000 * 1_000_000 / 67_000_000_000_000 = 1492 + 36/67
+			CurrencyId::USDT => 1492,
+			// //TODO: KAR: ?
+			CurrencyId::KAR => 100_000_000_000,
+			// kUSD: 100_000_000_000 / 67 = 1_492_537_313 + 29/67
+			CurrencyId::kUSD => 1_492_537_313,
+			// KSM: 100_000_000_000 / 2667 = 37_495_314 + 229/2667
+			CurrencyId::KSM => 37_495_314,
+			// TODO: BNC: ?
+			CurrencyId::BNC => 100_000_000_000,
+			// TODO: vKSM: ?
+			CurrencyId::vKSM => 100_000_000_000,
+			// TODO: MOVR: ?
+			CurrencyId::MOVR => 100_000_000_000,
+			// Unknown: Prune unknown balances
+			_ => Balance::MAX,
+		})
 }
 
 parameter_types! {

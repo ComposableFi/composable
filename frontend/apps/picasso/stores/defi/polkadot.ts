@@ -44,22 +44,13 @@ const initialState: {
     deposits: string;
     totalStaked: string;
   };
-  assets: (
-    | {
-        balance: number;
-        price: number;
-        change_24hr: number;
-        value: number;
-        token: Token;
-      }
-    | {
-        balance: number;
-        price: number;
-        change_24hr: number;
-        value: number;
-        token: Token;
-      }
-  )[];
+  assets: ({
+    balance: number;
+    price: number;
+    change_24hr: number;
+    value: number;
+    token: Token;
+  })[];
   selectedAccount: null;
 } = {
   selectedAccount: null,
@@ -95,7 +86,7 @@ const initialState: {
 };
 
 export interface PolkadotSlice {
-  polkadot: typeof initialState & {};
+  polkadot: typeof initialState;
 }
 
 export const createPolkadotSlice: StoreSlice<PolkadotSlice> = (

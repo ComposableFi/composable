@@ -1,7 +1,5 @@
 # Composable Grants Program
 
----
-
 Composable will be offering grants and developmental assistance to the projects using our technology, 
 emphasising supporting those that provide crucial functionalities or are incredibly innovative. 
 The programs allows us to support and award the most promising projects using our infrastructure 

@@ -2,8 +2,6 @@
 
 *The Picasso Parachain is realized!*
 
----
-
 ## Picasso has been Procured
 
 Composable is devoted to making DeFi truly interoperable, user-friendly, and flexible — and the support by our community

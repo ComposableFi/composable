@@ -1,8 +1,5 @@
 # The Dynamic Fee Model
 
----
-
-
 ![dynamic_fee_model](./dynamic-fee-model.png)
 
 

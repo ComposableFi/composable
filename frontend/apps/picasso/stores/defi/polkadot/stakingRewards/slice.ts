@@ -31,6 +31,7 @@ export type PortfolioItem = {
 export type PortfolioTuple = [string, string, PortfolioItem];
 export type StakingPortfolio = Array<PortfolioItem>;
 export type StakingRewardsSlice = {
+  // TODO: key better to be in string as we might have types not cast-able to number.
   rewardPools: {
     [key in number]: RewardPool;
   };

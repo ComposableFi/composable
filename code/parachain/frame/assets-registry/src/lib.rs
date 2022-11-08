@@ -31,7 +31,9 @@ pub mod pallet {
 	use codec::FullCodec;
 	use composable_traits::{
 		assets::Asset,
-		currency::{BalanceLike, CurrencyFactory, Exponent, RangeId},
+		currency::{
+			AssetExistentialDepositInspect, BalanceLike, CurrencyFactory, Exponent, RangeId,
+		},
 		defi::Ratio,
 		xcm::assets::{
 			AssetRatioInspect, ForeignMetadata, RemoteAssetRegistryInspect,
@@ -81,7 +83,8 @@ pub mod pallet {
 		type ParachainOrGovernanceOrigin: EnsureOrigin<Self::Origin>;
 		type WeightInfo: WeightInfo;
 		type Balance: BalanceLike;
-		type CurrencyFactory: CurrencyFactory<AssetId = Self::LocalAssetId, Balance = Self::Balance>;
+		type CurrencyFactory: CurrencyFactory<AssetId = Self::LocalAssetId, Balance = Self::Balance>
+			+ AssetExistentialDepositInspect<AssetId = Self::LocalAssetId, Balance = Self::Balance>;
 	}
 
 	#[pallet::pallet]
@@ -143,10 +146,12 @@ pub mod pallet {
 		AssetRegistered {
 			asset_id: T::LocalAssetId,
 			location: T::ForeignAssetId,
+			decimals: Option<Exponent>,
 		},
 		AssetUpdated {
 			asset_id: T::LocalAssetId,
 			location: T::ForeignAssetId,
+			decimals: Option<Exponent>,
 		},
 		MinFeeUpdated {
 			target_parachain_id: ParaId,
@@ -206,7 +211,7 @@ pub mod pallet {
 			);
 			let asset_id = T::CurrencyFactory::create(RangeId::FOREIGN_ASSETS, ed)?;
 			Self::set_reserve_location(asset_id, location.clone(), ratio, decimals)?;
-			Self::deposit_event(Event::<T>::AssetRegistered { asset_id, location });
+			Self::deposit_event(Event::<T>::AssetRegistered { asset_id, location, decimals });
 			Ok(().into())
 		}
 
@@ -226,7 +231,7 @@ pub mod pallet {
 			// TODO: after compile time well known assets allow to check existence, add ensure
 			// clause for that
 			Self::set_reserve_location(asset_id, location.clone(), ratio, decimals)?;
-			Self::deposit_event(Event::<T>::AssetUpdated { asset_id, location });
+			Self::deposit_event(Event::<T>::AssetUpdated { asset_id, location, decimals });
 			Ok(().into())
 		}
 
@@ -336,6 +341,15 @@ pub mod pallet {
 		type AssetId = T::LocalAssetId;
 		fn get_ratio(asset_id: Self::AssetId) -> Option<composable_traits::defi::Ratio> {
 			AssetRatio::<T>::get(asset_id)
+		}
+	}
+
+	impl<T: Config> AssetExistentialDepositInspect for Pallet<T> {
+		type AssetId = T::LocalAssetId;
+		type Balance = T::Balance;
+
+		fn existential_deposit(asset_id: Self::AssetId) -> Result<Self::Balance, DispatchError> {
+			T::CurrencyFactory::existential_deposit(asset_id)
 		}
 	}
 }

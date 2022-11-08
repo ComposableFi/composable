@@ -1,7 +1,6 @@
 # Development Environments
-*Declarative tooling*
 
----
+*Declarative tooling*
 
 We want to ensure that all developers use identical tools within their shells. We also want to ensure that these tools are identical to those used in our CI pipelines and that we can declaratively upgrade developer environments. Nix allows us to do this with the [flakes](https://nixos.wiki/wiki/Flakes)' `devShell` system.
 

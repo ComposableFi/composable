@@ -1,5 +1,5 @@
 use codec::{Decode, Encode};
-use composable_tests_helpers::test::helper::assert_last_event;
+use composable_tests_helpers::test::helper::RuntimeTrait;
 use composable_traits::fnft::FinancialNft;
 use frame_support::{
 	assert_ok,
@@ -30,7 +30,7 @@ pub(crate) fn mint_nft_and_assert() -> FinancialNftInstanceIdOf<MockRuntime> {
 	let created_nft_id = 1_u64;
 	assert_ok!(Pallet::<MockRuntime>::mint_into(&TEST_COLLECTION_ID, &created_nft_id, &ALICE));
 
-	assert_last_event::<MockRuntime>(Event::Nft(NftEvent::FinancialNftCreated {
+	MockRuntime::assert_last_event(Event::Nft(NftEvent::FinancialNftCreated {
 		collection_id: TEST_COLLECTION_ID,
 		instance_id: created_nft_id,
 	}));
@@ -67,7 +67,7 @@ pub(crate) fn mint_into_and_assert() -> FinancialNftInstanceIdOf<MockRuntime> {
 	Nft::create_collection(&TEST_COLLECTION_ID, &ALICE, &BOB).unwrap();
 	Pallet::<MockRuntime>::mint_into(&TEST_COLLECTION_ID, &NEW_NFT_ID, &ALICE).unwrap();
 
-	assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNftCreated {
+	MockRuntime::assert_last_event(Event::Nft(crate::Event::FinancialNftCreated {
 		collection_id: TEST_COLLECTION_ID,
 		instance_id: NEW_NFT_ID,
 	}));
@@ -97,7 +97,7 @@ pub(crate) fn mint_many_nfts_and_assert<const AMOUNT: usize>(
 		let new_nft_id = Pallet::<MockRuntime>::get_next_nft_id(&collection).unwrap();
 		Pallet::<MockRuntime>::mint_into(&collection, &new_nft_id, &who).unwrap();
 
-		assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNftCreated {
+		MockRuntime::assert_last_event(Event::Nft(crate::Event::FinancialNftCreated {
 			collection_id: collection,
 			instance_id: new_nft_id,
 		}));

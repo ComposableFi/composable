@@ -1,7 +1,6 @@
 # Defining your own packages
-*When building something new*
 
----
+*When building something new*
 
 If you are working on something new within Composable that does not have a Nix package yet, you will need to "nixify" your project by writing a package definition in our `flake.nix`. To do this, you should read the following:
 
