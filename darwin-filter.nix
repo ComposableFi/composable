@@ -1,27 +1,37 @@
 { lib }:
 let
   packages = [
-    "docs-static"
-    "docs-server"
-    "spell-check"
+    "common-deps"
+    "common-deps-nightly"
+    "composable-bench-runtime"
+    "composable-node"
+    "composable-runtime"
+    "dali-bench-runtime"
+    "dali-runtime"
+    "default"
     "devnet-dali"
+    "docs-server"
+    "docs-static"
     "fmt"
-    "rust-stable"
+    "picasso-bench-runtime"
+    "picasso-runtime"
+    "polkadot-launch"
+    "polkadot-node"
     "rust-nightly"
+    "rust-stable"
+    "spell-check"
+    "wasm-optimizer"
   ];
 
   devShells = [ "minimal" ];
 
   apps = [ "docs-dev" ];
 
-  isDarwin = sys: lib.elem sys [ "x86_64-darwin" "aarch64-darwin" ];
 
-  applyAllowList = allowList:
-    lib.mapAttrs (sn: sv:
-      if isDarwin sn then
-        lib.filterAttrs (pn: pv: lib.elem pn allowList) sv
-      else
-        sv);
+  # Filter implementation
+  darwinSystems = [ "x86_64-darwin" "aarch64-darwin"];
+  filterByAllowlist = list: lib.filterAttrs (pn: pv: lib.elem pn list);  
+  applyAllowList = list: lib.updateManyAttrsByPath (builtins.map (system: { path = [ system ] ; update = filterByAllowList list }) darwinSystems);
 
 in lib.updateManyAttrsByPath [
   {
