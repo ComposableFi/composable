@@ -110,6 +110,13 @@
             version = "0.1.0";
             # NOTE: we copy more then needed, but tht is simpler to setup, we depend on substrate for sure so
           });
+
+        hyperspace = ((pkgs.callPackage ./centauri/hyperspace/default.nix {
+          inherit common-deps;
+          common-attrs = systemCommonRust.common-attrs;
+          crane = crane.nightly;
+        }).template { }).bin;
+
       };
 
     };
