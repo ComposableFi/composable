@@ -27,13 +27,6 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const CALL_ID: u64 = 1;
 const SELF_CALL_ID: u64 = 2;
 
-/// Used for unwrapping must-have fields in protobuf
-macro_rules! must_ok {
-	($opt:expr) => {
-		$opt.ok_or(ContractError::InvalidProgram)
-	};
-}
-
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
 	deps: DepsMut,
@@ -49,18 +42,16 @@ pub fn instantiate(
 		registry_address,
 		relayer_address,
 		network_id: msg.network_id,
-		user_id: msg.user_id.clone(),
+		user_id: msg.user_id,
 	};
 	CONFIG.save(deps.storage, &config)?;
 	// Save the caller as owner, in most cases, it is the `XCVM router`
 	OWNERS.save(deps.storage, info.sender, &())?;
 
-	Ok(Response::new().add_event(
-		Event::new("xcvm.interpreter.instantiated").add_attribute(
-			"data",
-			to_binary(&(msg.network_id.0, msg.user_id))?.to_base64().as_str(),
-		),
-	))
+	Ok(Response::new().add_event(Event::new("xcvm.interpreter.instantiated").add_attribute(
+		"data",
+		cw_xcvm_utils::encode_origin_data(config.network_id, &config.user_id)?.as_str(),
+	)))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -147,15 +138,15 @@ pub fn interpret_program(
 	program: proto::Program,
 ) -> Result<Response, ContractError> {
 	let mut response = Response::new();
-	let instructions = must_ok!(program.instructions)?.instructions;
+	let instructions = must_ok(program.instructions)?.instructions;
 	let instruction_len = instructions.len();
 	let mut instruction_iter = instructions.into_iter().enumerate();
 	let mut ip = IP_REGISTER.load(deps.storage)?;
 	while let Some((index, instruction)) = instruction_iter.next() {
-		let instruction = must_ok!(instruction.instruction)?;
+		let instruction = must_ok(instruction.instruction)?;
 		response = match instruction {
 			proto::instruction::Instruction::Call(proto::Call { payload, bindings }) => {
-				let bindings = must_ok!(bindings)?;
+				let bindings = must_ok(bindings)?;
 				if index >= instruction_len - 1 {
 					// If the call is the final instruction, do not yield execution
 					interpret_call(
@@ -205,7 +196,7 @@ pub fn interpret_program(
 			proto::instruction::Instruction::Spawn(ctx) =>
 				interpret_spawn(&deps, &env, ctx, response)?,
 			proto::instruction::Instruction::Transfer(proto::Transfer { assets, account_type }) =>
-				interpret_transfer(&mut deps, &env, must_ok!(account_type)?, assets, response)?,
+				interpret_transfer(&mut deps, &env, must_ok(account_type)?, assets, response)?,
 			instr => return Err(ContractError::InstructionNotSupported(format!("{:?}", instr))),
 		};
 		ip += 1;
@@ -246,7 +237,7 @@ pub fn interpret_call(
 		let mut offset: usize = 0;
 		for binding in bindings {
 			let binding_index = binding.position as usize;
-			let binding = must_ok!(must_ok!(binding.binding_value)?.r#type)?;
+			let binding = must_ok(must_ok(binding.binding_value)?.r#type)?;
 			// Current index of the output call
 			let shifted_index = original_index + offset;
 
@@ -281,7 +272,7 @@ pub fn interpret_call(
 				proto::binding_value::Type::Self_(_) =>
 					Cow::Borrowed(env.contract.address.as_bytes()),
 				proto::binding_value::Type::AssetId(proto::AssetId { asset_id }) => {
-					let asset_id = must_ok!(asset_id)?;
+					let asset_id = must_ok(asset_id)?;
 					let query_msg = AssetRegistryQueryMsg::GetAssetContract(asset_id.into());
 
 					let response: GetAssetContractResponse = deps.querier.query(
@@ -347,8 +338,8 @@ pub fn interpret_spawn(
 	let mut normalized_funds: Vec<proto::Asset> = Vec::new();
 
 	for asset in ctx.assets {
-		let asset_id = must_ok!(must_ok!(asset.asset_id)?.asset_id)?;
-		let amount: Amount = must_ok!(asset.balance)?.try_into()?;
+		let asset_id = must_ok(must_ok(asset.asset_id)?.asset_id)?;
+		let amount: Amount = must_ok(asset.balance)?.try_into()?;
 		if amount.is_zero() {
 			// We ignore zero amounts
 			continue
@@ -435,12 +426,12 @@ pub fn interpret_transfer(
 	};
 
 	for asset in assets {
-		let amount: Amount = must_ok!(asset.balance)?.try_into()?;
+		let amount: Amount = must_ok(asset.balance)?.try_into()?;
 		if amount.is_zero() {
 			continue
 		}
 
-		let asset_id = must_ok!(must_ok!(asset.asset_id)?.asset_id)?;
+		let asset_id = must_ok(must_ok(asset.asset_id)?.asset_id)?;
 		let query_msg = AssetRegistryQueryMsg::GetAssetContract(asset_id.into());
 		let cw20_address: GetAssetContractResponse = deps.querier.query(
 			&WasmQuery::Smart { contract_addr: registry_addr.clone(), msg: to_binary(&query_msg)? }
@@ -512,6 +503,12 @@ fn handle_call_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 	let response = msg.result.into_result().map_err(StdError::generic_err)?;
 	RESULT_REGISTER.save(deps.storage, &Ok(response.clone()))?;
 	Ok(Response::default().add_events(response.events))
+}
+
+/// Used for unwrapping must-have fields in protobuf
+#[inline]
+fn must_ok<T>(expr: Option<T>) -> Result<T, ContractError> {
+	expr.ok_or(ContractError::InvalidProgram)
 }
 
 #[cfg(test)]

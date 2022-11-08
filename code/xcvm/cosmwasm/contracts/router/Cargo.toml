@@ -30,6 +30,7 @@ thiserror = { version = "1.0.31" }
 cw-xcvm-asset-registry = { path = "../asset-registry", features = ["library"] }
 xcvm-core = { path = "../../../lib/core", features = ["std"] }
 cw-xcvm-interpreter = { path = "../interpreter", features = ["library"] }
+cw-xcvm-utils = { path = "../utils" }
 
 [dev-dependencies]
 cosmwasm-schema = "1.0.0"

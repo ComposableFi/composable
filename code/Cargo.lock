@@ -2844,6 +2844,7 @@ dependencies = [
  "cw-storage-plus 0.13.4",
  "cw-utils",
  "cw-xcvm-asset-registry",
+ "cw-xcvm-utils",
  "cw2",
  "cw20",
  "num",
@@ -2867,6 +2868,7 @@ dependencies = [
  "cw-utils",
  "cw-xcvm-asset-registry",
  "cw-xcvm-interpreter",
+ "cw-xcvm-utils",
  "cw2",
  "cw20",
  "hex",
@@ -2877,6 +2879,14 @@ dependencies = [
  "thiserror",
  "xcvm-core",
  "xcvm-proto",
+]
+
+[[package]]
+name = "cw-xcvm-utils"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-std",
+ "xcvm-core",
 ]
 
 [[package]]

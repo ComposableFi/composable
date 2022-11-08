@@ -1,5 +1,5 @@
-use crate::state::UserId;
 use cw_xcvm_interpreter::msg::ExecuteMsg as InterpreterExecuteMsg;
+use cw_xcvm_utils::UserId;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use xcvm_core::{Bridge, BridgeSecurity, Displayed, Funds, NetworkId};

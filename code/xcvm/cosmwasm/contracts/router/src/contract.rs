@@ -1,13 +1,13 @@
 use crate::{
 	error::ContractError,
 	msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg},
-	state::{Config, Interpreter, UserId, ADMIN, BRIDGES, CONFIG, INTERPRETERS},
+	state::{Config, Interpreter, ADMIN, BRIDGES, CONFIG, INTERPRETERS},
 };
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-	from_binary, to_binary, wasm_execute, Addr, Binary, CosmosMsg, Deps, DepsMut, Env, Event,
-	MessageInfo, Reply, Response, StdError, StdResult, SubMsg, WasmMsg, WasmQuery,
+	to_binary, wasm_execute, Addr, Binary, CosmosMsg, Deps, DepsMut, Env, Event, MessageInfo,
+	Reply, Response, StdError, StdResult, SubMsg, WasmMsg, WasmQuery,
 };
 use cw2::set_contract_version;
 use cw20::{Cw20Contract, Cw20ExecuteMsg};
@@ -16,6 +16,7 @@ use cw_xcvm_asset_registry::msg::{GetAssetContractResponse, QueryMsg as AssetReg
 use cw_xcvm_interpreter::msg::{
 	ExecuteMsg as InterpreterExecuteMsg, InstantiateMsg as InterpreterInstantiateMsg,
 };
+use cw_xcvm_utils::UserId;
 use xcvm_core::{Bridge, BridgeSecurity, Displayed, Funds, NetworkId};
 
 const CONTRACT_NAME: &str = "composable:xcvm-router";
@@ -254,8 +255,8 @@ fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 		)?
 	};
 
-	let router_reply = {
-		// Interpreter provides `user_id, network_id` pair as an event for the router to know which
+	let (network_id, user_id) = {
+		// Interpreter provides `network_id, user_id` pair as an event for the router to know which
 		// pair is instantiated
 		let interpreter_event = response
 			.events
@@ -263,11 +264,7 @@ fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 			.find(|event| event.ty == "wasm-xcvm.interpreter.instantiated")
 			.ok_or(StdError::not_found("interpreter event not found"))?;
 
-		// TODO(aeryz): This heavily depends on how the interpreter formats the data. This either be
-		// a decoding function and a type in the interpreter contract or an encoding function in the
-		// router. But the interpreter option seems to be better because other contracts might wanna
-		// use this.
-		from_binary::<(u8, UserId)>(&Binary::from_base64(
+		cw_xcvm_utils::decode_origin_data(
 			interpreter_event
 				.attributes
 				.iter()
@@ -275,18 +272,18 @@ fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 				.ok_or(StdError::not_found("no data is returned from 'xcvm_interpreter'"))?
 				.value
 				.as_str(),
-		)?)?
+		)?
 	};
 
-	match INTERPRETERS.load(deps.storage, (router_reply.0, router_reply.1.clone())) {
+	match INTERPRETERS.load(deps.storage, (network_id, user_id.clone())) {
 		Ok(Interpreter { security, .. }) => INTERPRETERS.save(
 			deps.storage,
-			(router_reply.0, router_reply.1),
+			(network_id, user_id),
 			&Interpreter { address: Some(interpreter_address), security },
 		)?,
 		Err(_) => INTERPRETERS.save(
 			deps.storage,
-			(router_reply.0, router_reply.1),
+			(network_id, user_id),
 			&Interpreter {
 				security: BridgeSecurity::Deterministic,
 				address: Some(interpreter_address),
