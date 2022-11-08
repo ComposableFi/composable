@@ -30,8 +30,8 @@ let
 
   # Filter implementation
   darwinSystems = [ "x86_64-darwin" "aarch64-darwin"];
-  filterByAllowlist = list: lib.filterAttrs (pn: pv: lib.elem pn list);  
-  applyAllowList = list: lib.updateManyAttrsByPath (builtins.map (system: { path = [ system ] ; update = filterByAllowList list }) darwinSystems);
+  filterByAllowList = list: lib.filterAttrs (pn: pv: lib.elem pn list);  
+  applyAllowList = list: lib.updateManyAttrsByPath (builtins.map (system: { path = [ system ] ; update = filterByAllowList list; }) darwinSystems);
 
 in lib.updateManyAttrsByPath [
   {
