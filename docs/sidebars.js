@@ -235,13 +235,13 @@ const sidebars = {
           collapsed: true,
           items: [
             'nix/install',
-            `nix/frequently-occurring-issues`,
             'nix/run-packages',
             'nix/development-environments',
             'nix/running-checks',
             'nix/defining-your-own-packages',
             'nix/composing-services-with-arion',
             'nix/editing-docs',
+            'nix/frequently-occurring-issues',
           ],
         },
         {
