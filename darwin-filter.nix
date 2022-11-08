@@ -8,25 +8,29 @@ let
     "composable-runtime"
     "dali-bench-runtime"
     "dali-runtime"
+    "deadnix-check"
     "default"
+    "docker-wipe-system"
     "devnet-dali"
     "docs-server"
     "docs-static"
     "fmt"
+    "frontend-static"
     "picasso-bench-runtime"
     "picasso-runtime"
     "polkadot-launch"
     "polkadot-node"
+    "price-feed"
     "rust-nightly"
     "rust-stable"
     "spell-check"
+    "hadolint-check"
+    "gex"
     "wasm-optimizer"
   ];
 
   devShells = [ "minimal" ];
-
   apps = [ "docs-dev" ];
-
 
   # Filter implementation
   darwinSystems = [ "x86_64-darwin" "aarch64-darwin"];
