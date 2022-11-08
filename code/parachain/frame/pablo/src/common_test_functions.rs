@@ -256,6 +256,7 @@ pub fn common_exchange_failure(
 	exchange_first_amount: AssetAmount<AssetId, Balance>,
 ) {
 	let pool_id = Pablo::do_create_pool(init_config).expect("pool creation failed");
+	let pair = get_pair(init_config);
 	// Mint the tokens
 	assert_ok!(Tokens::mint_into(init_first_amount.asset_id, &ALICE, init_first_amount.amount));
 	assert_ok!(Tokens::mint_into(init_second_amount.asset_id, &ALICE, init_second_amount.amount));
