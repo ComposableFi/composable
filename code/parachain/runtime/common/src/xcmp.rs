@@ -1,7 +1,6 @@
 //! proposed shared XCM setup parameters and impl
 use crate::{fees::NativeBalance, prelude::*, AccountId, Balance};
 use composable_traits::xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation};
-use cumulus_primitives_core::ParaId;
 use frame_support::{
 	dispatch::Weight,
 	log, match_types, parameter_types,
