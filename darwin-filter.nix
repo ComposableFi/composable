@@ -1,6 +1,6 @@
 { lib }:
 let
-  packages = [ "docs-static" ];
+  packages = [ "docs-static" "docs-server" "spell-check" "devnet-dali" "fmt" ];
 
   devShells = [ "minimal" ];
 
