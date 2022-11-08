@@ -51,7 +51,7 @@
           name = "generate-release-artifacts";
           text = let
             make-bundle = type: package:
-              inputs'.bundlers.bundlers."${system}"."${type}" package;
+              inputs'.bundlers."${type}" package;
             subwasm-version = runtime:
               builtins.readFile (pkgs.runCommand "subwasm-version" { } ''
                 ${packages.subwasm}/bin/subwasm version ${runtime}/lib/runtime.optimized.wasm | grep specifications | cut -d ":" -f2 | cut -d " " -f3 | head -c -1 > $out
