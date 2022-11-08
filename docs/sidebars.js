@@ -235,6 +235,7 @@ const sidebars = {
           collapsed: true,
           items: [
             'nix/install',
+            `nix/frequently-occurring-issues`,
             'nix/run-packages',
             'nix/development-environments',
             'nix/running-checks',
