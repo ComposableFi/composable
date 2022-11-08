@@ -5,7 +5,7 @@ use crate::{
 	PoolConfiguration::DualAssetConstantProduct,
 	PoolInitConfiguration,
 };
-use composable_traits::dex::AssetAmount;
+use composable_traits::{defi::CurrencyPair, dex::AssetAmount};
 use frame_support::{
 	assert_noop, assert_ok,
 	traits::fungibles::{Inspect, Mutate},
@@ -255,7 +255,7 @@ pub fn common_exchange_failure(
 	init_second_amount: AssetAmount<AssetId, Balance>,
 	exchange_first_amount: AssetAmount<AssetId, Balance>,
 ) {
-	let pool_id = Pablo::do_create_pool(init_config).expect("pool creation failed");
+	let pool_id = Pablo::do_create_pool(init_config.clone()).expect("pool creation failed");
 	let pair = get_pair(init_config);
 	// Mint the tokens
 	assert_ok!(Tokens::mint_into(init_first_amount.asset_id, &ALICE, init_first_amount.amount));
@@ -276,7 +276,7 @@ pub fn common_exchange_failure(
 	// Mint the tokens
 	assert_ok!(Tokens::mint_into(init_first_amount.asset_id, &BOB, exchange_first_amount.amount));
 	// error as trying to swap more value than balance
-	let swapped_pair = CurrencyPair::new(pair[1], pair[0]);
+	let _swapped_pair = CurrencyPair::new(pair[1], pair[0]);
 	assert_noop!(
 		Pablo::swap(
 			Origin::signed(BOB),
