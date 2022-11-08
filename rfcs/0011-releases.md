@@ -65,7 +65,7 @@ Typical Composable releases involve multiple rounds of QA and external audits/te
 As the work starts for a `vMajor` (eg: v5) release,
 
 1. Create a branch `release-v5`.
-2. in order to make/deploy (in staging) a release create a tag `release-v5.4200` which should trigger a workflow.
+2. in order to make/deploy (in staging) a release create a tag `release-v5.4200` from the previously created branch, which should trigger a workflow.
 3. QA/Audit happens on these released tag.
 4. Any reported issues must be fixed on `main` and merged/cherry picked to the `release-v5.4200` branch. Then a tag should be created for the next round and so on until "release-able" version is found.
 5. Node and runtimes are release together from the same tag while other components(eg: fe) must have their own tag/workflows to release.
