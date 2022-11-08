@@ -32,6 +32,11 @@ let
     "hadolint-check"
     "gex"
     "wasm-optimizer"
+    "cargo-deny-check"
+    "cargo-clippy-check"
+    "cargo-fmt-check"
+    "cargo-llvm-cov"
+    "cargo-udeps-check"
   ];
 
   devShells = [ "minimal" "default" ];
