@@ -191,9 +191,9 @@ library BytesLib {
 
                 // Copy over the first `submod` bytes of the new data as in
                 // case 1 above.
-                let slengthmod := mod(slength, 32)
-                let mlengthmod := mod(mlength, 32)
-                let submod := sub(32, slengthmod)
+                let slengthMod := mod(slength, 32)
+                let mlengthMod := mod(mlength, 32)
+                let submod := sub(32, slengthMod)
                 let mc := add(_postBytes, submod)
                 let end := add(_postBytes, mlength)
                 let mask := sub(exp(0x100, submod), 1)
@@ -238,23 +238,23 @@ library BytesLib {
                 // word read from the original array. To read it, we calculate
                 // the length of that partial word and start copying that many
                 // bytes into the array. The first word we copy will start with
-                // data we don't care about, but the last `lengthmod` bytes will
+                // data we don't care about, but the last `lengthMod` bytes will
                 // land at the beginning of the contents of the new array. When
                 // we're done copying, we overwrite the full first word with
                 // the actual length of the slice.
-                let lengthmod := and(_length, 31)
+                let lengthMod := and(_length, 31)
 
                 // The multiplication in the next line is necessary
-                // because when slicing multiples of 32 bytes (lengthmod == 0)
+                // because when slicing multiples of 32 bytes (lengthMod == 0)
                 // the following copy loop was copying the origin's length
                 // and then ending prematurely not copying everything it should.
-                let mc := add(add(tempBytes, lengthmod), mul(0x20, iszero(lengthmod)))
+                let mc := add(add(tempBytes, lengthMod), mul(0x20, iszero(lengthMod)))
                 let end := add(mc, _length)
 
                 for {
                     // The multiplication in the next line has the same exact purpose
                     // as the one above.
-                    let cc := add(add(add(_bytes, lengthmod), mul(0x20, iszero(lengthmod))), _start)
+                    let cc := add(add(add(_bytes, lengthMod), mul(0x20, iszero(lengthMod))), _start)
                 } lt(mc, end) {
                     mc := add(mc, 0x20)
                     cc := add(cc, 0x20)

@@ -90,19 +90,19 @@ export class XCVM {
 
   public convertUint128(n: Number | string): Message<{}> {
       const bn = BigNumber.from(n);
-      const hexbytes = bn.toHexString().slice(2);
-      let highbits;
-      let lowbits;
-      if (hexbytes.length > 32) {
+      const hexBytes = bn.toHexString().slice(2);
+      let highBits;
+      let lowBits;
+      if (hexBytes.length > 32) {
         throw ("Number is bigger than uint128 max value");
-      } else if (hexbytes.length > 16) {
-        highbits = BigNumber.from("0x" + hexbytes.slice(0, hexbytes.length-16)).toString()
-        lowbits = BigNumber.from("0x" + hexbytes.slice(hexbytes.length-16, hexbytes.length)).toString()
+      } else if (hexBytes.length > 16) {
+        highBits = BigNumber.from("0x" + hexBytes.slice(0, hexBytes.length-16)).toString()
+        lowBits = BigNumber.from("0x" + hexBytes.slice(hexBytes.length-16, hexBytes.length)).toString()
       } else{
-        highbits = BigNumber.from("0").toString()
-        lowbits = BigNumber.from("0x" + hexbytes).toString();
+        highBits = BigNumber.from("0").toString()
+        lowBits = BigNumber.from("0x" + hexBytes).toString();
       }
-      return this.Uint128Message.create({highBits: highbits, lowBits: lowbits});
+      return this.Uint128Message.create({highBits: highBits, lowBits: lowBits});
   }
 
   public createRatio(nominator: Number | string, denominator: Number | string): Message<{}> {

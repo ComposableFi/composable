@@ -100,7 +100,7 @@ describe("Interpreter", function () {
       expect((await erc20.balanceOf(owner.address)).toString()).to.be.equal("5000000000000000000000000000000000");
     });
 
-    it("test program using sdk: transfer absolut", async function () {
+    it("test program using sdk: transfer absolute", async function () {
       let xcvm = new XCVM();
       let data = xcvm.createProgram(
         "0x01",
@@ -145,7 +145,7 @@ describe("Interpreter", function () {
       const abiCoder = ethers.utils.defaultAbiCoder;
 
       let functionSignature = erc20.interface.getSighash("transfer(address,uint256)");
-      // placehold 1 and 2
+      // placeholder 1 and 2
       const payload = ethers.utils.concat([
         ethers.utils.arrayify("0x01"),
         ethers.utils.arrayify(functionSignature),
@@ -268,7 +268,7 @@ describe("Interpreter", function () {
     });
   });
 
-  it("test addOwner and removeOnwer by Call instruction and self later binding", async function () {
+  it("test addOwner and removeOwner by Call instruction and self later binding", async function () {
       const abiCoder = ethers.utils.defaultAbiCoder;
 
       let functionSignature = Interpreter.interface.getSighash("addOwners(address[])");
