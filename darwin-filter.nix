@@ -1,6 +1,14 @@
 { lib }:
 let
-  packages = [ "docs-static" "docs-server" "spell-check" "devnet-dali" "fmt" ];
+  packages = [
+    "docs-static"
+    "docs-server"
+    "spell-check"
+    "devnet-dali"
+    "fmt"
+    "rust-stable"
+    "rust-nightly"
+  ];
 
   devShells = [ "minimal" ];
 
