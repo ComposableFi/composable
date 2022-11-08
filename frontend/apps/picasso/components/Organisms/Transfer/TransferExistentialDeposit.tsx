@@ -29,7 +29,7 @@ export const TransferExistentialDeposit: FC = () => {
     <FeeDisplay
       label="Existential Deposit"
       feeText={
-        decimals !== null && existentialDeposit !== null ? (
+        decimals !== null && !!existentialDeposit ? (
           `${existentialDeposit.toFormat(decimals)} ${selectedToken.symbol}`
         ) : (
           <Chip

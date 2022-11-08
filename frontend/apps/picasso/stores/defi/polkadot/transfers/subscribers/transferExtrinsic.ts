@@ -27,6 +27,10 @@ export const subscribeTransferApiCall = async (allProviders: AllProviders) => {
         set(api.tx.xTokens.transfer);
       }
 
+      if (from === "statemine") {
+        set(api.tx.polkadotXcm.limitedReserveTransferAssets);
+      }
+
       // Both Karura and Kusama as targetChain
       if (from === "picasso") {
         try {

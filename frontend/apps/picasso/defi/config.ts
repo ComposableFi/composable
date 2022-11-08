@@ -28,5 +28,6 @@ export type AllowedTransferList = {
 export const TRANSFER_ASSET_LIST: AllowedTransferList = {
   kusama: ["ksm"],
   karura: ["ksm", "ausd", "kusd", "kar"],
-  picasso: ["ksm", "kusd", "ausd", "kar"],
+  picasso: ["ksm", "kusd", "ausd", "kar", "usdt"],
+  statemine: ["usdt", "ksm"],
 };

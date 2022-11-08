@@ -1,11 +1,12 @@
 import { ApiPromise } from "@polkadot/api";
 import { u128 } from "@polkadot/types-codec";
 import { fromChainIdUnit, toChainIdUnit } from "shared";
-import { ParachainId, RelayChainId } from "substrate-react";
+import { ParachainId, ParachainNetworks, RelayChainId } from "substrate-react";
 import { TokenId } from "tokens";
 import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
 import BigNumber from "bignumber.js";
-import { TRANSFER_ASSET_LIST } from "@/defi/config";
+import { SubstrateNetworkId } from "@/defi/polkadot/types";
+import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 
 export function getAmountToTransfer({
   balance,
@@ -15,14 +16,16 @@ export function getAmountToTransfer({
   api,
   sourceChain,
   targetChain,
+  token,
 }: {
   balance: BigNumber;
   amount: BigNumber;
   existentialDeposit: BigNumber;
   keepAlive: boolean;
   api: ApiPromise;
-  sourceChain: ParachainId | RelayChainId;
-  targetChain: ParachainId | RelayChainId;
+  sourceChain: SubstrateNetworkId;
+  targetChain: SubstrateNetworkId;
+  token: TokenMetadata;
 }): u128 {
   const isExistentialDepositImportant = balance
     .minus(amount)
@@ -36,7 +39,13 @@ export function getAmountToTransfer({
       ? amount.minus(existentialDeposit)
       : amount;
 
-  return api.createType("u128", toChainIdUnit(calculatedAmount, 12).toString());
+  return api.createType(
+    "u128",
+    toChainIdUnit(
+      calculatedAmount,
+      token.decimals[sourceChain] || SUBSTRATE_NETWORKS[sourceChain].decimals
+    ).toString()
+  );
 }
 
 export type CalculateTransferAmount = {
