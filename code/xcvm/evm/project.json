@@ -1,0 +1,47 @@
+{
+  "$schema": "./node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "./src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/workspace:run-commands",
+      "options": {
+        "commands": [
+          {
+            "command": "forge build --optimize"
+          }
+        ]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/workspace:run-commands",
+      "options": {
+        "commands": [
+          {
+            "command": "forge test  -vvv --gas-report"
+          }
+        ]
+      }
+    },
+    "testWatch": {
+      "executor": "@nrwl/workspace:run-commands",
+      "options": {
+        "commands": [
+          {
+            "command": "forge test -vvv --watch"
+          }
+        ]
+      }
+    },
+    "coverage": {
+      "executor": "@nrwl/workspace:run-commands",
+      "options": {
+        "commands": [
+          {
+            "command": "forge coverage"
+          }
+        ]
+      }
+    },
+    "tags": []
+}
