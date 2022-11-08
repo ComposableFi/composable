@@ -7,7 +7,8 @@ Given the complexity of the number of components and teams involved a standard p
 ## 2. Goals
 
 1. Define release numbering convention.
-2. Define release process steps.
+2. Define branching strategy for releases.
+3. Define release process steps.
 
 ## 3. Method
 
