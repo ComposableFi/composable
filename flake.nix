@@ -32,7 +32,6 @@
       # for packages, apps, devShells, disallow darwin unless on allowlist
       darwinPackages = [
         "docs-static"
-     
       ];
       
       darwinApps = [
@@ -43,39 +42,32 @@
       darwinDevShells = [
         "minimal"
       ];
-      
-      darwinSystems = [ "x86_64-darwin" "aarch64-darwin" ];
-      isDarwin = x: lib.elem x darwinSystems;
-      
+     
       lib = nixpkgs.lib;
+      isDarwin = sys: lib.elem sys [ "x86_64-darwin" "aarch64-darwin" ];
       
-      f = entry: n: v: if n == entry.name
-        then lib.mapAttrs (sn: sv: 
+      
+      applyAllowList = allowList: lib.mapAttrs (sn: sv: 
             if isDarwin sn 
-            then lib.filterAttrs (pn: pv: lib.elem pn entry.allowList) sv
-            else sv) v
-        else v;     
+            then lib.filterAttrs (pn: pv: lib.elem pn allowList) sv
+            else sv);
 
-      entries = [
+      darwinFilter = lib.updateManyAttrsByPath [
         {
-          name = "packages";
-          allowList = darwinPackages;
+          path = [ "packages" ];
+          update = applyAllowList darwinPackages;
         }
         {
-          name = "apps";
-          allowList = darwinApps;
+          path = [ "apps" ];
+          update = applyAllowList darwinApps;
         }
         {
-          name = "devShells";
-          allowList = darwinDevShells;
+          path = [ "devShells" ];
+          update = applyAllowList darwinDevShells;
         }
       ];
-      
-
-      systemFilter = lib.foldl (n: v: ) f ;
-
     in 
-    systemFilter (flake-parts.lib.mkFlake { inherit self; } {
+    darwinFilter (flake-parts.lib.mkFlake { inherit self; } {
       imports = [
         # To import a flake module
         # 1. Add foo to inputs
