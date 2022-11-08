@@ -33,8 +33,19 @@ in {
         port = 31220;
         wsPort = 10008;
         count = 2;
-        chain = "";
+        chain = "statemine-local";
         bin = "${statemine-bin}/bin/polkadot-parachain";
+        flags = [
+          "--unsafe-ws-external"
+          "--unsafe-rpc-external"
+          "--rpc-external"
+          "--ws-external"
+          "--rpc-cors=all"
+          "--rpc-methods=Unsafe"
+          "--log=xcm=trace"
+          "--"
+          "--execution=wasm"
+        ];
       }
 
       {
