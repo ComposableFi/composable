@@ -45,6 +45,9 @@ $ bash -c 'ulimit -n 10000; nix run github:composablefi/composable#devnet-dali`
 
 ## Nix run command does not respect `nix.conf` configuration.
 
+If you encounter any of the error messages seen below, we may need to change the Nix configuration directory to 
+`/etc/nix/nix.conf`, instead of `~/.config/nix/nix.conf`, see the [installation process](./install.md) for more details.
+
 ```
 experimental Nix feature is disabled. 
 ```
@@ -55,8 +58,7 @@ derivation has '__noChroot' set, but that';s not allowed when 'sandbox' is 'true
 Nix run command does not respect `nix.conf` configuration.
 ```
 
-If you encounter any of the above errors, we may need to change the Nix configuration directory to `/etc/nix/nix.conf`,
-instead of `~/.config/nix/nix.conf`, see the [installation process](./install.md) for more details.
+
 
 
 ## Can't re-install Nix after macOS update
