@@ -5,7 +5,7 @@
 
 ## Installing Nix
 
-There are four ways to use Nix at Composable, ranked from most compatible to least compatible:
+There are four ways to use Nix at Composable, ranked from most compatible to least compatible. **3 and 4 are best-effort and we do not provide any official support for them. If you work at Composable, you are expected to work on Linux.**
 
 1. **NixOS**. NixOS is a system that uses Nix to define your entire OS. Switching to it (in a VM) is an excellent way of learning Nix, as you will use it to build and configure your system.
 2. **Nix: the package manager on Linux**. Nix on Linux is an (additional) package manager that allows you to build and run Nix packages using the Nix build system. _This is in most cases as compatible as #1_.
