@@ -149,7 +149,7 @@ pub struct CosmwasmVM<'a, T: Config> {
 	// the lifetime would be different (lifetime of children live longer than the initial one,
 	// hence we'll face a compilation issue). This could be solved with HKT or unsafe host
 	// functions (raw pointer without lifetime).
-  /// Host functions by index.
+	/// Host functions by index.
 	pub host_functions_by_index:
 		BTreeMap<WasmiHostFunctionIndex, WasmiHostFunction<CosmwasmVM<'a, T>>>,
 	/// Host functions by (module, name).
@@ -564,6 +564,29 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 	) -> Result<bool, Self::Error> {
 		log::debug!(target: "runtime::contracts", "ed25519_batch_verify");
 		Ok(Pallet::<T>::do_ed25519_batch_verify(messages, signatures, public_keys))
+	}
+
+	fn ibc_transfer(
+		&mut self,
+		channel_id: String,
+		to_address: String,
+		amount: Coin,
+		timeout: cosmwasm_minimal_std::ibc::IbcTimeout,
+	) -> Result<(), Self::Error> {
+		Pallet::<T>::do_ibc_transfer(self, channel_id, to_address, amount, timeout)
+	}
+
+	fn ibc_send_packet(
+		&mut self,
+		channel_id: String,
+		data: cosmwasm_minimal_std::Binary,
+		timeout: cosmwasm_minimal_std::ibc::IbcTimeout,
+	) -> Result<(), Self::Error> {
+		Pallet::<T>::do_ibc_send_packet(self, channel_id, data, timeout)
+	}
+
+	fn ibc_close_channel(&mut self, channel_id: String) -> Result<(), Self::Error> {
+		Pallet::<T>::do_ibc_close_channel(self, channel_id)
 	}
 }
 

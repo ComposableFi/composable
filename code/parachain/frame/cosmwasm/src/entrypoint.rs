@@ -11,8 +11,8 @@ use composable_support::abstractions::utils::increment::Increment;
 use core::marker::PhantomData;
 use cosmwasm_minimal_std::Coin;
 use cosmwasm_vm::{
-	executor::{ExecuteInput, InstantiateInput, MigrateInput},
-	system::{cosmwasm_system_entrypoint, cosmwasm_system_run, CosmwasmCallVM, CosmwasmCodeId},
+	executor::{ExecuteInput, InstantiateInput, MigrateInput, ibc::{IbcChannelOpen, IbcChannelConnect}},
+	system::{cosmwasm_system_entrypoint, cosmwasm_system_run, CosmwasmCallVM, CosmwasmCodeId, StargateCosmwasmCallVM},
 	vm::VMBase,
 };
 use cosmwasm_vm_wasmi::WasmiVM;
@@ -183,7 +183,7 @@ where
 		message: ContractMessageOf<T>,
 	) -> Result<O, CosmwasmVMError<T>>
 	where
-		for<'x> WasmiVM<CosmwasmVM<'x, T>>: CosmwasmCallVM<I>,
+		for<'x> WasmiVM<CosmwasmVM<'x, T>>: CosmwasmCallVM<I> + StargateCosmwasmCallVM,
 		for<'x> VmErrorOf<WasmiVM<CosmwasmVM<'x, T>>>: Into<CosmwasmVMError<T>>,
 	{
 		Pallet::<T>::do_extrinsic_dispatch(
@@ -215,7 +215,7 @@ where
 		event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
 	) -> Result<Option<cosmwasm_minimal_std::Binary>, CosmwasmVMError<T>>
 	where
-		for<'x> WasmiVM<CosmwasmVM<'x, T>>: CosmwasmCallVM<I>,
+		for<'x> WasmiVM<CosmwasmVM<'x, T>>: CosmwasmCallVM<I> + StargateCosmwasmCallVM,
 		for<'x> VmErrorOf<WasmiVM<CosmwasmVM<'x, T>>>: Into<CosmwasmVMError<T>>,
 	{
 		// Call `cosmwasm_call` to transfer funds and create the vm instance before

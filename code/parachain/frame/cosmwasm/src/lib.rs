@@ -1528,6 +1528,32 @@ pub mod pallet {
 			let info = Pallet::<T>::contract_info(&address)?;
 			Pallet::<T>::do_db_read_other_contract(vm, &info.trie_id, key)
 		}
+
+		pub(crate) fn do_ibc_transfer(
+			vm: &mut CosmwasmVM<T>,
+			channel_id: String,
+			to_address: String,
+			amount: Coin,
+			timeout: cosmwasm_minimal_std::ibc::IbcTimeout,
+		) -> Result<(), CosmwasmVMError<T>> {
+			todo!()
+		}
+
+		pub(crate) fn do_ibc_send_packet(
+			vm: &mut CosmwasmVM<T>,
+			channel_id: String,
+			data: cosmwasm_minimal_std::Binary,
+			timeout: cosmwasm_minimal_std::ibc::IbcTimeout,
+		) -> Result<(), CosmwasmVMError<T>> {
+			todo!()
+		}
+
+		pub(crate) fn do_ibc_close_channel(
+			vm: &mut CosmwasmVM<T>,
+			channel_id: String,
+		) -> Result<(), CosmwasmVMError<T>> {
+			todo!()
+		}
 	}
 
 	/// Query cosmwasm contracts
