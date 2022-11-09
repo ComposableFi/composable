@@ -20,9 +20,7 @@ Genesis is a hardcoded approach.
 
 An asset is a local number identifier. Also, it may be foreign (has a remote reserve location that mints that asset),  sufficient (it has a well-known gas price, a fee payable), and metadata (symbol, name, decimals).
 
-Examples, 
-- `PICA = (id(1), location(Here), ratio(1/1), symbol(PICA), name(PICA), decimals(12))`
-- `USDT = (id(130), location(Statemine, 1984), ratio(1/67), symbol(USDT), name(Tether USD),  decimals(6))`. 
+Examples, `PICA = (1, Here, 1, PICA, PICA, 12)`, and `USDT = (130, (Statemine, 1984), USDT, Tether USD,  6)`. 
 
 ## What is a hardcode?
 
@@ -62,3 +60,13 @@ You will use the best permissionless (data storage) assets infrastructure and de
 ## Conclusion
 
 Releasing permissioned well-known assets along with the runtime release is a viable approach, short term, and long term.
+
+## Notes
+
+Static assets allow deterring decisions on how runtime data assets should be governed and configured later. 
+
+Author, if this RFC favors the Moonbeam approach. It does static assets, the instance of cumulus pallet assets for foreign assets, the instance of cumulus pallets assets for local assets, the adapter to ERC, the adapter to admin of assets, and the adapter to dispatch assets calls. Local assets can mint. Foreign assets cannot. Moonbeam takes the best from the ecosystem (wallets, explorers, tooling, governances) on top of nice asset categorization.
+
+We may consider tuning our runtime data assets while we use static assets for a while. 
+
+This may be subject for other RFC.
