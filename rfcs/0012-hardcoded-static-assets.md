@@ -51,6 +51,14 @@ Rust `const` and `macro` allow encoding assets boilerplate-free and bug-free, an
 
 Each Picasso protocol encodes relevant assets. We do often release to bring features and fixes to users along with new assets.
 
+## What if assets are encoded differently in different environments?
+
+Well knows assets tend to be encoded similarly on Rococo and Kusama connected chains. 
+
+If Polkadot assets are different, we can override static assets in relevant Composable runtime (as we do for other configuration cases of standard vs. specific configuration).
+
+Also, we can override runtime data override for the specific case.
+
 ## Why would one be using hardcoded assets?
 
 You use well-known priceable assets.
