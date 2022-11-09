@@ -1,4 +1,4 @@
-//! Workarounds for generic_const_exprs on stable rust.
+//! Workarounds for `generic_const_exprs` on stable rust.
 //!
 //! See https://github.com/rust-lang/rust/issues/76560 for more information.
 
@@ -10,15 +10,18 @@
 /// # Examples
 ///
 /// ```rust
-/// // a convoluted implementation of a non-zero u64
+/// # use composable_support::types::const_assertions::AssertNonZero;
+///
+/// // a custom implementation of a non-zero u64
 /// pub struct NonZeroU64(u64);
 ///
 /// impl NonZeroU64 {
 ///     pub const fn new<const N: u64>() -> Self {
-///         // this will raise a const_err:
+///         // this will raise a const_err if N is 0:
+///         //
 ///         // error[E0080]: evaluation of `composable_support::types::rational::AssertNonZero::<0>::OK` failed
 ///         // attempt to compute `0_u8 - 1_u8`, which would overflow
-///         let _ = AssertNonZero::<D>::OK;
+///         let _ = AssertNonZero::<N>::OK;
 ///         
 ///         Self(N)
 ///     }

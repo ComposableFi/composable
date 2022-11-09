@@ -9,6 +9,9 @@ use scale_info::TypeInfo;
 
 use super::const_assertions::AssertNonZero;
 
+/// Represents a [rational number], with 64 bit numbers for the numerator and denominator.
+///
+/// [rational number]: https://en.wikipedia.org/wiki/Rational_number
 #[derive(
 	Copy,
 	Clone,
@@ -22,52 +25,9 @@ use super::const_assertions::AssertNonZero;
 	MaxEncodedLen,
 	TypeInfo,
 )]
-/// Represents a [rational number], with 64 bit numbers for the numerator and denominator.
-///
-/// [rational number]: https://en.wikipedia.org/wiki/Rational_number
 pub struct Rational64 {
 	n: u64,
 	d: NonZeroU64,
-}
-
-pub struct Guard<const U: bool>;
-
-pub trait Protect {}
-impl Protect for Guard<true> {}
-
-#[doc = "Const getter for a basic type."]
-#[derive(RuntimeDebug)]
-pub struct ConstRational64<const N: u64, const D: u64>;
-
-impl Rational64 {
-	/// Constructs a new [`Rational64`]. Returns `None` if `d` is zero.
-	pub const fn try_new(n: u64, d: u64) -> Option<Self> {
-		match NonZeroU64::new(d) {
-			Some(d) => Some(Self { n, d }),
-			None => None,
-		}
-	}
-
-	/// Constructs a new [`Rational64`]. This will fail to compile if `D` is zero.
-	pub const fn new<const N: u64, const D: u64>() -> Self {
-		let _ = AssertNonZero::<D>::OK;
-
-		Rational64 {
-			n: N,
-			d: match NonZeroU64::new(D) {
-				Some(d) => d,
-				None => panic!("known to be non-zero as per above check; qed;"),
-			},
-		}
-	}
-
-	pub const fn n(&self) -> u64 {
-		self.n
-	}
-
-	pub const fn d(&self) -> NonZeroU64 {
-		self.d
-	}
 }
 
 /// Used to construct a [`Rational64`] from literals. This will fail at compile time if the
@@ -114,6 +74,41 @@ impl<const N: u64, const D: u64> TypedGet for ConstRational64<N, D> {
 	type Type = Rational64;
 	fn get() -> Rational64 {
 		Rational64::new::<N, D>()
+	}
+}
+
+/// Const getter for [`Rational64`].
+#[derive(RuntimeDebug)]
+pub struct ConstRational64<const N: u64, const D: u64>;
+
+impl Rational64 {
+	/// Constructs a new [`Rational64`]. Returns `None` if `d` is zero.
+	pub const fn try_new(n: u64, d: u64) -> Option<Self> {
+		match NonZeroU64::new(d) {
+			Some(d) => Some(Self { n, d }),
+			None => None,
+		}
+	}
+
+	/// Constructs a new [`Rational64`]. This will fail to compile if `D` is zero.
+	pub const fn new<const N: u64, const D: u64>() -> Self {
+		let _ = AssertNonZero::<D>::OK;
+
+		Rational64 {
+			n: N,
+			d: match NonZeroU64::new(D) {
+				Some(d) => d,
+				None => panic!("known to be non-zero as per above check; qed;"),
+			},
+		}
+	}
+
+	pub const fn n(&self) -> u64 {
+		self.n
+	}
+
+	pub const fn d(&self) -> NonZeroU64 {
+		self.d
 	}
 }
 
@@ -184,6 +179,34 @@ mod test {
 				// codec errors aren't typed so this is the best we can do
 				codec::Error::from("cannot create non-zero number from 0")
 					.chain("Could not decode `Rational64::d`")
+			);
+		}
+	}
+
+	mod const_rational_64 {
+		use super::*;
+
+		#[test]
+		fn get() {
+			assert_eq!(
+				<ConstRational64<10, 3> as Get<Rational64>>::get(),
+				Rational64 { n: 10, d: NonZeroU64::new(3).expect("3 > 0; qed;") }
+			);
+		}
+
+		#[test]
+		fn get_option() {
+			assert_eq!(
+				<ConstRational64<10, 3> as Get<Option<Rational64>>>::get(),
+				Some(Rational64 { n: 10, d: NonZeroU64::new(3).expect("3 > 0; qed;") })
+			);
+		}
+
+		#[test]
+		fn typed_get() {
+			assert_eq!(
+				<ConstRational64<10, 3> as TypedGet>::get(),
+				Rational64 { n: 10, d: NonZeroU64::new(3).expect("3 > 0; qed;") }
 			);
 		}
 	}
