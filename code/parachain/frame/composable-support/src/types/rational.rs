@@ -59,10 +59,11 @@ impl Rational64 {
 #[macro_export]
 macro_rules! rational_64 {
 	($n:literal / $d:literal) => {{
-		const RATIONAL64: Rational64 = match Rational64::new($n, $d) {
-			Some(rational) => rational,
-			None => panic!("denominator cannot be zero"),
-		};
+		const RATIONAL64: $crate::types::rational::Rational64 =
+			match $crate::types::rational::Rational64::new($n, $d) {
+				Some(rational) => rational,
+				None => panic!("denominator cannot be zero"),
+			};
 		RATIONAL64
 	}};
 }

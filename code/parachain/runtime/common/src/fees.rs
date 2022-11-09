@@ -1,9 +1,8 @@
 use crate::{prelude::*, Balance};
-use composable_support::math::safe::safe_multiply_by_rational;
-use composable_traits::{
-	currency::{AssetExistentialDepositInspect, AssetRatioInspect, Rational64},
-	rational,
+use composable_support::{
+	math::safe::safe_multiply_by_rational, rational_64, types::rational::Rational64,
 };
+use composable_traits::currency::{AssetExistentialDepositInspect, AssetRatioInspect};
 
 use frame_support::{
 	traits::ConstU128,
@@ -73,12 +72,12 @@ pub struct WellKnownForeignToNativePriceConverter;
 impl WellKnownForeignToNativePriceConverter {
 	pub fn get_ratio(asset_id: CurrencyId) -> Option<Rational64> {
 		match asset_id {
-			CurrencyId::KSM => Some(rational!(375 / 1_000_000)),
-			CurrencyId::ibcDOT => Some(rational!(2143 / 1_000_000)),
-			CurrencyId::USDT | CurrencyId::USDC => Some(rational!(15 / 1_000_000_000)),
-			CurrencyId::kUSD => Some(rational!(15 / 1_000)),
-			CurrencyId::PICA => Some(rational!(1 / 1)),
-			CurrencyId::PBLO => Some(rational!(1 / 1)),
+			CurrencyId::KSM => Some(rational_64!(375 / 1_000_000)),
+			CurrencyId::ibcDOT => Some(rational_64!(2143 / 1_000_000)),
+			CurrencyId::USDT | CurrencyId::USDC => Some(rational_64!(15 / 1_000_000_000)),
+			CurrencyId::kUSD => Some(rational_64!(15 / 1_000)),
+			CurrencyId::PICA => Some(rational_64!(1 / 1)),
+			CurrencyId::PBLO => Some(rational_64!(1 / 1)),
 			_ => None,
 		}
 	}
@@ -89,7 +88,7 @@ impl WellKnownForeignToNativePriceConverter {
 
 	pub fn to_asset_balance(balance: NativeBalance, asset_id: CurrencyId) -> Option<Balance> {
 		Self::get_ratio(asset_id).map(|x| {
-			safe_multiply_by_rational(balance, x.n().into(), x.d().into())
+			safe_multiply_by_rational(balance, x.n().into(), x.d().get().into())
 				.unwrap_or_else(|_| Balance::one())
 		})
 	}
@@ -108,7 +107,9 @@ impl<AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>>
 		asset_id: CurrencyId,
 	) -> Result<Balance, Self::Error> {
 		AssetsRegistry::get_ratio(asset_id)
-			.and_then(|x| safe_multiply_by_rational(native_amount, x.n().into(), x.d().into()).ok())
+			.and_then(|x| {
+				safe_multiply_by_rational(native_amount, x.n().into(), x.d().get().into()).ok()
+			})
 			.or_else(|| {
 				WellKnownForeignToNativePriceConverter::to_asset_balance(native_amount, asset_id)
 			})

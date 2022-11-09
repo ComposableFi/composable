@@ -63,6 +63,7 @@ assets = { package = "pallet-assets", path = "../../parachain/frame/assets", def
 assets-registry = { package = "pallet-assets-registry", path = "../../parachain/frame/assets-registry", default-features = false, optional = true }
 call-filter = { package = "pallet-call-filter", path = "../../parachain/frame/call-filter", default-features = false }
 common = { path = "../../parachain/runtime/common", default-features = false }
+composable-support = { path = "../../parachain/frame/composable-support", default-features = false }
 composable-tests-helpers = { path = "../../parachain/frame/composable-tests-helpers", default-features = false }
 composable-traits = { path = "../../parachain/frame/composable-traits", default-features = false }
 currency-factory = { package = "pallet-currency-factory", path = "../../parachain/frame/currency-factory", default-features = false }

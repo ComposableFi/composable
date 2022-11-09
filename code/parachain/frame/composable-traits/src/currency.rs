@@ -1,13 +1,15 @@
 use codec::FullCodec;
 use frame_support::pallet_prelude::*;
 use scale_info::TypeInfo;
-use sp_arithmetic::fixed_point::FixedU64;
 use sp_runtime::{
 	traits::{AtLeast32BitUnsigned, Zero},
-	ArithmeticError, FixedU128, Rational128,
+	ArithmeticError,
 };
 
-use composable_support::math::safe::{SafeAdd, SafeDiv, SafeMul, SafeSub};
+use composable_support::{
+	math::safe::{SafeAdd, SafeDiv, SafeMul, SafeSub},
+	types::rational::Rational64,
+};
 use sp_std::fmt::Debug;
 
 pub type Exponent = u8;
@@ -161,124 +163,3 @@ impl<
 }
 
 pub trait AssetIdLike = FullCodec + MaxEncodedLen + Copy + Eq + PartialEq + Debug + TypeInfo;
-
-#[derive(
-	RuntimeDebug,
-	Copy,
-	Clone,
-	PartialEq,
-	Eq,
-	PartialOrd,
-	Ord,
-	Encode,
-	Decode,
-	MaxEncodedLen,
-	TypeInfo,
-)]
-pub struct Rational64 {
-	pub n: u64,
-	pub d: u64,
-}
-
-pub trait RationalLike<const N: u64, const D: u64> {
-	fn new() -> Self;
-	const CHECK: () = if D == 0 {
-		panic!("denominator cannot be zero")
-	};
-}
-
-#[macro_export]
-macro_rules! rational {
-	($n:literal / $d: literal) => {
-		<Rational64 as composable_traits::currency::RationalLike<$n, $d>>::new()
-	};
-}
-
-// const struct version of https://paritytech.github.io/substrate/master/src/sp_core/lib.rs.html#422
-// so that it can be used in runtime config
-// ands its private
-macro_rules! impl_const_get {
-	($name:ident, $t:ty) => {
-		#[doc = "Const getter for a basic type."]
-		#[derive(RuntimeDebug)]
-		pub struct $name<const T: $t>;
-		impl<const T: $t> Get<$t> for $name<T> {
-			fn get() -> $t {
-				T
-			}
-		}
-		impl<const T: $t> Get<Option<$t>> for $name<T> {
-			fn get() -> Option<$t> {
-				Some(T)
-			}
-		}
-		impl<const T: $t> TypedGet for $name<T> {
-			type Type = $t;
-			fn get() -> $t {
-				T
-			}
-		}
-	};
-}
-
-impl_const_get!(ConstRational64, Rational64);
-
-impl<const N: u64, const D: u64> RationalLike<N, D> for Rational64 {
-	fn new() -> Self {
-		Self::from_unchecked(N, D)
-	}
-}
-
-impl Rational64 {
-	pub const fn from(n: u64, d: u64) -> Self {
-		Self::from_unchecked(n, d.max(1))
-	}
-
-	pub const fn from_unchecked(n: u64, d: u64) -> Self {
-		Self { n, d }
-	}
-
-	pub const fn one() -> Self {
-		Rational64::from(1, 1)
-	}
-
-	pub const fn zero() -> Self {
-		Rational64::from(0, 1)
-	}
-
-	pub const fn n(&self) -> u64 {
-		self.n
-	}
-
-	pub const fn d(&self) -> u64 {
-		self.d
-	}
-}
-
-impl const From<Rational64> for FixedU128 {
-	fn from(this: Rational64) -> Self {
-		Self::from_rational(this.n.into(), this.d.into())
-	}
-}
-
-impl const From<(u64, u64)> for Rational64 {
-	fn from(this: (u64, u64)) -> Self {
-		{
-			let n = this.0;
-			let d = this.1;
-			Rational64 { n, d }
-		}
-	}
-}
-
-impl const From<Rational64> for FixedU64 {
-	fn from(this: Rational64) -> Self {
-		Self::from_rational(this.n.into(), this.d.into())
-	}
-}
-
-impl From<Rational64> for Rational128 {
-	fn from(this: Rational64) -> Self {
-		Self::from(this.n.into(), this.d.into())
-	}
-}
