@@ -143,12 +143,13 @@ impl CosmwasmVMShared {
 /// This structure hold the state for a single contract.
 /// Note that all [`CosmwasmVM`] share the same [`CosmWasmVMShared`] structure.
 pub struct CosmwasmVM<'a, T: Config> {
-	/// NOTE(hussein-aitlahcen): would be nice to move the host functions to the shared structure.
-	/// but we can't do it, otherwise we introduce a dependency do the lifetime `'a` here. This
-	/// lifetime is used by the host function and when reusing the shared structure for sub-calls,
-	/// the lifetime would be different (lifetime of children live longer than the initial one,
-	/// hence we'll face a compilation issue). This could be solved with HKT or unsafe host
-	/// functions (raw pointer without lifetime). Host functions by index.
+	// NOTE(hussein-aitlahcen): would be nice to move the host functions to the shared structure.
+	// but we can't do it, otherwise we introduce a dependency do the lifetime `'a` here. This
+	// lifetime is used by the host function and when reusing the shared structure for sub-calls,
+	// the lifetime would be different (lifetime of children live longer than the initial one,
+	// hence we'll face a compilation issue). This could be solved with HKT or unsafe host
+	// functions (raw pointer without lifetime).
+  /// Host functions by index.
 	pub host_functions_by_index:
 		BTreeMap<WasmiHostFunctionIndex, WasmiHostFunction<CosmwasmVM<'a, T>>>,
 	/// Host functions by (module, name).
