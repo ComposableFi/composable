@@ -1,6 +1,6 @@
 # Crowdloan Rewards Integration Guide
 
-[**Pallet Overview & Workflow**](https://github.com/ComposableFi/composable/blob/0fa1f1986ab91ad5bdbd69437bd90f47e077983f/code/parachain/frame/crowdloan-rewards/README.md)
+[**Pallet Overview & Workflow**](https://github.com/ComposableFi/composable/blob/0fa1f1986ab91ad5bdbd69437bd90f47e077983f/code/parachain/frame/crowdloan-rewards/README.md)<!-- TODO replace this with a valid monorepo link -->
 
 ## Integration Status
 
@@ -13,15 +13,17 @@
 <!-- *Include any notes about pallet lifecycle or states. A state diagram that notes
 transition requirements if you're feeling fancy* -->
 
-Crowdloans are created and managed by sudo. Only sudo is entitled to access life cycle methods of the crowdloan.
-Crowdloans have 2 states: created and initialized. These states transition linearly:
+Crowdloans are created and managed by admins. Therefore, only admins can access the life cycle methods of the crowdloan.
 
-During the created state management transactions can be conducted to populate the crowdloan with funds and a vesting schedule.
-Once enough funds have been transferred the crowdloan can be initialized at some timestamp.
-During the initialized state users can associate their contributors account with a reward account to make claims.
+Crowdloans have three states: created, initialized, and unlocked. These states transition linearly:
+During the created state, management transactions can be conducted to `populate` the crowdloan with funds and a vesting 
+schedule. After transferring enough funds, the crowdloan can be initialized.
+During the initialized state, users can associate their contributor account with a reward account by providing a proof.
+During the unlocked state, contributors can claim the initial reward percentage and afterward claim rewards with each 
+vesting step.
 
-Automatic state transition occurs if the crowdloan was provided with a timestamp to `initialize_at` and that time has come,
-the crowdloan will be initialized .
+Automatic state transition can occur if the crowdloan was provided with a timestamp to `initialize_at` and that time has 
+come, the crowdloan will be initialized.
 
 ## RPC & Data Retrieval
 
@@ -62,6 +64,8 @@ the crowdloan will be initialized .
 
 <!-- *"Provide calculations of APY or APR if any and mention the source of all values
 that need to be fetched from the chain/backend/subsquid or any other data source"* -->
+
+<!-- MartinK - QUESTION: Should we include a calculation for the reward percentage upon first claim here? -->
 
 
 ## Extrinsic Parameter Sources
