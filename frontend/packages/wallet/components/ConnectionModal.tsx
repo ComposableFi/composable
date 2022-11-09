@@ -1,7 +1,6 @@
-import React from "react";
 import { DotSamaExtensionStatus, SupportedWalletId } from "substrate-react";
 import { Box, IconButton, Typography, useTheme } from "@mui/material";
-import { useCallback } from "react";
+import { Dispatch, useCallback } from "react";
 import { ConnectorType } from "bi-lib";
 import { ChevronLeft } from "@mui/icons-material";
 import { Modal } from "./Molecules/Modal";
@@ -15,9 +14,12 @@ import { useSnackbar } from "notistack";
 export type ConnectionModalProps = {
   closeConnectionModal: () => void;
   walletConnectStep: WalletConnectStep;
-  setWalletConnectStep: React.Dispatch<WalletConnectStep>;
+  setWalletConnectStep: Dispatch<WalletConnectStep>;
   isOpenConnectionModal: boolean;
-} & Omit<WalletProps, "connectedAccountNativeBalance" | "connectedWalletTransactions">;
+} & Omit<
+  WalletProps,
+  "connectedAccountNativeBalance" | "connectedWalletTransactions"
+>;
 
 function getTitle(walletStep: WalletConnectStep): string {
   switch (walletStep) {
@@ -106,7 +108,7 @@ export const ConnectionModal: React.FC<ConnectionModalProps> = ({
         key={wallet.walletId}
         onClick={(walletId: SupportedWalletId) => {
           onConnectPolkadotWallet(walletId)
-            .then((walletConnected) => {
+            .then((_walletConnected) => {
               setWalletConnectStep(WalletConnectStep.SelectDotsamaAccount);
             })
             .catch((err) => {
@@ -239,6 +241,7 @@ export const ConnectionModal: React.FC<ConnectionModalProps> = ({
             accounts={polkadotAccounts}
             selectedAccount={selectedPolkadotAccount}
             onSelect={onSelectPolkadotAccount}
+            closeConnectionModal={closeConnectionModal}
           />
         ) : null}
       </Box>
