@@ -138,6 +138,8 @@ macro_rules! list_assets {
 	}
 }
 
+#[allow(non_snake_case)]
+#[allow(non_upper_case_globals)]
 impl CurrencyId {
 	pub const INVALID: CurrencyId = CurrencyId(0);
 
@@ -164,7 +166,7 @@ impl CurrencyId {
 				interior: X1(GeneralIndex(5)),
 			})
 		);
-		#[allow(non_upper_case_globals)]
+
 		pub const ibcDOT: CurrencyId = CurrencyId(6, None);
 
 		// Non-Native Tokens (101 - 1000)
@@ -185,14 +187,12 @@ impl CurrencyId {
 		/// BIFROST BNC
 		pub const BNC: CurrencyId = CurrencyId(102, None);
 		/// BIFROST vKSM
-		#[allow(non_upper_case_globals)]
 		pub const vKSM: CurrencyId = CurrencyId(103, None);
 		/// Moonriver MOVR
 		pub const MOVR: CurrencyId = CurrencyId(104, None);
 		// NOTE: Empty CurrencyId slots starting with 105
 
 		/// Karura stable coin(Acala Dollar), not native.
-		#[allow(non_upper_case_globals)]
 		pub const kUSD: CurrencyId = CurrencyId(
 			129,
 			Some(MultiLocation {
@@ -221,24 +221,18 @@ impl CurrencyId {
 		);
 		pub const USDC: CurrencyId = CurrencyId(131, None);
 		/// Wrapped BTC
-		#[allow(non_upper_case_globals)]
 		pub const wBTC: CurrencyId = CurrencyId(132, None);
 		/// Wrapped ETH
-		#[allow(non_upper_case_globals)]
 		pub const wETH: CurrencyId = CurrencyId(133, None);
 
 		// Staked asset xTokens (1001 - 2000)
 		/// Staked asset xPICA Token
-		#[allow(non_upper_case_globals)]
 		pub const xPICA: CurrencyId = CurrencyId(1001, None);
 		/// Staked asset xLAYR Token
-		#[allow(non_upper_case_globals)]
 		pub const xLAYR: CurrencyId = CurrencyId(1002, None);
 		/// Staked asset xKSM Token
-		#[allow(non_upper_case_globals)]
 		pub const xKSM: CurrencyId = CurrencyId(1004, None);
 		/// Staked asset xPBLO Token
-		#[allow(non_upper_case_globals)]
 		pub const xPBLO: CurrencyId = CurrencyId(1005, None);
 
 		// fNFT Collection IDs (2001 - 100_000_000_000)
@@ -248,6 +242,8 @@ impl CurrencyId {
 		pub const PBLO_STAKE_FNFT_COLLECTION: CurrencyId = CurrencyId(2005, None);
 	}
 
+	// this to be removed because of XCMP and Parity Assets design one may not make sure assets all
+	// normalized to 12
 	#[inline(always)]
 	pub const fn decimals() -> Exponent {
 		12
