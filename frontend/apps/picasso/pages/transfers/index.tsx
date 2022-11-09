@@ -52,6 +52,7 @@ const Transfers: NextPage = () => {
 
   const hasPendingTransfer = hasPendingXcmTransfer || hasPendingXTokensTransfer;
   const getBalance = useStore((state) => state.substrateBalances.getBalance);
+  const hasFormError = useStore((state) => state.transfers.hasFormError);
 
   useEffect(() => {
     if (
@@ -141,7 +142,8 @@ const Transfers: NextPage = () => {
               amount.gt(balance) ||
               amount.lte(minValue ?? 0) ||
               !hasEnoughGasFee ||
-              hasPendingTransfer
+              hasPendingTransfer ||
+              hasFormError
             }
             fullWidth
             onClick={transfer}

@@ -53,6 +53,7 @@ interface TransfersState {
   destinationMultiLocation: XcmVersionedMultiLocation | null;
   transferExtrinsic: null | ((...args: any[]) => any);
   multiAsset: SupportedTransferMultiAssets | null;
+  hasFormError: boolean;
 }
 
 export type SupportedTransferMultiAssets =
@@ -93,6 +94,7 @@ const initialState: TransfersState = {
   destinationMultiLocation: null,
   transferExtrinsic: null,
   multiAsset: null,
+  hasFormError: false,
 };
 
 interface TransferActions {
@@ -125,6 +127,7 @@ interface TransferActions {
     targetAddress: string | undefined
   ) => SubmittableExtrinsic<"promise"> | undefined;
   getTransferAmount: (api: ApiPromise) => u128;
+  setFormError: (value: boolean) => void;
 }
 
 export interface TransfersSlice {
@@ -332,6 +335,11 @@ export const createTransfersSlice: StoreSlice<TransfersSlice> = (set, get) => ({
       } catch {
         return;
       }
+    },
+    setFormError: (value) => {
+      set((state) => {
+        state.transfers.hasFormError = value;
+      });
     },
   },
 });
