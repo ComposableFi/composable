@@ -1,5 +1,6 @@
 //! Definitions for types used throughout the Composable Rust project
 
+pub mod const_assertions;
 pub mod rational;
 
 use codec::{Decode, Encode, MaxEncodedLen};

@@ -316,7 +316,7 @@ fn rockmine_stable_to_dali_transfer() {
 			),
 		));
 
-		let ratio = Rational64::new(
+		let ratio = Rational64::try_new(
 			STABLE::units(15).try_into().expect("should be less than u64::MAX"),
 			PICA::units(1000).try_into().expect("should be less than u64::MAX"),
 		)

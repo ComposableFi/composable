@@ -1,8 +1,13 @@
 use core::num::NonZeroU64;
 
 use codec::{Decode, Encode, MaxEncodedLen};
-use frame_support::RuntimeDebug;
+use frame_support::{
+	traits::{Get, TypedGet},
+	RuntimeDebug,
+};
 use scale_info::TypeInfo;
+
+use super::const_assertions::AssertNonZero;
 
 #[derive(
 	Copy,
@@ -25,11 +30,34 @@ pub struct Rational64 {
 	d: NonZeroU64,
 }
 
+pub struct Guard<const U: bool>;
+
+pub trait Protect {}
+impl Protect for Guard<true> {}
+
+#[doc = "Const getter for a basic type."]
+#[derive(RuntimeDebug)]
+pub struct ConstRational64<const N: u64, const D: u64>;
+
 impl Rational64 {
-	pub const fn new(n: u64, d: u64) -> Option<Self> {
+	/// Constructs a new [`Rational64`]. Returns `None` if `d` is zero.
+	pub const fn try_new(n: u64, d: u64) -> Option<Self> {
 		match NonZeroU64::new(d) {
 			Some(d) => Some(Self { n, d }),
 			None => None,
+		}
+	}
+
+	/// Constructs a new [`Rational64`]. This will fail to compile if `D` is zero.
+	pub const fn new<const N: u64, const D: u64>() -> Self {
+		let _ = AssertNonZero::<D>::OK;
+
+		Rational64 {
+			n: N,
+			d: match NonZeroU64::new(D) {
+				Some(d) => d,
+				None => panic!("known to be non-zero as per above check; qed;"),
+			},
 		}
 	}
 
@@ -58,19 +86,35 @@ impl Rational64 {
 /// ```
 #[macro_export]
 macro_rules! rational_64 {
-	($n:literal / $d:literal) => {{
-		const RATIONAL64: $crate::types::rational::Rational64 =
-			match $crate::types::rational::Rational64::new($n, $d) {
-				Some(rational) => rational,
-				None => panic!("denominator cannot be zero"),
-			};
-		RATIONAL64
-	}};
+	($n:literal / $d:literal) => {
+		$crate::types::rational::Rational64::new::<$n, $d>()
+	};
 }
 
 impl Rational64 {
 	/// The smallest representation of `1` as a ratio; `1:1`.
 	pub const ONE: Self = rational_64!(1 / 1);
+}
+
+// `Get`-like impls
+
+impl<const N: u64, const D: u64> Get<Rational64> for ConstRational64<N, D> {
+	fn get() -> Rational64 {
+		Rational64::new::<N, D>()
+	}
+}
+
+impl<const N: u64, const D: u64> Get<Option<Rational64>> for ConstRational64<N, D> {
+	fn get() -> Option<Rational64> {
+		Some(Rational64::new::<N, D>())
+	}
+}
+
+impl<const N: u64, const D: u64> TypedGet for ConstRational64<N, D> {
+	type Type = Rational64;
+	fn get() -> Rational64 {
+		Rational64::new::<N, D>()
+	}
 }
 
 #[cfg(test)]
