@@ -129,7 +129,7 @@ macro_rules! list_assets {
 				$(Asset {
 					id: CurrencyId::$NAME.0 as u128,
 					name: Some(stringify!($NAME).as_bytes().to_vec()),
-					decimals: 12_u8.into(),
+					decimals: Self::decimals(),
 					foreign_id: Self::local_to_xcm_reserve(CurrencyId::$NAME).map(XcmAssetLocation::new)
 				},)*
 			]

@@ -4,18 +4,22 @@ import testConfiguration from "./test_configuration.json";
 import { ApiPromise } from "@polkadot/api";
 import { getNewConnection } from "@composable/utils/connectionHelper";
 import { getDevWallets } from "@composable/utils/walletHelper";
+import { sendAndWaitForSuccess } from "@composable/utils/polkadotjs";
+import { KeyringPair } from "@polkadot/keyring/types";
 
 describe("[SHORT] rpc.assets Tests", function () {
   if (!testConfiguration.enabledTests.rpc.enabled) return;
   let api: ApiPromise;
   let walletBobPublicKey: string;
+  let sudoKey: KeyringPair;
 
   before("Setting up tests", async function () {
     this.timeout(60 * 1000);
     const { newClient, newKeyring } = await getNewConnection();
     api = newClient;
-    const { devWalletBob } = getDevWallets(newKeyring);
+    const { devWalletAlice, devWalletBob } = getDevWallets(newKeyring);
     walletBobPublicKey = devWalletBob.address;
+    sudoKey = devWalletAlice;
   });
 
   after("Closing the connection", async function () {
@@ -47,6 +51,7 @@ describe("[SHORT] rpc.assets Tests", function () {
   });
 
   it("rpc.assets.listAssets Tests", async function () {
+    this.timeout(60 * 1000);
     if (!testConfiguration.enabledTests.rpc.listAssets__success) this.skip();
     const result = await RpcAssetsTests.rpcListAssetsTest(api);
     result.every(i => expect(i).to.have.all.keys("id", "name", "decimals", "foreignId"));
@@ -72,6 +77,33 @@ describe("[SHORT] rpc.assets Tests", function () {
     const KSM = result.find(e => hex_to_ascii(e.name.toString()) === "KSM")!;
     expect(PICA.id.toNumber()).to.equal(1);
     expect(KSM.id.toNumber()).to.equal(4);
+    expect(PICA.decimals.toNumber()).to.equal(12);
+
+    // Update KSM
+    await sendAndWaitForSuccess(
+      api,
+      sudoKey,
+      api.events.sudo.Sudid.is,
+      api.tx.sudo.sudo(api.tx.assetsRegistry.updateAsset(4, { parents: 1, interior: "Here" }, 200_000, 6))
+    );
+
+    let resultAfterUpdate = await RpcAssetsTests.rpcListAssetsTest(api);
+    expect(result.length).to.eq(resultAfterUpdate.length);
+    let KSMAfterUpdate = resultAfterUpdate.find(e => hex_to_ascii(e.name.toString()) === "KSM")!;
+    expect(KSMAfterUpdate.decimals.toNumber()).to.equal(6);
+
+    // Update KSM
+    await sendAndWaitForSuccess(
+        api,
+        sudoKey,
+        api.events.sudo.Sudid.is,
+        api.tx.sudo.sudo(api.tx.assetsRegistry.updateAsset(4, { parents: 1, interior: "Here" }, 200_000, 8))
+    );
+
+    resultAfterUpdate = await RpcAssetsTests.rpcListAssetsTest(api);
+    expect(result.length).to.eq(resultAfterUpdate.length);
+    KSMAfterUpdate = resultAfterUpdate.find(e => hex_to_ascii(e.name.toString()) === "KSM")!;
+    expect(KSMAfterUpdate.decimals.toNumber()).to.equal(8);
   });
 });
 

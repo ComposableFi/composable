@@ -1364,11 +1364,23 @@ impl_runtime_apis! {
 		}
 
 		fn list_assets() -> Vec<Asset<ForeignAssetId>> {
-			let mut assets = CurrencyId::list_assets();
-			let mut foreign_assets = assets_registry::Pallet::<Runtime>::get_foreign_assets_list();
-			assets.append(&mut foreign_assets);
+			let assets = CurrencyId::list_assets();
+			let foreign_assets = assets_registry::Pallet::<Runtime>::get_foreign_assets_list();
 
-			assets
+			foreign_assets.iter().fold(assets, |mut acc, foreign_asset| {
+				if let Some(i) = acc.iter().position(|asset_i| asset_i.id == foreign_asset.id) {
+					match acc.get_mut(i) {
+						Some(asset) => {
+							asset.decimals = foreign_asset.decimals;
+							asset.foreign_id = foreign_asset.foreign_id.clone();
+						},
+						_ => {},
+					}
+				} else {
+					acc.push(foreign_asset.clone())
+				}
+				acc
+			})
 		}
 	}
 
