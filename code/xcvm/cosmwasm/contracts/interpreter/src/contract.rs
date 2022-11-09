@@ -296,7 +296,7 @@ pub fn interpret_call(
 					serde_json_wasm::to_vec(&RESULT_REGISTER.load(deps.storage)?)
 						.map_err(|_| ContractError::DataSerializationError)?,
 				),
-				proto::binding_value::Type::Ip(_) =>
+				proto::binding_value::Type::IpRegister(_) =>
 					Cow::Owned(format!("{}", IP_REGISTER.load(deps.storage)?).into()),
 				_ => return Err(ContractError::InvalidBindings),
 			};

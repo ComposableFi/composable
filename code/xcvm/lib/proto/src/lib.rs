@@ -127,7 +127,7 @@ impl TryFrom<binding_value::Type> for xcvm_core::BindingValue {
 				xcvm_core::BindingValue::Register(xcvm_core::Register::Relayer),
 			binding_value::Type::Result(_) =>
 				xcvm_core::BindingValue::Register(xcvm_core::Register::Result),
-			binding_value::Type::Ip(_) =>
+			binding_value::Type::IpRegister(_) =>
 				xcvm_core::BindingValue::Register(xcvm_core::Register::Ip),
 			binding_value::Type::AssetAmount(_) => todo!(),
 			binding_value::Type::AssetId(asset_id) =>
@@ -236,7 +236,7 @@ impl TryFrom<Balance> for Amount {
 		let balance_type = balance.balance_type.ok_or(())?;
 		let wrap = |num: u128| -> FixedU128<U16> { FixedU128::wrapping_from_num(num) };
 		// TODO(aeryz): This can be a helper function in SDK so that users won't
-		// necesarilly need to know how the ratio is handled in our SDK
+		// necessarily need to know how the ratio is handled in our SDK
 		// Calculates `x` in the following equation: nom / denom = x / max
 		let calc_nom = |nom: u128, denom: u128, max: u128| -> u128 {
 			wrap(nom)
@@ -278,7 +278,7 @@ impl From<Amount> for Balance {
 		// same protobuf when you convert protobuf to XCVM types and convert back again. Because
 		// `intercept = 0 & ratio = 0` is always converted to `Absolute`. But this can be also
 		// expressed with `Ratio` and `Unit` as well. Also, since the ratio is expanded to use
-		// denomitor `MAX_PARTS`, it also won't be the same.
+		// denominator `MAX_PARTS`, it also won't be the same.
 		let balance_type = if amount.is_absolute() {
 			balance::BalanceType::Absolute(Absolute { value: Some(amount.intercept.0.into()) })
 		} else if amount.is_ratio() {
@@ -315,7 +315,7 @@ impl From<xcvm_core::BindingValue> for binding_value::Type {
 	fn from(binding_value: xcvm_core::BindingValue) -> Self {
 		match binding_value {
 			xcvm_core::BindingValue::Register(xcvm_core::Register::Ip) =>
-				binding_value::Type::Ip(Ip { id: 0 }),
+				binding_value::Type::IpRegister(IpRegister { ip: 0 }),
 			xcvm_core::BindingValue::Register(xcvm_core::Register::Relayer) =>
 				binding_value::Type::Relayer(Relayer { id: 0 }),
 			xcvm_core::BindingValue::Register(xcvm_core::Register::Result) =>
