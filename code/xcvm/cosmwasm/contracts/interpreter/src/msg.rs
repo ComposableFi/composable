@@ -14,6 +14,8 @@ pub struct InstantiateMsg {
 	pub registry_address: String,
 	/// Address of the relayer
 	pub relayer_address: String,
+	/// Address of the router
+	pub router_address: String,
 	/// Network ID of the origin network
 	pub network_id: NetworkId,
 	/// Id of the origin user

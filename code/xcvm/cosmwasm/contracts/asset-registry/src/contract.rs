@@ -1,6 +1,8 @@
 use crate::{
 	error::ContractError,
-	msg::{ExecuteMsg, GetAssetContractResponse, InstantiateMsg, MigrateMsg, QueryMsg},
+	msg::{
+		AssetReference, ExecuteMsg, GetAssetContractResponse, InstantiateMsg, MigrateMsg, QueryMsg,
+	},
 	state::{XcvmAssetId, ASSETS},
 };
 #[cfg(not(feature = "library"))]
@@ -47,13 +49,13 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 	match msg {
-		QueryMsg::GetAssetContract(token_id) => to_binary(&query_asset_contract(deps, token_id)?),
+		QueryMsg::GetAssetContract(asset_id) => to_binary(&query_asset_contract(deps, asset_id)?),
 	}
 }
 
 pub fn handle_set_assets(
 	deps: DepsMut,
-	assets: BTreeMap<String, String>,
+	assets: BTreeMap<String, AssetReference>,
 ) -> Result<Response, ContractError> {
 	// Remove all keys
 	for key in ASSETS
@@ -63,9 +65,12 @@ pub fn handle_set_assets(
 		ASSETS.remove(deps.storage, key);
 	}
 
-	for (asset_id, contract_addr) in assets {
-		let addr = deps.api.addr_validate(&contract_addr)?;
-		ASSETS.save(deps.storage, asset_id.parse::<XcvmAssetId>().unwrap(), &addr)?;
+	for (asset_id, asset_reference) in assets {
+		ASSETS.save(
+			deps.storage,
+			asset_id.parse::<XcvmAssetId>().map_err(|_| ContractError::CannotParseAssetId)?,
+			&asset_reference,
+		)?;
 	}
 
 	Ok(Response::new().add_event(Event::new("xcvm.registry.updated")))
@@ -73,10 +78,10 @@ pub fn handle_set_assets(
 
 pub fn query_asset_contract(
 	deps: Deps,
-	token_id: XcvmAssetId,
+	asset_id: XcvmAssetId,
 ) -> StdResult<GetAssetContractResponse> {
-	let contract_addr = ASSETS.load(deps.storage, token_id)?;
-	Ok(GetAssetContractResponse { addr: contract_addr })
+	let asset_reference = ASSETS.load(deps.storage, asset_id)?;
+	Ok(GetAssetContractResponse { asset_reference })
 }
 
 #[cfg(test)]

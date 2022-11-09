@@ -6,13 +6,15 @@ use crate::{
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-	to_binary, wasm_execute, Addr, Binary, CosmosMsg, Deps, DepsMut, Env, Event, MessageInfo,
-	Reply, Response, StdError, StdResult, SubMsg, WasmMsg, WasmQuery,
+	to_binary, wasm_execute, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, Env, Event,
+	MessageInfo, Reply, Response, StdError, StdResult, SubMsg, WasmMsg, WasmQuery,
 };
 use cw2::set_contract_version;
 use cw20::{Cw20Contract, Cw20ExecuteMsg};
 use cw_utils::ensure_from_older_version;
-use cw_xcvm_asset_registry::msg::{GetAssetContractResponse, QueryMsg as AssetRegistryQueryMsg};
+use cw_xcvm_asset_registry::msg::{
+	AssetReference, GetAssetContractResponse, QueryMsg as AssetRegistryQueryMsg,
+};
 use cw_xcvm_interpreter::msg::{
 	ExecuteMsg as InterpreterExecuteMsg, InstantiateMsg as InterpreterInstantiateMsg,
 };
@@ -197,19 +199,27 @@ fn send_funds_to_interpreter(
 			continue
 		}
 		let query_msg = AssetRegistryQueryMsg::GetAssetContract(asset_id.into());
-		let cw20_address: GetAssetContractResponse = deps.querier.query(
+		let query_response: GetAssetContractResponse = deps.querier.query(
 			&WasmQuery::Smart {
 				contract_addr: registry_address.clone(),
 				msg: to_binary(&query_msg)?,
 			}
 			.into(),
 		)?;
-		let contract = Cw20Contract(cw20_address.addr.clone());
-		// Adding callbacks to transfer funds to the interpreter prior to execution
-		response = response.add_message(contract.call(Cw20ExecuteMsg::Transfer {
-			recipient: interpreter_address.clone(),
-			amount: amount.0.into(),
-		})?);
+
+		response = match query_response.asset_reference {
+			AssetReference::Native(denom) => response.add_message(BankMsg::Send {
+				to_address: interpreter_address.clone(),
+				amount: vec![Coin::new(amount.0, denom)],
+			}),
+			AssetReference::Virtual(address) => {
+				let contract = Cw20Contract(address.clone());
+				response.add_message(contract.call(Cw20ExecuteMsg::Transfer {
+					recipient: interpreter_address.clone(),
+					amount: amount.0.into(),
+				})?)
+			},
+		};
 	}
 	Ok(response)
 }

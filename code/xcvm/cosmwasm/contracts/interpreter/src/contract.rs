@@ -9,13 +9,15 @@ use alloc::borrow::Cow;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-	to_binary, wasm_execute, Addr, Binary, CosmosMsg, Deps, DepsMut, Env, Event, MessageInfo,
-	QueryRequest, Reply, Response, StdError, StdResult, SubMsg, WasmQuery,
+	to_binary, wasm_execute, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, Env, Event,
+	MessageInfo, QueryRequest, Reply, Response, StdError, StdResult, SubMsg, WasmQuery,
 };
 use cw2::set_contract_version;
 use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg};
 use cw_utils::ensure_from_older_version;
-use cw_xcvm_asset_registry::msg::{GetAssetContractResponse, QueryMsg as AssetRegistryQueryMsg};
+use cw_xcvm_asset_registry::msg::{
+	AssetReference, GetAssetContractResponse, QueryMsg as AssetRegistryQueryMsg,
+};
 use num::Zero;
 use prost::Message;
 use serde::Serialize;
@@ -38,8 +40,10 @@ pub fn instantiate(
 
 	let registry_address = deps.api.addr_validate(&msg.registry_address)?;
 	let relayer_address = deps.api.addr_validate(&msg.relayer_address)?;
+	let router_address = deps.api.addr_validate(&msg.router_address)?;
 	let config = Config {
 		registry_address,
+		router_address,
 		relayer_address,
 		network_id: msg.network_id,
 		user_id: msg.user_id,
@@ -283,7 +287,10 @@ pub fn interpret_call(
 						.into(),
 					)?;
 
-					Cow::Owned(response.addr.into_string().into())
+					match response.asset_reference {
+						AssetReference::Virtual(addr) => Cow::Owned(addr.into_string().into()),
+						AssetReference::Native(_) => return Err(ContractError::InvalidBindings),
+					}
 				},
 				proto::binding_value::Type::Result(_) => Cow::Owned(
 					serde_json_wasm::to_vec(&RESULT_REGISTER.load(deps.storage)?)
@@ -333,8 +340,11 @@ pub fn interpret_spawn(
 		program: Vec<u8>,
 	}
 
-	let config = CONFIG.load(deps.storage)?;
-	let registry_addr = config.registry_address.into_string();
+	let Config { network_id, user_id, registry_address, router_address, .. } =
+		CONFIG.load(deps.storage)?;
+
+	let registry_address = registry_address.into_string();
+	let router_address = router_address.into_string();
 	let mut normalized_funds: Vec<proto::Asset> = Vec::new();
 
 	for asset in ctx.assets {
@@ -345,43 +355,57 @@ pub fn interpret_spawn(
 			continue
 		}
 
-		let amount = {
-			let query_msg = AssetRegistryQueryMsg::GetAssetContract(asset_id.clone().into());
+		let query_msg = AssetRegistryQueryMsg::GetAssetContract(asset_id.clone().into());
 
-			let cw20_address: GetAssetContractResponse = deps.querier.query(
-				&WasmQuery::Smart {
-					contract_addr: registry_addr.clone(),
-					msg: to_binary(&query_msg)?,
-				}
-				.into(),
-			)?;
-			let response =
-				deps.querier.query::<BalanceResponse>(&QueryRequest::Wasm(WasmQuery::Smart {
-					contract_addr: cw20_address.addr.clone().into_string(),
-					msg: to_binary(&Cw20QueryMsg::Balance {
-						address: env.contract.address.clone().into_string(),
-					})?,
-				}))?;
-			Amount::absolute(amount.apply(response.balance.into()).into())
+		let query_response: GetAssetContractResponse = deps.querier.query(
+			&WasmQuery::Smart {
+				contract_addr: registry_address.clone(),
+				msg: to_binary(&query_msg)?,
+			}
+			.into(),
+		)?;
+
+		let amount = {
+			let transfer_amount = match &query_response.asset_reference {
+				AssetReference::Native(denom) => {
+					let coin =
+						deps.querier.query_balance(env.contract.address.clone(), denom.clone())?;
+					coin.amount
+				},
+				AssetReference::Virtual(address) => {
+					let rsp = deps.querier.query::<BalanceResponse>(&QueryRequest::Wasm(
+						WasmQuery::Smart {
+							contract_addr: address.clone().into_string(),
+							msg: to_binary(&Cw20QueryMsg::Balance {
+								address: env.contract.address.clone().into_string(),
+							})?,
+						},
+					))?;
+					rsp.balance
+				},
+			};
+			Amount::absolute(amount.apply(transfer_amount.into()).into())
 		};
 
 		if !amount.is_zero() {
+			// Send funds to the router
+			// TODO(aeryz): Router should do the IBC transfer so the interpreter should also include
+			// a submessage to the router to trigger this IBC transfer
 			let asset_id: u128 = asset_id.into();
-			let burn_amount = amount.intercept.0;
+			let transfer_amount = amount.intercept.0;
 			normalized_funds.push((AssetId(asset_id), amount).into());
-			// TODO(probably call the router via a Cw20 `send` to spawn the program and do w/e
-			// required with the funds)
-			let query_msg = AssetRegistryQueryMsg::GetAssetContract(asset_id);
-			let cw20_address: GetAssetContractResponse = deps.querier.query(
-				&WasmQuery::Smart {
-					contract_addr: registry_addr.clone(),
-					msg: to_binary(&query_msg)?,
-				}
-				.into(),
-			)?;
-			let contract = Cw20Contract(cw20_address.addr);
-			response = response
-				.add_message(contract.call(Cw20ExecuteMsg::Burn { amount: burn_amount.into() })?);
+			response = match query_response.asset_reference {
+				AssetReference::Native(denom) => response.add_message(BankMsg::Send {
+					to_address: router_address.clone(),
+					amount: vec![Coin { denom, amount: transfer_amount.into() }],
+				}),
+				AssetReference::Virtual(address) => response.add_message(
+					Cw20Contract(address.clone()).call(Cw20ExecuteMsg::Transfer {
+						recipient: router_address.clone(),
+						amount: transfer_amount.into(),
+					})?,
+				),
+			};
 		}
 	}
 
@@ -397,12 +421,12 @@ pub fn interpret_spawn(
 		Event::new("xcvm.interpreter.spawn")
 			.add_attribute(
 				"origin_network_id",
-				serde_json_wasm::to_string(&config.network_id.0)
+				serde_json_wasm::to_string(&network_id.0)
 					.map_err(|_| ContractError::DataSerializationError)?,
 			)
 			.add_attribute(
 				"origin_user_id",
-				serde_json_wasm::to_string(&config.user_id)
+				serde_json_wasm::to_string(&user_id)
 					.map_err(|_| ContractError::DataSerializationError)?,
 			)
 			.add_attribute("program", Binary(encoded_spawn).to_base64()),
@@ -433,27 +457,37 @@ pub fn interpret_transfer(
 
 		let asset_id = must_ok(must_ok(asset.asset_id)?.asset_id)?;
 		let query_msg = AssetRegistryQueryMsg::GetAssetContract(asset_id.into());
-		let cw20_address: GetAssetContractResponse = deps.querier.query(
+		let query_response: GetAssetContractResponse = deps.querier.query(
 			&WasmQuery::Smart { contract_addr: registry_addr.clone(), msg: to_binary(&query_msg)? }
 				.into(),
 		)?;
-		let contract = Cw20Contract(cw20_address.addr.clone());
 
-		let transfer_amount = {
-			let response =
-				deps.querier.query::<BalanceResponse>(&QueryRequest::Wasm(WasmQuery::Smart {
-					contract_addr: cw20_address.addr.clone().into_string(),
-					msg: to_binary(&Cw20QueryMsg::Balance {
-						address: env.contract.address.clone().into_string(),
-					})?,
-				}))?;
-			amount.apply(response.balance.into())
+		response = match query_response.asset_reference {
+			AssetReference::Native(denom) => {
+				let mut coin = deps.querier.query_balance(env.contract.address.clone(), denom)?;
+				coin.amount = amount.apply(coin.amount.into()).into();
+				response.add_message(BankMsg::Send {
+					to_address: recipient.clone(),
+					amount: vec![coin],
+				})
+			},
+			AssetReference::Virtual(address) => {
+				let contract = Cw20Contract(address.clone());
+				let rsp = deps.querier.query::<BalanceResponse>(&QueryRequest::Wasm(
+					WasmQuery::Smart {
+						contract_addr: address.clone().into_string(),
+						msg: to_binary(&Cw20QueryMsg::Balance {
+							address: env.contract.address.clone().into_string(),
+						})?,
+					},
+				))?;
+				let transfer_amount = amount.apply(rsp.balance.into());
+				response.add_message(contract.call(Cw20ExecuteMsg::Transfer {
+					recipient: recipient.clone(),
+					amount: transfer_amount.into(),
+				})?)
+			},
 		};
-
-		response = response.add_message(contract.call(Cw20ExecuteMsg::Transfer {
-			recipient: recipient.clone(),
-			amount: transfer_amount.into(),
-		})?);
 	}
 
 	Ok(response)
@@ -530,7 +564,23 @@ mod tests {
 	const CW20_ADDR: &str = "cw20_addr";
 	const REGISTRY_ADDR: &str = "registry_addr";
 	const RELAYER_ADDR: &str = "relayer_addr";
+	const ROUTER_ADDR: &str = "router_addr";
 	const BALANCE: u128 = 10_000;
+
+	fn do_instantiate(
+		deps: DepsMut,
+		env: Env,
+		info: MessageInfo,
+	) -> Result<Response, ContractError> {
+		let msg = InstantiateMsg {
+			registry_address: REGISTRY_ADDR.to_string(),
+			relayer_address: RELAYER_ADDR.to_string(),
+			router_address: ROUTER_ADDR.to_string(),
+			network_id: Picasso.into(),
+			user_id: vec![],
+		};
+		instantiate(deps, env, info, msg)
+	}
 
 	fn encode_protobuf<E: prost::Message>(encodable: E) -> Vec<u8> {
 		let mut buf = Vec::new();
@@ -548,7 +598,7 @@ mod tests {
 			WasmQuery::Smart { contract_addr, .. } if contract_addr.as_str() == REGISTRY_ADDR =>
 				SystemResult::Ok(ContractResult::Ok(
 					to_binary(&cw_xcvm_asset_registry::msg::GetAssetContractResponse {
-						addr: Addr::unchecked(CW20_ADDR),
+						asset_reference: AssetReference::Virtual(Addr::unchecked(CW20_ADDR)),
 					})
 					.unwrap(),
 				))
@@ -561,15 +611,8 @@ mod tests {
 	fn proper_instantiation() {
 		let mut deps = mock_dependencies();
 
-		let msg = InstantiateMsg {
-			registry_address: REGISTRY_ADDR.to_string(),
-			relayer_address: RELAYER_ADDR.to_string(),
-			network_id: Picasso.into(),
-			user_id: vec![],
-		};
-		let info = mock_info("sender", &vec![]);
-
-		let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+		let info = mock_info(MOCK_CONTRACT_ADDR, &vec![]);
+		let res = do_instantiate(deps.as_mut(), mock_env(), info).unwrap();
 		assert_eq!(0, res.messages.len());
 
 		// Make sure that the storage is empty
@@ -578,13 +621,14 @@ mod tests {
 			Config {
 				registry_address: Addr::unchecked(REGISTRY_ADDR),
 				relayer_address: Addr::unchecked(RELAYER_ADDR),
+				router_address: Addr::unchecked(ROUTER_ADDR),
 				network_id: Picasso.into(),
 				user_id: vec![]
 			}
 		);
 
 		// Make sure that the sender is added as an owner
-		assert!(OWNERS.has(&deps.storage, Addr::unchecked("sender")));
+		assert!(OWNERS.has(&deps.storage, Addr::unchecked(MOCK_CONTRACT_ADDR)));
 	}
 
 	#[test]
@@ -592,18 +636,7 @@ mod tests {
 		let mut deps = mock_dependencies();
 
 		let info = mock_info(MOCK_CONTRACT_ADDR, &vec![]);
-		let _ = instantiate(
-			deps.as_mut(),
-			mock_env(),
-			info.clone(),
-			InstantiateMsg {
-				registry_address: REGISTRY_ADDR.into(),
-				relayer_address: RELAYER_ADDR.into(),
-				network_id: Picasso.into(),
-				user_id: vec![],
-			},
-		)
-		.unwrap();
+		let _ = do_instantiate(deps.as_mut(), mock_env(), info.clone()).unwrap();
 
 		let program: proto::Program =
 			XCVMProgram { tag: vec![], instructions: vec![].into() }.into();
@@ -636,18 +669,7 @@ mod tests {
 
 		let garbage_info = mock_info(GARBAGE_SENDER, &vec![]);
 		let legit_info = mock_info(MOCK_CONTRACT_ADDR, &vec![]);
-		let _ = instantiate(
-			deps.as_mut(),
-			mock_env(),
-			legit_info.clone(),
-			InstantiateMsg {
-				registry_address: REGISTRY_ADDR.into(),
-				relayer_address: RELAYER_ADDR.into(),
-				network_id: Picasso.into(),
-				user_id: vec![],
-			},
-		)
-		.unwrap();
+		let _ = do_instantiate(deps.as_mut(), mock_env(), legit_info.clone()).unwrap();
 
 		let program: proto::Program =
 			XCVMProgram { tag: vec![], instructions: vec![].into() }.into();
@@ -688,18 +710,7 @@ mod tests {
 		let mut deps = mock_dependencies();
 
 		let info = mock_info(MOCK_CONTRACT_ADDR, &vec![]);
-		let _ = instantiate(
-			deps.as_mut(),
-			mock_env(),
-			info.clone(),
-			InstantiateMsg {
-				registry_address: REGISTRY_ADDR.into(),
-				relayer_address: RELAYER_ADDR.into(),
-				network_id: Picasso.into(),
-				user_id: vec![],
-			},
-		)
-		.unwrap();
+		let _ = do_instantiate(deps.as_mut(), mock_env(), info.clone()).unwrap();
 
 		// Now the contract has no owner
 		let _ = execute(
@@ -730,18 +741,7 @@ mod tests {
 		deps.querier = querier;
 
 		let info = mock_info(MOCK_CONTRACT_ADDR, &vec![]);
-		let _ = instantiate(
-			deps.as_mut(),
-			mock_env(),
-			info.clone(),
-			InstantiateMsg {
-				registry_address: REGISTRY_ADDR.into(),
-				relayer_address: RELAYER_ADDR.into(),
-				network_id: Picasso.into(),
-				user_id: vec![],
-			},
-		)
-		.unwrap();
+		let _ = do_instantiate(deps.as_mut(), mock_env(), info.clone()).unwrap();
 
 		IP_REGISTER.save(deps.as_mut().storage, &0).unwrap();
 
@@ -805,18 +805,7 @@ mod tests {
 		let mut deps = mock_dependencies();
 
 		let info = mock_info(MOCK_CONTRACT_ADDR, &vec![]);
-		let _ = instantiate(
-			deps.as_mut(),
-			mock_env(),
-			info.clone(),
-			InstantiateMsg {
-				registry_address: REGISTRY_ADDR.into(),
-				relayer_address: RELAYER_ADDR.into(),
-				network_id: Picasso.into(),
-				user_id: vec![],
-			},
-		)
-		.unwrap();
+		let _ = do_instantiate(deps.as_mut(), mock_env(), info.clone()).unwrap();
 
 		IP_REGISTER.save(deps.as_mut().storage, &0).unwrap();
 
@@ -889,18 +878,7 @@ mod tests {
 		deps.querier = querier;
 
 		let info = mock_info(MOCK_CONTRACT_ADDR, &vec![]);
-		let _ = instantiate(
-			deps.as_mut(),
-			mock_env(),
-			info.clone(),
-			InstantiateMsg {
-				registry_address: REGISTRY_ADDR.into(),
-				relayer_address: RELAYER_ADDR.into(),
-				network_id: Picasso.into(),
-				user_id: vec![],
-			},
-		)
-		.unwrap();
+		let _ = do_instantiate(deps.as_mut(), mock_env(), info.clone()).unwrap();
 
 		IP_REGISTER.save(deps.as_mut().storage, &0).unwrap();
 
@@ -946,7 +924,12 @@ mod tests {
 		let contract = Cw20Contract(Addr::unchecked(CW20_ADDR));
 		assert_eq!(
 			res.messages[0].msg,
-			contract.call(Cw20ExecuteMsg::Burn { amount: 1_u128.into() }).unwrap()
+			contract
+				.call(Cw20ExecuteMsg::Transfer {
+					recipient: ROUTER_ADDR.into(),
+					amount: 1_u128.into()
+				})
+				.unwrap()
 		);
 	}
 
@@ -955,18 +938,7 @@ mod tests {
 		let mut deps = mock_dependencies();
 
 		let info = mock_info(MOCK_CONTRACT_ADDR, &vec![]);
-		let _ = instantiate(
-			deps.as_mut(),
-			mock_env(),
-			info.clone(),
-			InstantiateMsg {
-				registry_address: REGISTRY_ADDR.into(),
-				relayer_address: RELAYER_ADDR.into(),
-				network_id: Picasso.into(),
-				user_id: vec![65, 65],
-			},
-		)
-		.unwrap();
+		let _ = do_instantiate(deps.as_mut(), mock_env(), info.clone()).unwrap();
 
 		IP_REGISTER.save(deps.as_mut().storage, &0).unwrap();
 
