@@ -23,11 +23,17 @@ use serde::{Deserialize, Serialize};
 	Deserialize,
 )]
 #[repr(transparent)]
-pub struct NetworkId(pub u8);
+pub struct NetworkId(pub u32);
 
-impl From<u8> for NetworkId {
-	fn from(x: u8) -> Self {
+impl From<u32> for NetworkId {
+	fn from(x: u32) -> Self {
 		NetworkId(x)
+	}
+}
+
+impl From<NetworkId> for u32 {
+	fn from(network_id: NetworkId) -> Self {
+		network_id.0 as u32
 	}
 }
 
@@ -89,8 +95,8 @@ mod tests {
 	use super::*;
 	#[test]
 	fn network_ids() {
-		assert_eq!(Picasso::ID, NetworkId(1u8));
-		assert_eq!(Ethereum::ID, NetworkId(2u8));
-		assert_eq!(Juno::ID, NetworkId(3u8));
+		assert_eq!(Picasso::ID, NetworkId(1));
+		assert_eq!(Ethereum::ID, NetworkId(2));
+		assert_eq!(Juno::ID, NetworkId(3));
 	}
 }

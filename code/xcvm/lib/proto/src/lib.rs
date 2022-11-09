@@ -4,12 +4,63 @@ extern crate alloc;
 
 use alloc::{collections::VecDeque, vec::Vec};
 use fixed::{types::extra::U16, FixedU128};
-use xcvm_core::{Amount, Destination, Funds, NetworkId, MAX_PARTS};
+use prost::{DecodeError, Message};
+use xcvm_core::{Amount, Destination, NetworkId, SpawnEvent, MAX_PARTS};
 
 include!(concat!(env!("OUT_DIR"), "/interpreter.rs"));
 
-pub type XCVMInstruction<Account> = xcvm_core::Instruction<NetworkId, Vec<u8>, Account, Funds>;
-pub type XCVMProgram<Account> = xcvm_core::Program<VecDeque<XCVMInstruction<Account>>>;
+pub trait Encodable {
+	fn encode(self) -> Vec<u8>;
+}
+
+pub type XCVMProgram<TNetwork, TAbiEncoded, TAccount, TAssets> =
+	xcvm_core::Program<VecDeque<xcvm_core::Instruction<TNetwork, TAbiEncoded, TAccount, TAssets>>>;
+
+#[derive(Clone, Debug)]
+pub enum DecodingFailure {
+	Protobuf(DecodeError),
+	Isomorphism,
+}
+
+pub fn decode<TNetwork, TAbiEncoded, TAccount, TAssets>(
+	buffer: &[u8],
+) -> core::result::Result<XCVMProgram<TNetwork, TAbiEncoded, TAccount, TAssets>, DecodingFailure>
+where
+	TNetwork: From<u32>,
+	TAbiEncoded: TryFrom<Vec<u8>>,
+	TAccount: for<'a> TryFrom<&'a [u8]>,
+	TAssets: From<Vec<(xcvm_core::AssetId, xcvm_core::Amount)>>,
+{
+	Program::decode(buffer)
+		.map_err(DecodingFailure::Protobuf)
+		.and_then(|x| TryInto::try_into(x).map_err(|_| DecodingFailure::Isomorphism))
+}
+
+impl<TNetwork, TAbiEncoded, TAccount, TAssets> Encodable
+	for XCVMProgram<TNetwork, TAbiEncoded, TAccount, TAssets>
+where
+	TNetwork: Into<u32>,
+	TAbiEncoded: Into<Vec<u8>>,
+	TAccount: Into<Vec<u8>>,
+	TAssets: Into<Vec<(xcvm_core::AssetId, xcvm_core::Amount)>>,
+{
+	fn encode(self) -> Vec<u8> {
+		Program::encode_to_vec(&self.into())
+	}
+}
+
+impl<TNetwork, TAbiEncoded, TAccount, TAssets> Encodable
+	for SpawnEvent<TNetwork, TAbiEncoded, TAccount, TAssets>
+where
+	TNetwork: Into<u32>,
+	TAbiEncoded: Into<Vec<u8>>,
+	TAccount: Into<Vec<u8>>,
+	TAssets: Into<Vec<(xcvm_core::AssetId, xcvm_core::Amount)>>,
+{
+	fn encode(self) -> Vec<u8> {
+		Spawn::encode_to_vec(&self.into())
+	}
+}
 
 impl From<Uint128> for u128 {
 	fn from(value: Uint128) -> Self {
@@ -23,9 +74,13 @@ impl From<u128> for Uint128 {
 	}
 }
 
-impl<Account> TryFrom<Program> for XCVMProgram<Account>
+impl<TNetwork, TAbiEncoded, TAccount, TAssets> TryFrom<Program>
+	for XCVMProgram<TNetwork, TAbiEncoded, TAccount, TAssets>
 where
-	Account: From<Vec<u8>>,
+	TNetwork: From<u32>,
+	TAbiEncoded: TryFrom<Vec<u8>>,
+	TAccount: for<'a> TryFrom<&'a [u8]>,
+	TAssets: From<Vec<(xcvm_core::AssetId, xcvm_core::Amount)>>,
 {
 	type Error = ();
 
@@ -37,24 +92,32 @@ where
 	}
 }
 
-impl<Account> TryFrom<Instructions> for VecDeque<XCVMInstruction<Account>>
+impl<TNetwork, TAbiEncoded, TAccount, TAssets> TryFrom<Instructions>
+	for VecDeque<xcvm_core::Instruction<TNetwork, TAbiEncoded, TAccount, TAssets>>
 where
-	Account: From<Vec<u8>>,
+	TNetwork: From<u32>,
+	TAbiEncoded: TryFrom<Vec<u8>>,
+	TAccount: for<'a> TryFrom<&'a [u8]>,
+	TAssets: From<Vec<(xcvm_core::AssetId, xcvm_core::Amount)>>,
 {
 	type Error = ();
 
 	fn try_from(instructions: Instructions) -> core::result::Result<Self, Self::Error> {
-		instructions
-			.instructions
-			.into_iter()
-			.map(|instruction| instruction.try_into())
-			.collect()
+		let mut instrs = VecDeque::new();
+		for inst in instructions.instructions {
+			instrs.push_back(inst.try_into()?);
+		}
+		Ok(instrs)
 	}
 }
 
-impl<Account> TryFrom<Instruction> for XCVMInstruction<Account>
+impl<TNetwork, TAbiEncoded, TAccount, TAssets> TryFrom<Instruction>
+	for xcvm_core::Instruction<TNetwork, TAbiEncoded, TAccount, TAssets>
 where
-	Account: From<Vec<u8>>,
+	TNetwork: From<u32>,
+	TAbiEncoded: TryFrom<Vec<u8>>,
+	TAccount: for<'a> TryFrom<&'a [u8]>,
+	TAssets: From<Vec<(xcvm_core::AssetId, xcvm_core::Amount)>>,
 {
 	type Error = ();
 
@@ -63,9 +126,13 @@ where
 	}
 }
 
-impl<Account> TryFrom<instruction::Instruction> for XCVMInstruction<Account>
+impl<TNetwork, TAbiEncoded, TAccount, TAssets> TryFrom<instruction::Instruction>
+	for xcvm_core::Instruction<TNetwork, TAbiEncoded, TAccount, TAssets>
 where
-	Account: From<Vec<u8>>,
+	TNetwork: From<u32>,
+	TAbiEncoded: TryFrom<Vec<u8>>,
+	TAccount: for<'a> TryFrom<&'a [u8]>,
+	TAssets: From<Vec<(xcvm_core::AssetId, xcvm_core::Amount)>>,
 {
 	type Error = ();
 
@@ -81,15 +148,22 @@ where
 	}
 }
 
-impl<Account> TryFrom<Call> for XCVMInstruction<Account>
+impl<TNetwork, TAbiEncoded, TAccount, TAssets> TryFrom<Call>
+	for xcvm_core::Instruction<TNetwork, TAbiEncoded, TAccount, TAssets>
 where
-	Account: From<Vec<u8>>,
+	TNetwork: From<u32>,
+	TAbiEncoded: TryFrom<Vec<u8>>,
+	TAccount: for<'a> TryFrom<&'a [u8]>,
+	TAssets: From<Vec<(xcvm_core::AssetId, xcvm_core::Amount)>>,
 {
 	type Error = ();
 
 	fn try_from(call: Call) -> core::result::Result<Self, Self::Error> {
 		let bindings = call.bindings.ok_or(())?.try_into()?;
-		Ok(XCVMInstruction::Call { bindings, encoded: call.payload })
+		Ok(xcvm_core::Instruction::Call {
+			bindings,
+			encoded: call.payload.try_into().map_err(|_| ())?,
+		})
 	}
 }
 
@@ -136,77 +210,85 @@ impl TryFrom<binding_value::Type> for xcvm_core::BindingValue {
 	}
 }
 
-impl<Account> TryFrom<Spawn> for XCVMInstruction<Account>
+impl<TNetwork, TAbiEncoded, TAccount, TAssets> TryFrom<Spawn>
+	for xcvm_core::Instruction<TNetwork, TAbiEncoded, TAccount, TAssets>
 where
-	Account: From<Vec<u8>>,
+	TNetwork: From<u32>,
+	TAbiEncoded: TryFrom<Vec<u8>>,
+	TAccount: for<'a> TryFrom<&'a [u8]>,
+	TAssets: From<Vec<(xcvm_core::AssetId, xcvm_core::Amount)>>,
 {
 	type Error = ();
 
 	fn try_from(spawn: Spawn) -> core::result::Result<Self, Self::Error> {
-		let network = spawn.network.ok_or(())?.into();
+		let network = spawn.network.ok_or(())?.network_id.into();
 		let salt = spawn.salt.ok_or(())?.salt;
-		// let program = spawn.program.ok_or(())?;
-		// TODO(aeryz): convert program
-		// TODO(aeryz): assets conversion can be a function
-		Ok(XCVMInstruction::Spawn {
+		Ok(xcvm_core::Instruction::Spawn {
 			network,
 			salt,
 			bridge_security: match spawn.security {
-				0 => xcvm_core::BridgeSecurity::None,
+				0 => xcvm_core::BridgeSecurity::Insecure,
 				1 => xcvm_core::BridgeSecurity::Deterministic,
 				2 => xcvm_core::BridgeSecurity::Probabilistic,
 				3 => xcvm_core::BridgeSecurity::Optimistic,
 				_ => return Err(()),
 			},
-			assets: Funds(
-				spawn
-					.assets
-					.into_iter()
-					.map(|asset| asset.try_into())
-					.collect::<core::result::Result<Vec<_>, _>>()?,
-			),
-			program: XCVMProgram { tag: Vec::new(), instructions: VecDeque::new() },
+			assets: spawn
+				.assets
+				.into_iter()
+				.map(|asset| asset.try_into())
+				.collect::<core::result::Result<Vec<_>, _>>()?
+				.into(),
+			program: XCVMProgram {
+				tag: Vec::new(),
+				instructions: spawn.program.ok_or(())?.instructions.ok_or(())?.try_into()?,
+			},
 		})
 	}
 }
 
 impl From<Network> for NetworkId {
 	fn from(network: Network) -> Self {
-		(network.network_id as u8).into()
+		network.network_id.into()
 	}
 }
 
-impl<Account> TryFrom<Transfer> for XCVMInstruction<Account>
+impl<TNetwork, TAbiEncoded, TAccount, TAssets> TryFrom<Transfer>
+	for xcvm_core::Instruction<TNetwork, TAbiEncoded, TAccount, TAssets>
 where
-	Account: From<Vec<u8>>,
+	TNetwork: From<u32>,
+	TAbiEncoded: TryFrom<Vec<u8>>,
+	TAccount: for<'a> TryFrom<&'a [u8]>,
+	TAssets: From<Vec<(xcvm_core::AssetId, xcvm_core::Amount)>>,
 {
 	type Error = ();
 
 	fn try_from(transfer: Transfer) -> core::result::Result<Self, Self::Error> {
 		let account_type = transfer.account_type.ok_or(())?;
-		Ok(XCVMInstruction::Transfer {
-			to: account_type.into(),
-			assets: Funds(
-				transfer
-					.assets
-					.into_iter()
-					.map(|asset| asset.try_into())
-					.collect::<core::result::Result<Vec<_>, _>>()?,
-			),
+		Ok(xcvm_core::Instruction::Transfer {
+			to: account_type.try_into()?,
+			assets: transfer
+				.assets
+				.into_iter()
+				.map(|asset| asset.try_into())
+				.collect::<core::result::Result<Vec<_>, _>>()?
+				.into(),
 		})
 	}
 }
 
-impl<Acc> From<transfer::AccountType> for Destination<Acc>
+impl<TAccount> TryFrom<transfer::AccountType> for Destination<TAccount>
 where
-	Acc: From<Vec<u8>>,
+	TAccount: for<'a> TryFrom<&'a [u8]>,
 {
-	fn from(account_type: transfer::AccountType) -> Self {
-		match account_type {
+	type Error = ();
+
+	fn try_from(account_type: transfer::AccountType) -> core::result::Result<Self, Self::Error> {
+		Ok(match account_type {
 			transfer::AccountType::Account(Account { account }) =>
-				Destination::Account(account.into()),
+				Destination::Account(account.as_slice().try_into().map_err(|_| ())?),
 			transfer::AccountType::Relayer(_) => Destination::Relayer,
-		}
+		})
 	}
 }
 
@@ -340,11 +422,11 @@ impl From<xcvm_core::NetworkId> for Network {
 	}
 }
 
-impl<Account_> From<xcvm_core::Destination<Account_>> for transfer::AccountType
+impl<TAccount> From<xcvm_core::Destination<TAccount>> for transfer::AccountType
 where
-	Vec<u8>: From<Account_>,
+	TAccount: Into<Vec<u8>>,
 {
-	fn from(destination: xcvm_core::Destination<Account_>) -> Self {
+	fn from(destination: xcvm_core::Destination<TAccount>) -> Self {
 		match destination {
 			Destination::Account(account) =>
 				transfer::AccountType::Account(Account { account: account.into() }),
@@ -359,60 +441,96 @@ impl From<(u32, xcvm_core::BindingValue)> for Binding {
 	}
 }
 
-impl<Account> From<XCVMInstruction<Account>> for instruction::Instruction
+impl<TNetwork, TAbiEncoded, TAccount, TAssets>
+	From<xcvm_core::Instruction<TNetwork, TAbiEncoded, TAccount, TAssets>> for instruction::Instruction
 where
-	Vec<u8>: From<Account>,
+	TNetwork: Into<u32>,
+	TAbiEncoded: Into<Vec<u8>>,
+	TAccount: Into<Vec<u8>>,
+	TAssets: Into<Vec<(xcvm_core::AssetId, xcvm_core::Amount)>>,
 {
-	fn from(instruction: XCVMInstruction<Account>) -> Self {
+	fn from(instruction: xcvm_core::Instruction<TNetwork, TAbiEncoded, TAccount, TAssets>) -> Self {
 		match instruction {
 			xcvm_core::Instruction::Transfer { to, assets } =>
 				instruction::Instruction::Transfer(Transfer {
-					assets: assets.0.into_iter().map(|asset| asset.into()).collect(),
+					assets: assets.into().into_iter().map(|asset| asset.into()).collect(),
 					account_type: Some(to.into()),
 				}),
 			xcvm_core::Instruction::Call { bindings, encoded } =>
 				instruction::Instruction::Call(Call {
-					payload: encoded,
+					payload: encoded.into(),
 					bindings: Some(Bindings {
 						bindings: bindings.into_iter().map(|binding| binding.into()).collect(),
 					}),
 				}),
 			xcvm_core::Instruction::Spawn { network, bridge_security, salt, assets, program } =>
 				instruction::Instruction::Spawn(Spawn {
-					network: Some(network.into()),
+					network: Some(Network { network_id: network.into() }),
 					security: bridge_security as i32,
 					salt: Some(Salt { salt }),
 					program: Some(program.into()),
-					assets: assets.0.into_iter().map(|asset| asset.into()).collect(),
+					assets: assets.into().into_iter().map(|asset| asset.into()).collect(),
 				}),
 			xcvm_core::Instruction::Query { network, salt } =>
 				instruction::Instruction::Query(Query {
-					network: Some(network.into()),
+					network: Some(Network { network_id: network.into() }),
 					salt: Some(Salt { salt }),
 				}),
 		}
 	}
 }
 
-impl<Account> From<XCVMInstruction<Account>> for Instruction
+impl<TNetwork, TAbiEncoded, TAccount, TAssets>
+	From<xcvm_core::Instruction<TNetwork, TAbiEncoded, TAccount, TAssets>> for Instruction
 where
-	Vec<u8>: From<Account>,
+	TNetwork: Into<u32>,
+	TAbiEncoded: Into<Vec<u8>>,
+	TAccount: Into<Vec<u8>>,
+	TAssets: Into<Vec<(xcvm_core::AssetId, xcvm_core::Amount)>>,
 {
-	fn from(instruction: XCVMInstruction<Account>) -> Self {
+	fn from(instruction: xcvm_core::Instruction<TNetwork, TAbiEncoded, TAccount, TAssets>) -> Self {
 		Instruction { instruction: Some(instruction.into()) }
 	}
 }
 
-impl<Account> From<XCVMProgram<Account>> for Program
+impl<TNetwork, TAbiEncoded, TAccount, TAssets>
+	From<XCVMProgram<TNetwork, TAbiEncoded, TAccount, TAssets>> for Program
 where
-	Vec<u8>: From<Account>,
+	TNetwork: Into<u32>,
+	TAbiEncoded: Into<Vec<u8>>,
+	TAccount: Into<Vec<u8>>,
+	TAssets: Into<Vec<(xcvm_core::AssetId, xcvm_core::Amount)>>,
 {
-	fn from(program: XCVMProgram<Account>) -> Self {
+	fn from(program: XCVMProgram<TNetwork, TAbiEncoded, TAccount, TAssets>) -> Self {
 		Program {
 			tag: program.tag,
 			instructions: Some(Instructions {
 				instructions: program.instructions.into_iter().map(|instr| instr.into()).collect(),
 			}),
+		}
+	}
+}
+
+impl<TNetwork, TAbiEncoded, TAccount, TAssets>
+	From<SpawnEvent<TNetwork, TAbiEncoded, TAccount, TAssets>> for Spawn
+where
+	TNetwork: Into<u32>,
+	TAbiEncoded: Into<Vec<u8>>,
+	TAccount: Into<Vec<u8>>,
+	TAssets: Into<Vec<(xcvm_core::AssetId, xcvm_core::Amount)>>,
+{
+	fn from(spawn_event: SpawnEvent<TNetwork, TAbiEncoded, TAccount, TAssets>) -> Self {
+		Spawn {
+			network: Some(Network { network_id: spawn_event.network.into() }),
+			security: spawn_event.bridge_security as i32,
+			salt: Some(Salt { salt: spawn_event.salt }),
+			program: Some(spawn_event.program.into()),
+			assets: spawn_event
+				.assets
+				.0
+				.into_iter()
+				.map(|(asset_id, amount)| (asset_id, xcvm_core::Amount::absolute(amount.0)).into())
+				.collect(),
 		}
 	}
 }

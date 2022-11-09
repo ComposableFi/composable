@@ -1,3 +1,5 @@
+extern crate alloc;
+
 use crate::{
 	error::ContractError,
 	msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg},
@@ -319,14 +321,16 @@ fn assert_bridge_security(
 #[cfg(test)]
 mod tests {
 	use super::*;
+	use alloc::collections::VecDeque;
 	use cosmwasm_std::{
 		testing::{mock_dependencies, mock_env, mock_info, MockQuerier, MOCK_CONTRACT_ADDR},
-		wasm_execute, Addr, ContractResult, QuerierResult, SystemResult,
+		wasm_execute, Addr, CanonicalAddr, ContractResult, QuerierResult, SystemResult,
 	};
 	use prost::Message;
-	use proto::{XCVMInstruction, XCVMProgram};
 	use xcvm_core::{Amount, AssetId, BridgeProtocol, Destination, Picasso, ETH, PICA};
 	use xcvm_proto as proto;
+	type XCVMInstruction = xcvm_core::Instruction<NetworkId, Vec<u8>, CanonicalAddr, Funds>;
+	type XCVMProgram = xcvm_core::Program<VecDeque<XCVMInstruction>>;
 
 	const CW20_ADDR: &str = "cw20addr";
 	const REGISTRY_ADDR: &str = "registry_addr";
@@ -406,7 +410,7 @@ mod tests {
 		let program = XCVMProgram {
 			tag: vec![],
 			instructions: vec![XCVMInstruction::Transfer {
-				to: Destination::<Vec<u8>>::Relayer,
+				to: Destination::<CanonicalAddr>::Relayer,
 				assets: Funds::from([
 					(Into::<AssetId>::into(PICA), Amount::absolute(1)),
 					(ETH.into(), Amount::absolute(2)),
@@ -493,7 +497,7 @@ mod tests {
 		let program = XCVMProgram {
 			tag: vec![],
 			instructions: vec![XCVMInstruction::Transfer {
-				to: Destination::<Vec<u8>>::Relayer,
+				to: Destination::<CanonicalAddr>::Relayer,
 				assets: Funds::from([
 					(Into::<AssetId>::into(PICA), Amount::absolute(1)),
 					(ETH.into(), Amount::absolute(2)),

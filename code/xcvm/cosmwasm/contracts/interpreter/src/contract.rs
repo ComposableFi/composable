@@ -5,12 +5,12 @@ use crate::{
 	msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg},
 	state::{Config, CONFIG, IP_REGISTER, OWNERS, RESULT_REGISTER},
 };
-use alloc::borrow::Cow;
+use alloc::{borrow::Cow, collections::VecDeque};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-	to_binary, wasm_execute, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, Env, Event,
-	MessageInfo, QueryRequest, Reply, Response, StdError, StdResult, SubMsg, WasmQuery,
+	to_binary, wasm_execute, Addr, BankMsg, Binary, CanonicalAddr, Coin, CosmosMsg, Deps, DepsMut,
+	Env, Event, MessageInfo, QueryRequest, Reply, Response, StdError, StdResult, SubMsg, WasmQuery,
 };
 use cw2::set_contract_version;
 use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg};
@@ -19,10 +19,15 @@ use cw_xcvm_asset_registry::msg::{
 	AssetReference, GetAssetContractResponse, QueryMsg as AssetRegistryQueryMsg,
 };
 use num::Zero;
-use prost::Message;
-use serde::Serialize;
-use xcvm_core::{cosmwasm::*, Amount, AssetId, Displayed, Funds, Register};
+use proto::Encodable;
+use xcvm_core::{
+	cosmwasm::*, Amount, BindingValue, BridgeSecurity, Destination, Displayed, Funds, NetworkId,
+	Register, SpawnEvent,
+};
 use xcvm_proto as proto;
+
+type XCVMInstruction = xcvm_core::Instruction<NetworkId, Vec<u8>, CanonicalAddr, Funds>;
+type XCVMProgram = xcvm_core::Program<VecDeque<XCVMInstruction>>;
 
 const CONTRACT_NAME: &str = "composable:xcvm-interpreter";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -74,8 +79,8 @@ pub fn execute(
 			if env.contract.address != info.sender {
 				Err(ContractError::NotAuthorized)
 			} else {
-				let program = proto::Program::decode(&program[..])
-					.map_err(|_| ContractError::InvalidProgram)?;
+				let program =
+					proto::decode(&program[..]).map_err(|_| ContractError::InvalidProgram)?;
 				interpret_program(deps, env, info, program)
 			},
 		ExecuteMsg::AddOwners { owners } => add_owners(deps, owners),
@@ -139,28 +144,18 @@ pub fn interpret_program(
 	mut deps: DepsMut,
 	env: Env,
 	_info: MessageInfo,
-	program: proto::Program,
+	program: XCVMProgram,
 ) -> Result<Response, ContractError> {
 	let mut response = Response::new();
-	let instructions = must_ok(program.instructions)?.instructions;
-	let instruction_len = instructions.len();
-	let mut instruction_iter = instructions.into_iter().enumerate();
+	let instruction_len = program.instructions.len();
+	let mut instruction_iter = program.instructions.into_iter().enumerate();
 	let mut ip = IP_REGISTER.load(deps.storage)?;
 	while let Some((index, instruction)) = instruction_iter.next() {
-		let instruction = must_ok(instruction.instruction)?;
 		response = match instruction {
-			proto::instruction::Instruction::Call(proto::Call { payload, bindings }) => {
-				let bindings = must_ok(bindings)?;
+			XCVMInstruction::Call { bindings, encoded } => {
 				if index >= instruction_len - 1 {
 					// If the call is the final instruction, do not yield execution
-					interpret_call(
-						deps.as_ref(),
-						&env,
-						bindings.bindings,
-						payload,
-						ip as usize,
-						response,
-					)?
+					interpret_call(deps.as_ref(), &env, bindings, encoded, ip as usize, response)?
 				} else {
 					// If the call is not the final instruction:
 					// 1. interpret the call: this will add the call to the response's
@@ -169,38 +164,32 @@ pub fn interpret_program(
 					//    rest of the instructions as XCVM program. This will make sure that
 					//    previous call instruction will run first, then the rest of the program
 					//    will run.
-					let response = interpret_call(
-						deps.as_ref(),
-						&env,
-						bindings.bindings,
-						payload,
-						index,
-						response,
-					)?;
-					let program = {
-						let instructions: Vec<proto::Instruction> =
-							instruction_iter.map(|(_, instr)| instr).collect();
-						let program = proto::Program {
-							tag: program.tag.clone(),
-							instructions: Some(proto::Instructions { instructions }),
-						};
-						let mut buf = Vec::new();
-						buf.reserve(program.encoded_len());
-						program.encode(&mut buf).unwrap();
-						buf
-					};
+					let response =
+						interpret_call(deps.as_ref(), &env, bindings, encoded, index, response)?;
+					let instructions: VecDeque<XCVMInstruction> =
+						instruction_iter.map(|(_, instr)| instr).collect();
+					let program = XCVMProgram { tag: program.tag, instructions };
 					IP_REGISTER.save(deps.storage, &ip)?;
 					return Ok(response.add_message(wasm_execute(
 						env.contract.address,
-						&ExecuteMsg::_SelfExecute { program },
+						&ExecuteMsg::_SelfExecute { program: program.encode() },
 						vec![],
 					)?))
 				}
 			},
-			proto::instruction::Instruction::Spawn(ctx) =>
-				interpret_spawn(&deps, &env, ctx, response)?,
-			proto::instruction::Instruction::Transfer(proto::Transfer { assets, account_type }) =>
-				interpret_transfer(&mut deps, &env, must_ok(account_type)?, assets, response)?,
+			XCVMInstruction::Spawn { network, bridge_security, salt, assets, program } =>
+				interpret_spawn(
+					&deps,
+					&env,
+					network,
+					bridge_security,
+					salt,
+					assets,
+					program,
+					response,
+				)?,
+			XCVMInstruction::Transfer { to, assets } =>
+				interpret_transfer(&mut deps, &env, to, assets, response)?,
 			instr => return Err(ContractError::InstructionNotSupported(format!("{:?}", instr))),
 		};
 		ip += 1;
@@ -222,7 +211,7 @@ pub fn interpret_program(
 pub fn interpret_call(
 	deps: Deps,
 	env: &Env,
-	bindings: Vec<proto::Binding>,
+	bindings: Vec<(u32, BindingValue)>,
 	payload: Vec<u8>,
 	_ip: usize,
 	response: Response,
@@ -239,9 +228,8 @@ pub fn interpret_call(
 		// inserting a contract address "addr1234" causes 8 chars of shift. Which means index 'X' in
 		// the unformatted call, will be equal to 'X + 8' in the output call.
 		let mut offset: usize = 0;
-		for binding in bindings {
-			let binding_index = binding.position as usize;
-			let binding = must_ok(must_ok(binding.binding_value)?.r#type)?;
+		for (binding_index, binding) in bindings {
+			let binding_index = binding_index as usize;
 			// Current index of the output call
 			let shifted_index = original_index + offset;
 
@@ -272,11 +260,17 @@ pub fn interpret_call(
 				.copy_from_slice(&payload[original_index..=binding_index]);
 
 			let data: Cow<[u8]> = match binding {
-				proto::binding_value::Type::Relayer(_) => Cow::Borrowed(relayer_address.as_bytes()),
-				proto::binding_value::Type::Self_(_) =>
+				BindingValue::Register(Register::Ip) =>
+					Cow::Owned(format!("{}", IP_REGISTER.load(deps.storage)?).into()),
+				BindingValue::Register(Register::Relayer) =>
+					Cow::Borrowed(relayer_address.as_bytes()),
+				BindingValue::Register(Register::This) =>
 					Cow::Borrowed(env.contract.address.as_bytes()),
-				proto::binding_value::Type::AssetId(proto::AssetId { asset_id }) => {
-					let asset_id = must_ok(asset_id)?;
+				BindingValue::Register(Register::Result) => Cow::Owned(
+					serde_json_wasm::to_vec(&RESULT_REGISTER.load(deps.storage)?)
+						.map_err(|_| ContractError::DataSerializationError)?,
+				),
+				BindingValue::Asset(asset_id) => {
 					let query_msg = AssetRegistryQueryMsg::GetAssetContract(asset_id.into());
 
 					let response: GetAssetContractResponse = deps.querier.query(
@@ -292,13 +286,6 @@ pub fn interpret_call(
 						AssetReference::Native(_) => return Err(ContractError::InvalidBindings),
 					}
 				},
-				proto::binding_value::Type::Result(_) => Cow::Owned(
-					serde_json_wasm::to_vec(&RESULT_REGISTER.load(deps.storage)?)
-						.map_err(|_| ContractError::DataSerializationError)?,
-				),
-				proto::binding_value::Type::IpRegister(_) =>
-					Cow::Owned(format!("{}", IP_REGISTER.load(deps.storage)?).into()),
-				_ => return Err(ContractError::InvalidBindings),
 			};
 
 			formatted_call[binding_index + offset + 1..=binding_index + offset + data.len()]
@@ -328,28 +315,21 @@ pub fn interpret_call(
 pub fn interpret_spawn(
 	deps: &DepsMut,
 	env: &Env,
-	mut ctx: proto::Spawn,
+	network: NetworkId,
+	bridge_security: BridgeSecurity,
+	salt: Vec<u8>,
+	assets: Funds,
+	program: XCVMProgram,
 	mut response: Response,
 ) -> Result<Response, ContractError> {
-	#[derive(Serialize)]
-	struct SpawnEvent {
-		network: u32,
-		salt: Vec<u8>,
-		security: i32,
-		assets: Funds<Displayed<u128>>,
-		program: Vec<u8>,
-	}
-
 	let Config { network_id, user_id, registry_address, router_address, .. } =
 		CONFIG.load(deps.storage)?;
 
 	let registry_address = registry_address.into_string();
 	let router_address = router_address.into_string();
-	let mut normalized_funds: Vec<proto::Asset> = Vec::new();
+	let mut normalized_funds: Funds<Displayed<u128>> = Funds::empty();
 
-	for asset in ctx.assets {
-		let asset_id = must_ok(must_ok(asset.asset_id)?.asset_id)?;
-		let amount: Amount = must_ok(asset.balance)?.try_into()?;
+	for (asset_id, amount) in assets.0 {
 		if amount.is_zero() {
 			// We ignore zero amounts
 			continue
@@ -393,7 +373,7 @@ pub fn interpret_spawn(
 			// a submessage to the router to trigger this IBC transfer
 			let asset_id: u128 = asset_id.into();
 			let transfer_amount = amount.intercept.0;
-			normalized_funds.push((AssetId(asset_id), amount).into());
+			normalized_funds.0.push((asset_id.into(), transfer_amount.into()));
 			response = match query_response.asset_reference {
 				AssetReference::Native(denom) => response.add_message(BankMsg::Send {
 					to_address: router_address.clone(),
@@ -409,13 +389,8 @@ pub fn interpret_spawn(
 		}
 	}
 
-	let encoded_spawn = {
-		ctx.assets = normalized_funds.into();
-		let mut buf = Vec::new();
-		buf.reserve(ctx.encoded_len());
-		ctx.encode(&mut buf).map_err(|_| ContractError::DataSerializationError)?;
-		buf
-	};
+	let encoded_spawn =
+		SpawnEvent { network, bridge_security, salt, assets: normalized_funds, program }.encode();
 
 	Ok(response.add_event(
 		Event::new("xcvm.interpreter.spawn")
@@ -436,26 +411,23 @@ pub fn interpret_spawn(
 pub fn interpret_transfer(
 	deps: &mut DepsMut,
 	env: &Env,
-	to: proto::transfer::AccountType,
-	assets: Vec<proto::Asset>,
+	to: Destination<CanonicalAddr>,
+	assets: Funds,
 	mut response: Response,
 ) -> Result<Response, ContractError> {
 	let config = CONFIG.load(deps.storage)?;
 	let registry_addr = config.registry_address.into_string();
 
 	let recipient = match to {
-		proto::transfer::AccountType::Account(proto::Account { account }) =>
-			String::from_utf8(account).map_err(|_| ContractError::InvalidAddress)?,
-		proto::transfer::AccountType::Relayer(_) => config.relayer_address.into_string(),
+		Destination::Account(account) => deps.api.addr_humanize(&account)?.into_string(),
+		Destination::Relayer => config.relayer_address.into_string(),
 	};
 
-	for asset in assets {
-		let amount: Amount = must_ok(asset.balance)?.try_into()?;
+	for (asset_id, amount) in assets.0 {
 		if amount.is_zero() {
 			continue
 		}
 
-		let asset_id = must_ok(must_ok(asset.asset_id)?.asset_id)?;
 		let query_msg = AssetRegistryQueryMsg::GetAssetContract(asset_id.into());
 		let query_response: GetAssetContractResponse = deps.querier.query(
 			&WasmQuery::Smart { contract_addr: registry_addr.clone(), msg: to_binary(&query_msg)? }
@@ -539,12 +511,6 @@ fn handle_call_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 	Ok(Response::default().add_events(response.events))
 }
 
-/// Used for unwrapping must-have fields in protobuf
-#[inline]
-fn must_ok<T>(expr: Option<T>) -> Result<T, ContractError> {
-	expr.ok_or(ContractError::InvalidProgram)
-}
-
 #[cfg(test)]
 mod tests {
 	use super::*;
@@ -552,14 +518,11 @@ mod tests {
 		testing::{mock_dependencies, mock_env, mock_info, MockQuerier, MOCK_CONTRACT_ADDR},
 		Addr, CanonicalAddr, ContractResult, Order, QuerierResult, SystemResult, WasmMsg,
 	};
-	use serde::Deserialize;
+	use serde::{Deserialize, Serialize};
 	use xcvm_core::{
 		Amount, AssetId, BindingValue, BridgeSecurity, Destination, Picasso, ETH, MAX_PARTS, PICA,
 		USDT,
 	};
-
-	type XCVMProgram = proto::XCVMProgram<CanonicalAddr>;
-	type XCVMInstruction = proto::XCVMInstruction<CanonicalAddr>;
 
 	const CW20_ADDR: &str = "cw20_addr";
 	const REGISTRY_ADDR: &str = "registry_addr";
@@ -757,7 +720,7 @@ mod tests {
 					]),
 				},
 				XCVMInstruction::Transfer {
-					to: Destination::Account(b"recipient".as_slice().into()),
+					to: Destination::Account(vec![65; 54].into()),
 					assets: Funds::from([(Into::<AssetId>::into(PICA), Amount::absolute(1))]),
 				},
 			]
@@ -791,7 +754,7 @@ mod tests {
 				.unwrap(),
 			contract
 				.call(Cw20ExecuteMsg::Transfer {
-					recipient: "recipient".into(),
+					recipient: String::from_utf8_lossy(&vec![65; 54]).to_string(),
 					amount: 1_u128.into(),
 				})
 				.unwrap(),
@@ -902,7 +865,7 @@ mod tests {
 			salt: Some(xcvm_proto::Salt { salt: vec![] }),
 			security: 1,
 			program: Some(inner_program.into()),
-			assets: funds.0.into_iter().map(|asset| asset.into()).collect(),
+			assets: funds.0.into_iter().map(Into::into).collect(),
 		};
 
 		let program: proto::Program =

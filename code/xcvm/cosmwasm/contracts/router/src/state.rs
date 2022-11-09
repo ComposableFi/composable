@@ -19,7 +19,7 @@ pub struct Interpreter {
 	pub security: BridgeSecurity,
 }
 
-pub const INTERPRETERS: Map<(u8, UserId), Interpreter> = Map::new("interpreters");
+pub const INTERPRETERS: Map<(u32, UserId), Interpreter> = Map::new("interpreters");
 pub const CONFIG: Item<Config> = Item::new("config");
 pub const ADMIN: Item<Addr> = Item::new("admin");
 pub const BRIDGES: Map<Bridge, ()> = Map::new("bridges");

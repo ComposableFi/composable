@@ -7,6 +7,6 @@ pub fn encode_origin_data(network_id: NetworkId, user_id: &UserId) -> StdResult<
 	Ok(to_binary(&(network_id.0, user_id))?.to_base64())
 }
 
-pub fn decode_origin_data<S: AsRef<str>>(encoded: S) -> StdResult<(u8, UserId)> {
-	from_binary::<(u8, UserId)>(&Binary::from_base64(encoded.as_ref())?)
+pub fn decode_origin_data<S: AsRef<str>>(encoded: S) -> StdResult<(u32, UserId)> {
+	from_binary::<(u32, UserId)>(&Binary::from_base64(encoded.as_ref())?)
 }

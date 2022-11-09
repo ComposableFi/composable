@@ -264,6 +264,13 @@ where
 	}
 }
 
+impl<T> From<Funds<T>> for Vec<(AssetId, T)> {
+	#[inline]
+	fn from(Funds(assets): Funds<T>) -> Self {
+		assets
+	}
+}
+
 impl<T> From<Funds<T>> for Vec<(u128, T)> {
 	#[inline]
 	fn from(Funds(assets): Funds<T>) -> Self {
