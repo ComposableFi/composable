@@ -23,6 +23,7 @@
 //!
 //! - `vested_transfer` - Add a new vesting schedule for an account.
 //! - `claim` - Claim unlocked balances.
+//! - `claim_for` - Claim unlocked balances for a `target` account.
 //! - `update_vesting_schedules` - Update all vesting schedules under an account, `root` origin
 //!   required.
 

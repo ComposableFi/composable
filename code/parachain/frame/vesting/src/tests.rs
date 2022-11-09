@@ -1194,6 +1194,95 @@ fn update_vesting_schedules_works() {
 }
 
 #[test]
+fn update_vesting_schedules_does_not_break_locking_amount() {
+	ExtBuilder::build().execute_with(|| {
+		// Mint missing tokens for vesting schedules
+		assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &ALICE, 1_300));
+
+		assert_eq!(Tokens::locks(&BOB, MockCurrencyId::BTC).get(0), None);
+
+		// Locks 100 * 10 = 1_000
+		let schedule_input_1 = VestingScheduleInfo {
+			window: BlockNumberBased { start: 0_u64, period: 1_u64 },
+			period_count: 100_u32,
+			per_period: 10_u64,
+		};
+
+		assert_ok!(Vesting::vested_transfer(
+			Origin::root(),
+			ALICE,
+			BOB,
+			MockCurrencyId::BTC,
+			schedule_input_1,
+		));
+
+		// Locks 50 * 8 = 400
+		let schedule_input_2 = VestingScheduleInfo {
+			window: BlockNumberBased { start: 0_u64, period: 1_u64 },
+			period_count: 50_u32,
+			per_period: 8_u64,
+		};
+
+		assert_ok!(Vesting::vested_transfer(
+			Origin::root(),
+			ALICE,
+			BOB,
+			MockCurrencyId::BTC,
+			schedule_input_2,
+		));
+
+		// Should have locked 1_000 + 400 = 1_400
+		assert_eq!(Tokens::locks(&BOB, MockCurrencyId::BTC).get(0).unwrap().amount, 1_400);
+
+		System::set_block_number(25);
+
+		// Claim all. Should have locked 1_400 - (25 * 10) - (25 * 8) = 950
+		assert_ok!(Vesting::claim(
+			Origin::signed(BOB),
+			MockCurrencyId::BTC,
+			VestingScheduleIdSet::All
+		));
+
+		assert_eq!(Tokens::locks(&BOB, MockCurrencyId::BTC).get(0).unwrap().amount, 950);
+
+		// Locks 60 * 5 = 300
+		let schedule_input_3 = VestingScheduleInfo {
+			window: BlockNumberBased { start: 30_u64, period: 1_u64 },
+			period_count: 60_u32,
+			per_period: 5_u64,
+		};
+
+		// Locks 200 * 2 = 400
+		let schedule_input_4 = VestingScheduleInfo {
+			window: BlockNumberBased { start: 40_u64, period: 1_u64 },
+			period_count: 200_u32,
+			per_period: 2_u64,
+		};
+
+		// Unlocks all and locks 300 + 400 = 700
+		assert_ok!(Vesting::update_vesting_schedules(
+			Origin::root(),
+			BOB,
+			MockCurrencyId::BTC,
+			vec![schedule_input_3.clone(), schedule_input_4.clone()]
+		));
+
+		assert_eq!(Tokens::locks(&BOB, MockCurrencyId::BTC).get(0).unwrap().amount, 700);
+
+		System::set_block_number(50);
+
+		// Claim all. Should have locked 700 - (20 * 5) - (10 * 2) = 580
+		assert_ok!(Vesting::claim(
+			Origin::signed(BOB),
+			MockCurrencyId::BTC,
+			VestingScheduleIdSet::All
+		));
+
+		assert_eq!(Tokens::locks(&BOB, MockCurrencyId::BTC).get(0).unwrap().amount, 580);
+	});
+}
+
+#[test]
 fn update_vesting_schedules_fails_if_unexpected_existing_locks() {
 	ExtBuilder::build().execute_with(|| {
 		assert_ok!(Tokens::transfer(Origin::signed(ALICE), BOB, MockCurrencyId::BTC, 1));
