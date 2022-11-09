@@ -11,8 +11,14 @@ use composable_support::abstractions::utils::increment::Increment;
 use core::marker::PhantomData;
 use cosmwasm_minimal_std::Coin;
 use cosmwasm_vm::{
-	executor::{ExecuteInput, InstantiateInput, MigrateInput, ibc::{IbcChannelOpen, IbcChannelConnect}},
-	system::{cosmwasm_system_entrypoint, cosmwasm_system_run, CosmwasmCallVM, CosmwasmCodeId, StargateCosmwasmCallVM},
+	executor::{
+		ibc::{IbcChannelConnect, IbcChannelOpen},
+		ExecuteInput, InstantiateInput, MigrateInput,
+	},
+	system::{
+		cosmwasm_system_entrypoint, cosmwasm_system_run, CosmwasmCallVM, CosmwasmCodeId,
+		StargateCosmwasmCallVM,
+	},
 	vm::VMBase,
 };
 use cosmwasm_vm_wasmi::WasmiVM;
