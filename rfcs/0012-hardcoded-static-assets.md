@@ -6,7 +6,7 @@ It describes how one would initialize, update and override static assets.
 
 Hopefully, that description will be good enough to favor hardcoded assets as a viable approach for asset engineering.
 
-## Prereqisites
+## Prerequisites
 
 Reader clear on general consequences of code as data, data as code, and code vs. data approaches for configuration and other small data parameters.
 
@@ -49,7 +49,7 @@ Rust `const` and `macro` allow encoding assets boilerplate-free and bug-free, an
 
 ## How do we release static assets?
 
-Each Piccaso protocol encodes relevant assets. We do often release to bring features and fixes to users along with new assets.
+Each Picasso protocol encodes relevant assets. We do often release to bring features and fixes to users along with new assets.
 
 ## Why would one be using hardcoded assets?
 
