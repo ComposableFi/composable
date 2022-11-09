@@ -361,7 +361,7 @@ pub mod module {
 			origin: OriginFor<T>,
 			who: <T::Lookup as StaticLookup>::Source,
 			asset: AssetIdOf<T>,
-			vesting_schedules: Vec<VestingScheduleOf<T>>,
+			vesting_schedules: Vec<VestingScheduleInfoOf<T>>,
 		) -> DispatchResult {
 			ensure_root(origin)?;
 
@@ -621,7 +621,7 @@ impl<T: Config> Pallet<T> {
 	fn do_update_vesting_schedules(
 		who: &AccountIdOf<T>,
 		asset: AssetIdOf<T>,
-		schedules: Vec<VestingScheduleOf<T>>,
+		schedules: Vec<VestingScheduleInfoOf<T>>,
 	) -> DispatchResult {
 		// empty vesting schedules cleanup the storage and unlock the fund
 		if schedules.is_empty() {
@@ -637,7 +637,10 @@ impl<T: Config> Pallet<T> {
 
 		let bounded_schedules: BoundedBTreeMap<_, _, _> = schedules
 			.into_iter()
-			.map(|schedule| VestingScheduleNonce::<T>::increment().map(|id| (id, schedule)))
+			.map(|schedule_info| {
+				VestingScheduleNonce::<T>::increment()
+					.map(|id| (id, VestingSchedule::from_input(id, schedule_info)))
+			})
 			.collect::<Result<BTreeMap<T::VestingScheduleId, VestingScheduleOf<T>>, _>>()?
 			.try_into()
 			.map_err(|_| Error::<T>::MaxVestingSchedulesExceeded)?;
