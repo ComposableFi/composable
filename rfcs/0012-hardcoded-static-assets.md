@@ -20,7 +20,7 @@ Genesis is a hardcoded approach.
 
 An asset is a local number identifier. Also, it may be foreign (has a remote reserve location that mints that asset),  sufficient (it has a well-known gas price, a fee payable), and metadata (symbol, name, decimals).
 
-Examples, `PICA = (1, Here, 1, PICA, PICA, 12)`, and `USDT = (130, (Statemine, 1984), USDT, Tether USD,  6)`. 
+Examples, `PICA = (1, Here, 1/1, PICA, PICA, 12)`, and `USDT = (130, (Statemine, 1984), 1/67, USDT, Tether USD,  6)`. 
 
 ## What is a hardcode?
 
