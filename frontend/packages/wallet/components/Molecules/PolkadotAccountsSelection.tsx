@@ -2,7 +2,6 @@ import { Box, Button, useTheme } from "@mui/material";
 import { useState } from "react";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import { PolkadotAccountListItem } from "./PolkadotAccountListItem";
-import { closePolkadotModal } from "pablo/stores/ui/uiSlice";
 
 export const PolkadotAccountsSelection = ({
   accounts,

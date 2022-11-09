@@ -25,7 +25,9 @@ import { useSelectedAccount } from "@/defi/polkadot/hooks";
 import { useAllParachainProviders } from "@/defi/polkadot/context/hooks";
 import BigNumber from "bignumber.js";
 import { usePendingExtrinsic } from "substrate-react";
-import { DangerousRounded, InfoOutlined } from "@mui/icons-material";
+import { InfoOutlined } from "@mui/icons-material";
+import { pipe } from "fp-ts/function";
+import { option } from "fp-ts";
 
 const Transfers: NextPage = () => {
   const { amount, setAmount, from, balance, transfer, to } = useTransfer();
@@ -36,7 +38,23 @@ const Transfers: NextPage = () => {
   const fee = useStore((state) => state.transfers.fee);
   const selectedToken = useStore((state) => state.transfers.selectedToken);
   const destFee = getDestChainFee(from, to, tokens, selectedToken);
-  const minValue = destFee.fee ? destFee.fee.plus(fee.partialFee) : null;
+
+  // TODO this value can be moved to its own store subscriber
+  const minValue = useMemo(() => {
+    const ed = tokens[selectedToken].existentialDeposit[to];
+    return pipe(
+      destFee.fee,
+      option.fromNullable,
+      option.chain((fee) =>
+        pipe(
+          ed,
+          option.fromNullable,
+          option.map((v) => fee.plus(v as BigNumber.Instance))
+        )
+      ),
+      option.getOrElse(() => new BigNumber(0))
+    );
+  }, [tokens, to, destFee.fee, selectedToken]);
   const feeTokenId = useStore((state) => state.transfers.getFeeToken(from));
   const selectedAccount = useSelectedAccount();
   const hasPendingXcmTransfer = usePendingExtrinsic(
@@ -152,8 +170,12 @@ const Transfers: NextPage = () => {
           </Button>
           {!amount.eq(0) && amount.lte(minValue ?? 0) && (
             <Typography variant="caption" color="error.main">
-              At least {minValue?.toFormat(12) ?? "0"}{" "}
-              {feeTokenId.symbol.toUpperCase()} will be spent for gas fees.
+              {`
+              At least ${minValue?.toFormat(12) ?? "0"} ${
+                tokens[selectedToken].symbol
+              } should be sent over. Transferred amount should be bigger than target network's 
+              existential deposit.
+              `}
             </Typography>
           )}
         </Grid>

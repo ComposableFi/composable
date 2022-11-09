@@ -17,7 +17,10 @@ import BigNumber from "bignumber.js";
 export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
   disabled,
 }) => {
-  const updateAmount = useStore((state) => state.transfers.updateAmount);
+  const updateAmount = useStore(
+    (state) => state.transfers.updateAmount,
+    () => true
+  );
   const amount = useStore((state) => state.transfers.amount);
   const { balance, tokenId } = useExistentialDeposit();
   const { from, fromProvider, to } = useTransfer();
@@ -31,7 +34,6 @@ export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
   );
   const tokens = useStore((state) => state.substrateTokens.tokens);
   const existentialDeposit = tokens[selectedToken].existentialDeposit[from];
-  const decimals = tokens[selectedToken].decimals[from] ?? Number(0);
   const keepAlive = useStore((state) => state.transfers.keepAlive);
   const { validate, hasError, stringValue, bignrValue, setValue } =
     useValidation({
@@ -45,7 +47,10 @@ export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
     fee: fee.partialFee,
     token: feeToken,
   };
-  const setFormError = useStore((state) => state.transfers.setFormError);
+  const setFormError = useStore(
+    (state) => state.transfers.setFormError,
+    () => true
+  );
 
   const handleMaxClick = () => {
     callbackGate(
@@ -78,24 +83,28 @@ export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
   useEffect(() => {
     // On network or token change, reset the amount
     setValue(new BigNumber(0));
-  }, [from, to, selectedToken]);
+  }, [from, to, selectedToken, setValue]);
 
   useEffect(() => {
     setFormError(hasError);
-  }, [hasError]);
+  }, [hasError, setFormError]);
 
   // Update the amount based on user input
   useEffect(() => {
     if (!bignrValue.eq(amount)) {
       updateAmount(bignrValue);
     }
-  }, [bignrValue.toString()]);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bignrValue]);
 
   // Update internal value based on external amount changes. (post transfer hooks, etc)
   useEffect(() => {
     if (!amount.eq(bignrValue)) {
       setValue(amount);
     }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [amount.toString()]);
 
   return (
