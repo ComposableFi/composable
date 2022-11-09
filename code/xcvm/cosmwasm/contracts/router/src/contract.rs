@@ -160,6 +160,7 @@ fn handle_run(
 				msg: to_binary(&InterpreterInstantiateMsg {
 					registry_address: registry_address.into_string(),
 					relayer_address: relayer_address.into_string(),
+					router_address: env.contract.address.clone().into_string(),
 					network_id,
 					user_id: user_id.clone(),
 				})?,
@@ -328,8 +329,8 @@ mod tests {
 	use xcvm_proto as proto;
 
 	const CW20_ADDR: &str = "cw20addr";
-	const REGISTRY_ADDR: &str = "registryaddr";
-	const RELAYER_ADDR: &str = "relayeraddr";
+	const REGISTRY_ADDR: &str = "registry_addr";
+	const RELAYER_ADDR: &str = "relayer_addr";
 
 	#[test]
 	fn proper_instantiation() {
@@ -366,7 +367,7 @@ mod tests {
 			WasmQuery::Smart { contract_addr, .. } if contract_addr.as_str() == REGISTRY_ADDR =>
 				SystemResult::Ok(ContractResult::Ok(
 					to_binary(&cw_xcvm_asset_registry::msg::GetAssetContractResponse {
-						addr: Addr::unchecked(CW20_ADDR),
+						asset_reference: AssetReference::Virtual(Addr::unchecked(CW20_ADDR)),
 					})
 					.unwrap(),
 				))
@@ -439,6 +440,7 @@ mod tests {
 			msg: to_binary(&InterpreterInstantiateMsg {
 				registry_address: REGISTRY_ADDR.to_string(),
 				relayer_address: RELAYER_ADDR.to_string(),
+				router_address: MOCK_CONTRACT_ADDR.to_string(),
 				network_id: Picasso.into(),
 				user_id: vec![1],
 			})
