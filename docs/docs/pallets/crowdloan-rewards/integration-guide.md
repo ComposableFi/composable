@@ -38,10 +38,10 @@ the crowdloan will be initialized .
 ### Types
 
 - `Balance` - Numeric type used to represent some amount of tokens
-- `RewardAsset` - The `RewardAsset` used to transfer the rewards.
+- `RewardAsset` - The `RewardAsset` used to transfer the rewards
 - `Moment` -  Numeric type used to express a time stamp
 - `Time` - The Time provider
-- `Admin Origin` - The origin that is allowed to `initialize` the pallet.
+- `Admin Origin` - The origin that is allowed to `initialize` the pallet
 - `Convert` - Function for converting between `Moment` and `Balance`
 - `RelayChainAccountId` - Numeric type used to uniquely identify relay chain accounts
 - `Weight Info` - Provider for extrinsic transaction
@@ -49,13 +49,13 @@ the crowdloan will be initialized .
 
 ### Constants
 
-- `InitialPayment` - The upfront liquidity unlocked at first claim.
-- `OverFundedThreshold` -  The percentage of excess funds required to trigger the `OverFunded` event.
-- `VestingStep` - The time you have to wait to unlock another part of your reward.
+- `InitialPayment` - The upfront liquidity unlocked at first claim
+- `OverFundedThreshold` -  The percentage of excess funds required to trigger the `OverFunded` event
+- `VestingStep` - The time you have to wait to unlock another part of your reward
 - `Prefix` - The arbitrary prefix used in proofs
-- `PalletId` - The unique identifier of this pallet.
-- `LockId` - The unique identifier for locks maintained by this pallet.
-- `LockByDefault` - Configuration if claimed amounts should be locked by the pallet.
+- `PalletId` - The unique identifier of this pallet
+- `LockId` - The unique identifier for locks maintained by this pallet
+- `LockByDefault` - Configuration if claimed amounts should be locked by the pallet
 
 
 ## Calculations & Sources of Values
