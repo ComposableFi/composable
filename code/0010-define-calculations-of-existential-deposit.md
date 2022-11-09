@@ -156,8 +156,17 @@ asset ID.
   the ED of a foreign asset is lower/higher on our chain than it is on the
   assets native chain?
   
+  > This is not really a solvable problem AFAIK given that we don't control
+    validations done on other chains when transferring to Picasso.
+  
 * Can an RPC expose a function that only exists in the runtime? If not, we may
   need to move `multi_existential_deposits` (or at least its functionality) into
   Asset Registry.
   
+  Moving this functionality into Asset Registry will be necessary for 
+  different runtimes to have different asset configurations.
+  
 * Do we already have an in-use storage for AssetRegistry in Picasso?
+
+  > I think we don't use it at the moment but best assume that we use it, for 
+    all purposes.
