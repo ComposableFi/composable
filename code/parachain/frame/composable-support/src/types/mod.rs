@@ -1,5 +1,7 @@
 //! Definitions for types used throughout the Composable Rust project
 
+pub mod rational;
+
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::RuntimeDebug;
