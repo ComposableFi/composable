@@ -1141,19 +1141,15 @@ fn update_vesting_schedules_works() {
 			moment_based_schedule_input,
 		));
 
-		let updated_schedule = VestingSchedule {
-			vesting_schedule_id: 4_u128,
+		let updated_schedule = VestingScheduleInfo {
 			window: BlockNumberBased { start: 0_u64, period: 20_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
-			already_claimed: 0_u64,
 		};
-		let updated_moment_based_schedule = VestingSchedule {
-			vesting_schedule_id: 5_u128,
+		let updated_moment_based_schedule = VestingScheduleInfo {
 			window: MomentBased { start: 0_u64, period: 120000_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
-			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::update_vesting_schedules(
 			Origin::root(),
@@ -1299,7 +1295,6 @@ fn exceeding_maximum_schedules_should_fail() {
 			period_count: 2_u32,
 			per_period: 10_u64,
 		};
-		let schedule = VestingSchedule::from_input(4_u128, schedule_input.clone());
 		let moment_schedule_input = VestingScheduleInfo {
 			window: MomentBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
@@ -1332,15 +1327,25 @@ fn exceeding_maximum_schedules_should_fail() {
 				ALICE,
 				BOB,
 				MockCurrencyId::BTC,
-				schedule_input,
+				schedule_input.clone(),
 			),
 			Error::<Runtime>::MaxVestingSchedulesExceeded
 		);
 
-		let schedules = vec![schedule.clone(), schedule.clone(), schedule.clone(), schedule];
+		let schedule_inputs = vec![
+			schedule_input.clone(),
+			schedule_input.clone(),
+			schedule_input.clone(),
+			schedule_input,
+		];
 
 		assert_noop!(
-			Vesting::update_vesting_schedules(Origin::root(), BOB, MockCurrencyId::BTC, schedules,),
+			Vesting::update_vesting_schedules(
+				Origin::root(),
+				BOB,
+				MockCurrencyId::BTC,
+				schedule_inputs,
+			),
 			Error::<Runtime>::MaxVestingSchedulesExceeded
 		);
 	});
