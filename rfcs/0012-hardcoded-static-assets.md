@@ -47,6 +47,10 @@ Acala and Moonbeam use them.
 
 Rust `const` and `macro` allow encoding assets boilerplate-free and bug-free, and consistent (RPC, BYOG, XCM). This encoding simplifies testing, QA, and release management.
 
+## How do we release static assets?
+
+Each Piccaso protocol encodes relevant assets. We do often release to bring features and fixes to users along with new assets.
+
 ## Why would one be using hardcoded assets?
 
 You use well-known priceable assets.
