@@ -260,6 +260,7 @@ prost
 protoc
 PROTOC
 PTRACE
+radiumblock
 rebag
 rebagged
 rebond
@@ -282,6 +283,7 @@ RUSTFLAGS
 rustfmt
 RUSTSEC # RUSTSEC-XXXX-XXXX is id of RustSec Advisory Database
 rustup
+sufficients
 sccache
 schemars
 scrollbox
