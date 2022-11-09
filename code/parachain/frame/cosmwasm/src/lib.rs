@@ -87,13 +87,12 @@ pub mod pallet {
 	use cosmwasm_minimal_std::{
 		Addr, Attribute as CosmwasmEventAttribute, Binary as CosmwasmBinary, BlockInfo, Coin,
 		ContractInfo as CosmwasmContractInfo, ContractInfoResponse, Env, Event as CosmwasmEvent,
-		MessageInfo, Timestamp, TransactionInfo,
+		MessageInfo, QueryRequest, Timestamp, TransactionInfo,
 	};
-	pub use cosmwasm_minimal_std::{QueryRequest, QueryResponse};
 	use cosmwasm_vm::{
 		executor::{
 			cosmwasm_call, AllocateInput, AsFunctionName, DeallocateInput, ExecuteInput,
-			InstantiateInput, MigrateInput, QueryInput, ReplyInput,
+			InstantiateInput, MigrateInput, QueryInput, QueryResponse, ReplyInput,
 		},
 		memory::PointerOf,
 		system::{cosmwasm_system_query, CosmwasmCodeId, CosmwasmContractMeta},
@@ -1504,7 +1503,7 @@ pub mod pallet {
 			vm: &'a mut CosmwasmVM<T>,
 			contract: AccountIdOf<T>,
 			message: &[u8],
-		) -> Result<cosmwasm_minimal_std::QueryResult, CosmwasmVMError<T>> {
+		) -> Result<cosmwasm_vm::executor::QueryResult, CosmwasmVMError<T>> {
 			log::debug!(target: "runtime::contracts", "query_continuation");
 			let sender = vm.contract_address.clone().into_inner();
 			let info = Pallet::<T>::contract_info(&contract)?;

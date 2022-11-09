@@ -344,7 +344,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		&mut self,
 		address: Self::Address,
 		message: &[u8],
-	) -> Result<cosmwasm_minimal_std::QueryResult, Self::Error> {
+	) -> Result<cosmwasm_vm::executor::QueryResult, Self::Error> {
 		log::debug!(target: "runtime::contracts", "query_continuation");
 		Pallet::<T>::do_query_continuation(self, address.into_inner(), message)
 	}
@@ -386,7 +386,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		&mut self,
 		_: Self::QueryCustom,
 	) -> Result<
-		cosmwasm_minimal_std::SystemResult<cosmwasm_minimal_std::CosmwasmQueryResult>,
+		cosmwasm_minimal_std::SystemResult<cosmwasm_vm::executor::CosmwasmQueryResult>,
 		Self::Error,
 	> {
 		log::debug!(target: "runtime::contracts", "query_custom");
