@@ -247,5 +247,7 @@ export default {
     FrameSupportTokensMiscBalanceStatus: "Null",
     FrameSupportWeightsDispatchInfo: "Null",
     FrameSupportPalletId: "Null",
+    ComposableTraitsCurrencyRational64: "Null",
+    PalletCosmwasmInstrumentCostRules: "Null",
   }
 };
