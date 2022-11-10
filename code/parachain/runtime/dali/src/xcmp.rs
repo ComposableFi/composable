@@ -1,17 +1,14 @@
-//! Setup of XCMP for parachain to allow cross chain transfers and other operations.
-//! Very similar to https://github.com/galacticcouncil/Basilisk-node/blob/master/runtime/basilisk/src/xcm.rs
 use super::*;
 use common::{
-	governance::native::EnsureRootOrHalfNativeTechnical, topology, xcmp::*, PriceConverter,
+	fees::{PriceConverter, WeightToFeeConverter},
+	governance::native::{EnsureRootOrHalfNativeTechnical, NativeCouncilCollective},
+	xcmp::*,
 };
-use composable_traits::{
-	oracle::MinimalOracle,
-	xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation},
-};
+use composable_traits::xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation};
 use cumulus_primitives_core::ParaId;
 use frame_support::{
 	log, parameter_types,
-	traits::{Everything, Nothing},
+	traits::{Everything, Nothing, OriginTrait, PalletInfoAccess},
 	weights::Weight,
 };
 use orml_traits::{
@@ -28,10 +25,10 @@ use sp_std::{marker::PhantomData, prelude::*};
 use xcm::latest::prelude::*;
 use xcm_builder::{
 	AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
-	AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, EnsureXcmOrigin, FixedWeightBounds,
-	LocationInverter, ParentIsPreset, RelayChainAsNative, SiblingParachainAsNative,
-	SiblingParachainConvertsVia, SignedAccountId32AsNative, SignedToAccountId32,
-	SovereignSignedViaLocation, TakeRevenue, TakeWeightCredit,
+	AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, BackingToPlurality, EnsureXcmOrigin,
+	FixedWeightBounds, LocationInverter, ParentIsPreset, RelayChainAsNative,
+	SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
+	SignedToAccountId32, SovereignSignedViaLocation, TakeRevenue, TakeWeightCredit,
 };
 use xcm_executor::{
 	traits::{DropAssets, FilterAssetLocation},
@@ -39,19 +36,16 @@ use xcm_executor::{
 };
 
 parameter_types! {
-	pub KsmLocation: MultiLocation = MultiLocation::parent();
 	pub const RelayNetwork: NetworkId = NetworkId::Kusama;
-	pub RelayOrigin: Origin = cumulus_pallet_xcm::Origin::Relay.into();
 	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
+	pub AssetsPalletLocation: MultiLocation =
+		PalletInstance(<super::Assets as PalletInfoAccess>::index() as u8).into();
 }
 
 pub type Barrier = (
-	XcmpDebug,
 	AllowUnpaidExecutionFrom<ThisChain<ParachainInfo>>,
-	// Expected responses are OK.
 	AllowKnownQueryResponses<RelayerXcm>,
-	// Subscriptions for version tracking are OK.
-	AllowSubscriptionsFrom<Everything>,
+	AllowSubscriptionsFrom<ParentOrSiblings>,
 	AllowTopLevelPaidExecutionFrom<Everything>,
 	TakeWeightCredit,
 );
@@ -93,9 +87,6 @@ pub type XcmOriginToTransactDispatchOrigin = (
 	// Native converter for sibling Parachains; will convert to a `SiblingPara` origin when
 	// recognized.
 	SiblingParachainAsNative<cumulus_pallet_xcm::Origin, Origin>,
-	// Superuser converter for the Relay-chain (Parent) location. This will allow it to issue a
-	// transaction from the Root origin.
-	xcm_builder::ParentAsSuperuser<Origin>,
 	// Native signed account converter; this just converts an `AccountId32` origin into a normal
 	// `Origin::Signed` origin of the same 32-byte value.
 	SignedAccountId32AsNative<RelayNetwork, Origin>,
@@ -128,7 +119,7 @@ impl FilterAssetLocation for RelayReserveFromParachain {
 }
 
 type IsReserveAssetLocationFilter =
-	(DebugMultiNativeAsset, MultiNativeAsset<AbsoluteReserveProvider>, RelayReserveFromParachain);
+	(MultiNativeAsset<AbsoluteReserveProvider>, RelayReserveFromParachain);
 
 type AssetsIdConverter =
 	CurrencyIdConvert<AssetsRegistry, CurrencyId, ParachainInfo, StaticAssetsMap>;
@@ -137,12 +128,12 @@ pub type Trader = TransactionFeePoolTrader<
 	AssetsIdConverter,
 	PriceConverter<AssetsRegistry>,
 	ToTreasury<AssetsIdConverter, crate::Assets, TreasuryAccount>,
-	WeightToFee,
+	WeightToFeeConverter,
 >;
 
 pub struct CaptureDropAssets<
 	Treasury: TakeRevenue,
-	PriceConverter: MinimalOracle,
+	PriceConverter,
 	AssetConverter: Convert<MultiLocation, Option<CurrencyId>>,
 >(PhantomData<(Treasury, PriceConverter, AssetConverter)>);
 
@@ -153,7 +144,7 @@ pub struct CaptureDropAssets<
 /// else if asset location and origin not know, hash it until it will be added
 impl<
 		Treasury: TakeRevenue,
-		PriceConverter: MinimalOracle,
+		PriceConverter,
 		AssetConverter: Convert<MultiLocation, Option<CurrencyId>>,
 	> DropAssets for CaptureDropAssets<Treasury, PriceConverter, AssetConverter>
 {
@@ -207,17 +198,26 @@ impl xcm_executor::Config for XcmConfig {
 }
 
 parameter_type_with_key! {
+	// 1. use configured pessimistic asset min fee for target chain / asset pair
+	// 2. use built int
+	// 3. allow to transfer anyway (let not lock assets on our chain for now)
+	// until XCM v4
 	pub ParachainMinFee: |location: MultiLocation| -> Option<Balance> {
 		#[allow(clippy::match_ref_pats)] // false positive
 		#[allow(clippy::match_single_binding)]
-		match (location.parents, location.first_interior()) {
-			// relay KSM
-			(1, None) => Some(400_000_000_000),
-			(1, Some(Parachain(id)))  =>  {
-				let location = XcmAssetLocation::new(location.clone());
-				AssetsRegistry::min_xcm_fee(ParaId::from(*id), location).or(Some(u128::MAX))
-			},
-			_ => Some(u128::MAX),
+		let parents = location.parents;
+		let interior = location.first_interior();
+
+		let location = XcmAssetLocation::new(location.clone());
+		if let Some(Parachain(id)) = interior {
+			if let Some(amount) = AssetsRegistry::min_xcm_fee(ParaId::from(*id), location) {
+				return Some(amount)
+			}
+		}
+
+		match (parents, interior) {
+			(1, None) => Some(400_000),
+			_ => None,
 		}
 	};
 }
@@ -228,7 +228,7 @@ impl orml_xtokens::Config for Runtime {
 	type CurrencyId = CurrencyId;
 	type CurrencyIdConvert = AssetsIdConverter;
 	type AccountIdToMultiLocation = AccountIdToMultiLocation;
-	type SelfLocation = topology::this::Local;
+	type SelfLocation = ThisLocal;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
 	type BaseXcmWeight = BaseXcmWeight;
@@ -243,8 +243,6 @@ impl orml_unknown_tokens::Config for Runtime {
 	type Event = Event;
 }
 
-// make setup as in Acala, max instructions seems reasonable, for weight may consider to  settle
-// with our PICA
 parameter_types! {
 	// One XCM operation is 200_000_000 weight, cross-chain transfer ~= 2x of transfer.
 	pub const UnitWeightCost: Weight = 200_000_000;
@@ -264,12 +262,45 @@ pub fn xcm_fee_estimator(instructions: u8) -> Weight {
 	UnitWeightCost::get() * instructions as u64
 }
 
+parameter_types! {
+	pub const CollectiveBodyId: BodyId = BodyId::Unit;
+}
+
+parameter_types! {
+	pub const CouncilBodyId: BodyId = BodyId::Executive;
+}
+
+pub type CouncilToPlurality =
+	BackingToPlurality<Origin, collective::Origin<Runtime, NativeCouncilCollective>, CouncilBodyId>;
+
+pub struct RootToParachainMultiLocation<Origin, AccountId, Network>(
+	PhantomData<(Origin, AccountId, Network)>,
+);
+impl<Origin: OriginTrait + Clone, AccountId: Into<[u8; 32]>, Network: Get<NetworkId>>
+	xcm_executor::traits::Convert<Origin, MultiLocation>
+	for RootToParachainMultiLocation<Origin, AccountId, Network>
+where
+	Origin::PalletsOrigin: From<system::RawOrigin<AccountId>>
+		+ TryInto<system::RawOrigin<AccountId>, Error = Origin::PalletsOrigin>,
+{
+	fn convert(o: Origin) -> Result<MultiLocation, Origin> {
+		o.try_with_caller(|caller| match caller.try_into() {
+			Ok(system::RawOrigin::Root) =>
+				Ok(Junction::Parachain(ParachainInfo::parachain_id().into()).into()),
+			Ok(other) => Err(other.into()),
+			Err(other) => Err(other),
+		})
+	}
+}
+
+pub type SendXcmOriginLocation =
+	(CouncilToPlurality, RootToParachainMultiLocation<Origin, AccountId, RelayNetwork>);
+
 impl pallet_xcm::Config for Runtime {
 	type Event = Event;
-	type SendXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
+	type SendXcmOrigin = EnsureXcmOrigin<Origin, SendXcmOriginLocation>;
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
-	/// https://medium.com/kusama-network/kusamas-governance-thwarts-would-be-attacker-9023180f6fb
 	type XcmExecuteFilter = Nothing;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type XcmTeleportFilter = Everything;
@@ -279,11 +310,10 @@ impl pallet_xcm::Config for Runtime {
 	type Origin = Origin;
 	type Call = Call;
 
-	const VERSION_DISCOVERY_QUEUE_SIZE: u32 = 100;
+	const VERSION_DISCOVERY_QUEUE_SIZE: u32 = VERSION_DISCOVERY_QUEUE_SIZE;
 	type AdvertisedXcmVersion = pallet_xcm::CurrentXcmVersion;
 }
 
-/// cumulus is default implementation  of queue integrated with polkadot and kusama runtimes
 impl cumulus_pallet_xcm::Config for Runtime {
 	type Event = Event;
 	type XcmExecutor = XcmExecutor<XcmConfig>;

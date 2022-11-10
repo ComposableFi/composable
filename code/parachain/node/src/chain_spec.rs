@@ -126,7 +126,7 @@ pub fn picasso_dev() -> picasso::ChainSpec {
 				],
 				dev_accounts(),
 				*PARA_ID,
-				common::NativeExistentialDeposit::get(),
+				common::fees::NATIVE_EXISTENTIAL_DEPOSIT,
 				picasso_runtime::governance::TreasuryAccount::get(),
 			)
 		},
@@ -175,7 +175,7 @@ pub fn dali_dev(id: &str) -> dali::ChainSpec {
 				],
 				dev_accounts(),
 				para_id,
-				common::NativeExistentialDeposit::get(),
+				common::fees::NATIVE_EXISTENTIAL_DEPOSIT,
 				dali_runtime::TreasuryAccount::get(),
 			)
 		},

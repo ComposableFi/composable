@@ -1,18 +1,11 @@
 //! proposed shared XCM setup parameters and impl
-use crate::{
-	topology::{self},
-	AccountId, Balance,
-};
-use composable_traits::{
-	oracle::MinimalOracle,
-	xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation},
-};
+use crate::{fees::NativeBalance, prelude::*, AccountId, Balance};
+use composable_traits::xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation};
 use frame_support::{
 	dispatch::Weight,
-	ensure, log, parameter_types,
-	traits::{Contains, Get},
+	log, match_types, parameter_types,
+	traits::{tokens::BalanceConversion, Contains, Get},
 	weights::{WeightToFee, WeightToFeePolynomial},
-	WeakBoundedVec,
 };
 use num_traits::{One, Zero};
 use orml_traits::location::{AbsoluteReserveProvider, Reserve};
@@ -23,34 +16,27 @@ use sp_std::marker::PhantomData;
 use xcm::{latest::MultiAsset, prelude::*};
 use xcm_builder::*;
 use xcm_executor::{
-	traits::{FilterAssetLocation, ShouldExecute, WeightTrader},
+	traits::{FilterAssetLocation, WeightTrader},
 	*,
 };
 
+pub const VERSION_DISCOVERY_QUEUE_SIZE: u32 = 100;
+
+match_types! {
+	pub type ParentOrSiblings: impl Contains<MultiLocation> = {
+		MultiLocation { parents: 1, interior: Here } |
+		MultiLocation { parents: 1, interior: X1(_) }
+	};
+}
+
 parameter_types! {
-	// similar to what Acala/Hydra has
 	pub const BaseXcmWeight: Weight = 100_000_000;
 	pub const XcmMaxAssetsForTransfer: usize = 2;
+	pub RelayNativeLocation: MultiLocation = MultiLocation::parent();
+	pub RelayOrigin: cumulus_pallet_xcm::Origin = cumulus_pallet_xcm::Origin::Relay;
+	pub const UnitWeightCost: Weight = 200_000_000;
+	pub const MaxInstructions: u32 = 100;
 }
-
-/// this is debug struct implementing as many XCMP interfaces as possible
-/// it just dumps content, no modification.
-/// returns default expected
-pub struct XcmpDebug;
-
-impl ShouldExecute for XcmpDebug {
-	fn should_execute<Call>(
-		origin: &MultiLocation,
-		message: &mut Xcm<Call>,
-		max_weight: Weight,
-		weight_credit: &mut Weight,
-	) -> Result<(), ()> {
-		log::trace!(target: "xcmp::should_execute", "{:?} {:?} {:?} {:?}", origin, message, max_weight, weight_credit);
-		Err(())
-	}
-}
-
-/// is used to represent this chain in various APIS
 pub struct ThisChain<T>(PhantomData<T>);
 
 impl<T: Get<Id>> ThisChain<T> {
@@ -61,26 +47,7 @@ impl<T: Get<Id>> ThisChain<T> {
 
 impl<T: Get<Id>> Contains<MultiLocation> for ThisChain<T> {
 	fn contains(origin: &MultiLocation) -> bool {
-		origin == &topology::this::Local::get() || origin == &Self::self_parent()
-	}
-}
-
-/// NOTE: there could be payments taken on other side, so cannot rely on this to work end to end
-pub struct DebugAllowUnpaidExecutionFrom<T>(PhantomData<T>);
-impl<T: Contains<MultiLocation>> ShouldExecute for DebugAllowUnpaidExecutionFrom<T> {
-	fn should_execute<Call>(
-		origin: &MultiLocation,
-		_message: &mut Xcm<Call>,
-		_max_weight: Weight,
-		_weight_credit: &mut Weight,
-	) -> Result<(), ()> {
-		log::trace!(
-			target: "xcm::barriers",
-			"AllowUnpaidExecutionFrom origin: {:?}, message: {:?}, max_weight: {:?}, weight_credit: {:?}, contains: {:?}",
-			origin, _message, _max_weight, _weight_credit, T::contains(origin),
-		);
-		ensure!(T::contains(origin), ());
-		Ok(())
+		origin == &topology::this::LOCAL || origin == &Self::self_parent()
 	}
 }
 
@@ -98,7 +65,7 @@ pub struct TransactionFeePoolTrader<
 
 impl<
 		AssetConverter: Convert<MultiLocation, Option<CurrencyId>>,
-		PriceConverter: MinimalOracle<AssetId = CurrencyId, Balance = Balance>,
+		PriceConverter: BalanceConversion<NativeBalance, CurrencyId, Balance>,
 		Treasury: TakeRevenue,
 		WeightToFeeConverter: WeightToFeePolynomial<Balance = Balance> + WeightToFee<Balance = Balance>,
 	> TransactionFeePoolTrader<AssetConverter, PriceConverter, Treasury, WeightToFeeConverter>
@@ -110,7 +77,7 @@ impl<
 		let fee = WeightToFeeConverter::weight_to_fee(&weight);
 		log::trace!(target : "xcmp::weight_to_asset", "required payment in native token is: {:?}", fee );
 		let price =
-			PriceConverter::get_price_inverse(asset_id, fee).map_err(|_| XcmError::TooExpensive)?;
+			PriceConverter::to_asset_balance(fee, asset_id).map_err(|_| XcmError::TooExpensive)?;
 		let price = price.max(Balance::one());
 		log::trace!(target : "xcmp::weight_to_asset", "amount of priceable token to pay fee {:?}", price );
 		Ok((fee, price))
@@ -118,7 +85,7 @@ impl<
 }
 impl<
 		AssetConverter: Convert<MultiLocation, Option<CurrencyId>>,
-		PriceConverter: MinimalOracle<AssetId = CurrencyId, Balance = Balance>,
+		PriceConverter: BalanceConversion<NativeBalance, CurrencyId, Balance>,
 		Treasury: TakeRevenue,
 		WeightToFeeConverter: WeightToFeePolynomial<Balance = Balance> + WeightToFee<Balance = Balance>,
 	> WeightTrader
@@ -219,59 +186,14 @@ impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 
 pub trait XcmpAssets {
 	fn remote_to_local(location: MultiLocation) -> Option<CurrencyId> {
-		match location {
-			MultiLocation { parents: 1, interior: X2(Parachain(para_id), GeneralKey(key)) } =>
-				match (para_id, &key[..]) {
-					(topology::karura::ID, topology::karura::KUSD_KEY) => Some(CurrencyId::kUSD),
-					_ => None,
-				},
-			MultiLocation {
-				parents: 1,
-				interior: X3(Parachain(para_id), PalletInstance(pallet_instance), GeneralIndex(key)),
-			} => match (para_id, pallet_instance, key) {
-				(
-					topology::common_good_assets::ID,
-					topology::statemine::ASSETS,
-					topology::statemine::USDT,
-				) => Some(CurrencyId::USDT),
-				_ => None,
-			},
-			_ => None,
-		}
+		CurrencyId::xcm_reserve_to_local(location)
 	}
 
 	fn local_to_remote(id: CurrencyId, _this_para_id: u32) -> Option<MultiLocation> {
-		match id {
-			CurrencyId::NATIVE => Some(topology::this::Local::get()),
-			CurrencyId::PBLO => Some(MultiLocation {
-				parents: 0,
-				interior: X1(GeneralIndex(CurrencyId::PBLO.into())),
-			}),
-			CurrencyId::RELAY_NATIVE => Some(MultiLocation::parent()),
-			CurrencyId::kUSD => Some(MultiLocation {
-				parents: 1,
-				interior: X2(
-					Parachain(topology::karura::ID),
-					GeneralKey(WeakBoundedVec::force_from(
-						topology::karura::KUSD_KEY.to_vec(),
-						None,
-					)),
-				),
-			}),
-			CurrencyId::USDT => Some(MultiLocation {
-				parents: 1,
-				interior: X3(
-					Parachain(topology::common_good_assets::ID),
-					PalletInstance(topology::common_good_assets::ASSETS),
-					GeneralIndex(topology::common_good_assets::USDT),
-				),
-			}),
-			_ => None,
-		}
+		CurrencyId::local_to_xcm_reserve(id)
 	}
 }
 
-/// Converts currency to and from local and remote
 pub struct CurrencyIdConvert<AssetRegistry, WellKnownCurrency, ThisParaId, WellKnownXcmpAssets>(
 	PhantomData<(AssetRegistry, WellKnownCurrency, ThisParaId, WellKnownXcmpAssets)>,
 );
@@ -339,7 +261,6 @@ impl<
 	}
 }
 
-/// covert remote to local, usually when receiving transfer
 impl<
 		T: RemoteAssetRegistryInspect<AssetId = CurrencyId, AssetNativeLocation = XcmAssetLocation>,
 		WellKnown: WellKnownCurrency,
@@ -359,20 +280,6 @@ impl<
 	}
 }
 
-pub struct DebugMultiNativeAsset;
-impl FilterAssetLocation for DebugMultiNativeAsset {
-	fn filter_asset_location(asset: &MultiAsset, origin: &MultiLocation) -> bool {
-		log::trace!(
-			target: "xcmp::filter_asset_location",
-			"asset: {:?}; origin: {:?}; reserve: {:?};",
-			&asset,
-			&origin,
-			AbsoluteReserveProvider::reserve(&asset.clone()),
-		);
-		false
-	}
-}
-
 impl<X, Y, Treasury: TakeRevenue, Z> Drop for TransactionFeePoolTrader<X, Y, Treasury, Z> {
 	fn drop(&mut self) {
 		log::info!(target : "xcmp::take_revenue", "{:?} {:?}", &self.asset_location, self.fee);
@@ -382,4 +289,15 @@ impl<X, Y, Treasury: TakeRevenue, Z> Drop for TransactionFeePoolTrader<X, Y, Tre
 			}
 		}
 	}
+}
+pub struct RelayReserveFromParachain;
+impl FilterAssetLocation for RelayReserveFromParachain {
+	fn filter_asset_location(asset: &MultiAsset, origin: &MultiLocation) -> bool {
+		AbsoluteReserveProvider::reserve(asset) == Some(MultiLocation::parent()) &&
+			matches!(origin, MultiLocation { parents: 1, interior: X1(Parachain(_)) })
+	}
+}
+
+parameter_types! {
+	pub const ThisLocal: MultiLocation = primitives::topology::this::LOCAL;
 }

@@ -20,6 +20,7 @@ pub const VALID_PRICE_QUOTE_ASSETS: &[Asset] = &[Asset::USDT, Asset::USDC];
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct AssetPair(pub Asset, pub Asset);
 
+// NOTE: sure it is better move it into primitives
 lazy_static! {
 	/*
 	  The map of valid asset we are allowed to ask price for.

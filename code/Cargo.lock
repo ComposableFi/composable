@@ -1301,6 +1301,8 @@ version = "0.8.30"
 dependencies = [
  "composable-support",
  "composable-traits",
+ "cumulus-pallet-xcm",
+ "cumulus-primitives-core",
  "frame-support",
  "frame-system",
  "num-traits",
@@ -1317,6 +1319,7 @@ dependencies = [
  "primitives",
  "scale-info",
  "serde",
+ "smallvec 1.10.0",
  "sp-consensus-aura",
  "sp-core",
  "sp-io",
@@ -1597,6 +1600,7 @@ dependencies = [
  "scale-info",
  "serde",
  "sp-arithmetic",
+ "sp-core",
  "sp-runtime",
  "sp-std",
  "xcm",
@@ -5369,6 +5373,9 @@ name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
+dependencies = [
+ "spin",
+]
 
 [[package]]
 name = "lazycell"
@@ -6154,6 +6161,7 @@ dependencies = [
  "polkadot-core-primitives",
  "polkadot-parachain",
  "polkadot-primitives",
+ "polkadot-runtime",
  "polkadot-runtime-parachains",
  "primitives",
  "rococo-runtime",
@@ -10490,6 +10498,8 @@ version = "0.1.0"
 dependencies = [
  "composable-support",
  "composable-traits",
+ "frame-support",
+ "lazy_static",
  "parity-scale-codec",
  "scale-info",
  "serde",

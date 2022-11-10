@@ -1,19 +1,11 @@
-use common::{
-	multi_existential_deposits, xcmp::BaseXcmWeight, AccountId, Balance, NativeExistentialDeposit,
-	PriceConverter,
-};
-use composable_traits::{
-	currency::AssetExistentialDepositInspect, oracle::MinimalOracle, xcm::assets::AssetRatioInspect,
-};
+use common::{fees::NATIVE_EXISTENTIAL_DEPOSIT, xcmp::BaseXcmWeight, AccountId, Balance};
 use cumulus_primitives_core::ParaId;
 
-use frame_support::log;
 use primitives::currency::CurrencyId;
 use sp_runtime::traits::AccountIdConversion;
 
-use crate::{env_logger_init, prelude::*};
+use crate::{env_logger_init, kusama_test_net::KusamaRelay, prelude::*};
 
-// TODO: make macro of it
 pub fn simtest() {
 	crate::kusama_test_net::KusamaNetwork::reset();
 	env_logger_init();
@@ -34,17 +26,6 @@ pub fn buy_execution_unlimited<Call>(fees: impl Into<MultiAsset>) -> Instruction
 
 pub fn deposit_all_one<Call>(beneficiary: impl Into<MultiLocation>) -> Instruction<Call> {
 	DepositAsset { assets: All.into(), max_assets: 1, beneficiary: beneficiary.into() }
-}
-
-/// under ED, but above Weight
-pub fn under_existential_deposit<
-	AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>
-		+ AssetExistentialDepositInspect<AssetId = CurrencyId, Balance = Balance>,
->(
-	asset_id: LocalAssetId,
-	_instruction_count: usize,
-) -> Balance {
-	multi_existential_deposits::<AssetsRegistry>(&asset_id) / 2
 }
 
 /// dumps events for debugging
@@ -69,11 +50,8 @@ pub fn assert_above_deposit<AssetsRegistry: AssetRatioInspect<AssetId = Currency
 	amount: Balance,
 ) -> Balance {
 	assert!(
-		PriceConverter::<AssetsRegistry>::get_price_inverse(
-			asset_id,
-			NativeExistentialDeposit::get()
-		)
-		.unwrap() <= amount
+		PriceConverter::<AssetsRegistry>::to_asset_balance(NATIVE_EXISTENTIAL_DEPOSIT, asset_id,)
+			.unwrap() <= amount
 	);
 	amount
 }
@@ -82,4 +60,23 @@ pub fn assert_above_deposit<AssetsRegistry: AssetRatioInspect<AssetId = Currency
 pub fn enough_weight() -> u128 {
 	BaseXcmWeight::get() as u128 +
 		100 * UnitWeightCost::get() as Balance * MaxInstructions::get() as Balance
+}
+
+pub fn mint_relay_native_on_parachain(amount: Balance, to: &AccountId, para_id: u32) {
+	KusamaRelay::execute_with(|| {
+		use kusama_runtime::*;
+		let _ = <Balances as frame_support::traits::Currency<_>>::deposit_creating(to, amount);
+		XcmPallet::reserve_transfer_assets(
+			Origin::signed(to.to_owned().into()),
+			Box::new(Parachain(para_id).into().into()),
+			Box::new(
+				Junction::AccountId32 { id: to.to_owned().into(), network: NetworkId::Any }
+					.into()
+					.into(),
+			),
+			Box::new((Here, amount).into()),
+			0,
+		)
+		.unwrap();
+	});
 }
