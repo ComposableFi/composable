@@ -59,7 +59,9 @@ where
 {
 	// 1. Generate a wasm code
 	let wasm_module: WasmModule =
-		code_gen::ModuleDefinition::new(Default::default(), BASE_ADDITIONAL_BINARY_SIZE).unwrap().into();
+		code_gen::ModuleDefinition::new(Default::default(), BASE_ADDITIONAL_BINARY_SIZE)
+			.unwrap()
+			.into();
 	// 2. Properly upload the code (so that the necessary storage items are modified)
 	Cosmwasm::<T>::do_upload(&origin, wasm_module.code.try_into().unwrap()).unwrap();
 	// 3. Create the shared vm (inner vm)
