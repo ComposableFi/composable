@@ -39,9 +39,11 @@ extern crate alloc;
 
 pub use pallet::*;
 
+pub mod ibc;
 pub mod instrument;
 pub mod runtimes;
 pub mod types;
+pub mod version;
 pub mod weights;
 
 mod entrypoint;
@@ -60,15 +62,16 @@ pub mod pallet {
 	const SUBSTRATE_ECDSA_SIGNATURE_LEN: usize = 65;
 	use crate::{
 		entrypoint::*,
-		instrument::gas_and_stack_instrumentation,
+		instrument::{gas_and_stack_instrumentation, INSTRUMENTATION_VERSION},
 		runtimes::{
 			abstraction::{CanonicalCosmwasmAccount, CosmwasmAccount, Gas, VMPallet},
 			wasmi::{
 				CodeValidation, CosmwasmVM, CosmwasmVMCache, CosmwasmVMError, CosmwasmVMShared,
-				ExportRequirement, InitialStorageMutability, ValidationError,
+				InitialStorageMutability, ValidationError,
 			},
 		},
 		types::{CodeInfo, ContractInfo},
+		version::Version,
 		weights::WeightInfo,
 	};
 	use alloc::{
@@ -91,12 +94,9 @@ pub mod pallet {
 	};
 	use cosmwasm_vm::{
 		executor::{
-			cosmwasm_call, AllocateInput, AsFunctionName, DeallocateInput, ExecuteInput,
-			InstantiateInput, MigrateInput, QueryInput, QueryResponse, ReplyInput,
+			cosmwasm_call, ExecuteInput, InstantiateInput, MigrateInput, QueryInput, QueryResponse,
 		},
-		memory::PointerOf,
 		system::{cosmwasm_system_query, CosmwasmCodeId, CosmwasmContractMeta},
-		vm::VmMessageCustomOf,
 	};
 	use cosmwasm_vm_wasmi::{host_functions, new_wasmi_vm, WasmiImportResolver, WasmiVM};
 	use frame_support::{
@@ -227,6 +227,7 @@ pub mod pallet {
 		IteratorIdOverflow,
 		IteratorNotFound,
 		NotAuthorized,
+		Unsupported,
 	}
 
 	#[pallet::config]
@@ -828,84 +829,6 @@ pub mod pallet {
 			ContractToInfo::<T>::insert(contract, info)
 		}
 
-		/// Current instrumentation version
-		const INSTRUMENTATION_VERSION: u16 = 1;
-
-		/// V1 exports, verified w.r.t https://github.com/CosmWasm/cosmwasm/#exports
-		/// The format is (required, function_name, function_signature)
-		const V1_EXPORTS: &'static [(
-			ExportRequirement,
-			&'static str,
-			&'static [parity_wasm::elements::ValueType],
-		)] = &[
-			// We support v1+
-			(
-				ExportRequirement::Mandatory,
-				// 	extern "C" fn interface_version_8() -> () {}
-				"interface_version_8",
-				&[],
-			),
-			// Memory related exports.
-			(
-				ExportRequirement::Mandatory,
-				AllocateInput::<PointerOf<CosmwasmVM<T>>>::NAME,
-				// extern "C" fn allocate(size: usize) -> u32;
-				&[parity_wasm::elements::ValueType::I32],
-			),
-			(
-				ExportRequirement::Mandatory,
-				DeallocateInput::<PointerOf<CosmwasmVM<T>>>::NAME,
-				// extern "C" fn deallocate(pointer: u32);
-				&[parity_wasm::elements::ValueType::I32],
-			),
-			// Contract execution exports.
-			(
-				ExportRequirement::Mandatory,
-				InstantiateInput::<VmMessageCustomOf<CosmwasmVM<T>>>::NAME,
-				// extern "C" fn instantiate(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32;
-				&[
-					parity_wasm::elements::ValueType::I32,
-					parity_wasm::elements::ValueType::I32,
-					parity_wasm::elements::ValueType::I32,
-				],
-			),
-			(
-				ExportRequirement::Mandatory,
-				ExecuteInput::<VmMessageCustomOf<CosmwasmVM<T>>>::NAME,
-				// extern "C" fn execute(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32;
-				&[
-					parity_wasm::elements::ValueType::I32,
-					parity_wasm::elements::ValueType::I32,
-					parity_wasm::elements::ValueType::I32,
-				],
-			),
-			(
-				ExportRequirement::Mandatory,
-				QueryInput::NAME,
-				// extern "C" fn query(env_ptr: u32, msg_ptr: u32) -> u32;
-				&[parity_wasm::elements::ValueType::I32, parity_wasm::elements::ValueType::I32],
-			),
-			(
-				ExportRequirement::Optional,
-				MigrateInput::<VmMessageCustomOf<CosmwasmVM<T>>>::NAME,
-				// extern "C" fn migrate(env_ptr: u32, msg_ptr: u32) -> u32;
-				&[parity_wasm::elements::ValueType::I32, parity_wasm::elements::ValueType::I32],
-			),
-			(
-				ExportRequirement::Optional,
-				ReplyInput::<VmMessageCustomOf<CosmwasmVM<T>>>::NAME,
-				// extern "C" fn reply(env_ptr: u32, msg_ptr: u32) -> u32;
-				&[parity_wasm::elements::ValueType::I32, parity_wasm::elements::ValueType::I32],
-			),
-		];
-
-		/// Default module from where a CosmWasm import functions.
-		const ENV_MODULE: &'static str = "env";
-
-		/// Arbitrary function name for gas instrumentation.
-		/// A contract is not allowed to import this function from the above [`ENV_MODULE`].
-		const ENV_GAS: &'static str = "gas";
-
 		/// Validate a wasm module against the defined limitations.
 		///
 		/// Notably
@@ -931,9 +854,9 @@ pub mod pallet {
 					.validate_parameter_limit(T::CodeParameterLimit::get())?
 					.validate_br_table_size_limit(T::CodeBranchTableSizeLimit::get())?
 					.validate_no_floating_types()?
-					.validate_exports(Self::V1_EXPORTS)?
+					.validate_exports(Version::<T>::EXPORTS)?
 					// env.gas is banned as injected by instrumentation
-					.validate_imports(&[(Self::ENV_MODULE, Self::ENV_GAS)])?;
+					.validate_imports(&[(Version::<T>::ENV_MODULE, Version::<T>::ENV_GAS)])?;
 				Ok(())
 			})();
 			validation.map_err(|e| {
@@ -949,7 +872,7 @@ pub mod pallet {
 			Self::do_validate_code(&module)?;
 			let instrumented_module = gas_and_stack_instrumentation(
 				module,
-				Self::ENV_MODULE,
+				Version::<T>::ENV_MODULE,
 				T::CodeStackLimit::get(),
 				// TODO(hussein-aitlahcen): this constant cost rules can't be used in production
 				// and must be benchmarked we can reuse contracts pallet cost rules for now as
@@ -977,13 +900,13 @@ pub mod pallet {
 		) -> Result<(), Error<T>> {
 			CodeIdToInfo::<T>::try_mutate(code_id, |entry| {
 				let code_info = entry.as_mut().ok_or(Error::<T>::CodeNotFound)?;
-				if code_info.instrumentation_version != Self::INSTRUMENTATION_VERSION {
+				if code_info.instrumentation_version != INSTRUMENTATION_VERSION {
 					log::debug!(target: "runtime::contracts", "do_check_for_reinstrumentation: required");
 					let code = PristineCode::<T>::get(code_id).ok_or(Error::<T>::CodeNotFound)?;
 					let module = Self::do_load_module(&code)?;
 					let instrumented_code = Self::do_instrument_code(module)?;
 					InstrumentedCode::<T>::insert(&code_id, instrumented_code);
-					code_info.instrumentation_version = Self::INSTRUMENTATION_VERSION;
+					code_info.instrumentation_version = INSTRUMENTATION_VERSION;
 				} else {
 					log::debug!(target: "runtime::contracts", "do_check_for_reinstrumentation: not required");
 				}
@@ -1009,6 +932,7 @@ pub mod pallet {
 			T::NativeAsset::reserve(who, deposit.saturated_into())
 				.map_err(|_| Error::<T>::NotEnoughFundsForUpload)?;
 			let module = Self::do_load_module(&code)?;
+      let ibc_capable = Self::do_check_ibc_capability(&module);
 			let instrumented_code = Self::do_instrument_code(module)?;
 			let code_id = CurrentCodeId::<T>::increment()?;
 			CodeHashToId::<T>::insert(code_hash, code_id);
@@ -1019,7 +943,8 @@ pub mod pallet {
 				CodeInfoOf::<T> {
 					creator: who.clone(),
 					pristine_code_hash: code_hash,
-					instrumentation_version: Self::INSTRUMENTATION_VERSION,
+					instrumentation_version: INSTRUMENTATION_VERSION,
+          ibc_capable,
 					refcount: 0,
 				},
 			);
@@ -1527,32 +1452,6 @@ pub mod pallet {
 		) -> Result<Option<Vec<u8>>, CosmwasmVMError<T>> {
 			let info = Pallet::<T>::contract_info(&address)?;
 			Pallet::<T>::do_db_read_other_contract(vm, &info.trie_id, key)
-		}
-
-		pub(crate) fn do_ibc_transfer(
-			vm: &mut CosmwasmVM<T>,
-			channel_id: String,
-			to_address: String,
-			amount: Coin,
-			timeout: cosmwasm_minimal_std::ibc::IbcTimeout,
-		) -> Result<(), CosmwasmVMError<T>> {
-			todo!()
-		}
-
-		pub(crate) fn do_ibc_send_packet(
-			vm: &mut CosmwasmVM<T>,
-			channel_id: String,
-			data: cosmwasm_minimal_std::Binary,
-			timeout: cosmwasm_minimal_std::ibc::IbcTimeout,
-		) -> Result<(), CosmwasmVMError<T>> {
-			todo!()
-		}
-
-		pub(crate) fn do_ibc_close_channel(
-			vm: &mut CosmwasmVM<T>,
-			channel_id: String,
-		) -> Result<(), CosmwasmVMError<T>> {
-			todo!()
 		}
 	}
 
