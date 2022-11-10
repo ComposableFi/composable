@@ -16,7 +16,11 @@ export function xcmPalletEventParser(
 ) {
   pipe(
     records,
-    findFirst((e) => api.events.xcmPallet.Attempted.is(e.event) as boolean),
+    findFirst(
+      (e) =>
+        api.events?.xcmPallet?.Attempted?.is?.(e.event) ||
+        api.events?.polkadotXcm?.Attempted?.is?.(e.event)
+    ),
     option.map((e) => e.event),
     option.map((event) => {
       // @ts-ignore
