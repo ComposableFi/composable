@@ -153,12 +153,13 @@ mod tests {
 				.spawn::<Ethereum, _, ProgramBuildError, _>(
 					Default::default(),
 					Default::default(),
+					BridgeSecurity::Deterministic,
 					Funds::empty(),
 					|child| {
 						Ok(child
 							.call(DummyProtocol2)?
 							.call(DummyProtocol1)?
-							.transfer((), Funds::from([(PICA::ID, u128::MAX)])))
+							.transfer(Destination::Relayer, Funds::from([(PICA::ID, u128::MAX)])))
 					},
 				)?
 				.build())
@@ -175,6 +176,7 @@ mod tests {
 					// Move to ethereum
 					Instruction::Spawn {
 						network: Ethereum::ID,
+						bridge_security: BridgeSecurity::Deterministic,
 						salt: Vec::new(),
 						assets: Funds::empty(),
 						program: Program {
@@ -191,7 +193,7 @@ mod tests {
 									encoded: vec![192, 222, 192, 222]
 								},
 								Instruction::Transfer {
-									to: (),
+									to: Destination::Relayer,
 									assets: Funds::from(vec![(PICA::ID, u128::MAX)])
 								}
 							])

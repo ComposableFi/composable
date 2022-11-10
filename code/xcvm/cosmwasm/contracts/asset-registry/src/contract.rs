@@ -113,21 +113,26 @@ mod tests {
 
 		let _ = instantiate(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
 
+		let addr1 = AssetReference::Virtual(Addr::unchecked("addr1"));
+		let addr2 = AssetReference::Virtual(Addr::unchecked("addr2"));
+		let addr3 = AssetReference::Virtual(Addr::unchecked("addr3"));
+		let addr4 = AssetReference::Virtual(Addr::unchecked("addr4"));
+
 		let mut assets = BTreeMap::new();
-		assets.insert("1".into(), "addr1".into());
-		assets.insert("2".into(), "addr2".into());
+		assets.insert("1".into(), addr1.clone());
+		assets.insert("2".into(), addr2.clone());
 
 		let res =
 			execute(deps.as_mut(), mock_env(), info.clone(), ExecuteMsg::SetAssets(assets.clone()))
 				.unwrap();
 		assert_eq!(res.attributes.len(), 0);
 
-		assert_eq!(ASSETS.load(&deps.storage, 1).unwrap(), Addr::unchecked("addr1"));
-		assert_eq!(ASSETS.load(&deps.storage, 2).unwrap(), Addr::unchecked("addr2"));
+		assert_eq!(ASSETS.load(&deps.storage, 1).unwrap(), addr1);
+		assert_eq!(ASSETS.load(&deps.storage, 2).unwrap(), addr2);
 
 		let mut assets = BTreeMap::new();
-		assets.insert("3".into(), "addr3".into());
-		assets.insert("4".into(), "addr4".into());
+		assets.insert("3".into(), addr3.clone());
+		assets.insert("4".into(), addr4.clone());
 
 		let _ = execute(deps.as_mut(), mock_env(), info, ExecuteMsg::SetAssets(assets.clone()))
 			.unwrap();
@@ -135,8 +140,8 @@ mod tests {
 		// Make sure that set removes the previous elements
 		assert!(ASSETS.load(&deps.storage, 1).is_err());
 		assert!(ASSETS.load(&deps.storage, 2).is_err());
-		assert_eq!(ASSETS.load(&deps.storage, 3).unwrap(), Addr::unchecked("addr3"));
-		assert_eq!(ASSETS.load(&deps.storage, 4).unwrap(), Addr::unchecked("addr4"));
+		assert_eq!(ASSETS.load(&deps.storage, 3).unwrap(), addr3);
+		assert_eq!(ASSETS.load(&deps.storage, 4).unwrap(), addr4);
 
 		// Finally make sure that there are two elements in the assets storage
 		assert_eq!(
@@ -157,8 +162,9 @@ mod tests {
 
 		let _ = instantiate(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
 
+		let addr1 = AssetReference::Virtual(Addr::unchecked("addr1"));
 		let mut assets = BTreeMap::new();
-		assets.insert("1".into(), "addr1".into());
+		assets.insert("1".into(), addr1.clone());
 
 		let _ =
 			execute(deps.as_mut(), mock_env(), info.clone(), ExecuteMsg::SetAssets(assets.clone()))
@@ -169,7 +175,7 @@ mod tests {
 				.unwrap();
 
 		// Query should return the corresponding address
-		assert_eq!(res, GetAssetContractResponse { addr: Addr::unchecked("addr1") });
+		assert_eq!(res, GetAssetContractResponse { asset_reference: addr1 });
 
 		// This should fail since there the asset doesn't exist
 		assert!(query(deps.as_ref(), mock_env(), QueryMsg::GetAssetContract(2)).is_err());

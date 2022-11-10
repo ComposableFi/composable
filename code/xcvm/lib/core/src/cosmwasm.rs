@@ -478,7 +478,7 @@ mod tests {
 	fn test_instantiate() {
 		let (test_msg, payload_bindings) = create_dummy_data();
 		let msg = LateCall::wasm_instantiate(
-			Some(StaticBinding::Some(BindingValue::Asset(1))),
+			Some(StaticBinding::Some(BindingValue::Asset(1.into()))),
 			1,
 			payload_bindings,
 			Vec::new(),
@@ -489,7 +489,7 @@ mod tests {
 		assert_eq!(
 			msg.bindings,
 			vec![
-				(32, BindingValue::Asset(1)),
+				(32, BindingValue::Asset(1.into())),
 				(62, BindingValue::Register(Register::This)),
 				(89, BindingValue::Register(Register::Relayer)),
 			]

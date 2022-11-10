@@ -58,6 +58,7 @@ assetsinfo
 autofetch
 autorenew
 azuretools
+bech
 BCENT
 BCENTS
 BCOIN
@@ -156,6 +157,7 @@ immer
 includeurl
 infima
 inprocess
+instrs
 ipam
 ipetkov # github username
 iszero
