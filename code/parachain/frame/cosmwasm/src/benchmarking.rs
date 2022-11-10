@@ -59,7 +59,7 @@ where
 {
 	// 1. Generate a wasm code
 	let wasm_module: WasmModule =
-		code_gen::ModuleDefinition::new(BASE_ADDITIONAL_BINARY_SIZE).unwrap().into();
+		code_gen::ModuleDefinition::new(Default::default(), BASE_ADDITIONAL_BINARY_SIZE).unwrap().into();
 	// 2. Properly upload the code (so that the necessary storage items are modified)
 	Cosmwasm::<T>::do_upload(&origin, wasm_module.code.try_into().unwrap()).unwrap();
 	// 3. Create the shared vm (inner vm)
@@ -150,7 +150,7 @@ benchmarks! {
 	upload {
 		let n in 1..T::MaxCodeSize::get() - 10000;
 		let origin = create_funded_account::<T>("signer");
-		let wasm_module: WasmModule = code_gen::ModuleDefinition::new(n as usize).unwrap().into();
+		let wasm_module: WasmModule = code_gen::ModuleDefinition::new(Default::default(), n as usize).unwrap().into();
 	}: _(RawOrigin::Signed(origin), wasm_module.code.try_into().unwrap())
 
 	instantiate {
@@ -158,7 +158,7 @@ benchmarks! {
 		let origin = create_funded_account::<T>("origin");
 		// BASE_ADDITIONAL_BINARY_SIZE + 1 to make a different code so that it doesn't already exist
 		// in `PristineCode` and we don't get an error back.
-		let wasm_module: WasmModule = code_gen::ModuleDefinition::new(BASE_ADDITIONAL_BINARY_SIZE + 1).unwrap().into();
+		let wasm_module: WasmModule = code_gen::ModuleDefinition::new(Default::default(), BASE_ADDITIONAL_BINARY_SIZE + 1).unwrap().into();
 		Cosmwasm::<T>::do_upload(&origin, wasm_module.code.try_into().unwrap()).unwrap();
 		let salt: ContractSaltOf<T> = vec![1].try_into().unwrap();
 		let label: ContractLabelOf<T> = "label".as_bytes().to_vec().try_into().unwrap();
@@ -222,7 +222,7 @@ benchmarks! {
 		let (_, contract, _info) = create_instantiated_contract::<T>(origin.clone());
 		{
 			// Upload the second contract but do not instantiate it, this will get `code_id = 2`
-			let wasm_module: WasmModule = code_gen::ModuleDefinition::new(12).unwrap().into();
+			let wasm_module: WasmModule = code_gen::ModuleDefinition::new(Default::default(), 12).unwrap().into();
 			Cosmwasm::<T>::do_upload(&origin, wasm_module.code.try_into().unwrap()).unwrap();
 		}
 		let message = b"{}".to_vec().try_into().unwrap();
