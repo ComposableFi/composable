@@ -3,7 +3,7 @@ use crate::{
 	version::Version,
 	AccountIdOf, Config, Error, Pallet,
 };
-use alloc::string::String;
+use alloc::{format, string::String};
 
 impl<T: Config> Pallet<T> {
 	/// Check whether a contract export the mandatory IBC functions and is consequently IBC capable.
