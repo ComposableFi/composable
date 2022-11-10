@@ -24,15 +24,19 @@ pub const WASM_BINARY_V2: Option<&[u8]> = None;
 pub mod governance;
 mod weights;
 pub mod xcmp;
-
-pub use xcmp::{MaxInstructions, UnitWeightCost, XcmConfig};
+pub use common::xcmp::{MaxInstructions, UnitWeightCost};
+pub use xcmp::XcmConfig;
 
 use governance::*;
 
 use common::{
-	governance::native::*, impls::DealWithFees, multi_existential_deposits, AccountId,
-	AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, BondOfferId, ForeignAssetId, Hash,
-	MaxStringSize, Moment, NativeExistentialDeposit, PriceConverter, Signature,
+	fees::{
+		multi_existential_deposits, NativeExistentialDeposit, PriceConverter, WeightToFeeConverter,
+	},
+	governance::native::*,
+	rewards::StakingPot,
+	AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, BondOfferId,
+	ForeignAssetId, Hash, MaxStringSize, Moment, ReservedDmpWeight, ReservedXcmpWeight, Signature,
 	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
@@ -361,26 +365,11 @@ parameter_types! {
 	pub const OperationalFeeMultiplier: u8 = 5;
 }
 
-pub struct WeightToFee;
-impl WeightToFeePolynomial for WeightToFee {
-	type Balance = Balance;
-	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
-		let p = CurrencyId::milli::<Balance>();
-		let q = 10 * Balance::from(ExtrinsicBaseWeight::get());
-		smallvec::smallvec![WeightToFeeCoefficient {
-			degree: 1,
-			negative: false,
-			coeff_frac: Perbill::from_rational(p % q, q),
-			coeff_integer: p / q,
-		}]
-	}
-}
-
 impl transaction_payment::Config for Runtime {
 	type Event = Event;
 	type OnChargeTransaction =
-		transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime, NativeTreasury>>;
-	type WeightToFee = WeightToFee;
+		transaction_payment::CurrencyAdapter<Balances, StakingPot<Runtime, NativeTreasury>>;
+	type WeightToFee = WeightToFeeConverter;
 	type FeeMultiplierUpdate =
 		TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
@@ -426,7 +415,7 @@ impl asset_tx_payment::Config for Runtime {
 
 	type ConfigurationOrigin = EnsureRootOrHalfNativeCouncil;
 
-	type ConfigurationExistentialDeposit = common::NativeExistentialDeposit;
+	type ConfigurationExistentialDeposit = common::fees::NativeExistentialDeposit;
 
 	type PayableCall = Call;
 
@@ -513,15 +502,6 @@ where
 {
 	type OverarchingCall = Call;
 	type Extrinsic = UncheckedExtrinsic;
-}
-
-// Parachain stuff.
-// See https://github.com/paritytech/cumulus/blob/polkadot-v0.9.8/polkadot-parachains/rococo/src/lib.rs for details.
-parameter_types! {
-	/// 1/4 of block weight is reserved for XCMP
-	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
-	/// 1/4 of block weight is reserved for handling Downward messages
-	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
 }
 
 impl cumulus_pallet_parachain_system::Config for Runtime {

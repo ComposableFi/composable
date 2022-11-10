@@ -1,0 +1,59 @@
+@startuml
+skinparam handwritten true
+!includeurl https://raw.githubusercontent.com/inthepocket/plantuml-styles/master/styles.plantuml!0
+
+box Picasso #LightYellow
+participant Pallet as pallet
+participant XTokens as xtokens
+participant XcmExecutor
+participant TransactAsset
+participant Converters
+participant XcmQueue
+participant Assets
+participant Weighter
+participant Barrier
+participant vm
+participant "cumulus:DmpMessageHandler"
+end box
+
+box Sibling #LightBlue
+participant "XcmQueue" as sibling_xcm_queue
+participant "XcmExecutor" as sibling_xcm_executor
+participant "Assets" as sibling_assets
+end box
+
+
+box Sibling #SeaGreen
+participant "Kusama" as kusama
+end box
+
+
+pallet -> xtokens: ReserveTransfer Local Assets
+xtokens -> Converters: pallet to map local tokens to remote
+xtokens -> xtokens : Build XCM message depending on remote type
+xtokens -> XcmExecutor : Execute
+XcmExecutor -> TransactAsset : Withdraw
+TransactAsset -> Assets: Withdraw (transfers from sender account to holder)
+XcmExecutor -> XcmQueue : Put transformed DepositReserved message starting from submessage
+note right
+    - Networking layer will ensure that messages appear on another chain
+end note
+...
+sibling_xcm_queue -> sibling_xcm_executor: Receive message
+sibling_xcm_executor -> sibling_assets: Dispatch to call relevant pallet for accepting foreign assets
+
+...
+
+kusama -> Picasso : transfer (add amount to Picasso reserver account)
+...
+Picasso -> "cumulus:DmpMessageHandler" : handle
+"cumulus:DmpMessageHandler"  -> "cumulus:DmpMessageHandler": handle_dmp_messages
+"cumulus:DmpMessageHandler"  -> "cumulus:DmpMessageHandler": try_service_message
+"cumulus:DmpMessageHandler" -> XcmExecutor: execute_xcm_in_credit
+XcmExecutor -> Weighter : weight is computable and under limit
+XcmExecutor -> Barrier : should execute
+XcmExecutor -> vm : execute (add holding to reserve account of asset)
+XcmExecutor  -> vm : process_instruction: for each instruction in message (validate origin is Relay)
+XcmExecutor -> vm : either accrue weight while there are messages or call error handler
+
+@enduml

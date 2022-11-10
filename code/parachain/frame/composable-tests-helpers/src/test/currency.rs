@@ -8,18 +8,24 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::RuntimeDebug;
 use scale_info::TypeInfo;
 
+// https://github.com/paritytech/substrate/pull/12638
+// const XCM_RESERVE_LOCATION: Option<xcm::latest::MultiLocation> = None,
 #[derive(RuntimeDebug, Clone, Copy, TypeInfo, PartialEq, Eq)]
 pub struct ComposableCurrency<
 	Consensus,
 	const ID: CurrencyId,
 	const EXPONENT: u8 = 12,
-	const RESERVE_EXPONENT: u8 = 12,
+	const PROPOSED_RESERVE_MINIMAL_FEE: u64 = 0,
 > {
 	_marker: PhantomData<Consensus>,
 }
 
-impl<Consensus, const ID: CurrencyId, const EXPONENT: u8, const RESERVE_EXPONENT: u8> Deref
-	for ComposableCurrency<Consensus, ID, EXPONENT, RESERVE_EXPONENT>
+impl<
+		Consensus,
+		const ID: CurrencyId,
+		const EXPONENT: u8,
+		const PROPOSED_RESERVE_MINIMAL_FEE: u64,
+	> Deref for ComposableCurrency<Consensus, ID, EXPONENT, PROPOSED_RESERVE_MINIMAL_FEE>
 {
 	type Target = CurrencyId;
 
@@ -43,11 +49,18 @@ impl<Consensus, const ID: CurrencyId, const EXPONENT: u8, const RESERVE_EXPONENT
 /// let one_hundred_a_tokens = ACOIN::units(100);
 /// let one_value_of_b = BCOIN::ONE;
 /// ```
-pub type Currency<const ID: CurrencyId, const EXPONENT: u8 = 12, const RESERVE_EXPONENT: u8 = 12> =
-	ComposableCurrency<(), ID, EXPONENT, RESERVE_EXPONENT>;
+pub type Currency<
+	const ID: CurrencyId,
+	const EXPONENT: u8 = 12,
+	const PROPOSED_RESERVE_MINIMAL_FEE: u64 = 0,
+> = ComposableCurrency<(), ID, EXPONENT, PROPOSED_RESERVE_MINIMAL_FEE>;
 
-impl<Consensus, const ID: CurrencyId, const EXPONENT: u8, const RESERVE_EXPONENT: u8>
-	ComposableCurrency<Consensus, ID, EXPONENT, RESERVE_EXPONENT>
+impl<
+		Consensus,
+		const ID: CurrencyId,
+		const EXPONENT: u8,
+		const PROPOSED_RESERVE_MINIMAL_FEE: u64,
+	> ComposableCurrency<Consensus, ID, EXPONENT, PROPOSED_RESERVE_MINIMAL_FEE>
 {
 	/// The id of the currency. This is fairly arbitrary, and is only used to differentiate between
 	/// different currencies.
@@ -107,11 +120,6 @@ impl<Consensus, const ID: CurrencyId, const EXPONENT: u8, const RESERVE_EXPONENT
 	pub const fn instance() -> RuntimeCurrency {
 		RuntimeCurrency { id: ID, exponent: EXPONENT }
 	}
-
-	/// The exponent as it it was issued on origin consensus.
-	pub const RESERVE_EXPONENT: u8 = RESERVE_EXPONENT;
-
-	pub const RESERVE_ONE: CurrencyId = (10 as CurrencyId).pow(Self::RESERVE_EXPONENT as u32);
 }
 
 /// A 'runtime' equivalent of [`Currency`].
@@ -251,9 +259,9 @@ pub struct CurrencyAmount<
 	Consensus,
 	const ID: CurrencyId,
 	const EXPONENT: u8,
-	const RESERVE_EXPONENT: u8,
+	const PROPOSED_RESERVE_MINIMAL_FEE: u64,
 	PositiveBalance,
 > {
-	pub currency: ComposableCurrency<Consensus, ID, EXPONENT, RESERVE_EXPONENT>,
+	pub currency: ComposableCurrency<Consensus, ID, EXPONENT, PROPOSED_RESERVE_MINIMAL_FEE>,
 	pub amount: PositiveBalance,
 }

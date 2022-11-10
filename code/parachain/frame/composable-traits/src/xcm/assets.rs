@@ -8,7 +8,10 @@ use serde::{Deserialize, Serialize};
 use sp_std::vec::Vec;
 use xcm::latest::MultiLocation;
 
-use crate::{assets::Asset, currency::Exponent, defi::Ratio};
+use crate::{
+	assets::Asset,
+	currency::{Exponent, Rational64},
+};
 
 /// works only with concrete assets
 #[derive(Debug, Encode, Decode, Clone, PartialEq, Eq, TypeInfo)]
@@ -42,13 +45,6 @@ impl XcmAssetLocation {
 	pub fn new(multi_location: xcm::latest::MultiLocation) -> Self {
 		Self(multi_location)
 	}
-}
-
-// ration of any asset to native
-pub trait AssetRatioInspect {
-	type AssetId;
-	/// How much of foreign assets I have to pay for unit of native asset
-	fn get_ratio(asset_id: Self::AssetId) -> Option<Ratio>;
 }
 
 pub trait RemoteAssetRegistryInspect {
@@ -93,7 +89,6 @@ pub trait RemoteAssetRegistryInspect {
 	fn get_foreign_assets_list() -> Vec<Asset<Self::AssetNativeLocation>>;
 }
 
-/// Used in tandem with `CurrencyFactory` trait
 pub trait RemoteAssetRegistryMutate {
 	type AssetId;
 	type AssetNativeLocation;
@@ -108,21 +103,23 @@ pub trait RemoteAssetRegistryMutate {
 	/// `asset_id` local asset id created using `CurrencyFactory`
 	/// `location` - remote location
 	/// `ed` - minimal amount of registered asset allowed to form account
-	/// `ratio` - how much of remote assets should you pay to get unit if local native asset (used
-	/// to allow). if there is no price ration on chain, asset cannot be used to pay for execution
-	/// `decimals` - if asset decimals is not 12, than value must be provided
-	/// Emits `LocationSet` event when successful.
+	/// `ratio` - of native asset to remote; amount of foreign asset multiplied by ratio will give
+	/// equivalent amount of native; `decimals` - if asset decimals is not 12, than value must be
+	/// provided Emits `LocationSet` event when successful.
 	/// `asset_id` - local asset id create via `CurrencyFactory`
 	/// `location` - remote location relative to this chain
 	fn set_reserve_location(
 		asset_id: Self::AssetId,
 		location: Self::AssetNativeLocation,
-		ratio: Option<Ratio>,
+		ratio: Option<Rational64>,
 		decimals: Option<Exponent>,
 	) -> DispatchResult;
 
 	/// allows change  ratio of how much remote assets is needed for unit of native
-	fn update_ratio(location: Self::AssetNativeLocation, ration: Option<Ratio>) -> DispatchResult;
+	fn update_ratio(
+		location: Self::AssetNativeLocation,
+		ratio: Option<Rational64>,
+	) -> DispatchResult;
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]

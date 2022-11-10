@@ -35,15 +35,17 @@ use orml_traits::{parameter_type_with_key, LockIdentifier, MultiCurrency};
 pub use xcmp::{MaxInstructions, UnitWeightCost};
 
 use common::{
+	fees::{
+		multi_existential_deposits, NativeExistentialDeposit, PriceConverter, WeightToFeeConverter,
+	},
 	governance::native::{
 		EnsureRootOrHalfNativeCouncil, EnsureRootOrOneThirdNativeTechnical, NativeTreasury,
 	},
-	impls::DealWithFees,
-	multi_existential_deposits, AccountId, AccountIndex, Address, Amount, AuraId, Balance,
-	BlockNumber, BondOfferId, FinancialNftInstanceId, ForeignAssetId, Hash, MaxStringSize, Moment,
-	MosaicRemoteAssetId, NativeExistentialDeposit, PoolId, PriceConverter, Signature,
-	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
-	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	rewards::StakingPot,
+	AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, BondOfferId,
+	FinancialNftInstanceId, ForeignAssetId, Hash, MaxStringSize, Moment, MosaicRemoteAssetId,
+	PoolId, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT,
+	MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
@@ -330,7 +332,7 @@ impl balances::Config for Runtime {
 	/// The ubiquitous event type.
 	type Event = Event;
 	type DustRemoval = Treasury;
-	type ExistentialDeposit = common::NativeExistentialDeposit;
+	type ExistentialDeposit = NativeExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = weights::balances::WeightInfo<Runtime>;
 }
@@ -354,27 +356,12 @@ parameter_types! {
 	pub const OperationalFeeMultiplier: u8 = 5;
 }
 
-pub struct WeightToFee;
-impl WeightToFeePolynomial for WeightToFee {
-	type Balance = Balance;
-	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
-		let p = CurrencyId::milli::<Balance>();
-		let q = 10 * Balance::from(ExtrinsicBaseWeight::get());
-		smallvec::smallvec![WeightToFeeCoefficient {
-			degree: 1,
-			negative: false,
-			coeff_frac: Perbill::from_rational(p % q, q),
-			coeff_integer: p / q,
-		}]
-	}
-}
-
 impl transaction_payment::Config for Runtime {
 	type Event = Event;
 	type OnChargeTransaction =
-		transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime, NativeTreasury>>;
+		transaction_payment::CurrencyAdapter<Balances, StakingPot<Runtime, NativeTreasury>>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
-	type WeightToFee = WeightToFee;
+	type WeightToFee = WeightToFeeConverter;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type FeeMultiplierUpdate =
 		TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
@@ -419,7 +406,7 @@ impl asset_tx_payment::Config for Runtime {
 
 	type ConfigurationOrigin = EnsureRootOrHalfNativeCouncil;
 
-	type ConfigurationExistentialDeposit = common::NativeExistentialDeposit;
+	type ConfigurationExistentialDeposit = NativeExistentialDeposit;
 
 	type PayableCall = Call;
 
@@ -1065,7 +1052,7 @@ impl lending::Config for Runtime {
 	type PalletId = LendingPalletId;
 	type NativeCurrency = Balances;
 	type MaxLiquidationBatchSize = MaxLiquidationBatchSize;
-	type WeightToFee = WeightToFee;
+	type WeightToFee = WeightToFeeConverter;
 }
 
 parameter_types! {
