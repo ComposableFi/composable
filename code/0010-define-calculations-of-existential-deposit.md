@@ -131,7 +131,7 @@ to be possible.
   ) -> DispatchResultWithPostInfo;
   ```
 
-* Additionally, Asset Registry needs to support creating assets with a difined
+* Additionally, Asset Registry needs to support creating assets with a defined
 asset ID. 
 
   ```rust
