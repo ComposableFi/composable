@@ -1,8 +1,9 @@
 use crate::{
 	runtimes::wasmi::{CodeValidation, CosmwasmVM, CosmwasmVMError},
 	version::Version,
-	Config, Error, Pallet,
+	AccountIdOf, Config, Error, Pallet,
 };
+use alloc::string::String;
 
 impl<T: Config> Pallet<T> {
 	/// Check whether a contract export the mandatory IBC functions and is consequently IBC capable.
@@ -37,5 +38,9 @@ impl<T: Config> Pallet<T> {
 		_channel_id: String,
 	) -> Result<(), CosmwasmVMError<T>> {
 		Err(Error::<T>::Unsupported.into())
+	}
+
+	pub(crate) fn do_compute_ibc_contract_port(address: AccountIdOf<T>) -> String {
+		format!("wasm.{}", Pallet::<T>::account_to_cosmwasm_addr(address))
 	}
 }

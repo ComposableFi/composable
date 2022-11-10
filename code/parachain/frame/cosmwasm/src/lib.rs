@@ -932,7 +932,7 @@ pub mod pallet {
 			T::NativeAsset::reserve(who, deposit.saturated_into())
 				.map_err(|_| Error::<T>::NotEnoughFundsForUpload)?;
 			let module = Self::do_load_module(&code)?;
-      let ibc_capable = Self::do_check_ibc_capability(&module);
+			let ibc_capable = Self::do_check_ibc_capability(&module);
 			let instrumented_code = Self::do_instrument_code(module)?;
 			let code_id = CurrentCodeId::<T>::increment()?;
 			CodeHashToId::<T>::insert(code_hash, code_id);
@@ -944,7 +944,7 @@ pub mod pallet {
 					creator: who.clone(),
 					pristine_code_hash: code_hash,
 					instrumentation_version: INSTRUMENTATION_VERSION,
-          ibc_capable,
+					ibc_capable,
 					refcount: 0,
 				},
 			);
@@ -1412,15 +1412,20 @@ pub mod pallet {
 		) -> Result<ContractInfoResponse, CosmwasmVMError<T>> {
 			// TODO: cache or at least check if its current contract and use `self.contract_info`
 			let info = Pallet::<T>::contract_info(&address)?;
-			let code_id = info.code_id;
-			let pinned = vm.shared.cache.code.contains_key(&code_id);
+			let code_info =
+				CodeIdToInfo::<T>::get(&info.code_id).ok_or(Error::<T>::CodeNotFound)?;
+			let ibc_port = if code_info.ibc_capable {
+				Some(Pallet::<T>::do_compute_ibc_contract_port(address))
+			} else {
+				None
+			};
+			let pinned = vm.shared.cache.code.contains_key(&info.code_id);
 			Ok(ContractInfoResponse {
-				code_id,
+				code_id: info.code_id,
 				creator: CosmwasmAccount::<T>::new(info.instantiator.clone()).into(),
 				admin: info.admin.map(|admin| CosmwasmAccount::<T>::new(admin).into()),
 				pinned,
-				// TODO(hussein-aitlahcen): IBC
-				ibc_port: None,
+				ibc_port,
 			})
 		}
 
