@@ -21,7 +21,7 @@ type StatemineAssetDetail = {
   minBalance: number;
   isSufficient: true;
   accounts: number;
-  sufficients: number;
+  sufficients: number; // Cspell:ignore sufficients
   approvals: number;
   isFrozen: boolean;
 };
