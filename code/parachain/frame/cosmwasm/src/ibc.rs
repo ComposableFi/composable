@@ -3,7 +3,11 @@ use crate::{
 	version::Version,
 	AccountIdOf, Config, Error, Pallet,
 };
+<<<<<<< HEAD
 use alloc::{format, string::String};
+=======
+use alloc::string::String;
+>>>>>>> feat(cosmwasm): on query: do return ibc port for ibc capable contracts
 
 impl<T: Config> Pallet<T> {
 	/// Check whether a contract export the mandatory IBC functions and is consequently IBC capable.
