@@ -70,6 +70,16 @@ As the work starts for a `vMajor` (eg: v5) release,
 4. Any reported issues must be fixed on `main` and merged/cherry picked to the `release-v5.4200` branch. Then a tag should be created for the next round and so on until "release-able" version is found.
 5. Node and runtimes are release together from the same tag while other components(eg: fe) must have their own tag/workflows to release.
 
+#### 3.2.1 Frontend releases:
+Frontend releases follows the above guideline, with a few rules:
+- Versioning and Triggers:
+Create a tag `staging-fe-v[MAJOR].[MINOR]-picasso-[FE_VERSION_NUMBER]`
+- To deploy to production, the approved commit should be tagged with: `fe-v[MAJOR].[MINOR]-picasso-[FE_VERSION_NUMBER]`
+
+> Note: [MAJOR] and [MINOR] follows the convention of the branch.
+
+**[FE_VERSION_NUMBER] is a number incremented on each release.**
+
 ## 4. Implementation
 
 The following section lays out the release steps for each release in a checklist form.
