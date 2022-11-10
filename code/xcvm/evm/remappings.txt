@@ -1,0 +1,7 @@
+@ensdomains/=@ensdomains/
+@lazyledger/=@lazyledger/
+@openzeppelin/=@openzeppelin/
+@prb/=@prb/
+ds-test/=lib/forge-std/lib/ds-test/src/
+forge-std/=lib/forge-std/src/
+hardhat/=hardhat/

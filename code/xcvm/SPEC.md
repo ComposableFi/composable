@@ -465,6 +465,7 @@ Each XCVM execution has access to its message `MessageOrigin` and can be configu
 
 The `Gateway` allows for third parties to add their bridges as well, using our open transport protocol (`OTP`), although this is a feature that we will only later make public. `OTP` provides the following functionality
 
+
 - Registration of bridges.
 - Deregistration.
 - Pausing.
