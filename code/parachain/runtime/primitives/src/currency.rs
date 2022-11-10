@@ -330,7 +330,7 @@ impl From<CurrencyId> for xcm::latest::Junction {
 #[cfg(test)]
 mod common_sense {
 	use super::*;
-	use xcm::latest::prelude::*;
+
 	#[test]
 	fn no_wrong_map() {
 		assert_eq!(

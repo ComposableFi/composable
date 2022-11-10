@@ -4,7 +4,6 @@ edition = "2021"
 name = "primitives"
 version = "0.1.0"
 
-
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
 

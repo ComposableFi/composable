@@ -125,7 +125,7 @@ fn update_asset() {
 		assert_eq!(AssetsRegistry::asset_ratio(local_asset_id), Some(ratio));
 
 		let new_decimals = 12;
-		let new_ratio = rational!(42 / 123);
+		let new_ratio = rational!(100500 / 666);
 		assert_ok!(AssetsRegistry::update_asset(
 			Origin::root(),
 			local_asset_id,

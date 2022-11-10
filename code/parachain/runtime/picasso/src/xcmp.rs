@@ -1,59 +1,40 @@
 use super::*;
-use codec::{Decode, Encode};
 use common::{
 	fees::{PriceConverter, WeightToFeeConverter},
 	xcmp::*,
 };
 
-use composable_traits::{
-	defi::Ratio,
-	xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation},
-};
+use composable_traits::xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation};
 use cumulus_primitives_core::{IsSystem, ParaId};
 use frame_support::{
-	construct_runtime, ensure, log, parameter_types,
-	traits::{
-		Contains, Everything, KeyOwnerProofSystem, Nothing, OriginTrait, Randomness, StorageInfo,
-	},
-	weights::{
-		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-		DispatchClass, IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
-		WeightToFeePolynomial,
-	},
-	PalletId, RuntimeDebug, WeakBoundedVec,
+	log, parameter_types,
+	traits::{Everything, Nothing, OriginTrait},
+	weights::Weight,
 };
 use orml_traits::{
-	location::{AbsoluteReserveProvider, RelativeReserveProvider, Reserve},
-	parameter_type_with_key, MultiCurrency,
+	location::{AbsoluteReserveProvider, RelativeReserveProvider},
+	parameter_type_with_key,
 };
 
 use orml_xcm_support::{
-	DepositToAlternative, IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset, OnDepositFail,
+	DepositToAlternative, IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset,
 };
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
-use primitives::currency::WellKnownCurrency;
-use sp_api::impl_runtime_apis;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
-use sp_runtime::{
-	traits::{AccountIdLookup, BlakeTwo256, Convert, ConvertInto, Zero},
-	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, DispatchError,
-};
+
+use sp_runtime::traits::{Convert, Zero};
 use sp_std::marker::PhantomData;
-use xcm::latest::{prelude::*, Error};
+use xcm::latest::prelude::*;
 use xcm_builder::{
 	AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
-	AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, EnsureXcmOrigin, FixedWeightBounds,
-	LocationInverter, ParentIsPreset, RelayChainAsNative, SiblingParachainAsNative,
-	SiblingParachainConvertsVia, SignedAccountId32AsNative, SignedToAccountId32,
-	SovereignSignedViaLocation, TakeRevenue, TakeWeightCredit,
+	AllowTopLevelPaidExecutionFrom, EnsureXcmOrigin, FixedWeightBounds, LocationInverter,
+	ParentIsPreset, RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
+	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeRevenue,
+	TakeWeightCredit,
 };
 use xcm_executor::{
-	traits::{
-		ConvertOrigin, DropAssets, FilterAssetLocation, ShouldExecute, TransactAsset, WeightTrader,
-	},
-	Assets, Config, XcmExecutor,
+	traits::{ConvertOrigin, DropAssets},
+	Assets, XcmExecutor,
 };
 parameter_types! {
 	pub KsmLocation: MultiLocation = MultiLocation::parent();
