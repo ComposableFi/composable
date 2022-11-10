@@ -2,14 +2,7 @@
 
 List of useful to have XCM messages working for testing and playbooks.
 
-General flow for XCM is:
-
-1. Open channels
-2. Register foreign assets or from genesis
-3. Obtain assets (mint or swap on DEX)
-4. Execute XCM transactions
-
-If any of these steps is missing, parachain XCM messages will not work. 
+ For details on the general workflow of XCM and transfers [look here](./ping.plantuml)
 
 ## Transfer
 
@@ -21,7 +14,13 @@ If any of these steps is missing, parachain XCM messages will not work.
 
 [Reserve transfer KSM from Picasso to Kusama to specified account](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rpc.composable.finance#/extrinsics/decode/0x29020101000100010100b8e39e87c0fec96f7d012d31a4c27b44bfb504ab359662112e4270e380c8434101040000000002c2eb0b00000000)
 
-[Reserve transfer assets from Kusama to Karura to specified account](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2F1rpc.io%2Fksm#/extrinsics/decode/0x630201000100411f0100010100b8e39e87c0fec96f7d012d31a4c27b44bfb504ab359662112e4270e380c84341010400000000070010a5d4e800000000)
+[Reserve transfer KSM from Kusama to Karura to specified account](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2F1rpc.io%2Fksm#/extrinsics/decode/0x630201000100411f0100010100b8e39e87c0fec96f7d012d31a4c27b44bfb504ab359662112e4270e380c84341010400000000070010a5d4e800000000)
+
+[Reserve transfer KSM from Testnet Rococo to Dali](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Frococo-rpc.polkadot.io#/extrinsics/decode/0x6308010001009d200100010100b8e39e87c0fec96f7d012d31a4c27b44bfb504ab359662112e4270e380c8434101040000000003ba5cbf480000000000)
+
+[Reserve transfer KSM from Dali to Rococo Testnet](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Frpc.composablefinance.ninja#/extrinsics/decode/0x2c00040000000000000000000000000000001bb8a3720000000000000000000000000101010100b8e39e87c0fec96f7d012d31a4c27b44bfb504ab359662112e4270e380c8434100ca9a3b00000000)
+
+[Low level reserve transfer KSM from Dali to Rococo Testnet](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Frpc.composablefinance.ninja#/extrinsics/decode/0x2903020800040001000056346f1d100100000008130001000056346f1d0107006e2e12010d01000400010100b8e39e87c0fec96f7d012d31a4c27b44bfb504ab359662112e4270e380c843410084d71700000000)
 
 ## Local assets, mint and swap
 
@@ -32,7 +31,6 @@ https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkarura-rpc-0.aca-api.network#/extr
 
 [Mint non payable(not sufficient) asset on Rockmine](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Frococo-rockmine-rpc.polkadot.io#/extrinsics/decode/0x32035222060000b8e39e87c0fec96f7d012d31a4c27b44bfb504ab359662112e4270e380c843410f0000c16ff28623)
 
-
 [Create USDT on local devnet Rockmine](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A10008#/extrinsics/decode/0x02001f1000105553445410555344540600)
 
 [Updated metadata of USDT on local devnet Rockmine](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A10008#/extrinsics/decode/0x02001f1000105553445410555344540600)
@@ -40,6 +38,8 @@ https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkarura-rpc-0.aca-api.network#/extr
 [Make USDT payable on local devnet Rockmine](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A10008#/extrinsics/decode/0x02001f12011f00d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d00d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d00d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d00d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27da10f0100)
 
 [Mint USDT on local devnet Rockmine](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A10008#/extrinsics/decode/0x1f03011f00d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d130000e8890423c78a)
+
+TODO: fail channel here
 
 ## Other
 

@@ -276,6 +276,7 @@ prost
 protoc
 PROTOC
 PTRACE
+radiumblock
 rebag
 rebagged
 rebond
@@ -312,6 +313,7 @@ serayuzgur
 serie
 serokell
 setaf
+sharded
 shortkey
 skinparam
 Sighash
@@ -411,3 +413,6 @@ Origin
 protobufs
 divn
 XCVM
+tmpfs
+nodev
+nosuid

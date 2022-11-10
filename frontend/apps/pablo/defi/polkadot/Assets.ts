@@ -24,6 +24,7 @@ export const Assets: {
     supportedNetwork: {
       karura: null,
       picasso: 1,
+      statemine: null,
     },
   },
   ksm: {
@@ -35,6 +36,7 @@ export const Assets: {
     supportedNetwork: {
       karura: null,
       picasso: 4,
+      statemine: null,
     },
   },
   kusd: {
@@ -46,6 +48,7 @@ export const Assets: {
     supportedNetwork: {
       karura: null,
       picasso: 129,
+      statemine: null,
     },
   },
   layr: {
@@ -57,6 +60,7 @@ export const Assets: {
     supportedNetwork: {
       karura: null,
       picasso: 2,
+      statemine: null,
     },
   },
   pablo: {
@@ -68,6 +72,7 @@ export const Assets: {
     supportedNetwork: {
       karura: null,
       picasso: 201,
+      statemine: null,
     },
   },
 };

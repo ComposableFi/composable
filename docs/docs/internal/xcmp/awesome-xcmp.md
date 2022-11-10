@@ -8,7 +8,7 @@ XCM - Cross Chain Message.
 
 XCMP - XCM passing.
 
-XCMP can be upward (parachain to relay), downward(relay to parachain) and sibling(lateral, parachain to parachain).
+XCMP can be upward (parachain to relay), downward(relay to parachain, parachain to smart contract) and sibling(lateral, parachain to parachain) and anything in v3.
 
 [Moonbeam: Cross-Consensus Messaging (XCM)](https://docs.moonbeam.network/builders/xcm/overview/)
 
@@ -36,11 +36,13 @@ XCMP can be upward (parachain to relay), downward(relay to parachain) and siblin
 
 ## XCMP design
 
-- <https://www.youtube.com/watch?v=cS8GvPGMLS0>
-- <https://www.youtube.com/watch?v=5cgq5jOZx9g>
-- <https://substrate.stackexchange.com/questions/37/how-can-i-transfer-assets-using-xcm>
-- <https://www.youtube.com/watch?v=wrA9vlPjVPE>
-- <https://research.web3.foundation/en/latest/polkadot/XCMP/Opening_closing%20XCMP%20Channel.html>
+- [Gavin Wood: XCM V3: Building a Heterogeneous Sharded Ecosystem | Polkadot Decoded 2022(video)](https://www.youtube.com/watch?v=ccfhYX3AimU)
+- [Substrate Builders Program Office Hours: XCM AMA(video)](https://www.youtube.com/watch?v=cS8GvPGMLS0)
+- [Shawn Tabrizi: XCM - The Backbone Of A Multichain Future | Polkadot Decoded 2022(video)](https://www.youtube.com/watch?v=2tmspefsygQ)
+- [Sub0 Online: Getting Started with XCM - Your First Cross Chain Messages](https://www.youtube.com/watch?v=5cgq5jOZx9g)
+- [How can I transfer assets using XCM?](https://substrate.stackexchange.com/questions/37/how-can-i-transfer-assets-using-xcm)
+- [Sub0.1: Gavin Wood presents Polkadot's cross-chain messaging (XCMP) scheme(2020)](https://www.youtube.com/watch?v=wrA9vlPjVPE)
+- [https://research.web3.foundation/en/latest/polkadot/XCMP/Opening_closing%20XCMP%20Channel.html](https://research.web3.foundation/en/latest/polkadot/XCMP/Opening_closing%20XCMP%20Channel.html)
 - <https://www.youtube.com/watch?v=P_yLrFfmLrU>
 - <https://blog.quarkslab.com/resources/2022-02-27-xcmv2-audit/21-12-908-REP.pdf>
 - [Polkadot Implementers Guide Messaging Overview](https://github.com/paritytech/polkadot/blob/master/roadmap/implementers-guide/src/messaging.md)
@@ -52,16 +54,16 @@ XCMP can be upward (parachain to relay), downward(relay to parachain) and siblin
 
 ## Other parachains usage
 
-- <https://www.youtube.com/watch?v=5mspUoK1aIE>
-- <https://docs.moonbeam.network/builders/xcm/xc20/overview/>
+- [Substrate Seminar: Extending XCM to the off chain world](https://www.youtube.com/watch?v=5mspUoK1aIE)
+- [Overview of XC-20s](https://docs.moonbeam.network/builders/xcm/xc20/overview/)
+- [Statemine XCMP configuration](https://github.com/paritytech/cumulus/blob/master/parachains/runtimes/assets/statemine/src/xcm_config.rs)
+- [Bridging parachains to other ecosystems with Phala's SubBridge](https://www.youtube.com/watch?v=K5i_BpuZAnE)
 
 ## Solution and integrations
 
 - [Subscan XCM (explorer/indexer)](https://picasso.subscan.io/xcm_dashboard)
 - ORML + Cumulus, which does not support out of box access to all XMP and as of now opinionated implementations instructions.
-- <https://www.youtube.com/watch?v=92w8rVXB5q8> extends and enhances to support more `Transact` patterns
-- Checkout Composable [XCVM](../../xcvm/SPEC.md) which
-
+- <https://www.youtube.com/watch?v=92w8rVXB5q8> - extends and enhances to support more `Transact` patterns
 - [Substrate Utilities(decoder/encoder)](https://www.shawntabrizi.com/substrate-js-utilities/)
 - [Account Format Transform](https://polkadot.subscan.io/tools/ss58_transform)
 

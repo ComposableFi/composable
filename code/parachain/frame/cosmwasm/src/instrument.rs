@@ -3,6 +3,10 @@ use parity_wasm::elements::Module;
 use scale_info::TypeInfo;
 use wasm_instrument::gas_metering::{self, Rules};
 
+/// Current instrumentation version
+/// Must be incremented whenever the instrumentation is updated.
+pub const INSTRUMENTATION_VERSION: u16 = 1;
+
 /// Errors that can possibly happen while instrumenting a code.
 #[derive(Clone, Debug, Encode, Decode, TypeInfo)]
 pub enum InstrumentationError {

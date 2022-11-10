@@ -143,12 +143,13 @@ impl CosmwasmVMShared {
 /// This structure hold the state for a single contract.
 /// Note that all [`CosmwasmVM`] share the same [`CosmWasmVMShared`] structure.
 pub struct CosmwasmVM<'a, T: Config> {
-	/// NOTE(hussein-aitlahcen): would be nice to move the host functions to the shared structure.
-	/// but we can't do it, otherwise we introduce a dependency do the lifetime `'a` here. This
-	/// lifetime is used by the host function and when reusing the shared structure for sub-calls,
-	/// the lifetime would be different (lifetime of children live longer than the initial one,
-	/// hence we'll face a compilation issue). This could be solved with HKT or unsafe host
-	/// functions (raw pointer without lifetime). Host functions by index.
+	// NOTE(hussein-aitlahcen): would be nice to move the host functions to the shared structure.
+	// but we can't do it, otherwise we introduce a dependency do the lifetime `'a` here. This
+	// lifetime is used by the host function and when reusing the shared structure for sub-calls,
+	// the lifetime would be different (lifetime of children live longer than the initial one,
+	// hence we'll face a compilation issue). This could be solved with HKT or unsafe host
+	// functions (raw pointer without lifetime).
+	/// Host functions by index.
 	pub host_functions_by_index:
 		BTreeMap<WasmiHostFunctionIndex, WasmiHostFunction<CosmwasmVM<'a, T>>>,
 	/// Host functions by (module, name).
@@ -235,11 +236,37 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 	type QueryCustom = Empty;
 	type MessageCustom = Empty;
 	type ContractMeta = CosmwasmContractMeta<CosmwasmAccount<T>>;
-	type CanonicalAddress = CanonicalCosmwasmAccount<T>;
 	type Address = CosmwasmAccount<T>;
+	type CanonicalAddress = CanonicalCosmwasmAccount<T>;
 	type StorageKey = Vec<u8>;
 	type StorageValue = Vec<u8>;
 	type Error = CosmwasmVMError<T>;
+
+	fn running_contract_meta(&mut self) -> Result<Self::ContractMeta, Self::Error> {
+		log::debug!(target: "runtime::contracts", "contract_meta");
+		Ok(Pallet::<T>::do_running_contract_meta(self))
+	}
+
+	fn db_scan(
+		&mut self,
+		_start: Option<Self::StorageKey>,
+		_end: Option<Self::StorageKey>,
+		_order: cosmwasm_minimal_std::Order,
+	) -> Result<u32, Self::Error> {
+		log::debug!(target: "runtime::contracts", "db_scan");
+		Pallet::<T>::do_db_scan(self)
+	}
+
+	fn db_next(
+		&mut self,
+		iterator_id: u32,
+	) -> Result<(Self::StorageKey, Self::StorageValue), Self::Error> {
+		log::debug!(target: "runtime::contracts", "db_next");
+		match Pallet::<T>::do_db_next(self, iterator_id)? {
+			Some(kv_pair) => Ok(kv_pair),
+			None => Ok((Vec::new(), Vec::new())),
+		}
+	}
 
 	fn set_contract_meta(
 		&mut self,
@@ -256,95 +283,16 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		.map_err(Into::into)
 	}
 
-	fn running_contract_meta(&mut self) -> Result<Self::ContractMeta, Self::Error> {
-		log::debug!(target: "runtime::contracts", "contract_meta");
-		Ok(Pallet::<T>::do_running_contract_meta(self))
-	}
-
 	fn contract_meta(&mut self, address: Self::Address) -> Result<Self::ContractMeta, Self::Error> {
 		log::debug!(target: "runtime::contracts", "code_id");
 		Pallet::<T>::do_contract_meta(address.into_inner())
-	}
-
-	fn debug(&mut self, message: Vec<u8>) -> Result<(), Self::Error> {
-		log::debug!(target: "runtime::contracts", "[CONTRACT-LOG] {}", String::from_utf8_lossy(&message));
-		Ok(())
-	}
-
-	fn addr_validate(&mut self, input: &str) -> Result<Result<(), Self::Error>, Self::Error> {
-		log::debug!(target: "runtime::contracts", "addr_validate");
-		match Pallet::<T>::do_addr_validate(input.into()) {
-			Ok(_) => Ok(Ok(())),
-			Err(e) => Ok(Err(e)),
-		}
-	}
-
-	fn addr_canonicalize(
-		&mut self,
-		input: &str,
-	) -> Result<Result<Self::CanonicalAddress, Self::Error>, Self::Error> {
-		log::debug!(target: "runtime::contracts", "addr_canonicalize");
-		let account = match Pallet::<T>::do_addr_canonicalize(input.into()) {
-			Ok(account) => account,
-			Err(e) => return Ok(Err(e)),
-		};
-
-		Ok(Ok(CosmwasmAccount::new(account).into()))
-	}
-
-	fn addr_humanize(
-		&mut self,
-		addr: &Self::CanonicalAddress,
-	) -> Result<Result<Self::Address, Self::Error>, Self::Error> {
-		log::debug!(target: "runtime::contracts", "addr_humanize");
-		Ok(Ok(Pallet::<T>::do_addr_humanize(addr)))
-	}
-
-	fn secp256k1_recover_pubkey(
-		&mut self,
-		message_hash: &[u8],
-		signature: &[u8],
-		recovery_param: u8,
-	) -> Result<Result<Vec<u8>, ()>, Self::Error> {
-		log::debug!(target: "runtime::contracts", "secp256k1_recover_pubkey");
-		Ok(Pallet::<T>::do_secp256k1_recover_pubkey(message_hash, signature, recovery_param))
-	}
-
-	fn secp256k1_verify(
-		&mut self,
-		message_hash: &[u8],
-		signature: &[u8],
-		public_key: &[u8],
-	) -> Result<bool, Self::Error> {
-		log::debug!(target: "runtime::contracts", "secp256k1_verify");
-		Ok(Pallet::<T>::do_secp256k1_verify(message_hash, signature, public_key))
-	}
-
-	fn ed25519_batch_verify(
-		&mut self,
-		messages: &[&[u8]],
-		signatures: &[&[u8]],
-		public_keys: &[&[u8]],
-	) -> Result<bool, Self::Error> {
-		log::debug!(target: "runtime::contracts", "ed25519_batch_verify");
-		Ok(Pallet::<T>::do_ed25519_batch_verify(messages, signatures, public_keys))
-	}
-
-	fn ed25519_verify(
-		&mut self,
-		message: &[u8],
-		signature: &[u8],
-		public_key: &[u8],
-	) -> Result<bool, Self::Error> {
-		log::debug!(target: "runtime::contracts", "ed25519_verify");
-		Ok(Pallet::<T>::do_ed25519_verify(message, signature, public_key))
 	}
 
 	fn query_continuation(
 		&mut self,
 		address: Self::Address,
 		message: &[u8],
-	) -> Result<cosmwasm_minimal_std::QueryResult, Self::Error> {
+	) -> Result<cosmwasm_vm::executor::QueryResult, Self::Error> {
 		log::debug!(target: "runtime::contracts", "query_continuation");
 		Pallet::<T>::do_query_continuation(self, address.into_inner(), message)
 	}
@@ -386,7 +334,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		&mut self,
 		_: Self::QueryCustom,
 	) -> Result<
-		cosmwasm_minimal_std::SystemResult<cosmwasm_minimal_std::CosmwasmQueryResult>,
+		cosmwasm_minimal_std::SystemResult<cosmwasm_vm::executor::CosmwasmQueryResult>,
 		Self::Error,
 	> {
 		log::debug!(target: "runtime::contracts", "query_custom");
@@ -441,6 +389,11 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		Pallet::<T>::do_query_info(self, address.into_inner())
 	}
 
+	fn debug(&mut self, message: Vec<u8>) -> Result<(), Self::Error> {
+		log::debug!(target: "runtime::contracts", "[CONTRACT-LOG] {}", String::from_utf8_lossy(&message));
+		Ok(())
+	}
+
 	fn db_read(
 		&mut self,
 		key: Self::StorageKey,
@@ -473,25 +426,33 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		}
 	}
 
-	fn db_scan(
-		&mut self,
-		_start: Option<Self::StorageKey>,
-		_end: Option<Self::StorageKey>,
-		_order: cosmwasm_minimal_std::Order,
-	) -> Result<u32, Self::Error> {
-		log::debug!(target: "runtime::contracts", "db_scan");
-		Pallet::<T>::do_db_scan(self)
+	fn addr_validate(&mut self, input: &str) -> Result<Result<(), Self::Error>, Self::Error> {
+		log::debug!(target: "runtime::contracts", "addr_validate");
+		match Pallet::<T>::do_addr_validate(input.into()) {
+			Ok(_) => Ok(Ok(())),
+			Err(e) => Ok(Err(e)),
+		}
 	}
 
-	fn db_next(
+	fn addr_canonicalize(
 		&mut self,
-		iterator_id: u32,
-	) -> Result<(Self::StorageKey, Self::StorageValue), Self::Error> {
-		log::debug!(target: "runtime::contracts", "db_next");
-		match Pallet::<T>::do_db_next(self, iterator_id)? {
-			Some(kv_pair) => Ok(kv_pair),
-			None => Ok((Vec::new(), Vec::new())),
-		}
+		input: &str,
+	) -> Result<Result<Self::CanonicalAddress, Self::Error>, Self::Error> {
+		log::debug!(target: "runtime::contracts", "addr_canonicalize");
+		let account = match Pallet::<T>::do_addr_canonicalize(input.into()) {
+			Ok(account) => account,
+			Err(e) => return Ok(Err(e)),
+		};
+
+		Ok(Ok(CosmwasmAccount::new(account).into()))
+	}
+
+	fn addr_humanize(
+		&mut self,
+		addr: &Self::CanonicalAddress,
+	) -> Result<Result<Self::Address, Self::Error>, Self::Error> {
+		log::debug!(target: "runtime::contracts", "addr_humanize");
+		Ok(Ok(Pallet::<T>::do_addr_humanize(addr)))
 	}
 
 	fn abort(&mut self, message: String) -> Result<(), Self::Error> {
@@ -563,6 +524,69 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		} else {
 			Err(CosmwasmVMError::OutOfGas)
 		}
+	}
+
+	fn secp256k1_verify(
+		&mut self,
+		message_hash: &[u8],
+		signature: &[u8],
+		public_key: &[u8],
+	) -> Result<bool, Self::Error> {
+		log::debug!(target: "runtime::contracts", "secp256k1_verify");
+		Ok(Pallet::<T>::do_secp256k1_verify(message_hash, signature, public_key))
+	}
+
+	fn secp256k1_recover_pubkey(
+		&mut self,
+		message_hash: &[u8],
+		signature: &[u8],
+		recovery_param: u8,
+	) -> Result<Result<Vec<u8>, ()>, Self::Error> {
+		log::debug!(target: "runtime::contracts", "secp256k1_recover_pubkey");
+		Ok(Pallet::<T>::do_secp256k1_recover_pubkey(message_hash, signature, recovery_param))
+	}
+
+	fn ed25519_verify(
+		&mut self,
+		message: &[u8],
+		signature: &[u8],
+		public_key: &[u8],
+	) -> Result<bool, Self::Error> {
+		log::debug!(target: "runtime::contracts", "ed25519_verify");
+		Ok(Pallet::<T>::do_ed25519_verify(message, signature, public_key))
+	}
+
+	fn ed25519_batch_verify(
+		&mut self,
+		messages: &[&[u8]],
+		signatures: &[&[u8]],
+		public_keys: &[&[u8]],
+	) -> Result<bool, Self::Error> {
+		log::debug!(target: "runtime::contracts", "ed25519_batch_verify");
+		Ok(Pallet::<T>::do_ed25519_batch_verify(messages, signatures, public_keys))
+	}
+
+	fn ibc_transfer(
+		&mut self,
+		channel_id: String,
+		to_address: String,
+		amount: Coin,
+		timeout: cosmwasm_minimal_std::ibc::IbcTimeout,
+	) -> Result<(), Self::Error> {
+		Pallet::<T>::do_ibc_transfer(self, channel_id, to_address, amount, timeout)
+	}
+
+	fn ibc_send_packet(
+		&mut self,
+		channel_id: String,
+		data: cosmwasm_minimal_std::Binary,
+		timeout: cosmwasm_minimal_std::ibc::IbcTimeout,
+	) -> Result<(), Self::Error> {
+		Pallet::<T>::do_ibc_send_packet(self, channel_id, data, timeout)
+	}
+
+	fn ibc_close_channel(&mut self, channel_id: String) -> Result<(), Self::Error> {
+		Pallet::<T>::do_ibc_close_channel(self, channel_id)
 	}
 }
 

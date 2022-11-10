@@ -71,7 +71,7 @@ export const useTransfer = () => {
           });
         },
         (txHash, records) => {
-          if (api.events.xcmPallet) {
+          if (api.events.xcmPallet || api.events.polkadotXcm) {
             xcmPalletEventParser(
               records,
               api,

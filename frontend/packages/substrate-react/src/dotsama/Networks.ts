@@ -1,9 +1,29 @@
-import { ParachainId, ParachainNetwork, RelayChainId, RelaychainNetwork } from "./types";
+import {
+  ParachainId,
+  ParachainNetwork,
+  RelayChainId,
+  RelaychainNetwork
+} from "./types";
 
 export type ParachainNetworks = {
   [parachainId in ParachainId]: ParachainNetwork;
-}
+};
 export const ParachainNetworks: ParachainNetworks = {
+  statemine: {
+    name: "Statemine",
+    wsUrl: "rpc=wss://statemine.public.curie.radiumblock.xyz/ws",
+    tokenId: "ksm",
+    prefix: 2,
+    accountType: "*25519",
+    subscanUrl: "",
+    decimals: 12,
+    color: "#113911",
+    symbol: "KSM",
+    logo:
+      "https://raw.githubusercontent.com/TalismanSociety/chaindata/2778d4b989407a2e9fca6ae897fe849561f74afe/assets/statemine/logo.svg",
+    parachainId: 1000,
+    relayChain: "kusama"
+  },
   picasso: {
     name: "Picasso",
     wsUrl: "wss://picasso-rpc.composable.finance",
