@@ -11,20 +11,15 @@ use composable_support::abstractions::utils::increment::Increment;
 use core::marker::PhantomData;
 use cosmwasm_minimal_std::Coin;
 use cosmwasm_vm::{
-	executor::{
-		ibc::{IbcChannelConnect, IbcChannelOpen},
-		ExecuteInput, InstantiateInput, MigrateInput,
-	},
+	executor::{ExecuteInput, InstantiateInput, MigrateInput},
 	system::{
 		cosmwasm_system_entrypoint, cosmwasm_system_run, CosmwasmCallVM, CosmwasmCodeId,
 		StargateCosmwasmCallVM,
 	},
-	vm::VMBase,
+	vm::VmErrorOf,
 };
 use cosmwasm_vm_wasmi::WasmiVM;
 use frame_support::ensure;
-
-pub type VmErrorOf<T> = <T as VMBase>::Error;
 
 /// State machine for entrypoint calls like `instantiate`, `migrate`, etc.
 pub struct EntryPointCaller<S: CallerState> {
