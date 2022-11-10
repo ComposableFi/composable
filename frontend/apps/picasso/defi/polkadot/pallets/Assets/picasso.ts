@@ -13,13 +13,13 @@ export async function picassoAssetsList(
 ): Promise<PicassoRpcAsset[]> {
   try {
     const assetsList = await api.rpc.assets.listAssets();
-    return assetsList.map((asset) => {
+    return assetsList.map(asset => {
       return {
         name: asset.name.toUtf8(),
         id: new BigNumber(asset.id.toString()),
-        decimals: asset.id.toNumber(),
+        decimals: asset.decimals.toNumber(),
         foreignId: asset.foreignId,
-        existentialDeposit: null,
+        existentialDeposit: null
       };
     });
   } catch (err) {

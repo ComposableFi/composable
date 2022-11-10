@@ -14,7 +14,7 @@ export const SUBSTRATE_NETWORKS: {
     subscanUrl: "",
     decimals: 12,
     symbol: "KSM",
-    logo: "/networks/kusama.svg",
+    logo: "/networks/kusama.svg"
   },
   picasso: {
     relayChain: "kusama",
@@ -26,7 +26,7 @@ export const SUBSTRATE_NETWORKS: {
     subscanUrl: "",
     decimals: 12,
     symbol: "PICA",
-    logo: "/networks/picasso.svg",
+    logo: "/networks/picasso.svg"
   },
   karura: {
     relayChain: "kusama",
@@ -38,8 +38,20 @@ export const SUBSTRATE_NETWORKS: {
     subscanUrl: "",
     decimals: 12,
     symbol: "KAR",
-    logo: "/networks/karura.svg",
+    logo: "/networks/karura.svg"
   },
+  statemine: {
+    relayChain: "kusama",
+    parachainId: 1000,
+    name: "Statemine",
+    wsUrl: getEnvironment("statemine"),
+    tokenId: "ksm",
+    ss58Format: 2,
+    subscanUrl: "",
+    symbol: "KSM",
+    logo: "/networks/statemine.svg",
+    decimals: 12
+  }
 };
 export const SUBSTRATE_NETWORK_IDS: Array<SubstrateNetworkId> = Object.keys(
   SUBSTRATE_NETWORKS

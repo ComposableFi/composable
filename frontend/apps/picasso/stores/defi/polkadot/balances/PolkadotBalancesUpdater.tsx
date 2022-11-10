@@ -7,30 +7,32 @@ import {
   ParachainId,
   RelayChainId,
   useDotSamaContext,
-  useEagerConnect,
+  useEagerConnect
 } from "substrate-react";
 
 import {
   subscribeKaruraBalance,
   subscribeNativeBalance,
   subscribePicassoBalanceByAssetId,
+  subscribeStatemineBalance
 } from "@/defi/polkadot/pallets/Balances";
 import { TokenMetadata } from "../tokens/slice";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import {
   karuraAssetsList,
-  picassoAssetsList,
+  picassoAssetsList
 } from "@/defi/polkadot/pallets/Assets";
 import { VoidFn } from "@polkadot/api/types";
 import { AcalaPrimitivesCurrencyCurrencyId } from "@acala-network/types/interfaces/types-lookup";
 import { ApiPromise } from "@polkadot/api";
 import { kusamaAssetsList } from "@/defi/polkadot/pallets/Assets/kusama";
+import { statemineAssetList } from "@/defi/polkadot/pallets/Assets/statemine";
 
 const PolkadotBalancesUpdater = () => {
   useEagerConnect("picasso");
   useEagerConnect("karura");
 
-  const isLoaded = useStore((state) => state.substrateTokens.isLoaded);
+  const isLoaded = useStore(state => state.substrateTokens.isLoaded);
 
   const updateTokens = useStore(
     ({ substrateTokens }) => substrateTokens.updateTokens
@@ -50,7 +52,7 @@ const PolkadotBalancesUpdater = () => {
     selectedAccount,
     parachainProviders,
     relaychainProviders,
-    connectedAccounts,
+    connectedAccounts
   } = useDotSamaContext();
 
   /**
@@ -61,21 +63,30 @@ const PolkadotBalancesUpdater = () => {
    */
   useEffect(() => {
     callbackGate(
-      async (_picaApi, _karApi, _kusamaApi) => {
+      async (_picaApi, _karApi, _kusamaApi, _statemineApi) => {
+        const statemineAssetMetadataList = await statemineAssetList(
+          _statemineApi
+        );
         const picaAssetMetadataList = await picassoAssetsList(_picaApi);
         const karuraAssetMetadataList = await karuraAssetsList(_karApi);
         const kusamaAssetMetadata = await kusamaAssetsList(_kusamaApi);
         updateTokens(
           picaAssetMetadataList,
           karuraAssetMetadataList,
+          statemineAssetMetadataList,
           kusamaAssetMetadata
         );
       },
       parachainProviders.picasso.parachainApi,
       parachainProviders.karura.parachainApi,
-      relaychainProviders.kusama.parachainApi
+      relaychainProviders.kusama.parachainApi,
+      parachainProviders.statemine.parachainApi
     );
-  }, [parachainProviders, updateTokens]);
+  }, [
+    parachainProviders,
+    relaychainProviders.kusama.parachainApi,
+    updateTokens
+  ]);
 
   const picassoBalanceSubscriber = useCallback(
     async (
@@ -90,11 +101,11 @@ const PolkadotBalancesUpdater = () => {
             api,
             account.address,
             tokenMetadata,
-            (balance) => {
+            balance => {
               updateBalance({
                 network: chainId as SubstrateNetworkId,
                 tokenId: tokenMetadata.id,
-                balance,
+                balance
               });
             }
           );
@@ -128,7 +139,7 @@ const PolkadotBalancesUpdater = () => {
               chainId,
               SUBSTRATE_NETWORKS[chainId as SubstrateNetworkId].tokenId,
               updateBalance
-            ).then((subscription) => {
+            ).then(subscription => {
               subscriptionList.push(subscription);
             });
           }
@@ -137,7 +148,7 @@ const PolkadotBalancesUpdater = () => {
 
       return function unsubNativeBalances() {
         console.log("Clearing Native Subscriptions. ", subscriptionList.length);
-        return subscriptionList.forEach((x) => {
+        return subscriptionList.forEach(x => {
           x?.();
         });
       };
@@ -150,7 +161,7 @@ const PolkadotBalancesUpdater = () => {
     selectedAccount,
     connectedAccounts,
     updateBalance,
-    clearBalance,
+    clearBalance
   ]);
 
   // Subscribe non-native token balances
@@ -166,8 +177,8 @@ const PolkadotBalancesUpdater = () => {
     }
 
     Object.entries(parachainProviders).forEach(([chainId, chain]) =>
-      callbackGate((api) => {
-        Object.values(tokens).forEach((asset) => {
+      callbackGate(api => {
+        Object.values(tokens).forEach(asset => {
           switch (chainId) {
             case "picasso":
               if (SUBSTRATE_NETWORKS.picasso.tokenId !== asset.id) {
@@ -189,23 +200,37 @@ const PolkadotBalancesUpdater = () => {
                   api,
                   connectedAccounts.karura[selectedAccount].address,
                   asset,
-                  (balance) => {
+                  balance => {
                     updateBalance({
                       network: chainId as SubstrateNetworkId,
                       tokenId: asset.id,
-                      balance,
+                      balance
                     });
                   }
                 );
               }
               break;
+            case "statemine":
+              subscribeStatemineBalance(
+                api,
+                connectedAccounts.statemine[selectedAccount].address,
+                asset,
+                chainId,
+                balance => {
+                  updateBalance({
+                    network: chainId as SubstrateNetworkId,
+                    tokenId: asset.id,
+                    balance
+                  });
+                }
+              );
             default:
               break;
           }
         });
 
         return () => {
-          unsubList.forEach((unsub) => {
+          unsubList.forEach(unsub => {
             unsub.then((call: any) => call?.());
           });
         };

@@ -3,7 +3,9 @@ import { useStore } from "@/stores/root";
 import {
   AcalaPrimitivesCurrencyCurrencyId,
   XcmVersionedMultiAsset,
+  XcmVersionedMultiAssets,
 } from "@acala-network/types/interfaces/types-lookup";
+import { toChainIdUnit } from "shared";
 
 export const subscribeMultiAsset = async (allProviders: AllProviders) => {
   return useStore.subscribe(
@@ -41,6 +43,38 @@ export const subscribeMultiAsset = async (allProviders: AllProviders) => {
               }),
             ],
           }) as XcmVersionedMultiAsset
+        );
+      }
+
+      if (from === "statemine") {
+        set(
+          <XcmVersionedMultiAssets>api.createType("XcmVersionedMultiAssets", {
+            V1: [
+              {
+                id: {
+                  Concrete: {
+                    parents: 0,
+                    interior: {
+                      X2: [
+                        {
+                          PalletInstance: 50,
+                        },
+                        {
+                          GeneralIndex:
+                            useStore.getState().substrateTokens.tokens[
+                              selectedToken
+                            ].chainId.statemine,
+                        },
+                      ],
+                    },
+                  },
+                },
+                fun: {
+                  Fungible: amountToTransfer.toString(),
+                },
+              },
+            ],
+          })
         );
       }
 
