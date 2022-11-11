@@ -7,13 +7,13 @@ import {
   IconButton,
   useTheme,
 } from "@mui/material";
-import React from "react";
+import { FC } from "react";
 
 export type ModalProps = DialogProps & {
   dismissible?: boolean;
 };
 
-export const Modal: React.FC<ModalProps> = ({
+export const Modal: FC<ModalProps> = ({
   dismissible = false,
   children,
   open,
