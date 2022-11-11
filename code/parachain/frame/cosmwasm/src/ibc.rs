@@ -9,7 +9,10 @@ use alloc::{
 	string::{String, ToString},
 };
 
-use cosmwasm_minimal_std::ibc::{IbcChannelOpenMsg, IbcOrder};
+use cosmwasm_minimal_std::{
+	ibc::{IbcChannelOpenMsg, IbcOrder},
+	ContractResult,
+};
 use cosmwasm_vm::executor::{cosmwasm_call_serialize, ibc::IbcChannelOpen, ExecuteInput};
 use cosmwasm_vm_wasmi::WasmiVM;
 use sp_std::{marker::PhantomData, str::FromStr};
@@ -97,6 +100,58 @@ pub struct Router<T: Config> {
 }
 
 impl<T: Config> Router<T> {
+	fn port_to_address(port_id: &PortId) -> Result<<T as Config>::AccountIdExtended, IbcError> {
+		let address_part = Self::parse_address_part(port_id)?;
+		let address =
+			<Pallet<T>>::cosmwasm_addr_to_account(address_part.to_string()).map_err(|_| {
+				IbcError::implementation_specific("contract for port not found".to_string())
+			})?;
+		Ok(address)
+	}
+
+	fn relayer_executor(
+		vm: &mut crate::runtimes::wasmi::CosmwasmVMShared,
+		address: <T as Config>::AccountIdExtended,
+		contract_info: crate::types::ContractInfo<
+			<T as Config>::AccountIdExtended,
+			frame_support::BoundedVec<u8, <T as Config>::MaxContractLabelSize>,
+			frame_support::BoundedVec<u8, <T as Config>::MaxContractTrieIdSize>,
+		>,
+	) -> Result<WasmiVM<CosmwasmVM<T>>, IbcError> {
+		let mut executor = <Pallet<T>>::cosmwasm_new_vm(
+			vm,
+			T::IbcRelayerAccount::get(),
+			address,
+			contract_info,
+			Default::default(),
+		)
+		.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
+		Ok(executor)
+	}
+
+	fn to_ibc_contract(
+		address: &<T as Config>::AccountIdExtended,
+	) -> Result<
+		crate::types::ContractInfo<
+			<T as Config>::AccountIdExtended,
+			frame_support::BoundedVec<u8, <T as Config>::MaxContractLabelSize>,
+			frame_support::BoundedVec<u8, <T as Config>::MaxContractTrieIdSize>,
+		>,
+		IbcError,
+	> {
+		let contract_info = <Pallet<T>>::contract_info(&address).map_err(|_| {
+			IbcError::implementation_specific("contract for desired port not found".to_string())
+		})?;
+		let ibc_capable = <CodeIdToInfo<T>>::get(contract_info.code_id)
+			.expect("all contract have code because of RC; qed")
+			.ibc_capable;
+		ensure!(
+			ibc_capable,
+			IbcError::implementation_specific("contract is not IBC capable".to_string())
+		);
+		Ok(contract_info)
+	}
+
 	fn parse_address_part(port_id: &PortId) -> Result<&str, IbcError> {
 		let port_id = port_id.as_str();
 		let mut prefix_address = port_id.split('.');
@@ -130,25 +185,9 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		version: &IbcVersion,
 		// weight_limit: Weight,
 	) -> Result<(), IbcError> {
-		let address_part = Self::parse_address_part(port_id)?;
+		let address = Self::port_to_address(port_id)?;
 
-		let address =
-			<Pallet<T>>::cosmwasm_addr_to_account(address_part.to_string()).map_err(|_| {
-				IbcError::implementation_specific("contract for port not found".to_string())
-			})?;
-
-		let contract_info = <Pallet<T>>::contract_info(&address).map_err(|_| {
-			IbcError::implementation_specific("contract for desired port not found".to_string())
-		})?;
-
-		let ibc_capable = <CodeIdToInfo<T>>::get(contract_info.code_id)
-			.expect("all contract have code because of RC; qed")
-			.ibc_capable;
-
-		ensure!(
-			ibc_capable,
-			IbcError::implementation_specific("contract is not IBC capable".to_string())
-		);
+		let contract_info = Self::to_ibc_contract(&address)?;
 
 		let message = {
 			use cosmwasm_minimal_std::ibc::{IbcChannel, IbcChannelOpenMsg, IbcEndpoint, IbcOrder};
@@ -171,20 +210,18 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 
 		let gas = u64::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
-		let mut vm = <Pallet<T>>::cosmwasm_new_vm(
-			&mut vm,
-			T::IbcRelayerAccount::get(),
-			address,
-			contract_info,
-			Default::default(),
+		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
+		cosmwasm_call_serialize::<IbcChannelOpen, WasmiVM<CosmwasmVM<T>>, IbcChannelOpenMsg>(
+			&mut executor,
+			&message,
 		)
-		.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
-
-		let _ =
-			cosmwasm_call_serialize::<IbcChannelOpen, WasmiVM<CosmwasmVM<T>>, IbcChannelOpenMsg>(
-				&mut vm, &message,
-			)
-			.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
+		.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))
+		.map(|x| match x.0 {
+			ContractResult::Ok(_) => Ok(()),
+			ContractResult::Err(err) =>
+				Err(IbcError::implementation_specific(format!("{:?}", err))),
+		})??;
+		let _remaining = vm.gas.remaining();
 		Ok(())
 	}
 
@@ -192,15 +229,55 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		&mut self,
 		_output: &mut ModuleOutputBuilder,
 		order: Order,
-		_connection_hops: &[ConnectionId],
-		_port_id: &PortId,
-		_channel_id: &ChannelId,
-		_counterparty: &Counterparty,
-		_version: &IbcVersion,
-		_counterparty_version: &IbcVersion,
+		connection_hops: &[ConnectionId],
+		port_id: &PortId,
+		channel_id: &ChannelId,
+		counterparty: &Counterparty,
+		version: &IbcVersion,
+		counterparty_version: &IbcVersion,
 	) -> Result<IbcVersion, IbcError> {
 		let order = map_order(order);
-		Err(IbcError::implementation_specific("unimplemented!".to_string()))
+		let address = Self::port_to_address(port_id)?;
+		let contract_info = Self::to_ibc_contract(&address)?;
+
+		let message = {
+			use cosmwasm_minimal_std::ibc::{IbcChannel, IbcChannelOpenMsg, IbcEndpoint, IbcOrder};
+			IbcChannelOpenMsg::OpenInit {
+				channel: IbcChannel {
+					endpoint: IbcEndpoint {
+						channel_id: channel_id.to_string(),
+						port_id: port_id.to_string(),
+					},
+					counterparty_endpoint: IbcEndpoint {
+						port_id: counterparty.port_id.to_string(),
+						channel_id: counterparty.channel_id.expect("channel").to_string(),
+					},
+					order,
+					version: version.to_string(),
+					connection_id: connection_hops[0].to_string(),
+				},
+			}
+		};
+
+		let gas = u64::MAX;
+		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
+		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
+		let result = cosmwasm_call_serialize::<
+			IbcChannelOpen,
+			WasmiVM<CosmwasmVM<T>>,
+			IbcChannelOpenMsg,
+		>(&mut executor, &message)
+		.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))
+		.map(|x| match x.0 {
+			ContractResult::Ok(version) => Ok(version),
+			ContractResult::Err(err) =>
+				Err(IbcError::implementation_specific(format!("{:?}", err))),
+		})??
+		.map(|x| IbcVersion::new(x.version.to_string()))
+		.unwrap_or(version.clone());
+		let _remaining = vm.gas.remaining();
+
+		Ok(result)
 	}
 }
 
