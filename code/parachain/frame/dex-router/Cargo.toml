@@ -4,7 +4,7 @@ edition = "2021"
 homepage = "https://composable.finance"
 name = "pallet-dex-router"
 rust-version = "1.56"
-version = "0.0.1"
+version = "1.10000.0"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
@@ -40,7 +40,7 @@ frame-benchmarking = { default-features = false, git = "https://github.com/parit
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "504d11bd1af3613a0e66b47b99713675e9b6bd10" }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "504d11bd1af3613a0e66b47b99713675e9b6bd10", default-features = false }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-pallet-currency-factory = { version = "0.0.1", path = "../currency-factory" }
+pallet-currency-factory = { version = "1.10000.0", path = "../currency-factory" }
 pallet-pablo = { path = "../pablo", default-features = false }
 pallet-staking-rewards = { path = "../staking-rewards", default-features = false }
 pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
