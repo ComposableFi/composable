@@ -1,4 +1,4 @@
-# Frequently Occurring Issues
+# Troubleshooting
 
 This document intends to record frequently occurring issues running our Nix setup and how to fix
 them. Please note that this list is not exhaustive and only suggests some known fixes that may not
