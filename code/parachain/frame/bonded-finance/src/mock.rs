@@ -154,7 +154,8 @@ impl pallet_vesting::Config for Runtime {
 	type Event = Event;
 	type Currency = Tokens;
 	type MinVestedTransfer = MinVestedTransfer;
-	type VestedTransferOrigin = EnsureAliceOrBob;
+	type VestedTransferOrigin = EnsureRoot<AccountId>;
+	type UpdateSchedulesOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = ();
 	type MaxVestingSchedules = MaxVestingSchedule;
 	type Moment = Moment;

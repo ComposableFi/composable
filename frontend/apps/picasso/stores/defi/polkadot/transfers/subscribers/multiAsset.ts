@@ -5,7 +5,6 @@ import {
   XcmVersionedMultiAsset,
   XcmVersionedMultiAssets,
 } from "@acala-network/types/interfaces/types-lookup";
-import { toChainIdUnit } from "shared";
 
 export const subscribeMultiAsset = async (allProviders: AllProviders) => {
   return useStore.subscribe(
@@ -47,35 +46,56 @@ export const subscribeMultiAsset = async (allProviders: AllProviders) => {
       }
 
       if (from === "statemine") {
-        set(
-          <XcmVersionedMultiAssets>api.createType("XcmVersionedMultiAssets", {
-            V1: [
-              {
-                id: {
-                  Concrete: {
-                    parents: 0,
-                    interior: {
-                      X2: [
-                        {
-                          PalletInstance: 50,
-                        },
-                        {
-                          GeneralIndex:
-                            useStore.getState().substrateTokens.tokens[
-                              selectedToken
-                            ].chainId.statemine,
-                        },
-                      ],
+        if (selectedToken === "usdt") {
+          set(
+            <XcmVersionedMultiAssets>api.createType("XcmVersionedMultiAssets", {
+              V1: [
+                {
+                  id: {
+                    Concrete: {
+                      parents: 0,
+                      interior: {
+                        X2: [
+                          {
+                            PalletInstance: 50,
+                          },
+                          {
+                            GeneralIndex:
+                              useStore.getState().substrateTokens.tokens[
+                                selectedToken
+                              ].chainId.statemine,
+                          },
+                        ],
+                      },
                     },
                   },
+                  fun: {
+                    Fungible: amountToTransfer.toString(),
+                  },
                 },
-                fun: {
-                  Fungible: amountToTransfer.toString(),
+              ],
+            })
+          );
+        }
+        if (selectedToken === "ksm") {
+          set(
+            <XcmVersionedMultiAssets>api.createType("XcmVersionedMultiAssets", {
+              V1: [
+                {
+                  id: {
+                    Concrete: {
+                      parents: 1,
+                      interior: "Here",
+                    },
+                  },
+                  fun: {
+                    Fungible: amountToTransfer.toString(),
+                  },
                 },
-              },
-            ],
-          })
-        );
+              ],
+            })
+          );
+        }
       }
 
       if (from === "karura" && to === "picasso") {

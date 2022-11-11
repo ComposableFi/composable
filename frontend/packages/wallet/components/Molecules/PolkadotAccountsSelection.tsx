@@ -2,23 +2,25 @@ import { Box, Button, useTheme } from "@mui/material";
 import { useState } from "react";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import { PolkadotAccountListItem } from "./PolkadotAccountListItem";
-import React from "react";
 
 export const PolkadotAccountsSelection = ({
   accounts,
   onSelect,
   selectedAccount,
   disconnectWallet,
+  closeConnectionModal,
 }: {
   accounts: InjectedAccountWithMeta[];
   onSelect: (account: InjectedAccountWithMeta) => void;
   selectedAccount?: InjectedAccountWithMeta;
   disconnectWallet: (() => Promise<void>) | undefined;
+  closeConnectionModal: () => void;
 }) => {
   const theme = useTheme();
   const [selectedActiveAccount, setSelectedActiveAccount] = useState<
     InjectedAccountWithMeta | undefined
   >(selectedAccount);
+
   return (
     <>
       <Box
@@ -48,6 +50,7 @@ export const PolkadotAccountsSelection = ({
         onClick={() => {
           if (selectedActiveAccount) {
             onSelect(selectedActiveAccount);
+            closeConnectionModal();
           }
         }}
         sx={{ marginTop: theme.spacing(2) }}

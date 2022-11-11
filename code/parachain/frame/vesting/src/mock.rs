@@ -159,6 +159,7 @@ impl Config for Runtime {
 	type Currency = Tokens;
 	type MinVestedTransfer = MinVestedTransfer;
 	type VestedTransferOrigin = EnsureRoot<AccountId>;
+	type UpdateSchedulesOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = ();
 	type MaxVestingSchedules = MaxVestingSchedule;
 	type Moment = Moment;
