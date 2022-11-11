@@ -41,17 +41,20 @@ export function xcmPalletEventParser(
       boolean.fold(
         () => {
           closeSnackbar(snackbarKey);
-          enqueueSnackbar("Transfer failed", {
-            persist: true,
-            description: "XcmV2TraitsOutcome: Incomplete",
-            variant: "error",
-            isCloseable: true,
-            url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
-          });
+          enqueueSnackbar(
+            "Transfer failed, could not confirm transaction on-chain.",
+            {
+              persist: true,
+              description: "XcmV2TraitsOutcome: Incomplete",
+              variant: "error",
+              isCloseable: true,
+              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
+            }
+          );
         },
         () => {
           closeSnackbar(snackbarKey);
-          enqueueSnackbar("Transfer executed successfully.", {
+          enqueueSnackbar("Transfer successful!", {
             persist: true,
             variant: "success",
             isCloseable: true,
