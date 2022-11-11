@@ -33,9 +33,7 @@ export function useValidation({
 
   const validate: (
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => void = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  ) => void = (event) => {
     const eventValue = event.target.value;
 
     if (!eventValue.length) {

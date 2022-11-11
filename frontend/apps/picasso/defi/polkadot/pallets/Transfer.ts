@@ -74,8 +74,11 @@ export function calculateTransferAmount({
     ? amountToTransfer.minus(sourceGas.fee)
     : amountToTransfer;
   // Is account going to be removed after transfer?
-  const willReap = balance.minus(amountMinusGas).lt(sourceExistentialDeposit);
-
+  const willReap = balance
+    .minus(gasTokenEqSelected ? sourceGas.fee : ZERO)
+    .minus(amountToTransfer)
+    .minus(sourceExistentialDeposit)
+    .lt(sourceExistentialDeposit);
   // If we should keep alive, deduct existential deposit from the amount to transfer
   // NOTE: This should happen only if amount is MAX balance.
   const requiredKeepAliveValue =

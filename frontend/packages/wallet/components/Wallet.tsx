@@ -1,11 +1,16 @@
-import React from "react";
 import { useState } from "react";
 import { ConnectionStatus } from "./ConnectionStatus";
 import { ConnectionModal } from "./ConnectionModal";
 import { WalletViewModal } from "./WalletViewModal";
 import { ConnectorType } from "bi-lib";
 import { DotSamaExtensionStatus, SupportedWalletId } from "substrate-react";
-import { BlockchainNetwork, EthereumWallet, NetworkId, PolkadotWallet, WalletConnectStep } from "../types";
+import {
+  BlockchainNetwork,
+  EthereumWallet,
+  NetworkId,
+  PolkadotWallet,
+  WalletConnectStep,
+} from "../types";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import BigNumber from "bignumber.js";
 
@@ -24,7 +29,7 @@ export type WalletProps = {
   isEthereumWalletActive: boolean;
   polkadotAccounts: Array<InjectedAccountWithMeta>;
   polkadotExtensionStatus: DotSamaExtensionStatus;
-  connectedWalletTransactions: Array<{ title: string; timestamp: number; }>;
+  connectedWalletTransactions: Array<{ title: string; timestamp: number }>;
   selectedPolkadotAccount: InjectedAccountWithMeta | undefined;
   supportedEthereumWallets: Array<EthereumWallet>;
   supportedPolkadotWallets: Array<PolkadotWallet>;
@@ -47,7 +52,7 @@ export const Wallet: React.FC<WalletProps> = ({
   supportedEthereumWallets,
   connectedAccountNativeBalance,
   connectedWalletTransactions,
-  ethereumConnectorInUse
+  ethereumConnectorInUse,
 }) => {
   const label =
     isEthereumWalletActive || polkadotExtensionStatus === "connected"
@@ -59,13 +64,13 @@ export const Wallet: React.FC<WalletProps> = ({
     WalletConnectStep.SelectNetwork
   );
 
-  const selectedPolkadotWallet = supportedPolkadotWallets.find(x => {
-    return x.walletId === localStorage.getItem("wallet-id")
+  const selectedPolkadotWallet = supportedPolkadotWallets.find((x) => {
+    return x.walletId === localStorage.getItem("wallet-id");
   });
 
-  const selectedEthereumWallet = supportedEthereumWallets.find(x => {
-    return x.walletId === ethereumConnectorInUse
-  })
+  const selectedEthereumWallet = supportedEthereumWallets.find((x) => {
+    return x.walletId === ethereumConnectorInUse;
+  });
 
   return (
     <>
@@ -115,11 +120,11 @@ export const Wallet: React.FC<WalletProps> = ({
         selectedPolkadotWallet={selectedPolkadotWallet}
         onDisconnectDotsamaWallet={onDisconnectDotsamaWallet}
         onDisconnectEthereum={onDisconnectEthereum}
-        ethereumNetwork={blockchainNetworksSupported.find(x => {
-          return x.networkId === NetworkId.Ethereum
+        ethereumNetwork={blockchainNetworksSupported.find((x) => {
+          return x.networkId === NetworkId.Ethereum;
         })}
-        polkadotNetwork={blockchainNetworksSupported.find(x => {
-          return x.networkId === NetworkId.Polkadot
+        polkadotNetwork={blockchainNetworksSupported.find((x) => {
+          return x.networkId === NetworkId.Polkadot;
         })}
         onConnectPolkadot={() => {
           setWalletConnectStep(WalletConnectStep.SelectedDotsamaWallet);
@@ -140,10 +145,9 @@ export const Wallet: React.FC<WalletProps> = ({
         connectedEthereumAccount={ethereumConnectedAccount}
         selectedPolkadotAccount={selectedPolkadotAccount}
         open={isOpenWalletViewModal}
-        onClose={(evt, reason) => {
+        onClose={(_evt, _reason) => {
           setIsOpenWalletViewModal(false);
         }}
-
       />
     </>
   );
