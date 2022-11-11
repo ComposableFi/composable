@@ -30,7 +30,8 @@ import { pipe } from "fp-ts/function";
 import { option } from "fp-ts";
 
 const Transfers: NextPage = () => {
-  const { amount, setAmount, from, balance, transfer, to } = useTransfer();
+  const { setAmount, from, balance, transfer, to } = useTransfer();
+  const amount = useStore((state) => state.transfers.amount);
   const allProviders = useAllParachainProviders();
 
   const tokens = useStore((state) => state.substrateTokens.tokens);

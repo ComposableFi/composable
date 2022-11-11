@@ -106,7 +106,7 @@ export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bignrValue]);
 
-  // Update internal value based on external amount changes. (post transfer hooks, etc)
+  // Update internal value based on external amount changes. (post transfer hooks, etc.)
   useEffect(() => {
     if (!amount.eq(bignrValue)) {
       setValue(amount);
