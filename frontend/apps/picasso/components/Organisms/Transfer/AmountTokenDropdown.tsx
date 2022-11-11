@@ -7,7 +7,7 @@ import {
   subscribeDefaultTransferToken,
   subscribeTokenOptions,
 } from "@/stores/defi/polkadot/transfers/subscribers";
-import React, { FC, useEffect } from "react";
+import React, { FC, useEffect, useMemo } from "react";
 import { useValidation } from "@/components/Molecules/BigNumberInput/hooks";
 import { Tooltip, Typography } from "@mui/material";
 import { calculateTransferAmount } from "@/defi/polkadot/pallets/Transfer";
@@ -43,12 +43,6 @@ export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
   const tokens = useStore((state) => state.substrateTokens.tokens);
   const existentialDeposit = tokens[selectedToken].existentialDeposit[from];
   const keepAlive = useStore((state) => state.transfers.keepAlive);
-  const { validate, hasError, stringValue, bignrValue, setValue } =
-    useValidation({
-      maxValue: balance,
-      maxDec: 12,
-      initialValue: amount,
-    });
   const fee = useStore((state) => state.transfers.fee);
   const feeToken = useStore((state) => state.transfers.feeToken);
   const sourceGas = {
@@ -60,10 +54,10 @@ export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
     () => true
   );
 
-  const handleMaxClick = () => {
-    callbackGate(
+  const maxAmountToTransfer = useMemo(() => {
+    return callbackGate(
       (api, _existentialDeposit) => {
-        const amountToTransfer = calculateTransferAmount({
+        return calculateTransferAmount({
           amountToTransfer: balance,
           balance: balance,
           keepAlive,
@@ -71,11 +65,28 @@ export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
           sourceExistentialDeposit: _existentialDeposit,
           sourceGas,
         });
-        setValue(amountToTransfer);
       },
       fromProvider.parachainApi,
       existentialDeposit
     );
+  }, [
+    balance,
+    existentialDeposit,
+    fromProvider.parachainApi,
+    keepAlive,
+    selectedToken,
+    sourceGas,
+  ]);
+
+  const { validate, hasError, stringValue, bignrValue, setValue } =
+    useValidation({
+      maxValue: maxAmountToTransfer,
+      maxDec: 12,
+      initialValue: amount,
+    });
+
+  const handleMaxClick = () => {
+    setValue(maxAmountToTransfer);
   };
 
   useEffect(() => {
