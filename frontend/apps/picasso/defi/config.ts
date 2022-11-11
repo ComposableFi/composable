@@ -45,9 +45,9 @@ export const TRANSFER_ASSET_LIST: AllowedTransferList = {
     statemine: ["usdt"],
   },
   statemine: {
-    picasso: ["usdt"],
+    picasso: ["usdt", "ksm"],
     kusama: [],
     karura: [],
     statemine: [],
-  }
+  },
 };
