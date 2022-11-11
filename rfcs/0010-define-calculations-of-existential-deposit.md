@@ -25,9 +25,6 @@ extensibility in the future.
   substantial for ED. In other words, a user cannot "delete" their balance when 
   they convert it into another asset.
 
-* The implementation of our ED value retrieval should allow for the overwriting
-  of the standard ED value defined in this document.
-
 ## Method
 
 ### Initial Standard ED Value
@@ -75,14 +72,11 @@ assert(asset_a_ed_as_native == asset_b_ed_as_native)
 assert(native_as_asset_b == asset_a_as_asset_b)
 ```
 
-### Overwriting & Asset Registry Storage
+### Well-Known Assets & Asset Registry Storage
 
 For a asset to have its ED be correctly calculated, and therefore to exists on 
-chain, it should have its `foreign_asset_ratio` defined and stored.
-
-If the need arises, an optional ED value can be provided to an asset within
-Asset Registry. This will have priority over the default ED calculation and will
-be evaluated as is.
+chain, it should have its `foreign_asset_ratio` defined in either our Well-Known 
+assets list, or stored in Asset Registry.
 
 ## Implementation
 
@@ -90,7 +84,8 @@ be evaluated as is.
 
 The current implementation of `multi_existential_deposits` does the following:
   
-  1. If an ED is defined for an asset in Asset Registry, return the ED as is.
+  1. **If an ED is defined for an asset in Asset Registry, return the ED as 
+     is.**
   
   2. **Otherwise, pull a hard-coded ED from a `match` statement**.
   
@@ -99,10 +94,8 @@ The current implementation of `multi_existential_deposits` does the following:
     
 It should be updated as follows:
 
-  1. If an ED is defined for an asset in Asset Registry, return the ED as is.
-  
-  2. **If a asset ratio is defined for an asset in Asset Registry, calculate the
-     standard ED as defined by this document.**
+  1. **If a asset ratio is defined for an asset in Asset Registry or as a 
+     well-known asset, calculate the standard ED as defined by this document.**
   
   3. If no matches are found, return `Balance::MAX` which will prune unknown
      assets.
@@ -125,7 +118,6 @@ to be possible.
   pub fn register_asset(
     origin: OriginFor<T>,
     location: T::ForeignAssetId,
-    ed: Option<T::Balance>, // Used to be required
     ratio: Ratio, // Used to be optional
     decimals: Option<Exponent>,
   ) -> DispatchResultWithPostInfo;
@@ -139,7 +131,6 @@ asset ID.
     origin: OriginFor<T>,
     asset_id: T::AssetId,
     location: T::ForeignAssetId,
-    ed: Option<T::Balance>, // Used to be required
     ratio: Ratio, // Used to be optional
     decimals: Option<Exponent>,
   ) -> DispatchResultWithPostInfo;
@@ -147,7 +138,7 @@ asset ID.
 
 ## Quality Assurance
 
-* Manually changing the values of different EDs is not the standard. By default
+* Manually changing the values of different EDs is not supported. By default
   EDs should behave as defined in this document.
 
 ## Questions
