@@ -21,6 +21,7 @@ use crate::runtimes::wasmi::InitialStorageMutability;
 use frame_support::{
 	ensure,
 	traits::{Get, UnixTime},
+	weights::Weight,
 	RuntimeDebug,
 };
 use ibc::core::{
@@ -208,7 +209,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 			}
 		};
 
-		let gas = u64::MAX;
+		let gas = Weight::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
 		cosmwasm_call_serialize::<IbcChannelOpen, WasmiVM<CosmwasmVM<T>>, IbcChannelOpenMsg>(
@@ -259,7 +260,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 			}
 		};
 
-		let gas = u64::MAX;
+		let gas = Weight::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
 		let result = cosmwasm_call_serialize::<
@@ -276,7 +277,6 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		.map(|x| IbcVersion::new(x.version.to_string()))
 		.unwrap_or(version.clone());
 		let _remaining = vm.gas.remaining();
-
 		Ok(result)
 	}
 }
@@ -294,7 +294,7 @@ impl<T: Config + Send + Sync + Default> IbcModuleRouter for Router<T> {
 		&mut self,
 		module_id: &impl core::borrow::Borrow<ModuleId>,
 	) -> Option<&mut dyn IbcModule> {
-		if module_id.borrow() == &ModuleId::from_str("cosmwasm").expect("constant") {
+		if module_id.borrow() == &into_module_id::<T>() {
 			return Some(self)
 		}
 
@@ -302,28 +302,16 @@ impl<T: Config + Send + Sync + Default> IbcModuleRouter for Router<T> {
 	}
 
 	fn has_route(module_id: &impl sp_std::borrow::Borrow<ModuleId>) -> bool {
-		module_id.borrow() == &ModuleId::from_str("cosmwasm").expect("constant")
+		module_id.borrow() == &into_module_id::<T>() 
 	}
 
 	fn lookup_module_by_port(port_id: &PortId) -> Option<ModuleId> {
-		let address_part = Self::parse_address_part(port_id).ok()?;
-
-		let address = <Pallet<T>>::cosmwasm_addr_to_account(address_part.to_string())
-			.map_err(|_| {
-				IbcError::implementation_specific("contract for port not found".to_string())
-			})
-			.ok()?;
-
-		let contract_info = <Pallet<T>>::contract_info(&address)
-			.map_err(|_| {
-				IbcError::implementation_specific("contract for desired port not found".to_string())
-			})
-			.ok()?;
-
-		let ibc_capable = <CodeIdToInfo<T>>::get(contract_info.code_id)
-			.expect("all contract have code because of RC; qed")
-			.ibc_capable;
-
-		Some(ModuleId::from_str("cosmwasm").expect("constant"))
+		let address = Self::port_to_address(port_id).ok()?;
+		let _ = Self::to_ibc_contract(&address).ok()?;
+		Some(into_module_id::<T>())
 	}
+}
+
+fn into_module_id<T: Config + Send + Sync + Default>() -> ModuleId {
+	ModuleId::from_str(&String::from_utf8_lossy(&T::PalletId::get().0[..])).expect("constant")
 }
