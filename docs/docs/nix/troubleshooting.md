@@ -51,7 +51,7 @@ $ bash -c 'ulimit -n 10000; nix run github:composablefi/composable#devnet-dali`
 
 ## Nix run command does not respect `nix.conf` configuration.
 
-If you're running Nix on a non-NixOS Linux, even if your config file(s) are set up correctly, 
+If you're running Nix on a non-NixOS Linux distribution, even if your config file(s) are set up correctly, 
 you may encounter some or all of the following issues:
 
 ```
