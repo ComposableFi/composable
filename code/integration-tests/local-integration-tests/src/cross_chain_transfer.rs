@@ -1,19 +1,14 @@
-use crate::{
-	assert_lt_by,
-	helpers::*,
-	kusama_test_net::{KusamaRelay, Sibling, This, PICA, SIBLING_PARA_ID, THIS_PARA_ID},
-	prelude::*,
-};
 use codec::Encode;
 use common::{AccountId, Balance};
-use composable_traits::{currency::RangeId, rational};
-
+use composable_support::rational_64;
+use composable_traits::currency::RangeId;
+use frame_support::{
+	assert_ok, log, traits::fungibles::Inspect as MultiInspect,
+	weights::constants::WEIGHT_PER_MILLIS,
+};
 use frame_system::RawOrigin;
-
 use num_traits::Zero;
 use orml_traits::currency::MultiCurrency;
-
-use frame_support::{assert_ok, log, weights::constants::WEIGHT_PER_MILLIS};
 use primitives::currency::*;
 use sp_runtime::{assert_eq_error_rate, traits::AccountIdConversion, MultiAddress};
 use xcm::latest::prelude::*;
@@ -21,7 +16,12 @@ use xcm_builder::ParentIsPreset;
 use xcm_emulator::TestExt;
 use xcm_executor::{traits::Convert, XcmExecutor};
 
-use frame_support::traits::fungibles::Inspect as MultiInspect;
+use crate::{
+	assert_lt_by,
+	helpers::*,
+	kusama_test_net::{KusamaRelay, Sibling, This, PICA, SIBLING_PARA_ID, THIS_PARA_ID},
+	prelude::*,
+};
 
 #[test]
 fn reserve_transfer_from_relay_alice_bob() {
@@ -140,7 +140,7 @@ fn transfer_this_native_to_sibling_overridden() {
 				1,
 				X1(Parachain(THIS_PARA_ID),)
 			)),
-			Some(rational!(1 / 1)),
+			Some(rational_64!(1 / 1)),
 			None,
 		));
 	});
@@ -190,7 +190,7 @@ fn transfer_non_native_reserve_asset_from_this_to_sibling() {
 				1,
 				X2(Parachain(THIS_PARA_ID), GeneralIndex(CurrencyId::PBLO.into()),)
 			)),
-			Some(Rational64::one()),
+			Some(rational_64!(1 / 1)),
 			None,
 		));
 	});
@@ -235,7 +235,7 @@ fn transfer_non_native_reserve_asset_from_this_to_sibling_by_local_id_overridden
 				1,
 				X2(Parachain(THIS_PARA_ID), GeneralIndex(CurrencyId::PBLO.into()),)
 			)),
-			Some(Rational64::one()),
+			Some(rational_64!(1 / 1)),
 			None,
 		));
 	});
@@ -288,7 +288,7 @@ fn this_native_transferred_from_sibling_to_native_is_not_enough() {
 			root.into(),
 			location.clone(),
 			1000,
-			Some(Rational64::one()),
+			Some(rational_64!(1 / 1)),
 			None,
 		)
 		.unwrap();
@@ -986,7 +986,7 @@ fn sibling_trap_assets_works() {
 			RawOrigin::Root.into(),
 			any_asset,
 			remote,
-			Some(Rational64::one()),
+			Some(rational_64!(1 / 1)),
 			None
 		));
 		(balance, sibling_non_native_amount)
@@ -1062,7 +1062,7 @@ fn sibling_shib_to_transfer() {
 			root.into(),
 			sibling_asset_id,
 			location,
-			Some(Rational64::one()),
+			Some(rational_64!(1 / 1)),
 			Some(SHIB::EXPONENT),
 		)
 		.expect("Asset already in Currency Factory; QED");
@@ -1092,7 +1092,7 @@ fn sibling_shib_to_transfer() {
 			root.into(),
 			location,
 			1000,
-			Some(Rational64::one()),
+			Some(rational_64!(1 / 1)),
 			Some(SHIB::EXPONENT),
 		)
 		.expect("Asset details are valid; QED");

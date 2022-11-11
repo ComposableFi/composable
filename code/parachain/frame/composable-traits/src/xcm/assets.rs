@@ -1,5 +1,6 @@
 //! Interfaces to managed assets
 use codec::{Decode, Encode, MaxEncodedLen};
+use composable_support::types::rational::Rational64;
 use frame_support::{dispatch::DispatchResult, pallet_prelude::ConstU32, WeakBoundedVec};
 use polkadot_parachain::primitives::Id;
 use scale_info::TypeInfo;
@@ -8,10 +9,7 @@ use serde::{Deserialize, Serialize};
 use sp_std::vec::Vec;
 use xcm::latest::MultiLocation;
 
-use crate::{
-	assets::Asset,
-	currency::{Exponent, Rational64},
-};
+use crate::{assets::Asset, currency::Exponent};
 
 /// works only with concrete assets
 #[derive(Debug, Encode, Decode, Clone, PartialEq, Eq, TypeInfo)]

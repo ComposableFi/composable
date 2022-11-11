@@ -5,9 +5,11 @@ use sp_runtime::{
 	ArithmeticError,
 };
 
-/// Thin wrapper around [`multiply_by_rational`], transforming any errors into [`ArithmeticError`]
-/// for easier use in pallets and Dispatch-related contexts. See [`multiply_by_rational`] for more
-/// information.
+/// Thin wrapper around [`multiply_by_rational_with_rounding`], transforming any errors into
+/// [`ArithmeticError`] for easier use in pallets and Dispatch-related contexts. See
+/// [`multiply_by_rational_with_rounding`] for more information.
+///
+/// Computes a * b / c, rounding down.
 ///
 /// Note: [`multiply_by_rational`] clamps `c` at a minimum of `1`, which can be confusing.
 /// [`safe_multiply_by_rational`] instead returns a divide by zero error if `c == 0`.
