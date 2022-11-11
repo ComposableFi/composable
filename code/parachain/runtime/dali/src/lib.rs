@@ -921,6 +921,7 @@ impl vesting::Config for Runtime {
 	type MaxVestingSchedules = MaxVestingSchedule;
 	type MinVestedTransfer = MinVestedTransfer;
 	type VestedTransferOrigin = EnsureRootOrHalfNativeCouncil;
+	type UpdateSchedulesOrigin = EnsureRootOrHalfNativeCouncil;
 	type WeightInfo = weights::vesting::WeightInfo<Runtime>;
 	type Moment = Moment;
 	type Time = Timestamp;
