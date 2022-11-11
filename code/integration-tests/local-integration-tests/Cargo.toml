@@ -45,9 +45,9 @@ collective = { package = "pallet-collective", git = "https://github.com/parityte
 democracy = { package = "pallet-democracy", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
 indices = { package = "pallet-indices", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
 membership = { package = "pallet-membership", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
-orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "377213f750755cc48e80a3131eaae63b5eda8362", default-features = false }
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "377213f750755cc48e80a3131eaae63b5eda8362", default-features = false }
-orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "377213f750755cc48e80a3131eaae63b5eda8362", default-features = false }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "504d11bd1af3613a0e66b47b99713675e9b6bd10", default-features = false }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "504d11bd1af3613a0e66b47b99713675e9b6bd10", default-features = false }
+orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "504d11bd1af3613a0e66b47b99713675e9b6bd10", default-features = false }
 randomness-collective-flip = { package = "pallet-randomness-collective-flip", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
 scheduler = { package = "pallet-scheduler", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
 session = { package = "pallet-session", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
