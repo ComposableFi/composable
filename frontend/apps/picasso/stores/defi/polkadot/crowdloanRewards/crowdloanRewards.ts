@@ -64,13 +64,13 @@ export async function fetchAssociations(
  * @param {string} connectedAddress address in ss58 or ethereum format
  * @returns {CrowdloanContributionRecord} { [<address>]: { totalRewards: BigNumber, contributedAmount: BigNumber } }
  */
-export function fetchContributionAndRewardsFromJSON(
+export async function fetchContributionAndRewardsFromJSON(
   connectedAddress: string
-): CrowdloanContributionRecord {
+): Promise<CrowdloanContributionRecord> {
   let crowdloanContributionRecord: CrowdloanContributionRecord = {};
 
-  let totalRewards = presentInRewards(connectedAddress, process.env.NODE_ENV);
-  let totalContributed = presentInContributors(
+  let totalRewards = await presentInRewards(connectedAddress, process.env.NODE_ENV);
+  let totalContributed = await presentInContributors(
     connectedAddress,
     process.env.NODE_ENV
   );
