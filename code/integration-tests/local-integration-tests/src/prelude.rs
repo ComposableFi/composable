@@ -6,8 +6,7 @@ pub use common::{
 	AccountId,
 };
 pub use composable_traits::{
-	currency::{AssetExistentialDepositInspect, AssetRatioInspect, CurrencyFactory, Rational64},
-	rational,
+	currency::{AssetExistentialDepositInspect, AssetRatioInspect, CurrencyFactory},
 	xcm::assets::XcmAssetLocation,
 };
 pub use cumulus_primitives_core::ParaId;

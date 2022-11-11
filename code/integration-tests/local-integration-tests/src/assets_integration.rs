@@ -1,5 +1,6 @@
 ///! tests that various assets integration scenarios work well
 use crate::{helpers::*, kusama_test_net::This, prelude::*};
+use composable_support::rational_64;
 use composable_traits::xcm::assets::XcmAssetLocation;
 
 use frame_system::RawOrigin;
@@ -15,7 +16,7 @@ fn updated_assets_registry_works_well_for_ratios() {
 			RawOrigin::Root.into(),
 			CurrencyId(42),
 			XcmAssetLocation(MultiLocation::new(1, X1(Parachain(666)))),
-			Some(Rational64::from(10, 1)),
+			Some(rational_64!(10 / 1)),
 			None,
 		)
 		.unwrap();
@@ -23,7 +24,7 @@ fn updated_assets_registry_works_well_for_ratios() {
 			RawOrigin::Root.into(),
 			CurrencyId(123),
 			XcmAssetLocation(MultiLocation::new(1, X1(Parachain(4321)))),
-			Some(Rational64::from(10, 100)),
+			Some(rational_64!(10 / 100)),
 			None,
 		)
 		.unwrap();
@@ -47,7 +48,7 @@ fn registered_assets_with_smaller_than_native_price() {
 			RawOrigin::Root.into(),
 			XcmAssetLocation(MultiLocation::new(1, X1(Parachain(666)))),
 			42,
-			Some(Rational64::from(10, 1)),
+			Some(rational_64!(10 / 1)),
 			None,
 		)
 		.unwrap();
@@ -78,7 +79,7 @@ fn registered_assets_with_larger_than_native_price() {
 			RawOrigin::Root.into(),
 			XcmAssetLocation(MultiLocation::new(1, X1(Parachain(666)))),
 			42,
-			Some(Rational64::from(10, 100)),
+			Some(rational_64!(10 / 100)),
 			None,
 		)
 		.unwrap();
