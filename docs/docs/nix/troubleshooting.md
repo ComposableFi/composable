@@ -41,7 +41,7 @@ This change will permanently mount the `/tmp` directory with a fixed size of 16G
 
 ## Too many open files
 
-If you encounter a `Too many open files` error, we need to increase this limit.
+If you encounter a `Too many open files` error, this limit needs to be increased.
 
 The easiest way is to modify the `run` command with the `ulimit` command. Like the following:
 
@@ -51,8 +51,8 @@ $ bash -c 'ulimit -n 10000; nix run github:composablefi/composable#devnet-dali`
 
 ## Nix run command does not respect `nix.conf` configuration.
 
-If you're running nix on non-NixOS Linux, you may encounter some or all of the following issues, even if your
-config file(s) are set up correctly:
+If you're running Nix on a non-NixOS Linux, even if your config file(s) are set up correctly, 
+you may encounter some or all of the following issues:
 
 ```
 experimental Nix feature is disabled. 
