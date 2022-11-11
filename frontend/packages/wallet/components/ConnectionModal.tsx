@@ -108,7 +108,7 @@ export const ConnectionModal: React.FC<ConnectionModalProps> = ({
         key={wallet.walletId}
         onClick={(walletId: SupportedWalletId) => {
           onConnectPolkadotWallet(walletId)
-            .then((_walletConnected) => {
+            .then(() => {
               setWalletConnectStep(WalletConnectStep.SelectDotsamaAccount);
             })
             .catch((err) => {
