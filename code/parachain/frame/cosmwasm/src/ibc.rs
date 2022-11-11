@@ -4,18 +4,15 @@ use crate::{
 	version::Version,
 	AccountIdOf, CodeIdToInfo, Config, ContractMessageOf, Error, Pallet,
 };
-use alloc::{format, string::String};
-use alloc::string::{String, ToString};
-
-use cosmwasm_vm::{
-    executor::{
-        ibc::{ IbcChannelOpenInput, 
-		}
-	}
+use alloc::{
+	format,
+	string::{String, ToString},
 };
-use cosmwasm_vm::executor::{cosmwasm_call_serialize, ibc::{IbcChannelOpen, IbcChannelOpenInput}, ExecuteInput};
-use sp_std::{marker::PhantomData, str::FromStr};
 
+use cosmwasm_minimal_std::ibc::{IbcChannelOpenMsg, IbcOrder};
+use cosmwasm_vm::executor::{cosmwasm_call_serialize, ibc::IbcChannelOpen, ExecuteInput};
+use cosmwasm_vm_wasmi::WasmiVM;
+use sp_std::{marker::PhantomData, str::FromStr};
 
 use crate::runtimes::wasmi::InitialStorageMutability;
 use frame_support::{
@@ -37,7 +34,6 @@ use ibc_primitives::{IbcHandler, SendPacketData};
 use pallet_ibc::routing::ModuleRouter as IbcModuleRouter;
 
 const PORT_PREFIX: &str = "wasm";
->>>>>>> draft
 
 impl<T: Config> Pallet<T> {
 	/// Check whether a contract export the mandatory IBC functions and is consequently IBC capable.
@@ -64,9 +60,10 @@ impl<T: Config> Pallet<T> {
 		data: cosmwasm_minimal_std::Binary,
 		_timeout: cosmwasm_minimal_std::ibc::IbcTimeout,
 	) -> Result<(), CosmwasmVMError<T>> {
-		let port_id =
-			PortId::from_str(&Self::do_ibc_contract_port(vm.contract_address.as_ref().clone()))
-				.expect("address is port; qed");
+		let port_id = PortId::from_str(&Self::do_compute_ibc_contract_port(
+			vm.contract_address.as_ref().clone(),
+		))
+		.expect("address is port; qed");
 		let channel_id = ChannelId::from_str(&channel_id)
 			.map_err(|_| CosmwasmVMError::<T>::Ibc("unsupported channel name".to_string()))?;
 
@@ -89,12 +86,8 @@ impl<T: Config> Pallet<T> {
 		Err(Error::<T>::Unsupported.into())
 	}
 
-<<<<<<< HEAD
 	pub(crate) fn do_compute_ibc_contract_port(address: AccountIdOf<T>) -> String {
 		format!("wasm.{}", Pallet::<T>::account_to_cosmwasm_addr(address))
-=======
-	pub(crate) fn do_ibc_contract_port(address: AccountIdOf<T>) -> String {
-		format!("{}.{}", PORT_PREFIX, Pallet::<T>::account_to_cosmwasm_addr(address))
 	}
 }
 
@@ -169,11 +162,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 						port_id: counterparty.port_id.to_string(),
 						channel_id: counterparty.channel_id.expect("channel").to_string(),
 					},
-					order: match order {
-						Order::None => unimplemented!("bridge: team what we should do with it? it is neither by spec nor cosmwasm knows this (Order::OrderedAllowTimeout  is in spec)"),
-						Order::Unordered => IbcOrder::Unordered,
-						Order::Ordered => IbcOrder::Unordered,
-					},
+					order: map_order(order),
 					version: version.to_string(),
 					connection_id: connection_hops[0].to_string(),
 				},
@@ -191,14 +180,18 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		)
 		.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
 
-		cosmwasm_call_serialize::<IbcChannelOpenInput, _, _>(&mut vm, &message);
+		let _ =
+			cosmwasm_call_serialize::<IbcChannelOpen, WasmiVM<CosmwasmVM<T>>, IbcChannelOpenMsg>(
+				&mut vm, &message,
+			)
+			.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
 		Ok(())
 	}
 
 	fn on_chan_open_try(
 		&mut self,
 		_output: &mut ModuleOutputBuilder,
-		_order: Order,
+		order: Order,
 		_connection_hops: &[ConnectionId],
 		_port_id: &PortId,
 		_channel_id: &ChannelId,
@@ -206,8 +199,17 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		_version: &IbcVersion,
 		_counterparty_version: &IbcVersion,
 	) -> Result<IbcVersion, IbcError> {
+		let order = map_order(order);
 		Err(IbcError::implementation_specific("unimplemented!".to_string()))
 	}
+}
+
+fn map_order(order: Order) -> IbcOrder {
+	match order {
+						    Order::None => unimplemented!("bridge: team what we should do with it? it is neither by spec nor cosmwasm knows this (Order::OrderedAllowTimeout  is in spec)"),
+						    Order::Unordered => IbcOrder::Unordered,
+						    Order::Ordered => IbcOrder::Unordered,
+					    }
 }
 
 impl<T: Config + Send + Sync + Default> IbcModuleRouter for Router<T> {
@@ -246,6 +248,5 @@ impl<T: Config + Send + Sync + Default> IbcModuleRouter for Router<T> {
 			.ibc_capable;
 
 		Some(ModuleId::from_str("cosmwasm").expect("constant"))
->>>>>>> draft
 	}
 }

@@ -47,9 +47,6 @@ impl CallerState for InstantiateInput {}
 
 impl CallerState for ExecuteInput {}
 
-#[cfg(feature = "ibc")]
-impl CallerState for IbcChannelOpen {}
-
 impl<I, O, T: Config> CallerState for Dispatchable<I, O, T> {}
 
 /// Setup state for `instantiate` entrypoint.
@@ -99,30 +96,6 @@ impl EntryPointCaller<InstantiateInput> {
 				contract_info,
 				entry_point: EntryPoint::Instantiate,
 				output: contract,
-				marker: PhantomData,
-			},
-		})
-	}
-}
-
-#[cfg(feature = "ibc")]
-impl EntryPointCaller<IbcChannelOpen> {
-	/// Prepares for `execute` entrypoint call.
-	///
-	/// * `executor` - Address of the account that calls this entrypoint.
-	/// * `contract` - Address of the contract to be called.
-	pub(crate) fn setup<T: Config>(
-		executor: AccountIdOf<T>,
-		contract: AccountIdOf<T>,
-	) -> Result<EntryPointCaller<Dispatchable<IbcChannelOpen, (), T>>, Error<T>> {
-		let contract_info = Pallet::<T>::contract_info(&contract)?;
-		Ok(EntryPointCaller {
-			state: Dispatchable {
-				entry_point: EntryPoint::IbcChannelOpen,
-				sender: executor,
-				contract,
-				contract_info,
-				output: (),
 				marker: PhantomData,
 			},
 		})
