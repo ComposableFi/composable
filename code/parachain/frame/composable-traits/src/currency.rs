@@ -147,6 +147,7 @@ pub trait MathBalance:
 	+ Copy
 {
 }
+
 impl<
 		T: PartialOrd
 			+ Zero
@@ -162,4 +163,12 @@ impl<
 {
 }
 
-pub trait AssetIdLike = FullCodec + MaxEncodedLen + Copy + Eq + PartialEq + Debug + TypeInfo;
+pub trait AssetIdLike:
+	FullCodec + MaxEncodedLen + Copy + Eq + PartialEq + Debug + TypeInfo
+{
+}
+
+impl<T> AssetIdLike for T where
+	T: FullCodec + MaxEncodedLen + Copy + Eq + PartialEq + Debug + TypeInfo
+{
+}
