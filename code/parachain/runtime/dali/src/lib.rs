@@ -1369,12 +1369,9 @@ impl_runtime_apis! {
 
 			foreign_assets.iter().fold(assets, |mut acc, foreign_asset| {
 				if let Some(i) = acc.iter().position(|asset_i| asset_i.id == foreign_asset.id) {
-					match acc.get_mut(i) {
-						Some(asset) => {
-							asset.decimals = foreign_asset.decimals;
-							asset.foreign_id = foreign_asset.foreign_id.clone();
-						},
-						_ => {},
+					if let Some(asset) = acc.get_mut(i) {
+						asset.decimals = foreign_asset.decimals;
+						asset.foreign_id = foreign_asset.foreign_id.clone();
 					}
 				} else {
 					acc.push(foreign_asset.clone())
