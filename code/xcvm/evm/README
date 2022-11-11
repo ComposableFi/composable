@@ -1,0 +1,33 @@
+# EVM
+
+## Installation
+
+1. Install [foundry](https://github.com/foundry-rs/foundry
+
+
+## Run tests
+1. `cd xcvm/evm`
+2. `forge test`
+
+
+EVM based call payload structure
+For xcvm call instruction, the payload field contains information such the encoded function and parameters, additionally for evm based
+calls, the destination should be included.
+```
+Call {
+    payload: encode(swap(10,(1,2))),
+    bindings: [(13, BindingValue::Self)],
+}
+```
+In this case, current EVM implementation for the payload is structured as follows:
+(1)|swap(10,(2,3)), where (1) is the place reserved for the address, the address could be interpolated if needed.
+
+Call {
+    payload: address|encode(swap(10,(1,2))),
+    bindings: [(13, BindingValue::Self)],
+}
+```
+
+the payload should be interpolated first with binding values. then the address will be extracted, the actual function call payload
+will be encoded afterward.
+
