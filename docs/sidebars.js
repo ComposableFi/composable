@@ -241,7 +241,7 @@ const sidebars = {
             'nix/defining-your-own-packages',
             'nix/composing-services-with-arion',
             'nix/editing-docs',
-            'nix/frequently-occurring-issues',
+            'nix/troubleshooting',
           ],
         },
         {
