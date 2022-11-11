@@ -639,7 +639,7 @@ impl currency_factory::Config for Runtime {
 parameter_types! {
 	pub const CrowdloanRewardsId: PalletId = PalletId(*b"pal_crow");
 	pub const CrowdloanRewardsLockId: LockIdentifier = *b"clr_lock";
-	pub const InitialPayment: Perbill = Perbill::from_percent(25);
+	pub const InitialPayment: Perbill = Perbill::from_percent(50);
 	pub const OverFundedThreshold: Perbill = Perbill::from_percent(1);
 	pub const VestingStep: Moment = (7 * DAYS as Moment) * (MILLISECS_PER_BLOCK as Moment);
 	pub const Prefix: &'static [u8] = b"picasso-";
