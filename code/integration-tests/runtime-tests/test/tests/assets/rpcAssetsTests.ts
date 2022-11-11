@@ -94,10 +94,10 @@ describe("[SHORT] rpc.assets Tests", function () {
 
     // Update KSM
     await sendAndWaitForSuccess(
-        api,
-        sudoKey,
-        api.events.sudo.Sudid.is,
-        api.tx.sudo.sudo(api.tx.assetsRegistry.updateAsset(4, { parents: 1, interior: "Here" }, 200_000, 8))
+      api,
+      sudoKey,
+      api.events.sudo.Sudid.is,
+      api.tx.sudo.sudo(api.tx.assetsRegistry.updateAsset(4, { parents: 1, interior: "Here" }, 200_000, 8))
     );
 
     resultAfterUpdate = await RpcAssetsTests.rpcListAssetsTest(api);
