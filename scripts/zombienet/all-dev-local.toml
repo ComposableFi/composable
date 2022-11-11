@@ -1,0 +1,107 @@
+[settings]
+node_spawn_timeout = 120
+provider = "native"
+timeout = 600
+
+[relaychain]
+chain = "rococo-local"
+default_args = ["-lparachain=debug"]
+default_command = "../../../../paritytech/polkadot/target/release/polkadot"
+
+[relaychain.genesis.runtime.runtime_genesis_config.configuration.config]
+max_validators_per_core = 2
+needed_approvals = 2
+
+[[relaychain.nodes]]
+name = "alice"
+rpc_port = 30444
+validator = true
+ws_port = 9944
+
+[[relaychain.nodes]]
+name = "bob"
+validator = true
+
+[[relaychain.nodes]]
+name = "charlie"
+validator = true
+
+[[relaychain.nodes]]
+name = "dave"
+validator = true
+
+[[relaychain.nodes]]
+name = "eve"
+validator = true
+
+[[relaychain.nodes]]
+name = "ferdie"
+validator = true
+
+[[parachains]]
+add_to_genesis = true
+chain = "statemine-local"
+cumulus_based = true
+id = 1000
+
+[[parachains.collators]]
+command = "../../../../paritytech/cumulus/target/release/polkadot-parachain"
+name = "statemine-local-alice"
+rpc_port = 31220
+validator = true
+ws_port = 10008
+[[parachains.collators.env]]
+name = "RUST_LOG"
+value = "runtime=debug,parachain=trace,cumulus-collator=trace,aura=trace,xcm=trace"
+
+[[parachains.collators]]
+command = "../../../../paritytech/cumulus/target/release/polkadot-parachain"
+name = "statemine-local-bob"
+validator = true
+[[parachains.collators.env]]
+name = "RUST_LOG"
+value = "runtime=debug,parachain=trace,cumulus-collator=trace,aura=trace,xcm=trace"
+
+
+[[parachains]]
+add_to_genesis = true
+chain = "dali-dev"
+cumulus_based = true
+id = 2087
+
+[[parachains.collators]]
+command = "../../target/release/composable"
+name = "dali-dev-alice"
+rpc_port = 31200
+ws_port = 9988
+
+[[parachains.collators.env]]
+name = "RUST_LOG"
+value = "runtime=debug,parachain=trace,cumulus-collator=trace,aura=trace,xcm=trace"
+
+[[parachains.collators]]
+command = "../../target/release/composable"
+name = "dali-dev-bob"
+[[parachains.collators.env]]
+name = "RUST_LOG"
+value = "runtime=debug,parachain=trace,cumulus-collator=trace,aura=trace,xcm=trace"
+
+
+[[parachains.collators]]
+command = "../../target/release/composable"
+name = "dali-dev-charlie"
+[[parachains.collators.env]]
+name = "RUST_LOG"
+value = "runtime=debug,parachain=trace,cumulus-collator=trace,aura=trace,xcm=trace"
+
+[[hrmp_channels]]
+max_capacity = 8
+max_message_size = 512
+recipient = 1000
+sender = 2087
+
+[[hrmp_channels]]
+max_capacity = 8
+max_message_size = 512
+recipient = 2087
+sender = 1000

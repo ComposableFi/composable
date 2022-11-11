@@ -1,0 +1,1 @@
+DEBUG=zombie* ~/github.com/paritytech/zombienet/zombienet spawn ./all-dev-local.toml --provider native
