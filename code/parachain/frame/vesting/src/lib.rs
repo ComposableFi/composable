@@ -34,7 +34,6 @@
 		clippy::disallowed_types,
 		clippy::indexing_slicing,
 		clippy::todo,
-		clippy::expect_used
 	),
 	deny(clippy::unwrap_used, clippy::panic)
 )] // allow in tests
