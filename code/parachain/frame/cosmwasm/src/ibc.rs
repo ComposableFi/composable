@@ -279,6 +279,71 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		let _remaining = vm.gas.remaining();
 		Ok(result)
 	}
+
+	fn on_chan_open_ack(
+		&mut self,
+		_output: &mut ModuleOutputBuilder,
+		_port_id: &PortId,
+		_channel_id: &ChannelId,
+		_counterparty_version: &IbcVersion,
+	) -> Result<(), IbcError> {
+		Ok(())
+	}
+
+	fn on_chan_open_confirm(
+		&mut self,
+		_output: &mut ModuleOutputBuilder,
+		_port_id: &PortId,
+		_channel_id: &ChannelId,
+	) -> Result<(), IbcError> {
+		Ok(())
+	}
+
+	fn on_chan_close_init(
+		&mut self,
+		_output: &mut ModuleOutputBuilder,
+		_port_id: &PortId,
+		_channel_id: &ChannelId,
+	) -> Result<(), IbcError> {
+		Ok(())
+	}
+
+	fn on_chan_close_confirm(
+		&mut self,
+		_output: &mut ModuleOutputBuilder,
+		_port_id: &PortId,
+		_channel_id: &ChannelId,
+	) -> Result<(), IbcError> {
+		Ok(())
+	}
+
+	fn on_recv_packet(
+		&self,
+		_output: &mut ModuleOutputBuilder,
+		_packet: &ibc::core::ics04_channel::packet::Packet,
+		_relayer: &pallet_ibc::Signer,
+	) -> ibc::core::ics26_routing::context::OnRecvPacketAck {
+		ibc::core::ics26_routing::context::OnRecvPacketAck::Nil(Box::new(|_| Ok(())))
+	}
+
+	fn on_acknowledgement_packet(
+		&mut self,
+		_output: &mut ModuleOutputBuilder,
+		_packet: &ibc::core::ics04_channel::packet::Packet,
+		_acknowledgement: &ibc::core::ics04_channel::msgs::acknowledgement::Acknowledgement,
+		_relayer: &pallet_ibc::Signer,
+	) -> Result<(), IbcError> {
+		Ok(())
+	}
+
+	fn on_timeout_packet(
+		&mut self,
+		_output: &mut ModuleOutputBuilder,
+		_packet: &ibc::core::ics04_channel::packet::Packet,
+		_relayer: &pallet_ibc::Signer,
+	) -> Result<(), IbcError> {
+		Ok(())
+	}
 }
 
 fn map_order(order: Order) -> IbcOrder {
@@ -302,7 +367,7 @@ impl<T: Config + Send + Sync + Default> IbcModuleRouter for Router<T> {
 	}
 
 	fn has_route(module_id: &impl sp_std::borrow::Borrow<ModuleId>) -> bool {
-		module_id.borrow() == &into_module_id::<T>() 
+		module_id.borrow() == &into_module_id::<T>()
 	}
 
 	fn lookup_module_by_port(port_id: &PortId) -> Option<ModuleId> {
