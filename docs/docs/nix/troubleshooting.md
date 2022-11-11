@@ -62,7 +62,7 @@ experimental Nix feature is disabled.
 error: derivation '/nix/store/some-derivation.drv' has '__noChroot' set, but that's not allowed when 'sandbox' is 'true'
 ```
 
-This is due to nix not reading the config file. Following are some possible sollutions:
+This is due to Nix not reading the config file. Following are some possible solutions:
 
 ### Restart Nix Daemon
 
