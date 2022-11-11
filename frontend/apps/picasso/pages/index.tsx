@@ -24,8 +24,8 @@ const Overview: NextPage = () => {
   const myStakes = useStore((state) => state.polkadot.myStakingAssets);
   const tabs: TabItem[] = [
     { label: "My assets" },
-    { label: "My stakes", disabled: false },
-    { label: "My bonds", disabled: false },
+    { label: "My stakes", disabled: true },
+    { label: "My bonds", disabled: true },
   ];
 
   const [tabValue, setTabValue] = useState(0);
@@ -63,29 +63,6 @@ const Overview: NextPage = () => {
           <CrowdloanRewardsFeaturedBox />
         </Grid>
         {extensionStatus === "connected" && (
-          <Chart
-            title="My portfolio"
-            totalText="$24,587,298"
-            changeText="+34%"
-            changeTextColor={theme.palette.featured.lemon}
-            AreaChartProps={{
-              data: [
-                [1644550600000, 20],
-                [1644560620928, 40],
-                [1644570600000, 35],
-                [1644580600000, 60],
-                [1644590600000, 80],
-              ],
-              height: 118,
-              shorthandLabel: "Change",
-              labelFormat: (n: number) => n.toFixed(),
-              color: theme.palette.featured.lemon,
-            }}
-            intervals={["1h", "24h", "1w", "1m", "1y"]}
-            marginTop={9}
-          />
-        )}
-        {extensionStatus === "connected" && (
           <Grid item {...standardPageSize}>
             <Tabs
               items={tabs}
@@ -96,9 +73,7 @@ const Overview: NextPage = () => {
             {/* My Assets Tab Panels */}
             {/* Pass in more token ids to show here */}
             <TabPanel value={tabValue} index={0}>
-              <MyAssetsTable tokensToList={[
-                "pica"
-              ]} />
+              <MyAssetsTable tokensToList={["pica"]} />
             </TabPanel>
 
             {/* My Staking Tab Panels */}
@@ -106,9 +81,7 @@ const Overview: NextPage = () => {
               <Box px={2}>
                 <PageTitle title="Picasso" textAlign="left" fontSize={40} />
               </Box>
-              <MyAssetsTable tokensToList={[
-                "pica"
-              ]} />
+              <MyAssetsTable tokensToList={["pica"]} />
             </TabPanel>
 
             <TabPanel value={tabValue} index={1}>
