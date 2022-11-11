@@ -34,9 +34,9 @@
 		clippy::disallowed_types,
 		clippy::indexing_slicing,
 		clippy::todo,
-		clippy::unwrap_used,
-		clippy::panic
-	)
+		clippy::expect_used
+	),
+	deny(clippy::unwrap_used, clippy::panic)
 )] // allow in tests
 #![warn(clippy::unseparated_literal_suffix)]
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -208,7 +208,8 @@ pub mod module {
 
 	/// Vesting schedules of an account.
 	///
-	/// VestingSchedules: map AccountId => Vec<VestingSchedule>
+	/// VestingSchedules: map (AccountId, AssetId) => BoundedBTreeMap<VestingScheduleId,
+	/// VestingSchedule, MaxVestingSchedules>
 	#[pallet::storage]
 	#[pallet::getter(fn vesting_schedules)]
 	// FIXME: Temporary fix to get CI to pass, separate PRs will be made per pallet to refactor to
@@ -246,10 +247,13 @@ pub mod module {
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
+			// Generate initial vesting configuration
 			self.vesting.iter().for_each(|(asset, who, window, period_count, per_period)| {
 				let mut bounded_schedules = VestingSchedules::<T>::get(who, asset);
-				let vesting_schedule_id =
-					VestingScheduleNonce::<T>::increment().expect("Max vesting schedules exceeded");
+				// Safety: we support up to u128::MAX schedules, so this will never happen on
+				// genesis.
+				let vesting_schedule_id = VestingScheduleNonce::<T>::increment()
+					.expect("Too many vesting schedules at genesis");
 
 				bounded_schedules
 					.try_insert(
@@ -262,7 +266,7 @@ pub mod module {
 							already_claimed: BalanceOf::<T>::zero(),
 						},
 					)
-					.expect("Max vesting schedules exceeded");
+					.expect("Too many vesting schedules at genesis");
 
 				let total_amount = bounded_schedules
 					.iter()
@@ -606,7 +610,7 @@ impl<T: Config> Pallet<T> {
 
 					claims_per_schedule
 						.try_insert(*id_to_claim, available_amount)
-						.expect("Max vesting schedules exceeded");
+						.map_err(|_| Error::<T>::MaxVestingSchedulesExceeded)?;
 
 					if locked_amount.is_zero() {
 						// Remove fully claimed schedules
