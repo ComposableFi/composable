@@ -1,7 +1,7 @@
 use crate::{prelude::*, Balance};
 use composable_support::math::safe::safe_multiply_by_rational;
 use composable_traits::{
-	currency::{AssetExistentialDepositInspect, AssetRatioInspect, Rational64},
+	currency::{AssetRatioInspect, Rational64},
 	rational,
 };
 
@@ -12,7 +12,6 @@ use frame_support::{
 		WeightToFeePolynomial,
 	},
 };
-use num_traits::One;
 use primitives::currency::CurrencyId;
 use sp_runtime::Perbill;
 use sp_std::marker::PhantomData;
@@ -48,15 +47,10 @@ pub fn multi_existential_deposits<AssetsRegistry>(_currency_id: &CurrencyId) -> 
 }
 
 #[cfg(not(feature = "runtime-benchmarks"))]
-pub fn multi_existential_deposits<
-	AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>
-		+ AssetExistentialDepositInspect<AssetId = CurrencyId, Balance = Balance>,
->(
+pub fn multi_existential_deposits<AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>>(
 	currency_id: &CurrencyId,
 ) -> Balance {
-	AssetsRegistry::existential_deposit(*currency_id)
-		.ok()
-		.or_else(|| WellKnownForeignToNativePriceConverter::existential_deposit(*currency_id))
+	PriceConverter::<AssetsRegistry>::to_asset_balance(NATIVE_EXISTENTIAL_DEPOSIT, *currency_id)
 		.unwrap_or(Balance::MAX)
 }
 
@@ -88,9 +82,8 @@ impl WellKnownForeignToNativePriceConverter {
 	}
 
 	pub fn to_asset_balance(balance: NativeBalance, asset_id: CurrencyId) -> Option<Balance> {
-		Self::get_ratio(asset_id).map(|x| {
-			safe_multiply_by_rational(balance, x.n().into(), x.d().into())
-				.unwrap_or_else(|_| Balance::one())
+		Self::get_ratio(asset_id).and_then(|ratio| {
+			safe_multiply_by_rational(balance, ratio.n.into(), ratio.d.into()).ok()
 		})
 	}
 }
