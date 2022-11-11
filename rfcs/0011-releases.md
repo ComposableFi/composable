@@ -80,6 +80,30 @@ Create a tag `staging-fe-v[MAJOR].[MINOR]-picasso-[FE_VERSION_NUMBER]`
 
 **[FE_VERSION_NUMBER] is a number incremented on each release.**
 
+
+### 3.2.4 Security
+
+Tip of the branch from which runtime release is considered should be signed by at least 2 keys owned by Technical committee or by Council members.
+
+#### 3.2.4.1 Examples
+
+```shell
+ # Alice and Bob are signers
+ # Charlie is verifier
+ 
+ # All
+ git switch release-vx.y.3
+ 
+ # Alice signs
+ git tag --sign "release-vx.y.3/alice" --message "release"
+ 
+ # Bob signs
+ git tag --sign "release-vx.y.3/bob" --message "release"
+ 
+ # Charlie looks that each tag is signed and references relevant commit
+ git tag --list | grep release-vx.y.3 | xargs git tag --verify 
+```
+
 ## 4. Implementation
 
 The following section lays out the release steps for each release in a checklist form.
@@ -95,6 +119,7 @@ The following section lays out the release steps for each release in a checklist
 - [ ] Storage/logic migrations from the previous versions has been removed.
 - [ ] Make sure proper logic/storage migrations are included as necessary
 - [ ] Verify documentation has been updated.
+- [ ] Verify that there are no critical update instructions in release notes from Substrate/Cumulus/Polkadot releases that may not have been taken into account.
 
 ### 4.3. Act
 
@@ -107,7 +132,10 @@ The following section lays out the release steps for each release in a checklist
 - [ ] Update composableJs version (if necessary to be released)
 - [ ] Update FE version (if necessary to be released)
 - [ ] Update Subsquid version (if necessary to be released)
+- [ ] Update relevant frame pallets being released in runtimes to the latest node version
 - [ ] Consider and list possible proxy filter updates for available calls.
 - [ ] Categorize (and give a title) the release according to the types of changes it does, eg: security patch, bugfix, feature etc.
 - [ ] Run `cargo build` once to update the Cargo.lock file.
+- [ ] Update the `v<Major>` branch on Github and make PR to master. Get it merged to main before next step. Note that `v<Major>` branch must not be deleted.
+- [ ] Get the tip of the branch signed according to 3.2.4 section.
 - [ ] Finally, create a tag `v<Branch.Spec_version>` (eg: `v5.4201`) to trigger the release artifact build.
