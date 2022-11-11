@@ -6,7 +6,7 @@ homepage = "https://composable.finance"
 license = "Apache-2.0"
 name = "pallet-democracy"
 readme = "README.md"
-version = "1.10000.0"
+version = "1.0.0"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]

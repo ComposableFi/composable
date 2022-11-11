@@ -3,7 +3,7 @@ authors = ["Composable Developers"]
 edition = "2021"
 homepage = "https://composable.finance"
 name = "pallet-vault"
-version = "1.10000.0"
+version = "1.0.0"
 
 
 [package.metadata.docs.rs]
@@ -37,7 +37,7 @@ scale-info = { version = "2.1.1", default-features = false, features = [
 ] }
 
 [dev-dependencies]
-composable-tests-helpers = { version = "1.10000.0", path = "../composable-tests-helpers" }
+composable-tests-helpers = { version = "1.0.0", path = "../composable-tests-helpers" }
 frame-benchmarking = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 once_cell = "1.8.0"
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "504d11bd1af3613a0e66b47b99713675e9b6bd10" }

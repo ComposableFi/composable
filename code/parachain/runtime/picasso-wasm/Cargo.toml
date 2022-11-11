@@ -1,7 +1,7 @@
 [package]
 edition = "2021"
 name = "picasso-runtime-wasm"
-version = "1.10000.0"
+version = "1.0.0"
 
 authors = ["Hussein Ait Lahcen <hussein.aitlahcen@gmail.com>"]
 description = "Picasso, Kusama Parachain Runtime WASM Implementation"
