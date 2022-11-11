@@ -256,7 +256,6 @@ export const createTransfersSlice: StoreSlice<TransfersSlice> = (set, get) => ({
           transferExtrinsic === null ||
           get().transfers.destinationMultiLocation === null
         ) {
-          console.warn("Shush");
           return; // bail if required params are not available.
         }
 

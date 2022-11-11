@@ -7,12 +7,20 @@ import {
   subscribeDefaultTransferToken,
   subscribeTokenOptions,
 } from "@/stores/defi/polkadot/transfers/subscribers";
-import { FC, useEffect } from "react";
+import React, { FC, useEffect } from "react";
 import { useValidation } from "@/components/Molecules/BigNumberInput/hooks";
-import { Typography } from "@mui/material";
+import { Tooltip, Typography } from "@mui/material";
 import { calculateTransferAmount } from "@/defi/polkadot/pallets/Transfer";
 import { useTransfer } from "@/defi/polkadot/hooks";
 import BigNumber from "bignumber.js";
+import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
+import {
+  HelpCenterOutlined,
+  HelpOutlined,
+  InfoOutlined,
+  InfoTwoTone,
+  QuestionMark,
+} from "@mui/icons-material";
 
 export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
   disabled,
@@ -119,7 +127,24 @@ export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
           },
           balanceLabelProps: {
             label: "Balance:",
-            balanceText: humanBalance(balance) + " " + tokenId.toUpperCase(),
+            balanceText: (
+              <>
+                <Typography variant="inputLabel" ml={0.5}>
+                  {humanBalance(balance) + " " + tokens[tokenId].symbol}
+                </Typography>
+                <Tooltip
+                  arrow
+                  placement="top"
+                  title={`${balance.toFixed()} ${tokens[tokenId].symbol}`}
+                  color="primary"
+                  sx={{
+                    fontSize: "01rem",
+                  }}
+                >
+                  <InfoTwoTone />
+                </Tooltip>
+              </>
+            ),
           },
         }}
         ButtonProps={{
