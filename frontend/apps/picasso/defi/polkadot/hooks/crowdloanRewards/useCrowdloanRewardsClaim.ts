@@ -27,7 +27,7 @@ export function useCrowdloanRewardsClaim({
       enqueueSnackbar("Claim Processing", {
         variant: "info",
         isClosable: true,
-        url: SUBSTRATE_NETWORKS.picasso.subscanUrl + transactionHash,
+        url: SUBSTRATE_NETWORKS.picasso.subscanUrl + "extrinsic/" + transactionHash,
       });
     },
     [enqueueSnackbar]
@@ -38,7 +38,7 @@ export function useCrowdloanRewardsClaim({
       enqueueSnackbar("Claim Finalized", {
         variant: "success",
         isClosable: true,
-        url: SUBSTRATE_NETWORKS.picasso.subscanUrl + transactionHash,
+        url: SUBSTRATE_NETWORKS.picasso.subscanUrl + "extrinsic/" + transactionHash,
       });
 
       setCrowdloanRewardsState({ claimableAmount: new BigNumber(0) });
