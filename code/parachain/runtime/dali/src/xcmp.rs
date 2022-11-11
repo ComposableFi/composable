@@ -253,7 +253,7 @@ pub fn xcm_asset_fee_estimator(instructions: u8, asset_id: CurrencyId) -> Balanc
 	assert!((instructions as u32) <= MaxInstructions::get());
 	let total_weight = UnitWeightCost::get() * instructions as u64;
 	Trader::weight_to_asset(total_weight, asset_id)
-		.expect("use only in simulator")
+		.expect("use only in simulator") // Isn't it better to have a default value than potentially panic?
 		.1
 }
 

@@ -132,16 +132,19 @@ impl<
 		Err(XcmError::TooExpensive)
 	}
 
+	// how does this refunding works? - add docs
 	fn refund_weight(&mut self, weight: Weight) -> Option<MultiAsset> {
 		if let Some(ref asset_location) = self.asset_location {
 			let fee = WeightToFeeConverter::weight_to_fee(&weight);
 			let fee = self.fee.min(fee);
 			let price = fee.saturating_mul(self.price) / self.fee;
+			if price <= 0 {
+				// optimization: check for price before and return None
+				return None
+			}
 			self.price = self.price.saturating_sub(price);
 			self.fee = self.fee.saturating_sub(fee);
-			if price > 0 {
-				return Some((asset_location.clone(), price).into())
-			}
+			return Some((asset_location.clone(), price).into())
 		}
 
 		None
@@ -243,6 +246,8 @@ impl<
 			MultiLocation { parents: 0, interior: X1(GeneralIndex(index)) } =>
 				Some(CurrencyId(index)),
 			_ =>
+			// there is a risk with this `_` that if a new Junction gets added, it will come
+			// directly to this path are we sure that this is futureproof?
 				if let Some(currency_id) = WellKnownXcmpAssets::remote_to_local(location.clone()) {
 					Some(currency_id)
 				} else {

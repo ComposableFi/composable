@@ -272,7 +272,7 @@ fn rockmine_stable_to_dali_transfer() {
 	simtest();
 	let this_parachain_account: AccountId =
 		polkadot_parachain::primitives::Sibling::from(THIS_PARA_ID).into_account_truncating();
-	let statemine_parachain_account: AccountId =
+	let _statemine_parachain_account: AccountId =
 		ParaId::from(topology::common_good_assets::ID).into_account_truncating();
 	let statemine_asset_id = STABLE::ID as u32;
 	let total_issuance = 3_500_000_000_000;

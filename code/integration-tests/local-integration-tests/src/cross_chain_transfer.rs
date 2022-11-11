@@ -801,6 +801,7 @@ fn unspent_xcm_fee_is_returned_correctly() {
 	});
 }
 
+// what is ED?
 #[test]
 fn trap_assets_larger_than_ed_works() {
 	simtest();
@@ -824,11 +825,13 @@ fn trap_assets_larger_than_ed_works() {
 			);
 		// TODO: if we do not top up account initially, than any deposit_creating do not create
 		// anything may be something with zero block or like - fix it better way
+		// -> I don't understand what's the action here
+
 		let _ =
 			<balances::Pallet<Runtime> as frame_support::traits::Currency<AccountId>>::deposit_creating(
-				&this_runtime::TreasuryAccount::get(),
-				7 * CurrencyId::unit::<Balance>(),
-			);
+			&this_runtime::TreasuryAccount::get(),
+			7 * CurrencyId::unit::<Balance>(),
+		);
 
 		native_treasury_amount =
 			Assets::free_balance(CurrencyId::PICA, &this_runtime::TreasuryAccount::get());

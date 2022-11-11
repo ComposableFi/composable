@@ -307,7 +307,7 @@ pub mod pallet {
 						.expect("Must exist, as it does in ForeignToLocal");
 					let decimals = match foreign_metadata.decimals {
 						Some(exponent) => exponent,
-						_ => 12_u8,
+						_ => 12_u8, // add doc that 12 is the default exponent?
 					};
 
 					Asset {
@@ -317,7 +317,7 @@ pub mod pallet {
 						foreign_id: Some(foreign_metadata.location),
 					}
 				})
-				.collect::<Vec<_>>()
+				.collect()
 		}
 	}
 

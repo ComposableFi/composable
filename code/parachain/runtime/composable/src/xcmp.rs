@@ -195,7 +195,7 @@ impl pallet_xcm::Config for Runtime {
 	type Origin = Origin;
 	type Call = Call;
 
-	const VERSION_DISCOVERY_QUEUE_SIZE: u32 = 100;
+	const VERSION_DISCOVERY_QUEUE_SIZE: u32 = 100; // any reasoning behind this number?
 	type AdvertisedXcmVersion = pallet_xcm::CurrentXcmVersion;
 }
 
