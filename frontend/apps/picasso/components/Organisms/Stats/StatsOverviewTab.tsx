@@ -23,7 +23,8 @@ export const StatsOverviewTab: FC = () => {
               color: theme.palette.common.darkWhite,
             }}
             TooltipProps={{
-              title: "tooltip",
+              title:
+                "The total value of PICA in USD deposited in Picasso's smart contracts.",
             }}
             textAbove="Total value locked"
             title={data?.overviewStats.totalValueLocked.toString()}
@@ -37,7 +38,7 @@ export const StatsOverviewTab: FC = () => {
               color: theme.palette.common.darkWhite,
             }}
             TooltipProps={{
-              title: "tooltip",
+              title: "The number of people possessing a Picasso account.",
             }}
             textAbove="Account holders"
             title={data?.overviewStats.accountHoldersCount.toString()}
@@ -51,7 +52,7 @@ export const StatsOverviewTab: FC = () => {
               color: theme.palette.common.darkWhite,
             }}
             TooltipProps={{
-              title: "tooltip",
+              title: "The total number of finalized transactions.",
             }}
             textAbove="Total transactions"
             title={formatNumber(data?.overviewStats.transactionsCount)}
@@ -64,7 +65,8 @@ export const StatsOverviewTab: FC = () => {
             color: theme.palette.common.darkWhite,
           }}
           TooltipProps={{
-            title: "tooltip",
+            title:
+              "The total value of all minted PICA in USD. (total supply * current market price)",
           }}
           textAbove="Picasso market cap"
           title={`$${marketCap.toFormat(2)}`}
@@ -76,7 +78,7 @@ export const StatsOverviewTab: FC = () => {
             color: theme.palette.common.darkWhite,
           }}
           TooltipProps={{
-            title: "tooltip",
+            title: "The number of coins publicly available in the market.",
           }}
           textAbove="Picasso circulating supply"
           title={`${circulatingSupply.toFormat(0)} PICA`}
@@ -89,7 +91,8 @@ export const StatsOverviewTab: FC = () => {
               color: theme.palette.common.darkWhite,
             }}
             TooltipProps={{
-              title: "tooltip",
+              title:
+                "The number of people interacting with Picasso in the last 24 hours.",
             }}
             textAbove="Active users"
             title={data?.overviewStats.activeUsersCount.toString()}

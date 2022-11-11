@@ -193,7 +193,8 @@ export const StablecoinClaimForm: React.FC<StablecoinClaimFormProps> = ({
               mainLabelProps: {
                 label: "Approved SS8 address",
                 TooltipProps: {
-                  title: "Account used to contribute to crowd loan",
+                  title:
+                    "Please connect an account address that contributed to the crowd loan.",
                   children: <></>,
                 },
               },

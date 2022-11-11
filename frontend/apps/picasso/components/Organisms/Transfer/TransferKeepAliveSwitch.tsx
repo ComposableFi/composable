@@ -10,7 +10,8 @@ export const TransferKeepAliveSwitch = () => {
       label="Keep alive"
       checked={keepAlive}
       TooltipProps={{
-        title: "This will prevent account of being removed due to low balance.",
+        title:
+          "Check for enough balance in the account to keep the existential deposit.",
       }}
       onChange={flipKeepAlive}
     />

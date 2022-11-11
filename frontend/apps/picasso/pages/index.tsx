@@ -51,7 +51,7 @@ const Overview: NextPage = () => {
           <PageTitle
             title="Overview"
             textAlign="center"
-            subtitle="You will be able to check on your positions here."
+            subtitle="Your Portfolio in full view. Check on your positions and claim rewards."
           />
         </Grid>
         {extensionStatus !== "connected" && (

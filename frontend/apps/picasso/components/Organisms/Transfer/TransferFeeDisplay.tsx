@@ -58,7 +58,8 @@ export const TransferFeeDisplay = () => {
         label="Fee"
         feeText={`${humanBalance(fee.partialFee)} ${tokens[feeToken].symbol}`}
         TooltipProps={{
-          title: "Fee tooltip title",
+          title:
+            "Fees(gas) for processing the given transaction. The amount can vary depending on transaction details and network conditions.",
         }}
       />
       {destFee.fee !== null && destFee.token !== null ? (
@@ -67,7 +68,7 @@ export const TransferFeeDisplay = () => {
           feeText={`${destFee.fee.toFormat()} ${destFee.token.symbol}`}
           TooltipProps={{
             title:
-              "Destination transaction fee is approximate and might change due to network conditions",
+              "Transaction fee on the destination chain. This fee is approximate and might change due to network conditions.",
           }}
         />
       ) : null}
