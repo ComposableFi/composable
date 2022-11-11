@@ -55,7 +55,7 @@ use frame_support::{
 	traits::{EnsureOrigin, Get, LockIdentifier, Time},
 	transactional, BoundedBTreeMap,
 };
-use frame_system::{ensure_root, ensure_signed, pallet_prelude::*};
+use frame_system::{ensure_signed, pallet_prelude::*};
 use orml_traits::{MultiCurrency, MultiLockableCurrency};
 use sp_runtime::{
 	traits::{BlockNumberProvider, One, StaticLookup, Zero},
@@ -129,6 +129,9 @@ pub mod module {
 
 		/// Required origin for vested transfer.
 		type VestedTransferOrigin: EnsureOrigin<Self::Origin>;
+
+		/// Required origin for updating schedules.
+		type UpdateSchedulesOrigin: EnsureOrigin<Self::Origin>;
 
 		/// Weight information for extrinsics in this module.
 		type WeightInfo: WeightInfo;
@@ -322,7 +325,7 @@ pub mod module {
 
 		/// Create a vested transfer.
 		///
-		/// The dispatch origin for this call must be _Signed_.
+		/// The dispatch origin for this call must be _Root_ or Democracy.
 		///
 		/// - `from`: The account sending the vested funds.
 		/// - `beneficiary`: The account receiving the vested funds.
@@ -350,7 +353,7 @@ pub mod module {
 
 		/// Update vesting schedules
 		///
-		/// The dispatch origin for this call must be _Signed_.
+		/// The dispatch origin for this call must be _Root_ or democracy.
 		///
 		/// - `who`: The account whose vested funds should be updated.
 		/// - `asset`: The asset associated with the vesting schedules.
@@ -364,7 +367,7 @@ pub mod module {
 			asset: AssetIdOf<T>,
 			vesting_schedules: Vec<VestingScheduleInfoOf<T>>,
 		) -> DispatchResult {
-			ensure_root(origin)?;
+			T::UpdateSchedulesOrigin::ensure_origin(origin)?;
 
 			let account = T::Lookup::lookup(who)?;
 			Self::do_update_vesting_schedules(&account, asset, vesting_schedules)?;
