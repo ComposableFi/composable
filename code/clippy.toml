@@ -1,21 +1,6 @@
 disallowed-methods = [
   "core::result::Result::unwrap", # { path = "core::result::Result::unwrap", reason = "Errors should be handled properly. If panicking is valid in this context, make sure to write a comment explaining why." },
   "core::option::Option::unwrap", # { path = "core::option::Option::unwrap", reason = "Errors should be handled properly. If panicking is valid in this context, make sure to write a comment explaining why." },
-  # Use of the following `fungible`/`fungibles` traits should be avoided until https://github.com/paritytech/substrate/pull/12569 is resolved and available in our code.
-  "frame_support::traits::tokens::fungible::Balanced::resolve",
-  "frame_support::traits::tokens::fungible::Balanced::deposit",
-  "frame_support::traits::tokens::fungible::Balanced::withdraw",
-  "frame_support::traits::tokens::fungible::Unbalanced::decrease_balance",
-  "frame_support::traits::tokens::fungible::Unbalanced::decrease_balance_at_most",
-  "frame_support::traits::tokens::fungible::Unbalanced::increase_balance",
-  "frame_support::traits::tokens::fungible::Unbalanced::increase_balance_at_most",
-  "frame_support::traits::tokens::fungibles::Balanced::resolve",
-  "frame_support::traits::tokens::fungibles::Balanced::deposit",
-  "frame_support::traits::tokens::fungibles::Balanced::withdraw",
-  "frame_support::traits::tokens::fungibles::Unbalanced::decrease_balance",
-  "frame_support::traits::tokens::fungibles::Unbalanced::decrease_balance_at_most",
-  "frame_support::traits::tokens::fungibles::Unbalanced::increase_balance",
-  "frame_support::traits::tokens::fungibles::Unbalanced::increase_balance_at_most",
 ]
 
 disallowed-types = [
