@@ -22,12 +22,32 @@ export const DEFI_CONFIG = {
 };
 
 export type AllowedTransferList = {
-  [key in SubstrateNetworkId]: Array<TokenId>;
+  [key in SubstrateNetworkId]: Record<SubstrateNetworkId, Array<TokenId>>;
 };
 
 export const TRANSFER_ASSET_LIST: AllowedTransferList = {
-  kusama: ["ksm"],
-  karura: ["ksm", "ausd", "kusd", "kar"],
-  picasso: ["ksm", "kusd", "ausd", "kar", "usdt"],
-  statemine: ["usdt"],
+  karura: {
+    picasso: ["ksm", "ausd", "kusd", "kar"],
+    kusama: [],
+    karura: [],
+    statemine: [],
+  },
+  kusama: {
+    picasso: ["ksm"],
+    kusama: [],
+    karura: [],
+    statemine: [],
+  },
+  picasso: {
+    picasso: [],
+    kusama: ["ksm"],
+    karura: ["ksm", "ausd", "kusd", "kar"],
+    statemine: ["usdt"],
+  },
+  statemine: {
+    picasso: ["usdt", "ksm"],
+    kusama: [],
+    karura: [],
+    statemine: [],
+  },
 };
