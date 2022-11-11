@@ -13,14 +13,7 @@ import { Tooltip, Typography } from "@mui/material";
 import { calculateTransferAmount } from "@/defi/polkadot/pallets/Transfer";
 import { useTransfer } from "@/defi/polkadot/hooks";
 import BigNumber from "bignumber.js";
-import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
-import {
-  HelpCenterOutlined,
-  HelpOutlined,
-  InfoOutlined,
-  InfoTwoTone,
-  QuestionMark,
-} from "@mui/icons-material";
+import { InfoTwoTone } from "@mui/icons-material";
 
 export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
   disabled,
@@ -45,10 +38,12 @@ export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
   const keepAlive = useStore((state) => state.transfers.keepAlive);
   const fee = useStore((state) => state.transfers.fee);
   const feeToken = useStore((state) => state.transfers.feeToken);
-  const sourceGas = {
-    fee: fee.partialFee,
-    token: feeToken,
-  };
+  const sourceGas = useMemo(() => {
+    return {
+      fee: fee.partialFee,
+      token: feeToken,
+    };
+  }, [fee.partialFee, feeToken]);
   const setFormError = useStore(
     (state) => state.transfers.setFormError,
     () => true
