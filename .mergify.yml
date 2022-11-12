@@ -2,18 +2,16 @@ queue_rules:
  - name: default
    allow_inplace_checks: false
    conditions: 
-     - and:
-       - not:
-         - title~=#wip
+     - not:
+       - title~="#wip"
 
 pull_request_rules:
   - name: Automatic merge on approval
     conditions:
-      - and:
-        - "#approved-reviews-by>=2"
-        - base=main
-        - not:
-          - title~=#wip
+      - "#approved-reviews-by>=2"
+      - base=main
+      - not:
+        - title~="#wip"
     actions:
       queue:
         name: default
