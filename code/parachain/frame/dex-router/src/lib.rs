@@ -178,7 +178,7 @@ pub mod pallet {
 
 		/// Exchange `amount` of quote asset for `asset_pair` via route found in router.
 		/// On successful underlying DEX pallets will emit appropriate event
-		#[pallet::weight(T::WeightInfo::exchange())]
+		#[pallet::weight(T::WeightInfo::swap())]
 		pub fn swap(
 			origin: OriginFor<T>,
 			in_asset: AssetAmount<T::AssetId, T::Balance>,
