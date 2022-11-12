@@ -11,7 +11,6 @@ pub trait WeightInfo {
 	fn add_liquidity() -> Weight;
 	fn remove_liquidity() -> Weight;
 	fn buy() -> Weight;
-	fn sell() -> Weight;
 	fn swap() -> Weight;
 }
 
@@ -21,6 +20,5 @@ impl WeightInfo for () {
 	fn add_liquidity() -> Weight {10_000}
 	fn remove_liquidity() -> Weight {10_000}
 	fn buy() -> Weight {10_000}
-	fn sell() -> Weight {10_000}
 	fn swap() -> Weight {10_000}
 }

@@ -6100,6 +6100,7 @@ version = "0.1.0"
 dependencies = [
  "base58",
  "common",
+ "composable-support",
  "composable-tests-helpers",
  "composable-traits",
  "cumulus-pallet-aura-ext",
@@ -7295,6 +7296,7 @@ dependencies = [
 name = "pallet-assets-registry"
 version = "1.0.0"
 dependencies = [
+ "composable-support",
  "composable-traits",
  "cumulus-primitives-core",
  "frame-benchmarking",

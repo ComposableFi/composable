@@ -31,7 +31,15 @@ pub mod weights;
 pub mod pallet {
 	use crate::prelude::*;
 	pub use crate::weights::WeightInfo;
-	use composable_traits::currency::{CurrencyFactory, ForeignByNative, RangeId};
+	use codec::FullCodec;
+	use composable_support::types::rational::Rational64;
+	use composable_traits::{
+		assets::Asset,
+		currency::{
+			AssetExistentialDepositInspect, BalanceLike, CurrencyFactory, Exponent, RangeId,
+		},
+		xcm::assets::{ForeignMetadata, RemoteAssetRegistryInspect, RemoteAssetRegistryMutate},
+	};
 	use cumulus_primitives_core::ParaId;
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo, pallet_prelude::*, traits::EnsureOrigin,
@@ -111,7 +119,8 @@ pub mod pallet {
 	/// How much of asset amount is needed to pay for one unit of native token.
 	#[pallet::storage]
 	#[pallet::getter(fn asset_ratio)]
-	pub type AssetRatio<T: Config> = StorageMap<_, Twox128, T::LocalAssetId, Rational, OptionQuery>;
+	pub type AssetRatio<T: Config> =
+		StorageMap<_, Twox128, T::LocalAssetId, Rational64, OptionQuery>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config>(sp_std::marker::PhantomData<T>);
@@ -187,7 +196,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			location: T::ForeignAssetId,
 			ed: T::Balance,
-			ratio: Option<Rational>,
+			ratio: Option<Rational64>,
 			decimals: Option<Exponent>,
 		) -> DispatchResultWithPostInfo {
 			T::UpdateAssetRegistryOrigin::ensure_origin(origin)?;
@@ -209,7 +218,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			asset_id: T::LocalAssetId,
 			location: T::ForeignAssetId,
-			ratio: Option<Rational>,
+			ratio: Option<Rational64>,
 			decimals: Option<Exponent>,
 		) -> DispatchResultWithPostInfo {
 			T::UpdateAssetRegistryOrigin::ensure_origin(origin)?;
@@ -258,7 +267,7 @@ pub mod pallet {
 		fn set_reserve_location(
 			asset_id: Self::AssetId,
 			location: Self::AssetNativeLocation,
-			ratio: Option<Rational>,
+			ratio: Option<Rational64>,
 			decimals: Option<Exponent>,
 		) -> DispatchResult {
 			ForeignToLocal::<T>::insert(&location, asset_id);
@@ -269,7 +278,7 @@ pub mod pallet {
 
 		fn update_ratio(
 			location: Self::AssetNativeLocation,
-			ratio: Option<Rational>,
+			ratio: Option<Rational64>,
 		) -> DispatchResult {
 			let asset_id =
 				ForeignToLocal::<T>::try_get(location).map_err(|_| Error::<T>::AssetNotFound)?;
@@ -323,8 +332,8 @@ pub mod pallet {
 
 	impl<T: Config> AssetRatioInspect for Pallet<T> {
 		type AssetId = T::LocalAssetId;
-		fn get_ratio(asset_id: Self::AssetId) -> Option<ForeignByNative> {
-			AssetRatio::<T>::get(asset_id).map(Into::into)
+		fn get_ratio(asset_id: Self::AssetId) -> Option<Rational64> {
+			AssetRatio::<T>::get(asset_id)
 		}
 	}
 
