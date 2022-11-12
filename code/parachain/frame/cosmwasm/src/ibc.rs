@@ -86,7 +86,8 @@ impl<T: Config> Pallet<T> {
 	pub(crate) fn do_ibc_close_channel(
 		_vm: &mut CosmwasmVM<T>,
 		_channel_id: String,
-	) -> Result<(), CosmwasmVMError<T>> {
+	) -> Result<(), CosmwasmVMError<T>> {	
+		/// how to ensure contract closes only own channel? we have contract(port) here, by not map backward	
 		Err(Error::<T>::Unsupported.into())
 	}
 
