@@ -128,10 +128,6 @@ mod commons_sense {
 	impl AssetRatioInspect for Dummy {
 		type AssetId = CurrencyId;
 	}
-	impl AssetExistentialDepositInspect for Dummy {
-		type AssetId = CurrencyId;
-		type Balance = Balance;
-	}
 
 	#[cfg(not(feature = "runtime-benchmarks"))]
 	#[test]
