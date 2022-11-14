@@ -111,7 +111,7 @@ let
     domain = "persistent.devnets.composablefinance.ninja";
     machine-name = "composable-persistent-devnet";
     ip = "persistent-devnet-ip";
-    package = "devnet-persistent";
+    package = "devnet-dali-persistent";
     chain = "dali";
   };
 
