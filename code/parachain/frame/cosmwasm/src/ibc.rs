@@ -12,14 +12,17 @@ use alloc::{
 use cosmwasm_minimal_std::{
 	ibc::{
 		IbcAcknowledgement, IbcBasicResponse, IbcChannel, IbcChannelConnectMsg, IbcChannelOpenMsg,
-		IbcEndpoint, IbcOrder, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcTimeout, IbcPacketTimeoutMsg,
+		IbcEndpoint, IbcOrder, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg,
+		IbcPacketTimeoutMsg, IbcTimeout, IbcChannelCloseMsg,
 	},
 	Binary, ContractResult,
 };
 use cosmwasm_vm::{
 	executor::{
 		cosmwasm_call_serialize,
-		ibc::{IbcChannelConnect, IbcChannelOpen, IbcPacketAck, IbcPacketReceive, IbcPacketTimeout},
+		ibc::{
+			IbcChannelConnect, IbcChannelOpen, IbcPacketAck, IbcPacketReceive, IbcPacketTimeout, IbcChannelClose,
+		},
 		ExecuteInput,
 	},
 	system::cosmwasm_system_entrypoint_serialize,
@@ -354,7 +357,6 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 	) -> Result<(), IbcError> {
 		let address = Self::port_to_address(port_id)?;
 		let contract_info = Self::to_ibc_contract(&address)?;
-
 		let message = IbcChannelConnectMsg::OpenAck {
 			channel: IbcChannel {
 				endpoint: IbcEndpoint {
@@ -377,37 +379,103 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 			IbcChannelConnectMsg,
 		>(&mut executor, &message)
 		.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
-
-		//
-		// add output.with_events(events)
-
+		// add output.with_events(events). what events to add?
 		Ok(())
 	}
 
 	fn on_chan_open_confirm(
 		&mut self,
 		_output: &mut ModuleOutputBuilder,
-		_port_id: &PortId,
-		_channel_id: &ChannelId,
+		port_id: &PortId,
+		channel_id: &ChannelId,
 	) -> Result<(), IbcError> {
+		let address = Self::port_to_address(port_id)?;
+		let contract_info = Self::to_ibc_contract(&address)?;
+		let message = IbcChannelConnectMsg::OpenConfirm { 
+			channel: IbcChannel {
+				endpoint: IbcEndpoint {
+					port_id: port_id.to_string(),
+					channel_id: channel_id.to_string(),
+				},
+				counterparty_endpoint: todo!("https://github.com/ComposableFi/centauri/issues/120"),
+				order: todo!("https://github.com/ComposableFi/centauri/issues/120"),
+				version: todo!("https://github.com/ComposableFi/centauri/issues/120"),
+				connection_id: todo!("https://github.com/ComposableFi/centauri/issues/120"),
+			},
+		};
+		let gas = Weight::MAX;
+		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
+		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
+		let (data, events) = cosmwasm_system_entrypoint_serialize::<
+			IbcChannelConnect,
+			WasmiVM<CosmwasmVM<T>>,
+			IbcChannelConnectMsg,
+		>(&mut executor, &message)
+		.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
 		Ok(())
 	}
 
 	fn on_chan_close_init(
 		&mut self,
 		_output: &mut ModuleOutputBuilder,
-		_port_id: &PortId,
-		_channel_id: &ChannelId,
+		port_id: &PortId,
+		channel_id: &ChannelId,
 	) -> Result<(), IbcError> {
+		let address = Self::port_to_address(port_id)?;
+		let contract_info = Self::to_ibc_contract(&address)?;
+		let message = IbcChannelCloseMsg::CloseInit { 
+			channel: IbcChannel {
+				endpoint: IbcEndpoint {
+					port_id: port_id.to_string(),
+					channel_id: channel_id.to_string(),
+				},
+				counterparty_endpoint: todo!("https://github.com/ComposableFi/centauri/issues/120"),
+				order: todo!("https://github.com/ComposableFi/centauri/issues/120"),
+				version: todo!("https://github.com/ComposableFi/centauri/issues/120"),
+				connection_id: todo!("https://github.com/ComposableFi/centauri/issues/120"),
+			},
+		};
+		let gas = Weight::MAX;
+		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
+		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
+		let (data, events) = cosmwasm_system_entrypoint_serialize::<
+			IbcChannelClose,
+			WasmiVM<CosmwasmVM<T>>,
+			IbcChannelCloseMsg,
+		>(&mut executor, &message)
+		.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
 		Ok(())
 	}
 
 	fn on_chan_close_confirm(
 		&mut self,
 		_output: &mut ModuleOutputBuilder,
-		_port_id: &PortId,
-		_channel_id: &ChannelId,
+		port_id: &PortId,
+		channel_id: &ChannelId,
 	) -> Result<(), IbcError> {
+		let address = Self::port_to_address(port_id)?;
+		let contract_info = Self::to_ibc_contract(&address)?;
+		let message = IbcChannelCloseMsg::CloseConfirm { 
+			channel: IbcChannel {
+				endpoint: IbcEndpoint {
+					port_id: port_id.to_string(),
+					channel_id: channel_id.to_string(),
+				},
+				counterparty_endpoint: todo!("https://github.com/ComposableFi/centauri/issues/120"),
+				order: todo!("https://github.com/ComposableFi/centauri/issues/120"),
+				version: todo!("https://github.com/ComposableFi/centauri/issues/120"),
+				connection_id: todo!("https://github.com/ComposableFi/centauri/issues/120"),
+			},
+		};
+		let gas = Weight::MAX;
+		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
+		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
+		let (data, events) = cosmwasm_system_entrypoint_serialize::<
+			IbcChannelClose,
+			WasmiVM<CosmwasmVM<T>>,
+			IbcChannelCloseMsg,
+		>(&mut executor, &message)
+		.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
 		Ok(())
 	}
 
