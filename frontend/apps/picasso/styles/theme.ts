@@ -497,6 +497,7 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
           paddingLeft: "1.5rem",
           paddingRight: "1rem",
           height: "5rem",
+          marginTop: theme.spacing(1),
           borderRadius: theme.spacing(1.5),
           "&.Mui-selected": {
             backgroundColor: alpha(brandPalette.primary.main, 0.1),
