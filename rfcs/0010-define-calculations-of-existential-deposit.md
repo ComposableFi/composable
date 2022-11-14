@@ -123,19 +123,6 @@ to be possible.
   ) -> DispatchResultWithPostInfo;
   ```
 
-* Additionally, Asset Registry needs to support creating assets with a defined
-asset ID. 
-
-  ```rust
-  pub fn register_asset_with_id(
-    origin: OriginFor<T>,
-    asset_id: T::AssetId,
-    location: T::ForeignAssetId,
-    ratio: Ratio, // Used to be optional
-    decimals: Option<Exponent>,
-  ) -> DispatchResultWithPostInfo;
-  ```
-
 ## Quality Assurance
 
 * Manually changing the values of different EDs is not supported. By default
