@@ -43,17 +43,17 @@ import { KsmAndEthAssociationInfoBox } from "@/components/Organisms/CrowdloanRew
 const ERROR_MESSAGES = {
   KSM_WALLET_NOT_CONNECTED: {
     message:
-      "Please connect the KSM address used to contribute to the Picasso crowdloan.",
-    title: "Nothing to claim",
+      "Please connect the Kusama wallet address used to contribute to the Picasso crowdloan.",
+    title: "No rewards are available to claim.",
   },
   WRONG_ADDRESS: {
     message:
-      "Please connect the address used to contribute to Picasso crowdloan.",
-    title: "Nothing to claim",
+      "Please connect the wallet address used to contribute to the Picasso crowdloan.",
+    title: "No rewards are available to claim.",
   },
   ETH_WALLET_NOT_CONNECTED: {
-    message: "Please connect metamask to claim PICA rewards.",
-    title: "Nothing to claim",
+    message: "Please connect a metamask wallet to claim your PICA rewards.",
+    title: "No rewards are available to claim.",
   },
 };
 
@@ -120,7 +120,8 @@ export const ClaimLoanPage = () => {
       selectedAccount?.address
     );
 
-  const isEligibleForBothAddresses = isEthAccountEligible && isPicassoAccountEligible;
+  const isEligibleForBothAddresses =
+    isEthAccountEligible && isPicassoAccountEligible;
 
   const { contributedAmount, totalRewards } =
     useCrowdloanRewardsContributionAndRewards(
@@ -131,7 +132,7 @@ export const ClaimLoanPage = () => {
 
   const flow = useMemo(() => {
     if (isEthAccountEligible && isPicassoAccountEligible) {
-      return "Claim"
+      return "Claim";
     } else if (isEthAccountEligible && !isPicassoAccountEligible) {
       return "Stable coin";
     } else {
@@ -313,7 +314,9 @@ export const ClaimLoanPage = () => {
                 isClaiming={isPendingAssociate || isPendingClaim}
                 SS58Address={
                   ethAssociatedOrSelectedAccount
-                    ? `${ethAssociatedOrSelectedAccount.address} (${ethAssociatedOrSelectedAccount.meta.name ?? ""})`
+                    ? `${ethAssociatedOrSelectedAccount.address} (${
+                        ethAssociatedOrSelectedAccount.meta.name ?? ""
+                      })`
                     : "-"
                 }
                 disabled={
@@ -329,7 +332,9 @@ export const ClaimLoanPage = () => {
                 readonlyAvailableToClaim
                 readonlyTotalPicaVested
                 picassoAccountName={
-                  selectedAccount && selectedAccount.meta.name  ? selectedAccount.meta.name : "-"
+                  selectedAccount && selectedAccount.meta.name
+                    ? selectedAccount.meta.name
+                    : "-"
                 }
                 readonlySS8Address
                 onClaim={operation}
@@ -350,7 +355,9 @@ export const ClaimLoanPage = () => {
                 readonlyAvailableToClaim
                 readonlyTotalPicaVested
                 picassoAccountName={
-                  selectedAccount && selectedAccount.meta.name ? selectedAccount.meta.name : "-"
+                  selectedAccount && selectedAccount.meta.name
+                    ? selectedAccount.meta.name
+                    : "-"
                 }
                 readonlySS8Address
                 onClaim={operation}
@@ -359,9 +366,14 @@ export const ClaimLoanPage = () => {
           </Grid>
         )}
 
-        {isEligibleForBothAddresses && <Grid item {...standardPageSize} mt={theme.spacing(2)} >
-          <KsmAndEthAssociationInfoBox connectedAccount={selectedAccount} isEligibleForBothAddresses />
-        </Grid>}
+        {isEligibleForBothAddresses && (
+          <Grid item {...standardPageSize} mt={theme.spacing(2)}>
+            <KsmAndEthAssociationInfoBox
+              connectedAccount={selectedAccount}
+              isEligibleForBothAddresses
+            />
+          </Grid>
+        )}
 
         <Grid item {...standardPageSize}>
           <SS8WalletHelper />

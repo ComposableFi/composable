@@ -24,7 +24,7 @@ export function useCrowdloanRewardsClaim({
 
   const onClaimReady = useCallback(
     (transactionHash: string) => {
-      enqueueSnackbar("Claim Processing", {
+      enqueueSnackbar("Claim processing...", {
         variant: "info",
         isClosable: true,
         url: subscanExtrinsicLink("picasso", transactionHash),
@@ -35,7 +35,7 @@ export function useCrowdloanRewardsClaim({
 
   const onClaimFinalized = useCallback(
     (transactionHash: string) => {
-      enqueueSnackbar("Claim Finalized", {
+      enqueueSnackbar("Your claim was successful!", {
         variant: "success",
         isClosable: true,
         url: subscanExtrinsicLink("picasso", transactionHash),

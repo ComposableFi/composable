@@ -62,13 +62,16 @@ export const useTransfer = () => {
         api,
         signer,
         (txHash) => {
-          snackbarKey = enqueueSnackbar("Transfer executed", {
-            persist: true,
-            description: `Transaction hash: ${txHash}`,
-            variant: "info",
-            isCloseable: true,
-            url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
-          });
+          snackbarKey = enqueueSnackbar(
+            "Executing transfer... just one moment, please.",
+            {
+              persist: true,
+              description: `Transaction hash: ${txHash}`,
+              variant: "info",
+              isCloseable: true,
+              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
+            }
+          );
         },
         (txHash, records) => {
           if (api.events.xcmPallet || api.events.polkadotXcm) {

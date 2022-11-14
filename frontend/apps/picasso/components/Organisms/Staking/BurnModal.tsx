@@ -11,7 +11,6 @@ import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { useStakingRewards } from "@/defi/polkadot/hooks/useStakingRewards";
 import { useExpiredPortfolio } from "@/components/Organisms/Staking/useExpiredPortfolio";
 
-
 export const BurnModal: FC<{
   open: boolean;
   onClose: () => void;
@@ -55,12 +54,15 @@ export const BurnModal: FC<{
           },
           (errorMessage: string) => {
             closeSnackbar(snackbarKey);
-            enqueueSnackbar("An error occurred while processing transaction", {
-              variant: "error",
-              isClosable: true,
-              persist: true,
-              description: errorMessage,
-            });
+            enqueueSnackbar(
+              "An error occurred while processing the transaction. The process was canceled.",
+              {
+                variant: "error",
+                isClosable: true,
+                persist: true,
+                description: errorMessage,
+              }
+            );
             onClose();
           }
         );

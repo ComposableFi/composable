@@ -40,7 +40,7 @@ export const TransferExistentialDeposit: FC = () => {
         )
       }
       TooltipProps={{
-        title: `On the Polkadot network, an address is only active when it holds a minimum amount, currently set at 1 DOT (and 0.0000333333 KSM on the Kusama network). This minimum amount is called the Existential Deposit (ED).`,
+        title: `On the Polkadot network, an address is only active when it holds a minimum amount, currently set at 1 DOT (and 0.0000333333 KSM on the Kusama network). This minimum amount is called the Existential Deposit (ED) and prevents account removal.`,
       }}
     />
   );
