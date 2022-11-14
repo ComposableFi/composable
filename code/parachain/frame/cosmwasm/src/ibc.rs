@@ -84,10 +84,16 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub(crate) fn do_ibc_close_channel(
-		_vm: &mut CosmwasmVM<T>,
-		_channel_id: String,
-	) -> Result<(), CosmwasmVMError<T>> {	
-		/// how to ensure contract closes only own channel? we have contract(port) here, by not map backward	
+		vm: &mut CosmwasmVM<T>,
+		channel_id: String,
+	) -> Result<(), CosmwasmVMError<T>> {
+		let _channel_id = ChannelId::from_str(channel_id.as_ref())
+			.map_err(|_| <CosmwasmVMError<T>>::Ibc("channel name is not valid".to_string()))?;
+		let address: cosmwasm_minimal_std::Addr = vm.contract_address.clone().into();
+
+		let _port_id = PortId::from_str(address.as_str())
+			.expect("all pallet instanced contract addresses are valid port names; qwe");
+		/// https://github.com/ComposableFi/centauri/issues/115
 		Err(Error::<T>::Unsupported.into())
 	}
 
