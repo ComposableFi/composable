@@ -31,7 +31,7 @@ jobs:
        cancel-in-progress: true
     strategy:
       matrix:
-        package: [devnet-persistent-program, devnet-picasso-persistent-program]
+        package: [devnet-dali-persistent, devnet-picasso-persistent]
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
@@ -72,7 +72,6 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with:
-        ref: ${{ inputs.ref }}
         fetch-depth: 0
     - run: |
         echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
