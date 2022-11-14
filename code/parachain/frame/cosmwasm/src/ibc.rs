@@ -10,12 +10,15 @@ use alloc::{
 };
 
 use cosmwasm_minimal_std::{
-	ibc::{IbcChannelOpenMsg, IbcEndpoint, IbcOrder, IbcPacket, IbcPacketReceiveMsg, IbcTimeout},
+	ibc::{
+		IbcChannel, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcEndpoint, IbcOrder, IbcPacket,
+		IbcPacketReceiveMsg, IbcTimeout,
+	},
 	ContractResult,
 };
 use cosmwasm_vm::executor::{
 	cosmwasm_call_serialize,
-	ibc::{IbcChannelOpen, IbcPacketReceive},
+	ibc::{IbcChannelConnect, IbcChannelOpen, IbcPacketReceive},
 	ExecuteInput,
 };
 use cosmwasm_vm_wasmi::WasmiVM;
@@ -153,14 +156,11 @@ pub struct Router<T: Config> {
 struct MapBinary(Vec<u8>);
 
 impl AsRef<[u8]> for MapBinary {
-	fn as_ref(&self) -> &[u8] { 
+	fn as_ref(&self) -> &[u8] {
 		&self.0[..]
 	}
 }
-impl
- ibc::core::ics26_routing::context::Acknowledgement for MapBinary {
-
-}
+impl ibc::core::ics26_routing::context::Acknowledgement for MapBinary {}
 
 impl<T: Config> Router<T> {
 	fn port_to_address(port_id: &PortId) -> Result<<T as Config>::AccountIdExtended, IbcError> {
@@ -345,10 +345,40 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 	fn on_chan_open_ack(
 		&mut self,
 		_output: &mut ModuleOutputBuilder,
-		_port_id: &PortId,
-		_channel_id: &ChannelId,
-		_counterparty_version: &IbcVersion,
+		port_id: &PortId,
+		channel_id: &ChannelId,
+		counterparty_version: &IbcVersion,
 	) -> Result<(), IbcError> {
+		let address = Self::port_to_address(port_id)?;
+		let contract_info = Self::to_ibc_contract(&address)?;
+
+		let message = IbcChannelConnectMsg::OpenAck {
+			channel: IbcChannel {
+				endpoint: todo!(),
+				counterparty_endpoint: todo!("https://github.com/ComposableFi/centauri/issues/120"),
+				order: todo!("https://github.com/ComposableFi/centauri/issues/120"),
+				version: todo!("https://github.com/ComposableFi/centauri/issues/120"),
+				connection_id: todo!("https://github.com/ComposableFi/centauri/issues/120"),
+			},
+			counterparty_version: counterparty_version.to_string(),
+		};
+		let gas = Weight::MAX;
+		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
+		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
+		let result = cosmwasm_call_serialize::<
+			IbcChannelConnect,
+			WasmiVM<CosmwasmVM<T>>,
+			IbcChannelConnectMsg,
+		>(&mut executor, &message)
+		.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))
+		.map(|x| match x.0 {
+			ContractResult::Ok(version) => Ok(version),
+			ContractResult::Err(err) =>
+				Err(IbcError::implementation_specific(format!("{:?}", err))),
+		})??
+		.map(|x| IbcVersion::new(x.version.to_string()))
+		.unwrap_or(version.clone());
+
 		Ok(())
 	}
 
@@ -415,17 +445,12 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 			ContractResult::Ok(x) => Ok(x),
 			ContractResult::Err(err) =>
 				Err(IbcError::implementation_specific(format!("{:?}", err))),
-		}).unwrap().unwrap();
-		// .map(|x| IbcVersion::new(x.version.to_string()))
-		// .unwrap_or(version.clone());
-		// let _remaining = vm.gas.remaining();
+		})
+		.unwrap()
+		.unwrap(); // depends on https://github.com/ComposableFi/centauri/issues/119
+		let _remaining = vm.gas.remaining();
 		let acknowledgement = MapBinary(result.acknowledgement.0);
-		OnRecvPacketAck::Successful(
-			Box::new(acknowledgement), 
-			Box::new(
-				|_| Ok(())
-			)
-		)
+		OnRecvPacketAck::Successful(Box::new(acknowledgement), Box::new(|_| Ok(())))
 	}
 
 	fn on_acknowledgement_packet(
