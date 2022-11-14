@@ -36,10 +36,9 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
   readonlyTotalPicaVested,
   readonlyCrowdLoanContribution,
   onClaim,
-  isClaiming
+  isClaiming,
 }) => {
   const theme = useTheme();
-
 
   return (
     <Box>
@@ -194,7 +193,8 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
               mainLabelProps: {
                 label: "Approved account",
                 TooltipProps: {
-                  title: "Account used to contribute to crowd loan",
+                  title:
+                    "Please connect an account address that contributed to the crowd loan.",
                   children: <></>,
                 },
               },
@@ -229,11 +229,7 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
           </Button>
         </Box>
       </Paper>
-      <Modal
-        open={isClaiming}
-        maxWidth="md"
-        dismissible
-      >
+      <Modal open={isClaiming} maxWidth="md" dismissible>
         <Box
           sx={{
             display: "flex",
