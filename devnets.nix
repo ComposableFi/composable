@@ -133,7 +133,7 @@
         parachainIds = [ 1000 2000 2087 ];
       };
 
-      devnet-initialize-script-persistent =
+      devnet-initialize-script-dali-persistent =
         devnetTools.mkDevnetInitializeScript {
           polkadotUrl =
             "wss://persistent.devnets.composablefinance.ninja/chain/rococo";
