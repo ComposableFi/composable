@@ -19,5 +19,11 @@
   "bugs": {
     "url": "https://github.com/composablefi/composable/issues"
   },
-  "homepage": "https://github.com/composablefi/composable#readme"
+  "homepage": "https://github.com/composablefi/composable#readme",
+  "dependencies": {
+    "@polkadot/api": "^9.7.1",
+    "chalk": "^5.1.2",
+    "commander": "^9.4.1",
+    "conf": "^10.2.0"
+  }
 }
