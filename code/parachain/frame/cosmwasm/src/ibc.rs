@@ -10,10 +10,14 @@ use alloc::{
 };
 
 use cosmwasm_minimal_std::{
-	ibc::{IbcChannelOpenMsg, IbcOrder},
+	ibc::{IbcChannelOpenMsg, IbcEndpoint, IbcOrder, IbcPacket, IbcPacketReceiveMsg, IbcTimeout},
 	ContractResult,
 };
-use cosmwasm_vm::executor::{cosmwasm_call_serialize, ibc::IbcChannelOpen, ExecuteInput};
+use cosmwasm_vm::executor::{
+	cosmwasm_call_serialize,
+	ibc::{IbcChannelOpen, IbcPacketReceive},
+	ExecuteInput,
+};
 use cosmwasm_vm_wasmi::WasmiVM;
 use sp_std::{marker::PhantomData, str::FromStr};
 
@@ -33,7 +37,9 @@ use ibc::{
 			Version as IbcVersion,
 		},
 		ics24_host::identifier::{ChannelId, ConnectionId, PortId},
-		ics26_routing::context::{Module as IbcModule, ModuleId, ModuleOutputBuilder},
+		ics26_routing::context::{
+			Module as IbcModule, ModuleId, ModuleOutputBuilder, OnRecvPacketAck,
+		},
 	},
 	signer::Signer as IbcSigner,
 };
@@ -48,19 +54,11 @@ trait IbcHandlerExtended<C: Config> {
 	fn get_relayer_account() -> AccountIdOf<C>;
 }
 
-
-impl<T : IbcHandler, C: Config> IbcHandlerExtended<C> for T {
-		fn get_relayer_account() -> AccountIdOf<C> {
-			C::IbcRelayerAccount::get()
-		}
+impl<T: IbcHandler, C: Config> IbcHandlerExtended<C> for T {
+	fn get_relayer_account() -> AccountIdOf<C> {
+		C::IbcRelayerAccount::get()
 	}
-
-// impl<T : IbcHandler, Cc> IbcHandlerExtended for T {
-// 	type C = Cc;
-// 	fn get_relayer_account() -> AccountIdOf<Self::C> {
-// 		Self::C::IbcRelayerAccount::get()
-// 	}
-// }
+}
 
 impl<T: Config> Pallet<T> {
 	/// Check whether a contract export the mandatory IBC functions and is consequently IBC capable.
@@ -372,10 +370,46 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 	fn on_recv_packet(
 		&self,
 		_output: &mut ModuleOutputBuilder,
-		_packet: &ibc::core::ics04_channel::packet::Packet,
-		_relayer: &pallet_ibc::Signer,
+		packet: &ibc::core::ics04_channel::packet::Packet,
+		relayer: &pallet_ibc::Signer,
 	) -> ibc::core::ics26_routing::context::OnRecvPacketAck {
-		ibc::core::ics26_routing::context::OnRecvPacketAck::Nil(Box::new(|_| Ok(())))
+		let address = Self::port_to_address(&packet.destination_port).unwrap();
+		let contract_info = Self::to_ibc_contract(&address).unwrap();
+
+		let message = IbcPacketReceiveMsg {
+			packet: IbcPacket {
+				data: packet.data.clone().into(),
+				src: IbcEndpoint {
+					port_id: packet.source_port.to_string(),
+					channel_id: packet.source_channel.to_string(),
+				},
+				dest: IbcEndpoint {
+					port_id: packet.destination_port.to_string(),
+					channel_id: packet.destination_channel.to_string(),
+				},
+				sequence: packet.sequence.into(),
+				timeout: todo!("after it will get public way to create"),
+			},
+		};
+		let gas = Weight::MAX;
+		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
+		let mut executor = Self::relayer_executor(&mut vm, address, contract_info).unwrap();
+		// let result = cosmwasm_call_serialize::<
+		// 	IbcChannelOpen,
+		// 	WasmiVM<CosmwasmVM<T>>,
+		// 	IbcPacketReceive,
+		// >(&mut executor, &message).unwrap();
+		// .map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))
+		// .map(|x| match x.0 {
+		// 	ContractResult::Ok(version) => Ok(version),
+		// 	ContractResult::Err(err) =>
+		// 		Err(IbcError::implementation_specific(format!("{:?}", err))),
+		// })??
+		// .map(|x| IbcVersion::new(x.version.to_string()))
+		// .unwrap_or(version.clone());
+		// let _remaining = vm.gas.remaining();
+
+		OnRecvPacketAck::Nil(Box::new(|_| Ok(())))
 	}
 
 	fn on_acknowledgement_packet(
