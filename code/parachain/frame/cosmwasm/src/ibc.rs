@@ -11,15 +11,19 @@ use alloc::{
 
 use cosmwasm_minimal_std::{
 	ibc::{
-		IbcChannel, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcEndpoint, IbcOrder, IbcPacket,
-		IbcPacketReceiveMsg, IbcTimeout, IbcBasicResponse,
+		IbcAcknowledgement, IbcBasicResponse, IbcChannel, IbcChannelConnectMsg, IbcChannelOpenMsg,
+		IbcEndpoint, IbcOrder, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcTimeout,
 	},
-	ContractResult,
+	Binary, ContractResult,
 };
-use cosmwasm_vm::{executor::{
-	ibc::{IbcChannelConnect, IbcChannelOpen, IbcPacketReceive},
-	ExecuteInput, cosmwasm_call_serialize,
-}, system::cosmwasm_system_entrypoint_serialize};
+use cosmwasm_vm::{
+	executor::{
+		cosmwasm_call_serialize,
+		ibc::{IbcChannelConnect, IbcChannelOpen, IbcPacketAck, IbcPacketReceive},
+		ExecuteInput,
+	},
+	system::cosmwasm_system_entrypoint_serialize,
+};
 use cosmwasm_vm_wasmi::WasmiVM;
 use sp_std::{marker::PhantomData, str::FromStr};
 
@@ -372,11 +376,10 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 			WasmiVM<CosmwasmVM<T>>,
 			IbcChannelConnectMsg,
 		>(&mut executor, &message)
-		.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))
-		?;
+		.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
 
-		// how it should be mapped?
-		// result -> output.with_events(events)
+		//
+		// add output.with_events(events)
 
 		Ok(())
 	}
@@ -449,11 +452,40 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 	fn on_acknowledgement_packet(
 		&mut self,
 		_output: &mut ModuleOutputBuilder,
-		_packet: &ibc::core::ics04_channel::packet::Packet,
-		_acknowledgement: &ibc::core::ics04_channel::msgs::acknowledgement::Acknowledgement,
-		_relayer: &pallet_ibc::Signer,
+		packet: &ibc::core::ics04_channel::packet::Packet,
+		acknowledgement: &ibc::core::ics04_channel::msgs::acknowledgement::Acknowledgement,
+		relayer: &pallet_ibc::Signer,
 	) -> Result<(), IbcError> {
-		
+		let address = Self::port_to_address(&packet.destination_port).unwrap();
+		let contract_info = Self::to_ibc_contract(&address).unwrap();
+
+		let message = IbcPacketAckMsg {
+			acknowledgement: IbcAcknowledgement { data: Binary(acknowledgement.clone().into_bytes()) },
+			original_packet: IbcPacket {
+				data: Binary(packet.data.clone()),
+				src: IbcEndpoint {
+					port_id: packet.source_port.to_string(),
+					channel_id: packet.source_channel.to_string(),
+				},
+				dest: IbcEndpoint {
+					port_id: packet.source_port.to_string(),
+					channel_id: packet.source_channel.to_string(),
+				},
+				sequence: packet.sequence.into(),
+				timeout: todo!("need make pub access to init of IbcTimeout"),
+			},
+		};
+
+		let gas = Weight::MAX;
+		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
+		let mut executor = Self::relayer_executor(&mut vm, address, contract_info).unwrap();
+		let (data, events) = cosmwasm_system_entrypoint_serialize::<
+			IbcPacketAck,
+			WasmiVM<CosmwasmVM<T>>,
+			IbcPacketAckMsg,
+		>(&mut executor, &message)
+		.unwrap();
+		let _remaining = vm.gas.remaining();
 		Ok(())
 	}
 
