@@ -56,6 +56,7 @@
         ./rust.nix
         ./subsquid/subsquid.nix
         ./subwasm.nix
+        ./code/utils/subxt-exports/subxt.nix
       ];
       systems = [ "x86_64-linux" "aarch64-linux" ];
       perSystem = { config, self', inputs', pkgs, system, crane, ... }: {
