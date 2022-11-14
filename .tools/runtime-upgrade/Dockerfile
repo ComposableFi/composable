@@ -4,8 +4,7 @@ WORKDIR /upgrader
 RUN git clone https://github.com/maxsam4/fork-off-substrate.git
 
 WORKDIR /upgrader/fork-off-substrate
-RUN npm i
-RUN mkdir data
+RUN npm i && mkdir data
 
 WORKDIR /upgrader
 COPY *.json ./
