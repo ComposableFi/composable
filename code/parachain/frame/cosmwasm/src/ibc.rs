@@ -24,14 +24,18 @@ use frame_support::{
 	weights::Weight,
 	RuntimeDebug,
 };
-use ibc::core::{
-	ics04_channel::{
-		channel::{Counterparty, Order},
-		error::Error as IbcError,
-		Version as IbcVersion,
+use ibc::{
+	applications::transfer::{msgs::transfer::MsgTransfer, Amount, PrefixedCoin, PrefixedDenom},
+	core::{
+		ics04_channel::{
+			channel::{Counterparty, Order},
+			error::Error as IbcError,
+			Version as IbcVersion,
+		},
+		ics24_host::identifier::{ChannelId, ConnectionId, PortId},
+		ics26_routing::context::{Module as IbcModule, ModuleId, ModuleOutputBuilder},
 	},
-	ics24_host::identifier::{ChannelId, ConnectionId, PortId},
-	ics26_routing::context::{Module as IbcModule, ModuleId, ModuleOutputBuilder},
+	signer::Signer as IbcSigner,
 };
 
 use ibc_primitives::{IbcHandler, SendPacketData};
@@ -49,13 +53,34 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub(crate) fn do_ibc_transfer(
-		_vm: &mut CosmwasmVM<T>,
-		_channel_id: String,
-		_to_address: String,
-		_amount: cosmwasm_minimal_std::Coin,
+		vm: &mut CosmwasmVM<T>,
+		channel_id: String,
+		to_address: String,
+		amount: cosmwasm_minimal_std::Coin,
 		_timeout: cosmwasm_minimal_std::ibc::IbcTimeout,
 	) -> Result<(), CosmwasmVMError<T>> {
-		Err(Error::<T>::Unsupported.into())
+		let channel_id = ChannelId::from_str(channel_id.as_ref())
+			.map_err(|_| <CosmwasmVMError<T>>::Ibc("channel name is not valid".to_string()))?;
+		let address: cosmwasm_minimal_std::Addr = vm.contract_address.clone().into();
+
+		let port_id = PortId::from_str(address.as_str())
+			.expect("all pallet instanced contract addresses are valid port names; qwe");
+
+		let msg = MsgTransfer {
+			source_port: port_id,
+			source_channel: channel_id,
+			token: PrefixedCoin {
+				amount: Amount::from(amount.amount as u64),
+				denom: PrefixedDenom::from_str(amount.denom.as_ref()).unwrap(),
+			},
+			sender: IbcSigner::from_str(address.as_str()).expect("address is signer; qed"),
+			receiver: IbcSigner::from_str(to_address.as_str()).map_err(|_| <CosmwasmVMError<T>>::Ibc(format!("receiver is wrong")))?,
+			timeout_height: todo!("after timeout will have pub interface"),
+			timeout_timestamp: todo!("above"),
+		};
+
+		T::IbcRelayer::send_transfer(msg)
+			.map_err(|err| <CosmwasmVMError<T>>::Ibc(format!("failed to send amount")))
 	}
 
 	pub(crate) fn do_ibc_send_packet(
