@@ -151,7 +151,7 @@
           parachainIds = [ 1000 2000 2087 ];
         };
 
-      devnet-default-program = pkgs.composable.mkDevnetProgram "devnet-default"
+      devnet = pkgs.composable.mkDevnetProgram "devnet-default"
         (import ./.nix/devnet-specs/default.nix {
           inherit pkgs;
           price-feed = packages.price-feed;
@@ -159,14 +159,14 @@
           frontend = packages.frontend-static;
         });
 
-      devnet-xcvm-program = pkgs.composable.mkDevnetProgram "devnet-xcvm"
+      devnet-xcvm = pkgs.composable.mkDevnetProgram "devnet-xcvm"
         (import ./.nix/devnet-specs/xcvm.nix {
           inherit pkgs;
           inherit devnet-dali;
         });
 
-      devnet-persistent-program =
-        pkgs.composable.mkDevnetProgram "devnet-persistent"
+      devnet-dali-persistent =
+        pkgs.composable.mkDevnetProgram "devnet-dali-persistent"
         (import ./.nix/devnet-specs/default.nix {
           inherit pkgs;
           price-feed = packages.price-feed;
@@ -174,14 +174,15 @@
           frontend = packages.frontend-static-persistent;
         });
 
-      devnet-picasso-persistent-program =
-        pkgs.composable.mkDevnetProgram "devnet-persistent"
+      devnet-picasso-persistent =
+        pkgs.composable.mkDevnetProgram "devnet-picasso-persistent"
         (import ./.nix/devnet-specs/default.nix {
           inherit pkgs;
           price-feed = packages.price-feed;
           devnet = packages.devnet-picasso-complete;
           frontend = packages.frontend-static-picasso-persistent;
         });
+
       kusama-picasso-karura-devnet = let
         config = (pkgs.callPackage
           ./scripts/polkadot-launch/kusama-local-picasso-dev-karura-dev.nix {
@@ -201,7 +202,6 @@
           ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
         '';
       };
-
     };
   };
 }
