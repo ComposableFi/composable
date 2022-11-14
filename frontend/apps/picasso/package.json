@@ -7,7 +7,7 @@
     "build": "node_modules/.bin/next build",
     "start": "node_modules/.bin/next start",
     "lint": "node_modules/.bin/next lint --max-warnings=0",
-    "test": "jest",
+    "test": "./node_modules/.bin/jest --coverage",
     "test:watch": "jest --watch",
     "post-update": "echo \"codesandbox preview only, need an update\" && yarn upgrade --latest",
     "postinstall": "node ./.scripts/postinstall.js",
