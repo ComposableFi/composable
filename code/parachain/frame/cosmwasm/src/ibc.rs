@@ -367,17 +367,13 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		let gas = Weight::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
-		let result = cosmwasm_system_entrypoint_serialize::<
+		let (data, events) = cosmwasm_system_entrypoint_serialize::<
 			IbcChannelConnect,
 			WasmiVM<CosmwasmVM<T>>,
 			IbcChannelConnectMsg,
 		>(&mut executor, &message)
 		.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))
-		.map(|x| match x.0 {
-			ContractResult::Ok(x) => Ok(x),
-			ContractResult::Err(err) =>
-				Err(IbcError::implementation_specific(format!("{:?}", err))),
-		})??;
+		?;
 
 		// how it should be mapped?
 		// result -> output.with_events(events)
@@ -439,20 +435,14 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		let gas = Weight::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 		let mut executor = Self::relayer_executor(&mut vm, address, contract_info).unwrap();
-		let result = cosmwasm_system_entrypoint_serialize::<
+		let (data, events) = cosmwasm_system_entrypoint_serialize::<
 			IbcPacketReceive,
 			WasmiVM<CosmwasmVM<T>>,
 			IbcPacketReceiveMsg,
 		>(&mut executor, &message)
-		.map(|x| match x.0 {
-			ContractResult::Ok(x) => Ok(x),
-			ContractResult::Err(err) =>
-				Err(IbcError::implementation_specific(format!("{:?}", err))),
-		})
-		.unwrap()
 		.unwrap(); // depends on https://github.com/ComposableFi/centauri/issues/119
 		let _remaining = vm.gas.remaining();
-		let acknowledgement = MapBinary(result.acknowledgement.0);
+		let acknowledgement = MapBinary(data.expect("there is always data from vm; qed").0);
 		OnRecvPacketAck::Successful(Box::new(acknowledgement), Box::new(|_| Ok(())))
 	}
 
@@ -463,6 +453,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		_acknowledgement: &ibc::core::ics04_channel::msgs::acknowledgement::Acknowledgement,
 		_relayer: &pallet_ibc::Signer,
 	) -> Result<(), IbcError> {
+		
 		Ok(())
 	}
 
