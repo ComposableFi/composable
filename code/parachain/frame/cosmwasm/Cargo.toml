@@ -26,13 +26,16 @@ sp-std = { default-features = false, git = "https://github.com/paritytech/substr
 
 composable-support = { path = "../composable-support", default-features = false }
 cosmwasm-minimal-std = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "ee37ee8263cbcd249e163da47065980cbe426c47", default-features = false, features = [
-  "iterator", "stargate"
+  "iterator",
+  "stargate",
 ] }
 cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "ee37ee8263cbcd249e163da47065980cbe426c47", default-features = false, features = [
-  "iterator", "stargate"
+  "iterator",
+  "stargate",
 ] }
 cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "ee37ee8263cbcd249e163da47065980cbe426c47", default-features = false, features = [
-  "iterator", "stargate"
+  "iterator",
+  "stargate",
 ] }
 hex = { version = "0.4", default-features = false, features = ["alloc"] }
 log = { version = "0.4.14", default-features = false }
