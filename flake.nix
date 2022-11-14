@@ -48,7 +48,7 @@
         ./devnet-tools.nix
         ./devnets.nix
         ./docker.nix
-        ./code/xcvm/cosmos/flake-parts.nix
+        ./code/xcvm/cosmos/flake-module.nix
         ./docs/docs.nix
         ./fmt.nix
         ./frontend/frontend.nix
