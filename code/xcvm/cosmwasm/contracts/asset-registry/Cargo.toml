@@ -1,7 +1,7 @@
 [package]
 authors = ["Composable Developers"]
 edition = "2021"
-name = "xcvm-asset-registry"
+name = "cw-xcvm-asset-registry"
 version = "0.1.0"
 
 exclude = [
