@@ -124,6 +124,7 @@ const config = {
         darkTheme: darkCodeTheme,
       },
     }),
+  plugins: ['docusaurus-plugin-sass'],
 };
 
 module.exports = config;

@@ -1,0 +1,19 @@
+{
+	"semi": true,
+	"tabWidth": 2,
+	"useTabs": true,
+	"printWidth": 120,
+	"singleQuote": true,
+	"trailingComma": "es5",
+	"jsxBracketSameLine": true,
+	"arrowParens": "avoid",
+	"importOrderSeparation": true,
+	"importOrderSortSpecifiers": true,
+	"importOrder": [
+		"^(next/(.*)$)|^(next$)|react$",
+		"<THIRD_PARTY_MODULES>",
+		"^@/.+$",
+		"^\\.?\\./.+$"
+	],
+	"importOrderCaseInsensitive": true
+}
