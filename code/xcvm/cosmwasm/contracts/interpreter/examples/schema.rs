@@ -1,7 +1,7 @@
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 use std::{env::current_dir, fs::create_dir_all};
 
-use xcvm_interpreter::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use cw_xcvm_interpreter::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 fn main() {
 	let mut out_dir = current_dir().unwrap();

@@ -58,6 +58,7 @@ assetsinfo
 autofetch
 autorenew
 azuretools
+bech
 BCENT
 BCENTS
 BCOIN
@@ -156,6 +157,7 @@ immer
 includeurl
 infima
 inprocess
+instrs
 ipam
 ipetkov # github username
 iszero
@@ -386,6 +388,7 @@ usermod
 vadimcn
 Varint
 vsicons
+wasmd
 wasmi
 wasmswap
 wasmtime
@@ -410,6 +413,7 @@ zustand
 DACP
 Origin
 protobufs
+protos
 divn
 XCVM
 tmpfs

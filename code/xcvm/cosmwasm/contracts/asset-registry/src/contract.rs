@@ -1,6 +1,8 @@
 use crate::{
 	error::ContractError,
-	msg::{ExecuteMsg, GetAssetContractResponse, InstantiateMsg, MigrateMsg, QueryMsg},
+	msg::{
+		AssetReference, ExecuteMsg, GetAssetContractResponse, InstantiateMsg, MigrateMsg, QueryMsg,
+	},
 	state::{XcvmAssetId, ASSETS},
 };
 #[cfg(not(feature = "library"))]
@@ -47,13 +49,13 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 	match msg {
-		QueryMsg::GetAssetContract(token_id) => to_binary(&query_asset_contract(deps, token_id)?),
+		QueryMsg::GetAssetContract(asset_id) => to_binary(&query_asset_contract(deps, asset_id)?),
 	}
 }
 
 pub fn handle_set_assets(
 	deps: DepsMut,
-	assets: BTreeMap<String, String>,
+	assets: BTreeMap<String, AssetReference>,
 ) -> Result<Response, ContractError> {
 	// Remove all keys
 	for key in ASSETS
@@ -63,9 +65,12 @@ pub fn handle_set_assets(
 		ASSETS.remove(deps.storage, key);
 	}
 
-	for (asset_id, contract_addr) in assets {
-		let addr = deps.api.addr_validate(&contract_addr)?;
-		ASSETS.save(deps.storage, asset_id.parse::<XcvmAssetId>().unwrap(), &addr)?;
+	for (asset_id, asset_reference) in assets {
+		ASSETS.save(
+			deps.storage,
+			asset_id.parse::<XcvmAssetId>().map_err(|_| ContractError::CannotParseAssetId)?,
+			&asset_reference,
+		)?;
 	}
 
 	Ok(Response::new().add_event(Event::new("xcvm.registry.updated")))
@@ -73,10 +78,10 @@ pub fn handle_set_assets(
 
 pub fn query_asset_contract(
 	deps: Deps,
-	token_id: XcvmAssetId,
+	asset_id: XcvmAssetId,
 ) -> StdResult<GetAssetContractResponse> {
-	let contract_addr = ASSETS.load(deps.storage, token_id)?;
-	Ok(GetAssetContractResponse { addr: contract_addr })
+	let asset_reference = ASSETS.load(deps.storage, asset_id)?;
+	Ok(GetAssetContractResponse { asset_reference })
 }
 
 #[cfg(test)]
@@ -108,21 +113,26 @@ mod tests {
 
 		let _ = instantiate(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
 
+		let addr1 = AssetReference::Virtual(Addr::unchecked("addr1"));
+		let addr2 = AssetReference::Virtual(Addr::unchecked("addr2"));
+		let addr3 = AssetReference::Virtual(Addr::unchecked("addr3"));
+		let addr4 = AssetReference::Virtual(Addr::unchecked("addr4"));
+
 		let mut assets = BTreeMap::new();
-		assets.insert("1".into(), "addr1".into());
-		assets.insert("2".into(), "addr2".into());
+		assets.insert("1".into(), addr1.clone());
+		assets.insert("2".into(), addr2.clone());
 
 		let res =
 			execute(deps.as_mut(), mock_env(), info.clone(), ExecuteMsg::SetAssets(assets.clone()))
 				.unwrap();
 		assert_eq!(res.attributes.len(), 0);
 
-		assert_eq!(ASSETS.load(&deps.storage, 1).unwrap(), Addr::unchecked("addr1"));
-		assert_eq!(ASSETS.load(&deps.storage, 2).unwrap(), Addr::unchecked("addr2"));
+		assert_eq!(ASSETS.load(&deps.storage, 1).unwrap(), addr1);
+		assert_eq!(ASSETS.load(&deps.storage, 2).unwrap(), addr2);
 
 		let mut assets = BTreeMap::new();
-		assets.insert("3".into(), "addr3".into());
-		assets.insert("4".into(), "addr4".into());
+		assets.insert("3".into(), addr3.clone());
+		assets.insert("4".into(), addr4.clone());
 
 		let _ = execute(deps.as_mut(), mock_env(), info, ExecuteMsg::SetAssets(assets.clone()))
 			.unwrap();
@@ -130,8 +140,8 @@ mod tests {
 		// Make sure that set removes the previous elements
 		assert!(ASSETS.load(&deps.storage, 1).is_err());
 		assert!(ASSETS.load(&deps.storage, 2).is_err());
-		assert_eq!(ASSETS.load(&deps.storage, 3).unwrap(), Addr::unchecked("addr3"));
-		assert_eq!(ASSETS.load(&deps.storage, 4).unwrap(), Addr::unchecked("addr4"));
+		assert_eq!(ASSETS.load(&deps.storage, 3).unwrap(), addr3);
+		assert_eq!(ASSETS.load(&deps.storage, 4).unwrap(), addr4);
 
 		// Finally make sure that there are two elements in the assets storage
 		assert_eq!(
@@ -152,8 +162,9 @@ mod tests {
 
 		let _ = instantiate(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
 
+		let addr1 = AssetReference::Virtual(Addr::unchecked("addr1"));
 		let mut assets = BTreeMap::new();
-		assets.insert("1".into(), "addr1".into());
+		assets.insert("1".into(), addr1.clone());
 
 		let _ =
 			execute(deps.as_mut(), mock_env(), info.clone(), ExecuteMsg::SetAssets(assets.clone()))
@@ -164,7 +175,7 @@ mod tests {
 				.unwrap();
 
 		// Query should return the corresponding address
-		assert_eq!(res, GetAssetContractResponse { addr: Addr::unchecked("addr1") });
+		assert_eq!(res, GetAssetContractResponse { asset_reference: addr1 });
 
 		// This should fail since there the asset doesn't exist
 		assert!(query(deps.as_ref(), mock_env(), QueryMsg::GetAssetContract(2)).is_err());

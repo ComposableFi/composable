@@ -1,6 +1,30 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "QueryMsg",
-  "type": "string",
-  "enum": []
+  "oneOf": [
+    {
+      "description": "Get a specific register",
+      "type": "object",
+      "required": [
+        "Register"
+      ],
+      "properties": {
+        "Register": {
+          "$ref": "#/definitions/Register"
+        }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "definitions": {
+    "Register": {
+      "type": "string",
+      "enum": [
+        "ip",
+        "relayer",
+        "this",
+        "result"
+      ]
+    }
+  }
 }
