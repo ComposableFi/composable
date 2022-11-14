@@ -12,7 +12,7 @@ use alloc::{
 use cosmwasm_minimal_std::{
 	ibc::{
 		IbcChannel, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcEndpoint, IbcOrder, IbcPacket,
-		IbcPacketReceiveMsg, IbcTimeout,
+		IbcPacketReceiveMsg, IbcTimeout, IbcBasicResponse,
 	},
 	ContractResult,
 };
@@ -344,7 +344,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 
 	fn on_chan_open_ack(
 		&mut self,
-		_output: &mut ModuleOutputBuilder,
+		output: &mut ModuleOutputBuilder,
 		port_id: &PortId,
 		channel_id: &ChannelId,
 		counterparty_version: &IbcVersion,
@@ -354,7 +354,10 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 
 		let message = IbcChannelConnectMsg::OpenAck {
 			channel: IbcChannel {
-				endpoint: todo!(),
+				endpoint: IbcEndpoint {
+					port_id: port_id.to_string(),
+					channel_id: channel_id.to_string(),
+				},
 				counterparty_endpoint: todo!("https://github.com/ComposableFi/centauri/issues/120"),
 				order: todo!("https://github.com/ComposableFi/centauri/issues/120"),
 				version: todo!("https://github.com/ComposableFi/centauri/issues/120"),
@@ -372,12 +375,13 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		>(&mut executor, &message)
 		.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))
 		.map(|x| match x.0 {
-			ContractResult::Ok(version) => Ok(version),
+			ContractResult::Ok(x) => Ok(x),
 			ContractResult::Err(err) =>
 				Err(IbcError::implementation_specific(format!("{:?}", err))),
-		})??
-		.map(|x| IbcVersion::new(x.version.to_string()))
-		.unwrap_or(version.clone());
+		})??;
+
+		// how it should be mapped?
+		// result -> output.with_events(events)
 
 		Ok(())
 	}
