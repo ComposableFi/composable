@@ -31,7 +31,7 @@ extensibility in the future.
 
 With the following definitions: 
 
-* `local_ed` - The functional ED of a asset on our chain.
+* `local_ed` - The functional ED of an asset on our chain.
 
 * `native_asset_ed` - The ED of our chains native asset.
 
@@ -74,7 +74,7 @@ assert(native_as_asset_b == asset_a_as_asset_b)
 
 ### Well-Known Assets & Asset Registry Storage
 
-For a asset to have its ED be correctly calculated, and therefore to exists on 
+For an asset to have its ED be correctly calculated, and therefore to exist on 
 chain, it should have its `foreign_asset_ratio` defined in either our Well-Known 
 assets list, or stored in Asset Registry.
 
@@ -94,7 +94,7 @@ The current implementation of `multi_existential_deposits` does the following:
     
 It should be updated as follows:
 
-  1. **If a asset ratio is defined for an asset in Asset Registry or as a 
+  1. **If an asset ratio is defined for an asset in Asset Registry or as a 
      well-known asset, calculate the standard ED as defined by this document.**
   
   3. If no matches are found, return `Balance::MAX` which will prune unknown
@@ -118,7 +118,7 @@ to be possible.
   pub fn register_asset(
     origin: OriginFor<T>,
     location: T::ForeignAssetId,
-    ratio: Ratio, // Used to be optional
+    ratio: Rational64, // Used to be optional
     decimals: Option<Exponent>,
   ) -> DispatchResultWithPostInfo;
   ```
@@ -141,7 +141,7 @@ to be possible.
   need to move `multi_existential_deposits` (or at least its functionality) into
   Asset Registry.
   
-  Moving this functionality into Asset Registry will be necessary for 
+  > Moving this functionality into Asset Registry will be necessary for 
   different runtimes to have different asset configurations.
   
 * Do we already have an in-use storage for AssetRegistry in Picasso?
