@@ -14,62 +14,67 @@ program
 
 
 async function upgrade(options) {
-  console.log("Starting runtime upgrade");  
+ 
+    console.log("Starting runtime upgrade");  
+    await cryptoWaitReady()
+    console.log("crypto intialized")
 
-  await cryptoWaitReady()
-  console.log("crypto intialized")
+    // Initialise the provider to connect to the local node
+    const provider = new WsProvider(options.wss);
+    console.log(options.wss);  
 
-  // Initialise the provider to connect to the local node
-  const provider = new WsProvider(options.wss, { timeout: 30 });
-  console.log(options.wss);  
+    // Create the API and wait until ready (optional provider passed through)
+    const api = await new ApiPromise({ provider }).isReady
 
-  // Create the API and wait until ready (optional provider passed through)
-  const api = await new ApiPromise({ provider }).isReady;
-  console.log("2");  
+    // Find the actual keypair in the keyring (if this is a changed value, the key
+    // needs to be added to the keyring before - this assumes we have defaults, i.e.
+    // Alice as the key - and this already exists on the test keyring)
+    const keyring = new Keyring({ type: 'sr25519' });
 
-  // Find the actual keypair in the keyring (if this is a changed value, the key
-  // needs to be added to the keyring before - this assumes we have defaults, i.e.
-  // Alice as the key - and this already exists on the test keyring)
-  const keyring = new Keyring({ type: 'sr25519' });
+    console.log("creating keyring")
+    const adminPair = keyring.addFromUri(options.keyring);
+    console.log(`Using ${adminPair.address}`);  
 
-  console.log("creating keyring")
-  const adminPair = keyring.addFromUri(options.keyring);
-  console.log(`Using ${adminPair.address}`);  
+    // Retrieve the runtime to upgrade
+    const code = fs.readFileSync(options.runtime).toString('hex');
 
-  // Retrieve the runtime to upgrade
-  const code = fs.readFileSync(options.runtime).toString('hex');
+    const proposal = api.tx.system && api.tx.system.setCode
+      ? api.tx.system.setCode(`0x${code}`) // For newer versions of Substrate
+      : api.tx.consensus.setCode(`0x${code}`); // For previous versions
 
-  const proposal = api.tx.system && api.tx.system.setCode
-    ? api.tx.system.setCode(`0x${code}`) // For newer versions of Substrate
-    : api.tx.consensus.setCode(`0x${code}`); // For previous versions
+    if (options.mode == 'sudo') {
+      console.log(`Upgrading from ${adminPair.address} using sudo, ${code.length / 2} bytes`);
 
-  if (options.mode == 'sudo') {
-    console.log(`Upgrading from ${adminPair.address} using sudo, ${code.length / 2} bytes`);
+      // Perform the actual chain upgrade via the sudo module
+      api.tx.sudo
+          .sudo(proposal)
+          .signAndSend(adminPair, ({ events = [], status }) => {
+          console.log('Proposal status:', status.type);
 
-    // Perform the actual chain upgrade via the sudo module
-    api.tx.sudo
-        .sudo(proposal)
-        .signAndSend(adminPair, ({ events = [], status }) => {
-        console.log('Proposal status:', status.type);
+          if (status.isInBlock) {
+              console.error('You have just upgraded your chain');
 
-        if (status.isInBlock) {
-            console.error('You have just upgraded your chain');
+              console.log('Included at block hash', status.asInBlock.toHex());
+              console.log('Events:');
 
-            console.log('Included at block hash', status.asInBlock.toHex());
-            console.log('Events:');
-
-            console.log(JSON.stringify(events.toHuman(), null, 2));
-        } else if (status.isFinalized) {
-            console.log('Finalized block hash', status.asFinalized.toHex());
-            process.exit(0);
-        }
-    });
-  } else if (options.mode == "democracy") {
-        console.error('democracy is currently still unsupported')
-  } else {
-    console.error("unknown options")
-  }
-  console.log("finished runtime upgrade")
+              console.log(JSON.stringify(events.toHuman(), null, 2));
+          } else if (status.isFinalized) {
+              console.log('Finalized block hash', status.asFinalized.toHex());
+              process.exit(0);
+          }
+          console.log("finished runtime upgrade")
+      });
+    } else if (options.mode == "democracy") {
+          console.error('democracy is currently still unsupported')
+    } else {
+      console.error("unknown options")
+    }
 }
 
 program.parse()
+
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
