@@ -659,6 +659,14 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
     },
     MuiTypography: {
       styleOverrides: {
+        root: {
+          "&.MuiTypography-inputLabel": {
+            color: alpha(
+              brandPalette.common.white,
+              customThemeOptions.custom.opacity.darker
+            ),
+          },
+        },
         button: {
           textTransform: "none",
         },
