@@ -150,6 +150,18 @@ pub struct Router<T: Config> {
 	_marker: PhantomData<T>,
 }
 
+struct MapBinary(Vec<u8>);
+
+impl AsRef<[u8]> for MapBinary {
+	fn as_ref(&self) -> &[u8] { 
+		&self.0[..]
+	}
+}
+impl
+ ibc::core::ics26_routing::context::Acknowledgement for MapBinary {
+
+}
+
 impl<T: Config> Router<T> {
 	fn port_to_address(port_id: &PortId) -> Result<<T as Config>::AccountIdExtended, IbcError> {
 		let address_part = Self::parse_address_part(port_id)?;
@@ -394,22 +406,26 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		let gas = Weight::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 		let mut executor = Self::relayer_executor(&mut vm, address, contract_info).unwrap();
-		// let result = cosmwasm_call_serialize::<
-		// 	IbcChannelOpen,
-		// 	WasmiVM<CosmwasmVM<T>>,
-		// 	IbcPacketReceive,
-		// >(&mut executor, &message).unwrap();
-		// .map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))
-		// .map(|x| match x.0 {
-		// 	ContractResult::Ok(version) => Ok(version),
-		// 	ContractResult::Err(err) =>
-		// 		Err(IbcError::implementation_specific(format!("{:?}", err))),
-		// })??
+		let result = cosmwasm_call_serialize::<
+			IbcPacketReceive,
+			WasmiVM<CosmwasmVM<T>>,
+			IbcPacketReceiveMsg,
+		>(&mut executor, &message)
+		.map(|x| match x.0 {
+			ContractResult::Ok(x) => Ok(x),
+			ContractResult::Err(err) =>
+				Err(IbcError::implementation_specific(format!("{:?}", err))),
+		}).unwrap().unwrap();
 		// .map(|x| IbcVersion::new(x.version.to_string()))
 		// .unwrap_or(version.clone());
 		// let _remaining = vm.gas.remaining();
-
-		OnRecvPacketAck::Nil(Box::new(|_| Ok(())))
+		let acknowledgement = MapBinary(result.acknowledgement.0);
+		OnRecvPacketAck::Successful(
+			Box::new(acknowledgement), 
+			Box::new(
+				|_| Ok(())
+			)
+		)
 	}
 
 	fn on_acknowledgement_packet(
