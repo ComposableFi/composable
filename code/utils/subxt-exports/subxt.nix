@@ -7,8 +7,9 @@
             pname = "subxt-exports";
             cargoArtifacts = self'.packages.common-deps;
             # You can use RELAY_HOST and PARA_HOST environment variables to configure this crate.
+            # You can use SUBXT_ENABLED=1 to enable code generation.
             cargoBuildCommand =
-              "SUBXT_ENABLED=1 cargo build --release -p subxt-exports";
+              "cargo build --release -p subxt-exports";
             meta = { mainProgram = "subxt-exports"; };
           });
       };
