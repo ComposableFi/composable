@@ -16,11 +16,10 @@ use cosmwasm_minimal_std::{
 	},
 	ContractResult,
 };
-use cosmwasm_vm::executor::{
-	cosmwasm_call_serialize,
+use cosmwasm_vm::{executor::{
 	ibc::{IbcChannelConnect, IbcChannelOpen, IbcPacketReceive},
-	ExecuteInput,
-};
+	ExecuteInput, cosmwasm_call_serialize,
+}, system::cosmwasm_system_entrypoint_serialize};
 use cosmwasm_vm_wasmi::WasmiVM;
 use sp_std::{marker::PhantomData, str::FromStr};
 
@@ -368,7 +367,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		let gas = Weight::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
-		let result = cosmwasm_call_serialize::<
+		let result = cosmwasm_system_entrypoint_serialize::<
 			IbcChannelConnect,
 			WasmiVM<CosmwasmVM<T>>,
 			IbcChannelConnectMsg,
@@ -440,7 +439,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		let gas = Weight::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 		let mut executor = Self::relayer_executor(&mut vm, address, contract_info).unwrap();
-		let result = cosmwasm_call_serialize::<
+		let result = cosmwasm_system_entrypoint_serialize::<
 			IbcPacketReceive,
 			WasmiVM<CosmwasmVM<T>>,
 			IbcPacketReceiveMsg,
