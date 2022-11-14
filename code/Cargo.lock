@@ -16089,6 +16089,7 @@ name = "subxt-exports"
 version = "0.1.0"
 dependencies = [
  "color-eyre 0.6.2",
+ "once_cell",
  "parity-scale-codec",
  "serde",
  "subxt 0.24.0",
