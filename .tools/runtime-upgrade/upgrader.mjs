@@ -47,7 +47,7 @@ async function upgrade(options) {
 
       // Perform the actual chain upgrade via the sudo module
       api.tx.sudo
-          .sudo(proposal)
+          .sudoUncheckedWeight(proposal, 0)
           .signAndSend(adminPair, ({ events = [], status }) => {
           console.log('Proposal status:', status.type);
 
