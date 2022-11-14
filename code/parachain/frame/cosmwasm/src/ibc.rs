@@ -43,6 +43,25 @@ use pallet_ibc::routing::ModuleRouter as IbcModuleRouter;
 
 const PORT_PREFIX: &str = "wasm";
 
+// https://github.com/ComposableFi/centauri/discussions/118
+trait IbcHandlerExtended<C: Config> {
+	fn get_relayer_account() -> AccountIdOf<C>;
+}
+
+
+impl<T : IbcHandler, C: Config> IbcHandlerExtended<C> for T {
+		fn get_relayer_account() -> AccountIdOf<C> {
+			C::IbcRelayerAccount::get()
+		}
+	}
+
+// impl<T : IbcHandler, Cc> IbcHandlerExtended for T {
+// 	type C = Cc;
+// 	fn get_relayer_account() -> AccountIdOf<Self::C> {
+// 		Self::C::IbcRelayerAccount::get()
+// 	}
+// }
+
 impl<T: Config> Pallet<T> {
 	/// Check whether a contract export the mandatory IBC functions and is consequently IBC capable.
 	pub(crate) fn do_check_ibc_capability(module: &parity_wasm::elements::Module) -> bool {
@@ -74,7 +93,8 @@ impl<T: Config> Pallet<T> {
 				denom: PrefixedDenom::from_str(amount.denom.as_ref()).unwrap(),
 			},
 			sender: IbcSigner::from_str(address.as_str()).expect("address is signer; qed"),
-			receiver: IbcSigner::from_str(to_address.as_str()).map_err(|_| <CosmwasmVMError<T>>::Ibc(format!("receiver is wrong")))?,
+			receiver: IbcSigner::from_str(to_address.as_str())
+				.map_err(|_| <CosmwasmVMError<T>>::Ibc(format!("receiver is wrong")))?,
 			timeout_height: todo!("after timeout will have pub interface"),
 			timeout_timestamp: todo!("above"),
 		};
@@ -153,7 +173,7 @@ impl<T: Config> Router<T> {
 	) -> Result<WasmiVM<CosmwasmVM<T>>, IbcError> {
 		let mut executor = <Pallet<T>>::cosmwasm_new_vm(
 			vm,
-			T::IbcRelayerAccount::get(),
+			<T::IbcRelayer as IbcHandlerExtended<T>>::get_relayer_account(),
 			address,
 			contract_info,
 			Default::default(),
