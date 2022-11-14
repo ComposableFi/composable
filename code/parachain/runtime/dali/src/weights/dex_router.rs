@@ -42,7 +42,7 @@ impl<T: frame_system::Config> dex_router::WeightInfo for WeightInfo<T> {
 	// Storage: Tokens Accounts (r:13 w:13)
 	// Storage: System Account (r:4 w:0)
 	// Storage: Pablo PriceCumulativeState (r:4 w:4)
-	fn exchange() -> Weight {
+	fn swap() -> Weight {
 		(283_084_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(27 as Weight))
 			.saturating_add(T::DbWeight::get().writes(17 as Weight))
@@ -54,16 +54,6 @@ impl<T: frame_system::Config> dex_router::WeightInfo for WeightInfo<T> {
 	// Storage: Pablo PriceCumulativeState (r:4 w:4)
 	fn buy() -> Weight {
 		(298_460_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(26 as Weight))
-			.saturating_add(T::DbWeight::get().writes(17 as Weight))
-	}
-	// Storage: DexRouter DexRoutes (r:1 w:0)
-	// Storage: Pablo Pools (r:4 w:0)
-	// Storage: Tokens Accounts (r:13 w:13)
-	// Storage: System Account (r:4 w:0)
-	// Storage: Pablo PriceCumulativeState (r:4 w:4)
-	fn sell() -> Weight {
-		(295_251_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(26 as Weight))
 			.saturating_add(T::DbWeight::get().writes(17 as Weight))
 	}

@@ -3,6 +3,7 @@ import { ApiPromise } from "@polkadot/api";
 import { fromChainIdUnit } from "shared";
 import BigNumber from "bignumber.js";
 import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
+import { ParachainNetworks } from "substrate-react";
 
 export const fetchBalanceByAssetId = async (
   api: ApiPromise,
@@ -38,7 +39,12 @@ export const subscribePicassoBalanceByAssetId = async (
       uAccount,
       api.createType("u128", tokenMetadata.chainId.picasso.toString()),
       (balance: OrmlTokensAccountData) => {
-        callback(fromChainIdUnit(new BigNumber(balance.free.toString())));
+        callback(
+          fromChainIdUnit(
+            new BigNumber(balance.free.toString()),
+            tokenMetadata.decimals.picasso ?? ParachainNetworks.picasso.decimals
+          )
+        );
       }
     );
   } catch (err) {

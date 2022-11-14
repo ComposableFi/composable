@@ -18,12 +18,7 @@ const CrowdloanRewards: NextPage = () => {
   const selectedAccount = useSelectedAccount();
 
   const breadcrumbs = [
-    <Link
-      key="Overview"
-      underline="none"
-      color="primary"
-      href="/"
-    >
+    <Link key="Overview" underline="none" color="primary" href="/">
       Overview
     </Link>,
     <Typography key="claims" color="text.secondary">
@@ -96,7 +91,7 @@ const CrowdloanRewards: NextPage = () => {
                   />
                 </Box>
               }
-              textBelow="To see your portfolio, wallet needs to be connected."
+              textBelow="To see your portfolio, connect a Polkadot or Metamask wallet."
               ButtonProps={{
                 label: "Claim with Polkadot.js",
                 variant: "contained",
@@ -109,7 +104,7 @@ const CrowdloanRewards: NextPage = () => {
             />
             <FeaturedBox
               title="Stablecoin Contribution"
-              textBelow="To see your portfolio, wallet needs to be connected."
+              textBelow="To see your portfolio, connect a Polkadot or Metamask wallet."
               textAbove={
                 <Box
                   sx={{

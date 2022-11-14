@@ -52,12 +52,15 @@ export const ClaimForm = () => {
       },
       (msg) => {
         closeSnackbar(snackbarKey);
-        enqueueSnackbar("An error occurred while processing transaction", {
-          variant: "error",
-          isClosable: true,
-          persist: true,
-          description: msg,
-        });
+        enqueueSnackbar(
+          "An error occurred while processing the transaction. The process was canceled.",
+          {
+            variant: "error",
+            isClosable: true,
+            persist: true,
+            description: msg,
+          }
+        );
       },
       (txHash) => {
         snackbarKey = enqueueSnackbar("Processing Claim", {

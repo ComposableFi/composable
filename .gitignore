@@ -53,6 +53,7 @@ target
 node_modules/
 **/yarn-error.log
 **/.yarn/
+.vercel/
 
 .benchmarkRun
 

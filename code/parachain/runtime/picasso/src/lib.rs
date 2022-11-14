@@ -24,15 +24,19 @@ pub const WASM_BINARY_V2: Option<&[u8]> = None;
 pub mod governance;
 mod weights;
 pub mod xcmp;
-
-pub use xcmp::{MaxInstructions, UnitWeightCost, XcmConfig};
+pub use common::xcmp::{MaxInstructions, UnitWeightCost};
+pub use xcmp::XcmConfig;
 
 use governance::*;
 
 use common::{
-	governance::native::*, impls::DealWithFees, multi_existential_deposits, AccountId,
-	AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, BondOfferId, ForeignAssetId, Hash,
-	MaxStringSize, Moment, NativeExistentialDeposit, PriceConverter, Signature,
+	fees::{
+		multi_existential_deposits, NativeExistentialDeposit, PriceConverter, WeightToFeeConverter,
+	},
+	governance::native::*,
+	rewards::StakingPot,
+	AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, BondOfferId,
+	ForeignAssetId, Hash, MaxStringSize, Moment, ReservedDmpWeight, ReservedXcmpWeight, Signature,
 	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
@@ -132,7 +136,7 @@ pub fn native_version() -> NativeVersion {
 	NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
 }
 
-use orml_traits::{parameter_type_with_key, LockIdentifier, MultiCurrency};
+use orml_traits::{parameter_type_with_key, LockIdentifier};
 parameter_type_with_key! {
 	// Minimum amount an account has to hold to stay in state
 	pub MultiExistentialDeposits: |currency_id: CurrencyId| -> Balance {
@@ -361,26 +365,11 @@ parameter_types! {
 	pub const OperationalFeeMultiplier: u8 = 5;
 }
 
-pub struct WeightToFee;
-impl WeightToFeePolynomial for WeightToFee {
-	type Balance = Balance;
-	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
-		let p = CurrencyId::milli::<Balance>();
-		let q = 10 * Balance::from(ExtrinsicBaseWeight::get());
-		smallvec::smallvec![WeightToFeeCoefficient {
-			degree: 1,
-			negative: false,
-			coeff_frac: Perbill::from_rational(p % q, q),
-			coeff_integer: p / q,
-		}]
-	}
-}
-
 impl transaction_payment::Config for Runtime {
 	type Event = Event;
 	type OnChargeTransaction =
-		transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime, NativeTreasury>>;
-	type WeightToFee = WeightToFee;
+		transaction_payment::CurrencyAdapter<Balances, StakingPot<Runtime, NativeTreasury>>;
+	type WeightToFee = WeightToFeeConverter;
 	type FeeMultiplierUpdate =
 		TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
@@ -392,24 +381,8 @@ impl transaction_payment::Config for Runtime {
 pub struct TransferToTreasuryOrDrop;
 impl asset_tx_payment::HandleCredit<AccountId, Tokens> for TransferToTreasuryOrDrop {
 	fn handle_credit(credit: fungibles::CreditOf<AccountId, Tokens>) {
-		// `old_free` is only the `free` balance of an account
-		let old_free = <Tokens as MultiCurrency<AccountId>>::free_balance(
-			credit.asset(),
-			&TreasuryAccount::get(),
-		);
-
-		// `new_free` is `old_free + credit.peek()`
-		let new_free = old_free.saturating_add(credit.peek());
-
-		// NOTE: After our runtime depends on paritytech/substrate PR#12569, this function will need
-		// to be re-evaluated as `set_balance` might not do what it is meant to do when implemented
-		// for pallet balances or orml tokens.
-		// https://github.com/paritytech/substrate/pull/12569
-		let _ = <Tokens as fungibles::Unbalanced<AccountId>>::set_balance(
-			credit.asset(),
-			&TreasuryAccount::get(),
-			new_free,
-		);
+		let _ =
+			<Tokens as fungibles::Balanced<AccountId>>::resolve(&TreasuryAccount::get(), credit);
 	}
 }
 
@@ -426,7 +399,7 @@ impl asset_tx_payment::Config for Runtime {
 
 	type ConfigurationOrigin = EnsureRootOrHalfNativeCouncil;
 
-	type ConfigurationExistentialDeposit = common::NativeExistentialDeposit;
+	type ConfigurationExistentialDeposit = common::fees::NativeExistentialDeposit;
 
 	type PayableCall = Call;
 
@@ -513,15 +486,6 @@ where
 {
 	type OverarchingCall = Call;
 	type Extrinsic = UncheckedExtrinsic;
-}
-
-// Parachain stuff.
-// See https://github.com/paritytech/cumulus/blob/polkadot-v0.9.8/polkadot-parachains/rococo/src/lib.rs for details.
-parameter_types! {
-	/// 1/4 of block weight is reserved for XCMP
-	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
-	/// 1/4 of block weight is reserved for handling Downward messages
-	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
 }
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
@@ -675,7 +639,7 @@ impl currency_factory::Config for Runtime {
 parameter_types! {
 	pub const CrowdloanRewardsId: PalletId = PalletId(*b"pal_crow");
 	pub const CrowdloanRewardsLockId: LockIdentifier = *b"clr_lock";
-	pub const InitialPayment: Perbill = Perbill::from_percent(25);
+	pub const InitialPayment: Perbill = Perbill::from_percent(50);
 	pub const OverFundedThreshold: Perbill = Perbill::from_percent(1);
 	pub const VestingStep: Moment = (7 * DAYS as Moment) * (MILLISECS_PER_BLOCK as Moment);
 	pub const Prefix: &'static [u8] = b"picasso-";
@@ -712,6 +676,7 @@ impl vesting::Config for Runtime {
 	type MaxVestingSchedules = MaxVestingSchedule;
 	type MinVestedTransfer = MinVestedTransfer;
 	type VestedTransferOrigin = EnsureRootOrHalfNativeCouncil;
+	type UpdateSchedulesOrigin = EnsureRootOrHalfNativeCouncil;
 	type WeightInfo = weights::vesting::WeightInfo<Runtime>;
 	type Moment = Moment;
 	type Time = Timestamp;

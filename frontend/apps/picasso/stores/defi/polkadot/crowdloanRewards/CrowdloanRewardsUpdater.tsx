@@ -1,6 +1,6 @@
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { usePicassoAccounts, usePicassoProvider } from "@/defi/polkadot/hooks";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useBlockchainProvider } from "bi-lib";
 import { fromPerbill } from "shared";
 import { encodeAddress } from "@polkadot/util-crypto";
@@ -14,18 +14,24 @@ import {
   setCrowdloanRewardsState,
 } from "./crowdloanRewards.slice";
 // Import static JSON files
-import rewardsAndContributions from "@/defi/polkadot/constants/pica-rewards-contributions.json";
-import rewardsAndContributionsDev from "@/defi/polkadot/constants/pica-rewards-contributions-dev.json";
+// import rewardsAndContributions from "@/defi/polkadot/constants/pica-rewards-contributions.json";
+// import rewardsAndContributionsDev from "@/defi/polkadot/constants/pica-rewards-contributions-dev.json";
 
 /**
  * Check for contributions in JSON
  * @param account ethereum or kusama format address
  * @returns string | undefined
  */
-export const presentInContributors = (
+export const presentInContributors = async (
   account: string,
   env: "development" | "production" | "test"
-): string | undefined => {
+): Promise<string | undefined> => {
+  const rewardsAndContributions = await import(
+    "@/defi/polkadot/constants/pica-rewards-contributions.json"
+  );
+  const rewardsAndContributionsDev = await import(
+    "@/defi/polkadot/constants/pica-rewards-contributions-dev.json"
+  );
   const ethAccount = account.startsWith("0x")
     ? account.toLowerCase()
     : undefined;
@@ -72,10 +78,16 @@ export const presentInContributors = (
  * @param account ethereum or kusama format address
  * @returns string | undefined
  */
-export const presentInRewards = (
+export const presentInRewards = async (
   account: string,
   env: "development" | "production" | "test"
-): string | undefined => {
+): Promise<string | undefined> => {
+  const rewardsAndContributions = await import(
+    "@/defi/polkadot/constants/pica-rewards-contributions.json"
+  );
+  const rewardsAndContributionsDev = await import(
+    "@/defi/polkadot/constants/pica-rewards-contributions-dev.json"
+  );
   const ethAccount = account.startsWith("0x")
     ? account.toLowerCase()
     : undefined;
@@ -146,23 +158,25 @@ const CrowdloanRewardsUpdater = () => {
   useEffect(() => {
     if (accounts.length <= 0) return;
 
-    let contributions = accounts
-      .map((ksmAccount) => {
-        const ksmAddress = encodeAddress(
-          ksmAccount.address,
-          SUBSTRATE_NETWORKS.kusama.ss58Format
-        );
-        return fetchContributionAndRewardsFromJSON(ksmAddress);
-      })
-      .reduce((agg, curr) => {
-        return {
-          ...agg,
-          ...curr,
-        };
-      }, {} as CrowdloanContributionRecord);
+    let contributions = accounts.map((ksmAccount) => {
+      const ksmAddress = encodeAddress(
+        ksmAccount.address,
+        SUBSTRATE_NETWORKS.kusama.ss58Format
+      );
+      return fetchContributionAndRewardsFromJSON(ksmAddress);
+    });
 
-    setCrowdloanRewardsState({
-      kusamaContributions: contributions,
+    Promise.all(contributions).then((ksmContributions) => {
+      setCrowdloanRewardsState({
+        kusamaContributions: ksmContributions.reduce((agg, curr) => {
+          return {
+            ...agg,
+            ...curr,
+          };
+        }, {} as CrowdloanContributionRecord),
+      });
+    }).catch((err) => {
+      console.log(`Possible JSON import error`);
     });
   }, [accounts]);
   /**
@@ -172,10 +186,14 @@ const CrowdloanRewardsUpdater = () => {
   useEffect(() => {
     if (!account) return;
 
-    setCrowdloanRewardsState({
-      ethereumContributions: fetchContributionAndRewardsFromJSON(
-        account.toLowerCase()
-      ),
+    fetchContributionAndRewardsFromJSON(account.toLocaleLowerCase()).then(
+      (contributions) => {
+        setCrowdloanRewardsState({
+          ethereumContributions: contributions,
+        });
+      }
+    ).catch((err) => {
+      console.log(`Possible JSON import error`);
     });
   }, [account]);
 

@@ -30,20 +30,22 @@ mod weights;
 pub mod xcmp;
 
 use lending::MarketId;
-use orml_traits::{parameter_type_with_key, LockIdentifier, MultiCurrency};
+use orml_traits::{parameter_type_with_key, LockIdentifier};
 // TODO: consider moving this to shared runtime
 pub use xcmp::{MaxInstructions, UnitWeightCost};
 
 use common::{
+	fees::{
+		multi_existential_deposits, NativeExistentialDeposit, PriceConverter, WeightToFeeConverter,
+	},
 	governance::native::{
 		EnsureRootOrHalfNativeCouncil, EnsureRootOrOneThirdNativeTechnical, NativeTreasury,
 	},
-	impls::DealWithFees,
-	multi_existential_deposits, AccountId, AccountIndex, Address, Amount, AuraId, Balance,
-	BlockNumber, BondOfferId, FinancialNftInstanceId, ForeignAssetId, Hash, MaxStringSize, Moment,
-	MosaicRemoteAssetId, NativeExistentialDeposit, PoolId, PriceConverter, Signature,
-	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
-	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	rewards::StakingPot,
+	AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, BondOfferId,
+	FinancialNftInstanceId, ForeignAssetId, Hash, MaxStringSize, Moment, MosaicRemoteAssetId,
+	PoolId, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT,
+	MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
@@ -330,7 +332,7 @@ impl balances::Config for Runtime {
 	/// The ubiquitous event type.
 	type Event = Event;
 	type DustRemoval = Treasury;
-	type ExistentialDeposit = common::NativeExistentialDeposit;
+	type ExistentialDeposit = NativeExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = weights::balances::WeightInfo<Runtime>;
 }
@@ -354,27 +356,12 @@ parameter_types! {
 	pub const OperationalFeeMultiplier: u8 = 5;
 }
 
-pub struct WeightToFee;
-impl WeightToFeePolynomial for WeightToFee {
-	type Balance = Balance;
-	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
-		let p = CurrencyId::milli::<Balance>();
-		let q = 10 * Balance::from(ExtrinsicBaseWeight::get());
-		smallvec::smallvec![WeightToFeeCoefficient {
-			degree: 1,
-			negative: false,
-			coeff_frac: Perbill::from_rational(p % q, q),
-			coeff_integer: p / q,
-		}]
-	}
-}
-
 impl transaction_payment::Config for Runtime {
 	type Event = Event;
 	type OnChargeTransaction =
-		transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime, NativeTreasury>>;
+		transaction_payment::CurrencyAdapter<Balances, StakingPot<Runtime, NativeTreasury>>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
-	type WeightToFee = WeightToFee;
+	type WeightToFee = WeightToFeeConverter;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type FeeMultiplierUpdate =
 		TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
@@ -385,24 +372,8 @@ impl transaction_payment::Config for Runtime {
 pub struct TransferToTreasuryOrDrop;
 impl asset_tx_payment::HandleCredit<AccountId, Tokens> for TransferToTreasuryOrDrop {
 	fn handle_credit(credit: fungibles::CreditOf<AccountId, Tokens>) {
-		// `old_free` is only the `free` balance of an account
-		let old_free = <Tokens as MultiCurrency<AccountId>>::free_balance(
-			credit.asset(),
-			&TreasuryAccount::get(),
-		);
-
-		// `new_free` is `old_free + credit.peek()`
-		let new_free = old_free.saturating_add(credit.peek());
-
-		// NOTE: After our runtime depends on paritytech/substrate PR#12569, this function will need
-		// to be re-evaluated as `set_balance` might not do what it is meant to do when implemented
-		// for pallet balances or orml tokens.
-		// https://github.com/paritytech/substrate/pull/12569
-		let _ = <Tokens as fungibles::Unbalanced<AccountId>>::set_balance(
-			credit.asset(),
-			&TreasuryAccount::get(),
-			new_free,
-		);
+		let _ =
+			<Tokens as fungibles::Balanced<AccountId>>::resolve(&TreasuryAccount::get(), credit);
 	}
 }
 
@@ -419,7 +390,7 @@ impl asset_tx_payment::Config for Runtime {
 
 	type ConfigurationOrigin = EnsureRootOrHalfNativeCouncil;
 
-	type ConfigurationExistentialDeposit = common::NativeExistentialDeposit;
+	type ConfigurationExistentialDeposit = NativeExistentialDeposit;
 
 	type PayableCall = Call;
 
@@ -927,13 +898,7 @@ pub struct BaseCallFilter;
 impl Contains<Call> for BaseCallFilter {
 	fn contains(call: &Call) -> bool {
 		!(call_filter::Pallet::<Runtime>::contains(call) ||
-			matches!(
-				call,
-				Call::Tokens(_) |
-					Call::Indices(_) | Call::Treasury(_) |
-					Call::IbcPing(_) | Call::Transfer(_) |
-					Call::Ibc(_)
-			))
+			matches!(call, Call::Tokens(_) | Call::Indices(_) | Call::Treasury(_)))
 	}
 }
 
@@ -956,6 +921,7 @@ impl vesting::Config for Runtime {
 	type MaxVestingSchedules = MaxVestingSchedule;
 	type MinVestedTransfer = MinVestedTransfer;
 	type VestedTransferOrigin = EnsureRootOrHalfNativeCouncil;
+	type UpdateSchedulesOrigin = EnsureRootOrHalfNativeCouncil;
 	type WeightInfo = weights::vesting::WeightInfo<Runtime>;
 	type Moment = Moment;
 	type Time = Timestamp;
@@ -1071,7 +1037,7 @@ impl lending::Config for Runtime {
 	type PalletId = LendingPalletId;
 	type NativeCurrency = Balances;
 	type MaxLiquidationBatchSize = MaxLiquidationBatchSize;
-	type WeightToFee = WeightToFee;
+	type WeightToFee = WeightToFeeConverter;
 }
 
 parameter_types! {
@@ -1136,78 +1102,6 @@ impl dex_router::Config for Runtime {
 
 parameter_types! {
 	pub const ExpectedBlockTime: u64 = SLOT_DURATION;
-}
-
-#[derive(Clone)]
-pub struct IbcAccount(AccountId);
-
-impl sp_runtime::traits::IdentifyAccount for IbcAccount {
-	type AccountId = AccountId;
-	fn into_account(self) -> Self::AccountId {
-		self.0
-	}
-}
-
-impl TryFrom<pallet_ibc::Signer> for IbcAccount
-where
-	AccountId: From<[u8; 32]>,
-{
-	type Error = &'static str;
-
-	/// Convert a signer to an IBC account.
-	/// Only valid hex strings are supported for now.
-	fn try_from(signer: pallet_ibc::Signer) -> Result<Self, Self::Error> {
-		let acc_str = signer.as_ref();
-		if acc_str.starts_with("0x") {
-			match acc_str.strip_prefix("0x") {
-				Some(hex_string) => TryInto::<[u8; 32]>::try_into(
-					hex::decode(hex_string).map_err(|_| "Error decoding invalid hex string")?,
-				)
-				.map_err(|_| "Invalid account id hex string")
-				.map(|acc| Self(acc.into())),
-				_ => Err("Signer does not hold a valid hex string"),
-			}
-		}
-		// Do SS58 decoding instead
-		else {
-			let bytes = ibc_primitives::runtime_interface::ibc::ss58_to_account_id_32(acc_str)
-				.map_err(|_| "Invalid SS58 address")?;
-			Ok(Self(bytes.into()))
-		}
-	}
-}
-
-parameter_types! {
-	pub TransferPalletID: PalletId = PalletId(*b"transfer");
-}
-
-impl ibc_transfer::Config for Runtime {
-	type Event = Event;
-	type MultiCurrency = Assets;
-	type IbcHandler = Ibc;
-	type AccountIdConversion = IbcAccount;
-	type AssetRegistry = AssetsRegistry;
-	type CurrencyFactory = CurrencyFactory;
-	type AdminOrigin = EnsureRoot<AccountId>;
-	type PalletId = TransferPalletID;
-	type WeightInfo = crate::weights::ibc_transfer::WeightInfo<Self>;
-}
-
-impl pallet_ibc::Config for Runtime {
-	type TimeProvider = Timestamp;
-	type Event = Event;
-	type Currency = Balances;
-	const INDEXING_PREFIX: &'static [u8] = b"ibc/";
-	const CONNECTION_PREFIX: &'static [u8] = b"ibc/";
-	const CHILD_TRIE_KEY: &'static [u8] = b"ibc/";
-	type ExpectedBlockTime = ExpectedBlockTime;
-	type WeightInfo = crate::weights::pallet_ibc::WeightInfo<Self>;
-	type AdminOrigin = EnsureRoot<AccountId>;
-}
-
-impl pallet_ibc_ping::Config for Runtime {
-	type Event = Event;
-	type IbcHandler = Ibc;
 }
 
 /// Native <-> Cosmwasm account mapping
@@ -1372,11 +1266,6 @@ construct_runtime!(
 
 		CallFilter: call_filter = 140,
 
-		// IBC Support, pallet-ibc should be the last in the list of pallets that use the ibc protocol
-		IbcPing: pallet_ibc_ping = 151,
-		Transfer: ibc_transfer = 152,
-		Ibc: pallet_ibc = 153,
-
 	  // Cosmwasm support
 	  Cosmwasm: cosmwasm = 180
 	}
@@ -1455,9 +1344,6 @@ mod benches {
 		[pallet_account_proxy, Proxy]
 		[dex_router, DexRouter]
 		[cosmwasm, Cosmwasm]
-	// TODO: Broken
-		// [pallet_ibc, Ibc]
-		// [ibc_transfer, Transfer]
 	);
 }
 
@@ -1743,140 +1629,6 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl ibc_runtime_api::IbcRuntimeApi<Block> for Runtime {
-		fn para_id() -> u32 {
-			<Runtime as cumulus_pallet_parachain_system::Config>::SelfParaId::get().into()
-		}
-
-		fn child_trie_key() -> Vec<u8> {
-			<Runtime as pallet_ibc::Config>::CHILD_TRIE_KEY.to_vec()
-		}
-
-		fn query_balance_with_address(addr: Vec<u8>) -> Option<u128> {
-			Ibc::query_balance_with_address(addr).ok()
-		}
-
-		fn query_packets(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<ibc_primitives::OffchainPacketType>> {
-			Ibc::get_offchain_packets(channel_id, port_id, seqs).ok()
-		}
-
-		fn query_acknowledgements(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<Vec<u8>>> {
-			Ibc::get_offchain_acks(channel_id, port_id, seqs).ok()
-		}
-
-		fn client_state(client_id: Vec<u8>) -> Option<ibc_primitives::QueryClientStateResponse> {
-			Ibc::client(client_id).ok()
-		}
-
-		fn host_consensus_state(height: u32) -> Option<Vec<u8>> {
-			Ibc::host_consensus_state(height)
-		}
-
-		fn client_consensus_state(client_id: Vec<u8>, client_height: Vec<u8>, latest_cs: bool) -> Option<ibc_primitives::QueryConsensusStateResponse> {
-			Ibc::consensus_state(client_height, client_id, latest_cs).ok()
-		}
-
-		fn clients() -> Option<Vec<(Vec<u8>, Vec<u8>)>> {
-			Some(Ibc::clients())
-		}
-
-		fn connection(connection_id: Vec<u8>) -> Option<ibc_primitives::QueryConnectionResponse>{
-			Ibc::connection(connection_id).ok()
-		}
-
-		fn connections() -> Option<ibc_primitives::QueryConnectionsResponse> {
-			Ibc::connections().ok()
-		}
-
-		fn connection_using_client(client_id: Vec<u8>) -> Option<Vec<ibc_primitives::IdentifiedConnection>>{
-			Ibc::connection_using_client(client_id).ok()
-		}
-
-		fn connection_handshake(client_id: Vec<u8>, connection_id: Vec<u8>) -> Option<ibc_primitives::ConnectionHandshake> {
-			Ibc::connection_handshake(client_id, connection_id).ok()
-		}
-
-		fn channel(channel_id: Vec<u8>, port_id: Vec<u8>) -> Option<ibc_primitives::QueryChannelResponse> {
-			Ibc::channel(channel_id, port_id).ok()
-		}
-
-		fn channel_client(channel_id: Vec<u8>, port_id: Vec<u8>) -> Option<ibc_primitives::IdentifiedClientState> {
-			Ibc::channel_client(channel_id, port_id).ok()
-		}
-
-		fn connection_channels(connection_id: Vec<u8>) -> Option<ibc_primitives::QueryChannelsResponse> {
-			Ibc::connection_channels(connection_id).ok()
-		}
-
-		fn channels() -> Option<ibc_primitives::QueryChannelsResponse> {
-			Ibc::channels().ok()
-		}
-
-		fn packet_commitments(channel_id: Vec<u8>, port_id: Vec<u8>) -> Option<ibc_primitives::QueryPacketCommitmentsResponse> {
-			Ibc::packet_commitments(channel_id, port_id).ok()
-		}
-
-		fn packet_acknowledgements(channel_id: Vec<u8>, port_id: Vec<u8>) -> Option<ibc_primitives::QueryPacketAcknowledgementsResponse>{
-			Ibc::packet_acknowledgements(channel_id, port_id).ok()
-		}
-
-		fn unreceived_packets(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<u64>> {
-			Ibc::unreceived_packets(channel_id, port_id, seqs).ok()
-		}
-
-		fn unreceived_acknowledgements(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<u64>> {
-			Ibc::unreceived_acknowledgements(channel_id, port_id, seqs).ok()
-		}
-
-		fn next_seq_recv(channel_id: Vec<u8>, port_id: Vec<u8>) -> Option<ibc_primitives::QueryNextSequenceReceiveResponse> {
-			Ibc::next_seq_recv(channel_id, port_id).ok()
-		}
-
-		fn packet_commitment(channel_id: Vec<u8>, port_id: Vec<u8>, seq: u64) -> Option<ibc_primitives::QueryPacketCommitmentResponse> {
-			Ibc::packet_commitment(channel_id, port_id, seq).ok()
-		}
-
-		fn packet_acknowledgement(channel_id: Vec<u8>, port_id: Vec<u8>, seq: u64) -> Option<ibc_primitives::QueryPacketAcknowledgementResponse> {
-			Ibc::packet_acknowledgement(channel_id, port_id, seq).ok()
-		}
-
-		fn packet_receipt(channel_id: Vec<u8>, port_id: Vec<u8>, seq: u64) -> Option<ibc_primitives::QueryPacketReceiptResponse> {
-			Ibc::packet_receipt(channel_id, port_id, seq).ok()
-		}
-
-		fn denom_trace(asset_id: u128) -> Option<ibc_primitives::QueryDenomTraceResponse> {
-			Transfer::get_denom_trace(asset_id)
-		}
-
-		fn denom_traces(key: Option<u128>, offset: Option<u32>, limit: u64, count_total: bool) -> ibc_primitives::QueryDenomTracesResponse {
-			Transfer::get_denom_traces(key, offset, limit, count_total)
-		}
-
-		fn block_events(extrinsic_index: Option<u32>) -> Vec<pallet_ibc::events::IbcEvent> {
-			let mut raw_events = frame_system::Pallet::<Self>::read_events_no_consensus().into_iter();
-			if let Some(idx) = extrinsic_index {
-				raw_events.find_map(|e| {
-					let frame_system::EventRecord{ event, phase, ..} = *e;
-					match (event, phase) {
-						(Event::Ibc(pallet_ibc::Event::IbcEvents{ events }), frame_system::Phase::ApplyExtrinsic(index)) if index == idx => Some(events),
-						_ => None
-					}
-				}).unwrap_or_default()
-			}
-			else {
-				raw_events.filter_map(|e| {
-					let frame_system::EventRecord{ event, ..} = *e;
-
-					match event {
-						Event::Ibc(pallet_ibc::Event::IbcEvents{ events }) => {
-								Some(events)
-							},
-						_ => None
-					}
-				}).flatten().collect()
-			}
-		}
-	}
 	#[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {
 		fn benchmark_metadata(extra: bool) -> (

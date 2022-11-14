@@ -151,5 +151,5 @@ impl treasury::Config<NativeTreasury> for Runtime {
 impl governance_registry::Config for Runtime {
 	type Event = Event;
 	type AssetId = CurrencyId;
-	type WeightInfo = governance_registry::weights::SubstrateWeight<Runtime>; // TODO: add to benches https://app.clickup.com/t/37h4edu , all ops are root now, so safe for now
+	type WeightInfo = governance_registry::weights::SubstrateWeight<Runtime>;
 }

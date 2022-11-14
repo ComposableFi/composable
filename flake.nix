@@ -28,8 +28,9 @@
     };
   };
 
-  outputs = { self, flake-parts, ... }:
-    flake-parts.lib.mkFlake { inherit self; } {
+  outputs = { self, nixpkgs, flake-parts, ... }:
+    let darwinFilter = import ./darwin-filter.nix { lib = nixpkgs.lib; };
+    in darwinFilter (flake-parts.lib.mkFlake { inherit self; } {
       imports = [
         # To import a flake module
         # 1. Add foo to inputs
@@ -50,14 +51,15 @@
         ./docs/docs.nix
         ./fmt.nix
         ./frontend/frontend.nix
-        ./nixops.nix
+        ./nixops-config.nix
         ./price-feed.nix
         ./release.nix
         ./rust.nix
         ./subsquid/subsquid.nix
         ./subwasm.nix
       ];
-      systems = [ "x86_64-linux" "aarch64-linux" ];
+      systems =
+        [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
       perSystem = { config, self', inputs', pkgs, system, crane, ... }: {
         # Per-system attributes can be defined here. The self' and inputs'
         # module parameters provide easy access to attributes of the same
@@ -136,5 +138,5 @@
           ];
         };
       };
-    };
+    });
 }

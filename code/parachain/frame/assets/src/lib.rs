@@ -656,7 +656,6 @@ pub mod pallet {
 				who: &T::AccountId,
 				amount: Self::Balance,
 			) -> Result<Self::Balance, DispatchError> {
-				#[allow(clippy::disallowed_methods)] // paritytech/substrate/pull/12569
 				<<T as Config>::NativeCurrency>::decrease_balance(who, amount)
 			}
 
@@ -664,7 +663,6 @@ pub mod pallet {
 				who: &T::AccountId,
 				amount: Self::Balance,
 			) -> Self::Balance {
-				#[allow(clippy::disallowed_methods)] // paritytech/substrate/pull/12569
 				<<T as Config>::NativeCurrency>::decrease_balance_at_most(who, amount)
 			}
 
@@ -672,7 +670,6 @@ pub mod pallet {
 				who: &T::AccountId,
 				amount: Self::Balance,
 			) -> Result<Self::Balance, DispatchError> {
-				#[allow(clippy::disallowed_methods)] // paritytech/substrate/pull/12569
 				<<T as Config>::NativeCurrency>::increase_balance(who, amount)
 			}
 
@@ -680,7 +677,6 @@ pub mod pallet {
 				who: &T::AccountId,
 				amount: Self::Balance,
 			) -> Self::Balance {
-				#[allow(clippy::disallowed_methods)] // paritytech/substrate/pull/12569
 				<<T as Config>::NativeCurrency>::increase_balance_at_most(who, amount)
 			}
 		}
@@ -832,11 +828,9 @@ pub mod pallet {
 				amount: Self::Balance,
 			) -> Result<Self::Balance, DispatchError> {
 				if asset == T::NativeAssetId::get() {
-					#[allow(clippy::disallowed_methods)] // paritytech/substrate/pull/12569
 					return <<T as Config>::NativeCurrency>::decrease_balance(who, amount)
 				}
 				let asset = valid_asset_id::<T>(asset).ok_or(Error::<T>::InvalidCurrency)?;
-				#[allow(clippy::disallowed_methods)] // paritytech/substrate/pull/12569
 				<<T as Config>::MultiCurrency>::decrease_balance(asset, who, amount)
 			}
 
@@ -846,11 +840,9 @@ pub mod pallet {
 				amount: Self::Balance,
 			) -> Self::Balance {
 				if asset == T::NativeAssetId::get() {
-					#[allow(clippy::disallowed_methods)] // paritytech/substrate/pull/12569
 					return <<T as Config>::NativeCurrency>::decrease_balance_at_most(who, amount)
 				}
 				if let Some(asset) = valid_asset_id::<T>(asset) {
-					#[allow(clippy::disallowed_methods)] // paritytech/substrate/pull/12569
 					return <<T as Config>::MultiCurrency>::decrease_balance_at_most(
 						asset, who, amount,
 					)
@@ -864,11 +856,9 @@ pub mod pallet {
 				amount: Self::Balance,
 			) -> Result<Self::Balance, DispatchError> {
 				if asset == T::NativeAssetId::get() {
-					#[allow(clippy::disallowed_methods)] // paritytech/substrate/pull/12569
 					return <<T as Config>::NativeCurrency>::increase_balance(who, amount)
 				}
 				let asset = valid_asset_id::<T>(asset).ok_or(Error::<T>::InvalidCurrency)?;
-				#[allow(clippy::disallowed_methods)] // paritytech/substrate/pull/12569
 				<<T as Config>::MultiCurrency>::increase_balance(asset, who, amount)
 			}
 
@@ -878,11 +868,9 @@ pub mod pallet {
 				amount: Self::Balance,
 			) -> Self::Balance {
 				if asset == T::NativeAssetId::get() {
-					#[allow(clippy::disallowed_methods)] // paritytech/substrate/pull/12569
 					return <<T as Config>::NativeCurrency>::increase_balance_at_most(who, amount)
 				}
 				if let Some(asset) = valid_asset_id::<T>(asset) {
-					#[allow(clippy::disallowed_methods)] // paritytech/substrate/pull/12569
 					return <<T as Config>::MultiCurrency>::increase_balance_at_most(
 						asset, who, amount,
 					)

@@ -13,11 +13,10 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import React from "react";
 import Image from "next/image";
 import BigNumber from "bignumber.js";
 import { Badge } from "./Atoms/Badge";
-import { useState } from "react";
+import { FC, useState } from "react";
 import { PolkadotAccountView } from "./Molecules/PolkadotAccountView";
 import { BlockchainNetwork, EthereumWallet, PolkadotWallet } from "../types";
 import { EthereumAccountView } from "./Molecules/EthereumAccountView";
@@ -59,7 +58,7 @@ export type WalletViewProps = {
   onConnectEVM: () => void;
 } & DialogProps;
 
-export const WalletViewModal: React.FC<WalletViewProps> = ({
+export const WalletViewModal: FC<WalletViewProps> = ({
   balance,
   polkadotNetwork,
   ethereumNetwork,

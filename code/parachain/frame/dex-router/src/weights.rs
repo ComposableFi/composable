@@ -8,8 +8,7 @@ use sp_std::marker::PhantomData;
 
 pub trait WeightInfo {
   fn update_route() -> Weight;
-  fn exchange() -> Weight;
-  fn sell() -> Weight;
+  fn swap() -> Weight;
   fn buy() -> Weight;
   fn add_liquidity() -> Weight;
   fn remove_liquidity() -> Weight;
@@ -25,11 +24,7 @@ impl WeightInfo for () {
         10_000
     }
 
-    fn sell() -> Weight {
-        10_000
-    }
-
-    fn exchange() -> Weight {
+    fn swap() -> Weight {
         10_000
     }
 

@@ -1,0 +1,47 @@
+digraph "XCMP runtime" {
+    graph [fontname = "Handlee";];
+    node [fontname = "Handlee";];
+    edge [fontname = "Handlee";];
+    client [label = "polkadotjs/subxt";];
+    xcm_executor [label = "xcm-executor (interpreter)";];
+    orml_xtokens;
+    orml_unknown_tokens;
+    pallet_xcm [label = "pallet-xcm (versioning, message formation)"; URL = "https://github.com/paritytech/polkadot/blob/master/xcm/pallet-xcm/src/lib.rs"];
+    cumulus_primitives_utility;
+    cumulus_pallet_xcm;
+    cumulus_pallet_dmp_queue;
+    cumulus_pallet_xcmp_queue [label = "cumulus-pallet-xcmp-queue (channels)";URL = "https://github.com/paritytech/cumulus/blob/master/pallets/xcmp-queue/src/lib.rs";];
+    cumulus_pallet_parachain_system;
+    cumulus_pallet_dmp_queue;
+    assets_registry;
+    assets;
+    runtime;
+    
+    pallet_xcm -> xcm_executor [label = "execute";];
+    pallet_xcm -> cumulus_pallet_xcmp_queue [label = "send";];
+    pallet_xcm -> cumulus_primitives_utility [label = "send";];
+    
+    xcm_executor -> cumulus_pallet_xcmp_queue [label = "send";];
+    xcm_executor -> cumulus_primitives_utility [label = "send";];
+    xcm_executor -> runtime;
+    xcm_executor -> pallet_xcm;
+    
+    orml_xtokens -> runtime;
+    orml_xtokens -> xcm_executor;
+    
+    runtime -> assets [label = "deposit/withdraw/mint/burn";];
+    runtime -> assets_registry [label = "map remote to/from local";];
+    runtime -> orml_unknown_tokens [label = "store failed to map assets";];
+    
+    cumulus_pallet_xcm -> xcm_executor;
+    xcm_executor -> cumulus_primitives_utility;
+    cumulus_pallet_dmp_queue -> xcm_executor;
+    cumulus_pallet_xcmp_queue -> xcm_executor [label = "execute";];
+    cumulus_pallet_xcmp_queue -> cumulus_pallet_parachain_system [label = "get channel info";];
+    cumulus_pallet_xcmp_queue -> pallet_xcm [label = "get version";];
+    cumulus_pallet_parachain_system -> cumulus_pallet_xcmp_queue;
+    cumulus_pallet_parachain_system -> cumulus_pallet_dmp_queue;
+    
+    client -> pallet_xcm [label = "send xcm (example, transfer)";];
+    client -> orml_xtokens [label = "send xcm (example, transfer)";];
+}

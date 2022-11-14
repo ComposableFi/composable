@@ -39,8 +39,30 @@ export const subscribeDestinationMultiLocation = async (
         );
       }
 
+      if (sourceChain === "statemine") {
+        set(
+          <XcmVersionedMultiLocation>api.createType(
+            "XcmVersionedMultiLocation",
+            {
+              V1: {
+                parents: 1,
+                interior: {
+                  X1: {
+                    Parachain: targetChainId,
+                  },
+                },
+              },
+            }
+          )
+        );
+      }
+
       // Picasso to Kusama needs recipient in MultiLocation
-      if (sourceChain === "picasso" && targetChain === "kusama" && recipient) {
+      if (
+        sourceChain === "picasso" &&
+        ["kusama", "statemine"].includes(targetChain) &&
+        recipient
+      ) {
         // Set destination. Should have 2 Junctions, first to parent and then to wallet
         set(
           <XcmVersionedMultiLocation>api.createType(
