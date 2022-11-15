@@ -5,7 +5,6 @@ use crate::{
 };
 
 use common::Balance;
-use composable_support::rational_64;
 use composable_traits::currency::{
 	AssetDataMutate, AssetExistentialDepositInspect, AssetRatioInspect,
 };
@@ -146,7 +145,7 @@ fn cannot_reserver_transfer_assets_when_fee_and_non_fee_has_different_origin() {
 				1,
 				X2(Parachain(THIS_PARA_ID), GeneralIndex(100500)),
 			)),
-			Some(rational_64!(1 / 1)),
+			Some(Rational64::one()),
 			None,
 		)
 		.unwrap();
@@ -163,7 +162,7 @@ fn cannot_reserver_transfer_assets_when_fee_and_non_fee_has_different_origin() {
 				1,
 				X2(Parachain(THIS_PARA_ID), GeneralIndex(123_666)),
 			)),
-			Some(rational_64!(1 / 1)),
+			Some(Rational64::one()),
 			None,
 		)
 		.unwrap();
@@ -225,7 +224,7 @@ fn transfer_existing_asset_but_with_relevant_outgoing_fee_by_local_id() {
 				1,
 				X2(Parachain(THIS_PARA_ID), GeneralIndex(100500)),
 			)),
-			Some(rational_64!(1 / 1)),
+			Some(Rational64::one()),
 			None,
 		)
 		.unwrap();
@@ -276,7 +275,7 @@ fn cannot_transfer_away_if_min_fee_is_not_defined() {
 				1,
 				X2(Parachain(SIBLING_PARA_ID), GeneralIndex(100500)),
 			)),
-			Some(rational_64!(1 / 1)),
+			Some(Rational64::one()),
 			None,
 		)
 		.unwrap();
@@ -312,7 +311,7 @@ fn cannot_transfer_away_if_min_fee_is_not_defined() {
 					1,
 					X2(
 						Parachain(SIBLING_PARA_ID),
-						Junction::AccountId32 { network: NetworkId::Any, id: alice() },
+						Junction::AccountId32 { network: NetworkId::Any, id: alice().into() },
 					),
 				)
 				.into(),
@@ -342,7 +341,7 @@ fn cannot_reserver_transfer_assets_from_self() {
 				0,
 				X2(Parachain(THIS_PARA_ID), GeneralIndex(100500)),
 			)),
-			Some(rational_64!(1 / 1)),
+			Some(Rational64::one()),
 			None,
 		)
 		.unwrap();
