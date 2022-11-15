@@ -28,7 +28,7 @@ benchmarks! {
 	}: _(RawOrigin::Root, 100000000000000)
 	set_metadata {
 		currency_factory::Pallet::<T>::add_range(RawOrigin::Root.into(), 0).unwrap();
-		let asset_id = <currency_factory::Pallet::<T> as DeFiCurrencyFactory>::create(RangeId::from(0), T::Balance::default()).unwrap();
+		let asset_id = <currency_factory::Pallet::<T> as DeFiCurrencyFactory>::create(RangeId::from(0)).unwrap();
 		let metadata = BasicAssetMetadata::try_from(b"SMB", b"Symbol Name").unwrap();
 	}: {
 		currency_factory::Pallet::<T>::set_metadata(RawOrigin::Root.into(), asset_id,  metadata).unwrap();

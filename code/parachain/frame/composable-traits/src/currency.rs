@@ -20,9 +20,9 @@ pub trait CurrencyFactory {
 	type Balance;
 
 	/// permissionless creation of new transferable asset id
-	fn create(id: RangeId, ed: Self::Balance) -> Result<Self::AssetId, DispatchError>;
-	fn reserve_lp_token_id(ed: Self::Balance) -> Result<Self::AssetId, DispatchError> {
-		Self::create(RangeId::LP_TOKENS, ed)
+	fn create(id: RangeId) -> Result<Self::AssetId, DispatchError>;
+	fn reserve_lp_token_id() -> Result<Self::AssetId, DispatchError> {
+		Self::create(RangeId::LP_TOKENS)
 	}
 	/// Given a `u32` ID (within the range of `0` to `u32::MAX`) returns a unique `AssetId` reserved
 	/// by Currency Factory for the runtime.

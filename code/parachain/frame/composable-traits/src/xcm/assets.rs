@@ -111,7 +111,7 @@ pub trait RemoteAssetRegistryMutate {
 	fn set_reserve_location(
 		asset_id: Self::AssetId,
 		location: Self::AssetNativeLocation,
-		ratio: Option<Rational64>,
+		ratio: Rational64,
 		decimals: Option<Exponent>,
 	) -> DispatchResult;
 
