@@ -225,6 +225,7 @@ export const WalletViewModal: React.FC<WalletViewProps> = ({
                   src="/networks/polkadot_js.svg"
                   height="23.5"
                   width="23.5"
+                  alt="polkadot_wallet"
                 />
                 Connect Polkadot
               </Button>
@@ -241,7 +242,7 @@ export const WalletViewModal: React.FC<WalletViewProps> = ({
               }}
             >
               <Button onClick={onConnectEVM} fullWidth variant="outlined">
-                <Image src="/networks/mainnet.svg" height="23.5" width="23.5" />
+                <Image src="/networks/mainnet.svg" height="23.5" width="23.5" alt="ethereum_wallet"/>
                 Connect EVM
               </Button>
             </Box>
