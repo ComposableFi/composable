@@ -13,6 +13,9 @@ pub struct CodeInfo<AccountId, Hash> {
 	pub instrumentation_version: u16,
 	/// Number of contract referencing this code.
 	pub refcount: u32,
+	/// Wether the contract export IBC functions and is consequently able to be called back by IBC
+	/// operations.
+	pub ibc_capable: bool,
 }
 
 /// Contract metadata.

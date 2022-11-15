@@ -25,7 +25,7 @@ export async function subscribeKaruraBalance(
         token: api.createType(
           "AcalaPrimitivesCurrencyTokenSymbol",
           tokenMetadata.chainId.karura
-        ),
+        )
       }),
       (result: OrmlTokensAccountData) => {
         const { free } = result.toJSON() as any;

@@ -7,6 +7,7 @@ import { XcmVersionedMultiLocation } from "@polkadot/types/lookup";
 import {
   AcalaPrimitivesCurrencyCurrencyId,
   XcmVersionedMultiAsset,
+  XcmVersionedMultiAssets,
 } from "@acala-network/types/interfaces/types-lookup";
 import { u128 } from "@polkadot/types-codec";
 import { ApiPromise } from "@polkadot/api";
@@ -52,13 +53,16 @@ interface TransfersState {
   destinationMultiLocation: XcmVersionedMultiLocation | null;
   transferExtrinsic: null | ((...args: any[]) => any);
   multiAsset: SupportedTransferMultiAssets | null;
+  hasFormError: boolean;
 }
+
 export type SupportedTransferMultiAssets =
   | u128
   | XcmVersionedMultiAsset
   | u128[]
   | u128[][]
-  | AcalaPrimitivesCurrencyCurrencyId;
+  | AcalaPrimitivesCurrencyCurrencyId
+  | XcmVersionedMultiAssets;
 
 const networks = Object.keys(SUBSTRATE_NETWORKS).map((networkId) => ({
   networkId: networkId as SubstrateNetworkId,
@@ -90,6 +94,7 @@ const initialState: TransfersState = {
   destinationMultiLocation: null,
   transferExtrinsic: null,
   multiAsset: null,
+  hasFormError: false,
 };
 
 interface TransferActions {
@@ -106,6 +111,7 @@ interface TransferActions {
   }) => void;
   tokenOptions: Array<TokenOption>;
   updateExistentialDeposit: (data: BigNumber) => void;
+  setFeeItemEd: (value: BigNumber) => void;
   setFeeToken: (data: TokenId) => void;
   getFeeToken: (network: SubstrateNetworkId) => TokenMetadata;
   updateSelectedToken: (token: TokenId) => void;
@@ -121,6 +127,7 @@ interface TransferActions {
     targetAddress: string | undefined
   ) => SubmittableExtrinsic<"promise"> | undefined;
   getTransferAmount: (api: ApiPromise) => u128;
+  setFormError: (value: boolean) => void;
 }
 
 export interface TransfersSlice {
@@ -158,6 +165,11 @@ export const createTransfersSlice: StoreSlice<TransfersSlice> = (set, get) => ({
     flipKeepAlive: () => {
       set((state) => {
         state.transfers.keepAlive = !state.transfers.keepAlive;
+      });
+    },
+    setFeeItemEd: (value: BigNumber) => {
+      set((state) => {
+        state.transfers.feeItemEd = value;
       });
     },
     setFeeItem: (data: TokenId) =>
@@ -199,6 +211,7 @@ export const createTransfersSlice: StoreSlice<TransfersSlice> = (set, get) => ({
       return getAmountToTransfer({
         amount: get().transfers.amount,
         api,
+        token: get().substrateTokens.tokens[get().transfers.selectedToken],
         balance: get().transfers.getTransferTokenBalance(),
         existentialDeposit: get().transfers.existentialDeposit,
         keepAlive: get().transfers.keepAlive,
@@ -284,6 +297,32 @@ export const createTransfersSlice: StoreSlice<TransfersSlice> = (set, get) => ({
           ) as SubmittableExtrinsic<"promise">;
         }
 
+        if (get().transfers.networks.from === "statemine") {
+          const beneficiary = api.createType("XcmVersionedMultiLocation", {
+            V1: {
+              parents: 0,
+              interior: {
+                X1: {
+                  AccountId32: {
+                    id: api.createType("AccountId32", recipient),
+                    network: "Any",
+                  },
+                },
+              },
+            },
+          });
+          const feeAssetItem = api.createType("u32", 0); // First item in the list.
+          const args = [
+            get().transfers.destinationMultiLocation,
+            beneficiary,
+            get().transfers.multiAsset,
+            feeAssetItem,
+            api.createType("XcmV2WeightLimit", "Unlimited"),
+          ];
+
+          return transferExtrinsic(...args) as SubmittableExtrinsic<"promise">;
+        }
+
         // Else state where from is Picasso
         const args = [
           get().transfers.multiAsset,
@@ -292,9 +331,14 @@ export const createTransfersSlice: StoreSlice<TransfersSlice> = (set, get) => ({
           destWeight,
         ];
         return transferExtrinsic(...args) as SubmittableExtrinsic<"promise">;
-      } catch (e) {
+      } catch {
         return;
       }
+    },
+    setFormError: (value) => {
+      set((state) => {
+        state.transfers.hasFormError = value;
+      });
     },
   },
 });

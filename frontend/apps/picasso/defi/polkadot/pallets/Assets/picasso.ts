@@ -1,5 +1,6 @@
 import { ApiPromise } from "@polkadot/api";
 import BigNumber from "bignumber.js";
+import { getExistentialDeposit } from "shared";
 
 export type PicassoRpcAsset = {
   name: string;
@@ -16,8 +17,12 @@ export async function picassoAssetsList(
       return {
         name: asset.name.toUtf8(),
         id: new BigNumber(asset.id.toString()),
-        decimals: asset.id.toNumber(),
+        decimals:
+          asset.name.toUtf8().toUpperCase() !== "USDT"
+            ? asset.decimals.toNumber()
+            : 6, // TODO: Temporary assign 6 decimals to USDT until RPC is ready
         foreignId: asset.foreignId,
+        existentialDeposit: null,
       };
     });
   } catch (err) {

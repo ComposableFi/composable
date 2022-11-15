@@ -52,8 +52,8 @@ identity = { package = "pallet-identity", git = "https://github.com/paritytech/s
 indices = { package = "pallet-indices", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
 membership = { package = "pallet-membership", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
 multisig = { package = "pallet-multisig", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
-orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "377213f750755cc48e80a3131eaae63b5eda8362", default-features = false }
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "377213f750755cc48e80a3131eaae63b5eda8362", default-features = false }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "504d11bd1af3613a0e66b47b99713675e9b6bd10", default-features = false }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "504d11bd1af3613a0e66b47b99713675e9b6bd10", default-features = false }
 preimage = { package = "pallet-preimage", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
 randomness-collective-flip = { package = "pallet-randomness-collective-flip", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
 scheduler = { package = "pallet-scheduler", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
@@ -94,14 +94,7 @@ vesting = { package = "pallet-vesting", path = "../../frame/vesting", default-fe
 
 # cosmwasm support
 cosmwasm = { package = "pallet-cosmwasm", path = "../../frame/cosmwasm", default-features = false }
-
-# ibc support
 hex = { version = "0.4.0", default-features = false }
-ibc-primitives = { path = "../../frame/ibc/ibc-primitives", default-features = false }
-ibc-runtime-api = { path = "../../frame/ibc/ibc-runtime-api", default-features = false }
-ibc-transfer = { path = "../../frame/ibc-transfer", default-features = false }
-pallet-ibc = { path = "../../frame/ibc", default-features = false }
-pallet-ibc-ping = { path = "../../frame/ibc-ping", default-features = false }
 
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
@@ -144,9 +137,9 @@ xcm-builder = { git = "https://github.com/paritytech/polkadot", default-features
 xcm-executor = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.27" }
 
 # orml XCM support
-orml-unknown-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "377213f750755cc48e80a3131eaae63b5eda8362", default-features = false }
-orml-xcm-support = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "377213f750755cc48e80a3131eaae63b5eda8362", default-features = false }
-orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "377213f750755cc48e80a3131eaae63b5eda8362", default-features = false }
+orml-unknown-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "504d11bd1af3613a0e66b47b99713675e9b6bd10", default-features = false }
+orml-xcm-support = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "504d11bd1af3613a0e66b47b99713675e9b6bd10", default-features = false }
+orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "504d11bd1af3613a0e66b47b99713675e9b6bd10", default-features = false }
 
 # simnode support
 simnode-apis = { package = "simnode-runtime-apis", git = "https://github.com/polytope-labs/substrate-simnode", default-features = false, branch = "polkadot-v0.9.27" }
@@ -176,7 +169,6 @@ runtime-benchmarks = [
   "frame-support/runtime-benchmarks",
   "frame-system/runtime-benchmarks",
   "hex-literal",
-  "ibc-transfer/runtime-benchmarks",
   "identity/runtime-benchmarks",
   "indices/runtime-benchmarks",
   "lending/runtime-benchmarks",
@@ -186,7 +178,6 @@ runtime-benchmarks = [
   "multisig/runtime-benchmarks",
   "oracle/runtime-benchmarks",
   "pablo/runtime-benchmarks",
-  "pallet-ibc/runtime-benchmarks",
   "pallet-account-proxy/runtime-benchmarks",
   "pallet-staking-rewards/runtime-benchmarks",
   "pallet-xcm/runtime-benchmarks",
@@ -210,8 +201,6 @@ runtime-benchmarks = [
   "pablo/runtime-benchmarks",
   "dex-router/runtime-benchmarks",
   "common/runtime-benchmarks",
-  "pallet-ibc/runtime-benchmarks",
-  "ibc-transfer/runtime-benchmarks",
   "pallet-staking-rewards/runtime-benchmarks",
   "cosmwasm/runtime-benchmarks",
   "asset-tx-payment/runtime-benchmarks",
@@ -244,14 +233,11 @@ std = [
   "democracy/std",
   "dex-router/std",
   "dutch-auction/std",
+  "hex/std",
   "executive/std",
   "frame-support/std",
   "frame-system/std",
   "governance-registry/std",
-  "hex/std",
-  "ibc-primitives/std",
-  "ibc-runtime-api/std",
-  "ibc-transfer/std",
   "identity/std",
   "indices/std",
   "lending/std",
@@ -268,8 +254,6 @@ std = [
   "orml-xtokens/std",
   "pablo-runtime-api/std",
   "pablo/std",
-  "pallet-ibc-ping/std",
-  "pallet-ibc/std",
   "pallet-account-proxy/std",
   "pallet-staking-rewards/std",
   "parachain-info/std",

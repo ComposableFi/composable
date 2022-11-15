@@ -20,7 +20,8 @@ const DEFAULT_ACCOUNTS: ConnectedAccounts = {
   picasso: [],
   karura: [],
   kusama: [],
-  polkadot: []
+  polkadot: [],
+  statemine: [],
 };
 
 function mapAccounts(

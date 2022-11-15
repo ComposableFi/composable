@@ -14,6 +14,7 @@ import {
   subscribeKaruraBalance,
   subscribeNativeBalance,
   subscribePicassoBalanceByAssetId,
+  subscribeStatemineBalance,
 } from "@/defi/polkadot/pallets/Balances";
 import { TokenMetadata } from "../tokens/slice";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
@@ -24,19 +25,8 @@ import {
 import { VoidFn } from "@polkadot/api/types";
 import { AcalaPrimitivesCurrencyCurrencyId } from "@acala-network/types/interfaces/types-lookup";
 import { ApiPromise } from "@polkadot/api";
-
-/**
- * Get Native Token symbol for Karura
- *
- * @param {ApiPromise} api
- * @returns {string} NATIVE token symbol, or empty string
- */
-function getKaruraNativeToken(api: ApiPromise) {
-  const nativeToken: AcalaPrimitivesCurrencyCurrencyId =
-    api.consts.currencies.getNativeCurrencyId;
-
-  return (nativeToken.toHuman() as { Token: string }).Token ?? "";
-}
+import { kusamaAssetsList } from "@/defi/polkadot/pallets/Assets/kusama";
+import { statemineAssetList } from "@/defi/polkadot/pallets/Assets/statemine";
 
 const PolkadotBalancesUpdater = () => {
   useEagerConnect("picasso");
@@ -73,15 +63,30 @@ const PolkadotBalancesUpdater = () => {
    */
   useEffect(() => {
     callbackGate(
-      async (_picaApi, _karApi) => {
+      async (_picaApi, _karApi, _kusamaApi, _statemineApi) => {
+        const statemineAssetMetadataList = await statemineAssetList(
+          _statemineApi
+        );
         const picaAssetMetadataList = await picassoAssetsList(_picaApi);
         const karuraAssetMetadataList = await karuraAssetsList(_karApi);
-        updateTokens(picaAssetMetadataList, karuraAssetMetadataList);
+        const kusamaAssetMetadata = await kusamaAssetsList(_kusamaApi);
+        updateTokens(
+          picaAssetMetadataList,
+          karuraAssetMetadataList,
+          statemineAssetMetadataList,
+          kusamaAssetMetadata
+        );
       },
       parachainProviders.picasso.parachainApi,
-      parachainProviders.karura.parachainApi
+      parachainProviders.karura.parachainApi,
+      relaychainProviders.kusama.parachainApi,
+      parachainProviders.statemine.parachainApi
     );
-  }, [parachainProviders, updateTokens]);
+  }, [
+    parachainProviders,
+    relaychainProviders.kusama.parachainApi,
+    updateTokens,
+  ]);
 
   const picassoBalanceSubscriber = useCallback(
     async (
@@ -90,11 +95,6 @@ const PolkadotBalancesUpdater = () => {
       chainId,
       accounts
     ) => {
-      console.log(
-        chainId,
-        tokenMetadata.symbol,
-        tokenMetadata.chainId.picasso?.toString()
-      );
       callbackGate(
         async (api, tokenMetadata, chainId, account) => {
           await subscribePicassoBalanceByAssetId(
@@ -126,6 +126,7 @@ const PolkadotBalancesUpdater = () => {
 
       Object.entries({ ...parachainProviders, ...relaychainProviders }).forEach(
         ([chainId, chain]) => {
+          console.log("Subscribing native balance", chainId);
           if (
             connectedAccounts[chainId as RelayChainId | ParachainId] &&
             chain.parachainApi
@@ -180,20 +181,20 @@ const PolkadotBalancesUpdater = () => {
         Object.values(tokens).forEach((asset) => {
           switch (chainId) {
             case "picasso":
-              picassoBalanceSubscriber(
-                chain,
-                asset,
-                chainId,
-                connectedAccounts[chainId]
-              );
+              if (SUBSTRATE_NETWORKS.picasso.tokenId !== asset.id) {
+                picassoBalanceSubscriber(
+                  chain,
+                  asset,
+                  chainId,
+                  connectedAccounts[chainId]
+                );
+              }
               break;
             case "karura":
               // Ignore native token since for that we need to fetch system
-              const nativeTokenSymbol = getKaruraNativeToken(api);
-
               if (
                 connectedAccounts.karura[selectedAccount] &&
-                nativeTokenSymbol !== asset.symbol
+                SUBSTRATE_NETWORKS.karura.tokenId !== asset.id
               ) {
                 subscribeKaruraBalance(
                   api,
@@ -209,6 +210,20 @@ const PolkadotBalancesUpdater = () => {
                 );
               }
               break;
+            case "statemine":
+              subscribeStatemineBalance(
+                api,
+                connectedAccounts.statemine[selectedAccount].address,
+                asset,
+                chainId,
+                (balance) => {
+                  updateBalance({
+                    network: chainId as SubstrateNetworkId,
+                    tokenId: asset.id,
+                    balance,
+                  });
+                }
+              );
             default:
               break;
           }

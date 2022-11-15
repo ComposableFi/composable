@@ -1,0 +1,22 @@
+@startuml
+skinparam handwritten true
+!includeurl https://raw.githubusercontent.com/inthepocket/plantuml-styles/master/styles.plantuml!0
+
+actor user
+actor governance
+
+picasso --\ karura : request open half channel
+karura --\ picasso : accept open half channel
+karura --\ picasso : accept open half channel
+picasso --\ karura : request open half channel
+
+governance -> picasso : register sufficient Karura KUSD asset
+picasso -> picasso : register incoming `(Parent(Kusama), Parachain(Karura), Key(KUSD))` asset
+...
+user -> karura : Swap KSM to KUSD on DEX
+user -> karura : Send KUSD to Picasso
+karura -> karura : prepare message to be sent with `(Parent(Kusama), Parachain(Karura), Key(KUSD))`
+karura --\ picasso : transfer asset
+picasso -> picasso : map `(Parent(Kusama), Parachain(Karura), Key(KUSD))` to KUSD
+picasso -> picasso : deposit KSD
+@enduml

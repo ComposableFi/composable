@@ -24,7 +24,7 @@ export async function setPaymentAsset({
   executor,
   onSuccess,
   onError,
-  onReady,
+  onReady
 }: SetPaymentAssetArgs) {
   return executor.execute(
     api.tx.assetTxPayment.setPaymentAsset(
@@ -51,7 +51,7 @@ export async function getPaymentAsset({
   api,
   walletAddress,
   network,
-  tokens,
+  tokens
 }: GetPaymentAssetArgs) {
   if (network === "picasso") {
     try {
@@ -78,9 +78,9 @@ export async function getPaymentAsset({
       return tokens.pica;
     }
   }
-  if (network === "kusama") {
-    return tokens.ksm;
+  if (network === "karura") {
+    return tokens.kar;
   }
 
-  return tokens.kar;
+  return tokens.ksm;
 }

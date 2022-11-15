@@ -36,6 +36,7 @@
 1ubrf2y
 5C4hrfjw
 aarch
+abicoder
 acala
 ACENT
 ACENTS
@@ -50,12 +51,14 @@ airdropper
 alice
 apexcharts
 arion
+arrayify
 asciidoctor
 assetinfo
 assetsinfo
 autofetch
 autorenew
 azuretools
+bech
 BCENT
 BCENTS
 BCOIN
@@ -96,6 +99,7 @@ containrrr # `containrrr/watchtower` docker image
 contentful
 coreutils
 cosm
+Cosmoverse
 crev # cargo-crev
 dalek
 crowdloaning
@@ -113,6 +117,7 @@ edgeware
 endef
 enduml
 endwhile
+ensdomains
 ferdie
 fgrep
 findutils
@@ -123,6 +128,7 @@ fontname
 freetype
 fsevenm
 FSIZE
+fslot
 getrandom
 giga
 GITREPO
@@ -136,12 +142,14 @@ gsutil
 hadolint
 hasher
 hasura
+hexlify
 hljs
 horiz
 hotjar
 iavl
 idents
 iefix
+IERC
 ifeq
 imagesdir
 imagesoutdir
@@ -149,8 +157,10 @@ immer
 includeurl
 infima
 inprocess
+instrs
 ipam
 ipetkov # github username
+iszero
 journalctl
 jsonrpsee
 junod
@@ -159,6 +169,7 @@ keccak256
 Konnect
 lastmod
 lcgfmg
+lazyledger
 lcov
 LIBCLANG
 libcurl
@@ -181,13 +192,18 @@ millify
 miniserve
 minvested
 mochawesome
+mlength
+mlengthmod
+mload
 msapplication
+mstore
 Multiaddr
 multiassets
 multihash
 mutantdino
 narinfo
 nettools
+newlength
 nextjs
 NFTID
 nixfmt
@@ -201,11 +217,13 @@ nocompile
 noconfirm
 nodedir
 NOFILE
+nomiclabs
 NOPASSWD
 notistack
 npmjs
 npos
 NPROC
+nrwl
 numtide
 offboarded
 offences
@@ -251,6 +269,7 @@ preclaim
 preclaims
 precommit
 precommits
+preinstall
 prevote
 procps
 proptest
@@ -259,12 +278,14 @@ prost
 protoc
 PROTOC
 PTRACE
+radiumblock
 rebag
 rebagged
 rebond
 reduxjs
 registryaddr
 rekt
+remappings
 resourcemonitor
 revhash
 rewardaccumulationhook
@@ -293,13 +314,20 @@ serayuzgur
 serie
 serokell
 setaf
+sharded
 shortkey
 skinparam
+Sighash
 smallvec
 snackbars
+solhint
+slength
+slengthmod
+sload
 sparkline
 sproof
 squeezy
+sstore
 Stackexchange
 stakeform
 stakerclaimunstake
@@ -312,6 +340,7 @@ submessage
 submessages
 Subql
 substituters
+submod
 subwasm
 subxt
 supertrait
@@ -337,6 +366,7 @@ truetype
 tsconfigs
 tsdx
 tungstenite
+typechain
 typegen
 typeorm
 udeps
@@ -356,7 +386,9 @@ urql
 USDCUSDT
 usermod
 vadimcn
+Varint
 vsicons
+wasmd
 wasmi
 wasmswap
 wasmtime
@@ -379,4 +411,11 @@ zlfzypzcr
 zstd
 zustand
 DACP
+Origin
+protobufs
+protos
 divn
+XCVM
+tmpfs
+nodev
+nosuid

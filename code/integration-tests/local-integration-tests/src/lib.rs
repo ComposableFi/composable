@@ -39,6 +39,7 @@
 #[cfg(test)]
 pub fn env_logger_init() {
 	use std::sync::Once;
+	// FIXME: This cell is unnecessary, as the log crate already does this internally.
 	static START: Once = Once::new();
 	START.call_once(|| {
 		let _ = env_logger::builder()
@@ -72,4 +73,6 @@ mod transact_calls;
 
 #[cfg(test)]
 mod common_goods_assets;
+#[cfg(test)]
+mod errors;
 pub mod testing;

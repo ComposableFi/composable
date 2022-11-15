@@ -7,6 +7,8 @@ import {
   TooltipProps,
   Tooltip,
   Switch,
+  useTheme,
+  alpha,
 } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { Theme } from "@mui/material";
@@ -35,6 +37,7 @@ export const TextSwitch: React.FC<TextSwitchProps> = ({
   checked,
   onChange,
 }) => {
+  const theme = useTheme();
   return (
     <Box
       display="flex"
@@ -51,7 +54,7 @@ export const TextSwitch: React.FC<TextSwitchProps> = ({
       >
         <Typography
           variant="body2"
-          color="text.primary"
+          color={alpha(theme.palette.common.white, theme.custom.opacity.darker)}
           mr={2}
           ml={textFirst ? 0 : 2}
           {...TypographyProps}

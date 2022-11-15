@@ -136,7 +136,7 @@ benchmarks! {
 		let per_period = T::MinVestedTransfer::get();
 		for i in 0..s {
 			fund_account::<T>(&dest, asset_id.clone(), FUNDING.into());
-			schedules.push(vesting_schedule::<T>(
+			schedules.push(vesting_schedule_info::<T>(
 				START_BLOCK_NUMBER.into(),
 				PERIOD.into(),
 				PERIOD_COUNT,

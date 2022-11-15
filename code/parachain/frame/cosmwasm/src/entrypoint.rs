@@ -12,13 +12,14 @@ use core::marker::PhantomData;
 use cosmwasm_minimal_std::Coin;
 use cosmwasm_vm::{
 	executor::{ExecuteInput, InstantiateInput, MigrateInput},
-	system::{cosmwasm_system_entrypoint, cosmwasm_system_run, CosmwasmCallVM, CosmwasmCodeId},
-	vm::VMBase,
+	system::{
+		cosmwasm_system_entrypoint, cosmwasm_system_run, CosmwasmCallVM, CosmwasmCodeId,
+		StargateCosmwasmCallVM,
+	},
+	vm::VmErrorOf,
 };
 use cosmwasm_vm_wasmi::WasmiVM;
 use frame_support::ensure;
-
-pub type VmErrorOf<T> = <T as VMBase>::Error;
 
 /// State machine for entrypoint calls like `instantiate`, `migrate`, etc.
 pub struct EntryPointCaller<S: CallerState> {
@@ -183,7 +184,7 @@ where
 		message: ContractMessageOf<T>,
 	) -> Result<O, CosmwasmVMError<T>>
 	where
-		for<'x> WasmiVM<CosmwasmVM<'x, T>>: CosmwasmCallVM<I>,
+		for<'x> WasmiVM<CosmwasmVM<'x, T>>: CosmwasmCallVM<I> + StargateCosmwasmCallVM,
 		for<'x> VmErrorOf<WasmiVM<CosmwasmVM<'x, T>>>: Into<CosmwasmVMError<T>>,
 	{
 		Pallet::<T>::do_extrinsic_dispatch(
@@ -215,7 +216,7 @@ where
 		event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
 	) -> Result<Option<cosmwasm_minimal_std::Binary>, CosmwasmVMError<T>>
 	where
-		for<'x> WasmiVM<CosmwasmVM<'x, T>>: CosmwasmCallVM<I>,
+		for<'x> WasmiVM<CosmwasmVM<'x, T>>: CosmwasmCallVM<I> + StargateCosmwasmCallVM,
 		for<'x> VmErrorOf<WasmiVM<CosmwasmVM<'x, T>>>: Into<CosmwasmVMError<T>>,
 	{
 		// Call `cosmwasm_call` to transfer funds and create the vm instance before

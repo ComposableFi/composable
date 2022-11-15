@@ -22,7 +22,7 @@ decl_test_parachain! {
 		Origin = statemine_runtime::Origin,
 		XcmpMessageHandler = statemine_runtime::XcmpQueue,
 		DmpMessageHandler = statemine_runtime::DmpQueue,
-		new_ext = para_ext(common::topology::statemine::ID),
+		new_ext = para_ext(topology::statemine::ID),
 	}
 }
 
@@ -70,7 +70,7 @@ decl_test_network! {
 fn default_parachains_host_configuration() -> HostConfiguration<BlockNumber> {
 	HostConfiguration {
 		minimum_validation_upgrade_delay: 5,
-		validation_upgrade_cooldown: 5u32,
+		validation_upgrade_cooldown: 5_u32,
 		validation_upgrade_delay: 5,
 		code_retention_period: 1200,
 		max_code_size: MAX_CODE_SIZE,
@@ -139,7 +139,6 @@ pub fn kusama_ext() -> sp_io::TestExternalities {
 
 pub const ALICE_PARACHAIN_BALANCE: u128 = 200 * PICA::ONE;
 pub const ALICE_PARACHAIN_PICA: u128 = 200 * PICA::ONE;
-pub const ALICE_PARACHAIN_KSM: u128 = 13 * RELAY_NATIVE::ONE;
 
 pub fn picasso_ext(parachain_id: u32) -> sp_io::TestExternalities {
 	let parachain_id = parachain_id.into();
@@ -156,12 +155,8 @@ pub fn picasso_ext(parachain_id: u32) -> sp_io::TestExternalities {
 		&mut storage,
 	)
 	.unwrap();
-	// TODO: remove implicit assets and mint these directly in test
 	orml_tokens::GenesisConfig::<Runtime> {
-		balances: vec![
-			(AccountId::from(ALICE), CurrencyId::PICA, ALICE_PARACHAIN_PICA),
-			(AccountId::from(ALICE), CurrencyId::KSM, ALICE_PARACHAIN_KSM),
-		],
+		balances: vec![(AccountId::from(ALICE), CurrencyId::PICA, ALICE_PARACHAIN_PICA)],
 	}
 	.assimilate_storage(&mut storage)
 	.unwrap();
@@ -187,7 +182,11 @@ pub fn para_ext(parachain_id: u32) -> sp_io::TestExternalities {
 	use statemine_runtime::{Runtime, System};
 	let mut storage = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
 	balances::GenesisConfig::<Runtime> {
-		balances: vec![(AccountId::from(ALICE), ALICE_PARACHAIN_BALANCE)],
+		balances: vec![
+			// remove ALICE when all tests refactored
+			(AccountId::from(ALICE), ALICE_PARACHAIN_BALANCE),
+			(AccountId::from(alice()), ALICE_PARACHAIN_BALANCE),
+		],
 	}
 	.assimilate_storage(&mut storage)
 	.unwrap();

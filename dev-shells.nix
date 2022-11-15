@@ -10,7 +10,7 @@
         systemCommonRust.common-attrs // {
           buildInputs = base.buildInputs
             ++ (with pkgs; [ clang nodejs python3 yarn ])
-            ++ (with self'.packages; [ rust-nightly subwasm ]);
+            ++ (with self'.packages; [ rust-nightly ]);
           LD_LIBRARY_PATH = pkgs.lib.strings.makeLibraryPath
             (with pkgs; [ stdenv.cc.cc.lib llvmPackages.libclang.lib ]);
           LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
@@ -23,7 +23,6 @@
         buildInputs = base.buildInputs ++ (with pkgs; [
           bacon
           google-cloud-sdk
-          grub2
           jq
           lldb
           llvmPackages_latest.bintools
@@ -44,14 +43,15 @@
           rnix-lsp
           nodePackages.typescript
           nodePackages.typescript-language-server
-        ]) ++ [ self'.packages.subxt ];
+        ]);
       });
 
-      with-wasm-optimizer = default.overrideAttrs (base: {
-        buildInputs = base.buildInputs ++ [ self'.packages.wasm-optimizer ];
+      wasm = default.overrideAttrs (base: {
+        buildInputs = base.buildInputs ++ [ pkgs.grub2 ]
+          ++ (with self'.packages; [ subwasm wasm-optimizer ]);
       });
 
-      xcvm = with-wasm-optimizer.overrideAttrs (base: {
+      xcvm = wasm.overrideAttrs (base: {
         buildInputs = base.buildInputs ++ (with self'.packages; [ junod gex ]);
         shellHook = ''
           echo "junod alice key:"

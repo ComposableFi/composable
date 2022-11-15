@@ -1,4 +1,4 @@
-import {OpenInNew} from "@mui/icons-material";
+import { OpenInNew } from "@mui/icons-material";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import {
   Accordion,
@@ -15,9 +15,9 @@ import {
 } from "@mui/material";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import {NextRouter, useRouter} from "next/router";
-import {Logo} from "../Atom";
-import {FC} from "react";
+import { NextRouter, useRouter } from "next/router";
+import { Logo } from "../Atom";
+import { FC } from "react";
 
 type MenuItem = {
   label: string;
@@ -75,16 +75,20 @@ const RoutesConfig: ConfigType[] = [
   },
   {
     label: "Governance",
-    path: "",
+    path: process.env.PICASSO_GOVERNANCE_URL || "",
     icon: dynamic(() => import("@mui/icons-material/HowToVoteRounded")),
     status: "active",
     matches: [],
     endAdornment: (
-        <Link href="https://polkassembly.io/" passHref>
-          <IconButton>
-            <OpenInNew />
-          </IconButton>
-        </Link>
+      <a
+        target="_blank"
+        href={process.env.PICASSO_GOVERNANCE_URL || ""}
+        rel="noopener noreferrer"
+      >
+        <IconButton color="primary">
+          <OpenInNew />
+        </IconButton>
+      </a>
     ),
   },
   {
@@ -124,9 +128,13 @@ const NavItem: FC<NavItemProps> = ({ router, config, theme, isSubItem }) => {
       sx={{ paddingLeft: isSubItem ? "3rem" : "1.5rem" }}
       onClick={handleClick}
     >
-      <ListItemIcon sx={{
-        color: config?.matches?.includes(router.pathname) ? theme.palette.primary.main : undefined
-      }}>
+      <ListItemIcon
+        sx={{
+          color: config?.matches?.includes(router.pathname)
+            ? theme.palette.primary.main
+            : undefined,
+        }}
+      >
         <config.icon />
       </ListItemIcon>
       <ListItemText primary={config.label} />

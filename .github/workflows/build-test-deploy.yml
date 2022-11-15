@@ -108,7 +108,7 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - run: |
-          nix flake show --allow-import-from-derivation  --show-trace --fallback --debug --print-build-logs --keep-failed          
+          nix flake show --allow-import-from-derivation  --show-trace --fallback --debug --print-build-logs --keep-failed
 
   cargo-fmt-check:
     name: "Cargo fmt check"
@@ -402,32 +402,33 @@ jobs:
       - run: |
           cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#cargo-deny-check --no-update-lock-file --show-trace -L
 
-  cargo-udeps-check:
-    name: "Cargo udeps"
-    needs: common-deps
-    runs-on: ubuntu-latest
-    concurrency:
-      group: ${{ github.workflow }}-cargo-udeps-check-${{ github.ref }}
-      cancel-in-progress: true
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
-        with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#cargo-udeps-check --no-update-lock-file --show-trace -L
+# TODO (vim): Decrease lead time until after release 3
+#  cargo-udeps-check:
+#    name: "Cargo udeps"
+#    needs: common-deps
+#    runs-on: ubuntu-latest
+#    concurrency:
+#      group: ${{ github.workflow }}-cargo-udeps-check-${{ github.ref }}
+#      cancel-in-progress: true
+#    container:
+#      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+#    steps:
+#      - uses: actions/checkout@v3
+#      - run: |
+#          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+#          echo "sandbox = relaxed" >> /etc/nix/nix.conf
+#          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+#      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+#        with:
+#          skipPush: true
+#          installCommand: |
+#            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+#            nix-channel --update
+#            nix-env -iA nixpkgs.cachix
+#          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+#          name: composable-community
+#      - run: |
+#          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#cargo-udeps-check --no-update-lock-file --show-trace -L
 
   benchmarks-check:
     name: "Benchmarks check"
@@ -492,42 +493,43 @@ jobs:
       - run: |
           cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#unit-tests --no-update-lock-file --show-trace -L
 
-  unit-tests-with-coverage:
-    name: "Unit Tests with coverage"
-    needs: common-deps
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: ${{ github.workflow }}-unittests-with-coverage-${{ github.ref }}
-      cancel-in-progress: true
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
-        with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - run: |
-          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#unit-tests-with-coverage --no-update-lock-file --show-trace -L
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v2
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: result/lcov/lcov.info
-          fail_ci_if_error: false
+# TODO (vim): Decrease lead time until after release 3
+#  unit-tests-with-coverage:
+#    name: "Unit Tests with coverage"
+#    needs: common-deps
+#    runs-on:
+#      - self-hosted
+#      - linux
+#      - x64
+#      - sre
+#    concurrency:
+#      group: ${{ github.workflow }}-unittests-with-coverage-${{ github.ref }}
+#      cancel-in-progress: true
+#    container:
+#      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+#    steps:
+#      - uses: actions/checkout@v3
+#      - run: |
+#          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+#          echo "sandbox = relaxed" >> /etc/nix/nix.conf
+#          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+#      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+#        with:
+#          skipPush: true
+#          installCommand: |
+#            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+#            nix-channel --update
+#            nix-env -iA nixpkgs.cachix
+#          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+#          name: composable-community
+#      - run: |
+#          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#unit-tests-with-coverage --no-update-lock-file --show-trace -L
+#      - name: Upload coverage to Codecov
+#        uses: codecov/codecov-action@v2
+#        with:
+#          token: ${{ secrets.CODECOV_TOKEN }}
+#          files: result/lcov/lcov.info
+#          fail_ci_if_error: false
 
   test-running-of-pallet-benchmarks:
     name: "Test running of pallet benchmarks"
@@ -885,7 +887,7 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#devnet-default-program --no-update-lock-file --show-trace -L
+          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#devnet --no-update-lock-file --show-trace -L
 
   package-xcvm-minimal:
     name: "Package XCVM minimal"
@@ -1128,7 +1130,8 @@ jobs:
         - test-running-of-pallet-benchmarks
         - local-integration-tests
         - unit-tests
-        - cargo-udeps-check
+        # TODO (vim): Decrease lead time until after release 3
+        #- cargo-udeps-check
         - nixfmt-check
         - cargo-clippy-check
         - cargo-deny-check
@@ -1383,14 +1386,14 @@ jobs:
 
             #### Spin up a local XCVM devnet:
             ```bash
-            nix run "github:ComposableFi/composable/${{ github.event.pull_request.head.sha }}#devnet-xcvm-up" -L
+            nix run "github:ComposableFi/composable/${{ github.event.pull_request.head.sha }}#devnet-xcvm" -L
             ```
-           
+
             ### View the docs:
             ```bash
             nix run ".#docs-server"
             ```
-  
+
             ### Run this without Nix in Docker.
             ```bash
             docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v nix:/nix -it nixos/nix bash -c "nix-env -iA nixpkgs.cachix && cachix use composable-community && nix run github:ComposableFi/Composable/${{ github.event.pull_request.head.sha }}#devnet-dali -L --extra-experimental-features nix-command --extra-experimental-features flakes"

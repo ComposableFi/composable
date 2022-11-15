@@ -24,8 +24,8 @@ const Overview: NextPage = () => {
   const myStakes = useStore((state) => state.polkadot.myStakingAssets);
   const tabs: TabItem[] = [
     { label: "My assets" },
-    { label: "My stakes", disabled: false },
-    { label: "My bonds", disabled: false },
+    { label: "My stakes", disabled: true },
+    { label: "My bonds", disabled: true },
   ];
 
   const [tabValue, setTabValue] = useState(0);
@@ -51,7 +51,7 @@ const Overview: NextPage = () => {
           <PageTitle
             title="Overview"
             textAlign="center"
-            subtitle="You will be able to check on your positions here."
+            subtitle="Your Portfolio in full view. Check on your positions and claim rewards."
           />
         </Grid>
         {extensionStatus !== "connected" && (
@@ -63,29 +63,6 @@ const Overview: NextPage = () => {
           <CrowdloanRewardsFeaturedBox />
         </Grid>
         {extensionStatus === "connected" && (
-          <Chart
-            title="My portfolio"
-            totalText="$24,587,298"
-            changeText="+34%"
-            changeTextColor={theme.palette.featured.lemon}
-            AreaChartProps={{
-              data: [
-                [1644550600000, 20],
-                [1644560620928, 40],
-                [1644570600000, 35],
-                [1644580600000, 60],
-                [1644590600000, 80],
-              ],
-              height: 118,
-              shorthandLabel: "Change",
-              labelFormat: (n: number) => n.toFixed(),
-              color: theme.palette.featured.lemon,
-            }}
-            intervals={["1h", "24h", "1w", "1m", "1y"]}
-            marginTop={9}
-          />
-        )}
-        {extensionStatus === "connected" && (
           <Grid item {...standardPageSize}>
             <Tabs
               items={tabs}
@@ -96,9 +73,7 @@ const Overview: NextPage = () => {
             {/* My Assets Tab Panels */}
             {/* Pass in more token ids to show here */}
             <TabPanel value={tabValue} index={0}>
-              <MyAssetsTable tokensToList={[
-                "pica"
-              ]} />
+              <MyAssetsTable tokensToList={["pica"]} />
             </TabPanel>
 
             {/* My Staking Tab Panels */}
@@ -106,9 +81,7 @@ const Overview: NextPage = () => {
               <Box px={2}>
                 <PageTitle title="Picasso" textAlign="left" fontSize={40} />
               </Box>
-              <MyAssetsTable tokensToList={[
-                "pica"
-              ]} />
+              <MyAssetsTable tokensToList={["pica"]} />
             </TabPanel>
 
             <TabPanel value={tabValue} index={1}>
@@ -141,67 +114,6 @@ const Overview: NextPage = () => {
             </TabPanel>
           </Grid>
         )}
-        <Grid item {...standardPageSize}>
-          <Typography variant="h6" align="center">
-            Picasso projects
-          </Typography>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              mt: theme.spacing(4),
-              gap: theme.spacing(5),
-            }}
-          >
-            <Box>
-              <Link
-                href="https://angular.finance/"
-                target="_blank"
-                rel="noopener"
-              >
-                <Image
-                  src="/logo/logo-angular.svg"
-                  width="125"
-                  height="48"
-                  alt="Angular logo"
-                />
-              </Link>
-            </Box>
-            <Box>
-              <Link
-                href="https://pablo.exchange"
-                target="_blank"
-                rel="noopener"
-              >
-                <Image
-                  src="/logo/logo-pablo.svg"
-                  width="172"
-                  height="45"
-                  alt="Pablo logo"
-                  css={{
-                    mixBlendMode: "luminosity",
-                  }}
-                />
-              </Link>
-            </Box>
-          </Box>
-        </Grid>
-        <Grid item {...standardPageSize}>
-          <FeaturedBox
-            title="Join the pallet revolution, powered by Picasso"
-            textBelow="To help support pallet development, we have launched the Composable Grant Program."
-            horizontalAligned
-            sx={{
-              padding: theme.spacing(6),
-            }}
-            ButtonProps={{
-              label: "Apply here",
-              onClick: () => {},
-              variant: "outlined",
-            }}
-          />
-        </Grid>
       </Grid>
     </Default>
   );

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import {
   Typography,
   useTheme,
@@ -19,7 +19,7 @@ export type LabelProps = {
   balanceLabelProps?: {
     label?: string;
     LabelTypographyProps?: TypographyProps;
-    balanceText?: string;
+    balanceText?: string | ReactNode;
     BalanceTypographyProps?: TypographyProps;
   };
 } & BoxProps;
@@ -70,13 +70,17 @@ export const Label: React.FC<LabelProps> = ({
             >
               {balanceLabelProps.label}
             </Typography>
-            <Typography
-              variant="inputLabel"
-              ml={0.5}
-              {...balanceLabelProps.BalanceTypographyProps}
-            >
-              {balanceLabelProps.balanceText}
-            </Typography>
+            {typeof balanceLabelProps.balanceText === "string" ? (
+              <Typography
+                variant="inputLabel"
+                ml={0.5}
+                {...balanceLabelProps.BalanceTypographyProps}
+              >
+                {balanceLabelProps.balanceText}
+              </Typography>
+            ) : (
+              balanceLabelProps.balanceText
+            )}
           </Box>
         )}
     </Box>

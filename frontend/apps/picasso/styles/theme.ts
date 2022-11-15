@@ -497,6 +497,7 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
           paddingLeft: "1.5rem",
           paddingRight: "1rem",
           height: "5rem",
+          marginTop: theme.spacing(1),
           borderRadius: theme.spacing(1.5),
           "&.Mui-selected": {
             backgroundColor: alpha(brandPalette.primary.main, 0.1),
@@ -658,6 +659,14 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
     },
     MuiTypography: {
       styleOverrides: {
+        root: {
+          "&.MuiTypography-inputLabel": {
+            color: alpha(
+              brandPalette.common.white,
+              customThemeOptions.custom.opacity.darker
+            ),
+          },
+        },
         button: {
           textTransform: "none",
         },
@@ -777,6 +786,9 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
     },
     MuiMenuItem: {
       styleOverrides: {
+        root: {
+          minWidth: "inherit",
+        },
         gutters: {
           padding: theme.spacing(2.25, 3),
           "&:hover": {

@@ -1,11 +1,13 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import {
+  alpha,
   Box,
   Theme,
   Tooltip,
   TooltipProps,
   Typography,
   TypographyProps,
+  useTheme,
 } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 
@@ -18,7 +20,7 @@ const infoIconStyle = (theme: Theme) => ({
 
 export type FeeDisplayProps = {
   label: string;
-  feeText: string;
+  feeText: string | ReactNode;
   textFirst?: boolean;
   TypographyProps?: TypographyProps;
   TooltipProps?: Omit<TooltipProps, "children">;
@@ -31,6 +33,7 @@ export const FeeDisplay: React.FC<FeeDisplayProps> = ({
   TypographyProps,
   TooltipProps,
 }) => {
+  const theme = useTheme();
   return (
     <Box
       display="flex"
@@ -45,7 +48,11 @@ export const FeeDisplay: React.FC<FeeDisplayProps> = ({
         alignItems="center"
         component="div"
       >
-        <Typography variant="body2" color="text.primary" {...TypographyProps}>
+        <Typography
+          variant="body2"
+          color={alpha(theme.palette.common.white, theme.custom.opacity.darker)}
+          {...TypographyProps}
+        >
           {label}
         </Typography>
         {TooltipProps?.title && (
@@ -56,9 +63,13 @@ export const FeeDisplay: React.FC<FeeDisplayProps> = ({
           </Tooltip>
         )}
       </Box>
-      <Typography variant="body2" color="text.primary" {...TypographyProps}>
-        {feeText}
-      </Typography>
+      {typeof feeText === "string" ? (
+        <Typography variant="body2" color="text.primary" {...TypographyProps}>
+          {feeText}
+        </Typography>
+      ) : (
+        feeText
+      )}
     </Box>
   );
 };

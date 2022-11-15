@@ -79,17 +79,6 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 	// Storage: StakingRewards RewardPools (r:1 w:1)
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: Pablo PriceCumulativeState (r:1 w:1)
-	fn sell() -> Weight {
-		(172_918_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(12 as Weight))
-			.saturating_add(T::DbWeight::get().writes(9 as Weight))
-	}
-	// Storage: Pablo Pools (r:1 w:0)
-	// Storage: Tokens Accounts (r:5 w:5)
-	// Storage: System Account (r:3 w:2)
-	// Storage: StakingRewards RewardPools (r:1 w:1)
-	// Storage: Timestamp Now (r:1 w:0)
-	// Storage: Pablo PriceCumulativeState (r:1 w:1)
 	fn swap() -> Weight {
 		(128_167_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(12 as Weight))

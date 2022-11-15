@@ -21,8 +21,8 @@ use crate::{
 	client::{FullBackend, FullClient},
 	runtime::{
 		assets::ExtendWithAssetsApi, cosmwasm::ExtendWithCosmwasmApi,
-		crowdloan_rewards::ExtendWithCrowdloanRewardsApi, ibc::ExtendWithIbcApi,
-		lending::ExtendWithLendingApi, pablo::ExtendWithPabloApi, BaseHostRuntimeApis,
+		crowdloan_rewards::ExtendWithCrowdloanRewardsApi, lending::ExtendWithLendingApi,
+		pablo::ExtendWithPabloApi, BaseHostRuntimeApis,
 	},
 };
 
@@ -66,7 +66,6 @@ where
 			+ ExtendWithCrowdloanRewardsApi<RuntimeApi, Executor>
 			+ ExtendWithPabloApi<RuntimeApi, Executor>
 			+ ExtendWithLendingApi<RuntimeApi, Executor>
-			+ ExtendWithIbcApi<RuntimeApi, Executor>
 			+ ExtendWithCosmwasmApi<RuntimeApi, Executor>,
 {
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
@@ -94,11 +93,6 @@ where
 	)?;
 
 	<FullClient<RuntimeApi, Executor> as ProvideRuntimeApi<OpaqueBlock>>::Api::extend_with_lending_api(
-		&mut io,
-		deps.clone(),
-	)?;
-
-	<FullClient<RuntimeApi, Executor> as ProvideRuntimeApi<OpaqueBlock>>::Api::extend_with_ibc_api(
 		&mut io,
 		deps.clone(),
 	)?;

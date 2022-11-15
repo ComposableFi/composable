@@ -23,6 +23,7 @@
 //!
 //! - `vested_transfer` - Add a new vesting schedule for an account.
 //! - `claim` - Claim unlocked balances.
+//! - `claim_for` - Claim unlocked balances for a `target` account.
 //! - `update_vesting_schedules` - Update all vesting schedules under an account, `root` origin
 //!   required.
 
@@ -54,7 +55,7 @@ use frame_support::{
 	traits::{EnsureOrigin, Get, LockIdentifier, Time},
 	transactional, BoundedBTreeMap,
 };
-use frame_system::{ensure_root, ensure_signed, pallet_prelude::*};
+use frame_system::{ensure_signed, pallet_prelude::*};
 use orml_traits::{MultiCurrency, MultiLockableCurrency};
 use sp_runtime::{
 	traits::{BlockNumberProvider, One, StaticLookup, Zero},
@@ -128,6 +129,9 @@ pub mod module {
 
 		/// Required origin for vested transfer.
 		type VestedTransferOrigin: EnsureOrigin<Self::Origin>;
+
+		/// Required origin for updating schedules.
+		type UpdateSchedulesOrigin: EnsureOrigin<Self::Origin>;
 
 		/// Weight information for extrinsics in this module.
 		type WeightInfo: WeightInfo;
@@ -321,7 +325,7 @@ pub mod module {
 
 		/// Create a vested transfer.
 		///
-		/// The dispatch origin for this call must be _Signed_.
+		/// The dispatch origin for this call must be _Root_ or Democracy.
 		///
 		/// - `from`: The account sending the vested funds.
 		/// - `beneficiary`: The account receiving the vested funds.
@@ -349,7 +353,7 @@ pub mod module {
 
 		/// Update vesting schedules
 		///
-		/// The dispatch origin for this call must be _Signed_.
+		/// The dispatch origin for this call must be _Root_ or democracy.
 		///
 		/// - `who`: The account whose vested funds should be updated.
 		/// - `asset`: The asset associated with the vesting schedules.
@@ -361,9 +365,9 @@ pub mod module {
 			origin: OriginFor<T>,
 			who: <T::Lookup as StaticLookup>::Source,
 			asset: AssetIdOf<T>,
-			vesting_schedules: Vec<VestingScheduleOf<T>>,
+			vesting_schedules: Vec<VestingScheduleInfoOf<T>>,
 		) -> DispatchResult {
-			ensure_root(origin)?;
+			T::UpdateSchedulesOrigin::ensure_origin(origin)?;
 
 			let account = T::Lookup::lookup(who)?;
 			Self::do_update_vesting_schedules(&account, asset, vesting_schedules)?;
@@ -621,7 +625,7 @@ impl<T: Config> Pallet<T> {
 	fn do_update_vesting_schedules(
 		who: &AccountIdOf<T>,
 		asset: AssetIdOf<T>,
-		schedules: Vec<VestingScheduleOf<T>>,
+		schedules: Vec<VestingScheduleInfoOf<T>>,
 	) -> DispatchResult {
 		// empty vesting schedules cleanup the storage and unlock the fund
 		if schedules.is_empty() {
@@ -637,7 +641,10 @@ impl<T: Config> Pallet<T> {
 
 		let bounded_schedules: BoundedBTreeMap<_, _, _> = schedules
 			.into_iter()
-			.map(|schedule| VestingScheduleNonce::<T>::increment().map(|id| (id, schedule)))
+			.map(|schedule_info| {
+				VestingScheduleNonce::<T>::increment()
+					.map(|id| (id, VestingSchedule::from_input(id, schedule_info)))
+			})
 			.collect::<Result<BTreeMap<T::VestingScheduleId, VestingScheduleOf<T>>, _>>()?
 			.try_into()
 			.map_err(|_| Error::<T>::MaxVestingSchedulesExceeded)?;

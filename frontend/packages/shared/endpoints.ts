@@ -1,6 +1,11 @@
-export type AvailableEndpoints = "picasso" | "kusama" | "karura" | "subsquid";
+export type AvailableEndpoints =
+  | "picasso"
+  | "kusama"
+  | "karura"
+  | "subsquid"
+  | "statemine";
 
-function cacheAndFetch(target: "picasso" | "kusama" | "karura" | "subsquid") {
+function cacheAndFetch(target: AvailableEndpoints) {
   let cache = "";
   switch (target) {
     case "kusama":
@@ -11,6 +16,9 @@ function cacheAndFetch(target: "picasso" | "kusama" | "karura" | "subsquid") {
       break;
     case "karura":
       cache = process.env.SUBSTRATE_PROVIDER_URL_KARURA || "";
+      break;
+    case "statemine":
+      cache = process.env.SUBSTRATE_PROVIDER_URL_STATEMINE || "";
       break;
     case "subsquid":
       cache = process.env.SUBSQUID_URL || "";
@@ -48,14 +56,17 @@ export const endpointPresets: EndpointPresets = {
     picasso: "ws://127.0.0.1:9988",
     karura: "ws://127.0.0.1:9999",
     kusama: "ws://127.0.0.1:9944",
-    subsquid: "http://localhost:4350/graphql",
+    statemine: "ws://127.0.0.1:10009",
+    subsquid: "http://localhost:4350/graphql"
   },
   daliStage: {
     picasso: "wss://persistent.devnets.composablefinance.ninja/chain/dali",
     karura: "wss://persistent.devnets.composablefinance.ninja/chain/karura",
     kusama: "wss://persistent.devnets.composablefinance.ninja/chain/rococo",
+    statemine:
+      "wss://persistent.devnets.composablefinance.ninja/chain/statemine",
     subsquid:
-      "https://persistent.devnets.composablefinance.ninja/subsquid/graphql",
+      "https://persistent.devnets.composablefinance.ninja/subsquid/graphql"
   },
   picassoStage: {
     picasso:
@@ -64,9 +75,11 @@ export const endpointPresets: EndpointPresets = {
       "wss://persistent.picasso.devnets.composablefinance.ninja/chain/karura",
     kusama:
       "wss://persistent.picasso.devnets.composablefinance.ninja/chain/rococo",
+    statemine:
+      "wss://persistent.picasso.devnets.composablefinance.ninja/chain/statemine",
     subsquid:
-      "https://persistent.picasso.devnets.composablefinance.ninja/subsquid/graphql",
-  },
+      "https://persistent.picasso.devnets.composablefinance.ninja/subsquid/graphql"
+  }
 };
 
 export function setEndpointPreset(endpointPreset: EndpointPreset) {

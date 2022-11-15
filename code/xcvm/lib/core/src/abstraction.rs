@@ -16,25 +16,25 @@ mod _priv {
 }
 
 pub trait Nat: _priv::Sealed {
-	const VALUE: u8;
+	const VALUE: u32;
 }
 
 impl Nat for Zero {
-	const VALUE: u8 = 0;
+	const VALUE: u32 = 0;
 }
 
 impl<X: Nat> Nat for Succ<X> {
-	const VALUE: u8 = 1 + X::VALUE;
+	const VALUE: u32 = 1 + X::VALUE;
 }
 
 /// Compile time indexing of an element of type `T` inside a structure of type `U`
 pub trait IndexOf<T, U> {
-	const INDEX: u8;
+	const INDEX: u32;
 }
 
 /// Base case
 impl<T, U> IndexOf<T, Zero> for (T, U) {
-	const INDEX: u8 = Zero::VALUE;
+	const INDEX: u32 = Zero::VALUE;
 }
 
 /// Inductive case
@@ -43,5 +43,5 @@ where
 	X: Nat,
 	V: IndexOf<T, X>,
 {
-	const INDEX: u8 = <Succ<X>>::VALUE;
+	const INDEX: u32 = <Succ<X>>::VALUE;
 }

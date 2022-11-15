@@ -1,7 +1,7 @@
 ///! tests that various assets integration scenarios work well
 use crate::{helpers::*, kusama_test_net::This, prelude::*};
-use common::PriceConverter;
-use composable_traits::{defi::Ratio, oracle::MinimalOracle, xcm::assets::XcmAssetLocation};
+use composable_support::rational_64;
+use composable_traits::xcm::assets::XcmAssetLocation;
 
 use frame_system::RawOrigin;
 use primitives::currency::*;
@@ -16,7 +16,7 @@ fn updated_assets_registry_works_well_for_ratios() {
 			RawOrigin::Root.into(),
 			CurrencyId(42),
 			XcmAssetLocation(MultiLocation::new(1, X1(Parachain(666)))),
-			Ratio::checked_from_integer::<u128>(10),
+			Some(rational_64!(10 / 1)),
 			None,
 		)
 		.unwrap();
@@ -24,17 +24,17 @@ fn updated_assets_registry_works_well_for_ratios() {
 			RawOrigin::Root.into(),
 			CurrencyId(123),
 			XcmAssetLocation(MultiLocation::new(1, X1(Parachain(4321)))),
-			Ratio::checked_from_rational(10u32, 100u32),
+			Some(rational_64!(10 / 100)),
 			None,
 		)
 		.unwrap();
 		assert_eq!(
 			1000,
-			<PriceConverter<AssetsRegistry>>::get_price_inverse(CurrencyId(42), 100).unwrap()
+			<PriceConverter<AssetsRegistry>>::to_asset_balance(100, CurrencyId(42)).unwrap()
 		);
 		assert_eq!(
 			10,
-			<PriceConverter<AssetsRegistry>>::get_price_inverse(CurrencyId(123), 100).unwrap()
+			<PriceConverter<AssetsRegistry>>::to_asset_balance(100, CurrencyId(123)).unwrap()
 		);
 	});
 }
@@ -48,7 +48,7 @@ fn registered_assets_with_smaller_than_native_price() {
 			RawOrigin::Root.into(),
 			XcmAssetLocation(MultiLocation::new(1, X1(Parachain(666)))),
 			42,
-			Ratio::checked_from_integer::<u128>(10),
+			Some(rational_64!(10 / 1)),
 			None,
 		)
 		.unwrap();
@@ -65,7 +65,7 @@ fn registered_assets_with_smaller_than_native_price() {
 			.unwrap();
 		assert_eq!(
 			1000,
-			<PriceConverter<AssetsRegistry>>::get_price_inverse(asset_id, 100).unwrap()
+			<PriceConverter<AssetsRegistry>>::to_asset_balance(100, asset_id).unwrap()
 		);
 	});
 }
@@ -79,7 +79,7 @@ fn registered_assets_with_larger_than_native_price() {
 			RawOrigin::Root.into(),
 			XcmAssetLocation(MultiLocation::new(1, X1(Parachain(666)))),
 			42,
-			Ratio::checked_from_rational(10u32, 100u32),
+			Some(rational_64!(10 / 100)),
 			None,
 		)
 		.unwrap();
@@ -94,6 +94,6 @@ fn registered_assets_with_larger_than_native_price() {
 				_ => None,
 			})
 			.unwrap();
-		assert_eq!(10, <PriceConverter<AssetsRegistry>>::get_price_inverse(asset_id, 100).unwrap());
+		assert_eq!(10, <PriceConverter<AssetsRegistry>>::to_asset_balance(100, asset_id).unwrap());
 	});
 }

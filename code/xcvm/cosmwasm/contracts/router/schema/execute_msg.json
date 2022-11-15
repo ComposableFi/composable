@@ -3,6 +3,7 @@
   "title": "ExecuteMsg",
   "oneOf": [
     {
+      "description": "Run an XCVM program on the XCVM interpreter instance Creates a new one if there is no instance.",
       "type": "object",
       "required": [
         "run"
@@ -11,17 +12,76 @@
         "run": {
           "type": "object",
           "required": [
+            "bridge",
             "funds",
             "interpreter_execute_msg",
             "network_id",
             "user_id"
           ],
           "properties": {
+            "bridge": {
+              "description": "The bridge that is used to call the router",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Bridge"
+                }
+              ]
+            },
             "funds": {
-              "$ref": "#/definitions/Funds_for_Displayed_for_uint128"
+              "description": "Funds to fund the XCVM interpreter instance The interpreter is funded prior to execution",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Funds_for_Displayed_for_uint128"
+                }
+              ]
             },
             "interpreter_execute_msg": {
-              "$ref": "#/definitions/ExecuteMsg"
+              "description": "Message to execute in the XCVM interpreter instance",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/ExecuteMsg"
+                }
+              ]
+            },
+            "network_id": {
+              "description": "Origin network ID",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/NetworkId"
+                }
+              ]
+            },
+            "user_id": {
+              "description": "Origin user ID. (Caller)",
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "uint8",
+                "minimum": 0.0
+              }
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Set a certain bridge security requirement for a specific interpreter even it hasn't instantiated yet",
+      "type": "object",
+      "required": [
+        "set_interpreter_security"
+      ],
+      "properties": {
+        "set_interpreter_security": {
+          "type": "object",
+          "required": [
+            "bridge_security",
+            "network_id",
+            "user_id"
+          ],
+          "properties": {
+            "bridge_security": {
+              "$ref": "#/definitions/BridgeSecurity"
             },
             "network_id": {
               "$ref": "#/definitions/NetworkId"
@@ -38,24 +98,93 @@
         }
       },
       "additionalProperties": false
+    },
+    {
+      "description": "Register a bridge. The caller needs to be admin for this.",
+      "type": "object",
+      "required": [
+        "register_bridge"
+      ],
+      "properties": {
+        "register_bridge": {
+          "type": "object",
+          "required": [
+            "bridge"
+          ],
+          "properties": {
+            "bridge": {
+              "$ref": "#/definitions/Bridge"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Unregister a bridge. The caller needs to be admin for this.",
+      "type": "object",
+      "required": [
+        "unregister_bridge"
+      ],
+      "properties": {
+        "unregister_bridge": {
+          "type": "object",
+          "required": [
+            "bridge"
+          ],
+          "properties": {
+            "bridge": {
+              "$ref": "#/definitions/Bridge"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
     }
   ],
   "definitions": {
-    "Amount": {
-      "description": "See https://en.wikipedia.org/wiki/Linear_equation#Slope%E2%80%93intercept_form_or_Gradient-intercept_form",
+    "Addr": {
+      "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
+      "type": "string"
+    },
+    "AssetId": {
+      "description": "Newtype for XCVM assets ID. Must be unique for each asset and must never change. This ID is an opaque, arbitrary type from the XCVM protocol and no assumption must be made on how it is computed.",
+      "type": "integer",
+      "format": "uint128",
+      "minimum": 0.0
+    },
+    "Bridge": {
       "type": "object",
       "required": [
-        "intercept",
-        "slope"
+        "protocol",
+        "security"
       ],
       "properties": {
-        "intercept": {
-          "$ref": "#/definitions/Displayed_for_uint128"
+        "protocol": {
+          "$ref": "#/definitions/BridgeProtocol"
         },
-        "slope": {
-          "$ref": "#/definitions/Displayed_for_uint128"
+        "security": {
+          "$ref": "#/definitions/BridgeSecurity"
         }
       }
+    },
+    "BridgeProtocol": {
+      "type": "string",
+      "enum": [
+        "IBC",
+        "XCM",
+        "OTP"
+      ]
+    },
+    "BridgeSecurity": {
+      "description": "Newtype for XCVM networks ID. Must be unique for each network and must never change. This ID is an opaque, arbitrary type from the XCVM protocol and no assumption must be made on how it is computed.",
+      "type": "string",
+      "enum": [
+        "Insecure",
+        "Deterministic",
+        "Probabilistic",
+        "Optimistic"
+      ]
     },
     "Displayed_for_uint128": {
       "type": "integer",
@@ -65,6 +194,7 @@
     "ExecuteMsg": {
       "oneOf": [
         {
+          "description": "Execute an XCVM program",
           "type": "object",
           "required": [
             "execute"
@@ -77,7 +207,86 @@
               ],
               "properties": {
                 "program": {
-                  "$ref": "#/definitions/Program_for_Array_of_Instruction_for_NetworkId_and_Array_of_uint8_and_String_and_Funds_for_Amount"
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "format": "uint8",
+                    "minimum": 0.0
+                  }
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "description": "This is only meant to be used by the interpreter itself, otherwise it will return an error",
+          "type": "object",
+          "required": [
+            "__self_execute"
+          ],
+          "properties": {
+            "__self_execute": {
+              "type": "object",
+              "required": [
+                "program"
+              ],
+              "properties": {
+                "program": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "format": "uint8",
+                    "minimum": 0.0
+                  }
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "description": "Add owners of this contract",
+          "type": "object",
+          "required": [
+            "add_owners"
+          ],
+          "properties": {
+            "add_owners": {
+              "type": "object",
+              "required": [
+                "owners"
+              ],
+              "properties": {
+                "owners": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/Addr"
+                  }
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "description": "Remove owners from the contract",
+          "type": "object",
+          "required": [
+            "remove_owners"
+          ],
+          "properties": {
+            "remove_owners": {
+              "type": "object",
+              "required": [
+                "owners"
+              ],
+              "properties": {
+                "owners": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/Addr"
+                  }
                 }
               }
             }
@@ -85,141 +294,28 @@
           "additionalProperties": false
         }
       ]
-    },
-    "Funds_for_Amount": {
-      "type": "object",
-      "additionalProperties": {
-        "$ref": "#/definitions/Amount"
-      }
     },
     "Funds_for_Displayed_for_uint128": {
-      "type": "object",
-      "additionalProperties": {
-        "$ref": "#/definitions/Displayed_for_uint128"
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "$ref": "#/definitions/AssetId"
+          },
+          {
+            "$ref": "#/definitions/Displayed_for_uint128"
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
       }
-    },
-    "Instruction_for_NetworkId_and_Array_of_uint8_and_String_and_Funds_for_Amount": {
-      "description": "Base XCVM instructions. This set will remain as small as possible, expressiveness must come on `top` of the base instructions.",
-      "oneOf": [
-        {
-          "description": "Transfer some [`Assets`] from the current program to the [`to`] account.",
-          "type": "object",
-          "required": [
-            "transfer"
-          ],
-          "properties": {
-            "transfer": {
-              "type": "object",
-              "required": [
-                "assets",
-                "to"
-              ],
-              "properties": {
-                "assets": {
-                  "$ref": "#/definitions/Funds_for_Amount"
-                },
-                "to": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "description": "Arbitrary payload representing a raw call inside the current [`Network`].\n\nOn picasso, this will be a SCALE encoded dispatch call. On ethereum, an ethereum ABI encoded call. On cosmos, a raw json WasmMsg call.\n\nDepending on the network, the payload might be more structured than the base call. For most of the network in fact, we need to provide the target address along the payload, which can be encoded inside this single payload.",
-          "type": "object",
-          "required": [
-            "call"
-          ],
-          "properties": {
-            "call": {
-              "type": "object",
-              "required": [
-                "encoded"
-              ],
-              "properties": {
-                "encoded": {
-                  "type": "array",
-                  "items": {
-                    "type": "integer",
-                    "format": "uint8",
-                    "minimum": 0.0
-                  }
-                }
-              }
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "description": "Spawn a sub-program on the target `network`.\n\nThe program will be spawned with the desired [`Assets`]. The salt is used to track the program when events are dispatched in the network.",
-          "type": "object",
-          "required": [
-            "spawn"
-          ],
-          "properties": {
-            "spawn": {
-              "type": "object",
-              "required": [
-                "assets",
-                "network",
-                "program",
-                "salt"
-              ],
-              "properties": {
-                "assets": {
-                  "$ref": "#/definitions/Funds_for_Amount"
-                },
-                "network": {
-                  "$ref": "#/definitions/NetworkId"
-                },
-                "program": {
-                  "$ref": "#/definitions/Program_for_Array_of_Instruction_for_NetworkId_and_Array_of_uint8_and_String_and_Funds_for_Amount"
-                },
-                "salt": {
-                  "type": "array",
-                  "items": {
-                    "type": "integer",
-                    "format": "uint8",
-                    "minimum": 0.0
-                  }
-                }
-              }
-            }
-          },
-          "additionalProperties": false
-        }
-      ]
     },
     "NetworkId": {
       "description": "Newtype for XCVM networks ID. Must be unique for each network and must never change. This ID is an opaque, arbitrary type from the XCVM protocol and no assumption must be made on how it is computed.",
       "type": "integer",
-      "format": "uint8",
+      "format": "uint32",
       "minimum": 0.0
-    },
-    "Program_for_Array_of_Instruction_for_NetworkId_and_Array_of_uint8_and_String_and_Funds_for_Amount": {
-      "type": "object",
-      "required": [
-        "instructions",
-        "tag"
-      ],
-      "properties": {
-        "instructions": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Instruction_for_NetworkId_and_Array_of_uint8_and_String_and_Funds_for_Amount"
-          }
-        },
-        "tag": {
-          "type": "array",
-          "items": {
-            "type": "integer",
-            "format": "uint8",
-            "minimum": 0.0
-          }
-        }
-      }
     }
   }
 }
