@@ -25,9 +25,9 @@ import {
 
 import { SetRequired } from 'type-fest';
 
-import { codeStore } from '@/utils/cosmwasm-vm/code/methods';
-import { VMHostShared, VmRunEnv, getVmInitParams } from '@/utils/cosmwasm-vm/vm/types';
-import { SetupState } from '@/utils/cosmwasm-vm/types';
+import { codeStore } from '../code/methods';
+import { VMHostShared, VmRunEnv, getVmInitParams } from './types';
+import { SetupState } from '../types';
 
 const createVM = (info: MessageInfo, env: Env, metadata: ContractMeta, shared: VMHostShared): Partial<VMHost> => {
 	const getStore = (address: string): Map<String, Object> => {
@@ -116,6 +116,7 @@ const safeSingleRunVmSetup = async (): Promise<void> => {
 	setupState.promise = new Promise(async (res, rej) => {
 		await promise;
 		setupState.loaded = true;
+		console.log('vm setup success');
 		res();
 	});
 	return setupState.promise;

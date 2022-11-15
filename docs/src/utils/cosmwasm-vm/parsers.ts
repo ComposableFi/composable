@@ -1,4 +1,4 @@
-import { RawContractEvent, ContractEvent } from '@/utils/cosmwasm-vm/types';
+import { RawContractEvent, ContractEvent } from './types';
 
 export function getRefinedEvents(events: RawContractEvent[]): ContractEvent[] {
 	const refinedEvents: ContractEvent[] = events.map(event => {
