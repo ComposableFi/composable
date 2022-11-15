@@ -3,7 +3,7 @@ extern crate alloc;
 use crate::{
 	error::ContractError,
 	msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg},
-	state::{Config, CONFIG, IP_REGISTER, OWNERS, RESULT_REGISTER},
+	state::{Config, CONFIG, IP_REGISTER, OWNERS, RELAYER_REGISTER, RESULT_REGISTER},
 };
 use alloc::{borrow::Cow, collections::VecDeque};
 #[cfg(not(feature = "library"))]
@@ -45,21 +45,16 @@ pub fn instantiate(
 	let registry_address = deps.api.addr_validate(&msg.registry_address)?;
 	let gateway_address = deps.api.addr_validate(&msg.gateway_address)?;
 	let router_address = deps.api.addr_validate(&msg.router_address)?;
-	let config = Config {
-		registry_address,
-		router_address,
-		gateway_address,
-		network_id: msg.network_id,
-		user_id: msg.user_id,
-	};
+	let config =
+		Config { registry_address, router_address, gateway_address, user_origin: msg.user_origin };
 	CONFIG.save(deps.storage, &config)?;
 	// Save the caller as owner, in most cases, it is the `XCVM router`
 	OWNERS.save(deps.storage, info.sender, &())?;
 
-	Ok(Response::new().add_event(Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute(
-		"data",
-		cw_xcvm_utils::encode_origin_data(config.network_id, &config.user_id)?.as_str(),
-	)))
+	Ok(Response::new().add_event(
+		Event::new(XCVM_INTERPRETER_EVENT_PREFIX)
+			.add_attribute("data", cw_xcvm_utils::encode_origin_data(config.user_origin)?.as_str()),
+	))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -73,8 +68,9 @@ pub fn execute(
 	assert_owner(deps.as_ref(), &env.contract.address, &info.sender)?;
 	match msg {
 		ExecuteMsg::Execute { relayer, program } => initiate_execution(deps, env, relayer, program),
-		ExecuteMsg::SelfExecute { relayer, program } =>
-		// SelfExecute should be called by interpreter itself
+
+		// ExecuteStep should be called by interpreter itself
+		ExecuteMsg::ExecuteStep { relayer, program } =>
 			if env.contract.address != info.sender {
 				Err(ContractError::NotAuthorized)
 			} else {
@@ -82,7 +78,9 @@ pub fn execute(
 					proto::decode(&program[..]).map_err(|_| ContractError::InvalidProgram)?;
 				interpret_program(deps, env, info, relayer, program)
 			},
+
 		ExecuteMsg::AddOwners { owners } => add_owners(deps, owners),
+
 		ExecuteMsg::RemoveOwners { owners } => Ok(remove_owners(deps, owners)),
 	}
 }
@@ -104,7 +102,7 @@ fn assert_owner(deps: Deps, self_addr: &Addr, owner: &Addr) -> Result<(), Contra
 	}
 }
 
-/// Initiate an execution by adding a `SelfExecute` callback. This is used to be able to prepare an
+/// Initiate an execution by adding a `ExecuteStep` callback. This is used to be able to prepare an
 /// execution by resetting the necessary registers as well as being able to catch any failures and
 /// store it in the `RESULT_REGISTER`
 fn initiate_execution(
@@ -113,18 +111,23 @@ fn initiate_execution(
 	relayer: Addr,
 	program: Vec<u8>,
 ) -> Result<Response, ContractError> {
+  // Reset instruction pointer to zero.
 	IP_REGISTER.save(deps.storage, &0)?;
+
+  // Set the new relayer, note that the relayer that is in the register is always the last relayer that executed a program.
+	RELAYER_REGISTER.save(deps.storage, &relayer)?;
+
 	Ok(Response::default().add_submessage(SubMsg::reply_on_error(
 		wasm_execute(
 			env.contract.address,
-			&ExecuteMsg::SelfExecute { relayer, program },
-			Vec::new(),
+			&ExecuteMsg::ExecuteStep { relayer, program },
+			Default::default(),
 		)?,
 		SELF_CALL_ID,
 	)))
 }
 
-/// Add owners who can execute entrypoints other than `SelfExecute`
+/// Add owners who can execute entrypoints other than `ExecuteStep`
 fn add_owners(deps: DepsMut, owners: Vec<Addr>) -> Result<Response, ContractError> {
 	let mut event =
 		Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "owners.added");
@@ -162,15 +165,7 @@ pub fn interpret_program(
 			XCVMInstruction::Call { bindings, encoded } => {
 				if index >= instruction_len - 1 {
 					// If the call is the final instruction, do not yield execution
-					interpret_call(
-						deps.as_ref(),
-						&env,
-						bindings,
-						encoded,
-						ip as usize,
-						relayer.clone(),
-						response,
-					)?
+					interpret_call(deps.as_ref(), &env, bindings, encoded, ip as usize, response)?
 				} else {
 					// If the call is not the final instruction:
 					// 1. interpret the call: this will add the call to the response's
@@ -179,22 +174,15 @@ pub fn interpret_program(
 					//    rest of the instructions as XCVM program. This will make sure that
 					//    previous call instruction will run first, then the rest of the program
 					//    will run.
-					let response = interpret_call(
-						deps.as_ref(),
-						&env,
-						bindings,
-						encoded,
-						index,
-						relayer.clone(),
-						response,
-					)?;
+					let response =
+						interpret_call(deps.as_ref(), &env, bindings, encoded, index, response)?;
 					let instructions: VecDeque<XCVMInstruction> =
 						instruction_iter.map(|(_, instr)| instr).collect();
 					let program = XCVMProgram { tag: program.tag, instructions };
 					IP_REGISTER.save(deps.storage, &ip)?;
 					return Ok(response.add_message(wasm_execute(
 						env.contract.address,
-						&ExecuteMsg::SelfExecute {
+						&ExecuteMsg::ExecuteStep {
 							relayer: relayer.clone(),
 							program: program.encode(),
 						},
@@ -243,7 +231,6 @@ pub fn interpret_call(
 	bindings: Vec<(u32, BindingValue)>,
 	payload: Vec<u8>,
 	_ip: usize,
-	relayer: Addr,
 	response: Response,
 ) -> Result<Response, ContractError> {
 	// We don't know the type of the payload, so we use `serde_json::Value`
@@ -292,7 +279,8 @@ pub fn interpret_call(
 			let data: Cow<[u8]> = match binding {
 				BindingValue::Register(Register::Ip) =>
 					Cow::Owned(format!("{}", IP_REGISTER.load(deps.storage)?).into()),
-				BindingValue::Register(Register::Relayer) => Cow::Borrowed(relayer.as_bytes()),
+				BindingValue::Register(Register::Relayer) =>
+					Cow::Owned(format!("{}", RELAYER_REGISTER.load(deps.storage)?).into()),
 				BindingValue::Register(Register::This) =>
 					Cow::Borrowed(env.contract.address.as_bytes()),
 				BindingValue::Register(Register::Result) => Cow::Owned(
@@ -349,8 +337,7 @@ pub fn interpret_spawn(
 	program: XCVMProgram,
 	mut response: Response,
 ) -> Result<Response, ContractError> {
-	let Config { network_id, user_id, registry_address, router_address, .. } =
-		CONFIG.load(deps.storage)?;
+	let Config { user_origin, registry_address, router_address, .. } = CONFIG.load(deps.storage)?;
 
 	let registry_address = registry_address.into_string();
 	let mut normalized_funds: Funds<Displayed<u128>> = Funds::empty();
@@ -415,12 +402,12 @@ pub fn interpret_spawn(
 			.add_attribute("instruction", "spawn")
 			.add_attribute(
 				"origin_network_id",
-				serde_json_wasm::to_string(&network_id.0)
+				serde_json_wasm::to_string(&user_origin.network_id)
 					.map_err(|_| ContractError::DataSerializationError)?,
 			)
 			.add_attribute(
 				"origin_user_id",
-				serde_json_wasm::to_string(&user_id)
+				serde_json_wasm::to_string(&user_origin.user_id)
 					.map_err(|_| ContractError::DataSerializationError)?,
 			)
 			.add_attribute("program", Binary(encoded_spawn).to_base64()),
@@ -489,10 +476,8 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
 		QueryMsg::Register(Register::Result) =>
 			Ok(to_binary(&RESULT_REGISTER.load(deps.storage)?)?),
 		QueryMsg::Register(Register::This) => Ok(to_binary(&env.contract.address)?),
-		QueryMsg::Register(Register::Relayer) => {
-			let Config { user_id, .. } = CONFIG.load(deps.storage)?;
-			Ok(to_binary(&user_id)?)
-		},
+		QueryMsg::Register(Register::Relayer) =>
+			Ok(to_binary(&RELAYER_REGISTER.load(deps.storage)?)?),
 	}
 }
 
@@ -537,8 +522,8 @@ mod tests {
 	};
 	use serde::{Deserialize, Serialize};
 	use xcvm_core::{
-		Amount, AssetId, BindingValue, BridgeSecurity, Destination, Picasso, ETH, MAX_PARTS, PICA,
-		USDT,
+		Amount, AssetId, BindingValue, BridgeSecurity, Destination, Picasso, UserOrigin, ETH,
+		MAX_PARTS, PICA, USDT,
 	};
 
 	const CW20_ADDR: &str = "cw20_addr";
@@ -556,8 +541,7 @@ mod tests {
 			gateway_address: GATEWAY_ADDR.to_string(),
 			registry_address: REGISTRY_ADDR.to_string(),
 			router_address: ROUTER_ADDR.to_string(),
-			network_id: Picasso.into(),
-			user_id: vec![],
+			user_origin: UserOrigin { network_id: Picasso.into(), user_id: vec![].into() },
 		};
 		instantiate(deps, env, info, msg)
 	}
@@ -604,8 +588,7 @@ mod tests {
 				gateway_address: Addr::unchecked(GATEWAY_ADDR),
 				registry_address: Addr::unchecked(REGISTRY_ADDR),
 				router_address: Addr::unchecked(ROUTER_ADDR),
-				network_id: Picasso.into(),
-				user_id: vec![]
+				user_origin: UserOrigin { network_id: Picasso.into(), user_id: vec![].into() }
 			}
 		);
 
@@ -639,7 +622,7 @@ mod tests {
 			SubMsg::reply_on_error(
 				wasm_execute(
 					MOCK_CONTRACT_ADDR,
-					&ExecuteMsg::SelfExecute { relayer: Addr::unchecked("2"), program },
+					&ExecuteMsg::ExecuteStep { relayer: Addr::unchecked("2"), program },
 					Vec::new()
 				)
 				.unwrap(),
@@ -751,13 +734,13 @@ mod tests {
 		}
 		.into();
 
-    let relayer = "1337".to_string();
+		let relayer = "1337".to_string();
 		let program = encode_protobuf(program);
 		let res = execute(
 			deps.as_mut(),
 			mock_env(),
 			info.clone(),
-			ExecuteMsg::SelfExecute { relayer: Addr::unchecked(relayer.clone()), program },
+			ExecuteMsg::ExecuteStep { relayer: Addr::unchecked(relayer.clone()), program },
 		)
 		.unwrap();
 		let contract = Cw20Contract(Addr::unchecked(CW20_ADDR));
@@ -775,10 +758,7 @@ mod tests {
 				})
 				.unwrap(),
 			contract
-				.call(Cw20ExecuteMsg::Transfer {
-					recipient: relayer,
-					amount: (BALANCE / 2).into(),
-				})
+				.call(Cw20ExecuteMsg::Transfer { recipient: relayer, amount: (BALANCE / 2).into() })
 				.unwrap(),
 			contract
 				.call(Cw20ExecuteMsg::Transfer {
@@ -797,6 +777,9 @@ mod tests {
 
 		let info = mock_info(MOCK_CONTRACT_ADDR, &vec![]);
 		let _ = do_instantiate(deps.as_mut(), mock_env(), info.clone()).unwrap();
+
+		let relayer = Addr::unchecked("1337");
+		RELAYER_REGISTER.save(deps.as_mut().storage, &relayer).unwrap();
 
 		IP_REGISTER.save(deps.as_mut().storage, &0).unwrap();
 
@@ -828,8 +811,8 @@ mod tests {
 
 		let program: proto::Program =
 			XCVMProgram { tag: vec![], instructions: instructions.clone().into() }.into();
-		let execute_msg = ExecuteMsg::SelfExecute {
-			relayer: Addr::unchecked("2"),
+		let execute_msg = ExecuteMsg::ExecuteStep {
+			relayer: relayer.clone(),
 			program: encode_protobuf(Into::<proto::Program>::into(XCVMProgram {
 				tag: vec![],
 				instructions: instructions[1..].to_owned().into(),
@@ -840,10 +823,7 @@ mod tests {
 			deps.as_mut(),
 			mock_env(),
 			info.clone(),
-			ExecuteMsg::SelfExecute {
-				relayer: Addr::unchecked("2"),
-				program: encode_protobuf(program),
-			},
+			ExecuteMsg::ExecuteStep { relayer: relayer.clone(), program: encode_protobuf(program) },
 		)
 		.unwrap();
 		assert_eq!(
@@ -875,6 +855,8 @@ mod tests {
 		let info = mock_info(MOCK_CONTRACT_ADDR, &vec![]);
 		let _ = do_instantiate(deps.as_mut(), mock_env(), info.clone()).unwrap();
 
+		let relayer = Addr::unchecked("1337");
+		RELAYER_REGISTER.save(deps.as_mut().storage, &relayer).unwrap();
 		IP_REGISTER.save(deps.as_mut().storage, &0).unwrap();
 
 		let inner_program = XCVMProgram {
@@ -895,7 +877,7 @@ mod tests {
 		let proto_spawn = proto::Spawn {
 			network: Some(Into::<xcvm_core::NetworkId>::into(Picasso).into()),
 			salt: Some(xcvm_proto::Salt { salt: vec![] }),
-			security: 1,
+			security: 3,
 			program: Some(inner_program.into()),
 			assets: funds.0.into_iter().map(Into::into).collect(),
 		};
@@ -907,7 +889,7 @@ mod tests {
 			deps.as_mut(),
 			mock_env(),
 			info.clone(),
-			ExecuteMsg::SelfExecute { relayer: Addr::unchecked("2"), program },
+			ExecuteMsg::ExecuteStep { relayer, program },
 		)
 		.unwrap();
 
@@ -940,6 +922,9 @@ mod tests {
 		let info = mock_info(MOCK_CONTRACT_ADDR, &vec![]);
 		let _ = do_instantiate(deps.as_mut(), mock_env(), info.clone()).unwrap();
 
+		let relayer = Addr::unchecked("1337");
+		RELAYER_REGISTER.save(deps.as_mut().storage, &relayer).unwrap();
+
 		IP_REGISTER.save(deps.as_mut().storage, &0).unwrap();
 
 		#[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -971,24 +956,21 @@ mod tests {
 			bindings: late_call.bindings.clone(),
 			encoded: late_call.encoded_call.clone(),
 		}];
-    let relayer = "1337".to_string();
+		let relayer = "1337".to_string();
 		let program: proto::Program =
 			XCVMProgram { tag: vec![], instructions: instructions.clone().into() }.into();
 		let res = execute(
 			deps.as_mut(),
 			mock_env(),
 			info.clone(),
-			ExecuteMsg::SelfExecute {
+			ExecuteMsg::ExecuteStep {
 				relayer: Addr::unchecked(relayer.clone()),
 				program: encode_protobuf(program),
 			},
 		)
 		.unwrap();
-		let final_test_msg = TestMsg {
-			part1: MOCK_CONTRACT_ADDR.into(),
-			part2: "hello".into(),
-			part3: relayer,
-		};
+		let final_test_msg =
+			TestMsg { part1: MOCK_CONTRACT_ADDR.into(), part2: "hello".into(), part3: relayer };
 		assert_eq!(
 			CosmosMsg::Wasm(WasmMsg::Execute {
 				contract_addr: MOCK_CONTRACT_ADDR.into(),

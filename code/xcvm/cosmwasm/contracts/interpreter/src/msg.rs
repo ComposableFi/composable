@@ -4,9 +4,7 @@ use alloc::{string::String, vec::Vec};
 use cosmwasm_std::Addr;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use xcvm_core::{NetworkId, Register};
-
-pub type UserId = Vec<u8>;
+use xcvm_core::{Register, UserOrigin};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
@@ -17,9 +15,7 @@ pub struct InstantiateMsg {
 	/// Address of the router
 	pub router_address: String,
 	/// Network ID of the origin network
-	pub network_id: NetworkId,
-	/// Id of the origin user
-	pub user_id: UserId,
+	pub user_origin: UserOrigin,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -28,7 +24,10 @@ pub enum ExecuteMsg {
 	/// Execute an XCVM program
 	Execute { relayer: Addr, program: Vec<u8> },
 	/// This is only meant to be used by the interpreter itself, otherwise it will return an error
-	SelfExecute { relayer: Addr, program: Vec<u8> },
+	/// The existence of this message is to allow the execution of the `Call` instruction. Once we
+	/// hit a call, the program queue the call and queue itself after it to ensure that the side
+	/// effect of the call has been executed.
+	ExecuteStep { relayer: Addr, program: Vec<u8> },
 	/// Add owners of this contract
 	AddOwners { owners: Vec<Addr> },
 	/// Remove owners from the contract

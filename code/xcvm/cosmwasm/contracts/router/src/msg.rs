@@ -1,14 +1,12 @@
-use cosmwasm_std::Addr;
 use cw_xcvm_interpreter::msg::ExecuteMsg as InterpreterExecuteMsg;
-use cw_xcvm_utils::UserId;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use xcvm_core::{Bridge, BridgeSecurity, Displayed, Funds, NetworkId};
+use xcvm_core::{BridgeSecurity, CallOrigin, Displayed, Funds, NetworkId, UserOrigin};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
-  /// Addres of the XCVM gateway contract
-  pub gateway_address: String,
+	/// Addres of the XCVM gateway contract
+	pub gateway_address: String,
 	/// Address of the XCVM registry contract
 	pub registry_address: String,
 	/// Address of the XCVM interpreter contract code
@@ -22,17 +20,11 @@ pub struct InstantiateMsg {
 pub enum ExecuteMsg {
 	/// Run an XCVM program on the XCVM interpreter instance
 	/// Creates a new one if there is no instance.
-	Run {
-		/// The bridge that is used to call the router
-		bridge: Bridge,
-    /// The relayer that is executing the transaction
-    relayer: Addr,
-		/// Origin network ID
-		network_id: NetworkId,
-		/// Origin user ID. (Caller)
-		user_id: UserId,
+	ExecuteProgram {
+		/// The origin of the call.
+		call_origin: CallOrigin,
 		/// Message to execute in the XCVM interpreter instance
-		interpreter_execute_msg: InterpreterExecuteMsg,
+		msg: InterpreterExecuteMsg,
 		/// Funds to fund the XCVM interpreter instance
 		/// The interpreter is funded prior to execution
 		funds: Funds<Displayed<u128>>,
@@ -40,8 +32,9 @@ pub enum ExecuteMsg {
 	/// Set a certain bridge security requirement for a specific interpreter even it hasn't
 	/// instantiated yet
 	SetInterpreterSecurity {
-		network_id: NetworkId,
-		user_id: UserId,
+    /// The user origin we initiate this call for.
+    user_origin: UserOrigin,
+    /// The new bridge security the user is willing to take risk for.
 		bridge_security: BridgeSecurity,
 	},
 }

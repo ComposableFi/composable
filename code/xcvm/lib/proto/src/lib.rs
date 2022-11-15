@@ -228,9 +228,9 @@ where
 			salt,
 			bridge_security: match spawn.security {
 				0 => xcvm_core::BridgeSecurity::Insecure,
-				1 => xcvm_core::BridgeSecurity::Deterministic,
+				1 => xcvm_core::BridgeSecurity::Optimistic,
 				2 => xcvm_core::BridgeSecurity::Probabilistic,
-				3 => xcvm_core::BridgeSecurity::Optimistic,
+				3 => xcvm_core::BridgeSecurity::Deterministic,
 				_ => return Err(()),
 			},
 			assets: spawn

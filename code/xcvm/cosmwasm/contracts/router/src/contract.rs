@@ -3,7 +3,7 @@ extern crate alloc;
 use crate::{
 	error::ContractError,
 	msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg},
-	state::{Config, Interpreter, ADMIN, CONFIG, INTERPRETERS},
+	state::{Config, Interpreter, CONFIG, INTERPRETERS},
 };
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
@@ -18,8 +18,7 @@ use cw_xcvm_asset_registry::{contract::external_query_lookup_asset, msg::AssetRe
 use cw_xcvm_interpreter::msg::{
 	ExecuteMsg as InterpreterExecuteMsg, InstantiateMsg as InterpreterInstantiateMsg,
 };
-use cw_xcvm_utils::UserId;
-use xcvm_core::{Bridge, BridgeSecurity, Displayed, Funds, NetworkId};
+use xcvm_core::{BridgeSecurity, CallOrigin, Displayed, Funds, UserOrigin};
 
 const CONTRACT_NAME: &str = "composable:xcvm-router";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -30,13 +29,12 @@ pub const XCVM_ROUTER_EVENT_PREFIX: &str = "xcvm.router";
 pub fn instantiate(
 	deps: DepsMut,
 	_env: Env,
-	info: MessageInfo,
+	_info: MessageInfo,
 	msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
 	set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 	let gateway_address = deps.api.addr_validate(&msg.gateway_address)?;
 	let registry_address = deps.api.addr_validate(&msg.registry_address)?;
-	ADMIN.save(deps.storage, &info.sender)?;
 	CONFIG.save(
 		deps.storage,
 		&Config {
@@ -58,32 +56,12 @@ pub fn execute(
 	msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
 	match msg {
-		ExecuteMsg::Run {
-			bridge,
-			relayer,
-			network_id,
-			user_id,
-			interpreter_execute_msg,
-			funds,
-		} => handle_run(
-			deps,
-			env,
-			bridge,
-			relayer,
-			network_id,
-			user_id,
-			interpreter_execute_msg,
-			funds,
-		),
-		ExecuteMsg::SetInterpreterSecurity { network_id, user_id, bridge_security } => {
-			ensure_admin(deps.as_ref(), &info.sender)?;
-			set_interpreter_security(deps, network_id, user_id, bridge_security)?;
-			// TODO(aeryz): see if we need an event here
-			Ok(Response::default().add_event(
-				Event::new(XCVM_ROUTER_EVENT_PREFIX)
-					.add_attribute("action", "interpreter.setSecurity"),
-			))
-		},
+		ExecuteMsg::ExecuteProgram { call_origin, msg, funds } =>
+			handle_execute_program(deps, env, info, call_origin, msg, funds),
+
+		// Only the local user origin is able to change it's interpreter security.
+		ExecuteMsg::SetInterpreterSecurity { user_origin, bridge_security } =>
+			handle_set_interpreter_security(deps, info, user_origin, bridge_security),
 	}
 }
 
@@ -93,59 +71,93 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
 	Ok(Response::default())
 }
 
-fn set_interpreter_security(
-	deps: DepsMut,
-	network_id: NetworkId,
-	user_id: UserId,
-	security: BridgeSecurity,
-) -> Result<(), ContractError> {
-	match INTERPRETERS.load(deps.storage, (network_id.0, user_id.clone())) {
-		Ok(Interpreter { address, .. }) => INTERPRETERS.save(
-			deps.storage,
-			(network_id.0, user_id),
-			&Interpreter { address, security },
-		),
-		Err(_) => INTERPRETERS.save(
-			deps.storage,
-			(network_id.0, user_id),
-			&Interpreter { address: None, security },
-		),
+fn ensure_gateway(deps: &DepsMut, sender: &Addr) -> Result<(), ContractError> {
+	let config = CONFIG.load(deps.storage)?;
+	if &config.gateway_address == sender {
+		Ok(())
+	} else {
+		Err(ContractError::NotAuthorized)
 	}
-	.map_err(Into::into)
 }
 
-fn handle_run(
+fn ensure_interpreter(
+	deps: &DepsMut,
+	sender: &Addr,
+	user_origin: UserOrigin,
+) -> Result<(), ContractError> {
+	match INTERPRETERS.load(deps.storage, user_origin) {
+		Ok(Interpreter { address: Some(address), .. }) if &address == sender => Ok(()),
+		_ => Err(ContractError::NotAuthorized),
+	}
+}
+
+fn handle_set_interpreter_security(
+	deps: DepsMut,
+	info: MessageInfo,
+	user_origin: UserOrigin,
+	security: BridgeSecurity,
+) -> Result<Response, ContractError> {
+	// Ensure that the sender is the interpreter for the given user origin.
+	// The security of an interpreter can only be altered by the interpreter itself.
+	// If a user is willing to alter the default security, he must submit an XCVM program with a
+	// call to the router that does it for him.
+	ensure_interpreter(&deps, &info.sender, user_origin.clone())?;
+
+	match INTERPRETERS.load(deps.storage, user_origin.clone()) {
+		Ok(Interpreter { address, .. }) =>
+			INTERPRETERS.save(deps.storage, user_origin.clone(), &Interpreter { address, security }),
+		Err(_) => INTERPRETERS.save(
+			deps.storage,
+			user_origin.clone(),
+			&Interpreter { address: None, security },
+		),
+	}?;
+	Ok(Response::default().add_event(
+		Event::new(XCVM_ROUTER_EVENT_PREFIX)
+			.add_attribute("action", "interpreter.setSecurity")
+			.add_attribute("network_id", format!("{}", u32::from(user_origin.network_id)))
+			.add_attribute("user_id", hex::encode(&user_origin.user_id))
+			.add_attribute("security", format!("{}", security as u8)),
+	))
+}
+
+fn handle_execute_program(
 	deps: DepsMut,
 	env: Env,
-	bridge: Bridge,
-	relayer: Addr,
-	network_id: NetworkId,
-	user_id: UserId,
-	interpreter_execute_msg: InterpreterExecuteMsg,
+	info: MessageInfo,
+	call_origin: CallOrigin,
+	msg: InterpreterExecuteMsg,
 	funds: Funds<Displayed<u128>>,
 ) -> Result<Response, ContractError> {
-	match INTERPRETERS.load(deps.storage, (network_id.0, user_id.clone())) {
+	// Ensure that the sender is the gateway.
+	// If a user want to directly execute payload, he must send it to it's interpreter after having
+	// added himself as owner.
+	ensure_gateway(&deps, &info.sender)?;
+
+	match INTERPRETERS.load(deps.storage, call_origin.user().clone()) {
 		Ok(Interpreter { address: Some(interpreter_address), security }) => {
+			// Ensure that the current call origin meet the user expected security.
+			call_origin
+				.ensure_security(security)
+				.map_err(|_| ContractError::ExpectedBridgeSecurity(security))?;
+
 			// There is already an interpreter instance, so all we do is fund the interpreter, then
 			// add a callback to it
-			assert_bridge_security(bridge, security)?;
 			let response =
 				send_funds_to_interpreter(deps.as_ref(), interpreter_address.clone(), funds)?;
-			let wasm_msg = wasm_execute(interpreter_address, &interpreter_execute_msg, vec![])?;
+			let wasm_msg = wasm_execute(interpreter_address, &msg, vec![])?;
 			Ok(response.add_message(wasm_msg))
 		},
 		_ => {
-			let Config {
-				gateway_address,
-				registry_address,
-				interpreter_code_id,
-				network_id: router_network_id,
-			} = CONFIG.load(deps.storage)?;
+			let Config { gateway_address, registry_address, interpreter_code_id, .. } =
+				CONFIG.load(deps.storage)?;
+
 			// There is no interpreter, so the bridge security must be at least `Deterministic`
-			// or the message should be coming from a local origin
-			if network_id != router_network_id {
-				assert_bridge_security(bridge, BridgeSecurity::Deterministic)?;
-			}
+			// or the message should be coming from a local origin.
+			call_origin.ensure_security(BridgeSecurity::Deterministic).map_err(|_| {
+				ContractError::ExpectedBridgeSecurity(BridgeSecurity::Deterministic)
+			})?;
+
 			// First, add a callback to instantiate an interpreter (which we later get the result
 			// and save it)
 			let instantiate_msg: CosmosMsg = WasmMsg::Instantiate {
@@ -156,11 +168,14 @@ fn handle_run(
 					gateway_address: gateway_address.into(),
 					registry_address: registry_address.into(),
 					router_address: env.contract.address.clone().into_string(),
-					network_id,
-					user_id: user_id.clone(),
+					user_origin: call_origin.user().clone(),
 				})?,
 				funds: vec![],
-				label: format!("xcvm-interpreter-{}-{}", network_id.0, hex::encode(&user_id)),
+				label: format!(
+					"xcvm-interpreter-{}-{}",
+					u32::from(call_origin.user().network_id),
+					hex::encode(&call_origin.user().user_id)
+				),
 			}
 			.into();
 
@@ -170,14 +185,7 @@ fn handle_run(
 			// into `Ok` state and properly executes the interpreter
 			let self_call_message: CosmosMsg = wasm_execute(
 				env.contract.address,
-				&ExecuteMsg::Run {
-					bridge,
-					relayer,
-					network_id,
-					user_id,
-					interpreter_execute_msg,
-					funds,
-				},
+				&ExecuteMsg::ExecuteProgram { call_origin: call_origin.clone(), msg, funds },
 				vec![],
 			)?
 			.into();
@@ -221,14 +229,6 @@ fn send_funds_to_interpreter(
 	Ok(response)
 }
 
-fn ensure_admin(deps: Deps, addr: &Addr) -> Result<(), ContractError> {
-	if ADMIN.load(deps.storage)? == *addr {
-		Ok(())
-	} else {
-		Err(ContractError::NotAuthorized)
-	}
-}
-
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> StdResult<Response> {
 	match msg.id {
@@ -262,7 +262,7 @@ fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 		)?
 	};
 
-	let (network_id, user_id) = {
+	let user_origin = {
 		// Interpreter provides `network_id, user_id` pair as an event for the router to know which
 		// pair is instantiated
 		let interpreter_event = response
@@ -282,15 +282,15 @@ fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 		)?
 	};
 
-	match INTERPRETERS.load(deps.storage, (network_id, user_id.clone())) {
+	match INTERPRETERS.load(deps.storage, user_origin.clone()) {
 		Ok(Interpreter { security, .. }) => INTERPRETERS.save(
 			deps.storage,
-			(network_id, user_id),
+			user_origin,
 			&Interpreter { address: Some(interpreter_address), security },
 		)?,
 		Err(_) => INTERPRETERS.save(
 			deps.storage,
-			(network_id, user_id),
+			user_origin,
 			&Interpreter {
 				security: BridgeSecurity::Deterministic,
 				address: Some(interpreter_address),
@@ -299,17 +299,6 @@ fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 	}
 
 	Ok(Response::new())
-}
-
-fn assert_bridge_security(
-	bridge: Bridge,
-	expected_security: BridgeSecurity,
-) -> Result<(), ContractError> {
-	if bridge.security <= expected_security {
-		Ok(())
-	} else {
-		Err(ContractError::InsufficientBridgeSecurity(expected_security, bridge.security))
-	}
 }
 
 #[cfg(test)]
@@ -321,7 +310,7 @@ mod tests {
 		wasm_execute, Addr, CanonicalAddr, ContractResult, QuerierResult, SystemResult, WasmQuery,
 	};
 	use prost::Message;
-	use xcvm_core::{Amount, AssetId, BridgeProtocol, Destination, Picasso, ETH, PICA};
+	use xcvm_core::{Amount, AssetId, BridgeProtocol, Destination, NetworkId, Picasso, ETH, PICA};
 	use xcvm_proto as proto;
 	type XCVMInstruction = xcvm_core::Instruction<NetworkId, Vec<u8>, CanonicalAddr, Funds>;
 	type XCVMProgram = xcvm_core::Program<VecDeque<XCVMInstruction>>;
@@ -405,8 +394,6 @@ mod tests {
 		)
 		.unwrap();
 
-		let relayer = Addr::unchecked("1337");
-
 		let program = XCVMProgram {
 			tag: vec![],
 			instructions: vec![XCVMInstruction::Transfer {
@@ -419,23 +406,20 @@ mod tests {
 			.into(),
 		};
 
-		let interpreter_execute_msg = InterpreterExecuteMsg::Execute {
-			relayer: relayer.clone(),
-			program: encode_protobuf(program.into()),
-		};
-
 		let funds =
 			Funds::<Displayed<u128>>::from([(Into::<AssetId>::into(PICA), Displayed(1000_u128))]);
 
-		let run_msg = ExecuteMsg::Run {
-			bridge: Bridge {
-				security: BridgeSecurity::Deterministic,
+		let relayer = Addr::unchecked("13245");
+		let run_msg = ExecuteMsg::ExecuteProgram {
+			call_origin: CallOrigin::Remote {
 				protocol: BridgeProtocol::IBC,
+				relayer: relayer.as_bytes().to_vec(),
+				user_origin: UserOrigin { network_id: Picasso.into(), user_id: vec![1].into() },
 			},
-			relayer,
-			network_id: Picasso.into(),
-			user_id: vec![1],
-			interpreter_execute_msg,
+			msg: InterpreterExecuteMsg::Execute {
+				relayer: relayer.clone(),
+				program: encode_protobuf(program.into()),
+			},
 			funds: funds.clone(),
 		};
 
@@ -448,8 +432,7 @@ mod tests {
 				registry_address: REGISTRY_ADDR.into(),
 				gateway_address: GATEWAY_ADDR.into(),
 				router_address: MOCK_CONTRACT_ADDR.into(),
-				network_id: Picasso.into(),
-				user_id: vec![1],
+				user_origin: UserOrigin { network_id: Picasso.into(), user_id: vec![1].into() },
 			})
 			.unwrap(),
 			funds: vec![],
@@ -473,7 +456,7 @@ mod tests {
 		querier.update_wasm(wasm_querier);
 		deps.querier = querier;
 
-		let info = mock_info("sender", &vec![]);
+		let info = mock_info(GATEWAY_ADDR, &vec![]);
 		let _ = instantiate(
 			deps.as_mut(),
 			mock_env(),
@@ -490,7 +473,7 @@ mod tests {
 		INTERPRETERS
 			.save(
 				&mut deps.storage,
-				(Into::<NetworkId>::into(Picasso).0, vec![]),
+				UserOrigin { network_id: Picasso.into(), user_id: vec![].into() },
 				&Interpreter {
 					address: Some(Addr::unchecked("interpreter")),
 					security: BridgeSecurity::Deterministic,
@@ -510,25 +493,22 @@ mod tests {
 			}]
 			.into(),
 		};
-		let interpreter_execute_msg = InterpreterExecuteMsg::Execute {
-			relayer: relayer.clone(),
-			program: encode_protobuf(program.into()),
-		};
 
 		let funds = Funds::<Displayed<u128>>::from([
 			(Into::<AssetId>::into(PICA), Displayed(1000_u128)),
 			(Into::<AssetId>::into(ETH), Displayed(2000_u128)),
 		]);
 
-		let run_msg = ExecuteMsg::Run {
-			bridge: Bridge {
-				protocol: BridgeProtocol::IBC,
-				security: BridgeSecurity::Deterministic,
+		let run_msg = ExecuteMsg::ExecuteProgram {
+			call_origin: CallOrigin::Remote {
+				protocol: BridgeProtocol::XCM,
+				relayer: relayer.as_bytes().to_vec(),
+				user_origin: UserOrigin { network_id: Picasso.into(), user_id: vec![].into() },
 			},
-			relayer,
-			network_id: Picasso.into(),
-			user_id: vec![],
-			interpreter_execute_msg: interpreter_execute_msg.clone(),
+			msg: InterpreterExecuteMsg::Execute {
+				relayer: relayer.clone(),
+				program: encode_protobuf(program.clone().into()),
+			},
 			funds: funds.clone(),
 		};
 
@@ -548,7 +528,16 @@ mod tests {
 					amount: 2000_u128.into(),
 				})
 				.unwrap(),
-			wasm_execute("interpreter", &interpreter_execute_msg, vec![]).unwrap().into(),
+			wasm_execute(
+				"interpreter",
+				&InterpreterExecuteMsg::Execute {
+					relayer: relayer.clone(),
+					program: encode_protobuf(program.into()),
+				},
+				vec![],
+			)
+			.unwrap()
+			.into(),
 		];
 
 		messages.into_iter().enumerate().for_each(|(i, msg)| {

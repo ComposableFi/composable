@@ -64,21 +64,59 @@
 //! variants of both of them.
 
 use super::{BindingValue, Bindings};
-use crate::{Bridge, OrderedBindings};
+use crate::{OrderedBindings, UserOrigin, UserId, NetworkId};
 use alloc::{fmt::Debug, string::String, vec, vec::Vec};
-use cosmwasm_std::{BankMsg, Coin, CosmosMsg};
-use cw_storage_plus::{Key, PrimaryKey};
+use cosmwasm_std::{BankMsg, Coin, CosmosMsg, StdResult};
+use cw_storage_plus::{CwIntKey, Key, KeyDeserialize, Prefixer, PrimaryKey};
 use serde::{Deserialize, Serialize};
 
-/// Make `Bridge` usable in `cw-storage-plus`
-impl<'a> PrimaryKey<'a> for Bridge {
-	type Prefix = u8;
+impl<'a> PrimaryKey<'a> for UserOrigin {
+	type Prefix = ();
 	type SubPrefix = ();
-	type Suffix = u8;
-	type SuperSuffix = (u8, u8);
-
+	type Suffix = u128;
+	type SuperSuffix = u128;
 	fn key(&self) -> Vec<Key> {
-		vec![Key::Val16([self.security as u8, self.protocol as u8])]
+		vec![Key::Val32(self.network_id.0.to_cw_bytes()), Key::Ref(self.user_id.as_ref())]
+	}
+}
+
+impl<'a> PrimaryKey<'a> for UserId {
+	type Prefix = ();
+	type SubPrefix = ();
+	type Suffix = u128;
+	type SuperSuffix = u128;
+	fn key(&self) -> Vec<Key> {
+		vec![Key::Ref(self.0.as_ref())]
+	}
+}
+
+impl KeyDeserialize for UserId {
+	type Output = <Vec<u8> as KeyDeserialize>::Output;
+	fn from_vec(value: Vec<u8>) -> StdResult<Self::Output> {
+		<Vec<u8> as KeyDeserialize>::from_vec(value)
+	}
+}
+
+impl<'a> PrimaryKey<'a> for NetworkId {
+	type Prefix = ();
+	type SubPrefix = ();
+	type Suffix = u128;
+	type SuperSuffix = u128;
+	fn key(&self) -> Vec<Key> {
+		vec![Key::Val32(self.0.to_cw_bytes())]
+	}
+}
+
+impl<'a> Prefixer<'a> for NetworkId {
+	fn prefix(&self) -> Vec<Key> {
+		<u32 as Prefixer<'a>>::prefix(&self.0)
+	}
+}
+
+impl KeyDeserialize for NetworkId {
+	type Output = <u32 as KeyDeserialize>::Output;
+	fn from_vec(value: Vec<u8>) -> StdResult<Self::Output> {
+		<u32 as KeyDeserialize>::from_vec(value)
 	}
 }
 
