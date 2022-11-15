@@ -696,26 +696,12 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
       },
       styleOverrides: {
         root: {
-          "&:hover": {
-            "& .MuiOutlinedInput-notchedOutline": {
-              borderColor: `${alpha(
-                theme.palette.common.white,
-                customThemeOptions.custom.opacity.main
-              )}`,
-            },
-          },
           "&.Mui-error": {
             color: brandPalette.error.main,
             "&:hover": {
               "& .MuiOutlinedInput-notchedOutline": {
                 borderColor: `${brandPalette.error.main}`,
               },
-            },
-          },
-          "&.Mui-focused": {
-            color: brandPalette.common.white,
-            "& .MuiOutlinedInput-notchedOutline": {
-              borderColor: `${brandPalette.primary.light}`,
             },
           },
           "&.Mui-disabled": {
@@ -744,6 +730,10 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
             "& .MuiBox-root": {
               overflow: "hidden",
             },
+          },
+          "&:hover .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#FF8500",
+            borderWidth: "2px",
           },
         },
         input: {
