@@ -32,7 +32,7 @@ impl<'a> PrimaryKey<'a> for AssetKey {
 	type Suffix = u128;
 	type SuperSuffix = u128;
 	fn key(&self) -> Vec<Key> {
-		vec![Key::Val128(self.0.0.to_cw_bytes())]
+		vec![Key::Val128(self.0.0.0.to_cw_bytes())]
 	}
 }
 

@@ -5,7 +5,7 @@ extern crate alloc;
 use alloc::{collections::VecDeque, vec::Vec};
 use fixed::{types::extra::U16, FixedU128};
 use prost::{DecodeError, Message};
-use xcvm_core::{Amount, Destination, NetworkId, SpawnEvent, MAX_PARTS};
+use xcvm_core::{Amount, Destination, NetworkId, SpawnEvent, MAX_PARTS, Displayed};
 
 include!(concat!(env!("OUT_DIR"), "/interpreter.rs"));
 
@@ -307,7 +307,7 @@ impl TryFrom<AssetId> for xcvm_core::AssetId {
 	type Error = ();
 
 	fn try_from(asset_id: AssetId) -> core::result::Result<Self, Self::Error> {
-		Ok(xcvm_core::AssetId(asset_id.asset_id.ok_or(())?.into()))
+		Ok(xcvm_core::AssetId(Displayed(asset_id.asset_id.ok_or(())?.into())))
 	}
 }
 
@@ -383,7 +383,7 @@ impl From<Amount> for Balance {
 
 impl From<xcvm_core::AssetId> for AssetId {
 	fn from(asset_id: xcvm_core::AssetId) -> Self {
-		AssetId { asset_id: Some(asset_id.0.into()) }
+		AssetId { asset_id: Some(asset_id.0.0.into()) }
 	}
 }
 

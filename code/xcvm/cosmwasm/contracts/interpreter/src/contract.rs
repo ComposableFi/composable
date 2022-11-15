@@ -73,8 +73,8 @@ pub fn execute(
 	assert_owner(deps.as_ref(), &env.contract.address, &info.sender)?;
 	match msg {
 		ExecuteMsg::Execute { relayer, program } => initiate_execution(deps, env, relayer, program),
-		ExecuteMsg::_SelfExecute { relayer, program } =>
-		// _SelfExecute should be called by interpreter itself
+		ExecuteMsg::SelfExecute { relayer, program } =>
+		// SelfExecute should be called by interpreter itself
 			if env.contract.address != info.sender {
 				Err(ContractError::NotAuthorized)
 			} else {
@@ -104,7 +104,7 @@ fn assert_owner(deps: Deps, self_addr: &Addr, owner: &Addr) -> Result<(), Contra
 	}
 }
 
-/// Initiate an execution by adding a `_SelfExecute` callback. This is used to be able to prepare an
+/// Initiate an execution by adding a `SelfExecute` callback. This is used to be able to prepare an
 /// execution by resetting the necessary registers as well as being able to catch any failures and
 /// store it in the `RESULT_REGISTER`
 fn initiate_execution(
@@ -117,14 +117,14 @@ fn initiate_execution(
 	Ok(Response::default().add_submessage(SubMsg::reply_on_error(
 		wasm_execute(
 			env.contract.address,
-			&ExecuteMsg::_SelfExecute { relayer, program },
+			&ExecuteMsg::SelfExecute { relayer, program },
 			Vec::new(),
 		)?,
 		SELF_CALL_ID,
 	)))
 }
 
-/// Add owners who can execute entrypoints other than `_SelfExecute`
+/// Add owners who can execute entrypoints other than `SelfExecute`
 fn add_owners(deps: DepsMut, owners: Vec<Addr>) -> Result<Response, ContractError> {
 	let mut event =
 		Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "owners.added");
@@ -194,7 +194,7 @@ pub fn interpret_program(
 					IP_REGISTER.save(deps.storage, &ip)?;
 					return Ok(response.add_message(wasm_execute(
 						env.contract.address,
-						&ExecuteMsg::_SelfExecute {
+						&ExecuteMsg::SelfExecute {
 							relayer: relayer.clone(),
 							program: program.encode(),
 						},
@@ -639,7 +639,7 @@ mod tests {
 			SubMsg::reply_on_error(
 				wasm_execute(
 					MOCK_CONTRACT_ADDR,
-					&ExecuteMsg::_SelfExecute { relayer: Addr::unchecked("2"), program },
+					&ExecuteMsg::SelfExecute { relayer: Addr::unchecked("2"), program },
 					Vec::new()
 				)
 				.unwrap(),
@@ -757,7 +757,7 @@ mod tests {
 			deps.as_mut(),
 			mock_env(),
 			info.clone(),
-			ExecuteMsg::_SelfExecute { relayer: Addr::unchecked(relayer.clone()), program },
+			ExecuteMsg::SelfExecute { relayer: Addr::unchecked(relayer.clone()), program },
 		)
 		.unwrap();
 		let contract = Cw20Contract(Addr::unchecked(CW20_ADDR));
@@ -828,7 +828,7 @@ mod tests {
 
 		let program: proto::Program =
 			XCVMProgram { tag: vec![], instructions: instructions.clone().into() }.into();
-		let execute_msg = ExecuteMsg::_SelfExecute {
+		let execute_msg = ExecuteMsg::SelfExecute {
 			relayer: Addr::unchecked("2"),
 			program: encode_protobuf(Into::<proto::Program>::into(XCVMProgram {
 				tag: vec![],
@@ -840,7 +840,7 @@ mod tests {
 			deps.as_mut(),
 			mock_env(),
 			info.clone(),
-			ExecuteMsg::_SelfExecute {
+			ExecuteMsg::SelfExecute {
 				relayer: Addr::unchecked("2"),
 				program: encode_protobuf(program),
 			},
@@ -907,7 +907,7 @@ mod tests {
 			deps.as_mut(),
 			mock_env(),
 			info.clone(),
-			ExecuteMsg::_SelfExecute { relayer: Addr::unchecked("2"), program },
+			ExecuteMsg::SelfExecute { relayer: Addr::unchecked("2"), program },
 		)
 		.unwrap();
 
@@ -978,7 +978,7 @@ mod tests {
 			deps.as_mut(),
 			mock_env(),
 			info.clone(),
-			ExecuteMsg::_SelfExecute {
+			ExecuteMsg::SelfExecute {
 				relayer: Addr::unchecked(relayer.clone()),
 				program: encode_protobuf(program),
 			},

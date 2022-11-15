@@ -1,3 +1,4 @@
+use cosmwasm_std::Addr;
 use cw_xcvm_interpreter::msg::ExecuteMsg as InterpreterExecuteMsg;
 use cw_xcvm_utils::UserId;
 use schemars::JsonSchema;
@@ -22,6 +23,10 @@ pub enum ExecuteMsg {
 	/// Run an XCVM program on the XCVM interpreter instance
 	/// Creates a new one if there is no instance.
 	Run {
+		/// The bridge that is used to call the router
+		bridge: Bridge,
+    /// The relayer that is executing the transaction
+    relayer: Addr,
 		/// Origin network ID
 		network_id: NetworkId,
 		/// Origin user ID. (Caller)
@@ -31,8 +36,6 @@ pub enum ExecuteMsg {
 		/// Funds to fund the XCVM interpreter instance
 		/// The interpreter is funded prior to execution
 		funds: Funds<Displayed<u128>>,
-		/// The bridge that is used to call the router
-		bridge: Bridge,
 	},
 	/// Set a certain bridge security requirement for a specific interpreter even it hasn't
 	/// instantiated yet
@@ -41,10 +44,6 @@ pub enum ExecuteMsg {
 		user_id: UserId,
 		bridge_security: BridgeSecurity,
 	},
-	/// Register a bridge. The caller needs to be admin for this.
-	RegisterBridge { bridge: Bridge },
-	/// Unregister a bridge. The caller needs to be admin for this.
-	UnregisterBridge { bridge: Bridge },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

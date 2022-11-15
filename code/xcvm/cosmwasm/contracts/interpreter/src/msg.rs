@@ -28,7 +28,7 @@ pub enum ExecuteMsg {
 	/// Execute an XCVM program
 	Execute { relayer: Addr, program: Vec<u8> },
 	/// This is only meant to be used by the interpreter itself, otherwise it will return an error
-	_SelfExecute { relayer: Addr, program: Vec<u8> },
+	SelfExecute { relayer: Addr, program: Vec<u8> },
 	/// Add owners of this contract
 	AddOwners { owners: Vec<Addr> },
 	/// Remove owners from the contract
