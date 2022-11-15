@@ -15,9 +15,7 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg};
 use cw_utils::ensure_from_older_version;
-use cw_xcvm_asset_registry::msg::{
-	AssetReference, GetAssetContractResponse, QueryMsg as AssetRegistryQueryMsg,
-};
+use cw_xcvm_asset_registry::{contract::external_query_lookup_asset, msg::AssetReference};
 use num::Zero;
 use proto::Encodable;
 use xcvm_core::{
@@ -33,6 +31,7 @@ const CONTRACT_NAME: &str = "composable:xcvm-interpreter";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const CALL_ID: u64 = 1;
 const SELF_CALL_ID: u64 = 2;
+pub const XCVM_INTERPRETER_EVENT_PREFIX: &str = "xcvm.interpreter";
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -57,7 +56,7 @@ pub fn instantiate(
 	// Save the caller as owner, in most cases, it is the `XCVM router`
 	OWNERS.save(deps.storage, info.sender, &())?;
 
-	Ok(Response::new().add_event(Event::new("xcvm.interpreter.instantiated").add_attribute(
+	Ok(Response::new().add_event(Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute(
 		"data",
 		cw_xcvm_utils::encode_origin_data(config.network_id, &config.user_id)?.as_str(),
 	)))
@@ -122,18 +121,20 @@ fn initiate_execution(
 
 /// Add owners who can execute entrypoints other than `_SelfExecute`
 fn add_owners(deps: DepsMut, owners: Vec<Addr>) -> Result<Response, ContractError> {
-	let mut event = Event::new("xcvm.interpreter.add_owners");
+	let mut event =
+		Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "owners.added");
 	for owner in owners {
-		event = event.add_attribute(format!("{}", owner), "");
+		event = event.add_attribute("owner", format!("{}", owner));
 		OWNERS.save(deps.storage, owner, &())?;
 	}
 	Ok(Response::default().add_event(event))
 }
 
 fn remove_owners(deps: DepsMut, owners: Vec<Addr>) -> Response {
-	let mut event = Event::new("xcvm.interpreter.remove_owners");
+	let mut event =
+		Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "owners.removed");
 	for owner in owners {
-		event = event.add_attribute(format!("{}", owner), "");
+		event = event.add_attribute("owner", format!("{}", owner));
 		OWNERS.remove(deps.storage, owner);
 	}
 	Response::default().add_event(event)
@@ -197,10 +198,14 @@ pub fn interpret_program(
 
 	IP_REGISTER.save(deps.storage, &ip)?;
 
-	Ok(response.add_event(Event::new("xcvm.interpreter.executed").add_attribute(
-		"program",
-		core::str::from_utf8(&program.tag).map_err(|_| ContractError::InvalidProgramTag)?,
-	)))
+	Ok(response.add_event(
+		Event::new(XCVM_INTERPRETER_EVENT_PREFIX)
+			.add_attribute("action", "executed")
+			.add_attribute(
+				"program",
+				core::str::from_utf8(&program.tag).map_err(|_| ContractError::InvalidProgramTag)?,
+			),
+	))
 }
 
 /// Interpret the `Call` instruction
@@ -271,19 +276,15 @@ pub fn interpret_call(
 						.map_err(|_| ContractError::DataSerializationError)?,
 				),
 				BindingValue::Asset(asset_id) => {
-					let query_msg = AssetRegistryQueryMsg::GetAssetContract(asset_id.into());
-
-					let response: GetAssetContractResponse = deps.querier.query(
-						&WasmQuery::Smart {
-							contract_addr: registry_address.clone().into_string(),
-							msg: to_binary(&query_msg)?,
-						}
-						.into(),
+					let reference = external_query_lookup_asset(
+						deps.querier,
+						registry_address.clone().into(),
+						asset_id,
 					)?;
-
-					match response.asset_reference {
-						AssetReference::Virtual(addr) => Cow::Owned(addr.into_string().into()),
-						AssetReference::Native(_) => return Err(ContractError::InvalidBindings),
+					match reference {
+						AssetReference::Virtual { cw20_address } =>
+							Cow::Owned(cw20_address.into_string().into()),
+						AssetReference::Native { denom } => Cow::Owned(denom.into()),
 					}
 				},
 			};
@@ -309,7 +310,9 @@ pub fn interpret_call(
 
 	let cosmos_msg: CosmosMsg =
 		flat_cosmos_msg.try_into().map_err(|_| ContractError::DataSerializationError)?;
-	Ok(response.add_submessage(SubMsg::reply_on_success(cosmos_msg, CALL_ID)))
+	Ok(response
+		.add_event(Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("instruction", "call"))
+		.add_submessage(SubMsg::reply_on_success(cosmos_msg, CALL_ID)))
 }
 
 pub fn interpret_spawn(
@@ -326,7 +329,6 @@ pub fn interpret_spawn(
 		CONFIG.load(deps.storage)?;
 
 	let registry_address = registry_address.into_string();
-	let router_address = router_address.into_string();
 	let mut normalized_funds: Funds<Displayed<u128>> = Funds::empty();
 
 	for (asset_id, amount) in assets.0 {
@@ -335,27 +337,19 @@ pub fn interpret_spawn(
 			continue
 		}
 
-		let query_msg = AssetRegistryQueryMsg::GetAssetContract(asset_id.clone().into());
-
-		let query_response: GetAssetContractResponse = deps.querier.query(
-			&WasmQuery::Smart {
-				contract_addr: registry_address.clone(),
-				msg: to_binary(&query_msg)?,
-			}
-			.into(),
-		)?;
-
+		let reference =
+			external_query_lookup_asset(deps.querier, registry_address.clone(), asset_id)?;
 		let amount = {
-			let transfer_amount = match &query_response.asset_reference {
-				AssetReference::Native(denom) => {
+			let transfer_amount = match &reference {
+				AssetReference::Native { denom } => {
 					let coin =
 						deps.querier.query_balance(env.contract.address.clone(), denom.clone())?;
 					coin.amount
 				},
-				AssetReference::Virtual(address) => {
+				AssetReference::Virtual { cw20_address } => {
 					let rsp = deps.querier.query::<BalanceResponse>(&QueryRequest::Wasm(
 						WasmQuery::Smart {
-							contract_addr: address.clone().into_string(),
+							contract_addr: cw20_address.clone().into_string(),
 							msg: to_binary(&Cw20QueryMsg::Balance {
 								address: env.contract.address.clone().into_string(),
 							})?,
@@ -374,14 +368,14 @@ pub fn interpret_spawn(
 			let asset_id: u128 = asset_id.into();
 			let transfer_amount = amount.intercept.0;
 			normalized_funds.0.push((asset_id.into(), transfer_amount.into()));
-			response = match query_response.asset_reference {
-				AssetReference::Native(denom) => response.add_message(BankMsg::Send {
-					to_address: router_address.clone(),
+			response = match reference {
+				AssetReference::Native { denom } => response.add_message(BankMsg::Send {
+					to_address: router_address.clone().into(),
 					amount: vec![Coin { denom, amount: transfer_amount.into() }],
 				}),
-				AssetReference::Virtual(address) => response.add_message(
-					Cw20Contract(address.clone()).call(Cw20ExecuteMsg::Transfer {
-						recipient: router_address.clone(),
+				AssetReference::Virtual { cw20_address } => response.add_message(
+					Cw20Contract(cw20_address).call(Cw20ExecuteMsg::Transfer {
+						recipient: router_address.clone().into(),
 						amount: transfer_amount.into(),
 					})?,
 				),
@@ -393,7 +387,8 @@ pub fn interpret_spawn(
 		SpawnEvent { network, bridge_security, salt, assets: normalized_funds, program }.encode();
 
 	Ok(response.add_event(
-		Event::new("xcvm.interpreter.spawn")
+		Event::new(XCVM_INTERPRETER_EVENT_PREFIX)
+			.add_attribute("instruction", "spawn")
 			.add_attribute(
 				"origin_network_id",
 				serde_json_wasm::to_string(&network_id.0)
@@ -428,14 +423,9 @@ pub fn interpret_transfer(
 			continue
 		}
 
-		let query_msg = AssetRegistryQueryMsg::GetAssetContract(asset_id.into());
-		let query_response: GetAssetContractResponse = deps.querier.query(
-			&WasmQuery::Smart { contract_addr: registry_addr.clone(), msg: to_binary(&query_msg)? }
-				.into(),
-		)?;
-
-		response = match query_response.asset_reference {
-			AssetReference::Native(denom) => {
+		let reference = external_query_lookup_asset(deps.querier, registry_addr.clone(), asset_id)?;
+		response = match reference {
+			AssetReference::Native { denom } => {
 				let mut coin = deps.querier.query_balance(env.contract.address.clone(), denom)?;
 				coin.amount = amount.apply(coin.amount.into()).into();
 				response.add_message(BankMsg::Send {
@@ -443,11 +433,11 @@ pub fn interpret_transfer(
 					amount: vec![coin],
 				})
 			},
-			AssetReference::Virtual(address) => {
-				let contract = Cw20Contract(address.clone());
+			AssetReference::Virtual { cw20_address } => {
+				let contract = Cw20Contract(cw20_address.clone());
 				let rsp = deps.querier.query::<BalanceResponse>(&QueryRequest::Wasm(
 					WasmQuery::Smart {
-						contract_addr: address.clone().into_string(),
+						contract_addr: cw20_address.into(),
 						msg: to_binary(&Cw20QueryMsg::Balance {
 							address: env.contract.address.clone().into_string(),
 						})?,
@@ -462,7 +452,8 @@ pub fn interpret_transfer(
 		};
 	}
 
-	Ok(response)
+	Ok(response
+		.add_event(Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("instruction", "transfer")))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -494,7 +485,7 @@ fn handle_self_call_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 		Ok(_) => Err(StdError::generic_err("Returned OK from a reply that is called with `reply_on_error`. This should never happen")),
 		Err(e) => {
 			// Save the result that is returned from the sub-interpreter
-			// this way, only the `RESULT_REGISTER` is persisted. All 
+			// this way, only the `RESULT_REGISTER` is persisted. All
 			// other state changes are reverted.
 			RESULT_REGISTER.save(deps.storage, &Err(e))?;
 			// Ip register should be incremented by one
@@ -516,7 +507,7 @@ mod tests {
 	use super::*;
 	use cosmwasm_std::{
 		testing::{mock_dependencies, mock_env, mock_info, MockQuerier, MOCK_CONTRACT_ADDR},
-		Addr, CanonicalAddr, ContractResult, Order, QuerierResult, SystemResult, WasmMsg,
+		Addr, ContractResult, Order, QuerierResult, SystemResult, WasmMsg,
 	};
 	use serde::{Deserialize, Serialize};
 	use xcvm_core::{
@@ -560,8 +551,10 @@ mod tests {
 				)),
 			WasmQuery::Smart { contract_addr, .. } if contract_addr.as_str() == REGISTRY_ADDR =>
 				SystemResult::Ok(ContractResult::Ok(
-					to_binary(&cw_xcvm_asset_registry::msg::GetAssetContractResponse {
-						asset_reference: AssetReference::Virtual(Addr::unchecked(CW20_ADDR)),
+					to_binary(&cw_xcvm_asset_registry::msg::LookupResponse {
+						reference: AssetReference::Virtual {
+							cw20_address: Addr::unchecked(CW20_ADDR),
+						},
 					})
 					.unwrap(),
 				))
@@ -877,7 +870,8 @@ mod tests {
 
 		assert_eq!(
 			res.events[0],
-			Event::new("xcvm.interpreter.spawn")
+			Event::new(XCVM_INTERPRETER_EVENT_PREFIX)
+				.add_attribute("instruction", "spawn")
 				.add_attribute("origin_network_id", "1")
 				.add_attribute("origin_user_id", "[]")
 				.add_attribute("program", Binary(encode_protobuf(proto_spawn)).to_base64())

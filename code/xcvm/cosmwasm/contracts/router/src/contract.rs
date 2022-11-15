@@ -9,14 +9,12 @@ use crate::{
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
 	to_binary, wasm_execute, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, Env, Event,
-	MessageInfo, Reply, Response, StdError, StdResult, SubMsg, WasmMsg, WasmQuery,
+	MessageInfo, Reply, Response, StdError, StdResult, SubMsg, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw20::{Cw20Contract, Cw20ExecuteMsg};
 use cw_utils::ensure_from_older_version;
-use cw_xcvm_asset_registry::msg::{
-	AssetReference, GetAssetContractResponse, QueryMsg as AssetRegistryQueryMsg,
-};
+use cw_xcvm_asset_registry::{contract::external_query_lookup_asset, msg::AssetReference};
 use cw_xcvm_interpreter::msg::{
 	ExecuteMsg as InterpreterExecuteMsg, InstantiateMsg as InterpreterInstantiateMsg,
 };
@@ -26,7 +24,7 @@ use xcvm_core::{Bridge, BridgeSecurity, Displayed, Funds, NetworkId};
 const CONTRACT_NAME: &str = "composable:xcvm-router";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const INSTANTIATE_REPLY_ID: u64 = 1;
-const EVENT_PREFIX: &str = "xcvm.router";
+pub const XCVM_ROUTER_EVENT_PREFIX: &str = "xcvm.router";
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -72,7 +70,7 @@ pub fn execute(
 			ensure_admin(deps.as_ref(), &info.sender)?;
 			register_bridge(deps, bridge)?;
 			Ok(Response::default().add_event(
-				Event::new(EVENT_PREFIX)
+				Event::new(XCVM_ROUTER_EVENT_PREFIX)
 					.add_attribute("bridge_registered", format!("{:?}", bridge)),
 			))
 		},
@@ -80,7 +78,7 @@ pub fn execute(
 			ensure_admin(deps.as_ref(), &info.sender)?;
 			unregister_bridge(deps, bridge);
 			Ok(Response::default().add_event(
-				Event::new(EVENT_PREFIX)
+				Event::new(XCVM_ROUTER_EVENT_PREFIX)
 					.add_attribute("bridge_unregistered", format!("{:?}", bridge)),
 			))
 		},
@@ -201,22 +199,16 @@ fn send_funds_to_interpreter(
 		if amount.0 == 0 {
 			continue
 		}
-		let query_msg = AssetRegistryQueryMsg::GetAssetContract(asset_id.into());
-		let query_response: GetAssetContractResponse = deps.querier.query(
-			&WasmQuery::Smart {
-				contract_addr: registry_address.clone(),
-				msg: to_binary(&query_msg)?,
-			}
-			.into(),
-		)?;
 
-		response = match query_response.asset_reference {
-			AssetReference::Native(denom) => response.add_message(BankMsg::Send {
+		let reference =
+			external_query_lookup_asset(deps.querier, registry_address.clone(), asset_id)?;
+		response = match reference {
+			AssetReference::Native { denom } => response.add_message(BankMsg::Send {
 				to_address: interpreter_address.clone(),
 				amount: vec![Coin::new(amount.0, denom)],
 			}),
-			AssetReference::Virtual(address) => {
-				let contract = Cw20Contract(address.clone());
+			AssetReference::Virtual { cw20_address } => {
+				let contract = Cw20Contract(cw20_address);
 				response.add_message(contract.call(Cw20ExecuteMsg::Transfer {
 					recipient: interpreter_address.clone(),
 					amount: amount.0.into(),
@@ -324,7 +316,7 @@ mod tests {
 	use alloc::collections::VecDeque;
 	use cosmwasm_std::{
 		testing::{mock_dependencies, mock_env, mock_info, MockQuerier, MOCK_CONTRACT_ADDR},
-		wasm_execute, Addr, CanonicalAddr, ContractResult, QuerierResult, SystemResult,
+		wasm_execute, Addr, CanonicalAddr, ContractResult, QuerierResult, SystemResult, WasmQuery,
 	};
 	use prost::Message;
 	use xcvm_core::{Amount, AssetId, BridgeProtocol, Destination, Picasso, ETH, PICA};
@@ -370,8 +362,10 @@ mod tests {
 				)),
 			WasmQuery::Smart { contract_addr, .. } if contract_addr.as_str() == REGISTRY_ADDR =>
 				SystemResult::Ok(ContractResult::Ok(
-					to_binary(&cw_xcvm_asset_registry::msg::GetAssetContractResponse {
-						asset_reference: AssetReference::Virtual(Addr::unchecked(CW20_ADDR)),
+					to_binary(&cw_xcvm_asset_registry::msg::LookupResponse {
+						reference: AssetReference::Virtual {
+							cw20_address: Addr::unchecked(CW20_ADDR),
+						},
 					})
 					.unwrap(),
 				))
