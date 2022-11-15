@@ -275,7 +275,7 @@ describe("Interpreter", function () {
     );
   });
 
-  it("test generating absolut", async function () {
+  it("test generating absolute", async function () {
     let xcvm = new XCVM();
     let interpreter = await ethers.getContractAt("Interpreter", interpreterAddress);
     expect(ethers.utils.hexlify(xcvm.encodeMessage(xcvm.createAbsolute("100")))).to.be.equal(
@@ -543,7 +543,7 @@ describe("Interpreter", function () {
     );
   });
 
-  it("test generating swapn", async function () {
+  it("test generating spawn", async function () {
     let xcvm = new XCVM();
     let interpreter = await ethers.getContractAt("Interpreter", interpreterAddress);
     expect(
