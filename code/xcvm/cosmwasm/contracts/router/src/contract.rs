@@ -34,20 +34,20 @@ pub fn instantiate(
 	msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
 	set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+	let gateway_address = deps.api.addr_validate(&msg.gateway_address)?;
 	let registry_address = deps.api.addr_validate(&msg.registry_address)?;
-	// Admin, when called by the relayer will be the relayer. And relayers,
-	// will be using only the routers that are called by themselves.
 	ADMIN.save(deps.storage, &info.sender)?;
 	CONFIG.save(
 		deps.storage,
 		&Config {
+			gateway_address,
 			registry_address,
-			relayer_address: info.sender,
 			interpreter_code_id: msg.interpreter_code_id,
 			network_id: msg.network_id,
 		},
 	)?;
-	Ok(Response::default())
+	Ok(Response::default()
+		.add_event(Event::new(XCVM_ROUTER_EVENT_PREFIX).add_attribute("action", "instantiated")))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -141,8 +141,8 @@ fn handle_run(
 		},
 		_ => {
 			let Config {
+        gateway_address,
 				registry_address,
-				relayer_address,
 				interpreter_code_id,
 				network_id: router_network_id,
 			} = CONFIG.load(deps.storage)?;
@@ -158,8 +158,8 @@ fn handle_run(
 				admin: Some(env.contract.address.clone().into_string()),
 				code_id: interpreter_code_id,
 				msg: to_binary(&InterpreterInstantiateMsg {
-					registry_address: registry_address.into_string(),
-					relayer_address: relayer_address.into_string(),
+          gateway_address: gateway_address.into(),
+					registry_address: registry_address.into(),
 					router_address: env.contract.address.clone().into_string(),
 					network_id,
 					user_id: user_id.clone(),
@@ -326,18 +326,19 @@ mod tests {
 
 	const CW20_ADDR: &str = "cw20addr";
 	const REGISTRY_ADDR: &str = "registry_addr";
-	const RELAYER_ADDR: &str = "relayer_addr";
+	const GATEWAY_ADDR: &str = "gateway_addr";
 
 	#[test]
 	fn proper_instantiation() {
 		let mut deps = mock_dependencies();
 
 		let msg = InstantiateMsg {
-			registry_address: REGISTRY_ADDR.to_string(),
+      gateway_address: GATEWAY_ADDR.into(),
+			registry_address: REGISTRY_ADDR.into(),
 			interpreter_code_id: 1,
 			network_id: Picasso.into(),
 		};
-		let info = mock_info(RELAYER_ADDR, &vec![]);
+		let info = mock_info(GATEWAY_ADDR, &vec![]);
 
 		let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 		assert_eq!(0, res.messages.len());
@@ -346,8 +347,8 @@ mod tests {
 		assert_eq!(
 			CONFIG.load(&deps.storage).unwrap(),
 			Config {
+				gateway_address: Addr::unchecked(GATEWAY_ADDR),
 				registry_address: Addr::unchecked(REGISTRY_ADDR),
-				relayer_address: Addr::unchecked(RELAYER_ADDR),
 				interpreter_code_id: 1,
 				network_id: Picasso.into()
 			}

@@ -43,12 +43,12 @@ pub fn instantiate(
 	set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
 	let registry_address = deps.api.addr_validate(&msg.registry_address)?;
-	let relayer_address = deps.api.addr_validate(&msg.relayer_address)?;
+	let gateway_address = deps.api.addr_validate(&msg.gateway_address)?;
 	let router_address = deps.api.addr_validate(&msg.router_address)?;
 	let config = Config {
 		registry_address,
 		router_address,
-		relayer_address,
+		gateway_address,
 		network_id: msg.network_id,
 		user_id: msg.user_id,
 	};
@@ -72,15 +72,15 @@ pub fn execute(
 	// Only owners can execute entrypoints of the interpreter
 	assert_owner(deps.as_ref(), &env.contract.address, &info.sender)?;
 	match msg {
-		ExecuteMsg::Execute { program } => initiate_execution(deps, env, program),
-		ExecuteMsg::_SelfExecute { program } =>
+		ExecuteMsg::Execute { relayer, program } => initiate_execution(deps, env, relayer, program),
+		ExecuteMsg::_SelfExecute { relayer, program } =>
 		// _SelfExecute should be called by interpreter itself
 			if env.contract.address != info.sender {
 				Err(ContractError::NotAuthorized)
 			} else {
 				let program =
 					proto::decode(&program[..]).map_err(|_| ContractError::InvalidProgram)?;
-				interpret_program(deps, env, info, program)
+				interpret_program(deps, env, info, relayer, program)
 			},
 		ExecuteMsg::AddOwners { owners } => add_owners(deps, owners),
 		ExecuteMsg::RemoveOwners { owners } => Ok(remove_owners(deps, owners)),
@@ -110,11 +110,16 @@ fn assert_owner(deps: Deps, self_addr: &Addr, owner: &Addr) -> Result<(), Contra
 fn initiate_execution(
 	deps: DepsMut,
 	env: Env,
+	relayer: Addr,
 	program: Vec<u8>,
 ) -> Result<Response, ContractError> {
 	IP_REGISTER.save(deps.storage, &0)?;
 	Ok(Response::default().add_submessage(SubMsg::reply_on_error(
-		wasm_execute(env.contract.address, &ExecuteMsg::_SelfExecute { program }, Vec::new())?,
+		wasm_execute(
+			env.contract.address,
+			&ExecuteMsg::_SelfExecute { relayer, program },
+			Vec::new(),
+		)?,
 		SELF_CALL_ID,
 	)))
 }
@@ -145,6 +150,7 @@ pub fn interpret_program(
 	mut deps: DepsMut,
 	env: Env,
 	_info: MessageInfo,
+	relayer: Addr,
 	program: XCVMProgram,
 ) -> Result<Response, ContractError> {
 	let mut response = Response::new();
@@ -156,7 +162,15 @@ pub fn interpret_program(
 			XCVMInstruction::Call { bindings, encoded } => {
 				if index >= instruction_len - 1 {
 					// If the call is the final instruction, do not yield execution
-					interpret_call(deps.as_ref(), &env, bindings, encoded, ip as usize, response)?
+					interpret_call(
+						deps.as_ref(),
+						&env,
+						bindings,
+						encoded,
+						ip as usize,
+						relayer.clone(),
+						response,
+					)?
 				} else {
 					// If the call is not the final instruction:
 					// 1. interpret the call: this will add the call to the response's
@@ -165,15 +179,25 @@ pub fn interpret_program(
 					//    rest of the instructions as XCVM program. This will make sure that
 					//    previous call instruction will run first, then the rest of the program
 					//    will run.
-					let response =
-						interpret_call(deps.as_ref(), &env, bindings, encoded, index, response)?;
+					let response = interpret_call(
+						deps.as_ref(),
+						&env,
+						bindings,
+						encoded,
+						index,
+						relayer.clone(),
+						response,
+					)?;
 					let instructions: VecDeque<XCVMInstruction> =
 						instruction_iter.map(|(_, instr)| instr).collect();
 					let program = XCVMProgram { tag: program.tag, instructions };
 					IP_REGISTER.save(deps.storage, &ip)?;
 					return Ok(response.add_message(wasm_execute(
 						env.contract.address,
-						&ExecuteMsg::_SelfExecute { program: program.encode() },
+						&ExecuteMsg::_SelfExecute {
+							relayer: relayer.clone(),
+							program: program.encode(),
+						},
 						vec![],
 					)?))
 				}
@@ -190,7 +214,7 @@ pub fn interpret_program(
 					response,
 				)?,
 			XCVMInstruction::Transfer { to, assets } =>
-				interpret_transfer(&mut deps, &env, to, assets, response)?,
+				interpret_transfer(&mut deps, &env, relayer.clone(), to, assets, response)?,
 			instr => return Err(ContractError::InstructionNotSupported(format!("{:?}", instr))),
 		};
 		ip += 1;
@@ -219,11 +243,12 @@ pub fn interpret_call(
 	bindings: Vec<(u32, BindingValue)>,
 	payload: Vec<u8>,
 	_ip: usize,
+	relayer: Addr,
 	response: Response,
 ) -> Result<Response, ContractError> {
 	// We don't know the type of the payload, so we use `serde_json::Value`
 	let flat_cosmos_msg: FlatCosmosMsg<serde_json::Value> = if !bindings.is_empty() {
-		let Config { registry_address, relayer_address, .. } = CONFIG.load(deps.storage)?;
+		let Config { registry_address, .. } = CONFIG.load(deps.storage)?;
 		// Len here is the maximum possible length
 		let mut formatted_call =
 			vec![0; env.contract.address.as_bytes().len() * bindings.len() + payload.len()];
@@ -267,8 +292,7 @@ pub fn interpret_call(
 			let data: Cow<[u8]> = match binding {
 				BindingValue::Register(Register::Ip) =>
 					Cow::Owned(format!("{}", IP_REGISTER.load(deps.storage)?).into()),
-				BindingValue::Register(Register::Relayer) =>
-					Cow::Borrowed(relayer_address.as_bytes()),
+				BindingValue::Register(Register::Relayer) => Cow::Borrowed(relayer.as_bytes()),
 				BindingValue::Register(Register::This) =>
 					Cow::Borrowed(env.contract.address.as_bytes()),
 				BindingValue::Register(Register::Result) => Cow::Owned(
@@ -406,6 +430,7 @@ pub fn interpret_spawn(
 pub fn interpret_transfer(
 	deps: &mut DepsMut,
 	env: &Env,
+	relayer: Addr,
 	to: Destination<CanonicalAddr>,
 	assets: Funds,
 	mut response: Response,
@@ -415,7 +440,7 @@ pub fn interpret_transfer(
 
 	let recipient = match to {
 		Destination::Account(account) => deps.api.addr_humanize(&account)?.into_string(),
-		Destination::Relayer => config.relayer_address.into_string(),
+		Destination::Relayer => relayer.into(),
 	};
 
 	for (asset_id, amount) in assets.0 {
@@ -452,8 +477,9 @@ pub fn interpret_transfer(
 		};
 	}
 
-	Ok(response
-		.add_event(Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("instruction", "transfer")))
+	Ok(response.add_event(
+		Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("instruction", "transfer"),
+	))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -517,7 +543,7 @@ mod tests {
 
 	const CW20_ADDR: &str = "cw20_addr";
 	const REGISTRY_ADDR: &str = "registry_addr";
-	const RELAYER_ADDR: &str = "relayer_addr";
+	const GATEWAY_ADDR: &str = "gateway_addr";
 	const ROUTER_ADDR: &str = "router_addr";
 	const BALANCE: u128 = 10_000;
 
@@ -527,8 +553,8 @@ mod tests {
 		info: MessageInfo,
 	) -> Result<Response, ContractError> {
 		let msg = InstantiateMsg {
+			gateway_address: GATEWAY_ADDR.to_string(),
 			registry_address: REGISTRY_ADDR.to_string(),
-			relayer_address: RELAYER_ADDR.to_string(),
 			router_address: ROUTER_ADDR.to_string(),
 			network_id: Picasso.into(),
 			user_id: vec![],
@@ -575,8 +601,8 @@ mod tests {
 		assert_eq!(
 			CONFIG.load(&deps.storage).unwrap(),
 			Config {
+				gateway_address: Addr::unchecked(GATEWAY_ADDR),
 				registry_address: Addr::unchecked(REGISTRY_ADDR),
-				relayer_address: Addr::unchecked(RELAYER_ADDR),
 				router_address: Addr::unchecked(ROUTER_ADDR),
 				network_id: Picasso.into(),
 				user_id: vec![]
@@ -601,7 +627,7 @@ mod tests {
 			deps.as_mut(),
 			mock_env(),
 			info,
-			ExecuteMsg::Execute { program: program.clone() },
+			ExecuteMsg::Execute { relayer: Addr::unchecked("2"), program: program.clone() },
 		)
 		.unwrap();
 
@@ -611,8 +637,12 @@ mod tests {
 		assert_eq!(
 			res.messages[0],
 			SubMsg::reply_on_error(
-				wasm_execute(MOCK_CONTRACT_ADDR, &ExecuteMsg::_SelfExecute { program }, Vec::new())
-					.unwrap(),
+				wasm_execute(
+					MOCK_CONTRACT_ADDR,
+					&ExecuteMsg::_SelfExecute { relayer: Addr::unchecked("2"), program },
+					Vec::new()
+				)
+				.unwrap(),
 				SELF_CALL_ID,
 			)
 		);
@@ -635,7 +665,7 @@ mod tests {
 			deps.as_mut(),
 			mock_env(),
 			garbage_info.clone(),
-			ExecuteMsg::Execute { program: program.clone() },
+			ExecuteMsg::Execute { relayer: Addr::unchecked("1337"), program: program.clone() },
 		)
 		.unwrap_err();
 		// The error type needs to be authorization
@@ -656,7 +686,7 @@ mod tests {
 			deps.as_mut(),
 			mock_env(),
 			garbage_info.clone(),
-			ExecuteMsg::Execute { program: program.clone() },
+			ExecuteMsg::Execute { relayer: Addr::unchecked("1337"), program: program.clone() },
 		)
 		.unwrap();
 	}
@@ -721,27 +751,32 @@ mod tests {
 		}
 		.into();
 
+    let relayer = "1337".to_string();
 		let program = encode_protobuf(program);
-		let res =
-			execute(deps.as_mut(), mock_env(), info.clone(), ExecuteMsg::_SelfExecute { program })
-				.unwrap();
+		let res = execute(
+			deps.as_mut(),
+			mock_env(),
+			info.clone(),
+			ExecuteMsg::_SelfExecute { relayer: Addr::unchecked(relayer.clone()), program },
+		)
+		.unwrap();
 		let contract = Cw20Contract(Addr::unchecked(CW20_ADDR));
 		let messages = vec![
 			contract
 				.call(Cw20ExecuteMsg::Transfer {
-					recipient: RELAYER_ADDR.into(),
+					recipient: relayer.clone(),
 					amount: 1_u128.into(),
 				})
 				.unwrap(),
 			contract
 				.call(Cw20ExecuteMsg::Transfer {
-					recipient: RELAYER_ADDR.into(),
+					recipient: relayer.clone(),
 					amount: 2_u128.into(),
 				})
 				.unwrap(),
 			contract
 				.call(Cw20ExecuteMsg::Transfer {
-					recipient: RELAYER_ADDR.into(),
+					recipient: relayer,
 					amount: (BALANCE / 2).into(),
 				})
 				.unwrap(),
@@ -794,6 +829,7 @@ mod tests {
 		let program: proto::Program =
 			XCVMProgram { tag: vec![], instructions: instructions.clone().into() }.into();
 		let execute_msg = ExecuteMsg::_SelfExecute {
+			relayer: Addr::unchecked("2"),
 			program: encode_protobuf(Into::<proto::Program>::into(XCVMProgram {
 				tag: vec![],
 				instructions: instructions[1..].to_owned().into(),
@@ -804,7 +840,10 @@ mod tests {
 			deps.as_mut(),
 			mock_env(),
 			info.clone(),
-			ExecuteMsg::_SelfExecute { program: encode_protobuf(program) },
+			ExecuteMsg::_SelfExecute {
+				relayer: Addr::unchecked("2"),
+				program: encode_protobuf(program),
+			},
 		)
 		.unwrap();
 		assert_eq!(
@@ -864,9 +903,13 @@ mod tests {
 		let program: proto::Program =
 			XCVMProgram { tag: vec![], instructions: vec![xcvm_spawn.clone()].into() }.into();
 		let program = encode_protobuf(program);
-		let res =
-			execute(deps.as_mut(), mock_env(), info.clone(), ExecuteMsg::_SelfExecute { program })
-				.unwrap();
+		let res = execute(
+			deps.as_mut(),
+			mock_env(),
+			info.clone(),
+			ExecuteMsg::_SelfExecute { relayer: Addr::unchecked("2"), program },
+		)
+		.unwrap();
 
 		assert_eq!(
 			res.events[0],
@@ -928,19 +971,23 @@ mod tests {
 			bindings: late_call.bindings.clone(),
 			encoded: late_call.encoded_call.clone(),
 		}];
+    let relayer = "1337".to_string();
 		let program: proto::Program =
 			XCVMProgram { tag: vec![], instructions: instructions.clone().into() }.into();
 		let res = execute(
 			deps.as_mut(),
 			mock_env(),
 			info.clone(),
-			ExecuteMsg::_SelfExecute { program: encode_protobuf(program) },
+			ExecuteMsg::_SelfExecute {
+				relayer: Addr::unchecked(relayer.clone()),
+				program: encode_protobuf(program),
+			},
 		)
 		.unwrap();
 		let final_test_msg = TestMsg {
 			part1: MOCK_CONTRACT_ADDR.into(),
 			part2: "hello".into(),
-			part3: RELAYER_ADDR.into(),
+			part3: relayer,
 		};
 		assert_eq!(
 			CosmosMsg::Wasm(WasmMsg::Execute {

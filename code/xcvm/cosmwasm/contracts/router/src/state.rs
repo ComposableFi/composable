@@ -7,8 +7,8 @@ use xcvm_core::{Bridge, BridgeSecurity, NetworkId};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Config {
+  pub gateway_address: Addr,
 	pub registry_address: Addr,
-	pub relayer_address: Addr,
 	pub interpreter_code_id: u64,
 	pub network_id: NetworkId,
 }
