@@ -48,7 +48,7 @@
 
       wasm = default.overrideAttrs (base: {
         buildInputs = base.buildInputs ++ [ pkgs.grub2 ]
-          ++ (with self'.packages; [ subwasm wasm-optimizer subxt ]);
+          ++ (with self'.packages; [ subwasm wasm-optimizer ]);
       });
 
       xcvm = wasm.overrideAttrs (base: {

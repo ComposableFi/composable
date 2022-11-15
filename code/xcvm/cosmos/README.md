@@ -1,3 +1,3 @@
 # Overview
 
-Some cosmos specific stuff of XCVM ecosystem.
+Cosmos blockchain nix files.
