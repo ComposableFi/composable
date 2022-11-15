@@ -83,7 +83,7 @@ const sidebars = {
           collapsed: true,
           items: [
             'products/xcvm/writing-smart-contracts-with-cosmwasm',
-            'products/xcvm/how-the-xcvm-works',
+            'products/xcvm/how-it-works',
             'products/xcvm/routing-layer',
             'products/xcvm/routing-layer-libraries'
           ],
