@@ -18,7 +18,7 @@ export const TransactionsPanel = ({
   const [lastClearedTimestamp, setLastClearedTimestamp] = useState(0);
   const filtered = useMemo(() => {
     return transactions.filter(tx => {
-      tx.timestamp > lastClearedTimestamp
+      return tx.timestamp > lastClearedTimestamp
     });
   }, [lastClearedTimestamp, transactions])
 
@@ -37,8 +37,6 @@ export const TransactionsPanel = ({
         <Grid item xs={12} marginTop={theme.spacing(2)}>
           <Box
             sx={{
-              display: "flex",
-              justifyContent: "space-between",
               height: "172px",
               px: 0,
               overflowY: "scroll",
@@ -46,12 +44,12 @@ export const TransactionsPanel = ({
           >
             {filtered.map((tx) => {
               return (
-                <>
-                  <Typography variant="caption">{tx.title}</Typography>
+                <Box sx={{display: "block"}}>
+                  <Typography variant="caption">{tx.title}</Typography>{" "}
                   <Typography variant="caption">
                     {moment.utc(tx.timestamp).format("dd/mm/yyyy")}
                   </Typography>
-                </>
+                </Box>
               );
             })}
           </Box>
