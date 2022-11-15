@@ -13,8 +13,7 @@
 <!--*Include any notes about pallet lifecycle or states. A state diagram that notes
 transition requirements if you're feeling fancy*-->
  
-Pallet fNFT is an abstraction of functionalities for Financial NFTs. 
-A user facing, mutating API is provided by other pallets. No automatic state transitions occur.
+Pallet fNFT is an abstract implementation for Financial NFTs. A user facing, mutating API is provided by other pallets.
 fNFT's have four states: Create, update, transfer + (re-)proxy and burn. 
 These states generally transition linearly, though the update state can occur independently.
 
@@ -22,6 +21,8 @@ During the create state fNFTs can be minted and collections can be created (init
 During the update state functions to inspect and edit attributes of minted assets and collections can be run.
 During the transfer +(re)proxy state transfers and proxy configurations can be conducted.
 During the burn state functions to permanently remove fNFT assets can be performed.
+
+No automatic state transitions occur.
 
 ## RPC & Data Retrieval
 
@@ -32,9 +33,7 @@ During the burn state functions to permanently remove fNFT assets can be perform
 <!--*Not required yet since we have no subsquid yet* -->
 
 ## Locally Consumed Types
-
 <!--*Types the pallet consumes, potentially linking to pallet#config docs* -->
-
 ### Types
 
 - `MaxProperties` - Numeric type representing the maximum number of assets that can be owned by an account
@@ -57,6 +56,9 @@ source"* -->
 
 <!--*Document sources of extrinsic parameters, hard coded, calculated on the front
 end, user provided*-->
+
+Due to the nature of this pallet, its functions are not defined as extrinsics, therefore the source of all 
+parameters is the higher level pallet extending a user facing, mutating API.
 
 ## Pricing Sources
 
