@@ -1,15 +1,15 @@
 use crate::{
 	error::ContractError,
 	msg::{
-		AssetReference, ExecuteMsg, InstantiateMsg, LookupResponse, MigrateMsg, QueryMsg,
-		AssetKey,
+		AssetKey, AssetReference, ExecuteMsg, InstantiateMsg, LookupResponse, MigrateMsg, QueryMsg,
 	},
 	state::ASSETS,
 };
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-	to_binary, Binary, Deps, DepsMut, Env, Event, MessageInfo, Response, StdResult, QuerierWrapper, WasmQuery,
+	to_binary, Binary, Deps, DepsMut, Env, Event, MessageInfo, QuerierWrapper, Response, StdResult,
+	WasmQuery,
 };
 use cw2::set_contract_version;
 use cw_utils::ensure_from_older_version;
@@ -26,8 +26,9 @@ pub fn instantiate(
 	_msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
 	set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-	Ok(Response::default()
-		.add_event(Event::new(XCVM_ASSET_REGISTRY_EVENT_PREFIX).add_attribute("action", "instantiated")))
+	Ok(Response::default().add_event(
+		Event::new(XCVM_ASSET_REGISTRY_EVENT_PREFIX).add_attribute("action", "instantiated"),
+	))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -89,7 +90,7 @@ pub fn query_lookup(deps: Deps, asset_id: AssetKey) -> StdResult<LookupResponse>
 }
 
 pub fn external_query_lookup_asset(
-  querier: QuerierWrapper,
+	querier: QuerierWrapper,
 	registry_addr: String,
 	asset_id: impl Into<AssetKey>,
 ) -> StdResult<AssetReference> {
@@ -103,7 +104,6 @@ pub fn external_query_lookup_asset(
 		)
 		.map(|response| response.reference)
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -233,11 +233,7 @@ mod tests {
 		assert_eq!(res, LookupResponse { reference: addr1 });
 
 		// This should fail since there the asset doesn't exist
-		assert!(query(
-			deps.as_ref(),
-			mock_env(),
-			QueryMsg::Lookup { asset_id: AssetKey::from(2) }
-		)
-		.is_err());
+		assert!(query(deps.as_ref(), mock_env(), QueryMsg::Lookup { asset_id: AssetKey::from(2) })
+			.is_err());
 	}
 }

@@ -15,15 +15,15 @@ impl From<u128> for AssetKey {
 }
 
 impl From<AssetId> for AssetKey {
-    fn from(x: AssetId) -> Self {
-      Self(x)
-    }
+	fn from(x: AssetId) -> Self {
+		Self(x)
+	}
 }
 
 impl From<AssetKey> for AssetId {
-    fn from(AssetKey(x): AssetKey) -> Self {
-      x
-    }
+	fn from(AssetKey(x): AssetKey) -> Self {
+		x
+	}
 }
 
 impl<'a> PrimaryKey<'a> for AssetKey {
@@ -32,7 +32,7 @@ impl<'a> PrimaryKey<'a> for AssetKey {
 	type Suffix = u128;
 	type SuperSuffix = u128;
 	fn key(&self) -> Vec<Key> {
-		vec![Key::Val128(self.0.0.0.to_cw_bytes())]
+		vec![Key::Val128(self.0 .0 .0.to_cw_bytes())]
 	}
 }
 

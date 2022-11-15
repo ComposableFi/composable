@@ -5,7 +5,7 @@ extern crate alloc;
 use alloc::{collections::VecDeque, vec::Vec};
 use fixed::{types::extra::U16, FixedU128};
 use prost::{DecodeError, Message};
-use xcvm_core::{Amount, Destination, NetworkId, SpawnEvent, MAX_PARTS, Displayed};
+use xcvm_core::{Amount, Destination, Displayed, NetworkId, SpawnEvent, MAX_PARTS};
 
 include!(concat!(env!("OUT_DIR"), "/interpreter.rs"));
 
@@ -383,7 +383,7 @@ impl From<Amount> for Balance {
 
 impl From<xcvm_core::AssetId> for AssetId {
 	fn from(asset_id: xcvm_core::AssetId) -> Self {
-		AssetId { asset_id: Some(asset_id.0.0.into()) }
+		AssetId { asset_id: Some(asset_id.0 .0.into()) }
 	}
 }
 

@@ -86,8 +86,8 @@ pub enum CallOrigin {
 }
 
 impl CallOrigin {
-  /// Extract the user from a [`CallOrigin`].
-  /// No distinction is done for local or remote user in this case.
+	/// Extract the user from a [`CallOrigin`].
+	/// No distinction is done for local or remote user in this case.
 	pub fn user(&self) -> &UserOrigin {
 		match self {
 			CallOrigin::Remote { user_origin, .. } => user_origin,
@@ -95,8 +95,8 @@ impl CallOrigin {
 		}
 	}
 
-  /// Ensure that the call origin meet the security requirement.
-  /// If the call is originating from the local chain, it is considered trusted.
+	/// Ensure that the call origin meet the security requirement.
+	/// If the call is originating from the local chain, it is considered trusted.
 	pub fn ensure_security(&self, security: BridgeSecurity) -> Result<(), ()> {
 		match self {
 			CallOrigin::Remote { protocol, .. } => protocol.ensure_security(security),

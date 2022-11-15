@@ -32,9 +32,9 @@ pub enum ExecuteMsg {
 	/// Set a certain bridge security requirement for a specific interpreter even it hasn't
 	/// instantiated yet
 	SetInterpreterSecurity {
-    /// The user origin we initiate this call for.
-    user_origin: UserOrigin,
-    /// The new bridge security the user is willing to take risk for.
+		/// The user origin we initiate this call for.
+		user_origin: UserOrigin,
+		/// The new bridge security the user is willing to take risk for.
 		bridge_security: BridgeSecurity,
 	},
 }
