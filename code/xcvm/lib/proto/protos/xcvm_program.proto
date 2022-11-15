@@ -123,10 +123,10 @@ message Network {
 }
 
 enum BridgeSecurity {
-  none = 0;
-  deterministic = 1;
+  insecure = 0;
+  optimistic = 1;
   probabilistic = 2;
-  optimistic = 3;
+  deterministic = 3;
 }
 
 message Spawn {
