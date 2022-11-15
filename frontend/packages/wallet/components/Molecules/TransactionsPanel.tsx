@@ -47,7 +47,7 @@ export const TransactionsPanel = ({
                 <Box sx={{display: "block"}}>
                   <Typography variant="caption">{tx.title}</Typography>{" "}
                   <Typography variant="caption">
-                    {moment.utc(tx.timestamp).format("dd/mm/yyyy")}
+                    {moment.utc(tx.timestamp).format("DD/MM/yyyy")}
                   </Typography>
                 </Box>
               );
