@@ -71,6 +71,8 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
 	Ok(Response::default())
 }
 
+/// Ensure that the `sender` is the router gateway contract.
+/// This is used for privileged operations such as [`ExecuteMsg::ExecuteProgram`].
 fn ensure_gateway(deps: &DepsMut, sender: &Addr) -> Result<(), ContractError> {
 	let config = CONFIG.load(deps.storage)?;
 	if &config.gateway_address == sender {
@@ -80,6 +82,9 @@ fn ensure_gateway(deps: &DepsMut, sender: &Addr) -> Result<(), ContractError> {
 	}
 }
 
+/// Ensure that the `sender` is the interpreter for the provided `user_origin`.
+/// This function is used whenever we want an operation to be executable by an interpreter,
+/// currently [`ExecuteMsg::SetInterpreterSecurity`].
 fn ensure_interpreter(
 	deps: &DepsMut,
 	sender: &Addr,
@@ -91,6 +96,10 @@ fn ensure_interpreter(
 	}
 }
 
+/// Handle a request to change an interpreter security level.
+/// Only the interpreter instance itself is allowed to change it's security level.
+/// A user is able to change it's interpreter security level by provided an [`XCVMProgram`] that
+/// contains a [`XCVMInstruction::Call`] to the router contract.
 fn handle_set_interpreter_security(
 	deps: DepsMut,
 	info: MessageInfo,
@@ -121,6 +130,10 @@ fn handle_set_interpreter_security(
 	))
 }
 
+/// Handle a request to execute a [`XCVMProgram`].
+/// Only the gateway is allowed to dispatch such operation.
+/// The gateway must ensure that the `CallOrigin` is valid as the router does not do further
+/// checking on it.
 fn handle_execute_program(
 	deps: DepsMut,
 	env: Env,
@@ -196,6 +209,7 @@ fn handle_execute_program(
 	}
 }
 
+/// Transfer funds attached to a [`XCVMProgram`] before dispatching the program to the interpreter.
 fn send_funds_to_interpreter(
 	deps: Deps,
 	interpreter_address: Addr,

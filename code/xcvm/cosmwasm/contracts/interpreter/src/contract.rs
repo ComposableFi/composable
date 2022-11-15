@@ -65,7 +65,7 @@ pub fn execute(
 	msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
 	// Only owners can execute entrypoints of the interpreter
-	assert_owner(deps.as_ref(), &env.contract.address, &info.sender)?;
+	ensure_owner(deps.as_ref(), &env.contract.address, &info.sender)?;
 	match msg {
 		ExecuteMsg::Execute { relayer, program } => initiate_execution(deps, env, relayer, program),
 
@@ -76,7 +76,7 @@ pub fn execute(
 			} else {
 				let program =
 					proto::decode(&program[..]).map_err(|_| ContractError::InvalidProgram)?;
-				interpret_program(deps, env, info, relayer, program)
+				handle_execute_step(deps, env, relayer, program)
 			},
 
 		ExecuteMsg::AddOwners { owners } => add_owners(deps, owners),
@@ -87,14 +87,16 @@ pub fn execute(
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
-	// Already only callable by the admin of the contract, so no need to `assert_owner`
+	// Already only callable by the admin of the contract, so no need to `ensure_owner`
 	let _ = ensure_from_older_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 	let _ = add_owners(deps, msg.owners)?;
 	Ok(Response::default())
 }
 
-/// Check if the caller is the interpreter itself, or one of the owners
-fn assert_owner(deps: Deps, self_addr: &Addr, owner: &Addr) -> Result<(), ContractError> {
+/// Ensure that the caller is either the current interpreter or listed in the owners of the
+/// interpreter.
+/// Any operation executing against the interpreter must pass this check.
+fn ensure_owner(deps: Deps, self_addr: &Addr, owner: &Addr) -> Result<(), ContractError> {
 	if owner == self_addr || OWNERS.has(deps.storage, owner.clone()) {
 		Ok(())
 	} else {
@@ -104,17 +106,21 @@ fn assert_owner(deps: Deps, self_addr: &Addr, owner: &Addr) -> Result<(), Contra
 
 /// Initiate an execution by adding a `ExecuteStep` callback. This is used to be able to prepare an
 /// execution by resetting the necessary registers as well as being able to catch any failures and
-/// store it in the `RESULT_REGISTER`
+/// store it in the `RESULT_REGISTER`.
+/// The [`RELAYER_REGISTER`] is updated to hold the current relayer address. Note that the
+/// [`RELAYER_REGISTER`] always contains a value, and the value is equal to the last relayer that
+/// executed a program if any.
 fn initiate_execution(
 	deps: DepsMut,
 	env: Env,
 	relayer: Addr,
 	program: Vec<u8>,
 ) -> Result<Response, ContractError> {
-  // Reset instruction pointer to zero.
+	// Reset instruction pointer to zero.
 	IP_REGISTER.save(deps.storage, &0)?;
 
-  // Set the new relayer, note that the relayer that is in the register is always the last relayer that executed a program.
+	// Set the new relayer, note that the relayer that is in the register is always the last relayer
+	// that executed a program.
 	RELAYER_REGISTER.save(deps.storage, &relayer)?;
 
 	Ok(Response::default().add_submessage(SubMsg::reply_on_error(
@@ -138,6 +144,8 @@ fn add_owners(deps: DepsMut, owners: Vec<Addr>) -> Result<Response, ContractErro
 	Ok(Response::default().add_event(event))
 }
 
+/// Remove a set of owners from the current owners list.
+/// Beware that emptying the set of owners result in a tombstoned interpreter.
 fn remove_owners(deps: DepsMut, owners: Vec<Addr>) -> Response {
 	let mut event =
 		Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "owners.removed");
@@ -148,11 +156,16 @@ fn remove_owners(deps: DepsMut, owners: Vec<Addr>) -> Response {
 	Response::default().add_event(event)
 }
 
-/// Interpret an XCVM program
-pub fn interpret_program(
+/// Execute a [`XCVMProgram`].
+/// The function will execute the program instructions one by one.
+/// If the program contains a [`XCVMInstruction::Call`], the execution is suspended and resumed
+/// after having executed the call.
+/// The [`IP_REGISTER`] is updated accordingly.
+/// A final `executed` event is yield whenever a program come to completion (all it's instructions
+/// has been executed).
+pub fn handle_execute_step(
 	mut deps: DepsMut,
 	env: Env,
-	_info: MessageInfo,
 	relayer: Addr,
 	program: XCVMProgram,
 ) -> Result<Response, ContractError> {
