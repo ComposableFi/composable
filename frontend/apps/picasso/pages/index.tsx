@@ -114,67 +114,6 @@ const Overview: NextPage = () => {
             </TabPanel>
           </Grid>
         )}
-        <Grid item {...standardPageSize}>
-          <Typography variant="h6" align="center">
-            Picasso projects
-          </Typography>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              mt: theme.spacing(4),
-              gap: theme.spacing(5),
-            }}
-          >
-            <Box>
-              <Link
-                href="https://angular.finance/"
-                target="_blank"
-                rel="noopener"
-              >
-                <Image
-                  src="/logo/logo-angular.svg"
-                  width="125"
-                  height="48"
-                  alt="Angular logo"
-                />
-              </Link>
-            </Box>
-            <Box>
-              <Link
-                href="https://pablo.exchange"
-                target="_blank"
-                rel="noopener"
-              >
-                <Image
-                  src="/logo/logo-pablo.svg"
-                  width="172"
-                  height="45"
-                  alt="Pablo logo"
-                  css={{
-                    mixBlendMode: "luminosity",
-                  }}
-                />
-              </Link>
-            </Box>
-          </Box>
-        </Grid>
-        <Grid item {...standardPageSize}>
-          <FeaturedBox
-            title="Join the pallet revolution, powered by Picasso"
-            textBelow="To help support pallet development, we have launched the Composable Grant Program."
-            horizontalAligned
-            sx={{
-              padding: theme.spacing(6),
-            }}
-            ButtonProps={{
-              label: "Apply here",
-              onClick: () => {},
-              variant: "outlined",
-            }}
-          />
-        </Grid>
       </Grid>
     </Default>
   );

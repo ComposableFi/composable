@@ -4,12 +4,15 @@ extern crate alloc;
 
 mod abstraction;
 mod asset;
+mod bridge;
+#[cfg(feature = "cosmwasm")]
+pub mod cosmwasm;
 mod instruction;
 mod network;
 mod program;
 mod protocol;
 
-pub use crate::{asset::*, instruction::*, network::*, program::*, protocol::*};
+pub use crate::{asset::*, bridge::*, instruction::*, network::*, program::*, protocol::*};
 use alloc::{collections::VecDeque, vec::Vec};
 use core::marker::PhantomData;
 
@@ -32,7 +35,7 @@ where
 	}
 
 	#[inline]
-	pub fn transfer(mut self, to: Account, assets: Assets) -> Self {
+	pub fn transfer(mut self, to: Destination<Account>, assets: Assets) -> Self {
 		self.instructions.push_back(Instruction::Transfer { to, assets });
 		self
 	}
@@ -42,6 +45,7 @@ where
 		self,
 		tag: Vec<u8>,
 		salt: Vec<u8>,
+		bridge_security: BridgeSecurity,
 		assets: Assets,
 		f: F,
 	) -> Result<ProgramBuilder<FinalNetwork, Account, Assets>, E>
@@ -58,6 +62,7 @@ where
 		let mut builder =
 			ProgramBuilder { tag: self.tag, instructions: self.instructions, _marker: PhantomData };
 		builder.instructions.push_back(Instruction::Spawn {
+			bridge_security,
 			salt,
 			assets,
 			network: SpawningNetwork::ID,
@@ -68,7 +73,8 @@ where
 
 	#[inline]
 	pub fn call_raw(mut self, encoded: CurrentNetwork::EncodedCall) -> Self {
-		self.instructions.push_back(Instruction::Call { encoded: encoded.into() });
+		self.instructions
+			.push_back(Instruction::Call { bindings: Vec::new(), encoded: encoded.into() });
 		self
 	}
 
@@ -89,7 +95,7 @@ where
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use alloc::{collections::BTreeMap, vec};
+	use alloc::vec;
 
 	struct DummyProtocol1;
 	#[derive(Debug)]
@@ -147,12 +153,13 @@ mod tests {
 				.spawn::<Ethereum, _, ProgramBuildError, _>(
 					Default::default(),
 					Default::default(),
+					BridgeSecurity::Deterministic,
 					Funds::empty(),
 					|child| {
 						Ok(child
 							.call(DummyProtocol2)?
 							.call(DummyProtocol1)?
-							.transfer((), Funds::from([(PICA::ID, u128::MAX)])))
+							.transfer(Destination::Relayer, Funds::from([(PICA::ID, u128::MAX)])))
 					},
 				)?
 				.build())
@@ -165,22 +172,29 @@ mod tests {
 				tag: "Main program".as_bytes().to_vec(),
 				instructions: VecDeque::from([
 					// Protocol 1 on picasso
-					Instruction::Call { encoded: vec![202, 254, 190, 239] },
+					Instruction::Call { bindings: vec![], encoded: vec![202, 254, 190, 239] },
 					// Move to ethereum
 					Instruction::Spawn {
 						network: Ethereum::ID,
+						bridge_security: BridgeSecurity::Deterministic,
 						salt: Vec::new(),
 						assets: Funds::empty(),
 						program: Program {
 							tag: Default::default(),
 							instructions: VecDeque::from([
 								// Protocol 2 on eth
-								Instruction::Call { encoded: vec![222, 173, 192, 222] },
+								Instruction::Call {
+									bindings: vec![],
+									encoded: vec![222, 173, 192, 222]
+								},
 								// Protocol 1 on eth, different encoding than on previous network
-								Instruction::Call { encoded: vec![192, 222, 192, 222] },
+								Instruction::Call {
+									bindings: vec![],
+									encoded: vec![192, 222, 192, 222]
+								},
 								Instruction::Transfer {
-									to: (),
-									assets: Funds::from(BTreeMap::from([(PICA::ID, u128::MAX)]))
+									to: Destination::Relayer,
+									assets: Funds::from(vec![(PICA::ID, u128::MAX)])
 								}
 							])
 						}

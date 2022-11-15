@@ -103,7 +103,8 @@
           name = "qa-state-initialize";
           runtimeInputs = [ pkgs.nodejs ];
           text = ''
-            PARACHAIN_ENDPOINT=${composableUrl} ${pkgs.nodejs}/bin/npm run --prefix ${composablejs} start -w packages/devnet-setup
+            # TODO: outdated
+            # PARACHAIN_ENDPOINT=${composableUrl} ${pkgs.nodejs}/bin/npm run --prefix ${composablejs} start -w packages/devnet-setup
             ${builtins.concatStringsSep "\n" (builtins.map (parachainId:
               "NODE_URL=${polkadotUrl} PARA_ID=${
                 toString parachainId

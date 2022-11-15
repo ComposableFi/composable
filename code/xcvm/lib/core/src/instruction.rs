@@ -1,8 +1,60 @@
-use crate::Program;
-use alloc::{collections::VecDeque, vec::Vec};
+use crate::{AssetId, BridgeSecurity, Displayed, Funds, Program};
+use alloc::{
+	collections::{BTreeMap, VecDeque},
+	vec::Vec,
+};
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
+
+/// Spawn instruction emits this event
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Clone, PartialEq, Eq, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub struct SpawnEvent<Network, Payload, Account, Assets> {
+	pub network: Network,
+	pub bridge_security: BridgeSecurity,
+	pub salt: Vec<u8>,
+	pub assets: Funds<Displayed<u128>>,
+	pub program: Program<VecDeque<Instruction<Network, Payload, Account, Assets>>>,
+}
+
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum BindingValue {
+	Register(Register),
+	/// Asset's address
+	Asset(AssetId),
+}
+
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Register {
+	/// Instruction pointer
+	Ip,
+	/// Relayer's address
+	Relayer,
+	/// Interpreter's address
+	This,
+	/// Result of the last executed instruction
+	Result,
+}
+
+/// Bindings: (Index, Binding)
+pub type Bindings = Vec<(u32, BindingValue)>;
+
+/// Ordered Bindings: (Index, Binding)
+pub type OrderedBindings = BTreeMap<u32, BindingValue>;
+
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Clone, PartialEq, Eq, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Destination<Account> {
+	Account(Account),
+	Relayer,
+}
 
 /// Base XCVM instructions.
 /// This set will remain as small as possible, expressiveness must come on `top` of the base
@@ -13,7 +65,7 @@ use serde::{Deserialize, Serialize};
 pub enum Instruction<Network, Payload, Account, Assets> {
 	/// Transfer some [`Assets`] from the current program to the [`to`] account.
 	#[serde(rename_all = "snake_case")]
-	Transfer { to: Account, assets: Assets },
+	Transfer { to: Destination<Account>, assets: Assets },
 	/// Arbitrary payload representing a raw call inside the current [`Network`].
 	///
 	/// On picasso, this will be a SCALE encoded dispatch call.
@@ -24,11 +76,20 @@ pub enum Instruction<Network, Payload, Account, Assets> {
 	/// For most of the network in fact, we need to provide the target address along the payload,
 	/// which can be encoded inside this single payload.
 	#[serde(rename_all = "snake_case")]
-	Call { encoded: Payload },
+	Call { bindings: Bindings, encoded: Payload },
 	/// Spawn a sub-program on the target `network`.
 	///
 	/// The program will be spawned with the desired [`Assets`].
 	/// The salt is used to track the program when events are dispatched in the network.
 	#[serde(rename_all = "snake_case")]
-	Spawn { network: Network, salt: Vec<u8>, assets: Assets, program: Program<VecDeque<Self>> },
+	Spawn {
+		network: Network,
+		bridge_security: BridgeSecurity,
+		salt: Vec<u8>,
+		assets: Assets,
+		program: Program<VecDeque<Self>>,
+	},
+	/// Query the state of a contract
+	#[serde(rename_all = "snake_case")]
+	Query { network: Network, salt: Vec<u8> },
 }
