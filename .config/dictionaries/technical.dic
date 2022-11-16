@@ -35,6 +35,7 @@
 0xsequence
 1ubrf2y
 5C4hrfjw
+aaaaaabb
 aarch
 abicoder
 acala
@@ -58,6 +59,7 @@ assetsinfo
 autofetch
 autorenew
 azuretools
+bbcccccc
 bech
 BCENT
 BCENTS
@@ -180,6 +182,8 @@ libsecp
 libsecp256k1
 libudev
 libwasmvm
+lightclient
+lightclients
 llvm
 localstorage
 loglevel
@@ -274,6 +278,7 @@ prevote
 procps
 proptest
 proptests
+Proofwith
 prost
 protoc
 PROTOC
@@ -285,6 +290,8 @@ rebond
 reduxjs
 registryaddr
 rekt
+relaychain
+relaychains
 remappings
 resourcemonitor
 revhash
@@ -369,6 +376,7 @@ tungstenite
 typechain
 typegen
 typeorm
+uatom
 udeps
 unbond
 unbonded
