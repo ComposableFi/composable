@@ -149,8 +149,6 @@ pub mod pallet {
 		Reply,
 		Sudo,
 		Query,
-		#[cfg(feature = "ibc")]
-		IbcChannelOpen,
 	}
 
 	#[derive(Copy, Clone, PartialEq, Eq, Encode, Decode, TypeInfo, Debug)]
