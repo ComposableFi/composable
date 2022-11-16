@@ -111,6 +111,10 @@ pub mod pallet {
 	pub type AssetIdRanges<T: Config> =
 		StorageValue<_, Ranges<T::AssetId>, ValueQuery, RangesOnEmpty<T>>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn get_assets_ed)]
+	pub type AssetEd<T: Config> = StorageMap<_, Twox128, T::AssetId, T::Balance, OptionQuery>;
+
 	// technically that can be stored offchain, but other parachains do int on chain too (and some
 	// other blockchains) also may do routing for approved symbols based, not on ids, too
 	#[pallet::storage]
