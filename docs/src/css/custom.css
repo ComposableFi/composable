@@ -74,14 +74,9 @@ p {
   margin-bottom: 16px !important;
   font-size: 1.2em;
 }
-/*
+
 .markdown {
   padding: 16px;
-}
-*/
-
-.markdown strong {
-  font-weight: 800;
 }
 
 .markdown a {
@@ -101,7 +96,6 @@ p {
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
   /* --ifm-font-family-monospace: "JetBrains Mono Regular"; */
   --ifm-heading-font-family:"EkMukta", system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';  
-  --ifm-font-family-base: "EkMukta", system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
   --ifm-heading-font-weight: 700;
 }
 
