@@ -296,6 +296,43 @@ impl<T: Config> Router<T> {
 		cosmwasm_call_serialize::<I, V, M>(vm, &message)
 			.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))
 	}
+
+	fn on_recv_packet_internal(
+		&self,
+		_output: &mut ModuleOutputBuilder,
+		packet: &ibc::core::ics04_channel::packet::Packet,
+		relayer: &pallet_ibc::Signer,
+	) -> Result<Vec<u8>, IbcError> {
+		let address = Self::port_to_address(&packet.destination_port)?;
+		let contract_info = Self::to_ibc_contract(&address)?;
+
+		let message = IbcPacketReceiveMsg {
+			packet: IbcPacket {
+				data: packet.data.clone().into(),
+				src: IbcEndpoint {
+					port_id: packet.source_port.to_string(),
+					channel_id: packet.source_channel.to_string(),
+				},
+				dest: IbcEndpoint {
+					port_id: packet.destination_port.to_string(),
+					channel_id: packet.destination_channel.to_string(),
+				},
+				sequence: packet.sequence.into(),
+				timeout: todo!("https://app.clickup.com/t/39gjzw1"),
+			},
+		};
+		let gas = Weight::MAX;
+		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
+		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
+		let (data, _) = cosmwasm_system_entrypoint_serialize::<
+			IbcPacketReceive,
+			VM<T>,
+			IbcPacketReceiveMsg,
+		>(&mut executor, &message)
+		.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
+		let _remaining = vm.gas.remaining();
+		Ok(data.expect("there is always data from contract; qed").0)
+	}
 }
 
 impl<T: Config + Send + Sync> IbcModule for Router<T> {
@@ -520,40 +557,18 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 
 	fn on_recv_packet(
 		&self,
-		_output: &mut ModuleOutputBuilder,
+		output: &mut ModuleOutputBuilder,
 		packet: &ibc::core::ics04_channel::packet::Packet,
 		relayer: &pallet_ibc::Signer,
 	) -> ibc::core::ics26_routing::context::OnRecvPacketAck {
-		let address = Self::port_to_address(&packet.destination_port).unwrap();
-		let contract_info = Self::to_ibc_contract(&address).unwrap();
-
-		let message = IbcPacketReceiveMsg {
-			packet: IbcPacket {
-				data: packet.data.clone().into(),
-				src: IbcEndpoint {
-					port_id: packet.source_port.to_string(),
-					channel_id: packet.source_channel.to_string(),
-				},
-				dest: IbcEndpoint {
-					port_id: packet.destination_port.to_string(),
-					channel_id: packet.destination_channel.to_string(),
-				},
-				sequence: packet.sequence.into(),
-				timeout: todo!("https://app.clickup.com/t/39gjzw1"),
-			},
-		};
-		let gas = Weight::MAX;
-		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
-		let mut executor = Self::relayer_executor(&mut vm, address, contract_info).unwrap();
-		let (data, events) = cosmwasm_system_entrypoint_serialize::<
-			IbcPacketReceive,
-			VM<T>,
-			IbcPacketReceiveMsg,
-		>(&mut executor, &message)
-		.unwrap(); // depends on https://github.com/ComposableFi/centauri/issues/119
-		let _remaining = vm.gas.remaining();
-		let acknowledgement = MapBinary(data.expect("there is always data from vm; qed").0);
-		OnRecvPacketAck::Successful(Box::new(acknowledgement), Box::new(|_| Ok(())))
+		// depends on https://github.com/ComposableFi/centauri/issues/119
+		match self.on_recv_packet_internal(output, packet, relayer) {
+			Ok(ok) => OnRecvPacketAck::Successful(Box::new(MapBinary(ok)), Box::new(|_| Ok(()))),
+			Err(err) => OnRecvPacketAck::Successful(
+				Box::new(MapBinary(err.to_string().into_bytes())),
+				Box::new(|_| Ok(())),
+			),
+		}
 	}
 
 	fn on_acknowledgement_packet(
@@ -646,10 +661,10 @@ fn contract_to_result<T>(result: ContractResult<T>) -> Result<T, IbcError> {
 
 fn map_order(order: Order) -> IbcOrder {
 	match order {
-						    Order::None => unimplemented!("https://github.com/ComposableFi/centauri/issues/130"),
-						    Order::Unordered => IbcOrder::Unordered,
-						    Order::Ordered => IbcOrder::Unordered,
-					    }
+		Order::None => unimplemented!("https://github.com/ComposableFi/centauri/issues/130"),
+		Order::Unordered => IbcOrder::Unordered,
+		Order::Ordered => IbcOrder::Unordered,
+	}
 }
 
 impl<T: Config + Send + Sync + Default> IbcModuleRouter for Router<T> {
