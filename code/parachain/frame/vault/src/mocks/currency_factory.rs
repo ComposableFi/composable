@@ -79,7 +79,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(10_000)]
 		pub fn create(_origin: OriginFor<T>, id: RangeId) -> DispatchResultWithPostInfo {
-			let currency_id = <Self as CurrencyFactory>::create(id, T::Balance::default())?;
+			let currency_id = <Self as CurrencyFactory>::create(id)?;
 			Self::deposit_event(Event::Created(currency_id));
 			Ok(().into())
 		}
@@ -89,7 +89,7 @@ pub mod pallet {
 		type AssetId = MockCurrencyId;
 		type Balance = T::Balance;
 
-		fn create(_: RangeId, _: Self::Balance) -> Result<Self::AssetId, DispatchError> {
+		fn create(_: RangeId) -> Result<Self::AssetId, DispatchError> {
 			let lp_token_id = CurrencyCounter::<T>::mutate(|c| {
 				*c += 1;
 				*c

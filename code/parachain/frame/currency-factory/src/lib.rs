@@ -55,10 +55,7 @@ pub mod pallet {
 	};
 	use composable_traits::{
 		assets::BasicAssetMetadata,
-		currency::{
-			AssetExistentialDepositInspect, AssetIdLike, BalanceLike, CurrencyFactory, Exponent,
-			LocalAssets,
-		},
+		currency::{AssetIdLike, BalanceLike, CurrencyFactory, Exponent, LocalAssets},
 	};
 	use frame_support::{pallet_prelude::*, traits::EnsureOrigin, transactional, PalletId};
 	use frame_system::pallet_prelude::*;
@@ -160,14 +157,10 @@ pub mod pallet {
 			metadata: BasicAssetMetadata,
 		) -> DispatchResultWithPostInfo {
 			T::AddOrigin::ensure_origin(origin)?;
-			if AssetEd::<T>::get(asset_id).is_some() {
-				// note: if will decide to build route on symbol, than better to make second map
-				// from symbol to asset to check unique
-				AssetMetadata::<T>::insert(asset_id, metadata);
-				Ok(().into())
-			} else {
-				Err(Error::<T>::AssetNotFound.into())
-			}
+			// note: if will decide to build route on symbol, than better to make second map
+			// from symbol to asset to check unique
+			AssetMetadata::<T>::insert(asset_id, metadata);
+			Ok(().into())
 		}
 	}
 
@@ -176,9 +169,8 @@ pub mod pallet {
 		type Balance = T::Balance;
 
 		#[transactional]
-		fn create(id: RangeId, ed: Self::Balance) -> Result<Self::AssetId, DispatchError> {
+		fn create(id: RangeId) -> Result<Self::AssetId, DispatchError> {
 			let asset_id = AssetIdRanges::<T>::mutate(|range| range.increment(id))?;
-			AssetEd::<T>::insert(asset_id, ed);
 			Ok(asset_id)
 		}
 
@@ -198,24 +190,6 @@ pub mod pallet {
 		fn unique_asset_id_to_protocol_asset_id(unique_asset_id: Self::AssetId) -> u32 {
 			u32::try_from(unique_asset_id.into() % u32::MAX as u128)
 				.expect("u128 is made of u32 chunks")
-		}
-	}
-
-	impl<T: Config> AssetExistentialDepositInspect for Pallet<T> {
-		type AssetId = T::AssetId;
-		type Balance = T::Balance;
-
-		fn existential_deposit(asset_id: Self::AssetId) -> Result<Self::Balance, DispatchError> {
-			AssetEd::<T>::get(asset_id).ok_or_else(|| Error::<T>::AssetNotFound.into())
-		}
-	}
-
-	impl<T: Config> composable_traits::currency::AssetDataMutate for Pallet<T> {
-		type AssetId = T::AssetId;
-		type Balance = T::Balance;
-
-		fn update_existential_deposit(asset_id: Self::AssetId, ed: Option<Self::Balance>) {
-			AssetEd::<T>::set(asset_id, ed)
 		}
 	}
 
