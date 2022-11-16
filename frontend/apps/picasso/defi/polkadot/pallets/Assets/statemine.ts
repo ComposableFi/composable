@@ -56,7 +56,7 @@ export async function statemineAssetList(
   );
 
   const KSM: StatemineAssetMetadata = {
-    id: "1",
+    id: "ksm",
     name: "KSM",
     decimals: 12,
     symbol: "KSM",

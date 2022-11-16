@@ -211,19 +211,24 @@ const PolkadotBalancesUpdater = () => {
               }
               break;
             case "statemine":
-              subscribeStatemineBalance(
-                api,
-                connectedAccounts.statemine[selectedAccount].address,
-                asset,
-                chainId,
-                (balance) => {
-                  updateBalance({
-                    network: chainId as SubstrateNetworkId,
-                    tokenId: asset.id,
-                    balance,
-                  });
-                }
-              );
+              if (
+                connectedAccounts.statemine[selectedAccount] &&
+                SUBSTRATE_NETWORKS.statemine.tokenId !== asset.id
+              ) {
+                subscribeStatemineBalance(
+                  api,
+                  connectedAccounts.statemine[selectedAccount].address,
+                  asset,
+                  chainId,
+                  (balance) => {
+                    updateBalance({
+                      network: chainId as SubstrateNetworkId,
+                      tokenId: asset.id,
+                      balance,
+                    });
+                  }
+                );
+              }
             default:
               break;
           }
