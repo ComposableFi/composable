@@ -120,6 +120,7 @@ const config = {
         copyright: `Copyright © ${new Date().getFullYear()} Composable Finance, Ltd.`,
       },
       prism: {
+        additionalLanguages: ['rust', 'haskell'],
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,
       },
