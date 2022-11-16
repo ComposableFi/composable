@@ -1080,20 +1080,12 @@ pub mod pallet {
 		) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
-			let (base_amount, owner, fees) = match pool {
+			let (swap_result, fee, owner) = match pool {
 				PoolConfiguration::DualAssetConstantProduct(info) => {
-					// NOTE: lp_fees includes owner_fees.
-					let (base_amount, quote_amount_excluding_lp_fee, fees) =
-						DualAssetConstantProduct::<T>::do_swap(
-							&info,
-							&pool_account,
-							in_asset,
-							min_receive,
-							true,
-						)?;
+					let swap_result = Self::spot_price(pool_id, in_asset, min_receive.asset_id)?;
 
 					ensure!(
-						base_amount >= min_receive.amount,
+						swap_result.value.amount >= min_receive.amount,
 						Error::<T>::CannotRespectMinimumRequested
 					);
 
@@ -1101,31 +1093,37 @@ pub mod pallet {
 						in_asset.asset_id,
 						who,
 						&pool_account,
-						quote_amount_excluding_lp_fee,
+						in_asset.amount,
 						keep_alive,
 					)?;
 					T::Assets::transfer(
 						min_receive.asset_id,
 						&pool_account,
 						who,
-						base_amount,
+						swap_result.value.amount,
 						false,
 					)?;
-					(base_amount, info.owner, fees)
+
+					(
+						swap_result,
+						info.fee_config
+							.calculate_fees(swap_result.fee.asset_id, swap_result.fee.amount),
+						info.owner,
+					)
 				},
 			};
-			Self::disburse_fees(who, &pool_id, &owner, &fees)?;
-			Self::update_twap(pool_id)?;
+			Self::disburse_fees(who, &pool_id, &owner, &fee);
+			Self::update_twap(pool_id);
 			Self::deposit_event(Event::<T>::Swapped {
 				pool_id,
 				who: who.clone(),
 				base_asset: min_receive.asset_id,
 				quote_asset: in_asset.asset_id,
-				base_amount,
+				base_amount: swap_result.value.amount,
 				quote_amount: in_asset.amount,
-				fee: fees,
+				fee,
 			});
-			Ok(SwapResult::new(min_receive.asset_id, base_amount, fees.asset_id, fees.fee))
+			Ok(swap_result)
 		}
 
 		#[transactional]
