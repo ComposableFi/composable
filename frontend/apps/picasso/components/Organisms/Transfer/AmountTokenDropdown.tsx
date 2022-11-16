@@ -51,7 +51,7 @@ export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
   );
 
   const maxAmountToTransfer = useMemo(() => {
-    return callbackGate(
+    const amount = callbackGate(
       (api, _existentialDeposit) => {
         return calculateTransferAmount({
           amountToTransfer: balance,
@@ -65,6 +65,8 @@ export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
       fromProvider.parachainApi,
       existentialDeposit
     );
+
+    return amount instanceof BigNumber ? amount : new BigNumber(0);
   }, [
     balance,
     existentialDeposit,

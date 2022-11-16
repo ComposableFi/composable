@@ -44,7 +44,9 @@ export function getAmountToTransfer({
     toChainIdUnit(
       calculatedAmount,
       token.decimals[sourceChain] || SUBSTRATE_NETWORKS[sourceChain].decimals
-    ).toFixed(0).toString()
+    )
+      .toFixed(0)
+      .toString()
   );
 }
 
