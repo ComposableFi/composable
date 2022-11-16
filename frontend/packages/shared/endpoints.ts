@@ -45,7 +45,7 @@ export function getEnvironment(target: AvailableEndpoints) {
   return cacheAndFetch(target);
 }
 
-export type EndpointPreset = "local" | "daliStage" | "picassoStage";
+export type EndpointPreset = "local" | "stage";
 export type EndpointPresets = {
   [key in EndpointPreset]: {
     [key in AvailableEndpoints]: string;
@@ -57,18 +57,9 @@ export const endpointPresets: EndpointPresets = {
     karura: "ws://127.0.0.1:9999",
     kusama: "ws://127.0.0.1:9944",
     statemine: "ws://127.0.0.1:10009",
-    subsquid: "http://localhost:4350/graphql"
+    subsquid: "http://localhost:4350/graphql",
   },
-  daliStage: {
-    picasso: "wss://persistent.devnets.composablefinance.ninja/chain/dali",
-    karura: "wss://persistent.devnets.composablefinance.ninja/chain/karura",
-    kusama: "wss://persistent.devnets.composablefinance.ninja/chain/rococo",
-    statemine:
-      "wss://persistent.devnets.composablefinance.ninja/chain/statemine",
-    subsquid:
-      "https://persistent.devnets.composablefinance.ninja/subsquid/graphql"
-  },
-  picassoStage: {
+  stage: {
     picasso:
       "wss://persistent.picasso.devnets.composablefinance.ninja/chain/picasso",
     karura:
@@ -78,8 +69,8 @@ export const endpointPresets: EndpointPresets = {
     statemine:
       "wss://persistent.picasso.devnets.composablefinance.ninja/chain/statemine",
     subsquid:
-      "https://persistent.picasso.devnets.composablefinance.ninja/subsquid/graphql"
-  }
+      "https://persistent.picasso.devnets.composablefinance.ninja/subsquid/graphql",
+  },
 };
 
 export function setEndpointPreset(endpointPreset: EndpointPreset) {
