@@ -144,7 +144,7 @@ export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
                   title={`${balance.toFixed()} ${tokens[tokenId].symbol}`}
                   color="primary"
                   sx={{
-                    fontSize: "01rem",
+                    fontSize: "1rem",
                   }}
                 >
                   <InfoTwoTone />
