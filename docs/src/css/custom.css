@@ -72,11 +72,15 @@ h1, h2, h3, h4 {
 
 p {
   margin-bottom: 16px !important;
-  font-size: 1.1em;
+  font-size: 1.2em;
 }
 
 .markdown {
   padding: 16px;
+}
+
+.markdown strong {
+  font-weight: 700;
 }
 
 .markdown a {
