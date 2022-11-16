@@ -67,11 +67,20 @@
 
 h1, h2, h3, h4 {
   font-weight: 700;
-  margin-bottom: 0 !important;
+  margin-bottom: 4px !important;
 }
 
 p {
-  margin-bottom: 10px !important;
+  margin-bottom: 16px !important;
+  font-size: 1.1em;
+}
+
+.markdown {
+  padding: 16px;
+}
+
+.markdown a {
+  text-decoration: underline;
 }
 
 /* You can override the default Infima variables here. */
