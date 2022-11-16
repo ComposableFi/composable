@@ -1,3 +1,4 @@
+import { TextExpander } from "@/components/Molecules/TextExpander";
 import { humanBalance } from "shared";
 import { FeeDisplay } from "@/components";
 import { useEffect } from "react";
@@ -7,7 +8,7 @@ import { useTransfer } from "@/defi/polkadot/hooks";
 
 import { getDestChainFee } from "@/defi/polkadot/pallets/Transfer";
 import { getPaymentAsset } from "@/defi/polkadot/pallets/AssetTxPayment";
-import { Stack } from "@mui/material";
+import { Stack, Typography } from "@mui/material";
 import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
 import { useAllParachainProviders } from "@/defi/polkadot/context/hooks";
 import { subscribeTransactionFee } from "@/stores/defi/polkadot/transfers/subscribers";
@@ -56,7 +57,21 @@ export const TransferFeeDisplay = () => {
     <Stack direction="column" gap={4}>
       <FeeDisplay
         label="Fee"
-        feeText={`${fee.partialFee.toFormat()} ${tokens[feeToken].symbol}`}
+        feeText={
+          <TextExpander
+            short={
+              <Typography variant="body2">
+                {humanBalance(fee.partialFee)} {tokens[feeToken].symbol}
+              </Typography>
+            }
+            expanded={
+              <Typography variant="body2">
+                {fee.partialFee.toFormat(tokens[feeToken].decimals[from] ?? 12)}{" "}
+                {tokens[feeToken].symbol}
+              </Typography>
+            }
+          />
+        }
         TooltipProps={{
           title:
             "Fees(gas) for processing the given transaction. The amount can vary depending on transaction details and network conditions.",
@@ -65,7 +80,21 @@ export const TransferFeeDisplay = () => {
       {destFee.fee !== null && destFee.token !== null ? (
         <FeeDisplay
           label="Destination chain fee"
-          feeText={`${destFee.fee.toFormat()} ${destFee.token.symbol}`}
+          feeText={
+            <TextExpander
+              short={
+                <Typography variant="body2">
+                  {destFee.fee.toFormat(3)} {destFee.token.symbol}
+                </Typography>
+              }
+              expanded={
+                <Typography variant="body2">
+                  {destFee.fee.toFormat(destFee.token.decimals[to] ?? 12)}{" "}
+                  {destFee.token.symbol}
+                </Typography>
+              }
+            />
+          }
           TooltipProps={{
             title:
               "Transaction fee on the destination chain. This fee is approximate and might change due to network conditions.",
