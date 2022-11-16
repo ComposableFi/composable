@@ -322,7 +322,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 					},
 					counterparty_endpoint: IbcEndpoint {
 						port_id: counterparty.port_id.to_string(),
-						channel_id: counterparty.channel_id.expect("channel").to_string(),
+						channel_id: counterparty.channel_id.expect("one may not have OpenTry without remote channel id by protocol; qed").to_string(),
 					},
 					order,
 					version: version.to_string(),
@@ -503,7 +503,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 					channel_id: packet.destination_channel.to_string(),
 				},
 				sequence: packet.sequence.into(),
-				timeout: todo!("after it will get public way to create"),
+				timeout: todo!("https://app.clickup.com/t/39gjzw1"),
 			},
 		};
 		let gas = Weight::MAX;
@@ -545,7 +545,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 					channel_id: packet.source_channel.to_string(),
 				},
 				sequence: packet.sequence.into(),
-				timeout: todo!("need make pub access to init of IbcTimeout"),
+				timeout: todo!("https://app.clickup.com/t/39gjzw1"),
 			},
 		};
 
