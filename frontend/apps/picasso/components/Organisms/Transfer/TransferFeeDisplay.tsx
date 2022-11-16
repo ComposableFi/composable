@@ -56,7 +56,7 @@ export const TransferFeeDisplay = () => {
     <Stack direction="column" gap={4}>
       <FeeDisplay
         label="Fee"
-        feeText={`${humanBalance(fee.partialFee)} ${tokens[feeToken].symbol}`}
+        feeText={`${fee.partialFee.toFormat()} ${tokens[feeToken].symbol}`}
         TooltipProps={{
           title:
             "Fees(gas) for processing the given transaction. The amount can vary depending on transaction details and network conditions.",

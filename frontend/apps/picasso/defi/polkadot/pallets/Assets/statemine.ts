@@ -1,6 +1,6 @@
 import { ApiPromise } from "@polkadot/api";
 import { hexToString } from "@polkadot/util";
-import { fromChainIdUnit } from "shared";
+import { fromChainIdUnit, unwrapNumberOrHex } from "shared";
 import BigNumber from "bignumber.js";
 
 export type StatemineAssetMetadata = {
@@ -55,6 +55,18 @@ export async function statemineAssetList(
     }
   );
 
-  const result = await Promise.all(assets);
-  return result.filter((a) => a !== null) as StatemineAssetMetadata[];
+  const KSM: StatemineAssetMetadata = {
+    id: "1",
+    name: "KSM",
+    decimals: 12,
+    symbol: "KSM",
+    deposit: 0,
+    existentialDeposit: fromChainIdUnit(
+      unwrapNumberOrHex(api.consts.balances.existentialDeposit.toString()),
+      12
+    ),
+  };
+
+  const result = (await Promise.all(assets)).filter((a) => a !== null);
+  return [...result, KSM] as StatemineAssetMetadata[];
 }

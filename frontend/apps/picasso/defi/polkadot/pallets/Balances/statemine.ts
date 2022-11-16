@@ -11,9 +11,10 @@ export function subscribeStatemineBalance(
   chainId: SubstrateNetworkId,
   callback: (value: BigNumber) => void
 ) {
-  const onChainId = BigNumber.isBigNumber(asset.chainId[chainId])
-    ? asset.chainId[chainId]?.toString()
-    : asset.chainId[chainId];
+  const onChainId =
+    asset.chainId[chainId] instanceof BigNumber
+      ? asset.chainId[chainId]?.toString()
+      : asset.chainId[chainId];
   if (onChainId) {
     api.query.assets.account(onChainId, address, (assetAccount: any) => {
       assetAccount.isSome && asset.decimals[chainId] !== null
@@ -23,7 +24,7 @@ export function subscribeStatemineBalance(
               asset.decimals[chainId]
             )
           )
-        : new BigNumber(0);
+        : callback(new BigNumber(0));
     });
   }
 }
