@@ -102,12 +102,14 @@ pub enum InitialStorageMutability {
 }
 
 /// VM shared cache
+#[derive(Clone)]
 pub struct CosmwasmVMCache {
 	/// Code cache, a mapping from a CosmWasm contract code id to the baking code.
 	pub code: BTreeMap<CosmwasmCodeId, Vec<u8>>,
 }
 
 /// VM shared state
+#[derive(Clone)]
 pub struct CosmwasmVMShared {
 	/// Readonly depth, used to determine whether the storage is currently readonly or not.
 	/// Whenever a contract call `query`, we increment this counter before the call and decrement

@@ -1,9 +1,7 @@
 use crate::*;
 
-use composable_traits::{
-	currency::{CurrencyFactory, RangeId},
-	xcm::assets::XcmAssetLocation,
-};
+use crate::instrument::CostRules;
+use composable_traits::currency::{CurrencyFactory, RangeId};
 use frame_support::{
 	pallet_prelude::ConstU32,
 	parameter_types,
@@ -211,13 +209,12 @@ parameter_types! {
 	pub const CodeGlobalVariableLimit: u32 = 256;
 	pub const CodeParameterLimit: u32 = 128;
 	pub const CodeBranchTableSizeLimit: u32 = 256;
-	// Not really required as it's embedded.
 	pub const CodeStackLimit: u32 = u32::MAX;
 
-	// TODO: benchmark for proper values
 	pub const CodeStorageByteDeposit: u32 = 1;
 	pub const ContractStorageByteReadPrice: u32 = 1;
 	pub const ContractStorageByteWritePrice: u32 = 1;
+	pub WasmCostRules: CostRules<Test> = Default::default();
 }
 
 impl Config for Test {
@@ -248,8 +245,8 @@ impl Config for Test {
 	type ContractStorageByteReadPrice = ContractStorageByteReadPrice;
 	type ContractStorageByteWritePrice = ContractStorageByteWritePrice;
 	type UnixTime = Timestamp;
-	// TODO: proper weights
 	type WeightInfo = ();
+	type WasmCostRules = WasmCostRules;
 }
 
 // Build genesis storage according to the mock runtime.
