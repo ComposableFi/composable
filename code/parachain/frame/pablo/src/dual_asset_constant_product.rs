@@ -1,7 +1,5 @@
 use crate::{Config, Error, PoolConfiguration, PoolCount, Pools};
-use composable_maths::dex::constant_product::{
-	compute_deposit_lp, compute_in_given_out, compute_out_given_in,
-};
+use composable_maths::dex::constant_product::{compute_deposit_lp, compute_in_given_out};
 use composable_support::math::safe::{SafeAdd, SafeSub};
 use composable_traits::{
 	currency::{CurrencyFactory, RangeId},
@@ -141,44 +139,6 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		T::Assets::burn_from(pool.lp_token, who, lp_amount)?;
 
 		Ok((*first_asset_amount, *second_asset_amount, lp_issued.safe_sub(&lp_amount)?))
-	}
-
-	pub(crate) fn do_swap(
-		pool: &BasicPoolInfo<T::AccountId, T::AssetId, ConstU32<2>>,
-		pool_account: &T::AccountId,
-		in_asset: AssetAmount<T::AssetId, T::Balance>,
-		min_receive: AssetAmount<T::AssetId, T::Balance>,
-		apply_fees: bool,
-	) -> Result<(T::Balance, T::Balance, Fee<T::AssetId, T::Balance>), DispatchError> {
-		let pool_assets = Self::get_pool_balances(pool, pool_account);
-		let base_asset = pool_assets.get(&min_receive.asset_id).ok_or(Error::<T>::PairMismatch)?;
-		let quote_asset = pool_assets.get(&in_asset.asset_id).ok_or(Error::<T>::PairMismatch)?;
-		ensure!(base_asset.1 > 0 && quote_asset.1 > 0, Error::<T>::NotEnoughLiquidity);
-
-		// TODO (vim): Fees refactored later
-		let fee = if apply_fees {
-			pool.fee_config.calculate_fees(in_asset.asset_id, in_asset.amount)
-		} else {
-			Fee::<T::AssetId, T::Balance>::zero(in_asset.asset_id)
-		};
-		// Charging fees "on the way in"
-		// https://balancer.gitbook.io/balancer/core-concepts/protocol/index#out-given-in
-		let quote_amount_excluding_lp_fee =
-			T::Convert::convert(in_asset.amount.safe_sub(&fee.fee)?);
-		let base_amount = compute_out_given_in(
-			quote_asset.0,
-			base_asset.0,
-			quote_asset.1,
-			base_asset.1,
-			quote_amount_excluding_lp_fee,
-		)?;
-		ensure!(base_amount > 0 && quote_amount_excluding_lp_fee > 0, Error::<T>::InvalidAmount);
-
-		Ok((
-			T::Convert::convert(base_amount),
-			T::Convert::convert(quote_amount_excluding_lp_fee),
-			fee,
-		))
 	}
 
 	pub(crate) fn do_buy(

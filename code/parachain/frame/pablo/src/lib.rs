@@ -1112,8 +1112,8 @@ pub mod pallet {
 					)
 				},
 			};
-			Self::disburse_fees(who, &pool_id, &owner, &fee);
-			Self::update_twap(pool_id);
+			Self::disburse_fees(who, &pool_id, &owner, &fee)?;
+			Self::update_twap(pool_id)?;
 			Self::deposit_event(Event::<T>::Swapped {
 				pool_id,
 				who: who.clone(),
