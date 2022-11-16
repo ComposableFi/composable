@@ -24,6 +24,7 @@ import {
 import { useSelectedAccount } from "@/defi/polkadot/hooks";
 import { useAllParachainProviders } from "@/defi/polkadot/context/hooks";
 import BigNumber from "bignumber.js";
+import { FEE_MULTIPLIER } from "shared/defi/constants";
 import { usePendingExtrinsic } from "substrate-react";
 import { InfoOutlined } from "@mui/icons-material";
 import { pipe } from "fp-ts/function";
@@ -106,7 +107,7 @@ const Transfers: NextPage = () => {
 
   const hasEnoughGasFee = useMemo(() => {
     const feeBalance = getBalance(feeTokenId.id, from);
-    return feeBalance.gte(fee.partialFee);
+    return feeBalance.gte(fee.partialFee.multipliedBy(FEE_MULTIPLIER));
   }, [fee.partialFee, feeTokenId.id, from, getBalance]);
 
   useEffect(() => {
