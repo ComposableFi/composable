@@ -31,7 +31,12 @@ pub mod weights;
 pub mod pallet {
 	use crate::prelude::*;
 	pub use crate::weights::WeightInfo;
-	use composable_traits::currency::{CurrencyFactory, ForeignByNative, RangeId};
+	use codec::FullCodec;
+	use composable_traits::{
+		assets::Asset,
+		currency::{BalanceLike, CurrencyFactory, Exponent, ForeignByNative, RangeId},
+		xcm::assets::{ForeignMetadata, RemoteAssetRegistryInspect, RemoteAssetRegistryMutate},
+	};
 	use cumulus_primitives_core::ParaId;
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo, pallet_prelude::*, traits::EnsureOrigin,
@@ -75,8 +80,7 @@ pub mod pallet {
 		type ParachainOrGovernanceOrigin: EnsureOrigin<Self::Origin>;
 		type WeightInfo: WeightInfo;
 		type Balance: BalanceLike;
-		type CurrencyFactory: CurrencyFactory<AssetId = Self::LocalAssetId, Balance = Self::Balance>
-			+ AssetExistentialDepositInspect<AssetId = Self::LocalAssetId, Balance = Self::Balance>;
+		type CurrencyFactory: CurrencyFactory<AssetId = Self::LocalAssetId, Balance = Self::Balance>;
 	}
 
 	#[pallet::pallet]
@@ -186,8 +190,7 @@ pub mod pallet {
 		pub fn register_asset(
 			origin: OriginFor<T>,
 			location: T::ForeignAssetId,
-			ed: T::Balance,
-			ratio: Option<Rational>,
+			ratio: Rational,
 			decimals: Option<Exponent>,
 		) -> DispatchResultWithPostInfo {
 			T::UpdateAssetRegistryOrigin::ensure_origin(origin)?;
@@ -195,7 +198,7 @@ pub mod pallet {
 				!ForeignToLocal::<T>::contains_key(&location),
 				Error::<T>::ForeignAssetAlreadyRegistered
 			);
-			let asset_id = T::CurrencyFactory::create(RangeId::FOREIGN_ASSETS, ed)?;
+			let asset_id = T::CurrencyFactory::create(RangeId::FOREIGN_ASSETS)?;
 			Self::set_reserve_location(asset_id, location.clone(), ratio, decimals)?;
 			Self::deposit_event(Event::<T>::AssetRegistered { asset_id, location, decimals });
 			Ok(().into())
@@ -209,7 +212,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			asset_id: T::LocalAssetId,
 			location: T::ForeignAssetId,
-			ratio: Option<Rational>,
+			ratio: Rational,
 			decimals: Option<Exponent>,
 		) -> DispatchResultWithPostInfo {
 			T::UpdateAssetRegistryOrigin::ensure_origin(origin)?;
@@ -258,12 +261,12 @@ pub mod pallet {
 		fn set_reserve_location(
 			asset_id: Self::AssetId,
 			location: Self::AssetNativeLocation,
-			ratio: Option<Rational>,
+			ratio: Rational,
 			decimals: Option<Exponent>,
 		) -> DispatchResult {
 			ForeignToLocal::<T>::insert(&location, asset_id);
 			LocalToForeign::<T>::insert(asset_id, ForeignMetadata { decimals, location });
-			AssetRatio::<T>::mutate_exists(asset_id, |x| *x = ratio);
+			AssetRatio::<T>::mutate_exists(asset_id, |x| *x = Some(ratio));
 			Ok(())
 		}
 
@@ -325,15 +328,6 @@ pub mod pallet {
 		type AssetId = T::LocalAssetId;
 		fn get_ratio(asset_id: Self::AssetId) -> Option<ForeignByNative> {
 			AssetRatio::<T>::get(asset_id).map(Into::into)
-		}
-	}
-
-	impl<T: Config> AssetExistentialDepositInspect for Pallet<T> {
-		type AssetId = T::LocalAssetId;
-		type Balance = T::Balance;
-
-		fn existential_deposit(asset_id: Self::AssetId) -> Result<Self::Balance, DispatchError> {
-			T::CurrencyFactory::existential_deposit(asset_id)
 		}
 	}
 }

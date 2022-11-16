@@ -140,7 +140,7 @@ fn transfer_this_native_to_sibling_overridden() {
 				1,
 				X1(Parachain(THIS_PARA_ID),)
 			)),
-			Some(rational!(1 / 1)),
+			rational!(1 / 1),
 			None,
 		));
 	});
@@ -190,7 +190,7 @@ fn transfer_non_native_reserve_asset_from_this_to_sibling() {
 				1,
 				X2(Parachain(THIS_PARA_ID), GeneralIndex(CurrencyId::PBLO.into()),)
 			)),
-			Some(Rational64::one()),
+			Rational64::one(),
 			None,
 		));
 	});
@@ -235,7 +235,7 @@ fn transfer_non_native_reserve_asset_from_this_to_sibling_by_local_id_overridden
 				1,
 				X2(Parachain(THIS_PARA_ID), GeneralIndex(CurrencyId::PBLO.into()),)
 			)),
-			Some(Rational64::one()),
+			Rational64::one(),
 			None,
 		));
 	});
@@ -284,14 +284,8 @@ fn this_native_transferred_from_sibling_to_native_is_not_enough() {
 		let root = frame_system::RawOrigin::Root;
 		let location =
 			XcmAssetLocation::new(MultiLocation::new(1, X1(Parachain(THIS_PARA_ID))).into());
-		AssetsRegistry::register_asset(
-			root.into(),
-			location.clone(),
-			1000,
-			Some(Rational64::one()),
-			None,
-		)
-		.unwrap();
+		AssetsRegistry::register_asset(root.into(), location.clone(), Rational64::one(), None)
+			.unwrap();
 		System::events()
 			.iter()
 			.find_map(|x| match x.event {
@@ -986,7 +980,7 @@ fn sibling_trap_assets_works() {
 			RawOrigin::Root.into(),
 			any_asset,
 			remote,
-			Some(Rational64::one()),
+			Rational64::one(),
 			None
 		));
 		(balance, sibling_non_native_amount)
@@ -1052,7 +1046,7 @@ fn sibling_shib_to_transfer() {
 		log::info!(target: "bdd", "Given SHIB on sibling registered");
 		use sibling_runtime::*;
 		let sibling_asset_id =
-			CurrencyFactory::create(RangeId::TOKENS, 42).expect("Valid range and ED; QED");
+			CurrencyFactory::create(RangeId::TOKENS).expect("Valid range and ED; QED");
 		let root = frame_system::RawOrigin::Root;
 		let location = XcmAssetLocation(MultiLocation::new(
 			1,
@@ -1062,7 +1056,7 @@ fn sibling_shib_to_transfer() {
 			root.into(),
 			sibling_asset_id,
 			location,
-			Some(Rational64::one()),
+			Rational64::one(),
 			Some(SHIB::EXPONENT),
 		)
 		.expect("Asset already in Currency Factory; QED");
@@ -1091,8 +1085,7 @@ fn sibling_shib_to_transfer() {
 		AssetsRegistry::register_asset(
 			root.into(),
 			location,
-			1000,
-			Some(Rational64::one()),
+			Rational64::one(),
 			Some(SHIB::EXPONENT),
 		)
 		.expect("Asset details are valid; QED");
