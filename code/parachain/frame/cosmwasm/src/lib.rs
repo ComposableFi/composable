@@ -372,7 +372,7 @@ pub mod pallet {
 		type IbcRelayerAccount: Get<AccountIdOf<Self>>;
 
 		#[cfg(feature = "ibc")]
-		type IbcRelayer: ibc_primitives::IbcHandler;
+		type IbcRelayer: ibc_primitives::IbcHandler<AccountIdOf<Self>>;
 	}
 
 	#[pallet::pallet]

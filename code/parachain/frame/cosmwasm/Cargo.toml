@@ -38,7 +38,7 @@ ibc-primitives = { git = "https://github.com/ComposableFi/centauri/", rev = "088
 log = { version = "0.4.14", default-features = false }
 pallet-assets = { default-features = false, path = "../assets" }
 pallet-balances = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-pallet-ibc = { git = "https://github.com/ComposableFi/centauri/", rev = "0888dde9c11e63dd4c3241e9bb80e38b9fef4fda", default-features = false }
+pallet-ibc = { git = "https://github.com/ComposableFi/centauri/", rev = "742a069b057a323cdf452f567c9c2f4ec460bf56", default-features = false }
 parity-wasm = { version = "0.45.0", default-features = false }
 primitives = { path = "../../runtime/primitives", default-features = false }
 rand = { version = "0.8.5", optional = true, default-features = false, features = [

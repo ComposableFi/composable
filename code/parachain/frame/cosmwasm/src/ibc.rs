@@ -53,7 +53,7 @@ use ibc::{
 	signer::Signer as IbcSigner,
 };
 
-use ibc_primitives::{IbcHandler, SendPacketData};
+use ibc_primitives::{IbcHandler, HandlerMessage,};
 use pallet_ibc::routing::ModuleRouter as IbcModuleRouter;
 
 const PORT_PREFIX: &str = "wasm";
@@ -63,7 +63,7 @@ trait IbcHandlerExtended<C: Config> {
 	fn get_relayer_account() -> AccountIdOf<C>;
 }
 
-impl<T: IbcHandler, C: Config> IbcHandlerExtended<C> for T {
+impl<T: IbcHandler<AccountIdOf<C>>, C: Config> IbcHandlerExtended<C> for T {
 	fn get_relayer_account() -> AccountIdOf<C> {
 		C::IbcRelayerAccount::get()
 	}
@@ -92,21 +92,27 @@ impl<T: Config> Pallet<T> {
 		let port_id = PortId::from_str(address.as_str())
 			.expect("all pallet instanced contract addresses are valid port names; qwe");
 
-		let msg = MsgTransfer {
-			source_port: port_id,
-			source_channel: channel_id,
-			token: PrefixedCoin {
-				amount: Amount::from(amount.amount as u64),
-				denom: PrefixedDenom::from_str(amount.denom.as_ref()).unwrap(),
-			},
-			sender: IbcSigner::from_str(address.as_str()).expect("address is signer; qed"),
-			receiver: IbcSigner::from_str(to_address.as_str())
-				.map_err(|_| <CosmwasmVMError<T>>::Ibc(format!("receiver is wrong")))?,
-			timeout_height: todo!("after timeout will have pub interface"),
-			timeout_timestamp: todo!("above"),
+		let msg = HandlerMessage::Transfer { 
+			channel_id: channel_id, 
+			coin: (), 
+			timeout: (), 
+			from: (), 
+			to: () 
+
+			// source_port: port_id,
+			// source_channel: channel_id,
+			// token: PrefixedCoin {
+			// 	amount: Amount::from(amount.amount as u64),
+			// 	denom: PrefixedDenom::from_str(amount.denom.as_ref()).unwrap(),
+			// },
+			// sender: IbcSigner::from_str(address.as_str()).expect("address is signer; qed"),
+			// receiver: IbcSigner::from_str(to_address.as_str())
+			// 	.map_err(|_| <CosmwasmVMError<T>>::Ibc(format!("receiver is wrong")))?,
+			// timeout_height: todo!("after timeout will have pub interface"),
+			// timeout_timestamp: todo!("above"),
 		};
 
-		T::IbcRelayer::send_transfer(msg)
+		T::IbcRelayer::handle_message(msg)
 			.map_err(|err| <CosmwasmVMError<T>>::Ibc(format!("failed to send amount")))
 	}
 
