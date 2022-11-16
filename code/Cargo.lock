@@ -2735,7 +2735,7 @@ dependencies = [
  "cw20",
  "hex",
  "num",
- "prost 0.11.0",
+ "prost 0.11.2",
  "schemars",
  "serde",
  "serde-json-wasm",
@@ -2759,7 +2759,7 @@ dependencies = [
  "cw2",
  "cw20",
  "hex",
- "prost 0.11.0",
+ "prost 0.11.2",
  "schemars",
  "serde",
  "serde-json-wasm",
@@ -7574,6 +7574,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex",
+ "lazy_static",
  "log 0.4.17",
  "num-traits",
  "orml-tokens",
@@ -7585,6 +7586,7 @@ dependencies = [
  "parity-scale-codec",
  "parity-wasm 0.45.0",
  "primitives",
+ "rand 0.8.5",
  "scale-info",
  "serde_json",
  "sha2 0.10.6",
@@ -10437,6 +10439,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "eb9f9e6e233e5c4a35559a617bf40a4ec447db2e84c20b55a6f83167b7e57872"
 
 [[package]]
+name = "prettyplease"
+version = "0.1.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c142c0e46b57171fe0c528bee8c5b7569e80f0c17e377cd0e30ea57dbc11bb51"
+dependencies = [
+ "proc-macro2 1.0.43",
+ "syn 1.0.100",
+]
+
+[[package]]
 name = "price-feed"
 version = "0.1.0"
 dependencies = [
@@ -10648,12 +10660,12 @@ dependencies = [
 
 [[package]]
 name = "prost"
-version = "0.11.0"
+version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "399c3c31cdec40583bb68f0b18403400d01ec4289c383aa047560439952c4dd7"
+checksum = "a0841812012b2d4a6145fae9a6af1534873c32aa67fff26bd09f8fa42c83f95a"
 dependencies = [
  "bytes 1.2.1",
- "prost-derive 0.11.0",
+ "prost-derive 0.11.2",
 ]
 
 [[package]]
@@ -10680,9 +10692,9 @@ dependencies = [
 
 [[package]]
 name = "prost-build"
-version = "0.11.1"
+version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f835c582e6bd972ba8347313300219fed5bfa52caf175298d860b61ff6069bb"
+checksum = "1d8b442418ea0822409d9e7d047cbf1e7e9e1760b172bf9982cf29d517c93511"
 dependencies = [
  "bytes 1.2.1",
  "heck 0.4.0",
@@ -10691,9 +10703,11 @@ dependencies = [
  "log 0.4.17",
  "multimap",
  "petgraph",
- "prost 0.11.0",
- "prost-types 0.11.1",
+ "prettyplease",
+ "prost 0.11.2",
+ "prost-types 0.11.2",
  "regex",
+ "syn 1.0.100",
  "tempfile",
  "which",
 ]
@@ -10726,9 +10740,9 @@ dependencies = [
 
 [[package]]
 name = "prost-derive"
-version = "0.11.0"
+version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7345d5f0e08c0536d7ac7229952590239e77abf0a0100a1b1d890add6ea96364"
+checksum = "164ae68b6587001ca506d3bf7f1000bfa248d0e1217b618108fba4ec1d0cc306"
 dependencies = [
  "anyhow",
  "itertools",
@@ -10749,12 +10763,12 @@ dependencies = [
 
 [[package]]
 name = "prost-types"
-version = "0.11.1"
+version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4dfaa718ad76a44b3415e6c4d53b17c8f99160dcb3a99b10470fce8ad43f6e3e"
+checksum = "747761bc3dc48f9a34553bf65605cf6cb6288ba219f3450b4275dbd81539551a"
 dependencies = [
  "bytes 1.2.1",
- "prost 0.11.0",
+ "prost 0.11.2",
 ]
 
 [[package]]
@@ -16556,7 +16570,7 @@ dependencies = [
  "fixed",
  "num",
  "parity-scale-codec",
- "prost 0.11.0",
+ "prost 0.11.2",
  "scale-info",
  "schemars",
  "serde",
@@ -16568,9 +16582,9 @@ name = "xcvm-proto"
 version = "0.1.0"
 dependencies = [
  "fixed",
- "prost 0.11.0",
- "prost-build 0.11.1",
- "prost-types 0.11.1",
+ "prost 0.11.2",
+ "prost-build 0.11.2",
+ "prost-types 0.11.2",
  "xcvm-core",
 ]
 
