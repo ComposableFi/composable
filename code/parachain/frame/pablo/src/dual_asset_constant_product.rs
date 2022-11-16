@@ -1,5 +1,7 @@
 use crate::{Config, Error, PoolConfiguration, PoolCount, Pools};
-use composable_maths::dex::constant_product::{compute_deposit_lp, compute_in_given_out};
+use composable_maths::dex::constant_product::{
+	compute_deposit_lp, compute_in_given_out, compute_out_given_in_new,
+};
 use composable_support::math::safe::{SafeAdd, SafeSub};
 use composable_traits::{
 	currency::{CurrencyFactory, RangeId},
@@ -139,6 +141,31 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		T::Assets::burn_from(pool.lp_token, who, lp_amount)?;
 
 		Ok((*first_asset_amount, *second_asset_amount, lp_issued.safe_sub(&lp_amount)?))
+	}
+
+	pub(crate) fn get_exchange_value(
+		pool: &BasicPoolInfo<T::AccountId, T::AssetId, ConstU32<2>>,
+		pool_account: &T::AccountId,
+		in_asset: AssetAmount<T::AssetId, T::Balance>,
+		out_asset_id: T::AssetId,
+		_apply_fees: bool,
+	) -> Result<
+		(AssetAmount<T::AssetId, T::Balance>, AssetAmount<T::AssetId, T::Balance>),
+		DispatchError,
+	> {
+		let pool_assets = Self::get_pool_balances(pool, pool_account);
+		let a_sent = T::Convert::convert(in_asset.amount);
+		let (w_i, b_i) = pool_assets.get(&out_asset_id).ok_or(Error::<T>::PairMismatch)?;
+		let (w_o, b_o) = pool_assets.get(&in_asset.asset_id).ok_or(Error::<T>::PairMismatch)?;
+
+		// TODO: Provide fee calculations or value
+		let amm_pair =
+			compute_out_given_in_new::<_>(*w_i, *w_o, *b_i, *b_o, a_sent, Permill::zero())?;
+
+		let value = AssetAmount::new(out_asset_id, T::Convert::convert(amm_pair.value));
+		let fee = AssetAmount::new(in_asset.asset_id, T::Convert::convert(amm_pair.fee));
+
+		Ok((value, fee))
 	}
 
 	pub(crate) fn do_buy(
