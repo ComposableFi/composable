@@ -19,11 +19,13 @@ export function useValidation({
   const [value, setValue] = React.useState<BigNumber>(initialValue);
 
   React.useEffect(() => {
-    setStringValue(value.toFixed());
-    if (!value.eq(0)) {
-      setValid(true);
+    if (!value.eq(new BigNumber(stringValue))) {
+      setStringValue(value.toFixed());
+      if (!value.eq(0)) {
+        setValid(true);
+      }
     }
-  }, [value]);
+  }, [maxDec, value]);
 
   React.useEffect(() => {
     if (!initialValue.eq(value)) {
