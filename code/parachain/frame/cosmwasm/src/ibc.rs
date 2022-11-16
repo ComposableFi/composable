@@ -134,21 +134,22 @@ impl<T: Config> Pallet<T> {
 			channel_id,
 			port_id,
 		})
-		.map_err(|_| Error::<T>::Unsupported.into())
+		.map_err(|_| CosmwasmVMError::<T>::Ibc("failed to send packet".to_string()))
 	}
 
 	pub(crate) fn do_ibc_close_channel(
 		vm: &mut CosmwasmVM<T>,
 		channel_id: String,
 	) -> Result<(), CosmwasmVMError<T>> {
-		let _channel_id = ChannelId::from_str(channel_id.as_ref())
+		let channel_id = ChannelId::from_str(channel_id.as_ref())
 			.map_err(|_| <CosmwasmVMError<T>>::Ibc("channel name is not valid".to_string()))?;
 		let address: cosmwasm_minimal_std::Addr = vm.contract_address.clone().into();
 
-		let _port_id = PortId::from_str(address.as_str())
+		let port_id = PortId::from_str(address.as_str())
 			.expect("all pallet instanced contract addresses are valid port names; qwe");
-		/// https://github.com/ComposableFi/centauri/issues/115
-		Err(Error::<T>::Unsupported.into())
+
+		T::IbcRelayer::handle_message(HandlerMessage::CloseChannel { channel_id, port_id })
+			.map_err(|_| CosmwasmVMError::<T>::Ibc("failed to close channel".to_string()))
 	}
 
 	pub(crate) fn do_compute_ibc_contract_port(address: AccountIdOf<T>) -> String {
@@ -254,7 +255,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		channel_id: &ChannelId,
 		counterparty: &Counterparty,
 		version: &IbcVersion,
-		// weight_limit: Weight,
+		// weight_limit: Weight, https://github.com/ComposableFi/centauri/issues/129
 	) -> Result<(), IbcError> {
 		let address = Self::port_to_address(port_id)?;
 
@@ -381,7 +382,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 			IbcChannelConnectMsg,
 		>(&mut executor, &message)
 		.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
-		// add output.with_events(events). what events to add?
+
 		Ok(())
 	}
 
