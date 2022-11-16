@@ -101,6 +101,7 @@ export const DotSamaContextProvider = ({
     rpcUrl: string;
     rpc: any;
     types: any;
+    chainSpec?: string
   }[];
   supportedRelaychains?: {
     chainId: RelayChainId;

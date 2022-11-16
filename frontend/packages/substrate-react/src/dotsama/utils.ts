@@ -1,4 +1,5 @@
 import { ApiPromise, WsProvider } from "@polkadot/api";
+import { ScProvider } from "@polkadot/rpc-provider/substrate-connect";
 import {
   ParachainApi,
   ParachainId,
@@ -24,6 +25,7 @@ export async function createParachainApis(
     rpcUrl: string;
     rpc: any;
     types: any;
+    chainSpec?: string
   }[]
 ): Promise<{ [chainId in ParachainId]: ParachainApi }> {
   let newRecord: { [chainId in ParachainId]: ParachainApi } = Object.keys(
@@ -42,14 +44,21 @@ export async function createParachainApis(
   for (let i = 0; i < supportedChains.length; i++) {
     connectionPromises.push(
       new Promise(async (res, _rej) => {
-        const { chainId, rpcUrl, rpc, types } = supportedChains[i];
+        const { chainId, rpcUrl, rpc, types, chainSpec } = supportedChains[i];
         try {
-          const wsProvider = new WsProvider(rpcUrl);
-          const parachainApi = new ApiPromise({
-            provider: wsProvider,
-            rpc,
-            types,
-          });
+          let parachainApi;
+          if (chainSpec) {
+            const provider = new ScProvider(chainSpec);            
+            await provider.connect();
+            parachainApi = await ApiPromise.create({ provider });
+          } else {
+            const wsProvider = new WsProvider(rpcUrl);
+            parachainApi = new ApiPromise({
+              provider: wsProvider,
+              rpc,
+              types,
+            });
+          }
 
           await parachainApi.isReadyOrError;
           if (parachainApi.isConnected) {

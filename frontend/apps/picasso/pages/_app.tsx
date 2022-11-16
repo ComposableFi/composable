@@ -21,6 +21,7 @@ import { SnackbarProvider } from "notistack";
 
 import * as React from "react";
 import { hotjar } from "react-hotjar";
+import chainSpec from "@/defi/chainspec/dali.json";
 import { getEnvironment } from "shared/endpoints";
 import { DotSamaContextProvider, ExecutorProvider } from "substrate-react";
 // Client-side cache, shared for the whole session of the user in the browser.
@@ -118,6 +119,7 @@ export default function MyApp(props: MyAppProps) {
               },
               {
                 chainId: "picasso",
+                chainSpec: JSON.stringify(chainSpec),
                 rpcUrl: getEnvironment("picasso"),
                 rpc,
                 types
@@ -127,7 +129,7 @@ export default function MyApp(props: MyAppProps) {
                 rpcUrl: getEnvironment("karura"),
                 rpc: acalaRpc,
                 types: acalaTypes
-              }
+              },
             ]}
             appName={APP_NAME}
           >
