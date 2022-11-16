@@ -26,17 +26,17 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 	Deserialize,
 )]
 #[repr(transparent)]
-pub struct AssetId(pub u128);
+pub struct AssetId(pub Displayed<u128>);
 
 impl From<AssetId> for u128 {
 	fn from(val: AssetId) -> Self {
-		val.0
+		val.0 .0
 	}
 }
 
 impl From<u128> for AssetId {
 	fn from(asset: u128) -> Self {
-		AssetId(asset)
+		AssetId(Displayed(asset))
 	}
 }
 
@@ -80,24 +80,35 @@ pub trait Asset {
 }
 
 impl Asset for PICA {
-	const ID: AssetId = AssetId(<Assets as IndexOf<Self, _>>::INDEX as u128);
+	const ID: AssetId = AssetId(Displayed(<Assets as IndexOf<Self, _>>::INDEX as u128));
 }
 
 impl Asset for ETH {
-	const ID: AssetId = AssetId(<Assets as IndexOf<Self, _>>::INDEX as u128);
+	const ID: AssetId = AssetId(Displayed(<Assets as IndexOf<Self, _>>::INDEX as u128));
 }
 
 impl Asset for USDT {
-	const ID: AssetId = AssetId(<Assets as IndexOf<Self, _>>::INDEX as u128);
+	const ID: AssetId = AssetId(Displayed(<Assets as IndexOf<Self, _>>::INDEX as u128));
 }
 
 impl Asset for USDC {
-	const ID: AssetId = AssetId(<Assets as IndexOf<Self, _>>::INDEX as u128);
+	const ID: AssetId = AssetId(Displayed(<Assets as IndexOf<Self, _>>::INDEX as u128));
 }
 
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[derive(
-	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
+	Copy,
+	Clone,
+	PartialEq,
+	Eq,
+	PartialOrd,
+	Ord,
+	Debug,
+	Encode,
+	Decode,
+	TypeInfo,
+	Serialize,
+	Deserialize,
 )]
 #[repr(transparent)]
 pub struct Displayed<T>(
@@ -274,7 +285,10 @@ impl<T> From<Funds<T>> for Vec<(AssetId, T)> {
 impl<T> From<Funds<T>> for Vec<(u128, T)> {
 	#[inline]
 	fn from(Funds(assets): Funds<T>) -> Self {
-		assets.into_iter().map(|(AssetId(asset), amount)| (asset, amount)).collect()
+		assets
+			.into_iter()
+			.map(|(AssetId(Displayed(asset)), amount)| (asset, amount))
+			.collect()
 	}
 }
 
@@ -283,9 +297,9 @@ mod tests {
 	use super::*;
 	#[test]
 	fn asset_ids() {
-		assert_eq!(PICA::ID, AssetId(1));
-		assert_eq!(ETH::ID, AssetId(2));
-		assert_eq!(USDT::ID, AssetId(3));
-		assert_eq!(USDC::ID, AssetId(4));
+		assert_eq!(PICA::ID, AssetId::from(1));
+		assert_eq!(ETH::ID, AssetId::from(2));
+		assert_eq!(USDT::ID, AssetId::from(3));
+		assert_eq!(USDC::ID, AssetId::from(4));
 	}
 }
