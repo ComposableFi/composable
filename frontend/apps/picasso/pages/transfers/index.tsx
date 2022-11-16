@@ -69,7 +69,17 @@ const Transfers: NextPage = () => {
     selectedAccount ? selectedAccount.address : "-"
   );
 
-  const hasPendingTransfer = hasPendingXcmTransfer || hasPendingXTokensTransfer;
+  const hasPendingLimitedXcmTransfer = usePendingExtrinsic(
+    "limitedReserveTransferAssets",
+    "polkadotXcm",
+    selectedAccount ? selectedAccount.address : "-"
+  );
+
+  const hasPendingTransfer =
+    hasPendingXcmTransfer ||
+    hasPendingXTokensTransfer ||
+    hasPendingLimitedXcmTransfer;
+
   const getBalance = useStore((state) => state.substrateBalances.getBalance);
   const hasFormError = useStore((state) => state.transfers.hasFormError);
 

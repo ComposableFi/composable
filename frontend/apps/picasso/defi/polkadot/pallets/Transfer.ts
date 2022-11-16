@@ -1,12 +1,12 @@
+import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
+import { SubstrateNetworkId } from "@/defi/polkadot/types";
+import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
 import { ApiPromise } from "@polkadot/api";
 import { u128 } from "@polkadot/types-codec";
-import { fromChainIdUnit, toChainIdUnit } from "shared";
-import { ParachainId, ParachainNetworks, RelayChainId } from "substrate-react";
-import { TokenId } from "tokens";
-import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
 import BigNumber from "bignumber.js";
-import { SubstrateNetworkId } from "@/defi/polkadot/types";
-import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
+import { fromChainIdUnit, toChainIdUnit } from "shared";
+import { ParachainId, RelayChainId } from "substrate-react";
+import { TokenId } from "tokens";
 
 export function getAmountToTransfer({
   balance,
@@ -70,23 +70,23 @@ export function calculateTransferAmount({
 }: CalculateTransferAmount) {
   const ZERO = new BigNumber(0);
   const gasTokenEqSelected = selectedToken === sourceGas.token;
-  const amountMinusGas = gasTokenEqSelected
-    ? amountToTransfer.minus(sourceGas.fee)
-    : amountToTransfer;
+  // If the remainder is not enough to pay the gas fee, deduct the gas fee from amount.
+  // NOTE: This should happen only if transfer token and gas token are the same.
+  const gasPrice = gasTokenEqSelected ? sourceGas.fee : ZERO;
+
   // Is account going to be removed after transfer?
-  const willReap = balance
-    .minus(gasTokenEqSelected ? sourceGas.fee : ZERO)
-    .minus(amountToTransfer)
-    .minus(sourceExistentialDeposit)
-    .lt(sourceExistentialDeposit);
+  const willReap = balance.lte(amountToTransfer)
+    ? true
+    : balance
+        .minus(gasPrice)
+        .minus(amountToTransfer)
+        .minus(sourceExistentialDeposit)
+        .lt(sourceExistentialDeposit);
+
   // If we should keep alive, deduct existential deposit from the amount to transfer
   // NOTE: This should happen only if amount is MAX balance.
   const requiredKeepAliveValue =
     keepAlive && willReap ? sourceExistentialDeposit : ZERO;
-
-  // If the remainder is not enough to pay the gas fee, deduct the gas fee from amount.
-  // NOTE: This should happen only if transfer token and gas token are the same.
-  const gasPrice = gasTokenEqSelected ? sourceGas.fee : ZERO;
 
   const output = amountToTransfer.minus(gasPrice).minus(requiredKeepAliveValue);
   // Don't send values less than zero.
