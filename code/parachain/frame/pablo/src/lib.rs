@@ -1089,6 +1089,11 @@ pub mod pallet {
 						swap_result.value.amount >= min_receive.amount,
 						Error::<T>::CannotRespectMinimumRequested
 					);
+					ensure!(
+						T::Assets::balance(min_receive.asset_id, &pool_account) >
+							swap_result.value.amount,
+						Error::<T>::NotEnoughLiquidity
+					);
 
 					T::Assets::transfer(
 						in_asset.asset_id,

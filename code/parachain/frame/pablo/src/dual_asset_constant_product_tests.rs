@@ -649,32 +649,52 @@ proptest! {
 	fn buy_sell_proptest(
 		btc_value in 1..u32::MAX,
 	) {
-	  new_test_ext().execute_with(|| {
-		  let unit = 1_000_000_000_000_u128;
-		  let initial_btc = 1_000_000_000_000_u128 * unit;
-		  let btc_price = 45_000_u128;
-		  let initial_usdt = initial_btc * btc_price;
-		  let btc_value = btc_value as u128 * unit;
-		  let usdt_value = btc_value * btc_price;
-		  let pool_id = create_pool(
+		new_test_ext().execute_with(|| {
+			let unit = 1_000_000_000_000_u128;
+			let initial_btc = 1_000_000_000_000_u128 * unit;
+			let btc_price = 45_000_u128;
+			let initial_usdt = initial_btc * btc_price;
+			let btc_value = btc_value as u128 * unit;
+			let usdt_value = btc_value * btc_price;
+			let pool_id = create_pool(
 			  BTC,
 			  USDT,
 			  initial_btc,
 			  initial_usdt,
 			  Permill::zero(),
 			  Permill::zero(),
-		  );
-		  prop_assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_value));
-		  prop_assert_ok!(Pablo::swap(Origin::signed(BOB), pool_id, AssetAmount::new(USDT, usdt_value), AssetAmount::new(BTC, 0_u128), false));
-		  let bob_btc = Tokens::balance(BTC, &BOB);
-		  // mint extra BTC equal to slippage so that original amount of USDT can be buy back
-		  prop_assert_ok!(Tokens::mint_into(BTC, &BOB, btc_value - bob_btc));
-		  prop_assert_ok!(Pablo::buy(Origin::signed(BOB), pool_id, BTC, AssetAmount::new(USDT, usdt_value), false));
-		  let bob_usdt = Tokens::balance(USDT, &BOB);
-		  let slippage = usdt_value -  bob_usdt;
-		  let slippage_percentage = slippage as f64 * 100.0_f64 / usdt_value as f64;
-		  prop_assert!(slippage_percentage < 1.0_f64);
-		  Ok(())
+			);
+			prop_assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_value));
+			prop_assert_ok!(
+				Pablo::swap(
+					Origin::signed(BOB),
+					pool_id,
+					AssetAmount::new(USDT, usdt_value),
+					AssetAmount::new(BTC, 0_u128),
+					false
+				)
+			);
+			let bob_btc = Tokens::balance(BTC, &BOB);
+
+			// mint extra BTC equal to slippage so that original amount of USDT can be buy back
+			prop_assert_ok!(
+				Tokens::mint_into(BTC, &BOB, btc_value - bob_btc)
+			);
+			prop_assert_ok!(
+				Pablo::buy(
+					Origin::signed(BOB),
+					pool_id,
+					BTC,
+					AssetAmount::new(USDT, usdt_value),
+					false
+				)
+			);
+			let bob_usdt = Tokens::balance(USDT, &BOB);
+
+			let slippage = usdt_value -  bob_usdt;
+			let slippage_percentage = slippage as f64 * 100.0_f64 / usdt_value as f64;
+			prop_assert!(slippage_percentage < 1.0_f64);
+			Ok(())
 	  })?;
 	}
 
