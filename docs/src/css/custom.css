@@ -69,7 +69,7 @@ h1, h2, h3, h4 {
   font-weight: 800;
   margin-bottom: 4px !important;
 }
-
+ 
 p {
   margin-bottom: 16px !important;
 }
@@ -92,6 +92,8 @@ p {
   --ifm-color-primary-lighter: #726db1;
   --ifm-color-primary-lightest: #8a86be;
   --ifm-code-font-size: 95%;
+  --ifm-h1-font-size: 3.5rem;
+  --ifm-h2-font-size: 2.3rem;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
   /* --ifm-font-family-monospace: "JetBrains Mono Regular"; */
   --ifm-heading-font-family:"EkMukta", system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';  
