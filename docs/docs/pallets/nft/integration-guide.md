@@ -40,8 +40,9 @@ No automatic state transitions occur.
 - `FinancialNftCollectionId` - Unique identifier for fNFT collections
 - `FinancialNftInstanceId` - Unique identifier for fNFT instances
 - `ProxyType` - Array type representing the permissions allowed for a proxy account
-- `AccountProxy` - Function setting the owning account of an fNFT as a delegate for the fNFT asset_account
-- `ProxyTypeSelector` - 
+- `AccountProxy` - Type dependency used for setting the owning account of an fNFT as a delegate for the fNFT asset_account
+- `ProxyTypeSelector` - Type dependency representing the fNFT proxies
+
 ### Constants
 
 - `PalletId` - The unique identifier of this pallet
