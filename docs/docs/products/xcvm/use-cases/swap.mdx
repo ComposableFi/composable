@@ -1,0 +1,78 @@
+# Cross-Chain Swap
+
+Many different applications can be built upon XCVM. **One of which** is a
+cross-chain swap program.
+
+Traditionally, users and applications were trading tokens that were only
+available on their native chain. If you were operating on a chain **X**, you
+would only be able to **swap** tokens that were registered on **X** (be it
+native, virtualized like ERC20 or even virtualized and wrapped like WETH).
+
+:::tip Single-Chain Swap
+
+Decentralized exchanges are one of (if not the one) the most widely used DeFi
+protocol in the blockchain ecosystem. It allows (through a contract) anyone to
+atomically exchange a token **A** against a token **B** at a defined rate,
+usually following a constant product invariant `x * y = k`. This operation is
+executed atomically from within a transaction and we call this action a
+**swap**.
+
+:::
+
+Under XCVM, tokens are **free to fly** between any chain connected to it
+network. Not only they can be traded regardless of their origin, but they are
+also abstracted thanks to a globally unique XCVM **asset identifier**.
+
+Let's take an example. Suppose we have [**Picasso**](https://picasso.xyz) and
+[**Osmosis**](https://osmosis.zone) connected with an
+[**IBC**](https://ibcprotocol.org/) bridge powered by
+[**Centauri**](https://github.com/composablefi/centauri). **Alice** could submit
+the following **XCVM program** to execute a cross-chain swap:
+
+```haskell
+[
+    -- 1. Move to Osmosis with a bag of 250 PICA.
+    Spawn Osmosis [PICA 250],
+
+    -- 2. (OPTIONAL) Tip the relayer for the journey.
+    Transfer Relayer (PICA 25),
+
+    -- 3. Execute a swap, effectively trading 200 PICA for OSMO with 1% slippage tolerance.
+    Swap (PICA 200) OSMO 1%,
+
+    -- 4. At this point we don't know how many OSMOS/PICA we have.
+    -- But we can ask XCVM to move 100% of both!
+    Spawn Picasso [OSMO 100%, PICA 100%],
+
+    -- 5. (OPTIONAL) Tip the relayer for the cozy home with the remaining PICAs.
+    Transfer Relayer (PICA 100%),
+
+    -- 6. Funds are safu.
+    Transfer (OSMO 100% Alice)
+]
+```
+
+:::info
+
+- The above program is a pseudocode. XCVM programs are represented as
+  **protobuf** encoded binary payload.
+- Obviously, the sequence of instructions cannot be executed atomically, another
+section is used to discuss how we circumvent issues related to atomicity.
+- As per the XCVM specification, fees are covered by the relayer, another
+section is used to discuss relayer incentives.
+
+:::
+
+Let's dissect the program execution to have a better understanding:
+
+1. The first instruction tells the XCVM interpreter to **spawn** the following
+instructions (that we call sub-program) to **Osmosis**. Not only the sub-program
+is going to be relayed, but we also specify a list of assets to attach to the
+transfer. In this case, **Alice** would like to attach **250 PICA** to the
+executing program. In this example, we suppose that we have an IBC bridge.
+Consequently, the program and it's attached funds will be transferred with an
+IBC packet and an ICS20 transfer.
+
+2. As per the specification, we can optionally tip the relayer by an arbitrary
+amount. Any relayer will be able to **inspect** XCVM programs and determine
+whether relaying will be profitable or not and act accordingly.
