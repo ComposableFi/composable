@@ -2,7 +2,7 @@
 
 `XCVM` (Cross-chain virtual machine) is an application-level protocol being built on top of IBC (and other trustless technology) by us. It's a bridge-agnostic subset of `XCM`, tailored for use by third-party application developers. 
 
-The [specification](https://github.com/ComposableFi/composable/blob/main/xcvm/SPEC.md) should provide you with an understanding, although depending on your technical background, maybe a bit formal and complicated. Because the spec is still a work-in-progress, we haven't yet included a layman's explanation as part of your onboarding. 
+The [specification](https://github.com/ComposableFi/composable/blob/main/code/xcvm/SPEC.md) should provide you with an understanding, although depending on your technical background, maybe a bit formal and complicated. Because the spec is still a work-in-progress, we haven't yet included a layman's explanation as part of your onboarding. 
 
 ### Takeaways
 
