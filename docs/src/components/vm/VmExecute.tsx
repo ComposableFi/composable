@@ -14,6 +14,19 @@ interface VmExecuteProps<T extends VmExecuteParams> {
 }
 
 //	1. Execute the contract in the way specified with a limit of how many times it can be executed
-export function VmExecute<T extends VmExecuteParams>({ storageId }: VmExecuteProps<T>) {
-	return <div></div>;
+export function VmExecute<T extends VmExecuteParams>({
+	storageId,
+	vmShared,
+	inputParams,
+	placeholders,
+}: VmExecuteProps<T>) {
+	console.log('vmExecute >>> ', vmShared, inputParams, placeholders);
+	return (
+		<div className={'rounded-xl w-full h-[400px]'}>
+			<div>Input area</div>
+			<button className={'rounded-2xl px-4 py-2 '}>
+				<p>Execute button</p>
+			</button>
+		</div>
+	);
 }

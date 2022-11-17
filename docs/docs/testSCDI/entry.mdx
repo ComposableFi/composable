@@ -1,11 +1,15 @@
 import BrowserOnly from '@docusaurus/BrowserOnly';
 import {VmWrapper} from '../../src/components/vm/VmWrapper';
-import {ResetButton} from '../../src/components/vm/ResetButton';
+import {ResetButton} from '../../src/components/vm/ResetButton'; import {
+	unhexifyKeys
+} from '../../src/utils/cosmwasm-vm/parsers';
 
 # SCDI test md file
 
-## this is a test - won't display on prod
-## MDX test
+## SCDI test
+
+<br />
+
 <div className='max-w-[600px] overflow-auto'>
 	<ResetButton />
 	<VmWrapper storageId='test' initOptions={{
@@ -23,29 +27,24 @@ import {ResetButton} from '../../src/components/vm/ResetButton';
 		}
 	}}>
 		{(vmShared) => {
-			console.log('vmShared >>> ', vmShared);
 			if(!vmShared) return null;
 			return (
 				<>
-					<p>should be here</p>
+					<p>nextAccountId</p>
 					<pre>{vmShared.nextAccountId}</pre>
 				</>
 			)
 		}}
 	</VmWrapper>
+	text text text
 	<VmWrapper storageId={'test'}>
 		{(vmShared) => {
+			if(!vmShared) return <span>loading...</span>;
+			const storageObj = unhexifyKeys(Object.fromEntries(vmShared.storage.get('10000').entries()));
 			return (
-				<p>lol</p>
+				<span className={'mx-5 bg-gray-600'}>{JSON.stringify(storageObj)}</span>
 			)
 		}}
 	</VmWrapper>
-	<BrowserOnly>
-		{() => {
-			const obj = {a: 10};
-			//	holy shit this works
-			return <pre>{JSON.stringify(obj, null, 2)}</pre>;
-		}}
-	</BrowserOnly>
-
+	text text text
 </div>

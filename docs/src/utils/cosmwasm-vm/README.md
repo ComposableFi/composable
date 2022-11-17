@@ -18,4 +18,3 @@ Headless by default.
 ## Misc
 
 - imports are relative due to spending too much time trying to make tsconfig import properly while keeping the docusaurus weird `@site` import work
-- tailwind doesn't work in mdx files
