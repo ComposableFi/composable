@@ -2,8 +2,8 @@ import { DEFI_CONFIG } from "@/defi/config";
 import { queryLiquidityByPoolId } from "@/defi/subsquid/liquidity/queries";
 import { useState, useEffect } from "react";
 import { processSubsquidChartData } from "@/defi/utils/charts";
-import BigNumber from "bignumber.js";
 import { useLiquidityPoolDetails } from "./useLiquidityPoolDetails";
+import { fromChainIdUnit } from "shared";
 
 export const usePoolTvlChart = (poolId: number) => {
   const poolDetails = useLiquidityPoolDetails(poolId);
@@ -15,8 +15,8 @@ export const usePoolTvlChart = (poolId: number) => {
   );
 
   useEffect(() => {
-    if (poolId !== -1 && poolDetails.quoteAsset) {
-      const quoteDecs = new BigNumber(10).pow(poolDetails.quoteAsset.getDecimals());
+    const quoteDecimals = poolDetails.quoteAsset?.getDecimals("picasso");
+    if (poolId !== -1 && poolDetails.quoteAsset && quoteDecimals) {
       queryLiquidityByPoolId(poolId)
         .then((response) => {
           const { pabloPools } = response.data;
@@ -24,7 +24,7 @@ export const usePoolTvlChart = (poolId: number) => {
           const data = pabloPools.map((i: any) => {
             return [
               Number(i.calculatedTimestamp),
-              new BigNumber(i.totalLiquidity).div(quoteDecs).toNumber(),
+              fromChainIdUnit(BigInt(i.totalLiquidity), quoteDecimals),
             ];
           });
 
