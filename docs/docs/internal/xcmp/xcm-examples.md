@@ -57,7 +57,7 @@ https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkarura-rpc-0.aca-api.network#/extr
 
 [Transfer KSM on Kusama to parachain in batch call](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkusama-rpc.polkadot.io#/extrinsics/decode/0x180204040000706172612708000000000000000000000000000000000000000000000000000052220600)
 
-[Register some Karura token on Piasso](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Frpc.composablefinance.ninja#/extrinsics/decode/0x3700010200411f0608008140420f0000000000000000000000000001000064a7b3b6e00d0000000000000000010c000000)
+[Register some Karura token on Picasso](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Frpc.composablefinance.ninja#/extrinsics/decode/0x3700010200411f0608008140420f0000000000000000000000000001000064a7b3b6e00d0000000000000000010c000000)
 
 [Register PICA on Karura](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkarura-rpc-1.aca-api.network#/extrinsics/decode/0x7a000001019d20105049434110504943410c00ca9a3b000000000000000000000000)
 

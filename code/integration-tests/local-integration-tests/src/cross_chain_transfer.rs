@@ -109,9 +109,10 @@ fn transfer_this_native_to_sibling_overridden() {
 		let alice_before = Balances::balance(&alice().into());
 		assert_ok!(RelayerXcm::limited_reserve_transfer_assets(
 			Origin::signed(alice().into()),
-			Box::new(
-				VersionedMultiLocation::V1(MultiLocation::new(1, X1(Parachain(SIBLING_PARA_ID))))
-			),
+			Box::new(VersionedMultiLocation::V1(MultiLocation::new(
+				1,
+				X1(Parachain(SIBLING_PARA_ID))
+			))),
 			Box::new(Junction::AccountId32 { id: bob(), network: NetworkId::Any }.into().into()),
 			Box::new((Here, 3 * PICA).into()),
 			0,
@@ -155,9 +156,10 @@ fn transfer_non_native_reserve_asset_from_this_to_sibling() {
 		let _before = Assets::free_balance(CurrencyId::PBLO, &alice().into());
 		assert_ok!(RelayerXcm::limited_reserve_transfer_assets(
 			Origin::signed(alice().into()),
-			Box::new(
-				VersionedMultiLocation::V1(MultiLocation::new(1, X1(Parachain(SIBLING_PARA_ID))))
-			),
+			Box::new(VersionedMultiLocation::V1(MultiLocation::new(
+				1,
+				X1(Parachain(SIBLING_PARA_ID))
+			))),
 			Box::new(Junction::AccountId32 { id: bob(), network: NetworkId::Any }.into().into()),
 			Box::new((X1(GeneralIndex(CurrencyId::PBLO.into()),), 3 * PICA).into()),
 			0,
@@ -1060,9 +1062,10 @@ fn sibling_shib_to_transfer() {
 		let origin = Origin::signed(bob().into());
 		assert_ok!(RelayerXcm::limited_reserve_transfer_assets(
 			origin,
-			Box::new(
-				VersionedMultiLocation::V1(MultiLocation::new(1, X1(Parachain(THIS_PARA_ID))))
-			),
+			Box::new(VersionedMultiLocation::V1(MultiLocation::new(
+				1,
+				X1(Parachain(THIS_PARA_ID))
+			))),
 			Box::new(Junction::AccountId32 { id: bob(), network: NetworkId::Any }.into().into()),
 			Box::new((X1(GeneralIndex(sibling_asset_id.into()),), transfer_amount).into()),
 			0,

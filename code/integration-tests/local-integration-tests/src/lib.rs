@@ -73,6 +73,6 @@ mod transact_calls;
 mod common_goods_assets;
 #[cfg(test)]
 mod errors;
-pub mod testing;
 #[cfg(test)]
 mod relay_transfer;
+pub mod testing;

@@ -5,23 +5,17 @@ use crate::{
 	prelude::*,
 };
 
-use common::{AccountId};
-
+use common::AccountId;
 
 use frame_system::RawOrigin;
-
 
 use orml_traits::currency::MultiCurrency;
 
 use frame_support::{assert_ok, log};
 
-
-use xcm::{VersionedXcm};
+use xcm::VersionedXcm;
 
 use xcm_emulator::TestExt;
-
-
-use frame_support::traits::fungibles::Inspect as MultiInspect;
 
 #[cfg(feature = "dali")]
 #[test]

@@ -77,9 +77,10 @@ fn transfer_native_from_statemine_to_this() {
 
 		assert_ok!(PolkadotXcm::reserve_transfer_assets(
 			origin,
-			Box::new(
-				VersionedMultiLocation::V1(MultiLocation::new(1, X1(Parachain(THIS_PARA_ID))))
-			),
+			Box::new(VersionedMultiLocation::V1(MultiLocation::new(
+				1,
+				X1(Parachain(THIS_PARA_ID))
+			))),
 			Box::new(Junction::AccountId32 { id: BOB, network: NetworkId::Any }.into().into()),
 			Box::new((MultiLocation::new(1, Here), bob_balance).into()),
 			0,
@@ -133,9 +134,10 @@ fn transfer_usdt_from_statemine_to_this() {
 		let origin = Origin::signed(BOB.into());
 		assert_ok!(PolkadotXcm::limited_reserve_transfer_assets(
 			origin,
-			Box::new(
-				VersionedMultiLocation::V1(MultiLocation::new(1, X1(Parachain(THIS_PARA_ID))))
-			),
+			Box::new(VersionedMultiLocation::V1(MultiLocation::new(
+				1,
+				X1(Parachain(THIS_PARA_ID))
+			))),
 			Box::new(Junction::AccountId32 { id: BOB, network: NetworkId::Any }.into().into()),
 			Box::new(
 				(X2(PalletInstance(50), GeneralIndex(statemine_asset_id)), usdt_transfer_amount)
@@ -198,16 +200,14 @@ fn rockmine_shib_to_dali_transfer() {
 		log::info!(target: "bdd", "	and USDT on Dali registered");
 		use this_runtime::*;
 		let root = frame_system::RawOrigin::Root;
-		let location = XcmAssetLocation::new(
-			MultiLocation::new(
-				1,
-				X3(
-					Parachain(topology::common_good_assets::ID),
-					PalletInstance(50),
-					GeneralIndex(statemine_asset_id as u128),
-				),
+		let location = XcmAssetLocation::new(MultiLocation::new(
+			1,
+			X3(
+				Parachain(topology::common_good_assets::ID),
+				PalletInstance(50),
+				GeneralIndex(statemine_asset_id as u128),
 			),
-		);
+		));
 		AssetsRegistry::register_asset(
 			root.into(),
 			location.clone(),
@@ -235,9 +235,10 @@ fn rockmine_shib_to_dali_transfer() {
 		let origin = Origin::signed(BOB.into());
 		assert_ok!(PolkadotXcm::limited_reserve_transfer_assets(
 			origin,
-			Box::new(
-				VersionedMultiLocation::V1(MultiLocation::new(1, X1(Parachain(THIS_PARA_ID))))
-			),
+			Box::new(VersionedMultiLocation::V1(MultiLocation::new(
+				1,
+				X1(Parachain(THIS_PARA_ID))
+			))),
 			Box::new(Junction::AccountId32 { id: BOB, network: NetworkId::Any }.into().into()),
 			Box::new(
 				(X2(PalletInstance(50), GeneralIndex(statemine_asset_id as u128)), transfer_amount)
@@ -299,16 +300,14 @@ fn rockmine_stable_to_dali_transfer() {
 		log::info!(target: "bdd", "	and STABLE on Dali registered");
 		use this_runtime::*;
 		let root = frame_system::RawOrigin::Root;
-		let location = XcmAssetLocation::new(
-			MultiLocation::new(
-				1,
-				X3(
-					Parachain(topology::common_good_assets::ID),
-					PalletInstance(50),
-					GeneralIndex(STABLE::ID),
-				),
+		let location = XcmAssetLocation::new(MultiLocation::new(
+			1,
+			X3(
+				Parachain(topology::common_good_assets::ID),
+				PalletInstance(50),
+				GeneralIndex(STABLE::ID),
 			),
-		);
+		));
 		let ratio = Rational64::from(STABLE::ONE as u64 * 15, 1000 * PICA::ONE as u64);
 
 		AssetsRegistry::register_asset(
@@ -337,9 +336,10 @@ fn rockmine_stable_to_dali_transfer() {
 		let origin = Origin::signed(BOB.into());
 		assert_ok!(PolkadotXcm::limited_reserve_transfer_assets(
 			origin,
-			Box::new(
-				VersionedMultiLocation::V1(MultiLocation::new(1, X1(Parachain(THIS_PARA_ID))))
-			),
+			Box::new(VersionedMultiLocation::V1(MultiLocation::new(
+				1,
+				X1(Parachain(THIS_PARA_ID))
+			))),
 			Box::new(Junction::AccountId32 { id: BOB, network: NetworkId::Any }.into().into()),
 			Box::new(
 				(X2(PalletInstance(50), GeneralIndex(statemine_asset_id as u128)), transfer_amount)
@@ -539,9 +539,10 @@ fn statemine_side(this_parachain_account_init_amount: u128, statemine_asset_id: 
 
 		assert_ok!(PolkadotXcm::reserve_transfer_assets(
 			origin,
-			Box::new(
-				VersionedMultiLocation::V1(MultiLocation::new(1, X1(Parachain(THIS_PARA_ID))))
-			),
+			Box::new(VersionedMultiLocation::V1(MultiLocation::new(
+				1,
+				X1(Parachain(THIS_PARA_ID))
+			))),
 			Box::new(Junction::AccountId32 { id: BOB, network: NetworkId::Any }.into().into()),
 			Box::new(
 				(X2(PalletInstance(50), GeneralIndex(statemine_asset_id as u128)), TEN).into()
@@ -564,16 +565,14 @@ fn statemine_side(this_parachain_account_init_amount: u128, statemine_asset_id: 
 fn register_statemine_asset(remote_asset_id: CommonAssetId, ratio: Rational64) -> CurrencyId {
 	This::execute_with(|| {
 		use this_runtime::*;
-		let location = XcmAssetLocation::new(
-			MultiLocation::new(
-				1,
-				X3(
-					Parachain(topology::common_good_assets::ID),
-					PalletInstance(50),
-					GeneralIndex(remote_asset_id as u128),
-				),
+		let location = XcmAssetLocation::new(MultiLocation::new(
+			1,
+			X3(
+				Parachain(topology::common_good_assets::ID),
+				PalletInstance(50),
+				GeneralIndex(remote_asset_id as u128),
 			),
-		);
+		));
 		AssetsRegistry::register_asset(
 			frame_system::RawOrigin::Root.into(),
 			location.clone(),
@@ -581,9 +580,10 @@ fn register_statemine_asset(remote_asset_id: CommonAssetId, ratio: Rational64) -
 			None,
 		)
 		.unwrap();
-		let location = XcmAssetLocation::new(
-			MultiLocation::new(1, X1(Parachain(topology::common_good_assets::ID))),
-		);
+		let location = XcmAssetLocation::new(MultiLocation::new(
+			1,
+			X1(Parachain(topology::common_good_assets::ID)),
+		));
 		AssetsRegistry::set_min_fee(
 			frame_system::RawOrigin::Root.into(),
 			ParaId::from(topology::common_good_assets::ID),
