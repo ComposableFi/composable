@@ -7,7 +7,15 @@ import {
   ResolverInterface,
 } from "type-graphql";
 import type { EntityManager } from "typeorm";
-import { Event, Account, Activity, HistoricalLockedValue } from "../../model";
+import { ApiPromise, WsProvider } from "@polkadot/api";
+import {
+  Event,
+  Account,
+  Activity,
+  CurrentLockedValue,
+  LockedSource,
+} from "../../model";
+import { chain } from "../../config";
 
 @ObjectType()
 export class PicassoOverviewStats {
@@ -36,26 +44,45 @@ export class PicassoOverviewStatsResolver
 
   @FieldResolver({ name: "totalValueLocked", defaultValue: 0 })
   async totalValueLocked(): Promise<bigint> {
+    const wsProvider = new WsProvider(chain());
+    const api = await ApiPromise.create({ provider: wsProvider });
+
     const manager = await this.tx();
 
-    // TODO: add something like WHERE source = 'All' once PR 1703 is merged
-    let lockedValue: { amount: bigint }[] = await manager
-      .getRepository(HistoricalLockedValue)
-      .query(
-        `
-        SELECT
-          amount
-        FROM historical_locked_value
-        ORDER BY timestamp DESC
-        LIMIT 1
-      `
-      );
+    const lockedValue = await manager.getRepository(CurrentLockedValue).find({
+      where: {
+        source: LockedSource.All,
+      },
+    });
 
-    if (!lockedValue?.[0]) {
-      return Promise.resolve(0n);
+    const assetPrices = lockedValue.reduce<Record<string, bigint>>(
+      (acc, value) => {
+        acc[value.assetId] = 0n;
+        return acc;
+      },
+      {}
+    );
+
+    for (const assetId of Object.keys(assetPrices)) {
+      try {
+        const oraclePrice = await api.query.oracle.prices(assetId);
+        if (oraclePrice?.price) {
+          assetPrices[assetId] = BigInt(oraclePrice?.price?.toString() || 0n);
+        }
+        // TODO: what to do if no there's no Oracle price?
+      } catch (err) {
+        console.log("Error:", err);
+      }
     }
 
-    return Promise.resolve(lockedValue[0].amount);
+    const totalLockedValue = lockedValue.reduce((acc, value) => {
+      if (!assetPrices?.[value?.assetId]) {
+        return acc;
+      }
+      return acc + assetPrices[value.assetId] * value.amount;
+    }, 0n);
+
+    return Promise.resolve(totalLockedValue);
   }
 
   @FieldResolver({ name: "transactionsCount", defaultValue: 0 })
