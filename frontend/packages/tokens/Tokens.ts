@@ -23,7 +23,8 @@ const tokenIds = [
   "usdt",
   "kar",
   "ausd",
-  "kusd"
+  "kusd",
+  "xpblo"
 ] as const; // important
 
 export const TOKEN_IDS = tokenIds;
@@ -105,6 +106,12 @@ export const TOKENS: { [key in TokenId]: Token } = {
     id: "pblo",
     icon: "/tokens/pablo.svg",
     symbol: "PBLO",
+    decimalsToDisplay: 4,
+  },
+  xpblo: {
+    id: "xpblo",
+    icon: "/tokens/pablo.svg",
+    symbol: "XPBLO",
     decimalsToDisplay: 4,
   },
   angl: {

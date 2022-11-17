@@ -17,8 +17,13 @@ export function useAssetBalance(
         if (!asset || !hasFetchedTokens) return tokenId;
 
         for (const token in tokens) {
-            if (tokens[token as TokenId].getPicassoAssetId() as string === asset.getPicassoAssetId() as string) {
-                tokenId = token as TokenId
+            try {
+                const tokenOnChainId = tokens[token as TokenId].getPicassoAssetId() as string;
+                if (tokenOnChainId === asset.getPicassoAssetId() as string) {
+                    tokenId = token as TokenId
+                }
+            } catch (err: any) {
+                continue;
             }
         }
 

@@ -11,8 +11,13 @@ export function useAsset(assetId: string): Asset | undefined {
         if (!hasFetchedTokens) return;
 
         for (const token in tokens) {
-            if (tokens[token as TokenId].getPicassoAssetId() as string === assetId) {
-                return tokens[token as TokenId];
+            try {
+                if (tokens[token as TokenId].getPicassoAssetId() as string === assetId) {
+                    return tokens[token as TokenId];
+                }
+            } catch (err) {
+                console.log('Error:', err);
+                return undefined;
             }
         }
     }, [tokens, assetId, hasFetchedTokens]);

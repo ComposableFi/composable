@@ -102,8 +102,8 @@ export function useSwaps({ selectedAccount }: { selectedAccount?: InjectedAccoun
   const asset2PriceUsd = useAssetIdOraclePrice(selectedAssetTwoId);
   const balance1 = useAssetBalance(selectedAssetOne, "picasso");
   const balance2 = useAssetBalance(selectedAssetTwo, "picasso");
-  const assetListOne = useFilteredAssetListDropdownOptions(selectedAssetTwoId);
-  const assetListTwo = useFilteredAssetListDropdownOptions(selectedAssetOneId);
+  const assetListOne = useFilteredAssetListDropdownOptions(selectedAssetOneId);
+  const assetListTwo = useFilteredAssetListDropdownOptions(selectedAssetTwoId);
 
   const updateSpotPrice = useCallback(async () => {
     if (selectedPool) {

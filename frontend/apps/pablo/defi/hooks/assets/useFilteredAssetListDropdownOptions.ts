@@ -12,7 +12,15 @@ export function useFilteredAssetListDropdownOptions(
     if (!hasFetchedTokens) return [];
 
     return Object.values(tokens)
-      .filter((asset) => (asset.getPicassoAssetId() as string) === assetId)
+      .filter((asset) => {
+        try {
+          const picaId = asset.getPicassoAssetId() as string;
+          return picaId === assetId;
+        } catch (err: any) {
+          console.log("Error Missing ID: ", asset.getSymbol(), err.message);
+          return false;
+        }
+      })
       .map((asset) => ({
         value: asset.getPicassoAssetId() as string,
         label: asset.getName(),
