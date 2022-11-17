@@ -1,7 +1,7 @@
 import { program } from 'commander'
 import { ApiPromise, WsProvider, Keyring } from '@polkadot/api';
 import fs from 'fs';
-import { cryptoWaitReady } from '@polkadot/util-crypto';
+import { cryptoWaitReady, blake2AsHex } from '@polkadot/util-crypto';
 
 program
     .command('upgrade')
@@ -17,7 +17,13 @@ async function upgrade(options) {
  
     console.log("Starting runtime upgrade");  
     await cryptoWaitReady()
-    console.log("crypto intialized")
+    console.log("crypto initialized")
+
+    console.log("Retrieve the runtime to upgrade")
+    const rawCode = fs.readFileSync(options.runtime);    
+    const code = rawCode.toString('hex');
+    const codeHash = blake2AsHex(rawCode, 256) 
+    console.log("Runtime runtime::system::Config::Hashing=BlakeTwo256 hash:", codeHash);
 
     // Initialise the provider to connect to the local node
     const provider = new WsProvider(options.wss);
@@ -25,6 +31,9 @@ async function upgrade(options) {
 
     // Create the API and wait until ready (optional provider passed through)
     const api = await new ApiPromise({ provider }).isReady
+    const authorizeUpgrade = api.tx.parachainSystem.authorizeUpgrade(codeHash).toHex()
+    const authorizeUpgradeUrl = " https://polkadot.js.org/apps/?rpc=" + options.wss + "#/extrinsics/decode/" + authorizeUpgrade;
+    console.log("Authorize upgrade for Relay extrinsics payload encoded: ", authorizeUpgradeUrl);
 
     // Find the actual keypair in the keyring (if this is a changed value, the key
     // needs to be added to the keyring before - this assumes we have defaults, i.e.
@@ -34,9 +43,6 @@ async function upgrade(options) {
     console.log("creating keyring")
     const adminPair = keyring.addFromUri(options.keyring);
     console.log(`Using ${adminPair.address}`);  
-
-    // Retrieve the runtime to upgrade
-    const code = fs.readFileSync(options.runtime).toString('hex');
 
     const proposal = api.tx.system && api.tx.system.setCode
       ? api.tx.system.setCode(`0x${code}`) // For newer versions of Substrate
@@ -65,6 +71,13 @@ async function upgrade(options) {
           console.log("finished runtime upgrade")
       });
     } else if (options.mode == "democracy") {
+          // semantically it what should be done, so not yet run it from js
+          api.tx.democracy
+                .notePreimage(authorizeUpgrade)
+                .signAndSend(adminPair, ({ events = [], status }) => {
+                    console.log(events, status)
+                });
+
           console.error('democracy is currently still unsupported')
     } else {
       console.error("unknown options")

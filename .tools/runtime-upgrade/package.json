@@ -4,7 +4,7 @@
   "description": "SRE automation for performing runtime upgrades.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "picasso": "node ./upgrader.mjs upgrade --runtime=./path/to/runtime.wasm --wss=wss://picasso-rpc.composable.finance"
   },
   "repository": {
     "type": "git",
