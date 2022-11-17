@@ -34,7 +34,7 @@ fn transfer_from_relay_native_from_this_to_relay_chain_raw() {
 		assert_eq!(relay_runtime::Balances::balance(&AccountId::from(bob())), 0);
 	});
 
-	log::info!(target: "bdd", "Root transfers native from this to Relay");
+	log::info!(target: "bdd", "Root transfers native from this to Relay onto Bob account");
 	let message = Xcm(vec![
 		WithdrawAsset(MultiAssets::from(vec![MultiAsset {
 			id: Concrete(MultiLocation { parents: 1, interior: Here }),
@@ -60,18 +60,20 @@ fn transfer_from_relay_native_from_this_to_relay_chain_raw() {
 
 	This::execute_with(|| {
 		use this_runtime::*;
-		let before = Assets::free_balance(CurrencyId::KSM, &alice().into());
+		let before = Assets::free_balance(CurrencyId::KSM, &this_runtime::TreasuryAccount::get());
+		assert_gt!(before, transfer_amount);
 		let transferred =
 			RelayerXcm::execute(RawOrigin::Root.into(), Box::new(VersionedXcm::V2(message)), limit);
 
 		assert_ok!(transferred);
 
-		let after = Assets::free_balance(CurrencyId::KSM, &alice().into());
+		let after = Assets::free_balance(CurrencyId::KSM, &this_runtime::TreasuryAccount::get());
 
 		assert_eq!(before - after, transfer_amount);
 	});
 
 	KusamaRelay::execute_with(|| {
+		log::info!(target: "bdd", "Then bob has amount on Relay");
 		assert_lt_by!(
 			relay_runtime::Balances::balance(&AccountId::from(bob())),
 			transfer_amount,
