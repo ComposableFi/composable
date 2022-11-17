@@ -1,9 +1,11 @@
 import { StorageId } from '@site/src/utils/cosmwasm-vm/store/state';
+import { VMHostShared } from '../../utils/cosmwasm-vm/vm/types';
 
 type InputTypes = 'string' | 'number';
 type VmExecuteParams = Record<string, InputTypes>;
 
-interface VmInputProps<T extends VmExecuteParams> {
+interface VmExecuteProps<T extends VmExecuteParams> {
+	vmShared: VMHostShared;
 	readonly inputParams: T;
 	readonly placeholders?: Partial<Record<keyof T, string>>;
 	readonly storageId: StorageId;
@@ -12,6 +14,6 @@ interface VmInputProps<T extends VmExecuteParams> {
 }
 
 //	1. Execute the contract in the way specified with a limit of how many times it can be executed
-export function VmInput<T extends VmExecuteParams>({ storageId }: VmInputProps<T>) {
+export function VmExecute<T extends VmExecuteParams>({ storageId }: VmExecuteProps<T>) {
 	return <div></div>;
 }

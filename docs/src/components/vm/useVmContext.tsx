@@ -18,50 +18,51 @@ export interface VmContextInit {
 }
 
 export const useVmContext = ({ storageId, initOptions }: VmContextInit): VMHostShared | null => {
-	const [fetched, setFetched] = useState(false);
-	//	TODO : fetch stored vmHostShared from storageId if exists
-	const vmShared = useMemo(() => {
-		if (!fetched) return null;
-		return getVmShared(storageId, initOptions?.instantiateObj);
-	}, [storageId, fetched]);
+	const vmShared = useVmStore(state => state.vmStates[storageId]);
 
-	useLayoutEffect(() => {
+	useEffect(() => {
 		//	TODO : consider case where initOptions is not provided
 		if (!initOptions) return;
-		fetchContract(storageId, initOptions.contractUrl).then(() => setFetched(true));
-	}, [initOptions]);
+		fetchContract(storageId, initOptions.contractUrl).then(() => {
+			getVmShared(storageId, initOptions.instantiateObj);
+		});
+	}, []);
 
-	return vmShared;
+	return vmShared?.state;
 };
 
 //	TODO : currently uploads only one code to address 0, update to process array of codeIds
 //	 maybe extract code upload logic out to separate function
-const getVmShared = (storageId: StorageId, instantiateObj?: Object): VMHostShared | null => {
+const getVmShared = (storageId: StorageId, instantiateObj?: Object) => {
 	const codeHash = vmStore.getState().codeHashMap[storageId];
-	if (!codeHash) return null;
-	console.log('run getVmShared');
+	if (!codeHash) {
+		console.log('code hash should be loaded by here');
+		return;
+	}
+
 	const storedVmShared = vmStore.getState().vmStates[storageId];
-	if (storedVmShared) return storedVmShared.state;
+	if (storedVmShared) return;
+
 	const vmShared = getInitVmHostShared();
 	const codeId = 0;
 	vmShared.codes.set(codeId, codeHash);
 	let res: Result<VMStep, Error>;
 	if (instantiateObj) {
 		res = vmMethods.instantiate(codeHash, instantiateObj, vmShared, { senderAddress: 0, codeId });
-		if ('Ok' in res) vmStoreMethods.vmStateUpdate(storageId, vmShared, res.Ok.events as RawContractEvent[]);
-		else {
+		if ('Ok' in res) {
+			vmStoreMethods.vmStateUpdate(storageId, vmShared, res.Ok.events as RawContractEvent[]);
+		} else {
 			//	TODO : handle error
 			console.error('instantiate error', res.Err);
 		}
 	}
-
-	return vmShared;
 };
 
 const fetchContract = async (storageId: StorageId, contractUrl: string): Promise<void> => {
 	let codeHash: string;
 	codeHash = vmStore.getState().codeHashMap[storageId];
 	if (codeHash) return;
+
 	console.log('fetch contract');
 	codeHash = await loadRemoteContract(contractUrl);
 	if (codeHash === '') return;
