@@ -350,44 +350,43 @@ mod tests {
 
 	#[test]
 	fn calculate_fee() {
-		const UNIT: u128 = 1_000_000_000_000_u128;
-		let amount = 1_000_000_u128 * UNIT;
+		let total_fee: u128 = 10_000_000_000;
 		let f = FeeConfig {
 			fee_rate: Permill::from_percent(1),
 			owner_fee_rate: Permill::from_percent(1),
 			protocol_fee_rate: Permill::from_percent(1),
 		};
 		assert_eq!(
-			f.calculate_fees(1, amount),
+			f.calculate_fees(1, total_fee),
 			Fee {
-				fee: 10000 * UNIT,
-				lp_fee: 9900 * UNIT,
-				owner_fee: 99 * UNIT,
-				protocol_fee: 1 * UNIT,
+				fee: total_fee,
+				lp_fee: 9_900_000_000,
+				owner_fee: 99_000_000,
+				protocol_fee: 1_000_000,
 				asset_id: 1
 			}
 		);
 
 		let f_default = FeeConfig::default_from(Permill::from_perthousand(3));
 		assert_eq!(
-			f_default.calculate_fees(1, amount),
+			f_default.calculate_fees(1, total_fee),
 			Fee {
-				fee: 3000 * UNIT,
-				lp_fee: 2400 * UNIT,
+				fee: 10_000_000_000,
+				lp_fee: 8_000_000_000,
 				owner_fee: 0,
-				protocol_fee: 600 * UNIT,
+				protocol_fee: 2_000_000_000,
 				asset_id: 1
 			}
 		);
 
 		let f2 = f.mul(Permill::from_percent(50));
 		assert_eq!(
-			f2.calculate_fees(1, amount),
+			f2.calculate_fees(1, total_fee),
 			Fee {
-				fee: 5000000000000000,
-				lp_fee: 4950000000000000,
-				owner_fee: 49500000000000,
-				protocol_fee: 500000000000,
+				fee: 10_000_000_000,
+				lp_fee: 9_900_000_000,
+				owner_fee: 99_000_000,
+				protocol_fee: 1_000_000,
 				asset_id: 1
 			}
 		);
