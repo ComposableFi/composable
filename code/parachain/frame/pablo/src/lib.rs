@@ -745,7 +745,7 @@ pub mod pallet {
 					who,
 					&T::PbloAssetId::get(),
 					fees.asset_id,
-					dbg!(fees.protocol_fee),
+					fees.protocol_fee,
 					false,
 				)?;
 			}

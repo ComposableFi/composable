@@ -217,7 +217,7 @@ impl FeeConfig {
 		fee: Balance,
 	) -> Fee<AssetId, Balance> {
 		let owner_fee: Balance = self.owner_fee_rate.mul_floor(fee);
-		let protocol_fee: Balance = dbg!(self.protocol_fee_rate.mul_floor(owner_fee));
+		let protocol_fee: Balance = self.protocol_fee_rate.mul_floor(owner_fee);
 		Fee {
 			fee,
 			// safe as the values are calculated as per million
