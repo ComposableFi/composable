@@ -1,6 +1,6 @@
 import { ApiPromise } from "@polkadot/api";
 import BigNumber from "bignumber.js";
-import { Asset } from "../Asset";
+import { Asset } from "../assets/Asset";
 import { BasePabloPool } from "./BasePabloPool";
 
 export class DexRouter {

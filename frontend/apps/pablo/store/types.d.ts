@@ -5,6 +5,7 @@ import { LiquiditySlice } from "@/store/liquidity/types";
 import { RemoveLiquiditySlice } from "@/store/removeLiquidity/types";
 import { CreatePoolSlice } from "@/store/createPool/types";
 import { PoolStatsSlice } from "@/store/poolStats/types";
+import { TokenBalancesSlice } from "./tokenBalances/types";
 
 export type StoreSlice<T> = StateCreator<
   AllSlices,
@@ -18,6 +19,7 @@ export type StoreSlice<T> = StateCreator<
 >;
 
 export type AllSlices = TokensSlice &
+  TokenBalancesSlice &
   SwapsSlice &
   LiquiditySlice &
   RemoveLiquiditySlice &

@@ -3,7 +3,7 @@ import { blake2AsHex } from "@polkadot/util-crypto";
 import { ApiPromise } from "@polkadot/api";
 import { concatU8a } from "../../u8a";
 import { hexToU8a } from "@polkadot/util";
-import { Asset } from "../Asset";
+import { Asset } from "../assets/Asset";
 import BigNumber from "bignumber.js";
 
 export class FinancialNft {

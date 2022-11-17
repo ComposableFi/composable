@@ -1,38 +1,88 @@
 import { useParachainApi, useSelectedAccount } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
-import { useCallback, useEffect } from "react";
-import { PicassoAssetsRPCMetadata } from "@/store/tokens/types";
-import BigNumber from "bignumber.js";
+import { useEffect } from "react";
+import {
+  picassoAssetsList,
+  subscribeNativeBalance,
+  subscribePicassoBalanceByAssetId,
+  SUBSTRATE_NETWORKS,
+} from "shared";
 import useStore from "@/store/useStore";
+import { TokenId } from "tokens";
+import BigNumber from "bignumber.js";
 
 const Updater = () => {
-  const { substrateTokens } = useStore();
-  const { setTokens } = substrateTokens;
+  const { substrateTokens, substrateBalances } = useStore();
+  const { setTokenBalance } = substrateBalances;
+  const { setTokens, tokens, hasFetchedTokens } = substrateTokens;
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
-
-  const fetchPicassoAssets = useCallback(() => {
-    if (!parachainApi) return;
-
-    parachainApi.rpc.assets.listAssets().then((assetList) => {
-      setTokens({
-        picasso: {
-          list: assetList.map((asset) => {
-            return {
-              id: new BigNumber(asset.id.toString()),
-              name: asset.name.toUtf8(),
-              decimals: 12,
-              foreignId: null,
-            };
-          }) as PicassoAssetsRPCMetadata,
-          api: parachainApi,
-        },
-      });
-    });
-  }, [setTokens, parachainApi]);
+  const account = useSelectedAccount("picasso");
 
   useEffect(() => {
-    fetchPicassoAssets();
-  }, [fetchPicassoAssets]);
+    if (parachainApi) {
+      picassoAssetsList(parachainApi).then((list) => {
+        setTokens({
+          picasso: {
+            list,
+            api: parachainApi,
+          },
+        });
+      });
+    }
+  }, [parachainApi, setTokens]);
+
+  useEffect(() => {
+    if (!parachainApi || !hasFetchedTokens || !account) return;
+    const supportedTokens: TokenId[] = [];
+
+    const allTokens = Object.entries(tokens);
+    for (const [id, token] of allTokens) {
+      if (token.isSupportedOn("picasso")) {
+        supportedTokens.push(id as TokenId);
+      }
+    }
+
+    let subscriptions: any[] = [];
+    supportedTokens.forEach((tokenId) => {
+      if (tokenId !== SUBSTRATE_NETWORKS.picasso.tokenId) {
+        subscribePicassoBalanceByAssetId(
+          parachainApi,
+          account.address,
+          tokens[tokenId].getPicassoAssetId(true) as BigNumber,
+          tokens[tokenId].getDecimals("picasso") as number,
+          (balance) => {
+            setTokenBalance(tokenId, "picasso", balance.free, balance.locked);
+          }
+        ).then((sub) => {
+          subscriptions.push(sub);
+        });
+      } else {
+        subscribeNativeBalance(
+          parachainApi,
+          account.address,
+          "picasso",
+          (balance) => {
+            setTokenBalance(tokenId, "picasso", balance.free, balance.locked);
+          }
+        ).then((sub) => {
+          subscriptions.push(sub)
+        })
+      }
+    });
+
+    return function () {
+      subscriptions.map((sub) => {
+        sub?.();
+      });
+    };
+  }, [
+    parachainApi,
+    substrateTokens,
+    hasFetchedTokens,
+    account,
+    tokens,
+    setTokenBalance,
+  ]);
 
   return null;
 };

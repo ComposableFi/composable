@@ -1,5 +1,5 @@
 import { ApiPromise } from "@polkadot/api";
-import { Asset } from "./Asset";
+import { Asset } from "./assets/Asset";
 import BigNumber from "bignumber.js";
 
 export class Apollo {

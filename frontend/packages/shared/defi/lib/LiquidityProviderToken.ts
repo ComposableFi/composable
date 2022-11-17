@@ -1,6 +1,6 @@
 import BigNumber from "bignumber.js";
 import { ApiPromise } from "@polkadot/api";
-import { Asset } from "./Asset";
+import { Asset } from "./assets/Asset";
 
 export class LiquidityProviderToken extends Asset {
     protected __underlyingAssets: Asset[];

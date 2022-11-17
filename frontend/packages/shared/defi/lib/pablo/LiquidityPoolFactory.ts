@@ -1,6 +1,6 @@
 import { PabloConstantProductPool } from "./PabloConstantProductPool";
 import { ApiPromise } from "@polkadot/api";
-import { Asset } from "../Asset";
+import { Asset } from "../assets/Asset";
 import { DexRouter } from "./DexRouter";
 import { BasePabloPool } from "./BasePabloPool";
 import BigNumber from "bignumber.js";

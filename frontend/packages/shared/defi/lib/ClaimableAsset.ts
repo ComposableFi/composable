@@ -1,5 +1,5 @@
 import BigNumber from "bignumber.js";
-import { Asset } from "./Asset";
+import { Asset } from "./assets/Asset";
 import { ApiPromise } from "@polkadot/api";
 
 export class ClaimableAsset extends Asset {

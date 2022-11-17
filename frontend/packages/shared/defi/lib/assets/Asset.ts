@@ -1,6 +1,6 @@
 import { ApiPromise } from "@polkadot/api";
-import { fromChainIdUnit } from "../unit";
-import { DropdownOptionWithIcon } from "./types";
+import { fromChainIdUnit } from "../../unit";
+import { DropdownOptionWithIcon } from "../types";
 import BigNumber from "bignumber.js";
 
 export class Asset {
@@ -8,8 +8,8 @@ export class Asset {
   protected readonly __name: string;
   protected readonly __symbol: string;
   protected readonly __iconUrl: string;
-  protected readonly __decimals: number = 12;
   protected __price: BigNumber = new BigNumber(0);
+  protected __decimals: Map<string, number>;
   protected __parachainAssetIds: Map<string, BigNumber>;
   /**
    * Transform assets list
@@ -39,6 +39,7 @@ export class Asset {
     this.__symbol = symbol;
     this.__iconUrl = iconUrl;
     this.__parachainAssetIds = new Map<string, BigNumber>();
+    this.__decimals = new Map<string, number>();
   }
   /**
    * Returns asset id of this asset
@@ -52,6 +53,11 @@ export class Asset {
     if (!picassoAssetId) throw new Error('Asset Unavailable on Picasso');
     return inBn ? picassoAssetId : picassoAssetId.toString()
   }
+  
+  isSupportedOn(network: string): boolean {
+    const id = this.__parachainAssetIds.get(network);
+    return !!id;
+  }
 
   getSymbol(): string {
     return this.__symbol;
@@ -61,8 +67,8 @@ export class Asset {
     return this.__name;
   }
 
-  getDecimals() {
-    return this.__decimals;
+  getDecimals(network: string) {
+    return this.__decimals.get(network);
   }
 
 
@@ -138,6 +144,10 @@ export class Asset {
     this.__api  = api;
   }
 
+  setDecimals(network: string, decimals: number) {
+    this.__decimals.set(network, decimals);
+  }
+
   getApi(): ApiPromise {
     if (!this.__api) throw new Error('API Unavailable.');
     return this.__api;
@@ -156,13 +166,15 @@ export class OwnedAsset extends Asset {
   protected __balance: BigNumber;
 
   static fromAsset(asset: Asset, balance: BigNumber): OwnedAsset {
-    return new OwnedAsset(
+    const ownedAsset = new OwnedAsset(
       asset.getName(),
       asset.getSymbol(),
       asset.getIconUrl(),
       balance,
       asset.getApi(),
     )
+    ownedAsset.setIdOnChain("picasso", asset.getPicassoAssetId(true) as BigNumber);
+    return ownedAsset;
   }
 
   constructor(

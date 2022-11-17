@@ -5,7 +5,7 @@ import { PabloPoolPair } from "./PabloPoolPair";
 import { Exchangeable } from "./Exchangeable";
 import { ApiPromise } from "@polkadot/api";
 import { concatU8a } from "../../u8a";
-import { Asset } from "../Asset";
+import { Asset } from "../assets/Asset";
 import BigNumber from "bignumber.js";
 
 export class BasePabloPool implements Exchangeable {

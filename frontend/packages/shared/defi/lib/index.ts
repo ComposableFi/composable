@@ -1,5 +1,6 @@
 export * from "./Apollo";
-export * from "./Asset";
+export * from "./assets";
+export * from "./balances";
 export * from "./BondOffer";
 export * from "./ClaimableAsset";
 export * from "./pablo";

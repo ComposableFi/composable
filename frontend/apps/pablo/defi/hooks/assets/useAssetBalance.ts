@@ -9,25 +9,37 @@ export function useAssetBalance(
     asset: Asset | LiquidityProviderToken | undefined,
     network: SubstrateNetwork
 ): BigNumber {
-    const { substrateTokens } = useStore();
-    const { tokenBalances, tokens, hasFetchedTokens } = substrateTokens;
+    const { substrateTokens, substrateBalances } = useStore();
+    const { tokenBalances } = substrateBalances;
+    const { tokens, hasFetchedTokens } = substrateTokens;
     
     const tokenId = useMemo(() => {
         let tokenId: TokenId | null = null;
         if (!asset || !hasFetchedTokens) return tokenId;
 
-        for (const token in tokens) {
+        const tokenIds = Object.keys(tokens);
+        for (const _tokenId of tokenIds) {
             try {
-                const tokenOnChainId = tokens[token as TokenId].getPicassoAssetId() as string;
-                if (tokenOnChainId === asset.getPicassoAssetId() as string) {
-                    tokenId = token as TokenId
+                const _tokenIdChainId = tokens[_tokenId as TokenId].getPicassoAssetId() as string;
+                const _assetChainId = asset.getPicassoAssetId() as string;
+
+                if (_tokenIdChainId === _assetChainId) {
+                    tokenId = _tokenId as TokenId
                 }
             } catch (err: any) {
+                console.log(`useAssetBalance ${_tokenId} Error: `, err.message)
                 continue;
             }
         }
 
+        return tokenId
     }, [asset, tokens, hasFetchedTokens])
 
-    return tokenId ? tokenBalances[network][tokenId] : new BigNumber(0);
+    const balance = useMemo(() => {
+        if (!tokenId) return new BigNumber(0);
+
+        return tokenBalances[network][tokenId].free;
+    }, [network, tokenBalances, tokenId])
+
+    return balance;
 }

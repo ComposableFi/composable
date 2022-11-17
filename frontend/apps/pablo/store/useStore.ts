@@ -7,13 +7,15 @@ import createPoolStatsSlice from "./poolStats/slice";
 import createRemoveLiquiditySlice from "./removeLiquidity/slice";
 import createPoolSlice from "./createPool/slice";
 import createSwapsSlice from "./swaps/slice";
-import createAssetsSlice from "./tokens/slice";
+import createTokensSlice from "./tokens/slice";
+import createTokenBalancesSlice from "./tokenBalances/slice";
 
 const useStore = create<AllSlices>()(
   subscribeWithSelector(
     immer(
       devtools((...a) => ({
-        ...createAssetsSlice(...a),
+        ...createTokensSlice(...a),
+        ...createTokenBalancesSlice(...a),
         ...createSwapsSlice(...a),
         ...createLiquiditySlice(...a),
         ...createRemoveLiquiditySlice(...a),

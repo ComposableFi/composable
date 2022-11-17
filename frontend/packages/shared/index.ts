@@ -10,6 +10,7 @@ export * from "./date";
 export * from "./number";
 export * from "./string";
 export * from "./stringToNumber";
+export * from "./SubstrateNetworks";
 export * from "./defi/getExistentialDeposit";
 export * from "./defi/unit";
 export * from "./functions";

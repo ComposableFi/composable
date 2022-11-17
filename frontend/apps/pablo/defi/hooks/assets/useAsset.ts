@@ -10,14 +10,14 @@ export function useAsset(assetId: string): Asset | undefined {
     const asset = useMemo(() => {
         if (!hasFetchedTokens) return;
 
-        for (const token in tokens) {
+        const tokenIds = Object.keys(tokens);
+        for (const tokenId of tokenIds) {
             try {
-                if (tokens[token as TokenId].getPicassoAssetId() as string === assetId) {
-                    return tokens[token as TokenId];
+                if (tokens[tokenId as TokenId].getPicassoAssetId() as string === assetId) {
+                    return tokens[tokenId as TokenId];
                 }
             } catch (err) {
-                console.log('Error:', err);
-                return undefined;
+                continue;
             }
         }
     }, [tokens, assetId, hasFetchedTokens]);

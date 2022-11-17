@@ -5,18 +5,19 @@ import { TokenId } from "tokens";
 
 export function useAssetsWithBalance(): OwnedAsset[] {
     const {
-        substrateTokens
+        substrateTokens,
+        substrateBalances
     } = useStore();
-    const { tokens, tokenBalances, hasFetchedTokens } = substrateTokens;
+    const { tokenBalances } = substrateBalances;
+    const { tokens, hasFetchedTokens } = substrateTokens;
     const { picasso } = tokenBalances;
 
     const assetsWithBalance = useMemo(() => {
         if (!hasFetchedTokens) return [];
-        
-        
+
         const tokenIds: TokenId[] = [];
         for (const token in picasso) {
-            if (picasso[token as TokenId].gt(0)) {
+            if (picasso[token as TokenId].free.gt(0)) {
                 tokenIds.push(token as TokenId);
             }
         }
@@ -26,7 +27,7 @@ export function useAssetsWithBalance(): OwnedAsset[] {
             assetsWithBalance.push(
                 OwnedAsset.fromAsset(
                     tokens[token as TokenId],
-                    picasso[token as TokenId]
+                    picasso[token as TokenId].free
                 )
             )
         }
