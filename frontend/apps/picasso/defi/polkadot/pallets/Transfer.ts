@@ -96,7 +96,6 @@ export function calculateTransferAmount({
 }
 
 /**
- * TODO: Get the selected token to calculate the dest fee based of that.
  * @param sourceChain
  * @param targetChain
  * @param tokens
@@ -110,10 +109,13 @@ export function getDestChainFee(
 ) {
   switch (`${sourceChain}=>${targetChain}`) {
     case "kusama=>picasso":
-      return {
-        fee: fromChainIdUnit(new BigNumber("7536750")),
-        token: tokens.ksm,
-      };
+      if (selectedToken === "ksm") {
+        return {
+          fee: fromChainIdUnit(new BigNumber("7536750")),
+          token: tokens.ksm,
+        };
+      }
+      break;
     case "karura=>picasso":
       const fee: BigNumber | undefined = {
         kusd: fromChainIdUnit(new BigNumber("927020325")),
@@ -125,17 +127,64 @@ export function getDestChainFee(
         fee: fee ?? null,
         token: fee ? tokens[selectedToken] : null,
       };
-
     case "picasso=>karura":
-      return {
-        fee: fromChainIdUnit(new BigNumber("74592000000")),
-        token: tokens.kusd,
-      };
+      if (selectedToken === "kusd") {
+        return {
+          fee: fromChainIdUnit(new BigNumber("74592000000")),
+          token: tokens.kusd,
+        };
+      }
+      break;
     case "picasso=>kusama":
-      return {
-        fee: fromChainIdUnit(new BigNumber("51105801784")),
-        token: tokens.ksm,
-      };
+      if (selectedToken === "ksm") {
+        return {
+          fee: fromChainIdUnit(new BigNumber("51105801784")),
+          token: tokens.ksm,
+        };
+      }
+      break;
+    case "statemine=>picasso":
+      if (selectedToken === "usdt") {
+        return {
+          fee: fromChainIdUnit(
+            new BigNumber(13),
+            tokens.usdt.decimals.statemine
+          ),
+          token: tokens.usdt,
+        };
+      }
+
+      if (selectedToken === "ksm") {
+        return {
+          fee: fromChainIdUnit(
+            new BigNumber(347632),
+            tokens.ksm.decimals.statemine
+          ),
+          token: tokens.ksm,
+        };
+      }
+      break;
+    case "picasso=>statemine":
+      if (selectedToken === "usdt") {
+        return {
+          fee: fromChainIdUnit(
+            new BigNumber(13),
+            tokens.usdt.decimals.statemine
+          ),
+          token: tokens.usdt,
+        };
+      }
+
+      if (selectedToken === "ksm") {
+        return {
+          fee: fromChainIdUnit(
+            new BigNumber(15450332),
+            tokens.ksm.decimals.statemine
+          ),
+          token: tokens.ksm,
+        };
+      }
+      break;
     default:
       return {
         fee: new BigNumber(0),
