@@ -745,7 +745,7 @@ pub mod pallet {
 					who,
 					&T::PbloAssetId::get(),
 					fees.asset_id,
-					fees.protocol_fee,
+					dbg!(fees.protocol_fee),
 					false,
 				)?;
 			}
@@ -1095,13 +1095,15 @@ pub mod pallet {
 						Error::<T>::NotEnoughLiquidity
 					);
 
+					// Transfer `in_asset_amount - fee_amount` to pool
 					T::Assets::transfer(
 						in_asset.asset_id,
 						who,
 						&pool_account,
-						in_asset.amount,
+						in_asset.amount.safe_sub(&swap_result.fee.amount)?,
 						keep_alive,
 					)?;
+					// Transfer swaped value to user
 					T::Assets::transfer(
 						min_receive.asset_id,
 						&pool_account,
