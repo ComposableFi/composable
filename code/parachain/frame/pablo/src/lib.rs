@@ -997,7 +997,7 @@ pub mod pallet {
 						&pool_account,
 						in_asset_amount,
 						out_asset_id,
-						false,
+						true,
 					)?;
 
 					Ok(SwapResult { value, fee })
@@ -1100,6 +1100,9 @@ pub mod pallet {
 						in_asset.asset_id,
 						who,
 						&pool_account,
+						// NOTE: This needs better handling if we're to conditionally apply fees.
+						// One option is to return the correct amount to transfer to the pool from
+						// `spot_price`.
 						in_asset.amount.safe_sub(&swap_result.fee.amount)?,
 						keep_alive,
 					)?;
