@@ -65,7 +65,6 @@ const sidebars = {
     {
       type: 'category',
       label: 'Products',
-
       link: {
         type: 'generated-index',
         slug: 'products',
@@ -82,10 +81,22 @@ const sidebars = {
           collapsible: true,
           collapsed: true,
           items: [
-            'products/xcvm/writing-smart-contracts-with-cosmwasm',
-            'products/xcvm/how-the-xcvm-works',
+            'products/xcvm/how-it-works',
             'products/xcvm/routing-layer',
-            'products/xcvm/routing-layer-libraries'
+            'products/xcvm/routing-layer-libraries',
+            'products/xcvm/writing-smart-contracts-with-cosmwasm',
+            {
+                type: 'category',
+                label: 'Use Cases',
+                link: {
+                    type: 'generated-index',
+                    slug: 'use-cases'
+                },
+                collapsible: false,
+                items: [
+                  'products/xcvm/use-cases/swap',
+                ]
+            }
           ],
         },
         {
