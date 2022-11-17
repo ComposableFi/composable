@@ -1,18 +1,19 @@
+import { useOverviewStats } from "@/apollo/hooks/useOverviewStats";
+import { ActiveUsers, GET_ACTIVE_USERS } from "@/apollo/queries/activeUsers";
+import { Chart } from "@/components";
+import { ChartLoadingSkeleton } from "@/components/Organisms/Stats/ChartLoadingSkeleton";
+import { useQuery } from "@apollo/client";
+import { Box, Typography, useTheme } from "@mui/material";
 import { FC, useMemo, useState } from "react";
 import {
   formatNumber,
   getRange,
   head,
+  humanBalance,
   PRESET_RANGE,
   PresetRange,
   tail,
 } from "shared";
-import { useQuery } from "@apollo/client";
-import { ActiveUsers, GET_ACTIVE_USERS } from "@/apollo/queries/activeUsers";
-import { Box, Typography, useTheme } from "@mui/material";
-import { Chart } from "@/components";
-import { useOverviewStats } from "@/apollo/hooks/useOverviewStats";
-import { ChartLoadingSkeleton } from "@/components/Organisms/Stats/ChartLoadingSkeleton";
 
 export const DailyActiveUsersChart: FC = () => {
   const theme = useTheme();
@@ -27,7 +28,7 @@ export const DailyActiveUsersChart: FC = () => {
       dateTo,
       dateFrom,
     },
-    pollInterval: 60_000, // Every one minute
+    pollInterval: 60_000, // Every minute
   });
   const { data: overviewStats, loading: overviewStatsLoading } =
     useOverviewStats();
@@ -52,7 +53,7 @@ export const DailyActiveUsersChart: FC = () => {
       const percentageDifference =
         ((firstValue - lastValue) / firstValue) * 100;
       return {
-        value: percentageDifference.toFixed(2) + "%",
+        value: humanBalance(Math.abs(percentageDifference).toFixed(2)) + "%",
         color:
           firstValue > lastValue
             ? theme.palette.error.main
