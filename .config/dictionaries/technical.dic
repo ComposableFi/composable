@@ -322,6 +322,7 @@ RUSTFLAGS
 rustfmt
 RUSTSEC # RUSTSEC-XXXX-XXXX is id of RustSec Advisory Database
 rustup
+safu
 sccache
 schemars
 scrollbox
@@ -441,6 +442,7 @@ zstd
 zustand
 DACP
 Origin
+OSMO
 Prefixer
 protobufs
 protos
