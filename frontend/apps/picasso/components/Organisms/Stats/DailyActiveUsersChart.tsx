@@ -27,7 +27,7 @@ export const DailyActiveUsersChart: FC = () => {
       dateTo,
       dateFrom,
     },
-    pollInterval: 60_000, // Every one minute
+    pollInterval: 60_000, // Every 60 seconds
   });
   const { data: overviewStats, loading: overviewStatsLoading } =
     useOverviewStats();
