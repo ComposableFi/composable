@@ -506,16 +506,13 @@ fn staking_pool_test() {
 		// Mint the tokens
 		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
 
-		assert_ok!(
-			<Pablo as Amm>::do_swap(
-				&BOB, 
-				pool_id, 
-				AssetAmount::new(USDT, bob_usdt), 
-				AssetAmount::new(BTC, 0_u128), 
-				false
-			)
-			
-		);
+		assert_ok!(<Pablo as Amm>::do_swap(
+			&BOB,
+			pool_id,
+			AssetAmount::new(USDT, bob_usdt),
+			AssetAmount::new(BTC, 0_u128),
+			false
+		));
         // lp_fee is taken from quote 
 		// from lp_fee 20 % (default) (as per owner_fee) goes to staking pool
 		assert_has_event::<Test, _>(|e| {

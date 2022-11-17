@@ -1106,7 +1106,7 @@ pub mod pallet {
 						in_asset.amount.safe_sub(&swap_result.fee.amount)?,
 						keep_alive,
 					)?;
-					// Transfer swaped value to user
+					// Transfer swapped value to user
 					T::Assets::transfer(
 						min_receive.asset_id,
 						&pool_account,
