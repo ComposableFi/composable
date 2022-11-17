@@ -1,10 +1,51 @@
-import View from '@site/src/components/HomepageFeatures/index';
-
+import BrowserOnly from '@docusaurus/BrowserOnly';
+import {VmWrapper} from '../../src/components/vm/VmWrapper';
+import {ResetButton} from '../../src/components/vm/ResetButton';
 
 # SCDI test md file
 
 ## this is a test - won't display on prod
 ## MDX test
 <div className='max-w-[600px] overflow-auto'>
-	<View />
+	<ResetButton />
+	<VmWrapper storageId='test' initOptions={{
+		contractUrl: '/wasm/cw20_base.wasm',
+		instantiateObj: {
+			"name": "picasso",
+			"symbol": "PICA",
+			"decimals": 12,
+			"initial_balances": [],
+			"mint": {
+				"minter": "0",
+				"cap": null
+			},
+			"marketing": null
+		}
+	}}>
+		{(vmShared) => {
+			console.log(vmShared);
+			if(!vmShared) return null;
+			return (
+				<>
+					<p>should be here</p>
+					<pre>{vmShared.nextAccountId}</pre>
+				</>
+			)
+		}}
+	</VmWrapper>
+	<VmWrapper storageId={'test'}>
+		{(vmShared) => {
+			return (
+				<p>lol</p>
+			)
+		}}
+	</VmWrapper>
+	<BrowserOnly>
+		{() => {
+			const obj = {a: 10};
+			//	holy shit this works
+			return <pre>{JSON.stringify(obj, null, 2)}</pre>;
+		}}
+	</BrowserOnly>
+
 </div>

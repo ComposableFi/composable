@@ -127,17 +127,9 @@ export const vmMethods = {
 		const vm = createVM(info, env, metadata, shared);
 		return vm;
 	},
-	uploadContract: function (
-		info: MessageInfo,
-		env: Env,
-		metadata: ContractMeta,
-		shared: VMHostShared
-	): Partial<VMHost> {
-		return this.createVM(info, env, metadata, shared);
-	},
 	safeSingleRunVmSetup,
 	instantiate: <T extends Object>(
-		codeHash: UUID,
+		codeHash: string,
 		message: T,
 		vmShared: VMHostShared,
 		getInitParamsParams: VmRunEnv
@@ -170,7 +162,7 @@ export const vmMethods = {
 		return ret;
 	},
 	execute: <T extends Object>(
-		codeHash: UUID,
+		codeHash: string,
 		message: T,
 		vmShared: VMHostShared,
 		getInitParamsParams: SetRequired<VmRunEnv, 'contractAddress'>

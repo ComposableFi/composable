@@ -1,5 +1,6 @@
 import { Addr, CodeId, ContractMeta, Env, MessageInfo } from 'cw_vm_ts_sdk_001';
 
+export type UUID = string;
 export interface VMHostShared {
 	storage: Map<Addr, Map<String, Object>>; //  generates a map for each instantiations I think
 	codes: Map<CodeId, UUID>; //  codeId - contract hash

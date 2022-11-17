@@ -1,6 +1,8 @@
 import { CodeKeyValue, memoryStore } from './memoryStore';
 import { persistentStore } from './persistentStore';
+import { UUID } from '../vm/types';
 
+//	TODO : currently codeStore never discards any contracts, implement if needed
 // This was created purely so that code can be stored in IDB instead of local Storage
 // While keeping the code in memory so that code can be retrieved synchronously without being stored inside the VM
 export const codeStore = {

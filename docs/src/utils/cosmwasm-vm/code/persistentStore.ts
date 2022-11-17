@@ -9,6 +9,8 @@ import {
 	set as idbSet,
 } from 'idb-keyval';
 
+import { UUID } from '../vm/types';
+
 //  the shit you have to do because SSR
 let hashStore: UseStore;
 const getHashStore = (): UseStore | undefined => {
