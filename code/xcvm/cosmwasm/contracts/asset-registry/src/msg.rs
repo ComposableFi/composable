@@ -1,10 +1,53 @@
-use std::collections::BTreeMap;
-
 use cosmwasm_std::Addr;
+use cw_storage_plus::{CwIntKey, Key, KeyDeserialize, PrimaryKey};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use xcvm_core::AssetId;
 
-use crate::state::XcvmAssetId;
+#[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, JsonSchema)]
+#[repr(transparent)]
+pub struct AssetKey(AssetId);
+
+impl From<u128> for AssetKey {
+	fn from(x: u128) -> Self {
+		Self(x.into())
+	}
+}
+
+impl From<AssetId> for AssetKey {
+	fn from(x: AssetId) -> Self {
+		Self(x)
+	}
+}
+
+impl From<AssetKey> for AssetId {
+	fn from(AssetKey(x): AssetKey) -> Self {
+		x
+	}
+}
+
+impl<'a> PrimaryKey<'a> for AssetKey {
+	type Prefix = ();
+	type SubPrefix = ();
+	type Suffix = u128;
+	type SuperSuffix = u128;
+	fn key(&self) -> Vec<Key> {
+		vec![Key::Val128(self.0 .0 .0.to_cw_bytes())]
+	}
+}
+
+impl KeyDeserialize for AssetKey {
+	type Output = <u128 as KeyDeserialize>::Output;
+	fn from_vec(value: Vec<u8>) -> cosmwasm_std::StdResult<Self::Output> {
+		<u128 as KeyDeserialize>::from_vec(value)
+	}
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub enum AssetReference {
+	Native { denom: String },
+	Virtual { cw20_address: Addr },
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {}
@@ -12,7 +55,8 @@ pub struct InstantiateMsg {}
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
-	SetAssets(BTreeMap<String, String>),
+	RegisterAsset { asset_id: AssetKey, reference: AssetReference },
+	UnregisterAsset { asset_id: AssetKey },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -21,10 +65,10 @@ pub struct MigrateMsg {}
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
-	GetAssetContract(XcvmAssetId),
+	Lookup { asset_id: AssetKey },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct GetAssetContractResponse {
-	pub addr: Addr,
+pub struct LookupResponse {
+	pub reference: AssetReference,
 }

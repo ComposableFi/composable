@@ -1,5 +1,5 @@
 use crate::abstraction::IndexOf;
-use alloc::{collections::BTreeMap, string::ToString};
+use alloc::{string::ToString, vec::Vec};
 use codec::{Decode, Encode};
 use core::ops::Add;
 use fixed::{types::extra::U16, FixedU128};
@@ -26,17 +26,17 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 	Deserialize,
 )]
 #[repr(transparent)]
-pub struct AssetId(pub u128);
+pub struct AssetId(pub Displayed<u128>);
 
 impl From<AssetId> for u128 {
 	fn from(val: AssetId) -> Self {
-		val.0
+		val.0 .0
 	}
 }
 
 impl From<u128> for AssetId {
 	fn from(asset: u128) -> Self {
-		AssetId(asset)
+		AssetId(Displayed(asset))
 	}
 }
 
@@ -80,24 +80,35 @@ pub trait Asset {
 }
 
 impl Asset for PICA {
-	const ID: AssetId = AssetId(<Assets as IndexOf<Self, _>>::INDEX as u128);
+	const ID: AssetId = AssetId(Displayed(<Assets as IndexOf<Self, _>>::INDEX as u128));
 }
 
 impl Asset for ETH {
-	const ID: AssetId = AssetId(<Assets as IndexOf<Self, _>>::INDEX as u128);
+	const ID: AssetId = AssetId(Displayed(<Assets as IndexOf<Self, _>>::INDEX as u128));
 }
 
 impl Asset for USDT {
-	const ID: AssetId = AssetId(<Assets as IndexOf<Self, _>>::INDEX as u128);
+	const ID: AssetId = AssetId(Displayed(<Assets as IndexOf<Self, _>>::INDEX as u128));
 }
 
 impl Asset for USDC {
-	const ID: AssetId = AssetId(<Assets as IndexOf<Self, _>>::INDEX as u128);
+	const ID: AssetId = AssetId(Displayed(<Assets as IndexOf<Self, _>>::INDEX as u128));
 }
 
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[derive(
-	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
+	Copy,
+	Clone,
+	PartialEq,
+	Eq,
+	PartialOrd,
+	Ord,
+	Debug,
+	Encode,
+	Decode,
+	TypeInfo,
+	Serialize,
+	Deserialize,
 )]
 #[repr(transparent)]
 pub struct Displayed<T>(
@@ -142,15 +153,33 @@ pub struct Amount {
 }
 
 impl Amount {
+	#[inline]
+	pub fn new(intercept: u128, slope: u128) -> Self {
+		Self { intercept: Displayed(intercept), slope: Displayed(slope) }
+	}
+
 	/// An absolute amount
 	#[inline]
 	pub fn absolute(value: u128) -> Self {
 		Self { intercept: Displayed(value), slope: Displayed(0) }
 	}
+
 	/// A ratio amount, expressed in u128 parts (x / u128::MAX)
 	#[inline]
 	pub fn ratio(parts: u128) -> Self {
 		Self { intercept: Displayed(0), slope: Displayed(parts) }
+	}
+
+	/// Helper function to see if the amount is absolute
+	#[inline]
+	pub fn is_absolute(&self) -> bool {
+		self.slope.0 == 0
+	}
+
+	/// Helper function to see if the amount is ratio
+	#[inline]
+	pub fn is_ratio(&self) -> bool {
+		self.intercept.0 == 0
 	}
 }
 
@@ -210,22 +239,22 @@ impl Amount {
 	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
 )]
 #[repr(transparent)]
-pub struct Funds<T = Amount>(pub BTreeMap<AssetId, T>);
+pub struct Funds<T = Amount>(pub Vec<(AssetId, T)>);
 
 impl<T> Funds<T> {
 	#[inline]
 	pub fn empty() -> Self {
-		Funds(BTreeMap::new())
+		Funds(Vec::new())
 	}
 }
 
-impl<T, U, V> From<BTreeMap<U, V>> for Funds<T>
+impl<T, U, V> From<Vec<(U, V)>> for Funds<T>
 where
 	U: Into<AssetId>,
 	V: Into<T>,
 {
 	#[inline]
-	fn from(assets: BTreeMap<U, V>) -> Self {
+	fn from(assets: Vec<(U, V)>) -> Self {
 		Funds(
 			assets
 				.into_iter()
@@ -246,10 +275,20 @@ where
 	}
 }
 
-impl<T> From<Funds<T>> for BTreeMap<u128, T> {
+impl<T> From<Funds<T>> for Vec<(AssetId, T)> {
 	#[inline]
 	fn from(Funds(assets): Funds<T>) -> Self {
-		assets.into_iter().map(|(AssetId(asset), amount)| (asset, amount)).collect()
+		assets
+	}
+}
+
+impl<T> From<Funds<T>> for Vec<(u128, T)> {
+	#[inline]
+	fn from(Funds(assets): Funds<T>) -> Self {
+		assets
+			.into_iter()
+			.map(|(AssetId(Displayed(asset)), amount)| (asset, amount))
+			.collect()
 	}
 }
 
@@ -258,9 +297,9 @@ mod tests {
 	use super::*;
 	#[test]
 	fn asset_ids() {
-		assert_eq!(PICA::ID, AssetId(1));
-		assert_eq!(ETH::ID, AssetId(2));
-		assert_eq!(USDT::ID, AssetId(3));
-		assert_eq!(USDC::ID, AssetId(4));
+		assert_eq!(PICA::ID, AssetId::from(1));
+		assert_eq!(ETH::ID, AssetId::from(2));
+		assert_eq!(USDT::ID, AssetId::from(3));
+		assert_eq!(USDC::ID, AssetId::from(4));
 	}
 }

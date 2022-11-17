@@ -1,7 +1,7 @@
 [package]
 authors = ["Composable Developers"]
 edition = "2021"
-name = "xcvm-asset-registry"
+name = "cw-xcvm-asset-registry"
 version = "0.1.0"
 
 exclude = [
@@ -25,6 +25,7 @@ cw2 = "0.14.0"
 schemars = "0.8.8"
 serde = { version = "1.0.137", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.31" }
+xcvm-core = { path = "../../../lib/core", features = ["cosmwasm", "std"] }
 
 [dev-dependencies]
 cosmwasm-schema = "1.0.0"

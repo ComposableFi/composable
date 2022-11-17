@@ -11,8 +11,11 @@
           buildInputs = base.buildInputs
             ++ (with pkgs; [ clang nodejs python3 yarn ])
             ++ (with self'.packages; [ rust-nightly ]);
-          LD_LIBRARY_PATH = pkgs.lib.strings.makeLibraryPath
-            (with pkgs; [ stdenv.cc.cc.lib llvmPackages.libclang.lib ]);
+          LD_LIBRARY_PATH = pkgs.lib.strings.makeLibraryPath (with pkgs; [
+            stdenv.cc.cc.lib
+            llvmPackages.libclang.lib
+            pkgs.zlib
+          ]);
           LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
           PROTOC = "${pkgs.protobuf}/bin/protoc";
           ROCKSDB_LIB_DIR = "${pkgs.rocksdb}/lib";
@@ -48,7 +51,7 @@
 
       wasm = default.overrideAttrs (base: {
         buildInputs = base.buildInputs ++ [ pkgs.grub2 ]
-          ++ (with self'.packages; [ subwasm wasm-optimizer subxt ]);
+          ++ (with self'.packages; [ subwasm wasm-optimizer ]);
       });
 
       xcvm = wasm.overrideAttrs (base: {

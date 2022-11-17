@@ -1,5 +1,12 @@
 use cosmwasm_std::StdError;
 use thiserror::Error;
+use xcvm_core::BridgeSecurity;
+
+impl From<()> for ContractError {
+	fn from(_: ()) -> Self {
+		ContractError::InvalidProgram
+	}
+}
 
 #[derive(Error, Debug)]
 pub enum ContractError {
@@ -12,6 +19,27 @@ pub enum ContractError {
 	#[error("Data cannot be serialized")]
 	DataSerializationError,
 
+	#[error("XCVM program is invalid")]
+	InvalidProgram,
+
 	#[error("A program tag must be a correct utf8 encoded string")]
 	InvalidProgramTag,
+
+	#[error("Bindings are invalid")]
+	InvalidBindings,
+
+	#[error("Expected bridge security to be at least {0:?}, got {1:?}")]
+	InsufficientBridgeSecurity(BridgeSecurity, BridgeSecurity),
+
+	#[error("Caller is not authenticated to take the action")]
+	NotAuthorized,
+
+	#[error("Instruction {0} is not supported")]
+	InstructionNotSupported(String),
+
+	#[error("Address is invalid")]
+	InvalidAddress,
+
+	#[error("Unsupported")]
+	Unsupported,
 }

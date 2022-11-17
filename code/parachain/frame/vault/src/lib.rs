@@ -675,7 +675,7 @@ pub mod pallet {
 				);
 
 				let lp_token_id = {
-					T::CurrencyFactory::create(RangeId::LP_TOKENS, T::Balance::zero())
+					T::CurrencyFactory::create(RangeId::LP_TOKENS)
 						.map_err(|_| Error::<T>::CannotCreateAsset)?
 				};
 

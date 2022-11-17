@@ -1,8 +1,9 @@
 use crate::{prelude::*, Balance};
-use composable_support::{
-	math::safe::safe_multiply_by_rational, rational_64, types::rational::Rational64,
+use composable_support::math::safe::safe_multiply_by_rational;
+use composable_traits::{
+	currency::{AssetRatioInspect, Rational64},
+	rational,
 };
-use composable_traits::currency::{AssetExistentialDepositInspect, AssetRatioInspect};
 
 use frame_support::{
 	traits::ConstU128,
@@ -11,7 +12,6 @@ use frame_support::{
 		WeightToFeePolynomial,
 	},
 };
-use num_traits::One;
 use primitives::currency::CurrencyId;
 use sp_runtime::Perbill;
 use sp_std::marker::PhantomData;
@@ -47,15 +47,10 @@ pub fn multi_existential_deposits<AssetsRegistry>(_currency_id: &CurrencyId) -> 
 }
 
 #[cfg(not(feature = "runtime-benchmarks"))]
-pub fn multi_existential_deposits<
-	AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>
-		+ AssetExistentialDepositInspect<AssetId = CurrencyId, Balance = Balance>,
->(
+pub fn multi_existential_deposits<AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>>(
 	currency_id: &CurrencyId,
 ) -> Balance {
-	AssetsRegistry::existential_deposit(*currency_id)
-		.ok()
-		.or_else(|| WellKnownForeignToNativePriceConverter::existential_deposit(*currency_id))
+	PriceConverter::<AssetsRegistry>::to_asset_balance(NATIVE_EXISTENTIAL_DEPOSIT, *currency_id)
 		.unwrap_or(Balance::MAX)
 }
 
@@ -72,12 +67,12 @@ pub struct WellKnownForeignToNativePriceConverter;
 impl WellKnownForeignToNativePriceConverter {
 	pub fn get_ratio(asset_id: CurrencyId) -> Option<Rational64> {
 		match asset_id {
-			CurrencyId::KSM => Some(rational_64!(375 / 1_000_000)),
-			CurrencyId::ibcDOT => Some(rational_64!(2143 / 1_000_000)),
-			CurrencyId::USDT | CurrencyId::USDC => Some(rational_64!(15 / 1_000_000_000)),
-			CurrencyId::kUSD => Some(rational_64!(15 / 1_000)),
-			CurrencyId::PICA => Some(rational_64!(1 / 1)),
-			CurrencyId::PBLO => Some(rational_64!(1 / 1)),
+			CurrencyId::KSM => Some(rational!(375 / 1_000_000)),
+			CurrencyId::ibcDOT => Some(rational!(2143 / 1_000_000)),
+			CurrencyId::USDT | CurrencyId::USDC => Some(rational!(15 / 1_000_000_000)),
+			CurrencyId::kUSD => Some(rational!(15 / 1_000)),
+			CurrencyId::PICA => Some(rational!(1 / 1)),
+			CurrencyId::PBLO => Some(rational!(1 / 1)),
 			_ => None,
 		}
 	}
@@ -87,9 +82,8 @@ impl WellKnownForeignToNativePriceConverter {
 	}
 
 	pub fn to_asset_balance(balance: NativeBalance, asset_id: CurrencyId) -> Option<Balance> {
-		Self::get_ratio(asset_id).map(|x| {
-			safe_multiply_by_rational(balance, x.n().into(), x.d().get().into())
-				.unwrap_or_else(|_| Balance::one())
+		Self::get_ratio(asset_id).and_then(|ratio| {
+			safe_multiply_by_rational(balance, ratio.n.into(), ratio.d.into()).ok()
 		})
 	}
 }
@@ -107,9 +101,7 @@ impl<AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>>
 		asset_id: CurrencyId,
 	) -> Result<Balance, Self::Error> {
 		AssetsRegistry::get_ratio(asset_id)
-			.and_then(|x| {
-				safe_multiply_by_rational(native_amount, x.n().into(), x.d().get().into()).ok()
-			})
+			.and_then(|x| safe_multiply_by_rational(native_amount, x.n().into(), x.d().into()).ok())
 			.or_else(|| {
 				WellKnownForeignToNativePriceConverter::to_asset_balance(native_amount, asset_id)
 			})
@@ -135,10 +127,6 @@ mod commons_sense {
 	struct Dummy {}
 	impl AssetRatioInspect for Dummy {
 		type AssetId = CurrencyId;
-	}
-	impl AssetExistentialDepositInspect for Dummy {
-		type AssetId = CurrencyId;
-		type Balance = Balance;
 	}
 
 	#[cfg(not(feature = "runtime-benchmarks"))]

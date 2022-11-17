@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       ref:
-        description: "Release tag, branch name or any revision."
+        description: "Release tag, branch name or any ref."
         required: true
         type: string
   push:
@@ -31,13 +31,13 @@ jobs:
        cancel-in-progress: true
     strategy:
       matrix:
-        package: [devnet-persistent-program, devnet-picasso-persistent-program]
+        package: [devnet-dali-persistent, devnet-picasso-persistent]
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
     - uses: actions/checkout@v3
       with:
-        ref: ${{ inputs.revision }}
+        ref: ${{ inputs.ref }}
         fetch-depth: 0
     - run: |
         echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
@@ -72,7 +72,6 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with:
-        ref: ${{ inputs.revision }}
         fetch-depth: 0
     - run: |
         echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
@@ -95,7 +94,6 @@ jobs:
     - name: Install NixOps
       run: |
         nix-env -iA nixpkgs.nixopsUnstable
-
     - name: Load NixOps State
       run: |
         if gsutil -q stat $NIXOPS_STATE_URL/$NIXOPS_STATE_FILE;
@@ -115,6 +113,7 @@ jobs:
         nixops deploy --allow-recreate --allow-reboot --confirm --deployment devnet-gce --debug --show-trace --option narinfo-cache-negative-ttl 0 --include composable-persistent-devnet picasso-composable-persistent-devnet
       env:
         NIXOPS_STATE: ${{ runner.temp }}/${{ env.NIXOPS_STATE_FILE }}
+        DEPLOY_REVISION: ${{ inputs.ref }}
     - name: Save NixOps State
       if: always()
       run: |
