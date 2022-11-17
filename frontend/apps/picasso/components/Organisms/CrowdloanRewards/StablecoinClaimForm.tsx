@@ -167,7 +167,7 @@ export const StablecoinClaimForm: React.FC<StablecoinClaimFormProps> = ({
                   label: "Crowdloan contribution",
                   TooltipProps: {
                     title:
-                      "Amount of KSM you have contributed to the Picasso crowdloan on this account",
+                      "Amount of Stablecoin you have contributed to the Picasso crowdloan on this account",
                     children: <></>,
                   },
                 },
