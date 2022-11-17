@@ -66,7 +66,7 @@ export const useTransfer = () => {
             "Executing transfer... just one moment, please.",
             {
               persist: true,
-              description: `Transaction hash: ${txHash}`,
+              description: "",
               variant: "info",
               isCloseable: true,
               url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
