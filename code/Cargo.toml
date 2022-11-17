@@ -42,6 +42,7 @@ members = [
   "utils/common",
   "utils/price-feed",
   "utils/collator-sidecar",
+  "utils/subxt-exports",
   "utils/composable-subxt",
   "simnode/simnode-tests",
   "simnode/common",
@@ -79,9 +80,6 @@ sp-externalities = { git = "https://github.com/ComposableFi/substrate", rev = "9
 sp-io = { git = "https://github.com/ComposableFi/substrate", rev = "9bdc51acad943bd07fae159f59564a1b464d33b5" }
 sp-runtime = { git = "https://github.com/ComposableFi/substrate", rev = "9bdc51acad943bd07fae159f59564a1b464d33b5" }
 wasmi-validation = { git = "https://github.com/ComposableFi/wasmi", rev = "cd8c0c775a1d197a35ff3d5c7d6cded3d476411b" }
-
-[patch."https://github.com/paritytech/subxt"]
-subxt-codegen = { git = "https://github.com/paritytech//subxt", rev = "2fe9a1446d32b93a10804db3304ccaac65f764b8" }
 
 [patch."https://github.com/paritytech/cumulus"]
 cumulus-client-cli = { git = "https://github.com/ComposableFi/cumulus", rev = "f730e6747be173e2d4609381edc7929c8671f4d8" }

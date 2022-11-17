@@ -1275,7 +1275,34 @@ dependencies = [
  "eyre",
  "indenter",
  "once_cell",
- "owo-colors",
+ "owo-colors 1.3.0",
+]
+
+[[package]]
+name = "color-eyre"
+version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5a667583cca8c4f8436db8de46ea8233c42a7d9ae424a82d338f2e4675229204"
+dependencies = [
+ "backtrace",
+ "color-spantrace",
+ "eyre",
+ "indenter",
+ "once_cell",
+ "owo-colors 3.5.0",
+ "tracing-error",
+]
+
+[[package]]
+name = "color-spantrace"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1ba75b3d9449ecdccb27ecbc479fdc0b87fa2dd43d2f8298f9bf0e59aacc8dce"
+dependencies = [
+ "once_cell",
+ "owo-colors 3.5.0",
+ "tracing-core",
+ "tracing-error",
 ]
 
 [[package]]
@@ -1334,7 +1361,7 @@ dependencies = [
 name = "composable"
 version = "2.3.4"
 dependencies = [
- "color-eyre",
+ "color-eyre 0.5.11",
  "composable-node",
 ]
 
@@ -4973,7 +5000,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1d02a921aa22006ed979c2e1c407fd21302ac6049e5b544634ec5ec41516363d"
 dependencies = [
  "jsonrpsee-core 0.11.0",
- "jsonrpsee-http-client",
+ "jsonrpsee-http-client 0.11.0",
  "jsonrpsee-proc-macros 0.11.0",
  "jsonrpsee-types 0.11.0",
 ]
@@ -4986,6 +5013,7 @@ checksum = "11e017217fcd18da0a25296d3693153dd19c8a6aadab330b3595285d075385d1"
 dependencies = [
  "jsonrpsee-client-transport 0.14.0",
  "jsonrpsee-core 0.14.0",
+ "jsonrpsee-http-client 0.14.0",
  "jsonrpsee-http-server",
  "jsonrpsee-proc-macros 0.14.0",
  "jsonrpsee-types 0.14.0",
@@ -5002,6 +5030,7 @@ checksum = "8bd0d559d5e679b1ab2f869b486a11182923863b1b3ee8b421763cdd707b783a"
 dependencies = [
  "jsonrpsee-client-transport 0.15.1",
  "jsonrpsee-core 0.15.1",
+ "jsonrpsee-types 0.15.1",
 ]
 
 [[package]]
@@ -5128,6 +5157,25 @@ dependencies = [
  "hyper-rustls",
  "jsonrpsee-core 0.11.0",
  "jsonrpsee-types 0.11.0",
+ "rustc-hash",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "jsonrpsee-http-client"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5fc1d8c0e4f455c47df21f8a29f4bbbcb75eb71bfee919b92e92502b48358392"
+dependencies = [
+ "async-trait",
+ "hyper 0.14.22",
+ "hyper-rustls",
+ "jsonrpsee-core 0.14.0",
+ "jsonrpsee-types 0.14.0",
  "rustc-hash",
  "serde",
  "serde_json",
@@ -7209,6 +7257,12 @@ name = "owo-colors"
 version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2386b4ebe91c2f7f51082d4cefa145d030e33a1842a96b12e4885cc3c01f7a55"
+
+[[package]]
+name = "owo-colors"
+version = "3.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c1b04fb49957986fdce4d6ee7a65027d55d4b6d2265e5848bbb507b58ccfdb6f"
 
 [[package]]
 name = "p256"
@@ -12667,7 +12721,7 @@ dependencies = [
  "thiserror",
  "tracing",
  "tracing-log",
- "tracing-subscriber",
+ "tracing-subscriber 0.2.25",
 ]
 
 [[package]]
@@ -12735,6 +12789,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "scale-bits"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8dd7aca73785181cc41f0bbe017263e682b585ca660540ba569133901d013ecf"
+dependencies = [
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+]
+
+[[package]]
 name = "scale-decode"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -12742,6 +12807,18 @@ checksum = "c70dece385bc3e5918109830d9509806b5d4525fdf594e3463078c529122979e"
 dependencies = [
  "bitvec",
  "parity-scale-codec",
+ "scale-info",
+ "thiserror",
+]
+
+[[package]]
+name = "scale-decode"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d823d4be477fc33321f93d08fb6c2698273d044f01362dc27573a750deb7c233"
+dependencies = [
+ "parity-scale-codec",
+ "scale-bits",
  "scale-info",
  "thiserror",
 ]
@@ -12782,7 +12859,24 @@ dependencies = [
  "either",
  "frame-metadata",
  "parity-scale-codec",
- "scale-decode",
+ "scale-decode 0.3.0",
+ "scale-info",
+ "serde",
+ "thiserror",
+ "yap",
+]
+
+[[package]]
+name = "scale-value"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "16a5e7810815bd295da73e4216d1dfbced3c7c7c7054d70fa5f6e4c58123fff4"
+dependencies = [
+ "either",
+ "frame-metadata",
+ "parity-scale-codec",
+ "scale-bits",
+ "scale-decode 0.4.0",
  "scale-info",
  "serde",
  "thiserror",
@@ -14067,7 +14161,7 @@ dependencies = [
  "sp-std",
  "tracing",
  "tracing-core",
- "tracing-subscriber",
+ "tracing-subscriber 0.2.25",
 ]
 
 [[package]]
@@ -14610,17 +14704,56 @@ dependencies = [
  "jsonrpsee 0.15.1",
  "parity-scale-codec",
  "parking_lot 0.12.1",
- "scale-decode",
+ "scale-decode 0.3.0",
  "scale-info",
- "scale-value",
+ "scale-value 0.5.0",
  "serde",
  "serde_json",
  "sp-core",
  "sp-runtime",
  "subxt-macro 0.23.0",
- "subxt-metadata 0.23.0 (git+https://github.com/paritytech/subxt?rev=2fe9a1446d32b93a10804db3304ccaac65f764b8)",
+ "subxt-metadata 0.23.0",
  "thiserror",
  "tracing",
+]
+
+[[package]]
+name = "subxt"
+version = "0.24.0"
+source = "git+https://github.com/paritytech/subxt?rev=51179a8b72472d0b43c91cda75a1ddc3fddb9555#51179a8b72472d0b43c91cda75a1ddc3fddb9555"
+dependencies = [
+ "bitvec",
+ "derivative",
+ "frame-metadata",
+ "futures 0.3.25",
+ "hex",
+ "jsonrpsee 0.15.1",
+ "parity-scale-codec",
+ "parking_lot 0.12.1",
+ "scale-decode 0.4.0",
+ "scale-info",
+ "scale-value 0.6.0",
+ "serde",
+ "serde_json",
+ "sp-core",
+ "sp-runtime",
+ "subxt-macro 0.24.0",
+ "subxt-metadata 0.24.0",
+ "thiserror",
+ "tracing",
+]
+
+[[package]]
+name = "subxt-codegen"
+version = "0.1.0"
+dependencies = [
+ "color-eyre 0.6.2",
+ "frame-metadata",
+ "hex",
+ "jsonrpsee 0.14.0",
+ "parity-scale-codec",
+ "subxt-codegen 0.24.0",
+ "syn 1.0.103",
 ]
 
 [[package]]
@@ -14644,7 +14777,7 @@ dependencies = [
 [[package]]
 name = "subxt-codegen"
 version = "0.23.0"
-source = "git+https://github.com/paritytech//subxt?rev=2fe9a1446d32b93a10804db3304ccaac65f764b8#2fe9a1446d32b93a10804db3304ccaac65f764b8"
+source = "git+https://github.com/paritytech/subxt?rev=2fe9a1446d32b93a10804db3304ccaac65f764b8#2fe9a1446d32b93a10804db3304ccaac65f764b8"
 dependencies = [
  "darling",
  "frame-metadata",
@@ -14654,8 +14787,38 @@ dependencies = [
  "proc-macro2 1.0.47",
  "quote 1.0.21",
  "scale-info",
- "subxt-metadata 0.23.0 (git+https://github.com/paritytech//subxt?rev=2fe9a1446d32b93a10804db3304ccaac65f764b8)",
+ "subxt-metadata 0.23.0",
  "syn 1.0.103",
+]
+
+[[package]]
+name = "subxt-codegen"
+version = "0.24.0"
+source = "git+https://github.com/paritytech/subxt?rev=51179a8b72472d0b43c91cda75a1ddc3fddb9555#51179a8b72472d0b43c91cda75a1ddc3fddb9555"
+dependencies = [
+ "darling",
+ "frame-metadata",
+ "heck 0.4.0",
+ "parity-scale-codec",
+ "proc-macro-error",
+ "proc-macro2 1.0.47",
+ "quote 1.0.21",
+ "scale-info",
+ "subxt-metadata 0.24.0",
+ "syn 1.0.103",
+]
+
+[[package]]
+name = "subxt-exports"
+version = "0.1.0"
+dependencies = [
+ "color-eyre 0.6.2",
+ "once_cell",
+ "parity-scale-codec",
+ "serde",
+ "subxt 0.24.0",
+ "subxt-codegen 0.1.0",
+ "tokio",
 ]
 
 [[package]]
@@ -14682,6 +14845,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "subxt-macro"
+version = "0.24.0"
+source = "git+https://github.com/paritytech/subxt?rev=51179a8b72472d0b43c91cda75a1ddc3fddb9555#51179a8b72472d0b43c91cda75a1ddc3fddb9555"
+dependencies = [
+ "darling",
+ "proc-macro-error",
+ "subxt-codegen 0.24.0",
+ "syn 1.0.103",
+]
+
+[[package]]
 name = "subxt-metadata"
 version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -14696,7 +14870,7 @@ dependencies = [
 [[package]]
 name = "subxt-metadata"
 version = "0.23.0"
-source = "git+https://github.com/paritytech//subxt?rev=2fe9a1446d32b93a10804db3304ccaac65f764b8#2fe9a1446d32b93a10804db3304ccaac65f764b8"
+source = "git+https://github.com/paritytech/subxt?rev=2fe9a1446d32b93a10804db3304ccaac65f764b8#2fe9a1446d32b93a10804db3304ccaac65f764b8"
 dependencies = [
  "frame-metadata",
  "parity-scale-codec",
@@ -14706,8 +14880,8 @@ dependencies = [
 
 [[package]]
 name = "subxt-metadata"
-version = "0.23.0"
-source = "git+https://github.com/paritytech/subxt?rev=2fe9a1446d32b93a10804db3304ccaac65f764b8#2fe9a1446d32b93a10804db3304ccaac65f764b8"
+version = "0.24.0"
+source = "git+https://github.com/paritytech/subxt?rev=51179a8b72472d0b43c91cda75a1ddc3fddb9555#51179a8b72472d0b43c91cda75a1ddc3fddb9555"
 dependencies = [
  "frame-metadata",
  "parity-scale-codec",
@@ -15229,6 +15403,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "tracing-error"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d686ec1c0f384b1277f097b2f279a2ecc11afe8c133c1aabf036a27cb4cd206e"
+dependencies = [
+ "tracing",
+ "tracing-subscriber 0.3.16",
+]
+
+[[package]]
 name = "tracing-futures"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -15303,6 +15487,17 @@ dependencies = [
  "tracing-core",
  "tracing-log",
  "tracing-serde",
+]
+
+[[package]]
+name = "tracing-subscriber"
+version = "0.3.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a6176eae26dd70d0c919749377897b54a9276bd7061339665dd68777926b5a70"
+dependencies = [
+ "sharded-slab",
+ "thread_local",
+ "tracing-core",
 ]
 
 [[package]]
