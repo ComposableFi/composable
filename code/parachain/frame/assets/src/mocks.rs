@@ -73,7 +73,7 @@ impl CurrencyFactory for CurrencyIdGenerator {
 	type AssetId = AssetId;
 	type Balance = Balance;
 
-	fn create(_: RangeId, _: Self::Balance) -> Result<Self::AssetId, sp_runtime::DispatchError> {
+	fn create(_: RangeId) -> Result<Self::AssetId, sp_runtime::DispatchError> {
 		Ok(1)
 	}
 

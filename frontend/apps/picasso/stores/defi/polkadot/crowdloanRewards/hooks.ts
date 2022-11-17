@@ -16,6 +16,7 @@ import {
   useCrowdloanRewardsSlice,
 } from "./crowdloanRewards.slice";
 import BigNumber from "bignumber.js";
+import { fromChainIdUnit } from "shared";
 
 export const toKusamaAddressFormat = (address: string) =>
   encodeAddress(address, SUBSTRATE_NETWORKS.kusama.ss58Format);
@@ -112,6 +113,14 @@ export const useCrowdloanRewardsClaimableRewards = (
   const updateClaimable = useCallback(async (): Promise<BigNumber> => {
     if (!api) return new BigNumber(0);
 
+    const vestingStep =
+      await api.consts.crowdloanRewards.vestingStep.toNumber();
+    const startTimestampOption =
+      await api.query.crowdloanRewards.vestingTimeStart();
+    const startTimestamp = new BigNumber(startTimestampOption.toString());
+    const nowU64 = await api.query.timestamp.now();
+    const now = new BigNumber(nowU64.toString());
+
     let totalRewards = new BigNumber(0),
       canClaim = false,
       accountAssociation: CrowdloanAssociation | undefined;
@@ -146,7 +155,30 @@ export const useCrowdloanRewardsClaimableRewards = (
       !accountAssociation &&
       (isEthAccountEligible || isPicassoAccountEligible)
     ) {
-      return totalRewards.times(initialPayment);
+      const rewardsCodec = await api.query.crowdloanRewards.rewards(
+        isEthAccountEligible ? {
+          Ethereum: ethAccount
+        } : {
+          RelayChain: picassoAccount
+        }
+      );
+      const rewards = rewardsCodec.toJSON() as {
+        vestingPeriod: number | string;
+        total: number | string;
+        claimed: number | string;
+      };
+      const vestingPoint = now.minus(startTimestamp);
+
+      if (vestingPoint.gt(rewards.vestingPeriod)) {
+        return fromChainIdUnit(BigInt(rewards.total))
+      } else {
+        const upfront = totalRewards.times(initialPayment);
+        const vestingWindow = vestingPoint.minus(vestingPoint.mod(vestingStep));
+        const vested = new BigNumber(fromChainIdUnit(BigInt(rewards.total))).minus(upfront);
+        return upfront.plus(
+          vested.times(vestingWindow.div(rewards.vestingPeriod))
+        ).dp(4)
+      }
     }
     return new BigNumber(0);
   }, [
@@ -244,19 +276,27 @@ export const useCrowdloanRewardsEthereumAddressAssociatedAccount = (
           return address === ethAssociation[0];
         });
       } else if (!ethAssociation) {
-        const connectedKsmHasOtherAssociation = findAssociatedByAccount(connectedPicassoAccount.address, onChainAssociations);
-        if (connectedKsmHasOtherAssociation && connectedKsmHasOtherAssociation[1] === null) {
+        const connectedKsmHasOtherAssociation = findAssociatedByAccount(
+          connectedPicassoAccount.address,
+          onChainAssociations
+        );
+        if (
+          connectedKsmHasOtherAssociation &&
+          connectedKsmHasOtherAssociation[1] === null
+        ) {
           return connectedPicassoAccount;
         } else {
           return {
             address: "DOT Wallet is associated with",
             meta: {
               genesisHash: null,
-              name: connectedKsmHasOtherAssociation?.[1] ? connectedKsmHasOtherAssociation?.[1] : "-",
-              source: "none"
+              name: connectedKsmHasOtherAssociation?.[1]
+                ? connectedKsmHasOtherAssociation?.[1]
+                : "-",
+              source: "none",
             },
-            type: "ethereum"
-          }
+            type: "ethereum",
+          };
         }
       }
     }
@@ -322,7 +362,10 @@ export const useCrowdloanRewardsStepGivenConnectedAccounts = (
           return CrowdloanStep.None;
         }
       } else {
-        const ksmAssociation = findAssociatedByAccount(selectedPicassoAccount, onChainAssociations);
+        const ksmAssociation = findAssociatedByAccount(
+          selectedPicassoAccount,
+          onChainAssociations
+        );
         if (ksmAssociation && ksmAssociation[1] === null) {
           return CrowdloanStep.AssociateEth;
         } else {

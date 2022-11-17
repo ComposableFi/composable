@@ -1,6 +1,5 @@
 //! Interfaces to managed assets
 use codec::{Decode, Encode, MaxEncodedLen};
-use composable_support::types::rational::Rational64;
 use frame_support::{dispatch::DispatchResult, pallet_prelude::ConstU32, WeakBoundedVec};
 use polkadot_parachain::primitives::Id;
 use scale_info::TypeInfo;
@@ -9,7 +8,10 @@ use serde::{Deserialize, Serialize};
 use sp_std::vec::Vec;
 use xcm::latest::MultiLocation;
 
-use crate::{assets::Asset, currency::Exponent};
+use crate::{
+	assets::Asset,
+	currency::{Exponent, Rational64},
+};
 
 /// works only with concrete assets
 #[derive(Debug, Encode, Decode, Clone, PartialEq, Eq, TypeInfo)]
@@ -109,7 +111,7 @@ pub trait RemoteAssetRegistryMutate {
 	fn set_reserve_location(
 		asset_id: Self::AssetId,
 		location: Self::AssetNativeLocation,
-		ratio: Option<Rational64>,
+		ratio: Rational64,
 		decimals: Option<Exponent>,
 	) -> DispatchResult;
 

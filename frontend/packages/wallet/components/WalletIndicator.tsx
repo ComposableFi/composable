@@ -6,6 +6,7 @@ import {
   useMediaQuery,
   useTheme,
   alpha,
+  Button,
 } from "@mui/material";
 import Image from "next/image";
 import { useCallback } from "react";
@@ -23,7 +24,7 @@ export const WalletIndicator: React.FC<ConnectionButtonProps> = ({
   label,
   onClick,
   isEthereumConnected = false,
-  isPolkadotConnected
+  isPolkadotConnected,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -41,41 +42,49 @@ export const WalletIndicator: React.FC<ConnectionButtonProps> = ({
             <Image src={ethIcon} width="24" height="24" alt="Account" />
           </Box>
         </>
-      )
+      );
     } else if (isEthereumConnected || isPolkadotConnected) {
       const icon = isEthereumConnected ? ethIcon : polkaIcon;
       return (
         <Box sx={{ display: "flex" }}>
           <Image src={icon} width="24" height="24" alt="Account" />
         </Box>
-      )
+      );
     } else {
       return (
         <>
           <Box sx={{ display: "flex" }}>
-            <Image style={{ filter: "grayscale(100%)" }}  src={polkaIcon} width="24" height="24" alt="Account" />
+            <Image
+              style={{ filter: "grayscale(100%)" }}
+              src={polkaIcon}
+              width="24"
+              height="24"
+              alt="Account"
+            />
           </Box>
           <Box sx={{ display: "flex" }}>
-            <Image style={{ filter: "grayscale(100%)" }} src={ethIcon} width="24" height="24" alt="Account" />
+            <Image
+              style={{ filter: "grayscale(100%)" }}
+              src={ethIcon}
+              width="24"
+              height="24"
+              alt="Account"
+            />
           </Box>
         </>
-      )
+      );
     }
-
   }, [isEthereumConnected, isPolkadotConnected]);
 
   return (
-    <Paper
+    <Button
+      variant="outlined"
       onClick={onClick}
       sx={{
         display: "flex",
         alignContent: "center",
         gap: theme.spacing(2),
         flexShrink: 0,
-        background: alpha(
-          theme.palette.primary.main,
-          theme.custom.opacity.light
-        ),
         cursor: "pointer",
         "&:hover": {
           background: alpha(
@@ -85,7 +94,14 @@ export const WalletIndicator: React.FC<ConnectionButtonProps> = ({
         },
       }}
     >
-      <Box sx={{ height: theme.spacing(3), display: "flex", flexGrow: isMobile ? 1 : undefined, justifyContent: isMobile ? "center" : undefined }}>
+      <Box
+        sx={{
+          height: theme.spacing(3),
+          display: "flex",
+          flexGrow: isMobile ? 1 : undefined,
+          justifyContent: isMobile ? "center" : undefined,
+        }}
+      >
         {networkIcons()}
       </Box>
 
@@ -95,7 +111,6 @@ export const WalletIndicator: React.FC<ConnectionButtonProps> = ({
           {!isEthereumConnected && isPolkadotConnected ? <Add /> : null}
         </>
       ) : null}
-
-    </Paper>
+    </Button>
   );
 };

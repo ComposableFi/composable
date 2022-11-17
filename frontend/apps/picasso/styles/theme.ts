@@ -486,7 +486,7 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
     MuiList: {
       styleOverrides: {
         root: {
-          padding: theme.spacing(0, 3),
+          padding: theme.spacing(0, 2),
         },
       },
     },
@@ -506,6 +506,14 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
               color: theme.palette.common.white,
             },
           },
+          "&:hover": {
+            "& .MuiListItemIcon-root": {
+              color: theme.palette.common.white,
+            },
+            "& .MuiListItemText-primary": {
+              color: theme.palette.common.white,
+            },
+          },
         },
       },
     },
@@ -513,6 +521,7 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
       styleOverrides: {
         root: {
           minWidth: "2.625rem",
+          color: alpha(theme.palette.common.white, 0.6),
         },
       },
     },
@@ -687,26 +696,12 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
       },
       styleOverrides: {
         root: {
-          "&:hover": {
-            "& .MuiOutlinedInput-notchedOutline": {
-              borderColor: `${alpha(
-                theme.palette.common.white,
-                customThemeOptions.custom.opacity.main
-              )}`,
-            },
-          },
           "&.Mui-error": {
             color: brandPalette.error.main,
             "&:hover": {
               "& .MuiOutlinedInput-notchedOutline": {
                 borderColor: `${brandPalette.error.main}`,
               },
-            },
-          },
-          "&.Mui-focused": {
-            color: brandPalette.common.white,
-            "& .MuiOutlinedInput-notchedOutline": {
-              borderColor: `${brandPalette.primary.light}`,
             },
           },
           "&.Mui-disabled": {
@@ -735,6 +730,10 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
             "& .MuiBox-root": {
               overflow: "hidden",
             },
+          },
+          "&:hover .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#FF8500",
+            borderWidth: "2px",
           },
         },
         input: {

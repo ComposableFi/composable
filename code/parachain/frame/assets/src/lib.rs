@@ -292,8 +292,7 @@ pub mod pallet {
 			dest: <T::Lookup as StaticLookup>::Source,
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
-			// TODO: pass non zero from creators
-			let id = T::GenerateCurrencyId::create(RangeId::TOKENS, T::Balance::default())?;
+			let id = T::GenerateCurrencyId::create(RangeId::TOKENS)?;
 			let dest = T::Lookup::lookup(dest)?;
 			<Self as Mutate<T::AccountId>>::mint_into(id, &dest, amount)?;
 			Ok(().into())
@@ -311,7 +310,7 @@ pub mod pallet {
 			dest: <T::Lookup as StaticLookup>::Source,
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
-			let id = T::GenerateCurrencyId::create(RangeId::TOKENS, T::Balance::default())?;
+			let id = T::GenerateCurrencyId::create(RangeId::TOKENS)?;
 			let governance_origin = T::Lookup::lookup(governance_origin)?;
 			T::GovernanceRegistry::set(id, SignedRawOrigin::Signed(governance_origin));
 			let dest = T::Lookup::lookup(dest)?;

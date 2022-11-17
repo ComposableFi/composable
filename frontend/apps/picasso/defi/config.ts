@@ -25,6 +25,12 @@ export type AllowedTransferList = {
   [key in SubstrateNetworkId]: Record<SubstrateNetworkId, Array<TokenId>>;
 };
 
+export const PICASSO_SUPPORTED_TRANSFERS: Array<SubstrateNetworkId> = [
+  "kusama",
+  "picasso",
+  "statemine",
+];
+
 export const TRANSFER_ASSET_LIST: AllowedTransferList = {
   karura: {
     picasso: ["ksm", "ausd", "kusd", "kar"],
