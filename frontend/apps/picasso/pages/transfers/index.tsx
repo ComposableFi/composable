@@ -45,7 +45,7 @@ const Transfers: NextPage = () => {
   const minValue = useMemo(() => {
     const ed = tokens[selectedToken].existentialDeposit[to];
     return pipe(
-      destFee.fee,
+      destFee?.fee,
       option.fromNullable,
       option.chain((fee) =>
         pipe(
@@ -56,7 +56,7 @@ const Transfers: NextPage = () => {
       ),
       option.getOrElse(() => new BigNumber(0))
     );
-  }, [tokens, to, destFee.fee, selectedToken]);
+  }, [tokens, to, destFee?.fee, selectedToken]);
   const feeTokenId = useStore((state) => state.transfers.getFeeToken(from));
   const selectedAccount = useSelectedAccount();
   const hasPendingXcmTransfer = usePendingExtrinsic(

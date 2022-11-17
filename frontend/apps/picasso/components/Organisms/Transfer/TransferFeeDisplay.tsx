@@ -81,7 +81,7 @@ export const TransferFeeDisplay = () => {
             "Fees(gas) for processing the given transaction. The amount can vary depending on transaction details and network conditions.",
         }}
       />
-      {destFee.fee !== null && destFee.token !== null ? (
+      {destFee && destFee?.fee !== null && destFee?.token !== null ? (
         <FeeDisplay
           label="Destination chain fee"
           feeText={
