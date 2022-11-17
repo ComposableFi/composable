@@ -11,7 +11,10 @@ import { useStore } from "@/stores/root";
 import { Stack, Typography } from "@mui/material";
 import { useEffect } from "react";
 import { humanBalance } from "shared";
-import { FEE_MULTIPLIER } from "shared/defi/constants";
+import {
+  DESTINATION_FEE_MULTIPLIER,
+  FEE_MULTIPLIER,
+} from "shared/defi/constants";
 import { useExecutor } from "substrate-react";
 
 export const TransferFeeDisplay = () => {
@@ -88,7 +91,10 @@ export const TransferFeeDisplay = () => {
             <TextExpander
               short={
                 <Typography variant="body2">
-                  {humanBalance(destFee.fee)} {destFee.token.symbol}
+                  {humanBalance(
+                    destFee.fee.multipliedBy(DESTINATION_FEE_MULTIPLIER)
+                  )}{" "}
+                  {destFee.token.symbol}
                 </Typography>
               }
               expanded={
