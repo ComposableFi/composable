@@ -1,0 +1,33 @@
+{
+  "name": "@composable/crowdloan_data_verifier",
+  "version": "1.0.0",
+  "description": "Verifies data populated on the crowdloan pallet, based on provided contributors file.",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "yarn crowdloan_verification",
+    "build": "tsc --build",
+    "crowdloan_verification": "npx ts-node -P tsconfig.json src/main.ts",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint 'src/*.ts' --fix-dry-run ",
+    "clean": "find ./src -name '*.js' -or -name '*.js.map'  -or -name '*.d.ts' -type f -delete"
+  },
+  "keywords": [
+    "crowdloan",
+    "composable"
+  ],
+  "license": "Public Domain",
+  "dependencies": {
+    "@polkadot/api": "9.8.2",
+    "@polkadot/keyring": "10.1.12",
+    "@polkadot/types": "9.8.2",
+    "@polkadot/types-codec": "9.8.2",
+    "@polkadot/util": "10.1.12",
+    "@polkadot/util-crypto": "10.1.12",
+    "@types/node": "18.11.9",
+    "bn.js": "5.2.1",
+    "eslint": "8.27.0",
+    "node-fetch": "2.6.7",
+    "ts-node": "10.9.1",
+    "typescript": "4.9.3"
+  }
+}
