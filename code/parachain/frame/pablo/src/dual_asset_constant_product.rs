@@ -155,12 +155,11 @@ impl<T: Config> DualAssetConstantProduct<T> {
 	> {
 		let pool_assets = Self::get_pool_balances(pool, pool_account);
 		let a_sent = T::Convert::convert(in_asset.amount);
+		let fee = pool.fee_config.fee_rate;
 		let (w_i, b_i) = pool_assets.get(&in_asset.asset_id).ok_or(Error::<T>::PairMismatch)?;
 		let (w_o, b_o) = pool_assets.get(&out_asset_id).ok_or(Error::<T>::PairMismatch)?;
 
-		// TODO: Provide fee calculations or value
-		let amm_pair =
-			compute_out_given_in_new::<_>(*w_i, *w_o, *b_i, *b_o, a_sent, Permill::zero())?;
+		let amm_pair = compute_out_given_in_new::<_>(*w_i, *w_o, *b_i, *b_o, a_sent, fee)?;
 
 		let value = AssetAmount::new(out_asset_id, T::Convert::convert(amm_pair.value));
 		let fee = AssetAmount::new(in_asset.asset_id, T::Convert::convert(amm_pair.fee));
