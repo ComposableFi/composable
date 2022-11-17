@@ -21,8 +21,9 @@ There are guides and tools which help to make life easier
 ## Tools
 
 - https://github.com/open-web3-stack/parachain-launch
-- https://github.com/paritytech/polkadot-launch/blob/master/src/spawn
+- https://github.com/paritytech/polkadot-launch/
 - https://github.com/paritytech/zombienet
+- https://www.youtube.com/watch?v=9BPGQOM7d2E
 - https://github.com/paritytech/polkadot-introspector 
 
 
