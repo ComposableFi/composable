@@ -25,6 +25,7 @@ export function useValidation({
         setValid(true);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [maxDec, value]);
 
   React.useEffect(() => {
