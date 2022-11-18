@@ -1,5 +1,5 @@
-import { TokenId } from "tokens";
 import { BaseAsset, Select } from "@/components";
+import { useAllParachainProviders } from "@/defi/polkadot/context/hooks";
 
 import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
@@ -13,19 +13,18 @@ import { ErrorOutline, LocalGasStation } from "@mui/icons-material";
 import {
   alpha,
   Box,
-  CircularProgress,
   InputAdornment,
   Tooltip,
   Typography,
   useTheme,
 } from "@mui/material";
+import { Signer } from "@polkadot/api/types";
 import BigNumber from "bignumber.js";
 import { SnackbarKey, useSnackbar } from "notistack";
 import React, { FC, useCallback, useEffect, useMemo, useRef } from "react";
 import { callbackGate } from "shared";
 import { useDotSamaContext, useExecutor } from "substrate-react";
-import { Signer } from "@polkadot/api/types";
-import { useAllParachainProviders } from "@/defi/polkadot/context/hooks";
+import { TokenId } from "tokens";
 
 type Props = {
   toggleModal: () => void;
@@ -36,13 +35,13 @@ export const GasFeeDropdown: FC<Props> = ({
   setTargetFeeItem,
 }) => {
   const theme = useTheme();
-  const mountRef = useRef(false);
   const feeItem = useStore((state) => state.transfers.feeItem);
   const originalFeeItem = useRef(feeItem);
   const setFeeItem = useStore((state) => state.transfers.setFeeItem);
   const feeItemEd = useStore((state) => state.transfers.feeItemEd);
   const { signer } = useDotSamaContext();
   const tokens = useStore(({ substrateTokens }) => substrateTokens.tokens);
+  const setFeeToken = useStore((state) => state.transfers.setFeeToken);
   const balances = useStore(
     ({ substrateBalances }) => substrateBalances.balances
   );
@@ -103,6 +102,7 @@ export const GasFeeDropdown: FC<Props> = ({
                 });
                 originalFeeItem.current = tokenId;
                 setFeeItem(tokenId);
+                setFeeToken(tokenId);
                 toggleModal();
               },
               onError: (_err) => {
@@ -137,6 +137,7 @@ export const GasFeeDropdown: FC<Props> = ({
       );
     },
     [
+      setFeeToken,
       account?.address,
       closeSnackbar,
       enqueueSnackbar,
