@@ -25,10 +25,11 @@ const createTokensSlice: StoreSlice<TokensSlice> = (set) => ({
            * update decimals and id
            */
           const identifier = listItem.name.toLowerCase();
-          if (state.substrateTokens.tokens[identifier as TokenId]) {
-            console.log("[Picasso] Found Supported Asset", identifier);
+          if (state.substrateTokens.tokens[identifier as TokenId] && listItem.decimals) {
+            console.log("[Pablo] Found Supported Asset", identifier);
             state.substrateTokens.tokens[identifier as TokenId].setIdOnChain("picasso", listItem.id);
             state.substrateTokens.tokens[identifier as TokenId].setApi(tokenMetadata.picasso.api);
+            state.substrateTokens.tokens[identifier as TokenId].setDecimals("picasso", listItem.decimals);
           }
         });
         state.substrateTokens.hasFetchedTokens = true;

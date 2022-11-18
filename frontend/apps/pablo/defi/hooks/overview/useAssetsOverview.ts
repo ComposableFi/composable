@@ -3,9 +3,12 @@ import { useAssetsWithBalance } from "@/defi/hooks";
 import { OwnedAsset } from "shared";
 import { useParachainApi } from "substrate-react";
 import { useAsyncEffect } from "@/hooks/useAsyncEffect";
+import { useOracleSlice } from "@/store/oracle/slice";
+import BigNumber from "bignumber.js";
 
 export function useAssetsOverview(): OwnedAsset[] {
   const { parachainApi } = useParachainApi("picasso");
+  const oracleSlice = useOracleSlice();
   const assetsWithBalance = useAssetsWithBalance();
   const [assetsWithValue, setAssetsWithValue] = useState<OwnedAsset[]>([]);
 
@@ -13,10 +16,12 @@ export function useAssetsOverview(): OwnedAsset[] {
     if (!parachainApi) return [];
 
     for (const asset of assetsWithBalance) {
-      const price = await parachainApi.query.oracle.prices(
-        asset.getPicassoAssetId() as string
-      );
-      asset.setPrice(price.toString());
+      try {
+        asset.setPrice(oracleSlice.prices[asset.getSymbol()].coingecko.usd);
+      } catch (err: any) {
+        console.log('[useAssetsOverview]: ', err.message);
+        asset.setPrice(new BigNumber(0));
+      }
     }
 
     return assetsWithBalance;
