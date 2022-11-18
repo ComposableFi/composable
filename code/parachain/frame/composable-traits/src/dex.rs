@@ -286,6 +286,7 @@ pub struct BasicPoolInfo<
 	/// Owner of pool
 	pub owner: AccountId,
 	/// Swappable assets with their normalized(sum of weights = 1) weights
+	/// REVIEW(benluelo): Make this a newtype that upholds the "weights sum must be 1" invariant?
 	pub assets_weights: BoundedBTreeMap<AssetId, Permill, MaxAssets>,
 	/// AssetId of LP token
 	pub lp_token: AssetId,

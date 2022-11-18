@@ -32,6 +32,14 @@
 pub use pallet::*;
 
 #[cfg(test)]
+mod common_test_functions;
+
+#[cfg(test)]
+mod dual_asset_constant_product_tests;
+#[cfg(test)]
+mod dual_asset_constant_product_tests_new;
+
+#[cfg(test)]
 mod mock;
 #[cfg(test)]
 mod mock_fnft;
@@ -153,10 +161,10 @@ pub mod pallet {
 			who: T::AccountId,
 			/// Pool id to which liquidity added.
 			pool_id: T::PoolId,
-			/// Amount of base asset deposited.
-			base_amount: T::Balance,
-			/// Amount of quote asset deposited.
-			quote_amount: T::Balance,
+			// /// Amount of base asset deposited.
+			// base_amount: T::Balance,
+			// /// Amount of quote asset deposited.
+			// quote_amount: T::Balance,
 			/// Amount of minted lp.
 			minted_lp: T::Balance,
 		},
@@ -225,6 +233,9 @@ pub mod pallet {
 		WeightsMustBeNonZero,
 		WeightsMustSumToOne,
 		StakingPoolConfigError,
+		IncorrectAmountOfAssets,
+		UnsupportedOperation,
+		InitialDepositCannotBeZero,
 	}
 
 	#[pallet::config]
@@ -885,13 +896,17 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
-			let (added_base_amount, added_quote_amount, minted_lp) = match pool {
+			let minted_lp = match pool {
 				PoolConfiguration::DualAssetConstantProduct(info) =>
 					DualAssetConstantProduct::<T>::add_liquidity(
 						who,
 						info,
 						pool_account,
-						assets,
+						assets
+							.into_iter()
+							.map(|(asset_id, amount)| AssetAmount { asset_id, amount })
+							.try_collect()
+							.map_err(|_| Error::<T>::MoreThanTwoAssetsNotYetSupported)?,
 						min_mint_amount,
 						keep_alive,
 					)?,
@@ -900,8 +915,8 @@ pub mod pallet {
 			Self::deposit_event(Event::<T>::LiquidityAdded {
 				who: who.clone(),
 				pool_id,
-				base_amount: added_base_amount,
-				quote_amount: added_quote_amount,
+				// base_amount: added_base_amount,
+				// quote_amount: added_quote_amount,
 				minted_lp,
 			});
 			Ok(())

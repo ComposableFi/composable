@@ -9,6 +9,7 @@ use composable_traits::{
 	dex::{AssetAmount, BasicPoolInfo, Fee, FeeConfig},
 };
 use frame_support::{
+	defensive,
 	pallet_prelude::*,
 	traits::fungibles::{Inspect, Mutate, Transfer},
 };
@@ -80,47 +81,133 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		who: &T::AccountId,
 		pool: BasicPoolInfo<T::AccountId, T::AssetId, ConstU32<2>>,
 		pool_account: T::AccountId,
-		assets: BTreeMap<T::AssetId, T::Balance>,
+		// Bounds for the Vec can be specified here to based on a pallet config.
+		// The details can be figured out in the implementation
+		assets: BoundedVec<AssetAmount<T::AssetId, T::Balance>, ConstU32<2>>,
 		min_mint_amount: T::Balance,
 		keep_alive: bool,
-	) -> Result<(T::Balance, T::Balance, T::Balance), DispatchError> {
-		// TODO (vim): Pool weight validation is missing, which would cause the received LP tokens
-		//  to be higher than expected if the base token has more than what is allowed by the pool
-		//  weight.
-		ensure!(!assets.values().any(|balance| balance.is_zero()), Error::<T>::InvalidAmount);
-		let pool_assets = Self::get_pool_balances(&pool, &pool_account);
-		let assets_vec = pool_assets.keys().copied().collect::<Vec<_>>();
-		// This function currently expects liquidity to be provided in all assets in weight ratio
-		ensure!(assets_vec == assets.keys().copied().collect::<Vec<_>>(), Error::<T>::PairMismatch);
-		// TODO (vim): Change later. Make a vector of keys to easily map base, quote for now
-		let first_asset = assets_vec.get(0).expect("Must exist as per previous validations");
-		let first_asset_amount =
-			assets.get(first_asset).expect("Must exist as per previous validations");
-		let second_asset = assets_vec.get(1).expect("Must exist as per previous validations");
-		let second_asset_amount =
-			assets.get(second_asset).expect("Must exist as per previous validations");
+	) -> Result<T::Balance, DispatchError> {
+		let mut pool_assets = Self::get_pool_balances(&pool, &pool_account);
+
+		let assets_with_balances = assets
+			.iter()
+			.map(|asset_amount| {
+				if asset_amount.amount.is_zero() {
+					return Err(Error::<T>::InvalidAmount)
+				};
+
+				let balance =
+					pool_assets.remove(&asset_amount.asset_id).ok_or(Error::<T>::PairMismatch)?;
+
+				Ok((asset_amount, balance))
+			})
+			.collect::<Result<Vec<_>, _>>()?;
 
 		let lp_total_issuance = T::Convert::convert(T::Assets::total_issuance(pool.lp_token));
-		let (quote_amount, amount_of_lp_token_to_mint) = compute_deposit_lp(
-			lp_total_issuance,
-			T::Convert::convert(*first_asset_amount),
-			T::Convert::convert(*second_asset_amount),
-			pool_assets.get(first_asset).expect("Must exist as per previous validations").1,
-			pool_assets.get(second_asset).expect("Must exist as per previous validations").1,
-		)?;
-		let quote_amount = T::Convert::convert(quote_amount);
+
+		let amount_of_lp_token_to_mint = match assets_with_balances[..] {
+			[(single, (single_weight, single_balance))] => {
+				if single_balance.is_zero() {
+					return Err(Error::<T>::InitialDepositCannotBeZero.into())
+				}
+				let single_deposit = compute_deposit_lp_(
+					lp_total_issuance,
+					T::Convert::convert(single.amount),
+					single_balance,
+					single_weight,
+					pool.fee_config.fee_rate,
+				)?;
+
+				T::Assets::transfer(
+					single.asset_id,
+					who,
+					&pool_account,
+					single.amount,
+					keep_alive,
+				)?;
+
+				single_deposit.value
+			},
+			[(first, (first_weight, first_balance)), (second, (second_weight, second_balance))] => {
+				if first_balance.is_zero() && second_balance.is_zero() {
+					compute_first_deposit_lp_(
+						&[
+							(T::Convert::convert(first.amount), first_balance, first_weight),
+							(T::Convert::convert(second.amount), second_balance, second_weight),
+						],
+						Permill::zero(),
+					)?
+					.value
+				} else {
+					dbg!(&first, &second);
+
+					let input_ratio_first_to_second = Permill::from_rational(
+						first.amount,
+						first.amount.safe_add(&second.amount)?,
+					);
+
+					// REVIEW(benluelo): Is this correct?
+					ensure!(
+						dbg!(input_ratio_first_to_second) == dbg!(first_weight),
+						Error::<T>::IncorrectAmountOfAssets
+					);
+
+					dbg!(&first_balance);
+
+					let first_deposit = compute_deposit_lp_(
+						lp_total_issuance,
+						T::Convert::convert(first.amount),
+						first_balance,
+						Permill::one(),
+						dbg!(pool.fee_config.fee_rate),
+					)?;
+
+					dbg!();
+
+					let second_deposit = compute_deposit_lp_(
+						lp_total_issuance,
+						T::Convert::convert(second.amount),
+						second_balance,
+						Permill::one(),
+						pool.fee_config.fee_rate,
+					)?;
+
+					dbg!();
+
+					T::Assets::transfer(
+						first.asset_id,
+						who,
+						&pool_account,
+						first.amount,
+						keep_alive,
+					)?;
+					T::Assets::transfer(
+						second.asset_id,
+						who,
+						&pool_account,
+						second.amount,
+						keep_alive,
+					)?;
+
+					first_deposit.value.safe_add(&second_deposit.value)?
+				}
+			},
+			_ => {
+				defensive!("this should be unreachable, since the input assets are bounded at 2");
+				return Err(Error::<T>::UnsupportedOperation.into())
+			},
+		};
+
 		let amount_of_lp_token_to_mint = T::Convert::convert(amount_of_lp_token_to_mint);
 
-		ensure!(quote_amount > T::Balance::zero(), Error::<T>::InvalidAmount);
 		ensure!(
 			amount_of_lp_token_to_mint >= min_mint_amount,
 			Error::<T>::CannotRespectMinimumRequested
 		);
 
-		T::Assets::transfer(*first_asset, who, &pool_account, *first_asset_amount, keep_alive)?;
-		T::Assets::transfer(*second_asset, who, &pool_account, *second_asset_amount, keep_alive)?;
 		T::Assets::mint_into(pool.lp_token, who, amount_of_lp_token_to_mint)?;
-		Ok((*first_asset_amount, quote_amount, amount_of_lp_token_to_mint))
+
+		Ok(amount_of_lp_token_to_mint)
 	}
 
 	pub(crate) fn remove_liquidity(

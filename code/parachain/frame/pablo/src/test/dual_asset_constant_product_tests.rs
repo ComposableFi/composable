@@ -1,4 +1,5 @@
-#[cfg(test)]
+use crate::mock::Test;
+
 use crate::{
 	dual_asset_constant_product::DualAssetConstantProduct as DACP,
 	mock,
@@ -12,7 +13,13 @@ use crate::{
 use composable_support::math::safe::safe_multiply_by_rational;
 use composable_tests_helpers::{
 	prop_assert_ok,
-	test::helper::{acceptable_computation_error, default_acceptable_computation_error},
+	test::{
+		block::next_block,
+		currency,
+		helper::{
+			acceptable_computation_error, default_acceptable_computation_error, RuntimeTrait,
+		},
+	},
 };
 use composable_traits::dex::{Amm, AssetAmount, BasicPoolInfo, FeeConfig};
 use frame_support::{
@@ -184,7 +191,7 @@ fn test() {
 	});
 }
 
-fn valid_pool_init_config(
+pub fn valid_pool_init_config(
 	owner: &AccountId,
 	first_asset: AssetId,
 	first_asset_weight: Permill,
@@ -251,34 +258,13 @@ fn test_redeemable_assets() {
 	});
 }
 
-//- test lp mint/burn
-#[test]
-fn add_remove_lp() {
-	new_test_ext().execute_with(|| {
-		let pool_init_config = valid_pool_init_config(
-			&ALICE,
-			BTC,
-			Permill::from_percent(50_u32),
-			USDT,
-			Permill::zero(),
-		);
-		let unit = 1_000_000_000_000_u128;
-		let initial_btc = 1_00_u128 * unit;
-		let btc_price = 45_000_u128;
-		let initial_usdt = initial_btc * btc_price;
-		let btc_amount = 10 * unit;
-		let usdt_amount = btc_amount * btc_price;
-		let expected_lp_check =
-			|_base_amount: Balance, _quote_amount: Balance, lp: Balance| -> bool { lp > 0_u128 };
-		common_add_remove_lp(
-			pool_init_config,
-			initial_btc,
-			initial_usdt,
-			btc_amount,
-			usdt_amount,
-			expected_lp_check,
-		);
-	});
+pub fn create_pool_from_config(init_config: PoolInitConfiguration<u128, u128>) -> u128 {
+	Test::assert_extrinsic_event_with(Pablo::create(Origin::root(), init_config), |event| {
+		match event {
+			crate::Event::PoolCreated { pool_id, .. } => Some(pool_id),
+			_ => None,
+		}
+	})
 }
 
 // TODO (vim): Enable when weight validation is done
@@ -322,34 +308,87 @@ fn test_add_liquidity_with_disproportionate_amount() {
 #[test]
 fn add_lp_with_min_mint_amount() {
 	new_test_ext().execute_with(|| {
-		let pool_init_config = valid_pool_init_config(
-			&ALICE,
-			BTC,
-			Permill::from_percent(50_u32),
-			USDT,
-			Permill::zero(),
+		next_block::<Pablo, Test>();
+
+		let first_asset = BTC;
+		let second_asset = USDT;
+
+		let pool_init_config = PoolInitConfiguration::DualAssetConstantProduct {
+			owner: ALICE,
+			assets_weights: dual_asset_pool_weights(
+				first_asset,
+				Permill::from_percent(50_u32),
+				second_asset,
+			),
+			fee: Permill::zero(),
+		};
+
+		let init_first_asset_amount = currency::BTC::units(100);
+		let init_second_asset_amount = currency::USDT::units(100);
+		let first_asset_amount = currency::BTC::units(10);
+		let second_asset_amount = currency::USDT::units(10);
+
+		let assets_with_amounts = BTreeMap::from([
+			(first_asset, init_first_asset_amount),
+			(second_asset, init_second_asset_amount),
+		]);
+
+		let pool_id = create_pool_from_config(pool_init_config);
+		let lp_token = lp_token_of_pool(pool_id);
+
+		// Mint the tokens
+		assert_ok!(Tokens::mint_into(first_asset, &ALICE, init_first_asset_amount));
+		assert_ok!(Tokens::mint_into(second_asset, &ALICE, init_second_asset_amount));
+
+		// Add the liquidity, min amount = 0
+		assert_ok!(Pablo::add_liquidity(
+			Origin::signed(ALICE),
+			pool_id,
+			assets_with_amounts.clone(),
+			0,
+			false
+		));
+
+		// Mint the tokens
+		assert_ok!(Tokens::mint_into(first_asset, &BOB, first_asset_amount));
+		assert_ok!(Tokens::mint_into(second_asset, &BOB, second_asset_amount));
+
+		let alice_lp = Tokens::balance(lp_token, &ALICE);
+		let bob_lp = Tokens::balance(lp_token, &BOB);
+
+		assert_eq!(bob_lp, 0_u128, "BOB should not have any LP tokens");
+
+		let min_mint_amount = (bob_lp + alice_lp) * first_asset_amount / init_first_asset_amount;
+
+		// Add the liquidity, but expect more lp tokens, hence errors
+		assert_noop!(
+			Pablo::add_liquidity(
+				Origin::signed(BOB),
+				pool_id,
+				assets_with_amounts.clone(),
+				min_mint_amount + 1,
+				false
+			),
+			crate::Error::<Test>::CannotRespectMinimumRequested
 		);
-		let unit = 1_000_000_000_000_u128;
-		let initial_btc = 1_00_u128 * unit;
-		let btc_price = 45_000_u128;
-		let initial_usdt = initial_btc * btc_price;
-		let btc_amount = 10 * unit;
-		let usdt_amount = btc_amount * btc_price;
-		let expected_lp = |base_amount: Balance,
-		                   _quote_amount: Balance,
-		                   lp_total_issuance: Balance,
-		                   pool_base_amount: Balance,
-		                   _pool_quote_amount: Balance|
-		 -> Balance { lp_total_issuance * base_amount / pool_base_amount };
-		common_add_lp_with_min_mint_amount(
-			pool_init_config,
-			initial_btc,
-			initial_usdt,
-			btc_amount,
-			usdt_amount,
-			expected_lp,
-		);
+
+		// Add liquidity with min_mint_amount
+		assert_ok!(Pablo::add_liquidity(
+			Origin::signed(BOB),
+			pool_id,
+			assets_with_amounts,
+			min_mint_amount,
+			false
+		));
 	});
+}
+
+pub fn lp_token_of_pool(pool_id: u128) -> u128 {
+	let pool = Pablo::pools(pool_id).expect("pool not found");
+
+	match pool {
+		DualAssetConstantProduct(pool) => pool.lp_token,
+	}
 }
 
 //

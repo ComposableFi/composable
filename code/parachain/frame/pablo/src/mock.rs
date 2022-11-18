@@ -1,6 +1,7 @@
 #![cfg(test)]
 
 use crate as pablo;
+use composable_tests_helpers::test::currency;
 use frame_support::{
 	ord_parameter_types,
 	pallet_prelude::GenesisBuild,
@@ -22,8 +23,8 @@ pub type CurrencyId = u128;
 pub type BlockNumber = u64;
 pub type Moment = composable_traits::time::Timestamp;
 
-pub const BTC: AssetId = 0;
-pub const USDT: CurrencyId = 2;
+pub const BTC: CurrencyId = currency::BTC::ID;
+pub const USDT: CurrencyId = currency::USDT::ID;
 pub const USDC: CurrencyId = 4;
 pub const TWAP_INTERVAL: Moment = 10;
 pub const MILLISECS_PER_BLOCK: u64 = 12000;

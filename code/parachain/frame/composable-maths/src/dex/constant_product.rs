@@ -339,8 +339,8 @@ pub struct ConstantProductAmmValueFeePair {
 /// **NOTE**: May overflow when `w_k` is below 25%
 ///
 /// # Parameters
-/// * `p_supply` - Existing supply of LPT
-/// * `p_redeemed` - Redeemed LPT tokens
+/// * `p_supply` - Existing supply of LP
+/// * `p_redeemed` - Redeemed LP tokens
 /// * `b_k` - balance of token `k`
 /// * `w_k` - weight of token `k`
 ///
@@ -495,7 +495,7 @@ pub fn compute_first_deposit_lp_<T: PerThing>(
 /// If `Ok`, returns a `ConstantProductAmmValueFeePair` containing the `lp_to_mint` and the `fee`.
 ///
 /// # Parameters
-/// * `p_supply` - Existing supply of LPT tokens
+/// * `p_supply` - Existing supply of LP tokens
 /// * `d_k` - Deposit of token `k`
 /// * `b_k` - Balance of token `k`
 /// * `w_k` - Weight of token `k`
