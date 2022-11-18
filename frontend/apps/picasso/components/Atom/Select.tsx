@@ -37,6 +37,7 @@ export type SelectProps = {
   searchable?: boolean;
   centeredLabel?: boolean;
   renderValue?: (v: any) => ReactNode | undefined;
+  displayEmpty?: boolean;
 } & InputProps;
 
 export const Select: React.FC<SelectProps> = ({
@@ -49,6 +50,7 @@ export const Select: React.FC<SelectProps> = ({
   searchable,
   centeredLabel,
   renderValue,
+  displayEmpty,
   ...rest
 }) => {
   const theme = useTheme();
@@ -60,7 +62,7 @@ export const Select: React.FC<SelectProps> = ({
     setKeyword(event.target.value);
   };
 
-  const handleClick = (event: React.MouseEvent<HTMLInputElement>) => {
+  const handleClick = () => {
     setKeyword("");
     setOpen(true);
   };
@@ -81,6 +83,7 @@ export const Select: React.FC<SelectProps> = ({
       value={value}
       onClick={handleClick}
       SelectProps={{
+        displayEmpty,
         MenuProps: {
           open: open,
           BackdropProps: {

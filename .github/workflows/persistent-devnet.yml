@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       ref:
-        description: "Release tag, branch name or any ref."
+        description: "Release tag, branch name or any other ref."
         required: true
         type: string
   push:
@@ -37,7 +37,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with:
-        ref: ${{ inputs.ref }}
+        ref: ${{ inputs.ref || github.sha }}
         fetch-depth: 0
     - run: |
         echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
@@ -113,7 +113,7 @@ jobs:
         nixops deploy --allow-recreate --allow-reboot --confirm --deployment devnet-gce --debug --show-trace --option narinfo-cache-negative-ttl 0 --include composable-persistent-devnet picasso-composable-persistent-devnet
       env:
         NIXOPS_STATE: ${{ runner.temp }}/${{ env.NIXOPS_STATE_FILE }}
-        DEPLOY_REVISION: ${{ inputs.ref }}
+        DEPLOY_REVISION: ${{ inputs.ref || github.sha }}
     - name: Save NixOps State
       if: always()
       run: |

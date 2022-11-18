@@ -24,6 +24,10 @@ import {
 import { useSelectedAccount } from "@/defi/polkadot/hooks";
 import { useAllParachainProviders } from "@/defi/polkadot/context/hooks";
 import BigNumber from "bignumber.js";
+import {
+  DESTINATION_FEE_MULTIPLIER,
+  FEE_MULTIPLIER,
+} from "shared/defi/constants";
 import { usePendingExtrinsic } from "substrate-react";
 import { InfoOutlined } from "@mui/icons-material";
 import { pipe } from "fp-ts/function";
@@ -44,7 +48,7 @@ const Transfers: NextPage = () => {
   const minValue = useMemo(() => {
     const ed = tokens[selectedToken].existentialDeposit[to];
     return pipe(
-      destFee.fee,
+      destFee?.fee?.multipliedBy(DESTINATION_FEE_MULTIPLIER),
       option.fromNullable,
       option.chain((fee) =>
         pipe(
@@ -55,7 +59,7 @@ const Transfers: NextPage = () => {
       ),
       option.getOrElse(() => new BigNumber(0))
     );
-  }, [tokens, to, destFee.fee, selectedToken]);
+  }, [tokens, to, destFee?.fee, selectedToken]);
   const feeTokenId = useStore((state) => state.transfers.getFeeToken(from));
   const selectedAccount = useSelectedAccount();
   const hasPendingXcmTransfer = usePendingExtrinsic(
@@ -69,7 +73,17 @@ const Transfers: NextPage = () => {
     selectedAccount ? selectedAccount.address : "-"
   );
 
-  const hasPendingTransfer = hasPendingXcmTransfer || hasPendingXTokensTransfer;
+  const hasPendingLimitedXcmTransfer = usePendingExtrinsic(
+    "limitedReserveTransferAssets",
+    "polkadotXcm",
+    selectedAccount ? selectedAccount.address : "-"
+  );
+
+  const hasPendingTransfer =
+    hasPendingXcmTransfer ||
+    hasPendingXTokensTransfer ||
+    hasPendingLimitedXcmTransfer;
+
   const getBalance = useStore((state) => state.substrateBalances.getBalance);
   const hasFormError = useStore((state) => state.transfers.hasFormError);
 
@@ -96,7 +110,7 @@ const Transfers: NextPage = () => {
 
   const hasEnoughGasFee = useMemo(() => {
     const feeBalance = getBalance(feeTokenId.id, from);
-    return feeBalance.gte(fee.partialFee);
+    return feeBalance.gte(fee.partialFee.multipliedBy(FEE_MULTIPLIER));
   }, [fee.partialFee, feeTokenId.id, from, getBalance]);
 
   useEffect(() => {

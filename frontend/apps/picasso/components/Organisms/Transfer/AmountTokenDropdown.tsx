@@ -14,6 +14,7 @@ import { calculateTransferAmount } from "@/defi/polkadot/pallets/Transfer";
 import { useTransfer } from "@/defi/polkadot/hooks";
 import BigNumber from "bignumber.js";
 import { InfoTwoTone } from "@mui/icons-material";
+import { FEE_MULTIPLIER } from "shared/defi/constants";
 
 export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
   disabled,
@@ -40,7 +41,7 @@ export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
   const feeToken = useStore((state) => state.transfers.feeToken);
   const sourceGas = useMemo(() => {
     return {
-      fee: fee.partialFee,
+      fee: fee.partialFee.multipliedBy(FEE_MULTIPLIER),
       token: feeToken,
     };
   }, [fee.partialFee, feeToken]);
@@ -50,7 +51,7 @@ export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
   );
 
   const maxAmountToTransfer = useMemo(() => {
-    return callbackGate(
+    const amount = callbackGate(
       (api, _existentialDeposit) => {
         return calculateTransferAmount({
           amountToTransfer: balance,
@@ -64,6 +65,8 @@ export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
       fromProvider.parachainApi,
       existentialDeposit
     );
+
+    return amount instanceof BigNumber ? amount : new BigNumber(0);
   }, [
     balance,
     existentialDeposit,
@@ -76,7 +79,7 @@ export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
   const { validate, hasError, stringValue, bignrValue, setValue } =
     useValidation({
       maxValue: maxAmountToTransfer,
-      maxDec: 12,
+      maxDec: tokens[selectedToken].decimals[from] ?? 12,
       initialValue: amount,
     });
 
@@ -144,7 +147,7 @@ export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
                   title={`${balance.toFixed()} ${tokens[tokenId].symbol}`}
                   color="primary"
                   sx={{
-                    fontSize: "01rem",
+                    fontSize: "1rem",
                   }}
                 >
                   <InfoTwoTone />

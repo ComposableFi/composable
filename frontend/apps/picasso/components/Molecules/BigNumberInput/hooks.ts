@@ -19,11 +19,14 @@ export function useValidation({
   const [value, setValue] = React.useState<BigNumber>(initialValue);
 
   React.useEffect(() => {
-    setStringValue(value.toFixed());
-    if (!value.eq(0)) {
-      setValid(true);
+    if (!value.eq(new BigNumber(stringValue))) {
+      setStringValue(value.toFixed());
+      if (!value.eq(0)) {
+        setValid(true);
+      }
     }
-  }, [value]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [maxDec, value]);
 
   React.useEffect(() => {
     if (!initialValue.eq(value)) {

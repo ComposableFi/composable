@@ -5,13 +5,13 @@ import {
   ListItem,
   ListItemText,
   Stack,
-  Typography
+  Typography,
 } from "@mui/material";
 import {
   EndpointPreset,
   endpointPresets,
   getEnvironment,
-  setEndpointPreset
+  setEndpointPreset,
 } from "shared/endpoints";
 
 export const EndpointPage = () => {
@@ -28,7 +28,7 @@ export const EndpointPage = () => {
           </ListItem>
           <ListItem>
             <ListItemText
-              primary={"Picasso(DALI) parachain"}
+              primary={"Picasso parachain"}
               secondary={getEnvironment("picasso")}
             />
           </ListItem>
@@ -42,6 +42,12 @@ export const EndpointPage = () => {
             <ListItemText
               primary={"Karura parachain"}
               secondary={getEnvironment("karura")}
+            />
+          </ListItem>
+          <ListItem>
+            <ListItemText
+              primary={"Statemine parachain"}
+              secondary={getEnvironment("statemine")}
             />
           </ListItem>
         </List>

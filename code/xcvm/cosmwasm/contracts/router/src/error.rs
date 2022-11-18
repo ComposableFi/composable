@@ -7,8 +7,8 @@ pub enum ContractError {
 	#[error("{0}")]
 	Std(#[from] StdError),
 
-	#[error("Expected at least {0:?}, got {1:?}")]
-	InsufficientBridgeSecurity(BridgeSecurity, BridgeSecurity),
+	#[error("Security requirement not meet, expected {0:?}")]
+	ExpectedBridgeSecurity(BridgeSecurity),
 
 	#[error("Caller is not authorized to take this action")]
 	NotAuthorized,

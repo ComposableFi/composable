@@ -16,7 +16,7 @@ export class AssetsRegistryAssetRegisteredEvent {
   }
 
   get isV2402(): boolean {
-    return this._chain.getEventHash('AssetsRegistry.AssetRegistered') === 'ae5a781702a5b7dee0f69f06cfa5c98bbc4a0fc46f19a56b1de73db1f82f1a9c'
+    return this._chain.getEventHash('AssetsRegistry.AssetRegistered') === '1a2df5dc03da9f3f2850f9f87cba28c55a399bcfa2b16bfd3911fb85c1653654'
   }
 
   get asV2402(): {assetId: bigint, location: v2402.XcmAssetLocation, decimals: (number | undefined)} {
@@ -39,7 +39,7 @@ export class AssetsRegistryAssetUpdatedEvent {
   }
 
   get isV2402(): boolean {
-    return this._chain.getEventHash('AssetsRegistry.AssetUpdated') === 'ae5a781702a5b7dee0f69f06cfa5c98bbc4a0fc46f19a56b1de73db1f82f1a9c'
+    return this._chain.getEventHash('AssetsRegistry.AssetUpdated') === '1a2df5dc03da9f3f2850f9f87cba28c55a399bcfa2b16bfd3911fb85c1653654'
   }
 
   get asV2402(): {assetId: bigint, location: v2402.XcmAssetLocation, decimals: (number | undefined)} {
