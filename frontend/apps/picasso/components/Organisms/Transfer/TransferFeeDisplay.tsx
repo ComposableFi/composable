@@ -99,7 +99,9 @@ export const TransferFeeDisplay = () => {
               }
               expanded={
                 <Typography variant="body2">
-                  {destFee.fee.toFormat(destFee.token.decimals[to] ?? 12)}{" "}
+                  {destFee.fee
+                    .multipliedBy(DESTINATION_FEE_MULTIPLIER)
+                    .toFormat(destFee.token.decimals[to] ?? 12)}{" "}
                   {destFee.token.symbol}
                 </Typography>
               }
