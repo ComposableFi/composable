@@ -12,7 +12,6 @@ const codeUpload = (storageId: StorageId, codeHash: string) => {
 const vmStateUpdate = (storageId: StorageId, vmShared: VMHostShared, contractEvents?: RawContractEvent[]) => {
 	vmStore.setState(state => {
 		state.vmStates[storageId] = { state: vmShared, events: contractEvents || [] };
-		return state;
 	});
 };
 

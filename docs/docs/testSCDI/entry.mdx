@@ -1,8 +1,8 @@
-import BrowserOnly from '@docusaurus/BrowserOnly';
-import {VmWrapper} from '../../src/components/vm/VmWrapper';
-import {ResetButton} from '../../src/components/vm/ResetButton'; import {
-	unhexifyKeys
-} from '../../src/utils/cosmwasm-vm/parsers';
+
+import {VmWrapper} from '../../src/components/vm/wrappers/VmWrapper';
+import {ResetButton} from '../../src/components/vm/ResetButton';
+import { VmExecute } from '../../src/components/vm/VmExecute';
+import { VmDisplayStorageWrapper } from '../../src/components/vm/wrappers/VmDisplayStorageWrapper';
 
 # SCDI test md file
 
@@ -28,23 +28,43 @@ import {ResetButton} from '../../src/components/vm/ResetButton'; import {
 	}}>
 		{(vmShared) => {
 			if(!vmShared) return null;
+			//	TODO : figure out how to make mdx work with ts
+			const createExecuteMessage = ({recipient, amount}) => {
+				return {
+					mint: {
+						'recipient': recipient,
+						'amount': amount
+					}
+				}
+			}
 			return (
 				<>
 					<p>nextAccountId</p>
 					<pre>{vmShared.nextAccountId}</pre>
+					<div className={'my-5'}>
+						<VmExecute storageId={'test'} inputParams={{recipient: '150', amount: '10'}} createExecuteMessage={createExecuteMessage} vmShared={vmShared} />
+					</div>
 				</>
 			)
 		}}
 	</VmWrapper>
-	text text text
-	<VmWrapper storageId={'test'}>
-		{(vmShared) => {
-			if(!vmShared) return <span>loading...</span>;
-			const storageObj = unhexifyKeys(Object.fromEntries(vmShared.storage.get('10000').entries()));
-			return (
-				<span className={'mx-5 bg-gray-600'}>{JSON.stringify(storageObj)}</span>
-			)
-		}}
-	</VmWrapper>
-	text text text
+	<div className={'bg-gray-600 rounded-2xl px-5 py-2'}>
+		<VmDisplayStorageWrapper storageId='test'>
+			{(data) => {
+				if(!data) return null;
+				console.log(data);
+				return (
+					<ul>
+						{Object.keys(data).map(key => {
+							return (
+								<li key={key}>
+									{key} : <span className={'bg-gray-500'}>{JSON.stringify(data[key])}</span>
+								</li>
+							)
+						})}
+					</ul>
+				)
+			}}
+		</VmDisplayStorageWrapper>
+	</div>
 </div>

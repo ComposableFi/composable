@@ -6,7 +6,7 @@ export const ResetButton = () => {
 		<button
 			className={'rounded-2xl px-5 py-2 bg-red-500 flex items-center justify-center'}
 			onClick={() => vmStoreMethods.resetStore()}>
-			<p>reset state</p>
+			<p className={'!mb-0'}>reset state</p>
 		</button>
 	);
 };

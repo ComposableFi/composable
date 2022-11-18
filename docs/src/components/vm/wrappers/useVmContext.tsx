@@ -1,11 +1,11 @@
-import { StorageId, useVmStore, vmStore } from '../../utils/cosmwasm-vm/store/state';
+import { StorageId, useVmStore, vmStore } from '../../../utils/cosmwasm-vm/store/state';
 import { Result, VMStep } from 'cw_vm_ts_sdk_001';
-import { getInitVmHostShared, VMHostShared } from '../../utils/cosmwasm-vm/vm/types';
+import { getInitVmHostShared, VMHostShared } from '../../../utils/cosmwasm-vm/vm/types';
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
-import { loadRemoteContract } from '../../utils/cosmwasm-vm/code/utils';
-import { vmStoreMethods } from '../../utils/cosmwasm-vm/store/storeMethods';
-import { vmMethods } from '../../utils/cosmwasm-vm/vm/vmMethods';
-import { RawContractEvent } from '../../utils/cosmwasm-vm/types';
+import { loadRemoteContract } from '../../../utils/cosmwasm-vm/code/utils';
+import { vmStoreMethods } from '../../../utils/cosmwasm-vm/store/storeMethods';
+import { vmMethods } from '../../../utils/cosmwasm-vm/vm/vmMethods';
+import { RawContractEvent } from '../../../utils/cosmwasm-vm/types';
 
 export interface VmContextInit {
 	readonly storageId: StorageId;
@@ -21,7 +21,6 @@ export const useVmContext = ({ storageId, initOptions }: VmContextInit): VMHostS
 	const vmShared = useVmStore(state => state.vmStates[storageId]);
 
 	useEffect(() => {
-		//	TODO : consider case where initOptions is not provided
 		if (!initOptions) return;
 		fetchContract(storageId, initOptions.contractUrl).then(() => {
 			getVmShared(storageId, initOptions.instantiateObj);

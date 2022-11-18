@@ -1,10 +1,14 @@
 import { RawContractEvent, ContractEvent } from './types';
+import deburr from 'lodash/deburr';
 
 export function hexToString(hex: string): string {
 	let str = '';
 	for (let n = 0; n < hex.length; n += 2) {
-		str += String.fromCharCode(parseInt(hex.substr(n, 2), 16));
+		const int = parseInt(hex.substr(n, 2), 16);
+		//	to prevent \u0001 & \u0007 appearing in front
+		if (int !== 0 && int !== 7) str += String.fromCharCode(parseInt(hex.substr(n, 2), 16));
 	}
+	console.log(hex, str);
 	return str;
 }
 

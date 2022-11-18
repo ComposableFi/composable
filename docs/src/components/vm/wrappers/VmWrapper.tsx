@@ -1,6 +1,6 @@
 import { useVmContext, VmContextInit } from './useVmContext';
-import { VMHostShared } from '../../utils/cosmwasm-vm/vm/types';
-import { vmMethods } from '../../utils/cosmwasm-vm/vm/vmMethods';
+import { VMHostShared } from '../../../utils/cosmwasm-vm/vm/types';
+import { vmMethods } from '../../../utils/cosmwasm-vm/vm/vmMethods';
 
 //	TODO : update the storageId to different value if contract code or contractUrl is changed
 //	premise is that only a single contract is uploaded with a single instantiation(for the time being)
