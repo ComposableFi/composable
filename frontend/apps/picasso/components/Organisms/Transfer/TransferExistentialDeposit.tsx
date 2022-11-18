@@ -1,7 +1,9 @@
 import { FeeDisplay } from "@/components";
+import { TextExpander } from "@/components/Molecules/TextExpander";
 import React, { FC } from "react";
 import { useStore } from "@/stores/root";
-import { Chip } from "@mui/material";
+import { Chip, Typography } from "@mui/material";
+import { humanBalance } from "shared";
 
 /**
  * Existential deposit should be derived from, and in order:
@@ -30,7 +32,21 @@ export const TransferExistentialDeposit: FC = () => {
       label="Existential Deposit"
       feeText={
         decimals !== null && !!existentialDeposit ? (
-          `${existentialDeposit.toFormat(decimals)} ${selectedToken.symbol}`
+          <TextExpander
+            short={
+              <Typography variant="body2">
+                {humanBalance(existentialDeposit)} {selectedToken.symbol}
+              </Typography>
+            }
+            expanded={
+              <Typography variant="body2">
+                {existentialDeposit.toFormat(
+                  selectedToken.decimals[from] ?? 12
+                )}{" "}
+                {selectedToken.symbol}
+              </Typography>
+            }
+          />
         ) : (
           <Chip
             variant="filled"

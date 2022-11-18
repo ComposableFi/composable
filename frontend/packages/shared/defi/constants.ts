@@ -5,3 +5,5 @@ export const PERMILL_UNIT = new BigNumber(1_000_000);
 export const PERBILL_UNIT = new BigNumber(1_000_000_000);
 export const PALLET_ID = "modl";
 export const PALLET_TYPE_ID = stringToU8a(PALLET_ID);
+export const FEE_MULTIPLIER = 1.5;
+export const DESTINATION_FEE_MULTIPLIER = 5;

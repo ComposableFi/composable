@@ -195,6 +195,7 @@ libwasmvm
 llvm
 localstorage
 loglevel
+lparachain
 lppicapbloother
 mdbook
 MEMLOCK
@@ -274,6 +275,7 @@ pkgs
 plantuml
 Pointable
 polkalaunch
+polkassembly
 popcnt
 Popcnt
 popout
@@ -322,6 +324,7 @@ RUSTFLAGS
 rustfmt
 RUSTSEC # RUSTSEC-XXXX-XXXX is id of RustSec Advisory Database
 rustup
+safu
 sccache
 schemars
 scrollbox
@@ -441,6 +444,7 @@ zstd
 zustand
 DACP
 Origin
+OSMO
 Prefixer
 protobufs
 protos

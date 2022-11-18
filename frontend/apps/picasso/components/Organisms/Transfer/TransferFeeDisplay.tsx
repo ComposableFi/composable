@@ -1,16 +1,21 @@
-import { humanBalance } from "shared";
 import { FeeDisplay } from "@/components";
-import { useEffect } from "react";
-import { useStore } from "@/stores/root";
-import { useExecutor } from "substrate-react";
+import { TextExpander } from "@/components/Molecules/TextExpander";
+import { useAllParachainProviders } from "@/defi/polkadot/context/hooks";
 import { useTransfer } from "@/defi/polkadot/hooks";
+import { getPaymentAsset } from "@/defi/polkadot/pallets/AssetTxPayment";
 
 import { getDestChainFee } from "@/defi/polkadot/pallets/Transfer";
-import { getPaymentAsset } from "@/defi/polkadot/pallets/AssetTxPayment";
-import { Stack } from "@mui/material";
 import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
-import { useAllParachainProviders } from "@/defi/polkadot/context/hooks";
 import { subscribeTransactionFee } from "@/stores/defi/polkadot/transfers/subscribers";
+import { useStore } from "@/stores/root";
+import { Stack, Typography } from "@mui/material";
+import { useEffect } from "react";
+import { humanBalance } from "shared";
+import {
+  DESTINATION_FEE_MULTIPLIER,
+  FEE_MULTIPLIER,
+} from "shared/defi/constants";
+import { useExecutor } from "substrate-react";
 
 export const TransferFeeDisplay = () => {
   const executor = useExecutor();
@@ -56,16 +61,50 @@ export const TransferFeeDisplay = () => {
     <Stack direction="column" gap={4}>
       <FeeDisplay
         label="Fee"
-        feeText={`${humanBalance(fee.partialFee)} ${tokens[feeToken].symbol}`}
+        feeText={
+          <TextExpander
+            short={
+              <Typography variant="body2">
+                {humanBalance(fee.partialFee.multipliedBy(FEE_MULTIPLIER))}{" "}
+                {tokens[feeToken].symbol}
+              </Typography>
+            }
+            expanded={
+              <Typography variant="body2">
+                {fee.partialFee
+                  .multipliedBy(FEE_MULTIPLIER)
+                  .toFormat(tokens[feeToken].decimals[from] ?? 12)}{" "}
+                {tokens[feeToken].symbol}
+              </Typography>
+            }
+          />
+        }
         TooltipProps={{
           title:
             "Fees(gas) for processing the given transaction. The amount can vary depending on transaction details and network conditions.",
         }}
       />
-      {destFee.fee !== null && destFee.token !== null ? (
+      {destFee && destFee?.fee !== null && destFee?.token !== null ? (
         <FeeDisplay
           label="Destination chain fee"
-          feeText={`${destFee.fee.toFormat()} ${destFee.token.symbol}`}
+          feeText={
+            <TextExpander
+              short={
+                <Typography variant="body2">
+                  {humanBalance(
+                    destFee.fee.multipliedBy(DESTINATION_FEE_MULTIPLIER)
+                  )}{" "}
+                  {destFee.token.symbol}
+                </Typography>
+              }
+              expanded={
+                <Typography variant="body2">
+                  {destFee.fee.toFormat(destFee.token.decimals[to] ?? 12)}{" "}
+                  {destFee.token.symbol}
+                </Typography>
+              }
+            />
+          }
           TooltipProps={{
             title:
               "Transaction fee on the destination chain. This fee is approximate and might change due to network conditions.",
