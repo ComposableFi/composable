@@ -27,7 +27,7 @@ import { VmDisplayStorageWrapper } from '../../src/components/vm/wrappers/VmDisp
 		}
 	}}>
 		{(vmShared) => {
-			if(!vmShared) return null;
+			if(!vmShared) return <></>;
 			//	TODO : figure out how to make mdx work with ts
 			const createExecuteMessage = ({recipient, amount}) => {
 				return {
@@ -41,19 +41,20 @@ import { VmDisplayStorageWrapper } from '../../src/components/vm/wrappers/VmDisp
 				<>
 					<p>nextAccountId</p>
 					<pre>{vmShared.nextAccountId}</pre>
-					<div className={'my-5'}>
+					<div>
 						<VmExecute storageId={'test'} inputParams={{recipient: '150', amount: '10'}} createExecuteMessage={createExecuteMessage} vmShared={vmShared} />
 					</div>
 				</>
 			)
 		}}
 	</VmWrapper>
-	<div className={'bg-gray-600 rounded-2xl px-5 py-2'}>
+	<div className={'my-5'}>
 		<VmDisplayStorageWrapper storageId='test'>
 			{(data) => {
-				if(!data) return null;
+				if(!data) return <></>;
 				console.log(data);
 				return (
+					<div className={'bg-gray-600 rounded-2xl px-5 py-2'}>
 					<ul>
 						{Object.keys(data).map(key => {
 							return (
@@ -63,6 +64,7 @@ import { VmDisplayStorageWrapper } from '../../src/components/vm/wrappers/VmDisp
 							)
 						})}
 					</ul>
+					</div>
 				)
 			}}
 		</VmDisplayStorageWrapper>
