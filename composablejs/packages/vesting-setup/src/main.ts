@@ -10,12 +10,14 @@ import "@composable/types/augment-types";
 import { getDevWallets, sendAndWaitForSuccess, getNewConnection } from "@composable/utils";
 import { ApiPromise, Keyring } from "@polkadot/api";
 import { expect } from "chai";
+import { parse } from "csv-parse";
+import path from "path";
 // This file contains the asset id and the `from` account.
 // TODO: Replace mock data
 import { config } from "./config.json";
 // This file contains the vesting schedules to be generated.
 // TODO: Replace mock data
-import { schedules } from "./schedules.json";
+import fs from "fs";
 
 /**
  * Establishes connection.
@@ -33,8 +35,7 @@ async function connect(): Promise<{ api: ApiPromise; keyring: Keyring }> {
 }
 
 /**
- * Check that both `config.json` and `schedules.json` meet minimum requirements.
- * TODO: check that data is always the correct type. Will wait for actual schedules for this.
+ * Check that `config.json` has all the necessary data.
  */
 async function sanitizeData() {
   if (!config.asset) {
@@ -43,34 +44,73 @@ async function sanitizeData() {
   if (!config.address) {
     return Promise.reject("config.address is missing");
   }
-  if (!config.windowType) {
-    return Promise.reject("config.windowType is missing");
+  if (!config.period) {
+    return Promise.reject("config.period is missing");
   }
-  if (config.windowType !== "block" && config.windowType !== "moment") {
-    return Promise.reject(
-      `config.windowType must be either "block" or "moment", but is currently "${config.windowType}"`
-    );
+  if (!config.startDate) {
+    return Promise.reject("config.startDate is missing");
   }
-
-  const schedulesAreSanitized = schedules.every(
-    schedule =>
-      !!(
-        schedule.start &&
-        schedule.vestingPeriodCount &&
-        schedule.windowPeriod &&
-        schedule.perPeriodAmount &&
-        schedule.beneficiary
-      )
-  );
-
-  if (!schedulesAreSanitized) {
-    return Promise.reject("At least one schedule is missing some parameter.");
+  if (!config.endDate) {
+    return Promise.reject("config.endDate is missing");
   }
 }
 
+type VestedTransfer = {
+  beneficiary: string;
+  perPeriod: number;
+  periodCount: number;
+};
+
+const parseCsv = async (): Promise<{ start: number; vestedTransfers: VestedTransfer[] }> => {
+  const startDate = new Date(config.startDate);
+  // const startDate = new Date();
+  const endDate = new Date(config.endDate);
+
+  // TODO: set right values
+  const startMoment = startDate.getTime();
+  // const startMoment = startDate.getTime() + 30 * 1_000;
+  const endMoment = endDate.getTime();
+  const period = 12 * 1_000;
+
+  const periods = Math.ceil((endMoment - startMoment) / period);
+
+  const vestedTransfers: VestedTransfer[] = [];
+
+  const sample = fs.readFileSync(path.join(__dirname, "sample.csv"));
+
+  const parser = parse(sample, { delimiter: ",", from_line: 2 });
+
+  // Parse data
+  for await (const row of parser) {
+    const beneficiary = row[0];
+    const totalAmount = Number(row[1].replaceAll(",", ""));
+    const perPeriod = totalAmount / periods;
+    // Round up
+    const perPeriodRounded = Math.ceil(perPeriod);
+
+    // Adjust periods if necessary
+    const extraAmount = (perPeriodRounded - perPeriod) * periods;
+    const extraPeriods = Math.floor(extraAmount / perPeriodRounded);
+
+    vestedTransfers.push({
+      beneficiary,
+      perPeriod: perPeriodRounded,
+      periodCount: periods - extraPeriods
+    });
+  }
+
+  return {
+    start: startMoment,
+    vestedTransfers
+  };
+};
+
 const main = async () => {
-  // Make sure `config.json` and `schedules.json` meet requirements.
+  // Make sure `config.json` meet requirements.
   await sanitizeData();
+
+  // Parse data
+  const { start, vestedTransfers } = await parseCsv();
 
   console.log("Composable Vesting Schedules Initialization");
   console.debug("Connecting...");
@@ -81,23 +121,22 @@ const main = async () => {
   const { devWalletAlice } = getDevWallets(keyring);
 
   // Create vested transfers.
-  const transactions = schedules.map(schedule => {
+  const transactions = vestedTransfers.map(schedule => {
     const scheduleInfo = api.createType("ComposableTraitsVestingVestingScheduleInfo", {
       window: api.createType("ComposableTraitsVestingVestingWindow", {
-        [config.windowType === "block" ? "BlockNumberBased" : "MomentBased"]: {
-          start: api.createType("u64", schedule.start),
-          period: api.createType("u64", schedule.windowPeriod)
+        MomentBased: {
+          start: api.createType("u64", start),
+          period: api.createType("u64", config.period)
         }
       }),
-      periodCount: schedule.vestingPeriodCount,
-      perPeriod: api.createType("u128", schedule.perPeriodAmount)
+      periodCount: schedule.periodCount,
+      perPeriod: api.createType("u128", schedule.perPeriod)
     });
 
     return api.tx.vesting.vestedTransfer(config.address, schedule.beneficiary, config.asset, scheduleInfo);
   });
 
   // Execute transactions.
-  console.log("Creating schedules...");
   const {
     data: [result]
   } = await sendAndWaitForSuccess(

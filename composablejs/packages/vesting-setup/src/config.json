@@ -2,6 +2,8 @@
   "config": {
     "asset": 1,
     "address": "5yNZjX24n2eg7W6EVamaTXNQbWCwchhThEaSWB7V3GRjtHeL",
-    "windowType": "block"
+    "period": 12000,
+    "startDate": "4/1/2023",
+    "endDate": "1/1/2025"
   }
 }
