@@ -71,6 +71,7 @@ composabletests
 containerd
 containrrr # `containrrr/watchtower` docker image
 contentful
+contribs
 coreutils
 cosm
 Cosmoverse
@@ -192,6 +193,7 @@ mlengthmod
 mload
 mochawesome
 msapplication
+msig
 mstore
 Multiaddr
 multiassets
@@ -268,6 +270,7 @@ popout
 postinfo
 powd
 powf
+powi
 prebaked
 preclaim
 preclaims
@@ -415,6 +418,7 @@ uptodate # used throughout our codebase
 urql
 USDCUSDT
 usermod
+utilisuba
 vadimcn
 Varint
 vsicons
