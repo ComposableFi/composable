@@ -24,11 +24,11 @@ export const subscribePicassoBalanceByAssetId = async (
     unsubscribe = await api.query.tokens.accounts(
       uAccount,
       api.createType("u128", onChainId.toString()),
-      (acocuntData: OrmlTokensAccountData) => {
+      (accountData: OrmlTokensAccountData) => {
         callback(
           {
-            locked: fromChainIdUnit(BigInt(acocuntData.reserved.toString()), decimals),
-            free: fromChainIdUnit(BigInt(acocuntData.free.toString()), decimals)
+            locked: fromChainIdUnit(BigInt(accountData.reserved.toString()), decimals),
+            free: fromChainIdUnit(BigInt(accountData.free.toString()), decimals)
           }
         );
       }

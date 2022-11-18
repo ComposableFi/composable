@@ -25,9 +25,9 @@ export const subscription = useStore.subscribe(
 
       if (app_supported.length > 0) {
         const url = `https://api.coingecko.com/api/v3/simple/price?ids=${app_supported
-          .filter((k) => !!TOKENS[k].coingeckoid)
+          .filter((k) => !!TOKENS[k].coinGeckoId)
           .map((k) => {
-            return TOKENS[k].coingeckoid;
+            return TOKENS[k].coinGeckoId;
           })
           .join(",")}&vs_currencies=${vs_currencies.join(",")}`;
 
@@ -39,7 +39,7 @@ export const subscription = useStore.subscribe(
           ][];
 
           for (const tokenAndPrice of tokenIdPrice) {
-            const token = allTokenMetadata.find((x) => (x.coingeckoid === tokenAndPrice[0]));
+            const token = allTokenMetadata.find((x) => (x.coinGeckoId === tokenAndPrice[0]));
 
             if (token) {
               const baseCurrencies = Object.keys(tokenAndPrice[1]);
