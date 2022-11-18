@@ -41,6 +41,10 @@ hex = { version = "0.4", default-features = false, features = ["alloc"] }
 lazy_static = { version = "1.4.0", optional = true, default-features = false, features = [
   "spin_no_std",
 ] }
+libsecp256k1 = { version = "0.7.0", default-features = false, features = [
+  "hmac",
+  "static-context",
+] }
 log = { version = "0.4.14", default-features = false }
 pallet-assets = { default-features = false, path = "../assets" }
 pallet-balances = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }

@@ -78,6 +78,7 @@ pub mod pallet {
 		collections::{btree_map::Entry, BTreeMap},
 		format,
 		string::String,
+		vec,
 	};
 	use composable_support::abstractions::{
 		nonce::Nonce,
@@ -111,7 +112,7 @@ pub mod pallet {
 		transactional, BoundedBTreeMap, PalletId, StorageHasher, Twox64Concat,
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
-	use sp_core::{crypto::UncheckedFrom, ecdsa, ed25519};
+	use sp_core::{crypto::UncheckedFrom, ed25519};
 	use sp_runtime::traits::{Convert, Hash, MaybeDisplay, SaturatedConversion};
 	use sp_std::vec::Vec;
 
@@ -1277,7 +1278,7 @@ pub mod pallet {
 
 			sp_io::crypto::secp256k1_ecdsa_recover(&signature, &message_hash)
 				.map(|without_tag| {
-					let mut with_tag = vec![0x04u8];
+					let mut with_tag = vec![0x04_u8];
 					with_tag.extend_from_slice(&without_tag[..]);
 					with_tag
 				})
@@ -1289,28 +1290,22 @@ pub mod pallet {
 			signature: &[u8],
 			public_key: &[u8],
 		) -> bool {
-			if signature.len() != SUBSTRATE_ECDSA_SIGNATURE_LEN - 1 {
-				return false
-			}
-			// Try into a [u8; 32]
-			let message_hash = match message_hash.try_into() {
+			let message_hash = match libsecp256k1::Message::parse_slice(message_hash) {
 				Ok(message_hash) => message_hash,
 				Err(_) => return false,
 			};
 
-			// We are expecting 64 bytes long public keys but the substrate function use an
-			// additional byte for recovery id. So we insert a dummy byte.
-			let signature = {
-				let mut signature_inner = [0_u8; SUBSTRATE_ECDSA_SIGNATURE_LEN];
-				signature_inner[..SUBSTRATE_ECDSA_SIGNATURE_LEN - 1].copy_from_slice(signature);
-				ecdsa::Signature(signature_inner)
+			let signature = match libsecp256k1::Signature::parse_standard_slice(signature) {
+				Ok(signature) => signature,
+				Err(_) => return false,
 			};
 
-			let public_key = match ecdsa::Public::from_full(public_key) {
+			let public_key = match libsecp256k1::PublicKey::parse_slice(public_key, None) {
 				Ok(public_key) => public_key,
 				Err(_) => return false,
 			};
-			sp_io::crypto::ecdsa_verify_prehashed(&signature, &message_hash, &public_key)
+
+			libsecp256k1::verify(&message_hash, &signature, &public_key)
 		}
 
 		pub(crate) fn do_ed25519_batch_verify(

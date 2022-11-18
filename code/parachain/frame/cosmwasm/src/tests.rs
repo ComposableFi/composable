@@ -198,7 +198,7 @@ fn ed25519_batch_verify_fails_if_one_fail() {
 }
 
 #[test]
-fn ed25519_batch_verify_fails_if_input_lengts_are_incorrect() {
+fn ed25519_batch_verify_fails_if_input_lengths_are_incorrect() {
 	new_test_ext().execute_with(|| {
 		let decode = |m| -> Vec<u8> { hex::decode(m).unwrap() };
 
