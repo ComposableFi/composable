@@ -1,6 +1,6 @@
 use crate::{Config, Error, PoolConfiguration, PoolCount, Pools};
 use composable_maths::dex::constant_product::{
-	compute_deposit_lp, compute_in_given_out, compute_out_given_in_new,
+	compute_deposit_lp, compute_in_given_out_new, compute_out_given_in_new,
 };
 use composable_support::math::safe::{SafeAdd, SafeSub};
 use composable_traits::{
@@ -172,26 +172,26 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		pool_account: &T::AccountId,
 		out_asset: AssetAmount<T::AssetId, T::Balance>,
 		in_asset_id: T::AssetId,
-		_apply_fees: bool,
-	) -> Result<(T::Balance, T::Balance, Fee<T::AssetId, T::Balance>), DispatchError> {
+		apply_fees: bool,
+	) -> Result<
+		(
+			AssetAmount<T::AssetId, T::Balance>,
+			AssetAmount<T::AssetId, T::Balance>,
+			Fee<T::AssetId, T::Balance>,
+		),
+		DispatchError,
+	> {
 		let pool_assets = Self::get_pool_balances(pool, pool_account);
-		let base_asset = pool_assets.get(&out_asset.asset_id).ok_or(Error::<T>::PairMismatch)?;
-		let quote_asset = pool_assets.get(&in_asset_id).ok_or(Error::<T>::PairMismatch)?;
+		let a_out = T::Convert::convert(out_asset.amount);
+		let fee = if apply_fees { pool.fee_config.fee_rate } else { Permill::zero() };
+		let (w_o, b_o) = pool_assets.get(&out_asset.asset_id).ok_or(Error::<T>::PairMismatch)?;
+		let (w_i, b_i) = pool_assets.get(&in_asset_id).ok_or(Error::<T>::PairMismatch)?;
 
-		// TODO (vim): Fees refactored later
-		let base_amount = T::Convert::convert(out_asset.amount);
-		let quote_amount = compute_in_given_out(
-			quote_asset.0,
-			base_asset.0,
-			quote_asset.1,
-			base_asset.1,
-			base_amount,
-		)?;
+		let amm_pair = compute_in_given_out_new(*w_i, *w_o, *b_i, *b_o, a_out, fee)?;
 
-		Ok((
-			T::Convert::convert(base_amount),
-			T::Convert::convert(quote_amount),
-			Fee::zero(in_asset_id),
-		))
+		let a_sent = AssetAmount::new(in_asset_id, T::Convert::convert(amm_pair.value));
+		let fee = pool.fee_config.calculate_fees(in_asset_id, T::Convert::convert(amm_pair.fee));
+
+		Ok((out_asset, a_sent, fee))
 	}
 }

@@ -1147,33 +1147,32 @@ pub mod pallet {
 		) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
-			let (quote_amount, owner, fees) = match pool {
+			let (amount_sent, owner, fees) = match pool {
 				PoolConfiguration::DualAssetConstantProduct(info) => {
 					// NOTE: lp_fees includes owner_fees.
-					let (base_amount, quote_amount_including_lp_fee, fees) =
-						DualAssetConstantProduct::<T>::do_buy(
-							&info,
-							&pool_account,
-							out_asset,
-							in_asset_id,
-							true,
-						)?;
+					let (amount_out, amount_sent, fees) = DualAssetConstantProduct::<T>::do_buy(
+						&info,
+						&pool_account,
+						out_asset,
+						in_asset_id,
+						true,
+					)?;
 
 					T::Assets::transfer(
-						in_asset_id,
+						amount_sent.asset_id,
 						who,
 						&pool_account,
-						quote_amount_including_lp_fee,
+						amount_sent.amount,
 						keep_alive,
 					)?;
 					T::Assets::transfer(
-						out_asset.asset_id,
+						amount_out.asset_id,
 						&pool_account,
 						who,
-						base_amount,
+						amount_out.amount,
 						false,
 					)?;
-					(quote_amount_including_lp_fee, info.owner, fees)
+					(amount_sent, info.owner, fees)
 				},
 			};
 			Self::disburse_fees(who, &pool_id, &owner, &fees)?;
@@ -1183,9 +1182,9 @@ pub mod pallet {
 				pool_id,
 				who: who.clone(),
 				base_asset: out_asset.asset_id,
-				quote_asset: in_asset_id,
+				quote_asset: amount_sent.asset_id,
 				base_amount: out_asset.amount,
-				quote_amount,
+				quote_amount: amount_sent.amount,
 				fee: fees,
 			});
 			// TODO (vim): Return a BuyResult type
