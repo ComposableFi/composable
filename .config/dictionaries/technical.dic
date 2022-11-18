@@ -451,3 +451,8 @@ XCVM
 tmpfs
 nodev
 nosuid
+tailwindcss
+keyval
+rfdc # really fast deep clone
+unhexify
+deburr
