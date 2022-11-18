@@ -1256,7 +1256,7 @@ pub mod pallet {
 			recovery_param: u8,
 		) -> Result<Vec<u8>, ()> {
 			// `recovery_param` must be 0 or 1. Other values are not supported from CosmWasm.
-			if recovery_param > 2 {
+			if recovery_param >= 2 {
 				return Err(())
 			}
 
@@ -1275,11 +1275,12 @@ pub mod pallet {
 				signature_inner
 			};
 
-			// We used `compressed` function here because the api states that this function
-			// needs to return a public key that can be used in `secp256k1_verify` which
-			// takes a compressed public key.
-			sp_io::crypto::secp256k1_ecdsa_recover_compressed(&signature, &message_hash)
-				.map(|val| val.into())
+			sp_io::crypto::secp256k1_ecdsa_recover(&signature, &message_hash)
+				.map(|without_tag| {
+					let mut with_tag = vec![0x04u8];
+					with_tag.extend_from_slice(&without_tag[..]);
+					with_tag
+				})
 				.map_err(|_| ())
 		}
 
@@ -1288,10 +1289,9 @@ pub mod pallet {
 			signature: &[u8],
 			public_key: &[u8],
 		) -> bool {
-			if signature.len() != SUBSTRATE_ECDSA_SIGNATURE_LEN {
+			if signature.len() != SUBSTRATE_ECDSA_SIGNATURE_LEN - 1 {
 				return false
 			}
-
 			// Try into a [u8; 32]
 			let message_hash = match message_hash.try_into() {
 				Ok(message_hash) => message_hash,
@@ -1306,11 +1306,10 @@ pub mod pallet {
 				ecdsa::Signature(signature_inner)
 			};
 
-			let public_key = match ecdsa::Public::try_from(public_key) {
+			let public_key = match ecdsa::Public::from_full(public_key) {
 				Ok(public_key) => public_key,
 				Err(_) => return false,
 			};
-
 			sp_io::crypto::ecdsa_verify_prehashed(&signature, &message_hash, &public_key)
 		}
 
@@ -1319,7 +1318,19 @@ pub mod pallet {
 			signatures: &[&[u8]],
 			public_keys: &[&[u8]],
 		) -> bool {
-			if messages.len() != signatures.len() || signatures.len() != public_keys.len() {
+			let mut messages = messages.to_vec();
+			let mut public_keys = public_keys.to_vec();
+
+			if messages.len() == signatures.len() && messages.len() == public_keys.len() {
+				// Nothing needs to be done
+			} else if messages.len() == 1 && signatures.len() == public_keys.len() {
+				// There can be a single message signed with different signature-public key pairs
+				messages = messages.repeat(signatures.len());
+			} else if public_keys.len() == 1 && messages.len() == signatures.len() {
+				// Single entity(with a public key) might wanna verify different messages
+				public_keys = public_keys.repeat(signatures.len());
+			} else {
+				// Any other case is wrong
 				return false
 			}
 
