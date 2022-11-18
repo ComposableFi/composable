@@ -10,6 +10,7 @@ import {
   Activity,
   Asset,
   Currency,
+  CurrentLockedValue,
   Event,
   EventType,
   HistoricalLockedValue,
@@ -353,4 +354,77 @@ export async function getLastVolume(
   });
 
   return BigInt(lastVolume.length > 0 ? lastVolume[0].amount : 0);
+}
+
+/**
+ * Get currently locked value for a given asset and source, or create new one,
+ * and increase/decrease locked amount.
+ */
+export async function getOrCreateCurrentLockedValue(
+  ctx: EventHandlerContext<Store>,
+  assetId: string,
+  amount: bigint,
+  source: LockedSource,
+  event: Event
+): Promise<CurrentLockedValue> {
+  const currentLockedValue = await ctx.store.get(CurrentLockedValue, {
+    where: { assetId, source },
+    relations: { event: true },
+  });
+
+  if (currentLockedValue) {
+    currentLockedValue.amount += amount;
+    currentLockedValue.event = event;
+    return Promise.resolve(currentLockedValue);
+  }
+
+  const newCurrentLockedValue = new CurrentLockedValue({
+    id: randomUUID(),
+    assetId,
+    event,
+    amount,
+    source,
+  });
+
+  return Promise.resolve(newCurrentLockedValue);
+}
+
+/**
+ * Stores a new CurrentLockedValue with current locked amount
+ * for the specified asset and source
+ * @param ctx
+ * @param amountsLocked
+ * @param source
+ */
+export async function storeCurrentLockedValue(
+  ctx: EventHandlerContext<Store>,
+  amountsLocked: Record<string, bigint>,
+  source: LockedSource
+): Promise<void> {
+  let event = await ctx.store.get(Event, { where: { id: ctx.event.id } });
+
+  if (!event) {
+    return Promise.reject(new Error("Event not found"));
+  }
+
+  for (const assetId of Object.keys(amountsLocked)) {
+    const amount = amountsLocked[assetId];
+    const currentLockedValueAll = await getOrCreateCurrentLockedValue(
+      ctx,
+      assetId,
+      amount,
+      LockedSource.All,
+      event
+    );
+    const currentLockedValueSource = await getOrCreateCurrentLockedValue(
+      ctx,
+      assetId,
+      amount,
+      source,
+      event
+    );
+
+    await ctx.store.save(currentLockedValueAll);
+    await ctx.store.save(currentLockedValueSource);
+  }
 }
