@@ -69,7 +69,6 @@ export class PicassoOverviewStatsResolver
         if (oraclePrice?.price) {
           assetPrices[assetId] = BigInt(oraclePrice?.price?.toString() || 0n);
         }
-        // TODO: what to do if no there's no Oracle price?
       } catch (err) {
         console.log("Error:", err);
       }
