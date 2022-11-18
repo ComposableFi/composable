@@ -30,7 +30,7 @@ import { statemineAssetList } from "@/defi/polkadot/pallets/Assets/statemine";
 
 const PolkadotBalancesUpdater = () => {
   useEagerConnect("picasso");
-  useEagerConnect("karura");
+  // useEagerConnect("karura");
 
   const isLoaded = useStore((state) => state.substrateTokens.isLoaded);
 
@@ -63,22 +63,22 @@ const PolkadotBalancesUpdater = () => {
    */
   useEffect(() => {
     callbackGate(
-      async (_picaApi, _karApi, _kusamaApi, _statemineApi) => {
+      async (_picaApi, _kusamaApi, _statemineApi) => {
         const statemineAssetMetadataList = await statemineAssetList(
           _statemineApi
         );
         const picaAssetMetadataList = await picassoAssetsList(_picaApi);
-        const karuraAssetMetadataList = await karuraAssetsList(_karApi);
+        // const karuraAssetMetadataList = await karuraAssetsList(_karApi);
         const kusamaAssetMetadata = await kusamaAssetsList(_kusamaApi);
         updateTokens(
           picaAssetMetadataList,
-          karuraAssetMetadataList,
+          // karuraAssetMetadataList,
           statemineAssetMetadataList,
           kusamaAssetMetadata
         );
       },
       parachainProviders.picasso.parachainApi,
-      parachainProviders.karura.parachainApi,
+      // parachainProviders.karura.parachainApi,
       relaychainProviders.kusama.parachainApi,
       parachainProviders.statemine.parachainApi
     );
