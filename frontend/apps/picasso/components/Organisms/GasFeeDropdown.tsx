@@ -43,6 +43,7 @@ export const GasFeeDropdown: FC<Props> = ({
   const feeItemEd = useStore((state) => state.transfers.feeItemEd);
   const { signer } = useDotSamaContext();
   const tokens = useStore(({ substrateTokens }) => substrateTokens.tokens);
+  const setFeeToken = useStore((state) => state.transfers.setFeeToken);
   const balances = useStore(
     ({ substrateBalances }) => substrateBalances.balances
   );
@@ -103,6 +104,7 @@ export const GasFeeDropdown: FC<Props> = ({
                 });
                 originalFeeItem.current = tokenId;
                 setFeeItem(tokenId);
+                setFeeToken(tokenId);
                 toggleModal();
               },
               onError: (_err) => {
