@@ -28,7 +28,7 @@ where
 	) -> RpcResult<SafeRpcWrapper<Balance>>;
 
 	#[method(name = "assets_listAssets")]
-	fn list_assets(&self, at: Option<BlockHash>) -> RpcResult<Vec<Asset<ForeignAssetId>>>;
+	fn list_assets(&self, at: Option<BlockHash>) -> RpcResult<Vec<Asset<Balance, ForeignAssetId>>>;
 }
 
 pub struct Assets<C, Block> {
@@ -83,7 +83,7 @@ where
 	fn list_assets(
 		&self,
 		at: Option<<Block as BlockT>::Hash>,
-	) -> RpcResult<Vec<Asset<ForeignAssetId>>> {
+	) -> RpcResult<Vec<Asset<Balance, ForeignAssetId>>> {
 		let api = self.client.runtime_api();
 
 		let at = BlockId::hash(at.unwrap_or_else(|| {

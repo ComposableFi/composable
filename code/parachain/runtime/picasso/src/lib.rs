@@ -857,7 +857,7 @@ impl_runtime_apis! {
 			SafeRpcWrapper(<Assets as fungibles::Inspect::<AccountId>>::balance(asset_id, &account_id))
 		}
 
-		fn list_assets() -> Vec<Asset<ForeignAssetId>> {
+		fn list_assets() -> Vec<Asset<Balance, ForeignAssetId>> {
 			CurrencyId::list_assets()
 		}
 	}

@@ -86,7 +86,7 @@ pub trait RemoteAssetRegistryInspect {
 	// Option<Self::Balance>;
 
 	/// Return information about foreign assets stored on assets registry
-	fn get_foreign_assets_list() -> Vec<Asset<Self::AssetNativeLocation>>;
+	fn get_foreign_assets_list() -> Vec<Asset<Self::Balance, Self::AssetNativeLocation>>;
 }
 
 pub trait RemoteAssetRegistryMutate {
