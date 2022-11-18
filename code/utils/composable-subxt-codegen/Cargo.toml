@@ -1,5 +1,5 @@
 [package]
-name = "subxt-codegen"
+name = "composable-subxt-codegen"
 version = "0.1.0"
 edition = "2021"
 authors = ["Seun Lanlege <seunlanlege@gmail.com>"]

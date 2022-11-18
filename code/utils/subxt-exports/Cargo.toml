@@ -8,7 +8,7 @@ edition = "2021"
 [build-dependencies]
 color-eyre = "0.6.2"
 once_cell = "1.16.0"
-subxt-codegen = { path = "../subxt-codegen" }
+composable-subxt-codegen = { path = "../composable-subxt-codegen" }
 tokio = { version = "1.19.2", features = ["macros", "rt-multi-thread"] }
 
 [dependencies]

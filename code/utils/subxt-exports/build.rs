@@ -31,8 +31,8 @@ async fn main() -> color_eyre::Result<()> {
 	// TODO(Dzmitry): add conditional env var
 	if env::var("SUBXT_ENABLED").is_ok() {
 		println!("relay_url: {}, para_url: {}", RELAY_URL.as_str(), &PARA_URL.as_str());
-		subxt_codegen::build_script(&PARA_URL, "polkadot").await?;
-		subxt_codegen::build_script(&RELAY_URL, "parachain").await?;
+		composable_subxt_codegen::build_script(&PARA_URL, "polkadot").await?;
+		composable_subxt_codegen::build_script(&RELAY_URL, "parachain").await?;
 	}
 	Ok(())
 }
