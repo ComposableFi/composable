@@ -8,12 +8,14 @@ import {
 } from "type-graphql";
 import type { EntityManager } from "typeorm";
 import { ApiPromise, WsProvider } from "@polkadot/api";
+import { getAmountWithoutDecimals } from "../../utils";
 import {
   Event,
   Account,
   Activity,
   CurrentLockedValue,
   LockedSource,
+  Asset,
 } from "../../model";
 import { chain } from "../../config";
 
@@ -55,19 +57,29 @@ export class PicassoOverviewStatsResolver
       },
     });
 
-    const assetPrices = lockedValue.reduce<Record<string, bigint>>(
-      (acc, value) => {
-        acc[value.assetId] = 0n;
-        return acc;
-      },
-      {}
-    );
+    const assetsInfo = lockedValue.reduce<
+      Record<string, { price: bigint; decimals: number }>
+    >((acc, value) => {
+      acc[value.assetId] = {
+        price: 0n,
+        decimals: 12,
+      };
+      return acc;
+    }, {});
 
-    for (const assetId of Object.keys(assetPrices)) {
+    for (const assetId of Object.keys(assetsInfo)) {
       try {
         const oraclePrice = await api.query.oracle.prices(assetId);
+        const asset = await manager.getRepository(Asset).findOne({
+          where: {
+            id: assetId,
+          },
+        });
         if (oraclePrice?.price) {
-          assetPrices[assetId] = BigInt(oraclePrice?.price?.toString() || 0n);
+          assetsInfo[assetId] = {
+            price: BigInt(oraclePrice?.price?.toString() || 0n),
+            decimals: asset?.decimals || 12,
+          };
         }
       } catch (err) {
         console.log("Error:", err);
@@ -75,10 +87,19 @@ export class PicassoOverviewStatsResolver
     }
 
     const totalLockedValue = lockedValue.reduce((acc, value) => {
-      if (!assetPrices?.[value?.assetId]) {
+      const { assetId } = value;
+      const { price, decimals } = assetsInfo[assetId];
+
+      if (!price) {
         return acc;
       }
-      return acc + assetPrices[value.assetId] * value.amount;
+
+      const lockedValue = getAmountWithoutDecimals(
+        value.amount,
+        decimals
+      ).toString();
+
+      return acc + price * BigInt(lockedValue);
     }, 0n);
 
     return Promise.resolve(totalLockedValue);
