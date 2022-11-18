@@ -4,18 +4,26 @@ import testConfiguration from "./test_configuration.json";
 import { ApiPromise } from "@polkadot/api";
 import { getNewConnection } from "@composable/utils/connectionHelper";
 import { getDevWallets } from "@composable/utils/walletHelper";
+import { sendAndWaitForSuccess } from "@composable/utils/polkadotjs";
+import { KeyringPair } from "@polkadot/keyring/types";
+
+// Creates Rational64
+const rational = (n: number, d: number) => ({ n, d });
 
 describe("[SHORT] rpc.assets Tests", function () {
   if (!testConfiguration.enabledTests.rpc.enabled) return;
   let api: ApiPromise;
   let walletBobPublicKey: string;
+  let sudoKey: KeyringPair;
+  this.retries(0);
+  this.timeout(3 * 60 * 1000);
 
   before("Setting up tests", async function () {
-    this.timeout(60 * 1000);
     const { newClient, newKeyring } = await getNewConnection();
     api = newClient;
-    const { devWalletBob } = getDevWallets(newKeyring);
+    const { devWalletAlice, devWalletBob } = getDevWallets(newKeyring);
     walletBobPublicKey = devWalletBob.address;
+    sudoKey = devWalletAlice;
   });
 
   after("Closing the connection", async function () {
@@ -49,7 +57,7 @@ describe("[SHORT] rpc.assets Tests", function () {
   it("rpc.assets.listAssets Tests", async function () {
     if (!testConfiguration.enabledTests.rpc.listAssets__success) this.skip();
     const result = await RpcAssetsTests.rpcListAssetsTest(api);
-    result.every(i => expect(i).to.have.all.keys("id", "name", "decimals", "foreignId"));
+    result.every(i => expect(i).to.have.all.keys("id", "name", "decimals", "foreignId", "ratio", "existentialDeposit"));
     expect(result.map(e => e.id.toNumber())).to.include.members([
       // These are the assets to be included on the first release
       1, 4, 5, 129, 130, 131
@@ -72,6 +80,74 @@ describe("[SHORT] rpc.assets Tests", function () {
     const KSM = result.find(e => hex_to_ascii(e.name.toString()) === "KSM")!;
     expect(PICA.id.toNumber()).to.equal(1);
     expect(KSM.id.toNumber()).to.equal(4);
+    expect(PICA.decimals.toNumber()).to.equal(12);
+
+    // Update KSM
+    let newKsmInfo = {
+      decimals: 2,
+      foreignId: { parents: "2", interior: "Here" },
+      ratio: rational(2, 10)
+    };
+    await sendAndWaitForSuccess(
+      api,
+      sudoKey,
+      api.events.sudo.Sudid.is,
+      api.tx.sudo.sudo(
+        api.tx.assetsRegistry.updateAsset(4, newKsmInfo.foreignId, newKsmInfo.ratio, newKsmInfo.decimals)
+      )
+    );
+
+    let resultAfterUpdate = await RpcAssetsTests.rpcListAssetsTest(api);
+    expect(resultAfterUpdate.length).to.eq(result.length);
+    let KSMAfterUpdate = resultAfterUpdate.find(e => hex_to_ascii(e.name.toString()) === "KSM")!;
+    expect(KSMAfterUpdate).to.not.be.undefined;
+    expect(KSMAfterUpdate.decimals.toNumber()).to.equal(newKsmInfo.decimals);
+    expect(KSMAfterUpdate.foreignId.toHuman()).to.deep.equal(newKsmInfo.foreignId);
+    expect(KSMAfterUpdate.ratio.toJSON()).to.deep.equal(newKsmInfo.ratio);
+
+    // Update KSM
+    newKsmInfo = {
+      decimals: 3,
+      foreignId: { parents: "3", interior: "Here" },
+      ratio: rational(3, 10)
+    };
+    await sendAndWaitForSuccess(
+      api,
+      sudoKey,
+      api.events.sudo.Sudid.is,
+      api.tx.sudo.sudo(
+        api.tx.assetsRegistry.updateAsset(4, newKsmInfo.foreignId, newKsmInfo.ratio, newKsmInfo.decimals)
+      )
+    );
+
+    resultAfterUpdate = await RpcAssetsTests.rpcListAssetsTest(api);
+    KSMAfterUpdate = resultAfterUpdate.find(e => hex_to_ascii(e.name.toString()) === "KSM")!;
+    expect(KSMAfterUpdate).to.not.be.undefined;
+    expect(KSMAfterUpdate.decimals.toNumber()).to.equal(newKsmInfo.decimals);
+    expect(KSMAfterUpdate.foreignId.toHuman()).to.deep.equal(newKsmInfo.foreignId);
+    expect(KSMAfterUpdate.ratio.toJSON()).to.deep.equal(newKsmInfo.ratio);
+
+    // Register new asset
+    const newAssetInfo = {
+      decimals: 4,
+      foreignId: { parents: "1", interior: { X1: { Parachain: "4" } } },
+      ratio: rational(4, 10)
+    };
+    await sendAndWaitForSuccess(
+      api,
+      sudoKey,
+      api.events.sudo.Sudid.is,
+      api.tx.sudo.sudo(
+        api.tx.assetsRegistry.registerAsset(newAssetInfo.foreignId, newAssetInfo.ratio, newAssetInfo.decimals)
+      )
+    );
+    const resultAfterRegister = await RpcAssetsTests.rpcListAssetsTest(api);
+
+    const recentlyAddedAsset = resultAfterRegister[resultAfterRegister.length - 1];
+    expect(recentlyAddedAsset).to.not.be.undefined;
+    expect(recentlyAddedAsset.decimals.toNumber()).to.equal(newAssetInfo.decimals);
+    expect(recentlyAddedAsset.foreignId.toHuman()).to.deep.equal(newAssetInfo.foreignId);
+    expect(recentlyAddedAsset.ratio.toJSON()).to.deep.equal(newAssetInfo.ratio);
   });
 });
 
