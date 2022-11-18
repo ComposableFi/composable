@@ -318,7 +318,9 @@ pub fn compute_in_given_out_new<T: PerThing>(
 	let power = base.checked_powd(weight_ratio).ok_or(ArithmeticError::Overflow)?;
 	let ratio = power.safe_sub(&Decimal::ONE)?;
 
-	let a_sent = b_i_over_fee.safe_mul(&ratio)?.round_up();
+	// NOTE(connor): for in_given_out to produce compatible results for out_given_in, both must
+	// round in the same direction.
+	let a_sent = b_i_over_fee.safe_mul(&ratio)?.round_down();
 	let fee = a_sent.safe_mul(&fee)?.round_up().safe_to_u128()?;
 
 	Ok(ConstantProductAmmValueFeePair { value: a_sent.safe_to_u128()?, fee })
