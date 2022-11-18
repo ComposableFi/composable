@@ -55,12 +55,12 @@ export function VmExecute({ storageId, vmShared, inputParams, placeholders, crea
 							<input
 								onInput={e => {
 									e.preventDefault();
-									setState(prevState => ({ ...prevState, [key]: e.target?.value }));
+									setState(prevState => ({ ...prevState, [key]: (e.target as HTMLInputElement)?.value }));
 								}}
 								value={state[key]}
 								type={'text'}
 								id={key}
-								placeholder={placeholders?.[key as keyof T]}
+								placeholder={placeholders?.[key]}
 							/>
 						</li>
 					);
