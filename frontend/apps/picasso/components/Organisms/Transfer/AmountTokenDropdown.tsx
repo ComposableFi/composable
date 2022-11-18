@@ -70,6 +70,7 @@ export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
 
     return amount instanceof BigNumber ? amount : new BigNumber(0);
   }, [
+    tokens,
     balance,
     existentialDeposit,
     fromProvider.parachainApi,
