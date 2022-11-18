@@ -7,7 +7,17 @@ import {
   ResolverInterface,
 } from "type-graphql";
 import type { EntityManager } from "typeorm";
-import { Event, Account, Activity, HistoricalLockedValue } from "../../model";
+import { ApiPromise, WsProvider } from "@polkadot/api";
+import { getAmountWithoutDecimals } from "../../utils";
+import {
+  Event,
+  Account,
+  Activity,
+  CurrentLockedValue,
+  LockedSource,
+  Asset,
+} from "../../model";
+import { chain } from "../../config";
 
 @ObjectType()
 export class PicassoOverviewStats {
@@ -36,26 +46,63 @@ export class PicassoOverviewStatsResolver
 
   @FieldResolver({ name: "totalValueLocked", defaultValue: 0 })
   async totalValueLocked(): Promise<bigint> {
+    const wsProvider = new WsProvider(chain());
+    const api = await ApiPromise.create({ provider: wsProvider });
+
     const manager = await this.tx();
 
-    // TODO: add something like WHERE source = 'All' once PR 1703 is merged
-    let lockedValue: { amount: bigint }[] = await manager
-      .getRepository(HistoricalLockedValue)
-      .query(
-        `
-        SELECT
-          amount
-        FROM historical_locked_value
-        ORDER BY timestamp DESC
-        LIMIT 1
-      `
-      );
+    const lockedValue = await manager.getRepository(CurrentLockedValue).find({
+      where: {
+        source: LockedSource.All,
+      },
+    });
 
-    if (!lockedValue?.[0]) {
-      return Promise.resolve(0n);
+    const assetsInfo = lockedValue.reduce<
+      Record<string, { price: bigint; decimals: number }>
+    >((acc, value) => {
+      acc[value.assetId] = {
+        price: 0n,
+        decimals: 12,
+      };
+      return acc;
+    }, {});
+
+    for (const assetId of Object.keys(assetsInfo)) {
+      try {
+        const oraclePrice = await api.query.oracle.prices(assetId);
+        const asset = await manager.getRepository(Asset).findOne({
+          where: {
+            id: assetId,
+          },
+        });
+        if (oraclePrice?.price) {
+          assetsInfo[assetId] = {
+            price: BigInt(oraclePrice?.price?.toString() || 0n),
+            decimals: asset?.decimals || 12,
+          };
+        }
+      } catch (err) {
+        console.log("Error:", err);
+      }
     }
 
-    return Promise.resolve(lockedValue[0].amount);
+    const totalLockedValue = lockedValue.reduce((acc, value) => {
+      const { assetId } = value;
+      const { price, decimals } = assetsInfo[assetId];
+
+      if (!price) {
+        return acc;
+      }
+
+      const lockedValue = getAmountWithoutDecimals(
+        value.amount,
+        decimals
+      ).toString();
+
+      return acc + price * BigInt(lockedValue);
+    }, 0n);
+
+    return Promise.resolve(totalLockedValue);
   }
 
   @FieldResolver({ name: "transactionsCount", defaultValue: 0 })

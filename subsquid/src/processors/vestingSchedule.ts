@@ -17,7 +17,11 @@ import {
   VestingVestingScheduleAddedEvent,
 } from "../types/events";
 import { encodeAccount } from "../utils";
-import { saveAccountAndEvent, storeHistoricalLockedValue } from "../dbHelper";
+import {
+  saveAccountAndEvent,
+  storeCurrentLockedValue,
+  storeHistoricalLockedValue,
+} from "../dbHelper";
 
 interface VestingScheduleAddedEvent {
   from: Uint8Array;
@@ -116,6 +120,12 @@ export async function processVestingScheduleAddedEvent(
     { [asset.toString()]: scheduleAmount },
     LockedSource.VestingSchedules
   );
+
+  await storeCurrentLockedValue(
+    ctx,
+    { [asset.toString()]: scheduleAmount },
+    LockedSource.VestingSchedules
+  );
 }
 
 interface VestingScheduleClaimedEvent {
@@ -178,7 +188,11 @@ export async function processVestingClaimedEvent(
 
     const schedule: VestingSchedule | undefined = await ctx.store.get(
       VestingSchedule,
-      id.toString()
+      {
+        where: {
+          scheduleId: id,
+        },
+      }
     );
 
     if (!schedule) {
@@ -193,6 +207,12 @@ export async function processVestingClaimedEvent(
     await ctx.store.save(schedule);
 
     await storeHistoricalLockedValue(
+      ctx,
+      { [schedule.assetId]: -amount },
+      LockedSource.VestingSchedules
+    );
+
+    await storeCurrentLockedValue(
       ctx,
       { [schedule.assetId]: -amount },
       LockedSource.VestingSchedules
