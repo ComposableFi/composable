@@ -741,7 +741,7 @@ pub mod pallet {
 			let max_proposals = T::MaxProposals::get();
 			ensure!(real_prop_count < max_proposals, Error::<T>::TooManyProposals);
 
-			if let Some((until, _)) = <Blacklist<T>>::get(&id) {
+			if let Some((until, _)) = <Blacklist<T>>::get(id) {
 				ensure!(
 					<frame_system::Pallet<T>>::block_number() >= until,
 					Error::<T>::ProposalBlacklisted,
@@ -824,7 +824,7 @@ pub mod pallet {
 
 			let status = Self::referendum_status(ref_index)?;
 			let id = status.proposal_id;
-			ensure!(!<Cancellations<T>>::contains_key(&id), Error::<T>::AlreadyCanceled);
+			ensure!(!<Cancellations<T>>::contains_key(id), Error::<T>::AlreadyCanceled);
 
 			<Cancellations<T>>::insert(id, true);
 			Self::internal_cancel_referendum(ref_index);
@@ -850,7 +850,7 @@ pub mod pallet {
 			T::ExternalOrigin::ensure_origin(origin)?;
 			ensure!(!<NextExternal<T>>::exists(), Error::<T>::DuplicateProposal);
 			let id = ProposalId { hash: proposal_hash, asset_id };
-			if let Some((until, _)) = <Blacklist<T>>::get(&id) {
+			if let Some((until, _)) = <Blacklist<T>>::get(id) {
 				ensure!(
 					<frame_system::Pallet<T>>::block_number() >= until,
 					Error::<T>::ProposalBlacklisted,
@@ -990,13 +990,13 @@ pub mod pallet {
 			}
 
 			let mut existing_vetoers =
-				<Blacklist<T>>::get(&id).map(|pair| pair.1).unwrap_or_else(Vec::new);
+				<Blacklist<T>>::get(id).map(|pair| pair.1).unwrap_or_else(Vec::new);
 			let insert_position =
 				existing_vetoers.binary_search(&who).err().ok_or(Error::<T>::AlreadyVetoed)?;
 
 			existing_vetoers.insert(insert_position, who.clone());
 			let until = <frame_system::Pallet<T>>::block_number() + T::CooloffPeriod::get();
-			<Blacklist<T>>::insert(&id, (until, existing_vetoers));
+			<Blacklist<T>>::insert(id, (until, existing_vetoers));
 
 			Self::deposit_event(Event::<T>::Vetoed(who, proposal_hash, until));
 			<NextExternal<T>>::kill();
@@ -1221,7 +1221,7 @@ pub mod pallet {
 				Error::<T>::WrongUpperBound,
 			);
 
-			let (provider, deposit, since, expiry) = <Preimages<T>>::get(&id)
+			let (provider, deposit, since, expiry) = <Preimages<T>>::get(id)
 				.and_then(|m| match m {
 					PreimageStatus::Available { provider, deposit, since, expiry, .. } =>
 						Some((provider, deposit, since, expiry)),
@@ -1237,7 +1237,7 @@ pub mod pallet {
 
 			let res = T::NativeCurrency::transfer_held(&provider, &who, deposit, false, false);
 			debug_assert!(res.is_ok());
-			<Preimages<T>>::remove(&id);
+			<Preimages<T>>::remove(id);
 			Self::deposit_event(Event::<T>::PreimageReaped(id.hash, provider, deposit, who));
 			Ok(())
 		}
@@ -1372,7 +1372,7 @@ pub mod pallet {
 
 			// Insert the proposal into the blacklist.
 			let permanent = (T::BlockNumber::max_value(), Vec::<T::AccountId>::new());
-			Blacklist::<T>::insert(&id, permanent);
+			Blacklist::<T>::insert(id, permanent);
 
 			// Remove the queued proposal, if it's there.
 			PublicProps::<T>::try_mutate(|props| -> DispatchResult {
@@ -1863,7 +1863,7 @@ impl<T: Config> Pallet<T> {
 		proposal_id: ProposalId<T::Hash, T::AssetId>,
 		index: ReferendumIndex,
 	) -> DispatchResult {
-		let preimage = <Preimages<T>>::take(&proposal_id);
+		let preimage = <Preimages<T>>::take(proposal_id);
 		if let Some(PreimageStatus::Available { data, provider, deposit, .. }) = preimage {
 			if let Ok(proposal) = T::Proposal::decode(&mut &data[..]) {
 				let err_amount = T::NativeCurrency::release(&provider, deposit, true)?;
@@ -1910,7 +1910,7 @@ impl<T: Config> Pallet<T> {
 			} else {
 				let when = now + status.delay;
 				// Note that we need the preimage now.
-				Preimages::<T>::mutate_exists(&status.proposal_id, |maybe_pre| match *maybe_pre {
+				Preimages::<T>::mutate_exists(status.proposal_id, |maybe_pre| match *maybe_pre {
 					Some(PreimageStatus::Available { ref mut expiry, .. }) => *expiry = Some(when),
 					ref mut a => *a = Some(PreimageStatus::Missing(when)),
 				});
@@ -2079,7 +2079,7 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		let proposal_hash = T::Hashing::hash(&encoded_proposal[..]);
 		let id = ProposalId { hash: proposal_hash, asset_id };
-		ensure!(!<Preimages<T>>::contains_key(&id), Error::<T>::DuplicatePreimage);
+		ensure!(!<Preimages<T>>::contains_key(id), Error::<T>::DuplicatePreimage);
 
 		let deposit = <BalanceOf<T>>::from(encoded_proposal.len() as u32)
 			.saturating_mul(T::PreimageByteDeposit::get());
@@ -2108,7 +2108,7 @@ impl<T: Config> Pallet<T> {
 		let proposal_hash = T::Hashing::hash(&encoded_proposal[..]);
 		let id = ProposalId { hash: proposal_hash, asset_id };
 		Self::check_pre_image_is_missing(&id)?;
-		let status = Preimages::<T>::get(&id).ok_or(Error::<T>::NotImminent)?;
+		let status = Preimages::<T>::get(id).ok_or(Error::<T>::NotImminent)?;
 		let expiry = status.to_missing_expiry().ok_or(Error::<T>::DuplicatePreimage)?;
 
 		let now = <frame_system::Pallet<T>>::block_number();

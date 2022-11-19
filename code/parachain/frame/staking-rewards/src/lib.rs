@@ -14,7 +14,6 @@
 #![deny(
 	bad_style,
 	bare_trait_objects,
-	const_err,
 	improper_ctypes,
 	non_shorthand_field_patterns,
 	no_mangle_generic_items,
@@ -1194,7 +1193,7 @@ pub mod pallet {
 				},
 			)?;
 
-			Stakes::<T>::insert(&fnft_collection_id, &new_fnft_instance_id, &new_position);
+			Stakes::<T>::insert(fnft_collection_id, new_fnft_instance_id, new_position);
 
 			Ok((*fnft_collection_id, new_fnft_instance_id))
 		}
