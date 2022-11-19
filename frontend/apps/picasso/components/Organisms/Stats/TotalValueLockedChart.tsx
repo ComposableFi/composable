@@ -3,6 +3,7 @@ import {
   formatNumber,
   getRange,
   head,
+  humanBalance,
   PRESET_RANGE,
   PresetRange,
   tail,
@@ -31,6 +32,7 @@ export const TotalValueLockedChart: FC = () => {
         dateTo,
         dateFrom,
       },
+      pollInterval: 60_000, // Every minute
     }
   );
   const chartSeries: [number, number][] = useMemo(() => {
@@ -53,7 +55,7 @@ export const TotalValueLockedChart: FC = () => {
       const percentageDifference =
         ((firstValue - lastValue) / firstValue) * 100;
       return {
-        value: percentageDifference.toFixed(2) + "%",
+        value: humanBalance(Math.abs(percentageDifference).toFixed(2)) + "%",
         color:
           firstValue > lastValue
             ? theme.palette.error.main

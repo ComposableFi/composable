@@ -19,8 +19,8 @@ installation instructions](https://nixos.org/download.html).
 :::danger
 **We do not provide any official support for macOS. You are expected to run
 Linux if you work at Composable. If you really want to use a Mac, then you are
-responsible for managing your own Linux VM. You can look at [my nixos-config]
-(https://github.com/cor/nixos-config), where I provide instructions on how to
+responsible for managing your own Linux VM. You can look at [my nixos-config](https://github.com/cor/nixos-config), 
+where I provide instructions on how to
 set up a NixOS VM on an M1 Mac. There is no guarantee that these instructions
 will remain up-to-date**
 :::

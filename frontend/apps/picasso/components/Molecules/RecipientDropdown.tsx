@@ -36,7 +36,7 @@ const detailsStyle = {
 export type RecipientDropDownProps = {
   value: string;
   expanded: boolean;
-  options: Array<{ value: string, label: string, icon: string }>;
+  options: Array<{ value: string; label: string; icon: string }>;
   setValue?: React.Dispatch<React.SetStateAction<any>>;
 };
 
@@ -68,6 +68,7 @@ export const RecipientDropdown: React.FC<RecipientDropDownProps> = ({
       </AccordionSummary>
       <AccordionDetails sx={detailsStyle}>
         <Select
+          displayEmpty
           value={value}
           searchable={true}
           centeredLabel={true}

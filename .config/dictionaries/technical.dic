@@ -32,6 +32,7 @@
 # these should probably be replaced with stakes and bonds respectively
 # various keywords
 # various rust methods and types
+
 0xsequence
 1ubrf2y
 5C4hrfjw
@@ -75,7 +76,9 @@ bitfields
 bitvec
 bob
 bootnodes
+brif
 browserconfig
+brtable
 bufferutil
 buildpackage
 buildx
@@ -103,13 +106,18 @@ coreutils
 cosm
 Cosmoverse
 crev # cargo-crev
-dalek
 crowdloaning
+currentmemory
+DACP
+dalek
 deadnix
 devcontainers
 devel
 dhms # day hour minute second
 dispatchables
+divn
+divs
+divu
 dockerfile
 dotgraphs
 drawio
@@ -120,6 +128,7 @@ endef
 enduml
 endwhile
 ensdomains
+extendsi
 ferdie
 fgrep
 findutils
@@ -131,6 +140,8 @@ freetype
 fsevenm
 FSIZE
 fslot
+getglobal
+getlocal
 getrandom
 giga
 GITREPO
@@ -140,6 +151,7 @@ gnumake
 gpgsign
 graphviz
 grep
+growmemory
 gsutil
 hadolint
 hasher
@@ -187,6 +199,7 @@ lightclients
 llvm
 localstorage
 loglevel
+lparachain
 lppicapbloother
 mdbook
 MEMLOCK
@@ -211,18 +224,20 @@ newlength
 nextjs
 NFTID
 nixfmt
+nixified
+nixify
 nixops
 nixos
 nixpkgs
-nixify
-nixified
 nocapture
 nocompile
 noconfirm
 nodedir
+nodev
 NOFILE
 nomiclabs
 NOPASSWD
+nosuid
 notistack
 npmjs
 npos
@@ -231,14 +246,15 @@ nrwl
 numtide
 offboarded
 offences
-on_unbalanceds
 oneliner
 oneof
 oneshot
+on_unbalanceds
 opentype
 OPTARG
 oraclesetup # script of package.json
 oraclestake
+Origin
 oxalica # github username
 pacman
 pandoc
@@ -252,7 +268,6 @@ peerset
 penwidth
 perbill
 permill
-
 permissionlessly
 perquintill
 perthing
@@ -264,6 +279,9 @@ pkgs
 plantuml
 Pointable
 polkalaunch
+polkassembly
+popcnt
+Popcnt
 popout
 postinfo
 powd
@@ -280,6 +298,7 @@ proptest
 proptests
 Proofwith
 prost
+protobufs
 protoc
 PROTOC
 PTRACE
@@ -299,9 +318,12 @@ rewardaccumulationhook
 rewardtrackerstore
 ripemd
 rlib
+rngs
 rnix
 rocksdb
 ROCKSDB
+rotr
+Rotr
 rpath
 rustc
 RUSTC
@@ -309,6 +331,7 @@ RUSTFLAGS
 rustfmt
 RUSTSEC # RUSTSEC-XXXX-XXXX is id of RustSec Advisory Database
 rustup
+safu
 sccache
 schemars
 scrollbox
@@ -317,12 +340,16 @@ searchresults
 seccomp
 sectnumlevels
 sectnums
+Seedable
 serayuzgur
 serie
 serokell
 setaf
 sharded
+setglobal
+setlocal
 shortkey
+shrs
 skinparam
 Sighash
 smallvec
@@ -356,10 +383,12 @@ svgr
 sysinfo
 tamasfe
 taplo
+teelocal
 tendermint
 TentangNanti
 termcolor
 thiserror
+tmpfs
 toc
 toclevels
 tokenvalue
@@ -395,6 +424,7 @@ USDCUSDT
 usermod
 vadimcn
 Varint
+# various rust methods and types
 vsicons
 wasmd
 wasmi
@@ -406,8 +436,10 @@ websocket
 websockets
 whereis
 WORKDIR
+wrapi
 wscat
 xaxis
+XCVM
 xorriso
 xorshift # rand_xorshift
 xpablo
@@ -420,6 +452,8 @@ zstd
 zustand
 DACP
 Origin
+OSMO
+Prefixer
 protobufs
 protos
 divn

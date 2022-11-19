@@ -1,5 +1,5 @@
-module.exports = class Data1667390540374 {
-  name = 'Data1667390540374'
+module.exports = class Data1668704166793 {
+  name = 'Data1668704166793'
 
   async up(db) {
     await db.query(`CREATE TABLE "account" ("id" character varying NOT NULL, "event_id" text NOT NULL, CONSTRAINT "PK_54115ee388cdb6d86bb4bf5b2ea" PRIMARY KEY ("id"))`)
@@ -41,6 +41,9 @@ module.exports = class Data1667390540374 {
     await db.query(`CREATE INDEX "IDX_e16f52796ccae0d99cb8d6e404" ON "historical_locked_value" ("event_id") `)
     await db.query(`CREATE TABLE "historical_volume" ("id" character varying NOT NULL, "amount" numeric NOT NULL, "currency" character varying(3) NOT NULL, "timestamp" numeric NOT NULL, "asset_id" text NOT NULL, "event_id" character varying, CONSTRAINT "PK_7f5775a1b43be10057e93cad992" PRIMARY KEY ("id"))`)
     await db.query(`CREATE INDEX "IDX_eceb392fe7bbe48cb21e1d8b5a" ON "historical_volume" ("event_id") `)
+    await db.query(`CREATE TABLE "current_locked_value" ("id" character varying NOT NULL, "asset_id" text NOT NULL, "amount" numeric NOT NULL, "source" character varying(16) NOT NULL, "event_id" character varying, CONSTRAINT "PK_42f4240de672201fc4df1cf3d7b" PRIMARY KEY ("id"))`)
+    await db.query(`CREATE INDEX "IDX_0c07e602cb4227de7ec82ff33a" ON "current_locked_value" ("event_id") `)
+    await db.query(`CREATE UNIQUE INDEX "IDX_db4dedc6da2eb4a95fafe42ce0" ON "current_locked_value" ("asset_id", "source") `)
     await db.query(`ALTER TABLE "pablo_pool_asset" ADD CONSTRAINT "FK_7fd4cdb45620476d1de745a2658" FOREIGN KEY ("pool_id") REFERENCES "pablo_pool"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
     await db.query(`ALTER TABLE "activity" ADD CONSTRAINT "FK_c2c1e9fdda754a6bf7f664d7e04" FOREIGN KEY ("event_id") REFERENCES "event"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
     await db.query(`ALTER TABLE "pablo_transaction" ADD CONSTRAINT "FK_0118a010cf1571fc5cb70b90a73" FOREIGN KEY ("event_id") REFERENCES "event"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
@@ -49,6 +52,7 @@ module.exports = class Data1667390540374 {
     await db.query(`ALTER TABLE "staking_position" ADD CONSTRAINT "FK_3e2e1b465d89dbb2736e70fe5f1" FOREIGN KEY ("event_id") REFERENCES "event"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
     await db.query(`ALTER TABLE "historical_locked_value" ADD CONSTRAINT "FK_e16f52796ccae0d99cb8d6e4040" FOREIGN KEY ("event_id") REFERENCES "event"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
     await db.query(`ALTER TABLE "historical_volume" ADD CONSTRAINT "FK_eceb392fe7bbe48cb21e1d8b5a5" FOREIGN KEY ("event_id") REFERENCES "event"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
+    await db.query(`ALTER TABLE "current_locked_value" ADD CONSTRAINT "FK_0c07e602cb4227de7ec82ff33a7" FOREIGN KEY ("event_id") REFERENCES "event"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
   }
 
   async down(db) {
@@ -91,6 +95,9 @@ module.exports = class Data1667390540374 {
     await db.query(`DROP INDEX "public"."IDX_e16f52796ccae0d99cb8d6e404"`)
     await db.query(`DROP TABLE "historical_volume"`)
     await db.query(`DROP INDEX "public"."IDX_eceb392fe7bbe48cb21e1d8b5a"`)
+    await db.query(`DROP TABLE "current_locked_value"`)
+    await db.query(`DROP INDEX "public"."IDX_0c07e602cb4227de7ec82ff33a"`)
+    await db.query(`DROP INDEX "public"."IDX_db4dedc6da2eb4a95fafe42ce0"`)
     await db.query(`ALTER TABLE "pablo_pool_asset" DROP CONSTRAINT "FK_7fd4cdb45620476d1de745a2658"`)
     await db.query(`ALTER TABLE "activity" DROP CONSTRAINT "FK_c2c1e9fdda754a6bf7f664d7e04"`)
     await db.query(`ALTER TABLE "pablo_transaction" DROP CONSTRAINT "FK_0118a010cf1571fc5cb70b90a73"`)
@@ -99,5 +106,6 @@ module.exports = class Data1667390540374 {
     await db.query(`ALTER TABLE "staking_position" DROP CONSTRAINT "FK_3e2e1b465d89dbb2736e70fe5f1"`)
     await db.query(`ALTER TABLE "historical_locked_value" DROP CONSTRAINT "FK_e16f52796ccae0d99cb8d6e4040"`)
     await db.query(`ALTER TABLE "historical_volume" DROP CONSTRAINT "FK_eceb392fe7bbe48cb21e1d8b5a5"`)
+    await db.query(`ALTER TABLE "current_locked_value" DROP CONSTRAINT "FK_0c07e602cb4227de7ec82ff33a7"`)
   }
 }

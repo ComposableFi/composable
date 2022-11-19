@@ -15,6 +15,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::topology;
 use xcm::latest::prelude::*;
+
 /// Trait used to write generalized code over well know currencies
 /// We use const to allow for match on these
 /// Allows to have reuse of code amids runtime and cross relay transfers in future.
@@ -124,13 +125,15 @@ macro_rules! list_assets {
 			XCM_ASSETS.get(&remote_id.encode()).map(|x| *x)
 		}
 
-		pub fn list_assets() -> Vec<Asset<XcmAssetLocation>> {
+		pub fn list_assets() -> Vec<Asset<u128, XcmAssetLocation>> {
 			[
 				$(Asset {
 					id: CurrencyId::$NAME.0 as u128,
 					name: Some(stringify!($NAME).as_bytes().to_vec()),
-					decimals: 12_u8.into(),
-					foreign_id: Self::local_to_xcm_reserve(CurrencyId::$NAME).map(XcmAssetLocation::new)
+					ratio: None,
+					decimals: Self::decimals(),
+					foreign_id: Self::local_to_xcm_reserve(CurrencyId::$NAME).map(XcmAssetLocation::new),
+					existential_deposit: 0_u128,
 				},)*
 			]
 			.to_vec()

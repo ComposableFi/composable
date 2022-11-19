@@ -36,7 +36,9 @@ export default {
       name: "Vec<u8>",
       id: "u128",
       decimals: "u32",
-      foreignId: "Option<XcmV1MultiLocation>"
+      ratio: "Option<ComposableTraitsCurrencyRational64>",
+      foreignId: "Option<XcmV1MultiLocation>",
+      existentialDeposit: "CustomRpcBalance",
     }
   }
 };

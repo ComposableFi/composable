@@ -92,12 +92,12 @@ const RoutesConfig: ConfigType[] = [
     ),
   },
   {
-    label: "Pablo Exchange",
-    path: "/pablo-exchange",
+    label: "Pablo",
+    path: "",
     icon: dynamic(() => import("@mui/icons-material/Autorenew")),
     status: "inactive",
     endAdornment: (
-      <Link href="@/components/Molecules/NavBar#" passHref>
+      <Link href="#" passHref>
         <IconButton>
           <OpenInNew />
         </IconButton>
@@ -131,7 +131,7 @@ const NavItem: FC<NavItemProps> = ({ router, config, theme, isSubItem }) => {
       <ListItemIcon
         sx={{
           color: config?.matches?.includes(router.pathname)
-            ? theme.palette.primary.main
+            ? theme.palette.primary.light
             : undefined,
         }}
       >
@@ -147,7 +147,7 @@ const NavItem: FC<NavItemProps> = ({ router, config, theme, isSubItem }) => {
   );
 };
 
-export const NavBar: React.FC = () => {
+export const NavBar: FC = () => {
   const theme = useTheme();
   const router = useRouter();
   return (

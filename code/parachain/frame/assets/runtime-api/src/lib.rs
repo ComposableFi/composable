@@ -20,6 +20,6 @@ sp_api::decl_runtime_apis! {
 	{
 		fn balance_of(asset_id: SafeRpcWrapper<AssetId>, account_id: AccountId) -> SafeRpcWrapper<Balance>;
 
-		fn list_assets() -> Vec<Asset<ForeignAssetId>>;
+		fn list_assets() -> Vec<Asset<Balance, ForeignAssetId>>;
 	}
 }

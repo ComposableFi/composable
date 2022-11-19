@@ -5,7 +5,7 @@
 // this is required to allow for ambient/previous definitions
 import '@polkadot/api-base/types/consts';
 
-import type { FrameSupportPalletId, FrameSupportWeightsRuntimeDbWeight, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, SpVersionRuntimeVersion, XcmV1MultiLocation } from '@composable/types/interfaces/crowdloanRewards';
+import type { FrameSupportPalletId, FrameSupportWeightsRuntimeDbWeight, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, PalletCosmwasmInstrumentCostRules, SpVersionRuntimeVersion, XcmV1MultiLocation } from '@composable/types/interfaces/crowdloanRewards';
 import type { ApiTypes, AugmentedConst } from '@polkadot/api-base/types';
 import type { Bytes, Option, Text, U8aFixed, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { Codec } from '@polkadot/types-codec/types';
@@ -165,6 +165,7 @@ declare module '@polkadot/api-base/types/consts' {
        * Pallet unique ID.
        **/
       palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
+      wasmCostRules: PalletCosmwasmInstrumentCostRules & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/
@@ -299,16 +300,6 @@ declare module '@polkadot/api-base/types/consts' {
     };
     fnft: {
       palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
-      /**
-       * Generic const
-       **/
-      [key: string]: Codec;
-    };
-    ibc: {
-      /**
-       * Expected blocktime
-       **/
-      expectedBlockTime: u64 & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/
@@ -650,13 +641,6 @@ declare module '@polkadot/api-base/types/consts' {
        * transactions.
        **/
       operationalFeeMultiplier: u8 & AugmentedConst<ApiType>;
-      /**
-       * Generic const
-       **/
-      [key: string]: Codec;
-    };
-    transfer: {
-      palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/

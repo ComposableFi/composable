@@ -1,3 +1,5 @@
+#![recursion_limit = "256"]
+#![feature(sync_unsafe_cell)]
 #![feature(generic_associated_types)]
 #![cfg_attr(
 	not(test),
@@ -62,7 +64,7 @@ pub mod pallet {
 	const SUBSTRATE_ECDSA_SIGNATURE_LEN: usize = 65;
 	use crate::{
 		entrypoint::*,
-		instrument::{gas_and_stack_instrumentation, INSTRUMENTATION_VERSION},
+		instrument::{gas_and_stack_instrumentation, CostRules, INSTRUMENTATION_VERSION},
 		runtimes::{
 			abstraction::{CanonicalCosmwasmAccount, CosmwasmAccount, Gas, VMPallet},
 			wasmi::{
@@ -114,7 +116,6 @@ pub mod pallet {
 	use sp_core::{crypto::UncheckedFrom, ecdsa, ed25519};
 	use sp_runtime::traits::{Convert, Hash, MaybeDisplay, SaturatedConversion};
 	use sp_std::vec::Vec;
-	use wasm_instrument::gas_metering::ConstantCostRules;
 
 	pub(crate) type KeepAlive = bool;
 	pub(crate) type FundsOf<T> =
@@ -318,6 +319,9 @@ pub mod pallet {
 		/// Price of extracting a byte from the storage.
 		#[pallet::constant]
 		type ContractStorageByteReadPrice: Get<u32>;
+
+		#[pallet::constant]
+		type WasmCostRules: Get<CostRules<Self>>;
 
 		/// A way to convert from our native account to cosmwasm `Addr`.
 		type AccountToAddr: Convert<AccountIdOf<Self>, String>
@@ -874,10 +878,7 @@ pub mod pallet {
 				module,
 				Version::<T>::ENV_MODULE,
 				T::CodeStackLimit::get(),
-				// TODO(hussein-aitlahcen): this constant cost rules can't be used in production
-				// and must be benchmarked we can reuse contracts pallet cost rules for now as
-				// well.
-				&ConstantCostRules::new(0, 0),
+				&T::WasmCostRules::get(),
 			);
 			instrumented_module
 				.map_err(|e| {
@@ -1324,15 +1325,36 @@ pub mod pallet {
 				return false
 			}
 
+			// Each batch verification process is started with `start_batch_verify` and ended with
+			// `finish_batch_verify`. When it is started, it needs to be properly finished. But this
+			// means `finish_batch_verify` will verify the previously pushed verification tasks. We
+			// converted all the public keys and signatures in-front not to unnecessarily verify
+			// previously pushed signatures. (Note that there is no function to ditch the batch
+			// verification early without doing any verification)
+			let mut verify_items = Vec::with_capacity(messages.len());
 			for ((message, signature), public_key) in
 				messages.iter().zip(signatures.iter()).zip(public_keys.iter())
 			{
-				if !(Pallet::<T>::do_ed25519_verify(message, signature, public_key)) {
+				match ((*signature).try_into(), (*public_key).try_into()) {
+					(Ok(signature), Ok(public_key)) =>
+						verify_items.push((signature, message, public_key)),
+					_ => return false,
+				}
+			}
+
+			sp_io::crypto::start_batch_verify();
+
+			for (signature, message, public_key) in verify_items {
+				// This is very unlikely to fail. Because this only fails if the verification task
+				// cannot be spawned internally. Note that the actual verification is only done when
+				// `finish_batch_verify` is called.
+				if !sp_io::crypto::ed25519_batch_verify(&signature, message, &public_key) {
+					let _ = sp_io::crypto::finish_batch_verify();
 					return false
 				}
 			}
 
-			true
+			sp_io::crypto::finish_batch_verify()
 		}
 
 		pub(crate) fn do_ed25519_verify(

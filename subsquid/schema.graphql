@@ -180,6 +180,14 @@ type PabloTransaction @entity {
   fee: String!
 }
 
+type CurrentLockedValue @entity @index(fields: ["assetId", "source"], unique: true) {
+  id: ID!
+  assetId: String! @index
+  event: Event! @index
+  amount: BigInt!
+  source: LockedSource!
+}
+
 enum EventType {
   ADD_LIQUIDITY,
   REMOVE_LIQUIDITY,
