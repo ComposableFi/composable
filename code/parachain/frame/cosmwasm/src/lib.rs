@@ -1,6 +1,5 @@
 #![recursion_limit = "256"]
 #![feature(sync_unsafe_cell)]
-#![feature(generic_associated_types)]
 #![cfg_attr(
 	not(test),
 	deny(
@@ -18,7 +17,6 @@
 #![deny(
 	bad_style,
 	bare_trait_objects,
-	const_err,
 	improper_ctypes,
 	non_shorthand_field_patterns,
 	no_mangle_generic_items,
@@ -523,7 +521,7 @@ pub mod pallet {
 			let new_code_id = match new_code_identifier {
 				CodeIdentifier::CodeId(code_id) => code_id,
 				CodeIdentifier::CodeHash(code_hash) =>
-					CodeHashToId::<T>::try_get(&code_hash).map_err(|_| Error::<T>::CodeNotFound)?,
+					CodeHashToId::<T>::try_get(code_hash).map_err(|_| Error::<T>::CodeNotFound)?,
 			};
 			let outcome = EntryPointCaller::<MigrateInput>::setup(who, contract, new_code_id)?
 				.call(&mut shared, Default::default(), message);
@@ -906,7 +904,7 @@ pub mod pallet {
 					let code = PristineCode::<T>::get(code_id).ok_or(Error::<T>::CodeNotFound)?;
 					let module = Self::do_load_module(&code)?;
 					let instrumented_code = Self::do_instrument_code(module)?;
-					InstrumentedCode::<T>::insert(&code_id, instrumented_code);
+					InstrumentedCode::<T>::insert(code_id, instrumented_code);
 					code_info.instrumentation_version = INSTRUMENTATION_VERSION;
 				} else {
 					log::debug!(target: "runtime::contracts", "do_check_for_reinstrumentation: not required");
@@ -918,7 +916,7 @@ pub mod pallet {
 		pub(crate) fn do_load_module(
 			code: &ContractCodeOf<T>,
 		) -> Result<parity_wasm::elements::Module, Error<T>> {
-			parity_wasm::elements::Module::from_bytes(&code).map_err(|e| {
+			parity_wasm::elements::Module::from_bytes(code).map_err(|e| {
 				log::debug!(target: "runtime::contracts", "do_load_module: {:#?}", e);
 				Error::<T>::CodeDecoding
 			})
@@ -1045,7 +1043,7 @@ pub mod pallet {
 				host_functions_by_index: host_functions_definitions
 					.0
 					.into_iter()
-					.flat_map(|(_, modules)| modules.into_iter().map(|(_, function)| function))
+					.flat_map(|(_, modules)| modules.into_values())
 					.collect(),
 				executing_module: module,
 				cosmwasm_env: env,
@@ -1434,8 +1432,7 @@ pub mod pallet {
 		) -> Result<ContractInfoResponse, CosmwasmVMError<T>> {
 			// TODO: cache or at least check if its current contract and use `self.contract_info`
 			let info = Pallet::<T>::contract_info(&address)?;
-			let code_info =
-				CodeIdToInfo::<T>::get(&info.code_id).ok_or(Error::<T>::CodeNotFound)?;
+			let code_info = CodeIdToInfo::<T>::get(info.code_id).ok_or(Error::<T>::CodeNotFound)?;
 			let ibc_port = if code_info.ibc_capable {
 				Some(Pallet::<T>::do_compute_ibc_contract_port(address))
 			} else {

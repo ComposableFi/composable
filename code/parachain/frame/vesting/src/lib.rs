@@ -308,7 +308,7 @@ pub mod module {
 		/// - `vesting_schedule_ids`: The ids of the vesting schedules to be claimed
 		///
 		/// Emits `Claimed`.
-		#[pallet::weight(<T as Config>::WeightInfo::claim((<T as Config>::MaxVestingSchedules::get() / 2) as u32))]
+		#[pallet::weight(<T as Config>::WeightInfo::claim(<T as Config>::MaxVestingSchedules::get() / 2))]
 		pub fn claim(
 			origin: OriginFor<T>,
 			asset: AssetIdOf<T>,
@@ -386,7 +386,7 @@ pub mod module {
 		/// - `vesting_schedule_ids`: The ids of the vesting schedules to be claimed.
 		///
 		/// Emits `Claimed`.
-		#[pallet::weight(<T as Config>::WeightInfo::claim((<T as Config>::MaxVestingSchedules::get() / 2) as u32))]
+		#[pallet::weight(<T as Config>::WeightInfo::claim(<T as Config>::MaxVestingSchedules::get() / 2))]
 		pub fn claim_for(
 			origin: OriginFor<T>,
 			dest: <T::Lookup as StaticLookup>::Source,
