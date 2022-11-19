@@ -150,7 +150,11 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		out_asset_id: T::AssetId,
 		apply_fees: bool,
 	) -> Result<
-		(AssetAmount<T::AssetId, T::Balance>, AssetAmount<T::AssetId, T::Balance>),
+		(
+			AssetAmount<T::AssetId, T::Balance>,
+			AssetAmount<T::AssetId, T::Balance>,
+			Fee<T::AssetId, T::Balance>,
+		),
 		DispatchError,
 	> {
 		let pool_assets = Self::get_pool_balances(pool, pool_account);
@@ -161,10 +165,16 @@ impl<T: Config> DualAssetConstantProduct<T> {
 
 		let amm_pair = compute_out_given_in_new::<_>(*w_i, *w_o, *b_i, *b_o, a_sent, fee)?;
 
-		let value = AssetAmount::new(out_asset_id, T::Convert::convert(amm_pair.value));
-		let fee = AssetAmount::new(in_asset.asset_id, T::Convert::convert(amm_pair.fee));
+		let a_out = AssetAmount::new(out_asset_id, T::Convert::convert(amm_pair.value));
+		let a_sent = AssetAmount::new(
+			in_asset.asset_id,
+			in_asset.amount.safe_sub(&T::Convert::convert(amm_pair.fee))?,
+		);
+		let fee = pool
+			.fee_config
+			.calculate_fees(in_asset.asset_id, T::Convert::convert(amm_pair.fee));
 
-		Ok((value, fee))
+		Ok((a_out, a_sent, fee))
 	}
 
 	pub(crate) fn do_buy(

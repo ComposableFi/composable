@@ -992,15 +992,20 @@ pub mod pallet {
 			let pool_account = Self::account_id(&pool_id);
 			match pool {
 				PoolConfiguration::DualAssetConstantProduct(info) => {
-					let (value, fee) = DualAssetConstantProduct::<T>::get_exchange_value(
-						&info,
-						&pool_account,
-						in_asset_amount,
-						out_asset_id,
-						true,
-					)?;
+					let (amount_out, amount_in, fee) =
+						DualAssetConstantProduct::<T>::get_exchange_value(
+							&info,
+							&pool_account,
+							in_asset_amount,
+							out_asset_id,
+							true,
+						)?;
 
-					Ok(SwapResult { value, fee })
+					Ok(SwapResult {
+						value: amount_out,
+						// fee = initial_amount - post_fee_amount
+						fee: AssetAmount::new(amount_in.asset_id, fee.fee),
+					})
 				},
 			}
 		}
@@ -1081,17 +1086,23 @@ pub mod pallet {
 		) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
-			let (swap_result, fee, owner) = match pool {
+			let (amount_out, amount_in, fee, owner) = match pool {
 				PoolConfiguration::DualAssetConstantProduct(info) => {
-					let swap_result = Self::spot_price(pool_id, in_asset, min_receive.asset_id)?;
+					let (amount_out, amount_in, fee) =
+						DualAssetConstantProduct::<T>::get_exchange_value(
+							&info,
+							&pool_account,
+							in_asset,
+							min_receive.asset_id,
+							true,
+						)?;
 
 					ensure!(
-						swap_result.value.amount >= min_receive.amount,
+						amount_out.amount >= min_receive.amount,
 						Error::<T>::CannotRespectMinimumRequested
 					);
 					ensure!(
-						T::Assets::balance(min_receive.asset_id, &pool_account) >
-							swap_result.value.amount,
+						T::Assets::balance(amount_out.asset_id, &pool_account) > amount_out.amount,
 						Error::<T>::NotEnoughLiquidity
 					);
 
@@ -1100,27 +1111,19 @@ pub mod pallet {
 						in_asset.asset_id,
 						who,
 						&pool_account,
-						// NOTE: This needs better handling if we're to conditionally apply fees.
-						// One option is to return the correct amount to transfer to the pool from
-						// `spot_price`.
-						in_asset.amount.safe_sub(&swap_result.fee.amount)?,
+						amount_in.amount,
 						keep_alive,
 					)?;
 					// Transfer swapped value to user
 					T::Assets::transfer(
-						min_receive.asset_id,
+						amount_out.asset_id,
 						&pool_account,
 						who,
-						swap_result.value.amount,
+						amount_out.amount,
 						false,
 					)?;
 
-					(
-						swap_result,
-						info.fee_config
-							.calculate_fees(swap_result.fee.asset_id, swap_result.fee.amount),
-						info.owner,
-					)
+					(amount_out, amount_in, fee, info.owner)
 				},
 			};
 			Self::disburse_fees(who, &pool_id, &owner, &fee)?;
@@ -1128,13 +1131,18 @@ pub mod pallet {
 			Self::deposit_event(Event::<T>::Swapped {
 				pool_id,
 				who: who.clone(),
-				base_asset: min_receive.asset_id,
-				quote_asset: in_asset.asset_id,
-				base_amount: swap_result.value.amount,
-				quote_amount: in_asset.amount,
+				base_asset: amount_out.asset_id,
+				quote_asset: amount_in.asset_id,
+				base_amount: amount_out.amount,
+				quote_amount: amount_in.amount,
 				fee,
 			});
-			Ok(swap_result)
+
+			Ok(SwapResult {
+				value: amount_out,
+				// fee = initial_amount - post_fee_amount
+				fee: AssetAmount::new(amount_in.asset_id, fee.fee),
+			})
 		}
 
 		#[transactional]
