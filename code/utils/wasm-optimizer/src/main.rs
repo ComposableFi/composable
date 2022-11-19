@@ -15,14 +15,13 @@ pub struct Opts {
 
 fn main() {
 	let opts = Opts::parse();
-	compact_wasm_file(&Path::new(&opts.input), &Path::new(&opts.output));
+	compact_wasm_file(Path::new(&opts.input), Path::new(&opts.output));
 }
 
 /// Compact the WASM binary using `wasm-gc` and compress it using zstd.
 fn compact_wasm_file(input: &Path, output: &Path) {
-	wasm_gc::garbage_collect_file(&input, &output)
-		.expect("Failed to compact generated WASM binary.");
-	compress_wasm(&output, &output);
+	wasm_gc::garbage_collect_file(input, output).expect("Failed to compact generated WASM binary.");
+	compress_wasm(output, output);
 }
 
 fn compress_wasm(input: &Path, output: &Path) {

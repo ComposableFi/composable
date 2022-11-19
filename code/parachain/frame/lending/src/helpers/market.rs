@@ -105,7 +105,7 @@ impl<T: Config> Pallet<T> {
 		>,
 	) -> Result<(), DispatchError> {
 		let input = input.value();
-		Markets::<T>::mutate(&market_id, |market| {
+		Markets::<T>::mutate(market_id, |market| {
 			if let Some(market) = market {
 				ensure!(manager == market.manager, Error::<T>::Unauthorized);
 

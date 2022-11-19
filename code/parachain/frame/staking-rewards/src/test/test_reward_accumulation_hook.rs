@@ -54,7 +54,7 @@ fn test_reward_update_calculation() {
 			(4, PICA::units(48)),
 		];
 
-		let mut reward = RewardPools::<Test>::get(&PICA::ID)
+		let mut reward = RewardPools::<Test>::get(PICA::ID)
 			.unwrap()
 			.rewards
 			.get(&PICA::ID)
@@ -889,7 +889,7 @@ fn check_events(expected_events: impl IntoIterator<Item = crate::Event<Test>>) {
 		if let Event::StakingRewards(staking_event) = record.event {
 			let idx = expected_events
 				.iter()
-				.position(|e| e.eq(&&staking_event))
+				.position(|e| e.eq(&staking_event))
 				.expect(&format!("unexpected event: {staking_event:#?}"));
 
 			expected_events.remove(idx);
@@ -927,9 +927,9 @@ block:   {block}"#
 pub(crate) fn check_rewards(expected: &[CheckRewards<'_>]) {
 	let mut all_rewards = RewardPools::<Test>::iter().collect::<BTreeMap<_, _>>();
 
-	for CheckRewards { owner, pool_asset_id, pool_rewards } in expected.into_iter() {
+	for CheckRewards { owner, pool_asset_id, pool_rewards } in expected.iter() {
 		let mut pool = all_rewards
-			.remove(&pool_asset_id)
+			.remove(pool_asset_id)
 			.expect(&format!("pool {pool_asset_id} not present in RewardPools"));
 
 		assert_eq!(pool.owner, *owner, "error at pool {pool_asset_id}");
@@ -950,7 +950,7 @@ pub(crate) fn check_rewards(expected: &[CheckRewards<'_>]) {
 			let actual_unlocked_balance =
 				balance(*reward_asset_id, &pool_account) - actual_locked_balance;
 
-			let reward = pool.rewards.remove(&reward_asset_id).expect(&format!(
+			let reward = pool.rewards.remove(reward_asset_id).expect(&format!(
 				"reward asset {reward_asset_id} not present in pool {pool_asset_id}"
 			));
 

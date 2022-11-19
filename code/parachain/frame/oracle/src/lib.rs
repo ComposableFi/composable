@@ -588,8 +588,8 @@ pub mod pallet {
 			let current_controller = ControllerToSigner::<T>::get(&who);
 			let current_signer = SignerToController::<T>::get(&signer);
 
-			ensure!(current_controller == None, Error::<T>::ControllerUsed);
-			ensure!(current_signer == None, Error::<T>::SignerUsed);
+			ensure!(current_controller.is_none(), Error::<T>::ControllerUsed);
+			ensure!(current_signer.is_none(), Error::<T>::SignerUsed);
 
 			Self::do_add_stake(who.clone(), signer.clone(), T::MinStake::get())?;
 
@@ -1111,7 +1111,7 @@ pub mod pallet {
 			who: &T::AccountId,
 			asset_info: &AssetInfo<Percent, T::BlockNumber, BalanceOf<T>>,
 		) {
-			AnswerInTransit::<T>::mutate(&who, |transit| {
+			AnswerInTransit::<T>::mutate(who, |transit| {
 				*transit = Some(transit.unwrap_or_else(Zero::zero).saturating_sub(asset_info.slash))
 			});
 		}
