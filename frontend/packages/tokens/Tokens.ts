@@ -25,7 +25,7 @@ const tokenIds = [
   "kar",
   "ausd",
   "kusd",
-  "xpblo"
+  "xpblo" // Cspell:ignore xpblo
 ] as const; // important
 
 export const TOKEN_IDS = tokenIds;
@@ -122,10 +122,10 @@ export const TOKENS: { [key in TokenId]: Token } = {
     decimalsToDisplay: 4,
     coinGeckoId: null
   },
-  xpblo: {
-    id: "xpblo",
+  xpblo: { // Cspell:ignore xpblo
+    id: "xpblo", // Cspell:ignore xpblo
     icon: "/tokens/pablo.svg",
-    symbol: "XPBLO",
+    symbol: "XPBLO", // Cspell:ignore XPBLO
     decimalsToDisplay: 4,
     coinGeckoId: null
   },
