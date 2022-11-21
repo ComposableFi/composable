@@ -415,7 +415,7 @@ mod constant_product {
 				b_o: 2048,
 				a_out: 100,
 				f: Permill::from_percent(10),
-				a_sent: 116,
+				a_sent: 117,
 				fee: 12,
 			},
 			InputsAndOutputs {
@@ -425,7 +425,7 @@ mod constant_product {
 				b_o: 2048,
 				a_out: 100,
 				f: Permill::from_percent(10),
-				a_sent: 116,
+				a_sent: 117,
 				fee: 12,
 			},
 			InputsAndOutputs {
@@ -435,7 +435,7 @@ mod constant_product {
 				b_o: 30_000,
 				a_out: 100,
 				f: Permill::from_percent(10),
-				a_sent: 111,
+				a_sent: 112,
 				fee: 12,
 			},
 			InputsAndOutputs {
@@ -445,7 +445,7 @@ mod constant_product {
 				b_o: 30_000_000,
 				a_out: 100_000,
 				f: Permill::from_percent(10),
-				a_sent: 111_575,
+				a_sent: 111_576,
 				fee: 11_158,
 			},
 			InputsAndOutputs {
@@ -455,7 +455,7 @@ mod constant_product {
 				b_o: 10_000_000,
 				a_out: 100_000,
 				f: Permill::from_percent(10),
-				a_sent: 111_951,
+				a_sent: 111_952,
 				fee: 11_196,
 			},
 		];
@@ -569,7 +569,7 @@ mod constant_product {
 			// Actual expected 256_128_000_000_000
 			// +000000250000% Error
 			assert!(default_acceptable_computation_error(res.value, 256_128_000_000_000).is_ok());
-			assert_eq!(res.value, 256_128_064_032_016);
+			assert_eq!(res.value, 256_128_064_032_017);
 		}
 
 		proptest! {

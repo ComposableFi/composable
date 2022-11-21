@@ -135,6 +135,8 @@ fn test() {
 		// swap a btc
 		let swap_btc = unit;
 		assert_ok!(Tokens::mint_into(BTC, &BOB, swap_btc));
+		// in_given_out uses greedy rounding so bob will need some extra USDT
+		assert_ok!(Tokens::mint_into(USDT, &BOB, swap_btc));
 
 		<Pablo as Amm>::do_swap(
 			&BOB,
