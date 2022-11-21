@@ -20,7 +20,7 @@ use num::Zero;
 use proto::Encodable;
 use xcvm_core::{
 	apply_bindings, cosmwasm::*, Amount, BindingValue, BridgeSecurity, Destination, Displayed,
-	Funds, NetworkId, Register, SpawnEvent,
+	Funds, NetworkId, Register,
 };
 use xcvm_proto as proto;
 
@@ -362,8 +362,7 @@ pub fn interpret_spawn(
 		}
 	}
 
-	let encoded_spawn =
-		SpawnEvent { network, bridge_security, salt, assets: normalized_funds, program }.encode();
+  // TODO(hussein-aitlahcen): forward back to gateway
 
 	Ok(response.add_event(
 		Event::new(XCVM_INTERPRETER_EVENT_PREFIX)
@@ -377,8 +376,7 @@ pub fn interpret_spawn(
 				"origin_user_id",
 				serde_json_wasm::to_string(&user_origin.user_id)
 					.map_err(|_| ContractError::DataSerializationError)?,
-			)
-			.add_attribute("program", Binary(encoded_spawn).to_base64()),
+			),
 	))
 }
 
@@ -867,7 +865,6 @@ mod tests {
 				.add_attribute("instruction", "spawn")
 				.add_attribute("origin_network_id", "1")
 				.add_attribute("origin_user_id", "[]")
-				.add_attribute("program", Binary(encode_protobuf(proto_spawn)).to_base64())
 		);
 
 		// Check if burn callback is added

@@ -9,10 +9,13 @@ mod bridge;
 pub mod cosmwasm;
 mod instruction;
 mod network;
+mod packet;
 mod program;
 mod protocol;
 
-pub use crate::{asset::*, bridge::*, instruction::*, network::*, program::*, protocol::*};
+pub use crate::{
+	asset::*, bridge::*, instruction::*, network::*, packet::*, program::*, protocol::*,
+};
 use alloc::{collections::VecDeque, vec::Vec};
 use core::marker::PhantomData;
 
