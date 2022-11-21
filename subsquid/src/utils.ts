@@ -48,5 +48,4 @@ export function getAmountWithoutDecimals(
   decimals: number
 ): BigNumber {
   return BigNumber(amount.toString()).div(BigNumber(10 ** decimals));
-  // return amount / BigInt(10 ** decimals);
 }

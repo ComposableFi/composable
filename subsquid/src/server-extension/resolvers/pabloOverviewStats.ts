@@ -38,7 +38,6 @@ export class PabloOverviewStatsResolver
   async totalValueLocked(): Promise<bigint> {
     const manager = await this.tx();
 
-    // TODO: add something like WHERE source = 'Pablo' once PR 1703 is merged
     let lockedValue: { amount: bigint }[] = await manager
       .getRepository(HistoricalLockedValue)
       .query(

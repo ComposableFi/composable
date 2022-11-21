@@ -8,7 +8,11 @@ import {
   StakingRewardsStakedEvent,
   StakingRewardsUnstakedEvent,
 } from "../types/events";
-import { saveAccountAndEvent, storeHistoricalLockedValue } from "../dbHelper";
+import {
+  saveAccountAndEvent,
+  storeCurrentLockedValue,
+  storeHistoricalLockedValue,
+} from "../dbHelper";
 import {
   Event,
   EventType,
@@ -272,6 +276,14 @@ export async function processStakedEvent(
     LockedSource.StakingRewards
   );
 
+  await storeCurrentLockedValue(
+    ctx,
+    {
+      [poolId.toString()]: amount,
+    },
+    LockedSource.StakingRewards
+  );
+
   await ctx.store.save(stakingPosition);
 }
 
@@ -319,6 +331,14 @@ export async function processStakeAmountExtendedEvent(
   await ctx.store.save(stakingPosition);
 
   await storeHistoricalLockedValue(
+    ctx,
+    {
+      [stakingPosition.assetId]: amount,
+    },
+    LockedSource.StakingRewards
+  );
+
+  await storeCurrentLockedValue(
     ctx,
     {
       [stakingPosition.assetId]: amount,
@@ -373,6 +393,14 @@ export async function processUnstakedEvent(
   await ctx.store.save(position);
 
   await storeHistoricalLockedValue(
+    ctx,
+    {
+      [position.assetId]: -unstakedAmount,
+    },
+    LockedSource.StakingRewards
+  );
+
+  await storeCurrentLockedValue(
     ctx,
     {
       [position.assetId]: -unstakedAmount,

@@ -1,0 +1,112 @@
+# Cross-Chain Swap
+
+:::tip
+
+Developers should be interested to read [the XCVM
+specification.](https://github.com/ComposableFi/composable/blob/b3ead07321238ec6d6435efea2f123f3000e0568/code/xcvm/SPEC.md)
+
+:::
+
+Many different applications can be built upon XCVM. **One of which** is a
+cross-chain swap program.
+
+Traditionally, users and applications were trading tokens that were only
+available on their native chain. If you were operating on a chain **X**, you
+would only be able to **swap** tokens that were registered on **X** (be it
+native, ERC20 virtualized or even virtualized and wrapped like WETH).
+
+Manipulating tokens is very complex already. Users willing to move assets
+between chains are facing incredible difficulties. Not only bridging is hard,
+but also insecure. In most cases, the bridges are centralized and hackable by
+design. We, at Composable, try to push the blockchain vision forward, trustless
+from the start to the end.
+
+:::note Single-Chain Swap
+
+Decentralized exchanges are one of (if not the one) the most widely used DeFi
+protocols in the blockchain ecosystem. It allows (through a contract) anyone to
+atomically exchange a token **A** against a token **B** at a defined rate (such
+as with the invariant `x * y = k`). This operation is executed atomically from
+within a transaction and we call this action a **swap**.
+
+:::
+
+In this example, we will execute a cross-chain swap through XCVM and understand
+how programs are relayed, instructions executed and funds transferred. Be aware
+that this use case can be generalized to any DeFi protocol and it is the reason
+why **XCVM makes protocols cross-chain native**.
+
+Under XCVM, tokens are **free to fly** between any chain connected to its
+network. Not only they can be traded regardless of their origin, but they are
+completely abstracted thanks to a globally unique XCVM **asset identifier**.
+
+Let's take an example. Suppose we have [**Picasso**](https://picasso.xyz) and
+[**Osmosis**](https://osmosis.zone) connected with an
+[**IBC**](https://ibcprotocol.org/) bridge powered by
+[**Centauri**](../../centauri-overview). **Alice** could submit the following
+**XCVM program**, along **250 PICA** to execute a cross-chain swap:
+
+```haskell
+[
+  -- 1. Move to Osmosis with a bag of 250 PICA.
+  Spawn Osmosis Deterministic 0x0 [
+    -- 1.1. (OPTIONAL) Tip the relayer for the journey.
+    Transfer Relayer (PICA (Unit 25)),
+    -- 1.2. Execute a swap, effectively trading 200 PICA for OSMO with 1% slippage tolerance.
+    -- This might be replaced by an arbitrary `Call 0x042502` representing the swap,
+    -- but for some well-known protocols, we decided to include a custom, strongly typed instruction.
+    Swap (PICA (Unit 200)) OSMO 1%,
+    -- 1.3. At this point, we don't know how many OSMO/PICA we have.
+    -- But we can ask XCVM to move 100% of both!
+    Spawn Picasso Deterministic 0x01 [
+      -- 1.3.1. (OPTIONAL) Tip the relayer for the cosy home with the remaining PICA.
+      Transfer Relayer (PICA 100%),
+      -- 1.3.2. Funds are safu.
+      Transfer (OSMO 100% Alice)
+    ] { OSMO: 100%, PICA: 100% }
+  ] { PICA: Unit 250 }
+]
+```
+
+1. Alice submits the XCVM program and the instruction **1.** is executed,
+   resulting in:
+   1. the **child XCVM program**, consisting of the instructions **[1.1., 1.2.,
+     1.3.]** is being submitted within an IBC packet to **Osmosis**.
+   2. the funds attached to the child program, **250 PICA**, are being
+transferred to **Osmosis** using an [**ICS20
+transfer**](https://github.com/cosmos/ibc/blob/f6371ffd5de3787eb4b85f9fe77f81be4a5993a0/spec/app/ics-020-fungible-token-transfer/README.md).
+2. An IBC relayer, listening to on-chain events, determine that relaying the IBC
+  packet containing the XCVM program is profitable. It proceeds and relays both
+  the funds and the packet to **Osmosis**.
+3. The packet is being submitted by the relayer and subsequently processed on
+   **Osmosis**, resulting in the **child XCVM program** being executed:
+   1. the instruction **1.1.** is executed: **25 PICA** are transferred to the
+      relayer.
+   2. the instruction **1.2.** is executed: **200 PICA** are traded against an
+      unknown amount **X** of **OSMO**.
+   3. the instruction **1.3.** is executed, resulting in:
+      1. the **second child XCVM program**, consisting of the instructions
+      **[1.3.1., 1.3.2.]** is being submitted within an IBC packet to
+      **Picasso**.
+      2. the funds attached to the second child program, **100% of the OSMO and
+         100% of the remaining PICA** are being transferred to **Picasso** using
+         an **ICS20 transfer**.
+4. Finally, an IBC relayer determines that relaying the program is again
+   profitable, the packet and the funds are relayed to **Picasso**.
+5. The packet is being submitted by the relayer and subsequently processed on
+   **Picasso**, resulting in the **second child XCVM program** being executed:
+   1. the instruction **1.3.1.** is executed: **100% of the remaining PICA**
+      (25 + dust from the swap) is transferred to the relayer.
+   2. the instruction **1.3.2.** is executed: **100% of the OSMO** is
+      transferred back to **Alice**.
+
+:::note
+
+- The above program is a pseudocode. XCVM programs are represented as
+**protobuf** encoded binary payload.
+- Obviously, the sequence of instructions cannot be executed atomically, another
+section is used to discuss how we circumvent issues related to atomicity.
+- As per the XCVM specification, fees are covered by the relayer, another
+section is used to discuss relayer incentives.
+
+:::

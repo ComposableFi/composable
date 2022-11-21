@@ -16,7 +16,6 @@
 	clippy::useless_conversion,
 	bad_style,
 	bare_trait_objects,
-	const_err,
 	improper_ctypes,
 	non_shorthand_field_patterns,
 	no_mangle_generic_items,
@@ -39,7 +38,6 @@
 #[cfg(test)]
 pub fn env_logger_init() {
 	use std::sync::Once;
-	// FIXME: This cell is unnecessary, as the log crate already does this internally.
 	static START: Once = Once::new();
 	START.call_once(|| {
 		let _ = env_logger::builder()

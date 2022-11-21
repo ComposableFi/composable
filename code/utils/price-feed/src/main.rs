@@ -97,7 +97,7 @@ async fn main() {
 		(join_all(handles), futures::stream::select_all(sources))
 	};
 
-	let backend_shutdown_trigger: Fuse<SignalsInfo> = Signals::new(&[SIGTERM, SIGINT, SIGQUIT])
+	let backend_shutdown_trigger: Fuse<SignalsInfo> = Signals::new([SIGTERM, SIGINT, SIGQUIT])
 		.map_err(|e| {
 			log::error!("{:?}", e);
 			std::process::exit(1);

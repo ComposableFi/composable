@@ -1,3 +1,4 @@
+import { PICASSO_SUPPORTED_TRANSFERS } from "@/defi/config";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { SubstrateNetworkId } from "@/defi/polkadot/types";
 import BigNumber from "bignumber.js";
@@ -64,9 +65,11 @@ export type SupportedTransferMultiAssets =
   | AcalaPrimitivesCurrencyCurrencyId
   | XcmVersionedMultiAssets;
 
-const networks = Object.keys(SUBSTRATE_NETWORKS).map((networkId) => ({
-  networkId: networkId as SubstrateNetworkId,
-}));
+const networks = Object.keys(SUBSTRATE_NETWORKS)
+  .map((networkId) => ({
+    networkId: networkId as SubstrateNetworkId,
+  }))
+  .filter(({ networkId }) => PICASSO_SUPPORTED_TRANSFERS.includes(networkId));
 
 const initialState: TransfersState = {
   networks: {

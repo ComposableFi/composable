@@ -13,6 +13,7 @@ import {
   get,
   getLatestPoolByPoolId,
   getOrCreate,
+  storeCurrentLockedValue,
   storeHistoricalLockedValue,
   storeHistoricalVolume,
 } from "../dbHelper";
@@ -289,6 +290,15 @@ export async function processLiquidityAddedEvent(
       },
       LockedSource.Pablo
     );
+
+    await storeCurrentLockedValue(
+      ctx,
+      {
+        [baseAsset.assetId]: liquidityAddedEvt.baseAmount,
+        [quoteAsset.assetId]: liquidityAddedEvt.quoteAmount,
+      },
+      LockedSource.Pablo
+    );
   } else {
     throw new Error("Pool not found");
   }
@@ -392,6 +402,15 @@ export async function processLiquidityRemovedEvent(
     await ctx.store.save(pabloTransaction);
 
     await storeHistoricalLockedValue(
+      ctx,
+      {
+        [baseAsset.assetId]: -liquidityRemovedEvt.baseAmount,
+        [quoteAsset.assetId]: -liquidityRemovedEvt.quoteAmount,
+      },
+      LockedSource.Pablo
+    );
+
+    await storeCurrentLockedValue(
       ctx,
       {
         [baseAsset.assetId]: -liquidityRemovedEvt.baseAmount,

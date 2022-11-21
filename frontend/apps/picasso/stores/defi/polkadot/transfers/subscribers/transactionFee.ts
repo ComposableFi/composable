@@ -16,6 +16,7 @@ export const subscribeTransactionFee = async (
       selectedRecipient: store.transfers.recipients.selected,
       sourceChain: store.transfers.networks.from,
       transferExtrinsic: store.transfers.transferExtrinsic,
+      amount: store.transfers.amount,
     }),
     async ({ selectedRecipient, sourceChain, isLoaded, transferExtrinsic }) => {
       if (!isLoaded || !transferExtrinsic) return;
@@ -62,7 +63,8 @@ export const subscribeTransactionFee = async (
         a.selectedRecipient === b.selectedRecipient &&
         a.sourceChain === b.sourceChain &&
         a.isLoaded === b.isLoaded &&
-        a.transferExtrinsic === b.transferExtrinsic,
+        a.transferExtrinsic === b.transferExtrinsic &&
+        a.amount.eq(b.amount),
     }
   );
 };

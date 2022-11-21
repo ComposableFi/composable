@@ -1,5 +1,6 @@
 import React from "react";
 import { BigNumber } from "bignumber.js";
+import { fromChainIdUnit, toChainIdUnit } from "shared";
 
 const FLOAT_NUMBER: RegExp = /^\d+(\.\d+)?$/;
 
@@ -19,11 +20,15 @@ export function useValidation({
   const [value, setValue] = React.useState<BigNumber>(initialValue);
 
   React.useEffect(() => {
-    setStringValue(value.toFixed());
-    if (!value.eq(0)) {
-      setValid(true);
+    if (!value.eq(new BigNumber(stringValue))) {
+      validate({
+        target: {
+          value: value.toString(),
+        },
+      } as any);
     }
-  }, [value]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [maxDec, value]);
 
   React.useEffect(() => {
     if (!initialValue.eq(value)) {
@@ -40,22 +45,19 @@ export function useValidation({
       setStringValue(eventValue);
       setValid(false);
     }
-
     if (eventValue.match(FLOAT_NUMBER)) {
-      const bignr = new BigNumber(eventValue);
+      const bignr = fromChainIdUnit(
+        toChainIdUnit(new BigNumber(eventValue), maxDec).integerValue(),
+        maxDec
+      );
       if ((bignr.decimalPlaces() || 0) > maxDec) {
-        setValid(false);
-        return;
-      }
-
-      const [, decimal] = eventValue.split(".");
-      if (decimal && decimal.length > maxDec) {
         setValid(false);
         return;
       }
 
       if (bignr.eq(0)) {
         setStringValue(eventValue);
+        setValue(new BigNumber(0));
         setValid(false);
         return;
       }
@@ -71,8 +73,7 @@ export function useValidation({
         // or maybe change this to invalid value
         setStringValue(maxValue.toFixed());
         setValue(maxValue);
-        setStringValue(maxValue.toFixed());
-        setValid(false);
+        setValid(true);
         return;
       }
 

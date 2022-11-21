@@ -1,4 +1,5 @@
-#![feature(generic_associated_types)]
+#![recursion_limit = "256"]
+#![feature(sync_unsafe_cell)]
 #![cfg_attr(
 	not(test),
 	deny(
@@ -16,7 +17,6 @@
 #![deny(
 	bad_style,
 	bare_trait_objects,
-	const_err,
 	improper_ctypes,
 	non_shorthand_field_patterns,
 	no_mangle_generic_items,
@@ -62,7 +62,7 @@ pub mod pallet {
 	const SUBSTRATE_ECDSA_SIGNATURE_LEN: usize = 65;
 	use crate::{
 		entrypoint::*,
-		instrument::{gas_and_stack_instrumentation, INSTRUMENTATION_VERSION},
+		instrument::{gas_and_stack_instrumentation, CostRules, INSTRUMENTATION_VERSION},
 		runtimes::{
 			abstraction::{CanonicalCosmwasmAccount, CosmwasmAccount, Gas, VMPallet},
 			wasmi::{
@@ -114,7 +114,6 @@ pub mod pallet {
 	use sp_core::{crypto::UncheckedFrom, ecdsa, ed25519};
 	use sp_runtime::traits::{Convert, Hash, MaybeDisplay, SaturatedConversion};
 	use sp_std::vec::Vec;
-	use wasm_instrument::gas_metering::ConstantCostRules;
 
 	pub(crate) type KeepAlive = bool;
 	pub(crate) type FundsOf<T> =
@@ -319,6 +318,9 @@ pub mod pallet {
 		#[pallet::constant]
 		type ContractStorageByteReadPrice: Get<u32>;
 
+		#[pallet::constant]
+		type WasmCostRules: Get<CostRules<Self>>;
+
 		/// A way to convert from our native account to cosmwasm `Addr`.
 		type AccountToAddr: Convert<AccountIdOf<Self>, String>
 			+ Convert<String, Result<AccountIdOf<Self>, ()>>;
@@ -519,7 +521,7 @@ pub mod pallet {
 			let new_code_id = match new_code_identifier {
 				CodeIdentifier::CodeId(code_id) => code_id,
 				CodeIdentifier::CodeHash(code_hash) =>
-					CodeHashToId::<T>::try_get(&code_hash).map_err(|_| Error::<T>::CodeNotFound)?,
+					CodeHashToId::<T>::try_get(code_hash).map_err(|_| Error::<T>::CodeNotFound)?,
 			};
 			let outcome = EntryPointCaller::<MigrateInput>::setup(who, contract, new_code_id)?
 				.call(&mut shared, Default::default(), message);
@@ -874,10 +876,7 @@ pub mod pallet {
 				module,
 				Version::<T>::ENV_MODULE,
 				T::CodeStackLimit::get(),
-				// TODO(hussein-aitlahcen): this constant cost rules can't be used in production
-				// and must be benchmarked we can reuse contracts pallet cost rules for now as
-				// well.
-				&ConstantCostRules::new(0, 0),
+				&T::WasmCostRules::get(),
 			);
 			instrumented_module
 				.map_err(|e| {
@@ -905,7 +904,7 @@ pub mod pallet {
 					let code = PristineCode::<T>::get(code_id).ok_or(Error::<T>::CodeNotFound)?;
 					let module = Self::do_load_module(&code)?;
 					let instrumented_code = Self::do_instrument_code(module)?;
-					InstrumentedCode::<T>::insert(&code_id, instrumented_code);
+					InstrumentedCode::<T>::insert(code_id, instrumented_code);
 					code_info.instrumentation_version = INSTRUMENTATION_VERSION;
 				} else {
 					log::debug!(target: "runtime::contracts", "do_check_for_reinstrumentation: not required");
@@ -917,7 +916,7 @@ pub mod pallet {
 		pub(crate) fn do_load_module(
 			code: &ContractCodeOf<T>,
 		) -> Result<parity_wasm::elements::Module, Error<T>> {
-			parity_wasm::elements::Module::from_bytes(&code).map_err(|e| {
+			parity_wasm::elements::Module::from_bytes(code).map_err(|e| {
 				log::debug!(target: "runtime::contracts", "do_load_module: {:#?}", e);
 				Error::<T>::CodeDecoding
 			})
@@ -1044,7 +1043,7 @@ pub mod pallet {
 				host_functions_by_index: host_functions_definitions
 					.0
 					.into_iter()
-					.flat_map(|(_, modules)| modules.into_iter().map(|(_, function)| function))
+					.flat_map(|(_, modules)| modules.into_values())
 					.collect(),
 				executing_module: module,
 				cosmwasm_env: env,
@@ -1324,15 +1323,36 @@ pub mod pallet {
 				return false
 			}
 
+			// Each batch verification process is started with `start_batch_verify` and ended with
+			// `finish_batch_verify`. When it is started, it needs to be properly finished. But this
+			// means `finish_batch_verify` will verify the previously pushed verification tasks. We
+			// converted all the public keys and signatures in-front not to unnecessarily verify
+			// previously pushed signatures. (Note that there is no function to ditch the batch
+			// verification early without doing any verification)
+			let mut verify_items = Vec::with_capacity(messages.len());
 			for ((message, signature), public_key) in
 				messages.iter().zip(signatures.iter()).zip(public_keys.iter())
 			{
-				if !(Pallet::<T>::do_ed25519_verify(message, signature, public_key)) {
+				match ((*signature).try_into(), (*public_key).try_into()) {
+					(Ok(signature), Ok(public_key)) =>
+						verify_items.push((signature, message, public_key)),
+					_ => return false,
+				}
+			}
+
+			sp_io::crypto::start_batch_verify();
+
+			for (signature, message, public_key) in verify_items {
+				// This is very unlikely to fail. Because this only fails if the verification task
+				// cannot be spawned internally. Note that the actual verification is only done when
+				// `finish_batch_verify` is called.
+				if !sp_io::crypto::ed25519_batch_verify(&signature, message, &public_key) {
+					let _ = sp_io::crypto::finish_batch_verify();
 					return false
 				}
 			}
 
-			true
+			sp_io::crypto::finish_batch_verify()
 		}
 
 		pub(crate) fn do_ed25519_verify(
@@ -1412,8 +1432,7 @@ pub mod pallet {
 		) -> Result<ContractInfoResponse, CosmwasmVMError<T>> {
 			// TODO: cache or at least check if its current contract and use `self.contract_info`
 			let info = Pallet::<T>::contract_info(&address)?;
-			let code_info =
-				CodeIdToInfo::<T>::get(&info.code_id).ok_or(Error::<T>::CodeNotFound)?;
+			let code_info = CodeIdToInfo::<T>::get(info.code_id).ok_or(Error::<T>::CodeNotFound)?;
 			let ibc_port = if code_info.ibc_capable {
 				Some(Pallet::<T>::do_compute_ibc_contract_port(address))
 			} else {

@@ -3,7 +3,7 @@ extern crate alloc;
 use crate::{
 	error::ContractError,
 	msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg},
-	state::{Config, CONFIG, IP_REGISTER, OWNERS, RESULT_REGISTER},
+	state::{Config, CONFIG, IP_REGISTER, OWNERS, RELAYER_REGISTER, RESULT_REGISTER},
 };
 use alloc::{borrow::Cow, collections::VecDeque};
 #[cfg(not(feature = "library"))]
@@ -15,9 +15,7 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg};
 use cw_utils::ensure_from_older_version;
-use cw_xcvm_asset_registry::msg::{
-	AssetReference, GetAssetContractResponse, QueryMsg as AssetRegistryQueryMsg,
-};
+use cw_xcvm_asset_registry::{contract::external_query_lookup_asset, msg::AssetReference};
 use num::Zero;
 use proto::Encodable;
 use xcvm_core::{
@@ -33,6 +31,7 @@ const CONTRACT_NAME: &str = "composable:xcvm-interpreter";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const CALL_ID: u64 = 1;
 const SELF_CALL_ID: u64 = 2;
+pub const XCVM_INTERPRETER_EVENT_PREFIX: &str = "xcvm.interpreter";
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -44,23 +43,18 @@ pub fn instantiate(
 	set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
 	let registry_address = deps.api.addr_validate(&msg.registry_address)?;
-	let relayer_address = deps.api.addr_validate(&msg.relayer_address)?;
+	let gateway_address = deps.api.addr_validate(&msg.gateway_address)?;
 	let router_address = deps.api.addr_validate(&msg.router_address)?;
-	let config = Config {
-		registry_address,
-		router_address,
-		relayer_address,
-		network_id: msg.network_id,
-		user_id: msg.user_id,
-	};
+	let config =
+		Config { registry_address, router_address, gateway_address, user_origin: msg.user_origin };
 	CONFIG.save(deps.storage, &config)?;
 	// Save the caller as owner, in most cases, it is the `XCVM router`
 	OWNERS.save(deps.storage, info.sender, &())?;
 
-	Ok(Response::new().add_event(Event::new("xcvm.interpreter.instantiated").add_attribute(
-		"data",
-		cw_xcvm_utils::encode_origin_data(config.network_id, &config.user_id)?.as_str(),
-	)))
+	Ok(Response::new().add_event(
+		Event::new(XCVM_INTERPRETER_EVENT_PREFIX)
+			.add_attribute("data", cw_xcvm_utils::encode_origin_data(config.user_origin)?.as_str()),
+	))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -71,33 +65,38 @@ pub fn execute(
 	msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
 	// Only owners can execute entrypoints of the interpreter
-	assert_owner(deps.as_ref(), &env.contract.address, &info.sender)?;
+	ensure_owner(deps.as_ref(), &env.contract.address, &info.sender)?;
 	match msg {
-		ExecuteMsg::Execute { program } => initiate_execution(deps, env, program),
-		ExecuteMsg::_SelfExecute { program } =>
-		// _SelfExecute should be called by interpreter itself
+		ExecuteMsg::Execute { relayer, program } => initiate_execution(deps, env, relayer, program),
+
+		// ExecuteStep should be called by interpreter itself
+		ExecuteMsg::ExecuteStep { relayer, program } =>
 			if env.contract.address != info.sender {
 				Err(ContractError::NotAuthorized)
 			} else {
 				let program =
 					proto::decode(&program[..]).map_err(|_| ContractError::InvalidProgram)?;
-				interpret_program(deps, env, info, program)
+				handle_execute_step(deps, env, relayer, program)
 			},
+
 		ExecuteMsg::AddOwners { owners } => add_owners(deps, owners),
+
 		ExecuteMsg::RemoveOwners { owners } => Ok(remove_owners(deps, owners)),
 	}
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
-	// Already only callable by the admin of the contract, so no need to `assert_owner`
+	// Already only callable by the admin of the contract, so no need to `ensure_owner`
 	let _ = ensure_from_older_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 	let _ = add_owners(deps, msg.owners)?;
 	Ok(Response::default())
 }
 
-/// Check if the caller is the interpreter itself, or one of the owners
-fn assert_owner(deps: Deps, self_addr: &Addr, owner: &Addr) -> Result<(), ContractError> {
+/// Ensure that the caller is either the current interpreter or listed in the owners of the
+/// interpreter.
+/// Any operation executing against the interpreter must pass this check.
+fn ensure_owner(deps: Deps, self_addr: &Addr, owner: &Addr) -> Result<(), ContractError> {
 	if owner == self_addr || OWNERS.has(deps.storage, owner.clone()) {
 		Ok(())
 	} else {
@@ -105,45 +104,69 @@ fn assert_owner(deps: Deps, self_addr: &Addr, owner: &Addr) -> Result<(), Contra
 	}
 }
 
-/// Initiate an execution by adding a `_SelfExecute` callback. This is used to be able to prepare an
+/// Initiate an execution by adding a `ExecuteStep` callback. This is used to be able to prepare an
 /// execution by resetting the necessary registers as well as being able to catch any failures and
-/// store it in the `RESULT_REGISTER`
+/// store it in the `RESULT_REGISTER`.
+/// The [`RELAYER_REGISTER`] is updated to hold the current relayer address. Note that the
+/// [`RELAYER_REGISTER`] always contains a value, and the value is equal to the last relayer that
+/// executed a program if any.
 fn initiate_execution(
 	deps: DepsMut,
 	env: Env,
+	relayer: Addr,
 	program: Vec<u8>,
 ) -> Result<Response, ContractError> {
+	// Reset instruction pointer to zero.
 	IP_REGISTER.save(deps.storage, &0)?;
+
+	// Set the new relayer, note that the relayer that is in the register is always the last relayer
+	// that executed a program.
+	RELAYER_REGISTER.save(deps.storage, &relayer)?;
+
 	Ok(Response::default().add_submessage(SubMsg::reply_on_error(
-		wasm_execute(env.contract.address, &ExecuteMsg::_SelfExecute { program }, Vec::new())?,
+		wasm_execute(
+			env.contract.address,
+			&ExecuteMsg::ExecuteStep { relayer, program },
+			Default::default(),
+		)?,
 		SELF_CALL_ID,
 	)))
 }
 
-/// Add owners who can execute entrypoints other than `_SelfExecute`
+/// Add owners who can execute entrypoints other than `ExecuteStep`
 fn add_owners(deps: DepsMut, owners: Vec<Addr>) -> Result<Response, ContractError> {
-	let mut event = Event::new("xcvm.interpreter.add_owners");
+	let mut event =
+		Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "owners.added");
 	for owner in owners {
-		event = event.add_attribute(format!("{}", owner), "");
+		event = event.add_attribute("owner", format!("{}", owner));
 		OWNERS.save(deps.storage, owner, &())?;
 	}
 	Ok(Response::default().add_event(event))
 }
 
+/// Remove a set of owners from the current owners list.
+/// Beware that emptying the set of owners result in a tombstoned interpreter.
 fn remove_owners(deps: DepsMut, owners: Vec<Addr>) -> Response {
-	let mut event = Event::new("xcvm.interpreter.remove_owners");
+	let mut event =
+		Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "owners.removed");
 	for owner in owners {
-		event = event.add_attribute(format!("{}", owner), "");
+		event = event.add_attribute("owner", format!("{}", owner));
 		OWNERS.remove(deps.storage, owner);
 	}
 	Response::default().add_event(event)
 }
 
-/// Interpret an XCVM program
-pub fn interpret_program(
+/// Execute a [`XCVMProgram`].
+/// The function will execute the program instructions one by one.
+/// If the program contains a [`XCVMInstruction::Call`], the execution is suspended and resumed
+/// after having executed the call.
+/// The [`IP_REGISTER`] is updated accordingly.
+/// A final `executed` event is yield whenever a program come to completion (all it's instructions
+/// has been executed).
+pub fn handle_execute_step(
 	mut deps: DepsMut,
 	env: Env,
-	_info: MessageInfo,
+	relayer: Addr,
 	program: XCVMProgram,
 ) -> Result<Response, ContractError> {
 	let mut response = Response::new();
@@ -172,7 +195,10 @@ pub fn interpret_program(
 					IP_REGISTER.save(deps.storage, &ip)?;
 					return Ok(response.add_message(wasm_execute(
 						env.contract.address,
-						&ExecuteMsg::_SelfExecute { program: program.encode() },
+						&ExecuteMsg::ExecuteStep {
+							relayer: relayer.clone(),
+							program: program.encode(),
+						},
 						vec![],
 					)?))
 				}
@@ -189,7 +215,7 @@ pub fn interpret_program(
 					response,
 				)?,
 			XCVMInstruction::Transfer { to, assets } =>
-				interpret_transfer(&mut deps, &env, to, assets, response)?,
+				interpret_transfer(&mut deps, &env, relayer.clone(), to, assets, response)?,
 			instr => return Err(ContractError::InstructionNotSupported(format!("{:?}", instr))),
 		};
 		ip += 1;
@@ -197,10 +223,14 @@ pub fn interpret_program(
 
 	IP_REGISTER.save(deps.storage, &ip)?;
 
-	Ok(response.add_event(Event::new("xcvm.interpreter.executed").add_attribute(
-		"program",
-		core::str::from_utf8(&program.tag).map_err(|_| ContractError::InvalidProgramTag)?,
-	)))
+	Ok(response.add_event(
+		Event::new(XCVM_INTERPRETER_EVENT_PREFIX)
+			.add_attribute("action", "executed")
+			.add_attribute(
+				"program",
+				core::str::from_utf8(&program.tag).map_err(|_| ContractError::InvalidProgramTag)?,
+			),
+	))
 }
 
 /// Interpret the `Call` instruction
@@ -218,7 +248,7 @@ pub fn interpret_call(
 ) -> Result<Response, ContractError> {
 	// We don't know the type of the payload, so we use `serde_json::Value`
 	let flat_cosmos_msg: FlatCosmosMsg<serde_json::Value> = if !bindings.is_empty() {
-		let Config { registry_address, relayer_address, .. } = CONFIG.load(deps.storage)?;
+		let Config { registry_address, .. } = CONFIG.load(deps.storage)?;
 		// Len here is the maximum possible length
 		let mut formatted_call =
 			vec![0; env.contract.address.as_bytes().len() * bindings.len() + payload.len()];
@@ -263,7 +293,7 @@ pub fn interpret_call(
 				BindingValue::Register(Register::Ip) =>
 					Cow::Owned(format!("{}", IP_REGISTER.load(deps.storage)?).into()),
 				BindingValue::Register(Register::Relayer) =>
-					Cow::Borrowed(relayer_address.as_bytes()),
+					Cow::Owned(format!("{}", RELAYER_REGISTER.load(deps.storage)?).into()),
 				BindingValue::Register(Register::This) =>
 					Cow::Borrowed(env.contract.address.as_bytes()),
 				BindingValue::Register(Register::Result) => Cow::Owned(
@@ -271,19 +301,15 @@ pub fn interpret_call(
 						.map_err(|_| ContractError::DataSerializationError)?,
 				),
 				BindingValue::Asset(asset_id) => {
-					let query_msg = AssetRegistryQueryMsg::GetAssetContract(asset_id.into());
-
-					let response: GetAssetContractResponse = deps.querier.query(
-						&WasmQuery::Smart {
-							contract_addr: registry_address.clone().into_string(),
-							msg: to_binary(&query_msg)?,
-						}
-						.into(),
+					let reference = external_query_lookup_asset(
+						deps.querier,
+						registry_address.clone().into(),
+						asset_id,
 					)?;
-
-					match response.asset_reference {
-						AssetReference::Virtual(addr) => Cow::Owned(addr.into_string().into()),
-						AssetReference::Native(_) => return Err(ContractError::InvalidBindings),
+					match reference {
+						AssetReference::Virtual { cw20_address } =>
+							Cow::Owned(cw20_address.into_string().into()),
+						AssetReference::Native { denom } => Cow::Owned(denom.into()),
 					}
 				},
 			};
@@ -309,7 +335,9 @@ pub fn interpret_call(
 
 	let cosmos_msg: CosmosMsg =
 		flat_cosmos_msg.try_into().map_err(|_| ContractError::DataSerializationError)?;
-	Ok(response.add_submessage(SubMsg::reply_on_success(cosmos_msg, CALL_ID)))
+	Ok(response
+		.add_event(Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("instruction", "call"))
+		.add_submessage(SubMsg::reply_on_success(cosmos_msg, CALL_ID)))
 }
 
 pub fn interpret_spawn(
@@ -322,11 +350,9 @@ pub fn interpret_spawn(
 	program: XCVMProgram,
 	mut response: Response,
 ) -> Result<Response, ContractError> {
-	let Config { network_id, user_id, registry_address, router_address, .. } =
-		CONFIG.load(deps.storage)?;
+	let Config { user_origin, registry_address, router_address, .. } = CONFIG.load(deps.storage)?;
 
 	let registry_address = registry_address.into_string();
-	let router_address = router_address.into_string();
 	let mut normalized_funds: Funds<Displayed<u128>> = Funds::empty();
 
 	for (asset_id, amount) in assets.0 {
@@ -335,27 +361,19 @@ pub fn interpret_spawn(
 			continue
 		}
 
-		let query_msg = AssetRegistryQueryMsg::GetAssetContract(asset_id.clone().into());
-
-		let query_response: GetAssetContractResponse = deps.querier.query(
-			&WasmQuery::Smart {
-				contract_addr: registry_address.clone(),
-				msg: to_binary(&query_msg)?,
-			}
-			.into(),
-		)?;
-
+		let reference =
+			external_query_lookup_asset(deps.querier, registry_address.clone(), asset_id)?;
 		let amount = {
-			let transfer_amount = match &query_response.asset_reference {
-				AssetReference::Native(denom) => {
+			let transfer_amount = match &reference {
+				AssetReference::Native { denom } => {
 					let coin =
 						deps.querier.query_balance(env.contract.address.clone(), denom.clone())?;
 					coin.amount
 				},
-				AssetReference::Virtual(address) => {
+				AssetReference::Virtual { cw20_address } => {
 					let rsp = deps.querier.query::<BalanceResponse>(&QueryRequest::Wasm(
 						WasmQuery::Smart {
-							contract_addr: address.clone().into_string(),
+							contract_addr: cw20_address.clone().into_string(),
 							msg: to_binary(&Cw20QueryMsg::Balance {
 								address: env.contract.address.clone().into_string(),
 							})?,
@@ -374,14 +392,14 @@ pub fn interpret_spawn(
 			let asset_id: u128 = asset_id.into();
 			let transfer_amount = amount.intercept.0;
 			normalized_funds.0.push((asset_id.into(), transfer_amount.into()));
-			response = match query_response.asset_reference {
-				AssetReference::Native(denom) => response.add_message(BankMsg::Send {
-					to_address: router_address.clone(),
+			response = match reference {
+				AssetReference::Native { denom } => response.add_message(BankMsg::Send {
+					to_address: router_address.clone().into(),
 					amount: vec![Coin { denom, amount: transfer_amount.into() }],
 				}),
-				AssetReference::Virtual(address) => response.add_message(
-					Cw20Contract(address.clone()).call(Cw20ExecuteMsg::Transfer {
-						recipient: router_address.clone(),
+				AssetReference::Virtual { cw20_address } => response.add_message(
+					Cw20Contract(cw20_address).call(Cw20ExecuteMsg::Transfer {
+						recipient: router_address.clone().into(),
 						amount: transfer_amount.into(),
 					})?,
 				),
@@ -393,15 +411,16 @@ pub fn interpret_spawn(
 		SpawnEvent { network, bridge_security, salt, assets: normalized_funds, program }.encode();
 
 	Ok(response.add_event(
-		Event::new("xcvm.interpreter.spawn")
+		Event::new(XCVM_INTERPRETER_EVENT_PREFIX)
+			.add_attribute("instruction", "spawn")
 			.add_attribute(
 				"origin_network_id",
-				serde_json_wasm::to_string(&network_id.0)
+				serde_json_wasm::to_string(&user_origin.network_id)
 					.map_err(|_| ContractError::DataSerializationError)?,
 			)
 			.add_attribute(
 				"origin_user_id",
-				serde_json_wasm::to_string(&user_id)
+				serde_json_wasm::to_string(&user_origin.user_id)
 					.map_err(|_| ContractError::DataSerializationError)?,
 			)
 			.add_attribute("program", Binary(encoded_spawn).to_base64()),
@@ -411,6 +430,7 @@ pub fn interpret_spawn(
 pub fn interpret_transfer(
 	deps: &mut DepsMut,
 	env: &Env,
+	relayer: Addr,
 	to: Destination<CanonicalAddr>,
 	assets: Funds,
 	mut response: Response,
@@ -420,7 +440,7 @@ pub fn interpret_transfer(
 
 	let recipient = match to {
 		Destination::Account(account) => deps.api.addr_humanize(&account)?.into_string(),
-		Destination::Relayer => config.relayer_address.into_string(),
+		Destination::Relayer => relayer.into(),
 	};
 
 	for (asset_id, amount) in assets.0 {
@@ -428,14 +448,9 @@ pub fn interpret_transfer(
 			continue
 		}
 
-		let query_msg = AssetRegistryQueryMsg::GetAssetContract(asset_id.into());
-		let query_response: GetAssetContractResponse = deps.querier.query(
-			&WasmQuery::Smart { contract_addr: registry_addr.clone(), msg: to_binary(&query_msg)? }
-				.into(),
-		)?;
-
-		response = match query_response.asset_reference {
-			AssetReference::Native(denom) => {
+		let reference = external_query_lookup_asset(deps.querier, registry_addr.clone(), asset_id)?;
+		response = match reference {
+			AssetReference::Native { denom } => {
 				let mut coin = deps.querier.query_balance(env.contract.address.clone(), denom)?;
 				coin.amount = amount.apply(coin.amount.into()).into();
 				response.add_message(BankMsg::Send {
@@ -443,11 +458,11 @@ pub fn interpret_transfer(
 					amount: vec![coin],
 				})
 			},
-			AssetReference::Virtual(address) => {
-				let contract = Cw20Contract(address.clone());
+			AssetReference::Virtual { cw20_address } => {
+				let contract = Cw20Contract(cw20_address.clone());
 				let rsp = deps.querier.query::<BalanceResponse>(&QueryRequest::Wasm(
 					WasmQuery::Smart {
-						contract_addr: address.clone().into_string(),
+						contract_addr: cw20_address.into(),
 						msg: to_binary(&Cw20QueryMsg::Balance {
 							address: env.contract.address.clone().into_string(),
 						})?,
@@ -462,7 +477,9 @@ pub fn interpret_transfer(
 		};
 	}
 
-	Ok(response)
+	Ok(response.add_event(
+		Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("instruction", "transfer"),
+	))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -472,10 +489,8 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
 		QueryMsg::Register(Register::Result) =>
 			Ok(to_binary(&RESULT_REGISTER.load(deps.storage)?)?),
 		QueryMsg::Register(Register::This) => Ok(to_binary(&env.contract.address)?),
-		QueryMsg::Register(Register::Relayer) => {
-			let Config { user_id, .. } = CONFIG.load(deps.storage)?;
-			Ok(to_binary(&user_id)?)
-		},
+		QueryMsg::Register(Register::Relayer) =>
+			Ok(to_binary(&RELAYER_REGISTER.load(deps.storage)?)?),
 	}
 }
 
@@ -494,7 +509,7 @@ fn handle_self_call_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 		Ok(_) => Err(StdError::generic_err("Returned OK from a reply that is called with `reply_on_error`. This should never happen")),
 		Err(e) => {
 			// Save the result that is returned from the sub-interpreter
-			// this way, only the `RESULT_REGISTER` is persisted. All 
+			// this way, only the `RESULT_REGISTER` is persisted. All
 			// other state changes are reverted.
 			RESULT_REGISTER.save(deps.storage, &Err(e))?;
 			// Ip register should be incremented by one
@@ -516,17 +531,17 @@ mod tests {
 	use super::*;
 	use cosmwasm_std::{
 		testing::{mock_dependencies, mock_env, mock_info, MockQuerier, MOCK_CONTRACT_ADDR},
-		Addr, CanonicalAddr, ContractResult, Order, QuerierResult, SystemResult, WasmMsg,
+		Addr, ContractResult, Order, QuerierResult, SystemResult, WasmMsg,
 	};
 	use serde::{Deserialize, Serialize};
 	use xcvm_core::{
-		Amount, AssetId, BindingValue, BridgeSecurity, Destination, Picasso, ETH, MAX_PARTS, PICA,
-		USDT,
+		Amount, AssetId, BindingValue, BridgeSecurity, Destination, Picasso, UserOrigin, ETH,
+		MAX_PARTS, PICA, USDT,
 	};
 
 	const CW20_ADDR: &str = "cw20_addr";
 	const REGISTRY_ADDR: &str = "registry_addr";
-	const RELAYER_ADDR: &str = "relayer_addr";
+	const GATEWAY_ADDR: &str = "gateway_addr";
 	const ROUTER_ADDR: &str = "router_addr";
 	const BALANCE: u128 = 10_000;
 
@@ -536,11 +551,10 @@ mod tests {
 		info: MessageInfo,
 	) -> Result<Response, ContractError> {
 		let msg = InstantiateMsg {
+			gateway_address: GATEWAY_ADDR.to_string(),
 			registry_address: REGISTRY_ADDR.to_string(),
-			relayer_address: RELAYER_ADDR.to_string(),
 			router_address: ROUTER_ADDR.to_string(),
-			network_id: Picasso.into(),
-			user_id: vec![],
+			user_origin: UserOrigin { network_id: Picasso.into(), user_id: vec![].into() },
 		};
 		instantiate(deps, env, info, msg)
 	}
@@ -560,8 +574,10 @@ mod tests {
 				)),
 			WasmQuery::Smart { contract_addr, .. } if contract_addr.as_str() == REGISTRY_ADDR =>
 				SystemResult::Ok(ContractResult::Ok(
-					to_binary(&cw_xcvm_asset_registry::msg::GetAssetContractResponse {
-						asset_reference: AssetReference::Virtual(Addr::unchecked(CW20_ADDR)),
+					to_binary(&cw_xcvm_asset_registry::msg::LookupResponse {
+						reference: AssetReference::Virtual {
+							cw20_address: Addr::unchecked(CW20_ADDR),
+						},
 					})
 					.unwrap(),
 				))
@@ -582,11 +598,10 @@ mod tests {
 		assert_eq!(
 			CONFIG.load(&deps.storage).unwrap(),
 			Config {
+				gateway_address: Addr::unchecked(GATEWAY_ADDR),
 				registry_address: Addr::unchecked(REGISTRY_ADDR),
-				relayer_address: Addr::unchecked(RELAYER_ADDR),
 				router_address: Addr::unchecked(ROUTER_ADDR),
-				network_id: Picasso.into(),
-				user_id: vec![]
+				user_origin: UserOrigin { network_id: Picasso.into(), user_id: vec![].into() }
 			}
 		);
 
@@ -608,7 +623,7 @@ mod tests {
 			deps.as_mut(),
 			mock_env(),
 			info,
-			ExecuteMsg::Execute { program: program.clone() },
+			ExecuteMsg::Execute { relayer: Addr::unchecked("2"), program: program.clone() },
 		)
 		.unwrap();
 
@@ -618,8 +633,12 @@ mod tests {
 		assert_eq!(
 			res.messages[0],
 			SubMsg::reply_on_error(
-				wasm_execute(MOCK_CONTRACT_ADDR, &ExecuteMsg::_SelfExecute { program }, Vec::new())
-					.unwrap(),
+				wasm_execute(
+					MOCK_CONTRACT_ADDR,
+					&ExecuteMsg::ExecuteStep { relayer: Addr::unchecked("2"), program },
+					Vec::new()
+				)
+				.unwrap(),
 				SELF_CALL_ID,
 			)
 		);
@@ -642,7 +661,7 @@ mod tests {
 			deps.as_mut(),
 			mock_env(),
 			garbage_info.clone(),
-			ExecuteMsg::Execute { program: program.clone() },
+			ExecuteMsg::Execute { relayer: Addr::unchecked("1337"), program: program.clone() },
 		)
 		.unwrap_err();
 		// The error type needs to be authorization
@@ -663,7 +682,7 @@ mod tests {
 			deps.as_mut(),
 			mock_env(),
 			garbage_info.clone(),
-			ExecuteMsg::Execute { program: program.clone() },
+			ExecuteMsg::Execute { relayer: Addr::unchecked("1337"), program: program.clone() },
 		)
 		.unwrap();
 	}
@@ -728,29 +747,31 @@ mod tests {
 		}
 		.into();
 
+		let relayer = "1337".to_string();
 		let program = encode_protobuf(program);
-		let res =
-			execute(deps.as_mut(), mock_env(), info.clone(), ExecuteMsg::_SelfExecute { program })
-				.unwrap();
+		let res = execute(
+			deps.as_mut(),
+			mock_env(),
+			info.clone(),
+			ExecuteMsg::ExecuteStep { relayer: Addr::unchecked(relayer.clone()), program },
+		)
+		.unwrap();
 		let contract = Cw20Contract(Addr::unchecked(CW20_ADDR));
 		let messages = vec![
 			contract
 				.call(Cw20ExecuteMsg::Transfer {
-					recipient: RELAYER_ADDR.into(),
+					recipient: relayer.clone(),
 					amount: 1_u128.into(),
 				})
 				.unwrap(),
 			contract
 				.call(Cw20ExecuteMsg::Transfer {
-					recipient: RELAYER_ADDR.into(),
+					recipient: relayer.clone(),
 					amount: 2_u128.into(),
 				})
 				.unwrap(),
 			contract
-				.call(Cw20ExecuteMsg::Transfer {
-					recipient: RELAYER_ADDR.into(),
-					amount: (BALANCE / 2).into(),
-				})
+				.call(Cw20ExecuteMsg::Transfer { recipient: relayer, amount: (BALANCE / 2).into() })
 				.unwrap(),
 			contract
 				.call(Cw20ExecuteMsg::Transfer {
@@ -769,6 +790,9 @@ mod tests {
 
 		let info = mock_info(MOCK_CONTRACT_ADDR, &vec![]);
 		let _ = do_instantiate(deps.as_mut(), mock_env(), info.clone()).unwrap();
+
+		let relayer = Addr::unchecked("1337");
+		RELAYER_REGISTER.save(deps.as_mut().storage, &relayer).unwrap();
 
 		IP_REGISTER.save(deps.as_mut().storage, &0).unwrap();
 
@@ -800,7 +824,8 @@ mod tests {
 
 		let program: proto::Program =
 			XCVMProgram { tag: vec![], instructions: instructions.clone().into() }.into();
-		let execute_msg = ExecuteMsg::_SelfExecute {
+		let execute_msg = ExecuteMsg::ExecuteStep {
+			relayer: relayer.clone(),
 			program: encode_protobuf(Into::<proto::Program>::into(XCVMProgram {
 				tag: vec![],
 				instructions: instructions[1..].to_owned().into(),
@@ -811,7 +836,7 @@ mod tests {
 			deps.as_mut(),
 			mock_env(),
 			info.clone(),
-			ExecuteMsg::_SelfExecute { program: encode_protobuf(program) },
+			ExecuteMsg::ExecuteStep { relayer: relayer.clone(), program: encode_protobuf(program) },
 		)
 		.unwrap();
 		assert_eq!(
@@ -843,6 +868,8 @@ mod tests {
 		let info = mock_info(MOCK_CONTRACT_ADDR, &vec![]);
 		let _ = do_instantiate(deps.as_mut(), mock_env(), info.clone()).unwrap();
 
+		let relayer = Addr::unchecked("1337");
+		RELAYER_REGISTER.save(deps.as_mut().storage, &relayer).unwrap();
 		IP_REGISTER.save(deps.as_mut().storage, &0).unwrap();
 
 		let inner_program = XCVMProgram {
@@ -863,7 +890,7 @@ mod tests {
 		let proto_spawn = proto::Spawn {
 			network: Some(Into::<xcvm_core::NetworkId>::into(Picasso).into()),
 			salt: Some(xcvm_proto::Salt { salt: vec![] }),
-			security: 1,
+			security: 3,
 			program: Some(inner_program.into()),
 			assets: funds.0.into_iter().map(Into::into).collect(),
 		};
@@ -871,13 +898,18 @@ mod tests {
 		let program: proto::Program =
 			XCVMProgram { tag: vec![], instructions: vec![xcvm_spawn.clone()].into() }.into();
 		let program = encode_protobuf(program);
-		let res =
-			execute(deps.as_mut(), mock_env(), info.clone(), ExecuteMsg::_SelfExecute { program })
-				.unwrap();
+		let res = execute(
+			deps.as_mut(),
+			mock_env(),
+			info.clone(),
+			ExecuteMsg::ExecuteStep { relayer, program },
+		)
+		.unwrap();
 
 		assert_eq!(
 			res.events[0],
-			Event::new("xcvm.interpreter.spawn")
+			Event::new(XCVM_INTERPRETER_EVENT_PREFIX)
+				.add_attribute("instruction", "spawn")
 				.add_attribute("origin_network_id", "1")
 				.add_attribute("origin_user_id", "[]")
 				.add_attribute("program", Binary(encode_protobuf(proto_spawn)).to_base64())
@@ -902,6 +934,9 @@ mod tests {
 
 		let info = mock_info(MOCK_CONTRACT_ADDR, &vec![]);
 		let _ = do_instantiate(deps.as_mut(), mock_env(), info.clone()).unwrap();
+
+		let relayer = Addr::unchecked("1337");
+		RELAYER_REGISTER.save(deps.as_mut().storage, &relayer).unwrap();
 
 		IP_REGISTER.save(deps.as_mut().storage, &0).unwrap();
 
@@ -934,20 +969,21 @@ mod tests {
 			bindings: late_call.bindings.clone(),
 			encoded: late_call.encoded_call.clone(),
 		}];
+		let relayer = "1337".to_string();
 		let program: proto::Program =
 			XCVMProgram { tag: vec![], instructions: instructions.clone().into() }.into();
 		let res = execute(
 			deps.as_mut(),
 			mock_env(),
 			info.clone(),
-			ExecuteMsg::_SelfExecute { program: encode_protobuf(program) },
+			ExecuteMsg::ExecuteStep {
+				relayer: Addr::unchecked(relayer.clone()),
+				program: encode_protobuf(program),
+			},
 		)
 		.unwrap();
-		let final_test_msg = TestMsg {
-			part1: MOCK_CONTRACT_ADDR.into(),
-			part2: "hello".into(),
-			part3: RELAYER_ADDR.into(),
-		};
+		let final_test_msg =
+			TestMsg { part1: MOCK_CONTRACT_ADDR.into(), part2: "hello".into(), part3: relayer };
 		assert_eq!(
 			CosmosMsg::Wasm(WasmMsg::Execute {
 				contract_addr: MOCK_CONTRACT_ADDR.into(),

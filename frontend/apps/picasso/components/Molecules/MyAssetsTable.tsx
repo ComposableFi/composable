@@ -19,21 +19,35 @@ import { useStore } from "@/stores/root";
 import { PriceHashMap } from "@/stores/defi/stats/apollo";
 
 export type MyAssetsTableProps = TableContainerProps & {
-  tokensToList: TokenId[]
+  tokensToList: TokenId[];
 };
 
-function getPrice(map: PriceHashMap, token: TokenMetadata, key: "open" | "close"): BigNumber {
-  return !!map[token.symbol] && !!map[token.symbol][key] ? map[token.symbol][key] as BigNumber : new BigNumber(0)
+function getPrice(
+  map: PriceHashMap,
+  token: TokenMetadata,
+  key: "open" | "close"
+): BigNumber {
+  return !!map[token.symbol] && !!map[token.symbol][key]
+    ? (map[token.symbol][key] as BigNumber)
+    : new BigNumber(0);
 }
 
-export const MyAssetsTable: React.FC<MyAssetsTableProps> = ({ tokensToList }) => {
+export const MyAssetsTable: React.FC<MyAssetsTableProps> = ({
+  tokensToList,
+}) => {
   const tokens = useStore(({ substrateTokens }) => substrateTokens.tokens);
-  const tokenList = Object.values(tokens).filter((x) => (tokensToList.includes(x.id)));
-  const balances = useStore(({ substrateBalances }) => substrateBalances.balances.picasso);
+  const tokenList = Object.values(tokens).filter((x) =>
+    tokensToList.includes(x.id)
+  );
+  const balances = useStore(
+    ({ substrateBalances }) => substrateBalances.balances.picasso
+  );
   // dont know whether to use binance or our oracle here
   // for now using oracle
-  const { binanceAssets, oracleAssets } = useStore(({ statsApollo }) => statsApollo)
-  
+  const { binanceAssets, oracleAssets } = useStore(
+    ({ statsApollo }) => statsApollo
+  );
+
   if (tokenList && tokenList.length > 0) {
     return (
       <TableContainer>
@@ -51,7 +65,10 @@ export const MyAssetsTable: React.FC<MyAssetsTableProps> = ({ tokensToList }) =>
             {tokenList.map((row: TokenMetadata) => {
               const openPrice = getPrice(oracleAssets, row, "open");
               const closePrice = getPrice(oracleAssets, row, "open");
-              const change_24hr = openPrice.minus(closePrice).div(openPrice).toNumber()
+              const change_24hr = openPrice
+                .minus(closePrice)
+                .div(openPrice.eq(0) ? 1 : openPrice)
+                .toNumber();
               const balance = balances[row.id].balance;
               if (row.symbol) {
                 return (
@@ -62,9 +79,7 @@ export const MyAssetsTable: React.FC<MyAssetsTableProps> = ({ tokensToList }) =>
                     <TableCell align="left">
                       {/* Needs work */}
                       <Typography variant="body2">
-                        $ {openPrice.toFormat(
-                          row.decimalsToDisplay
-                        )}
+                        $ {openPrice.toFormat(row.decimalsToDisplay)}
                       </Typography>
                     </TableCell>
                     <TableCell align="left">
@@ -75,9 +90,7 @@ export const MyAssetsTable: React.FC<MyAssetsTableProps> = ({ tokensToList }) =>
                           sx={{ width: 36 }}
                         />
                         <Typography variant="body2">
-                          {balance.toFormat(
-                            row.decimalsToDisplay
-                          )}
+                          {balance.toFormat(row.decimalsToDisplay)}
                           &nbsp;
                           {row.symbol}
                         </Typography>
@@ -86,9 +99,9 @@ export const MyAssetsTable: React.FC<MyAssetsTableProps> = ({ tokensToList }) =>
                     <TableCell align="left">
                       <Typography variant="body2">
                         $
-                        {balance.times(openPrice).toFormat(
-                          row.decimalsToDisplay
-                        )}
+                        {balance
+                          .times(openPrice)
+                          .toFormat(row.decimalsToDisplay)}
                       </Typography>
                     </TableCell>
                     <TableCell align="left">
