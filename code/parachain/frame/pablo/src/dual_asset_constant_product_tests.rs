@@ -123,7 +123,7 @@ fn test() {
 
 		// TODO: Re-evaluate this assertion. The calculation of expected value is incorrect.
 		// 1 unit of btc = 45k + some unit of usdt
-		let ratio = <Pablo as Amm>::spot_price(pool_id, AssetAmount::new(BTC, unit), USDT)
+		let ratio = <Pablo as Amm>::spot_price(pool_id, AssetAmount::new(BTC, unit), USDT, true)
 			.expect("get_exchange_value failed");
 		// 4_500_000_000_000_000_000 / 101 ~= 44_554_455_445_544_554
 		assert!(ratio.value.amount == 44_554_455_445_544_554);
@@ -445,7 +445,7 @@ fn fees() {
 		let pool_id = create_pool(BTC, USDT, initial_btc, initial_usdt, lp_fee, owner_fee);
 		let bob_usdt = 45_000_u128 * unit;
 		let quote_usdt = bob_usdt - lp_fee.mul_floor(bob_usdt);
-		let expected_btc_value = <Pablo as Amm>::spot_price(pool_id, AssetAmount::new(USDT, quote_usdt), BTC)
+		let expected_btc_value = <Pablo as Amm>::spot_price(pool_id, AssetAmount::new(USDT, quote_usdt), BTC, true)
 			.expect("get_exchange_value failed");
 		// Mint the tokens
 		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
@@ -622,7 +622,7 @@ fn cannot_get_exchange_value_for_wrong_asset() {
 		));
 		let usdc_amount = 2000_u128 * unit;
 		assert_noop!(
-			<Pablo as Amm>::spot_price(pool_id, AssetAmount::new(USDC, usdc_amount), BTC),
+			<Pablo as Amm>::spot_price(pool_id, AssetAmount::new(USDC, usdc_amount), BTC, true),
 			Error::<Test>::AssetNotFound
 		);
 	});

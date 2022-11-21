@@ -986,8 +986,9 @@ pub mod pallet {
 
 		fn spot_price(
 			pool_id: Self::PoolId,
-			in_asset_amount: AssetAmount<Self::AssetId, Self::Balance>,
-			out_asset_id: Self::AssetId,
+			base_asset: AssetAmount<Self::AssetId, Self::Balance>,
+			quote_asset_id: Self::AssetId,
+			calculate_with_fees: bool,
 		) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
@@ -997,9 +998,9 @@ pub mod pallet {
 						DualAssetConstantProduct::<T>::get_exchange_value(
 							&info,
 							&pool_account,
-							in_asset_amount,
-							out_asset_id,
-							true,
+							base_asset,
+							quote_asset_id,
+							calculate_with_fees,
 						)?;
 
 					Ok(SwapResult {
@@ -1215,6 +1216,7 @@ pub mod pallet {
 			pool_id,
 			AssetAmount::new(base_asset_id, amount),
 			quote_asset_id,
+			false,
 		)?;
 		Ok(PriceAggregate {
 			pool_id,

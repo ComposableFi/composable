@@ -101,6 +101,7 @@ pub trait Amm {
 		pool_id: Self::PoolId,
 		base_asset: AssetAmount<Self::AssetId, Self::Balance>,
 		quote_asset_id: Self::AssetId,
+		calculate_with_fees: bool,
 	) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError>;
 
 	/// Buy given `amount` of given asset from the pool.
