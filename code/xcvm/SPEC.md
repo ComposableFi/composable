@@ -339,6 +339,13 @@ Sends a `Program` to another chain to be executed asynchronously. It is only gua
 <Salt>       ::= bytes
 ```
 
+### 2.2.3.1 Spawn program through IBC
+Spawned program using IBC based bridges need to be wrapped into packet data before being sent to IBC bridges. Protobuf encoding and decoding is implemented in this case for both sending and receiving packages. 
+The packet data is defined as follows:
+```
+<SpawnPackage>      ::= <Account> <Network> <Salt> <Program> <Assets>
+```
+
 ### 2.2.4. Query
 
 Queries register values of an `XCVM` instance across chains. It sets the current `Result Register` to `QueryResult`. See section 3. on the semantics of registers and `RegisterValues`.
