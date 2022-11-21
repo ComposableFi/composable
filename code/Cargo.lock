@@ -2976,6 +2976,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "cw-xcvm-gateway"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 0.14.0",
+ "cw-utils",
+ "cw-xcvm-asset-registry",
+ "cw-xcvm-router",
+ "cw-xcvm-utils",
+ "cw2",
+ "cw20",
+ "hex",
+ "prost 0.11.2",
+ "schemars",
+ "serde",
+ "serde-json-wasm",
+ "thiserror",
+ "xcvm-core",
+ "xcvm-proto",
+]
+
+[[package]]
 name = "cw-xcvm-interpreter"
 version = "0.1.0"
 dependencies = [
