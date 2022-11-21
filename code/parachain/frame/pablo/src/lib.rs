@@ -218,6 +218,7 @@ pub mod pallet {
 		NotEnoughLiquidity,
 		NotEnoughLpToken,
 		PairMismatch,
+		AssetNotFound,
 		MustBeOwner,
 		InvalidSaleState,
 		InvalidAmount,

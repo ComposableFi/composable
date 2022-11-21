@@ -584,7 +584,7 @@ fn cannot_swap_between_wrong_pairs() {
 				AssetAmount::new(BTC, 0_u128),
 				false
 			),
-			Error::<Test>::PairMismatch
+			Error::<Test>::AssetNotFound
 		);
 		assert_noop!(
 			Pablo::swap(
@@ -594,7 +594,7 @@ fn cannot_swap_between_wrong_pairs() {
 				AssetAmount::new(USDC, 0_u128),
 				false
 			),
-			Error::<Test>::PairMismatch
+			Error::<Test>::AssetNotFound
 		);
 	});
 }
@@ -623,7 +623,7 @@ fn cannot_get_exchange_value_for_wrong_asset() {
 		let usdc_amount = 2000_u128 * unit;
 		assert_noop!(
 			<Pablo as Amm>::spot_price(pool_id, AssetAmount::new(USDC, usdc_amount), BTC),
-			Error::<Test>::PairMismatch
+			Error::<Test>::AssetNotFound
 		);
 	});
 }

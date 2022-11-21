@@ -160,8 +160,8 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		let pool_assets = Self::get_pool_balances(pool, pool_account);
 		let a_sent = T::Convert::convert(in_asset.amount);
 		let fee = if apply_fees { pool.fee_config.fee_rate } else { Permill::zero() };
-		let (w_i, b_i) = pool_assets.get(&in_asset.asset_id).ok_or(Error::<T>::PairMismatch)?;
-		let (w_o, b_o) = pool_assets.get(&out_asset_id).ok_or(Error::<T>::PairMismatch)?;
+		let (w_i, b_i) = pool_assets.get(&in_asset.asset_id).ok_or(Error::<T>::AssetNotFound)?;
+		let (w_o, b_o) = pool_assets.get(&out_asset_id).ok_or(Error::<T>::AssetNotFound)?;
 
 		let amm_pair = compute_out_given_in_new::<_>(*w_i, *w_o, *b_i, *b_o, a_sent, fee)?;
 
@@ -194,8 +194,8 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		let pool_assets = Self::get_pool_balances(pool, pool_account);
 		let a_out = T::Convert::convert(out_asset.amount);
 		let fee = if apply_fees { pool.fee_config.fee_rate } else { Permill::zero() };
-		let (w_o, b_o) = pool_assets.get(&out_asset.asset_id).ok_or(Error::<T>::PairMismatch)?;
-		let (w_i, b_i) = pool_assets.get(&in_asset_id).ok_or(Error::<T>::PairMismatch)?;
+		let (w_o, b_o) = pool_assets.get(&out_asset.asset_id).ok_or(Error::<T>::AssetNotFound)?;
+		let (w_i, b_i) = pool_assets.get(&in_asset_id).ok_or(Error::<T>::AssetNotFound)?;
 
 		let amm_pair = compute_in_given_out_new(*w_i, *w_o, *b_i, *b_o, a_out, fee)?;
 
