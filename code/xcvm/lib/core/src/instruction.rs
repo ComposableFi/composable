@@ -1,4 +1,4 @@
-use crate::{AssetId, BridgeSecurity, Displayed, Funds, Program};
+use crate::{AssetId, Balance, BridgeSecurity, Displayed, Funds, Program};
 use alloc::{
 	collections::{BTreeMap, VecDeque},
 	vec::Vec,
@@ -20,12 +20,13 @@ pub struct SpawnEvent<Network, Payload, Account, Assets> {
 }
 
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum BindingValue {
 	Register(Register),
 	/// Asset's address
 	Asset(AssetId),
+	AssetAmount(AssetId, Balance),
 }
 
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]

@@ -146,6 +146,23 @@ pub const MAX_PARTS: u128 = 1000000000000000000;
 	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
 )]
 #[serde(rename_all = "snake_case")]
+pub struct Balance {
+	pub amount: Amount,
+	pub is_unit: bool,
+}
+
+impl Balance {
+	#[inline]
+	pub fn new(amount: Amount, is_unit: bool) -> Self {
+		Self { amount, is_unit }
+	}
+}
+
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(
+	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
+)]
+#[serde(rename_all = "snake_case")]
 /// See https://en.wikipedia.org/wiki/Linear_equation#Slope%E2%80%93intercept_form_or_Gradient-intercept_form
 pub struct Amount {
 	pub intercept: Displayed<u128>,
@@ -216,6 +233,7 @@ impl From<u128> for Amount {
 }
 
 impl Amount {
+	/// `f(x) = a(x - b) + b where a = slope / MAX_PARTS, b = intercept`
 	#[inline]
 	pub fn apply(&self, value: u128) -> u128 {
 		let amount = if self.slope.0 == 0 {
@@ -230,6 +248,20 @@ impl Amount {
 				.wrapping_to_num::<u128>()
 				.saturating_add(self.intercept.0)
 		};
+		u128::min(value, amount)
+	}
+
+	/// `f(x) = a + b * 10 ^ decimals where a = intercept, b = slope / MAX_PARTS`
+	#[inline]
+	pub fn apply_with_decimals(&self, decimals: u8, value: u128) -> u128 {
+		let amount = FixedU128::<U16>::wrapping_from_num(self.intercept.0)
+			.saturating_add(
+				FixedU128::<U16>::wrapping_from_num(self.slope.0)
+					.saturating_div(FixedU128::<U16>::wrapping_from_num(MAX_PARTS)),
+			)
+			.wrapping_to_num::<u128>()
+			.saturating_mul(10 ^ (decimals as u128));
+
 		u128::min(value, amount)
 	}
 }
