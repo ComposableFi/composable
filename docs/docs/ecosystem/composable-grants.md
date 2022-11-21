@@ -27,13 +27,9 @@ we are interested in working with you and will support projects at every stage o
 
 Individuals and teams looking to build pallets on Picasso should apply [here](https://airtable.com/shrGBfRd7HfEFKQOM).
 
-Those interested in working with Mosaic and the Composable SDK to develop cross-layer dApps should apply 
-[here](https://airtable.com/shryLItVAiXjWzqdn).
-
 Apply now to be on the cutting-edge of DeFi’s interoperable future. 
 This is just the start of Composable’s journey to bring interoperability to the blockchain, 
 and we want you to grow alongside us. The grants program has three divisions:
-
 
 ### The Pallets Program
 
@@ -42,7 +38,6 @@ pallets onto [Picasso](../parachains/picasso-parachain-overview.md),
 helping build out a complete offering of all DeFi functionalities (from basic to advanced) 
 as building blocks for future developers to quickly architect powerful dApps on Picasso.
 
-
 Composable’s Substrate pallets provide LEGO-like building blocks for developers to build interoperable applications on Picasso. 
 As noted, our team is currently working on several pallets. 
 To reach our goal of providing a complete list of offerings to make building on our ecosystem as simple as possible, 
@@ -50,33 +45,26 @@ we are providing grants for pallet developers and those leveraging our pallets t
 
 There are three separate pallet tracks for our grants: primitive, core and application:
 
-
-
 * **Primitive Track** grant recipients building essential tooling for pallets and applications deployed on the XCVM. 
 * **Secondary (Core) Track** teams will leverage the primary primitive pallets to create building blocks which allow for 
   user interaction and value generation.
 * **Tertiary (Application) Track** projects will be those that leverage both primitive pallets and core functionalities.
 
-
 ### The Cross-Chain Applications Program:
 
-This program invites developers to leverage our 
-[Composable software development kit (SDK)](https://sdk-docs.composable.finance/sdk/introduction) 
-to use our technology and build interoperable applications native to the Composable ecosystem. 
-Currently, the Composable SDK comprises a set of tools such as Mosaic, 
-which is stacked in a layer on top of the XCVM and functions as an early iteration of the XCVM.
+This program invites developers to leverage our [technical stack](../products/technical-stack-overview.md) 
+and build interoperable applications native to the Composable ecosystem.
 
-Composable Finance has built this [SDK](https://sdk-docs.composable.finance/sdk/introduction) 
-to facilitate development across various layers and chains. 
+Composable Finance aims to facilitate innovative and end-user focused development across various layers and chains. 
 Given this broad scope of possibilities, our cross-layer grant recipients can have a diverse set of interests, 
 for example:
 
-- Use Composable’s SDK to build a cross-layer yield aggregator, allowing maximal yield generation.
+- Use Composable’s technical stack to build a cross-layer yield aggregator, allowing maximal yield generation.
 
 - Use cross-layer function calls to build a flash loan protocol which can leap across several chains within a single 
   block time.
 
 At Composable, we are still discovering the full extent to which this technology can be leveraged. 
-Even if you are not seeking a grant, we still invite you to work with our SDK to see what you can build!
+Even if you are not seeking a grant, we still invite you to work with our technical stack to see what you can build!
 
 ---
