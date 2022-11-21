@@ -7,7 +7,7 @@ timeout = 600
 [relaychain]
 chain = "rococo-local"
 default_args = ["-lparachain=debug"]
-default_command = "../../../../paritytech/polkadot/target/release/polkadot"  # nix build .#polakdot-node 
+default_command = "../../../../paritytech/polkadot/target/release/polkadot"  # nix build .#polkadot-node 
 
 
 [relaychain.genesis.runtime.runtime_genesis_config.configuration.config]
