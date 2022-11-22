@@ -7,12 +7,14 @@ use crate::{
 
 use common::AccountId;
 
+#[cfg(feature = "dali")]
 use frame_system::RawOrigin;
 
 use orml_traits::currency::MultiCurrency;
 
 use frame_support::{assert_ok, log};
 
+#[cfg(feature = "dali")]
 use xcm::VersionedXcm;
 
 use xcm_emulator::TestExt;
