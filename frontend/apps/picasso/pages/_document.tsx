@@ -53,7 +53,7 @@ export default class MyDocument extends Document {
             href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;600&display=swap"
             rel="stylesheet"
           />
-          <link rel="apple-touch-icon" href="/pwa/touch-icon-iphone.png" />
+          <link rel="apple-touch-icon" href="/pwa/apple-touch-icon.png" />
           <link
             rel="apple-touch-icon"
             sizes="152x152"
@@ -62,7 +62,7 @@ export default class MyDocument extends Document {
           <link
             rel="apple-touch-icon"
             sizes="180x180"
-            href="/pwa/touch-icon-iphone.png"
+            href="/pwa/apple-touch-icon.png"
           />
           <link
             rel="apple-touch-icon"
@@ -74,13 +74,13 @@ export default class MyDocument extends Document {
             rel="icon"
             type="image/png"
             sizes="32x32"
-            href="/pwa/32x32.png"
+            href="/pwa/favicon-32x32.png"
           />
           <link
             rel="icon"
             type="image/png"
             sizes="16x16"
-            href="/pwa/16x16.png"
+            href="/pwa/favicon-32x32.png"
           />
           <link rel="manifest" href="/manifest.json" />
           <link rel="shortcut icon" href="/pwa/favicon.ico" />
@@ -94,7 +94,7 @@ export default class MyDocument extends Document {
             name="twitter:description"
             content="The interoperable crosschain DeFi Hub built on the DotSama ecosystem"
           />
-          <meta name="twitter:image" content="/pwa/icon-medium.png" />
+          <meta name="twitter:image" content="/pwa/android-chrome-512x512.png" />
           <meta name="twitter:creator" content="@picasso_network" />
           <meta property="og:type" content="website" />
           <meta
@@ -107,7 +107,7 @@ export default class MyDocument extends Document {
           />
           <meta property="og:site_name" content="Picasso Parachain" />
           <meta property="og:url" content="https://picasso.xyz" />
-          <meta property="og:image" content="/pwa/icon-medium.png" />
+          <meta property="og:image" content="/pwa/android-chrome-512x512.png" />
 
           {/* PWA primary color */}
           <meta name="theme-color" content={theme.palette.primary.main} />
