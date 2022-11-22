@@ -1,3 +1,5 @@
+use core::fmt::Display;
+
 use crate::abstraction::IndexOf;
 use alloc::vec::Vec;
 use codec::{Decode, Encode};
@@ -61,6 +63,12 @@ impl AsRef<[u8]> for UserId {
 )]
 #[repr(transparent)]
 pub struct NetworkId(pub u32);
+
+impl Display for NetworkId {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+      <u32 as Display>::fmt(&self.0, f)
+    }
+}
 
 impl From<u32> for NetworkId {
 	fn from(x: u32) -> Self {
