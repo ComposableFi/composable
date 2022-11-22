@@ -1,0 +1,36 @@
+{
+  "name": "@composable/vesting_data_verifier",
+  "version": "1.0.0",
+  "description": "Verifies data populated on the vesting pallet, based on provided expected transfers file.",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "yarn vesting_verification",
+    "build": "tsc --build",
+    "vesting_verification": "npx ts-node -P tsconfig.json src/main.ts",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint 'src/*.ts' --fix-dry-run ",
+    "clean": "find ./src -name '*.js' -or -name '*.js.map'  -or -name '*.d.ts' -type f -delete"
+  },
+  "keywords": [
+    "crowdloan",
+    "composable"
+  ],
+  "license": "Public Domain",
+  "dependencies": {
+    "@polkadot/api": "9.9.1",
+    "@polkadot/keyring": "10.1.13",
+    "@polkadot/types": "9.9.1",
+    "@polkadot/types-codec": "9.9.1",
+    "@polkadot/util": "10.1.13",
+    "@polkadot/util-crypto": "10.1.13",
+    "@types/node": "18.11.9",
+    "@types/papaparse": "^5.3.5",
+    "bn.js": "5.2.1",
+    "eslint": "8.28.0",
+    "node-fetch": "2.6.7",
+    "papaparse": "^5.3.2",
+    "request": "^2.88.2",
+    "ts-node": "10.9.1",
+    "typescript": "4.9.3"
+  }
+}
