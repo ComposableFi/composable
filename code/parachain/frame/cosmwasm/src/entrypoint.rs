@@ -193,6 +193,7 @@ where
 		})
 	}
 
+	#[allow(dead_code)]
 	pub fn call_json<Message>(
 		self,
 		shared: &mut CosmwasmVMShared,

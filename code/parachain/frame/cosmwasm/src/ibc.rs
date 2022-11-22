@@ -69,7 +69,6 @@ type VM<'a, T> = WasmiVM<CosmwasmVM<'a, T>>;
 
 const PORT_PREFIX: &str = "wasm";
 
-// https://github.com/ComposableFi/centauri/discussions/118
 trait IbcHandlerExtended<C: Config> {
 	fn get_relayer_account() -> AccountIdOf<C>;
 }
@@ -111,8 +110,8 @@ impl<T: Config> Pallet<T> {
 			},
 			from: vm.contract_address.clone().into_inner(),
 			timeout: ibc_primitives::Timeout::Offset {
-				timestamp: unimplemented!("after timeout will have pub interface"),
-				height: unimplemented!("after timeout will have pub interface"),
+				timestamp: Err(<CosmwasmVMError<T>>::Ibc(format!("after timeout will have pub interface")))?,
+				height: Err(<CosmwasmVMError<T>>::Ibc(format!("after timeout will have pub interface")))?,
 			},
 			to: IbcSigner::from_str(&to_address.as_ref())
 				.map_err(|_| <CosmwasmVMError<T>>::Ibc("bad ".to_string()))?,
@@ -137,7 +136,7 @@ impl<T: Config> Pallet<T> {
 
 		T::IbcRelayer::handle_message(HandlerMessage::SendPacket {
 			data: data.to_vec(),
-			timeout: unimplemented!("as soon as IBC will provide public timeout"),
+			timeout: Err(<CosmwasmVMError<T>>::Ibc(format!("as soon as IBC will provide public timeout")))?,
 			channel_id,
 			port_id,
 		})
@@ -279,6 +278,11 @@ impl<T: Config> Router<T> {
 
 	fn execute<I, M, V>(vm: &mut V, message: M) -> Result<I::Output, IbcError>
 	where
+	    // unfortunately, here is reason
+		// 1. Rust fails to decided that VM is V (which it is)
+		// 2. also without unsafe rust cannot do struct which borrows mut 2 of its items (without callbacks)
+		// 3. so in order to reuse calls either need to build entrypoint.rs like wrappers for each call
+		// 4. but here just closed `cosmwasm_vm + pallet-cosmwasm` on functional level (helped rust type inference)
 		M: serde::Serialize,
 		I: Input + HasInfo,
 		I::Output: serde::de::DeserializeOwned + ReadLimit + DeserializeLimit,
@@ -318,7 +322,7 @@ impl<T: Config> Router<T> {
 					channel_id: packet.destination_channel.to_string(),
 				},
 				sequence: packet.sequence.into(),
-				timeout: unimplemented!("https://app.clickup.com/t/39gjzw1"),
+				timeout: Err(IbcError::implementation_specific(format!("https://app.clickup.com/t/39gjzw1")))?,
 			},
 		};
 		let gas = Weight::MAX;
@@ -363,7 +367,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 						port_id: counterparty.port_id.to_string(),
 						channel_id: counterparty.channel_id.expect("channel").to_string(),
 					},
-					order: map_order(order),
+					order: map_order(order)?,
 					version: version.to_string(),
 					connection_id: connection_hops.get(0).expect("by spec there is at least one connection; qed").to_string(),
 				},
@@ -390,7 +394,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		version: &IbcVersion,
 		counterparty_version: &IbcVersion,
 	) -> Result<IbcVersion, IbcError> {
-		let order = map_order(order);
+		let order = map_order(order)?;
 		let address = Self::port_to_address(port_id)?;
 		let contract_info = Self::to_ibc_contract(&address)?;
 
@@ -439,10 +443,10 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 					port_id: port_id.to_string(),
 					channel_id: channel_id.to_string(),
 				},
-				counterparty_endpoint: unimplemented!("https://github.com/ComposableFi/centauri/issues/120"),
-				order: unimplemented!("https://github.com/ComposableFi/centauri/issues/120"),
-				version: unimplemented!("https://github.com/ComposableFi/centauri/issues/120"),
-				connection_id: unimplemented!("https://github.com/ComposableFi/centauri/issues/120"),
+				counterparty_endpoint: Err(IbcError::implementation_specific(format!("https://github.com/ComposableFi/centauri/issues/120")))?,
+				order: Err(IbcError::implementation_specific(format!("https://github.com/ComposableFi/centauri/issues/120")))?,
+				version: Err(IbcError::implementation_specific(format!("https://github.com/ComposableFi/centauri/issues/120")))?,
+				connection_id: Err(IbcError::implementation_specific(format!("https://github.com/ComposableFi/centauri/issues/120")))?,
 			},
 			counterparty_version: counterparty_version.to_string(),
 		};
@@ -473,10 +477,10 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 					port_id: port_id.to_string(),
 					channel_id: channel_id.to_string(),
 				},
-				counterparty_endpoint: unimplemented!("https://github.com/ComposableFi/centauri/issues/120"),
-				order: unimplemented!("https://github.com/ComposableFi/centauri/issues/120"),
-				version: unimplemented!("https://github.com/ComposableFi/centauri/issues/120"),
-				connection_id: unimplemented!("https://github.com/ComposableFi/centauri/issues/120"),
+				counterparty_endpoint: Err(IbcError::implementation_specific(format!("https://github.com/ComposableFi/centauri/issues/120")))?,
+				order: Err(IbcError::implementation_specific(format!("https://github.com/ComposableFi/centauri/issues/120")))?,
+				version: Err(IbcError::implementation_specific(format!("https://github.com/ComposableFi/centauri/issues/120")))?,
+				connection_id: Err(IbcError::implementation_specific(format!("https://github.com/ComposableFi/centauri/issues/120")))?,
 			},
 		};
 		let gas = Weight::MAX;
@@ -505,10 +509,10 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 					port_id: port_id.to_string(),
 					channel_id: channel_id.to_string(),
 				},
-				counterparty_endpoint: unimplemented!("https://github.com/ComposableFi/centauri/issues/120"),
-				order: unimplemented!("https://github.com/ComposableFi/centauri/issues/120"),
-				version: unimplemented!("https://github.com/ComposableFi/centauri/issues/120"),
-				connection_id: unimplemented!("https://github.com/ComposableFi/centauri/issues/120"),
+				counterparty_endpoint: Err(IbcError::implementation_specific(format!("https://github.com/ComposableFi/centauri/issues/120")))?,
+				order: Err(IbcError::implementation_specific(format!("https://github.com/ComposableFi/centauri/issues/120")))?,
+				version: Err(IbcError::implementation_specific(format!("https://github.com/ComposableFi/centauri/issues/120")))?,
+				connection_id: Err(IbcError::implementation_specific(format!("https://github.com/ComposableFi/centauri/issues/120")))?,
 			},
 		};
 		let gas = Weight::MAX;
@@ -537,10 +541,10 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 					port_id: port_id.to_string(),
 					channel_id: channel_id.to_string(),
 				},
-				counterparty_endpoint: unimplemented!("https://github.com/ComposableFi/centauri/issues/120"),
-				order: unimplemented!("https://github.com/ComposableFi/centauri/issues/120"),
-				version: unimplemented!("https://github.com/ComposableFi/centauri/issues/120"),
-				connection_id: unimplemented!("https://github.com/ComposableFi/centauri/issues/120"),
+				counterparty_endpoint: Err(IbcError::implementation_specific(format!("https://github.com/ComposableFi/centauri/issues/120")))?,
+				order: Err(IbcError::implementation_specific(format!("https://github.com/ComposableFi/centauri/issues/120")))?,
+				version: Err(IbcError::implementation_specific(format!("https://github.com/ComposableFi/centauri/issues/120")))?,
+				connection_id: Err(IbcError::implementation_specific(format!("https://github.com/ComposableFi/centauri/issues/120")))?,
 			},
 		};
 		let gas = Weight::MAX;
@@ -596,7 +600,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 					channel_id: packet.source_channel.to_string(),
 				},
 				sequence: packet.sequence.into(),
-				timeout: unimplemented!("https://app.clickup.com/t/39gjzw1"),
+				timeout: Err(IbcError::implementation_specific(format!("https://app.clickup.com/t/39gjzw1")))?,
 			},
 		};
 
@@ -608,7 +612,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 			VM<T>,
 			IbcPacketAckMsg,
 		>(&mut executor, &message)
-		.unwrap();
+		.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
 		let _remaining = vm.gas.remaining();
 		Ok(())
 	}
@@ -634,7 +638,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 					channel_id: packet.source_channel.to_string(),
 				},
 				sequence: packet.sequence.into(),
-				timeout: unimplemented!("need make pub access to init of IbcTimeout"),
+				timeout: Err(IbcError::implementation_specific(format!("need make pub access to init of IbcTimeout")))?,
 			},
 		};
 
@@ -646,7 +650,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 			VM<T>,
 			IbcPacketTimeoutMsg,
 		>(&mut executor, &message)
-		.unwrap();
+		.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
 		let _remaining = vm.gas.remaining();
 		Ok(())
 	}
@@ -659,11 +663,11 @@ fn contract_to_result<T>(result: ContractResult<T>) -> Result<T, IbcError> {
 	}
 }
 
-fn map_order(order: Order) -> IbcOrder {
+fn map_order(order: Order) -> Result<IbcOrder, IbcError> {
 	match order {
-		Order::None => unimplemented!("https://github.com/ComposableFi/centauri/issues/130"),
-		Order::Unordered => IbcOrder::Unordered,
-		Order::Ordered => IbcOrder::Unordered,
+		Order::None => Err(IbcError::implementation_specific(format!("https://github.com/ComposableFi/centauri/issues/130")))?,
+		Order::Unordered => Ok(IbcOrder::Unordered),
+		Order::Ordered => Ok(IbcOrder::Ordered),
 	}
 }
 
