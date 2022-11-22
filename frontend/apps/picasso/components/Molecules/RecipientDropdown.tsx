@@ -38,6 +38,7 @@ export type RecipientDropDownProps = {
   expanded: boolean;
   options: Array<{ value: string; label: string; icon: string }>;
   setValue?: React.Dispatch<React.SetStateAction<any>>;
+  disabled?: boolean;
 };
 
 export const RecipientDropdown: React.FC<RecipientDropDownProps> = ({
@@ -45,6 +46,7 @@ export const RecipientDropdown: React.FC<RecipientDropDownProps> = ({
   expanded,
   options,
   setValue,
+  disabled,
 }) => {
   const [isExpanded, setIsExpanded] = useState(expanded);
 
@@ -55,7 +57,11 @@ export const RecipientDropdown: React.FC<RecipientDropDownProps> = ({
   };
 
   return (
-    <Accordion expanded={isExpanded} onChange={handleChange}>
+    <Accordion
+      expanded={isExpanded}
+      onChange={handleChange}
+      disabled={disabled}
+    >
       <AccordionSummary
         sx={headerStyle}
         expandIcon={<ExpandMoreIcon sx={expandIconStyle} />}
