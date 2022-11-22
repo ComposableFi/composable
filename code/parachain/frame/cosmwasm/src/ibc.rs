@@ -365,7 +365,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 					},
 					order: map_order(order),
 					version: version.to_string(),
-					connection_id: connection_hops.get(0).expect("by spec there is at least one connection; qed")).to_string(),
+					connection_id: connection_hops.get(0).expect("by spec there is at least one connection; qed").to_string(),
 				},
 			}
 		};
@@ -408,7 +408,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 					},
 					order,
 					version: version.to_string(),
-					connection_id: connection_hops.get(0).expect("by spec there is at least one connection; qed")).to_string(),
+					connection_id: connection_hops.get(0).expect("by spec there is at least one connection; qed").to_string(),
 				},
 			}
 		};
@@ -602,7 +602,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 
 		let gas = Weight::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
-		let mut executor = Self::relayer_executor(&mut vm, address, contract_info).unwrap();
+		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
 		let (data, events) = cosmwasm_system_entrypoint_serialize::<
 			IbcPacketAck,
 			VM<T>,
@@ -640,7 +640,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 
 		let gas = Weight::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
-		let mut executor = Self::relayer_executor(&mut vm, address, contract_info).unwrap();
+		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
 		let (data, events) = cosmwasm_system_entrypoint_serialize::<
 			IbcPacketTimeout,
 			VM<T>,
