@@ -6,7 +6,6 @@ import BN from "bn.js";
 
 
 /**
- * Thanks to Saracha Tongkumpunt on StackOverflow for this snippet.
  * Source: https://stackoverflow.com/a/66149302
  */
 const downloadCsv = async (url: string) => {

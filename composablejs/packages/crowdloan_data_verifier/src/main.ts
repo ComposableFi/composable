@@ -5,9 +5,6 @@ import { getNewConnection } from "@composable/utils";
 import { verifyCrowdloanData } from "@composable/crowdloan_data_verifier/handler";
 
 
-const CONTRIBUTOR_LIST_URL =
-  "https://raw.githubusercontent.com/ComposableFi/composable/main/frontend/apps/picasso/defi/polkadot/constants/pica-rewards-contributions.json";
-
 const main = async () => {
   console.log("Crowdloan Pallet Verifier");
 
@@ -16,11 +13,10 @@ const main = async () => {
   const endpoint = process.env.ENDPOINT ?? "ws://127.0.0.1:9988";
   const { newClient } = await getNewConnection(endpoint);
 
-  const contributorsUrl = process.env.CONTRIBUTOR_LIST_URL ?? CONTRIBUTOR_LIST_URL;
 
   // Here the actual magic happens
   // @ts-ignore
-  await verifyCrowdloanData(newClient, contributorsUrl);
+  await verifyCrowdloanData(newClient);
 
   // Disconnecting from the node.
   console.debug("disconnecting...");
