@@ -19,6 +19,7 @@ const main = async () => {
   const contributorsUrl = process.env.CONTRIBUTOR_LIST_URL ?? CONTRIBUTOR_LIST_URL;
 
   // Here the actual magic happens
+  // @ts-ignore
   await verifyCrowdloanData(newClient, contributorsUrl);
 
   // Disconnecting from the node.
