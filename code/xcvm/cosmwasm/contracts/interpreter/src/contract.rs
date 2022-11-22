@@ -362,7 +362,7 @@ pub fn interpret_spawn(
 		}
 	}
 
-  // TODO(hussein-aitlahcen): forward back to gateway
+	// TODO(hussein-aitlahcen): forward back to gateway
 
 	Ok(response.add_event(
 		Event::new(XCVM_INTERPRETER_EVENT_PREFIX)
