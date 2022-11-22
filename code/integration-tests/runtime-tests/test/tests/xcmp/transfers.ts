@@ -73,7 +73,6 @@ describe("[SHORT][LAUNCH] tx.xcmp Tests", function () {
    * Sudo command success is checked with `.isOk`.
    */
   describe("xcmPallet.reserveTransferAssets Success Test", function () {
-    if (!testConfiguration.enabledTests.addAssetAndInfo__success.enabled) return;
     // Timeout set to 2 minutes
     this.timeout(10 * 60 * 1000);
     it("Can transfer asset(kUSD) from relay chain(KSM) to Picasso", async function () {
@@ -160,8 +159,6 @@ describe("[SHORT][LAUNCH] tx.xcmp Tests", function () {
    * Transfers an asset from RelayChain (Rococo Testnet) to Picasso/Dali.
    */
   describe("xTokens.transfer Success Test", function () {
-    // update name in test_configuration. Ask Dom
-    if (!testConfiguration.enabledTests.addAssetAndInfo__success.enabled) return;
     // Timeout set to 2 minutes
     this.timeout(10 * 60 * 1000);
 
