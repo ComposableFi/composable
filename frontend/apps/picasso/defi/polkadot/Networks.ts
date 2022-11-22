@@ -47,7 +47,7 @@ export const SUBSTRATE_NETWORKS: {
     wsUrl: getEnvironment("statemine"),
     tokenId: "ksm",
     ss58Format: 2,
-    subscanUrl: "",
+    subscanUrl: "https://statemine.subscan.io/",
     symbol: "KSM",
     logo: "/networks/statemine.svg",
     decimals: 12,
