@@ -1,7 +1,5 @@
 use crate::{
-	runtimes::{
-		wasmi::{CodeValidation, CosmwasmVM, CosmwasmVMError, CosmwasmVMShared},
-	},
+	runtimes::wasmi::{CodeValidation, CosmwasmVM, CosmwasmVMError, CosmwasmVMShared},
 	version::Version,
 	AccountIdOf, CodeIdToInfo, Config, ContractInfoOf, Pallet,
 };
@@ -16,7 +14,7 @@ use cosmwasm_minimal_std::{
 		IbcChannelOpenMsg, IbcEndpoint, IbcOrder, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg,
 		IbcPacketTimeoutMsg,
 	},
-	Binary, ContractResult, Env, MessageInfo,
+	Addr, Binary, ContractResult, Env, MessageInfo,
 };
 use cosmwasm_vm::{
 	executor::{
@@ -38,12 +36,7 @@ use cosmwasm_vm_wasmi::WasmiVM;
 use sp_std::{marker::PhantomData, str::FromStr};
 
 use crate::runtimes::wasmi::InitialStorageMutability;
-use frame_support::{
-	ensure,
-	traits::{Get},
-	weights::Weight,
-	RuntimeDebug,
-};
+use frame_support::{ensure, traits::Get, weights::Weight, RuntimeDebug};
 use ibc::{
 	applications::transfer::{Amount, PrefixedCoin, PrefixedDenom},
 	core::{
@@ -104,12 +97,18 @@ impl<T: Config> Pallet<T> {
 			channel_id,
 			coin: PrefixedCoin {
 				amount: Amount::from(amount.amount as u64),
-				denom: PrefixedDenom::from_str(amount.denom.as_ref()).map_err(|_| <CosmwasmVMError<T>>::Ibc("provided asset is not IBC compatible".to_string()))?,
+				denom: PrefixedDenom::from_str(amount.denom.as_ref()).map_err(|_| {
+					<CosmwasmVMError<T>>::Ibc("provided asset is not IBC compatible".to_string())
+				})?,
 			},
 			from: vm.contract_address.clone().into_inner(),
 			timeout: ibc_primitives::Timeout::Offset {
-				timestamp: Err(<CosmwasmVMError<T>>::Ibc("after timeout will have pub interface".to_string()))?,
-				height: Err(<CosmwasmVMError<T>>::Ibc("after timeout will have pub interface".to_string()))?,
+				timestamp: Err(<CosmwasmVMError<T>>::Ibc(
+					"after timeout will have pub interface".to_string(),
+				))?,
+				height: Err(<CosmwasmVMError<T>>::Ibc(
+					"after timeout will have pub interface".to_string(),
+				))?,
 			},
 			to: IbcSigner::from_str(to_address.as_ref())
 				.map_err(|_| <CosmwasmVMError<T>>::Ibc("bad ".to_string()))?,
@@ -134,7 +133,9 @@ impl<T: Config> Pallet<T> {
 
 		T::IbcRelayer::handle_message(HandlerMessage::SendPacket {
 			data: data.to_vec(),
-			timeout: Err(<CosmwasmVMError<T>>::Ibc("as soon as IBC will provide public timeout".to_string()))?,
+			timeout: Err(<CosmwasmVMError<T>>::Ibc(
+				"as soon as IBC will provide public timeout".to_string(),
+			))?,
 			channel_id,
 			port_id,
 		})
@@ -196,7 +197,9 @@ impl<T: Config> Router<T> {
 		let address_part = Self::parse_address_part(port_id)?;
 		let address =
 			<Pallet<T>>::cosmwasm_addr_to_account(address_part.to_string()).map_err(|_| {
-				IbcError::implementation_specific("was not able to convert port to contract address".to_string())
+				IbcError::implementation_specific(
+					"was not able to convert port to contract address".to_string(),
+				)
 			})?;
 		Ok(address)
 	}
@@ -276,11 +279,12 @@ impl<T: Config> Router<T> {
 
 	fn execute<I, M, V>(vm: &mut V, message: M) -> Result<I::Output, IbcError>
 	where
-	    // unfortunately, here is reason
+		// unfortunately, here is reason
 		// 1. Rust fails to decided that VM is V (which it is)
-		// 2. also without unsafe rust cannot do struct which borrows mut 2 of its items (without callbacks)
-		// 3. so in order to reuse calls either need to build entrypoint.rs like wrappers for each call
-		// 4. but here just closed `cosmwasm_vm + pallet-cosmwasm` on functional level (helped rust type inference)
+		// 2. also without unsafe rust cannot do struct which borrows mut 2 of its items (without
+		// callbacks) 3. so in order to reuse calls either need to build entrypoint.rs like wrappers for
+		// each call 4. but here just closed `cosmwasm_vm + pallet-cosmwasm` on functional level (helped
+		// rust type inference)
 		M: serde::Serialize,
 		I: Input + HasInfo,
 		I::Output: serde::de::DeserializeOwned + ReadLimit + DeserializeLimit,
@@ -320,9 +324,11 @@ impl<T: Config> Router<T> {
 					channel_id: packet.destination_channel.to_string(),
 				},
 				sequence: packet.sequence.into(),
-				timeout: Err(IbcError::implementation_specific("https://app.clickup.com/t/39gjzw1".to_string()))?,
+				timeout: Err(IbcError::implementation_specific(
+					"https://app.clickup.com/t/39gjzw1".to_string(),
+				))?,
 			},
-			relayer : relayer.to_string(),
+			relayer: Addr::unchecked(relayer.to_string()),
 		};
 		let gas = Weight::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
@@ -355,7 +361,6 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		let contract_info = Self::to_ibc_contract(&address)?;
 
 		let message = {
-			use cosmwasm_minimal_std::ibc::{IbcChannel, IbcChannelOpenMsg, IbcEndpoint};
 			IbcChannelOpenMsg::OpenInit {
 				channel: IbcChannel {
 					endpoint: IbcEndpoint {
@@ -368,7 +373,10 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 					},
 					order: map_order(order)?,
 					version: version.to_string(),
-					connection_id: connection_hops.get(0).expect("by spec there is at least one connection; qed").to_string(),
+					connection_id: connection_hops
+						.get(0)
+						.expect("by spec there is at least one connection; qed")
+						.to_string(),
 				},
 			}
 		};
@@ -398,7 +406,6 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		let contract_info = Self::to_ibc_contract(&address)?;
 
 		let message = {
-			use cosmwasm_minimal_std::ibc::{IbcChannel, IbcChannelOpenMsg, IbcEndpoint};
 			IbcChannelOpenMsg::OpenInit {
 				channel: IbcChannel {
 					endpoint: IbcEndpoint {
@@ -422,7 +429,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 			Self::execute::<IbcChannelOpen, IbcChannelOpenMsg, VM<T>>(&mut instance, message)?.0,
 		)?
 		.map(|x| IbcVersion::new(x.version))
-		.unwrap_or(version.clone());
+		.unwrap_or_else(|| version.clone());
 		let _remaining = vm.runtime.gas.remaining();
 		Ok(result)
 	}
@@ -442,10 +449,18 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 					port_id: port_id.to_string(),
 					channel_id: channel_id.to_string(),
 				},
-				counterparty_endpoint: Err(IbcError::implementation_specific("https://github.com/ComposableFi/centauri/issues/120".to_string()))?,
-				order: Err(IbcError::implementation_specific("https://github.com/ComposableFi/centauri/issues/120".to_string()))?,
-				version: Err(IbcError::implementation_specific("https://github.com/ComposableFi/centauri/issues/120".to_string()))?,
-				connection_id: Err(IbcError::implementation_specific("https://github.com/ComposableFi/centauri/issues/120".to_string()))?,
+				counterparty_endpoint: Err(IbcError::implementation_specific(
+					"https://github.com/ComposableFi/centauri/issues/120".to_string(),
+				))?,
+				order: Err(IbcError::implementation_specific(
+					"https://github.com/ComposableFi/centauri/issues/120".to_string(),
+				))?,
+				version: Err(IbcError::implementation_specific(
+					"https://github.com/ComposableFi/centauri/issues/120".to_string(),
+				))?,
+				connection_id: Err(IbcError::implementation_specific(
+					"https://github.com/ComposableFi/centauri/issues/120".to_string(),
+				))?,
 			},
 			counterparty_version: counterparty_version.to_string(),
 		};
@@ -476,10 +491,18 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 					port_id: port_id.to_string(),
 					channel_id: channel_id.to_string(),
 				},
-				counterparty_endpoint: Err(IbcError::implementation_specific("https://github.com/ComposableFi/centauri/issues/120".to_string()))?,
-				order: Err(IbcError::implementation_specific("https://github.com/ComposableFi/centauri/issues/120".to_string()))?,
-				version: Err(IbcError::implementation_specific("https://github.com/ComposableFi/centauri/issues/120".to_string()))?,
-				connection_id: Err(IbcError::implementation_specific("https://github.com/ComposableFi/centauri/issues/120".to_string()))?,
+				counterparty_endpoint: Err(IbcError::implementation_specific(
+					"https://github.com/ComposableFi/centauri/issues/120".to_string(),
+				))?,
+				order: Err(IbcError::implementation_specific(
+					"https://github.com/ComposableFi/centauri/issues/120".to_string(),
+				))?,
+				version: Err(IbcError::implementation_specific(
+					"https://github.com/ComposableFi/centauri/issues/120".to_string(),
+				))?,
+				connection_id: Err(IbcError::implementation_specific(
+					"https://github.com/ComposableFi/centauri/issues/120".to_string(),
+				))?,
 			},
 		};
 		let gas = Weight::MAX;
@@ -508,10 +531,18 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 					port_id: port_id.to_string(),
 					channel_id: channel_id.to_string(),
 				},
-				counterparty_endpoint: Err(IbcError::implementation_specific("https://github.com/ComposableFi/centauri/issues/120".to_string()))?,
-				order: Err(IbcError::implementation_specific("https://github.com/ComposableFi/centauri/issues/120".to_string()))?,
-				version: Err(IbcError::implementation_specific("https://github.com/ComposableFi/centauri/issues/120".to_string()))?,
-				connection_id: Err(IbcError::implementation_specific("https://github.com/ComposableFi/centauri/issues/120".to_string()))?,
+				counterparty_endpoint: Err(IbcError::implementation_specific(
+					"https://github.com/ComposableFi/centauri/issues/120".to_string(),
+				))?,
+				order: Err(IbcError::implementation_specific(
+					"https://github.com/ComposableFi/centauri/issues/120".to_string(),
+				))?,
+				version: Err(IbcError::implementation_specific(
+					"https://github.com/ComposableFi/centauri/issues/120".to_string(),
+				))?,
+				connection_id: Err(IbcError::implementation_specific(
+					"https://github.com/ComposableFi/centauri/issues/120".to_string(),
+				))?,
 			},
 		};
 		let gas = Weight::MAX;
@@ -540,10 +571,18 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 					port_id: port_id.to_string(),
 					channel_id: channel_id.to_string(),
 				},
-				counterparty_endpoint: Err(IbcError::implementation_specific("https://github.com/ComposableFi/centauri/issues/120".to_string()))?,
-				order: Err(IbcError::implementation_specific("https://github.com/ComposableFi/centauri/issues/120".to_string()))?,
-				version: Err(IbcError::implementation_specific("https://github.com/ComposableFi/centauri/issues/120".to_string()))?,
-				connection_id: Err(IbcError::implementation_specific("https://github.com/ComposableFi/centauri/issues/120".to_string()))?,
+				counterparty_endpoint: Err(IbcError::implementation_specific(
+					"https://github.com/ComposableFi/centauri/issues/120".to_string(),
+				))?,
+				order: Err(IbcError::implementation_specific(
+					"https://github.com/ComposableFi/centauri/issues/120".to_string(),
+				))?,
+				version: Err(IbcError::implementation_specific(
+					"https://github.com/ComposableFi/centauri/issues/120".to_string(),
+				))?,
+				connection_id: Err(IbcError::implementation_specific(
+					"https://github.com/ComposableFi/centauri/issues/120".to_string(),
+				))?,
 			},
 		};
 		let gas = Weight::MAX;
@@ -599,9 +638,11 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 					channel_id: packet.source_channel.to_string(),
 				},
 				sequence: packet.sequence.into(),
-				timeout: Err(IbcError::implementation_specific("https://app.clickup.com/t/39gjzw1".to_string()))?,
+				timeout: Err(IbcError::implementation_specific(
+					"https://app.clickup.com/t/39gjzw1".to_string(),
+				))?,
 			},
-			relayer : relayer.to_string(),
+			relayer: Addr::unchecked(relayer.to_string()),
 		};
 
 		let gas = Weight::MAX;
@@ -621,7 +662,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		&mut self,
 		_output: &mut ModuleOutputBuilder,
 		packet: &ibc::core::ics04_channel::packet::Packet,
-		_relayer: &pallet_ibc::Signer,
+		relayer: &pallet_ibc::Signer,
 	) -> Result<(), IbcError> {
 		let address = Self::port_to_address(&packet.source_port)?;
 		let contract_info = Self::to_ibc_contract(&address)?;
@@ -638,9 +679,11 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 					channel_id: packet.source_channel.to_string(),
 				},
 				sequence: packet.sequence.into(),
-				timeout: Err(IbcError::implementation_specific("need make pub access to init of IbcTimeout".to_string()))?,
+				timeout: Err(IbcError::implementation_specific(
+					"need make pub access to init of IbcTimeout".to_string(),
+				))?,
 			},
-			relayer : relayer.to_string(),
+			relayer: Addr::unchecked(relayer.to_string()),
 		};
 
 		let gas = Weight::MAX;
@@ -666,7 +709,9 @@ fn contract_to_result<T>(result: ContractResult<T>) -> Result<T, IbcError> {
 
 fn map_order(order: Order) -> Result<IbcOrder, IbcError> {
 	match order {
-		Order::None => Err(IbcError::implementation_specific("https://github.com/ComposableFi/centauri/issues/130".to_string()))?,
+		Order::None => Err(IbcError::implementation_specific(
+			"https://github.com/ComposableFi/centauri/issues/130".to_string(),
+		))?,
 		Order::Unordered => Ok(IbcOrder::Unordered),
 		Order::Ordered => Ok(IbcOrder::Ordered),
 	}
