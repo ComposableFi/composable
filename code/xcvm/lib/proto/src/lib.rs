@@ -583,13 +583,13 @@ mod tests {
 				denominator: Some(5u128.into()),
 			})),
 		};
-		let amount: Amount = balance.try_into().unwrap();
-		assert_eq!(amount.intercept, Displayed(0));
+		let xcvm_balance: xcvm_core::Balance = balance.try_into().unwrap();
+		assert_eq!(xcvm_balance.amount.intercept, Displayed(0));
 
 		let wrap = |num: u128| -> FixedU128<U16> { FixedU128::wrapping_from_num(num) };
 		assert_eq!(
 			wrap(3).saturating_div(wrap(5)),
-			wrap(amount.slope.0).saturating_div(wrap(MAX_PARTS))
+			wrap(xcvm_balance.amount.slope.0).saturating_div(wrap(MAX_PARTS))
 		)
 	}
 
