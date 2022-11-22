@@ -193,7 +193,7 @@ where
 		})
 	}
 
-	pub(crate) fn call_json<Message>(
+	pub fn call_json<Message>(
 		self,
 		shared: &mut CosmwasmVMShared,
 		funds: FundsOf<T>,

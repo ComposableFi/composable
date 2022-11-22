@@ -107,12 +107,12 @@ impl<T: Config> Pallet<T> {
 			channel_id,
 			coin: PrefixedCoin {
 				amount: Amount::from(amount.amount as u64),
-				denom: PrefixedDenom::from_str(amount.denom.as_ref()).unwrap(),
+				denom: PrefixedDenom::from_str(amount.denom.as_ref()).map_err(|_| <CosmwasmVMError<T>>::Ibc("provided asset is not IBC compatible".to_string()))?,
 			},
 			from: vm.contract_address.clone().into_inner(),
 			timeout: ibc_primitives::Timeout::Offset {
-				timestamp: todo!("after timeout will have pub interface"),
-				height: todo!("after timeout will have pub interface"),
+				timestamp: unimplemented!("after timeout will have pub interface"),
+				height: unimplemented!("after timeout will have pub interface"),
 			},
 			to: IbcSigner::from_str(&to_address.as_ref())
 				.map_err(|_| <CosmwasmVMError<T>>::Ibc("bad ".to_string()))?,
@@ -137,7 +137,7 @@ impl<T: Config> Pallet<T> {
 
 		T::IbcRelayer::handle_message(HandlerMessage::SendPacket {
 			data: data.to_vec(),
-			timeout: todo!("as soon as IBC will provide public timeout"),
+			timeout: unimplemented!("as soon as IBC will provide public timeout"),
 			channel_id,
 			port_id,
 		})
@@ -199,7 +199,7 @@ impl<T: Config> Router<T> {
 		let address_part = Self::parse_address_part(port_id)?;
 		let address =
 			<Pallet<T>>::cosmwasm_addr_to_account(address_part.to_string()).map_err(|_| {
-				IbcError::implementation_specific("contract for port not found".to_string())
+				IbcError::implementation_specific("was not able to convert port to contract address".to_string())
 			})?;
 		Ok(address)
 	}
@@ -318,7 +318,7 @@ impl<T: Config> Router<T> {
 					channel_id: packet.destination_channel.to_string(),
 				},
 				sequence: packet.sequence.into(),
-				timeout: todo!("https://app.clickup.com/t/39gjzw1"),
+				timeout: unimplemented!("https://app.clickup.com/t/39gjzw1"),
 			},
 		};
 		let gas = Weight::MAX;
@@ -365,7 +365,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 					},
 					order: map_order(order),
 					version: version.to_string(),
-					connection_id: connection_hops[0].to_string(),
+					connection_id: connection_hops.get(0).expect("by spec there is at least one connection; qed")).to_string(),
 				},
 			}
 		};
@@ -408,7 +408,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 					},
 					order,
 					version: version.to_string(),
-					connection_id: connection_hops[0].to_string(),
+					connection_id: connection_hops.get(0).expect("by spec there is at least one connection; qed")).to_string(),
 				},
 			}
 		};
@@ -439,10 +439,10 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 					port_id: port_id.to_string(),
 					channel_id: channel_id.to_string(),
 				},
-				counterparty_endpoint: todo!("https://github.com/ComposableFi/centauri/issues/120"),
-				order: todo!("https://github.com/ComposableFi/centauri/issues/120"),
-				version: todo!("https://github.com/ComposableFi/centauri/issues/120"),
-				connection_id: todo!("https://github.com/ComposableFi/centauri/issues/120"),
+				counterparty_endpoint: unimplemented!("https://github.com/ComposableFi/centauri/issues/120"),
+				order: unimplemented!("https://github.com/ComposableFi/centauri/issues/120"),
+				version: unimplemented!("https://github.com/ComposableFi/centauri/issues/120"),
+				connection_id: unimplemented!("https://github.com/ComposableFi/centauri/issues/120"),
 			},
 			counterparty_version: counterparty_version.to_string(),
 		};
@@ -473,10 +473,10 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 					port_id: port_id.to_string(),
 					channel_id: channel_id.to_string(),
 				},
-				counterparty_endpoint: todo!("https://github.com/ComposableFi/centauri/issues/120"),
-				order: todo!("https://github.com/ComposableFi/centauri/issues/120"),
-				version: todo!("https://github.com/ComposableFi/centauri/issues/120"),
-				connection_id: todo!("https://github.com/ComposableFi/centauri/issues/120"),
+				counterparty_endpoint: unimplemented!("https://github.com/ComposableFi/centauri/issues/120"),
+				order: unimplemented!("https://github.com/ComposableFi/centauri/issues/120"),
+				version: unimplemented!("https://github.com/ComposableFi/centauri/issues/120"),
+				connection_id: unimplemented!("https://github.com/ComposableFi/centauri/issues/120"),
 			},
 		};
 		let gas = Weight::MAX;
@@ -505,10 +505,10 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 					port_id: port_id.to_string(),
 					channel_id: channel_id.to_string(),
 				},
-				counterparty_endpoint: todo!("https://github.com/ComposableFi/centauri/issues/120"),
-				order: todo!("https://github.com/ComposableFi/centauri/issues/120"),
-				version: todo!("https://github.com/ComposableFi/centauri/issues/120"),
-				connection_id: todo!("https://github.com/ComposableFi/centauri/issues/120"),
+				counterparty_endpoint: unimplemented!("https://github.com/ComposableFi/centauri/issues/120"),
+				order: unimplemented!("https://github.com/ComposableFi/centauri/issues/120"),
+				version: unimplemented!("https://github.com/ComposableFi/centauri/issues/120"),
+				connection_id: unimplemented!("https://github.com/ComposableFi/centauri/issues/120"),
 			},
 		};
 		let gas = Weight::MAX;
@@ -537,10 +537,10 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 					port_id: port_id.to_string(),
 					channel_id: channel_id.to_string(),
 				},
-				counterparty_endpoint: todo!("https://github.com/ComposableFi/centauri/issues/120"),
-				order: todo!("https://github.com/ComposableFi/centauri/issues/120"),
-				version: todo!("https://github.com/ComposableFi/centauri/issues/120"),
-				connection_id: todo!("https://github.com/ComposableFi/centauri/issues/120"),
+				counterparty_endpoint: unimplemented!("https://github.com/ComposableFi/centauri/issues/120"),
+				order: unimplemented!("https://github.com/ComposableFi/centauri/issues/120"),
+				version: unimplemented!("https://github.com/ComposableFi/centauri/issues/120"),
+				connection_id: unimplemented!("https://github.com/ComposableFi/centauri/issues/120"),
 			},
 		};
 		let gas = Weight::MAX;
@@ -578,8 +578,8 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		acknowledgement: &ibc::core::ics04_channel::msgs::acknowledgement::Acknowledgement,
 		relayer: &pallet_ibc::Signer,
 	) -> Result<(), IbcError> {
-		let address = Self::port_to_address(&packet.source_port).unwrap();
-		let contract_info = Self::to_ibc_contract(&address).unwrap();
+		let address = Self::port_to_address(&packet.source_port)?;
+		let contract_info = Self::to_ibc_contract(&address)?;
 
 		let message = IbcPacketAckMsg {
 			acknowledgement: IbcAcknowledgement {
@@ -596,7 +596,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 					channel_id: packet.source_channel.to_string(),
 				},
 				sequence: packet.sequence.into(),
-				timeout: todo!("https://app.clickup.com/t/39gjzw1"),
+				timeout: unimplemented!("https://app.clickup.com/t/39gjzw1"),
 			},
 		};
 
@@ -619,8 +619,8 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		packet: &ibc::core::ics04_channel::packet::Packet,
 		relayer: &pallet_ibc::Signer,
 	) -> Result<(), IbcError> {
-		let address = Self::port_to_address(&packet.source_port).unwrap();
-		let contract_info = Self::to_ibc_contract(&address).unwrap();
+		let address = Self::port_to_address(&packet.source_port)?;
+		let contract_info = Self::to_ibc_contract(&address)?;
 
 		let message = IbcPacketTimeoutMsg {
 			packet: IbcPacket {
@@ -634,7 +634,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 					channel_id: packet.source_channel.to_string(),
 				},
 				sequence: packet.sequence.into(),
-				timeout: todo!("need make pub access to init of IbcTimeout"),
+				timeout: unimplemented!("need make pub access to init of IbcTimeout"),
 			},
 		};
 
