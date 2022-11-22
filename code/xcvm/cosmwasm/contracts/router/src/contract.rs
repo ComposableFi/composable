@@ -324,9 +324,12 @@ mod tests {
 		wasm_execute, Addr, CanonicalAddr, ContractResult, QuerierResult, SystemResult, WasmQuery,
 	};
 	use prost::Message;
-	use xcvm_core::{Amount, AssetId, BridgeProtocol, Destination, NetworkId, Picasso, ETH, PICA};
+	use xcvm_core::{
+		Amount, AssetId, Balance, BridgeProtocol, Destination, NetworkId, Picasso, ETH, PICA,
+	};
 	use xcvm_proto as proto;
-	type XCVMInstruction = xcvm_core::Instruction<NetworkId, Vec<u8>, CanonicalAddr, Funds>;
+	type XCVMInstruction =
+		xcvm_core::Instruction<NetworkId, Vec<u8>, CanonicalAddr, Funds<Balance>>;
 	type XCVMProgram = xcvm_core::Program<VecDeque<XCVMInstruction>>;
 
 	const CW20_ADDR: &str = "cw20addr";
@@ -412,9 +415,9 @@ mod tests {
 			tag: vec![],
 			instructions: vec![XCVMInstruction::Transfer {
 				to: Destination::<CanonicalAddr>::Relayer,
-				assets: Funds::from([
-					(Into::<AssetId>::into(PICA), Amount::absolute(1)),
-					(ETH.into(), Amount::absolute(2)),
+				assets: Funds::<Balance>::from([
+					(Into::<AssetId>::into(PICA), Balance::new(Amount::absolute(1), false)),
+					(ETH.into(), Balance::new(Amount::absolute(2), false)),
 				]),
 			}]
 			.into(),
@@ -500,9 +503,9 @@ mod tests {
 			tag: vec![],
 			instructions: vec![XCVMInstruction::Transfer {
 				to: Destination::<CanonicalAddr>::Relayer,
-				assets: Funds::from([
-					(Into::<AssetId>::into(PICA), Amount::absolute(1)),
-					(ETH.into(), Amount::absolute(2)),
+				assets: Funds::<Balance>::from([
+					(Into::<AssetId>::into(PICA), Balance::new(Amount::absolute(1), false)),
+					(ETH.into(), Balance::new(Amount::absolute(2), false)),
 				]),
 			}]
 			.into(),
