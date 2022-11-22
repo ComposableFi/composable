@@ -84,6 +84,7 @@ rand = { version = "0.8.5", default-features = false, features = [
 default = ["std", "ibc"]
 ibc = [
   "cosmwasm-minimal-std/stargate",
+  "cosmwasm-minimal-std/ibc3",
   "cosmwasm-vm/stargate",
   "cosmwasm-vm-wasmi/stargate",
   "ibc-primitives",

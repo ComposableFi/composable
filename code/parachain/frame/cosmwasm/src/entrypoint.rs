@@ -10,8 +10,7 @@ use alloc::{
 use composable_support::abstractions::utils::increment::Increment;
 use core::marker::PhantomData;
 use cosmwasm_minimal_std::{Binary, Coin, Event as CosmwasmEvent};
-#[cfg(feature = "ibc")]
-use cosmwasm_vm::executor::ibc::*;
+
 use cosmwasm_vm::{
 	executor::{ExecuteInput, InstantiateInput, MigrateInput},
 	system::{

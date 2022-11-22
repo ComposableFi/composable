@@ -224,38 +224,25 @@ pub struct IbcLoopback<Config> {
 	_marker: PhantomData<Config>,
 }
 
-impl<T: Config> ibc_primitives::IbcHandler for IbcLoopback<T> {
+impl<T: Config> ibc_primitives::IbcHandler<AccountIdOf<T>> for IbcLoopback<T> {
+	fn handle_message(
+		_msg: ibc_primitives::HandlerMessage<AccountIdOf<T>>,
+	) -> Result<(), ibc_primitives::Error> {
+		todo!("loopback")
+	}
+
 	fn latest_height_and_timestamp(
-		port_id: &::ibc::core::ics24_host::identifier::PortId,
-		channel_id: &::ibc::core::ics24_host::identifier::ChannelId,
+		_port_id: &::ibc::core::ics24_host::identifier::PortId,
+		_channel_id: &::ibc::core::ics24_host::identifier::ChannelId,
 	) -> Result<(::ibc::Height, ::ibc::timestamp::Timestamp), ibc_primitives::Error> {
-		todo!("call Runtime system")
-	}
-
-	fn send_packet(data: ibc_primitives::SendPacketData) -> Result<(), ibc_primitives::Error> {
-		todo!("add IbcModule and IbcModuleRouter types from Runtime to call it back")
-	}
-
-	fn open_channel(
-		port_id: ::ibc::core::ics24_host::identifier::PortId,
-		channel_end: ::ibc::core::ics04_channel::channel::ChannelEnd,
-	) -> Result<::ibc::core::ics24_host::identifier::ChannelId, ibc_primitives::Error> {
-		todo!("add IbcModule and IbcModuleRouter types from Runtime to call it back")
+		todo!("loopback")
 	}
 
 	fn write_acknowledgement(
-		packet: &::ibc::core::ics04_channel::packet::Packet,
-		ack: Vec<u8>,
+		_packet: &::ibc::core::ics04_channel::packet::Packet,
+		_ack: Vec<u8>,
 	) -> Result<(), ibc_primitives::Error> {
-		todo!("add IbcModule and IbcModuleRouter types from Runtime to call it back")
-	}
-
-	fn send_transfer(
-		data: ::ibc::applications::transfer::msgs::transfer::MsgTransfer<
-			::ibc::applications::transfer::PrefixedCoin,
-		>,
-	) -> Result<(), ibc_primitives::Error> {
-		todo!("add IbcModule and IbcModuleRouter types from Runtime to call it back")
+		todo!("loopback")
 	}
 }
 
@@ -297,7 +284,7 @@ impl Config for Test {
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let origin = frame_benchmarking::account("signer", 0, 0xCAFEBABE);
 	let balances: Vec<(AccountId, Balance)> = vec![(origin, 1_000_000_000_000_000_000)];
-	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap().into();
+	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	let genesis = pallet_balances::GenesisConfig::<Test> { balances };
 	genesis.assimilate_storage(&mut t).unwrap();
 	t.into()
