@@ -39,6 +39,8 @@ import {
 } from "@/stores/defi/polkadot/crowdloanRewards/hooks";
 import { DEFAULT_EVM_ID, DEFAULT_NETWORK_ID } from "@/defi/polkadot/constants";
 import { KsmAndEthAssociationInfoBox } from "@/components/Organisms/CrowdloanRewards/KsmAndEthAssociationInfoBox";
+import { UnavailableFeature } from "@/components/Molecules/UnavailableFeature";
+import { CrowdloanRewardsSoon } from "@/components/Molecules/CrowdloanRewardSoon";
 
 const ERROR_MESSAGES = {
   KSM_WALLET_NOT_CONNECTED: {
@@ -298,6 +300,7 @@ export const ClaimLoanPage = () => {
             textAlign="center"
             subtitle="You will be able to check on your positions here."
           />
+          <CrowdloanRewardsSoon />
         </Grid>
         {hasNothingToClaim && (
           <Grid item {...standardPageSize}>
