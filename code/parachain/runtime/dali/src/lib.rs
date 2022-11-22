@@ -54,6 +54,7 @@ use composable_traits::{
 	dex::{Amm, PriceAggregate, RemoveLiquiditySimulationResult},
 	xcm::assets::RemoteAssetRegistryInspect,
 };
+use cosmwasm::instrument::CostRules;
 use primitives::currency::{CurrencyId, ValidateCurrencyId};
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
@@ -85,6 +86,7 @@ pub use frame_support::{
 };
 
 use codec::{Codec, Encode, EncodeLike};
+use common::fees::WellKnownForeignToNativePriceConverter;
 use composable_traits::{account_proxy::ProxyType, fnft::FnftAccountProxyType};
 use frame_support::{
 	traits::{
@@ -1158,6 +1160,7 @@ parameter_types! {
   pub const CodeStorageByteDeposit: u32 = 1;
   pub const ContractStorageByteReadPrice: u32 = 1;
   pub const ContractStorageByteWritePrice: u32 = 1;
+  pub WasmCostRules: CostRules<Runtime> = Default::default();
 }
 
 impl cosmwasm::Config for Runtime {
@@ -1187,6 +1190,7 @@ impl cosmwasm::Config for Runtime {
 	type CodeStorageByteDeposit = CodeStorageByteDeposit;
 	type ContractStorageByteReadPrice = ContractStorageByteReadPrice;
 	type ContractStorageByteWritePrice = ContractStorageByteWritePrice;
+	type WasmCostRules = WasmCostRules;
 	type UnixTime = Timestamp;
 	// TODO: proper weights
 	type WeightInfo = cosmwasm::weights::SubstrateWeight<Runtime>;
@@ -1364,12 +1368,34 @@ impl_runtime_apis! {
 			SafeRpcWrapper(<Assets as fungibles::Inspect::<AccountId>>::balance(asset_id, &account_id))
 		}
 
-		fn list_assets() -> Vec<Asset<ForeignAssetId>> {
-			let mut assets = CurrencyId::list_assets();
-			let mut foreign_assets = assets_registry::Pallet::<Runtime>::get_foreign_assets_list();
-			assets.append(&mut foreign_assets);
+		fn list_assets() -> Vec<Asset<Balance, ForeignAssetId>> {
+			// Hardcoded assets
+			let assets = CurrencyId::list_assets().into_iter().map(|mut asset| {
+				// Add hardcoded ratio and ED for well known assets
+				asset.ratio = WellKnownForeignToNativePriceConverter::get_ratio(CurrencyId(asset.id));
+				asset.existential_deposit = multi_existential_deposits::<AssetsRegistry>(&asset.id.into());
+				asset
+			}).collect::<Vec<_>>();
+			// Assets from the assets-registry pallet
+			let foreign_assets = assets_registry::Pallet::<Runtime>::get_foreign_assets_list();
 
-			assets
+			// Override asset data for hardcoded assets that have been manually updated, and append
+			// new assets without duplication
+			foreign_assets.into_iter().fold(assets, |mut acc, mut foreign_asset| {
+				if let Some(i) = acc.iter().position(|asset_i| asset_i.id == foreign_asset.id) {
+					// Assets that have been updated
+					if let Some(asset) = acc.get_mut(i) {
+						// Update asset with data from assets-registry
+						asset.decimals = foreign_asset.decimals;
+						asset.foreign_id = foreign_asset.foreign_id.clone();
+						asset.ratio = foreign_asset.ratio;
+					}
+				} else {
+					foreign_asset.existential_deposit = multi_existential_deposits::<AssetsRegistry>(&foreign_asset.id.into());
+					acc.push(foreign_asset.clone())
+				}
+				acc
+			})
 		}
 	}
 
@@ -1432,7 +1458,7 @@ impl_runtime_apis! {
 			min_expected_amounts: BTreeMap<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>>,
 		) -> RemoveLiquiditySimulationResult<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>> {
 			let min_expected_amounts: BTreeMap<_, _> = min_expected_amounts.iter().map(|(k, v)| (k.0, v.0)).collect();
-			let default_removed_assets = min_expected_amounts.iter().map(|(k, _)| (CurrencyId(k.0), 0_u128)).collect::<BTreeMap<_,_>>();
+			let default_removed_assets = min_expected_amounts.keys().map(|k| (*k, 0_u128)).collect::<BTreeMap<_,_>>();
 			let simulate_remove_liquidity_result = <Pablo as Amm>::simulate_remove_liquidity(&who.0, pool_id.0, lp_amount.0, min_expected_amounts)
 				.unwrap_or(
 					RemoveLiquiditySimulationResult{

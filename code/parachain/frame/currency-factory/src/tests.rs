@@ -44,7 +44,7 @@ proptest! {
 	) {
 		new_test_ext().execute_with(|| {
 			for _ in 0..30 {
-				let res = <CurrencyRanges as CurrencyFactory>::create(RangeId::from(range), 42);
+				let res = <CurrencyRanges as CurrencyFactory>::create(RangeId::from(range));
 				prop_assert_ok!(res);
 
 			}
@@ -59,7 +59,7 @@ proptest! {
 		new_test_ext().execute_with(|| {
 			let mut prev = None;
 			for _ in 0..i {
-				let res = <CurrencyRanges as CurrencyFactory>::create(RangeId::TOKENS, 42);
+				let res = <CurrencyRanges as CurrencyFactory>::create(RangeId::TOKENS);
 				prop_assert_ok!(res);
 				if let Some(prev) = prev {
 					prop_assert_eq!(prev + 1, res.unwrap())

@@ -86,8 +86,7 @@ impl<T: Config> Pallet<T> {
 					.under_collateralized_warn_percent,
 				liquidators: config_input.updatable.liquidators,
 			};
-			// TODO: pass ED from API,
-			let debt_token_id = T::CurrencyFactory::reserve_lp_token_id(T::Balance::default())?;
+			let debt_token_id = T::CurrencyFactory::reserve_lp_token_id()?;
 
 			DebtTokenForMarket::<T>::insert(market_id, debt_token_id);
 			Markets::<T>::insert(market_id, market_config);
@@ -106,7 +105,7 @@ impl<T: Config> Pallet<T> {
 		>,
 	) -> Result<(), DispatchError> {
 		let input = input.value();
-		Markets::<T>::mutate(&market_id, |market| {
+		Markets::<T>::mutate(market_id, |market| {
 			if let Some(market) = market {
 				ensure!(manager == market.manager, Error::<T>::Unauthorized);
 

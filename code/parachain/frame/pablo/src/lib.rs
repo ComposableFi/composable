@@ -13,7 +13,6 @@
 #![warn(
 	bad_style,
 	bare_trait_objects,
-	const_err,
 	improper_ctypes,
 	non_shorthand_field_patterns,
 	no_mangle_generic_items,
@@ -763,7 +762,7 @@ pub mod pallet {
 			match token_id {
 				x if x == T::PicaAssetId::get() => Ok(T::XPicaAssetId::get()),
 				x if x == T::PbloAssetId::get() => Ok(T::XPbloAssetId::get()),
-				_ => Ok(T::CurrencyFactory::create(RangeId::XTOKEN_ASSETS, T::Balance::default())?),
+				_ => Ok(T::CurrencyFactory::create(RangeId::XTOKEN_ASSETS)?),
 			}
 		}
 
@@ -778,7 +777,7 @@ pub mod pallet {
 			match token_id {
 				x if x == T::PicaAssetId::get() => Ok(T::PicaStakeFinancialNftCollectionId::get()),
 				x if x == T::PbloAssetId::get() => Ok(T::PbloStakeFinancialNftCollectionId::get()),
-				_ => Ok(T::CurrencyFactory::create(RangeId::FNFT_ASSETS, T::Balance::default())?),
+				_ => Ok(T::CurrencyFactory::create(RangeId::FNFT_ASSETS)?),
 			}
 		}
 

@@ -111,7 +111,6 @@ contract Interpreter is IInterpreter {
         newPos = pos + size;
     }
 
-
     function _handleUint128(bytes calldata program, uint64 pos) internal returns (uint128 value, uint64 newPos) {
         bool success;
         uint64 size;
@@ -599,5 +598,251 @@ contract Interpreter is IInterpreter {
                 pos = _handleCall(program, pos, relayer);
             }
         }
+    }
+
+    function generateUint128(uint128 n) public view returns (bytes memory u128) {
+        uint64 highBits = uint64(n >> 64);
+        uint64 lowBits = uint64(n);
+        return abi.encodePacked(ProtobufLib.encode_key(1, 0), ProtobufLib.encode_uint64(highBits), ProtobufLib.encode_key(2, 0), ProtobufLib.encode_uint64(lowBits));
+    }
+
+    function generateAbsolute(uint128 n) public view returns (bytes memory absolute) {
+        return abi.encodePacked(
+            ProtobufLib.encode_key(1, 2),
+            ProtobufLib.encode_length_delimited(abi.encodePacked(generateUint128(n)))
+        );
+    }
+
+    function generateRatio(uint128 nominator, uint128 denominator) public view returns (bytes memory ratio) {
+        return abi.encodePacked(
+            ProtobufLib.encode_key(1, 2),
+            ProtobufLib.encode_length_delimited(generateUint128(nominator)),
+            ProtobufLib.encode_key(2, 2),
+            ProtobufLib.encode_length_delimited(generateUint128(denominator))
+        );
+    }
+
+    function generateUnit(uint128 integer, bytes memory ratio) public view returns (bytes memory unit) {
+        return abi.encodePacked(
+            ProtobufLib.encode_key(1, 2),
+            ProtobufLib.encode_length_delimited(generateUint128(integer)),
+            ProtobufLib.encode_key(2, 2),
+            ProtobufLib.encode_length_delimited(ratio)
+        );
+    }
+
+    function generateBalanceByRatio(bytes memory ratio) public view returns (bytes memory balance) {
+        return abi.encodePacked(
+            ProtobufLib.encode_key(1, 2),
+            ProtobufLib.encode_length_delimited(ratio)
+        );
+    }
+
+    function generateBalanceByAbsolute(bytes memory absolute) public view returns (bytes memory balance) {
+        return abi.encodePacked(
+            ProtobufLib.encode_key(2, 2),
+            ProtobufLib.encode_length_delimited(absolute)
+        );
+    }
+
+    function generateBalanceByUnit(bytes memory _unit) public view returns (bytes memory balance) {
+        return abi.encodePacked(
+            ProtobufLib.encode_key(3, 2),
+            ProtobufLib.encode_length_delimited(_unit)
+        );
+    }
+
+    function generateAccount(bytes memory _account) public view returns (bytes memory account) {
+        return abi.encodePacked(
+            ProtobufLib.encode_key(1, 2),
+            ProtobufLib.encode_length_delimited(_account)
+        );
+    }
+
+    function generateAssetId(uint128 _assetId) public view returns (bytes memory assetId) {
+        return abi.encodePacked(
+            ProtobufLib.encode_key(1, 2),
+            ProtobufLib.encode_length_delimited(generateUint128(_assetId))
+        );
+    }
+
+    function generateAsset(bytes memory _assetId, bytes memory _balance) public view returns (bytes memory asset) {
+        return abi.encodePacked(
+            ProtobufLib.encode_key(1, 2),
+            ProtobufLib.encode_length_delimited(_assetId),
+            ProtobufLib.encode_key(2, 2),
+            ProtobufLib.encode_length_delimited(_balance)
+        );
+    }
+
+    function generateSelf(uint32 _self) public view returns (bytes memory self) {
+        return abi.encodePacked(
+            ProtobufLib.encode_key(1, 0),
+            ProtobufLib.encode_uint32(_self)
+        );
+    }
+
+    function generateRelayer(uint32 _relayer) public view returns (bytes memory relayer) {
+        return abi.encodePacked(
+            ProtobufLib.encode_key(1, 0),
+            ProtobufLib.encode_uint32(_relayer)
+        );
+    }
+
+    function generateResult(uint32 _result) public view returns (bytes memory result) {
+        return abi.encodePacked(
+            ProtobufLib.encode_key(1, 0),
+            ProtobufLib.encode_uint32(_result)
+        );
+    }
+
+    function generateAssetAmount(bytes memory assetId, bytes memory ratio) public view returns (bytes memory assetAmount) {
+        return abi.encodePacked(
+            ProtobufLib.encode_key(1, 2),
+            ProtobufLib.encode_length_delimited(assetId),
+            ProtobufLib.encode_key(2, 2),
+            ProtobufLib.encode_length_delimited(ratio)
+        );
+    }
+
+    function generateBindingValueByAssetAmount(bytes memory _assetAmount) public view returns (bytes memory bindingValue) {
+        return abi.encodePacked(
+            ProtobufLib.encode_key(4, 2),
+            ProtobufLib.encode_length_delimited(_assetAmount)
+        );
+    }
+
+    function generateBindingValueByAssetId(bytes memory _assetId) public view returns (bytes memory bindingValue) {
+        return abi.encodePacked(
+            ProtobufLib.encode_key(5, 2),
+            ProtobufLib.encode_length_delimited(_assetId)
+        );
+    }
+
+    function generateBinding(uint32 position, bytes memory _bindingValue) public view returns (bytes memory binding) {
+        return abi.encodePacked(
+            ProtobufLib.encode_key(1, 0),
+            ProtobufLib.encode_uint32(uint32(position)),
+            ProtobufLib.encode_key(2, 2),
+            ProtobufLib.encode_length_delimited(_bindingValue)
+        );
+    }
+
+    function generateBindings(bytes[] memory _bindings) public view returns (bytes memory bindings) {
+        for (uint i = 0; i < _bindings.length; i++) {
+            bindings = abi.encodePacked(bindings, ProtobufLib.encode_key(1, 2), ProtobufLib.encode_length_delimited(_bindings[i]));
+        }
+    }
+
+    function generateTransferByAccount(bytes memory _account, bytes[] memory _assets) public view returns (bytes memory transfer) {
+        transfer = abi.encodePacked(
+            ProtobufLib.encode_key(1, 2),
+            ProtobufLib.encode_length_delimited(_account)
+        );
+        for (uint i = 0; i < _assets.length; i++) {
+            transfer = abi.encodePacked(transfer, ProtobufLib.encode_key(3, 2), ProtobufLib.encode_length_delimited(_assets[i]));
+        }
+    }
+
+    function generateSalt(bytes memory _salt) public view returns (bytes memory salt) {
+        return abi.encodePacked(
+            ProtobufLib.encode_key(1, 2),
+            ProtobufLib.encode_length_delimited(_salt)
+        );
+    }
+
+    function generateNetwork(uint32 _network) public view returns (bytes memory network) {
+        return abi.encodePacked(
+            ProtobufLib.encode_key(1, 0),
+            ProtobufLib.encode_uint32(_network)
+        );
+    }
+
+    function generateSpawn(
+        bytes memory _network,
+        int32 _security,
+        bytes memory _salt,
+        bytes memory _spawnedProgram,
+        bytes[] memory _assets
+    ) public view returns (bytes memory spawn) {
+        spawn = abi.encodePacked(
+            ProtobufLib.encode_key(1, 2),
+            ProtobufLib.encode_length_delimited(_network),
+            ProtobufLib.encode_key(2, 0),
+            ProtobufLib.encode_enum(_security),
+            ProtobufLib.encode_key(3, 2),
+            ProtobufLib.encode_length_delimited(_salt),
+            ProtobufLib.encode_key(4, 2),
+            ProtobufLib.encode_length_delimited(_spawnedProgram)
+        );
+        for (uint i = 0; i < _assets.length; i++) {
+            spawn = abi.encodePacked(spawn, ProtobufLib.encode_key(5, 2), ProtobufLib.encode_length_delimited(_assets[i]));
+        }
+    }
+
+    function generateCall(
+        bytes memory _payload,
+        bytes memory _bindings
+    ) public view returns (bytes memory call) {
+        call = abi.encodePacked(
+            ProtobufLib.encode_key(1, 2),
+            ProtobufLib.encode_length_delimited(_payload),
+            ProtobufLib.encode_key(2, 2),
+            ProtobufLib.encode_length_delimited(_bindings)
+        );
+    }
+
+    function generateInstructionByTransfer(
+        bytes memory _transfer
+    ) public view returns (bytes memory instruction) {
+        instruction = abi.encodePacked(
+            ProtobufLib.encode_key(1, 2),
+            ProtobufLib.encode_length_delimited(_transfer)
+        );
+    }
+
+    function generateInstructionByCall(
+        bytes memory _call
+    ) public view returns (bytes memory instruction) {
+        instruction = abi.encodePacked(
+            ProtobufLib.encode_key(3, 2),
+            ProtobufLib.encode_length_delimited(_call)
+        );
+    }
+
+    function generateInstructionBySpawn(
+        bytes memory _spawn
+    ) public view returns (bytes memory instruction) {
+        instruction = abi.encodePacked(
+            ProtobufLib.encode_key(2, 2),
+            ProtobufLib.encode_length_delimited(_spawn)
+        );
+    }
+
+    function generateInstructionByQuery(
+        bytes memory _query
+    ) public view returns (bytes memory instruction) {
+        instruction = abi.encodePacked(
+            ProtobufLib.encode_key(4, 2),
+            ProtobufLib.encode_length_delimited(_query)
+        );
+    }
+
+    function generateInstructions(bytes[] memory _instructions) public view returns (bytes memory instructions) {
+        for (uint i = 0; i < _instructions.length; i++) {
+            instructions = abi.encodePacked(instructions, ProtobufLib.encode_key(1, 2), ProtobufLib.encode_length_delimited(_instructions[i]));
+        }
+    }
+
+    function generateProgram(
+        bytes memory _tag,
+        bytes memory _instructions
+    ) public view returns (bytes memory program) {
+        program = abi.encodePacked(
+            ProtobufLib.encode_key(1, 2),
+            ProtobufLib.encode_length_delimited(_tag),
+            ProtobufLib.encode_key(2, 2),
+            ProtobufLib.encode_length_delimited(_instructions)
+        );
     }
 }

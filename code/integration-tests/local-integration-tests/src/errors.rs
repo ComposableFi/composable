@@ -5,17 +5,12 @@ use crate::{
 };
 
 use common::Balance;
-use composable_traits::currency::{
-	AssetDataMutate, AssetExistentialDepositInspect, AssetRatioInspect,
-};
+use composable_traits::currency::AssetRatioInspect;
 use orml_traits::MultiCurrency;
 use xcm::VersionedMultiAsset;
 
 /// under ED, but above Weight
-pub fn under_existential_deposit<
-	AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>
-		+ AssetExistentialDepositInspect<AssetId = CurrencyId, Balance = Balance>,
->(
+pub fn under_existential_deposit<AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>>(
 	asset_id: LocalAssetId,
 	_instruction_count: usize,
 ) -> Balance {
@@ -145,14 +140,10 @@ fn cannot_reserver_transfer_assets_when_fee_and_non_fee_has_different_origin() {
 				1,
 				X2(Parachain(THIS_PARA_ID), GeneralIndex(100500)),
 			)),
-			Some(Rational64::one()),
+			Rational64::one(),
 			None,
 		)
 		.unwrap();
-		<CurrencyFactory as AssetDataMutate>::update_existential_deposit(
-			CurrencyId(100500),
-			Some(42),
-		);
 		assert_ok!(Tokens::deposit(CurrencyId(100500), &alice().into(), 2 * transfer_amount));
 
 		AssetsRegistry::update_asset(
@@ -162,14 +153,10 @@ fn cannot_reserver_transfer_assets_when_fee_and_non_fee_has_different_origin() {
 				1,
 				X2(Parachain(THIS_PARA_ID), GeneralIndex(123_666)),
 			)),
-			Some(Rational64::one()),
+			Rational64::one(),
 			None,
 		)
 		.unwrap();
-		<CurrencyFactory as AssetDataMutate>::update_existential_deposit(
-			CurrencyId(123_666),
-			Some(42),
-		);
 		assert_ok!(Tokens::deposit(CurrencyId(123_666), &alice().into(), 2 * transfer_amount));
 
 		let before = Assets::free_balance(CurrencyId::KSM, &alice().into());
@@ -224,14 +211,10 @@ fn transfer_existing_asset_but_with_relevant_outgoing_fee_by_local_id() {
 				1,
 				X2(Parachain(THIS_PARA_ID), GeneralIndex(100500)),
 			)),
-			Some(Rational64::one()),
+			Rational64::one(),
 			None,
 		)
 		.unwrap();
-		<CurrencyFactory as AssetDataMutate>::update_existential_deposit(
-			CurrencyId(100500),
-			Some(42),
-		);
 
 		assert_ok!(Tokens::deposit(CurrencyId(100500), &alice().into(), 2 * transfer_amount));
 
@@ -275,14 +258,10 @@ fn cannot_transfer_away_if_min_fee_is_not_defined() {
 				1,
 				X2(Parachain(SIBLING_PARA_ID), GeneralIndex(100500)),
 			)),
-			Some(Rational64::one()),
+			Rational64::one(),
 			None,
 		)
 		.unwrap();
-		<CurrencyFactory as AssetDataMutate>::update_existential_deposit(
-			CurrencyId(100500),
-			Some(42),
-		);
 		assert_ok!(Tokens::deposit(CurrencyId(100500), &alice().into(), 2 * transfer_amount));
 
 		AssetsRegistry::set_min_fee(
@@ -341,14 +320,10 @@ fn cannot_reserver_transfer_assets_from_self() {
 				0,
 				X2(Parachain(THIS_PARA_ID), GeneralIndex(100500)),
 			)),
-			Some(Rational64::one()),
+			Rational64::one(),
 			None,
 		)
 		.unwrap();
-		<CurrencyFactory as AssetDataMutate>::update_existential_deposit(
-			CurrencyId(100500),
-			Some(42),
-		);
 
 		assert_ok!(Tokens::deposit(CurrencyId(100500), &alice().into(), 2 * transfer_amount));
 

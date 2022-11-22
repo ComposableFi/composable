@@ -24,10 +24,15 @@ import {
 import { useSelectedAccount } from "@/defi/polkadot/hooks";
 import { useAllParachainProviders } from "@/defi/polkadot/context/hooks";
 import BigNumber from "bignumber.js";
+import {
+  DESTINATION_FEE_MULTIPLIER,
+  FEE_MULTIPLIER,
+} from "shared/defi/constants";
 import { usePendingExtrinsic } from "substrate-react";
 import { InfoOutlined } from "@mui/icons-material";
 import { pipe } from "fp-ts/function";
 import { option } from "fp-ts";
+import { UpcomingFeature } from "@/components/Molecules/UpcomingFeature";
 
 const Transfers: NextPage = () => {
   const { setAmount, from, balance, transfer, to } = useTransfer();
@@ -44,7 +49,7 @@ const Transfers: NextPage = () => {
   const minValue = useMemo(() => {
     const ed = tokens[selectedToken].existentialDeposit[to];
     return pipe(
-      destFee.fee,
+      destFee?.fee?.multipliedBy(DESTINATION_FEE_MULTIPLIER),
       option.fromNullable,
       option.chain((fee) =>
         pipe(
@@ -55,7 +60,7 @@ const Transfers: NextPage = () => {
       ),
       option.getOrElse(() => new BigNumber(0))
     );
-  }, [tokens, to, destFee.fee, selectedToken]);
+  }, [tokens, to, destFee?.fee, selectedToken]);
   const feeTokenId = useStore((state) => state.transfers.getFeeToken(from));
   const selectedAccount = useSelectedAccount();
   const hasPendingXcmTransfer = usePendingExtrinsic(
@@ -69,7 +74,17 @@ const Transfers: NextPage = () => {
     selectedAccount ? selectedAccount.address : "-"
   );
 
-  const hasPendingTransfer = hasPendingXcmTransfer || hasPendingXTokensTransfer;
+  const hasPendingLimitedXcmTransfer = usePendingExtrinsic(
+    "limitedReserveTransferAssets",
+    "polkadotXcm",
+    selectedAccount ? selectedAccount.address : "-"
+  );
+
+  const hasPendingTransfer =
+    hasPendingXcmTransfer ||
+    hasPendingXTokensTransfer ||
+    hasPendingLimitedXcmTransfer;
+
   const getBalance = useStore((state) => state.substrateBalances.getBalance);
   const hasFormError = useStore((state) => state.transfers.hasFormError);
 
@@ -96,7 +111,7 @@ const Transfers: NextPage = () => {
 
   const hasEnoughGasFee = useMemo(() => {
     const feeBalance = getBalance(feeTokenId.id, from);
-    return feeBalance.gte(fee.partialFee);
+    return feeBalance.gte(fee.partialFee.multipliedBy(FEE_MULTIPLIER));
   }, [fee.partialFee, feeTokenId.id, from, getBalance]);
 
   useEffect(() => {
@@ -120,66 +135,61 @@ const Transfers: NextPage = () => {
         <Grid item {...gridItemStyle("6rem")}>
           <Header />
         </Grid>
-        <Grid item {...gridItemStyle()}>
-          <TransferNetworkSelector disabled={hasPendingTransfer} />
-        </Grid>
-        <Grid item {...gridItemStyle()}>
-          <AmountTokenDropdown disabled={hasPendingTransfer} />
-        </Grid>
-        <Grid item {...gridItemStyle("1.5rem")}>
-          <TransferRecipientDropdown />
-        </Grid>
-        <Grid item {...gridItemStyle("1.5rem")}>
-          <TransferFeeDisplay />
-        </Grid>
-        {!hasEnoughGasFee ? (
-          <Grid item {...gridItemStyle("1.5rem")}>
-            <Alert
-              variant="filled"
-              severity="error"
-              iconMapping={{
-                error: <InfoOutlined color="error" />,
-              }}
-            >
-              You do not have enough gas for this transfer, switch token or top
-              up to complete transfer.
-            </Alert>
+        <UpcomingFeature>
+          <Grid item {...gridItemStyle()}>
+            <TransferNetworkSelector disabled={true} />
           </Grid>
-        ) : null}
-        <Grid item {...gridItemStyle()}>
-          <TransferKeepAliveSwitch />
-        </Grid>
-        <Grid item {...gridItemStyle()}>
-          <TransferExistentialDeposit />
-        </Grid>
-        <Grid item {...gridItemStyle("1.5rem")}>
-          <Button
-            variant="contained"
-            color="primary"
-            disabled={
-              amount.lte(0) ||
-              amount.gt(balance) ||
-              amount.lte(minValue ?? 0) ||
-              !hasEnoughGasFee ||
-              hasPendingTransfer ||
-              hasFormError
-            }
-            fullWidth
-            onClick={transfer}
-          >
-            <Typography variant="button">Transfer</Typography>
-          </Button>
-          {!amount.eq(0) && amount.lte(minValue ?? 0) && (
-            <Typography variant="caption" color="error.main">
-              {`
+          <Grid item {...gridItemStyle()}>
+            <AmountTokenDropdown disabled={true} />
+          </Grid>
+          <Grid item {...gridItemStyle("1.5rem")}>
+            <TransferRecipientDropdown />
+          </Grid>
+          <Grid item {...gridItemStyle("1.5rem")}>
+            <TransferFeeDisplay disabled={true} />
+          </Grid>
+          {!hasEnoughGasFee ? (
+            <Grid item {...gridItemStyle("1.5rem")}>
+              <Alert
+                variant="filled"
+                severity="error"
+                iconMapping={{
+                  error: <InfoOutlined color="error" />,
+                }}
+              >
+                You do not have enough gas for this transfer, switch token or
+                top up to complete transfer.
+              </Alert>
+            </Grid>
+          ) : null}
+          <Grid item {...gridItemStyle()}>
+            <TransferKeepAliveSwitch />
+          </Grid>
+          <Grid item {...gridItemStyle()}>
+            <TransferExistentialDeposit />
+          </Grid>
+          <Grid item {...gridItemStyle("1.5rem")}>
+            <Button
+              variant="contained"
+              color="primary"
+              disabled={true}
+              fullWidth
+              onClick={transfer}
+            >
+              <Typography variant="button">Transfer</Typography>
+            </Button>
+            {!amount.eq(0) && amount.lte(minValue ?? 0) && (
+              <Typography variant="caption" color="error.main">
+                {`
               At least ${minValue?.toFormat(12) ?? "0"} ${
-                tokens[selectedToken].symbol
-              } should be sent over. Transferred amount should be bigger than target network's 
+                  tokens[selectedToken].symbol
+                } should be sent over. Transferred amount should be bigger than target network's 
               existential deposit.
               `}
-            </Typography>
-          )}
-        </Grid>
+              </Typography>
+            )}
+          </Grid>
+        </UpcomingFeature>
       </Grid>
     </Default>
   );

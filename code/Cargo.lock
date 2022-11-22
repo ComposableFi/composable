@@ -2718,6 +2718,7 @@ dependencies = [
  "schemars",
  "serde",
  "thiserror",
+ "xcvm-core",
 ]
 
 [[package]]
@@ -2732,8 +2733,9 @@ dependencies = [
  "cw-xcvm-utils",
  "cw2",
  "cw20",
+ "hex",
  "num",
- "prost 0.11.0",
+ "prost 0.11.2",
  "schemars",
  "serde",
  "serde-json-wasm",
@@ -2757,7 +2759,7 @@ dependencies = [
  "cw2",
  "cw20",
  "hex",
- "prost 0.11.0",
+ "prost 0.11.2",
  "schemars",
  "serde",
  "serde-json-wasm",
@@ -4359,6 +4361,9 @@ name = "hex"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "hex-literal"
@@ -7569,6 +7574,8 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex",
+ "lazy_static",
+ "libsecp256k1",
  "log 0.4.17",
  "num-traits",
  "orml-tokens",
@@ -7580,6 +7587,7 @@ dependencies = [
  "parity-scale-codec",
  "parity-wasm 0.45.0",
  "primitives",
+ "rand 0.8.5",
  "scale-info",
  "serde_json",
  "sha2 0.10.6",
@@ -10432,6 +10440,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "eb9f9e6e233e5c4a35559a617bf40a4ec447db2e84c20b55a6f83167b7e57872"
 
 [[package]]
+name = "prettyplease"
+version = "0.1.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c142c0e46b57171fe0c528bee8c5b7569e80f0c17e377cd0e30ea57dbc11bb51"
+dependencies = [
+ "proc-macro2 1.0.43",
+ "syn 1.0.100",
+]
+
+[[package]]
 name = "price-feed"
 version = "0.1.0"
 dependencies = [
@@ -10643,12 +10661,12 @@ dependencies = [
 
 [[package]]
 name = "prost"
-version = "0.11.0"
+version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "399c3c31cdec40583bb68f0b18403400d01ec4289c383aa047560439952c4dd7"
+checksum = "a0841812012b2d4a6145fae9a6af1534873c32aa67fff26bd09f8fa42c83f95a"
 dependencies = [
  "bytes 1.2.1",
- "prost-derive 0.11.0",
+ "prost-derive 0.11.2",
 ]
 
 [[package]]
@@ -10675,9 +10693,9 @@ dependencies = [
 
 [[package]]
 name = "prost-build"
-version = "0.11.1"
+version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f835c582e6bd972ba8347313300219fed5bfa52caf175298d860b61ff6069bb"
+checksum = "1d8b442418ea0822409d9e7d047cbf1e7e9e1760b172bf9982cf29d517c93511"
 dependencies = [
  "bytes 1.2.1",
  "heck 0.4.0",
@@ -10686,9 +10704,11 @@ dependencies = [
  "log 0.4.17",
  "multimap",
  "petgraph",
- "prost 0.11.0",
- "prost-types 0.11.1",
+ "prettyplease",
+ "prost 0.11.2",
+ "prost-types 0.11.2",
  "regex",
+ "syn 1.0.100",
  "tempfile",
  "which",
 ]
@@ -10721,9 +10741,9 @@ dependencies = [
 
 [[package]]
 name = "prost-derive"
-version = "0.11.0"
+version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7345d5f0e08c0536d7ac7229952590239e77abf0a0100a1b1d890add6ea96364"
+checksum = "164ae68b6587001ca506d3bf7f1000bfa248d0e1217b618108fba4ec1d0cc306"
 dependencies = [
  "anyhow",
  "itertools",
@@ -10744,12 +10764,12 @@ dependencies = [
 
 [[package]]
 name = "prost-types"
-version = "0.11.1"
+version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4dfaa718ad76a44b3415e6c4d53b17c8f99160dcb3a99b10470fce8ad43f6e3e"
+checksum = "747761bc3dc48f9a34553bf65605cf6cb6288ba219f3450b4275dbd81539551a"
 dependencies = [
  "bytes 1.2.1",
- "prost 0.11.0",
+ "prost 0.11.2",
 ]
 
 [[package]]
@@ -12650,9 +12670,9 @@ dependencies = [
 
 [[package]]
 name = "scale-info"
-version = "2.2.0"
+version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "333af15b02563b8182cd863f925bd31ef8fa86a0e095d30c091956057d436153"
+checksum = "88d8a765117b237ef233705cc2cc4c6a27fccd46eea6ef0c8c6dae5f3ef407f8"
 dependencies = [
  "bitvec",
  "cfg-if 1.0.0",
@@ -12664,9 +12684,9 @@ dependencies = [
 
 [[package]]
 name = "scale-info-derive"
-version = "2.2.0"
+version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "53f56acbd0743d29ffa08f911ab5397def774ad01bab3786804cf6ee057fb5e1"
+checksum = "cdcd47b380d8c4541044e341dcd9475f55ba37ddc50c908d945fc036a8642496"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2 1.0.43",
@@ -12881,9 +12901,9 @@ dependencies = [
 
 [[package]]
 name = "serde"
-version = "1.0.144"
+version = "1.0.147"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0f747710de3dcd43b88c9168773254e809d8ddbdf9653b84e2554ab219f17860"
+checksum = "d193d69bae983fc11a79df82342761dfbf28a99fc8d203dca4c3c1b590948965"
 dependencies = [
  "serde_derive",
 ]
@@ -12898,9 +12918,9 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.144"
+version = "1.0.147"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "94ed3a816fb1d101812f83e789f888322c34e291f894f19590dc310963e87a00"
+checksum = "4f1d362ca8fc9c3e3a7484440752472d68a6caa98f1ab81d99b5dfe517cec852"
 dependencies = [
  "proc-macro2 1.0.43",
  "quote 1.0.21",
@@ -16551,7 +16571,7 @@ dependencies = [
  "fixed",
  "num",
  "parity-scale-codec",
- "prost 0.11.0",
+ "prost 0.11.2",
  "scale-info",
  "schemars",
  "serde",
@@ -16563,9 +16583,9 @@ name = "xcvm-proto"
 version = "0.1.0"
 dependencies = [
  "fixed",
- "prost 0.11.0",
- "prost-build 0.11.1",
- "prost-types 0.11.1",
+ "prost 0.11.2",
+ "prost-build 0.11.2",
+ "prost-types 0.11.2",
  "xcvm-core",
 ]
 

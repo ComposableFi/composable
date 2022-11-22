@@ -1,12 +1,12 @@
+import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
+import { SubstrateNetworkId } from "@/defi/polkadot/types";
+import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
 import { ApiPromise } from "@polkadot/api";
 import { u128 } from "@polkadot/types-codec";
-import { fromChainIdUnit, toChainIdUnit } from "shared";
-import { ParachainId, ParachainNetworks, RelayChainId } from "substrate-react";
-import { TokenId } from "tokens";
-import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
 import BigNumber from "bignumber.js";
-import { SubstrateNetworkId } from "@/defi/polkadot/types";
-import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
+import { fromChainIdUnit, toChainIdUnit } from "shared";
+import { ParachainId, RelayChainId } from "substrate-react";
+import { TokenId } from "tokens";
 
 export function getAmountToTransfer({
   balance,
@@ -44,7 +44,9 @@ export function getAmountToTransfer({
     toChainIdUnit(
       calculatedAmount,
       token.decimals[sourceChain] || SUBSTRATE_NETWORKS[sourceChain].decimals
-    ).toString()
+    )
+      .toFixed(0)
+      .toString()
   );
 }
 
@@ -58,6 +60,7 @@ export type CalculateTransferAmount = {
   selectedToken: TokenId;
   keepAlive: boolean;
   sourceExistentialDeposit: BigNumber;
+  decimals: number;
 };
 
 export function calculateTransferAmount({
@@ -67,34 +70,41 @@ export function calculateTransferAmount({
   selectedToken,
   keepAlive,
   sourceExistentialDeposit,
+  decimals,
 }: CalculateTransferAmount) {
   const ZERO = new BigNumber(0);
   const gasTokenEqSelected = selectedToken === sourceGas.token;
-  const amountMinusGas = gasTokenEqSelected
-    ? amountToTransfer.minus(sourceGas.fee)
-    : amountToTransfer;
+  // If the remainder is not enough to pay the gas fee, deduct the gas fee from amount.
+  // NOTE: This should happen only if transfer token and gas token are the same.
+  const gasPrice = gasTokenEqSelected ? sourceGas.fee : ZERO;
+
   // Is account going to be removed after transfer?
-  const willReap = balance
-    .minus(gasTokenEqSelected ? sourceGas.fee : ZERO)
-    .minus(amountToTransfer)
-    .minus(sourceExistentialDeposit)
-    .lt(sourceExistentialDeposit);
+  const willReap = balance.lte(amountToTransfer)
+    ? true
+    : balance
+        .minus(gasPrice)
+        .minus(amountToTransfer)
+        .minus(sourceExistentialDeposit)
+        .lt(sourceExistentialDeposit);
+
   // If we should keep alive, deduct existential deposit from the amount to transfer
   // NOTE: This should happen only if amount is MAX balance.
   const requiredKeepAliveValue =
     keepAlive && willReap ? sourceExistentialDeposit : ZERO;
 
-  // If the remainder is not enough to pay the gas fee, deduct the gas fee from amount.
-  // NOTE: This should happen only if transfer token and gas token are the same.
-  const gasPrice = gasTokenEqSelected ? sourceGas.fee : ZERO;
+  const output = fromChainIdUnit(
+    toChainIdUnit(
+      amountToTransfer.minus(gasPrice).minus(requiredKeepAliveValue),
+      decimals
+    ).integerValue(),
+    decimals
+  );
 
-  const output = amountToTransfer.minus(gasPrice).minus(requiredKeepAliveValue);
   // Don't send values less than zero.
   return output.lte(ZERO) ? ZERO : output;
 }
 
 /**
- * TODO: Get the selected token to calculate the dest fee based of that.
  * @param sourceChain
  * @param targetChain
  * @param tokens
@@ -108,10 +118,13 @@ export function getDestChainFee(
 ) {
   switch (`${sourceChain}=>${targetChain}`) {
     case "kusama=>picasso":
-      return {
-        fee: fromChainIdUnit(new BigNumber("7536750")),
-        token: tokens.ksm,
-      };
+      if (selectedToken === "ksm") {
+        return {
+          fee: fromChainIdUnit(new BigNumber("7536750")),
+          token: tokens.ksm,
+        };
+      }
+      break;
     case "karura=>picasso":
       const fee: BigNumber | undefined = {
         kusd: fromChainIdUnit(new BigNumber("927020325")),
@@ -123,17 +136,64 @@ export function getDestChainFee(
         fee: fee ?? null,
         token: fee ? tokens[selectedToken] : null,
       };
-
     case "picasso=>karura":
-      return {
-        fee: fromChainIdUnit(new BigNumber("74592000000")),
-        token: tokens.kusd,
-      };
+      if (selectedToken === "kusd") {
+        return {
+          fee: fromChainIdUnit(new BigNumber("74592000000")),
+          token: tokens.kusd,
+        };
+      }
+      break;
     case "picasso=>kusama":
-      return {
-        fee: fromChainIdUnit(new BigNumber("51105801784")),
-        token: tokens.ksm,
-      };
+      if (selectedToken === "ksm") {
+        return {
+          fee: fromChainIdUnit(new BigNumber("51105801784")),
+          token: tokens.ksm,
+        };
+      }
+      break;
+    case "statemine=>picasso":
+      if (selectedToken === "usdt") {
+        return {
+          fee: fromChainIdUnit(
+            new BigNumber(13),
+            tokens.usdt.decimals.statemine
+          ),
+          token: tokens.usdt,
+        };
+      }
+
+      if (selectedToken === "ksm") {
+        return {
+          fee: fromChainIdUnit(
+            new BigNumber(347632),
+            tokens.ksm.decimals.statemine
+          ),
+          token: tokens.ksm,
+        };
+      }
+      break;
+    case "picasso=>statemine":
+      if (selectedToken === "usdt") {
+        return {
+          fee: fromChainIdUnit(
+            new BigNumber(600000000),
+            tokens.ksm.decimals.statemine
+          ),
+          token: tokens.ksm,
+        };
+      }
+
+      if (selectedToken === "ksm") {
+        return {
+          fee: fromChainIdUnit(
+            new BigNumber(15450332),
+            tokens.ksm.decimals.statemine
+          ),
+          token: tokens.ksm,
+        };
+      }
+      break;
     default:
       return {
         fee: new BigNumber(0),

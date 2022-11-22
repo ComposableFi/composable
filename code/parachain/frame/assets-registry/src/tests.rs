@@ -25,8 +25,7 @@ fn set_metadata() {
 		assert_ok!(AssetsRegistry::register_asset(
 			RawOrigin::Root.into(),
 			XcmAssetLocation::RELAY_NATIVE,
-			42,
-			Some(rational!(42 / 123)),
+			rational!(42 / 123),
 			Some(4)
 		));
 		let asset_id = System::events()
@@ -66,7 +65,6 @@ fn register_asset() {
 			&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..],
 		)
 		.unwrap();
-		let ed = 42_u64.into();
 		let ratio = rational!(42 / 123);
 		let decimals = 3;
 
@@ -75,8 +73,7 @@ fn register_asset() {
 		assert_ok!(AssetsRegistry::register_asset(
 			Origin::root(),
 			location.clone(),
-			ed,
-			Some(ratio),
+			ratio,
 			Some(decimals)
 		));
 		let local_asset_id = AssetsRegistry::from_foreign_asset(location.clone()).unwrap();
@@ -86,13 +83,7 @@ fn register_asset() {
 		);
 
 		assert_noop!(
-			AssetsRegistry::register_asset(
-				Origin::root(),
-				location,
-				ed,
-				Some(ratio),
-				Some(decimals)
-			),
+			AssetsRegistry::register_asset(Origin::root(), location, ratio, Some(decimals)),
 			Error::<Runtime>::ForeignAssetAlreadyRegistered
 		);
 	})
@@ -105,15 +96,13 @@ fn update_asset() {
 			&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..],
 		)
 		.unwrap();
-		let ed = 42_u64.into();
 		let ratio = rational!(42 / 123);
 		let decimals = 3;
 
 		assert_ok!(AssetsRegistry::register_asset(
 			Origin::root(),
 			location.clone(),
-			ed,
-			Some(ratio),
+			ratio,
 			Some(decimals)
 		));
 
@@ -130,7 +119,7 @@ fn update_asset() {
 			Origin::root(),
 			local_asset_id,
 			location.clone(),
-			Some(new_ratio),
+			new_ratio,
 			Some(new_decimals)
 		));
 		assert_eq!(
@@ -174,7 +163,6 @@ fn get_foreign_assets_list_should_work() {
 			&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..],
 		)
 		.unwrap();
-		let ed = 42_u64.into();
 		let ratio = rational!(42 / 123);
 		let decimals = 3;
 
@@ -185,8 +173,7 @@ fn get_foreign_assets_list_should_work() {
 		assert_ok!(AssetsRegistry::register_asset(
 			Origin::root(),
 			location.clone(),
-			ed,
-			Some(ratio),
+			ratio,
 			Some(decimals)
 		));
 
@@ -198,10 +185,12 @@ fn get_foreign_assets_list_should_work() {
 				name: None,
 				id: 12884901886,
 				decimals: 3,
+				ratio: Some(ratio),
 				foreign_id: Some(XcmAssetLocation::new(MultiLocation {
 					parents: 1,
 					interior: Junctions::Here
-				}))
+				})),
+				existential_deposit: 0,
 			}]
 		);
 	})

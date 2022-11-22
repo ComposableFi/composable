@@ -39,7 +39,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		);
 		ensure!(fee_config.fee_rate < Permill::one(), Error::<T>::InvalidFees);
 
-		let lp_token = T::CurrencyFactory::create(RangeId::LP_TOKENS, T::Balance::default())?;
+		let lp_token = T::CurrencyFactory::create(RangeId::LP_TOKENS)?;
 		// Add new pool
 		let pool_id =
 			PoolCount::<T>::try_mutate(|pool_count| -> Result<T::PoolId, DispatchError> {

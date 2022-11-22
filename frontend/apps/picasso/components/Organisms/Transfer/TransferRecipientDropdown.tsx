@@ -17,7 +17,24 @@ function attachNetworkIconToItems(network: "kusama" | "picasso") {
     });
   };
 }
-
+function prependEmpty(
+  items: Array<{
+    disabled?: boolean;
+    value: string;
+    label: string;
+    icon: string;
+  }>
+): Array<{ value: string; label: string; icon: string; disabled?: boolean }> {
+  return [
+    {
+      value: "",
+      label: "Please select",
+      disabled: true,
+      icon: "",
+    },
+    ...items,
+  ];
+}
 function composeOptions(
   items: Array<{ address: string; name: string; icon: string }>
 ): Array<{ value: string; label: string; icon: string }> {
@@ -38,8 +55,12 @@ export const TransferRecipientDropdown = () => {
   const updateRecipient = useStore((state) => state.transfers.updateRecipient);
   const options =
     to === "kusama"
-      ? composeOptions(attachNetworkIconToItems("kusama")(kusamaAccounts))
-      : composeOptions(attachNetworkIconToItems("picasso")(picassoAccounts));
+      ? prependEmpty(
+          composeOptions(attachNetworkIconToItems("kusama")(kusamaAccounts))
+        )
+      : prependEmpty(
+          composeOptions(attachNetworkIconToItems("picasso")(picassoAccounts))
+        );
   const handleRecipientChange = (value: string) => updateRecipient(value);
 
   useEffect(() => {
@@ -50,6 +71,7 @@ export const TransferRecipientDropdown = () => {
 
   return (
     <RecipientDropdown
+      disabled
       value={recipients.selected}
       expanded={false}
       options={options}

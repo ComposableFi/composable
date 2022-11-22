@@ -25,6 +25,12 @@ export type AllowedTransferList = {
   [key in SubstrateNetworkId]: Record<SubstrateNetworkId, Array<TokenId>>;
 };
 
+export const PICASSO_SUPPORTED_TRANSFERS: Array<SubstrateNetworkId> = [
+  "kusama",
+  "picasso",
+  "statemine",
+];
+
 export const TRANSFER_ASSET_LIST: AllowedTransferList = {
   karura: {
     picasso: ["ksm", "ausd", "kusd", "kar"],
@@ -51,3 +57,8 @@ export const TRANSFER_ASSET_LIST: AllowedTransferList = {
     statemine: [],
   },
 };
+
+export const STATEMINE_SUBSCAN_URL = "https://statemine.subscan.io/";
+export const KUSAMA_SUBSCAN_URL = "https://kusama.subscan.io/";
+export const PICASSO_SUBSCAN_URL = "https://picasso.subscan.io/";
+export const KARURA_SUBSCAN_URL = "https://karura.subscan.io/";

@@ -17,11 +17,11 @@ parameter_types! {
 
 impl membership::Config<NativeCouncilMembership> for Runtime {
 	type Event = Event;
-	type AddOrigin = EnsureRootOrHalfNativeCouncil;
-	type RemoveOrigin = EnsureRootOrHalfNativeCouncil;
-	type SwapOrigin = EnsureRootOrHalfNativeCouncil;
-	type ResetOrigin = EnsureRootOrHalfNativeCouncil;
-	type PrimeOrigin = EnsureRootOrHalfNativeCouncil;
+	type AddOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type RemoveOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type SwapOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type ResetOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type PrimeOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type MembershipInitialized = Council;
 	type MembershipChanged = Council;
 	type MaxMembers = CouncilMaxMembers;
@@ -41,11 +41,11 @@ impl collective::Config<NativeCouncilCollective> for Runtime {
 
 impl membership::Config<NativeTechnicalMembership> for Runtime {
 	type Event = Event;
-	type AddOrigin = EnsureRootOrHalfNativeCouncilOrTechnical;
-	type RemoveOrigin = EnsureRootOrHalfNativeCouncilOrTechnical;
-	type SwapOrigin = EnsureRootOrHalfNativeCouncilOrTechnical;
-	type ResetOrigin = EnsureRootOrHalfNativeCouncilOrTechnical;
-	type PrimeOrigin = EnsureRootOrHalfNativeCouncilOrTechnical;
+	type AddOrigin = EnsureRootOrTwoThirdNativeCouncilOrTechnical;
+	type RemoveOrigin = EnsureRootOrTwoThirdNativeCouncilOrTechnical;
+	type SwapOrigin = EnsureRootOrTwoThirdNativeCouncilOrTechnical;
+	type ResetOrigin = EnsureRootOrTwoThirdNativeCouncilOrTechnical;
+	type PrimeOrigin = EnsureRootOrTwoThirdNativeCouncilOrTechnical;
 	type MembershipInitialized = TechnicalCollective;
 	type MembershipChanged = TechnicalCollective;
 	type MaxMembers = CouncilMaxMembers;
@@ -94,11 +94,11 @@ impl democracy::Config<NativeDemocracy> for Runtime {
 	type VotingPeriod = VotingPeriod;
 	type VoteLockingPeriod = EnactmentPeriod;
 	type MinimumDeposit = MinimumDeposit;
-	type ExternalOrigin = EnsureRootOrHalfNativeCouncil;
+	type ExternalOrigin = EnsureRootOrTwoThirdNativeCouncil;
 
 	type ExternalMajorityOrigin = EnsureRootOrMoreThenHalfNativeCouncil;
 
-	type ExternalDefaultOrigin = EnsureRootOrHalfNativeCouncil;
+	type ExternalDefaultOrigin = EnsureRootOrTwoThirdNativeCouncil;
 
 	type FastTrackOrigin = EnsureRootOrHalfNativeTechnical;
 	type InstantOrigin = EnsureRootOrHalfNativeTechnical;
@@ -108,8 +108,8 @@ impl democracy::Config<NativeDemocracy> for Runtime {
 
 	type CancellationOrigin = EnsureRootOrAllNativeTechnical;
 
-	type BlacklistOrigin = EnsureRootOrHalfNativeCouncil;
-	type CancelProposalOrigin = EnsureRootOrHalfNativeCouncil;
+	type BlacklistOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type CancelProposalOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type VetoOrigin = EnsureNativeTechnicalMember;
 	type OperationalPreimageOrigin = EnsureNativeCouncilMember;
 	type Slash = Treasury;
@@ -144,8 +144,8 @@ parameter_types! {
 impl treasury::Config<NativeTreasury> for Runtime {
 	type PalletId = TreasuryPalletId;
 	type Currency = Balances;
-	type ApproveOrigin = EnsureRootOrHalfNativeCouncil;
-	type RejectOrigin = EnsureRootOrHalfNativeCouncil;
+	type ApproveOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type RejectOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type Event = Event;
 	type OnSlash = Treasury;
 	type ProposalBond = ProposalBond;
