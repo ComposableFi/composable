@@ -1,6 +1,6 @@
 {
   "name": "composable-squid",
-  "version": "1.10001.0",
+  "version": "1.10002.0",
   "private": true,
   "scripts": {
     "build": "rm -rf lib && tsc",
