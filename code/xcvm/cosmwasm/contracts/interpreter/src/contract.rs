@@ -597,7 +597,7 @@ mod tests {
 	const REGISTRY_ADDR: &str = "registry_addr";
 	const GATEWAY_ADDR: &str = "gateway_addr";
 	const ROUTER_ADDR: &str = "router_addr";
-	const BALANCE: u128 = 10_000;
+	const BALANCE: u128 = 10_000_000_000_000_000_000;
 
 	fn do_instantiate(
 		deps: DepsMut,
@@ -622,9 +622,10 @@ mod tests {
 
 	fn wasm_querier(query: &WasmQuery) -> QuerierResult {
 		match query {
-			WasmQuery::Smart { contract_addr, msg } if contract_addr.as_str() == CW20_ADDR =>
-				if from_binary::<cw20::TokenInfoResponse>(msg).is_ok() {
-					SystemResult::Ok(ContractResult::Ok(
+			WasmQuery::Smart { contract_addr, msg } if contract_addr.as_str() == CW20_ADDR => {
+				let query = from_binary::<cw20::Cw20QueryMsg>(msg).unwrap();
+				match query {
+					cw20::Cw20QueryMsg::TokenInfo {} => SystemResult::Ok(ContractResult::Ok(
 						to_binary(&cw20::TokenInfoResponse {
 							name: "Picasso".to_string(),
 							symbol: "PICA".to_string(),
@@ -632,12 +633,13 @@ mod tests {
 							total_supply: 100_000_000_u128.into(),
 						})
 						.unwrap(),
-					))
-				} else {
-					SystemResult::Ok(ContractResult::Ok(
+					)),
+					cw20::Cw20QueryMsg::Balance { .. } => SystemResult::Ok(ContractResult::Ok(
 						to_binary(&cw20::BalanceResponse { balance: BALANCE.into() }).unwrap(),
-					))
-				},
+					)),
+					_ => panic!("Unhandled query"),
+				}
+			},
 			WasmQuery::Smart { contract_addr, .. } if contract_addr.as_str() == REGISTRY_ADDR =>
 				SystemResult::Ok(ContractResult::Ok(
 					to_binary(&cw_xcvm_asset_registry::msg::LookupResponse {
@@ -997,6 +999,36 @@ mod tests {
 					amount: 1_u128.into()
 				})
 				.unwrap()
+		);
+	}
+
+	#[test]
+	fn balance_apply_works() {
+		let mut deps = mock_dependencies();
+		let mut querier = MockQuerier::default();
+		querier.update_wasm(wasm_querier);
+		deps.querier = querier;
+
+		assert_eq!(
+			apply_amount_to_cw20_balance(
+				deps.as_ref(),
+				&Balance::new(Amount::new(1, MAX_PARTS / 2), true),
+				CW20_ADDR,
+				MOCK_CONTRACT_ADDR,
+			)
+			.unwrap(),
+			15_u128 * 10_u128.pow(11)
+		);
+
+		assert_eq!(
+			apply_amount_to_cw20_balance(
+				deps.as_ref(),
+				&Balance::new(Amount::new(512, MAX_PARTS / 4), true),
+				CW20_ADDR,
+				MOCK_CONTRACT_ADDR,
+			)
+			.unwrap(),
+			51225_u128 * 10_u128.pow(10)
 		);
 	}
 

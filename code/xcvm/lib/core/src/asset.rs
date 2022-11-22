@@ -259,8 +259,8 @@ impl Amount {
 				FixedU128::<U16>::wrapping_from_num(self.slope.0)
 					.saturating_div(FixedU128::<U16>::wrapping_from_num(MAX_PARTS)),
 			)
-			.wrapping_to_num::<u128>()
-			.saturating_mul(10 ^ (decimals as u128));
+			.saturating_mul(FixedU128::<U16>::wrapping_from_num(10_u128.pow(decimals as u32)))
+			.wrapping_to_num::<u128>();
 
 		u128::min(value, amount)
 	}
