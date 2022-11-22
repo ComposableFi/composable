@@ -70,7 +70,7 @@ fn transfer_relay_native_to_non_existing_chain_by_local_id() {
 
 	This::execute_with(|| {
 		use this_runtime::*;
-		let before = Assets::free_balance(CurrencyId::KSM, &alice().into());
+		let _before = Assets::free_balance(CurrencyId::KSM, &alice().into());
 		let transferred = XTokens::transfer(
 			Origin::signed(alice().into()),
 			CurrencyId::KSM,
@@ -100,7 +100,7 @@ fn transfer_non_existing_asset_by_local_id() {
 
 	This::execute_with(|| {
 		use this_runtime::*;
-		let before = Assets::free_balance(CurrencyId::KSM, &alice().into());
+		let _before = Assets::free_balance(CurrencyId::KSM, &alice().into());
 		let transferred = XTokens::transfer(
 			Origin::signed(alice().into()),
 			CurrencyId(100500),
@@ -159,7 +159,7 @@ fn cannot_reserver_transfer_assets_when_fee_and_non_fee_has_different_origin() {
 		.unwrap();
 		assert_ok!(Tokens::deposit(CurrencyId(123_666), &alice().into(), 2 * transfer_amount));
 
-		let before = Assets::free_balance(CurrencyId::KSM, &alice().into());
+		let _before = Assets::free_balance(CurrencyId::KSM, &alice().into());
 		let transferred = XTokens::transfer_multiasset_with_fee(
 			Origin::signed(alice().into()),
 			Box::new(VersionedMultiAsset::V1(MultiAsset {
@@ -218,7 +218,7 @@ fn transfer_existing_asset_but_with_relevant_outgoing_fee_by_local_id() {
 
 		assert_ok!(Tokens::deposit(CurrencyId(100500), &alice().into(), 2 * transfer_amount));
 
-		let before = Assets::free_balance(CurrencyId::KSM, &alice().into());
+		let _before = Assets::free_balance(CurrencyId::KSM, &alice().into());
 		let transferred = XTokens::transfer(
 			Origin::signed(alice().into()),
 			CurrencyId(100500),
@@ -277,7 +277,7 @@ fn cannot_transfer_away_if_min_fee_is_not_defined() {
 
 		assert_ok!(Tokens::deposit(CurrencyId::RELAY_NATIVE, &alice().into(), 2 * transfer_amount));
 
-		let before = Assets::free_balance(CurrencyId::KSM, &alice().into());
+		let _before = Assets::free_balance(CurrencyId::KSM, &alice().into());
 		let transferred = XTokens::transfer_multicurrencies(
 			Origin::signed(alice().into()),
 			vec![
@@ -290,7 +290,7 @@ fn cannot_transfer_away_if_min_fee_is_not_defined() {
 					1,
 					X2(
 						Parachain(SIBLING_PARA_ID),
-						Junction::AccountId32 { network: NetworkId::Any, id: alice().into() },
+						Junction::AccountId32 { network: NetworkId::Any, id: alice() },
 					),
 				)
 				.into(),
@@ -327,7 +327,7 @@ fn cannot_reserver_transfer_assets_from_self() {
 
 		assert_ok!(Tokens::deposit(CurrencyId(100500), &alice().into(), 2 * transfer_amount));
 
-		let before = Assets::free_balance(CurrencyId::KSM, &alice().into());
+		let _before = Assets::free_balance(CurrencyId::KSM, &alice().into());
 		let transferred = XTokens::transfer(
 			Origin::signed(alice().into()),
 			CurrencyId(100500),

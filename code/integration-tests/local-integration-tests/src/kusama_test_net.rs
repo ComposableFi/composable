@@ -70,7 +70,7 @@ decl_test_network! {
 fn default_parachains_host_configuration() -> HostConfiguration<BlockNumber> {
 	HostConfiguration {
 		minimum_validation_upgrade_delay: 5,
-		validation_upgrade_cooldown: 5u32,
+		validation_upgrade_cooldown: 5_u32,
 		validation_upgrade_delay: 5,
 		code_retention_period: 1200,
 		max_code_size: MAX_CODE_SIZE,
