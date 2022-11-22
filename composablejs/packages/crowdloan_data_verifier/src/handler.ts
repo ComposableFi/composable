@@ -1,12 +1,9 @@
 import { ApiPromise } from "@polkadot/api";
 import BN from "bn.js";
-import fetch from "node-fetch";
 import { Keyring } from "@polkadot/keyring";
 import { AssertionError } from "assert";
-
-async function loadJSON(url: string) {
-  return await (await fetch(url)).json();
-}
+// @ts-ignore
+import * as intendedVestedTransfers from "@composable/crowdloan_data_verifier/transfers";
 
 /**
  * Queries contributors on crowdloan pallet & fetches list of contributors from an url, as json file.
@@ -16,9 +13,9 @@ async function loadJSON(url: string) {
  * @param api Connected API Client
  * @param urlToContributorsFile String containing url to contributors list in json format.
  */
-export async function verifyCrowdloanData(api: ApiPromise, urlToContributorsFile: string) {
+export async function verifyCrowdloanData(api: ApiPromise) {
   const rawPalletData = await api.query.crowdloanRewards.rewards.entries();
-  const contributors = await loadJSON(urlToContributorsFile);
+  const contributors = intendedVestedTransfers;
   if (!contributors) throw new AssertionError({ message:"Could not retrieve contributors list!" });
   if (rawPalletData.length == 0) throw new AssertionError({ message:"Chain wasn't populated yet! 0 contributors on chain." });
 
@@ -50,6 +47,7 @@ export async function verifyCrowdloanData(api: ApiPromise, urlToContributorsFile
       // @ts-ignore
       const decodedValue = keyring.decodeAddress(contributor.toHuman()[0]["RelayChain"]);
       if (!decodedValue) continue;
+      // @ts-ignore
       const contrib = contributors["rewardedPICAs"][keyring.encodeAddress(decodedValue, 2)];
       const rawAmountFromList = contrib;
       amountFromList = new BN(parseFloat(rawAmountFromList)).mul(new BN(10).pow(new BN(12)));
