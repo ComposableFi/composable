@@ -13,7 +13,8 @@ composable_pid=$(echo $!)
 
 # wait for TCP port opening
 while ! nc -z 127.0.0.1 $PARA_PORT; do
-  sleep 0.5
+  sleep 1
+  echo "Trying to connect to 127.0.0.1:${PARA_PORT}..."
 done
 
 # required subxt v0.25.0
