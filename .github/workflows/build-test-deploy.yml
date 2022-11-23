@@ -315,6 +315,8 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - run: |
+          nix --version
+          nix show-config
           cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#docs-static --no-update-lock-file --show-trace -L
 
   frontend-check:
