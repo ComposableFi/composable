@@ -15,19 +15,19 @@ pub enum ContractError {
 	#[error("An invalid XCVM packet has been received.")]
 	InvalidIbcXcvmPacket,
 	#[error("No IBC channel is opened to the target network.")]
-  UnsupportedNetwork,
+	UnsupportedNetwork,
 	#[error("Could not serialize to JSON")]
-  FailedToSerialize,
+	FailedToSerialize,
 	#[error("The required BridgeSecurity is not yet supported.")]
-  UnsupportedBridgeSecurity,
+	UnsupportedBridgeSecurity,
 	#[error("The asset is not yet supported.")]
-  UnsupportedAsset,
+	UnsupportedAsset,
 	#[error("The contract must be initialized first.")]
-  NotInitialized,
+	NotInitialized,
 	#[error("An overflow occured.")]
-  ArithmeticOverflow,
+	ArithmeticOverflow,
 	#[error("Not enough funds to cover the operation.")]
-  InsufficientFunds,
+	InsufficientFunds,
 	#[error("{0:?}")]
 	Protobuf(DecodingFailure),
 }

@@ -245,7 +245,7 @@ impl<T> IntoIterator for Funds<T> {
 	type Item = <Vec<(AssetId, T)> as IntoIterator>::Item;
 	type IntoIter = <Vec<(AssetId, T)> as IntoIterator>::IntoIter;
 	fn into_iter(self) -> Self::IntoIter {
-    self.0.into_iter()
+		self.0.into_iter()
 	}
 }
 

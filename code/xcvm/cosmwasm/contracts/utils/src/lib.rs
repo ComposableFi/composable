@@ -1,6 +1,6 @@
+use cosmwasm_std::{from_binary, to_binary, Binary, CanonicalAddr, StdResult};
 use std::collections::VecDeque;
-use cosmwasm_std::{from_binary, to_binary, Binary, StdResult, CanonicalAddr};
-use xcvm_core::{NetworkId, UserId, UserOrigin, Funds};
+use xcvm_core::{Funds, NetworkId, UserId, UserOrigin};
 
 pub type DefaultXCVMInstruction = xcvm_core::Instruction<NetworkId, Vec<u8>, CanonicalAddr, Funds>;
 pub type DefaultXCVMProgram = xcvm_core::Program<VecDeque<DefaultXCVMInstruction>>;

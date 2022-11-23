@@ -1,7 +1,7 @@
 use cw_xcvm_utils::DefaultXCVMProgram;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use xcvm_core::{Funds, NetworkId, Displayed, BridgeSecurity};
+use xcvm_core::{BridgeSecurity, Displayed, Funds, NetworkId};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {}
@@ -15,7 +15,7 @@ pub enum ExecuteMsg {
 	},
 	Bridge {
 		network_id: NetworkId,
-    security: BridgeSecurity,
+		security: BridgeSecurity,
 		salt: Vec<u8>,
 		program: DefaultXCVMProgram,
 		assets: Funds<Displayed<u128>>,
