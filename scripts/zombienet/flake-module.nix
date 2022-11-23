@@ -28,7 +28,7 @@
             cp . $out --recursive
           '';
           # https://app.clickup.com/t/3w8y83f
-          # npm build fails with https://github.com/serokell/nix-npm-buildpackage/pull/62 (also i have updaed to this PR...)
+          # npm build fails with https://github.com/serokell/nix-npm-buildpackage/pull/62 (also i have updated to this PR...)
           __noChroot = true;
         };
 

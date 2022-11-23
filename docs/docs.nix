@@ -3,10 +3,12 @@
     packages = rec {
       docs-static = pkgs.buildNpmPackage {
         src = ./.;
-        npmBuild = "npm run build";
+        npmBuild = ''
+          npm run build
+        '';
         installPhase = ''
-          mkdir -p $out
-          cp -a ./build/. $out
+          mkdir --parents $out
+          cp --archive ./build/. $out
         '';
       };
 
