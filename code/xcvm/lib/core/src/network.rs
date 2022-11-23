@@ -65,9 +65,9 @@ impl AsRef<[u8]> for UserId {
 pub struct NetworkId(pub u32);
 
 impl Display for NetworkId {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-      <u32 as Display>::fmt(&self.0, f)
-    }
+	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+		<u32 as Display>::fmt(&self.0, f)
+	}
 }
 
 impl From<u32> for NetworkId {
