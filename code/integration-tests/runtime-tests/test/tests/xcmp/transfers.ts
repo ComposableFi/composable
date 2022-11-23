@@ -76,8 +76,6 @@ describe("[SHORT][LAUNCH] tx.xcmp Tests", function () {
     // Timeout set to 2 minutes
     this.timeout(10 * 60 * 1000);
     it("Can transfer asset(kUSD) from relay chain(KSM) to Picasso", async function () {
-      if (!testConfiguration.enabledTests.addAssetAndInfo__success.add1) this.skip();
-
       // Setting the destination chain to Picasso/Dali
       const destination = relayChainApiClient.createType("XcmVersionedMultiLocation", {
         V0: relayChainApiClient.createType("XcmV0MultiLocation", {
@@ -163,8 +161,6 @@ describe("[SHORT][LAUNCH] tx.xcmp Tests", function () {
     this.timeout(10 * 60 * 1000);
 
     it("Can transfer KSM from Picasso to relay chain", async function () {
-      // update name in test_configuration. Ask Dom
-      if (!testConfiguration.enabledTests.addAssetAndInfo__success.add1) this.skip();
 
       //Set amount to transfer
       const amountToTransfer = relayChainApiClient.createType("u128", 10000000000000);
