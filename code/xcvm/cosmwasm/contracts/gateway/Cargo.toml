@@ -25,10 +25,10 @@ serde = { version = "1.0.137", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.31" }
 xcvm-core = { path = "../../../lib/core", features = ["std"] }
 xcvm-proto = { path = "../../../lib/proto" }
+serde-json-wasm = { git = "https://github.com/hussein-aitlahcen/serde-json-wasm", rev = "1608a13d2a2ba90605d9626a51ff6667aca5a2d6" }
 
 [dev-dependencies]
 cosmwasm-schema = "1.0.0"
 prost = { version = "0.11", default-features = false, features = [
   "prost-derive",
 ] }
-serde-json-wasm = { git = "https://github.com/hussein-aitlahcen/serde-json-wasm", rev = "1608a13d2a2ba90605d9626a51ff6667aca5a2d6" }

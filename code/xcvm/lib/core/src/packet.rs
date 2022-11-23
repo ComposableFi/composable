@@ -8,6 +8,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, PartialEq, Eq, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct Packet<Program> {
+  /// The interpreter that was the origin of this packet.
+  pub interpreter: Vec<u8>,
 	/// The user that originated the first XCVM call.
 	pub user_origin: UserOrigin,
 	/// The salt associated with the program.

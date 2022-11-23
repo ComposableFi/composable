@@ -1,5 +1,10 @@
-use cosmwasm_std::{from_binary, to_binary, Binary, StdResult};
-use xcvm_core::{NetworkId, UserId, UserOrigin};
+use std::collections::VecDeque;
+use cosmwasm_std::{from_binary, to_binary, Binary, StdResult, CanonicalAddr};
+use xcvm_core::{NetworkId, UserId, UserOrigin, Funds};
+
+pub type DefaultXCVMInstruction = xcvm_core::Instruction<NetworkId, Vec<u8>, CanonicalAddr, Funds>;
+pub type DefaultXCVMProgram = xcvm_core::Program<VecDeque<DefaultXCVMInstruction>>;
+pub type DefaultXCVMPacket = xcvm_core::Packet<DefaultXCVMProgram>;
 
 pub fn encode_origin_data(user_origin: UserOrigin) -> StdResult<String> {
 	Ok(to_binary(&(user_origin.network_id, user_origin.user_id))?.to_base64())

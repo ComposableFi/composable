@@ -2,15 +2,35 @@
 
 extern crate alloc;
 
-use alloc::{collections::VecDeque, vec::Vec};
+use core::fmt::Display;
+
+use alloc::{collections::VecDeque, format, vec::Vec};
 use fixed::{types::extra::U16, FixedU128};
 use prost::{DecodeError, Message};
 use xcvm_core::{Amount, Destination, Displayed, Funds, NetworkId, MAX_PARTS};
 
 include!(concat!(env!("OUT_DIR"), "/interpreter.rs"));
 
+pub type XCVMPacket<TNetwork, TAbiEncoded, TAccount, TAssets> =
+	xcvm_core::Packet<XCVMProgram<TNetwork, TAbiEncoded, TAccount, TAssets>>;
+
+pub type XCVMProgram<TNetwork, TAbiEncoded, TAccount, TAssets> =
+	xcvm_core::Program<VecDeque<xcvm_core::Instruction<TNetwork, TAbiEncoded, TAccount, TAssets>>>;
+
 pub trait Encodable {
 	fn encode(self) -> Vec<u8>;
+}
+
+#[derive(Clone, Debug)]
+pub enum DecodingFailure {
+	Protobuf(DecodeError),
+	Isomorphism,
+}
+
+impl Display for DecodingFailure {
+	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+		<str as Display>::fmt(&format!("{:?}", self), f)
+	}
 }
 
 pub fn decode_packet<TNetwork, TAbiEncoded, TAccount, TAssets>(
@@ -30,18 +50,6 @@ where
 		.and_then(|x| TryInto::try_into(x).map_err(|_| DecodingFailure::Isomorphism))
 }
 
-pub type XCVMPacket<TNetwork, TAbiEncoded, TAccount, TAssets> =
-	xcvm_core::Packet<XCVMProgram<TNetwork, TAbiEncoded, TAccount, TAssets>>;
-
-pub type XCVMProgram<TNetwork, TAbiEncoded, TAccount, TAssets> =
-	xcvm_core::Program<VecDeque<xcvm_core::Instruction<TNetwork, TAbiEncoded, TAccount, TAssets>>>;
-
-#[derive(Clone, Debug)]
-pub enum DecodingFailure {
-	Protobuf(DecodeError),
-	Isomorphism,
-}
-
 pub fn decode<TNetwork, TAbiEncoded, TAccount, TAssets>(
 	buffer: &[u8],
 ) -> core::result::Result<XCVMProgram<TNetwork, TAbiEncoded, TAccount, TAssets>, DecodingFailure>
@@ -54,6 +62,62 @@ where
 	Program::decode(buffer)
 		.map_err(DecodingFailure::Protobuf)
 		.and_then(|x| TryInto::try_into(x).map_err(|_| DecodingFailure::Isomorphism))
+}
+
+impl<TNetwork, TAbiEncoded, TAccount, TAssets> Encodable
+	for XCVMPacket<TNetwork, TAbiEncoded, TAccount, TAssets>
+where
+	TNetwork: Into<u32>,
+	TAbiEncoded: Into<Vec<u8>>,
+	TAccount: Into<Vec<u8>>,
+	TAssets: Into<Vec<(xcvm_core::AssetId, xcvm_core::Amount)>>,
+{
+	fn encode(self) -> Vec<u8> {
+		Packet::encode_to_vec(&self.into())
+	}
+}
+
+impl From<Vec<u8>> for Salt {
+	fn from(value: Vec<u8>) -> Self {
+		Salt { salt: value }
+	}
+}
+
+impl From<xcvm_core::UserId> for Account {
+	fn from(xcvm_core::UserId(account): xcvm_core::UserId) -> Self {
+		Account { account }
+	}
+}
+
+impl From<xcvm_core::UserOrigin> for UserOrigin {
+	fn from(value: xcvm_core::UserOrigin) -> Self {
+		UserOrigin { network: Some(value.network_id.into()), account: Some(value.user_id.into()) }
+	}
+}
+
+impl From<(xcvm_core::AssetId, Displayed<u128>)> for PacketAsset {
+	fn from((asset, Displayed(amount)): (xcvm_core::AssetId, Displayed<u128>)) -> Self {
+		PacketAsset { asset_id: Some(asset.into()), amount: Some(amount.into()) }
+	}
+}
+
+impl<TNetwork, TAbiEncoded, TAccount, TAssets>
+	From<XCVMPacket<TNetwork, TAbiEncoded, TAccount, TAssets>> for Packet
+where
+	TNetwork: Into<u32>,
+	TAbiEncoded: Into<Vec<u8>>,
+	TAccount: Into<Vec<u8>>,
+	TAssets: Into<Vec<(xcvm_core::AssetId, xcvm_core::Amount)>>,
+{
+	fn from(value: XCVMPacket<TNetwork, TAbiEncoded, TAccount, TAssets>) -> Self {
+		Packet {
+			interpreter: Some(Account { account: value.interpreter.into() }),
+			user_origin: Some(value.user_origin.into()),
+			salt: Some(value.salt.into()),
+			program: Some(value.program.into()),
+			assets: value.assets.0.into_iter().map(PacketAsset::from).collect::<Vec<_>>(),
+		}
+	}
 }
 
 impl<TNetwork, TAbiEncoded, TAccount, TAssets> Encodable
@@ -113,6 +177,7 @@ where
 
 	fn try_from(packet: Packet) -> core::result::Result<Self, Self::Error> {
 		Ok(XCVMPacket {
+			interpreter: packet.interpreter.ok_or(())?.account.into(),
 			user_origin: packet.user_origin.ok_or(())?.try_into()?,
 			salt: packet.salt.map(|s| s.salt).ok_or(())?,
 			program: packet.program.ok_or(())?.try_into()?,

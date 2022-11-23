@@ -8,10 +8,11 @@ message PacketAsset {
 }
 
 message Packet {
-  UserOrigin user_origin = 1;
-  Salt salt = 2;
-  Program program = 3;
-  repeated PacketAsset assets = 4;
+  Account interpreter = 1;
+  UserOrigin user_origin = 2;
+  Salt salt = 3;
+  Program program = 4;
+  repeated PacketAsset assets = 5;
 }
 
 message UserOrigin {

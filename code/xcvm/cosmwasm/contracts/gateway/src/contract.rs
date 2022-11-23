@@ -3,8 +3,9 @@ extern crate alloc;
 use crate::{
 	common::ensure_admin,
 	error::ContractError,
+	ibc::handle_bridge,
 	msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg},
-	state::{CONFIG, IBC_NETWORK_CHANNEL},
+	state::IBC_NETWORK_CHANNEL,
 };
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
@@ -21,12 +22,9 @@ pub fn instantiate(
 	deps: DepsMut,
 	_env: Env,
 	_info: MessageInfo,
-	mut msg: InstantiateMsg,
+	_msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
 	set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-	msg.config.admin = deps.api.addr_validate(msg.config.admin.as_ref())?;
-	msg.config.router_address = deps.api.addr_validate(msg.config.router_address.as_ref())?;
-	CONFIG.save(deps.storage, &msg.config)?;
 	Ok(Response::default()
 		.add_event(Event::new(XCVM_GATEWAY_EVENT_PREFIX).add_attribute("action", "instantiated")))
 }
@@ -34,7 +32,7 @@ pub fn instantiate(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
 	deps: DepsMut,
-	_env: Env,
+	env: Env,
 	info: MessageInfo,
 	msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
@@ -49,6 +47,8 @@ pub fn execute(
 					.add_attribute("channel_id", channel_id),
 			))
 		},
+		ExecuteMsg::Bridge { network_id, security, salt, program, assets } =>
+			handle_bridge(deps, env, info, network_id, security, salt, program, assets),
 	}
 }
 
