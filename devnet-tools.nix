@@ -82,7 +82,8 @@
             ];
             src = ./scripts/lease-period-prolongator;
             buildPhase = ''
-              yarn
+              export HOME=$(pwd)
+              yarn --offline
               ${pkgs.nodePackages.typescript}/bin/tsc
             '';
           };
@@ -96,7 +97,8 @@
             ];
             src = ./composablejs;
             buildPhase = ''
-              yarn
+              export HOME=$(pwd)
+              yarn --offline
             '';
           };
         in pkgs.writeShellApplication {
