@@ -21,6 +21,8 @@ From this, a pallet under development does not represent a security issue.
 
 See usage of 'feature = "develop"` in runtime.
 
+See usage of `[cfg(feature= ...)]` in Cumulus Assets parachains (the conditionally enable some specific pallets in construct runtime macro).
+
 ### IDE support
 
 Rust analyzer works well with features behind `rust-analyzer.cargo.features` configuration in VS Code. It is visible what features are on and off.
@@ -52,10 +54,9 @@ Using develop branch is an attempted alternative to go forward. I see next probl
 - Merging main into develop and develop back is hard and error-prone. Can introduce security bugs.
 - Develop is not up today with the same GitOps and linting practices with main. This leads to broken and hard-to-fix build issues, like the inability to build runtime on current develop.
 
-## Unresolved questions
+## Questions
 
 - Gating new yet audited extrinsic in existing pallets.
 - Versioning conditional blocks of code inside pallets.
-- https://github.com/paritytech/substrate/issues/10286
 
 Two of the above issues should be solved regardless of whether we are using develop branch or feature gate.

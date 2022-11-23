@@ -1,5 +1,9 @@
 # Overview
 
+This RFC example payload and flow is legacy.
+
+With recent upgrade, Parity allowed to open channels [without using 3 hops XCM message for Common Good Parachains](https://github.com/paritytech/polkadot/pull/6155), [message is simple now](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkusama-rpc.polkadot.io#/extrinsics/decode/0x18020c0402006d6f646c70792f747273727900000000000000000000000000000000000000000070617261e80300000000000000000000000000000000000000000000000000000b00a0724e18093c0727080000e8030000e8030000009001003c07e803000027080000e803000000900100).
+
 Details of Statemine open channel proposal for https://kusama.polkassembly.io/proposal/111
 
 ## Preimage
