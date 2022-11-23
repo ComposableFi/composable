@@ -8,6 +8,7 @@
         '';
         installPhase = ''
           mkdir --parents $out
+          ls
           cp --archive ./build/. $out
         '';
       };
