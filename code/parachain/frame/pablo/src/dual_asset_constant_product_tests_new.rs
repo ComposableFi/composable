@@ -19,7 +19,7 @@ use crate::{
 };
 
 #[test]
-fn add_remove_lp_new() {
+fn add_remove_lp() {
 	new_test_ext().execute_with(|| {
 		next_block::<Pablo, Test>();
 

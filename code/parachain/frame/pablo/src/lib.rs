@@ -935,21 +935,25 @@ pub mod pallet {
 			let pool_account = Self::account_id(&pool_id);
 			match pool {
 				PoolConfiguration::DualAssetConstantProduct(info) => {
-					let (base_amount, quote_amount, updated_lp) =
-						DualAssetConstantProduct::<T>::remove_liquidity(
-							who,
-							info,
-							pool_account,
-							lp_amount,
-							redeemable_assets.assets,
-						)?;
+					DualAssetConstantProduct::<T>::remove_liquidity(
+						who,
+						info,
+						pool_account,
+						lp_amount,
+						redeemable_assets
+							.assets
+							.into_iter()
+							.map(|(asset_id, amount)| AssetAmount { asset_id, amount })
+							.try_collect()
+							.map_err(|_| Error::<T>::MoreThanTwoAssetsNotYetSupported)?,
+					)?;
 					Self::update_twap(pool_id)?;
 					Self::deposit_event(Event::<T>::LiquidityRemoved {
 						pool_id,
 						who: who.clone(),
-						base_amount,
-						quote_amount,
-						total_issuance: updated_lp,
+						base_amount: T::Balance::zero(),
+						quote_amount: T::Balance::zero(),
+						total_issuance: T::Balance::zero(),
 					});
 				},
 			}
