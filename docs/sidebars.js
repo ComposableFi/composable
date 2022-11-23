@@ -319,14 +319,16 @@ const sidebars = {
       ]
     },
     {
-      type: 'category',
+      type: 'doc',
+      id:'faqs/faqs',
       label: 'FAQs',
-      collapsible: false,
-      items: [
-        'faqs/faqs',
-        'faqs/risks-disclosures'
-      ]
     },
+    {
+      type: 'category',
+      id:'faqs/risks-disclosures',
+      label: 'Legal Disclosures',
+    },
+
   ],
 };
 
