@@ -161,7 +161,6 @@ describe("[SHORT][LAUNCH] tx.xcmp Tests", function () {
     this.timeout(10 * 60 * 1000);
 
     it("Can transfer KSM from Picasso to relay chain", async function () {
-
       //Set amount to transfer
       const amountToTransfer = relayChainApiClient.createType("u128", 10000000000000);
 
