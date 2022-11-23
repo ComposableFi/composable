@@ -4,68 +4,12 @@
 Composable Labs actively supports developers building projects with our technology. 
 This includes projects using pallets on our Picasso parachain and those building with our cross-chain technology.*
 
-## Composable Ecosystem
+Composable labs is devoted to pushing new protocols that harness the full potential of the Composable techstack.
+Projects building on Composable:
 
-[The Composable Labs team](https://medium.com/@ComposableLabs/introducing-composable-labs-our-approach-to-building-and-developing-a-substrate-focused-605415f8ac79) 
-operates as the research, development, and incubation division of Composable 
-and comprises a team of 14 researchers, developers, and engineers. Composable Labs serves three core purposes: 
-Firstly, exploring partnerships with existing projects in the DeFi space. 
-Secondly, crafting protocol designs with aspiring founders who share their vision of a blockchain-agnostic future
-and offering them incubation grants. Thirdly, building protocols in-house that harness the Composable tech stack. 
+- [Angular Finance](https://www.angular.finance/)
 
-As Composable’s tech stack is primarily based on Substrate pallets, 
-Composable Labs is heavily focused on Substrate-based DeFi. 
-Composable Labs’ Substrate primitives are at the pioneering front of DeFi innovation and represent novel advancements. 
-They are built as modular pallets that can be natively ‘stacked’ by any DeFi developer to create new services. 
-The primitives Composable Labs are building to fill critical gaps within the DotSama ecosystem 
-are vital to the realization of DotSama’s potential.
-
-### [Angular Finance](https://angularfinance.medium.com/)
-
-[Angular Finance](https://www.angular.finance/) is a cross-chain money market that will enable 
-the permissionless creation of isolated pools for any asset part of Composable’s ecosystem. 
-Angular will also offer leverage as a service, liquidation as a service, flash loans, 
-and unique capabilities such as the option to provide NFTs and fNFTs as collateral, among other functionalities.
-
-### Instrumental Finance:
-
-[Instrumental Finance](https://www.instrumental.finance/) 
-is a cross-chain-and-layer LP position movement and arbitrage protocol. 
-LPs can deposit any asset belonging to Composable’s ecosystem into an Instrumental Vault. 
-Instrumental will automatically deploy the funds to the highest yield-earning platform and pool currently available, 
-regardless of the chain or layer it is on.
-
-### Whirlpool Cash:
-
-[Whirlpool Cash](https://www.whirlpoolcash.com/) is a native, 
-privacy-preserving protocol that works by mixing transactions into a collective, anonymized pool. 
-In addition, Whirlpool uses yield farms to generate returns for 
-those who deposit assets that are part of Composable’s ecosystem, which are later paid back to contributors. 
-This compensates for any costs incurred through transaction fees 
-and inverts the traditional view of privacy in DeFi as a cost-driver.
-
-To see an overview of the decentralized applications and services hosted within the Composable ecosystem, explore
-[ this blog by Karel Kubat and 0xbrainjar](https://medium.com/composable-finance/the-primitives-needed-to-power-a-complete-defi-ecosystem-6e7d5cfdc525).
-
-## Composable Labs Roadmap
-
-### Phase 1
-
-Composable Labs will develop and run in-house and incubated projects. 
-These include Substrate primitives such as Angular Finance, Ensemble, and Whirlpool Cash. 
-During each phase, Composable Labs will continue researching innovative solutions for DeFi products and services.
-
-### Phase 2
-
-Composable Labs will dedicate members of its talent pool to project-specific needs and enable developers to use 
-the resources available at Composable to build faster, more efficiently, and scale at will. 
-Angular, for example, already has a dedicated team of Composable Labs engineers to aid in the project’s development.
-
-### Phase 3
-
-During this phase, Composable will be entirely up and running, and the pallets on Picasso. 
-Composable Labs will heavily explore the nested parachain approach to project deployment on the Composable parachain. 
-This means that each project will become a nested parachain.
+- [Instrumental Finance](https://www.instrumental.finance/)
 
 ## Composable Research
 
@@ -113,9 +57,7 @@ such as our oracle and vault pallets,
 [Apollo](https://0xbrainjar.medium.com/introducing-apollo-an-mev-resistant-oracle-884efae18848) and 
 [Cubic](https://0xbrainjar.medium.com/introducing-cubic-setting-the-standard-for-vault-infrastructure-in-polkadot-and-kusama-8c1ab9390c5f). 
 Developers working on Ethereum will get access to 
-[Mosaic](https://medium.com/composable-finance/introducing-mosaic-phase-2-10d1bfe5f6f8), 
-facilitating the development of cross-layer dApp projects. Once an Ethereum project reaches a particular stage of 
-development, Composable’s team can also help port it to 
+Once an Ethereum project reaches a particular stage of development, Composable’s team can also help port it to 
 [Rust pallets](https://substrate.dev/docs/en/knowledgebase/runtime/pallets) 
 and deploy them on our parachain. Once the 
 [Cross-Chain Virtual Machine (XCVM)](https://dali.devnets.composablefinance.ninja/products/xcvm.html) 
