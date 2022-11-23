@@ -307,7 +307,7 @@ Executes a payload within the execution context of the chain, such as an extrins
 ```
 <Call>         ::= <Payload> <Bindings>
 <Payload>      ::= bytes
-<Bindings>     ::= { u16 : <BindingValue> }
+<Bindings>     ::= [ u16 <BindingValue> ]
 <AssetAmount>  ::= <AssetId> <Balance>
 <BindingValue> ::= <Self> | <Relayer> | <Result> | <AssetAmount> | <GlobalId>
 ```
@@ -325,6 +325,8 @@ If the caller wants to swap funds from the interpreter account and receive the f
 On the executing instance, `BindingValue::Self` will be interpolated at byte index 13  of the payload before being executed, the final payload then becomes `swap(10,(1,2), BindingValue::Self)`, where `BindingValue::Self` is the canonical address of the interpreter on the destination side.
 
 Besides accessing the `Self` register, `BindingValue` allows for lazy lookups of AssetId conversions, by using `BindingValue::AssetId(GlobalId)`, or lazily converting decimal points depending on the chain using the `Balance` type.
+
+Indices in bindings must to be **sorted** in an ascending order and **unique**.
 
 Bindings do not support non-byte aligned encodings.
 
@@ -379,7 +381,7 @@ The result register contains the result of the last executed instruction.
 ```
 <ResultRegister> ::= 
     <Error> 
-    | <ExecutionResult><
+    | <ExecutionResult>
 
 <Error ::= 
     <CallError> 
@@ -410,7 +412,7 @@ The instruction pointer register contains the instruction pointer of the last ex
 The relayer register contains the `Account` of the account triggering the initial execution. This can be the IBC relayer or any other entity. By definition, the relayer is the account paying the fees for interpreter execution.
 
 ```
-<RelayerRegister> ::= u32
+<RelayerRegister> ::= <Account>
 ```
 
 #### 2.4.1.4 Self Register
