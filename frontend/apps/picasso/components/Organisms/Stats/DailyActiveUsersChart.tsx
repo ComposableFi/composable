@@ -1,13 +1,8 @@
-import { useOverviewStats } from "@/apollo/hooks/useOverviewStats";
-import { ActiveUsers, GET_ACTIVE_USERS } from "@/apollo/queries/activeUsers";
 import { Chart } from "@/components";
-import { ChartLoadingSkeleton } from "@/components/Organisms/Stats/ChartLoadingSkeleton";
-import { useQuery } from "@apollo/client";
 import { Box, Typography, useTheme } from "@mui/material";
 import { FC, useMemo, useState } from "react";
 import {
   formatNumber,
-  getRange,
   head,
   humanBalance,
   PRESET_RANGE,
@@ -18,31 +13,9 @@ import {
 export const DailyActiveUsersChart: FC = () => {
   const theme = useTheme();
   const [interval, setInterval] = useState<PresetRange>("24h");
-  const [dateFrom, dateTo, intervalQuery] = useMemo(
-    () => getRange(interval),
-    [interval]
-  );
-  const { data, loading, error } = useQuery<ActiveUsers>(GET_ACTIVE_USERS, {
-    variables: {
-      interval: intervalQuery,
-      dateTo,
-      dateFrom,
-    },
-    pollInterval: 60_000, // Every 60 seconds
-  });
-  const { data: overviewStats, loading: overviewStatsLoading } =
-    useOverviewStats();
 
-  const chartSeries: [number, number][] = useMemo(() => {
-    if (!data) return [];
+  const chartSeries: [number, number][] = useMemo(() => [], []);
 
-    const tuples: [number, number][] = data.activeUsers.map((activeUser) => {
-      const date = new Date(activeUser.date);
-      return [date.getTime(), activeUser.count];
-    });
-
-    return tuples.sort((a, b) => (a[0] > b[0] ? 1 : -1));
-  }, [data]);
   const change = useMemo(() => {
     const first = head(chartSeries);
     const last = tail(chartSeries);
@@ -75,14 +48,6 @@ export const DailyActiveUsersChart: FC = () => {
     const first = tail(chartSeries);
     return formatNumber(first?.[1] ?? 0);
   }, [chartSeries]);
-
-  if (loading) {
-    return <ChartLoadingSkeleton />;
-  }
-
-  if (error) {
-    return <>{"error:" + error}</>;
-  }
 
   return (
     <Box sx={{ height: 337 }}>
