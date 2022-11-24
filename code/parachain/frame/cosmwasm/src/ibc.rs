@@ -438,33 +438,19 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 
 	fn on_chan_open_ack(
 		&mut self,
-		_ctx: &dyn ModuleCallbackContext,
+		ctx: &dyn ModuleCallbackContext,
 		_output: &mut ModuleOutputBuilder,
 		port_id: &PortId,
 		channel_id: &ChannelId,
 		counterparty_version: &IbcVersion,
 	) -> Result<(), IbcError> {
+		let metadata = ctx
+			.channel_end(&(port_id.clone(), channel_id.clone()).into())
+			.expect("callback provides only existing connection port pairs; qed");
 		let address = Self::port_to_address(port_id)?;
 		let contract_info = Self::to_ibc_contract(&address)?;
 		let message = IbcChannelConnectMsg::OpenAck {
-			channel: IbcChannel {
-				endpoint: IbcEndpoint {
-					port_id: port_id.to_string(),
-					channel_id: channel_id.to_string(),
-				},
-				counterparty_endpoint: Err(IbcError::implementation_specific(
-					"https://github.com/ComposableFi/centauri/issues/120".to_string(),
-				))?,
-				order: Err(IbcError::implementation_specific(
-					"https://github.com/ComposableFi/centauri/issues/120".to_string(),
-				))?,
-				version: Err(IbcError::implementation_specific(
-					"https://github.com/ComposableFi/centauri/issues/120".to_string(),
-				))?,
-				connection_id: Err(IbcError::implementation_specific(
-					"https://github.com/ComposableFi/centauri/issues/120".to_string(),
-				))?,
-			},
+			channel: map_channel(port_id, channel_id, metadata)?,
 			counterparty_version: counterparty_version.to_string(),
 		};
 		let gas = Weight::MAX;
@@ -482,32 +468,18 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 
 	fn on_chan_open_confirm(
 		&mut self,
-		_ctx: &dyn ModuleCallbackContext,
+		ctx: &dyn ModuleCallbackContext,
 		_output: &mut ModuleOutputBuilder,
 		port_id: &PortId,
 		channel_id: &ChannelId,
 	) -> Result<(), IbcError> {
+		let metadata = ctx
+			.channel_end(&(port_id.clone(), channel_id.clone()).into())
+			.expect("callback provides only existing connection port pairs; qed");
 		let address = Self::port_to_address(port_id)?;
 		let contract_info = Self::to_ibc_contract(&address)?;
 		let message = IbcChannelConnectMsg::OpenConfirm {
-			channel: IbcChannel {
-				endpoint: IbcEndpoint {
-					port_id: port_id.to_string(),
-					channel_id: channel_id.to_string(),
-				},
-				counterparty_endpoint: Err(IbcError::implementation_specific(
-					"https://github.com/ComposableFi/centauri/issues/120".to_string(),
-				))?,
-				order: Err(IbcError::implementation_specific(
-					"https://github.com/ComposableFi/centauri/issues/120".to_string(),
-				))?,
-				version: Err(IbcError::implementation_specific(
-					"https://github.com/ComposableFi/centauri/issues/120".to_string(),
-				))?,
-				connection_id: Err(IbcError::implementation_specific(
-					"https://github.com/ComposableFi/centauri/issues/120".to_string(),
-				))?,
-			},
+			channel: map_channel(port_id, channel_id, metadata)?,
 		};
 		let gas = Weight::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
@@ -523,11 +495,14 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 
 	fn on_chan_close_init(
 		&mut self,
-		_ctx: &dyn ModuleCallbackContext,
+		ctx: &dyn ModuleCallbackContext,
 		_output: &mut ModuleOutputBuilder,
 		port_id: &PortId,
 		channel_id: &ChannelId,
 	) -> Result<(), IbcError> {
+		let metadata = ctx
+			.channel_end(&(port_id.clone(), channel_id.clone()).into())
+			.expect("callback provides only existing connection port pairs; qed");
 		let address = Self::port_to_address(port_id)?;
 		let contract_info = Self::to_ibc_contract(&address)?;
 		let message = IbcChannelCloseMsg::CloseInit {
@@ -536,18 +511,14 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 					port_id: port_id.to_string(),
 					channel_id: channel_id.to_string(),
 				},
-				counterparty_endpoint: Err(IbcError::implementation_specific(
-					"https://github.com/ComposableFi/centauri/issues/120".to_string(),
-				))?,
-				order: Err(IbcError::implementation_specific(
-					"https://github.com/ComposableFi/centauri/issues/120".to_string(),
-				))?,
-				version: Err(IbcError::implementation_specific(
-					"https://github.com/ComposableFi/centauri/issues/120".to_string(),
-				))?,
-				connection_id: Err(IbcError::implementation_specific(
-					"https://github.com/ComposableFi/centauri/issues/120".to_string(),
-				))?,
+				counterparty_endpoint: map_endpoint(&metadata),
+				order: map_order(metadata.ordering)?,
+				version: metadata.version.to_string(),
+				connection_id: metadata
+					.connection_hops
+					.get(0)
+					.expect("at least one connection should exists; qed")
+					.to_string(),
 			},
 		};
 		let gas = Weight::MAX;
@@ -575,29 +546,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		let address = Self::port_to_address(port_id)?;
 		let contract_info = Self::to_ibc_contract(&address)?;
 		let message = IbcChannelCloseMsg::CloseConfirm {
-			channel: IbcChannel {
-				endpoint: IbcEndpoint {
-					port_id: port_id.to_string(),
-					channel_id: channel_id.to_string(),
-				},
-				counterparty_endpoint: IbcEndpoint {
-					port_id: metadata.remote.port_id.to_string(),
-					channel_id: metadata
-						.remote
-						.channel_id
-						.expect("if callback was from counter party, then it has channel; qed")
-						.to_string(),
-				},
-				order: Err(IbcError::implementation_specific(
-					"https://github.com/ComposableFi/centauri/issues/120".to_string(),
-				))?,
-				version: Err(IbcError::implementation_specific(
-					"https://github.com/ComposableFi/centauri/issues/120".to_string(),
-				))?,
-				connection_id: Err(IbcError::implementation_specific(
-					"https://github.com/ComposableFi/centauri/issues/120".to_string(),
-				))?,
-			},
+			channel: map_channel(port_id, channel_id, metadata)?,
 		};
 		let gas = Weight::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
@@ -710,6 +659,35 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
 		let _remaining = vm.gas.remaining();
 		Ok(())
+	}
+}
+
+fn map_channel(
+	port_id: &PortId,
+	channel_id: &ChannelId,
+	metadata: ibc::core::ics04_channel::channel::ChannelEnd,
+) -> Result<IbcChannel, IbcError> {
+	Ok(IbcChannel {
+		endpoint: IbcEndpoint { port_id: port_id.to_string(), channel_id: channel_id.to_string() },
+		counterparty_endpoint: map_endpoint(&metadata),
+		order: map_order(metadata.ordering)?,
+		version: metadata.version.to_string(),
+		connection_id: metadata
+			.connection_hops
+			.get(0)
+			.expect("at least one connection should exists; qed")
+			.to_string(),
+	})
+}
+
+fn map_endpoint(metadata: &ibc::core::ics04_channel::channel::ChannelEnd) -> IbcEndpoint {
+	IbcEndpoint {
+		port_id: metadata.remote.port_id.to_string(),
+		channel_id: metadata
+			.remote
+			.channel_id
+			.expect("if callback was from counter party, then it has channel; qed")
+			.to_string(),
 	}
 }
 
