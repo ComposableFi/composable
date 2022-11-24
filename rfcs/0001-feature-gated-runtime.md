@@ -22,7 +22,7 @@ From this, a pallet under development does not represent a security issue.
 See usage of 'feature = "develop"` in runtime.
 
 See usage of `[cfg(feature= ...)]` in Cumulus Assets parachains (the conditionally enable some specific pallets in construct runtime macro).
-
+(this conditionally enables specific pallets in the construct runtime macro)
 ### IDE support
 
 Rust analyzer works well with features behind `rust-analyzer.cargo.features` configuration in VS Code. It is visible what features are on and off.
