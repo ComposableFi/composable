@@ -87,21 +87,38 @@ Tip of the branch from which runtime release is considered should be signed by a
 
 #### 3.2.4.1 Examples
 
+Alice and Bob review changes and sign.
+
+Charlie verifies.
+
+ If release is done from branch:
 ```shell
- # Alice and Bob are signers
- # Charlie is verifier
- 
+
  # All
  git switch release-vx.y.3
  
  # Alice signs
- git tag --sign "release-vx.y.3/alice" --message "release"
- 
+ git tag --sign "release-vx.y.3/alice" --message "reviewed"
+ git push origin "release-vx.y.3/alice"
+
  # Bob signs
- git tag --sign "release-vx.y.3/bob" --message "release"
+ git tag --sign "release-vx.y.3/bob" --message "reviewed"
  
  # Charlie looks that each tag is signed and references relevant commit
  git tag --list | grep release-vx.y.3 | xargs git tag --verify 
+```
+
+In case of release from tag:
+```shell
+# Checkout old tag
+git checkout release-v1.10001 --force
+
+# Make diff with new release tag to review changes
+git merge release-v1.10002 --no-commit --squash
+
+# Sign new tag
+git checkout release-v1.10002 --force
+git tag --sign "release-v1.10002-alice" --message "reviewed"
 ```
 
 ## 4. Implementation
