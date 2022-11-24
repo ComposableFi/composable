@@ -2,10 +2,10 @@
 
 ## The Picasso treasury’s different revenue streams
 
-The Picasso treasury functions as a broad representative of the Picasso ecosystem. This is because the projects
-incubated by Composable Labs, such as Angular Finance, allocate a portion of their token supply to the Picasso treasury.
-In addition, the treasury actively generates revenue through network fees, staking, and liquidity provision. The CHAOS
-fNFT therefore gives holders incentives to be held long term, and also provides them a means to earn revenue through the
+The Picasso treasury functions as a broad representative of the Picasso ecosystem, actively generating 
+revenue through network fees, staking, and liquidity provision. 
+The CHAOS fNFT therefore gives holders incentives to be held long term, 
+and also provides them a means to earn revenue through the
 active yield the CHAOS fNFT returns.
 
 The Picasso protocol earns yield on its own protocol owned assets, network fees and revenue from its incubated
