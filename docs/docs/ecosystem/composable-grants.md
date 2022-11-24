@@ -34,7 +34,6 @@ Apply now to be on the cutting-edge of DeFi’s interoperable future.
 This is just the start of Composable’s journey to bring interoperability to the blockchain, 
 and we want you to grow alongside us. The grants program has three divisions:
 
-
 ### The Pallets Program
 
 This program invites developers to build [Substrate](https://substrate.io/) 
@@ -42,15 +41,12 @@ pallets onto [Picasso](../parachains/picasso-parachain-overview.md),
 helping build out a complete offering of all DeFi functionalities (from basic to advanced) 
 as building blocks for future developers to quickly architect powerful dApps on Picasso.
 
-
 Composable’s Substrate pallets provide LEGO-like building blocks for developers to build interoperable applications on Picasso. 
 As noted, our team is currently working on several pallets. 
 To reach our goal of providing a complete list of offerings to make building on our ecosystem as simple as possible, 
 we are providing grants for pallet developers and those leveraging our pallets to create applications.
 
 There are three separate pallet tracks for our grants: primitive, core and application:
-
-
 
 * **Primitive Track** grant recipients building essential tooling for pallets and applications deployed on the XCVM. 
 * **Secondary (Core) Track** teams will leverage the primary primitive pallets to create building blocks which allow for 
@@ -78,5 +74,3 @@ for example:
 
 At Composable, we are still discovering the full extent to which this technology can be leveraged. 
 Even if you are not seeking a grant, we still invite you to work with our SDK to see what you can build!
-
----
