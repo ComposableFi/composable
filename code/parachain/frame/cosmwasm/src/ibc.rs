@@ -47,7 +47,7 @@ use ibc::{
 		},
 		ics24_host::identifier::{ChannelId, ConnectionId, PortId},
 		ics26_routing::context::{
-			Module as IbcModule, ModuleId, ModuleOutputBuilder, OnRecvPacketAck,
+			Module as IbcModule, ModuleCallbackContext, ModuleId, ModuleOutputBuilder,
 		},
 	},
 	signer::Signer as IbcSigner,
@@ -347,6 +347,7 @@ impl<T: Config> Router<T> {
 impl<T: Config + Send + Sync> IbcModule for Router<T> {
 	fn on_chan_open_init(
 		&mut self,
+		_ctx: &dyn ModuleCallbackContext,
 		_output: &mut ModuleOutputBuilder,
 		order: Order,
 		connection_hops: &[ConnectionId],
@@ -392,6 +393,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 
 	fn on_chan_open_try(
 		&mut self,
+		_ctx: &dyn ModuleCallbackContext,
 		_output: &mut ModuleOutputBuilder,
 		order: Order,
 		connection_hops: &[ConnectionId],
@@ -436,6 +438,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 
 	fn on_chan_open_ack(
 		&mut self,
+		_ctx: &dyn ModuleCallbackContext,
 		_output: &mut ModuleOutputBuilder,
 		port_id: &PortId,
 		channel_id: &ChannelId,
@@ -479,6 +482,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 
 	fn on_chan_open_confirm(
 		&mut self,
+		_ctx: &dyn ModuleCallbackContext,
 		_output: &mut ModuleOutputBuilder,
 		port_id: &PortId,
 		channel_id: &ChannelId,
@@ -519,6 +523,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 
 	fn on_chan_close_init(
 		&mut self,
+		_ctx: &dyn ModuleCallbackContext,
 		_output: &mut ModuleOutputBuilder,
 		port_id: &PortId,
 		channel_id: &ChannelId,
@@ -559,10 +564,14 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 
 	fn on_chan_close_confirm(
 		&mut self,
+		ctx: &dyn ModuleCallbackContext,
 		_output: &mut ModuleOutputBuilder,
 		port_id: &PortId,
 		channel_id: &ChannelId,
 	) -> Result<(), IbcError> {
+		let metadata = ctx
+			.channel_end(&(port_id.clone(), channel_id.clone()).into())
+			.expect("callback provides only existing connection port pairs; qed");
 		let address = Self::port_to_address(port_id)?;
 		let contract_info = Self::to_ibc_contract(&address)?;
 		let message = IbcChannelCloseMsg::CloseConfirm {
@@ -571,9 +580,14 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 					port_id: port_id.to_string(),
 					channel_id: channel_id.to_string(),
 				},
-				counterparty_endpoint: Err(IbcError::implementation_specific(
-					"https://github.com/ComposableFi/centauri/issues/120".to_string(),
-				))?,
+				counterparty_endpoint: IbcEndpoint {
+					port_id: metadata.remote.port_id.to_string(),
+					channel_id: metadata
+						.remote
+						.channel_id
+						.expect("if callback was from counter party, then it has channel; qed")
+						.to_string(),
+				},
 				order: Err(IbcError::implementation_specific(
 					"https://github.com/ComposableFi/centauri/issues/120".to_string(),
 				))?,
@@ -599,22 +613,20 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 
 	fn on_recv_packet(
 		&self,
+		_ctx: &dyn ModuleCallbackContext,
 		output: &mut ModuleOutputBuilder,
 		packet: &ibc::core::ics04_channel::packet::Packet,
 		relayer: &pallet_ibc::Signer,
-	) -> ibc::core::ics26_routing::context::OnRecvPacketAck {
-		// depends on https://github.com/ComposableFi/centauri/issues/119
+	) -> Result<(), IbcError> {
 		match self.on_recv_packet_internal(output, packet, relayer) {
-			Ok(ok) => OnRecvPacketAck::Successful(Box::new(MapBinary(ok)), Box::new(|_| Ok(()))),
-			Err(err) => OnRecvPacketAck::Successful(
-				Box::new(MapBinary(err.to_string().into_bytes())),
-				Box::new(|_| Ok(())),
-			),
+			Ok(_) => Ok(()), // so unlike Go IBC impl we cannot send data in acknowledgement...
+			Err(err) => Err(IbcError::implementation_specific(format!("{:?}", err))),
 		}
 	}
 
 	fn on_acknowledgement_packet(
 		&mut self,
+		_ctx: &dyn ModuleCallbackContext,
 		_output: &mut ModuleOutputBuilder,
 		packet: &ibc::core::ics04_channel::packet::Packet,
 		acknowledgement: &ibc::core::ics04_channel::msgs::acknowledgement::Acknowledgement,
@@ -660,6 +672,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 
 	fn on_timeout_packet(
 		&mut self,
+		_ctx: &dyn ModuleCallbackContext,
 		_output: &mut ModuleOutputBuilder,
 		packet: &ibc::core::ics04_channel::packet::Packet,
 		relayer: &pallet_ibc::Signer,
@@ -709,9 +722,6 @@ fn contract_to_result<T>(result: ContractResult<T>) -> Result<T, IbcError> {
 
 fn map_order(order: Order) -> Result<IbcOrder, IbcError> {
 	match order {
-		Order::None => Err(IbcError::implementation_specific(
-			"https://github.com/ComposableFi/centauri/issues/130".to_string(),
-		))?,
 		Order::Unordered => Ok(IbcOrder::Unordered),
 		Order::Ordered => Ok(IbcOrder::Ordered),
 	}
