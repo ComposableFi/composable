@@ -16,6 +16,7 @@ export const StakingHighlights: FC = () => {
           tooltip={"Total pica locked"}
           title={"Total PICA locked"}
           value={totalPicaLocked}
+          disabled
         />
       </Grid>
       <Grid item xs={6} sm={4}>
@@ -23,6 +24,7 @@ export const StakingHighlights: FC = () => {
           tooltip={"Total xPICA APY"}
           title={"Total xPICA APY"}
           value={totalChaosAPY}
+          disabled
         />
       </Grid>
       <Grid item xs={6} sm={4}>
@@ -30,6 +32,7 @@ export const StakingHighlights: FC = () => {
           tooltip={"Total xPICA minted"}
           title={"Total xPICA minted"}
           value={totalChaosMinted}
+          disabled
         />
       </Grid>
       <Grid item xs={6}>
@@ -37,6 +40,7 @@ export const StakingHighlights: FC = () => {
           tooltip={"Average lock multiplier"}
           title={"Average lock multiplier"}
           value={averageLockMultiplier}
+          disabled
         />
       </Grid>
       <Grid item xs={6}>
@@ -44,6 +48,7 @@ export const StakingHighlights: FC = () => {
           tooltip={"Average lock time"}
           title={"Average lock time"}
           value={averageLockTime}
+          disabled
         />
       </Grid>
     </Grid>

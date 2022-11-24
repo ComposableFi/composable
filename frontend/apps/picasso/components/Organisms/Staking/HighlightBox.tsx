@@ -7,12 +7,14 @@ type HighlighBoxProps = {
   title: string;
   tooltip: string;
   value: string;
+  disabled?: boolean;
 };
 
 export const HighlightBox: FC<HighlighBoxProps> = ({
   title,
   tooltip,
   value,
+  disabled,
 }) => {
   const theme = useTheme();
   return (
@@ -24,6 +26,7 @@ export const HighlightBox: FC<HighlighBoxProps> = ({
               color: alpha(theme.palette.common.white, 0.6),
             }}
             tooltip={tooltip}
+            disabled={disabled}
           >
             {title}
           </TextWithTooltip>
