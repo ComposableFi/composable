@@ -69,6 +69,7 @@ opt-level = "s"
 overflow-checks = true
 panic = "abort"
 rpath = false
+codegen-units = 1
 
 [patch.crates-io]
 serde-json-wasm = { git = "https://github.com/hussein-aitlahcen/serde-json-wasm", rev = "1608a13d2a2ba90605d9626a51ff6667aca5a2d6" }
