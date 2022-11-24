@@ -1,17 +1,14 @@
 use crate::{
 	error::ContractError,
-	state::{ConfigState, CONFIG},
+	state::{Config, CONFIG},
 };
 use cosmwasm_std::Deps;
 
 pub fn ensure_admin(deps: Deps, sender: &str) -> Result<(), ContractError> {
-	match CONFIG.load(deps.storage)? {
-		ConfigState::Initialized { admin, .. } =>
-			if admin.as_ref() == sender {
-				Ok(())
-			} else {
-				Err(ContractError::NotAuthorized)
-			},
-		ConfigState::NotInitialized => Err(ContractError::NotAuthorized),
+	let Config { admin, .. } = CONFIG.load(deps.storage)?;
+	if &admin == sender {
+		Ok(())
+	} else {
+		Err(ContractError::NotAuthorized)
 	}
 }

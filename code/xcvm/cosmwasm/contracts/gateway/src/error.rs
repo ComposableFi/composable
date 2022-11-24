@@ -30,4 +30,6 @@ pub enum ContractError {
 	InsufficientFunds,
 	#[error("{0:?}")]
 	Protobuf(DecodingFailure),
+  #[error("The function is not yet implemented.")]
+  Unimplemented,
 }

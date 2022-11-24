@@ -2,8 +2,7 @@ use crate::{
 	contract::XCVM_GATEWAY_EVENT_PREFIX,
 	error::ContractError,
 	state::{
-		ChannelInfo, ConfigState, CONFIG, IBC_CHANNEL_INFO, IBC_CHANNEL_NETWORK,
-		IBC_NETWORK_CHANNEL,
+		ChannelInfo, Config, CONFIG, IBC_CHANNEL_INFO, IBC_CHANNEL_NETWORK, IBC_NETWORK_CHANNEL,
 	},
 };
 #[cfg(not(feature = "library"))]
@@ -141,29 +140,26 @@ pub fn ibc_packet_ack(
 	msg: IbcPacketAckMsg,
 ) -> Result<IbcBasicResponse, ContractError> {
 	let ack = from_binary::<XCVMAck>(&msg.acknowledgement.data)?;
-	match (ack, CONFIG.load(deps.storage)?) {
-		(XCVMAck::Ok, ConfigState::Initialized { registry_address, .. }) => {
-			let packet: DefaultXCVMPacket =
-				decode_packet(&msg.original_packet.data).map_err(ContractError::Protobuf)?;
+	let Config { registry_address, .. } = CONFIG.load(deps.storage)?;
+	let packet: DefaultXCVMPacket =
+		decode_packet(&msg.original_packet.data).map_err(ContractError::Protobuf)?;
+	let messages = match ack {
+		XCVMAck::Ok => {
 			// We got the ACK
-			let burns = burn_escrowed_assets(deps, env, registry_address.as_str(), packet.assets)?;
-			Ok(IbcBasicResponse::default().add_messages(burns))
+			burn_escrowed_assets(deps, env, registry_address.as_str(), packet.assets)
 		},
-		(XCVMAck::Ko, ConfigState::Initialized { registry_address, .. }) => {
-			let packet: DefaultXCVMPacket =
-				decode_packet(&msg.original_packet.data).map_err(ContractError::Protobuf)?;
+		XCVMAck::Ko => {
 			// On failure, return the funds
-			let burns = unescrow_assets(
+			unescrow_assets(
 				&deps,
 				// Safe as impossible to tamper.
 				String::from_utf8_lossy(&packet.interpreter).to_string(),
 				registry_address.as_str(),
 				packet.assets,
-			)?;
-			Ok(IbcBasicResponse::default().add_messages(burns))
+			)
 		},
-		(_, _) => Err(ContractError::NotInitialized),
-	}
+	}?;
+	Ok(IbcBasicResponse::default().add_messages(messages))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -172,22 +168,18 @@ pub fn ibc_packet_timeout(
 	_env: Env,
 	msg: IbcPacketTimeoutMsg,
 ) -> Result<IbcBasicResponse, ContractError> {
-	match CONFIG.load(deps.storage)? {
-		ConfigState::NotInitialized => Err(ContractError::NotInitialized),
-		ConfigState::Initialized { registry_address, .. } => {
-			let packet: DefaultXCVMPacket =
-				decode_packet(&msg.packet.data).map_err(ContractError::Protobuf)?;
-			// On timeout, return the funds
-			let burns = unescrow_assets(
-				&deps,
-				// Safe as impossible to tamper.
-				String::from_utf8_lossy(&packet.interpreter).to_string(),
-				registry_address.as_str(),
-				packet.assets,
-			)?;
-			Ok(IbcBasicResponse::default().add_messages(burns))
-		},
-	}
+	let Config { registry_address, .. } = CONFIG.load(deps.storage)?;
+	let packet: DefaultXCVMPacket =
+		decode_packet(&msg.packet.data).map_err(ContractError::Protobuf)?;
+	// On timeout, return the funds
+	let burns = unescrow_assets(
+		&deps,
+		// Safe as impossible to tamper.
+		String::from_utf8_lossy(&packet.interpreter).to_string(),
+		registry_address.as_str(),
+		packet.assets,
+	)?;
+	Ok(IbcBasicResponse::default().add_messages(burns))
 }
 
 fn burn_escrowed_assets(
@@ -289,10 +281,10 @@ pub fn handle_bridge(
 	program: DefaultXCVMProgram,
 	assets: Funds<Displayed<u128>>,
 ) -> Result<Response, ContractError> {
-	let config = CONFIG.load(deps.storage)?;
-	match (security, config) {
+	let Config { registry_address, .. } = CONFIG.load(deps.storage)?;
+	match security {
 		// Only allow deterministic over IBC here
-		(BridgeSecurity::Deterministic, ConfigState::Initialized { registry_address, .. }) => {
+		BridgeSecurity::Deterministic => {
 			let transfers = escrow_assets(
 				&deps,
 				env,

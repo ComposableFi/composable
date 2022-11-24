@@ -3,8 +3,12 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use xcvm_core::{BridgeSecurity, Displayed, Funds, NetworkId};
 
+use crate::state::Config;
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct InstantiateMsg {}
+pub struct InstantiateMsg {
+  pub config: Config
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]

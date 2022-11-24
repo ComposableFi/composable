@@ -29,11 +29,11 @@ pub const XCVM_ROUTER_EVENT_PREFIX: &str = "xcvm.router";
 pub fn instantiate(
 	deps: DepsMut,
 	_env: Env,
-	_info: MessageInfo,
+	info: MessageInfo,
 	msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
 	set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-	let gateway_address = deps.api.addr_validate(&msg.gateway_address)?;
+	let gateway_address = info.sender;
 	let registry_address = deps.api.addr_validate(&msg.registry_address)?;
 	CONFIG.save(
 		deps.storage,

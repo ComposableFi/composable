@@ -5,8 +5,6 @@ use xcvm_core::{BridgeSecurity, CallOrigin, Displayed, Funds, NetworkId, UserOri
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
-	/// Address of the XCVM gateway contract
-	pub gateway_address: String,
 	/// Address of the XCVM registry contract
 	pub registry_address: String,
 	/// Address of the XCVM interpreter contract code
