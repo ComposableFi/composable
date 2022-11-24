@@ -73,7 +73,7 @@ export async function verifyVestingPalletData(api: ApiPromise, urlToContributors
     const schedules = Object.values(_schedules as any).map(i => decodeVestingSchedule(i));
 
     // @ts-ignore
-    const expectedFullTransferAmount = new BN((expectedContributors[i][1]).replaceAll(",", ""));
+    const expectedFullTransferAmount = BigInt((parseFloat(expectedContributors[i][1]) * Math.pow(10, 12)));
     if (schedules.toString() == "") {
       console.warn("\nWARNING: Contributor",
         expectedContributorPublicKey.toString(),
@@ -82,9 +82,13 @@ export async function verifyVestingPalletData(api: ApiPromise, urlToContributors
       continue;
     }
     for (const schedule of schedules) {
-      const fullVestedTransferAmount = new BN(schedule.perPeriod * (schedule.periodCount));
+      const fullVestedTransferAmount = BigInt(
+        (Math.round(
+            (Number(schedule.perPeriod) * (schedule.periodCount)) / Math.pow(10, 12)
+          ) * Math.pow(10, 12)
+        ).toString());
 
-      if (!fullVestedTransferAmount.eq(expectedFullTransferAmount)) {
+      if (fullVestedTransferAmount != expectedFullTransferAmount) {
         console.warn("\nDiscrepancy found!", expectedContributorPublicKey.toString(),
           "\nExpected:", expectedFullTransferAmount.toString(), " - Is:", fullVestedTransferAmount.toString());
       }
