@@ -30,6 +30,10 @@ pub enum ContractError {
 	InsufficientFunds,
 	#[error("{0:?}")]
 	Protobuf(DecodingFailure),
-  #[error("The function is not yet implemented.")]
-  Unimplemented,
+	#[error("The function is not yet implemented.")]
+	Unimplemented,
+	#[error("An invalid ACK was provided, this MUST be impossible.")]
+	InvalidAck,
+	#[error("An unknown reply ID was provided, this MUST be impossible.")]
+	UnknownReply,
 }

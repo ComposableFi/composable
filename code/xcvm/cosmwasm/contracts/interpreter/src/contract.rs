@@ -16,6 +16,7 @@ use cw2::set_contract_version;
 use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg};
 use cw_utils::ensure_from_older_version;
 use cw_xcvm_asset_registry::{contract::external_query_lookup_asset, msg::AssetReference};
+use cw_xcvm_utils::DefaultXCVMProgram;
 use num::Zero;
 use proto::Encodable;
 use xcvm_core::{
@@ -74,8 +75,6 @@ pub fn execute(
 			if env.contract.address != info.sender {
 				Err(ContractError::NotAuthorized)
 			} else {
-				let program =
-					proto::decode(&program[..]).map_err(|_| ContractError::InvalidProgram)?;
 				handle_execute_step(deps, env, relayer, program)
 			},
 
@@ -114,7 +113,7 @@ fn initiate_execution(
 	deps: DepsMut,
 	env: Env,
 	relayer: Addr,
-	program: Vec<u8>,
+	program: DefaultXCVMProgram,
 ) -> Result<Response, ContractError> {
 	// Reset instruction pointer to zero.
 	IP_REGISTER.save(deps.storage, &0)?;
@@ -195,10 +194,7 @@ pub fn handle_execute_step(
 					IP_REGISTER.save(deps.storage, &ip)?;
 					return Ok(response.add_message(wasm_execute(
 						env.contract.address,
-						&ExecuteMsg::ExecuteStep {
-							relayer: relayer.clone(),
-							program: program.encode(),
-						},
+						&ExecuteMsg::ExecuteStep { relayer: relayer.clone(), program },
 						vec![],
 					)?))
 				}

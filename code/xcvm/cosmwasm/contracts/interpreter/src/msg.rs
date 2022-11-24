@@ -2,6 +2,7 @@ extern crate alloc;
 
 use alloc::{string::String, vec::Vec};
 use cosmwasm_std::Addr;
+use cw_xcvm_utils::DefaultXCVMProgram;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use xcvm_core::{Register, UserOrigin};
@@ -22,12 +23,12 @@ pub struct InstantiateMsg {
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
 	/// Execute an XCVM program
-	Execute { relayer: Addr, program: Vec<u8> },
+	Execute { relayer: Addr, program: DefaultXCVMProgram },
 	/// This is only meant to be used by the interpreter itself, otherwise it will return an error
 	/// The existence of this message is to allow the execution of the `Call` instruction. Once we
 	/// hit a call, the program queue the call and queue itself after it to ensure that the side
 	/// effect of the call has been executed.
-	ExecuteStep { relayer: Addr, program: Vec<u8> },
+	ExecuteStep { relayer: Addr, program: DefaultXCVMProgram },
 	/// Add owners of this contract
 	AddOwners { owners: Vec<Addr> },
 	/// Remove owners from the contract

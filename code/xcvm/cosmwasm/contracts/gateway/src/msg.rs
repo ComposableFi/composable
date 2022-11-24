@@ -1,4 +1,5 @@
-use cw_xcvm_utils::DefaultXCVMProgram;
+use cosmwasm_std::Addr;
+use cw_xcvm_utils::{DefaultXCVMPacket, DefaultXCVMProgram};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use xcvm_core::{BridgeSecurity, Displayed, Funds, NetworkId};
@@ -7,7 +8,7 @@ use crate::state::Config;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
-  pub config: Config
+	pub config: Config,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -23,6 +24,10 @@ pub enum ExecuteMsg {
 		salt: Vec<u8>,
 		program: DefaultXCVMProgram,
 		assets: Funds<Displayed<u128>>,
+	},
+	ExecutePacket {
+		relayer: Addr,
+		packet: DefaultXCVMPacket,
 	},
 }
 

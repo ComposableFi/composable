@@ -1,4 +1,4 @@
-use cw_xcvm_interpreter::msg::ExecuteMsg as InterpreterExecuteMsg;
+use cw_xcvm_utils::DefaultXCVMProgram;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use xcvm_core::{BridgeSecurity, CallOrigin, Displayed, Funds, NetworkId, UserOrigin};
@@ -21,8 +21,10 @@ pub enum ExecuteMsg {
 	ExecuteProgram {
 		/// The origin of the call.
 		call_origin: CallOrigin,
-		/// Message to execute in the XCVM interpreter instance
-		msg: InterpreterExecuteMsg,
+		/// The program salt.
+		salt: Vec<u8>,
+		/// The program.
+		program: DefaultXCVMProgram,
 		/// Funds to fund the XCVM interpreter instance
 		/// The interpreter is funded prior to execution
 		funds: Funds<Displayed<u128>>,

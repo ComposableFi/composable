@@ -2984,6 +2984,7 @@ dependencies = [
  "cw-storage-plus 0.14.0",
  "cw-utils",
  "cw-xcvm-asset-registry",
+ "cw-xcvm-interpreter",
  "cw-xcvm-router",
  "cw-xcvm-utils",
  "cw2",
