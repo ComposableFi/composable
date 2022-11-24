@@ -91,7 +91,7 @@ Alice and Bob review changes and sign.
 
 Charlie verifies.
 
- If release is done from branch:
+Releasing from a branch:
 ```shell
 
  # All
