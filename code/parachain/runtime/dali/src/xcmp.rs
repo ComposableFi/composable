@@ -8,7 +8,7 @@ use composable_traits::xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocatio
 use cumulus_primitives_core::ParaId;
 use frame_support::{
 	log, parameter_types,
-	traits::{Everything, Nothing, OriginTrait, PalletInfoAccess},
+	traits::{Everything, OriginTrait, PalletInfoAccess},
 	weights::Weight,
 };
 use orml_traits::{
@@ -71,7 +71,20 @@ pub type LocationToAccountId = (
 	SiblingParachainConvertsVia<Sibling, AccountId>,
 	// Straight up local `AccountId32` origins just alias directly to `AccountId`.
 	AccountId32Aliases<RelayNetwork, AccountId>,
+	HereToTreasury,
 );
+
+pub struct HereToTreasury;
+
+impl xcm_executor::traits::Convert<MultiLocation, AccountId> for HereToTreasury {
+	fn convert_ref(value: impl core::borrow::Borrow<MultiLocation>) -> Result<AccountId, ()> {
+		if value.borrow() == &(MultiLocation { parents: 0, interior: Here }) {
+			Ok(TreasuryAccount::get())
+		} else {
+			Err(())
+		}
+	}
+}
 
 /// This is the type we use to convert an (incoming) XCM origin into a local `Origin` instance,
 /// ready for dispatching a transaction with Xcm's `Transact`. There is an `OriginKind` which can
@@ -273,35 +286,44 @@ parameter_types! {
 pub type CouncilToPlurality =
 	BackingToPlurality<Origin, collective::Origin<Runtime, NativeCouncilCollective>, CouncilBodyId>;
 
-pub struct RootToParachainMultiLocation<Origin, AccountId, Network>(
+pub struct RootToHereLocation<Origin, AccountId, Network>(
 	PhantomData<(Origin, AccountId, Network)>,
 );
 impl<Origin: OriginTrait + Clone, AccountId: Into<[u8; 32]>, Network: Get<NetworkId>>
 	xcm_executor::traits::Convert<Origin, MultiLocation>
-	for RootToParachainMultiLocation<Origin, AccountId, Network>
+	for RootToHereLocation<Origin, AccountId, Network>
 where
 	Origin::PalletsOrigin: From<system::RawOrigin<AccountId>>
 		+ TryInto<system::RawOrigin<AccountId>, Error = Origin::PalletsOrigin>,
 {
 	fn convert(o: Origin) -> Result<MultiLocation, Origin> {
 		o.try_with_caller(|caller| match caller.try_into() {
-			Ok(system::RawOrigin::Root) =>
-				Ok(Junction::Parachain(ParachainInfo::parachain_id().into()).into()),
+			Ok(system::RawOrigin::Root) => Ok(Here.into()),
 			Ok(other) => Err(other.into()),
 			Err(other) => Err(other),
 		})
 	}
 }
 
-pub type SendXcmOriginLocation =
-	(CouncilToPlurality, RootToParachainMultiLocation<Origin, AccountId, RelayNetwork>);
+pub type RootOrNativeCouncilOrSignedLocation = (RootOrNativeCouncilLocation, LocalOriginToLocation);
+
+pub type RootOrNativeCouncilLocation =
+	(CouncilToPlurality, RootToHereLocation<Origin, AccountId, RelayNetwork>);
+
+pub struct RootExecuteFilter;
+
+impl Contains<(MultiLocation, Xcm<Call>)> for RootExecuteFilter {
+	fn contains((origin, _call): &(MultiLocation, Xcm<Call>)) -> bool {
+		origin == &MultiLocation { parents: 0, interior: Here }
+	}
+}
 
 impl pallet_xcm::Config for Runtime {
 	type Event = Event;
-	type SendXcmOrigin = EnsureXcmOrigin<Origin, SendXcmOriginLocation>;
 	type XcmRouter = XcmRouter;
-	type ExecuteXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
-	type XcmExecuteFilter = Nothing;
+	type SendXcmOrigin = EnsureXcmOrigin<Origin, RootOrNativeCouncilLocation>;
+	type ExecuteXcmOrigin = EnsureXcmOrigin<Origin, RootOrNativeCouncilOrSignedLocation>;
+	type XcmExecuteFilter = RootExecuteFilter;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type XcmTeleportFilter = Everything;
 	type XcmReserveTransferFilter = Everything;

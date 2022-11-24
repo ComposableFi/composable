@@ -45,7 +45,7 @@ export function getEnvironment(target: AvailableEndpoints) {
   return cacheAndFetch(target);
 }
 
-export type EndpointPreset = "local" | "stage";
+export type EndpointPreset = "local" | "stage" | "mainnet";
 export type EndpointPresets = {
   [key in EndpointPreset]: {
     [key in AvailableEndpoints]: string;
@@ -70,6 +70,13 @@ export const endpointPresets: EndpointPresets = {
       "wss://persistent.picasso.devnets.composablefinance.ninja/chain/statemine",
     subsquid:
       "https://persistent.picasso.devnets.composablefinance.ninja/subsquid/graphql",
+  },
+  mainnet: {
+    picasso: "wss://picasso-rpc.composable.finance",
+    karura: "wss://karura-rpc-0.aca-api.network",
+    kusama: "wss://kusama-rpc.polkadot.io",
+    statemine: "wss://statemine-rpc.polkadot.io",
+    subsquid: "",
   },
 };
 

@@ -1,29 +1,5 @@
 {
   "enabledTests": {
-    "enabled": true,
-    "addAssetAndInfo__success": {
-      "enabled": true,
-      "add1": true
-    },
-    "setSigner__success": {
-      "enabled": true,
-      "set1": true
-    },
-    "addStake__success": {
-      "enabled": true,
-      "add1": true
-    },
-    "submitPrice__success": {
-      "enabled": true,
-      "submit1": true
-    },
-    "removeStake__success": {
-      "enabled": true,
-      "remove1": true
-    },
-    "reclaimStake__success": {
-      "enabled": true,
-      "reclaim1": true
-    }
+    "enabled": false
   }
 }
