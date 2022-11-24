@@ -6,12 +6,12 @@
         devnetConfigs = [
           {
             containerName = "devnet-1";
-            ports = [9944 9988 9989 9990];
+            ports = [ 9944 9988 9989 9990 ];
             devnet = devnet-1;
           }
           {
             containerName = "devnet-2";
-            ports = [29944 29988 29989 29990];
+            ports = [ 29944 29988 29989 29990 ];
             devnet = devnet-2;
           }
         ];
@@ -36,7 +36,9 @@
         config = {
           project.name = "composable";
           networks."${network-name}" = { };
-          services = builtins.listToAttrs (map toService devnetConfigs);
+          services = builtins.listToAttrs (map toService devnetConfigs) // {
+            "centauri" = mkComposableContainer (import ../services/centauri.nix { });
+          };
         };
       }
     )
