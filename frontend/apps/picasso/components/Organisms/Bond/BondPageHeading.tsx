@@ -6,7 +6,7 @@ export const BondPageHeading = () => {
     <>
       <PageTitle
         title="Bond"
-        subtitle="Something about earning PICA"
+        subtitle="Provide liquidity on Picasso to earn PICA"
         textAlign="center"
       />
       <UnavailableFeature pageTitle={"Bonds"} />
