@@ -3,7 +3,12 @@ import { useStore } from "@/stores/root";
 import { WebsocketClient } from "binance";
 import BigNumber from "bignumber.js";
 import { useEffect } from "react";
-import { callbackGate, fromChainIdUnit, unwrapNumberOrHex } from "shared";
+import {
+  callbackGate,
+  fromChainIdUnit,
+  isPalletSupported,
+  unwrapNumberOrHex,
+} from "shared";
 import { BN } from "@polkadot/util";
 import { ComposableTraitsOraclePrice } from "defi-interfaces";
 
@@ -87,18 +92,20 @@ export const useApolloStats = () => {
     Object.keys(oracleAssets).forEach((symbol) => {
       const unsubPromise: Promise<() => void> = callbackGate(
         (api, picaId) => {
-          return api.query.oracle.prices(
-            picaId.toString(),
-            (prices: ComposableTraitsOraclePrice) => {
-              setOracleAssets(
-                symbol,
-                null,
-                fromChainIdUnit(
-                  unwrapNumberOrHex((prices as any).price.toString())
-                )
-              );
-            }
-          );
+          isPalletSupported(api)("Oracle")
+            ? api.query.oracle.prices(
+                picaId.toString(),
+                (prices: ComposableTraitsOraclePrice) => {
+                  setOracleAssets(
+                    symbol,
+                    null,
+                    fromChainIdUnit(
+                      unwrapNumberOrHex((prices as any).price.toString())
+                    )
+                  );
+                }
+              )
+            : () => {};
         },
         parachainApi,
         tokens.pica.chainId.picasso
