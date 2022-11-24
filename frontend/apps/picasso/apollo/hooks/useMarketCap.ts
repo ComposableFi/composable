@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import BigNumber from "bignumber.js";
 import { usePicassoProvider } from "@/defi/polkadot/hooks";
-import { callbackGate, fromChainIdUnit, unwrapNumberOrHex } from "shared";
+import {
+  callbackGate,
+  fromChainIdUnit,
+  isPalletSupported,
+  unwrapNumberOrHex,
+} from "shared";
 
 import { useCirculatingSupply } from "@/apollo/hooks/useCirculatingSupply";
 import { ComposableTraitsOraclePrice } from "defi-interfaces";
@@ -15,18 +20,20 @@ export const useMarketCap = () => {
   useEffect(() => {
     callbackGate(
       (api, picassoId) => {
-        api.query.oracle.prices(
-          picassoId.toString(),
-          (result: ComposableTraitsOraclePrice) => {
-            if (!result.isEmpty) {
-              setPicaPrice(
-                fromChainIdUnit(
-                  unwrapNumberOrHex((result as any).price.toString())
-                )
-              );
-            }
-          }
-        );
+        isPalletSupported(api)("Oracle")
+          ? api.query.oracle.prices(
+              picassoId.toString(),
+              (result: ComposableTraitsOraclePrice) => {
+                if (!result.isEmpty) {
+                  setPicaPrice(
+                    fromChainIdUnit(
+                      unwrapNumberOrHex((result as any).price.toString())
+                    )
+                  );
+                }
+              }
+            )
+          : null;
       },
       parachainApi,
       tokens.pica.chainId.picasso
