@@ -37,8 +37,6 @@ export async function verifyCrowdloanData(api: ApiPromise) {
       const rawAmountFromList = contributors["rewardedPICAs"][contributor.toHuman()[0]["Ethereum"]];
 
       amountFromList = BigInt(Math.floor(parseFloat(rawAmountFromList) *  Math.pow(10, 12)));
-      //amountFromList = parseFloat(rawAmountFromList) * Math.pow(10, 12);
-      //amountFromList = new BN(amountFromListPre.toString());
 
       // Getting PICA amount of contributor from chain list. (Already adjusted by 12 decimal places)
       // @ts-ignore
