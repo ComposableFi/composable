@@ -41,7 +41,7 @@ and we recommend you to keep your passphrase safe using a password manager of yo
 Please DO NOT share your passphrase with anyone. 
 Your seed grants full access to ALL funds stored in that account and all accounts derived from it.
 
-![mnemonic_seed](./mnemonic-seed.png)
+![mnemonic_seed](./mnemonic-seed-polkadotjs.png)
 
 1. Once you have secured your passphrase, check the corresponding box
 2. Click "Next Step"
