@@ -14,11 +14,16 @@ describe("Interpreter", function () {
   let interpreterAddress: any;
   let erc20: any;
   let Interpreter: any;
+  let sdk: any;
   beforeEach(async function () {
     accounts = await ethers.getSigners();
     [owner, user1, user2] = accounts;
-    Interpreter = await ethers.getContractFactory("Interpreter");
-    const Router = await ethers.getContractFactory("Router");
+
+    const SDK = await ethers.getContractFactory("SDK");
+    const sdkLib = await SDK.deploy();
+
+    Interpreter = await ethers.getContractFactory("Interpreter", {libraries: {SDK: sdkLib.address}});
+    const Router = await ethers.getContractFactory("Router", {libraries: {SDK: sdkLib.address}});
     router = await Router.deploy();
     //register owner as the bridge
     await router.registerBridge(owner.address, 1, 1);
@@ -31,6 +36,14 @@ describe("Interpreter", function () {
     const ERC20Mock = await ethers.getContractFactory("ERC20Mock");
     erc20 = await ERC20Mock.deploy("test", "test", interpreterAddress, ethers.utils.parseEther("10000000000000000"));
     await router.registerAsset(erc20.address, 1);
+
+    const SDKMock = await ethers.getContractFactory("SDKMock", 
+      {
+        libraries: {
+        SDK: sdkLib.address,
+      }
+    });
+    sdk = await SDKMock.deploy();
   });
 
   describe("interpreter with protobuf", function () {
@@ -202,7 +215,12 @@ describe("Interpreter", function () {
         ])
       );
 
-      await expect(router.runProgram({ networkId: 1, account: owner.address }, xcvm.encodeMessage(data), [], []))
+      await router.unregisterBridge(owner.address)
+      const IBCBridge = await ethers.getContractFactory("IBCBridgeMock");
+      let bridge =  await IBCBridge.deploy();
+      await router.registerBridge(bridge.address, 1, 1)
+
+      await expect(bridge.runProgram(router.address, { networkId: 1, account: owner.address }, xcvm.encodeMessage(data), [], []))
         .to.emit(router, "Spawn")
         .withArgs(
           owner.address.toLowerCase(),
@@ -213,7 +231,7 @@ describe("Interpreter", function () {
           [erc20.address],
           [200]
         );
-      expect((await erc20.balanceOf(owner.address)).toString()).to.be.equal("200");
+      expect((await erc20.balanceOf(bridge.address)).toString()).to.be.equal("200");
     });
 
     it("test program with multiple instructions", async function () {
@@ -271,7 +289,7 @@ describe("Interpreter", function () {
     let xcvm = new XCVM();
     let interpreter = await ethers.getContractAt("Interpreter", interpreterAddress);
     expect(ethers.utils.hexlify(xcvm.encodeMessage(xcvm.convertUint128("100")))).to.be.equal(
-      await interpreter.generateUint128("100")
+      await sdk.generateUint128("100")
     );
   });
 
@@ -279,7 +297,7 @@ describe("Interpreter", function () {
     let xcvm = new XCVM();
     let interpreter = await ethers.getContractAt("Interpreter", interpreterAddress);
     expect(ethers.utils.hexlify(xcvm.encodeMessage(xcvm.createAbsolute("100")))).to.be.equal(
-      await interpreter.generateAbsolute("100")
+      await sdk.generateAbsolute("100")
     );
   });
 
@@ -287,7 +305,7 @@ describe("Interpreter", function () {
     let xcvm = new XCVM();
     let interpreter = await ethers.getContractAt("Interpreter", interpreterAddress);
     expect(ethers.utils.hexlify(xcvm.encodeMessage(xcvm.createRatio("100", "200")))).to.be.equal(
-      await interpreter.generateRatio("100", "200")
+      await sdk.generateRatio("100", "200")
     );
   });
 
@@ -296,14 +314,14 @@ describe("Interpreter", function () {
     let interpreter = await ethers.getContractAt("Interpreter", interpreterAddress);
     expect(
       ethers.utils.hexlify(xcvm.encodeMessage(xcvm.createUnit("100", xcvm.createRatio("100", "200"))))
-    ).to.be.equal(await interpreter.generateUnit("100", await interpreter.generateRatio("100", "200")));
+    ).to.be.equal(await sdk.generateUnit("100", await sdk.generateRatio("100", "200")));
   });
 
   it("test generating balance by ratio", async function () {
     let xcvm = new XCVM();
     let interpreter = await ethers.getContractAt("Interpreter", interpreterAddress);
     expect(ethers.utils.hexlify(xcvm.encodeMessage(xcvm.createBalance(xcvm.createRatio("100", "200"))))).to.be.equal(
-      await interpreter.generateBalanceByRatio(await interpreter.generateRatio("100", "200"))
+      await sdk.generateBalanceByRatio(await sdk.generateRatio("100", "200"))
     );
   });
 
@@ -311,7 +329,7 @@ describe("Interpreter", function () {
     let xcvm = new XCVM();
     let interpreter = await ethers.getContractAt("Interpreter", interpreterAddress);
     expect(ethers.utils.hexlify(xcvm.encodeMessage(xcvm.createBalance(xcvm.createAbsolute("100"))))).to.be.equal(
-      await interpreter.generateBalanceByAbsolute(await interpreter.generateAbsolute("100"))
+      await sdk.generateBalanceByAbsolute(await sdk.generateAbsolute("100"))
     );
   });
 
@@ -323,8 +341,8 @@ describe("Interpreter", function () {
         xcvm.encodeMessage(xcvm.createBalance(xcvm.createUnit("100", xcvm.createRatio("100", "200"))))
       )
     ).to.be.equal(
-      await interpreter.generateBalanceByUnit(
-        await interpreter.generateUnit("100", await interpreter.generateRatio("100", "200"))
+      await sdk.generateBalanceByUnit(
+        await sdk.generateUnit("100", await sdk.generateRatio("100", "200"))
       )
     );
   });
@@ -333,7 +351,7 @@ describe("Interpreter", function () {
     let xcvm = new XCVM();
     let interpreter = await ethers.getContractAt("Interpreter", interpreterAddress);
     expect(ethers.utils.hexlify(xcvm.encodeMessage(xcvm.createAccount("0x1111")))).to.be.equal(
-      await interpreter.generateAccount("0x1111")
+      await sdk.generateAccount("0x1111")
     );
   });
 
@@ -342,7 +360,7 @@ describe("Interpreter", function () {
     let interpreter = await ethers.getContractAt("Interpreter", interpreterAddress);
     expect(
       ethers.utils.hexlify(xcvm.encodeMessage(xcvm.createAssetId(1))))
-        .to.be.equal(await interpreter.generateAssetId("1"));
+        .to.be.equal(await sdk.generateAssetId("1"));
   });
 
   it("test generating asset", async function () {
@@ -353,9 +371,9 @@ describe("Interpreter", function () {
         xcvm.encodeMessage(xcvm.createAsset(xcvm.createAssetId(1), xcvm.createBalance(xcvm.createRatio("100", "200"))))
       )
     ).to.be.equal(
-      await interpreter.generateAsset(
-        await interpreter.generateAssetId("1"),
-        await interpreter.generateBalanceByRatio(await interpreter.generateRatio("100", "200"))
+      await sdk.generateAsset(
+        await sdk.generateAssetId("1"),
+        await sdk.generateBalanceByRatio(await sdk.generateRatio("100", "200"))
       )
     );
   });
@@ -368,9 +386,9 @@ describe("Interpreter", function () {
         xcvm.encodeMessage(xcvm.createAssetAmount(xcvm.createAssetId(1), xcvm.createRatio("100", "200")))
       )
     ).to.be.equal(
-      await interpreter.generateAssetAmount(
-        await interpreter.generateAssetId("1"),
-        await interpreter.generateRatio("100", "200")
+      await sdk.generateAssetAmount(
+        await sdk.generateAssetId("1"),
+        await sdk.generateRatio("100", "200")
       )
     );
   });
@@ -379,7 +397,7 @@ describe("Interpreter", function () {
     let xcvm = new XCVM();
     let interpreter = await ethers.getContractAt("Interpreter", interpreterAddress);
     expect(ethers.utils.hexlify(xcvm.encodeMessage(xcvm.createBindingValue(xcvm.createAssetId(1))))).to.be.equal(
-      await interpreter.generateBindingValueByAssetId(await interpreter.generateAssetId("1"))
+      await sdk.generateBindingValueByAssetId(await sdk.generateAssetId("1"))
     );
   });
 
@@ -393,10 +411,10 @@ describe("Interpreter", function () {
         )
       )
     ).to.be.equal(
-      await interpreter.generateBindingValueByAssetAmount(
-        await interpreter.generateAssetAmount(
-          await interpreter.generateAssetId("1"),
-          await interpreter.generateRatio("100", "200")
+      await sdk.generateBindingValueByAssetAmount(
+        await sdk.generateAssetAmount(
+          await sdk.generateAssetId("1"),
+          await sdk.generateRatio("100", "200")
         )
       )
     );
@@ -415,12 +433,12 @@ describe("Interpreter", function () {
         )
       )
     ).to.be.equal(
-      await interpreter.generateBinding(
+      await sdk.generateBinding(
         1,
-        await interpreter.generateBindingValueByAssetAmount(
-          await interpreter.generateAssetAmount(
-            await interpreter.generateAssetId("1"),
-            await interpreter.generateRatio("100", "200")
+        await sdk.generateBindingValueByAssetAmount(
+          await sdk.generateAssetAmount(
+            await sdk.generateAssetId("1"),
+            await sdk.generateRatio("100", "200")
           )
         )
       )
@@ -443,19 +461,19 @@ describe("Interpreter", function () {
         )
       )
     ).to.be.equal(
-      await interpreter.generateBindings([
-        await interpreter.generateBinding(
+      await sdk.generateBindings([
+        await sdk.generateBinding(
           1,
-          await interpreter.generateBindingValueByAssetAmount(
-            await interpreter.generateAssetAmount(
-              await interpreter.generateAssetId("1"),
-              await interpreter.generateRatio("100", "200")
+          await sdk.generateBindingValueByAssetAmount(
+            await sdk.generateAssetAmount(
+              await sdk.generateAssetId("1"),
+              await sdk.generateRatio("100", "200")
             )
           )
         ),
-        await interpreter.generateBinding(
+        await sdk.generateBinding(
           2,
-          await interpreter.generateBindingValueByAssetId(await interpreter.generateAssetId("1"))
+          await sdk.generateBindingValueByAssetId(await sdk.generateAssetId("1"))
         ),
       ])
     );
@@ -477,16 +495,16 @@ describe("Interpreter", function () {
         )
       )
     ).to.be.equal(
-      await interpreter.generateTransferByAccount(await interpreter.generateAccount(owner.address), [
-        await interpreter.generateAsset(
-          await interpreter.generateAssetId("1"),
-          await interpreter.generateBalanceByUnit(
-            await interpreter.generateUnit(1, await interpreter.generateRatio("100", "200"))
+      await sdk.generateTransferByAccount(await sdk.generateAccount(owner.address), [
+        await sdk.generateAsset(
+          await sdk.generateAssetId("1"),
+          await sdk.generateBalanceByUnit(
+            await sdk.generateUnit(1, await sdk.generateRatio("100", "200"))
           )
         ),
-        await interpreter.generateAsset(
-          await interpreter.generateAssetId("2"),
-          await interpreter.generateBalanceByAbsolute(await interpreter.generateAbsolute(1))
+        await sdk.generateAsset(
+          await sdk.generateAssetId("2"),
+          await sdk.generateBalanceByAbsolute(await sdk.generateAbsolute(1))
         ),
       ])
     );
@@ -510,17 +528,17 @@ describe("Interpreter", function () {
         )
       )
     ).to.be.equal(
-      await interpreter.generateInstructionByTransfer(
-        await interpreter.generateTransferByAccount(await interpreter.generateAccount(owner.address), [
-          await interpreter.generateAsset(
-            await interpreter.generateAssetId("1"),
-            await interpreter.generateBalanceByUnit(
-              await interpreter.generateUnit(1, await interpreter.generateRatio("100", "200"))
+      await sdk.generateInstructionByTransfer(
+        await sdk.generateTransferByAccount(await sdk.generateAccount(owner.address), [
+          await sdk.generateAsset(
+            await sdk.generateAssetId("1"),
+            await sdk.generateBalanceByUnit(
+              await sdk.generateUnit(1, await sdk.generateRatio("100", "200"))
             )
           ),
-          await interpreter.generateAsset(
-            await interpreter.generateAssetId("2"),
-            await interpreter.generateBalanceByAbsolute(await interpreter.generateAbsolute(1))
+          await sdk.generateAsset(
+            await sdk.generateAssetId("2"),
+            await sdk.generateBalanceByAbsolute(await sdk.generateAbsolute(1))
           ),
         ])
       )
@@ -531,7 +549,7 @@ describe("Interpreter", function () {
     let xcvm = new XCVM();
     let interpreter = await ethers.getContractAt("Interpreter", interpreterAddress);
     expect(ethers.utils.hexlify(xcvm.encodeMessage(xcvm.createSalt("0x1111")))).to.be.equal(
-      await interpreter.generateSalt("0x1111")
+      await sdk.generateSalt("0x1111")
     );
   });
 
@@ -539,7 +557,7 @@ describe("Interpreter", function () {
     let xcvm = new XCVM();
     let interpreter = await ethers.getContractAt("Interpreter", interpreterAddress);
     expect(ethers.utils.hexlify(xcvm.encodeMessage(xcvm.createNetwork(1)))).to.be.equal(
-      await interpreter.generateNetwork(1)
+      await sdk.generateNetwork(1)
     );
   });
 
@@ -568,27 +586,27 @@ describe("Interpreter", function () {
         )
       )
     ).to.be.equal(
-      await interpreter.generateSpawn(
-        await interpreter.generateNetwork(1),
+      await sdk.generateSpawn(
+        await sdk.generateNetwork(1),
         1,
-        await interpreter.generateSalt("0x11"),
-        await interpreter.generateProgram(
+        await sdk.generateSalt("0x11"),
+        await sdk.generateProgram(
           "0x01",
-          await interpreter.generateInstructions([
-            await interpreter.generateInstructionByTransfer(
-              await interpreter.generateTransferByAccount(await interpreter.generateAccount(owner.address), [
-                await interpreter.generateAsset(
-                  await interpreter.generateAssetId("1"),
-                  await interpreter.generateBalanceByAbsolute(await interpreter.generateAbsolute("100"))
+          await sdk.generateInstructions([
+            await sdk.generateInstructionByTransfer(
+              await sdk.generateTransferByAccount(await sdk.generateAccount(owner.address), [
+                await sdk.generateAsset(
+                  await sdk.generateAssetId("1"),
+                  await sdk.generateBalanceByAbsolute(await sdk.generateAbsolute("100"))
                 ),
               ])
             ),
           ])
         ),
         [
-          await interpreter.generateAsset(
-            await interpreter.generateAssetId("1"),
-            await interpreter.generateBalanceByAbsolute(await interpreter.generateAbsolute(200))
+          await sdk.generateAsset(
+            await sdk.generateAssetId("1"),
+            await sdk.generateBalanceByAbsolute(await sdk.generateAbsolute(200))
           ),
         ]
       )
@@ -622,28 +640,28 @@ describe("Interpreter", function () {
         )
       )
     ).to.be.equal(
-      await interpreter.generateInstructionBySpawn(
-        await interpreter.generateSpawn(
-          await interpreter.generateNetwork(1),
+      await sdk.generateInstructionBySpawn(
+        await sdk.generateSpawn(
+          await sdk.generateNetwork(1),
           1,
-          await interpreter.generateSalt("0x11"),
-          await interpreter.generateProgram(
+          await sdk.generateSalt("0x11"),
+          await sdk.generateProgram(
             "0x01",
-            await interpreter.generateInstructions([
-              await interpreter.generateInstructionByTransfer(
-                await interpreter.generateTransferByAccount(await interpreter.generateAccount(owner.address), [
-                  await interpreter.generateAsset(
-                    await interpreter.generateAssetId("1"),
-                    await interpreter.generateBalanceByAbsolute(await interpreter.generateAbsolute("100"))
+            await sdk.generateInstructions([
+              await sdk.generateInstructionByTransfer(
+                await sdk.generateTransferByAccount(await sdk.generateAccount(owner.address), [
+                  await sdk.generateAsset(
+                    await sdk.generateAssetId("1"),
+                    await sdk.generateBalanceByAbsolute(await sdk.generateAbsolute("100"))
                   ),
                 ])
               ),
             ])
           ),
           [
-            await interpreter.generateAsset(
-              await interpreter.generateAssetId("1"),
-              await interpreter.generateBalanceByAbsolute(await interpreter.generateAbsolute(200))
+            await sdk.generateAsset(
+              await sdk.generateAssetId("1"),
+              await sdk.generateBalanceByAbsolute(await sdk.generateAbsolute(200))
             ),
           ]
         )
@@ -671,21 +689,21 @@ describe("Interpreter", function () {
         )
       )
     ).to.be.equal(
-      await interpreter.generateCall(
+      await sdk.generateCall(
         "0x11",
-        await interpreter.generateBindings([
-          await interpreter.generateBinding(
+        await sdk.generateBindings([
+          await sdk.generateBinding(
             1,
-            await interpreter.generateBindingValueByAssetAmount(
-              await interpreter.generateAssetAmount(
-                await interpreter.generateAssetId("1"),
-                await interpreter.generateRatio("100", "200")
+            await sdk.generateBindingValueByAssetAmount(
+              await sdk.generateAssetAmount(
+                await sdk.generateAssetId("1"),
+                await sdk.generateRatio("100", "200")
               )
             )
           ),
-          await interpreter.generateBinding(
+          await sdk.generateBinding(
             2,
-            await interpreter.generateBindingValueByAssetId(await interpreter.generateAssetId("1"))
+            await sdk.generateBindingValueByAssetId(await sdk.generateAssetId("1"))
           ),
         ])
       )
@@ -714,22 +732,22 @@ describe("Interpreter", function () {
         )
       )
     ).to.be.equal(
-      await interpreter.generateInstructionByCall(
-        await interpreter.generateCall(
+      await sdk.generateInstructionByCall(
+        await sdk.generateCall(
           "0x11",
-          await interpreter.generateBindings([
-            await interpreter.generateBinding(
+          await sdk.generateBindings([
+            await sdk.generateBinding(
               1,
-              await interpreter.generateBindingValueByAssetAmount(
-                await interpreter.generateAssetAmount(
-                  await interpreter.generateAssetId("1"),
-                  await interpreter.generateRatio("100", "200")
+              await sdk.generateBindingValueByAssetAmount(
+                await sdk.generateAssetAmount(
+                  await sdk.generateAssetId("1"),
+                  await sdk.generateRatio("100", "200")
                 )
               )
             ),
-            await interpreter.generateBinding(
+            await sdk.generateBinding(
               2,
-              await interpreter.generateBindingValueByAssetId(await interpreter.generateAssetId("1"))
+              await sdk.generateBindingValueByAssetId(await sdk.generateAssetId("1"))
             ),
           ])
         )
@@ -763,23 +781,23 @@ describe("Interpreter", function () {
         )
       )
     ).to.be.equal(
-      await interpreter.generateInstructions([
-        await interpreter.generateInstructionByCall(
-          await interpreter.generateCall(
+      await sdk.generateInstructions([
+        await sdk.generateInstructionByCall(
+          await sdk.generateCall(
             "0x11",
-            await interpreter.generateBindings([
-              await interpreter.generateBinding(
+            await sdk.generateBindings([
+              await sdk.generateBinding(
                 1,
-                await interpreter.generateBindingValueByAssetAmount(
-                  await interpreter.generateAssetAmount(
-                    await interpreter.generateAssetId("1"),
-                    await interpreter.generateRatio("100", "200")
+                await sdk.generateBindingValueByAssetAmount(
+                  await sdk.generateAssetAmount(
+                    await sdk.generateAssetId("1"),
+                    await sdk.generateRatio("100", "200")
                   )
                 )
               ),
-              await interpreter.generateBinding(
+              await sdk.generateBinding(
                 2,
-                await interpreter.generateBindingValueByAssetId(await interpreter.generateAssetId("1"))
+                await sdk.generateBindingValueByAssetId(await sdk.generateAssetId("1"))
               ),
             ])
           )
@@ -817,25 +835,25 @@ describe("Interpreter", function () {
         )
       )
     ).to.be.equal(
-      await interpreter.generateProgram(
+      await sdk.generateProgram(
         "0x11",
-        await interpreter.generateInstructions([
-          await interpreter.generateInstructionByCall(
-            await interpreter.generateCall(
+        await sdk.generateInstructions([
+          await sdk.generateInstructionByCall(
+            await sdk.generateCall(
               "0x11",
-              await interpreter.generateBindings([
-                await interpreter.generateBinding(
+              await sdk.generateBindings([
+                await sdk.generateBinding(
                   1,
-                  await interpreter.generateBindingValueByAssetAmount(
-                    await interpreter.generateAssetAmount(
-                      await interpreter.generateAssetId("1"),
-                      await interpreter.generateRatio("100", "200")
+                  await sdk.generateBindingValueByAssetAmount(
+                    await sdk.generateAssetAmount(
+                      await sdk.generateAssetId("1"),
+                      await sdk.generateRatio("100", "200")
                     )
                   )
                 ),
-                await interpreter.generateBinding(
+                await sdk.generateBinding(
                   2,
-                  await interpreter.generateBindingValueByAssetId(await interpreter.generateAssetId("1"))
+                  await sdk.generateBindingValueByAssetId(await sdk.generateAssetId("1"))
                 ),
               ])
             )

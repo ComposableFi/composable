@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./Interpreter.sol";
 import "./interfaces/IRouter.sol";
+import "./interfaces/IIbcBridge.sol";
 
 contract Router is Ownable, IRouter {
     mapping(uint256 => mapping(bytes => address)) public userInterpreter;
@@ -41,11 +42,11 @@ contract Router is Ownable, IRouter {
         // enable trustless bridge;
     }
 
-    function getAsset(uint256 assetId) external returns (address) {
+    function getAsset(uint256 assetId) external view returns (address) {
         return assets[assetId];
     }
 
-    function getBridge(uint256 networkId, BridgeSecurity security) external returns (address) {
+    function getBridge(uint256 networkId, BridgeSecurity security) external view returns (address) {
         return bridges[networkId][security];
     }
 
@@ -103,21 +104,22 @@ contract Router is Ownable, IRouter {
         bytes memory program,
         address[] memory _assets,
         uint256[] memory _amounts
-    ) external payable onlyBridge {
+    ) public override payable onlyBridge returns (bool){
         // a program is a result of spawn function, pull the assets from the bridge to the interpreter
-        address payable interpreterAddress = _getOrCreateInterpreter(origin);
+        address payable interpreterAddress = getOrCreateInterpreter(origin);
         _provisionAssets(interpreterAddress, _assets, _amounts);
 
         IInterpreter(interpreterAddress).interpret(program, msg.sender);
+        return true;
     }
 
     function createInterpreter(Origin memory origin) public {
         address interpreterAddress = userInterpreter[origin.networkId][origin.account];
         require(interpreterAddress == address(0), "Interpreter already exists");
-        _getOrCreateInterpreter(origin);
+        getOrCreateInterpreter(origin);
     }
 
-    function _getOrCreateInterpreter(Origin memory origin) private returns (address payable) {
+    function getOrCreateInterpreter(Origin memory origin) public returns (address payable) {
         address interpreterAddress = userInterpreter[origin.networkId][origin.account];
         if (interpreterAddress == address(0)) {
             //interpreterAddress = address(new Interpreter(networkId, account));
@@ -140,10 +142,15 @@ contract Router is Ownable, IRouter {
         bytes memory salt,
         bytes memory spawnedProgram,
         address[] memory assetAddresses,
+        uint128[] memory assetIds,
         uint256[] memory amounts
     ) override external {
-        address payable interpreterAddress = _getOrCreateInterpreter(Origin(uint32(networkId), account));
+        address payable interpreterAddress = getOrCreateInterpreter(Origin(uint32(networkId), account));
         require(interpreterAddress == msg.sender, "Router: sender is not an interpreter address");
         emit Spawn(account, networkId, security, salt, spawnedProgram, assetAddresses, amounts);
+        if (security == BridgeSecurity.Deterministic) {
+            // send through ibc
+            IIbcBridge(bridges[networkId][security]).sendProgram(account, uint32(networkId), salt, spawnedProgram, assetIds, amounts);
+        }
     }
 }
