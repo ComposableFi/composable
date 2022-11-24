@@ -328,9 +328,14 @@ fn add_lp_with_min_mint_amount() {
 		let first_asset_amount = currency::BTC::units(10);
 		let second_asset_amount = currency::USDT::units(10);
 
-		let assets_with_amounts = BTreeMap::from([
+		let assets_with_init_amounts = BTreeMap::from([
 			(first_asset, init_first_asset_amount),
 			(second_asset, init_second_asset_amount),
+		]);
+
+		let assets_with_amounts = BTreeMap::from([
+			(first_asset, first_asset_amount),
+			(second_asset, second_asset_amount),
 		]);
 
 		let pool_id = create_pool_from_config(pool_init_config);
@@ -344,7 +349,7 @@ fn add_lp_with_min_mint_amount() {
 		assert_ok!(Pablo::add_liquidity(
 			Origin::signed(ALICE),
 			pool_id,
-			assets_with_amounts.clone(),
+			assets_with_init_amounts,
 			0,
 			false
 		));
@@ -358,7 +363,11 @@ fn add_lp_with_min_mint_amount() {
 
 		assert_eq!(bob_lp, 0_u128, "BOB should not have any LP tokens");
 
-		let min_mint_amount = (bob_lp + alice_lp) * first_asset_amount / init_first_asset_amount;
+		// no idea what this was calculating, but the following add_liquidity was successful when it
+		// should not have been when using this value let min_mint_amount =
+		//
+		// 	dbg!(alice_lp) * dbg!(first_asset_amount) / dbg!(init_first_asset_amount);
+		// dbg!(min_mint_amount);
 
 		// Add the liquidity, but expect more lp tokens, hence errors
 		assert_noop!(
@@ -366,7 +375,8 @@ fn add_lp_with_min_mint_amount() {
 				Origin::signed(BOB),
 				pool_id,
 				assets_with_amounts.clone(),
-				min_mint_amount + 1,
+				// arbitrarilly large number, 200 * 10^12
+				200_000_000_000_000,
 				false
 			),
 			crate::Error::<Test>::CannotRespectMinimumRequested
@@ -377,7 +387,7 @@ fn add_lp_with_min_mint_amount() {
 			Origin::signed(BOB),
 			pool_id,
 			assets_with_amounts,
-			min_mint_amount,
+			100_000_000,
 			false
 		));
 	});

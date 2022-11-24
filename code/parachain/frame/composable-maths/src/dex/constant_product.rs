@@ -466,6 +466,7 @@ pub fn compute_deposit_lp(
 /// https://github.com/ComposableFi/composable/blob/main/rfcs/0008-pablo-lbp-cpp-restructure.md#42-liquidity-provider-token-lpt-math-updates
 /// Equation 6
 pub fn compute_first_deposit_lp_<T: PerThing>(
+	// REVIEW(benluelo): Make this a named struct instead of a tuple?
 	pool_assets: &[(u128, T)],
 	_f: T,
 ) -> ConstantProductAmmResult<ConstantProductAmmValueFeePair> {

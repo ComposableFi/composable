@@ -12,10 +12,10 @@ use sp_std::collections::btree_map::BTreeMap;
 
 //- test lp mint/burn
 use crate::{
-	dual_asset_constant_product_tests::{
-		create_pool_from_config, lp_token_of_pool, valid_pool_init_config,
-	},
+	common_test_functions::dual_asset_pool_weights,
+	dual_asset_constant_product_tests::{create_pool_from_config, lp_token_of_pool},
 	mock::*,
+	PoolInitConfiguration,
 };
 
 #[test]
@@ -26,13 +26,15 @@ fn add_remove_lp() {
 		let first_asset = BTC::ID;
 		let second_asset = USDT::ID;
 
-		let init_config = valid_pool_init_config(
-			&ALICE,
-			first_asset,
-			Permill::from_percent(50_u32),
-			second_asset,
-			Permill::zero(),
-		);
+		let init_config = PoolInitConfiguration::DualAssetConstantProduct {
+			owner: ALICE,
+			assets_weights: dual_asset_pool_weights(
+				first_asset,
+				Permill::from_percent(50_u32),
+				second_asset,
+			),
+			fee: Permill::zero(),
+		};
 
 		let first_asset_amount = BTC::units(100);
 		let second_asset_amount = USDT::units(100);
@@ -62,7 +64,7 @@ fn add_remove_lp() {
 
 		Test::assert_extrinsic_event(
 			Pablo::add_liquidity(Origin::signed(ALICE), pool_id, assets_with_amounts, 0, false),
-			crate::Event::LiquidityAdded { who: ALICE, pool_id, minted_lp: 0 },
+			crate::Event::LiquidityAdded { who: ALICE, pool_id, minted_lp: 199_999_999_814_806 },
 		);
 
 		// Mint the tokens
@@ -76,10 +78,10 @@ fn add_remove_lp() {
 		// Add the liquidity
 		Test::assert_extrinsic_event(
 			Pablo::add_liquidity(Origin::signed(BOB), pool_id, assets_with_next_amounts, 0, false),
-			crate::Event::LiquidityAdded { who: BOB, pool_id, minted_lp: 0 },
+			crate::Event::LiquidityAdded { who: BOB, pool_id, minted_lp: 39999999962960 },
 		);
 
-		assert!(Tokens::balance(lp_token, &BOB) > 0);
+		assert!(dbg!(Tokens::balance(lp_token, &BOB)) > 0);
 
 		assert_ok!(Pablo::remove_liquidity(
 			Origin::signed(BOB),
