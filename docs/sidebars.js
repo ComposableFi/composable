@@ -227,6 +227,31 @@ const sidebars = {
     },
     {
       type: 'category',
+      label: 'User Guides',
+      link: {
+        type: 'generated-index',
+        slug: 'user-guides',
+      },
+      collapsible: false,
+      items: [
+        {
+          type: 'category',
+          label: 'Accounts and Wallet',
+          link: {
+            type: 'generated-index',
+            slug: 'user-guides'
+          },
+          collapsible: true,
+          items: [
+            'user-guides/polkadotjs-extension-create-account',
+            'user-guides/talisman-create-account',
+            'user-guides/claim-rewards',
+        ],
+        },
+      ]
+    },
+    {
+      type: 'category',
       label: 'Developer Guides',
 
       link: {
