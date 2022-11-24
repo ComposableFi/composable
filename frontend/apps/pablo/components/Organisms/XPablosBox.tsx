@@ -9,7 +9,7 @@ import {
   BoxProps,
 } from "@mui/material";
 import { BaseAsset } from "@/components/Atoms";
-import React from "react";
+import React, { useMemo } from "react";
 import { TableHeader } from "@/defi/types";
 import { BoxWrapper } from "./BoxWrapper";
 import {
@@ -20,6 +20,7 @@ import { useAsset } from "@/defi/hooks";
 import { NoPositionsPlaceholder } from "./overview/NoPositionsPlaceholder";
 import { OVERVIEW_ERRORS } from "./overview/errors";
 import { useXTokensList } from "@/defi/hooks/financialNfts";
+import useStore from "@/store/useStore";
 
 const tableHeaders: TableHeader[] = [
   {
@@ -54,9 +55,16 @@ export const XPablosBox: React.FC<XPablosBoxProps> = ({
   financialNftCollectionId,
   ...boxProps
 }) => {
-  const xPablo = useAsset(PBLO_ASSET_ID);
+  const { substrateTokens } = useStore();
+
+  const xPablo = useMemo(() => {
+    if (!substrateTokens.hasFetchedTokens) return undefined;
+
+    return substrateTokens.tokens.xpblo
+  }, [])
+
   const _xPablos = useXTokensList({
-    stakedAssetId: PBLO_ASSET_ID,
+    stakedAssetId: xPablo?.getPicassoAssetId() as string,
   });
 
   return (

@@ -1,5 +1,5 @@
-import { getEnvironment } from "shared/endpoints";
 import { TokenId } from "tokens";
+import { SUBSTRATE_NETWORKS } from "./defi/constants";
 
 export const SubstrateNetworks = ["kusama", "picasso", "karura", "statemine"] as const;
 export type SubstrateNetworkId = typeof SubstrateNetworks[number];
@@ -15,60 +15,6 @@ export type SubstrateNetwork = {
   color?: string;
   symbol: string;
   logo: string;
-};
-
-
-export const SUBSTRATE_NETWORKS: {
-  [substrateNetworkId in SubstrateNetworkId]: SubstrateNetwork;
-} = {
-  kusama: {
-    relayChain: "kusama",
-    parachainId: 0,
-    name: "Kusama",
-    wsUrl: getEnvironment("kusama"),
-    tokenId: "ksm",
-    ss58Format: 2,
-    subscanUrl: "https://kusama.subscan.io/",
-    decimals: 12,
-    symbol: "KSM",
-    logo: "/networks/kusama.svg",
-  },
-  picasso: {
-    relayChain: "kusama",
-    parachainId: 2087,
-    name: "Picasso",
-    wsUrl: getEnvironment("picasso"),
-    tokenId: "pica",
-    ss58Format: 49,
-    subscanUrl: "https://picasso.subscan.io/",
-    decimals: 12,
-    symbol: "PICA",
-    logo: "/networks/picasso.svg",
-  },
-  karura: {
-    relayChain: "kusama",
-    parachainId: 2000,
-    name: "Karura",
-    wsUrl: getEnvironment("karura"),
-    tokenId: "kar",
-    ss58Format: 8,
-    subscanUrl: "https://karura.subscan.io/",
-    decimals: 12,
-    symbol: "KAR",
-    logo: "/networks/karura.svg",
-  },
-  statemine: {
-    relayChain: "kusama",
-    parachainId: 1000,
-    name: "Statemine",
-    wsUrl: getEnvironment("statemine"),
-    tokenId: "ksm",
-    ss58Format: 2,
-    subscanUrl: "",
-    symbol: "KSM",
-    logo: "/networks/statemine.svg",
-    decimals: 12,
-  },
 };
 
 export const getSubstrateNetwork = (

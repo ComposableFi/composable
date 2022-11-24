@@ -128,8 +128,8 @@ export const AreaChart: React.FC<AreaChartProps> = ({
   const theme = useTheme();
 
   let { min, max } = useMemo(() => {
-    let min = data.reduce((agg, [ts, val]) => (val < agg ? val : agg), Infinity)
-    let max = data.reduce((agg, [ts, val]) => (val > agg ? val : agg), -Infinity)
+    let min = data.reduce((agg, [ts, val]) => (val < agg ? val : agg), 0)
+    let max = data.reduce((agg, [ts, val]) => (val > agg ? val : agg), 0)
 
     return { min, max }
   }, [data]);

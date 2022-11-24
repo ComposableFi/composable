@@ -8,7 +8,12 @@ export class Apollo {
   constructor(api: ApiPromise) {
     this.__api = api;
   }
-
+  /**
+   * TODO: Asses whether 
+   * this class is needed or not
+   * @param assets 
+   * @returns {Promise<Record<string, BigNumber>>}
+   */
   public async getPrice(assets: Asset[]): Promise<Record<string, BigNumber>> {
     let priceMap: Record<string, BigNumber> = {};
     try {
