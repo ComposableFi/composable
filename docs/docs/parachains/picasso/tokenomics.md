@@ -1,41 +1,10 @@
 # PICA Tokenomics
 
-## PICA use cases
-
-PICA is fundamental to governance, user dynamics, and network usage on the Picasso parachain. 
-
-
-### Gas fees
-
-Transaction fees (or gas) are payable in PICA.
-
-
-### Governance
-
-PICA will be used in voting to decide on key governance decisions, including:
-
-* Pallet onboarding: which pallets can be incorporated on the Picasso parachain
-* Pallet graduation: which pallets on Picasso will be able to “graduate” onto the Composable parachain
-* Ecosystem growth: directing Treasury towards different initiatives in the ecosystem such as grants and incentivizing usage of the initial decentralized apps (dApps) on the network.
-* Public goods infrastructure: powering infrastructure providers, block explorers, wallets, and other key ecosystem partners.
-
-### Collator staking
-
-Collators for the Picasso parachain are required to put down a stake to produce blocks on the Picasso parachain. In doing so, collators will earn PICA through transaction fees.
-
-### Oracle staking
-
-Oracle operators are required to put down stakes to provide price feeds. They will be rewarded/ slashed according to the accuracy of the data they provide.
-
-### Liquidity provisioning
-
-Users can provide liquidity for PICA-USDC, PICA-KSM pairs on the Pablo DEX for yield. 
-
 ## Total supply and genesis token distribution
 
 The total supply of PICA is 10 billion tokens. PICA Token distribution is intended as follows:
 
-![pica_allocation_pie](./pica-allocation-pie.png)
+![pica_vesting_schedule](./pica-vesting-schedule.png)
 
 |                       Allocation                        |         Amount |  Percentage (%)  | Description                                                                                                                                                                                                                                                                                                                                                                                                                            |
 |:-------------------------------------------------------:|---------------:|:----------------:|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -51,6 +20,8 @@ The total supply of PICA is 10 billion tokens. PICA Token distribution is intend
 |                   Liquidity Programs                    |  1,500,000,000 |       15%        | 15% of the total token supply will be released as rewards for participants in Liquidity Programs on Picasso. This includes programs such as xPICA.                                                                                                                                                                                                                                                                                     |
 
 
-*All terms related to token allocations are subject to change. [Legal disclosures apply.](../../faqs/risks-disclosures.md)
 
-![pica_allocation_graph](./pica-allocation-graph.png)
+**Estimated allocation and length of program is subject to change. [Specific Disclaimers and Disclosures for the PICA Token](../../faqs/disclaimer-disclosure-pica-token.md)
+
+![pica_allocation_pie](./pica-allocation-pie.png)
+*All terms related to token allocations are subject to change. [Legal disclosures apply.](../../faqs/risks-disclosures.md)

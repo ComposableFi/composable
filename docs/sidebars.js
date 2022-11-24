@@ -40,8 +40,22 @@ const sidebars = {
           collapsible: true,
           collapsed: true,
           items: [
-            'parachains/picasso/picasso-crowdloan',
-            'parachains/picasso/picasso-tokenomics'
+            'parachains/picasso/crowdloan',
+            'parachains/picasso/governance',
+            {
+            type: 'category',
+            label: 'Picasso Tokenomics',
+            link: {
+              type: 'doc',
+              id: 'parachains/picasso/tokenomics'
+            },
+            collapsible: true,
+            collapsed: true,
+            items:[
+              'parachains/picasso/token-transparancy',
+              'parachains/picasso/pica-use-cases'
+            ]
+            },
           ],
         },
         {
@@ -319,14 +333,22 @@ const sidebars = {
       ]
     },
     {
-      type: 'category',
+      type: 'doc',
       label: 'FAQs',
-      collapsible: false,
-      items: [
-        'faqs/faqs',
+      id: 'faqs/faqs',
+
+    },
+    {
+      type: 'category',
+      label: 'Legal disclaimers and disclosures',
+      collapsible: true,
+      collapsed: true,
+      items:[
+        'faqs/disclaimer-disclosure-pica-token',
+        'faqs/risk-factors',
         'faqs/risks-disclosures'
       ]
-    },
+    }
   ],
 };
 
