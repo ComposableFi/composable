@@ -4,11 +4,11 @@ import { useEffect } from "react";
 import {
   picassoAssetsList,
   subscribeNativeBalance,
-  subscribePicassoBalanceByAssetId,
-  SUBSTRATE_NETWORKS,
+  subscribePicassoBalanceByAssetId
 } from "shared";
-import useStore from "@/store/useStore";
 import { TokenId } from "tokens";
+import { SUBSTRATE_NETWORKS } from "shared/defi/constants";
+import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";
 
 const Updater = () => {

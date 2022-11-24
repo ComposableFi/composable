@@ -1,7 +1,8 @@
-import { SubstrateNetworkId, SUBSTRATE_NETWORKS, toTokenUnitsBN } from "shared";
+import { SubstrateNetworkId, toTokenUnitsBN } from "shared";
 import { ApiPromise } from "@polkadot/api";
 import BigNumber from "bignumber.js";
 import { FrameSystemAccountInfo } from "defi-interfaces";
+import { SUBSTRATE_NETWORKS } from "../../constants";
 
 export async function subscribeNativeBalance(
   api: ApiPromise | undefined,

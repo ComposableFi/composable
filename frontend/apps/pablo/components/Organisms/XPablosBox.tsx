@@ -61,7 +61,7 @@ export const XPablosBox: React.FC<XPablosBoxProps> = ({
     if (!substrateTokens.hasFetchedTokens) return undefined;
 
     return substrateTokens.tokens.xpblo
-  }, [])
+  }, [substrateTokens])
 
   const _xPablos = useXTokensList({
     stakedAssetId: xPablo?.getPicassoAssetId() as string,
