@@ -43,5 +43,3 @@ pub const BRIDGES: Map<BridgeId, Bridge> = Map::new("bridges");
 pub const IBC_CHANNEL_INFO: Map<String, ChannelInfo> = Map::new("ibc_channel_info");
 pub const IBC_NETWORK_CHANNEL: Map<NetworkId, String> = Map::new("ibc_network_channel");
 pub const IBC_CHANNEL_NETWORK: Map<String, NetworkId> = Map::new("ibc_channel_network");
-
-pub const MINT_SUCCESS_REGISTER: Item<bool> = Item::new("mint_failure_registry");

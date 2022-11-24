@@ -6,7 +6,7 @@ use crate::{
 	msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg},
 	state::{
 		ChannelInfo, Config, CONFIG, IBC_CHANNEL_INFO, IBC_CHANNEL_NETWORK, IBC_NETWORK_CHANNEL,
-		MINT_SUCCESS_REGISTER, ROUTER,
+		ROUTER,
 	},
 };
 #[cfg(not(feature = "library"))]
@@ -36,13 +36,12 @@ pub const XCVM_GATEWAY_IBC_VERSION: &str = "xcvm-gateway-v0";
 pub const XCVM_GATEWAY_IBC_ORDERING: IbcOrder = IbcOrder::Unordered;
 
 pub const XCVM_GATEWAY_INSTANTIATE_ROUTER_REPLY_ID: u64 = 0;
-pub const XCVM_GATEWAY_MINT_ROUTER_REPLY_ID: u64 = 1;
-pub const XCVM_GATEWAY_EXECUTE_ROUTER_REPLY_ID: u64 = 2;
+pub const XCVM_GATEWAY_BATCH_REPLY_ID: u64 = 1;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
 	deps: DepsMut,
-	env: Env,
+	_env: Env,
 	_info: MessageInfo,
 	mut msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
@@ -87,36 +86,12 @@ pub fn execute(
 		},
 		ExecuteMsg::Bridge { network_id, security, salt, program, assets } =>
 			handle_bridge(deps, env, info, network_id, security, salt, program, assets),
-		ExecuteMsg::ExecutePacket { relayer, packet } => {
-			// Only the gateway is allowed to execute this message
+		ExecuteMsg::Batch { msgs } =>
 			if info.sender != env.contract.address {
 				Err(ContractError::NotAuthorized)
 			} else {
-				match MINT_SUCCESS_REGISTER.load(deps.storage)? {
-					true => {
-						let router_address = ROUTER.load(deps.storage)?;
-						Ok(Response::default().add_submessage(SubMsg::reply_on_error(
-							wasm_execute(
-								router_address,
-								&cw_xcvm_router::msg::ExecuteMsg::ExecuteProgram {
-									call_origin: CallOrigin::Remote {
-										protocol: BridgeProtocol::IBC,
-										relayer,
-										user_origin: packet.user_origin,
-									},
-									salt: packet.salt,
-									program: packet.program,
-									funds: packet.assets,
-								},
-								Default::default(),
-							)?,
-							XCVM_GATEWAY_EXECUTE_ROUTER_REPLY_ID,
-						)))
-					},
-					false => Ok(Response::default().set_data(XCVMAck::KO.into_vec())),
-				}
-			}
-		},
+				Ok(Response::default().add_messages(msgs))
+			},
 	}
 }
 
@@ -135,8 +110,7 @@ pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> Result<Binary, ContractE
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
 	match msg.id {
 		XCVM_GATEWAY_INSTANTIATE_ROUTER_REPLY_ID => handle_instantiate_reply(deps, msg),
-		XCVM_GATEWAY_MINT_ROUTER_REPLY_ID => handle_mint_reply(deps, msg),
-		XCVM_GATEWAY_EXECUTE_ROUTER_REPLY_ID => handle_execute_reply(deps, msg),
+		XCVM_GATEWAY_BATCH_REPLY_ID => handle_batch_reply(msg),
 		_ => Err(ContractError::UnknownReply),
 	}
 }
@@ -214,30 +188,44 @@ pub fn ibc_packet_receive(
 	env: Env,
 	msg: IbcPacketReceiveMsg,
 ) -> Result<IbcReceiveResponse, ContractError> {
-	let messages = (|| -> Result<_, ContractError> {
-		MINT_SUCCESS_REGISTER.save(deps.storage, &true)?;
+	let batch = (|| -> Result<_, ContractError> {
 		let Config { registry_address, .. } = CONFIG.load(deps.storage)?;
 		let router_address = ROUTER.load(deps.storage)?;
 		let packet: DefaultXCVMPacket =
 			decode_packet(&msg.packet.data).map_err(ContractError::Protobuf)?;
-		let mints = mint_counterparty_assets(
+		// Execute both mints + execution in a single sub-transaction.
+		let mut msgs = mint_counterparty_assets(
 			&deps,
 			router_address.as_ref(),
 			registry_address.as_ref(),
 			packet.assets.clone(),
 		)?;
-		let execute = wasm_execute(
-			env.contract.address,
-			&ExecuteMsg::ExecutePacket { relayer: msg.relayer, packet },
-			Default::default(),
-		)?;
-		Ok((mints, execute))
+		msgs.push(
+			wasm_execute(
+				router_address,
+				&cw_xcvm_router::msg::ExecuteMsg::ExecuteProgram {
+					call_origin: CallOrigin::Remote {
+						protocol: BridgeProtocol::IBC,
+						relayer: msg.relayer,
+						user_origin: packet.user_origin,
+					},
+					salt: packet.salt,
+					program: packet.program,
+					funds: packet.assets,
+				},
+				Default::default(),
+			)?
+			.into(),
+		);
+		Ok(SubMsg::reply_always(
+			wasm_execute(env.contract.address, &ExecuteMsg::Batch { msgs }, Default::default())?,
+			XCVM_GATEWAY_BATCH_REPLY_ID,
+		))
 	})();
-	match messages {
-		Ok((mints, execute)) => Ok(IbcReceiveResponse::default()
+	match batch {
+		Ok(batch) => Ok(IbcReceiveResponse::default()
 			.set_ack(XCVMAck::OK.into_vec())
-			.add_submessages(mints)
-			.add_message(execute)),
+			.add_submessage(batch)),
 		Err(_) => Ok(IbcReceiveResponse::default().set_ack(XCVMAck::KO.into_vec())),
 	}
 }
@@ -293,21 +281,10 @@ pub fn ibc_packet_timeout(
 	Ok(IbcBasicResponse::default().add_messages(burns))
 }
 
-pub fn handle_mint_reply(deps: DepsMut, msg: Reply) -> Result<Response, ContractError> {
+pub fn handle_batch_reply(msg: Reply) -> Result<Response, ContractError> {
 	match msg.result {
-		SubMsgResult::Ok(_) => Ok(Response::default()),
-		SubMsgResult::Err(_) => {
-			MINT_SUCCESS_REGISTER.save(deps.storage, &false)?;
-			Ok(Response::default().set_data(XCVMAck::KO.into_vec()))
-		},
-	}
-}
-
-pub fn handle_execute_reply(deps: DepsMut, msg: Reply) -> Result<Response, ContractError> {
-	let mint_succeeded = MINT_SUCCESS_REGISTER.load(deps.storage).unwrap_or(false);
-	match (mint_succeeded, msg.result) {
-		(true, SubMsgResult::Ok(_)) => Ok(Response::default().set_data(XCVMAck::OK.into_vec())),
-		_ => Ok(Response::default().set_data(XCVMAck::KO.into_vec())),
+		SubMsgResult::Ok(_) => Ok(Response::default().set_data(XCVMAck::OK.into_vec())),
+		SubMsgResult::Err(_) => Ok(Response::default().set_data(XCVMAck::KO.into_vec())),
 	}
 }
 
@@ -316,7 +293,7 @@ fn mint_counterparty_assets(
 	router_address: &str,
 	registry_address: &str,
 	assets: Funds<Displayed<u128>>,
-) -> Result<Vec<SubMsg>, ContractError> {
+) -> Result<Vec<CosmosMsg>, ContractError> {
 	assets
 		.into_iter()
 		.map(|(asset_id, Displayed(amount))| {
@@ -326,17 +303,15 @@ fn mint_counterparty_assets(
 				AssetReference::Native { .. } => Err(ContractError::UnsupportedAsset),
 				AssetReference::Virtual { cw20_address } => {
 					// Burn from the current contract.
-					Ok(SubMsg::reply_on_error(
-						wasm_execute(
-							cw20_address.to_string(),
-							&Cw20ExecuteMsg::Mint {
-								recipient: router_address.to_string(),
-								amount: amount.into(),
-							},
-							Default::default(),
-						)?,
-						XCVM_GATEWAY_MINT_ROUTER_REPLY_ID,
-					))
+					Ok(wasm_execute(
+						cw20_address.to_string(),
+						&Cw20ExecuteMsg::Mint {
+							recipient: router_address.to_string(),
+							amount: amount.into(),
+						},
+						Default::default(),
+					)?
+					.into())
 				},
 			}
 		})
