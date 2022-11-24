@@ -60,7 +60,7 @@ export const XPablosBox: React.FC<XPablosBoxProps> = ({
   const xPablo = useMemo(() => {
     if (!substrateTokens.hasFetchedTokens) return undefined;
 
-    return substrateTokens.tokens.xpblo
+    return substrateTokens.tokens.xpblo // Cspell:ignore XPBLO
   }, [substrateTokens])
 
   const _xPablos = useXTokensList({
