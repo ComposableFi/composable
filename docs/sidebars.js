@@ -247,6 +247,7 @@ const sidebars = {
             'user-guides/talisman-create-account',
         ],
         },
+        'claim-rewards-guide',
         'user-guides/polkassembly-picasso-governance',
       ]
     },
