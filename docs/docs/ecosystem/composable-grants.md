@@ -41,7 +41,6 @@ to support robust innovation with the necessary scalability, security and sustai
 As the grants programme is up to $100,000 per project, 
 a small financial plan should be presented later when in discussion with the grants team.
 
-
 ### The Pallets Program
 
 This program invites developers to build [Substrate](https://substrate.io/) 
@@ -63,6 +62,5 @@ There are three separate pallet tracks for our grants: primitive, core and appli
 
 
 At Composable, we are still discovering the full extent to which this technology can be leveraged. 
-Even if you are not seeking a grant, we still invite you to work with our technical stack to see what you can build!
 
----
+Even if you are not seeking a grant, we still invite you to work with our technical stack to see what you can build!
