@@ -65,6 +65,7 @@ export class XCVM {
     this.messageTypeLookUp['Absolute'] = this.AbsoluteMessage;
     this.messageTypeLookUp['Balance'] = this.BalanceMessage;
     this.messageTypeLookUp['Binding'] = this.BindingMessage;
+    this.messageTypeLookUp['BindingValue'] = this.BindingValueMessage;
     this.messageTypeLookUp['Bindings'] = this.BindingsMessage;
     this.messageTypeLookUp['AssetAmount'] = this.AssetAmountMessage;
     this.messageTypeLookUp['Unit'] = this.UnitMessage;
