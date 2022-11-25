@@ -85,3 +85,4 @@ ignorePaths:
   - "code/parachain/runtime/picasso/src/weights/*"
   - "code/parachain/runtime/composable/src/weights/*"
   - "frontend/apps/picasso/defi/polkadot/pallets/Assets/karura.ts"
+  - "docs/docs/faqs/terms-of-use.md"
