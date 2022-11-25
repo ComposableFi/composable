@@ -82,7 +82,7 @@ export class PicassoOverviewStatsResolver
           };
         }
       } catch (err) {
-        console.log("Error:", err);
+        console.warn("Warning: Oracle not available");
       }
     }
 
@@ -143,10 +143,6 @@ export class PicassoOverviewStatsResolver
 
   @FieldResolver({ name: "activeUsers", defaultValue: 0 })
   async activeUsersCount(): Promise<number> {
-    const currentTimestamp = new Date().valueOf();
-    const msPerDay = 24 * 60 * 60 * 1_000;
-    const threshold = currentTimestamp - msPerDay;
-
     const manager = await this.tx();
 
     const activeUsers: { active_users_count: number }[] = await manager
@@ -156,7 +152,7 @@ export class PicassoOverviewStatsResolver
         SELECT
           count(distinct account_id) as active_users_count
         FROM activity
-        WHERE timestamp > ${threshold}
+        WHERE timestamp > current_timestamp - interval '1 day'
       `
       );
 

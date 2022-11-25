@@ -1,34 +1,46 @@
-export function getTimelineParams(
-  intervalMinutes: number,
-  dateFrom?: string,
-  dateTo?: string
-): {
-  where: string[];
-  params: number[];
+export function getStartAndStep(range: string): {
+  startHoursAgo: number;
+  step: number;
 } {
-  const intervalMilliseconds = intervalMinutes * 60 * 1000;
-  const params: number[] = [intervalMilliseconds];
-  const where: string[] = [];
-  let from: number;
-
-  // Set "from" filter
-  if (dateFrom) {
-    from = new Date(dateFrom).valueOf();
-  } else {
-    from = 0;
+  if (
+    range !== "day" &&
+    range !== "week" &&
+    range !== "month" &&
+    range !== "year"
+  ) {
+    throw new Error(
+      "Invalid range. Should be 'day', 'week', 'month' or 'year'."
+    );
   }
-  from = Math.floor(from / intervalMilliseconds) * intervalMilliseconds;
-  where.push(`timestamp > $${params.push(from)}`);
 
-  // Set "to" filter
-  if (dateTo) {
-    let to = new Date(dateTo).valueOf();
-    to = Math.ceil(to / intervalMilliseconds) * intervalMilliseconds;
-    where.push(`timestamp < $${params.push(to)}`);
+  let startHoursAgo: number;
+  let step: number;
+
+  switch (range) {
+    case "day": {
+      startHoursAgo = 22;
+      step = 1;
+      break;
+    }
+    case "week": {
+      startHoursAgo = 5 * 24;
+      step = 24;
+      break;
+    }
+    case "month": {
+      startHoursAgo = 28 * 24;
+      step = 24;
+      break;
+    }
+    case "year":
+    default: {
+      startHoursAgo = 10 * 30 * 24;
+      step = 24 * 30;
+    }
   }
 
   return {
-    where,
-    params,
+    startHoursAgo,
+    step,
   };
 }

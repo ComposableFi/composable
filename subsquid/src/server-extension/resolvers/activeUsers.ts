@@ -2,15 +2,12 @@ import {
   Arg,
   Field,
   InputType,
-  Int,
   ObjectType,
   Query,
   Resolver,
 } from "type-graphql";
 import type { EntityManager } from "typeorm";
-import { IsDateString, Min } from "class-validator";
 import { Activity } from "../../model";
-import { getTimelineParams } from "./common";
 
 @ObjectType()
 export class ActiveUsers {
@@ -27,17 +24,8 @@ export class ActiveUsers {
 
 @InputType()
 export class ActiveUsersInput {
-  @Field(() => Int, { nullable: false })
-  @Min(1)
-  intervalMinutes!: number;
-
-  @Field(() => String, { nullable: true })
-  @IsDateString()
-  dateFrom?: string;
-
-  @Field(() => String, { nullable: true })
-  @IsDateString()
-  dateTo?: string;
+  @Field(() => String, { nullable: false })
+  range!: string;
 }
 
 @Resolver()
@@ -48,34 +36,118 @@ export class ActiveUsersResolver {
   async activeUsers(
     @Arg("params", { validate: true }) input: ActiveUsersInput
   ): Promise<ActiveUsers[]> {
-    const { intervalMinutes, dateFrom, dateTo } = input;
-    const { where, params } = getTimelineParams(
-      intervalMinutes,
-      dateFrom,
-      dateTo
-    );
+    const { range } = input;
+
+    if (
+      range !== "day" &&
+      range !== "week" &&
+      range !== "month" &&
+      range !== "year"
+    ) {
+      throw new Error(
+        "Invalid range. Should be 'day', 'week', 'month' or 'year'."
+      );
+    }
 
     const manager = await this.tx();
 
-    const rows: { period: string; count: string }[] = await manager
-      .getRepository(Activity)
-      .query(
-        `
+    let rows: { period: string; count: string }[] = [];
+
+    // Hourly
+    switch (range) {
+      case "day": {
+        const startHoursAgo = 22;
+
+        rows = await manager.getRepository(Activity).query(
+          `
+          WITH range AS (
             SELECT
-              round(timestamp / $1) * $1 as period,
-              count(distinct account_id) as count
+               generate_series (
+                 ${startHoursAgo},
+                 0,
+                 -1
+               ) AS hour
+          )
+          SELECT
+              date_trunc('hour', current_timestamp) - hour * interval '1 hour' as period, 
+              hourly_active_users(hour) as count
+          FROM range
+          UNION
+          SELECT 
+            current_timestamp as period,
+            count(distinct account_id)
+          FROM activity
+          WHERE
+            timestamp > current_timestamp - interval '1 day'
+          ORDER BY period;
+        `
+        );
+        break;
+      }
+      case "week":
+      case "month": {
+        const startDaysAgo = range === "week" ? 5 : 28;
+
+        rows = await manager.getRepository(Activity).query(
+          `
+          WITH range AS (
+            SELECT
+               generate_series (
+                 ${startDaysAgo},
+                 0,
+                 -1
+               ) AS day
+            )
+            SELECT
+                date_trunc('day', current_timestamp) - day * interval '1 day' as period,
+                daily_active_users(day, 1) as count
+            FROM range
+            UNION
+            SELECT
+                 current_timestamp as period,
+                 COUNT(DISTINCT account_id) as count
             FROM activity
-            WHERE ${where.join(" AND ")}
-            GROUP BY period
-            ORDER BY period DESC
-        `,
-        params
-      );
+            WHERE timestamp >= current_timestamp - interval '1 day'
+            ORDER BY period;
+        `
+        );
+        break;
+      }
+      case "year":
+      default: {
+        const startMonthsAgo = 10;
+
+        rows = await manager.getRepository(Activity).query(
+          `
+          WITH range AS (
+            SELECT
+               generate_series (
+                 ${startMonthsAgo},
+                 0,
+                 -1
+               ) AS month
+            )
+            SELECT
+                date_trunc('month', current_timestamp - month * interval '1 month') as period, 
+                daily_active_users(month, 30) as count
+            FROM range
+            UNION
+            SELECT
+                current_timestamp as period,
+                COUNT(DISTINCT account_id) as count
+            FROM activity
+            WHERE timestamp >= current_timestamp - interval '1 month'
+            ORDER BY period;
+        `
+        );
+        break;
+      }
+    }
 
     return rows.map(
       (row) =>
         new ActiveUsers({
-          date: new Date(parseInt(row.period, 10)).toISOString(),
+          date: row.period,
           count: Number(row.count),
         })
     );

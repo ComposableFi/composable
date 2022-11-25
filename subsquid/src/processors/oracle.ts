@@ -47,7 +47,7 @@ export function getHistoricalAssetPrice(
     eventId: ctx.event.id,
     asset,
     price,
-    timestamp: BigInt(ctx.block.timestamp),
+    timestamp: new Date(ctx.block.timestamp),
     currency: Currency.USD,
   });
 }

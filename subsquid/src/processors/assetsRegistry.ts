@@ -35,7 +35,7 @@ function getAssetUpdatedEvent(
 
 /**
  * Handle AssetRegistry.AssetRegisteredEvent
- *  - Get latest price from oracle
+ *  - Get the latest price from oracle
  *  - Create new asset
  *  - Update historical price
  * No need to store account activity, as this should only be executed by
@@ -58,13 +58,12 @@ export async function processAssetRegisteredEvent(
   try {
     const oraclePrice = await api.query.oracle.prices(assetId);
     if (!oraclePrice?.price) {
-      // TODO: handle possible error
       return;
     }
 
     price = BigInt(oraclePrice.price.toString());
   } catch (error) {
-    console.log({ error });
+    console.warn("Warning: Oracle not available.");
     return;
   }
 
@@ -101,9 +100,6 @@ export async function processAssetUpdatedEvent(
   const event = new AssetsRegistryAssetUpdatedEvent(ctx);
   const assetUpdatedEvent = getAssetUpdatedEvent(event);
   const { assetId, decimals } = assetUpdatedEvent;
-
-  const wsProvider = new WsProvider(chain());
-  const api = await ApiPromise.create({ provider: wsProvider });
 
   const asset: Asset | undefined = await ctx.store.get(Asset, {
     where: {

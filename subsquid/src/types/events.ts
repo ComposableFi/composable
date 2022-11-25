@@ -297,14 +297,29 @@ export class PabloLiquidityAddedEvent {
    * Liquidity added into the pool `T::PoolId`.
    */
   get isV2402(): boolean {
+    return this._chain.getEventHash('Pablo.LiquidityAdded') === '486edbf8643ab771073bd483f4953899fa28a13f3c282666a2462c3cca2570c7'
+  }
+
+  /**
+   * Liquidity added into the pool `T::PoolId`.
+   */
+  get asV2402(): {who: Uint8Array, poolId: bigint, assets: [bigint, bigint][], mintedLp: bigint} {
+    assert(this.isV2402)
+    return this._chain.decodeEvent(this.event)
+  }
+
+  /**
+   * Liquidity added into the pool `T::PoolId`.
+   */
+  get isV10002(): boolean {
     return this._chain.getEventHash('Pablo.LiquidityAdded') === '312d582090ea3aa5c6ba6b929f4114d4a54ddca29cc066e4de5540c288ce5464'
   }
 
   /**
    * Liquidity added into the pool `T::PoolId`.
    */
-  get asV2402(): {who: Uint8Array, poolId: bigint, baseAmount: bigint, quoteAmount: bigint, mintedLp: bigint} {
-    assert(this.isV2402)
+  get asV10002(): {who: Uint8Array, poolId: bigint, baseAmount: bigint, quoteAmount: bigint, mintedLp: bigint} {
+    assert(this.isV10002)
     return this._chain.decodeEvent(this.event)
   }
 }
@@ -326,14 +341,29 @@ export class PabloLiquidityRemovedEvent {
    * Liquidity removed from pool `T::PoolId` by `T::AccountId` in balanced way.
    */
   get isV2402(): boolean {
+    return this._chain.getEventHash('Pablo.LiquidityRemoved') === '2c7e841374438a598134480f43b6c2b079b50bd25457174f647f6dca94a93d53'
+  }
+
+  /**
+   * Liquidity removed from pool `T::PoolId` by `T::AccountId` in balanced way.
+   */
+  get asV2402(): {who: Uint8Array, poolId: bigint, assets: [bigint, bigint][], totalIssuance: bigint} {
+    assert(this.isV2402)
+    return this._chain.decodeEvent(this.event)
+  }
+
+  /**
+   * Liquidity removed from pool `T::PoolId` by `T::AccountId` in balanced way.
+   */
+  get isV10002(): boolean {
     return this._chain.getEventHash('Pablo.LiquidityRemoved') === 'ef123c9326de7ce47d183c1b7d729db3c90f89a6bd64122aa03a48c169c6aa5b'
   }
 
   /**
    * Liquidity removed from pool `T::PoolId` by `T::AccountId` in balanced way.
    */
-  get asV2402(): {who: Uint8Array, poolId: bigint, baseAmount: bigint, quoteAmount: bigint, totalIssuance: bigint} {
-    assert(this.isV2402)
+  get asV10002(): {who: Uint8Array, poolId: bigint, baseAmount: bigint, quoteAmount: bigint, totalIssuance: bigint} {
+    assert(this.isV10002)
     return this._chain.decodeEvent(this.event)
   }
 }
@@ -384,14 +414,29 @@ export class PabloPoolDeletedEvent {
    * The sale ended, the funds repatriated and the pool deleted.
    */
   get isV2402(): boolean {
+    return this._chain.getEventHash('Pablo.PoolDeleted') === '19ca4533e16e3838ae98776a6f38c75647996f376f07e614f658d78acd1c3f65'
+  }
+
+  /**
+   * The sale ended, the funds repatriated and the pool deleted.
+   */
+  get asV2402(): {poolId: bigint, assets: [bigint, bigint][]} {
+    assert(this.isV2402)
+    return this._chain.decodeEvent(this.event)
+  }
+
+  /**
+   * The sale ended, the funds repatriated and the pool deleted.
+   */
+  get isV10002(): boolean {
     return this._chain.getEventHash('Pablo.PoolDeleted') === '1b2177997ab30c1eecba237f26886dc4fce241682664c0c2ccd6fa478d585089'
   }
 
   /**
    * The sale ended, the funds repatriated and the pool deleted.
    */
-  get asV2402(): {poolId: bigint, baseAmount: bigint, quoteAmount: bigint} {
-    assert(this.isV2402)
+  get asV10002(): {poolId: bigint, baseAmount: bigint, quoteAmount: bigint} {
+    assert(this.isV10002)
     return this._chain.decodeEvent(this.event)
   }
 }

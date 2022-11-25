@@ -22,8 +22,9 @@ export class HistoricalVolume {
   @Column_("varchar", {length: 3, nullable: false})
   currency!: Currency
 
-  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
-  timestamp!: bigint
+  @Index_()
+  @Column_("timestamp with time zone", {nullable: false})
+  timestamp!: Date
 
   @Column_("text", {nullable: false})
   assetId!: string

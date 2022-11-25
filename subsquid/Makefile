@@ -45,6 +45,10 @@ explore:
 	npx squid-substrate-metadata-explorer --chain ws://127.0.0.1:9988 --out daliDevVersions.jsonl
 
 
+sqlinit:
+	psql -d postgres -f db/init.sql
+
+
 rebuild:
 	make down
 	rm -f -r lib
