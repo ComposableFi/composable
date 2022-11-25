@@ -6,9 +6,12 @@ import { getDevWallets } from "@composable/utils/walletHelper";
 import { ApiPromise } from "@polkadot/api";
 import { sendAndWaitForSuccess } from "@composable/utils/polkadotjs";
 import { expect } from "chai";
+import BN from "bn.js";
 
 
 const DEFAULT_FEE = 10_000; // 1 Percent
+
+const DEFAULT_LIQUIDITY_AMOUNT_TO_ADD = Pica(10_000);
 
 describe("tx.constantProductDex Tests", function() {
   if (!pabloTestConfiguration.enabledTests.enabled) {
@@ -21,7 +24,7 @@ describe("tx.constantProductDex Tests", function() {
   let fee: number;
   let baseWeight: number;
   let baseAmount: bigint, quoteAmount: bigint;
-  let poolId1:number;
+  let poolId1:number, poolId2: number, poolId3: number;
 
   before("Initialize variables", async function() {
     const { newClient, newKeyring } = await getNewConnection();
@@ -40,7 +43,7 @@ describe("tx.constantProductDex Tests", function() {
   });
 
   before("Minting assets", async function() {
-    // await mintAssetsToWallet(api, poolOwnerWallet, sudoKey, [1]);
+    await mintAssetsToWallet(api, poolOwnerWallet, sudoKey, [1]);
     // await mintAssetsToWallet(api, walletLpProvider1, sudoKey, [1]);
     // await mintAssetsToWallet(api, walletTrader1, sudoKey, [1]);
   });
@@ -56,7 +59,6 @@ describe("tx.constantProductDex Tests", function() {
       const owner = api.createType("AccountId32", poolOwnerWallet.publicKey);
       const poolConfiguration = api.createType("PalletPabloPoolInitConfiguration", {
         DualAssetConstantProduct: {
-          //pool: {
             owner: owner,
             assetsWeights: api.createType("BTreeMap<u128, Permill>", {
               "1": 500_000,
@@ -64,7 +66,6 @@ describe("tx.constantProductDex Tests", function() {
             }),
             fee: api.createType("Permill", 10_000)
           }
-      //}
         });
 
       const {data: [resultPoolId, resultOwner, resultAssets]} = await sendAndWaitForSuccess(
@@ -78,19 +79,160 @@ describe("tx.constantProductDex Tests", function() {
       console.debug(resultAssets.toHuman());
     });
 
-    it("#1.2  I can, as sudo, create a new Pablo Constant Product pool, for assets which already belong to an existing pool.");
+    it("#1.2  I can, as sudo, create a new Pablo Constant Product pool, for assets which already belong to an existing pool.", async function() {
+      this.timeout(2*60*1000);
 
-    it("#1.3  User wallets can not create new Pablo Constant Product pools.");
+      const owner = api.createType("AccountId32", poolOwnerWallet.publicKey);
+      const poolConfiguration = api.createType("PalletPabloPoolInitConfiguration", {
+        DualAssetConstantProduct: {
+          owner: owner,
+          assetsWeights: api.createType("BTreeMap<u128, Permill>", {
+            "4": 500_000,
+            "131": 500_000
+          }),
+          fee: api.createType("Permill", 10_000)
+        }
+      });
 
-    it("#1.4  I can, as sudo, create a new Pablo Constant Product pool with 0 fees.");
+      const {data: [resultPoolId, resultOwner, resultAssets]} = await sendAndWaitForSuccess(
+        api,
+        sudoKey,
+        api.events.pablo.PoolCreated.is,
+        api.tx.sudo.sudo(api.tx.pablo.create(poolConfiguration))
+      );
+      poolId2 = resultPoolId.toNumber();
+      expect(resultOwner.toString()).to.be.equal(owner.toString());
+      console.debug(resultAssets.toHuman());
+    });
 
-    it("#1.5  I can not, as sudo, create a new Pablo Constant Product pool with fees greater than 100%.");
+    it("#1.3  User wallets can not create new Pablo Constant Product pools.", async function () {
+      this.timeout(2*60*1000);
 
-    it("#1.6  I can not, as sudo, create a new Pablo Constant Product pool with the base asset being equal to the quote asset.");
+      const owner = api.createType("AccountId32", poolOwnerWallet.publicKey);
+      const poolConfiguration = api.createType("PalletPabloPoolInitConfiguration", {
+        DualAssetConstantProduct: {
+          owner: owner,
+          assetsWeights: api.createType("BTreeMap<u128, Permill>", {
+            "1": 500_000,
+            "131": 500_000
+          }),
+          fee: api.createType("Permill", 10_000)
+        }
+      });
+
+      await sendAndWaitForSuccess(
+        api,
+        poolOwnerWallet,
+        api.events.pablo.PoolCreated.is,
+        api.tx.pablo.create(poolConfiguration)
+      ).catch(function(exc) {
+        expect(exc.toString()).to.contain("BadOrigin");
+      });
+    });
+
+    it("#1.4  I can, as sudo, create a new Pablo Constant Product pool with 0 fees.", async function() {
+      this.timeout(2*60*1000);
+
+      const owner = api.createType("AccountId32", poolOwnerWallet.publicKey);
+      const poolConfiguration = api.createType("PalletPabloPoolInitConfiguration", {
+        DualAssetConstantProduct: {
+          owner: owner,
+          assetsWeights: api.createType("BTreeMap<u128, Permill>", {
+            "1": 500_000,
+            "131": 500_000
+          }),
+          fee: api.createType("Permill", 0)
+        }
+      });
+
+      const {data: [resultPoolId, resultOwner, resultAssets]} = await sendAndWaitForSuccess(
+        api,
+        sudoKey,
+        api.events.pablo.PoolCreated.is,
+        api.tx.sudo.sudo(api.tx.pablo.create(poolConfiguration))
+      );
+      poolId3 = resultPoolId.toNumber();
+      expect(resultOwner.toString()).to.be.equal(owner.toString());
+      console.debug(resultAssets.toHuman());
+    });
+
+    it("#1.5  I can not, as sudo, create a new Pablo Constant Product pool with fees greater than 100%.", async function() {
+      this.timeout(2*60*1000);
+
+      const owner = api.createType("AccountId32", poolOwnerWallet.publicKey);
+      const poolConfiguration = api.createType("PalletPabloPoolInitConfiguration", {
+        DualAssetConstantProduct: {
+          owner: owner,
+          assetsWeights: api.createType("BTreeMap<u128, Permill>", {
+            "1": 500_000,
+            "131": 500_000
+          }),
+          fee: api.createType("Permill", 1_250_000) // 125% fee
+        }
+      });
+
+      await sendAndWaitForSuccess(
+        api,
+        sudoKey,
+        api.events.pablo.PoolCreated.is,
+        api.tx.sudo.sudo(api.tx.pablo.create(poolConfiguration))
+      ).catch(function(exc) {
+        // ToDo
+        console.debug(exc.toString());
+        return exc;
+      });
+    });
+
+    it("#1.6  I can not, as sudo, create a new Pablo Constant Product pool with the base asset being equal to the quote asset.", async function() {
+      this.timeout(2 * 60 * 1000);
+
+      const owner = api.createType("AccountId32", poolOwnerWallet.publicKey);
+      const poolConfiguration = api.createType("PalletPabloPoolInitConfiguration", {
+        DualAssetConstantProduct: {
+          owner: owner,
+          assetsWeights: api.createType("BTreeMap<u128, Permill>", {
+            "1": 500_000,
+            "131": 500_000
+          }),
+          fee: api.createType("Permill", 10_000)
+        }
+      });
+
+   await sendAndWaitForSuccess(
+        api,
+        sudoKey,
+        api.events.pablo.PoolCreated.is,
+        api.tx.sudo.sudo(api.tx.pablo.create(poolConfiguration))
+      ).catch(function(exc) {
+        // ToDo
+        console.debug(exc.toString());
+        return exc;
+      });
+    });
   });
 
   describe("2. Providing liquidity", function() {
-    it("#2.1  I can provide liquidity to the newly created pool. #1.1");
+    it("#2.1  I can provide liquidity to the newly created pool. #1.1", async function() {
+      this.timeout(2 * 60 * 1000);
+
+      const assets = api.createType('BTreeMap<u128, u128>', {
+        "1": 1_000,
+        "131": 10_000
+      });
+
+      const {data: [resultWho, resultPoolId, resultBaseAmount, resultQuoteAmount, resultMintedLp]} = await sendAndWaitForSuccess(
+        api,
+        walletLpProvider1,
+        api.events.pablo.LiquidityAdded.is,
+        api.tx.pablo.addLiquidity(poolId1, assets, 0, true)
+      );
+
+      expect(resultWho.toString()).to.be.equal(api.createType("AccountId32", walletLpProvider1.publicKey));
+      expect(resultPoolId).to.be.bignumber.equal(new BN(poolId1));
+      expect(resultBaseAmount).to.be.bignumber.equal(new BN(assets["1"]));
+      expect(resultQuoteAmount).to.be.bignumber.equal(new BN(assets["131"]));
+      console.debug("MintedLp", resultMintedLp);
+    });
 
     it("#2.2  I can transfer my LP tokens to another user.");
 
