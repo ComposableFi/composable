@@ -1,5 +1,5 @@
 use crate::{Displayed, Funds, UserOrigin};
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};

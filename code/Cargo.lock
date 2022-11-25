@@ -2926,17 +2926,6 @@ checksum = "ef8ae57c4978a2acd8b869ce6b9ca1dfe817bff704c220209fdef2c0b75a01b9"
 
 [[package]]
 name = "cw-storage-plus"
-version = "0.13.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "648b1507290bbc03a8d88463d7cd9b04b1fa0155e5eef366c4fa052b9caaac7a"
-dependencies = [
- "cosmwasm-std",
- "schemars",
- "serde",
-]
-
-[[package]]
-name = "cw-storage-plus"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1c8b264257c4f44c49b7ce09377af63aa040768ecd3fd7bdd2d48a09323a1e90"
@@ -2966,7 +2955,7 @@ version = "0.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-storage-plus 0.14.0",
+ "cw-storage-plus",
  "cw-utils",
  "cw2",
  "schemars",
@@ -2981,7 +2970,7 @@ version = "0.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-storage-plus 0.14.0",
+ "cw-storage-plus",
  "cw-utils",
  "cw-xcvm-asset-registry",
  "cw-xcvm-interpreter",
@@ -3005,7 +2994,7 @@ version = "0.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-storage-plus 0.13.4",
+ "cw-storage-plus",
  "cw-utils",
  "cw-xcvm-asset-registry",
  "cw-xcvm-utils",
@@ -3029,7 +3018,7 @@ version = "0.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-storage-plus 0.14.0",
+ "cw-storage-plus",
  "cw-utils",
  "cw-xcvm-asset-registry",
  "cw-xcvm-interpreter",
@@ -3061,7 +3050,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "aa74c324af8e3506fd8d50759a265bead3f87402e413c840042af5d2808463d6"
 dependencies = [
  "cosmwasm-std",
- "cw-storage-plus 0.14.0",
+ "cw-storage-plus",
  "schemars",
  "serde",
 ]
@@ -17710,7 +17699,7 @@ name = "xcvm-core"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-std",
- "cw-storage-plus 0.14.0",
+ "cw-storage-plus",
  "fixed",
  "num",
  "parity-scale-codec",

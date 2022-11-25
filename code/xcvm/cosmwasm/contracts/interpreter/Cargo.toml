@@ -21,13 +21,13 @@ crate-type = ["cdylib", "rlib"]
 library = []
 
 [dependencies]
-cosmwasm-std = { version = "1.0.0" }
-cw-storage-plus = "0.13.2"
+cosmwasm-std = "1.0.0"
+cw-storage-plus = "0.14.0"
 cw-utils = "0.14.0"
-cw-xcvm-asset-registry = { path = "../asset-registry", features = ["library"] }
-cw-xcvm-utils = { path = "../utils" }
 cw2 = "0.14.0"
 cw20 = "0.14.0"
+cw-xcvm-asset-registry = { path = "../asset-registry", features = ["library"] }
+cw-xcvm-utils = { path = "../utils" }
 hex = { version = "0.4", default-features = false, features = [
   "alloc",
   "serde",

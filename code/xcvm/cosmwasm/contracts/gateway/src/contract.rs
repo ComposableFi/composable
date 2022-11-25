@@ -49,6 +49,7 @@ pub fn instantiate(
 	msg.config.registry_address =
 		deps.api.addr_validate(&msg.config.registry_address)?.into_string();
 	msg.config.admin = deps.api.addr_validate(&msg.config.admin)?.into_string();
+  CONFIG.save(deps.storage, &msg.config)?;
 	Ok(Response::default()
 		.add_event(Event::new(XCVM_GATEWAY_EVENT_PREFIX).add_attribute("action", "instantiated"))
 		.add_submessage(SubMsg::reply_on_success(
@@ -434,6 +435,7 @@ pub fn handle_bridge(
 			let channel_id = IBC_NETWORK_CHANNEL.load(deps.storage, network_id)?;
 			let packet = DefaultXCVMPacket {
 				interpreter: info.sender.as_bytes().to_vec().into(),
+        // Settle on whether we forward the origin or not
 				user_origin: UserOrigin {
 					network_id,
 					user_id: info.sender.as_bytes().to_vec().into(),
@@ -490,4 +492,28 @@ fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> Result<Response, Contr
 	};
 	ROUTER.save(deps.storage, &router_address)?;
 	Ok(Response::default())
+}
+
+#[cfg(test)]
+mod tests {
+	use cw_xcvm_utils::DefaultXCVMProgram;
+	use xcvm_core::{BridgeSecurity, Funds, ProgramBuilder, Picasso, Juno};
+
+	use crate::msg::ExecuteMsg;
+
+	#[test]
+	fn test() {
+		let program = ProgramBuilder::<Picasso, _, _>::new(vec![])
+			.spawn::<_, Juno, (), _>(vec![], vec![], BridgeSecurity::Deterministic, Funds::empty(), |child| Ok(child))
+			.unwrap()
+			.build();
+		let msg = ExecuteMsg::Bridge {
+			network_id: 0.into(),
+			security: BridgeSecurity::Deterministic,
+			salt: vec![],
+			program,
+			assets: Funds::empty(),
+		};
+		println!("{}", serde_json_wasm::to_string(&msg).unwrap());
+	}
 }
