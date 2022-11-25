@@ -82,6 +82,8 @@ Treasury Pallet for accruing fees: 5wCLknMQkBGmuTQxsxYAyevpa37mMCkFLaqaYNcowsSnR
 
 #### Crowdloan Pallet Funds
 
+Are located at the crowdloan pallet: 
+
 #### Token Purchasers' Funds
 
 Token purchasers’ funds have been loaded into a vesting pallet and
