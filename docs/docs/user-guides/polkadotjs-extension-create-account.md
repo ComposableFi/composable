@@ -75,14 +75,14 @@ Please read our guide on [how to make a Talisman account](./talisman-create-acco
 
 ![picasso_homepage](./picasso-homepage.png)
 
-1. Cick "Wallets" in the top right corner
+1. Click "Wallets" in the top right corner
 2. Click "Polkadot"
 3. Select a wallet of your choice. In this case, we use the Polkadot.js account we created earlier
 
 You will be prompted to allow Picasso access to your account's addresses. 
 Make sure it identifies as Picasso and its origin "app.picasso.xyz"
 
-![picaso_access_request](./picasso-access-request.png)
+![picasso_access_request](./picasso-access-request.png)
 
 1. Click "Yes, allow this application access"
 
