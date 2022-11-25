@@ -15,15 +15,18 @@ blueprints to help developers utilize Composable Finance’s novel solution for 
 
 Here’s how the general flow of this process will look:
 1. Composable's core team ideates a new use-case for the XCVM that could add value to the Picasso ecosystem.
-Composable Labs takes this idea and turns it into a comprehensive blueprint.
-This blueprint will be posted in a Request for Proposal (RFP) structure on Github. Developers who then find any of the open RFP compelling can submit a grants application to Composable Labs for precursory discussions regarding the development of the blueprint.
-The Labs team and development team can then define the scope of the project, relevant milestones, along with how any required grants may be distributed across these milestones.
-Please reach out to the Labs team if you are interested in having us support any particular tools or projects for the Composable ecosystem that are not currently open for RFPs.
+2. Composable Labs takes this idea and turns it into a comprehensive blueprint.
+3. This blueprint will be posted in a Request for Proposal (RFP) structure on Github. 
+   Developers who then find any of the open RFP compelling can submit a grants application to Composable Labs for 
+   precursory discussions regarding the development of the blueprint.
+4. The Labs team and development team can then define the scope of the project, relevant milestones, 
+   along with how any required grants may be distributed across these milestones.
+5. Please reach out to the Labs team if you are interested in having us support any particular tools or projects 
+   for the Composable ecosystem that are not currently open for RFPs.
 
-More documentation on the XCVM will follow shortly but with a Rust SDK, Solidity SDK, and frontend SDK (XCVM.js) all well underway, you can expect to see the release of blueprints utilizing all of the above.
+More documentation on the XCVM will follow shortly but with a Rust SDK, Solidity SDK, and frontend SDK (XCVM.js) 
+all well underway, you can expect to see the release of blueprints utilizing all of the above.
 
-
-Composable labs is devoted to pushing new protocols that harness the full potential of the Composable tech-stack.
 Projects building on Composable:
 
 - [Angular Finance](https://www.angular.finance/)
