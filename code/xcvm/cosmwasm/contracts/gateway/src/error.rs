@@ -36,4 +36,6 @@ pub enum ContractError {
 	InvalidAck,
 	#[error("An unknown reply ID was provided, this MUST be impossible.")]
 	UnknownReply,
+	#[error("The provided channel has not been previously opened.")]
+  UnknownChannel,
 }

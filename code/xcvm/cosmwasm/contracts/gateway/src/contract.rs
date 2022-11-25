@@ -49,7 +49,7 @@ pub fn instantiate(
 	msg.config.registry_address =
 		deps.api.addr_validate(&msg.config.registry_address)?.into_string();
 	msg.config.admin = deps.api.addr_validate(&msg.config.admin)?.into_string();
-  CONFIG.save(deps.storage, &msg.config)?;
+	CONFIG.save(deps.storage, &msg.config)?;
 	Ok(Response::default()
 		.add_event(Event::new(XCVM_GATEWAY_EVENT_PREFIX).add_attribute("action", "instantiated"))
 		.add_submessage(SubMsg::reply_on_success(
@@ -77,6 +77,9 @@ pub fn execute(
 	match msg {
 		ExecuteMsg::IbcSetNetworkChannel { network_id, channel_id } => {
 			ensure_admin(deps.as_ref(), info.sender.as_ref())?;
+			let _ = IBC_CHANNEL_INFO
+				.load(deps.storage, channel_id.clone())
+				.map_err(|_| ContractError::UnknownChannel)?;
 			IBC_NETWORK_CHANNEL.save(deps.storage, network_id, &channel_id)?;
 			Ok(Response::default().add_event(
 				Event::new(XCVM_GATEWAY_EVENT_PREFIX)
@@ -435,7 +438,7 @@ pub fn handle_bridge(
 			let channel_id = IBC_NETWORK_CHANNEL.load(deps.storage, network_id)?;
 			let packet = DefaultXCVMPacket {
 				interpreter: info.sender.as_bytes().to_vec().into(),
-        // Settle on whether we forward the origin or not
+				// Settle on whether we forward the origin or not
 				user_origin: UserOrigin {
 					network_id,
 					user_id: info.sender.as_bytes().to_vec().into(),
@@ -497,14 +500,20 @@ fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> Result<Response, Contr
 #[cfg(test)]
 mod tests {
 	use cw_xcvm_utils::DefaultXCVMProgram;
-	use xcvm_core::{BridgeSecurity, Funds, ProgramBuilder, Picasso, Juno};
+	use xcvm_core::{BridgeSecurity, Funds, Juno, Picasso, ProgramBuilder};
 
 	use crate::msg::ExecuteMsg;
 
 	#[test]
 	fn test() {
 		let program = ProgramBuilder::<Picasso, _, _>::new(vec![])
-			.spawn::<_, Juno, (), _>(vec![], vec![], BridgeSecurity::Deterministic, Funds::empty(), |child| Ok(child))
+			.spawn::<_, Juno, (), _>(
+				vec![],
+				vec![],
+				BridgeSecurity::Deterministic,
+				Funds::empty(),
+				|child| Ok(child),
+			)
 			.unwrap()
 			.build();
 		let msg = ExecuteMsg::Bridge {

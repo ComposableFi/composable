@@ -15,6 +15,9 @@ use cw2::set_contract_version;
 use cw20::{Cw20Contract, Cw20ExecuteMsg};
 use cw_utils::ensure_from_older_version;
 use cw_xcvm_asset_registry::{contract::external_query_lookup_asset, msg::AssetReference};
+use cw_xcvm_interpreter::contract::{
+	XCVM_INTERPRETER_EVENT_DATA_ORIGIN, XCVM_INTERPRETER_EVENT_PREFIX,
+};
 use cw_xcvm_utils::DefaultXCVMProgram;
 use xcvm_core::{BridgeSecurity, CallOrigin, Displayed, Funds, UserOrigin};
 
@@ -294,14 +297,14 @@ fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 		let interpreter_event = response
 			.events
 			.iter()
-			.find(|event| event.ty == "wasm-xcvm.interpreter.instantiated")
+			.find(|event| event.ty.starts_with(&format!("wasm-{}", XCVM_INTERPRETER_EVENT_PREFIX)))
 			.ok_or(StdError::not_found("interpreter event not found"))?;
 
 		cw_xcvm_utils::decode_origin_data(
 			interpreter_event
 				.attributes
 				.iter()
-				.find(|attr| &attr.key == "data")
+				.find(|attr| &attr.key == XCVM_INTERPRETER_EVENT_DATA_ORIGIN)
 				.ok_or(StdError::not_found("no data is returned from 'xcvm_interpreter'"))?
 				.value
 				.as_str(),

@@ -34,6 +34,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const CALL_ID: u64 = 1;
 const SELF_CALL_ID: u64 = 2;
 pub const XCVM_INTERPRETER_EVENT_PREFIX: &str = "xcvm.interpreter";
+pub const XCVM_INTERPRETER_EVENT_DATA_ORIGIN: &str = "data";
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -55,7 +56,7 @@ pub fn instantiate(
 
 	Ok(Response::new().add_event(
 		Event::new(XCVM_INTERPRETER_EVENT_PREFIX)
-			.add_attribute("data", cw_xcvm_utils::encode_origin_data(config.user_origin)?.as_str()),
+			.add_attribute(XCVM_INTERPRETER_EVENT_DATA_ORIGIN, cw_xcvm_utils::encode_origin_data(config.user_origin)?.as_str()),
 	))
 }
 
@@ -77,6 +78,7 @@ pub fn execute(
 			if env.contract.address != info.sender {
 				Err(ContractError::NotAuthorized)
 			} else {
+				// Encore self ownership in this token
 				handle_execute_step(token, deps, env, relayer, program)
 			},
 
