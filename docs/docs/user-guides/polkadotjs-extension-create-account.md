@@ -96,3 +96,5 @@ If you create/derive more wallets in the future, they will show up here.
 
 And we are done. You can use Picasso as you please using the accounts and their respective wallets we just connected, 
 or you can try connecting an Ethereum wallet using Metamask.
+
+[![How to create a Polkadot.js account](https://img.youtube.com/vi/tRrrF37MxBc/maxresdefault.jpg)](https://www.youtube.com/watch?v=tRrrF37MxBc)

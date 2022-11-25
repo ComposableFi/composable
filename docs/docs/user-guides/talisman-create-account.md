@@ -75,3 +75,4 @@ On the following page, you will see all the wallets associated with the connecte
 This confirms the activation of your account. 
 You can now use Picasso with the accounts and their respective wallets we just connected.
 
+[![How to create a Talisman account](https://img.youtube.com/vi/O1-X6Us9Yio/maxresdefault.jpg)](https://www.youtube.com/watch?v=O1-X6Us9Yio)

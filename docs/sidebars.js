@@ -239,7 +239,7 @@ const sidebars = {
           label: 'Accounts and Wallet',
           link: {
             type: 'generated-index',
-            slug: 'user-guides'
+            slug: 'accounts-wallets'
           },
           collapsible: true,
           items: [
