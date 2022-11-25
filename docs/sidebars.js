@@ -41,7 +41,6 @@ const sidebars = {
           collapsed: true,
           items: [
             'parachains/picasso/picasso-crowdloan',
-            'parachains/picasso/KSM-purchase-log',
             'parachains/picasso/picasso-tokenomics'
           ],
         },
