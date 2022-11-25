@@ -62,7 +62,6 @@ During this time users are free to vote on the referenda by following the steps 
     b. Passed - the referendum has passed but not yet been executed and can no longer be voted on
     c. Executed - the referendum has passed and already been executed
     d. NotPassed - the referendum failed to pass and can no longer be voted on
-
 3. Find a referendum with the “Started” label
 4. Enter the amount you’re willing to lock in the “Lock balance” field
 5. Enter the time you’re willing to lock for in the “Vote lock” field (read more on conviction voting here)
