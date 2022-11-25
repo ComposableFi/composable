@@ -356,8 +356,17 @@ export interface PalletIbcEventsIbcEvent extends Null {}
 /** @name PalletIbcIbcConsensusState */
 export interface PalletIbcIbcConsensusState extends Null {}
 
+/** @name PalletIbcPalletParams */
+export interface PalletIbcPalletParams extends Null {}
+
 /** @name PalletIbcPingSendPingParams */
 export interface PalletIbcPingSendPingParams extends Null {}
+
+/** @name PalletIbcTransferParams */
+export interface PalletIbcTransferParams extends Null {}
+
+/** @name PalletIbcUpgradeParams */
+export interface PalletIbcUpgradeParams extends Null {}
 
 /** @name PalletIdentityBitFlags */
 export interface PalletIdentityBitFlags extends Null {}
@@ -426,6 +435,12 @@ export interface PalletOracleWithdraw extends Struct {
   readonly stake: u128;
   readonly unlockBlock: u32;
 }
+
+/** @name PalletProxyAnnouncement */
+export interface PalletProxyAnnouncement extends Null {}
+
+/** @name PalletProxyProxyDefinition */
+export interface PalletProxyProxyDefinition extends Null {}
 
 /** @name PalletSchedulerReleases */
 export interface PalletSchedulerReleases extends Null {}

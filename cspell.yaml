@@ -89,3 +89,4 @@ ignorePaths:
   - "frontend/apps/picasso/defi/polkadot/pallets/Assets/karura.ts"
   - "docs/docs/faqs/terms-of-use.md"
   - "frontend/apps/pablo/pages/legal/*"
+  - "code/integration-tests/runtime-tests/test/tests/pablo/testHandlers/constantProduct/*"
