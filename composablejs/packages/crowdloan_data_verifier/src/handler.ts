@@ -22,8 +22,8 @@ export async function verifyCrowdloanData(api: ApiPromise) {
   const keyring = new Keyring();
   keyring.setSS58Format(49);
   for (const [contributor, contributorAmount] of rawPalletData) {
-    let amountFromList: BN;
-    let amountFromChain;
+    let amountFromList: bigint;
+    let amountFromChain: bigint;
 
     // @ts-ignore
     if ("Ethereum" in contributor.toHuman()[0]) {
@@ -35,7 +35,8 @@ export async function verifyCrowdloanData(api: ApiPromise) {
       // Getting PICA amount for the according contributor & adjusting by 12 decimal places.
       // @ts-ignore
       const rawAmountFromList = contributors["rewardedPICAs"][contributor.toHuman()[0]["Ethereum"]];
-      amountFromList = new BN(parseFloat(rawAmountFromList)).mul(new BN(10).pow(new BN(12)));
+
+      amountFromList = BigInt(Math.floor(parseFloat(rawAmountFromList) *  Math.pow(10, 12)));
 
       // Getting PICA amount of contributor from chain list. (Already adjusted by 12 decimal places)
       // @ts-ignore
@@ -50,7 +51,7 @@ export async function verifyCrowdloanData(api: ApiPromise) {
       // @ts-ignore
       const contrib = contributors["rewardedPICAs"][keyring.encodeAddress(decodedValue, 2)];
       const rawAmountFromList = contrib;
-      amountFromList = new BN(parseFloat(rawAmountFromList)).mul(new BN(10).pow(new BN(12)));
+      amountFromList = BigInt(Math.floor(parseFloat(rawAmountFromList) * Math.pow(10,12)));
 
       // @ts-ignore
       amountFromChain = new BN(contributorAmount.toPrimitive()["total"]);
@@ -58,8 +59,8 @@ export async function verifyCrowdloanData(api: ApiPromise) {
 
     // If the amounts of a contributor do not align with the data on the chain,
     // we'll notify the user, and show him the wallet public key, intended amount & actual amount on chain.
-    if (!amountFromList.eq(amountFromChain))
-      console.warn(
+    if (amountFromList !=(amountFromChain))
+      console.log(
         "\nDiscrepancy found!\n",
         contributor.toHuman(),
         " - Is:",

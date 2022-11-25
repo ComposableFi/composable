@@ -216,7 +216,7 @@ checksum = "9b34d609dfbaf33d6889b2b7106d3ca345eacad44200913df5ba02bfd31d2ba9"
 
 [[package]]
 name = "assets-rpc"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "assets-runtime-api",
  "composable-support",
@@ -232,7 +232,7 @@ dependencies = [
 
 [[package]]
 name = "assets-runtime-api"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "composable-support",
  "composable-traits",
@@ -1332,7 +1332,7 @@ dependencies = [
 
 [[package]]
 name = "composable"
-version = "2.3.4"
+version = "1.10002.0"
 dependencies = [
  "color-eyre",
  "composable-node",
@@ -1340,7 +1340,7 @@ dependencies = [
 
 [[package]]
 name = "composable-maths"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "composable-support",
  "composable-tests-helpers",
@@ -1358,7 +1358,7 @@ dependencies = [
 
 [[package]]
 name = "composable-node"
-version = "2.3.4"
+version = "1.10002.0"
 dependencies = [
  "assets-rpc",
  "assets-runtime-api",
@@ -1391,7 +1391,7 @@ dependencies = [
  "once_cell",
  "pablo-rpc",
  "pablo-runtime-api",
- "pallet-assets 0.0.1",
+ "pallet-assets 1.0.0",
  "pallet-crowdloan-rewards",
  "pallet-transaction-payment-rpc",
  "pallet-transaction-payment-rpc-runtime-api",
@@ -1444,7 +1444,7 @@ dependencies = [
 
 [[package]]
 name = "composable-runtime"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "assets-runtime-api",
  "common",
@@ -1472,7 +1472,7 @@ dependencies = [
  "orml-unknown-tokens",
  "orml-xcm-support",
  "orml-xtokens",
- "pallet-assets 0.0.1",
+ "pallet-assets 1.0.0",
  "pallet-assets-registry",
  "pallet-aura",
  "pallet-authorship",
@@ -1524,7 +1524,7 @@ dependencies = [
 
 [[package]]
 name = "composable-runtime-wasm"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "composable-runtime",
 ]
@@ -1549,7 +1549,7 @@ dependencies = [
 
 [[package]]
 name = "composable-support"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -1571,7 +1571,7 @@ dependencies = [
 
 [[package]]
 name = "composable-tests-helpers"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "composable-support",
  "frame-support",
@@ -1587,7 +1587,7 @@ dependencies = [
 
 [[package]]
 name = "composable-traits"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "bitflags",
  "composable-support",
@@ -1758,7 +1758,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-rpc"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "cosmwasm-runtime-api",
  "jsonrpsee 0.14.0",
@@ -1772,7 +1772,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-runtime-api"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "parity-scale-codec",
  "sp-api",
@@ -2043,7 +2043,7 @@ dependencies = [
 
 [[package]]
 name = "crowdloan-rewards-rpc"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "composable-support",
  "crowdloan-rewards-runtime-api",
@@ -2059,7 +2059,7 @@ dependencies = [
 
 [[package]]
 name = "crowdloan-rewards-runtime-api"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "composable-support",
  "parity-scale-codec",
@@ -2858,7 +2858,7 @@ dependencies = [
 
 [[package]]
 name = "dali-runtime"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "assets-runtime-api",
  "common",
@@ -2892,7 +2892,7 @@ dependencies = [
  "pablo-runtime-api",
  "pallet-account-proxy",
  "pallet-asset-tx-payment",
- "pallet-assets 0.0.1",
+ "pallet-assets 1.0.0",
  "pallet-assets-registry",
  "pallet-aura",
  "pallet-authorship",
@@ -2930,7 +2930,7 @@ dependencies = [
  "pallet-treasury",
  "pallet-utility",
  "pallet-vault",
- "pallet-vesting 0.0.1",
+ "pallet-vesting 1.0.0",
  "pallet-xcm",
  "parachain-info",
  "parity-scale-codec",
@@ -2957,7 +2957,7 @@ dependencies = [
 
 [[package]]
 name = "dali-runtime-wasm"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "dali-runtime",
 ]
@@ -5458,7 +5458,7 @@ checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 
 [[package]]
 name = "lending-rpc"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "composable-support",
  "composable-traits",
@@ -5474,7 +5474,7 @@ dependencies = [
 
 [[package]]
 name = "lending-runtime-api"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "composable-support",
  "composable-traits",
@@ -6200,7 +6200,7 @@ dependencies = [
  "orml-tokens",
  "orml-traits",
  "orml-xtokens",
- "pallet-assets 0.0.1",
+ "pallet-assets 1.0.0",
  "pallet-assets-registry",
  "pallet-aura",
  "pallet-authorship",
@@ -7228,7 +7228,7 @@ dependencies = [
 
 [[package]]
 name = "pablo-rpc"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "composable-support",
  "composable-traits",
@@ -7244,7 +7244,7 @@ dependencies = [
 
 [[package]]
 name = "pablo-runtime-api"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "composable-support",
  "composable-traits",
@@ -7255,7 +7255,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-account-proxy"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "composable-traits",
  "frame-benchmarking",
@@ -7274,7 +7274,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-airdrop"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "composable-support",
  "composable-tests-helpers",
@@ -7325,7 +7325,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-assets"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "composable-support",
  "composable-tests-helpers",
@@ -7366,7 +7366,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-assets-registry"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "composable-traits",
  "cumulus-primitives-core",
@@ -7532,7 +7532,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-bonded-finance"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "composable-support",
  "composable-tests-helpers",
@@ -7543,7 +7543,7 @@ dependencies = [
  "orml-tokens",
  "orml-traits",
  "pallet-timestamp",
- "pallet-vesting 0.0.1",
+ "pallet-vesting 1.0.0",
  "parity-scale-codec",
  "proptest",
  "proptest-derive",
@@ -7576,7 +7576,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-call-filter"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "composable-traits",
  "frame-support",
@@ -7650,7 +7650,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-cosmwasm"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "composable-support",
  "composable-traits",
@@ -7667,7 +7667,7 @@ dependencies = [
  "num-traits",
  "orml-tokens",
  "orml-traits",
- "pallet-assets 0.0.1",
+ "pallet-assets 1.0.0",
  "pallet-balances",
  "pallet-governance-registry",
  "pallet-timestamp",
@@ -7691,7 +7691,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-crowdloan-rewards"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "composable-support",
  "composable-tests-helpers",
@@ -7719,7 +7719,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-currency-factory"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "composable-tests-helpers",
  "composable-traits",
@@ -7739,7 +7739,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-democracy"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "composable-traits",
  "frame-benchmarking",
@@ -7778,7 +7778,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-dex-router"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "composable-support",
  "composable-tests-helpers",
@@ -7805,7 +7805,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-dutch-auction"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "composable-support",
  "composable-tests-helpers",
@@ -7820,7 +7820,7 @@ dependencies = [
  "num-traits",
  "orml-tokens",
  "orml-traits",
- "pallet-assets 0.0.1",
+ "pallet-assets 1.0.0",
  "pallet-balances",
  "pallet-currency-factory",
  "pallet-timestamp",
@@ -7895,7 +7895,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-fnft"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "composable-support",
  "composable-tests-helpers",
@@ -7930,7 +7930,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-governance-registry"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "composable-traits",
  "frame-support",
@@ -8024,7 +8024,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-lending"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "composable-support",
  "composable-tests-helpers",
@@ -8040,7 +8040,7 @@ dependencies = [
  "once_cell",
  "orml-tokens",
  "orml-traits",
- "pallet-assets 0.0.1",
+ "pallet-assets 1.0.0",
  "pallet-balances",
  "pallet-currency-factory",
  "pallet-dutch-auction",
@@ -8067,7 +8067,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-liquidations"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "composable-support",
  "composable-tests-helpers",
@@ -8081,7 +8081,7 @@ dependencies = [
  "num-traits",
  "orml-tokens",
  "orml-traits",
- "pallet-assets 0.0.1",
+ "pallet-assets 1.0.0",
  "pallet-balances",
  "pallet-currency-factory",
  "pallet-dutch-auction",
@@ -8151,7 +8151,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-mosaic"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "composable-support",
  "composable-tests-helpers",
@@ -8305,7 +8305,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-pablo"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "composable-maths",
  "composable-support",
@@ -8349,7 +8349,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-privilege"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "bitflags",
  "composable-support",
@@ -8521,7 +8521,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-staking-rewards"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "composable-support",
  "composable-tests-helpers",
@@ -8533,7 +8533,7 @@ dependencies = [
  "orml-tokens",
  "orml-traits",
  "pallet-account-proxy",
- "pallet-assets 0.0.1",
+ "pallet-assets 1.0.0",
  "pallet-balances",
  "pallet-currency-factory",
  "pallet-fnft",
@@ -8692,7 +8692,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-vault"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "bitflags",
  "composable-support",
@@ -8720,7 +8720,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-vesting"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "composable-support",
  "composable-traits",
@@ -9145,7 +9145,7 @@ dependencies = [
 
 [[package]]
 name = "picasso-runtime"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "assets-runtime-api",
  "common",
@@ -9174,7 +9174,7 @@ dependencies = [
  "orml-xcm-support",
  "orml-xtokens",
  "pallet-asset-tx-payment",
- "pallet-assets 0.0.1",
+ "pallet-assets 1.0.0",
  "pallet-assets-registry",
  "pallet-aura",
  "pallet-authorship",
@@ -9201,7 +9201,7 @@ dependencies = [
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
  "pallet-utility",
- "pallet-vesting 0.0.1",
+ "pallet-vesting 1.0.0",
  "pallet-xcm",
  "parachain-info",
  "parity-scale-codec",
@@ -9228,7 +9228,7 @@ dependencies = [
 
 [[package]]
 name = "picasso-runtime-wasm"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "picasso-runtime",
 ]
@@ -10580,7 +10580,7 @@ dependencies = [
 
 [[package]]
 name = "primitives"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "composable-support",
  "composable-traits",

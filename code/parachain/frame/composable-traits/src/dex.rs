@@ -101,6 +101,7 @@ pub trait Amm {
 		pool_id: Self::PoolId,
 		base_asset: AssetAmount<Self::AssetId, Self::Balance>,
 		quote_asset_id: Self::AssetId,
+		calculate_with_fees: bool,
 	) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError>;
 
 	/// Buy given `amount` of given asset from the pool.
@@ -206,12 +207,16 @@ impl FeeConfig {
 		}
 	}
 
+	/// Calculates the fee distribution
+	///
+	/// # Parameters
+	/// * asset_id - The asset ID that the fee will be paid in
+	/// * fee - The total fee taken from the transaction
 	pub fn calculate_fees<AssetId: AssetIdLike, Balance: BalanceLike>(
 		&self,
 		asset_id: AssetId,
-		amount: Balance,
+		fee: Balance,
 	) -> Fee<AssetId, Balance> {
-		let fee: Balance = self.fee_rate.mul_floor(amount);
 		let owner_fee: Balance = self.owner_fee_rate.mul_floor(fee);
 		let protocol_fee: Balance = self.protocol_fee_rate.mul_floor(owner_fee);
 		Fee {
@@ -346,44 +351,43 @@ mod tests {
 
 	#[test]
 	fn calculate_fee() {
-		const UNIT: u128 = 1_000_000_000_000_u128;
-		let amount = 1_000_000_u128 * UNIT;
+		let total_fee: u128 = 10_000_000_000;
 		let f = FeeConfig {
 			fee_rate: Permill::from_percent(1),
 			owner_fee_rate: Permill::from_percent(1),
 			protocol_fee_rate: Permill::from_percent(1),
 		};
 		assert_eq!(
-			f.calculate_fees(1, amount),
+			f.calculate_fees(1, total_fee),
 			Fee {
-				fee: 10000 * UNIT,
-				lp_fee: 9900 * UNIT,
-				owner_fee: 99 * UNIT,
-				protocol_fee: 1 * UNIT,
+				fee: total_fee,
+				lp_fee: 9_900_000_000,
+				owner_fee: 99_000_000,
+				protocol_fee: 1_000_000,
 				asset_id: 1
 			}
 		);
 
 		let f_default = FeeConfig::default_from(Permill::from_perthousand(3));
 		assert_eq!(
-			f_default.calculate_fees(1, amount),
+			f_default.calculate_fees(1, total_fee),
 			Fee {
-				fee: 3000 * UNIT,
-				lp_fee: 2400 * UNIT,
+				fee: 10_000_000_000,
+				lp_fee: 8_000_000_000,
 				owner_fee: 0,
-				protocol_fee: 600 * UNIT,
+				protocol_fee: 2_000_000_000,
 				asset_id: 1
 			}
 		);
 
 		let f2 = f.mul(Permill::from_percent(50));
 		assert_eq!(
-			f2.calculate_fees(1, amount),
+			f2.calculate_fees(1, total_fee),
 			Fee {
-				fee: 5000000000000000,
-				lp_fee: 4950000000000000,
-				owner_fee: 49500000000000,
-				protocol_fee: 500000000000,
+				fee: 10_000_000_000,
+				lp_fee: 9_900_000_000,
+				owner_fee: 99_000_000,
+				protocol_fee: 1_000_000,
 				asset_id: 1
 			}
 		);
