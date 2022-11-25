@@ -165,10 +165,3 @@ started looking into Cardano and its domain. Hussein joined Mlabs, an AI and blo
 and now works as the XCVM lead for Composable. Hussein also loves game hacking and bypassing anti-cheats and still does
 this in his spare time. [Twitter](https://twitter.com/0xc0dejug) | 
 [LinkedIn](https://www.linkedin.com/in/hussein-a-967810a7/details/experience/)
-
-## Pepe Blasco | Solidity Lead
-Pepe has been around the crypto sphere since 2016. Before Composable, Pepe was the CTO and technical architect of a 
-blockchain-based carbon credits marketplace. He is an expert in user interface technology, focusing on increasing 
-customer ease of use, while optimizing costs and utility. At Composable, he is part of the bridging team focusing on
-Solidity development. [LinkedIn](https://www.linkedin.com/in/pepeblasco/) | 
-[Twitter](https://mobile.twitter.com/pepeblasco_tech)
