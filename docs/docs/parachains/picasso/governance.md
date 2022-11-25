@@ -23,17 +23,16 @@ Members of the First Council will consist of:
 - 0xBrainJar, Composable Founder/CEO
 - Jeff Smith, Composable General Counsel (GC)
 - Eoin Whelan, Composable CFO
-- Seun Lanlege, Composable Rust Substrate Lead
-- Marmite, Composable Head of Product Strategy
-- Karel, ComposableCTO
+- Seun Lanlege, Composable Bridging Protocol Lead
+- Marmite, Composable Head of Product 
+- Karel, Composable CTO
 - 0xslenderman, Composable Head of Design
 - Jesse Abramowitz, Entropy Lead Software and Protocol Engineer
 - Will Pankiewicz, Parity Master of Validators
 - Tamara Frankel, D1 Ventures Founding Partner
 - James Wo, Digital Finance Group (DFG) Founder & Chairman
 
-As the Picasso community strengthens, 
-community members will play a bigger role in governance and Picasso will transition into a full democracy. 
+As the Picasso community strengthens, community members will play a bigger role in governance and Picasso will transition into a full democracy. 
 In the meantime, the First Council will safeguard the functioning of the parachain. 
 First Council motions require a strict majority or at least 6 out of the 11 members to be passed.
 
@@ -116,7 +115,7 @@ in the case of the Council, there was a unanimous or simple majority approval of
 ### Community Proposals
 
 Any token holder has the ability to initiate a proposal for a vote from the entire community 
-by locking up a minimum deposit of 100 PICA for a certain period. 
+by locking up a minimum deposit of 100 PICA for a certain period and posting a vote on our governance forum. 
 Other token holders can endorse proposals by locking up a matching deposit. 
 The proposal with the highest amount of bonded PICA will be passed as a referendum in the next voting cycle. 
 There can be a maximum of 100 community proposals in the queue at a given time.
