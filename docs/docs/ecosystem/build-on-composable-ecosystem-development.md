@@ -35,16 +35,10 @@ Projects building on Composable:
 
 ## Composable Research
 
-Composable Labs is always working towards advancing innovative ideas,
+An aspect of Composable Labs is Composable Research, a research arm dedicated to working towards advancing innovative ideas,
 identifying market trends, and discovering untapped potential.
 This is not only the case for in-house projects – Composable Labs works closely with incubated project teams to identify
 problems, shortcomings, and opportunities for new functionality or increased efficiency.
-
-Composable Labs have recently researched and developed Instrumental Finance’s pallet on Picasso.
-This benefits mainnet and EVM ecosystem users looking to farm yield on Picasso and DotSama.
-As Picasso-based pallets start offering liquidity rush events (LREs) and other strategies,
-Ethereum and other EVM communities can participate in these fresh APY opportunities without the hassle of installing a
-Polkadot.js wallet.
 
 Composable Labs works in tandem with our in-house lead cryptography researcher,
 [@Cryptoni0x](https://twitter.com/Cryptoni0x), who plays a crucial role in researching cryptographic primitives and the
