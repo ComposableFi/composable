@@ -76,7 +76,7 @@ Ecosystem Incentives Multisig : 5ytUzQtNj7vibyr79cqUENuDLNUnTsgDAJMDefhBywRTNrDU
 
 Liquidity Programs Multisig : 5ytrBrTBma4kKfmEXGoKGMVjfyTnKgpvXaiwwCbXCbdZQK25
 
-Treasury Pallet for accruing fees: 
+Treasury Pallet for accruing fees: 5wCLknMQkBGmuTQxsxYAyevpa37mMCkFLaqaYNcowsSnR7CJ
 
 ### Protocol Controlled Addresses
 
