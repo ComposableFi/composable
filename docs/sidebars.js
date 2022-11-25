@@ -226,6 +226,32 @@ const sidebars = {
     },
     {
       type: 'category',
+      label: 'User Guides',
+      link: {
+        type: 'generated-index',
+        slug: 'user-guides',
+      },
+      collapsible: false,
+      items: [
+        {
+          type: 'category',
+          label: 'Accounts and Wallets',
+          link: {
+            type: 'generated-index',
+            slug: 'accounts-wallets'
+          },
+          collapsible: true,
+          items: [
+            'user-guides/polkadotjs-extension-create-account',
+            'user-guides/talisman-create-account',
+        ],
+        },
+        'user-guides/claim-rewards-guide',
+        'user-guides/polkassembly-picasso-governance',
+      ]
+    },
+    {
+      type: 'category',
       label: 'Developer Guides',
 
       link: {
