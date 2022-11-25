@@ -38,8 +38,8 @@ which changes dynamically depending on the target load of the network.
 This means as the usage of the chain increases towards maximum capacity, the price of a unit of weight increases as well.
 
 ## Oracle staking
-Apollo is our permissionless, MEV-resistant oracle solution. A
-nyone can run an oracle node on Picasso by providing a PICA stake.
+Apollo is our permissionless, MEV-resistant oracle solution. 
+Anyone can run an oracle node on Picasso by providing a PICA stake.
 
 ## Collator staking
 25% of fees on Picasso is distributed to collators, with the remaining 75% going directly to the community-governed treasury.
