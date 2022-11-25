@@ -32,3 +32,29 @@ Projects building on Composable:
 - [Angular Finance](https://www.angular.finance/)
 
 - [Instrumental Finance](https://www.instrumental.finance/)
+
+## Composable Research
+
+Composable Labs is always working towards advancing innovative ideas,
+identifying market trends, and discovering untapped potential.
+This is not only the case for in-house projects – Composable Labs works closely with incubated project teams to identify
+problems, shortcomings, and opportunities for new functionality or increased efficiency.
+
+Composable Labs have recently researched and developed Instrumental Finance’s pallet on Picasso.
+This benefits mainnet and EVM ecosystem users looking to farm yield on Picasso and DotSama.
+As Picasso-based pallets start offering liquidity rush events (LREs) and other strategies,
+Ethereum and other EVM communities can participate in these fresh APY opportunities without the hassle of installing a
+Polkadot.js wallet.
+
+Composable Labs works in tandem with our in-house lead cryptography researcher,
+[@Cryptoni0x](https://twitter.com/Cryptoni0x), who plays a crucial role in researching cryptographic primitives and the
+technology that surrounds it. Composable Labs are developing several primitives that will serve as fundamental DeFi
+products and services for users on Picasso.
+
+As we work to confront MEV in the DeFi ecosystem and explore opportunities to leverage the idea for the good of
+Composable Finance, we will continue to research and discussions within our team and community.
+[You can check out this post](https://medium.com/@ComposableLabs/addressing-mev-in-composables-cross-layer-solution-b59f91fc46dc)
+by 0xbrainjar stating our team's approach to addressing MEV in the Composable ecosystem.
+
+**Composable Labs will continue to grow its research presence and is always looking for individuals to add to their
+talent pool.**
