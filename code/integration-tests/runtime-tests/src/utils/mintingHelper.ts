@@ -18,7 +18,7 @@ export async function mintAssetsToWallet(
   wallet: KeyringPair,
   sudoKey: KeyringPair,
   assetIDs: number[],
-  amount: bigint | BN = Pica(900000000)
+  amount: bigint | BN = Pica(100_000_000)
 ) {
   const tx = [];
   const balancesBefore = [];
