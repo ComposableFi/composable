@@ -74,9 +74,13 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
 
 /// Ensure that the `sender` is the router gateway contract.
 /// This is used for privileged operations such as [`ExecuteMsg::ExecuteProgram`].
-fn ensure_gateway(deps: &DepsMut, sender: &Addr) -> Result<(), ContractError> {
+fn ensure_self_or_gateway(
+	deps: &DepsMut,
+	self_address: &Addr,
+	sender: &Addr,
+) -> Result<(), ContractError> {
 	let config = CONFIG.load(deps.storage)?;
-	if &config.gateway_address == sender {
+	if &config.gateway_address == sender || self_address == sender {
 		Ok(())
 	} else {
 		Err(ContractError::NotAuthorized)
@@ -144,10 +148,10 @@ fn handle_execute_program(
 	program: DefaultXCVMProgram,
 	funds: Funds<Displayed<u128>>,
 ) -> Result<Response, ContractError> {
-	// Ensure that the sender is the gateway.
+	// Ensure that the sender is the gateway or ourself.
 	// If a user want to directly execute payload, he must send it to it's interpreter after having
 	// added himself as owner.
-	ensure_gateway(&deps, &info.sender)?;
+	ensure_self_or_gateway(&deps, &env.contract.address, &info.sender)?;
 
 	let config = CONFIG.load(deps.storage)?;
 

@@ -19,12 +19,10 @@ use cw_utils::ensure_from_older_version;
 use cw_xcvm_asset_registry::{contract::external_query_lookup_asset, msg::AssetReference};
 use cw_xcvm_utils::DefaultXCVMProgram;
 use num::Zero;
-use proto::Encodable;
 use xcvm_core::{
 	apply_bindings, cosmwasm::*, Amount, BindingValue, BridgeSecurity, Destination, Displayed,
 	Funds, NetworkId, Register,
 };
-use xcvm_proto as proto;
 
 type XCVMInstruction = xcvm_core::Instruction<NetworkId, Vec<u8>, CanonicalAddr, Funds>;
 type XCVMProgram = xcvm_core::Program<VecDeque<XCVMInstruction>>;
@@ -54,10 +52,10 @@ pub fn instantiate(
 	// Save the caller as owner, in most cases, it is the `XCVM router`
 	OWNERS.save(deps.storage, info.sender, &())?;
 
-	Ok(Response::new().add_event(
-		Event::new(XCVM_INTERPRETER_EVENT_PREFIX)
-			.add_attribute(XCVM_INTERPRETER_EVENT_DATA_ORIGIN, cw_xcvm_utils::encode_origin_data(config.user_origin)?.as_str()),
-	))
+	Ok(Response::new().add_event(Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute(
+		XCVM_INTERPRETER_EVENT_DATA_ORIGIN,
+		cw_xcvm_utils::encode_origin_data(config.user_origin)?.as_str(),
+	)))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -68,7 +66,8 @@ pub fn execute(
 	msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
 	// Only owners can execute entrypoints of the interpreter
-	let token = ensure_owner(deps.as_ref(), &env.contract.address, &info.sender)?;
+  deps.api.debug(&format!("The sender is {}", info.sender.as_str()));
+	let token = ensure_owner(deps.as_ref(), &env.contract.address, info.sender.clone())?;
 	match msg {
 		ExecuteMsg::Execute { relayer, program } =>
 			initiate_execution(token, deps, env, relayer, program),
@@ -76,7 +75,7 @@ pub fn execute(
 		// ExecuteStep should be called by interpreter itself
 		ExecuteMsg::ExecuteStep { relayer, program } =>
 			if env.contract.address != info.sender {
-				Err(ContractError::NotAuthorized)
+				Err(ContractError::NotSelf)
 			} else {
 				// Encore self ownership in this token
 				handle_execute_step(token, deps, env, relayer, program)
@@ -93,7 +92,7 @@ pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Result<Response, Con
 	let _ = ensure_from_older_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
 	// Already only callable by the admin of the contract, so no need to `ensure_owner`
-	let token = ensure_owner(deps.as_ref(), &env.contract.address, &env.contract.address)?;
+	let token = ensure_owner(deps.as_ref(), &env.contract.address, env.contract.address.clone())?;
 	let _ = add_owners(token, deps, msg.owners)?;
 	Ok(Response::default())
 }

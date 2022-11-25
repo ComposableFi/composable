@@ -11,9 +11,9 @@ pub struct Authenticated(());
 pub fn ensure_owner(
 	deps: Deps,
 	self_addr: &Addr,
-	owner: &Addr,
+	sender: Addr,
 ) -> Result<Authenticated, ContractError> {
-	if owner == self_addr || OWNERS.has(deps.storage, owner.clone()) {
+	if &sender == self_addr || OWNERS.has(deps.storage, sender) {
 		Ok(Authenticated(()))
 	} else {
 		Err(ContractError::NotAuthorized)
