@@ -76,7 +76,7 @@ export const endpointPresets: EndpointPresets = {
     karura: "wss://karura-rpc-0.aca-api.network",
     kusama: "wss://kusama-rpc.polkadot.io",
     statemine: "wss://statemine-rpc.polkadot.io",
-    subsquid: "",
+    subsquid: "https://stats.composablenodes.tech/grahql",
   },
 };
 
