@@ -1,6 +1,6 @@
 import { ApiPromise } from "@polkadot/api";
 import { APP_NAME } from "../../constants";
-import { subscanExtrinsicLink } from "../../Networks";
+import { subscanAccountLink, subscanExtrinsicLink } from "../../Networks";
 import { useSnackbar } from "notistack";
 import { useCallback } from "react";
 import { Executor, useSigner } from "substrate-react";
@@ -24,26 +24,28 @@ export function useCrowdloanRewardsClaim({
 
   const onClaimReady = useCallback(
     (transactionHash: string) => {
+      if (selectedPicassoAddress)
       enqueueSnackbar("Claim processing...", {
         variant: "info",
         isClosable: true,
-        url: subscanExtrinsicLink("picasso", transactionHash),
+        url: subscanAccountLink("picasso", selectedPicassoAddress),
       });
     },
-    [enqueueSnackbar]
+    [enqueueSnackbar, selectedPicassoAddress]
   );
 
   const onClaimFinalized = useCallback(
     (transactionHash: string) => {
+      if (selectedPicassoAddress)
       enqueueSnackbar("Your claim was successful!", {
         variant: "success",
         isClosable: true,
-        url: subscanExtrinsicLink("picasso", transactionHash),
+        url: subscanAccountLink("picasso", selectedPicassoAddress),
       });
 
       setCrowdloanRewardsState({ claimableAmount: new BigNumber(0) });
     },
-    [enqueueSnackbar]
+    [enqueueSnackbar, selectedPicassoAddress]
   );
 
   const onClaimFail = useCallback(
