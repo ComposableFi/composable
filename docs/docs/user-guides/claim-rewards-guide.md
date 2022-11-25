@@ -37,11 +37,44 @@ If you create/derive more wallets in the future, they will show up here.
 Now that your wallet is connected to Picasso you can claim your crowdloan rewards.
 You can simply replicate the following steps in Talisman, they are virtually the same.
 
-![picasso_overview](./picasso-overview.png)
-
-![confirm_transaction](./confirm-transaction.png)
+![picasso_claim](./claim-rewards.png)
 
 1. Click “Claim Rewards”
+2. On the following Screen click "Claim with Polkadot.js"
+
+## For Stablecoin contributors
+
+1. You will first be required to [create a wallet](https://medium.com/picasso-network/guide-how-to-create-and-connect-a-polkadot-js-and-talisman-wallet-to-picasso-e3c444bb9421) using the Polkadot.js or Talisman extensions.
+2. After your wallet has been created you can sign into your Polkadot wallet by clicking the icon in the top right.
+
+![wallets_button](./wallets-button.png)
+
+3. Connect to the Polkadot network and select the wallet with which you would like to receive your rewards
+
+![network_wallets](./network-wallets.png)
+
+4. After connecting your Polkadot wallet you will be brought to this screen, 
+   where you can connect the Ethereum wallet you contributed stablecoins from:
+
+![connected_wallet](./connected-wallet.png)
+
+5. After connecting both wallets you should now be presented with this icon in the top right of your screen:
+
+![wallets_button](./connected-wallets-button.png)
+
+6. You should now be able to follow the steps listed above to claim your Picasso rewards to your new Polkadot wallet.
+
+## Confirm Your Claim
+
+You can see your rewards that are currently available to claim followed by the already claimed rewards. 
+The unvested amount is the total amount of rewards you are still to receive. 
+It also shows your crowdloan contribution and the given account collecting the reward.
+
+![confirm_claim](./confirm-claim.png)
+
+![sign_transaction](./sign-transaction.png)
+
+1. Click "Claim Rewards"
 2. Confirm the transaction with your password
 3. Wait for your claim to be processed
 
