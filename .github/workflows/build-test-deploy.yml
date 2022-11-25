@@ -919,6 +919,44 @@ jobs:
           cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#gex --no-update-lock-file --show-trace -L
           cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#wasmswap --no-update-lock-file --show-trace -L
 
+  package-xcvm-evm:
+    name: "Package XCVM evm sdk"
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-package-xcvm-evm-${{ github.ref }}
+      cancel-in-progress: true
+    continue-on-error: false
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: "yarn"
+          cache-dependency-path: code/xcvm/evm/yarn.lock
+      - name: Install dependencies
+        working-directory: code/xcvm/evm/
+        run: yarn install --force 
+
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: run tests without gas report
+        working-directory: code/xcvm/evm/
+        run: forge test -vvv
+        env:
+          # make fuzzing semi-deterministic to avoid noisy gas cost estimation
+          # due to non-deterministic fuzzing, but keep it not always deterministic
+          FOUNDRY_FUZZ_SEED: 0x${{ github.event.pull_request.base.sha || github.sha }}
+
+      - name: run tests using hardhat for comparing xcvm-typescript-sdk and xcvm-evm-sdk output
+        working-directory: code/xcvm/evm/
+        run: npm run test-proto
+
+
   package-price-feed:
     needs: common-deps
     runs-on:
