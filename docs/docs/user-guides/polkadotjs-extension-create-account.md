@@ -57,7 +57,7 @@ On the next page, fill in the form as follows:
    to be valid for a specific chain. 
    For more details on how accounts work in Polkadot/Kusama, please read the Polkadot documentation.
 2. Add a display name for the account (e.g., Picasso)
-3. Set a password. You will sign transactions with this password.Please note: 
+3. Set a password. You will sign transactions with this password. Please note: 
    This password does not protect your seed phrase. If someone can get access to your mnemonic seed, 
    they can gain control over your account even if they do not know your password.
 4. Confirm the password

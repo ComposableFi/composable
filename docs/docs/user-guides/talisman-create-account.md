@@ -10,7 +10,7 @@ This guide will show the user how to set up a Talisman account using the browser
 followed by how to connect the account we create to Picasso. 
 It is highly recommended to read and understand the complete instructions before following along.
 
-## Download the Polkadot.js Extension
+## Download the Talisman Extension
 
 Click this link to download the extension for your preferred browser: [https://talisman.xyz/](https://talisman.xyz/).
 

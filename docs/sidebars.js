@@ -245,7 +245,6 @@ const sidebars = {
           items: [
             'user-guides/polkadotjs-extension-create-account',
             'user-guides/talisman-create-account',
-            'user-guides/claim-rewards',
         ],
         },
       ]
