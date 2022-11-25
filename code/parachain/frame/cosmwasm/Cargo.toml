@@ -29,8 +29,8 @@ frame-benchmarking = { default-features = false, git = "https://github.com/parit
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 hex = { version = "0.4", default-features = false, features = ["alloc"] }
-ibc = { git = "https://github.com/ComposableFi/centauri/", rev = "d8fdb31227a221a794f86c5bba4a8127cf8e71d5", default-features = false }
-ibc-primitives = { git = "https://github.com/ComposableFi/centauri/", rev = "d8fdb31227a221a794f86c5bba4a8127cf8e71d5", default-features = false, optional = true }
+ibc = { git = "https://github.com/ComposableFi/centauri/", rev = "c80e2b203ecfb1925b0330aafba0f736c99fa5f6", default-features = false }
+ibc-primitives = { git = "https://github.com/ComposableFi/centauri/", rev = "c80e2b203ecfb1925b0330aafba0f736c99fa5f6", default-features = false, optional = true }
 lazy_static = { version = "1.4.0", optional = true, default-features = false, features = [
   "spin_no_std",
 ] }
@@ -41,7 +41,7 @@ ibc-primitives = { git = "https://github.com/ComposableFi/centauri/", rev = "83c
 log = { version = "0.4.14", default-features = false }
 pallet-assets = { default-features = false, path = "../assets" }
 pallet-balances = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-pallet-ibc = { git = "https://github.com/ComposableFi/centauri/", rev = "d8fdb31227a221a794f86c5bba4a8127cf8e71d5", default-features = false }
+pallet-ibc = { git = "https://github.com/ComposableFi/centauri/", rev = "c80e2b203ecfb1925b0330aafba0f736c99fa5f6", default-features = false }
 parity-wasm = { version = "0.45.0", default-features = false }
 primitives = { path = "../../runtime/primitives", default-features = false }
 rand = { version = "0.8.5", optional = true, default-features = false, features = [
