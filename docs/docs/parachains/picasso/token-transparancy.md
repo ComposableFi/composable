@@ -24,7 +24,7 @@ A subcategory of these incentives are the so-called “Infrastructure Tokens”,
 currently comprising approximately 0.72% of the total token supply of PICA (72,132,700 tokens) 
 and dedicated to rewarding people running infrastructure for the Composable Ecosystem. 
 
-Further, Composabe has allocated 30% of the PICA token supply to participants in our previous [Picasso crowdloan](./crowdloan.md). 
+Further, Composable has allocated 30% of the PICA token supply to participants in our previous [Picasso crowdloan](./crowdloan.md). 
 Our crowdloan and the user support therein were critical in helping Composable secure both its Kusama and Picasso parachain slots. 
 Thus, to reward and thank the devoted users who supported us through this process, 
 we are allocating a portion of the PICA token supply to crowdloan participants. 
