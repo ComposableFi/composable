@@ -87,3 +87,4 @@ ignorePaths:
   - "code/parachain/runtime/composable/src/weights/*"
   - "frontend/apps/picasso/defi/polkadot/pallets/Assets/karura.ts"
   - "docs/docs/faqs/terms-of-use.md"
+  - "code/integration-tests/runtime-tests/test/tests/pablo/testHandlers/constantProduct/*"
