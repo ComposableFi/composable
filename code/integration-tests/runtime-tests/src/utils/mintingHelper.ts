@@ -18,7 +18,7 @@ export async function mintAssetsToWallet(
   wallet: KeyringPair,
   sudoKey: KeyringPair,
   assetIDs: number[],
-  amount: bigint | BN = Pica(900000000)
+  amount: bigint | BN = Pica(100_000_000)
 ) {
   const tx = [];
   const balancesBefore = [];
@@ -43,6 +43,15 @@ export async function mintAssetsToWallet(
  * @param Accepts either string or number
  * @returns valid tokens with 12 decimals omitted
  */
-export function Pica(value: string | number) {
+export function Pica(value: string | number | bigint) {
   return BigInt(value) * BigInt(10 ** 12);
+}
+
+/***
+ * Returns the passed amount as 12 decimal tokens for better readability
+ * @param Accepts either string or number
+ * @returns valid tokens with 12 decimals omitted
+ */
+export function USDT(value: string | number | bigint) {
+  return BigInt(value) * BigInt(10 ** 6);
 }

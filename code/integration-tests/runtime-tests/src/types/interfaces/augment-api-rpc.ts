@@ -6,11 +6,11 @@
 import '@polkadot/rpc-core/types/jsonrpc';
 
 import type { Asset } from '@composable/types/interfaces/assets';
-import type { CustomRpcBalance, CustomRpcCurrencyId } from '@composable/types/interfaces/common';
-import type { PalletPabloPoolId, PalletPabloPriceAggregate } from '@composable/types/interfaces/pablo';
+import type { CustomRpcBalance, CustomRpcCurrencyId, SafeRpcWrapper } from '@composable/types/interfaces/common';
+import type { PalletPabloPoolId, PalletPabloPriceAggregate, RemoveLiquiditySimulationResult } from '@composable/types/interfaces/pablo';
 import type { AugmentedRpc } from '@polkadot/rpc-core/types';
 import type { Metadata, StorageKey } from '@polkadot/types';
-import type { Bytes, HashMap, Json, Null, Option, Text, U256, U64, Vec, bool, f64, u32, u64 } from '@polkadot/types-codec';
+import type { BTreeMap, Bytes, HashMap, Json, Null, Option, Text, U256, U64, Vec, bool, f64, u32, u64 } from '@polkadot/types-codec';
 import type { AnyNumber, Codec } from '@polkadot/types-codec/types';
 import type { ExtrinsicOrHash, ExtrinsicStatus } from '@polkadot/types/interfaces/author';
 import type { EpochAuthorship } from '@polkadot/types/interfaces/babe';
@@ -429,6 +429,14 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        * Get the price(in quote asset) for the given asset pair in the given pool for the given amount
        **/
       pricesFor: AugmentedRpc<(poolId: PalletPabloPoolId | string, baseAssetId: CustomRpcCurrencyId | string, quoteAssetId: CustomRpcCurrencyId | string, amount: CustomRpcBalance | string, at?: Hash | string | Uint8Array) => Observable<PalletPabloPriceAggregate>>;
+      /**
+       * Simulate removal liquidity
+       **/
+      simulateAddLiquidity: AugmentedRpc<(who: SafeRpcWrapper | string, poolId: SafeRpcWrapper | string, amounts: BTreeMap<SafeRpcWrapper, SafeRpcWrapper>) => Observable<SafeRpcWrapper>>;
+      /**
+       * Get the price(in quote asset) for the given asset pair in the given pool for the given amount
+       **/
+      simulateRemoveLiquidity: AugmentedRpc<(who: SafeRpcWrapper | string, poolId: SafeRpcWrapper | string, lpAmount: SafeRpcWrapper | string, minExpectedAmounts: BTreeMap<SafeRpcWrapper, SafeRpcWrapper>) => Observable<RemoveLiquiditySimulationResult>>;
     };
     payment: {
       /**
