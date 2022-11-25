@@ -346,7 +346,8 @@ const sidebars = {
       items:[
         'faqs/disclaimer-disclosure-pica-token',
         'faqs/risk-factors',
-        'faqs/risks-disclosures'
+        'faqs/risks-disclosures',
+        'faqs/terms-of-use',
       ]
     }
   ],
