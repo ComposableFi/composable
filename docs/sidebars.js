@@ -236,7 +236,7 @@ const sidebars = {
       items: [
         {
           type: 'category',
-          label: 'Accounts and Wallet',
+          label: 'Accounts and Wallets',
           link: {
             type: 'generated-index',
             slug: 'accounts-wallets'
