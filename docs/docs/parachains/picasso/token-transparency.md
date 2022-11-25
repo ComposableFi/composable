@@ -76,13 +76,15 @@ Ecosystem Incentives Multisig : 5ytUzQtNj7vibyr79cqUENuDLNUnTsgDAJMDefhBywRTNrDU
 
 Liquidity Programs Multisig : 5ytrBrTBma4kKfmEXGoKGMVjfyTnKgpvXaiwwCbXCbdZQK25
 
-Treasury Pallet for accruing fees: 5wCLknMQkBGmuTQxsxYAyevpa37mMCkFLaqaYNcowsSnR7CJ
+Treasury Pallet for accruing fees: https://polkadot.js.org/apps/#/treasury
 
 ### Protocol Controlled Addresses
 
 #### Crowdloan Pallet Funds
 
-Are located at the crowdloan pallet: 
+Are located at the crowdloan pallet: 5w3oyasYQg6vkbxZKeMG8Dz2evBw1P7Xr7xhVwk4qwwFkm8u
+
+A detailed list of the crowdloan contributions and rewards can be found [on our GitHub](https://raw.githubusercontent.com/ComposableFi/composable/main/frontend/apps/picasso/defi/polkadot/constants/pica-rewards-contributions.json).
 
 #### Token Purchasers' Funds
 
