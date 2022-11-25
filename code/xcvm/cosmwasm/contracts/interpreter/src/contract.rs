@@ -1,6 +1,7 @@
 extern crate alloc;
 
 use crate::{
+	authenticate::{ensure_owner, Authenticated},
 	error::ContractError,
 	msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg},
 	state::{Config, CONFIG, IP_REGISTER, OWNERS, RELAYER_REGISTER, RESULT_REGISTER},
@@ -66,41 +67,33 @@ pub fn execute(
 	msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
 	// Only owners can execute entrypoints of the interpreter
-	ensure_owner(deps.as_ref(), &env.contract.address, &info.sender)?;
+	let token = ensure_owner(deps.as_ref(), &env.contract.address, &info.sender)?;
 	match msg {
-		ExecuteMsg::Execute { relayer, program } => initiate_execution(deps, env, relayer, program),
+		ExecuteMsg::Execute { relayer, program } =>
+			initiate_execution(token, deps, env, relayer, program),
 
 		// ExecuteStep should be called by interpreter itself
 		ExecuteMsg::ExecuteStep { relayer, program } =>
 			if env.contract.address != info.sender {
 				Err(ContractError::NotAuthorized)
 			} else {
-				handle_execute_step(deps, env, relayer, program)
+				handle_execute_step(token, deps, env, relayer, program)
 			},
 
-		ExecuteMsg::AddOwners { owners } => add_owners(deps, owners),
+		ExecuteMsg::AddOwners { owners } => add_owners(token, deps, owners),
 
-		ExecuteMsg::RemoveOwners { owners } => Ok(remove_owners(deps, owners)),
+		ExecuteMsg::RemoveOwners { owners } => Ok(remove_owners(token, deps, owners)),
 	}
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
-	// Already only callable by the admin of the contract, so no need to `ensure_owner`
+pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
 	let _ = ensure_from_older_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-	let _ = add_owners(deps, msg.owners)?;
-	Ok(Response::default())
-}
 
-/// Ensure that the caller is either the current interpreter or listed in the owners of the
-/// interpreter.
-/// Any operation executing against the interpreter must pass this check.
-fn ensure_owner(deps: Deps, self_addr: &Addr, owner: &Addr) -> Result<(), ContractError> {
-	if owner == self_addr || OWNERS.has(deps.storage, owner.clone()) {
-		Ok(())
-	} else {
-		Err(ContractError::NotAuthorized)
-	}
+	// Already only callable by the admin of the contract, so no need to `ensure_owner`
+	let token = ensure_owner(deps.as_ref(), &env.contract.address, &env.contract.address)?;
+	let _ = add_owners(token, deps, msg.owners)?;
+	Ok(Response::default())
 }
 
 /// Initiate an execution by adding a `ExecuteStep` callback. This is used to be able to prepare an
@@ -110,6 +103,7 @@ fn ensure_owner(deps: Deps, self_addr: &Addr, owner: &Addr) -> Result<(), Contra
 /// [`RELAYER_REGISTER`] always contains a value, and the value is equal to the last relayer that
 /// executed a program if any.
 fn initiate_execution(
+	_: Authenticated,
 	deps: DepsMut,
 	env: Env,
 	relayer: Addr,
@@ -133,7 +127,11 @@ fn initiate_execution(
 }
 
 /// Add owners who can execute entrypoints other than `ExecuteStep`
-fn add_owners(deps: DepsMut, owners: Vec<Addr>) -> Result<Response, ContractError> {
+fn add_owners(
+	_: Authenticated,
+	deps: DepsMut,
+	owners: Vec<Addr>,
+) -> Result<Response, ContractError> {
 	let mut event =
 		Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "owners.added");
 	for owner in owners {
@@ -145,7 +143,7 @@ fn add_owners(deps: DepsMut, owners: Vec<Addr>) -> Result<Response, ContractErro
 
 /// Remove a set of owners from the current owners list.
 /// Beware that emptying the set of owners result in a tombstoned interpreter.
-fn remove_owners(deps: DepsMut, owners: Vec<Addr>) -> Response {
+fn remove_owners(_: Authenticated, deps: DepsMut, owners: Vec<Addr>) -> Response {
 	let mut event =
 		Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "owners.removed");
 	for owner in owners {
@@ -163,6 +161,7 @@ fn remove_owners(deps: DepsMut, owners: Vec<Addr>) -> Response {
 /// A final `executed` event is yield whenever a program come to completion (all it's instructions
 /// has been executed).
 pub fn handle_execute_step(
+	_: Authenticated,
 	mut deps: DepsMut,
 	env: Env,
 	relayer: Addr,
@@ -358,6 +357,7 @@ pub fn interpret_spawn(
 		}
 	}
 
+	//
 	// TODO(hussein-aitlahcen): forward back to gateway
 
 	Ok(response.add_event(
