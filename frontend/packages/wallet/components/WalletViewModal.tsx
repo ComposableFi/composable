@@ -190,6 +190,7 @@ export const WalletViewModal: FC<WalletViewProps> = ({
             <PolkadotAccountView
               selectedPolkadotAccount={selectedPolkadotAccount}
               selectedPolkadotWallet={selectedPolkadotWallet}
+              nativeCurrencyIcon={polkadotNetwork?.nativeCurrencyIcon}
               onChangeAccount={onChangePolkadotAccount}
               onDisconnectWallet={onDisconnectDotsamaWallet}
               subscanUrl={
