@@ -103,24 +103,16 @@ export const PolkadotAccountView = ({
             </Box>
             <Box>
               {nativeCurrencyIcon ? (
-                <>
-                  <Image src={nativeCurrencyIcon} height="16px" width="16px" />
-                  <Typography
-                    ml={1}
-                    color={theme.palette.text.secondary}
-                    variant="caption"
-                  >
-                    {trimAddress(selectedPolkadotAccount.address)}
-                  </Typography>
-                </>
-              ) : (
-                <Typography
-                  color={theme.palette.text.secondary}
-                  variant="caption"
-                >
-                  {trimAddress(selectedPolkadotAccount.address)}
-                </Typography>
-              )}
+                <Image src={nativeCurrencyIcon} height="16px" width="16px" />
+              ) : null}
+              <Typography
+                ml={1}
+                color={theme.palette.text.secondary}
+                variant="caption"
+              >
+                {trimAddress(selectedPolkadotAccount.address)}
+              </Typography>
+
               <IconButton
                 onClick={(_evt) => {
                   navigator.clipboard.writeText(
