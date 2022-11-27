@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 /// Security associated with a bridge.
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 #[repr(u8)]
 pub enum BridgeSecurity {
 	Insecure = 0,

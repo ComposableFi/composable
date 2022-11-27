@@ -470,15 +470,8 @@ mod tests {
 	use xcvm_core::{Amount, Asset, BridgeSecurity, Funds, Juno, Picasso, ProgramBuilder, PICA};
 	#[test]
 	fn test() {
-		let program = ProgramBuilder::<Picasso, Vec<u8>, _>::new(vec![])
-			.spawn::<_, Juno, (), _>(
-				vec![],
-				vec![],
-				BridgeSecurity::Deterministic,
-				Funds::from([(PICA::ID, Amount::absolute(1_000_000_000_000u128))]),
-				|child| Ok(child),
-			)
-			.unwrap()
+		let program = ProgramBuilder::<Picasso, Vec<u8>, Funds>::new(vec![])
+			.transfer(xcvm_core::Destination::Relayer, Funds(Default::default()))
 			.build();
 		println!("{}", serde_json_wasm::to_string(&program).unwrap());
 	}

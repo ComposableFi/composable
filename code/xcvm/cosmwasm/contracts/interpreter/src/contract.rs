@@ -219,14 +219,15 @@ pub fn handle_execute_step(
 
 	IP_REGISTER.save(deps.storage, &ip)?;
 
-	Ok(response.add_event(
-		Event::new(XCVM_INTERPRETER_EVENT_PREFIX)
-			.add_attribute("action", "executed")
-			.add_attribute(
-				"program",
-				core::str::from_utf8(&program.tag).map_err(|_| ContractError::InvalidProgramTag)?,
-			),
-	))
+	let mut event = Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "executed");
+	if program.tag.len() >= 3 {
+		event = event.add_attribute(
+			"tag",
+			core::str::from_utf8(&program.tag).map_err(|_| ContractError::InvalidProgramTag)?,
+		);
+	}
+
+	Ok(response.add_event(event))
 }
 
 /// Interpret the `Call` instruction
