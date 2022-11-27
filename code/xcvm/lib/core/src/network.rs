@@ -105,14 +105,14 @@ impl From<Juno> for NetworkId {
 pub struct InvalidNetwork;
 /// Composable Picasso (Kusama parachain)
 pub struct Picasso;
-/// Ethereum mainnet
-pub struct Ethereum;
 /// Juno (Cosmos) mainnet
 pub struct Juno;
+/// Ethereum mainnet
+pub struct Ethereum;
 
 /// List of networks supported by XCVM.
 // /!\ The order matters and must not be changed, adding a network on the right is safe.
-pub type Networks = (InvalidNetwork, (Picasso, (Ethereum, (Juno, ()))));
+pub type Networks = (InvalidNetwork, (Picasso, (Juno, (Ethereum, ()))));
 
 /// Type implement network must be part of [`Networks`], otherwise invalid.
 pub trait Network {
@@ -141,7 +141,7 @@ mod tests {
 	#[test]
 	fn network_ids() {
 		assert_eq!(Picasso::ID, NetworkId(1));
-		assert_eq!(Ethereum::ID, NetworkId(2));
-		assert_eq!(Juno::ID, NetworkId(3));
+		assert_eq!(Juno::ID, NetworkId(2));
+		assert_eq!(Ethereum::ID, NetworkId(3));
 	}
 }
