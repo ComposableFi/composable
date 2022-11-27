@@ -483,7 +483,7 @@ fn handle_self_call_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 fn handle_call_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 	let response = msg.result.into_result().map_err(StdError::generic_err)?;
 	RESULT_REGISTER.save(deps.storage, &Ok(response.clone()))?;
-	Ok(Response::default().add_events(response.events))
+	Ok(Response::default())
 }
 
 #[cfg(test)]
