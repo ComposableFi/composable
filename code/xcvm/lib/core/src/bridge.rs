@@ -17,6 +17,7 @@ pub enum BridgeSecurity {
 	Deterministic = 3,
 }
 
+// Keep the ordering explicit.
 impl PartialOrd for BridgeSecurity {
 	#[inline]
 	fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
@@ -63,16 +64,12 @@ pub enum BridgeProtocol {
 impl BridgeProtocol {
 	/// Ensure that a protocol enforce the minimum requested security.
 	pub fn ensure_security(&self, security: BridgeSecurity) -> Result<(), ()> {
-		let has = match (self, security) {
-			(BridgeProtocol::IBC, _) => true,
-			(BridgeProtocol::XCM, _) => true,
-			(BridgeProtocol::OTP { security: otp_security, .. }, security) =>
-				*otp_security >= security,
-		};
-		if has {
-			Ok(())
-		} else {
-			Err(())
+		match self {
+			BridgeProtocol::IBC => Ok(()),
+			BridgeProtocol::XCM => Ok(()),
+			BridgeProtocol::OTP { security: otp_security, .. } if *otp_security >= security =>
+				Ok(()),
+			_ => Err(()),
 		}
 	}
 }
