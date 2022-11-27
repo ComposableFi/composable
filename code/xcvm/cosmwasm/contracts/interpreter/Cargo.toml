@@ -28,6 +28,7 @@ cw2 = "0.14.0"
 cw20 = "0.14.0"
 cw-xcvm-asset-registry = { path = "../asset-registry", features = ["library"] }
 cw-xcvm-utils = { path = "../utils" }
+cw-xcvm-common = { path = "../common" }
 hex = { version = "0.4", default-features = false, features = [
   "alloc",
   "serde",

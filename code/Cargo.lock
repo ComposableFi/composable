@@ -2965,6 +2965,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "cw-xcvm-common"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-std",
+ "cw-xcvm-utils",
+ "schemars",
+ "serde",
+ "xcvm-core",
+]
+
+[[package]]
 name = "cw-xcvm-gateway"
 version = "0.1.0"
 dependencies = [
@@ -2973,6 +2984,7 @@ dependencies = [
  "cw-storage-plus",
  "cw-utils",
  "cw-xcvm-asset-registry",
+ "cw-xcvm-common",
  "cw-xcvm-interpreter",
  "cw-xcvm-router",
  "cw-xcvm-utils",
@@ -2997,6 +3009,7 @@ dependencies = [
  "cw-storage-plus",
  "cw-utils",
  "cw-xcvm-asset-registry",
+ "cw-xcvm-common",
  "cw-xcvm-utils",
  "cw2",
  "cw20",
@@ -3021,6 +3034,7 @@ dependencies = [
  "cw-storage-plus",
  "cw-utils",
  "cw-xcvm-asset-registry",
+ "cw-xcvm-common",
  "cw-xcvm-interpreter",
  "cw-xcvm-utils",
  "cw2",

@@ -17,6 +17,7 @@ use cw2::set_contract_version;
 use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg};
 use cw_utils::ensure_from_older_version;
 use cw_xcvm_asset_registry::{contract::external_query_lookup_asset, msg::AssetReference};
+use cw_xcvm_common::shared::BridgeMsg;
 use cw_xcvm_utils::DefaultXCVMProgram;
 use num::Zero;
 use xcvm_core::{
@@ -66,7 +67,6 @@ pub fn execute(
 	msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
 	// Only owners can execute entrypoints of the interpreter
-  deps.api.debug(&format!("The sender is {}", info.sender.as_str()));
 	let token = ensure_owner(deps.as_ref(), &env.contract.address, info.sender.clone())?;
 	match msg {
 		ExecuteMsg::Execute { relayer, program } =>
@@ -337,9 +337,6 @@ pub fn interpret_spawn(
 		};
 
 		if !amount.is_zero() {
-			// Send funds to the router
-			// TODO(aeryz): Router should do the IBC transfer so the interpreter should also include
-			// a submessage to the router to trigger this IBC transfer
 			let asset_id: u128 = asset_id.into();
 			let transfer_amount = amount.intercept.0;
 			normalized_funds.0.push((asset_id.into(), transfer_amount.into()));
@@ -358,23 +355,35 @@ pub fn interpret_spawn(
 		}
 	}
 
-	//
-	// TODO(hussein-aitlahcen): forward back to gateway
-
-	Ok(response.add_event(
-		Event::new(XCVM_INTERPRETER_EVENT_PREFIX)
-			.add_attribute("instruction", "spawn")
-			.add_attribute(
-				"origin_network_id",
-				serde_json_wasm::to_string(&user_origin.network_id)
-					.map_err(|_| ContractError::DataSerializationError)?,
-			)
-			.add_attribute(
-				"origin_user_id",
-				serde_json_wasm::to_string(&user_origin.user_id)
-					.map_err(|_| ContractError::DataSerializationError)?,
-			),
-	))
+	Ok(response
+		.add_message(wasm_execute(
+			router_address,
+			&cw_xcvm_common::router::ExecuteMsg::BridgeForward {
+				msg: BridgeMsg {
+					user_origin: user_origin.clone(),
+					network_id: network,
+					security: bridge_security,
+					salt,
+					program,
+					assets: normalized_funds,
+				},
+			},
+			Default::default(),
+		)?)
+		.add_event(
+			Event::new(XCVM_INTERPRETER_EVENT_PREFIX)
+				.add_attribute("instruction", "spawn")
+				.add_attribute(
+					"origin_network_id",
+					serde_json_wasm::to_string(&user_origin.network_id)
+						.map_err(|_| ContractError::DataSerializationError)?,
+				)
+				.add_attribute(
+					"origin_user_id",
+					serde_json_wasm::to_string(&user_origin.user_id)
+						.map_err(|_| ContractError::DataSerializationError)?,
+				),
+		))
 }
 
 pub fn interpret_transfer(

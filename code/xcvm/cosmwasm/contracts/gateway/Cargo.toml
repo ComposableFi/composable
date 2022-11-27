@@ -20,6 +20,7 @@ cw-xcvm-asset-registry = { path = "../asset-registry", features = ["library"] }
 cw-xcvm-interpreter = { path = "../interpreter", features = ["library"] }
 cw-xcvm-router = { path = "../router", features = ["library"] }
 cw-xcvm-utils = { path = "../utils" }
+cw-xcvm-common = { path = "../common" }
 hex = "0.4"
 schemars = "0.8.8"
 serde = { version = "1.0.137", default-features = false, features = ["derive"] }

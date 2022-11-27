@@ -2,7 +2,7 @@ extern crate alloc;
 
 use crate::{
 	error::ContractError,
-	msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg},
+	msg::{InstantiateMsg, MigrateMsg, QueryMsg},
 	state::{Config, Interpreter, CONFIG, INTERPRETERS},
 };
 #[cfg(not(feature = "library"))]
@@ -15,6 +15,7 @@ use cw2::set_contract_version;
 use cw20::{Cw20Contract, Cw20ExecuteMsg};
 use cw_utils::ensure_from_older_version;
 use cw_xcvm_asset_registry::{contract::external_query_lookup_asset, msg::AssetReference};
+use cw_xcvm_common::{router::ExecuteMsg, shared::BridgeMsg};
 use cw_xcvm_interpreter::contract::{
 	XCVM_INTERPRETER_EVENT_DATA_ORIGIN, XCVM_INTERPRETER_EVENT_PREFIX,
 };
@@ -57,12 +58,27 @@ pub fn execute(
 	msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
 	match msg {
-		ExecuteMsg::ExecuteProgram { call_origin, salt, program, funds } =>
-			handle_execute_program(deps, env, info, call_origin, salt, program, funds),
+		ExecuteMsg::ExecuteProgram { salt, program, assets } => {
+			let self_address = env.contract.address;
+			let call_origin = CallOrigin::Local { user: info.sender.clone() };
+			let transfers =
+				transfer_from_user(&deps, self_address.clone(), info.sender, info.funds, &assets)?;
+			Ok(Response::default().add_messages(transfers).add_message(wasm_execute(
+				self_address,
+				&ExecuteMsg::ExecuteProgramPrivileged { call_origin, salt, program, assets },
+				Default::default(),
+			)?))
+		},
 
-		// Only the local user origin is able to change it's interpreter security.
+		ExecuteMsg::ExecuteProgramPrivileged { call_origin, salt, program, assets } => {
+			ensure_self_or_gateway(&deps, &env.contract.address, &info.sender)?;
+			handle_execute_program(deps, env, call_origin, salt, program, assets)
+		},
+
 		ExecuteMsg::SetInterpreterSecurity { user_origin, bridge_security } =>
 			handle_set_interpreter_security(deps, info, user_origin, bridge_security),
+
+		ExecuteMsg::BridgeForward { msg } => handle_bridge_forward(deps, info, msg),
 	}
 }
 
@@ -73,7 +89,7 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
 }
 
 /// Ensure that the `sender` is the router gateway contract.
-/// This is used for privileged operations such as [`ExecuteMsg::ExecuteProgram`].
+/// This is used for privileged operations such as [`ExecuteMsg::ExecuteProgramPrivileged`].
 fn ensure_self_or_gateway(
 	deps: &DepsMut,
 	self_address: &Addr,
@@ -99,6 +115,81 @@ fn ensure_interpreter(
 		Ok(Interpreter { address: Some(address), .. }) if &address == sender => Ok(()),
 		_ => Err(ContractError::NotAuthorized),
 	}
+}
+
+fn transfer_from_user(
+	deps: &DepsMut,
+	self_address: Addr,
+	user: Addr,
+	funds: Vec<Coin>,
+	assets: &Funds<Displayed<u128>>,
+) -> Result<Vec<CosmosMsg>, ContractError> {
+	let config = CONFIG.load(deps.storage)?;
+	let mut transfers = Vec::with_capacity(assets.0.len());
+	for (asset, Displayed(amount)) in assets.0.iter() {
+		let reference =
+			external_query_lookup_asset(deps.querier, config.registry_address.to_string(), *asset)?;
+		match reference {
+			AssetReference::Native { denom } => {
+				let Coin { amount: provided_amount, .. } = funds
+					.iter()
+					.find(|c| c.denom == denom)
+					.ok_or(ContractError::InsufficientFunds)?;
+				if u128::from(*provided_amount) != *amount {
+					return Err(ContractError::InsufficientFunds)?
+				}
+			},
+			AssetReference::Virtual { cw20_address } =>
+				transfers.push(Cw20Contract(cw20_address).call(Cw20ExecuteMsg::TransferFrom {
+					owner: user.to_string(),
+					recipient: self_address.to_string(),
+					amount: amount.clone().into(),
+				})?),
+		}
+	}
+	Ok(transfers)
+}
+
+/// Handle a request to forward a message to the bridge gateway.
+/// The call must originate from an interpreter.
+fn handle_bridge_forward(
+	deps: DepsMut,
+	info: MessageInfo,
+	msg: BridgeMsg,
+) -> Result<Response, ContractError> {
+	ensure_interpreter(&deps, &info.sender, msg.user_origin.clone())?;
+	let config = CONFIG.load(deps.storage)?;
+
+	let transfers = msg
+		.assets
+		.0
+		.iter()
+		.map(|(asset, Displayed(amount))| {
+			let reference = external_query_lookup_asset(
+				deps.querier,
+				config.registry_address.to_string(),
+				*asset,
+			)?;
+			match reference {
+				AssetReference::Native { denom } => Ok(BankMsg::Send {
+					to_address: config.gateway_address.clone().into(),
+					amount: vec![Coin { denom, amount: amount.clone().into() }],
+				}
+				.into()),
+				AssetReference::Virtual { cw20_address } =>
+					Cw20Contract(cw20_address).call(Cw20ExecuteMsg::Transfer {
+						recipient: config.gateway_address.clone().into(),
+						amount: amount.clone().into(),
+					}),
+			}
+		})
+		.collect::<Result<Vec<CosmosMsg>, _>>()?;
+
+	Ok(Response::default().add_messages(transfers).add_message(wasm_execute(
+		config.gateway_address,
+		&cw_xcvm_common::gateway::ExecuteMsg::Bridge { interpreter: info.sender, msg },
+		Default::default(),
+	)?))
 }
 
 /// Handle a request to change an interpreter security level.
@@ -142,21 +233,13 @@ fn handle_set_interpreter_security(
 fn handle_execute_program(
 	deps: DepsMut,
 	env: Env,
-	info: MessageInfo,
 	call_origin: CallOrigin,
 	salt: Vec<u8>,
 	program: DefaultXCVMProgram,
-	funds: Funds<Displayed<u128>>,
+	assets: Funds<Displayed<u128>>,
 ) -> Result<Response, ContractError> {
-	// Ensure that the sender is the gateway or ourself.
-	// If a user want to directly execute payload, he must send it to it's interpreter after having
-	// added himself as owner.
-	ensure_self_or_gateway(&deps, &env.contract.address, &info.sender)?;
-
 	let config = CONFIG.load(deps.storage)?;
-
 	let user = call_origin.user(config.network_id);
-
 	match INTERPRETERS.load(deps.storage, user.clone()) {
 		Ok(Interpreter { address: Some(interpreter_address), security }) => {
 			// Ensure that the current call origin meet the user expected security.
@@ -167,7 +250,7 @@ fn handle_execute_program(
 			// There is already an interpreter instance, so all we do is fund the interpreter, then
 			// add a callback to it
 			let response =
-				send_funds_to_interpreter(deps.as_ref(), interpreter_address.clone(), funds)?;
+				send_funds_to_interpreter(deps.as_ref(), interpreter_address.clone(), assets)?;
 			let wasm_msg = wasm_execute(
 				interpreter_address,
 				&cw_xcvm_interpreter::msg::ExecuteMsg::Execute {
@@ -212,11 +295,11 @@ fn handle_execute_program(
 			// into `Ok` state and properly executes the interpreter
 			let self_call_message: CosmosMsg = wasm_execute(
 				env.contract.address,
-				&ExecuteMsg::ExecuteProgram {
+				&ExecuteMsg::ExecuteProgramPrivileged {
 					call_origin: call_origin.clone(),
 					salt,
 					program,
-					funds,
+					assets,
 				},
 				vec![],
 			)?
@@ -443,7 +526,7 @@ mod tests {
 			Funds::<Displayed<u128>>::from([(Into::<AssetId>::into(PICA), Displayed(1000_u128))]);
 
 		let relayer = Addr::unchecked("13245");
-		let run_msg = ExecuteMsg::ExecuteProgram {
+		let run_msg = ExecuteMsg::ExecuteProgramPrivileged {
 			call_origin: CallOrigin::Remote {
 				protocol: BridgeProtocol::IBC,
 				relayer: relayer.as_bytes().to_vec(),
@@ -532,7 +615,7 @@ mod tests {
 			(Into::<AssetId>::into(ETH), Displayed(2000_u128)),
 		]);
 
-		let run_msg = ExecuteMsg::ExecuteProgram {
+		let run_msg = ExecuteMsg::ExecuteProgramPrivileged {
 			call_origin: CallOrigin::Remote {
 				protocol: BridgeProtocol::XCM,
 				relayer: relayer.as_bytes().to_vec(),

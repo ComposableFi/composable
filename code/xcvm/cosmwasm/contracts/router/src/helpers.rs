@@ -1,9 +1,7 @@
+use cosmwasm_std::{to_binary, Addr, CosmosMsg, StdResult, WasmMsg};
+use cw_xcvm_common::router::ExecuteMsg;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-
-use cosmwasm_std::{to_binary, Addr, CosmosMsg, StdResult, WasmMsg};
-
-use crate::msg::ExecuteMsg;
 
 /// AssetRegistryContract is a wrapper around Addr that provides helpers
 /// for working with this as a library.

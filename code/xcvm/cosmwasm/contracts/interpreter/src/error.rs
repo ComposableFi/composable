@@ -44,7 +44,7 @@ pub enum ContractError {
 	NotAuthorized,
 
 	#[error("Only the contract is authorized for this action")]
-  NotSelf,
+	NotSelf,
 
 	#[error("Instruction {0} is not supported")]
 	InstructionNotSupported(String),

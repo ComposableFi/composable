@@ -1,9 +1,9 @@
 extern crate alloc;
 
 use crate::{
-	common::ensure_admin,
+	common::{ensure_admin, ensure_router},
 	error::ContractError,
-	msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg},
+	msg::{InstantiateMsg, MigrateMsg, QueryMsg},
 	state::{
 		ChannelInfo, Config, CONFIG, IBC_CHANNEL_INFO, IBC_CHANNEL_NETWORK, IBC_NETWORK_CHANNEL,
 		ROUTER,
@@ -12,7 +12,7 @@ use crate::{
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-	wasm_execute, wasm_instantiate, Binary, CosmosMsg, Deps, DepsMut, Env, Event,
+	wasm_execute, wasm_instantiate, Addr, Binary, CosmosMsg, Deps, DepsMut, Env, Event,
 	Ibc3ChannelOpenResponse, IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg,
 	IbcChannelOpenMsg, IbcChannelOpenResponse, IbcMsg, IbcOrder, IbcPacketAckMsg,
 	IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, IbcTimeout, IbcTimeoutBlock,
@@ -22,6 +22,7 @@ use cw2::set_contract_version;
 use cw20::Cw20ExecuteMsg;
 use cw_utils::ensure_from_older_version;
 use cw_xcvm_asset_registry::{contract::external_query_lookup_asset, msg::AssetReference};
+use cw_xcvm_common::{gateway::ExecuteMsg, shared::BridgeMsg};
 use cw_xcvm_utils::{DefaultXCVMPacket, DefaultXCVMProgram};
 use xcvm_core::{
 	BridgeProtocol, BridgeSecurity, CallOrigin, Displayed, Funds, NetworkId, UserOrigin, XCVMAck,
@@ -88,8 +89,22 @@ pub fn execute(
 					.add_attribute("channel_id", channel_id),
 			))
 		},
-		ExecuteMsg::Bridge { network_id, security, salt, program, assets } =>
-			handle_bridge(deps, env, info, network_id, security, salt, program, assets),
+
+		ExecuteMsg::Bridge {
+			interpreter,
+			msg: BridgeMsg { user_origin, network_id, security, salt, program, assets },
+		} => handle_bridge(
+			deps,
+			info,
+			interpreter,
+			user_origin,
+			network_id,
+			security,
+			salt,
+			program,
+			assets,
+		),
+
 		ExecuteMsg::Batch { msgs } =>
 			if info.sender != env.contract.address {
 				Err(ContractError::NotAuthorized)
@@ -207,7 +222,7 @@ pub fn ibc_packet_receive(
 		msgs.push(
 			wasm_execute(
 				router_address,
-				&cw_xcvm_router::msg::ExecuteMsg::ExecuteProgram {
+				&cw_xcvm_common::router::ExecuteMsg::ExecuteProgramPrivileged {
 					call_origin: CallOrigin::Remote {
 						protocol: BridgeProtocol::IBC,
 						relayer: msg.relayer,
@@ -215,7 +230,7 @@ pub fn ibc_packet_receive(
 					},
 					salt: packet.salt,
 					program: packet.program,
-					funds: packet.assets,
+					assets: packet.assets,
 				},
 				Default::default(),
 			)?
@@ -237,7 +252,7 @@ pub fn ibc_packet_receive(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn ibc_packet_ack(
 	deps: DepsMut,
-	env: Env,
+	_env: Env,
 	msg: IbcPacketAckMsg,
 ) -> Result<IbcBasicResponse, ContractError> {
 	let ack = XCVMAck::try_from(msg.acknowledgement.data.as_slice())
@@ -248,7 +263,7 @@ pub fn ibc_packet_ack(
 	let messages = match ack {
 		XCVMAck::OK => {
 			// We got the ACK
-			burn_escrowed_assets(deps, env, registry_address.as_str(), packet.assets)
+			burn_escrowed_assets(deps, registry_address.as_str(), packet.assets)
 		},
 		XCVMAck::KO => {
 			// On failure, return the funds
@@ -324,7 +339,6 @@ fn mint_counterparty_assets(
 
 fn burn_escrowed_assets(
 	deps: DepsMut,
-	env: Env,
 	registry_address: &str,
 	assets: Funds<Displayed<u128>>,
 ) -> Result<Vec<CosmosMsg>, ContractError> {
@@ -339,10 +353,7 @@ fn burn_escrowed_assets(
 					// Burn from the current contract.
 					Ok(wasm_execute(
 						cw20_address.to_string(),
-						&Cw20ExecuteMsg::BurnFrom {
-							owner: env.contract.address.to_string(),
-							amount: amount.into(),
-						},
+						&Cw20ExecuteMsg::Burn { amount: amount.into() },
 						Default::default(),
 					)?
 					.into())
@@ -382,67 +393,25 @@ fn unescrow_assets(
 		.collect::<Result<Vec<_>, _>>()
 }
 
-fn escrow_assets(
-	deps: &DepsMut,
-	env: Env,
-	sender: String,
-	registry_address: &str,
-	assets: Funds<Displayed<u128>>,
-) -> Result<Vec<CosmosMsg>, ContractError> {
-	assets
-		.into_iter()
-		.map(|(asset_id, Displayed(amount))| {
-			let reference =
-				external_query_lookup_asset(deps.querier, registry_address.to_string(), asset_id)?;
-			match &reference {
-				AssetReference::Native { .. } => Err(ContractError::UnsupportedAsset),
-				AssetReference::Virtual { cw20_address } => {
-					// Transfer from the sender to the gateway
-					Ok(wasm_execute(
-						cw20_address.to_string(),
-						&Cw20ExecuteMsg::TransferFrom {
-							owner: sender.clone(),
-							recipient: env.contract.address.to_string(),
-							amount: amount.into(),
-						},
-						Default::default(),
-					)?
-					.into())
-				},
-			}
-		})
-		.collect::<Result<Vec<_>, _>>()
-}
-
 pub fn handle_bridge(
 	deps: DepsMut,
-	env: Env,
 	info: MessageInfo,
+	interpreter: Addr,
+	user_origin: UserOrigin,
 	network_id: NetworkId,
 	security: BridgeSecurity,
 	salt: Vec<u8>,
 	program: DefaultXCVMProgram,
 	assets: Funds<Displayed<u128>>,
 ) -> Result<Response, ContractError> {
-	let Config { registry_address, .. } = CONFIG.load(deps.storage)?;
+	ensure_router(deps.as_ref(), info.sender.as_ref())?;
 	match security {
 		// Only allow deterministic over IBC here
 		BridgeSecurity::Deterministic => {
-			let transfers = escrow_assets(
-				&deps,
-				env,
-				info.sender.to_string(),
-				registry_address.as_str(),
-				assets.clone(),
-			)?;
 			let channel_id = IBC_NETWORK_CHANNEL.load(deps.storage, network_id)?;
 			let packet = DefaultXCVMPacket {
-				interpreter: info.sender.as_bytes().to_vec().into(),
-				// Settle on whether we forward the origin or not
-				user_origin: UserOrigin {
-					network_id,
-					user_id: info.sender.as_bytes().to_vec().into(),
-				},
+				interpreter: interpreter.as_bytes().to_vec(),
+				user_origin,
 				salt,
 				program,
 				assets,
@@ -464,7 +433,6 @@ pub fn handle_bridge(
 								.map_err(|_| ContractError::FailedToSerialize)?,
 						),
 				)
-				.add_messages(transfers)
 				.add_message(IbcMsg::SendPacket {
 					channel_id,
 					data: Binary::from(packet.encode()),
@@ -499,30 +467,19 @@ fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> Result<Response, Contr
 
 #[cfg(test)]
 mod tests {
-	use cw_xcvm_utils::DefaultXCVMProgram;
-	use xcvm_core::{BridgeSecurity, Funds, Juno, Picasso, ProgramBuilder};
-
-	use crate::msg::ExecuteMsg;
-
+	use xcvm_core::{Amount, Asset, BridgeSecurity, Funds, Juno, Picasso, ProgramBuilder, PICA};
 	#[test]
 	fn test() {
-		let program = ProgramBuilder::<Picasso, _, _>::new(vec![])
+		let program = ProgramBuilder::<Picasso, Vec<u8>, _>::new(vec![])
 			.spawn::<_, Juno, (), _>(
 				vec![],
 				vec![],
 				BridgeSecurity::Deterministic,
-				Funds::empty(),
+				Funds::from([(PICA::ID, Amount::absolute(1_000_000_000_000u128))]),
 				|child| Ok(child),
 			)
 			.unwrap()
 			.build();
-		let msg = ExecuteMsg::Bridge {
-			network_id: 0.into(),
-			security: BridgeSecurity::Deterministic,
-			salt: vec![],
-			program,
-			assets: Funds::empty(),
-		};
-		println!("{}", serde_json_wasm::to_string(&msg).unwrap());
+		println!("{}", serde_json_wasm::to_string(&program).unwrap());
 	}
 }
