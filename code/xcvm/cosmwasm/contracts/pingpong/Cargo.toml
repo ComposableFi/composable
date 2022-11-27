@@ -1,0 +1,39 @@
+[package]
+authors = ["Composable Developers"]
+description = "XCVM Ping Pong"
+edition = "2021"
+license = "Apache-2.0"
+name = "cw-xcvm-pingpong"
+repository = "https://github.com/ComposableFi/composable"
+version = "0.1.0"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+# use library feature to disable all instantiate/execute/query exports
+library = []
+
+[dependencies]
+cosmwasm-std = "1.0.0"
+cw-storage-plus = "0.14.0"
+cw-utils = "0.14.0"
+cw2 = "0.14.0"
+cw20 = "0.14.0"
+cw-xcvm-utils = { path = "../utils" }
+cw-xcvm-common = { path = "../common" }
+hex = { version = "0.4", default-features = false, features = [
+  "alloc",
+  "serde",
+] }
+num = "0.4"
+prost = { version = "0.11", default-features = false, features = [
+  "prost-derive",
+] }
+schemars = "0.8.8"
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+serde-json-wasm = { git = "https://github.com/hussein-aitlahcen/serde-json-wasm", rev = "1608a13d2a2ba90605d9626a51ff6667aca5a2d6" }
+serde_json = "1"
+thiserror = { version = "1.0.31" }
+xcvm-core = { path = "../../../lib/core", features = ["cosmwasm", "std"] }
+xcvm-proto = { path = "../../../lib/proto" }
