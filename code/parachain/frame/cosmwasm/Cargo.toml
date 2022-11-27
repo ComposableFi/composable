@@ -35,8 +35,6 @@ lazy_static = { version = "1.4.0", optional = true, default-features = false, fe
   "spin_no_std",
 ] }
 libsecp256k1 = { version = "0.7.0", default-features = false }
-ibc = { git = "https://github.com/ComposableFi/centauri/", rev = "83cdbd978ab31dd5df1b7c2eff119dc43ef62148", default-features = false}
-ibc-primitives = { git = "https://github.com/ComposableFi/centauri/", rev = "83cdbd978ab31dd5df1b7c2eff119dc43ef62148", default-features = false, optional = true}
 
 log = { version = "0.4.14", default-features = false }
 pallet-assets = { default-features = false, path = "../assets" }
