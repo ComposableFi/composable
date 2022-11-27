@@ -26,8 +26,9 @@ pub type Moment = composable_traits::time::Timestamp;
 pub const BTC: CurrencyId = currency::BTC::ID;
 pub const USDT: CurrencyId = currency::USDT::ID;
 pub const USDC: CurrencyId = 4;
-pub const TWAP_INTERVAL: Moment = 10;
-pub const MILLISECS_PER_BLOCK: u64 = 12000;
+pub const TWAP_INTERVAL_BLOCKS: Moment = 10;
+// TODO(benluelo): Inline this
+pub const MILLISECS_PER_BLOCK: u64 = composable_tests_helpers::test::block::MILLISECS_PER_BLOCK;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -134,7 +135,7 @@ parameter_types! {
 	pub MaxSaleDuration: BlockNumber = 30 * 24 * 3600 / 12;
 	pub MaxInitialWeight: Permill = Permill::from_percent(95);
 	pub MinFinalWeight: Permill = Permill::from_percent(5);
-	pub const TWAPInterval: Moment = MILLISECS_PER_BLOCK * TWAP_INTERVAL;
+	pub const TWAPInterval: Moment = MILLISECS_PER_BLOCK * TWAP_INTERVAL_BLOCKS;
 }
 
 parameter_types! {

@@ -24,15 +24,12 @@ use composable_tests_helpers::{
 use composable_traits::dex::{Amm, AssetAmount, BasicPoolInfo, FeeConfig};
 use frame_support::{
 	assert_noop, assert_ok,
-	traits::{
-		fungibles::{Inspect, Mutate},
-		Hooks,
-	},
+	traits::fungibles::{Inspect, Mutate},
 };
 use proptest::prelude::*;
 use sp_runtime::{
 	traits::{ConstU32, IntegerSquareRoot},
-	BoundedBTreeMap, DispatchError, Perbill, Permill,
+	BoundedBTreeMap, DispatchError, Perbill, Permill, TokenError,
 };
 use sp_std::collections::btree_map::BTreeMap;
 
@@ -44,6 +41,7 @@ fn create_pool(
 	lp_fee: Permill,
 	protocol_fee: Permill,
 ) -> PoolId {
+	// TODO(benluelo): why is this set here
 	System::set_block_number(1);
 	let asset_weights = dual_asset_pool_weights(base_asset, Permill::from_percent(50), quote_asset);
 	let actual_pool_id = DACP::<Test>::do_create_pool(
@@ -406,20 +404,91 @@ pub fn lp_token_of_pool(pool_id: u128) -> u128 {
 #[test]
 fn remove_lp_failure() {
 	new_test_ext().execute_with(|| {
+		next_block::<Pablo, Test>();
+
 		let pool_init_config = valid_pool_init_config(
 			&ALICE,
-			BTC,
+			currency::BTC::ID,
 			Permill::from_percent(50_u32),
-			USDT,
+			currency::USDT::ID,
 			Permill::zero(),
 		);
-		let unit = 1_000_000_000_000_u128;
-		let initial_btc = 1_00_u128 * unit;
-		let btc_price = 45_000_u128;
-		let initial_usdt = initial_btc * btc_price;
-		let bob_btc = 10 * unit;
-		let bob_usdt = bob_btc * btc_price;
-		common_remove_lp_failure(pool_init_config, initial_btc, initial_usdt, bob_btc, bob_usdt);
+
+		let first_asset = currency::BTC::ID;
+		let second_asset = currency::USDT::ID;
+
+		let init_first_asset_amount = currency::BTC::units(100);
+		let init_second_asset_amount = currency::USDT::units(100);
+		let first_asset_amount = currency::BTC::units(10);
+		let second_asset_amount = currency::USDT::units(10);
+
+		let pool_id = create_pool_from_config(pool_init_config);
+
+		// Mint the tokens
+		assert_ok!(Tokens::mint_into(first_asset, &ALICE, init_first_asset_amount));
+		assert_ok!(Tokens::mint_into(second_asset, &ALICE, init_second_asset_amount));
+
+		let lp_token = lp_token_of_pool(pool_id);
+
+		// Add the liquidity
+		assert_ok!(Pablo::add_liquidity(
+			Origin::signed(ALICE),
+			pool_id,
+			BTreeMap::from([
+				(first_asset, init_first_asset_amount),
+				(second_asset, init_second_asset_amount)
+			]),
+			0, // minimum lp of zero is fine
+			false
+		));
+
+		// Mint the tokens
+		assert_ok!(Tokens::mint_into(first_asset, &BOB, first_asset_amount));
+		assert_ok!(Tokens::mint_into(second_asset, &BOB, second_asset_amount));
+
+		let bob_lp_before_adding_liquidity = Tokens::balance(lp_token, &BOB);
+		assert_eq!(bob_lp_before_adding_liquidity, 0_u128);
+
+		// Add the liquidity
+		assert_ok!(Pablo::add_liquidity(
+			Origin::signed(BOB),
+			pool_id,
+			BTreeMap::from([
+				(first_asset, first_asset_amount),
+				(second_asset, second_asset_amount)
+			]),
+			0,
+			false
+		));
+
+		let bob_lp_after_adding_liquidity = Tokens::balance(lp_token, &BOB);
+
+		dbg!(bob_lp_after_adding_liquidity);
+
+		// error as trying to redeem more tokens than lp
+		assert_noop!(
+			Pablo::remove_liquidity(
+				Origin::signed(BOB),
+				pool_id,
+				bob_lp_after_adding_liquidity + 1,
+				BTreeMap::from([(first_asset, 0), (second_asset, 0)])
+			),
+			TokenError::NoFunds
+		);
+
+		// error as expected values are more than actual redeemed values.
+		assert_noop!(
+			Pablo::remove_liquidity(
+				Origin::signed(BOB),
+				pool_id,
+				bob_lp_after_adding_liquidity,
+				BTreeMap::from([
+					(first_asset, first_asset_amount + 1000),
+					(second_asset, second_asset_amount + 1000)
+				])
+			),
+			crate::Error::<Test>::CannotRespectMinimumRequested
+		);
 	});
 }
 
@@ -847,24 +916,9 @@ proptest! {
 mod twap {
 	use super::*;
 	use crate::types::TimeWeightedAveragePrice;
+	use composable_tests_helpers::test::block::process_and_progress_blocks;
 	use composable_traits::defi::Rate;
 	use sp_runtime::traits::One;
-
-	fn run_to_block(n: BlockNumber) {
-		Pablo::on_finalize(System::block_number());
-		for b in (System::block_number() + 1)..=n {
-			next_block(b);
-			if b != n {
-				Pablo::on_finalize(System::block_number());
-			}
-		}
-	}
-
-	fn next_block(n: u64) {
-		Timestamp::set_timestamp(MILLISECS_PER_BLOCK * n);
-		System::set_block_number(n);
-		Pablo::on_initialize(n);
-	}
 
 	#[test]
 	fn twap_asset_prices_change_after_twap_interval() {
@@ -878,7 +932,7 @@ mod twap {
 			System::set_block_number(0);
 			assert_eq!(Pablo::twap(pool_id), None);
 			assert_ok!(Pablo::enable_twap(Origin::root(), pool_id));
-			run_to_block(1);
+			process_and_progress_blocks::<Pablo, Test>(1);
 
 			assert_eq!(
 				Pablo::twap(pool_id),
@@ -892,7 +946,7 @@ mod twap {
 			);
 
 			// TWAP get updated from on_initialize()
-			run_to_block(TWAP_INTERVAL + 1);
+			process_and_progress_blocks::<Pablo, Test>(TWAP_INTERVAL_BLOCKS.try_into().unwrap());
 			// execute a swap to invoke update_twap() however it will only update price_cumulative
 			// and not twap as elapsed time is < TWAPInterval
 			let usdt_value = unit;
@@ -907,25 +961,30 @@ mod twap {
 
 			let price_cumulative =
 				Pablo::price_cumulative(pool_id).expect("price_cumulative not found");
-			assert_eq!(price_cumulative.timestamp, (TWAP_INTERVAL + 1) * MILLISECS_PER_BLOCK);
-			assert_eq!(price_cumulative.base_price_cumulative, 131764);
-			assert_eq!(price_cumulative.quote_price_cumulative, 132242);
+			assert_eq!(
+				price_cumulative.timestamp,
+				(TWAP_INTERVAL_BLOCKS + 1) * MILLISECS_PER_BLOCK
+			);
+			// was previously 131764
+			assert_eq!(price_cumulative.base_price_cumulative, 66121);
+			// was previously 132242
+			assert_eq!(price_cumulative.quote_price_cumulative, 65882);
 			// here in on_initialize() TWAP does not get updated as elapsed < TWAPInterval
 			// and as TWAP does not get updated, price_cumulative will also not be updated.
-			run_to_block(TWAP_INTERVAL + 2);
-			let price_cumulative_ =
+			process_and_progress_blocks::<Pablo, Test>(TWAP_INTERVAL_BLOCKS.try_into().unwrap());
+			let price_cumulative_new =
 				Pablo::price_cumulative(pool_id).expect("price_cumulative not found");
-			assert_eq!(price_cumulative.timestamp, price_cumulative_.timestamp);
+			assert_eq!(price_cumulative.timestamp, price_cumulative_new.timestamp);
 			assert_eq!(
 				price_cumulative.base_price_cumulative,
-				price_cumulative_.base_price_cumulative
+				price_cumulative_new.base_price_cumulative
 			);
 			assert_eq!(
 				price_cumulative.quote_price_cumulative,
-				price_cumulative_.quote_price_cumulative
+				price_cumulative_new.quote_price_cumulative
 			);
 
-			let elapsed = TWAP_INTERVAL * MILLISECS_PER_BLOCK;
+			let elapsed = TWAP_INTERVAL_BLOCKS * MILLISECS_PER_BLOCK;
 			let twap = Pablo::twap(pool_id).expect("twap not found");
 			assert_eq!(twap.timestamp, elapsed);
 			assert_eq!(twap.base_price_cumulative, 120001);
@@ -963,7 +1022,7 @@ mod twap {
 			System::set_block_number(0);
 			assert_eq!(Pablo::twap(pool_identifier), None);
 			assert_ok!(Pablo::enable_twap(Origin::root(), pool_identifier));
-			run_to_block(1);
+			process_and_progress_blocks::<Pablo, Test>(1);
 
 			assert_eq!(
 				Pablo::twap(pool_identifier),
@@ -976,7 +1035,7 @@ mod twap {
 				})
 			);
 			let run_to_block_and_swap = |block_number: BlockNumber| {
-				run_to_block(block_number);
+				process_and_progress_blocks::<Pablo, Test>(block_number.try_into().unwrap());
 				// execute a swap to invoke update_twap() on given block_number
 				let usdt_value = unit;
 				assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_value));
@@ -1004,7 +1063,7 @@ mod twap {
 			assert_eq!(price_cumulative.quote_price_cumulative, 98660);
 			update_min_max_price();
 
-			run_to_block_and_swap(TWAP_INTERVAL + 1);
+			run_to_block_and_swap(TWAP_INTERVAL_BLOCKS + 1);
 			assert_has_event::<Test, _>(|e| {
 				matches!(e.event,
 				mock::Event::Pablo(crate::Event::TwapUpdated { pool_id, ..})
@@ -1013,11 +1072,14 @@ mod twap {
 			});
 			let price_cumulative =
 				Pablo::price_cumulative(pool_identifier).expect("price_cumulative not found");
-			assert_eq!(price_cumulative.timestamp, (TWAP_INTERVAL + 1) * MILLISECS_PER_BLOCK);
+			assert_eq!(
+				price_cumulative.timestamp,
+				(TWAP_INTERVAL_BLOCKS + 1) * MILLISECS_PER_BLOCK
+			);
 			assert_eq!(price_cumulative.base_price_cumulative, 127799);
 			assert_eq!(price_cumulative.quote_price_cumulative, 136359);
 			update_min_max_price();
-			let elapsed = (TWAP_INTERVAL) * MILLISECS_PER_BLOCK;
+			let elapsed = (TWAP_INTERVAL_BLOCKS) * MILLISECS_PER_BLOCK;
 			let twap = Pablo::twap(pool_identifier).expect("twap not found");
 			assert_eq!(twap.timestamp, elapsed);
 			assert!(twap.base_twap > min_base_price);
