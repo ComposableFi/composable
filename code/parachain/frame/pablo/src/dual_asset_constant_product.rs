@@ -166,10 +166,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		let amm_pair = compute_out_given_in_new::<_>(*w_i, *w_o, *b_i, *b_o, a_sent, fee)?;
 
 		let a_out = AssetAmount::new(out_asset_id, T::Convert::convert(amm_pair.value));
-		let a_sent = AssetAmount::new(
-			in_asset.asset_id,
-			in_asset.amount.safe_sub(&T::Convert::convert(amm_pair.fee))?,
-		);
+		let a_sent = AssetAmount::new(in_asset.asset_id, in_asset.amount);
 		let fee = pool
 			.fee_config
 			.calculate_fees(in_asset.asset_id, T::Convert::convert(amm_pair.fee));

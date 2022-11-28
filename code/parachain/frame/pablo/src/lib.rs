@@ -635,7 +635,7 @@ pub mod pallet {
 			if !fees.owner_fee.is_zero() {
 				T::Assets::transfer(fees.asset_id, who, owner, fees.owner_fee, false)?;
 			}
-			// No protocol fees for relase 2
+			// TODO: Enable fee disbursal for release 2
 			// if !fees.protocol_fee.is_zero() {
 			// 	T::ProtocolStaking::transfer_reward(
 			// 		who,
@@ -953,7 +953,7 @@ pub mod pallet {
 		) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
-			let (amount_out, amount_in, fee, owner) = match pool {
+			let (amount_out, amount_in, fee, _owner) = match pool {
 				PoolConfiguration::DualAssetConstantProduct(info) => {
 					let (amount_out, amount_in, fee) =
 						DualAssetConstantProduct::<T>::get_exchange_value(
@@ -973,9 +973,9 @@ pub mod pallet {
 						Error::<T>::NotEnoughLiquidity
 					);
 
-					// Transfer `in_asset_amount - fee_amount` to pool
+					// Transfer the in asset amount to the pool
 					T::Assets::transfer(
-						in_asset.asset_id,
+						amount_in.asset_id,
 						who,
 						&pool_account,
 						amount_in.amount,
@@ -993,7 +993,6 @@ pub mod pallet {
 					(amount_out, amount_in, fee, info.owner)
 				},
 			};
-			Self::disburse_fees(who, &pool_id, &owner, &fee)?;
 			Self::update_twap(pool_id)?;
 			Self::deposit_event(Event::<T>::Swapped {
 				pool_id,
@@ -1022,7 +1021,7 @@ pub mod pallet {
 		) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
-			let (amount_sent, owner, fees) = match pool {
+			let (amount_sent, _owner, fees) = match pool {
 				PoolConfiguration::DualAssetConstantProduct(info) => {
 					// NOTE: lp_fees includes owner_fees.
 					let (amount_out, amount_sent, fees) = DualAssetConstantProduct::<T>::do_buy(
@@ -1050,7 +1049,6 @@ pub mod pallet {
 					(amount_sent, info.owner, fees)
 				},
 			};
-			Self::disburse_fees(who, &pool_id, &owner, &fees)?;
 			Self::update_twap(pool_id)?;
 			// TODO (vim): Emit a Buy event
 			Self::deposit_event(Event::<T>::Swapped {
