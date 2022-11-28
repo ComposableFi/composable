@@ -663,7 +663,7 @@ impl InstanceFilter<Call> for ProxyType {
 			ProxyType::Governance => matches!(
 				c,
 				Call::Democracy(..) |
-					Call::Council(..) | Call::TechnicalCollective(..) |
+					Call::Council(..) | Call::TechnicalCommittee(..) |
 					Call::Treasury(..) | Call::Utility(..)
 			),
 			ProxyType::CancelProxy => {
@@ -1203,8 +1203,8 @@ construct_runtime!(
 		CouncilMembership: membership::<Instance1> = 31,
 		Treasury: treasury::<Instance1> = 32,
 		Democracy: democracy::<Instance1> = 33,
-		TechnicalCollective: collective::<Instance2> = 70,
-		TechnicalMembership: membership::<Instance2> = 71,
+		TechnicalCommittee: collective::<Instance2> = 70,
+		TechnicalCommitteeMembership: membership::<Instance2> = 71,
 
 
 		// helpers/utilities
