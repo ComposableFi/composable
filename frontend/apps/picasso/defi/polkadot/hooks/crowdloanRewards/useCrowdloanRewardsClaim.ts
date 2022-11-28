@@ -1,6 +1,5 @@
 import { ApiPromise } from "@polkadot/api";
-import { APP_NAME } from "../../constants";
-import { subscanAccountLink, subscanExtrinsicLink } from "../../Networks";
+import { subscanAccountLink } from "../../Networks";
 import { useSnackbar } from "notistack";
 import { useCallback } from "react";
 import { Executor, useSigner } from "substrate-react";
@@ -17,7 +16,7 @@ export type ClaimProps = {
 export function useCrowdloanRewardsClaim({
   api,
   executor,
-  selectedPicassoAddress,
+  selectedPicassoAddress
 }: ClaimProps) {
   const { enqueueSnackbar } = useSnackbar();
   const signer = useSigner();
@@ -59,9 +58,6 @@ export function useCrowdloanRewardsClaim({
   );
 
   return useCallback(async () => {
-    const { web3Enable } = require("@polkadot/extension-dapp");
-    await web3Enable(APP_NAME);
-
     if (!api || !executor || !selectedPicassoAddress || !signer) return;
     try {
       await executor.execute(
