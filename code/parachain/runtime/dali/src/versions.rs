@@ -1,6 +1,5 @@
 use frame_support::parameter_types;
-#[cfg(feature = "std")]
-use sp_version::NativeVersion;
+use sp_runtime::create_runtime_str;
 use sp_version::RuntimeVersion;
 
 parameter_types! {
@@ -19,13 +18,13 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   the compatible custom types.
 	spec_version: 10_003,
 	impl_version: 3,
-	apis: RUNTIME_API_VERSIONS,
+	apis: crate::RUNTIME_API_VERSIONS,
 	transaction_version: 1,
 	state_version: 0,
 };
 
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
-pub fn native_version() -> NativeVersion {
-	NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
+pub fn native_version() -> sp_version::NativeVersion {
+	sp_version::NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
 }

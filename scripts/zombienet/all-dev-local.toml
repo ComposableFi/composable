@@ -7,7 +7,7 @@ timeout = 600
 [relaychain]
 chain = "rococo-local"
 default_args = ["-lparachain=debug"]
-default_command = "../../../../paritytech/polkadot/target/release/polkadot"  # nix build .#polkadot-node 
+default_command = "../../../../paritytech/polkadot/target/release/polkadot" # nix build .#polkadot-node 
 
 
 [relaychain.genesis.runtime.runtime_genesis_config.configuration.config]
@@ -43,7 +43,7 @@ cumulus_based = true
 id = 1000
 
 [parachains.genesis.runtime.balances.balances]
-0 = {  0 = "5GF8HUxZ1tCHWVZMoGVqDWe8EtdnKznHEbaguRQNqvMkw34H", 1 = 1_123_000_000_000_000_000}
+0 = { 0 = "5GF8HUxZ1tCHWVZMoGVqDWe8EtdnKznHEbaguRQNqvMkw34H", 1 = 1_123_000_000_000_000_000 }
 
 # issue: https://github.com/paritytech/zombienet/issues/605
 # [parachains.genesis.runtime.assets.assets]
@@ -78,7 +78,7 @@ id = 2087
 
 [[parachains.collators]]
 command = "../../target/release/composable" # nix build .#composable-node
-name = "alice" # must be 100 alice and only alice because our chain is hardcoded with it, prevent other nodes to be alice
+name = "alice"                              # must be 100 alice and only alice because our chain is hardcoded with it, prevent other nodes to be alice
 rpc_port = 32200
 validator = true
 ws_port = 9988
