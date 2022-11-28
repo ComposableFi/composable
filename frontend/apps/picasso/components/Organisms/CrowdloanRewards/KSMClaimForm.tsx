@@ -135,7 +135,7 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
                     },
                     TooltipProps: {
                       title:
-                        "This is the total PICA rewards based on your crowdloan contribution for this account. Your unvested amount is your claimable plus your claimed.",
+                        "This is the total PICA rewards based on your crowdloan contribution for this account. This includes your vested amount plus your claimable amount.",
                       children: <></>,
                     },
                   },
