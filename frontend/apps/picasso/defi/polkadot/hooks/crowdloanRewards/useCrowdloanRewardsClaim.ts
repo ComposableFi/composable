@@ -4,7 +4,6 @@ import { useSnackbar } from "notistack";
 import { useCallback } from "react";
 import { Executor, useSigner } from "substrate-react";
 import { setCrowdloanRewardsState } from "@/stores/defi/polkadot/crowdloanRewards/crowdloanRewards.slice";
-import { Signer } from "@polkadot/api/types";
 import BigNumber from "bignumber.js";
 
 export type ClaimProps = {
