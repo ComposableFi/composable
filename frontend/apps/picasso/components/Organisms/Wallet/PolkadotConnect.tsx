@@ -16,7 +16,7 @@ import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 
 const BLOCKCHAIN_NETWORKS_SUPPORTED = [
   {
-    name: "Polkadot",
+    name: "DotSama",
     icon: "/networks/polkadot_js.svg",
     networkId: NetworkId.Polkadot,
     explorerUrl: "https://picasso.subscan.io",
