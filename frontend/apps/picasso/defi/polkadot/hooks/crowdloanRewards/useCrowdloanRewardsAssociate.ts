@@ -1,9 +1,8 @@
 import { ApiPromise } from "@polkadot/api";
-import { APP_NAME } from "../../constants";
 import { subscanAccountLink } from "../../Networks";
 import { useSnackbar } from "notistack";
 import { useCallback } from "react";
-import { Executor } from "substrate-react";
+import { Executor, useSigner } from "substrate-react";
 import { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import { fetchAssociations } from "@/stores/defi/polkadot/crowdloanRewards/crowdloanRewards";
 import { setCrowdloanRewardsState } from "@/stores/defi/polkadot/crowdloanRewards/crowdloanRewards.slice";
@@ -37,6 +36,7 @@ export function useCrowdloanRewardsAssociate({
   connectedAccounts,
 }: AssociateProps) {
   const { enqueueSnackbar } = useSnackbar();
+  const signer = useSigner();
 
   const onAssociationReady = useCallback(
     (transactionHash: string) => {
@@ -84,9 +84,8 @@ export function useCrowdloanRewardsAssociate({
   return useCallback(
     async (signature: string) => {
       const { web3Enable } = require("@polkadot/extension-dapp");
-      await web3Enable(APP_NAME);
 
-      if (!api || !executor || !associateMode || !selectedPicassoAddress)
+      if (!api || !signer || !executor || !associateMode || !selectedPicassoAddress)
         return;
       try {
         const signatureParam = createSignatureParam(
@@ -117,6 +116,7 @@ export function useCrowdloanRewardsAssociate({
       onAssociationReady,
       onAssociateFinalized,
       onAssociationFail,
+      signer
     ]
   );
 }
