@@ -84,6 +84,8 @@ cachix
 cdylib
 charlie
 chevdor
+cheatcode
+cheatcodes
 chrono
 cita
 claimunstake
@@ -363,6 +365,7 @@ stakerclaimunstake
 startuml
 statemine
 stdenv
+stdstore
 structopt
 styleguide
 submessage
