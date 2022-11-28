@@ -107,6 +107,7 @@ crev # cargo-crev
 crowdloaning
 currentmemory
 DACP
+dappsys
 dalek
 deadnix
 devcontainers
@@ -154,6 +155,7 @@ gsutil
 hadolint
 hasher
 hasura
+hevm
 hexlify
 hljs
 horiz
@@ -391,6 +393,7 @@ toolset
 tooltipped
 tooltiptext
 tput
+trimed
 truetype
 tsconfigs
 tsdx

@@ -1,3 +1,4 @@
+// cspell:disable
 // SPDX-License-Identifier: Unlicense
 pragma solidity >=0.6.0;
 pragma experimental ABIEncoderV2;

@@ -73,21 +73,6 @@ contract IBCBridge is Context, IIbcBridge, IModuleCallbacks {
         address[] memory _assets,
         uint256[] memory _amounts) = SDK.decodeIBCSpawn(packet.data, routerAddress);
         return _newAcknowledgement(IRouter(routerAddress).runProgram(origin, program, _assets, _amounts));
-
-        //strings.slice memory denom = data.denom.toSlice();
-        //strings.slice memory trimedDenom = data.denom.toSlice().beyond(
-        //    _makeDenomPrefix(packet.source_port, packet.source_channel)
-        //);
-        //if (!denom.equals(trimedDenom)) { // receiver is source chain
-        //    return _newAcknowledgement(
-        //        _transferFrom(_getEscrowAddress(packet.destination_channel), data.receiver.toAddress(), trimedDenom.toString(), data.amount)
-        //    );
-        //} else {
-        //    string memory prefixedDenom = _makeDenomPrefix(packet.destination_port, packet.destination_channel).concat(denom);
-        //    return _newAcknowledgement(
-        //        _mint(data.receiver.toAddress(), prefixedDenom, data.amount)
-        //    );
-        //}
     }
 
     function onAcknowledgementPacket(Packet.Data calldata packet, bytes calldata acknowledgement, address relayer) external virtual override {
