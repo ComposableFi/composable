@@ -32,13 +32,11 @@
 pub use pallet::*;
 
 #[cfg(test)]
-mod common_test_functions;
-#[cfg(test)]
-mod dual_asset_constant_product_tests;
-#[cfg(test)]
 mod mock;
 #[cfg(test)]
 mod mock_fnft;
+#[cfg(test)]
+mod test;
 
 pub mod weights;
 
