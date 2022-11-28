@@ -36,7 +36,6 @@ pub enum CosmwasmVMError<T: Config> {
 	OutOfGas,
 	Unsupported,
 	Rpc(String),
-	#[cfg(feature = "ibc")]
 	Ibc(String),
 }
 

@@ -39,7 +39,6 @@ extern crate alloc;
 
 pub use pallet::*;
 
-#[cfg(feature = "ibc")]
 pub mod ibc;
 pub mod instrument;
 pub mod runtimes;
@@ -197,7 +196,6 @@ pub mod pallet {
 			contract: AccountIdOf<T>,
 			old_admin: Option<AccountIdOf<T>>,
 		},
-		#[cfg(feature = "ibc")]
 		IbcChannelOpen {
 			contract: AccountIdOf<T>,
 		},
@@ -233,7 +231,6 @@ pub mod pallet {
 		IteratorNotFound,
 		NotAuthorized,
 		Unsupported,
-		#[cfg(feature = "ibc")]
 		Ibc,
 	}
 
@@ -366,10 +363,8 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 
 		/// account which execute relayer calls IBC exported entry points
-		#[cfg(feature = "ibc")]
 		type IbcRelayerAccount: Get<AccountIdOf<Self>>;
 
-		#[cfg(feature = "ibc")]
 		type IbcRelayer: ibc_primitives::IbcHandler<AccountIdOf<Self>>;
 	}
 
