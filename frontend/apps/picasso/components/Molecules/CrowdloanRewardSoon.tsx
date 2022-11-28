@@ -25,7 +25,7 @@ export const CrowdloanRewardsSoon = () => {
           2.
           <br />
           For more information please see{" "}
-          <Link href="https://docs.composable.finance">
+          <Link target="_blank" href="https://docs.composable.finance">
             docs.composable.finance
           </Link>
         </Typography>
