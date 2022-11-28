@@ -83,8 +83,6 @@ export function useCrowdloanRewardsAssociate({
 
   return useCallback(
     async (signature: string) => {
-      const { web3Enable } = require("@polkadot/extension-dapp");
-
       if (!api || !signer || !executor || !associateMode || !selectedPicassoAddress)
         return;
       try {
