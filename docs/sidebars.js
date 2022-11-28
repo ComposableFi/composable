@@ -366,13 +366,13 @@ const sidebars = {
     },
     {
       type: 'category',
-      label: 'Legal disclaimers and disclosures',
+      label: 'Legal Disclaimers and Disclosures',
       collapsible: true,
       collapsed: true,
       items:[
         'faqs/disclaimer-disclosure-pica-token',
         'faqs/risk-factors',
-        'faqs/risks-disclosures',
+        'faqs/legal-disclaimer-disclosures',
         'faqs/terms-of-use',
       ]
     }
