@@ -1160,8 +1160,9 @@ impl cosmwasm::Config for Runtime {
 	type ContractStorageByteWritePrice = ContractStorageByteWritePrice;
 	type WasmCostRules = WasmCostRules;
 	type UnixTime = Timestamp;
-	// TODO: proper weights
 	type WeightInfo = cosmwasm::weights::SubstrateWeight<Runtime>;
+	type IbcRelayerAccount = TreasuryAccount;
+	type IbcRelayer = cosmwasm::NoRelayer<Runtime>;
 }
 
 construct_runtime!(

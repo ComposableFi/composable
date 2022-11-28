@@ -45,7 +45,7 @@ pub mod runtimes;
 pub mod types;
 pub mod version;
 pub mod weights;
-
+pub use crate::ibc::NoRelayer;
 mod entrypoint;
 
 #[cfg(any(feature = "runtime-benchmarks", test))]

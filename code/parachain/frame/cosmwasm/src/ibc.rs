@@ -731,3 +731,27 @@ impl<T: Config + Send + Sync + Default> IbcModuleRouter for Router<T> {
 fn into_module_id<T: Config + Send + Sync + Default>() -> ModuleId {
 	ModuleId::from_str(&String::from_utf8_lossy(&T::PalletId::get().0[..])).expect("constant")
 }
+
+pub struct NoRelayer<T> {
+	_marker: sp_std::marker::PhantomData<T>,
+}
+
+impl<T: Config> ibc_primitives::IbcHandler<AccountIdOf<T>> for NoRelayer<T> {
+	fn latest_height_and_timestamp(
+		_port_id: &PortId,
+		_channel_id: &ChannelId,
+	) -> Result<(ibc::Height, ibc::timestamp::Timestamp), ibc_primitives::Error> {
+		Err(ibc_primitives::Error::Other { msg: Some("not supported".to_string()) })
+	}
+
+	fn handle_message(_msg: HandlerMessage<AccountIdOf<T>>) -> Result<(), ibc_primitives::Error> {
+		Err(ibc_primitives::Error::Other { msg: Some("not supported".to_string()) })
+	}
+
+	fn write_acknowledgement(
+		_packet: &ibc::core::ics04_channel::packet::Packet,
+		_ack: Vec<u8>,
+	) -> Result<(), ibc_primitives::Error> {
+		Err(ibc_primitives::Error::Other { msg: Some("not supported".to_string()) })
+	}
+}
