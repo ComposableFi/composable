@@ -17,21 +17,27 @@ import { SupportedWalletId } from "substrate-react";
 import { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 
 export type PolkadotAccountViewProps = {
-    activePanel: WalletViewTabs;
-    selectedPolkadotWallet: { name: string; icon: string; walletId: SupportedWalletId };
-    selectedPolkadotAccount: InjectedAccountWithMeta;
-    onChangeAccount: () => void;
-    onDisconnectWallet: (() => void) | undefined;
-    subscanUrl: string;
-}
+  activePanel: WalletViewTabs;
+  selectedPolkadotWallet: {
+    name: string;
+    icon: string;
+    walletId: SupportedWalletId;
+  };
+  selectedPolkadotAccount: InjectedAccountWithMeta;
+  onChangeAccount: () => void;
+  onDisconnectWallet: (() => void) | undefined;
+  subscanUrl: string;
+  nativeCurrencyIcon?: string;
+};
 
 export const PolkadotAccountView = ({
-    activePanel,
-    selectedPolkadotAccount,
-    selectedPolkadotWallet,
-    onChangeAccount,
-    onDisconnectWallet,
-    subscanUrl
+  activePanel,
+  selectedPolkadotAccount,
+  selectedPolkadotWallet,
+  onChangeAccount,
+  onDisconnectWallet,
+  nativeCurrencyIcon,
+  subscanUrl,
 }: PolkadotAccountViewProps) => {
   const theme = useTheme();
   return (
@@ -96,12 +102,17 @@ export const PolkadotAccountView = ({
               </Typography>
             </Box>
             <Box>
+              {nativeCurrencyIcon ? (
+                <Image src={nativeCurrencyIcon} height="16px" width="16px" />
+              ) : null}
               <Typography
+                ml={1}
                 color={theme.palette.text.secondary}
                 variant="caption"
               >
                 {trimAddress(selectedPolkadotAccount.address)}
               </Typography>
+
               <IconButton
                 onClick={(_evt) => {
                   navigator.clipboard.writeText(
@@ -116,9 +127,7 @@ export const PolkadotAccountView = ({
               <IconButton
                 onClick={(_evt) => {
                   window.open(
-                    subscanUrl +
-                      "address/" +
-                      selectedPolkadotAccount.address
+                    subscanUrl + "address/" + selectedPolkadotAccount.address
                   );
                 }}
                 color="primary"
