@@ -253,7 +253,7 @@ export const ClaimLoanPage = () => {
       color="primary"
       href="/crowdloan-rewards"
     >
-      Crowdloan rewards
+      Crowdloan Rewards
     </Link>,
     <Typography key="claims" color="text.secondary">
       {flow}
