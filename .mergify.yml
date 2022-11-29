@@ -13,3 +13,17 @@ pull_request_rules:
     actions:
       queue:
         name: default
+        
+  - name: Automatic merge on approval (Picasso Runtime)
+    conditions:
+      - or:
+        - "#approved-reviews-by>=3"     
+        - and:
+          - "#approved-reviews-by>=2"
+          - approved-reviews-by=@ComposableFi/core
+      - base=main    
+      - files ~= ^code\/parachain\/runtime\/picasso\/(lib\.rs|governance\.rs)
+      - -title~="#wip"
+    actions:
+      queue:
+        name: default   
