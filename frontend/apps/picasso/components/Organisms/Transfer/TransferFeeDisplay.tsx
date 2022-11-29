@@ -30,6 +30,20 @@ export const TransferFeeDisplay = () => {
   const allProviders = useAllParachainProviders();
 
   useEffect(() => {
+    if (executor && account) {
+      const unsub = subscribeTransactionFee(
+        allProviders,
+        account.address,
+        executor
+      );
+
+      return () => {
+        unsub.then((call) => call());
+      };
+    }
+  }, [executor, allProviders, account]);
+
+  useEffect(() => {
     if (fromProvider.parachainApi && account) {
       getPaymentAsset({
         api: fromProvider.parachainApi,
