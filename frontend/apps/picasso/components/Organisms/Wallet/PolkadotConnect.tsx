@@ -19,7 +19,7 @@ const BLOCKCHAIN_NETWORKS_SUPPORTED = [
     name: "DotSama",
     icon: "/networks/polkadot_js.svg",
     networkId: NetworkId.Polkadot,
-    explorerUrl: "https://picasso.subscan.io",
+    explorerUrl: "https://picasso.subscan.io/",
     nativeCurrencyIcon: "/logos/picasso.svg",
   },
   {
