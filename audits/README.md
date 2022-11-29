@@ -15,4 +15,4 @@ The related code audits are provided for context.
 
 ## Post-Mortems
 
-- [Picasso Block Production Hault code fix](post-mortems/picasso-block-production-halt-code-fix/README.md)
+- [Picasso Block Production Halt code fix](post-mortems/picasso-block-production-halt-code-fix/README.md)
