@@ -51,7 +51,7 @@ export type WalletViewProps = {
   selectedEthereumWallet?: EthereumWallet;
   connectedWalletTransactions: Array<{ title: string; timestamp: number }>;
 
-  onDisconnectEthereum: (...args: unknown[]) => Promise<void> | void;
+  onDisconnectEthereum?: (...args: unknown[]) => Promise<void> | void;
   onDisconnectDotsamaWallet: (() => Promise<void>) | undefined;
   onChangePolkadotAccount: () => void;
   onConnectPolkadot: () => void;

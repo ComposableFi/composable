@@ -90,6 +90,7 @@ export const Wallet: FC<WalletProps> = ({
         isEthereumActive={isEthereumWalletActive}
         isPolkadotActive={polkadotExtensionStatus === "connected"}
         ownedAssets={[]}
+        blockchainNetworksSupported={blockchainNetworksSupported}
       />
 
       <ConnectionModal

@@ -2,6 +2,7 @@ import React from "react";
 import { Box, useTheme } from "@mui/material";
 import { Select } from "./Atoms/Select";
 import { WalletIndicator } from "./WalletIndicator";
+import { BlockchainNetwork } from "../types";
 
 export type ConnectionStatusProps = {
   label: string;
@@ -15,6 +16,7 @@ export type ConnectionStatusProps = {
     icon: string;
     label: string;
   }>;
+  blockchainNetworksSupported: BlockchainNetwork[];
 };
 
 export const ConnectionStatus = ({
@@ -25,6 +27,7 @@ export const ConnectionStatus = ({
   ownedAssets,
   onOpenConnectionModal,
   setSelectedAsset,
+  blockchainNetworksSupported,
 }: ConnectionStatusProps) => {
   const theme = useTheme();
 
@@ -61,6 +64,7 @@ export const ConnectionStatus = ({
         }}
         isPolkadotConnected={isPolkadotActive}
         label={label}
+        blockchainNetworksSupported={blockchainNetworksSupported}
       />
     </Box>
   );

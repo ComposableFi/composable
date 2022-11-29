@@ -11,12 +11,14 @@ import {
 import Image from "next/image";
 import { useCallback } from "react";
 import "../styles/theme.d.ts";
+import { BlockchainNetwork } from "../types";
 
 type ConnectionButtonProps = {
   label: string;
   onClick: () => void;
   isEthereumConnected?: boolean;
   isPolkadotConnected: boolean;
+  blockchainNetworksSupported: BlockchainNetwork[];
 };
 
 export const WalletIndicator: React.FC<ConnectionButtonProps> = ({
@@ -24,12 +26,16 @@ export const WalletIndicator: React.FC<ConnectionButtonProps> = ({
   onClick,
   isEthereumConnected = false,
   isPolkadotConnected,
+  blockchainNetworksSupported,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const polkaIcon = "/networks/polkadot_js.svg";
   const ethIcon = "/networks/mainnet.svg";
-
+  const shouldShowAddButton =
+    blockchainNetworksSupported.length > 1 &&
+    !isEthereumConnected &&
+    isPolkadotConnected;
   const networkIcons = useCallback(() => {
     if (isEthereumConnected && isPolkadotConnected) {
       return (
@@ -107,7 +113,7 @@ export const WalletIndicator: React.FC<ConnectionButtonProps> = ({
       {!isMobile ? (
         <>
           <Typography variant="body2">{label}</Typography>
-          {!isEthereumConnected && isPolkadotConnected ? <Add /> : null}
+          {shouldShowAddButton ? <Add /> : null}
         </>
       ) : null}
     </Button>

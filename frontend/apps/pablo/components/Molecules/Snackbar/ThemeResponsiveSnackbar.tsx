@@ -4,12 +4,7 @@ import { themeOverride } from "@/components/Molecules/Snackbar/themeOverride";
 import { CheckCircle, Error } from "@mui/icons-material";
 import { Alert, AlertColor, Box } from "@mui/material";
 import { ThemeProvider, useTheme } from "@mui/material/styles";
-import {
-  CustomContentProps,
-  SharedProps,
-  useSnackbar,
-  VariantType,
-} from "notistack";
+import { CustomContentProps, useSnackbar } from "notistack";
 import { keyframes } from "@emotion/react";
 import {
   forwardRef,
@@ -19,15 +14,6 @@ import {
   useRef,
   useState,
 } from "react";
-
-declare module "notistack" {
-  interface OptionsObject<V extends VariantType = VariantType>
-    extends SharedProps<V> {
-    description?: string;
-    url?: string;
-    isClosable?: boolean;
-  }
-}
 
 const progress = keyframes([
   {
