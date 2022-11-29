@@ -250,24 +250,26 @@ export const WalletViewModal: FC<WalletViewProps> = ({
                 marginTop: theme.spacing(2),
               }}
             >
-              <Button
-                onClick={onConnectEVM}
-                fullWidth
-                variant="outlined"
-                sx={{
-                  display: "flex",
-                  justifyContent: "center",
-                  gap: theme.spacing(1),
-                }}
-              >
-                <Image
-                  src="/networks/mainnet.svg"
-                  height="23.5"
-                  width="23.5"
-                  alt="ethereum_wallet"
-                />
-                Connect EVM
-              </Button>
+              {ethereumNetwork ? (
+                <Button
+                  onClick={onConnectEVM}
+                  fullWidth
+                  variant="outlined"
+                  sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    gap: theme.spacing(1),
+                  }}
+                >
+                  <Image
+                    src="/networks/mainnet.svg"
+                    height="23.5"
+                    width="23.5"
+                    alt="ethereum_wallet"
+                  />
+                  Connect EVM
+                </Button>
+              ) : null}
             </Box>
           )}
 
