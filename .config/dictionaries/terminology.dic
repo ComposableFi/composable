@@ -322,6 +322,7 @@ Currency
 unignore
 modularly
 admined
+mintable
 
 coeff # coefficient
 recvs # recieves

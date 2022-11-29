@@ -1,16 +1,16 @@
-# Depercation of Currency Factory - Assessment RFC
+# Depreciation of Currency Factory - Assessment RFC
 
-This assessment aims to gather all relevant details and consoquences of 
-depercating Currency Factory and its replacments.
+This assessment aims to gather all relevant details and consequences of 
+depreciating Currency Factory and its replacements.
 
 ## Reasoning
 
-There are several reasons we stand to benifit from replacing Currency Factory.
+There are several reasons we stand to benefit from replacing Currency Factory.
 These reasons are detailed below:
 
 ### Currency Factory Ranges are Confusing
   
-As detailed by Dzmitry in [this](https://composablefinance.slack.com/archives/C031G5NT0CA/p1667492928188269) 
+As detailed in [this](https://composablefinance.slack.com/archives/C031G5NT0CA/p1667492928188269) 
 thread, the Currency Factory ranges are a confusing abstraction that we don't 
 stand to gain from. We really only have two types of currencies native 
 (mintable) and non-native (external). However, we have many more ranges that 
@@ -24,8 +24,8 @@ Recently, we moved away from storing ED in Currency Factory. This leaves two
 uses for currency factory: reserving asset IDs and storing asset metadata. 
 
 As we have already discussed, currency factory over complicates the asset ID 
-resevation system. As for asset metadata, we don't have standards for formatting 
-this nor do we utilize it.
+reservation system. As for asset metadata, we don't have standards for 
+formatting this nor do we utilize it.
 
 Assuming we replace the reservation system, Currency Factory will be left 
 without value.
@@ -37,15 +37,15 @@ solutions are detailed below:
 
 ### Simplify & Move the Asset ID Reservation System
 
-One way to remove the neeed for pallet-currency-factory is to move its 
+One way to remove the need for pallet-currency-factory is to move its 
 functionality to pallet-asset-registry. If we also simplify the asset ID 
 reservation system, this will be a minimal change.
 
-Instead of reserving assset IDs via our current range system, we could simply 
+Instead of reserving asset IDs via our current range system, we could simply 
 have a nonce for reserving new asset IDs while ensuring a lack of collisions. 
-This nonce can start at an arbritary but high number so that our hard-coded 
+This nonce can start at an arbitrary but high number so that our hard-coded 
 asset IDs are still safe (i.e `u32::MAX`). This would reduce the complexity of 
-our current reservation system while still avoiding collisons.
+our current reservation system while still avoiding collision.
 
 ### Use an Externally Maintained Asset ID Reservation System
 
@@ -60,7 +60,7 @@ changes.
   
   #### Pros
   
-  * Very nice UI compatability with Polkadot Dashboard
+  * Very nice UI compatibility with Polkadot Dashboard
   
   * Maintained by Parity
   
@@ -89,5 +89,5 @@ changes.
 * > As for asset metadata, we don't have standards for formatting this nor do we 
   utilize it.
 
-  Is this true? A breif investigation revealed that outside of `scripts/polkadot-launch/initialization/src/interfaces/basilisk/definitions.ts` 
+  Is this true? A brief investigation revealed that outside of `scripts/polkadot-launch/initialization/src/interfaces/basilisk/definitions.ts` 
   there is no mention of the Asset Metadata structure.
