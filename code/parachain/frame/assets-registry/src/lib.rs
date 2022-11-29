@@ -303,7 +303,7 @@ pub mod pallet {
 			<MinFeeAmounts<T>>::get(parachain_id, remote_asset_id)
 		}
 
-		fn get_foreign_assets_list() -> Vec<Asset<Self::AssetNativeLocation>> {
+		fn get_foreign_assets_list() -> Vec<Asset<T::Balance, Self::AssetNativeLocation>> {
 			ForeignToLocal::<T>::iter()
 				.map(|(_, asset_id)| {
 					let foreign_metadata = LocalToForeign::<T>::get(asset_id)
@@ -312,12 +312,15 @@ pub mod pallet {
 						Some(exponent) => exponent,
 						_ => 12_u8,
 					};
+					let ratio = AssetRatio::<T>::get(asset_id);
 
 					Asset {
 						name: None,
 						id: asset_id.into(),
 						decimals,
+						ratio,
 						foreign_id: Some(foreign_metadata.location),
+						existential_deposit: T::Balance::default(),
 					}
 				})
 				.collect::<Vec<_>>()

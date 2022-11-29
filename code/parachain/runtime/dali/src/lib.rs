@@ -26,8 +26,11 @@ pub const WASM_BINARY_V2: Option<&[u8]> = None;
 extern crate alloc;
 
 mod governance;
+mod versions;
 mod weights;
 pub mod xcmp;
+
+pub use versions::*;
 
 use lending::MarketId;
 use orml_traits::{parameter_type_with_key, LockIdentifier};
@@ -59,7 +62,7 @@ use primitives::currency::{CurrencyId, ValidateCurrencyId};
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
-	create_runtime_str, generic, impl_opaque_keys,
+	generic, impl_opaque_keys,
 	traits::{
 		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Bounded, Convert,
 		ConvertInto, Zero,
@@ -69,9 +72,6 @@ use sp_runtime::{
 };
 
 use sp_std::prelude::*;
-#[cfg(feature = "std")]
-use sp_version::NativeVersion;
-use sp_version::RuntimeVersion;
 
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
@@ -86,6 +86,7 @@ pub use frame_support::{
 };
 
 use codec::{Codec, Encode, EncodeLike};
+use common::fees::WellKnownForeignToNativePriceConverter;
 use composable_traits::{account_proxy::ProxyType, fnft::FnftAccountProxyType};
 use frame_support::{
 	traits::{
@@ -132,31 +133,6 @@ pub mod opaque {
 	}
 }
 
-// To learn more about runtime versioning and what each of the following value means:
-//   https://substrate.dev/docs/en/knowledgebase/runtime/upgrades#runtime-versioning
-#[sp_version::runtime_version]
-pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("dali"),
-	impl_name: create_runtime_str!("dali"),
-	authoring_version: 1,
-	// The version of the runtime specification. A full node will not attempt to use its native
-	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
-	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
-	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
-	//   the compatible custom types.
-	spec_version: 2402,
-	impl_version: 3,
-	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 1,
-	state_version: 0,
-};
-
-/// The version information used to identify this runtime when compiled natively.
-#[cfg(feature = "std")]
-pub fn native_version() -> NativeVersion {
-	NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
-}
-
 parameter_type_with_key! {
 	// Minimum amount an account has to hold to stay in state
 	pub MultiExistentialDeposits: |currency_id: CurrencyId| -> Balance {
@@ -167,7 +143,6 @@ parameter_type_with_key! {
 parameter_types! {
 	// how much block hashes to keep
 	pub const BlockHashCount: BlockNumber = 250;
-	pub const Version: RuntimeVersion = VERSION;
 	// 5mb with 25% of that reserved for system extrinsics.
 	pub RuntimeBlockLength: BlockLength =
 		BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
@@ -1071,15 +1046,9 @@ impl pablo::Config for Runtime {
 	type MaxStakingRewardPools = MaxStakingRewardPools;
 	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
 	type MaxStakingDurationPresets = MaxStakingDurationPresets;
-	type ManageStaking = StakingRewards;
-	type ProtocolStaking = StakingRewards;
 	type MsPerBlock = MillisecsPerBlock;
 	type PicaAssetId = PicaAssetId;
 	type PbloAssetId = PbloAssetId;
-	type XPicaAssetId = XPicaAssetId;
-	type XPbloAssetId = XPbloAssetId;
-	type PicaStakeFinancialNftCollectionId = PicaStakeFinancialNftCollectionId;
-	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
 }
 
 parameter_types! {
@@ -1367,12 +1336,34 @@ impl_runtime_apis! {
 			SafeRpcWrapper(<Assets as fungibles::Inspect::<AccountId>>::balance(asset_id, &account_id))
 		}
 
-		fn list_assets() -> Vec<Asset<ForeignAssetId>> {
-			let mut assets = CurrencyId::list_assets();
-			let mut foreign_assets = assets_registry::Pallet::<Runtime>::get_foreign_assets_list();
-			assets.append(&mut foreign_assets);
+		fn list_assets() -> Vec<Asset<Balance, ForeignAssetId>> {
+			// Hardcoded assets
+			let assets = CurrencyId::list_assets().into_iter().map(|mut asset| {
+				// Add hardcoded ratio and ED for well known assets
+				asset.ratio = WellKnownForeignToNativePriceConverter::get_ratio(CurrencyId(asset.id));
+				asset.existential_deposit = multi_existential_deposits::<AssetsRegistry>(&asset.id.into());
+				asset
+			}).collect::<Vec<_>>();
+			// Assets from the assets-registry pallet
+			let foreign_assets = assets_registry::Pallet::<Runtime>::get_foreign_assets_list();
 
-			assets
+			// Override asset data for hardcoded assets that have been manually updated, and append
+			// new assets without duplication
+			foreign_assets.into_iter().fold(assets, |mut acc, mut foreign_asset| {
+				if let Some(i) = acc.iter().position(|asset_i| asset_i.id == foreign_asset.id) {
+					// Assets that have been updated
+					if let Some(asset) = acc.get_mut(i) {
+						// Update asset with data from assets-registry
+						asset.decimals = foreign_asset.decimals;
+						asset.foreign_id = foreign_asset.foreign_id.clone();
+						asset.ratio = foreign_asset.ratio;
+					}
+				} else {
+					foreign_asset.existential_deposit = multi_existential_deposits::<AssetsRegistry>(&foreign_asset.id.into());
+					acc.push(foreign_asset.clone())
+				}
+				acc
+			})
 		}
 	}
 
@@ -1435,7 +1426,7 @@ impl_runtime_apis! {
 			min_expected_amounts: BTreeMap<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>>,
 		) -> RemoveLiquiditySimulationResult<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>> {
 			let min_expected_amounts: BTreeMap<_, _> = min_expected_amounts.iter().map(|(k, v)| (k.0, v.0)).collect();
-			let default_removed_assets = min_expected_amounts.iter().map(|(k, _)| (CurrencyId(k.0), 0_u128)).collect::<BTreeMap<_,_>>();
+			let default_removed_assets = min_expected_amounts.keys().map(|k| (*k, 0_u128)).collect::<BTreeMap<_,_>>();
 			let simulate_remove_liquidity_result = <Pablo as Amm>::simulate_remove_liquidity(&who.0, pool_id.0, lp_amount.0, min_expected_amounts)
 				.unwrap_or(
 					RemoveLiquiditySimulationResult{
@@ -1493,7 +1484,7 @@ impl_runtime_apis! {
 	}
 
 	impl sp_api::Core<Block> for Runtime {
-		fn version() -> RuntimeVersion {
+		fn version() -> sp_version::RuntimeVersion {
 			VERSION
 		}
 

@@ -1,0 +1,30 @@
+{
+  "name": "runtime-upgrade",
+  "version": "1.0.0",
+  "description": "SRE automation for performing runtime upgrades.",
+  "main": "index.js",
+  "scripts": {
+    "picasso": "node ./upgrader.mjs upgrade --runtime=./path/to/runtime.wasm --wss=wss://picasso-rpc.composable.finance",
+    "dali-dev-local": "node ./upgrader.mjs upgrade --runtime=../../result/lib/runtime.optimized.wasm --wss=ws://127.0.0.1:9988 --keyring '//Alice' --mode democracy"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/composablefi/composable.git"
+  },
+  "keywords": [
+    "substrate",
+    "composable"
+  ],
+  "author": "kaiserkarel",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/composablefi/composable/issues"
+  },
+  "homepage": "https://github.com/composablefi/composable#readme",
+  "dependencies": {
+    "@polkadot/api": "^9.7.1",
+    "chalk": "^5.1.2",
+    "commander": "^9.4.1",
+    "conf": "^10.2.0"
+  }
+}

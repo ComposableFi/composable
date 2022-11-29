@@ -29,6 +29,7 @@ export const TransferExistentialDeposit: FC = () => {
 
   return (
     <FeeDisplay
+      disabled={true}
       label="Existential Deposit"
       feeText={
         decimals !== null && !!existentialDeposit ? (

@@ -1,5 +1,11 @@
 import { getEnvironment } from "shared/endpoints";
 import { SubstrateNetwork, SubstrateNetworkId } from "./types";
+import {
+  KARURA_SUBSCAN_URL,
+  KUSAMA_SUBSCAN_URL,
+  PICASSO_SUBSCAN_URL,
+  STATEMINE_SUBSCAN_URL,
+} from "@/defi/config";
 
 export const SUBSTRATE_NETWORKS: {
   [substrateNetworkId in SubstrateNetworkId]: SubstrateNetwork;
@@ -11,7 +17,7 @@ export const SUBSTRATE_NETWORKS: {
     wsUrl: getEnvironment("kusama"),
     tokenId: "ksm",
     ss58Format: 2,
-    subscanUrl: "https://kusama.subscan.io/",
+    subscanUrl: KUSAMA_SUBSCAN_URL,
     decimals: 12,
     symbol: "KSM",
     logo: "/networks/kusama.svg",
@@ -23,7 +29,7 @@ export const SUBSTRATE_NETWORKS: {
     wsUrl: getEnvironment("picasso"),
     tokenId: "pica",
     ss58Format: 49,
-    subscanUrl: "https://picasso.subscan.io/",
+    subscanUrl: PICASSO_SUBSCAN_URL,
     decimals: 12,
     symbol: "PICA",
     logo: "/networks/picasso.svg",
@@ -35,7 +41,7 @@ export const SUBSTRATE_NETWORKS: {
     wsUrl: getEnvironment("karura"),
     tokenId: "kar",
     ss58Format: 8,
-    subscanUrl: "https://karura.subscan.io/",
+    subscanUrl: KARURA_SUBSCAN_URL,
     decimals: 12,
     symbol: "KAR",
     logo: "/networks/karura.svg",
@@ -47,7 +53,7 @@ export const SUBSTRATE_NETWORKS: {
     wsUrl: getEnvironment("statemine"),
     tokenId: "ksm",
     ss58Format: 2,
-    subscanUrl: "",
+    subscanUrl: STATEMINE_SUBSCAN_URL,
     symbol: "KSM",
     logo: "/networks/statemine.svg",
     decimals: 12,
@@ -72,4 +78,11 @@ export function subscanExtrinsicLink(
   extrinsicHash: string
 ): string {
   return SUBSTRATE_NETWORKS[network].subscanUrl + "extrinsic/" + extrinsicHash;
+}
+
+export function subscanAccountLink(
+  network: SubstrateNetworkId,
+  account: string
+): string {
+  return SUBSTRATE_NETWORKS[network].subscanUrl + "account/" + account;
 }

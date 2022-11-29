@@ -3,7 +3,7 @@ authors = ["Composable Developers"]
 edition = "2021"
 homepage = "https://composable.finance"
 name = "pallet-currency-factory"
-version = "0.0.1"
+version = "1.0.0"
 
 
 [package.metadata.docs.rs]
@@ -35,7 +35,7 @@ sp-std = { default-features = false, git = "https://github.com/paritytech/substr
 composable-traits = { path = "../composable-traits", default-features = false }
 
 [dev-dependencies]
-composable-tests-helpers = { version = "0.0.1", path = "../composable-tests-helpers" }
+composable-tests-helpers = { version = "1.0.0", path = "../composable-tests-helpers" }
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 proptest = "1.0.0"

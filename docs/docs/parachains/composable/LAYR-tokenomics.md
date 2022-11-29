@@ -72,4 +72,4 @@ on TGE, and the remainder vesting over two years.
 Polkadot vault strategy. 50% of this (2,500,000 LAYR) will be released at TGE, with the remaining distributed over six 
 months. 
 
-*All terms related to token allocations are subject to change. [Legal disclosures apply.](../../faqs/risks-disclosures.md)
+*All terms related to token allocations are subject to change. [Legal disclosures apply.](../../faqs/legal-disclaimer-disclosures.md)

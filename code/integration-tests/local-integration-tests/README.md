@@ -1,3 +1,3 @@
 # Overview
 
-In memory tests running several parachains and relay chain.
+This crate contains in memory tests which run several parachains and relay chain.

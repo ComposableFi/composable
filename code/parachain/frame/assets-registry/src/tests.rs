@@ -185,10 +185,12 @@ fn get_foreign_assets_list_should_work() {
 				name: None,
 				id: 12884901886,
 				decimals: 3,
+				ratio: Some(ratio),
 				foreign_id: Some(XcmAssetLocation::new(MultiLocation {
 					parents: 1,
 					interior: Junctions::Here
-				}))
+				})),
+				existential_deposit: 0,
 			}]
 		);
 	})

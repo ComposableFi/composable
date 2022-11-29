@@ -307,7 +307,7 @@ Executes a payload within the execution context of the chain, such as an extrins
 ```
 <Call>         ::= <Payload> <Bindings>
 <Payload>      ::= bytes
-<Bindings>     ::= { u16 : <BindingValue> }
+<Bindings>     ::= [ u16 <BindingValue> ]
 <AssetAmount>  ::= <AssetId> <Balance>
 <BindingValue> ::= <Self> | <Relayer> | <Result> | <AssetAmount> | <GlobalId>
 ```
@@ -326,6 +326,8 @@ On the executing instance, `BindingValue::Self` will be interpolated at byte ind
 
 Besides accessing the `Self` register, `BindingValue` allows for lazy lookups of AssetId conversions, by using `BindingValue::AssetId(GlobalId)`, or lazily converting decimal points depending on the chain using the `Balance` type.
 
+Indices in bindings must to be **sorted** in an ascending order and **unique**.
+
 Bindings do not support non-byte aligned encodings.
 
 ### 2.2.3 Spawn
@@ -337,6 +339,13 @@ Sends a `Program` to another chain to be executed asynchronously. It is only gua
 
 <Network>    ::= u128
 <Salt>       ::= bytes
+```
+
+### 2.2.3.1 Spawn program through IBC
+Spawned program using IBC based bridges need to be wrapped into packet data before being sent to IBC bridges. Protobuf encoding and decoding is implemented in this case for both sending and receiving packages. 
+The packet data is defined as follows:
+```
+<SpawnPackage>      ::= <Account> <Network> <Salt> <Program> <Assets>
 ```
 
 ### 2.2.4. Query
@@ -372,7 +381,7 @@ The result register contains the result of the last executed instruction.
 ```
 <ResultRegister> ::= 
     <Error> 
-    | <ExecutionResult><
+    | <ExecutionResult>
 
 <Error ::= 
     <CallError> 
@@ -403,7 +412,7 @@ The instruction pointer register contains the instruction pointer of the last ex
 The relayer register contains the `Account` of the account triggering the initial execution. This can be the IBC relayer or any other entity. By definition, the relayer is the account paying the fees for interpreter execution.
 
 ```
-<RelayerRegister> ::= u32
+<RelayerRegister> ::= <Account>
 ```
 
 #### 2.4.1.4 Self Register

@@ -230,15 +230,9 @@ impl pallet_pablo::Config for Test {
 	type MaxStakingRewardPools = MaxStakingRewardPools;
 	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
 	type MaxStakingDurationPresets = MaxStakingDurationPresets;
-	type ManageStaking = StakingRewards;
-	type ProtocolStaking = StakingRewards;
 	type MsPerBlock = MillisecsPerBlock;
 	type PicaAssetId = PicaAssetId;
 	type PbloAssetId = PbloAssetId;
-	type XPicaAssetId = XPicaAssetId;
-	type XPbloAssetId = XPbloAssetId;
-	type PicaStakeFinancialNftCollectionId = PicaStakeFinancialNftCollectionId;
-	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
 }
 
 parameter_types! {

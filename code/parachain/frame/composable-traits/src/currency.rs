@@ -10,6 +10,9 @@ use sp_runtime::{
 use composable_support::math::safe::{SafeAdd, SafeDiv, SafeMul, SafeSub};
 use sp_std::fmt::Debug;
 
+#[cfg(feature = "std")]
+use serde::{Deserialize, Serialize};
+
 pub type Exponent = u8;
 
 /// Creates a new asset, compatible with [`MultiCurrency`](https://docs.rs/orml-traits/0.4.0/orml_traits/currency/trait.MultiCurrency.html).
@@ -175,6 +178,7 @@ pub trait AssetIdLike = FullCodec + MaxEncodedLen + Copy + Eq + PartialEq + Debu
 	MaxEncodedLen,
 	TypeInfo,
 )]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct Rational64 {
 	pub n: u64,
 	pub d: u64,

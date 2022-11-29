@@ -1,9 +1,8 @@
 import { ApiPromise } from "@polkadot/api";
-import { APP_NAME } from "../../constants";
-import { subscanExtrinsicLink } from "../../Networks";
+import { subscanAccountLink } from "../../Networks";
 import { useSnackbar } from "notistack";
 import { useCallback } from "react";
-import { Executor } from "substrate-react";
+import { Executor, useSigner } from "substrate-react";
 import { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import { fetchAssociations } from "@/stores/defi/polkadot/crowdloanRewards/crowdloanRewards";
 import { setCrowdloanRewardsState } from "@/stores/defi/polkadot/crowdloanRewards/crowdloanRewards.slice";
@@ -37,24 +36,27 @@ export function useCrowdloanRewardsAssociate({
   connectedAccounts,
 }: AssociateProps) {
   const { enqueueSnackbar } = useSnackbar();
+  const signer = useSigner();
 
   const onAssociationReady = useCallback(
     (transactionHash: string) => {
+      if (selectedPicassoAddress)
       enqueueSnackbar("Claim processing...", {
         variant: "info",
         isClosable: true,
-        url: subscanExtrinsicLink("picasso", transactionHash),
+        url: subscanAccountLink("picasso", selectedPicassoAddress),
       });
     },
-    [enqueueSnackbar]
+    [enqueueSnackbar, selectedPicassoAddress]
   );
 
   const onAssociateFinalized = useCallback(
     (transactionHash: string) => {
+      if (selectedPicassoAddress)
       enqueueSnackbar("Your claim was successful!", {
         variant: "success",
         isClosable: true,
-        url: subscanExtrinsicLink("picasso", transactionHash),
+        url: subscanAccountLink("picasso", selectedPicassoAddress),
       });
 
       if (api) {
@@ -66,7 +68,7 @@ export function useCrowdloanRewardsAssociate({
         });
       }
     },
-    [enqueueSnackbar, api, connectedAccounts]
+    [enqueueSnackbar, api, connectedAccounts, selectedPicassoAddress]
   );
 
   const onAssociationFail = useCallback(
@@ -81,10 +83,7 @@ export function useCrowdloanRewardsAssociate({
 
   return useCallback(
     async (signature: string) => {
-      const { web3Enable } = require("@polkadot/extension-dapp");
-      await web3Enable(APP_NAME);
-
-      if (!api || !executor || !associateMode || !selectedPicassoAddress)
+      if (!api || !signer || !executor || !associateMode || !selectedPicassoAddress)
         return;
       try {
         const signatureParam = createSignatureParam(
@@ -115,6 +114,7 @@ export function useCrowdloanRewardsAssociate({
       onAssociationReady,
       onAssociateFinalized,
       onAssociationFail,
+      signer
     ]
   );
 }

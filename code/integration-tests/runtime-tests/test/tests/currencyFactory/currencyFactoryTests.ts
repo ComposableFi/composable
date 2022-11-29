@@ -6,7 +6,7 @@ import { getNewConnection } from "@composable/utils/connectionHelper";
 import { getDevWallets } from "@composable/utils/walletHelper";
 import { sendAndWaitForSuccess } from "@composable/utils/polkadotjs";
 import { AnyNumber } from "@polkadot/types-codec/types";
-import { Option, u128, u64 } from "@polkadot/types-codec";
+import { u128, u64 } from "@polkadot/types-codec";
 import BN from "bn.js";
 import { AssetId } from "@polkadot/types/interfaces/runtime";
 import { ComposableTraitsAssetsBasicAssetMetadata } from "@composable/types/interfaces";
@@ -41,47 +41,52 @@ describe("[SHORT] Currency Factory Tests", function () {
 
   describe("tx.currencyFactory.setMetadata", function () {
     it("Sudo can initialize new asset", async function () {
-      this.timeout(2 * 60 * 1000);
-      const amount = 999_999_999_999;
-      const beneficiary = sudoKey.publicKey;
-      const assetListBefore = await api.query.currencyFactory.assetEd.entries();
-      const {
-        data: [resultCurrencyId, resultBeneficiary, resultAmount]
-      } = await CurrencyFactoryTests.initializeNewAsset(api, sudoKey, amount, beneficiary);
-      assetIdToSetMetadata = resultCurrencyId;
-      expect(resultBeneficiary.toString()).to.equal(api.createType("AccountId32", beneficiary).toString());
-      expect(resultAmount).to.be.bignumber.equal(amount.toString());
-      const assetListAfter = await api.query.currencyFactory.assetEd.entries();
-      expect(assetListAfter.length).to.be.greaterThan(assetListBefore.length);
+      console.warn("setMetadata tests are temporarily disabled!");
+      this.skip();
+
+      // this.timeout(2 * 60 * 1000);
+      // const amount = 999_999_999_999;
+      // const beneficiary = sudoKey.publicKey;
+      // const assetListBefore = await api.query.currencyFactory.assetEd.entries();
+      // const {
+      //   data: [resultCurrencyId, resultBeneficiary, resultAmount]
+      // } = await CurrencyFactoryTests.initializeNewAsset(api, sudoKey, amount, beneficiary);
+      // assetIdToSetMetadata = resultCurrencyId;
+      // expect(resultBeneficiary.toString()).to.equal(api.createType("AccountId32", beneficiary).toString());
+      // expect(resultAmount).to.be.bignumber.equal(amount.toString());
+      // const assetListAfter = await api.query.currencyFactory.assetEd.entries();
+      // expect(assetListAfter.length).to.be.greaterThan(assetListBefore.length);
     });
     it("Sudo can set metadata for newly created asset", async function () {
+      console.warn("setMetadata tests are temporarily disabled!");
       this.timeout(2 * 60 * 1000);
+      this.skip();
 
-      const assetId = assetIdToSetMetadata;
-      const metadata = {
-        symbol: {
-          inner: "BAN"
-        },
-        name: {
-          inner: "Banana Coin"
-        }
-      };
-
-      const {
-        data: [result]
-      } = await CurrencyFactoryTests.setMetadata(api, sudoKey, assetId, metadata);
-      expect(result.isOk).to.be.true;
-
-      const assetMetadataAfter = <Option<ComposableTraitsAssetsBasicAssetMetadata>>(
-        await api.query.currencyFactory.assetMetadata(assetId)
-      );
-      expect(assetMetadataAfter.unwrap().isEmpty).to.be.false;
-      expect(CurrencyFactoryTests.hex2a(assetMetadataAfter.unwrap().name.inner)).to.be.equal(
-        metadata.name.inner.toString()
-      );
-      expect(CurrencyFactoryTests.hex2a(assetMetadataAfter.unwrap().symbol.inner)).to.be.equal(
-        metadata.symbol.inner.toString()
-      );
+      // const assetId = assetIdToSetMetadata;
+      // const metadata = {
+      //   symbol: {
+      //     inner: "BAN"
+      //   },
+      //   name: {
+      //     inner: "Banana Coin"
+      //   }
+      // };
+      //
+      // const {
+      //   data: [result]
+      // } = await CurrencyFactoryTests.setMetadata(api, sudoKey, assetId, metadata);
+      // expect(result.isOk).to.be.true;
+      //
+      // const assetMetadataAfter = <Option<ComposableTraitsAssetsBasicAssetMetadata>>(
+      //   await api.query.currencyFactory.assetMetadata(assetId)
+      // );
+      // expect(assetMetadataAfter.unwrap().isEmpty).to.be.false;
+      // expect(CurrencyFactoryTests.hex2a(assetMetadataAfter.unwrap().name.inner)).to.be.equal(
+      //   metadata.name.inner.toString()
+      // );
+      // expect(CurrencyFactoryTests.hex2a(assetMetadataAfter.unwrap().symbol.inner)).to.be.equal(
+      //   metadata.symbol.inner.toString()
+      // );
     });
   });
 

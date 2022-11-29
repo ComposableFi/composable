@@ -24,20 +24,25 @@ library = []
 cosmwasm-std = { version = "1.0.0" }
 cw-storage-plus = "0.13.2"
 cw-utils = "0.14.0"
+cw-xcvm-asset-registry = { path = "../asset-registry", features = ["library"] }
+cw-xcvm-utils = { path = "../utils" }
 cw2 = "0.14.0"
 cw20 = "0.14.0"
+hex = { version = "0.4", default-features = false, features = [
+  "alloc",
+  "serde",
+] }
 num = "0.4"
+prost = { version = "0.11", default-features = false, features = [
+  "prost-derive",
+] }
 schemars = "0.8.8"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 serde-json-wasm = { git = "https://github.com/hussein-aitlahcen/serde-json-wasm", rev = "1608a13d2a2ba90605d9626a51ff6667aca5a2d6" }
 serde_json = "1"
 thiserror = { version = "1.0.31" }
-cw-xcvm-utils = { path = "../utils" }
-cw-xcvm-asset-registry = { path = "../asset-registry", features = ["library"] }
 xcvm-core = { path = "../../../lib/core", features = ["cosmwasm", "std"] }
 xcvm-proto = { path = "../../../lib/proto" }
-prost = { version = "0.11", default-features = false, features = ["prost-derive"] }
-hex = { version = "0.4", default-features = false, features = [ "alloc", "serde" ] }
 
 [dev-dependencies]
 cosmwasm-schema = "1.0.0"

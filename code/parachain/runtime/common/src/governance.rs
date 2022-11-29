@@ -10,18 +10,23 @@ pub mod native {
 	/// Origin for either root or half of PICA council
 	pub type EnsureRootOrHalfNativeCouncil = EitherOfDiverse<
 		EnsureRoot<AccountId>,
-		collective::EnsureProportionAtLeast<AccountId, NativeCouncilCollective, 50, 100>,
+		collective::EnsureProportionAtLeast<AccountId, NativeCouncilCollective, 1, 2>,
+	>;
+
+	pub type EnsureRootOrTwoThirdNativeCouncil = EitherOfDiverse<
+		EnsureRoot<AccountId>,
+		collective::EnsureProportionAtLeast<AccountId, NativeCouncilCollective, 2, 3>,
 	>;
 
 	pub type EnsureRootOrMoreThenHalfNativeCouncil = EitherOfDiverse<
 		EnsureRoot<AccountId>,
-		collective::EnsureProportionMoreThan<AccountId, NativeCouncilCollective, 50, 100>,
+		collective::EnsureProportionMoreThan<AccountId, NativeCouncilCollective, 1, 2>,
 	>;
 
 	/// Origin for either root or half of general council
 	pub type EnsureRootOrHalfNativeTechnical = EitherOfDiverse<
 		EnsureRoot<AccountId>,
-		collective::EnsureProportionAtLeast<AccountId, NativeTechnicalCollective, 50, 100>,
+		collective::EnsureProportionAtLeast<AccountId, NativeTechnicalCollective, 1, 2>,
 	>;
 
 	pub type EnsureRootOrOneThirdNativeTechnical = EitherOfDiverse<
@@ -29,9 +34,14 @@ pub mod native {
 		collective::EnsureProportionAtLeast<AccountId, NativeTechnicalCollective, 1, 3>,
 	>;
 
+	pub type EnsureRootOrTwoThirdNativeTechnical = EitherOfDiverse<
+		EnsureRoot<AccountId>,
+		collective::EnsureProportionAtLeast<AccountId, NativeTechnicalCollective, 2, 3>,
+	>;
+
 	pub type EnsureRootOrAllNativeTechnical = EitherOfDiverse<
 		EnsureRoot<AccountId>,
-		collective::EnsureProportionAtLeast<AccountId, NativeTechnicalCollective, 50, 100>,
+		collective::EnsureProportionAtLeast<AccountId, NativeTechnicalCollective, 1, 1>,
 	>;
 
 	pub type EnsureNativeTechnicalMember =
@@ -42,8 +52,16 @@ pub mod native {
 	pub type EnsureRootOrHalfNativeCouncilOrTechnical = EitherOfDiverse<
 		EnsureRoot<AccountId>,
 		EitherOfDiverse<
-			collective::EnsureProportionAtLeast<AccountId, NativeTechnicalCollective, 50, 100>,
-			collective::EnsureProportionAtLeast<AccountId, NativeCouncilCollective, 50, 100>,
+			collective::EnsureProportionAtLeast<AccountId, NativeTechnicalCollective, 1, 2>,
+			collective::EnsureProportionAtLeast<AccountId, NativeCouncilCollective, 1, 2>,
+		>,
+	>;
+
+	pub type EnsureRootOrTwoThirdNativeCouncilOrTechnical = EitherOfDiverse<
+		EnsureRoot<AccountId>,
+		EitherOfDiverse<
+			collective::EnsureProportionAtLeast<AccountId, NativeTechnicalCollective, 2, 3>,
+			collective::EnsureProportionAtLeast<AccountId, NativeCouncilCollective, 2, 3>,
 		>,
 	>;
 }

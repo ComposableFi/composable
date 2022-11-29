@@ -26,6 +26,14 @@
 
 Visit our [docs](https://docs.composable.finance) to learn more about our ecosystem, vision, and product specifics.
 
+## Installation
+
+Refer [releases](https://github.com/ComposableFi/composable/releases) page.
+
+## Release Process
+
+Refer [RFC-0011](./rfcs/0011-releases.md).
+
 ## Nix
 
 We use [`nix`](https://nixos.org/) in order to reproducibly build all of our packages. [Check out our Nix docs here in order to build our packages](https://docs.composable.finance/nix.html).

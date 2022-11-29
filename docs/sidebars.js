@@ -42,9 +42,22 @@ const sidebars = {
           collapsible: true,
           collapsed: true,
           items: [
-            'parachains/picasso/picasso-crowdloan',
-            'parachains/picasso/KSM-purchase-log',
-            'parachains/picasso/picasso-tokenomics'
+            'parachains/picasso/crowdloan',
+            'parachains/picasso/governance',
+            {
+            type: 'category',
+            label: 'Picasso Tokenomics',
+            link: {
+              type: 'doc',
+              id: 'parachains/picasso/tokenomics'
+            },
+            collapsible: true,
+            collapsed: true,
+            items:[
+              'parachains/picasso/token-transparency',
+              'parachains/picasso/pica-use-cases'
+            ]
+            },
           ],
         },
         {
@@ -229,6 +242,32 @@ const sidebars = {
     },
     {
       type: 'category',
+      label: 'User Guides',
+      link: {
+        type: 'generated-index',
+        slug: 'user-guides',
+      },
+      collapsible: false,
+      items: [
+        {
+          type: 'category',
+          label: 'Accounts and Wallets',
+          link: {
+            type: 'generated-index',
+            slug: 'accounts-wallets'
+          },
+          collapsible: true,
+          items: [
+            'user-guides/polkadotjs-extension-create-account',
+            'user-guides/talisman-create-account',
+        ],
+        },
+        'user-guides/claim-rewards-guide',
+        'user-guides/polkassembly-picasso-governance',
+      ]
+    },
+    {
+      type: 'category',
       label: 'Developer Guides',
 
 			link: {
@@ -307,40 +346,54 @@ const sidebars = {
 			type: 'category',
 			label: 'Audits And Fixes',
 
-			link: {
-				type: 'generated-index',
-				slug: 'audits',
-			},
-			collapsible: false,
-			items: ['audits/audit-results-recommendations-and-remediations'],
-		},
-		{
-			type: 'category',
-			label: 'FAQs',
-			collapsible: false,
-			items: ['faqs/faqs', 'faqs/risks-disclosures'],
-		},
-	],
+      link: {
+        type: 'generated-index',
+        slug: 'audits',
+      },
+      collapsible: false,
+      items: [
+        'audits/audit-results-recommendations-and-remediations',
+      ]
+    },
+    {
+      type: 'doc',
+      label: 'FAQs',
+      id: 'faqs/faqs',
+
+    },
+    {
+      type: 'category',
+      label: 'Legal Disclaimers and Disclosures',
+      collapsible: true,
+      collapsed: true,
+      items:[
+        'faqs/disclaimer-disclosure-pica-token',
+        'faqs/risk-factors',
+        'faqs/legal-disclaimer-disclosures',
+        'faqs/terms-of-use',
+      ]
+    }
+  ],
 };
 
 if (!isProd) {
-	sidebars.tutorialSidebar.unshift({
-		type: 'category',
-		label: 'test-SCDI',
-		link: {
-			type: 'doc',
-			id: 'testSCDI/entry',
-		},
-		collapsible: true,
-		collapsed: true,
-		items: [
-			{
-				type: 'link',
-				label: 'test-SCDI',
-				href: '/test-vm',
-			},
-		],
-	});
+  sidebars.tutorialSidebar.unshift({
+    type: 'category',
+    label: 'test-SCDI',
+    link: {
+      type: 'doc',
+      id: 'testSCDI/entry',
+    },
+    collapsible: true,
+    collapsed: true,
+    items: [
+      {
+        type: 'link',
+        label: 'test-SCDI',
+        href: '/test-vm',
+      },
+    ],
+  });
 }
 
 module.exports = sidebars;

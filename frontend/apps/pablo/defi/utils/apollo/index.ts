@@ -1,20 +1,20 @@
 import { ApiPromise } from "@polkadot/api";
 import BigNumber from "bignumber.js";
+import { isPalletSupported } from "shared";
 
-export async function fetchApolloPriceByAssetId (
+export async function fetchApolloPriceByAssetId(
   api: ApiPromise,
   assetId: string
 ): Promise<string> {
-  try {
+  if (isPalletSupported(api)("Oracle")) {
     let data = await api.query.oracle.prices(assetId);
     const decoded: any = data.toJSON();
     return decoded.price;
-  } catch (err: any) {
-    return "0";
   }
-};
+  return "0";
+}
 
-export async function fetchApolloPriceByAssetIds (
+export async function fetchApolloPriceByAssetIds(
   api: ApiPromise,
   assetIds: string[]
 ): Promise<Record<string, BigNumber>> {
@@ -26,7 +26,7 @@ export async function fetchApolloPriceByAssetIds (
       const p = await fetchApolloPriceByAssetId(api, assetId);
       price = new BigNumber(p);
     } catch (err) {
-      console.error(`Error fetching price assetId: ${assetId}, Error: ${err}`)
+      console.error(`Error fetching price assetId: ${assetId}, Error: ${err}`);
     } finally {
       usdPricesRecord[assetId] = price;
     }

@@ -168,6 +168,10 @@ jobs:
           fail_on_unmatched_files: true
           generate_release_notes: true
           body_path: release-artifacts/release.txt
+          # Every release is assumed to be a release candidate("RC") until a runtime upgrade is made,
+          # upon which this needs to be manually set to exclude "RC" postfix
+          name: v${{ env.COMPOSABLE_VERSION }}-RC
+          prerelease: true
           tag_name: v${{ env.COMPOSABLE_VERSION }}
           target_commitish: ${{ steps.fetch_commit_sha.outputs.sha }}
           files: |

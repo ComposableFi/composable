@@ -15,7 +15,6 @@
 	dead_code,
 	bad_style,
 	bare_trait_objects,
-	const_err,
 	improper_ctypes,
 	non_shorthand_field_patterns,
 	no_mangle_generic_items,
@@ -627,10 +626,10 @@ pub mod pallet {
 		) -> DispatchResult {
 			let from = ensure_signed(origin)?;
 			ensure!(Self::vault_info(&vault_idx)?.manager == from, Error::<T>::AccountIsNotManager);
-			let balance = CapitalStructure::<T>::try_get(&vault_idx, &strategy_account_id)
+			let balance = CapitalStructure::<T>::try_get(vault_idx, &strategy_account_id)
 				.map_err(|_err| DispatchError::CannotLookup)?
 				.balance;
-			CapitalStructure::<T>::remove(&vault_idx, &strategy_account_id);
+			CapitalStructure::<T>::remove(vault_idx, &strategy_account_id);
 			Self::deposit_event(Event::LiquidateStrategy {
 				account: strategy_account_id,
 				amount: balance,
@@ -710,13 +709,13 @@ pub mod pallet {
 		fn rent_account(vault_id: T::VaultId) -> T::AccountId {
 			let vault_id: u128 = vault_id.into();
 			T::PalletId::get()
-				.into_sub_account_truncating(&[b"rent_account____", &vault_id.to_le_bytes()])
+				.into_sub_account_truncating([b"rent_account____", &vault_id.to_le_bytes()])
 		}
 
 		fn deletion_reward_account(vault_id: T::VaultId) -> T::AccountId {
 			let vault_id: u128 = vault_id.into();
 			T::PalletId::get()
-				.into_sub_account_truncating(&[b"deletion_account", &vault_id.to_le_bytes()])
+				.into_sub_account_truncating([b"deletion_account", &vault_id.to_le_bytes()])
 		}
 
 		/// Computes the sum of all the assets that the vault currently controls.
@@ -963,7 +962,7 @@ pub mod pallet {
 
 		fn token_vault(token: Self::AssetId) -> Result<Self::VaultId, DispatchError> {
 			let vault_index =
-				LpTokensToVaults::<T>::try_get(&token).map_err(|_| Error::<T>::NotVaultLpToken)?;
+				LpTokensToVaults::<T>::try_get(token).map_err(|_| Error::<T>::NotVaultLpToken)?;
 			Ok(vault_index)
 		}
 
@@ -1003,7 +1002,7 @@ pub mod pallet {
 		) -> Result<FundsAvailability<Self::Balance>, DispatchError> {
 			match (
 				Vaults::<T>::try_get(vault_id),
-				CapitalStructure::<T>::try_get(vault_id, &account),
+				CapitalStructure::<T>::try_get(vault_id, account),
 			) {
 				(Ok(vault), Ok(StrategyOverview { allocation, balance, .. }))
 					if !vault.capabilities.is_stopped() && !vault.capabilities.is_tombstoned() =>

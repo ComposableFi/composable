@@ -1,6 +1,5 @@
 #![recursion_limit = "256"]
 #![feature(sync_unsafe_cell)]
-#![feature(generic_associated_types)]
 #![cfg_attr(
 	not(test),
 	deny(
@@ -18,7 +17,6 @@
 #![deny(
 	bad_style,
 	bare_trait_objects,
-	const_err,
 	improper_ctypes,
 	non_shorthand_field_patterns,
 	no_mangle_generic_items,
@@ -80,6 +78,7 @@ pub mod pallet {
 		collections::{btree_map::Entry, BTreeMap},
 		format,
 		string::String,
+		vec,
 	};
 	use composable_support::abstractions::{
 		nonce::Nonce,
@@ -523,7 +522,7 @@ pub mod pallet {
 			let new_code_id = match new_code_identifier {
 				CodeIdentifier::CodeId(code_id) => code_id,
 				CodeIdentifier::CodeHash(code_hash) =>
-					CodeHashToId::<T>::try_get(&code_hash).map_err(|_| Error::<T>::CodeNotFound)?,
+					CodeHashToId::<T>::try_get(code_hash).map_err(|_| Error::<T>::CodeNotFound)?,
 			};
 			let outcome = EntryPointCaller::<MigrateInput>::setup(who, contract, new_code_id)?
 				.call(&mut shared, Default::default(), message);
@@ -906,7 +905,7 @@ pub mod pallet {
 					let code = PristineCode::<T>::get(code_id).ok_or(Error::<T>::CodeNotFound)?;
 					let module = Self::do_load_module(&code)?;
 					let instrumented_code = Self::do_instrument_code(module)?;
-					InstrumentedCode::<T>::insert(&code_id, instrumented_code);
+					InstrumentedCode::<T>::insert(code_id, instrumented_code);
 					code_info.instrumentation_version = INSTRUMENTATION_VERSION;
 				} else {
 					log::debug!(target: "runtime::contracts", "do_check_for_reinstrumentation: not required");
@@ -918,7 +917,7 @@ pub mod pallet {
 		pub(crate) fn do_load_module(
 			code: &ContractCodeOf<T>,
 		) -> Result<parity_wasm::elements::Module, Error<T>> {
-			parity_wasm::elements::Module::from_bytes(&code).map_err(|e| {
+			parity_wasm::elements::Module::from_bytes(code).map_err(|e| {
 				log::debug!(target: "runtime::contracts", "do_load_module: {:#?}", e);
 				Error::<T>::CodeDecoding
 			})
@@ -1045,7 +1044,7 @@ pub mod pallet {
 				host_functions_by_index: host_functions_definitions
 					.0
 					.into_iter()
-					.flat_map(|(_, modules)| modules.into_iter().map(|(_, function)| function))
+					.flat_map(|(_, modules)| modules.into_values())
 					.collect(),
 				executing_module: module,
 				cosmwasm_env: env,
@@ -1258,7 +1257,7 @@ pub mod pallet {
 			recovery_param: u8,
 		) -> Result<Vec<u8>, ()> {
 			// `recovery_param` must be 0 or 1. Other values are not supported from CosmWasm.
-			if recovery_param > 2 {
+			if recovery_param >= 2 {
 				return Err(())
 			}
 
@@ -1277,11 +1276,12 @@ pub mod pallet {
 				signature_inner
 			};
 
-			// We used `compressed` function here because the api states that this function
-			// needs to return a public key that can be used in `secp256k1_verify` which
-			// takes a compressed public key.
-			sp_io::crypto::secp256k1_ecdsa_recover_compressed(&signature, &message_hash)
-				.map(|val| val.into())
+			sp_io::crypto::secp256k1_ecdsa_recover(&signature, &message_hash)
+				.map(|without_tag| {
+					let mut with_tag = vec![0x04_u8];
+					with_tag.extend_from_slice(&without_tag[..]);
+					with_tag
+				})
 				.map_err(|_| ())
 		}
 
@@ -1290,11 +1290,6 @@ pub mod pallet {
 			signature: &[u8],
 			public_key: &[u8],
 		) -> bool {
-			if signature.len() != SUBSTRATE_ECDSA_SIGNATURE_LEN {
-				return false
-			}
-
-			// Try into a [u8; 32]
 			let message_hash = match message_hash.try_into() {
 				Ok(message_hash) => message_hash,
 				Err(_) => return false,
@@ -1308,8 +1303,8 @@ pub mod pallet {
 				ecdsa::Signature(signature_inner)
 			};
 
-			let public_key = match ecdsa::Public::try_from(public_key) {
-				Ok(public_key) => public_key,
+			let public_key = match libsecp256k1::PublicKey::parse_slice(public_key, None) {
+				Ok(public_key) => ecdsa::Public::from_raw(public_key.serialize_compressed()),
 				Err(_) => return false,
 			};
 
@@ -1321,19 +1316,52 @@ pub mod pallet {
 			signatures: &[&[u8]],
 			public_keys: &[&[u8]],
 		) -> bool {
-			if messages.len() != signatures.len() || signatures.len() != public_keys.len() {
+			let mut messages = messages.to_vec();
+			let mut public_keys = public_keys.to_vec();
+
+			if messages.len() == signatures.len() && messages.len() == public_keys.len() {
+				// Nothing needs to be done
+			} else if messages.len() == 1 && signatures.len() == public_keys.len() {
+				// There can be a single message signed with different signature-public key pairs
+				messages = messages.repeat(signatures.len());
+			} else if public_keys.len() == 1 && messages.len() == signatures.len() {
+				// Single entity(with a public key) might wanna verify different messages
+				public_keys = public_keys.repeat(signatures.len());
+			} else {
+				// Any other case is wrong
 				return false
 			}
 
+			// Each batch verification process is started with `start_batch_verify` and ended with
+			// `finish_batch_verify`. When it is started, it needs to be properly finished. But this
+			// means `finish_batch_verify` will verify the previously pushed verification tasks. We
+			// converted all the public keys and signatures in-front not to unnecessarily verify
+			// previously pushed signatures. (Note that there is no function to ditch the batch
+			// verification early without doing any verification)
+			let mut verify_items = Vec::with_capacity(messages.len());
 			for ((message, signature), public_key) in
 				messages.iter().zip(signatures.iter()).zip(public_keys.iter())
 			{
-				if !(Pallet::<T>::do_ed25519_verify(message, signature, public_key)) {
+				match ((*signature).try_into(), (*public_key).try_into()) {
+					(Ok(signature), Ok(public_key)) =>
+						verify_items.push((signature, message, public_key)),
+					_ => return false,
+				}
+			}
+
+			sp_io::crypto::start_batch_verify();
+
+			for (signature, message, public_key) in verify_items {
+				// This is very unlikely to fail. Because this only fails if the verification task
+				// cannot be spawned internally. Note that the actual verification is only done when
+				// `finish_batch_verify` is called.
+				if !sp_io::crypto::ed25519_batch_verify(&signature, message, &public_key) {
+					let _ = sp_io::crypto::finish_batch_verify();
 					return false
 				}
 			}
 
-			true
+			sp_io::crypto::finish_batch_verify()
 		}
 
 		pub(crate) fn do_ed25519_verify(
@@ -1413,8 +1441,7 @@ pub mod pallet {
 		) -> Result<ContractInfoResponse, CosmwasmVMError<T>> {
 			// TODO: cache or at least check if its current contract and use `self.contract_info`
 			let info = Pallet::<T>::contract_info(&address)?;
-			let code_info =
-				CodeIdToInfo::<T>::get(&info.code_id).ok_or(Error::<T>::CodeNotFound)?;
+			let code_info = CodeIdToInfo::<T>::get(info.code_id).ok_or(Error::<T>::CodeNotFound)?;
 			let ibc_port = if code_info.ibc_capable {
 				Some(Pallet::<T>::do_compute_ibc_contract_port(address))
 			} else {

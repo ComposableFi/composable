@@ -1,7 +1,7 @@
 import { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { ApiPromise } from "@polkadot/api";
-import { encodeAddress } from "@polkadot/util-crypto";
+import { decodeAddress, encodeAddress } from "@polkadot/util-crypto";
 import { useMemo, useState, useEffect, useCallback } from "react";
 import {
   fetchClaimedRewards,
@@ -117,6 +117,11 @@ export const useCrowdloanRewardsClaimableRewards = (
       await api.consts.crowdloanRewards.vestingStep.toNumber();
     const startTimestampOption =
       await api.query.crowdloanRewards.vestingTimeStart();
+
+    if (startTimestampOption.isNone) {
+      return new BigNumber(0)
+    }
+
     const startTimestamp = new BigNumber(startTimestampOption.toString());
     const nowU64 = await api.query.timestamp.now();
     const now = new BigNumber(nowU64.toString());
@@ -159,16 +164,20 @@ export const useCrowdloanRewardsClaimableRewards = (
         isEthAccountEligible ? {
           Ethereum: ethAccount
         } : {
-          RelayChain: picassoAccount
+          RelayChain: encodeAddress(decodeAddress(picassoAccount), SUBSTRATE_NETWORKS.kusama.ss58Format)
         }
       );
       const rewards = rewardsCodec.toJSON() as {
-        vestingPeriod: number | string;
-        total: number | string;
-        claimed: number | string;
-      };
-      const vestingPoint = now.minus(startTimestamp);
+        vestingPeriod: number;
+        total: string;
+        claimed: string;
+      } | null;
 
+      if (!rewards) {
+        return new BigNumber(0);
+      }
+
+      const vestingPoint = now.minus(startTimestamp);
       if (vestingPoint.gt(rewards.vestingPeriod)) {
         return fromChainIdUnit(BigInt(rewards.total))
       } else {

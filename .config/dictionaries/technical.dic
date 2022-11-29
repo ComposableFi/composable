@@ -195,6 +195,7 @@ libwasmvm
 llvm
 localstorage
 loglevel
+lparachain
 lppicapbloother
 mdbook
 MEMLOCK
@@ -274,6 +275,7 @@ pkgs
 plantuml
 Pointable
 polkalaunch
+polkassembly
 popcnt
 Popcnt
 popout
@@ -451,6 +453,8 @@ XCVM
 tmpfs
 nodev
 nosuid
+papaparse
+polkassembly
 tailwindcss
 keyval
 rfdc # really fast deep clone

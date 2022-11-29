@@ -13,7 +13,6 @@
 #![warn(
 	bad_style,
 	bare_trait_objects,
-	const_err,
 	improper_ctypes,
 	non_shorthand_field_patterns,
 	no_mangle_generic_items,
@@ -33,13 +32,11 @@
 pub use pallet::*;
 
 #[cfg(test)]
-mod common_test_functions;
-#[cfg(test)]
-mod dual_asset_constant_product_tests;
-#[cfg(test)]
 mod mock;
 #[cfg(test)]
 mod mock_fnft;
+#[cfg(test)]
+mod test;
 
 pub mod weights;
 
@@ -61,33 +58,25 @@ pub mod pallet {
 		WeightInfo,
 	};
 	use codec::FullCodec;
-	use composable_support::{
-		math::safe::{safe_multiply_by_rational, SafeArithmetic, SafeSub},
-		validation::TryIntoValidated,
-	};
+	use composable_support::math::safe::{safe_multiply_by_rational, SafeArithmetic, SafeSub};
 	use composable_traits::{
-		currency::{CurrencyFactory, LocalAssets, RangeId},
+		currency::{CurrencyFactory, LocalAssets},
 		defi::{CurrencyPair, Rate},
 		dex::{
 			Amm, BasicPoolInfo, Fee, PriceAggregate, RedeemableAssets,
 			RemoveLiquiditySimulationResult,
 		},
-		staking::{
-			lock::LockConfig, ManageStaking, ProtocolStaking, RewardConfig,
-			RewardPoolConfiguration, RewardRate,
-		},
-		time::{ONE_MONTH, ONE_WEEK},
 	};
 	use core::fmt::Debug;
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{
 			fungibles::{Inspect, Mutate, Transfer},
-			Time, TryCollect,
+			Time,
 		},
 		transactional, BoundedBTreeMap, PalletId, RuntimeDebug,
 	};
-	use sp_arithmetic::{fixed_point::FixedU64, FixedPointOperand};
+	use sp_arithmetic::FixedPointOperand;
 
 	use composable_maths::dex::{
 		constant_product::compute_deposit_lp, price::compute_initial_price_cumulative,
@@ -98,8 +87,8 @@ pub mod pallet {
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use sp_runtime::{
-		traits::{AccountIdConversion, BlockNumberProvider, Convert, One, Zero},
-		ArithmeticError, FixedPointNumber, Perbill, Permill,
+		traits::{AccountIdConversion, Convert, One, Zero},
+		ArithmeticError, FixedPointNumber, Permill,
 	};
 	use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 
@@ -218,6 +207,7 @@ pub mod pallet {
 		NotEnoughLiquidity,
 		NotEnoughLpToken,
 		PairMismatch,
+		AssetNotFound,
 		MustBeOwner,
 		InvalidSaleState,
 		InvalidAmount,
@@ -313,23 +303,6 @@ pub mod pallet {
 
 		type MaxStakingDurationPresets: Get<u32>;
 
-		type ManageStaking: ManageStaking<
-			AccountId = AccountIdOf<Self>,
-			AssetId = <Self as Config>::AssetId,
-			BlockNumber = <Self as frame_system::Config>::BlockNumber,
-			Balance = Self::Balance,
-			RewardConfigsLimit = Self::MaxRewardConfigsPerPool,
-			StakingDurationPresetsLimit = Self::MaxStakingDurationPresets,
-			RewardPoolId = Self::AssetId,
-		>;
-
-		type ProtocolStaking: ProtocolStaking<
-			AccountId = AccountIdOf<Self>,
-			AssetId = <Self as Config>::AssetId,
-			Balance = Self::Balance,
-			RewardPoolId = Self::AssetId,
-		>;
-
 		type WeightInfo: WeightInfo;
 
 		/// AssetId of the PICA asset
@@ -339,20 +312,6 @@ pub mod pallet {
 		/// AssetId of the PBLO asset
 		#[pallet::constant]
 		type PbloAssetId: Get<Self::AssetId>;
-
-		/// AssetId of the xToken variant of PICA asset
-		#[pallet::constant]
-		type XPicaAssetId: Get<Self::AssetId>;
-
-		/// AssetId of the xToken variant of PBLO asset
-		#[pallet::constant]
-		type XPbloAssetId: Get<Self::AssetId>;
-
-		#[pallet::constant]
-		type PicaStakeFinancialNftCollectionId: Get<Self::AssetId>;
-
-		#[pallet::constant]
-		type PbloStakeFinancialNftCollectionId: Get<Self::AssetId>;
 
 		#[pallet::constant]
 		type MsPerBlock: Get<u32>;
@@ -556,71 +515,6 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		fn default_lp_staking_pool_config(
-			pool_id: &T::PoolId,
-		) -> Result<
-			RewardPoolConfiguration<
-				AccountIdOf<T>,
-				AssetIdOf<T>,
-				BalanceOf<T>,
-				T::BlockNumber,
-				T::MaxRewardConfigsPerPool,
-				T::MaxStakingDurationPresets,
-			>,
-			DispatchError,
-		> {
-			// let reward_rate = Perbill::from_percent(REWARD_PERCENTAGE); not sure how this
-			// translates to the new model
-			let reward_rate = RewardRate::per_second(T::Convert::convert(0));
-			let pblo_asset_id: T::AssetId = T::PbloAssetId::get();
-			let reward_configs = [(pblo_asset_id, RewardConfig { reward_rate })]
-				.into_iter()
-				.try_collect()
-				.map_err(|_| Error::<T>::StakingPoolConfigError)?;
-			let duration_presets = [
-				(
-					ONE_WEEK,
-					FixedU64::from_rational(101, 100)
-						.try_into_validated()
-						.expect("valid reward multiplier"),
-				),
-				(
-					ONE_MONTH,
-					FixedU64::from_rational(11, 10)
-						.try_into_validated()
-						.expect("valid reward multiplier"),
-				),
-			]
-			.into_iter()
-			.try_collect()
-			.map_err(|_| Error::<T>::StakingPoolConfigError)?;
-			let lock = LockConfig { duration_presets, unlock_penalty: Perbill::from_percent(5) };
-			let five_years_block = 5 * 365 * 24 * 60 * 60 / T::MsPerBlock::get();
-			// NOTE(connor): `start_block` must greater than current block
-			let start_block = frame_system::Pallet::<T>::current_block_number() + 1_u32.into();
-			let end_block = start_block + five_years_block.into();
-			let minimum_staking_amount: T::Balance = T::Convert::convert(2_000_000_u128);
-
-			Ok(RewardPoolConfiguration::RewardRateBasedIncentive {
-				owner: Self::account_id(pool_id),
-				asset_id: Self::lp_token(*pool_id)?,
-				start_block,
-				end_block,
-				reward_configs,
-				lock,
-				share_asset_id: Self::get_x_token_from_pool(*pool_id)?,
-				financial_nft_asset_id: Self::get_financial_nft_from_pool(*pool_id)?,
-				minimum_staking_amount,
-			})
-		}
-
-		#[transactional]
-		fn create_staking_reward_pool(pool_id: &T::PoolId) -> DispatchResult {
-			let lp_pool_config = Self::default_lp_staking_pool_config(pool_id)?;
-			T::ManageStaking::create_staking_pool(lp_pool_config)?;
-			Ok(())
-		}
-
 		/// Note this function does not validate,
 		/// 1. if the pool is created by a valid origin.
 		/// 2. if a pool exists with the same pair already.
@@ -635,7 +529,6 @@ pub mod pallet {
 						FeeConfig::default_from(fee),
 						assets_weights.clone(),
 					)?;
-					Self::create_staking_reward_pool(&pool_id)?;
 					(owner, pool_id, assets_weights)
 				},
 			};
@@ -740,46 +633,17 @@ pub mod pallet {
 			if !fees.owner_fee.is_zero() {
 				T::Assets::transfer(fees.asset_id, who, owner, fees.owner_fee, false)?;
 			}
-			if !fees.protocol_fee.is_zero() {
-				T::ProtocolStaking::transfer_reward(
-					who,
-					&T::PbloAssetId::get(),
-					fees.asset_id,
-					fees.protocol_fee,
-					false,
-				)?;
-			}
+			// TODO: Enable fee disbursal for release 2
+			// if !fees.protocol_fee.is_zero() {
+			// 	T::ProtocolStaking::transfer_reward(
+			// 		who,
+			// 		&T::PbloAssetId::get(),
+			// 		fees.asset_id,
+			// 		fees.protocol_fee,
+			// 		false,
+			// 	)?;
+			// }
 			Ok(())
-		}
-
-		fn get_x_token_from_pool(pool_id: T::PoolId) -> Result<T::AssetId, DispatchError> {
-			// Get token asset ID from pool ID
-			let pool = Self::get_pool(pool_id)?;
-			let token_id = match pool {
-				PoolConfiguration::DualAssetConstantProduct(info) => info.lp_token,
-			};
-
-			// Match token asset ID with xToken asset ID
-			match token_id {
-				x if x == T::PicaAssetId::get() => Ok(T::XPicaAssetId::get()),
-				x if x == T::PbloAssetId::get() => Ok(T::XPbloAssetId::get()),
-				_ => Ok(T::CurrencyFactory::create(RangeId::XTOKEN_ASSETS)?),
-			}
-		}
-
-		fn get_financial_nft_from_pool(pool_id: T::PoolId) -> Result<T::AssetId, DispatchError> {
-			// Get token asset ID from pool ID
-			let pool = Self::get_pool(pool_id)?;
-			let token_id = match pool {
-				PoolConfiguration::DualAssetConstantProduct(info) => info.lp_token,
-			};
-
-			// Match token asset ID with fNFT asset ID
-			match token_id {
-				x if x == T::PicaAssetId::get() => Ok(T::PicaStakeFinancialNftCollectionId::get()),
-				x if x == T::PbloAssetId::get() => Ok(T::PbloStakeFinancialNftCollectionId::get()),
-				_ => Ok(T::CurrencyFactory::create(RangeId::FNFT_ASSETS)?),
-			}
 		}
 
 		fn lp_for_liquidity(
@@ -987,19 +851,26 @@ pub mod pallet {
 			pool_id: Self::PoolId,
 			base_asset: AssetAmount<Self::AssetId, Self::Balance>,
 			quote_asset_id: Self::AssetId,
+			calculate_with_fees: bool,
 		) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
 			match pool {
 				PoolConfiguration::DualAssetConstantProduct(info) => {
-					let res = DualAssetConstantProduct::<T>::do_buy(
-						&info,
-						&pool_account,
-						base_asset,
-						quote_asset_id,
-						false,
-					)?;
-					Ok(SwapResult::new(quote_asset_id, res.1, res.2.asset_id, res.2.fee))
+					let (amount_out, amount_in, fee) =
+						DualAssetConstantProduct::<T>::get_exchange_value(
+							&info,
+							&pool_account,
+							base_asset,
+							quote_asset_id,
+							calculate_with_fees,
+						)?;
+
+					Ok(SwapResult {
+						value: amount_out,
+						// fee = initial_amount - post_fee_amount
+						fee: AssetAmount::new(amount_in.asset_id, fee.fee),
+					})
 				},
 			}
 		}
@@ -1080,52 +951,62 @@ pub mod pallet {
 		) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
-			let (base_amount, owner, fees) = match pool {
+			let (amount_out, amount_in, fee, _owner) = match pool {
 				PoolConfiguration::DualAssetConstantProduct(info) => {
-					// NOTE: lp_fees includes owner_fees.
-					let (base_amount, quote_amount_excluding_lp_fee, fees) =
-						DualAssetConstantProduct::<T>::do_swap(
+					let (amount_out, amount_in, fee) =
+						DualAssetConstantProduct::<T>::get_exchange_value(
 							&info,
 							&pool_account,
 							in_asset,
-							min_receive,
+							min_receive.asset_id,
 							true,
 						)?;
 
 					ensure!(
-						base_amount >= min_receive.amount,
+						amount_out.amount >= min_receive.amount,
 						Error::<T>::CannotRespectMinimumRequested
 					);
+					ensure!(
+						T::Assets::balance(amount_out.asset_id, &pool_account) > amount_out.amount,
+						Error::<T>::NotEnoughLiquidity
+					);
 
+					// Transfer the in asset amount to the pool
 					T::Assets::transfer(
-						in_asset.asset_id,
+						amount_in.asset_id,
 						who,
 						&pool_account,
-						quote_amount_excluding_lp_fee,
+						amount_in.amount,
 						keep_alive,
 					)?;
+					// Transfer swapped value to user
 					T::Assets::transfer(
-						min_receive.asset_id,
+						amount_out.asset_id,
 						&pool_account,
 						who,
-						base_amount,
+						amount_out.amount,
 						false,
 					)?;
-					(base_amount, info.owner, fees)
+
+					(amount_out, amount_in, fee, info.owner)
 				},
 			};
-			Self::disburse_fees(who, &pool_id, &owner, &fees)?;
 			Self::update_twap(pool_id)?;
 			Self::deposit_event(Event::<T>::Swapped {
 				pool_id,
 				who: who.clone(),
-				base_asset: min_receive.asset_id,
-				quote_asset: in_asset.asset_id,
-				base_amount,
-				quote_amount: in_asset.amount,
-				fee: fees,
+				base_asset: amount_out.asset_id,
+				quote_asset: amount_in.asset_id,
+				base_amount: amount_out.amount,
+				quote_amount: amount_in.amount,
+				fee,
 			});
-			Ok(SwapResult::new(min_receive.asset_id, base_amount, fees.asset_id, fees.fee))
+
+			Ok(SwapResult {
+				value: amount_out,
+				// fee = initial_amount - post_fee_amount
+				fee: AssetAmount::new(amount_in.asset_id, fee.fee),
+			})
 		}
 
 		#[transactional]
@@ -1138,45 +1019,43 @@ pub mod pallet {
 		) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
-			let (quote_amount, owner, fees) = match pool {
+			let (amount_sent, _owner, fees) = match pool {
 				PoolConfiguration::DualAssetConstantProduct(info) => {
 					// NOTE: lp_fees includes owner_fees.
-					let (base_amount, quote_amount_including_lp_fee, fees) =
-						DualAssetConstantProduct::<T>::do_buy(
-							&info,
-							&pool_account,
-							out_asset,
-							in_asset_id,
-							true,
-						)?;
+					let (amount_out, amount_sent, fees) = DualAssetConstantProduct::<T>::do_buy(
+						&info,
+						&pool_account,
+						out_asset,
+						in_asset_id,
+						true,
+					)?;
 
 					T::Assets::transfer(
-						in_asset_id,
+						amount_sent.asset_id,
 						who,
 						&pool_account,
-						quote_amount_including_lp_fee,
+						amount_sent.amount,
 						keep_alive,
 					)?;
 					T::Assets::transfer(
-						out_asset.asset_id,
+						amount_out.asset_id,
 						&pool_account,
 						who,
-						base_amount,
+						amount_out.amount,
 						false,
 					)?;
-					(quote_amount_including_lp_fee, info.owner, fees)
+					(amount_sent, info.owner, fees)
 				},
 			};
-			Self::disburse_fees(who, &pool_id, &owner, &fees)?;
 			Self::update_twap(pool_id)?;
 			// TODO (vim): Emit a Buy event
 			Self::deposit_event(Event::<T>::Swapped {
 				pool_id,
 				who: who.clone(),
 				base_asset: out_asset.asset_id,
-				quote_asset: in_asset_id,
+				quote_asset: amount_sent.asset_id,
 				base_amount: out_asset.amount,
-				quote_amount,
+				quote_amount: amount_sent.amount,
 				fee: fees,
 			});
 			// TODO (vim): Return a BuyResult type
@@ -1198,6 +1077,7 @@ pub mod pallet {
 			pool_id,
 			AssetAmount::new(base_asset_id, amount),
 			quote_asset_id,
+			false,
 		)?;
 		Ok(PriceAggregate {
 			pool_id,
