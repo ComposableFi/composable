@@ -24,6 +24,7 @@ Currently, development produces wasted output, misses people's expectations on c
 All work items MUST are entered in ClickUp[CU]
 People tagged or mentioned in CI or watching relevant tasks are expected to respond within 24 working hours. 
 GitHub (GH) issues, GH metions or review requests notifications are good help, but not required. 
+If there is dependency on exteranal our of companu CU work item work or dependcy, it should be accompanied by in CU referencing work item
 If person is not working on CU item during 24 hours (or not going to do so) it changes status to ensure it is NOT  `in progress` item. You should leave comment if you plan to proceed later.
 When task is started to work on, it set to equivalent of `progress state`.
 If you stop any work on item and not going to do any progress, you unassign task from you. Settle expectations by setting some final end status  or set some intermediate status assigned with assiganation other people or do 3, but remove you from assigned and add comentary why you are doing so.
