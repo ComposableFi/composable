@@ -1,7 +1,13 @@
 import { useMobile, useTablet } from "@/hooks/responsive";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import MenuIcon from "@mui/icons-material/Menu";
-import { Breadcrumbs, Typography, useTheme } from "@mui/material";
+import {
+  Breadcrumbs,
+  createTheme,
+  ThemeProvider,
+  Typography,
+  useTheme,
+} from "@mui/material";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -13,6 +19,7 @@ import { NavBar } from "../Organisms";
 import { PolkadotConnect } from "../Organisms/Wallet/PolkadotConnect";
 import { AnimatedCircles } from "@/components/Molecules/AnimatedCircles";
 import NoSSR from "@/components/Atoms/NoSSR";
+import { useMemo } from "react";
 
 type DefaultLayoutProps = {
   breadcrumbs?: React.ReactNode[];
@@ -26,6 +33,25 @@ export const DefaultLayout: React.FC<DefaultLayoutProps> = (props) => {
   const isTablet = useTablet();
   const isMobile = useMobile();
   const theme = useTheme();
+  const walletThemeOverride = useMemo(() => {
+    return createTheme(theme, {
+      components: {
+        MuiDialog: {
+          styleOverrides: {
+            paper: {
+              backgroundColor: theme.palette.background.transparentCharcoal,
+              backdropFilter: "blur(32px)",
+            },
+            root: {
+              "& .MuiBackdrop-root": {
+                backdropFilter: "none",
+              },
+            },
+          },
+        },
+      },
+    });
+  }, [theme]);
   const drawerWidth = isTablet
     ? theme.custom.drawerWidth.tablet
     : theme.custom.drawerWidth.desktop;
@@ -68,7 +94,9 @@ export const DefaultLayout: React.FC<DefaultLayoutProps> = (props) => {
             </IconButton>
             <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
               <NoSSR>
-                <PolkadotConnect />
+                <ThemeProvider theme={walletThemeOverride}>
+                  <PolkadotConnect />
+                </ThemeProvider>
               </NoSSR>
             </Box>
             {!isMobile && breadcrumbs && (
