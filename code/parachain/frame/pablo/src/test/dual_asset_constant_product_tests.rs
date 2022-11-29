@@ -1,10 +1,11 @@
 #[cfg(test)]
 use crate::{
-	common_test_functions::*,
 	dual_asset_constant_product::DualAssetConstantProduct as DACP,
 	mock,
 	mock::{Pablo, *},
-	pallet, Error,
+	pallet,
+	test::common_test_functions::*,
+	Error,
 	PoolConfiguration::DualAssetConstantProduct,
 	PoolInitConfiguration,
 };
@@ -474,6 +475,9 @@ fn fees() {
 
 	});
 }
+
+// NOTE(connor): Ignored until Pablo depends on pallet-staking
+#[ignore]
 #[test]
 fn staking_pool_test() {
 	new_test_ext().execute_with(|| {
