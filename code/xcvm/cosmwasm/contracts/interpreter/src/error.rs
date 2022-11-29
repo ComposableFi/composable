@@ -1,10 +1,19 @@
 use cosmwasm_std::StdError;
 use thiserror::Error;
-use xcvm_core::BridgeSecurity;
+use xcvm_core::{BridgeSecurity, LateBindingError};
 
 impl From<()> for ContractError {
 	fn from(_: ()) -> Self {
 		ContractError::InvalidProgram
+	}
+}
+
+impl From<LateBindingError<ContractError>> for ContractError {
+	fn from(e: LateBindingError<ContractError>) -> Self {
+		match e {
+			LateBindingError::InvalidBinding => ContractError::InvalidBindings,
+			LateBindingError::App(e) => e,
+		}
 	}
 }
 

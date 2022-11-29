@@ -19,8 +19,8 @@ use cw_xcvm_asset_registry::{contract::external_query_lookup_asset, msg::AssetRe
 use num::Zero;
 use proto::Encodable;
 use xcvm_core::{
-	cosmwasm::*, Amount, BindingValue, BridgeSecurity, Destination, Displayed, Funds, NetworkId,
-	Register, SpawnEvent,
+	apply_bindings, cosmwasm::*, Amount, BindingValue, BridgeSecurity, Destination, Displayed,
+	Funds, NetworkId, Register, SpawnEvent,
 };
 use xcvm_proto as proto;
 
@@ -252,44 +252,9 @@ pub fn interpret_call(
 		// Len here is the maximum possible length
 		let mut formatted_call =
 			vec![0; env.contract.address.as_bytes().len() * bindings.len() + payload.len()];
-		// Current index of the unformatted call
-		let mut original_index: usize = 0;
-		// This stores the amount of shifting we caused because of the data insertion. For example,
-		// inserting a contract address "addr1234" causes 8 chars of shift. Which means index 'X' in
-		// the unformatted call, will be equal to 'X + 8' in the output call.
-		let mut offset: usize = 0;
-		for (binding_index, binding) in bindings {
-			let binding_index = binding_index as usize;
-			// Current index of the output call
-			let shifted_index = original_index + offset;
 
-			// Check for overflow
-			// * No need to check if `shifted_index` > `binding_index + offset` because
-			//   `original_index > binding_index` already guarantees that
-			// * No need to check if `shifted_index < formatted_call.len()` because initial
-			//   allocation of `formatted_call` guarantees that even the max length can fit in.
-			// * No need to check if `original_index < encoded_call.len()` because `original_index`
-			//   is already less or equals to `binding_index` and we check if `binding_index` is
-			//   in-bounds.
-			if original_index > binding_index || binding_index + 1 >= payload.len() {
-				return Err(ContractError::InvalidBindings)
-			}
-
-			// Copy everything until the index of where binding happens from original call
-			// to formatted call. Eg.
-			// Formatted call: `{ "hello": "" }`
-			// Output call supposed to be: `{ "hello": "contract_addr" }`
-			// In the first iteration, this will copy `{ "hello": "` to the formatted call.
-			// SAFETY:
-			//     - Two slices are in the same size for sure because `shifted_index` is
-			//		 `original_index + offset` and `binding_index + offset - (shifted_index)`
-			//       equals to `binding_index - original_index`.
-			//     - Index accesses should not fail because we check if all indices are inbounds and
-			//       also if `shifted` and `original` indices are greater than `binding_index`
-			formatted_call[shifted_index..=binding_index + offset]
-				.copy_from_slice(&payload[original_index..=binding_index]);
-
-			let data: Cow<[u8]> = match binding {
+		apply_bindings(payload, bindings, &mut formatted_call, |binding| {
+			let data = match binding {
 				BindingValue::Register(Register::Ip) =>
 					Cow::Owned(format!("{}", IP_REGISTER.load(deps.storage)?).into()),
 				BindingValue::Register(Register::Relayer) =>
@@ -313,19 +278,9 @@ pub fn interpret_call(
 					}
 				},
 			};
+			Ok(data)
+		})?;
 
-			formatted_call[binding_index + offset + 1..=binding_index + offset + data.len()]
-				.copy_from_slice(&data);
-			offset += data.len();
-			original_index = binding_index + 1;
-		}
-		// Copy the rest of the data to the output data
-		if original_index < payload.len() {
-			formatted_call[original_index + offset..payload.len() + offset]
-				.copy_from_slice(&payload[original_index..]);
-		}
-		// Get rid of the final 0's.
-		formatted_call.truncate(payload.len() + offset);
 		serde_json_wasm::from_slice(&formatted_call)
 			.map_err(|_| ContractError::InvalidCallPayload)?
 	} else {
