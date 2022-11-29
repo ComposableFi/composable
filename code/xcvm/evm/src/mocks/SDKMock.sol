@@ -83,7 +83,7 @@ contract SDKMock {
         return SDK.generateSalt(_salt);
     }
 
-    function generateNetwork(uint32 _network) public pure returns (bytes memory network) {
+    function generateNetwork(uint128 _network) public pure returns (bytes memory network) {
         return SDK.generateNetwork(_network);
     }
 

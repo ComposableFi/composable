@@ -360,14 +360,13 @@ library SDK {
         newPos = pos;
     }
 
-    function _handleNetwork(bytes memory program, uint64 pos) internal pure returns (uint256 networkId, uint64 newPos) {
+    function _handleNetwork(bytes memory program, uint64 pos) internal pure returns (uint128 networkId, uint64 newPos) {
         // reading network
         uint64 size;
         bool success;
         (size, pos) = _getMessageLength(program, pos);
-        pos = _checkField(program, 1, ProtobufLib.WireType.Varint, pos);
-        (success, newPos, networkId) = ProtobufLib.decode_uint64(pos, program);
-        require(success, "decode value failed");
+        pos = _checkField(program, 1, ProtobufLib.WireType.LengthDelimited, pos);
+        (networkId, newPos) = _handleUint128(program, pos);
     }
 
     function _handleSecurity(bytes memory program, uint64 pos)
@@ -704,10 +703,10 @@ library SDK {
         );
     }
 
-    function generateNetwork(uint32 _network) public pure returns (bytes memory network) {
+    function generateNetwork(uint128 _network) public pure returns (bytes memory network) {
         return abi.encodePacked(
-            ProtobufLib.encode_key(1, 0),
-            ProtobufLib.encode_uint32(_network)
+            ProtobufLib.encode_key(1, 2),
+            ProtobufLib.encode_length_delimited(abi.encodePacked(generateUint128(_network)))
         );
     }
 
@@ -802,7 +801,7 @@ library SDK {
     // IBC spawn program encoder and decoder
     function generateIBCSpawn(
         bytes memory _account,
-        uint32 _network,
+        uint128 _network,
         bytes memory _salt,
         bytes memory _spawnedProgram,
         uint128[] memory assetIds,
@@ -844,7 +843,7 @@ library SDK {
         (account, pos) = _handleAccount(program, pos);
 
         pos = _checkField(program, 2, ProtobufLib.WireType.LengthDelimited, pos);
-        uint256 networkId;
+        uint128 networkId;
         (networkId, pos) = _handleNetwork(program, pos);
         origin.account = abi.encodePacked(account);
         origin.networkId = uint32(networkId);

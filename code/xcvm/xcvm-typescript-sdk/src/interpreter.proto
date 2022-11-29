@@ -119,7 +119,7 @@ message Salt {
 }
 
 message Network {
-  uint32 networkId = 1;
+  Uint128 networkId = 1;
 }
 
 enum BridgeSecurity {

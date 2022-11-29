@@ -211,7 +211,7 @@ export class XCVM {
 
 
   public createNetwork(networkId: Number): Message<{}> {
-    return this.NetworkMessage.create({networkId: networkId});
+    return this.NetworkMessage.create({networkId: this.convertUint128(networkId)});
   }
 
   public createSalt(salt: string): Message<{}> {
