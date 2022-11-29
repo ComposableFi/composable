@@ -308,7 +308,7 @@ Executes a payload within the execution context of the chain, such as an extrins
 <Call>         ::= <Payload> <Bindings>
 <Payload>      ::= bytes
 <Bindings>     ::= { u16 : <BindingValue> }
-<AssetAmount>  ::= <AssetId> <Balance>
+<AssetAmount>  ::= <AssetId> <Ratio> | <Unit>
 <BindingValue> ::= <Self> | <Relayer> | <Result> | <AssetAmount> | <GlobalId>
 ```
 
