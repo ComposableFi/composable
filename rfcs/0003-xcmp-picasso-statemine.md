@@ -1,5 +1,9 @@
 # Overview
 
+This RFC example payload and flow is legacy.
+
+With a recent upgrade Parity has allowed the opening of channels
+
 Details of Statemine open channel proposal for https://kusama.polkassembly.io/proposal/111
 
 ## Preimage
