@@ -48,8 +48,8 @@ impl membership::Config<NativeTechnicalMembership> for Runtime {
 	type ResetOrigin = EnsureRootOrHalfNativeCouncilOrTechnical;
 	type PrimeOrigin = EnsureRootOrHalfNativeCouncilOrTechnical;
 
-	type MembershipInitialized = TechnicalCollective;
-	type MembershipChanged = TechnicalCollective;
+	type MembershipInitialized = TechnicalCommittee;
+	type MembershipChanged = TechnicalCommittee;
 	type MaxMembers = CouncilMaxMembers;
 	type WeightInfo = weights::membership::WeightInfo<Runtime>;
 }
