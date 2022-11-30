@@ -12,12 +12,15 @@ let
     optionalAttrs = lib.optionalAttrs;
   };
 in with prelude; {
-  mkChannel = sender: recipient: {
+  mkChannel = sender: recipient: [{
     max_capacity = 8;
     max_message_size = 512;
-    recipient = 1000;
-    sender = 2087;
-  };
+    recipient = recipient;
+    sender = sender;
+  }];
+
+  mkBidirectionalChannel = a: b: (mkChannel a b) ++ (mkChannel b a);
+
   mkCollator = { command, name ? "alice", rpc_port ? null, ws_port ? null }:
     {
       command = command;
@@ -58,4 +61,9 @@ in with prelude; {
         }
       ];
     };
+
+  mkParachains = parachains: builtins.map mkParachain parachains;
+  # mkRelaychainNode =
+  # mkRelaychain =
+  # mkZombienet =  
 }
