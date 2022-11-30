@@ -31,6 +31,7 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
   availableToClaim,
   claimedRewards,
   amountContributed,
+  totalRewards,
   picassoAccountName,
   readonlyAvailableToClaim,
   readonlyTotalPicaVested,
@@ -95,13 +96,13 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
                 disabled={readonlyTotalPicaVested}
                 LabelProps={{
                   mainLabelProps: {
-                    label: "Claimed",
+                    label: "Total Rewards",
                     TypographyProps: {
                       fontSize: 16,
                     },
                     TooltipProps: {
                       title:
-                        "This is the total PICA you have claimed so far for your account",
+                        "This is the total PICA rewards based on your crowdloan contribution account.",
                       children: <></>,
                     },
                   },
@@ -135,7 +136,7 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
                     },
                     TooltipProps: {
                       title:
-                        "This is the total PICA rewards based on your crowdloan contribution for this account. This includes your vested amount plus your claimable amount.",
+                        "Unvested includes your claimed amount plus the vested amount available to claim (released) as per the linear vesting of the locked rewards.",
                       children: <></>,
                     },
                   },
