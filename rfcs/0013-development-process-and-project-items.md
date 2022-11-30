@@ -44,6 +44,11 @@ If work item is assigned to several people and in progress. Specific subitem it 
 
 If you want to learn CU, please check [this](https://univerasity.clickup.com/page/course-catalog#level_novice,role_member).
 
-This guidlines compose nicely with per item definition of done or/and acceptance criteria.
+This guidlines compose nicely with per item definition of done or/and acceptance criteria are outliend in each item.
+
+This guideline also compose nicelu with automatically recalculaed Gantt Chart (project "DAG").
+
+### Ghant Chart DAG
+
 
 
