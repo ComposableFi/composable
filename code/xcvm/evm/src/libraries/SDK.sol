@@ -144,21 +144,8 @@ library SDK {
         uint128 assetId;
         (asset, assetId, pos) = _handleAssetId(program, pos, routerAddress);
 
-        (success, pos, field, _type) = ProtobufLib.decode_key(pos, program);
-        require(field == 2 || field == 3, "decode key failed");
-        require(success, "decode key failed");
-        require(_type == ProtobufLib.WireType.LengthDelimited, "decode type is not embedded messages");
-
-        if (field == 2) {
-            // ratio
-            uint256 nominator;
-            uint256 denominator;
-            (nominator, denominator, newPos) = _handleRatio(program, pos);
-            amount = (IERC20(asset).balanceOf(address(this)) * nominator) / denominator;
-        } else if (field == 3) {
-            // unit
-            (amount, newPos) = _handleUnit(program, pos, asset);
-        }
+        pos = _checkField(program, 2, ProtobufLib.WireType.LengthDelimited, pos);
+        (amount, newPos) = _handleBalance(program, asset, pos);
     }
 
     function _handleBalance(
@@ -648,12 +635,12 @@ library SDK {
         );
     }
 
-    function generateAssetAmount(bytes memory assetId, bytes memory ratio) public pure returns (bytes memory assetAmount) {
+    function generateAssetAmount(bytes memory assetId, bytes memory balance) public pure returns (bytes memory assetAmount) {
         return abi.encodePacked(
             ProtobufLib.encode_key(1, 2),
             ProtobufLib.encode_length_delimited(assetId),
             ProtobufLib.encode_key(2, 2),
-            ProtobufLib.encode_length_delimited(ratio)
+            ProtobufLib.encode_length_delimited(balance)
         );
     }
 

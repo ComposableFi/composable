@@ -255,14 +255,14 @@ export class XCVM {
     return this.CallMessage.create({payload: payload, bindings: bindingsMessage});
   }
 
-  public createAssetAmount(assetIdMessage: Message, ratioMessage: Message): Message<{}> {
+  public createAssetAmount(assetIdMessage: Message, balanceMessage: Message): Message<{}> {
     if (assetIdMessage.$type.name != "AssetId") {
       throw this.getTypeError("assetIdMessage", "assetId")
     }
-    if (ratioMessage.$type.name != "Ratio") {
-      throw this.getTypeError("ratioMessage", "ratio")
+    if (balanceMessage.$type.name != "Balance") {
+      throw this.getTypeError("balanceMessage", "balance")
     }
-    return this.AssetAmountMessage.create({assetId: assetIdMessage, ratio: ratioMessage});
+    return this.AssetAmountMessage.create({assetId: assetIdMessage, balance: balanceMessage});
   }
 
   public createSelf(): Message<{}> {
