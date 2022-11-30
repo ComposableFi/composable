@@ -1,6 +1,7 @@
 use crate::{Config, Error, PoolConfiguration, PoolCount, Pools};
-use composable_maths::dex::constant_product::{
-	compute_deposit_lp, compute_in_given_out_new, compute_out_given_in_new,
+use composable_maths::dex::{
+	constant_product::{compute_deposit_lp, compute_in_given_out_new, compute_out_given_in_new},
+	WeightMath,
 };
 use composable_support::math::safe::{SafeAdd, SafeSub};
 use composable_traits::{
@@ -28,13 +29,15 @@ impl<T: Config> DualAssetConstantProduct<T> {
 	) -> Result<T::PoolId, DispatchError> {
 		ensure!(assets_weights.len() == 2, Error::<T>::InvalidPair);
 		let weights = assets_weights.iter().map(|(_, w)| w).copied().collect::<Vec<_>>();
+
+		ensure!(Permill::non_zero_weights(&weights), Error::<T>::WeightsMustBeNonZero);
 		ensure!(
-			weights[0] != Permill::zero() && weights[1] != Permill::zero(),
-			Error::<T>::WeightsMustBeNonZero
-		);
-		ensure!(
-			weights[0].deconstruct() + weights[1].deconstruct() ==
-				Permill::from_percent(100).deconstruct(),
+			if let Some(total_weight) = Permill::sum_weights(&weights) {
+				total_weight.is_one()
+			} else {
+				// If `sum_weights` returns `None`, it overflowed and weights are not normalized
+				false
+			},
 			Error::<T>::WeightsMustSumToOne
 		);
 		ensure!(fee_config.fee_rate < Permill::one(), Error::<T>::InvalidFees);
