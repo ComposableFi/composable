@@ -167,7 +167,7 @@ pub struct Router<T: Config> {
 	_marker: PhantomData<T>,
 }
 
-struct MapBinary(Vec<u8>);
+struct MapBinary(sp_std::vec::Vec<u8>);
 
 impl AsRef<[u8]> for MapBinary {
 	fn as_ref(&self) -> &[u8] {
@@ -289,7 +289,7 @@ impl<T: Config> Router<T> {
 		I: Input + HasInfo,
 		I::Output: serde::de::DeserializeOwned + ReadLimit + DeserializeLimit,
 		V: cosmwasm_vm::vm::VM + ReadWriteMemory + Has<Env> + Has<MessageInfo> + VMBase,
-		<V as VMBase>::Error: std::fmt::Debug,
+		<V as VMBase>::Error: sp_std::fmt::Debug,
 		V::Pointer: for<'x> TryFrom<VmOutputOf<'x, V>, Error = VmErrorOf<V>>,
 		for<'x> Unit: TryFrom<VmOutputOf<'x, V>, Error = VmErrorOf<V>>,
 		for<'x> VmInputOf<'x, V>: TryFrom<AllocateInput<V::Pointer>, Error = VmErrorOf<V>>
@@ -308,7 +308,7 @@ impl<T: Config> Router<T> {
 		_output: &mut ModuleOutputBuilder,
 		packet: &ibc::core::ics04_channel::packet::Packet,
 		relayer: &pallet_ibc::Signer,
-	) -> Result<Vec<u8>, IbcError> {
+	) -> Result<sp_std::vec::Vec<u8>, IbcError> {
 		let address = Self::port_to_address(&packet.destination_port)?;
 		let contract_info = Self::to_ibc_contract(&address)?;
 
@@ -750,7 +750,7 @@ impl<T: Config> ibc_primitives::IbcHandler<AccountIdOf<T>> for NoRelayer<T> {
 
 	fn write_acknowledgement(
 		_packet: &ibc::core::ics04_channel::packet::Packet,
-		_ack: Vec<u8>,
+		_ack: sp_std::vec::Vec<u8>,
 	) -> Result<(), ibc_primitives::Error> {
 		Err(ibc_primitives::Error::Other { msg: Some("not supported".to_string()) })
 	}
