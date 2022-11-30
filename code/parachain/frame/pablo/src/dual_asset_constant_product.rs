@@ -28,7 +28,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		assets_weights: BoundedBTreeMap<T::AssetId, Permill, ConstU32<2>>,
 	) -> Result<T::PoolId, DispatchError> {
 		ensure!(assets_weights.len() == 2, Error::<T>::InvalidPair);
-		let weights = assets_weights.iter().map(|(_, w)| w).copied().collect::<Vec<_>>();
+		let weights = assets_weights.values().copied().collect::<Vec<_>>();
 
 		ensure!(Permill::non_zero_weights(&weights), Error::<T>::WeightsMustBeNonZero);
 		ensure!(
