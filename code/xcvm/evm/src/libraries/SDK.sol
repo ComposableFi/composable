@@ -299,10 +299,10 @@ library SDK {
             newPos = pos + size;
             valueToReplace = abi.encode(address(this));
         } else if (valueType == 2) {
-            //self
+            //relayer
             (success, pos, size) = ProtobufLib.decode_embedded_message(pos, program);
             newPos = pos + size;
-            valueToReplace = abi.encode(address(this));
+            valueToReplace = abi.encode(relayer);
         } else if (valueType == 3) {
             //TODO result
         } else if (valueType == 4) {
