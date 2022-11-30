@@ -63,7 +63,14 @@ in with prelude; {
     };
 
   mkParachains = parachains: builtins.map mkParachain parachains;
-  # mkRelaychainNode =
+  mkRelaychainNode =        {
+        name = "rococo-local-alice";
+        rpc_port = 30444;
+        validator = true;
+        ws_port = 9944;
+      };
+  #mkSettings = 
+  #mkTypes = 
   # mkRelaychain =
   # mkZombienet =  
 }
