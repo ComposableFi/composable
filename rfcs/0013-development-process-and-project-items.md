@@ -45,9 +45,19 @@ People tagged or mentioned in item or anybody from watching an item are expected
 GitHub (GH) issues, GH metions or review requests notifications are good help, but not required.
 Slack notifications are also good will, but optional.
 
+**Will it work?**
+
+CU is very versatile in delivery, email, mobile app, desktop up, browser, watcher and taging.
+Notification table is huge and allows to fine tune every tiny detail of notificaitons. 
+
+That is way more thatn Slack or GH provide. 
+
+
+
 #### Depedencies
 
-If there is dependency on exteranal our of companu CU work item work or dependcy, it should be accompanied by in CU referencing work item
+If there is dependency on exteranal our of companu CU work item work or dependcy, it should be accompanied by in CU referencing work item.
+If one team depends on work of other team, CU added as dependency.
 
 #### Item existence
 
@@ -56,6 +66,8 @@ Repeating, work which is not considered to be done should not be click up item.
 
 CU creation can be dicussed. If dicussion is long and inteream, task to align/decide should be created.
 
+Task created by single person and not tagging any other people should not exists. Consider that to be `at least 1 reviewer` rule for task.  
+
 Non of tasks could created or watched by single person. If task was created you should make watch or tag with explanation people who should be aware of its existence and progress.
 
 If task was created as result of communiction in GH or Slack, refere GH item or Slack dicussion (or people from diucssion) in CU item.
@@ -63,6 +75,13 @@ If task was created as result of communiction in GH or Slack, refere GH item or 
 **Will it work?**
 
 Producer  from Electorns Arts said that in one startip, and it made project managment tool more clean and targeted. 
+
+It is good way to clean up grabage. 
+
+Also it impvoe item description and solvence as at least 2 people are on what this item is about.
+
+
+
 
 #### Item state
 
@@ -77,10 +96,15 @@ If any work was considered to be and decided not to be later, it should be set t
 
 If any item takes more then several days to deliver, split it into subtask with resonable delivery goals.
 If task grows large because of unvoered new items, limit scope of this task deliver and outline new tasks which scope remaining work. Explain why this is done.
-Task created by single person and not tagging any other people should not exists. Consider that to be `at least 1 reviewer` rule for task.  
 If work item is assigned to several people and in progress. Specific subitem it outlined assigned to one person.
 
 ** Will it work?**
+
+It allwos personal process to fin into global work. Also it is very agile to attune to uncovered detiles.
+Smaller task are more predictable, more parallasible.
+Too big items.
+
+Also it clarified who does what.
 
 - One startup i worked (Rust).
 - Half year.
@@ -98,6 +122,8 @@ How it will work without?
 Having boards wich bring several layers of subtasks into meeting based on `tags` and `labels` well compose with subitems creations guidlines outlined above.
 
 ** will it work**?
+
+It allows to fit subtasks into board and ghant chart as soon as these created. 
 
 Only anectodate perosnal evidence. So more tooling appears in that area as time goes.
 
@@ -125,6 +151,10 @@ Running Ghant Chart in it,
 3. Will give nice and visual picture.
 
 As you can see this approach is more automated and scinetic and more maintainble then drawing some `ghang chart` by hand.
+
+LibreOffice.
+
+It well composes with `Substask` creation process.
 
 **Will it work?**
 
