@@ -873,14 +873,11 @@ impl_runtime_apis! {
 			// Override asset data for hardcoded assets that have been manually updated, and append
 			// new assets without duplication
 			foreign_assets.into_iter().fold(assets, |mut acc, mut foreign_asset| {
-				if let Some(i) = acc.iter().position(|asset_i| asset_i.id == foreign_asset.id) {
-					// Assets that have been updated
-					if let Some(asset) = acc.get_mut(i) {
-						// Update asset with data from assets-registry
-						asset.decimals = foreign_asset.decimals;
-						asset.foreign_id = foreign_asset.foreign_id.clone();
-						asset.ratio = foreign_asset.ratio;
-					}
+				if let Some(asset) = acc.iter_mut().find(|asset_i| asset_i.id == foreign_asset.id) {
+					// Update asset with data from assets-registry
+					asset.decimals = foreign_asset.decimals;
+					asset.foreign_id = foreign_asset.foreign_id.clone();
+					asset.ratio = foreign_asset.ratio;
 				} else {
 					foreign_asset.existential_deposit = multi_existential_deposits::<AssetsRegistry>(&foreign_asset.id.into());
 					acc.push(foreign_asset.clone())
