@@ -84,6 +84,9 @@ export const FeaturedBox: React.FC<FeaturedBoxProps> = ({
             )}`
           : undefined
       }
+      sx={{
+        minHeight: "12rem"
+      }}
       borderRadius={isMobile ? undefined : 1}
       {...rest}
     >
