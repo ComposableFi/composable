@@ -28,6 +28,7 @@ std = ["composable-node/std"]
 [workspace]
 exclude = ["utils/extrinsics-docs-scraper", "integration-tests"]
 members = [
+  "cmc-api",
   "parachain/frame/*",
   "integration-tests/local-integration-tests",
   "parachain/node",
