@@ -445,7 +445,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		counterparty_version: &IbcVersion,
 	) -> Result<(), IbcError> {
 		let metadata = ctx
-			.channel_end(&(port_id.clone(), channel_id.clone()).into())
+			.channel_end(&(port_id.clone(), *channel_id))
 			.expect("callback provides only existing connection port pairs; qed");
 		let address = Self::port_to_address(port_id)?;
 		let contract_info = Self::to_ibc_contract(&address)?;
@@ -474,7 +474,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		channel_id: &ChannelId,
 	) -> Result<(), IbcError> {
 		let metadata = ctx
-			.channel_end(&(port_id.clone(), channel_id.clone()).into())
+			.channel_end(&(port_id.clone(), *channel_id))
 			.expect("callback provides only existing connection port pairs; qed");
 		let address = Self::port_to_address(port_id)?;
 		let contract_info = Self::to_ibc_contract(&address)?;
@@ -501,7 +501,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		channel_id: &ChannelId,
 	) -> Result<(), IbcError> {
 		let metadata = ctx
-			.channel_end(&(port_id.clone(), channel_id.clone()).into())
+			.channel_end(&(port_id.clone(), *channel_id))
 			.expect("callback provides only existing connection port pairs; qed");
 		let address = Self::port_to_address(port_id)?;
 		let contract_info = Self::to_ibc_contract(&address)?;
@@ -541,7 +541,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		channel_id: &ChannelId,
 	) -> Result<(), IbcError> {
 		let metadata = ctx
-			.channel_end(&(port_id.clone(), channel_id.clone()).into())
+			.channel_end(&(port_id.clone(), *channel_id))
 			.expect("callback provides only existing connection port pairs; qed");
 		let address = Self::port_to_address(port_id)?;
 		let contract_info = Self::to_ibc_contract(&address)?;
