@@ -5,43 +5,6 @@ export interface XcmAssetLocation {
   interior: V1Junctions
 }
 
-export interface CurrencyPair {
-  base: bigint
-  quote: bigint
-}
-
-export interface Fee {
-  fee: bigint
-  lpFee: bigint
-  ownerFee: bigint
-  protocolFee: bigint
-  assetId: bigint
-}
-
-export type VestingScheduleIdSet = VestingScheduleIdSet_All | VestingScheduleIdSet_One | VestingScheduleIdSet_Many
-
-export interface VestingScheduleIdSet_All {
-  __kind: 'All'
-}
-
-export interface VestingScheduleIdSet_One {
-  __kind: 'One'
-  value: bigint
-}
-
-export interface VestingScheduleIdSet_Many {
-  __kind: 'Many'
-  value: bigint[]
-}
-
-export interface VestingSchedule {
-  vestingScheduleId: bigint
-  window: VestingWindow
-  periodCount: number
-  perPeriod: bigint
-  alreadyClaimed: bigint
-}
-
 export type V1Junctions = V1Junctions_Here | V1Junctions_X1 | V1Junctions_X2 | V1Junctions_X3 | V1Junctions_X4 | V1Junctions_X5 | V1Junctions_X6 | V1Junctions_X7 | V1Junctions_X8
 
 export interface V1Junctions_Here {
@@ -86,20 +49,6 @@ export interface V1Junctions_X7 {
 export interface V1Junctions_X8 {
   __kind: 'X8'
   value: [V1Junction, V1Junction, V1Junction, V1Junction, V1Junction, V1Junction, V1Junction, V1Junction]
-}
-
-export type VestingWindow = VestingWindow_MomentBased | VestingWindow_BlockNumberBased
-
-export interface VestingWindow_MomentBased {
-  __kind: 'MomentBased'
-  start: bigint
-  period: bigint
-}
-
-export interface VestingWindow_BlockNumberBased {
-  __kind: 'BlockNumberBased'
-  start: number
-  period: number
 }
 
 export type V1Junction = V1Junction_Parachain | V1Junction_AccountId32 | V1Junction_AccountIndex64 | V1Junction_AccountKey20 | V1Junction_PalletInstance | V1Junction_GeneralIndex | V1Junction_GeneralKey | V1Junction_OnlyChild | V1Junction_Plurality

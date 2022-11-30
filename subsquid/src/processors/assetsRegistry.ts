@@ -22,15 +22,25 @@ interface AssetUpdatedEvent {
 function getAssetRegisteredEvent(
   event: AssetsRegistryAssetRegisteredEvent
 ): AssetRegisteredEvent {
-  const { assetId, decimals } = event.asV2402;
-  return { assetId, decimals };
+  if (event.isV1200) {
+    return {
+      decimals: 0,
+      ...event.asV1200,
+    };
+  }
+  return event.asV10002;
 }
 
 function getAssetUpdatedEvent(
   event: AssetsRegistryAssetUpdatedEvent
 ): AssetUpdatedEvent {
-  const { assetId, decimals } = event.asV2402;
-  return { assetId, decimals };
+  if (event.isV1200) {
+    return {
+      assetId: event.asV1200.assetId,
+      decimals: 0,
+    };
+  }
+  return event.asV10002;
 }
 
 /**

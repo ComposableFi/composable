@@ -1,27 +1,27 @@
 import { SubstrateProcessor } from "@subsquid/substrate-processor";
 import { TypeormDatabase } from "@subsquid/typeorm-store";
 import { archive, chain } from "./config";
-import {
-  PabloLiquidityAddedEvent,
-  PabloLiquidityRemovedEvent,
-  PabloPoolCreatedEvent,
-  PabloPoolDeletedEvent,
-  PabloSwappedEvent,
-} from "./types/events";
-import {
-  processLiquidityAddedEvent,
-  processLiquidityRemovedEvent,
-  processPoolCreatedEvent,
-  processPoolDeletedEvent,
-  processSwappedEvent,
-} from "./processors/pablo";
-import {
-  processRewardPoolCreatedEvent,
-  processSplitPositionEvent,
-  processStakeAmountExtendedEvent,
-  processStakedEvent,
-  processUnstakedEvent,
-} from "./processors/stakingRewards";
+// import {
+//   PabloLiquidityAddedEvent,
+//   PabloLiquidityRemovedEvent,
+//   PabloPoolCreatedEvent,
+//   PabloPoolDeletedEvent,
+//   PabloSwappedEvent,
+// } from "./types/events";
+// import {
+//   processLiquidityAddedEvent,
+//   processLiquidityRemovedEvent,
+//   processPoolCreatedEvent,
+//   processPoolDeletedEvent,
+//   processSwappedEvent,
+// } from "./processors/pablo";
+// import {
+//   processRewardPoolCreatedEvent,
+//   processSplitPositionEvent,
+//   processStakeAmountExtendedEvent,
+//   processStakedEvent,
+//   processUnstakedEvent,
+// } from "./processors/stakingRewards";
 import {
   processDepositEvent,
   processTransferEvent,
@@ -36,7 +36,7 @@ import {
   processVestingClaimedEvent,
   processVestingScheduleAddedEvent,
 } from "./processors/vestingSchedule";
-import { processOraclePriceChanged } from "./processors/oracle";
+// import { processOraclePriceChanged } from "./processors/oracle";
 import {
   processAssetRegisteredEvent,
   processAssetUpdatedEvent,
@@ -56,30 +56,30 @@ processor.setDataSource({
   chain: chainConnectionString,
 });
 
-processor.addEventHandler("Pablo.PoolCreated", async (ctx) => {
-  const event = new PabloPoolCreatedEvent(ctx);
-  await processPoolCreatedEvent(ctx, event);
-});
-
-processor.addEventHandler("Pablo.PoolDeleted", async (ctx) => {
-  const event = new PabloPoolDeletedEvent(ctx);
-  await processPoolDeletedEvent(ctx, event);
-});
-
-processor.addEventHandler("Pablo.LiquidityAdded", async (ctx) => {
-  const event = new PabloLiquidityAddedEvent(ctx);
-  await processLiquidityAddedEvent(ctx, event);
-});
-
-processor.addEventHandler("Pablo.LiquidityRemoved", async (ctx) => {
-  const event = new PabloLiquidityRemovedEvent(ctx);
-  await processLiquidityRemovedEvent(ctx, event);
-});
-
-processor.addEventHandler("Pablo.Swapped", async (ctx) => {
-  const event = new PabloSwappedEvent(ctx);
-  await processSwappedEvent(ctx, event);
-});
+// processor.addEventHandler("Pablo.PoolCreated", async (ctx) => {
+//   const event = new PabloPoolCreatedEvent(ctx);
+//   await processPoolCreatedEvent(ctx, event);
+// });
+//
+// processor.addEventHandler("Pablo.PoolDeleted", async (ctx) => {
+//   const event = new PabloPoolDeletedEvent(ctx);
+//   await processPoolDeletedEvent(ctx, event);
+// });
+//
+// processor.addEventHandler("Pablo.LiquidityAdded", async (ctx) => {
+//   const event = new PabloLiquidityAddedEvent(ctx);
+//   await processLiquidityAddedEvent(ctx, event);
+// });
+//
+// processor.addEventHandler("Pablo.LiquidityRemoved", async (ctx) => {
+//   const event = new PabloLiquidityRemovedEvent(ctx);
+//   await processLiquidityRemovedEvent(ctx, event);
+// });
+//
+// processor.addEventHandler("Pablo.Swapped", async (ctx) => {
+//   const event = new PabloSwappedEvent(ctx);
+//   await processSwappedEvent(ctx, event);
+// });
 
 processor.addEventHandler("Balances.Transfer", processTransferEvent);
 
@@ -103,26 +103,26 @@ processor.addEventHandler(
 
 processor.addEventHandler("Vesting.Claimed", processVestingClaimedEvent);
 
-processor.addEventHandler(
-  "StakingRewards.RewardPoolCreated",
-  processRewardPoolCreatedEvent
-);
-
-processor.addEventHandler("StakingRewards.Staked", processStakedEvent);
-
-processor.addEventHandler(
-  "StakingRewards.StakeAmountExtended",
-  processStakeAmountExtendedEvent
-);
-
-processor.addEventHandler("StakingRewards.Unstaked", processUnstakedEvent);
-
-processor.addEventHandler(
-  "StakingRewards.SplitPosition",
-  processSplitPositionEvent
-);
-
-processor.addEventHandler("Oracle.PriceChanged", processOraclePriceChanged);
+// processor.addEventHandler(
+//   "StakingRewards.RewardPoolCreated",
+//   processRewardPoolCreatedEvent
+// );
+//
+// processor.addEventHandler("StakingRewards.Staked", processStakedEvent);
+//
+// processor.addEventHandler(
+//   "StakingRewards.StakeAmountExtended",
+//   processStakeAmountExtendedEvent
+// );
+//
+// processor.addEventHandler("StakingRewards.Unstaked", processUnstakedEvent);
+//
+// processor.addEventHandler(
+//   "StakingRewards.SplitPosition",
+//   processSplitPositionEvent
+// );
+//
+// processor.addEventHandler("Oracle.PriceChanged", processOraclePriceChanged);
 
 processor.addEventHandler(
   "AssetsRegistry.AssetRegistered",
