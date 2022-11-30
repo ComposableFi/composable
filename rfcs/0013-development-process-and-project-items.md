@@ -36,6 +36,7 @@ Next is set of guidlines and constrains to operate CU items which are considered
 ### CU guidlines
 
 `ETA` - is 24 working hours
+
 `Item` - CU item 
 
 #### Commnication
@@ -59,6 +60,9 @@ Non of tasks could created or watched by single person. If task was created you 
 
 If task was created as result of communiction in GH or Slack, refere GH item or Slack dicussion (or people from diucssion) in CU item.
 
+**Will it work?**
+
+Producer  from Electorns Arts said that in one startip, and it made project managment tool more clean and targeted. 
 
 #### Item state
 
@@ -69,22 +73,65 @@ If task assigned to you and it is not clear why it was happend, you have 24 work
 If any work was considered to be and decided not to be later, it should be set to end state by current assigen or its manager.
 
 
-### Subitems
+#### Subitems
 
 If any item takes more then several days to deliver, split it into subtask with resonable delivery goals.
 If task grows large because of unvoered new items, limit scope of this task deliver and outline new tasks which scope remaining work. Explain why this is done.
 Task created by single person and not tagging any other people should not exists. Consider that to be `at least 1 reviewer` rule for task.  
 If work item is assigned to several people and in progress. Specific subitem it outlined assigned to one person.
 
+** Will it work?**
+
+- One startup i worked (Rust).
+- Half year.
+
+
+
 ## Notes
 
 This guidlines compose nicely with per item `definition of done` or/and `acceptance criteria` are outliend in each item.
 
+** Will it work? **
+
+How it will work without?
+
 Having boards wich bring several layers of subtasks into meeting based on `tags` and `labels` well compose with subitems creations guidlines outlined above.
+
+** will it work**?
+
+Only anectodate perosnal evidence. So more tooling appears in that area as time goes.
 
 This guideline also compose nicely with automatically recalculaed `Gantt Chart`.
 
 ### Ghant Chart
+
+To undrestand how it composes, need to understand what it is.
+
+Having `inputs`:
+1. Items to things done.
+2. Items on which items depend on. 
+3. Resource units to execute items. Each resource unit has limited single thread time per day. Examle, 2 Rust develope, 1 QA.
+4. Estimates on raw time to be spent to each resource. There is no unqalified not resourced time.
+4.1 Items parent of several items includes only time which it requires to finalise items.
+
+Running Ghant Chart in it,
+1. Will paralelise work as much as possible give dependnecy graph and qualified resources. 
+1.1 So it will estimate work with parallizastion time and avoid mistakes on prediciton based only on linear time of full occupation
+1.2 Will revela resource bottlenecks
+2. It will predict deliver time
+2.1 Changes in items and work will changed predicted time
+2.2. Real time of deliver can be ajuested based on snapshots of previos predicictions taken over the time.
+2.3. And will allow to make feedback look to improve seting up `inputs` better next time.
+3. Will give nice and visual picture.
+
+As you can see this approach is more automated and scinetic and more maintainble then drawing some `ghang chart` by hand.
+
+**Will it work?**
+
+- team
+- estimates
+
+
 
 
 
