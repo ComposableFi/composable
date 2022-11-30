@@ -9,3 +9,14 @@ Arguments:
 Options:
   -h, --help  Print help information
 ```
+
+It exposes the following endpoints:
+
+```
+/healthcheck
+/total_supply
+/circulating_supply
+/explorer_url
+/rich_list_url
+```
+    

@@ -36,7 +36,7 @@
         # 1. Add foo to inputs
         # 2. Add foo as a parameter to the outputs function
         # 3. Add here: foo.flakeModule
-        ./cmc-api/cmc-api.nix
+        ./code/services/cmc-api/cmc-api.nix
         ./code/benchmarks.nix
         ./code/common-deps.nix
         ./code/composable-nodes.nix
