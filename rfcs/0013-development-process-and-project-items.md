@@ -35,22 +35,45 @@ Next is set of guidlines and constrains to operate CU items which are considered
 
 ### CU guidlines
 
-People tagged or mentioned in CI or watching relevant tasks are expected to respond within 24 working hours. 
-GitHub (GH) issues, GH metions or review requests notifications are good help, but not required. 
+`ETA` - is 24 working hours
+`Item` - CU item 
+
+#### Commnication
+
+People tagged or mentioned in item or anybody from watching an item are expected to respond within ETA.
+GitHub (GH) issues, GH metions or review requests notifications are good help, but not required.
+Slack notifications are also good will, but optional.
+
+#### Depedencies
+
 If there is dependency on exteranal our of companu CU work item work or dependcy, it should be accompanied by in CU referencing work item
+
+#### Item existence
+
+Any work which is not considered to be done or planned should not be in CU. 
+Repeating, work which is not considered to be done should not be click up item.
+
+CU creation can be dicussed. If dicussion is long and inteream, task to align/decide should be created.
+
+Non of tasks could created or watched by single person. If task was created you should make watch or tag with explanation people who should be aware of its existence and progress.
+
+If task was created as result of communiction in GH or Slack, refere GH item or Slack dicussion (or people from diucssion) in CU item.
+
+
+#### Item state
+
 If person is not working on CU item during 24 hours (or not going to do so) it changes status to ensure it is NOT  `in progress` item. You should leave comment if you plan to proceed later.
 When task is started to work on, it set to equivalent of `progress state`.
 If you stop any work on item and not going to do any progress, you unassign task from you. Settle expectations by setting some final end status  or set some intermediate status assigned with assiganation other people or do 3, but remove you from assigned and add comentary why you are doing so.
 If task assigned to you and it is not clear why it was happend, you have 24 working hours to ask for clarification.
+If any work was considered to be and decided not to be later, it should be set to end state by current assigen or its manager.
+
+
+### Subitems
+
 If any item takes more then several days to deliver, split it into subtask with resonable delivery goals.
 If task grows large because of unvoered new items, limit scope of this task deliver and outline new tasks which scope remaining work. Explain why this is done.
-Any work which is not considered to be done or planned should not be in CU. 
-If any work was considered to be and decided not to be later, it should be set to end state by current assigen or its manager.
-Repeating, work which is not considered to be done should not be click up item.
-CU creation can be dicussed. If dicussion is long and inteream, task to align/decide should be created.
-Non of tasks could created or watched by single person. If task was created you should make watch or tag with explanation people who should be aware of its existence and progress.
 Task created by single person and not tagging any other people should not exists. Consider that to be `at least 1 reviewer` rule for task.  
-If task was created as result of communiction in GH or Slack, refere GH item or Slack dicussion (or people from diucssion) in CU item.
 If work item is assigned to several people and in progress. Specific subitem it outlined assigned to one person.
 
 ## Notes
