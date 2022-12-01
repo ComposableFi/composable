@@ -1,20 +1,50 @@
 import { FC, useMemo, useState } from "react";
 import {
   formatNumber,
+  getRange,
   head,
   humanBalance,
   PRESET_RANGE,
   PresetRange,
   tail,
 } from "shared";
+import { useQuery } from "@apollo/client";
 import { Box, Typography, useTheme } from "@mui/material";
 import { Chart } from "@/components";
+import {
+  GET_TOTAL_VALUE_LOCKED,
+  TotalValueLocked,
+} from "@/apollo/queries/totalValueLocked";
+import { ChartLoadingSkeleton } from "@/components/Organisms/Stats/ChartLoadingSkeleton";
 
 export const TotalValueLockedChart: FC = () => {
   const theme = useTheme();
   const [interval, setInterval] = useState<PresetRange>("24h");
-  const chartSeries: any[] = useMemo(() => [], []);
+  const [dateFrom, dateTo, intervalQuery] = useMemo(
+    () => getRange(interval),
+    [interval]
+  );
+  const { data, loading, error } = useQuery<TotalValueLocked>(
+    GET_TOTAL_VALUE_LOCKED,
+    {
+      variables: {
+        interval: intervalQuery,
+        dateTo,
+        dateFrom,
+      },
+      pollInterval: 60_000, // Every minute
+    }
+  );
+  const chartSeries: [number, number][] = useMemo(() => {
+    if (!data) return [];
 
+    const tuples: [number, number][] = data.totalValueLocked.map((tvl) => {
+      const date = new Date(tvl.date);
+      return [date.getTime(), tvl.totalValueLocked];
+    });
+
+    return tuples.sort((a, b) => (a[0] > b[0] ? 1 : -1));
+  }, [data]);
   const change = useMemo(() => {
     const first = head(chartSeries);
     const last = tail(chartSeries);
@@ -47,6 +77,14 @@ export const TotalValueLockedChart: FC = () => {
     const first = tail(chartSeries);
     return formatNumber(first?.[1] ?? 0);
   }, [chartSeries]);
+
+  if (loading) {
+    return <ChartLoadingSkeleton />;
+  }
+
+  if (error) {
+    return <>{"error:" + error}</>;
+  }
 
   return (
     <Box sx={{ height: 337 }}>
