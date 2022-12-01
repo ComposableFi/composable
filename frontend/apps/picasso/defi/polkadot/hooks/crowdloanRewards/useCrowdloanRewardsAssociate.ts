@@ -1,5 +1,5 @@
 import { ApiPromise } from "@polkadot/api";
-import { subscanAccountLink } from "../../Networks";
+import { subscanExtrinsicLink } from "../../Networks";
 import { useSnackbar } from "notistack";
 import { useCallback } from "react";
 import { Executor, useSigner } from "substrate-react";
@@ -44,7 +44,7 @@ export function useCrowdloanRewardsAssociate({
       enqueueSnackbar("Claim processing...", {
         variant: "info",
         isClosable: true,
-        url: subscanAccountLink("picasso", selectedPicassoAddress),
+        url: subscanExtrinsicLink("picasso", transactionHash),
       });
     },
     [enqueueSnackbar, selectedPicassoAddress]
@@ -56,7 +56,7 @@ export function useCrowdloanRewardsAssociate({
       enqueueSnackbar("Your claim was successful!", {
         variant: "success",
         isClosable: true,
-        url: subscanAccountLink("picasso", selectedPicassoAddress),
+        url: subscanExtrinsicLink("picasso", transactionHash),
       });
 
       if (api) {
