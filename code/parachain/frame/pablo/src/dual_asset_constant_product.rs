@@ -30,12 +30,12 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		ensure!(assets_weights.len() == 2, Error::<T>::InvalidPair);
 		ensure!(assets_weights.values().non_zero_weights(), Error::<T>::WeightsMustBeNonZero);
 		ensure!(
-			if let Some(total_weight) = assets_weights.values().sum_weights() {
-				total_weight.is_one()
-			} else {
-				// If `sum_weights` returns `None`, it overflowed and weights are not normalized
-				false
-			},
+			assets_weights
+				.values()
+				.sum_weights()
+				.map(|total_weight| total_weight.is_one())
+				// If `None`, `sum_weights` overflowed - weights are not normalized
+				.unwrap_or(false),
 			Error::<T>::WeightsMustSumToOne
 		);
 		ensure!(fee_config.fee_rate < Permill::one(), Error::<T>::InvalidFees);
