@@ -690,29 +690,52 @@ jobs:
         cancel-in-progress: true
       steps:
       - uses: actions/checkout@v3
+        with:
+          clean: false
+          fetch-depth: 0
       - uses: cachix/install-nix-action@v17
         with:
           extra_nix_config: |
             sandbox = relaxed
             narinfo-cache-negative-ttl = 0
-      - uses: "./.github/templates/nix"
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
         with:
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          command: |
-            ( nix run .#devnet-dali 2>&1 & ) | tee devnet-dali.log &
-            until test -f devnet-dali.log; do sleep 1 && echo "waiting network start"; done;
-            ( tail --follow --lines=0  devnet-dali.log & ) | grep --max-count=1 "POLKADOT LAUNCH COMPLETE"
+          skipPush: true
+          installCommand: |
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix nixpkgs.nodejs
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: ${{  env.CACHIX_COMPOSABLE }}
 
-            echo "PATH=$(pwd):$PATH" >> $GITHUB_ENV
-            cd code/integration-tests/runtime-tests
-            npm install -q
-            export ENDPOINT=127.0.0.1:9988 && export ENDPOINT_RELAYCHAIN=127.0.0.1:9944 && npm run test_short 2>&1>runtime-tests.log & RUNTIME_TESTS_PID=$!
-            until test -f runtime-tests.log; do sleep 1 && echo "waiting tests start"; done;
-            tail --follow runtime-tests.log &
-            ( tail --follow --lines=0 runtime-tests.log & ) | ( grep --max-count=5 "API-WS: disconnected from" >stop.log & )
-            ( while : ; do if test $( wc --lines stop.log | cut --delimiter " " --fields 1 ) -gt 4; then kill -9 $RUNTIME_TESTS_PID && echo "Failed" && exit 42; fi; sleep 1; done ) &
-            wait $RUNTIME_TESTS_PID
-            exit $?
+      - run: |
+          # ideally it does:
+          # start first process
+          # start second if and only if first stdout specific string
+          # first stdout await has timeout, any stderr or exit end stdout timeout and shell exits non zero
+          # if first or second second stderr or non zero exited, then end second and first end and shell non zero exit
+          # if second timeouted, then in shell non zero exit
+          # more complicated, stderr by regex X times before exit
+          # if second ended success, first stopped gracefully
+          #
+          # TODO: handle
+          # 🧹 Resolving parachain id...
+          # /nix/store/rfrhfi70ijykigwyaswrwlmfqbxw570g-polkadot-v0.9.27/bin/polkadot build-spec --chain=rococo-local --disable-default-bootnode
+          # 2022-08-25 02:01:57 Building chain spec
+          # ⚠ failed to parse the chain spec
+          ( nix run .#devnet-dali 2>&1 & ) | tee devnet-dali.log &
+          until test -f devnet-dali.log; do sleep 1 && echo "waiting network start"; done;
+          ( tail --follow --lines=0  devnet-dali.log & ) | grep --max-count=1 "POLKADOT LAUNCH COMPLETE"
+          echo "PATH=$(pwd):$PATH" >> $GITHUB_ENV
+          cd code/integration-tests/runtime-tests
+          npm install -q
+          export ENDPOINT=127.0.0.1:9988 && export ENDPOINT_RELAYCHAIN=127.0.0.1:9944 && npm run test_short 2>&1>runtime-tests.log & RUNTIME_TESTS_PID=$!
+          until test -f runtime-tests.log; do sleep 1 && echo "waiting tests start"; done;
+          tail --follow runtime-tests.log &
+          ( tail --follow --lines=0 runtime-tests.log & ) | ( grep --max-count=5 "API-WS: disconnected from" >stop.log & )
+          ( while : ; do if test $( wc --lines stop.log | cut --delimiter " " --fields 1 ) -gt 4; then kill -9 $RUNTIME_TESTS_PID && echo "Failed" && exit 42; fi; sleep 1; done ) &
+          wait $RUNTIME_TESTS_PID
+          exit $?
 
   effects-gate:
       name: "Effect gate, automatically merged if passed"
