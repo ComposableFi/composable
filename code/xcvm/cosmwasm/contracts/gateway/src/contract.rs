@@ -464,15 +464,3 @@ fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> Result<Response, Contr
 	ROUTER.save(deps.storage, &router_address)?;
 	Ok(Response::default())
 }
-
-#[cfg(test)]
-mod tests {
-	use xcvm_core::{Amount, Asset, BridgeSecurity, Funds, Juno, Picasso, ProgramBuilder, PICA};
-	#[test]
-	fn test() {
-		let program = ProgramBuilder::<Picasso, Vec<u8>, Funds>::new(vec![])
-			.transfer(xcvm_core::Destination::Relayer, Funds(Default::default()))
-			.build();
-		println!("{}", serde_json_wasm::to_string(&program).unwrap());
-	}
-}
