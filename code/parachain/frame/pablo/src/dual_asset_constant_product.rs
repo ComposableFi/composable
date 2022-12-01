@@ -1,7 +1,7 @@
 use crate::{Config, Error, PoolConfiguration, PoolCount, Pools};
 use composable_maths::dex::{
 	constant_product::{compute_deposit_lp, compute_in_given_out_new, compute_out_given_in_new},
-	WeightMath,
+	PoolWeightMathExt,
 };
 use composable_support::math::safe::{SafeAdd, SafeSub};
 use composable_traits::{

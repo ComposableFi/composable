@@ -5,7 +5,7 @@ pub mod price;
 #[cfg(test)]
 pub mod tests;
 
-pub trait WeightMath<'t>: PerThing + 't {
+pub trait PoolWeightMathExt<'t>: PerThing + 't {
 	/// Sums all weights in an array. If weights total greater than `Perthing::one()`, returns
 	/// `None`.
 	fn sum_weights(weights: impl IntoIterator<Item = &'t Self>) -> Option<Self>;
@@ -14,7 +14,7 @@ pub trait WeightMath<'t>: PerThing + 't {
 	fn non_zero_weights(weights: impl IntoIterator<Item = &'t Self>) -> bool;
 }
 
-impl<'t, T: PerThing + CheckedAdd + 't> WeightMath<'t> for T {
+impl<'t, T: PerThing + CheckedAdd + 't> PoolWeightMathExt<'t> for T {
 	fn sum_weights(weights: impl IntoIterator<Item = &'t Self>) -> Option<Self> {
 		weights
 			.into_iter()
