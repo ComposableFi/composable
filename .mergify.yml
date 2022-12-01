@@ -22,7 +22,7 @@ pull_request_rules:
           - "#approved-reviews-by>=2"
           - approved-reviews-by=@ComposableFi/core
       - base=main    
-      - files ~= ^code\/parachain\/runtime\/picasso\/(lib\.rs|governance\.rs)
+      - files ~= ^code\/parachain\/runtime\/picasso\/(lib\.rs|governance\.rs|xcmp\.rs)
       - -title~="#wip"
     actions:
       queue:
