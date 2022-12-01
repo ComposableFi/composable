@@ -330,23 +330,59 @@ Indices in bindings must to be **sorted** in an ascending order and **unique**.
 
 Bindings do not support non-byte aligned encodings.
 
-### 2.2.3 Spawn
+### 2.2.3. Spawn
 
 Sends a `Program` to another chain to be executed asynchronously. It is only guaranteed to execute on the specified `Network` if its `Program` contains an instruction that is guaranteed to execute on the `Network` of the `Spawn` context.
 
 ```
-<Spawn>      ::= <Network> <BridgeSecurity> <Salt> <Program> <Assets>
-
 <Network>    ::= u128
 <Salt>       ::= bytes
+
+<Spawn>      ::= <Network> <BridgeSecurity> <Salt> <Program> <Assets>
 ```
 
-### 2.2.3.1 Spawn program through IBC
+Where the **salt** is used by the router while instantiating the interpreter (see section 2.5.2.).
+
+### 2.2.3.1. IBC
+
 Spawned program using IBC based bridges need to be wrapped into packet data before being sent to IBC bridges. Protobuf encoding and decoding is implemented in this case for both sending and receiving packages.
 The packet data is defined as follows:
+
 ```
-<SpawnPackage>      ::= <Account> <Network> <Salt> <Program> <Assets>
+<UserOrigin>        ::= Account Network
+<InterpreterOrigin> ::= Account
+
+<SpawnPackage>      ::= <InterpreterOrigin> <UserOrigin> <Salt> <Program> <Assets>
 ```
+
+Where the **interpreter** is used in when the IBC packet execution fail or timeout to return the locked funds.
+
+### 2.2.3.1.1. Spawn send
+
+The bridge MUST escrow the **assets** transferred.
+
+Upon successful acknowledgement (see section 2.2.3.1.2.), the bridge MUST burn
+the previously escrowed **assets**.
+
+Upon failure acknowledgement (see section 2.2.3.1.2.) or timeout, the bridge
+MUST unescrow and return the **assets** to the **interpreter** (using the
+`InterpreterOrigin`).
+
+### 2.2.3.1.2. Spawn receive
+
+Upon reception of a `SpawnPackage`, the XCVM execution MUST happen on a
+sub-transaction (the transaction MUST not fail even if the execution fails) and
+an XCVM-specific acknowledgement must be committed for the packet:
+- A single byte, `0x00` if unsuccessful
+- A single byte, `0x01` if successful
+
+The bridge MUST mint the **assets** in the Router contract before executing the
+XCVM program.
+
+Note: Assuming we transfer the assets `[asset1 amount1, ..., assetN amountN]`,
+the bridge MUST ensure that the sequence `[mint1, ... mintN, executeProgram]` is
+atomically executed within a sub-transaction. If any error occur, the according
+acknowledgement byte MUST be comitted and the sub-transaction MUST be reverted.
 
 ### 2.2.4. Query
 
@@ -487,6 +523,8 @@ Each program arriving through the `Gateway` is passed to the `Router`, which bec
 Subsequent calls by the same `Origin` will not result in an instantiation, but instead in re-use of the `Interpreter` instance. This allows foreign Origins to maintain state across different protocols, such as managing LP positions.
 
 If no interpreter instance has been created for a given caller, the call to the router must either come from the `IBC`, `XCM`, `OTP` with `Deterministic` security, or a local origin. After the instance has been created, it can be configured to accept other origins by the caller.
+
+For a given XCVM program, its interpreter instance is derived from `Network Account Salt`. This allows users to create different interpreter instances to execute programs against.
 
 ### 2.6. Ownership
 
