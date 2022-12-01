@@ -43,6 +43,6 @@ export async function mintAssetsToWallet(
  * @param Accepts either string or number
  * @returns valid tokens with 12 decimals omitted
  */
-export function Pica(value: string | number) {
+export function Pica(value: string | number | bigint) {
   return BigInt(value) * BigInt(10 ** 12);
 }
