@@ -37,22 +37,11 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+      - uses: "./.github/templates/watch-exec"
         with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          name: ${{  env.CACHIX_COMPOSABLE }}
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-      - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#devnet-initialize-script-picasso-persistent --no-update-lock-file --show-trace -L
-
+          command: nix -- build .#devnet-initialize-script-picasso-persistent
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+  
   common-deps:
     name: "Common dependencies"
     needs:
@@ -64,23 +53,12 @@ jobs:
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
-      # TODO: do composable-nix-os which has experimental-features, proper channel, and cachix installed with composable cache
       - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+      - uses: "./.github/templates/watch-exec"
         with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          name: ${{  env.CACHIX_COMPOSABLE }}
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-      - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#common-deps --no-update-lock-file --show-trace -L
+          command: nix -- build .#common-deps
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+
   build-common-test-deps:
     needs:
       - check-nix
@@ -91,23 +69,11 @@ jobs:
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
-      # TODO: do composable-nix-os which has experimental-features, proper channel, and cachix installed with composable cache
       - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+      - uses: "./.github/templates/watch-exec"
         with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          name: ${{  env.CACHIX_COMPOSABLE }}
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-      - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#common-test-deps --no-update-lock-file --show-trace -L
+          command: nix -- build .#common-test-deps
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   check-nix:
     name: "Check nix"
@@ -148,21 +114,10 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+      - uses: "./.github/templates/watch-exec"
         with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#cargo-fmt-check --no-update-lock-file --show-trace -L
+          command: nix -- build .#cargo-fmt-check
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   taplo-cli-check:
     name: "Taplo cli check"
@@ -174,21 +129,10 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+      - uses: "./.github/templates/watch-exec"
         with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#taplo-cli-check --no-update-lock-file --show-trace -L
+          command: nix -- build .#taplo-cli-check
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   prettier-check:
     name: "Prettier check"
@@ -200,21 +144,10 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+      - uses: "./.github/templates/watch-exec"
         with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#prettier-check --no-update-lock-file --show-trace -L
+          command: nix -- build .#prettier-check
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   nixfmt-check:
     name: "Nixfmt check"
@@ -226,21 +159,10 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+      - uses: "./.github/templates/watch-exec"
         with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#nixfmt-check --no-update-lock-file --show-trace -L
+          command: nix -- build .#nixfmt-check
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   deadnix-check:
     name: "Deadnix check"
@@ -252,21 +174,10 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+      - uses: "./.github/templates/watch-exec"
         with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#deadnix-check --no-update-lock-file --show-trace -L
+          command: nix -- build .#deadnix-check
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   spell-check:
     name: "Spelling check"
@@ -278,22 +189,11 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+      - uses: "./.github/templates/watch-exec"
         with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#spell-check --no-update-lock-file --show-trace -L
-
+          command: nix -- build .#spell-check
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          
   docs-check:
     name: "Docs check"
     runs-on: ubuntu-latest
@@ -304,20 +204,10 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+      - uses: "./.github/templates/watch-exec"
         with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#docs-static --no-update-lock-file --show-trace -L
+          command: nix -- build .#docs-static
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   frontend-check:
     name: "Frontend check"
@@ -329,21 +219,10 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+      - uses: "./.github/templates/watch-exec"
         with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#frontend-static --no-update-lock-file --show-trace -L
+          command: nix -- build .#frontend-static
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   hadolint-check:
     name: "Dockerfiles check"
@@ -359,21 +238,10 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+      - uses: "./.github/templates/watch-exec"
         with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#hadolint-check --no-update-lock-file --show-trace -L
+          command: nix -- build .#hadolint-check
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   cargo-clippy-check:
     name: "Cargo clippy check"
@@ -386,21 +254,10 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+      - uses: "./.github/templates/watch-exec"
         with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#cargo-clippy-check --no-update-lock-file --show-trace -L
+          command: nix -- build .#cargo-clippy-check
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   cargo-deny-check:
     name: "Cargo deny check"
@@ -413,21 +270,10 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+      - uses: "./.github/templates/watch-exec"
         with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#cargo-deny-check --no-update-lock-file --show-trace -L
+          command: nix -- build .#cargo-deny-check
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
 # TODO (vim): Decrease lead time until after release 3
 #  cargo-udeps-check:
@@ -472,21 +318,10 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+      - uses: "./.github/templates/watch-exec"
         with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - run: |
-          cachix watch-exec --jobs 16 --compression-level 0 composable-community nix -- build .#benchmarks-check --no-update-lock-file --show-trace -L
+          command: nix -- build .#benchmarks-check
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   unit-tests:
     name: "Unit Tests"
@@ -504,21 +339,10 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+      - uses: "./.github/templates/watch-exec"
         with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#unit-tests --no-update-lock-file --show-trace -L
+          command: nix -- build .#unit-tests
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
 # TODO (vim): Decrease lead time until after release 3
 #  unit-tests-with-coverage:
@@ -576,63 +400,34 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+      - uses: "./.github/templates/watch-exec"
         with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- run .#benchmarks-once-${{ matrix.runtime }} --no-update-lock-file --show-trace -L
+          command: nix -- run .#benchmarks-once-${{ matrix.runtime }}
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
-  check-simnode:
-    name: "Simnode"
-    needs: package-simnode-tests
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: check-simnode-${{ matrix.runtime }}-${{ github.ref }}
-      cancel-in-progress: true
-    strategy:
-      matrix:
-        runtime: [picasso, composable]
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
-        with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix nixpkgs.python3 nixpkgs.unzip
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - uses: google-github-actions/setup-gcloud@v0
-        with:
-          service_account_key: ${{ secrets.DEPLOY_DALI }}
-          export_default_credentials: true
-      - run: |
-          FILENAME=$(date -d yesterday +'%m-%d-%Y').zip
-          GS_BUCKET="${{ matrix.runtime }}-data-store"
-          gsutil cp gs://$GS_BUCKET/"$FILENAME" .
-          unzip -o "$FILENAME" -d /tmp/db
-          cachix watch-exec -j 16 -c 0 composable-community nix -- run .#simnode-tests-${{ matrix.runtime }} --no-update-lock-file --show-trace -L
+  # Simnode is flaky, enable once not flaky
+  # check-simnode:
+  #   name: "Simnode"
+  #   needs: package-simnode-tests
+  #   runs-on:
+  #     - self-hosted
+  #     - linux
+  #     - x64
+  #     - sre
+  #   concurrency:
+  #     group: check-simnode-${{ matrix.runtime }}-${{ github.ref }}
+  #     cancel-in-progress: true
+  #   strategy:
+  #     matrix:
+  #       runtime: [picasso, composable]
+  #   container:
+  #     image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: "./.github/templates/watch-exec"
+  #       with:
+  #         command: nix -- run .#simnode-tests-${{ matrix.runtime }}
+  #         token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   local-integration-tests:
     name: "Local integration tests"
@@ -651,21 +446,10 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+      - uses: "./.github/templates/watch-exec"
         with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#check-${{ matrix.runtime }}-integration-tests --no-update-lock-file --show-trace -L
+          command: nix -- build .#check-${{ matrix.runtime }}-integration-tests
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   package-simnode-tests:
     name: "Package Simnode Tests"
@@ -681,21 +465,10 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+      - uses: "./.github/templates/watch-exec"
         with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - run: |
-          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#simnode-tests --no-update-lock-file --show-trace -L
+          command: nix -- build .#simnode-tests
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   package-composable-node:
     name: "Package Composable node"
@@ -712,21 +485,10 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+      - uses: "./.github/templates/watch-exec"
         with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#composable-node --no-update-lock-file --show-trace -L
+          command: nix -- build .#composable-node
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   package-composable-bench-node:
     name: "Package Composable bench node"
@@ -742,21 +504,10 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+      - uses: "./.github/templates/watch-exec"
         with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#composable-bench-node --no-update-lock-file --show-trace -L
+          command: nix -- build .#composable-bench-node
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   package-polkadot-node:
     name: "Package Polkadot node"
@@ -772,22 +523,11 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+      - uses: "./.github/templates/watch-exec"
         with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#polkadot-node --no-update-lock-file --show-trace -L
-
+          command: nix -- build .#polkadot-node
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          
   package-statemine-node:
     name: "Package Statemine node"
     runs-on:
@@ -802,21 +542,10 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+      - uses: "./.github/templates/watch-exec"
         with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#statemine-node --no-update-lock-file --show-trace -L
+          command: nix -- build .#statemine-node
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   package-acala-node:
     name: "Package Acala node"
@@ -832,21 +561,10 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+      - uses: "./.github/templates/watch-exec"
         with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#acala-node --no-update-lock-file --show-trace -L
+          command: nix -- build .#acala-node
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   cache-kusama-parachains-devnet:
     name: "Package kusama parachains devnet"
@@ -865,21 +583,10 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+      - uses: "./.github/templates/watch-exec"
         with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#kusama-picasso-karura-devnet --no-update-lock-file --show-trace -L
+          command: nix -- build .#kusama-picasso-karura-devnet
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   cache-devnet-all-dev-local:
     name: "Package Full Devnet"
@@ -900,52 +607,11 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+      - uses: "./.github/templates/watch-exec"
         with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#devnet --no-update-lock-file --show-trace -L
-
-  package-xcvm-minimal:
-    name: "Package XCVM minimal"
-    runs-on: ubuntu-latest
-    concurrency:
-      group: ${{ github.workflow }}-package-xcvm-${{ github.ref }}
-      cancel-in-progress: true
-    continue-on-error: false
-
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
-        with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#junod --no-update-lock-file --show-trace -L
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#gex --no-update-lock-file --show-trace -L
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#wasmswap --no-update-lock-file --show-trace -L
-
+          command: nix -- build .#devnet
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          
   package-price-feed:
     needs: common-deps
     runs-on:
@@ -960,21 +626,10 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+      - uses: "./.github/templates/watch-exec"
         with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#price-feed --no-update-lock-file --show-trace -L
+          command: nix -- build .#price-feed
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   composable-sandbox-container-publish:
     needs:
@@ -991,42 +646,13 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+      - uses: "./.github/templates/docker-publish"
         with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix nixpkgs.docker nixpkgs.docker-buildx
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - uses: docker/login-action@v1
-        with:
+          command: nix -- build .#devnet-container
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-      - run: |
-          # enable required features (see https://github.com/cachix/install-nix-action/issues/19)
-          mkdir -p ~/.config/nix
-          echo "system-features = kvm" >> ~/.config/nix/nix.conf
-      - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#devnet-container --no-update-lock-file --show-trace -L
-          docker load --input ./result
-          # update soon https://github.com/actions/checkout/issues/760
-          git config --global --add safe.directory /__w/composable/composable
-          CONTAINER_NAME=composable-sandbox
-          SHA256=$(sha256sum ./result | cut --delimiter " " --fields 1)
-          COMMIT_SHA=$(git rev-parse HEAD)
-          LOCAL_DOCKER_IMAGE_NAME=composable-devnet-container:latest
-          docker image tag $LOCAL_DOCKER_IMAGE_NAME "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}:${COMMIT_SHA}"
-          docker image tag $LOCAL_DOCKER_IMAGE_NAME "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}:${SHA256}"
-          if [ $(git symbolic-ref HEAD) = "refs/heads/main" ]; then
-            docker image tag $LOCAL_DOCKER_IMAGE_NAME "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}:latest"
-          fi;
-          docker push --all-tags "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}"
+          name: composable-sandbox
 
   composable-bridge-devnet-container-publish:
     name: "Docker composable-bridge-devnet"
@@ -1044,45 +670,13 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+      - uses: "./.github/templates/docker-publish"
         with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix nixpkgs.docker nixpkgs.docker-buildx
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - uses: docker/login-action@v1
-        with:
+          command: nix -- build .#bridge-devnet-dali-container
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-      - run: |
-          # enable required features (see https://github.com/cachix/install-nix-action/issues/19)
-          mkdir -p ~/.config/nix
-          echo "system-features = kvm" >> ~/.config/nix/nix.conf
-      - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#bridge-devnet-dali-container --no-update-lock-file --show-trace -L
-          docker load --input ./result
-
-          # update soon https://github.com/actions/checkout/issues/760
-          git config --global --add safe.directory /__w/composable/composable
-
-          SHA256=$(sha256sum ./result | cut --delimiter " " --fields 1)
-          COMMIT_SHA=$(git rev-parse HEAD)
-          CONTAINER_NAME="composable-bridge-devnet"
-          TEMP_CONTAINER_NAME="${CONTAINER_NAME}-container"
-
-          docker tag "${TEMP_CONTAINER_NAME}:latest" "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}:${SHA256}"
-          docker tag "${TEMP_CONTAINER_NAME}:latest" "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}:${COMMIT_SHA}"
-          if [ $(git symbolic-ref HEAD) = "refs/heads/main" ]; then
-            docker tag "${TEMP_CONTAINER_NAME}:latest" "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}:latest"
-          fi;
-          docker push --all-tags "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}"
+          name: composable-bridge-devnet
 
   devnet-integration-tests:
       name: "Devnet integration tests"
@@ -1130,11 +724,9 @@ jobs:
           # /nix/store/rfrhfi70ijykigwyaswrwlmfqbxw570g-polkadot-v0.9.27/bin/polkadot build-spec --chain=rococo-local --disable-default-bootnode
           # 2022-08-25 02:01:57 Building chain spec
           # ⚠ failed to parse the chain spec
-
           ( nix run .#devnet-dali 2>&1 & ) | tee devnet-dali.log &
           until test -f devnet-dali.log; do sleep 1 && echo "waiting network start"; done;
           ( tail --follow --lines=0  devnet-dali.log & ) | grep --max-count=1 "POLKADOT LAUNCH COMPLETE"
-
           echo "PATH=$(pwd):$PATH" >> $GITHUB_ENV
           cd code/integration-tests/runtime-tests
           npm install -q
@@ -1165,7 +757,8 @@ jobs:
         - cargo-fmt-check
         - taplo-cli-check
         - prettier-check
-        - check-simnode
+        # Simnode is flaky, enable once not flaky
+        # - check-simnode
         - benchmarks-check
         - spell-check
         - docs-check
@@ -1328,31 +921,20 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+      - uses: "./.github/templates/nix"
         with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - run: |
-          cachix watch-exec --jobs 16 --compression-level 0 composable-community nix -- build .#frontend-static-firebase --no-update-lock-file --show-trace -L
-          mkdir -p firebase/picasso/out/
-          mkdir -p firebase/pablo/out/
-          cp -R result/picasso/* firebase/picasso/out/
-          cp -R result/pablo/* firebase/pablo/out/
-          cp frontend/apps/pablo/.firebaserc firebase/pablo/
-          cp frontend/apps/pablo/firebase.json firebase/pablo/
-          cp frontend/apps/picasso/.firebaserc firebase/picasso/
-          cp frontend/apps/picasso/firebase.json firebase/picasso/
-          nix-env -iA nixpkgs.nodejs
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          command: |
+            cachix watch-exec --jobs 16 --compression-level 0 composable-community nix -- build .#frontend-static-firebase --no-update-lock-file --show-trace -L
+            mkdir -p firebase/picasso/out/
+            mkdir -p firebase/pablo/out/
+            cp -R result/picasso/* firebase/picasso/out/
+            cp -R result/pablo/* firebase/pablo/out/
+            cp frontend/apps/pablo/.firebaserc firebase/pablo/
+            cp frontend/apps/pablo/firebase.json firebase/pablo/
+            cp frontend/apps/picasso/.firebaserc firebase/picasso/
+            cp frontend/apps/picasso/firebase.json firebase/picasso/
+            nix-env -iA nixpkgs.nodejs
 
       - name: Deploy Picasso on live channel
         uses: FirebaseExtended/action-hosting-deploy@0f248036885ae672f78587669fa2923f0ef6cac2
@@ -1362,6 +944,7 @@ jobs:
           projectId: picasso-f0d16
           entrypoint: firebase/picasso/
           channelId: live
+
       - name: Deploy Pablo on live channel
         uses: FirebaseExtended/action-hosting-deploy@0f248036885ae672f78587669fa2923f0ef6cac2
         with:
