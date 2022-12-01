@@ -22,12 +22,6 @@ impl<T: PerThing + CheckedAdd> WeightMath for T {
 	}
 
 	fn non_zero_weights(weights: &[Self]) -> bool {
-		for weight in weights {
-			if weight.is_zero() {
-				return false
-			}
-		}
-
-		true
+		weights.iter().all(|weight| !weight.is_zero())
 	}
 }
