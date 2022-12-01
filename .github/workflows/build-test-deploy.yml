@@ -690,6 +690,11 @@ jobs:
         cancel-in-progress: true
       steps:
       - uses: actions/checkout@v3
+      - uses: cachix/install-nix-action@v17
+        with:
+          extra_nix_config: |
+            sandbox = relaxed
+            narinfo-cache-negative-ttl = 0
       - uses: "./.github/templates/nix"
         with:
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -914,7 +919,7 @@ jobs:
           projectId: picasso-f0d16
           entrypoint: firebase/picasso/
           channelId: live
-          
+
       - name: Deploy Pablo on live channel
         uses: FirebaseExtended/action-hosting-deploy@0f248036885ae672f78587669fa2923f0ef6cac2
         with:
