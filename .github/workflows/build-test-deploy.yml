@@ -405,28 +405,29 @@ jobs:
           command: nix -- run .#benchmarks-once-${{ matrix.runtime }}
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
-  check-simnode:
-    name: "Simnode"
-    needs: package-simnode-tests
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: check-simnode-${{ matrix.runtime }}-${{ github.ref }}
-      cancel-in-progress: true
-    strategy:
-      matrix:
-        runtime: [picasso, composable]
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-      - uses: "./.github/templates/watch-exec"
-        with:
-          command: nix -- run .#simnode-tests-${{ matrix.runtime }}
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+  # Simnode is flaky, enable once not flaky
+  # check-simnode:
+  #   name: "Simnode"
+  #   needs: package-simnode-tests
+  #   runs-on:
+  #     - self-hosted
+  #     - linux
+  #     - x64
+  #     - sre
+  #   concurrency:
+  #     group: check-simnode-${{ matrix.runtime }}-${{ github.ref }}
+  #     cancel-in-progress: true
+  #   strategy:
+  #     matrix:
+  #       runtime: [picasso, composable]
+  #   container:
+  #     image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: "./.github/templates/watch-exec"
+  #       with:
+  #         command: nix -- run .#simnode-tests-${{ matrix.runtime }}
+  #         token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   local-integration-tests:
     name: "Local integration tests"
@@ -756,7 +757,8 @@ jobs:
         - cargo-fmt-check
         - taplo-cli-check
         - prettier-check
-        - check-simnode
+        # Simnode is flaky, enable once not flaky
+        # - check-simnode
         - benchmarks-check
         - spell-check
         - docs-check
