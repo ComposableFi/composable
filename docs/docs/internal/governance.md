@@ -74,7 +74,7 @@ Pallets can be configured dependent on protocol needs.
 - Allows voting on a setup **collective** of members.
 - Same as used to setup validators
 
-There are other pallets like `Referenda`, `Society`, `Fellowship`, and `Incentives(bribe)`.
+There are other pallets like `Referenda`, `Society`, `Fellowship`, `Governance Delegation(Incentives)`, `Guild`, `Alliance`.
 
 ## Composable
 
@@ -128,6 +128,8 @@ Steps:
 - `InstantOrigin`(`collective`, `technical`) fast-track referendum for voting
 - `EnactmentPeriod` is overridden by a period that is set to be small in the previous extrinsic call
 
+See example usage for [runtime upgrades](./runtime-upgrades.md)
+
 ### Multisignature proxy setup
 
 Example, imagine we want to get next:
@@ -155,7 +157,7 @@ This way we can have simplified weaker form of `councils` and `fast track democr
 
 ## References
 
-### In polkadot
+### In Parity (Kusama/Polkadot/Common Good Parachains)
 
 - <https://www.shawntabrizi.com/substrate/the-sudo-story-in-substrate/>
 - <https://github.com/AcalaNetwork/Acala/blob/master/runtime/common/src/lib.rs>
@@ -164,10 +166,11 @@ This way we can have simplified weaker form of `councils` and `fast track democr
 - <https://kusama.polkassembly.io/>
 - <https://wiki.polkadot.network/docs/learn-governance>
 - <https://www.youtube.com/watch?v=tBvxn8WfcFI>
+- https://polkadot.network/blog/gov2-polkadots-next-generation-of-decentralised-governance/
 
 ### Others
 
 - <https://vitalik.ca/general/2019/12/07/quadratic.html>
 - <https://vitalik.ca/general/2021/08/16/voting3.html>
-
-
+- https://docs.moonbeam.network/learn/features/governance/
+- https://docs.moonbeam.network/builders/pallets-precompiles/pallets/democracy/
