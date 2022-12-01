@@ -1,9 +1,9 @@
-name: nix
-description: Sets up nix and calls the command without calling watch-exec.
+name: watch-exec
+description: Calls commands within a cachix watch-exec wrapper.
 
 inputs:
   command:
-    description: "The shell command to execute"
+    description: "The shell command to execute within a watch-exec context"
     required: true
   token:
     description: "Cachix auth token"
@@ -29,5 +29,5 @@ runs:
           nix-env -iA nixpkgs.cachix
         name: ${{  env.CACHIX_COMPOSABLE }}
         authToken: "${{ inputs.token }}"
-    - run: ${{ inputs.command }}
+    - run: cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community ${{ inputs.command }} --no-update-lock-file --show-trace -L
       shell: "bash"
