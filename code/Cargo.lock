@@ -9168,6 +9168,7 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "hex-literal",
+ "log 0.4.17",
  "orml-tokens",
  "orml-traits",
  "orml-unknown-tokens",
