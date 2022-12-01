@@ -3038,7 +3038,7 @@ dependencies = [
  "cw20",
  "hex",
  "num",
- "prost 0.11.2",
+ "prost 0.11.3",
  "schemars",
  "serde",
  "serde-json-wasm",
