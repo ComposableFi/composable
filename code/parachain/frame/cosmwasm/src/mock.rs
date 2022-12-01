@@ -1,3 +1,5 @@
+use core::marker::PhantomData;
+
 use crate::*;
 
 use crate::instrument::CostRules;
@@ -15,7 +17,7 @@ use primitives::currency::{CurrencyId, ValidateCurrencyId};
 use sp_core::H256;
 use sp_runtime::{
 	generic,
-	traits::{BlakeTwo256, Convert, IdentityLookup},
+	traits::{AccountIdConversion, BlakeTwo256, Convert, IdentityLookup},
 	AccountId32, DispatchError,
 };
 
@@ -196,6 +198,7 @@ impl Convert<CurrencyId, alloc::string::String> for AssetToDenom {
 
 parameter_types! {
 	pub const CosmwasmPalletId: PalletId = PalletId(*b"cosmwasm");
+	pub IbcRelayerAccount: AccountId = PalletId(*b"centauri").into_account_truncating();
 	pub const ChainId: &'static str = "composable-network-dali";
 	pub const MaxFrames: u32 = 64;
 	pub const MaxCodeSize: u32 = 512 * 1024;
@@ -215,6 +218,32 @@ parameter_types! {
 	pub const ContractStorageByteReadPrice: u32 = 1;
 	pub const ContractStorageByteWritePrice: u32 = 1;
 	pub WasmCostRules: CostRules<Test> = Default::default();
+}
+
+pub struct IbcLoopback<Config> {
+	_marker: PhantomData<Config>,
+}
+
+impl<T: Config> ibc_primitives::IbcHandler<AccountIdOf<T>> for IbcLoopback<T> {
+	fn handle_message(
+		_msg: ibc_primitives::HandlerMessage<AccountIdOf<T>>,
+	) -> Result<(), ibc_primitives::Error> {
+		todo!("loopback")
+	}
+
+	fn latest_height_and_timestamp(
+		_port_id: &::ibc::core::ics24_host::identifier::PortId,
+		_channel_id: &::ibc::core::ics24_host::identifier::ChannelId,
+	) -> Result<(::ibc::Height, ::ibc::timestamp::Timestamp), ibc_primitives::Error> {
+		todo!("loopback")
+	}
+
+	fn write_acknowledgement(
+		_packet: &::ibc::core::ics04_channel::packet::Packet,
+		_ack: Vec<u8>,
+	) -> Result<(), ibc_primitives::Error> {
+		todo!("loopback")
+	}
 }
 
 impl Config for Test {
@@ -247,13 +276,15 @@ impl Config for Test {
 	type UnixTime = Timestamp;
 	type WeightInfo = ();
 	type WasmCostRules = WasmCostRules;
+	type IbcRelayerAccount = IbcRelayerAccount;
+	type IbcRelayer = IbcLoopback<Self>;
 }
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let origin = frame_benchmarking::account("signer", 0, 0xCAFEBABE);
 	let balances: Vec<(AccountId, Balance)> = vec![(origin, 1_000_000_000_000_000_000)];
-	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap().into();
+	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	let genesis = pallet_balances::GenesisConfig::<Test> { balances };
 	genesis.assimilate_storage(&mut t).unwrap();
 	t.into()

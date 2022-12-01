@@ -96,7 +96,7 @@ fn create_wasm_module_with_fns(mut functions: Vec<(Function, Option<u32>)>) -> w
 	.unwrap()
 	.try_into()
 	.unwrap();
-	let wasmi_module = wasmi::Module::from_buffer(wasm_module.code.clone()).unwrap();
+	let wasmi_module = wasmi::Module::from_buffer(wasm_module.code).unwrap();
 	let not_started_module_ref =
 		wasmi::ModuleInstance::new(&wasmi_module, &wasmi::ImportsBuilder::default()).unwrap();
 	not_started_module_ref
@@ -124,7 +124,7 @@ where
 	.unwrap()
 	.try_into()
 	.unwrap();
-	let wasmi_module = wasmi::Module::from_buffer(wasm_module.code.clone()).unwrap();
+	let wasmi_module = wasmi::Module::from_buffer(wasm_module.code).unwrap();
 	let not_started_module_ref =
 		wasmi::ModuleInstance::new(&wasmi_module, &wasmi::ImportsBuilder::default()).unwrap();
 	not_started_module_ref
@@ -203,7 +203,7 @@ where
 			.unwrap()
 			.into();
 	// 2. Properly upload the code (so that the necessary storage items are modified)
-	Cosmwasm::<T>::do_upload(&origin, wasm_module.code.clone().try_into().unwrap()).unwrap();
+	Cosmwasm::<T>::do_upload(&origin, wasm_module.code.try_into().unwrap()).unwrap();
 
 	// 3. Instantiate the contract and get the contract address
 	let contract_addr = EntryPointCaller::<InstantiateInput>::setup::<T>(
@@ -428,7 +428,7 @@ benchmarks! {
 	db_scan {
 		let sender = create_funded_account::<T>("origin");
 		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, info.clone(), vec![]).unwrap();
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, info, vec![]).unwrap();
 	}: {
 		Cosmwasm::<T>::do_db_scan(&mut vm.0).unwrap()
 	}
@@ -436,7 +436,7 @@ benchmarks! {
 	db_next {
 		let sender = create_funded_account::<T>("origin");
 		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, info.clone(), vec![]).unwrap();
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, info, vec![]).unwrap();
 		let iterator = Cosmwasm::<T>::do_db_scan(&mut vm.0).unwrap();
 	}: {
 		Cosmwasm::<T>::do_db_next(&mut vm.0, iterator).unwrap()
@@ -445,7 +445,7 @@ benchmarks! {
 	db_remove {
 		let sender = create_funded_account::<T>("origin");
 		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, info.clone(), vec![]).unwrap();
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, info, vec![]).unwrap();
 		Cosmwasm::<T>::do_db_write(&mut vm.0, "hello".as_bytes(), "world".as_bytes()).unwrap();
 	}: {
 		Cosmwasm::<T>::do_db_remove(&mut vm.0, "hello".as_bytes())
@@ -515,7 +515,7 @@ benchmarks! {
 		let message = "connect all the things";
 		let signature_hex = "dada130255a447ecf434a2df9193e6fbba663e4546c35c075cd6eea21d8c7cb1714b9b65a4f7f604ff6aad55fba73f8c36514a512bbbba03709b37069194f8a4";
 		// let signer_address = "0x12890D2cce102216644c59daE5baed380d84830c";
-		let signature = hex::decode(&signature_hex).unwrap();
+		let signature = hex::decode(signature_hex).unwrap();
 		let mut hasher = Keccak256::new();
 		hasher.update(format!("\x19Ethereum Signed Message:\n{}", message.len()));
 		hasher.update(message);
