@@ -1,12 +1,11 @@
 import { Add } from "@mui/icons-material";
 import {
+  alpha,
   Box,
-  Paper,
+  Button,
   Typography,
   useMediaQuery,
   useTheme,
-  alpha,
-  Button,
 } from "@mui/material";
 import Image from "next/image";
 import { useCallback } from "react";
