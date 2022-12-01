@@ -921,7 +921,11 @@ jobs:
 
   package-xcvm-evm:
     name: "Package XCVM evm sdk"
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
     concurrency:
       group: ${{ github.workflow }}-package-xcvm-evm-${{ github.ref }}
       cancel-in-progress: true
