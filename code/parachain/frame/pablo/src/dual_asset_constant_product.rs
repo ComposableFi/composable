@@ -28,12 +28,9 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		assets_weights: BoundedBTreeMap<T::AssetId, Permill, ConstU32<2>>,
 	) -> Result<T::PoolId, DispatchError> {
 		ensure!(assets_weights.len() == 2, Error::<T>::InvalidPair);
+		ensure!(assets_weights.values().non_zero_weights(), Error::<T>::WeightsMustBeNonZero);
 		ensure!(
-			Permill::non_zero_weights(assets_weights.values()),
-			Error::<T>::WeightsMustBeNonZero
-		);
-		ensure!(
-			if let Some(total_weight) = Permill::sum_weights(assets_weights.values()) {
+			if let Some(total_weight) = assets_weights.values().sum_weights() {
 				total_weight.is_one()
 			} else {
 				// If `sum_weights` returns `None`, it overflowed and weights are not normalized
