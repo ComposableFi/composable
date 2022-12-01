@@ -11,14 +11,14 @@ export default class MyDocument extends Document {
       <Html lang="en">
         <Head>
           {/* PWA Related */}
-          <meta name="application-name" content="PWA App" />
+          <meta name="application-name" content="Composable Finance Pablo DEX" />
           <meta name="apple-mobile-web-app-capable" content="yes" />
           <meta
             name="apple-mobile-web-app-status-bar-style"
             content="default"
           />
-          <meta name="apple-mobile-web-app-title" content="PWA App" />
-          <meta name="description" content="Best PWA App in the world" />
+          <meta name="apple-mobile-web-app-title" content="Composable Finance Pablo DEX" />
+          <meta name="description" content="The decentralized exchange for crosschain liquidity in DotSama" />
           <meta name="format-detection" content="telephone=no" />
           <meta name="mobile-web-app-capable" content="yes" />
           <meta
@@ -57,30 +57,30 @@ export default class MyDocument extends Document {
             sizes="16x16"
             href="/icons/favicon-16x16.png"
           />
-          <link rel="manifest" href="/frontend/apps/pablo/public/manifest.json" />
+          <link rel="manifest" href="/manifest.json" />
           <link
             rel="mask-icon"
             href="/icons/safari-pinned-tab.svg"
             color="#5bbad5"
           />
-          <link rel="shortcut icon" href="/frontend/apps/pablo/public/favicon.ico" />
+          <link rel="shortcut icon" href="/favicon.ico" />
           <meta name="twitter:card" content="summary" />
-          <meta name="twitter:url" content="https://yourdomain.com" />
-          <meta name="twitter:title" content="PWA App" />
+          <meta name="twitter:url" content="https://pablo.xyz" />
+          <meta name="twitter:title" content="Composable Finance Pablo DEX" />
           <meta
             name="twitter:description"
-            content="Best PWA App in the world"
+            content="The decentralized exchange for crosschain liquidity in DotSama"
           />
           <meta
             name="twitter:image"
             content="https://yourdomain.com/icons/android-chrome-192x192.png"
           />
-          <meta name="twitter:creator" content="@DavidWShadow" />
+          <meta name="twitter:creator" content="@picasso_network" />
           <meta property="og:type" content="website" />
-          <meta property="og:title" content="PWA App" />
-          <meta property="og:description" content="Best PWA App in the world" />
-          <meta property="og:site_name" content="PWA App" />
-          <meta property="og:url" content="https://yourdomain.com" />
+          <meta property="og:title" content="Composable Finance Pablo DEX" />
+          <meta property="og:description" content="The decentralized exchange for crosschain liquidity in DotSama" />
+          <meta property="og:site_name" content="Composable Finance Pablo DEX" />
+          <meta property="og:url" content="https://pablo.xyz" />
           <meta
             property="og:image"
             content="https://yourdomain.com/icons/apple-touch-icon.png"
