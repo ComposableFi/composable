@@ -15,7 +15,8 @@ stand to gain from. We really only have two types of currencies native
 (mintable) and non-native (external). However, we currently have many more 
 ranges that enforce artificial limitations on various abstractions of these two 
 currency types. This complicates the currency creation process and leads to 
-confusion while providing no benefit to us.
+confusion while providing no benefit to us. 
+Since asset IDs aren't intended for human consumption, there is no requirement for them to be "easily consumable" - the end user should be concerned with the asset's _symbol_, not it's id.
 
 ### No Permissionless Asset Creation
 
@@ -51,23 +52,22 @@ enforce in a future solution.
 ## Solution Proposals
 
 There are multiple ways we could go about replacing Currency Factory. Possible 
-solutions are not necessarily exclusive (i.e. we could implement multiple). 
+solutions are not necessarily mutually exclusive (i.e. we could implement multiple). 
 These solutions are detailed below:
 
 ### Simplify & Move the Asset ID Reservation System
 
 One way to remove the need for pallet-currency-factory is to move its 
 functionality to pallet-asset-registry. If we also simplify the asset ID 
-reservation system, this will be a minimal change.
+reservation system to no longer use predefined ranges, this will be a minimal change.
 
-This keeps the functionality of Currency Factory around but removes the need for
-another pallet. This does not enable premissionless asset creation without the
+This retains the functionality of Currency Factory, and does not require a new pallet. However, this does not enable permissionless asset creation without the
 need for more design.
 
 #### Technical Implementation
 
 Instead of reserving asset IDs via our current range system, we could simply 
-have a nonce for reserving new asset IDs while ensuring a lack of collisions. 
+have one nonce for reserving new asset IDs, which would (by the definition of a nonce) ensure no collisions. 
 This nonce can start at an arbitrary but high number so that our hard-coded 
 asset IDs are still safe. This would reduce the complexity of our current 
 reservation system while still avoiding collision.
