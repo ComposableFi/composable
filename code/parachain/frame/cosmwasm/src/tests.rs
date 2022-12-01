@@ -36,7 +36,7 @@ fn secp256k1_verify_verifies() {
 		let message = hex::decode(SECP256K1_MESSAGE_HEX).unwrap();
 		let signature = hex::decode(SECP256K1_SIGNATURE_HEX).unwrap();
 		let public_key = hex::decode(SECP256K1_PUBLIC_KEY_HEX).unwrap();
-		let hash = Sha256::digest(&message);
+		let hash = Sha256::digest(message);
 
 		assert!(Cosmwasm::do_secp256k1_verify(&hash, &signature, &public_key))
 	})
@@ -48,7 +48,7 @@ fn secp256k1_verify_fails() {
 		let message = hex::decode(SECP256K1_MESSAGE_HEX).unwrap();
 		let mut signature = hex::decode(SECP256K1_SIGNATURE_HEX).unwrap();
 		let public_key = hex::decode(SECP256K1_PUBLIC_KEY_HEX).unwrap();
-		let hash = Sha256::digest(&message);
+		let hash = Sha256::digest(message);
 
 		*signature.last_mut().unwrap() += 1;
 
@@ -69,7 +69,7 @@ fn secp256k1_recover_pubkey_works() {
 		let (recovery, signature) = signature.split_last().unwrap();
 
 		let recovered_pubkey =
-			Cosmwasm::do_secp256k1_recover_pubkey(&message_hash, &signature, *recovery - 27)
+			Cosmwasm::do_secp256k1_recover_pubkey(&message_hash, signature, *recovery - 27)
 				.unwrap();
 		let recovered_pubkey_hash = Keccak256::digest(&recovered_pubkey[1..]);
 
