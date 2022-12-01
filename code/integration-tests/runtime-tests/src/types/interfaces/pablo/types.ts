@@ -2,8 +2,8 @@
 /* eslint-disable */
 
 import type { ComposableTraitsDefiCurrencyPairCurrencyId, CustomRpcBalance, CustomRpcCurrencyId, SafeRpcWrapper } from '@composable/types/interfaces/common';
-import type { Enum, Null, Struct, u128, u16 } from '@polkadot/types-codec';
-import type { AccountId32, BlockNumber, Permill } from '@polkadot/types/interfaces/runtime';
+import type { BTreeMap, Enum, Null, Struct, u128, u16 } from '@polkadot/types-codec';
+import type { AccountId32, AssetId, Balance, BlockNumber, Permill } from '@polkadot/types/interfaces/runtime';
 
 /** @name ComposableTraitsDexFee */
 export interface ComposableTraitsDexFee extends Struct {
@@ -71,5 +71,10 @@ export interface PalletPabloPriceCumulative extends Null {}
 
 /** @name PalletPabloTimeWeightedAveragePrice */
 export interface PalletPabloTimeWeightedAveragePrice extends Null {}
+
+/** @name RemoveLiquiditySimulationResult */
+export interface RemoveLiquiditySimulationResult extends Struct {
+  readonly assets: BTreeMap<AssetId, Balance>;
+}
 
 export type PHANTOM_PABLO = 'pablo';
