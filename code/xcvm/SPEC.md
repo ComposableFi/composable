@@ -24,8 +24,8 @@ document authors. All rights reserved.
 
 # Table of Contents
 
-<!-- 
-generated using https://ecotrust-canada.github.io/markdown-toc/ 
+<!--
+generated using https://ecotrust-canada.github.io/markdown-toc/
 -->
 
 - [Abstract](#abstract)
@@ -151,7 +151,7 @@ Commonly used terms in this document are described below.
 
 ## 1.3.  Notational Conventions
 
-This document makes ample usage of a pseudo-Backus-Naur form to describe the format of messages and instructions without yet specifying the exact encoding. 
+This document makes ample usage of a pseudo-Backus-Naur form to describe the format of messages and instructions without yet specifying the exact encoding.
 
 ### 1.3.1. Types
 A type is defined using `::=` and referenced using angle brackets `<>`, unless it is a primitive type:
@@ -257,13 +257,13 @@ sequenceDiagram
 
 ## 2.2. Instruction Set
 
-Messages executed by the `XCVM` follow the `Program` format. 
+Messages executed by the `XCVM` follow the `Program` format.
 
 ```
 <Program> ::= <Tag> [<Instruction>]
 
 <Tag> ::= bytes
-<Instruction> ::= 
+<Instruction> ::=
     <Transfer>
     | <Call>
     | <Spawn>
@@ -293,7 +293,7 @@ Transfers funds within a chain between accounts.
 <Assets>       ::= { <AssetId> : <Balance> }
 <AssetId>      ::= <GlobalId> | <LocalId>
 <GlobalId>     ::= u128
-<LocalId>      ::= bytes 
+<LocalId>      ::= bytes
 <Balance>      ::= <Ratio> | <Absolute> | <Unit>
 <Absolute>     ::= u128
 <Unit>         ::= u128 Ratio
@@ -317,7 +317,7 @@ Executes a payload within the execution context of the chain, such as an extrins
 The call instruction supports bindings values on the executing side of the program by specifying the `Bindings`. This allows us to construct a program that uses data only available on the executing side. For example, the swap call of the following smart contract snippet expects a `to` address to receive the funds after a trade.
 
 ```rust
-fn swap(amount: u256, pair: (u128, u128), to: AccountId) { ... } 
+fn swap(amount: u256, pair: (u128, u128), to: AccountId) { ... }
 ```
 
 If the caller wants to swap funds from the interpreter account and receive the funds into the interpreter account, we need to specify the BindingValue `Self`, using the index of the `to` field for the serialized data being passed to the smart contract.
@@ -332,7 +332,7 @@ Bindings do not support non-byte aligned encodings.
 
 ### 2.2.3 Spawn
 
-Sends a `Program` to another chain to be executed asynchronously. It is only guaranteed to execute on the specified `Network` if its `Program` contains an instruction that is guaranteed to execute on the `Network` of the `Spawn` context. 
+Sends a `Program` to another chain to be executed asynchronously. It is only guaranteed to execute on the specified `Network` if its `Program` contains an instruction that is guaranteed to execute on the `Network` of the `Spawn` context.
 
 ```
 <Spawn>      ::= <Network> <BridgeSecurity> <Salt> <Program> <Assets>
@@ -342,7 +342,7 @@ Sends a `Program` to another chain to be executed asynchronously. It is only gua
 ```
 
 ### 2.2.3.1 Spawn program through IBC
-Spawned program using IBC based bridges need to be wrapped into packet data before being sent to IBC bridges. Protobuf encoding and decoding is implemented in this case for both sending and receiving packages. 
+Spawned program using IBC based bridges need to be wrapped into packet data before being sent to IBC bridges. Protobuf encoding and decoding is implemented in this case for both sending and receiving packages.
 The packet data is defined as follows:
 ```
 <SpawnPackage>      ::= <Account> <Network> <Salt> <Program> <Assets>
@@ -361,9 +361,9 @@ Queries register values of an `XCVM` instance across chains. It sets the current
 
 Amounts of assets can be specified using the `Balance` type. This allows foreign programs to specify sending a part of the total amount of funds using `Ratio`, or express the amounts in the canonical unit of the asset: `Unit`,  or if the caller is aware of the number of decimals of the assets on the destination side: `Absolute`.
 
-## 2.4. Abstract Virtual Machine 
+## 2.4. Abstract Virtual Machine
 
-Each `XCVM` instance is a bytecode interpreter with a limited set of specialized registers. 
+Each `XCVM` instance is a bytecode interpreter with a limited set of specialized registers.
 
 ### 2.4.1 Registers
 
@@ -379,17 +379,17 @@ Each interpreter keeps track of persistent states during and across executions, 
 The result register contains the result of the last executed instruction.
 
 ```
-<ResultRegister> ::= 
-    <Error> 
+<ResultRegister> ::=
+    <Error>
     | <ExecutionResult>
 
-<Error ::= 
-    <CallError> 
+<Error ::=
+    <CallError>
     | <TransferError>
     | <SpawnError>
     | <QueryError>
 
-<ExecutionResult> ::= 
+<ExecutionResult> ::=
     <Ok> | bytes
 <Ok> ::= '0'
 
@@ -429,9 +429,9 @@ The version register contains the semantic version of the contract code, which c
 
 ### 2.4.5 Program Execution Semantics
 
-Execution of a program is a two-stage process. First, the virtual machine MUST verify that the caller is allowed to execute programs for that specific instance, by verifying that the caller is one of the owners. See section XYZ for ownership semantics. Second, the RelayerRegister must be set. Third, the instructions are iterated over and executed. Implementors MUST execute each instruction in the provided order and MUST update the IP register after each instruction is executed. After each instruction is executed, the result register MUST be set to the return value of the instruction. The interpreter SHOULD NOT mangle the return values but store them as returned. Because the return values are chain specific, the actual structure is left *undefined*. 
+Execution of a program is a two-stage process. First, the virtual machine MUST verify that the caller is allowed to execute programs for that specific instance, by verifying that the caller is one of the owners. See section XYZ for ownership semantics. Second, the RelayerRegister must be set. Third, the instructions are iterated over and executed. Implementors MUST execute each instruction in the provided order and MUST update the IP register after each instruction is executed. After each instruction is executed, the result register MUST be set to the return value of the instruction. The interpreter SHOULD NOT mangle the return values but store them as returned. Because the return values are chain specific, the actual structure is left *undefined*.
 
-If an error is encountered by executing an instruction, the defined transactional behavior for that instruction should be abided by. All instructions defined in this document require the transaction to be aborted on failure, however, subsequent addendums may define new instructions with different behavior. 
+If an error is encountered by executing an instruction, the defined transactional behavior for that instruction should be abided by. All instructions defined in this document require the transaction to be aborted on failure, however, subsequent addendums may define new instructions with different behavior.
 
 After the final instruction has been executed and registers are set, the execution stops and the transaction ends.
 
@@ -448,10 +448,10 @@ Each chain contains a bridge aggregator contract (`Gateway`), which abstracts ov
 The `Gateway` is configured to label bridges with different security levels. We define three security levels as of now:
 
 ```
-<BridgeSecurity> ::= 
-    <Deterministic> 
-    | <Probabilistic> 
-    | <Optimistic> 
+<BridgeSecurity> ::=
+    <Deterministic>
+    | <Probabilistic>
+    | <Optimistic>
 ```
 
 - `Deterministic` bridges are light client based using a consensus protocol that has deterministic finality (IBC and XCM). Messages arriving from these bridges MUST never be fraudulent.
@@ -497,7 +497,7 @@ XCVM interpreter instances maintain a set of owners.
 <Identity> ::= <Network> <Account>
 ```
 
-Programs are only executed by the interpreter if the caller is in the set of owners. 
+Programs are only executed by the interpreter if the caller is in the set of owners.
 
 On initial instantiation of the `XCVM` interpreter, the calling `Identity` is the owner. This can be a local or foreign account, depending on the origin. The owning `Identity` has total control of the interpreter instance and the funds held and can make delegate calls from the instance's account.
 
@@ -554,10 +554,10 @@ The design specification currently does not take NFTs into account. We have chos
 
 ## 6.2. Name Service
 
-The `CNS` provides an abstraction on top of the `Identity` system, allowing developers and users to use a single name across interpreter instances. Each `XCVM` chain contains a `CNS` registry, which maps `Identity` to `Name`. On bridge relays, the calling program can specify to use an associated `Name` instead of its `Identity`. The `XCVM` interpreter has to be configured to accept the `CNS` as an owner. 
+The `CNS` provides an abstraction on top of the `Identity` system, allowing developers and users to use a single name across interpreter instances. Each `XCVM` chain contains a `CNS` registry, which maps `Identity` to `Name`. On bridge relays, the calling program can specify to use an associated `Name` instead of its `Identity`. The `XCVM` interpreter has to be configured to accept the `CNS` as an owner.
 
 ```
-<Name> ::= bytes 
+<Name> ::= bytes
 ```
 
 We will later elaborate on using alternative name registries such as [`ENS`](https://ens.domains/).
@@ -583,7 +583,7 @@ Using insecure bridges such as LayerZero or Wormhole is equivalent to adding the
 fn execute(&mut self, sender: Account, relayer: Account, caller: Identity, instructions: Vec<u8>) {
     assert_eq!(sender, ROUTER::ACCOUNT);
     assert!(self.owners.contains(&caller))
-    
+
     // reset the IP from the last execution
     self.IP = 0;
     self.relayer = relayer;
@@ -610,7 +610,7 @@ Concretely, we want to execute the following operations:
 - Reward the relayer, to incentivize execution.
 - Send funds back.
 
-Since we might not know the current interest rates, we'll use relative values for fund transfers, instead of absolute ones. 
+Since we might not know the current interest rates, we'll use relative values for fund transfers, instead of absolute ones.
 
 For this example, we have the source initiator be a regular user, however, a smart contract is capable of executing the same operations.
 
@@ -642,7 +642,7 @@ Spawn XYZ BridgeSecurity::Deterministic 0 [
    Transfer Relayer USDC Unit 50,               // 50 bucks for the fee. The relayer earns this if the inner spawn is dispatched.
    Spawn HOME BridgeSecurity::Deterministic 0 [
        Transfer Relayer USDC Unit 50            // Another 50 bucks fee for the operation, but now reverse direction.
-       Transfer USER { USDC: Ratio::ALL }       // On ABC, we transfer all USDC to the user. 
+       Transfer USER { USDC: Ratio::ALL }       // On ABC, we transfer all USDC to the user.
        ] { USDC: ALL },                         // We send over all our USDC back to ABC.
    ] { DOT: UNIT 100 },                         // We send over 100 DOT from ABC to XYZ.
 ```
@@ -654,7 +654,7 @@ Spawn XYZ BridgeSecurity::Deterministic 0 [
 - Abdullah Eryuzlu
 - Cor Pruijs
 - Sofia de Proença
-- Jiang Qijong 
+- Jiang Qijong
 - Joon Whang
 - 0xbrainjar
 - 0xslenderman
