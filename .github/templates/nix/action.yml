@@ -31,6 +31,6 @@ runs:
         authToken: "${{ inputs.token }}"
     - run: |
         while IFS= read -r cmd; do
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community $cmd --no-update-lock-file --show-trace -L
+          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community eval $cmd --no-update-lock-file --show-trace -L
         done <<< ${{ inputs.command }}
       shell: "bash"

@@ -643,21 +643,11 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+      - uses: "./.github/templates/nix"
         with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - run: |
-          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#price-feed --no-update-lock-file --show-trace -L
+          command: |
+            nix -- build .#price-feed
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   composable-sandbox-container-publish:
     needs:
