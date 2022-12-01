@@ -130,6 +130,8 @@ idea but would require much more substantial changes.
 
   * Supported by Polkadot wallets
   
+  * Supports asset metadata
+  
   #### Cons
   
   * No asset ID reservation system, only prevents duplicates
@@ -137,6 +139,9 @@ idea but would require much more substantial changes.
   * Hold functionality is not present (We depend on this in several cases)
 
 * **Moonbeam's pallet-asset-manager**
+
+Note: Not looking at using or forking this directly, but instead how they use 
+different instances of the same pallet for mintable and external assets.
 
   #### Pros
   
@@ -154,6 +159,40 @@ idea but would require much more substantial changes.
 existing storage for pallet-assets/pallet-asset-registry/pallet-currency-factory 
 to an alternative.
 
+## Conclusion
+
+After analyzing possible solutions, the best course of action to deprecate 
+Currency Factory is to maintain a fork of Parity's pallet-assets, embrace the 
+design Moonbeam uses to maintain two instances of their pallet, and to remove 
+our asset ID reservation system (for release two).
+
+This can be accomplished in two main phases:
+
+1. Create a fork of Parity's pallet-assets and add the features we need
+
+2. Replace our pallet-assets and pallet-currency-factory with two instances of
+Parity's pallet-assets.
+
+Parts of either of these phases can be scaled down for release two.
+
+### Fork of Parity's pallet-assets
+
+1. Create a non-traditional fork of Parity's pallet-assets
+
+2. Implement `frame_support::traits::tokens::fungibles::MutateHold` for 
+pallet-assets
+
+3. Translate calls into our old pallet-assets and pallet-currency-factory to 
+our new pallet-assets
+
+### Manage Two Instances of pallet-assets
+
+1. Configure instance for mintable assets
+
+2. Configure instance for external assets
+
+3. Route calls between the two instances
+
 ## Questions
 
 * > As for asset metadata, we don't have standards for formatting this nor do we 
@@ -165,3 +204,7 @@ to an alternative.
 # References
 
 * [Slack thread detailing issues with Currency Factory Ranges](https://composablefinance.slack.com/archives/C031G5NT0CA/p1667492928188269)
+
+* [Parity's pallet-assets](https://github.com/paritytech/substrate/tree/master/frame/assets)
+
+* [Moonbeam's asset-manager](https://github.com/PureStake/moonbeam/tree/master/pallets/asset-manager)
