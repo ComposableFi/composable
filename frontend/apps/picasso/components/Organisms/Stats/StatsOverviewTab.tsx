@@ -84,7 +84,7 @@ export const StatsOverviewTab: FC = () => {
             disableHoverListener: true,
           }}
           textAbove="Picasso circulating supply"
-          title={`${circulatingSupply.toFormat(0)} PICA`}
+          title={circulatingSupply.toFormat(0)}
         />
       </Grid>
       <Grid item xs={12} sm={6} md={4}>
