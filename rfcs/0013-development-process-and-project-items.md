@@ -162,6 +162,78 @@ It well composes with `Substask` creation process.
 - estimates
 
 
+## TODO
+
+Антон Кот, [2022-11-30 9:34 PM]
+"Producer from Electorns Arts said that in one startip, and it made project managment tool more clean and targeted. 
+It is good way to clean up grabage. 
+Also it impvoe item description and solvence as at least 2 people are on what this item is about."
+
+Антон Кот, [2022-11-30 9:36 PM]
+"It allwos personal process to fin into global work. Also it is very agile to attune to uncovered detiles.Smaller task are more predictable, more parallasible.Too big items.
+Also it clarified who does what.
+- One startup i worked (Rust).- Half year."
+
+Антон Кот, [2022-11-30 9:39 PM]
+Ты там где пишешь will it work секцию, лучше попробуй что-то типа
+
+dzmitry lahoda, [2022-11-30 9:39 PM]
+Я думал там типа персональные анекдоты написать и типа что оно улучшает каждое правило написал. Но что то лучше хорошо бы.
+
+Антон Кот, [2022-11-30 9:40 PM]
+Based on our experience atomic tasks and multiple person accounting helps to do/achieve something
+
+dzmitry lahoda, [2022-11-30 9:40 PM]
+Искать ПМ статистику в мире SAFE и Srum  - я думаю 90% процентов будет шлак.
+
+Антон Кот, [2022-11-30 9:41 PM]
+100% :)
+
+Антон Кот, [2022-11-30 9:41 PM]
+Попробуй добавить привязки к каким-то общепринятым agile техникам/принципам
+
+dzmitry lahoda, [2022-11-30 9:42 PM]
+Я думал на тот же SAFE сослаться где мен надо )))
+
+Антон Кот, [2022-11-30 9:42 PM]
+Потому что то, что ты описываешь это набор правил поверх scrum как мне кажется
+
+dzmitry lahoda, [2022-11-30 9:42 PM]
+ну да. вместо статы тупо ссылки на правила где Scrum и SAFE мне подходят
+
+dzmitry lahoda, [2022-11-30 9:42 PM]
+не
+
+dzmitry lahoda, [2022-11-30 9:42 PM]
+мне скорее пофигу Scrum
+
+dzmitry lahoda, [2022-11-30 9:43 PM]
+это скорее ортогонально процессу
+
+Антон Кот, [2022-11-30 9:43 PM]
+Типа обязательно надо пригласить вотчера, иначе такс не создастся
+
+Антон Кот, [2022-11-30 9:44 PM]
+Опять же зависит от размера команды/проекта
+
+dzmitry lahoda, [2022-11-30 9:44 PM]
+Я  думаю типа спекулятивно - создавай таск. Но если ты не согласовал ни с кем - чего ты на ним работаешь? Типа PR + reivew
+
+Антон Кот, [2022-11-30 9:45 PM]
+Не, ну, логично. У merge request есть ревьювер и у таска тоже может быть peer-надзиратель
+
+dzmitry lahoda, [2022-11-30 9:46 PM]
+В Scrum надзиратель PO или PM afaik. То есть там фильр at least one review + reivwer is PM or PO
+
+dzmitry lahoda, [2022-11-30 9:57 PM]
+вообще весь документ это мой опыт многолетний как мне работать меньше
+
+dzmitry lahoda, [2022-11-30 9:58 PM]
+типа есть
+1. иерархия, централизация, синхронность
+2. децентралзация, DAG, асинхрноость
 
 
+dzmitry lahoda, [2022-11-30 10:19 PM]
+Вообще придумал 2 отсылки на скрам и сейф.
 
