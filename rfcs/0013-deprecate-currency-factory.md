@@ -34,6 +34,20 @@ As for asset metadata, we don't have standards for formatting this nor do we
 utilize it. Assuming we replace the reservation system, Currency Factory will be 
 left without value.
 
+## Requirements
+
+If we are to deprecate Currency Factory, we will need to ensure the requirements
+it fulfills are still met by some solution.
+
+* Permissioned asset creation can be done without collision in the asset ID
+
+* Asset metadata is available
+
+Additionally, Currency Factory failed to meet some requirements that we should
+enforce in a future solution.
+
+* Permissionless asset creation can be done without collision in the asset ID
+
 ## Solution Proposals
 
 There are multiple ways we could go about replacing Currency Factory. Possible 
@@ -45,6 +59,10 @@ These solutions are detailed below:
 One way to remove the need for pallet-currency-factory is to move its 
 functionality to pallet-asset-registry. If we also simplify the asset ID 
 reservation system, this will be a minimal change.
+
+This keeps the functionality of Currency Factory around but removes the need for
+another pallet. This does not enable premissionless asset creation without the
+need for more design.
 
 #### Technical Implementation
 
@@ -68,6 +86,10 @@ reservation (any way making fork with reservation is easy later).
 Asset reservation helps us automate new asset IDs. However, for the scope of 
 release two - this may not be necessary. We could instead hard-code asset IDs 
 for LP tokens and other instances.
+
+Given we can currently manage without automated asset creation, as we can forgo
+the asset creation requirements for release two and ensure that all asset data
+is still made available.
 
 #### Consequences
 
