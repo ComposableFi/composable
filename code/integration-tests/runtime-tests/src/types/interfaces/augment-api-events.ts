@@ -129,6 +129,7 @@ declare module '@polkadot/api-base/types/events' {
       Emitted: AugmentedEvent<ApiType, [contract: AccountId32, ty: Bytes, attributes: Vec<ITuple<[Bytes, Bytes]>>], { contract: AccountId32, ty: Bytes, attributes: Vec<ITuple<[Bytes, Bytes]>> }>;
       Executed: AugmentedEvent<ApiType, [contract: AccountId32, entrypoint: PalletCosmwasmEntryPoint, data: Option<Bytes>], { contract: AccountId32, entrypoint: PalletCosmwasmEntryPoint, data: Option<Bytes> }>;
       ExecutionFailed: AugmentedEvent<ApiType, [contract: AccountId32, entrypoint: PalletCosmwasmEntryPoint, error: Bytes], { contract: AccountId32, entrypoint: PalletCosmwasmEntryPoint, error: Bytes }>;
+      IbcChannelOpen: AugmentedEvent<ApiType, [contract: AccountId32], { contract: AccountId32 }>;
       Instantiated: AugmentedEvent<ApiType, [contract: AccountId32, info: PalletCosmwasmContractInfo], { contract: AccountId32, info: PalletCosmwasmContractInfo }>;
       Migrated: AugmentedEvent<ApiType, [contract: AccountId32, to: u64], { contract: AccountId32, to: u64 }>;
       Uploaded: AugmentedEvent<ApiType, [codeHash: H256, codeId: u64], { codeHash: H256, codeId: u64 }>;
@@ -995,7 +996,7 @@ declare module '@polkadot/api-base/types/events' {
        **/
       [key: string]: AugmentedEvent<ApiType>;
     };
-    technicalCollective: {
+    technicalCommittee: {
       /**
        * A motion was approved by the required threshold.
        **/
@@ -1031,7 +1032,7 @@ declare module '@polkadot/api-base/types/events' {
        **/
       [key: string]: AugmentedEvent<ApiType>;
     };
-    technicalMembership: {
+    technicalCommitteeMembership: {
       /**
        * Phantom member, never used.
        **/

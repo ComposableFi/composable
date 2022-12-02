@@ -129,7 +129,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * `ed` - same meaning as in for foreign asset account (if None, then asset is not
        * sufficient)
        **/
-      registerAsset: AugmentedSubmittable<(location: ComposableTraitsXcmAssetsXcmAssetLocation | { parents?: any; interior?: any } | string | Uint8Array, ed: u128 | AnyNumber | Uint8Array, ratio: Option<ComposableTraitsCurrencyRational64> | null | Uint8Array | ComposableTraitsCurrencyRational64 | { n?: any; d?: any } | string, decimals: Option<u8> | null | Uint8Array | u8 | AnyNumber) => SubmittableExtrinsic<ApiType>, [ComposableTraitsXcmAssetsXcmAssetLocation, u128, Option<ComposableTraitsCurrencyRational64>, Option<u8>]>;
+      registerAsset: AugmentedSubmittable<(location: ComposableTraitsXcmAssetsXcmAssetLocation | { parents?: any; interior?: any } | string | Uint8Array, ratio: ComposableTraitsCurrencyRational64 | { n?: any; d?: any } | string | Uint8Array, decimals: Option<u8> | null | Uint8Array | u8 | AnyNumber) => SubmittableExtrinsic<ApiType>, [ComposableTraitsXcmAssetsXcmAssetLocation, ComposableTraitsCurrencyRational64, Option<u8>]>;
       /**
        * Minimal amount of `foreign_asset_id` required to send message to other network.
        * Target network may or may not accept payment `amount`.
@@ -147,7 +147,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * Use with caution as it allow reroute assets location.
        * See `register_asset` for parameters meaning.
        **/
-      updateAsset: AugmentedSubmittable<(assetId: u128 | AnyNumber | Uint8Array, location: ComposableTraitsXcmAssetsXcmAssetLocation | { parents?: any; interior?: any } | string | Uint8Array, ratio: Option<ComposableTraitsCurrencyRational64> | null | Uint8Array | ComposableTraitsCurrencyRational64 | { n?: any; d?: any } | string, decimals: Option<u8> | null | Uint8Array | u8 | AnyNumber) => SubmittableExtrinsic<ApiType>, [u128, ComposableTraitsXcmAssetsXcmAssetLocation, Option<ComposableTraitsCurrencyRational64>, Option<u8>]>;
+      updateAsset: AugmentedSubmittable<(assetId: u128 | AnyNumber | Uint8Array, location: ComposableTraitsXcmAssetsXcmAssetLocation | { parents?: any; interior?: any } | string | Uint8Array, ratio: ComposableTraitsCurrencyRational64 | { n?: any; d?: any } | string | Uint8Array, decimals: Option<u8> | null | Uint8Array | u8 | AnyNumber) => SubmittableExtrinsic<ApiType>, [u128, ComposableTraitsXcmAssetsXcmAssetLocation, ComposableTraitsCurrencyRational64, Option<u8>]>;
       /**
        * Generic tx
        **/
@@ -2630,7 +2630,7 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       [key: string]: SubmittableExtrinsicFunction<ApiType>;
     };
-    technicalCollective: {
+    technicalCommittee: {
       /**
        * Close a vote that is either approved, disapproved or whose voting period has ended.
        * 
@@ -2785,7 +2785,7 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       [key: string]: SubmittableExtrinsicFunction<ApiType>;
     };
-    technicalMembership: {
+    technicalCommitteeMembership: {
       /**
        * Add a member `who` to the set.
        * 
@@ -3090,7 +3090,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * - Weight of derivative `call` execution + T::WeightInfo::dispatch_as().
        * # </weight>
        **/
-      dispatchAs: AugmentedSubmittable<(asOrigin: DaliRuntimeOriginCaller | { system: any } | { Void: any } | { Council: any } | { RelayerXcm: any } | { CumulusXcm: any } | { TechnicalCollective: any } | string | Uint8Array, call: Call | IMethod | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [DaliRuntimeOriginCaller, Call]>;
+      dispatchAs: AugmentedSubmittable<(asOrigin: DaliRuntimeOriginCaller | { system: any } | { Void: any } | { Council: any } | { RelayerXcm: any } | { CumulusXcm: any } | { TechnicalCommittee: any } | string | Uint8Array, call: Call | IMethod | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [DaliRuntimeOriginCaller, Call]>;
       /**
        * Send a batch of dispatch calls.
        * Unlike `batch`, it allows errors and won't interrupt.

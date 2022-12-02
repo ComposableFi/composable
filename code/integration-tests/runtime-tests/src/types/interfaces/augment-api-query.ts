@@ -1083,7 +1083,7 @@ declare module '@polkadot/api-base/types/storage' {
        **/
       [key: string]: QueryableStorageEntry<ApiType>;
     };
-    technicalCollective: {
+    technicalCommittee: {
       /**
        * The current members of the collective. This is stored sorted (just by value).
        **/
@@ -1113,7 +1113,7 @@ declare module '@polkadot/api-base/types/storage' {
        **/
       [key: string]: QueryableStorageEntry<ApiType>;
     };
-    technicalMembership: {
+    technicalCommitteeMembership: {
       /**
        * The current membership, stored as an ordered Vec.
        **/
