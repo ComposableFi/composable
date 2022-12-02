@@ -45,7 +45,7 @@ export function getEnvironment(target: AvailableEndpoints) {
   return cacheAndFetch(target);
 }
 
-export type EndpointPreset = "local" | "stage" | "mainnet";
+export type EndpointPreset = "local" | "stage" | "mainnet" | "dali";
 export type EndpointPresets = {
   [key in EndpointPreset]: {
     [key in AvailableEndpoints]: string;
@@ -58,6 +58,14 @@ export const endpointPresets: EndpointPresets = {
     kusama: "ws://127.0.0.1:9944",
     statemine: "ws://127.0.0.1:10009",
     subsquid: "http://localhost:4350/graphql",
+  },
+  dali: {
+    picasso: "wss://persistent.devnets.composablefinance.ninja/chain/dali",
+    karura: "wss://persistent.devnets.composablefinance.ninja/chain/karura",
+    kusama: "wss://persistent.devnets.composablefinance.ninja/chain/rococo",
+    statemine: "wss://persistent.devnets.composablefinance.ninja/chain/statemine",
+    subsquid:
+      "https://persistent.devnets.composablefinance.ninja/subsquid/graphql",
   },
   stage: {
     picasso:
