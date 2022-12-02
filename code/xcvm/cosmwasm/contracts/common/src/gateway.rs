@@ -1,9 +1,8 @@
+use crate::shared::BridgeMsg;
 use cosmwasm_std::{Addr, CosmosMsg};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use xcvm_core::NetworkId;
-
-use crate::shared::BridgeMsg;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]

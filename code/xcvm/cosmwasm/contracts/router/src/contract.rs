@@ -15,12 +15,15 @@ use cw2::set_contract_version;
 use cw20::{Cw20Contract, Cw20ExecuteMsg};
 use cw_utils::ensure_from_older_version;
 use cw_xcvm_asset_registry::{contract::external_query_lookup_asset, msg::AssetReference};
-use cw_xcvm_common::{router::ExecuteMsg, shared::BridgeMsg};
+use cw_xcvm_common::{
+	router::ExecuteMsg,
+	shared::{decode_base64, BridgeMsg},
+};
 use cw_xcvm_interpreter::contract::{
 	XCVM_INTERPRETER_EVENT_DATA_ORIGIN, XCVM_INTERPRETER_EVENT_PREFIX,
 };
 use cw_xcvm_utils::DefaultXCVMProgram;
-use xcvm_core::{BridgeSecurity, CallOrigin, Displayed, Funds, UserOrigin};
+use xcvm_core::{BridgeSecurity, CallOrigin, Displayed, Funds, InterpreterOrigin};
 
 const CONTRACT_NAME: &str = "composable:xcvm-router";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -75,8 +78,8 @@ pub fn execute(
 			handle_execute_program(deps, env, call_origin, salt, program, assets)
 		},
 
-		ExecuteMsg::SetInterpreterSecurity { user_origin, bridge_security } =>
-			handle_set_interpreter_security(deps, info, user_origin, bridge_security),
+		ExecuteMsg::SetInterpreterSecurity { interpreter_origin, bridge_security } =>
+			handle_set_interpreter_security(deps, info, interpreter_origin, bridge_security),
 
 		ExecuteMsg::BridgeForward { msg } => handle_bridge_forward(deps, info, msg),
 	}
@@ -103,15 +106,15 @@ fn ensure_self_or_gateway(
 	}
 }
 
-/// Ensure that the `sender` is the interpreter for the provided `user_origin`.
+/// Ensure that the `sender` is the interpreter for the provided `interpreter_origin`.
 /// This function is used whenever we want an operation to be executable by an interpreter,
 /// currently [`ExecuteMsg::SetInterpreterSecurity`].
 fn ensure_interpreter(
 	deps: &DepsMut,
 	sender: &Addr,
-	user_origin: UserOrigin,
+	interpreter_origin: InterpreterOrigin,
 ) -> Result<(), ContractError> {
-	match INTERPRETERS.load(deps.storage, user_origin) {
+	match INTERPRETERS.load(deps.storage, interpreter_origin) {
 		Ok(Interpreter { address: Some(address), .. }) if &address == sender => Ok(()),
 		_ => Err(ContractError::NotAuthorized),
 	}
@@ -157,7 +160,7 @@ fn handle_bridge_forward(
 	info: MessageInfo,
 	msg: BridgeMsg,
 ) -> Result<Response, ContractError> {
-	ensure_interpreter(&deps, &info.sender, msg.user_origin.clone())?;
+	ensure_interpreter(&deps, &info.sender, msg.interpreter_origin.clone())?;
 	let config = CONFIG.load(deps.storage)?;
 	let transfers = msg
 		.assets
@@ -197,29 +200,36 @@ fn handle_bridge_forward(
 fn handle_set_interpreter_security(
 	deps: DepsMut,
 	info: MessageInfo,
-	user_origin: UserOrigin,
+	interpreter_origin: InterpreterOrigin,
 	security: BridgeSecurity,
 ) -> Result<Response, ContractError> {
 	// Ensure that the sender is the interpreter for the given user origin.
 	// The security of an interpreter can only be altered by the interpreter itself.
 	// If a user is willing to alter the default security, he must submit an XCVM program with a
 	// call to the router that does it for him.
-	ensure_interpreter(&deps, &info.sender, user_origin.clone())?;
+	ensure_interpreter(&deps, &info.sender, interpreter_origin.clone())?;
 
-	match INTERPRETERS.load(deps.storage, user_origin.clone()) {
-		Ok(Interpreter { address, .. }) =>
-			INTERPRETERS.save(deps.storage, user_origin.clone(), &Interpreter { address, security }),
+	match INTERPRETERS.load(deps.storage, interpreter_origin.clone()) {
+		Ok(Interpreter { address, .. }) => INTERPRETERS.save(
+			deps.storage,
+			interpreter_origin.clone(),
+			&Interpreter { address, security },
+		),
 		Err(_) => INTERPRETERS.save(
 			deps.storage,
-			user_origin.clone(),
+			interpreter_origin.clone(),
 			&Interpreter { address: None, security },
 		),
 	}?;
+
 	Ok(Response::default().add_event(
 		Event::new(XCVM_ROUTER_EVENT_PREFIX)
 			.add_attribute("action", "interpreter.setSecurity")
-			.add_attribute("network_id", format!("{}", u32::from(user_origin.network_id)))
-			.add_attribute("user_id", hex::encode(&user_origin.user_id))
+			.add_attribute(
+				"network_id",
+				format!("{}", u32::from(interpreter_origin.user_origin.network_id)),
+			)
+			.add_attribute("user_id", hex::encode(&interpreter_origin.user_origin.user_id))
 			.add_attribute("security", format!("{}", security as u8)),
 	))
 }
@@ -237,8 +247,9 @@ fn handle_execute_program(
 	assets: Funds<Displayed<u128>>,
 ) -> Result<Response, ContractError> {
 	let config = CONFIG.load(deps.storage)?;
-	let user = call_origin.user(config.network_id);
-	match INTERPRETERS.load(deps.storage, user.clone()) {
+	let interpreter_origin =
+		InterpreterOrigin { user_origin: call_origin.user(config.network_id), salt };
+	match INTERPRETERS.load(deps.storage, interpreter_origin.clone()) {
 		Ok(Interpreter { address: Some(interpreter_address), security }) => {
 			// Ensure that the current call origin meet the user expected security.
 			call_origin
@@ -276,13 +287,14 @@ fn handle_execute_program(
 					gateway_address: config.gateway_address.into(),
 					registry_address: config.registry_address.into(),
 					router_address: env.contract.address.clone().into_string(),
-					user_origin: user.clone(),
+					interpreter_origin: interpreter_origin.clone(),
 				})?,
 				funds: vec![],
 				label: format!(
-					"xcvm-interpreter-{}-{}",
-					u32::from(user.network_id),
-					hex::encode::<Vec<u8>>(user.user_id.into())
+					"xcvm-interpreter-{}-{}-{}",
+					u32::from(interpreter_origin.user_origin.network_id),
+					hex::encode::<Vec<u8>>(interpreter_origin.user_origin.user_id.into()),
+					hex::encode(&interpreter_origin.salt)
 				),
 			}
 			.into();
@@ -295,7 +307,7 @@ fn handle_execute_program(
 				env.contract.address,
 				&ExecuteMsg::ExecuteProgramPrivileged {
 					call_origin: call_origin.clone(),
-					salt,
+					salt: interpreter_origin.salt,
 					program,
 					assets,
 				},
@@ -376,7 +388,7 @@ fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 		)?
 	};
 
-	let user_origin = {
+	let interpreter_origin = {
 		// Interpreter provides `network_id, user_id` pair as an event for the router to know which
 		// pair is instantiated
 		let interpreter_event = response
@@ -385,7 +397,7 @@ fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 			.find(|event| event.ty.starts_with(&format!("wasm-{}", XCVM_INTERPRETER_EVENT_PREFIX)))
 			.ok_or(StdError::not_found("interpreter event not found"))?;
 
-		cw_xcvm_utils::decode_origin_data(
+		decode_base64::<_, InterpreterOrigin>(
 			interpreter_event
 				.attributes
 				.iter()
@@ -396,15 +408,15 @@ fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 		)?
 	};
 
-	match INTERPRETERS.load(deps.storage, user_origin.clone()) {
+	match INTERPRETERS.load(deps.storage, interpreter_origin.clone()) {
 		Ok(Interpreter { security, .. }) => INTERPRETERS.save(
 			deps.storage,
-			user_origin,
+			interpreter_origin,
 			&Interpreter { address: Some(interpreter_address), security },
 		)?,
 		Err(_) => INTERPRETERS.save(
 			deps.storage,
-			user_origin,
+			interpreter_origin,
 			&Interpreter {
 				security: BridgeSecurity::Deterministic,
 				address: Some(interpreter_address),

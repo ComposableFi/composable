@@ -17,7 +17,7 @@ use cw2::set_contract_version;
 use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg};
 use cw_utils::ensure_from_older_version;
 use cw_xcvm_asset_registry::{contract::external_query_lookup_asset, msg::AssetReference};
-use cw_xcvm_common::shared::BridgeMsg;
+use cw_xcvm_common::shared::{encode_base64, BridgeMsg};
 use cw_xcvm_utils::DefaultXCVMProgram;
 use num::Zero;
 use xcvm_core::{
@@ -47,15 +47,19 @@ pub fn instantiate(
 	let registry_address = deps.api.addr_validate(&msg.registry_address)?;
 	let gateway_address = deps.api.addr_validate(&msg.gateway_address)?;
 	let router_address = deps.api.addr_validate(&msg.router_address)?;
-	let config =
-		Config { registry_address, router_address, gateway_address, user_origin: msg.user_origin };
+	let config = Config {
+		registry_address,
+		router_address,
+		gateway_address,
+		interpreter_origin: msg.interpreter_origin,
+	};
 	CONFIG.save(deps.storage, &config)?;
 	// Save the caller as owner, in most cases, it is the `XCVM router`
 	OWNERS.save(deps.storage, info.sender, &())?;
 
 	Ok(Response::new().add_event(Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute(
 		XCVM_INTERPRETER_EVENT_DATA_ORIGIN,
-		cw_xcvm_utils::encode_origin_data(config.user_origin)?.as_str(),
+		encode_base64(&config.interpreter_origin)?.as_str(),
 	)))
 }
 
@@ -302,7 +306,8 @@ pub fn interpret_spawn(
 	program: XCVMProgram,
 	mut response: Response,
 ) -> Result<Response, ContractError> {
-	let Config { user_origin, registry_address, router_address, .. } = CONFIG.load(deps.storage)?;
+	let Config { interpreter_origin, registry_address, router_address, .. } =
+		CONFIG.load(deps.storage)?;
 
 	let registry_address = registry_address.into_string();
 	let mut normalized_funds: Funds<Displayed<u128>> = Funds::empty();
@@ -361,7 +366,7 @@ pub fn interpret_spawn(
 			router_address,
 			&cw_xcvm_common::router::ExecuteMsg::BridgeForward {
 				msg: BridgeMsg {
-					user_origin: user_origin.clone(),
+					interpreter_origin: interpreter_origin.clone(),
 					network_id: network,
 					security: bridge_security,
 					salt,
@@ -376,12 +381,12 @@ pub fn interpret_spawn(
 				.add_attribute("instruction", "spawn")
 				.add_attribute(
 					"origin_network_id",
-					serde_json_wasm::to_string(&user_origin.network_id)
+					serde_json_wasm::to_string(&interpreter_origin.user_origin.network_id)
 						.map_err(|_| ContractError::DataSerializationError)?,
 				)
 				.add_attribute(
 					"origin_user_id",
-					serde_json_wasm::to_string(&user_origin.user_id)
+					serde_json_wasm::to_string(&interpreter_origin.user_origin.user_id)
 						.map_err(|_| ContractError::DataSerializationError)?,
 				),
 		))

@@ -6,6 +6,16 @@ use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
 
+/// The interpreter origin, composite of a user origin and a salt.
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(
+	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
+)]
+pub struct InterpreterOrigin {
+	pub user_origin: UserOrigin,
+	pub salt: Vec<u8>,
+}
+
 /// The origin of a user, which consist of the composite, origin network and origin network user id.
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[derive(

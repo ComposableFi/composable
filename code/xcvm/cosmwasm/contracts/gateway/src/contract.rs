@@ -25,7 +25,8 @@ use cw_xcvm_asset_registry::{contract::external_query_lookup_asset, msg::AssetRe
 use cw_xcvm_common::{gateway::ExecuteMsg, shared::BridgeMsg};
 use cw_xcvm_utils::{DefaultXCVMPacket, DefaultXCVMProgram};
 use xcvm_core::{
-	BridgeProtocol, BridgeSecurity, CallOrigin, Displayed, Funds, NetworkId, UserOrigin, XCVMAck,
+	BridgeProtocol, BridgeSecurity, CallOrigin, Displayed, Funds, InterpreterOrigin, NetworkId,
+	XCVMAck,
 };
 use xcvm_proto::{decode_packet, Encodable};
 
@@ -92,12 +93,12 @@ pub fn execute(
 
 		ExecuteMsg::Bridge {
 			interpreter,
-			msg: BridgeMsg { user_origin, network_id, security, salt, program, assets },
+			msg: BridgeMsg { interpreter_origin, network_id, security, salt, program, assets },
 		} => handle_bridge(
 			deps,
 			info,
 			interpreter,
-			user_origin,
+			interpreter_origin,
 			network_id,
 			security,
 			salt,
@@ -397,7 +398,7 @@ pub fn handle_bridge(
 	deps: DepsMut,
 	info: MessageInfo,
 	interpreter: Addr,
-	user_origin: UserOrigin,
+	interpreter_origin: InterpreterOrigin,
 	network_id: NetworkId,
 	security: BridgeSecurity,
 	salt: Vec<u8>,
@@ -411,7 +412,7 @@ pub fn handle_bridge(
 			let channel_id = IBC_NETWORK_CHANNEL.load(deps.storage, network_id)?;
 			let packet = DefaultXCVMPacket {
 				interpreter: interpreter.as_bytes().to_vec(),
-				user_origin,
+				user_origin: interpreter_origin.user_origin,
 				salt,
 				program,
 				assets,

@@ -5,18 +5,18 @@ use cosmwasm_std::Addr;
 use cw_xcvm_utils::DefaultXCVMProgram;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use xcvm_core::{Register, UserOrigin};
+use xcvm_core::{InterpreterOrigin, Register};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
-	/// Address of the gateway,
+	/// Address of the gateway.
 	pub gateway_address: String,
-	/// Address of the XCVM asset registry
+	/// Address of the XCVM asset registry.
 	pub registry_address: String,
-	/// Address of the router
+	/// Address of the router.
 	pub router_address: String,
-	/// Network ID of the origin network
-	pub user_origin: UserOrigin,
+	/// The interpreter origin.
+	pub interpreter_origin: InterpreterOrigin,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
