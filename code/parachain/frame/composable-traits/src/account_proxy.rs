@@ -53,14 +53,23 @@ pub struct ProxyDefinition<AccountId, ProxyType, BlockNumber> {
 	pub delay: BlockNumber,
 }
 
+impl<AccountId, ProxyType, BlockNumber> From<proxy::ProxyDefinition<AccountId, ProxyType, BlockNumber>> for ProxyDefinition<AccountId, ProxyType, BlockNumber> {
+	fn from(proxy_definition: proxy::ProxyDefinition<AccountId, ProxyType, BlockNumber>) -> Self {
+		Self {
+			delegate: proxy_definition.delegate,
+			proxy_type: proxy_definition.proxy_type,
+			delay: proxy_definition.delay,
+		}
+	}
+}
+
 /// API into pallet-account-proxy. Provides functions to manage delegation of operations of
 /// one account to another.
 pub trait AccountProxy {
 	type AccountId;
-
 	type ProxyType;
-
 	type BlockNumber;
+	type Proxy;
 
 	/// Register a proxy account for the delegator that is able to make calls on its behalf.
 	///
@@ -103,4 +112,28 @@ pub trait AccountProxy {
 		delegate: &Self::AccountId,
 		force_proxy_type: Option<Self::ProxyType>,
 	) -> Result<ProxyDefinition<Self::AccountId, Self::ProxyType, Self::BlockNumber>, DispatchError>;
+}
+
+
+pub struct AccountProxyWrapper<Runtime> {
+	_phantom: sp_std::marker::PhantomData<Runtime>,
+}
+
+impl<Runtime: proxy::Config> AccountProxy for AccountProxyWrapper<Runtime> {
+	type AccountId = <Runtime as frame_system::Config>::AccountId;
+	type ProxyType = <Runtime as proxy::Config>::ProxyType;
+	type BlockNumber = <Runtime as frame_system::Config>::BlockNumber;
+	type Proxy = proxy::Pallet<Runtime>;
+
+	fn add_proxy_delegate(delegator: &Self::AccountId, delegatee: Self::AccountId, proxy_type: Self::ProxyType, delay: Self::BlockNumber) -> DispatchResult {
+		Self::Proxy::add_proxy_delegate(delegator, delegatee, proxy_type, delay)
+	}
+
+	fn remove_proxy_delegate(delegator: &Self::AccountId, delegatee: Self::AccountId, proxy_type: Self::ProxyType, delay: Self::BlockNumber) -> DispatchResult {
+		Self::Proxy::remove_proxy_delegate(delegator, delegatee, proxy_type, delay)
+	}
+
+	fn find_proxy(real: &Self::AccountId, delegate: &Self::AccountId, force_proxy_type: Option<Self::ProxyType>) -> Result<ProxyDefinition<Self::AccountId, Self::ProxyType, Self::BlockNumber>, DispatchError> {
+		Self::Proxy::find_proxy(real, delegate, force_proxy_type).map(|proxy| ProxyDefinition::from(proxy))
+	}
 }

@@ -45,7 +45,7 @@ use sp_std::marker::PhantomData;
 
 /// Weights for pallet_proxy using the Substrate node and recommended hardware.
 pub struct WeightInfo<T>(PhantomData<T>);
-impl<T: frame_system::Config> pallet_account_proxy::WeightInfo for WeightInfo<T> {
+impl<T: frame_system::Config> pallet_proxy::WeightInfo for WeightInfo<T> {
 	// Storage: Proxy Proxies (r:1 w:0)
 	fn proxy() -> Weight {
 		17_768_000

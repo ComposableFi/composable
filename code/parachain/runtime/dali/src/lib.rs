@@ -106,6 +106,7 @@ use system::{
 	EnsureRoot,
 };
 use transaction_payment::{Multiplier, TargetedFeeAdjustment};
+use composable_traits::account_proxy::AccountProxyWrapper;
 pub use xcmp::XcmConfig;
 
 use crate::{governance::PreimageByteDeposit, xcmp::XcmRouter};
@@ -694,7 +695,7 @@ impl InstanceFilter<Call> for ProxyType {
 			),
 			ProxyType::CancelProxy => {
 				// TODO (vim): We might not need this
-				matches!(c, Call::Proxy(pallet_account_proxy::Call::reject_announcement { .. }))
+				matches!(c, Call::Proxy(pallet_proxy::Call::reject_announcement { .. }))
 			},
 		}
 	}
@@ -715,7 +716,7 @@ parameter_types! {
 	pub ProxyPrice: Balance = 0;
 }
 
-impl pallet_account_proxy::Config for Runtime {
+impl pallet_proxy::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
 	type Currency = Assets;
@@ -723,13 +724,14 @@ impl pallet_account_proxy::Config for Runtime {
 	type ProxyDepositBase = ProxyPrice;
 	type ProxyDepositFactor = ProxyPrice;
 	type MaxProxies = MaxProxies;
-	type WeightInfo = weights::account_proxy::WeightInfo<Runtime>;
+	type WeightInfo = weights::proxy::WeightInfo<Runtime>;
 	type MaxPending = MaxPending;
 	type CallHasher = BlakeTwo256;
 	type AnnouncementDepositBase = ProxyPrice;
 	type AnnouncementDepositFactor = ProxyPrice;
 }
 
+type AccountProxyWrapperInstance = AccountProxyWrapper<Runtime>;
 parameter_types! {
 	pub const FnftPalletId: PalletId = PalletId(*b"pal_fnft");
 }
@@ -740,7 +742,7 @@ impl pallet_fnft::Config for Runtime {
 	type FinancialNftCollectionId = CurrencyId;
 	type FinancialNftInstanceId = FinancialNftInstanceId;
 	type ProxyType = ProxyType;
-	type AccountProxy = Proxy;
+	type AccountProxy = AccountProxyWrapperInstance;
 	type ProxyTypeSelector = FnftAccountProxyType;
 	type PalletId = FnftPalletId;
 }
@@ -1237,7 +1239,7 @@ construct_runtime!(
 		Scheduler: scheduler = 34,
 		Utility: utility = 35,
 		Preimage: preimage = 36,
-		Proxy: pallet_account_proxy = 37,
+		Proxy: pallet_proxy = 37,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue = 40,
@@ -1345,7 +1347,7 @@ mod benches {
 		[assets_registry, AssetsRegistry]
 		[pablo, Pablo]
 		[pallet_staking_rewards, StakingRewards]
-		[pallet_account_proxy, Proxy]
+		[pallet_proxy, Proxy]
 		[dex_router, DexRouter]
 		[cosmwasm, Cosmwasm]
 	);
