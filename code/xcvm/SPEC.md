@@ -465,7 +465,7 @@ The version register contains the semantic version of the contract code, which c
 
 ### 2.4.5 Program Execution Semantics
 
-Execution of a program is a two-stage process. First, the virtual machine MUST verify that the caller is allowed to execute programs for that specific instance, by verifying that the caller is one of the owners. See section XYZ for ownership semantics. Second, the RelayerRegister must be set. Third, the instructions are iterated over and executed. Implementors MUST execute each instruction in the provided order and MUST update the IP register after each instruction is executed. After each instruction is executed, the result register MUST be set to the return value of the instruction. The interpreter SHOULD NOT mangle the return values but store them as returned. Because the return values are chain specific, the actual structure is left *undefined*.
+Execution of a program is a two-stage process. First, the virtual machine MUST verify that the caller is allowed to execute programs for that specific instance, by verifying that the caller is one of the owners. See section 2.6. for ownership semantics. Second, the RelayerRegister must be set. Third, the instructions are iterated over and executed. Implementors MUST execute each instruction in the provided order and MUST update the IP register after each instruction is executed. After each instruction is executed, the result register MUST be set to the return value of the instruction. The interpreter SHOULD NOT mangle the return values but store them as returned. Because the return values are chain specific, the actual structure is left *undefined*.
 
 If an error is encountered by executing an instruction, the defined transactional behavior for that instruction should be abided by. All instructions defined in this document require the transaction to be aborted on failure, however, subsequent addendums may define new instructions with different behavior.
 
@@ -524,7 +524,20 @@ Subsequent calls by the same `Origin` will not result in an instantiation, but i
 
 If no interpreter instance has been created for a given caller, the call to the router must either come from the `IBC`, `XCM`, `OTP` with `Deterministic` security, or a local origin. After the instance has been created, it can be configured to accept other origins by the caller.
 
-For a given XCVM program, its interpreter instance is derived from `Network Account Salt`. This allows users to create different interpreter instances to execute programs against.
+For a given XCVM program, its interpreter instance is derived from `Network Account Salt`. This allows users to create different interpreter instances to execute programs against. Note that the `Salt` is not additive and only the composite `Network Account` is forwarded to remote chains as the user origin:
+```
+Spawn A BridgeSecurity::Deterministic 0x1 [          // Parent program spawned on A, with 0x1 as salt, the origin for the instructions is (A, AccountOnA, 0x1)
+    Call 0x1337,                                     // Call instruction executed on A
+    Spawn B BridgeSecurity::Deterministic 0x2 [] {}, // Sub-program spawned on B, with 0x2 as salt, the origin for the instructions is (A, AccountOnA, 0x2)
+] {}
+```
+In the above XCVM program, the parent program salt `0x01` is not a prefix of the sub-program salt `0x02`. The user is able to make it's interpreter origin using a fine grained mode. The following program is an example on how we can spread a salt:
+```
+Spawn A BridgeSecurity::Deterministic 0x1 [          // Parent program spawned on A, with 0x1 as salt, the origin for the instructions is (A, AccountOnA, 0x1)
+    Call 0x1337,                                     // Call instruction executed on A
+    Spawn B BridgeSecurity::Deterministic 0x0102 [] {}, // Sub-program spawned on B, with 0x102 as salt, the origin for the instructions is (A, AccountOnA, 0x0102)
+] {}
+```
 
 ### 2.6. Ownership
 
@@ -676,13 +689,13 @@ Although these operations are quite complicated to code by hand, using the XCVM 
 
 ```
 Spawn XYZ BridgeSecurity::Deterministic 0 [
-   Call 0x1337,                                 //chain-specific encoding to make a smart contract call.
-   Transfer Relayer USDC Unit 50,               // 50 bucks for the fee. The relayer earns this if the inner spawn is dispatched.
-   Spawn HOME BridgeSecurity::Deterministic 0 [
-       Transfer Relayer USDC Unit 50            // Another 50 bucks fee for the operation, but now reverse direction.
-       Transfer USER { USDC: Ratio::ALL }       // On ABC, we transfer all USDC to the user.
-       ] { USDC: ALL },                         // We send over all our USDC back to ABC.
-   ] { DOT: UNIT 100 },                         // We send over 100 DOT from ABC to XYZ.
+    Call 0x1337,                                 //chain-specific encoding to make a smart contract call.
+    Transfer Relayer USDC Unit 50,               // 50 bucks for the fee. The relayer earns this if the inner spawn is dispatched.
+    Spawn HOME BridgeSecurity::Deterministic 0 [
+        Transfer Relayer USDC Unit 50            // Another 50 bucks fee for the operation, but now reverse direction.
+        Transfer USER { USDC: Ratio::ALL }       // On ABC, we transfer all USDC to the user.
+    ] { USDC: ALL },                             // We send over all our USDC back to ABC.
+] { DOT: UNIT 100 },                             // We send over 100 DOT from ABC to XYZ.
 ```
 
 # 10. Contributors
