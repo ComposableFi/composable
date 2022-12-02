@@ -15,8 +15,12 @@ inputs:
     description: "Docker hub password"
     required: true
   name:
-    description: "The name of the container"
+    description: "The name of the container to be published"
     required: true
+  artifact:
+    description: "The image and tag produced by the nix expression"
+    required: true
+
   skipPush:
     description: "Skip pushing to caching"
     required: false
@@ -56,7 +60,7 @@ runs:
         SHA256=$(sha256sum ./result | cut --delimiter " " --fields 1)
         COMMIT_SHA=$(git rev-parse HEAD)
         CONTAINER_NAME=${{ inputs.name }}
-        TEMP_CONTAINER_NAME="${CONTAINER_NAME}-container"
+        TEMP_CONTAINER_NAME=${{ inputs.artifact }}
 
         docker tag "${TEMP_CONTAINER_NAME}:latest" "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}:${SHA256}"
         docker tag "${TEMP_CONTAINER_NAME}:latest" "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}:${COMMIT_SHA}"

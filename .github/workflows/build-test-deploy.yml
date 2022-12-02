@@ -662,7 +662,8 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
           name: composable-sandbox
-
+          artifact: composable-devnet-container:latest
+  
   composable-bridge-devnet-container-publish:
     name: "Docker composable-bridge-devnet"
     needs:
@@ -686,7 +687,8 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
           name: composable-bridge-devnet
-
+          artifact: composable-bridge-devnet-container
+          
   devnet-integration-tests:
       name: "Devnet integration tests"
       needs:
