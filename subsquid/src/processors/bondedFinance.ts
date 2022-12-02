@@ -1,6 +1,5 @@
 import { EventHandlerContext } from "@subsquid/substrate-processor";
 import { Store } from "@subsquid/typeorm-store";
-import * as ss58 from "@subsquid/ss58";
 import { randomUUID } from "crypto";
 import {
   BondedFinanceNewBondEvent,
@@ -9,7 +8,7 @@ import {
 } from "../types/events";
 import { BondedFinanceBondOffer, EventType } from "../model";
 import { saveAccountAndEvent } from "../dbHelper";
-import { BOB, createAccount, encodeAccount } from "../utils";
+import { encodeAccount } from "../utils";
 
 interface NewOfferEvent {
   offerId: bigint;
@@ -32,13 +31,7 @@ interface OfferCancelledEvent {
 export function getNewOfferEvent(
   event: BondedFinanceNewOfferEvent
 ): NewOfferEvent {
-  if (event.isV1000) {
-    return {
-      ...event.asV1000,
-      beneficiary: ss58.codec("picasso").decode(""),
-    };
-  }
-  return event.asV1400;
+  return event.asV10003;
 }
 
 /**
@@ -48,7 +41,7 @@ export function getNewOfferEvent(
 export function getNewBondEvent(
   event: BondedFinanceNewBondEvent
 ): NewBondEvent {
-  const { offerId, nbOfBonds } = event.asV1000;
+  const { offerId, nbOfBonds } = event.asV10003;
   return { offerId, nbOfBonds };
 }
 
@@ -59,7 +52,7 @@ export function getNewBondEvent(
 export function getOfferCancelledEvent(
   event: BondedFinanceOfferCancelledEvent
 ): OfferCancelledEvent {
-  return event.asV1000;
+  return event.asV10003;
 }
 
 /**

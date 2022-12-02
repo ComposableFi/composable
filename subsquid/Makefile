@@ -5,10 +5,10 @@ build:
 	@npm run build
 
 build-processor-image:
-	@docker build . --target processor -t squid-processor
+	@docker build . -t squid-processor
 
 build-query-node-image:
-	@docker build . --target query-node -t query-node
+	@docker build . -t graphql-server -f graphql.Dockerfile
 
 build-images: build-processor-image build-query-node-image
 
@@ -18,6 +18,7 @@ serve:
 
 migrate:
 	@npx squid-typeorm-migration apply
+	npm run build && node lib/helperInit.js
 
 
 codegen:
@@ -46,7 +47,7 @@ explore:
 
 
 sqlinit:
-	psql -d postgres -f db/init.sql
+	npm run build && node lib/helperInit.js
 
 
 rebuild:

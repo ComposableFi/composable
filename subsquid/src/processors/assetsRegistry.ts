@@ -4,6 +4,7 @@ import { ApiPromise, WsProvider } from "@polkadot/api";
 import { getHistoricalAssetPrice } from "./oracle";
 import { Asset, HistoricalAssetPrice } from "../model";
 import { chain } from "../config";
+import { XcmAssetLocation } from "subsquid/types/v10003";
 import {
   AssetsRegistryAssetRegisteredEvent,
   AssetsRegistryAssetUpdatedEvent,
@@ -17,30 +18,19 @@ interface AssetRegisteredEvent {
 interface AssetUpdatedEvent {
   assetId: bigint;
   decimals: number | undefined | null;
+  location: XcmAssetLocation;
 }
 
 function getAssetRegisteredEvent(
   event: AssetsRegistryAssetRegisteredEvent
 ): AssetRegisteredEvent {
-  if (event.isV1200) {
-    return {
-      decimals: 0,
-      ...event.asV1200,
-    };
-  }
-  return event.asV10002;
+  return event.asV10003;
 }
 
 function getAssetUpdatedEvent(
   event: AssetsRegistryAssetUpdatedEvent
 ): AssetUpdatedEvent {
-  if (event.isV1200) {
-    return {
-      assetId: event.asV1200.assetId,
-      decimals: 0,
-    };
-  }
-  return event.asV10002;
+  return event.asV10003;
 }
 
 /**

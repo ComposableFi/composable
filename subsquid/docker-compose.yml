@@ -1,3 +1,6 @@
+#
+### Main Service 1: Squid Archive setups
+#
 services:
   db:
     image: postgres:14  # CockroachDB cluster might be a better fit for production deployment
@@ -59,6 +62,10 @@ services:
     ports:
       - "4010:3000"
 
+#
+### Main Service 2: Processor, aka squid processor
+#
+
   # This DB service is used by squid
   squid-db:
     image: postgres:14
@@ -72,34 +79,15 @@ services:
       POSTGRES_DB: squid
       POSTGRES_PASSWORD: squid
 
-  graphql-server:
-    build:
-      context: ./
-      dockerfile: graphql.Dockerfile
+  db-migration:
+    image: squid-processor
+    entrypoint:
+      - npx
+      - squid-typeorm-migration
+      - apply
     depends_on:
       squid-db:
         condition: service_healthy
-    ports:
-      - 4350:4000
-    environment:
-      DB_NAME: squid
-      DB_HOST: squid-db
-      DB_PASS: squid
-      DB_PORT_PG: 5432
-    # volumes:
-    #   - ./scripts/init.sh:/init.sh
-    # entrypoint: sh /init.sh
-
-
-  processor:
-    build:
-      context: ./
-      dockerfile: Dockerfile
-    depends_on:
-      squid-db:
-        condition: service_healthy
-      graphql-server:
-        condition: service_started
     environment:
       DB_HOST: squid-db
       DB_NAME: squid
@@ -108,3 +96,47 @@ services:
       GQL_PORT: 4350
       SUBSQUID_ARCHIVE_URI: "http://gateway:8000/graphql"
       RELAYCHAIN_URI: "ws://host.docker.internal:9988"
+
+  sqlinit:
+    image: squid-processor
+    entrypoint:
+      - node
+      - lib/helperInit.js
+    depends_on:
+      db-migration:
+          condition: service_completed_successfully
+    environment:
+      DB_HOST: squid-db
+      DB_NAME: squid
+      DB_PASS: squid
+      DB_PORT: 5432
+      GQL_PORT: 4350
+      SUBSQUID_ARCHIVE_URI: "http://gateway:8000/graphql"
+      RELAYCHAIN_URI: "ws://host.docker.internal:9988"
+
+  processor:
+    image: squid-processor
+    depends_on:
+      sqlinit:
+        condition: service_completed_successfully
+    environment:
+      DB_HOST: squid-db
+      DB_NAME: squid
+      DB_PASS: squid
+      DB_PORT: 5432
+      GQL_PORT: 4350
+      SUBSQUID_ARCHIVE_URI: "http://gateway:8000/graphql"
+      RELAYCHAIN_URI: "ws://host.docker.internal:9988"
+
+  graphql-server:
+    image: graphql-server
+    depends_on:
+      processor:
+        condition: service_started
+    ports:
+      - 4350:4000
+    environment:
+      DB_NAME: squid
+      DB_HOST: squid-db
+      DB_PASS: squid
+      DB_PORT_PG: 5432
