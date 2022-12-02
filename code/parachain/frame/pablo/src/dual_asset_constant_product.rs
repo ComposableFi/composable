@@ -1,6 +1,7 @@
 use crate::{Config, Error, PoolConfiguration, PoolCount, Pools};
-use composable_maths::dex::constant_product::{
-	compute_deposit_lp, compute_in_given_out_new, compute_out_given_in_new,
+use composable_maths::dex::{
+	constant_product::{compute_deposit_lp, compute_in_given_out_new, compute_out_given_in_new},
+	PoolWeightMathExt,
 };
 use composable_support::math::safe::{SafeAdd, SafeSub};
 use composable_traits::{
@@ -27,14 +28,14 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		assets_weights: BoundedBTreeMap<T::AssetId, Permill, ConstU32<2>>,
 	) -> Result<T::PoolId, DispatchError> {
 		ensure!(assets_weights.len() == 2, Error::<T>::InvalidPair);
-		let weights = assets_weights.iter().map(|(_, w)| w).copied().collect::<Vec<_>>();
+		ensure!(assets_weights.values().non_zero_weights(), Error::<T>::WeightsMustBeNonZero);
 		ensure!(
-			weights[0] != Permill::zero() && weights[1] != Permill::zero(),
-			Error::<T>::WeightsMustBeNonZero
-		);
-		ensure!(
-			weights[0].deconstruct() + weights[1].deconstruct() ==
-				Permill::from_percent(100).deconstruct(),
+			assets_weights
+				.values()
+				.sum_weights()
+				.map(|total_weight| total_weight.is_one())
+				// If `None`, `sum_weights` overflowed - weights are not normalized
+				.unwrap_or(false),
 			Error::<T>::WeightsMustSumToOne
 		);
 		ensure!(fee_config.fee_rate < Permill::one(), Error::<T>::InvalidFees);
