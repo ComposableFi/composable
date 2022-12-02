@@ -1,0 +1,71 @@
+name: docker-publish
+description: Builds a docker image using nix and publish it to Docker hub.
+
+inputs:
+  command:
+    description: "The shell command to execute within a watch-exec context"
+    required: true
+  token:
+    description: "Cachix auth token"
+    required: true
+  username:
+    description: "Docker hub username"
+    required: true
+  password:
+    description: "Docker hub password"
+    required: true
+  name:
+    description: "The name of the container to be published"
+    required: true
+  artifact:
+    description: "The image and tag produced by the nix expression"
+    required: true
+
+  skipPush:
+    description: "Skip pushing to caching"
+    required: false
+    default: "true"
+runs:
+  using: "composite"
+  steps:
+    - run: |
+        echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+        echo "sandbox = relaxed" >> /etc/nix/nix.conf
+        echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+      shell: "bash"
+    - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+      with:
+        skipPush: "${{ inputs.skipPush }}"
+        installCommand: |
+          nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+          nix-channel --update
+          nix-env -iA nixpkgs.cachix nixpkgs.docker
+        name: ${{  env.CACHIX_COMPOSABLE }}
+        authToken: "${{ inputs.token }}"
+    - uses: docker/login-action@v1
+      with:
+        username: ${{ inputs.username }}
+        password: ${{ inputs.password }}
+    - run: |
+        # enable required features (see https://github.com/cachix/install-nix-action/issues/19)
+        mkdir -p ~/.config/nix
+        echo "system-features = kvm" >> ~/.config/nix/nix.conf
+      shell: bash  
+    - run: |
+        # See https://github.com/actions/checkout/issues/760
+        git config --global --add safe.directory /__w/composable/composable
+        cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community ${{ inputs.command }} --no-update-lock-file --show-trace -L
+        docker load --input ./result
+
+        SHA256=$(sha256sum ./result | cut --delimiter " " --fields 1)
+        COMMIT_SHA=$(git rev-parse HEAD)
+        CONTAINER_NAME=${{ inputs.name }}
+        TEMP_CONTAINER_NAME=${{ inputs.artifact }}
+
+        docker tag "${TEMP_CONTAINER_NAME}" "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}:${SHA256}"
+        docker tag "${TEMP_CONTAINER_NAME}" "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}:${COMMIT_SHA}"
+        if [ $(git symbolic-ref HEAD) = "refs/heads/main" ]; then
+          docker tag "${TEMP_CONTAINER_NAME}" "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}:latest"
+        fi;
+        docker push --all-tags "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}"
+      shell: bash
