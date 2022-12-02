@@ -652,6 +652,29 @@ parameter_types! {
 	pub const LockCrowdloanRewards: bool = true;
 }
 
+parameter_types! {
+	pub MaxProxies : u32 = 4;
+	pub MaxPending : u32 = 32;
+	// just make dali simple to proxy
+	pub ProxyPrice: Balance = 0;
+}
+
+impl proxy::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+	type Currency = Assets;
+	type ProxyType = ProxyType;
+	type ProxyDepositBase = ProxyPrice;
+	type ProxyDepositFactor = ProxyPrice;
+	type MaxProxies = MaxProxies;
+	type WeightInfo = weights::proxy::WeightInfo<Runtime>;
+	type MaxPending = MaxPending;
+	type CallHasher = BlakeTwo256;
+	type AnnouncementDepositBase = ProxyPrice;
+	type AnnouncementDepositFactor = ProxyPrice;
+}
+
+
 impl crowdloan_rewards::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
@@ -768,6 +791,7 @@ construct_runtime!(
 		Scheduler: scheduler = 34,
 		Utility: utility = 35,
 		Preimage: preimage = 36,
+		Proxy: proxy = 37,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue = 40,
@@ -842,6 +866,7 @@ mod benches {
 		[utility, Utility]
 		[identity, Identity]
 		[multisig, Multisig]
+		[proxy, Proxy]
 		[currency_factory, CurrencyFactory]
 		[bonded_finance, BondedFinance]
 		[vesting, Vesting]

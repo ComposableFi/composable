@@ -716,7 +716,7 @@ parameter_types! {
 	pub ProxyPrice: Balance = 0;
 }
 
-impl pallet_proxy::Config for Runtime {
+impl proxy::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
 	type Currency = Assets;
@@ -1239,7 +1239,7 @@ construct_runtime!(
 		Scheduler: scheduler = 34,
 		Utility: utility = 35,
 		Preimage: preimage = 36,
-		Proxy: pallet_proxy = 37,
+		Proxy: proxy = 37,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue = 40,
@@ -1347,7 +1347,7 @@ mod benches {
 		[assets_registry, AssetsRegistry]
 		[pablo, Pablo]
 		[pallet_staking_rewards, StakingRewards]
-		[pallet_proxy, Proxy]
+		[proxy, Proxy]
 		[dex_router, DexRouter]
 		[cosmwasm, Cosmwasm]
 	);
