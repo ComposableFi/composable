@@ -14,6 +14,11 @@ pull_request_rules:
     actions:
       queue:
         name: default
+      # Squash merge the commits to keep the history clean while also allowing easier cherry-picks of features for release.
+      merge:
+        method: squash
+      squash:
+        commit_message: title+body
 
   # Any files in Picasso must be reviewed and approved by more than 3 reviewers plus core group
   - name: Automatic merge on approval (Picasso Runtime)
@@ -28,3 +33,8 @@ pull_request_rules:
       queue:
         priority: high
         name: default
+      # Squash merge the commits to keep the history clean while also allowing easier cherry-picks of features for release.
+      merge:
+        method: squash
+      squash:
+        commit_message: title+body
