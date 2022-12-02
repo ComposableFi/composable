@@ -1,5 +1,5 @@
 #![allow(clippy::unnecessary_cast)]
-pub mod account_proxy;
+pub mod proxy;
 pub mod asset_tx_payment;
 pub mod assets_registry;
 pub mod balances;

@@ -1635,6 +1635,7 @@ dependencies = [
  "composable-support",
  "frame-support",
  "frame-system",
+ "pallet-proxy",
  "parity-scale-codec",
  "plotters",
  "polkadot-parachain",
@@ -2954,7 +2955,6 @@ dependencies = [
  "orml-xcm-support",
  "orml-xtokens",
  "pablo-runtime-api",
- "pallet-account-proxy",
  "pallet-asset-tx-payment",
  "pallet-assets 1.0.0",
  "pallet-assets-registry",
@@ -2983,6 +2983,7 @@ dependencies = [
  "pallet-oracle",
  "pallet-pablo",
  "pallet-preimage",
+ "pallet-proxy",
  "pallet-randomness-collective-flip",
  "pallet-scheduler",
  "pallet-session",
@@ -7575,25 +7576,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-account-proxy"
-version = "1.0.0"
-dependencies = [
- "composable-traits",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "pallet-balances",
- "pallet-utility",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std 4.0.0 (git+https://github.com/ComposableFi/substrate?rev=9bdc51acad943bd07fae159f59564a1b464d33b5)",
-]
-
-[[package]]
 name = "pallet-airdrop"
 version = "1.0.0"
 dependencies = [
@@ -8227,7 +8209,7 @@ dependencies = [
  "composable-traits",
  "frame-support",
  "frame-system",
- "pallet-account-proxy",
+ "pallet-proxy",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
@@ -8895,11 +8877,11 @@ dependencies = [
  "frame-system",
  "orml-tokens",
  "orml-traits",
- "pallet-account-proxy",
  "pallet-assets 1.0.0",
  "pallet-balances",
  "pallet-currency-factory",
  "pallet-fnft",
+ "pallet-proxy",
  "pallet-timestamp",
  "parity-scale-codec",
  "primitives",

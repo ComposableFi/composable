@@ -8,16 +8,13 @@ use frame_support::{
 	PalletId,
 };
 use frame_system as system;
-use frame_system::EnsureRoot;
 pub use sp_core::{
 	crypto::AccountId32,
 	sr25519::{Public, Signature},
 	H256,
 };
-use sp_runtime::{
-	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup},
-};
+use sp_runtime::{testing::Header, traits::{BlakeTwo256, IdentityLookup}};
+use composable_traits::account_proxy::AccountProxyWrapper;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<MockRuntime>;
 type Block = frame_system::mocking::MockBlock<MockRuntime>;
@@ -32,7 +29,7 @@ frame_support::construct_runtime!(
 		System: frame_system,
 		Timestamp: pallet_timestamp,
 		Nft: crate,
-		Proxy: pallet_account_proxy,
+		Proxy: pallet_proxy,
 	}
 );
 
@@ -47,13 +44,14 @@ impl FnftAccountProxyTypeSelector<ProxyType> for MockFnftAccountProxyType {
 	}
 }
 
+type AccountProxyWrapperInstance = AccountProxyWrapper<MockRuntime>;
 impl crate::Config for MockRuntime {
 	type Event = Event;
 	type MaxProperties = ConstU32<16>;
 	type FinancialNftCollectionId = u128;
 	type FinancialNftInstanceId = u64;
 	type ProxyType = ProxyType;
-	type AccountProxy = Proxy;
+	type AccountProxy = AccountProxyWrapperInstance;
 	type ProxyTypeSelector = MockFnftAccountProxyType;
 	type PalletId = FnftPalletId;
 }
@@ -72,7 +70,7 @@ parameter_types! {
 	pub ProxyPrice: u32 = 0;
 }
 
-impl pallet_account_proxy::Config for MockRuntime {
+impl pallet_proxy::Config for MockRuntime {
 	type Event = Event;
 	type Call = Call;
 	type Currency = ();
