@@ -24,7 +24,7 @@ pub enum ContractError {
 	UnsupportedAsset,
 	#[error("The contract must be initialized first.")]
 	NotInitialized,
-	#[error("An overflow occured.")]
+	#[error("An overflow occurred.")]
 	ArithmeticOverflow,
 	#[error("Not enough funds to cover the operation.")]
 	InsufficientFunds,

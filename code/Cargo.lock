@@ -16965,7 +16965,6 @@ dependencies = [
  "num-traits",
  "parity-wasm 0.42.2",
  "wasmi-validation 0.4.0",
- "wasmi-validation 0.4.1",
 ]
 
 [[package]]

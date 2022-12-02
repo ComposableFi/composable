@@ -382,7 +382,7 @@ XCVM program.
 Note: Assuming we transfer the assets `[asset1 amount1, ..., assetN amountN]`,
 the bridge MUST ensure that the sequence `[mint1, ... mintN, executeProgram]` is
 atomically executed within a sub-transaction. If any error occur, the according
-acknowledgement byte MUST be comitted and the sub-transaction MUST be reverted.
+acknowledgement byte MUST be committed and the sub-transaction MUST be reverted.
 
 ### 2.2.4. Query
 
