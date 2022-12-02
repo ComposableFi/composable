@@ -12,6 +12,13 @@ inputs:
     description: "Skip pushing to caching"
     required: false
     default: "true"
+  nix-env:
+    description: "Additional packages to load in the shell through nix-env"
+    required: false
+  pre-run:
+    description: "Commands to pre-run before executing the watch-exec"
+    required: false
+
 runs:
   using: "composite"
   steps:
@@ -26,8 +33,10 @@ runs:
         installCommand: |
           nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
           nix-channel --update
-          nix-env -iA nixpkgs.cachix
+          nix-env -iA nixpkgs.cachix ${{ inputs.nix-env }}
         name: ${{  env.CACHIX_COMPOSABLE }}
         authToken: "${{ inputs.token }}"
-    - run: cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community ${{ inputs.command }} --no-update-lock-file --show-trace -L
+    - run: |
+        ${{ inputs.pre-run }}
+        cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community ${{ inputs.command }} --no-update-lock-file --show-trace -L
       shell: "bash"

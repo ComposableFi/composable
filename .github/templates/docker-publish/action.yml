@@ -48,6 +48,8 @@ runs:
         echo "system-features = kvm" >> ~/.config/nix/nix.conf
       shell: bash  
     - run: |
+        # See https://github.com/actions/checkout/issues/760
+        git config --global --add safe.directory /__w/composable/composable
         cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community ${{ inputs.command }} --no-update-lock-file --show-trace -L
         docker load --input ./result
 
