@@ -288,14 +288,15 @@ describe("[SHORT] Vesting Pallet Tests", function () {
     const verificationHandler = new vestedScheduleCreationVerifier(api);
     verificationHandler.verificationSetup(assetId, walletFundSender.publicKey);
 
-    await sendAndWaitForSuccess(
+    const res = await sendAndWaitForSuccess(
       api,
       walletFundSender,
       api.events.vesting.VestingScheduleAdded.is,
       api.tx.vesting.vestedTransfer(walletFundSender.publicKey, walletBeneficiary.publicKey, assetId, scheduleInfo)
     ).catch(exc => {
-      expect(exc.toString()).to.contain("BadOrigin");
+      return exc;
     });
+    expect(res.toString()).to.contain("BadOrigin");
   });
 
   it("#1.5  The beneficiary of a block vested transfer (#1.1) can claim its transfer during the vesting period.", async function () {
@@ -573,12 +574,15 @@ describe("[SHORT] Vesting Pallet Tests", function () {
 
   it("#1.14 A user can not claim if no funds are available for gas fees.", async function () {
     this.timeout(2 * 60 * 1000);
-    await sendAndWaitForSuccess(
+    const res = await sendAndWaitForSuccess(
       api,
       wallet5,
       api.events.vesting.Claimed.is,
       api.tx.vesting.claim(PICA_ASSET_ID, "All")
-    ).catch(exc => expect(exc.toString()).to.contain("Inability to pay some fees"));
+    ).catch(exc => {
+      return exc;
+    });
+    expect(res.toString()).to.contain("Inability to pay some fees");
   });
 
   it("#1.17 A user can claim multiple vested transfer schedules for the same asset at once.", async function () {
@@ -661,11 +665,14 @@ describe("[SHORT] Vesting Pallet Tests", function () {
       })
     ];
 
-    await sendAndWaitForSuccess(
+    const res = await sendAndWaitForSuccess(
       api,
       sudoKey,
       api.events.vesting.VestingSchedulesUpdated.is,
       api.tx.vesting.updateVestingSchedules(wallet1.publicKey, PICA_ASSET_ID, newSchedule)
-    ).catch(exc => expect(exc.toString()).to.contain("BadOrigin"));
+    ).catch(exc => {
+      return exc;
+    });
+    expect(res.toString()).to.contain("BadOrigin");
   });
 });
