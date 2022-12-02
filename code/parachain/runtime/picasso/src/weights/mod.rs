@@ -20,3 +20,4 @@ pub mod tokens;
 pub mod treasury;
 pub mod utility;
 pub mod vesting;
+pub mod proxy;
