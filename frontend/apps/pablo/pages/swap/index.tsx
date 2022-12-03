@@ -32,7 +32,7 @@ const Swap: NextPage = () => {
           </Box>
           <Grid mt={4} container spacing={4}>
             <Grid item {...twoColumnPageSize}>
-              <SwapChart height={610}/>
+              <SwapChart  height={610}/>
             </Grid>
             <Grid item {...twoColumnPageSize}>
               <SwapForm/>
