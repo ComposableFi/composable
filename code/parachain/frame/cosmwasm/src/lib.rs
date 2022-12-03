@@ -45,7 +45,7 @@ pub mod runtimes;
 pub mod types;
 pub mod version;
 pub mod weights;
-
+pub use crate::ibc::NoRelayer;
 mod entrypoint;
 
 #[cfg(any(feature = "runtime-benchmarks", test))]
@@ -196,6 +196,9 @@ pub mod pallet {
 			contract: AccountIdOf<T>,
 			old_admin: Option<AccountIdOf<T>>,
 		},
+		IbcChannelOpen {
+			contract: AccountIdOf<T>,
+		},
 	}
 
 	#[pallet::error]
@@ -228,6 +231,7 @@ pub mod pallet {
 		IteratorNotFound,
 		NotAuthorized,
 		Unsupported,
+		Ibc,
 	}
 
 	#[pallet::config]
@@ -357,6 +361,11 @@ pub mod pallet {
 
 		/// Weight implementation.
 		type WeightInfo: WeightInfo;
+
+		/// account which execute relayer calls IBC exported entry points
+		type IbcRelayerAccount: Get<AccountIdOf<Self>>;
+
+		type IbcRelayer: ibc_primitives::IbcHandler<AccountIdOf<Self>>;
 	}
 
 	#[pallet::pallet]
@@ -416,10 +425,9 @@ pub mod pallet {
 		/// - `code` the actual wasm code.
 		#[transactional]
 		#[pallet::weight(T::WeightInfo::upload(code.len() as u32))]
-		pub fn upload(origin: OriginFor<T>, code: ContractCodeOf<T>) -> DispatchResultWithPostInfo {
+		pub fn upload(origin: OriginFor<T>, code: ContractCodeOf<T>) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			Self::do_upload(&who, code)?;
-			Ok(().into())
+			Self::do_upload(&who, code)
 		}
 
 		/// Instantiate a previously uploaded code resulting in a new contract being generated.
@@ -952,14 +960,18 @@ pub mod pallet {
 			Ok(())
 		}
 
+		fn block_env() -> BlockInfo {
+			BlockInfo {
+				height: frame_system::Pallet::<T>::block_number().saturated_into(),
+				time: Timestamp(T::UnixTime::now().as_secs().into()),
+				chain_id: T::ChainId::get().into(),
+			}
+		}
+
 		/// Extract the current environment from the pallet.
 		pub(crate) fn cosmwasm_env(cosmwasm_contract_address: CosmwasmAccount<T>) -> Env {
 			Env {
-				block: BlockInfo {
-					height: frame_system::Pallet::<T>::block_number().saturated_into(),
-					time: Timestamp(T::UnixTime::now().as_secs().into()),
-					chain_id: T::ChainId::get().into(),
-				},
+				block: Self::block_env(),
 				transaction: frame_system::Pallet::<T>::extrinsic_index()
 					.map(|index| TransactionInfo { index }),
 				contract: CosmwasmContractInfo {
