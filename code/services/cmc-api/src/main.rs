@@ -10,16 +10,12 @@ pub struct Cli {
 
 #[tokio::main]
 async fn main() {
-	// initialize tracing
 	tracing_subscriber::fmt::init();
 
 	let cli = Cli::parse();
 
-	// build our application with a route
 	let app = build_router();
 
-	// run our app with hyper
-	// `axum::Server` is a re-export of `hyper::Server`
 	let addr = cli.address;
 	tracing::info!("listening on {}", addr);
 	axum::Server::bind(&addr).serve(app.into_make_service()).await.unwrap();
