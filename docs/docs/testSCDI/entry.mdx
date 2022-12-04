@@ -1,0 +1,72 @@
+
+import {VmWrapper} from '../../src/components/vm/wrappers/VmWrapper';
+import {ResetButton} from '../../src/components/vm/ResetButton';
+import { VmExecute } from '../../src/components/vm/VmExecute';
+import { VmDisplayStorageWrapper } from '../../src/components/vm/wrappers/VmDisplayStorageWrapper';
+
+# SCDI test md file
+
+## SCDI test
+
+<br />
+
+<div className='max-w-[600px] overflow-auto'>
+	<ResetButton />
+	<VmWrapper storageId='test' initOptions={{
+		contractUrl: '/wasm/cw20_base.wasm',
+		instantiateObj: {
+			"name": "picasso",
+			"symbol": "PICA",
+			"decimals": 12,
+			"initial_balances": [],
+			"mint": {
+				"minter": "0",
+				"cap": null
+			},
+			"marketing": null
+		}
+	}}>
+		{(vmShared) => {
+			if(!vmShared) return <></>;
+			//	TODO : figure out how to make mdx work with ts
+			const createExecuteMessage = ({recipient, amount}) => {
+				return {
+					mint: {
+						'recipient': recipient,
+						'amount': amount
+					}
+				}
+			}
+			return (
+				<>
+					<p>nextAccountId</p>
+					<pre>{vmShared.nextAccountId}</pre>
+					<div>
+						<VmExecute storageId={'test'} inputParams={{recipient: '150', amount: '10'}} createExecuteMessage={createExecuteMessage} vmShared={vmShared} />
+					</div>
+				</>
+			)
+		}}
+	</VmWrapper>
+	<div className={'my-5'}>
+		<VmDisplayStorageWrapper storageId='test'>
+			{(data) => {
+				if(!data) return <></>;
+				console.log(data);
+				return (
+					<div className={'bg-gray-600 rounded-2xl px-5 py-2'}>
+					<ul>
+						{Object.keys(data).map(key => {
+							return (
+								<li key={key}>
+									{key} : <span className={'bg-gray-500'}>{JSON.stringify(data[key])}</span>
+								</li>
+							)
+						})}
+					</ul>
+					</div>
+				)
+			}}
+		</VmDisplayStorageWrapper>
+	</div>
+</div>
