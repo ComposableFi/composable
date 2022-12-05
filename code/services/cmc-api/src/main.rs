@@ -25,7 +25,7 @@ async fn healthcheck() -> &'static str {
 	"Hello, World!"
 }
 
-const BILLION: u128 = 1_000_000_000_000;
+const BILLION: u128 = 1_000_000_000;
 
 #[axum_macros::debug_handler]
 async fn total_supply() -> Result<String, StatusCode> {
