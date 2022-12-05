@@ -121,6 +121,25 @@ pub enum CurrencyId {
 }
 ```
 
+### Moonbeam
+
+Moonbeam has two asset classifications: 
+
+* Local
+* Foreign
+
+Moonbeam maintains separate instances of Parity's pallet-assets to track each of
+these asset classifications. Another pallet, pallet-asset-manager, is used to 
+route between the two.
+
+Local asset IDs are determined by the result of hashing a counter that tracks
+the number of local assets. While Foreign asset IDs are determined by the assets
+XCM Multilocation.
+
+#### Foreign
+
+Local assets are registered with a `ForeignAssetType`, `AssetRegisterarMetadata`, a `Balance` representing the ED, and a `bool` `is_sufficent`.
+
 ## Requirements
 
 If we are to deprecate Currency Factory, we will need to ensure the requirements
@@ -145,18 +164,20 @@ These solutions are detailed below:
 
 One way to remove the need for pallet-currency-factory is to move its 
 functionality to pallet-asset-registry. If we also simplify the asset ID 
-reservation system to no longer use predefined ranges, this will be a minimal change.
+reservation system to no longer use predefined ranges, this will be a minimal 
+change.
 
-This retains the functionality of Currency Factory, and does not require a new pallet. However, this does not enable permissionless asset creation without the
+This retains the functionality of Currency Factory, and does not require a new 
+pallet. However, this does not enable permissionless asset creation without the
 need for more design.
 
 #### Technical Implementation
 
 Instead of reserving asset IDs via our current range system, we could simply 
-have one nonce for reserving new asset IDs, which would (by the definition of a nonce) ensure no collisions. 
-This nonce can start at an arbitrary but high number so that our hard-coded 
-asset IDs are still safe. This would reduce the complexity of our current 
-reservation system while still avoiding collision.
+have one nonce for reserving new asset IDs, which would (by the definition of a 
+nonce) ensure no collisions. This nonce can start at an arbitrary but high 
+number so that our hard-coded asset IDs are still safe. This would reduce the 
+complexity of our current reservation system while still avoiding collision.
 
 #### Consequences
 
@@ -251,6 +272,9 @@ After analyzing possible solutions, the best course of action to deprecate
 Currency Factory is to maintain a fork of Parity's pallet-assets, embrace the 
 design Moonbeam uses to maintain two instances of their pallet, and to remove 
 our asset ID reservation system (for release two).
+
+Additionally, for foreign asset IDs, we can move to the standard of using XCM 
+Multi Locations. We can move to using a simple nonce for local asset IDs.
 
 This can be accomplished in two main phases:
 
