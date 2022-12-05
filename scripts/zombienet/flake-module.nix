@@ -8,12 +8,9 @@
         hash = "sha256-+tyVQa+BYdFphSLbinMFZlhV/fPG8R+/mwij36WwEEM=";
       };
 
-      build = pkgs.callPackage "./default.nix";
+      build = pkgs.callPackage ./default.nix { };
       all-dev-local-config = ./all-dev-local.toml;
-
-    in with build;
-
-    {
+    in with build; {
       packages = rec {
         paritytech-zombienet = pkgs.stdenv.mkDerivation {
           name = "zombienet";
@@ -57,11 +54,12 @@
           config = mkZombienet {
             relaychain = {
               chain = "rococo-local";
-              default_command = self'.packages.polkadot-bin;
+              default_command =
+                pkgs.lib.meta.getExe self'.packages.polkadot-node;
               count = 3;
             };
             parachains = [{
-              command = self'.packages.composable-bin;
+              command = pkgs.lib.meta.getExe self'.packages.composable-node;
               chain = "dali-dev";
               id = 2087;
               collators = 3;
@@ -71,15 +69,17 @@
           name = "rococo-local-dali-dev";
           runtimeInputs = [ pkgs.nodejs pkgs.yq paritytech-zombienet ];
           text = ''
-            printf ${builtins.toJSON config} > ${name}.json
+            printf '${builtins.toJSON config}' > ${name}.json
+
             ${pkgs.yq}/bin/yq  . ${name}.json --toml-output > ${name}.toml
-            cat ${name}.toml
-            npm run zombie spawn ${name}.toml
+            cat ${name}.toml      
+            ${pkgs.lib.meta.getExe zombienet} spawn ${name}.toml
           '';
         };
       };
 
       apps = {
+
         zombienet = {
           type = "app";
           program = self'.packages.zombienet;
@@ -87,6 +87,10 @@
         zombienet-devnet-dali-complete = {
           type = "app";
           program = self'.packages.zombienet-devnet-dali-complete;
+        };
+        zombienet-rococo-local-dali-dev = {
+          type = "app";
+          program = self'.packages.zombienet-rococo-local-dali-dev;
         };
       };
     };
