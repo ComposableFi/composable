@@ -7,6 +7,11 @@ services:
     restart: always
     volumes:
       - /var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -16,12 +21,13 @@ services:
 
   ingest:
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     restart: on-failure
     image: subsquid/substrate-ingest:firesquid
     command: [
       # polkadot endpoints -- replace with your wss
-      "-e", "ws://host.docker.internal:9988",
+      "-e", "wss://rpc.composablenodes.tech",
       "-c", "10", # allow up to 20 pending requests for the above endpoint (default is 5)
       #  "--start-block", "1000000", # uncomment to specify a non-zero start block
       "--prom-port", "9090",
@@ -52,13 +58,18 @@ services:
   # Many developers find it very useful for exploration and debugging.
   explorer:
     image: subsquid/substrate-explorer:firesquid
+    depends_on:
+      db:
+        condition: service_healthy
     environment:
       DB_TYPE: postgres # set to `cockroach` for Cockroach DB
       DB_HOST: db
       DB_PORT: "5432"
+      DB_PORT_PG: 5432
       DB_NAME: "squid-archive"
       DB_USER: "postgres"
       DB_PASS: "postgres"
+
     ports:
       - "4010:3000"
 
@@ -95,7 +106,7 @@ services:
       DB_PORT: 5432
       GQL_PORT: 4350
       SUBSQUID_ARCHIVE_URI: "http://gateway:8000/graphql"
-      RELAYCHAIN_URI: "ws://host.docker.internal:9988"
+      RELAYCHAIN_URI: "wss://rpc.composablenodes.tech"
 
   sqlinit:
     image: squid-processor
@@ -112,7 +123,7 @@ services:
       DB_PORT: 5432
       GQL_PORT: 4350
       SUBSQUID_ARCHIVE_URI: "http://gateway:8000/graphql"
-      RELAYCHAIN_URI: "ws://host.docker.internal:9988"
+      RELAYCHAIN_URI: "wss://rpc.composablenodes.tech"
 
   processor:
     image: squid-processor
@@ -126,7 +137,7 @@ services:
       DB_PORT: 5432
       GQL_PORT: 4350
       SUBSQUID_ARCHIVE_URI: "http://gateway:8000/graphql"
-      RELAYCHAIN_URI: "ws://host.docker.internal:9988"
+      RELAYCHAIN_URI: "wss://rpc.composablenodes.tech"
 
   graphql-server:
     image: graphql-server
