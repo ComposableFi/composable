@@ -63,12 +63,25 @@ in with prelude; {
     };
 
   mkParachains = parachains: builtins.map mkParachain parachains;
-  mkRelaychainNode =        {
-        name = "rococo-local-alice";
-        rpc_port = 30444;
-        validator = true;
-        ws_port = 9944;
-      };
+  mkRelaychainNode = { rpc_port, ws_port, name }:
+    {
+      #name = name; # "rococo-local-alice";
+      rpc_port = rpc_port; # 30444;
+      validator = true;
+      #ws_port = ws_port; # 9944
+    } // optionalAttrs (rpc_port != null) { inherit rpc_port; }
+    // optionalAttrs (ws_port != null) { inherit ws_port; };
+
+  mpRelaychainNodes = { chain, rpc_port ? 30444, ws_port ? 9944, count ? 2 }:
+    let
+      prefixName = name : chain ++ "-" ++ name;
+      generated = lib.lists.zipListsWith
+        (_increment: name: mkRelaychainNode { name = prefixName name; })
+        (lib.lists.range 0 (count - 1)) (builtins.tail names);
+      bootst
+    in {
+    
+    };
   #mkSettings = 
   #mkTypes = 
   # mkRelaychain =
