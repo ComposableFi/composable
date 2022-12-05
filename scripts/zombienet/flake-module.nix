@@ -55,7 +55,14 @@
 
         zombienet-rococo-local-dali-dev = 
         let 
-        
+          config = mkZombienet {
+            relaychain = {
+              chain = "rococo-local";
+              default_command = self'.packages.polkadot-bin;
+              count = 3;
+            };
+            parachains = [];
+          };
         in
         pkgs.writeShellApplication {
           name = "rococo-local-dali-dev";
