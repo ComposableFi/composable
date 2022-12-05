@@ -212,7 +212,14 @@ export default {
     XcmV1MultiLocation: "Null",
     XcmV1MultiAsset: "Null",
     XcmV1MultiassetMultiAssets: "Null",
-    XcmV2TraitsOutcome: "Null",
+    XcmV2TraitsOutcome: {
+      _enum: {
+        Error: "Null",
+        Complete: "u128",
+        isError: "bool",
+        isComplete: "bool"
+      }
+    },
     XcmV2Xcm: "Null",
     SpRuntimeDispatchError: "Null",
     SpRuntimeHeader: "Null",
@@ -223,7 +230,9 @@ export default {
     PalletCollectiveVotes: "Null",
     FrameSystemLastRuntimeUpgradeInfo: "Null",
     FrameSystemPhase: "Null",
-    FrameSystemEventRecord: "Null",
+    FrameSystemEventRecord: {
+      event: "Event"
+    },
     SpRuntimeDigest: "Null",
     FrameSupportWeightsPerDispatchClassU64: "Null",
     SpCoreCryptoKeyTypeId: "Null",
@@ -246,5 +255,11 @@ export default {
     FrameSupportPalletId: "Null",
     ComposableTraitsCurrencyRational64: "Null",
     PalletCosmwasmInstrumentCostRules: "Null",
+    PalletAssetsAssetAccount: {
+      balance: "u128",
+      isFrozen: "bool",
+      reason: "string",
+      extra: null
+    }
   }
 };

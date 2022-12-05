@@ -1,5 +1,44 @@
 {
   "enabledTests": {
-    "enabled": true
+    "enabled": true,
+    "statemineTests": {
+      "enabled": true
+    },
+    "kusamaTests": {
+      "enabled": true
+    },
+    "trapAndUnknownTests": {
+      "enabled": true
+    },
+    "failTests": {
+      "enabled": true
+    }
+  },
+  "testData": {
+    "fees": {
+      "toPicasso": {
+        "usdt": 13,
+        "ksm": 347632
+      },
+      "toKusama": {
+        "ksm": 51105801784
+      },
+      "onKusama": {
+        "ksm": 38329351338
+      }
+    },
+    "existentialDeposits": {
+      "ksm": 37500000,
+      "usdt": 1500
+    },
+    "staticValues": {
+      "usdtOnStatemine": 1984,
+      "usdtOnPicasso": 130,
+      "statemineParaId": 1000,
+      "ksm": 4,
+      "destWeight": 9000000000,
+      "treasuryAddress": "5w3oyasYR35Hek3szEEuWUz8Vm2XXDs4dMoosQEvLU8JGuw7",
+      "picassoParaAccount": "5Ec4AhNu5P23CC2GdrmsC8HYBKiidqhPnfSfRQPaH9swr2b7"
+    }
   }
 }
