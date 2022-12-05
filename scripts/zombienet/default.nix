@@ -39,7 +39,7 @@ in with prelude; rec {
           inherit command;
           inherit name;
         })
-        (lib.lists.range 0 (count - 1)) (builtins.tail names);
+        (lib.lists.range 0 (collators - 1)) (builtins.tail names);
 
     in {
       add_to_genesis = true;
@@ -53,7 +53,7 @@ in with prelude; rec {
           inherit ws_port;
           name = builtins.head names;
         })
-      ];
+      ] ++ generated;
     };
 
   mkParachains = parachains: builtins.map mkParachain parachains;

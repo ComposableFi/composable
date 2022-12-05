@@ -15,6 +15,33 @@ name = "RUST_LOG"
 value = "runtime=debug,parachain=trace,cumulus-collator=trace,aura=trace,xcm=trace"
 
 
+[[parachains.collators]]
+command = "/nix/store/q52plzbqdvia88iczhi0hrhjfc0j2w29-composable/bin/composable"
+name = "bob"
+validator = true
+[[parachains.collators.env]]
+name = "RUST_LOG"
+value = "runtime=debug,parachain=trace,cumulus-collator=trace,aura=trace,xcm=trace"
+
+
+[[parachains.collators]]
+command = "/nix/store/q52plzbqdvia88iczhi0hrhjfc0j2w29-composable/bin/composable"
+name = "charlie"
+validator = true
+[[parachains.collators.env]]
+name = "RUST_LOG"
+value = "runtime=debug,parachain=trace,cumulus-collator=trace,aura=trace,xcm=trace"
+
+
+[[parachains.collators]]
+command = "/nix/store/q52plzbqdvia88iczhi0hrhjfc0j2w29-composable/bin/composable"
+name = "dave"
+validator = true
+[[parachains.collators.env]]
+name = "RUST_LOG"
+value = "runtime=debug,parachain=trace,cumulus-collator=trace,aura=trace,xcm=trace"
+
+
 
 [relaychain]
 chain = "rococo-local"

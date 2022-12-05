@@ -70,10 +70,11 @@
           runtimeInputs = [ pkgs.nodejs pkgs.yq paritytech-zombienet ];
           text = ''
             printf '${builtins.toJSON config}' > ${name}.json
-
+            CONFIG=$PWD
             ${pkgs.yq}/bin/yq  . ${name}.json --toml-output > ${name}.toml
             cat ${name}.toml      
-            ${pkgs.lib.meta.getExe zombienet} spawn ${name}.toml
+            cd ${paritytech-zombienet}            
+            npm run zombie spawn "$CONFIG"/${name}.toml
           '';
         };
       };
