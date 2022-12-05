@@ -1,11 +1,9 @@
 import React, { useMemo } from "react";
 import { ModalProps, Modal } from "@/components/Molecules";
 import { Box, Typography, useTheme, Button, Grid } from "@mui/material";
-
-import { useDispatch } from "react-redux";
 import { Label } from "@/components/Atoms";
 import { TokenValueItem } from "../TokenValueItem";
-import { TOKENS } from "@/defi/Tokens";
+import { TOKENS } from "tokens";
 import { StakedFinancialNftPosition, StakingRewardPool } from "@/defi/types";
 import BigNumber from "bignumber.js";
 
@@ -24,7 +22,6 @@ export const UnstakeModal: React.FC<UnstakeModalProps> = ({
   ...modalProps
 }) => {
   const theme = useTheme();
-  const dispatch = useDispatch();
 
   const amount = useMemo(() => {
     if (!stakingRewardPool) return new BigNumber(0);
@@ -56,7 +53,7 @@ export const UnstakeModal: React.FC<UnstakeModalProps> = ({
                 }}
               />
               <TokenValueItem
-                token={TOKENS.pablo}
+                token={TOKENS.pblo}
                 value={amount.toFormat()}
               />
             </Grid>
@@ -70,7 +67,7 @@ export const UnstakeModal: React.FC<UnstakeModalProps> = ({
                 }}
               />
               <TokenValueItem
-                token={TOKENS.pablo}
+                token={TOKENS.pblo}
                 value={xPablo.lockedPrincipalAsset.toFormat()}
                 ValueProps={{ color: "text.secondary" }}
               />

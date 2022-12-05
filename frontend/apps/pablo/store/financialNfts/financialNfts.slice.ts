@@ -1,24 +1,25 @@
 import BigNumber from "bignumber.js";
 import create from "zustand";
+import { FinancialNft } from "shared";
 
 export interface FinancialNftSlice {
   // Collection Id => [Instance Ids]
-  ownedNfts: Record<string, Array<string>>;
+  ownedNfts: FinancialNft[];
   xTokenBalances: Record<string, Record<string, BigNumber>>;
 }
 
 export const useFinancialNftSlice = create<FinancialNftSlice>(() => ({
-  ownedNfts: {},
+  ownedNfts: [],
   xTokenBalances: {},
 }));
 
 export const setOwnedFinancialNfts = (
-  ownedNfts: Record<string, Array<string>>
+  ownedNfts: FinancialNft[]
 ) => useFinancialNftSlice.setState((state) => ({ ...state, ownedNfts }));
 
-export const resetOwnedFinancialNfts = () => useFinancialNftSlice.setState((state) => ({ ...state, ownedNfts: {} }))
+export const resetOwnedFinancialNfts = () => useFinancialNftSlice.setState((state) => ({ ...state, ownedNfts: [] }))
 
-export const useOwnedFinancialNfts = (): Record<string, Array<string>> =>
+export const useOwnedFinancialNfts = (): FinancialNft[] =>
   useFinancialNftSlice().ownedNfts;
 
 export const putXTokenBalances = (

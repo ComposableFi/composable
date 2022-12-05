@@ -6,11 +6,6 @@ import { XPablosBox } from "../XPablosBox";
 import { BoxWrapper } from "../BoxWrapper";
 import { StakeForm } from "./StakeForm";
 import { ClaimableRewards } from "./ClaimableRewards";
-import { useAppDispatch, useAppSelector } from "@/hooks/store";
-import { setMessage } from "@/stores/ui/uiSlice";
-import { Alert } from "@/components/Atoms";
-import { Link } from "@/components/Molecules";
-import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
 import { UnstakeForm } from "./UnstakeForm";
 import { useStakingRewardPool } from "@/store/stakingRewards/stakingRewards.slice";
 import { PBLO_ASSET_ID } from "@/defi/utils";
@@ -45,21 +40,16 @@ const tableHeaders = [
 ];
 
 export const Staking: React.FC<BoxProps> = ({ ...boxProps }) => {
-  const dispatch = useAppDispatch();
   const [tab, setTab] = useState(0);
-  const message = useAppSelector((state) => state.ui.message);
-  const shouldShowPortfolio = true; // TODO: Use dynamic values to check if user has open positions for this check
 
   const stakingRewardPool = useStakingRewardPool(PBLO_ASSET_ID);
-
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setTab(newValue);
   };
 
   return (
     <Box {...boxProps}>
-      <StakingStatistics stakingRewardPool={stakingRewardPool} />
-      {shouldShowPortfolio && (
+      <StakingStatistics stakingRewardPool={stakingRewardPool} rewardPoolId={PBLO_ASSET_ID} />
         <XPablosBox
           financialNftCollectionId={
             stakingRewardPool ? stakingRewardPool.financialNftAssetId : "-"
@@ -68,7 +58,7 @@ export const Staking: React.FC<BoxProps> = ({ ...boxProps }) => {
           title="Portfolio"
           header={tableHeaders}
         />
-      )}
+
       <BoxWrapper mt={8}>
         <Tabs items={tabItems} value={tab} onChange={handleTabChange} />
         <TabPanel index={0} value={tab}>
@@ -78,14 +68,14 @@ export const Staking: React.FC<BoxProps> = ({ ...boxProps }) => {
           <UnstakeForm stakingRewardPool={stakingRewardPool} />
         </TabPanel>
       </BoxWrapper>
-      {shouldShowPortfolio && (
+
         <ClaimableRewards
           financialNftCollectionId={stakingRewardPool?.financialNftAssetId.toString()}
           mt={8}
         />
-      )}
 
-      {message.text && (
+
+      {/* {message.text && (
         <Box mt={8}>
           <Alert
             severity={message.severity}
@@ -105,7 +95,7 @@ export const Staking: React.FC<BoxProps> = ({ ...boxProps }) => {
             }
           />
         </Box>
-      )}
+      )} */}
     </Box>
   );
 };

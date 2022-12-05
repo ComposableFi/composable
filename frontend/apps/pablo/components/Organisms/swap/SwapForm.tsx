@@ -11,33 +11,24 @@ import {
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import { useEffect, useMemo, useState } from "react";
 import { BoxProps } from "@mui/system";
-import { useAppSelector } from "@/hooks/store";
-import { useDispatch } from "react-redux";
 import { InfoOutlined, Settings, SwapVertRounded } from "@mui/icons-material";
-import {
-  closeConfirmingModal,
-  openSwapPreviewModal,
-  openTransactionSettingsModal,
-  setMessage,
-} from "@/stores/ui/uiSlice";
 import { TransactionSettings } from "../TransactionSettings";
 import { SwapSummary } from "./SwapSummary";
 import { SwapRoute } from "./SwapRoute";
 import { PreviewModal } from "./PreviewModal";
 import { ConfirmingModal } from "./ConfirmingModal";
-import { useDotSamaContext } from "substrate-react";
+import { useDotSamaContext, usePendingExtrinsic, useSelectedAccount } from "substrate-react";
 import { useSwaps } from "@/defi/hooks/swaps/useSwaps";
-import _ from "lodash";
 import { usePabloSwap } from "@/defi/hooks/swaps/usePabloSwap";
-import useStore from "@/store/useStore";
 import { HighlightBox } from "@/components/Atoms/HighlightBox";
+import { setUiState, useUiSlice } from "@/store/ui/ui.slice";
+import { DEFAULT_NETWORK_ID, DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils";
 
 const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
   const isMobile = useMobile();
   const theme = useTheme();
-  const dispatch = useDispatch();
-  const { openPolkadotModal } = useStore();
 
+  const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const { extensionStatus } = useDotSamaContext();
 
   const {
@@ -62,12 +53,12 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
     setAssetOneInputValid,
     setAssetTwoInputValid,
     assetOneInputValid,
-    assetTwoInputValid,
     flipAssetSelection,
-    isProcessing,
     percentageToSwap,
     priceImpact,
-  } = useSwaps();
+    inputMode,
+    setInputMode
+  } = useSwaps({ selectedAccount });
 
   const initiateSwapTx = usePabloSwap({
     baseAssetId: selectedAssetTwoId,
@@ -76,30 +67,20 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
     minimumReceived,
   });
 
-  const onConfirmSwap = async () => {
-    initiateSwapTx()
-      .then(() => {
-        dispatch(closeConfirmingModal());
-      })
-      .catch((err) => {
-        console.error(err);
-        dispatch(closeConfirmingModal());
-      });
-  };
+  const isConfirmingModalOpen = usePendingExtrinsic(
+    "exchange",
+    "dexRouter",
+    selectedAccount?.address ?? "-"
+  )
 
-  const isSwapPreviewModalOpen = useAppSelector(
-    (state) => state.ui.isSwapPreviewModalOpen
-  );
-  const isConfirmingModalOpen = useAppSelector(
-    (state) => state.ui.isConfirmingModalOpen
-  );
+  const { isSwapPreviewModalOpen } = useUiSlice();
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
 
   const handleButtonClick = () => {
     if (extensionStatus !== "connected") {
-      openPolkadotModal();
+      setUiState({ isPolkadotModalOpen: true });
     } else {
-      dispatch(openSwapPreviewModal());
+      setUiState({ isSwapPreviewModalOpen: true });
     }
   };
 
@@ -112,23 +93,14 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
 
   useEffect(() => {
     if (isConfirmed) {
-      dispatch(
-        setMessage({
-          text: "Transaction successful",
-          link: "/",
-          severity: "success",
-        })
-      );
       setIsConfirmed(false);
-      dispatch(closeConfirmingModal());
+      setUiState({ isConfirmingModalOpen: false })
     }
-  }, [isConfirmed, dispatch]);
+  }, [isConfirmed]);
 
   const onSettingHandler = () => {
-    dispatch(openTransactionSettingsModal());
+    setUiState({ isTransactionSettingsModalOpen: true });
   };
-
-  const debouncedTokenAmountUpdate = _.debounce(onChangeTokenAmount, 1000);
 
   return (
     <HighlightBox margin="auto" {...boxProps}>
@@ -156,19 +128,16 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
           setValid={setAssetOneInputValid}
           noBorder
           value={assetOneAmount}
-          setValue={(val) => {
-            if (isProcessing) return;
-            debouncedTokenAmountUpdate("quote", val);
+          onMouseDown={() => {
+            setInputMode(1)
           }}
-          InputProps={{
-            disabled: isProcessing,
-          }}
+          setValue={inputMode === 1 ? onChangeTokenAmount : undefined}
           buttonLabel={assetOneInputValid ? "Max" : undefined}
           referenceText={
             assetOneInputValid ? `${percentageToSwap}%` : undefined
           }
           ReferenceTextProps={{
-            onClick: () => {},
+            onClick: () => { },
             sx: {
               cursor: "pointer",
               "&:hover": {
@@ -181,9 +150,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
               const balanceLimit = balance1.multipliedBy(
                 percentageToSwap / 100
               );
-              if (!isProcessing && balanceLimit.gt(0)) {
-                debouncedTokenAmountUpdate("quote", balanceLimit);
-              }
+              onChangeTokenAmount(balanceLimit)
             },
           }}
           CombinedSelectProps={{
@@ -213,9 +180,9 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
             label: "From",
             BalanceProps: selectedAssetOne
               ? {
-                  title: <AccountBalanceWalletIcon color="primary" />,
-                  balance: balance1.toFixed(4),
-                }
+                title: <AccountBalanceWalletIcon color="primary" />,
+                balance: balance1.toFixed(4),
+              }
               : undefined,
           }}
         />
@@ -259,15 +226,12 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
           setValid={setAssetTwoInputValid}
           noBorder
           value={assetTwoAmount}
-          setValue={(val) => {
-            if (isProcessing) return;
-            debouncedTokenAmountUpdate("base", val);
+          onMouseDown={() => {
+            setInputMode(2)
           }}
-          InputProps={{
-            disabled: isProcessing,
-          }}
+          setValue={inputMode === 2 ? onChangeTokenAmount : undefined}
           ButtonProps={{
-            onClick: () => {},
+            onClick: () => { },
           }}
           CombinedSelectProps={{
             value: selectedAssetTwoId,
@@ -296,9 +260,9 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
             label: "To",
             BalanceProps: selectedAssetTwo
               ? {
-                  title: <AccountBalanceWalletIcon color="primary" />,
-                  balance: balance2.toFixed(4),
-                }
+                title: <AccountBalanceWalletIcon color="primary" />,
+                balance: balance2.toFixed(4),
+              }
               : undefined,
           }}
         />
@@ -320,13 +284,12 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
         {selectedAssetOne && selectedAssetTwo && (
           <>
             <Typography variant="body2">
-              1 {selectedAssetTwo.symbol} = {spotPrice.toFixed()}{" "}
-              {selectedAssetOne.symbol}
+              1 {selectedAssetTwo.getSymbol()} = {spotPrice.toFixed(DEFAULT_UI_FORMAT_DECIMALS)}{" "}
+              {selectedAssetOne.getSymbol()}
             </Typography>
             <Tooltip
-              title={`1 ${selectedAssetOne?.symbol} = ${spotPrice.toFixed()} ${
-                selectedAssetTwo.symbol
-              }`}
+              title={`1 ${selectedAssetOne?.getSymbol()} = ${spotPrice.toFixed(DEFAULT_UI_FORMAT_DECIMALS)} ${selectedAssetTwo.getSymbol()
+                }`}
               placement="top"
             >
               <InfoOutlined sx={{ color: theme.palette.primary.main }} />
@@ -369,7 +332,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
           />
           <PreviewModal
             priceImpact={priceImpact}
-            onConfirmSwap={onConfirmSwap}
+            onConfirmSwap={initiateSwapTx}
             minimumReceived={minimumReceived}
             baseAssetAmount={assetTwoAmount}
             quoteAmount={assetOneAmount}

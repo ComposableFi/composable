@@ -1,3 +1,4 @@
+import { useAsset } from "@/defi/hooks";
 import { useAuctionsSlice } from "@/store/auctions/auctions.slice";
 import { Box } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
@@ -6,9 +7,17 @@ import useStore from "pablo/store/useStore";
 
 const AuctionDetailsStories = () => {
   const { activePool, activePoolStats } = useAuctionsSlice();
+  const baseAsset = useAsset(activePool?.getPair().getBaseAsset().toString() as string ?? "-");
+  const quoteAsset = useAsset(activePool?.getPair().getQuoteAsset().toString() as string ?? "-");
+  const hasLoaded = baseAsset && quoteAsset && activePool
+
   return (
     <Box>
-      <AuctionDetails stats={activePoolStats} auction={activePool} />
+      {hasLoaded && <AuctionDetails 
+        quoteAsset={quoteAsset}
+        baseAsset={baseAsset}
+        stats={activePoolStats}
+        auction={activePool} />}
     </Box>
   );
 };

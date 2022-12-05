@@ -7,21 +7,21 @@ import {
   Button,
   GridProps,
 } from "@mui/material";
-import { useAppSelector } from "@/hooks/store";
 import { BaseAsset } from "@/components/Atoms";
 import { BoxWrapper } from "../../BoxWrapper";
 import { useRouter } from "next/router";
 import { DonutChart } from "@/components/Atoms/DonutChart";
-import { useLiquidityPoolDetails } from "@/store/hooks/useLiquidityPoolDetails";
+import { useLiquidityPoolDetails } from "@/defi/hooks/useLiquidityPoolDetails";
 import { PoolDetailsProps } from "./index";
 import { useRemoveLiquidityState } from "@/store/removeLiquidity/hooks";
 import {
   setManualPoolSearch,
   setPool,
 } from "@/store/addLiquidity/addLiquidity.slice";
-import { useUserProvidedLiquidityByPool } from "@/store/hooks/useUserProvidedLiquidityByPool";
-import { useUSDPriceByAssetId } from "@/store/assets/hooks";
+import { useUserProvidedLiquidityByPool } from "@/defi/hooks/useUserProvidedLiquidityByPool";
 import { calculatePoolTotalValueLocked } from "@/defi/utils";
+import { useLiquidity } from "@/defi/hooks/useLiquidity";
+import { useAssetIdOraclePrice, useLpTokenPrice, useLpTokenUserBalance } from "@/defi/hooks";
 
 const twoColumnPageSize = {
   sm: 12,
@@ -56,16 +56,24 @@ export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
   const router = useRouter();
   const theme = useTheme();
   const { setRemoveLiquidity } = useRemoveLiquidityState();
+
   const poolDetails = useLiquidityPoolDetails(poolId);
+  const { pool } = poolDetails;
+  const { baseAmount, quoteAmount } = useLiquidity(pool);
+  const lpTokenBalance = useLpTokenUserBalance(pool);
+  const lpTokenPrice = useLpTokenPrice(pool?.getLiquidityProviderToken());
+  const providedLiquidityAmount = useUserProvidedLiquidityByPool(poolId)
 
-  const baseAssetPriceUSD = useUSDPriceByAssetId(
-    poolDetails.pool?.pair.base.toString() ?? "-1"
-  );
-  const quoteAssetPriceUSD = useUSDPriceByAssetId(
-    poolDetails.pool?.pair.quote.toString() ?? "-1"
-  );
+  const pair = pool?.getPair() ?? null;
+  const base = pair?.getBaseAsset().toString() ?? "-";
+  const quote = pair?.getQuoteAsset().toString() ?? "-";
 
-  const liquidityProvided = useUserProvidedLiquidityByPool(poolId);
+  const baseAssetPriceUSD = useAssetIdOraclePrice(
+    base
+  );
+  const quoteAssetPriceUSD = useAssetIdOraclePrice(
+    quote
+  );
 
   const handleAddLiquidity = () => {
     if (poolDetails.baseAsset && poolDetails.quoteAsset && poolDetails.pool) {
@@ -84,24 +92,22 @@ export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
     }
   };
 
-  const totalValueProvided = liquidityProvided.value.baseValue.plus(
-    liquidityProvided.value.quoteValue
-  );
-
   const totalValueLocked = calculatePoolTotalValueLocked(
-    poolDetails.tokensLocked.tokenAmounts.baseAmount,
-    poolDetails.tokensLocked.tokenAmounts.baseAmount,
+    quoteAmount,
+    baseAmount,
     baseAssetPriceUSD,
     quoteAssetPriceUSD
   );
 
-  const remaining = totalValueLocked.minus(totalValueProvided);
+  const valueProvided = totalValueLocked.minus(
+    lpTokenPrice.times(lpTokenBalance)
+  );
 
   return (
     <BoxWrapper {...boxProps}>
       <Grid container>
         <Grid item {...twoColumnPageSize}>
-          <Typography variant="h5">{`$${totalValueProvided.toFormat(
+          <Typography variant="h5">{`$${valueProvided.toFormat(
             2
           )}`}</Typography>
           <Typography variant="body1" color="text.secondary">
@@ -121,7 +127,7 @@ export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
           </Grid>
           <Grid item {...twoColumnPageSize}>
             <Button
-              disabled={poolDetails.lpBalance.eq(0)}
+              disabled={lpTokenBalance.eq(0)}
               variant="outlined"
               size="large"
               fullWidth
@@ -137,7 +143,7 @@ export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
         <Grid container spacing={4}>
           <Grid item {...twoColumnPageSize}>
             <DonutChart
-              data={[totalValueProvided.toNumber(), remaining.toNumber()]}
+              data={[valueProvided.toNumber(), totalValueLocked.minus(valueProvided).toNumber()]}
               colors={[
                 alpha(theme.palette.common.white, theme.custom.opacity.main),
                 theme.palette.primary.main,
@@ -150,30 +156,30 @@ export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
             <Box mt={8}>
               {poolDetails.baseAsset && (
                 <Item
-                  value={liquidityProvided.tokenAmounts.baseAmount.toFormat(2)}
+                  value={providedLiquidityAmount.tokenAmounts.baseAmount.toFormat(2)}
                 >
                   <BaseAsset
-                    label={`Pooled ${poolDetails.baseAsset.symbol}`}
-                    icon={poolDetails.baseAsset.icon}
+                    label={`Pooled ${poolDetails.baseAsset.getSymbol()}`}
+                    icon={poolDetails.baseAsset.getIconUrl()}
                   />
                 </Item>
               )}
               {poolDetails.quoteAsset && (
                 <Item
-                  value={liquidityProvided.tokenAmounts.quoteAmount.toFormat(2)}
+                  value={providedLiquidityAmount.tokenAmounts.quoteAmount.toFormat(2)}
                   mt={4}
                 >
                   <BaseAsset
-                    label={`Pooled ${poolDetails.quoteAsset.symbol}`}
-                    icon={poolDetails.quoteAsset.icon}
+                    label={`Pooled ${poolDetails.quoteAsset.getSymbol()}`}
+                    icon={poolDetails.quoteAsset.getIconUrl()}
                   />
                 </Item>
               )}
               <Item
                 value={`${
-                  totalValueProvided.eq(0)
+                  totalValueLocked.eq(0)
                     ? "0"
-                    : totalValueProvided
+                    : valueProvided
                         .div(totalValueLocked)
                         .times(100)
                         .toFixed(2)

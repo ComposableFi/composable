@@ -1,7 +1,6 @@
-import { LiquidityBootstrappingPool } from "@/defi/types";
+import { AuctionsSlice } from "./auctions.types";
 import BigNumber from "bignumber.js";
 import create from "zustand";
-import { AuctionsSlice } from "./auctions.types";
 
 const DEFAULT_STATS = {
   totalVolume: new BigNumber(0),
@@ -18,34 +17,8 @@ const DEFAULT_STATS = {
   totalRaised: new BigNumber(0)
 };
 
-const DEFAULT_POOL: LiquidityBootstrappingPool = {
-  id: "-",
-  poolId: -1,
-  owner: "-",
-  pair: {
-    base: -1,
-    quote: -1,
-  },
-  sale: {
-    startBlock: "0",
-    endBlock: "0",
-    start: Date.now() - 30 * 24 * 60 * 60 * 1000,
-    end: Date.now() + 30 * 24 * 60 * 60 * 1000,
-    duration: 60,
-    initialWeight: 0,
-    finalWeight: 0,
-  },
-  feeConfig: {
-    feeRate: "1",
-    protocolFeeRate: "1",
-    ownerFeeRate: "1"
-  },
-  networkId: "picasso",
-  auctionDescription: [],
-};
-
 export const useAuctionsSlice = create<AuctionsSlice>(() => ({
-  activePool: DEFAULT_POOL,
+  activePool: null,
   activePoolStats: DEFAULT_STATS,
   spotPrices: {},
   activePoolTradeHistory: []

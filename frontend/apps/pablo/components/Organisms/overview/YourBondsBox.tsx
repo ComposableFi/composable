@@ -41,7 +41,7 @@ export const YourBondsBox: React.FC<BoxProps> = ({ ...boxProps }) => {
 
   const bondedOffers = useMemo(() => {
     return bondOffers.filter((offer) => {
-      const offerId = offer.offerId.toString();
+      const offerId = offer.getBondOfferId() as string;
       return (
         offerId in bondedOfferVestingSchedules &&
         bondedOfferVestingSchedules[offerId].length > 0
@@ -70,7 +70,7 @@ export const YourBondsBox: React.FC<BoxProps> = ({ ...boxProps }) => {
             <TableBody>
               {bondedOffers.map((offer) => (
                 <OverviewBondedOfferRow
-                  offerId={offer.offerId.toString()}
+                  offerId={offer.getBondOfferId() as string}
                   bondOffer={offer}
                 />
               ))}

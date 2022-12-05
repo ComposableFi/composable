@@ -1,46 +1,12 @@
-import { StoreSlice } from "../types";
-import {
-  PoolsSlice,
-  AnyPoolArray
-} from "./pools.types";
-import {
-  putLiquidityBootstrappingPoolSpotPrice,
-  setPoolsListVerified,
-} from "./pools.utils";
+import { PabloConstantProductPool, PabloLiquidityBootstrappingPool } from "shared";
+import create from "zustand";
 
-const createPoolsSlice: StoreSlice<PoolsSlice> = (set) => ({
-  pools: {
-    constantProductPools: {
-      verified: [],
-      unVerified: [],
-    },
-    liquidityBootstrappingPools: {
-      verified: [],
-      unVerified: [],
-      spotPrices: [],
-    },
-    stableSwapPools: {
-      verified: [],
-      unVerified: [],
-    },
-    setPoolsList: (
-      pools: AnyPoolArray
-    ) =>
-      set((prev: PoolsSlice) => ({
-        pools: setPoolsListVerified(prev.pools, pools),
-      })),
-    setLiquidityBootstrappingPoolSpotPrice: (
-      poolId: number,
-      spotPrice: string
-    ) =>
-      set((prev: PoolsSlice) => ({
-        pools: putLiquidityBootstrappingPoolSpotPrice(
-          prev.pools,
-          poolId,
-          spotPrice
-        ),
-      })),
-  },
-});
+export const usePoolsSlice = create<{ constantProductPools: PabloConstantProductPool[], liquidityBootstrappingPools: PabloLiquidityBootstrappingPool[] }>(() => ({
+  constantProductPools: [],
+  liquidityBootstrappingPools: []
+}));
 
-export default createPoolsSlice;
+export const setPermissionedConstantProductPools = (pools: PabloConstantProductPool[]) => usePoolsSlice.setState((state) => ({
+  ...state,
+  constantProductPools: pools
+}));
