@@ -1,5 +1,4 @@
-import { getToken } from "@/defi/Tokens";
-import { TokenId } from "@/defi/types";
+import { getToken,TokenId } from "tokens";
 import {
   alpha,
   Box,

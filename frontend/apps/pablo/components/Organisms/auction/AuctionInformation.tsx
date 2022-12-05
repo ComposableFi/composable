@@ -1,21 +1,20 @@
 import { Box, BoxProps, Typography, useTheme, Grid } from "@mui/material";
-import { getFullHumanizedDateDiff } from "shared";
+import { getFullHumanizedDateDiff, PabloLiquidityBootstrappingPool } from "shared";
 import { nFormatter } from "shared";
 import { useMemo } from "react";
-import { useUSDPriceByAssetId } from "@/store/assets/hooks";
 import { useAuctionSpotPrice } from "@/defi/hooks/auctions";
-import { MockedAsset } from "@/store/assets/assets.types";
-import { LiquidityBootstrappingPool } from "@/defi/types";
-import { DEFAULT_NETWORK_ID, DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils";
+import { DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils";
 import { LiquidityBootstrappingPoolStatistics } from "@/store/auctions/auctions.types";
+import { useAssetIdOraclePrice } from "@/defi/hooks";
+import { useAuctionTiming } from "@/defi/hooks/auctions/useAuctionTiming";
+import { Asset } from "shared";
 import BigNumber from "bignumber.js";
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
-import useBlockNumber from "@/defi/hooks/useBlockNumber";
 
 export type AuctionInformationProps = {
-  auction: LiquidityBootstrappingPool;
-  baseAsset?: MockedAsset;
-  quoteAsset?: MockedAsset;
+  auction: PabloLiquidityBootstrappingPool;
+  baseAsset: Asset;
+  quoteAsset: Asset;
   stats: LiquidityBootstrappingPoolStatistics;
 } & BoxProps;
 
@@ -27,12 +26,7 @@ export const AuctionInformation: React.FC<AuctionInformationProps> = ({
   ...rest
 }) => {
   const theme = useTheme();
-  const currentBlock = useBlockNumber(DEFAULT_NETWORK_ID);
-  const isActive: boolean =
-    currentBlock.gte(auction.sale.startBlock) &&
-    currentBlock.lte(auction.sale.endBlock);
-  const isEnded: boolean = currentBlock.gt(auction.sale.endBlock);
-
+  const { isActive, isEnded, duration, endTimestamp } = useAuctionTiming(auction);
   const standardPageSize = {
     xs: 12,
     sm: 6,
@@ -45,7 +39,7 @@ export const AuctionInformation: React.FC<AuctionInformationProps> = ({
 
   const getTime = () => {
     if (isActive) {
-      return getFullHumanizedDateDiff(Date.now(), auction.sale.end);
+      return getFullHumanizedDateDiff(Date.now(), endTimestamp);
     } else if (isEnded) {
       return "-";
     } else {
@@ -53,8 +47,8 @@ export const AuctionInformation: React.FC<AuctionInformationProps> = ({
     }
   };
 
-  const spotPrice = useAuctionSpotPrice(auction.poolId);
-  const quoteAssetPrice = useUSDPriceByAssetId(auction.pair.quote.toString());
+  const spotPrice = useAuctionSpotPrice(auction ? (auction.getPoolId(true) as BigNumber).toNumber() : -1);
+  const quoteAssetPrice = useAssetIdOraclePrice(auction ? auction.getPair().getQuoteAsset().toString() : "-");
 
   let {
     tokenRaised,
@@ -125,7 +119,7 @@ export const AuctionInformation: React.FC<AuctionInformationProps> = ({
             Duration
           </Typography>
           <Box display="flex" alignItems="center" gap={1.75}>
-            <Typography variant="h6">{auction.sale.duration} days</Typography>
+            <Typography variant="h6">{duration} days</Typography>
             <AccessTimeRoundedIcon />
           </Box>
         </Grid>
@@ -181,7 +175,7 @@ export const AuctionInformation: React.FC<AuctionInformationProps> = ({
             <Typography variant="h6">{tokenRaised}</Typography>
           </Box>
           <Typography variant="body1" color="text.secondary" fontWeight="bold">
-            {quoteAsset?.symbol}
+            {quoteAsset?.getSymbol()}
           </Typography>
         </Grid>
       </Grid>

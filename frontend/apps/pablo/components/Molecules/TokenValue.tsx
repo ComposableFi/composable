@@ -1,7 +1,7 @@
-import { Token } from "@/defi/types";
+import { Token } from "tokens";
 import { Box, BoxProps, Typography, TypographyProps } from "@mui/material";
 import { BaseAsset } from "@/components/Atoms";
-import { MockedAsset } from "@/store/assets/assets.types";
+import { Asset } from "shared";
 
 const defaultFlexBoxProps = {
   display: "flex",
@@ -11,7 +11,7 @@ const defaultFlexBoxProps = {
 }
 
 export type TokenValueProps = {
-  token: Token | MockedAsset,
+  token: Token | Asset,
   value: string,
   LabelProps?: TypographyProps,
   ValueProps?: TypographyProps,
@@ -27,8 +27,12 @@ export const TokenValue: React.FC<TokenValueProps> = ({
   return (
     <Box {...defaultFlexBoxProps} {...boxProps}>
       <BaseAsset
-        icon={token.icon}
-        label={token.symbol}
+        icon={
+          token instanceof Asset ? token.getIconUrl() : token.icon
+        }
+        label={
+          token instanceof Asset ? token.getSymbol() : token.symbol
+        }
         LabelProps={LabelProps}
       />
       <Typography variant="body1" {...ValueProps}>

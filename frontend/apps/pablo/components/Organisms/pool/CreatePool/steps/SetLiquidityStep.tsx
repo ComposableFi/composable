@@ -12,17 +12,16 @@ import {
 } from "@mui/material";
 import { useMemo, useState } from "react";
 import BigNumber from "bignumber.js";
-import { useDispatch } from "react-redux";
 import FormWrapper from "../FormWrapper";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import { useMobile } from "@/hooks/responsive";
 import { TransactionSettings } from "@/components/Organisms/TransactionSettings";
-import { openTransactionSettingsModal } from "@/stores/ui/uiSlice";
 import useStore from "@/store/useStore";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
-import { useAssetBalance, useUSDPriceByAssetId } from "@/store/assets/hooks";
-import { MockedAsset } from "@/store/assets/assets.types";
-import { useAsset } from "@/defi/hooks/assets/useAsset";
+import { useAsset, useAssetBalance, useAssetIdOraclePrice } from "@/defi/hooks";
+import { setUiState } from "@/store/ui/ui.slice";
+import { Asset } from "shared";
+import { useSelectedAccount } from "substrate-react";
 
 const selectLabelProps = (valid: boolean, label: string, balance: string) =>
   ({
@@ -63,20 +62,20 @@ const priceLabelProps = (label: string, balance?: string) =>
   } as const);
 
 const combinedSelectProps = (
-  asset: MockedAsset | undefined,
+  asset: Asset | undefined,
   isMobile?: boolean
 ) =>
   ({
-    value: asset?.network?.[DEFAULT_NETWORK_ID] || "",
+    value: asset?.getPicassoAssetId() as string || "",
     dropdownModal: true,
     forceHiddenLabel: isMobile ? true : false,
     options: asset
       ? [
           {
-            value: asset.network?.[DEFAULT_NETWORK_ID],
-            label: asset.name,
-            shortLabel: asset.symbol,
-            icon: asset.icon,
+            value: asset?.getPicassoAssetId() as string,
+            label: asset?.getName(),
+            shortLabel: asset.getSymbol(),
+            icon: asset.getIconUrl(),
           },
         ]
       : [],
@@ -89,8 +88,8 @@ const combinedSelectProps = (
 const SetLiquidityStep: React.FC<BoxProps> = ({ ...boxProps }) => {
   const theme = useTheme();
   const isMobile = useMobile();
-  const dispatch = useDispatch();
 
+  const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const { createPool } = useStore();
 
   const baseAmount = useMemo(() => {
@@ -101,17 +100,24 @@ const SetLiquidityStep: React.FC<BoxProps> = ({ ...boxProps }) => {
     return new BigNumber(createPool.liquidity.quoteAmount);
   }, [createPool.liquidity.quoteAmount]);
 
-  const balance1 = useAssetBalance(DEFAULT_NETWORK_ID, createPool.baseAsset);
-  const balance2 = useAssetBalance(DEFAULT_NETWORK_ID, createPool.quoteAsset);
-
   const [valid1, setValid1] = useState<boolean>(false);
   const [valid2, setValid2] = useState<boolean>(false);
 
-  const tokenToUSD1 = useUSDPriceByAssetId(createPool.baseAsset);
-  const tokenToUSD2 = useUSDPriceByAssetId(createPool.quoteAsset);
+  const tokenToUSD1 = useAssetIdOraclePrice(createPool.baseAsset);
+  const tokenToUSD2 = useAssetIdOraclePrice(createPool.quoteAsset);
 
   const _baseAsset = useAsset(createPool.baseAsset);
   const _quoteAsset = useAsset(createPool.quoteAsset);
+
+  const balance1 = useAssetBalance(
+    _baseAsset,
+    "picasso"
+  )
+
+  const balance2 = useAssetBalance(
+    _quoteAsset,
+    "picasso"
+  )
 
   const validToken1 = createPool.baseAsset !== "none";
   const validToken2 = createPool.quoteAsset !== "none";
@@ -137,7 +143,7 @@ const SetLiquidityStep: React.FC<BoxProps> = ({ ...boxProps }) => {
   };
 
   const onSettingHandler = () => {
-    dispatch(openTransactionSettingsModal());
+    setUiState({ isTransactionSettingsModalOpen: true })
   };
 
   return (

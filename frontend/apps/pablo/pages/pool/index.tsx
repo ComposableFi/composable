@@ -10,23 +10,20 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 import { useRouter } from "next/router";
-import Default from "@/components/Templates/Default";
 import { MessageBox } from "@/components/Atoms";
 import { Link, PageTitle } from "@/components";
 import { ConnectWalletFeaturedBox } from "@/components/Organisms/ConnectWalletFeaturedBox";
-import { AllLiquidityTable } from "@/components/Organisms/AllLiquidityTable";
 import { useDotSamaContext } from "substrate-react";
 import { resetAddLiquiditySlice } from "@/store/addLiquidity/addLiquidity.slice";
-import useStore from "@/store/useStore";
 import { HighlightBox } from "@/components/Atoms/HighlightBox";
+import { useAllLpTokenRewardingPools } from "@/defi/hooks/useAllLpTokenRewardingPools";
+import { PoolsTable } from "@/components/Organisms/PoolsTable";
+import { usePoolsWithLpBalance } from "@/defi/hooks/overview/usePoolsWithLpBalance";
+import Default from "@/components/Templates/Default";
+import useStore from "@/store/useStore";
 
 const standardPageSize = {
   xs: 12,
-};
-
-const twoColumnPageSize = {
-  xs: 12,
-  md: 6,
 };
 
 const Pool: NextPage = () => {
@@ -46,6 +43,9 @@ const Pool: NextPage = () => {
     createPool.resetSlice();
     router.push("/pool/create-pool");
   };
+
+  const allLpRewardingPools = useAllLpTokenRewardingPools();
+  const poolsWithUserProvidedLiquidity = usePoolsWithLpBalance();
 
   return (
     <Default>
@@ -88,14 +88,18 @@ const Pool: NextPage = () => {
                     >
                       Create a pair
                     </Button>
-                    <Button onClick={handleClick} variant="contained">
+                    <Button disabled={
+                      allLpRewardingPools.length === 0
+                    } onClick={handleClick} variant="contained">
                       Add Liquidity
                     </Button>
                   </Box>
                 </Box>
-                <AllLiquidityTable flow="user" />
+                {
+                  <PoolsTable liquidityPools={poolsWithUserProvidedLiquidity} source="user" />
+                }
               </HighlightBox>
-              <Box mt={4} display="flex" gap={1} justifyContent="center">
+              <Box mt={4} display="none" gap={1} justifyContent="center">
                 <Typography
                   textAlign="center"
                   variant="body2"
@@ -126,7 +130,9 @@ const Pool: NextPage = () => {
               <Typography variant="h6" mb={2}>
                 All Liquidity
               </Typography>
-              <AllLiquidityTable flow="all" />
+              {
+                <PoolsTable liquidityPools={allLpRewardingPools} source="pallet" />
+              }
             </HighlightBox>
           </Grid>
         </Grid>

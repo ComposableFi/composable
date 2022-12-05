@@ -1,5 +1,5 @@
 import { OperationResult } from "@urql/core";
-import { makeClient } from "../makeClient";
+import { subsquidClient } from "../client";
 
 export interface PabloTransactions {
   id: string;
@@ -27,7 +27,7 @@ export function queryUserProvidedLiquidity(
 ): Promise<OperationResult<{
   pabloTransactions: PabloTransactions[]
 }, {}>> {
-  return makeClient().query(`
+  return subsquidClient().query(`
     query pabloTransactions {
       pabloTransactions (
         limit: ${limit},
@@ -62,7 +62,7 @@ export function queryUserProvidedLiquidity(
   `).toPromise();
 }
 
-export const queryPabloPoolById = (poolId: number) => makeClient().query(`query queryPabloPoolById {
+export const queryPabloPoolById = (poolId: number) => subsquidClient().query(`query queryPabloPoolById {
   pabloPools(orderBy: calculatedTimestamp_DESC, where: {poolId_eq: ${poolId}}) {
     totalLiquidity
     totalVolume

@@ -1,20 +1,28 @@
 import PoolsUpdater from "@/updaters/pools/Updater";
 import LiquidityUpdater from "@/updaters/liquidity/Updater";
 import PoolStatsUpdater from "@/updaters/poolStats/Updater";
-import BalancesUpdater from "@/updaters/assets/balances/Updater";
-import ApolloUpdater from "@/updaters/assets/apollo/Updater";
+import AssetsUpdater from "@/updaters/assets/Updater";
 import AuctionsUpdater from "@/updaters/auctions/Updater";
 import BondsUpdater from "@/updaters/bonds/Updater";
 import StakingRewardsUpdater from "@/updaters/stakingRewards/Updater";
 
+import { subscription } from "@/updaters/oracle/oracle";
+import { useEffect } from "react";
+
 const BaseUpdater = () => {
+
+  useEffect(() => {
+    return () => {
+      subscription();
+    }
+  }, []);
+
   return (
     <>
       <AuctionsUpdater />
-      <BalancesUpdater />
+      <AssetsUpdater />
       <LiquidityUpdater />
       <PoolStatsUpdater />
-      <ApolloUpdater />
       <PoolsUpdater />
       <BondsUpdater />
       <StakingRewardsUpdater />

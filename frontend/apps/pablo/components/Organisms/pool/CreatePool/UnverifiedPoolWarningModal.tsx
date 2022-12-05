@@ -1,23 +1,20 @@
 import React from "react";
 import { ModalProps, Modal } from "@/components/Molecules";
 import { Box, Typography, useTheme, Button } from "@mui/material";
-
-import { useDispatch } from "react-redux";
-import { closeConfirmingModal } from "@/stores/ui/uiSlice";
 import { WarningAmberRounded } from "@mui/icons-material";
 import useStore from "@/store/useStore";
+import { setUiState } from "@/store/ui/ui.slice";
 
 export const UnverifiedPoolWarningModal: React.FC<ModalProps> = ({
   ...modalProps
 }) => {
   const theme = useTheme();
-  const dispatch = useDispatch();
   const {
-    createPool: { currentStep, setSelectable },
+    createPool: { currentStep, setSelectable }
   } = useStore();
 
   const handleClose = () => {
-    dispatch(closeConfirmingModal());
+    setUiState({ isConfirmingModalOpen: false });
   };
 
   const handleContinue = () => {

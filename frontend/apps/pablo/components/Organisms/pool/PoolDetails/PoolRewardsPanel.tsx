@@ -1,6 +1,6 @@
 import { BaseAsset, PairAsset } from "@/components/Atoms";
-import { useLiquidityPoolDetails } from "@/store/hooks/useLiquidityPoolDetails";
-import { useUserProvidedLiquidityByPool } from "@/store/hooks/useUserProvidedLiquidityByPool";
+import { useLiquidityPoolDetails } from "@/defi/hooks/useLiquidityPoolDetails";
+import { useUserProvidedLiquidityByPool } from "@/defi/hooks/useUserProvidedLiquidityByPool";
 import {
   alpha,
   Box,
@@ -16,7 +16,7 @@ import { PoolDetailsProps } from "./index";
 import { BoxWrapper } from "../../BoxWrapper";
 import { useStakingRewardPool } from "@/store/stakingRewards/stakingRewards.slice";
 import { useAssets } from "@/defi/hooks";
-import { MockedAsset } from "@/store/assets/assets.types";
+import { Asset } from "shared";
 import { useClaimStakingRewards } from "@/defi/hooks/stakingRewards/useClaimStakingRewards";
 import { ConfirmingModal } from "../../swap/ConfirmingModal";
 import { usePendingExtrinsic, useSelectedAccount } from "substrate-react";
@@ -67,17 +67,16 @@ export const PoolRewardsPanel: React.FC<PoolDetailsProps> = ({
   ...boxProps
 }) => {
   const theme = useTheme();
-
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const poolDetails = useLiquidityPoolDetails(poolId);
-  const userProvidedLiquidity = useUserProvidedLiquidityByPool(poolId);
-
-  const { baseAsset, quoteAsset, pool } = poolDetails;
-  const stakingRewardsPool = useStakingRewardPool(pool ? pool.lpToken : "-");
+  const { pool } = poolDetails;
+  const lpToken = pool?.getLiquidityProviderToken();
+  const lpAssetId = lpToken?.getPicassoAssetId() as string ?? "-";
+  const stakingRewardsPool = useStakingRewardPool(lpAssetId);
   const rewardAssets = useAssets(stakingRewardsPool ? Object.keys(stakingRewardsPool.rewards) : []);
 
   // WIP - awaiting Andres' subsquid changes
-  const lpDeposit = new BigNumber(0);
+  const lpStaked = new BigNumber(0);
   const handleClaimRewards = useClaimStakingRewards({})
 
   const isPendingClaimStakingRewards = usePendingExtrinsic(
@@ -89,32 +88,21 @@ export const PoolRewardsPanel: React.FC<PoolDetailsProps> = ({
   return (
     <BoxWrapper {...boxProps}>
       <Item
-        value={`$${lpDeposit}`}
-        intro={`${lpDeposit} ${baseAsset?.symbol}/${
-          quoteAsset?.symbol
-        }`}
+        value={`$${lpStaked}`}
+        intro={`${lpStaked} ${lpToken?.getSymbol()}`}
       >
         <Typography variant="h6">Your deposits</Typography>
       </Item>
       <Item
-        value={userProvidedLiquidity.tokenAmounts.baseAmount.toFormat()}
+        value={lpStaked.toFormat()}
         mt={4.375}
       >
-        {baseAsset && quoteAsset && (
-          <PairAsset 
-          assets={[
-            {
-              icon: baseAsset.icon,
-              label: baseAsset.symbol,
-            },
-            {
-              icon: quoteAsset.icon,
-              label: quoteAsset.symbol,
-            },
-          ]}
-          separator="/"
+        {
+          lpToken && <PairAsset
+            assets={lpToken.getUnderlyingAssetJSON()}
+            separator="/"
           />
-        )}
+        }
       </Item>
       {/* <Item
         value={userProvidedLiquidity.tokenAmounts.quoteAmount.toFormat()}
@@ -142,11 +130,11 @@ export const PoolRewardsPanel: React.FC<PoolDetailsProps> = ({
       <Item mt={4} mb={4} value={`$${0}`}>
         <Typography variant="h6">Your rewards</Typography>
       </Item>
-      {rewardAssets.map(({ name, icon, symbol }: MockedAsset) => (
-        <Item value={new BigNumber(0).toString()} mt={2} key={name}>
+      {rewardAssets.map((asset: Asset) => (
+        <Item value={new BigNumber(0).toString()} mt={2} key={asset.getName()}>
           <BaseAsset
-            icon={icon}
-            label={symbol}
+            icon={asset.getIconUrl()}
+            label={asset.getSymbol()}
           />
         </Item>
       ))}

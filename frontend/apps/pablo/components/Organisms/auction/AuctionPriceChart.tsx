@@ -1,8 +1,8 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { Box, Typography, useTheme } from "@mui/material";
 import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
-import { MockedAsset } from "@/store/assets/assets.types";
+import { Asset } from "shared";
 import { ApexOptions } from "apexcharts";
 
 const NoSSRChart = dynamic(() => import("react-apexcharts"), { ssr: false });
@@ -113,7 +113,7 @@ const createChartOptions = (color: string, theme: any, dateFormat: any): ApexOpt
 type PriceChartLabelProps = {
   priceSeries: [number, number][];
   predictedPriceSeries: [number, number][];
-  assetSymbol?: string;
+  assetSymbol: string;
 };
 
 const PriceChartLabels = ({
@@ -155,7 +155,7 @@ const PriceChartLabels = ({
 };
 
 export type AuctionPriceChartProps = {
-  baseAsset: MockedAsset | undefined;
+  baseAsset: Asset;
   chartSeries: {
     currentPriceSeries: [number, number][];
     predictedPriceSeries: [number, number][];
@@ -209,7 +209,7 @@ export const AuctionPriceChart: React.FC<AuctionPriceChartProps> = ({
         <PriceChartLabels
           predictedPriceSeries={chartSeries.predictedPriceSeries}
           priceSeries={chartSeries.currentPriceSeries}
-          assetSymbol={baseAsset?.symbol}
+          assetSymbol={baseAsset.getSymbol()}
         />
       </Box>
     </Box>

@@ -2,7 +2,7 @@
 /* eslint-disable */
 
 import type { ComposableTraitsDefiCurrencyPairCurrencyId, CurrencyId, } from "../common";
-import type { bool, Enum, Null, Struct, u128, u32, } from "@polkadot/types-codec";
+import type { bool, Enum, Null, Struct, u128, u32, u64, } from "@polkadot/types-codec";
 import type { ITuple } from "@polkadot/types-codec/types";
 import type { EthereumAccountId } from "@polkadot/types/interfaces/eth";
 import type { EcdsaSignature, MultiSignature, } from "@polkadot/types/interfaces/extrinsics";
@@ -108,7 +108,10 @@ export interface ComposableTraitsLendingRepayStrategy extends Null {}
 export interface ComposableTraitsLendingUpdateInput extends Null {}
 
 /** @name ComposableTraitsOraclePrice */
-export interface ComposableTraitsOraclePrice extends Null {}
+export interface ComposableTraitsOraclePrice extends Null {
+  price: u128;
+  block: u64;
+}
 
 /** @name ComposableTraitsOracleRewardTracker */
 export interface ComposableTraitsOracleRewardTracker extends Null {}
