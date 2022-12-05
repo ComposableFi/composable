@@ -2,6 +2,9 @@ import BigNumber from "bignumber.js";
 import { ApiPromise } from "@polkadot/api";
 import { fromChainIdUnit, fromPerbill } from "../unit";
 import moment from "moment";
+import { calculatePeriod, createDurationPresetLabel, Period } from "./utils";
+import { ClaimableAsset } from "./ClaimableAsset";
+import { Asset } from "./assets";
 
 type StakingPoolRewardRatePeriod = "PerSecond";
 
@@ -151,7 +154,7 @@ export class StakingRewardPoolLockConfig {
   }
 }
 
-export class StakingRewardPool {
+export class PabloStakingRewardPool {
   protected __api: ApiPromise;
   protected __assetId: BigNumber;
   protected __claimedShares: BigNumber;
@@ -164,10 +167,22 @@ export class StakingRewardPool {
   protected __rewards: Map<string, StakingPoolReward>;
   protected __minimumStakingAmount: BigNumber;
 
+  static calculateStakingRewardsPoolApy(
+    rewardValue: BigNumber,
+    dailyRewardAmount: BigNumber,
+    totalValueLocked: BigNumber
+  ): BigNumber {
+    if (totalValueLocked.eq(0)) {
+      return new BigNumber(0);
+    }
+    let num = rewardValue.times(dailyRewardAmount).times(365);
+    return num.div(totalValueLocked);
+  }
+
   static async fetchStakingRewardPool(
     api: ApiPromise,
     assetId: BigNumber
-  ): Promise<StakingRewardPool> {
+  ): Promise<PabloStakingRewardPool> {
     try {
       const rewardPool = await api.query.stakingRewards.rewardPools(
         assetId.toString()
@@ -180,7 +195,7 @@ export class StakingRewardPool {
     }
   }
 
-  static fromJSON(api: ApiPromise, assetId: BigNumber, stakePool: any): StakingRewardPool {
+  static fromJSON(api: ApiPromise, assetId: BigNumber, stakePool: any): PabloStakingRewardPool {
     try {
       const shareAssetId = new BigNumber(stakePool.shareAssetId);
       const financialNftAssetId = new BigNumber(stakePool.financialNftAssetId);
@@ -204,7 +219,7 @@ export class StakingRewardPool {
         );
       });
 
-      return new StakingRewardPool(
+      return new PabloStakingRewardPool(
         api,
         assetId,
         claimedShares,
@@ -249,7 +264,58 @@ export class StakingRewardPool {
     this.__startBlock = startBlock;
   }
 
+  getApi(): ApiPromise {
+    return this.__api;
+  }
+
   getRewards() {
     return this.__rewards;
+  }
+
+  getDurationPresets() {
+    const durationPresets = this.__lock.durationPresets;
+
+    let durationPresetLabels: Array<{
+      periodInString: string;
+      period: Period;
+      periodInSeconds: number;
+      value: number
+    }> = [];
+
+    durationPresets.forEach((v, k) => {
+      const seconds = Number(k);
+      const period = calculatePeriod(seconds);
+      const periodInString = createDurationPresetLabel(period);
+  
+      durationPresetLabels.push({
+          periodInString,
+          period,
+          periodInSeconds: k,
+          value: v.toNumber(),
+      });
+    })
+
+    return durationPresetLabels;
+  }
+
+  getDailyRewards(assets: Asset[]): ClaimableAsset[] {
+    const rewards = this.getRewards();
+    let claimableAssets: ClaimableAsset[] = [];
+
+    const ids = Array.from(rewards.keys());
+    for (const id of ids) {
+      const rewardConf = rewards.get(id);
+      if (rewardConf) {
+        const asset = assets.find((_asset) => _asset.getPicassoAssetId() as string === id);
+        if (asset) {
+          claimableAssets.push(ClaimableAsset.fromAsset(
+            asset,
+            rewardConf.getRewardsPerDay()
+          ))
+        }
+      }
+    }
+
+    return claimableAssets;
   }
 }

@@ -5,13 +5,13 @@ import {
 } from "@mui/material";
 import { PairAsset } from "@/components/Atoms";
 import { useLpTokenPrice, useLpTokenUserBalance } from "@/defi/hooks";
-import { PabloConstantProductPool } from "shared";
+import { DualAssetConstantProduct } from "shared";
 import BigNumber from "bignumber.js";
 
 const LiquidityProviderPositionRow = ({
   pool,
 }: {
-  pool: PabloConstantProductPool
+  pool: DualAssetConstantProduct
 }) => {
   const lpTokenUserBalance = useLpTokenUserBalance(pool);
   const lpTokenPrice = useLpTokenPrice(pool.getLiquidityProviderToken());

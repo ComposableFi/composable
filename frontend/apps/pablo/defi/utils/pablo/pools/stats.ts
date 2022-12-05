@@ -1,7 +1,7 @@
 import { queryPabloPoolById } from "@/defi/subsquid/pools/queries";
 import { DAYS } from "../../constants";
 import { fromChainUnits } from "../../units";
-import { PabloConstantProductPool } from "shared";
+import { DualAssetConstantProduct } from "shared";
 import BigNumber from "bignumber.js";
 
 export interface PabloPoolQueryResponse {
@@ -14,7 +14,7 @@ export interface PabloPoolQueryResponse {
     poolId: number;
 }
 
-export async function fetchPoolStats(pool: PabloConstantProductPool): Promise<PabloPoolQueryResponse[]> {
+export async function fetchPoolStats(pool: DualAssetConstantProduct): Promise<PabloPoolQueryResponse[]> {
     try {
         const id = pool.getPoolId(true) as BigNumber
         const response = await queryPabloPoolById(id.toNumber());
