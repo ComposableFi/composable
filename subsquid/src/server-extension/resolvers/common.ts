@@ -9,7 +9,7 @@ export function getStartAndStep(range: string): {
     range !== "year"
   ) {
     throw new Error(
-      "Invalid range. Should be 'day', 'week', 'month' or 'year'."
+      "Invalid range. It should be 'day', 'week', 'month' or 'year'."
     );
   }
 
