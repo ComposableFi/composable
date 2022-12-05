@@ -53,18 +53,21 @@
           '';
         };
 
-        zombienet-rococo-local-dali-dev = 
-        let 
+        zombienet-rococo-local-dali-dev = let
           config = mkZombienet {
             relaychain = {
               chain = "rococo-local";
               default_command = self'.packages.polkadot-bin;
               count = 3;
             };
-            parachains = [];
+            parachains = [{
+              command = self'.packages.composable-bin;
+              chain = "dali-dev";
+              id = 2087;
+              collators = 3;
+            }];
           };
-        in
-        pkgs.writeShellApplication {
+        in pkgs.writeShellApplication {
           name = "rococo-local-dali-dev";
           runtimeInputs = [ pkgs.nodejs paritytech-zombienet ];
           text = ''
