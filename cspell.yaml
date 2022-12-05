@@ -51,6 +51,7 @@ ignoreRegExpList:
 
 ignorePaths:
   - "docs/static/fonts"
+  - "docs/static/wasm"
   - "code/parachain/node/src/res"
   - "target/"
   - "**/node_modules/"
