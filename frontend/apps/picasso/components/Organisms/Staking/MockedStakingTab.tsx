@@ -35,7 +35,7 @@ export const MockedStakingTab = () => {
       </Stack>
       {/*  Radiobutton groups*/}
       <Box display="flex" justifyContent="space-between" alignItems="center">
-        <TextWithTooltip tooltip={"Select lock period"} disabled={true}>
+        <TextWithTooltip tooltip={"Select lock period"}>
           Select lock period (multiplier)
         </TextWithTooltip>
         <Box display="flex" justifyContent="flex-end" alignItems="center">
@@ -47,9 +47,7 @@ export const MockedStakingTab = () => {
           </Typography>
         </Box>
       </Box>
-      <TextWithTooltip tooltip="Unlock date" disabled={true}>
-        Unlock date
-      </TextWithTooltip>
+      <TextWithTooltip tooltip="Unlock date">Unlock date</TextWithTooltip>
       <FutureDatePaper duration={""} />
       <AlertBox status="warning" icon={<WarningAmberRounded color="warning" />}>
         <Typography variant="body2">Warning</Typography>

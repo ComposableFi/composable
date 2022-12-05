@@ -9,7 +9,9 @@ test("renders Stats page with default args", () => {
   render(<StatsPage />);
   expect(useConnector).toBeCalled();
   expect(
-    screen.getByText("All of Picasso's global information at a glance.")
+    screen.getByText(
+      "You will be able to see all Picasso's global information here."
+    )
   ).toBeInTheDocument();
   expect(screen.getByText("Telemetry")).toBeInTheDocument();
 });

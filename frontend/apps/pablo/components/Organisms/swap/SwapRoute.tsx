@@ -10,11 +10,11 @@ import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { useState } from "react";
-import { MockedAsset } from "@/store/assets/assets.types";
+import { Asset } from "shared";
 
 export type SwapRouteProps = {
-  quoteAsset: MockedAsset | undefined,
-  baseAsset: MockedAsset | undefined,
+  quoteAsset: Asset | undefined,
+  baseAsset: Asset | undefined,
   visibleOnMount?: boolean,
 } & BoxProps;
 
@@ -76,11 +76,11 @@ export const SwapRoute: React.FC<SwapRouteProps> = ({
             ),
           }}
         >
-          <BaseAsset icon={quoteAsset.icon} label={quoteAsset.symbol} width="auto" />
+          <BaseAsset icon={quoteAsset?.getIconUrl()} label={quoteAsset?.getSymbol()} width="auto" />
           <ChevronRightIcon />
           <BaseAsset icon={'/tokens/pablo.svg'} label={`PABLO`} width="auto" />
           <ChevronRightIcon />
-          <BaseAsset icon={baseAsset.icon} label={baseAsset.symbol} width="auto" />
+          <BaseAsset icon={baseAsset?.getIconUrl()} label={baseAsset?.getSymbol()} width="auto" />
         </Box>
       )}
     </Box>

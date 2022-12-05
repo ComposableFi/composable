@@ -2,7 +2,7 @@ import type { NextPage } from "next";
 import { Box, Grid, Link, Typography, useTheme } from "@mui/material";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
-import { FeaturedBox, PageTitle, SS8WalletHelper } from "@/components";
+import { PageTitle, FeaturedBox, SS8WalletHelper } from "@/components";
 import { ConnectorType, useBlockchainProvider, useConnector } from "bi-lib";
 import { useSelectedAccount } from "@/defi/polkadot/hooks";
 import { useDotSamaContext } from "substrate-react";
@@ -10,7 +10,6 @@ import { useCrowdloanRewardsEligibility } from "@/stores/defi/polkadot/crowdloan
 import { DEFAULT_EVM_ID } from "@/defi/polkadot/constants";
 import Default from "@/components/Templates/Default";
 import Image from "next/image";
-import { CrowdloanRewardsSoon } from "@/components/Molecules/CrowdloanRewardSoon";
 
 const CrowdloanRewards: NextPage = () => {
   const theme = useTheme();
@@ -69,7 +68,6 @@ const CrowdloanRewards: NextPage = () => {
             textAlign="center"
             subtitle="Claim your PICA rewards for both KSM and stablecoin contributions."
           />
-          <CrowdloanRewardsSoon />
         </Grid>
         <Grid item {...standardPageSize}>
           <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 3 }}>

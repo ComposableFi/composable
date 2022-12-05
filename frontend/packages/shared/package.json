@@ -6,8 +6,9 @@
   },
   "dependencies": {
     "bn.js": "^5.2.1",
-    "tokens": "*",
-    "fp-ts": "^2.13.1"
+    "defi-interfaces": "*",
+    "moment": "^2.29.4",
+    "tokens": "*"
   },
   "devDependencies": {
     "@types/jest": "^28.1.4",

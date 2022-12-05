@@ -1,16 +1,13 @@
-import { LiquidityBootstrappingPool } from "@/defi/types";
+import { DUMMY_LAUNCH_DESCRIPTION } from "@/defi/utils";
 import { 
   Box, 
   BoxProps, 
   Typography, 
 } from "@mui/material";
 
-export type LaunchDescriptionProps = {
-  auction: LiquidityBootstrappingPool,
-} & BoxProps;
+export type LaunchDescriptionProps = BoxProps;
 
 export const LaunchDescription: React.FC<LaunchDescriptionProps> = ({
-  auction,
   ...rest
 }) => {
   return (
@@ -19,7 +16,7 @@ export const LaunchDescription: React.FC<LaunchDescriptionProps> = ({
         Launch description
       </Typography>
       {
-        auction.auctionDescription.map((paragraph, index) => (
+        DUMMY_LAUNCH_DESCRIPTION().map((paragraph, index) => (
           <Typography variant="subtitle1" color="text.secondary" mt={4} key={index}>
             {paragraph}
           </Typography>

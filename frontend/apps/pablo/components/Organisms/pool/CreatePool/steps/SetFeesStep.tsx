@@ -12,11 +12,10 @@ import {
 } from "@mui/material";
 import { useMemo, useState } from "react";
 import BigNumber from "bignumber.js";
-import { useDispatch } from "react-redux";
 import FormWrapper from "../FormWrapper";
 import { TransactionSettings } from "@/components/Organisms/TransactionSettings";
-import { openTransactionSettingsModal } from "@/stores/ui/uiSlice";
 import useStore from "@/store/useStore";
+import { setUiState } from "@/store/ui/ui.slice";
 
 const availableFees = [0.1, 0.3, 1.0];
 
@@ -37,7 +36,6 @@ const SetFeesStep: React.FC<SetFeesStepProps> = ({
   ...boxProps
 }) => {
   const theme = useTheme();
-  const dispatch = useDispatch();
 
   const {
     createPool
@@ -75,7 +73,7 @@ const SetFeesStep: React.FC<SetFeesStepProps> = ({
   };
 
   const onSettingHandler = () => {
-    dispatch(openTransactionSettingsModal());
+    setUiState({ isTransactionSettingsModalOpen: true });
   };
 
   const selected = (fee: number) => initialSwapFee.eq(fee);

@@ -1,15 +1,9 @@
-import { MockedAsset } from "@/store/assets/assets.types";
-import { useEffect, useMemo } from "react";
-import { useAssets } from "../assets";
-import { useStakingPositions } from "./useStakingPositions";
-import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import BigNumber from "bignumber.js";
+import { useMemo } from "react";
+import { useAssetIdTotalIssuance, useAssets } from "../assets";
+import { useStakingPositions } from "./useStakingPositions";
 import { Stake, StakingRewardPool } from "@/defi/types";
-import { fromChainIdUnit } from "@/../../packages/shared";
-
-export interface ClaimableAsset extends MockedAsset {
-  claimable: BigNumber;
-}
+import { ClaimableAsset, fromChainIdUnit } from "shared";
 
 type ClaimableRewardsProps = {
   stakedAssetId?: string;
@@ -18,9 +12,10 @@ type ClaimableRewardsProps = {
 function claimOfStake(
   stake: Stake,
   stakingRewardPool: StakingRewardPool,
-  rewardAssetId: string
+  rewardAssetId: string,
+  xTokenTotalIssuance: BigNumber
 ): BigNumber {
-  if (stakingRewardPool.totalShares.eq(0)) {
+  if (xTokenTotalIssuance.eq(0)) {
     return new BigNumber(0);
   } else {
     let inflation =
@@ -30,7 +25,7 @@ function claimOfStake(
       stakingRewardPool.rewards[rewardAssetId].totalRewards
     );
     const share = stake.share;
-    const totalShares = stakingRewardPool.totalShares;
+    const totalShares = xTokenTotalIssuance;
     const myShare = totalRewards.times(share).div(totalShares);
 
     return myShare.minus(inflation);
@@ -40,10 +35,11 @@ function claimOfStake(
 function calculateClaim(
   stake: Stake,
   stakingRewardPool: StakingRewardPool,
+  xTokenTotalIssuance: BigNumber,
   accountForPenalty: boolean = false
 ): [string, BigNumber, string][] {
   return Object.keys(stakingRewardPool.rewards).map((assetId) => {
-    let claimable = claimOfStake(stake, stakingRewardPool, assetId);
+    let claimable = claimOfStake(stake, stakingRewardPool, assetId, xTokenTotalIssuance);
 
     if (claimable.lte(0)) {
       claimable = new BigNumber(0);
@@ -83,6 +79,10 @@ export function useClaimableRewards({
     stakedAssetId,
   });
 
+  const totalIssued = useAssetIdTotalIssuance(
+    stakingRewardPool?.shareAssetId
+  );
+
   const rewardAssets = useAssets(
     stakingRewardPool ? Object.keys(stakingRewardPool.rewards) : []
   );
@@ -90,14 +90,15 @@ export function useClaimableRewards({
   const claimableAmounts = useMemo(() => {
     if (!stakingRewardPool || stakes.length === 0) return [];
 
-    return calculateClaim(stakes[0], stakingRewardPool, false);
-  }, [stakes, stakingRewardPool]);
+    return calculateClaim(stakes[0], stakingRewardPool, totalIssued, false);
+  }, [stakes, stakingRewardPool, totalIssued]);
 
   return useMemo(() => {
     let financialNftInstanceId = "-";
     const claimableAssets = rewardAssets.map((asset) => {
-      const assetId = asset.network[DEFAULT_NETWORK_ID];
-      let claimable = new BigNumber(0);
+      const assetId = asset.getPicassoAssetId() as string;
+      let claimableAmount = new BigNumber(0);
+      const claimableAsset = ClaimableAsset.fromAsset(asset, claimableAmount);
       if (claimableAmounts.length > 0) {
         const claimableFromStake = claimableAmounts.find(
           ([_assetId, _val]) => _assetId === assetId
@@ -105,11 +106,11 @@ export function useClaimableRewards({
 
         if (claimableFromStake) {
           financialNftInstanceId = claimableFromStake[2];
-          claimable = claimableFromStake[1];
+          claimableAsset.setClaimable(claimableFromStake[1]);
         }
       }
 
-      return { ...asset, claimable };
+      return claimableAsset;
     });
 
     return { claimableAssets, financialNftInstanceId };

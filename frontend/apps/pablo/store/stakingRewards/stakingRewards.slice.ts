@@ -41,26 +41,26 @@ export const updateStake = (
     return state;
   });
 
-export const putStakingRewardPool = (stakingRewardPool: StakingRewardPool) =>
+export const putStakingRewardPool = (stakingRewardPool: StakingRewardPool, assetId: string) =>
   useStakingRewardsSlice.setState((state) => ({
     ...state,
     rewardPools: {
       ...state.rewardPools,
-      [stakingRewardPool.assetId.toString()]: {
+      [assetId]: {
         ...stakingRewardPool,
       },
     },
   }));
 
 export const putStakingRewardPools = (
-  stakingRewardPools: StakingRewardPool[]
+  stakingRewardPools: Array<{ pool: StakingRewardPool, assetId: string }>
 ) =>
   useStakingRewardsSlice.setState((state) => ({
     ...state,
     rewardPools: stakingRewardPools.reduce(function(acc, curr) {
       return {
         ...acc,
-        [curr.assetId.toString()]: curr,
+        [curr.assetId]: curr.pool,
       };
     }, {} as Record<string, StakingRewardPool>),
   }));

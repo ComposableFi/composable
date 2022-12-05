@@ -45,7 +45,7 @@ export function getEnvironment(target: AvailableEndpoints) {
   return cacheAndFetch(target);
 }
 
-export type EndpointPreset = "local" | "stage" | "mainnet" | "dali";
+export type EndpointPreset = "local" | "stage";
 export type EndpointPresets = {
   [key in EndpointPreset]: {
     [key in AvailableEndpoints]: string;
@@ -59,14 +59,6 @@ export const endpointPresets: EndpointPresets = {
     statemine: "ws://127.0.0.1:10009",
     subsquid: "http://localhost:4350/graphql",
   },
-  dali: {
-    picasso: "wss://persistent.devnets.composablefinance.ninja/chain/dali",
-    karura: "wss://persistent.devnets.composablefinance.ninja/chain/karura",
-    kusama: "wss://persistent.devnets.composablefinance.ninja/chain/rococo",
-    statemine: "wss://persistent.devnets.composablefinance.ninja/chain/statemine",
-    subsquid:
-      "https://persistent.devnets.composablefinance.ninja/subsquid/graphql",
-  },
   stage: {
     picasso:
       "wss://persistent.picasso.devnets.composablefinance.ninja/chain/picasso",
@@ -78,13 +70,6 @@ export const endpointPresets: EndpointPresets = {
       "wss://persistent.picasso.devnets.composablefinance.ninja/chain/statemine",
     subsquid:
       "https://persistent.picasso.devnets.composablefinance.ninja/subsquid/graphql",
-  },
-  mainnet: {
-    picasso: "wss://picasso-rpc.composable.finance",
-    karura: "wss://karura-rpc-0.aca-api.network",
-    kusama: "wss://kusama-rpc.polkadot.io",
-    statemine: "wss://statemine-rpc.polkadot.io",
-    subsquid: "https://stats.composablenodes.tech/graphql",
   },
 };
 

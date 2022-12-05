@@ -11,8 +11,7 @@ import { FC } from "react";
 export const TextWithTooltip: FC<{
   tooltip: string;
   TypographyProps?: TypographyProps;
-  disabled?: boolean;
-}> = ({ tooltip, children, TypographyProps, disabled }) => {
+}> = ({ tooltip, children, TypographyProps }) => {
   const theme = useTheme();
   return (
     <Box sx={{ display: "flex", gap: 1 }}>
@@ -24,7 +23,7 @@ export const TextWithTooltip: FC<{
       >
         {children}
       </Typography>
-      <Tooltip title={tooltip} arrow disableHoverListener={disabled}>
+      <Tooltip title={tooltip} arrow>
         <InfoOutlined
           sx={{
             color: theme.palette.primary.light,

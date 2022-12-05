@@ -1,5 +1,6 @@
 import { ApiPromise } from "@polkadot/api";
-import { subscanAccountLink } from "../../Networks";
+import { APP_NAME } from "../../constants";
+import { subscanExtrinsicLink } from "../../Networks";
 import { useSnackbar } from "notistack";
 import { useCallback } from "react";
 import { Executor, useSigner } from "substrate-react";
@@ -16,35 +17,33 @@ export type ClaimProps = {
 export function useCrowdloanRewardsClaim({
   api,
   executor,
-  selectedPicassoAddress
+  selectedPicassoAddress,
 }: ClaimProps) {
   const { enqueueSnackbar } = useSnackbar();
   const signer = useSigner();
 
   const onClaimReady = useCallback(
     (transactionHash: string) => {
-      if (selectedPicassoAddress)
       enqueueSnackbar("Claim processing...", {
         variant: "info",
         isClosable: true,
-        url: subscanAccountLink("picasso", selectedPicassoAddress),
+        url: subscanExtrinsicLink("picasso", transactionHash),
       });
     },
-    [enqueueSnackbar, selectedPicassoAddress]
+    [enqueueSnackbar]
   );
 
   const onClaimFinalized = useCallback(
     (transactionHash: string) => {
-      if (selectedPicassoAddress)
       enqueueSnackbar("Your claim was successful!", {
         variant: "success",
         isClosable: true,
-        url: subscanAccountLink("picasso", selectedPicassoAddress),
+        url: subscanExtrinsicLink("picasso", transactionHash),
       });
 
       setCrowdloanRewardsState({ claimableAmount: new BigNumber(0) });
     },
-    [enqueueSnackbar, selectedPicassoAddress]
+    [enqueueSnackbar]
   );
 
   const onClaimFail = useCallback(
@@ -58,6 +57,9 @@ export function useCrowdloanRewardsClaim({
   );
 
   return useCallback(async () => {
+    const { web3Enable } = require("@polkadot/extension-dapp");
+    await web3Enable(APP_NAME);
+
     if (!api || !executor || !selectedPicassoAddress || !signer) return;
     try {
       await executor.execute(

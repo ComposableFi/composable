@@ -3,9 +3,9 @@ import { StoreSlice } from "@/stores/types";
 import { Token, TokenId, TOKENS } from "tokens";
 import BigNumber from "bignumber.js";
 import {
-  // HumanizedKaruraAssetMetadata,
+  HumanizedKaruraAssetMetadata,
   PicassoRpcAsset,
-  StatemineAssetMetadata,
+  StatemineAssetMetadata
 } from "@/defi/polkadot/pallets/Assets";
 import { fromChainIdUnit, unwrapNumberOrHex } from "shared";
 import { KusamaAsset } from "@/defi/polkadot/pallets/Assets/kusama";
@@ -36,28 +36,28 @@ const initialState = {
         chainId: {
           picasso: null,
           kusama: null,
-          karura: null,
+          karura: null
         },
         decimals: {
           kusama: null,
           picasso: 12,
-          karura: null,
+          karura: null
         },
         existentialDeposit: {
           kusama: null,
           picasso: null,
-          karura: null,
-        },
-      },
+          karura: null
+        }
+      }
     };
   }, {} as Record<TokenId, TokenMetadata>),
-  isLoaded: false,
+  isLoaded: false
 };
 
 interface TokensActions {
   updateTokens: (
     picassoList: Array<PicassoRpcAsset>,
-    // karuraList: Array<HumanizedKaruraAssetMetadata>,
+    karuraList: Array<HumanizedKaruraAssetMetadata>,
     statemineList: Array<StatemineAssetMetadata>,
     kusamaAssetMetadata: KusamaAsset
   ) => void;
@@ -67,18 +67,18 @@ export interface TokensSlice {
   substrateTokens: TokensState & TokensActions;
 }
 
-export const createTokensSlice: StoreSlice<TokensSlice> = (set) => ({
+export const createTokensSlice: StoreSlice<TokensSlice> = set => ({
   substrateTokens: {
     tokens: initialState.tokens,
     isLoaded: initialState.isLoaded,
     updateTokens: (
       picassoList,
-      // karuraList,
+      karuraList,
       statemineList,
       kusamaAssetMetadata
     ) => {
-      set((state) => {
-        statemineList.forEach((listItem) => {
+      set(state => {
+        statemineList.forEach(listItem => {
           const identifier = listItem.name.toLowerCase();
           const token = state.substrateTokens.tokens[identifier as TokenId];
           if (token) {
@@ -89,7 +89,7 @@ export const createTokensSlice: StoreSlice<TokensSlice> = (set) => ({
             token.existentialDeposit.statemine = listItem.existentialDeposit;
           }
         });
-        picassoList.forEach((listItem) => {
+        picassoList.forEach(listItem => {
           /**
            * Here identifier is in lower case
            * name mapped as token id
@@ -105,25 +105,25 @@ export const createTokensSlice: StoreSlice<TokensSlice> = (set) => ({
             token.existentialDeposit.picasso = null;
           }
         });
-        // karuraList.forEach(listItem => {
-        //   /**
-        //    * Here identifier is in lower case
-        //    * symbol mapped as token id
-        //    * might change later
-        //    * update decimals and id
-        //    */
-        //   const identifier = listItem.symbol.toLowerCase();
-        //   const token = state.substrateTokens.tokens[identifier as TokenId];
-        //   if (token && listItem.decimals) {
-        //     console.log("[KARURA] Found Supported Asset", listItem.symbol);
-        //     token.decimals.karura = listItem.decimals;
-        //     token.chainId.karura = listItem.symbol;
-        //     token.existentialDeposit.karura = fromChainIdUnit(
-        //       unwrapNumberOrHex(listItem.minimalBalance),
-        //       listItem.decimals
-        //     );
-        //   }
-        // });
+        karuraList.forEach(listItem => {
+          /**
+           * Here identifier is in lower case
+           * symbol mapped as token id
+           * might change later
+           * update decimals and id
+           */
+          const identifier = listItem.symbol.toLowerCase();
+          const token = state.substrateTokens.tokens[identifier as TokenId];
+          if (token && listItem.decimals) {
+            console.log("[KARURA] Found Supported Asset", listItem.symbol);
+            token.decimals.karura = listItem.decimals;
+            token.chainId.karura = listItem.symbol;
+            token.existentialDeposit.karura = fromChainIdUnit(
+              unwrapNumberOrHex(listItem.minimalBalance),
+              listItem.decimals
+            );
+          }
+        });
 
         // This is done only for Kusama chain
         // If more tokens are imported, this needs a dedicated function
@@ -134,14 +134,10 @@ export const createTokensSlice: StoreSlice<TokensSlice> = (set) => ({
         state.substrateTokens.tokens.ksm.existentialDeposit.kusama =
           kusamaAssetMetadata.existentialDeposit;
 
-        // TODO : enable this condition when karura is supported
-        // if (picassoList.length + karuraList.length > 0) {
-        //   state.substrateTokens.isLoaded = true;
-        // }
-        if (picassoList.length > 0) {
+        if (picassoList.length + karuraList.length > 0) {
           state.substrateTokens.isLoaded = true;
         }
       });
-    },
-  },
+    }
+  }
 });

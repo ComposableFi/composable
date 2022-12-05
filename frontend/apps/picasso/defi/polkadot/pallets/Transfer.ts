@@ -60,7 +60,6 @@ export type CalculateTransferAmount = {
   selectedToken: TokenId;
   keepAlive: boolean;
   sourceExistentialDeposit: BigNumber;
-  decimals: number;
 };
 
 export function calculateTransferAmount({
@@ -70,7 +69,6 @@ export function calculateTransferAmount({
   selectedToken,
   keepAlive,
   sourceExistentialDeposit,
-  decimals,
 }: CalculateTransferAmount) {
   const ZERO = new BigNumber(0);
   const gasTokenEqSelected = selectedToken === sourceGas.token;
@@ -92,14 +90,7 @@ export function calculateTransferAmount({
   const requiredKeepAliveValue =
     keepAlive && willReap ? sourceExistentialDeposit : ZERO;
 
-  const output = fromChainIdUnit(
-    toChainIdUnit(
-      amountToTransfer.minus(gasPrice).minus(requiredKeepAliveValue),
-      decimals
-    ).integerValue(),
-    decimals
-  );
-
+  const output = amountToTransfer.minus(gasPrice).minus(requiredKeepAliveValue);
   // Don't send values less than zero.
   return output.lte(ZERO) ? ZERO : output;
 }
@@ -177,10 +168,10 @@ export function getDestChainFee(
       if (selectedToken === "usdt") {
         return {
           fee: fromChainIdUnit(
-            new BigNumber(600000000),
-            tokens.ksm.decimals.statemine
+            new BigNumber(13),
+            tokens.usdt.decimals.statemine
           ),
-          token: tokens.ksm,
+          token: tokens.usdt,
         };
       }
 

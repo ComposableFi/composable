@@ -37,7 +37,6 @@ const nextConfig = {
         SUBSTRATE_PROVIDER_URL_KUSAMA: process.env.SUBSTRATE_PROVIDER_URL_KUSAMA,
         SUBSQUID_URL: process.env.SUBSQUID_URL,
         WEBSITE_VERSION: getVersion(),
-        SUBSTRATE_PROVIDER_URL_STATEMINE: process.env.SUBSTRATE_PROVIDER_URL_STATEMINE,
     },
     webpack(config) {
         config.module.rules.push({

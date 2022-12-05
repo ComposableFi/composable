@@ -8,25 +8,6 @@ import { fromChainUnits, fromPerbill } from "../units";
 
 export function decodeStakingRewardPool(pool: any): StakingRewardPool {
   return {
-    shareAssetId: new BigNumber(pool.shareAssetId).toString(),
-    financialNftAssetId: new BigNumber(pool.financialNftAssetId).toString(),
-    assetId: new BigNumber(pool.assetId),
-    claimedShares: new BigNumber(pool.claimedShares),
-    endBlock: new BigNumber(pool.endBlock),
-    lock: {
-      durationPresets: Object.keys(pool.lock.durationPresets).reduce(
-        (acc, presetDuration) => {
-          return {
-            ...acc,
-            [presetDuration]: fromPerbill(
-              pool.lock.durationPresets[presetDuration]
-            ),
-          };
-        },
-        {} as StakingRewardPoolLockConfig["durationPresets"]
-      ),
-      unlockPenalty: fromPerbill(pool.lock.unlockPenalty),
-    },
     owner: pool.owner,
     rewards: Object.keys(pool.rewards).reduce((acc, assetId) => {
       return {
@@ -47,7 +28,26 @@ export function decodeStakingRewardPool(pool: any): StakingRewardPool {
         },
       };
     }, {} as StakingRewardPool["rewards"]),
-    totalShares: fromChainUnits(pool.totalShares),
+    claimedShares: new BigNumber(pool.claimedShares),
+    startBlock: new BigNumber(pool.startBlock),
+    endBlock: new BigNumber(pool.endBlock),
+    lock: {
+      durationPresets: Object.keys(pool.lock.durationPresets).reduce(
+        (acc, presetDuration) => {
+          return {
+            ...acc,
+            [presetDuration]: fromPerbill(
+              pool.lock.durationPresets[presetDuration]
+            ),
+          };
+        },
+        {} as StakingRewardPoolLockConfig["durationPresets"]
+      ),
+      unlockPenalty: fromPerbill(pool.lock.unlockPenalty),
+    },
+    shareAssetId: new BigNumber(pool.shareAssetId).toString(),
+    financialNftAssetId: new BigNumber(pool.financialNftAssetId).toString(),
+    minimumStakingAmount: fromChainUnits(pool.minimumStakingAmount),
   };
 }
 

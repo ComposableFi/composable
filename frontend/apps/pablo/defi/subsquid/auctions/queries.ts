@@ -1,8 +1,8 @@
-import { makeClient } from "../makeClient";
+import { subsquidClient } from "../client";
 
 export const queryAuctionStats = (
   poolId: number
-) => makeClient().query(`query auctionVolumeAndLiquidity {
+) => subsquidClient().query(`query auctionVolumeAndLiquidity {
   pabloPools(orderBy: calculatedTimestamp_DESC, where: {poolId_eq: ${poolId.toString()}}) {
     id
     totalVolume

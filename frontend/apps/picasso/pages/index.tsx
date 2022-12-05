@@ -1,8 +1,11 @@
 import type { NextPage } from "next";
 import Default from "@/components/Templates/Default";
-import { Box, Grid, useTheme } from "@mui/material";
+import { Box, Grid, Typography, useTheme } from "@mui/material";
 import {
+  Chart,
   ConnectWalletFeaturedBox,
+  FeaturedBox,
+  Link,
   MyAssetsTable,
   PageTitle,
   TabItem,
@@ -15,7 +18,6 @@ import { useState } from "react";
 import { MyStakesTable } from "@/components/Molecules/MyStakesTable";
 import { useStore } from "@/stores/root";
 import { useDotSamaContext } from "substrate-react";
-import { CrowdloanRewardsSoon } from "@/components/Molecules/CrowdloanRewardSoon";
 
 const Overview: NextPage = () => {
   const { extensionStatus } = useDotSamaContext();
@@ -51,7 +53,6 @@ const Overview: NextPage = () => {
             textAlign="center"
             subtitle="Your Portfolio in full view. Check on your positions and claim rewards."
           />
-          <CrowdloanRewardsSoon />
         </Grid>
         {extensionStatus !== "connected" && (
           <Grid item {...standardPageSize}>

@@ -1,10 +1,4 @@
-import { FormTitle, ValueSelector } from "@/components";
-import { useAppSelector } from "@/hooks/store";
-import {
-  closeConfirmingModal,
-  openConfirmingModal,
-  setMessage,
-} from "@/stores/ui/uiSlice";
+import { FormTitle, TransactionSettings, ValueSelector } from "@/components";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
   alpha,
@@ -18,12 +12,11 @@ import {
 import BigNumber from "bignumber.js";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
 import { ConfirmingModal } from "./ConfirmingModal";
 import { PreviewDetails } from "./PreviewDetails";
 import { useRemoveLiquidityState } from "@/store/removeLiquidity/hooks";
 import useDebounce from "@/hooks/useDebounce";
-import { useLiquidityPoolDetails } from "@/store/hooks/useLiquidityPoolDetails";
+import { useLiquidityPoolDetails } from "@/defi/hooks";
 import {
   fetchSpotPrice,
   fromRemoveLiquiditySimulationResult,
@@ -31,20 +24,20 @@ import {
 } from "@/defi/utils";
 import { useParachainApi, useSelectedAccount } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
+import { useUiSlice, setUiState } from "@/store/ui/ui.slice";
+import { useLpTokenUserBalance } from "@/defi/hooks";
 
 export const RemoveLiquidityForm = ({ ...rest }) => {
   const theme = useTheme();
   const router = useRouter();
-  const dispatch = useDispatch();
 
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
-  const { poolId } = useRemoveLiquidityState();
-  const { lpBalance, baseAsset, quoteAsset } = useLiquidityPoolDetails(poolId);
 
-  const isConfirmingModalOpen = useAppSelector(
-    (state) => state.ui.isConfirmingModalOpen
-  );
+  const { poolId } = useRemoveLiquidityState();
+  const { baseAsset, quoteAsset, pool } = useLiquidityPoolDetails(poolId);
+  const lpBalance = useLpTokenUserBalance(pool);
+  const { isConfirmingModalOpen } = useUiSlice();
 
   const [percentage, setPercentage] = useState<number>(0);
   const [expectedRemoveAmountQuote, setExpectedRemoveAmountQuote] =
@@ -53,19 +46,17 @@ export const RemoveLiquidityForm = ({ ...rest }) => {
     useState<BigNumber>(new BigNumber(0));
 
   const [confirmed, setConfirmed] = useState<boolean>(false);
-
-  const debouncedPercentage = useDebounce(percentage, 500);
-
   const [priceOfBase, setPriceOfBase] = useState(new BigNumber(0));
   const [priceOfQuote, setPriceOfQuote] = useState(new BigNumber(0));
+  const debouncedPercentage = useDebounce(percentage, 500);
 
   useEffect(() => {
     if (poolId !== -1 && baseAsset && quoteAsset && parachainApi) {
       fetchSpotPrice(
         parachainApi,
         {
-          base: baseAsset.network[DEFAULT_NETWORK_ID],
-          quote: quoteAsset.network[DEFAULT_NETWORK_ID],
+          base: baseAsset.getPicassoAssetId().toString(),
+          quote: quoteAsset.getPicassoAssetId().toString(),
         },
         poolId
       ).then((basePrice) => {
@@ -90,8 +81,8 @@ export const RemoveLiquidityForm = ({ ...rest }) => {
         lpBalance.times(debouncedPercentage / 100)
       );
 
-      const b = baseAsset.network[DEFAULT_NETWORK_ID].toString();
-      const q = quoteAsset.network[DEFAULT_NETWORK_ID].toString();
+      const b = baseAsset.getPicassoAssetId().toString();
+      const q = quoteAsset.getPicassoAssetId().toString();
 
       parachainApi.rpc.pablo
         .simulateRemoveLiquidity(
@@ -132,7 +123,7 @@ export const RemoveLiquidityForm = ({ ...rest }) => {
   };
 
   const onSettingHandler = () => {
-    console.log("onSettingHandler");
+    setUiState({ isTransactionSettingsModalOpen: true })
   };
 
   const onSliderChangeHandler = (_: Event, newValue: number | number[]) => {
@@ -140,18 +131,12 @@ export const RemoveLiquidityForm = ({ ...rest }) => {
   };
 
   const onRemoveHandler = async () => {
-    dispatch(openConfirmingModal());
+    setUiState({ isConfirmingModalOpen: true })
   };
 
   useEffect(() => {
-    confirmed && dispatch(closeConfirmingModal());
-    !confirmed && dispatch(setMessage({}));
-  }, [confirmed, dispatch]);
-
-  useEffect(() => {
-    dispatch(setMessage({}));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    confirmed && setUiState({ isConfirmingModalOpen: false });
+  }, [confirmed]);
 
   return (
     <Box
@@ -251,34 +236,6 @@ export const RemoveLiquidityForm = ({ ...rest }) => {
           mt={4}
           gap={2}
         >
-          {/* <Box width="50%">
-            <Button
-              variant="contained"
-              size="large"
-              fullWidth
-              onClick={() => setApproved(true)}
-              disabled={approved}
-              sx={{
-                "&:disabled": {
-                  backgroundColor: alpha(
-                    theme.palette.success.main,
-                    theme.custom.opacity.light
-                  ),
-                  color: theme.palette.featured.main,
-                },
-              }}
-            >
-              {approved ? (
-                <>
-                  <CheckIcon sx={{ marginRight: theme.spacing(2) }} />
-                  Approved
-                </>
-              ) : (
-                <>Approve</>
-              )}
-            </Button>
-          </Box> */}
-
           <Box width="100%">
             <Button
               variant="outlined"
@@ -333,6 +290,8 @@ export const RemoveLiquidityForm = ({ ...rest }) => {
           setConfirmed={setConfirmed}
         />
       )}
+
+      <TransactionSettings showSlippageSelection={false} />
     </Box>
   );
 };

@@ -52,7 +52,7 @@ export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
 
   const maxAmountToTransfer = useMemo(() => {
     const amount = callbackGate(
-      (api, _existentialDeposit, decimals) => {
+      (api, _existentialDeposit) => {
         return calculateTransferAmount({
           amountToTransfer: balance,
           balance: balance,
@@ -60,24 +60,20 @@ export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
           selectedToken,
           sourceExistentialDeposit: _existentialDeposit,
           sourceGas,
-          decimals,
         });
       },
       fromProvider.parachainApi,
-      existentialDeposit,
-      tokens[selectedToken].decimals[from]
+      existentialDeposit
     );
 
     return amount instanceof BigNumber ? amount : new BigNumber(0);
   }, [
-    tokens,
     balance,
     existentialDeposit,
     fromProvider.parachainApi,
     keepAlive,
     selectedToken,
     sourceGas,
-    from,
   ]);
 
   const { validate, hasError, stringValue, bignrValue, setValue } =
@@ -150,7 +146,6 @@ export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
                   placement="top"
                   title={`${balance.toFixed()} ${tokens[tokenId].symbol}`}
                   color="primary"
-                  disableHoverListener={disabled}
                   sx={{
                     fontSize: "1rem",
                   }}
@@ -172,14 +167,14 @@ export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
         CombinedSelectProps={{
           options: tokenOptions.map((token) => ({
             ...token,
-            disabled: disabled,
+            disabled: isTokenBalanceZero(token.tokenId),
           })),
           value: selectedToken,
           setValue: updateSelectedToken,
           disabled,
         }}
       />
-      {hasError && !disabled && (
+      {hasError && (
         <Typography variant="caption" color="error.main">
           Please input a valid number
         </Typography>

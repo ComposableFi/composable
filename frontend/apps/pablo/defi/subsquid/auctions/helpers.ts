@@ -1,27 +1,27 @@
-import { LiquidityBootstrappingPool } from "@/defi/types";
+import { PabloLiquidityBootstrappingPool } from "shared";
 import { LiquidityBootstrappingPoolTrade } from "@/defi/types/auctions";
 import { fromChainUnits } from "@/defi/utils";
 import { transformPabloTransaction } from "@/defi/utils/pablo/auctions";
 import { PoolTradeHistory } from "@/store/auctions/auctions.types";
-import BigNumber from "bignumber.js";
 import { PabloTransactions } from "../pools/queries";
 import { fetchSubsquid } from "../stakingRewards/helpers";
 import { queryAuctionStats } from "./queries";
+import BigNumber from "bignumber.js";
 
 export async function fetchInitialBalance(
-  pool: LiquidityBootstrappingPool
+  pool: PabloLiquidityBootstrappingPool
 ): Promise<{ baseBalance: BigNumber; quoteBalance: BigNumber }> {
   let baseBalance = new BigNumber(0);
   let quoteBalance = new BigNumber(0);
 
   try {
     const { pabloTransactions } = await fetchPabloTransactions(
-      pool.poolId,
+      (pool.getPoolId(true) as BigNumber).toNumber(),
       "ADD_LIQUIDITY"
     );
 
     const addLiqTxs: PoolTradeHistory[] = pabloTransactions.map((t: any) =>
-      transformPabloTransaction(t, pool.pair.quote)
+      transformPabloTransaction(t, pool.getPair().getQuoteAsset().toNumber())
     );
 
     quoteBalance = addLiqTxs.reduce((agg, i) => {
@@ -41,13 +41,12 @@ export async function fetchInitialBalance(
 }
 
 export async function fetchAuctionTrades(
-  pool: LiquidityBootstrappingPool
+  pool: PabloLiquidityBootstrappingPool
 ): Promise<LiquidityBootstrappingPoolTrade[]> {
   let trades: LiquidityBootstrappingPoolTrade[] = [];
-
   try {
-    const { pabloTransactions } = await fetchPabloTransactions(pool.poolId, "SWAP");
-    let poolQuote = pool.pair.quote;
+    const { pabloTransactions } = await fetchPabloTransactions((pool.getPoolId(true) as BigNumber).toNumber(), "SWAP");
+    let poolQuote = pool.getPair().getQuoteAsset().toNumber();
     trades = pabloTransactions.map((i: any) =>
       transformPabloTransaction(i, poolQuote)
     );
@@ -59,7 +58,7 @@ export async function fetchAuctionTrades(
 }
 
 export async function fetchAuctionStats(
-  pool: LiquidityBootstrappingPool
+  pool: PabloLiquidityBootstrappingPool
 ): Promise<{
   totalLiquidity: BigNumber;
   totalVolume: BigNumber;
@@ -68,7 +67,7 @@ export async function fetchAuctionStats(
   let totalVolume = new BigNumber(0);
 
   try {
-    const queryResponse = await queryAuctionStats(pool.poolId);
+    const queryResponse = await queryAuctionStats((pool.getPoolId(true) as BigNumber).toNumber());
     if (queryResponse.error) throw new Error(queryResponse.error.message);
     if (!queryResponse.data)
       throw new Error(
