@@ -85,7 +85,7 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
             <Grid item xs={12} md={6}>
               <BigNumberInput
                 noBorder={true}
-                value={claimedRewards}
+                value={totalRewards}
                 setter={(v: BigNumber) => {}}
                 isValid={(_v: boolean) => {}}
                 tokenId="pica"
