@@ -14,17 +14,15 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { TokenId } from "@/defi/types";
 import BigNumber from "bignumber.js";
 import { FormTitle } from "../../FormTitle";
-import { useDispatch } from "react-redux";
-import { openTransactionSettingsModal } from "@/stores/ui/uiSlice";
 import { useMobile } from "@/hooks/responsive";
-import { getToken, getTokenOptions } from "@/defi/Tokens";
+import { getToken, TOKENS, TokenId } from "tokens";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import { InfoOutlined, SwapVertRounded } from "@mui/icons-material";
 import { BigNumberInput } from "@/components/Atoms";
 import { TransactionSettings } from "../../TransactionSettings";
+import { setUiState } from "@/store/ui/ui.slice";
 
 const containerProps = (theme: Theme) => ({
   p: 4,
@@ -82,7 +80,6 @@ export const BuySingleTokenModal: React.FC<BuySingleTokenModalProps> = ({
   ...modalProps
 }) => {
   const theme = useTheme();
-  const dispatch = useDispatch();
   const isMobile = useMobile();
 
   const [balance1] = useState<BigNumber>(new BigNumber(500.35523));
@@ -102,7 +99,7 @@ export const BuySingleTokenModal: React.FC<BuySingleTokenModalProps> = ({
   }, [tokenId]);
 
   const onSettingHandler = () => {
-    dispatch(openTransactionSettingsModal());
+    setUiState({ isTransactionSettingsModalOpen: true });
   };
 
   const onSwapHandler = () => {
@@ -143,7 +140,14 @@ export const BuySingleTokenModal: React.FC<BuySingleTokenModalProps> = ({
             CombinedSelectProps={{
               value: tokenId1,
               setValue: setTokenId1,
-              options: getTokenOptions("Select"),
+              options: Object.values(TOKENS).map(x => {
+                return {
+                  value: x.id,
+                  label: x.symbol,
+                  shortLabel: x.symbol,
+                  icon: x.icon
+                }
+              }),
               ...defaultCombinedSelectProps(isMobile),
             }}
             LabelProps={labelProps("From", balance1, validToken1)}

@@ -1,8 +1,8 @@
-import { makeClient } from "../makeClient";
+import { subsquidClient } from "../client";
 
-export async function fetchSubsquid<T>(query: string): Promise<T> {
+export async function fetchSubsquid<T>(query: string, cached: boolean = false): Promise<T> {
   try {
-    const queryResponse = await makeClient().query(query).toPromise();
+    const queryResponse = await subsquidClient(cached).query(query).toPromise();
     const { error, data } = queryResponse;
 
     if (error) throw new Error(error.message);

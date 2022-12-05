@@ -5,10 +5,9 @@ import {
   Typography,
   Button,
 } from "@mui/material";
-import { useDispatch } from "react-redux";
 import { Label } from "@/components/Atoms";
 import { TokenValueItem } from "../TokenValueItem";
-import { TOKENS } from "@/defi/Tokens";
+import { TOKENS } from "tokens";
 import { SelectLockPeriod } from "../StakeForm/SelectLockPeriod";
 import { Multiplier } from "../StakeForm";
 import { isNumber } from "lodash";
@@ -23,9 +22,7 @@ export const RenewModal: React.FC<RenewModalProps> = ({
   onClose,
   ...modalProps
 }) => {
-  const dispatch = useDispatch();
-
-  const [multiplier, setMultiplier] = useState<Multiplier>({});
+  const [multiplier, _setMultiplier] = useState<Multiplier>({});
 
   const validMultiplier = isNumber(multiplier.value);
 
@@ -53,7 +50,7 @@ export const RenewModal: React.FC<RenewModalProps> = ({
             }}
           />
           <TokenValueItem
-            token={TOKENS.pablo}
+            token={TOKENS.pblo}
             value={xPablo.lockedPrincipalAsset.toFormat()}
             ValueProps={{color: "text.secondary"}}
           />

@@ -1,14 +1,13 @@
 import { Box, BoxProps, Grid, Typography, useTheme } from "@mui/material";
 import { BaseAsset, Link } from "@/components";
+import { useCallback } from "react";
+import { Asset, PabloLiquidityBootstrappingPool } from "shared";
 import ContentCopyOutlinedIcon from "@mui/icons-material/ContentCopyOutlined";
 import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
-import { useCallback } from "react";
-import { MockedAsset } from "@/store/assets/assets.types";
-import { LiquidityBootstrappingPool } from "@/defi/types/pablo/LiquidityBootstrappingPool";
 
 export type ContractDetailsProps = {
-  auction: LiquidityBootstrappingPool;
-  baseAsset: MockedAsset | undefined;
+  auction: PabloLiquidityBootstrappingPool;
+  baseAsset: Asset;
 } & BoxProps;
 
 export const ContractDetails: React.FC<ContractDetailsProps> = ({
@@ -22,31 +21,32 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({
     return ``;
   };
 
+  const owner = auction.getOwner();
   const copyTokenAddress = useCallback(() => {
-    navigator.clipboard.writeText(auction.owner);
-  }, [auction]);
+    navigator.clipboard.writeText(owner);
+  }, [owner]);
 
   return (
     <Box {...rest}>
       <Grid container>
         <Grid item xs={12} sm={12} md={6}>
-          {baseAsset && (
+
             <BaseAsset
-              icon={baseAsset.icon}
-              label={`${baseAsset.name} Token`}
+              icon={baseAsset.getIconUrl()}
+              label={`${baseAsset.getName()} Token`}
               LabelProps={{ variant: "h6" }}
             />
-          )}
+
           <Typography variant="body1" color="text.secondary" mt={4}>
             Token owner address
           </Typography>
           <Box display="flex" alignItems="center" gap={2} mt={1}>
             <Typography variant="subtitle1">
-              {auction.owner.substring(0, 6) +
+              {owner.substring(0, 6) +
                 "..." +
-                auction.owner.substring(
-                  auction.owner.length - 4,
-                  auction.owner.length
+                owner.substring(
+                  owner.length - 4,
+                  owner.length
                 )}
             </Typography>
             <ContentCopyOutlinedIcon
@@ -69,7 +69,7 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({
             </Typography>
             <Box display="flex" alignItems="center" gap={1.5} mt={2}>
               <Typography variant="subtitle1">
-                {`${baseAsset?.symbol ?? ""} on polkascan`}
+                {`${baseAsset.getSymbol()} on polkascan`}
               </Typography>
               <Link href={getTokenLink()} target="_blank">
                 <OpenInNewRoundedIcon />

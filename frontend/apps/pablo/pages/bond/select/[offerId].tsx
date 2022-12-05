@@ -1,6 +1,7 @@
 import type { NextPage } from "next";
+import Default from "@/components/Templates/Default";
+import useBondOffer from "@/defi/hooks/bonds/useBondOffer";
 import { Container, Box, Grid, Typography } from "@mui/material";
-import { useAppSelector } from "@/hooks/store";
 import { PageTitle } from "@/components/Organisms/bonds/PageTitle";
 import { BuyButtons } from "@/components/Organisms/bonds/BuyButtons";
 import { SupplySummary } from "../../../components/Organisms/bonds/SupplySummary";
@@ -10,9 +11,6 @@ import { useDotSamaContext } from "substrate-react";
 import { Link } from "@/components";
 import { useEffect } from "react";
 import { useRouter } from "next/router";
-import { useSnackbar } from "notistack";
-import Default from "@/components/Templates/Default";
-import useBondOffer from "@/defi/hooks/bonds/useBondOffer";
 
 const standardPageSize = {
   xs: 12,
@@ -25,13 +23,9 @@ const twoColumnPageSize = {
 
 const SelectBond: NextPage = () => {
   const router = useRouter();
-  const { enqueueSnackbar } = useSnackbar();
   const { extensionStatus } = useDotSamaContext();
-
   const offerId = router.query.offerId || "";
   const bondOfferSelected = useBondOffer(offerId as string);
-
-  const message = useAppSelector((state) => state.ui.message);
 
   useEffect(
     () => {
@@ -42,16 +36,16 @@ const SelectBond: NextPage = () => {
     [extensionStatus, router]
   );
 
-  useEffect(() => {
-    if (message.text) {
-      enqueueSnackbar(message.text, {
-        description: message.text,
-        variant: message.severity,
-        isClosable: true,
-        url: message.link,
-      });
-    }
-  }, [enqueueSnackbar, message]);
+  // useEffect(() => {
+  //   if (message.text) {
+  //     enqueueSnackbar(message.text, {
+  //       description: message.text,
+  //       variant: message.severity,
+  //       isClosable: true,
+  //       url: message.link,
+  //     });
+  //   }
+  // }, [enqueueSnackbar, message]);
 
   const breadcrumbs = [
     <Link key="pool" underline="none" color="primary" href="/bond">
@@ -70,7 +64,7 @@ const SelectBond: NextPage = () => {
         <Box display="flex" flexDirection="column" alignItems="center">
           <PageTitle
             rewardAsset={bondOfferSelected.rewardAsset}
-            principalAsset={bondOfferSelected.principalAsset}
+            bondedAsset_s={bondOfferSelected.bondedAsset_s}
           />
         </Box>
 

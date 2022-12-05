@@ -5,23 +5,19 @@ import {
   Typography
 } from "@mui/material";
 import { AuctionStatusIndicator } from "../AuctionStatusIndicator";
+import { PabloLiquidityBootstrappingPool } from "shared";
+import { useAuctionTiming } from "@/defi/hooks/auctions/useAuctionTiming";
 import moment from "moment-timezone";
-import { LiquidityBootstrappingPool } from "@/defi/types";
 
 export type LaunchDetailsProps = {
-  auction: LiquidityBootstrappingPool,
+  auction: PabloLiquidityBootstrappingPool,
 } & BoxProps;
 
 export const LaunchDetails: React.FC<LaunchDetailsProps> = ({
   auction,
   ...rest
 }) => {
-
-  const currentTimestamp = Date.now();
-  const isActive: boolean = auction.sale.start <= currentTimestamp 
-                    && auction.sale.end >= currentTimestamp;
-  const isEnded: boolean = auction.sale.end < currentTimestamp;
-
+  const { isActive, isEnded, startTimestamp, endTimestamp } = useAuctionTiming(auction);
   const getStatusLabel = () => {
     return isActive ? 'Active' : (isEnded ? 'Ended' : 'Starting soon');
   };
@@ -48,7 +44,7 @@ export const LaunchDetails: React.FC<LaunchDetailsProps> = ({
             Start Date
           </Typography>
           <Typography variant="subtitle1" mt={1}>
-            {moment(auction.sale.start).utc().format("MMM DD, YYYY, h:mm A z")}
+            {moment(startTimestamp).utc().format("MMM DD, YYYY, h:mm A z")}
           </Typography>
         </Grid>
         <Grid item xs={12} sm={12} md={4}>
@@ -56,7 +52,7 @@ export const LaunchDetails: React.FC<LaunchDetailsProps> = ({
             End Date
           </Typography>
           <Typography variant="subtitle1" mt={1}>
-            {moment(auction.sale.end).utc().format("MMM DD, YYYY, h:mm A z")}
+            {moment(endTimestamp).utc().format("MMM DD, YYYY, h:mm A z")}
           </Typography>
         </Grid>
       </Grid>

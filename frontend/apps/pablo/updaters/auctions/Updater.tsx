@@ -1,30 +1,25 @@
 import { useEffect } from "react";
-import { useParachainApi } from "substrate-react";
-import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
-import { fetchAndExtractAuctionStats, fetchAuctionSpotPrices } from "@/defi/utils/pablo/auctions";
+import { fetchAndExtractAuctionStats } from "@/defi/utils/pablo/auctions";
 import { fetchAuctionTrades } from "@/defi/subsquid/auctions/helpers";
-import useStore from "@/store/useStore";
 import {
   setAuctionsSlice,
+  setAuctionsSpotPrice,
   useAuctionsSlice,
 } from "@/store/auctions/auctions.slice";
+import { usePoolsSlice } from "@/store/pools/pools.slice";
 
 const Updater = () => {
   const {
-    pools: {
-      liquidityBootstrappingPools,
-    },
-  } = useStore();
-  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
+    liquidityBootstrappingPools
+  } = usePoolsSlice();
   const { activePool } = useAuctionsSlice();
   /**
    * Queries initiated on an Auctions
    * LBP selection
    */
   useEffect(() => {
-    const { poolId } = activePool;
-    if (parachainApi && poolId !== -1) {
-      fetchAndExtractAuctionStats(parachainApi, activePool)
+    if (activePool) {
+      fetchAndExtractAuctionStats(activePool)
         .then((activePoolStats) => {
           setAuctionsSlice({ activePoolStats });
         })
@@ -32,15 +27,14 @@ const Updater = () => {
           console.error(err);
         });
     }
-  }, [parachainApi, activePool]);
+  }, [activePool]);
   /**
    * Update trade history
    * in history tab
    * add apollo here as well
    */
   useEffect(() => {
-    const { poolId } = activePool;
-    if (poolId !== -1) {
+    if (activePool) {
       fetchAuctionTrades(activePool)
         .then((activePoolTradeHistory) => {
           setAuctionsSlice({ activePoolTradeHistory });
@@ -55,12 +49,13 @@ const Updater = () => {
    * on auctions page
    */
   useEffect(() => {
-    fetchAuctionSpotPrices(parachainApi, liquidityBootstrappingPools.verified).then((spotPrices) => {
-      setAuctionsSlice({ spotPrices })
-    })
+    for (const pool of liquidityBootstrappingPools) {
+      pool.getSpotPrice().then((spotPrice) => {
+        setAuctionsSpotPrice(pool.getPoolId() as string, spotPrice)
+      })
+    }
   }, [
-    parachainApi,
-    liquidityBootstrappingPools.verified,
+    liquidityBootstrappingPools,
   ]);
 
   return null;

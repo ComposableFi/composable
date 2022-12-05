@@ -1,49 +1,48 @@
 import { TableCell, TableRow, Box, Typography } from "@mui/material";
-import { ConstantProductPool, StableSwapPool } from "@/defi/types";
-import { useAsset, useAssets } from "@/defi/hooks";
-import { useLiquidityByPool } from "@/store/hooks/useLiquidityByPool";
-import millify from "millify";
+import { useAsset, useAssetIdOraclePrice, useAssets } from "@/defi/hooks";
 import { PairAsset } from "@/components/Atoms";
-import { useLiquidityPoolStats } from "@/store/hooks/useLiquidityPoolStats";
-import { useUSDPriceByAssetId } from "@/store/assets/hooks";
+import { useLiquidityPoolStats } from "@/defi/hooks/useLiquidityPoolStats";
 import {
   calculatePoolTotalValueLocked,
-  DEFAULT_NETWORK_ID,
   DEFAULT_UI_FORMAT_DECIMALS,
 } from "@/defi/utils";
 import { useStakingRewardPool } from "@/store/stakingRewards/stakingRewards.slice";
 import { calculateRewardPerDayByAssetId } from "@/defi/utils/stakingRewards/math";
 import { useStakingRewardsPoolApy } from "@/defi/hooks/stakingRewards/useStakingRewardsPoolApy";
 import { useMemo } from "react";
+import { PabloConstantProductPool } from "shared";
+import { useLiquidity } from "@/defi/hooks/useLiquidity";
+import millify from "millify";
 import BigNumber from "bignumber.js";
 
 const LiquidityPoolRow = ({
   liquidityPool,
   handleRowClick,
 }: {
-  liquidityPool: StableSwapPool | ConstantProductPool;
+  liquidityPool: PabloConstantProductPool;
   handleRowClick: (e: any, poolId: string) => void;
 }) => {
-  const rewardPool = useStakingRewardPool(liquidityPool.lpToken);
+  const lpAssetId = liquidityPool.getLiquidityProviderToken().getPicassoAssetId() as string;
+  const pair = liquidityPool.getPair();
+  const rewardPool = useStakingRewardPool(lpAssetId);
   const rewardAssets = useAssets(
     rewardPool ? Object.keys(rewardPool.rewards) : []
   );
 
-  const baseAsset = useAsset(liquidityPool.pair.base.toString());
-  const quoteAsset = useAsset(liquidityPool.pair.quote.toString());
-
+  let baseAssetId = pair.getBaseAsset().toString();
+  let quoteAssetId = pair.getQuoteAsset().toString()
   const poolStats = useLiquidityPoolStats(liquidityPool);
-  const liquidity = useLiquidityByPool(liquidityPool);
-
-  const quoteAssetPriceUSD = useUSDPriceByAssetId(
-    liquidityPool.pair.quote.toString()
+  const liquidity = useLiquidity(liquidityPool);
+  const baseAsset = useAsset(baseAssetId);
+  const quoteAsset = useAsset(quoteAssetId);
+  const quoteAssetPriceUSD = useAssetIdOraclePrice(
+    quoteAssetId
   );
-  const baseAssetPriceUSD = useUSDPriceByAssetId(
-    liquidityPool.pair.base.toString()
+  const baseAssetPriceUSD = useAssetIdOraclePrice(
+    baseAssetId
   );
 
-  const apy = useStakingRewardsPoolApy(liquidityPool?.lpToken ?? "-");
-
+  const apy = useStakingRewardsPoolApy(lpAssetId);
   const rewardAPYs = useMemo(() => {
     return Object.keys(apy).reduce((v, i) => {
       return v.plus(apy[i])
@@ -53,24 +52,15 @@ const LiquidityPoolRow = ({
   return (
     <TableRow
       onClick={(e) => {
-        handleRowClick(e, liquidityPool.poolId.toString());
+        handleRowClick(e, liquidityPool.getPoolId() as string);
       }}
-      key={liquidityPool.poolId.toString()}
+      key={liquidityPool.getPoolId() as string}
       sx={{ cursor: "pointer" }}
     >
       <TableCell align="left">
         {baseAsset && quoteAsset && (
           <PairAsset
-            assets={[
-              {
-                icon: baseAsset.icon,
-                label: baseAsset.symbol,
-              },
-              {
-                icon: quoteAsset.icon,
-                label: quoteAsset.symbol,
-              },
-            ]}
+            assets={liquidityPool.getLiquidityProviderToken().getUnderlyingAssetJSON()}
             separator="/"
           />
         )}
@@ -80,8 +70,8 @@ const LiquidityPoolRow = ({
           $
           {millify(
             calculatePoolTotalValueLocked(
-              liquidity.tokenAmounts.baseAmount,
-              liquidity.tokenAmounts.quoteAmount,
+              liquidity.baseAmount,
+              liquidity.quoteAmount,
               baseAssetPriceUSD,
               quoteAssetPriceUSD
             ).toNumber()
@@ -96,23 +86,23 @@ const LiquidityPoolRow = ({
       <TableCell align="left">
         {rewardAssets
           ? rewardAssets.map((item) => {
-              return (
-                <Box key={item.name} display="flex">
-                  <PairAsset
-                    assets={[
-                      {
-                        icon: item.icon,
-                        label: item.symbol,
-                      },
-                    ]}
-                    label={calculateRewardPerDayByAssetId(
-                      item.network[DEFAULT_NETWORK_ID],
-                      rewardPool
-                    ).toFixed(DEFAULT_UI_FORMAT_DECIMALS)}
-                  />
-                </Box>
-              );
-            })
+            return (
+              <Box key={item.getName()} display="flex">
+                <PairAsset
+                  assets={[
+                    {
+                      icon: item.getIconUrl(),
+                      label: item.getSymbol(),
+                    },
+                  ]}
+                  label={calculateRewardPerDayByAssetId(
+                    item.getPicassoAssetId() as string,
+                    rewardPool
+                  ).toFixed(DEFAULT_UI_FORMAT_DECIMALS)}
+                />
+              </Box>
+            );
+          })
           : null}
       </TableCell>
       <TableCell align="left">
@@ -120,8 +110,8 @@ const LiquidityPoolRow = ({
           $
           {poolStats
             ? quoteAssetPriceUSD
-                .times(poolStats.totalVolume)
-                .toFormat(DEFAULT_UI_FORMAT_DECIMALS)
+              .times(poolStats.totalVolume)
+              .toFormat(DEFAULT_UI_FORMAT_DECIMALS)
             : 0}
         </Typography>
       </TableCell>

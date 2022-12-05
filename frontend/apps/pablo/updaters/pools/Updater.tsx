@@ -1,32 +1,32 @@
 import { useCallback, useEffect, useRef } from "react";
 import useStore from "@/store/useStore";
 import { useParachainApi } from "substrate-react";
-import { fetchPools } from "@/defi/utils";
+import { LiquidityPoolFactory } from "shared";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import { useRouter } from "next/router";
+import { setPermissionedConstantProductPools } from "@/store/pools/pools.slice";
 /**
  * Updates zustand store with all pools from pablo pallet
  * @returns null
  */
 const Updater = () => {
   const {
-    pools: { setPoolsList },
+    substrateTokens
   } = useStore();
+  const { tokens, hasFetchedTokens } = substrateTokens;
+
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const hasFetchedOnce = useRef(false);
 
   const updatePools = useCallback((url) => {
-    if (parachainApi && (!hasFetchedOnce.current || url === "/pool")) {
+    const assets = Object.values(tokens);
+    if (parachainApi && hasFetchedTokens && assets.length > 0 && (!hasFetchedOnce.current || url === "/pool")) {
       if (!hasFetchedOnce.current) hasFetchedOnce.current = true;
-      fetchPools(parachainApi).then((pools) => {
-        setPoolsList([
-          ...pools.liquidityBootstrapping.verified,
-          ...pools.constantProduct.verified,
-          ...pools.stableSwap.verified,
-        ]);
+      LiquidityPoolFactory.fetchPermissionedPools(parachainApi, assets).then((pools) => {
+        setPermissionedConstantProductPools(pools.uniswapConstantProduct);
       });
     }
-  }, [parachainApi, setPoolsList]);
+  }, [hasFetchedTokens, parachainApi, tokens]);
 
   /**
    * Populate all pools

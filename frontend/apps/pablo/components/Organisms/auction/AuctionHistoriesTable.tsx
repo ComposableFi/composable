@@ -13,22 +13,18 @@ import {
 import React, { useState } from "react";
 import { KeyboardArrowDown } from "@mui/icons-material";
 import { KeyboardArrowUp } from "@mui/icons-material";
-import { useAppSelector } from "@/hooks/store";
-import moment from "moment-timezone";
 import { Link } from "@/components/Molecules";
-import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
-import { LiquidityBootstrappingPool } from "@/defi/types";
-import { getShortAddress } from "shared";
-import useStore from "@/store/useStore";
-import BigNumber from "bignumber.js";
-import { MockedAsset } from "@/store/assets/assets.types";
-import { DEFAULT_NETWORK_ID } from "@/defi/utils";
+import { getShortAddress, PabloLiquidityBootstrappingPool } from "shared";
+import { Asset } from "shared";
 import { PoolTradeHistory } from "@/store/auctions/auctions.types";
+import moment from "moment-timezone";
+import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
+import BigNumber from "bignumber.js";
 
 export type AuctionHistoriesTableProps = {
-  auction: LiquidityBootstrappingPool,
-  baseAsset?: MockedAsset,
-  quoteAsset?: MockedAsset,
+  auction: PabloLiquidityBootstrappingPool,
+  baseAsset: Asset,
+  quoteAsset: Asset,
   history: PoolTradeHistory[],
   historiesTableLimit?: number,
 } & TableContainerProps;
@@ -87,7 +83,7 @@ export const AuctionHistoriesTable: React.FC<AuctionHistoriesTableProps> = ({
             </TableCell>
             <TableCell align="center">
               <Typography variant="body1">
-                {`${baseAsset?.symbol} Price`}
+                {`${baseAsset?.getSymbol()} Price`}
               </Typography>  
             </TableCell>
             <TableCell align="right" sx={{paddingRight: theme.spacing(4)}}>
@@ -101,7 +97,7 @@ export const AuctionHistoriesTable: React.FC<AuctionHistoriesTableProps> = ({
           {history.slice(0, count).map((history, index) => {
             let historyBase = undefined, historyQuote = undefined;
             if (baseAsset && quoteAsset) {
-              if(history.quoteAssetId.toString() === quoteAsset.network[DEFAULT_NETWORK_ID]) {
+              if(history.quoteAssetId.toString() === quoteAsset.getPicassoAssetId() as string) {
                 historyBase = baseAsset;
                 historyQuote = quoteAsset;
               } else {
@@ -130,12 +126,12 @@ export const AuctionHistoriesTable: React.FC<AuctionHistoriesTableProps> = ({
                 </TableCell>
                 <TableCell align="center">
                   <Typography variant="body1">
-                    {`${history.quoteAssetAmount} ${historyQuote?.symbol}`}
+                    {`${history.quoteAssetAmount} ${historyQuote?.getSymbol()}`}
                   </Typography>
                 </TableCell>
                 <TableCell align="center">
                   <Typography variant="body1">
-                    {`${history.baseAssetAmount} ${historyBase?.symbol}`}
+                    {`${history.baseAssetAmount} ${historyBase?.getSymbol()}`}
                   </Typography>
                 </TableCell>
                 <TableCell align="center">

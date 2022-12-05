@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useParachainApi } from "substrate-react";
 import { isValidAssetPair } from "@/defi/utils";
 import { useAddLiquiditySlice, setPool, setSelection } from "@/store/addLiquidity/addLiquidity.slice";
-import { useAllLpTokenRewardingPools } from "@/store/hooks/useAllLpTokenRewardingPools";
+import { useAllLpTokenRewardingPools } from "@/defi/hooks/useAllLpTokenRewardingPools";
 
 /**
  * Updates zustand store with all 
@@ -22,11 +22,14 @@ const Updater = () => {
       ) {
 
       const pool = pools.find((i) => {
+        const pair = i.getPair();
+        const base = pair.getBaseAsset().toString();
+        const quote = pair.getQuoteAsset().toString();
         return (
-          (i.pair.base.toString() === ui.assetOne &&
-            i.pair.quote.toString() === ui.assetTwo) ||
-          (i.pair.base.toString() === ui.assetTwo &&
-            i.pair.quote.toString() === ui.assetOne)
+          (base === ui.assetOne &&
+            quote === ui.assetTwo) ||
+          (quote === ui.assetTwo &&
+            base === ui.assetOne)
         );
       });
 
@@ -45,10 +48,14 @@ const Updater = () => {
   ]);
 
   useEffect(() => {
-    if (parachainApi && !findPoolManually && pool && pool.poolId !== -1) {
+    if (parachainApi && !findPoolManually && pool) {
+      const pair = pool.getPair();
+      const base = pair.getBaseAsset().toString();
+      const quote = pair.getQuoteAsset().toString();
+
       setSelection({
-        assetOne: pool.pair.base.toString(),
-        assetTwo: pool.pair.quote.toString()
+        assetOne: base,
+        assetTwo: quote
       })
     }
   }, [parachainApi, findPoolManually, pool]);
