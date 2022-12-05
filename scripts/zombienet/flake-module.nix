@@ -8,10 +8,12 @@
         hash = "sha256-+tyVQa+BYdFphSLbinMFZlhV/fPG8R+/mwij36WwEEM=";
       };
 
-      # will be builder of it https://app.clickup.com/t/3u4b2ad
+      build = pkgs.callPackage "./default.nix";
       all-dev-local-config = ./all-dev-local.toml;
 
-    in {
+    in with build;
+
+    {
       packages = rec {
         paritytech-zombienet = pkgs.stdenv.mkDerivation {
           name = "zombienet";
@@ -44,6 +46,19 @@
 
         zombienet-devnet-dali-complete = pkgs.writeShellApplication {
           name = "zombienet-devnet-dali-complete";
+          runtimeInputs = [ pkgs.nodejs paritytech-zombienet ];
+          text = ''
+            cd ${paritytech-zombienet}            
+            npm run zombie spawn ${all-dev-local-config}
+          '';
+        };
+
+        zombienet-rococo-local-dali-dev = 
+        let 
+        
+        in
+        pkgs.writeShellApplication {
+          name = "rococo-local-dali-dev";
           runtimeInputs = [ pkgs.nodejs paritytech-zombienet ];
           text = ''
             cd ${paritytech-zombienet}            

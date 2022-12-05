@@ -128,5 +128,10 @@ in with prelude; {
       post_state = "Hash";
     };
   };
-  # mkZombienet =  
+  mkZombienet = { relay, parachhains}:
+  let
+    
+   {
+
+  };
 }
