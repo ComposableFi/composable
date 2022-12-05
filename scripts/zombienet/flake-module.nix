@@ -67,12 +67,14 @@
               collators = 3;
             }];
           };
-        in pkgs.writeShellApplication {
+        in pkgs.writeShellApplication rec {
           name = "rococo-local-dali-dev";
-          runtimeInputs = [ pkgs.nodejs paritytech-zombienet ];
+          runtimeInputs = [ pkgs.nodejs pkgs.yq paritytech-zombienet ];
           text = ''
-            cd ${paritytech-zombienet}            
-            npm run zombie spawn ${all-dev-local-config}
+            printf ${builtins.toJSON config} > ${name}.json
+            ${pkgs.yq}/bin/yq  . ${name}.json --toml-output > ${name}.toml
+            cat ${name}.toml
+            npm run zombie spawn ${name}.toml
           '';
         };
       };
