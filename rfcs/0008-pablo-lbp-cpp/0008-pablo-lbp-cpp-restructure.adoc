@@ -242,27 +242,29 @@ These are the modifications to be made to the existing https://github.com/Compos
 
 [source,rust]
 ----
-fn compute_deposit_lp_<T: PerThing>(
+pub fn compute_deposit_lp_<T: PerThing>(
 	p_supply: u128,
 	d_k: u128,
 	b_k: u128,
     // w_k = 1 when providing liquidity in pool weight ratio for all assets
 	w_k: T,
-    // f=0 for getting `lp_to_mint` without taking into account the fee
+    // f = 0 for getting `lp_to_mint` without taking into account the fee
 	f: T,
-) -> Result<(/*lp_to_mint*/ u128, /*fee*/ u128), ConstantProductAmmError> {
+) -> ConstantProductAmmResult<ConstantProductAmmValueFeePair> {
     // Calculate `lp_to_mint` according to section 4.2 Eqn: 5
-    Ok(lp_to_mint, fee)
 }
 
-fn compute_first_deposit_lp_<T: PerThing>(
-    // Vec<(token_deposit, token_balance, token_weight)>
-	pool_assets: Vec<(u128, u128, T)>,
-    // Fees are always 0 on first deposit
+pub fn compute_first_deposit_lp_<T, I>(
+	pool_assets: I,
+    // fees are always 0 for first deposit
 	_f: T,
-) -> Result<(/*lp_to_mint*/ u128, /*fee*/ u128), ConstantProductAmmError> {
+) -> ConstantProductAmmResult<ConstantProductAmmValueFeePair>
+where
+	T: PerThing,
+	I: IntoIterator<Item = ConstantProductFirstDepositInput<T>>,
+	I::IntoIter: ExactSizeIterator,
+{
     // Calculate `lp_to_mint` according to section 4.2 Eqn: 6
-    Ok(lp_to_mint, fee)
 }
 ----
 
