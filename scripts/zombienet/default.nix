@@ -5,11 +5,13 @@ let
   prelude = rec {
     lib = pkgs.lib;
     optionalAttrs = lib.optionalAttrs;
+    map = builtins.map;
+    filter = builtins.filter;
   };
 in with prelude; {
   mkChannel = sender: recipient: [{
     max_capacity = 8;
-    max_message_size = 512;
+    max_message_size = 4096;
     recipient = recipient;
     sender = sender;
   }];
@@ -58,6 +60,17 @@ in with prelude; {
     };
 
   mkParachains = parachains: builtins.map mkParachain parachains;
+
+  mkHrmpChannels = { parachains }:
+    let
+      ids = map (x: x.id) parachains;
+      cross = pkgs.lib.cartesianProductOfSets {
+        sender = ids;
+        recipient = ids;
+      };
+      unique = filter (x: x.sender != x.recipient) cross;
+    in map mkChannel unique;
+
   mkRelaychainNode = { rpc_port, ws_port, name }:
     {
       name = name;
