@@ -1,10 +1,10 @@
-import { MockedAsset } from "@/store/assets/assets.types";
+import { Asset } from "shared";
 import { alpha, Box, BoxProps, Typography, useTheme } from "@mui/material";
 import BigNumber from "bignumber.js";
 
 type PoolShareProps = {
-  baseAsset: MockedAsset | undefined;
-  quoteAsset: MockedAsset | undefined;
+  baseAsset: Asset | undefined;
+  quoteAsset: Asset | undefined;
   price: BigNumber;
   revertPrice: BigNumber;
   share: number;
@@ -53,7 +53,7 @@ export const PoolShare: React.FC<PoolShareProps> = ({
             color="text.secondary"
             whiteSpace="nowrap"
           >
-            {baseAsset?.symbol} per {quoteAsset?.symbol}
+            {baseAsset?.getSymbol()} per {quoteAsset?.getSymbol()}
           </Typography>
         </Box>
 
@@ -77,7 +77,7 @@ export const PoolShare: React.FC<PoolShareProps> = ({
             color="text.secondary"
             whiteSpace="nowrap"
           >
-            {quoteAsset?.symbol} per {baseAsset?.symbol}
+            {quoteAsset?.getSymbol()} per {baseAsset?.getSymbol()}
           </Typography>
         </Box>
 

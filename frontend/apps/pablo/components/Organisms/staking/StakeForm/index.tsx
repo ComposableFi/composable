@@ -1,20 +1,20 @@
 import { Box, Button, useTheme } from "@mui/material";
 import { BigNumberInput } from "@/components/Atoms";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { BoxProps } from "@mui/material";
 import { SelectLockPeriod } from "./SelectLockPeriod";
 import { StakingRewardPool } from "@/defi/types";
-import { useAssetBalance } from "@/store/assets/hooks";
+import { useAssetBalance } from "@/defi/hooks";
 import { DEFAULT_NETWORK_ID, PBLO_ASSET_ID } from "@/defi/utils";
 import { useAsset } from "@/defi/hooks";
 import { useStake } from "@/defi/hooks/stakingRewards";
 import { usePendingExtrinsic, useSelectedAccount } from "substrate-react";
-import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-import BigNumber from "bignumber.js";
 import { ConfirmingModal } from "../../swap/ConfirmingModal";
 import {
   extractDurationPresets,
 } from "@/defi/utils/stakingRewards/durationPresets";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import BigNumber from "bignumber.js";
 
 export type Multiplier = {
   value?: number;
@@ -30,7 +30,7 @@ export const StakeForm: React.FC<
   const [valid, setValid] = useState<boolean>(false);
   const [selectedMultiplier, setSelectedMultiplier] = useState<number>(0);
   const pabloAsset = useAsset(PBLO_ASSET_ID);
-  const balance = useAssetBalance(DEFAULT_NETWORK_ID, PBLO_ASSET_ID);
+  const balance = useAssetBalance(pabloAsset, "picasso");
 
   const multipliers = useMemo(() => {
     return extractDurationPresets(stakingRewardPool);
@@ -55,9 +55,9 @@ export const StakeForm: React.FC<
   );
 
   const validMultiplier =
-  stakingRewardPool &&
-  durationPresetSelected &&
-  durationPresetSelected.periodInSeconds in
+    stakingRewardPool &&
+    durationPresetSelected &&
+    durationPresetSelected.periodInSeconds in
     stakingRewardPool.lock.durationPresets;
 
   return (
@@ -80,13 +80,13 @@ export const StakeForm: React.FC<
           TypographyProps: { color: "text.secondary" },
           BalanceProps: {
             title: <AccountBalanceWalletIcon color="primary" />,
-            balance: `${balance} ${pabloAsset?.symbol}`,
+            balance: `${balance} ${pabloAsset?.getSymbol()}`,
             BalanceTypographyProps: { color: "text.secondary" },
           },
         }}
         EndAdornmentAssetProps={{
           assets: pabloAsset
-            ? [{ icon: pabloAsset.icon, label: pabloAsset.symbol }]
+            ? [{ icon: pabloAsset.getIconUrl(), label: pabloAsset.getSymbol() }]
             : [],
         }}
       />

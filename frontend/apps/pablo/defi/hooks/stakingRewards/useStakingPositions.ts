@@ -62,12 +62,12 @@ export function useStakingPositions({ stakedAssetId }: StakingPositionsProps): {
    */
   const ownedFinancialNftsHistory = useMemo(() => {
     if (userStakingEvents.length <= 0 || !financialNftCollectionId) return [];
-    if (ownedFinancialNfts[financialNftCollectionId] === undefined) return [];
+
+    const hasOwnedFnftsOfCollection = ownedFinancialNfts.find(fnft => fnft.getFinancialNftCollectionId() as string === financialNftCollectionId)
+    if (hasOwnedFnftsOfCollection === undefined) return [];
 
     return userStakingEvents.filter((x) => {
-      return ownedFinancialNfts[financialNftCollectionId].includes(
-        x.fnftInstanceId
-      );
+      return ownedFinancialNfts.find(ownedFnft => ownedFnft.getFinancialNftInstanceId() as string === x.fnftInstanceId)
     });
   }, [userStakingEvents, ownedFinancialNfts, financialNftCollectionId]);
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
@@ -78,7 +78,7 @@ export function useStakingPositions({ stakedAssetId }: StakingPositionsProps): {
    * this is only used to show
    * xToken multiplier on UI
    */
-   const updateStakes = useCallback(() => {
+  const updateStakes = useCallback(() => {
     if (!parachainApi || !financialNftCollectionId || ownedFinancialNftsHistory.length <= 0) return;
     let allPromises = ownedFinancialNftsHistory.map((stake) =>
       parachainApi.query.stakingRewards.stakes(

@@ -1,49 +1,68 @@
 import {
-  Box, 
-  BoxProps, 
-  Typography, 
-  TypographyProps, 
-  useTheme, 
+  Box,
+  BoxProps,
+  Typography,
+  TypographyProps,
+  useTheme,
 } from "@mui/material";
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
-import { getHumanizedDateDiff } from "shared";
-import { LiquidityBootstrappingPool } from "@/defi/types";
-import { DEFAULT_NETWORK_ID } from "@/defi/utils";
-import useBlockNumber from "@/defi/hooks/useBlockNumber";
+import { getHumanizedDateDiff, PabloLiquidityBootstrappingPool } from "shared";
+import { useCallback } from "react";
+import { useAuctionTiming } from "@/defi/hooks";
 
 export type AuctionStatusIndicatorProps = {
-  auction: LiquidityBootstrappingPool,
+  auction: PabloLiquidityBootstrappingPool,
+  labelWithDuration?: boolean,
   label?: string,
   LabelProps?: TypographyProps,
 } & BoxProps;
 
 export const AuctionStatusIndicator: React.FC<AuctionStatusIndicatorProps> = ({
   auction,
+  labelWithDuration = false,
   label,
   LabelProps,
   ...rest
 }) => {
-  const blockNumber = useBlockNumber(DEFAULT_NETWORK_ID);
   const theme = useTheme();
-  const isActive: boolean = blockNumber.gte(auction.sale.startBlock) 
-                    && blockNumber.lte(auction.sale.endBlock);
-  const isEnded: boolean = blockNumber.gt(auction.sale.endBlock);
+  const { isActive, isEnded, willStart, startTimestamp, endTimestamp } = useAuctionTiming(auction);
 
-  const getLabel = () => {
-    if (!!label) {
-      return label;
-    }
-
-    return (
-      isActive
-        ? "Ends in " + getHumanizedDateDiff(Date.now(), auction.sale.end)
-        : (
-            isEnded
-              ? "Ended " + getHumanizedDateDiff(Date.now(), auction.sale.end) + " ago"
-              : "Starts in " + getHumanizedDateDiff(Date.now(), auction.sale.start)
+  const getLabel = useCallback(() => {
+    if (willStart) {
+      if (!labelWithDuration) {
+        return "Starting Soon";
+      } else {
+        let dateDiff = getHumanizedDateDiff(
+          Date.now(),
+          startTimestamp
         )
-    )
-  }
+
+        return `Starts in ${dateDiff}`
+      }
+    } else if (isActive) {
+      if (!labelWithDuration) {
+        return "Active";
+      } else {
+        let dateDiff = getHumanizedDateDiff(
+          Date.now(),
+          endTimestamp
+        )
+
+        return `Ends in ${dateDiff}`
+      }
+    } else if (isEnded) {
+      if (!labelWithDuration) {
+        return "Ended";
+      } else {
+        let dateDiff = getHumanizedDateDiff(
+          Date.now(),
+          endTimestamp
+        )
+
+        return `Ended ${dateDiff}`
+      }
+    }
+  }, [willStart, isActive, isEnded, labelWithDuration, startTimestamp, endTimestamp])
 
   return (
     <Box display="flex" alignItems="center" gap={1.5} {...rest}>
@@ -61,7 +80,7 @@ export const AuctionStatusIndicator: React.FC<AuctionStatusIndicatorProps> = ({
         }}
       />
       <Typography variant="body1" {...LabelProps}>
-        { getLabel() }
+        {getLabel()}
       </Typography>
     </Box>
   );

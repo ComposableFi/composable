@@ -41,7 +41,7 @@ export function usePurchaseBond(offerId: BigNumber, amount: BigNumber) {
               )
           } catch (err: any) {
             console.error(err.message);
-            enqueueSnackbar(err.message);
+            enqueueSnackbar(err.message, { variant: "error" });
             return rej(err)
           }
         })

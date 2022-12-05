@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import { useMemo } from "react";
 import { PoolDetailsProps } from "./index";
-import { useLiquidityPoolDetails } from "@/store/hooks/useLiquidityPoolDetails";
+import { useLiquidityPoolDetails } from "@/defi/hooks/useLiquidityPoolDetails";
 import { useXTokensList } from "@/defi/hooks/financialNfts";
 import { useStakingRewardPoolCollectionId } from "@/store/stakingRewards/stakingRewards.slice";
 import { useUnstake } from "@/defi/hooks/stakingRewards";
@@ -19,6 +19,7 @@ import { PairAsset } from "@/components/Atoms";
 import { DEFAULT_NETWORK_ID, DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils";
 import { usePendingExtrinsic, useSelectedAccount } from "substrate-react";
 import { ConfirmingModal } from "../../swap/ConfirmingModal";
+import { useLpTokenPrice } from "@/defi/hooks";
 import BigNumber from "bignumber.js";
 
 const UnstakeFormPosition: React.FC<{
@@ -66,11 +67,12 @@ export const PoolUnstakeForm: React.FC<PoolDetailsProps> = ({
   ...boxProps
 }) => {
   const theme = useTheme();
-
-  const { baseAsset, quoteAsset, pool } = useLiquidityPoolDetails(poolId);
+  const { pool } = useLiquidityPoolDetails(poolId);
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
-  const positions = useXTokensList({ stakedAssetId: pool?.lpToken });
-  const collectionId = useStakingRewardPoolCollectionId(pool?.lpToken ?? "-");
+  const lpToken = pool?.getLiquidityProviderToken() ?? null;
+  const lpAssetId = lpToken?.getPicassoAssetId() as string ?? "-"
+  const positions = useXTokensList({ stakedAssetId: lpAssetId });
+  const collectionId = useStakingRewardPoolCollectionId(lpAssetId);
 
   const financialNftCollectionId = useMemo(() => {
     if (!collectionId) return undefined;
@@ -82,25 +84,13 @@ export const PoolUnstakeForm: React.FC<PoolDetailsProps> = ({
     return undefined;
   }, [positions]);
 
-  const principalAssetSymbol = useMemo(() => {
-    if (!baseAsset || !quoteAsset) return undefined;
-    return `${baseAsset.symbol}/${quoteAsset.symbol}`;
-  }, [baseAsset, quoteAsset]);
+  const lpTokenPrice = useLpTokenPrice(lpToken ?? undefined);
 
   const pairAssets = useMemo(() => {
-    if (!baseAsset || !quoteAsset) return [];
+    if (!lpToken) return [];
 
-    return [
-      {
-        icon: baseAsset.icon,
-        label: baseAsset.symbol,
-      },
-      {
-        icon: quoteAsset.icon,
-        label: quoteAsset.symbol,
-      },
-    ];
-  }, [baseAsset, quoteAsset]);
+    return lpToken.getUnderlyingAssetJSON();
+  }, [lpToken]);
 
   const hasStakedPositions = useMemo(() => {
     return positions.length > 0;
@@ -134,7 +124,7 @@ export const PoolUnstakeForm: React.FC<PoolDetailsProps> = ({
             color="text.secondary"
             textAlign={"center"}
           >
-            You don&apos;t currently have any ${principalAssetSymbol} positions
+            You don&apos;t currently have any {lpToken?.getSymbol()} positions
             staked.
           </Typography>
         </Box>
@@ -150,7 +140,7 @@ export const PoolUnstakeForm: React.FC<PoolDetailsProps> = ({
                     <UnstakeFormPosition
                       principalAssets={pairAssets}
                       financialNftId={nftId}
-                      principalAssetValue={new BigNumber(0.5)} // mocked usd price
+                      principalAssetValue={lpTokenPrice}
                       principalAssetStakedAmount={lockedPrincipalAsset}
                       isExpired={isExpired}
                       expiryDate={expiryDate}
@@ -171,7 +161,7 @@ export const PoolUnstakeForm: React.FC<PoolDetailsProps> = ({
           onClick={handleUnStake}
           disabled={!hasStakedPositions}
         >
-          {`Unstake ${principalAssetSymbol}`}
+          {`Unstake ${lpToken?.getSymbol()}`}
         </Button>
       </Box>
 

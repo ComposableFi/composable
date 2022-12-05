@@ -6,16 +6,12 @@ import {
 import {
   PabloTransactions,
 } from "@/defi/subsquid/pools/queries";
-import { LiquidityBootstrappingPool } from "@/defi/types";
 import { LiquidityBootstrappingPoolTrade } from "@/defi/types/auctions";
 import { LiquidityBootstrappingPoolStatistics } from "@/store/auctions/auctions.types";
-import { ApiPromise } from "@polkadot/api";
-import { fetchBalanceByAssetId } from "../../assets";
 import { fromChainUnits } from "../../units";
-import { createPabloPoolAccountId } from "../misc";
-import { lbpCalculatePriceAtBlock } from "./weightCalculator";
+import { PabloLiquidityBootstrappingPool } from "@/../../packages/shared";
+import { AVERAGE_BLOCK_TIME } from "../../constants";
 import BigNumber from "bignumber.js";
-import moment from "moment";
 
 export function transformPabloTransaction(
   tx: PabloTransactions,
@@ -58,8 +54,7 @@ export function transformPabloTransaction(
 }
 
 export async function fetchAndExtractAuctionStats(
-  api: ApiPromise,
-  pool: LiquidityBootstrappingPool
+  pool: PabloLiquidityBootstrappingPool
 ): Promise<LiquidityBootstrappingPoolStatistics> {
   let startLiquidity = {
     baseAmount: new BigNumber(0),
@@ -72,8 +67,8 @@ export async function fetchAndExtractAuctionStats(
   let totalVolume = new BigNumber(0);
   let totalLiquidity = new BigNumber(0);
 
-  const { base, quote } = pool.pair;
-  const poolAccountId = createPabloPoolAccountId(api, pool.poolId);
+  const base = pool.getPair().getBaseAsset();
+  const quote = pool.getPair().getQuoteAsset();
   try {
     /**
      * Query for volume, liquidity
@@ -95,21 +90,13 @@ export async function fetchAndExtractAuctionStats(
      * Query amount of base tokens in
      * the pool
      */
-    const baseCurrBalance = await fetchBalanceByAssetId(
-      api,
-      poolAccountId,
-      base.toString()
-    );
+    const baseCurrBalance = await pool.getAssetLiquidity(base);
     liquidity.baseAmount = new BigNumber(baseCurrBalance);
     /**
      * Query amount of quote tokens in
      * the pool
      */
-    const quoteCurrBalance = await fetchBalanceByAssetId(
-      api,
-      poolAccountId,
-      quote.toString()
-    );
+    const quoteCurrBalance = await pool.getAssetLiquidity(quote);
     liquidity.quoteAmount = new BigNumber(quoteCurrBalance);
   } catch (err) {
     console.error(err);
@@ -123,8 +110,7 @@ export async function fetchAndExtractAuctionStats(
 }
 
 export async function fetchAuctionChartSeries(
-  parachainApi?: ApiPromise,
-  auction?: LiquidityBootstrappingPool
+  auction: PabloLiquidityBootstrappingPool | null
 ): Promise<{
   chartSeries: [number, number][];
   predictedSeries: [number, number][];
@@ -132,31 +118,29 @@ export async function fetchAuctionChartSeries(
   let chartSeries: [number, number][] = [];
   let predictedSeries: [number, number][] = [];
   try {
-    if (!parachainApi || !auction || auction.poolId == -1)
+    if (!auction)
       throw new Error("Cannot fetch data.");
 
-    const accountId = createPabloPoolAccountId(parachainApi, auction.poolId);
-
-    const baseBalance = await fetchBalanceByAssetId(
-      parachainApi,
-      accountId,
-      auction.pair.base.toString()
-    );
-    const quoteBalance = await fetchBalanceByAssetId(
-      parachainApi,
-      accountId,
-      auction.pair.quote.toString()
+    const api = auction.getApi();
+    const baseId = auction.getPair().getBaseAsset();
+    const quoteId = auction.getPair().getQuoteAsset();
+    const baseBalance = await auction.getAssetLiquidity(baseId);
+    const quoteBalance = await auction.getAssetLiquidity(quoteId);
+    let blockBn = await api.query.system.number();
+    const { endTimestamp } = await auction.getSaleTiming(
+      new BigNumber(blockBn.toString()),
+      new BigNumber(AVERAGE_BLOCK_TIME)
     );
 
     const { pabloTransactions } = await fetchPabloTransactions(
-      auction.poolId,
+      (auction.getPoolId(true) as BigNumber).toNumber(),
       "SWAP",
       "ASC",
       100
     );
 
     const transactions = pabloTransactions.map((tx) =>
-      transformPabloTransaction(tx, auction.pair.quote)
+      transformPabloTransaction(tx, quoteId.toNumber())
     );
 
     if (transactions.length) {
@@ -173,12 +157,11 @@ export async function fetchAuctionChartSeries(
         pabloTransactions[transactions.length - 1].event.blockNumber
       );
 
-      while (predictedSeriesStartTimeStamp < auction.sale.end) {
-        predictedSeriesStartSpotPrice = lbpCalculatePriceAtBlock(
-          auction,
-          new BigNumber(baseBalance),
-          new BigNumber(quoteBalance),
-          predictedSeriesStartBlock
+      while (predictedSeriesStartTimeStamp < endTimestamp) {
+        predictedSeriesStartSpotPrice = auction.simulatePriceAt(
+          predictedSeriesStartBlock,
+          baseBalance,
+          quoteBalance
         );
         predictedSeries.push([
           predictedSeriesStartTimeStamp,
@@ -188,22 +171,20 @@ export async function fetchAuctionChartSeries(
         predictedSeriesStartTimeStamp += 60 * 1000;
       }
     } else {
-      let blockBn = await parachainApi.query.system.number();
+
       let predictedSeriesStartBlock = new BigNumber(blockBn.toString());
       let predictedSeriesStartTimeStamp = Date.now();
-      let predictedSeriesStartSpotPrice = lbpCalculatePriceAtBlock(
-        auction,
-        new BigNumber(baseBalance),
-        new BigNumber(quoteBalance),
-        predictedSeriesStartBlock
+      let predictedSeriesStartSpotPrice = auction.simulatePriceAt(
+        predictedSeriesStartBlock,
+        baseBalance,
+        quoteBalance
       );
 
-      while (predictedSeriesStartTimeStamp < auction.sale.end) {
-        predictedSeriesStartSpotPrice = lbpCalculatePriceAtBlock(
-          auction,
-          new BigNumber(baseBalance),
-          new BigNumber(quoteBalance),
-          predictedSeriesStartBlock
+      while (predictedSeriesStartTimeStamp < endTimestamp) {
+        predictedSeriesStartSpotPrice = auction.simulatePriceAt(
+          predictedSeriesStartBlock,
+          baseBalance,
+          quoteBalance,
         );
         predictedSeries.push([
           predictedSeriesStartTimeStamp,
