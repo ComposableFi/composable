@@ -32,14 +32,6 @@
 pub use pallet::*;
 
 #[cfg(test)]
-mod common_test_functions;
-
-#[cfg(test)]
-mod dual_asset_constant_product_tests;
-#[cfg(test)]
-mod dual_asset_constant_product_tests_new;
-
-#[cfg(test)]
 mod mock;
 #[cfg(test)]
 mod mock_fnft;
@@ -80,7 +72,7 @@ pub mod pallet {
 		pallet_prelude::*,
 		traits::{
 			fungibles::{Inspect, Mutate, Transfer},
-			Time,
+			Time, TryCollect,
 		},
 		transactional, BoundedBTreeMap, PalletId, RuntimeDebug,
 	};
@@ -174,12 +166,12 @@ pub mod pallet {
 			who: T::AccountId,
 			/// Pool id to which liquidity added.
 			pool_id: T::PoolId,
-			/// Amount of base asset removed from pool.
-			base_amount: T::Balance,
-			/// Amount of quote asset removed from pool.
-			quote_amount: T::Balance,
-			/// Updated lp token supply.
-			total_issuance: T::Balance,
+			// /// Amount of base asset removed from pool.
+			// base_amount: T::Balance,
+			// /// Amount of quote asset removed from pool.
+			// quote_amount: T::Balance,
+			// /// Updated lp token supply.
+			// total_issuance: T::Balance,
 		},
 		/// Token exchange happened.
 		Swapped {
@@ -951,9 +943,9 @@ pub mod pallet {
 					Self::deposit_event(Event::<T>::LiquidityRemoved {
 						pool_id,
 						who: who.clone(),
-						base_amount: T::Balance::zero(),
-						quote_amount: T::Balance::zero(),
-						total_issuance: T::Balance::zero(),
+						// base_amount,
+						// quote_amount,
+						// total_issuance: updated_lp,
 					});
 				},
 			}

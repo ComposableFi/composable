@@ -1,5 +1,3 @@
-use core::ops::Sub;
-
 use crate::{Config, Error, PoolConfiguration, PoolCount, Pools};
 use composable_maths::dex::{
 	constant_product::{
@@ -20,7 +18,7 @@ use frame_support::{
 };
 use sp_runtime::{
 	traits::{Convert, One, Zero},
-	BoundedBTreeMap, PerThing, Permill,
+	BoundedBTreeMap, Permill,
 };
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 
@@ -86,6 +84,8 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		who: &T::AccountId,
 		pool: BasicPoolInfo<T::AccountId, T::AssetId, ConstU32<2>>,
 		pool_account: T::AccountId,
+		// Bounds for the Vec can be specified here to based on a pallet config.
+		// The details can be figured out in the implementation
 		assets: BoundedVec<AssetAmount<T::AssetId, T::Balance>, ConstU32<2>>,
 		min_mint_amount: T::Balance,
 		keep_alive: bool,
@@ -107,6 +107,10 @@ impl<T: Config> DualAssetConstantProduct<T> {
 			.collect::<Result<Vec<_>, _>>()?;
 
 		let lp_total_issuance = T::Convert::convert(T::Assets::total_issuance(pool.lp_token));
+
+		dbg!(&lp_total_issuance);
+
+		dbg!(&assets_with_balances);
 
 		let amount_of_lp_token_to_mint = match assets_with_balances[..] {
 			[(single, (single_weight, single_balance))] => {
@@ -133,19 +137,17 @@ impl<T: Config> DualAssetConstantProduct<T> {
 				single_deposit.value
 			},
 			[(first, (first_weight, first_balance)), (second, (second_weight, second_balance))] => {
-				dbg!(first, second);
-				dbg!(&lp_total_issuance);
-
-				let lp_to_mint = if lp_total_issuance.is_zero() {
-					let constant_product_amm_value_fee_pair = compute_first_deposit_lp_(
+				if lp_total_issuance.is_zero() {
+					let value = compute_first_deposit_lp_(
 						&[
 							(T::Convert::convert(first.amount), first_weight),
 							(T::Convert::convert(second.amount), second_weight),
 						],
 						Permill::zero(),
-					)?;
+					)?
+					.value;
 
-					dbg!(constant_product_amm_value_fee_pair).value
+					dbg!(value)
 				} else {
 					dbg!(&first, &second);
 
@@ -156,10 +158,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 
 					// REVIEW(benluelo): Is this correct?
 					ensure!(
-						per_thing_acceptable_computation_error(
-							dbg!(input_ratio_first_to_second),
-							dbg!(first_weight)
-						),
+						dbg!(input_ratio_first_to_second) == dbg!(first_weight),
 						Error::<T>::IncorrectAmountOfAssets
 					);
 
@@ -170,7 +169,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 						T::Convert::convert(first.amount),
 						first_balance,
 						Permill::one(),
-						pool.fee_config.fee_rate,
+						dbg!(pool.fee_config.fee_rate),
 					)?;
 
 					dbg!();
@@ -185,19 +184,23 @@ impl<T: Config> DualAssetConstantProduct<T> {
 
 					dbg!();
 
+					T::Assets::transfer(
+						first.asset_id,
+						who,
+						&pool_account,
+						first.amount,
+						keep_alive,
+					)?;
+					T::Assets::transfer(
+						second.asset_id,
+						who,
+						&pool_account,
+						second.amount,
+						keep_alive,
+					)?;
+
 					first_deposit.value.safe_add(&second_deposit.value)?
-				};
-
-				T::Assets::transfer(first.asset_id, who, &pool_account, first.amount, keep_alive)?;
-				T::Assets::transfer(
-					second.asset_id,
-					who,
-					&pool_account,
-					second.amount,
-					keep_alive,
-				)?;
-
-				lp_to_mint
+				}
 			},
 			_ => {
 				defensive!("this should be unreachable, since the input assets are bounded at 2");
@@ -208,7 +211,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		let amount_of_lp_token_to_mint = T::Convert::convert(amount_of_lp_token_to_mint);
 
 		ensure!(
-			amount_of_lp_token_to_mint >= min_mint_amount,
+			dbg!(amount_of_lp_token_to_mint) >= min_mint_amount,
 			Error::<T>::CannotRespectMinimumRequested
 		);
 
@@ -271,10 +274,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 
 				// REVIEW(benluelo): Is this correct?
 				ensure!(
-					per_thing_acceptable_computation_error(
-						dbg!(input_ratio_first_to_second),
-						dbg!(first_weight)
-					),
+					dbg!(input_ratio_first_to_second) == dbg!(first_weight),
 					Error::<T>::IncorrectAmountOfAssets
 				);
 
@@ -380,53 +380,5 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		let fee = pool.fee_config.calculate_fees(in_asset_id, T::Convert::convert(amm_pair.fee));
 
 		Ok((out_asset, a_sent, fee))
-	}
-}
-
-fn per_thing_acceptable_computation_error<T>(a: T, b: T) -> bool
-where
-	T: PerThing + Sub<Output = T>,
-	// T::Inner: From<u16>,
-{
-	let c = if a > b { a - b } else { b - a };
-
-	let epsilon = T::from_rational::<u128>(1, 100_000);
-
-	dbg!(c, epsilon);
-
-	c <= epsilon
-}
-
-#[cfg(test)]
-mod per_thing_computation_error {
-	use sp_arithmetic::Rounding;
-	use sp_runtime::{PerThing, Permill};
-
-	use super::per_thing_acceptable_computation_error;
-
-	#[test]
-	fn difference_too_large() {
-		let a = Permill::from_rational::<u32>(1, 100_000);
-		let b = Permill::from_rational::<u32>(3, 100_000);
-
-		dbg!(a, b);
-
-		assert!(!per_thing_acceptable_computation_error(a, b))
-	}
-
-	#[test]
-	fn acceptable_difference() {
-		let a = Permill::from_rational_with_rounding::<u128>(
-			49_999_000,
-			100_000_000,
-			Rounding::NearestPrefUp,
-		)
-		.unwrap();
-		// let a = Permill::from_rational::<u128>(50001, 100_000);
-		let b = Permill::from_rational::<u32>(50, 100);
-
-		dbg!(a, b);
-
-		assert!(per_thing_acceptable_computation_error(a, b))
 	}
 }

@@ -1,12 +1,10 @@
 use crate::{
-	dual_asset_constant_product_tests::{create_pool_from_config, lp_token_of_pool},
 	mock,
 	mock::{Pablo, *},
 	Config,
 	PoolConfiguration::DualAssetConstantProduct,
 	PoolInitConfiguration,
 };
-use composable_tests_helpers::test::{block::process_and_progress_blocks, helper::RuntimeTrait};
 use composable_traits::dex::AssetAmount;
 use frame_support::{
 	assert_noop, assert_ok,

@@ -12,9 +12,11 @@ use sp_std::collections::btree_map::BTreeMap;
 
 //- test lp mint/burn
 use crate::{
-	common_test_functions::dual_asset_pool_weights,
-	dual_asset_constant_product_tests::{create_pool_from_config, lp_token_of_pool},
 	mock::*,
+	test::{
+		common_test_functions::dual_asset_pool_weights,
+		dual_asset_constant_product_tests::{create_pool_from_config, lp_token_of_pool},
+	},
 	PoolInitConfiguration,
 };
 

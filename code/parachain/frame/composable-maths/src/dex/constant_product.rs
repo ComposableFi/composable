@@ -480,7 +480,11 @@ pub fn compute_first_deposit_lp_<T: PerThing>(
 			let w_i = Decimal::safe_from_per_thing(*w_i)?;
 			let pow = b_i.checked_powd(w_i).ok_or(ArithmeticError::Overflow)?;
 
-			product.safe_mul(&pow)
+			let output = product.safe_mul(&pow);
+
+			dbg!(b_i, w_i, pow, product, output);
+
+			output
 		},
 	)?;
 

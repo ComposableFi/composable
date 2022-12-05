@@ -344,13 +344,18 @@ fn add_lp_with_min_mint_amount() {
 		assert_ok!(Tokens::mint_into(second_asset, &ALICE, init_second_asset_amount));
 
 		// Add the liquidity, min amount = 0
-		assert_ok!(Pablo::add_liquidity(
-			Origin::signed(ALICE),
-			pool_id,
-			assets_with_init_amounts,
-			0,
-			false
-		));
+		Test::assert_extrinsic_event(
+			Pablo::add_liquidity(
+				Origin::signed(ALICE),
+				pool_id,
+				assets_with_init_amounts,
+				0,
+				false,
+			),
+			crate::Event::<Test>::LiquidityAdded { who: ALICE, pool_id: 0, minted_lp: 0 },
+		);
+
+		dbg!(Tokens::total_issuance(lp_token));
 
 		// Mint the tokens
 		assert_ok!(Tokens::mint_into(first_asset, &BOB, first_asset_amount));
@@ -362,10 +367,9 @@ fn add_lp_with_min_mint_amount() {
 		assert_eq!(bob_lp, 0_u128, "BOB should not have any LP tokens");
 
 		// no idea what this was calculating, but the following add_liquidity was successful when it
-		// should not have been when using this value let min_mint_amount =
-		//
-		// 	dbg!(alice_lp) * dbg!(first_asset_amount) / dbg!(init_first_asset_amount);
-		// dbg!(min_mint_amount);
+		// should not have been when using this value
+		// let min_mint_amount = dbg!(alice_lp) * dbg!(first_asset_amount) /
+		// dbg!(init_first_asset_amount); dbg!(min_mint_amount);
 
 		// Add the liquidity, but expect more lp tokens, hence errors
 		assert_noop!(
@@ -385,7 +389,7 @@ fn add_lp_with_min_mint_amount() {
 			Origin::signed(BOB),
 			pool_id,
 			assets_with_amounts,
-			100_000_000,
+			1,
 			false
 		));
 	});
