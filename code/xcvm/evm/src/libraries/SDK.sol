@@ -184,17 +184,52 @@ library SDK {
         }
     }
 
+    function _handleLocalId(bytes memory program, uint64 pos) internal pure returns(address assetAddress, uint64 newPos) {
+        uint64 size;
+        bool success;
+        uint64 field;
+        ProtobufLib.WireType _type;
+        // read balance message body
+        (size, pos) = _getMessageLength(program, pos);
+        pos = _checkField(program, 1, ProtobufLib.WireType.LengthDelimited, pos);
+        (size, pos) = _getMessageLength(program, pos);
+        assetAddress = bytesToAddress(program.slice(pos, size));
+        newPos = pos + size;
+    }
+
+    function _handleGlobalId(bytes memory program, uint64 pos) internal view returns(uint128 assetId, uint64 newPos) {
+        uint64 size;
+        bool success;
+        uint64 field;
+        ProtobufLib.WireType _type;
+        // read balance message body
+        (size, pos) = _getMessageLength(program, pos);
+        pos = _checkField(program, 1, ProtobufLib.WireType.LengthDelimited, pos);
+        (assetId, newPos) = _handleUint128(program, pos);
+    }
+
     function _handleAssetId(bytes memory program, uint64 pos, address routerAddress) internal view returns (address asset, uint128 assetId, uint64 newPos) {
         uint64 size;
         // read asset message body
         (size, pos) = _getMessageLength(program, pos);
-        // reading asset message
-        pos = _checkField(program, 1, ProtobufLib.WireType.LengthDelimited, pos);
-        // decode asset id
-        (assetId, newPos) =_handleUint128(program, pos);
 
-        asset = IRouter(routerAddress).getAsset(uint256(assetId));
-        require(asset != address(0), "asset not registered");
+        bool success;
+        uint64 field;
+        ProtobufLib.WireType _type;
+        (success, pos, field, _type) = ProtobufLib.decode_key(pos, program);
+        require(field == 1 || field == 2, "invalid key field");
+        require(success, "decode key failed");
+
+        // asset id
+        if (field == 1) {
+            (assetId, newPos) = _handleGlobalId(program, pos);
+            asset = IRouter(routerAddress).getAsset(uint256(assetId));
+        } else if (field == 2) {
+            (asset, newPos) = _handleLocalId(program, pos);
+            assetId = uint128(IRouter(routerAddress).getAssetIdByLocalId(asset));
+        } else {
+            revert("no valid field");
+        }
     }
 
     function _handleAsset(bytes memory program, uint64 pos, address routerAddress)
@@ -598,10 +633,31 @@ library SDK {
         );
     }
 
-    function generateAssetId(uint128 _assetId) public pure returns (bytes memory assetId) {
+    function generateGlobalId(uint128 _globalId) public pure returns (bytes memory globalId) {
         return abi.encodePacked(
             ProtobufLib.encode_key(1, 2),
-            ProtobufLib.encode_length_delimited(generateUint128(_assetId))
+            ProtobufLib.encode_length_delimited(generateUint128(_globalId))
+        );
+    }
+
+    function generateLocalId(bytes memory _localId) public pure returns (bytes memory localId) {
+        return abi.encodePacked(
+            ProtobufLib.encode_key(1, 2),
+            ProtobufLib.encode_length_delimited(_localId)
+        );
+    }
+
+    function generateAssetIdByGlobalId(bytes memory globalId) public pure returns (bytes memory assetId) {
+        return abi.encodePacked(
+            ProtobufLib.encode_key(1, 2),
+            ProtobufLib.encode_length_delimited(globalId)
+        );
+    }
+
+    function generateAssetIdByLocalId(bytes memory local) public pure returns (bytes memory assetId) {
+        return abi.encodePacked(
+            ProtobufLib.encode_key(2, 2),
+            ProtobufLib.encode_length_delimited(local)
         );
     }
 
@@ -805,7 +861,7 @@ library SDK {
             ProtobufLib.encode_length_delimited(_spawnedProgram)
         );
         for (uint i = 0; i < assetIds.length; i++) {
-            bytes memory assetId = generateAssetId(assetIds[i]);
+            bytes memory assetId = generateAssetIdByGlobalId(generateGlobalId(assetIds[i]));
             bytes memory asset = generateAsset(
                     assetId, generateBalanceByAbsolute(
                         generateAbsolute(uint128(amounts[i]))

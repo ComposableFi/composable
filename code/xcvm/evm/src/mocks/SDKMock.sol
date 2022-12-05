@@ -35,8 +35,20 @@ contract SDKMock {
         return SDK.generateAccount(_account);
     }
 
-    function generateAssetId(uint128 _assetId) public pure returns (bytes memory assetId) {
-        return SDK.generateAssetId(_assetId);
+    function generateGlobalId(uint128 _globalId) public pure returns (bytes memory globalId) {
+        return SDK.generateGlobalId(_globalId);
+    }
+
+    function generateLocalId(bytes memory _localId) public pure returns (bytes memory localId) {
+        return SDK.generateLocalId(_localId);
+    }
+
+    function generateAssetIdByGlobalId(bytes memory _globalId) public pure returns (bytes memory assetId) {
+        return SDK.generateAssetIdByGlobalId(_globalId);
+    }
+
+    function generateAssetIdByLocalId(bytes memory _localId) public pure returns (bytes memory assetId) {
+        return SDK.generateAssetIdByLocalId(_localId);
     }
 
     function generateAsset(bytes memory _assetId, bytes memory _balance) public pure returns (bytes memory asset) {

@@ -16,6 +16,7 @@ contract Router is Ownable, IRouter {
     // TODO ? do we have only one bridge per network and security
     mapping(uint256 => mapping(BridgeSecurity => address)) public bridges;
     mapping(uint256 => address) public assets;
+    mapping(address => uint256) public assetIds;
 
     event InstanceCreated(uint256 networkId, bytes user, address instance);
 
@@ -46,6 +47,10 @@ contract Router is Ownable, IRouter {
         return assets[assetId];
     }
 
+    function getAssetIdByLocalId(address asset) external view returns(uint256) {
+        return assetIds[asset];
+    }
+
     function getBridge(uint256 networkId, BridgeSecurity security) external view returns (address) {
         return bridges[networkId][security];
     }
@@ -53,9 +58,11 @@ contract Router is Ownable, IRouter {
     function registerAsset(address assetAddress, uint128 assetId) external onlyOwner {
         require(assetAddress != address(0), "Router: invalid address");
         assets[assetId] = assetAddress;
+        assetIds[assetAddress] = assetId;
     }
 
     function unregisterAsset(uint128 assetId) external onlyOwner {
+        delete assetIds[assets[assetId]];
         delete assets[assetId];
     }
 

@@ -22,6 +22,8 @@ interface IRouter {
 
     function getAsset(uint256 assetId) external view returns (address);
 
+    function getAssetIdByLocalId(address asset) external view returns (uint256);
+
     function getBridge(uint256 networkId, BridgeSecurity security) external view returns (address);
 
     function runProgram(

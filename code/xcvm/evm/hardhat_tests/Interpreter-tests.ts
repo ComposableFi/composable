@@ -55,7 +55,7 @@ describe("Interpreter", function () {
           xcvm.createInstruction(
             xcvm.createTransfer(xcvm.createRelayer(), [
               xcvm.createAsset(
-                xcvm.createAssetId(1),
+                xcvm.createAssetId(xcvm.createGlobalId(1)),
                 xcvm.createBalance(
                   // 1.5
                   xcvm.createUnit(1, xcvm.createRatio("1000", "2000"))
@@ -78,7 +78,7 @@ describe("Interpreter", function () {
           xcvm.createInstruction(
             xcvm.createTransfer(xcvm.createAccount(owner.address), [
               xcvm.createAsset(
-                xcvm.createAssetId(1),
+                xcvm.createAssetId(xcvm.createGlobalId(1)),
                 xcvm.createBalance(
                   // 1.5
                   xcvm.createUnit(1, xcvm.createRatio("1000", "2000"))
@@ -101,7 +101,7 @@ describe("Interpreter", function () {
           xcvm.createInstruction(
             xcvm.createTransfer(xcvm.createAccount(owner.address), [
               xcvm.createAsset(
-                xcvm.createAssetId(1),
+                xcvm.createAssetId(xcvm.createGlobalId(1)),
                 xcvm.createBalance(xcvm.createRatio("1000000000000000000000000000", "2000000000000000000000000000"))
               ),
             ])
@@ -120,7 +120,7 @@ describe("Interpreter", function () {
           xcvm.createInstruction(
             xcvm.createTransfer(xcvm.createAccount(owner.address), [
               xcvm.createAsset(
-                xcvm.createAssetId(1),
+                xcvm.createAssetId(xcvm.createGlobalId(1)),
                 xcvm.createBalance(xcvm.createAbsolute("1000000000000000000000000000"))
               ),
             ])
@@ -172,11 +172,11 @@ describe("Interpreter", function () {
             xcvm.createCall(
               payload,
               xcvm.createBindings([
-                xcvm.createBinding(0, xcvm.createBindingValue(xcvm.createAssetId(1))),
+                xcvm.createBinding(0, xcvm.createBindingValue(xcvm.createAssetId(xcvm.createGlobalId(1)))),
                 // bindingValuePosition(1 byte) + function signature (4bytes) + address(32bytes, its encoded) = 37 => balanceValuePosition
                 xcvm.createBinding(
                   37,
-                  xcvm.createBindingValue(xcvm.createAssetAmount(xcvm.createAssetId(1), xcvm.createBalance(xcvm.createRatio(1, 2))))
+                  xcvm.createBindingValue(xcvm.createAssetAmount(xcvm.createAssetId(xcvm.createGlobalId(1)), xcvm.createBalance(xcvm.createRatio(1, 2))))
                 ),
               ])
             )
@@ -198,7 +198,7 @@ describe("Interpreter", function () {
         xcvm.createInstructions([
           xcvm.createInstruction(
             xcvm.createTransfer(xcvm.createAccount(owner.address), [
-              xcvm.createAsset(xcvm.createAssetId(1), xcvm.createBalance(xcvm.createAbsolute("100"))),
+              xcvm.createAsset(xcvm.createAssetId(xcvm.createGlobalId(1)), xcvm.createBalance(xcvm.createAbsolute("100"))),
             ])
           ),
         ])
@@ -209,7 +209,7 @@ describe("Interpreter", function () {
         xcvm.createInstructions([
           xcvm.createInstruction(
             xcvm.createSpawn(xcvm.createNetwork(1), xcvm.createSalt("0x11"), 1, programMessage, [
-              xcvm.createAsset(xcvm.createAssetId(1), xcvm.createBalance(xcvm.createAbsolute(200))),
+              xcvm.createAsset(xcvm.createAssetId(xcvm.createGlobalId(1)), xcvm.createBalance(xcvm.createAbsolute(200))),
             ])
           ),
         ])
@@ -253,11 +253,11 @@ describe("Interpreter", function () {
             xcvm.createCall(
               payload,
               xcvm.createBindings([
-                xcvm.createBinding(0, xcvm.createBindingValue(xcvm.createAssetId(1))),
+                xcvm.createBinding(0, xcvm.createBindingValue(xcvm.createAssetId(xcvm.createGlobalId(1)))),
                 // bindingValuePosition(1 byte) + function signature (4bytes) + address(32bytes, its encoded) = 37 => balanceValuePosition
                 xcvm.createBinding(
                   37,
-                  xcvm.createBindingValue(xcvm.createAssetAmount(xcvm.createAssetId(1), xcvm.createBalance(xcvm.createRatio(1, 2))))
+                  xcvm.createBindingValue(xcvm.createAssetAmount(xcvm.createAssetId(xcvm.createGlobalId(1)), xcvm.createBalance(xcvm.createRatio(1, 2))))
                 ),
               ])
             )
@@ -265,7 +265,7 @@ describe("Interpreter", function () {
           xcvm.createInstruction(
             xcvm.createTransfer(xcvm.createAccount(owner.address), [
               xcvm.createAsset(
-                xcvm.createAssetId(1),
+                xcvm.createAssetId(xcvm.createGlobalId(1)),
                 xcvm.createBalance(
                   // 1.5
                   xcvm.createUnit(1, xcvm.createRatio("1000", "2000"))
@@ -355,12 +355,24 @@ describe("Interpreter", function () {
     );
   });
 
-  it("test generating assetId", async function () {
+  it("test generating assetId by globalId", async function () {
     let xcvm = new XCVM();
     let interpreter = await ethers.getContractAt("Interpreter", interpreterAddress);
     expect(
-      ethers.utils.hexlify(xcvm.encodeMessage(xcvm.createAssetId(1))))
-        .to.be.equal(await sdk.generateAssetId("1"));
+      ethers.utils.hexlify(xcvm.encodeMessage(xcvm.createAssetId(xcvm.createGlobalId(1)))))
+        .to.be.equal(
+          await sdk.generateAssetIdByGlobalId(sdk.generateGlobalId(1))
+      );
+  });
+
+  it("test generating assetId by localId", async function () {
+    let xcvm = new XCVM();
+    let interpreter = await ethers.getContractAt("Interpreter", interpreterAddress);
+    expect(
+      ethers.utils.hexlify(xcvm.encodeMessage(xcvm.createAssetId(xcvm.createLocalId(owner.address)))))
+        .to.be.equal(
+          await sdk.generateAssetIdByLocalId(sdk.generateLocalId(owner.address))
+      );
   });
 
   it("test generating asset", async function () {
@@ -368,11 +380,11 @@ describe("Interpreter", function () {
     let interpreter = await ethers.getContractAt("Interpreter", interpreterAddress);
     expect(
       ethers.utils.hexlify(
-        xcvm.encodeMessage(xcvm.createAsset(xcvm.createAssetId(1), xcvm.createBalance(xcvm.createRatio("100", "200"))))
+        xcvm.encodeMessage(xcvm.createAsset(xcvm.createAssetId(xcvm.createGlobalId(1)), xcvm.createBalance(xcvm.createRatio("100", "200"))))
       )
     ).to.be.equal(
       await sdk.generateAsset(
-        await sdk.generateAssetId("1"),
+        sdk.generateAssetIdByGlobalId(sdk.generateGlobalId(1)),
         await sdk.generateBalanceByRatio(await sdk.generateRatio("100", "200"))
       )
     );
@@ -383,11 +395,11 @@ describe("Interpreter", function () {
     let interpreter = await ethers.getContractAt("Interpreter", interpreterAddress);
     expect(
       ethers.utils.hexlify(
-        xcvm.encodeMessage(xcvm.createAssetAmount(xcvm.createAssetId(1), xcvm.createBalance(xcvm.createRatio("100", "200"))))
+        xcvm.encodeMessage(xcvm.createAssetAmount(xcvm.createAssetId(xcvm.createGlobalId(1)), xcvm.createBalance(xcvm.createRatio("100", "200"))))
       )
     ).to.be.equal(
       await sdk.generateAssetAmount(
-        await sdk.generateAssetId("1"),
+        await sdk.generateAssetIdByGlobalId(sdk.generateGlobalId(1)),
         await sdk.generateBalanceByRatio(await sdk.generateRatio("100", "200"))
       )
     );
@@ -396,8 +408,10 @@ describe("Interpreter", function () {
   it("test generating bindingValue by assetId ", async function () {
     let xcvm = new XCVM();
     let interpreter = await ethers.getContractAt("Interpreter", interpreterAddress);
-    expect(ethers.utils.hexlify(xcvm.encodeMessage(xcvm.createBindingValue(xcvm.createAssetId(1))))).to.be.equal(
-      await sdk.generateBindingValueByAssetId(await sdk.generateAssetId("1"))
+    expect(ethers.utils.hexlify(xcvm.encodeMessage(xcvm.createBindingValue(xcvm.createAssetId(xcvm.createGlobalId(1)))))).to.be.equal(
+      await sdk.generateBindingValueByAssetId(
+        await sdk.generateAssetIdByGlobalId(sdk.generateGlobalId(1))
+      )
     );
   });
 
@@ -407,13 +421,13 @@ describe("Interpreter", function () {
     expect(
       ethers.utils.hexlify(
         xcvm.encodeMessage(
-          xcvm.createBindingValue(xcvm.createAssetAmount(xcvm.createAssetId(1), xcvm.createBalance(xcvm.createRatio("100", "200"))))
+          xcvm.createBindingValue(xcvm.createAssetAmount(xcvm.createAssetId(xcvm.createGlobalId(1)), xcvm.createBalance(xcvm.createRatio("100", "200"))))
         )
       )
     ).to.be.equal(
       await sdk.generateBindingValueByAssetAmount(
         await sdk.generateAssetAmount(
-          await sdk.generateAssetId("1"),
+          await sdk.generateAssetIdByGlobalId(sdk.generateGlobalId(1)),
           await sdk.generateBalanceByRatio(await sdk.generateRatio("100", "200"))
         )
       )
@@ -428,7 +442,7 @@ describe("Interpreter", function () {
         xcvm.encodeMessage(
           xcvm.createBinding(
             1,
-            xcvm.createBindingValue(xcvm.createAssetAmount(xcvm.createAssetId(1), xcvm.createBalance(xcvm.createRatio("100", "200"))))
+            xcvm.createBindingValue(xcvm.createAssetAmount(xcvm.createAssetId(xcvm.createGlobalId(1)), xcvm.createBalance(xcvm.createRatio("100", "200"))))
           )
         )
       )
@@ -437,7 +451,7 @@ describe("Interpreter", function () {
         1,
         await sdk.generateBindingValueByAssetAmount(
           await sdk.generateAssetAmount(
-            await sdk.generateAssetId("1"),
+            await sdk.generateAssetIdByGlobalId(sdk.generateGlobalId(1)),
             await sdk.generateBalanceByRatio(await sdk.generateRatio("100", "200"))
           )
         )
@@ -454,9 +468,9 @@ describe("Interpreter", function () {
           xcvm.createBindings([
             xcvm.createBinding(
               1,
-              xcvm.createBindingValue(xcvm.createAssetAmount(xcvm.createAssetId(1), xcvm.createBalance(xcvm.createRatio("100", "200"))))
+              xcvm.createBindingValue(xcvm.createAssetAmount(xcvm.createAssetId(xcvm.createGlobalId(1)), xcvm.createBalance(xcvm.createRatio("100", "200"))))
             ),
-            xcvm.createBinding(2, xcvm.createBindingValue(xcvm.createAssetId(1))),
+            xcvm.createBinding(2, xcvm.createBindingValue(xcvm.createAssetId(xcvm.createGlobalId(1)))),
           ])
         )
       )
@@ -466,14 +480,16 @@ describe("Interpreter", function () {
           1,
           await sdk.generateBindingValueByAssetAmount(
             await sdk.generateAssetAmount(
-              await sdk.generateAssetId("1"),
+              await sdk.generateAssetIdByGlobalId(sdk.generateGlobalId(1)),
               await sdk.generateBalanceByRatio(await sdk.generateRatio("100", "200"))
             )
           )
         ),
         await sdk.generateBinding(
           2,
-          await sdk.generateBindingValueByAssetId(await sdk.generateAssetId("1"))
+          await sdk.generateBindingValueByAssetId(
+            await sdk.generateAssetIdByGlobalId(sdk.generateGlobalId(1))
+          )
         ),
       ])
     );
@@ -487,23 +503,23 @@ describe("Interpreter", function () {
         xcvm.encodeMessage(
           xcvm.createTransfer(xcvm.createAccount(owner.address), [
             xcvm.createAsset(
-              xcvm.createAssetId(1),
+              xcvm.createAssetId(xcvm.createGlobalId(1)),
               xcvm.createBalance(xcvm.createUnit(1, xcvm.createRatio("100", "200")))
             ),
-            xcvm.createAsset(xcvm.createAssetId(2), xcvm.createBalance(xcvm.createAbsolute(1))),
+            xcvm.createAsset(xcvm.createAssetId(xcvm.createGlobalId(2)), xcvm.createBalance(xcvm.createAbsolute(1))),
           ])
         )
       )
     ).to.be.equal(
       await sdk.generateTransferByAccount(await sdk.generateAccount(owner.address), [
         await sdk.generateAsset(
-          await sdk.generateAssetId("1"),
+          await sdk.generateAssetIdByGlobalId(sdk.generateGlobalId(1)),
           await sdk.generateBalanceByUnit(
             await sdk.generateUnit(1, await sdk.generateRatio("100", "200"))
           )
         ),
         await sdk.generateAsset(
-          await sdk.generateAssetId("2"),
+          await sdk.generateAssetIdByGlobalId(sdk.generateGlobalId(2)),
           await sdk.generateBalanceByAbsolute(await sdk.generateAbsolute(1))
         ),
       ])
@@ -519,10 +535,10 @@ describe("Interpreter", function () {
           xcvm.createInstruction(
             xcvm.createTransfer(xcvm.createAccount(owner.address), [
               xcvm.createAsset(
-                xcvm.createAssetId(1),
+                xcvm.createAssetId(xcvm.createGlobalId(1)),
                 xcvm.createBalance(xcvm.createUnit(1, xcvm.createRatio("100", "200")))
               ),
-              xcvm.createAsset(xcvm.createAssetId(2), xcvm.createBalance(xcvm.createAbsolute(1))),
+              xcvm.createAsset(xcvm.createAssetId(xcvm.createGlobalId(2)), xcvm.createBalance(xcvm.createAbsolute(1))),
             ])
           )
         )
@@ -531,13 +547,13 @@ describe("Interpreter", function () {
       await sdk.generateInstructionByTransfer(
         await sdk.generateTransferByAccount(await sdk.generateAccount(owner.address), [
           await sdk.generateAsset(
-            await sdk.generateAssetId("1"),
+            await sdk.generateAssetIdByGlobalId(sdk.generateGlobalId(1)),
             await sdk.generateBalanceByUnit(
               await sdk.generateUnit(1, await sdk.generateRatio("100", "200"))
             )
           ),
           await sdk.generateAsset(
-            await sdk.generateAssetId("2"),
+            await sdk.generateAssetIdByGlobalId(sdk.generateGlobalId(2)),
             await sdk.generateBalanceByAbsolute(await sdk.generateAbsolute(1))
           ),
         ])
@@ -576,12 +592,12 @@ describe("Interpreter", function () {
               xcvm.createInstructions([
                 xcvm.createInstruction(
                   xcvm.createTransfer(xcvm.createAccount(owner.address), [
-                    xcvm.createAsset(xcvm.createAssetId(1), xcvm.createBalance(xcvm.createAbsolute("100"))),
+                    xcvm.createAsset(xcvm.createAssetId(xcvm.createGlobalId(1)), xcvm.createBalance(xcvm.createAbsolute("100"))),
                   ])
                 ),
               ])
             ),
-            [xcvm.createAsset(xcvm.createAssetId(1), xcvm.createBalance(xcvm.createAbsolute(200)))]
+            [xcvm.createAsset(xcvm.createAssetId(xcvm.createGlobalId(1)), xcvm.createBalance(xcvm.createAbsolute(200)))]
           )
         )
       )
@@ -596,7 +612,7 @@ describe("Interpreter", function () {
             await sdk.generateInstructionByTransfer(
               await sdk.generateTransferByAccount(await sdk.generateAccount(owner.address), [
                 await sdk.generateAsset(
-                  await sdk.generateAssetId("1"),
+                  await sdk.generateAssetIdByGlobalId(sdk.generateGlobalId(1)),
                   await sdk.generateBalanceByAbsolute(await sdk.generateAbsolute("100"))
                 ),
               ])
@@ -605,7 +621,7 @@ describe("Interpreter", function () {
         ),
         [
           await sdk.generateAsset(
-            await sdk.generateAssetId("1"),
+            await sdk.generateAssetIdByGlobalId(sdk.generateGlobalId(1)),
             await sdk.generateBalanceByAbsolute(await sdk.generateAbsolute(200))
           ),
         ]
@@ -629,12 +645,12 @@ describe("Interpreter", function () {
                 xcvm.createInstructions([
                   xcvm.createInstruction(
                     xcvm.createTransfer(xcvm.createAccount(owner.address), [
-                      xcvm.createAsset(xcvm.createAssetId(1), xcvm.createBalance(xcvm.createAbsolute("100"))),
+                      xcvm.createAsset(xcvm.createAssetId(xcvm.createGlobalId(1)), xcvm.createBalance(xcvm.createAbsolute("100"))),
                     ])
                   ),
                 ])
               ),
-              [xcvm.createAsset(xcvm.createAssetId(1), xcvm.createBalance(xcvm.createAbsolute(200)))]
+              [xcvm.createAsset(xcvm.createAssetId(xcvm.createGlobalId(1)), xcvm.createBalance(xcvm.createAbsolute(200)))]
             )
           )
         )
@@ -651,7 +667,7 @@ describe("Interpreter", function () {
               await sdk.generateInstructionByTransfer(
                 await sdk.generateTransferByAccount(await sdk.generateAccount(owner.address), [
                   await sdk.generateAsset(
-                    await sdk.generateAssetId("1"),
+                    await sdk.generateAssetIdByGlobalId(sdk.generateGlobalId(1)),
                     await sdk.generateBalanceByAbsolute(await sdk.generateAbsolute("100"))
                   ),
                 ])
@@ -660,7 +676,7 @@ describe("Interpreter", function () {
           ),
           [
             await sdk.generateAsset(
-              await sdk.generateAssetId("1"),
+              await sdk.generateAssetIdByGlobalId(sdk.generateGlobalId(1)),
               await sdk.generateBalanceByAbsolute(await sdk.generateAbsolute(200))
             ),
           ]
@@ -681,9 +697,9 @@ describe("Interpreter", function () {
             xcvm.createBindings([
               xcvm.createBinding(
                 1,
-                xcvm.createBindingValue(xcvm.createAssetAmount(xcvm.createAssetId(1), xcvm.createBalance(xcvm.createRatio("100", "200"))))
+                xcvm.createBindingValue(xcvm.createAssetAmount(xcvm.createAssetId(xcvm.createGlobalId(1)), xcvm.createBalance(xcvm.createRatio("100", "200"))))
               ),
-              xcvm.createBinding(2, xcvm.createBindingValue(xcvm.createAssetId(1))),
+              xcvm.createBinding(2, xcvm.createBindingValue(xcvm.createAssetId(xcvm.createGlobalId(1)))),
             ])
           )
         )
@@ -696,14 +712,16 @@ describe("Interpreter", function () {
             1,
             await sdk.generateBindingValueByAssetAmount(
               await sdk.generateAssetAmount(
-                await sdk.generateAssetId("1"),
+                await sdk.generateAssetIdByGlobalId(sdk.generateGlobalId(1)),
                 await sdk.generateBalanceByRatio(await sdk.generateRatio("100", "200"))
               )
             )
           ),
           await sdk.generateBinding(
             2,
-            await sdk.generateBindingValueByAssetId(await sdk.generateAssetId("1"))
+            await sdk.generateBindingValueByAssetId(
+              await sdk.generateAssetIdByGlobalId(sdk.generateGlobalId(1))
+            )
           ),
         ])
       )
@@ -723,9 +741,9 @@ describe("Interpreter", function () {
               xcvm.createBindings([
                 xcvm.createBinding(
                   1,
-                  xcvm.createBindingValue(xcvm.createAssetAmount(xcvm.createAssetId(1), xcvm.createBalance(xcvm.createRatio("100", "200"))))
+                  xcvm.createBindingValue(xcvm.createAssetAmount(xcvm.createAssetId(xcvm.createGlobalId(1)), xcvm.createBalance(xcvm.createRatio("100", "200"))))
                 ),
-                xcvm.createBinding(2, xcvm.createBindingValue(xcvm.createAssetId(1))),
+                xcvm.createBinding(2, xcvm.createBindingValue(xcvm.createAssetId(xcvm.createGlobalId(1)))),
               ])
             )
           )
@@ -740,14 +758,16 @@ describe("Interpreter", function () {
               1,
               await sdk.generateBindingValueByAssetAmount(
                 await sdk.generateAssetAmount(
-                  await sdk.generateAssetId("1"),
+                  await sdk.generateAssetIdByGlobalId(sdk.generateGlobalId(1)),
                   await sdk.generateBalanceByRatio(await sdk.generateRatio("100", "200"))
                 )
               )
             ),
             await sdk.generateBinding(
               2,
-              await sdk.generateBindingValueByAssetId(await sdk.generateAssetId("1"))
+              await sdk.generateBindingValueByAssetId(
+                await sdk.generateAssetIdByGlobalId(sdk.generateGlobalId(1))
+              )
             ),
           ])
         )
@@ -770,10 +790,10 @@ describe("Interpreter", function () {
                   xcvm.createBinding(
                     1,
                     xcvm.createBindingValue(
-                      xcvm.createAssetAmount(xcvm.createAssetId(1), xcvm.createBalance(xcvm.createRatio("100", "200")))
+                      xcvm.createAssetAmount(xcvm.createAssetId(xcvm.createGlobalId(1)), xcvm.createBalance(xcvm.createRatio("100", "200")))
                     )
                   ),
-                  xcvm.createBinding(2, xcvm.createBindingValue(xcvm.createAssetId(1))),
+                  xcvm.createBinding(2, xcvm.createBindingValue(xcvm.createAssetId(xcvm.createGlobalId(1)))),
                 ])
               )
             ),
@@ -790,14 +810,16 @@ describe("Interpreter", function () {
                 1,
                 await sdk.generateBindingValueByAssetAmount(
                   await sdk.generateAssetAmount(
-                    await sdk.generateAssetId("1"),
+                    await sdk.generateAssetIdByGlobalId(sdk.generateGlobalId(1)),
                     await sdk.generateBalanceByRatio(await sdk.generateRatio("100", "200"))
                   )
                 )
               ),
               await sdk.generateBinding(
                 2,
-                await sdk.generateBindingValueByAssetId(await sdk.generateAssetId("1"))
+                await sdk.generateBindingValueByAssetId(
+                  await sdk.generateAssetIdByGlobalId(sdk.generateGlobalId(1))
+                )
               ),
             ])
           )
@@ -823,10 +845,10 @@ describe("Interpreter", function () {
                     xcvm.createBinding(
                       1,
                       xcvm.createBindingValue(
-                        xcvm.createAssetAmount(xcvm.createAssetId(1), xcvm.createBalance(xcvm.createRatio("100", "200")))
+                        xcvm.createAssetAmount(xcvm.createAssetId(xcvm.createGlobalId(1)), xcvm.createBalance(xcvm.createRatio("100", "200")))
                       )
                     ),
-                    xcvm.createBinding(2, xcvm.createBindingValue(xcvm.createAssetId(1))),
+                    xcvm.createBinding(2, xcvm.createBindingValue(xcvm.createAssetId(xcvm.createGlobalId(1)))),
                   ])
                 )
               ),
@@ -846,14 +868,16 @@ describe("Interpreter", function () {
                   1,
                   await sdk.generateBindingValueByAssetAmount(
                     await sdk.generateAssetAmount(
-                      await sdk.generateAssetId("1"),
+                      await sdk.generateAssetIdByGlobalId(sdk.generateGlobalId(1)),
                       await sdk.generateBalanceByRatio(await sdk.generateRatio("100", "200"))
                     )
                   )
                 ),
                 await sdk.generateBinding(
                   2,
-                  await sdk.generateBindingValueByAssetId(await sdk.generateAssetId("1"))
+                  await sdk.generateBindingValueByAssetId(
+                    await sdk.generateAssetIdByGlobalId(sdk.generateGlobalId(1))
+                  )
                 ),
               ])
             )
