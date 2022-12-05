@@ -80,6 +80,7 @@
           ];
         };
         packages = {
+          # TODO: replace
           default = self'.packages.devnet-dali;
 
           subxt = pkgs.callPackage ./code/utils/composable-subxt/subxt.nix { };

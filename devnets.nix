@@ -20,7 +20,8 @@
           procps
         ] ++ containers-tools-minimal;
     in rec {
-      # Dali devnet
+      
+      # TODO: zombie
       devnet-dali = (pkgs.callPackage devnetTools.mk-devnet {
         inherit (packages) polkadot-launch composable-node polkadot-node;
         chain-spec = "dali-dev";
