@@ -1,218 +1,382 @@
 import { KeyringPair } from "@polkadot/keyring/types";
 import testConfiguration from "./test_configuration.json";
-import { ApiPromise, WsProvider } from "@polkadot/api";
-import { sendAndWaitForSuccess, waitForBlocks } from "@composable/utils/polkadotjs";
-import { SafeRpcWrapper, XcmV2TraitsOutcome, XcmVersionedMultiLocation } from "@composable/types/interfaces";
+import { ApiPromise } from "@polkadot/api";
+import { waitForBlocks } from "@composable/utils/polkadotjs";
 import { getNewConnection } from "@composable/utils/connectionHelper";
 import { getDevWallets } from "@composable/utils/walletHelper";
-import { mintAssetsToWallet } from "@composable/utils/mintingHelper";
+import { Pica } from "@composable/utils/mintingHelper";
 import { expect } from "chai";
+import { u8aToHex } from "@polkadot/util"
+import { decodeAddress } from "@polkadot/util-crypto"
 import BN from "bn.js";
-import { u128 } from "@polkadot/types-codec";
+import {
+  calculateTransferredAmount,
+  changeGasToken,
+  disconnectApis,
+  fetchNativeBalance,
+  fetchTokenBalance,
+  fetchTotalIssuance,
+  fetchXChainTokenBalances,
+  initializeApis,
+  mintTokensOnStatemine,
+  registerAssetOnStatemine,
+  saveTrappedAssets,
+  sendAssetToRelaychain,
+  sendFundsFromRelaychain,
+  sendKSMFromStatemine,
+  sendPicaToAnotherAccount,
+  sendTokenToStatemine,
+  sendUnknownFromStatemine,
+  sendUSDTFromStatemine,
+  sendXCMMessageFromRelayer,
+  setAssetStatusMessage,
+  setChainsForTests,
+  to6Digit,
+  trapAssetsOnKusama
+} from "@composabletests/tests/xcmp/transfersTestHelper";
 
 /**
  * Contains tests for the XCMP system.
  *
  * 1. Transferring (KSM) funds from 'RelayChain (Kusama)' to Picasso/Dali
- * 2. The other way around with KSM.
+ * 2. Transferrin
  */
 describe("[SHORT][LAUNCH] tx.xcmp Tests", function () {
   if (!testConfiguration.enabledTests.enabled) return;
-
-  let api: ApiPromise;
-  let walletAlice: KeyringPair;
-
-  let relayChainApiClient: ApiPromise;
-  let assetId: number;
-  let ksmAssetID: SafeRpcWrapper;
+  let picassoApi: ApiPromise;
+  let kusamaApi: ApiPromise;
+  let statemineApi: ApiPromise;
+  let devWalletAlice: KeyringPair, devWalletFerdie: KeyringPair;
+  const { usdtOnStatemine, usdtOnPicasso, statemineParaId, ksm, destWeight, treasuryAddress, picassoParaAccount } =
+    testConfiguration.testData.staticValues;
+  const fees = testConfiguration.testData.fees;
+  const existentialDeposits = testConfiguration.testData.existentialDeposits;
+  let totalIssuance: BN;
 
   before(async function () {
-    this.timeout(60 * 1000);
-    // `getNewConnection()` establishes a new connection to the chain and gives us the ApiPromise & a Keyring.
+    this.timeout(3 * 60 * 1000);
     const { newClient, newKeyring } = await getNewConnection();
-    api = newClient;
-
-    // Using `getDevWallets(Keyring)` we're able to get a dict of all developer wallets.
-    const { devWalletAlice } = getDevWallets(newKeyring);
-    walletAlice = devWalletAlice;
-
-    const relayChainEndpoint = "ws://" + (process.env.ENDPOINT_RELAYCHAIN ?? "127.0.0.1:9944");
-    const relayChainProvider = new WsProvider(relayChainEndpoint);
-    relayChainApiClient = await ApiPromise.create({
-      provider: relayChainProvider,
-      types: {
-        XcmV2TraitsOutcome: {
-          _enum: {
-            Error: "Null",
-            Complete: "u128",
-            isError: "bool",
-            isComplete: "bool"
-          }
-        }
-      }
-    });
-    assetId = 4;
-    ksmAssetID = api.createType("SafeRpcWrapper", assetId) as SafeRpcWrapper;
-
-    await mintAssetsToWallet(api, walletAlice, walletAlice, [1]);
+    ({ picassoApi, kusamaApi, statemineApi } = await initializeApis(newClient));
+    ({ devWalletAlice, devWalletFerdie } = getDevWallets(newKeyring));
+    await setChainsForTests(
+      kusamaApi,
+      statemineApi,
+      picassoApi,
+      devWalletAlice,
+      usdtOnStatemine,
+      1_000,
+      statemineParaId
+    );
   });
 
   after(async function () {
-    await relayChainApiClient.disconnect();
-    await api.disconnect();
+    await disconnectApis(picassoApi, kusamaApi, statemineApi);
   });
-
   /**
-   * xcmPallet.reserveTransferAssets transfers an asset from parachain (Picasso) to a relayChain,
-   * in this case the `Rococo Testnet`.
-   *
-   * Sudo command success is checked with `.isOk`.
+   * Tests between relaychain and picasso
    */
-  describe("xcmPallet.reserveTransferAssets Success Test", function () {
-    // Timeout set to 2 minutes
+  describe("xcmPallet transfers between Kusama to Picasso", function () {
+    if (!testConfiguration.enabledTests.kusamaTests.enabled) {
+      console.warn("Transfers between Kusama and Picasso are being skipped...");
+      return;
+    }
+    // Timeout set to 10 minutes
     this.timeout(10 * 60 * 1000);
-    it("Can transfer asset(KSM) from relay chain(Kusama) to Picasso", async function () {
-      // Setting the destination chain to Picasso/Dali
-      const destination = relayChainApiClient.createType("XcmVersionedMultiLocation", {
-        V0: relayChainApiClient.createType("XcmV0MultiLocation", {
-          X1: relayChainApiClient.createType("XcmV0Junction", {
-            Parachain: relayChainApiClient.createType("Compact<u32>", 2087)
-          })
-        })
-      });
+    const transferAmountToPicasso = 10;
+    const transferAmountFromPicasso = 5;
 
-      // Setting the wallet receiving the funds
-      const beneficiary = relayChainApiClient.createType("XcmVersionedMultiLocation", {
-        V0: relayChainApiClient.createType("XcmV0MultiLocation", {
-          X1: relayChainApiClient.createType("XcmV0Junction", {
-            AccountId32: {
-              network: relayChainApiClient.createType("XcmV0JunctionNetworkId", "Any"),
-              id: walletAlice.publicKey
-            }
-          })
-        })
-      });
-
-      const paraAmount = relayChainApiClient.createType("Compact<u128>", "100000000000000");
-
-      // Setting up the asset & amount
-      const assets = relayChainApiClient.createType("XcmVersionedMultiAssets", {
-        V0: [
-          relayChainApiClient.createType("XcmV0MultiAsset", {
-            ConcreteFungible: {
-              id: relayChainApiClient.createType("XcmV0MultiLocation", "Null"),
-              amount: paraAmount
-            }
-          })
-        ]
-      });
-
-      // Setting the asset which will be used for fees (0 refers to first in asset list)
-      const feeAssetItem = relayChainApiClient.createType("u32", 0);
-
-      // Getting Alice wallet balance before transaction.
-      const walletBalanceAliceBeforeTransaction = await relayChainApiClient.query.system.account(walletAlice.publicKey);
-      // Getting beneficiary wallet amount before transaction.
-      const beneficiaryBalanceBeforeTransaction = new BN(
-        (await api.rpc.assets.balanceOf(ksmAssetID, walletAlice.publicKey)).toString()
-      );
-
-      // Making the transaction
+    it("When users have sufficient funds on Kusama, I can send KSM to Picasso", async function () {
+      const aliceBeforeBalanceOnPicasso = await fetchTokenBalance(picassoApi, devWalletAlice, ksm);
       const {
         data: [result]
-      } = await sendAndWaitForSuccess(
-        relayChainApiClient,
-        walletAlice,
-        relayChainApiClient.events.xcmPallet.Attempted.is,
-        relayChainApiClient.tx.xcmPallet.reserveTransferAssets(destination, beneficiary, assets, feeAssetItem)
+      } = await sendFundsFromRelaychain(kusamaApi, devWalletAlice, transferAmountToPicasso);
+      await waitForBlocks(picassoApi, 2);
+      const aliceAfterBalanceOnPicasso = await fetchTokenBalance(picassoApi, devWalletAlice, ksm);
+      const expectedAmount = calculateTransferredAmount(transferAmountToPicasso, fees.toPicasso.ksm);
+      totalIssuance = await fetchTotalIssuance(picassoApi, ksm);
+      expect(result.toString()).to.contain("complete");
+      expect(aliceAfterBalanceOnPicasso.sub(aliceBeforeBalanceOnPicasso)).to.be.bignumber.equal(expectedAmount);
+      expect(totalIssuance).to.be.bignumber.equal(new BN(Pica(transferAmountToPicasso).toString()));
+    });
+    it("When users don't have any Pica, I can set payment asset to newly transferred KSM", async function () {
+      const {
+        data: [currencyId, accountId, amount]
+      } = await changeGasToken(picassoApi, devWalletAlice, ksm);
+      expect(currencyId.toNumber()).to.be.equal(ksm);
+      expect(accountId.toString()).to.be.equal(picassoApi.createType("AccountId32", devWalletAlice.address).toString());
+      expect(amount.toNumber()).to.be.equal(existentialDeposits.ksm);
+    });
+    it("When users set KSM as payment asset, I can pay gas fee in KSM", async function () {
+      const [treasuryBalanceBefore, ksmBalanceOfUserBefore] = await fetchXChainTokenBalances(
+        [picassoApi],
+        [treasuryAddress, devWalletAlice],
+        [ksm]
       );
-      await waitForBlocks(api, 3);
-
-      // Verifying Stuff
-      const convertedResult: XcmV2TraitsOutcome = relayChainApiClient.createType("XcmV2TraitsOutcome", result);
-      // @ts-ignore
-      expect(convertedResult.isComplete).to.be.true;
-      // @ts-ignore
-      expect(convertedResult.isError).to.be.false;
-
-      // Getting Alice wallet balance after transaction.
-      const walletBalanceAliceAfterTransaction = await relayChainApiClient.query.system.account(walletAlice.publicKey);
-      expect(new BN(walletBalanceAliceAfterTransaction.data.free)).to.be.bignumber.lessThan(
-        new BN(walletBalanceAliceBeforeTransaction.data.free)
+      await sendPicaToAnotherAccount(picassoApi, devWalletAlice, devWalletFerdie, 4, 2);
+      const [treasuryBalanceAfter, ksmBalanceOfUserAfter] = await fetchXChainTokenBalances(
+        [picassoApi],
+        [treasuryAddress, devWalletAlice],
+        [ksm]
       );
-      // Beneficiary Wallet after transaction.
-      const beneficiaryBalanceAfterTransaction = new BN(
-        (await api.rpc.assets.balanceOf(ksmAssetID, walletAlice.publicKey)).toString()
+      expect(treasuryBalanceAfter).to.be.bignumber.greaterThan(treasuryBalanceBefore);
+      expect(treasuryBalanceAfter.sub(treasuryBalanceBefore)).to.be.bignumber.equal(
+        ksmBalanceOfUserBefore.sub(ksmBalanceOfUserAfter)
       );
-
-      expect(beneficiaryBalanceAfterTransaction).to.be.bignumber.greaterThan(beneficiaryBalanceBeforeTransaction);
+    });
+    it("The total issuance information stays the same after changing gas asset to KSM", async function () {
+      const totalIssuanceAfterTxs = await fetchTotalIssuance(picassoApi, ksm);
+      expect(totalIssuanceAfterTxs).to.be.bignumber.equal(totalIssuance);
+    });
+    it("Users can transfer asset(KSM) from Picasso to relay chain(Kusama).", async function () {
+      const alicePreBalanceOnKSM = await fetchNativeBalance(kusamaApi, devWalletAlice);
+      const [alicePreBalance, treasuryPreBalance] = await fetchXChainTokenBalances(
+        [picassoApi],
+        [devWalletAlice, treasuryAddress],
+        [ksm]
+      );
+      await sendAssetToRelaychain(picassoApi, devWalletAlice, devWalletAlice, transferAmountFromPicasso, destWeight);
+      await waitForBlocks(kusamaApi, 1);
+      const [aliceAfterBalance, treasuryAfterBalance] = await fetchXChainTokenBalances(
+        [picassoApi],
+        [devWalletAlice, treasuryAddress],
+        [ksm]
+      );
+      const aliceAfterBalanceOnKSM = await fetchNativeBalance(kusamaApi, devWalletAlice);
+      const gasFeePaid = treasuryAfterBalance.sub(treasuryPreBalance);
+      const expectedAmount = calculateTransferredAmount(transferAmountFromPicasso, fees.toKusama.ksm);
+      expect(expectedAmount).to.be.bignumber.equal(aliceAfterBalanceOnKSM.sub(alicePreBalanceOnKSM));
+      expect(aliceAfterBalance).to.be.bignumber.equal(alicePreBalance.sub(new BN(Pica(transferAmountFromPicasso).toString())).sub(gasFeePaid));
+    });
+    it("Total issuance changes correctly with xchain transfers", async function () {
+      const totalIssuanceAfter = await fetchTotalIssuance(picassoApi, ksm);
+      expect(totalIssuanceAfter).to.be.bignumber.equal(totalIssuance.sub(new BN(Pica(transferAmountFromPicasso).toString())));
     });
   });
-
-  /**
-   * Transfers an asset from RelayChain (Rococo Testnet) to Picasso/Dali.
-   */
-  describe("xTokens.transfer Success Test", function () {
-    // Timeout set to 2 minutes
-    this.timeout(10 * 60 * 1000);
-
-    it("Can transfer asset(KSM) from Picasso to relay chain(Kusama).", async function () {
-      //Set amount to transfer
-      const amountToTransfer = relayChainApiClient.createType("u128", 10000000000000);
-
-      //Set destination. Should have 2 Junctions, first to parent and then to wallet
-      const destination = <XcmVersionedMultiLocation>api.createType("XcmVersionedMultiLocation", {
-        V0: api.createType("XcmV0MultiLocation", {
-          X2: [
-            api.createType("XcmV0Junction", "Parent"),
-            api.createType("XcmV0Junction", {
-              AccountId32: {
-                network: api.createType("XcmV0JunctionNetworkId", "Any"),
-                id: walletAlice.publicKey
-              }
-            })
-          ]
-        })
-      });
-
-      // Set dest weight
-      const destWeight = relayChainApiClient.createType("u64", 4000000000); // > 4000000000
-
-      const transactorWalletBalanceBeforeTransaction = new BN(
-        (await api.rpc.assets.balanceOf(ksmAssetID, walletAlice.publicKey)).toString()
+  describe("Transfers between Statemine and Picasso", function () {
+    if (!testConfiguration.enabledTests.statemineTests.enabled) {
+      console.warn("Transfers between Statemine and Picasso are being skipped...");
+      return;
+    }
+    const transferAmount = 1;
+    this.timeout(3 * 60 * 1000);
+    it("Given that users have KSM on Statemine, they can  send Ksm to Picasso", async function () {
+      const [alicePreBalanceOnStatemine, alicePreBalanceOnPicasso] = await fetchXChainTokenBalances(
+        [statemineApi, picassoApi],
+        [devWalletAlice],
+        [0, ksm]
       );
-
-      const walletBalanceAliceBeforeTransaction = await relayChainApiClient.query.system.account(walletAlice.publicKey);
-      //This tx pass on the parachain but encounter an error on relay. Barrier
       const {
-        data: [resultTransactorAccountId, resultsAssetsList, resultMultiAsset, resultMultiLocation]
-      } = await sendAndWaitForSuccess(
-        api,
-        walletAlice,
-        api.events.xTokens.TransferredMultiAssets.is,
-        api.tx.xTokens.transfer(<u128>new BN(ksmAssetID.toString()), amountToTransfer, destination, destWeight)
+        data: [result]
+      } = await sendKSMFromStatemine(statemineApi, devWalletAlice, devWalletAlice, transferAmount);
+      await waitForBlocks(picassoApi, 2);
+      const [aliceAfterBalanceOnStatemine, aliceAfterBalanceOnPicasso] = await fetchXChainTokenBalances(
+        [statemineApi, picassoApi],
+        [devWalletAlice],
+        [0, ksm]
       );
-      await waitForBlocks(api, 3);
-
-      // Verifying Stuff
-      const transactorWalletBalanceAfterTransaction = new BN(
-        (await api.rpc.assets.balanceOf(ksmAssetID, walletAlice.publicKey)).toString()
+      const expectedAmount = calculateTransferredAmount(transferAmount, fees.toPicasso.ksm);
+      expect(result.toString()).to.contain("complete");
+      expect(expectedAmount).to.be.bignumber.equal(aliceAfterBalanceOnPicasso.sub(alicePreBalanceOnPicasso));
+      expect(alicePreBalanceOnStatemine).to.be.bignumber.greaterThan(
+        aliceAfterBalanceOnStatemine.add(new BN(Pica(transferAmount).toString()))
       );
+    });
 
-      const walletBalanceAliceAfterTransaction = await relayChainApiClient.query.system.account(walletAlice.publicKey);
-
-      expect(new BN(walletBalanceAliceAfterTransaction.data.free))
-        .to.be.bignumber.lessThan(new BN(walletBalanceAliceBeforeTransaction.data.free).add(amountToTransfer))
-        .to.be.bignumber.greaterThan(new BN(walletBalanceAliceBeforeTransaction.data.free));
-
-      expect(resultMultiLocation).to.not.be.an("Error");
-      expect(resultTransactorAccountId).to.not.be.an("Error");
-      expect(resultsAssetsList).to.not.be.an("Error");
-      expect(resultMultiAsset).to.not.be.an("Error");
-
-      expect(transactorWalletBalanceAfterTransaction).to.be.bignumber.lessThan(
-        transactorWalletBalanceBeforeTransaction
+    it("Users can send USDT from Statemine to Picasso", async function () {
+      const transferAmount = 13;
+      const [alicePreBalanceOnStatemine, alicePreBalanceOnPicasso] = await fetchXChainTokenBalances(
+        [statemineApi, picassoApi],
+        [devWalletAlice],
+        [usdtOnStatemine, usdtOnPicasso]
       );
+      const {
+        data: [result]
+      } = await sendUSDTFromStatemine(statemineApi, devWalletAlice, devWalletAlice, transferAmount);
+      await waitForBlocks(picassoApi, 2);
+      const [aliceAfterBalanceOnStatemine, aliceAfterBalanceOnPicasso] = await fetchXChainTokenBalances(
+        [statemineApi, picassoApi],
+        [devWalletAlice],
+        [usdtOnStatemine, usdtOnPicasso]
+      );
+      const transferredAmount = to6Digit(transferAmount) - fees.toPicasso.usdt;
+      expect(aliceAfterBalanceOnStatemine).to.be.bignumber.equal(alicePreBalanceOnStatemine.sub(new BN(to6Digit(13))));
+      expect(aliceAfterBalanceOnPicasso).to.be.bignumber.equal(alicePreBalanceOnPicasso.add(new BN(transferredAmount)));
+    });
+
+    it("Users can change to pay with USDT", async function () {
+      const {
+        data: [currencyId, accountId, amount]
+      } = await changeGasToken(picassoApi, devWalletAlice, usdtOnPicasso);
+      expect(currencyId.toNumber()).to.be.equal(usdtOnPicasso);
+      expect(accountId.toString()).to.be.equal(picassoApi.createType("AccountId32", devWalletAlice.address).toString());
+      expect(amount.toNumber()).to.be.equal(existentialDeposits.usdt);
+    });
+
+    it("Users can pay tx fee with USDT", async function () {
+      const [treasuryBalanceBefore, ksmBalanceOfUserBefore] = await fetchXChainTokenBalances(
+        [picassoApi],
+        [treasuryAddress, devWalletAlice],
+        [usdtOnPicasso]
+      );
+      await sendPicaToAnotherAccount(picassoApi, devWalletAlice, devWalletFerdie, 4, 2);
+      const [treasuryBalanceAfter, ksmBalanceOfUserAfter] = await fetchXChainTokenBalances(
+        [picassoApi],
+        [treasuryAddress, devWalletAlice],
+        [usdtOnPicasso]
+      );
+      expect(treasuryBalanceAfter).to.be.bignumber.greaterThan(treasuryBalanceBefore);
+      expect(treasuryBalanceAfter.sub(treasuryBalanceBefore)).to.be.bignumber.equal(
+        ksmBalanceOfUserBefore.sub(ksmBalanceOfUserAfter)
+      );
+    });
+
+    it("Users can send USDT from Picasso to Statemine", async function () {
+      const transferAmount = 2;
+      const treasuryPreBalance = await fetchTokenBalance(picassoApi, treasuryAddress, usdtOnPicasso);
+      const [preAliceBalanceOnPicasso, preAliceBalanceOnStatemine] = await fetchXChainTokenBalances(
+        [picassoApi, statemineApi],
+        [devWalletAlice],
+        [usdtOnPicasso, usdtOnStatemine]
+      );
+      await sendTokenToStatemine(picassoApi, devWalletAlice, devWalletAlice, transferAmount, usdtOnStatemine);
+      await waitForBlocks(picassoApi, 2);
+      const treasuryAfterBalance = await fetchTokenBalance(picassoApi, treasuryAddress, usdtOnPicasso);
+      const gasFeePaid = treasuryAfterBalance.sub(treasuryPreBalance);
+      const [afterAliceBalanceOnPicasso, afterAliceBalanceOnStatemine] = await fetchXChainTokenBalances(
+        [picassoApi, statemineApi],
+        [devWalletAlice],
+        [usdtOnPicasso, usdtOnStatemine]
+      );
+      expect(preAliceBalanceOnPicasso.sub(new BN(to6Digit(transferAmount)))).to.be.bignumber.equal(
+        afterAliceBalanceOnPicasso.add(gasFeePaid)
+      );
+      expect(preAliceBalanceOnStatemine.add(new BN(to6Digit(transferAmount)))).to.be.bignumber.equal(
+        afterAliceBalanceOnStatemine
+      );
+    });
+  });
+  describe("Trapped assets and unknown tokens tests", function () {
+    if (!testConfiguration.enabledTests.trapAndUnknownTests.enabled) {
+      console.warn("Trapped assets and unknown tokens tests are being skipped...");
+      return;
+    }
+    this.timeout(8 * 60 * 1000);
+    const transferAmount = 3;
+    const unknownAsset = 1985;
+
+    before("Creates another asset for tests", async function () {
+      await registerAssetOnStatemine(statemineApi, devWalletAlice, unknownAsset);
+      const payload = setAssetStatusMessage(statemineApi, devWalletAlice, 5000, unknownAsset);
+      await sendXCMMessageFromRelayer(kusamaApi, devWalletAlice, payload);
+      await mintTokensOnStatemine(statemineApi, unknownAsset, devWalletAlice);
+    });
+
+    it("Users can trap assets on Kusama with falsy xcm messages", async function () {
+      const paraAccountPreBalance = await fetchNativeBalance(kusamaApi, picassoParaAccount);
+      await trapAssetsOnKusama(picassoApi, devWalletAlice, transferAmount);
+      await waitForBlocks(kusamaApi, 1);
+      const paraAccountAfterBalance = await fetchNativeBalance(kusamaApi, picassoParaAccount);
+      expect(paraAccountPreBalance.sub(paraAccountAfterBalance)).to.be.bignumber.equal(
+        new BN(Pica(transferAmount).toString())
+      );
+    });
+
+    it("Users can save trapped assets with xcm messages", async function () {
+      const preBalance = await fetchNativeBalance(kusamaApi, picassoParaAccount);
+      const amountToSave = new BN(Pica(transferAmount).toString()).sub(new BN(fees.onKusama.ksm));
+      await saveTrappedAssets(picassoApi, devWalletAlice, amountToSave);
+      await waitForBlocks(kusamaApi, 1);
+      const afterBalance = await fetchNativeBalance(kusamaApi, picassoParaAccount);
+      expect(afterBalance).to.be.bignumber.equal(preBalance.add(amountToSave).sub(new BN(fees.onKusama.ksm)));
+    });
+
+    it("Users can send tokens to unknown tokens pallet", async function () {
+      const [preBalanceOnStatemine] = await fetchXChainTokenBalances(
+        [statemineApi],
+        [devWalletAlice],
+        [unknownAsset]
+      );
+      await sendUnknownFromStatemine(statemineApi, devWalletAlice, transferAmount, unknownAsset, usdtOnStatemine);
+      const [afterBalanceOnStatemine] = await fetchXChainTokenBalances(
+        [statemineApi],
+        [devWalletAlice],
+        [unknownAsset]
+      );
+      await waitForBlocks(picassoApi, 1);
+      expect(preBalanceOnStatemine).to.be.bignumber.equal(
+        afterBalanceOnStatemine.add(new BN(to6Digit(transferAmount)))
+      );
+    });
+    it("I can send back if a token is deposited to unknown tokens", async function () {
+      const [preBalanceOnStatemine] = await fetchXChainTokenBalances(
+        [statemineApi],
+        [devWalletAlice],
+        [unknownAsset]
+      );
+      await sendTokenToStatemine(picassoApi, devWalletAlice, devWalletAlice, transferAmount, unknownAsset);
+      await waitForBlocks(statemineApi, 2);
+      const [afterBalanceOnStatemine] = await fetchXChainTokenBalances(
+        [statemineApi],
+        [devWalletAlice],
+        [unknownAsset]
+      );
+      expect(afterBalanceOnStatemine).to.be.bignumber.equal(
+        preBalanceOnStatemine.add(new BN(to6Digit(transferAmount)))
+      );
+    });
+  });
+  describe("XCMP Fail Tests", function () {
+    if (!testConfiguration.enabledTests.trapAndUnknownTests.enabled) {
+      console.warn("Fail tests are being skipped...");
+      return;
+    }
+    this.timeout(5 * 60 * 1000);
+    const falsyWeight = 1_000_000;
+    const excessiveAmount = 3790;
+    const nonTransferrableAsset = 5;
+    it("Users can't send an untransferrable token to Picasso", async function () {
+      const [preBalance] = await fetchXChainTokenBalances(
+        [picassoApi],
+        [devWalletAlice],
+        [nonTransferrableAsset]
+      );
+      await sendTokenToStatemine(picassoApi, devWalletAlice, devWalletAlice, 10, nonTransferrableAsset)
+        .catch(error => {
+        expect(error).to.be.an("error");
+      });
+      const [afterBalance] = await fetchXChainTokenBalances(
+        [picassoApi],
+        [devWalletAlice],
+        [nonTransferrableAsset]
+      );
+      expect(preBalance).to.be.bignumber.equal(afterBalance);
+    });
+    it("When users set incorrect weights, transfers don't reach to the target chain", async function () {
+      const [preBalance] = await fetchXChainTokenBalances([kusamaApi], [devWalletAlice], [0]);
+      await sendAssetToRelaychain(picassoApi, devWalletAlice, devWalletAlice, 1, falsyWeight).catch(result=>{
+        expect(result).to.be.an("error");
+      });
+      const [afterBalance] = await fetchXChainTokenBalances([kusamaApi], [devWalletAlice], [0]);
+      expect(preBalance).to.be.bignumber.equal(afterBalance);
+    });
+    it("When users don't have sufficient balance, then the tx will fail", async function () {
+      const [preBalanceOnPicasso, preBalanceOnKusama] = await fetchXChainTokenBalances(
+        [picassoApi, kusamaApi],
+        [devWalletAlice],
+        [ksm, 0]
+      );
+      await sendAssetToRelaychain(picassoApi, devWalletAlice, devWalletAlice, excessiveAmount, destWeight).catch(
+        result => {
+          expect(result).to.be.an("error");
+        }
+      );
+      const [afterBalanceOnPicasso, afterBalanceOnKusama] = await fetchXChainTokenBalances(
+        [picassoApi, kusamaApi],
+        [devWalletAlice],
+        [ksm, 0]
+      );
+      expect(afterBalanceOnPicasso).to.be.bignumber.equal(preBalanceOnPicasso);
+      expect(afterBalanceOnKusama).to.be.bignumber.equal(preBalanceOnKusama);
     });
   });
 });

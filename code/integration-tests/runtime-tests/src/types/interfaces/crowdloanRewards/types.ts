@@ -8,6 +8,7 @@ import type { EthereumAccountId } from '@polkadot/types/interfaces/eth';
 import type { EcdsaSignature, MultiSignature } from '@polkadot/types/interfaces/extrinsics';
 import type { ParachainInherentData, PersistedValidationData } from '@polkadot/types/interfaces/parachains';
 import type { AccountId32, Balance, Permill } from '@polkadot/types/interfaces/runtime';
+import type { Event } from '@polkadot/types/interfaces/system';
 
 /** @name CommonMosaicRemoteAssetId */
 export interface CommonMosaicRemoteAssetId extends Null {}
@@ -223,7 +224,9 @@ export interface FrameSystemAccountInfo extends Struct {
 }
 
 /** @name FrameSystemEventRecord */
-export interface FrameSystemEventRecord extends Null {}
+export interface FrameSystemEventRecord extends Struct {
+  readonly event: Event;
+}
 
 /** @name FrameSystemLastRuntimeUpgradeInfo */
 export interface FrameSystemLastRuntimeUpgradeInfo extends Null {}
@@ -261,6 +264,14 @@ export interface OrmlTokensReserveData extends Null {}
 
 /** @name PalletAccountProxyAnnouncement */
 export interface PalletAccountProxyAnnouncement extends Null {}
+
+/** @name PalletAssetsAssetAccount */
+export interface PalletAssetsAssetAccount extends Struct {
+  readonly balance: u128;
+  readonly isFrozen: bool;
+  readonly reason: string;
+  readonly extra: null;
+}
 
 /** @name PalletAssetsRegistryCandidateStatus */
 export interface PalletAssetsRegistryCandidateStatus extends Null {}
@@ -524,7 +535,16 @@ export interface XcmV2Response extends Null {}
 export interface XcmV2TraitsError extends Null {}
 
 /** @name XcmV2TraitsOutcome */
-export interface XcmV2TraitsOutcome extends Null {}
+export interface XcmV2TraitsOutcome extends Enum {
+  readonly isError: boolean;
+  readonly isComplete: boolean;
+  readonly asComplete: u128;
+  readonly isIsError: boolean;
+  readonly asIsError: bool;
+  readonly isIsComplete: boolean;
+  readonly asIsComplete: bool;
+  readonly type: 'Error' | 'Complete' | 'IsError' | 'IsComplete';
+}
 
 /** @name XcmV2WeightLimit */
 export interface XcmV2WeightLimit extends Null {}
