@@ -1,8 +1,5 @@
 # How to transfer USDT from Statemine to Picasso
 
-As part of our ongoing efforts at presenting you with different guides on how to interact with Picasso, 
-here is a new guide on how you can transfer USDT stablecoins from Statemine to Picasso.
-
 The Statemine parachain acts as the issuer of fungible and non-fungible tokens on Kusama, 
 this means if you want to transfer non-native assets on Kusama to use on Picasso, 
 they first need to be transferred from the Statemine to your Picasso wallet.
