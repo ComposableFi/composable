@@ -128,10 +128,13 @@ in with prelude; {
       post_state = "Hash";
     };
   };
-  mkZombienet = { relay, parachhains}:
-  let
-    
-   {
+  mkZombienet = { relay, parachains }:
+    let
+      # collators
+      # relaychain
+      # settings 
+      # types
+    in {
 
-  };
+    };
 }
