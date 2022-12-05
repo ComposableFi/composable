@@ -465,29 +465,40 @@ pub fn compute_deposit_lp(
 ///
 /// https://github.com/ComposableFi/composable/blob/main/rfcs/0008-pablo-lbp-cpp-restructure.md#42-liquidity-provider-token-lpt-math-updates
 /// Equation 6
-pub fn compute_first_deposit_lp_<T: PerThing>(
-	pool_assets: &[(u128, u128, T)],
+pub fn compute_first_deposit_lp_<T, I>(
+	pool_assets: I,
 	_f: T,
-) -> ConstantProductAmmResult<ConstantProductAmmValueFeePair> {
+) -> ConstantProductAmmResult<ConstantProductAmmValueFeePair>
+where
+	T: PerThing,
+	I: IntoIterator<Item = ConstantProductFirstDepositInput<T>>,
+	I::IntoIter: ExactSizeIterator,
+{
+	let mut pool_assets = pool_assets.into_iter();
+
 	let k: u128 = pool_assets.len().try_into().map_err(|_| ArithmeticError::Overflow)?;
+
 	ensure!(!k.is_zero(), ConstantProductAmmError::InvalidTokensList);
 
-	let product = pool_assets.iter().try_fold::<_, _, Result<_, ArithmeticError>>(
-		Decimal::from(1),
-		|product, (_d_i, b_i, w_i)| {
-			let b_i = Decimal::safe_from_fixed_point(*b_i)?;
-			let w_i = Decimal::safe_from_per_thing(*w_i)?;
-			let pow = b_i.checked_powd(w_i).ok_or(ArithmeticError::Overflow)?;
+	let product =
+		pool_assets.try_fold::<_, _, Result<_, ArithmeticError>>(Decimal::ONE, |product, i| {
+			let d_i = Decimal::safe_from_fixed_point(i.deposit)?;
+			let w_i = Decimal::safe_from_per_thing(i.weight)?;
+			let pow = d_i.checked_powd(w_i).ok_or(ArithmeticError::Overflow)?;
 
 			product.safe_mul(&pow)
-		},
-	)?;
+		})?;
 
 	let k = Decimal::safe_from_u128(k)?;
 	let product = k.safe_mul(&product)?;
 
 	// NOTE: Zero fees on first deposit
 	Ok(ConstantProductAmmValueFeePair { value: product.safe_to_fixed_point()?, fee: 0 })
+}
+
+pub struct ConstantProductFirstDepositInput<T> {
+	pub deposit: u128,
+	pub weight: T,
 }
 
 /// Computes the LP to mint on an existing deposit.

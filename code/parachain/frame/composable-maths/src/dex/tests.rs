@@ -179,14 +179,13 @@ mod constant_product {
 			}
 		}
 
-		fn generate_pool_assets(number_of_assets: u32) -> Vec<(u128, u128, Permill)> {
+		fn generate_pool_assets(
+			number_of_assets: u32,
+		) -> Vec<ConstantProductFirstDepositInput<Permill>> {
 			(0..number_of_assets)
-				.map(|n| {
-					(
-						0,
-						100_000_000_000_000 * (n + 1) as u128,
-						Permill::from_rational(1, number_of_assets),
-					)
+				.map(|n| ConstantProductFirstDepositInput {
+					deposit: 100_000_000_000_000 * (n + 1) as u128,
+					weight: Permill::from_rational(1, number_of_assets),
 				})
 				.collect()
 		}
@@ -196,7 +195,7 @@ mod constant_product {
 			let pool_assets = vec![];
 			let f = Permill::zero();
 
-			let res = compute_first_deposit_lp_(&pool_assets, f);
+			let res = compute_first_deposit_lp_(pool_assets, f);
 
 			assert_eq!(res, Err(ConstantProductAmmError::InvalidTokensList))
 		}
@@ -204,12 +203,18 @@ mod constant_product {
 		#[test]
 		fn should_provide_correct_vales_on_fifty_fifty() {
 			let pool_assets = vec![
-				(0, 100_000_000_000_000_000, Permill::from_rational::<u32>(1, 2)),
-				(0, 300_000_000_000_000_000, Permill::from_rational::<u32>(1, 2)),
+				ConstantProductFirstDepositInput {
+					deposit: 100_000_000_000_000_000,
+					weight: Permill::from_rational::<u32>(1, 2),
+				},
+				ConstantProductFirstDepositInput {
+					deposit: 300_000_000_000_000_000,
+					weight: Permill::from_rational::<u32>(1, 2),
+				},
 			];
-			let f = Permill::zero();
+			let fee = Permill::zero();
 
-			let res = compute_first_deposit_lp_(&pool_assets, f).expect("Inputs are valid; QED");
+			let res = compute_first_deposit_lp_(pool_assets, fee).expect("Inputs are valid; QED");
 
 			// Actual expected 346_410_161_513_775_458
 			// -000000000310% Error
@@ -226,7 +231,7 @@ mod constant_product {
 			fn no_unexpected_errors_in_range(input in first_deposit_range_inputs()) {
 				let pool_assets = generate_pool_assets(dbg!(input.number_of_assets));
 
-				let res = compute_first_deposit_lp_(&pool_assets, input.f);
+				let res = compute_first_deposit_lp_(pool_assets, input.f);
 
 				prop_assert!(dbg!(res).is_ok());
 			}
