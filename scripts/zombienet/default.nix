@@ -1,9 +1,4 @@
 # allows to compose DSL to instantiate relay and parachains
-# 
-# package operates in next assumptions:
-# 1. we good to have all nodes to be equal regarding logging/storage/networking per chain
-# 2. allocate node names equal to owners sudo keys according well know keyring
-# 3. it is possible to allocate range of ports to each node starting from some base
 { pkgs }:
 let
   default-node-names = [ "alice" "bob" "charlie" "dave" "eve" "ferdie" ];
@@ -65,25 +60,60 @@ in with prelude; {
   mkParachains = parachains: builtins.map mkParachain parachains;
   mkRelaychainNode = { rpc_port, ws_port, name }:
     {
-      #name = name; # "rococo-local-alice";
-      rpc_port = rpc_port; # 30444;
+      name = name;
       validator = true;
-      #ws_port = ws_port; # 9944
     } // optionalAttrs (rpc_port != null) { inherit rpc_port; }
     // optionalAttrs (ws_port != null) { inherit ws_port; };
 
-  mpRelaychainNodes = { chain, rpc_port ? 30444, ws_port ? 9944, count ? 2 }:
+  mkRelaychainNodes = { chain, rpc_port ? 30444, ws_port ? 9944, count ? 2 }:
     let
-      prefixName = name : chain ++ "-" ++ name;
+      prefixName = name: chain ++ "-" ++ name;
       generated = lib.lists.zipListsWith
         (_increment: name: mkRelaychainNode { name = prefixName name; })
         (lib.lists.range 0 (count - 1)) (builtins.tail names);
-      bootst
-    in {
-    
+      bootstrap = mkRelaychainNode {
+        ws_port = 9944;
+        rpc_port = 30444;
+        name = prefixName "alice";
+      };
+    in [ bootstrap ] ++ generated;
+
+  mkRelaychain =
+    { chain, default_command, rpc_port ? 30444, ws_port ? 9944, count ? 2 }: {
+      inherit default_command;
+      inherit chain;
+      default_args = [ "-lparachain=debug" ];
+      genesis = {
+        runtime = {
+          runtime_genesis_config = {
+            configuration = {
+              config = {
+                max_validators_per_core = 2;
+                needed_approvals = 1;
+                validation_upgrade_cooldown = 2;
+                validation_upgrade_delay = 2;
+              };
+            };
+          };
+        };
+      };
+      nodes = mkRelaychainNodes {
+        inherit rpc_port;
+        inherit ws_port;
+        inherit count;
+      };
     };
-  #mkSettings = 
-  #mkTypes = 
-  # mkRelaychain =
+  mkSettings = {
+    node_spawn_timeout = 120;
+    provider = "native";
+    timeout = 600;
+  };
+  mkTypes = {
+    Header = {
+      number = "u64";
+      parent_hash = "Hash";
+      post_state = "Hash";
+    };
+  };
   # mkZombienet =  
 }
