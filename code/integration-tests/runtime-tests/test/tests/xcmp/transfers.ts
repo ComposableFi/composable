@@ -329,7 +329,7 @@ describe("[SHORT][LAUNCH] tx.xcmp Tests", function () {
     const falsyWeight = 1_000_000;
     const excessiveAmount = 3790;
     const nonTransferrableAsset = 5;
-    it("Users can't send an untransferrable token to Picasso", async function () {
+    it("Users can't send an untransferable token to Picasso", async function () {
       const [preBalance] = await fetchXChainTokenBalances([picassoApi], [devWalletAlice], [nonTransferrableAsset]);
       await sendTokenToStatemine(picassoApi, devWalletAlice, devWalletAlice, 10, nonTransferrableAsset).catch(error => {
         expect(error).to.be.an("error");
