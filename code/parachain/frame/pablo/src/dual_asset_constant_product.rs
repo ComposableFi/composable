@@ -94,9 +94,6 @@ impl<T: Config> DualAssetConstantProduct<T> {
 	) -> Result<T::Balance, DispatchError> {
 		let mut pool_assets = Self::get_pool_balances(&pool, &pool_account);
 
-		dbg!(&pool_assets);
-		dbg!(&assets);
-
 		let assets_with_balances = assets
 			.iter()
 			.map(|asset_amount| {
@@ -112,10 +109,6 @@ impl<T: Config> DualAssetConstantProduct<T> {
 			.collect::<Result<Vec<_>, _>>()?;
 
 		let lp_total_issuance = T::Convert::convert(T::Assets::total_issuance(pool.lp_token));
-
-		dbg!(&lp_total_issuance);
-
-		dbg!(&assets_with_balances);
 
 		let amount_of_lp_token_to_mint = match assets_with_balances[..] {
 			[(single, (single_weight, single_balance))] => {
@@ -143,24 +136,15 @@ impl<T: Config> DualAssetConstantProduct<T> {
 			},
 			[(first, (first_weight, first_balance)), (second, (second_weight, second_balance))] => {
 				let lp_to_mint = if lp_total_issuance.is_zero() {
-					println!("is first deposit");
-					let value = compute_first_deposit_lp_(
+					compute_first_deposit_lp_(
 						&[
 							(T::Convert::convert(first.amount), first_weight),
 							(T::Convert::convert(second.amount), second_weight),
 						],
 						Permill::zero(),
 					)?
-					.value;
-
-					dbg!(value)
+					.value
 				} else {
-					println!("is normal deposit");
-					dbg!(&first, &second);
-
-					assert_ne!(first_balance, 0, "first_balance shouldn't be 0");
-					assert_ne!(second_balance, 0, "second_balance shouldn't be 0");
-
 					let input_ratio_first_to_second = Permill::from_rational(
 						first.amount,
 						first.amount.safe_add(&second.amount)?,
@@ -175,17 +159,13 @@ impl<T: Config> DualAssetConstantProduct<T> {
 						Error::<T>::IncorrectAmountOfAssets
 					);
 
-					dbg!(&first_balance);
-
 					let first_deposit = compute_deposit_lp_(
 						lp_total_issuance,
 						T::Convert::convert(first.amount),
 						first_balance,
 						Permill::one(),
-						dbg!(pool.fee_config.fee_rate),
+						pool.fee_config.fee_rate,
 					)?;
-
-					dbg!();
 
 					let second_deposit = compute_deposit_lp_(
 						lp_total_issuance,
@@ -194,8 +174,6 @@ impl<T: Config> DualAssetConstantProduct<T> {
 						Permill::one(),
 						pool.fee_config.fee_rate,
 					)?;
-
-					dbg!();
 
 					first_deposit.value.safe_add(&second_deposit.value)?
 				};
@@ -220,7 +198,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		let amount_of_lp_token_to_mint = T::Convert::convert(amount_of_lp_token_to_mint);
 
 		ensure!(
-			dbg!(amount_of_lp_token_to_mint) >= min_mint_amount,
+			amount_of_lp_token_to_mint >= min_mint_amount,
 			Error::<T>::CannotRespectMinimumRequested
 		);
 
@@ -404,8 +382,6 @@ where
 
 	let epsilon = T::from_rational::<u128>(1, 100_000);
 
-	dbg!(c, epsilon);
-
 	c <= epsilon
 }
 
@@ -421,8 +397,6 @@ mod per_thing_computation_error {
 		let a = Permill::from_rational::<u32>(1, 100_000);
 		let b = Permill::from_rational::<u32>(3, 100_000);
 
-		dbg!(a, b);
-
 		assert!(!per_thing_acceptable_computation_error(a, b))
 	}
 
@@ -436,8 +410,6 @@ mod per_thing_computation_error {
 		.unwrap();
 		// let a = Permill::from_rational::<u128>(50001, 100_000);
 		let b = Permill::from_rational::<u32>(50, 100);
-
-		dbg!(a, b);
 
 		assert!(per_thing_acceptable_computation_error(a, b))
 	}
