@@ -30,192 +30,200 @@ fn works() {
 	new_test_ext().execute_with(|| {})
 }
 
-#[test]
-fn secp256k1_verify_verifies() {
-	new_test_ext().execute_with(|| {
-		let message = hex::decode(SECP256K1_MESSAGE_HEX).unwrap();
-		let signature = hex::decode(SECP256K1_SIGNATURE_HEX).unwrap();
-		let public_key = hex::decode(SECP256K1_PUBLIC_KEY_HEX).unwrap();
-		let hash = Sha256::digest(message);
+mod secp256k1 {
+	use super::*;
 
-		assert!(Cosmwasm::do_secp256k1_verify(&hash, &signature, &public_key))
-	})
+	#[test]
+	fn verify_verifies() {
+		new_test_ext().execute_with(|| {
+			let message = hex::decode(SECP256K1_MESSAGE_HEX).unwrap();
+			let signature = hex::decode(SECP256K1_SIGNATURE_HEX).unwrap();
+			let public_key = hex::decode(SECP256K1_PUBLIC_KEY_HEX).unwrap();
+			let hash = Sha256::digest(message);
+
+			assert!(Cosmwasm::do_secp256k1_verify(&hash, &signature, &public_key))
+		})
+	}
+
+	#[test]
+	fn verify_fails() {
+		new_test_ext().execute_with(|| {
+			let message = hex::decode(SECP256K1_MESSAGE_HEX).unwrap();
+			let mut signature = hex::decode(SECP256K1_SIGNATURE_HEX).unwrap();
+			let public_key = hex::decode(SECP256K1_PUBLIC_KEY_HEX).unwrap();
+			let hash = Sha256::digest(message);
+
+			*signature.last_mut().unwrap() += 1;
+
+			assert!(!Cosmwasm::do_secp256k1_verify(&hash, &signature, &public_key))
+		})
+	}
+
+	#[test]
+	fn recover_pubkey_works() {
+		new_test_ext().execute_with(|| {
+			let mut hasher = Keccak256::new();
+			hasher.update(format!("\x19Ethereum Signed Message:\n{}", ETHEREUM_MESSAGE.len()));
+			hasher.update(ETHEREUM_MESSAGE);
+			let message_hash = hasher.finalize();
+			let signature = hex::decode(ETHEREUM_SIGNATURE_HEX).unwrap();
+			let signer_address = hex::decode(&ETHEREUM_SIGNER_ADDRESS[2..]).unwrap();
+
+			let (recovery, signature) = signature.split_last().unwrap();
+
+			let recovered_pubkey =
+				Cosmwasm::do_secp256k1_recover_pubkey(&message_hash, signature, *recovery - 27)
+					.unwrap();
+			let recovered_pubkey_hash = Keccak256::digest(&recovered_pubkey[1..]);
+
+			assert_eq!(signer_address, recovered_pubkey_hash[recovered_pubkey_hash.len() - 20..]);
+		})
+	}
 }
 
-#[test]
-fn secp256k1_verify_fails() {
-	new_test_ext().execute_with(|| {
-		let message = hex::decode(SECP256K1_MESSAGE_HEX).unwrap();
-		let mut signature = hex::decode(SECP256K1_SIGNATURE_HEX).unwrap();
-		let public_key = hex::decode(SECP256K1_PUBLIC_KEY_HEX).unwrap();
-		let hash = Sha256::digest(message);
+mod ed25519 {
+	use super::*;
 
-		*signature.last_mut().unwrap() += 1;
+	#[test]
+	fn verify_verifies() {
+		new_test_ext().execute_with(|| {
+			let message = hex::decode(ED25519_MESSAGE_HEX).unwrap();
+			let signature = hex::decode(ED25519_SIGNATURE_HEX).unwrap();
+			let public_key = hex::decode(ED25519_PUBLIC_KEY_HEX).unwrap();
 
-		assert!(!Cosmwasm::do_secp256k1_verify(&hash, &signature, &public_key))
-	})
-}
+			assert!(Cosmwasm::do_ed25519_verify(&message, &signature, &public_key));
+		})
+	}
 
-#[test]
-fn secp256k1_recover_pubkey_works() {
-	new_test_ext().execute_with(|| {
-		let mut hasher = Keccak256::new();
-		hasher.update(format!("\x19Ethereum Signed Message:\n{}", ETHEREUM_MESSAGE.len()));
-		hasher.update(ETHEREUM_MESSAGE);
-		let message_hash = hasher.finalize();
-		let signature = hex::decode(ETHEREUM_SIGNATURE_HEX).unwrap();
-		let signer_address = hex::decode(&ETHEREUM_SIGNER_ADDRESS[2..]).unwrap();
+	#[test]
+	fn verify_fails() {
+		new_test_ext().execute_with(|| {
+			let message = hex::decode(ED25519_MESSAGE_HEX).unwrap();
+			let mut signature = hex::decode(ED25519_SIGNATURE_HEX).unwrap();
+			let public_key = hex::decode(ED25519_PUBLIC_KEY_HEX).unwrap();
 
-		let (recovery, signature) = signature.split_last().unwrap();
+			*signature.last_mut().unwrap() += 1;
 
-		let recovered_pubkey =
-			Cosmwasm::do_secp256k1_recover_pubkey(&message_hash, signature, *recovery - 27)
-				.unwrap();
-		let recovered_pubkey_hash = Keccak256::digest(&recovered_pubkey[1..]);
+			assert!(!Cosmwasm::do_ed25519_verify(&message, &signature, &public_key));
+		})
+	}
 
-		assert_eq!(signer_address, recovered_pubkey_hash[recovered_pubkey_hash.len() - 20..]);
-	})
-}
+	#[test]
+	fn batch_verify_verifies() {
+		new_test_ext().execute_with(|| {
+			let decode = |m| -> Vec<u8> { hex::decode(m).unwrap() };
 
-#[test]
-fn ed25519_verify_verifies() {
-	new_test_ext().execute_with(|| {
-		let message = hex::decode(ED25519_MESSAGE_HEX).unwrap();
-		let signature = hex::decode(ED25519_SIGNATURE_HEX).unwrap();
-		let public_key = hex::decode(ED25519_PUBLIC_KEY_HEX).unwrap();
+			let messages: Vec<Vec<u8>> =
+				[ED25519_MESSAGE_HEX, ED25519_MESSAGE2_HEX].iter().map(decode).collect();
+			let signatures: Vec<Vec<u8>> =
+				[ED25519_SIGNATURE_HEX, ED25519_SIGNATURE2_HEX].iter().map(decode).collect();
+			let public_keys: Vec<Vec<u8>> =
+				[ED25519_PUBLIC_KEY_HEX, ED25519_PUBLIC_KEY2_HEX].iter().map(decode).collect();
 
-		assert!(Cosmwasm::do_ed25519_verify(&message, &signature, &public_key));
-	})
-}
+			let ref_messages: Vec<&[u8]> = messages.iter().map(|b| b.as_slice()).collect();
+			let ref_signatures: Vec<&[u8]> = signatures.iter().map(|b| b.as_slice()).collect();
+			let ref_public_keys: Vec<&[u8]> = public_keys.iter().map(|b| b.as_slice()).collect();
 
-#[test]
-fn ed25519_verify_fails() {
-	new_test_ext().execute_with(|| {
-		let message = hex::decode(ED25519_MESSAGE_HEX).unwrap();
-		let mut signature = hex::decode(ED25519_SIGNATURE_HEX).unwrap();
-		let public_key = hex::decode(ED25519_PUBLIC_KEY_HEX).unwrap();
+			assert!(Cosmwasm::do_ed25519_batch_verify(
+				&ref_messages,
+				&ref_signatures,
+				&ref_public_keys
+			));
+		})
+	}
 
-		*signature.last_mut().unwrap() += 1;
+	#[test]
+	fn batch_verify_verifies_multisig() {
+		new_test_ext().execute_with(|| {
+			let decode = |m| -> Vec<u8> { hex::decode(m).unwrap() };
 
-		assert!(!Cosmwasm::do_ed25519_verify(&message, &signature, &public_key));
-	})
-}
+			let messages: Vec<Vec<u8>> = [ED25519_MESSAGE_HEX].iter().map(decode).collect();
+			let signatures: Vec<Vec<u8>> =
+				[ED25519_SIGNATURE_HEX, ED25519_SIGNATURE_HEX].iter().map(decode).collect();
+			let public_keys: Vec<Vec<u8>> =
+				[ED25519_PUBLIC_KEY_HEX, ED25519_PUBLIC_KEY_HEX].iter().map(decode).collect();
 
-#[test]
-fn ed25519_batch_verify_verifies() {
-	new_test_ext().execute_with(|| {
-		let decode = |m| -> Vec<u8> { hex::decode(m).unwrap() };
+			let ref_messages: Vec<&[u8]> = messages.iter().map(|b| b.as_slice()).collect();
+			let ref_signatures: Vec<&[u8]> = signatures.iter().map(|b| b.as_slice()).collect();
+			let ref_public_keys: Vec<&[u8]> = public_keys.iter().map(|b| b.as_slice()).collect();
 
-		let messages: Vec<Vec<u8>> =
-			[ED25519_MESSAGE_HEX, ED25519_MESSAGE2_HEX].iter().map(decode).collect();
-		let signatures: Vec<Vec<u8>> =
-			[ED25519_SIGNATURE_HEX, ED25519_SIGNATURE2_HEX].iter().map(decode).collect();
-		let public_keys: Vec<Vec<u8>> =
-			[ED25519_PUBLIC_KEY_HEX, ED25519_PUBLIC_KEY2_HEX].iter().map(decode).collect();
+			assert!(Cosmwasm::do_ed25519_batch_verify(
+				&ref_messages,
+				&ref_signatures,
+				&ref_public_keys
+			));
+		})
+	}
 
-		let ref_messages: Vec<&[u8]> = messages.iter().map(|b| b.as_slice()).collect();
-		let ref_signatures: Vec<&[u8]> = signatures.iter().map(|b| b.as_slice()).collect();
-		let ref_public_keys: Vec<&[u8]> = public_keys.iter().map(|b| b.as_slice()).collect();
+	#[test]
+	fn batch_verify_verifies_with_single_pubkey_multi_msg() {
+		new_test_ext().execute_with(|| {
+			let decode = |m| -> Vec<u8> { hex::decode(m).unwrap() };
 
-		assert!(Cosmwasm::do_ed25519_batch_verify(
-			&ref_messages,
-			&ref_signatures,
-			&ref_public_keys
-		));
-	})
-}
+			let messages: Vec<Vec<u8>> =
+				[ED25519_MESSAGE_HEX, ED25519_MESSAGE_HEX].iter().map(decode).collect();
+			let signatures: Vec<Vec<u8>> =
+				[ED25519_SIGNATURE_HEX, ED25519_SIGNATURE_HEX].iter().map(decode).collect();
+			let public_keys: Vec<Vec<u8>> = [ED25519_PUBLIC_KEY_HEX].iter().map(decode).collect();
 
-#[test]
-fn ed25519_batch_verify_verifies_multisig() {
-	new_test_ext().execute_with(|| {
-		let decode = |m| -> Vec<u8> { hex::decode(m).unwrap() };
+			let ref_messages: Vec<&[u8]> = messages.iter().map(|b| b.as_slice()).collect();
+			let ref_signatures: Vec<&[u8]> = signatures.iter().map(|b| b.as_slice()).collect();
+			let ref_public_keys: Vec<&[u8]> = public_keys.iter().map(|b| b.as_slice()).collect();
 
-		let messages: Vec<Vec<u8>> = [ED25519_MESSAGE_HEX].iter().map(decode).collect();
-		let signatures: Vec<Vec<u8>> =
-			[ED25519_SIGNATURE_HEX, ED25519_SIGNATURE_HEX].iter().map(decode).collect();
-		let public_keys: Vec<Vec<u8>> =
-			[ED25519_PUBLIC_KEY_HEX, ED25519_PUBLIC_KEY_HEX].iter().map(decode).collect();
+			assert!(Cosmwasm::do_ed25519_batch_verify(
+				&ref_messages,
+				&ref_signatures,
+				&ref_public_keys
+			));
+		})
+	}
 
-		let ref_messages: Vec<&[u8]> = messages.iter().map(|b| b.as_slice()).collect();
-		let ref_signatures: Vec<&[u8]> = signatures.iter().map(|b| b.as_slice()).collect();
-		let ref_public_keys: Vec<&[u8]> = public_keys.iter().map(|b| b.as_slice()).collect();
+	#[test]
+	fn batch_verify_fails_if_one_fail() {
+		new_test_ext().execute_with(|| {
+			let decode = |m| -> Vec<u8> { hex::decode(m).unwrap() };
 
-		assert!(Cosmwasm::do_ed25519_batch_verify(
-			&ref_messages,
-			&ref_signatures,
-			&ref_public_keys
-		));
-	})
-}
+			let messages: Vec<Vec<u8>> =
+				[ED25519_MESSAGE_HEX, ED25519_MESSAGE2_HEX].iter().map(decode).collect();
+			let mut signatures: Vec<Vec<u8>> =
+				[ED25519_SIGNATURE_HEX, ED25519_SIGNATURE2_HEX].iter().map(decode).collect();
+			let public_keys: Vec<Vec<u8>> =
+				[ED25519_PUBLIC_KEY_HEX, ED25519_PUBLIC_KEY2_HEX].iter().map(decode).collect();
 
-#[test]
-fn ed25519_batch_verify_verifies_with_single_pubkey_multi_msg() {
-	new_test_ext().execute_with(|| {
-		let decode = |m| -> Vec<u8> { hex::decode(m).unwrap() };
+			*signatures.last_mut().unwrap().last_mut().unwrap() += 1;
 
-		let messages: Vec<Vec<u8>> =
-			[ED25519_MESSAGE_HEX, ED25519_MESSAGE_HEX].iter().map(decode).collect();
-		let signatures: Vec<Vec<u8>> =
-			[ED25519_SIGNATURE_HEX, ED25519_SIGNATURE_HEX].iter().map(decode).collect();
-		let public_keys: Vec<Vec<u8>> = [ED25519_PUBLIC_KEY_HEX].iter().map(decode).collect();
+			let ref_messages: Vec<&[u8]> = messages.iter().map(|b| b.as_slice()).collect();
+			let ref_signatures: Vec<&[u8]> = signatures.iter().map(|b| b.as_slice()).collect();
+			let ref_public_keys: Vec<&[u8]> = public_keys.iter().map(|b| b.as_slice()).collect();
 
-		let ref_messages: Vec<&[u8]> = messages.iter().map(|b| b.as_slice()).collect();
-		let ref_signatures: Vec<&[u8]> = signatures.iter().map(|b| b.as_slice()).collect();
-		let ref_public_keys: Vec<&[u8]> = public_keys.iter().map(|b| b.as_slice()).collect();
+			assert!(!Cosmwasm::do_ed25519_batch_verify(
+				&ref_messages,
+				&ref_signatures,
+				&ref_public_keys
+			));
+		})
+	}
 
-		assert!(Cosmwasm::do_ed25519_batch_verify(
-			&ref_messages,
-			&ref_signatures,
-			&ref_public_keys
-		));
-	})
-}
+	#[test]
+	fn batch_verify_fails_if_input_lengths_are_incorrect() {
+		new_test_ext().execute_with(|| {
+			let decode = |m| -> Vec<u8> { hex::decode(m).unwrap() };
 
-#[test]
-fn ed25519_batch_verify_fails_if_one_fail() {
-	new_test_ext().execute_with(|| {
-		let decode = |m| -> Vec<u8> { hex::decode(m).unwrap() };
+			let messages: Vec<Vec<u8>> =
+				[ED25519_MESSAGE_HEX, ED25519_MESSAGE2_HEX].iter().map(decode).collect();
+			let signatures: Vec<Vec<u8>> = [ED25519_SIGNATURE_HEX].iter().map(decode).collect();
+			let public_keys: Vec<Vec<u8>> =
+				[ED25519_PUBLIC_KEY_HEX, ED25519_PUBLIC_KEY2_HEX].iter().map(decode).collect();
 
-		let messages: Vec<Vec<u8>> =
-			[ED25519_MESSAGE_HEX, ED25519_MESSAGE2_HEX].iter().map(decode).collect();
-		let mut signatures: Vec<Vec<u8>> =
-			[ED25519_SIGNATURE_HEX, ED25519_SIGNATURE2_HEX].iter().map(decode).collect();
-		let public_keys: Vec<Vec<u8>> =
-			[ED25519_PUBLIC_KEY_HEX, ED25519_PUBLIC_KEY2_HEX].iter().map(decode).collect();
+			let ref_messages: Vec<&[u8]> = messages.iter().map(|b| b.as_slice()).collect();
+			let ref_signatures: Vec<&[u8]> = signatures.iter().map(|b| b.as_slice()).collect();
+			let ref_public_keys: Vec<&[u8]> = public_keys.iter().map(|b| b.as_slice()).collect();
 
-		*signatures.last_mut().unwrap().last_mut().unwrap() += 1;
-
-		let ref_messages: Vec<&[u8]> = messages.iter().map(|b| b.as_slice()).collect();
-		let ref_signatures: Vec<&[u8]> = signatures.iter().map(|b| b.as_slice()).collect();
-		let ref_public_keys: Vec<&[u8]> = public_keys.iter().map(|b| b.as_slice()).collect();
-
-		assert!(!Cosmwasm::do_ed25519_batch_verify(
-			&ref_messages,
-			&ref_signatures,
-			&ref_public_keys
-		));
-	})
-}
-
-#[test]
-fn ed25519_batch_verify_fails_if_input_lengths_are_incorrect() {
-	new_test_ext().execute_with(|| {
-		let decode = |m| -> Vec<u8> { hex::decode(m).unwrap() };
-
-		let messages: Vec<Vec<u8>> =
-			[ED25519_MESSAGE_HEX, ED25519_MESSAGE2_HEX].iter().map(decode).collect();
-		let signatures: Vec<Vec<u8>> = [ED25519_SIGNATURE_HEX].iter().map(decode).collect();
-		let public_keys: Vec<Vec<u8>> =
-			[ED25519_PUBLIC_KEY_HEX, ED25519_PUBLIC_KEY2_HEX].iter().map(decode).collect();
-
-		let ref_messages: Vec<&[u8]> = messages.iter().map(|b| b.as_slice()).collect();
-		let ref_signatures: Vec<&[u8]> = signatures.iter().map(|b| b.as_slice()).collect();
-		let ref_public_keys: Vec<&[u8]> = public_keys.iter().map(|b| b.as_slice()).collect();
-
-		assert!(!Cosmwasm::do_ed25519_batch_verify(
-			&ref_messages,
-			&ref_signatures,
-			&ref_public_keys
-		));
-	})
+			assert!(!Cosmwasm::do_ed25519_batch_verify(
+				&ref_messages,
+				&ref_signatures,
+				&ref_public_keys
+			));
+		})
+	}
 }
