@@ -1,5 +1,4 @@
 import { ApiPromise, WsProvider } from "@polkadot/api";
-import { default as ksmTypes } from "./types/kusamaTypes";
 import { KeyringPair } from "@polkadot/keyring/types";
 import { sendAndWaitForSuccess } from "@composable/utils/polkadotjs";
 import { Pica } from "@composable/utils/mintingHelper";
@@ -34,8 +33,7 @@ export async function initializeKusamaApi() {
   const relayChainEndpoint = "ws://" + (process.env.ENDPOINT_RELAYCHAIN ?? "127.0.0.1:9944");
   const relayChainProvider = new WsProvider(relayChainEndpoint);
   const relayChainApiClient = await ApiPromise.create({
-    provider: relayChainProvider,
-    types: ksmTypes.types
+    provider: relayChainProvider
   });
   await relayChainApiClient.isReady;
   return relayChainApiClient;
@@ -104,11 +102,11 @@ export async function mintTokensOnStatemine(
   assetId: number,
   minterWallet: KeyringPair,
   amountToMint = 1_000,
-  receiveeWallet = minterWallet
+  receiverWallet = minterWallet
 ) {
   const id = api.createType("Compact<u32>", assetId);
   const beneficiary = api.createType("MultiAddress", {
-    Id: api.createType("AccountId", receiveeWallet.address)
+    Id: api.createType("AccountId", receiverWallet.address)
   });
   const amount = api.createType("Compact<u128>", to6Digit(amountToMint));
   await sendAndWaitForSuccess(
@@ -148,10 +146,10 @@ export async function sendFundsFromRelaychain(
   api: ApiPromise,
   senderWallet: KeyringPair,
   amount: number,
-  receiveeWallet = senderWallet
+  receiverWallet = senderWallet
 ) {
   const destination = setDestination(api, 0, 2087);
-  const beneficiary = setBeneficiary(api, receiveeWallet, 0);
+  const beneficiary = setBeneficiary(api, receiverWallet, 0);
   const paraAmount = api.createType("Compact<u128>", Pica(amount));
   const assets = api.createType("XcmVersionedMultiAssets", {
     V1: api.createType("XcmV1MultiassetMultiAssets", [
@@ -199,7 +197,7 @@ function setDestination(api: ApiPromise, parent: number, targetParachainId?: num
   });
 }
 
-function setBeneficiary(api: ApiPromise, receiveeWallet: KeyringPair, parents: number) {
+function setBeneficiary(api: ApiPromise, receiverWallet: KeyringPair, parents: number) {
   return api.createType("XcmVersionedMultiLocation", {
     V1: api.createType("XcmV1MultiLocation", {
       parents: api.createType("u8", parents),
@@ -207,7 +205,7 @@ function setBeneficiary(api: ApiPromise, receiveeWallet: KeyringPair, parents: n
         X1: api.createType("XcmV1Junction", {
           AccountId32: {
             network: api.createType("XcmV0JunctionNetworkId", "Any"),
-            id: receiveeWallet.publicKey
+            id: receiverWallet.publicKey
           }
         })
       })
@@ -243,7 +241,6 @@ export async function sendPicaToAnotherAccount(
   api: ApiPromise,
   senderWallet: KeyringPair,
   receiverWallet: KeyringPair,
-  assetdId: number,
   amount: number
 ) {
   const asset = api.createType("u128", 1);
@@ -288,13 +285,13 @@ export async function fetchXChainTokenBalances(
 export async function sendAssetToRelaychain(
   api: ApiPromise,
   senderWallet: KeyringPair,
-  receiveeWallet: KeyringPair,
+  receiverWallet: KeyringPair,
   amount: number,
   destinationWeight: number
 ) {
   const currencyId = api.createType("u128", 4);
   const amountP = api.createType("u128", Pica(amount));
-  const dest = setBeneficiary(api, receiveeWallet, 1);
+  const dest = setBeneficiary(api, receiverWallet, 1);
   await sendAndWaitForSuccess(
     api,
     senderWallet,
@@ -305,11 +302,11 @@ export async function sendAssetToRelaychain(
 
 export async function fetchNativeBalance(api: ApiPromise, wallet: KeyringPair | string) {
   if (typeof wallet === "string") {
-    const accountId = await api.createType("AccountId32", wallet);
+    const accountId = api.createType("AccountId32", wallet);
     const balanceRaw = await api.query.system.account(accountId);
     return new BN(balanceRaw.data.free.toString());
   }
-  const accountId = await api.createType("AccountId32", wallet.publicKey);
+  const accountId = api.createType("AccountId32", wallet.publicKey);
   const balanceRaw = await api.query.system.account(accountId);
   return new BN(balanceRaw.data.free.toString());
 }
@@ -317,11 +314,11 @@ export async function fetchNativeBalance(api: ApiPromise, wallet: KeyringPair | 
 export async function sendKSMFromStatemine(
   api: ApiPromise,
   senderWallet: KeyringPair,
-  receiveeWallet: KeyringPair,
+  receiverWallet: KeyringPair,
   amount: number
 ) {
   const dest = setDestination(api, 1, 2087);
-  const beneficiary = setBeneficiary(api, receiveeWallet, 0);
+  const beneficiary = setBeneficiary(api, receiverWallet, 0);
   const paraAmount = api.createType("u128", Pica(amount));
   const asset = api.createType("XcmVersionedMultiAssets", {
     V1: api.createType("XcmV1MultiassetMultiAssets", [
@@ -360,11 +357,11 @@ export async function fetchTokenBalanceOnStatemine(api: ApiPromise, wallet: Keyr
 export async function sendUSDTFromStatemine(
   api: ApiPromise,
   senderWallet: KeyringPair,
-  receiveeWallet: KeyringPair,
+  receiverWallet: KeyringPair,
   amount: number
 ) {
   const dest = setDestination(api, 1, 2087);
-  const beneficiary = setBeneficiary(api, receiveeWallet, 0);
+  const beneficiary = setBeneficiary(api, receiverWallet, 0);
   const paraAmount = api.createType("u128", to6Digit(amount));
   const asset = api.createType("XcmVersionedMultiAssets", {
     V1: api.createType("XcmV1MultiassetMultiAssets", [
@@ -403,7 +400,7 @@ export async function sendUSDTFromStatemine(
 function setTypesForTransfersToStatemine(
   api: ApiPromise,
   senderWallet: KeyringPair,
-  receiveeWallet: KeyringPair,
+  receiverWallet: KeyringPair,
   amount: number,
   assetId: number
 ) {
@@ -457,7 +454,7 @@ function setTypesForTransfersToStatemine(
           api.createType("XcmV1Junction", {
             AccountId32: {
               network: api.createType("XcmV0JunctionNetworkId", "Any"),
-              id: receiveeWallet.publicKey
+              id: receiverWallet.publicKey
             }
           })
         ]
@@ -471,14 +468,14 @@ function setTypesForTransfersToStatemine(
 export async function sendTokenToStatemine(
   api: ApiPromise,
   senderWallet: KeyringPair,
-  receiveeWallet: KeyringPair,
+  receiverWallet: KeyringPair,
   amount: number,
   assetId: number
 ) {
   const { asset, fee, dest, weightLimit } = setTypesForTransfersToStatemine(
     api,
     senderWallet,
-    receiveeWallet,
+    receiverWallet,
     amount,
     assetId
   );
