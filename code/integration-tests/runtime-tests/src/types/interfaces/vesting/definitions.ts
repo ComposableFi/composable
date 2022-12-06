@@ -22,6 +22,10 @@ export default {
       alreadyClaimed: "Balance"
     },
     ComposableTraitsVestingVestingScheduleIdSet: "Null",
-    ComposableTraitsVestingVestingScheduleInfo: "Null"
+    ComposableTraitsVestingVestingScheduleInfo: {
+      window: "VestingWindow<BlockNumber, Moment>",
+      periodCount: "u128",
+      perPeriod: "u128"
+    }
   }
 };
