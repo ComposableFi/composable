@@ -695,7 +695,7 @@ impl InstanceFilter<Call> for ProxyType {
 			),
 			ProxyType::CancelProxy => {
 				// TODO (vim): We might not need this
-				matches!(c, Call::Proxy(pallet_proxy::Call::reject_announcement { .. }))
+				matches!(c, Call::Proxy(proxy::Call::reject_announcement { .. }))
 			},
 		}
 	}

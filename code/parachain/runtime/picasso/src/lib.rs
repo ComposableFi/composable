@@ -82,7 +82,7 @@ pub use frame_support::{
 pub use governance::TreasuryAccount;
 
 use codec::{Codec, Encode, EncodeLike};
-use frame_support::traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade};
+use frame_support::traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade, InstanceFilter};
 use frame_system as system;
 use scale_info::TypeInfo;
 use sp_runtime::AccountId32;
@@ -143,6 +143,7 @@ pub fn native_version() -> NativeVersion {
 }
 
 use orml_traits::{parameter_type_with_key, LockIdentifier};
+use composable_traits::account_proxy::ProxyType;
 parameter_type_with_key! {
 	// Minimum amount an account has to hold to stay in state
 	pub MultiExistentialDeposits: |currency_id: CurrencyId| -> Balance {
@@ -650,6 +651,31 @@ parameter_types! {
 	pub const VestingStep: Moment = (DAYS as Moment) * (MILLISECS_PER_BLOCK as Moment);
 	pub const Prefix: &'static [u8] = b"picasso-";
 	pub const LockCrowdloanRewards: bool = true;
+}
+
+impl InstanceFilter<Call> for ProxyType {
+	fn filter(&self, c: &Call) -> bool {
+		match self {
+			ProxyType::Any => true,
+			ProxyType::Governance => matches!(
+				c,
+				Call::Democracy(..) |
+					Call::Council(..) | Call::TechnicalCollective(..) |
+					Call::Treasury(..) | Call::Utility(..)
+			),
+			ProxyType::CancelProxy => {
+				matches!(c, Call::Proxy(proxy::Call::reject_announcement { .. }))
+			},
+		}
+	}
+	fn is_superset(&self, o: &Self) -> bool {
+		match (self, o) {
+			(x, y) if x == y => true,
+			(ProxyType::Any, _) => true,
+			(_, ProxyType::Any) => false,
+			_ => false,
+		}
+	}
 }
 
 parameter_types! {
