@@ -86,8 +86,6 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		who: &T::AccountId,
 		pool: BasicPoolInfo<T::AccountId, T::AssetId, ConstU32<2>>,
 		pool_account: T::AccountId,
-		// Bounds for the Vec can be specified here to based on a pallet config.
-		// The details can be figured out in the implementation
 		assets: BoundedVec<AssetAmount<T::AssetId, T::Balance>, ConstU32<2>>,
 		min_mint_amount: T::Balance,
 		keep_alive: bool,
@@ -150,7 +148,6 @@ impl<T: Config> DualAssetConstantProduct<T> {
 						first.amount.safe_add(&second.amount)?,
 					);
 
-					// REVIEW(benluelo): Is this correct?
 					ensure!(
 						per_thing_acceptable_computation_error(
 							input_ratio_first_to_second,
@@ -259,7 +256,6 @@ impl<T: Config> DualAssetConstantProduct<T> {
 				let input_ratio_first_to_second =
 					Permill::from_rational(first.amount, first.amount.safe_add(&second.amount)?);
 
-				// REVIEW(benluelo): Is this correct?
 				ensure!(
 					per_thing_acceptable_computation_error(
 						input_ratio_first_to_second,
@@ -376,7 +372,6 @@ impl<T: Config> DualAssetConstantProduct<T> {
 fn per_thing_acceptable_computation_error<T>(a: T, b: T) -> bool
 where
 	T: PerThing + Sub<Output = T>,
-	// T::Inner: From<u16>,
 {
 	let c = if a > b { a - b } else { b - a };
 
