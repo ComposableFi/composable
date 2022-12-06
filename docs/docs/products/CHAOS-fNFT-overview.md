@@ -2,11 +2,12 @@
 
 ## Introduction
 
-xPICA is a financial NFT (fNFT) that represents the locked yield-bearing version of PICA. Users will lock their PICA for
-various amounts of time to mint xPICA, an fNFT that represents the amount of PICA locked and the duration, with the 
-relevant multiplier proportional to how long a user locked for. 
-Users holding xPICA will earn yield in the form of PICA and other incubated tokens, as well as the yield from our 
-actively managed treasury and various revenue streams such as network transactions.
+Previously known as CHAOS, xPICA is a financial NFT (fNFT) that represents the locked yield-bearing version of PICA. 
+Users will lock their PICA for various amounts of time to mint xPICA, 
+an fNFT that represents the amount of PICA locked and the duration, 
+with the relevant multiplier proportional to how long a user locked for. 
+Users holding xPICA will earn yield in the form of PICA and other incubated tokens, 
+as well as the yield from our actively managed treasury and various revenue streams such as network transactions.
 
 Financial NFTs (fNFTs) are a form of tokenization that allows composability and utility within DeFi ecosystems. 
 The more widely used VE tokens, which function as receipts for locked assets, do not provide this functionality. 
