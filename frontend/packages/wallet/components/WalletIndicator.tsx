@@ -10,13 +10,12 @@ import {
 } from "@mui/material";
 import Image from "next/image";
 import { useCallback } from "react";
-import React from "react";
 import "../styles/theme.d.ts";
 
 type ConnectionButtonProps = {
   label: string;
   onClick: () => void;
-  isEthereumConnected: boolean;
+  isEthereumConnected?: boolean;
   isPolkadotConnected: boolean;
 };
 

@@ -12,6 +12,7 @@ import * as React from "react";
 import { NavBar } from "../Organisms";
 import { PolkadotConnect } from "../Organisms/Wallet/PolkadotConnect";
 import { AnimatedCircles } from "@/components/Molecules/AnimatedCircles";
+import NoSSR from "@/components/Atoms/NoSSR";
 
 type DefaultLayoutProps = {
   breadcrumbs?: React.ReactNode[];
@@ -66,8 +67,9 @@ export const DefaultLayout: React.FC<DefaultLayoutProps> = (props) => {
               <MenuIcon />
             </IconButton>
             <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-              {/* TODO: adding other content for toolbar */}
-              <PolkadotConnect />
+              <NoSSR>
+                <PolkadotConnect />
+              </NoSSR>
             </Box>
             {!isMobile && breadcrumbs && (
               <Breadcrumbs

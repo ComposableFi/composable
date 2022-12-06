@@ -42,7 +42,7 @@ export const PolkadotAccountView = ({
   const theme = useTheme();
   return (
     <TabPanel value={activePanel} index={WalletViewTabs.Wallets}>
-      <Grid container xs={12}>
+      <Grid container>
         <Grid item xs={8}>
           <Typography variant="inputLabel">Connected with</Typography>
           <Badge
