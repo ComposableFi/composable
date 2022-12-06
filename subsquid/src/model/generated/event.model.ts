@@ -36,8 +36,9 @@ export class Event {
   /**
    * Timestamp of the block in which this transaction was registered
    */
-  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
-  timestamp!: bigint
+  @Index_()
+  @Column_("timestamp with time zone", {nullable: false})
+  timestamp!: Date
 
   /**
    * If this transaction came from Pablo, it will have extra information

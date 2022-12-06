@@ -2,8 +2,6 @@ import { Field, ObjectType, Query, Resolver } from "type-graphql";
 import type { EntityManager } from "typeorm";
 import { Asset, Currency, HistoricalAssetPrice } from "../../model";
 
-const DAY_IN_MS = 24 * 60 * 60 * 1_000;
-
 @ObjectType()
 export class Assets {
   @Field(() => String, { nullable: false })
@@ -59,9 +57,6 @@ export class AssetsResolver {
 
   @Query(() => [Assets])
   async assetsPrices(): Promise<Assets[]> {
-    const currentTimestamp = new Date().valueOf();
-    const threshold = currentTimestamp - DAY_IN_MS;
-
     const manager = await this.tx();
 
     // Query asset prices.
@@ -93,14 +88,14 @@ export class AssetsResolver {
                 SELECT
                     MAX(timestamp) as max_timestamp
                 FROM historical_asset_price
-                WHERE timestamp < ${threshold}
+                WHERE timestamp < current_timestamp - interval '1 day'
                 GROUP BY asset_id
             )
             OR timestamp IN (
                 SELECT
                     MIN(timestamp) as min_timestamp
                 FROM historical_asset_price
-                WHERE timestamp > ${threshold}
+                WHERE timestamp > current_timestamp - interval '1day'
                 GROUP BY asset_id
             )
         `
