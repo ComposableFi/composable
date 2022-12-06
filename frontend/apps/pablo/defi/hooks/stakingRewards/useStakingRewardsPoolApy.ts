@@ -20,17 +20,20 @@ export function useStakingRewardsPoolApy(
     let _apy: Record<string, BigNumber> = {};
     const rewards = Object.keys(stakingRewardPool.rewards);
     for (const rewardAsset of rewards) {
-      const rewardAssetValue = await parachainApi.query.oracle.prices(rewardAsset);
-        const { period, amount } = stakingRewardPool.rewards[rewardAsset].rewardRate;
-        _apy[rewardAsset] = calculateStakingRewardsPoolApy(
+      const rewardAssetValue = await parachainApi.query.oracle.prices(
+        rewardAsset
+      );
+      const { period, amount } =
+        stakingRewardPool.rewards[rewardAsset].rewardRate;
+      _apy[rewardAsset] = calculateStakingRewardsPoolApy(
         new BigNumber(rewardAssetValue.toString()),
         period === "PerSecond" ? amount.times(86400) : new BigNumber(0),
-        totalValueLocked        
-      )
+        totalValueLocked
+      );
     }
 
-    setApy(_apy)
-  }, [])
+    setApy(_apy);
+  }, []);
 
   return apy;
 }

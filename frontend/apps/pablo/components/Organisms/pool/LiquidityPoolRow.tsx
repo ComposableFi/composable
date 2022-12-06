@@ -1,4 +1,4 @@
-import { TableCell, TableRow, Box, Typography } from "@mui/material";
+import { Box, TableCell, TableRow, Typography } from "@mui/material";
 import { useAsset, useAssetIdOraclePrice, useAssets } from "@/defi/hooks";
 import { PairAsset } from "@/components/Atoms";
 import { useLiquidityPoolStats } from "@/defi/hooks/useLiquidityPoolStats";
@@ -22,7 +22,9 @@ const LiquidityPoolRow = ({
   liquidityPool: PabloConstantProductPool;
   handleRowClick: (e: any, poolId: string) => void;
 }) => {
-  const lpAssetId = liquidityPool.getLiquidityProviderToken().getPicassoAssetId() as string;
+  const lpAssetId = liquidityPool
+    .getLiquidityProviderToken()
+    .getPicassoAssetId() as string;
   const pair = liquidityPool.getPair();
   const rewardPool = useStakingRewardPool(lpAssetId);
   const rewardAssets = useAssets(
@@ -30,23 +32,19 @@ const LiquidityPoolRow = ({
   );
 
   let baseAssetId = pair.getBaseAsset().toString();
-  let quoteAssetId = pair.getQuoteAsset().toString()
+  let quoteAssetId = pair.getQuoteAsset().toString();
   const poolStats = useLiquidityPoolStats(liquidityPool);
   const liquidity = useLiquidity(liquidityPool);
   const baseAsset = useAsset(baseAssetId);
   const quoteAsset = useAsset(quoteAssetId);
-  const quoteAssetPriceUSD = useAssetIdOraclePrice(
-    quoteAssetId
-  );
-  const baseAssetPriceUSD = useAssetIdOraclePrice(
-    baseAssetId
-  );
+  const quoteAssetPriceUSD = useAssetIdOraclePrice(quoteAssetId);
+  const baseAssetPriceUSD = useAssetIdOraclePrice(baseAssetId);
 
   const apy = useStakingRewardsPoolApy(lpAssetId);
   const rewardAPYs = useMemo(() => {
     return Object.keys(apy).reduce((v, i) => {
-      return v.plus(apy[i])
-    }, new BigNumber(0))
+      return v.plus(apy[i]);
+    }, new BigNumber(0));
   }, [apy]);
 
   return (
@@ -60,7 +58,9 @@ const LiquidityPoolRow = ({
       <TableCell align="left">
         {baseAsset && quoteAsset && (
           <PairAsset
-            assets={liquidityPool.getLiquidityProviderToken().getUnderlyingAssetJSON()}
+            assets={liquidityPool
+              .getLiquidityProviderToken()
+              .getUnderlyingAssetJSON()}
             separator="/"
           />
         )}
@@ -79,30 +79,30 @@ const LiquidityPoolRow = ({
         </Typography>
       </TableCell>
       <TableCell align="left">
-        <Typography variant="body2">{
-          rewardAPYs.toFixed(DEFAULT_UI_FORMAT_DECIMALS)
-        }%</Typography>
+        <Typography variant="body2">
+          {rewardAPYs.toFixed(DEFAULT_UI_FORMAT_DECIMALS)}%
+        </Typography>
       </TableCell>
       <TableCell align="left">
         {rewardAssets
           ? rewardAssets.map((item) => {
-            return (
-              <Box key={item.getName()} display="flex">
-                <PairAsset
-                  assets={[
-                    {
-                      icon: item.getIconUrl(),
-                      label: item.getSymbol(),
-                    },
-                  ]}
-                  label={calculateRewardPerDayByAssetId(
-                    item.getPicassoAssetId() as string,
-                    rewardPool
-                  ).toFixed(DEFAULT_UI_FORMAT_DECIMALS)}
-                />
-              </Box>
-            );
-          })
+              return (
+                <Box key={item.getName()} display="flex">
+                  <PairAsset
+                    assets={[
+                      {
+                        icon: item.getIconUrl(),
+                        label: item.getSymbol(),
+                      },
+                    ]}
+                    label={calculateRewardPerDayByAssetId(
+                      item.getPicassoAssetId() as string,
+                      rewardPool
+                    ).toFixed(DEFAULT_UI_FORMAT_DECIMALS)}
+                  />
+                </Box>
+              );
+            })
           : null}
       </TableCell>
       <TableCell align="left">
@@ -110,8 +110,8 @@ const LiquidityPoolRow = ({
           $
           {poolStats
             ? quoteAssetPriceUSD
-              .times(poolStats.totalVolume)
-              .toFormat(DEFAULT_UI_FORMAT_DECIMALS)
+                .times(poolStats.totalVolume)
+                .toFormat(DEFAULT_UI_FORMAT_DECIMALS)
             : 0}
         </Typography>
       </TableCell>

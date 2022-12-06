@@ -19,6 +19,7 @@ import { Link } from "../Molecules";
 import { NextRouter, useRouter } from "next/router";
 import { Logo } from "../Atoms";
 import { MenuItemType } from "../types";
+import { FC } from "react";
 
 const MENU_ITEMS: MenuItemType[] = [
   {
@@ -57,19 +58,12 @@ const MENU_ITEMS: MenuItemType[] = [
     matches: ["/staking"],
   },
   {
-    label: "Auctions",
-    path: "/auctions",
-    icon: dynamic(() => import("@mui/icons-material/HowToVoteRounded")),
-    status: "active",
-    matches: ["/auctions"],
-  },
-  {
     label: "Picasso",
     path: "/picasso",
     icon: dynamic(() => import("@mui/icons-material/Autorenew")),
     status: "active",
     endAdornment: (
-      <Link href="https://picasso.composable.finance/">
+      <Link href="https://picasso.xyz/" target="_blank">
         <IconButton>
           <OpenInNew />
         </IconButton>
@@ -115,7 +109,7 @@ const MenuItem = (
   );
 };
 
-export const NavBar: React.FC = () => {
+export const NavBar: FC = () => {
   const theme = useTheme();
   const isTablet = useTablet();
   const router = useRouter();
