@@ -2,23 +2,24 @@ import { useTablet } from "@/hooks/responsive";
 import { OpenInNew } from "@mui/icons-material";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Box,
-  useTheme,
   IconButton,
   List,
   ListItem,
   ListItemIcon,
   ListItemText,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   Theme,
+  useTheme,
 } from "@mui/material";
 import dynamic from "next/dynamic";
 import { Link } from "../Molecules";
 import { NextRouter, useRouter } from "next/router";
 import { Logo } from "../Atoms";
 import { MenuItemType } from "../types";
+import { FC } from "react";
 
 const MENU_ITEMS: MenuItemType[] = [
   {
@@ -40,7 +41,12 @@ const MENU_ITEMS: MenuItemType[] = [
     path: "/pool",
     icon: dynamic(() => import("@mui/icons-material/AttachMoney")),
     status: "active",
-    matches: ["/pool", "/pool/add-liquidity", "/pool/select", "/pool/create-pool"],
+    matches: [
+      "/pool",
+      "/pool/add-liquidity",
+      "/pool/select",
+      "/pool/create-pool",
+    ],
   },
   {
     label: "Bond",
@@ -115,7 +121,7 @@ const MenuItem = (
   );
 };
 
-export const NavBar: React.FC = () => {
+export const NavBar: FC = () => {
   const theme = useTheme();
   const isTablet = useTablet();
   const router = useRouter();

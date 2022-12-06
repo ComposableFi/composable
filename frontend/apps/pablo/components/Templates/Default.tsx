@@ -15,18 +15,19 @@ import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
 import Toolbar from "@mui/material/Toolbar";
 import * as React from "react";
+import { FC, useMemo } from "react";
 import { NavBar } from "../Organisms";
 import { PolkadotConnect } from "../Organisms/Wallet/PolkadotConnect";
 import { AnimatedCircles } from "@/components/Molecules/AnimatedCircles";
 import NoSSR from "@/components/Atoms/NoSSR";
-import { useMemo } from "react";
+import { GasFeeDropdown } from "@/components/Organisms/BYOG/GasFeeDropdown";
 
 type DefaultLayoutProps = {
   breadcrumbs?: React.ReactNode[];
   children?: React.ReactNode;
 };
 
-export const DefaultLayout: React.FC<DefaultLayoutProps> = (props) => {
+export const DefaultLayout: FC<DefaultLayoutProps> = (props) => {
   const { children, breadcrumbs } = props;
 
   const [mobileOpen, setMobileOpen] = React.useState(false);
@@ -94,6 +95,10 @@ export const DefaultLayout: React.FC<DefaultLayoutProps> = (props) => {
             </IconButton>
             <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
               <NoSSR>
+                <GasFeeDropdown
+                  toggleModal={() => {}}
+                  setTargetFeeItem={() => {}}
+                />
                 <ThemeProvider theme={walletThemeOverride}>
                   <PolkadotConnect />
                 </ThemeProvider>

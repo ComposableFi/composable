@@ -111,7 +111,7 @@ export const PolkadotAccountView = ({
                 alignItems="center"
                 justifyContent="space-between"
               >
-                <Typography variant="body3" fontWeight="bold">
+                <Typography variant="body2" fontWeight="bold">
                   {selectedPolkadotAccount.meta.name}
                 </Typography>
                 <Box>
