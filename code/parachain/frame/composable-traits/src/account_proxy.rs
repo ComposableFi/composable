@@ -134,6 +134,6 @@ impl<Runtime: proxy::Config> AccountProxy for AccountProxyWrapper<Runtime> {
 	}
 
 	fn find_proxy(real: &Self::AccountId, delegate: &Self::AccountId, force_proxy_type: Option<Self::ProxyType>) -> Result<ProxyDefinition<Self::AccountId, Self::ProxyType, Self::BlockNumber>, DispatchError> {
-		Self::Proxy::find_proxy(real, delegate, force_proxy_type).map(|proxy| ProxyDefinition::from(proxy))
+		Self::Proxy::find_proxy(real, delegate, force_proxy_type).map(|proxy| proxy.into())
 	}
 }
