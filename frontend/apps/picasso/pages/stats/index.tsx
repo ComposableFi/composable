@@ -16,6 +16,7 @@ const tabItems: TabItem[] = [
   },
   {
     label: "Apollo",
+    disabled: true,
   },
 ];
 
