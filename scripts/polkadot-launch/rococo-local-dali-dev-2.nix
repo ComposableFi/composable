@@ -12,7 +12,7 @@ in {
     relaychain = {
       bin = "${polkadot-bin}/bin/polkadot";
       chain = "rococo-local";
-      port = 30444;
+      port = 30445;
       wsPort = 29944;
       count = 2;
       flags = [
@@ -25,7 +25,7 @@ in {
     };
     parachains = [{
       id = 2087;
-      port = 31200;
+      port = 31201;
       wsPort = 29988;
       count = 3;
       chain = "dali-dev";
