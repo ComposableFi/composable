@@ -2,6 +2,8 @@
   modules = [
     (
       let
+        consfigPathSource = "/tmp/config.toml";
+        consfigPathContainer = "/tmp/config.toml";
 
         devnetConfigs = [
           {
@@ -37,7 +39,26 @@
           project.name = "composable";
           networks."${network-name}" = { };
           services = builtins.listToAttrs (map toService devnetConfigs) // {
-            "centauri" = mkComposableContainer (import ../services/centauri.nix { });
+            "centauri" = mkComposableContainer (import ../services/centauri.nix { 
+              [ 
+                "create-clients" "--config" configPathContainer
+              ] configPathSource configPathContainer null
+            });
+
+            /*
+            "centauri" = mkComposableContainer (import ../services/centauri.nix { 
+              [ 
+                "create-connection" "--config" configPathContainer
+              ] configPathSource configPathContainer {
+                    depends_on = {
+                              create-clients = {
+                                condition = service_completed_successfully
+                              }
+                    }
+              }
+            });
+
+            */
           };
         };
       }

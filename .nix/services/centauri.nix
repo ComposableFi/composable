@@ -1,16 +1,18 @@
-{  }: {
+{ execCommands configPathSource configPathContainer dependsOn}: {
   service = {
-    name = "hyperspace";
+    name = "hyperspace-create-client";
     image = "composablefi/composable-centauri:d8fdb31227a221a794f86c5bba4a8127cf8e71d5";
     restart = "always";
-    # environment = {
-    #   DEV_MODE = "true";
-    #   DB_NAME = database.name;
-    #   DB_HOST = database.host;
-    #   DB_USER = database.user;
-    #   DB_PASS = database.password;
-    #   DB_PORT = database.port;
-    # };
-    # ports = [ "${toString graphql-port}:8080" ];
+    volumes = {
+      type = "bind";
+      source = configPathSource;
+      target = configPathContainer;
+    };
+     environment = {
+       RUST_LOG = "info";
+    };
+    commands = execCommands;
+    # should only be added if it's null
+    depends_on = dependsOn; 
   };
 }
