@@ -111,7 +111,7 @@ benchmarks! {
 			  false
 		));
 		let user = account("user", 0, 0);
-		assert_ok!(T::Assets::mint_into(usdt, &user, (1001_u128 * unit).into()));
+		assert_ok!(T::Assets::mint_into(usdt, &user, (1020_u128 * unit).into()));
 		// buy 1000 USDC
 	 }: _(RawOrigin::Signed(user), pool_id, usdt, AssetAmount::new(usdc, (1000_u128 * unit).into()), false)
 

@@ -449,24 +449,14 @@ declare module '@polkadot/api-base/types/consts' {
        * AssetId of the PBLO asset
        **/
       pbloAssetId: u128 & AugmentedConst<ApiType>;
-      pbloStakeFinancialNftCollectionId: u128 & AugmentedConst<ApiType>;
       /**
        * AssetId of the PICA asset
        **/
       picaAssetId: u128 & AugmentedConst<ApiType>;
-      picaStakeFinancialNftCollectionId: u128 & AugmentedConst<ApiType>;
       /**
        * The interval between TWAP computations.
        **/
       twapInterval: u64 & AugmentedConst<ApiType>;
-      /**
-       * AssetId of the xToken variant of PBLO asset
-       **/
-      xPbloAssetId: u128 & AugmentedConst<ApiType>;
-      /**
-       * AssetId of the xToken variant of PICA asset
-       **/
-      xPicaAssetId: u128 & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/

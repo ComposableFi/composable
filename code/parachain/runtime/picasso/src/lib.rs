@@ -14,6 +14,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
+#![allow(incomplete_features)] // see other usage -
+#![feature(adt_const_params)]
 
 // Make the WASM binary available
 #[cfg(all(feature = "std", feature = "builtin-wasm"))]
@@ -22,16 +24,21 @@ pub const WASM_BINARY_V2: Option<&[u8]> = Some(include_bytes!(env!("PICASSO_RUNT
 pub const WASM_BINARY_V2: Option<&[u8]> = None;
 
 pub mod governance;
+mod migrations;
+mod prelude;
 mod weights;
+
 pub mod xcmp;
 pub use common::xcmp::{MaxInstructions, UnitWeightCost};
 pub use xcmp::XcmConfig;
 
 use governance::*;
+use prelude::*;
 
 use common::{
 	fees::{
 		multi_existential_deposits, NativeExistentialDeposit, PriceConverter, WeightToFeeConverter,
+		WellKnownForeignToNativePriceConverter,
 	},
 	governance::native::*,
 	rewards::StakingPot,
@@ -41,7 +48,7 @@ use common::{
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 
-use composable_traits::assets::Asset;
+use composable_traits::{assets::Asset, xcm::assets::RemoteAssetRegistryInspect};
 use primitives::currency::{CurrencyId, ValidateCurrencyId};
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
@@ -53,7 +60,7 @@ use sp_runtime::{
 };
 
 use composable_support::rpc_helpers::SafeRpcWrapper;
-use sp_std::prelude::*;
+
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
@@ -123,7 +130,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// The version of the runtime specification. A full node will not attempt to use its native
 	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
-	spec_version: 1402,
+	spec_version: 10_003,
 	impl_version: 2,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -239,8 +246,8 @@ impl assets_registry::Config for Runtime {
 	type LocalAssetId = CurrencyId;
 	type Balance = Balance;
 	type ForeignAssetId = composable_traits::xcm::assets::XcmAssetLocation;
-	type UpdateAssetRegistryOrigin = EnsureRootOrHalfNativeCouncil;
-	type ParachainOrGovernanceOrigin = EnsureRootOrHalfNativeCouncil;
+	type UpdateAssetRegistryOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type ParachainOrGovernanceOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type CurrencyFactory = CurrencyFactory;
 	type WeightInfo = weights::assets_registry::WeightInfo<Runtime>;
 }
@@ -253,7 +260,7 @@ impl assets::Config for Runtime {
 	type NativeCurrency = Balances;
 	type MultiCurrency = Tokens;
 	type WeightInfo = ();
-	type AdminOrigin = EnsureRootOrHalfNativeCouncil;
+	type AdminOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type GovernanceRegistry = GovernanceRegistry;
 	type CurrencyValidator = ValidateCurrencyId;
 }
@@ -397,7 +404,7 @@ impl asset_tx_payment::Config for Runtime {
 
 	type WeightInfo = weights::asset_tx_payment::WeightInfo<Runtime>;
 
-	type ConfigurationOrigin = EnsureRootOrHalfNativeCouncil;
+	type ConfigurationOrigin = EnsureRootOrTwoThirdNativeCouncil;
 
 	type ConfigurationExistentialDeposit = common::fees::NativeExistentialDeposit;
 
@@ -546,7 +553,7 @@ parameter_types! {
 impl collator_selection::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
-	type UpdateOrigin = EnsureRootOrHalfNativeCouncil;
+	type UpdateOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type PotId = PotId;
 	type MaxCandidates = MaxCandidates;
 	type MinCandidates = MinCandidates;
@@ -631,7 +638,7 @@ impl utility::Config for Runtime {
 impl currency_factory::Config for Runtime {
 	type Event = Event;
 	type AssetId = CurrencyId;
-	type AddOrigin = EnsureRootOrHalfNativeCouncil;
+	type AddOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type WeightInfo = weights::currency_factory::WeightInfo<Runtime>;
 	type Balance = Balance;
 }
@@ -641,7 +648,7 @@ parameter_types! {
 	pub const CrowdloanRewardsLockId: LockIdentifier = *b"clr_lock";
 	pub const InitialPayment: Perbill = Perbill::from_percent(50);
 	pub const OverFundedThreshold: Perbill = Perbill::from_percent(1);
-	pub const VestingStep: Moment = (7 * DAYS as Moment) * (MILLISECS_PER_BLOCK as Moment);
+	pub const VestingStep: Moment = (DAYS as Moment) * (MILLISECS_PER_BLOCK as Moment);
 	pub const Prefix: &'static [u8] = b"picasso-";
 	pub const LockCrowdloanRewards: bool = true;
 }
@@ -650,7 +657,7 @@ impl crowdloan_rewards::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
 	type RewardAsset = Assets;
-	type AdminOrigin = EnsureRootOrHalfNativeCouncil;
+	type AdminOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type Convert = sp_runtime::traits::ConvertInto;
 	type RelayChainAccountId = sp_runtime::AccountId32;
 	type InitialPayment = InitialPayment;
@@ -675,8 +682,8 @@ impl vesting::Config for Runtime {
 	type Event = Event;
 	type MaxVestingSchedules = MaxVestingSchedule;
 	type MinVestedTransfer = MinVestedTransfer;
-	type VestedTransferOrigin = EnsureRootOrHalfNativeCouncil;
-	type UpdateSchedulesOrigin = EnsureRootOrHalfNativeCouncil;
+	type VestedTransferOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type UpdateSchedulesOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type WeightInfo = weights::vesting::WeightInfo<Runtime>;
 	type Moment = Moment;
 	type Time = Timestamp;
@@ -691,7 +698,7 @@ parameter_types! {
 }
 
 impl bonded_finance::Config for Runtime {
-	type AdminOrigin = EnsureRootOrHalfNativeCouncil;
+	type AdminOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type BondOfferId = BondOfferId;
 	type Convert = sp_runtime::traits::ConvertInto;
 	type Currency = Assets;
@@ -715,7 +722,7 @@ impl Contains<Call> for BaseCallFilter {
 
 impl call_filter::Config for Runtime {
 	type Event = Event;
-	type UpdateOrigin = EnsureRootOrOneThirdNativeTechnical;
+	type UpdateOrigin = EnsureRootOrHalfNativeTechnical;
 	type Hook = ();
 	type WeightInfo = ();
 	type MaxStringSize = MaxStringSize;
@@ -755,8 +762,8 @@ construct_runtime!(
 		CouncilMembership: membership::<Instance1> = 31,
 		Treasury: treasury::<Instance1> = 32,
 		Democracy: democracy::<Instance1> = 33,
-		TechnicalCollective: collective::<Instance2> = 70,
-		TechnicalMembership: membership::<Instance2> = 71,
+		TechnicalCommittee: collective::<Instance2> = 72,
+		TechnicalCommitteeMembership: membership::<Instance2> = 73,
 
 		// helpers/utilities
 		Scheduler: scheduler = 34,
@@ -801,14 +808,6 @@ pub type SignedExtra = (
 	asset_tx_payment::ChargeAssetTxPayment<Runtime>,
 );
 
-// Migration for scheduler pallet to move from a plain Call to a CallOrHash.
-pub struct SchedulerMigrationV3;
-impl OnRuntimeUpgrade for SchedulerMigrationV3 {
-	fn on_runtime_upgrade() -> frame_support::weights::Weight {
-		Scheduler::migrate_v2_to_v3()
-	}
-}
-
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
 /// Executive: handles dispatch to the various modules.
@@ -818,7 +817,7 @@ pub type Executive = executive::Executive<
 	system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	SchedulerMigrationV3,
+	crate::migrations::Migrations,
 >;
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -858,7 +857,31 @@ impl_runtime_apis! {
 		}
 
 		fn list_assets() -> Vec<Asset<Balance, ForeignAssetId>> {
-			CurrencyId::list_assets()
+			// Hardcoded assets
+			let assets = CurrencyId::list_assets().into_iter().map(|mut asset| {
+				// Add hardcoded ratio and ED for well known assets
+				asset.ratio = WellKnownForeignToNativePriceConverter::get_ratio(CurrencyId(asset.id));
+				asset.existential_deposit = multi_existential_deposits::<AssetsRegistry>(&asset.id.into());
+				asset
+			}).collect::<Vec<_>>();
+
+			// Assets from the assets-registry pallet
+			let foreign_assets = assets_registry::Pallet::<Runtime>::get_foreign_assets_list();
+
+			// Override asset data for hardcoded assets that have been manually updated, and append
+			// new assets without duplication
+			foreign_assets.into_iter().fold(assets, |mut acc, mut foreign_asset| {
+				if let Some(asset) = acc.iter_mut().find(|asset_i| asset_i.id == foreign_asset.id) {
+					// Update asset with data from assets-registry
+					asset.decimals = foreign_asset.decimals;
+					asset.foreign_id = foreign_asset.foreign_id.clone();
+					asset.ratio = foreign_asset.ratio;
+				} else {
+					foreign_asset.existential_deposit = multi_existential_deposits::<AssetsRegistry>(&foreign_asset.id.into());
+					acc.push(foreign_asset.clone())
+				}
+				acc
+			})
 		}
 	}
 

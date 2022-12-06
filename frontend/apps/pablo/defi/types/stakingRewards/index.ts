@@ -23,15 +23,15 @@ export type StakingRewardPoolLockConfig = {
 };
 
 export type StakingRewardPool = {
-  assetId: BigNumber;
-  claimedShares: BigNumber;
-  endBlock: BigNumber;
-  lock: StakingRewardPoolLockConfig;
   owner: string;
   rewards: Record<string, StakingRewardPoolRewardConfig>;
-  totalShares: BigNumber;
+  claimedShares: BigNumber;
+  startBlock: BigNumber;
+  endBlock: BigNumber;
+  lock: StakingRewardPoolLockConfig;
   shareAssetId: string;
   financialNftAssetId: string;
+  minimumStakingAmount: BigNumber;
 };
 
 export type Stake = {

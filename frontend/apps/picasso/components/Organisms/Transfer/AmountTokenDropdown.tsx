@@ -150,6 +150,7 @@ export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
                   placement="top"
                   title={`${balance.toFixed()} ${tokens[tokenId].symbol}`}
                   color="primary"
+                  disableHoverListener={disabled}
                   sx={{
                     fontSize: "1rem",
                   }}
@@ -171,14 +172,14 @@ export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
         CombinedSelectProps={{
           options: tokenOptions.map((token) => ({
             ...token,
-            disabled: isTokenBalanceZero(token.tokenId),
+            disabled: disabled,
           })),
           value: selectedToken,
           setValue: updateSelectedToken,
           disabled,
         }}
       />
-      {hasError && (
+      {hasError && !disabled && (
         <Typography variant="caption" color="error.main">
           Please input a valid number
         </Typography>

@@ -41,7 +41,7 @@ fn dex() {
 		LocalAssetId::kUSD,
 		// prices are set just for easy debugging
 		100,
-		FixedU128::saturating_from_integer(42u64),
+		FixedU128::saturating_from_integer(42_u64),
 	);
 
 	// this can be generated from scale by third parties

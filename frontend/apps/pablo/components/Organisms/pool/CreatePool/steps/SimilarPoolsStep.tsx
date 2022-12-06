@@ -11,14 +11,13 @@ import {
   useTheme,
 } from "@mui/material";
 import { useState } from "react";
-import { useDispatch } from "react-redux";
 import { TransactionSettings } from "@/components/Organisms/TransactionSettings";
-import { openTransactionSettingsModal } from "@/stores/ui/uiSlice";
 import { useAsset } from "@/defi/hooks/assets/useAsset";
 import BigNumber from "bignumber.js";
 import FormWrapper from "../FormWrapper";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import useStore from "@/store/useStore";
+import { setUiState } from "@/store/ui/ui.slice";
 
 const itemBoxProps = (theme: Theme) =>
   ({
@@ -39,7 +38,6 @@ const SimilarPoolsStep: React.FC<SimilarPoolsStepProps> = ({
   ...boxProps
 }) => {
   const theme = useTheme();
-  const dispatch = useDispatch();
 
   const {
     createPool: {
@@ -48,8 +46,7 @@ const SimilarPoolsStep: React.FC<SimilarPoolsStepProps> = ({
       currentStep,
       similarPool,
       setSelectable,
-    },
-    supportedAssets,
+    }
   } = useStore();
 
   const [isSettingOnFlow, setIsSettingOnFlow] = useState<boolean>(false);
@@ -64,12 +61,12 @@ const SimilarPoolsStep: React.FC<SimilarPoolsStepProps> = ({
 
   const onNextClickHandler = () => {
     setIsSettingOnFlow(true);
-    dispatch(openTransactionSettingsModal());
+    setUiState({ isTransactionSettingsModalOpen: true });
   };
 
   const onSettingHandler = () => {
     setIsSettingOnFlow(false);
-    dispatch(openTransactionSettingsModal());
+    setUiState({ isTransactionSettingsModalOpen: true });
   };
 
   const onSettingCallback = () => {
@@ -94,8 +91,8 @@ const SimilarPoolsStep: React.FC<SimilarPoolsStepProps> = ({
         {_baseAsset && _quoteAsset && (
           <PairAsset
             assets={[
-              { icon: _baseAsset.icon, label: _baseAsset.symbol },
-              { icon: _quoteAsset.icon, label: _quoteAsset.symbol },
+              { icon: _baseAsset.getIconUrl(), label: _baseAsset.getSymbol() },
+              { icon: _quoteAsset.getIconUrl(), label: _quoteAsset.getSymbol() },
             ]}
             iconSize={32}
             LabelProps={{ variant: "body1" }}

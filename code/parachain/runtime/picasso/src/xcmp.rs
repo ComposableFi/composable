@@ -300,5 +300,5 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 impl cumulus_pallet_dmp_queue::Config for Runtime {
 	type Event = Event;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type ExecuteOverweightOrigin = EnsureRootOrHalfNativeCouncil;
+	type ExecuteOverweightOrigin = EnsureRootOrTwoThirdNativeCouncil;
 }

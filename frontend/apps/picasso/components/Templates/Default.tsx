@@ -16,7 +16,7 @@ type DefaultLayoutProps = {
   breadcrumbs?: React.ReactNode[];
 };
 
-export const DefaultLayout: React.FC<DefaultLayoutProps> = props => {
+export const DefaultLayout: React.FC<DefaultLayoutProps> = (props) => {
   const { children, breadcrumbs } = props;
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const isTablet = useTablet();
@@ -37,10 +37,10 @@ export const DefaultLayout: React.FC<DefaultLayoutProps> = props => {
           ml: { md: `${drawerWidth}px` },
           px: {
             xs: "0",
-            md: theme.spacing(3)
+            md: theme.spacing(3),
           },
           backgroundColor: alpha("#0f0904", 0.9),
-          backdropFilter: "blur(32x)"
+          backdropFilter: "blur(32x)",
         }}
       >
         <Toolbar
@@ -48,7 +48,7 @@ export const DefaultLayout: React.FC<DefaultLayoutProps> = props => {
             display: "flex",
             justifyContent: "space-between",
             flexDirection: "row-reverse",
-            gap: 3
+            gap: 3,
           }}
         >
           <IconButton
@@ -82,15 +82,15 @@ export const DefaultLayout: React.FC<DefaultLayoutProps> = props => {
           anchor="right"
           onClose={handleDrawerToggle}
           ModalProps={{
-            keepMounted: true // Better open performance on mobile.
+            keepMounted: true, // Better open performance on mobile.
           }}
           sx={{
-            display: { xs: "block", sm: "block", md: "none" },
+            display: { xs: "block", sm: "block", md: "none", background: theme.palette.primary.dark, },
             "& .MuiDrawer-paper": {
               boxSizing: "border-box",
               width: drawerWidth,
-              padding: "0rem"
-            }
+              padding: "0rem",
+            },
           }}
         >
           <NavBar />
@@ -102,8 +102,8 @@ export const DefaultLayout: React.FC<DefaultLayoutProps> = props => {
             "& .MuiDrawer-paper": {
               boxSizing: "border-box",
               width: drawerWidth,
-              padding: 0
-            }
+              padding: 0,
+            },
           }}
           open
         >
@@ -118,7 +118,7 @@ export const DefaultLayout: React.FC<DefaultLayoutProps> = props => {
           background: theme.palette.primary.dark,
           display: "flex",
           flexDirection: "column",
-          justifyContent: "flex-start"
+          justifyContent: "flex-start",
         }}
       >
         <Box
@@ -127,7 +127,7 @@ export const DefaultLayout: React.FC<DefaultLayoutProps> = props => {
             alignItems: "flex-start",
             justifyContent: "flex-start",
             flexDirection: "row",
-            flexGrow: 1
+            flexGrow: 1,
           }}
         >
           {children}
@@ -137,7 +137,7 @@ export const DefaultLayout: React.FC<DefaultLayoutProps> = props => {
             display: "flex",
             justifyContent: "flex-end",
             alignItems: "center",
-            height: theme.spacing(2)
+            height: theme.spacing(2),
           }}
         >
           <Typography variant="caption">

@@ -91,7 +91,7 @@ type Activity @entity {
   "ID of the active account"
   accountId: String! @index
   "Timestamp of the block in which this activity occurred"
-  timestamp: BigInt!
+  timestamp: DateTime! @index
 }
 
 type Asset @entity {
@@ -116,7 +116,7 @@ type HistoricalAssetPrice @entity {
   "ID of the asset"
   asset: Asset!
   price: BigInt!
-  timestamp: BigInt!
+  timestamp: DateTime! @index
   currency: Currency!
 }
 
@@ -154,7 +154,7 @@ type HistoricalLockedValue @entity {
   event: Event! @index
   amount: BigInt!
   currency: Currency!
-  timestamp: BigInt!
+  timestamp: DateTime! @index
   source: LockedSource!
 }
 
@@ -163,7 +163,7 @@ type HistoricalVolume @entity {
   event: Event! @index
   amount: BigInt!
   currency: Currency!
-  timestamp: BigInt!
+  timestamp: DateTime! @index
   assetId: String!
 }
 
@@ -219,7 +219,7 @@ type Event @entity {
   "Block in which transaction was registered"
   blockNumber: BigInt! @index
   "Timestamp of the block in which this transaction was registered"
-  timestamp: BigInt!
+  timestamp: DateTime! @index
   "If this transaction came from Pablo, it will have extra information"
   pabloTransaction: PabloTransaction @derivedFrom(field: "event")
   activities: [Activity!] @derivedFrom(field: "event")

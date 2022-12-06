@@ -1,6 +1,5 @@
 import { ApiPromise } from "@polkadot/api";
 import BigNumber from "bignumber.js";
-import { getExistentialDeposit } from "shared";
 
 export type PicassoRpcAsset = {
   name: string;

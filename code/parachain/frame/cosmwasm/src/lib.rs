@@ -45,7 +45,7 @@ pub mod runtimes;
 pub mod types;
 pub mod version;
 pub mod weights;
-
+pub use crate::ibc::NoRelayer;
 mod entrypoint;
 
 #[cfg(any(feature = "runtime-benchmarks", test))]
@@ -112,7 +112,7 @@ pub mod pallet {
 		transactional, BoundedBTreeMap, PalletId, StorageHasher, Twox64Concat,
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
-	use sp_core::{crypto::UncheckedFrom, ed25519};
+	use sp_core::{crypto::UncheckedFrom, ecdsa, ed25519};
 	use sp_runtime::traits::{Convert, Hash, MaybeDisplay, SaturatedConversion};
 	use sp_std::vec::Vec;
 
@@ -196,6 +196,9 @@ pub mod pallet {
 			contract: AccountIdOf<T>,
 			old_admin: Option<AccountIdOf<T>>,
 		},
+		IbcChannelOpen {
+			contract: AccountIdOf<T>,
+		},
 	}
 
 	#[pallet::error]
@@ -228,6 +231,7 @@ pub mod pallet {
 		IteratorNotFound,
 		NotAuthorized,
 		Unsupported,
+		Ibc,
 	}
 
 	#[pallet::config]
@@ -357,6 +361,11 @@ pub mod pallet {
 
 		/// Weight implementation.
 		type WeightInfo: WeightInfo;
+
+		/// account which execute relayer calls IBC exported entry points
+		type IbcRelayerAccount: Get<AccountIdOf<Self>>;
+
+		type IbcRelayer: ibc_primitives::IbcHandler<AccountIdOf<Self>>;
 	}
 
 	#[pallet::pallet]
@@ -416,10 +425,9 @@ pub mod pallet {
 		/// - `code` the actual wasm code.
 		#[transactional]
 		#[pallet::weight(T::WeightInfo::upload(code.len() as u32))]
-		pub fn upload(origin: OriginFor<T>, code: ContractCodeOf<T>) -> DispatchResultWithPostInfo {
+		pub fn upload(origin: OriginFor<T>, code: ContractCodeOf<T>) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			Self::do_upload(&who, code)?;
-			Ok(().into())
+			Self::do_upload(&who, code)
 		}
 
 		/// Instantiate a previously uploaded code resulting in a new contract being generated.
@@ -952,14 +960,18 @@ pub mod pallet {
 			Ok(())
 		}
 
+		fn block_env() -> BlockInfo {
+			BlockInfo {
+				height: frame_system::Pallet::<T>::block_number().saturated_into(),
+				time: Timestamp(T::UnixTime::now().as_secs().into()),
+				chain_id: T::ChainId::get().into(),
+			}
+		}
+
 		/// Extract the current environment from the pallet.
 		pub(crate) fn cosmwasm_env(cosmwasm_contract_address: CosmwasmAccount<T>) -> Env {
 			Env {
-				block: BlockInfo {
-					height: frame_system::Pallet::<T>::block_number().saturated_into(),
-					time: Timestamp(T::UnixTime::now().as_secs().into()),
-					chain_id: T::ChainId::get().into(),
-				},
+				block: Self::block_env(),
 				transaction: frame_system::Pallet::<T>::extrinsic_index()
 					.map(|index| TransactionInfo { index }),
 				contract: CosmwasmContractInfo {
@@ -1290,22 +1302,25 @@ pub mod pallet {
 			signature: &[u8],
 			public_key: &[u8],
 		) -> bool {
-			let message_hash = match libsecp256k1::Message::parse_slice(message_hash) {
+			let message_hash = match message_hash.try_into() {
 				Ok(message_hash) => message_hash,
 				Err(_) => return false,
 			};
 
-			let signature = match libsecp256k1::Signature::parse_standard_slice(signature) {
-				Ok(signature) => signature,
-				Err(_) => return false,
+			// We are expecting 64 bytes long public keys but the substrate function use an
+			// additional byte for recovery id. So we insert a dummy byte.
+			let signature = {
+				let mut signature_inner = [0_u8; SUBSTRATE_ECDSA_SIGNATURE_LEN];
+				signature_inner[..SUBSTRATE_ECDSA_SIGNATURE_LEN - 1].copy_from_slice(signature);
+				ecdsa::Signature(signature_inner)
 			};
 
 			let public_key = match libsecp256k1::PublicKey::parse_slice(public_key, None) {
-				Ok(public_key) => public_key,
+				Ok(public_key) => ecdsa::Public::from_raw(public_key.serialize_compressed()),
 				Err(_) => return false,
 			};
 
-			libsecp256k1::verify(&message_hash, &signature, &public_key)
+			sp_io::crypto::ecdsa_verify_prehashed(&signature, &message_hash, &public_key)
 		}
 
 		pub(crate) fn do_ed25519_batch_verify(

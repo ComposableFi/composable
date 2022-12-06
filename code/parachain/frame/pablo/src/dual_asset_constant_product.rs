@@ -1,6 +1,7 @@
 use crate::{Config, Error, PoolConfiguration, PoolCount, Pools};
-use composable_maths::dex::constant_product::{
-	compute_deposit_lp, compute_in_given_out, compute_out_given_in,
+use composable_maths::dex::{
+	constant_product::{compute_deposit_lp, compute_in_given_out_new, compute_out_given_in_new},
+	PoolWeightMathExt,
 };
 use composable_support::math::safe::{SafeAdd, SafeSub};
 use composable_traits::{
@@ -27,14 +28,14 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		assets_weights: BoundedBTreeMap<T::AssetId, Permill, ConstU32<2>>,
 	) -> Result<T::PoolId, DispatchError> {
 		ensure!(assets_weights.len() == 2, Error::<T>::InvalidPair);
-		let weights = assets_weights.iter().map(|(_, w)| w).copied().collect::<Vec<_>>();
+		ensure!(assets_weights.values().non_zero_weights(), Error::<T>::WeightsMustBeNonZero);
 		ensure!(
-			weights[0] != Permill::zero() && weights[1] != Permill::zero(),
-			Error::<T>::WeightsMustBeNonZero
-		);
-		ensure!(
-			weights[0].deconstruct() + weights[1].deconstruct() ==
-				Permill::from_percent(100).deconstruct(),
+			assets_weights
+				.values()
+				.sum_weights()
+				.map(|total_weight| total_weight.is_one())
+				// If `None`, `sum_weights` overflowed - weights are not normalized
+				.unwrap_or(false),
 			Error::<T>::WeightsMustSumToOne
 		);
 		ensure!(fee_config.fee_rate < Permill::one(), Error::<T>::InvalidFees);
@@ -143,42 +144,35 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		Ok((*first_asset_amount, *second_asset_amount, lp_issued.safe_sub(&lp_amount)?))
 	}
 
-	pub(crate) fn do_swap(
+	pub(crate) fn get_exchange_value(
 		pool: &BasicPoolInfo<T::AccountId, T::AssetId, ConstU32<2>>,
 		pool_account: &T::AccountId,
 		in_asset: AssetAmount<T::AssetId, T::Balance>,
-		min_receive: AssetAmount<T::AssetId, T::Balance>,
+		out_asset_id: T::AssetId,
 		apply_fees: bool,
-	) -> Result<(T::Balance, T::Balance, Fee<T::AssetId, T::Balance>), DispatchError> {
+	) -> Result<
+		(
+			AssetAmount<T::AssetId, T::Balance>,
+			AssetAmount<T::AssetId, T::Balance>,
+			Fee<T::AssetId, T::Balance>,
+		),
+		DispatchError,
+	> {
 		let pool_assets = Self::get_pool_balances(pool, pool_account);
-		let base_asset = pool_assets.get(&min_receive.asset_id).ok_or(Error::<T>::PairMismatch)?;
-		let quote_asset = pool_assets.get(&in_asset.asset_id).ok_or(Error::<T>::PairMismatch)?;
-		ensure!(base_asset.1 > 0 && quote_asset.1 > 0, Error::<T>::NotEnoughLiquidity);
+		let a_sent = T::Convert::convert(in_asset.amount);
+		let fee = if apply_fees { pool.fee_config.fee_rate } else { Permill::zero() };
+		let (w_i, b_i) = pool_assets.get(&in_asset.asset_id).ok_or(Error::<T>::AssetNotFound)?;
+		let (w_o, b_o) = pool_assets.get(&out_asset_id).ok_or(Error::<T>::AssetNotFound)?;
 
-		// TODO (vim): Fees refactored later
-		let fee = if apply_fees {
-			pool.fee_config.calculate_fees(in_asset.asset_id, in_asset.amount)
-		} else {
-			Fee::<T::AssetId, T::Balance>::zero(in_asset.asset_id)
-		};
-		// Charging fees "on the way in"
-		// https://balancer.gitbook.io/balancer/core-concepts/protocol/index#out-given-in
-		let quote_amount_excluding_lp_fee =
-			T::Convert::convert(in_asset.amount.safe_sub(&fee.fee)?);
-		let base_amount = compute_out_given_in(
-			quote_asset.0,
-			base_asset.0,
-			quote_asset.1,
-			base_asset.1,
-			quote_amount_excluding_lp_fee,
-		)?;
-		ensure!(base_amount > 0 && quote_amount_excluding_lp_fee > 0, Error::<T>::InvalidAmount);
+		let amm_pair = compute_out_given_in_new::<_>(*w_i, *w_o, *b_i, *b_o, a_sent, fee)?;
 
-		Ok((
-			T::Convert::convert(base_amount),
-			T::Convert::convert(quote_amount_excluding_lp_fee),
-			fee,
-		))
+		let a_out = AssetAmount::new(out_asset_id, T::Convert::convert(amm_pair.value));
+		let a_sent = AssetAmount::new(in_asset.asset_id, in_asset.amount);
+		let fee = pool
+			.fee_config
+			.calculate_fees(in_asset.asset_id, T::Convert::convert(amm_pair.fee));
+
+		Ok((a_out, a_sent, fee))
 	}
 
 	pub(crate) fn do_buy(
@@ -186,26 +180,26 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		pool_account: &T::AccountId,
 		out_asset: AssetAmount<T::AssetId, T::Balance>,
 		in_asset_id: T::AssetId,
-		_apply_fees: bool,
-	) -> Result<(T::Balance, T::Balance, Fee<T::AssetId, T::Balance>), DispatchError> {
+		apply_fees: bool,
+	) -> Result<
+		(
+			AssetAmount<T::AssetId, T::Balance>,
+			AssetAmount<T::AssetId, T::Balance>,
+			Fee<T::AssetId, T::Balance>,
+		),
+		DispatchError,
+	> {
 		let pool_assets = Self::get_pool_balances(pool, pool_account);
-		let base_asset = pool_assets.get(&out_asset.asset_id).ok_or(Error::<T>::PairMismatch)?;
-		let quote_asset = pool_assets.get(&in_asset_id).ok_or(Error::<T>::PairMismatch)?;
+		let a_out = T::Convert::convert(out_asset.amount);
+		let fee = if apply_fees { pool.fee_config.fee_rate } else { Permill::zero() };
+		let (w_o, b_o) = pool_assets.get(&out_asset.asset_id).ok_or(Error::<T>::AssetNotFound)?;
+		let (w_i, b_i) = pool_assets.get(&in_asset_id).ok_or(Error::<T>::AssetNotFound)?;
 
-		// TODO (vim): Fees refactored later
-		let base_amount = T::Convert::convert(out_asset.amount);
-		let quote_amount = compute_in_given_out(
-			quote_asset.0,
-			base_asset.0,
-			quote_asset.1,
-			base_asset.1,
-			base_amount,
-		)?;
+		let amm_pair = compute_in_given_out_new(*w_i, *w_o, *b_i, *b_o, a_out, fee)?;
 
-		Ok((
-			T::Convert::convert(base_amount),
-			T::Convert::convert(quote_amount),
-			Fee::zero(in_asset_id),
-		))
+		let a_sent = AssetAmount::new(in_asset_id, T::Convert::convert(amm_pair.value));
+		let fee = pool.fee_config.calculate_fees(in_asset_id, T::Convert::convert(amm_pair.fee));
+
+		Ok((out_asset, a_sent, fee))
 	}
 }

@@ -29,8 +29,9 @@ export class HistoricalAssetPrice {
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   price!: bigint
 
-  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
-  timestamp!: bigint
+  @Index_()
+  @Column_("timestamp with time zone", {nullable: false})
+  timestamp!: Date
 
   @Column_("varchar", {length: 3, nullable: false})
   currency!: Currency

@@ -63,8 +63,10 @@ export const Select: React.FC<SelectProps> = ({
   };
 
   const handleClick = () => {
-    setKeyword("");
-    setOpen(true);
+    if (!rest.disabled) {
+      setOpen(true);
+      setKeyword("");
+    }
   };
 
   const searchOptions = (options: Option[], keyword: string) => {

@@ -13,9 +13,8 @@ import { u128 } from "@polkadot/types-codec";
 /**
  * Contains tests for the XCMP system.
  *
- * 1. Transferring funds from 'RelayChain (KSM)' to Picasso/Dali
+ * 1. Transferring (KSM) funds from 'RelayChain (Kusama)' to Picasso/Dali
  * 2. The other way around with KSM.
- * 3. Again from Picasso/Dali to RelayChain with PICA.
  */
 describe("[SHORT][LAUNCH] tx.xcmp Tests", function () {
   if (!testConfiguration.enabledTests.enabled) return;
@@ -54,10 +53,7 @@ describe("[SHORT][LAUNCH] tx.xcmp Tests", function () {
     });
     assetId = 4;
     ksmAssetID = api.createType("SafeRpcWrapper", assetId) as SafeRpcWrapper;
-  });
 
-  before("Providing assets for tests", async function () {
-    this.timeout(2 * 60 * 1000);
     await mintAssetsToWallet(api, walletAlice, walletAlice, [1]);
   });
 
@@ -73,12 +69,9 @@ describe("[SHORT][LAUNCH] tx.xcmp Tests", function () {
    * Sudo command success is checked with `.isOk`.
    */
   describe("xcmPallet.reserveTransferAssets Success Test", function () {
-    if (!testConfiguration.enabledTests.addAssetAndInfo__success.enabled) return;
     // Timeout set to 2 minutes
     this.timeout(10 * 60 * 1000);
-    it("Can transfer asset(kUSD) from relay chain(KSM) to Picasso", async function () {
-      if (!testConfiguration.enabledTests.addAssetAndInfo__success.add1) this.skip();
-
+    it("Can transfer asset(KSM) from relay chain(Kusama) to Picasso", async function () {
       // Setting the destination chain to Picasso/Dali
       const destination = relayChainApiClient.createType("XcmVersionedMultiLocation", {
         V0: relayChainApiClient.createType("XcmV0MultiLocation", {
@@ -160,15 +153,10 @@ describe("[SHORT][LAUNCH] tx.xcmp Tests", function () {
    * Transfers an asset from RelayChain (Rococo Testnet) to Picasso/Dali.
    */
   describe("xTokens.transfer Success Test", function () {
-    // update name in test_configuration. Ask Dom
-    if (!testConfiguration.enabledTests.addAssetAndInfo__success.enabled) return;
     // Timeout set to 2 minutes
     this.timeout(10 * 60 * 1000);
 
-    it("Can transfer KSM from Picasso to relay chain", async function () {
-      // update name in test_configuration. Ask Dom
-      if (!testConfiguration.enabledTests.addAssetAndInfo__success.add1) this.skip();
-
+    it("Can transfer asset(KSM) from Picasso to relay chain(Kusama).", async function () {
       //Set amount to transfer
       const amountToTransfer = relayChainApiClient.createType("u128", 10000000000000);
 

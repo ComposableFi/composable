@@ -9,7 +9,7 @@ import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
 import { subscribeTransactionFee } from "@/stores/defi/polkadot/transfers/subscribers";
 import { useStore } from "@/stores/root";
 import { Stack, Typography } from "@mui/material";
-import { useEffect } from "react";
+import { FC, useEffect } from "react";
 import { humanBalance } from "shared";
 import {
   DESTINATION_FEE_MULTIPLIER,
@@ -17,7 +17,9 @@ import {
 } from "shared/defi/constants";
 import { useExecutor } from "substrate-react";
 
-export const TransferFeeDisplay = () => {
+export const TransferFeeDisplay: FC<{ disabled?: boolean }> = ({
+  disabled,
+}) => {
   const executor = useExecutor();
   const tokens = useStore(({ substrateTokens }) => substrateTokens.tokens);
   const setFeeToken = useStore((state) => state.transfers.setFeeToken);
@@ -28,20 +30,6 @@ export const TransferFeeDisplay = () => {
   const selectedToken = useStore((state) => state.transfers.selectedToken);
   const destFee = getDestChainFee(from, to, tokens, selectedToken);
   const allProviders = useAllParachainProviders();
-
-  useEffect(() => {
-    if (executor && account) {
-      const unsub = subscribeTransactionFee(
-        allProviders,
-        account.address,
-        executor
-      );
-
-      return () => {
-        unsub.then((call) => call());
-      };
-    }
-  }, [executor, allProviders, account]);
 
   useEffect(() => {
     if (fromProvider.parachainApi && account) {
@@ -61,6 +49,7 @@ export const TransferFeeDisplay = () => {
     <Stack direction="column" gap={4}>
       <FeeDisplay
         label="Fee"
+        disabled={disabled}
         feeText={
           <TextExpander
             short={
@@ -87,6 +76,7 @@ export const TransferFeeDisplay = () => {
       {destFee && destFee?.fee !== null && destFee?.token !== null ? (
         <FeeDisplay
           label="Destination chain fee"
+          disabled={disabled}
           feeText={
             <TextExpander
               short={

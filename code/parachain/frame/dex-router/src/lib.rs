@@ -404,10 +404,12 @@ pub mod pallet {
 			pool_id: Self::PoolId,
 			base_asset: AssetAmount<Self::AssetId, Self::Balance>,
 			quote_asset_id: Self::AssetId,
+			calculate_with_fees: bool,
 		) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError> {
 			let (route, _reverse) = Self::get_route(pool_id).ok_or(Error::<T>::NoRouteFound)?;
 			match route[..] {
-				[pool_id] => T::Pablo::spot_price(pool_id, base_asset, quote_asset_id),
+				[pool_id] =>
+					T::Pablo::spot_price(pool_id, base_asset, quote_asset_id, calculate_with_fees),
 				_ => Err(Error::<T>::UnsupportedOperation.into()),
 			}
 		}
@@ -549,7 +551,7 @@ pub mod pallet {
 					.copied()
 					.find(|a| *a != in_asset_itr.asset_id)
 					.ok_or(Error::<T>::NoRouteFound)?;
-				in_asset = T::Pablo::spot_price(*pool_id, in_asset_itr, quote_asset_id)?;
+				in_asset = T::Pablo::spot_price(*pool_id, in_asset_itr, quote_asset_id, false)?;
 				in_asset_itr = in_asset.value;
 			}
 

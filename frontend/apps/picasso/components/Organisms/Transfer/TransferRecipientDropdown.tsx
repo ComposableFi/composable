@@ -71,6 +71,7 @@ export const TransferRecipientDropdown = () => {
 
   return (
     <RecipientDropdown
+      disabled
       value={recipients.selected}
       expanded={false}
       options={options}

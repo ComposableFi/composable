@@ -1,4 +1,4 @@
-import { getToken, TOKENS } from "@/defi/Tokens";
+import { getToken, TOKENS, Token, TokenId } from "tokens";
 import { useMobile } from "@/hooks/responsive";
 import {
   Box,
@@ -13,19 +13,14 @@ import { useRouter } from "next/router";
 import { FormTitle } from "@/components/Organisms";
 import { Link } from "@/components/Molecules";
 import React, { useState } from "react";
-import { Token, TokenId } from "@/defi/types";
 import { BoxProps } from "@mui/system";
-import { useDispatch } from "react-redux";
-import {
-  openPolkadotModal,
-  openTransactionSettingsModal,
-} from "@/stores/ui/uiSlice";
 import Image from "next/image";
 import { PairAsset } from "@/components/Atoms";
 import { InfoOutlined } from "@mui/icons-material";
 import { TransactionSettings } from "../TransactionSettings";
 import { useDotSamaContext } from "substrate-react";
 import { HighlightBox } from "@/components/Atoms/HighlightBox";
+import { setUiState } from "@/store/ui/ui.slice";
 
 const options = Object.values(TOKENS);
 export const ImportPool: React.FC<BoxProps> = ({ ...rest }) => {
@@ -33,17 +28,17 @@ export const ImportPool: React.FC<BoxProps> = ({ ...rest }) => {
   const isMobile = useMobile();
   const theme = useTheme();
   const router = useRouter();
-  const dispatch = useDispatch();
+
   const [token1Value, setToken1Value] = useState(options[0].id);
   const [token2Value, setToken2Value] = useState<TokenId>();
-  const [isLiquidityPresent, setIsLiquidityPreset] = useState(false);
+  const [isLiquidityPresent, _setIsLiquidityPreset] = useState(false);
 
   const onBackHandler = () => {
     router.push("/pool");
   };
 
   const onSettingHandler = () => {
-    dispatch(openTransactionSettingsModal());
+    setUiState({ isTransactionSettingsModalOpen: true });
   };
 
   return (
@@ -136,7 +131,7 @@ export const ImportPool: React.FC<BoxProps> = ({ ...rest }) => {
             size="large"
             fullWidth
             onClick={() => {
-              dispatch(openPolkadotModal());
+              setUiState({ isPolkadotModalOpen: true })
             }}
           >
             Connect wallet to find pools

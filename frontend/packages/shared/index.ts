@@ -1,3 +1,6 @@
+import "defi-interfaces";
+
+export * from "./defi";
 export * from "./human";
 export * from "./hexStrings";
 export * from "./formatters";
@@ -7,7 +10,9 @@ export * from "./date";
 export * from "./number";
 export * from "./string";
 export * from "./stringToNumber";
+export * from "./SubstrateNetworks";
 export * from "./defi/getExistentialDeposit";
 export * from "./defi/unit";
+export * from "./defi/metadata";
 export * from "./functions";
 export * from "./array";

@@ -1,1 +1,1 @@
-DEBUG=zombie* ~/github.com/paritytech/zombienet/zombienet spawn ./all-dev-local.toml --provider=native 2>&1 | tee all-dev-local.log
+DEBUG=zombie* ../../../../paritytech/zombienet/javascript/bins/zombienet-linux spawn ./all-dev-local.toml --provider=native 2>&1 | tee all-dev-local.log

@@ -9,14 +9,15 @@ import { StatsApolloTab } from "@/components/Organisms/Stats/StatsApolloTab";
 
 const tabItems: TabItem[] = [
   {
-    label: "Overview"
+    label: "Overview",
   },
   {
-    label: "Telemetry"
+    label: "Telemetry",
   },
   {
-    label: "Apollo"
-  }
+    label: "Apollo",
+    disabled: true,
+  },
 ];
 
 const Stats: NextPage = () => {
@@ -27,7 +28,7 @@ const Stats: NextPage = () => {
   };
 
   const standardPageSize = {
-    xs: 12
+    xs: 12,
   };
 
   return (
@@ -45,7 +46,7 @@ const Stats: NextPage = () => {
         <Grid item {...standardPageSize} mt={9}>
           <PageTitle
             title="Stats"
-            subtitle="You will be able to see all Picasso's global information here."
+            subtitle="All of Picasso's global information at a glance."
             textAlign="center"
           />
         </Grid>
