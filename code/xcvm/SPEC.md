@@ -376,7 +376,7 @@ an XCVM-specific acknowledgement must be committed for the packet:
 - A single byte, `0x00` if unsuccessful
 - A single byte, `0x01` if successful
 
-The bridge MUST mint the **assets** in the Router contract before executing the
+The bridge MUST deposit the **assets** in the Router contract before executing the
 XCVM program.
 
 Note: Assuming we transfer the assets `[asset1 amount1, ..., assetN amountN]`,
@@ -533,8 +533,8 @@ Spawn A BridgeSecurity::Deterministic 0x1 [          // Parent program spawned o
 ```
 In the above XCVM program, the parent program salt `0x01` is not a prefix of the sub-program salt `0x02`. The user is able to make it's interpreter origin using a fine grained mode. The following program is an example on how we can spread a salt:
 ```
-Spawn A BridgeSecurity::Deterministic 0x1 [          // Parent program spawned on A, with 0x1 as salt, the origin for the instructions is (A, AccountOnA, 0x1)
-    Call 0x1337,                                     // Call instruction executed on A
+Spawn A BridgeSecurity::Deterministic 0x1 [             // Parent program spawned on A, with 0x1 as salt, the origin for the instructions is (A, AccountOnA, 0x1)
+    Call 0x1337,                                        // Call instruction executed on A
     Spawn B BridgeSecurity::Deterministic 0x0102 [] {}, // Sub-program spawned on B, with 0x102 as salt, the origin for the instructions is (A, AccountOnA, 0x0102)
 ] {}
 ```
@@ -689,7 +689,7 @@ Although these operations are quite complicated to code by hand, using the XCVM 
 
 ```
 Spawn XYZ BridgeSecurity::Deterministic 0 [
-    Call 0x1337,                                 //chain-specific encoding to make a smart contract call.
+    Call 0x1337,                                 // chain-specific encoding to make a smart contract call.
     Transfer Relayer USDC Unit 50,               // 50 bucks for the fee. The relayer earns this if the inner spawn is dispatched.
     Spawn HOME BridgeSecurity::Deterministic 0 [
         Transfer Relayer USDC Unit 50            // Another 50 bucks fee for the operation, but now reverse direction.
