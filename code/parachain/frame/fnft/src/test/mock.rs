@@ -1,7 +1,10 @@
 #![cfg(test)]
 
 use composable_tests_helpers::test::block::{process_and_progress_blocks, MILLISECS_PER_BLOCK};
-use composable_traits::{account_proxy::ProxyType, fnft::FnftAccountProxyTypeSelector};
+use composable_traits::{
+	account_proxy::{AccountProxyWrapper, ProxyType},
+	fnft::FnftAccountProxyTypeSelector,
+};
 use frame_support::{
 	parameter_types,
 	traits::{ConstU32, ConstU64, Everything, InstanceFilter},
@@ -13,8 +16,10 @@ pub use sp_core::{
 	sr25519::{Public, Signature},
 	H256,
 };
-use sp_runtime::{testing::Header, traits::{BlakeTwo256, IdentityLookup}};
-use composable_traits::account_proxy::AccountProxyWrapper;
+use sp_runtime::{
+	testing::Header,
+	traits::{BlakeTwo256, IdentityLookup},
+};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<MockRuntime>;
 type Block = frame_system::mocking::MockBlock<MockRuntime>;
