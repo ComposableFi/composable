@@ -5,34 +5,18 @@ import { ChartLoadingSkeleton } from "@/components/Organisms/Stats/ChartLoadingS
 import { useQuery } from "@apollo/client";
 import { Box, Typography, useTheme } from "@mui/material";
 import { FC, useMemo, useState } from "react";
-import {
-  formatNumber,
-  getRange,
-  head,
-  humanBalance,
-  PRESET_RANGE,
-  PresetRange,
-  tail,
-} from "shared";
+import { formatNumber, getRange, head, humanBalance, PRESET_RANGE, PresetRange, tail } from "shared";
+import { changeCalculator } from "@/components/Organisms/Stats/utils";
 
 export const DailyActiveUsersChart: FC = () => {
   const theme = useTheme();
-  const [interval, setInterval] = useState<PresetRange>("24h");
-  const [dateFrom, dateTo, intervalQuery] = useMemo(
-    () => getRange(interval),
-    [interval]
-  );
+  const [range, setRange] = useState<PresetRange>("24h");
   const { data, loading, error } = useQuery<ActiveUsers>(GET_ACTIVE_USERS, {
     variables: {
-      interval: intervalQuery,
-      dateTo,
-      dateFrom,
+      range: getRange(range),
     },
     pollInterval: 60_000, // Every 60 seconds
   });
-  const { data: overviewStats, loading: overviewStatsLoading } =
-    useOverviewStats();
-
   const chartSeries: [number, number][] = useMemo(() => {
     if (!data) return [];
 
@@ -44,33 +28,8 @@ export const DailyActiveUsersChart: FC = () => {
     return tuples.sort((a, b) => (a[0] > b[0] ? 1 : -1));
   }, [data]);
   const change = useMemo(() => {
-    const first = head(chartSeries);
-    const last = tail(chartSeries);
-
-    if (first && last) {
-      const firstValue = first[1];
-      const lastValue = last[1];
-      const percentageDifference =
-        ((firstValue - lastValue) / firstValue) * 100;
-      return {
-        value: humanBalance(Math.abs(percentageDifference).toFixed(2)) + "%",
-        color:
-          firstValue > lastValue
-            ? theme.palette.error.main
-            : theme.palette.success.main,
-      };
-    }
-
-    return {
-      value: "",
-      color: theme.palette.text.primary,
-    };
-  }, [
-    chartSeries,
-    theme.palette.error.main,
-    theme.palette.success.main,
-    theme.palette.text.primary,
-  ]);
+    return changeCalculator(chartSeries, theme);
+  }, [chartSeries, theme]);
   const changeTextPrimary = useMemo(() => {
     const first = tail(chartSeries);
     return formatNumber(first?.[1] ?? 0);
@@ -108,9 +67,9 @@ export const DailyActiveUsersChart: FC = () => {
           labelFormat: (n: number) => n.toFixed(),
           color: theme.palette.primary.main,
         }}
-        onIntervalChange={setInterval}
+        onIntervalChange={setRange}
         intervals={PRESET_RANGE as unknown as string[]}
-        currentInterval={interval}
+        currentInterval={range}
       />
     </Box>
   );

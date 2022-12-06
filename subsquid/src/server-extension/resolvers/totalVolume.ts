@@ -2,15 +2,13 @@ import {
   Arg,
   Field,
   InputType,
-  Int,
   ObjectType,
   Query,
   Resolver,
 } from "type-graphql";
 import type { EntityManager } from "typeorm";
-import { IsDateString, Min } from "class-validator";
 import { HistoricalVolume } from "../../model";
-import { getTimelineParams } from "./common";
+import { getStartAndStep } from "./common";
 
 @ObjectType()
 export class TotalVolume {
@@ -27,17 +25,8 @@ export class TotalVolume {
 
 @InputType()
 export class TotalVolumeInput {
-  @Field(() => Int, { nullable: false })
-  @Min(1)
-  intervalMinutes!: number;
-
-  @Field(() => String, { nullable: true })
-  @IsDateString()
-  dateFrom?: string;
-
-  @Field(() => String, { nullable: true })
-  @IsDateString()
-  dateTo?: string;
+  @Field(() => String, { nullable: false })
+  range!: string;
 }
 
 @Resolver()
@@ -48,12 +37,9 @@ export class TotalVolumeResolver {
   async totalVolume(
     @Arg("params", { validate: true }) input: TotalVolumeInput
   ): Promise<TotalVolume[]> {
-    const { intervalMinutes, dateFrom, dateTo } = input;
-    const { where, params } = getTimelineParams(
-      intervalMinutes,
-      dateFrom,
-      dateTo
-    );
+    const { range } = input;
+
+    const { startHoursAgo, step } = getStartAndStep(range);
 
     const manager = await this.tx();
 
@@ -62,21 +48,33 @@ export class TotalVolumeResolver {
       total_volume: string;
     }[] = await manager.getRepository(HistoricalVolume).query(
       `
-            SELECT
-              round(timestamp / $1) * $1 as period,
-              max(amount) as total_volume
-            FROM historical_volume
-            WHERE ${where.join(" AND ")}
-            GROUP BY period
-            ORDER BY period DESC
-        `,
-      params
+        WITH range AS (
+          SELECT
+            generate_series (
+              ${startHoursAgo},
+              0,
+              ${-step}
+            ) AS hour
+          )
+        SELECT
+          date_trunc('hour', current_timestamp) - hour * interval '1 hour' as period,
+          coalesce(hourly_total_volume(hour), 0) as total_volume
+        FROM range
+        UNION
+        (SELECT
+          CURRENT_TIMESTAMP as period,
+          COALESCE(amount, 0) as total_volume
+        FROM historical_volume
+        ORDER BY period DESC
+        LIMIT 1)
+        ORDER BY period;
+      `
     );
 
     return rows.map(
       (row) =>
         new TotalVolume({
-          date: new Date(parseInt(row.period, 10)).toISOString(),
+          date: new Date(row.period).toISOString(),
           totalVolume: BigInt(row.total_volume),
         })
     );

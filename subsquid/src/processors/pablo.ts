@@ -37,7 +37,7 @@ function createEvent(
     id: ctx.event.id,
     accountId: who,
     blockNumber: BigInt(ctx.block.height),
-    timestamp: BigInt(new Date().valueOf()),
+    timestamp: new Date(ctx.block.timestamp),
     eventType,
   });
 }
@@ -198,8 +198,19 @@ interface LiquidityAddedEvent {
 function getLiquidityAddedEvent(
   event: PabloLiquidityAddedEvent
 ): LiquidityAddedEvent {
-  const { who, poolId, baseAmount, quoteAmount, mintedLp } = event.asV2402;
-  return { who, poolId, baseAmount, quoteAmount, mintedLp };
+  if (event.isV2402) {
+    const { who, poolId, assets, mintedLp } = event.asV2402;
+    return {
+      who,
+      poolId,
+      baseAmount: assets?.[0]?.[1] || 0n,
+      quoteAmount: assets?.[1]?.[1] || 0n,
+      mintedLp,
+    };
+  } else {
+    const { who, poolId, baseAmount, quoteAmount, mintedLp } = event.asV10002;
+    return { who, poolId, baseAmount, quoteAmount, mintedLp };
+  }
 }
 
 export async function processLiquidityAddedEvent(
@@ -315,8 +326,20 @@ interface LiquidityRemovedEvent {
 function getLiquidityRemovedEvent(
   event: PabloLiquidityRemovedEvent
 ): LiquidityRemovedEvent {
-  const { who, poolId, baseAmount, quoteAmount, totalIssuance } = event.asV2402;
-  return { who, poolId, baseAmount, quoteAmount, totalIssuance };
+  if (event.isV2402) {
+    const { who, poolId, assets, totalIssuance } = event.asV2402;
+    return {
+      who,
+      poolId,
+      baseAmount: assets?.[0]?.[1] || 0n,
+      quoteAmount: assets?.[1]?.[1] || 0n,
+      totalIssuance,
+    };
+  } else {
+    const { who, poolId, baseAmount, quoteAmount, totalIssuance } =
+      event.asV10002;
+    return { who, poolId, baseAmount, quoteAmount, totalIssuance };
+  }
 }
 
 export async function processLiquidityRemovedEvent(
@@ -588,8 +611,26 @@ interface PoolDeletedEvent {
 }
 
 function getPoolDeletedEvent(event: PabloPoolDeletedEvent): PoolDeletedEvent {
-  const { poolId, baseAmount, quoteAmount } = event.asV2402;
-  return { poolId, baseAmount, quoteAmount };
+  let poolId = 0n;
+  let baseAmount = 0n;
+  let quoteAmount = 0n;
+
+  if (event.isV2402) {
+    const { assets } = event.asV2402;
+    poolId = event.asV2402.poolId;
+    baseAmount = assets?.[0]?.[1] || 0n;
+    quoteAmount = assets?.[1]?.[1] || 0n;
+  } else {
+    poolId = event.asV10002.poolId;
+    baseAmount = event.asV10002.baseAmount;
+    quoteAmount = event.asV10002.quoteAmount;
+  }
+
+  return {
+    poolId,
+    baseAmount,
+    quoteAmount,
+  };
 }
 
 export async function processPoolDeletedEvent(
