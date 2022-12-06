@@ -37,13 +37,6 @@ xPICA holders will be continuously earning rewards throughout the lock period of
 
 fNFTs create an even more effective route for bonding and building a treasury of protocol-owned liquidity and strategic 
 assets. Instead of selling bonds for PICA, the protocol will be able to offer bonds for xPICA directly, therefore 
-meaning that the PICA has already been committed to longer-term locks. Bonds will be offered for varying tenors of xPICA, 
-e.g different discounts for 1 year locked, 2 year locked etc. These bonds represent longer lock periods of the 
-underlying PICA tokens, and as such help deepen liquidity on the Picasso treasury, via protocol-owned liquidity. 
-Resultantly, this helps overcome the issue of mercenary capital.
-
-fNFTs create an even more effective route for bonding and building a treasury of protocol-owned liquidity and strategic 
-assets. Instead of selling bonds for PICA, the protocol will be able to offer bonds for xPICA directly, therefore 
 meaning that the PICA has already been committed to longer-term locks. Bonds will be offered for varying tenors of 
 xPICA, e.g different discounts for 1 year locked, 2 year locked etc. These bonds represent longer lock periods of the 
 underlying PICA tokens, and as such help deepen liquidity on the Picasso treasury, via protocol-owned liquidity. 
