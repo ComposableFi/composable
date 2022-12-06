@@ -686,9 +686,10 @@ impl InstanceFilter<Call> for ProxyType {
 parameter_types! {
 	pub MaxProxies : u32 = 4;
 	pub MaxPending : u32 = 32;
-	// just make dali simple to proxy
-	pub ProxyPrice: Balance = 0;
 }
+
+// Minimal deposit required to place a proxy announcement as per native existential deposit.
+pub type ProxyPrice = NativeExistentialDeposit;
 
 impl proxy::Config for Runtime {
 	type Event = Event;
