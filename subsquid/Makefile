@@ -7,10 +7,7 @@ build:
 build-processor-image:
 	@docker build . -t squid-processor
 
-build-query-node-image:
-	@docker build . -t graphql-server -f graphql.Dockerfile
-
-build-images: build-processor-image build-query-node-image
+build-images: build-processor-image 
 
 serve:
 	@npx squid-graphql-server --subscriptions

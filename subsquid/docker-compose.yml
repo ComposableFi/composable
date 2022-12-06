@@ -4,7 +4,7 @@
 services:
   db:
     image: postgres:14  # CockroachDB cluster might be a better fit for production deployment
-    restart: always
+    restart: on-failure
     volumes:
       - /var/lib/postgresql/data
     healthcheck:
@@ -40,8 +40,10 @@ services:
 
   gateway:
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     image: subsquid/substrate-gateway:firesquid
+    restart: on-failure
     environment:
       RUST_LOG: "substrate_gateway=info,actix_server=info"
     command: [
@@ -58,6 +60,7 @@ services:
   # Many developers find it very useful for exploration and debugging.
   explorer:
     image: subsquid/substrate-explorer:firesquid
+    restart: on-failure
     depends_on:
       db:
         condition: service_healthy
@@ -80,7 +83,7 @@ services:
   # This DB service is used by squid
   squid-db:
     image: postgres:14
-    restart: always
+    restart: on-failure
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 5s
@@ -90,46 +93,14 @@ services:
       POSTGRES_DB: squid
       POSTGRES_PASSWORD: squid
 
-  db-migration:
-    image: squid-processor
-    entrypoint:
-      - npx
-      - squid-typeorm-migration
-      - apply
-    depends_on:
-      squid-db:
-        condition: service_healthy
-    environment:
-      DB_HOST: squid-db
-      DB_NAME: squid
-      DB_PASS: squid
-      DB_PORT: 5432
-      GQL_PORT: 4350
-      SUBSQUID_ARCHIVE_URI: "http://gateway:8000/graphql"
-      RELAYCHAIN_URI: "wss://rpc.composablenodes.tech"
-
-  sqlinit:
-    image: squid-processor
-    entrypoint:
-      - node
-      - lib/helperInit.js
-    depends_on:
-      db-migration:
-          condition: service_completed_successfully
-    environment:
-      DB_HOST: squid-db
-      DB_NAME: squid
-      DB_PASS: squid
-      DB_PORT: 5432
-      GQL_PORT: 4350
-      SUBSQUID_ARCHIVE_URI: "http://gateway:8000/graphql"
-      RELAYCHAIN_URI: "wss://rpc.composablenodes.tech"
-
   processor:
     image: squid-processor
+    restart: on-failure
     depends_on:
-      sqlinit:
-        condition: service_completed_successfully
+      gateway:
+        condition: service_started
+      squid-db:
+        condition: service_started
     environment:
       DB_HOST: squid-db
       DB_NAME: squid
@@ -140,7 +111,12 @@ services:
       RELAYCHAIN_URI: "wss://rpc.composablenodes.tech"
 
   graphql-server:
-    image: graphql-server
+    image: squid-processor
+    restart: on-failure
+    entrypoint:
+      - npx 
+      - squid-graphql-server 
+      - --subscriptions    
     depends_on:
       processor:
         condition: service_started
