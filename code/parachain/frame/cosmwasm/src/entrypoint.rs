@@ -137,6 +137,10 @@ impl EntryPointCaller<MigrateInput> {
 		new_code_id: CosmwasmCodeId,
 	) -> Result<EntryPointCaller<Dispatchable<MigrateInput, (), T>>, Error<T>> {
 		let mut contract_info = Pallet::<T>::contract_info(&contract)?;
+
+		// Migrate is only callable by the contract admin
+		ensure!(contract_info.admin.as_ref() == Some(&migrator), Error::<T>::NotAuthorized);
+
 		// If the contract is already migrated (which is the case for `continue_migrate`) don't try
 		// to migrate again.
 		if contract_info.code_id != new_code_id {
