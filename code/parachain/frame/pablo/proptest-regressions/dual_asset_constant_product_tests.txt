@@ -1,9 +1,0 @@
-# Seeds for failure cases proptest has generated in the past. It is
-# automatically read and these particular cases re-run before any
-# novel cases are generated.
-#
-# It is recommended to check this file in to source control so that
-# everyone who runs the test benefits from these saved cases.
-cc 43a361310f8dbee1265202d6b3789ca2ef4b91ca061017eced18876318c9eee8 # shrinks to usdt_value = 1
-cc f47fc8da8fb92c32324c13121291165325eb8ab94ead31900bf070096b33f582 # shrinks to btc_value = 1
-cc d83ebb6454c259b316724f19663aa18f69333a5a6253b2a1de889a126816b459 # shrinks to btc_value = 1

@@ -681,6 +681,7 @@ pub mod pallet {
 		#[deprecated(
 			note = "This is a temporary function for refactoring/migration purposes. Use `Amm::assets` instead."
 		)]
+		#[allow(deprecated)]
 		fn pool_ordered_pair(
 			pool_id: T::PoolId,
 		) -> Result<CurrencyPair<T::AssetId>, DispatchError> {
