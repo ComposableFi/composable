@@ -133,14 +133,18 @@ export function useSwaps({ selectedAccount }: { selectedAccount?: InjectedAccoun
   useEffect(() => {
     if (liquidityPools.length > 0) {
       const pool = liquidityPools.find((_constantPool) => {
-        const pair = Object.values(_constantPool.getAssets().assets);
-        const pairBase = pair[0].toString();
-        const pairQuote = pair[1].toString();
-
-        return (
-          pairBase === selectedAssetOneId && pairQuote === selectedAssetTwoId ||
-          pairBase === selectedAssetTwoId && pairQuote === selectedAssetOneId
-        )
+        try {
+          const pair = Object.keys(_constantPool.getAssets().assets);
+          const pairBase = pair[0].toString();
+          const pairQuote = pair[1].toString();
+  
+          return (
+            pairBase === selectedAssetOneId && pairQuote === selectedAssetTwoId ||
+            pairBase === selectedAssetTwoId && pairQuote === selectedAssetOneId
+          )
+        } catch (err: any) {
+          console.error('[useSwaps] Liquidity Pool not found. ', err.message);
+        }
       });
       if (pool) {
         setSelectedPool(pool);
@@ -185,12 +189,12 @@ export function useSwaps({ selectedAccount }: { selectedAccount?: InjectedAccoun
   const { baseAmount, quoteAmount } = useLiquidity(selectedPool);
   const poolAssets = selectedPool ? Object.keys(selectedPool.getAssets().assets) : null;
   let poolQuoteBalance = poolAssets ? 
-    poolAssets[0] === selectedAssetOneId
+    poolAssets?.[0] === selectedAssetOneId
       ? quoteAmount
       : baseAmount
     : new BigNumber(0);
   let poolBaseBalance = poolAssets
-    ? poolAssets[1] === selectedAssetOneId
+    ? poolAssets?.[1] === selectedAssetOneId
       ? baseAmount
       : quoteAmount
     : new BigNumber(0);
