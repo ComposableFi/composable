@@ -23,7 +23,7 @@ pull_request_rules:
           - approved-reviews-by=@ComposableFi/core
           - "#review-threads-unresolved=0"
       - base=main
-      - files~=^code/parachain/runtime/picasso/
+      - files~=^code\/parachain\/runtime\/picasso\/
     actions:
       queue:
         priority: high
