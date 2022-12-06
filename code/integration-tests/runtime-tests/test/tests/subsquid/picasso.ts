@@ -4,7 +4,9 @@ import {
   ActiveUsers,
   GET_ACTIVE_USERS,
   OVERVIEW_STATS,
-  OverviewStats
+  OverviewStats,
+  GET_TOTAL_VALUE_LOCKED,
+  TotalValueLocked
 } from "@composable/utils/subsquid/apollo/queries";
 
 import { client } from "@composable/utils/subsquid/apollo/apolloGraphql";
@@ -13,7 +15,6 @@ import { sendAndWaitForSuccess, waitForBlocks } from "@composable/utils/polkadot
 import { getDevWallets } from "@composable/utils/walletHelper";
 import { KeyringPair } from "@polkadot/keyring/types";
 import { mintAssetsToWallet } from "@composable/utils/mintingHelper";
-import { GET_TOTAL_VALUE_LOCKED, TotalValueLocked } from "@composable/utils/subsquid/apollo/queries/totalValueLocked";
 
 describe("Picasso graphql queries", function () {
   let api: ApiPromise;

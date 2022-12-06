@@ -2,10 +2,9 @@ import { alpha, Box, Button, Typography, useTheme } from "@mui/material";
 import { CheckRounded } from "@mui/icons-material";
 import { useConnectedAccounts, useDotSamaContext } from "substrate-react";
 import Image from "next/image";
-import useStore from "@/store/useStore";
+import { setUiState } from "@/store/ui/ui.slice";
 
 export const PolkadotAccountForm: React.FC<{}> = () => {
-  const { closePolkadotModal } = useStore();
   const {
     deactivate,
     extensionStatus,
@@ -15,7 +14,7 @@ export const PolkadotAccountForm: React.FC<{}> = () => {
   const theme = useTheme();
 
   const handleConfirm = () => {
-    closePolkadotModal();
+    setUiState({isPolkadotModalOpen: false })
   };
 
   const handleDisconnect = () => {

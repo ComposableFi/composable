@@ -1,8 +1,7 @@
-import { fetchTotalIssued } from "@/defi/utils";
+import { Asset } from "shared";
 import { ApiPromise } from "@polkadot/api";
-import BigNumber from "bignumber.js";
-import _ from "lodash";
 import { useEffect, useState } from "react";
+import BigNumber from "bignumber.js";
 
 export type TotalXTokensIssuedProps = {
   shareAssetId?: string;
@@ -18,7 +17,9 @@ export function useTotalXTokensIssued({
   useEffect(() => {
     if (!api || !shareAssetId) return;
 
-    fetchTotalIssued(api, shareAssetId).then(setXTokensIssued);
+    const xAsset = new Asset("", "", "", api)
+    xAsset.setIdOnChain("picasso", new BigNumber(shareAssetId));
+    xAsset.totalIssued().then(setXTokensIssued);
   }, [api, shareAssetId]);
 
   return xTokensIssued;

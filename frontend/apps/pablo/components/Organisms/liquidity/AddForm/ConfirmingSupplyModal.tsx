@@ -1,21 +1,14 @@
 import React from "react";
 import { CircularProgress } from "@/components/Atoms";
-import { ModalProps, Modal, Link } from "@/components/Molecules";
+import { ModalProps, Modal } from "@/components/Molecules";
 import { 
   alpha,
   Box,
   Typography,
   useTheme,
-  Button, 
 } from "@mui/material";
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import { useAppSelector } from "@/hooks/store";
-
-import { useDispatch } from "react-redux";
-import {  
-  closeConfirmingSupplyModal,
-} from "@/stores/ui/uiSlice";
 import { SupplyModalProps } from "./ConfirmSupplyModal";
+import { setUiState } from "@/store/ui/ui.slice";
 
 export const ConfirmingSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
   assetOne,
@@ -29,15 +22,9 @@ export const ConfirmingSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
   ...rest
 }) => {
   const theme = useTheme();
-  const dispatch = useDispatch();
-
-  const {
-    confirmed,
-  } = useAppSelector((state) => state.pool.currentSupply);
-
 
   const handelClose = () => {
-    dispatch(closeConfirmingSupplyModal());
+    setUiState({ isConfirmingSupplyModalOpen: false });
   }
 
   return (
@@ -45,7 +32,7 @@ export const ConfirmingSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
       onClose={() => handelClose()}
       {...rest}
     >
-      {!confirmed && (
+      {/* {!confirmed && ( */}
         <Box
           textAlign="center"
           sx={{
@@ -63,7 +50,7 @@ export const ConfirmingSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
             Waiting for confirmation
           </Typography>
           <Typography variant="subtitle1" mt={2} color="text.secondary">
-            Adding {`${assetOneAmount}`} {assetOne?.symbol} and {`${assetTwoAmount}`} {assetTwo?.symbol}
+            Adding {`${assetOneAmount}`} {assetOne?.getSymbol()} and {`${assetTwoAmount}`} {assetTwo?.getSymbol()}
           </Typography>
           <Typography 
             variant="body1" 
@@ -75,9 +62,9 @@ export const ConfirmingSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
             Confirming this transaction in your wallet
           </Typography>
         </Box>
-      )}
+      {/* )} */}
 
-      {confirmed && (
+      {/* {confirmed && (
         <Box
           textAlign="center"
           sx={{
@@ -114,7 +101,7 @@ export const ConfirmingSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
             Close
           </Button>      
         </Box>
-      )}
+      )} */}
     </Modal>  
   );
 };

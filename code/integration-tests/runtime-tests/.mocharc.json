@@ -12,7 +12,7 @@
   },
   "slow": 600000,
   "timeout": 2000,
-  "retries": 2,
+  "retries": 0,
   "ui": "bdd",
   "trace-warnings": true,
   "watch-files": ["src/**/*.ts"],

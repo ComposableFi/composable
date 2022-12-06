@@ -1,9 +1,9 @@
 import create from "zustand";
-import { ConstantProductPool, StableSwapPool } from "@/defi/types";
 import BigNumber from "bignumber.js";
+import { PabloConstantProductPool } from "shared";
 
 export interface AddLiquiditySlice {
-  pool: StableSwapPool | ConstantProductPool | undefined;
+  pool: PabloConstantProductPool | undefined;
   ui: {
     assetOne: string | "none";
     assetTwo: string | "none";
@@ -25,7 +25,7 @@ export const useAddLiquiditySlice = create<AddLiquiditySlice>(() => ({
 }));
 
 export const setPool = (
-  pool: StableSwapPool | ConstantProductPool | undefined
+  pool: PabloConstantProductPool | undefined
 ) =>
   useAddLiquiditySlice.setState((state) => ({
     ...state,

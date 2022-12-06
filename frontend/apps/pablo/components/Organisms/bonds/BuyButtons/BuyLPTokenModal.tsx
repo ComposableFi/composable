@@ -2,15 +2,14 @@ import React, { useState } from "react";
 import { Modal, ModalProps } from "@/components/Molecules";
 import { alpha, Box, Button, IconButton, Theme, useTheme } from "@mui/material";
 import { BondDetails } from "@/defi/types";
-import BigNumber from "bignumber.js";
 import { FormTitle } from "../../FormTitle";
-import { useDispatch } from "react-redux";
-import { openTransactionSettingsModal } from "@/stores/ui/uiSlice";
-import { getToken } from "@/defi/Tokens";
-import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import { getToken } from "tokens";
 import { BigNumberInput } from "@/components/Atoms";
 import { TransactionSettings } from "../../TransactionSettings";
 import { PoolShare } from "../PoolShare";
+import BigNumber from "bignumber.js";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import { setUiState } from "@/store/ui/ui.slice";
 
 const containerProps = (theme: Theme) => ({
   p: 4,
@@ -49,7 +48,6 @@ export const BuyLPTokenModal: React.FC<BuyLPTokenModalProps> = ({
   ...modalProps
 }) => {
   const theme = useTheme();
-  const dispatch = useDispatch();
 
   const [balance1] = useState<BigNumber>(new BigNumber(500.35523));
   const [balance2] = useState<BigNumber>(new BigNumber(4560.9153));
@@ -64,7 +62,7 @@ export const BuyLPTokenModal: React.FC<BuyLPTokenModalProps> = ({
   const [share] = useState<BigNumber>(new BigNumber(3.3));
 
   const onSettingHandler = () => {
-    dispatch(openTransactionSettingsModal());
+    setUiState({ isTransactionSettingsModalOpen: true });
   };
 
   const onBackHandler = () => {
@@ -79,7 +77,7 @@ export const BuyLPTokenModal: React.FC<BuyLPTokenModalProps> = ({
     <Modal open={open} onClose={onClose} {...modalProps}>
       <Box {...containerProps(theme)}>
         <FormTitle
-          title={`Create ${token1.symbol}-${token2.symbol}  LP`}
+          title={`Create ${token1.symbol}-${token2.symbol} LP`}
           onSettingHandler={onSettingHandler}
           onBackHandler={onBackHandler}
         />

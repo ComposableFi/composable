@@ -3,6 +3,7 @@ import { ComponentStory } from "@storybook/react";
 import { AuctionPriceChartProps, AuctionPriceChart } from "pablo/components/Organisms/auction/AuctionPriceChart";
 
 import moment from "moment-timezone";
+import { Asset } from "shared";
 
 const dummyAuctionPrices = [
   [1644454200000, 7],
@@ -30,7 +31,11 @@ const Template: ComponentStory<typeof AuctionPriceChart> = (args) => (
 
 export const Default = Template.bind({});
 Default.args = {
-  baseAsset: undefined,
+  baseAsset: new Asset(
+    "Pablo",
+    "PBLO",
+    "/tokens/pblo.svg"
+  ),
   chartSeries: {
     currentPriceSeries: dummyAuctionPrices,
     predictedPriceSeries: [],

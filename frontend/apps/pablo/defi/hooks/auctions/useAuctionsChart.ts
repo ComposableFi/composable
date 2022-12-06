@@ -1,11 +1,9 @@
 import { fetchAuctionChartSeries } from "@/defi/utils/pablo/auctions";
 import { useEffect, useRef } from "react";
-import { LiquidityBootstrappingPool } from "@/defi/types";
-import { ApiPromise } from "@polkadot/api";
+import { PabloLiquidityBootstrappingPool } from "shared";
 
 export function useAuctionsChart(
-  api?: ApiPromise,
-  pool?: LiquidityBootstrappingPool
+  pool: PabloLiquidityBootstrappingPool | null
 ): {
   currentPriceSeries: [number, number][];
   predictedPriceSeries: [number, number][];
@@ -16,11 +14,11 @@ export function useAuctionsChart(
   });
 
   useEffect(() => {
-    fetchAuctionChartSeries(api, pool).then((response) => {
+    fetchAuctionChartSeries(pool).then((response) => {
       auctionChartSeries.current.currentPriceSeries = response.chartSeries
       auctionChartSeries.current.predictedPriceSeries = response.predictedSeries
     });
-  }, [pool, api]);
+  }, [pool]);
 
   const { currentPriceSeries, predictedPriceSeries } = auctionChartSeries.current;
 

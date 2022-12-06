@@ -14,6 +14,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
+#![allow(incomplete_features)] // see other usage -
+#![feature(adt_const_params)]
 
 // Make the WASM binary available
 #[cfg(all(feature = "std", feature = "builtin-wasm"))]
@@ -22,12 +24,16 @@ pub const WASM_BINARY_V2: Option<&[u8]> = Some(include_bytes!(env!("PICASSO_RUNT
 pub const WASM_BINARY_V2: Option<&[u8]> = None;
 
 pub mod governance;
+mod migrations;
+mod prelude;
 mod weights;
+
 pub mod xcmp;
 pub use common::xcmp::{MaxInstructions, UnitWeightCost};
 pub use xcmp::XcmConfig;
 
 use governance::*;
+use prelude::*;
 
 use common::{
 	fees::{
@@ -54,7 +60,7 @@ use sp_runtime::{
 };
 
 use composable_support::rpc_helpers::SafeRpcWrapper;
-use sp_std::prelude::*;
+
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
@@ -756,8 +762,8 @@ construct_runtime!(
 		CouncilMembership: membership::<Instance1> = 31,
 		Treasury: treasury::<Instance1> = 32,
 		Democracy: democracy::<Instance1> = 33,
-		TechnicalCollective: collective::<Instance2> = 70,
-		TechnicalMembership: membership::<Instance2> = 71,
+		TechnicalCommittee: collective::<Instance2> = 72,
+		TechnicalCommitteeMembership: membership::<Instance2> = 73,
 
 		// helpers/utilities
 		Scheduler: scheduler = 34,
@@ -802,14 +808,6 @@ pub type SignedExtra = (
 	asset_tx_payment::ChargeAssetTxPayment<Runtime>,
 );
 
-// Migration for scheduler pallet to move from a plain Call to a CallOrHash.
-pub struct SchedulerMigrationV3;
-impl OnRuntimeUpgrade for SchedulerMigrationV3 {
-	fn on_runtime_upgrade() -> frame_support::weights::Weight {
-		Scheduler::migrate_v2_to_v3()
-	}
-}
-
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
 /// Executive: handles dispatch to the various modules.
@@ -819,7 +817,7 @@ pub type Executive = executive::Executive<
 	system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	SchedulerMigrationV3,
+	crate::migrations::Migrations,
 >;
 
 #[cfg(feature = "runtime-benchmarks")]

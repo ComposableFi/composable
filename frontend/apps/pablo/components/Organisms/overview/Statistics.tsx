@@ -1,7 +1,9 @@
-import { useAppSelector } from "@/hooks/store";
 import { Grid, Typography, useTheme } from "@mui/material";
 import { GridProps } from "@mui/system";
 import { HighlightBox } from "@/components/Atoms/HighlightBox";
+import { useAssetIdOraclePrice } from "@/defi/hooks";
+import { PBLO_ASSET_ID } from "@/defi/utils";
+import BigNumber from "bignumber.js";
 
 const threeColumnPageSize = {
   xs: 12,
@@ -34,9 +36,9 @@ const Item: React.FC<ItemProps> = ({ label, value }) => {
 export const Statistics: React.FC<GridProps> = ({ ...gridProps }) => {
   const theme = useTheme();
 
-  const { totalValueLocked, tradingVolume24hrs, pabloPrice } = useAppSelector(
-    (state) => state.polkadot.overview
-  );
+  const PBLO_PRICE = useAssetIdOraclePrice(PBLO_ASSET_ID);
+  const totalValueLocked = new BigNumber(0);
+  const tradingVolume24hrs = new BigNumber(0);
 
   return (
     <Grid container spacing={3} {...gridProps}>
@@ -53,7 +55,7 @@ export const Statistics: React.FC<GridProps> = ({ ...gridProps }) => {
         />
       </Grid>
       <Grid item {...threeColumnPageSize}>
-        <Item label="PABLO price" value={`$${pabloPrice.toFormat()}`} />
+        <Item label="PABLO price" value={`$${PBLO_PRICE.toFormat()}`} />
       </Grid>
     </Grid>
   );

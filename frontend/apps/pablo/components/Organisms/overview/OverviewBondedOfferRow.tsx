@@ -1,14 +1,14 @@
 import { TableCell, TableRow, Typography } from "@mui/material";
-import { BondOffer } from "@/defi/types";
 import {
   useBondedOfferVestingState,
   useBondOfferROI,
 } from "@/store/bond/bond.slice";
-import { useUSDPriceByAssetId } from "@/store/assets/hooks";
 import useBondVestingTime from "@/defi/hooks/bonds/useBondVestingTime";
-import useBondOfferPrincipalAsset from "@/defi/hooks/bonds/useBondOfferPrincipalAsset";
 import BondPrincipalAssetIcon from "../bonds/BondPrincipalAssetIcon";
 import { DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils";
+import { BondOffer } from "shared";
+import { useBondedAsset, useAssetIdOraclePrice } from "@/defi/hooks";
+import BigNumber from "bignumber.js";
 
 export const OverviewBondedOfferRow = ({
   bondOffer,
@@ -17,17 +17,17 @@ export const OverviewBondedOfferRow = ({
   offerId: string;
   bondOffer: BondOffer;
 }) => {
-  const principalAsset = useBondOfferPrincipalAsset(bondOffer);
+  const bondedAsset_s = useBondedAsset(bondOffer);
   const discount = useBondOfferROI(offerId);
   const vestingTime = useBondVestingTime(bondOffer);
-  const rewardAssetPriceUSD = useUSDPriceByAssetId(bondOffer.reward.asset);
+  const rewardAssetPriceUSD = useAssetIdOraclePrice(bondOffer.getRewardAssetId() as string);
 
   const { claimable } = useBondedOfferVestingState(offerId);
 
   return (
     <TableRow>
       <TableCell align="left">
-        <BondPrincipalAssetIcon principalAsset={principalAsset} />
+        <BondPrincipalAssetIcon bondedAsset={bondedAsset_s} />
       </TableCell>
       <TableCell align="left">
         <Typography variant="body1">
@@ -36,8 +36,8 @@ export const OverviewBondedOfferRow = ({
       </TableCell>
       <TableCell align="left">
         <Typography variant="body1">
-          {bondOffer.reward.amount
-            .div(bondOffer.nbOfBonds)
+          {(bondOffer.getRewardAssetAmount(true) as BigNumber)
+            .div(bondOffer.getNumberOfBonds())
             .toFixed(DEFAULT_UI_FORMAT_DECIMALS)}
         </Typography>
       </TableCell>

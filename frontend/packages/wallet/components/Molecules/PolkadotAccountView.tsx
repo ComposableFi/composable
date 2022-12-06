@@ -145,6 +145,9 @@ export const PolkadotAccountView = ({
           onClick={onDisconnectWallet}
           color={theme.palette.text.secondary}
           variant="inputLabel"
+          sx={{
+            cursor: "pointer",
+          }}
         >
           Disconnect
         </Typography>

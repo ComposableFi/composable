@@ -6,15 +6,16 @@ import {
   Grid,
   alpha,
 } from "@mui/material";
-import { useLiquidityPoolDetails } from "@/store/hooks/useLiquidityPoolDetails";
+import { useLiquidityPoolDetails } from "@/defi/hooks/useLiquidityPoolDetails";
 import { PoolDetailsProps } from "./index";
 import { BaseAsset } from "@/components/Atoms";
-import { useUSDPriceByAssetId } from "@/store/assets/hooks";
-import millify from "millify";
-import { calculatePoolTotalValueLocked, DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils";
+import { calculatePoolTotalValueLocked } from "@/defi/utils";
 import { useStakingRewardsPoolApy } from "@/defi/hooks/stakingRewards/useStakingRewardsPoolApy";
-import BigNumber from "bignumber.js";
 import { useMemo } from "react";
+import BigNumber from "bignumber.js";
+import millify from "millify";
+import { useAssetIdOraclePrice } from "@/defi/hooks";
+import { useLiquidity } from "@/defi/hooks/useLiquidity";
 
 const twoColumnPageSize = {
   sm: 12,
@@ -59,16 +60,22 @@ export const PoolStatistics: React.FC<PoolDetailsProps> = ({
   poolId,
   ...boxProps
 }) => {
-  const { pool, poolStats, tokensLocked } = useLiquidityPoolDetails(poolId);
+  const { pool, poolStats } = useLiquidityPoolDetails(poolId);
 
-  const baseAssetPriceUSD = useUSDPriceByAssetId(
-    pool?.pair.base.toString() ?? "-1"
+  const pair = pool?.getPair() ?? null;
+  const base = pair?.getBaseAsset().toString() ?? "-";
+  const quote = pair?.getQuoteAsset().toString() ?? "-";
+
+  const { baseAmount, quoteAmount } = useLiquidity(pool);
+
+  const baseAssetPriceUSD = useAssetIdOraclePrice(
+    base
   );
-  const quoteAssetPriceUSD = useUSDPriceByAssetId(
-    pool?.pair.quote.toString() ?? "-1"
+  const quoteAssetPriceUSD = useAssetIdOraclePrice(
+    quote
   );
 
-  const stakePoolApy = useStakingRewardsPoolApy(pool?.lpToken);
+  const stakePoolApy = useStakingRewardsPoolApy(pool?.getLiquidityProviderToken().getPicassoAssetId() as string ?? "-");
   const rewardAPYs = useMemo(() => {
     return Object.keys(stakePoolApy).reduce((v, i) => {
       return v.plus(stakePoolApy[i])
@@ -83,8 +90,8 @@ export const PoolStatistics: React.FC<PoolDetailsProps> = ({
             label="Pool value"
             value={`$${millify(
               calculatePoolTotalValueLocked(
-                tokensLocked.tokenAmounts.baseAmount,
-                tokensLocked.tokenAmounts.quoteAmount,
+                baseAmount,
+                quoteAmount,
                 baseAssetPriceUSD,
                 quoteAssetPriceUSD
               ).toNumber()
