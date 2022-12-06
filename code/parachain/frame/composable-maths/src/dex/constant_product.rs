@@ -466,7 +466,7 @@ pub fn compute_deposit_lp(
 /// https://github.com/ComposableFi/composable/blob/main/rfcs/0008-pablo-lbp-cpp-restructure.md#42-liquidity-provider-token-lpt-math-updates
 /// Equation 6
 pub fn compute_first_deposit_lp_<T: PerThing>(
-	pool_assets: &[(u128, u128, T)],
+	pool_assets: &[(u128, T)],
 	_f: T,
 ) -> ConstantProductAmmResult<ConstantProductAmmValueFeePair> {
 	let k: u128 = pool_assets.len().try_into().map_err(|_| ArithmeticError::Overflow)?;
@@ -474,8 +474,8 @@ pub fn compute_first_deposit_lp_<T: PerThing>(
 
 	let product = pool_assets.iter().try_fold::<_, _, Result<_, ArithmeticError>>(
 		Decimal::from(1),
-		|product, (_d_i, b_i, w_i)| {
-			let b_i = Decimal::safe_from_fixed_point(*b_i)?;
+		|product, (d_i, w_i)| {
+			let b_i = Decimal::safe_from_fixed_point(*d_i)?;
 			let w_i = Decimal::safe_from_per_thing(*w_i)?;
 			let pow = b_i.checked_powd(w_i).ok_or(ArithmeticError::Overflow)?;
 
