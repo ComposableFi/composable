@@ -465,3 +465,5 @@ papaparse
 polkassembly
 sqlinit
 composablenodes
+hexdump
+bootnode
