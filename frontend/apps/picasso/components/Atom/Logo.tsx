@@ -3,6 +3,8 @@ import { useMediaQuery, useTheme } from "@mui/material";
 import Image from "next/image";
 import { useRouter } from "next/router";
 
+const LOGO_ROUTES_TO = "https://picasso.xyz";
+
 export const Logo: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -11,7 +13,7 @@ export const Logo: React.FC = () => {
   const router = useRouter();
 
   const goHome = () => {
-    router.push("/");
+    router.push(LOGO_ROUTES_TO);
   };
 
   if (isMobile) {
