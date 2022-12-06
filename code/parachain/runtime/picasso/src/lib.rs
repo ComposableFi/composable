@@ -76,7 +76,7 @@ pub use frame_support::{
 pub use governance::TreasuryAccount;
 
 use codec::{Codec, Encode, EncodeLike};
-use frame_support::traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade, InstanceFilter};
+use frame_support::traits::{fungibles, EqualPrivilegeOnly, InstanceFilter, OnRuntimeUpgrade};
 use frame_system as system;
 use scale_info::TypeInfo;
 use sp_runtime::AccountId32;
@@ -136,8 +136,8 @@ pub fn native_version() -> NativeVersion {
 	NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
 }
 
-use orml_traits::{parameter_type_with_key, LockIdentifier};
 use composable_traits::account_proxy::ProxyType;
+use orml_traits::{parameter_type_with_key, LockIdentifier};
 parameter_type_with_key! {
 	// Minimum amount an account has to hold to stay in state
 	pub MultiExistentialDeposits: |currency_id: CurrencyId| -> Balance {
@@ -693,7 +693,6 @@ impl proxy::Config for Runtime {
 	type AnnouncementDepositBase = ProxyPrice;
 	type AnnouncementDepositFactor = ProxyPrice;
 }
-
 
 impl crowdloan_rewards::Config for Runtime {
 	type Event = Event;

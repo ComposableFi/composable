@@ -9,7 +9,7 @@ use sp_core::{
 	H256,
 };
 
-use composable_traits::fnft::FnftAccountProxyType;
+use composable_traits::{account_proxy::AccountProxyWrapper, fnft::FnftAccountProxyType};
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{Everything, InstanceFilter},
@@ -22,7 +22,6 @@ use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentifyAccount, IdentityLookup, Verify},
 };
-use composable_traits::account_proxy::AccountProxyWrapper;
 
 pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
 

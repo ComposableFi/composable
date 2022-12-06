@@ -87,7 +87,10 @@ pub use frame_support::{
 
 use codec::{Codec, Encode, EncodeLike};
 use common::fees::WellKnownForeignToNativePriceConverter;
-use composable_traits::{account_proxy::ProxyType, fnft::FnftAccountProxyType};
+use composable_traits::{
+	account_proxy::{AccountProxyWrapper, ProxyType},
+	fnft::FnftAccountProxyType,
+};
 use frame_support::{
 	traits::{
 		fungibles, ConstBool, ConstU32, EqualPrivilegeOnly, InstanceFilter, OnRuntimeUpgrade,
@@ -106,7 +109,6 @@ use system::{
 	EnsureRoot,
 };
 use transaction_payment::{Multiplier, TargetedFeeAdjustment};
-use composable_traits::account_proxy::AccountProxyWrapper;
 pub use xcmp::XcmConfig;
 
 use crate::{governance::PreimageByteDeposit, xcmp::XcmRouter};
