@@ -66,7 +66,7 @@ impl<AccountId, ProxyType, BlockNumber>
 	}
 }
 
-/// API into pallet-account-proxy. Provides functions to manage delegation of operations of
+/// API into pallet-proxy. Provides functions to manage delegation of operations of
 /// one account to another.
 pub trait AccountProxy {
 	type AccountId;
@@ -117,6 +117,8 @@ pub trait AccountProxy {
 	) -> Result<ProxyDefinition<Self::AccountId, Self::ProxyType, Self::BlockNumber>, DispatchError>;
 }
 
+/// Wrapper for implementing AccountProxy trait over pallet-proxy. Provides functions to
+/// manage delegation of operations of one account to another.
 pub struct AccountProxyWrapper<Runtime> {
 	_phantom: sp_std::marker::PhantomData<Runtime>,
 }
