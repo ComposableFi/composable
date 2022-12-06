@@ -21,6 +21,10 @@ use sp_runtime::{
 	AccountId32, DispatchError,
 };
 
+// pub const BOB: AccountId32 = 1;
+// pub const CHARLIE: AccountId32 = 2;
+// pub const JEREMY: AccountId32 = 3;
+
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 type Header = generic::Header<u32, BlakeTwo256>;

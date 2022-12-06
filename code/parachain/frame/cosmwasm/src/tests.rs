@@ -1,4 +1,8 @@
-use crate::mock::*;
+use crate::{
+	mock::{new_test_ext, Cosmwasm, Origin, Test},
+	AccountIdOf, Error,
+};
+use frame_support::{assert_noop, BoundedVec};
 use sha2::{Digest, Sha256};
 use sha3::Keccak256;
 
@@ -26,8 +30,25 @@ const ED25519_PUBLIC_KEY2_HEX: &str =
 	"3d4017c3e843895a92b70aa74d1b7ebc9c982ccf2ec4968cc0cd55f12af4660c";
 
 #[test]
-fn works() {
+fn new_test_ext_works() {
 	new_test_ext().execute_with(|| {})
+}
+
+mod upload {
+	use super::*;
+
+	#[test]
+	fn not_enough_funds_for_upload() {
+		new_test_ext().execute_with(|| {
+			// This account is just created, so it does not have any funds.
+			let account_id = AccountIdOf::<Test>::from([1u8; 32]);
+			let origin = Origin::signed(account_id);
+			let code = BoundedVec::try_from(vec![1, 2, 3]).unwrap();
+			let result = Cosmwasm::upload(origin, code);
+
+			assert_noop!(result, Error::<Test>::NotEnoughFundsForUpload);
+		})
+	}
 }
 
 mod secp256k1 {
