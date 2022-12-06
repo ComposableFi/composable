@@ -92,6 +92,9 @@ impl<T: Config> DualAssetConstantProduct<T> {
 	) -> Result<T::Balance, DispatchError> {
 		let mut pool_assets = Self::get_pool_balances(&pool, &pool_account);
 
+		dbg!(&pool_assets);
+		dbg!(&assets);
+
 		let assets_with_balances = assets
 			.iter()
 			.map(|asset_amount| {
@@ -137,7 +140,8 @@ impl<T: Config> DualAssetConstantProduct<T> {
 				single_deposit.value
 			},
 			[(first, (first_weight, first_balance)), (second, (second_weight, second_balance))] => {
-				if lp_total_issuance.is_zero() {
+				let lp_to_mint = if lp_total_issuance.is_zero() {
+					println!("is first deposit");
 					let value = compute_first_deposit_lp_(
 						&[
 							(T::Convert::convert(first.amount), first_weight),
@@ -149,7 +153,11 @@ impl<T: Config> DualAssetConstantProduct<T> {
 
 					dbg!(value)
 				} else {
+					println!("is normal deposit");
 					dbg!(&first, &second);
+
+					assert_ne!(first_balance, 0, "first_balance shouldn't be 0");
+					assert_ne!(second_balance, 0, "second_balance shouldn't be 0");
 
 					let input_ratio_first_to_second = Permill::from_rational(
 						first.amount,
@@ -184,23 +192,19 @@ impl<T: Config> DualAssetConstantProduct<T> {
 
 					dbg!();
 
-					T::Assets::transfer(
-						first.asset_id,
-						who,
-						&pool_account,
-						first.amount,
-						keep_alive,
-					)?;
-					T::Assets::transfer(
-						second.asset_id,
-						who,
-						&pool_account,
-						second.amount,
-						keep_alive,
-					)?;
-
 					first_deposit.value.safe_add(&second_deposit.value)?
-				}
+				};
+
+				T::Assets::transfer(first.asset_id, who, &pool_account, first.amount, keep_alive)?;
+				T::Assets::transfer(
+					second.asset_id,
+					who,
+					&pool_account,
+					second.amount,
+					keep_alive,
+				)?;
+
+				lp_to_mint
 			},
 			_ => {
 				defensive!("this should be unreachable, since the input assets are bounded at 2");
