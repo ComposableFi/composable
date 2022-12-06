@@ -29,7 +29,7 @@ the lock, users will have the option to renew, or burn their xPICA fNFTs to retu
 xPICA holders will be continuously earning rewards throughout the lock period of their locked PICA.
 
 
-![how_to_xpica](./how-to-CHAOS.png)
+![how_to_xpica](./how-to-xpica.png)
 
 
 ## Building deep protocol-owned-liquidity
@@ -65,4 +65,4 @@ xPICA holders receive returns from multiple different streams. They earn yield d
 earn revenue from the Picasso treasury, and earn yield from transaction fees on the Picasso network.
 
 
-![xpica_architecture](./CHAOS-architecture.png)
+![xpica_architecture](./xpica-architecture.png)
