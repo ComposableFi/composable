@@ -2,7 +2,8 @@
 
 The Statemine parachain acts as the issuer of fungible and non-fungible tokens on Kusama, 
 this means if you want to transfer non-native assets on Kusama to use on Picasso, 
-they first need to be transferred from the Statemine to your Picasso wallet.
+they first need to be transferred from the Statemine to your Picasso wallet. 
+Watch the video for this guide here: https://youtu.be/SmTsDK1pI3Q
 
 Read our guides on how to create and connect a wallet the [Talisman] or [Polkadot.js] on Picasso.
 
