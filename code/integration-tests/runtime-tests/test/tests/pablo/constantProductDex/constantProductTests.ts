@@ -58,7 +58,7 @@ describe("tx.constantProductDex Tests", function () {
   });
 
   describe("1. Pool creation", function () {
-    it("#1.1  I can, as sudo, create a new Pablo Constant Product pool.", async function () {
+    it.only("#1.1  I can, as sudo, create a new Pablo Constant Product pool.", async function () {
       const owner = api.createType("AccountId32", poolOwnerWallet.publicKey);
       const poolConfiguration = api.createType("PalletPabloPoolInitConfiguration", {
         DualAssetConstantProduct: {
@@ -213,8 +213,8 @@ describe("tx.constantProductDex Tests", function () {
   describe("2. Providing liquidity", function () {
     it.only("#2.1  I can provide liquidity to the newly created pool. #1.1", async function () {
       const assets = api.createType("BTreeMap<u128, u128>", {
-        "1": Pica(10_0000000000000),
-        "131": Pica(10_0000000000000)
+        "1": Pica(100_000_0),
+        "131": Pica(100_000_0)
       });
 
       const expectedAmountLpTokens = await api.rpc.pablo.simulateAddLiquidity(
