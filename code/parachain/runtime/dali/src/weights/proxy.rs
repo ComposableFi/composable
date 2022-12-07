@@ -45,52 +45,52 @@ use sp_std::marker::PhantomData;
 
 /// Weights for pallet_proxy using the Substrate node and recommended hardware.
 pub struct WeightInfo<T>(PhantomData<T>);
-impl<T: frame_system::Config> pallet_account_proxy::WeightInfo for WeightInfo<T> {
+impl<T: frame_system::Config> proxy::WeightInfo for WeightInfo<T> {
 	// Storage: Proxy Proxies (r:1 w:0)
-	fn proxy() -> Weight {
+	fn proxy(_z: u32) -> Weight {
 		17_768_000
 	}
 	// Storage: Proxy Proxies (r:1 w:0)
 	// Storage: Proxy Announcements (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
-	fn proxy_announced() -> Weight {
+	fn proxy_announced(_z: u32, _s:u32) -> Weight {
 		35_682_000
 	}
 	// Storage: Proxy Announcements (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
-	fn remove_announcement() -> Weight {
+	fn remove_announcement(_z: u32, _s:u32) -> Weight {
 		25_586_000
 	}
 	// Storage: Proxy Announcements (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
-	fn reject_announcement() -> Weight {
+	fn reject_announcement(_z: u32, _s:u32) -> Weight {
 		25_794_000
 	}
 	// Storage: Proxy Proxies (r:1 w:0)
 	// Storage: Proxy Announcements (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
-	fn announce() -> Weight {
+	fn announce(_z: u32, _s:u32) -> Weight {
 		33_002_000
 	}
 	// Storage: Proxy Proxies (r:1 w:1)
-	fn add_proxy() -> Weight {
+	fn add_proxy(_z: u32) -> Weight {
 		28_166_000
 	}
 	// Storage: Proxy Proxies (r:1 w:1)
-	fn remove_proxy() -> Weight {
+	fn remove_proxy(_z: u32) -> Weight {
 		28_128_000
 	}
 	// Storage: Proxy Proxies (r:1 w:1)
-	fn remove_proxies() -> Weight {
+	fn remove_proxies(_z: u32) -> Weight {
 		24_066_000
 	}
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: Proxy Proxies (r:1 w:1)
-	fn anonymous() -> Weight {
+	fn anonymous(_z: u32) -> Weight {
 		31_077_000
 	}
 	// Storage: Proxy Proxies (r:1 w:1)
-	fn kill_anonymous() -> Weight {
+	fn kill_anonymous(_z: u32) -> Weight {
 		24_657_000
 	}
 }
