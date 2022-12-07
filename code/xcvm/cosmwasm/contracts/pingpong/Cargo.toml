@@ -1,17 +1,11 @@
 [package]
 authors = ["Composable Developers"]
-description = "XCVM interpreter contract"
+description = "XCVM Ping Pong"
 edition = "2021"
 license = "Apache-2.0"
-name = "cw-xcvm-interpreter"
+name = "cw-xcvm-pingpong"
 repository = "https://github.com/ComposableFi/composable"
 version = "0.1.0"
-
-exclude = [
-  # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
-  "xcvm-interpreter.wasm",
-  "hash.txt",
-]
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -26,7 +20,6 @@ cw-storage-plus = "0.14.0"
 cw-utils = "0.14.0"
 cw2 = "0.14.0"
 cw20 = "0.14.0"
-cw-xcvm-asset-registry = { path = "../asset-registry", features = ["library"] }
 cw-xcvm-utils = { path = "../utils" }
 cw-xcvm-common = { path = "../common" }
 hex = { version = "0.4", default-features = false, features = [
@@ -44,6 +37,3 @@ serde_json = "1"
 thiserror = { version = "1.0.31" }
 xcvm-core = { path = "../../../lib/core", features = ["cosmwasm", "std"] }
 xcvm-proto = { path = "../../../lib/proto" }
-
-[dev-dependencies]
-cosmwasm-schema = "1.0.0"
