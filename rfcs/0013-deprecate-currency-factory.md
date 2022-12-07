@@ -145,14 +145,13 @@ Local assets are registered with a `ForeignAssetType`, `AssetRegisterarMetadata`
 If we are to deprecate Currency Factory, we will need to ensure the requirements
 it fulfills are still met by some solution.
 
-* Permissioned asset creation can be done without collision in the asset ID
+* Permissioned asset creation can be done without collision
 
 * Asset metadata is available
 
-Additionally, Currency Factory failed to meet some requirements that we should
-enforce in a future solution.
+* Can registrar both local and foreign asset types
 
-* Permissionless asset creation can be done without collision in the asset ID
+* Support XCM Multi Locations for foreign assets
 
 ## Solution Proposals
 
@@ -274,34 +273,58 @@ design Moonbeam uses to maintain two instances of their pallet, and to remove
 our asset ID reservation system (for release two).
 
 Additionally, for foreign asset IDs, we can move to the standard of using XCM 
-Multi Locations. We can move to using a simple nonce for local asset IDs.
+Multi Locations. We can move to using a simple nonce for local asset IDs. Most
+of the foreign asset system is already implemented through Assets Registry and
+will not need significant changes.
 
-This can be accomplished in two main phases:
+However, we currently lack the means of creating local assets. The proposal here
+is to use Assets Registry to register both local and foreign assets. Assets
+Registry will act as a routing layer between our two instances of pallet-assets.
 
-1. Create a fork of Parity's pallet-assets and add the features we need
+This will leave us with two independently stored asset ranges (local and 
+foreign) without the overhead of Currency Factory. 
 
-2. Replace our pallet-assets and pallet-currency-factory with two instances of
-Parity's pallet-assets.
+### Technical
 
-Parts of either of these phases can be scaled down for release two.
+1. Asset IDs & Balances
 
-### Fork of Parity's pallet-assets
+  A top level enum can be used in environments dealing with both asset types in
+  the same context. (Note: the `AssetAmount` type exposes both a balance and ID).
 
-1. Create a non-traditional fork of Parity's pallet-assets
+  ```rust
+  enum MultiAssetAmount<ForeignAssetId, LocalAssetId, Balance> {
+    Local(AssetAmount<LocalAssetId, Balance>),
+    Foreign(ForeignAssetAmount<ForeignAssetId, LocalAssetId, Balance>)
+  }
 
-2. Implement `frame_support::traits::tokens::fungibles::MutateHold` for 
-pallet-assets
+  enum ForeignAssetAmount<ForeignAssetId, LocalAssetId, Balance> {
+    ByLocalId(AssetAmount<LocalAssetId, Balance>),
+    ByForeignId(AssetAmount<ForeignAssetId, Balance>)
+  }
+  ```
 
-3. Translate calls into our old pallet-assets and pallet-currency-factory to 
-our new pallet-assets
+  This will allow us to automatically route to the correct functions in 
+  Assets Registry when dealing with both in the same context.
 
-### Manage Two Instances of pallet-assets
+  Local asset IDs can be acquired via a nonce. A shared function can be used for
+  interacting with this nonce for getting local asset IDs for foreign and local
+  assets.
 
-1. Configure instance for mintable assets
+2. Asset Registry Configuration & Provided Traits
 
-2. Configure instance for external assets
+Asset Registry Will be configured with two instances of pallet-assets. One for
+local assets and one for foreign assets. It will need to be implemented with 
+three new traits (or classifications of traits if more fine trait breakdown is 
+desired): `MultiAssetRegistry`, `LocalAssetRegistry`, `ForeignAssetRegistry`.
 
-3. Route calls between the two instances
+The `MultiAssetRegistry` trait(s) will route between the other two traits 
+(classifications). This will allow us the flexibility of working with one or 
+both types of assets with minimum overhead.
+
+3. Extension of Pallet Assets
+
+If the need to extend pallet-assets arises, we can implement the traits on the
+Asset Registry level until appropriate contributions are made to pallet-assets.
 
 ## Questions
 
