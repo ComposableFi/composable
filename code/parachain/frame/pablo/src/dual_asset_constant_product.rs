@@ -172,7 +172,11 @@ impl<T: Config> DualAssetConstantProduct<T> {
 						pool.fee_config.fee_rate,
 					)?;
 
-					first_deposit.value.safe_add(&second_deposit.value)?
+					sp_std::if_std! {
+						debug_assert!(first_deposit == second_deposit);
+					}
+
+					first_deposit.value
 				};
 
 				T::Assets::transfer(first.asset_id, who, &pool_account, first.amount, keep_alive)?;

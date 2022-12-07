@@ -80,7 +80,7 @@ fn add_remove_lp() {
 		// Add the liquidity
 		Test::assert_extrinsic_event(
 			Pablo::add_liquidity(Origin::signed(BOB), pool_id, assets_with_next_amounts, 0, false),
-			crate::Event::LiquidityAdded { who: BOB, pool_id, minted_lp: 39999999962960 },
+			crate::Event::LiquidityAdded { who: BOB, pool_id, minted_lp: 19999999981480 },
 		);
 
 		assert!(dbg!(Tokens::balance(lp_token, &BOB)) > 0);
