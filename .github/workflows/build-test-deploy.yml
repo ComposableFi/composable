@@ -651,6 +651,52 @@ jobs:
           name: cmc-api-server
           artifact: cmc-api:latest
 
+  # TODO: nixify these test steps, and add me to subsquid-processor
+  test-subsquid:
+    name: Test Subquid
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup jest
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Install dependencies
+        run: npm ci
+        working-directory: subsquid
+      - name: Run tests
+        run: npm run test
+        working-directory: subsquid
+
+  subquid-processor:
+    name: "Package Subsquid Processor"
+    needs:
+      - test-subsquid
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    concurrency:
+      group: ${{ github.workflow }}-package-subsquid-processor-${{ github.ref }}
+      cancel-in-progress: true
+    continue-on-error: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - uses: "./.github/templates/watch-exec"
+        with:
+          command: nix -- build .#subsquid-processor
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+      - uses: "./.github/templates/docker-publish"
+        with:
+          command: nix -- build .#subsquid-processor-container
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          name: subsquid-processor
+          artifact: subsquid-processor:latest
 
   package-price-feed:
     needs: common-deps
