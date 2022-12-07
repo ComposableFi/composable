@@ -621,6 +621,35 @@ jobs:
           command: nix -- build .#devnet
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
+  lint-test-frontend:
+    # Legacy because these should be nixified.
+    name: Legacy Frontend Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          always-auth: true
+          registry-url: 'https://registry.npmjs.org'
+      - run: yarn install --ignore-scripts
+        env:
+          CI: true
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        working-directory: frontend  
+      - name: Lint Pablo
+        run: yarn --filter=pablo lint
+        working-directory: frontend
+      - name: Test Pablo
+        run: yarn --filter=pablo test
+        working-directory: frontend    
+      - name: Lint Picasso
+        run: yarn --filter=picasso lint
+        working-directory: frontend
+      - name: Test Picasso
+        run: yarn --filter=picasso test
+        working-directory: frontend  
+
   cmc-api:
     name: "Package CMC API"
     needs:
