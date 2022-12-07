@@ -8,10 +8,11 @@ export class Apollo {
   constructor(api: ApiPromise) {
     this.__api = api;
   }
+
   /**
-   * TODO: Asses whether 
+   * TODO: Asses whether
    * this class is needed or not
-   * @param assets 
+   * @param assets
    * @returns {Promise<Record<string, BigNumber>>}
    */
   public async getPrice(assets: Asset[]): Promise<Record<string, BigNumber>> {
@@ -20,6 +21,7 @@ export class Apollo {
       for (const asset of assets) {
         const assetId: string = asset.getPicassoAssetId() as string;
         let prices = await this.__api.query.oracle.prices(assetId);
+        // @ts-ignore
         const price = new BigNumber(prices.price.toString());
         // @ts-ignore
         priceMap[assetId] = price;

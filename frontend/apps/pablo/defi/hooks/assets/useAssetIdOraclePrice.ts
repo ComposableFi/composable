@@ -13,6 +13,7 @@ export function useAssetIdOraclePrice(
     const _assetId = typeof assetId === "string" ? assetId : assetId.toString();
 
     parachainApi.query.oracle.prices(_assetId).then((price) => {
+      // @ts-ignore
       setAssetPrice(new BigNumber(price.price.toString()));
     });
   }, [assetId, parachainApi]);
