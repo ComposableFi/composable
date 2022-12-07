@@ -1,5 +1,7 @@
 import { Box, Typography, useTheme } from "@mui/material";
-import { alpha, TypographyProps } from "@mui/system";
+import { TypographyProps } from "@mui/system";
+import Head from "next/head";
+import { APP_NAME } from "@/defi/polkadot/constants";
 
 type PageTitleProps = TypographyProps & {
   title: string;
@@ -15,6 +17,9 @@ export const PageTitle: React.FC<PageTitleProps> = ({
 
   return (
     <>
+      <Head>
+        <title>{`${title} - Composable Finance Picasso Parachain`}</title>
+      </Head>
       <Typography
         textAlign={textAlign}
         variant="h4"
