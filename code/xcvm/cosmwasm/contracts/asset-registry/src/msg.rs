@@ -49,6 +49,15 @@ pub enum AssetReference {
 	Virtual { cw20_address: Addr },
 }
 
+impl AssetReference {
+	pub fn denom(&self) -> String {
+		match self {
+			AssetReference::Native { denom } => denom.clone(),
+			AssetReference::Virtual { cw20_address } => format!("cw20:{}", cw20_address),
+		}
+	}
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {}
 

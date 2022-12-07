@@ -1,0 +1,12 @@
+[package]
+authors = ["Composable Developers"]
+edition = "2021"
+name = "cw-xcvm-common"
+version = "0.1.0"
+
+[dependencies]
+cosmwasm-std = "1.0.0"
+schemars = "0.8.8"
+serde = { version = "1.0.137", default-features = false, features = ["derive"] }
+xcvm-core = { path = "../../../lib/core", features = [] }
+cw-xcvm-utils = { path = "../utils" }

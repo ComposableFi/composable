@@ -1,8 +1,20 @@
+use core::fmt::Display;
+
 use crate::abstraction::IndexOf;
 use alloc::vec::Vec;
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
+
+/// The interpreter origin, composite of a user origin and a salt.
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(
+	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
+)]
+pub struct InterpreterOrigin {
+	pub user_origin: UserOrigin,
+	pub salt: Vec<u8>,
+}
 
 /// The origin of a user, which consist of the composite, origin network and origin network user id.
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
@@ -62,6 +74,12 @@ impl AsRef<[u8]> for UserId {
 #[repr(transparent)]
 pub struct NetworkId(pub u32);
 
+impl Display for NetworkId {
+	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+		<u32 as Display>::fmt(&self.0, f)
+	}
+}
+
 impl From<u32> for NetworkId {
 	fn from(x: u32) -> Self {
 		NetworkId(x)
@@ -97,14 +115,14 @@ impl From<Juno> for NetworkId {
 pub struct InvalidNetwork;
 /// Composable Picasso (Kusama parachain)
 pub struct Picasso;
-/// Ethereum mainnet
-pub struct Ethereum;
 /// Juno (Cosmos) mainnet
 pub struct Juno;
+/// Ethereum mainnet
+pub struct Ethereum;
 
 /// List of networks supported by XCVM.
 // /!\ The order matters and must not be changed, adding a network on the right is safe.
-pub type Networks = (InvalidNetwork, (Picasso, (Ethereum, (Juno, ()))));
+pub type Networks = (InvalidNetwork, (Picasso, (Juno, (Ethereum, ()))));
 
 /// Type implement network must be part of [`Networks`], otherwise invalid.
 pub trait Network {
@@ -133,7 +151,7 @@ mod tests {
 	#[test]
 	fn network_ids() {
 		assert_eq!(Picasso::ID, NetworkId(1));
-		assert_eq!(Ethereum::ID, NetworkId(2));
-		assert_eq!(Juno::ID, NetworkId(3));
+		assert_eq!(Juno::ID, NetworkId(2));
+		assert_eq!(Ethereum::ID, NetworkId(3));
 	}
 }

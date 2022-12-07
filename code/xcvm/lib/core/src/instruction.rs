@@ -1,4 +1,4 @@
-use crate::{AssetId, BridgeSecurity, Displayed, Funds, Program};
+use crate::{AssetId, BridgeSecurity, Program};
 use alloc::{
 	borrow::Cow,
 	collections::{BTreeMap, VecDeque},
@@ -7,18 +7,6 @@ use alloc::{
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
-
-/// Spawn instruction emits this event
-#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-#[derive(Clone, PartialEq, Eq, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub struct SpawnEvent<Network, Payload, Account, Assets> {
-	pub network: Network,
-	pub bridge_security: BridgeSecurity,
-	pub salt: Vec<u8>,
-	pub assets: Funds<Displayed<u128>>,
-	pub program: Program<VecDeque<Instruction<Network, Payload, Account, Assets>>>,
-}
 
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize)]
