@@ -10,8 +10,8 @@ export type TotalValueLocked = {
 }
 
 export const GET_TOTAL_VALUE_LOCKED = gql`
-    query getTotalValueLocked($interval: Int!, $dateTo: String!, $dateFrom: String ) {
-        totalValueLocked(params: {intervalMinutes: $interval, dateTo: $dateTo, dateFrom: $dateFrom}) {
+    query getTotalValueLocked($range: String! ) {
+        totalValueLocked(params: {range: $range}) {
             date
             totalValueLocked
         }
