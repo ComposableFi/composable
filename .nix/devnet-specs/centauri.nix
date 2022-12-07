@@ -6,14 +6,14 @@
         configPathContainer = "/tmp/config.toml";
 
         dependsOnCreateClient = {
-                hyperspace-create-clients = {
-                  condition = "service_completed_successfully";
-                };
+          hyperspace-create-clients = {
+            condition = "service_completed_successfully";
+          };
         };
         dependsOnCreateConnection = {
-                hyperspace-create-connection = {
-                  condition = "service_completed_successfully";
-                };
+          hyperspace-create-connection = {
+            condition = "service_completed_successfully";
+          };
         };
         devnetConfigs = [
           {
@@ -52,31 +52,54 @@
           services = builtins.listToAttrs (map toService devnetConfigs) // {
             "hyperspace-create-clients" = mkComposableContainer (import ../services/centauri.nix {
               name = "hyperspace-create-clients";
-              execCommands = [ 
-                "create-clients" "--config" configPathContainer
-              ]; configPathSource=configPathSource; configPathContainer=configPathContainer; dependsOn={};
-		}
+              execCommands = [
+                "create-clients"
+                "--config"
+                configPathContainer
+              ];
+              configPathSource = configPathSource;
+              configPathContainer = configPathContainer;
+              dependsOn = { };
+            }
             );
 
-            "hyperspace-create-connection" = mkComposableContainer (import ../services/centauri.nix  {
+            "hyperspace-create-connection" = mkComposableContainer (import ../services/centauri.nix {
               name = "hyperspace-create-connection";
-              execCommands = [ 
-                "create-connection" "--config" configPathContainer "--delay-period" "0"
-              ]; configPathSource=configPathSource; configPathContainer=configPathContainer; dependsOn=dependsOnCreateClient;
-		}
+              execCommands = [
+                "create-connection"
+                "--config"
+                configPathContainer
+                "--delay-period"
+                "0"
+              ];
+              configPathSource = configPathSource;
+              configPathContainer = configPathContainer;
+              dependsOn = dependsOnCreateClient;
+            }
             );
 
             "hyperspace-create-channels" = mkComposableContainer (import ../services/centauri.nix {
               name = "hyperspace-create-channel";
-              execCommands = [ 
-                "create-channel" "--config" configPathContainer "--port-id" "transfer" "--version" "ics20-1"
-                "--order" "unordered"
-              ]; configPathSource=configPathSource; configPathContainer=configPathContainer; dependsOn=dependsOnCreateConnection;
-		}
+              execCommands = [
+                "create-channel"
+                "--config"
+                configPathContainer
+                "--port-id"
+                "transfer"
+                "--version"
+                "ics20-1"
+                "--order"
+                "unordered"
+              ];
+              configPathSource = configPathSource;
+              configPathContainer = configPathContainer;
+              dependsOn = dependsOnCreateConnection;
+            }
             );
           };
-      };
-     })
- ];
+        };
+      }
+    )
+  ];
   inherit pkgs;
 }
