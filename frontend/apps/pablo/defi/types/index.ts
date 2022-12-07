@@ -1,21 +1,15 @@
+import { TokenId } from "tokens";
 import BigNumber from "bignumber.js";
 import { DEFI_CONFIG } from "../config";
-import { useFilteredAssetListDropdownOptions } from "../hooks/assets/useFilteredAssetListDropdownOptions";
-
-export * from "./bonds";
-export * from "./pablo";
 export * from "./vesting";
 export * from "./stakingRewards";
 
-export type AssetDropdownOptions = ReturnType <typeof useFilteredAssetListDropdownOptions>;
-
-export type TokenId = typeof DEFI_CONFIG.tokenIds[number];
-export type Token = {
-  id: TokenId;
+export type AssetDropdownOptions = Array<{
+  value: string;
+  label: string;
+  shortLabel: string;
   icon: string;
-  symbol: string;
-  name: string;
-};
+}>;
 
 export type NetworkId = typeof DEFI_CONFIG.networkIds[number];
 export type Network = {

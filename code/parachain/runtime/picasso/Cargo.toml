@@ -68,6 +68,8 @@ treasury = { package = "pallet-treasury", git = "https://github.com/paritytech/s
 utility = { package = "pallet-utility", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
 
 
+log = { version = "0.4.14", default-features = false }
+
 # local modules
 assets = { package = "pallet-assets", path = '../../frame/assets', default-features = false }
 assets-registry = { package = "pallet-assets-registry", path = '../../frame/assets-registry', default-features = false }

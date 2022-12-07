@@ -56,7 +56,6 @@ export default {
     PalletCrowdloanRewardsReward: "Null",
     CumulusPalletDmpQueueConfigData: "Null",
     PalletDutchAuctionSellOrder: "Null",
-    ComposableTraitsVestingVestingSchedule: "Null",
     CumulusPalletDmpQueuePageIndexData: "Null",
     PalletDutchAuctionTakeOrder: "Null",
     ComposableTraitsGovernanceSignedRawOrigin: {
@@ -195,8 +194,6 @@ export default {
     IbcTransferTransferParams: "Null",
     ComposableTraitsOracleRewardTracker: "Null",
     ComposableTraitsStakingStake: "Null",
-    ComposableTraitsVestingVestingScheduleInfo: "Null",
-    ComposableTraitsVestingVestingScheduleIdSet: "Null",
     ComposableTraitsStakingRewardUpdate: "Null",
     ComposableTraitsAccountProxyProxyType: "Null",
     ComposableTraitsAccountProxyProxyDefinition: "Null",

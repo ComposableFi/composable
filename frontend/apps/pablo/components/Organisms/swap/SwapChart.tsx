@@ -5,7 +5,7 @@ import { BoxProps } from "@mui/system";
 import { DEFI_CONFIG } from "@/defi/config";
 import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";
-import { useSwapsChart } from "@/store/hooks/useSwapsChart";
+import { useSwapsChart } from "@/defi/hooks/swaps/useSwapsChart";
 import { useAsset } from "@/defi/hooks/assets/useAsset";
 import { DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils";
 import { HighlightBox } from "@/components/Atoms/HighlightBox";
@@ -61,12 +61,12 @@ const SwapChart: React.FC<BoxProps> = ({ ...boxProps }) => {
                 <PairAsset
                   assets={[
                     {
-                      icon: baseAsset.icon,
-                      label: baseAsset.symbol,
+                      icon: baseAsset.getIconUrl(),
+                      label: baseAsset.getSymbol(),
                     },
                     {
-                      icon: quoteAsset.icon,
-                      label: quoteAsset.symbol,
+                      icon: quoteAsset.getIconUrl(),
+                      label: quoteAsset.getSymbol(),
                     },
                   ]}
                   separator="-"
@@ -85,7 +85,7 @@ const SwapChart: React.FC<BoxProps> = ({ ...boxProps }) => {
           </Box>
         }
         totalText={`${swaps.spotPrice.dp(DEFAULT_UI_FORMAT_DECIMALS)} ${
-          quoteAsset ? quoteAsset.symbol : ""
+          quoteAsset ? quoteAsset.getSymbol() : ""
         }`}
         changeTextColor={
           changePercent > 0
@@ -95,8 +95,8 @@ const SwapChart: React.FC<BoxProps> = ({ ...boxProps }) => {
         changeIntroText={`Past ${getCurrentInterval()?.name}`}
         changeText={
           changePercent > 0
-            ? `+${changePercent}% ${quoteAsset ? quoteAsset.symbol : ""}`
-            : `${changePercent}% ${quoteAsset ? quoteAsset.symbol : ""}`
+            ? `+${changePercent}% ${quoteAsset ? quoteAsset.getSymbol() : ""}`
+            : `${changePercent}% ${quoteAsset ? quoteAsset.getSymbol() : ""}`
         }
         AreaChartProps={{
           data: chartSeries,

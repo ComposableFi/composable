@@ -1,8 +1,8 @@
 import { queryPabloPoolById } from "@/defi/subsquid/pools/queries";
 import { DAYS } from "../../constants";
-import BigNumber from "bignumber.js";
 import { fromChainUnits } from "../../units";
-import { StableSwapPool, ConstantProductPool } from "@/defi/types";
+import { PabloConstantProductPool } from "shared";
+import BigNumber from "bignumber.js";
 
 export interface PabloPoolQueryResponse {
     totalLiquidity: BigNumber;
@@ -14,9 +14,10 @@ export interface PabloPoolQueryResponse {
     poolId: number;
 }
 
-export async function fetchPoolStats(pool: ConstantProductPool | StableSwapPool): Promise<PabloPoolQueryResponse[]> {
+export async function fetchPoolStats(pool: PabloConstantProductPool): Promise<PabloPoolQueryResponse[]> {
     try {
-        const response = await queryPabloPoolById(pool.poolId);
+        const id = pool.getPoolId(true) as BigNumber
+        const response = await queryPabloPoolById(id.toNumber());
 
         if (!response.data) throw new Error("Unable to Fetch Data");
 

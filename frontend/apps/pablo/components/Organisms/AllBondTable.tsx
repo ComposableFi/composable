@@ -16,7 +16,6 @@ import { TableHeader } from "@/defi/types";
 import { useRouter } from "next/router";
 import {
   DEFAULT_NETWORK_ID,
-  fetchBondOffers,
   fetchVestingSchedulesByBondOffers,
 } from "@/defi/utils";
 import {
@@ -32,6 +31,8 @@ import {
   useBondOffersSlice,
   putBondOffers,
 } from "@/store/bond/bond.slice";
+import { NoPositionsPlaceholder } from "./overview/NoPositionsPlaceholder";
+import { BondOffer } from "shared";
 
 const tableHeaders: TableHeader[] = [
   {
@@ -62,9 +63,8 @@ export const AllBondTable: React.FC = () => {
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
 
   useEffect(() => {
-    if (parachainApi) {
-      fetchBondOffers(parachainApi).then(putBondOffers);
-    }
+    if (!parachainApi) return;
+    BondOffer.fetchBondOffers(parachainApi).then(putBondOffers);
   }, [parachainApi]);
 
   useEffect(() => {
@@ -102,51 +102,57 @@ export const AllBondTable: React.FC = () => {
     router.push(`bond/select/${offerId}`);
   };
 
-  return (
-    <TableContainer>
-      <Table>
-        <TableHead>
-          <TableRow>
-            {tableHeaders.map((th) => (
-              <TableCell align="left" key={th.header}>
-                <Box display="flex" alignItems="center" gap={1}>
-                  {th.header}
-                  {th.tooltip && (
-                    <Tooltip arrow title={th.tooltip}>
-                      <InfoOutlined color="primary" fontSize="small" />
-                    </Tooltip>
-                  )}
-                </Box>
-              </TableCell>
+  if (bondOffers.length === 0) {
+    return (
+      <NoPositionsPlaceholder text="There no bond offers active at the moment." />
+    )
+  } else {
+    return (
+      <TableContainer>
+        <Table>
+          <TableHead>
+            <TableRow>
+              {tableHeaders.map((th) => (
+                <TableCell align="left" key={th.header}>
+                  <Box display="flex" alignItems="center" gap={1}>
+                    {th.header}
+                    {th.tooltip && (
+                      <Tooltip arrow title={th.tooltip}>
+                        <InfoOutlined color="primary" fontSize="small" />
+                      </Tooltip>
+                    )}
+                  </Box>
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {bondOffers.slice(0, count).map((bondOffer) => (
+              <BondOfferRow
+                offerId={bondOffer.getBondOfferId() as string}
+                key={bondOffer.getBondOfferId() as string}
+                bondOffer={bondOffer}
+                handleBondClick={handleBondClick}
+              />
             ))}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {bondOffers.slice(0, count).map((bondOffer, index) => (
-            <BondOfferRow
-              offerId={bondOffer.offerId.toString()}
-              key={bondOffer.offerId.toString()}
-              bondOffer={bondOffer}
-              handleBondClick={handleBondClick}
-            />
-          ))}
-        </TableBody>
-      </Table>
-      {bondOffers.length > count && (
-        <Box
-          onClick={handleSeeMore}
-          mt={4}
-          display="flex"
-          gap={1}
-          justifyContent="center"
-          sx={{ cursor: "pointer" }}
-        >
-          <Typography textAlign="center" variant="body2">
-            See more
-          </Typography>
-          <KeyboardArrowDown sx={{ color: theme.palette.primary.main }} />
-        </Box>
-      )}
-    </TableContainer>
-  );
+          </TableBody>
+        </Table>
+        {bondOffers.length > count && (
+          <Box
+            onClick={handleSeeMore}
+            mt={4}
+            display="flex"
+            gap={1}
+            justifyContent="center"
+            sx={{ cursor: "pointer" }}
+          >
+            <Typography textAlign="center" variant="body2">
+              See more
+            </Typography>
+            <KeyboardArrowDown sx={{ color: theme.palette.primary.main }} />
+          </Box>
+        )}
+      </TableContainer>
+    );
+  }
 };

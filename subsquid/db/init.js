@@ -1,31 +1,34 @@
-require('dotenv/config')
+require("dotenv/config");
 
 const ormConfig = {
-  type: 'postgres',
+  type: "postgres",
   // entities: [require.resolve('../lib/model')],
   entities: [],
-  migrations: [__dirname + '/migrations/*.js'],
+  migrations: [__dirname + "/migrations/*.js"],
   synchronize: false,
   migrationsRun: false,
   dropSchema: false,
   logging: ["query", "error", "schema"],
-  host: process.env.DB_HOST || 'localhost',
+  host: process.env.DB_HOST || "localhost",
   port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 5432,
-  database: process.env.DB_NAME || 'postgres',
-  username: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASS || 'postgres'
-}
+  database: process.env.DB_NAME || "postgres",
+  username: process.env.DB_USER || "postgres",
+  password: process.env.DB_PASS || "postgres",
+};
 
-require('typeorm').createConnection(ormConfig).then(async con => {
-  try {
-    await con.runMigrations({transaction: 'all'})
-  } finally {
-    await con.close().catch(err => null)
-  }
-}).then(
-  () => process.exit(),
-  err => {
-    console.error(err)
-    process.exit(1)
-  }
-)
+require("typeorm")
+  .createConnection(ormConfig)
+  .then(async (con) => {
+    try {
+      await con.runMigrations({ transaction: "all" });
+    } finally {
+      await con.close().catch((err) => null);
+    }
+  })
+  .then(
+    () => process.exit(),
+    (err) => {
+      console.error(err);
+      process.exit(1);
+    }
+  );

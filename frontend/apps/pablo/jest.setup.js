@@ -29,7 +29,7 @@ jest.mock('react-apexcharts', () => {
   }
 })
 
-jest.mock("@/store/hooks/useLiquidityPoolDetails", () => {
+jest.mock("@/defi/hooks/useLiquidityPoolDetails", () => {
   const BigNumber = require('bignumber.js');
   return { useLiquidityPoolDetails: jest.fn().mockImplementation(() => ({
     poolStats: {
@@ -62,7 +62,17 @@ jest.mock("@/store/hooks/useLiquidityPoolDetails", () => {
   }))}
 })
 
-jest.mock("@/store/hooks/useUserProvidedLiquidityByPool.ts", () => {
+jest.mock("@/defi/hooks/overview/usePabloHistoricalTotalValueLocked", () => {
+  return { usePabloHistoricalTotalValueLocked: jest.fn().mockImplementation(() => ({
+    chartSeries: [],
+    selectedInterval: "24h",
+    setSelectedInterval: jest.fn().mockImplementation(() => {}),
+    durationLabels: []
+  }))}
+})
+
+
+jest.mock("@/defi/hooks/useUserProvidedLiquidityByPool.ts", () => {
   const BigNumber = require('bignumber.js');
   return { useUserProvidedLiquidityByPool: jest.fn().mockImplementation(() => ({
       tokenAmounts: {
@@ -94,7 +104,7 @@ jest.mock("@/defi/subsquid/auctions/helpers", () => {
 }
 })
 
-jest.mock("@/store/hooks/usePoolTvlChart", () => ({
+jest.mock("@/defi/hooks/usePoolTvlChart", () => ({
   usePoolTvlChart: jest.fn().mockImplementation(() => ({
     seriesIntervals: [],
     chartSeries: [],

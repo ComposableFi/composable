@@ -12,7 +12,7 @@ import { useSnackbar } from "notistack";
 import {
   SNACKBAR_TYPES,
   transactionStatusSnackbarMessage,
-} from "../pools/addLiquidity/useAddLiquidity";
+} from "../addLiquidity/useAddLiquidity";
 import {
   updateOwnedFinancialNfts,
   updateStakingPositionsHistory,

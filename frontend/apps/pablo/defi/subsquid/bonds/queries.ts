@@ -1,7 +1,7 @@
-import { makeClient } from "@/defi/subsquid/makeClient";
+import { subsquidClient } from "@/defi/subsquid/client";
 import { OperationResult } from "urql";
 
-export const queryTotalPurchasedBondsByBondOfferIds = () => makeClient().query(`query queryTotalPurchasedBondsByBondOfferIds {
+export const queryTotalPurchasedBondsByBondOfferIds = () => subsquidClient().query(`query queryTotalPurchasedBondsByBondOfferIds {
     bondedFinanceBondOffers {
       offerId
       totalPurchased
@@ -19,7 +19,7 @@ export interface SubsquidVestingScheduleEntity {
 export function queryVestingSchedulesByAccountId(accountId: string): Promise<OperationResult<{
   vestingSchedules: SubsquidVestingScheduleEntity[]
 }, {}>> {
-  return makeClient().query(`
+  return subsquidClient().query(`
   query vestingSchedules {
     vestingSchedules(where: {to_eq: "${accountId}"}) {
       scheduleId

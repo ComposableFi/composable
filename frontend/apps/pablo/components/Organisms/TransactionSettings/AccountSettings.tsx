@@ -1,9 +1,5 @@
 import { Modal } from "@/components/Molecules";
-import { useAppDispatch, useAppSelector } from "@/hooks/store";
-import {
-  closeAccountSettingsModal,
-  openPolkadotModal,
-} from "@/stores/ui/uiSlice";
+import { setUiState, useUiSlice } from "@/store/ui/ui.slice";
 import {
   CloseOutlined,
   ContentCopy,
@@ -11,18 +7,15 @@ import {
 } from "@mui/icons-material";
 import { alpha, Box, Button, Typography, useTheme } from "@mui/material";
 import Image from "next/image";
-import React from "react";
 
 const AccountSettings: React.FC<{}> = () => {
   const theme = useTheme();
-  const dispatch = useAppDispatch();
-  const isModalOpen = useAppSelector(
-    (state) => state.ui.isAccountSettingsModalOpen
-  );
+  const { isAccountSettingsModalOpen } = useUiSlice();
+  const isModalOpen = isAccountSettingsModalOpen;
 
   return (
     <Modal
-      onClose={() => dispatch(closeAccountSettingsModal())}
+      onClose={() => setUiState({ isAccountSettingsModalOpen: false })}
       open={isModalOpen}
       maxWidth="sm"
       BackdropProps={{
@@ -51,7 +44,7 @@ const AccountSettings: React.FC<{}> = () => {
           <Typography>Account</Typography>
           <CloseOutlined
             sx={{ cursor: "pointer" }}
-            onClick={() => dispatch(closeAccountSettingsModal())}
+            onClick={() => setUiState({ isAccountSettingsModalOpen: false })}
           />
         </Box>
         <Box
@@ -85,7 +78,7 @@ const AccountSettings: React.FC<{}> = () => {
         </Box>
         <Box mt={4}>
           <Button
-            onClick={() => dispatch(openPolkadotModal())}
+            onClick={() => setUiState({ isPolkadotModalOpen: true })}
             variant="contained"
             fullWidth
           >

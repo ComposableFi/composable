@@ -12,7 +12,7 @@ import BigNumber from "bignumber.js";
 import {
   transactionStatusSnackbarMessage,
   SNACKBAR_TYPES,
-} from "../pools/addLiquidity/useAddLiquidity";
+} from "../addLiquidity/useAddLiquidity";
 import { updateOwnedFinancialNfts } from "@/updaters/stakingRewards/Updater";
 
 export type UnstakeProps = {
