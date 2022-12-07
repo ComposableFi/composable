@@ -60,12 +60,13 @@ pub mod pallet {
 	use codec::FullCodec;
 	use composable_support::math::safe::{safe_multiply_by_rational, SafeArithmetic, SafeSub};
 	use composable_traits::{
-		currency::{CurrencyFactory, LocalAssets},
+		currency::{LocalAssets, RegisterAsset},
 		defi::{CurrencyPair, Rate},
 		dex::{
 			Amm, BasicPoolInfo, Fee, PriceAggregate, RedeemableAssets,
 			RemoveLiquiditySimulationResult,
 		},
+		xcm::assets::XcmAssetLocation,
 	};
 	use core::fmt::Debug;
 	use frame_support::{
@@ -256,10 +257,9 @@ pub mod pallet {
 		/// An isomorphism: Balance<->u128
 		type Convert: Convert<u128, BalanceOf<Self>> + Convert<BalanceOf<Self>, u128>;
 
-		/// Factory to create new lp-token.
-		type CurrencyFactory: CurrencyFactory<
-			AssetId = <Self as Config>::AssetId,
-			Balance = Self::Balance,
+		type AssetsRegistry: RegisterAsset<
+			MultiLocation = XcmAssetLocation,
+			LocalAssetId = AssetIdOf<Self>,
 		>;
 
 		/// Dependency allowing this pallet to transfer funds from one account to another.

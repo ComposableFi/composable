@@ -44,6 +44,7 @@ frame_support::construct_runtime!(
 		Pablo: pablo::{Pallet, Call, Storage, Event<T>},
 		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
+		AssetsRegistry: pallet_assets_registry,
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
 		StakingRewards: pallet_staking_rewards::{Pallet, Storage, Call, Event<T>},
 	}
@@ -191,6 +192,17 @@ impl pallet_staking_rewards::Config for Test {
 	type ExistentialDeposits = ExistentialDeposits;
 }
 
+impl pallet_assets_registry::Config for Test {
+	type Event = Event;
+	type LocalAssetId = CurrencyId;
+	type Balance = Balance;
+	type ForeignAssetId = composable_traits::xcm::assets::XcmAssetLocation;
+	type UpdateAssetRegistryOrigin = EnsureRoot<AccountId>;
+	type ParachainOrGovernanceOrigin = EnsureRoot<AccountId>;
+	type CurrencyFactory = LpTokenFactory;
+	type WeightInfo = ();
+}
+
 ord_parameter_types! {
 	pub const RootAccount: AccountId = ALICE;
 }
@@ -204,8 +216,8 @@ impl pablo::Config for Test {
 	type Event = Event;
 	type AssetId = AssetId;
 	type Balance = Balance;
-	type CurrencyFactory = LpTokenFactory;
 	type Assets = Tokens;
+	type AssetsRegistry = AssetsRegistry;
 	type Convert = ConvertInto;
 	type PoolId = PoolId;
 	type PalletId = TestPalletID;

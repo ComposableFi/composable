@@ -63,6 +63,17 @@ pub trait AssetRatioInspect {
 	}
 }
 
+pub trait RegisterAsset {
+	type MultiLocation;
+	type LocalAssetId;
+
+	fn register_asset(
+		location: Self::MultiLocation,
+		ratio: Rational64,
+		decimals: Option<Exponent>,
+	) -> Result<Self::LocalAssetId, DispatchError>;
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Encode, Decode, TypeInfo)]
 pub struct RangeId(u32);
 

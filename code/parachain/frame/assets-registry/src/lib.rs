@@ -34,7 +34,9 @@ pub mod pallet {
 	use codec::FullCodec;
 	use composable_traits::{
 		assets::Asset,
-		currency::{BalanceLike, CurrencyFactory, Exponent, ForeignByNative, RangeId},
+		currency::{
+			BalanceLike, CurrencyFactory, Exponent, ForeignByNative, RangeId, RegisterAsset,
+		},
 		xcm::assets::{ForeignMetadata, RemoteAssetRegistryInspect, RemoteAssetRegistryMutate},
 	};
 	use cumulus_primitives_core::ParaId;
@@ -194,13 +196,7 @@ pub mod pallet {
 			decimals: Option<Exponent>,
 		) -> DispatchResultWithPostInfo {
 			T::UpdateAssetRegistryOrigin::ensure_origin(origin)?;
-			ensure!(
-				!ForeignToLocal::<T>::contains_key(&location),
-				Error::<T>::ForeignAssetAlreadyRegistered
-			);
-			let asset_id = T::CurrencyFactory::create(RangeId::FOREIGN_ASSETS)?;
-			Self::set_reserve_location(asset_id, location.clone(), ratio, decimals)?;
-			Self::deposit_event(Event::<T>::AssetRegistered { asset_id, location, decimals });
+			<Self as RegisterAsset>::register_asset(location, ratio, decimals)?;
 			Ok(().into())
 		}
 
@@ -324,6 +320,26 @@ pub mod pallet {
 					}
 				})
 				.collect::<Vec<_>>()
+		}
+	}
+
+	impl<T: Config> RegisterAsset for Pallet<T> {
+		type MultiLocation = T::ForeignAssetId;
+		type LocalAssetId = T::LocalAssetId;
+
+		fn register_asset(
+			location: Self::MultiLocation,
+			ratio: Rational,
+			decimals: Option<Exponent>,
+		) -> Result<Self::LocalAssetId, DispatchError> {
+			ensure!(
+				!ForeignToLocal::<T>::contains_key(&location),
+				Error::<T>::ForeignAssetAlreadyRegistered
+			);
+			let asset_id = T::CurrencyFactory::create(RangeId::FOREIGN_ASSETS)?;
+			Self::set_reserve_location(asset_id, location.clone(), ratio, decimals)?;
+			Self::deposit_event(Event::<T>::AssetRegistered { asset_id, location, decimals });
+			Ok(asset_id)
 		}
 	}
 

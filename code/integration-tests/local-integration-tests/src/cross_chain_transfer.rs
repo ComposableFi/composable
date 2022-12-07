@@ -236,8 +236,7 @@ fn this_native_transferred_from_sibling_to_native_is_not_enough() {
 		log::info!(target: "bdd", "Remote PICA registered on sibling");
 		use sibling_runtime::*;
 		let root = frame_system::RawOrigin::Root;
-		let location =
-			XcmAssetLocation::new(MultiLocation::new(1, X1(Parachain(THIS_PARA_ID))).into());
+		let location = XcmAssetLocation::new(MultiLocation::new(1, X1(Parachain(THIS_PARA_ID))));
 		AssetsRegistry::register_asset(root.into(), location.clone(), Rational64::one(), None)
 			.unwrap();
 		System::events()

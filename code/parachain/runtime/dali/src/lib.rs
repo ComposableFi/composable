@@ -1032,8 +1032,8 @@ impl pablo::Config for Runtime {
 	type AssetId = CurrencyId;
 	type Balance = Balance;
 	type Convert = ConvertInto;
-	type CurrencyFactory = CurrencyFactory;
 	type Assets = Assets;
+	type AssetsRegistry = AssetsRegistry;
 	type PoolId = PoolId;
 	type PalletId = PabloId;
 	type LocalAssets = CurrencyFactory;

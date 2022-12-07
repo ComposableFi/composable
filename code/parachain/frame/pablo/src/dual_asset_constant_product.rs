@@ -8,8 +8,9 @@ use composable_maths::dex::{
 };
 use composable_support::math::safe::SafeAdd;
 use composable_traits::{
-	currency::{CurrencyFactory, RangeId},
+	currency::{Rational64, RegisterAsset},
 	dex::{AssetAmount, BasicPoolInfo, Fee, FeeConfig},
+	xcm::assets::XcmAssetLocation,
 };
 use frame_support::{
 	defensive,
@@ -43,8 +44,11 @@ impl<T: Config> DualAssetConstantProduct<T> {
 			Error::<T>::WeightsMustSumToOne
 		);
 		ensure!(fee_config.fee_rate < Permill::one(), Error::<T>::InvalidFees);
-
-		let lp_token = T::CurrencyFactory::create(RangeId::LP_TOKENS)?;
+		let lp_token = T::AssetsRegistry::register_asset(
+			XcmAssetLocation::LOCAL_NATIVE,
+			Rational64::one(),
+			None,
+		)?;
 		// Add new pool
 		let pool_id =
 			PoolCount::<T>::try_mutate(|pool_count| -> Result<T::PoolId, DispatchError> {

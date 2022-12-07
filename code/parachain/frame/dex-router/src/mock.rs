@@ -19,7 +19,6 @@ pub type Amount = i128;
 pub type PoolId = u128;
 pub type BlockNumber = u64;
 pub type AccountId = u128;
-pub type PositionId = u128;
 pub type CurrencyId = u128;
 
 #[allow(dead_code)]
@@ -59,6 +58,7 @@ frame_support::construct_runtime!(
 		StakingRewards: pallet_staking_rewards::{Pallet, Storage, Call, Event<T>},
 		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
+		AssetsRegistry: pallet_assets_registry,
 		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
 	}
@@ -178,6 +178,18 @@ parameter_types! {
 	pub const PbloStakeFinancialNftCollectionId: CurrencyId = 1002;
 	// TODO(benluelo): Use a better value here?
 	pub const TreasuryAccountId: AccountId = 123_456_789_u128;
+	pub const RootAccount: AccountId = 0;
+}
+
+impl pallet_assets_registry::Config for Test {
+	type Event = Event;
+	type LocalAssetId = CurrencyId;
+	type Balance = Balance;
+	type ForeignAssetId = composable_traits::xcm::assets::XcmAssetLocation;
+	type UpdateAssetRegistryOrigin = EnsureRoot<AccountId>;
+	type ParachainOrGovernanceOrigin = EnsureRoot<AccountId>;
+	type CurrencyFactory = LpTokenFactory;
+	type WeightInfo = ();
 }
 
 impl pallet_staking_rewards::Config for Test {
@@ -216,8 +228,8 @@ impl pallet_pablo::Config for Test {
 	type Event = Event;
 	type AssetId = AssetId;
 	type Balance = Balance;
-	type CurrencyFactory = LpTokenFactory;
 	type Assets = Tokens;
+	type AssetsRegistry = AssetsRegistry;
 	type Convert = ConvertInto;
 	type PoolId = PoolId;
 	type PalletId = TestPalletID;
@@ -256,5 +268,8 @@ impl dex_router::Config for Test {
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+	system::GenesisConfig::default()
+		.build_storage::<Test>()
+		.expect("Storage is vlaid; QED")
+		.into()
 }
