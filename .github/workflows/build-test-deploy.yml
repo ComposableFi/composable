@@ -640,11 +640,9 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 16
-          cache: "yarn"
-          cache-dependency-path: code/xcvm/evm/yarn.lock
       - name: Install dependencies
         working-directory: code/xcvm/evm/
-        run: yarn install --force 
+        run: npm install --force 
 
       - uses: foundry-rs/foundry-toolchain@v1
         with:

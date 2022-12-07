@@ -8,7 +8,7 @@
     "/dist"
   ],
   "scripts": {
-    "build": "yarn clean && tsc && yarn copy-files",
+    "build": "npm run clean && tsc && npm run copy-files",
     "clean": "rm -rf ./dist",
     "test": "echo \"Error: no test specified\" && exit 1",
     "copy-files": "cp ./src/interpreter.proto ./dist/"
