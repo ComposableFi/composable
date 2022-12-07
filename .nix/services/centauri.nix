@@ -1,8 +1,7 @@
-{ execCommands, configPathSource, configPathContainer, dependsOn}: {
+{ name, execCommands, configPathSource, configPathContainer, dependsOn }: {
   service = {
-    name = "hyperspace-create-client";
     image = "composablefi/composable-centauri:d8fdb31227a221a794f86c5bba4a8127cf8e71d5";
-    restart = "always";
+    restart = "no";
     volumes = [
 	{
       type = "bind";
