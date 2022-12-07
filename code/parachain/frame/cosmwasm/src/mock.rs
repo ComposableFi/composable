@@ -1,3 +1,5 @@
+#![allow(clippy::disallowed_methods)] // disabled for now to make running clippy on the tests easier
+
 use core::marker::PhantomData;
 
 use crate::*;
@@ -20,10 +22,6 @@ use sp_runtime::{
 	traits::{AccountIdConversion, BlakeTwo256, Convert, IdentityLookup},
 	AccountId32, DispatchError,
 };
-
-// pub const BOB: AccountId32 = 1;
-// pub const CHARLIE: AccountId32 = 2;
-// pub const JEREMY: AccountId32 = 3;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;

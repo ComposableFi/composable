@@ -1,3 +1,5 @@
+#![allow(clippy::disallowed_methods)] // disabled for now to make running clippy on the tests easier
+
 use crate::{
 	mock::{new_test_ext, Cosmwasm, Origin, Test},
 	AccountIdOf, Error,

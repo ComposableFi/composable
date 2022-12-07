@@ -1,3 +1,5 @@
+#![allow(clippy::disallowed_methods)] // disabled for now to make running clippy on the tests easier
+
 use super::*;
 use crate::{
 	instrument::INSTRUCTIONS_MULTIPLIER,
@@ -373,10 +375,10 @@ benchmarks! {
 	}: _(RawOrigin::Signed(origin), contract.clone(), CodeIdentifier::CodeId(2), 100_000_000u64, message)
 	verify {
 		// Make sure code id doesn't exist
-		assert_eq!(CodeIdToInfo::<T>::contains_key(1), false);
-		assert_eq!(PristineCode::<T>::contains_key(1), false);
-		assert_eq!(InstrumentedCode::<T>::contains_key(1), false);
-		assert_eq!(CodeHashToId::<T>::contains_key(pristine_code_hash), false);
+		assert!(!CodeIdToInfo::<T>::contains_key(1));
+		assert!(!PristineCode::<T>::contains_key(1));
+		assert!(!InstrumentedCode::<T>::contains_key(1));
+		assert!(!CodeHashToId::<T>::contains_key(pristine_code_hash));
 		// Make sure contract points to the new code
 		assert_eq!(ContractToInfo::<T>::get(&contract).unwrap().code_id, 2);
 	}
