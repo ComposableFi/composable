@@ -54,29 +54,31 @@
           networks."${network-name}" = { };
 
           services = builtins.listToAttrs (map toService devnetConfigs) // {
-            "centauri" = mkComposableContainer (import ../services/centauri.nix
-              [ 
+            "hyperspace-create-clients" = mkComposableContainer (import ../services/centauri.nix {
+              execCommands = [ 
                 "create-clients" "--config" configPathContainer
-              ] configPathSource configPathContainer null
+              ]; configPathSource=configPathSource; configPathContainer=configPathContainer; dependsOn={};
+		}
             );
 
-          } // {
-            "centauri" = mkComposableContainer (import ../services/centauri.nix 
-              [ 
+            "hyperspace-create-connection" = mkComposableContainer (import ../services/centauri.nix  {
+              execCommands = [ 
                 "create-connection" "--config" configPathContainer "--delay-period" "0"
-              ] configPathSource configPathContainer dependsOnCreateClient
+              ]; configPathSource=configPathSource; configPathContainer=configPathContainer; dependsOn=dependsOnCreateClient;
+		}
             );
-          } // {
-            "centauri" = mkComposableContainer (import ../services/centauri.nix
-              [ 
-                "create-clients" "--config" configPathContainer "--port-id" "transfer" "--version" "ics20-1"
+
+            "hyperspace-create-channels" = mkComposableContainer (import ../services/centauri.nix {
+              execCommands = [ 
+                "create-channel" "--config" configPathContainer "--port-id" "transfer" "--version" "ics20-1"
                 "--order" "unordered"
-              ] configPathSource configPathContainer dependsOnCreateConnection
+              ]; configPathSource=configPathSource; configPathContainer=configPathContainer; dependsOn=dependsOnCreateConnection;
+		}
             );
           };
-        };
-      })
-  ];
+      };
+     })
+ ];
   inherit pkgs;
 }
 
