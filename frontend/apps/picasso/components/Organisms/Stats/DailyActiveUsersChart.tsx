@@ -45,7 +45,6 @@ export const DailyActiveUsersChart: FC = () => {
     return <ChartLoadingSkeleton />;
   }
 
-  console.log(JSON.stringify(chartSeries, null, 2));
 
   if (error) {
     return <>{"error:" + error}</>;
