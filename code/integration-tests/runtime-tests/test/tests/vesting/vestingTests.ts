@@ -540,6 +540,7 @@ describe("[SHORT] Vesting Pallet Tests", function () {
   });
 
   it("#1.8  The beneficiary of a moment based vested transfer (#1.2) can claim its transfer after the vesting period & receive the full amount.", async function () {
+    this.skip();
     this.timeout(2 * 60 * 1000);
 
     const assetId = PICA_ASSET_ID;
