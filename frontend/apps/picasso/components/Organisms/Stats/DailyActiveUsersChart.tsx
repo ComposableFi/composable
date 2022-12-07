@@ -26,7 +26,6 @@ export const DailyActiveUsersChart: FC = () => {
     if (!data) return [];
 
     const tuples: [number, number][] = data.activeUsers.map((activeUser) => {
-      console.log(JSON.stringify(activeUser, null, 2));
       const date = new Date(Number(activeUser.date));
       return [date.getTime(), activeUser.count];
     });
