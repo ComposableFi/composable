@@ -123,14 +123,15 @@ describe("tx.constantProductDex Tests", function () {
         }
       });
 
-      await sendAndWaitForSuccess(
+      const res = await sendAndWaitForSuccess(
         api,
         poolOwnerWallet,
         api.events.pablo.PoolCreated.is,
         api.tx.pablo.create(poolConfiguration)
       ).catch(function (exc) {
-        expect(exc.toString()).to.contain("BadOrigin");
+        return exc;
       });
+      expect(res.toString()).to.contain("BadOrigin");
     });
 
     it("#1.4  I can, as sudo, create a new Pablo Constant Product pool with 0 fees.", async function () {
@@ -172,17 +173,18 @@ describe("tx.constantProductDex Tests", function () {
         }
       });
 
-      await sendAndWaitForSuccess(
+      const res = await sendAndWaitForSuccess(
         api,
         sudoKey,
         api.events.pablo.PoolCreated.is,
         api.tx.sudo.sudo(api.tx.pablo.create(poolConfiguration))
-      ).catch(function (exc) {
-        expect(exc.toString()).to.contain("RpcError: 1002");
+      ).catch(function (exc) {return exc;
       });
+
+      expect(exc.toString()).to.contain("RpcError: 1002");
     });
 
-    it("#1.6  I can not, as sudo, create a new Pablo Constant Product pool with the base asset being equal to the quote asset.", async function () {
+    it.only("#1.6  I can not, as sudo, create a new Pablo Constant Product pool with the base asset being equal to the quote asset.", async function () {
       const owner = api.createType("AccountId32", poolOwnerWallet.publicKey);
       const poolConfiguration = api.createType("PalletPabloPoolInitConfiguration", {
         DualAssetConstantProduct: {
@@ -196,16 +198,15 @@ describe("tx.constantProductDex Tests", function () {
         }
       });
 
-      await sendAndWaitForSuccess(
+      const res = await sendAndWaitForSuccess(
         api,
         sudoKey,
-        api.events.pablo.PoolCreated.is,
+        api.events.sudo.Sudid.is,
         api.tx.sudo.sudo(api.tx.pablo.create(poolConfiguration))
       ).catch(function (exc) {
-        // ToDo
-        console.debug(exc.toString());
-        expect(exc.toString()).to.contain("ToDo!");
+        return exc;
       });
+      expect(res.toString()).to.contain("\"index\":65,\"error\":\"0x0b000000\"");
     });
   });
 
