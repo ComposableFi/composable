@@ -1,9 +1,18 @@
 import { FC, useMemo, useState } from "react";
-import { formatNumber, getRange, head, humanBalance, PRESET_RANGE, PresetRange, tail } from "shared";
+import {
+  formatNumber,
+  getRange,
+  PRESET_RANGE,
+  PresetRange,
+  tail,
+} from "shared";
 import { useQuery } from "@apollo/client";
 import { Box, Typography, useTheme } from "@mui/material";
 import { Chart } from "@/components";
-import { GET_TOTAL_VALUE_LOCKED, TotalValueLocked } from "@/apollo/queries/totalValueLocked";
+import {
+  GET_TOTAL_VALUE_LOCKED,
+  TotalValueLocked,
+} from "@/apollo/queries/totalValueLocked";
 import { ChartLoadingSkeleton } from "@/components/Organisms/Stats/ChartLoadingSkeleton";
 import { changeCalculator } from "@/components/Organisms/Stats/utils";
 
@@ -23,7 +32,7 @@ export const TotalValueLockedChart: FC = () => {
     if (!data) return [];
 
     const tuples: [number, number][] = data.totalValueLocked.map((tvl) => {
-      const date = new Date(tvl.date);
+      const date = new Date(Number(tvl.date));
       return [date.getTime(), tvl.totalValueLocked];
     });
 
@@ -31,10 +40,7 @@ export const TotalValueLockedChart: FC = () => {
   }, [data]);
   const change = useMemo(() => {
     return changeCalculator(chartSeries, theme);
-  }, [
-    chartSeries,
-    theme,
-  ]);
+  }, [chartSeries, theme]);
   const changeTextPrimary = useMemo(() => {
     const first = tail(chartSeries);
     return formatNumber(first?.[1] ?? 0);
