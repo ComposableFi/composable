@@ -36,6 +36,10 @@ pub mod xcmp;
 
 use alloc::string::String;
 use core::str::FromStr;
+
+#[cfg(test)]
+mod testing;
+
 pub use versions::*;
 
 use lending::MarketId;

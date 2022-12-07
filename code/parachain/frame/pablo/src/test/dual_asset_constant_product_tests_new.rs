@@ -1,7 +1,12 @@
-use composable_tests_helpers::test::{
-	block::{next_block, process_and_progress_blocks},
-	currency::{BTC, USDT},
-	helper::RuntimeTrait,
+#![allow(clippy::disallowed_methods)]
+
+use composable_tests_helpers::{
+	test::{
+		block::{next_block, process_and_progress_blocks},
+		currency::{BTC, USDT},
+		helper::RuntimeTrait,
+	},
+	ALICE, BOB,
 };
 use frame_support::{
 	assert_ok,

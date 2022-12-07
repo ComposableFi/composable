@@ -11,6 +11,8 @@ use sp_runtime::Permill;
 
 mod create {
 
+	use composable_tests_helpers::ALICE;
+
 	use crate::PoolInitConfigurationOf;
 
 	use super::*;

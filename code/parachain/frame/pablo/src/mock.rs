@@ -1,22 +1,20 @@
 #![cfg(test)]
 
 use crate as pablo;
-use composable_tests_helpers::test::currency;
+use composable_tests_helpers::{test::currency, ALICE};
 use frame_support::{
-	ord_parameter_types,
-	pallet_prelude::GenesisBuild,
-	parameter_types,
+	ord_parameter_types, parameter_types,
 	traits::{EitherOfDiverse, Everything},
 	PalletId,
 };
 use frame_system::{self as system, EnsureRoot, EnsureSignedBy};
-use orml_traits::{parameter_type_with_key, LockIdentifier};
+use orml_traits::parameter_type_with_key;
 use sp_arithmetic::traits::Zero;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, ConvertInto, IdentityLookup},
-	Permill,
+	AccountId32, Permill,
 };
 
 pub type CurrencyId = u128;
@@ -41,12 +39,11 @@ frame_support::construct_runtime!(
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		Pablo: pablo::{Pallet, Call, Storage, Event<T>},
-		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
-		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
-		StakingRewards: pallet_staking_rewards::{Pallet, Storage, Call, Event<T>},
+		System: frame_system,
+		Pablo: pablo,
+		LpTokenFactory: pallet_currency_factory,
+		Tokens: orml_tokens,
+		Timestamp: pallet_timestamp,
 	}
 );
 
@@ -63,18 +60,7 @@ parameter_types! {
 	pub const SS58Prefix: u8 = 42;
 }
 
-pub type AccountId = u128;
-
-#[allow(dead_code)]
-pub static ALICE: AccountId = 1;
-#[allow(dead_code)]
-pub static BOB: AccountId = 2;
-#[allow(dead_code)]
-pub static CHARLIE: AccountId = 3;
-#[allow(dead_code)]
-pub static DAVE: AccountId = 4;
-#[allow(dead_code)]
-pub static CURVE_ADMIN_FEE_ACC_ID: AccountId = 5;
+pub type AccountId = AccountId32;
 
 impl system::Config for Test {
 	type BaseCallFilter = Everything;
@@ -152,48 +138,6 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
-parameter_types! {
-	pub const StakingRewardsPalletId: PalletId = PalletId(*b"stk_rwrd");
-	pub const StakingRewardsLockId: LockIdentifier = *b"stk_lock";
-	pub const MaxStakingDurationPresets: u32 = 10;
-	pub const MaxRewardConfigsPerPool: u32 = 10;
-	pub const PicaAssetId : CurrencyId = 1;
-	pub const PbloAssetId : CurrencyId = 2;
-	pub const XPicaAssetId: CurrencyId = 101;
-	pub const XPbloAssetId: CurrencyId = 102;
-	pub const PicaStakeFinancialNftCollectionId: CurrencyId = 1001;
-	pub const PbloStakeFinancialNftCollectionId: CurrencyId = 1001;
-	// REVIEW(benluelo): Use a better value for this?
-	pub const TreasuryAccountId: AccountId = 123_456_789_u128;
-}
-
-impl pallet_staking_rewards::Config for Test {
-	type Event = Event;
-	type Balance = Balance;
-	type AssetId = CurrencyId;
-	type FinancialNft = pablo::mock_fnft::MockFnft;
-	type FinancialNftInstanceId = u64;
-	type CurrencyFactory = LpTokenFactory;
-	type Assets = Tokens;
-	type UnixTime = Timestamp;
-	type ReleaseRewardsPoolsBatchSize = frame_support::traits::ConstU8<13>;
-	type PalletId = StakingRewardsPalletId;
-	type MaxStakingDurationPresets = MaxStakingDurationPresets;
-	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
-	type RewardPoolCreationOrigin = EnsureRoot<Self::AccountId>;
-	type RewardPoolUpdateOrigin = EnsureRoot<Self::AccountId>;
-	type PicaAssetId = PicaAssetId;
-	type XPicaAssetId = XPicaAssetId;
-	type PbloAssetId = PbloAssetId;
-	type XPbloAssetId = XPbloAssetId;
-	type PicaStakeFinancialNftCollectionId = PicaStakeFinancialNftCollectionId;
-	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
-	type WeightInfo = ();
-	type LockId = StakingRewardsLockId;
-	type TreasuryAccount = TreasuryAccountId;
-	type ExistentialDeposits = ExistentialDeposits;
-}
-
 ord_parameter_types! {
 	pub const RootAccount: AccountId = ALICE;
 }
@@ -222,8 +166,6 @@ impl pablo::Config for Test {
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut storage =
 		frame_system::GenesisConfig::default().build_storage::<Test>().expect("success");
-	pallet_staking_rewards::GenesisConfig::<Test>::default()
-		.assimilate_storage(&mut storage)
-		.expect("success");
+
 	storage.into()
 }

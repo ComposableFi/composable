@@ -132,6 +132,12 @@ orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-l
 # simnode support
 simnode-apis = { package = "simnode-runtime-apis", git = "https://github.com/polytope-labs/substrate-simnode", default-features = false, branch = "polkadot-v0.9.27" }
 
+[dev-dependencies]
+pablo = { package = "pallet-pablo", path = "../../frame/pablo", features = [
+  "testing",
+] }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+
 [features]
 builtin-wasm = []
 default = ["std"]

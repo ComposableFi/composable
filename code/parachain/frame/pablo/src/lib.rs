@@ -10,6 +10,7 @@
 )]
 #![warn(clippy::unseparated_literal_suffix)]
 #![cfg_attr(not(feature = "std"), no_std)]
+#![cfg_attr(feature = "testing", macro_use)]
 #![warn(
 	bad_style,
 	bare_trait_objects,
@@ -31,12 +32,20 @@
 )]
 pub use pallet::*;
 
+#[cfg(feature = "testing")]
+include!(concat!(env!("OUT_DIR"), "/testing.rs"));
+
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
-mod mock_fnft;
+mod mock_fnft; // TODO(benluelo): DELETE!
 #[cfg(test)]
 mod test;
+
+#[cfg(feature = "testing")]
+pub mod testing;
+#[cfg(feature = "testing")]
+pub use testing::*;
 
 pub mod weights;
 

@@ -5,6 +5,7 @@ use crate::{
 	PoolConfiguration::DualAssetConstantProduct,
 	PoolInitConfiguration,
 };
+use composable_tests_helpers::{ALICE, BOB};
 use composable_traits::dex::AssetAmount;
 use frame_support::{
 	assert_noop, assert_ok,
@@ -62,10 +63,10 @@ pub fn common_add_remove_lp(
 		false
 	));
 	assert_last_event::<Test, _>(|e| {
-		matches!(e.event,
+		matches!(&e.event,
 			mock::Event::Pablo(crate::Event::LiquidityAdded { who, pool_id, /* base_amount, quote_amount, */ .. })
-			if who == ALICE
-			&& pool_id == actual_pool_id
+			if who == &ALICE
+			&& pool_id == &actual_pool_id
 			// && base_amount == first_asset_amount
 			// && quote_amount == second_asset_amount
 		)
@@ -92,10 +93,10 @@ pub fn common_add_remove_lp(
 		false
 	));
 	assert_last_event::<Test, _>(|e| {
-		matches!(e.event,
+		matches!(&e.event,
 		mock::Event::Pablo(crate::Event::LiquidityAdded { who, pool_id, /* base_amount, quote_amount, */  .. })
-		if who == BOB
-			&& pool_id == actual_pool_id
+		if who == &BOB
+			&& pool_id == &actual_pool_id
 			// && base_amount == next_first_asset_amount
 			// && quote_amount == next_second_asset_amount
 		)

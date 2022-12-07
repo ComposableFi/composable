@@ -153,6 +153,10 @@ pallet-ibc-ping = { git = "https://github.com/ComposableFi/centauri", rev = "c7d
 
 [dev-dependencies]
 frame-benchmarking = { package = "frame-benchmarking", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
+pablo = { package = "pallet-pablo", path = "../../frame/pablo", features = [
+  "testing",
+] }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 
 [features]
 builtin-wasm = []

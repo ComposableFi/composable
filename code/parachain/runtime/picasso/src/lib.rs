@@ -28,6 +28,9 @@ mod migrations;
 mod prelude;
 mod weights;
 
+#[cfg(test)]
+mod tests;
+
 pub mod xcmp;
 pub use common::xcmp::{MaxInstructions, UnitWeightCost};
 pub use xcmp::XcmConfig;
