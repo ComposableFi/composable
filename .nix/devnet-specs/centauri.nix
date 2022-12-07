@@ -38,6 +38,21 @@
         config = {
           project.name = "composable";
           networks."${network-name}" = { };
+          dependsOnCreateClient = {
+                depends_on = {
+                  create-clients = {
+                    condition = "service_completed_successfully"
+                  }
+                }
+          };
+          dependsOnCreateConnection = {
+                depends_on = {
+                  create-connection = {
+                    condition = "service_completed_successfully"
+                  }
+                }
+          };
+
           services = builtins.listToAttrs (map toService devnetConfigs) // {
             "centauri" = mkComposableContainer (import ../services/centauri.nix { 
               [ 
@@ -45,21 +60,20 @@
               ] configPathSource configPathContainer null
             });
 
-            /*
+          } // {
             "centauri" = mkComposableContainer (import ../services/centauri.nix { 
               [ 
-                "create-connection" "--config" configPathContainer
-              ] configPathSource configPathContainer {
-                    depends_on = {
-                              create-clients = {
-                                condition = service_completed_successfully
-                              }
-                    }
-              }
+                "create-connection" "--config" configPathContainer "--delay-period" "0"
+              ] configPathSource configPathContainer dependsOnCreateClient
             });
-
-            */
-          };
+          } // {
+            "centauri" = mkComposableContainer (import ../services/centauri.nix { 
+              [ 
+                "create-clients" "--config" configPathContainer "--port-id" "transfer" "--version" "ics20-1"
+                "--order" "unordered"
+              ] configPathSource configPathContainer dependsOnCreateConnection
+            });
+          }
         };
       }
     )
