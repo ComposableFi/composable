@@ -1,68 +1,69 @@
-name: Run Benchmarks
+name: Update benchmarks weights
 
 on:
-  workflow_dispatch:
   pull_request:
-    types: [labeled, synchronize, opened, reopened]
+    types: [labeled]
     branches:
       - main
-      - releases
+
+env:
+  NIX_NIXPKGS_CHANNEL: https://nixos.org/channels/nixpkgs-22.05-darwin
+  CACHIX_COMPOSABLE: composable-community
 
 jobs:
-  benchmark:
-    name: Benchmark
+  update_benchmarks_weights:
+    name: Update benchmarks weights
     runs-on:
       - self-hosted
       - linux
       - x64
       - bmark
     container:
-      image: composablefi/ci-linux:2022-08-06
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     concurrency:
-      group: bench-${{ github.ref }}
+      group: update-benchmarking-${{ matrix.runtime }}-${{ github.ref }}
       cancel-in-progress: true
-    if: github.event.pull_request.draft == false
+    strategy:
+      matrix:
+        runtime: [dali, picasso, composable]
+    if: contains(github.event.pull_request.labels.*.name, 'needs-benchmarks')
     steps:
-      - name: Clean up
-        continue-on-error: true
-        run: |
-          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
-          docker system prune --force --all --volumes
-
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.sha }}
 
-      - name: Fix dubious ownership
+      - name: "Setup Nix configuration"
         run: |
-          git config --global --add safe.directory /__w/composable/composable
-          git config --add safe.directory /__w/composable/composable
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+          echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          name: ${{ env.CACHIX_COMPOSABLE }}
+          skipPush: true
+          installCommand: |
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+
+      - name: Generate weights
+        run: |
+          nix run .#benchmarks-generate-${{ matrix.runtime }} -L
 
       - name: Get branch name
         id: branch-name
         uses: tj-actions/branch-names@v5.1
 
-      - name: Check for runtime changes
-        env:
-          BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
-          GITHUB_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
-        id: check_runtime
-        if: contains(github.event.pull_request.labels.*.name, 'needs-benchmarks')
-        run: .maintain/check_runtime.sh
+      - name: Fixup dubious ownership
+        run: |
+          # No clue why the next action fail without this otherwise.
+          git config --global --add safe.directory /__w/composable/composable
 
-      # TODO: use nix
-      - name: Benchmark Test
-        env:
-          BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
-          GITHUB_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
-        if: env.RUNTIME_CHECK == 1
-        id: run_benchmarks
-        run: .maintain/run_benchmarks.sh 50 20
-
-      - uses: EndBug/add-and-commit@v9
-        with: 
-          add: 'code/parachain/runtime'
-          message: 'Pushing benchmark changes'
+      - name: Push generated weights
+        uses: EndBug/add-and-commit@v9
+        with:
+          add: "code/parachain/runtime"
+          message: "chore(benchmarking): update ${{ matrix.runtime }} benchmarking weights"
           push: "true"
           new_branch: ${{ steps.branch-name.outputs.current_branch }}
