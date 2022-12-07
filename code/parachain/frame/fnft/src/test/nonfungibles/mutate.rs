@@ -5,10 +5,7 @@ mod mint_into {
 
 	use composable_tests_helpers::test::helper::RuntimeTrait;
 
-	use composable_traits::{
-		account_proxy::{AccountProxy, ProxyType},
-		fnft::FinancialNft,
-	};
+	use composable_traits::{account_proxy::ProxyType, fnft::FinancialNft};
 	use frame_support::{
 		assert_noop, assert_ok,
 		traits::tokens::nonfungibles::{Create, Mutate},
