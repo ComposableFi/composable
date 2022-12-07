@@ -8,7 +8,7 @@ interoperable technology stack that integrates with most major blockchain ecosys
 
 Picasso uses the, DotSama XCM channels and the Centauri IBC-Substrate bridge. 
 XCM channels allow Picasso to connect to any parachain with DotSama where Pablo can be leveraged by other projects who 
-would like a DEX for their tokens, bonding opportunities to increase POL and a platform to launch a LBP for launching 
+would like a DEX for their tokens, bonding opportunities to increase POL and a platform to launch an LBP for launching 
 tokens in a fair method whilst finding price discovery.
 
 The Centauri bridge allows Picasso to connect to the IBC-enabled blockchains. Initially bridging to the Cosmos 
