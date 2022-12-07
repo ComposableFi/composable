@@ -20,7 +20,7 @@ Initially,
 Pablo will focus on achieving strong liquidity for Substrate-native assets on our Kusama and Polkadot parachains, 
 and then continue to evolve as future infrastructure such as our Substrate <<!--\-->>IBC bridge — Centauri, goes live. 
 Therefore, Pablo is positioned not only to capture liquidity from the DotSama ecosystem
-but also to become a cross-chain hub that can natively tap into liquidity from IBC and EVM enabled blockchains.
+but also to become a cross-chain hub that can natively tap into liquidity from IBC-enabled blockchains.
 
 Pablo will kickstart the Composable DeFi ecosystem and act as a catalyst for our broader cross-chain vision.
 
