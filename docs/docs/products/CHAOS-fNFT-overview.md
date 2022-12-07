@@ -30,7 +30,7 @@ the lock, users will have the option to renew, or burn their xPICA fNFTs to retu
 xPICA holders will be continuously earning rewards throughout the lock period of their locked PICA.
 
 
-![how_to_xpica](./how-to-xpica.png)
+![staking](./staking.png)
 
 
 ## Building deep protocol-owned-liquidity
