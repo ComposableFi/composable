@@ -924,6 +924,8 @@ declare module '@polkadot/api-base/types/errors' {
       AssetAmountMustBePositiveNumber: AugmentedError<ApiType>;
       AssetNotFound: AugmentedError<ApiType>;
       CannotRespectMinimumRequested: AugmentedError<ApiType>;
+      IncorrectAmountOfAssets: AugmentedError<ApiType>;
+      InitialDepositCannotBeZero: AugmentedError<ApiType>;
       InvalidAmount: AugmentedError<ApiType>;
       InvalidAsset: AugmentedError<ApiType>;
       InvalidFees: AugmentedError<ApiType>;
@@ -940,6 +942,7 @@ declare module '@polkadot/api-base/types/errors' {
       PairMismatch: AugmentedError<ApiType>;
       PoolNotFound: AugmentedError<ApiType>;
       StakingPoolConfigError: AugmentedError<ApiType>;
+      UnsupportedOperation: AugmentedError<ApiType>;
       WeightsMustBeNonZero: AugmentedError<ApiType>;
       WeightsMustSumToOne: AugmentedError<ApiType>;
       /**

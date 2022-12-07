@@ -666,11 +666,11 @@ declare module '@polkadot/api-base/types/events' {
       /**
        * Liquidity added into the pool `T::PoolId`.
        **/
-      LiquidityAdded: AugmentedEvent<ApiType, [who: AccountId32, poolId: u128, baseAmount: u128, quoteAmount: u128, mintedLp: u128], { who: AccountId32, poolId: u128, baseAmount: u128, quoteAmount: u128, mintedLp: u128 }>;
+      LiquidityAdded: AugmentedEvent<ApiType, [who: AccountId32, poolId: u128, mintedLp: u128], { who: AccountId32, poolId: u128, mintedLp: u128 }>;
       /**
        * Liquidity removed from pool `T::PoolId` by `T::AccountId` in balanced way.
        **/
-      LiquidityRemoved: AugmentedEvent<ApiType, [who: AccountId32, poolId: u128, baseAmount: u128, quoteAmount: u128, totalIssuance: u128], { who: AccountId32, poolId: u128, baseAmount: u128, quoteAmount: u128, totalIssuance: u128 }>;
+      LiquidityRemoved: AugmentedEvent<ApiType, [who: AccountId32, poolId: u128], { who: AccountId32, poolId: u128 }>;
       /**
        * Pool with specified id `T::PoolId` was created successfully by `T::AccountId`.
        **/
