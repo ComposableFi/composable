@@ -181,10 +181,10 @@ describe("tx.constantProductDex Tests", function () {
       ).catch(function (exc) {return exc;
       });
 
-      expect(exc.toString()).to.contain("RpcError: 1002");
+      expect(res.toString()).to.contain("RpcError: 1002");
     });
 
-    it.only("#1.6  I can not, as sudo, create a new Pablo Constant Product pool with the base asset being equal to the quote asset.", async function () {
+    it("#1.6  I can not, as sudo, create a new Pablo Constant Product pool with the base asset being equal to the quote asset.", async function () {
       const owner = api.createType("AccountId32", poolOwnerWallet.publicKey);
       const poolConfiguration = api.createType("PalletPabloPoolInitConfiguration", {
         DualAssetConstantProduct: {
@@ -211,7 +211,7 @@ describe("tx.constantProductDex Tests", function () {
   });
 
   describe("2. Providing liquidity", function () {
-    it("#2.1  I can provide liquidity to the newly created pool. #1.1", async function () {
+    it.only("#2.1  I can provide liquidity to the newly created pool. #1.1", async function () {
       const assets = api.createType("BTreeMap<u128, u128>", {
         "1": Pica(10_0000000000000),
         "131": Pica(10_0000000000000)
