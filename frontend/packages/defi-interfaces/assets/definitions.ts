@@ -29,7 +29,7 @@ export default {
           isOptional: true,
         },
       ],
-      type: "Observable<Vec<Asset>>",
+      type: "Vec<Asset>",
     },
   },
   types: {

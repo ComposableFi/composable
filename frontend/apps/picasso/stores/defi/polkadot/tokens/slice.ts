@@ -3,11 +3,9 @@ import { StoreSlice } from "@/stores/types";
 import { Token, TokenId, TOKENS } from "tokens";
 import BigNumber from "bignumber.js";
 import {
-  // HumanizedKaruraAssetMetadata,
   PicassoRpcAsset,
   StatemineAssetMetadata,
 } from "@/defi/polkadot/pallets/Assets";
-import { fromChainIdUnit, unwrapNumberOrHex } from "shared";
 import { KusamaAsset } from "@/defi/polkadot/pallets/Assets/kusama";
 import { ParachainNetworks } from "substrate-react";
 
@@ -99,10 +97,9 @@ export const createTokensSlice: StoreSlice<TokensSlice> = (set) => ({
           const identifier = listItem.name.toLowerCase();
           const token = state.substrateTokens.tokens[identifier as TokenId];
           if (token) {
-            console.log("[Picasso] Found Supported Asset", identifier);
             token.decimals.picasso = listItem.decimals ?? 12;
             token.chainId.picasso = listItem.id;
-            token.existentialDeposit.picasso = null;
+            token.existentialDeposit.picasso = listItem.existentialDeposit;
           }
         });
         // karuraList.forEach(listItem => {

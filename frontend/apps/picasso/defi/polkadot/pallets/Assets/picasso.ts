@@ -1,5 +1,6 @@
 import { ApiPromise } from "@polkadot/api";
 import BigNumber from "bignumber.js";
+import { fromChainIdUnit, unwrapNumberOrHex } from "shared";
 
 export type PicassoRpcAsset = {
   name: string;
@@ -25,7 +26,10 @@ export async function picassoAssetsList(
         id: new BigNumber(asset.id.toString()),
         decimals: asset.decimals.toNumber(),
         foreignId: asset.foreignId.toJSON(),
-        existentialDeposit: new BigNumber(asset.existentialDeposit.toString()),
+        existentialDeposit: fromChainIdUnit(
+          unwrapNumberOrHex(asset.existentialDeposit.toString()),
+          asset.decimals.toNumber()
+        ),
         ratio: (asset.ratio.toJSON() as AssetRatio) ?? null,
       };
     });
