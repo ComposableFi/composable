@@ -5,6 +5,7 @@ import { useParachainApi } from "substrate-react";
 import { calculateStakingRewardsPoolApy } from "@/defi/utils/stakingRewards";
 import { useAsyncEffect } from "@/hooks/useAsyncEffect";
 import BigNumber from "bignumber.js";
+import { isPalletSupported } from "shared";
 
 export function useStakingRewardsPoolApy(
   stakingRewardPoolId: string | undefined
@@ -20,9 +21,9 @@ export function useStakingRewardsPoolApy(
     let _apy: Record<string, BigNumber> = {};
     const rewards = Object.keys(stakingRewardPool.rewards);
     for (const rewardAsset of rewards) {
-      const rewardAssetValue = await parachainApi.query.oracle.prices(
-        rewardAsset
-      );
+      const rewardAssetValue = isPalletSupported(parachainApi)("Oracle")
+        ? await parachainApi.query.oracle.prices(rewardAsset)
+        : 0; // Fallback to ZERO when Oracle is not available
       const { period, amount } =
         stakingRewardPool.rewards[rewardAsset].rewardRate;
       _apy[rewardAsset] = calculateStakingRewardsPoolApy(
