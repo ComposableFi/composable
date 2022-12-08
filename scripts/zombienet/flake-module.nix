@@ -4,8 +4,8 @@
       paritytech-zombienet-src = pkgs.fetchFromGitHub {
         owner = "paritytech";
         repo = "zombienet";
-        rev = "9cf8e598f0b8e8b88bc1b0e677acb7ba322c3a1a";
-        hash = "sha256-+tyVQa+BYdFphSLbinMFZlhV/fPG8R+/mwij36WwEEM=";
+        rev = "30f3cffc494622f710f73297a68831e564bbf9f1";
+        hash = "sha256-l4kCsTRXPKxg3UongXd/pWAdGTaV9k5pnlidU/2LWR4=";
       };
 
       build = pkgs.callPackage ./default.nix { };
@@ -79,6 +79,55 @@
             npm run zombie spawn "$CONFIG"/${name}.toml
           '';
         };
+
+        zombienet-all-dev-local = let
+          config = mkZombienet {
+            relaychain = {
+              chain = "rococo-local";
+              default_command =
+                pkgs.lib.meta.getExe self'.packages.polkadot-node;
+              count = 3;
+            };
+            parachains = [
+              {
+                command = pkgs.lib.meta.getExe self'.packages.composable-node;
+                chain = "dali-dev";
+                id = 2087;
+                collators = 3;
+              }
+
+              {
+                command = pkgs.lib.meta.getExe self'.packages.statemine-node;
+                chain = "statemine-local";
+                id = 1000;
+                collators = 2;
+                ws_port = 10008;
+                rpc_port = 32220;
+              }
+
+              {
+                command = pkgs.lib.meta.getExe self'.packages.acala-node;
+                chain = "karura-dev";
+                id = 2000;
+                collators = 1;
+                ws_port = 9999;
+                rpc_port = 32210;
+              }
+            ];
+          };
+        in pkgs.writeShellApplication rec {
+          name = "zombienet-all-dev-local";
+          runtimeInputs = [ pkgs.nodejs pkgs.yq paritytech-zombienet ];
+          text = ''
+            printf '${builtins.toJSON config}' > ${name}.json
+            CONFIG=$PWD
+            ${pkgs.yq}/bin/yq  . ${name}.json --toml-output > ${name}.toml
+            cat ${name}.toml      
+            cd ${paritytech-zombienet}            
+            npm run zombie spawn "$CONFIG"/${name}.toml
+          '';
+        };
+
       };
 
       apps = rec {
@@ -95,6 +144,11 @@
           type = "app";
           program = self'.packages.zombienet-rococo-local-dali-dev;
         };
+
+        zombienet-all-dev-local = {
+          type = "app";
+          program = self'.packages.zombienet-all-dev-local;
+        };        
       };
     };
 }

@@ -1,3 +1,4 @@
+# obsolete
 { pkgs, chainspec, polkadot-bin, composable-bin, acala-bin, statemine-bin }:
 with pkgs;
 let builder = pkgs.callPackage ./network-builder.nix { };
