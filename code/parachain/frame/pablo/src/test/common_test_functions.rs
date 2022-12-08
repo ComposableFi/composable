@@ -133,9 +133,11 @@ pub fn common_add_lp_with_min_mint_amount(
 	init_second_asset_amount: Balance,
 	first_asset_amount: Balance,
 	second_asset_amount: Balance,
+	lp_token_id: AssetId,
 	expected_lp: impl Fn(Balance, Balance, Balance, Balance, Balance) -> Balance,
 ) {
-	Pablo::create(Origin::root(), init_config.clone()).expect("pool creation failed");
+	Pablo::create(Origin::root(), init_config.clone(), Some(lp_token_id))
+		.expect("pool creation failed");
 
 	let pool_id = System::events()
 		.into_iter()
@@ -363,6 +365,7 @@ mod create {
 					assets_weights: dual_asset_pool_weights(BTC, Permill::from_percent(50), USDT),
 					fee: Permill::zero(),
 				},
+				Some(LP_TOKEN_ID),
 			));
 			assert_has_event::<Test, _>(|e| {
 				matches!(e.event, mock::Event::Pablo(crate::Event::PoolCreated { pool_id: 0, .. }))

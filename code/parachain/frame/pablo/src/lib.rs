@@ -362,9 +362,13 @@ pub mod pallet {
 		///
 		/// Emits `PoolCreated` event when successful.
 		#[pallet::weight(T::WeightInfo::create())]
-		pub fn create(origin: OriginFor<T>, pool: PoolInitConfigurationOf<T>) -> DispatchResult {
+		pub fn create(
+			origin: OriginFor<T>,
+			pool: PoolInitConfigurationOf<T>,
+			lp_token_id: Option<AssetIdOf<T>>,
+		) -> DispatchResult {
 			T::PoolCreationOrigin::ensure_origin(origin)?;
-			let _ = Self::do_create_pool(pool, None)?;
+			let _ = Self::do_create_pool(pool, lp_token_id)?;
 			Ok(())
 		}
 
