@@ -2,15 +2,7 @@ import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import {
-  alpha,
-  Box,
-  ListSubheader,
-  MenuItem,
-  Typography,
-  useMediaQuery,
-  useTheme,
-} from "@mui/material";
+import { alpha, Box, ListSubheader, MenuItem, Typography, useMediaQuery, useTheme } from "@mui/material";
 import React, { ReactNode } from "react";
 import { BaseAsset } from "./BaseAsset";
 import { Input, InputProps } from "./Input";
@@ -92,8 +84,8 @@ export const Select: React.FC<SelectProps> = ({
               setOpen(false);
             },
             sx: {
-              opacity: "0 !important",
-            },
+              opacity: "0 !important"
+            }
           },
           PaperProps: {
             onClick: (e) => e.stopPropagation(),
@@ -105,10 +97,10 @@ export const Select: React.FC<SelectProps> = ({
                 left: "0 !important",
                 bottom: 0,
                 right: 0,
-                maxWidth: "100%",
-              },
-            },
-          },
+                maxWidth: "100%"
+              }
+            }
+          }
         },
         IconComponent: open ? ExpandLessIcon : ExpandMoreIcon,
         renderValue: (v: any) => {
@@ -125,49 +117,49 @@ export const Select: React.FC<SelectProps> = ({
               />
             )
           );
-        },
+        }
       }}
       sx={{
         borderRight: borderRight
           ? `1px solid ${alpha(
-              theme.palette.common.white,
-              theme.custom.opacity.main
-            )}`
+            theme.palette.common.white,
+            theme.custom.opacity.main
+          )}`
           : undefined,
         "& .MuiOutlinedInput-root.MuiInputBase-root": {
           borderWidth: noBorder ? 0 : undefined,
           "& .MuiOutlinedInput-notchedOutline": {
-            borderWidth: noBorder ? 0 : undefined,
-          },
+            borderWidth: noBorder ? 0 : undefined
+          }
         },
         minWidth: {
-          md: minWidth,
+          md: minWidth
         },
         width: {
           xs: mobileWidth,
-          md: "100%",
-        },
+          md: "100%"
+        }
       }}
       {...rest}
     >
       {isMobile && (
-        <>
-          <ListSubheader>
+        [
+          <ListSubheader key="close">
             <Box textAlign="right">
               <CloseIcon
                 sx={{
-                  color: theme.palette.primary.main,
+                  color: theme.palette.primary.main
                 }}
                 onClick={() => setOpen(false)}
               />
             </Box>
-          </ListSubheader>
-          <ListSubheader>
+          </ListSubheader>,
+          <ListSubheader key="select-option">
             <Typography variant="h6" color="text.primary" textAlign="center">
               Select option
             </Typography>
           </ListSubheader>
-        </>
+        ]
       )}
       {searchable && (
         <ListSubheader>
@@ -198,7 +190,7 @@ export const Select: React.FC<SelectProps> = ({
               <CheckIcon
                 sx={{
                   position: "absolute",
-                  right: theme.spacing(3),
+                  right: theme.spacing(3)
                 }}
               />
             )}
