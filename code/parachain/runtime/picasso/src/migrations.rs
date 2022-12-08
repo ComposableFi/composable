@@ -45,6 +45,67 @@ impl OnRuntimeUpgrade for TechCollectiveRenameMigration {
 	}
 }
 
+mod pablo_picasso_init_pools {
+
+	use super::*;
+
+	use frame_support::BoundedBTreeMap;
+	use pablo::pallet::PoolInitConfiguration;
+	use sp_runtime::PerThing;
+
+	pub struct PabloPicassoInitialPoolsMigration;
+
+	fn add_initial_pools_to_storage() -> Weight {
+		Pablo::do_create_pool(
+			create_two_token_pool_config(
+				CurrencyId::KSM,
+				CurrencyId::USDT,
+				Permill::from_percent(50),
+			),
+			Some(CurrencyId::KSM_USDT_LPT),
+		)
+		.expect("Is a valid pool config; QED");
+
+		Pablo::do_create_pool(
+			create_two_token_pool_config(
+				CurrencyId::PICA,
+				CurrencyId::USDT,
+				Permill::from_percent(50),
+			),
+			Some(CurrencyId::PICA_USDT_LPT),
+		)
+		.expect("Is a valid pool config; QED");
+		// TODO(connor) calculate weight based of read/write count
+		0
+	}
+
+	fn create_two_token_pool_config(
+		base_asset_id: CurrencyId,
+		quote_asset_id: CurrencyId,
+		base_asset_weigth: Permill,
+	) -> PoolInitConfiguration<AccountId, CurrencyId> {
+		let owner = AccountId::from([0; 32]);
+		let mut assets_weights = BoundedBTreeMap::new();
+		let fee = Permill::from_percent(0);
+
+		assets_weights
+			.try_insert(base_asset_id, base_asset_weigth)
+			.expect("Within BT Bounds; QED");
+		assets_weights
+			.try_insert(quote_asset_id, base_asset_weigth.left_from_one())
+			.expect("Within BT Bounds; QED");
+
+		PoolInitConfiguration::<AccountId, CurrencyId>::DualAssetConstantProduct {
+			owner,
+			assets_weights,
+			fee,
+		}
+	}
+
+	// TODO(connor): Add impl methods
+	impl OnRuntimeUpgrade for PabloPicassoInitialPoolsMigration {}
+}
+
 #[cfg(test)]
 mod tests {
 	use frame_support::{
