@@ -56,6 +56,20 @@ const sidebars = {
               'parachains/picasso/pica-use-cases'
             ]
             },
+            {
+              type: 'category',
+              label: 'CHAOS fNFTs',
+              link: {
+                type: 'doc',
+                id: 'products/CHAOS-fNFT-overview'
+              },
+              collapsible: true,
+              collapsed: true,
+              items: [
+                'products/chaos/picasso-treasury',
+                'products/chaos/use-cases'
+              ],
+            },
           ],
         },
         {
@@ -70,7 +84,7 @@ const sidebars = {
           items: [
             'parachains/composable/composable-crowdloan',
             'parachains/composable/DOT-purchase-log',
-            'parachains/composable/LAYR-tokenomics'
+            'parachains/composable/LAYR-tokenomics',
           ],
         }
       ]
@@ -171,20 +185,6 @@ const sidebars = {
             'products/pablo/xPBLO-fNFT-staking',
             'products/pablo/cross-chain-DEX',
             'products/pablo/governance-tokenomics',
-          ],
-        },
-        {
-          type: 'category',
-          label: 'CHAOS fNFTs',
-          link: {
-            type: 'doc',
-            id: 'products/CHAOS-fNFT-overview'
-          },
-          collapsible: true,
-          collapsed: true,
-          items: [
-            'products/chaos/picasso-treasury',
-            'products/chaos/use-cases'
           ],
         },
         {
