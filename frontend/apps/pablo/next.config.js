@@ -38,6 +38,7 @@ const nextConfig = {
         SUBSQUID_URL: process.env.SUBSQUID_URL,
         WEBSITE_VERSION: getVersion(),
         SUBSTRATE_PROVIDER_URL_STATEMINE: process.env.SUBSTRATE_PROVIDER_URL_STATEMINE,
+        COINGECKO_KEY: process.env.COINGECKO_KEY
     },
     webpack(config) {
         config.module.rules.push({
