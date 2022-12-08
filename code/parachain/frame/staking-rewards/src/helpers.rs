@@ -30,11 +30,6 @@ pub(crate) fn add_to_rewards_pot_and_assert<Runtime, RuntimeEvent>(
 	amount: BalanceOf<Runtime>,
 ) where
 	Runtime: RuntimeTrait<Event<Runtime>> + Config,
-	<Runtime as frame_system::Config>::Event:
-		Parameter + Member + Debug + Clone + TryInto<Event<Runtime>> + From<Event<Runtime>>,
-	<<Runtime as frame_system::Config>::Event as TryInto<Event<Runtime>>>::Error: Debug,
-	<Runtime as frame_system::Config>::Origin:
-		OriginTrait<AccountId = <Runtime as frame_system::Config>::AccountId>,
 {
 	Runtime::assert_extrinsic_event(
 		Pallet::<Runtime>::add_to_rewards_pot(
@@ -56,11 +51,6 @@ pub fn stake_and_assert<Runtime, RuntimeEvent>(
 ) -> FinancialNftInstanceIdOf<Runtime>
 where
 	Runtime: RuntimeTrait<Event<Runtime>> + Config,
-	<Runtime as frame_system::Config>::Event:
-		Parameter + Member + Debug + Clone + TryInto<Event<Runtime>> + From<Event<Runtime>>,
-	<<Runtime as frame_system::Config>::Event as TryInto<Event<Runtime>>>::Error: Debug,
-	<Runtime as frame_system::Config>::Origin:
-		OriginTrait<AccountId = <Runtime as frame_system::Config>::AccountId>,
 {
 	Runtime::assert_extrinsic_event_with(
 		Pallet::<Runtime>::stake(
@@ -104,11 +94,6 @@ pub fn unstake_and_assert<Runtime, RuntimeEvent>(
 	should_be_early_unstake: bool,
 ) where
 	Runtime: RuntimeTrait<Event<Runtime>> + Config,
-	<Runtime as frame_system::Config>::Event:
-		Parameter + Member + Debug + Clone + TryInto<Event<Runtime>> + From<Event<Runtime>>,
-	<<Runtime as frame_system::Config>::Event as TryInto<Event<Runtime>>>::Error: Debug,
-	<Runtime as frame_system::Config>::Origin:
-		OriginTrait<AccountId = <Runtime as frame_system::Config>::AccountId>,
 {
 	let position_before_unstake =
 		Stakes::<Runtime>::get(fnft_collection_id, fnft_instance_id).unwrap();
@@ -495,11 +480,6 @@ pub fn split_and_assert<Runtime, RuntimeEvent>(
 ) -> FinancialNftInstanceIdOf<Runtime>
 where
 	Runtime: RuntimeTrait<Event<Runtime>> + Config,
-	<Runtime as frame_system::Config>::Event:
-		Parameter + Member + Debug + Clone + TryInto<Event<Runtime>> + From<Event<Runtime>>,
-	<<Runtime as frame_system::Config>::Event as TryInto<Event<Runtime>>>::Error: Debug,
-	<Runtime as frame_system::Config>::Origin:
-		OriginTrait<AccountId = <Runtime as frame_system::Config>::AccountId>,
 {
 	let existing_stake_before_split =
 		Stakes::<Runtime>::get(fnft_collection_id, fnft_instance_id).unwrap();
@@ -709,11 +689,6 @@ pub(crate) fn create_rewards_pool_and_assert<Runtime, RuntimeEvent>(
 	reward_config: RewardPoolConfigurationOf<Runtime>,
 ) where
 	Runtime: RuntimeTrait<Event<Runtime>> + Config,
-	<Runtime as frame_system::Config>::Event:
-		Parameter + Member + Debug + Clone + TryInto<Event<Runtime>> + From<Event<Runtime>>,
-	<<Runtime as frame_system::Config>::Event as TryInto<Event<Runtime>>>::Error: Debug,
-	<Runtime as frame_system::Config>::Origin:
-		OriginTrait<AccountId = <Runtime as frame_system::Config>::AccountId>,
 {
 	match reward_config.clone() {
 		RewardPoolConfiguration::RewardRateBasedIncentive {
