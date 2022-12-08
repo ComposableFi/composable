@@ -5,7 +5,7 @@ env:
 on:
   push:
     tags:
-      - 'staging-fe-v[0-9]+\.[0-9]+-pablo-[0-9]'
+      - 'staging-fe-v[0-9]+\.[0-9]+-pablo-[0-9]+'
 
 jobs:
   Deploy-Staging:
