@@ -120,17 +120,16 @@ This functionality is opt-in and can be disabled by contract authors.
 As of the moment of writing this document, state rent is not part of the CosmWasm standard or our implementation.
 
 ## 1.1. Document Structure
-Section 1 provides an overview of the specification and its notation.
-The rest of the manuscript, is structured as follows.
-
-Section 2 introduces the concept of smart contracts, the interfaces and functionalities they are REQUIRED to support in order to be compliant.
-Section 3 defines the host functions supported by our specification.
-In Section 4, we cover the virtualization details of the implementation, and, Section 5 briefly defines the serialization requirements.
-Section 6 depicts the IBC compatibility mechanisms of our implementation.
-In Section 7, we provide specific details about the pallet implementation of our specification.
-Section 8 covers security considerations that every developer MUST follow when using our specification.
-
-Finally, Section 9 lists the contributors that made this document possible.
+- Section 1 provides an overview of the specification and its notation.
+  The rest of the manuscript, is structured as follows.
+- Section 2 introduces the concept of smart contracts, the interfaces and functionalities they are REQUIRED to support in order to be compliant.
+- Section 3 defines the host functions supported by our specification.
+- Section 4 covers the virtualization details of the implementation, and, 
+- Section 5 briefly defines the serialization requirements.
+- Section 6 depicts the IBC compatibility mechanisms of our implementation.
+- Section 7 provides specific details about the pallet implementation of our specification.
+- Section 8 covers security considerations that every developer MUST follow when using our specification.
+- Section 9 lists the contributors that made this document possible.
 
 ## 1.2. Terms and Definitions
 The keywords "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
