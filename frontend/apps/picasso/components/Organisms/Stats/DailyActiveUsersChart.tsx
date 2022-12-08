@@ -1,11 +1,16 @@
-import { useOverviewStats } from "@/apollo/hooks/useOverviewStats";
 import { ActiveUsers, GET_ACTIVE_USERS } from "@/apollo/queries/activeUsers";
 import { Chart } from "@/components";
 import { ChartLoadingSkeleton } from "@/components/Organisms/Stats/ChartLoadingSkeleton";
 import { useQuery } from "@apollo/client";
 import { Box, Typography, useTheme } from "@mui/material";
 import { FC, useMemo, useState } from "react";
-import { formatNumber, getRange, head, humanBalance, PRESET_RANGE, PresetRange, tail } from "shared";
+import {
+  formatNumber,
+  getRange,
+  PRESET_RANGE,
+  PresetRange,
+  tail,
+} from "shared";
 import { changeCalculator } from "@/components/Organisms/Stats/utils";
 
 export const DailyActiveUsersChart: FC = () => {
@@ -21,7 +26,7 @@ export const DailyActiveUsersChart: FC = () => {
     if (!data) return [];
 
     const tuples: [number, number][] = data.activeUsers.map((activeUser) => {
-      const date = new Date(activeUser.date);
+      const date = new Date(Number(activeUser.date));
       return [date.getTime(), activeUser.count];
     });
 
@@ -38,6 +43,7 @@ export const DailyActiveUsersChart: FC = () => {
   if (loading) {
     return <ChartLoadingSkeleton />;
   }
+
 
   if (error) {
     return <>{"error:" + error}</>;
