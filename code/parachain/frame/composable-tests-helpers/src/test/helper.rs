@@ -51,10 +51,6 @@ pub trait RuntimeTrait<PalletEvent>:
 	Origin = <Self as RuntimeTrait<PalletEvent>>::Origin,
 >
 where
-	// 	<Self as Config>::Event:
-	// 		Parameter + Member + Debug + Clone + TryInto<PalletEvent> + From<PalletEvent>,
-	// 	<<Self as Config>::Event as TryInto<PalletEvent>>::Error: Debug,
-	// 	<Self as Config>::Origin: OriginTrait<AccountId = <Self as Config>::AccountId>,
 	PalletEvent: Clone + Debug + PartialEq,
 {
 	type Event: Parameter
