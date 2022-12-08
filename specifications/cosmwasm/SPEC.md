@@ -187,7 +187,7 @@ The tables below provides an overview of each function. Later sections elaborate
 ### 2.1.2. IBC exports
 
 Contracts MUST export **all** the functions below to be considered **IBC capable**.
-Section 6 elaborates more on IBC integration within the VM.
+Section [6.] elaborates more on IBC integration within the VM.
 
 | export              |  description                           |
 |---------------------|----------------------------------------|
@@ -247,7 +247,7 @@ Our virtual machine eagerly executes it.
 
 The environment pointer (`env_ptr`) contains the current state information.
 The message information pointer (info_ptr) contains the sender (public key) along with the tokens that have been sent for the contract call.
-See sections 2.5.1 and 2.5.2 for the exact definitions of these pointers.
+See sections [2.5.1.] and [2.5.2.] for the exact definitions of these pointers.
 
 The message pointer (`msg_ptr`) is an arbitrary message (specific to the contract) containing additional information for the contract to execute the desired operation.
 By convention, the data is JSON encoded.
@@ -266,7 +266,7 @@ pub struct Env {
 }
 ```
 
-`block`, `transaction`, and `contract` are information pointers (See section 2.5.2) that contain references to the block, transaction and contract, respectively, from which the message was initiated.
+`block`, `transaction`, and `contract` are information pointers (See section [2.5.2.]) that contain references to the block, transaction and contract, respectively, from which the message was initiated.
 `transaction` field MAY be unset when `MsgExecuteContract`/`MsgInstantiateContract`/`MsgMigrateContract` is not executed as part of a transaction.
 
 ### 2.5.2. Information Pointer
@@ -360,11 +360,11 @@ extern "C" fn execute(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32;
 
 The virtual machine MAY use `execute` when a transaction calls a contract, or when the contract is called by another contract or module.
 
-All changes to storage MUST be actuated by the virtual machine during the `execute` call. See sections 2.4.1 and 2.4.2 for the exact definitions of the `env_ptr` and `info_ptr` pointers. The `msg_ptr` is defined by the contract itself and by convention, JSON encoded.
+All changes to storage MUST be actuated by the virtual machine during the `execute` call. See sections [2.5.1.] and [2.5.2.] for the exact definitions of the `env_ptr` and `info_ptr` pointers. The `msg_ptr` is defined by the contract itself and by convention, JSON encoded.
 
 ## 2.7. Query
 
-After instantiation, the contract MAY receive `query` calls. The `query` export MUST be present in the contract binary. The query call is intended to provide information to public, well-defined contract info (See Section 2.5.2.3).
+After instantiation, the contract MAY receive `query` calls. The `query` export MUST be present in the contract binary. The query call is intended to provide information to public, well-defined contract info (See Section [2.5.2.3.].
 
 ```rust
 extern "C" fn query(env_ptr: u32, msg_ptr: u32) -> u32;
@@ -423,14 +423,14 @@ extern "C" fn sudo(env_ptr: u32, msg_ptr: u32) -> u32;
 
 ## 2.11. IBC Channel Open
 
-After instantiation, **IBC capable** contracts (see section 2.1.2.) MAY receive `ibc_channel_open` calls.
+After instantiation, **IBC capable** contracts (see section [2.1.2.](#212-ibc-exports)) MAY receive `ibc_channel_open` calls.
 The `ibc_channel_open` export MUST be present in the contract binary.
 
 ```rust
 extern "C" fn ibc_channel_open(env_ptr: u32, msg_ptr: u32) -> u32;
 ```
 
-Where `msg_ptr` is a pointer to a region (see section 2.5.3.) of [IbcChannelOpenMsg](https://github.com/CosmWasm/cosmwasm/blob/6033d91aab8dae99c0fe3b4ecf649242b21fde8a/packages/std/src/ibc.rs#L252).
+Where `msg_ptr` is a pointer to a region (see section [2.5.3.]) of [IbcChannelOpenMsg](https://github.com/CosmWasm/cosmwasm/blob/6033d91aab8dae99c0fe3b4ecf649242b21fde8a/packages/std/src/ibc.rs#L252).
 ```rust
 pub enum IbcChannelOpenMsg {
     OpenInit { channel: IbcChannel },
@@ -443,20 +443,20 @@ pub enum IbcChannelOpenMsg {
 
 Where `OpenInit` represents the channel handshake init, and, `OpenTry` represents the channel handshake try.
 
-The virtual machine MAY use `ibc_channel_open` when an IBC channel [handshake is being initiated](https://github.com/cosmos/ibc/blob/f6371ffd5de3787eb4b85f9fe77f81be4a5993a0/spec/core/ics-004-channel-and-packet-semantics/README.md#channel-lifecycle-management) between the contract (see section 6.) and a counterparty.
+The virtual machine MAY use `ibc_channel_open` when an IBC channel [handshake is being initiated](https://github.com/cosmos/ibc/blob/f6371ffd5de3787eb4b85f9fe77f81be4a5993a0/spec/core/ics-004-channel-and-packet-semantics/README.md#channel-lifecycle-management) between the contract (see section [6.]) and a counterparty.
 
 Contracts MAY abort the channel opening process by returning an error from the call or [optionally overwrite the channel version](https://github.com/CosmWasm/cosmwasm/blob/6033d91aab8dae99c0fe3b4ecf649242b21fde8a/packages/std/src/ibc.rs#L306).
 
 ## 2.12. IBC Channel Connect
 
-After having passed the IBC channel handshake initialization (see section 2.11.), **IBC capable** contracts (see section 2.1.2.) MAY receive `ibc_channel_connect` calls.
+After having passed the IBC channel handshake initialization (see section [2.11.](#211-ibc-channel-open)), **IBC capable** contracts (see section [2.1.2.](#212-ibc-exports)) MAY receive `ibc_channel_connect` calls.
 The `ibc_channel_connect` export MUST be present in the contract binary.
 
 ```rust
 extern "C" fn ibc_channel_open(env_ptr: u32, msg_ptr: u32) -> u32;
 ```
 
-Where `msg_ptr` is a pointer to a region (see section 2.5.3.) of [IbcChannelConnectMsg](https://github.com/CosmWasm/cosmwasm/blob/6033d91aab8dae99c0fe3b4ecf649242b21fde8a/packages/std/src/ibc.rs#L317).
+Where `msg_ptr` is a pointer to a region (see section [2.5.3.]) of [IbcChannelConnectMsg](https://github.com/CosmWasm/cosmwasm/blob/6033d91aab8dae99c0fe3b4ecf649242b21fde8a/packages/std/src/ibc.rs#L317).
 ```rust
 pub enum IbcChannelConnectMsg {
     OpenAck {
@@ -469,7 +469,7 @@ pub enum IbcChannelConnectMsg {
 
 Where `OpenAck` represents the channel handshake acknowledgement, and, `OpenConfirm` represents the channel handshake confirmation.
 
-The virtual machine MAY use `ibc_channel_connect` when an IBC channel [handshake is being finalized](https://github.com/cosmos/ibc/blob/f6371ffd5de3787eb4b85f9fe77f81be4a5993a0/spec/core/ics-004-channel-and-packet-semantics/README.md#channel-lifecycle-management) between the contract (see section 6.) and a counterparty.
+The virtual machine MAY use `ibc_channel_connect` when an IBC channel [handshake is being finalized](https://github.com/cosmos/ibc/blob/f6371ffd5de3787eb4b85f9fe77f81be4a5993a0/spec/core/ics-004-channel-and-packet-semantics/README.md#channel-lifecycle-management) between the contract (see section [6.]) and a counterparty.
 
 Contracts MAY return an error (aborting the channel handshake) or an [IbcBasicResponse](https://github.com/CosmWasm/cosmwasm/blob/6033d91aab8dae99c0fe3b4ecf649242b21fde8a/packages/std/src/ibc.rs#L486) from the call.
 
@@ -489,14 +489,14 @@ Where `events` are custom events that can be yielded along the default event.
 
 ## 2.13. IBC Channel Close
 
-If a channel has been opened to a contract (see section2.11.), **IBC capable** contracts (see section 2.1.2.) MAY receive `ibc_channel_close` calls.
+If a channel has been opened to a contract (see section [2.11.](#211-ibc-channel-open)), **IBC capable** contracts (see section [2.1.2.](#212-ibc-exports)) MAY receive `ibc_channel_close` calls.
 The `ibc_channel_close` export MUST be present in the contract binary.
 
 ```rust
 extern "C" fn ibc_channel_close(env_ptr: u32, msg_ptr: u32) -> u32;
 ```
 
-Where `msg_ptr` is a pointer to a region (see section 2.5.3.) of [IbcChannelCloseMsg](https://github.com/CosmWasm/cosmwasm/blob/6033d91aab8dae99c0fe3b4ecf649242b21fde8a/packages/std/src/ibc.rs#L369).
+Where `msg_ptr` is a pointer to a region (see section [2.5.3.]) of [IbcChannelCloseMsg](https://github.com/CosmWasm/cosmwasm/blob/6033d91aab8dae99c0fe3b4ecf649242b21fde8a/packages/std/src/ibc.rs#L369).
 ```rust
 pub enum IbcChannelCloseMsg {
     CloseInit { channel: IbcChannel },
@@ -526,14 +526,14 @@ Where `events` are custom events that can be yielded along the default event.
 
 ## 2.14. IBC Packet Receive
 
-If a channel has been opened to a contract (see section 2.11.), **IBC capable** contracts (see section 2.1.2.) MAY receive `ibc_packet_receive` calls.
+If a channel has been opened to a contract (see section [2.11.](#211-ibc-channel-open)), **IBC capable** contracts (see section [2.1.2.](#212-ibc-exports)) MAY receive `ibc_packet_receive` calls.
 The `ibc_packet_receive` export MUST be present in the contract binary.
 
 ```rust
 extern "C" fn ibc_packet_receive(env_ptr: u32, msg_ptr: u32) -> u32;
 ```
 
-Where `msg_ptr` is a pointer to a region (see section 2.5.3.) of [IbcPacketReceiveMsg](https://github.com/CosmWasm/cosmwasm/blob/6033d91aab8dae99c0fe3b4ecf649242b21fde8a/packages/std/src/ibc.rs#L405).
+Where `msg_ptr` is a pointer to a region (see section [2.5.3.]) of [IbcPacketReceiveMsg](https://github.com/CosmWasm/cosmwasm/blob/6033d91aab8dae99c0fe3b4ecf649242b21fde8a/packages/std/src/ibc.rs#L405).
 ```rust
 pub struct IbcPacketReceiveMsg {
     pub packet: IbcPacket,
@@ -571,14 +571,14 @@ Where `acknowledgement` is the field where the contracts MUST store the acknowle
 
 ## 2.15. IBC Packet Ack
 
-If a channel has been opened to a contract (see section 2.11.) and a packet has been sent over the channel (see section 2.14.), **IBC capable** contracts (see section 2.1.2.) MUST receive an `ibc_packet_ack` call.
+If a channel has been opened to a contract (see section [2.11.](#211-ibc-channel-open)) and a packet has been sent over the channel (see section [2.14.]), **IBC capable** contracts (see section [2.1.2.](#212-ibc-exports)) MUST receive an `ibc_packet_ack` call.
 The `ibc_packet_ack` export MUST be present in the contract binary.
 
 ```rust
 extern "C" fn ibc_packet_ack(env_ptr: u32, msg_ptr: u32) -> u32;
 ```
 
-Where `msg_ptr` is a pointer to a region (see section 2.5.3.) of [IbcPacketAckMsg](https://github.com/CosmWasm/cosmwasm/blob/6033d91aab8dae99c0fe3b4ecf649242b21fde8a/packages/std/src/ibc.rs#L426).
+Where `msg_ptr` is a pointer to a region (see section [2.5.3.]) of [IbcPacketAckMsg](https://github.com/CosmWasm/cosmwasm/blob/6033d91aab8dae99c0fe3b4ecf649242b21fde8a/packages/std/src/ibc.rs#L426).
 ```rust
 pub struct IbcPacketAckMsg {
     pub acknowledgement: IbcAcknowledgement,
@@ -616,14 +616,14 @@ Where `events` are custom events that can be yielded along the default event.
 
 ## 2.16. IBC Packet Timeout
 
-If a channel has been opened to a contract (see section 2.11) and a packet has been sent over the channel (see section 2.14), **IBC capable** contracts (see section 2.1.2.) MAY receive an `ibc_packet_timeout` call.
+If a channel has been opened to a contract (see section [2.11.](#211-ibc-channel-open)) and a packet has been sent over the channel (see section [2.14.]), **IBC capable** contracts (see section [2.1.2.](#212-ibc-exports)) MAY receive an `ibc_packet_timeout` call.
 The `ibc_packet_timeout` export MUST be present in the contract binary.
 
 ```rust
 extern "C" fn ibc_packet_timeout(env_ptr: u32, msg_ptr: u32) -> u32;
 ```
 
-Where `msg_ptr` is a pointer to a region (see section 2.5.3) of [IbcPacketTimeoutMsg](https://github.com/CosmWasm/cosmwasm/blob/6033d91aab8dae99c0fe3b4ecf649242b21fde8a/packages/std/src/ibc.rs#L459).
+Where `msg_ptr` is a pointer to a region (see section [2.5.3.]) of [IbcPacketTimeoutMsg](https://github.com/CosmWasm/cosmwasm/blob/6033d91aab8dae99c0fe3b4ecf649242b21fde8a/packages/std/src/ibc.rs#L459).
 ```rust
 pub struct IbcPacketTimeoutMsg {
     pub packet: IbcPacket,
@@ -727,7 +727,7 @@ Contract authors MUST not store handles in permanent storage.
 
 
 ## 3.5. DB Next
-After obtaining an iterator handle (section 3.4.), the handle can be passed to the `db_next` function to obtain the next value, a pointer to a region storing the value.
+After obtaining an iterator handle (section [3.4.]), the handle can be passed to the `db_next` function to obtain the next value, a pointer to a region storing the value.
 
 ```rust
 fn db_next(iterator_id: u32) -> u32;
@@ -755,9 +755,9 @@ fn addr_validate(source_ptr: u32) -> u32;
 
 Implementors MUST export the `addr_validate` function.
 
-Implementors MUST verify that the address can be canonicalized (see section 3.7.).
+Implementors MUST verify that the address can be canonicalized (see section [3.7.]).
 
-Implementors MUST verify that the address is normalized, such that the following equation hold: `addr_humanize(addr_canonicalize(address)) = address` (see section 3.7. and 3.8.).
+Implementors MUST verify that the address is normalized, such that the following equation hold: `addr_humanize(addr_canonicalize(address)) = address` (see section [3.7.] and [3.8.]).
 
 The return pointer point to a region containing a JSON serialized `Result<(), String>`.
 
@@ -776,7 +776,7 @@ fn addr_canonicalize(source_ptr: u32, destination_ptr: u32) -> u32;
 
 Contracts MAY request the host for address canonicalization.
 
-A canonical address is a binary representation of a valid address (see section 3.6.).
+A canonical address is a binary representation of a valid address (see section [3.6.]).
 
 ```rust
 fn addr_canonicalize(source_ptr: u32, destination_ptr: u32) -> u32;
@@ -787,7 +787,7 @@ Implementors MUST export the `addr_canonicalize` function.
 `source_ptr` is a pointer to a region containing a UTF-8 encoded `String`.
 `destination_ptr` is a pointer to a region containing a UTF-8 encoded `String`.
 
-Implementors MUST ensure that the `addr_canonicalize` function is the inverse of `addr_humanize` (see section 3.8.) such that the following equation hold: `addr_canonicalize . addr_humanize = addr_humanize . addr_canonicalize = identity`.
+Implementors MUST ensure that the `addr_canonicalize` function is the inverse of `addr_humanize` (see section [3.8.]) such that the following equation hold: `addr_canonicalize . addr_humanize = addr_humanize . addr_canonicalize = identity`.
 
 The return pointer point to a region containing a JSON serialized `Result<(), String>`.
 
@@ -799,7 +799,7 @@ Contract authors MUST handle the result of the call and MAY abort the transactio
 
 Contracts MAY request the host for address humanization.
 
-A human address is a human-readable representation of a canonical address (see section 3.7.).
+A human address is a human-readable representation of a canonical address (see section [3.7.]).
 
 ```rust
 fn addr_humanize(source_ptr: u32, destination_ptr: u32) -> u32;
@@ -807,7 +807,7 @@ fn addr_humanize(source_ptr: u32, destination_ptr: u32) -> u32;
 
 Implementors MUST export the `addr_humanize` function.
 
-Implementors MUST ensure that the `addr_humanize` function is the inverse of `addr_canonicalize` (see section 3.7.) such that the following equations hold: `addr_humanize . addr_canonicalize = addr_canonicalize . addr_humanize = identity`.
+Implementors MUST ensure that the `addr_humanize` function is the inverse of `addr_canonicalize` (see section [3.7.]) such that the following equations hold: `addr_humanize . addr_canonicalize = addr_canonicalize . addr_humanize = identity`.
 
 The return pointer point to a region containing a JSON serialized `Result<(), String>`.
 
@@ -830,7 +830,7 @@ It verifies the digital signature created with the `ECDSA` algorithm and over th
 fn secp256k1_verify(message_hash_ptr: u32, signature_ptr: u32, public_key_ptr: u32) -> u32;
 ```
 
-`message_hash_ptr` is a pointer to a Region (as defined in Section 2.5.3) that contains the hash of the message to be verified. The hash function used SHOULD be SHA-256.
+`message_hash_ptr` is a pointer to a Region (as defined in Section [2.5.3]) that contains the hash of the message to be verified. The hash function used SHOULD be SHA-256.
 
 `signature_ptr` is a pointer to a Region that contains the digital signature. Signature MUST be in compact format: a 64-byte-length binary string that serializes r (32 bytes) and s (32 bytes) in that specific order.
 
@@ -845,7 +845,7 @@ A public key can be recovered from a message hash and a signature by using the `
 fn secp256k1_recover_pubkey(message_hash_ptr: u32, signature_ptr: u32, recovery_param: u32, ) -> u64;
 ```
 
-`message_hash_ptr` is a pointer to a Region (as defined in Section 2.5.3) that contains the hash of the message to be verified. The hash function used SHOULD be SHA-256.
+`message_hash_ptr` is a pointer to a Region (as defined in Section [2.5.3]) that contains the hash of the message to be verified. The hash function used SHOULD be SHA-256.
 
 `signature_ptr` is a pointer to a Region that contains the digital signature. Signature MUST be in compact format: a 64-byte-length binary string that serializes r (32 bytes) and s (32 bytes) in that specific order.
 
@@ -869,7 +869,7 @@ It verifies the digital signature created with the `ed25519` algorithm and over 
 ```rust
     fn ed25519_verify(message_ptr: u32, signature_ptr: u32, public_key_ptr: u32) -> u32;
 ```
-`message_ptr` is a pointer to a Region (as defined in Section 2.5.3) that contains the hash of the message to be verified. The hash function used SHOULD be SHA-512.
+`message_ptr` is a pointer to a Region (as defined in Section [2.5.3]) that contains the hash of the message to be verified. The hash function used SHOULD be SHA-512.
 
 `signature_ptr` is a pointer to a Region that contains the digital signature. Signature MUST be in Raw ED25519 format.
 
@@ -884,7 +884,7 @@ Multiple signature verification over the `ed25519` algorithm can be optimized an
 fn ed25519_batch_verify(messages_ptr: u32, signatures_ptr: u32, public_keys_ptr: u32) -> u32;
 ```
 
-`messages_ptr` is a pointer to a Region (as defined in Section 2.5.3) that contains a list of references to the hashes of the messages to be verified. The hash function used SHOULD be SHA-512.
+`messages_ptr` is a pointer to a Region (as defined in Section [2.5.3]) that contains a list of references to the hashes of the messages to be verified. The hash function used SHOULD be SHA-512.
 
 `signatures_ptr` is a pointer to a Region that contains a list of references to the signatures to verify. Signature MUST be in Raw ED25519 format.
 
@@ -983,7 +983,7 @@ The `Smart` variant loads the contract specified by `contract_addr` into the vir
 `Raw` queries avoid loading the contract itself, and instead, it directly queries its storage at `key`.
 Note that due to updatability, this is more error-prone, but it implies lower gas costs.
 
-Metadata about the contract MAY be queried using the `ContractInfo` variant, which returns the canonical address (See Section 2.5.2.3).
+Metadata about the contract MAY be queried using the `ContractInfo` variant, which returns the canonical address (See Section [2.5.2.3]).
 
 # 4. Virtual Machine
 In this section we cover the main implementation details of our minimalistic and `no_std` friendly abstract virtual machine for CosmWasm contract execution. 
@@ -1006,7 +1006,7 @@ Actors have their own and private internal state that cannot be altered by exter
 All execution and logic is routed through messaging.
 Actor is an abstract term, but in CosmWasm usually refers to a single instance of a smart contract.
 
-Messages are the basic unit of communication in CosmWasm and message calls can spawn through several smart contracts (See Section 4.4 to see how the call graph is handled).
+Messages are the basic unit of communication in CosmWasm and message calls can spawn through several smart contracts (See Section [4.4.]) to see how the call graph is handled).
 This messaging architecture reduces the coupling between actors to a minimum and enhances the scalability of the model.
 
 CosmWasm defines the following standard for messages.
@@ -1132,13 +1132,13 @@ Implementors willing to support IBC MUST enable the [**stargate** feature](https
 
 ## 6.2. Host Functions
 
-Implementors MUST enable the IBC extension (see section 6.1.).
+Implementors MUST enable the IBC extension (see section [6.1.]).
 
-Implementors MUST declare the IBC host functions (see section 6.2.1, 6.2.2, 6.2.3).
+Implementors MUST declare the IBC host functions (see section [6.2.1.] up to [6.2.3.]).
 
-**IBC capable** contracts (see section 2.1.2.) MAY issue IBC operation via an [IbcMsg](https://github.com/CosmWasm/cosmwasm/blob/6033d91aab8dae99c0fe3b4ecf649242b21fde8a/packages/std/src/ibc.rs#L23) variant submessage of [CosmosMsg](https://github.com/CosmWasm/cosmwasm/blob/e161a7648170e7f740bc09c91c7f199dced3879c/packages/std/src/results/cosmos_msg.rs#L27).
+**IBC capable** contracts (see section [2.1.2.](#212-ibc-exports)) MAY issue IBC operation via an [IbcMsg](https://github.com/CosmWasm/cosmwasm/blob/6033d91aab8dae99c0fe3b4ecf649242b21fde8a/packages/std/src/ibc.rs#L23) variant submessage of [CosmosMsg](https://github.com/CosmWasm/cosmwasm/blob/e161a7648170e7f740bc09c91c7f199dced3879c/packages/std/src/results/cosmos_msg.rs#L27).
 
-Note that both `Stargate` and `Gov` variant of `CosmosMsg` are not supported by the VM, even if the IBC extension is enabled (see section 6.1.).
+Note that both `Stargate` and `Gov` variant of `CosmosMsg` are not supported by the VM, even if the IBC extension is enabled (see section [6.1.]).
 
 ```rust
 pub enum CosmosMsg<T = Empty> {
@@ -1192,7 +1192,7 @@ fn ibc_transfer(
 ) -> Result<(), Self::Error>;
 ```
 
-Implementors MUST verify that the `channel_id` exists and that it has previously been opened (see section 2.11.).
+Implementors MUST verify that the `channel_id` exists and that it has previously been opened (see section [2.11.](#211-ibc-channel-open)).
 
 Implementors MUST ensure that the `sender` balance can be reduced by the `amount`.
 
@@ -1212,7 +1212,7 @@ fn ibc_send_packet(
 ) -> Result<(), Self::Error>;
 ```
 
-Implementors MUST verify that the `channel_id` exists and that it has previously been opened (see section 2.11.).
+Implementors MUST verify that the `channel_id` exists and that it has previously been opened (see section [2.11.](#211-ibc-channel-open)).
 
 Implementors MAY forward the call to a specific module in charge of handling IBC operations.
 
@@ -1225,7 +1225,7 @@ Upon reception of the `IbcMsg::CloseChannel` variant submessage by the VM, the a
 fn ibc_close_channel(&mut self, channel_id: String) -> Result<(), Self::Error>;
 ```
 
-Implementors MUST verify that the `channel_id` exists and that it has previously been opened (see section 2.11.).
+Implementors MUST verify that the `channel_id` exists and that it has previously been opened (see section [2.11.](#211-ibc-channel-open)).
 
 Implementors MAY forward the call to a specific module in charge of handling IBC operations.
 
@@ -1410,3 +1410,19 @@ Contributors that made our CosmWasm implementation possible are here listed in a
 - Hussein Ait Lahcen - XCVM Principal Engineering - Composable Finance
 - Abdullah Eryuzlu - Rust Developer - Composable Finance
 - Cor Pruijs - Rust Developer - Composable Finance
+
+[2.5.1.]: #251-environment-pointer
+[2.5.2.]: #252-information-pointer
+[2.5.2.3.]: #2523-contract-info
+[2.5.3.]: #253-regions
+[2.14.]: #214-ibc-packet-receive
+[3.4.]: #34-db-scan
+[3.6.]: #36-address-validate
+[3.7.]: #37-address-canonicalize
+[3.8.]: #38-address-humanize
+[4.4.]: #44-contract-call-graph
+[6.]: #6-ibc
+[6.1.]: #61-enabling-ibc
+[6.2.1.]: #621-ibc-transfer
+[6.2.3]: #623-ibc-channel-close
+
