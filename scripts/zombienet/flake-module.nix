@@ -109,7 +109,7 @@
                 command = pkgs.lib.meta.getExe self'.packages.acala-node;
                 chain = "karura-dev";
                 id = 2000;
-                collators = 1;
+                collators = 0;
                 ws_port = 9999;
                 rpc_port = 32210;
               }
@@ -148,7 +148,7 @@
         zombienet-all-dev-local = {
           type = "app";
           program = self'.packages.zombienet-all-dev-local;
-        };        
+        };
       };
     };
 }

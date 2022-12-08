@@ -1,9 +1,4 @@
-# allows to compose DSL to instantiate relay and parachains
-# 
-# package operates in next assumptions:
-# 1. we good to have all nodes to be equal regarding logging/storage/networking per chain
-# 2. allocate node names equal to owners sudo keys according well know keyring
-# 3. it is possible to allocate range of ports to each node starting from some base
+3
 { pkgs }:
 with pkgs;
 let

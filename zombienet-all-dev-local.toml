@@ -129,15 +129,6 @@ name = "RUST_LOG"
 value = "runtime=debug,parachain=trace,cumulus-collator=trace,aura=trace,xcm=trace"
 
 
-[[parachains.collators]]
-command = "/nix/store/j33may0jyxyg2v89k7cixipfam0gz5f8-acala/bin/acala"
-name = "bob"
-validator = true
-[[parachains.collators.env]]
-name = "RUST_LOG"
-value = "runtime=debug,parachain=trace,cumulus-collator=trace,aura=trace,xcm=trace"
-
-
 
 [relaychain]
 chain = "rococo-local"

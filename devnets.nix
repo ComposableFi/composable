@@ -20,20 +20,31 @@
           procps
         ] ++ containers-tools-minimal;
     in rec {
-      # Dali bridge devnet
       bridge-devnet-dali = (devnetTools.mk-bridge-devnet {
         inherit packages;
         inherit (packages) polkadot-launch composable-node polkadot-node;
       }).script;
 
-      # Dali bridge devnet with mmr-polkadot
       bridge-mmr-devnet-dali = (devnetTools.mk-bridge-devnet {
         inherit packages;
         inherit (packages) polkadot-launch composable-node;
         polkadot-node = packages.mmr-polkadot-node;
       }).script;
 
-      # Picasso devnet
+      bridge-devnet-dali-container = devnetTools.mk-devnet-container {
+        inherit container-tools;
+        containerName = "composable-bridge-devnet-container";
+        devNet = packages.bridge-devnet-dali;
+      };
+
+      bridge-mmr-devnet-dali-container = devnetTools.mk-devnet-container {
+        inherit container-tools;
+        containerName = "composable-bridge-mmr-devnet-container";
+        devNet = packages.bridge-mmr-devnet-dali;
+      };
+
+
+      # TODO: zombie
       devnet-picasso = (pkgs.callPackage devnetTools.mk-devnet {
         inherit (packages) polkadot-launch composable-node polkadot-node;
         chain-spec = "picasso-dev";
@@ -43,20 +54,6 @@
         inherit container-tools;
         containerName = "composable-devnet-container";
         devNet = packages.zombienet-rococo-local-dali-dev;
-      };
-
-      # Dali Bridge devnet container
-      bridge-devnet-dali-container = devnetTools.mk-devnet-container {
-        inherit container-tools;
-        containerName = "composable-bridge-devnet-container";
-        devNet = packages.bridge-devnet-dali;
-      };
-
-      # Dali Bridge devnet container with mmr-polkadot
-      bridge-mmr-devnet-dali-container = devnetTools.mk-devnet-container {
-        inherit container-tools;
-        containerName = "composable-bridge-mmr-devnet-container";
-        devNet = packages.bridge-mmr-devnet-dali;
       };
 
       devnet-rococo-dali-karura = let
@@ -121,6 +118,8 @@
         '';
       };
 
+      # TODO end zombie
+
       devnet-initialize-script-local = devnetTools.mkDevnetInitializeScript {
         polkadotUrl = "ws://localhost:9944";
         composableUrl = "ws://localhost:9988";
@@ -176,26 +175,6 @@
           devnet = packages.devnet-picasso-complete;
           frontend = packages.frontend-static-picasso-persistent;
         });
-
-      kusama-picasso-karura-devnet = let
-        config = (pkgs.callPackage
-          ./scripts/polkadot-launch/kusama-local-picasso-dev-karura-dev.nix {
-            polkadot-bin = packages.polkadot-node;
-            composable-bin = packages.composable-node;
-            acala-bin = packages.acala-node;
-          }).result;
-        config-file = pkgs.writeTextFile {
-          name = "kusama-local-picasso-dev-karura-dev.json";
-          text = "${builtins.toJSON config}";
-        };
-      in pkgs.writeShellApplication {
-        name = "kusama-picasso-karura";
-        text = ''
-          cat ${config-file}
-          rm -rf /tmp/polkadot-launch
-          ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
-        '';
-      };
     };
   };
 }
