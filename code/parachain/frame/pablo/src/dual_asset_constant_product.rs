@@ -7,7 +7,10 @@ use composable_maths::dex::{
 	per_thing_acceptable_computation_error, PoolWeightMathExt,
 };
 use composable_support::math::safe::SafeAdd;
-use composable_traits::dex::{AssetAmount, BasicPoolInfo, Fee, FeeConfig};
+use composable_traits::{
+	currency::{CurrencyFactory, RangeId},
+	dex::{AssetAmount, BasicPoolInfo, Fee, FeeConfig},
+};
 use frame_support::{
 	defensive,
 	pallet_prelude::*,
@@ -42,9 +45,9 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		);
 		ensure!(fee_config.fee_rate < Permill::one(), Error::<T>::InvalidFees);
 
-		let Some(lp_token) = lp_token_id else {
-			return Err(Error::<T>::NoLpTokenForLbp.into());
-		};
+		// NOTE: Will fully move away from CF at a later date. For now, all pools used in production
+		// should be created with a supplied LPT via Pablo's `do_create_pool` function.
+		let lp_token = lp_token_id.unwrap_or(T::CurrencyFactory::create(RangeId::LP_TOKENS)?);
 
 		// Add new pool
 		let pool_id =

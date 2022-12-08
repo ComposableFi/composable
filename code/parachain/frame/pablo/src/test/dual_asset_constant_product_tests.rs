@@ -261,17 +261,13 @@ fn test_redeemable_assets() {
 	});
 }
 
-pub fn create_pool_from_config(
-	init_config: PoolInitConfiguration<u128, u128>,
-	lp_token_id: AssetId,
-) -> u128 {
-	Test::assert_extrinsic_event_with(
-		Pablo::create(Origin::root(), init_config, Some(lp_token_id)),
-		|event| match event {
+pub fn create_pool_from_config(init_config: PoolInitConfiguration<u128, u128>) -> u128 {
+	Test::assert_extrinsic_event_with(Pablo::create(Origin::root(), init_config), |event| {
+		match event {
 			crate::Event::PoolCreated { pool_id, .. } => Some(pool_id),
 			_ => None,
-		},
-	)
+		}
+	})
 }
 
 // TODO (vim): Enable when weight validation is done
@@ -346,7 +342,7 @@ fn add_lp_with_min_mint_amount() {
 			(second_asset, second_asset_amount),
 		]);
 
-		let pool_id = create_pool_from_config(pool_init_config, LP_TOKEN_ID);
+		let pool_id = create_pool_from_config(pool_init_config);
 		let lp_token = lp_token_of_pool(pool_id);
 
 		// Mint the tokens
@@ -440,7 +436,7 @@ fn remove_lp_failure() {
 		let first_asset_amount = currency::BTC::units(10);
 		let second_asset_amount = currency::USDT::units(10);
 
-		let pool_id = create_pool_from_config(pool_init_config, LP_TOKEN_ID);
+		let pool_id = create_pool_from_config(pool_init_config);
 
 		// Mint the tokens
 		assert_ok!(Tokens::mint_into(first_asset, &ALICE, init_first_asset_amount));

@@ -50,13 +50,12 @@ benchmarks! {
 	create {
 		let usdc = 100.into();
 		let usdt = 101.into();
-		let lp_token_id = 1000.into();
 		let owner: T::AccountId = whitelisted_caller();
 		let pair = CurrencyPair::new(usdc, usdt);
 		let fee = Permill::from_percent(1);
 		let protocol_fee = Permill::from_percent(1);
 		let stable_swap_pool_init = amm_init_config::<T>(owner, pair, Permill::from_percent(50_u32), fee);
-	  } : _(RawOrigin::Root, stable_swap_pool_init, Some(lp_token_id))
+	  } : _(RawOrigin::Root, stable_swap_pool_init)
 
 	add_liquidity {
 		let usdc = 100.into();
