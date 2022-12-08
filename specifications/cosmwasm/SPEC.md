@@ -254,8 +254,8 @@ By convention, the data is JSON encoded.
 
 ### 2.5.1. Environment Pointer
 Contracts need to be aware of their environment to properly execute its logic.
-The [environment pointer](https://github.com/ComposableFi/cosmwasm-vm/blob/5a874f21cac750cba3dfa0888a72e504515f7e83/std/src/lib.rs#L856) provides a set of indirect set of pointers that provide information about the environment in which a message was executed.
-The JSON-encoded `Env` struct defines the fields tha allow contracts to be aware of the current state of the chain and themselves.
+The [environment pointer](https://github.com/ComposableFi/cosmwasm-vm/blob/5a874f21cac750cba3dfa0888a72e504515f7e83/std/src/lib.rs#L856) provides a set of indirect pointers that provide information about the environment in which a message was executed.
+The JSON-encoded `Env` struct defines the fields that allow contracts to be aware of the current state of the chain and themselves.
 
 ```rust
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
@@ -483,9 +483,9 @@ pub struct IbcBasicResponse<T = Empty> {
 
 Where `messages` are the sub-messages to process.
 
-Where `attributes` are the attributes associated with the default event that will be yield for the call.
+Where `attributes` are the attributes associated with the default event that will be yielded for the call.
 
-Where `events` are custom events that can be yield along the default event.
+Where `events` are custom events that can be yielded along the default event.
 
 ## 2.13. IBC Channel Close
 
@@ -520,9 +520,9 @@ pub struct IbcBasicResponse<T = Empty> {
 
 Where `messages` are the sub-messages to process.
 
-Where `attributes` are the attributes associated with the default event that will be yield for the call.
+Where `attributes` are the attributes associated with the default event that will be yielded for the call.
 
-Where `events` are custom events that can be yield along the default event.
+Where `events` are custom events that can be yielded along the default event.
 
 ## 2.14. IBC Packet Receive
 
@@ -563,9 +563,9 @@ pub struct IbcReceiveResponse<T = Empty> {
 
 Where `messages` are the submessages to process.
 
-Where `attributes` are the attributes associated with the default event that will be yield for the call.
+Where `attributes` are the attributes associated with the default event that will be yielded for the call.
 
-Where `events` are custom events that can be yield along the default event.
+Where `events` are custom events that can be yielded along the default event.
 
 Where `acknowledgement` is the field where the contracts MUST store the acknowledgment (contract specific) for the counterparty that originally sent the packet.
 
@@ -610,9 +610,9 @@ pub struct IbcBasicResponse<T = Empty> {
 
 Where `messages` are the sub-messages to process.
 
-Where `attributes` are the attributes associated with the default event that will be yield for the call.
+Where `attributes` are the attributes associated with the default event that will be yielded for the call.
 
-Where `events` are custom events that can be yield along the default event.
+Where `events` are custom events that can be yielded along the default event.
 
 ## 2.16. IBC Packet Timeout
 
@@ -652,15 +652,15 @@ pub struct IbcBasicResponse<T = Empty> {
 
 Where `messages` are the sub-messages to process.
 
-Where `attributes` are the attributes associated with the default event that will be yield for the call.
+Where `attributes` are the attributes associated with the default event that will be yielded for the call.
 
-Where `events` are custom events that can be yield along the default event.
+Where `events` are custom events that can be yielded along the default event.
 
 # 3. Host Functions
 The virtual machine MUST provide the host functions listed below.
 A host function is provided by the virtual machine and callable by contracts to interact with the blockchain itself, very much like syscalls in operating system contexts.
 The next sections define each function in more depth.
-The `readonly` column determine whether the operation is allowed to alter the storage or not -- a readonly operation altering the storage result in a readonly violation.
+The `read-only` column determines whether the operation is allowed to alter the storage or not -- a read-only operation altering the storage result in a read-only violation.
 
 | import                   | required | description                                                                |
 |--------------------------|----------|----------------------------------------------------------------------------|
@@ -737,7 +737,7 @@ Contract authors MUST ensure that the iterator handle is obtained through the `d
 
 ## 3.6. Address Validate
 Function `addr_validate` takes as parameter a pointer to a `Region`
-The `Region`stores an address in human-readable format and validates if it is valid.
+The `Region` stores an address in human-readable format and validates if it is valid.
 If the validation succeeds, `0` is returned.
 Otherwise, the string representation of the error MUST be written to the contract's memory, and the pointer to the corresponding `Region` MUST be returned.
 
@@ -824,7 +824,7 @@ The signature MUST be in Cosmos format:
 | signature  | Serialized compressed signature                                                                                   | 64           |
 | public key | [Serialized according to SEC 2](https://www.oreilly.com/library/view/programming-bitcoin/9781492031482/ch04.html) | 33 or 65     |
 
-It verifies the digital signature created with the `ECDSA` algorithm and over the `secp256k1`elliptic curve.
+It verifies the digital signature created with the `ECDSA` algorithm and over the `secp256k1`elliptic curve (EC).
 
 ```rust
 fn secp256k1_verify(message_hash_ptr: u32, signature_ptr: u32, public_key_ptr: u32) -> u32;
@@ -834,7 +834,7 @@ fn secp256k1_verify(message_hash_ptr: u32, signature_ptr: u32, public_key_ptr: u
 
 `signature_ptr` is a pointer to a Region that contains the digital signature. Signature MUST be in compact format: a 64-byte-length binary string that serializes r (32 bytes) and s (32 bytes) in that specific order.
 
-`public_key_ptr` is a pointer to a Region that contains references the serialized public key against which the signature will be verified. The public key MUST be Serialized according to [SEC 2](https://www.oreilly.com/library/view/programming-bitcoin/9781492031482/ch04.html).
+`public_key_ptr` is a pointer to a Region that contains a list of references to the serialized public key against which the signature will be verified. The public key MUST be Serialized according to [SEC 2](https://www.oreilly.com/library/view/programming-bitcoin/9781492031482/ch04.html).
 
 `secp256k1_verify` returns 0 on verification success, 1 on verification failure, and values greater than 1 in case of error.
 
@@ -873,7 +873,7 @@ It verifies the digital signature created with the `ed25519` algorithm and over 
 
 `signature_ptr` is a pointer to a Region that contains the digital signature. Signature MUST be in Raw ED25519 format.
 
-`public_key_ptr` is a pointer to a Region that contains references the serialized public key against which the signature will be verified. The public key MUST be in Raw ED25519 format.
+`public_key_ptr` is a pointer to a Region that contains a list of references to the serialized public key against which the signature will be verified. The public key MUST be in Raw ED25519 format.
 
 `ed25519_verify` returns 0 on verification success, 1 on verification failure, and values greater than 1 in case of error.
 
@@ -983,26 +983,26 @@ The `Smart` variant loads the contract specified by `contract_addr` into the vir
 `Raw` queries avoid loading the contract itself, and instead, it directly queries its storage at `key`.
 Note that due to updatability, this is more error-prone, but it implies lower gas costs.
 
-Metadata about the contract MAY be queried using the `ContractInfo** variant, which returns the canonical address (See Section 2.5.2.3).
+Metadata about the contract MAY be queried using the `ContractInfo` variant, which returns the canonical address (See Section 2.5.2.3).
 
 # 4. Virtual Machine
 In this section we cover the main implementation details of our minimalistic and `no_std` friendly abstract virtual machine for CosmWasm contract execution. 
 
 ## 4.1. Gas Metering
-Gas metering is the process of instrumentalization the code from the wasm module to obtain a value describing the cost of executing that code.
+Gas metering is the process of instrumentalizing the code from the wasm module to obtain a value describing the cost of executing that code.
 The instrumentalization includes both gas metering calls and stack limit checks.
 These checks ensure the call stack size remains fixed across different execution engines, as some of them MAY support different complexities and this might lead to inconsistencies.
 
 Implementation details are left open to the developers. Gas metering MUST be deterministic and reproducible.
 
 ### 4.1.1. Gas to Weight
-Substrate based chain use weight as unit to charge computational execution.
+Substrate based chains use weight as unit to charge computational execution.
 One gas is equivalent to one weight, which is defined as 1<sup>-12</sup> seconds of execution time on a reference machine.
 
 ## 4.2. Messaging
 CosmWasm is based in the actor model design pattern.
 In this model, distributed entities are represented as independent actors.
-Actors have they own and private internal state that cannot be altered by external actors.
+Actors have their own and private internal state that cannot be altered by external actors.
 All execution and logic is routed through messaging.
 Actor is an abstract term, but in CosmWasm usually refers to a single instance of a smart contract.
 
@@ -1043,7 +1043,7 @@ pub fn execute(
 ### 4.2.1 Submessages
 Messages are used to interact with modules or other smart contracts.
 Given the actor model and the loose coupling between actors, messages are sent but no state is kept.
-This means there is no response on whether if the call result was successful or not.
+This means there is no response on whether the call result was successful or not.
 
 In some scenarios, the ability to get a result and decide whether the transaction MUST be aborted or not is extremely useful.
 For this purpose, submessages are introduced: a second message sent with the sole purpose of getting a call result from a previous message.
@@ -1100,7 +1100,7 @@ A call graph is a flow graph that represents the calling relationships between a
 For CosmWasm this means the call graph represents the transactional flow of messages between smart contracts.
 These dependencies can grow fast, specially in cross-chain scenarios. 
 Precedence is determined using a width-first approach.
-This means if an actor needs to process two messages `M1` and `M2` from actor `A1`, and two messages  `N1` and `N2` from actor `A2, the order will be: `M1`, `N1`, `M2`, `N2`. 
+This means if an actor needs to process two messages `M1` and `M2` from actor `A1`, and two messages  `N1` and `N2` from actor `A2`, the order will be: `M1`, `N1`, `M2`, `N2`. 
 
 To ensure atomicity of execution, the `Dispatcher` maintains the intermediate states across calls.
 This, together with the use of escrow accounts that lock the funds along the call time, ensure that the contract is able to atomically revert, no matter how large the graph call is or when the error occurs.
@@ -1240,7 +1240,7 @@ This instrumentation process adds both gas metering and stack height limit to th
 
 Proper gas metering is achieved in two steps:
 1. **Benchmarking**: Each instruction is benchmarked to determine the cost of its execution.
-2. **Injecting Gas Metering**: Gas metering is injected to the code by using [wasm_instrument](https://github.com/paritytech/wasm-instrument). This process injects a call to the gas function for every execution or path/code block (function call, if, else, etc.) with the associated execution cost parameter. Therefore, it computes the overall total cost and makes sure that every code block is paid before getting executed.
+2. **Injecting Gas Metering**: Gas metering is injected into the code by using [wasm_instrument](https://github.com/paritytech/wasm-instrument). This process injects a call into the gas function for every execution or path/code block (function call, if, else, etc.) with the associated execution cost parameter. Therefore, it computes the overall total cost and ensures that every code block is paid before getting executed.
 
 Then, whenever a contract entrypoint is called, the pallet checks if the instrumentation version is up-to-date.
 In case not, the code gets re-instrumented to ensure proper gas metering.
@@ -1274,7 +1274,7 @@ pub enum Event<T: Config> {
 Fees depend linearly on the size of the code.
 
 ## 7.3. Instantiating a Contract
-THe `instantiate` extrinsic is used to instantiate a smart contract.
+The `instantiate` extrinsic is used to instantiate a smart contract.
 
 ### 7.3.1 Definition
 ```rust
@@ -1298,7 +1298,7 @@ Hence, we are not only using `code id` to identify a code.
 Since `code id` depends on the current state of the chain, users won't be able to deterministically identify their code.
 So we created `CodeIdentifier` which makes users able to also identify their code by using `CodeHash`.
 And the corresponding `code id` is fetched internally.
-This feature comes handy when users want to batch their `upload + instantiate` calls, or they do any kind of scripting to upload and run the contracts.
+This feature comes in handy when users want to batch their `upload + instantiate` calls, or they do any kind of scripting to upload and run the contracts.
 ```rust
 pub enum CodeIdentifier<T: Config> {
 	CodeId(CosmwasmCodeId),
