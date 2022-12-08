@@ -185,7 +185,6 @@ The tables below provides an overview of each function. Later sections elaborate
 | reply               | No       | Handle execution results              |
 
 ### 2.1.2. IBC exports
-
 Contracts MUST export **all** the functions below to be considered **IBC capable**.
 Section [6.] elaborates more on IBC integration within the VM.
 
@@ -274,6 +273,7 @@ Different auxiliary `structs` act as pointers to enhance the information for a g
 
 #### 2.5.2.1. Block Info
 Block Info contains information on the block a message was initiated.
+
 ```rust
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct BlockInfo {
@@ -290,6 +290,7 @@ The field `chain_id` identifies the blockchain to which the block belongs.
 
 #### 2.5.2.2. Transaction Info
 Transaction Info contains information about the transaction in which the message was executed.
+
 ```rust
 pub struct TransactionInfo {
     pub index: u32,
@@ -350,7 +351,6 @@ The `length` is the number of bytes that MAY be read from the `offset`, prepared
 Implementors MUST never read past `length` bytes.
 
 ## 2.6. Execute
-
 After instantiation, the contract MAY receive `execute` calls.
 The `execute` export MUST be present in the contract binary.
 
@@ -363,7 +363,6 @@ The virtual machine MAY use `execute` when a transaction calls a contract, or wh
 All changes to storage MUST be actuated by the virtual machine during the `execute` call. See sections [2.5.1.] and [2.5.2.] for the exact definitions of the `env_ptr` and `info_ptr` pointers. The `msg_ptr` is defined by the contract itself and by convention, JSON encoded.
 
 ## 2.7. Query
-
 After instantiation, the contract MAY receive `query` calls. The `query` export MUST be present in the contract binary. The query call is intended to provide information to public, well-defined contract info (See Section [2.5.2.3.].
 
 ```rust
@@ -377,13 +376,11 @@ Virtual machine implementors MAY choose to make contract storage directly readab
 Contracts MAY call host functions that alter storage during `query` calls. The virtual machine MUST ensure that these calls are non-operational during and after the `query` call.
 
 ## 2.8. Migrate
-
 After instantiation, the contract MAY receive `migrate` calls. The `migrate` export MAY be present in the contract binary. The administrator of the contract MAY make `migrate` calls to contracts with a missing `migrate` export, which MUST be handled by the virtual machine in an error returned to the administrator. Migrate MUST be called *after* the new code has been swapped.
 
 Contracts without a `migrate` export MUST never be altered by users or administrators. Contracts MAY be migrated to different code if metering needs to be updated, which will not be observable from the contract or users.
 
 ## 2.9. Reply
-
 Contracts MAY want to catch the result of a submessage execution.
 To enable this optional behaviour, the `reply` export is employed.
 
@@ -392,14 +389,17 @@ extern "C" fn reply(env_ptr: u32, msg_ptr: u32) -> u32;
 ```
 
 Where `env_ptr` is a pointer that references the `Env`, and `msg_ptr` is pointer to the `Reply` struct.
+
 ```rust
 pub struct Reply {
 	pub id: u64,
 	pub result: SubMsgResult
 }
 ```
+
 `Reply` has a corresponding `id` to identify replies. `result` field contains the `SubMsgResult` of the executed submessage.
 Which contains either a `SubMsgResponse` if the  submessage's execution succeeds, or an error `Err` which contains string representation of the error.
+
 ```rust
 pub enum SubMsgResult {
 	Ok(SubMsgResponse),
@@ -411,10 +411,10 @@ pub struct SubMsgResponse {
 	pub data: Option<Binary>,
 }
 ```
+
 Where `events` contains a list of `Events`, and, `data` contains the binary representation of the response.
 
 ## 2.10. Sudo
-
 Contracts MAY choose to expose a special entry point, which MAY only be called from privileged modules. This is the CosmWasm equivalent of the root origin in Substrate.
 
 ```rust
@@ -422,7 +422,6 @@ extern "C" fn sudo(env_ptr: u32, msg_ptr: u32) -> u32;
 ```
 
 ## 2.11. IBC Channel Open
-
 After instantiation, **IBC capable** contracts (see section [2.1.2.](#212-ibc-exports)) MAY receive `ibc_channel_open` calls.
 The `ibc_channel_open` export MUST be present in the contract binary.
 
@@ -431,6 +430,7 @@ extern "C" fn ibc_channel_open(env_ptr: u32, msg_ptr: u32) -> u32;
 ```
 
 Where `msg_ptr` is a pointer to a region (see section [2.5.3.]) of [IbcChannelOpenMsg](https://github.com/CosmWasm/cosmwasm/blob/6033d91aab8dae99c0fe3b4ecf649242b21fde8a/packages/std/src/ibc.rs#L252).
+
 ```rust
 pub enum IbcChannelOpenMsg {
     OpenInit { channel: IbcChannel },
@@ -448,7 +448,6 @@ The virtual machine MAY use `ibc_channel_open` when an IBC channel [handshake is
 Contracts MAY abort the channel opening process by returning an error from the call or [optionally overwrite the channel version](https://github.com/CosmWasm/cosmwasm/blob/6033d91aab8dae99c0fe3b4ecf649242b21fde8a/packages/std/src/ibc.rs#L306).
 
 ## 2.12. IBC Channel Connect
-
 After having passed the IBC channel handshake initialization (see section [2.11.](#211-ibc-channel-open)), **IBC capable** contracts (see section [2.1.2.](#212-ibc-exports)) MAY receive `ibc_channel_connect` calls.
 The `ibc_channel_connect` export MUST be present in the contract binary.
 
@@ -457,6 +456,7 @@ extern "C" fn ibc_channel_open(env_ptr: u32, msg_ptr: u32) -> u32;
 ```
 
 Where `msg_ptr` is a pointer to a region (see section [2.5.3.]) of [IbcChannelConnectMsg](https://github.com/CosmWasm/cosmwasm/blob/6033d91aab8dae99c0fe3b4ecf649242b21fde8a/packages/std/src/ibc.rs#L317).
+
 ```rust
 pub enum IbcChannelConnectMsg {
     OpenAck {
@@ -488,7 +488,6 @@ Where `attributes` are the attributes associated with the default event that wil
 Where `events` are custom events that can be yielded along the default event.
 
 ## 2.13. IBC Channel Close
-
 If a channel has been opened to a contract (see section [2.11.](#211-ibc-channel-open)), **IBC capable** contracts (see section [2.1.2.](#212-ibc-exports)) MAY receive `ibc_channel_close` calls.
 The `ibc_channel_close` export MUST be present in the contract binary.
 
@@ -497,6 +496,7 @@ extern "C" fn ibc_channel_close(env_ptr: u32, msg_ptr: u32) -> u32;
 ```
 
 Where `msg_ptr` is a pointer to a region (see section [2.5.3.]) of [IbcChannelCloseMsg](https://github.com/CosmWasm/cosmwasm/blob/6033d91aab8dae99c0fe3b4ecf649242b21fde8a/packages/std/src/ibc.rs#L369).
+
 ```rust
 pub enum IbcChannelCloseMsg {
     CloseInit { channel: IbcChannel },
@@ -525,7 +525,6 @@ Where `attributes` are the attributes associated with the default event that wil
 Where `events` are custom events that can be yielded along the default event.
 
 ## 2.14. IBC Packet Receive
-
 If a channel has been opened to a contract (see section [2.11.](#211-ibc-channel-open)), **IBC capable** contracts (see section [2.1.2.](#212-ibc-exports)) MAY receive `ibc_packet_receive` calls.
 The `ibc_packet_receive` export MUST be present in the contract binary.
 
@@ -534,6 +533,7 @@ extern "C" fn ibc_packet_receive(env_ptr: u32, msg_ptr: u32) -> u32;
 ```
 
 Where `msg_ptr` is a pointer to a region (see section [2.5.3.]) of [IbcPacketReceiveMsg](https://github.com/CosmWasm/cosmwasm/blob/6033d91aab8dae99c0fe3b4ecf649242b21fde8a/packages/std/src/ibc.rs#L405).
+
 ```rust
 pub struct IbcPacketReceiveMsg {
     pub packet: IbcPacket,
@@ -570,7 +570,6 @@ Where `events` are custom events that can be yielded along the default event.
 Where `acknowledgement` is the field where the contracts MUST store the acknowledgment (contract specific) for the counterparty that originally sent the packet.
 
 ## 2.15. IBC Packet Ack
-
 If a channel has been opened to a contract (see section [2.11.](#211-ibc-channel-open)) and a packet has been sent over the channel (see section [2.14.]), **IBC capable** contracts (see section [2.1.2.](#212-ibc-exports)) MUST receive an `ibc_packet_ack` call.
 The `ibc_packet_ack` export MUST be present in the contract binary.
 
@@ -579,6 +578,7 @@ extern "C" fn ibc_packet_ack(env_ptr: u32, msg_ptr: u32) -> u32;
 ```
 
 Where `msg_ptr` is a pointer to a region (see section [2.5.3.]) of [IbcPacketAckMsg](https://github.com/CosmWasm/cosmwasm/blob/6033d91aab8dae99c0fe3b4ecf649242b21fde8a/packages/std/src/ibc.rs#L426).
+
 ```rust
 pub struct IbcPacketAckMsg {
     pub acknowledgement: IbcAcknowledgement,
@@ -615,7 +615,6 @@ Where `attributes` are the attributes associated with the default event that wil
 Where `events` are custom events that can be yielded along the default event.
 
 ## 2.16. IBC Packet Timeout
-
 If a channel has been opened to a contract (see section [2.11.](#211-ibc-channel-open)) and a packet has been sent over the channel (see section [2.14.]), **IBC capable** contracts (see section [2.1.2.](#212-ibc-exports)) MAY receive an `ibc_packet_timeout` call.
 The `ibc_packet_timeout` export MUST be present in the contract binary.
 
@@ -624,6 +623,7 @@ extern "C" fn ibc_packet_timeout(env_ptr: u32, msg_ptr: u32) -> u32;
 ```
 
 Where `msg_ptr` is a pointer to a region (see section [2.5.3.]) of [IbcPacketTimeoutMsg](https://github.com/CosmWasm/cosmwasm/blob/6033d91aab8dae99c0fe3b4ecf649242b21fde8a/packages/std/src/ibc.rs#L459).
+
 ```rust
 pub struct IbcPacketTimeoutMsg {
     pub packet: IbcPacket,
@@ -698,6 +698,7 @@ fn db_write(key: u32, value: u32);
 
 ## 3.3. DB Remove
 Removes the value associated to a given `key` from the storage.
+
 ```rust
 fn db_remove(key: u32);
 ```
@@ -796,7 +797,6 @@ Implementors MUST not abort VM execution on canonicalization error, instead, the
 Contract authors MUST handle the result of the call and MAY abort the transaction if the address could not be canonicalized.
 
 ## 3.8. Address Humanize
-
 Contracts MAY request the host for address humanization.
 
 A human address is a human-readable representation of a canonical address (see section [3.7.]).
@@ -869,6 +869,7 @@ It verifies the digital signature created with the `ed25519` algorithm and over 
 ```rust
     fn ed25519_verify(message_ptr: u32, signature_ptr: u32, public_key_ptr: u32) -> u32;
 ```
+
 `message_ptr` is a pointer to a Region (as defined in Section [2.5.3]) that contains the hash of the message to be verified. The hash function used SHOULD be SHA-512.
 
 `signature_ptr` is a pointer to a Region that contains the digital signature. Signature MUST be in Raw ED25519 format.
@@ -933,6 +934,7 @@ enum QueryRequest {
     Wasm(WasmQuery),
 }
 ```
+
 The custom query can be used by implementors to extend their virtual machine's capabilities.
 
 Implementors MUST ensure that the query is not allowed to alter the storage or any other part of the system.
@@ -1040,6 +1042,7 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> { }
 ```
+
 ### 4.2.1 Submessages
 Messages are used to interact with modules or other smart contracts.
 Given the actor model and the loose coupling between actors, messages are sent but no state is kept.
@@ -1056,11 +1059,13 @@ pub struct SubMsg<T> {
     pub reply_on: ReplyOn,      // a flag to determine when the reply should be sent
 }
 ```
+
 Submessages offer different patterns depending on the strategy to handle replies.
 Please note that a sub-message failure always induces a revert of the sub-transaction that executed it.
 Therefore, you get the result but the state on the destination actor has been already committed or reverted.
 This does not revert the calling contract state.
 It will simply return an error the calling contract will decide how to handle according to the following patterns:
+
 ```rust
 pub enum ReplyOn {
     /// Always perform a callback after SubMsg is processed
@@ -1073,6 +1078,7 @@ pub enum ReplyOn {
     Never,
 }
 ```
+
 If the caller decides to not handle the error, its state will be reverted. 
 
 ### 4.2.2 Query
@@ -1127,11 +1133,9 @@ Inter-Blockchain Communication ([IBC](https://ibcprotocol.org/documentation)) pr
 We devote this section to formalize the requirements for our implementation to be IBC compatible.
 
 ## 6.1. Enabling IBC
-
 Implementors willing to support IBC MUST enable the [**stargate** feature](https://github.com/ComposableFi/cosmwasm-vm/blob/b4896e068b8e58faae08d94728ad5684f668043b/vm/Cargo.toml#L11).
 
 ## 6.2. Host Functions
-
 Implementors MUST enable the IBC extension (see section [6.1.]).
 
 Implementors MUST declare the IBC host functions (see section [6.2.1.] up to [6.2.3.]).
@@ -1178,7 +1182,6 @@ pub enum IbcMsg {
 ```
 
 ### 6.2.1. IBC Transfer
-
 Upon reception of the `IbcMsg::Transfer` variant submessage by the VM, the according `ibc_transfer` host function is called.
 
 ```rust
@@ -1199,7 +1202,6 @@ Implementors MUST ensure that the `sender` balance can be reduced by the `amount
 Implementors MAY forward the call to a specific module in charge of handling IBC operations.
 
 ### 6.2.2. IBC Packet Send
-
 Upon reception of the `IbcMsg::SendPacket` variant submessage by the VM, the according `ibc_send_packet` host function is called.
 
 ```rust
@@ -1217,7 +1219,6 @@ Implementors MUST verify that the `channel_id` exists and that it has previously
 Implementors MAY forward the call to a specific module in charge of handling IBC operations.
 
 ### 6.2.3. IBC Channel Close
-
 Upon reception of the `IbcMsg::CloseChannel` variant submessage by the VM, the according `ibc_channel_close` host function is called.
 
 ```rust
@@ -1249,6 +1250,7 @@ In case not, the code gets re-instrumented to ensure proper gas metering.
 The `upload` extrinsic is used to upload smart contracts´ `code` to the pallet.
 
 ### 7.2.1. Definition
+
 ```rust
 #[pallet::weight(T::WeightInfo::upload(code.len() as u32))]
 pub fn upload(origin: OriginFor<T>, code: ContractCodeOf<T>) -> DispatchResultWithPostInfo;
@@ -1277,6 +1279,7 @@ Fees depend linearly on the size of the code.
 The `instantiate` extrinsic is used to instantiate a smart contract.
 
 ### 7.3.1 Definition
+
 ```rust
 #[pallet::weight(T::WeightInfo::instantiate(funds.len() as u32).saturating_add(*gas))]
 pub fn instantiate(
@@ -1299,6 +1302,7 @@ Since `code id` depends on the current state of the chain, users won't be able t
 So we created `CodeIdentifier` which makes users able to also identify their code by using `CodeHash`.
 And the corresponding `code id` is fetched internally.
 This feature comes in handy when users want to batch their `upload + instantiate` calls, or they do any kind of scripting to upload and run the contracts.
+
 ```rust
 pub enum CodeIdentifier<T: Config> {
 	CodeId(CosmwasmCodeId),
@@ -1320,9 +1324,11 @@ First, the contract address MUST be derived.
 As stated previously, one of our goals is determinism.
 Then, the contract addresses are also deterministic as opposed to other CosmWasm-running chains.
 The algorithm is based on `instantiator`, `salt`, `code_hash` and `message` which is:
+
 ```
 hash(instantiator + salt + code_hash + hash(message))
 ```
+
 This gives users opportunity to know the contract address prior to creation, which becomes really handy when it comes to XCVM.
 Because this will provide a way to know the `interpreter` address prior to the creation for example so that users can add `Transfer` instruction which transfers some funds to the `interpreter` without paying for late-binding.
 
@@ -1346,15 +1352,18 @@ Total fees depend on three factors:
 - Funds to be transferred.
 
 The total fee can be computed as follows.
+
 ```
 base_instantiate_fee + (fee_per_fund * length(funds)) + executed_instruction_costs
 ```
+
 The remaining gas is refunded after execution.
 
 ## 7.4. Executing a Contract
 The `execute` extrinsic is used for executing a smart contract.
 
 ### 7.4.1. Definition
+
 ```rust
 #[pallet::weight(T::WeightInfo::execute(funds.len() as u32).saturating_add(*gas))]
 pub fn execute(
@@ -1382,9 +1391,11 @@ Total fees depend on three factors:
 - Funds to be transferred.
 
 The total fee can be computed as follows.
+
 ```
 base_instantiate_fee + (fee_per_fund * length(funds)) + executed_instruction_costs
 ```
+
 The remaining gas is refunded after execution.
 
 
@@ -1401,7 +1412,6 @@ Instead of going into each of these in-depth, we recommend:
     - [fuzzing](https://github.com/rust-fuzz/cargo-fuzz)
 
 ## 8.1. Previous Vulnerabilities
-
 - https://halborn.com/halborn-discovers-zero-day-vulnerability-in-cosmwasm
 
 # 9. Contributors
