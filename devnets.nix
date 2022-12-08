@@ -42,7 +42,7 @@
       devnet-container = devnetTools.mk-devnet-container {
         inherit container-tools;
         containerName = "composable-devnet-container";
-        devNet = packages.devnet-dali;
+        devNet = packages.zombienet-rococo-local-dali-dev;
       };
 
       # Dali Bridge devnet container

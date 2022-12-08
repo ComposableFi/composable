@@ -41,8 +41,8 @@
           '';
         };
 
-        zombienet-devnet-dali-complete = pkgs.writeShellApplication {
-          name = "zombienet-devnet-dali-complete";
+        zombienet-rococo-local-dali-dev-statemine = pkgs.writeShellApplication {
+          name = "zombienet-rococo-local-dali-dev-statemine";
           runtimeInputs = [ pkgs.nodejs paritytech-zombienet ];
           text = ''
             cd ${paritytech-zombienet}            
@@ -85,16 +85,14 @@
           type = "app";
           program = self'.packages.zombienet;
         };
-        zombienet-devnet-dali-complete = {
+        zombienet-rococo-local-dali-dev-statemine = {
           type = "app";
-          program = self'.packages.zombienet-devnet-dali-complete;
+          program = self'.packages.zombienet-rococo-local-dali-dev-statemine;
         };
         zombienet-rococo-local-dali-dev = {
           type = "app";
           program = self'.packages.zombienet-rococo-local-dali-dev;
         };
-
-        devnet-dali = zombienet-rococo-local-dali-dev;
       };
     };
 }
