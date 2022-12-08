@@ -38,8 +38,7 @@ in with prelude; rec {
         mkCollator {
           inherit command;
           inherit name;
-        })
-        (lib.lists.range 0 (collators - 1)) (builtins.tail names);
+        }) (lib.lists.range 0 (collators - 1)) (builtins.tail names);
 
     in {
       add_to_genesis = true;

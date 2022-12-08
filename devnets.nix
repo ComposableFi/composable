@@ -20,13 +20,6 @@
           procps
         ] ++ containers-tools-minimal;
     in rec {
-      
-      # TODO: zombie
-      devnet-dali = (pkgs.callPackage devnetTools.mk-devnet {
-        inherit (packages) polkadot-launch composable-node polkadot-node;
-        chain-spec = "dali-dev";
-      }).script;
-
       # Dali bridge devnet
       bridge-devnet-dali = (devnetTools.mk-bridge-devnet {
         inherit packages;
@@ -163,7 +156,7 @@
       devnet-xcvm = pkgs.composable.mkDevnetProgram "devnet-xcvm"
         (import ./.nix/devnet-specs/xcvm.nix {
           inherit pkgs;
-          inherit devnet-dali;
+          devnet-dali = packages.zombienet-rococo-local-dali-dev;
         });
 
       devnet-dali-persistent =

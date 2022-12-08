@@ -79,7 +79,7 @@
         };
       };
 
-      apps = {
+      apps = rec {
 
         zombienet = {
           type = "app";
@@ -93,6 +93,8 @@
           type = "app";
           program = self'.packages.zombienet-rococo-local-dali-dev;
         };
+
+        devnet-dali = zombienet-rococo-local-dali-dev;
       };
     };
 }
