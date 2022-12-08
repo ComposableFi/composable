@@ -2,7 +2,7 @@ name: "Build, Test, Deploy"
 on:
   push:
     branches:
-      - releases
+      - release-*
       - main
       # bors related branches. Please do not remove.
       - staging
