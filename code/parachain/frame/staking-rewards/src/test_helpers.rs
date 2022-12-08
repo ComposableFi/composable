@@ -725,15 +725,6 @@ pub(crate) fn create_rewards_pool_and_assert<Runtime>(
 	reward_config: RewardPoolConfigurationOf<Runtime>,
 ) where
 	Runtime: crate::Config + RuntimeTrait<crate::Event<Runtime>>,
-	// <Runtime as frame_system::Config>::Event: Parameter
-	// 	+ Member
-	// 	+ Debug
-	// 	+ Clone
-	// 	+ TryInto<crate::Event<Runtime>>
-	// 	+ From<crate::Event<Runtime>>,
-	// <<Runtime as frame_system::Config>::Event as TryInto<crate::Event<Runtime>>>::Error: Debug,
-	// <Runtime as frame_system::Config>::Origin:
-	// 	OriginTrait<AccountId = <Runtime as frame_system::Config>::AccountId>,
 {
 	match reward_config.clone() {
 		RewardPoolConfiguration::RewardRateBasedIncentive {
