@@ -20,19 +20,18 @@
           procps
         ] ++ containers-tools-minimal;
     in rec {
-      # mmr-polkadot-node mk-bridge-devnet
-
+      devnet-container = devnetTools.mk-devnet-container {
+        inherit container-tools;
+        containerName = "composable-devnet-container";
+        devNet = packages.zombienet-rococo-local-dali-dev;
+      };
+      
       # TODO: zombie
       devnet-picasso = (pkgs.callPackage devnetTools.mk-devnet {
         inherit (packages) polkadot-launch composable-node polkadot-node;
         chain-spec = "picasso-dev";
       }).script;
 
-      devnet-container = devnetTools.mk-devnet-container {
-        inherit container-tools;
-        containerName = "composable-devnet-container";
-        devNet = packages.zombienet-rococo-local-dali-dev;
-      };
 
       devnet-rococo-dali-karura = let
         config = (pkgs.callPackage
