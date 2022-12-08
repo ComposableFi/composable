@@ -45,7 +45,7 @@ fn add_remove_lp() {
 
 		process_and_progress_blocks::<Pablo, Test>(1);
 
-		let pool_id = create_pool_from_config(init_config, LP_TOKEN_ID);
+		let pool_id = create_pool_from_config(init_config);
 		let lp_token = lp_token_of_pool(pool_id);
 
 		let assets_with_amounts = BTreeMap::from([
