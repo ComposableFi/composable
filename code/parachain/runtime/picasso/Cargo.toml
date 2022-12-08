@@ -83,6 +83,7 @@ currency-factory = { package = "pallet-currency-factory", path = "../../frame/cu
 governance-registry = { package = "pallet-governance-registry", path = "../../frame/governance-registry", default-features = false }
 primitives = { path = "../primitives", default-features = false }
 vesting = { package = "pallet-vesting", path = "../../frame/vesting", default-features = false }
+pablo = { package = "pallet-pablo", path = "../../frame/pablo", default-features = false }
 
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
@@ -167,6 +168,7 @@ runtime-benchmarks = [
   "common/runtime-benchmarks",
   "asset-tx-payment/runtime-benchmarks",
   "proxy/runtime-benchmarks",
+  "pablo/runtime-benchmarks",
 ]
 std = [
   "codec/std",
@@ -239,4 +241,5 @@ std = [
   "simnode-apis/std",
   "asset-tx-payment/std",
   "proxy/std",
+  "pablo/std",
 ]
