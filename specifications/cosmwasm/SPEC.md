@@ -247,7 +247,7 @@ Our virtual machine eagerly executes it.
 
 The environment pointer (`env_ptr`) contains the current state information.
 The message information pointer (info_ptr) contains the sender (public key) along with the tokens that have been sent for the contract call.
-See sections 2.4.1 and 2.4.2 for the exact definitions of these pointers.
+See sections 2.5.1 and 2.5.2 for the exact definitions of these pointers.
 
 The message pointer (`msg_ptr`) is an arbitrary message (specific to the contract) containing additional information for the contract to execute the desired operation.
 By convention, the data is JSON encoded.
