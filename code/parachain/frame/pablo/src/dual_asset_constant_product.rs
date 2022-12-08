@@ -1,4 +1,4 @@
-use crate::{Config, Error, PoolConfiguration, PoolCount, Pools};
+use crate::{AssetIdOf, Config, Error, PoolConfiguration, PoolCount, Pools};
 use composable_maths::dex::{
 	constant_product::{
 		compute_deposit_lp_, compute_first_deposit_lp_, compute_in_given_out_new,
@@ -7,10 +7,7 @@ use composable_maths::dex::{
 	per_thing_acceptable_computation_error, PoolWeightMathExt,
 };
 use composable_support::math::safe::SafeAdd;
-use composable_traits::{
-	currency::{CurrencyFactory, RangeId},
-	dex::{AssetAmount, BasicPoolInfo, Fee, FeeConfig},
-};
+use composable_traits::dex::{AssetAmount, BasicPoolInfo, Fee, FeeConfig};
 use frame_support::{
 	defensive,
 	pallet_prelude::*,
@@ -30,6 +27,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		who: &T::AccountId,
 		fee_config: FeeConfig,
 		assets_weights: BoundedBTreeMap<T::AssetId, Permill, ConstU32<2>>,
+		lp_token_id: Option<AssetIdOf<T>>,
 	) -> Result<T::PoolId, DispatchError> {
 		ensure!(assets_weights.len() == 2, Error::<T>::InvalidPair);
 		ensure!(assets_weights.values().non_zero_weights(), Error::<T>::WeightsMustBeNonZero);
@@ -44,7 +42,10 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		);
 		ensure!(fee_config.fee_rate < Permill::one(), Error::<T>::InvalidFees);
 
-		let lp_token = T::CurrencyFactory::create(RangeId::LP_TOKENS)?;
+		let Some(lp_token) = lp_token_id else {
+			return Err(Error::<T>::NoLpTokenForLbp.into());
+		};
+
 		// Add new pool
 		let pool_id =
 			PoolCount::<T>::try_mutate(|pool_count| -> Result<T::PoolId, DispatchError> {

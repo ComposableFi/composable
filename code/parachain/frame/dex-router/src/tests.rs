@@ -1,5 +1,5 @@
 use crate::{mock::*, Error};
-use composable_tests_helpers::test::{currency::USDT, helper::acceptable_computation_error};
+use composable_tests_helpers::test::helper::acceptable_computation_error;
 use composable_traits::{
 	defi::CurrencyPair,
 	dex::{Amm as AmmTrait, AssetAmount, DexRouter as DexRouterTrait},
@@ -31,6 +31,7 @@ pub fn dual_asset_pool_weights(
 fn create_constant_product_amm_pool(
 	assets: CurrencyPair<AssetId>,
 	amounts: Vec<Balance>,
+	lp_token_id: AssetId,
 	fee: Permill,
 ) -> PoolId {
 	let base = assets.base;
@@ -46,7 +47,7 @@ fn create_constant_product_amm_pool(
 		fee,
 	};
 	// Create Pablo pool
-	let p = Pablo::do_create_pool(init_config);
+	let p = Pablo::do_create_pool(init_config, Some(lp_token_id));
 	assert_ok!(&p);
 	let pool_id = p.unwrap();
 	// Add liquidity from ALICE's account to pool
@@ -76,7 +77,7 @@ fn create_usdt_usdc_pool() -> PoolId {
 	let fee = Permill::zero();
 	let assets = CurrencyPair::new(USDT, USDC);
 	let amounts = vec![initial_usdt, initial_usdc];
-	create_constant_product_amm_pool(assets, amounts, fee)
+	create_constant_product_amm_pool(assets, amounts, LP_TOKEN_GENERIC, fee)
 }
 
 fn create_usdc_usdt_pool() -> PoolId {
@@ -87,7 +88,7 @@ fn create_usdc_usdt_pool() -> PoolId {
 	let fee = Permill::zero();
 	let assets = CurrencyPair::new(USDC, USDT);
 	let amounts = vec![initial_usdc, initial_usdt];
-	create_constant_product_amm_pool(assets, amounts, fee)
+	create_constant_product_amm_pool(assets, amounts, LP_TOKEN_GENERIC, fee)
 }
 
 fn create_usdt_dai_pool() -> PoolId {
@@ -95,11 +96,10 @@ fn create_usdt_dai_pool() -> PoolId {
 	// usdc usdt have same price which is 1 USD
 	let initial_dai = 1_000_000_000 * unit;
 	let initial_usdt = 1_000_000_000 * unit;
-	let amp_coeff = 100;
 	let fee = Permill::zero();
 	let assets = CurrencyPair::new(USDT, DAI);
 	let amounts = vec![initial_usdt, initial_dai];
-	create_constant_product_amm_pool(assets, amounts, fee)
+	create_constant_product_amm_pool(assets, amounts, LP_TOKEN_GENERIC, fee)
 }
 
 fn create_usdc_eth_pool() -> PoolId {
@@ -110,7 +110,7 @@ fn create_usdc_eth_pool() -> PoolId {
 	let fee = Permill::zero();
 	let assets = CurrencyPair::new(USDC, ETH);
 	let amounts = vec![usdc_balance, eth_balance];
-	create_constant_product_amm_pool(assets, amounts, fee)
+	create_constant_product_amm_pool(assets, amounts, LP_TOKEN_GENERIC, fee)
 }
 
 fn create_dai_eth_pool() -> PoolId {
@@ -121,7 +121,7 @@ fn create_dai_eth_pool() -> PoolId {
 	let fee = Permill::zero();
 	let assets = CurrencyPair::new(DAI, ETH);
 	let amounts = vec![dai_balance, eth_balance];
-	create_constant_product_amm_pool(assets, amounts, fee)
+	create_constant_product_amm_pool(assets, amounts, LP_TOKEN_GENERIC, fee)
 }
 
 #[test]
@@ -153,7 +153,7 @@ fn update_route_origin_tests() {
 			DexRouter::update_route(
 				Origin::signed(ALICE),
 				currency_pair,
-				Some(dex_route.clone().try_into().unwrap())
+				Some(dex_route.try_into().unwrap())
 			),
 			BadOrigin
 		);
@@ -172,7 +172,7 @@ fn halborn_hal11_route_with_cycle() {
 			DexRouter::update_route(
 				Origin::root(),
 				currency_pair,
-				Some(dex_route.clone().try_into().unwrap())
+				Some(dex_route.try_into().unwrap())
 			),
 			Error::<Test>::LoopSuspectedInRouteUpdate
 		);
@@ -186,7 +186,7 @@ fn halborn_hal11_route_with_cycle() {
 			DexRouter::update_route(
 				Origin::root(),
 				currency_pair,
-				Some(dex_route.clone().try_into().unwrap())
+				Some(dex_route.try_into().unwrap())
 			),
 			Error::<Test>::LoopSuspectedInRouteUpdate,
 		);
@@ -196,7 +196,7 @@ fn halborn_hal11_route_with_cycle() {
 			DexRouter::update_route(
 				Origin::root(),
 				CurrencyPair::new(USDC, USDC),
-				Some(dex_route.clone().try_into().unwrap())
+				Some(dex_route.try_into().unwrap())
 			),
 			Error::<Test>::LoopSuspectedInRouteUpdate,
 		);
@@ -273,7 +273,7 @@ fn update_route_tests() {
 		assert_ok!(DexRouter::update_route(
 			Origin::root(),
 			CurrencyPair::new(USDT, USDC),
-			Some(dex_route.clone().try_into().unwrap())
+			Some(dex_route.try_into().unwrap())
 		));
 	});
 }
@@ -315,7 +315,7 @@ fn exchange_tests() {
 			&CHARLIE,
 			currency_pair,
 			AssetAmount::new(currency_pair.base, 3000_u128 * unit),
-			AssetAmount::new(currency_pair.quote, 1_u128 * unit),
+			AssetAmount::new(currency_pair.quote, unit),
 			false,
 		);
 		assert_ok!(dy);
@@ -381,12 +381,12 @@ fn buy_test() {
 			&CHARLIE,
 			currency_pair,
 			currency_pair.base, /* will be ignored */
-			AssetAmount::new(currency_pair.quote, 1_u128 * unit),
+			AssetAmount::new(currency_pair.quote, unit),
 			false,
 		);
 		assert_ok!(dy);
 		let dy = dy.unwrap();
-		let expected_value = 1_u128 * unit;
+		let expected_value = unit;
 		let precision = 100;
 		let epsilon = 1;
 		assert_ok!(acceptable_computation_error(
@@ -477,7 +477,7 @@ fn single_pool_route_test() {
 			&CHARLIE,
 			currency_pair,
 			AssetAmount::new(currency_pair.quote, unit),
-			AssetAmount::new(currency_pair.base, 2998_000_000_000_00_u128),
+			AssetAmount::new(currency_pair.base, 299_800_000_000_000_u128),
 			false,
 		);
 		assert_ok!(dy);
