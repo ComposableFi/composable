@@ -99,11 +99,6 @@
             rust-nightly = self'.packages.rust-nightly;
           };
 
-          mmr-polkadot-node =
-            pkgs.callPackage ./.nix/polkadot/mmr-polkadot-bin.nix {
-              rust-nightly = self'.packages.rust-nightly;
-            };
-
           polkadot-launch =
             pkgs.callPackage ./scripts/polkadot-launch/polkadot-launch.nix { };
 

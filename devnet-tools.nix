@@ -39,16 +39,6 @@
           };
         };
 
-      mk-bridge-devnet =
-        { packages, polkadot-launch, composable-node, polkadot-node }:
-        (pkgs.callPackage mk-devnet {
-          inherit (packages) polkadot-launch composable-node polkadot-node;
-          chain-spec = "dali-dev";
-          network-config-path =
-            ./scripts/polkadot-launch/bridge-rococo-local-dali-dev.nix;
-          useGlobalChainSpec = false;
-        });
-
       mk-devnet-container = { containerName, devNet, container-tools }:
         pkgs.lib.trace "Run Dali runtime on Composable node"
         pkgs.dockerTools.buildImage {

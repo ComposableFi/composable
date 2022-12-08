@@ -20,29 +20,7 @@
           procps
         ] ++ containers-tools-minimal;
     in rec {
-      bridge-devnet-dali = (devnetTools.mk-bridge-devnet {
-        inherit packages;
-        inherit (packages) polkadot-launch composable-node polkadot-node;
-      }).script;
-
-      bridge-mmr-devnet-dali = (devnetTools.mk-bridge-devnet {
-        inherit packages;
-        inherit (packages) polkadot-launch composable-node;
-        polkadot-node = packages.mmr-polkadot-node;
-      }).script;
-
-      bridge-devnet-dali-container = devnetTools.mk-devnet-container {
-        inherit container-tools;
-        containerName = "composable-bridge-devnet-container";
-        devNet = packages.bridge-devnet-dali;
-      };
-
-      bridge-mmr-devnet-dali-container = devnetTools.mk-devnet-container {
-        inherit container-tools;
-        containerName = "composable-bridge-mmr-devnet-container";
-        devNet = packages.bridge-mmr-devnet-dali;
-      };
-
+      # mmr-polkadot-node mk-bridge-devnet
 
       # TODO: zombie
       devnet-picasso = (pkgs.callPackage devnetTools.mk-devnet {
