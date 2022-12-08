@@ -1243,7 +1243,7 @@ Proper gas metering is achieved in two steps:
 1. **Benchmarking**: Each instruction is benchmarked to determine the cost of its execution.
 2. **Injecting Gas Metering**: Gas metering is injected to the code by using [wasm_instrument](https://github.com/paritytech/wasm-instrument). This process injects a call to the gas function for every execution or path/code block (function call, if, else, etc.) with the associated execution cost parameter. Therefore, it computes the overall total cost and makes sure that every code block is paid before getting executed.
 
-Then, everytime a contract entrypoint is called, the pallet checks if the instrumentation version is up-to-date.
+Then, whenever a contract entrypoint is called, the pallet checks if the instrumentation version is up-to-date.
 In case not, the code gets re-instrumented to ensure proper gas metering.
 
 ## 7.2. Uploading Contracts
@@ -1408,6 +1408,6 @@ Instead of going into each of these in-depth, we recommend:
 # 9. Contributors
 Contributors that made our CosmWasm implementation possible are here listed in alphabetical order:
 
-- Hussein Ait Lahcen - XVCM Principal Engineering - Composable Finance
+- Hussein Ait Lahcen - XCVM Principal Engineering - Composable Finance
 - Abdullah Eryuzlu - Rust Developer - Composable Finance
 - Cor Pruijs - Rust Developer - Composable Finance
