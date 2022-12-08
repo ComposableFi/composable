@@ -1,0 +1,21 @@
+name: Frontend - Lint and Test
+
+on:
+  push:
+    paths:
+      - 'frontend/**'
+
+jobs:
+  Lint_Suggestions:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v3
+      - run: yarn --cwd frontend install --ignore-scripts
+      - name: Lint check
+        run: yarn lint
+        working-directory: frontend
+      - name: Tests check
+        run: yarn test
+        working-directory: frontend
