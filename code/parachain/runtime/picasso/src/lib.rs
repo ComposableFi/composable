@@ -43,8 +43,8 @@ use common::{
 	governance::native::*,
 	rewards::StakingPot,
 	AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, BondOfferId,
-	ForeignAssetId, Hash, MaxStringSize, Moment, ReservedDmpWeight, ReservedXcmpWeight, Signature,
-	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
+	ForeignAssetId, Hash, MaxStringSize, Moment, PoolId, ReservedDmpWeight, ReservedXcmpWeight,
+	Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 
@@ -250,6 +250,40 @@ impl assets_registry::Config for Runtime {
 	type ParachainOrGovernanceOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type CurrencyFactory = CurrencyFactory;
 	type WeightInfo = weights::assets_registry::WeightInfo<Runtime>;
+}
+
+parameter_types! {
+	pub PabloPalletId: PalletId = PalletId(*b"pal_pblo");
+	pub TWAPInterval: u64 = (MILLISECS_PER_BLOCK as u64) * 10;
+	pub MaxStakingRewardsPools: u32 = 10;
+	pub MaxRewardConfigsPerPool: u32 = 10;
+	pub MaxStakingDurationPresets: u32 = 10;
+	pub PbloAssetId: CurrencyId = CurrencyId::PBLO;
+	pub MsPerBlock: u32 = MILLISECS_PER_BLOCK;
+}
+
+impl pablo::Config for Runtime {
+	type Event = Event;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type Convert = sp_runtime::traits::ConvertInto;
+	type CurrencyFactory = CurrencyFactory;
+	type Assets = Assets;
+	type PoolId = PoolId;
+	type PalletId = PabloPalletId;
+	type LocalAssets = CurrencyFactory;
+	type PoolCreationOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type EnableTwapOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type Time = Timestamp;
+	type TWAPInterval = TWAPInterval;
+	type MaxStakingRewardPools = MaxStakingRewardsPools;
+	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
+	type MaxStakingDurationPresets = MaxStakingDurationPresets;
+	// TODO(connor): Add real pablo weight
+	type WeightInfo = ();
+	type PicaAssetId = NativeAssetId;
+	type PbloAssetId = PbloAssetId;
+	type MsPerBlock = MsPerBlock;
 }
 
 impl assets::Config for Runtime {
@@ -786,6 +820,7 @@ construct_runtime!(
 		Vesting: vesting = 57,
 		BondedFinance: bonded_finance = 58,
 		AssetsRegistry: assets_registry = 59,
+		Pablo: pablo = 60,
 
 		CallFilter: call_filter = 100,
 	}
