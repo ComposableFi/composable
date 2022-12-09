@@ -84,14 +84,14 @@ impl<T: Config> Pallet<T> {
 		channel_id: String,
 		to_address: String,
 		amount: cosmwasm_minimal_std::Coin,
-		_timeout: cosmwasm_minimal_std::ibc::IbcTimeout,
+		_timeout: cosmwasm_minimal_std::ibc::IbcTimeout, // that is absolute on this
 	) -> Result<(), CosmwasmVMError<T>> {
 		let channel_id = ChannelId::from_str(channel_id.as_ref())
 			.map_err(|_| <CosmwasmVMError<T>>::Ibc("channel name is not valid".to_string()))?;
 		let address: cosmwasm_minimal_std::Addr = vm.contract_address.clone().into();
-
+		_timeout.block()
 		let _port_id = PortId::from_str(address.as_str())
-			.expect("all pallet instanced contract addresses are valid port names; qwe");
+			.expect("all pallet instanced contract addresses are valid port names; qed");
 
 		let msg = HandlerMessage::<AccountIdOf<T>>::Transfer {
 			channel_id,
@@ -102,7 +102,7 @@ impl<T: Config> Pallet<T> {
 				})?,
 			},
 			from: vm.contract_address.clone().into_inner(),
-			timeout: ibc_primitives::Timeout::Offset {
+			timeout: ibc_primitives::Timeout::Offset { // this is abolute onthem
 				timestamp: Err(<CosmwasmVMError<T>>::Ibc(
 					"after timeout will have pub interface".to_string(),
 				))?,
