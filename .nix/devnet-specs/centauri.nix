@@ -102,11 +102,7 @@
           "hyperspace-relay" = mkComposableContainer
             (import ../services/centauri.nix {
               name = "hyperspace-relay";
-              execCommands = [
-                "relay"
-                "--config"
-                configPathContainer
-              ];
+              execCommands = [ "relay" "--config" configPathContainer ];
               inherit configPathSource configPathContainer;
               dependsOn = dependsOnCreateConnection;
               # safely restart on failure due to connectivity loss for instance
