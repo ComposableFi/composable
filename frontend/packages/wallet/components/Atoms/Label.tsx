@@ -1,14 +1,14 @@
-import React from "react";
 import {
-  Typography,
-  useTheme,
-  TooltipProps,
-  TypographyProps,
   Box,
   BoxProps,
   Tooltip,
+  TooltipProps,
+  Typography,
+  TypographyProps,
+  useTheme,
 } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import { FC } from "react";
 
 export type LabelProps = {
   mainLabelProps?: {
@@ -24,7 +24,7 @@ export type LabelProps = {
   };
 } & BoxProps;
 
-export const Label: React.FC<LabelProps> = ({
+export const Label: FC<LabelProps> = ({
   mainLabelProps,
   balanceLabelProps,
   ...boxProps
@@ -40,7 +40,7 @@ export const Label: React.FC<LabelProps> = ({
       {mainLabelProps && mainLabelProps.label && (
         <Box display="flex" alignItems="center" gap={1.75} marginBottom={1.5}>
           <Typography
-            variant="inputLabel"
+            variant="body2"
             color="text.primary"
             {...mainLabelProps.TypographyProps}
           >
@@ -64,14 +64,14 @@ export const Label: React.FC<LabelProps> = ({
         (balanceLabelProps.label || balanceLabelProps.balanceText) && (
           <Box display="flex">
             <Typography
-              variant="inputLabel"
+              variant="body2"
               color="text.secondary"
               {...balanceLabelProps.LabelTypographyProps}
             >
               {balanceLabelProps.label}
             </Typography>
             <Typography
-              variant="inputLabel"
+              variant="body2"
               ml={0.5}
               {...balanceLabelProps.BalanceTypographyProps}
             >

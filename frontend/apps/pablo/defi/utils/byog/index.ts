@@ -1,9 +1,8 @@
-import { TokenId } from "tokens";
-import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
 import { ApiPromise } from "@polkadot/api";
 import { Signer } from "@polkadot/api/types";
 import { Executor, ParachainId, RelayChainId } from "substrate-react";
-import { extractTokenByNetworkIdentifier } from "../Assets";
+import { TokenId } from "tokens";
+import { Asset } from "shared";
 
 export type SetPaymentAssetArgs = {
   api: ApiPromise;
@@ -44,7 +43,7 @@ export type GetPaymentAssetArgs = {
   api: ApiPromise;
   walletAddress: string;
   network: ParachainId | Extract<"kusama", RelayChainId>;
-  tokens: Record<TokenId, TokenMetadata>;
+  tokens: Record<TokenId, Asset>;
 };
 
 export async function getPaymentAsset({
@@ -62,25 +61,25 @@ export async function getPaymentAsset({
       if (result.isSome) {
         const [assetId] = result.toJSON();
         if (assetId) {
-          const asset = extractTokenByNetworkIdentifier(
-            tokens,
-            network,
-            assetId
-          );
+          const [tokenId, asset] =
+            Object.entries<Asset>(tokens).find(
+              ([assetId, token]) => token.getIdOnChain("picasso") === assetId
+            ) ?? [];
+
           if (asset) {
-            return asset;
+            return tokenId as TokenId;
           }
         }
       }
-      return tokens.pica;
+      return "pica" as TokenId;
     } catch (e) {
       console.error("Error while trying to access assetTxPayment pallet", e);
-      return tokens.pica;
+      return "pica" as TokenId;
     }
   }
   if (network === "karura") {
-    return tokens.kar;
+    return "kar" as TokenId;
   }
 
-  return tokens.ksm;
+  return "ksm";
 }
