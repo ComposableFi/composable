@@ -28,7 +28,7 @@ COPY --from=deps /squid/node_modules node_modules
 COPY --from=builder /squid/lib lib
 COPY --from=builder /squid/db db
 COPY --from=builder /squid/dbInit.sql dbInit.sql
+COPY scripts scripts
+COPY schema.graphql .
 
-
-FROM squid AS processor
-ENTRYPOINT ["node", "-r", "dotenv/config", "lib/processor.js"]
+ENTRYPOINT ["sh", "/squid/scripts/init.sh"]

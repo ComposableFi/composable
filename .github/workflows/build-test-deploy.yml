@@ -694,7 +694,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v3
         with:
-          tags: subsquid-processor:latest
+          tags: ${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:latest
           context: subsquid
           push: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
 
