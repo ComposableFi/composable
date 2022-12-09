@@ -49,7 +49,7 @@ mod pablo_picasso_init_pools {
 
 	use super::*;
 
-	use frame_support::BoundedBTreeMap;
+	use frame_support::bounded_btree_map;
 	use pablo::pallet::PoolInitConfiguration;
 	use sp_runtime::PerThing;
 
@@ -80,20 +80,18 @@ mod pablo_picasso_init_pools {
 	}
 
 	fn create_two_token_pool_config(
-		base_asset_id: CurrencyId,
-		quote_asset_id: CurrencyId,
-		base_asset_weigth: Permill,
+		first_asset_id: CurrencyId,
+		second_asset_id: CurrencyId,
+		first_asset_weight: Permill,
 	) -> PoolInitConfiguration<AccountId, CurrencyId> {
 		let owner = AccountId::from([0; 32]);
-		let mut assets_weights = BoundedBTreeMap::new();
+		#[allow(clippy::disallowed_methods)] // BTree size is within bounds
+		let assets_weights = bounded_btree_map! {
+			first_asset_id => first_asset_weight,
+			second_asset_id => first_asset_weight.left_from_one(),
+		};
+		// TODO(connor): Confirm value with Product
 		let fee = Permill::from_percent(0);
-
-		assets_weights
-			.try_insert(base_asset_id, base_asset_weigth)
-			.expect("Within BT Bounds; QED");
-		assets_weights
-			.try_insert(quote_asset_id, base_asset_weigth.left_from_one())
-			.expect("Within BT Bounds; QED");
 
 		PoolInitConfiguration::<AccountId, CurrencyId>::DualAssetConstantProduct {
 			owner,
