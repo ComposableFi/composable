@@ -7,8 +7,9 @@ import useStore from "pablo/store/useStore";
 
 const AuctionDetailsStories = () => {
   const { activePool, activePoolStats } = useAuctionsSlice();
-  const baseAsset = useAsset(activePool?.getPair().getBaseAsset().toString() as string ?? "-");
-  const quoteAsset = useAsset(activePool?.getPair().getQuoteAsset().toString() as string ?? "-");
+  const pair = activePool ? Object.keys(activePool.getAssets().assets) : null;
+  const baseAsset = useAsset(pair?.[0] ?? "-");
+  const quoteAsset = useAsset(pair?.[1] ?? "-");
   const hasLoaded = baseAsset && quoteAsset && activePool
 
   return (

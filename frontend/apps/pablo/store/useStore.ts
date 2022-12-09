@@ -3,12 +3,13 @@ import { AllSlices } from "./types";
 import { immer } from "zustand/middleware/immer";
 import { devtools, subscribeWithSelector } from "zustand/middleware";
 import createLiquiditySlice from "./liquidity/slice";
-import createPoolStatsSlice from "./poolStats/slice";
 import createRemoveLiquiditySlice from "./removeLiquidity/slice";
-import createPoolSlice from "./createPool/slice";
 import createSwapsSlice from "./swaps/slice";
 import createTokensSlice from "./tokens/slice";
 import createTokenBalancesSlice from "./tokenBalances/slice";
+import { createBYOGSlice } from "@/store/byog/slice";
+import createPoolStatsSlice from "@/store/poolStats/slice";
+import createPoolSlice from "@/store/createPool/slice";
 
 const useStore = create<AllSlices>()(
   subscribeWithSelector(
@@ -20,7 +21,8 @@ const useStore = create<AllSlices>()(
         ...createLiquiditySlice(...a),
         ...createRemoveLiquiditySlice(...a),
         ...createPoolSlice(...a),
-        ...createPoolStatsSlice(...a)
+        ...createPoolStatsSlice(...a),
+        ...createBYOGSlice(...a),
       }))
     )
   )
