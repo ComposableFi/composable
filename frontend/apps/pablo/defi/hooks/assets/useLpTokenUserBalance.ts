@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import { PabloConstantProductPool } from "shared";
+import { DualAssetConstantProduct } from "shared";
 import { useSelectedAccount } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import BigNumber from "bignumber.js";
 
 export function useLpTokenUserBalance(
-  liquidityPool: PabloConstantProductPool | undefined
+  liquidityPool: DualAssetConstantProduct | undefined
 ): BigNumber {
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const [lpBalance, setLpBalance] = useState(new BigNumber(0));

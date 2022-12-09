@@ -32,8 +32,9 @@ export const usePermissionedAuctionPools = (): {
     for (const pool of liquidityBootstrappingPools) {
       const spotPrice = await pool.getSpotPrice();
       const assets = Object.values(tokens);
-      const base = assets.find(asset => (asset.getPicassoAssetId(true) as BigNumber).eq(pool.getPair().getBaseAsset()))
-      const quote = assets.find(asset => (asset.getPicassoAssetId(true) as BigNumber).eq(pool.getPair().getQuoteAsset()))
+      const poolPair = Object.keys(pool.getAssets().assets);
+      const base = assets.find(asset => (asset.getPicassoAssetId(true) as BigNumber).eq(poolPair[0]))
+      const quote = assets.find(asset => (asset.getPicassoAssetId(true) as BigNumber).eq(poolPair[1]))
 
       pools.push({
         pool,

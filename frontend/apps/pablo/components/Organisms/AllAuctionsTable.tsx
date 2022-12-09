@@ -28,7 +28,8 @@ export const AuctionPoolRow = ({ pool, onClickAuction }: {
   pool: PabloLiquidityBootstrappingPool,
   onClickAuction: (auction: PabloLiquidityBootstrappingPool) => void
 }) => {
-  const baseAsset = useAsset(pool?.getPair().getBaseAsset().toString() ?? "-");
+  const pair = Object.keys(pool.getAssets().assets);
+  const baseAsset = useAsset(pair?.[0] ?? "-");
   const spotPrice = useAuctionSpotPrice((pool.getPoolId() as BigNumber).toNumber())
   const theme = useTheme();
 

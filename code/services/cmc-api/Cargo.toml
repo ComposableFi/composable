@@ -1,0 +1,13 @@
+[package]
+edition = "2021"
+name = "cmc-api"
+version = "0.1.0"
+
+[dependencies]
+axum = "0.6.0"
+axum-macros = "0.3.0"
+clap = { version = "4.0.27", features = ["derive"] }
+serde = { version = "1.0.148", features = ["derive"] }
+tokio = { version = "1.22.0", features = ["full"] }
+tracing = "0.1.37"
+tracing-subscriber = "0.3.16"

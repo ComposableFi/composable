@@ -22,6 +22,11 @@ export class FinancialNft {
         number | string,
         number | string
       ][];
+
+      if (!decodedInstances) {
+        return [];
+      }
+
       return decodedInstances.map(
         ([collectionId, instanceId]) =>
           new FinancialNft(

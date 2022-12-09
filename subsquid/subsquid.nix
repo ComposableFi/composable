@@ -1,6 +1,6 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, system, ... }: {
-    packages = {
+    packages = rec {
       subsquid-processor = let
         processor = pkgs.buildNpmPackage {
           extraNodeModulesArgs = {
@@ -28,6 +28,14 @@
           ${pkgs.nodejs}/bin/node lib/processor.js
         '';
       });
+
+      subsquid-processor-container = pkgs.dockerTools.buildImage {
+        tag = "latest";
+        name = "subsquid-processor";
+        config = {
+          Entrypoint = [ "${subsquid-processor}/bin/run-subsquid-processor" ];
+        };
+      };
     };
   };
 }

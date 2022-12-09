@@ -3,6 +3,7 @@ import { useParachainApi } from "substrate-react";
 import { isValidAssetPair } from "@/defi/utils";
 import { useAddLiquiditySlice, setPool, setSelection } from "@/store/addLiquidity/addLiquidity.slice";
 import { useAllLpTokenRewardingPools } from "@/defi/hooks/useAllLpTokenRewardingPools";
+import useStore from "@/store/useStore";
 
 /**
  * Updates zustand store with all 
@@ -10,21 +11,23 @@ import { useAllLpTokenRewardingPools } from "@/defi/hooks/useAllLpTokenRewarding
  * @returns null
  */
 const Updater = () => {
+  const { substrateTokens } = useStore();
   const pools = useAllLpTokenRewardingPools();
   const { ui, pool, findPoolManually } = useAddLiquiditySlice();
   const { parachainApi } = useParachainApi("picasso");
 
   useEffect(() => {
     if (
+      substrateTokens.hasFetchedTokens && 
       parachainApi &&
       isValidAssetPair(ui.assetOne, ui.assetTwo) &&
       findPoolManually
       ) {
 
       const pool = pools.find((i) => {
-        const pair = i.getPair();
-        const base = pair.getBaseAsset().toString();
-        const quote = pair.getQuoteAsset().toString();
+        const pair = i.getAssets().intoAssets(Object.values(substrateTokens.tokens));
+        const base = pair[0].getPicassoAssetId() as string;
+        const quote = pair[1].getPicassoAssetId() as string;
         return (
           (base === ui.assetOne &&
             quote === ui.assetTwo) ||
@@ -39,26 +42,20 @@ const Updater = () => {
         setPool(undefined)
       }
     }
-  }, [
-    pools,
-    parachainApi,
-    ui.assetOne,
-    ui.assetTwo,
-    findPoolManually,
-  ]);
+  }, [pools, parachainApi, ui.assetOne, ui.assetTwo, findPoolManually, substrateTokens.hasFetchedTokens, substrateTokens.tokens]);
 
   useEffect(() => {
     if (parachainApi && !findPoolManually && pool) {
-      const pair = pool.getPair();
-      const base = pair.getBaseAsset().toString();
-      const quote = pair.getQuoteAsset().toString();
+      const pair = pool.getAssets().intoAssets(Object.values(substrateTokens.tokens));
+      const base = pair[0].getPicassoAssetId() as string;
+      const quote = pair[1].getPicassoAssetId() as string;
 
       setSelection({
         assetOne: base,
         assetTwo: quote
       })
     }
-  }, [parachainApi, findPoolManually, pool]);
+  }, [parachainApi, findPoolManually, pool, substrateTokens.tokens]);
 
   return null;
 };

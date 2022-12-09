@@ -2,6 +2,24 @@ syntax = "proto3";
 
 package interpreter;
 
+message PacketAsset {
+  AssetId assetId = 1;
+  Uint128 amount = 2;
+}
+
+message Packet {
+  Account interpreter = 1;
+  UserOrigin user_origin = 2;
+  Salt salt = 3;
+  Program program = 4;
+  repeated PacketAsset assets = 5;
+}
+
+message UserOrigin {
+  Network network = 1;
+  Account account = 2;
+}
+
 message Uint128 {
   uint64 highBits = 1;
   uint64 lowBits = 2;

@@ -17,6 +17,7 @@ sp-core = { default-features = false, git = "https://github.com/paritytech/subst
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 xcm = { default-features = false, git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.27" }
+proxy = { package = "pallet-proxy", default-features= false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 
 bitflags = "1.3.2"
 composable-support = { default-features = false, path = "../composable-support" }
@@ -47,6 +48,7 @@ std = [
   "sp-core/std",
   "scale-info/std",
   "xcm/std",
+  "proxy/std",
   "polkadot-parachain/std",
   "composable-support/std",
 ]
