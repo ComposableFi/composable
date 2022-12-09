@@ -60,6 +60,11 @@
               configPathSource = configPathSource;
               configPathContainer = configPathContainer;
               dependsOn = { };
+              # for the first process in the dependency chain we set a restart policy so that it
+              # restarts on failure. This is because the chain can be still unavailable (takes longer)
+              # than hyperspace). In that case, restarting hyperspace with this create-clients command
+              # is the cleanest option. Once it succeeds, the next commands won't have the same restart
+              # policy, as they should not fail
               restartPolicy = "on-failure";
             }
             );
