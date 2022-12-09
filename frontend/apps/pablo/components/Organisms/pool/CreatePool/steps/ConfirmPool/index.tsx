@@ -17,7 +17,6 @@ import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import { EventRecord } from "@polkadot/types/interfaces/system/types";
 import {
   addLiquidityToPoolViaPablo,
-  createConstantProductPool,
   toChainUnits
 } from "@/defi/utils";
 import { useAsset } from "@/defi/hooks/assets/useAsset";
@@ -167,49 +166,7 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
   };
 
   const onButtonClickHandler = async () => {
-    if (executor && signer !== undefined && parachainApi && selectedAccount) {
-      const { address } = selectedAccount;
-
-      let pair = { base: +baseAsset, quote: +quoteAsset };
-      let permillDecimals = new BigNumber(10).pow(4);
-      let fee = new BigNumber(swapFee).times(permillDecimals).toNumber();
-
-      let baseWeight = new BigNumber(weights.baseWeight).times(permillDecimals);
-
-      let call =
-        ammId === "uniswap" || ammId === "balancer"
-          ? createConstantProductPool(
-            parachainApi,
-            pair,
-            fee,
-            address,
-            baseWeight.toNumber()
-          )
-          : null;
-
-      if (call === null) return;
-
-      executor
-        .execute(
-          call,
-          selectedAccount.address,
-          parachainApi,
-          signer,
-          (txHash: string) => {
-            setUiState({ isConfirmingModalOpen: true });
-            console.log("Tx Ready Hash: ", txHash);
-          },
-          onCreateFinalized,
-          (errorMessage) => {
-            console.log("tx Error: ", errorMessage);
-            setUiState({ isConfirmingModalOpen: false });
-          }
-        )
-        .catch((err) => {
-          console.log("error", err);
-          setUiState({ isConfirmingModalOpen: false });
-        });
-    }
+    // This needs to be updated later
   };
 
   const onBackHandler = () => {

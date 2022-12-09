@@ -27,7 +27,10 @@ export const useAddLiquidityForm = () => {
   const [spotPrice, setSpotPrice] = useState(new BigNumber(0));
   useEffect(() => {
     if (pool) {
-      pool.getSpotPrice().then(setSpotPrice)
+      const pair = Object.keys(pool.getAssets().assets);
+      if (pair[0]) {
+        pool.getSpotPrice(new BigNumber(pair[0])).then(setSpotPrice)
+      }
     }
   }, [pool]);
 
@@ -122,9 +125,10 @@ export const useAddLiquidityForm = () => {
       pool &&
       selectedAccount
     ) {
-      const pair = pool.getPair();
-      let poolBase = pair.getBaseAsset().toString();
-      let poolQuote = pair.getQuoteAsset().toString();
+      const pair = Object.keys(pool.getAssets().assets);
+      const poolBase = pair?.[0];
+      const poolQuote = pair?.[1];
+
       let isReverse = poolBase !== assetOne;
       const bnBase = toChainUnits(isReverse ? assetTwoAmount : assetOneAmount);
       const bnQuote = toChainUnits(isReverse ? assetOneAmount : assetTwoAmount);

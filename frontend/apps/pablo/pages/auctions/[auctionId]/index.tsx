@@ -15,25 +15,24 @@ import { AuctionPriceChart } from "@/components/Organisms/auction/AuctionPriceCh
 import { useEffect } from "react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { useSelectedAccount } from "substrate-react";
-import { useAssets } from "@/defi/hooks";
 import { useRouter } from "next/router";
 import { useAuctionsSlice } from "@/store/auctions/auctions.slice";
 import { useAuctionsChart } from "@/defi/hooks";
 import AuctionDetailTabs from "@/components/Organisms/auction/AuctionDetailTabs";
 import moment from "moment-timezone";
-import { PabloLiquidityBootstrappingPool } from "shared";
+import { Asset, PabloLiquidityBootstrappingPool } from "shared";
+import useStore from "@/store/useStore";
 
 const Auction: NextPage = () => {
   const theme = useTheme();
   const router = useRouter();
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
 
+  const { substrateTokens } = useStore();
   const { activePool, activePoolStats } = useAuctionsSlice();
-  const [baseAsset, quoteAsset] = useAssets(
-    activePool
-      ? [activePool.getPair().getBaseAsset().toString(), activePool.getPair().getQuoteAsset().toString()]
-      : []
-  );
+  const pair = activePool && substrateTokens.hasFetchedTokens ? activePool.getAssets().intoAssets(Object.values(substrateTokens.tokens)) : null;
+  const baseAsset = pair ? pair[0] : null;
+  const quoteAsset = pair ? pair[1] : null;
 
   let hasLoaded = !!activePool && !!baseAsset && !!quoteAsset
 
@@ -96,8 +95,8 @@ const Auction: NextPage = () => {
             </Box>
 
             {hasLoaded && <AuctionInformation
-              baseAsset={baseAsset}
-              quoteAsset={quoteAsset}
+              baseAsset={baseAsset as Asset}
+              quoteAsset={quoteAsset as Asset}
               stats={activePoolStats}
               auction={activePool as PabloLiquidityBootstrappingPool}
               mt={6}

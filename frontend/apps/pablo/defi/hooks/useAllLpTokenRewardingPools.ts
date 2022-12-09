@@ -1,10 +1,10 @@
-import { PabloConstantProductPool } from "shared";
+import { DualAssetConstantProduct } from "shared";
 import { usePoolsSlice } from "@/store/pools/pools.slice";
 
-export const useAllLpTokenRewardingPools = (): Array<PabloConstantProductPool> => {
+export const useAllLpTokenRewardingPools = (): Array<DualAssetConstantProduct> => {
   const {
-    constantProductPools
+    liquidityPools
   } = usePoolsSlice();
 
-  return constantProductPools;
+  return liquidityPools;
 };

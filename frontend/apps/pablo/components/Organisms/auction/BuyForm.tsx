@@ -50,7 +50,6 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
     setIsValidBaseInput,
     setIsValidQuoteInput,
     isBuyButtonDisabled,
-    selectedAuction,
     minimumReceived
   } = useAuctionBuyForm();
 
@@ -62,10 +61,9 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
   );
 
   const { isActive, isEnded, startTimestamp } = useAuctionTiming(auction);
-
   const initiateBuyTx = usePabloSwap({
-    baseAssetId: selectedAuction?.getPair().getBaseAsset().toString() ?? "-",
-    quoteAssetId: selectedAuction?.getPair().getQuoteAsset().toString() ?? "-",
+    baseAssetId: baseAsset?.getPicassoAssetId() as string ?? "-",
+    quoteAssetId: quoteAsset?.getPicassoAssetId() as string ?? "-",
     quoteAmount,
     minimumReceived,
     swapOrigin: "Auction"
