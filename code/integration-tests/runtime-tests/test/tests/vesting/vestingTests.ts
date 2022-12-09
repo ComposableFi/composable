@@ -363,7 +363,7 @@ describe.skip("[SHORT] Vesting Pallet Tests", function () {
     );
   });
 
-  it("#1.20  The beneficiary of a moment based vested transfer (#1.3) can claim its transfer during the vesting period.", async function () {
+  it("#1.20  The beneficiary of a block based vested transfer (#1.3) can claim its transfer during the vesting period.", async function () {
     this.timeout(2 * 60 * 1000);
 
     const assetId = kUSD_ASSET_ID;
