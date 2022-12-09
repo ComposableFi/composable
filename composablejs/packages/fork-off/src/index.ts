@@ -6,6 +6,7 @@ import { execFileSync, execSync } from "child_process";
 import { getNewConnection } from "@composable/utils";
 import { xxhashAsHex } from "@polkadot/util-crypto";
 import { WsProvider } from "@polkadot/api";
+import signale from "signale"
 
 // File names
 const fileNames = {
@@ -71,22 +72,19 @@ async function main() {
       const rawVersion = execSync(`${polkadotPath} --version`).toString();
       const existingPolkadotVersion = rawVersion.split(" ")[1].split("-")[0];
       if (existingPolkadotVersion !== polkadotVersion) {
-        console.log(
-          chalk.yellow(
-            `Polkadot binary version mismatch. Expected ${polkadotVersion} but got ${existingPolkadotVersion}`
-          )
-        );
-        console.log(chalk.yellow(`Downloading version ${polkadotVersion}...`));
+        signale.await(`Polkadot binary is version ${existingPolkadotVersion}, downloading version ${polkadotVersion}`);
         execSync(`rm ${polkadotPath}`);
-        execSync(`wget ${polkadotUrl} -P ./data`);
+        execSync(`wget ${polkadotUrl} --quiet -P ./data`);
+        signale.success("Polkadot binary downloaded successfully");
       }
     } else {
-      console.log(chalk.yellow(`Polkadot binary not found. Downloading version ${polkadotVersion}...`));
+      signale.await(`Downloading Polkadot binary version ${polkadotVersion}`);
       // Download polkadot binary
-      execSync(`wget ${polkadotUrl} -P ./data`);
+      execSync(`wget ${polkadotUrl} --quiet -P ./data`);
+      signale.success("Polkadot binary downloaded successfully");
     }
   } catch {
-    logError(
+    signale.error(
       `Error running existing Polkadot binary.\nTry running 'wget ${polkadotUrl}' or download it manually from https://github.com/paritytech/polkadot/releases`
     );
     process.exit(1);
@@ -97,9 +95,7 @@ async function main() {
 
   // Check that the binary exists
   if (!fs.existsSync(binaryPath)) {
-    logError(
-      "Binary missing. Please copy the binary of your substrate node to the data folder and rename the binary to 'binary'"
-    );
+    signale.error("Binary missing. Please copy the binary of your substrate node to the data folder and rename it to 'binary'");
     process.exit(1);
   }
 
@@ -108,7 +104,7 @@ async function main() {
 
   // Check that the runtime wasm exists
   if (!fs.existsSync(wasmPath)) {
-    logError(
+    signale.error(
       `WASM missing. Please copy the WASM blob of your substrate node to the data folder and rename it to '${fileNames.wasm}'`
     );
     process.exit(1);
@@ -121,18 +117,10 @@ async function main() {
   const { newClient: api } = await getNewConnection(endpoint);
 
   if (fs.existsSync(storagePath)) {
-    console.log(
-      chalk.yellow(
-        `Reusing cached storage. Delete ${storagePath} and rerun the script if you want to fetch latest storage`
-      )
-    );
+    signale.warn(chalk.yellow(`Reusing cached storage. Delete ${storagePath} and rerun the script if you want to fetch latest storage`));
   } else {
     // Download state of original chain
-    console.log(
-      chalk.green(
-        "Fetching current state of the live chain. Please wait, it can take a while depending on the size of your chain."
-      )
-    );
+    signale.await("Fetching state of original chain...");
 
     // TODO: refactor this part
     const at = (await api.rpc.chain.getBlockHash()).toString();
@@ -153,18 +141,20 @@ async function main() {
       if (!skippedModulesPrefix.includes(module.name.toString())) {
         prefixes.push(xxhashAsHex(module.name.toString(), 128));
       } else {
-        console.log(chalk.yellow("Skipping"), chalk.blue(module.name.toString()));
+        signale.info("Skipping module",  chalk.blueBright(`${module.name.toString()}`));
       }
     }
   });
 
   // Generate spec for original chain
-  execSync(binaryPath + ` build-spec --chain ${originalChain} --raw > ` + originalSpecPath);
-  logSuccess("Original chain spec generated successfully", originalSpecPath)
+  execSync(binaryPath + ` build-spec --chain ${originalChain} --raw --log 0 > ` + originalSpecPath);
+
+  signale.success("Original chain spec generated successfully", chalk.blueBright(`(${originalSpecPath})`));
 
   // Generate spec for forked chain
-  execSync(binaryPath + ` build-spec --chain ${forkChain} --raw > ` + forkedSpecPath);
-  logSuccess("Forked chain spec generated successfully", forkedSpecPath);
+  execSync(binaryPath + ` build-spec --chain ${forkChain} --raw --log 0 > ` + forkedSpecPath);
+
+  signale.success("Forked chain spec generated successfully", chalk.blueBright(`(${forkedSpecPath})`));
 
   const storage: [string, string][] = JSON.parse(fs.readFileSync(storagePath, "utf8"));
   const originalSpec = JSON.parse(fs.readFileSync(originalSpecPath, "utf8"));
@@ -199,47 +189,29 @@ async function main() {
 
   fs.writeFileSync(forkedSpecPath, JSON.stringify(forkedSpec, null, 4));
 
-  logSuccess("Forked genesis generated successfully", forkedSpecPath)
+  signale.success("Forked genesis updated successfully", chalk.blueBright(`(${forkedSpecPath})`));
 
   // Generate a raw chain spec
-  execSync(`${polkadotPath} build-spec --chain rococo-local --disable-default-bootnode --raw > ${relayPath}`);
+  execSync(`${polkadotPath} build-spec --chain rococo-local --disable-default-bootnode --raw --log 0 > ${relayPath}`);
 
-  logSuccess("Raw relay chain spec generated successfully", relayPath);
+  signale.success("Raw relay chain spec generated successfully", chalk.blueBright(`(${relayPath})`));
 
   execSync(`${binaryPath} export-genesis-state --chain ${forkedSpecPath} > ${genesisStatePath}`);
-  logSuccess("Genesis state generated successfully", genesisStatePath);
+  signale.success("Genesis state generated successfully", chalk.blueBright(`(${genesisStatePath})`));
 
   execSync(`${binaryPath} export-genesis-wasm --chain ${forkedSpecPath} > ${genesisWasmPath}`);
-  logSuccess("Genesis wasm generated successfully", genesisWasmPath);
-
-  process.exit();
+  signale.success("Genesis wasm generated successfully", chalk.blueBright(genesisWasmPath));
 }
 
 main()
   .then(() => {
-    console.log("Finished successfully!");
+    signale.complete("All done! You can now start your relay chain and parachain nodes");
     process.exit(0);
   })
   .catch(err => {
-    console.error(err.toString());
+    signale.error(err.toString());
     process.exit(1);
   });
-
-function logError(message: string) {
-  const maxLength = process.stdout.columns - 5;
-  const stars = "*".repeat(Math.min(message.length, maxLength));
-  let splitMessage = message;
-  if (message.length > maxLength) {
-    const matcher = new RegExp(`.{1,${maxLength}}`, "g");
-    const parts = message.match(matcher) || [];
-    splitMessage = parts.join(" \n");
-  }
-  console.log(chalk.red(` ${stars} \n ${splitMessage} \n ${stars} \n`));
-}
-
-function logSuccess(message: string, path: string) {
-  console.log(chalk.green(message), chalk.blueBright(`(${path})`));
-}
 
 let chunksFetched = 0;
 let separator = false;

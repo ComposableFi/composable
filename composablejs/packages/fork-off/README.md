@@ -48,20 +48,21 @@ This script allows bootstrapping a new substrate chain with the current state of
     ```bash
      cp ./target/release/composable ../composablejs/packages/fork-off/data/binary
     ```
-4. Copy the runtime WASM blob of the Picasso release from `/target/wasm32-unknown-unknown/release/picasso_runtime.optimized.wasm` to `fork-off/data` and rename it to `runtime.wasm`.
+
+5. Copy the runtime WASM blob of the Picasso release from `/target/wasm32-unknown-unknown/release/picasso_runtime.optimized.wasm` to `fork-off/data` and rename it to `runtime.wasm`.
     ```bash
     cp ./target/wasm32-unknown-unknown/release/picasso_runtime.optimized.wasm ../composablejs/packages/fork-off/data/runtime.wasm
    ```
 
-5. Checkout your working branch
+6. Checkout your working branch
 
-6. Go back to the `fork-off` package (`cd ../composablejs/packages/fork-off`) and run the main script. This will download the right Polkadot version and generate all the necessary files for the new chain.
+7. Go back to the `fork-off` package (`cd ../composablejs/packages/fork-off`) and run the main script. This will download the right Polkadot version and generate all the necessary files for the new chain.
 
     ```bash
     yarn start
     ```
 
-7. On different terminals, run each of these commands:
+8. On different terminals, run each of these commands:
 
     ```bash
    make alice
@@ -77,12 +78,12 @@ This script allows bootstrapping a new substrate chain with the current state of
    ```
    The first 3 will run the relay chain and the last one will run the forked parachain.
 
-8. Register the parachain on the relay chain. This can be done manually or by running the following on a new terminal:
+9. Register the parachain on the relay chain. This can be done manually or by running the following on a new terminal:
 
     ```bash
     yarn run register
     ```
-   Once the script is finished, it should take around 2 minutes for the parachain to be registered. It will run on port `8844` and can be visualized in https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A8844#/explorer
+   Once the script is finished, it should take around 2 minutes for the parachain to be registered. It will run on port `9988` and can be visualized in https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9988#/explorer
 
 ### Optional
 
