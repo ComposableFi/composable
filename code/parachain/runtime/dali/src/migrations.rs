@@ -17,7 +17,7 @@ pub mod pablo_picasso_init_pools {
 	use super::*;
 
 	use frame_support::bounded_btree_map;
-	use pablo::pallet::PoolInitConfiguration;
+	use pablo::{pallet::PoolInitConfiguration, WeightInfo};
 	use sp_runtime::PerThing;
 
 	pub struct PabloPicassoInitialPoolsMigration;
@@ -61,8 +61,8 @@ pub mod pablo_picasso_init_pools {
 			)
 			.expect("Pool config is valid; QED");
 		});
-		// TODO(connor) calculate weight based of read/write count
-		0
+
+		weights::pablo::WeightInfo::<Runtime>::do_create_pool(pools.len() as u32)
 	}
 
 	fn create_two_token_pool_config(
@@ -86,7 +86,6 @@ pub mod pablo_picasso_init_pools {
 		}
 	}
 
-	// TODO(connor): Add impl methods
 	impl OnRuntimeUpgrade for PabloPicassoInitialPoolsMigration {
 		fn on_runtime_upgrade() -> Weight {
 			let pools = vec![

@@ -12,6 +12,7 @@ pub trait WeightInfo {
 	fn remove_liquidity() -> Weight;
 	fn buy() -> Weight;
 	fn swap() -> Weight;
+	fn do_create_pool(x: u32) -> Weight;
 }
 
 // For backwards compatibility and tests
@@ -21,4 +22,5 @@ impl WeightInfo for () {
 	fn remove_liquidity() -> Weight {10_000}
 	fn buy() -> Weight {10_000}
 	fn swap() -> Weight {10_000}
+	fn do_create_pool(x: u32) -> Weight {x.into()}
 }
