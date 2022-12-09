@@ -470,19 +470,15 @@ pub fn compute_first_deposit_lp_<T: PerThing>(
 	pool_assets: &[(u128, T)],
 	_f: T,
 ) -> ConstantProductAmmResult<ConstantProductAmmValueFeePair> {
-	dbg!(pool_assets);
 	let k: u128 = pool_assets.len().try_into().map_err(|_| ArithmeticError::Overflow)?;
 	ensure!(!k.is_zero(), ConstantProductAmmError::InvalidTokensList);
 
 	let product = pool_assets.iter().try_fold::<_, _, Result<_, ArithmeticError>>(
 		Decimal::from(1),
 		|product, (d_i, w_i)| {
-			dbg!(d_i, w_i);
 			let d_i = Decimal::safe_from_fixed_point(*d_i)?;
 			let w_i = Decimal::safe_from_per_thing(*w_i)?;
-			dbg!(d_i, w_i);
 			let pow = d_i.checked_powd(w_i).ok_or(ArithmeticError::Overflow)?;
-			dbg!(pow);
 
 			product.safe_mul(&pow)
 		},

@@ -899,8 +899,6 @@ pub mod pallet {
 					)?,
 			};
 
-			dbg!(minted_lp);
-
 			Self::update_twap(pool_id)?;
 			Self::deposit_event(Event::<T>::LiquidityAdded {
 				who: who.clone(),

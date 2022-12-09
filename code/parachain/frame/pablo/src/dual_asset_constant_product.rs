@@ -106,8 +106,6 @@ impl<T: Config> DualAssetConstantProduct<T> {
 
 		let lp_total_issuance = T::Convert::convert(T::Assets::total_issuance(pool.lp_token));
 
-		dbg!(&assets_with_balances);
-
 		let amount_of_lp_token_to_mint = match assets_with_balances[..] {
 			[(single, (single_weight, single_balance))] => {
 				if lp_total_issuance.is_zero() {
@@ -134,7 +132,6 @@ impl<T: Config> DualAssetConstantProduct<T> {
 			},
 			[(first, (first_weight, first_balance)), (second, (second_weight, second_balance))] => {
 				let lp_to_mint = if lp_total_issuance.is_zero() {
-					dbg!();
 					compute_first_deposit_lp_(
 						&[
 							(T::Convert::convert(first.amount), first_weight),
@@ -230,8 +227,6 @@ impl<T: Config> DualAssetConstantProduct<T> {
 			})
 			.collect::<Result<Vec<_>, _>>()?;
 
-		dbg!(&min_receive_with_current_balances);
-
 		let lp_total_issuance = T::Convert::convert(T::Assets::total_issuance(pool.lp_token));
 
 		match min_receive_with_current_balances[..] {
@@ -270,9 +265,6 @@ impl<T: Config> DualAssetConstantProduct<T> {
 					second_balance,
 					Permill::one(),
 				)?;
-
-				dbg!(first_redeemed_amount, first_min_receive.amount);
-				dbg!(second_redeemed_amount, second_min_receive.amount);
 
 				ensure!(
 					first_redeemed_amount >= T::Convert::convert(first_min_receive.amount) &&
