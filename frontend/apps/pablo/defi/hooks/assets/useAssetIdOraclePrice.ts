@@ -12,9 +12,13 @@ export function useAssetIdOraclePrice(
     if (!assetId || !parachainApi) return;
     const _assetId = typeof assetId === "string" ? assetId : assetId.toString();
 
-    parachainApi.query.oracle.prices(_assetId).then((price) => {
-      setAssetPrice(new BigNumber(price.price.toString()));
-    });
+    try {
+      parachainApi.query.oracle.prices(_assetId).then((price) => {
+        setAssetPrice(new BigNumber(price.price.toString()));
+      });
+    } catch (err: any) {
+      console.error('[useAssetIdOraclePrice] Error: ', err.message);
+    }
   }, [assetId, parachainApi]);
 
   return assetPrice;

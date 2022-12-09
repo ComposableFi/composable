@@ -1,10 +1,10 @@
 import { useMemo } from "react";
-import { PabloConstantProductPool } from "@/../../packages/shared";
+import { DualAssetConstantProduct } from "shared";
 import BigNumber from "bignumber.js";
 import useStore from "@/store/useStore";
 import { PoolStats } from "@/store/poolStats/types";
 
-export const useLiquidityPoolStats = (pool: PabloConstantProductPool): PoolStats | undefined => {
+export const useLiquidityPoolStats = (pool: DualAssetConstantProduct): PoolStats | undefined => {
   const { poolStats } = useStore();
 
   const stats = useMemo(() => {

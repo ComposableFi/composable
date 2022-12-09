@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { fetchPoolStats, calculatePoolStats, PabloPoolQueryResponse } from "@/defi/utils/pablo/pools/stats";
-import BigNumber from "bignumber.js";
 import useStore from "@/store/useStore";
 import { useAllLpTokenRewardingPools } from "@/defi/hooks";
 
@@ -9,7 +8,7 @@ import { useAllLpTokenRewardingPools } from "@/defi/hooks";
  * @returns null
  */
 const Updater = () => {
-  const { putPoolStats, poolStats, putPoolStatsValue } = useStore();
+  const { putPoolStats } = useStore();
   const allPermissionedConstantProductPools = useAllLpTokenRewardingPools();
 
   useEffect(() => {
@@ -44,40 +43,6 @@ const Updater = () => {
       });
     }
   }, [allPermissionedConstantProductPools, putPoolStats]);
-
-  // useEffect(() => {
-  //   if (allPermissionedConstantProductPools.length) {
-  //     allPermissionedConstantProductPools.forEach((i) => {
-  //       const id = (i.getPoolId(true) as BigNumber).toNumber();
-
-  //       if (poolStats[id]) {
-  //         let quoteId = i.getPair().getQuoteAsset().toString();
-
-  //         if (apollo[quoteId]) {
-  //           const totalVolumeValue = new BigNumber(
-  //             poolStats[id].totalVolume
-  //           )
-  //             .times(apollo[quoteId])
-  //             .toFixed(2);
-  //           const _24HrFeeValue = new BigNumber(poolStats[id]._24HrFee)
-  //             .times(apollo[quoteId])
-  //             .toFixed(2);
-  //           const _24HrVolumeValue = new BigNumber(
-  //             poolStats[id]._24HrVolume
-  //           )
-  //             .times(apollo[quoteId])
-  //             .toFixed(2);
-
-  //           putPoolStatsValue(id, {
-  //             totalVolumeValue,
-  //             _24HrFeeValue,
-  //             _24HrVolumeValue,
-  //           });
-  //         }
-  //       }
-  //     });
-  //   }
-  // }, [apollo, allPermissionedConstantProductPools, poolStats, putPoolStatsValue]);
 
   return null;
 };

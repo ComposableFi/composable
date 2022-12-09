@@ -8,17 +8,17 @@ export function useLpTokenPrice(
   lpToken: LiquidityProviderToken | undefined
 ): BigNumber {
   const [lpTokenPrice, setLpTokenPrice] = useState(new BigNumber(0));
-  const { constantProductPools } = usePoolsSlice();
+  const { liquidityPools } = usePoolsSlice();
 
   const liquidityPool = useMemo(() => {
-    return constantProductPools.find((_constantProductPool) =>
+    return liquidityPools.find((_constantProductPool) =>
       (
         _constantProductPool
           .getLiquidityProviderToken()
           .getPicassoAssetId(true) as BigNumber
       ).eq(lpToken?.getPicassoAssetId(true) as BigNumber)
     );
-  }, [constantProductPools, lpToken]);
+  }, [liquidityPools, lpToken]);
 
   useAsyncEffect(async (): Promise<void> => {
     if (!liquidityPool) {
