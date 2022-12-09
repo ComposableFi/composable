@@ -1,3 +1,23 @@
+{ name, execCommands, configPathSource, configPathContainer, dependsOn
+, restartPolicy }: {
+  service = {
+    image =
+      "composablefi/composable-centauri:d8fdb31227a221a794f86c5bba4a8127cf8e71d5";
+    restart = restartPolicy;
+    volumes = [{
+      type = "bind";
+      source = configPathSource;
+      target = configPathContainer;
+    }];
+    environment = { RUST_LOG = "info"; };
+    command = execCommands;
+    # should only be added if it's null
+    depends_on = dependsOn;
+  };
+}
+root@ubuntu-32gb-ash-1:~/composable# cat devnet
+cat: devnet: Is a directory
+root@ubuntu-32gb-ash-1:~/composable# cat devnets.nix 
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, system, devnetTools, ... }: {
     packages = let
