@@ -31,9 +31,7 @@ interface OfferCancelledEvent {
 export function getNewOfferEvent(
   event: BondedFinanceNewOfferEvent
 ): NewOfferEvent {
-  const { offerId, beneficiary } = event.asV2402;
-
-  return { offerId, beneficiary };
+  return event.asV10003;
 }
 
 /**
@@ -43,7 +41,7 @@ export function getNewOfferEvent(
 export function getNewBondEvent(
   event: BondedFinanceNewBondEvent
 ): NewBondEvent {
-  const { offerId, nbOfBonds } = event.asV2402;
+  const { offerId, nbOfBonds } = event.asV10003;
   return { offerId, nbOfBonds };
 }
 
@@ -54,8 +52,7 @@ export function getNewBondEvent(
 export function getOfferCancelledEvent(
   event: BondedFinanceOfferCancelledEvent
 ): OfferCancelledEvent {
-  const { offerId } = event.asV2402;
-  return { offerId };
+  return event.asV10003;
 }
 
 /**
