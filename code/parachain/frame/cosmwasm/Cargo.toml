@@ -13,16 +13,16 @@ version = "3.0.0"
 
 [dependencies]
 composable-support = { path = "../composable-support", default-features = false }
-cosmwasm-minimal-std = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "ee37ee8263cbcd249e163da47065980cbe426c47", default-features = false, features = [
+cosmwasm-std = { git = "https://github.com/ComposableFi/cosmwasm", rev = "21351cc1ced863b9af7c8a69f923036bc919b3b1", default-features = false, features = [
   "iterator",
   "stargate",
   "ibc3",
 ] }
-cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "ee37ee8263cbcd249e163da47065980cbe426c47", default-features = false, features = [
+cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "703969d031cb0342c6e8e85cc086316b06db6369", default-features = false, features = [
   "iterator",
   "stargate",
 ] }
-cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "ee37ee8263cbcd249e163da47065980cbe426c47", default-features = false, features = [
+cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "703969d031cb0342c6e8e85cc086316b06db6369", default-features = false, features = [
   "iterator",
   "stargate",
 ] }
@@ -110,4 +110,5 @@ std = [
   "hex/std",
   "pallet-ibc/std",
   "ibc/std",
+  "cosmwasm-std/std"
 ]

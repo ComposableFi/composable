@@ -89,7 +89,7 @@ impl<T: Config> Pallet<T> {
 		let channel_id = ChannelId::from_str(channel_id.as_ref())
 			.map_err(|_| <CosmwasmVMError<T>>::Ibc("channel name is not valid".to_string()))?;
 		let address: cosmwasm_minimal_std::Addr = vm.contract_address.clone().into();
-		_timeout.block()
+		let x = _timeout.block();
 		let _port_id = PortId::from_str(address.as_str())
 			.expect("all pallet instanced contract addresses are valid port names; qed");
 
