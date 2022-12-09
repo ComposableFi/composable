@@ -38,5 +38,5 @@ runs:
         authToken: "${{ inputs.token }}"
     - run: |
         ${{ inputs.pre-run }}
-        cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community ${{ inputs.command }} --no-update-lock-file --show-trace -L
+        cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community ${{ inputs.command }} --fallback --no-update-lock-file --show-trace -L
       shell: "bash"

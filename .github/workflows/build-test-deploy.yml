@@ -962,7 +962,7 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - run: |
-          cachix watch-exec --jobs 16 --compression-level 0 composable-community nix -- build .#frontend-static-firebase --no-update-lock-file --show-trace -L
+          cachix watch-exec --jobs 16 --compression-level 0 composable-community nix -- build .#frontend-static-firebase --fallback --no-update-lock-file --show-trace -L
           mkdir -p firebase/picasso/out/
           mkdir -p firebase/pablo/out/
           cp -R result/picasso/* firebase/picasso/out/
@@ -1013,7 +1013,7 @@ jobs:
         with:
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           command: |
-            cachix watch-exec --jobs 16 --compression-level 0 composable-community nix -- build .#frontend-static-firebase --no-update-lock-file --show-trace -L
+            cachix watch-exec --jobs 16 --compression-level 0 composable-community nix -- build .#frontend-static-firebase --fallback --no-update-lock-file --show-trace -L
             mkdir -p firebase/picasso/out/
             mkdir -p firebase/pablo/out/
             cp -R result/picasso/* firebase/picasso/out/
