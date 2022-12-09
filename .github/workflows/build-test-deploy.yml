@@ -798,23 +798,9 @@ jobs:
           name: ${{  env.CACHIX_COMPOSABLE }}
 
       - run: |
-          # ideally it does:
-          # start first process
-          # start second if and only if first stdout specific string
-          # first stdout await has timeout, any stderr or exit end stdout timeout and shell exits non zero
-          # if first or second second stderr or non zero exited, then end second and first end and shell non zero exit
-          # if second timeouted, then in shell non zero exit
-          # more complicated, stderr by regex X times before exit
-          # if second ended success, first stopped gracefully
-          #
-          # TODO: handle
-          # 🧹 Resolving parachain id...
-          # /nix/store/rfrhfi70ijykigwyaswrwlmfqbxw570g-polkadot-v0.9.27/bin/polkadot build-spec --chain=rococo-local --disable-default-bootnode
-          # 2022-08-25 02:01:57 Building chain spec
-          # ⚠ failed to parse the chain spec
           ( nix run .#devnet-dali 2>&1 & ) | tee devnet-dali.log &
           until test -f devnet-dali.log; do sleep 1 && echo "waiting network start"; done;
-          ( tail --follow --lines=0  devnet-dali.log & ) | grep --max-count=1 "POLKADOT LAUNCH COMPLETE"
+          ( tail --follow --lines=0  devnet-dali.log & ) | grep --max-count=1 "Network launched 🚀🚀"
           echo "PATH=$(pwd):$PATH" >> $GITHUB_ENV
           cd code/integration-tests/runtime-tests
           npm install -q
