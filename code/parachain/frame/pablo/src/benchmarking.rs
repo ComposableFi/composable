@@ -213,16 +213,12 @@ benchmarks! {
 	 }: _(RawOrigin::Signed(user), pool_id, AssetAmount::new(usdt, (1000_u128 * unit).into()), AssetAmount::new(usdc, 0.into()), false)
 
 	do_create_pool {
-		let n in 1..100;
-		let pools = generate_benchmark_pools::<T>(n as u128);
+		let pool = generate_benchmark_pools::<T>(1)[0].to_owned();
 	}: {
-		pools.iter().for_each(|pool_creation_input| {
 			Pallet::<T>::do_create_pool(
-				pool_creation_input.init_config.to_owned(),
-				Some(pool_creation_input.lp_token),
-			)
-			.expect("Pool config is valid; QED");
-		});
+				pool.init_config.to_owned(),
+				Some(pool.lp_token),
+			).expect("Pool has valid config");
 	}
 }
 

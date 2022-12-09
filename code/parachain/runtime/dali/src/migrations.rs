@@ -62,7 +62,7 @@ pub mod pablo_picasso_init_pools {
 			.expect("Pool config is valid; QED");
 		});
 
-		weights::pablo::WeightInfo::<Runtime>::do_create_pool(pools.len() as u32)
+		weights::pablo::WeightInfo::<Runtime>::do_create_pool() * pools.len() as Weight
 	}
 
 	fn create_two_token_pool_config(

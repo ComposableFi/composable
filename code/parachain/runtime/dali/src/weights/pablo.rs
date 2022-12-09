@@ -85,7 +85,7 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().writes(9 as Weight))
 	}
 
-fn do_create_pool(x: u32) -> Weight {
-		x as Weight
+	fn do_create_pool() -> Weight {
+		10_000
     }
 }
