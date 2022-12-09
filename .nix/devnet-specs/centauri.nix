@@ -102,9 +102,9 @@
               restartPolicy = "no";
             });
 
-          "hyperspace-create-channels" = mkComposableContainer
+          "hyperspace-relay" = mkComposableContainer
             (import ../services/centauri.nix {
-              name = "hyperspace-create-channel";
+              name = "hyperspace-relay";
               execCommands = [
                 "relay"
                 "--config"
