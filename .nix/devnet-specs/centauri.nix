@@ -60,6 +60,7 @@
               configPathSource = configPathSource;
               configPathContainer = configPathContainer;
               dependsOn = { };
+              restartPolicy = "on-failure";
             }
             );
 
@@ -75,6 +76,7 @@
               configPathSource = configPathSource;
               configPathContainer = configPathContainer;
               dependsOn = dependsOnCreateClient;
+              restartPolicy = "no";
             }
             );
 
@@ -94,6 +96,21 @@
               configPathSource = configPathSource;
               configPathContainer = configPathContainer;
               dependsOn = dependsOnCreateConnection;
+              restartPolicy = "no";
+            }
+            );
+
+            "hyperspace-relay" = mkComposableContainer (import ../services/centauri.nix {
+              name = "hyperspace-create-channel";
+              execCommands = [
+                "relay"
+                "--config"
+                configPathContainer
+              ];
+              configPathSource = configPathSource;
+              configPathContainer = configPathContainer;
+              dependsOn = { };
+              restartPolicy = "no";
             }
             );
           };
