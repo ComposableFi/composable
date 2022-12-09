@@ -65,9 +65,9 @@ export const PolkadotAccountsSelection = ({
         Confirm Account
       </Button>
       <Button
-        onClick={() => {
+        onClick={async () => {
           if (disconnectWallet) {
-            disconnectWallet();
+            await disconnectWallet();
           }
         }}
         sx={{ marginTop: theme.spacing(2) }}

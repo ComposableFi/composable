@@ -1,5 +1,5 @@
 import { Box, BoxProps, Typography, useTheme } from "@mui/material";
-import React from "react";
+
 export type BadgeProps = {
   color: string;
   background: string;
@@ -30,7 +30,7 @@ export const Badge = ({
       {...props}
     >
       {icon}
-      <Typography variant="inputLabel" marginLeft={theme.spacing(1)}>
+      <Typography variant="body2" marginLeft={theme.spacing(1)}>
         {label}
       </Typography>
     </Box>
