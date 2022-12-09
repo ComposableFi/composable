@@ -95,14 +95,14 @@ pub mod pablo_picasso_init_pools {
 					Permill::from_percent(50),
 					CurrencyId::USDT,
 					CurrencyId::KSM_USDT_LPT,
-					Permill::from_percent(0),
+					Permill::from_rational::<u32>(3, 1000),
 				),
 				PoolCreationInput::new_two_token_pool(
 					CurrencyId::PICA,
 					Permill::from_percent(50),
 					CurrencyId::USDT,
 					CurrencyId::PICA_USDT_LPT,
-					Permill::from_percent(0),
+					Permill::from_rational::<u32>(3, 1000),
 				),
 			];
 
