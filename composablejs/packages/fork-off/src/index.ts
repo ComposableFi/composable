@@ -216,6 +216,7 @@ main()
 let chunksFetched = 0;
 let separator = false;
 
+// Note: this function comes from the original fork-off-substrate repo, and should be refactored
 async function fetchChunks(prefix: string, levelsRemaining: number, stream: fs.WriteStream, at: string) {
   if (levelsRemaining <= 0) {
     const pairs = await provider.send("state_getPairs", [prefix, at]);
