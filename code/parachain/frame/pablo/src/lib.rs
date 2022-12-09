@@ -894,7 +894,9 @@ pub mod pallet {
 						info,
 						pool_account,
 						lp_amount,
-						min_receive
+						redeemable_assets
+							.assets
+							.clone()
 							.into_iter()
 							.map(|(asset_id, amount)| AssetAmount { asset_id, amount })
 							.try_collect()
