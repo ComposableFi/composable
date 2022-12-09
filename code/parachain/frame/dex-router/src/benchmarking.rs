@@ -192,6 +192,8 @@ where
 }
 
 benchmarks! {
+	impl_benchmark_test_suite!(DexRouter, crate::mock::new_test_ext(), crate::mock::Test);
+
 	where_clause {
 		where
 		T: pallet_dex_router::Config + pallet_pablo::Config,
@@ -261,4 +263,3 @@ benchmarks! {
 		// remove 1 lp_token
 	} : _(origin, 1_u128.into(), BTreeMap::from([(currency_pair.base, 0.into()), (currency_pair.quote, 0.into())]))
 }
-impl_benchmark_test_suite!(DexRouter, crate::mock::new_test_ext(), crate::mock::Test);

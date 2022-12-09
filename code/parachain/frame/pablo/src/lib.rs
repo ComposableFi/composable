@@ -79,7 +79,8 @@ pub mod pallet {
 	use sp_arithmetic::FixedPointOperand;
 
 	use composable_maths::dex::{
-		constant_product::compute_deposit_lp, price::compute_initial_price_cumulative,
+		constant_product::{compute_deposit_lp, compute_redeemed_for_lp},
+		price::compute_initial_price_cumulative,
 	};
 	use composable_traits::{
 		currency::BalanceLike,
@@ -225,7 +226,7 @@ pub mod pallet {
 		WeightsMustBeNonZero,
 		WeightsMustSumToOne,
 		StakingPoolConfigError,
-		IncorrectAmountOfAssets,
+		IncorrectAssetAmounts,
 		UnsupportedOperation,
 		InitialDepositCannotBeZero,
 	}
@@ -767,35 +768,28 @@ pub mod pallet {
 				.get(&currency_pair.quote)
 				.ok_or(Error::<T>::MissingMinExpectedAmount)?;
 			match pool {
-				PoolConfiguration::DualAssetConstantProduct(BasicPoolInfo { lp_token, .. }) => {
+				PoolConfiguration::DualAssetConstantProduct(BasicPoolInfo {
+					lp_token,
+					assets_weights,
+					..
+				}) => {
 					// TODO (vim): This function must call the relevant calculation through
 					//  dual_asset_constant_product.rs. Then most of the logic is removed here.
-					let pool_base_aum =
-						T::Convert::convert(T::Assets::balance(currency_pair.base, &pool_account));
-					let pool_quote_aum =
-						T::Convert::convert(T::Assets::balance(currency_pair.quote, &pool_account));
-					let lp_issued = T::Assets::total_issuance(lp_token);
 
-					let base_amount = T::Convert::convert(safe_multiply_by_rational(
-						T::Convert::convert(lp_amount),
-						pool_base_aum,
-						T::Convert::convert(lp_issued),
-					)?);
-					let quote_amount = T::Convert::convert(safe_multiply_by_rational(
-						T::Convert::convert(lp_amount),
-						pool_quote_aum,
-						T::Convert::convert(lp_issued),
-					)?);
-					ensure!(
-						base_amount >= min_base_amount && quote_amount >= min_quote_amount,
-						Error::<T>::CannotRespectMinimumRequested
-					);
-					Ok(RedeemableAssets {
-						assets: BTreeMap::from([
-							(currency_pair.base, base_amount),
-							(currency_pair.quote, quote_amount),
-						]),
-					})
+					let assets = assets_weights
+						.into_iter()
+						.map(|(id, w)| {
+							compute_redeemed_for_lp(
+								T::Convert::convert(T::Assets::total_issuance(lp_token)),
+								T::Convert::convert(lp_amount),
+								T::Convert::convert(T::Assets::balance(id, &pool_account)),
+								w,
+							)
+							.map(|res| (id, T::Convert::convert(res)))
+						})
+						.collect::<Result<BTreeMap<_, _>, _>>()?;
+
+					Ok(RedeemableAssets { assets })
 				},
 			}
 		}
@@ -904,6 +898,9 @@ pub mod pallet {
 						keep_alive,
 					)?,
 			};
+
+			dbg!(minted_lp);
+
 			Self::update_twap(pool_id)?;
 			Self::deposit_event(Event::<T>::LiquidityAdded {
 				who: who.clone(),
@@ -922,8 +919,8 @@ pub mod pallet {
 			lp_amount: Self::Balance,
 			min_receive: BTreeMap<Self::AssetId, Self::Balance>,
 		) -> Result<(), DispatchError> {
-			let redeemable_assets =
-				Self::redeemable_assets_for_lp_tokens(pool_id, lp_amount, min_receive)?;
+			// let redeemable_assets =
+			// 	Self::redeemable_assets_for_lp_tokens(pool_id, lp_amount, min_receive)?;
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
 			match pool {
@@ -933,8 +930,7 @@ pub mod pallet {
 						info,
 						pool_account,
 						lp_amount,
-						redeemable_assets
-							.assets
+						min_receive
 							.into_iter()
 							.map(|(asset_id, amount)| AssetAmount { asset_id, amount })
 							.try_collect()
