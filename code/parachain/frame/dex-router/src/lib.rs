@@ -249,6 +249,9 @@ pub mod pallet {
 				*assets_vec.get(0).expect("Must exist"),
 				*assets_vec.get(1).expect("Must exist"),
 			);
+
+			dbg!(&min_receive);
+
 			<Self as Amm>::remove_liquidity(&who, asset_pair, lp_amount, min_receive)?;
 			Ok(())
 		}

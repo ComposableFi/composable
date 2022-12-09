@@ -110,6 +110,8 @@ impl<T: Config> DualAssetConstantProduct<T> {
 
 		let lp_total_issuance = T::Convert::convert(T::Assets::total_issuance(pool.lp_token));
 
+		dbg!(&assets_with_balances);
+
 		let amount_of_lp_token_to_mint = match assets_with_balances[..] {
 			[(single, (single_weight, single_balance))] => {
 				if lp_total_issuance.is_zero() {
@@ -136,6 +138,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 			},
 			[(first, (first_weight, first_balance)), (second, (second_weight, second_balance))] => {
 				let lp_to_mint = if lp_total_issuance.is_zero() {
+					dbg!();
 					compute_first_deposit_lp_(
 						&[
 							(T::Convert::convert(first.amount), first_weight),
@@ -155,12 +158,12 @@ impl<T: Config> DualAssetConstantProduct<T> {
 							input_ratio_first_to_second,
 							first_weight
 						),
-						Error::<T>::IncorrectAmountOfAssets
+						Error::<T>::IncorrectAssetAmounts
 					);
 
 					// pass 1 as weight since adding liquidity for all assets
 					// see docs on compute_deposit_lp_ for more information
-					let first_deposit = compute_deposit_lp_(
+					let _first_deposit = compute_deposit_lp_(
 						lp_total_issuance,
 						T::Convert::convert(first.amount),
 						first_balance,
@@ -176,11 +179,11 @@ impl<T: Config> DualAssetConstantProduct<T> {
 						pool.fee_config.fee_rate,
 					)?;
 
-					sp_std::if_std! {
-						debug_assert!(first_deposit == second_deposit);
-					}
+					// sp_std::if_std! {
+					// 	debug_assert!(first_deposit == second_deposit);
+					// }
 
-					first_deposit.value
+					second_deposit.value
 				};
 
 				T::Assets::transfer(first.asset_id, who, &pool_account, first.amount, keep_alive)?;
@@ -224,16 +227,14 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		let min_receive_with_current_balances = min_receive
 			.iter()
 			.map(|asset_amount| {
-				if asset_amount.amount.is_zero() {
-					return Err(Error::<T>::InvalidAmount)
-				};
-
 				let balance =
 					pool_assets.remove(&asset_amount.asset_id).ok_or(Error::<T>::AssetNotFound)?;
 
-				Ok((asset_amount, balance))
+				Ok::<_, Error<T>>((asset_amount, balance))
 			})
 			.collect::<Result<Vec<_>, _>>()?;
+
+		dbg!(&min_receive_with_current_balances);
 
 		let lp_total_issuance = T::Convert::convert(T::Assets::total_issuance(pool.lp_token));
 
@@ -259,19 +260,8 @@ impl<T: Config> DualAssetConstantProduct<T> {
 					false, // pool account doesn't need to be kept alive
 				)?;
 			},
-			[(first, (first_weight, first_balance)), (second, (_second_weight, second_balance))] =>
+			[(first_min_receive, (_first_weight, first_balance)), (second_min_receive, (_second_weight, second_balance))] =>
 			{
-				let input_ratio_first_to_second =
-					Permill::from_rational(first.amount, first.amount.safe_add(&second.amount)?);
-
-				ensure!(
-					per_thing_acceptable_computation_error(
-						input_ratio_first_to_second,
-						first_weight
-					),
-					Error::<T>::IncorrectAmountOfAssets
-				);
-
 				let first_redeemed_amount = compute_redeemed_for_lp(
 					lp_total_issuance,
 					T::Convert::convert(lp_amount),
@@ -285,21 +275,24 @@ impl<T: Config> DualAssetConstantProduct<T> {
 					Permill::one(),
 				)?;
 
+				dbg!(first_redeemed_amount, first_min_receive.amount);
+				dbg!(second_redeemed_amount, second_min_receive.amount);
+
 				ensure!(
-					first_redeemed_amount >= T::Convert::convert(first.amount) &&
-						second_redeemed_amount >= T::Convert::convert(second.amount),
+					first_redeemed_amount >= T::Convert::convert(first_min_receive.amount) &&
+						second_redeemed_amount >= T::Convert::convert(second_min_receive.amount),
 					Error::<T>::CannotRespectMinimumRequested
 				);
 
 				T::Assets::transfer(
-					first.asset_id,
+					first_min_receive.asset_id,
 					&pool_account,
 					who,
 					T::Convert::convert(first_redeemed_amount),
 					false, // pool account doesn't need to be kept alive
 				)?;
 				T::Assets::transfer(
-					second.asset_id,
+					second_min_receive.asset_id,
 					&pool_account,
 					who,
 					T::Convert::convert(second_redeemed_amount),
