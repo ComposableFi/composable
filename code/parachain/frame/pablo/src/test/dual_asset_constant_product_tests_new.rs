@@ -65,8 +65,8 @@ fn add_remove_lp() {
 		process_and_progress_blocks::<Pablo, Test>(1);
 
 		Test::assert_extrinsic_event(
-			Pablo::add_liquidity(Origin::signed(ALICE), pool_id, assets_with_amounts, 0, false),
-			crate::Event::LiquidityAdded { who: ALICE, pool_id, minted_lp: 199_999_999_814_806 },
+			Pablo::add_liquidity(Origin::signed(ALICE), pool_id, assets_with_amounts.clone(), 0, false),
+			crate::Event::LiquidityAdded { who: ALICE, pool_id, asset_amounts: assets_with_amounts.into(), minted_lp: 199_999_999_814_806 },
 		);
 
 		// Mint the tokens
@@ -79,8 +79,8 @@ fn add_remove_lp() {
 
 		// Add the liquidity
 		Test::assert_extrinsic_event(
-			Pablo::add_liquidity(Origin::signed(BOB), pool_id, assets_with_next_amounts, 0, false),
-			crate::Event::LiquidityAdded { who: BOB, pool_id, minted_lp: 19999999981480 },
+			Pablo::add_liquidity(Origin::signed(BOB), pool_id, assets_with_next_amounts.clone(), 0, false),
+			crate::Event::LiquidityAdded { who: BOB, pool_id, asset_amounts: assets_with_next_amounts.into(), minted_lp: 19999999981480 },
 		);
 
 		assert!(Tokens::balance(lp_token, &BOB) > 0);

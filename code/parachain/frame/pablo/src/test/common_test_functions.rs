@@ -356,16 +356,18 @@ mod create {
 	fn signed_user_can_create() {
 		new_test_ext().execute_with(|| {
 			System::set_block_number(1);
+			let pool_weights = dual_asset_pool_weights(BTC, Permill::from_percent(50), USDT);
 			assert_ok!(Pablo::create(
 				Origin::signed(ALICE),
 				PoolInitConfiguration::DualAssetConstantProduct {
 					owner: ALICE,
-					assets_weights: dual_asset_pool_weights(BTC, Permill::from_percent(50), USDT),
+					assets_weights: pool_weights.clone(),
 					fee: Permill::zero(),
 				},
 			));
+			let inner_weights = pool_weights.into_inner();
 			assert_has_event::<Test, _>(|e| {
-				matches!(e.event, mock::Event::Pablo(crate::Event::PoolCreated { pool_id: 0, .. }))
+				matches!(&e.event, mock::Event::Pablo(crate::Event::PoolCreated { pool_id: 0, asset_weights, .. }) if asset_weights.clone() == inner_weights)
 			});
 		});
 	}
