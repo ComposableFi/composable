@@ -101,6 +101,21 @@
               dependsOn = dependsOnCreateConnection;
               restartPolicy = "no";
             });
+
+          "hyperspace-create-channels" = mkComposableContainer
+            (import ../services/centauri.nix {
+              name = "hyperspace-create-channel";
+              execCommands = [
+                "relay"
+                "--config"
+                configPathContainer
+              ];
+              configPathSource = configPathSource;
+              configPathContainer = configPathContainer;
+              dependsOn = dependsOnCreateConnection;
+              # safely restart on failure due to connectivity loss for instance
+              restartPolicy = "on-failure";
+            });
         };
       };
     })
