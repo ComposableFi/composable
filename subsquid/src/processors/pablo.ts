@@ -6,7 +6,6 @@ import {
   PabloLiquidityAddedEvent,
   PabloLiquidityRemovedEvent,
   PabloPoolCreatedEvent,
-  PabloPoolDeletedEvent,
   PabloSwappedEvent,
 } from "../types/events";
 import {
@@ -25,7 +24,7 @@ import {
   PabloPoolAsset,
   PabloTransaction,
 } from "../model";
-import { CurrencyPair, Fee } from "../types/v2402";
+import { CurrencyPair, Fee } from "../types/v10003";
 import { encodeAccount } from "../utils";
 
 function createEvent(
@@ -89,7 +88,7 @@ interface PoolCreatedEvent {
 }
 
 function getPoolCreatedEvent(event: PabloPoolCreatedEvent): PoolCreatedEvent {
-  const { owner, poolId, assets } = event.asV2402;
+  const { owner, poolId, assets } = event.asV10003;
   return { owner, poolId, assets };
 }
 
@@ -198,8 +197,8 @@ interface LiquidityAddedEvent {
 function getLiquidityAddedEvent(
   event: PabloLiquidityAddedEvent
 ): LiquidityAddedEvent {
-  if (event.isV2402) {
-    const { who, poolId, assets, mintedLp } = event.asV2402;
+  if (event.isV10003) {
+    const { who, poolId, assets, mintedLp } = event.asV10003;
     return {
       who,
       poolId,
@@ -208,7 +207,7 @@ function getLiquidityAddedEvent(
       mintedLp,
     };
   } else {
-    const { who, poolId, baseAmount, quoteAmount, mintedLp } = event.asV10002;
+    const { who, poolId, baseAmount, quoteAmount, mintedLp } = event.asV10003;
     return { who, poolId, baseAmount, quoteAmount, mintedLp };
   }
 }
@@ -326,8 +325,8 @@ interface LiquidityRemovedEvent {
 function getLiquidityRemovedEvent(
   event: PabloLiquidityRemovedEvent
 ): LiquidityRemovedEvent {
-  if (event.isV2402) {
-    const { who, poolId, assets, totalIssuance } = event.asV2402;
+  if (event.isV10003) {
+    const { who, poolId, assets, totalIssuance } = event.asV10003;
     return {
       who,
       poolId,
@@ -337,7 +336,7 @@ function getLiquidityRemovedEvent(
     };
   } else {
     const { who, poolId, baseAmount, quoteAmount, totalIssuance } =
-      event.asV10002;
+      event.asV10003;
     return { who, poolId, baseAmount, quoteAmount, totalIssuance };
   }
 }
@@ -458,7 +457,7 @@ interface SwappedEvent {
 
 function getSwappedEvent(event: PabloSwappedEvent): SwappedEvent {
   const { poolId, who, baseAsset, quoteAsset, baseAmount, quoteAmount, fee } =
-    event.asV2402;
+    event.asV10003;
   return {
     poolId,
     who,
@@ -610,106 +609,106 @@ interface PoolDeletedEvent {
   quoteAmount: bigint;
 }
 
-function getPoolDeletedEvent(event: PabloPoolDeletedEvent): PoolDeletedEvent {
-  let poolId = 0n;
-  let baseAmount = 0n;
-  let quoteAmount = 0n;
+// function getPoolDeletedEvent(event: PabloPoolDeletedEvent): PoolDeletedEvent {
+//   let poolId = 0n;
+//   let baseAmount = 0n;
+//   let quoteAmount = 0n;
+//
+//   if (event.isV10003) {
+//     const { assets } = event.asV10003;
+//     poolId = event.asV10003.poolId;
+//     baseAmount = assets?.[0]?.[1] || 0n;
+//     quoteAmount = assets?.[1]?.[1] || 0n;
+//   } else {
+//     poolId = event.asV10002.poolId;
+//     baseAmount = event.asV10002.baseAmount;
+//     quoteAmount = event.asV10002.quoteAmount;
+//   }
+//
+//   return {
+//     poolId,
+//     baseAmount,
+//     quoteAmount,
+//   };
+// }
 
-  if (event.isV2402) {
-    const { assets } = event.asV2402;
-    poolId = event.asV2402.poolId;
-    baseAmount = assets?.[0]?.[1] || 0n;
-    quoteAmount = assets?.[1]?.[1] || 0n;
-  } else {
-    poolId = event.asV10002.poolId;
-    baseAmount = event.asV10002.baseAmount;
-    quoteAmount = event.asV10002.quoteAmount;
-  }
-
-  return {
-    poolId,
-    baseAmount,
-    quoteAmount,
-  };
-}
-
-export async function processPoolDeletedEvent(
-  ctx: EventHandlerContext<Store, { event: true }>,
-  event: PabloPoolDeletedEvent
-): Promise<void> {
-  const poolDeletedEvent = getPoolDeletedEvent(event);
-  const pool = await getLatestPoolByPoolId(ctx.store, poolDeletedEvent.poolId);
-  // only set values if the owner was missing, i.e a new pool
-  if (pool !== undefined) {
-    const who = pool.owner;
-    const timestamp = BigInt(new Date().getTime());
-    pool.id = ctx.event.id;
-    pool.eventId = ctx.event.id;
-    pool.transactionCount += 1;
-    pool.totalLiquidity = "0.0";
-    pool.calculatedTimestamp = timestamp;
-    pool.blockNumber = BigInt(ctx.block.height);
-
-    // find baseAsset: Following is only valid for dual asset pools
-    const baseAsset = pool.poolAssets.find(
-      (asset) => asset.assetId !== pool.quoteAssetId
-    );
-    if (baseAsset === undefined) {
-      throw new Error("baseAsset not found");
-    }
-    baseAsset.id = createPoolAssetId(
-      ctx.event.id,
-      pool.poolId,
-      baseAsset.assetId
-    );
-    baseAsset.pool = pool;
-    baseAsset.totalLiquidity -= poolDeletedEvent.baseAmount;
-    baseAsset.calculatedTimestamp = timestamp;
-    baseAsset.blockNumber = BigInt(ctx.block.height);
-    // find quoteAsset
-    const quoteAsset = pool.poolAssets.find(
-      (asset) => asset.assetId === pool.quoteAssetId
-    );
-    if (quoteAsset === undefined) {
-      throw new Error("quoteAsset not found");
-    }
-    quoteAsset.id = createPoolAssetId(
-      ctx.event.id,
-      pool.poolId,
-      quoteAsset.assetId
-    );
-    quoteAsset.pool = pool;
-    quoteAsset.totalLiquidity -= poolDeletedEvent.quoteAmount;
-    quoteAsset.calculatedTimestamp = timestamp;
-    quoteAsset.blockNumber = BigInt(ctx.block.height);
-
-    let tx = await ctx.store.get(Event, ctx.event.id);
-    if (tx != undefined) {
-      throw new Error("Unexpected event in db");
-    }
-
-    const eventEntity = createEvent(ctx, who, EventType.DELETE_POOL);
-    const pabloTransaction = createPabloTransaction(
-      eventEntity,
-      pool,
-      Big(poolDeletedEvent.baseAmount.toString())
-        .div(Big(poolDeletedEvent.quoteAmount.toString()))
-        .toString(),
-      pool.baseAssetId,
-      poolDeletedEvent.baseAmount,
-      pool.quoteAssetId,
-      poolDeletedEvent.quoteAmount
-    );
-
-    await ctx.store.save(pool);
-    await ctx.store.save(baseAsset);
-    await ctx.store.save(quoteAsset);
-    await ctx.store.save(eventEntity);
-    await ctx.store.save(pabloTransaction);
-  } else {
-    throw new Error("Pool not found");
-  }
-}
+// export async function processPoolDeletedEvent(
+//   ctx: EventHandlerContext<Store, { event: true }>,
+//   event: PabloPoolDeletedEvent
+// ): Promise<void> {
+//   const poolDeletedEvent = getPoolDeletedEvent(event);
+//   const pool = await getLatestPoolByPoolId(ctx.store, poolDeletedEvent.poolId);
+//   // only set values if the owner was missing, i.e a new pool
+//   if (pool !== undefined) {
+//     const who = pool.owner;
+//     const timestamp = BigInt(new Date().getTime());
+//     pool.id = ctx.event.id;
+//     pool.eventId = ctx.event.id;
+//     pool.transactionCount += 1;
+//     pool.totalLiquidity = "0.0";
+//     pool.calculatedTimestamp = timestamp;
+//     pool.blockNumber = BigInt(ctx.block.height);
+//
+//     // find baseAsset: Following is only valid for dual asset pools
+//     const baseAsset = pool.poolAssets.find(
+//       (asset) => asset.assetId !== pool.quoteAssetId
+//     );
+//     if (baseAsset === undefined) {
+//       throw new Error("baseAsset not found");
+//     }
+//     baseAsset.id = createPoolAssetId(
+//       ctx.event.id,
+//       pool.poolId,
+//       baseAsset.assetId
+//     );
+//     baseAsset.pool = pool;
+//     baseAsset.totalLiquidity -= poolDeletedEvent.baseAmount;
+//     baseAsset.calculatedTimestamp = timestamp;
+//     baseAsset.blockNumber = BigInt(ctx.block.height);
+//     // find quoteAsset
+//     const quoteAsset = pool.poolAssets.find(
+//       (asset) => asset.assetId === pool.quoteAssetId
+//     );
+//     if (quoteAsset === undefined) {
+//       throw new Error("quoteAsset not found");
+//     }
+//     quoteAsset.id = createPoolAssetId(
+//       ctx.event.id,
+//       pool.poolId,
+//       quoteAsset.assetId
+//     );
+//     quoteAsset.pool = pool;
+//     quoteAsset.totalLiquidity -= poolDeletedEvent.quoteAmount;
+//     quoteAsset.calculatedTimestamp = timestamp;
+//     quoteAsset.blockNumber = BigInt(ctx.block.height);
+//
+//     let tx = await ctx.store.get(Event, ctx.event.id);
+//     if (tx != undefined) {
+//       throw new Error("Unexpected event in db");
+//     }
+//
+//     const eventEntity = createEvent(ctx, who, EventType.DELETE_POOL);
+//     const pabloTransaction = createPabloTransaction(
+//       eventEntity,
+//       pool,
+//       Big(poolDeletedEvent.baseAmount.toString())
+//         .div(Big(poolDeletedEvent.quoteAmount.toString()))
+//         .toString(),
+//       pool.baseAssetId,
+//       poolDeletedEvent.baseAmount,
+//       pool.quoteAssetId,
+//       poolDeletedEvent.quoteAmount
+//     );
+//
+//     await ctx.store.save(pool);
+//     await ctx.store.save(baseAsset);
+//     await ctx.store.save(quoteAsset);
+//     await ctx.store.save(eventEntity);
+//     await ctx.store.save(pabloTransaction);
+//   } else {
+//     throw new Error("Pool not found");
+//   }
+// }
 
 function calculateFeeInQuoteAsset(
   spotPrice: Big,

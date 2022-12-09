@@ -103,7 +103,7 @@ function createPoolCreatedEvent() {
     owner: owner,
     poolId: BigInt(1),
   };
-  when(eventMock.asV2402).thenReturn(evt);
+  when(eventMock.asV10003).thenReturn(evt);
   let event = instance(eventMock);
   return { owner, event };
 }
@@ -118,7 +118,7 @@ function createLiquidityAddedEvent() {
     quoteAmount: BigInt(10_000 * UNIT),
     mintedLp: BigInt(200),
   };
-  when(eventMock.asV2402).thenReturn(evt);
+  when(eventMock.asV10003).thenReturn(evt);
   let event = instance(eventMock);
   return { who, event };
 }
@@ -133,7 +133,7 @@ function createLiquidityRemovedEvent() {
     quoteAmount: BigInt(10_000 * UNIT),
     totalIssuance: BigInt(10_000),
   };
-  when(eventMock.asV2402).thenReturn(evt);
+  when(eventMock.asV10003).thenReturn(evt);
   let event = instance(eventMock);
   return { who, event };
 }
@@ -146,7 +146,7 @@ function createPoolDeletedEvent() {
     baseAmount: BigInt(10_000 * UNIT),
     quoteAmount: BigInt(10_000 * UNIT),
   };
-  when(eventMock.asV2402).thenReturn(evt);
+  when(eventMock.asV10003).thenReturn(evt);
   let event = instance(eventMock);
   return { who, event };
 }
@@ -175,7 +175,7 @@ function createSwappedEvent(
       assetId: BigInt(4),
     },
   };
-  when(eventMock.asV2402).thenReturn(evt);
+  when(eventMock.asV10003).thenReturn(evt);
   let event = instance(eventMock);
   return { who, event };
 }
