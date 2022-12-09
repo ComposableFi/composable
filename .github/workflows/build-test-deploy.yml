@@ -622,6 +622,7 @@ jobs:
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           
   package-price-feed:
+    name: "Package Price Feed"
     needs: common-deps
     runs-on:
       - self-hosted
@@ -629,7 +630,7 @@ jobs:
       - x64
       - sre
     concurrency:
-      group: packagepricefeed-${{ github.ref }}
+      group: ${{ github.workflow }}-package-price-feed-${{ github.ref }}
       cancel-in-progress: true
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
@@ -638,6 +639,28 @@ jobs:
       - uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#price-feed
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+
+  # TODO: We use `composable-sandbox:latest` docker image to generate client code.
+  #       We should use a cluster with the current Dali node to generate client code.
+  package-subxt-client:
+    name: "Package subxt client"
+    needs: common-deps
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    concurrency:
+      group: ${{ github.workflow }}-package-subxt-client-${{ github.ref }}
+      cancel-in-progress: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - uses: "./.github/templates/watch-exec"
+        with:
+          command: nix -- build .#subxt-client
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   composable-sandbox-container-publish:

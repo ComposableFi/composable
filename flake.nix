@@ -78,7 +78,7 @@
             rust-overlay.overlays.default
           ];
         };
-        packages = {
+        packages = rec {
           default = self'.packages.devnet-dali;
 
           subxt = pkgs.callPackage ./code/utils/composable-subxt/subxt.nix { };
@@ -86,6 +86,10 @@
           gex = pkgs.callPackage ./code/xcvm/cosmos/gex.nix { };
           wasmswap = pkgs.callPackage ./code/xcvm/cosmos/wasmswap.nix {
             crane = crane.nightly;
+          };
+
+          subxt-client = pkgs.callPackage ./code/utils/subxt-client/default.nix {
+            subxt = subxt;
           };
 
           # NOTE: crane can't be used because of how it vendors deps, which is incompatible with some packages in polkadot, an issue must be raised to the repo
