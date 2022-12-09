@@ -71,13 +71,13 @@ pub mod pallet {
 		currency::CurrencyFactory,
 		defi::{DeFiComposableConfig, *},
 		lending::{
-			BorrowAmountOf, CollateralLpAmountOf, CreateInput, Lending, MarketConfig,
-			RepayStrategy, TotalDebtWithInterest, UpdateInput,
+			BorrowAmountOf, CollateralLpAmountOf, CreateInput, LendAssetAmountOf, Lending,
+			MarketConfig, RepayStrategy, TotalDebtWithInterest, UpdateInput,
 		},
 		liquidation::Liquidation,
 		oracle::Oracle,
 		time::Timestamp,
-		vault::StrategicVault,
+		vault::{StrategicVault, Vault},
 	};
 
 	pub use crate::crypto;
@@ -136,6 +136,13 @@ pub mod pallet {
 
 		/// The Vault used to store the borrow asset.
 		type Vault: StrategicVault<
+			VaultId = Self::VaultId,
+			AssetId = <Self as DeFiComposableConfig>::MayBeAssetId,
+			Balance = Self::Balance,
+			AccountId = Self::AccountId,
+		>;
+
+		type VaultLender: Vault<
 			VaultId = Self::VaultId,
 			AssetId = <Self as DeFiComposableConfig>::MayBeAssetId,
 			Balance = Self::Balance,
@@ -367,6 +374,10 @@ pub mod pallet {
 			market_id: MarketId,
 			input: UpdateInput<T::LiquidationStrategyId, <T as frame_system::Config>::BlockNumber>,
 		},
+		/// Event emitted when asset is lent.
+		AssetLent { sender: T::AccountId, market_id: MarketId, amount: T::Balance },
+		/// Event emitted when asset is unlent.
+		AssetUnlent { sender: T::AccountId, market_id: MarketId, amount: T::Balance },
 		/// Event emitted when collateral is deposited.
 		CollateralDeposited { sender: T::AccountId, market_id: MarketId, amount: T::Balance },
 		/// Event emitted when collateral is withdrawn.
@@ -541,6 +552,36 @@ pub mod pallet {
 
 		fn account_id(market_id: &Self::MarketId) -> Self::AccountId {
 			T::PalletId::get().into_sub_account_truncating(market_id)
+		}
+
+		fn vault_deposit(
+			market_id: &Self::MarketId,
+			account: &Self::AccountId,
+			amount: LendAssetAmountOf<Self>,
+		) -> Result<(), DispatchError> {
+			let (_, market) = Self::get_market(market_id)?;
+			T::VaultLender::deposit(&market.borrow_asset_vault, account, amount)?;
+			Self::deposit_event(Event::<T>::AssetLent {
+				sender: account.clone(),
+				market_id: *market_id,
+				amount,
+			});
+			Ok(())
+		}
+
+		fn vault_withdraw(
+			market_id: &Self::MarketId,
+			account: &Self::AccountId,
+			amount: LendAssetAmountOf<Self>,
+		) -> Result<(), DispatchError> {
+			let (_, market) = Self::get_market(market_id)?;
+			T::VaultLender::withdraw(&market.borrow_asset_vault, account, amount)?;
+			Self::deposit_event(Event::<T>::AssetUnlent {
+				sender: account.clone(),
+				market_id: *market_id,
+				amount,
+			});
+			Ok(())
 		}
 
 		fn deposit_collateral(
@@ -739,6 +780,38 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			<Self as Lending>::update_market(who, market_id, input)?;
+			Ok(().into())
+		}
+
+		/// lender deposits assets to market.
+		/// - `origin` : Sender of this extrinsic.
+		/// - `market_id` : Market index to which asset will be lent.
+		/// - `amount` : Amount of asset to be lent.
+		#[pallet::weight(<T as Config>::WeightInfo::vault_deposit())]
+		#[transactional]
+		pub fn vault_deposit(
+			origin: OriginFor<T>,
+			market_id: MarketId,
+			amount: T::Balance,
+		) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin)?;
+			<Self as Lending>::vault_deposit(&market_id, &sender, amount)?;
+			Ok(().into())
+		}
+
+		/// lender withdraws assets to market.
+		/// - `origin` : Sender of this extrinsic.
+		/// - `market_id` : Market index to which asset will be unlent.
+		/// - `amount` : Amount of asset to be unlent.
+		#[pallet::weight(<T as Config>::WeightInfo::vault_withdraw())]
+		#[transactional]
+		pub fn vault_withdraw(
+			origin: OriginFor<T>,
+			market_id: MarketId,
+			amount: T::Balance,
+		) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin)?;
+			<Self as Lending>::vault_withdraw(&market_id, &sender, amount)?;
 			Ok(().into())
 		}
 
