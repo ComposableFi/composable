@@ -55,8 +55,7 @@
               name = "hyperspace-create-clients";
               execCommands =
                 [ "create-clients" "--config" configPathContainer ];
-              configPathSource = configPathSource;
-              configPathContainer = configPathContainer;
+              inherit configPathSource configPathContainer;
               dependsOn = { };
               # for the first process in the dependency chain we set a restart policy so that it
               # restarts on failure. This is because the chain can be still unavailable (takes longer)
@@ -76,8 +75,7 @@
                 "--delay-period"
                 "0"
               ];
-              configPathSource = configPathSource;
-              configPathContainer = configPathContainer;
+              inherit configPathSource configPathContainer;
               dependsOn = dependsOnCreateClient;
               restartPolicy = "no";
             });
@@ -96,8 +94,7 @@
                 "--order"
                 "unordered"
               ];
-              configPathSource = configPathSource;
-              configPathContainer = configPathContainer;
+              inherit configPathSource configPathContainer;
               dependsOn = dependsOnCreateConnection;
               restartPolicy = "no";
             });
@@ -110,8 +107,7 @@
                 "--config"
                 configPathContainer
               ];
-              configPathSource = configPathSource;
-              configPathContainer = configPathContainer;
+              inherit configPathSource configPathContainer;
               dependsOn = dependsOnCreateConnection;
               # safely restart on failure due to connectivity loss for instance
               restartPolicy = "on-failure";
