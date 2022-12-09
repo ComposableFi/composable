@@ -28,10 +28,11 @@
 
       devnet-dali-2 = (pkgs.callPackage devnetTools.mk-devnet {
         inherit (packages) polkadot-launch composable-node polkadot-node;
-        network-config-path = ./scripts/polkadot-launch/rococo-local-dali-dev-2.nix; 
+        network-config-path =
+          ./scripts/polkadot-launch/rococo-local-dali-dev-2.nix;
         chain-spec = "dali-dev";
       }).script;
-      
+
       devnet-centauri = pkgs.composable.mkDevnetProgram "devnet-centauri"
         (import ./.nix/devnet-specs/centauri.nix {
           inherit pkgs;
