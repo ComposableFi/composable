@@ -89,7 +89,7 @@ impl<T: Config> Pallet<T> {
 		let address: cosmwasm_vm::cosmwasm_std::Addr = vm.contract_address.clone().into();
 
 		let _port_id = PortId::from_str(address.as_str())
-			.expect("all pallet instanced contract addresses are valid port names; qwe");
+			.expect("all pallet instanced contract addresses are valid port names; qed");
 
 		let msg = HandlerMessage::<AccountIdOf<T>>::Transfer {
 			channel_id,
