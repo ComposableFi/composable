@@ -2010,30 +2010,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cosmwasm-schema"
-version = "1.1.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "04135971e2c3b867eb793ca4e832543c077dbf72edaef7672699190f8fcdb619"
-dependencies = [
- "cosmwasm-schema-derive",
- "schemars",
- "serde",
- "serde_json",
- "thiserror",
-]
-
-[[package]]
-name = "cosmwasm-schema-derive"
-version = "1.1.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a06c8f516a13ae481016aa35f0b5c4652459e8aee65b15b6fb51547a07cea5a0"
-dependencies = [
- "proc-macro2 1.0.47",
- "quote 1.0.21",
- "syn 1.0.105",
-]
-
-[[package]]
 name = "cosmwasm-std"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2932,175 +2908,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1c8b264257c4f44c49b7ce09377af63aa040768ecd3fd7bdd2d48a09323a1e90"
 dependencies = [
  "cosmwasm-std",
- "schemars",
- "serde",
-]
-
-[[package]]
-name = "cw-utils"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "414b91f3d7a619bb26c835119d7095804596a1382ddc1d184c33c1d2c17f6c5e"
-dependencies = [
- "cosmwasm-std",
- "cw2",
- "schemars",
- "semver 1.0.14",
- "serde",
- "thiserror",
-]
-
-[[package]]
-name = "cw-xcvm-asset-registry"
-version = "0.1.0"
-dependencies = [
- "cosmwasm-schema",
- "cosmwasm-std",
- "cw-storage-plus",
- "cw-utils",
- "cw2",
- "schemars",
- "serde",
- "thiserror",
- "xcvm-core",
-]
-
-[[package]]
-name = "cw-xcvm-common"
-version = "0.1.0"
-dependencies = [
- "cosmwasm-std",
- "cw-xcvm-utils",
- "schemars",
- "serde",
- "xcvm-core",
-]
-
-[[package]]
-name = "cw-xcvm-gateway"
-version = "0.1.0"
-dependencies = [
- "cosmwasm-schema",
- "cosmwasm-std",
- "cw-storage-plus",
- "cw-utils",
- "cw-xcvm-asset-registry",
- "cw-xcvm-common",
- "cw-xcvm-interpreter",
- "cw-xcvm-router",
- "cw-xcvm-utils",
- "cw2",
- "cw20",
- "hex",
- "prost 0.11.3",
- "schemars",
- "serde",
- "serde-json-wasm",
- "thiserror",
- "xcvm-core",
- "xcvm-proto",
-]
-
-[[package]]
-name = "cw-xcvm-interpreter"
-version = "0.1.0"
-dependencies = [
- "cosmwasm-schema",
- "cosmwasm-std",
- "cw-storage-plus",
- "cw-utils",
- "cw-xcvm-asset-registry",
- "cw-xcvm-common",
- "cw-xcvm-utils",
- "cw2",
- "cw20",
- "hex",
- "num",
- "prost 0.11.3",
- "schemars",
- "serde",
- "serde-json-wasm",
- "serde_json",
- "thiserror",
- "xcvm-core",
- "xcvm-proto",
-]
-
-[[package]]
-name = "cw-xcvm-pingpong"
-version = "0.1.0"
-dependencies = [
- "cosmwasm-std",
- "cw-storage-plus",
- "cw-utils",
- "cw-xcvm-common",
- "cw-xcvm-utils",
- "cw2",
- "cw20",
- "hex",
- "num",
- "prost 0.11.3",
- "schemars",
- "serde",
- "serde-json-wasm",
- "serde_json",
- "thiserror",
- "xcvm-core",
- "xcvm-proto",
-]
-
-[[package]]
-name = "cw-xcvm-router"
-version = "0.1.0"
-dependencies = [
- "cosmwasm-schema",
- "cosmwasm-std",
- "cw-storage-plus",
- "cw-utils",
- "cw-xcvm-asset-registry",
- "cw-xcvm-common",
- "cw-xcvm-interpreter",
- "cw-xcvm-utils",
- "cw2",
- "cw20",
- "hex",
- "prost 0.11.3",
- "schemars",
- "serde",
- "serde-json-wasm",
- "thiserror",
- "xcvm-core",
- "xcvm-proto",
-]
-
-[[package]]
-name = "cw-xcvm-utils"
-version = "0.1.0"
-dependencies = [
- "cosmwasm-std",
- "xcvm-core",
-]
-
-[[package]]
-name = "cw2"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aa74c324af8e3506fd8d50759a265bead3f87402e413c840042af5d2808463d6"
-dependencies = [
- "cosmwasm-std",
- "cw-storage-plus",
- "schemars",
- "serde",
-]
-
-[[package]]
-name = "cw20"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4f446f59c519fbac5ab8b9f6c7f8dcaa05ee761703971406b28221ea778bb737"
-dependencies = [
- "cosmwasm-std",
- "cw-utils",
  "schemars",
  "serde",
 ]
@@ -4784,9 +4591,6 @@ name = "hex"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
-dependencies = [
- "serde",
-]
 
 [[package]]
 name = "hex-literal"
@@ -7469,7 +7273,6 @@ version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "43db66d1170d347f9a065114077f7dccb00c1b9478c89384490a3425279a4606"
 dependencies = [
- "num-bigint 0.4.3",
  "num-complex",
  "num-integer",
  "num-iter",

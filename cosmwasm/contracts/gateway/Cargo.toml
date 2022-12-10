@@ -26,8 +26,8 @@ schemars = "0.8.8"
 serde = { version = "1.0.137", default-features = false, features = ["derive"] }
 serde-json-wasm = { git = "https://github.com/hussein-aitlahcen/serde-json-wasm", rev = "1608a13d2a2ba90605d9626a51ff6667aca5a2d6" }
 thiserror = { version = "1.0.31" }
-xcvm-core = { path = "../../../lib/core", features = ["std"] }
-xcvm-proto = { path = "../../../lib/proto" }
+xcvm-core = { path = "../../../code/xcvm/lib/core", features = ["std"] }
+xcvm-proto = { path = "../../../code/xcvm/lib/proto" }
 
 [dev-dependencies]
 cosmwasm-schema = "1.0.0"

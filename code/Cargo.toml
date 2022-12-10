@@ -49,7 +49,6 @@ members = [
   "utils/xcmp",
   "utils/wasm-optimizer",
   "xcvm/lib/*",
-  "xcvm/cosmwasm/contracts/*",
 ]
 resolver = "2"
 

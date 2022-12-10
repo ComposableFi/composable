@@ -9,4 +9,4 @@ cosmwasm-std = "1.0.0"
 cw-xcvm-utils = { path = "../utils" }
 schemars = "0.8.8"
 serde = { version = "1.0.137", default-features = false, features = ["derive"] }
-xcvm-core = { path = "../../../lib/core", features = [] }
+xcvm-core = { path = "../../../code/xcvm/lib/core", features = [] }
