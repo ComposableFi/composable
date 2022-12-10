@@ -61,12 +61,12 @@ session = { package = "pallet-session", git = "https://github.com/paritytech/sub
 smallvec = "1.6.1"
 
 asset-tx-payment = { package = "pallet-asset-tx-payment", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
+proxy = { package = "pallet-proxy", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
 sudo = { package = "pallet-sudo", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
 timestamp = { package = "pallet-timestamp", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
 transaction-payment = { package = "pallet-transaction-payment", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
 treasury = { package = "pallet-treasury", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
 utility = { package = "pallet-utility", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
-proxy = { package="pallet-proxy", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
 
 # local modules
 assets = { package = "pallet-assets", path = '../../frame/assets', default-features = false }
