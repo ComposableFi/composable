@@ -61,16 +61,6 @@ panic = "unwind"
 inherits = "release"
 lto = true
 
-[profile.cosmwasm-contracts]
-codegen-units = 1
-debug = false
-debug-assertions = false
-inherits = "production"
-opt-level = "s"
-overflow-checks = true
-panic = "abort"
-rpath = false
-
 [patch.crates-io]
 serde-json-wasm = { git = "https://github.com/hussein-aitlahcen/serde-json-wasm", rev = "1608a13d2a2ba90605d9626a51ff6667aca5a2d6" }
 sp-application-crypto = { git = "https://github.com/ComposableFi/substrate", rev = "9bdc51acad943bd07fae159f59564a1b464d33b5" }

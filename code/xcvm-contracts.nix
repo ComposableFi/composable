@@ -10,11 +10,11 @@
           RUSTFLAGS = "-C link-arg=-s";
         });
     in {
+      # TODO: cosmwasm contract
       packages = {
         xcvm-contract-asset-registry = mkXcvmContract "cw-xcvm-asset-registry";
         xcvm-contract-router = mkXcvmContract "cw-xcvm-router";
         xcvm-contract-interpreter = mkXcvmContract "cw-xcvm-interpreter";
-        # TODO: inherit and provide script to run all stuff
       };
     };
 }

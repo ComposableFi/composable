@@ -1,0 +1,19 @@
+[workspace]
+exclude = ["target"]
+members = [
+  "*",
+]
+resolver = "2"
+
+[profile.release]
+lto = true
+codegen-units = 1
+debug = false
+debug-assertions = false
+opt-level = "s"
+overflow-checks = true
+panic = "abort"
+rpath = false
+
+[patch.crates-io]
+serde-json-wasm = { git = "https://github.com/hussein-aitlahcen/serde-json-wasm", rev = "1608a13d2a2ba90605d9626a51ff6667aca5a2d6" }
