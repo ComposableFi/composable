@@ -2,5 +2,7 @@
 libs = ['lib', 'node_modules']
 out = 'out'
 src = 'src'
+remappings = ['/node_modules/@ensdomains/=@ensdomains/', '/node_modules/@lazyledger/=@lazyledger/', '/node_modules/@openzeppelin/=@openzeppelin/', '/node_modules/@prb/=@prb/', 'ds-test/=lib/forge-std/lib/ds-test/src/', 'forge-std/=lib/forge-std/src/', 'hardhat/=node_modules/hardhat/']
+
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config

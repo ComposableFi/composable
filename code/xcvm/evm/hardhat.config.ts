@@ -6,7 +6,7 @@ import {HardhatUserConfig, task} from "hardhat/config";
 
 function getRemappings() {
   return fs
-    .readFileSync("remappings.txt", "utf8")
+    .readFileSync("hardhatRemappings.txt", "utf8")
     .split("\n")
     .filter(Boolean)
     .map((line) => line.trim().split("="));
