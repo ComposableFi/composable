@@ -89,6 +89,8 @@ jobs:
           exclusionPatterns: |
             **/*.rs
             **/*.ts
+            **/*.json
+            **/*.lock
 
   check-nix:
     name: "Check nix"
