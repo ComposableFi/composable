@@ -90,7 +90,6 @@ jobs:
             **/*.rs
             **/*.ts
 
-
   check-nix:
     name: "Check nix"
     continue-on-error: false
@@ -875,6 +874,7 @@ jobs:
       name: "Effect gate, automatically merged if passed"
       runs-on: ubuntu-latest
       needs:
+        - check-lfs
         - check-nix
         - devnet-integration-tests
         - package-polkadot-node
