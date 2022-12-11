@@ -82,6 +82,7 @@ jobs:
       group: ${{ github.workflow }}-check-lfs-${{ github.ref }}
       cancel-in-progress: true
     steps:
+      - uses: actions/checkout@v3
       - uses: actionsdesk/lfs-warning@v3.2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
