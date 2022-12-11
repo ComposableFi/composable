@@ -43,25 +43,28 @@ This script allows bootstrapping a new substrate chain with the current state of
    cargo build --release --package composable --features=builtin-wasm
     ```
 
+
 4. Copy the binary from `target/release/composable` to `fork-off/data` and rename it to `binary`.
 
     ```bash
      cp ./target/release/composable ../composablejs/packages/fork-off/data/binary
     ```
 
+
 5. Copy the runtime WASM blob of the Picasso release from `/target/wasm32-unknown-unknown/release/picasso_runtime.optimized.wasm` to `fork-off/data` and rename it to `runtime.wasm`.
     ```bash
     cp ./target/wasm32-unknown-unknown/release/picasso_runtime.optimized.wasm ../composablejs/packages/fork-off/data/runtime.wasm
    ```
 
+
 6. Checkout your working branch
+
 
 7. Go back to the `fork-off` package (`cd ../composablejs/packages/fork-off`) and run the main script. This will download the right Polkadot version and generate all the necessary files for the new chain.
 
     ```bash
     yarn start
     ```
-
 8. On different terminals, run each of these commands:
 
     ```bash
@@ -74,22 +77,24 @@ This script allows bootstrapping a new substrate chain with the current state of
    make charlie
    ```
     ```bash
-   make collator
+   make collator1
    ```
-   The first 3 will run the relay chain and the last one will run the forked parachain.
+   ```bash
+   make collator2
+   ```
+   The first three will run the relay chain and the last two will run the forked parachain.
 
-9. Register the parachain on the relay chain. This can be done manually or by running the following on a new terminal:
+
+9. Download the next version of the Picasso runtime wasm from the [releases](https://github.com/ComposableFi/composable/releases/latest) page, save it in the `/data` folder, and rename it from `picasso_runtime_v****.wasm` to `runtime_upgrade.wasm`. This will be automated soon.
+
+
+10. Start the runtime upgrade by running
 
     ```bash
-    yarn run register
+    yarn run upgrade
     ```
-   Once the script is finished, it should take around 2 minutes for the parachain to be registered. It will run on port `9988` and can be visualized in https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9988#/explorer
-
-### Optional
-
-For manual registration, this extrinsic should be run as sudo from the relay chain at https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9944 and with a `ParaId` of 2087.
-
-   ![image](https://user-images.githubusercontent.com/2915325/99548884-1be13580-2987-11eb-9a8b-20be658d34f9.png)
+    This can take a few minutes from the moment the chain starts producing blocks.
+   Once the script is finished, the parachain should be upgraded on the next block. It will run on port `9988` and can be visualized in https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9988#/explorer
 
 ## Credits
 

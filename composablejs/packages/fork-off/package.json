@@ -5,7 +5,7 @@
   "main": "main/index.js",
   "scripts": {
     "start": "npx ts-node -P tsconfig.json src/index.ts",
-    "register": "npx ts-node -P tsconfig.json src/register.ts",
+    "upgrade": "npx ts-node -P tsconfig.json src/upgrade.ts",
     "relay:gen": "npm run relay:generate:defs && npm run relay:generate:meta",
     "relay:generate:defs": "ts-node --skip-project ../../node_modules/.bin/polkadot-types-from-defs --package relay/interfaces --input ./src/relay-interfaces --endpoint ws://127.0.0.1:9944",
     "relay:generate:meta": "ts-node --skip-project ../../node_modules/.bin/polkadot-types-from-chain --package relay/interfaces --endpoint ws://127.0.0.1:9944 --output ./src/relay-interfaces",

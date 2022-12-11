@@ -2,11 +2,12 @@ import cliProgress from "cli-progress";
 import chalk from "chalk";
 import path from "path";
 import fs from "fs";
+import signale from "signale";
 import { execFileSync, execSync } from "child_process";
 import { getNewConnection } from "@composable/utils";
 import { xxhashAsHex } from "@polkadot/util-crypto";
 import { WsProvider } from "@polkadot/api";
-import signale from "signale"
+import { getKusamaVersion } from "./utils";
 
 // File names
 const fileNames = {
@@ -17,6 +18,7 @@ const fileNames = {
   forkedSpec: "fork.json",
   storage: "storage.json",
   relay: "rococo-local.json",
+  relayTemp: "rococo-local-temp.json", // For editing and registering parachain
   genesisState: "genesis-state",
   genesisWasm: "genesis-wasm"
 };
@@ -31,15 +33,14 @@ const originalSpecPath = path.join(__dirname, "../data", fileNames.originalSpec)
 const forkedSpecPath = path.join(__dirname, "../data", fileNames.forkedSpec);
 const storagePath = path.join(__dirname, "../data", fileNames.storage);
 const relayPath = path.join(__dirname, "../data", fileNames.relay);
+const relayPathTemp = path.join(__dirname, "../data", fileNames.relayTemp);
 const genesisStatePath = path.join(__dirname, "../data", fileNames.genesisState);
 const genesisWasmPath = path.join(__dirname, "../data", fileNames.genesisWasm);
 const polkadotPath = path.join(__dirname, "../data", "polkadot");
 
 const originalChain = process.env.ORIGINAL_CHAIN || "picasso";
 const forkChain = process.env.FORK_CHAIN || "picasso-dev";
-const polkadotVersion = process.env.POLKADOT_VERSION || "0.9.27";
-
-const polkadotUrl = `https://github.com/paritytech/polkadot/releases/download/v${polkadotVersion}/polkadot`;
+const parachainId = process.env.PARACHAIN_ID ? Number(process.env.PARACHAIN_ID) : 2087;
 
 const chunksLevel = process.env.FORK_CHUNKS_LEVEL ? Number(process.env.FORK_CHUNKS_LEVEL) : 1;
 const totalChunks = Math.pow(256, chunksLevel);
@@ -64,15 +65,21 @@ const skippedModulesPrefix = [
 ];
 
 async function main() {
+  const polkadotVersion = (await getKusamaVersion()) || "0.9.33";
+  const polkadotUrl = `https://github.com/paritytech/polkadot/releases/download/v${polkadotVersion}/polkadot`;
+
   // If Polkadot binary is not present or is not the right version, download it
   try {
     if (fs.existsSync(polkadotPath)) {
       // Set the Polkadot binary to be executable, in case it was not
       execFileSync("chmod", ["+x", polkadotPath]);
+
       const rawVersion = execSync(`${polkadotPath} --version`).toString();
       const existingPolkadotVersion = rawVersion.split(" ")[1].split("-")[0];
       if (existingPolkadotVersion !== polkadotVersion) {
-        signale.await(`Polkadot binary is version ${existingPolkadotVersion}, downloading version ${polkadotVersion}`);
+        signale.await(
+          `Polkadot binary version is ${existingPolkadotVersion}, updating to version ${polkadotVersion}...`
+        );
         execSync(`rm ${polkadotPath}`);
         execSync(`wget ${polkadotUrl} --quiet -P ./data`);
         signale.success("Polkadot binary downloaded successfully");
@@ -85,7 +92,7 @@ async function main() {
     }
   } catch {
     signale.error(
-      `Error running existing Polkadot binary.\nTry running 'wget ${polkadotUrl}' or download it manually from https://github.com/paritytech/polkadot/releases`
+      `Error running existing Polkadot binary.\nPlease delete ${polkadotPath} and try again, or try running 'wget ${polkadotUrl}', or download it manually from https://github.com/paritytech/polkadot/releases`
     );
     process.exit(1);
   }
@@ -95,12 +102,16 @@ async function main() {
 
   // Check that the binary exists
   if (!fs.existsSync(binaryPath)) {
-    signale.error("Binary missing. Please copy the binary of your substrate node to the data folder and rename it to 'binary'");
+    signale.error(
+      "Binary missing. Please copy the binary of your substrate node to the data folder and rename it to 'binary'"
+    );
     process.exit(1);
   }
 
   // Set the binary to be executable
   execFileSync("chmod", ["+x", binaryPath]);
+
+  signale.success("Picasso binary found");
 
   // Check that the runtime wasm exists
   if (!fs.existsSync(wasmPath)) {
@@ -113,11 +124,17 @@ async function main() {
   // Dump wasm to hex
   execSync("cat " + wasmPath + " | hexdump -ve '/1 \"%02x\"' > " + hexPath);
 
+  signale.success("Picasso WASM found");
+
   // Connect to the node
   const { newClient: api } = await getNewConnection(endpoint);
 
   if (fs.existsSync(storagePath)) {
-    signale.warn(chalk.yellow(`Reusing cached storage. Delete ${storagePath} and rerun the script if you want to fetch latest storage`));
+    signale.warn(
+      chalk.yellow(
+        `Reusing cached storage. Delete ${storagePath} and rerun the script if you want to fetch the latest storage`
+      )
+    );
   } else {
     // Download state of original chain
     signale.await("Fetching state of original chain...");
@@ -141,7 +158,7 @@ async function main() {
       if (!skippedModulesPrefix.includes(module.name.toString())) {
         prefixes.push(xxhashAsHex(module.name.toString(), 128));
       } else {
-        signale.info("Skipping module",  chalk.blueBright(`${module.name.toString()}`));
+        signale.info("Skipping module", chalk.blueBright(`${module.name.toString()}`));
       }
     }
   });
@@ -156,7 +173,13 @@ async function main() {
 
   signale.success("Forked chain spec generated successfully", chalk.blueBright(`(${forkedSpecPath})`));
 
-  const storage: [string, string][] = JSON.parse(fs.readFileSync(storagePath, "utf8"));
+  let storage: [string, string][];
+  try {
+    storage = JSON.parse(fs.readFileSync(storagePath, "utf8"));
+  } catch {
+    signale.error(`Error parsing storage file. Please delete ${storagePath} and try again`);
+  }
+
   const originalSpec = JSON.parse(fs.readFileSync(originalSpecPath, "utf8"));
   const forkedSpec = JSON.parse(fs.readFileSync(forkedSpecPath, "utf8"));
 
@@ -166,7 +189,7 @@ async function main() {
   forkedSpec.protocolId = originalSpec.protocolId;
   forkedSpec.chainType = "Local";
   forkedSpec.bootNodes = [];
-  forkedSpec.para_id = 2087;
+  forkedSpec.para_id = parachainId;
 
   // Grab the items to be moved, then iterate through and insert into storage
   storage
@@ -176,6 +199,8 @@ async function main() {
 
   // Delete System.LastRuntimeUpgrade to ensure that the on_runtime_upgrade event is triggered
   delete forkedSpec.genesis.raw.top["0x26aa394eea5630e07c48ae0c9558cef7f9cce9c888469bb1a0dceaa129672ef8"];
+
+  // TODO: set initial balance to Alice
 
   // Set the code to the current runtime code
   forkedSpec.genesis.raw.top["0x3a636f6465"] = "0x" + fs.readFileSync(hexPath, "utf8").trim();
@@ -191,21 +216,65 @@ async function main() {
 
   signale.success("Forked genesis updated successfully", chalk.blueBright(`(${forkedSpecPath})`));
 
-  // Generate a raw chain spec
-  execSync(`${polkadotPath} build-spec --chain rococo-local --disable-default-bootnode --raw --log 0 > ${relayPath}`);
-
-  signale.success("Raw relay chain spec generated successfully", chalk.blueBright(`(${relayPath})`));
-
   execSync(`${binaryPath} export-genesis-state --chain ${forkedSpecPath} > ${genesisStatePath}`);
   signale.success("Genesis state generated successfully", chalk.blueBright(`(${genesisStatePath})`));
 
   execSync(`${binaryPath} export-genesis-wasm --chain ${forkedSpecPath} > ${genesisWasmPath}`);
-  signale.success("Genesis wasm generated successfully", chalk.blueBright(genesisWasmPath));
+  signale.success("Genesis wasm generated successfully", chalk.blueBright(`(${genesisWasmPath})`));
+
+  // Generate a temporary chain spec (without --raw, so that it can be easily modified)
+  execSync(`${polkadotPath} build-spec --chain rococo-local --disable-default-bootnode --log 0 > ${relayPathTemp}`);
+
+  // Modify the temporary chain spec to include the parachain
+  registerParachain();
+
+  // Generate the final chain spec, with --raw (needed for the parachain nodes to start)
+  execSync(
+    `${polkadotPath} build-spec --chain ${relayPathTemp} --disable-default-bootnode --raw --log 0 > ${relayPath}`
+  );
+
+  // Remove temporary chain spec
+  execSync(`rm ${relayPathTemp}`);
+
+  signale.success("Relay chain spec generated successfully", chalk.blueBright(`(${relayPath})`));
+
+  signale.complete("All done! You can now start your relay chain and parachain nodes");
+}
+
+/**
+ * Add the parachain to the relay chain spec
+ */
+function registerParachain() {
+  const relayChainSpec = fs.readFileSync(relayPathTemp, "utf8").trim();
+  if (!relayChainSpec) {
+    signale.error("Relay chain spec not found");
+    process.exit(1);
+  }
+
+  const rococo = JSON.parse(relayChainSpec);
+
+  const paras = rococo.genesis?.runtime?.runtime_genesis_config?.paras?.paras;
+
+  if (!paras) {
+    signale.error("'Paras' not found in relay chain spec. Aborting...");
+  }
+
+  paras.push([
+    parachainId,
+    {
+      genesis_head: fs.readFileSync(genesisStatePath, "utf8").trim(),
+      validation_code: fs.readFileSync(genesisWasmPath, "utf8").trim(),
+      parachain: true
+    }
+  ]);
+
+  fs.writeFileSync(relayPathTemp, JSON.stringify(rococo, null, 2));
+
+  signale.success("Parachain registered successfully");
 }
 
 main()
   .then(() => {
-    signale.complete("All done! You can now start your relay chain and parachain nodes");
     process.exit(0);
   })
   .catch(err => {
