@@ -75,6 +75,22 @@ jobs:
           command: nix -- build .#common-test-deps
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
+  check-lfs:
+    continue-on-error: false
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-check-lfs-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: actionsdesk/lfs-warning@v3.2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }} # Optional
+          filesizelimit: 10KB
+          exclusionPatterns: |
+            **/*.rs
+            **/*.ts
+
+
   check-nix:
     name: "Check nix"
     continue-on-error: false
