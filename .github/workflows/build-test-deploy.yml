@@ -84,7 +84,7 @@ jobs:
     steps:
       - uses: actionsdesk/lfs-warning@v3.2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }} # Optional
+          token: ${{ secrets.GITHUB_TOKEN }}
           filesizelimit: 10KB
           exclusionPatterns: |
             **/*.rs
