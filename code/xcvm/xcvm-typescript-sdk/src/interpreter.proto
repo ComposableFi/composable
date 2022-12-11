@@ -25,7 +25,6 @@ message Instruction {
   }
 }
 
-
 message Ratio {
   Uint128 nominator = 1;
   Uint128 denominator = 2;
@@ -53,7 +52,18 @@ message Account {
 }
 
 message AssetId {
-  Uint128 assetId = 1;
+  oneof type {
+    GlobalId globalId = 1;
+    LocalId localId = 2;
+  }
+}
+
+message GlobalId {
+  Uint128 globalId = 1; 
+}
+
+message LocalId {
+  bytes localId = 1; 
 }
 
 message Asset {
@@ -76,10 +86,7 @@ message Result {
 
 message AssetAmount {
   AssetId assetId = 1;
-  oneof balance_type {
-    Ratio ratio = 2;
-    Unit unit = 3;
-  }
+  Balance balance = 2;
 }
 
 message IpRegister {
@@ -119,7 +126,7 @@ message Salt {
 }
 
 message Network {
-  uint32 networkId = 1;
+  Uint128 networkId = 1;
 }
 
 enum BridgeSecurity {

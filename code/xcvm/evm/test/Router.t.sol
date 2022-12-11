@@ -50,18 +50,18 @@ contract test_Router is Test {
 
     function testRegisterBridgeFailed() public {
         vm.expectRevert("Ownable: caller is not the owner");
-        router.registerBridge(bridge1, Gateway.BridgeSecurity(1), 1);
+        router.registerBridge(bridge1, IRouter.BridgeSecurity(1), 1);
         vm.startPrank(owner);
-        vm.expectRevert("Gateway: invalid address");
-        router.registerBridge(address(0), Gateway.BridgeSecurity(1), 1);
-        vm.expectRevert("Gateway: should not disable bridge while registering bridge");
-        router.registerBridge(address(1), Gateway.BridgeSecurity(0), 1);
+        vm.expectRevert("Router: invalid address");
+        router.registerBridge(address(0), IRouter.BridgeSecurity(1), 1);
+        vm.expectRevert("Router: should not disable bridge while registering bridge");
+        router.registerBridge(address(1), IRouter.BridgeSecurity(0), 1);
         vm.stopPrank();
     }
 
     function testRegisterBridge() public {
         vm.prank(owner);
-        router.registerBridge(bridge1, Gateway.BridgeSecurity(1), 1);
+        router.registerBridge(bridge1, IRouter.BridgeSecurity(1), 1);
     }
 
     function testUnregisterBridgeFailed() public {
@@ -71,7 +71,7 @@ contract test_Router is Test {
 
     function testUnregisterBridge() public {
         vm.prank(owner);
-        router.registerBridge(bridge1, Gateway.BridgeSecurity(1), 1);
+        router.registerBridge(bridge1, IRouter.BridgeSecurity(1), 1);
         vm.prank(owner);
         router.unregisterBridge(bridge1);
     }
@@ -80,7 +80,7 @@ contract test_Router is Test {
         vm.expectRevert("Ownable: caller is not the owner");
         router.registerAsset(address(assetToken1), assetId);
         vm.startPrank(owner);
-        vm.expectRevert("Gateway: invalid address");
+        vm.expectRevert("Router: invalid address");
         router.registerAsset(address(0), assetId);
         vm.stopPrank();
     }
