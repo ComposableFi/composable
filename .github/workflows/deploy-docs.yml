@@ -24,6 +24,7 @@ jobs:
         with:
           command: nix -- build .#docs-static
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          working-directory: "./docs"
       - name: Use nodejs in the env for Firebase
         run: nix-env -iA nixpkgs.nodejs
       - uses: FirebaseExtended/action-hosting-deploy@0f248036885ae672f78587669fa2923f0ef6cac2

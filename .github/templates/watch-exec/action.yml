@@ -18,6 +18,9 @@ inputs:
   pre-run:
     description: "Commands to pre-run before executing the watch-exec"
     required: false
+  working-directory: 
+    description: "Directory to execute command"
+    required: false
 
 runs:
   using: "composite"
@@ -40,3 +43,4 @@ runs:
         ${{ inputs.pre-run }}
         cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community ${{ inputs.command }} --no-update-lock-file --show-trace -L
       shell: "bash"
+      working-directory: ${{ inputs.working-directory }}
