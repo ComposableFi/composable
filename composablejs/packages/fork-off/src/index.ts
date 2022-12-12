@@ -20,7 +20,8 @@ const fileNames = {
   relay: "rococo-local.json",
   relayTemp: "rococo-local-temp.json", // For editing and registering parachain
   genesisState: "genesis-state",
-  genesisWasm: "genesis-wasm"
+  genesisWasm: "genesis-wasm",
+  polkadot: "polkadot"
 };
 
 // Input paths
@@ -36,16 +37,13 @@ const relayPath = path.join(__dirname, "../data", fileNames.relay);
 const relayPathTemp = path.join(__dirname, "../data", fileNames.relayTemp);
 const genesisStatePath = path.join(__dirname, "../data", fileNames.genesisState);
 const genesisWasmPath = path.join(__dirname, "../data", fileNames.genesisWasm);
-const polkadotPath = path.join(__dirname, "../data", "polkadot");
+const polkadotPath = path.join(__dirname, "../data", fileNames.polkadot);
 
-const originalChain = process.env.ORIGINAL_CHAIN || "picasso";
-const forkChain = process.env.FORK_CHAIN || "picasso-dev";
-const parachainId = process.env.PARACHAIN_ID ? Number(process.env.PARACHAIN_ID) : 2087;
+const originalChain = "picasso";
+const forkChain = "picasso-dev";
+const parachainId = 2087;
+const endpoint = "wss://picasso-rpc.composable.finance";
 
-const chunksLevel = process.env.FORK_CHUNKS_LEVEL ? Number(process.env.FORK_CHUNKS_LEVEL) : 1;
-const totalChunks = Math.pow(256, chunksLevel);
-
-const endpoint = "wss://" + (process.env.ENDPOINT ?? "picasso-rpc.composable.finance");
 const provider = new WsProvider(endpoint);
 
 const progressBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
@@ -141,7 +139,7 @@ async function main() {
 
     // TODO: refactor this part
     const at = (await api.rpc.chain.getBlockHash()).toString();
-    progressBar.start(totalChunks, 0);
+    progressBar.start(256, 0);
     const stream = fs.createWriteStream(storagePath, { flags: "a" });
     stream.write("[");
     await fetchChunks("0x", 1, stream, at);
