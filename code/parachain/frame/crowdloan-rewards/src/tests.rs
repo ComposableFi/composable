@@ -189,6 +189,44 @@ fn test_populate_ok() {
 }
 
 #[test]
+fn test_delete_ok() {
+	let gen = |c, r| -> Vec<(RemoteAccountOf<Test>, RewardAmountOf<Test>, VestingPeriodOf<Test>)> {
+		generate_accounts(c)
+			.into_iter()
+			.map(|(_, account)| (account.as_remote_public(), r, DEFAULT_VESTING_PERIOD))
+			.collect()
+	};
+	ExtBuilder::default().build().execute_with(|| {
+		let expected_total_rewards = 100 * DEFAULT_REWARD;
+		let rewards = gen(100, DEFAULT_REWARD);
+		Balances::make_free_balance_be(&CrowdloanRewards::account_id(), expected_total_rewards);
+		assert_ok!(CrowdloanRewards::populate(Origin::root(), rewards));
+		assert_eq!(CrowdloanRewards::total_rewards(), expected_total_rewards);
+		assert_eq!(CrowdloanRewards::claimed_rewards(), 0);
+		CrowdloanRewards::delete(Origin::root(), rewards).unwrap();
+	});
+}
+
+#[test]
+fn test_add_ok() {
+	let gen = |c, r| -> Vec<(RemoteAccountOf<Test>, RewardAmountOf<Test>, VestingPeriodOf<Test>)> {
+		generate_accounts(c)
+			.into_iter()
+			.map(|(_, account)| (account.as_remote_public(), r, DEFAULT_VESTING_PERIOD))
+			.collect()
+	};
+	ExtBuilder::default().build().execute_with(|| {
+		let expected_total_rewards = 100 * DEFAULT_REWARD;
+		Balances::make_free_balance_be(&CrowdloanRewards::account_id(), expected_total_rewards);
+		assert_ok!(CrowdloanRewards::populate(Origin::root(), gen(100, DEFAULT_REWARD);));
+		assert_eq!(CrowdloanRewards::total_rewards(), expected_total_rewards);
+		assert_eq!(CrowdloanRewards::claimed_rewards(), 0);
+		CrowdloanRewards::add(Origin::root(), gen(100, DEFAULT_REWARD)).unwrap();
+		assert_eq!(CrowdloanRewards::total_rewards(), expected_total_rewards * 2);
+	});
+}
+
+#[test]
 fn populate_should_overwrite_existing_rewards_with_new_values() {
 	let gen = |c, r| -> Vec<(RemoteAccountOf<Test>, RewardAmountOf<Test>, VestingPeriodOf<Test>)> {
 		generate_accounts(c)
