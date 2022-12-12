@@ -8,22 +8,22 @@ use alloc::{
 	string::{String, ToString},
 };
 
-use cosmwasm_minimal_std::{
-	ibc::{
-		IbcAcknowledgement, IbcChannel, IbcChannelCloseMsg, IbcChannelConnectMsg,
-		IbcChannelOpenMsg, IbcEndpoint, IbcOrder, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg,
-		IbcPacketTimeoutMsg,
-	},
-	Addr, Binary, ContractResult, Env, MessageInfo,
-};
 use cosmwasm_vm::{
+	cosmwasm_std::{
+		ibc::{
+			IbcAcknowledgement, IbcChannel, IbcChannelCloseMsg, IbcChannelConnectMsg,
+			IbcChannelOpenMsg, IbcEndpoint, IbcOrder, IbcPacket, IbcPacketAckMsg,
+			IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
+		},
+		Addr, Binary, ContractResult, Env, MessageInfo,
+	},
 	executor::{
 		cosmwasm_call_serialize,
 		ibc::{
-			IbcChannelClose, IbcChannelConnect, IbcChannelOpen, IbcPacketAck, IbcPacketReceive,
-			IbcPacketTimeout,
+			IbcChannelCloseCall, IbcChannelConnectCall, IbcChannelOpenCall, IbcPacketAckCall,
+			IbcPacketReceiveCall, IbcPacketTimeoutCall,
 		},
-		AllocateInput, CosmwasmCallInput, CosmwasmCallWithoutInfoInput, DeallocateInput,
+		AllocateCall, CosmwasmCallInput, CosmwasmCallWithoutInfoInput, DeallocateCall,
 		DeserializeLimit, ExecutorError, HasInfo, ReadLimit, Unit,
 	},
 	has::Has,
@@ -292,8 +292,8 @@ impl<T: Config> Router<T> {
 		<V as VMBase>::Error: sp_std::fmt::Debug,
 		V::Pointer: for<'x> TryFrom<VmOutputOf<'x, V>, Error = VmErrorOf<V>>,
 		for<'x> Unit: TryFrom<VmOutputOf<'x, V>, Error = VmErrorOf<V>>,
-		for<'x> VmInputOf<'x, V>: TryFrom<AllocateInput<V::Pointer>, Error = VmErrorOf<V>>
-			+ TryFrom<DeallocateInput<V::Pointer>, Error = VmErrorOf<V>>
+		for<'x> VmInputOf<'x, V>: TryFrom<AllocateCall<V::Pointer>, Error = VmErrorOf<V>>
+			+ TryFrom<DeallocateCall<V::Pointer>, Error = VmErrorOf<V>>
 			+ TryFrom<CosmwasmCallInput<'x, V::Pointer, I>, Error = VmErrorOf<V>>
 			+ TryFrom<CosmwasmCallWithoutInfoInput<'x, V::Pointer, I>, Error = VmErrorOf<V>>,
 		VmErrorOf<V>:
@@ -334,7 +334,7 @@ impl<T: Config> Router<T> {
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
 		let (data, _) = cosmwasm_system_entrypoint_serialize::<
-			IbcPacketReceive,
+			IbcPacketReceiveCall,
 			VM<T>,
 			IbcPacketReceiveMsg,
 		>(&mut executor, &message)
@@ -385,7 +385,8 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		let mut vm = Self::create(address, contract_info)?;
 		let mut instance = vm.instance()?;
 		contract_to_result(
-			Self::execute::<IbcChannelOpen, IbcChannelOpenMsg, VM<T>>(&mut instance, message)?.0,
+			Self::execute::<IbcChannelOpenCall, IbcChannelOpenMsg, VM<T>>(&mut instance, message)?
+				.0,
 		)?;
 
 		Ok(())
@@ -428,7 +429,8 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		let mut vm = Self::create(address, contract_info)?;
 		let mut instance = vm.instance()?;
 		let result = contract_to_result(
-			Self::execute::<IbcChannelOpen, IbcChannelOpenMsg, VM<T>>(&mut instance, message)?.0,
+			Self::execute::<IbcChannelOpenCall, IbcChannelOpenMsg, VM<T>>(&mut instance, message)?
+				.0,
 		)?
 		.map(|x| IbcVersion::new(x.version))
 		.unwrap_or_else(|| version.clone());
@@ -457,7 +459,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
 		let (_data, _events) = cosmwasm_system_entrypoint_serialize::<
-			IbcChannelConnect,
+			IbcChannelConnectCall,
 			VM<T>,
 			IbcChannelConnectMsg,
 		>(&mut executor, &message)
@@ -485,7 +487,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
 		let (_data, _events) = cosmwasm_system_entrypoint_serialize::<
-			IbcChannelConnect,
+			IbcChannelConnectCall,
 			VM<T>,
 			IbcChannelConnectMsg,
 		>(&mut executor, &message)
@@ -525,7 +527,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
 		let (_data, _events) = cosmwasm_system_entrypoint_serialize::<
-			IbcChannelClose,
+			IbcChannelCloseCall,
 			VM<T>,
 			IbcChannelCloseMsg,
 		>(&mut executor, &message)
@@ -552,7 +554,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
 		let (_data, _events) = cosmwasm_system_entrypoint_serialize::<
-			IbcChannelClose,
+			IbcChannelCloseCall,
 			VM<T>,
 			IbcChannelCloseMsg,
 		>(&mut executor, &message)
@@ -610,7 +612,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
 		let (_data, _events) = cosmwasm_system_entrypoint_serialize::<
-			IbcPacketAck,
+			IbcPacketAckCall,
 			VM<T>,
 			IbcPacketAckMsg,
 		>(&mut executor, &message)
@@ -652,7 +654,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
 		let (_data, _events) = cosmwasm_system_entrypoint_serialize::<
-			IbcPacketTimeout,
+			IbcPacketTimeoutCall,
 			VM<T>,
 			IbcPacketTimeoutMsg,
 		>(&mut executor, &message)
