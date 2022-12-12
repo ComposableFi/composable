@@ -96,6 +96,7 @@ pub mod pallet {
 		},
 		executor::{
 			cosmwasm_call, ExecuteCall, InstantiateCall, MigrateCall, QueryCall, QueryResponse,
+			ReplyCall,
 		},
 		system::{cosmwasm_system_query, CosmwasmCodeId, CosmwasmContractMeta},
 	};
@@ -232,6 +233,7 @@ pub mod pallet {
 		NotAuthorized,
 		Unsupported,
 		Ibc,
+		FailedToSerialize,
 	}
 
 	#[pallet::config]
@@ -966,7 +968,7 @@ pub mod pallet {
 		fn block_env() -> BlockInfo {
 			BlockInfo {
 				height: frame_system::Pallet::<T>::block_number().saturated_into(),
-				time: Timestamp(T::UnixTime::now().as_secs().into()),
+				time: Timestamp::from_seconds(T::UnixTime::now().as_secs()),
 				chain_id: T::ChainId::get().into(),
 			}
 		}
@@ -1435,6 +1437,23 @@ pub mod pallet {
 			.continue_run(vm.shared, funds, message, event_handler)
 		}
 
+		pub(crate) fn do_continue_reply<'a>(
+			vm: &'a mut CosmwasmVM<T>,
+			reply: cosmwasm_vm::cosmwasm_std::Reply,
+			event_handler: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
+		) -> Result<Option<cosmwasm_vm::cosmwasm_std::Binary>, CosmwasmVMError<T>> {
+			EntryPointCaller::<ReplyCall>::setup(
+				vm.contract_address.clone().into_inner(),
+				vm.contract_address.clone().into_inner(),
+			)?
+			.continue_run(
+				vm.shared,
+				Default::default(),
+				&serde_json::to_vec(&reply).map_err(|_| Error::<T>::FailedToSerialize)?,
+				event_handler,
+			)
+		}
+
 		pub(crate) fn do_continue_migrate<'a>(
 			vm: &'a mut CosmwasmVM<T>,
 			contract: AccountIdOf<T>,
@@ -1463,16 +1482,17 @@ pub mod pallet {
 				None
 			};
 			let pinned = vm.shared.cache.code.contains_key(&info.code_id);
-			Ok(ContractInfoResponse {
-				code_id: info.code_id,
-				creator: CosmwasmAccount::<T>::new(info.instantiator.clone()).into(),
-				admin: info.admin.map(|admin| CosmwasmAccount::<T>::new(admin).into()),
-				pinned,
-				ibc_port,
-			})
+			let creator = CosmwasmAccount::<T>::new(info.instantiator.clone());
+			let mut contract_info_response = ContractInfoResponse::new(info.code_id, creator);
+			contract_info_response.admin =
+				info.admin.map(|admin| CosmwasmAccount::<T>::new(admin).into());
+			contract_info_response.pinned = pinned;
+			contract_info_response.ibc_port = ibc_port;
+
+			Ok(contract_info_response)
 		}
 
-		pub(crate) fn do_query_continuation<'a>(
+		pub(crate) fn do_continue_query<'a>(
 			vm: &'a mut CosmwasmVM<T>,
 			contract: AccountIdOf<T>,
 			message: &[u8],

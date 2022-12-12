@@ -12,7 +12,7 @@ use core::marker::PhantomData;
 
 use cosmwasm_vm::{
 	cosmwasm_std::{Binary, Coin, Event as CosmwasmEvent},
-	executor::{ExecuteCall, InstantiateCall, MigrateCall},
+	executor::{ExecuteCall, InstantiateCall, MigrateCall, ReplyCall},
 	system::{
 		cosmwasm_system_entrypoint, cosmwasm_system_entrypoint_serialize, cosmwasm_system_run,
 		CosmwasmCallVM, CosmwasmCodeId, StargateCosmwasmCallVM,
@@ -45,6 +45,8 @@ impl CallerState for MigrateCall {}
 impl CallerState for InstantiateCall {}
 
 impl CallerState for ExecuteCall {}
+
+impl CallerState for ReplyCall {}
 
 impl<I, O, T: Config> CallerState for Dispatchable<I, O, T> {}
 
@@ -114,6 +116,29 @@ impl EntryPointCaller<ExecuteCall> {
 		Ok(EntryPointCaller {
 			state: Dispatchable {
 				entry_point: EntryPoint::Execute,
+				sender: executor,
+				contract,
+				contract_info,
+				output: (),
+				marker: PhantomData,
+			},
+		})
+	}
+}
+
+impl EntryPointCaller<ReplyCall> {
+	/// Prepares for `reply` entrypoint call.
+	///
+	/// * `executor` - Address of the account that calls this entrypoint.
+	/// * `contract` - Address of the contract to be called.
+	pub(crate) fn setup<T: Config>(
+		executor: AccountIdOf<T>,
+		contract: AccountIdOf<T>,
+	) -> Result<EntryPointCaller<Dispatchable<ReplyCall, (), T>>, Error<T>> {
+		let contract_info = Pallet::<T>::contract_info(&contract)?;
+		Ok(EntryPointCaller {
+			state: Dispatchable {
+				entry_point: EntryPoint::Reply,
 				sender: executor,
 				contract,
 				contract_info,

@@ -291,13 +291,13 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		Pallet::<T>::do_contract_meta(address.into_inner())
 	}
 
-	fn query_continuation(
+	fn continue_query(
 		&mut self,
 		address: Self::Address,
 		message: &[u8],
 	) -> Result<cosmwasm_vm::executor::QueryResult, Self::Error> {
 		log::debug!(target: "runtime::contracts", "query_continuation");
-		Pallet::<T>::do_query_continuation(self, address.into_inner(), message)
+		Pallet::<T>::do_continue_query(self, address.into_inner(), message)
 	}
 
 	fn continue_execute(
@@ -309,6 +309,15 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 	) -> Result<Option<cosmwasm_vm::cosmwasm_std::Binary>, Self::Error> {
 		log::debug!(target: "runtime::contracts", "continue_execute");
 		Pallet::<T>::do_continue_execute(self, address.into_inner(), funds, message, event_handler)
+	}
+
+	fn continue_reply(
+		&mut self,
+		message: cosmwasm_vm::cosmwasm_std::Reply,
+		event_handler: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
+	) -> Result<Option<cosmwasm_vm::cosmwasm_std::Binary>, Self::Error> {
+		log::debug!(target: "runtime::contracts", "continue_reply");
+		Pallet::<T>::do_continue_reply(self, message, event_handler)
 	}
 
 	fn continue_instantiate(
