@@ -107,9 +107,7 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// The crowdloan has been initialized or set to initialize at some time.
-		Initialized {
-			at: MomentOf<T>,
-		},
+		Initialized { at: MomentOf<T> },
 		/// A claim has been made.
 		Claimed {
 			remote_account: RemoteAccountOf<T>,
@@ -117,26 +115,16 @@ pub mod pallet {
 			amount: T::Balance,
 		},
 		/// A remote account has been associated with a reward account.
-		Associated {
-			remote_account: RemoteAccountOf<T>,
-			reward_account: T::AccountId,
-		},
+		Associated { remote_account: RemoteAccountOf<T>, reward_account: T::AccountId },
 		/// The crowdloan was successfully initialized, but with excess funds that won't be
 		/// claimed.
-		OverFunded {
-			excess_funds: T::Balance,
-		},
+		OverFunded { excess_funds: T::Balance },
 		/// A portion of rewards have been unlocked and future claims will not have locks
-		RewardsUnlocked {
-			at: MomentOf<T>,
-		},
-		///
-		RewardsAdded {
-			additions: Vec<(RemoteAccountOf<T>, RewardAmountOf<T>, VestingPeriodOf<T>)>,
-		},
-		RewardsDeleted {
-			deletions: Vec<RemoteAccountOf<T>>,
-		},
+		RewardsUnlocked { at: MomentOf<T> },
+		/// Called after rewards have been added through the `add` extrinsic.
+		RewardsAdded { additions: Vec<(RemoteAccountOf<T>, RewardAmountOf<T>, VestingPeriodOf<T>)> },
+		/// Called after rewards have been deleted through the `delete` extrinsic.
+		RewardsDeleted { deletions: Vec<RemoteAccountOf<T>> },
 	}
 
 	#[pallet::error]
@@ -362,7 +350,8 @@ pub mod pallet {
 			deletions: Vec<(RemoteAccountOf<T>, BalanceOf<T>)>,
 		) -> DispatchResult {
 			T::AdminOrigin::ensure_origin(origin)?;
-			Self::do_delete(deletions)?;
+			Self::do_delete(&deletions)?;
+			Self::deposit_event(Event::RewardsDeleted { deletions });
 			Ok(())
 		}
 
@@ -374,7 +363,8 @@ pub mod pallet {
 			additions: Vec<(RemoteAccountOf<T>, RewardAmountOf<T>, VestingPeriodOf<T>)>,
 		) -> DispatchResult {
 			T::AdminOrigin::ensure_origin(origin)?;
-			Self::do_add(additions)?;
+			Self::do_add(&additions)?;
+			Self::deposit_event(Event::RewardsAdded { additions });
 			Ok(())
 		}
 	}
@@ -397,7 +387,7 @@ pub mod pallet {
 		///   change
 		/// storage.
 		pub(crate) fn do_delete(
-			deletions: Vec<(RemoteAccountOf<T>, BalanceOf<T>)>,
+			deletions: &[(RemoteAccountOf<T>, BalanceOf<T>)],
 		) -> DispatchResult {
 			let mut total_rewards: T::Balance = TotalRewards::<T>::get();
 			let mut total_contributors: u32 = TotalContributors::<T>::get();
@@ -422,7 +412,7 @@ pub mod pallet {
 
 		/// Add new rewards to the pallet. Updates total_rewards and contributors accordingly.
 		pub fn do_add(
-			additions: Vec<(RemoteAccountOf<T>, RewardAmountOf<T>, VestingPeriodOf<T>)>,
+			additions: &[(RemoteAccountOf<T>, RewardAmountOf<T>, VestingPeriodOf<T>)],
 		) -> DispatchResult {
 			Self::in_uninitialized(|| Self::do_populate(additions))
 		}
