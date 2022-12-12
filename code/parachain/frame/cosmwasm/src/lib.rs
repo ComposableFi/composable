@@ -220,8 +220,6 @@ pub mod pallet {
 		ContractAlreadyExists,
 		ContractNotFound,
 		TransferFailed,
-		ChargeGas,
-		RefundGas,
 		LabelTooBig,
 		UnknownDenom,
 		StackOverflow,
@@ -236,6 +234,7 @@ pub mod pallet {
 		Unsupported,
 		Ibc,
 		FailedToSerialize,
+    OutOfGas
 	}
 
 	#[pallet::config]
@@ -749,7 +748,7 @@ pub mod pallet {
 			initial_gas: u64,
 			remaining_gas: u64,
 		) -> DispatchResultWithPostInfo {
-			log::debug!(target: "runtime::contracts", "outcome: {:?}", outcome);
+			log::info!(target: "runtime::contracts", "outcome: {:?}", outcome);
 			let post_info = PostDispatchInfo {
 				actual_weight: Some(initial_gas.saturating_sub(remaining_gas)),
 				pays_fee: Pays::Yes,
@@ -759,6 +758,7 @@ pub mod pallet {
 				Err(e) => {
 					let e = match e {
 						CosmwasmVMError::Pallet(e) => e,
+            CosmwasmVMError::OutOfGas => Error::<T>::OutOfGas,
 						_ => Error::<T>::ContractTrapped,
 					};
 					Err(DispatchErrorWithPostInfo { error: e.into(), post_info })

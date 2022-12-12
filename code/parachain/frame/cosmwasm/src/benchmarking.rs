@@ -56,23 +56,26 @@ const INSTRUCTIONS_SAMPLE_COUNT: u32 = 50;
 //
 // We also used `SyncUnsafeCell` to be able to borrow the `shared vm` as  mutable. `Mutex` could
 // have been used but again, we don't want to pay for `Mutex` during benchmarking.
-//
-// One important note is benchmarks that use the shared state uses this static variable. Because
-// they don't care about whether the state is changed or not. Beware of this and if you want to use
-// a clean state, create a new static.
 lazy_static! {
-	static ref SHARED_VM: SyncUnsafeCell<CosmwasmVMShared> =
+	static ref SHARED_VM: SyncUnsafeCell<CosmwasmVMShared> = {
+		env_logger::init();
 		SyncUnsafeCell::new(CosmwasmVMShared {
 			storage_readonly_depth: 0,
 			depth: 0,
-			gas: Gas::new(64, 1_000_000_000_000_000_000u64),
+			gas: Gas::new(64, u64::MAX),
 			cache: CosmwasmVMCache { code: Default::default() },
-		});
+		})
+	};
 }
 
 /// Get a mutable reference to the shared vm
 fn get_shared_vm() -> &'static mut CosmwasmVMShared {
-	unsafe { SHARED_VM.get().as_mut().unwrap() }
+	let mut shared = unsafe { SHARED_VM.get().as_mut().unwrap() };
+	shared.gas = Gas::new(64, u64::MAX);
+	shared.depth = 0;
+	shared.storage_readonly_depth = 0;
+	shared.cache = CosmwasmVMCache { code: Default::default() };
+	shared
 }
 
 /// Create a CosmWasm module with additional custom functions
@@ -313,7 +316,7 @@ benchmarks! {
 			.unwrap();
 			funds.insert(currency_id.into(), (1_000_000_000_000_000_000u128.into(), false));
 		}
-	}: _(RawOrigin::Signed(origin.clone()), CodeIdentifier::CodeId(1), salt.clone(), None, label.clone(), funds.try_into().unwrap(), 100_000_000u64, message.clone())
+	}: _(RawOrigin::Signed(origin.clone()), CodeIdentifier::CodeId(1), salt.clone(), None, label.clone(), funds.try_into().unwrap(), 1_000_000_000_000u64, message.clone())
 	verify {
 		// Make sure refcount is increased
 		assert_eq!(CodeIdToInfo::<T>::get(1).unwrap().refcount, 1);
@@ -353,7 +356,7 @@ benchmarks! {
 			.unwrap();
 			funds.insert(currency_id.into(), (1_000_000_000_000_000_000u128.into(), false));
 		}
-	}: _(RawOrigin::Signed(origin), contract, funds.try_into().unwrap(), 100_000_000u64, message)
+	}: _(RawOrigin::Signed(origin), contract, funds.try_into().unwrap(), 1_000_000_000_000u64, message)
 
 	migrate {
 		let origin = create_funded_account::<T>("origin");
@@ -369,7 +372,7 @@ benchmarks! {
 			pristine_code_hash,
 			..
 		} = CodeIdToInfo::<T>::get(1).unwrap();
-	}: _(RawOrigin::Signed(origin), contract.clone(), CodeIdentifier::CodeId(2), 100_000_000u64, message)
+	}: _(RawOrigin::Signed(origin), contract.clone(), CodeIdentifier::CodeId(2), 1_000_000_000_000u64, message)
 	verify {
 		// Make sure code id doesn't exist
 		assert_eq!(CodeIdToInfo::<T>::contains_key(1), false);
