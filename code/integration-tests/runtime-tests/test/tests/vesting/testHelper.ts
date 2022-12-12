@@ -161,9 +161,8 @@ export class vestedScheduleClaimVerifier {
       // Verifying moment based vested schedule claim
       const currentTime = new BN(Date.now());
       const pastSinceStart = BN.min(currentTime.sub(start), end);
-      expectedClaimAmount = schedulePerPeriod
-        .mul(pastSinceStart.div(schedulePeriodLength))
-      if (!expectedClaimAmount.eqn(0)) expectedClaimAmount = expectedClaimAmount.sub(schedulePerPeriod)
+      expectedClaimAmount = schedulePerPeriod.mul(pastSinceStart.div(schedulePeriodLength));
+      if (!expectedClaimAmount.eqn(0)) expectedClaimAmount = expectedClaimAmount.sub(schedulePerPeriod);
     } else {
       // Verifying block number based vested schedule claim
       const currentBlock = await this.api.query.system.number();
