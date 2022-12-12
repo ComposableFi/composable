@@ -21,13 +21,17 @@ inputs:
   working-directory: 
     description: "Directory to execute command"
     required: false
+  nix-sandbox: 
+    description: "nix option sandbox value"
+    required: false
+    default: "relaxed"
 
 runs:
   using: "composite"
   steps:
     - run: |
         echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-        echo "sandbox = relaxed" >> /etc/nix/nix.conf
+        echo "sandbox = ${{ inputs.nix-sandbox }}" >> /etc/nix/nix.conf
         echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
       shell: "bash"
     - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
