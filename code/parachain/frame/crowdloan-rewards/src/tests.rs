@@ -204,6 +204,7 @@ fn test_delete_ok() {
 		assert_eq!(CrowdloanRewards::total_rewards(), expected_total_rewards);
 		assert_eq!(CrowdloanRewards::claimed_rewards(), 0);
 		CrowdloanRewards::delete(Origin::root(), rewards).unwrap();
+		assert_eq!(CrowdloanRewards::total_rewards(), 0);
 	});
 }
 
