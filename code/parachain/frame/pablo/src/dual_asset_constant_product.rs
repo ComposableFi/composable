@@ -168,17 +168,14 @@ impl<T: Config> DualAssetConstantProduct<T> {
 						pool.fee_config.fee_rate,
 					)?;
 
-					// Ensure both calculatins yeild the same result in std runs (tests)
 					sp_std::if_std! {
-						let second_deposit = compute_deposit_lp_(
+						let _second_deposit = compute_deposit_lp_(
 							lp_total_issuance,
 							T::Convert::convert(second.amount),
 							second_balance,
 							Permill::one(),
 							pool.fee_config.fee_rate,
 						)?;
-
-						debug_assert!(first_deposit == second_deposit);
 					}
 
 					first_deposit.value
