@@ -20,23 +20,11 @@ jobs:
         image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3  
-      - name: Configure nix.conf
-        run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+      - uses: "./.github/templates/watch-exec"
         with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          name: ${{ env.CACHIX_COMPOSABLE }}
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-      - name: Build docs-static
-        working-directory: ./docs
-        run: cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#docs-static --no-update-lock-file --show-trace -L
+          command: nix -- build .#docs-static
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          working-directory: "./docs"
       - name: Use nodejs in the env for Firebase
         run: nix-env -iA nixpkgs.nodejs
       - uses: FirebaseExtended/action-hosting-deploy@0f248036885ae672f78587669fa2923f0ef6cac2
