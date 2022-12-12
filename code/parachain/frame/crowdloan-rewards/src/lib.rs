@@ -344,16 +344,19 @@ pub mod pallet {
 
 		/// Deletes all accounts provided in the `deletions` vector. If the provided `Balance` does
 		/// not match the current balance of the account, the deletion will fail.
-		#[pallet::weight(<T as Config>::WeightInfo::populate(deletions.len() as _))]
-		pub fn delete(
-			origin: OriginFor<T>,
-			deletions: Vec<(RemoteAccountOf<T>, BalanceOf<T>)>,
-		) -> DispatchResult {
-			T::AdminOrigin::ensure_origin(origin)?;
-			Self::do_delete(&deletions)?;
-			Self::deposit_event(Event::RewardsDeleted { deletions });
-			Ok(())
-		}
+		// Chosen to remove this as we wish to avoid auditing before release. Instead
+		// the add extrinsic may be used to set an accounts reward to 0.
+		// A unit test is present but also commented in tests.rs
+		// #[pallet::weight(<T as Config>::WeightInfo::populate(deletions.len() as _))]
+		// pub fn delete(
+		// 	origin: OriginFor<T>,
+		// 	deletions: Vec<(RemoteAccountOf<T>, BalanceOf<T>)>,
+		// ) -> DispatchResult {
+		// 	T::AdminOrigin::ensure_origin(origin)?;
+		// 	Self::do_delete(&deletions)?;
+		// 	Self::deposit_event(Event::RewardsDeleted { deletions });
+		// 	Ok(())
+		// }
 
 		/// Adds all accounts in the `additions` vector. Add may be called even if the pallet has
 		/// been initialized.
