@@ -13,101 +13,83 @@ Making a process to handle a large-scale flaky brittle solution (not monorepo or
 
 ## Definitions
 
-[`Effect`](https://docs.hercules-ci.com/hercules-ci/effects/) [`gate`](https://learn.microsoft.com/en-us/azure/devops/pipelines/release/approvals/gates?view=azure-devops) is linter checks and automated tests which runs as part of CI before code modification applied to shared codebase or published to shared artifacts storage. 
-This RFC concentrates on automated effects gates which are usually tests. So uses check, gate and test interchangeably.
+[`Effect`](https://docs.hercules-ci.com/hercules-ci/effects/) [`gate`](https://learn.microsoft.com/en-us/azure/devops/pipelines/release/approvals/gates?view=azure-devops) is linter checks 
+and automated tests which run as part of CI before code modification applied to a shared codebase or published to shared artifacts storage(deployed). 
+This RFC concentrates on automated effects gates which are usually tests. It uses check, gate, and test interchangeably.
 
-[Flaky](https://docs.gitlab.com/ee/development/testing_guide/flaky_tests.html) tests is test which fails randomly on random CI job runs without changes in codebase it depend on. 
-Same gate may run several times without any changes to gate or to dependant artifacts and yet fail with network, file system, permissions or any other errors sometimes. 
+[Flaky](https://docs.gitlab.com/ee/development/testing_guide/flaky_tests.html) test
+is a test that fails randomly on random CI job runs without (breaking) changes in the codebase it depends on. 
+A flaky gate may run several times without any changes to the gate or dependant artifacts
+and yet fail with a network, file system, permissions, or any other errors sometimes. 
 While sometimes passing with no error.
  
 **Example**
 
-Integration tests fails sometimes because of timeout, sometimes because of network instability and sometimes with assertion error which is not repeatable.
+> An integration test fail sometimes because of a timeout, sometimes because of network instability in logs (HTTP/TPC/CURL/etc. errors) and sometimes with assertion error which is not repeatable.
 
-[Brittle] gates fail when changes done to code they depend on because they check assumptions which are not relevant to what they are actually checking. 
+[Brittle](https://softwareengineering.stackexchange.com/questions/356236/definition-of-brittle-unit-tests) gates fail when changes were done to the code they depend on
+because they check assumptions that are not relevant to what they are actually checking, and these assumptions are wrong.
 
 **Example**
 
-Integration test asserts change in value by asserting absolute values before and after check. Absolute values could change, while differences will not. Test will fail without any real [regression](https://en.wikipedia.org/wiki/Regression_testing).
+> An integration test asserts change in value by asserting absolute values before and after action. An absolute value could change, while differences will not. The gate will fail without any [regression](https://en.wikipedia.org/wiki/Regression_testing).
 
 ### Deeper definitions
 
 Flaky and brittle gates are [false positive](https://en.wikipedia.org/wiki/False_positives_and_false_negatives) gate failures.
 
-Flaky gates are results of badly managed [non determinism](https://en.wikipedia.org/wiki/Nondeterministic_algorithm).
+Flaky gates happen as consequence of a improper managed [non determinism](https://en.wikipedia.org/wiki/Nondeterministic_algorithm).
 
-Brittle gates are results of sloppy and low quality(may be tactically applied) engineering practices.
+Brittle gates happen as consequences sloppy and low quality(may be tactically reasoanble) engineering practices.
 
-## Why these are bad?
+## Why flaky and brittle gates are bad?
 
-Brittle tests slow down [merge](https://mergify.com/features/merge-queue) process, make CI `red` and take time of developers to double check same failures again and again.
+Brittle tests slow down [merge](https://mergify.com/features/merge-queue) process, make CI `red`, and cosume development resoruces to double check same failures repeatedly. 
 
-Flaky tests make asynchronous and yet high quality automate product delivery very hard.  Changes must be synced across parties and prevents value delivery in small pieces. That increase delivery time.
+Flaky tests make asynchronous and yet high quality automate product delivery very hard.  All changes must be synced across parties, that prevents value delivery in small pieces. Delivery time increased.
+
+Both lead to [alert fatigue](https://en.wikipedia.org/wiki/Alarm_fatigue) , which leads to real issues and regression are ingnored. A quality of output decreases. Resources spent on automation wasted.
 
 ## Solutions
 
 ### For Flaky 
 
-Flaky effect gates are disabled.
+Flaky effect gates are disabled by default in CI pipeline.
 
 Flaky effect gates are run only on items which market with `#flaky` hashtag or `flaky` label.
 
-Later such gates are enabled again if there was fix for making them less flaky.
+Later such gates are enabled again if there was an attempt to fix them.
 
 Deciding if test is flaky or complex regression out of scope of this RFC. 
 
-https://www.guru99.com/positive-and-negative-testing.html
 
-**Examples**
+Possible things to do with flaky tests:
 
-Integration tests
-
-- Depend flaky test only after non flaky run (example, integrations tests run only after basic performance tests or infrastructure liveness checks )
-- Temporal condition is changed to be event based(logic) condition.
-- Increase hardware resources provided to test (faster tests run)
+- Depend flaky test only on success after non flaky run. For examples, integrations tests are se to run only after basic performance or infrastructure liveness checks.
+- Temporal conditio(wait some time) is changed to event based(data presence) condition.
+- Increase hardware resources provided to test run
 
 ### For brittle
 
-Brittle tests is `skipped` with reference to failures to unblock merge queue. 
+Brittle tests is `skipped` with reference to failures to unblock merge queue.
 
 These should be fixed is an agreeably less brittle way to avoid failure repetition.
 
-**Example**
+Possible things to do with brittle tests:
 
-
-before after,
-
-invariant of amount and relation
-
-There are many other ways to make tests less brittle. 
-
-Name a few without reference:
-
-- Invariant (we test)
-
-
-- Tests hierarchies by the complexity of setup and assertions
-- Positive/negative testing (https://www.guru99.com/positive-and-negative-testing.html)
-- Refactoring to reuse parts
-- Constraints(relations) testing (we tests)
-- Property test ()
+- Capture value before action and compare with after action, not absolute 
+- Test invariants, relations, constraints and properties.
+- Refactor to reuse parts, specifically toward tests hierarchies by the complexity of setup and assertions (exampl,e previos simler test becomes setup of part of more complex tests)
+- [Positive/negative testing](https://www.guru99.com/positive-and-negative-testing.html)
 - Types (impossible states will not compile)
 
-These approaches not only make tests less brittle, but less amount of test code delivers more quality assurance with less work.
-
+These approaches not only make tests less brittle, but ensure fewer lines of a test code deliver more coverage.
 
 ## But disabling checks is bad ? 
 
-First, we enable flaky and brittle tests to be run and part of code base. So we allow them to be compiled and part of suite for human decision instead of being removed or commented out.
+First, we retain flaky and brittle tests to be run and be part of code base. We allow them to be compiled and run for human decision instead of being removed or commented out. So we allow there to be more tests to be here than without described approach.
 
-So we enable more tests.
-
-Second, sure if you know fix and fix will not break again same way and fix easy is - do it. So disabling is formal option to agree, but can solve faster if you know how and have capacity.
-
+Second, if you know fix and fix will not break again same way and fix easy is - do it. So disabling is formal option to align, but can solve faster if you know how and have capacity.
 
 Third, 
-For more cpmplicared 
-It will be harded to asssure release quality. There would be request to automated. 
-
-Automation would have choose either run manually gates and evaluate depending on domain knowledge, or make attemts for decisivi fixes knowing well what it is expected from them to do. 
-CI will be greener, deliver faster and more high qualit features to users.   
+If it end up to harded to asssure release quality. There could be urge to to more automated gates.  Automation would have choose either run manually gates and evaluate flaky/brittle results depending on domain knowledge, or make attempts to fix some flaky/brittle tests.
