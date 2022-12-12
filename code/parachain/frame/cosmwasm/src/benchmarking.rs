@@ -11,8 +11,7 @@ use alloc::{
 	borrow::ToOwned, boxed::Box, collections::BTreeMap, format, string::String, vec, vec::Vec,
 };
 use core::{cell::SyncUnsafeCell, marker::PhantomData};
-use cosmwasm_minimal_std::Coin;
-use cosmwasm_vm::{executor::InstantiateInput, system::CosmwasmContractMeta};
+use cosmwasm_vm::{cosmwasm_std::Coin, executor::InstantiateCall, system::CosmwasmContractMeta};
 use cosmwasm_vm_wasmi::code_gen::{self, Function, FunctionBuilder, WasmModule};
 use entrypoint::*;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
@@ -206,7 +205,7 @@ where
 	Cosmwasm::<T>::do_upload(&origin, wasm_module.code.try_into().unwrap()).unwrap();
 
 	// 3. Instantiate the contract and get the contract address
-	let contract_addr = EntryPointCaller::<InstantiateInput>::setup::<T>(
+	let contract_addr = EntryPointCaller::<InstantiateCall>::setup::<T>(
 		origin.clone(),
 		1,
 		"salt".as_bytes(),

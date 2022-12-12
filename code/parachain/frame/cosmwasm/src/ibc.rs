@@ -10,12 +10,9 @@ use alloc::{
 
 use cosmwasm_vm::{
 	cosmwasm_std::{
-		ibc::{
-			IbcAcknowledgement, IbcChannel, IbcChannelCloseMsg, IbcChannelConnectMsg,
-			IbcChannelOpenMsg, IbcEndpoint, IbcOrder, IbcPacket, IbcPacketAckMsg,
-			IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
-		},
-		Addr, Binary, ContractResult, Env, MessageInfo,
+		Addr, Binary, ContractResult, Env, IbcAcknowledgement, IbcChannel, IbcChannelCloseMsg,
+		IbcChannelConnectMsg, IbcChannelOpenMsg, IbcEndpoint, IbcOrder, IbcPacket, IbcPacketAckMsg,
+		IbcPacketReceiveMsg, IbcPacketTimeoutMsg, MessageInfo,
 	},
 	executor::{
 		cosmwasm_call_serialize,
@@ -83,12 +80,12 @@ impl<T: Config> Pallet<T> {
 		vm: &mut CosmwasmVM<T>,
 		channel_id: String,
 		to_address: String,
-		amount: cosmwasm_minimal_std::Coin,
-		_timeout: cosmwasm_minimal_std::ibc::IbcTimeout,
+		amount: cosmwasm_vm::cosmwasm_std::Coin,
+		_timeout: cosmwasm_vm::cosmwasm_std::IbcTimeout,
 	) -> Result<(), CosmwasmVMError<T>> {
 		let channel_id = ChannelId::from_str(channel_id.as_ref())
 			.map_err(|_| <CosmwasmVMError<T>>::Ibc("channel name is not valid".to_string()))?;
-		let address: cosmwasm_minimal_std::Addr = vm.contract_address.clone().into();
+		let address: cosmwasm_vm::cosmwasm_std::Addr = vm.contract_address.clone().into();
 
 		let _port_id = PortId::from_str(address.as_str())
 			.expect("all pallet instanced contract addresses are valid port names; qwe");
@@ -121,8 +118,8 @@ impl<T: Config> Pallet<T> {
 	pub(crate) fn do_ibc_send_packet(
 		vm: &mut CosmwasmVM<T>,
 		channel_id: String,
-		data: cosmwasm_minimal_std::Binary,
-		_timeout: cosmwasm_minimal_std::ibc::IbcTimeout,
+		data: cosmwasm_vm::cosmwasm_std::Binary,
+		_timeout: cosmwasm_vm::cosmwasm_std::IbcTimeout,
 	) -> Result<(), CosmwasmVMError<T>> {
 		let port_id = PortId::from_str(&Self::do_compute_ibc_contract_port(
 			vm.contract_address.as_ref().clone(),
@@ -148,7 +145,7 @@ impl<T: Config> Pallet<T> {
 	) -> Result<(), CosmwasmVMError<T>> {
 		let channel_id = ChannelId::from_str(channel_id.as_ref())
 			.map_err(|_| <CosmwasmVMError<T>>::Ibc("channel name is not valid".to_string()))?;
-		let address: cosmwasm_minimal_std::Addr = vm.contract_address.clone().into();
+		let address: cosmwasm_vm::cosmwasm_std::Addr = vm.contract_address.clone().into();
 
 		let port_id = PortId::from_str(address.as_str())
 			.expect("all pallet instanced contract addresses are valid port names; qwe");

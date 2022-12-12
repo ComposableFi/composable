@@ -3,8 +3,8 @@ use crate::{
 	runtimes::abstraction::GasOutcome, weights::WeightInfo, Config, ContractInfoOf, Pallet,
 };
 use alloc::string::String;
-use cosmwasm_minimal_std::{Coin, ContractInfoResponse, Empty, Env, MessageInfo};
 use cosmwasm_vm::{
+	cosmwasm_std::{Coin, ContractInfoResponse, Empty, Env, MessageInfo},
 	executor::ExecutorError,
 	has::Has,
 	memory::{
@@ -254,7 +254,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		&mut self,
 		_start: Option<Self::StorageKey>,
 		_end: Option<Self::StorageKey>,
-		_order: cosmwasm_minimal_std::Order,
+		_order: cosmwasm_vm::cosmwasm_std::Order,
 	) -> Result<u32, Self::Error> {
 		log::debug!(target: "runtime::contracts", "db_scan");
 		Pallet::<T>::do_db_scan(self)
@@ -305,8 +305,8 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		address: Self::Address,
 		funds: Vec<Coin>,
 		message: &[u8],
-		event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
-	) -> Result<Option<cosmwasm_minimal_std::Binary>, Self::Error> {
+		event_handler: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
+	) -> Result<Option<cosmwasm_vm::cosmwasm_std::Binary>, Self::Error> {
 		log::debug!(target: "runtime::contracts", "continue_execute");
 		Pallet::<T>::do_continue_execute(self, address.into_inner(), funds, message, event_handler)
 	}
@@ -316,8 +316,8 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		contract_meta: Self::ContractMeta,
 		funds: Vec<Coin>,
 		message: &[u8],
-		event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
-	) -> Result<(Self::Address, Option<cosmwasm_minimal_std::Binary>), Self::Error> {
+		event_handler: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
+	) -> Result<(Self::Address, Option<cosmwasm_vm::cosmwasm_std::Binary>), Self::Error> {
 		log::debug!(target: "runtime::contracts", "continue_instantiate");
 		Pallet::<T>::do_continue_instantiate(self, contract_meta, funds, message, event_handler)
 			.map(|r| (self.contract_address.clone(), r))
@@ -327,8 +327,8 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		&mut self,
 		address: Self::Address,
 		message: &[u8],
-		event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
-	) -> Result<Option<cosmwasm_minimal_std::Binary>, Self::Error> {
+		event_handler: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
+	) -> Result<Option<cosmwasm_vm::cosmwasm_std::Binary>, Self::Error> {
 		log::debug!(target: "runtime::contracts", "continue_migrate");
 		Pallet::<T>::do_continue_migrate(self, address.into_inner(), message, event_handler)
 	}
@@ -337,7 +337,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		&mut self,
 		_: Self::QueryCustom,
 	) -> Result<
-		cosmwasm_minimal_std::SystemResult<cosmwasm_vm::executor::CosmwasmQueryResult>,
+		cosmwasm_vm::cosmwasm_std::SystemResult<cosmwasm_vm::executor::CosmwasmQueryResult>,
 		Self::Error,
 	> {
 		log::debug!(target: "runtime::contracts", "query_custom");
@@ -347,8 +347,8 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 	fn message_custom(
 		&mut self,
 		_: Self::MessageCustom,
-		_: &mut dyn FnMut(cosmwasm_minimal_std::Event),
-	) -> Result<Option<cosmwasm_minimal_std::Binary>, Self::Error> {
+		_: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
+	) -> Result<Option<cosmwasm_vm::cosmwasm_std::Binary>, Self::Error> {
 		log::debug!(target: "runtime::contracts", "message_custom");
 		Err(CosmwasmVMError::Unsupported)
 	}
@@ -574,7 +574,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		channel_id: String,
 		to_address: String,
 		amount: Coin,
-		timeout: cosmwasm_minimal_std::ibc::IbcTimeout,
+		timeout: cosmwasm_vm::cosmwasm_std::IbcTimeout,
 	) -> Result<(), Self::Error> {
 		Pallet::<T>::do_ibc_transfer(self, channel_id, to_address, amount, timeout)
 	}
@@ -582,8 +582,8 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 	fn ibc_send_packet(
 		&mut self,
 		channel_id: String,
-		data: cosmwasm_minimal_std::Binary,
-		timeout: cosmwasm_minimal_std::ibc::IbcTimeout,
+		data: cosmwasm_vm::cosmwasm_std::Binary,
+		timeout: cosmwasm_vm::cosmwasm_std::IbcTimeout,
 	) -> Result<(), Self::Error> {
 		Pallet::<T>::do_ibc_send_packet(self, channel_id, data, timeout)
 	}

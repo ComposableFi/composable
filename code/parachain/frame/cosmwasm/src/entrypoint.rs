@@ -9,10 +9,10 @@ use alloc::{
 };
 use composable_support::abstractions::utils::increment::Increment;
 use core::marker::PhantomData;
-use cosmwasm_minimal_std::{Binary, Coin, Event as CosmwasmEvent};
 
 use cosmwasm_vm::{
-	executor::{ExecuteInput, InstantiateInput, MigrateInput},
+	cosmwasm_std::{Binary, Coin, Event as CosmwasmEvent},
+	executor::{ExecuteCall, InstantiateCall, MigrateCall},
 	system::{
 		cosmwasm_system_entrypoint, cosmwasm_system_entrypoint_serialize, cosmwasm_system_run,
 		CosmwasmCallVM, CosmwasmCodeId, StargateCosmwasmCallVM,
@@ -40,16 +40,16 @@ pub struct Dispatchable<I, O, T: Config> {
 
 pub trait CallerState {}
 
-impl CallerState for MigrateInput {}
+impl CallerState for MigrateCall {}
 
-impl CallerState for InstantiateInput {}
+impl CallerState for InstantiateCall {}
 
-impl CallerState for ExecuteInput {}
+impl CallerState for ExecuteCall {}
 
 impl<I, O, T: Config> CallerState for Dispatchable<I, O, T> {}
 
 /// Setup state for `instantiate` entrypoint.
-impl EntryPointCaller<InstantiateInput> {
+impl EntryPointCaller<InstantiateCall> {
 	/// Prepares for `instantiate` entrypoint call.
 	///
 	/// * `instantiator` - Address of the account that calls this entrypoint.
@@ -60,7 +60,7 @@ impl EntryPointCaller<InstantiateInput> {
 		admin: Option<AccountIdOf<T>>,
 		label: ContractLabelOf<T>,
 		message: &[u8],
-	) -> Result<EntryPointCaller<Dispatchable<InstantiateInput, AccountIdOf<T>, T>>, Error<T>> {
+	) -> Result<EntryPointCaller<Dispatchable<InstantiateCall, AccountIdOf<T>, T>>, Error<T>> {
 		let code_hash = CodeIdToInfo::<T>::get(code_id)
 			.ok_or(Error::<T>::CodeNotFound)?
 			.pristine_code_hash;
@@ -101,7 +101,7 @@ impl EntryPointCaller<InstantiateInput> {
 	}
 }
 
-impl EntryPointCaller<ExecuteInput> {
+impl EntryPointCaller<ExecuteCall> {
 	/// Prepares for `execute` entrypoint call.
 	///
 	/// * `executor` - Address of the account that calls this entrypoint.
@@ -109,7 +109,7 @@ impl EntryPointCaller<ExecuteInput> {
 	pub(crate) fn setup<T: Config>(
 		executor: AccountIdOf<T>,
 		contract: AccountIdOf<T>,
-	) -> Result<EntryPointCaller<Dispatchable<ExecuteInput, (), T>>, Error<T>> {
+	) -> Result<EntryPointCaller<Dispatchable<ExecuteCall, (), T>>, Error<T>> {
 		let contract_info = Pallet::<T>::contract_info(&contract)?;
 		Ok(EntryPointCaller {
 			state: Dispatchable {
@@ -125,7 +125,7 @@ impl EntryPointCaller<ExecuteInput> {
 }
 
 /// Setup state for `migrate` entrypoint.
-impl EntryPointCaller<MigrateInput> {
+impl EntryPointCaller<MigrateCall> {
 	/// Prepares for `migrate` entrypoint call.
 	///
 	/// * `migrator` - Address of the account that calls this entrypoint.
@@ -135,7 +135,7 @@ impl EntryPointCaller<MigrateInput> {
 		migrator: AccountIdOf<T>,
 		contract: AccountIdOf<T>,
 		new_code_id: CosmwasmCodeId,
-	) -> Result<EntryPointCaller<Dispatchable<MigrateInput, (), T>>, Error<T>> {
+	) -> Result<EntryPointCaller<Dispatchable<MigrateCall, (), T>>, Error<T>> {
 		let mut contract_info = Pallet::<T>::contract_info(&contract)?;
 		// If the contract is already migrated (which is the case for `continue_migrate`) don't try
 		// to migrate again.
@@ -246,8 +246,8 @@ where
 		shared: &mut CosmwasmVMShared,
 		funds: Vec<Coin>,
 		message: &[u8],
-		event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
-	) -> Result<Option<cosmwasm_minimal_std::Binary>, CosmwasmVMError<T>>
+		event_handler: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
+	) -> Result<Option<cosmwasm_vm::cosmwasm_std::Binary>, CosmwasmVMError<T>>
 	where
 		for<'x> WasmiVM<CosmwasmVM<'x, T>>: CosmwasmCallVM<I> + StargateCosmwasmCallVM,
 		for<'x> VmErrorOf<WasmiVM<CosmwasmVM<'x, T>>>: Into<CosmwasmVMError<T>>,
