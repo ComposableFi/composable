@@ -9,12 +9,12 @@ Then it describes process to handle such tests.
 
 Describing how to make gates not flaky and not brittle are mainly out of scope of this RFC.
 
-Making process to handle large scale always flaky and always brittle solution considered is out of scope of current state. 
+Making process to handle large scale always flaky and always brittle solution (non monorepo to speak or not automated or low engineering environments) are considered is out of scope of current state. 
 
 ## Definitions
 
 [`Effect`](https://docs.hercules-ci.com/hercules-ci/effects/) [`gate`](https://learn.microsoft.com/en-us/azure/devops/pipelines/release/approvals/gates?view=azure-devops) is linter checks and automated tests which runs as part of CI before code modification applied to shared codebase or published to shared artifacts storage. 
-This RFC concentrates on automated effects gates which are usually tests. So uses check, gate and test interchanbly.
+This RFC concentrates on automated effects gates which are usually tests. So uses check, gate and test interchangeably.
 
 [Flaky](https://docs.gitlab.com/ee/development/testing_guide/flaky_tests.html) tests is test which fails randomly on random CI job runs without changes in codebase it depend on. 
 Same gate may run several times without any changes to gate or to dependant artifacts and yet fail with network, file system, permissions or any other errors sometimes. 
@@ -28,7 +28,7 @@ Integration tests fails sometimes because of timeout, sometimes because of netwo
 
 **Example**
 
-Integration test asserts change in value by asserting absolute values before and after check. Absolute values could change, while difference will not. Test will fail without any real [regression](https://en.wikipedia.org/wiki/Regression_testing).
+Integration test asserts change in value by asserting absolute values before and after check. Absolute values could change, while differences will not. Test will fail without any real [regression](https://en.wikipedia.org/wiki/Regression_testing).
 
 ### Deeper definitions
 
@@ -36,7 +36,7 @@ Flaky and brittle gates are [false positive](https://en.wikipedia.org/wiki/False
 
 Flaky gates are results of badly managed [non determinism](https://en.wikipedia.org/wiki/Nondeterministic_algorithm).
 
-Brittle gates are results of sloppy and low quality engineering practices.
+Brittle gates are results of sloppy and low quality(may be tactically applied) engineering practices.
 
 ## Why these are bad?
 
@@ -62,22 +62,22 @@ https://www.guru99.com/positive-and-negative-testing.html
 
 Integration tests
 
-- Dependt flaky test only after non flaky run (example, integrations tests run only after basic performance tests or infrastucture liveness checks )
+- Depend flaky test only after non flaky run (example, integrations tests run only after basic performance tests or infrastructure liveness checks )
 - Temporal condition is changed to be event based(logic) condition.
-- Increase hardware resources provided to test (faster testsrun)
+- Increase hardware resources provided to test (faster tests run)
 
 ### For brittle
 
 Brittle tests is `skipped` with reference to failures to unblock merge queue. 
 
-These should be fixed is agreeably less brittle way to avoid failure repetition.
+These should be fixed is an agreeably less brittle way to avoid failure repetition.
 
 **Example**
 
 
 before after,
 
-invarint of amount and relation
+invariant of amount and relation
 
 There are many other ways to make tests less brittle. 
 
@@ -86,7 +86,7 @@ Name a few without reference:
 - Invariant (we test)
 
 
-- Tests hierarchies by complexity of setup and assertions
+- Tests hierarchies by the complexity of setup and assertions
 - Positive/negative testing (https://www.guru99.com/positive-and-negative-testing.html)
 - Refactoring to reuse parts
 - Constraints(relations) testing (we tests)

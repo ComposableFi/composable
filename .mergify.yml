@@ -10,6 +10,7 @@ pull_request_rules:
       - "#approved-reviews-by>=2"
       - base=main
       - -title~="#wip"
+      - check-success=effects-gate
     actions:
       queue:
         name: default
