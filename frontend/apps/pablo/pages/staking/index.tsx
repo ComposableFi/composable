@@ -2,13 +2,11 @@ import type { NextPage } from "next";
 import { Box, Container } from "@mui/material";
 import Default from "@/components/Templates/Default";
 import { PageTitle } from "@/components/Molecules";
-import { ConnectWalletFeaturedBox, Staking } from "@/components/Organisms";
-
-import { useDotSamaContext } from "substrate-react";
+import { Staking } from "@/components/Organisms";
+import { UnavailableFeature } from "@/components/Molecules/UnavailableFeature";
+import { UpcomingFeature } from "@/components/Atoms/UpcomingFeature";
 
 const StakingPage: NextPage = () => {
-  const { extensionStatus } = useDotSamaContext();
-  const connected = extensionStatus === "connected";
   return (
     <Default>
       <Container maxWidth="lg">
@@ -21,8 +19,11 @@ const StakingPage: NextPage = () => {
             title="Stake"
             subtitle="Lock PBLO to mint CHAOS, the yield bearing governance fNFT."
           />
+          <UnavailableFeature pageTitle={"Stake"} />
         </Box>
-        {connected ? <Staking mb={25} /> : <ConnectWalletFeaturedBox />}
+        <UpcomingFeature>
+          <Staking />
+        </UpcomingFeature>
       </Container>
     </Default>
   );

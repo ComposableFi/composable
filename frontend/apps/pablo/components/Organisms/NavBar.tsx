@@ -63,19 +63,12 @@ const MENU_ITEMS: MenuItemType[] = [
     matches: ["/staking"]
   },
   {
-    label: "Auctions",
-    path: "/auctions",
-    icon: dynamic(() => import("@mui/icons-material/HowToVoteRounded")),
-    status: "active",
-    matches: ["/auctions"]
-  },
-  {
     label: "Picasso",
     path: "/picasso",
     icon: dynamic(() => import("@mui/icons-material/Autorenew")),
     status: "active",
     endAdornment: (
-      <Link href="https://picasso.composable.finance/">
+      <Link href="https://picasso.xyz/" target="_blank">
         <IconButton>
           <OpenInNew />
         </IconButton>
