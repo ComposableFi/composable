@@ -344,16 +344,19 @@ pub mod pallet {
 
 		/// Deletes all accounts provided in the `deletions` vector. If the provided `Balance` does
 		/// not match the current balance of the account, the deletion will fail.
-		#[pallet::weight(<T as Config>::WeightInfo::populate(deletions.len() as _))]
-		pub fn delete(
-			origin: OriginFor<T>,
-			deletions: Vec<(RemoteAccountOf<T>, BalanceOf<T>)>,
-		) -> DispatchResult {
-			T::AdminOrigin::ensure_origin(origin)?;
-			Self::do_delete(deletions.clone())?;
-			Self::deposit_event(Event::RewardsDeleted { deletions });
-			Ok(())
-		}
+		//
+		// README: Disabled to reduce the amount of auditing work. When enabling, also enable the tests.
+		//
+		// #[pallet::weight(<T as Config>::WeightInfo::populate(deletions.len() as _))]
+		// pub fn delete(
+		// 	origin: OriginFor<T>,
+		// 	deletions: Vec<(RemoteAccountOf<T>, BalanceOf<T>)>,
+		// ) -> DispatchResult {
+		// 	T::AdminOrigin::ensure_origin(origin)?;
+		// 	Self::do_delete(deletions.clone())?;
+		// 	Self::deposit_event(Event::RewardsDeleted { deletions });
+		// 	Ok(())
+		// }
 
 		/// Adds all accounts in the `additions` vector. Add may be called even if the pallet has
 		/// been initialized.
@@ -387,7 +390,7 @@ pub mod pallet {
 		///   change
 		/// storage.
 		pub(crate) fn do_delete(
-			deletions: &[(RemoteAccountOf<T>, BalanceOf<T>)],
+			deletions: Vec<(RemoteAccountOf<T>, BalanceOf<T>)>,
 		) -> DispatchResult {
 			let mut total_rewards: T::Balance = TotalRewards::<T>::get();
 			let mut total_contributors: u32 = TotalContributors::<T>::get();
@@ -415,6 +418,12 @@ pub mod pallet {
 			additions: Vec<(RemoteAccountOf<T>, RewardAmountOf<T>, VestingPeriodOf<T>)>,
 		) -> DispatchResult {
 			Self::in_uninitialized(|| Self::do_populate(additions))
+			let available_funds = T::RewardAsset::balance(&Self::account_id());
+			let total_rewards = TotalRewards::<T>::get();
+			ensure!(
+				available_funds >= total_rewards,
+				Error::<T>::RewardsNotFunded
+			);
 		}
 
 		/// Runs the provided function while setting the crate to uninitialized. Useful during
