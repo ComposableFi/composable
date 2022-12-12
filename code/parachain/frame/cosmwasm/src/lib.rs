@@ -704,7 +704,7 @@ pub mod pallet {
 				.collect::<Vec<_>>();
 			Self::cosmwasm_call(shared, sender, contract.clone(), info, cosmwasm_funds, call).map(
 				|(data, events)| {
-					for CosmwasmEvent { ty, attributes } in events {
+					for CosmwasmEvent { ty, attributes, .. } in events {
 						Self::deposit_event(Event::<T>::Emitted {
 							contract: contract.clone(),
 							ty: ty.into(),
@@ -1003,7 +1003,7 @@ pub mod pallet {
 			amount: BalanceOf<T>,
 		) -> Coin {
 			let denom = T::AssetToDenom::convert(asset);
-			Coin { denom, amount: amount.into() }
+			Coin { denom, amount: amount.into().into() }
 		}
 
 		/// Try to convert from a CosmWasm denom to a native [`AssetIdOf<T>`].
@@ -1260,7 +1260,7 @@ pub mod pallet {
 			// Move funds to contract.
 			for Coin { denom, amount } in funds {
 				let asset = Self::cosmwasm_asset_to_native_asset(denom.clone())?;
-				let amount = (*amount).saturated_into();
+				let amount = amount.u128().saturated_into();
 				T::Assets::transfer(asset, from, to, amount, keep_alive)
 					.map_err(|_| Error::<T>::TransferFailed)?;
 			}
@@ -1534,7 +1534,7 @@ pub mod pallet {
 	) -> Result<QueryResponse, CosmwasmVMError<T>> {
 		let mut shared = Pallet::<T>::do_create_vm_shared(gas, InitialStorageMutability::ReadOnly);
 		let info = Pallet::<T>::contract_info(&contract)?;
-		let query_request: QueryRequest = serde_json::from_slice(&query_request)
+		let query_request = serde_json::from_slice(&query_request)
 			.map_err(|e| CosmwasmVMError::Rpc(format!("{}", e)))?;
 		Pallet::<T>::cosmwasm_call(
 			&mut shared,

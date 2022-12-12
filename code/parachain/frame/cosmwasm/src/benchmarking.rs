@@ -603,7 +603,7 @@ benchmarks! {
 		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), info, vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_query_continuation(&mut vm.0, contract, "{}".as_bytes()).unwrap()
+		Cosmwasm::<T>::do_continue_query(&mut vm.0, contract, "{}".as_bytes()).unwrap()
 	}
 
 	query_raw {

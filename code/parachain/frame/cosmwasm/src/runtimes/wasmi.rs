@@ -387,7 +387,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 	fn balance(&mut self, account: &Self::Address, denom: String) -> Result<Coin, Self::Error> {
 		log::debug!(target: "runtime::contracts", "balance: {} => {:#?}", Into::<String>::into(account.clone()), denom);
 		let amount = Pallet::<T>::do_balance(account.as_ref(), denom.clone())?;
-		Ok(Coin { denom, amount })
+		Ok(Coin { denom, amount: amount.into() })
 	}
 
 	fn all_balance(&mut self, account: &Self::Address) -> Result<Vec<Coin>, Self::Error> {
@@ -494,7 +494,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 			VmGas::ContinueInstantiate { nb_of_coins } =>
 				T::WeightInfo::continue_instantiate(nb_of_coins),
 			VmGas::ContinueMigrate => T::WeightInfo::continue_migrate(),
-			VmGas::QueryContinuation => T::WeightInfo::query_continuation(),
+			VmGas::ContinueQuery => T::WeightInfo::query_continuation(),
 			VmGas::QueryRaw => T::WeightInfo::query_raw(),
 			VmGas::QueryInfo => T::WeightInfo::query_info(),
 			// VmGas::Debug is not charged
