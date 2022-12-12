@@ -12,7 +12,7 @@ use cosmwasm_vm::{
 	cosmwasm_std::{
 		Addr, Binary, ContractResult, Env, IbcAcknowledgement, IbcChannel, IbcChannelCloseMsg,
 		IbcChannelConnectMsg, IbcChannelOpenMsg, IbcEndpoint, IbcOrder, IbcPacket, IbcPacketAckMsg,
-		IbcPacketReceiveMsg, IbcPacketTimeoutMsg, MessageInfo,
+		IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcTimeout, MessageInfo,
 	},
 	executor::{
 		cosmwasm_call_serialize,
@@ -309,24 +309,25 @@ impl<T: Config> Router<T> {
 		let address = Self::port_to_address(&packet.destination_port)?;
 		let contract_info = Self::to_ibc_contract(&address)?;
 
-		let message = IbcPacketReceiveMsg {
-			packet: IbcPacket {
-				data: packet.data.clone().into(),
-				src: IbcEndpoint {
+		let message = IbcPacketReceiveMsg::new(
+			IbcPacket::new(
+				packet.data.clone(),
+				IbcEndpoint {
 					port_id: packet.source_port.to_string(),
 					channel_id: packet.source_channel.to_string(),
 				},
-				dest: IbcEndpoint {
+				IbcEndpoint {
 					port_id: packet.destination_port.to_string(),
 					channel_id: packet.destination_channel.to_string(),
 				},
-				sequence: packet.sequence.into(),
-				timeout: Err(IbcError::implementation_specific(
-					"https://app.clickup.com/t/39gjzw1".to_string(),
-				))?,
-			},
-			relayer: Addr::unchecked(relayer.to_string()),
-		};
+				packet.sequence.into(),
+				IbcTimeout::with_both(
+					to_cosmwasm_timeout_block(packet.timeout_height),
+					to_cosmwasm_timestamp(packet.timeout_timestamp),
+				),
+			),
+			Addr::unchecked(relayer.to_string()),
+		);
 		let gas = Weight::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
@@ -339,6 +340,21 @@ impl<T: Config> Router<T> {
 		let _remaining = vm.gas.remaining();
 		Ok(data.expect("there is always data from contract; qed").0)
 	}
+}
+
+fn to_cosmwasm_timeout_block(
+	ibc::core::ics02_client::height::Height { revision_number, revision_height }: ibc::core::ics02_client::height::Height,
+) -> cosmwasm_vm::cosmwasm_std::IbcTimeoutBlock {
+	cosmwasm_vm::cosmwasm_std::IbcTimeoutBlock {
+		revision: revision_number,
+		height: revision_height,
+	}
+}
+
+fn to_cosmwasm_timestamp(
+	timestamp: ibc::timestamp::Timestamp,
+) -> cosmwasm_vm::cosmwasm_std::Timestamp {
+	cosmwasm_vm::cosmwasm_std::Timestamp::from_nanos(timestamp.nanoseconds())
 }
 
 impl<T: Config + Send + Sync> IbcModule for Router<T> {

@@ -600,6 +600,16 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 	fn ibc_close_channel(&mut self, channel_id: String) -> Result<(), Self::Error> {
 		Pallet::<T>::do_ibc_close_channel(self, channel_id)
 	}
+
+	fn transfer_from(
+		&mut self,
+		from: &Self::Address,
+		to: &Self::Address,
+		funds: &[Coin],
+	) -> Result<(), Self::Error> {
+		Pallet::<T>::do_transfer(from.as_ref(), to.as_ref(), funds, false)?;
+		Ok(())
+	}
 }
 
 impl<'a, T: Config> Transactional for CosmwasmVM<'a, T> {

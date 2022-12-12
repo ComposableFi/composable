@@ -737,7 +737,6 @@ pub mod pallet {
 		where
 			F: for<'x> FnOnce(&'x mut WasmiVM<CosmwasmVM<'x, T>>) -> Result<R, CosmwasmVMError<T>>,
 		{
-			Self::do_transfer(&sender, &contract, &funds, false)?;
 			let mut vm = Self::cosmwasm_new_vm(shared, sender, contract, info, funds)?;
 			call(&mut vm)
 		}

@@ -14,6 +14,7 @@ version = "3.0.0"
 [dependencies]
 composable-support = { path = "../composable-support", default-features = false }
 cosmwasm-vm = {  path = "../../../../../cosmwasm-vm/vm", default-features = false, features = [
+  "ibc3",
   "iterator",
   "stargate",
 ] }
