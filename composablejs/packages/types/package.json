@@ -8,7 +8,7 @@
     "build": "tsc",
     "gen": "npm run gen:defs && npm run gen:meta",
     "gen:defs": "ts-node --skip-project ../../node_modules/.bin/polkadot-types-from-defs --package @composable/types --input ./src",
-    "gen:meta": "ts-node --skip-project ../../node_modules/.bin/polkadot-types-from-chain --package @composable/types --endpoint ws://localhost:9988 --output ./src"
+    "gen:meta": "ts-node --skip-project ../../node_modules/.bin/polkadot-types-from-chain --package @composable/types --endpoint ws://127.0.0.1:9988 --output ./src"
   },
   "devDependencies": {
     "@polkadot/ts": "^0.4.22",
