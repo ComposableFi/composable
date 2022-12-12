@@ -16,7 +16,7 @@ pub mod pablo_picasso_init_pools {
 
 	use super::*;
 
-	use frame_support::bounded_btree_map;
+	use frame_support::BoundedBTreeMap;
 	use pablo::{pallet::PoolInitConfiguration, WeightInfo};
 	use sp_runtime::PerThing;
 
@@ -77,11 +77,14 @@ pub mod pablo_picasso_init_pools {
 	) -> PoolInitConfiguration<AccountId, CurrencyId> {
 		let owner = AccountId::from([0; 32]);
 
-		#[allow(clippy::disallowed_methods)] // BTree size is within bounds
-		let assets_weights = bounded_btree_map! {
-			first_asset_id => first_asset_weight,
-			second_asset_id => first_asset_weight.left_from_one(),
-		};
+		let mut assets_weights = BoundedBTreeMap::new();
+
+		assets_weights
+			.try_insert(first_asset_id, first_asset_weight)
+			.expect("Map is within bounds; QED");
+		assets_weights
+			.try_insert(second_asset_id, first_asset_weight.left_from_one())
+			.expect("Map is within bounds; QED");
 
 		PoolInitConfiguration::<AccountId, CurrencyId>::DualAssetConstantProduct {
 			owner,
