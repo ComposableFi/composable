@@ -30,6 +30,7 @@ use cosmwasm_vm::{
 	vm::{VMBase, VmErrorOf, VmInputOf, VmOutputOf},
 };
 use cosmwasm_vm_wasmi::WasmiVM;
+use sp_runtime::SaturatedConversion;
 use sp_std::{marker::PhantomData, str::FromStr};
 
 use crate::runtimes::wasmi::InitialStorageMutability;
@@ -93,7 +94,9 @@ impl<T: Config> Pallet<T> {
 		let msg = HandlerMessage::<AccountIdOf<T>>::Transfer {
 			channel_id,
 			coin: PrefixedCoin {
-				amount: Amount::from(amount.amount as u64),
+				// TODO: Amount from centauri should not have a From<u64> instance. 
+				// https://app.clickup.com/t/20465559/XCVM-241?comment=1190198806
+				amount: Amount::from(amount.amount.u128().saturated_into::<u64>()),
 				denom: PrefixedDenom::from_str(amount.denom.as_ref()).map_err(|_| {
 					<CosmwasmVMError<T>>::Ibc("provided asset is not IBC compatible".to_string())
 				})?,
@@ -376,22 +379,22 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 
 		let message = {
 			IbcChannelOpenMsg::OpenInit {
-				channel: IbcChannel {
-					endpoint: IbcEndpoint {
+				channel: IbcChannel::new(
+					IbcEndpoint {
 						channel_id: channel_id.to_string(),
 						port_id: port_id.to_string(),
 					},
-					counterparty_endpoint: IbcEndpoint {
+					IbcEndpoint {
 						port_id: counterparty.port_id.to_string(),
 						channel_id: counterparty.channel_id.expect("channel").to_string(),
 					},
-					order: map_order(order)?,
-					version: version.to_string(),
-					connection_id: connection_hops
+					map_order(order)?,
+					version.to_string(),
+					connection_hops
 						.get(0)
 						.expect("by spec there is at least one connection; qed")
 						.to_string(),
-				},
+				),
 			}
 		};
 
@@ -417,25 +420,24 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		version: &IbcVersion,
 		_counterparty_version: &IbcVersion,
 	) -> Result<IbcVersion, IbcError> {
-		let order = map_order(order)?;
 		let address = Self::port_to_address(port_id)?;
 		let contract_info = Self::to_ibc_contract(&address)?;
 
 		let message = {
 			IbcChannelOpenMsg::OpenInit {
-				channel: IbcChannel {
-					endpoint: IbcEndpoint {
+				channel: IbcChannel::new( 
+					IbcEndpoint {
 						channel_id: channel_id.to_string(),
 						port_id: port_id.to_string(),
 					},
-					counterparty_endpoint: IbcEndpoint {
+					IbcEndpoint {
 						port_id: counterparty.port_id.to_string(),
 						channel_id: counterparty.channel_id.expect("one may not have OpenTry without remote channel id by protocol; qed").to_string(),
 					},
-					order,
-					version: version.to_string(),
-					connection_id: connection_hops.get(0).expect("by spec there is at least one connection; qed").to_string(),
-				},
+					map_order(order)?,
+					version.to_string(),
+					connection_hops.get(0).expect("by spec there is at least one connection; qed").to_string(),
+				),
 			}
 		};
 
@@ -521,20 +523,20 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		let address = Self::port_to_address(port_id)?;
 		let contract_info = Self::to_ibc_contract(&address)?;
 		let message = IbcChannelCloseMsg::CloseInit {
-			channel: IbcChannel {
-				endpoint: IbcEndpoint {
+			channel: IbcChannel::new(
+				IbcEndpoint {
 					port_id: port_id.to_string(),
 					channel_id: channel_id.to_string(),
 				},
-				counterparty_endpoint: map_endpoint(&metadata),
-				order: map_order(metadata.ordering)?,
-				version: metadata.version.to_string(),
-				connection_id: metadata
+				map_endpoint(&metadata),
+				map_order(metadata.ordering)?,
+				metadata.version.to_string(),
+				metadata
 					.connection_hops
 					.get(0)
 					.expect("at least one connection should exists; qed")
 					.to_string(),
-			},
+			),
 		};
 		let gas = Weight::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
@@ -599,27 +601,28 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		let address = Self::port_to_address(&packet.source_port)?;
 		let contract_info = Self::to_ibc_contract(&address)?;
 
-		let message = IbcPacketAckMsg {
-			acknowledgement: IbcAcknowledgement {
-				data: Binary(acknowledgement.clone().into_bytes()),
-			},
-			original_packet: IbcPacket {
-				data: Binary(packet.data.clone()),
-				src: IbcEndpoint {
+		let message = IbcPacketAckMsg::new (
+			IbcAcknowledgement::new( 
+				acknowledgement.clone().into_bytes(),
+			),
+			IbcPacket::new( 
+				packet.data.clone(),
+				IbcEndpoint {
 					port_id: packet.source_port.to_string(),
 					channel_id: packet.source_channel.to_string(),
 				},
-				dest: IbcEndpoint {
+				IbcEndpoint {
 					port_id: packet.source_port.to_string(),
 					channel_id: packet.source_channel.to_string(),
 				},
-				sequence: packet.sequence.into(),
-				timeout: Err(IbcError::implementation_specific(
-					"https://app.clickup.com/t/39gjzw1".to_string(),
-				))?,
-			},
-			relayer: Addr::unchecked(relayer.to_string()),
-		};
+				packet.sequence.into(),
+				IbcTimeout::with_both(
+					to_cosmwasm_timeout_block(packet.timeout_height),
+					to_cosmwasm_timestamp(packet.timeout_timestamp),
+				),
+			),
+			Addr::unchecked(relayer.to_string()),
+		);
 
 		let gas = Weight::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
@@ -644,24 +647,25 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		let address = Self::port_to_address(&packet.source_port)?;
 		let contract_info = Self::to_ibc_contract(&address)?;
 
-		let message = IbcPacketTimeoutMsg {
-			packet: IbcPacket {
-				data: Binary(packet.data.clone()),
-				src: IbcEndpoint {
+		let message = IbcPacketTimeoutMsg::new( 
+			IbcPacket::new( 
+				packet.data.clone(),
+				IbcEndpoint {
 					port_id: packet.source_port.to_string(),
 					channel_id: packet.source_channel.to_string(),
 				},
-				dest: IbcEndpoint {
+				IbcEndpoint {
 					port_id: packet.source_port.to_string(),
 					channel_id: packet.source_channel.to_string(),
 				},
-				sequence: packet.sequence.into(),
-				timeout: Err(IbcError::implementation_specific(
-					"need make pub access to init of IbcTimeout".to_string(),
-				))?,
-			},
-			relayer: Addr::unchecked(relayer.to_string()),
-		};
+				packet.sequence.into(),
+				IbcTimeout::with_both(
+					to_cosmwasm_timeout_block(packet.timeout_height),
+					to_cosmwasm_timestamp(packet.timeout_timestamp),
+				),
+			),
+			Addr::unchecked(relayer.to_string()),
+		);
 
 		let gas = Weight::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
@@ -682,17 +686,17 @@ fn map_channel(
 	channel_id: &ChannelId,
 	metadata: ibc::core::ics04_channel::channel::ChannelEnd,
 ) -> Result<IbcChannel, IbcError> {
-	Ok(IbcChannel {
-		endpoint: IbcEndpoint { port_id: port_id.to_string(), channel_id: channel_id.to_string() },
-		counterparty_endpoint: map_endpoint(&metadata),
-		order: map_order(metadata.ordering)?,
-		version: metadata.version.to_string(),
-		connection_id: metadata
+	Ok(IbcChannel::new (
+		IbcEndpoint { port_id: port_id.to_string(), channel_id: channel_id.to_string() },
+		map_endpoint(&metadata),
+		map_order(metadata.ordering)?,
+		metadata.version.to_string(),
+		metadata
 			.connection_hops
 			.get(0)
 			.expect("at least one connection should exists; qed")
 			.to_string(),
-	})
+	))
 }
 
 fn map_endpoint(metadata: &ibc::core::ics04_channel::channel::ChannelEnd) -> IbcEndpoint {
