@@ -77,8 +77,8 @@
           ];
         };
         packages = {
-          default = self'.packages.devnet-dali;
-
+          default = self'.packages.zombienet-rococo-local-dali-dev;
+          devnet-dali = self'.packages.zombienet-rococo-local-dali-dev;
           subxt = pkgs.callPackage ./code/utils/composable-subxt/subxt.nix { };
           junod = pkgs.callPackage ./code/xcvm/cosmos/junod.nix { };
           gex = pkgs.callPackage ./code/xcvm/cosmos/gex.nix { };
