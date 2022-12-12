@@ -1,18 +1,14 @@
-import { Box, Button, useTheme } from "@mui/material";
+import { Box, BoxProps, Button, useTheme } from "@mui/material";
 import { BigNumberInput } from "@/components/Atoms";
-import { useMemo, useState } from "react";
-import { BoxProps } from "@mui/material";
-import { SelectLockPeriod } from "./SelectLockPeriod";
+import { FC, useMemo, useState } from "react";
+import { SelectLockPeriod } from "@/components";
 import { StakingRewardPool } from "@/defi/types";
-import { useAssetBalance } from "@/defi/hooks";
-import { DEFAULT_NETWORK_ID, PBLO_ASSET_ID } from "@/defi/utils";
 import { useAsset } from "@/defi/hooks";
+import { DEFAULT_NETWORK_ID, PBLO_ASSET_ID } from "@/defi/utils";
 import { useStake } from "@/defi/hooks/stakingRewards";
 import { usePendingExtrinsic, useSelectedAccount } from "substrate-react";
 import { ConfirmingModal } from "../../swap/ConfirmingModal";
-import {
-  extractDurationPresets,
-} from "@/defi/utils/stakingRewards/durationPresets";
+import { extractDurationPresets } from "@/defi/utils/stakingRewards/durationPresets";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import BigNumber from "bignumber.js";
 
@@ -21,16 +17,16 @@ export type Multiplier = {
   expiry?: number;
 };
 
-export const StakeForm: React.FC<
+export const StakeForm: FC<
   BoxProps & { stakingRewardPool?: StakingRewardPool }
 > = ({ stakingRewardPool, ...boxProps }) => {
   const theme = useTheme();
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const [amount, setAmount] = useState<BigNumber>(new BigNumber(0));
-  const [valid, setValid] = useState<boolean>(false);
+  const [_valid, setValid] = useState<boolean>(false);
   const [selectedMultiplier, setSelectedMultiplier] = useState<number>(0);
   const pabloAsset = useAsset(PBLO_ASSET_ID);
-  const balance = useAssetBalance(pabloAsset, "picasso");
+  const balance = new BigNumber(0);
 
   const multipliers = useMemo(() => {
     return extractDurationPresets(stakingRewardPool);
@@ -54,12 +50,6 @@ export const StakeForm: React.FC<
     selectedAccount ? selectedAccount.address : "-"
   );
 
-  const validMultiplier =
-    stakingRewardPool &&
-    durationPresetSelected &&
-    durationPresetSelected.periodInSeconds in
-    stakingRewardPool.lock.durationPresets;
-
   return (
     <Box {...boxProps}>
       <BigNumberInput
@@ -75,6 +65,7 @@ export const StakeForm: React.FC<
             padding: theme.spacing(1),
           },
         }}
+        disabled
         LabelProps={{
           label: "Amount to lock",
           TypographyProps: { color: "text.secondary" },
@@ -97,15 +88,11 @@ export const StakeForm: React.FC<
         periodItems={multipliers}
         durationPresetSelected={durationPresetSelected}
         multiplier={selectedMultiplier}
+        disabled
       />
 
       <Box mt={3}>
-        <Button
-          onClick={handleStake}
-          fullWidth
-          variant="contained"
-          disabled={!valid || !validMultiplier || isStaking}
-        >
+        <Button onClick={handleStake} fullWidth variant="contained" disabled>
           Stake and mint
         </Button>
       </Box>
