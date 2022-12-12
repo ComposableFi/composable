@@ -160,7 +160,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 
 					// pass 1 as weight since adding liquidity for all assets
 					// see docs on compute_deposit_lp_ for more information
-					let _first_deposit = compute_deposit_lp_(
+					let first_deposit = compute_deposit_lp_(
 						lp_total_issuance,
 						T::Convert::convert(first.amount),
 						first_balance,
@@ -168,19 +168,20 @@ impl<T: Config> DualAssetConstantProduct<T> {
 						pool.fee_config.fee_rate,
 					)?;
 
-					let second_deposit = compute_deposit_lp_(
-						lp_total_issuance,
-						T::Convert::convert(second.amount),
-						second_balance,
-						Permill::one(),
-						pool.fee_config.fee_rate,
-					)?;
+					// Ensure both calculatins yeild the same result in std runs (tests)
+					sp_std::if_std! {
+						let second_deposit = compute_deposit_lp_(
+							lp_total_issuance,
+							T::Convert::convert(second.amount),
+							second_balance,
+							Permill::one(),
+							pool.fee_config.fee_rate,
+						)?;
 
-					// sp_std::if_std! {
-					// 	debug_assert!(first_deposit == second_deposit);
-					// }
+						debug_assert!(first_deposit == second_deposit);
+					}
 
-					second_deposit.value
+					first_deposit.value
 				};
 
 				T::Assets::transfer(first.asset_id, who, &pool_account, first.amount, keep_alive)?;
