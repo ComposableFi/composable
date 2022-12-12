@@ -42,6 +42,7 @@ This script allows bootstrapping a new substrate chain with the current state of
    export COMPOSABLE_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/composable_runtime.optimized.wasm) && \
    cargo build --release --package composable --features=builtin-wasm
     ```
+    TODO: Remove this once the release includes the WASM, as it will not be necessary
 
 
 4. Copy the binary from `target/release/composable` to `fork-off/data` and rename it to `binary`.
