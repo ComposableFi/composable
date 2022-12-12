@@ -15,7 +15,7 @@ export function useAssetIdOraclePrice(
 
     if (isPalletSupported(parachainApi)("Oracle")) {
       parachainApi.query.oracle.prices(_assetId).then((price) => {
-        setAssetPrice(new BigNumber(price.price.toString()));
+        setAssetPrice(new BigNumber((price as any).price.toString()));
       });
     } else {
       setAssetPrice(new BigNumber("0"));

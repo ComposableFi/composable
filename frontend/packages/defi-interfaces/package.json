@@ -2,14 +2,14 @@
   "name": "defi-interfaces",
   "version": "1.0.0",
   "devDependencies": {
-    "@polkadot/api": "^8.3.2",
+    "@polkadot/api": "^9.6.2",
     "@polkadot/ts": "^0.4.22",
-    "@polkadot/typegen": "^8.3.2",
-    "@polkadot/types": "^8.3.2",
-    "@polkadot/types-augment": "^8.3.2",
-    "@polkadot/types-codec": "^8.3.2",
-    "@polkadot/types-create": "^8.3.2",
-    "@polkadot/types-known": "^8.3.2",
-    "@polkadot/types-support": "^8.3.2"
+    "@polkadot/typegen": "^9.6.2",
+    "@polkadot/types": "^9.6.2",
+    "@polkadot/types-augment": "^9.6.2",
+    "@polkadot/types-codec": "^9.6.2",
+    "@polkadot/types-create": "^9.6.2",
+    "@polkadot/types-known": "^9.6.2",
+    "@polkadot/types-support": "^9.6.2"
   }
 }

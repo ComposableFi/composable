@@ -24,7 +24,6 @@ export type FeeDisplayProps = {
   textFirst?: boolean;
   TypographyProps?: TypographyProps;
   TooltipProps?: Omit<TooltipProps, "children">;
-  disabled?: boolean;
 };
 
 export const FeeDisplay: React.FC<FeeDisplayProps> = ({
@@ -33,7 +32,6 @@ export const FeeDisplay: React.FC<FeeDisplayProps> = ({
   textFirst = true,
   TypographyProps,
   TooltipProps,
-  disabled,
 }) => {
   const theme = useTheme();
   return (
@@ -58,7 +56,7 @@ export const FeeDisplay: React.FC<FeeDisplayProps> = ({
           {label}
         </Typography>
         {TooltipProps?.title && (
-          <Tooltip {...TooltipProps} arrow disableHoverListener={disabled}>
+          <Tooltip {...TooltipProps} arrow>
             <Box display="flex" alignItems="center" ml={2}>
               <InfoOutlinedIcon sx={infoIconStyle} />
             </Box>
