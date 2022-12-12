@@ -163,7 +163,7 @@ export class vestedScheduleClaimVerifier {
       const pastSinceStart = BN.min(currentTime.sub(start), end);
       expectedClaimAmount = schedulePerPeriod
         .mul(pastSinceStart.div(schedulePeriodLength))
-        .sub(new BN(10).pow(new BN(12)));
+      if (!expectedClaimAmount.eqn(0)) expectedClaimAmount = expectedClaimAmount.sub(schedulePerPeriod)
     } else {
       // Verifying block number based vested schedule claim
       const currentBlock = await this.api.query.system.number();
@@ -182,11 +182,10 @@ export class vestedScheduleClaimVerifier {
       );
       walletBalanceBeneficiaryAfter = tokenAccountInfo.free.sub(tokenAccountInfo.frozen);
     }
-    let exactAmount: BN;
+    let exactAmount = new BN(0);
     for (const val of resultData.data[4]) {
       // For some reason indexing 0 didn't work therefore unnecessary looping.
-      exactAmount = val[1];
-      break;
+      exactAmount = exactAmount.add(val[1]);
     }
     // @ts-ignore
     if (!exactAmount) throw new AssertionError("No exact amount determined!");
