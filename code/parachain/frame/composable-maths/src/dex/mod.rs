@@ -70,8 +70,6 @@ where
 
 	let epsilon = T::from_rational::<u128>(1, 100_000);
 
-	dbg!(a, b, c);
-
 	c <= epsilon
 }
 

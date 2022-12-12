@@ -365,13 +365,11 @@ fn add_lp_with_min_mint_amount() {
 			},
 		);
 
-		dbg!(Tokens::total_issuance(lp_token));
-
 		// Mint the tokens
 		assert_ok!(Tokens::mint_into(first_asset, &BOB, first_asset_amount));
 		assert_ok!(Tokens::mint_into(second_asset, &BOB, second_asset_amount));
 
-		let alice_lp = Tokens::balance(lp_token, &ALICE);
+		let _alice_lp = Tokens::balance(lp_token, &ALICE);
 		let bob_lp = Tokens::balance(lp_token, &BOB);
 
 		assert_eq!(bob_lp, 0_u128, "BOB should not have any LP tokens");
@@ -474,8 +472,6 @@ fn remove_lp_failure() {
 		));
 
 		let bob_lp_after_adding_liquidity = Tokens::balance(lp_token, &BOB);
-
-		dbg!(bob_lp_after_adding_liquidity);
 
 		// error as trying to redeem more tokens than lp
 		assert_noop!(

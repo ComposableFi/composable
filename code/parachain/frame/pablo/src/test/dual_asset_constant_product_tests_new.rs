@@ -83,7 +83,7 @@ fn add_remove_lp() {
 			crate::Event::LiquidityAdded { who: BOB, pool_id, minted_lp: 19999999981480 },
 		);
 
-		assert!(dbg!(Tokens::balance(lp_token, &BOB)) > 0);
+		assert!(Tokens::balance(lp_token, &BOB) > 0);
 
 		assert_ok!(Pablo::remove_liquidity(
 			Origin::signed(BOB),
