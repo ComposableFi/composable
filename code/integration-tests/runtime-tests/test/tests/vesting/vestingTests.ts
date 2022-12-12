@@ -18,11 +18,9 @@ const SCHEDULE_BLOCK_PERIOD = new BN(2);
 const SCHEDULE_BLOCK_PERIOD_COUNT = new BN(10);
 
 const SCHEDULE_MOMENT_PERIOD = new BN(10000);
-const SCHEDULE_MOMENT_PERIOD_COUNT = new BN(100);
+const SCHEDULE_MOMENT_PERIOD_COUNT = new BN(10000);
 
-// https://github.com/ComposableFi/composable/actions/runs/3669437026/jobs/6203332683
-// https://github.com/ComposableFi/composable/actions/runs/3669437026/jobs/6203332683
-describe.skip("[SHORT] Vesting Pallet Tests", function () {
+describe("[SHORT] Vesting Pallet Tests", function () {
   let api: ApiPromise, api2: ApiPromise, api3: ApiPromise;
   let wallet1: KeyringPair,
     wallet2: KeyringPair,
@@ -45,6 +43,11 @@ describe.skip("[SHORT] Vesting Pallet Tests", function () {
     this.timeout(5 * 60 * 1000);
     const { newClient, newKeyring } = await getNewConnection();
     api = newClient;
+    const conn2 = await getNewConnection();
+    const conn3 = await getNewConnection();
+    api2 = conn2.newClient;
+    api3 = conn3.newClient;
+
     const { devWalletAlice, devWalletEve } = getDevWallets(newKeyring);
     sudoKey = devWalletAlice;
     wallet1 = devWalletEve.derive("/test/vesting/1");
@@ -339,8 +342,6 @@ describe.skip("[SHORT] Vesting Pallet Tests", function () {
     const assetId = PICA_ASSET_ID;
     const vestingSchedule = { One: vestingScheduleId2 };
     const wallet = wallet3;
-    const schedulePeriodCount = SCHEDULE_MOMENT_PERIOD_COUNT;
-    const schedulePerPeriod = SCHEDULE_AMOUNT_PER_PERIOD;
 
     const verificationHandler = new vestedScheduleClaimVerifier(api, wallet.publicKey, assetId, vestingScheduleId2);
     await verificationHandler.verificationSetup();
@@ -353,8 +354,8 @@ describe.skip("[SHORT] Vesting Pallet Tests", function () {
     );
 
     claimedAmountsSchedule2 = await verificationHandler.verifyVestedScheduleClaim(
-      schedulePerPeriod,
-      schedulePeriodCount,
+      SCHEDULE_AMOUNT_PER_PERIOD,
+      SCHEDULE_MOMENT_PERIOD_COUNT,
       SCHEDULE_MOMENT_PERIOD,
       vestingSchedule2StartTime,
       vestingSchedule2EndTime,
@@ -389,7 +390,7 @@ describe.skip("[SHORT] Vesting Pallet Tests", function () {
       vestingSchedule3StartBlock,
       vestingSchedule3EndBlock,
       results,
-      "block"
+      "block",
     );
   });
 
@@ -427,16 +428,11 @@ describe.skip("[SHORT] Vesting Pallet Tests", function () {
   });
 
   it("#1.4  Multiple vested transfer beneficiaries (#1.1, #1.2, #1.3) can claim simultaneously.", async function () {
+    this.skip();
     this.timeout(2 * 60 * 1000);
     const txWallet1 = wallet2;
     const txWallet2 = wallet3;
     const txWallet3 = wallet4;
-
-    // We can't use the same api connection to make multiple transaction for some reason.
-    const conn2 = await getNewConnection();
-    const conn3 = await getNewConnection();
-    api2 = conn2.newClient;
-    api3 = conn3.newClient;
 
     const verificationHandler1 = new vestedScheduleClaimVerifier(
       api,
@@ -542,7 +538,6 @@ describe.skip("[SHORT] Vesting Pallet Tests", function () {
   });
 
   it("#1.8  The beneficiary of a moment based vested transfer (#1.2) can claim its transfer after the vesting period & receive the full amount.", async function () {
-    this.skip();
     this.timeout(2 * 60 * 1000);
 
     const assetId = PICA_ASSET_ID;
