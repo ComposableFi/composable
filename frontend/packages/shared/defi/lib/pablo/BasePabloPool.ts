@@ -1,7 +1,6 @@
-import { fromChainIdUnit, toChainIdUnit } from "../../unit";
 import { PabloPoolFeeConfig } from "./PabloPoolFeeConfig";
 import { PALLET_TYPE_ID } from "../../constants";
-import { PabloPoolPair } from "./PabloPoolPair";
+import { PabloPoolAssets } from "./PabloPoolAssets";
 import { Exchangeable } from "./Exchangeable";
 import { ApiPromise } from "@polkadot/api";
 import { concatU8a } from "../../u8a";
@@ -9,21 +8,24 @@ import { Asset } from "../assets/Asset";
 import BigNumber from "bignumber.js";
 
 export class BasePabloPool implements Exchangeable {
-  protected __poolId: BigNumber;
-  protected __feeConfig: PabloPoolFeeConfig;
-  protected __pair: PabloPoolPair;
-  protected __api: ApiPromise;
+  protected readonly __poolId: BigNumber;
+  protected readonly __feeConfig: PabloPoolFeeConfig;
+  protected readonly __assets: PabloPoolAssets;
+  protected readonly __api: ApiPromise;
+  protected readonly __owner: string;
 
   constructor(
     api: ApiPromise,
     poolId: BigNumber,
-    pair: PabloPoolPair,
-    feeConfig: PabloPoolFeeConfig
+    assets: PabloPoolAssets,
+    feeConfig: PabloPoolFeeConfig,
+    owner: string
   ) {
     this.__api = api;
     this.__poolId = poolId;
-    this.__pair = pair;
+    this.__assets = assets;
     this.__feeConfig = feeConfig;
+    this.__owner = owner;
   }
 
   getAccountId(): string {
@@ -43,8 +45,8 @@ export class BasePabloPool implements Exchangeable {
     return this.__api.createType("AccountId32", poolAccount).toString();
   }
 
-  getPair(): PabloPoolPair {
-    return this.__pair;
+  getAssets(): PabloPoolAssets {
+    return this.__assets;
   }
 
   getFeeConfig(): PabloPoolFeeConfig {
@@ -75,19 +77,20 @@ export class BasePabloPool implements Exchangeable {
     return map;
   }
 
-  async getSpotPrice(): Promise<BigNumber> {
+  async getSpotPrice(...args: unknown[]): Promise<BigNumber> {
     try {
-      const pair = this.__pair.toJSON();
-      // @ts-ignore
-      const pricesFor = await this.__api.rpc.pablo.pricesFor(
-        this.__api.createType("PalletPabloPoolId", this.__poolId.toString()),
-        this.__api.createType("CustomRpcCurrencyId", pair.base.toString()),
-        this.__api.createType("CustomRpcCurrencyId", pair.quote.toString()),
-        this.__api.createType("CustomRpcBalance", toChainIdUnit(1).toString())
-      );
+      // const pair = this.__pair.toJSON();
 
-      const spotPrice = pricesFor.get("spotPrice");
-      return fromChainIdUnit(spotPrice ? BigInt(spotPrice.toString()) : 0);
+      // const pricesFor = await this.__api.rpc.pablo.pricesFor(
+      //   this.__api.createType("PalletPabloPoolId", this.__poolId.toString()),
+      //   this.__api.createType("CustomRpcCurrencyId", pair.base.toString()),
+      //   this.__api.createType("CustomRpcCurrencyId", pair.quote.toString()),
+      //   this.__api.createType("CustomRpcBalance", toChainIdUnit(1).toString())
+      // );
+
+      // const spotPrice = pricesFor.get("spotPrice");
+      // return fromChainIdUnit(spotPrice ? BigInt(spotPrice.toString()) : 0);
+      return new BigNumber(0)
     } catch (err: any) {
       console.error("[getSpotPrice] ", err.message);
       return new BigNumber(0);

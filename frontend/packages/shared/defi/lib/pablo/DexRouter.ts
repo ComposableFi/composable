@@ -39,13 +39,15 @@ export class DexRouter {
     public async isPermissioned(pool: BasePabloPool): Promise<{ isPermissioned: boolean; poolId: BigNumber }> {
         let status = { isPermissioned: false, poolId: pool.getPoolId(true) as BigNumber }
         try {
+            let assets = Object.keys(pool.getAssets().assets);
+
             let dexRoute: any = await this.__api.query.dexRouter.dexRoutes(
-                pool.getPair().getBaseAsset().toString(),
-                pool.getPair().getQuoteAsset().toString()
+                assets[0],
+                assets[1]
             );
             let dexRouteReverse: any = await this.__api.query.dexRouter.dexRoutes(
-                pool.getPair().getQuoteAsset().toString(),
-                pool.getPair().getBaseAsset().toString()
+                assets[1],
+                assets[0]
             );
 
             let _dexRoute: { direct: number[] } | null = dexRoute.toJSON() as { direct: number[] } | null;

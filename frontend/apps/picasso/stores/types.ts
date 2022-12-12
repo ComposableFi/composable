@@ -1,7 +1,6 @@
 import { StateCreator } from "zustand";
 
 import {
-  TokensSlice,
   OracleSlice,
   PolkadotSlice,
   StakingRewardsSlice,
@@ -9,6 +8,7 @@ import {
   StatsOverviewSlice,
   StatsTelemetrySlice,
   SubstrateBalancesSlice,
+  TokensSlice,
   TransfersSlice,
 } from "./defi";
 import { UISlice } from "./ui/ui";

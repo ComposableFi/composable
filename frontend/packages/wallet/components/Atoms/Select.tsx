@@ -1,20 +1,20 @@
-import React from "react";
 import {
   alpha,
+  Box,
   ListSubheader,
   MenuItem,
-  useTheme,
-  useMediaQuery,
   Typography,
-  Box,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
-import { InputProps, Input } from "./Input";
+import { Input, InputProps } from "./Input";
 import { BaseAsset } from "./BaseAsset";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import CheckIcon from "@mui/icons-material/Check";
 import { SearchInput } from "./SearchInput";
 import CloseIcon from "@mui/icons-material/Close";
+import { ChangeEvent, FC, useState } from "react";
 
 export type Option = {
   value: any;
@@ -34,7 +34,7 @@ export type SelectProps = {
   centeredLabel?: boolean;
 } & InputProps;
 
-export const Select: React.FC<SelectProps> = ({
+export const Select: FC<SelectProps> = ({
   value,
   options,
   noBorder,
@@ -47,14 +47,14 @@ export const Select: React.FC<SelectProps> = ({
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const [keyword, setKeyword] = React.useState<string>("");
-  const [open, setOpen] = React.useState<boolean>(false);
+  const [keyword, setKeyword] = useState<string>("");
+  const [open, setOpen] = useState<boolean>(false);
 
-  const handleKeywordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleKeywordChange = (event: ChangeEvent<HTMLInputElement>) => {
     setKeyword(event.target.value);
   };
 
-  const handleClick = (event: React.MouseEvent<HTMLInputElement>) => {
+  const handleClick = () => {
     setKeyword("");
     setOpen(true);
   };

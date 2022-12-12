@@ -1,3 +1,6 @@
+---
+title: References and Glossary
+---
 # Overview
 
 Resources which allows to grasp  XCM.  For concrete message examples relevant for Composable look [here](./xcm-examples.md).

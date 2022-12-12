@@ -1,7 +1,7 @@
 import { fromPerbill, humanizedBnToBn } from "shared";
 import { PabloPoolFeeConfig } from "./PabloPoolFeeConfig";
 import { ApiPromise } from "@polkadot/api";
-import { PabloPoolPair } from "./PabloPoolPair";
+import { PabloPoolAssets } from "./PabloPoolAssets";
 import { BasePabloPool } from "./BasePabloPool";
 import BigNumber from "bignumber.js";
 import BN from "bn.js";
@@ -61,7 +61,6 @@ class LiquidityBootstrappingPoolSaleConfig {
 }
 
 export class PabloLiquidityBootstrappingPool extends BasePabloPool {
-    protected readonly __owner: string;
     protected readonly __saleConfig: LiquidityBootstrappingPoolSaleConfig;
 
     static async fromPoolId(poolId: BN, api: ApiPromise): Promise<void> {
@@ -85,7 +84,7 @@ export class PabloLiquidityBootstrappingPool extends BasePabloPool {
             return new PabloLiquidityBootstrappingPool(
                 poolIndex,
                 liquidityBootstrappingPoolJson.owner,
-                PabloPoolPair.fromJSON(liquidityBootstrappingPoolJson.pair),
+                PabloPoolAssets.fromJSON(liquidityBootstrappingPoolJson.pair),
                 PabloPoolFeeConfig.fromJSON(liquidityBootstrappingPoolJson.feeConfig),
                 LiquidityBootstrappingPoolSaleConfig.fromJSON(
                     liquidityBootstrappingPoolJson.sale
@@ -101,13 +100,12 @@ export class PabloLiquidityBootstrappingPool extends BasePabloPool {
     constructor(
         poolId: BigNumber,
         owner: string,
-        pair: PabloPoolPair,
+        assets: PabloPoolAssets,
         feeConfig: PabloPoolFeeConfig,
         saleConfig: LiquidityBootstrappingPoolSaleConfig,
         api: ApiPromise
     ) {
-        super(api, poolId, pair, feeConfig);
-        this.__owner = owner;
+        super(api, poolId, assets, feeConfig, owner);
         this.__saleConfig = saleConfig;
     }
 

@@ -8,7 +8,7 @@ import { useAsyncEffect } from "@/hooks/useAsyncEffect";
 
 const Updater = () => {
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
-  const { constantProductPools } = usePoolsSlice();
+  const { liquidityPools } = usePoolsSlice();
   const { putLiquidityInPoolRecord, setUserLpBalance } =
     useStore();
   /**
@@ -18,16 +18,16 @@ const Updater = () => {
    * (first call)
    */
   useAsyncEffect(async (): Promise<void> => {
-    if (constantProductPools.length > 0) {
+    if (liquidityPools.length > 0) {
       let liquidity: Record<string, { baseAmount: BigNumber, quoteAmount: BigNumber }> = {};
-      // fetchPoolLiquidity(constantProductPools).then(putLiquidityInPoolRecord)
-      for (const pool of constantProductPools) {
-        const base = pool.getPair().getBaseAsset();
-        const quote = pool.getPair().getQuoteAsset();
-        const id = pool.getPoolId() as string;
+      for (const pool of liquidityPools) {
 
-        const baseAmount = await pool.getAssetLiquidity(base);
-        const quoteAmount = await pool.getAssetLiquidity(quote);
+        const pair = Object.keys(pool.getAssets().assets);
+        const base = pair[0];
+        const quote = pair[1];
+        const id = pool.getPoolId() as string;
+        const baseAmount = await pool.getAssetLiquidity(new BigNumber(base));
+        const quoteAmount = await pool.getAssetLiquidity(new BigNumber(quote));
 
         liquidity[id] = {
           baseAmount,
@@ -36,14 +36,14 @@ const Updater = () => {
       }
       putLiquidityInPoolRecord(liquidity)
     }
-  }, [constantProductPools, putLiquidityInPoolRecord]);
+  }, [liquidityPools, putLiquidityInPoolRecord]);
   /**
    * Fetch and update LP Balances within
    * zustand store
    */
   useEffect(() => {
-    if (constantProductPools.length > 0 && selectedAccount) {
-      for (const pool of constantProductPools) {
+    if (liquidityPools.length > 0 && selectedAccount) {
+      for (const pool of liquidityPools) {
         const lpToken = pool.getLiquidityProviderToken();
         const poolId: BigNumber = pool.getPoolId(true) as BigNumber;
         lpToken.balanceOf(selectedAccount.address).then(balance => {
@@ -51,7 +51,7 @@ const Updater = () => {
         })
       }
     }
-  }, [constantProductPools, selectedAccount, setUserLpBalance]);
+  }, [liquidityPools, selectedAccount, setUserLpBalance]);
 
   return null;
 };

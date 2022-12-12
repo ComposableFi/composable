@@ -18,10 +18,10 @@ library = []
 cosmwasm-std = "1.0.0"
 cw-storage-plus = "0.14.0"
 cw-utils = "0.14.0"
+cw-xcvm-common = { path = "../common" }
+cw-xcvm-utils = { path = "../utils" }
 cw2 = "0.14.0"
 cw20 = "0.14.0"
-cw-xcvm-utils = { path = "../utils" }
-cw-xcvm-common = { path = "../common" }
 hex = { version = "0.4", default-features = false, features = [
   "alloc",
   "serde",

@@ -1696,7 +1696,7 @@ dependencies = [
  "pallet-collective",
  "pallet-crowdloan-rewards",
  "pallet-currency-factory",
- "pallet-democracy 4.0.0-dev",
+ "pallet-democracy",
  "pallet-governance-registry",
  "pallet-indices",
  "pallet-membership",
@@ -3196,7 +3196,7 @@ dependencies = [
  "pallet-cosmwasm",
  "pallet-crowdloan-rewards",
  "pallet-currency-factory",
- "pallet-democracy 4.0.0-dev",
+ "pallet-democracy",
  "pallet-dex-router",
  "pallet-dutch-auction",
  "pallet-fnft",
@@ -5865,7 +5865,7 @@ dependencies = [
  "pallet-bounties",
  "pallet-child-bounties",
  "pallet-collective",
- "pallet-democracy 4.0.0-dev",
+ "pallet-democracy",
  "pallet-election-provider-multi-phase",
  "pallet-election-provider-support-benchmarking",
  "pallet-elections-phragmen",
@@ -6788,7 +6788,7 @@ dependencies = [
  "pallet-collator-selection",
  "pallet-collective",
  "pallet-currency-factory",
- "pallet-democracy 4.0.0-dev",
+ "pallet-democracy",
  "pallet-governance-registry",
  "pallet-indices",
  "pallet-liquidations",
@@ -8351,29 +8351,6 @@ dependencies = [
 
 [[package]]
 name = "pallet-democracy"
-version = "1.0.0"
-dependencies = [
- "composable-traits",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "orml-tokens",
- "orml-traits",
- "pallet-balances",
- "pallet-governance-registry",
- "pallet-preimage",
- "pallet-scheduler",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std 4.0.0 (git+https://github.com/ComposableFi/substrate?rev=9bdc51acad943bd07fae159f59564a1b464d33b5)",
-]
-
-[[package]]
-name = "pallet-democracy"
 version = "4.0.0-dev"
 source = "git+https://github.com/ComposableFi/substrate?rev=9bdc51acad943bd07fae159f59564a1b464d33b5#9bdc51acad943bd07fae159f59564a1b464d33b5"
 dependencies = [
@@ -9836,7 +9813,7 @@ dependencies = [
  "pallet-collective",
  "pallet-crowdloan-rewards",
  "pallet-currency-factory",
- "pallet-democracy 4.0.0-dev",
+ "pallet-democracy",
  "pallet-governance-registry",
  "pallet-identity",
  "pallet-indices",
@@ -10815,7 +10792,7 @@ dependencies = [
  "pallet-bounties",
  "pallet-child-bounties",
  "pallet-collective",
- "pallet-democracy 4.0.0-dev",
+ "pallet-democracy",
  "pallet-election-provider-multi-phase",
  "pallet-election-provider-support-benchmarking",
  "pallet-elections-phragmen",
@@ -17274,7 +17251,7 @@ dependencies = [
  "pallet-bags-list",
  "pallet-balances",
  "pallet-collective",
- "pallet-democracy 4.0.0-dev",
+ "pallet-democracy",
  "pallet-election-provider-multi-phase",
  "pallet-election-provider-support-benchmarking",
  "pallet-elections-phragmen",

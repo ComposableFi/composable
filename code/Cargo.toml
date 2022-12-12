@@ -26,7 +26,6 @@ runtime-benchmarks = ["composable-node/runtime-benchmarks"]
 std = ["composable-node/std"]
 
 [workspace]
-resolver = "2"
 exclude = ["utils/extrinsics-docs-scraper", "integration-tests"]
 members = [
   "services/cmc-api",
@@ -52,6 +51,7 @@ members = [
   "xcvm/lib/*",
   "xcvm/cosmwasm/contracts/*",
 ]
+resolver = "2"
 
 [profile.release]
 # Polkadot runtime requires unwinding.
@@ -63,6 +63,7 @@ inherits = "release"
 lto = true
 
 [profile.cosmwasm-contracts]
+codegen-units = 1
 debug = false
 debug-assertions = false
 inherits = "production"
@@ -70,7 +71,6 @@ opt-level = "s"
 overflow-checks = true
 panic = "abort"
 rpath = false
-codegen-units = 1
 
 [patch.crates-io]
 serde-json-wasm = { git = "https://github.com/hussein-aitlahcen/serde-json-wasm", rev = "1608a13d2a2ba90605d9626a51ff6667aca5a2d6" }

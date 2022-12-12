@@ -1,21 +1,19 @@
-import React from "react";
+import React, { FC, ReactElement } from "react";
 import {
   alpha,
+  Box,
   ListSubheader,
   MenuItem,
-  useTheme,
-  useMediaQuery,
   Typography,
-  Box,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
-import { InputProps, Input } from "./Input";
-import { BaseAsset } from "./BaseAsset";
+import { Input, InputProps } from "./Input";
+import { AssetSelectionModal, BaseAsset, SearchInput } from "@/components";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import CheckIcon from "@mui/icons-material/Check";
-import { SearchInput } from "./SearchInput";
-import CloseIcon from '@mui/icons-material/Close';
-import { AssetSelectionModal } from "./AssetSelectionModal";
+import CloseIcon from "@mui/icons-material/Close";
 import { Option } from "../types";
 
 export type SelectProps = {
@@ -35,15 +33,16 @@ export type SelectProps = {
   forceHiddenLabel?: boolean;
   anchorEl?: HTMLElement | null;
   renderShortLabel?: boolean;
+  renderValue?: (value: any) => ReactElement | null;
 } & InputProps;
 
-export const Select: React.FC<SelectProps> = ({
+export const Select: FC<SelectProps> = ({
   value,
   setValue,
   options,
   noBorder,
   borderRight,
-  noBackground=false,
+  noBackground = false,
   borderLeft,
   minWidth,
   mobileWidth,
@@ -57,6 +56,7 @@ export const Select: React.FC<SelectProps> = ({
   anchorEl = null,
   renderShortLabel = false,
   SelectProps,
+  renderValue,
   ...inputProps
 }) => {
   const theme = useTheme();
@@ -68,19 +68,19 @@ export const Select: React.FC<SelectProps> = ({
     setKeyword(event.target.value);
   };
 
-  const handleClick = (event: React.MouseEvent<HTMLInputElement>) => {
+  const handleClick = () => {
     setKeyword("");
     !inputProps.disabled && setOpen(true);
-  }
+  };
 
   const searchOptions = (options: Option[], keyword: string) => {
-    return options.filter(
-      (option) => {
-        let re = new RegExp(keyword, 'i');
-        return value === option.value
-                || [option?.shortLabel, option.label].some(x => x && re.test(x))
-      }
-    );
+    return options.filter((option) => {
+      let re = new RegExp(keyword, "i");
+      return (
+        value === option.value ||
+        [option?.shortLabel, option.label].some((x) => x && re.test(x))
+      );
+    });
   };
 
   return (
@@ -110,25 +110,32 @@ export const Select: React.FC<SelectProps> = ({
                 marginTop: dropdownOffsetY,
                 padding: 0,
                 maxHeight: 360,
-                backdropFilter: 'blur(120px)',
-                borderColor: alpha(theme.palette.common.white, theme.custom.opacity.light),
+                backdropFilter: "blur(120px)",
+                borderColor: alpha(
+                  theme.palette.common.white,
+                  theme.custom.opacity.light
+                ),
                 borderWidth: 1,
-                borderStyle: 'solid',
+                borderStyle: "solid",
                 [theme.breakpoints.down("sm")]: {
-                  width: 'inherit',
+                  width: "inherit",
                   marginLeft: 0,
                   marginTop: 0,
-                  top: '0 !important',
-                  left: '0 !important',
+                  top: "0 !important",
+                  left: "0 !important",
                   bottom: 0,
                   right: 0,
-                  maxWidth: '100%',
+                  maxWidth: "100%",
                 },
               },
             },
           },
           IconComponent: open ? ExpandLessIcon : ExpandMoreIcon,
           renderValue: (v: any) => {
+            if (typeof renderValue === "function") {
+              return renderValue(v);
+            }
+
             const option = options!.find((option) => option.value === v);
             return (
               option && (
@@ -136,8 +143,9 @@ export const Select: React.FC<SelectProps> = ({
                   label={
                     forceHiddenLabel
                       ? undefined
-                      : (renderShortLabel && option.shortLabel)
-                        || option.label || option.value
+                      : (renderShortLabel && option.shortLabel) ||
+                        option.label ||
+                        option.value
                   }
                   icon={option.icon}
                   centeredLabel={centeredLabel}
@@ -166,7 +174,7 @@ export const Select: React.FC<SelectProps> = ({
               )}`
             : undefined,
           "& .MuiOutlinedInput-root.MuiInputBase-root": {
-            background: noBackground ? 'none' : undefined,
+            background: noBackground ? "none" : undefined,
             borderWidth: noBorder ? 0 : undefined,
             "& .MuiOutlinedInput-notchedOutline": {
               borderWidth: noBorder ? 0 : undefined,
@@ -182,33 +190,25 @@ export const Select: React.FC<SelectProps> = ({
         }}
         {...inputProps}
       >
-        {
-          isMobile && (
-            <ListSubheader>
-              <Box textAlign="right">
-                <CloseIcon
-                  sx={{
-                    color: theme.palette.primary.main,
-                  }}
-                  onClick={() => setOpen(false)}
-                />
-              </Box>
-            </ListSubheader>
-          )
-        }
-        {
-          isMobile && (
-            <ListSubheader>
-              <Typography
-                variant="h6"
-                color="text.primary"
-                textAlign="center"
-              >
-                Select option
-              </Typography>
-            </ListSubheader>
-          )
-        }
+        {isMobile && (
+          <ListSubheader>
+            <Box textAlign="right">
+              <CloseIcon
+                sx={{
+                  color: theme.palette.primary.main,
+                }}
+                onClick={() => setOpen(false)}
+              />
+            </Box>
+          </ListSubheader>
+        )}
+        {isMobile && (
+          <ListSubheader>
+            <Typography variant="h6" color="text.primary" textAlign="center">
+              Select option
+            </Typography>
+          </ListSubheader>
+        )}
         {searchable && (
           <ListSubheader>
             <SearchInput
@@ -229,7 +229,7 @@ export const Select: React.FC<SelectProps> = ({
               disabled={option.disabled}
               onClick={() => setOpen(false)}
               sx={{
-                display: !option.hidden ? undefined : 'none',
+                display: !option.hidden ? undefined : "none",
               }}
             >
               <BaseAsset
@@ -255,9 +255,7 @@ export const Select: React.FC<SelectProps> = ({
         selected={value}
         setValue={setValue}
         anchorEl={anchorEl}
-        options={
-          options
-        }
+        options={options}
         searchable
       />
     </>

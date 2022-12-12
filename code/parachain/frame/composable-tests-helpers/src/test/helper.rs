@@ -41,20 +41,27 @@ pub fn default_acceptable_computation_error(x: u128, y: u128) -> Result<(), Fixe
 	acceptable_computation_error(x, y, DEFAULT_PRECISION, DEFAULT_EPSILON)
 }
 
-type EventRecordOf<T> =
-	EventRecord<<T as frame_system::Config>::Event, <T as frame_system::Config>::Hash>;
+type EventRecordOf<T> = EventRecord<<T as Config>::Event, <T as Config>::Hash>;
 
 // NOTE/FIXME(benluelo): These trait bounds can be simplified quite a bit once this issue is
 // resolved: https://github.com/rust-lang/rust/issues/20671#issuecomment-529752828
-pub trait RuntimeTrait<PalletEvent>: Config
+pub trait RuntimeTrait<PalletEvent>:
+	Config<
+	Event = <Self as RuntimeTrait<PalletEvent>>::Event,
+	Origin = <Self as RuntimeTrait<PalletEvent>>::Origin,
+>
 where
-	<Self as frame_system::Config>::Event:
-		Parameter + Member + Debug + Clone + TryInto<PalletEvent> + From<PalletEvent>,
-	<<Self as frame_system::Config>::Event as TryInto<PalletEvent>>::Error: Debug,
-	<Self as frame_system::Config>::Origin:
-		OriginTrait<AccountId = <Self as frame_system::Config>::AccountId>,
 	PalletEvent: Clone + Debug + PartialEq,
 {
+	type Event: Parameter
+		+ Member
+		+ Debug
+		+ Clone
+		+ TryInto<PalletEvent, Error = Self::EventTryIntoPalletEventError>
+		+ From<PalletEvent>;
+	type EventTryIntoPalletEventError: Debug;
+	type Origin: OriginTrait<AccountId = <Self as Config>::AccountId>;
+
 	/// Asserts that the last event in the runtime is the expected event.
 	fn assert_last_event(pallet_event: PalletEvent) {
 		let events = frame_system::Pallet::<Self>::events();
@@ -217,12 +224,14 @@ event checked: {pallet_event:#?}
 
 impl<Runtime, PalletEvent> RuntimeTrait<PalletEvent> for Runtime
 where
-	Runtime: Config, /* <Event = RuntimeEvent> */
-	<Runtime as frame_system::Config>::Event:
+	Runtime: Config,
+	<Runtime as Config>::Event:
 		Parameter + Member + Debug + Clone + TryInto<PalletEvent> + From<PalletEvent>,
 	<<Runtime as Config>::Event as TryInto<PalletEvent>>::Error: Debug,
-	<Runtime as frame_system::Config>::Origin:
-		OriginTrait<AccountId = <Runtime as frame_system::Config>::AccountId>,
+	<Runtime as Config>::Origin: OriginTrait<AccountId = <Runtime as Config>::AccountId>,
 	PalletEvent: Clone + Debug + PartialEq,
 {
+	type Event = <Runtime as Config>::Event;
+	type EventTryIntoPalletEventError = <<Runtime as Config>::Event as TryInto<PalletEvent>>::Error;
+	type Origin = <Runtime as Config>::Origin;
 }

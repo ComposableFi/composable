@@ -1,13 +1,6 @@
 import { TableCell, TableRow, Typography } from "@mui/material";
-import { BondOffer } from "shared";
-import {
-  useBondOfferPriceInAmountOfPrincipalTokens,
-  useBondOfferROI,
-  useBondOfferTotalPurchased,
-} from "@/store/bond/bond.slice";
+import { Asset, BondOffer } from "shared";
 import BondPrincipalAssetIcon from "./BondPrincipalAssetIcon";
-import { useBondedAsset } from "@/defi/hooks";
-import { useAssetPrice } from "@/defi/hooks";
 
 const BondOfferRow = ({
   bondOffer,
@@ -16,44 +9,29 @@ const BondOfferRow = ({
 }: {
   offerId: string;
   bondOffer: BondOffer;
-  handleBondClick: (bondOfferId: string) => void;
+  handleBondClick?: (bondOfferId: string) => void;
 }) => {
-  const roi = useBondOfferROI(offerId);
-  const totalPurchasedBonds = useBondOfferTotalPurchased(offerId);
-  const bondedAsset_s = useBondedAsset(bondOffer);
-  const bondedAssetPriceInUSD = useAssetPrice(bondedAsset_s);
-  const principalAmountOfTokensRequiredToBuy = useBondOfferPriceInAmountOfPrincipalTokens(offerId);
-
   return (
     <TableRow
       key={bondOffer.getBondOfferId() as string}
-      onClick={() => handleBondClick(bondOffer.getBondOfferId() as string)}
+      onClick={() => handleBondClick?.(bondOffer.getBondOfferId() as string)}
       sx={{ cursor: "pointer" }}
     >
       <TableCell align="left">
-        <BondPrincipalAssetIcon bondedAsset={bondedAsset_s} />
+        <BondPrincipalAssetIcon
+          bondedAsset={new Asset("Chaos", "CHAOS", "/tokens/chaos.svg")}
+        />
       </TableCell>
       <TableCell align="left">
-        <Typography variant="body2">
-          $
-          {principalAmountOfTokensRequiredToBuy
-            .times(bondedAssetPriceInUSD)
-            .toFormat(2)}
-        </Typography>
+        <Typography variant="body2">$12.00</Typography>
       </TableCell>
       <TableCell align="left">
         <Typography variant="body2" color="featured.main">
-          {roi.toFormat()}%
+          8.01%
         </Typography>
       </TableCell>
       <TableCell align="left">
-        <Typography variant="body2">
-          $
-          {totalPurchasedBonds
-            .times(principalAmountOfTokensRequiredToBuy)
-            .times(bondedAssetPriceInUSD)
-            .toFormat(2)}
-        </Typography>
+        <Typography variant="body2">$42.32</Typography>
       </TableCell>
     </TableRow>
   );
