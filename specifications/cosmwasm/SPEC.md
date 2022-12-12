@@ -1108,6 +1108,15 @@ These dependencies can grow fast, specially in cross-chain scenarios.
 Precedence is determined using a width-first approach.
 This means if an actor needs to process two messages `M1` and `M2` from actor `A1`, and two messages  `N1` and `N2` from actor `A2`, the order will be: `M1`, `N1`, `M2`, `N2`. 
 
+```mermaid
+
+flowchart LR
+
+A[M1] --> B[N1]
+B --> C[M2]
+C --> D[N2]
+```
+
 To ensure atomicity of execution, the `Dispatcher` maintains the intermediate states across calls.
 This, together with the use of escrow accounts that lock the funds along the call time, ensure that the contract is able to atomically revert, no matter how large the graph call is or when the error occurs.
 
@@ -1419,6 +1428,7 @@ Contributors that made our CosmWasm implementation possible are here listed in a
 
 - Hussein Ait Lahcen - XCVM Principal Engineering - Composable Finance
 - Abdullah Eryuzlu - Rust Developer - Composable Finance
+- Dzmitry Lahoda - Rust Developer - Composable Finance
 - Cor Pruijs - Rust Developer - Composable Finance
 
 [2.5.1.]: #251-environment-pointer
