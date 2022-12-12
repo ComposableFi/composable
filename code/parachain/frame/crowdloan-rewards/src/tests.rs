@@ -218,11 +218,11 @@ fn test_add_ok() {
 	};
 	ExtBuilder::default().build().execute_with(|| {
 		let expected_total_rewards = 100 * DEFAULT_REWARD;
-		Balances::make_free_balance_be(&CrowdloanRewards::account_id(), expected_total_rewards);
-		assert_ok!(CrowdloanRewards::populate(Origin::root(), gen(100, DEFAULT_REWARD);));
+		Balances::make_free_balance_be(&CrowdloanRewards::account_id(), expected_total_rewards * 2);
+		assert_ok!(CrowdloanRewards::populate(Origin::root(), gen(100, DEFAULT_REWARD)));
 		assert_eq!(CrowdloanRewards::total_rewards(), expected_total_rewards);
 		assert_eq!(CrowdloanRewards::claimed_rewards(), 0);
-		CrowdloanRewards::add(Origin::root(), gen(100, DEFAULT_REWARD)).unwrap();
+		CrowdloanRewards::add(Origin::root(), gen(200, DEFAULT_REWARD)).unwrap();
 		assert_eq!(CrowdloanRewards::total_rewards(), expected_total_rewards * 2);
 	});
 }

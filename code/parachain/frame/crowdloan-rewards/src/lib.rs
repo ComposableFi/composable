@@ -345,7 +345,8 @@ pub mod pallet {
 		/// Deletes all accounts provided in the `deletions` vector. If the provided `Balance` does
 		/// not match the current balance of the account, the deletion will fail.
 		//
-		// README: Disabled to reduce the amount of auditing work. When enabling, also enable the tests.
+		// README: Disabled to reduce the amount of auditing work. When enabling, also enable the
+		// tests.
 		//
 		// #[pallet::weight(<T as Config>::WeightInfo::populate(deletions.len() as _))]
 		// pub fn delete(
@@ -389,41 +390,44 @@ pub mod pallet {
 		/// * Should be called within a transactional context, as this may return an error but still
 		///   change
 		/// storage.
-		pub(crate) fn do_delete(
-			deletions: Vec<(RemoteAccountOf<T>, BalanceOf<T>)>,
-		) -> DispatchResult {
-			let mut total_rewards: T::Balance = TotalRewards::<T>::get();
-			let mut total_contributors: u32 = TotalContributors::<T>::get();
+		// pub(crate) fn do_delete(
+		// 	deletions: Vec<(RemoteAccountOf<T>, BalanceOf<T>)>,
+		// ) -> DispatchResult {
+		// 	let mut total_rewards: T::Balance = TotalRewards::<T>::get();
+		// 	let mut total_contributors: u32 = TotalContributors::<T>::get();
 
-			// Get each account from deletions and remove it from the storage
-			for (account, expected) in deletions {
-				Rewards::<T>::mutate_exists(account, |rewards| {
-					if let Some(rewards) = rewards {
-						ensure!(rewards.total == expected, Error::<T>::UnexpectedRewardAmount);
-						total_rewards -= rewards.total;
-						total_contributors -= 1;
-					}
-					*rewards = None;
-					Ok::<(), Error<T>>(())
-				})?;
-			}
+		// 	// Get each account from deletions and remove it from the storage
+		// 	for (account, expected) in deletions {
+		// 		Rewards::<T>::mutate_exists(account, |rewards| {
+		// 			if let Some(rewards) = rewards {
+		// 				ensure!(rewards.total == expected, Error::<T>::UnexpectedRewardAmount);
+		// 				total_rewards -= rewards.total;
+		// 				total_contributors -= 1;
+		// 			}
+		// 			*rewards = None;
+		// 			Ok::<(), Error<T>>(())
+		// 		})?;
+		// 	}
 
-			TotalRewards::<T>::set(total_rewards);
-			TotalContributors::<T>::set(total_contributors);
-			Ok(())
-		}
+		// 	TotalRewards::<T>::set(total_rewards);
+		// 	TotalContributors::<T>::set(total_contributors);
+		// 	Ok(())
+		// }
 
 		/// Add new rewards to the pallet. Updates total_rewards and contributors accordingly.
 		pub fn do_add(
 			additions: Vec<(RemoteAccountOf<T>, RewardAmountOf<T>, VestingPeriodOf<T>)>,
 		) -> DispatchResult {
-			Self::in_uninitialized(|| Self::do_populate(additions))
+			Self::ensure_can_reward(|| Self::in_uninitialized(|| Self::do_populate(additions)))
+		}
+
+		/// Runs the provided closure, and afterwards ensures that rewards can be paid out.
+		pub(crate) fn ensure_can_reward<F: FnOnce() -> DispatchResult>(f: F) -> DispatchResult {
+			let result = f();
 			let available_funds = T::RewardAsset::balance(&Self::account_id());
-			let total_rewards = TotalRewards::<T>::get();
-			ensure!(
-				available_funds >= total_rewards,
-				Error::<T>::RewardsNotFunded
-			);
+			let remaining = TotalRewards::<T>::get().safe_sub(&ClaimedRewards::<T>::get())?;
+			ensure!(available_funds >= remaining, Error::<T>::RewardsNotFunded);
+			result
 		}
 
 		/// Runs the provided function while setting the crate to uninitialized. Useful during
