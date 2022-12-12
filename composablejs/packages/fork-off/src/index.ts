@@ -176,6 +176,7 @@ async function main() {
     storage = JSON.parse(fs.readFileSync(storagePath, "utf8"));
   } catch {
     signale.error(`Error parsing storage file. Please delete ${storagePath} and try again`);
+    process.exit(1);
   }
 
   const originalSpec = JSON.parse(fs.readFileSync(originalSpecPath, "utf8"));

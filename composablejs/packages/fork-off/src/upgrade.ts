@@ -6,7 +6,7 @@ import signale from "signale";
 const endpoint = "ws://127.0.0.1:9988";
 
 const runtimeVersion = process.env.UPGRADE_VERSION || "1.10003";
-const runtimeUpgradeFilename = "runtime_upgrade.wasm"
+const runtimeUpgradeFilename = "runtime_upgrade.wasm";
 const runtimeUpgradePath = path.join(__dirname, "../data", runtimeUpgradeFilename);
 
 async function upgrade() {
@@ -19,7 +19,9 @@ async function upgrade() {
   const runtimeUpgrade = fs.readFileSync(runtimeUpgradePath);
 
   if (!runtimeUpgrade) {
-    signale.error(`Runtime upgrade file not found. Please place it in the data folder and rename it to ${runtimeUpgradeFilename}`);
+    signale.error(
+      `Runtime upgrade file not found. Please place it in the data folder and rename it to ${runtimeUpgradeFilename}`
+    );
     process.exit(1);
   }
 
@@ -50,7 +52,7 @@ async function upgrade() {
   signale.success("The runtime upgrade has been successfully scheduled");
   signale.await("Waiting for the runtime upgrade to be applied...");
 
-  api.query.system.events(events => {
+  api.query.system.events((events: any[]) => {
     // Loop through the Vec<EventRecord>
     events.forEach(async ({ event }) => {
       if (event.method === "ValidationFunctionApplied") {
