@@ -40,15 +40,15 @@ Flaky and brittle gates are [false positive](https://en.wikipedia.org/wiki/False
 
 Flaky gates happen as consequence of a improper managed [non determinism](https://en.wikipedia.org/wiki/Nondeterministic_algorithm).
 
-Brittle gates happen as consequences sloppy and low quality(may be tactically reasoanble) engineering practices.
+Brittle gates happen as consequences sloppy and low quality(may be tactically reasonable) engineering practices.
 
 ## Why flaky and brittle gates are bad?
 
-Brittle tests slow down [merge](https://mergify.com/features/merge-queue) process, make CI `red`, and cosume development resoruces to double check same failures repeatedly. 
+Brittle tests slow down [merge](https://mergify.com/features/merge-queue) process, make CI `red`, and consume development resources to double check same failures repeatedly. 
 
 Flaky tests make asynchronous and yet high quality automate product delivery very hard.  All changes must be synced across parties, that prevents value delivery in small pieces. Delivery time increased.
 
-Both lead to [alert fatigue](https://en.wikipedia.org/wiki/Alarm_fatigue) , which leads to real issues and regression are ingnored. A quality of output decreases. Resources spent on automation wasted.
+Both lead to [alert fatigue](https://en.wikipedia.org/wiki/Alarm_fatigue) , which leads to real issues and regression are ignored. A quality of output decreases. Resources spent on automation wasted.
 
 ## Solutions
 
@@ -66,7 +66,7 @@ Deciding if test is flaky or complex regression out of scope of this RFC.
 Possible things to do with flaky tests:
 
 - Depend flaky test only on success after non flaky run. For examples, integrations tests are se to run only after basic performance or infrastructure liveness checks.
-- Temporal conditio(wait some time) is changed to event based(data presence) condition.
+- Temporal condition (wait some time) is changed to event based(data presence) condition.
 - Increase hardware resources provided to test run
 
 ### For brittle
@@ -79,7 +79,7 @@ Possible things to do with brittle tests:
 
 - Capture value before action and compare with after action, not absolute 
 - Test invariants, relations, constraints and properties.
-- Refactor to reuse parts, specifically toward tests hierarchies by the complexity of setup and assertions (exampl,e previos simler test becomes setup of part of more complex tests)
+- Refactor to reuse parts, specifically toward tests hierarchies by the complexity of setup and assertions (example, previous simpler test becomes setup of part of more complex tests)
 - [Positive/negative testing](https://www.guru99.com/positive-and-negative-testing.html)
 - Types (impossible states will not compile)
 
@@ -92,4 +92,4 @@ First, we retain flaky and brittle tests to be run and be part of code base. We 
 Second, if you know fix and fix will not break again same way and fix easy is - do it. So disabling is formal option to align, but can solve faster if you know how and have capacity.
 
 Third, 
-If it end up to harded to asssure release quality. There could be urge to to more automated gates.  Automation would have choose either run manually gates and evaluate flaky/brittle results depending on domain knowledge, or make attempts to fix some flaky/brittle tests.
+If we end up to harder to assure release quality. There could be urge to to more automated gates. Automation would have choose either run manually gates and evaluate flaky/brittle results depending on domain knowledge, or make attempts to fix some flaky/brittle tests.
