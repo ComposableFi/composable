@@ -58,7 +58,7 @@ pub mod pallet {
 		WeightInfo,
 	};
 	use codec::FullCodec;
-	use composable_support::math::safe::{safe_multiply_by_rational, SafeArithmetic, SafeSub};
+	use composable_support::math::safe::{SafeArithmetic, SafeSub};
 	use composable_traits::{
 		currency::{CurrencyFactory, LocalAssets},
 		defi::{CurrencyPair, Rate},
@@ -756,28 +756,16 @@ pub mod pallet {
 		fn redeemable_assets_for_lp_tokens(
 			pool_id: Self::PoolId,
 			lp_amount: Self::Balance,
-			min_expected_amounts: BTreeMap<Self::AssetId, Self::Balance>,
 		) -> Result<RedeemableAssets<Self::AssetId, Self::Balance>, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
 			#[allow(deprecated)]
-			let currency_pair = Self::pool_ordered_pair(pool_id)?;
-			ensure!(min_expected_amounts.len() < 3, Error::<T>::MoreThanTwoAssetsNotYetSupported);
-			let min_base_amount = *min_expected_amounts
-				.get(&currency_pair.base)
-				.ok_or(Error::<T>::MissingMinExpectedAmount)?;
-			let min_quote_amount = *min_expected_amounts
-				.get(&currency_pair.quote)
-				.ok_or(Error::<T>::MissingMinExpectedAmount)?;
 			match pool {
 				PoolConfiguration::DualAssetConstantProduct(BasicPoolInfo {
 					lp_token,
 					assets_weights,
 					..
 				}) => {
-					// TODO (vim): This function must call the relevant calculation through
-					//  dual_asset_constant_product.rs. Then most of the logic is removed here.
-
 					let assets = assets_weights
 						.into_iter()
 						.map(|(id, w)| {
@@ -800,11 +788,8 @@ pub mod pallet {
 			who: &Self::AccountId,
 			pool_id: Self::PoolId,
 			lp_amount: Self::Balance,
-			min_expected_amounts: BTreeMap<Self::AssetId, Self::Balance>,
 		) -> Result<RemoveLiquiditySimulationResult<Self::AssetId, Self::Balance>, DispatchError> {
-			ensure!(min_expected_amounts.len() < 3, Error::<T>::MoreThanTwoAssetsNotYetSupported);
-			let redeemable_assets =
-				Self::redeemable_assets_for_lp_tokens(pool_id, lp_amount, min_expected_amounts)?;
+			let redeemable_assets = Self::redeemable_assets_for_lp_tokens(pool_id, lp_amount)?;
 			let pool = Self::get_pool(pool_id)?;
 			#[allow(deprecated)]
 			let currency_pair = Self::pool_ordered_pair(pool_id)?;

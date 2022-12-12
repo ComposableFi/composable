@@ -67,7 +67,6 @@ pub trait Amm {
 	fn redeemable_assets_for_lp_tokens(
 		pool_id: Self::PoolId,
 		lp_amount: Self::Balance,
-		min_expected_amounts: BTreeMap<Self::AssetId, Self::Balance>,
 	) -> Result<RedeemableAssets<Self::AssetId, Self::Balance>, DispatchError>
 	where
 		Self::AssetId: sp_std::cmp::Ord;
@@ -88,7 +87,6 @@ pub trait Amm {
 		who: &Self::AccountId,
 		pool_id: Self::PoolId,
 		lp_amount: Self::Balance,
-		min_expected_amounts: BTreeMap<Self::AssetId, Self::Balance>,
 	) -> Result<RemoveLiquiditySimulationResult<Self::AssetId, Self::Balance>, DispatchError>
 	where
 		Self::AssetId: sp_std::cmp::Ord;
