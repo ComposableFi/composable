@@ -344,19 +344,16 @@ pub mod pallet {
 
 		/// Deletes all accounts provided in the `deletions` vector. If the provided `Balance` does
 		/// not match the current balance of the account, the deletion will fail.
-		// Chosen to remove this as we wish to avoid auditing before release. Instead
-		// the add extrinsic may be used to set an accounts reward to 0.
-		// A unit test is present but also commented in tests.rs
-		// #[pallet::weight(<T as Config>::WeightInfo::populate(deletions.len() as _))]
-		// pub fn delete(
-		// 	origin: OriginFor<T>,
-		// 	deletions: Vec<(RemoteAccountOf<T>, BalanceOf<T>)>,
-		// ) -> DispatchResult {
-		// 	T::AdminOrigin::ensure_origin(origin)?;
-		// 	Self::do_delete(&deletions)?;
-		// 	Self::deposit_event(Event::RewardsDeleted { deletions });
-		// 	Ok(())
-		// }
+		#[pallet::weight(<T as Config>::WeightInfo::populate(deletions.len() as _))]
+		pub fn delete(
+			origin: OriginFor<T>,
+			deletions: Vec<(RemoteAccountOf<T>, BalanceOf<T>)>,
+		) -> DispatchResult {
+			T::AdminOrigin::ensure_origin(origin)?;
+			Self::do_delete(deletions.clone())?;
+			Self::deposit_event(Event::RewardsDeleted { deletions });
+			Ok(())
+		}
 
 		/// Adds all accounts in the `additions` vector. Add may be called even if the pallet has
 		/// been initialized.
@@ -366,7 +363,7 @@ pub mod pallet {
 			additions: Vec<(RemoteAccountOf<T>, RewardAmountOf<T>, VestingPeriodOf<T>)>,
 		) -> DispatchResult {
 			T::AdminOrigin::ensure_origin(origin)?;
-			Self::do_add(&additions)?;
+			Self::do_add(additions.clone())?;
 			Self::deposit_event(Event::RewardsAdded { additions });
 			Ok(())
 		}
@@ -415,7 +412,7 @@ pub mod pallet {
 
 		/// Add new rewards to the pallet. Updates total_rewards and contributors accordingly.
 		pub fn do_add(
-			additions: &[(RemoteAccountOf<T>, RewardAmountOf<T>, VestingPeriodOf<T>)],
+			additions: Vec<(RemoteAccountOf<T>, RewardAmountOf<T>, VestingPeriodOf<T>)>,
 		) -> DispatchResult {
 			Self::in_uninitialized(|| Self::do_populate(additions))
 		}
