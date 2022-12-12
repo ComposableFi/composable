@@ -64,11 +64,42 @@
 //! variants of both of them.
 
 use super::{BindingValue, Bindings};
-use crate::{NetworkId, OrderedBindings, UserId, UserOrigin};
+use crate::{InterpreterOrigin, NetworkId, OrderedBindings, UserId, UserOrigin};
 use alloc::{fmt::Debug, string::String, vec, vec::Vec};
 use cosmwasm_std::{BankMsg, Coin, CosmosMsg, StdResult};
 use cw_storage_plus::{CwIntKey, Key, KeyDeserialize, Prefixer, PrimaryKey};
 use serde::{Deserialize, Serialize};
+
+impl<'a> PrimaryKey<'a> for InterpreterOrigin {
+	type Prefix = ();
+	type SubPrefix = ();
+	type Suffix = u128;
+	type SuperSuffix = u128;
+	fn key(&self) -> Vec<Key> {
+		vec![
+			Key::Val32(self.user_origin.network_id.0.to_cw_bytes()),
+			Key::Ref(self.user_origin.user_id.as_ref()),
+			Key::Ref(self.salt.as_ref()),
+		]
+	}
+}
+
+impl<'a> Prefixer<'a> for InterpreterOrigin {
+	fn prefix(&self) -> Vec<Key> {
+		vec![
+			Key::Val32(self.user_origin.network_id.0.to_cw_bytes()),
+			Key::Ref(self.user_origin.user_id.as_ref()),
+			Key::Ref(self.salt.as_ref()),
+		]
+	}
+}
+
+impl KeyDeserialize for InterpreterOrigin {
+	type Output = <(u32, Vec<u8>, Vec<u8>) as KeyDeserialize>::Output;
+	fn from_vec(value: Vec<u8>) -> StdResult<Self::Output> {
+		<(u32, Vec<u8>, Vec<u8>) as KeyDeserialize>::from_vec(value)
+	}
+}
 
 impl<'a> PrimaryKey<'a> for UserOrigin {
 	type Prefix = ();
@@ -80,6 +111,19 @@ impl<'a> PrimaryKey<'a> for UserOrigin {
 	}
 }
 
+impl<'a> Prefixer<'a> for UserOrigin {
+	fn prefix(&self) -> Vec<Key> {
+		vec![Key::Val32(self.network_id.0.to_cw_bytes()), Key::Ref(self.user_id.as_ref())]
+	}
+}
+
+impl KeyDeserialize for UserOrigin {
+	type Output = <(u32, Vec<u8>) as KeyDeserialize>::Output;
+	fn from_vec(value: Vec<u8>) -> StdResult<Self::Output> {
+		<(u32, Vec<u8>) as KeyDeserialize>::from_vec(value)
+	}
+}
+
 impl<'a> PrimaryKey<'a> for UserId {
 	type Prefix = ();
 	type SubPrefix = ();
@@ -87,6 +131,12 @@ impl<'a> PrimaryKey<'a> for UserId {
 	type SuperSuffix = u128;
 	fn key(&self) -> Vec<Key> {
 		vec![Key::Ref(self.0.as_ref())]
+	}
+}
+
+impl<'a> Prefixer<'a> for UserId {
+	fn prefix(&self) -> Vec<Key> {
+		<Vec<u8> as Prefixer<'a>>::prefix(&self.0)
 	}
 }
 

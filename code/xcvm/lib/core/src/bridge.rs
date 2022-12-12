@@ -1,12 +1,15 @@
-use crate::UserOrigin;
+use crate::{NetworkId, UserOrigin};
+use alloc::vec::Vec;
 use codec::{Decode, Encode};
 use core::cmp::Ordering;
+use cosmwasm_std::Addr;
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
 
 /// Security associated with a bridge.
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 #[repr(u8)]
 pub enum BridgeSecurity {
 	Insecure = 0,
@@ -15,6 +18,7 @@ pub enum BridgeSecurity {
 	Deterministic = 3,
 }
 
+// Keep the ordering explicit.
 impl PartialOrd for BridgeSecurity {
 	#[inline]
 	fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
@@ -61,37 +65,40 @@ pub enum BridgeProtocol {
 impl BridgeProtocol {
 	/// Ensure that a protocol enforce the minimum requested security.
 	pub fn ensure_security(&self, security: BridgeSecurity) -> Result<(), ()> {
-		let has = match (self, security) {
-			(BridgeProtocol::IBC, _) => true,
-			(BridgeProtocol::XCM, _) => true,
-			(BridgeProtocol::OTP { security: otp_security, .. }, security) =>
-				*otp_security >= security,
-		};
-		if has {
-			Ok(())
-		} else {
-			Err(())
+		match self {
+			BridgeProtocol::IBC => Ok(()),
+			BridgeProtocol::XCM => Ok(()),
+			BridgeProtocol::OTP { security: otp_security, .. } if *otp_security >= security =>
+				Ok(()),
+			_ => Err(()),
 		}
 	}
 }
 
 /// The Origin that executed the XCVM operation.
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-#[derive(
-	Clone, PartialEq, Eq, PartialOrd, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
-)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Debug, Serialize, Deserialize)]
 pub enum CallOrigin {
-	Remote { protocol: BridgeProtocol, relayer: Vec<u8>, user_origin: UserOrigin },
-	Local { user_origin: UserOrigin },
+	Remote { protocol: BridgeProtocol, relayer: Addr, user_origin: UserOrigin },
+	Local { user: Addr },
 }
 
 impl CallOrigin {
 	/// Extract the user from a [`CallOrigin`].
 	/// No distinction is done for local or remote user in this case.
-	pub fn user(&self) -> &UserOrigin {
+	pub fn user(&self, current_network: NetworkId) -> UserOrigin {
 		match self {
-			CallOrigin::Remote { user_origin, .. } => user_origin,
-			CallOrigin::Local { user_origin } => user_origin,
+			CallOrigin::Remote { user_origin, .. } => user_origin.clone(),
+			CallOrigin::Local { user } =>
+				UserOrigin { network_id: current_network, user_id: user.as_bytes().to_vec().into() },
+		}
+	}
+
+	/// The relayer.
+	pub fn relayer(&self) -> &Addr {
+		match self {
+			CallOrigin::Remote { relayer, .. } => relayer,
+			CallOrigin::Local { user } => user,
 		}
 	}
 

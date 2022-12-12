@@ -1,76 +1,77 @@
-import { TableCell, TableRow, Box, Typography } from "@mui/material";
-import { ConstantProductPool, StableSwapPool } from "@/defi/types";
-import { useAsset, useAssets } from "@/defi/hooks";
-import { useLiquidityByPool } from "@/store/hooks/useLiquidityByPool";
-import millify from "millify";
+import { Box, TableCell, TableRow, Typography } from "@mui/material";
+import { useAssetIdOraclePrice, useAssets } from "@/defi/hooks";
 import { PairAsset } from "@/components/Atoms";
-import { useLiquidityPoolStats } from "@/store/hooks/useLiquidityPoolStats";
-import { useUSDPriceByAssetId } from "@/store/assets/hooks";
+import { useLiquidityPoolStats } from "@/defi/hooks/useLiquidityPoolStats";
 import {
   calculatePoolTotalValueLocked,
-  DEFAULT_NETWORK_ID,
   DEFAULT_UI_FORMAT_DECIMALS,
 } from "@/defi/utils";
 import { useStakingRewardPool } from "@/store/stakingRewards/stakingRewards.slice";
 import { calculateRewardPerDayByAssetId } from "@/defi/utils/stakingRewards/math";
 import { useStakingRewardsPoolApy } from "@/defi/hooks/stakingRewards/useStakingRewardsPoolApy";
 import { useMemo } from "react";
+import { DualAssetConstantProduct } from "shared";
+import { useLiquidity } from "@/defi/hooks/useLiquidity";
+import millify from "millify";
 import BigNumber from "bignumber.js";
 
 const LiquidityPoolRow = ({
   liquidityPool,
   handleRowClick,
 }: {
-  liquidityPool: StableSwapPool | ConstantProductPool;
+  liquidityPool: DualAssetConstantProduct;
   handleRowClick: (e: any, poolId: string) => void;
 }) => {
-  const rewardPool = useStakingRewardPool(liquidityPool.lpToken);
+  const lpAssetId = liquidityPool
+    .getLiquidityProviderToken()
+    .getPicassoAssetId() as string;
+  const rewardPool = useStakingRewardPool(lpAssetId);
   const rewardAssets = useAssets(
     rewardPool ? Object.keys(rewardPool.rewards) : []
   );
 
-  const baseAsset = useAsset(liquidityPool.pair.base.toString());
-  const quoteAsset = useAsset(liquidityPool.pair.quote.toString());
+  const { baseAsset, quoteAsset } = useMemo(() => {
+    const assets = liquidityPool.getLiquidityProviderToken().getUnderlyingAssets();
+    let baseAsset, quoteAsset;
+
+    if (assets.length > 0) {
+      baseAsset = assets[0];
+      quoteAsset = assets[1];
+    }
+
+    return {
+      baseAsset,
+      quoteAsset
+    }
+  }, [liquidityPool]);
 
   const poolStats = useLiquidityPoolStats(liquidityPool);
-  const liquidity = useLiquidityByPool(liquidityPool);
+  const liquidity = useLiquidity(liquidityPool);
 
-  const quoteAssetPriceUSD = useUSDPriceByAssetId(
-    liquidityPool.pair.quote.toString()
-  );
-  const baseAssetPriceUSD = useUSDPriceByAssetId(
-    liquidityPool.pair.base.toString()
-  );
+  const quoteAssetPriceUSD = useAssetIdOraclePrice(baseAsset?.getPicassoAssetId());
+  const baseAssetPriceUSD = useAssetIdOraclePrice(quoteAsset?.getPicassoAssetId());
 
-  const apy = useStakingRewardsPoolApy(liquidityPool?.lpToken ?? "-");
-
+  const apy = useStakingRewardsPoolApy(lpAssetId);
   const rewardAPYs = useMemo(() => {
     return Object.keys(apy).reduce((v, i) => {
-      return v.plus(apy[i])
-    }, new BigNumber(0))
+      return v.plus(apy[i]);
+    }, new BigNumber(0));
   }, [apy]);
 
   return (
     <TableRow
       onClick={(e) => {
-        handleRowClick(e, liquidityPool.poolId.toString());
+        handleRowClick(e, liquidityPool.getPoolId() as string);
       }}
-      key={liquidityPool.poolId.toString()}
+      key={liquidityPool.getPoolId() as string}
       sx={{ cursor: "pointer" }}
     >
       <TableCell align="left">
         {baseAsset && quoteAsset && (
           <PairAsset
-            assets={[
-              {
-                icon: baseAsset.icon,
-                label: baseAsset.symbol,
-              },
-              {
-                icon: quoteAsset.icon,
-                label: quoteAsset.symbol,
-              },
-            ]}
+            assets={liquidityPool
+              .getLiquidityProviderToken()
+              .getUnderlyingAssetJSON()}
             separator="/"
           />
         )}
@@ -80,8 +81,8 @@ const LiquidityPoolRow = ({
           $
           {millify(
             calculatePoolTotalValueLocked(
-              liquidity.tokenAmounts.baseAmount,
-              liquidity.tokenAmounts.quoteAmount,
+              liquidity.baseAmount,
+              liquidity.quoteAmount,
               baseAssetPriceUSD,
               quoteAssetPriceUSD
             ).toNumber()
@@ -89,24 +90,24 @@ const LiquidityPoolRow = ({
         </Typography>
       </TableCell>
       <TableCell align="left">
-        <Typography variant="body2">{
-          rewardAPYs.toFixed(DEFAULT_UI_FORMAT_DECIMALS)
-        }%</Typography>
+        <Typography variant="body2">
+          {rewardAPYs.toFixed(DEFAULT_UI_FORMAT_DECIMALS)}%
+        </Typography>
       </TableCell>
       <TableCell align="left">
         {rewardAssets
           ? rewardAssets.map((item) => {
               return (
-                <Box key={item.name} display="flex">
+                <Box key={item.getName()} display="flex">
                   <PairAsset
                     assets={[
                       {
-                        icon: item.icon,
-                        label: item.symbol,
+                        icon: item.getIconUrl(),
+                        label: item.getSymbol(),
                       },
                     ]}
                     label={calculateRewardPerDayByAssetId(
-                      item.network[DEFAULT_NETWORK_ID],
+                      item.getPicassoAssetId() as string,
                       rewardPool
                     ).toFixed(DEFAULT_UI_FORMAT_DECIMALS)}
                   />

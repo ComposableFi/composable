@@ -1,7 +1,13 @@
 import { useMobile, useTablet } from "@/hooks/responsive";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import MenuIcon from "@mui/icons-material/Menu";
-import { Breadcrumbs, Typography, useTheme } from "@mui/material";
+import {
+  Breadcrumbs,
+  createTheme,
+  ThemeProvider,
+  Typography,
+  useTheme,
+} from "@mui/material";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -9,22 +15,44 @@ import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
 import Toolbar from "@mui/material/Toolbar";
 import * as React from "react";
+import { FC, useMemo } from "react";
 import { NavBar } from "../Organisms";
 import { PolkadotConnect } from "../Organisms/Wallet/PolkadotConnect";
 import { AnimatedCircles } from "@/components/Molecules/AnimatedCircles";
+import NoSSR from "@/components/Atoms/NoSSR";
+import { GasFeeDropdown } from "@/components/Organisms/BYOG/GasFeeDropdown";
 
 type DefaultLayoutProps = {
   breadcrumbs?: React.ReactNode[];
   children?: React.ReactNode;
 };
 
-export const DefaultLayout: React.FC<DefaultLayoutProps> = (props) => {
+export const DefaultLayout: FC<DefaultLayoutProps> = (props) => {
   const { children, breadcrumbs } = props;
 
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const isTablet = useTablet();
   const isMobile = useMobile();
   const theme = useTheme();
+  const walletThemeOverride = useMemo(() => {
+    return createTheme(theme, {
+      components: {
+        MuiDialog: {
+          styleOverrides: {
+            paper: {
+              backgroundColor: theme.palette.background.transparentCharcoal,
+              backdropFilter: "blur(32px)",
+            },
+            root: {
+              "& .MuiBackdrop-root": {
+                backdropFilter: "none",
+              },
+            },
+          },
+        },
+      },
+    });
+  }, [theme]);
   const drawerWidth = isTablet
     ? theme.custom.drawerWidth.tablet
     : theme.custom.drawerWidth.desktop;
@@ -66,8 +94,15 @@ export const DefaultLayout: React.FC<DefaultLayoutProps> = (props) => {
               <MenuIcon />
             </IconButton>
             <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-              {/* TODO: adding other content for toolbar */}
-              <PolkadotConnect />
+              <NoSSR>
+                <GasFeeDropdown
+                  toggleModal={() => {}}
+                  setTargetFeeItem={() => {}}
+                />
+                <ThemeProvider theme={walletThemeOverride}>
+                  <PolkadotConnect />
+                </ThemeProvider>
+              </NoSSR>
             </Box>
             {!isMobile && breadcrumbs && (
               <Breadcrumbs

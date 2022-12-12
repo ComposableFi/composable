@@ -4,7 +4,6 @@ import { FormTitle } from "@/components/Organisms/FormTitle";
 import { alpha, Box, BoxProps, Button, Divider, IconButton, Typography, useTheme } from "@mui/material";
 import { useMemo, useState } from "react";
 import BigNumber from "bignumber.js";
-import { useDispatch } from "react-redux";
 import FormWrapper from "../../FormWrapper";
 
 import EditIcon from "@mui/icons-material/Edit";
@@ -13,43 +12,40 @@ import { AccessTimeRounded, OpenInNewRounded } from "@mui/icons-material";
 import moment from "moment-timezone";
 import useStore from "@/store/useStore";
 import { AMMs } from "@/defi/AMMs";
-import { useUSDPriceByAssetId } from "@/store/assets/hooks";
 import { useExecutor, useParachainApi, useSelectedAccount, useSigner } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import { EventRecord } from "@polkadot/types/interfaces/system/types";
 import {
   addLiquidityToPoolViaPablo,
-  createConstantProductPool,
-  createStableSwapPool,
   toChainUnits
 } from "@/defi/utils";
-import { closeConfirmingModal, openConfirmingModal } from "@/stores/ui/uiSlice";
 import { useAsset } from "@/defi/hooks/assets/useAsset";
+import { setUiState } from "@/store/ui/ui.slice";
+import { useAssetIdOraclePrice } from "@/defi/hooks";
 
 const labelProps = (
   label: string | undefined,
   balance?: string,
   fontWeight?: string | number
 ) =>
-  ({
-    label: label,
-    mb: 0,
-    TypographyProps: {
+({
+  label: label,
+  mb: 0,
+  TypographyProps: {
+    variant: "body1",
+    fontWeight: fontWeight
+  },
+  BalanceProps: {
+    balance: balance,
+    BalanceTypographyProps: {
       variant: "body1",
       fontWeight: fontWeight
-    },
-    BalanceProps: {
-      balance: balance,
-      BalanceTypographyProps: {
-        variant: "body1",
-        fontWeight: fontWeight
-      }
     }
-  } as const);
+  }
+} as const);
 
 const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
   const theme = useTheme();
-  const dispatch = useDispatch();
 
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const signer = useSigner();
@@ -84,8 +80,8 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
 
   const [createdAt, setCreatedAt] = useState(-1);
 
-  const baseTokenUSDPrice = useUSDPriceByAssetId(baseAsset);
-  const quoteTokenUSDPrice = useUSDPriceByAssetId(quoteAsset);
+  const baseTokenUSDPrice = useAssetIdOraclePrice(baseAsset);
+  const quoteTokenUSDPrice = useAssetIdOraclePrice(quoteAsset);
 
   const [isFunding, setIsFunding] = useState<boolean>(false);
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
@@ -93,7 +89,7 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
   const usdAmount1 = baseLiquidity.multipliedBy(baseTokenUSDPrice);
   const usdAmount2 = quoteLiquidity.multipliedBy(quoteTokenUSDPrice);
 
-  const poolName = `${_baseAsset?.symbol}-${_quoteAsset?.symbol}`;
+  const poolName = `${_baseAsset?.getSymbol()}-${_quoteAsset?.getSymbol()}`;
 
   const buttonText = () => {
     // if (isConfirmed) {
@@ -135,12 +131,12 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
           console.log("Add Liq Tx Hash: ", txHash);
         },
         (txHash: string, events) => {
-          dispatch(closeConfirmingModal());
+          setUiState({ isConfirmingModalOpen: false });
           console.log("Add Liq Tx Hash: ", txHash);
           resetSlice();
         },
         (errorMessage: string) => {
-          dispatch(closeConfirmingModal());
+          setUiState({ isConfirmingModalOpen: false });
           console.log("Add Liq Error: ", errorMessage);
         }
       );
@@ -170,47 +166,7 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
   };
 
   const onButtonClickHandler = async () => {
-    if (executor && signer !== undefined && parachainApi && selectedAccount) {
-      const { address } = selectedAccount;
-
-      let pair = { base: +baseAsset, quote: +quoteAsset };
-      let permillDecimals = new BigNumber(10).pow(4);
-      let fee = new BigNumber(swapFee).times(permillDecimals).toNumber();
-
-      let baseWeight = new BigNumber(weights.baseWeight).times(permillDecimals);
-
-      let call =
-        ammId === "uniswap" || ammId === "balancer"
-          ? createConstantProductPool(
-            parachainApi,
-            pair,
-            fee,
-            address,
-            baseWeight.toNumber()
-          )
-          : createStableSwapPool(parachainApi, pair, fee, address);
-
-      executor
-        .execute(
-          call,
-          selectedAccount.address,
-          parachainApi,
-          signer,
-          (txHash: string) => {
-            dispatch(openConfirmingModal());
-            console.log("Tx Ready Hash: ", txHash);
-          },
-          onCreateFinalized,
-          (errorMessage) => {
-            console.log("tx Error: ", errorMessage);
-            dispatch(closeConfirmingModal());
-          }
-        )
-        .catch((err) => {
-          console.log("error", err);
-          dispatch(closeConfirmingModal());
-        });
-    }
+    // This needs to be updated later
   };
 
   const onBackHandler = () => {
@@ -229,8 +185,8 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
         <Label {...labelProps(undefined, `${baseLiquidity}`, 600)} mt={3}>
           {_baseAsset && (
             <BaseAsset
-              icon={_baseAsset.icon}
-              label={_baseAsset.symbol}
+              icon={_baseAsset.getIconUrl()}
+              label={_baseAsset.getSymbol()}
             />
           )}
         </Label>
@@ -247,8 +203,8 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
         <Label {...labelProps(undefined, `${quoteLiquidity}`, 600)} mt={2}>
           {_quoteAsset && (
             <BaseAsset
-              icon={_quoteAsset.icon}
-              label={_quoteAsset.symbol}
+              icon={_quoteAsset.getIconUrl()}
+              label={_quoteAsset.getSymbol()}
             />
           )}
         </Label>
@@ -291,6 +247,7 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
         <Label
           {...labelProps(
             "Pool type",
+            // @ts-ignore
             `${ammId === "none" ? "-" : AMMs[ammId].label}`
           )}
           mt={1}

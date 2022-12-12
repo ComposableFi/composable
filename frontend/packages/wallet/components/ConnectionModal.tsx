@@ -127,7 +127,7 @@ export const ConnectionModal: React.FC<ConnectionModalProps> = ({
       <ConnectionListItem
         key={wallet.walletId}
         onClick={(walletId: ConnectorType) => {
-          onConnectEthereumWallet(walletId).catch((err) => {
+          onConnectEthereumWallet?.(walletId).catch((err) => {
             enqueueSnackbar(err.message, { variant: "error" });
           });
         }}

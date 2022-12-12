@@ -1,5 +1,6 @@
 import create from "zustand";
-import { BondOffer, VestingSchedule } from "@/defi/types";
+import { VestingSchedule } from "@/defi/types";
+import { BondOffer } from "shared";
 import BigNumber from "bignumber.js";
 
 export interface BondedOfferVestingState {
@@ -96,14 +97,16 @@ export const updateExistingBondOffer = (bondOffer: BondOffer) =>
   useBondOffersSlice.setState((state) => ({
     ...state,
     bondOffers: state.bondOffers.map((offer) =>
-      offer.offerId.eq(bondOffer.offerId) ? bondOffer : offer
+      (offer.getBondOfferId(true) as BigNumber).eq(
+        bondOffer.getBondOfferId(true) as BigNumber
+      ) ? bondOffer : offer
     ),
   }));
 
-export const useBondOfferPriceInAmountOfPrincipalTokens = (offerId: string) =>
+export const useBondOfferPriceInAmountOfPrincipalTokens = (offerId: string): BigNumber =>
   useBondOffersSlice().bondOffers.find(
-    (offer) => offer.offerId.toString() === offerId
-  )?.bondPrice ?? new BigNumber(0);
+    (offer) => offer.getBondOfferId() as string === offerId
+  )?.getBondPrice(true) as BigNumber ?? new BigNumber(0);
 
 export const useBondOfferROI = (offerId: string) =>
   useBondOffersSlice().returnOnInvestmentRecord[offerId] || new BigNumber(0);

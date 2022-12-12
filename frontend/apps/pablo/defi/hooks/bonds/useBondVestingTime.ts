@@ -1,4 +1,4 @@
-import { BondOffer } from "@/defi/types";
+import { BondOffer } from "shared";
 import { useMemo } from "react";
 import { AVERAGE_BLOCK_TIME, calculateVestingTime } from "@/defi/utils";
 import { useBlockInterval } from "../useBlockInterval";
@@ -17,7 +17,7 @@ export default function useBondVestingTime(
         : new BigNumber(AVERAGE_BLOCK_TIME);
 
       return calculateVestingTime(
-        bondOffer.reward.maturity,
+        bondOffer.getRewardAssetMaturity(true) as BigNumber,
         blockInterval
       );
     }

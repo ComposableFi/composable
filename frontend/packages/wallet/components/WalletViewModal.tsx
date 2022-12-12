@@ -51,7 +51,7 @@ export type WalletViewProps = {
   selectedEthereumWallet?: EthereumWallet;
   connectedWalletTransactions: Array<{ title: string; timestamp: number }>;
 
-  onDisconnectEthereum: (...args: unknown[]) => Promise<void> | void;
+  onDisconnectEthereum?: (...args: unknown[]) => Promise<void> | void;
   onDisconnectDotsamaWallet: (() => Promise<void>) | undefined;
   onChangePolkadotAccount: () => void;
   onConnectPolkadot: () => void;
@@ -190,6 +190,7 @@ export const WalletViewModal: FC<WalletViewProps> = ({
             <PolkadotAccountView
               selectedPolkadotAccount={selectedPolkadotAccount}
               selectedPolkadotWallet={selectedPolkadotWallet}
+              nativeCurrencyIcon={polkadotNetwork?.nativeCurrencyIcon}
               onChangeAccount={onChangePolkadotAccount}
               onDisconnectWallet={onDisconnectDotsamaWallet}
               subscanUrl={
@@ -219,14 +220,23 @@ export const WalletViewModal: FC<WalletViewProps> = ({
                 marginTop: theme.spacing(2),
               }}
             >
-              <Button onClick={onConnectPolkadot} fullWidth variant="outlined">
+              <Button
+                onClick={onConnectPolkadot}
+                fullWidth
+                variant="outlined"
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  gap: theme.spacing(1),
+                }}
+              >
                 <Image
                   src="/networks/polkadot_js.svg"
                   height="23.5"
                   width="23.5"
                   alt="polkadot_wallet"
                 />
-                Connect Polkadot
+                Connect DotSama
               </Button>
             </Box>
           )}
@@ -240,10 +250,26 @@ export const WalletViewModal: FC<WalletViewProps> = ({
                 marginTop: theme.spacing(2),
               }}
             >
-              <Button onClick={onConnectEVM} fullWidth variant="outlined">
-                <Image src="/networks/mainnet.svg" height="23.5" width="23.5" alt="ethereum_wallet"/>
-                Connect EVM
-              </Button>
+              {ethereumNetwork ? (
+                <Button
+                  onClick={onConnectEVM}
+                  fullWidth
+                  variant="outlined"
+                  sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    gap: theme.spacing(1),
+                  }}
+                >
+                  <Image
+                    src="/networks/mainnet.svg"
+                    height="23.5"
+                    width="23.5"
+                    alt="ethereum_wallet"
+                  />
+                  Connect EVM
+                </Button>
+              ) : null}
             </Box>
           )}
 

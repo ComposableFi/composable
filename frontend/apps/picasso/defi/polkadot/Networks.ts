@@ -79,3 +79,10 @@ export function subscanExtrinsicLink(
 ): string {
   return SUBSTRATE_NETWORKS[network].subscanUrl + "extrinsic/" + extrinsicHash;
 }
+
+export function subscanAccountLink(
+  network: SubstrateNetworkId,
+  account: string
+): string {
+  return SUBSTRATE_NETWORKS[network].subscanUrl + "account/" + account;
+}

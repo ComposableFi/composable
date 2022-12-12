@@ -7,7 +7,7 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { useAppSelector } from "@/hooks/store";
+import { useUiSlice } from "@/store/ui/ui.slice";
 
 type ConfirmingPoolModalProps = {
   poolName: string | null,
@@ -21,7 +21,8 @@ export const ConfirmingPoolModal: React.FC<ConfirmingPoolModalProps> = ({
 }) => {
 
   const theme = useTheme();
-  const isModalOpen = useAppSelector((state) => state.ui.isConfirmingModalOpen);
+  const { isConfirmingModalOpen } = useUiSlice();
+  const isModalOpen = isConfirmingModalOpen;
 
   return (
     <Modal

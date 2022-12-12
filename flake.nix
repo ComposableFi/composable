@@ -18,10 +18,7 @@
       url = "github:hercules-ci/arion";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    helix = {
-      url = "github:helix-editor/helix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    helix.url = "github:helix-editor/helix";
     bundlers = {
       url = "github:NixOS/bundlers";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -36,6 +33,7 @@
         # 1. Add foo to inputs
         # 2. Add foo as a parameter to the outputs function
         # 3. Add here: foo.flakeModule
+        ./code/services/cmc-api/cmc-api.nix
         ./code/benchmarks.nix
         ./code/common-deps.nix
         ./code/composable-nodes.nix
@@ -58,6 +56,7 @@
         ./rust.nix
         ./subsquid/subsquid.nix
         ./subwasm.nix
+        ./scripts/zombienet/flake-module.nix
       ];
       systems =
         [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
@@ -78,8 +77,8 @@
           ];
         };
         packages = {
-          default = self'.packages.devnet-dali;
-
+          default = self'.packages.zombienet-rococo-local-dali-dev;
+          devnet-dali = self'.packages.zombienet-rococo-local-dali-dev;
           subxt = pkgs.callPackage ./code/utils/composable-subxt/subxt.nix { };
           junod = pkgs.callPackage ./code/xcvm/cosmos/junod.nix { };
           gex = pkgs.callPackage ./code/xcvm/cosmos/gex.nix { };

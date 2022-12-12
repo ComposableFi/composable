@@ -26,8 +26,11 @@ pub const WASM_BINARY_V2: Option<&[u8]> = None;
 extern crate alloc;
 
 mod governance;
+mod versions;
 mod weights;
 pub mod xcmp;
+
+pub use versions::*;
 
 use lending::MarketId;
 use orml_traits::{parameter_type_with_key, LockIdentifier};
@@ -59,7 +62,7 @@ use primitives::currency::{CurrencyId, ValidateCurrencyId};
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
-	create_runtime_str, generic, impl_opaque_keys,
+	generic, impl_opaque_keys,
 	traits::{
 		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Bounded, Convert,
 		ConvertInto, Zero,
@@ -69,9 +72,6 @@ use sp_runtime::{
 };
 
 use sp_std::prelude::*;
-#[cfg(feature = "std")]
-use sp_version::NativeVersion;
-use sp_version::RuntimeVersion;
 
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
@@ -87,7 +87,10 @@ pub use frame_support::{
 
 use codec::{Codec, Encode, EncodeLike};
 use common::fees::WellKnownForeignToNativePriceConverter;
-use composable_traits::{account_proxy::ProxyType, fnft::FnftAccountProxyType};
+use composable_traits::{
+	account_proxy::{AccountProxyWrapper, ProxyType},
+	fnft::FnftAccountProxyType,
+};
 use frame_support::{
 	traits::{
 		fungibles, ConstBool, ConstU32, EqualPrivilegeOnly, InstanceFilter, OnRuntimeUpgrade,
@@ -133,31 +136,6 @@ pub mod opaque {
 	}
 }
 
-// To learn more about runtime versioning and what each of the following value means:
-//   https://substrate.dev/docs/en/knowledgebase/runtime/upgrades#runtime-versioning
-#[sp_version::runtime_version]
-pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("dali"),
-	impl_name: create_runtime_str!("dali"),
-	authoring_version: 1,
-	// The version of the runtime specification. A full node will not attempt to use its native
-	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
-	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
-	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
-	//   the compatible custom types.
-	spec_version: 10_002,
-	impl_version: 3,
-	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 1,
-	state_version: 0,
-};
-
-/// The version information used to identify this runtime when compiled natively.
-#[cfg(feature = "std")]
-pub fn native_version() -> NativeVersion {
-	NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
-}
-
 parameter_type_with_key! {
 	// Minimum amount an account has to hold to stay in state
 	pub MultiExistentialDeposits: |currency_id: CurrencyId| -> Balance {
@@ -168,7 +146,6 @@ parameter_type_with_key! {
 parameter_types! {
 	// how much block hashes to keep
 	pub const BlockHashCount: BlockNumber = 250;
-	pub const Version: RuntimeVersion = VERSION;
 	// 5mb with 25% of that reserved for system extrinsics.
 	pub RuntimeBlockLength: BlockLength =
 		BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
@@ -689,12 +666,12 @@ impl InstanceFilter<Call> for ProxyType {
 			ProxyType::Governance => matches!(
 				c,
 				Call::Democracy(..) |
-					Call::Council(..) | Call::TechnicalCollective(..) |
+					Call::Council(..) | Call::TechnicalCommittee(..) |
 					Call::Treasury(..) | Call::Utility(..)
 			),
 			ProxyType::CancelProxy => {
 				// TODO (vim): We might not need this
-				matches!(c, Call::Proxy(pallet_account_proxy::Call::reject_announcement { .. }))
+				matches!(c, Call::Proxy(proxy::Call::reject_announcement { .. }))
 			},
 		}
 	}
@@ -715,7 +692,7 @@ parameter_types! {
 	pub ProxyPrice: Balance = 0;
 }
 
-impl pallet_account_proxy::Config for Runtime {
+impl proxy::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
 	type Currency = Assets;
@@ -723,13 +700,14 @@ impl pallet_account_proxy::Config for Runtime {
 	type ProxyDepositBase = ProxyPrice;
 	type ProxyDepositFactor = ProxyPrice;
 	type MaxProxies = MaxProxies;
-	type WeightInfo = weights::account_proxy::WeightInfo<Runtime>;
+	type WeightInfo = weights::proxy::WeightInfo<Runtime>;
 	type MaxPending = MaxPending;
 	type CallHasher = BlakeTwo256;
 	type AnnouncementDepositBase = ProxyPrice;
 	type AnnouncementDepositFactor = ProxyPrice;
 }
 
+type AccountProxyWrapperInstance = AccountProxyWrapper<Runtime>;
 parameter_types! {
 	pub const FnftPalletId: PalletId = PalletId(*b"pal_fnft");
 }
@@ -740,7 +718,7 @@ impl pallet_fnft::Config for Runtime {
 	type FinancialNftCollectionId = CurrencyId;
 	type FinancialNftInstanceId = FinancialNftInstanceId;
 	type ProxyType = ProxyType;
-	type AccountProxy = Proxy;
+	type AccountProxy = AccountProxyWrapperInstance;
 	type ProxyTypeSelector = FnftAccountProxyType;
 	type PalletId = FnftPalletId;
 }
@@ -1072,15 +1050,9 @@ impl pablo::Config for Runtime {
 	type MaxStakingRewardPools = MaxStakingRewardPools;
 	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
 	type MaxStakingDurationPresets = MaxStakingDurationPresets;
-	type ManageStaking = StakingRewards;
-	type ProtocolStaking = StakingRewards;
 	type MsPerBlock = MillisecsPerBlock;
 	type PicaAssetId = PicaAssetId;
 	type PbloAssetId = PbloAssetId;
-	type XPicaAssetId = XPicaAssetId;
-	type XPbloAssetId = XPbloAssetId;
-	type PicaStakeFinancialNftCollectionId = PicaStakeFinancialNftCollectionId;
-	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
 }
 
 parameter_types! {
@@ -1192,8 +1164,9 @@ impl cosmwasm::Config for Runtime {
 	type ContractStorageByteWritePrice = ContractStorageByteWritePrice;
 	type WasmCostRules = WasmCostRules;
 	type UnixTime = Timestamp;
-	// TODO: proper weights
 	type WeightInfo = cosmwasm::weights::SubstrateWeight<Runtime>;
+	type IbcRelayerAccount = TreasuryAccount;
+	type IbcRelayer = cosmwasm::NoRelayer<Runtime>;
 }
 
 construct_runtime!(
@@ -1229,15 +1202,15 @@ construct_runtime!(
 		CouncilMembership: membership::<Instance1> = 31,
 		Treasury: treasury::<Instance1> = 32,
 		Democracy: democracy::<Instance1> = 33,
-		TechnicalCollective: collective::<Instance2> = 70,
-		TechnicalMembership: membership::<Instance2> = 71,
+		TechnicalCommittee: collective::<Instance2> = 70,
+		TechnicalCommitteeMembership: membership::<Instance2> = 71,
 
 
 		// helpers/utilities
 		Scheduler: scheduler = 34,
 		Utility: utility = 35,
 		Preimage: preimage = 36,
-		Proxy: pallet_account_proxy = 37,
+		Proxy: proxy = 37,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue = 40,
@@ -1345,7 +1318,7 @@ mod benches {
 		[assets_registry, AssetsRegistry]
 		[pablo, Pablo]
 		[pallet_staking_rewards, StakingRewards]
-		[pallet_account_proxy, Proxy]
+		[proxy, Proxy]
 		[dex_router, DexRouter]
 		[cosmwasm, Cosmwasm]
 	);
@@ -1516,7 +1489,7 @@ impl_runtime_apis! {
 	}
 
 	impl sp_api::Core<Block> for Runtime {
-		fn version() -> RuntimeVersion {
+		fn version() -> sp_version::RuntimeVersion {
 			VERSION
 		}
 

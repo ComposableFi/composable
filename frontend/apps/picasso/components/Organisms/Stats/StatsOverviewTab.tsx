@@ -81,7 +81,7 @@ export const StatsOverviewTab: FC = () => {
             title: "The number of coins publicly available in the market.",
           }}
           textAbove="Picasso circulating supply"
-          title={`${circulatingSupply.toFormat(0)} PICA`}
+          title={circulatingSupply.toFormat(0)}
         />
       </Grid>
       <Grid item xs={12} sm={6} md={4}>

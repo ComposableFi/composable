@@ -1,13 +1,13 @@
 import { Label, PairAsset } from "@/components/Atoms";
-import { MockedAsset } from "@/store/assets/assets.types";
+import { Asset } from "shared";
 import { alpha, Box, BoxProps, Typography, useTheme } from "@mui/material";
 import BigNumber from "bignumber.js";
 
 type YourPositionProps = {
   noTitle?: boolean;
   noDivider?: boolean;
-  token1: MockedAsset | undefined;
-  token2: MockedAsset | undefined;
+  token1: Asset | undefined;
+  token2: Asset | undefined;
   pooledAmount1: BigNumber;
   pooledAmount2: BigNumber;
   amount: BigNumber;
@@ -58,12 +58,12 @@ export const YourPosition: React.FC<YourPositionProps> = ({
           <PairAsset
             assets={[
               {
-                icon: token2.icon,
-                label: token2.symbol,
+                icon: token2.getIconUrl(),
+                label: token2.getSymbol(),
               },
               {
-                icon: token1.icon,
-                label: token1.symbol,
+                icon: token1.getIconUrl(),
+                label: token1.getSymbol(),
               },
             ]}
             separator="/"
@@ -86,7 +86,7 @@ export const YourPosition: React.FC<YourPositionProps> = ({
 
       <Label
         mt={3}
-        label={`Pooled ${token1?.symbol}`}
+        label={`Pooled ${token1?.getSymbol()}`}
         TypographyProps={{ variant: "body1" }}
         BalanceProps={{
           balance: pooledAmount1.toString(),
@@ -99,7 +99,7 @@ export const YourPosition: React.FC<YourPositionProps> = ({
 
       <Label
         mt={3}
-        label={`Pooled ${token2?.symbol}`}
+        label={`Pooled ${token2?.getSymbol()}`}
         TypographyProps={{ variant: "body1" }}
         BalanceProps={{
           balance: pooledAmount2.toString(),

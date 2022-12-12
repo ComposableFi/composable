@@ -7,17 +7,14 @@ import Default from "@/components/Templates/Default";
 import { CreatePool } from "@/components/Organisms/pool/CreatePool";
 import { Link } from "@/components";
 import { useEffect } from "react";
-import { useDispatch } from "react-redux";
 import {useDotSamaContext} from "substrate-react";
-import useStore from "@/store/useStore";
+import { useUiSlice } from "@/store/ui/ui.slice";
 
 const CreatePoolHome: NextPage = () => {
-
-  const dispatch = useDispatch();
   const router = useRouter();
 
   const {extensionStatus} = useDotSamaContext();
-  const {ui: { isPolkadotModalOpen } } = useStore();
+  const { isPolkadotModalOpen } = useUiSlice();
 
   useEffect(() => {
     extensionStatus !== "connected" && !isPolkadotModalOpen && router.push('/pool');

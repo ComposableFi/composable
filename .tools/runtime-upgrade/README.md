@@ -6,7 +6,7 @@ This tool is used by SRE for runtime upgrades. It provides two modes of runtime 
 
 The tool performs the following steps in sequence:
 
-1. Initialize a local chain using [`fork-of-substrate`](https://github.com/maxsam4/fork-off-substrate). TODO
+1. Initialize a local chain using [`fork-of-substrate-fork`](https://github.com/ComposableFi/fork-off-substrate-fork#picasso-fork-off-substrate). Instructions are provided there in the readme.
 
 2. Performs a `sudo`-based runtime upgrade against the local chain to verify that the upgrade will succeed. TODO
 

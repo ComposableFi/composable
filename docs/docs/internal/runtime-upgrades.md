@@ -79,5 +79,3 @@ If runtime upgrade is big(count on migrations), run it via `scheduler`.
 - https://karura.subsquare.io/democracy/referendum/37
 - https://wiki.polkadot.network/docs/learn-runtime-upgrades
 - https://github.com/paritytech/cumulus/issues/764
-- https://docs.moonbeam.network/learn/features/governance/
-- https://docs.moonbeam.network/builders/pallets-precompiles/pallets/democracy/

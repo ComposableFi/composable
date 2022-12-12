@@ -40,9 +40,36 @@ const sidebars = {
           collapsible: true,
           collapsed: true,
           items: [
-            'parachains/picasso/picasso-crowdloan',
-            'parachains/picasso/KSM-purchase-log',
-            'parachains/picasso/picasso-tokenomics'
+            'parachains/picasso/crowdloan',
+            'parachains/picasso/governance',
+            {
+            type: 'category',
+            label: 'Picasso Tokenomics',
+            link: {
+              type: 'doc',
+              id: 'parachains/picasso/tokenomics'
+            },
+            collapsible: true,
+            collapsed: true,
+            items:[
+              'parachains/picasso/token-transparency',
+              'parachains/picasso/pica-use-cases'
+            ]
+            },
+            {
+              type: 'category',
+              label: 'CHAOS fNFTs',
+              link: {
+                type: 'doc',
+                id: 'products/CHAOS-fNFT-overview'
+              },
+              collapsible: true,
+              collapsed: true,
+              items: [
+                'products/chaos/picasso-treasury',
+                'products/chaos/use-cases'
+              ],
+            },
           ],
         },
         {
@@ -57,7 +84,7 @@ const sidebars = {
           items: [
             'parachains/composable/composable-crowdloan',
             'parachains/composable/DOT-purchase-log',
-            'parachains/composable/LAYR-tokenomics'
+            'parachains/composable/LAYR-tokenomics',
           ],
         }
       ]
@@ -162,20 +189,6 @@ const sidebars = {
         },
         {
           type: 'category',
-          label: 'CHAOS fNFTs',
-          link: {
-            type: 'doc',
-            id: 'products/CHAOS-fNFT-overview'
-          },
-          collapsible: true,
-          collapsed: true,
-          items: [
-            'products/chaos/picasso-treasury',
-            'products/chaos/use-cases'
-          ],
-        },
-        {
-          type: 'category',
           label: 'Mosaic (Discontinued)',
           link: {
             type: 'doc',
@@ -223,6 +236,33 @@ const sidebars = {
             'products/parachain-vault-strategy/contracts-technical-details/contracts-technical-details',
           ],
         }
+      ]
+    },
+    {
+      type: 'category',
+      label: 'User Guides',
+      link: {
+        type: 'generated-index',
+        slug: 'user-guides',
+      },
+      collapsible: false,
+      items: [
+        {
+          type: 'category',
+          label: 'Accounts and Wallets',
+          link: {
+            type: 'generated-index',
+            slug: 'accounts-wallets'
+          },
+          collapsible: true,
+          items: [
+            'user-guides/polkadotjs-extension-create-account',
+            'user-guides/talisman-create-account',
+            `user-guides/transfer-usdt-statemine-picasso`,
+        ],
+        },
+        'user-guides/claim-rewards-guide',
+        'user-guides/polkassembly-picasso-governance',
       ]
     },
     {
@@ -320,14 +360,23 @@ const sidebars = {
       ]
     },
     {
-      type: 'category',
+      type: 'doc',
       label: 'FAQs',
-      collapsible: false,
-      items: [
-        'faqs/faqs',
-        'faqs/risks-disclosures'
-      ]
+      id: 'faqs/faqs',
+
     },
+    {
+      type: 'category',
+      label: 'Legal Disclaimers and Disclosures',
+      collapsible: true,
+      collapsed: true,
+      items:[
+        'faqs/disclaimer-disclosure-pica-token',
+        'faqs/risk-factors',
+        'faqs/legal-disclaimer-disclosures',
+        'faqs/terms-of-use',
+      ]
+    }
   ],
 };
 

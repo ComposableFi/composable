@@ -2,34 +2,41 @@ import { useTheme } from "@mui/material";
 import { Chart } from "@/components";
 import { DEFI_CONFIG } from "@/defi/config";
 import { HighlightBox } from "@/components/Atoms/HighlightBox";
+import { usePabloHistoricalTotalValueLocked } from "@/defi/hooks/overview/usePabloHistoricalTotalValueLocked";
+import { useMemo } from "react";
 
 export const TVLChart = ({}) => {
   const theme = useTheme();
-  const intervals = DEFI_CONFIG.swapChartIntervals;
+  const { chartSeries, setSelectedInterval, selectedInterval, durationLabels } = usePabloHistoricalTotalValueLocked();
 
-  const onIntervalChange = (interval: string) => {};
+  const change = useMemo(() => {
+    if (chartSeries.length === 0) return 0; 
 
-  const getCurrentInterval = () => {};
+    const head = chartSeries[0][1];
+    const tail = chartSeries[chartSeries.length - 1][1];
+    
+    return ((tail - head) / tail)
+  }, [chartSeries]);
 
   return (
     <HighlightBox>
       <Chart
         height="100%"
         title="TVL"
-        changeTextColor={theme.palette.error.main}
+        changeTextColor={change < 0 ? theme.palette.error.main : theme.palette.success.main}
         changeIntroText={`Past 24 hours`}
-        changeText=""
+        changeText={change.toFixed(2)}
         AreaChartProps={{
-          data: [],
+          data: chartSeries,
           height: 330,
           shorthandLabel: "Change",
           labelFormat: (n: number) => n.toFixed(),
           color: theme.palette.featured.main,
         }}
-        onIntervalChange={onIntervalChange}
-        intervals={["1w", "1m", "1y", "All"]}
-        currentInterval={"hr"}
-        timeSlots={["7:00 am", "10:00 am", "1:00 pm", "3:00 pm", "5:00 pm"]}
+        currentInterval={selectedInterval}
+        onIntervalChange={setSelectedInterval}
+        intervals={DEFI_CONFIG.swapChartIntervals.map(x => x.symbol)}
+        timeSlots={durationLabels}
       />
     </HighlightBox>
   );

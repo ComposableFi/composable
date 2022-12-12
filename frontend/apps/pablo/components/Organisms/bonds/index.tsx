@@ -10,17 +10,10 @@ const standardPageSize = {
 export const Bonds: React.FC<BoxProps> = ({ ...boxProps }) => {
   return (
     <Box {...boxProps}>
-      <BoxWrapper mt={8}>
-        <Typography variant="h6" mb={3}>
-          Your active bonds
-        </Typography>
-        <YourBondTable />
-      </BoxWrapper>
-
       <Grid mt={8}>
         <Grid item {...standardPageSize}>
           <BoxWrapper>
-            <Typography variant="h6" mb={2}>
+            <Typography variant="h6">
               All bonds
             </Typography>
             <AllBondTable />
