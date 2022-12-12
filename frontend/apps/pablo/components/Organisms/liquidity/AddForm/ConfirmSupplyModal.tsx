@@ -15,7 +15,7 @@ import { useSigner, useExecutor, useParachainApi, useSelectedAccount } from "sub
 import { DEFAULT_NETWORK_ID, DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils/constants";
 import { useAddLiquidity } from "@/defi/hooks";
 import { setUiState } from "@/store/ui/ui.slice";
-import { PabloConstantProductPool } from "shared";
+import { DualAssetConstantProduct } from "shared";
 import { Asset } from "shared";
 export interface SupplyModalProps {
   assetOne: Asset | undefined;
@@ -25,7 +25,7 @@ export interface SupplyModalProps {
   lpReceiveAmount: BigNumber;
   priceOneInTwo: BigNumber;
   priceTwoInOne: BigNumber;
-  pool: PabloConstantProductPool | undefined;
+  pool: DualAssetConstantProduct | undefined;
   share: BigNumber;
 }
 

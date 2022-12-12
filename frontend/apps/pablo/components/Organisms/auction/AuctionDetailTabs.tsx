@@ -10,12 +10,9 @@ const AuctionDetailTabs: React.FC<BoxProps> = ({ ...props }) => {
   const { activePool, activePoolStats, activePoolTradeHistory } =
     useAuctionsSlice();
 
-  const baseAsset = useAsset(
-    activePool ? activePool.getPair().getBaseAsset().toString() : "-"
-  );
-  const quoteAsset = useAsset(
-    activePool ? activePool.getPair().getQuoteAsset().toString() : "-"
-  );
+  const pair = activePool ? Object.keys(activePool.getAssets().assets) : null;
+  const baseAsset = useAsset(pair?.[0] ?? "-");
+  const quoteAsset = useAsset(pair?.[1] ?? "-");
 
   const hasLoaded = quoteAsset && baseAsset && activePool;
 

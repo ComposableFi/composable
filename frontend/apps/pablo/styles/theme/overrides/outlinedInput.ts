@@ -55,6 +55,10 @@ export const outlinedInputOverrides = (
           right: theme.spacing(2),
         },
       },
+      "&.MuiInputBase-sizeSmall": {
+        padding: theme.spacing(0),
+        height: theme.spacing(7),
+      },
       "&.MuiInputBase-adornedStart": {
         paddingLeft: theme.spacing(3),
         [theme.breakpoints.down("sm")]: {
@@ -63,7 +67,8 @@ export const outlinedInputOverrides = (
       },
       "& .MuiSelect-select": {
         "&.MuiOutlinedInput-input.MuiInputBase-input": {
-          paddingRight: theme.spacing(6),
+          paddingRight: theme.spacing(4),
+          paddingLeft: theme.spacing(2),
         },
         "& .MuiBox-root": {
           overflow: "hidden",

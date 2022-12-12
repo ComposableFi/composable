@@ -18,10 +18,7 @@
       url = "github:hercules-ci/arion";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    helix = {
-      url = "github:helix-editor/helix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    helix.url = "github:helix-editor/helix";
     bundlers = {
       url = "github:NixOS/bundlers";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -80,8 +77,8 @@
           ];
         };
         packages = {
-          default = self'.packages.devnet-dali;
-
+          default = self'.packages.zombienet-rococo-local-dali-dev;
+          devnet-dali = self'.packages.zombienet-rococo-local-dali-dev;
           subxt = pkgs.callPackage ./code/utils/composable-subxt/subxt.nix { };
           junod = pkgs.callPackage ./code/xcvm/cosmos/junod.nix { };
           gex = pkgs.callPackage ./code/xcvm/cosmos/gex.nix { };

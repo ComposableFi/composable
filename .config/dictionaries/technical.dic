@@ -84,6 +84,8 @@ cachix
 cdylib
 charlie
 chevdor
+cheatcode
+cheatcodes
 chrono
 cita
 claimunstake
@@ -107,6 +109,7 @@ crev # cargo-crev
 crowdloaning
 currentmemory
 DACP
+dappsys
 dalek
 deadnix
 devcontainers
@@ -154,6 +157,7 @@ gsutil
 hadolint
 hasher
 hasura
+hevm
 hexlify
 hljs
 horiz
@@ -362,6 +366,7 @@ stakerclaimunstake
 startuml
 statemine
 stdenv
+stdstore
 structopt
 styleguide
 submessage
@@ -392,6 +397,7 @@ toolset
 tooltipped
 tooltiptext
 tput
+trimed
 truetype
 tsconfigs
 tsdx

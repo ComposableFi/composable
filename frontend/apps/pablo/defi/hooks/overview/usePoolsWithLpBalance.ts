@@ -1,16 +1,16 @@
 import { useState } from "react";
-import { PabloConstantProductPool } from "shared";
+import { DualAssetConstantProduct } from "shared";
 import { usePoolsSlice } from "@/store/pools/pools.slice";
 import { useAsyncEffect } from "@/hooks/useAsyncEffect";
 import { useSelectedAccount } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 
-export const usePoolsWithLpBalance = (): Array<PabloConstantProductPool> => {
+export const usePoolsWithLpBalance = (): Array<DualAssetConstantProduct> => {
     const {
-        constantProductPools
+        liquidityPools
     } = usePoolsSlice();
     const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
-    const [poolsWithLpBalance, setPoolsWithLpBalance] = useState<PabloConstantProductPool[]>([]);
+    const [poolsWithLpBalance, setPoolsWithLpBalance] = useState<DualAssetConstantProduct[]>([]);
 
     useAsyncEffect(async (): Promise<void> => {
         if (!selectedAccount) {
@@ -19,7 +19,7 @@ export const usePoolsWithLpBalance = (): Array<PabloConstantProductPool> => {
         }
 
         let poolsWithBalance = [];
-        for (const pool of constantProductPools) {
+        for (const pool of liquidityPools) {
             const lpToken = pool.getLiquidityProviderToken();
             const balance = await lpToken.balanceOf(selectedAccount.address);
 
@@ -29,7 +29,7 @@ export const usePoolsWithLpBalance = (): Array<PabloConstantProductPool> => {
         }
 
         setPoolsWithLpBalance(poolsWithBalance);
-    }, [constantProductPools, selectedAccount])
+    }, [liquidityPools, selectedAccount])
 
     return poolsWithLpBalance;
 }

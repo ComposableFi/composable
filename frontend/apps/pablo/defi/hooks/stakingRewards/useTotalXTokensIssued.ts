@@ -17,7 +17,7 @@ export function useTotalXTokensIssued({
   useEffect(() => {
     if (!api || !shareAssetId) return;
 
-    const xAsset = new Asset("", "", "", api)
+    const xAsset = new Asset("", "", "", api);
     xAsset.setIdOnChain("picasso", new BigNumber(shareAssetId));
     xAsset.totalIssued().then(setXTokensIssued);
   }, [api, shareAssetId]);

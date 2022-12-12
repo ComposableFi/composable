@@ -52,7 +52,8 @@
     "substrate-react": "*",
     "tokens": "*",
     "urql": "^2.2.0",
-    "uuid": "^8.3.2"
+    "uuid": "^8.3.2",
+    "wallet": "*"
   },
   "devDependencies": {
     "@babel/core": "^7.16.7",

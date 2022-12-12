@@ -62,9 +62,9 @@ export const PoolStatistics: React.FC<PoolDetailsProps> = ({
 }) => {
   const { pool, poolStats } = useLiquidityPoolDetails(poolId);
 
-  const pair = pool?.getPair() ?? null;
-  const base = pair?.getBaseAsset().toString() ?? "-";
-  const quote = pair?.getQuoteAsset().toString() ?? "-";
+  const pair = pool ? Object.keys(pool?.getAssets().assets) : null;
+  const base = pair?.[0] ?? "-";
+  const quote = pair?.[1] ?? "-";
 
   const { baseAmount, quoteAmount } = useLiquidity(pool);
 

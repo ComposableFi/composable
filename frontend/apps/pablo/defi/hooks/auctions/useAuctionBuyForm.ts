@@ -1,12 +1,9 @@
 import { Asset, PabloLiquidityBootstrappingPool } from "shared";
-import { fetchAuctionTrades } from "@/defi/subsquid/auctions/helpers";
 import { calculator, DEFAULT_NETWORK_ID } from "@/defi/utils";
-import { fetchAndExtractAuctionStats } from "@/defi/utils/pablo/auctions";
 import { usePrevious } from "@/hooks/usePrevious";
 import { useAppSettingsSlice } from "@/store/appSettings/slice";
 import { useAssetBalance } from "@/defi/hooks";
 import {
-  setAuctionsSlice,
   setAuctionsSpotPrice,
   useAuctionsSlice,
 } from "@/store/auctions/auctions.slice";
@@ -66,11 +63,13 @@ export const useAuctionBuyForm = (): {
   const spotPrice = useAuctionSpotPrice(
     activePool ? (activePool.getPoolId(true) as BigNumber).toNumber() : -1
   );
+  
+  const pair = activePool ? Object.keys(activePool.getAssets().assets) : null;
   const baseAsset = useAsset(
-    activePool ? activePool.getPair().getBaseAsset().toString() : "-"
+    pair?.[0] ?? "-"
   );
   const quoteAsset = useAsset(
-    activePool ? activePool.getPair().getQuoteAsset().toString() : "-"
+    pair?.[1] ?? "-"
   );
 
   const balanceBase = useAssetBalance(
@@ -168,45 +167,46 @@ export const useAuctionBuyForm = (): {
     };
   }, [updateSpotPrice]);
 
-  const updateActiveAuctionsPoolTrades = useCallback(() => {
-    if (activePool) {
-      fetchAuctionTrades(activePool)
-        .then((activePoolTradeHistory) => {
-          setAuctionsSlice({ activePoolTradeHistory });
-        })
-        .catch(console.error)
-    }
-  }, [activePool]);
+  // Will be reworked
+  // const updateActiveAuctionsPoolTrades = useCallback(() => {
+  //   if (activePool) {
+  //     fetchAuctionTrades(activePool)
+  //       .then((activePoolTradeHistory) => {
+  //         setAuctionsSlice({ activePoolTradeHistory });
+  //       })
+  //       .catch(console.error)
+  //   }
+  // }, [activePool]);
 
-  useEffect(() => {
-    const updateActiveAuctionsPoolTradesInterval = setInterval(
-      updateActiveAuctionsPoolTrades,
-      UPDATE_TRADES_IN
-    );
-    return () => {
-      clearInterval(updateActiveAuctionsPoolTradesInterval);
-    };
-  }, [updateActiveAuctionsPoolTrades]);
+  // useEffect(() => {
+  //   const updateActiveAuctionsPoolTradesInterval = setInterval(
+  //     updateActiveAuctionsPoolTrades,
+  //     UPDATE_TRADES_IN
+  //   );
+  //   return () => {
+  //     clearInterval(updateActiveAuctionsPoolTradesInterval);
+  //   };
+  // }, [updateActiveAuctionsPoolTrades]);
 
-  const updateActiveAuctionPoolStats = useCallback(() => {
-    if (activePool) {
-      fetchAndExtractAuctionStats(activePool)
-        .then((activePoolStats) => {
-          setAuctionsSlice({ activePoolStats });
-        })
-        .catch(console.error);
-    }
-  }, [activePool]);
+  // const updateActiveAuctionPoolStats = useCallback(() => {
+  //   if (activePool) {
+  //     fetchAndExtractAuctionStats(activePool)
+  //       .then((activePoolStats) => {
+  //         setAuctionsSlice({ activePoolStats });
+  //       })
+  //       .catch(console.error);
+  //   }
+  // }, [activePool]);
 
-  useEffect(() => {
-    const updateActiveAuctionPoolStatsInterval = setInterval(
-      updateActiveAuctionPoolStats,
-      UPDATE_STATS_IN
-    );
-    return () => {
-      clearInterval(updateActiveAuctionPoolStatsInterval);
-    };
-  }, [updateActiveAuctionPoolStats]);
+  // useEffect(() => {
+  //   const updateActiveAuctionPoolStatsInterval = setInterval(
+  //     updateActiveAuctionPoolStats,
+  //     UPDATE_STATS_IN
+  //   );
+  //   return () => {
+  //     clearInterval(updateActiveAuctionPoolStatsInterval);
+  //   };
+  // }, [updateActiveAuctionPoolStats]);
 
   const { baseAmount, quoteAmount } = tokenAmounts;
   const isPendingBuy = usePendingExtrinsic(

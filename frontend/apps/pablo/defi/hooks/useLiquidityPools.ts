@@ -1,7 +1,7 @@
 import { useParachainApi, useSelectedAccount } from "substrate-react";
 import { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import { useState } from "react";
-import { Apollo, Asset, ClaimableAsset, fromChainIdUnit, LiquidityPoolFactory, LiquidityProviderToken, PabloConstantProductPool, StakingRewardPool } from "shared";
+import { Apollo, Asset, ClaimableAsset, fromChainIdUnit, LiquidityPoolFactory, LiquidityProviderToken, PabloStakingRewardPool, DualAssetConstantProduct } from "shared";
 import { DEFAULT_NETWORK_ID } from "../utils";
 import { useAsyncEffect } from "@/hooks/useAsyncEffect";
 import { calculateStakingRewardsPoolApy } from "../utils/stakingRewards";
@@ -11,7 +11,7 @@ import BigNumber from "bignumber.js";
 
 export default function useLiquidityPools(liquidityFilter: boolean = false): {
     pools: Array<{
-        pool: PabloConstantProductPool;
+        pool: DualAssetConstantProduct;
         rewardsPerDay: ClaimableAsset[];
         baseAsset: Asset;
         quoteAsset: Asset;
@@ -29,7 +29,7 @@ export default function useLiquidityPools(liquidityFilter: boolean = false): {
     const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
 
     const [pools, setPools] = useState<Array<{
-        pool: PabloConstantProductPool;
+        pool: DualAssetConstantProduct;
         rewardsPerDay: ClaimableAsset[];
         baseAsset: Asset;
         quoteAsset: Asset;
@@ -52,7 +52,7 @@ export default function useLiquidityPools(liquidityFilter: boolean = false): {
         );
         
         let pools: Array<{
-            pool: PabloConstantProductPool;
+            pool: DualAssetConstantProduct;
             rewardsPerDay: ClaimableAsset[];
             baseAsset: Asset;
             quoteAsset: Asset;
@@ -63,9 +63,9 @@ export default function useLiquidityPools(liquidityFilter: boolean = false): {
         }> = [];
 
         for (const pool of uniswapConstantProduct) {
-            const pair = pool.getPair();
-            const baseAsset = assets.find(x => (x.getPicassoAssetId(true) as BigNumber).eq(pair.getBaseAsset()));
-            const quoteAsset = assets.find(x => (x.getPicassoAssetId(true) as BigNumber).eq(pair.getQuoteAsset()));
+            const underlyingAssets = pool.getLiquidityProviderToken().getUnderlyingAssets();
+            const baseAsset = assets.find(x => (x.getPicassoAssetId(true) as BigNumber).eq(underlyingAssets[0].getPicassoAssetId(true)));
+            const quoteAsset = assets.find(x => (x.getPicassoAssetId(true) as BigNumber).eq(underlyingAssets[1].getPicassoAssetId(true)));
             const pabloPools = await fetchPabloPools((pool.getPoolId(true) as BigNumber).toNumber());
             const volume = pabloPools.length > 0 ? fromChainIdUnit(
                 BigInt(pabloPools[0].totalVolume)
@@ -84,7 +84,7 @@ export default function useLiquidityPools(liquidityFilter: boolean = false): {
                     }
                 }
 
-                const stakingRewardPool = await StakingRewardPool.fetchStakingRewardPool(
+                const stakingRewardPool = await PabloStakingRewardPool.fetchStakingRewardPool(
                     parachainApi,
                     lpToken.getPicassoAssetId(true) as BigNumber
                 );
