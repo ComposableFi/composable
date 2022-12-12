@@ -38,10 +38,12 @@ pub fn common_add_remove_lp(
 	second_asset_amount: Balance,
 	next_first_asset_amount: Balance,
 	next_second_asset_amount: Balance,
+	lp_token_id: AssetId,
 	expected_lp_check: impl Fn(Balance, Balance, Balance) -> bool,
 ) {
 	System::set_block_number(System::block_number() + 1);
-	let actual_pool_id = Pablo::do_create_pool(init_config.clone()).expect("pool creation failed");
+	let actual_pool_id = Pablo::do_create_pool(init_config.clone(), Some(lp_token_id))
+		.expect("pool creation failed");
 	assert_has_event::<Test, _>(
 		|e| matches!(e.event, mock::Event::Pablo(crate::Event::PoolCreated { pool_id, .. }) if pool_id == actual_pool_id),
 	);
@@ -214,8 +216,10 @@ pub fn common_remove_lp_failure(
 	init_quote_amount: Balance,
 	base_amount: Balance,
 	quote_amount: Balance,
+	lp_token_id: AssetId,
 ) {
-	let pool_id = Pablo::do_create_pool(init_config.clone()).expect("pool creation failed");
+	let pool_id = Pablo::do_create_pool(init_config.clone(), Some(lp_token_id))
+		.expect("pool creation failed");
 	let pair = get_pair(init_config);
 	// Mint the tokens
 	assert_ok!(Tokens::mint_into(pair[0], &ALICE, init_base_amount));
@@ -281,8 +285,10 @@ pub fn common_exchange_failure(
 	init_first_amount: AssetAmount<AssetId, Balance>,
 	init_second_amount: AssetAmount<AssetId, Balance>,
 	exchange_first_amount: AssetAmount<AssetId, Balance>,
+	lp_token_id: AssetId,
 ) {
-	let pool_id = Pablo::do_create_pool(init_config).expect("pool creation failed");
+	let pool_id =
+		Pablo::do_create_pool(init_config, Some(lp_token_id)).expect("pool creation failed");
 	// Mint the tokens
 	assert_ok!(Tokens::mint_into(init_first_amount.asset_id, &ALICE, init_first_amount.amount));
 	assert_ok!(Tokens::mint_into(init_second_amount.asset_id, &ALICE, init_second_amount.amount));
@@ -356,7 +362,7 @@ mod create {
 					owner: ALICE,
 					assets_weights: dual_asset_pool_weights(BTC, Permill::from_percent(50), USDT),
 					fee: Permill::zero(),
-				}
+				},
 			));
 			assert_has_event::<Test, _>(|e| {
 				matches!(e.event, mock::Event::Pablo(crate::Event::PoolCreated { pool_id: 0, .. }))

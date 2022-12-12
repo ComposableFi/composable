@@ -1,4 +1,4 @@
-use crate::{Config, Error, PoolConfiguration, PoolCount, Pools};
+use crate::{AssetIdOf, Config, Error, PoolConfiguration, PoolCount, Pools};
 use composable_maths::dex::{
 	constant_product::{
 		compute_deposit_lp_, compute_first_deposit_lp_, compute_in_given_out_new,
@@ -30,6 +30,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		who: &T::AccountId,
 		fee_config: FeeConfig,
 		assets_weights: BoundedBTreeMap<T::AssetId, Permill, ConstU32<2>>,
+		lp_token_id: Option<AssetIdOf<T>>,
 	) -> Result<T::PoolId, DispatchError> {
 		ensure!(assets_weights.len() == 2, Error::<T>::InvalidPair);
 		ensure!(assets_weights.values().non_zero_weights(), Error::<T>::WeightsMustBeNonZero);
@@ -44,7 +45,10 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		);
 		ensure!(fee_config.fee_rate < Permill::one(), Error::<T>::InvalidFees);
 
-		let lp_token = T::CurrencyFactory::create(RangeId::LP_TOKENS)?;
+		// NOTE: Will fully move away from CF at a later date. For now, all pools used in production
+		// should be created with a supplied LPT via Pablo's `do_create_pool` function.
+		let lp_token = lp_token_id.unwrap_or(T::CurrencyFactory::create(RangeId::LP_TOKENS)?);
+
 		// Add new pool
 		let pool_id =
 			PoolCount::<T>::try_mutate(|pool_count| -> Result<T::PoolId, DispatchError> {

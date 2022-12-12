@@ -365,7 +365,7 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::create())]
 		pub fn create(origin: OriginFor<T>, pool: PoolInitConfigurationOf<T>) -> DispatchResult {
 			T::PoolCreationOrigin::ensure_origin(origin)?;
-			let _ = Self::do_create_pool(pool)?;
+			let _ = Self::do_create_pool(pool, None)?;
 			Ok(())
 		}
 
@@ -525,6 +525,7 @@ pub mod pallet {
 		#[transactional]
 		pub fn do_create_pool(
 			init_config: PoolInitConfigurationOf<T>,
+			lp_token_id: Option<AssetIdOf<T>>,
 		) -> Result<T::PoolId, DispatchError> {
 			let (owner, pool_id, assets_weights) = match init_config {
 				PoolInitConfiguration::DualAssetConstantProduct { owner, fee, assets_weights } => {
@@ -532,6 +533,7 @@ pub mod pallet {
 						&owner,
 						FeeConfig::default_from(fee),
 						assets_weights.clone(),
+						lp_token_id,
 					)?;
 					(owner, pool_id, assets_weights)
 				},

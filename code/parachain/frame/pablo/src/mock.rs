@@ -26,6 +26,7 @@ pub type Moment = composable_traits::time::Timestamp;
 pub const BTC: CurrencyId = currency::BTC::ID;
 pub const USDT: CurrencyId = currency::USDT::ID;
 pub const USDC: CurrencyId = 4;
+pub const LP_TOKEN_ID: CurrencyId = 100;
 pub const TWAP_INTERVAL_BLOCKS: Moment = 10;
 // TODO(benluelo): Inline this
 pub const MILLISECS_PER_BLOCK: u64 = composable_tests_helpers::test::block::MILLISECS_PER_BLOCK;
