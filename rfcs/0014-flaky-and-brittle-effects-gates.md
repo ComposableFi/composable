@@ -94,3 +94,20 @@ Name a few without reference:
 - Types (impossible states will not compile)
 
 These approaches not only make tests less brittle, but less amount of test code delivers more quality assurance with less work.
+
+
+## But disabling checks is bad ? 
+
+First, we enable flaky and brittle tests to be run and part of code base. So we allow them to be compiled and part of suite for human decision instead of being removed or commented out.
+
+So we enable more tests.
+
+Second, sure if you know fix and fix will not break again same way and fix easy is - do it. So disabling is formal option to agree, but can solve faster if you know how and have capacity.
+
+
+Third, 
+For more cpmplicared 
+It will be harded to asssure release quality. There would be request to automated. 
+
+Automation would have choose either run manually gates and evaluate depending on domain knowledge, or make attemts for decisivi fixes knowing well what it is expected from them to do. 
+CI will be greener, deliver faster and more high qualit features to users.   
