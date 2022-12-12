@@ -54,6 +54,10 @@ pub mod pablo_picasso_init_pools {
 	///
 	/// Expects a vec of (pool_init_config, pool_lp_token_id)
 	fn add_initial_pools_to_storage(pools: Vec<PoolCreationInput>) -> Weight {
+		if Pablo::pool_count().is_zero() {
+			return 0
+		}
+
 		pools.iter().for_each(|pool_creation_input| {
 			Pablo::do_create_pool(
 				pool_creation_input.init_config.to_owned(),
