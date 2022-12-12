@@ -30,7 +30,7 @@ where
 	}
 }
 
-/// Checks if `a` and `b` are within an acceptable level of computaion error.
+/// Checks if `a` and `b` are within an acceptable level of computation error.
 ///
 /// Currently this checks within `1/100_000`.
 ///

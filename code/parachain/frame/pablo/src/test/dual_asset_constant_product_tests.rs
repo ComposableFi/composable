@@ -387,7 +387,7 @@ fn add_lp_with_min_mint_amount() {
 				Origin::signed(BOB),
 				pool_id,
 				assets_with_amounts.clone(),
-				// arbitrarilly large number, 200 * 10^12
+				// Arbitrarily large number, 200 * 10^12
 				200_000_000_000_000,
 				false
 			),
