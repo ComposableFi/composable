@@ -390,7 +390,7 @@ describe("[SHORT] Vesting Pallet Tests", function () {
       vestingSchedule3StartBlock,
       vestingSchedule3EndBlock,
       results,
-      "block",
+      "block"
     );
   });
 
