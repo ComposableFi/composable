@@ -1,15 +1,15 @@
 # Overview
 
-This RFC targets to help with negative impact flaky and brittle effect gates on developers productivity.
+This RFC targets to help with the negative impact of flaky and brittle effect gates on developers' productivity.
 
-It starts from describing what is [`flaky`](https://www.jetbrains.com/teamcity/ci-cd-guide/concepts/flaky-tests/
-), `brittle` and `effect gate`.
+It starts by describing what is [`flaky`](https://www.jetbrains.com/teamcity/ci-cd-guide/concepts/flaky-tests/
+), `brittle`, and `effect gate`.
 
-Then it describes process to handle such tests.
+Then it describes the process to handle such tests.
 
-Describing how to make gates not flaky and not brittle are mainly out of scope of this RFC.
+Describing all engineering ways to make gates not flaky and not brittle is mainly out of the scope of this RFC.
 
-Making process to handle large scale always flaky and always brittle solution (non monorepo to speak or not automated or low engineering environments) are considered is out of scope of current state. 
+Making a process to handle a large-scale flaky brittle solution (not monorepo or not automated or low engineering environments) is out of the scope of the current RFC. 
 
 ## Definitions
 
