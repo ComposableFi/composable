@@ -34,11 +34,11 @@ env_logger = "0.9.0"
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "504d11bd1af3613a0e66b47b99713675e9b6bd10" }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "504d11bd1af3613a0e66b47b99713675e9b6bd10", default-features = false }
-pallet-account-proxy = { path = "../../frame/account-proxy", default-features = false }
 pallet-assets = { path = "../assets" }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 pallet-currency-factory = { path = "../currency-factory" }
 pallet-fnft = { path = "../fnft" }
+pallet-proxy = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 primitives = { path = "../../runtime/primitives", default-features = false }
 proptest = "1.0"
@@ -58,7 +58,7 @@ std = [
   "frame-support/std",
   "composable-traits/std",
   "composable-support/std",
-  "pallet-account-proxy/std",
+  "pallet-proxy/std",
   "composable-tests-helpers/std",
 ]
 

@@ -13,9 +13,10 @@ import { BaseAsset } from "@/components/Atoms";
 import React from "react";
 import { TableHeader } from "@/defi/types";
 import { BoxWrapper } from "../BoxWrapper";
-import { useAssetsOverview } from "@/store/hooks/overview/useAssetsOverview";
+import { useAssetsOverview } from "@/defi/hooks/overview/useAssetsOverview";
 import { NoPositionsPlaceholder } from "./NoPositionsPlaceholder";
 import { OVERVIEW_ERRORS } from "./errors";
+import millify from "millify";
 
 const tableHeaders: TableHeader[] = [
   {
@@ -55,25 +56,25 @@ export const WalletBreakdownBox: React.FC<BoxProps> = ({ ...boxProps }) => {
             </TableHead>
             <TableBody>
               {assetsOverview.map((asset) => {
+                const ownedValue = asset.getBalance().multipliedBy(asset.getPrice())
                 return (
-                  <TableRow key={asset.name}>
+                  <TableRow key={asset.getName()}>
                     <TableCell align="left">
-                      <BaseAsset label={asset.symbol} icon={asset.icon} />
+                      <BaseAsset label={asset.getSymbol()} icon={asset.getIconUrl()} />
                     </TableCell>
                     <TableCell align="left">
                       <Typography variant="body1">
-                        ${asset.priceUsd.toFixed(2)}
+                        ${asset.getPrice().toFixed(2)}
                       </Typography>
                     </TableCell>
                     <TableCell align="left">
                       <Typography variant="body1">
-                        {asset.balance.toFormat(2)}
+                        {asset.getBalance().toFormat(2)}
                       </Typography>
                     </TableCell>
                     <TableCell align="left">
                       <Typography variant="body1">
-                        $
-                        {asset.balance.multipliedBy(asset.priceUsd).toFormat(2)}
+                        {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(ownedValue.toNumber())}
                       </Typography>
                     </TableCell>
                   </TableRow>

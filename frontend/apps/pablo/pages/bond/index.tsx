@@ -1,19 +1,19 @@
 import { Bonds, PageTitle } from "@/components";
-import { ConnectWalletFeaturedBox } from "@/components/Organisms/ConnectWalletFeaturedBox";
 import Default from "@/components/Templates/Default";
 import { Container } from "@mui/material";
 import type { NextPage } from "next";
-import { useDotSamaContext } from "substrate-react";
+import { UpcomingFeature } from "@/components/Atoms/UpcomingFeature";
+import { UnavailableFeature } from "@/components/Molecules/UnavailableFeature";
 
 const BondPage: NextPage = () => {
-  const { extensionStatus } = useDotSamaContext();
-  const connected = extensionStatus === "connected";
-
   return (
     <Default>
       <Container maxWidth="lg">
-        <PageTitle title="Bond" subtitle="Something about earning PICA" />
-        {connected ? <Bonds mb={25} /> : <ConnectWalletFeaturedBox />}
+        <PageTitle title="Bond" subtitle="Bond PICA for CHAOS" />
+        <UnavailableFeature pageTitle={"Bond"} />
+        <UpcomingFeature>
+          <Bonds />
+        </UpcomingFeature>
       </Container>
     </Default>
   );

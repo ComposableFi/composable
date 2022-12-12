@@ -1,31 +1,21 @@
 import { Label } from "@/components/Atoms";
-import { TOKENS } from "@/defi/Tokens";
-import { useAppSelector } from "@/hooks/store";
 import {
   Box,
   Grid,
   TooltipProps as MuiTooltipProps,
   Typography,
-  useTheme,
 } from "@mui/material";
 import { GridProps } from "@mui/system";
 import { BoxWrapper } from "../BoxWrapper";
 import { TokenValue } from "@/components/Molecules";
-import { useParachainApi } from "substrate-react";
-import { DEFAULT_NETWORK_ID, DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils";
-import { useTotalXTokensIssued } from "@/defi/hooks/stakingRewards/useTotalXTokensIssued";
+import { DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils";
 import { StakingRewardPool } from "@/defi/types";
-import {
-  useAverageLockTimeAndMultiplier,
-  useStakingRewardsPoolApy,
-} from "@/defi/hooks/stakingRewards";
 import {
   calculatePeriod,
   createDurationPresetLabel,
 } from "@/defi/utils/stakingRewards/durationPresets";
 import millify from "millify";
-import { useMemo } from "react";
-import { useAssets } from "@/defi/hooks";
+import { FC, useMemo } from "react";
 import BigNumber from "bignumber.js";
 
 const threeColumnPageSize = {
@@ -56,7 +46,7 @@ type ItemProps = {
   value: string;
   TooltipProps?: Omit<MuiTooltipProps, "children">;
 };
-const Item: React.FC<ItemProps> = ({ label, TooltipProps, value }) => {
+const Item: FC<ItemProps> = ({ label, TooltipProps, value }) => {
   return (
     <BoxWrapper textAlign="center">
       <Label
@@ -76,39 +66,22 @@ const Item: React.FC<ItemProps> = ({ label, TooltipProps, value }) => {
   );
 };
 
-export const StakingStatistics: React.FC<
-  GridProps & { stakingRewardPool?: StakingRewardPool }
-> = ({ stakingRewardPool, ...gridProps }) => {
-  const theme = useTheme();
+export const StakingStatistics: FC<
+  GridProps & { stakingRewardPool?: StakingRewardPool; rewardPoolId?: string }
+> = ({ stakingRewardPool, rewardPoolId, ...gridProps }) => {
+  const xTokensMinted = new BigNumber(0);
+  const totalApy = new BigNumber(0);
 
-  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
-  const xTokensMinted = useTotalXTokensIssued({
-    api: parachainApi,
-    shareAssetId: stakingRewardPool?.shareAssetId,
-  });
-
-  const apy = useStakingRewardsPoolApy(
-    stakingRewardPool?.assetId.toString() ?? "-"
-  );
-  const totalApy = useMemo(() => {
-    return Object.keys(apy).reduce((v, i) => {
-      return v.plus(apy[i]);
-    }, new BigNumber(0));
-  }, [apy]);
-
-  const { averageLockMultiplier, averageLockTime, totalValueLocked } =
-    useAverageLockTimeAndMultiplier();
+  const averageLockMultiplier = 0;
+  const averageLockTime = 0;
+  const totalValueLocked = new BigNumber(0);
   let _totalValeLocked = millify(totalValueLocked.toNumber());
-
-  const assets = useAssets(
-    stakingRewardPool ? Object.keys(stakingRewardPool.rewards) : []
-  );
 
   const apyTooltip = useMemo(() => {
     return (
       <Box {...defaultFlexBoxProps} p={3}>
-        {assets.map((asset) => {
-          const assetApy = apy[asset.network[DEFAULT_NETWORK_ID]];
+        {[].map((asset) => {
+          const assetApy = new BigNumber(0);
           return (
             <TokenValue
               token={asset}
@@ -119,7 +92,7 @@ export const StakingStatistics: React.FC<
         })}
       </Box>
     );
-  }, [assets, apy]);
+  }, []);
 
   return (
     <Grid container spacing={3} {...gridProps}>

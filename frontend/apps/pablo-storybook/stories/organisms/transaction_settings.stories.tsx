@@ -1,13 +1,11 @@
 import { Box } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
 import { TransactionSettings, TransactionSettingsProps } from "pablo/components";
-import { useAppDispatch } from "pablo/hooks/store";
-import { openTransactionSettingsModal } from "pablo/stores/ui/uiSlice";
+import { setUiState } from "pablo/store/ui/ui.slice";
 
 
 const TransactionSettingsStories = (props: TransactionSettingsProps) => {
-  const dispatch = useAppDispatch();
-  dispatch(openTransactionSettingsModal());
+  setUiState({ isTransactionSettingsModalOpen: true })
   return (
     <Box>
       <TransactionSettings {...props} />

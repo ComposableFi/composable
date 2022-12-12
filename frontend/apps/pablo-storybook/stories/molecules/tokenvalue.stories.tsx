@@ -1,6 +1,7 @@
 import { ComponentStory } from "@storybook/react";
-import { TOKENS } from "pablo/defi/Tokens";
+import { TOKENS } from "tokens";
 import { TokenValue } from "pablo/components/Molecules/TokenValue";
+import { Asset } from "shared";
 
 export default {
   title: "molecules/TokenValue",
@@ -13,6 +14,10 @@ const Template: ComponentStory<typeof TokenValue> = (args) => (
 
 export const Default = Template.bind({});
 Default.args = {
-  token: TOKENS.pablo,
+  token: new Asset(
+    TOKENS.pblo.symbol,
+    TOKENS.pblo.symbol,
+    TOKENS.pblo.icon
+  ),
   value: "500.00",
 };

@@ -10,8 +10,8 @@ export type ActiveUsers = {
 }
 
 export const GET_ACTIVE_USERS = gql`
-    query getActiveUsersQuery($interval: Int!, $dateTo: String!, $dateFrom: String ) {
-        activeUsers(params: {intervalMinutes: $interval, dateTo: $dateTo, dateFrom: $dateFrom}) {
+    query getActiveUsersQuery($range: String! ) {
+        activeUsers(params: {range: $range}) {
             count
             date
         }

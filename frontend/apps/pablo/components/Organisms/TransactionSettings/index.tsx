@@ -1,8 +1,6 @@
 import { Input } from "@/components/Atoms";
 import { Modal, ModalProps } from "@/components/Molecules";
-import { useAppDispatch, useAppSelector } from "@/hooks/store";
-import { setTransactionSettings } from "@/stores/defi/settings";
-import { closeTransactionSettingsModal } from "@/stores/ui/uiSlice";
+
 import { validNumber } from "shared";
 import { CloseOutlined } from "@mui/icons-material";
 import {
@@ -20,6 +18,8 @@ import {
 import BigNumber from "bignumber.js";
 import React, { useState } from "react";
 import { HighlightBox } from "@/components/Atoms/HighlightBox";
+import { setTransactionSetting, useAppSettingsSlice } from "@/store/appSettings/slice";
+import { setUiState, useUiSlice } from "@/store/ui/ui.slice";
 
 const toleranceSuffix = "     %";
 const toleranceOptions = [0.1, 0.5, 1];
@@ -50,18 +50,18 @@ export const TransactionSettings: React.FC<TransactionSettingsProps> = ({
   ...modalProps
 }) => {
   const theme = useTheme();
-  const dispatch = useAppDispatch();
   const {
     transactionSettings: { tolerance, deadline },
     maxTolerance,
     minTolerance,
     maxDeadline,
     minDeadline,
-  } = useAppSelector((state) => state.settings);
+  } = useAppSettingsSlice();
 
-  const isModalOpen = useAppSelector(
-    (state) => state.ui.isTransactionSettingsModalOpen
-  );
+  const { 
+    isTransactionSettingsModalOpen
+   } = useUiSlice();
+  const isModalOpen = isTransactionSettingsModalOpen;
 
   const [isToleranceFocussed, setIsToleranceFocussed] =
     useState<boolean>(false);
@@ -94,18 +94,16 @@ export const TransactionSettings: React.FC<TransactionSettingsProps> = ({
     : toleranceStringValue + toleranceSuffix;
 
   const onCloseHandler = () => {
-    dispatch(closeTransactionSettingsModal());
+    setUiState({ isTransactionSettingsModalOpen: false });
     closeCallback?.();
   };
 
   const onApplySettings = () => {
-    dispatch(
-      setTransactionSettings({
-        tolerance: new BigNumber(toleranceStringValue).toNumber(),
-        deadline: Number(deadlineStringValue),
-      })
-    );
-    dispatch(closeTransactionSettingsModal());
+    setTransactionSetting({
+      tolerance: new BigNumber(toleranceStringValue).toNumber(),
+      deadline: Number(deadlineStringValue),
+    });
+    setUiState({ isTransactionSettingsModalOpen: false });
     applyCallback?.();
   };
 

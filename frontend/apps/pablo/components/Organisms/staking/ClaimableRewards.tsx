@@ -47,7 +47,7 @@ export const ClaimableRewards: React.FC<BoxProps & {
   });
   const { financialNftInstanceId, claimableAssets } = claimableRewards;
   const canClaim =
-    claimableAssets.some((x) => x.claimable.gt(0)) &&
+    claimableAssets.some((x) => x.getClaimable().gt(0)) &&
     claimableRewards.financialNftInstanceId !== "-";
 
   const onClaimStakingRewards = useClaimStakingRewards({
@@ -68,10 +68,10 @@ export const ClaimableRewards: React.FC<BoxProps & {
       <Grid container spacing={3}>
         {claimableRewards.claimableAssets.map((asset) => {
           return (
-            <Grid key={asset.symbol} item {...defaultPageSize}>
+            <Grid key={asset.getSymbol()} item {...defaultPageSize}>
               <TokenValue
                 token={asset}
-                value={millify(asset.claimable.toNumber())}
+                value={millify(asset.getClaimable().toNumber())}
                 {...defaultTokenValueProps(theme)}
               />
             </Grid>

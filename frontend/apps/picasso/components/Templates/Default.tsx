@@ -85,7 +85,7 @@ export const DefaultLayout: React.FC<DefaultLayoutProps> = (props) => {
             keepMounted: true, // Better open performance on mobile.
           }}
           sx={{
-            display: { xs: "block", sm: "block", md: "none" },
+            display: { xs: "block", sm: "block", md: "none", background: theme.palette.primary.dark, },
             "& .MuiDrawer-paper": {
               boxSizing: "border-box",
               width: drawerWidth,

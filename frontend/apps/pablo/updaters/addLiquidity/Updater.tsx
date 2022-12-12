@@ -2,7 +2,8 @@ import { useEffect } from "react";
 import { useParachainApi } from "substrate-react";
 import { isValidAssetPair } from "@/defi/utils";
 import { useAddLiquiditySlice, setPool, setSelection } from "@/store/addLiquidity/addLiquidity.slice";
-import { useAllLpTokenRewardingPools } from "@/store/hooks/useAllLpTokenRewardingPools";
+import { useAllLpTokenRewardingPools } from "@/defi/hooks/useAllLpTokenRewardingPools";
+import useStore from "@/store/useStore";
 
 /**
  * Updates zustand store with all 
@@ -10,23 +11,28 @@ import { useAllLpTokenRewardingPools } from "@/store/hooks/useAllLpTokenRewardin
  * @returns null
  */
 const Updater = () => {
+  const { substrateTokens } = useStore();
   const pools = useAllLpTokenRewardingPools();
   const { ui, pool, findPoolManually } = useAddLiquiditySlice();
   const { parachainApi } = useParachainApi("picasso");
 
   useEffect(() => {
     if (
+      substrateTokens.hasFetchedTokens && 
       parachainApi &&
       isValidAssetPair(ui.assetOne, ui.assetTwo) &&
       findPoolManually
       ) {
 
       const pool = pools.find((i) => {
+        const pair = i.getAssets().intoAssets(Object.values(substrateTokens.tokens));
+        const base = pair[0].getPicassoAssetId() as string;
+        const quote = pair[1].getPicassoAssetId() as string;
         return (
-          (i.pair.base.toString() === ui.assetOne &&
-            i.pair.quote.toString() === ui.assetTwo) ||
-          (i.pair.base.toString() === ui.assetTwo &&
-            i.pair.quote.toString() === ui.assetOne)
+          (base === ui.assetOne &&
+            quote === ui.assetTwo) ||
+          (quote === ui.assetTwo &&
+            base === ui.assetOne)
         );
       });
 
@@ -36,22 +42,20 @@ const Updater = () => {
         setPool(undefined)
       }
     }
-  }, [
-    pools,
-    parachainApi,
-    ui.assetOne,
-    ui.assetTwo,
-    findPoolManually,
-  ]);
+  }, [pools, parachainApi, ui.assetOne, ui.assetTwo, findPoolManually, substrateTokens.hasFetchedTokens, substrateTokens.tokens]);
 
   useEffect(() => {
-    if (parachainApi && !findPoolManually && pool && pool.poolId !== -1) {
+    if (parachainApi && !findPoolManually && pool) {
+      const pair = pool.getAssets().intoAssets(Object.values(substrateTokens.tokens));
+      const base = pair[0].getPicassoAssetId() as string;
+      const quote = pair[1].getPicassoAssetId() as string;
+
       setSelection({
-        assetOne: pool.pair.base.toString(),
-        assetTwo: pool.pair.quote.toString()
+        assetOne: base,
+        assetTwo: quote
       })
     }
-  }, [parachainApi, findPoolManually, pool]);
+  }, [parachainApi, findPoolManually, pool, substrateTokens.tokens]);
 
   return null;
 };

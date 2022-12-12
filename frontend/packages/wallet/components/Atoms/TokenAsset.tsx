@@ -1,23 +1,17 @@
-import React from "react";
 import { BaseAsset, BaseAssetProps } from "./BaseAsset";
+import { FC } from "react";
 
 export type TokenAssetProps = {
   iconOnly?: boolean;
 } & BaseAssetProps;
 
-export const TokenAsset: React.FC<TokenAssetProps> = ({
+export const TokenAsset: FC<TokenAssetProps> = ({
   iconOnly,
   icon,
   label,
   ...rest
 }) => {
-  return (
-    <BaseAsset
-      icon={icon}
-      label={iconOnly ? "" : label}
-      {...rest}
-    />
-  );
+  return <BaseAsset icon={icon} label={iconOnly ? "" : label} {...rest} />;
 };
 
 TokenAsset.defaultProps = {

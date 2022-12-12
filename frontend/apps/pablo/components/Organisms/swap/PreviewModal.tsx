@@ -10,22 +10,17 @@ import {
   useTheme,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-
-import { useDispatch } from "react-redux";
-import {
-  closeSwapPreviewModal,
-  openConfirmingModal,
-} from "@/stores/ui/uiSlice";
 import { SwapSummary } from "./SwapSummary";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import BigNumber from "bignumber.js";
-import { useAppSelector } from "@/hooks/store";
-import { MockedAsset } from "@/store/assets/assets.types";
+import { Asset } from "shared";
+import { useAppSettingsSlice } from "@/store/appSettings/slice";
+import { setUiState } from "@/store/ui/ui.slice";
 
 export type PreviewModalProps = {
   setConfirmed?: (confirmed: boolean) => any;
-  baseAsset: MockedAsset | undefined;
-  quoteAsset: MockedAsset | undefined;
+  baseAsset: Asset | undefined;
+  quoteAsset: Asset | undefined;
   baseAssetAmount: BigNumber;
   quoteAmount: BigNumber;
   feeCharged: BigNumber;
@@ -49,20 +44,19 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
   ...modalProps
 }) => {
   const theme = useTheme();
-  const dispatch = useDispatch();
 
   const confirmSwap = () => {
-    dispatch(closeSwapPreviewModal());
-    dispatch(openConfirmingModal());
+    setUiState({
+      isSwapPreviewModalOpen: false,
+      isConfirmingModalOpen: true
+    })
     onConfirmSwap();
   };
 
-  const slippage = useAppSelector(
-    (state) => state.settings.transactionSettings.tolerance
-  );
+  const slippage = useAppSettingsSlice().transactionSettings.tolerance;
 
   return (
-    <Modal onClose={() => dispatch(closeSwapPreviewModal())} {...modalProps}>
+    <Modal onClose={() => setUiState({ isSwapPreviewModalOpen: false })} {...modalProps}>
       <Box
         sx={{
           background: theme.palette.gradient.secondary,
@@ -80,7 +74,7 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
       >
         <Box display="flex" alignItems="center" justifyContent="space-between">
           <Typography variant="h6">Confirm swap</Typography>
-          <IconButton onClick={() => dispatch(closeSwapPreviewModal())}>
+          <IconButton onClick={() => setUiState({ isSwapPreviewModalOpen: false })}>
             <CloseIcon sx={{ color: "text.secondary" }} />
           </IconButton>
         </Box>
@@ -88,7 +82,7 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
         <Label
           mt={4}
           BalanceProps={{
-            title: quoteAsset?.symbol,
+            title: quoteAsset?.getSymbol(),
             TitleTypographyProps: {
               variant: "body1",
               color: "text.primary",
@@ -96,7 +90,7 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
           }}
         >
           <BaseAsset
-            icon={quoteAsset?.icon}
+            icon={quoteAsset?.getIconUrl()}
             label={quoteAmount.toFixed()}
             LabelProps={{ variant: "body1" }}
           />
@@ -119,7 +113,7 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
         <Label
           mt={4}
           BalanceProps={{
-            title: baseAsset?.symbol,
+            title: baseAsset?.getSymbol(),
             TitleTypographyProps: {
               variant: "body1",
               color: "text.primary",
@@ -127,7 +121,7 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
           }}
         >
           <BaseAsset
-            icon={baseAsset?.icon}
+            icon={baseAsset?.getIconUrl()}
             label={baseAssetAmount.toFixed()}
             LabelProps={{ variant: "body1" }}
           />

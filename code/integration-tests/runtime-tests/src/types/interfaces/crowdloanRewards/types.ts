@@ -139,15 +139,6 @@ export interface ComposableTraitsTimeTimeReleaseFunction extends Null {}
 /** @name ComposableTraitsVaultVaultConfig */
 export interface ComposableTraitsVaultVaultConfig extends Null {}
 
-/** @name ComposableTraitsVestingVestingSchedule */
-export interface ComposableTraitsVestingVestingSchedule extends Null {}
-
-/** @name ComposableTraitsVestingVestingScheduleIdSet */
-export interface ComposableTraitsVestingVestingScheduleIdSet extends Null {}
-
-/** @name ComposableTraitsVestingVestingScheduleInfo */
-export interface ComposableTraitsVestingVestingScheduleInfo extends Null {}
-
 /** @name ComposableTraitsXcmAssetsForeignMetadata */
 export interface ComposableTraitsXcmAssetsForeignMetadata extends Null {}
 

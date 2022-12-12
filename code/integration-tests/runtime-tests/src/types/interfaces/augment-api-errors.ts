@@ -193,6 +193,7 @@ declare module '@polkadot/api-base/types/errors' {
       ContractHasNoInfo: AugmentedError<ApiType>;
       ContractNotFound: AugmentedError<ApiType>;
       ContractTrapped: AugmentedError<ApiType>;
+      Ibc: AugmentedError<ApiType>;
       Instrumentation: AugmentedError<ApiType>;
       InstrumentedCodeIsTooBig: AugmentedError<ApiType>;
       IteratorIdOverflow: AugmentedError<ApiType>;
@@ -921,6 +922,7 @@ declare module '@polkadot/api-base/types/errors' {
     pablo: {
       AmpFactorMustBeGreaterThanZero: AugmentedError<ApiType>;
       AssetAmountMustBePositiveNumber: AugmentedError<ApiType>;
+      AssetNotFound: AugmentedError<ApiType>;
       CannotRespectMinimumRequested: AugmentedError<ApiType>;
       InvalidAmount: AugmentedError<ApiType>;
       InvalidAsset: AugmentedError<ApiType>;
@@ -1305,7 +1307,7 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
-    technicalCollective: {
+    technicalCommittee: {
       /**
        * Members are already initialized!
        **/
@@ -1351,7 +1353,7 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
-    technicalMembership: {
+    technicalCommitteeMembership: {
       /**
        * Already a member.
        **/

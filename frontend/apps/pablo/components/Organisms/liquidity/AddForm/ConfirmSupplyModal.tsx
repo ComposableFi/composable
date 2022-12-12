@@ -10,26 +10,22 @@ import {
   Button,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-
-import { useDispatch } from "react-redux";
-import {
-  closeConfirmSupplyModal
-} from "@/stores/ui/uiSlice";
 import BigNumber from "bignumber.js";
 import { useSigner, useExecutor, useParachainApi, useSelectedAccount } from "substrate-react";
 import { DEFAULT_NETWORK_ID, DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils/constants";
-import { MockedAsset } from "@/store/assets/assets.types";
-import { ConstantProductPool, StableSwapPool } from "@/defi/types";
-import { useAddLiquidity } from "@/defi/hooks/pools/addLiquidity/useAddLiquidity";
+import { useAddLiquidity } from "@/defi/hooks";
+import { setUiState } from "@/store/ui/ui.slice";
+import { DualAssetConstantProduct } from "shared";
+import { Asset } from "shared";
 export interface SupplyModalProps {
-  assetOne: MockedAsset | undefined;
-  assetTwo: MockedAsset | undefined;
+  assetOne: Asset | undefined;
+  assetTwo: Asset | undefined;
   assetOneAmount: BigNumber;
   assetTwoAmount: BigNumber;
   lpReceiveAmount: BigNumber;
   priceOneInTwo: BigNumber;
   priceTwoInOne: BigNumber;
-  pool: ConstantProductPool | StableSwapPool | undefined;
+  pool: DualAssetConstantProduct | undefined;
   share: BigNumber;
 }
 
@@ -46,7 +42,6 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
   ...rest
 }) => {
   const theme = useTheme();
-  const dispatch = useDispatch();
 
   const signer = useSigner();
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
@@ -57,8 +52,8 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
     selectedAccount,
     executor,
     parachainApi,
-    assetOne: assetOne?.network?.[DEFAULT_NETWORK_ID],
-    assetTwo: assetTwo?.network?.[DEFAULT_NETWORK_ID],
+    assetOne: assetOne?.getPicassoAssetId() as string,
+    assetTwo: assetTwo?.getPicassoAssetId() as string,
     assetOneAmount,
     assetTwoAmount,
     lpReceiveAmount,
@@ -67,7 +62,7 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
   });
 
   return (
-    <Modal onClose={() => dispatch(closeConfirmSupplyModal())} {...rest}>
+    <Modal onClose={() => setUiState({ isConfirmSupplyModalOpen: false })} {...rest}>
       <Box
         sx={{
           background: theme.palette.gradient.secondary,
@@ -85,7 +80,7 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
       >
         <Box display="flex" alignItems="center" justifyContent="space-between">
           <Typography variant="body1">You will receive</Typography>
-          <IconButton onClick={() => dispatch(closeConfirmSupplyModal())}>
+          <IconButton onClick={() => setUiState({ isConfirmSupplyModalOpen: false })}>
             <CloseIcon />
           </IconButton>
         </Box>
@@ -95,7 +90,7 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
         </Typography>
 
         <Typography variant="body1" color="text.secondary" mt={1.75}>
-          {`LP ${assetOne?.symbol}/${assetTwo?.symbol} Tokens`}
+          {`LP ${assetOne?.getSymbol()}/${assetTwo?.getSymbol()} Tokens`}
         </Typography>
 
         <Typography variant="body2" mt={4} textAlign="center" paddingX={4.25}>
@@ -113,9 +108,9 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
 
         <Label
           mt={4}
-          label={`Pooled ${assetOne?.symbol}`}
+          label={`Pooled ${assetOne?.getSymbol()}`}
           BalanceProps={{
-            title: <BaseAsset icon={assetOne?.icon} pr={1} />,
+            title: <BaseAsset icon={assetOne?.getIconUrl()} pr={1} />,
             balance: `${assetOneAmount}`,
             BalanceTypographyProps: {
               variant: "body1",
@@ -125,9 +120,9 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
 
         <Label
           mt={2}
-          label={`Pooled ${assetTwo?.symbol}`}
+          label={`Pooled ${assetTwo?.getSymbol()}`}
           BalanceProps={{
-            title: <BaseAsset icon={assetTwo?.icon} pr={1} />,
+            title: <BaseAsset icon={assetTwo?.getIconUrl()} pr={1} />,
             balance: `${assetTwoAmount}`,
             BalanceTypographyProps: {
               variant: "body1",
@@ -139,7 +134,7 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
           mt={2}
           label={`Price`}
           BalanceProps={{
-            balance: `1 ${assetOne?.symbol} = ${priceOneInTwo} ${assetTwo?.symbol}`,
+            balance: `1 ${assetOne?.getSymbol()} = ${priceOneInTwo} ${assetTwo?.getSymbol()}`,
             BalanceTypographyProps: {
               variant: "body1",
             },
@@ -150,7 +145,7 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
           mt={2}
           label=""
           BalanceProps={{
-            balance: `1 ${assetTwo?.symbol} = ${priceTwoInOne} ${assetOne?.symbol}`,
+            balance: `1 ${assetTwo?.getSymbol()} = ${priceTwoInOne} ${assetOne?.getSymbol()}`,
             BalanceTypographyProps: {
               variant: "body1",
             },

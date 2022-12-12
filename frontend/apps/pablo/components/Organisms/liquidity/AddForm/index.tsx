@@ -4,29 +4,22 @@ import { Box, BoxProps, Button, Typography, useTheme } from "@mui/material";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import { useRouter } from "next/router";
 import { FormTitle } from "../../FormTitle";
-import { useAppSelector } from "@/hooks/store";
-import { useDispatch } from "react-redux";
-import {
-  openConfirmSupplyModal,
-  openTransactionSettingsModal,
-} from "@/stores/ui/uiSlice";
 import { ConfirmSupplyModal } from "./ConfirmSupplyModal";
 import { ConfirmingSupplyModal } from "./ConfirmingSupplyModal";
 import { TransactionSettings } from "../../TransactionSettings";
 import { YourPosition } from "../YourPosition";
 import { PoolShare } from "./PoolShare";
-import { useAddLiquidityForm } from "@/store/hooks/useAddLiquidityForm";
-import { DEFAULT_NETWORK_ID } from "@/defi/utils";
+import { useAddLiquidityForm } from "@/defi/hooks";
 import { useSnackbar } from "notistack";
 import BigNumber from "bignumber.js";
 import { useState } from "react";
 import { HighlightBox } from "@/components/Atoms/HighlightBox";
+import { setUiState, useUiSlice } from "@/store/ui/ui.slice";
 
 export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
   const isMobile = useMobile();
   const theme = useTheme();
   const router = useRouter();
-  const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
 
   const {
@@ -54,12 +47,12 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
     pool,
   } = useAddLiquidityForm();
 
-  const isConfirmSupplyModalOpen = useAppSelector(
-    (state) => state.ui.isConfirmSupplyModalOpen
-  );
-  const isConfirmingSupplyModalOpen = useAppSelector(
-    (state) => state.ui.isConfirmingSupplyModalOpen
-  );
+  const {
+
+      isConfirmSupplyModalOpen,
+      isConfirmingSupplyModalOpen
+    
+  } = useUiSlice();
 
   const [manualUpdateMode, setManualUpdateMode] = useState<1 | 2>(1);
 
@@ -68,7 +61,7 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
   };
 
   const onSettingHandler = () => {
-    dispatch(openTransactionSettingsModal());
+    setUiState({ isTransactionSettingsModalOpen: true })
   };
 
   return (
@@ -114,7 +107,7 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
           }}
           CombinedSelectProps={{
             disabled: !findPoolManually,
-            value: assetOne?.network?.[DEFAULT_NETWORK_ID] || "",
+            value: assetOne?.getPicassoAssetId() as string || "",
             setValue: setToken("assetOne"),
             dropdownModal: true,
             forceHiddenLabel: isMobile ? true : false,
@@ -181,7 +174,7 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
           }}
           CombinedSelectProps={{
             disabled: !findPoolManually,
-            value: assetTwo?.network?.[DEFAULT_NETWORK_ID] || "",
+            value: assetTwo?.getPicassoAssetId() as string || "",
             setValue: setToken("assetTwo"),
             dropdownModal: true,
             forceHiddenLabel: isMobile ? true : false,
@@ -250,7 +243,7 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
                 );
               }
 
-              dispatch(openConfirmSupplyModal());
+              setUiState({ isConfirmSupplyModalOpen: true })
             }}
           >
             Supply
@@ -283,18 +276,6 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
         share={share}
         open={isConfirmSupplyModalOpen}
       />
-
-      {/* <PreviewSupplyModal
-        open={isPreviewSupplyModalOpen}
-        lpReceiveAmount={lpReceiveAmount}
-        priceBaseInQuote={baseAmountBn.div(quoteAmountBn)}
-        priceQuoteInBase={quoteAmountBn.div(baseAmountBn)}
-        baseAmount={baseAmountBn}
-        quoteAmount={quoteAmountBn}
-        baseAsset={baseAsset}
-        quoteAsset={quoteAsset}
-        share={share}
-      /> */}
 
       <ConfirmingSupplyModal
         pool={pool}

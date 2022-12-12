@@ -1,3 +1,4 @@
+import { LiquidityProviderToken } from "shared";
 import { BaseAsset, PairAsset } from "@/components/Atoms";
 import { SelectedBondOffer } from "@/defi/hooks/bonds/useBondOffer";
 import { Button, Grid, GridProps } from "@mui/material";
@@ -47,47 +48,37 @@ export const BuyButtons: React.FC<BuyButtonsProps> = ({
     }
   };
 
-  const { baseAsset, quoteAsset } = bond.principalAsset.lpPrincipalAsset;
-  const isLpBond = baseAsset && quoteAsset;
+  const isLpBond = bond.bondedAsset_s instanceof LiquidityProviderToken ? bond.bondedAsset_s.getUnderlyingAssetJSON() : null;
   if (!isLpBond) return null;
 
   return (
     <Grid container columnSpacing={3} {...gridProps}>
       <Grid item {...threeColumnPageSize}>
         <Button {...buttonProps(onBuyHandler("token1"))}>
-          {baseAsset && (
+          {isLpBond[0] && (
             <BaseAsset
-              icon={baseAsset.icon}
-              {...restAssetProps(baseAsset.symbol, iconSize)}
+              icon={isLpBond[0].icon}
+              {...restAssetProps(isLpBond[0].label, iconSize)}
             />
           )}
         </Button>
       </Grid>
       <Grid item {...threeColumnPageSize}>
         <Button {...buttonProps(onBuyHandler("token2"))}>
-          {quoteAsset && (
+          {isLpBond[1] && (
             <BaseAsset
-              icon={quoteAsset.icon}
-              {...restAssetProps(quoteAsset.symbol, iconSize)}
+              icon={isLpBond[1].icon}
+              {...restAssetProps(isLpBond[0].label, iconSize)}
             />
           )}
         </Button>
       </Grid>
       <Grid item {...threeColumnPageSize}>
         <Button {...buttonProps(onBuyHandler("lp"))}>
-          <PairAsset
-            assets={[
-              {
-                icon: baseAsset.icon,
-                label: baseAsset.symbol,
-              },
-              {
-                icon: quoteAsset.icon,
-                label: quoteAsset.symbol,
-              },
-            ]}
+          {<PairAsset
+            assets={isLpBond}
             {...restAssetProps("Create LP", iconSize)}
-          />
+          />}
         </Button>
       </Grid>
     </Grid>

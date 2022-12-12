@@ -58,6 +58,20 @@ const sidebars = {
               'parachains/picasso/pica-use-cases'
             ]
             },
+            {
+              type: 'category',
+              label: 'CHAOS fNFTs',
+              link: {
+                type: 'doc',
+                id: 'products/CHAOS-fNFT-overview'
+              },
+              collapsible: true,
+              collapsed: true,
+              items: [
+                'products/chaos/picasso-treasury',
+                'products/chaos/use-cases'
+              ],
+            },
           ],
         },
         {
@@ -72,7 +86,7 @@ const sidebars = {
           items: [
             'parachains/composable/composable-crowdloan',
             'parachains/composable/DOT-purchase-log',
-            'parachains/composable/LAYR-tokenomics'
+            'parachains/composable/LAYR-tokenomics',
           ],
         }
       ]
@@ -177,20 +191,6 @@ const sidebars = {
         },
         {
           type: 'category',
-          label: 'CHAOS fNFTs',
-          link: {
-            type: 'doc',
-            id: 'products/CHAOS-fNFT-overview'
-          },
-          collapsible: true,
-          collapsed: true,
-          items: [
-            'products/chaos/picasso-treasury',
-            'products/chaos/use-cases'
-          ],
-        },
-        {
-          type: 'category',
           label: 'Mosaic (Discontinued)',
           link: {
             type: 'doc',
@@ -260,6 +260,7 @@ const sidebars = {
           items: [
             'user-guides/polkadotjs-extension-create-account',
             'user-guides/talisman-create-account',
+            `user-guides/transfer-usdt-statemine-picasso`,
         ],
         },
         'user-guides/claim-rewards-guide',

@@ -27,6 +27,8 @@ export class XCVM {
   Uint128Message: Type
   SelfMessage: Type
   RelayerMessage: Type
+  GlobalIdMessage: Type
+  LocalIdMessage: Type
   messageTypeLookUp: { [k: string]: any } = {};
 
   constructor() {
@@ -53,6 +55,8 @@ export class XCVM {
     this.Uint128Message =  this.root.lookupType("interpreter.Uint128");
     this.SelfMessage = this.root.lookupType("interpreter.Self");
     this.RelayerMessage = this.root.lookupType("interpreter.Relayer");
+    this.GlobalIdMessage = this.root.lookupType("interpreter.GlobalId");
+    this.LocalIdMessage = this.root.lookupType("interpreter.LocalId");
     this.BridgeSecurityEnum = this.root.lookupEnum("interpreter.BridgeSecurity");
 
     this.messageTypeLookUp['Program'] = this.ProgramMessage;
@@ -65,6 +69,7 @@ export class XCVM {
     this.messageTypeLookUp['Absolute'] = this.AbsoluteMessage;
     this.messageTypeLookUp['Balance'] = this.BalanceMessage;
     this.messageTypeLookUp['Binding'] = this.BindingMessage;
+    this.messageTypeLookUp['BindingValue'] = this.BindingValueMessage;
     this.messageTypeLookUp['Bindings'] = this.BindingsMessage;
     this.messageTypeLookUp['AssetAmount'] = this.AssetAmountMessage;
     this.messageTypeLookUp['Unit'] = this.UnitMessage;
@@ -77,6 +82,8 @@ export class XCVM {
     this.messageTypeLookUp['Uint128'] = this.Uint128Message;
     this.messageTypeLookUp['Self'] = this.SelfMessage;
     this.messageTypeLookUp['Relayer'] = this.RelayerMessage;
+    this.messageTypeLookUp['GlobalId'] = this.GlobalIdMessage;
+    this.messageTypeLookUp['LocalId'] = this.LocalIdMessage
   }
 
   public encodeMessage(message: Message) {
@@ -132,8 +139,23 @@ export class XCVM {
     }
   }
 
-  public createAssetId(id: Number): Message<{}> {
-    return this.AssetIdMessage.create({assetId: this.convertUint128(id)});
+  public createGlobalId(id: Number): Message<{}> {
+    return this.GlobalIdMessage.create({globalId: this.convertUint128(id)});
+  }
+
+  public createLocalId(id: string): Message<{}> {
+    return this.LocalIdMessage.create({localId: utils.arrayify(id)});
+  }
+
+  public createAssetId(idMessage: Message): Message<{}> {
+
+    if (idMessage.$type.name == "GlobalId"){
+      return this.AssetIdMessage.create({globalId: idMessage});
+    } else if (idMessage.$type.name == "LocalId") {
+      return this.AssetIdMessage.create({localId: idMessage});
+    } else {
+      throw this.getTypeError("idMessage", "globalId or localId");
+    }
   }
 
   public createAsset(assetIdMessage: Message, balanceMessage: Message): Message<{}> {
@@ -210,8 +232,12 @@ export class XCVM {
 
 
   public createNetwork(networkId: Number): Message<{}> {
-    return this.NetworkMessage.create({networkId: networkId});
+
+
+    return this.NetworkMessage.create({networkId: this.convertUint128(networkId)});
   }
+
+
 
   public createSalt(salt: string): Message<{}> {
     return this.SaltMessage.create({salt: utils.arrayify(salt)});
@@ -229,6 +255,10 @@ export class XCVM {
     if (saltMessage.$type.name != "Salt") {
       throw this.getTypeError("saltMessage", "salt")
     }
+
+
+
+
     if (programMessage.$type.name != "Program") {
       throw this.getTypeError("programMessage", "program")
     }
@@ -240,6 +270,7 @@ export class XCVM {
 
     return this.SpawnMessage.create({
       network: networkMessage,
+
       salt: saltMessage,
       security: security,
       program: programMessage,
@@ -254,14 +285,14 @@ export class XCVM {
     return this.CallMessage.create({payload: payload, bindings: bindingsMessage});
   }
 
-  public createAssetAmount(assetIdMessage: Message, ratioMessage: Message): Message<{}> {
+  public createAssetAmount(assetIdMessage: Message, balanceMessage: Message): Message<{}> {
     if (assetIdMessage.$type.name != "AssetId") {
       throw this.getTypeError("assetIdMessage", "assetId")
     }
-    if (ratioMessage.$type.name != "Ratio") {
-      throw this.getTypeError("ratioMessage", "ratio")
+    if (balanceMessage.$type.name != "Balance") {
+      throw this.getTypeError("balanceMessage", "balance")
     }
-    return this.AssetAmountMessage.create({assetId: assetIdMessage, ratio: ratioMessage});
+    return this.AssetAmountMessage.create({assetId: assetIdMessage, balance: balanceMessage});
   }
 
   public createSelf(): Message<{}> {
