@@ -98,7 +98,9 @@ pub mod pallet {
 			cosmwasm_call, ExecuteCall, InstantiateCall, MigrateCall, QueryCall, QueryResponse,
 			ReplyCall,
 		},
-		system::{cosmwasm_system_query, CosmwasmCodeId, CosmwasmContractMeta},
+		system::{
+			cosmwasm_system_query, cosmwasm_system_run, CosmwasmCodeId, CosmwasmContractMeta,
+		},
 	};
 	use cosmwasm_vm_wasmi::{host_functions, new_wasmi_vm, WasmiImportResolver, WasmiVM};
 	use frame_support::{
@@ -1436,6 +1438,29 @@ pub mod pallet {
 			.continue_run(vm.shared, funds, message, event_handler)
 		}
 
+		// pub(crate) fn do_continue_reply<'a>(
+		// 	vm: &'a mut CosmwasmVM<T>,
+		// 	// contract: AccountIdOf<T>,
+		// 	// message: &[u8],
+		// 	reply: cosmwasm_vm::cosmwasm_std::Reply,
+		// 	event_handler: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
+		// ) -> Result<Option<cosmwasm_vm::cosmwasm_std::Binary>, CosmwasmVMError<T>> {
+		// 	Pallet::<T>::cosmwasm_call(
+		// 		vm.shared,
+		// 		vm.cosmwasm_message_info.sender.clone().into_inner(),
+		// 		vm.contract_address.clone().into_inner(),
+		// 		vm.cosmwasm_message_info.clone(),
+		// 		Default::default(),
+		// 		|vm| {
+		// 			cosmwasm_system_run::<ReplyCall, WasmiVM<CosmwasmVM<T>>>(
+		// 				vm,
+		// 				&serde_json::to_vec(&reply).map_err(|_| Error::<T>::FailedToSerialize)?,
+		// 				event_handler,
+		// 			)
+		// 		},
+		// 	)
+		// }
+
 		pub(crate) fn do_continue_reply<'a>(
 			vm: &'a mut CosmwasmVM<T>,
 			reply: cosmwasm_vm::cosmwasm_std::Reply,
@@ -1447,7 +1472,7 @@ pub mod pallet {
 			)?
 			.continue_run(
 				vm.shared,
-				Default::default(),
+				Vec::default(),
 				&serde_json::to_vec(&reply).map_err(|_| Error::<T>::FailedToSerialize)?,
 				event_handler,
 			)
