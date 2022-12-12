@@ -1,15 +1,13 @@
 [workspace]
 exclude = ["target"]
-members = [
-  "*",
-]
+members = ["*"]
 resolver = "2"
 
 [profile.release]
-lto = true
 codegen-units = 1
 debug = false
 debug-assertions = false
+lto = true
 opt-level = "s"
 overflow-checks = true
 panic = "abort"

@@ -8,34 +8,34 @@ pub type ChannelId = String;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Config {
-	/// Address of the XCVM registry contract
-	pub registry_address: String,
-	/// Address of the XCVM router.
-	pub router_code_id: u64,
-	/// Address of the XCVM interpreter contract code
-	pub interpreter_code_id: u64,
-	/// Network ID of this network
-	pub network_id: NetworkId,
-	/// The admin which is allowed to update the bridge list.
-	pub admin: String,
+    /// Address of the XCVM registry contract
+    pub registry_address: String,
+    /// Address of the XCVM router.
+    pub router_code_id: u64,
+    /// Address of the XCVM interpreter contract code
+    pub interpreter_code_id: u64,
+    /// Network ID of this network
+    pub network_id: NetworkId,
+    /// The admin which is allowed to update the bridge list.
+    pub admin: String,
 }
 
 /// Bridge following the OTP specs.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Bridge {
-	pub security: BridgeSecurity,
-	pub address: Addr,
+    pub security: BridgeSecurity,
+    pub address: Addr,
 }
 
 /// Information associated with an IBC channel.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct ChannelInfo {
-	/// id of this channel
-	pub id: ChannelId,
-	/// the remote channel/port we connect to
-	pub counterparty_endpoint: IbcEndpoint,
-	/// the connection this exists on (you can use to query client/consensus info)
-	pub connection_id: String,
+    /// id of this channel
+    pub id: ChannelId,
+    /// the remote channel/port we connect to
+    pub counterparty_endpoint: IbcEndpoint,
+    /// the connection this exists on (you can use to query client/consensus info)
+    pub connection_id: String,
 }
 
 pub const ROUTER: Item<Addr> = Item::new("router");

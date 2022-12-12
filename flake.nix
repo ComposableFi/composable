@@ -41,7 +41,7 @@
         ./code/simnode-tests.nix
         ./code/integration-tests/runtime-tests/runtime-tests.nix
         ./code/runtimes.nix
-        ./code/xcvm-contracts.nix
+        ./cosmwasm/contracts/flake-module.nix
         ./dev-shells.nix
         ./devnet-tools.nix
         ./devnets.nix
