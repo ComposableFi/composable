@@ -56,39 +56,13 @@ export function getDiffInMinutes(
  * @param {PresetRange} preset
  * @returns {[(string | null), string, number]}
  */
-export function getRange(preset: PresetRange): [string | null, string, number] {
-  const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const dateTo = tomorrow.toISOString();
-
-  const range: {
-    [key in PresetRange]: () => [string | null, string, number];
-  } = {
-    "24h": () => {
-      const yesterday = new Date(today);
-      yesterday.setHours(yesterday.getHours() - 24);
-      return [yesterday.toISOString(), dateTo, 60];
-    },
-    "1w": () => {
-      const lastWeek = new Date(today);
-      lastWeek.setDate(lastWeek.getDate() - 7);
-      return [lastWeek.toISOString(), dateTo, 24 * 60];
-    },
-    "1m": () => {
-      const lastMonth = new Date(today);
-      lastMonth.setMonth(lastMonth.getMonth() - 1);
-      return [lastMonth.toISOString(), dateTo, 24 * 60];
-    },
-    "1y": () => {
-      const lastYear = new Date(today);
-      lastYear.setFullYear(lastYear.getFullYear() - 1);
-      return [lastYear.toISOString(), dateTo, 30 * 24 * 60];
-    },
-    all: () => {
-      return [null, tomorrow.toISOString(), 30 * 24 * 60];
-    },
-  };
-
-  return range[preset]();
+export function getRange(preset: PresetRange): string {
+  const subsquidRange = {
+    "24h": "day",
+    "1w": "week",
+    "1m": "month",
+    "1y": "year",
+    "all": "year", // TODO: once subsquid adds support for ALL change this to proper range
+  }
+  return subsquidRange[preset];
 }

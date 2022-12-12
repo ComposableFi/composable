@@ -5,7 +5,6 @@ import {
   calculateBondROI,
   calculateVestingState,
   DEFAULT_NETWORK_ID,
-  fetchBondOffers,
   fetchVestingSchedulesByBondOffers,
 } from "@/defi/utils";
 import {
@@ -23,41 +22,45 @@ import {
   fetchTotalPurchasedBondsByOfferIds,
   extractUserBondedFinanceVestingScheduleAddedEvents,
 } from "@/defi/subsquid/bonds/helpers";
+import { BondOffer } from "shared";
 import { useBlockInterval } from "@/defi/hooks";
 import useBlockNumber from "@/defi/hooks/useBlockNumber";
 import { AVERAGE_BLOCK_TIME } from "@/defi/utils/constants";
 
 const Updater = () => {
-  const { apollo } = useStore();
+  // const { apollo } = useStore();
   const {
     bondOffers,
     bondedOfferVestingScheduleIds,
     bondedOfferVestingSchedules,
   } = useBondOffersSlice();
 
-  useEffect(() => {
-    const roiRecord = bondOffers.reduce((acc, bondOffer) => {
-      const principalAssetPrinceInUSD: BigNumber =
-        new BigNumber(apollo[bondOffer.asset]) || new BigNumber(0);
-      const rewardAssetPriceInUSD =
-        new BigNumber(apollo[bondOffer.reward.asset]) || new BigNumber(0);
-      const rewardAssetAmountPerBond = bondOffer.reward.amount.div(
-        bondOffer.nbOfBonds
-      );
-      const principalAssetAmountPerBond: BigNumber = bondOffer.bondPrice;
-      return {
-        ...acc,
-        [bondOffer.offerId.toString()]: calculateBondROI(
-          principalAssetPrinceInUSD,
-          rewardAssetPriceInUSD,
-          principalAssetAmountPerBond,
-          rewardAssetAmountPerBond
-        ),
-      };
-    }, {} as Record<string, BigNumber>);
+  // useEffect(() => {
+  //   const roiRecord = bondOffers.reduce((acc, bondOffer) => {
+  //     const rewardAsset = bondOffer.getRewardAssetId() as string;
+  //     const bondedAsset = bondOffer.getBondedAssetId() as string;
+  //     const bondOfferId = bondOffer.getBondOfferId() as string;
+  //     const principalAssetPrinceInUSD: BigNumber =
+  //       new BigNumber(apollo[bondedAsset]) || new BigNumber(0);
+  //     const rewardAssetPriceInUSD =
+  //       new BigNumber(apollo[rewardAsset]) || new BigNumber(0);
+  //     const rewardAssetAmountPerBond = (bondOffer.getRewardAssetAmount(true) as BigNumber).div(
+  //       bondOffer.getBondPrice(true)
+  //     );
+  //     const principalAssetAmountPerBond: BigNumber = bondOffer.getBondPrice(true) as BigNumber;
+  //     return {
+  //       ...acc,
+  //       [bondOfferId]: calculateBondROI(
+  //         principalAssetPrinceInUSD,
+  //         rewardAssetPriceInUSD,
+  //         principalAssetAmountPerBond,
+  //         rewardAssetAmountPerBond
+  //       ),
+  //     };
+  //   }, {} as Record<string, BigNumber>);
 
-    putBondOffersReturnOnInvestmentRecord(roiRecord);
-  }, [apollo, bondOffers]);
+  //   putBondOffersReturnOnInvestmentRecord(roiRecord);
+  // }, [apollo, bondOffers]);
 
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
@@ -67,7 +70,7 @@ const Updater = () => {
    */
   useEffect(() => {
     if (parachainApi) {
-      fetchBondOffers(parachainApi).then(putBondOffers);
+      BondOffer.fetchBondOffers(parachainApi).then(putBondOffers);
     }
   }, [parachainApi]);
   /**

@@ -3,11 +3,9 @@ import { StoreSlice } from "@/stores/types";
 import { Token, TokenId, TOKENS } from "tokens";
 import BigNumber from "bignumber.js";
 import {
-  // HumanizedKaruraAssetMetadata,
   PicassoRpcAsset,
   StatemineAssetMetadata,
 } from "@/defi/polkadot/pallets/Assets";
-import { fromChainIdUnit, unwrapNumberOrHex } from "shared";
 import { KusamaAsset } from "@/defi/polkadot/pallets/Assets/kusama";
 import { ParachainNetworks } from "substrate-react";
 

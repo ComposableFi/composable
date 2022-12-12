@@ -241,6 +241,14 @@ impl Amount {
 #[repr(transparent)]
 pub struct Funds<T = Amount>(pub Vec<(AssetId, T)>);
 
+impl<T> IntoIterator for Funds<T> {
+	type Item = <Vec<(AssetId, T)> as IntoIterator>::Item;
+	type IntoIter = <Vec<(AssetId, T)> as IntoIterator>::IntoIter;
+	fn into_iter(self) -> Self::IntoIter {
+		self.0.into_iter()
+	}
+}
+
 impl<T> Funds<T> {
 	#[inline]
 	pub fn empty() -> Self {

@@ -23,7 +23,7 @@ function createNewOfferEvent(offerId: string) {
     offerId: BigInt(offerId),
     beneficiary: BOB_ADDRESS,
   };
-  when(eventMock.asV2402).thenReturn(evt);
+  when(eventMock.asV10003).thenReturn(evt);
 
   let event = instance(eventMock);
 
@@ -37,7 +37,7 @@ function createNewBondEvent(offerId: string, nbOfBonds: bigint) {
     who: WHO,
     nbOfBonds,
   };
-  when(eventMock.asV2402).thenReturn(evt);
+  when(eventMock.asV10003).thenReturn(evt);
 
   let event = instance(eventMock);
 

@@ -71,9 +71,9 @@ mod constant_product {
 			fn range_inputs()
 			(
 				p_supply in 2_048_000_000_000_000..16_384_000_000_000_000_u128,
-				p_redeemed in 128_000_000_000_000..2_048_000_000_000_000_u128,
+				p_redeemed in 128_000_000_000_000..1_945_600_000_000_000_u128,
 				b_k in 16_384_000_000_000_000..Decimal::MAX.to_u128().expect("Decimal::MAX fits in u128"),
-				w_k in 25..100_u32,
+				w_k in 20..100_u32,
 			)
 			-> InputsAndOutputs {
 				InputsAndOutputs {
@@ -142,7 +142,6 @@ mod constant_product {
 		proptest! {
 			#![proptest_config(ProptestConfig::with_cases(10_000))]
 
-			#[ignore]
 			#[test]
 			fn no_unexpected_errors_in_range(i_and_o in range_inputs()) {
 			let res = compute_redeemed_for_lp(

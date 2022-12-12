@@ -1,4 +1,3 @@
-import { APP_NAME } from "@/defi/polkadot/constants";
 import {
   DEFAULT_NETWORK_ID,
   isValidAssetPair,
@@ -16,7 +15,7 @@ import {
 import {
   transactionStatusSnackbarMessage,
   SNACKBAR_TYPES,
-} from "../pools/addLiquidity/useAddLiquidity";
+} from "../addLiquidity/useAddLiquidity";
 
 type PabloSwapProps = {
   baseAssetId: string;

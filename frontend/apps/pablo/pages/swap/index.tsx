@@ -2,13 +2,9 @@ import type { NextPage } from "next";
 import { Container, Box, Grid } from "@mui/material";
 import Default from "@/components/Templates/Default";
 import AccountSettings from "@/components/Organisms/TransactionSettings/AccountSettings";
-import { Alert, Link, PageTitle } from "@/components";
-import { useAppSelector } from "@/hooks/store";
-import { setMessage } from "@/stores/ui/uiSlice";
-import { useDispatch } from "react-redux";
+import { PageTitle } from "@/components";
 import SwapForm from "@/components/Organisms/swap/SwapForm";
 import SwapChart from "@/components/Organisms/swap/SwapChart";
-import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
 
 const twoColumnPageSize = {
   xs: 12,
@@ -17,10 +13,6 @@ const twoColumnPageSize = {
 };
 
 const Swap: NextPage = () => {
-  const dispatch = useDispatch();
-
-  const message = useAppSelector((state) => state.ui.message);
-
   return (
     <Default>
       <Container maxWidth="lg">
@@ -35,10 +27,10 @@ const Swap: NextPage = () => {
               <SwapChart height={610}/>
             </Grid>
             <Grid item {...twoColumnPageSize}>
-              <SwapForm/>
+              <SwapForm />
             </Grid>
           </Grid>
-          {message.text && (
+          {/* {message.text && (
             <Box sx={{maxWidth: 854, margin: "auto"}}>
               <Alert
                 severity={message.severity}
@@ -59,7 +51,7 @@ const Swap: NextPage = () => {
                 }
               />
             </Box>
-          )}
+          )} */}
           <AccountSettings />
         </Box>
       </Container>

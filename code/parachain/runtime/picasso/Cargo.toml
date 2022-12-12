@@ -68,6 +68,8 @@ treasury = { package = "pallet-treasury", git = "https://github.com/paritytech/s
 utility = { package = "pallet-utility", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
 
 
+log = { version = "0.4.14", default-features = false }
+
 # local modules
 assets = { package = "pallet-assets", path = '../../frame/assets', default-features = false }
 assets-registry = { package = "pallet-assets-registry", path = '../../frame/assets-registry', default-features = false }
@@ -111,6 +113,7 @@ cumulus-primitives-utility = { git = "https://github.com/paritytech/cumulus", de
 pallet-xcm = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.27" }
 parachain-info = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.27" }
 polkadot-parachain = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.27" }
+proxy = { package = "pallet-proxy", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
@@ -163,6 +166,7 @@ runtime-benchmarks = [
   "bonded-finance/runtime-benchmarks",
   "common/runtime-benchmarks",
   "asset-tx-payment/runtime-benchmarks",
+  "proxy/runtime-benchmarks",
 ]
 std = [
   "codec/std",
@@ -234,4 +238,5 @@ std = [
   "crowdloan-rewards-runtime-api/std",
   "simnode-apis/std",
   "asset-tx-payment/std",
+  "proxy/std",
 ]

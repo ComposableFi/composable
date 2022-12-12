@@ -61,6 +61,7 @@ session = { package = "pallet-session", git = "https://github.com/paritytech/sub
 smallvec = "1.6.1"
 
 asset-tx-payment = { package = "pallet-asset-tx-payment", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
+proxy = { package = "pallet-proxy", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
 sudo = { package = "pallet-sudo", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
 timestamp = { package = "pallet-timestamp", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
 transaction-payment = { package = "pallet-transaction-payment", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
@@ -85,7 +86,6 @@ liquidations = { package = "pallet-liquidations", path = "../../frame/liquidatio
 mosaic = { package = "pallet-mosaic", path = "../../frame/mosaic", default-features = false }
 oracle = { package = "pallet-oracle", path = "../../frame/oracle", default-features = false }
 pablo = { package = "pallet-pablo", path = "../../frame/pablo", default-features = false }
-pallet-account-proxy = { path = "../../frame/account-proxy", default-features = false }
 pallet-fnft = { path = "../../frame/fnft", default-features = false }
 pallet-staking-rewards = { path = "../../frame/staking-rewards", default-features = false }
 primitives = { path = "../primitives", default-features = false }
@@ -178,7 +178,7 @@ runtime-benchmarks = [
   "multisig/runtime-benchmarks",
   "oracle/runtime-benchmarks",
   "pablo/runtime-benchmarks",
-  "pallet-account-proxy/runtime-benchmarks",
+  "proxy/runtime-benchmarks",
   "pallet-staking-rewards/runtime-benchmarks",
   "pallet-xcm/runtime-benchmarks",
   "scheduler/runtime-benchmarks",
@@ -254,7 +254,7 @@ std = [
   "orml-xtokens/std",
   "pablo-runtime-api/std",
   "pablo/std",
-  "pallet-account-proxy/std",
+  "proxy/std",
   "pallet-staking-rewards/std",
   "parachain-info/std",
   "preimage/std",

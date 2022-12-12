@@ -1,22 +1,21 @@
 import { useEffect } from "react";
-import { useAllLpTokenRewardingPools } from "../../store/hooks/useAllLpTokenRewardingPools";
 import { fetchPoolStats, calculatePoolStats, PabloPoolQueryResponse } from "@/defi/utils/pablo/pools/stats";
-import BigNumber from "bignumber.js";
 import useStore from "@/store/useStore";
+import { useAllLpTokenRewardingPools } from "@/defi/hooks";
 
 /**
  * Updates zustand store with all pools from pablo pallet
  * @returns null
  */
 const Updater = () => {
-  const { apollo, putPoolStats, poolStats, putPoolStatsValue } = useStore();
-  const allLpRewardingPools = useAllLpTokenRewardingPools();
+  const { putPoolStats } = useStore();
+  const allPermissionedConstantProductPools = useAllLpTokenRewardingPools();
 
   useEffect(() => {
-    if (allLpRewardingPools.length) {
+    if (allPermissionedConstantProductPools.length) {
       let promises: Promise<PabloPoolQueryResponse[]>[] = [];
 
-      allLpRewardingPools.forEach((pool) => {
+      allPermissionedConstantProductPools.forEach((pool) => {
         promises.push(fetchPoolStats(pool as any));
       });
 
@@ -43,40 +42,7 @@ const Updater = () => {
         });
       });
     }
-  }, [allLpRewardingPools, putPoolStats]);
-
-  useEffect(() => {
-    if (allLpRewardingPools.length) {
-      allLpRewardingPools.forEach((i) => {
-
-        if (poolStats[i.poolId]) {
-          let quoteId = i.pair.quote.toString();
-
-          if (apollo[quoteId]) {
-            const totalVolumeValue = new BigNumber(
-              poolStats[i.poolId].totalVolume
-            )
-              .times(apollo[quoteId])
-              .toFixed(2);
-            const _24HrFeeValue = new BigNumber(poolStats[i.poolId]._24HrFee)
-              .times(apollo[quoteId])
-              .toFixed(2);
-            const _24HrVolumeValue = new BigNumber(
-              poolStats[i.poolId]._24HrVolume
-            )
-              .times(apollo[quoteId])
-              .toFixed(2);
-
-            putPoolStatsValue(i.poolId, {
-              totalVolumeValue,
-              _24HrFeeValue,
-              _24HrVolumeValue,
-            });
-          }
-        }
-      });
-    }
-  }, [apollo, allLpRewardingPools, poolStats, putPoolStatsValue]);
+  }, [allPermissionedConstantProductPools, putPoolStats]);
 
   return null;
 };

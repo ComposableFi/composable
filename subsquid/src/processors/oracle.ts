@@ -1,7 +1,7 @@
 import { EventHandlerContext } from "@subsquid/substrate-processor";
 import { Store } from "@subsquid/typeorm-store";
 import { randomUUID } from "crypto";
-import { OraclePriceChangedEvent } from "../types/events";
+// import { OraclePriceChangedEvent } from "../types/events";
 import { Asset, Currency, HistoricalAssetPrice } from "../model";
 
 interface PriceChangedEvent {
@@ -9,12 +9,12 @@ interface PriceChangedEvent {
   price: bigint;
 }
 
-function getPriceChangedEvent(
-  event: OraclePriceChangedEvent
-): PriceChangedEvent {
-  const [assetId, price] = event.asV2402;
-  return { assetId, price };
-}
+// function getPriceChangedEvent(
+//   event: OraclePriceChangedEvent
+// ): PriceChangedEvent {
+//   const [assetId, price] = event.asV2402;
+//   return { assetId, price };
+// }
 
 /**
  * Updates Asset object with last price and event id.
@@ -47,7 +47,7 @@ export function getHistoricalAssetPrice(
     eventId: ctx.event.id,
     asset,
     price,
-    timestamp: BigInt(ctx.block.timestamp),
+    timestamp: new Date(ctx.block.timestamp),
     currency: Currency.USD,
   });
 }
@@ -58,32 +58,32 @@ export function getHistoricalAssetPrice(
  *  - Create HistoricalAssetPrice.
  * @param ctx
  */
-export async function processOraclePriceChanged(
-  ctx: EventHandlerContext<Store>
-): Promise<void> {
-  console.log("Process price change");
-  const event = new OraclePriceChangedEvent(ctx);
-  const { assetId, price } = getPriceChangedEvent(event);
-
-  let asset: Asset | undefined = await ctx.store.get(Asset, {
-    where: { id: assetId.toString() },
-  });
-
-  if (!asset) {
-    asset = new Asset({
-      id: assetId.toString(),
-    });
-  }
-
-  updateAsset(ctx, asset, price);
-
-  await ctx.store.save(asset);
-
-  const historicalAssetPrice: HistoricalAssetPrice = getHistoricalAssetPrice(
-    ctx,
-    asset,
-    price
-  );
-
-  await ctx.store.save(historicalAssetPrice);
-}
+// export async function processOraclePriceChanged(
+//   ctx: EventHandlerContext<Store>
+// ): Promise<void> {
+//   console.log("Process price change");
+//   const event = new OraclePriceChangedEvent(ctx);
+//   const { assetId, price } = getPriceChangedEvent(event);
+//
+//   let asset: Asset | undefined = await ctx.store.get(Asset, {
+//     where: { id: assetId.toString() },
+//   });
+//
+//   if (!asset) {
+//     asset = new Asset({
+//       id: assetId.toString(),
+//     });
+//   }
+//
+//   updateAsset(ctx, asset, price);
+//
+//   await ctx.store.save(asset);
+//
+//   const historicalAssetPrice: HistoricalAssetPrice = getHistoricalAssetPrice(
+//     ctx,
+//     asset,
+//     price
+//   );
+//
+//   await ctx.store.save(historicalAssetPrice);
+// }

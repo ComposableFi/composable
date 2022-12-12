@@ -2,7 +2,6 @@ import type { NextPage } from "next";
 import { Container, Box, Grid } from "@mui/material";
 import Default from "@/components/Templates/Default";
 import { PageTitle } from "@/components";
-import { useDispatch } from "react-redux";
 import { Statistics } from "@/components/Organisms/overview/Statistics";
 import { useDotSamaContext } from "substrate-react";
 import { ConnectWalletFeaturedBox } from "@/components/Organisms/ConnectWalletFeaturedBox";
@@ -14,7 +13,6 @@ import { TVLChart } from "@/components/Organisms/overview/TVLChart";
 import { VolumeChart } from "@/components/Organisms/overview/VolumeChart";
 
 const Home: NextPage = () => {
-  const dispatch = useDispatch();
   const { extensionStatus } = useDotSamaContext();
   const connected = extensionStatus === "connected";
 
@@ -47,8 +45,6 @@ const Home: NextPage = () => {
               </Grid>
             </Grid>
           </Grid>
-
-
 
           {connected && (
             <>

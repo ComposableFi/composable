@@ -1,5 +1,4 @@
 #![allow(clippy::unnecessary_cast)]
-pub mod account_proxy;
 pub mod asset_tx_payment;
 pub mod assets_registry;
 pub mod balances;
@@ -22,6 +21,7 @@ pub mod multisig;
 pub mod oracle;
 pub mod pablo;
 pub mod pallet_staking_rewards;
+pub mod proxy;
 pub mod session;
 pub mod timestamp;
 pub mod tokens;

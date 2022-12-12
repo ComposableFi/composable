@@ -9,16 +9,19 @@ mod bridge;
 pub mod cosmwasm;
 mod instruction;
 mod network;
+mod packet;
 mod program;
 mod protocol;
 
-pub use crate::{asset::*, bridge::*, instruction::*, network::*, program::*, protocol::*};
+pub use crate::{
+	asset::*, bridge::*, instruction::*, network::*, packet::*, program::*, protocol::*,
+};
 use alloc::{collections::VecDeque, vec::Vec};
 use core::marker::PhantomData;
 
 /// Strongly typed network builder originating on `CurrentNetwork` network.
 #[derive(Clone)]
-pub struct ProgramBuilder<CurrentNetwork: Network, Account, Assets> {
+pub struct ProgramBuilder<CurrentNetwork, Account, Assets> {
 	pub tag: Vec<u8>,
 	pub instructions: VecDeque<Instruction<NetworkId, Vec<u8>, Account, Assets>>,
 	pub _marker: PhantomData<CurrentNetwork>,

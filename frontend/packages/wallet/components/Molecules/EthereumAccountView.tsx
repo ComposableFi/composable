@@ -1,5 +1,3 @@
-import React from "react";
-
 import { Badge } from "../Atoms/Badge";
 import { trimAddress, WalletViewTabs } from "../WalletViewModal";
 import { TabPanel } from "../Atoms/TabPanel";
@@ -29,7 +27,7 @@ export const EthereumAccountView = ({
   return (
     <TabPanel value={activePanel} index={WalletViewTabs.Wallets}>
       <Box>
-        <Typography variant="inputLabel">Connected with</Typography>
+        <Typography variant="body2">Connected with</Typography>
         <Badge
           marginLeft={theme.spacing(1)}
           label={selectedEthereumWallet.name}
@@ -46,12 +44,12 @@ export const EthereumAccountView = ({
       </Box>
       <Box marginTop={theme.spacing(2)} display="flex" alignItems={"center"}>
         <Image height="32" width="32" src="networks/mainnet.svg"></Image>
-        <Typography marginLeft={theme.spacing(1)} variant="inputLabel">
+        <Typography marginLeft={theme.spacing(1)} variant="body2">
           {trimAddress(connectedEthereumAccount)}
         </Typography>
         <IconButton
-          onClick={(_evt) => {
-            navigator.clipboard.writeText(connectedEthereumAccount);
+          onClick={async (_evt) => {
+            await navigator.clipboard.writeText(connectedEthereumAccount);
           }}
           color="primary"
           size="small"
@@ -60,9 +58,7 @@ export const EthereumAccountView = ({
         </IconButton>
         <IconButton
           onClick={(_evt) => {
-            window.open(
-                etherscanUrl + "address/" + connectedEthereumAccount
-            );
+            window.open(etherscanUrl + "address/" + connectedEthereumAccount);
           }}
           color="primary"
           size="small"
@@ -74,7 +70,7 @@ export const EthereumAccountView = ({
         <Typography
           onClick={onDisconnectWallet}
           color={theme.palette.text.secondary}
-          variant="inputLabel"
+          variant="body2"
         >
           Disconnect
         </Typography>

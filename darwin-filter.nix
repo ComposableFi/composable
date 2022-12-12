@@ -13,6 +13,7 @@ let
     "default"
     "docker-wipe-system"
     "devnet-dali"
+    "zombienet-rococo-local-dali-dev"
     "docs-server"
     "docs-static"
     "fmt"

@@ -39,6 +39,29 @@ export async function sendAndWaitForSuccess<T extends AnyTuple>(
 }
 
 /**
+ * Sends a signed extrinsic and waits for success.
+ * @param {ApiPromise} api Connected API Client.
+ * @param {AddressOrPair} sender Wallet initiating the transaction.
+ * @param {IEvent<AnyTuple>} filter Success event to be waited for.
+ * @param {SubmittableExtrinsic<Promise>} call Extrinsic call.
+ * @param {boolean} intendedToFail If set to true the transaction is expected to fail.
+ * @returns event that fits the filter
+ */
+export async function sendAndWaitForSuccessWithDelay<T extends AnyTuple>(
+  api: ApiPromise,
+  sender: AddressOrPair,
+  filter: (event: IEvent<AnyTuple>) => event is IEvent<T>,
+  call: SubmittableExtrinsic<"promise">,
+  waitTime: number,
+  intendedToFail = false
+): Promise<IEvent<T>> {
+  await setTimeout(() => {
+    /*NotEmpty*/
+  }, waitTime);
+  return await sendAndWaitFor(api, sender, filter, call, intendedToFail);
+}
+
+/**
  * Sends multiple signed extrinsics and waits for success
  * @param {ApiPromise} api Connected API Client.
  * @param {AddressOrPair} sender Wallet initiating the transaction.

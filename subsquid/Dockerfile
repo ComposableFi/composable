@@ -10,6 +10,8 @@ COPY package-lock.json .
 RUN npm ci
 COPY tsconfig.json .
 COPY src src
+COPY db db
+COPY dbInit.sql dbInit.sql
 RUN npm run build
 
 FROM node-with-gyp AS deps
@@ -24,7 +26,9 @@ COPY --from=deps /squid/package.json .
 COPY --from=deps /squid/package-lock.json .
 COPY --from=deps /squid/node_modules node_modules
 COPY --from=builder /squid/lib lib
+COPY --from=builder /squid/db db
+COPY --from=builder /squid/dbInit.sql dbInit.sql
+COPY scripts scripts
+COPY schema.graphql .
 
-
-FROM squid AS processor
-ENTRYPOINT ["npm", "run", "processor:start"]
+ENTRYPOINT ["sh", "/squid/scripts/init.sh"]
