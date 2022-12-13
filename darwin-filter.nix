@@ -1,5 +1,9 @@
 { lib }:
 let
+  nonArmPackages = [
+    "devnet-centauri"
+  ];
+
   packages = [
     "acala-node"
     "common-deps"
@@ -42,6 +46,8 @@ let
 
   devShells = [ "minimal" "default" ];
   apps = [ "docs-dev" ];
+  nonArmApps = [];
+  nonArmDevShells = [];
 
   # Filter implementation
   darwinSystems = [ "x86_64-darwin" "aarch64-darwin" ];
@@ -52,17 +58,27 @@ let
       update = filterByAllowList list;
     }) darwinSystems);
 
+  # Filter implementation
+  # TODO: refactor this nicely
+  armSystems = [ "aarch64-linux" ];
+  filterByBlockList = list: lib.filterAttrs (pn: pv: !(lib.elem pn list));
+  applyBlockList = list:
+    lib.updateManyAttrsByPath (builtins.map (system: {
+      path = [ system ];
+      update = filterByBlockList list;
+    }) armSystems);
+
 in lib.updateManyAttrsByPath [
   {
     path = [ "packages" ];
-    update = applyAllowList packages;
+    update = x: applyBlockList nonArmPackages (applyAllowList packages x) ;
   }
   {
     path = [ "apps" ];
-    update = applyAllowList apps;
+    update = x: applyBlockList nonArmApps (applyAllowList apps x);
   }
   {
     path = [ "devShells" ];
-    update = applyAllowList devShells;
+    update = x: applyBlockList nonArmDevShells (applyAllowList devShells x);
   }
 ]

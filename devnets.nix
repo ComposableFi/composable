@@ -33,6 +33,14 @@
         chain-spec = "dali-dev";
       }).script;
 
+      # Centauri Peristent Devnet
+      devnet-centauri = pkgs.composable.mkDevnetProgram "devnet-centauri"
+        (import ./.nix/devnet-specs/centauri.nix {
+          inherit pkgs;
+          devnet-1 = devnet-dali;
+          devnet-2 = devnet-dali-2;
+      });
+
       # Dali bridge devnet
       bridge-devnet-dali = (devnetTools.mk-bridge-devnet {
         inherit packages;
