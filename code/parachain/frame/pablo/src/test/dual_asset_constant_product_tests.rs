@@ -350,13 +350,14 @@ fn add_lp_with_min_mint_amount() {
 			Pablo::add_liquidity(
 				Origin::signed(ALICE),
 				pool_id,
-				assets_with_init_amounts,
+				assets_with_init_amounts.clone(),
 				0,
 				false,
 			),
 			crate::Event::<Test>::LiquidityAdded {
 				who: ALICE,
 				pool_id: 0,
+				asset_amounts: assets_with_init_amounts.into(),
 				minted_lp: 199_999_999_814_806,
 			},
 		);
