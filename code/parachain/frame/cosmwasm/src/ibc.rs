@@ -10,7 +10,7 @@ use alloc::{
 
 use cosmwasm_vm::{
 	cosmwasm_std::{
-		Addr, Binary, ContractResult, Env, IbcAcknowledgement, IbcChannel, IbcChannelCloseMsg,
+		Addr, ContractResult, Env, IbcAcknowledgement, IbcChannel, IbcChannelCloseMsg,
 		IbcChannelConnectMsg, IbcChannelOpenMsg, IbcEndpoint, IbcOrder, IbcPacket, IbcPacketAckMsg,
 		IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcTimeout, MessageInfo,
 	},
@@ -122,7 +122,7 @@ impl<T: Config> Pallet<T> {
 		vm: &mut CosmwasmVM<T>,
 		channel_id: String,
 		data: cosmwasm_vm::cosmwasm_std::Binary,
-		_timeout: cosmwasm_vm::cosmwasm_std::IbcTimeout,
+		timeout: cosmwasm_vm::cosmwasm_std::IbcTimeout,
 	) -> Result<(), CosmwasmVMError<T>> {
 		let port_id = PortId::from_str(&Self::do_compute_ibc_contract_port(
 			vm.contract_address.as_ref().clone(),
@@ -133,9 +133,7 @@ impl<T: Config> Pallet<T> {
 
 		T::IbcRelayer::handle_message(HandlerMessage::SendPacket {
 			data: data.to_vec(),
-			timeout: Err(<CosmwasmVMError<T>>::Ibc(
-				"as soon as IBC will provide public timeout".to_string(),
-			))?,
+			timeout: ibc_primitives::Timeout::Absolute { timestamp: timeout.timestamp().map(|t| t.nanos()), height: timeout.block().map(|b| b.height) },
 			channel_id,
 			port_id,
 		})

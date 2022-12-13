@@ -8273,7 +8273,6 @@ dependencies = [
  "composable-traits",
  "cosmwasm-vm",
  "cosmwasm-vm-wasmi",
- "env_logger",
  "frame-benchmarking",
  "frame-support",
  "frame-system",

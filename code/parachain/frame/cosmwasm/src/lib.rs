@@ -92,15 +92,13 @@ pub mod pallet {
 		cosmwasm_std::{
 			Addr, Attribute as CosmwasmEventAttribute, Binary as CosmwasmBinary, BlockInfo, Coin,
 			ContractInfo as CosmwasmContractInfo, ContractInfoResponse, Env,
-			Event as CosmwasmEvent, MessageInfo, QueryRequest, Timestamp, TransactionInfo,
+			Event as CosmwasmEvent, MessageInfo, Timestamp, TransactionInfo,
 		},
 		executor::{
 			cosmwasm_call, ExecuteCall, InstantiateCall, MigrateCall, QueryCall, QueryResponse,
 			ReplyCall,
 		},
-		system::{
-			cosmwasm_system_query, cosmwasm_system_run, CosmwasmCodeId, CosmwasmContractMeta,
-		},
+		system::{cosmwasm_system_query, CosmwasmCodeId, CosmwasmContractMeta},
 	};
 	use cosmwasm_vm_wasmi::{host_functions, new_wasmi_vm, WasmiImportResolver, WasmiVM};
 	use frame_support::{
