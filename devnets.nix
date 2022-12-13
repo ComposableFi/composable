@@ -21,12 +21,12 @@
         ] ++ containers-tools-minimal;
     in rec {
       # Dali devnet
-      devnet-dali = (pkgs.callPackage devnetTools.mk-devnet {
+      devnet-dali-centauri-1 = (pkgs.callPackage devnetTools.mk-devnet {
         inherit (packages) polkadot-launch composable-node polkadot-node;
         chain-spec = "dali-dev";
       }).script;
 
-      devnet-dali-2 = (pkgs.callPackage devnetTools.mk-devnet {
+      devnet-dali-centauri-2 = (pkgs.callPackage devnetTools.mk-devnet {
         inherit (packages) polkadot-launch composable-node polkadot-node;
         network-config-path =
           ./scripts/polkadot-launch/rococo-local-dali-dev-2.nix;
@@ -37,8 +37,8 @@
       devnet-centauri = pkgs.composable.mkDevnetProgram "devnet-centauri"
         (import ./.nix/devnet-specs/centauri.nix {
           inherit pkgs;
-          devnet-1 = devnet-dali;
-          devnet-2 = devnet-dali-2;
+          devnet-1 = devnet-dali-centauri-1;
+          devnet-2 = devnet-dali-centauri-2;
       });
 
       # Dali bridge devnet

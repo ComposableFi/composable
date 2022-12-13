@@ -17,6 +17,8 @@ let
     "default"
     "docker-wipe-system"
     "devnet-dali"
+    "devnet-dali-centauri-1"
+    "devnet-dali-centauri-2"
     "zombienet-rococo-local-dali-dev"
     "docs-server"
     "docs-static"
