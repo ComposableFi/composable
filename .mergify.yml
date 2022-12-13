@@ -28,3 +28,16 @@ pull_request_rules:
       queue:
         priority: high
         name: default
+
+  # Any RFCs must be reviewed and approved by more than 3 reviewers plus core group
+  - name: Automatic merge on approval (RFC)
+    conditions:
+      - and:
+          - "#approved-reviews-by>=3"
+          - approved-reviews-by=@ComposableFi/core
+          - "#review-threads-unresolved=0"
+      - base=main
+      - files~=^rfc/
+    actions:
+      queue:
+        name: default
