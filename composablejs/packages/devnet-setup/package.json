@@ -28,7 +28,7 @@
     "@polkadot/types-support": "^9.5.1",
     "@polkadot/keyring": "^10.1.10",
     "@polkadot/util": "^10.1.10",
-    "@polkadot/util-crypto": "^10.1.10",
+    "@polkadot/util-crypto": "^10.2.1",
     "@types/chai": "^4.3.1",
     "@types/node": "^18.0.1",
     "eslint": "^8.19.0",
