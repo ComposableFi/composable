@@ -56,17 +56,19 @@
           tag = "latest";
           copyToRoot = pkgs.buildEnv {
             name = "image-root";
-            paths = [ pkgs.curl pkgs.websocat ] ++ container-tools;
+            paths = [ devNet pkgs.curl pkgs.websocat pkgs.glibc.bin ]
+              ++ container-tools;
             pathsToLink = [ "/bin" ];
           };
           config = {
-            Entrypoint = [ "${devNet}/bin/run-devnet-dali-dev" ];
-            WorkingDir = "/home/polkadot-launch";
+            Entrypoint =
+              [ "${pkgs.lib.getBin devNet}/bin/${pkgs.lib.getName devNet}" ];
           };
+
           runAsRoot = ''
-            mkdir -p /home/polkadot-launch /tmp
-            chown 1000:1000 /home/polkadot-launch
-            chmod 777 /tmp
+            mkdir --parents /usr/bin /tmp
+            chown 777 /tmp
+            ln --target-directory=/usr/bin /bin/ldd # https://github.com/napi-rs/napi-rs/issues/1335
           '';
         };
 
