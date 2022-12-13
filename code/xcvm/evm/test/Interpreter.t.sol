@@ -23,7 +23,6 @@ contract test_Interpreter is Test {
     ERC20Mock internal assetToken1;
     ERC20Mock internal assetToken2;
     Interpreter internal interpreter;
-
     Router internal router;
 
     fallback() external payable {}
@@ -43,14 +42,14 @@ contract test_Interpreter is Test {
         router.registerBridge(user, IRouter.BridgeSecurity(1), 1);
 
         vm.prank(user);
-        router.createInterpreter(IRouter.Origin({networkId: 1, account: abi.encodePacked(owner)}));
-        interpreterAddress = router.userInterpreter(1, abi.encodePacked(owner));
+        router.createInterpreter(IRouter.Origin({networkId: 1, account: abi.encodePacked(owner)}), "salt");
+        interpreterAddress = router.userInterpreter(1, abi.encodePacked(owner), "salt");
         console.log(interpreterAddress);
         ERC20Mock erc20 = new ERC20Mock("test", "test", interpreterAddress, 100 ether);
         router.registerAsset(address(erc20), 1);
 
         vm.prank(owner);
-        interpreter = new Interpreter(IRouter.Origin({account: bytes("test"), networkId: 1}), owner);
+        interpreter = new Interpreter(IRouter.Origin({account: bytes("test"), networkId: 1}), owner, "salt");
     }
 
     function testRunProgram(address relayerAddress) private {
