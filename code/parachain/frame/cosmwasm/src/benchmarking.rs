@@ -58,7 +58,6 @@ const INSTRUCTIONS_SAMPLE_COUNT: u32 = 50;
 // have been used but again, we don't want to pay for `Mutex` during benchmarking.
 lazy_static! {
 	static ref SHARED_VM: SyncUnsafeCell<CosmwasmVMShared> = {
-		env_logger::init();
 		SyncUnsafeCell::new(CosmwasmVMShared {
 			storage_readonly_depth: 0,
 			depth: 0,
