@@ -22,7 +22,7 @@ import { Signer } from "@polkadot/api/types";
 import BigNumber from "bignumber.js";
 import { SnackbarKey, useSnackbar } from "notistack";
 import React, { FC, useCallback, useEffect, useMemo, useRef } from "react";
-import { callbackGate } from "shared";
+import { callbackGate, subscanExtrinsicLink } from "shared";
 import { useDotSamaContext, useExecutor } from "substrate-react";
 import { TokenId } from "tokens";
 
@@ -98,7 +98,7 @@ export const GasFeeDropdown: FC<Props> = ({
                   variant: "success",
                   isClosable: true,
                   persist: true,
-                  url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
+                  url: subscanExtrinsicLink("picasso", txHash),
                 });
                 originalFeeItem.current = tokenId;
                 setFeeItem(tokenId);

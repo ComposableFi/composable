@@ -22,7 +22,7 @@ module.exports = {
     "^store/(.*)$": "<rootDir>/store/$1",
     "^defi/(.*)$": "<rootDir>/defi/$1",
     "^utils/(.*)$": "<rootDir>/utils/$1",
-    "^tests/(.*)$": "<rootDir>/tests/$1",
+    "^tests/(.*)$": "<rootDir>/tests/$1"
   },
   setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
   testPathIgnorePatterns: ["<rootDir>/node_modules/", "<rootDir>/.next/"],
@@ -30,10 +30,10 @@ module.exports = {
   transform: {
     // Use babel-jest to transpile tests with the next/babel preset
     // https://jestjs.io/docs/configuration#transform-objectstring-pathtotransformer--pathtotransformer-object
-    "^.+\\.(js|jsx|ts|tsx)$": ["babel-jest", { presets: ["next/babel"] }],
+    "^.+\\.(js|jsx|ts|tsx)$": ["babel-jest", { presets: ["next/babel"] }]
   },
   transformIgnorePatterns: [
-    "/node_modules/(?!(@integrations-lib/core|@polkadot/util|@polkadot/api|@polkadot/types-codec|@polkadot/types|@polkadot/rpc-provider|@polkadot/keyring|@polkadot/api-derive|@polkadot/rpc-core|@polkadot/util-crypto|@polkadot/x-bigint|@polkadot/networks|@substrate/ss58-registry)/).*/",
-    "^.+\\.module\\.(css|sass|scss)$",
-  ],
+    "/node_modules/(?!(@integrations-lib/core|@polkadot/util|@polkadot/api|@polkadot/api-base|@polkadot/types-codec|@polkadot/types|@polkadot/rpc-provider|@polkadot/keyring|@polkadot/api-derive|@polkadot/rpc-core|@polkadot/util-crypto|@polkadot/x-bigint|@polkadot/networks|@substrate/ss58-registry)/).*/",
+    "^.+\\.module\\.(css|sass|scss)$"
+  ]
 };

@@ -4,7 +4,7 @@ import { AnyComponentMap, EnqueueSnackbar, SnackbarKey } from "notistack";
 import { pipe } from "fp-ts/function";
 import { findFirst } from "fp-ts/Array";
 import { boolean, option } from "fp-ts";
-import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
+import { subscanExtrinsicLink } from "shared";
 
 export function xcmPalletEventParser(
   records: EventRecord[],
@@ -35,7 +35,7 @@ export function xcmPalletEventParser(
           description: "",
           variant: "error",
           isCloseable: true,
-          url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
+          url: subscanExtrinsicLink("picasso", txHash),
         });
       },
       boolean.fold(
@@ -48,7 +48,7 @@ export function xcmPalletEventParser(
               description: "XcmV2TraitsOutcome: Incomplete",
               variant: "error",
               isCloseable: true,
-              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
+              url: subscanExtrinsicLink("picasso", txHash),
             }
           );
         },
@@ -58,7 +58,7 @@ export function xcmPalletEventParser(
             persist: true,
             variant: "success",
             isCloseable: true,
-            url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
+            url: subscanExtrinsicLink("picasso", txHash),
           });
         }
       )

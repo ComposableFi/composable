@@ -27,7 +27,6 @@ export type TextSwitchProps = {
   textFirst?: boolean;
   checked: boolean;
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  disabled?: boolean;
 } & BoxProps;
 
 export const TextSwitch: React.FC<TextSwitchProps> = ({
@@ -37,7 +36,6 @@ export const TextSwitch: React.FC<TextSwitchProps> = ({
   textFirst = true,
   checked,
   onChange,
-  disabled,
 }) => {
   const theme = useTheme();
   return (
@@ -64,12 +62,12 @@ export const TextSwitch: React.FC<TextSwitchProps> = ({
           {label}
         </Typography>
         {TooltipProps?.title && (
-          <Tooltip {...TooltipProps} arrow disableHoverListener={disabled}>
+          <Tooltip {...TooltipProps} arrow>
             <InfoOutlinedIcon sx={infoIconStyle} />
           </Tooltip>
         )}
       </Box>
-      <Switch checked={checked} onChange={onChange} disabled={disabled} />
+      <Switch checked={checked} onChange={onChange} />
     </Box>
   );
 };

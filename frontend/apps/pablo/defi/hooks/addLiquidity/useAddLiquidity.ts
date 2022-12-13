@@ -81,10 +81,17 @@ export const useAddLiquidity = ({
   const onTxReady = useCallback(
     (transactionHash: string) => {
       enqueueSnackbar(
-        transactionStatusSnackbarMessage(TxOrigin, transactionHash, "Initiated"),
+        transactionStatusSnackbarMessage(
+          TxOrigin,
+          transactionHash,
+          "Initiated"
+        ),
         SNACKBAR_TYPES.INFO
       );
-      setUiState({ isConfirmingSupplyModalOpen: true, isConfirmSupplyModalOpen: false });
+      setUiState({
+        isConfirmingSupplyModalOpen: true,
+        isConfirmSupplyModalOpen: false,
+      });
     },
     [enqueueSnackbar]
   );
@@ -92,7 +99,11 @@ export const useAddLiquidity = ({
   const onTxFinalized = useCallback(
     (transactionHash: string, _eventRecords: any[]) => {
       enqueueSnackbar(
-        transactionStatusSnackbarMessage(TxOrigin, transactionHash, "Finalized"),
+        transactionStatusSnackbarMessage(
+          TxOrigin,
+          transactionHash,
+          "Finalized"
+        ),
         SNACKBAR_TYPES.SUCCESS
       );
       resetAddLiquiditySlice();
@@ -135,8 +146,11 @@ export const useAddLiquidity = ({
       await executor.execute(
         parachainApi.tx.pablo.addLiquidity(
           pool.getPoolId() as string,
-          baseAmount,
-          quoteAmount,
+          parachainApi.createType(
+            "BTreeMap<u128, u128>",
+            baseAmount,
+            quoteAmount
+          ),
           _lpReceiveAmount,
           true
         ),
@@ -154,6 +168,20 @@ export const useAddLiquidity = ({
       );
       setUiState({ isConfirmingSupplyModalOpen: false });
     }
-  }, [selectedAccount, parachainApi, executor, assetOne, baseAmount, quoteAmount, assetTwo, signer, pool, _lpReceiveAmount, onTxReady, onTxFinalized, onTxError, enqueueSnackbar]);
-
+  }, [
+    selectedAccount,
+    parachainApi,
+    executor,
+    assetOne,
+    baseAmount,
+    quoteAmount,
+    assetTwo,
+    signer,
+    pool,
+    _lpReceiveAmount,
+    onTxReady,
+    onTxFinalized,
+    onTxError,
+    enqueueSnackbar,
+  ]);
 };
