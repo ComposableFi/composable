@@ -1,14 +1,18 @@
-use crate::{Config, Error, PoolConfiguration, PoolCount, Pools};
+use crate::{AssetIdOf, Config, Error, PoolConfiguration, PoolCount, Pools};
 use composable_maths::dex::{
-	constant_product::{compute_deposit_lp, compute_in_given_out_new, compute_out_given_in_new},
-	PoolWeightMathExt,
+	constant_product::{
+		compute_deposit_lp_, compute_first_deposit_lp_, compute_in_given_out_new,
+		compute_out_given_in_new, compute_redeemed_for_lp,
+	},
+	per_thing_acceptable_computation_error, PoolWeightMathExt,
 };
-use composable_support::math::safe::{SafeAdd, SafeSub};
+use composable_support::math::safe::SafeAdd;
 use composable_traits::{
 	currency::{CurrencyFactory, RangeId},
 	dex::{AssetAmount, BasicPoolInfo, Fee, FeeConfig},
 };
 use frame_support::{
+	defensive,
 	pallet_prelude::*,
 	traits::fungibles::{Inspect, Mutate, Transfer},
 };
@@ -26,6 +30,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		who: &T::AccountId,
 		fee_config: FeeConfig,
 		assets_weights: BoundedBTreeMap<T::AssetId, Permill, ConstU32<2>>,
+		lp_token_id: Option<AssetIdOf<T>>,
 	) -> Result<T::PoolId, DispatchError> {
 		ensure!(assets_weights.len() == 2, Error::<T>::InvalidPair);
 		ensure!(assets_weights.values().non_zero_weights(), Error::<T>::WeightsMustBeNonZero);
@@ -40,7 +45,10 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		);
 		ensure!(fee_config.fee_rate < Permill::one(), Error::<T>::InvalidFees);
 
-		let lp_token = T::CurrencyFactory::create(RangeId::LP_TOKENS)?;
+		// NOTE: Will fully move away from CF at a later date. For now, all pools used in production
+		// should be created with a supplied LPT via Pablo's `do_create_pool` function.
+		let lp_token = lp_token_id.unwrap_or(T::CurrencyFactory::create(RangeId::LP_TOKENS)?);
+
 		// Add new pool
 		let pool_id =
 			PoolCount::<T>::try_mutate(|pool_count| -> Result<T::PoolId, DispatchError> {
@@ -80,47 +88,126 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		who: &T::AccountId,
 		pool: BasicPoolInfo<T::AccountId, T::AssetId, ConstU32<2>>,
 		pool_account: T::AccountId,
-		assets: BTreeMap<T::AssetId, T::Balance>,
+		assets: BoundedVec<AssetAmount<T::AssetId, T::Balance>, ConstU32<2>>,
 		min_mint_amount: T::Balance,
 		keep_alive: bool,
-	) -> Result<(T::Balance, T::Balance, T::Balance), DispatchError> {
-		// TODO (vim): Pool weight validation is missing, which would cause the received LP tokens
-		//  to be higher than expected if the base token has more than what is allowed by the pool
-		//  weight.
-		ensure!(!assets.values().any(|balance| balance.is_zero()), Error::<T>::InvalidAmount);
-		let pool_assets = Self::get_pool_balances(&pool, &pool_account);
-		let assets_vec = pool_assets.keys().copied().collect::<Vec<_>>();
-		// This function currently expects liquidity to be provided in all assets in weight ratio
-		ensure!(assets_vec == assets.keys().copied().collect::<Vec<_>>(), Error::<T>::PairMismatch);
-		// TODO (vim): Change later. Make a vector of keys to easily map base, quote for now
-		let first_asset = assets_vec.get(0).expect("Must exist as per previous validations");
-		let first_asset_amount =
-			assets.get(first_asset).expect("Must exist as per previous validations");
-		let second_asset = assets_vec.get(1).expect("Must exist as per previous validations");
-		let second_asset_amount =
-			assets.get(second_asset).expect("Must exist as per previous validations");
+	) -> Result<T::Balance, DispatchError> {
+		let mut pool_assets = Self::get_pool_balances(&pool, &pool_account);
+
+		let assets_with_balances = assets
+			.iter()
+			.map(|asset_amount| {
+				if asset_amount.amount.is_zero() {
+					return Err(Error::<T>::InvalidAmount)
+				};
+
+				let balance =
+					pool_assets.remove(&asset_amount.asset_id).ok_or(Error::<T>::AssetNotFound)?;
+
+				Ok((asset_amount, balance))
+			})
+			.collect::<Result<Vec<_>, _>>()?;
 
 		let lp_total_issuance = T::Convert::convert(T::Assets::total_issuance(pool.lp_token));
-		let (quote_amount, amount_of_lp_token_to_mint) = compute_deposit_lp(
-			lp_total_issuance,
-			T::Convert::convert(*first_asset_amount),
-			T::Convert::convert(*second_asset_amount),
-			pool_assets.get(first_asset).expect("Must exist as per previous validations").1,
-			pool_assets.get(second_asset).expect("Must exist as per previous validations").1,
-		)?;
-		let quote_amount = T::Convert::convert(quote_amount);
+
+		let amount_of_lp_token_to_mint = match assets_with_balances[..] {
+			[(single, (single_weight, single_balance))] => {
+				if lp_total_issuance.is_zero() {
+					return Err(Error::<T>::InitialDepositCannotBeZero.into())
+				}
+
+				let single_deposit = compute_deposit_lp_(
+					lp_total_issuance,
+					T::Convert::convert(single.amount),
+					single_balance,
+					single_weight,
+					pool.fee_config.fee_rate,
+				)?;
+
+				T::Assets::transfer(
+					single.asset_id,
+					who,
+					&pool_account,
+					single.amount,
+					keep_alive,
+				)?;
+
+				single_deposit.value
+			},
+			[(first, (first_weight, first_balance)), (second, (second_weight, second_balance))] => {
+				let lp_to_mint = if lp_total_issuance.is_zero() {
+					compute_first_deposit_lp_(
+						&[
+							(T::Convert::convert(first.amount), first_weight),
+							(T::Convert::convert(second.amount), second_weight),
+						],
+						Permill::zero(),
+					)?
+					.value
+				} else {
+					let input_ratio_first_to_second = Permill::from_rational(
+						first.amount,
+						first.amount.safe_add(&second.amount)?,
+					);
+
+					ensure!(
+						per_thing_acceptable_computation_error(
+							input_ratio_first_to_second,
+							first_weight
+						),
+						Error::<T>::IncorrectAssetAmounts
+					);
+
+					// pass 1 as weight since adding liquidity for all assets
+					// see docs on compute_deposit_lp_ for more information
+					sp_std::if_std! {
+						let _first_deposit = compute_deposit_lp_(
+							lp_total_issuance,
+							T::Convert::convert(first.amount),
+							first_balance,
+							Permill::one(),
+							pool.fee_config.fee_rate,
+						)?;
+					}
+
+					let second_deposit = compute_deposit_lp_(
+						lp_total_issuance,
+						T::Convert::convert(second.amount),
+						second_balance,
+						Permill::one(),
+						pool.fee_config.fee_rate,
+					)?;
+
+					second_deposit.value
+				};
+
+				T::Assets::transfer(first.asset_id, who, &pool_account, first.amount, keep_alive)?;
+				T::Assets::transfer(
+					second.asset_id,
+					who,
+					&pool_account,
+					second.amount,
+					keep_alive,
+				)?;
+
+				lp_to_mint
+			},
+			_ => {
+				defensive!("this should be unreachable, since the input assets are bounded at 2");
+				return Err(Error::<T>::UnsupportedOperation.into())
+			},
+		};
+
 		let amount_of_lp_token_to_mint = T::Convert::convert(amount_of_lp_token_to_mint);
 
-		ensure!(quote_amount > T::Balance::zero(), Error::<T>::InvalidAmount);
 		ensure!(
 			amount_of_lp_token_to_mint >= min_mint_amount,
 			Error::<T>::CannotRespectMinimumRequested
 		);
 
-		T::Assets::transfer(*first_asset, who, &pool_account, *first_asset_amount, keep_alive)?;
-		T::Assets::transfer(*second_asset, who, &pool_account, *second_asset_amount, keep_alive)?;
 		T::Assets::mint_into(pool.lp_token, who, amount_of_lp_token_to_mint)?;
-		Ok((*first_asset_amount, quote_amount, amount_of_lp_token_to_mint))
+
+		Ok(amount_of_lp_token_to_mint)
 	}
 
 	pub(crate) fn remove_liquidity(
@@ -128,20 +215,89 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		pool: BasicPoolInfo<T::AccountId, T::AssetId, ConstU32<2>>,
 		pool_account: T::AccountId,
 		lp_amount: T::Balance,
-		min_receive: BTreeMap<T::AssetId, T::Balance>,
-	) -> Result<(T::Balance, T::Balance, T::Balance), DispatchError> {
-		let lp_issued = T::Assets::total_issuance(pool.lp_token);
-		let pool_assets = Self::get_pool_balances(&pool, &pool_account);
-		// TODO (vim): Business logic of calculating redeemable amounts must be called here
-		let assets = pool_assets.keys().copied().collect::<Vec<_>>();
+		min_receive: BoundedVec<AssetAmount<T::AssetId, T::Balance>, ConstU32<2>>,
+	) -> Result<(), DispatchError> {
+		let mut pool_assets = Self::get_pool_balances(&pool, &pool_account);
 
-		let first_asset_amount = min_receive.get(&assets[0]).ok_or(Error::<T>::InvalidAsset)?;
-		let second_asset_amount = min_receive.get(&assets[1]).ok_or(Error::<T>::InvalidAsset)?;
-		T::Assets::transfer(assets[0], &pool_account, who, *first_asset_amount, false)?;
-		T::Assets::transfer(assets[1], &pool_account, who, *second_asset_amount, false)?;
+		let min_receive_with_current_balances = min_receive
+			.iter()
+			.map(|asset_amount| {
+				let balance =
+					pool_assets.remove(&asset_amount.asset_id).ok_or(Error::<T>::AssetNotFound)?;
+
+				Ok::<_, Error<T>>((asset_amount, balance))
+			})
+			.collect::<Result<Vec<_>, _>>()?;
+
+		let lp_total_issuance = T::Convert::convert(T::Assets::total_issuance(pool.lp_token));
+
+		match min_receive_with_current_balances[..] {
+			[(single, (single_weight, single_balance))] => {
+				let single_redeemed_amount = compute_redeemed_for_lp(
+					lp_total_issuance,
+					T::Convert::convert(lp_amount),
+					single_balance,
+					single_weight,
+				)?;
+
+				ensure!(
+					single_redeemed_amount >= T::Convert::convert(single.amount),
+					Error::<T>::CannotRespectMinimumRequested
+				);
+
+				T::Assets::transfer(
+					single.asset_id,
+					&pool_account,
+					who,
+					T::Convert::convert(single_redeemed_amount),
+					false, // pool account doesn't need to be kept alive
+				)?;
+			},
+			[(first_min_receive, (_first_weight, first_balance)), (second_min_receive, (_second_weight, second_balance))] =>
+			{
+				let first_redeemed_amount = compute_redeemed_for_lp(
+					lp_total_issuance,
+					T::Convert::convert(lp_amount),
+					first_balance,
+					Permill::one(),
+				)?;
+				let second_redeemed_amount = compute_redeemed_for_lp(
+					lp_total_issuance,
+					T::Convert::convert(lp_amount),
+					second_balance,
+					Permill::one(),
+				)?;
+
+				ensure!(
+					first_redeemed_amount >= T::Convert::convert(first_min_receive.amount) &&
+						second_redeemed_amount >= T::Convert::convert(second_min_receive.amount),
+					Error::<T>::CannotRespectMinimumRequested
+				);
+
+				T::Assets::transfer(
+					first_min_receive.asset_id,
+					&pool_account,
+					who,
+					T::Convert::convert(first_redeemed_amount),
+					false, // pool account doesn't need to be kept alive
+				)?;
+				T::Assets::transfer(
+					second_min_receive.asset_id,
+					&pool_account,
+					who,
+					T::Convert::convert(second_redeemed_amount),
+					false, // pool account doesn't need to be kept alive
+				)?;
+			},
+			_ => {
+				defensive!("this should be unreachable, since the input assets are bounded at 2");
+				return Err(Error::<T>::UnsupportedOperation.into())
+			},
+		};
+
 		T::Assets::burn_from(pool.lp_token, who, lp_amount)?;
 
-		Ok((*first_asset_amount, *second_asset_amount, lp_issued.safe_sub(&lp_amount)?))
+		Ok(())
 	}
 
 	pub(crate) fn get_exchange_value(

@@ -58,7 +58,7 @@ pub mod pallet {
 		WeightInfo,
 	};
 	use codec::FullCodec;
-	use composable_support::math::safe::{safe_multiply_by_rational, SafeArithmetic, SafeSub};
+	use composable_support::math::safe::{SafeArithmetic, SafeSub};
 	use composable_traits::{
 		currency::{CurrencyFactory, LocalAssets},
 		defi::{CurrencyPair, Rate},
@@ -72,14 +72,15 @@ pub mod pallet {
 		pallet_prelude::*,
 		traits::{
 			fungibles::{Inspect, Mutate, Transfer},
-			Time,
+			Time, TryCollect,
 		},
 		transactional, BoundedBTreeMap, PalletId, RuntimeDebug,
 	};
 	use sp_arithmetic::FixedPointOperand;
 
 	use composable_maths::dex::{
-		constant_product::compute_deposit_lp, price::compute_initial_price_cumulative,
+		constant_product::{compute_deposit_lp, compute_redeemed_for_lp},
+		price::compute_initial_price_cumulative,
 	};
 	use composable_traits::{
 		currency::BalanceLike,
@@ -153,10 +154,10 @@ pub mod pallet {
 			who: T::AccountId,
 			/// Pool id to which liquidity added.
 			pool_id: T::PoolId,
-			/// Amount of base asset deposited.
-			base_amount: T::Balance,
-			/// Amount of quote asset deposited.
-			quote_amount: T::Balance,
+			// /// Amount of base asset deposited.
+			// base_amount: T::Balance,
+			// /// Amount of quote asset deposited.
+			// quote_amount: T::Balance,
 			/// Amount of minted lp.
 			minted_lp: T::Balance,
 		},
@@ -166,12 +167,12 @@ pub mod pallet {
 			who: T::AccountId,
 			/// Pool id to which liquidity added.
 			pool_id: T::PoolId,
-			/// Amount of base asset removed from pool.
-			base_amount: T::Balance,
-			/// Amount of quote asset removed from pool.
-			quote_amount: T::Balance,
-			/// Updated lp token supply.
-			total_issuance: T::Balance,
+			// /// Amount of base asset removed from pool.
+			// base_amount: T::Balance,
+			// /// Amount of quote asset removed from pool.
+			// quote_amount: T::Balance,
+			// /// Updated lp token supply.
+			// total_issuance: T::Balance,
 		},
 		/// Token exchange happened.
 		Swapped {
@@ -225,6 +226,9 @@ pub mod pallet {
 		WeightsMustBeNonZero,
 		WeightsMustSumToOne,
 		StakingPoolConfigError,
+		IncorrectAssetAmounts,
+		UnsupportedOperation,
+		InitialDepositCannotBeZero,
 	}
 
 	#[pallet::config]
@@ -361,7 +365,7 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::create())]
 		pub fn create(origin: OriginFor<T>, pool: PoolInitConfigurationOf<T>) -> DispatchResult {
 			T::PoolCreationOrigin::ensure_origin(origin)?;
-			let _ = Self::do_create_pool(pool)?;
+			let _ = Self::do_create_pool(pool, None)?;
 			Ok(())
 		}
 
@@ -521,6 +525,7 @@ pub mod pallet {
 		#[transactional]
 		pub fn do_create_pool(
 			init_config: PoolInitConfigurationOf<T>,
+			lp_token_id: Option<AssetIdOf<T>>,
 		) -> Result<T::PoolId, DispatchError> {
 			let (owner, pool_id, assets_weights) = match init_config {
 				PoolInitConfiguration::DualAssetConstantProduct { owner, fee, assets_weights } => {
@@ -528,6 +533,7 @@ pub mod pallet {
 						&owner,
 						FeeConfig::default_from(fee),
 						assets_weights.clone(),
+						lp_token_id,
 					)?;
 					(owner, pool_id, assets_weights)
 				},
@@ -678,6 +684,7 @@ pub mod pallet {
 		#[deprecated(
 			note = "This is a temporary function for refactoring/migration purposes. Use `Amm::assets` instead."
 		)]
+		#[allow(deprecated)]
 		fn pool_ordered_pair(
 			pool_id: T::PoolId,
 		) -> Result<CurrencyPair<T::AssetId>, DispatchError> {
@@ -749,49 +756,30 @@ pub mod pallet {
 		fn redeemable_assets_for_lp_tokens(
 			pool_id: Self::PoolId,
 			lp_amount: Self::Balance,
-			min_expected_amounts: BTreeMap<Self::AssetId, Self::Balance>,
 		) -> Result<RedeemableAssets<Self::AssetId, Self::Balance>, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
 			#[allow(deprecated)]
-			let currency_pair = Self::pool_ordered_pair(pool_id)?;
-			ensure!(min_expected_amounts.len() < 3, Error::<T>::MoreThanTwoAssetsNotYetSupported);
-			let min_base_amount = *min_expected_amounts
-				.get(&currency_pair.base)
-				.ok_or(Error::<T>::MissingMinExpectedAmount)?;
-			let min_quote_amount = *min_expected_amounts
-				.get(&currency_pair.quote)
-				.ok_or(Error::<T>::MissingMinExpectedAmount)?;
 			match pool {
-				PoolConfiguration::DualAssetConstantProduct(BasicPoolInfo { lp_token, .. }) => {
-					// TODO (vim): This function must call the relevant calculation through
-					//  dual_asset_constant_product.rs. Then most of the logic is removed here.
-					let pool_base_aum =
-						T::Convert::convert(T::Assets::balance(currency_pair.base, &pool_account));
-					let pool_quote_aum =
-						T::Convert::convert(T::Assets::balance(currency_pair.quote, &pool_account));
-					let lp_issued = T::Assets::total_issuance(lp_token);
+				PoolConfiguration::DualAssetConstantProduct(BasicPoolInfo {
+					lp_token,
+					assets_weights,
+					..
+				}) => {
+					let assets = assets_weights
+						.into_iter()
+						.map(|(id, w)| {
+							compute_redeemed_for_lp(
+								T::Convert::convert(T::Assets::total_issuance(lp_token)),
+								T::Convert::convert(lp_amount),
+								T::Convert::convert(T::Assets::balance(id, &pool_account)),
+								w,
+							)
+							.map(|res| (id, T::Convert::convert(res)))
+						})
+						.collect::<Result<BTreeMap<_, _>, _>>()?;
 
-					let base_amount = T::Convert::convert(safe_multiply_by_rational(
-						T::Convert::convert(lp_amount),
-						pool_base_aum,
-						T::Convert::convert(lp_issued),
-					)?);
-					let quote_amount = T::Convert::convert(safe_multiply_by_rational(
-						T::Convert::convert(lp_amount),
-						pool_quote_aum,
-						T::Convert::convert(lp_issued),
-					)?);
-					ensure!(
-						base_amount >= min_base_amount && quote_amount >= min_quote_amount,
-						Error::<T>::CannotRespectMinimumRequested
-					);
-					Ok(RedeemableAssets {
-						assets: BTreeMap::from([
-							(currency_pair.base, base_amount),
-							(currency_pair.quote, quote_amount),
-						]),
-					})
+					Ok(RedeemableAssets { assets })
 				},
 			}
 		}
@@ -800,11 +788,8 @@ pub mod pallet {
 			who: &Self::AccountId,
 			pool_id: Self::PoolId,
 			lp_amount: Self::Balance,
-			min_expected_amounts: BTreeMap<Self::AssetId, Self::Balance>,
 		) -> Result<RemoveLiquiditySimulationResult<Self::AssetId, Self::Balance>, DispatchError> {
-			ensure!(min_expected_amounts.len() < 3, Error::<T>::MoreThanTwoAssetsNotYetSupported);
-			let redeemable_assets =
-				Self::redeemable_assets_for_lp_tokens(pool_id, lp_amount, min_expected_amounts)?;
+			let redeemable_assets = Self::redeemable_assets_for_lp_tokens(pool_id, lp_amount)?;
 			let pool = Self::get_pool(pool_id)?;
 			#[allow(deprecated)]
 			let currency_pair = Self::pool_ordered_pair(pool_id)?;
@@ -885,23 +870,28 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
-			let (added_base_amount, added_quote_amount, minted_lp) = match pool {
+			let minted_lp = match pool {
 				PoolConfiguration::DualAssetConstantProduct(info) =>
 					DualAssetConstantProduct::<T>::add_liquidity(
 						who,
 						info,
 						pool_account,
-						assets,
+						assets
+							.into_iter()
+							.map(|(asset_id, amount)| AssetAmount { asset_id, amount })
+							.try_collect()
+							.map_err(|_| Error::<T>::MoreThanTwoAssetsNotYetSupported)?,
 						min_mint_amount,
 						keep_alive,
 					)?,
 			};
+
 			Self::update_twap(pool_id)?;
 			Self::deposit_event(Event::<T>::LiquidityAdded {
 				who: who.clone(),
 				pool_id,
-				base_amount: added_base_amount,
-				quote_amount: added_quote_amount,
+				// base_amount: added_base_amount,
+				// quote_amount: added_quote_amount,
 				minted_lp,
 			});
 			Ok(())
@@ -914,27 +904,30 @@ pub mod pallet {
 			lp_amount: Self::Balance,
 			min_receive: BTreeMap<Self::AssetId, Self::Balance>,
 		) -> Result<(), DispatchError> {
-			let redeemable_assets =
-				Self::redeemable_assets_for_lp_tokens(pool_id, lp_amount, min_receive)?;
+			// let redeemable_assets =
+			// 	Self::redeemable_assets_for_lp_tokens(pool_id, lp_amount, min_receive)?;
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
 			match pool {
 				PoolConfiguration::DualAssetConstantProduct(info) => {
-					let (base_amount, quote_amount, updated_lp) =
-						DualAssetConstantProduct::<T>::remove_liquidity(
-							who,
-							info,
-							pool_account,
-							lp_amount,
-							redeemable_assets.assets,
-						)?;
+					DualAssetConstantProduct::<T>::remove_liquidity(
+						who,
+						info,
+						pool_account,
+						lp_amount,
+						min_receive
+							.into_iter()
+							.map(|(asset_id, amount)| AssetAmount { asset_id, amount })
+							.try_collect()
+							.map_err(|_| Error::<T>::MoreThanTwoAssetsNotYetSupported)?,
+					)?;
 					Self::update_twap(pool_id)?;
 					Self::deposit_event(Event::<T>::LiquidityRemoved {
 						pool_id,
 						who: who.clone(),
-						base_amount,
-						quote_amount,
-						total_issuance: updated_lp,
+						// base_amount,
+						// quote_amount,
+						// total_issuance: updated_lp,
 					});
 				},
 			}

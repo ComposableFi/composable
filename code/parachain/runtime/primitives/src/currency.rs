@@ -193,7 +193,11 @@ impl CurrencyId {
 		pub const vKSM: CurrencyId = CurrencyId(103, None);
 		/// Moonriver MOVR
 		pub const MOVR: CurrencyId = CurrencyId(104, None);
-		// NOTE: Empty CurrencyId slots starting with 105
+
+		pub const KSM_USDT_LPT: CurrencyId = CurrencyId(105, None);
+		pub const PICA_USDT_LPT: CurrencyId = CurrencyId(106, None);
+		// NOTE: Empty CurrencyId slots starting with 107
+
 
 		/// Karura stable coin(Acala Dollar), not native.
 		pub const kUSD: CurrencyId = CurrencyId(
