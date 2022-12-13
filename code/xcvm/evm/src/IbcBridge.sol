@@ -38,8 +38,8 @@ contract IBCBridge is Context, IIbcBridge, IModuleCallbacks {
     ) external {
         require(msg.sender == routerAddress, "only router can send packet");
         bytes memory data = SDK.generateIBCSpawn(
-            account,
-            networkId,
+            SDK.generateUserOrigin(account, networkId),
+            SDK.generateInterpreterOrigin(account),
             salt,
             spawnedProgram,
             assetIds,
@@ -67,7 +67,8 @@ contract IBCBridge is Context, IIbcBridge, IModuleCallbacks {
 
     /// Module callbacks ///
     function onRecvPacket(Packet.Data calldata packet, address relayer) external virtual override returns (bytes memory acknowledgement) {
-        (IRouter.Origin memory origin,
+        (bytes memory intepreterOrigin,
+        IRouter.Origin memory origin,
         bytes memory program,
         bytes memory salt,
         address[] memory _assets,

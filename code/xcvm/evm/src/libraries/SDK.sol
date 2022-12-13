@@ -571,6 +571,25 @@ library SDK {
         }
     }
 
+    // ibc package specific functions
+    function _handleInterpreterOrigin(bytes memory program, uint64 pos) public pure returns(bytes memory originInterpreter, uint64 newPos) {
+        uint64 size;
+        (size, pos) = _getMessageLength(program, pos);
+        pos = _checkField(program, 1, ProtobufLib.WireType.LengthDelimited, pos);
+        (size, pos) = _getMessageLength(program, pos);
+        originInterpreter = program.slice(pos, size);
+        newPos = pos + size;
+    }
+
+    function _handleUserOrigin(bytes memory program, uint64 pos) public view returns(address account, uint128 networkId, uint64 newPos) {
+        uint64 size;
+        (size, pos) = _getMessageLength(program, pos);
+        pos = _checkField(program, 1, ProtobufLib.WireType.LengthDelimited, pos);
+        (account, pos) = _handleAccount(program, pos);
+        pos = _checkField(program, 2, ProtobufLib.WireType.LengthDelimited, pos);
+        (networkId, newPos) = _handleNetwork(program, pos);
+    }
+
     // view functions to generate xcvm bytecode using protobuf
 
     function generateUint128(uint128 n) public pure returns (bytes memory u128) {
@@ -842,9 +861,25 @@ library SDK {
     }
 
     // IBC spawn program encoder and decoder
+    function generateUserOrigin(bytes memory account, uint32 networkId) public pure returns (bytes memory userOrigin) {
+        userOrigin = abi.encodePacked(
+            ProtobufLib.encode_key(1, 2),
+            ProtobufLib.encode_length_delimited(generateAccount(account)),
+            ProtobufLib.encode_key(2, 2),
+            ProtobufLib.encode_length_delimited(generateNetwork(networkId))
+        );
+    }
+    
+    function generateInterpreterOrigin(bytes memory account) public pure returns (bytes memory interpreterOrigin) {
+        interpreterOrigin = abi.encodePacked(
+            ProtobufLib.encode_key(1, 2),
+            ProtobufLib.encode_length_delimited(generateAccount(account))
+        );
+    }
+
     function generateIBCSpawn(
-        bytes memory _account,
-        uint128 _network,
+        bytes memory interpreterOrigin,
+        bytes memory userOrigin,
         bytes memory _salt,
         bytes memory _spawnedProgram,
         uint128[] memory assetIds,
@@ -852,9 +887,9 @@ library SDK {
     ) public pure returns (bytes memory spawn) {
         spawn = abi.encodePacked(
             ProtobufLib.encode_key(1, 2),
-            ProtobufLib.encode_length_delimited(generateAccount(_account)),
+            ProtobufLib.encode_length_delimited(interpreterOrigin),
             ProtobufLib.encode_key(2, 2),
-            ProtobufLib.encode_length_delimited(generateNetwork(_network)),
+            ProtobufLib.encode_length_delimited(userOrigin),
             ProtobufLib.encode_key(3, 2),
             ProtobufLib.encode_length_delimited(generateSalt(_salt)),
             ProtobufLib.encode_key(4, 2),
@@ -870,24 +905,27 @@ library SDK {
         }
     }
 
+    
+
     function decodeIBCSpawn(
         bytes memory program,
         address routerAddress
     ) public 
     returns (
-        IRouter.Origin memory origin, bytes memory spawnedProgram, bytes memory salt, address[] memory assetAddresses, uint256[] memory assetAmounts)
+        bytes memory originInterpreter, IRouter.Origin memory origin, bytes memory spawnedProgram, bytes memory salt, address[] memory assetAddresses, uint256[] memory assetAmounts)
     {
         // reading spawn instruction
         uint64 size;
         uint64 pos;
 
         pos = _checkField(program, 1, ProtobufLib.WireType.LengthDelimited, pos);
-        address account;
-        (account, pos) = _handleAccount(program, pos);
+        (originInterpreter, pos) = _handleInterpreterOrigin(program, pos);
 
         pos = _checkField(program, 2, ProtobufLib.WireType.LengthDelimited, pos);
         uint128 networkId;
-        (networkId, pos) = _handleNetwork(program, pos);
+        address account;
+        (account, networkId, pos) = _handleUserOrigin(program, pos);
+
         origin.account = abi.encodePacked(account);
         origin.networkId = uint32(networkId);
 

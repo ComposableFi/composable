@@ -74,8 +74,10 @@ contract test_IBCBridge is Test {
             abi.encode(address(assetToken1))
         );
 
-        bytes memory ibcProgram = SDK.generateIBCSpawn(accountInBytes, networkId, salt, spawnedProgram, assetIds, amounts);
+        bytes memory ibcProgram = SDK.generateIBCSpawn(SDK.generateInterpreterOrigin(accountInBytes), 
+            SDK.generateUserOrigin(accountInBytes, networkId), salt, spawnedProgram, assetIds, amounts);
         (   
+            , 
             IRouter.Origin memory expectedOrigin, 
             bytes memory expectedSpawnedProgram, 
             bytes memory expectedSalt, 
