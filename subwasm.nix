@@ -43,6 +43,32 @@
           ```
         '';
       };
+
+      mkChainMetadata = { runtime, chainName }:
+        pkgs.stdenv.mkDerivation {
+          name = "subwasm-get-${chainName}-metadata";
+          dontUnpack = true;
+
+          installPhase = ''
+            mkdir $out
+            ${subwasm}/bin/subwasm metadata --json ${runtime}/lib/runtime.optimized.wasm > $out/${chainName}-metadata.json;
+          '';
+        };
+
+      subwasm-get-dali-metadata = mkChainMetadata {
+        runtime = self'.packages.dali-runtime;
+        chainName = "dali";
+      };
+
+      subwasm-get-picasso-metadata = mkChainMetadata {
+        runtime = self'.packages.picasso-runtime;
+        chainName = "picasso";
+      };
+
+      subwasm-get-composable-metadata = mkChainMetadata {
+        runtime = self'.packages.composable-runtime;
+        chainName = "composable";
+      };
     };
   };
 }
