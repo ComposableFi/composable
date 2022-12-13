@@ -7,6 +7,11 @@
           filter = pkgs.lib.cleanSourceFilter;
           src = pkgs.lib.cleanSourceWith {
             filter = let
+              isJSON = name: type:
+                type == "regular" && pkgs.lib.strings.hasSuffix ".json" name;
+              isREADME = name: type:
+                type == "regular"
+                && pkgs.lib.strings.hasSuffix "README.md" name;
               isDir = name: type: type == "directory";
               isCargo = name: type:
                 type == "regular" && pkgs.lib.strings.hasSuffix ".toml" name
@@ -14,8 +19,8 @@
               isRust = name: type:
                 type == "regular" && pkgs.lib.strings.hasSuffix ".rs" name;
               customFilter = name: type:
-                ((isCargo name type) || (isRust name type)
-                  || (isDir name type));
+                ((isCargo name type) || (isRust name type) || (isDir name type)
+                  || (isREADME name type) || (isJSON name type));
             in pkgs.nix-gitignore.gitignoreFilterPure customFilter
             [ ../.gitignore ] ./.;
             src = ./.;
