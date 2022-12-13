@@ -1,3 +1,7 @@
+---
+title: How to open XCMP channel
+---
+
 # Overview 
 
 This document describes all technical steps required to open a channel to any arbitrary chain.

@@ -33,7 +33,7 @@
     }
   ],
   "devDependencies": {
-    "@polkadot/api": "^8.3.2",
+    "@polkadot/api": "^9.6.2",
     "@size-limit/preset-small-lib": "^7.0.8",
     "@types/react": "^17.0.39",
     "@types/react-dom": "17.0.17",

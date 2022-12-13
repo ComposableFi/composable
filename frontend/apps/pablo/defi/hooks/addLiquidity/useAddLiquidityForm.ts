@@ -3,9 +3,9 @@ import {
   useAddLiquiditySlice,
 } from "@/store/addLiquidity/addLiquidity.slice";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParachainApi, useSelectedAccount } from "substrate-react";
-import { fromChainUnits, toChainUnits } from "@/defi/utils";
+import { toChainUnits } from "@/defi/utils";
 import { useAsset } from "@/defi/hooks/assets/useAsset";
 import { useFilteredAssetListDropdownOptions } from "@/defi/hooks/assets/useFilteredAssetListDropdownOptions";
 import { useLiquidity } from "@/defi/hooks/useLiquidity";
@@ -36,13 +36,14 @@ export const useAddLiquidityForm = () => {
 
   const setAmount =
     (key: "assetOneAmount" | "assetTwoAmount") => (v: BigNumber) => {
-      const otherKey = key == "assetOneAmount" ? "assetTwoAmount" : "assetOneAmount";
+      const otherKey =
+        key == "assetOneAmount" ? "assetTwoAmount" : "assetOneAmount";
       let otherValue = new BigNumber(0);
       if (spotPrice.gt(0)) {
         otherValue =
-        key == "assetOneAmount"
-          ? new BigNumber(1).div(spotPrice).times(v).dp(4)
-          : spotPrice.times(v).dp(4);
+          key == "assetOneAmount"
+            ? new BigNumber(1).div(spotPrice).times(v).dp(4)
+            : spotPrice.times(v).dp(4);
       }
 
       setSelection({ [key]: v, [otherKey]: otherValue });
@@ -134,31 +135,27 @@ export const useAddLiquidityForm = () => {
       const bnQuote = toChainUnits(isReverse ? assetOneAmount : assetTwoAmount);
 
       if (bnBase.gte(0) && bnQuote.gte(0)) {
-        let b = isReverse
-          ? poolQuote
-          : poolBase;
-        let q = isReverse
-          ? poolBase
-          : poolQuote;
+        let b = isReverse ? poolQuote : poolBase;
+        let q = isReverse ? poolBase : poolQuote;
 
-        parachainApi.rpc.pablo
-          .simulateAddLiquidity(
-            parachainApi.createType("AccountId32", selectedAccount.address),
-            parachainApi.createType("PalletPabloPoolId", pool.getPoolId() as string),
-            parachainApi.createType(
-              "BTreeMap<AssetId, Balance>",
-              {
-                [b]: bnBase.toFixed(0),
-                [q]: bnQuote.toFixed(0),
-              }
-            )
-          )
-          .then((expectedLP: any) => {
-            setLpReceiveAmount(fromChainUnits(expectedLP.toString()));
-          })
-          .catch((err: any) => {
-            console.log(err);
-          });
+        // parachainApi.rpc.pablo
+        //   .simulateAddLiquidity(
+        //     parachainApi.createType("AccountId32", selectedAccount.address),
+        //     parachainApi.createType("PalletPabloPoolId", pool.getPoolId() as string),
+        //     parachainApi.createType(
+        //       "BTreeMap<AssetId, Balance>",
+        //       {
+        //         [b]: bnBase.toFixed(0),
+        //         [q]: bnQuote.toFixed(0),
+        //       }
+        //     )
+        //   )
+        //   .then((expectedLP: any) => {
+        //     setLpReceiveAmount(fromChainUnits(expectedLP.toString()));
+        //   })
+        //   .catch((err: any) => {
+        //     console.log(err);
+        //   });
       }
     }
   }, [

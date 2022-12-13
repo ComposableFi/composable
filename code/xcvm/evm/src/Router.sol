@@ -10,23 +10,24 @@ import "./interfaces/IRouter.sol";
 import "./interfaces/IIbcBridge.sol";
 
 contract Router is Ownable, IRouter {
-    mapping(uint256 => mapping(bytes => address)) public userInterpreter;
+    // network => account => salt
+    mapping(uint128 => mapping(bytes => mapping(bytes => address))) public userInterpreter;
 
     mapping(address => Bridge) public bridgesInfo;
     // TODO ? do we have only one bridge per network and security
-    mapping(uint256 => mapping(BridgeSecurity => address)) public bridges;
+    mapping(uint128 => mapping(BridgeSecurity => address)) public bridges;
     mapping(uint256 => address) public assets;
     mapping(address => uint256) public assetIds;
 
-    event InstanceCreated(uint256 networkId, bytes user, address instance);
+    event InstanceCreated(uint128 networkId, bytes user, bytes salt, address instance);
 
-    event AddOwners(address sender, uint256 networkId, BridgeSecurity security, address[] owners);
+    event AddOwners(address sender, uint128 networkId, BridgeSecurity security, address[] owners);
 
-    event RemoveOwners(address sender, uint256 networkId, BridgeSecurity security, address[] owners);
+    event RemoveOwners(address sender, uint128 networkId, BridgeSecurity security, address[] owners);
 
     event Spawn(
         bytes account,
-        uint256 networkId,
+        uint128 networkId,
         BridgeSecurity security,
         bytes salt,
         bytes spawnedProgram,
@@ -51,7 +52,7 @@ contract Router is Ownable, IRouter {
         return assetIds[asset];
     }
 
-    function getBridge(uint256 networkId, BridgeSecurity security) external view returns (address) {
+    function getBridge(uint128 networkId, BridgeSecurity security) external view returns (address) {
         return bridges[networkId][security];
     }
 
@@ -69,7 +70,7 @@ contract Router is Ownable, IRouter {
     function registerBridge(
         address bridgeAddress,
         BridgeSecurity security,
-        uint256 networkId
+        uint128 networkId
     ) external onlyOwner {
         require(bridges[networkId][security] == address(0), "Router: this type of bridge already registered");
         require(bridgeAddress != address(0), "Router: invalid address");
@@ -108,56 +109,57 @@ contract Router is Ownable, IRouter {
 
     function runProgram(
         Origin memory origin,
+        bytes memory salt,
         bytes memory program,
         address[] memory _assets,
         uint256[] memory _amounts
     ) public override payable onlyBridge returns (bool){
         // a program is a result of spawn function, pull the assets from the bridge to the interpreter
-        address payable interpreterAddress = getOrCreateInterpreter(origin);
+        address payable interpreterAddress = getOrCreateInterpreter(origin, salt);
         _provisionAssets(interpreterAddress, _assets, _amounts);
 
         IInterpreter(interpreterAddress).interpret(program, msg.sender);
         return true;
     }
 
-    function createInterpreter(Origin memory origin) public {
-        address interpreterAddress = userInterpreter[origin.networkId][origin.account];
+    function createInterpreter(Origin memory origin, bytes memory salt) public returns(address payable) {
+        address interpreterAddress = userInterpreter[origin.networkId][origin.account][salt];
         require(interpreterAddress == address(0), "Interpreter already exists");
-        getOrCreateInterpreter(origin);
+        return getOrCreateInterpreter(origin, salt);
     }
 
-    function getOrCreateInterpreter(Origin memory origin) public returns (address payable) {
-        address interpreterAddress = userInterpreter[origin.networkId][origin.account];
+    function getOrCreateInterpreter(Origin memory origin, bytes memory salt) public returns (address payable) {
+        address interpreterAddress = userInterpreter[origin.networkId][origin.account][salt];
         if (interpreterAddress == address(0)) {
             //interpreterAddress = address(new Interpreter(networkId, account));
             require(
                 bridgesInfo[msg.sender].security == BridgeSecurity.Deterministic,
                 "For creating a new interpreter, the sender should be a deterministic bridge"
             );
-            interpreterAddress = address(new Interpreter(origin, address(this)));
-            userInterpreter[origin.networkId][origin.account] = interpreterAddress;
+            interpreterAddress = address(new Interpreter(origin, address(this), salt));
+            userInterpreter[origin.networkId][origin.account][salt] = interpreterAddress;
 
-            emit InstanceCreated(origin.networkId, origin.account, interpreterAddress);
+            emit InstanceCreated(origin.networkId, origin.account, salt, interpreterAddress);
         }
         return payable(interpreterAddress);
     }
 
     function emitSpawn(
         bytes memory account,
-        uint256 networkId,
+        uint128 networkId,
         BridgeSecurity security,
         bytes memory salt,
         bytes memory spawnedProgram,
         address[] memory assetAddresses,
-        uint128[] memory assetIds,
+        uint128[] memory _assetIds,
         uint256[] memory amounts
     ) override external {
-        address payable interpreterAddress = getOrCreateInterpreter(Origin(uint32(networkId), account));
+        address payable interpreterAddress = getOrCreateInterpreter(Origin(networkId, account), IInterpreter(msg.sender).salt());
         require(interpreterAddress == msg.sender, "Router: sender is not an interpreter address");
         emit Spawn(account, networkId, security, salt, spawnedProgram, assetAddresses, amounts);
         if (security == BridgeSecurity.Deterministic) {
             // send through ibc
-            IIbcBridge(bridges[networkId][security]).sendProgram(account, uint32(networkId), salt, spawnedProgram, assetIds, amounts);
+            IIbcBridge(bridges[networkId][security]).sendProgram(account, networkId, salt, spawnedProgram, _assetIds, amounts);
         }
     }
 }

@@ -1,11 +1,11 @@
 import { useAllParachainProviders } from "@/defi/polkadot/context/hooks";
 import { useSelectedAccount } from "@/defi/polkadot/hooks/index";
-import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { useStore } from "@/stores/root";
 import { SnackbarKey, useSnackbar } from "notistack";
 import { useExecutor, useSigner } from "substrate-react";
 import BigNumber from "bignumber.js";
 import { xcmPalletEventParser } from "@/defi/polkadot/pallets/XCM/utils";
+import { subscanExtrinsicLink } from "shared";
 
 export const useTransfer = () => {
   const allProviders = useAllParachainProviders();
@@ -69,7 +69,7 @@ export const useTransfer = () => {
               description: "",
               variant: "info",
               isCloseable: true,
-              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
+              url: subscanExtrinsicLink("picasso", txHash),
             }
           );
         },
@@ -90,7 +90,7 @@ export const useTransfer = () => {
               description: "",
               variant: "success",
               isCloseable: true,
-              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
+              url: subscanExtrinsicLink("picasso", txHash),
             });
           }
 

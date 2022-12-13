@@ -75,6 +75,24 @@ jobs:
           command: nix -- build .#common-test-deps
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
+  check-lfs:
+    continue-on-error: false
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-check-lfs-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actionsdesk/lfs-warning@v3.2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          filesizelimit: 10KB
+          exclusionPatterns: |
+            **/*.rs
+            **/*.ts
+            **/*.json
+            **/*.lock
+
   check-nix:
     name: "Check nix"
     continue-on-error: false
@@ -726,6 +744,21 @@ jobs:
           context: subsquid
           push: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
 
+  package-zombienet:
+    needs: common-deps
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-package-zombienet-${{ github.ref }}    
+      cancel-in-progress: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - uses: "./.github/templates/watch-exec"
+        with:
+          command: nix -- build .#zombienet
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+
   package-price-feed:
     needs: common-deps
     runs-on:
@@ -826,23 +859,32 @@ jobs:
           name: ${{  env.CACHIX_COMPOSABLE }}
 
       - run: |
-          ( nix run .#devnet-dali 2>&1 & ) | tee devnet-dali.log &
-          until test -f devnet-dali.log; do sleep 1 && echo "waiting network start"; done;
-          ( tail --follow --lines=0  devnet-dali.log & ) | grep --max-count=1 "Network launched 🚀🚀"
-          echo "PATH=$(pwd):$PATH" >> $GITHUB_ENV
-          cd code/integration-tests/runtime-tests
-          npm install -q
-          export ENDPOINT=127.0.0.1:9988 && export ENDPOINT_RELAYCHAIN=127.0.0.1:9944 && npm run test_short 2>&1>runtime-tests.log & RUNTIME_TESTS_PID=$!
-          until test -f runtime-tests.log; do sleep 1 && echo "waiting tests start"; done;
-          tail --follow runtime-tests.log &
-          ( tail --follow --lines=0 runtime-tests.log & ) | ( grep --max-count=5 "API-WS: disconnected from" >stop.log & )
-          ( while : ; do if test $( wc --lines stop.log | cut --delimiter " " --fields 1 ) -gt 4; then kill -9 $RUNTIME_TESTS_PID && echo "Failed" && exit 42; fi; sleep 1; done ) &
-          wait $RUNTIME_TESTS_PID
-          exit $?
+          DEVNET_MAIN=$(nix show-derivation github:ComposableFi/composable/#devnet-dali)
+          DEVNET_PR=$(nix show-derivation .#devnet-dali)
+          TESTS_MAIN=$(nix show-derivation github:ComposableFi/composable/#runtime-tests)
+          TESTS_PR=$(nix show-derivation .#runtime-tests)
+
+          if [ "$DEVNET_MAIN" != "$DEVNET_PR" ] || [ "$TESTS_MAIN" != "$TESTS_PR" ]; then
+            ( nix run .#devnet-dali 2>&1 & ) | tee devnet-dali.log &
+            until test -f devnet-dali.log; do sleep 1 && echo "waiting network start"; done;
+            ( tail --follow --lines=0  devnet-dali.log & ) | grep --max-count=1 "Network launched 🚀🚀"
+            echo "PATH=$(pwd):$PATH" >> $GITHUB_ENV
+            cd code/integration-tests/runtime-tests || exit
+            npm install -q
+            export ENDPOINT=127.0.0.1:9988 && export ENDPOINT_RELAYCHAIN=127.0.0.1:9944 && npm run test_short 2>&1>runtime-tests.log & RUNTIME_TESTS_PID=$!
+            until test -f runtime-tests.log; do sleep 1 && echo "waiting tests start"; done;
+            tail --follow runtime-tests.log &
+            ( tail --follow --lines=0 runtime-tests.log & ) | ( grep --max-count=5 "API-WS: disconnected from" >stop.log & )
+            ( while : ; do if test $( wc --lines stop.log | cut --delimiter " " --fields 1 ) -gt 4; then kill -9 $RUNTIME_TESTS_PID && echo "Failed" && exit 42; fi; sleep 1; done ) &
+            wait $RUNTIME_TESTS_PID
+            exit $?
+          fi
+  
   effects-gate:
       name: "Effect gate, automatically merged if passed"
       runs-on: ubuntu-latest
       needs:
+        - check-lfs
         - check-nix
         - devnet-integration-tests
         - package-polkadot-node

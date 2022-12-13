@@ -30,7 +30,7 @@
     "@polkadot/types-support": "^9.5.1",
     "@polkadot/keyring": "^9.7.2",
     "@polkadot/util": "^9.7.2",
-    "@polkadot/util-crypto": "^9.7.2",
+    "@polkadot/util-crypto": "^10.2.1",
     "@types/chai": "^4.3.1",
     "@types/node": "^18.0.1",
     "chai": "^4.3.6",

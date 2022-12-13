@@ -1,3 +1,7 @@
+---
+title: Runtime Upgrades
+---
+
 # Overview
 
 Upgrading runtime of parachain connected to relay via democracy.

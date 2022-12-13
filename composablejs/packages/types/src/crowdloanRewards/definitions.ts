@@ -197,5 +197,9 @@ export default {
     ComposableTraitsAccountProxyProxyType: "Null",
     ComposableTraitsAccountProxyProxyDefinition: "Null",
     PalletAccountProxyAnnouncement: "Null",
+    ComposableTraitsDexAssetAmount: "Null",
+    ComposableTraitsCurrencyRational64: "Null",
+    PalletCosmwasmCodeIdentifier: "Null",
+    PalletCosmwasmInstrumentCostRules: "Null"
   }
 };

@@ -2,6 +2,9 @@
 
 *Locations and packages*
 
+Before trying to run Nix packages, make sure you have git installed.
+You can use `which git` to check for a git installation or run `sudo apt install git` to install it.
+
 Now you can run Nix packages! In order to run one, you need both a **location** and a **package**.
 
 ## Locations

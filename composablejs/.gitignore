@@ -585,3 +585,9 @@ test/**/**.js
 test/**/**.d.ts
 test/**/**.js.map
 mochawesome-report/*
+
+# Typescript
+**/tsconfig.tsbuildinfo
+
+# Fork-off data
+packages/fork-off/data
