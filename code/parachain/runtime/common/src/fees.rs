@@ -73,6 +73,8 @@ impl WellKnownForeignToNativePriceConverter {
 			CurrencyId::kUSD => Some(rational!(15 / 1_000)),
 			CurrencyId::PICA => Some(rational!(1 / 1)),
 			CurrencyId::PBLO => Some(rational!(1 / 1)),
+			CurrencyId::KSM_USDT_LPT => Some(rational!(1 / 1_000_000_000)),
+			CurrencyId::PICA_USDT_LPT => Some(rational!(1 / 1_000_000_000)),
 			_ => None,
 		}
 	}

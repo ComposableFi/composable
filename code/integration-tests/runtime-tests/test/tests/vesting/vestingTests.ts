@@ -20,7 +20,9 @@ const SCHEDULE_BLOCK_PERIOD_COUNT = new BN(10);
 const SCHEDULE_MOMENT_PERIOD = new BN(10000);
 const SCHEDULE_MOMENT_PERIOD_COUNT = new BN(100);
 
-describe("[SHORT] Vesting Pallet Tests", function () {
+// https://github.com/ComposableFi/composable/actions/runs/3669437026/jobs/6203332683
+// https://github.com/ComposableFi/composable/actions/runs/3669437026/jobs/6203332683
+describe.skip("[SHORT] Vesting Pallet Tests", function () {
   let api: ApiPromise, api2: ApiPromise, api3: ApiPromise;
   let wallet1: KeyringPair,
     wallet2: KeyringPair,

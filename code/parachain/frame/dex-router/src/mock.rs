@@ -19,7 +19,6 @@ pub type Amount = i128;
 pub type PoolId = u128;
 pub type BlockNumber = u64;
 pub type AccountId = u128;
-pub type PositionId = u128;
 pub type CurrencyId = u128;
 
 #[allow(dead_code)]
@@ -36,6 +35,7 @@ pub const USDT: AssetId = 2;
 pub const ETH: AssetId = 3;
 pub const USDC: AssetId = 4;
 pub const DAI: AssetId = 5;
+pub const LP_TOKEN_GENERIC: AssetId = 102;
 pub const TWAP_INTERVAL: Moment = 10;
 pub const MILLISECS_PER_BLOCK: u64 = 12000;
 

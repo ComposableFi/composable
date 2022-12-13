@@ -1,3 +1,6 @@
+---
+title: BYOG
+---
 # Overview
 
 Use cases of Bring your own gas (`BYOG`) on the Picasso parachain.
