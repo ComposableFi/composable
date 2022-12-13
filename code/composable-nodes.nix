@@ -3,9 +3,36 @@
     { config, self', inputs', pkgs, system, crane, systemCommonRust, ... }:
 
     let
+      rustSrc = pkgs.lib.cleanSourceWith {
+        filter = pkgs.lib.cleanSourceFilter;
+        src = pkgs.lib.cleanSourceWith {
+          filter = let
+            isProto = name: type:
+              type == "regular" && pkgs.lib.strings.hasSuffix ".proto" name;
+            isJSON = name: type:
+              type == "regular" && pkgs.lib.strings.hasSuffix ".json" name;
+            isREADME = name: type:
+              type == "regular" && pkgs.lib.strings.hasSuffix "README.md" name;
+            isDir = name: type: type == "directory";
+            isCargo = name: type:
+              type == "regular" && pkgs.lib.strings.hasSuffix ".toml" name
+              || type == "regular" && pkgs.lib.strings.hasSuffix ".lock" name;
+            isRust = name: type:
+              type == "regular" && pkgs.lib.strings.hasSuffix ".rs" name;
+            customFilter = name: type:
+              ((isCargo name type) || (isRust name type) || (isDir name type)
+                || (isREADME name type) || (isJSON name type)
+                || (isProto name type));
+          in pkgs.nix-gitignore.gitignoreFilterPure customFilter
+          [ ../.gitignore ] ./.;
+          src = ./.;
+        };
+      };
+
       makeComposableNode = f:
         crane.nightly.buildPackage (f (systemCommonRust.common-attrs // {
           name = "composable";
+
           cargoArtifacts = self'.packages.common-deps;
           cargoBuildCommand =
             "cargo build --release --package composable --features=builtin-wasm";
