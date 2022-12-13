@@ -3,41 +3,19 @@
     { config, self', inputs', pkgs, system, crane, systemCommonRust, ... }: {
       _module.args.systemCommonRust = rec {
 
-        rustSrc = let
-          directoryBlacklist = [ "runtime-tests" ];
-          fileBlacklist = [
-            # does not makes sense to black list,
-            # if we changed some version of tooling(seldom), we want to rebuild
-            # so if we changed version of tooling, nix itself will detect invalidation and rebuild
-            # "flake.lock"
-          ];
-        in pkgs.lib.cleanSourceWith {
+        rustSrc = pkgs.lib.cleanSourceWith {
           filter = pkgs.lib.cleanSourceFilter;
           src = pkgs.lib.cleanSourceWith {
             filter = let
-              isBlacklisted = name: type:
-                let
-                  blacklist = if type == "directory" then
-                    directoryBlacklist
-                  else if type == "regular" then
-                    fileBlacklist
-                  else
-                    [ ]; # symlink, unknown
-                in builtins.elem (baseNameOf name) blacklist;
-              isImageFile = name: type:
-                type == "regular" && pkgs.lib.strings.hasSuffix ".png" name;
-              isPlantUmlFile = name: type:
-                type == "regular"
-                && pkgs.lib.strings.hasSuffix ".plantuml" name;
-              isNixFile = name: type:
-                type == "regular" && pkgs.lib.strings.hasSuffix ".nix" name;
+              isDir = name: type: type == "directory";
+              isCargo = name: type:
+                type == "regular" && pkgs.lib.strings.hasSuffix ".toml" name
+                || type == "regular" && pkgs.lib.strings.hasSuffix ".lock" name;
+              isRust = name: type:
+                type == "regular" && pkgs.lib.strings.hasSuffix ".rs" name;
               customFilter = name: type:
-                !((isBlacklisted name type) || (isImageFile name type)
-                  || (isPlantUmlFile name type)
-                  # assumption that nix is final builder,
-                  # so there would no be sandwich like  .*.nix <- build.rs <- *.nix
-                  # and if *.nix changed, nix itself will detect only relevant cache invalidations
-                  || (isNixFile name type));
+                ((isCargo name type) || (isRust name type)
+                  || (isDir name type));
             in pkgs.nix-gitignore.gitignoreFilterPure customFilter
             [ ../.gitignore ] ./.;
             src = ./.;

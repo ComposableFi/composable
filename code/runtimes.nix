@@ -2,10 +2,29 @@
   perSystem =
     { config, self', inputs', pkgs, system, crane, systemCommonRust, ... }:
     let
+      rustSrc = pkgs.lib.cleanSourceWith {
+        filter = pkgs.lib.cleanSourceFilter;
+        src = pkgs.lib.cleanSourceWith {
+          filter = let
+            isDir = name: type: type == "directory";
+            isCargo = name: type:
+              type == "regular" && pkgs.lib.strings.hasSuffix ".toml" name
+              || type == "regular" && pkgs.lib.strings.hasSuffix ".lock" name;
+            isRust = name: type:
+              type == "regular" && pkgs.lib.strings.hasSuffix ".rs" name;
+            customFilter = name: type:
+              ((isCargo name type) || (isRust name type) || (isDir name type));
+          in pkgs.nix-gitignore.gitignoreFilterPure customFilter
+          [ ../.gitignore ] ./.;
+          src = ./.;
+        };
+      };
       # Build a wasm runtime, unoptimized
       mkRuntime = name: features:
         crane.nightly.buildPackage (systemCommonRust.common-attrs // {
           pname = "${name}-runtime";
+          src = rustSrc;
+
           cargoArtifacts = self'.packages.common-deps-nightly;
           cargoBuildCommand =
             "cargo build --release -p ${name}-runtime-wasm --target wasm32-unknown-unknown"

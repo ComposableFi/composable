@@ -3,9 +3,28 @@
     { config, self', inputs', pkgs, system, crane, systemCommonRust, ... }:
 
     let
+      rustSrc = pkgs.lib.cleanSourceWith {
+        filter = pkgs.lib.cleanSourceFilter;
+        src = pkgs.lib.cleanSourceWith {
+          filter = let
+            isDir = name: type: type == "directory";
+            isCargo = name: type:
+              type == "regular" && pkgs.lib.strings.hasSuffix ".toml" name
+              || type == "regular" && pkgs.lib.strings.hasSuffix ".lock" name;
+            isRust = name: type:
+              type == "regular" && pkgs.lib.strings.hasSuffix ".rs" name;
+            customFilter = name: type:
+              ((isCargo name type) || (isRust name type) || (isDir name type));
+          in pkgs.nix-gitignore.gitignoreFilterPure customFilter
+          [ ../.gitignore ] ./.;
+          src = ./.;
+        };
+      };
+
       makeComposableNode = f:
         crane.nightly.buildPackage (f (systemCommonRust.common-attrs // {
           name = "composable";
+
           cargoArtifacts = self'.packages.common-deps;
           cargoBuildCommand =
             "cargo build --release --package composable --features=builtin-wasm";

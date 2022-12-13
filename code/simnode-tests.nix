@@ -9,11 +9,32 @@
           --pruning=archive \
           --execution=wasm
         '';
+      rustSrc = pkgs.lib.cleanSourceWith {
+        filter = pkgs.lib.cleanSourceFilter;
+        src = pkgs.lib.cleanSourceWith {
+          filter = let
+            isJSON = name: type:
+              type == "regular" && pkgs.lib.strings.hasSuffix ".json" name;
+            isDir = name: type: type == "directory";
+            isCargo = name: type:
+              type == "regular" && pkgs.lib.strings.hasSuffix ".toml" name
+              || type == "regular" && pkgs.lib.strings.hasSuffix ".lock" name;
+            isRust = name: type:
+              type == "regular" && pkgs.lib.strings.hasSuffix ".rs" name;
+            customFilter = name: type:
+              ((isCargo name type) || (isRust name type) || (isDir name type)
+                || (isJSON name type));
+          in pkgs.nix-gitignore.gitignoreFilterPure customFilter
+          [ ../.gitignore ] ./.;
+          src = ./.;
+        };
+      };
     in {
       packages = {
         simnode-tests = crane.nightly.cargoBuild (systemCommonRust.common-attrs
           // {
             pnameSuffix = "-simnode";
+            src = rustSrc;
             cargoArtifacts = self'.packages.common-deps;
             cargoBuildCommand =
               "cargo build --release --package simnode-tests --features=builtin-wasm";
