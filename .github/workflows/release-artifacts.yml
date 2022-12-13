@@ -161,7 +161,7 @@ jobs:
           body_path: release-artifacts/release.txt
           # Every release is assumed to be a release candidate("RC") until a runtime upgrade is made,
           # upon which this needs to be manually set to exclude "RC" postfix
-          name: v${{ env.COMPOSABLE_VERSION }}-RC
+          name: ${{ github.ref_name }}-RC
           prerelease: true
           tag_name: ${{ github.ref_name }}
           target_commitish: ${{ github.sha }}
