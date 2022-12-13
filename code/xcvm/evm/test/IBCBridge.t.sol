@@ -55,7 +55,7 @@ contract test_IBCBridge is Test {
         assertEq(bridge.routerAddress(), address(router));
     }
 
-    function testEncodeAndDecodeIBCProgram(address routerAddress, uint32 networkId, bytes memory salt, bytes memory spawnedProgram) public {
+    function testEncodeAndDecodeIBCProgram(address routerAddress, uint128 networkId, bytes memory salt, bytes memory spawnedProgram) public {
         vm.assume(routerAddress != address(0));
         uint128[] memory assetIds; 
         uint256[] memory amounts;

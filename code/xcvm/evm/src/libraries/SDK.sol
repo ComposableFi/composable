@@ -429,7 +429,7 @@ library SDK {
         returns (
             uint64 newPos,
             uint256 maxPos,
-            uint256 networkId,
+            uint128 networkId,
             IRouter.BridgeSecurity security,
             bytes memory salt,
             bytes memory spawnedProgram
@@ -458,7 +458,7 @@ library SDK {
     function _handleSpawn(bytes memory program, uint64 pos, address routerAddress, IRouter.Origin memory origin) internal returns (uint64 newPos) {
 
         uint256 maxPos;
-        uint256 networkId;
+        uint128 networkId;
         IRouter.BridgeSecurity security;
         bytes memory salt;
         bytes memory spawnedProgram;
@@ -861,7 +861,7 @@ library SDK {
     }
 
     // IBC spawn program encoder and decoder
-    function generateUserOrigin(bytes memory account, uint32 networkId) public pure returns (bytes memory userOrigin) {
+    function generateUserOrigin(bytes memory account, uint128 networkId) public pure returns (bytes memory userOrigin) {
         userOrigin = abi.encodePacked(
             ProtobufLib.encode_key(1, 2),
             ProtobufLib.encode_length_delimited(generateAccount(account)),
@@ -927,7 +927,7 @@ library SDK {
         (account, networkId, pos) = _handleUserOrigin(program, pos);
 
         origin.account = abi.encodePacked(account);
-        origin.networkId = uint32(networkId);
+        origin.networkId = networkId;
 
 
         pos = _checkField(program, 3, ProtobufLib.WireType.LengthDelimited, pos);

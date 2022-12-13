@@ -30,7 +30,7 @@ contract IBCBridge is Context, IIbcBridge, IModuleCallbacks {
 
     function sendProgram(
         bytes memory account,
-        uint32 networkId,
+        uint128 networkId,
         bytes memory salt,
         bytes memory spawnedProgram,
         uint128[] memory assetIds,
@@ -73,7 +73,7 @@ contract IBCBridge is Context, IIbcBridge, IModuleCallbacks {
         bytes memory salt,
         address[] memory _assets,
         uint256[] memory _amounts) = SDK.decodeIBCSpawn(packet.data, routerAddress);
-        return _newAcknowledgement(IRouter(routerAddress).runProgram(origin, program, _assets, _amounts));
+        return _newAcknowledgement(IRouter(routerAddress).runProgram(origin, salt, program, _assets, _amounts));
     }
 
     function onAcknowledgementPacket(Packet.Data calldata packet, bytes calldata acknowledgement, address relayer) external virtual override {
