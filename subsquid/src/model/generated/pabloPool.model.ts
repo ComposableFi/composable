@@ -21,6 +21,7 @@ export class PabloPool {
     @Column_("text", {nullable: false})
     eventId!: string
 
+    @Index_()
     @Column_("text", {nullable: false})
     owner!: string
 
@@ -30,23 +31,14 @@ export class PabloPool {
     @Column_("int4", {nullable: false})
     transactionCount!: number
 
-    @Column_("text", {nullable: false})
-    totalLiquidity!: string
+    @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
+    totalLiquidity!: bigint
 
-    @Column_("text", {nullable: false})
-    totalVolume!: string
+    @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
+    totalVolume!: bigint
 
-    @Column_("text", {nullable: false})
-    totalFees!: string
-
-    @Column_("text", {nullable: false})
-    baseAssetId!: string
-
-    /**
-     * Asset used for all quotes in this type
-     */
-    @Column_("text", {nullable: false})
-    quoteAssetId!: string
+    @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
+    totalFees!: bigint
 
     @Index_()
     @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})

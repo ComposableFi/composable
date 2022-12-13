@@ -33,8 +33,8 @@ export async function getLatestPoolByPoolId<T extends Entity>(
   poolId: bigint
 ): Promise<PabloPool | undefined> {
   return store.get<PabloPool>(PabloPool, {
-    where: { poolId },
-    order: { calculatedTimestamp: "DESC" },
+    where: { id: poolId.toString() },
+    order: { timestamp: "DESC" },
     relations: {
       poolAssets: true,
     },

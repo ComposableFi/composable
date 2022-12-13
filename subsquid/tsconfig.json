@@ -22,7 +22,7 @@
   "exclude": [
     "node_modules",
     "src/processors/stakingRewards.ts",
-    "src/processors/pablo.ts",
-    "src/processors/oracle.ts",
+    "src/processors/pabloBackup.ts",
+    "src/processors/oracle.ts"
   ]
 }
