@@ -20,6 +20,7 @@ import { Logo } from "../Atoms";
 import { MenuItemType } from "../types";
 import { FC } from "react";
 import { Link } from "../Molecules/Link";
+import config from "@/constants/config";
 
 const MENU_ITEMS: MenuItemType[] = [
   {
@@ -64,11 +65,11 @@ const MENU_ITEMS: MenuItemType[] = [
   },
   {
     label: "Picasso",
-    path: "/picasso",
+    path: config.picassoAppUrl,
     icon: dynamic(() => import("@mui/icons-material/Autorenew")),
     status: "active",
     endAdornment: (
-      <Link href="https://picasso.xyz/" target="_blank">
+      <Link href={config.picassoAppUrl} target="_blank">
         <IconButton>
           <OpenInNew />
         </IconButton>
@@ -90,8 +91,10 @@ const MenuItem = (
       selected={selected}
       button
       onClick={() => {
-        if (config.path) {
+        if (config.status === "active" && !config.path.startsWith("http")) {
           router.push(config.path);
+        } else {
+          window.open(config.path, "_blank");
         }
       }}
       key={key}
