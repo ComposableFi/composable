@@ -25,7 +25,7 @@ export const UnavailableFeature = ({ pageTitle }: Props) => {
         }}
       >
         <Typography variant="body2" textAlign="center">
-          {pageTitle} will be available soon. For more information do check{" "}
+          {pageTitle} will be available soon. For more information see{" "}
           <Link
             target="_blank"
             href="https://docs.composable.finance"
