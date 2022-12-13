@@ -17,6 +17,7 @@ pub mod pablo_picasso_init_pools {
 	use super::*;
 
 	use frame_support::BoundedBTreeMap;
+	use frame_support::traits::OnGenesis;
 	use pablo::{pallet::PoolInitConfiguration, WeightInfo};
 	use sp_runtime::PerThing;
 
@@ -93,8 +94,22 @@ pub mod pablo_picasso_init_pools {
 		}
 	}
 
+	// This is only for testing purposes for Pablo as otherwise
+	// pools are not created without a runtime upgrade.
+	impl OnGenesis for PabloPicassoInitialPoolsMigration {
+		fn on_genesis() {
+			Self::initial_pools();
+		}
+	}
+
 	impl OnRuntimeUpgrade for PabloPicassoInitialPoolsMigration {
 		fn on_runtime_upgrade() -> Weight {
+			Self::initial_pools()
+		}
+	}
+
+	impl PabloPicassoInitialPoolsMigration {
+		fn initial_pools() -> Weight {
 			let pools = vec![
 				PoolCreationInput::new_two_token_pool(
 					CurrencyId::KSM,
