@@ -20,7 +20,6 @@ inputs:
   artifact:
     description: "The image and tag produced by the nix expression"
     required: true
-
   skipPush:
     description: "Skip pushing to caching"
     required: false
@@ -32,6 +31,7 @@ runs:
         echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
         echo "sandbox = relaxed" >> /etc/nix/nix.conf
         echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+        echo "system-features = kvm" >> /etc/nix/nix.conf
       shell: "bash"
     - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
       with:
@@ -47,17 +47,20 @@ runs:
         username: ${{ inputs.username }}
         password: ${{ inputs.password }}
     - run: |
-        # enable required features (see https://github.com/cachix/install-nix-action/issues/19)
-        mkdir -p ~/.config/nix
-        echo "system-features = kvm" >> ~/.config/nix/nix.conf
-      shell: bash  
-    - run: |
         # See https://github.com/actions/checkout/issues/760
         git config --global --add safe.directory /__w/composable/composable
         cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community ${{ inputs.command }} --no-update-lock-file --show-trace -L
         docker load --input ./result
 
         SHA256=$(sha256sum ./result | cut --delimiter " " --fields 1)
+
+        docker run $SHA256
+        RESULT=$? 
+        if [ $RESULT -eq 127 ]
+        then 
+          printf "Failed test run docker container %s" $RESULT
+        fi
+
         COMMIT_SHA=$(git rev-parse HEAD)
         CONTAINER_NAME=${{ inputs.name }}
         TEMP_CONTAINER_NAME=${{ inputs.artifact }}
