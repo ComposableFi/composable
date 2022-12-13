@@ -422,7 +422,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 
 		let message = {
 			IbcChannelOpenMsg::OpenInit {
-				channel: IbcChannel::new( 
+				channel: IbcChannel::new(
 					IbcEndpoint {
 						channel_id: channel_id.to_string(),
 						port_id: port_id.to_string(),
