@@ -67,7 +67,7 @@ contract IBCBridge is Context, IIbcBridge, IModuleCallbacks {
 
     /// Module callbacks ///
     function onRecvPacket(Packet.Data calldata packet, address relayer) external virtual override returns (bytes memory acknowledgement) {
-        (bytes memory intepreterOrigin,
+        (bytes memory interpreterOrigin,
         IRouter.Origin memory origin,
         bytes memory program,
         bytes memory salt,
