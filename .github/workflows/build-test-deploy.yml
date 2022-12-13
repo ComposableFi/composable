@@ -422,6 +422,24 @@ jobs:
           command: nix -- run .#benchmarks-once-${{ matrix.runtime }}
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
+
+  build-xcvm-contracts:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-build-xcvm-contracts-${{ matrix.runtime }}-${{ github.ref }}
+      cancel-in-progress: true
+    strategy:
+      matrix:
+        runtime: [xcvm-contract-asset-registry, xcvm-contract-router, xcvm-contract-interpreter]
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - uses: "./.github/templates/watch-exec"
+        with:
+          command: nix -- build .#${{ matrix.runtime }}
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+
   check-simnode:
     name: "Simnode"
     needs: package-simnode-tests
@@ -907,6 +925,7 @@ jobs:
         - docs-check
         - hadolint-check
         - frontend-check
+        - build-xcvm-contracts
       steps:
         - run: echo "Goblins allow your work to see the light"
 
