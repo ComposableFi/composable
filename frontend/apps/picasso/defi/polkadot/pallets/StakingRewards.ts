@@ -5,6 +5,7 @@ import {
   fromChainIdUnit,
   fromPerbill,
   humanDateDiff,
+  subscanExtrinsicLink,
   toChainIdUnit,
   unwrapNumberOrHex,
 } from "shared";
@@ -12,7 +13,6 @@ import { RewardPool } from "@/stores/defi/polkadot/stakingRewards/slice";
 import { Executor, getSigner } from "substrate-react";
 import { AnyComponentMap, EnqueueSnackbar, SnackbarKey } from "notistack";
 import { APP_NAME } from "@/defi/polkadot/constants";
-import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 
 export async function fetchStakingRewardPosition(
@@ -120,7 +120,7 @@ export function stake({
             variant: "info",
             isClosable: true,
             persist: true,
-            url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
+            url: subscanExtrinsicLink("picasso", txHash),
           });
         },
         (txHash: string) => {
@@ -131,7 +131,7 @@ export function stake({
               variant: "success",
               isClosable: true,
               persist: true,
-              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
+              url: subscanExtrinsicLink("picasso", txHash),
             }
           );
         },

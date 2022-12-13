@@ -9,6 +9,7 @@
       };
 
       build = pkgs.callPackage ./default.nix { };
+      npmDeps = pkgs.callPackage ../../.nix/npm.nix { };
       all-dev-local-config = ./all-dev-local.toml;
     in with build; {
       packages = rec {
@@ -16,6 +17,7 @@
           name = "zombienet";
           src = "${paritytech-zombienet-src}/javascript";
           buildInputs = with pkgs; [ nodejs ];
+          nativeBuildInputs = npmDeps.nativeBuildInputs;
           buildPhase = ''
             mkdir home
             export HOME=$PWD/home

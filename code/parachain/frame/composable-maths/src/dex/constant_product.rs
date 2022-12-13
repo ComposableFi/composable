@@ -339,8 +339,8 @@ pub struct ConstantProductAmmValueFeePair {
 /// **NOTE**: May overflow when `w_k` is below 25%
 ///
 /// # Parameters
-/// * `p_supply` - Existing supply of LPT
-/// * `p_redeemed` - Redeemed LPT tokens
+/// * `p_supply` - Existing supply of LP
+/// * `p_redeemed` - Redeemed LP tokens
 /// * `b_k` - balance of token `k`
 /// * `w_k` - weight of token `k`
 ///
@@ -466,7 +466,8 @@ pub fn compute_deposit_lp(
 /// https://github.com/ComposableFi/composable/blob/main/rfcs/0008-pablo-lbp-cpp-restructure.md#42-liquidity-provider-token-lpt-math-updates
 /// Equation 6
 pub fn compute_first_deposit_lp_<T: PerThing>(
-	pool_assets: &[(u128, u128, T)],
+	// REVIEW(benluelo): Make this a named struct instead of a tuple?
+	pool_assets: &[(u128, T)],
 	_f: T,
 ) -> ConstantProductAmmResult<ConstantProductAmmValueFeePair> {
 	let k: u128 = pool_assets.len().try_into().map_err(|_| ArithmeticError::Overflow)?;
@@ -474,10 +475,10 @@ pub fn compute_first_deposit_lp_<T: PerThing>(
 
 	let product = pool_assets.iter().try_fold::<_, _, Result<_, ArithmeticError>>(
 		Decimal::from(1),
-		|product, (_d_i, b_i, w_i)| {
-			let b_i = Decimal::safe_from_fixed_point(*b_i)?;
+		|product, (d_i, w_i)| {
+			let d_i = Decimal::safe_from_fixed_point(*d_i)?;
 			let w_i = Decimal::safe_from_per_thing(*w_i)?;
-			let pow = b_i.checked_powd(w_i).ok_or(ArithmeticError::Overflow)?;
+			let pow = d_i.checked_powd(w_i).ok_or(ArithmeticError::Overflow)?;
 
 			product.safe_mul(&pow)
 		},
@@ -495,7 +496,7 @@ pub fn compute_first_deposit_lp_<T: PerThing>(
 /// If `Ok`, returns a `ConstantProductAmmValueFeePair` containing the `lp_to_mint` and the `fee`.
 ///
 /// # Parameters
-/// * `p_supply` - Existing supply of LPT tokens
+/// * `p_supply` - Existing supply of LP tokens
 /// * `d_k` - Deposit of token `k`
 /// * `b_k` - Balance of token `k`
 /// * `w_k` - Weight of token `k`

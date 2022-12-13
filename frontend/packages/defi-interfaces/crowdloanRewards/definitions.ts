@@ -7,25 +7,30 @@ export default {
       params: [
         {
           name: "accountId",
-          type: "AccountId",
+          type: "AccountId"
         },
         {
           name: "at",
           type: "Hash",
-          isOptional: true,
-        },
+          isOptional: true
+        }
       ],
-      type: "Balance",
-    },
+      type: "Balance"
+    }
   },
   types: {
     ComposableTraitsAssetsXcmAssetLocation: "Null",
-    PalletCrowdloanRewardsModelsReward: "Null",
+    PalletCrowdloanRewardsModelsReward: {
+      total: "u128",
+      claimed: "u128",
+      vestingPeriod: "u64"
+    },
     PalletCrowdloanRewardsModelsRemoteAccount: {
       _enum: {
         RelayChain: "AccountId32",
         Ethereum: "EthereumAccountId",
-      },
+        Registry: "Null"
+      }
     },
     ComposableTraitsCallFilterCallFilterEntry: "Null",
     PalletAssetsRegistryCandidateStatus: "Null",
@@ -37,43 +42,36 @@ export default {
       nbOfBonds: "u128",
       maturity: "ComposableTraitsBondedFinanceBondDuration",
       reward: "ComposableTraitsBondedFinanceBondOfferReward",
-      keepAlive: "bool",
+      keepAlive: "bool"
     },
     ComposableTraitsBondedFinanceBondDuration: {
-      Finite: { returnIn: "u32" },
+      Finite: { returnIn: "u32" }
     },
     ComposableTraitsBondedFinanceBondOfferReward: {
       asset: "CurrencyId",
       amount: "u128",
-      maturity: "u32",
+      maturity: "u32"
     },
     PalletCollatorSelectionCandidateInfo: "Null",
     PalletCrowdloanRewardsReward: "Null",
-    PalletDemocracyVoteThreshold: "Null",
-    PalletDemocracyPreimageStatus: "Null",
-    PalletDemocracyReferendumInfo: "Null",
-    PalletPreimageRequestStatus: "Null",
-    PalletDemocracyReleases: "Null",
-    PalletDemocracyVoteVoting: "Null",
     CumulusPalletDmpQueueConfigData: "Null",
     PalletDutchAuctionSellOrder: "Null",
-    ComposableTraitsVestingVestingSchedule: "Null",
     CumulusPalletDmpQueuePageIndexData: "Null",
     PalletDutchAuctionTakeOrder: "Null",
     ComposableTraitsGovernanceSignedRawOrigin: {
       _enum: {
         Root: "Null",
-        Signed: "AccountId32",
+        Signed: "",
         isSigned: "bool",
-        asSigned: "AccountId32",
-      },
+        asSigned: "AccountId32"
+      }
     },
     PalletIdentityRegistration: "Null",
     PalletIdentityRegistrarInfo: "Null",
     PalletOracleAssetInfo: "Null",
     PalletOracleWithdraw: {
       stake: "u128",
-      unlockBlock: "u32",
+      unlockBlock: "u32"
     },
     PalletOraclePrePrice: "Null",
     PalletOraclePrice: "Null",
@@ -81,8 +79,7 @@ export default {
     PolkadotPrimitivesV2PersistedValidationData: "Null",
     PolkadotPrimitivesV2UpgradeRestriction: "Null",
     PolkadotPrimitivesV2AbridgedHostConfiguration: "Null",
-    CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot:
-      "Null",
+    CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot: "Null",
     PolkadotPrimitivesV1PersistedValidationData: "PersistedValidationData",
     PalletSchedulerScheduledV2: "Null",
     PalletSchedulerReleases: "Null",
@@ -91,7 +88,7 @@ export default {
     OrmlTokensAccountData: {
       free: "u128",
       reserved: "u128",
-      frozen: "u128",
+      frozen: "u128"
     },
     OrmlTokensBalanceLock: "Null",
     OrmlTokensReserveData: "Null",
@@ -107,8 +104,8 @@ export default {
     PalletCrowdloanRewardsModelsProof: {
       _enum: {
         RelayChain: "(AccountId32, MultiSignature)",
-        Ethereum: "PalletCrowdloanRewardsModelsEcdsaSignature",
-      },
+        Ethereum: "PalletCrowdloanRewardsModelsEcdsaSignature"
+      }
     },
     PalletCrowdloanRewardsModelsEcdsaSignature: "EcdsaSignature",
     PalletDemocracyConviction: "Null",
@@ -120,14 +117,13 @@ export default {
     PalletIdentityJudgement: "Null",
     PalletIdentityBitFlags: "Null",
     PalletIdentityIdentityInfo: "Null",
-    CumulusPrimitivesParachainInherentParachainInherentData:
-      "ParachainInherentData",
+    CumulusPrimitivesParachainInherentParachainInherentData: "ParachainInherentData",
     DaliRuntimeOriginCaller: "Null",
     ComposableTraitsVaultVaultConfig: "Null",
     XcmVersionedMultiAsset: "Null",
     PalletMosaicNetworkInfo: {
       enabled: "bool",
-      maxTransferSize: "Balance",
+      maxTransferSize: "Balance"
     },
     PalletMosaicDecayBudgetPenaltyDecayer: "Null",
     PalletAssetsRegistryForeignMetadata: "Null",
@@ -137,9 +133,9 @@ export default {
         current: "AccountId32",
         next: {
           ttl: "u32",
-          account: "AccountId32",
-        },
-      },
+          account: "AccountId32"
+        }
+      }
     },
     FrameSupportScheduleMaybeHashed: "Null",
     FrameSupportScheduleLookupError: "Null",
@@ -156,16 +152,16 @@ export default {
       pair: "ComposableTraitsDefiCurrencyPairCurrencyId",
       lpToken: "u128",
       fee: "Permill",
-      ownerFee: "Permill",
+      ownerFee: "Permill"
     },
     ComposableSupportEthereumAddress: "Null",
     ComposableTraitsAssetsBasicAssetMetadata: {
       symbol: {
-        inner: "Null",
+        inner: "Null"
       },
       name: {
-        inner: "Null",
-      },
+        inner: "Null"
+      }
     },
     ComposableTraitsDexDexRoute: "Null",
     ComposableTraitsLendingRepayStrategy: "Null",
@@ -181,8 +177,8 @@ export default {
         free: "u128",
         reserved: "u128",
         miscFrozen: "u128",
-        feeFrozen: "u128",
-      },
+        feeFrozen: "u128"
+      }
     },
     PalletIbcPingSendPingParams: "Null",
     IbcTraitOpenChannelParams: "Null",
@@ -197,6 +193,58 @@ export default {
     IbcTransferPalletParams: "Null",
     IbcTransferTransferParams: "Null",
     ComposableTraitsOracleRewardTracker: "Null",
-    ComposableTraitsStakingStake: "Null"
+    ComposableTraitsStakingStake: "Null",
+    ComposableTraitsStakingRewardUpdate: "Null",
+    ComposableTraitsAccountProxyProxyType: "Null",
+    ComposableTraitsAccountProxyProxyDefinition: "Null",
+    PalletAccountProxyAnnouncement: "Null",
+    PalletCosmwasmContractInfo: "Null",
+    PalletCosmwasmCodeInfo: "Null",
+    PalletCosmwasmEntryPoint: "Null",
+    PalletStakingRewardsRewardAccumulationHookError: "Null",
+    XcmVersionedMultiAssets: "Null",
+    XcmVersionedMultiLocation: "Null",
+    XcmVersionedXcm: "Null",
+    PalletMultisigTimepoint: "Null",
+    XcmV2WeightLimit: "Null",
+    ComposableTraitsDexAssetAmount: "Null",
+    PalletCosmwasmCodeIdentifier: "Null",
+    XcmV1MultiLocation: "Null",
+    XcmV1MultiAsset: "Null",
+    XcmV1MultiassetMultiAssets: "Null",
+    XcmV2TraitsOutcome: "Null",
+    XcmV2Xcm: "Null",
+    SpRuntimeDispatchError: "Null",
+    SpRuntimeHeader: "Null",
+    SpVersionRuntimeVersion: "Null",
+    FrameSystemLimitsBlockWeights: "Null",
+    FrameSystemLimitsBlockLength: "Null",
+    FrameSupportWeightsRuntimeDbWeight: "Null",
+    PalletCollectiveVotes: "Null",
+    FrameSystemLastRuntimeUpgradeInfo: "Null",
+    FrameSystemPhase: "Null",
+    FrameSystemEventRecord: "Null",
+    SpRuntimeDigest: "Null",
+    FrameSupportWeightsPerDispatchClassU64: "Null",
+    SpCoreCryptoKeyTypeId: "Null",
+    PalletXcmQueryStatus: "Null",
+    PalletXcmVersionMigrationStage: "Null",
+    PolkadotCorePrimitivesOutboundHrmpMessage: "Null",
+    PalletBalancesReleases: "Null",
+    PalletBalancesReserveData: "Null",
+    PalletBalancesBalanceLock: {
+      amount: "Null",
+    },
+    PalletBalancesAccountData: "Null",
+    PalletAuthorshipUncleEntryItem: "Null",
+    PalletMultisigMultisig: "Null",
+    PalletTransactionPaymentReleases: "Null",
+    XcmV2TraitsError: "Null",
+    XcmV2Response: "Null",
+    FrameSupportTokensMiscBalanceStatus: "Null",
+    FrameSupportWeightsDispatchInfo: "Null",
+    FrameSupportPalletId: "Null",
+    ComposableTraitsCurrencyRational64: "Null",
+    PalletCosmwasmInstrumentCostRules: "Null",
   }
 };

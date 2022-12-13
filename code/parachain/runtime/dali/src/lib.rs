@@ -26,6 +26,8 @@ pub const WASM_BINARY_V2: Option<&[u8]> = None;
 extern crate alloc;
 
 mod governance;
+mod migrations;
+mod prelude;
 mod versions;
 mod weights;
 pub mod xcmp;
@@ -1267,13 +1269,6 @@ pub type SignedExtra = (
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
 
-// Migration for scheduler pallet to move from a plain Call to a CallOrHash.
-pub struct SchedulerMigrationV3;
-impl OnRuntimeUpgrade for SchedulerMigrationV3 {
-	fn on_runtime_upgrade() -> frame_support::weights::Weight {
-		Scheduler::migrate_v2_to_v3()
-	}
-}
 /// Executive: handles dispatch to the various modules.
 pub type Executive = executive::Executive<
 	Runtime,
@@ -1281,7 +1276,7 @@ pub type Executive = executive::Executive<
 	system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	SchedulerMigrationV3,
+	migrations::Migrations,
 >;
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -1432,7 +1427,7 @@ impl_runtime_apis! {
 		) -> RemoveLiquiditySimulationResult<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>> {
 			let min_expected_amounts: BTreeMap<_, _> = min_expected_amounts.iter().map(|(k, v)| (k.0, v.0)).collect();
 			let default_removed_assets = min_expected_amounts.keys().map(|k| (*k, 0_u128)).collect::<BTreeMap<_,_>>();
-			let simulate_remove_liquidity_result = <Pablo as Amm>::simulate_remove_liquidity(&who.0, pool_id.0, lp_amount.0, min_expected_amounts)
+			let simulate_remove_liquidity_result = <Pablo as Amm>::simulate_remove_liquidity(&who.0, pool_id.0, lp_amount.0)
 				.unwrap_or(
 					RemoveLiquiditySimulationResult{
 						assets: default_removed_assets

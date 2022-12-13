@@ -16,6 +16,7 @@ contract Interpreter is IInterpreter {
 
     address public creator;
     address public routerAddress;
+    bytes public override salt;
     mapping(address => bool) public owners;
     IRouter.Origin origin;
 
@@ -38,10 +39,11 @@ contract Interpreter is IInterpreter {
         _;
     }
 
-    constructor(IRouter.Origin memory _origin, address _routerAddress) {
+    constructor(IRouter.Origin memory _origin, address _routerAddress, bytes memory _salt) {
         owners[msg.sender] = true;
         creator = msg.sender;
         routerAddress = _routerAddress;
+        salt = _salt;
         origin = _origin;
     }
 

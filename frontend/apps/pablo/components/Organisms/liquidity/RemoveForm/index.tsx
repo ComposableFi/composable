@@ -16,16 +16,11 @@ import { ConfirmingModal } from "./ConfirmingModal";
 import { PreviewDetails } from "./PreviewDetails";
 import { useRemoveLiquidityState } from "@/store/removeLiquidity/hooks";
 import useDebounce from "@/hooks/useDebounce";
-import { useLiquidityPoolDetails } from "@/defi/hooks";
-import {
-  fetchSpotPrice,
-  fromRemoveLiquiditySimulationResult,
-  toChainUnits,
-} from "@/defi/utils";
+import { useLiquidityPoolDetails, useLpTokenUserBalance } from "@/defi/hooks";
+import { fetchSpotPrice, toChainUnits } from "@/defi/utils";
 import { useParachainApi, useSelectedAccount } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
-import { useUiSlice, setUiState } from "@/store/ui/ui.slice";
-import { useLpTokenUserBalance } from "@/defi/hooks";
+import { setUiState, useUiSlice } from "@/store/ui/ui.slice";
 
 export const RemoveLiquidityForm = ({ ...rest }) => {
   const theme = useTheme();
@@ -84,29 +79,29 @@ export const RemoveLiquidityForm = ({ ...rest }) => {
       const b = baseAsset.getPicassoAssetId().toString();
       const q = quoteAsset.getPicassoAssetId().toString();
 
-      parachainApi.rpc.pablo
-        .simulateRemoveLiquidity(
-          parachainApi.createType("AccountId32", selectedAccount.address),
-          parachainApi.createType("PalletPabloPoolId", poolId.toString()),
-          parachainApi.createType(
-            "CustomRpcBalance",
-            selectedLpAmount.dp(0).toString()
-          ),
-          parachainApi.createType("BTreeMap<SafeRpcWrapper, SafeRpcWrapper>", {
-            [b]: "0",
-            [q]: "0",
-          })
-        )
-        .then((response: any) => {
-          const remove = fromRemoveLiquiditySimulationResult(response.toJSON());
-          setExpectedRemoveAmountBase(remove[b]);
-          setExpectedRemoveAmountQuote(remove[q]);
-        })
-        .catch((err: any) => {
-          setExpectedRemoveAmountBase(new BigNumber(0));
-          setExpectedRemoveAmountQuote(new BigNumber(0));
-          console.error(err);
-        });
+      // parachainApi.rpc.pablo
+      //   .simulateRemoveLiquidity(
+      //     parachainApi.createType("AccountId32", selectedAccount.address),
+      //     parachainApi.createType("PalletPabloPoolId", poolId.toString()),
+      //     parachainApi.createType(
+      //       "CustomRpcBalance",
+      //       selectedLpAmount.dp(0).toString()
+      //     ),
+      //     parachainApi.createType("BTreeMap<SafeRpcWrapper, SafeRpcWrapper>", {
+      //       [b]: "0",
+      //       [q]: "0",
+      //     })
+      //   )
+      //   .then((response: any) => {
+      //     const remove = fromRemoveLiquiditySimulationResult(response.toJSON());
+      //     setExpectedRemoveAmountBase(remove[b]);
+      //     setExpectedRemoveAmountQuote(remove[q]);
+      //   })
+      //   .catch((err: any) => {
+      //     setExpectedRemoveAmountBase(new BigNumber(0));
+      //     setExpectedRemoveAmountQuote(new BigNumber(0));
+      //     console.error(err);
+      //   });
     }
   }, [
     parachainApi,
@@ -123,7 +118,7 @@ export const RemoveLiquidityForm = ({ ...rest }) => {
   };
 
   const onSettingHandler = () => {
-    setUiState({ isTransactionSettingsModalOpen: true })
+    setUiState({ isTransactionSettingsModalOpen: true });
   };
 
   const onSliderChangeHandler = (_: Event, newValue: number | number[]) => {
@@ -131,7 +126,7 @@ export const RemoveLiquidityForm = ({ ...rest }) => {
   };
 
   const onRemoveHandler = async () => {
-    setUiState({ isConfirmingModalOpen: true })
+    setUiState({ isConfirmingModalOpen: true });
   };
 
   useEffect(() => {

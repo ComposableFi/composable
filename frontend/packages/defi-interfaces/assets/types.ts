@@ -1,15 +1,21 @@
 // Auto-generated via `yarn polkadot-types-from-defs`, do not edit
 /* eslint-disable */
 
-import type { Bytes, Struct, u32, u64 } from '@polkadot/types-codec';
-import { ComposableTraitsAssetsXcmAssetLocation } from '../types';
+import type { CustomRpcBalance } from "../common";
+import type {
+  ComposableTraitsCurrencyRational64,
+  XcmV1MultiLocation,
+} from "../crowdloanRewards";
+import type { Bytes, Option, Struct, u128, u32 } from "@polkadot/types-codec";
 
 /** @name Asset */
 export interface Asset extends Struct {
   readonly name: Bytes;
-  readonly id: u64;
+  readonly id: u128;
   readonly decimals: u32;
-  readonly foreignId: ComposableTraitsAssetsXcmAssetLocation
+  readonly ratio: Option<ComposableTraitsCurrencyRational64>;
+  readonly foreignId: Option<XcmV1MultiLocation>;
+  readonly existentialDeposit: CustomRpcBalance;
 }
 
-export type PHANTOM_ASSETS = 'assets';
+export type PHANTOM_ASSETS = "assets";

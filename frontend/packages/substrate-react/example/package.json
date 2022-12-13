@@ -11,7 +11,7 @@
   "dependencies": {
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
-    "@polkadot/api": "^8.3.2",
+    "@polkadot/api": "^9.6.2",
     "@polkadot/extension-dapp": "^0.44.6",
     "bignumber.js": "^9.0.2",
     "react-app-polyfill": "^1.0.0"

@@ -2,7 +2,12 @@ import { BigNumberInput, Modal, TokenAsset } from "@/components";
 import { FC, useState } from "react";
 import { Box, Button, Paper, Stack, Typography } from "@mui/material";
 import { TextWithTooltip } from "@/components/Molecules/TextWithTooltip";
-import { callbackGate, formatNumber, toChainIdUnit } from "shared";
+import {
+  callbackGate,
+  formatNumber,
+  subscanExtrinsicLink,
+  toChainIdUnit,
+} from "shared";
 import { DurationOption } from "@/defi/polkadot/pallets/StakingRewards";
 import { useStakingRewards } from "@/defi/polkadot/hooks/useStakingRewards";
 import BigNumber from "bignumber.js";
@@ -10,7 +15,6 @@ import { useStore } from "@/stores/root";
 import { useSelectedAccount } from "@/defi/polkadot/hooks";
 import { getSigner, useExecutor } from "substrate-react";
 import { SnackbarKey, useSnackbar } from "notistack";
-import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { APP_NAME } from "@/defi/polkadot/constants";
 
 export const RenewModal: FC<{
@@ -65,7 +69,7 @@ export const RenewModal: FC<{
               variant: "info",
               isClosable: true,
               persist: true,
-              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
+              url: subscanExtrinsicLink("picasso", txHash),
             });
           },
           (txHash: string) => {
@@ -74,7 +78,7 @@ export const RenewModal: FC<{
               variant: "success",
               isClosable: true,
               persist: true,
-              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
+              url: subscanExtrinsicLink("picasso", txHash),
             });
             refresh();
             onClose();
