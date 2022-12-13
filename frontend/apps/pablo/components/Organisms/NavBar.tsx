@@ -12,7 +12,7 @@ import {
   ListItemIcon,
   ListItemText,
   Theme,
-  useTheme
+  useTheme,
 } from "@mui/material";
 import dynamic from "next/dynamic";
 import { NextRouter, useRouter } from "next/router";
@@ -27,14 +27,14 @@ const MENU_ITEMS: MenuItemType[] = [
     path: "/",
     icon: dynamic(() => import("@mui/icons-material/Home")),
     status: "active",
-    matches: ["/"]
+    matches: ["/"],
   },
   {
     label: "Swap",
     path: "/swap",
     icon: dynamic(() => import("@mui/icons-material/SwapVert")),
     status: "active",
-    matches: ["/swap"]
+    matches: ["/swap"],
   },
   {
     label: "Pool",
@@ -45,22 +45,22 @@ const MENU_ITEMS: MenuItemType[] = [
       "/pool",
       "/pool/add-liquidity",
       "/pool/select",
-      "/pool/create-pool"
-    ]
+      "/pool/create-pool",
+    ],
   },
   {
     label: "Bond",
     path: "/bond",
     icon: dynamic(() => import("@mui/icons-material/Payments")),
     status: "active",
-    matches: ["/bond", "/bond/select"]
+    matches: ["/bond", "/bond/select"],
   },
   {
-    label: "Staking",
-    path: "/staking",
+    label: "Stake",
+    path: "/stake",
     icon: dynamic(() => import("@mui/icons-material/TollOutlined")),
     status: "active",
-    matches: ["/staking"]
+    matches: ["/stake"],
   },
   {
     label: "Picasso",
@@ -73,8 +73,8 @@ const MENU_ITEMS: MenuItemType[] = [
           <OpenInNew />
         </IconButton>
       </Link>
-    )
-  }
+    ),
+  },
 ];
 
 const MenuItem = (
@@ -98,7 +98,7 @@ const MenuItem = (
       disabled={config.status === "inactive"}
       sx={{
         paddingLeft: isSubItem ? "3rem" : "1.5rem",
-        marginTop: 1
+        marginTop: 1,
       }}
     >
       <ListItemIcon>
@@ -123,7 +123,7 @@ export const NavBar: FC = () => {
       <Box
         sx={{
           padding: theme.spacing(6, 3),
-          mb: theme.spacing(6)
+          mb: theme.spacing(6),
         }}
       >
         <Logo />
