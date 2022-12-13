@@ -11,6 +11,4 @@ remappings = [
   'hardhat/=node_modules/hardhat/',
 ]
 src = 'src'
-
-
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
