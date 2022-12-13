@@ -75,6 +75,24 @@ jobs:
           command: nix -- build .#common-test-deps
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
+  check-lfs:
+    continue-on-error: false
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-check-lfs-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actionsdesk/lfs-warning@v3.2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          filesizelimit: 10KB
+          exclusionPatterns: |
+            **/*.rs
+            **/*.ts
+            **/*.json
+            **/*.lock
+
   check-nix:
     name: "Check nix"
     continue-on-error: false
@@ -858,6 +876,7 @@ jobs:
       name: "Effect gate, automatically merged if passed"
       runs-on: ubuntu-latest
       needs:
+        - check-lfs
         - check-nix
         - devnet-integration-tests
         - package-polkadot-node
