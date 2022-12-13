@@ -53,7 +53,6 @@ runs:
         docker load --input ./result
 
         SHA256=$(sha256sum ./result | cut --delimiter " " --fields 1)
-
         COMMIT_SHA=$(git rev-parse HEAD)
         CONTAINER_NAME=${{ inputs.name }}
         TEMP_CONTAINER_NAME=${{ inputs.artifact }}
