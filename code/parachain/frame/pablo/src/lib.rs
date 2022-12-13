@@ -124,8 +124,7 @@ pub mod pallet {
 	pub(crate) type PriceCumulativeStateOf<T> =
 		PriceCumulative<MomentOf<T>, <T as Config>::Balance>;
 
-	// TODO (vim): Modify events to remove base/quote asset naming and replace with just a map of
-	// 	asset->value. Also introduce a  new event for "buy" operation as swap is different.
+	// TODO (vim): Introduce a  new event for "buy" operation as swap is different.
 	#[pallet::event]
 	#[pallet::generate_deposit(pub (super) fn deposit_event)]
 	pub enum Event<T: Config> {
@@ -136,18 +135,8 @@ pub mod pallet {
 			/// Owner of the pool.
 			owner: T::AccountId,
 			// Pool assets
-			assets: CurrencyPair<AssetIdOf<T>>,
+			asset_weights: BTreeMap<T::AssetId, Permill>,
 		},
-		/// The sale ended, the funds repatriated and the pool deleted.
-		PoolDeleted {
-			/// Pool that was removed.
-			pool_id: T::PoolId,
-			/// Amount of base asset repatriated.
-			base_amount: T::Balance,
-			/// Amount of quote asset repatriated.
-			quote_amount: T::Balance,
-		},
-
 		/// Liquidity added into the pool `T::PoolId`.
 		LiquidityAdded {
 			/// Account id who added liquidity.
@@ -155,9 +144,7 @@ pub mod pallet {
 			/// Pool id to which liquidity added.
 			pool_id: T::PoolId,
 			// /// Amount of base asset deposited.
-			// base_amount: T::Balance,
-			// /// Amount of quote asset deposited.
-			// quote_amount: T::Balance,
+			asset_amounts: BTreeMap<T::AssetId, T::Balance>,
 			/// Amount of minted lp.
 			minted_lp: T::Balance,
 		},
@@ -167,12 +154,8 @@ pub mod pallet {
 			who: T::AccountId,
 			/// Pool id to which liquidity added.
 			pool_id: T::PoolId,
-			// /// Amount of base asset removed from pool.
-			// base_amount: T::Balance,
-			// /// Amount of quote asset removed from pool.
-			// quote_amount: T::Balance,
-			// /// Updated lp token supply.
-			// total_issuance: T::Balance,
+			/// Amount(s) of asset(s) removed from the pool.
+			asset_amounts: BTreeMap<T::AssetId, T::Balance>,
 		},
 		/// Token exchange happened.
 		Swapped {
@@ -538,13 +521,10 @@ pub mod pallet {
 					(owner, pool_id, assets_weights)
 				},
 			};
-			// TODO (vim): We have no way of knowing which amount is for which asset (fixed in a
-			// later  stage). For now we assume the input defined order.
-			let assets = assets_weights.keys().copied().collect::<Vec<_>>();
 			Self::deposit_event(Event::<T>::PoolCreated {
 				owner,
 				pool_id,
-				assets: CurrencyPair::new(assets[0], assets[1]),
+				asset_weights: assets_weights.into_inner(),
 			});
 			Ok(pool_id)
 		}
@@ -639,7 +619,7 @@ pub mod pallet {
 			if !fees.owner_fee.is_zero() {
 				T::Assets::transfer(fees.asset_id, who, owner, fees.owner_fee, false)?;
 			}
-			// TODO: Enable fee disbursal for release 2
+			// TODO: Enable fee disbursal for release 3
 			// if !fees.protocol_fee.is_zero() {
 			// 	T::ProtocolStaking::transfer_reward(
 			// 		who,
@@ -877,6 +857,7 @@ pub mod pallet {
 						info,
 						pool_account,
 						assets
+							.clone()
 							.into_iter()
 							.map(|(asset_id, amount)| AssetAmount { asset_id, amount })
 							.try_collect()
@@ -890,8 +871,7 @@ pub mod pallet {
 			Self::deposit_event(Event::<T>::LiquidityAdded {
 				who: who.clone(),
 				pool_id,
-				// base_amount: added_base_amount,
-				// quote_amount: added_quote_amount,
+				asset_amounts: assets,
 				minted_lp,
 			});
 			Ok(())
@@ -904,8 +884,7 @@ pub mod pallet {
 			lp_amount: Self::Balance,
 			min_receive: BTreeMap<Self::AssetId, Self::Balance>,
 		) -> Result<(), DispatchError> {
-			// let redeemable_assets =
-			// 	Self::redeemable_assets_for_lp_tokens(pool_id, lp_amount, min_receive)?;
+			let redeemable_assets = Self::redeemable_assets_for_lp_tokens(pool_id, lp_amount)?;
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
 			match pool {
@@ -925,9 +904,7 @@ pub mod pallet {
 					Self::deposit_event(Event::<T>::LiquidityRemoved {
 						pool_id,
 						who: who.clone(),
-						// base_amount,
-						// quote_amount,
-						// total_issuance: updated_lp,
+						asset_amounts: redeemable_assets.assets,
 					});
 				},
 			}
@@ -1041,7 +1018,7 @@ pub mod pallet {
 				},
 			};
 			Self::update_twap(pool_id)?;
-			// TODO (vim): Emit a Buy event
+			// TODO (vim): Emit a Buy event: Release 3
 			Self::deposit_event(Event::<T>::Swapped {
 				pool_id,
 				who: who.clone(),
