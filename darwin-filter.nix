@@ -1,8 +1,6 @@
 { lib }:
 let
-  nonArmPackages = [
-    "devnet-centauri"
-  ];
+  nonArmPackages = [ "devnet-centauri" ];
 
   packages = [
     "acala-node"
@@ -48,8 +46,8 @@ let
 
   devShells = [ "minimal" "default" ];
   apps = [ "docs-dev" ];
-  nonArmApps = [];
-  nonArmDevShells = [];
+  nonArmApps = [ ];
+  nonArmDevShells = [ ];
 
   # Filter implementation
   darwinSystems = [ "x86_64-darwin" "aarch64-darwin" ];
@@ -73,7 +71,7 @@ let
 in lib.updateManyAttrsByPath [
   {
     path = [ "packages" ];
-    update = x: applyBlockList nonArmPackages (applyAllowList packages x) ;
+    update = x: applyBlockList nonArmPackages (applyAllowList packages x);
   }
   {
     path = [ "apps" ];
