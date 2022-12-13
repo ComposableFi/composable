@@ -6,11 +6,10 @@ type Account @entity {
 }
 
 type PabloPool @entity {
+  "Pool ID"
   id: ID!
   "ID of the last event that was used to derive this entity data"
   eventId: ID!
-  "Pool ID"
-  poolId: BigInt!
   owner: String!
   lpIssued: BigInt!
   transactionCount: Int!
@@ -21,21 +20,22 @@ type PabloPool @entity {
   "Asset used for all quotes in this type"
   quoteAssetId: String!
   blockNumber: BigInt! @index
-  "Unix timestamp in ms"
-  calculatedTimestamp: BigInt!
+  "Timestamp of the block in which this activity occurred"
+  timestamp: DateTime! @index
   poolAssets: [PabloPoolAsset!] @derivedFrom(field: "pool")
   transactions: [PabloTransaction!] @derivedFrom(field: "pool")
 }
 
 type PabloPoolAsset @entity {
+  "Asset ID"
   id: ID!
-  assetId: String!
   pool: PabloPool!
+  weight: BigInt!
   totalLiquidity: BigInt!
   totalVolume: BigInt!
   blockNumber: BigInt! @index
-  "Unix timestamp in ms"
-  calculatedTimestamp: BigInt!
+  "Timestamp of the block in which this activity occurred"
+  timestamp: DateTime! @index
 }
 
 type BondedFinanceBondOffer @entity {
