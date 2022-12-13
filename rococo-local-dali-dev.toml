@@ -1,0 +1,81 @@
+hrmp_channels = []
+[[parachains]]
+add_to_genesis = true
+chain = "dali-dev"
+cumulus_based = true
+id = 2087
+[[parachains.collators]]
+command = "/nix/store/yrfm1g43zilavzf2ssmz1mzmk1w2aniz-composable/bin/composable"
+name = "alice"
+rpc_port = 32200
+validator = true
+ws_port = 9988
+[[parachains.collators.env]]
+name = "RUST_LOG"
+value = "runtime=debug,parachain=trace,cumulus-collator=trace,aura=trace,xcm=trace"
+
+
+[[parachains.collators]]
+command = "/nix/store/yrfm1g43zilavzf2ssmz1mzmk1w2aniz-composable/bin/composable"
+name = "bob"
+validator = true
+[[parachains.collators.env]]
+name = "RUST_LOG"
+value = "runtime=debug,parachain=trace,cumulus-collator=trace,aura=trace,xcm=trace"
+
+
+[[parachains.collators]]
+command = "/nix/store/yrfm1g43zilavzf2ssmz1mzmk1w2aniz-composable/bin/composable"
+name = "charlie"
+validator = true
+[[parachains.collators.env]]
+name = "RUST_LOG"
+value = "runtime=debug,parachain=trace,cumulus-collator=trace,aura=trace,xcm=trace"
+
+
+[[parachains.collators]]
+command = "/nix/store/yrfm1g43zilavzf2ssmz1mzmk1w2aniz-composable/bin/composable"
+name = "dave"
+validator = true
+[[parachains.collators.env]]
+name = "RUST_LOG"
+value = "runtime=debug,parachain=trace,cumulus-collator=trace,aura=trace,xcm=trace"
+
+
+[relaychain]
+chain = "rococo-local"
+default_args = ["-lparachain=debug"]
+default_command = "/nix/store/0wpw4f5zfa9sgmvpjyayndkiscdi8w4z-polkadot-v0.9.27/bin/polkadot"
+[[relaychain.nodes]]
+name = "rococo-local-alice"
+rpc_port = 30444
+validator = true
+ws_port = 9944
+
+[[relaychain.nodes]]
+name = "rococo-local-bob"
+validator = true
+
+[[relaychain.nodes]]
+name = "rococo-local-charlie"
+validator = true
+
+[[relaychain.nodes]]
+name = "rococo-local-dave"
+validator = true
+
+[settings]
+node_spawn_timeout = 120
+provider = "native"
+timeout = 600
+
+[types.Header]
+number = "u64"
+parent_hash = "Hash"
+post_state = "Hash"
+
+[relaychain.genesis.runtime.runtime_genesis_config.configuration.config]
+max_validators_per_core = 2
+needed_approvals = 1
+validation_upgrade_cooldown = 2
+validation_upgrade_delay = 2
