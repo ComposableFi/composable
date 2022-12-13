@@ -37,6 +37,8 @@
           rnix-lsp
           nodePackages.typescript
           nodePackages.typescript-language-server
+          git
+          git-lfs
         ]);
       });
 
