@@ -251,14 +251,14 @@ pub trait Lending: DeFiEngine {
 	/// [`AccountId`][Self::AccountId] of the market instance
 	fn account_id(market_id: &Self::MarketId) -> Self::AccountId;
 
-	/// lend asset to earn interest
+	/// deposit asset to earn interest
 	fn vault_deposit(
 		market_id: &Self::MarketId,
 		account_id: &Self::AccountId,
 		amount: LendAssetAmountOf<Self>,
 	) -> Result<(), DispatchError>;
 
-	/// unlend asset
+	/// withdraw asset
 	fn vault_withdraw(
 		market_id: &Self::MarketId,
 		account_id: &Self::AccountId,

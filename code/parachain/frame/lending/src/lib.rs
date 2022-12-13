@@ -374,10 +374,10 @@ pub mod pallet {
 			market_id: MarketId,
 			input: UpdateInput<T::LiquidationStrategyId, <T as frame_system::Config>::BlockNumber>,
 		},
-		/// Event emitted when asset is lent.
-		AssetLent { sender: T::AccountId, market_id: MarketId, amount: T::Balance },
-		/// Event emitted when asset is unlent.
-		AssetUnlent { sender: T::AccountId, market_id: MarketId, amount: T::Balance },
+		/// Event emitted when asset is deposited by lender.
+		AssetDeposited { sender: T::AccountId, market_id: MarketId, amount: T::Balance },
+		/// Event emitted when asset is withdrawn by lender.
+		AssetWithdrawn { sender: T::AccountId, market_id: MarketId, amount: T::Balance },
 		/// Event emitted when collateral is deposited.
 		CollateralDeposited { sender: T::AccountId, market_id: MarketId, amount: T::Balance },
 		/// Event emitted when collateral is withdrawn.
@@ -561,7 +561,7 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			let (_, market) = Self::get_market(market_id)?;
 			T::VaultLender::deposit(&market.borrow_asset_vault, account, amount)?;
-			Self::deposit_event(Event::<T>::AssetLent {
+			Self::deposit_event(Event::<T>::AssetDeposited {
 				sender: account.clone(),
 				market_id: *market_id,
 				amount,
@@ -576,7 +576,7 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			let (_, market) = Self::get_market(market_id)?;
 			T::VaultLender::withdraw(&market.borrow_asset_vault, account, amount)?;
-			Self::deposit_event(Event::<T>::AssetUnlent {
+			Self::deposit_event(Event::<T>::AssetWithdrawn {
 				sender: account.clone(),
 				market_id: *market_id,
 				amount,
@@ -785,8 +785,8 @@ pub mod pallet {
 
 		/// lender deposits assets to market.
 		/// - `origin` : Sender of this extrinsic.
-		/// - `market_id` : Market index to which asset will be lent.
-		/// - `amount` : Amount of asset to be lent.
+		/// - `market_id` : Market index to which asset will be deposited.
+		/// - `amount` : Amount of asset to be deposited.
 		#[pallet::weight(<T as Config>::WeightInfo::vault_deposit())]
 		#[transactional]
 		pub fn vault_deposit(
@@ -801,8 +801,8 @@ pub mod pallet {
 
 		/// lender withdraws assets to market.
 		/// - `origin` : Sender of this extrinsic.
-		/// - `market_id` : Market index to which asset will be unlent.
-		/// - `amount` : Amount of asset to be unlent.
+		/// - `market_id` : Market index to which asset will be withdrawn.
+		/// - `amount` : Amount of asset to be withdrawn.
 		#[pallet::weight(<T as Config>::WeightInfo::vault_withdraw())]
 		#[transactional]
 		pub fn vault_withdraw(
