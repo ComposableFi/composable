@@ -11,7 +11,7 @@ different AMM-types, to better optimize for their needs. As such users can selec
 efficiency, less slippage, and incentivize a use to trade more. Greater volume leads to higher transaction fees, which 
 are all distributed back to liquidity providers (LPers) and PBLO token holders.
 
-On launch Pablo will support Balancer pools, 
+On launch Pablo will support Constant product pools based on [BalancersFi weighted math], 
 later on followed by Uniswap 50/50 pools, Stableswap pools, as well as our custom LBP implementation. 
 Stableswap pools allow for superior trading of stablecoins or assets of the same price, 
 providing greater yield to LPs, and less price slippage for traders. 
@@ -21,3 +21,5 @@ In addition, pool creators are able to set fees based on the relative risks of t
 whereas other protocols often set fixed fees at 0.3% across all pairs. 
 The volatility and volume can depend significantly depending on the pool assets, 
 and therefore increasing the customizability will boost efficiency of the DEX.
+
+[BalancersFi weighted math]: https://docs.balancer.fi/concepts/math/weighted-math
