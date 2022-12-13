@@ -82,7 +82,7 @@ impl<T: Config> Pallet<T> {
 		channel_id: String,
 		to_address: String,
 		amount: cosmwasm_vm::cosmwasm_std::Coin,
-		_timeout: cosmwasm_vm::cosmwasm_std::IbcTimeout,
+		timeout: cosmwasm_vm::cosmwasm_std::IbcTimeout,
 	) -> Result<(), CosmwasmVMError<T>> {
 		let channel_id = ChannelId::from_str(channel_id.as_ref())
 			.map_err(|_| <CosmwasmVMError<T>>::Ibc("channel name is not valid".to_string()))?;
@@ -94,7 +94,7 @@ impl<T: Config> Pallet<T> {
 		let msg = HandlerMessage::<AccountIdOf<T>>::Transfer {
 			channel_id,
 			coin: PrefixedCoin {
-				// TODO: Amount from centauri should not have a From<u64> instance. 
+				// TODO: Amount from centauri should not have a From<u64> instance.
 				// https://app.clickup.com/t/20465559/XCVM-241?comment=1190198806
 				amount: Amount::from(amount.amount.u128().saturated_into::<u64>()),
 				denom: PrefixedDenom::from_str(amount.denom.as_ref()).map_err(|_| {
@@ -102,13 +102,9 @@ impl<T: Config> Pallet<T> {
 				})?,
 			},
 			from: vm.contract_address.clone().into_inner(),
-			timeout: ibc_primitives::Timeout::Offset {
-				timestamp: Err(<CosmwasmVMError<T>>::Ibc(
-					"after timeout will have pub interface".to_string(),
-				))?,
-				height: Err(<CosmwasmVMError<T>>::Ibc(
-					"after timeout will have pub interface".to_string(),
-				))?,
+			timeout: ibc_primitives::Timeout::Absolute {
+				timestamp: timeout.timestamp().map(|t| t.nanos()),
+				height: timeout.block().map(|b| b.height),
 			},
 			to: IbcSigner::from_str(to_address.as_ref())
 				.map_err(|_| <CosmwasmVMError<T>>::Ibc("bad ".to_string()))?,
@@ -133,7 +129,10 @@ impl<T: Config> Pallet<T> {
 
 		T::IbcRelayer::handle_message(HandlerMessage::SendPacket {
 			data: data.to_vec(),
-			timeout: ibc_primitives::Timeout::Absolute { timestamp: timeout.timestamp().map(|t| t.nanos()), height: timeout.block().map(|b| b.height) },
+			timeout: ibc_primitives::Timeout::Absolute {
+				timestamp: timeout.timestamp().map(|t| t.nanos()),
+				height: timeout.block().map(|b| b.height),
+			},
 			channel_id,
 			port_id,
 		})
@@ -522,10 +521,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		let contract_info = Self::to_ibc_contract(&address)?;
 		let message = IbcChannelCloseMsg::CloseInit {
 			channel: IbcChannel::new(
-				IbcEndpoint {
-					port_id: port_id.to_string(),
-					channel_id: channel_id.to_string(),
-				},
+				IbcEndpoint { port_id: port_id.to_string(), channel_id: channel_id.to_string() },
 				map_endpoint(&metadata),
 				map_order(metadata.ordering)?,
 				metadata.version.to_string(),
@@ -599,11 +595,9 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		let address = Self::port_to_address(&packet.source_port)?;
 		let contract_info = Self::to_ibc_contract(&address)?;
 
-		let message = IbcPacketAckMsg::new (
-			IbcAcknowledgement::new( 
-				acknowledgement.clone().into_bytes(),
-			),
-			IbcPacket::new( 
+		let message = IbcPacketAckMsg::new(
+			IbcAcknowledgement::new(acknowledgement.clone().into_bytes()),
+			IbcPacket::new(
 				packet.data.clone(),
 				IbcEndpoint {
 					port_id: packet.source_port.to_string(),
@@ -645,8 +639,8 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		let address = Self::port_to_address(&packet.source_port)?;
 		let contract_info = Self::to_ibc_contract(&address)?;
 
-		let message = IbcPacketTimeoutMsg::new( 
-			IbcPacket::new( 
+		let message = IbcPacketTimeoutMsg::new(
+			IbcPacket::new(
 				packet.data.clone(),
 				IbcEndpoint {
 					port_id: packet.source_port.to_string(),
@@ -684,7 +678,7 @@ fn map_channel(
 	channel_id: &ChannelId,
 	metadata: ibc::core::ics04_channel::channel::ChannelEnd,
 ) -> Result<IbcChannel, IbcError> {
-	Ok(IbcChannel::new (
+	Ok(IbcChannel::new(
 		IbcEndpoint { port_id: port_id.to_string(), channel_id: channel_id.to_string() },
 		map_endpoint(&metadata),
 		map_order(metadata.ordering)?,
