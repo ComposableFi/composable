@@ -88,14 +88,15 @@ pub mod pallet {
 		},
 	};
 	use core::fmt::Debug;
-	use cosmwasm_minimal_std::{
-		Addr, Attribute as CosmwasmEventAttribute, Binary as CosmwasmBinary, BlockInfo, Coin,
-		ContractInfo as CosmwasmContractInfo, ContractInfoResponse, Env, Event as CosmwasmEvent,
-		MessageInfo, QueryRequest, Timestamp, TransactionInfo,
-	};
 	use cosmwasm_vm::{
+		cosmwasm_std::{
+			Addr, Attribute as CosmwasmEventAttribute, Binary as CosmwasmBinary, BlockInfo, Coin,
+			ContractInfo as CosmwasmContractInfo, ContractInfoResponse, Env,
+			Event as CosmwasmEvent, MessageInfo, Timestamp, TransactionInfo,
+		},
 		executor::{
-			cosmwasm_call, ExecuteInput, InstantiateInput, MigrateInput, QueryInput, QueryResponse,
+			cosmwasm_call, ExecuteCall, InstantiateCall, MigrateCall, QueryCall, QueryResponse,
+			ReplyCall,
 		},
 		system::{cosmwasm_system_query, CosmwasmCodeId, CosmwasmContractMeta},
 	};
@@ -217,8 +218,6 @@ pub mod pallet {
 		ContractAlreadyExists,
 		ContractNotFound,
 		TransferFailed,
-		ChargeGas,
-		RefundGas,
 		LabelTooBig,
 		UnknownDenom,
 		StackOverflow,
@@ -232,6 +231,8 @@ pub mod pallet {
 		NotAuthorized,
 		Unsupported,
 		Ibc,
+		FailedToSerialize,
+		OutOfGas,
 	}
 
 	#[pallet::config]
@@ -458,17 +459,18 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
+			let initial_gas = T::WeightInfo::instantiate(funds.len() as u32).saturating_add(gas);
 			let code_id = match code_identifier {
 				CodeIdentifier::CodeId(code_id) => code_id,
 				CodeIdentifier::CodeHash(code_hash) =>
 					CodeHashToId::<T>::try_get(code_hash).map_err(|_| Error::<T>::CodeNotFound)?,
 			};
-			let outcome = EntryPointCaller::<InstantiateInput>::setup(
+			let outcome = EntryPointCaller::<InstantiateCall>::setup(
 				who, code_id, &salt, admin, label, &message,
 			)?
 			.call(&mut shared, funds, message)
 			.map(|_| ());
-			Self::refund_gas(outcome, gas, shared.gas.remaining())
+			Self::refund_gas(outcome, initial_gas, shared.gas.remaining())
 		}
 
 		/// Execute a previously instantiated contract.
@@ -495,12 +497,13 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
-			let outcome = EntryPointCaller::<ExecuteInput>::setup(who, contract)?.call(
+			let initial_gas = T::WeightInfo::execute(funds.len() as u32).saturating_add(gas);
+			let outcome = EntryPointCaller::<ExecuteCall>::setup(who, contract)?.call(
 				&mut shared,
 				funds,
 				message,
 			);
-			Self::refund_gas(outcome, gas, shared.gas.remaining())
+			Self::refund_gas(outcome, initial_gas, shared.gas.remaining())
 		}
 
 		/// Migrate a previously instantiated contract.
@@ -527,14 +530,18 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
+			let initial_gas = T::WeightInfo::migrate().saturating_add(gas);
 			let new_code_id = match new_code_identifier {
 				CodeIdentifier::CodeId(code_id) => code_id,
 				CodeIdentifier::CodeHash(code_hash) =>
 					CodeHashToId::<T>::try_get(code_hash).map_err(|_| Error::<T>::CodeNotFound)?,
 			};
-			let outcome = EntryPointCaller::<MigrateInput>::setup(who, contract, new_code_id)?
-				.call(&mut shared, Default::default(), message);
-			Self::refund_gas(outcome, gas, shared.gas.remaining())
+			let outcome = EntryPointCaller::<MigrateCall>::setup(who, contract, new_code_id)?.call(
+				&mut shared,
+				Default::default(),
+				message,
+			);
+			Self::refund_gas(outcome, initial_gas, shared.gas.remaining())
 		}
 
 		/// Update the admin of a contract.
@@ -557,6 +564,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
+			let initial_gas = T::WeightInfo::update_admin().saturating_add(gas);
 			let info = Self::contract_info(&contract)?;
 			let outcome = Self::cosmwasm_call(
 				&mut shared,
@@ -579,7 +587,7 @@ pub mod pallet {
 				old_admin: info.admin,
 				new_admin,
 			});
-			Self::refund_gas(outcome, gas, shared.gas.remaining())
+			Self::refund_gas(outcome, initial_gas, shared.gas.remaining())
 		}
 
 		/// Clear the admin of a contract.
@@ -600,6 +608,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
+			let initial_gas = T::WeightInfo::clear_admin().saturating_add(gas);
 			let info = Self::contract_info(&contract)?;
 			let outcome = Self::cosmwasm_call(
 				&mut shared,
@@ -618,7 +627,7 @@ pub mod pallet {
 				},
 			);
 			Self::deposit_event(Event::<T>::AdminCleared { contract, old_admin: info.admin });
-			Self::refund_gas(outcome, gas, shared.gas.remaining())
+			Self::refund_gas(outcome, initial_gas, shared.gas.remaining())
 		}
 	}
 
@@ -699,7 +708,7 @@ pub mod pallet {
 				.collect::<Vec<_>>();
 			Self::cosmwasm_call(shared, sender, contract.clone(), info, cosmwasm_funds, call).map(
 				|(data, events)| {
-					for CosmwasmEvent { ty, attributes } in events {
+					for CosmwasmEvent { ty, attributes, .. } in events {
 						Self::deposit_event(Event::<T>::Emitted {
 							contract: contract.clone(),
 							ty: ty.into(),
@@ -732,7 +741,6 @@ pub mod pallet {
 		where
 			F: for<'x> FnOnce(&'x mut WasmiVM<CosmwasmVM<'x, T>>) -> Result<R, CosmwasmVMError<T>>,
 		{
-			Self::do_transfer(&sender, &contract, &funds, false)?;
 			let mut vm = Self::cosmwasm_new_vm(shared, sender, contract, info, funds)?;
 			call(&mut vm)
 		}
@@ -743,7 +751,7 @@ pub mod pallet {
 			initial_gas: u64,
 			remaining_gas: u64,
 		) -> DispatchResultWithPostInfo {
-			log::debug!(target: "runtime::contracts", "outcome: {:?}", outcome);
+			log::info!(target: "runtime::contracts", "outcome: {:?}", outcome);
 			let post_info = PostDispatchInfo {
 				actual_weight: Some(initial_gas.saturating_sub(remaining_gas)),
 				pays_fee: Pays::Yes,
@@ -753,6 +761,7 @@ pub mod pallet {
 				Err(e) => {
 					let e = match e {
 						CosmwasmVMError::Pallet(e) => e,
+						CosmwasmVMError::OutOfGas => Error::<T>::OutOfGas,
 						_ => Error::<T>::ContractTrapped,
 					};
 					Err(DispatchErrorWithPostInfo { error: e.into(), post_info })
@@ -963,7 +972,7 @@ pub mod pallet {
 		fn block_env() -> BlockInfo {
 			BlockInfo {
 				height: frame_system::Pallet::<T>::block_number().saturated_into(),
-				time: Timestamp(T::UnixTime::now().as_secs().into()),
+				time: Timestamp::from_seconds(T::UnixTime::now().as_secs()),
 				chain_id: T::ChainId::get().into(),
 			}
 		}
@@ -999,7 +1008,7 @@ pub mod pallet {
 			amount: BalanceOf<T>,
 		) -> Coin {
 			let denom = T::AssetToDenom::convert(asset);
-			Coin { denom, amount: amount.into() }
+			Coin { denom, amount: amount.into().into() }
 		}
 
 		/// Try to convert from a CosmWasm denom to a native [`AssetIdOf<T>`].
@@ -1256,7 +1265,7 @@ pub mod pallet {
 			// Move funds to contract.
 			for Coin { denom, amount } in funds {
 				let asset = Self::cosmwasm_asset_to_native_asset(denom.clone())?;
-				let amount = (*amount).saturated_into();
+				let amount = amount.u128().saturated_into();
 				T::Assets::transfer(asset, from, to, amount, keep_alive)
 					.map_err(|_| Error::<T>::TransferFailed)?;
 			}
@@ -1401,9 +1410,9 @@ pub mod pallet {
 			>,
 			funds: Vec<Coin>,
 			message: &[u8],
-			event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
-		) -> Result<Option<cosmwasm_minimal_std::Binary>, CosmwasmVMError<T>> {
-			EntryPointCaller::<InstantiateInput>::setup(
+			event_handler: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
+		) -> Result<Option<cosmwasm_vm::cosmwasm_std::Binary>, CosmwasmVMError<T>> {
+			EntryPointCaller::<InstantiateCall>::setup(
 				vm.contract_address.clone().into_inner(),
 				code_id,
 				&[],
@@ -1423,23 +1432,40 @@ pub mod pallet {
 			contract: AccountIdOf<T>,
 			funds: Vec<Coin>,
 			message: &[u8],
-			event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
-		) -> Result<Option<cosmwasm_minimal_std::Binary>, CosmwasmVMError<T>> {
-			EntryPointCaller::<ExecuteInput>::setup(
+			event_handler: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
+		) -> Result<Option<cosmwasm_vm::cosmwasm_std::Binary>, CosmwasmVMError<T>> {
+			EntryPointCaller::<ExecuteCall>::setup(
 				vm.contract_address.clone().into_inner(),
 				contract,
 			)?
 			.continue_run(vm.shared, funds, message, event_handler)
 		}
 
+		pub(crate) fn do_continue_reply<'a>(
+			vm: &'a mut CosmwasmVM<T>,
+			reply: cosmwasm_vm::cosmwasm_std::Reply,
+			event_handler: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
+		) -> Result<Option<cosmwasm_vm::cosmwasm_std::Binary>, CosmwasmVMError<T>> {
+			EntryPointCaller::<ReplyCall>::setup(
+				vm.contract_address.clone().into_inner(),
+				vm.contract_address.clone().into_inner(),
+			)?
+			.continue_run(
+				vm.shared,
+				Vec::default(),
+				&serde_json::to_vec(&reply).map_err(|_| Error::<T>::FailedToSerialize)?,
+				event_handler,
+			)
+		}
+
 		pub(crate) fn do_continue_migrate<'a>(
 			vm: &'a mut CosmwasmVM<T>,
 			contract: AccountIdOf<T>,
 			message: &[u8],
-			event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
-		) -> Result<Option<cosmwasm_minimal_std::Binary>, CosmwasmVMError<T>> {
+			event_handler: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
+		) -> Result<Option<cosmwasm_vm::cosmwasm_std::Binary>, CosmwasmVMError<T>> {
 			let CosmwasmContractMeta { code_id, .. } = Self::do_running_contract_meta(vm);
-			EntryPointCaller::<MigrateInput>::setup(
+			EntryPointCaller::<MigrateCall>::setup(
 				vm.contract_address.clone().into_inner(),
 				contract,
 				code_id,
@@ -1460,16 +1486,17 @@ pub mod pallet {
 				None
 			};
 			let pinned = vm.shared.cache.code.contains_key(&info.code_id);
-			Ok(ContractInfoResponse {
-				code_id: info.code_id,
-				creator: CosmwasmAccount::<T>::new(info.instantiator.clone()).into(),
-				admin: info.admin.map(|admin| CosmwasmAccount::<T>::new(admin).into()),
-				pinned,
-				ibc_port,
-			})
+			let creator = CosmwasmAccount::<T>::new(info.instantiator.clone());
+			let mut contract_info_response = ContractInfoResponse::new(info.code_id, creator);
+			contract_info_response.admin =
+				info.admin.map(|admin| CosmwasmAccount::<T>::new(admin).into());
+			contract_info_response.pinned = pinned;
+			contract_info_response.ibc_port = ibc_port;
+
+			Ok(contract_info_response)
 		}
 
-		pub(crate) fn do_query_continuation<'a>(
+		pub(crate) fn do_continue_query<'a>(
 			vm: &'a mut CosmwasmVM<T>,
 			contract: AccountIdOf<T>,
 			message: &[u8],
@@ -1484,7 +1511,7 @@ pub mod pallet {
 				contract,
 				info,
 				Default::default(),
-				|vm| cosmwasm_call::<QueryInput, WasmiVM<CosmwasmVM<T>>>(vm, message),
+				|vm| cosmwasm_call::<QueryCall, WasmiVM<CosmwasmVM<T>>>(vm, message),
 			);
 			vm.shared.pop_readonly();
 			result
@@ -1512,7 +1539,7 @@ pub mod pallet {
 	) -> Result<QueryResponse, CosmwasmVMError<T>> {
 		let mut shared = Pallet::<T>::do_create_vm_shared(gas, InitialStorageMutability::ReadOnly);
 		let info = Pallet::<T>::contract_info(&contract)?;
-		let query_request: QueryRequest = serde_json::from_slice(&query_request)
+		let query_request = serde_json::from_slice(&query_request)
 			.map_err(|e| CosmwasmVMError::Rpc(format!("{}", e)))?;
 		Pallet::<T>::cosmwasm_call(
 			&mut shared,
@@ -1553,7 +1580,7 @@ pub mod pallet {
 			.try_into()
 			.map_err(|_| CosmwasmVMError::Rpc(String::from("'message' is too large")))?;
 		let mut shared = Pallet::<T>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
-		EntryPointCaller::<InstantiateInput>::setup(
+		EntryPointCaller::<InstantiateCall>::setup(
 			instantiator,
 			code_id,
 			&salt,
@@ -1572,7 +1599,7 @@ pub mod pallet {
 		message: ContractMessageOf<T>,
 	) -> Result<(), CosmwasmVMError<T>> {
 		let mut shared = Pallet::<T>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
-		EntryPointCaller::<ExecuteInput>::setup(executor, contract)?.call(
+		EntryPointCaller::<ExecuteCall>::setup(executor, contract)?.call(
 			&mut shared,
 			funds,
 			message,
