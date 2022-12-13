@@ -58,16 +58,16 @@ const sidebars = {
             },
             {
               type: 'category',
-              label: 'CHAOS fNFTs',
+              label: 'xPICA fNFTs',
               link: {
                 type: 'doc',
-                id: 'products/CHAOS-fNFT-overview'
+                id: 'products/xpica-fnft-overview'
               },
               collapsible: true,
               collapsed: true,
               items: [
-                'products/chaos/picasso-treasury',
-                'products/chaos/use-cases'
+                'products/xpica-fnft/picasso-treasury',
+                'products/xpica-fnft/use-cases'
               ],
             },
           ],
