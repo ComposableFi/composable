@@ -9,6 +9,5 @@ export const Header = () => (
       subtitle="Move assets across available Kusama chains."
       textAlign="center"
     />
-    <UnavailableFeature pageTitle={"Transfers"} />
   </>
 );

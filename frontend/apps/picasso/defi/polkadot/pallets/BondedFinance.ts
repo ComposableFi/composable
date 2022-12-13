@@ -8,9 +8,8 @@ import { ITuple } from "@polkadot/types-codec/types";
 import { fetchAssetPrice } from "./Oracle";
 import { Executor, getSigner, TokenId } from "substrate-react";
 import { APP_NAME } from "@/defi/polkadot/constants";
-import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
-import { fromChainIdUnit } from "shared";
+import { fromChainIdUnit, subscanExtrinsicLink } from "shared";
 import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
 
 export function createArrayOfLength(length: number): number[] {
@@ -240,7 +239,7 @@ export async function purchaseBond({
               variant: "info",
               isClosable: true,
               persist: true,
-              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
+              url: subscanExtrinsicLink("picasso", txHash),
             });
             setOpen(false);
             setOpen2nd(false);
@@ -250,7 +249,7 @@ export async function purchaseBond({
               variant: "success",
               isClosable: true,
               persist: true,
-              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
+              url: subscanExtrinsicLink("picasso", txHash),
             });
             handleFormReset();
           }

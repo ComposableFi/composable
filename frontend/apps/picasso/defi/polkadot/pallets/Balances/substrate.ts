@@ -1,4 +1,4 @@
-import { getExistentialDeposit, toTokenUnitsBN } from "shared";
+import { toTokenUnitsBN } from "shared";
 import { TokenId } from "tokens";
 import { ApiPromise } from "@polkadot/api";
 import { SUBSTRATE_NETWORKS } from "../../Networks";
@@ -24,7 +24,7 @@ export async function subscribeNativeBalance(
     const blObject: any = result.toJSON();
 
     const {
-      data: { free },
+      data: { free }
     } = blObject;
 
     const { decimals } = SUBSTRATE_NETWORKS[chainId as SubstrateNetworkId];
@@ -33,7 +33,7 @@ export async function subscribeNativeBalance(
     updateBalance({
       network: chainId as SubstrateNetworkId,
       tokenId,
-      balance: bnBalance,
+      balance: bnBalance
     });
   });
 

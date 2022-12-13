@@ -1,23 +1,24 @@
 export default {
   rpc: {
     balanceOf: {
-      description: "Balance available for the specified account for the specified asset.",
+      description:
+        "Balance available for the specified account for the specified asset.",
       params: [
         {
           name: "asset",
-          type: "CustomRpcCurrencyId"
+          type: "CustomRpcCurrencyId",
         },
         {
           name: "account",
-          type: "AccountId32"
+          type: "AccountId32",
         },
         {
           name: "at",
           type: "Hash",
-          isOptional: true
-        }
+          isOptional: true,
+        },
       ],
-      type: "CustomRpcBalance"
+      type: "CustomRpcBalance",
     },
     listAssets: {
       description: "Lists the available recognized assets for the runtime.",
@@ -25,18 +26,20 @@ export default {
         {
           name: "at",
           type: "Hash",
-          isOptional: true
-        }
+          isOptional: true,
+        },
       ],
-      type: "Vec<Asset>"
-    }
+      type: "Vec<Asset>",
+    },
   },
   types: {
     Asset: {
       name: "Vec<u8>",
-      id: "u64",
+      id: "u128",
       decimals: "u32",
-      foreignId: "ComposableTraitsAssetsXcmAssetLocation"
-    }
-  }
+      ratio: "Option<ComposableTraitsCurrencyRational64>",
+      foreignId: "Option<XcmV1MultiLocation>",
+      existentialDeposit: "CustomRpcBalance",
+    },
+  },
 };

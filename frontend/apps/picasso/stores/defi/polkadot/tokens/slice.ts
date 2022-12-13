@@ -77,10 +77,12 @@ export const createTokensSlice: StoreSlice<TokensSlice> = (set) => ({
     ) => {
       set((state) => {
         statemineList.forEach((listItem) => {
-          const identifier = listItem.name.toLowerCase();
-          const token = state.substrateTokens.tokens[identifier as TokenId];
-          if (token) {
-            console.log("[Statemine] Found supported asset", identifier);
+          if (listItem.id === "1984" || listItem.id === "ksm") {
+            const token =
+              state.substrateTokens.tokens[
+                listItem.id === "1984" ? "usdt" : ("ksm" as TokenId)
+              ];
+            console.log("[Statemine] Found supported asset", token.id);
             token.decimals.statemine =
               listItem.decimals ?? ParachainNetworks.statemine.decimals;
             token.chainId.statemine = listItem.id;
@@ -97,10 +99,9 @@ export const createTokensSlice: StoreSlice<TokensSlice> = (set) => ({
           const identifier = listItem.name.toLowerCase();
           const token = state.substrateTokens.tokens[identifier as TokenId];
           if (token) {
-            console.log("[Picasso] Found Supported Asset", identifier);
             token.decimals.picasso = listItem.decimals ?? 12;
             token.chainId.picasso = listItem.id;
-            token.existentialDeposit.picasso = null;
+            token.existentialDeposit.picasso = listItem.existentialDeposit;
           }
         });
         // karuraList.forEach(listItem => {
