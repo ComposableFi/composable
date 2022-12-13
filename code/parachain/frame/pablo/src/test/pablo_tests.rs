@@ -23,7 +23,7 @@ mod create {
 				fee,
 			};
 
-			assert_ok!(Pablo::do_create_pool(pool_config));
+			assert_ok!(Pablo::do_create_pool(pool_config, Some(LP_TOKEN_ID)));
 		});
 	}
 }
