@@ -2,6 +2,7 @@
   perSystem =
     { config, self', inputs', pkgs, system, crane, systemCommonRust, ... }:
     let
+      src = (pkgs.callPackage ../../.nix/rust.nix { }).rustSrc;
       cosmwasm-attrs = {
         LD_LIBRARY_PATH = pkgs.lib.strings.makeLibraryPath [
           pkgs.stdenv.cc.cc.lib
@@ -12,7 +13,7 @@
       };
 
       common-attrs = cosmwasm-attrs // {
-        src = ./../../.;
+        src = src;
         buildInputs = with pkgs; [ openssl zstd ];
         nativeBuildInputs = with pkgs;
           [ clang openssl pkg-config ] ++ pkgs.lib.optional stdenv.isDarwin
@@ -28,7 +29,7 @@
           cargoLock = common-attrs.src + "/cosmwasm/contracts/Cargo.lock";
           cargoToml = common-attrs.src + "/cosmwasm/contracts/Cargo.toml";
           dummySrc = crane.lib.mkDummySrc {
-            src = ./../../.;
+            src = src;
             cargoLock = common-attrs.src + "/cosmwasm/contracts/Cargo.lock";
           };
           cargoLockContents = builtins.readFile

@@ -1,10 +1,14 @@
 use crate::{NetworkId, UserOrigin};
 use alloc::vec::Vec;
-use codec::{Decode, Encode};
 use core::cmp::Ordering;
-use cosmwasm_std::Addr;
+
+use codec::{Decode, Encode};
 use scale_info::TypeInfo;
+
 use serde::{Deserialize, Serialize};
+
+#[cfg(feature = "cosmwasm")]
+use cosmwasm_std::Addr;
 
 /// Security associated with a bridge.
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
@@ -75,6 +79,7 @@ impl BridgeProtocol {
 	}
 }
 
+#[cfg(feature = "cosmwasm")]
 /// The Origin that executed the XCVM operation.
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[derive(Clone, PartialEq, Eq, PartialOrd, Debug, Serialize, Deserialize)]
@@ -83,6 +88,7 @@ pub enum CallOrigin {
 	Local { user: Addr },
 }
 
+#[cfg(feature = "cosmwasm")]
 impl CallOrigin {
 	/// Extract the user from a [`CallOrigin`].
 	/// No distinction is done for local or remote user in this case.
