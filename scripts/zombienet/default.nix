@@ -9,12 +9,12 @@ let
     filter = builtins.filter;
   };
 in with prelude; rec {
-  mkChannel = sender: recipient: [{
+  mkChannel = sender: recipient: {
     max_capacity = 8;
     max_message_size = 4096;
     recipient = recipient;
     sender = sender;
-  }];
+  };
 
   mkBidirectionalChannel = a: b: (mkChannel a b) ++ (mkChannel b a);
 
@@ -65,7 +65,7 @@ in with prelude; rec {
         recipient = ids;
       };
       unique = filter (x: x.sender != x.recipient) cross;
-    in map mkChannel unique;
+    in map (pair: mkChannel pair.sender pair.recipient) unique;
 
   mkRelaychainNode = { rpc_port ? null, ws_port ? null, name }:
     {

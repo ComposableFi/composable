@@ -68,7 +68,7 @@
             }];
           };
         in pkgs.writeShellApplication rec {
-          name = "rococo-local-dali-dev";
+          name = "zombienet-rococo-local-dali-dev";
           runtimeInputs = [ pkgs.nodejs pkgs.yq paritytech-zombienet ];
           text = ''
             printf '${builtins.toJSON config}' > ${name}.json
