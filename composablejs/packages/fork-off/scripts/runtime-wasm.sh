@@ -2,7 +2,7 @@
 set -e
 
 # Default binary version
-BINARY_VERSION=v1.0002
+BINARY_VERSION=v1.10002
 while getopts b: flag
 do
     case "${flag}" in

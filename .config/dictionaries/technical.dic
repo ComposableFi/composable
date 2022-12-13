@@ -73,6 +73,7 @@ bitfield
 bitfields
 bitvec
 bob
+bootnode
 bootnodes
 brif
 browserconfig
@@ -158,6 +159,7 @@ hadolint
 hasher
 hasura
 hevm
+hexdump
 hexlify
 hljs
 horiz
@@ -348,6 +350,7 @@ setglobal
 setlocal
 shortkey
 shrs
+signale
 skinparam
 Sighash
 smallvec
@@ -465,5 +468,3 @@ papaparse
 polkassembly
 sqlinit
 composablenodes
-hexdump
-bootnode
