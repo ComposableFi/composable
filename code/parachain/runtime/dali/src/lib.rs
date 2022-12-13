@@ -114,6 +114,7 @@ use transaction_payment::{Multiplier, TargetedFeeAdjustment};
 pub use xcmp::XcmConfig;
 
 use crate::{governance::PreimageByteDeposit, xcmp::XcmRouter};
+use crate::migrations::pablo_picasso_init_pools::PabloPicassoInitialPoolsMigration;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -1024,10 +1025,6 @@ impl lending::Config for Runtime {
 
 parameter_types! {
   pub PabloId: PalletId = PalletId(*b"pall_pab");
-  pub LbpMinSaleDuration: BlockNumber = 3 * HOURS;
-  pub LbpMaxSaleDuration: BlockNumber = 30 * DAYS;
-  pub LbpMaxInitialWeight: Permill = Permill::from_percent(95);
-  pub LbpMinFinalWeight: Permill = Permill::from_percent(5);
   pub TWAPInterval: u64 = (MILLISECS_PER_BLOCK as u64) * 10;
   pub const MaxStakingRewardPools: u32 = 10;
   pub const MillisecsPerBlock: u32 = MILLISECS_PER_BLOCK;
@@ -1055,6 +1052,7 @@ impl pablo::Config for Runtime {
 	type MsPerBlock = MillisecsPerBlock;
 	type PicaAssetId = PicaAssetId;
 	type PbloAssetId = PbloAssetId;
+	type RunOnGensisBuild = PabloPicassoInitialPoolsMigration;
 }
 
 parameter_types! {

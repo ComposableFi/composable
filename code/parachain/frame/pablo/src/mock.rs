@@ -225,6 +225,7 @@ impl pablo::Config for Test {
 	type MsPerBlock = MillisecsPerBlock;
 	type PicaAssetId = PicaAssetId;
 	type PbloAssetId = PbloAssetId;
+	type RunOnGensisBuild = ();
 }
 
 // Build genesis storage according to the mock runtime.

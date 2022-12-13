@@ -76,6 +76,7 @@ pub mod pallet {
 		},
 		transactional, BoundedBTreeMap, PalletId, RuntimeDebug,
 	};
+	use frame_support::traits::OnRuntimeUpgrade;
 	use sp_arithmetic::FixedPointOperand;
 
 	use composable_maths::dex::{
@@ -309,6 +310,9 @@ pub mod pallet {
 
 		type WeightInfo: WeightInfo;
 
+		// Massive hack to be able to inject the runtime hard coded currencies
+		type RunOnGensisBuild: OnRuntimeUpgrade;
+
 		/// AssetId of the PICA asset
 		#[pallet::constant]
 		type PicaAssetId: Get<Self::AssetId>;
@@ -350,6 +354,26 @@ pub mod pallet {
 	#[pallet::unbounded]
 	pub type PriceCumulativeState<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::PoolId, PriceCumulativeStateOf<T>, OptionQuery>;
+
+
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T: Config> {
+		_phantom: sp_std::marker::PhantomData<T>,
+	}
+
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			GenesisConfig { _phantom: Default::default() }
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			T::RunOnGensisBuild::on_runtime_upgrade();
+		}
+	}
 
 	pub(crate) enum PriceRatio {
 		Swapped,
