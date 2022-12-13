@@ -234,7 +234,7 @@ pub mod pallet {
 		Unsupported,
 		Ibc,
 		FailedToSerialize,
-    OutOfGas
+		OutOfGas,
 	}
 
 	#[pallet::config]
@@ -461,6 +461,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
+			let initial_gas = T::WeightInfo::instantiate(funds.len() as u32).saturating_add(gas);
 			let code_id = match code_identifier {
 				CodeIdentifier::CodeId(code_id) => code_id,
 				CodeIdentifier::CodeHash(code_hash) =>
@@ -471,7 +472,7 @@ pub mod pallet {
 			)?
 			.call(&mut shared, funds, message)
 			.map(|_| ());
-			Self::refund_gas(outcome, gas, shared.gas.remaining())
+			Self::refund_gas(outcome, initial_gas, shared.gas.remaining())
 		}
 
 		/// Execute a previously instantiated contract.
@@ -498,12 +499,13 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
+			let initial_gas = T::WeightInfo::execute(funds.len() as u32).saturating_add(gas);
 			let outcome = EntryPointCaller::<ExecuteCall>::setup(who, contract)?.call(
 				&mut shared,
 				funds,
 				message,
 			);
-			Self::refund_gas(outcome, gas, shared.gas.remaining())
+			Self::refund_gas(outcome, initial_gas, shared.gas.remaining())
 		}
 
 		/// Migrate a previously instantiated contract.
@@ -530,6 +532,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
+			let initial_gas = T::WeightInfo::migrate().saturating_add(gas);
 			let new_code_id = match new_code_identifier {
 				CodeIdentifier::CodeId(code_id) => code_id,
 				CodeIdentifier::CodeHash(code_hash) =>
@@ -540,7 +543,7 @@ pub mod pallet {
 				Default::default(),
 				message,
 			);
-			Self::refund_gas(outcome, gas, shared.gas.remaining())
+			Self::refund_gas(outcome, initial_gas, shared.gas.remaining())
 		}
 
 		/// Update the admin of a contract.
@@ -563,6 +566,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
+			let initial_gas = T::WeightInfo::update_admin().saturating_add(gas);
 			let info = Self::contract_info(&contract)?;
 			let outcome = Self::cosmwasm_call(
 				&mut shared,
@@ -585,7 +589,7 @@ pub mod pallet {
 				old_admin: info.admin,
 				new_admin,
 			});
-			Self::refund_gas(outcome, gas, shared.gas.remaining())
+			Self::refund_gas(outcome, initial_gas, shared.gas.remaining())
 		}
 
 		/// Clear the admin of a contract.
@@ -606,6 +610,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
+			let initial_gas = T::WeightInfo::clear_admin().saturating_add(gas);
 			let info = Self::contract_info(&contract)?;
 			let outcome = Self::cosmwasm_call(
 				&mut shared,
@@ -624,7 +629,7 @@ pub mod pallet {
 				},
 			);
 			Self::deposit_event(Event::<T>::AdminCleared { contract, old_admin: info.admin });
-			Self::refund_gas(outcome, gas, shared.gas.remaining())
+			Self::refund_gas(outcome, initial_gas, shared.gas.remaining())
 		}
 	}
 
@@ -758,7 +763,7 @@ pub mod pallet {
 				Err(e) => {
 					let e = match e {
 						CosmwasmVMError::Pallet(e) => e,
-            CosmwasmVMError::OutOfGas => Error::<T>::OutOfGas,
+						CosmwasmVMError::OutOfGas => Error::<T>::OutOfGas,
 						_ => Error::<T>::ContractTrapped,
 					};
 					Err(DispatchErrorWithPostInfo { error: e.into(), post_info })
