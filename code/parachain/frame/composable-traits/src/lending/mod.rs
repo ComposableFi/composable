@@ -27,6 +27,8 @@ pub enum CollateralRatio<T> {
 
 pub type CollateralLpAmountOf<T> = <T as DeFiEngine>::Balance;
 
+pub type LendAssetAmountOf<T> = <T as DeFiEngine>::Balance;
+
 pub type BorrowAmountOf<T> = <T as DeFiEngine>::Balance;
 
 #[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, PartialEq, Eq)]
@@ -248,6 +250,20 @@ pub trait Lending: DeFiEngine {
 
 	/// [`AccountId`][Self::AccountId] of the market instance
 	fn account_id(market_id: &Self::MarketId) -> Self::AccountId;
+
+	/// deposit asset to earn interest
+	fn vault_deposit(
+		market_id: &Self::MarketId,
+		account_id: &Self::AccountId,
+		amount: LendAssetAmountOf<Self>,
+	) -> Result<(), DispatchError>;
+
+	/// withdraw asset
+	fn vault_withdraw(
+		market_id: &Self::MarketId,
+		account_id: &Self::AccountId,
+		amount: LendAssetAmountOf<Self>,
+	) -> Result<(), DispatchError>;
 
 	/// Deposit collateral in order to borrow.
 	fn deposit_collateral(

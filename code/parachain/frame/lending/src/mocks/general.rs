@@ -423,6 +423,7 @@ impl pallet_lending::Config for Runtime {
 	type Oracle = Oracle;
 	type VaultId = VaultId;
 	type Vault = Vault;
+	type VaultLender = Vault;
 	type Event = Event;
 	type NativeCurrency = Balances;
 	type MultiCurrency = Tokens;
