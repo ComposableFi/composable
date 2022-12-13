@@ -33,7 +33,7 @@
         chain-spec = "dali-dev";
       }).script;
 
-      # Centauri Peristent Devnet
+      # Centauri Persistent Devnet
       devnet-centauri = pkgs.composable.mkDevnetProgram "devnet-centauri"
         (import ./.nix/devnet-specs/centauri.nix {
           inherit pkgs;
