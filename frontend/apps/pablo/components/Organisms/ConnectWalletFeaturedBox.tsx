@@ -1,12 +1,10 @@
-import useStore from "@/store/useStore";
+import { setUiState } from "@/store/ui/ui.slice";
 import { FeaturedBox, FeaturedBoxProps } from "../Molecules/FeaturedBox";
 
 export const ConnectWalletFeaturedBox: React.FC<FeaturedBoxProps> = ({
   ButtonProps,
   ...featuredBoxProps
 }) => {
-  const { openPolkadotModal } = useStore();
-
   return (
     <FeaturedBox
       title="Connect wallet"
@@ -16,7 +14,7 @@ export const ConnectWalletFeaturedBox: React.FC<FeaturedBoxProps> = ({
       ButtonProps={{
         label: "Connect Wallet",
         onClick: () => {
-          openPolkadotModal();
+          setUiState({ isPolkadotModalOpen: true });
         },
         ...ButtonProps
       }}

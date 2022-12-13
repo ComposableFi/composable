@@ -7,4 +7,7 @@ interface IInterpreter {
     function addOwners(address[] calldata newOwners) external;
 
     function removeOwners(address[] calldata newOwners) external;
+
+    function salt() external view returns (bytes memory);
+
 }

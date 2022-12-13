@@ -11,7 +11,7 @@ import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import {
   transactionStatusSnackbarMessage,
   SNACKBAR_TYPES,
-} from "../pools/addLiquidity/useAddLiquidity";
+} from "../addLiquidity/useAddLiquidity";
 import { updateStake } from "@/store/stakingRewards/stakingRewards.slice";
 import { decodeStake } from "@/defi/utils/stakingRewards";
 import { updateStakingRewardPool } from "@/updaters/stakingRewards/Updater";

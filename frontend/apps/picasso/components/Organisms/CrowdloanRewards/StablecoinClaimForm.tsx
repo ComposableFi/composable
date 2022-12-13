@@ -31,6 +31,7 @@ type StablecoinClaimFormProps = {
 export const StablecoinClaimForm: React.FC<StablecoinClaimFormProps> = ({
   disabled,
   availableToClaim,
+  totalRewards,
   claimedRewards,
   amountContributed,
   SS58Address,
@@ -85,7 +86,7 @@ export const StablecoinClaimForm: React.FC<StablecoinClaimFormProps> = ({
           <Grid item xs={12} md={6}>
             <BigNumberInput
               noBorder={true}
-              value={claimedRewards}
+              value={totalRewards}
               setter={(v: BigNumber) => {}}
               isValid={(_v: boolean) => {}}
               tokenId="pica"
@@ -96,13 +97,13 @@ export const StablecoinClaimForm: React.FC<StablecoinClaimFormProps> = ({
               disabled={readonlyTotalPicaVested}
               LabelProps={{
                 mainLabelProps: {
-                  label: "Claimed",
+                  label: "Total Rewards",
                   TypographyProps: {
                     fontSize: 16,
                   },
                   TooltipProps: {
                     title:
-                      "This is the total PICA you have claimed so far for your account",
+                      "This is the total PICA rewards based on your crowdloan contribution account.",
                     children: <></>,
                   },
                 },
@@ -136,7 +137,7 @@ export const StablecoinClaimForm: React.FC<StablecoinClaimFormProps> = ({
                   },
                   TooltipProps: {
                     title:
-                      "This is the total PICA rewards based on your crowdloan contribution for this account. This includes your vested amount plus your claimable amount.",
+                      "Unvested includes your claimed amount plus the vested amount available to claim (released) as per the linear vesting of the locked rewards.",
                     children: <></>,
                   },
                 },

@@ -9,7 +9,7 @@ use sp_core::{
 	H256,
 };
 
-use composable_traits::fnft::FnftAccountProxyType;
+use composable_traits::{account_proxy::AccountProxyWrapper, fnft::FnftAccountProxyType};
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{Everything, InstanceFilter},
@@ -64,7 +64,7 @@ frame_support::construct_runtime!(
 		Tokens: orml_tokens,
 		Assets: pallet_assets,
 		FinancialNft: pallet_fnft,
-		Proxy: pallet_account_proxy,
+		Proxy: pallet_proxy,
 		StakingRewards: crate,
 	}
 );
@@ -202,13 +202,14 @@ parameter_types! {
 	pub const FnftPalletId: PalletId = PalletId(*b"pal_fnft");
 }
 
+type AccountProxyWrapperInstance = AccountProxyWrapper<Test>;
 impl pallet_fnft::Config for Test {
 	type Event = Event;
 	type MaxProperties = ConstU32<16>;
 	type FinancialNftCollectionId = CurrencyId;
 	type FinancialNftInstanceId = FinancialNftInstanceId;
 	type ProxyType = ProxyType;
-	type AccountProxy = Proxy;
+	type AccountProxy = AccountProxyWrapperInstance;
 	type ProxyTypeSelector = FnftAccountProxyType;
 	type PalletId = FnftPalletId;
 }
@@ -220,7 +221,7 @@ parameter_types! {
 	pub ProxyPrice: u32 = 0;
 }
 
-impl pallet_account_proxy::Config for Test {
+impl pallet_proxy::Config for Test {
 	type Event = Event;
 	type Call = Call;
 	type Currency = ();

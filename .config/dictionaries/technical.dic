@@ -73,6 +73,7 @@ bitfield
 bitfields
 bitvec
 bob
+bootnode
 bootnodes
 brif
 browserconfig
@@ -84,6 +85,8 @@ cachix
 cdylib
 charlie
 chevdor
+cheatcode
+cheatcodes
 chrono
 cita
 claimunstake
@@ -107,6 +110,7 @@ crev # cargo-crev
 crowdloaning
 currentmemory
 DACP
+dappsys
 dalek
 deadnix
 devcontainers
@@ -154,6 +158,8 @@ gsutil
 hadolint
 hasher
 hasura
+hevm
+hexdump
 hexlify
 hljs
 horiz
@@ -269,6 +275,7 @@ perquintill
 perthing
 perthousand
 phragmen
+pingpong
 pkgconf
 pkgconfig
 pkgs
@@ -343,6 +350,7 @@ setglobal
 setlocal
 shortkey
 shrs
+signale
 skinparam
 Sighash
 smallvec
@@ -361,6 +369,7 @@ stakerclaimunstake
 startuml
 statemine
 stdenv
+stdstore
 structopt
 styleguide
 submessage
@@ -391,6 +400,7 @@ toolset
 tooltipped
 tooltiptext
 tput
+trimed
 truetype
 tsconfigs
 tsdx
@@ -399,6 +409,7 @@ typechain
 typegen
 typeorm
 udeps
+unescrow
 unbond
 unbonded
 unbonding
@@ -456,3 +467,5 @@ nosuid
 papaparse
 polkassembly
 structs
+sqlinit
+composablenodes

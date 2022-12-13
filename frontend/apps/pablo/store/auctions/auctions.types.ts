@@ -1,4 +1,4 @@
-import { LiquidityBootstrappingPool } from "@/defi/types";
+import { PabloLiquidityBootstrappingPool } from "shared";
 import BigNumber from "bignumber.js";
 
 export type LiquidityBootstrappingPoolStatistics = {
@@ -25,7 +25,7 @@ export interface PoolTradeHistory {
   walletAddress: string;
 }
 export interface AuctionsSlice {
-  activePool: LiquidityBootstrappingPool;
+  activePool: PabloLiquidityBootstrappingPool | null;
   activePoolStats: LiquidityBootstrappingPoolStatistics;
   spotPrices: Record<string, BigNumber>;
   activePoolTradeHistory: PoolTradeHistory[];

@@ -14,6 +14,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
+#![allow(incomplete_features)] // see other usage -
+#![feature(adt_const_params)]
 
 // Make the WASM binary available
 #[cfg(all(feature = "std", feature = "builtin-wasm"))]
@@ -22,12 +24,16 @@ pub const WASM_BINARY_V2: Option<&[u8]> = Some(include_bytes!(env!("PICASSO_RUNT
 pub const WASM_BINARY_V2: Option<&[u8]> = None;
 
 pub mod governance;
+mod migrations;
+mod prelude;
 mod weights;
+
 pub mod xcmp;
 pub use common::xcmp::{MaxInstructions, UnitWeightCost};
 pub use xcmp::XcmConfig;
 
 use governance::*;
+use prelude::*;
 
 use common::{
 	fees::{
@@ -54,7 +60,7 @@ use sp_runtime::{
 };
 
 use composable_support::rpc_helpers::SafeRpcWrapper;
-use sp_std::prelude::*;
+
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
@@ -77,7 +83,7 @@ pub use frame_support::{
 pub use governance::TreasuryAccount;
 
 use codec::{Codec, Encode, EncodeLike};
-use frame_support::traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade};
+use frame_support::traits::{fungibles, EqualPrivilegeOnly, InstanceFilter, OnRuntimeUpgrade};
 use frame_system as system;
 use scale_info::TypeInfo;
 use sp_runtime::AccountId32;
@@ -137,6 +143,7 @@ pub fn native_version() -> NativeVersion {
 	NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
 }
 
+use composable_traits::account_proxy::ProxyType;
 use orml_traits::{parameter_type_with_key, LockIdentifier};
 parameter_type_with_key! {
 	// Minimum amount an account has to hold to stay in state
@@ -400,7 +407,7 @@ impl asset_tx_payment::Config for Runtime {
 
 	type ConfigurationOrigin = EnsureRootOrTwoThirdNativeCouncil;
 
-	type ConfigurationExistentialDeposit = common::fees::NativeExistentialDeposit;
+	type ConfigurationExistentialDeposit = NativeExistentialDeposit;
 
 	type PayableCall = Call;
 
@@ -647,6 +654,53 @@ parameter_types! {
 	pub const LockCrowdloanRewards: bool = true;
 }
 
+impl InstanceFilter<Call> for ProxyType {
+	fn filter(&self, c: &Call) -> bool {
+		match self {
+			ProxyType::Any => true,
+			ProxyType::Governance => matches!(
+				c,
+				Call::Democracy(..) |
+					Call::Council(..) | Call::TechnicalCommittee(..) |
+					Call::Treasury(..) | Call::Utility(..)
+			),
+			ProxyType::CancelProxy => {
+				matches!(c, Call::Proxy(proxy::Call::reject_announcement { .. }))
+			},
+		}
+	}
+	fn is_superset(&self, o: &Self) -> bool {
+		match (self, o) {
+			(x, y) if x == y => true,
+			(ProxyType::Any, _) => true,
+			(_, ProxyType::Any) => false,
+			_ => false,
+		}
+	}
+}
+
+parameter_types! {
+	pub MaxProxies : u32 = 4;
+	pub MaxPending : u32 = 32;
+}
+// Minimal deposit required to place a proxy announcement as per native existential deposit.
+pub type ProxyPrice = NativeExistentialDeposit;
+
+impl proxy::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+	type Currency = Assets;
+	type ProxyType = ProxyType;
+	type ProxyDepositBase = ProxyPrice;
+	type ProxyDepositFactor = ProxyPrice;
+	type MaxProxies = MaxProxies;
+	type WeightInfo = weights::proxy::WeightInfo<Runtime>;
+	type MaxPending = MaxPending;
+	type CallHasher = BlakeTwo256;
+	type AnnouncementDepositBase = ProxyPrice;
+	type AnnouncementDepositFactor = ProxyPrice;
+}
+
 impl crowdloan_rewards::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
@@ -756,13 +810,14 @@ construct_runtime!(
 		CouncilMembership: membership::<Instance1> = 31,
 		Treasury: treasury::<Instance1> = 32,
 		Democracy: democracy::<Instance1> = 33,
-		TechnicalCollective: collective::<Instance2> = 70,
-		TechnicalMembership: membership::<Instance2> = 71,
+		TechnicalCommittee: collective::<Instance2> = 72,
+		TechnicalCommitteeMembership: membership::<Instance2> = 73,
 
 		// helpers/utilities
 		Scheduler: scheduler = 34,
 		Utility: utility = 35,
 		Preimage: preimage = 36,
+		Proxy: proxy = 37,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue = 40,
@@ -802,14 +857,6 @@ pub type SignedExtra = (
 	asset_tx_payment::ChargeAssetTxPayment<Runtime>,
 );
 
-// Migration for scheduler pallet to move from a plain Call to a CallOrHash.
-pub struct SchedulerMigrationV3;
-impl OnRuntimeUpgrade for SchedulerMigrationV3 {
-	fn on_runtime_upgrade() -> frame_support::weights::Weight {
-		Scheduler::migrate_v2_to_v3()
-	}
-}
-
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
 /// Executive: handles dispatch to the various modules.
@@ -819,7 +866,7 @@ pub type Executive = executive::Executive<
 	system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	SchedulerMigrationV3,
+	crate::migrations::Migrations,
 >;
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -845,6 +892,7 @@ mod benches {
 		[utility, Utility]
 		[identity, Identity]
 		[multisig, Multisig]
+		[proxy, Proxy]
 		[currency_factory, CurrencyFactory]
 		[bonded_finance, BondedFinance]
 		[vesting, Vesting]

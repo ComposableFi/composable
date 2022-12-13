@@ -2,10 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use codec::Encode;
 use composable_tests_helpers::test::{block::process_and_progress_blocks, helper::RuntimeTrait};
-use composable_traits::{
-	account_proxy::{AccountProxy, ProxyType},
-	fnft::FinancialNft,
-};
+use composable_traits::{account_proxy::ProxyType, fnft::FinancialNft};
 use frame_support::{
 	assert_noop, assert_ok,
 	traits::tokens::nonfungibles::{Create, Inspect, Transfer},

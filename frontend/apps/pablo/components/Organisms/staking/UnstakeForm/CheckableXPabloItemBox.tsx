@@ -47,9 +47,7 @@ export const CheckableXPabloItemBox: React.FC<CheckableXPabloItemBoxProps> = ({
   ...boxProps
 }) => {
   const theme = useTheme();
-
   const selected = xPablo.nftId === selectedXPabloId;
-
   const pabloAsset = useAsset(PBLO_ASSET_ID);
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedXPabloId?.(event.target.checked ? xPablo.nftId : undefined);
@@ -64,7 +62,7 @@ export const CheckableXPabloItemBox: React.FC<CheckableXPabloItemBoxProps> = ({
           onChange={handleChange}
           inputProps={{ "aria-label": "controlled" }}
         />
-        <BaseAsset icon={pabloAsset?.icon} label={`x-${pabloAsset?.symbol} ${xPablo.nftId}`} />
+        <BaseAsset icon={pabloAsset?.getIconUrl()} label={`x-${pabloAsset?.getSymbol()} ${xPablo.nftId}`} />
       </Box>
       <Typography variant="body1">
         {`${xPablo.lockedPrincipalAsset.toFormat()}(~$${xPablo.lockedPrincipalAsset.toFormat()})`}

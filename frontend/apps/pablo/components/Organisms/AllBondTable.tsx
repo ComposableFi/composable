@@ -1,37 +1,19 @@
 import {
+  Box,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Box,
-  Typography,
-  useTheme,
   Tooltip,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
-import { InfoOutlined, KeyboardArrowDown } from "@mui/icons-material";
+import React from "react";
+import { InfoOutlined } from "@mui/icons-material";
 import { TableHeader } from "@/defi/types";
-import { useRouter } from "next/router";
-import {
-  DEFAULT_NETWORK_ID,
-  fetchBondOffers,
-  fetchVestingSchedulesByBondOffers,
-} from "@/defi/utils";
-import {
-  extractUserBondedFinanceVestingScheduleAddedEvents,
-  fetchTotalPurchasedBondsByOfferIds,
-} from "@/defi/subsquid/bonds/helpers";
-import { useParachainApi, useSelectedAccount } from "substrate-react";
 import BondOfferRow from "./bonds/BondOfferRow";
-import {
-  putBondedOfferBondedVestingScheduleIds,
-  putBondOffersTotalPurchasedCount,
-  putBondedOfferVestingSchedules,
-  useBondOffersSlice,
-  putBondOffers,
-} from "@/store/bond/bond.slice";
+import { BondOffer, BondOfferReward } from "shared";
+import BigNumber from "bignumber.js";
 
 const tableHeaders: TableHeader[] = [
   {
@@ -54,54 +36,15 @@ const tableHeaders: TableHeader[] = [
 const BOND_LIMIT_TO_SHOW = 4;
 
 export const AllBondTable: React.FC = () => {
-  const theme = useTheme();
-  const router = useRouter();
-
-  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
-  const { bondOffers, bondedOfferVestingScheduleIds } = useBondOffersSlice();
-  const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
-
-  useEffect(() => {
-    if (parachainApi) {
-      fetchBondOffers(parachainApi).then(putBondOffers);
-    }
-  }, [parachainApi]);
-
-  useEffect(() => {
-    fetchTotalPurchasedBondsByOfferIds().then(
-      putBondOffersTotalPurchasedCount
-    );
-  }, []);
-
-  useEffect(() => {
-    if (selectedAccount && parachainApi) {
-      extractUserBondedFinanceVestingScheduleAddedEvents(
-        parachainApi,
-        selectedAccount.address
-      ).then(putBondedOfferBondedVestingScheduleIds);
-    }
-  }, [selectedAccount, parachainApi]);
-
-  useEffect(() => {
-    if (selectedAccount && parachainApi) {
-      fetchVestingSchedulesByBondOffers(
-        parachainApi,
-        selectedAccount.address,
-        bondOffers,
-        bondedOfferVestingScheduleIds
-      ).then(putBondedOfferVestingSchedules)
-    }
-  }, [selectedAccount, parachainApi, bondOffers, bondedOfferVestingScheduleIds]);
-
-  const [count, setCount] = useState(BOND_LIMIT_TO_SHOW);
-  const handleSeeMore = () => {
-    setCount(count + BOND_LIMIT_TO_SHOW);
-  };
-
-  const handleBondClick = (offerId: string) => {
-    router.push(`bond/select/${offerId}`);
-  };
-
+  const mockedOffer = new BondOffer(
+    new BigNumber(1),
+    new BigNumber(4),
+    "",
+    new BigNumber(0),
+    new BigNumber(1),
+    { finite: { returnIn: new BigNumber(1) } },
+    new BondOfferReward(new BigNumber(1), new BigNumber(0), new BigNumber(1))
+  );
   return (
     <TableContainer>
       <Table>
@@ -122,31 +65,15 @@ export const AllBondTable: React.FC = () => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {bondOffers.slice(0, count).map((bondOffer, index) => (
+          {[mockedOffer].map((bondOffer) => (
             <BondOfferRow
-              offerId={bondOffer.offerId.toString()}
-              key={bondOffer.offerId.toString()}
+              offerId={"fNFT 42"}
+              key={"fNFT 42"}
               bondOffer={bondOffer}
-              handleBondClick={handleBondClick}
             />
           ))}
         </TableBody>
       </Table>
-      {bondOffers.length > count && (
-        <Box
-          onClick={handleSeeMore}
-          mt={4}
-          display="flex"
-          gap={1}
-          justifyContent="center"
-          sx={{ cursor: "pointer" }}
-        >
-          <Typography textAlign="center" variant="body2">
-            See more
-          </Typography>
-          <KeyboardArrowDown sx={{ color: theme.palette.primary.main }} />
-        </Box>
-      )}
     </TableContainer>
   );
 };

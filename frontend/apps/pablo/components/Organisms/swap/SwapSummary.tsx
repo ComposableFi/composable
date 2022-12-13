@@ -1,15 +1,14 @@
 import { Box, BoxProps, TypographyProps } from "@mui/material";
 import BigNumber from "bignumber.js";
 import { Label } from "@/components";
-import { MockedAsset } from "@/store/assets/assets.types";
+import { Asset } from "shared";
 import { useEffect, useState } from "react";
 import { useParachainApi, useSelectedAccount } from "substrate-react";
 import { DEFAULT_NETWORK_ID, fromChainUnits, toChainUnits } from "@/defi/utils";
 
 export type SwapSummaryProps = {
-  quoteAsset: MockedAsset | undefined;
-  baseAsset: MockedAsset | undefined;
-
+  quoteAsset: Asset | undefined;
+  baseAsset: Asset | undefined;
   minimumReceived: BigNumber;
   priceImpact: BigNumber,
   PriceImpactProps?: TypographyProps,
@@ -40,8 +39,8 @@ export const SwapSummary: React.FC<SwapSummaryProps> = ({
   useEffect(() => {
     if (parachainApi && selectedAccount && baseAsset && quoteAsset) {
       let pair = {
-        base: baseAsset.network[DEFAULT_NETWORK_ID],
-        quote: quoteAsset.network[DEFAULT_NETWORK_ID],
+        base: baseAsset.getPicassoAssetId() as string,
+        quote: quoteAsset.getPicassoAssetId() as string,
       };
 
       parachainApi.tx.dexRouter
@@ -79,8 +78,8 @@ export const SwapSummary: React.FC<SwapSummaryProps> = ({
       <Label
         label="Price"
         BalanceProps={{
-          balance: `1 ${baseAsset?.symbol} = ${spotPrice.toFixed()} ${
-            quoteAsset?.symbol
+          balance: `1 ${baseAsset?.getSymbol()} = ${spotPrice.toFixed()} ${
+            quoteAsset?.getSymbol()
           }`,
         }}
         mb={2}
@@ -92,7 +91,7 @@ export const SwapSummary: React.FC<SwapSummaryProps> = ({
           title: "Minimum received",
         }}
         BalanceProps={{
-          balance: `${minimumReceived.toFixed()} ${baseAsset?.symbol}`,
+          balance: `${minimumReceived.toFixed()} ${baseAsset?.getSymbol()}`,
         }}
         mb={2}
       />
@@ -126,7 +125,7 @@ export const SwapSummary: React.FC<SwapSummaryProps> = ({
           title: "Liquidity provider fee",
         }}
         BalanceProps={{
-          balance: `${feeCharged.toFixed(4)} ${quoteAsset?.symbol}`,
+          balance: `${feeCharged.toFixed(4)} ${quoteAsset?.getSymbol()}`,
         }}
         mb={0}
       />

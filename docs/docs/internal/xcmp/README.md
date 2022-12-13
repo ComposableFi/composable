@@ -1,4 +1,4 @@
-# Overview
+# XCMP Overview
 
 - [Ping](./ping.plantuml)
 - [XCM examples](./xcm-examples.md)

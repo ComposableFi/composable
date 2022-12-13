@@ -3,6 +3,7 @@ import { Entity, Store } from "@subsquid/typeorm-store";
 import { randomUUID } from "crypto";
 import { ApiPromise, WsProvider } from "@polkadot/api";
 import { hexToU8a } from "@polkadot/util";
+import BigNumber from "bignumber.js";
 import { chain } from "./config";
 import { encodeAccount, getAmountWithoutDecimals } from "./utils";
 import {
@@ -18,7 +19,6 @@ import {
   LockedSource,
   PabloPool,
 } from "./model";
-import BigNumber from "bignumber.js";
 
 export async function get<T extends { id: string }>(
   store: Store,
@@ -118,7 +118,7 @@ export async function saveEvent(
     accountId,
     eventType,
     blockNumber: BigInt(ctx.block.height),
-    timestamp: BigInt(ctx.block.timestamp),
+    timestamp: new Date(ctx.block.timestamp),
   });
 
   // Store event
@@ -142,7 +142,7 @@ export async function saveActivity(
     id: randomUUID(),
     event,
     accountId,
-    timestamp: BigInt(ctx.block.timestamp),
+    timestamp: new Date(ctx.block.timestamp),
   });
 
   await ctx.store.save(activity);
@@ -226,7 +226,7 @@ export async function storeHistoricalLockedValue(
       oraclePrices[assetId] = BigInt(oraclePrice.price.toString());
     }
   } catch (error) {
-    console.error(error);
+    console.warn("Warning: Oracle not available.");
     return;
   }
 
@@ -254,7 +254,7 @@ export async function storeHistoricalLockedValue(
     event,
     amount: lastLockedValueAll + netLockedValue,
     currency: Currency.USD,
-    timestamp: BigInt(new Date(ctx.block.timestamp).valueOf()),
+    timestamp: new Date(ctx.block.timestamp),
     source: LockedSource.All,
   });
 
@@ -263,7 +263,7 @@ export async function storeHistoricalLockedValue(
     event,
     amount: lastLockedValueSource + netLockedValue,
     currency: Currency.USD,
-    timestamp: BigInt(new Date(ctx.block.timestamp).valueOf()),
+    timestamp: new Date(ctx.block.timestamp),
     source,
   });
 
@@ -289,13 +289,11 @@ export async function storeHistoricalVolume(
   try {
     const oraclePrice = await api.query.oracle.prices(quoteAssetId);
     if (!oraclePrice?.price) {
-      // TODO: handle missing oracle price
-      // NOTE: should we look at the latest known price for this asset?
       return;
     }
     assetPrice = BigInt(oraclePrice.price.toString());
   } catch (error) {
-    console.error(error);
+    console.warn("Warning: Oracle not available.");
     return;
   }
 
@@ -318,7 +316,7 @@ export async function storeHistoricalVolume(
     amount: lastVolume + volume,
     currency: Currency.USD,
     assetId: quoteAssetId,
-    timestamp: BigInt(new Date(ctx.block.timestamp).valueOf()),
+    timestamp: new Date(ctx.block.timestamp),
   });
 
   await ctx.store.save(historicalVolume);
@@ -331,13 +329,13 @@ export async function getLastLockedValue(
   ctx: EventHandlerContext<Store>,
   source: LockedSource
 ): Promise<bigint> {
-  const lastLockedValue = await ctx.store.find(HistoricalLockedValue, {
+  const lastLockedValue = await ctx.store.findOne(HistoricalLockedValue, {
     where: { source },
     order: { timestamp: "DESC" },
     relations: { event: true },
   });
 
-  return BigInt(lastLockedValue.length > 0 ? lastLockedValue[0].amount : 0);
+  return BigInt(lastLockedValue?.amount || 0);
 }
 
 /**
@@ -347,13 +345,13 @@ export async function getLastVolume(
   ctx: EventHandlerContext<Store>,
   assetId: string
 ): Promise<bigint> {
-  const lastVolume = await ctx.store.find(HistoricalVolume, {
+  const lastVolume = await ctx.store.findOne(HistoricalVolume, {
     where: { assetId },
     order: { timestamp: "DESC" },
     relations: { event: true },
   });
 
-  return BigInt(lastVolume.length > 0 ? lastVolume[0].amount : 0);
+  return BigInt(lastVolume?.amount || 0);
 }
 
 /**

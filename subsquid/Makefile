@@ -5,12 +5,9 @@ build:
 	@npm run build
 
 build-processor-image:
-	@docker build . --target processor -t squid-processor
+	@docker build . -t squid-processor
 
-build-query-node-image:
-	@docker build . --target query-node -t query-node
-
-build-images: build-processor-image build-query-node-image
+build-images: build-processor-image 
 
 serve:
 	@npx squid-graphql-server --subscriptions
@@ -18,6 +15,7 @@ serve:
 
 migrate:
 	@npx squid-typeorm-migration apply
+	npm run build && node lib/helperInit.js
 
 
 codegen:
@@ -43,6 +41,10 @@ down:
 explore:
 	rm -f daliDevVersions.jsonl
 	npx squid-substrate-metadata-explorer --chain ws://127.0.0.1:9988 --out daliDevVersions.jsonl
+
+
+sqlinit:
+	npm run build && node lib/helperInit.js
 
 
 rebuild:

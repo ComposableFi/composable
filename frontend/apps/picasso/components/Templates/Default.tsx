@@ -1,4 +1,5 @@
 import * as React from "react";
+import { FC, ReactNode } from "react";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -13,10 +14,10 @@ import { PolkadotConnect } from "../Organisms/Wallet/PolkadotConnect";
 import { GlobalSettings } from "../Organisms/Settings/GlobalSettings";
 
 type DefaultLayoutProps = {
-  breadcrumbs?: React.ReactNode[];
+  breadcrumbs?: ReactNode[];
 };
 
-export const DefaultLayout: React.FC<DefaultLayoutProps> = (props) => {
+export const DefaultLayout: FC<DefaultLayoutProps> = (props) => {
   const { children, breadcrumbs } = props;
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const isTablet = useTablet();
@@ -85,7 +86,12 @@ export const DefaultLayout: React.FC<DefaultLayoutProps> = (props) => {
             keepMounted: true, // Better open performance on mobile.
           }}
           sx={{
-            display: { xs: "block", sm: "block", md: "none" },
+            display: {
+              xs: "block",
+              sm: "block",
+              md: "none",
+              background: theme.palette.primary.dark,
+            },
             "& .MuiDrawer-paper": {
               boxSizing: "border-box",
               width: drawerWidth,

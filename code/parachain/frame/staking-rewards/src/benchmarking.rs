@@ -1,5 +1,4 @@
 //! Benchmarks
-use core::fmt::Debug;
 
 use crate::*;
 
@@ -18,7 +17,7 @@ use frame_support::{
 	traits::{fungibles::Mutate, Get, OriginTrait, TryCollect, UnixTime},
 	BoundedBTreeMap,
 };
-use frame_system::{EventRecord, RawOrigin};
+use frame_system::{pallet_prelude::OriginFor, EventRecord};
 use sp_arithmetic::{fixed_point::FixedU64, traits::SaturatedConversion, Perbill, Permill};
 use sp_runtime::traits::{BlockNumberProvider, One};
 use sp_std::collections::btree_map::BTreeMap;
@@ -88,11 +87,6 @@ benchmarks! {
 			T::Balance: From<u128>,
 			T::AssetId: From<u128>,
 			T: RuntimeTrait<crate::Event<T>> + Config,
-			<T as frame_system::Config>::Event:
-				Parameter + Member + Debug + Clone + TryInto<Event<T>> + From<Event<T>>,
-			<<T as frame_system::Config>::Event as TryInto<Event<T>>>::Error: Debug,
-			<T as frame_system::Config>::Origin:
-				OriginTrait<AccountId = <T as frame_system::Config>::AccountId>,
 	}
 
 	create_reward_pool {
@@ -100,7 +94,7 @@ benchmarks! {
 		let owner: T::AccountId = account("owner", 0, 0);
 		let pool_id = BASE_ASSET_ID.into();
 		let end_block = 5_u128.saturated_into();
-	}: _(RawOrigin::Root, get_reward_pool::<T>(owner.clone(), r))
+	}: _(OriginFor::<T>::root(), get_reward_pool::<T>(owner.clone(), r))
 	verify {
 		assert_last_event::<T>(Event::RewardPoolCreated { pool_id, owner, end_block }.into());
 	}
@@ -116,11 +110,11 @@ benchmarks! {
 		let pool_owner: T::AccountId = account("owner", 0, 0);
 
 		frame_system::Pallet::<T>::set_block_number(1.into());
-		<Pallet<T>>::create_reward_pool(RawOrigin::Root.into(), get_reward_pool::<T>(pool_owner, r))?;
+		<Pallet<T>>::create_reward_pool(OriginFor::<T>::root(), get_reward_pool::<T>(pool_owner, r))?;
 		<T::Assets as Mutate<T::AccountId>>::mint_into(asset_id, &staker, amount * 2.into())?;
 
 		frame_system::Pallet::<T>::set_block_number(2.into());
-	}: _(RawOrigin::Signed(staker.clone()), asset_id, amount, duration_preset)
+	}: _(OriginFor::<T>::signed(staker.clone()), asset_id, amount, duration_preset)
 	verify {
 		assert_last_event::<T>(
 			Event::Staked {
@@ -146,12 +140,12 @@ benchmarks! {
 		let pool_owner: T::AccountId = account("owner", 0, 0);
 
 		frame_system::Pallet::<T>::set_block_number(1.into());
-		<Pallet<T>>::create_reward_pool(RawOrigin::Root.into(), get_reward_pool::<T>(pool_owner, r))?;
+		<Pallet<T>>::create_reward_pool(OriginFor::<T>::root(), get_reward_pool::<T>(pool_owner, r))?;
 		<T::Assets as Mutate<T::AccountId>>::mint_into(asset_id, &staker, amount * 3.into()).expect("an asset minting expected");
 
 		frame_system::Pallet::<T>::set_block_number(2.into());
-		<Pallet<T>>::stake(RawOrigin::Signed(staker.clone()).into(), asset_id, amount, duration_preset)?;
-	}: _(RawOrigin::Signed(staker.clone()), STAKING_FNFT_COLLECTION_ID.into(), FNFT_INSTANCE_ID_BASE.into(), amount)
+		<Pallet<T>>::stake(OriginFor::<T>::signed(staker.clone()), asset_id, amount, duration_preset)?;
+	}: _(OriginFor::<T>::signed(staker), STAKING_FNFT_COLLECTION_ID.into(), FNFT_INSTANCE_ID_BASE.into(), amount)
 	verify {
 		assert_last_event::<T>(
 			Event::StakeAmountExtended {
@@ -172,12 +166,12 @@ benchmarks! {
 		let pool_owner: T::AccountId = account("owner", 0, 0);
 
 		frame_system::Pallet::<T>::set_block_number(1.into());
-		<Pallet<T>>::create_reward_pool(RawOrigin::Root.into(), get_reward_pool::<T>(pool_owner, r))?;
+		<Pallet<T>>::create_reward_pool(OriginFor::<T>::root(), get_reward_pool::<T>(pool_owner, r))?;
 		<T::Assets as Mutate<T::AccountId>>::mint_into(asset_id, &staker, amount * 2.into())?;
 
 		frame_system::Pallet::<T>::set_block_number(2.into());
-		<Pallet<T>>::stake(RawOrigin::Signed(staker.clone()).into(), asset_id, amount, duration_preset)?;
-	}: _(RawOrigin::Signed(staker.clone()), STAKING_FNFT_COLLECTION_ID.into(), FNFT_INSTANCE_ID_BASE.into())
+		<Pallet<T>>::stake(OriginFor::<T>::signed(staker.clone()), asset_id, amount, duration_preset)?;
+	}: _(OriginFor::<T>::signed(staker.clone()), STAKING_FNFT_COLLECTION_ID.into(), FNFT_INSTANCE_ID_BASE.into())
 	verify {
 		assert_last_event::<T>(
 			Event::Unstaked {
@@ -195,7 +189,7 @@ benchmarks! {
 
 		frame_system::Pallet::<T>::set_block_number(1.into());
 		Pallet::<T>::create_reward_pool(
-			RawOrigin::Root.into(),
+			OriginFor::<T>::root(),
 			get_reward_pool::<T>(user.clone(), r)
 		).expect("creating reward pool should succeed");
 
@@ -218,7 +212,7 @@ benchmarks! {
 			.try_into_validated()
 			.unwrap();
 
-	}: _(RawOrigin::Signed(user), STAKING_FNFT_COLLECTION_ID.into(), instance_id, ratio)
+	}: _(OriginFor::<T>::signed(user), STAKING_FNFT_COLLECTION_ID.into(), instance_id, ratio)
 
 	reward_accumulation_hook_reward_update_calculation {
 		let now = T::UnixTime::now().as_secs();
@@ -273,7 +267,7 @@ benchmarks! {
 		.collect::<BTreeMap<_, _>>()
 		.try_into()
 		.unwrap();
-	}: _(RawOrigin::Root, pool_id, updates)
+	}: _(OriginFor::<T>::root(), pool_id, updates)
 
 	claim {
 		let r in 1 .. T::MaxRewardConfigsPerPool::get();
@@ -285,12 +279,12 @@ benchmarks! {
 		let pool_owner: T::AccountId = account("owner", 0, 0);
 
 		frame_system::Pallet::<T>::set_block_number(1.into());
-		<Pallet<T>>::create_reward_pool(RawOrigin::Root.into(), get_reward_pool::<T>(pool_owner, r))?;
+		<Pallet<T>>::create_reward_pool(OriginFor::<T>::root(), get_reward_pool::<T>(pool_owner, r))?;
 		<T::Assets as Mutate<T::AccountId>>::mint_into(asset_id, &staker, amount * 2.into())?;
 
 		frame_system::Pallet::<T>::set_block_number(2.into());
-		<Pallet<T>>::stake(RawOrigin::Signed(staker.clone()).into(), asset_id, amount, duration_preset)?;
-	}: _(RawOrigin::Signed(staker.clone()), STAKING_FNFT_COLLECTION_ID.into(), FNFT_INSTANCE_ID_BASE.into())
+		<Pallet<T>>::stake(OriginFor::<T>::signed(staker.clone()), asset_id, amount, duration_preset)?;
+	}: _(OriginFor::<T>::signed(staker.clone()), STAKING_FNFT_COLLECTION_ID.into(), FNFT_INSTANCE_ID_BASE.into())
 	verify {
 		assert_last_event::<T>(Event::Claimed { owner: staker, fnft_collection_id: STAKING_FNFT_COLLECTION_ID.into(), fnft_instance_id: FNFT_INSTANCE_ID_BASE.into() }.into());
 	}
@@ -305,7 +299,7 @@ benchmarks! {
 		let pool_id = <Pallet<T> as ManageStaking>::create_staking_pool(get_reward_pool::<T>(user.clone(), 1)).unwrap();
 		<T::Assets as Mutate<T::AccountId>>::mint_into(asset_id, &user, amount * 2.into())?;
 
-	}: _(RawOrigin::Signed(user), pool_id,  asset_id, amount, true)
+	}: _(OriginFor::<T>::signed(user), pool_id,  asset_id, amount, true)
 
 	impl_benchmark_test_suite!(Pallet, crate::test::new_test_ext(), crate::runtime::Test);
 }

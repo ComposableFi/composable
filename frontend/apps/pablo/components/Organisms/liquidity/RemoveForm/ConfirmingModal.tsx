@@ -11,21 +11,23 @@ import {
   useTheme,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-
-import { useDispatch } from "react-redux";
-import { closeConfirmingModal } from "@/stores/ui/uiSlice";
 import BigNumber from "bignumber.js";
 import { useRemoveLiquidityState } from "@/store/removeLiquidity/hooks";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
-import { useParachainApi, useSelectedAccount, useExecutor, getSigner, useSigner } from "substrate-react";
-import { APP_NAME } from "@/defi/polkadot/constants";
+import {
+  useExecutor,
+  useParachainApi,
+  useSelectedAccount,
+  useSigner,
+} from "substrate-react";
 import { useRouter } from "next/router";
-import { MockedAsset } from "@/store/assets/assets.types";
 import { toChainUnits } from "@/defi/utils";
+import { setUiState } from "@/store/ui/ui.slice";
+import { Asset } from "shared";
 
 export type ConfirmingModalProps = {
-  baseAsset: MockedAsset;
-  quoteAsset: MockedAsset;
+  baseAsset: Asset;
+  quoteAsset: Asset;
   price1: BigNumber;
   price2: BigNumber;
   amount1: BigNumber;
@@ -56,19 +58,19 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
   const { poolId } = useRemoveLiquidityState();
 
   const theme = useTheme();
-  const dispatch = useDispatch();
 
   const [confirming, setConfirming] = useState<boolean>(false);
 
   const onCloseHandler = () => {
-    dispatch(closeConfirmingModal());
+    setUiState({ isConfirmingModalOpen: false });
   };
 
   const confirmRemoveHandler = async () => {
     // WIP
     if (
       parachainApi &&
-     signer !== undefined && executor &&
+      signer !== undefined &&
+      executor &&
       baseAsset &&
       quoteAsset &&
       selectedAccount
@@ -79,8 +81,7 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
           parachainApi.tx.pablo.removeLiquidity(
             parachainApi.createType("u128", poolId), // Pool ID
             parachainApi.createType("u128", lpRemoveAmount.dp(0).toString()), // LP Receive
-            parachainApi.createType("u128", 0), // Min Base
-            parachainApi.createType("u128", 0) // Min Quote
+            parachainApi.createType("BTreeMap<u128, u128>", 0, 0)
           ),
           selectedAccount.address,
           parachainApi,
@@ -90,19 +91,19 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
           },
           (txHash: string, events) => {
             console.log("Finalized ", txHash);
-            dispatch(closeConfirmingModal());
+            setUiState({ isConfirmingModalOpen: false });
             setConfirming(false);
             router.push("/pool/select/" + poolId);
           },
           (txError) => {
             console.log("Error ", txError);
-            dispatch(closeConfirmingModal());
+            setUiState({ isConfirmingModalOpen: false });
             setConfirming(false);
           }
         );
       } catch (err) {
         console.log(err);
-        dispatch(closeConfirmingModal());
+        setUiState({ isConfirmingModalOpen: false });
         setConfirming(false);
       }
     }
@@ -144,8 +145,8 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
               variant: "h6",
             }}
             BalanceProps={{
-              title: <BaseAsset icon={baseAsset.icon} pr={1} />,
-              balance: `${baseAsset.symbol}`,
+              title: <BaseAsset icon={baseAsset.getIconUrl()} pr={1} />,
+              balance: `${baseAsset.getSymbol()}`,
               BalanceTypographyProps: {
                 variant: "body1",
               },
@@ -163,8 +164,8 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
               variant: "h6",
             }}
             BalanceProps={{
-              title: <BaseAsset icon={quoteAsset.icon} pr={1} />,
-              balance: `${quoteAsset.symbol}`,
+              title: <BaseAsset icon={quoteAsset.getIconUrl()} pr={1} />,
+              balance: `${quoteAsset.getSymbol()}`,
               BalanceTypographyProps: {
                 variant: "body1",
               },
@@ -191,7 +192,7 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
             mt={4}
             label={`Price`}
             BalanceProps={{
-              balance: `1 ${quoteAsset.symbol} = ${price1} ${baseAsset.symbol}`,
+              balance: `1 ${quoteAsset.getSymbol()} = ${price1} ${baseAsset.getSymbol()}`,
               BalanceTypographyProps: {
                 variant: "body1",
               },
@@ -202,7 +203,7 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
             mt={2}
             label=""
             BalanceProps={{
-              balance: `1 ${baseAsset.symbol} = ${price2} ${quoteAsset.symbol}`,
+              balance: `1 ${baseAsset.getSymbol()} = ${price2} ${quoteAsset.getSymbol()}`,
               BalanceTypographyProps: {
                 variant: "body1",
               },
@@ -240,8 +241,8 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
             Waiting for confirmation
           </Typography>
           <Typography variant="subtitle1" mt={2} color="text.secondary">
-            Removing {`${percentage.times(lpBalance)}`} {baseAsset.symbol}/
-            {quoteAsset.symbol}
+            Removing {`${percentage.times(lpBalance)}`} {baseAsset.getSymbol()}/
+            {quoteAsset.getSymbol()}
           </Typography>
           <Typography
             variant="body1"

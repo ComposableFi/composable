@@ -28,6 +28,7 @@ std = ["composable-node/std"]
 [workspace]
 exclude = ["utils/extrinsics-docs-scraper", "integration-tests"]
 members = [
+  "services/cmc-api",
   "parachain/frame/*",
   "integration-tests/local-integration-tests",
   "parachain/node",
@@ -50,6 +51,7 @@ members = [
   "xcvm/lib/*",
   "xcvm/cosmwasm/contracts/*",
 ]
+resolver = "2"
 
 [profile.release]
 # Polkadot runtime requires unwinding.
@@ -61,6 +63,7 @@ inherits = "release"
 lto = true
 
 [profile.cosmwasm-contracts]
+codegen-units = 1
 debug = false
 debug-assertions = false
 inherits = "production"

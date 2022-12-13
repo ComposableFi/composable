@@ -71,9 +71,9 @@ mod constant_product {
 			fn range_inputs()
 			(
 				p_supply in 2_048_000_000_000_000..16_384_000_000_000_000_u128,
-				p_redeemed in 128_000_000_000_000..2_048_000_000_000_000_u128,
+				p_redeemed in 128_000_000_000_000..1_945_600_000_000_000_u128,
 				b_k in 16_384_000_000_000_000..Decimal::MAX.to_u128().expect("Decimal::MAX fits in u128"),
-				w_k in 25..100_u32,
+				w_k in 20..100_u32,
 			)
 			-> InputsAndOutputs {
 				InputsAndOutputs {
@@ -142,7 +142,6 @@ mod constant_product {
 		proptest! {
 			#![proptest_config(ProptestConfig::with_cases(10_000))]
 
-			#[ignore]
 			#[test]
 			fn no_unexpected_errors_in_range(i_and_o in range_inputs()) {
 			let res = compute_redeemed_for_lp(
@@ -179,11 +178,10 @@ mod constant_product {
 			}
 		}
 
-		fn generate_pool_assets(number_of_assets: u32) -> Vec<(u128, u128, Permill)> {
+		fn generate_pool_assets(number_of_assets: u32) -> Vec<(u128, Permill)> {
 			(0..number_of_assets)
 				.map(|n| {
 					(
-						0,
 						100_000_000_000_000 * (n + 1) as u128,
 						Permill::from_rational(1, number_of_assets),
 					)
@@ -204,8 +202,8 @@ mod constant_product {
 		#[test]
 		fn should_provide_correct_vales_on_fifty_fifty() {
 			let pool_assets = vec![
-				(0, 100_000_000_000_000_000, Permill::from_rational::<u32>(1, 2)),
-				(0, 300_000_000_000_000_000, Permill::from_rational::<u32>(1, 2)),
+				(100_000_000_000_000_000, Permill::from_rational::<u32>(1, 2)),
+				(300_000_000_000_000_000, Permill::from_rational::<u32>(1, 2)),
 			];
 			let f = Permill::zero();
 
@@ -224,7 +222,7 @@ mod constant_product {
 
 			#[test]
 			fn no_unexpected_errors_in_range(input in first_deposit_range_inputs()) {
-				let pool_assets = generate_pool_assets(dbg!(input.number_of_assets));
+				let pool_assets = generate_pool_assets(input.number_of_assets);
 
 				let res = compute_first_deposit_lp_(&pool_assets, input.f);
 

@@ -1,5 +1,1 @@
-export * from "./relaychain"
-export * from "./picasso"
-export * from "./parachain"
-export * from "./karura"
-export * from "./ksm"
+export * from "./utils";

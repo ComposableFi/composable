@@ -1,10 +1,8 @@
 # Terms of Use
-As of November 16, 2022
+As of December 13, 2022
 
-These Terms of Use (“Terms”) constitute a binding and enforceable legal contract between Composable Finance Ltd. 
-and its affiliates (“Composable,” “we,” “us,” or the “Company”) and you, an end user of the services (“you” or "User”) 
-at https://www.composable.finance and https://picasso.xyz (the “Services”). These Terms also include any guidelines, 
-announcements, additional terms, policies, and disclaimers made available or issued by us from time to time. 
+These Terms of Use (“Terms”) constitute a binding and enforceable legal contract between Composable Finance Ltd. and its affiliates (“Composable,” “we,” “us,” or the “Company”) and you, an end user of the services (“you” or “User”) at https://www.composable.finance, https://picasso.xyz and https://tools.xcvm.dev/ (the “Services”).
+These Terms also include any guidelines, announcements, additional terms, policies, and disclaimers made available or issued by us from time to time. 
 By accessing, using or clicking on our website (and all related subdomains) or its mobile applications (the “Site”) or
 accessing, using or attempting to use the Services, you agree that you have read, understood, 
 and are bound by these Terms and that you shall comply with the requirements listed herein. 

@@ -2,15 +2,14 @@ import {
   Arg,
   Field,
   InputType,
-  Int,
   ObjectType,
   Query,
   Resolver,
 } from "type-graphql";
 import type { EntityManager } from "typeorm";
-import { IsDateString, IsEnum, Min } from "class-validator";
+import { IsEnum } from "class-validator";
 import { HistoricalLockedValue, LockedSource } from "../../model";
-import { getTimelineParams } from "./common";
+import { getStartAndStep } from "./common";
 
 @ObjectType()
 export class TotalValueLocked {
@@ -30,17 +29,8 @@ export class TotalValueLocked {
 
 @InputType()
 export class TotalValueLockedInput {
-  @Field(() => Int, { nullable: false })
-  @Min(1)
-  intervalMinutes!: number;
-
-  @Field(() => String, { nullable: true })
-  @IsDateString()
-  dateFrom?: string;
-
-  @Field(() => String, { nullable: true })
-  @IsDateString()
-  dateTo?: string;
+  @Field(() => String, { nullable: false })
+  range!: string;
 
   @Field(() => String, { nullable: true, defaultValue: LockedSource.All })
   @IsEnum(LockedSource, {
@@ -58,37 +48,44 @@ export class TotalValueLockedResolver {
   async totalValueLocked(
     @Arg("params", { validate: true }) input: TotalValueLockedInput
   ): Promise<TotalValueLocked[]> {
-    const { intervalMinutes, dateFrom, dateTo, source } = input;
-    const { where, params } = getTimelineParams(
-      intervalMinutes,
-      dateFrom,
-      dateTo
-    );
+    const { range, source } = input;
 
     const manager = await this.tx();
 
-    const rows: {
-      period: string;
-      total_value_locked: string;
-      source: string;
-    }[] = await manager.getRepository(HistoricalLockedValue).query(
-      `
+    const { startHoursAgo, step } = getStartAndStep(range);
+
+    const rows: { period: string; total_value_locked: string }[] = await manager
+      .getRepository(HistoricalLockedValue)
+      .query(
+        `
+          WITH range AS (
             SELECT
-              round(timestamp / $1) * $1 as period,
-              max(amount) as total_value_locked
-            FROM historical_locked_value
-            WHERE ${where.join(" AND ")}
-            AND source = '${source}'
-            GROUP BY period
-            ORDER BY period DESC
-        `,
-      params
-    );
+              generate_series (
+                ${startHoursAgo},
+                0,
+                ${-step}
+              ) AS hour
+          )
+          SELECT
+              date_trunc('hour', current_timestamp) - hour * interval '1 hour' as period,
+              coalesce(hourly_total_value_locked(hour, '${source}'), 0) as total_value_locked
+          FROM range
+          UNION
+          (SELECT
+              CURRENT_TIMESTAMP as period,
+              COALESCE(amount, 0) as total_value_locked
+          FROM historical_locked_value
+          WHERE source = '${source}'
+          ORDER BY period DESC
+          LIMIT 1)
+          ORDER BY period;
+          `
+      );
 
     return rows.map(
       (row) =>
         new TotalValueLocked({
-          date: new Date(parseInt(row.period, 10)).toISOString(),
+          date: new Date(row.period).toISOString(),
           totalValueLocked: BigInt(row.total_value_locked),
           source,
         })

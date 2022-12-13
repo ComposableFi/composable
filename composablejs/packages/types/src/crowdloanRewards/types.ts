@@ -65,11 +65,17 @@ export interface ComposableTraitsBondedFinanceBondOfferReward extends Struct {
 /** @name ComposableTraitsCallFilterCallFilterEntry */
 export interface ComposableTraitsCallFilterCallFilterEntry extends Null {}
 
+/** @name ComposableTraitsCurrencyRational64 */
+export interface ComposableTraitsCurrencyRational64 extends Null {}
+
 /** @name ComposableTraitsDefiSell */
 export interface ComposableTraitsDefiSell extends Null {}
 
 /** @name ComposableTraitsDefiTake */
 export interface ComposableTraitsDefiTake extends Null {}
+
+/** @name ComposableTraitsDexAssetAmount */
+export interface ComposableTraitsDexAssetAmount extends Null {}
 
 /** @name ComposableTraitsDexConsantProductPoolInfo */
 export interface ComposableTraitsDexConsantProductPoolInfo extends Null {}
@@ -237,6 +243,12 @@ export interface PalletAssetsRegistryForeignMetadata extends Null {}
 
 /** @name PalletCollatorSelectionCandidateInfo */
 export interface PalletCollatorSelectionCandidateInfo extends Null {}
+
+/** @name PalletCosmwasmCodeIdentifier */
+export interface PalletCosmwasmCodeIdentifier extends Null {}
+
+/** @name PalletCosmwasmInstrumentCostRules */
+export interface PalletCosmwasmInstrumentCostRules extends Null {}
 
 /** @name PalletCrowdloanRewardsModelsEcdsaSignature */
 export interface PalletCrowdloanRewardsModelsEcdsaSignature extends EcdsaSignature {}

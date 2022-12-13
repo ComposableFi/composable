@@ -10,7 +10,7 @@ import {
 import React from "react";
 import { TableHeader } from "@/defi/types";
 import { BoxWrapper } from "../BoxWrapper";
-import { usePoolsWithLpBalance } from "@/store/hooks/overview/usePoolsWithLpBalance";
+import { usePoolsWithLpBalance } from "@/defi/hooks/overview/usePoolsWithLpBalance";
 import { NoPositionsPlaceholder } from "./NoPositionsPlaceholder";
 import { OVERVIEW_ERRORS } from "./errors";
 import LiquidityProviderPositionRow from "./LiquidityProviderPositionRow";
