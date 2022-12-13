@@ -11,8 +11,8 @@ different AMM-types, to better optimize for their needs. As such users can selec
 efficiency, less slippage, and incentivize a use to trade more. Greater volume leads to higher transaction fees, which 
 are all distributed back to liquidity providers (LPers) and PBLO token holders.
 
-On launch Pablo will support Constant product pools based on [BalancersFi weighted math], 
-later on followed by Uniswap 50/50 pools, Stableswap pools, as well as our custom LBP implementation. 
+On launch Pablo will support dual asset Constant product(x * y = k) pools based on [BalancersFi weighted math], 
+later on followed by BalancerFi based Stableswap pools, as well as LBP implementation. 
 Stableswap pools allow for superior trading of stablecoins or assets of the same price, 
 providing greater yield to LPs, and less price slippage for traders. 
 Balancer pools, which are commonly deployed as 80/20 pools, 
