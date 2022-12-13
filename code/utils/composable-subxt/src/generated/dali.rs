@@ -11537,7 +11537,7 @@ pub mod api {
 			}
 		}
 		#[doc = "\n\t\t\tThe [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted\n\t\t\tby this pallet.\n\t\t\t"]
-		pub type Event = runtime_types::pallet_account_proxy::pallet::Event;
+		pub type Event = runtime_types::pallet_proxy::pallet::Event;
 		pub mod events {
 			use super::runtime_types;
 			#[derive(
@@ -11683,7 +11683,7 @@ pub mod api {
 				) -> ::subxt::storage::address::StaticStorageAddress<
 					::subxt::metadata::DecodeStaticType<(
 						runtime_types::sp_runtime::bounded::bounded_vec::BoundedVec<
-							runtime_types::pallet_account_proxy::Announcement<
+							runtime_types::pallet_proxy::Announcement<
 								::subxt::ext::sp_core::crypto::AccountId32,
 								::subxt::ext::sp_core::H256,
 								::core::primitive::u32,
@@ -11715,7 +11715,7 @@ pub mod api {
 				) -> ::subxt::storage::address::StaticStorageAddress<
 					::subxt::metadata::DecodeStaticType<(
 						runtime_types::sp_runtime::bounded::bounded_vec::BoundedVec<
-							runtime_types::pallet_account_proxy::Announcement<
+							runtime_types::pallet_proxy::Announcement<
 								::subxt::ext::sp_core::crypto::AccountId32,
 								::subxt::ext::sp_core::H256,
 								::core::primitive::u32,
@@ -27226,7 +27226,7 @@ pub mod api {
 				#[codec(index = 36)]
 				Preimage(runtime_types::pallet_preimage::pallet::Call),
 				#[codec(index = 37)]
-				Proxy(runtime_types::pallet_account_proxy::pallet::Call),
+				Proxy(runtime_types::pallet_proxy::pallet::Call),
 				#[codec(index = 40)]
 				XcmpQueue(runtime_types::cumulus_pallet_xcmp_queue::pallet::Call),
 				#[codec(index = 41)]
@@ -27327,7 +27327,7 @@ pub mod api {
 				#[codec(index = 36)]
 				Preimage(runtime_types::pallet_preimage::pallet::Event),
 				#[codec(index = 37)]
-				Proxy(runtime_types::pallet_account_proxy::pallet::Event),
+				Proxy(runtime_types::pallet_proxy::pallet::Event),
 				#[codec(index = 40)]
 				XcmpQueue(runtime_types::cumulus_pallet_xcmp_queue::pallet::Event),
 				#[codec(index = 41)]
@@ -28480,7 +28480,7 @@ pub mod api {
 				}
 			}
 		}
-		pub mod pallet_account_proxy {
+		pub mod pallet_proxy {
 			use super::runtime_types;
 			pub mod pallet {
 				use super::runtime_types;

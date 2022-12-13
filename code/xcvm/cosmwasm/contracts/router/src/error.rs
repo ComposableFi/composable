@@ -12,4 +12,7 @@ pub enum ContractError {
 
 	#[error("Caller is not authorized to take this action")]
 	NotAuthorized,
+
+	#[error("The user did not provide enough fund to cover the execution.")]
+	InsufficientFunds,
 }

@@ -249,6 +249,7 @@ pub mod pallet {
 				*assets_vec.get(0).expect("Must exist"),
 				*assets_vec.get(1).expect("Must exist"),
 			);
+
 			<Self as Amm>::remove_liquidity(&who, asset_pair, lp_amount, min_receive)?;
 			Ok(())
 		}
@@ -429,15 +430,10 @@ pub mod pallet {
 		fn redeemable_assets_for_lp_tokens(
 			pool_id: Self::PoolId,
 			lp_amount: Self::Balance,
-			min_expected_amounts: BTreeMap<Self::AssetId, Self::Balance>,
 		) -> Result<RedeemableAssets<Self::AssetId, Self::Balance>, DispatchError> {
 			let (route, _reverse) = Self::get_route(pool_id).ok_or(Error::<T>::NoRouteFound)?;
 			match route[..] {
-				[pool_id] => T::Pablo::redeemable_assets_for_lp_tokens(
-					pool_id,
-					lp_amount,
-					min_expected_amounts,
-				),
+				[pool_id] => T::Pablo::redeemable_assets_for_lp_tokens(pool_id, lp_amount),
 				_ => Err(Error::<T>::UnsupportedOperation.into()),
 			}
 		}
@@ -446,16 +442,10 @@ pub mod pallet {
 			who: &Self::AccountId,
 			pool_id: Self::PoolId,
 			lp_amount: Self::Balance,
-			min_expected_amounts: BTreeMap<Self::AssetId, Self::Balance>,
 		) -> Result<RemoveLiquiditySimulationResult<Self::AssetId, Self::Balance>, DispatchError> {
 			let (route, _reverse) = Self::get_route(pool_id).ok_or(Error::<T>::NoRouteFound)?;
 			match route[..] {
-				[pool_id] => T::Pablo::simulate_remove_liquidity(
-					who,
-					pool_id,
-					lp_amount,
-					min_expected_amounts,
-				),
+				[pool_id] => T::Pablo::simulate_remove_liquidity(who, pool_id, lp_amount),
 				_ => Err(Error::<T>::UnsupportedOperation.into()),
 			}
 		}

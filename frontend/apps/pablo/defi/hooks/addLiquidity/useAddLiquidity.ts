@@ -6,7 +6,7 @@ import { useSnackbar, VariantType } from "notistack";
 import { Signer } from "@polkadot/api/types";
 import { useCallback, useMemo } from "react";
 import { setUiState } from "@/store/ui/ui.slice";
-import { PabloConstantProductPool } from "shared";
+import { DualAssetConstantProduct } from "shared";
 import BigNumber from "bignumber.js";
 import router from "next/router";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
@@ -47,7 +47,7 @@ export const useAddLiquidity = ({
   parachainApi: ApiPromise | undefined;
   assetOne: string | undefined;
   assetTwo: string | undefined;
-  pool: PabloConstantProductPool | undefined;
+  pool: DualAssetConstantProduct | undefined;
   assetOneAmount: BigNumber;
   assetTwoAmount: BigNumber;
   lpReceiveAmount: BigNumber;
@@ -62,8 +62,8 @@ export const useAddLiquidity = ({
         quoteAmount: undefined,
       };
 
-    const pair = pool.getPair();
-    let isReversed = pair.getBaseAsset().toString() !== assetOne;
+    const pair = Object.keys(pool.getAssets().assets);
+    let isReversed = pair[0].toString() !== assetOne;
     return {
       baseAmount: toChainUnits(
         isReversed ? assetTwoAmount : assetOneAmount
@@ -81,10 +81,17 @@ export const useAddLiquidity = ({
   const onTxReady = useCallback(
     (transactionHash: string) => {
       enqueueSnackbar(
-        transactionStatusSnackbarMessage(TxOrigin, transactionHash, "Initiated"),
+        transactionStatusSnackbarMessage(
+          TxOrigin,
+          transactionHash,
+          "Initiated"
+        ),
         SNACKBAR_TYPES.INFO
       );
-      setUiState({ isConfirmingSupplyModalOpen: true, isConfirmSupplyModalOpen: false });
+      setUiState({
+        isConfirmingSupplyModalOpen: true,
+        isConfirmSupplyModalOpen: false,
+      });
     },
     [enqueueSnackbar]
   );
@@ -92,7 +99,11 @@ export const useAddLiquidity = ({
   const onTxFinalized = useCallback(
     (transactionHash: string, _eventRecords: any[]) => {
       enqueueSnackbar(
-        transactionStatusSnackbarMessage(TxOrigin, transactionHash, "Finalized"),
+        transactionStatusSnackbarMessage(
+          TxOrigin,
+          transactionHash,
+          "Finalized"
+        ),
         SNACKBAR_TYPES.SUCCESS
       );
       resetAddLiquiditySlice();
@@ -135,8 +146,11 @@ export const useAddLiquidity = ({
       await executor.execute(
         parachainApi.tx.pablo.addLiquidity(
           pool.getPoolId() as string,
-          baseAmount,
-          quoteAmount,
+          parachainApi.createType(
+            "BTreeMap<u128, u128>",
+            baseAmount,
+            quoteAmount
+          ),
           _lpReceiveAmount,
           true
         ),
@@ -154,6 +168,20 @@ export const useAddLiquidity = ({
       );
       setUiState({ isConfirmingSupplyModalOpen: false });
     }
-  }, [selectedAccount, parachainApi, executor, assetOne, baseAmount, quoteAmount, assetTwo, signer, pool, _lpReceiveAmount, onTxReady, onTxFinalized, onTxError, enqueueSnackbar]);
-
+  }, [
+    selectedAccount,
+    parachainApi,
+    executor,
+    assetOne,
+    baseAmount,
+    quoteAmount,
+    assetTwo,
+    signer,
+    pool,
+    _lpReceiveAmount,
+    onTxReady,
+    onTxFinalized,
+    onTxError,
+    enqueueSnackbar,
+  ]);
 };

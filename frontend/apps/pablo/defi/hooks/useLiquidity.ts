@@ -22,18 +22,10 @@ export function useLiquidity(
             return;
         }
 
-
         const assets = Object.values(tokens);
-        const base = liquidityPool.getPair().getBaseAsset();
-        const quote = liquidityPool.getPair().getQuoteAsset();
-
-        const baseAsset = assets.find(asset => base.eq(
-            asset.getPicassoAssetId(true) as BigNumber
-        ));
-
-        const quoteAsset = assets.find(asset => quote.eq(
-            asset.getPicassoAssetId(true) as BigNumber
-        ));
+        const poolPair = Object.keys(liquidityPool.getAssets().assets);
+        const baseAsset = assets.find(asset => (asset.getPicassoAssetId(true) as BigNumber).eq(poolPair[0]))
+        const quoteAsset = assets.find(asset => (asset.getPicassoAssetId(true) as BigNumber).eq(poolPair[1]))
 
         const accountId = liquidityPool.getAccountId();
         if (baseAsset) baseAsset.balanceOf(accountId).then(setBaseAmount)

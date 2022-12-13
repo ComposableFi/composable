@@ -7,7 +7,6 @@ export const TransferKeepAliveSwitch = () => {
 
   return (
     <TextSwitch
-      disabled={true}
       label="Keep alive"
       checked={keepAlive}
       TooltipProps={{

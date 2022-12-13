@@ -67,7 +67,6 @@ pub trait Amm {
 	fn redeemable_assets_for_lp_tokens(
 		pool_id: Self::PoolId,
 		lp_amount: Self::Balance,
-		min_expected_amounts: BTreeMap<Self::AssetId, Self::Balance>,
 	) -> Result<RedeemableAssets<Self::AssetId, Self::Balance>, DispatchError>
 	where
 		Self::AssetId: sp_std::cmp::Ord;
@@ -88,7 +87,6 @@ pub trait Amm {
 		who: &Self::AccountId,
 		pool_id: Self::PoolId,
 		lp_amount: Self::Balance,
-		min_expected_amounts: BTreeMap<Self::AssetId, Self::Balance>,
 	) -> Result<RemoveLiquiditySimulationResult<Self::AssetId, Self::Balance>, DispatchError>
 	where
 		Self::AssetId: sp_std::cmp::Ord;
@@ -286,6 +284,7 @@ pub struct BasicPoolInfo<
 	/// Owner of pool
 	pub owner: AccountId,
 	/// Swappable assets with their normalized(sum of weights = 1) weights
+	/// REVIEW(benluelo): Make this a newtype that upholds the "weights sum must be 1" invariant?
 	pub assets_weights: BoundedBTreeMap<AssetId, Permill, MaxAssets>,
 	/// AssetId of LP token
 	pub lp_token: AssetId,

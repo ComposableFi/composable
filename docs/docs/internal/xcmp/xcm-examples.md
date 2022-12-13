@@ -1,3 +1,7 @@
+---
+title: XCM examples
+---
+
 # Overview
 
 List of useful to have XCM messages working for testing and playbooks.

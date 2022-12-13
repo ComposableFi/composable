@@ -26,6 +26,8 @@ pub const WASM_BINARY_V2: Option<&[u8]> = None;
 extern crate alloc;
 
 mod governance;
+mod migrations;
+mod prelude;
 mod versions;
 mod weights;
 pub mod xcmp;
@@ -87,7 +89,10 @@ pub use frame_support::{
 
 use codec::{Codec, Encode, EncodeLike};
 use common::fees::WellKnownForeignToNativePriceConverter;
-use composable_traits::{account_proxy::ProxyType, fnft::FnftAccountProxyType};
+use composable_traits::{
+	account_proxy::{AccountProxyWrapper, ProxyType},
+	fnft::FnftAccountProxyType,
+};
 use frame_support::{
 	traits::{
 		fungibles, ConstBool, ConstU32, EqualPrivilegeOnly, InstanceFilter, OnRuntimeUpgrade,
@@ -668,7 +673,7 @@ impl InstanceFilter<Call> for ProxyType {
 			),
 			ProxyType::CancelProxy => {
 				// TODO (vim): We might not need this
-				matches!(c, Call::Proxy(pallet_account_proxy::Call::reject_announcement { .. }))
+				matches!(c, Call::Proxy(proxy::Call::reject_announcement { .. }))
 			},
 		}
 	}
@@ -689,7 +694,7 @@ parameter_types! {
 	pub ProxyPrice: Balance = 0;
 }
 
-impl pallet_account_proxy::Config for Runtime {
+impl proxy::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
 	type Currency = Assets;
@@ -697,13 +702,14 @@ impl pallet_account_proxy::Config for Runtime {
 	type ProxyDepositBase = ProxyPrice;
 	type ProxyDepositFactor = ProxyPrice;
 	type MaxProxies = MaxProxies;
-	type WeightInfo = weights::account_proxy::WeightInfo<Runtime>;
+	type WeightInfo = weights::proxy::WeightInfo<Runtime>;
 	type MaxPending = MaxPending;
 	type CallHasher = BlakeTwo256;
 	type AnnouncementDepositBase = ProxyPrice;
 	type AnnouncementDepositFactor = ProxyPrice;
 }
 
+type AccountProxyWrapperInstance = AccountProxyWrapper<Runtime>;
 parameter_types! {
 	pub const FnftPalletId: PalletId = PalletId(*b"pal_fnft");
 }
@@ -714,7 +720,7 @@ impl pallet_fnft::Config for Runtime {
 	type FinancialNftCollectionId = CurrencyId;
 	type FinancialNftInstanceId = FinancialNftInstanceId;
 	type ProxyType = ProxyType;
-	type AccountProxy = Proxy;
+	type AccountProxy = AccountProxyWrapperInstance;
 	type ProxyTypeSelector = FnftAccountProxyType;
 	type PalletId = FnftPalletId;
 }
@@ -1206,7 +1212,7 @@ construct_runtime!(
 		Scheduler: scheduler = 34,
 		Utility: utility = 35,
 		Preimage: preimage = 36,
-		Proxy: pallet_account_proxy = 37,
+		Proxy: proxy = 37,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue = 40,
@@ -1263,13 +1269,6 @@ pub type SignedExtra = (
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
 
-// Migration for scheduler pallet to move from a plain Call to a CallOrHash.
-pub struct SchedulerMigrationV3;
-impl OnRuntimeUpgrade for SchedulerMigrationV3 {
-	fn on_runtime_upgrade() -> frame_support::weights::Weight {
-		Scheduler::migrate_v2_to_v3()
-	}
-}
 /// Executive: handles dispatch to the various modules.
 pub type Executive = executive::Executive<
 	Runtime,
@@ -1277,7 +1276,7 @@ pub type Executive = executive::Executive<
 	system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	SchedulerMigrationV3,
+	migrations::Migrations,
 >;
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -1314,7 +1313,7 @@ mod benches {
 		[assets_registry, AssetsRegistry]
 		[pablo, Pablo]
 		[pallet_staking_rewards, StakingRewards]
-		[pallet_account_proxy, Proxy]
+		[proxy, Proxy]
 		[dex_router, DexRouter]
 		[cosmwasm, Cosmwasm]
 	);
@@ -1428,7 +1427,7 @@ impl_runtime_apis! {
 		) -> RemoveLiquiditySimulationResult<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>> {
 			let min_expected_amounts: BTreeMap<_, _> = min_expected_amounts.iter().map(|(k, v)| (k.0, v.0)).collect();
 			let default_removed_assets = min_expected_amounts.keys().map(|k| (*k, 0_u128)).collect::<BTreeMap<_,_>>();
-			let simulate_remove_liquidity_result = <Pablo as Amm>::simulate_remove_liquidity(&who.0, pool_id.0, lp_amount.0, min_expected_amounts)
+			let simulate_remove_liquidity_result = <Pablo as Amm>::simulate_remove_liquidity(&who.0, pool_id.0, lp_amount.0)
 				.unwrap_or(
 					RemoveLiquiditySimulationResult{
 						assets: default_removed_assets

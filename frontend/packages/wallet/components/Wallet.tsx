@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { FC, useState } from "react";
 import { ConnectionStatus } from "./ConnectionStatus";
 import { ConnectionModal } from "./ConnectionModal";
 import { WalletViewModal } from "./WalletViewModal";
@@ -15,18 +15,18 @@ import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import BigNumber from "bignumber.js";
 
 export type WalletProps = {
-  onConnectEthereumWallet: (walletId: ConnectorType) => Promise<any>;
+  onConnectEthereumWallet?: (walletId: ConnectorType) => Promise<any>;
   onConnectPolkadotWallet: (
     walletId?: SupportedWalletId,
     selectedDefaultAccount?: boolean
   ) => Promise<any[] | undefined>;
-  onDisconnectEthereum: (...args: unknown[]) => Promise<void> | void;
+  onDisconnectEthereum?: (...args: unknown[]) => Promise<void> | void;
   onDisconnectDotsamaWallet: (() => Promise<void>) | undefined;
   onSelectPolkadotAccount: (account: InjectedAccountWithMeta) => void;
   blockchainNetworksSupported: Array<BlockchainNetwork>;
   ethereumConnectedAccount?: string;
   ethereumConnectorInUse?: ConnectorType;
-  isEthereumWalletActive: boolean;
+  isEthereumWalletActive?: boolean;
   polkadotAccounts: Array<InjectedAccountWithMeta>;
   polkadotExtensionStatus: DotSamaExtensionStatus;
   connectedWalletTransactions: Array<{ title: string; timestamp: number }>;
@@ -36,7 +36,7 @@ export type WalletProps = {
   connectedAccountNativeBalance: BigNumber;
 };
 
-export const Wallet: React.FC<WalletProps> = ({
+export const Wallet: FC<WalletProps> = ({
   onConnectEthereumWallet,
   onConnectPolkadotWallet,
   onDisconnectEthereum,
@@ -90,6 +90,7 @@ export const Wallet: React.FC<WalletProps> = ({
         isEthereumActive={isEthereumWalletActive}
         isPolkadotActive={polkadotExtensionStatus === "connected"}
         ownedAssets={[]}
+        blockchainNetworksSupported={blockchainNetworksSupported}
       />
 
       <ConnectionModal

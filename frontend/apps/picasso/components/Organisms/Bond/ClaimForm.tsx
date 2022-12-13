@@ -9,11 +9,10 @@ import router from "next/router";
 import { ActiveBond } from "@/stores/defi/polkadot/bonds/slice";
 import { PairAsset } from "@/components/Atom/PairAsset";
 import { useExecutor } from "substrate-react";
-import { humanBalance } from "shared";
+import { humanBalance, subscanExtrinsicLink } from "shared";
 import { useClaim } from "@/stores/defi/polkadot/bonds/useClaim";
 import { findCurrentBond } from "@/stores/defi/polkadot/bonds/utils";
 import { SnackbarKey, useSnackbar } from "notistack";
-import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 
 export const ClaimForm = () => {
   const theme = useTheme();
@@ -47,7 +46,7 @@ export const ClaimForm = () => {
           variant: "success",
           isClosable: true,
           persist: true,
-          url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
+          url: subscanExtrinsicLink("picasso", txHash),
         });
       },
       (msg) => {
@@ -67,7 +66,7 @@ export const ClaimForm = () => {
           variant: "info",
           isClosable: true,
           persist: true,
-          url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
+          url: subscanExtrinsicLink("picasso", txHash),
         });
       }
     );

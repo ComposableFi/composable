@@ -1,6 +1,6 @@
 import { ApiPromise } from "@polkadot/api";
 import BigNumber from "bignumber.js";
-import { fromChainIdUnit } from "shared";
+import { fromChainIdUnit, isPalletSupported } from "shared";
 import { useStore } from "@/stores/root";
 import { CurrencyId } from "defi-interfaces";
 
@@ -8,6 +8,10 @@ export async function subscribeAssetPrice(
   assetId: CurrencyId,
   api: ApiPromise
 ) {
+  if (!isPalletSupported(api)("Oracle")) {
+    return () => {
+    };
+  }
   try {
     const unsub: any = await api.query.oracle.prices(
       assetId.toString(),
@@ -20,21 +24,26 @@ export async function subscribeAssetPrice(
             prices: {
               [+assetId.toString()]: {
                 price,
-                block: new BigNumber(prices.block.toString()),
-              },
-            },
-          },
+                block: new BigNumber(prices.block.toString())
+              }
+            }
+          }
         });
 
         return unsub;
       }
     );
   } catch (e) {
-    return () => {};
+    return () => {
+    };
   }
 }
 
 export async function fetchAssetPrice(assetId: CurrencyId, api: ApiPromise) {
+  if (!isPalletSupported(api)("Oracle")) {
+    return new BigNumber(0);
+  }
+
   try {
     const prices: any = await api.query.oracle.prices(assetId.toString()); // TODO[type-gen]: replace any with proper type
     const jsonPrices = prices.toJSON();
@@ -47,10 +56,10 @@ export async function fetchAssetPrice(assetId: CurrencyId, api: ApiPromise) {
         prices: {
           [+assetId.toString()]: {
             price,
-            block: new BigNumber(jsonPrices.block.toString()),
-          },
-        },
-      },
+            block: new BigNumber(jsonPrices.block.toString())
+          }
+        }
+      }
     });
 
     return price;

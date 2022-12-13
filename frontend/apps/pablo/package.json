@@ -22,7 +22,7 @@
     "@emotion/styled": "^11.8.1",
     "@mui/icons-material": "^5.5.1",
     "@mui/material": "^5.5.2",
-    "@polkadot/api": "^8.3.2",
+    "@polkadot/api": "^9.6.2",
     "@polkadot/util": "^10.1.6",
     "@svgr/webpack": "^6.1.2",
     "@web3-react/core": "^6.1.9",
@@ -52,7 +52,8 @@
     "substrate-react": "*",
     "tokens": "*",
     "urql": "^2.2.0",
-    "uuid": "^8.3.2"
+    "uuid": "^8.3.2",
+    "wallet": "*"
   },
   "devDependencies": {
     "@babel/core": "^7.16.7",

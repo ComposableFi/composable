@@ -2,12 +2,11 @@ import { Modal, TokenAsset } from "@/components";
 import { Box, Button, Paper, Stack, Typography } from "@mui/material";
 import { TextWithTooltip } from "@/components/Molecules/TextWithTooltip";
 import { FC, useMemo } from "react";
-import { callbackGate, formatNumber } from "shared";
+import { callbackGate, formatNumber, subscanExtrinsicLink } from "shared";
 import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
 import { getSigner, useExecutor } from "substrate-react";
 import { APP_NAME } from "@/defi/polkadot/constants";
 import { SnackbarKey, useSnackbar } from "notistack";
-import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { useStakingRewards } from "@/defi/polkadot/hooks/useStakingRewards";
 import { useExpiredPortfolio } from "@/components/Organisms/Staking/useExpiredPortfolio";
 
@@ -38,7 +37,7 @@ export const BurnModal: FC<{
               variant: "info",
               isClosable: true,
               persist: true,
-              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
+              url: subscanExtrinsicLink("picasso", txHash),
             });
           },
           (txHash: string) => {
@@ -47,7 +46,7 @@ export const BurnModal: FC<{
               variant: "success",
               isClosable: true,
               persist: true,
-              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
+              url: subscanExtrinsicLink("picasso", txHash),
             });
             refresh();
             onClose();

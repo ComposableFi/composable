@@ -1,4 +1,4 @@
-import { PabloConstantProductPool, Asset, BondOffer, LiquidityProviderToken } from "shared";
+import { DualAssetConstantProduct, Asset, BondOffer, LiquidityProviderToken } from "shared";
 import BigNumber from "bignumber.js";
 import useStore from "@/store/useStore";
 import { usePoolsSlice } from "@/store/pools/pools.slice";
@@ -8,13 +8,13 @@ export function useBondedAsset(
 ): LiquidityProviderToken | Asset | undefined {
     const { substrateTokens } = useStore();
     const { tokens } = substrateTokens;
-    const lpRewardingPools = usePoolsSlice().constantProductPools;
+    const lpRewardingPools = usePoolsSlice().liquidityPools;
 
     if (!bondOffer) return undefined;
 
-    const isLpBasedBond: PabloConstantProductPool | undefined =
+    const isLpBasedBond: DualAssetConstantProduct | undefined =
         lpRewardingPools.find(
-            (pool: PabloConstantProductPool) =>
+            (pool: DualAssetConstantProduct) =>
             (pool.getLiquidityProviderToken().getPicassoAssetId(true) as BigNumber)
             .eq(bondOffer.getBondedAssetId(true) as BigNumber)
         );

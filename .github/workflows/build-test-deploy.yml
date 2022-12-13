@@ -41,7 +41,7 @@ jobs:
         with:
           command: nix -- build .#devnet-initialize-script-picasso-persistent
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-  
+
   common-deps:
     name: "Common dependencies"
     needs:
@@ -75,6 +75,24 @@ jobs:
           command: nix -- build .#common-test-deps
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
+  check-lfs:
+    continue-on-error: false
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-check-lfs-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actionsdesk/lfs-warning@v3.2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          filesizelimit: 10KB
+          exclusionPatterns: |
+            **/*.rs
+            **/*.ts
+            **/*.json
+            **/*.lock
+
   check-nix:
     name: "Check nix"
     continue-on-error: false
@@ -103,7 +121,6 @@ jobs:
           nix --version
           nix show-config                
           nix flake show --allow-import-from-derivation  --show-trace --fallback --debug --print-build-logs --keep-failed
-
   cargo-fmt-check:
     name: "Cargo fmt check"
     runs-on: ubuntu-latest
@@ -193,7 +210,7 @@ jobs:
         with:
           command: nix -- build .#spell-check
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          
+
   docs-check:
     name: "Docs check"
     runs-on: ubuntu-latest
@@ -536,7 +553,7 @@ jobs:
         with:
           command: nix -- build .#polkadot-node
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          
+
   package-statemine-node:
     name: "Package Statemine node"
     runs-on:
@@ -621,6 +638,35 @@ jobs:
           command: nix -- build .#devnet
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
+  lint-test-frontend:
+    # Legacy because these should be nixified.
+    name: Legacy Frontend Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          always-auth: true
+          registry-url: 'https://registry.npmjs.org'
+      - run: yarn install --ignore-scripts
+        env:
+          CI: true
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        working-directory: frontend  
+      - name: Lint Pablo
+        run: yarn --filter=pablo lint
+        working-directory: frontend
+      - name: Test Pablo
+        run: yarn --filter=pablo test
+        working-directory: frontend    
+      - name: Lint Picasso
+        run: yarn --filter=picasso lint
+        working-directory: frontend
+      - name: Test Picasso
+        run: yarn --filter=picasso test
+        working-directory: frontend  
+
   cmc-api:
     name: "Package CMC API"
     needs:
@@ -651,6 +697,67 @@ jobs:
           name: cmc-api-server
           artifact: cmc-api:latest
 
+  # TODO: nixify these test steps, and add me to subsquid-processor
+  test-subsquid:
+    name: Test Subquid
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup jest
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Install dependencies
+        run: npm ci
+        working-directory: subsquid
+      - name: Run tests
+        run: npm run test
+        working-directory: subsquid
+
+  subsquid-processor:
+    name: "Package Subsquid Processor"
+    needs:
+      - test-subsquid
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    concurrency:
+      group: ${{ github.workflow }}-package-subsquid-processor-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          tags: ${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:latest
+          context: subsquid
+          push: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+
+  package-zombienet:
+    needs: common-deps
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-package-zombienet-${{ github.ref }}    
+      cancel-in-progress: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - uses: "./.github/templates/watch-exec"
+        with:
+          command: nix -- build .#zombienet
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   package-price-feed:
     needs: common-deps
@@ -694,7 +801,7 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
           name: composable-sandbox
           artifact: composable-devnet-container:latest
-  
+
   composable-bridge-devnet-container-publish:
     name: "Docker composable-bridge-devnet"
     needs:
@@ -719,7 +826,7 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
           name: composable-bridge-devnet
           artifact: composable-bridge-devnet-container
-          
+
   devnet-integration-tests:
       name: "Devnet integration tests"
       needs:
@@ -752,38 +859,32 @@ jobs:
           name: ${{  env.CACHIX_COMPOSABLE }}
 
       - run: |
-          # ideally it does:
-          # start first process
-          # start second if and only if first stdout specific string
-          # first stdout await has timeout, any stderr or exit end stdout timeout and shell exits non zero
-          # if first or second second stderr or non zero exited, then end second and first end and shell non zero exit
-          # if second timeouted, then in shell non zero exit
-          # more complicated, stderr by regex X times before exit
-          # if second ended success, first stopped gracefully
-          #
-          # TODO: handle
-          # 🧹 Resolving parachain id...
-          # /nix/store/rfrhfi70ijykigwyaswrwlmfqbxw570g-polkadot-v0.9.27/bin/polkadot build-spec --chain=rococo-local --disable-default-bootnode
-          # 2022-08-25 02:01:57 Building chain spec
-          # ⚠ failed to parse the chain spec
-          ( nix run .#devnet-dali 2>&1 & ) | tee devnet-dali.log &
-          until test -f devnet-dali.log; do sleep 1 && echo "waiting network start"; done;
-          ( tail --follow --lines=0  devnet-dali.log & ) | grep --max-count=1 "POLKADOT LAUNCH COMPLETE"
-          echo "PATH=$(pwd):$PATH" >> $GITHUB_ENV
-          cd code/integration-tests/runtime-tests
-          npm install -q
-          export ENDPOINT=127.0.0.1:9988 && export ENDPOINT_RELAYCHAIN=127.0.0.1:9944 && npm run test_short 2>&1>runtime-tests.log & RUNTIME_TESTS_PID=$!
-          until test -f runtime-tests.log; do sleep 1 && echo "waiting tests start"; done;
-          tail --follow runtime-tests.log &
-          ( tail --follow --lines=0 runtime-tests.log & ) | ( grep --max-count=5 "API-WS: disconnected from" >stop.log & )
-          ( while : ; do if test $( wc --lines stop.log | cut --delimiter " " --fields 1 ) -gt 4; then kill -9 $RUNTIME_TESTS_PID && echo "Failed" && exit 42; fi; sleep 1; done ) &
-          wait $RUNTIME_TESTS_PID
-          exit $?
+          DEVNET_MAIN=$(nix show-derivation github:ComposableFi/composable/#devnet-dali)
+          DEVNET_PR=$(nix show-derivation .#devnet-dali)
+          TESTS_MAIN=$(nix show-derivation github:ComposableFi/composable/#runtime-tests)
+          TESTS_PR=$(nix show-derivation .#runtime-tests)
 
+          if [ "$DEVNET_MAIN" != "$DEVNET_PR" ] || [ "$TESTS_MAIN" != "$TESTS_PR" ]; then
+            ( nix run .#devnet-dali 2>&1 & ) | tee devnet-dali.log &
+            until test -f devnet-dali.log; do sleep 1 && echo "waiting network start"; done;
+            ( tail --follow --lines=0  devnet-dali.log & ) | grep --max-count=1 "Network launched 🚀🚀"
+            echo "PATH=$(pwd):$PATH" >> $GITHUB_ENV
+            cd code/integration-tests/runtime-tests || exit
+            npm install -q
+            export ENDPOINT=127.0.0.1:9988 && export ENDPOINT_RELAYCHAIN=127.0.0.1:9944 && npm run test_short 2>&1>runtime-tests.log & RUNTIME_TESTS_PID=$!
+            until test -f runtime-tests.log; do sleep 1 && echo "waiting tests start"; done;
+            tail --follow runtime-tests.log &
+            ( tail --follow --lines=0 runtime-tests.log & ) | ( grep --max-count=5 "API-WS: disconnected from" >stop.log & )
+            ( while : ; do if test $( wc --lines stop.log | cut --delimiter " " --fields 1 ) -gt 4; then kill -9 $RUNTIME_TESTS_PID && echo "Failed" && exit 42; fi; sleep 1; done ) &
+            wait $RUNTIME_TESTS_PID
+            exit $?
+          fi
+  
   effects-gate:
       name: "Effect gate, automatically merged if passed"
       runs-on: ubuntu-latest
       needs:
+        - check-lfs
         - check-nix
         - devnet-integration-tests
         - package-polkadot-node
@@ -849,17 +950,13 @@ jobs:
           cd devnet
           jq --null-input --arg client_email "$GCP_DEVNET_SERVICE_ACCOUNT" --arg project_id "$GCP_PROJECT_ID" --arg key "\"$GCP_DEVNET_SERVICE_ACCOUNT_KEY\"" '{ "project_id": $project_id, "private_key": ($key | fromjson), "client_email": $client_email }' > ops.json
           cd ..
-
           if gsutil -q stat $NIXOPS_STATE_URL/$NIXOPS_STATE;
           then
             gsutil cp $NIXOPS_STATE_URL/$NIXOPS_STATE $NIXOPS_STATE
           else
             nix develop .#ci --show-trace -L --command cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nixops -- create --deployment devnet-gce --show-trace --option narinfo-cache-negative-ttl 0 --include composable-devnet-dali-dev composable-devnet-picasso-dev
-
           fi
-
           nix develop .#ci --show-trace -L --command cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nixops -- deploy --check --confirm --deployment devnet-gce --debug --show-trace --option narinfo-cache-negative-ttl 0 --include composable-devnet-dali-dev composable-devnet-picasso-dev
-
         env:
           NIXOPS_STATE_URL: "gs://composable-state"
           NIXOPS_STATE: "deployment.nixops"
@@ -905,7 +1002,6 @@ jobs:
             echo "::set-output name=hashChange::false";
           else echo "::set-output name=hashChange::true";
           fi
-
       - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
         with:
           skipPush: true
@@ -926,7 +1022,6 @@ jobs:
           cp frontend/apps/picasso/.firebaserc firebase/picasso/
           cp frontend/apps/picasso/firebase.json firebase/picasso/
           nix-env -iA nixpkgs.nodejs
-
       - name: Deploy Picasso on preview channel
         if: steps.branch-name.outputs.current_branch != 'main' && steps.feStaticHashChanges.outputs.hashChange == 'true'
         uses: FirebaseExtended/action-hosting-deploy@0f248036885ae672f78587669fa2923f0ef6cac2
@@ -977,7 +1072,6 @@ jobs:
             cp frontend/apps/picasso/.firebaserc firebase/picasso/
             cp frontend/apps/picasso/firebase.json firebase/picasso/
             nix-env -iA nixpkgs.nodejs
-
       - name: Deploy Picasso on live channel
         uses: FirebaseExtended/action-hosting-deploy@0f248036885ae672f78587669fa2923f0ef6cac2
         with:
@@ -1013,48 +1107,37 @@ jobs:
           message: |
             ### Nix commands for this PR
             **NOTE: You can also run our Nix commands in Docker. See the bottom of this comment.**
-
-
             #### Make sure you have setup the Composable community cache:
             _(you only need to run it once on your machine)_
             ```bash
             nix-shell -p cachix --command "cachix use composable-community"
             ```
-
             #### Show all possible apps, shells and packages:
             ```
             nix flake show "github:ComposableFi/composable/${{ github.event.pull_request.head.sha }} --allow-import-from-derivation
             ```
-
             #### Run the Composable node alone:
             ```bash
             nix run "github:ComposableFi/composable/${{ github.event.pull_request.head.sha }}#composable-node" -L
             ```
-
             #### Spin up a local devnet:
             ```bash
             nix run "github:ComposableFi/composable/${{ github.event.pull_request.head.sha }}#devnet" -L --option sandbox relaxed --show-trace
             ```
-
             #### Spin up a local XCVM devnet:
             ```bash
             nix run "github:ComposableFi/composable/${{ github.event.pull_request.head.sha }}#devnet-xcvm" -L
             ```
-
             ### View the docs:
             ```bash
             nix run ".#docs-server"
             ```
-
             ### Run this without Nix in Docker.
             ```bash
             docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v nix:/nix -it nixos/nix bash -c "nix-env -iA nixpkgs.cachix && cachix use composable-community && nix run github:ComposableFi/Composable/${{ github.event.pull_request.head.sha }}#devnet-dali -L --extra-experimental-features nix-command --extra-experimental-features flakes"
             ```
             _NOTE: You can swap `devnet-dali` in the command above with any Nix package_
-
             _For more info on how to use Nix, check out our [Nix docs](https://docs.composable.finance/nix.html)_
-
             Note that the initial build may take about one hour if it has not been cached by our CI yet. Once it is cached, builds should take about one minute. We currently do not provide build caches for ARM machines such as M1 Macs, but building on ARM is supported.
-
           comment_includes: 'Nix commands for this PR'
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

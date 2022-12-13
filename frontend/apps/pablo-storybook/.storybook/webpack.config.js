@@ -31,16 +31,16 @@ module.exports = ({ config }) => {
             "@babel/plugin-proposal-class-properties",
             "@babel/plugin-proposal-object-rest-spread",
             "@babel/plugin-syntax-dynamic-import",
-            "@babel/plugin-transform-runtime",
+            "@babel/plugin-transform-runtime"
           ]
         }
       },
       {
-        loader: require.resolve('@open-wc/webpack-import-meta-loader'),
-      },
+        loader: require.resolve("@open-wc/webpack-import-meta-loader")
+      }
     ],
     // Exclude the untransformed packages from the exclude rule here
-    exclude: /node_modules\/(?!(@integrations-lib\/core|@polkadot\/api|@polkadot\/types-codec|@polkadot\/types|@polkadot\/rpc-provider|@polkadot\/keyring|@polkadot\/api-derive|@polkadot\/rpc-core|@polkadot\/util-crypto)\/).*/,
+    exclude: /node_modules\/(?!(@integrations-lib\/core|@polkadot\/api|@polkadot\/api-base|@polkadot\/types-codec|@polkadot\/types|@polkadot\/rpc-provider|@polkadot\/keyring|@polkadot\/api-derive|@polkadot\/rpc-core|@polkadot\/util-crypto)\/).*/
   });
   // Alternately, for an alias:
   config.resolve.alias = {

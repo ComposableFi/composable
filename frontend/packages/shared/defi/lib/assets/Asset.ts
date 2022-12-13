@@ -11,10 +11,11 @@ export class Asset {
   protected __price: BigNumber = new BigNumber(0);
   protected __decimals: Map<string, number>;
   protected __parachainAssetIds: Map<string, BigNumber>;
+
   /**
    * Transform assets list
    * to dropdown options
-   * @param {Array<Asset>} assets 
+   * @param {Array<Asset>} assets
    * @returns {DropdownOptionWithIcon[]}
    */
   static toDropdownList(assets: Asset[]): DropdownOptionWithIcon[] {
@@ -23,17 +24,12 @@ export class Asset {
         label: asset.getName(),
         shortLabel: asset.getSymbol(),
         value: asset.getPicassoAssetId(),
-        icon: asset.getIconUrl()
-      } as DropdownOptionWithIcon
-    })
+        icon: asset.getIconUrl(),
+      } as DropdownOptionWithIcon;
+    });
   }
 
-  constructor(
-    name: string,
-    symbol: string,
-    iconUrl: string,
-    api?: ApiPromise,
-  ) {
+  constructor(name: string, symbol: string, iconUrl: string, api?: ApiPromise) {
     this.__api = api;
     this.__name = name;
     this.__symbol = symbol;
@@ -41,6 +37,7 @@ export class Asset {
     this.__parachainAssetIds = new Map<string, BigNumber>();
     this.__decimals = new Map<string, number>();
   }
+
   /**
    * Returns asset id of this asset
    * on picasso parachain
@@ -50,10 +47,10 @@ export class Asset {
    */
   getPicassoAssetId(inBn: boolean = false): BigNumber | string {
     const picassoAssetId = this.__parachainAssetIds.get("picasso");
-    if (!picassoAssetId) throw new Error('Asset Unavailable on Picasso');
-    return inBn ? picassoAssetId : picassoAssetId.toString()
+    if (!picassoAssetId) throw new Error("Asset Unavailable on Picasso");
+    return inBn ? picassoAssetId : picassoAssetId.toString();
   }
-  
+
   isSupportedOn(network: string): boolean {
     const id = this.__parachainAssetIds.get(network);
     return !!id;
@@ -71,18 +68,18 @@ export class Asset {
     return this.__decimals.get(network);
   }
 
-
   getIconUrl(): string {
     return this.__iconUrl;
   }
+
   /**
    * Fetch balance of an account
-   * @param {string} account 
+   * @param {string} account
    * @returns {Promise<BigNumber>}
    */
   async balanceOf(account: string): Promise<BigNumber> {
     try {
-      if (!this.__api) throw new Error('API Unavailable.');
+      if (!this.__api) throw new Error("API Unavailable.");
 
       const picassoId = this.getPicassoAssetId();
 
@@ -101,6 +98,7 @@ export class Asset {
       return new BigNumber(0);
     }
   }
+
   /**
    * Fetch total issued amount
    * of this asset
@@ -108,7 +106,7 @@ export class Asset {
    */
   async totalIssued(): Promise<BigNumber> {
     try {
-      if (!this.__api) throw new Error('API Unavailable.');
+      if (!this.__api) throw new Error("API Unavailable.");
 
       const assetId = this.__api.createType(
         "u128",
@@ -120,18 +118,20 @@ export class Asset {
       return new BigNumber(0);
     }
   }
+
   /**
    * Set id on a different chain
-   * @param {string} chainId 
+   * @param {string} chainId
    * @param {BigNumber} assetId
    */
   setIdOnChain(chainId: string, assetId: BigNumber) {
-    this.__parachainAssetIds.set(chainId, assetId)
+    this.__parachainAssetIds.set(chainId, assetId);
   }
+
   /**
    * Get Asset Id on a different chain
-   * @param {string} chainId 
-   * @param {boolean} inBn 
+   * @param {string} chainId
+   * @param {boolean} inBn
    * @returns {BigNumber | string}
    */
   getIdOnChain(chainId: string, inBn: boolean = false): BigNumber | string {
@@ -141,7 +141,7 @@ export class Asset {
   }
 
   setApi(api: ApiPromise) {
-    this.__api  = api;
+    this.__api = api;
   }
 
   setDecimals(network: string, decimals: number) {
@@ -149,7 +149,7 @@ export class Asset {
   }
 
   getApi(): ApiPromise {
-    if (!this.__api) throw new Error('API Unavailable.');
+    if (!this.__api) throw new Error("API Unavailable.");
     return this.__api;
   }
 
@@ -158,7 +158,7 @@ export class Asset {
   }
 
   setPrice(price: BigNumber | string) {
-    this.__price = new BigNumber(price)
+    this.__price = new BigNumber(price);
   }
 }
 
@@ -171,9 +171,12 @@ export class OwnedAsset extends Asset {
       asset.getSymbol(),
       asset.getIconUrl(),
       balance,
-      asset.getApi(),
-    )
-    ownedAsset.setIdOnChain("picasso", asset.getPicassoAssetId(true) as BigNumber);
+      asset.getApi()
+    );
+    ownedAsset.setIdOnChain(
+      "picasso",
+      asset.getPicassoAssetId(true) as BigNumber
+    );
     return ownedAsset;
   }
 
@@ -182,14 +185,9 @@ export class OwnedAsset extends Asset {
     symbol: string,
     iconUrl: string,
     balance: BigNumber,
-    api?: ApiPromise,
+    api?: ApiPromise
   ) {
-    super(
-      name,
-      symbol,
-      iconUrl,
-      api,
-    );
+    super(name, symbol, iconUrl, api);
 
     this.__balance = balance;
   }

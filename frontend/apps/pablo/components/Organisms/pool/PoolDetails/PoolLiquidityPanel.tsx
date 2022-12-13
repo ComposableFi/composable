@@ -64,9 +64,9 @@ export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
   const lpTokenPrice = useLpTokenPrice(pool?.getLiquidityProviderToken());
   const providedLiquidityAmount = useUserProvidedLiquidityByPool(poolId)
 
-  const pair = pool?.getPair() ?? null;
-  const base = pair?.getBaseAsset().toString() ?? "-";
-  const quote = pair?.getQuoteAsset().toString() ?? "-";
+  const pair = pool ? Object.keys(pool?.getAssets().assets) : null;
+  const base = pair?.[0] ?? "-";
+  const quote = pair?.[1] ?? "-";
 
   const baseAssetPriceUSD = useAssetIdOraclePrice(
     base

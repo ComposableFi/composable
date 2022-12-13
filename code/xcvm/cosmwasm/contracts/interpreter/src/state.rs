@@ -5,14 +5,14 @@ use cosmwasm_std::{Addr, SubMsgResponse};
 use cw_storage_plus::{Item, Map};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use xcvm_core::UserOrigin;
+use xcvm_core::InterpreterOrigin;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Config {
 	pub gateway_address: Addr,
 	pub registry_address: Addr,
 	pub router_address: Addr,
-	pub user_origin: UserOrigin,
+	pub interpreter_origin: InterpreterOrigin,
 }
 
 pub const CONFIG: Item<Config> = Item::new("config");

@@ -51,7 +51,7 @@ export type WalletViewProps = {
   selectedEthereumWallet?: EthereumWallet;
   connectedWalletTransactions: Array<{ title: string; timestamp: number }>;
 
-  onDisconnectEthereum: (...args: unknown[]) => Promise<void> | void;
+  onDisconnectEthereum?: (...args: unknown[]) => Promise<void> | void;
   onDisconnectDotsamaWallet: (() => Promise<void>) | undefined;
   onChangePolkadotAccount: () => void;
   onConnectPolkadot: () => void;
@@ -250,24 +250,26 @@ export const WalletViewModal: FC<WalletViewProps> = ({
                 marginTop: theme.spacing(2),
               }}
             >
-              <Button
-                onClick={onConnectEVM}
-                fullWidth
-                variant="outlined"
-                sx={{
-                  display: "flex",
-                  justifyContent: "center",
-                  gap: theme.spacing(1),
-                }}
-              >
-                <Image
-                  src="/networks/mainnet.svg"
-                  height="23.5"
-                  width="23.5"
-                  alt="ethereum_wallet"
-                />
-                Connect EVM
-              </Button>
+              {ethereumNetwork ? (
+                <Button
+                  onClick={onConnectEVM}
+                  fullWidth
+                  variant="outlined"
+                  sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    gap: theme.spacing(1),
+                  }}
+                >
+                  <Image
+                    src="/networks/mainnet.svg"
+                    height="23.5"
+                    width="23.5"
+                    alt="ethereum_wallet"
+                  />
+                  Connect EVM
+                </Button>
+              ) : null}
             </Box>
           )}
 

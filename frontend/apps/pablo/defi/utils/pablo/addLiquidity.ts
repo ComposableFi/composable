@@ -14,8 +14,7 @@ export function addLiquidityToPoolViaPablo(
 
   return api.tx.pablo.addLiquidity(
     poolId,
-    baseAmountParam,
-    quoteAmountParam,
+    api.createType("BTreeMap<u128, u128>", baseAmountParam, quoteAmountParam),
     minMintAmount,
     keepAliveParam
   );

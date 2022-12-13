@@ -16,7 +16,7 @@ import { useRouter } from "next/router";
 import { InfoOutlined, KeyboardArrowDown } from "@mui/icons-material";
 import { TableHeader } from "@/defi/types";
 import { NoPositionsPlaceholder } from "./overview/NoPositionsPlaceholder";
-import { PabloConstantProductPool } from "shared";
+import { DualAssetConstantProduct } from "shared";
 import LiquidityPoolRow from "./pool/LiquidityPoolRow";
 import React, { useState } from "react";
 
@@ -48,7 +48,7 @@ const tableHeaders: TableHeader[] = [
 ];
 
 export type PoolsTableProps = {
-  liquidityPools: Array<PabloConstantProductPool>;
+  liquidityPools: Array<DualAssetConstantProduct>;
   source: "user" | "pallet"
 };
 

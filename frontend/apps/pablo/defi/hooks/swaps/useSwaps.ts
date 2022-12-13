@@ -1,4 +1,4 @@
-import { Asset, PabloConstantProductPool } from "shared";
+import { Asset, DualAssetConstantProduct } from "shared";
 import { Option } from "@/components/types";
 import {
   calculator,
@@ -37,7 +37,7 @@ export function useSwaps({ selectedAccount }: { selectedAccount?: InjectedAccoun
   updateSpotPrice: () => void;
   inputMode: 1 | 2,
   setInputMode: Dispatch<SetStateAction<1 | 2>>;
-  pabloPool: PabloConstantProductPool | undefined;
+  pabloPool: DualAssetConstantProduct | undefined;
   minimumReceived: BigNumber;
   slippageAmount: BigNumber;
   feeCharged: BigNumber;
@@ -107,11 +107,11 @@ export function useSwaps({ selectedAccount }: { selectedAccount?: InjectedAccoun
 
   const updateSpotPrice = useCallback(async () => {
     if (selectedPool) {
-      const pair = selectedPool.getPair();
-      const base = pair.getBaseAsset().toString();
+      const pair = Object.keys(selectedPool.getAssets().assets);
+      const base = pair[0];
       const isInverse = selectedAssetOneId === base;
 
-      const spotPrice = await selectedPool.getSpotPrice();
+      const spotPrice = await selectedPool.getSpotPrice(new BigNumber(selectedAssetOneId));
       if (isInverse) {
         setSpotPrice(new BigNumber(1).div(spotPrice));
       } else {
@@ -129,24 +129,28 @@ export function useSwaps({ selectedAccount }: { selectedAccount?: InjectedAccoun
     }
   }, [selectedPool, updateSpotPrice]);
 
-  const { constantProductPools } = usePoolsSlice();
+  const { liquidityPools } = usePoolsSlice();
   useEffect(() => {
-    if (constantProductPools.length > 0) {
-      const pool = constantProductPools.find((_constantPool) => {
-        const pair = _constantPool.getPair();
-        const pairBase = pair.getBaseAsset().toString();
-        const pairQuote = pair.getQuoteAsset().toString();
-
-        return (
-          pairBase === selectedAssetOneId && pairQuote === selectedAssetTwoId ||
-          pairBase === selectedAssetTwoId && pairQuote === selectedAssetOneId
-        )
+    if (liquidityPools.length > 0) {
+      const pool = liquidityPools.find((_constantPool) => {
+        try {
+          const pair = Object.keys(_constantPool.getAssets().assets);
+          const pairBase = pair[0].toString();
+          const pairQuote = pair[1].toString();
+  
+          return (
+            pairBase === selectedAssetOneId && pairQuote === selectedAssetTwoId ||
+            pairBase === selectedAssetTwoId && pairQuote === selectedAssetOneId
+          )
+        } catch (err: any) {
+          console.error('[useSwaps] Liquidity Pool not found. ', err.message);
+        }
       });
       if (pool) {
         setSelectedPool(pool);
       }
     }
-  }, [constantProductPools, selectedAssetOneId, selectedAssetTwoId, setSelectedPool, setSpotPrice])
+  }, [liquidityPools, selectedAssetOneId, selectedAssetTwoId, setSelectedPool, setSpotPrice])
 
   const [minimumReceived, setMinimumReceived] = useState(new BigNumber(0));
   const [slippageAmount, setSlippageAmount] = useState(new BigNumber(0));
@@ -183,13 +187,14 @@ export function useSwaps({ selectedAccount }: { selectedAccount?: InjectedAccoun
   };
 
   const { baseAmount, quoteAmount } = useLiquidity(selectedPool);
-  let poolQuoteBalance = selectedPool
-    ? selectedPool.getPair().getBaseAsset().toString() === selectedAssetOneId
+  const poolAssets = selectedPool ? Object.keys(selectedPool.getAssets().assets) : null;
+  let poolQuoteBalance = poolAssets ? 
+    poolAssets?.[0] === selectedAssetOneId
       ? quoteAmount
       : baseAmount
     : new BigNumber(0);
-  let poolBaseBalance = selectedPool
-    ? selectedPool.getPair().getQuoteAsset().toString() === selectedAssetOneId
+  let poolBaseBalance = poolAssets
+    ? poolAssets?.[1] === selectedAssetOneId
       ? baseAmount
       : quoteAmount
     : new BigNumber(0);
@@ -198,10 +203,8 @@ export function useSwaps({ selectedAccount }: { selectedAccount?: InjectedAccoun
     tokenInAmount: assetOneAmount,
     tokenOutAmount: assetTwoAmount,
     isConstantProductPool: selectedPool ? "baseWeight" in selectedPool : false,
-    baseWeight:
-      selectedPool && selectedPool instanceof PabloConstantProductPool
-        ? new BigNumber(selectedPool.getBaseWeight())
-        : new BigNumber(0),
+    // needs update later
+    baseWeight: new BigNumber(0),
     quoteBalance: poolQuoteBalance,
     baseBalance: poolBaseBalance,
     // amplificationCoefficient: selectedPool && "amplificationCoefficient" in selectedPool ? new BigNumber(selectedPool.amplificationCoefficient) : new BigNumber(0)
@@ -218,7 +221,7 @@ export function useSwaps({ selectedAccount }: { selectedAccount?: InjectedAccoun
           const feeRate = selectedPool.getFeeConfig().getFeeRate();
           let feePercentage = new BigNumber(feeRate).toNumber();
 
-          if (selectedPool instanceof PabloConstantProductPool) {
+          if (selectedPool instanceof DualAssetConstantProduct) {
             const { minReceive } =
               calculator(
                 "quote",

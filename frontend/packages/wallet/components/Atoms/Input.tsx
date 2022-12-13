@@ -1,5 +1,5 @@
-import React from "react";
 import {
+  Box,
   Button,
   ButtonProps as MuiButtonProps,
   InputAdornment,
@@ -7,12 +7,12 @@ import {
   TextFieldProps,
   Typography,
   useTheme,
-  Box
 } from "@mui/material";
 import { TokenId } from "tokens";
 import { TokenAsset } from "./TokenAsset";
 import { Label, LabelProps as MuiLabelProps } from "./Label";
 import { BaseAsset } from "./BaseAsset";
+import { ChangeEvent, Dispatch, FC, SetStateAction } from "react";
 
 export type InputProps = {
   LabelProps?: MuiLabelProps;
@@ -23,11 +23,11 @@ export type InputProps = {
   buttonLabel?: string;
   ButtonProps?: MuiButtonProps;
   referenceText?: string;
-  setValue?: React.Dispatch<React.SetStateAction<any>>;
+  setValue?: Dispatch<SetStateAction<any>>;
   noBorder?: boolean;
 } & Omit<TextFieldProps, "label">;
 
-export const Input: React.FC<InputProps> = ({
+export const Input: FC<InputProps> = ({
   LabelProps,
   alert,
   tokenId,
@@ -43,13 +43,14 @@ export const Input: React.FC<InputProps> = ({
   ...rest
 }) => {
   const theme = useTheme();
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     setValue && setValue(event.target.value);
   };
   return (
     <Box>
       {LabelProps && <Label {...LabelProps} />}
       <TextField
+        variant="outlined"
         fullWidth
         onChange={handleChange}
         InputProps={{
@@ -61,9 +62,7 @@ export const Input: React.FC<InputProps> = ({
             <InputAdornment position="start">
               <BaseAsset icon={icon} />
             </InputAdornment>
-          ) : (
-            undefined
-          ),
+          ) : undefined,
           endAdornment: buttonLabel ? (
             <Button size="small" disabled={rest.disabled} {...ButtonProps}>
               {buttonLabel}
@@ -79,16 +78,16 @@ export const Input: React.FC<InputProps> = ({
               </Typography>
             )
           ),
-          ...InputProps
+          ...InputProps,
         }}
         sx={{
           "& .MuiOutlinedInput-root": {
             color: alert ? theme.palette.warning.main : undefined,
             "& .MuiOutlinedInput-notchedOutline": {
               borderWidth: noBorder ? 0 : 1,
-              borderColor: alert ? `${theme.palette.warning.main}` : undefined
-            }
-          }
+              borderColor: alert ? `${theme.palette.warning.main}` : undefined,
+            },
+          },
         }}
         {...rest}
       >
