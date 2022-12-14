@@ -152,15 +152,6 @@ jobs:
           docker tag composable:latest "${{ env.DOCKER_REGISTRY_NAME }}/composable:v${{ env.COMPOSABLE_VERSION }}"
           docker push "${{ env.DOCKER_REGISTRY_NAME }}/composable:v${{ env.COMPOSABLE_VERSION }}"
 
-      - name: Get commit
-        id: fetch_commit_sha
-        run: |
-          if [ ${{ github.event_name == 'pull_request' }} ]; then
-            echo "::set-output name=sha::${{ github.event.pull_request.head.sha }}"
-          else
-            echo "::set-output name=sha::${{ github.sha }}"
-          fi
-
       - name: Release artifacts
         uses: softprops/action-gh-release@v1
         with:
@@ -170,9 +161,9 @@ jobs:
           body_path: release-artifacts/release.txt
           # Every release is assumed to be a release candidate("RC") until a runtime upgrade is made,
           # upon which this needs to be manually set to exclude "RC" postfix
-          name: v${{ env.COMPOSABLE_VERSION }}-RC
+          name: ${{ github.ref_name }}-RC
           prerelease: true
-          tag_name: v${{ env.COMPOSABLE_VERSION }}
-          target_commitish: ${{ steps.fetch_commit_sha.outputs.sha }}
+          tag_name: ${{ github.ref_name }}
+          target_commitish: ${{ github.sha }}
           files: |
             release-artifacts/to-upload/*

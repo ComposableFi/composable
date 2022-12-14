@@ -7,9 +7,10 @@ on:
         description: "Release tag, branch name or any other ref."
         required: true
         type: string
-  push:
-    tags:
-      - 'release-v[0-9]+\.[0-9]+'
+  # Following is disabled to allow manual upgrade to run data migrations by QA in staging
+  # push:
+    # tags:
+    #   - 'release-v[0-9]+\.[0-9]+'
 
 env:
   NIX_NIXPKGS_CHANNEL: https://nixos.org/channels/nixpkgs-22.05-darwin
