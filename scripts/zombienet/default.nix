@@ -21,6 +21,8 @@ in with prelude; rec {
   mkCollator = { name ? "alice", command, rpc_port ? null, ws_port ? null }:
     {
       command = command;
+      args =
+        [ "--wasmtime-instantiation-strategy=recreate-instance-copy-on-write" ];
       env = [{
         name = "RUST_LOG";
         value =

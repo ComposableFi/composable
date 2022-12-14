@@ -2,6 +2,8 @@ use common::{AccountId, AuraId, Balance};
 use dali_runtime::GenesisConfig;
 
 use super::{Extensions, ParaId};
+use pallet_ibc::pallet::AssetConfig;
+use primitives::currency::CurrencyId;
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
@@ -77,5 +79,8 @@ pub fn genesis_config(
 		vesting: Default::default(),
 		lending: Default::default(),
 		liquidations: Default::default(),
+		ibc: dali_runtime::IbcConfig {
+			assets: vec![AssetConfig { id: CurrencyId::from(1), denom: b"UNIT".to_vec() }],
+		},
 	}
 }

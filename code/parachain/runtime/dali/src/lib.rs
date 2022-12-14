@@ -32,6 +32,8 @@ mod versions;
 mod weights;
 pub mod xcmp;
 
+use alloc::string::String;
+use core::str::FromStr;
 pub use versions::*;
 
 use lending::MarketId;
@@ -70,7 +72,7 @@ use sp_runtime::{
 		ConvertInto, Zero,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult,
+	ApplyExtrinsicResult, DispatchError, Either,
 };
 
 use sp_std::prelude::*;
@@ -91,7 +93,9 @@ use codec::{Codec, Encode, EncodeLike};
 use common::fees::WellKnownForeignToNativePriceConverter;
 use composable_traits::{
 	account_proxy::{AccountProxyWrapper, ProxyType},
+	currency::{CurrencyFactory as CurrencyFactoryT, RangeId, Rational64},
 	fnft::FnftAccountProxyType,
+	xcm::assets::{RemoteAssetRegistryMutate, XcmAssetLocation},
 };
 use frame_support::{
 	traits::{
@@ -100,10 +104,18 @@ use frame_support::{
 	weights::ConstantMultiplier,
 };
 use frame_system as system;
+use ibc::core::{
+	ics24_host::identifier::PortId,
+	ics26_routing::context::{Module, ModuleId},
+};
+use pallet_ibc::{
+	light_client_common::RelayChain, routing::ModuleRouter, DenomToAssetId, IbcAssetIds, IbcAssets,
+	IbcDenoms,
+};
 use scale_info::TypeInfo;
-use sp_runtime::AccountId32;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
+use sp_runtime::{AccountId32, Either::*};
 pub use sp_runtime::{FixedPointNumber, Perbill, Permill, Perquintill};
 use sp_std::{collections::btree_map::BTreeMap, fmt::Debug, vec::Vec};
 use system::{
@@ -111,6 +123,7 @@ use system::{
 	EnsureRoot,
 };
 use transaction_payment::{Multiplier, TargetedFeeAdjustment};
+use xcm::{latest::MultiLocation, prelude::X1, v1::Junction};
 pub use xcmp::XcmConfig;
 
 use crate::{governance::PreimageByteDeposit, xcmp::XcmRouter};
@@ -1172,6 +1185,121 @@ impl cosmwasm::Config for Runtime {
 	type IbcRelayer = cosmwasm::NoRelayer<Runtime>;
 }
 
+parameter_types! {
+	pub const RelayChainId: RelayChain = RelayChain::Rococo;
+	pub const SpamProtectionDeposit: Balance = 1_000_000_000_000;
+	pub const MinimumConnectionDelay: u64 = 0;
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Default)]
+pub struct Router {
+	pallet_ibc_ping: pallet_ibc_ping::IbcModule<Runtime>,
+}
+
+impl ModuleRouter for Router {
+	fn get_route_mut(&mut self, module_id: &ModuleId) -> Option<&mut dyn Module> {
+		match module_id.as_ref() {
+			pallet_ibc_ping::MODULE_ID => Some(&mut self.pallet_ibc_ping),
+			_ => None,
+		}
+	}
+
+	fn has_route(module_id: &ModuleId) -> bool {
+		matches!(module_id.as_ref(), pallet_ibc_ping::MODULE_ID)
+	}
+
+	fn lookup_module_by_port(port_id: &PortId) -> Option<ModuleId> {
+		match port_id.as_str() {
+			pallet_ibc_ping::PORT_ID => ModuleId::from_str(pallet_ibc_ping::MODULE_ID).ok(),
+			_ => None,
+		}
+	}
+}
+
+pub struct IbcDenomToAssetIdConversion;
+
+impl DenomToAssetId<Runtime> for IbcDenomToAssetIdConversion {
+	type Error = DispatchError;
+
+	fn from_denom_to_asset_id(denom: &String) -> Result<CurrencyId, Self::Error> {
+		let denom_bytes = denom.as_bytes().to_vec();
+		if let Some(id) = IbcDenoms::<Runtime>::get(&denom_bytes) {
+			return Ok(id)
+		}
+
+		let asset_id =
+			<currency_factory::Pallet<Runtime> as CurrencyFactoryT>::create(RangeId::IBC_ASSETS)?;
+
+		IbcDenoms::<Runtime>::insert(denom_bytes.clone(), asset_id);
+		IbcAssetIds::<Runtime>::insert(asset_id, denom_bytes);
+
+		let location = XcmAssetLocation::new(MultiLocation::new(
+			1,
+			X1(Junction::GeneralIndex(asset_id.into())),
+		));
+		assets_registry::Pallet::<Runtime>::set_reserve_location(
+			asset_id,
+			location,
+			Rational64::one(),
+			Some(12),
+		)?;
+
+		Ok(asset_id)
+	}
+
+	fn from_asset_id_to_denom(id: CurrencyId) -> Option<String> {
+		IbcAssetIds::<Runtime>::get(id).and_then(|denom| String::from_utf8(denom).ok())
+	}
+
+	fn ibc_assets(start_key: Option<Either<CurrencyId, u32>>, limit: u64) -> IbcAssets<CurrencyId> {
+		let mut iterator = match start_key {
+			None => IbcAssetIds::<Runtime>::iter().skip(0),
+			Some(Left(asset_id)) => {
+				let raw_key = asset_id.encode();
+				IbcAssetIds::<Runtime>::iter_from(raw_key).skip(0)
+			},
+			Some(Right(offset)) => IbcAssetIds::<Runtime>::iter().skip(offset as usize),
+		};
+
+		let denoms = iterator.by_ref().take(limit as usize).map(|(_, denom)| denom).collect();
+		let maybe_currency_id = iterator.next().map(|(id, ..)| id);
+		IbcAssets {
+			denoms,
+			total_count: IbcAssetIds::<Runtime>::count() as u64,
+			next_id: maybe_currency_id,
+		}
+	}
+}
+
+impl pallet_ibc::Config for Runtime {
+	type TimeProvider = Timestamp;
+	type Event = Event;
+	type NativeCurrency = Balances;
+	type Balance = Balance;
+	type AssetId = CurrencyId;
+	type NativeAssetId = NativeAssetId;
+	type IbcDenomToAssetIdConversion = IbcDenomToAssetIdConversion;
+	const PALLET_PREFIX: &'static [u8] = b"ibc/";
+	const LIGHT_CLIENT_PROTOCOL: pallet_ibc::LightClientProtocol =
+		pallet_ibc::LightClientProtocol::Grandpa;
+	type AccountIdConversion = ibc_primitives::IbcAccount<AccountId>;
+	type Fungibles = Assets;
+	type ExpectedBlockTime = ExpectedBlockTime;
+	type Router = Router;
+	type MinimumConnectionDelay = MinimumConnectionDelay;
+	type ParaId = parachain_info::Pallet<Runtime>;
+	type RelayChain = RelayChainId;
+	type WeightInfo = ();
+	type AdminOrigin = EnsureRoot<AccountId>;
+	type SentryOrigin = EnsureRoot<AccountId>;
+	type SpamProtectionDeposit = SpamProtectionDeposit;
+}
+
+impl pallet_ibc_ping::Config for Runtime {
+	type Event = Event;
+	type IbcHandler = Ibc;
+}
+
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -1246,8 +1374,12 @@ construct_runtime!(
 
 		CallFilter: call_filter = 140,
 
-	  // Cosmwasm support
-	  Cosmwasm: cosmwasm = 180
+		// Cosmwasm support
+		Cosmwasm: cosmwasm = 180,
+
+		// IBC support
+		Ibc: pallet_ibc = 190,
+		IbcPing: pallet_ibc_ping = 191
 	}
 );
 
