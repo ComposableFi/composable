@@ -57,6 +57,7 @@
         ./code/utils/composable-subxt/subxt.nix
         ./code/xcvm/cosmos/junod.nix
         ./code/xcvm/cosmos/gex.nix
+        ./code/xcvm/cosmos/wasmswap.nix
       ];
       systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
       perSystem = { config, self', inputs', pkgs, system, crane, ... }: {
@@ -71,9 +72,6 @@
         packages = {
           default = self'.packages.zombienet-rococo-local-dali-dev;
           devnet-dali = self'.packages.zombienet-rococo-local-dali-dev;
-          wasmswap = pkgs.callPackage ./code/xcvm/cosmos/wasmswap.nix {
-            crane = crane.nightly;
-          };
 
           # NOTE: crane can't be used because of how it vendors deps, which is incompatible with some packages in polkadot, an issue must be raised to the repo
           acala-node = pkgs.callPackage ./.nix/acala-bin.nix {
