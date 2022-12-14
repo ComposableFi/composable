@@ -9811,6 +9811,7 @@ dependencies = [
  "orml-unknown-tokens",
  "orml-xcm-support",
  "orml-xtokens",
+ "pablo-runtime-api",
  "pallet-asset-tx-payment",
  "pallet-assets 1.0.0",
  "pallet-assets-registry",
