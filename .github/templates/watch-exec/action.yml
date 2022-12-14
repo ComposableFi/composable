@@ -45,6 +45,38 @@ runs:
         authToken: "${{ inputs.token }}"
     - run: |
         ${{ inputs.pre-run }}
-        cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community ${{ inputs.command }} --no-update-lock-file --show-trace -L
+        # Marker status code in case of network failure.
+        STATUS_TRANSIENT_FAILURE=200
+        # Maximum retries in case of network failures.
+        RETRIES=5               
+        CMD="nix -- run .#benchmarks-once-dali --no-update-lock-file --show-trace -L 2> >(tee -a $LOG_FILE >&2)" 
+        # Marker that a network error occurred.
+        BAD="HTTP error 200 ('')"  
+        LOG_FILE=/tmp/out.log
+
+        function run() {
+            eval "${CMD?}"
+            STATUS_CODE=$?
+            if [[ $STATUS_CODE -ne 0 ]] ; then
+                C=$(grep -c "HTTP error 200" $LOG_FILE)
+                if [[ $C -gt 0 ]]; then 
+                    STATUS_CODE=$STATUS_TRANSIENT_FAILURE 
+                fi
+            fi
+        }
+
+        try=0
+        while [[ "${try?}" -le "${RETRIES?}" ]]; do
+            if [[ "${try?}" -eq "${RETRIES?}" ]] ; then
+                exit 1
+            fi
+            run
+            if [[ $STATUS_CODE -ne 0 ]] || [[ $STATUS_CODE -ne $STATUS_TRANSIENT_FAILURE ]] ; then
+                break
+            fi
+            ((try=try+1))
+        done
+
+        exit $((STATUS_CODE))    
       shell: "bash"
       working-directory: ${{ inputs.working-directory }}
