@@ -1,3 +1,7 @@
 variable "project" {
-  type    = string
+  type = string
+}
+
+variable "node-name" {
+  type = string
 }
