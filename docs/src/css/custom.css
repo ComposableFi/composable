@@ -4,10 +4,6 @@
  * work well for content-centric websites.
  */
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 /* EkMukta Font */
 @font-face {
   font-family: "EkMukta";
