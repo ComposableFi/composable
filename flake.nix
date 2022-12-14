@@ -56,6 +56,7 @@
         ./.nix/cargo/flake-module.nix
         ./code/utils/composable-subxt/subxt.nix
         ./code/xcvm/cosmos/junod.nix
+        ./code/xcvm/cosmos/gex.nix
       ];
       systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
       perSystem = { config, self', inputs', pkgs, system, crane, ... }: {
@@ -70,7 +71,6 @@
         packages = {
           default = self'.packages.zombienet-rococo-local-dali-dev;
           devnet-dali = self'.packages.zombienet-rococo-local-dali-dev;
-          gex = pkgs.callPackage ./code/xcvm/cosmos/gex.nix { };
           wasmswap = pkgs.callPackage ./code/xcvm/cosmos/wasmswap.nix {
             crane = crane.nightly;
           };
