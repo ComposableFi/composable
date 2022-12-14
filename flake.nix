@@ -61,6 +61,7 @@
         ./parachains/acala.nix
         ./parachains/statemine.nix
         ./parachains/polkadot.nix
+        ./parachains/polkadot-launch.nix
       ];
       systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
       perSystem = { config, self', inputs', pkgs, system, crane, ... }: {
@@ -73,28 +74,14 @@
           ];
         };
         packages = {
+          # TODO: remove this from here
           default = self'.packages.zombienet-rococo-local-dali-dev;
           devnet-dali = self'.packages.zombienet-rococo-local-dali-dev;
-
-          # polkadot-node = pkgs.callPackage ./.nix/polkadot/polkadot-bin.nix {
-          #   rust-nightly = self'.packages.rust-nightly;
-          # };
-
-          # mmr-polkadot-node =
-          #   pkgs.callPackage ./.nix/polkadot/mmr-polkadot-bin.nix {
-          #     rust-nightly = self'.packages.rust-nightly;
-          #   };
-
-          polkadot-launch =
-            pkgs.callPackage ./scripts/polkadot-launch/polkadot-launch.nix { };
-
+          # NOTE: Do not add packages here directly, instead, put them in flake-parts.
         };
       };
       flake = {
-        # The usual flake attributes can be defined here, including system-
-        # agnostic ones like nixosModule and system-enumerating ones, although
-        # those are more easily expressed in perSystem.
-
+        # NOTE: These will bue put in a part soon.
         overlays = {
           default = let
             mkDevnetProgram = { pkgs }:
