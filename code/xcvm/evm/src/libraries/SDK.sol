@@ -346,9 +346,11 @@ library SDK {
             valueToReplace = abi.encode(uint256(amount));
             //balance
         } else if (valueType == 5) {
-            // asset id
+            // global id
             address asset;
-            (asset, , newPos) = _handleAssetId(program, pos, routerAddress);
+            uint256 assetId;
+            (assetId, newPos) = _handleGlobalId(program, pos);
+            asset = IRouter(routerAddress).getAsset(uint256(assetId));
             valueToReplace = abi.encode(asset);
         } else {
             revert("wrong binding value type");
@@ -726,10 +728,10 @@ library SDK {
         );
     }
 
-    function generateBindingValueByAssetId(bytes memory _assetId) public pure returns (bytes memory bindingValue) {
+    function generateBindingValueByGlobalId(bytes memory _globalId) public pure returns (bytes memory bindingValue) {
         return abi.encodePacked(
             ProtobufLib.encode_key(5, 2),
-            ProtobufLib.encode_length_delimited(_assetId)
+            ProtobufLib.encode_length_delimited(_globalId)
         );
     }
 

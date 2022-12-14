@@ -75,8 +75,8 @@ contract SDKMock {
         return SDK.generateBindingValueByAssetAmount(_assetAmount);
     }
 
-    function generateBindingValueByAssetId(bytes memory _assetId) public pure returns (bytes memory bindingValue) {
-        return SDK.generateBindingValueByAssetId(_assetId);
+    function generateBindingValueByGlobalId(bytes memory _globalId) public pure returns (bytes memory bindingValue) {
+        return SDK.generateBindingValueByGlobalId(_globalId);
     }
 
     function generateBinding(uint32 position, bytes memory _bindingValue) public pure returns (bytes memory binding) {

@@ -99,7 +99,7 @@ message BindingValue {
     Relayer relayer = 2;
     Result result = 3;
     AssetAmount assetAmount = 4;
-    AssetId assetId = 5;
+    GlobalId globalId = 5;
     IpRegister ipRegister = 6;
   }
 }
