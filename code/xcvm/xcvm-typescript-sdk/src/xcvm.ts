@@ -310,8 +310,8 @@ export class XCVM {
       return this.BindingValueMessage.create({relayer: bindingValueType});
     } else if (bindingValueType.$type.name == "AssetAmount") {
       return this.BindingValueMessage.create({assetAmount: bindingValueType});
-    } else if (bindingValueType.$type.name == "AssetId") {
-      return this.BindingValueMessage.create({assetId: bindingValueType});
+    } else if (bindingValueType.$type.name == "GlobalId") {
+      return this.BindingValueMessage.create({globalId: bindingValueType});
     } else if (bindingValueType.isNumeric()) {
       // type 3
       return this.BindingValueMessage.create({result: bindingValueType});
