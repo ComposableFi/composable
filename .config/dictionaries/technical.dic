@@ -466,6 +466,7 @@ nodev
 nosuid
 papaparse
 polkassembly
+structs
 tailwindcss
 keyval
 rfdc # really fast deep clone
