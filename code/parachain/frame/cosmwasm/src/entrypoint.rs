@@ -1,12 +1,12 @@
 use crate::{
-	runtimes::wasmi::{CosmwasmVM, CosmwasmVMError, CosmwasmVMShared},
+	runtimes::{
+		abstraction::CosmwasmAccount,
+		wasmi::{CosmwasmVM, CosmwasmVMError, CosmwasmVMShared},
+	},
 	AccountIdOf, CodeIdToInfo, Config, ContractInfoOf, ContractLabelOf, ContractMessageOf,
 	ContractToInfo, CurrentNonce, EntryPoint, Error, Event, FundsOf, Pallet,
 };
-use alloc::{
-	string::{String, ToString},
-	vec::Vec,
-};
+use alloc::vec::Vec;
 use composable_support::abstractions::utils::increment::Increment;
 use core::marker::PhantomData;
 
@@ -157,21 +157,33 @@ impl EntryPointCaller<MigrateCall> {
 	/// * `contract` - Address of the contract to be called.
 	/// * `new_code_id` - New code id that the contract will point to (or use).
 	pub(crate) fn setup<T: Config>(
+		shared: &mut CosmwasmVMShared,
 		migrator: AccountIdOf<T>,
 		contract: AccountIdOf<T>,
 		new_code_id: CosmwasmCodeId,
 	) -> Result<EntryPointCaller<Dispatchable<MigrateCall, (), T>>, Error<T>> {
-		let mut contract_info = Pallet::<T>::contract_info(&contract)?;
-		// If the contract is already migrated (which is the case for `continue_migrate`) don't try
-		// to migrate again.
+		let contract_info = Pallet::<T>::contract_info(&contract)?;
+
+		// If the migrate already happened, no need to do that again.
+		// This is the case for sub-message execution where `migrate` is
+		// called by the VM.
 		if contract_info.code_id != new_code_id {
-			Pallet::<T>::do_set_contract_meta(
-				&contract,
-				new_code_id,
-				contract_info.admin.clone(),
-				String::from_utf8_lossy(&contract_info.label).to_string(),
-			)?;
-			contract_info.code_id = new_code_id;
+			Pallet::<T>::cosmwasm_call(
+				shared,
+				migrator.clone(),
+				contract.clone(),
+				contract_info.clone(),
+				Default::default(),
+				|vm| {
+					cosmwasm_vm::system::migrate(
+						vm,
+						CosmwasmAccount::new(migrator.clone()),
+						CosmwasmAccount::new(contract.clone()),
+						new_code_id,
+					)
+				},
+			)
+			.map_err(|_| Error::<T>::NotAuthorized)?;
 		}
 
 		Pallet::<T>::deposit_event(Event::<T>::Migrated {

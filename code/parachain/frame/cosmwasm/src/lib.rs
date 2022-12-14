@@ -536,11 +536,9 @@ pub mod pallet {
 				CodeIdentifier::CodeHash(code_hash) =>
 					CodeHashToId::<T>::try_get(code_hash).map_err(|_| Error::<T>::CodeNotFound)?,
 			};
-			let outcome = EntryPointCaller::<MigrateCall>::setup(who, contract, new_code_id)?.call(
-				&mut shared,
-				Default::default(),
-				message,
-			);
+			let outcome =
+				EntryPointCaller::<MigrateCall>::setup(&mut shared, who, contract, new_code_id)?
+					.call(&mut shared, Default::default(), message);
 			Self::refund_gas(outcome, initial_gas, shared.gas.remaining())
 		}
 
@@ -1466,6 +1464,7 @@ pub mod pallet {
 		) -> Result<Option<cosmwasm_vm::cosmwasm_std::Binary>, CosmwasmVMError<T>> {
 			let CosmwasmContractMeta { code_id, .. } = Self::do_running_contract_meta(vm);
 			EntryPointCaller::<MigrateCall>::setup(
+				vm.shared,
 				vm.contract_address.clone().into_inner(),
 				contract,
 				code_id,
