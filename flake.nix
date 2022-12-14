@@ -59,6 +59,7 @@
         ./code/xcvm/cosmos/gex.nix
         ./code/xcvm/cosmos/wasmswap.nix
         ./parachains/acala.nix
+        ./parachains/statemine.nix
       ];
       systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
       perSystem = { config, self', inputs', pkgs, system, crane, ... }: {
@@ -80,10 +81,6 @@
           # };
 
           polkadot-node = pkgs.callPackage ./.nix/polkadot/polkadot-bin.nix {
-            rust-nightly = self'.packages.rust-nightly;
-          };
-
-          statemine-node = pkgs.callPackage ./.nix/statemine-bin.nix {
             rust-nightly = self'.packages.rust-nightly;
           };
 

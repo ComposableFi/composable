@@ -1,4 +1,3 @@
-
 # NOTE: crane can't be used because of how it vendors deps, which is incompatible with some packages in polkadot, an issue must be raised to the repo
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, system, crane, systemCommonRust, ... }:
