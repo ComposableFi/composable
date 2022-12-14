@@ -1,16 +1,11 @@
-import {
-  PabloPool,
-  PabloPoolAsset,
-  EventType,
-  LockedSource,
-} from "subsquid/model";
+import { PabloPool, PabloPoolAsset, EventType, LockedSource } from "subsquid/model";
 import { Store } from "@subsquid/typeorm-store";
 import { EventHandlerContext } from "@subsquid/substrate-processor";
 import {
   PabloLiquidityAddedEvent,
   PabloLiquidityRemovedEvent,
   PabloPoolCreatedEvent,
-  PabloSwappedEvent,
+  PabloSwappedEvent
 } from "subsquid/types/events";
 import { Fee } from "subsquid/types/v10003";
 import { encodeAccount } from "subsquid/utils";
@@ -21,7 +16,7 @@ import {
   saveEvent,
   storeCurrentLockedValue,
   storeHistoricalLockedValue,
-  storeHistoricalVolume,
+  storeHistoricalVolume
 } from "../dbHelper";
 
 /**
@@ -46,7 +41,7 @@ function createPabloAsset(
     totalLiquidity: BigInt(0),
     totalVolume: BigInt(0),
     weight,
-    timestamp,
+    timestamp
   });
 }
 
@@ -61,7 +56,7 @@ function getPoolCreatedEvent(event: PabloPoolCreatedEvent): PoolCreatedEvent {
   return {
     owner,
     poolId,
-    assetWeights,
+    assetWeights
   };
 }
 
@@ -72,15 +67,13 @@ interface LiquidityAddedEvent {
   mintedLp: bigint;
 }
 
-function getLiquidityAddedEvent(
-  event: PabloLiquidityAddedEvent
-): LiquidityAddedEvent {
+function getLiquidityAddedEvent(event: PabloLiquidityAddedEvent): LiquidityAddedEvent {
   const { who, poolId, assetAmounts, mintedLp } = event.asV10003;
   return {
     who,
     poolId,
     assetAmounts,
-    mintedLp,
+    mintedLp
   };
 }
 
@@ -90,14 +83,12 @@ interface LiquidityRemovedEvent {
   assetAmounts: [bigint, bigint][];
 }
 
-function getLiquidityRemovedEvent(
-  event: PabloLiquidityRemovedEvent
-): LiquidityRemovedEvent {
+function getLiquidityRemovedEvent(event: PabloLiquidityRemovedEvent): LiquidityRemovedEvent {
   const { who, poolId, assetAmounts } = event.asV10003;
   return {
     who,
     poolId,
-    assetAmounts,
+    assetAmounts
   };
 }
 
@@ -112,8 +103,7 @@ interface SwappedEvent {
 }
 
 function getSwappedEvent(event: PabloSwappedEvent): SwappedEvent {
-  const { who, poolId, baseAsset, baseAmount, quoteAsset, quoteAmount, fee } =
-    event.asV10003;
+  const { who, poolId, baseAsset, baseAmount, quoteAsset, quoteAmount, fee } = event.asV10003;
   return {
     who,
     poolId,
@@ -121,13 +111,11 @@ function getSwappedEvent(event: PabloSwappedEvent): SwappedEvent {
     baseAmount,
     quoteAsset,
     quoteAmount,
-    fee,
+    fee
   };
 }
 
-export async function processPoolCreatedEvent(
-  ctx: EventHandlerContext<Store, { event: true }>
-): Promise<void> {
+export async function processPoolCreatedEvent(ctx: EventHandlerContext<Store, { event: true }>): Promise<void> {
   console.debug("processing PoolCreatedEvent", ctx.event.id);
   const pabloPoolCreatedEvent = new PabloPoolCreatedEvent(ctx);
   const poolCreatedEvent = getPoolCreatedEvent(pabloPoolCreatedEvent);
@@ -148,18 +136,12 @@ export async function processPoolCreatedEvent(
     totalVolume: BigInt(0),
     totalFees: BigInt(0),
     blockNumber: BigInt(ctx.block.height),
-    timestamp: new Date(ctx.block.timestamp),
+    timestamp: new Date(ctx.block.timestamp)
   });
 
   // Create assets
   const poolAssets = assetWeights.map(([assetId, weight]) =>
-    createPabloAsset(
-      pool,
-      assetId.toString(),
-      BigInt(weight || 0),
-      ctx,
-      new Date(ctx.block.timestamp)
-    )
+    createPabloAsset(pool, assetId.toString(), BigInt(weight || 0), ctx, new Date(ctx.block.timestamp))
   );
 
   // Store assets
@@ -175,9 +157,7 @@ export async function processPoolCreatedEvent(
   await ctx.store.save(pool);
 }
 
-export async function processLiquidityAddedEvent(
-  ctx: EventHandlerContext<Store, { event: true }>
-): Promise<void> {
+export async function processLiquidityAddedEvent(ctx: EventHandlerContext<Store, { event: true }>): Promise<void> {
   console.debug("processing LiquidityAddedEvent", ctx.event.id);
   const pabloLiquidityAddedEvent = new PabloLiquidityAddedEvent(ctx);
   const liquidityAddedEvent = getLiquidityAddedEvent(pabloLiquidityAddedEvent);
@@ -193,19 +173,12 @@ export async function processLiquidityAddedEvent(
   }
 
   // Create and save event
-  const { event } = await saveAccountAndEvent(
-    ctx,
-    EventType.ADD_LIQUIDITY,
-    who
-  );
+  const { event } = await saveAccountAndEvent(ctx, EventType.ADD_LIQUIDITY, who);
 
   // Create and save activity
   await saveActivity(ctx, event, who);
 
-  const addedLiquidity = assetAmounts.reduce(
-    (acc, [, amount]) => acc + amount,
-    BigInt(0)
-  );
+  const addedLiquidity = assetAmounts.reduce((acc, [, amount]) => acc + amount, BigInt(0));
 
   // Update pool
   pool.eventId = ctx.event.id;
@@ -234,7 +207,7 @@ export async function processLiquidityAddedEvent(
   const amountsLocked = assetAmounts.reduce<Record<string, bigint>>(
     (acc, [assetId, amount]) => ({
       ...acc,
-      [assetId.toString()]: amount,
+      [assetId.toString()]: amount
     }),
     {}
   );
@@ -244,14 +217,10 @@ export async function processLiquidityAddedEvent(
   await storeCurrentLockedValue(ctx, amountsLocked, LockedSource.Pablo);
 }
 
-export async function processLiquidityRemovedEvent(
-  ctx: EventHandlerContext<Store, { event: true }>
-): Promise<void> {
+export async function processLiquidityRemovedEvent(ctx: EventHandlerContext<Store, { event: true }>): Promise<void> {
   console.debug("processing LiquidityRemovedEvent", ctx.event.id);
   const pabloLiquidityRemovedEvent = new PabloLiquidityRemovedEvent(ctx);
-  const liquidityRemovedEvent = getLiquidityRemovedEvent(
-    pabloLiquidityRemovedEvent
-  );
+  const liquidityRemovedEvent = getLiquidityRemovedEvent(pabloLiquidityRemovedEvent);
   const who = encodeAccount(liquidityRemovedEvent.who);
   const { poolId, assetAmounts } = liquidityRemovedEvent;
 
@@ -264,19 +233,12 @@ export async function processLiquidityRemovedEvent(
   }
 
   // Create and save account and event
-  const { event } = await saveAccountAndEvent(
-    ctx,
-    EventType.REMOVE_LIQUIDITY,
-    who
-  );
+  const { event } = await saveAccountAndEvent(ctx, EventType.REMOVE_LIQUIDITY, who);
 
   // Create and save activity
   await saveActivity(ctx, event, who);
 
-  const removedLiquidity = assetAmounts.reduce(
-    (acc, [, amount]) => acc + amount,
-    BigInt(0)
-  );
+  const removedLiquidity = assetAmounts.reduce((acc, [, amount]) => acc + amount, BigInt(0));
 
   // Update pool
   pool.eventId = ctx.event.id;
@@ -304,7 +266,7 @@ export async function processLiquidityRemovedEvent(
   const amountsLocked = assetAmounts.reduce<Record<string, bigint>>(
     (acc, [assetId, amount]) => ({
       ...acc,
-      [assetId.toString()]: -amount,
+      [assetId.toString()]: -amount
     }),
     {}
   );
@@ -314,21 +276,12 @@ export async function processLiquidityRemovedEvent(
   await storeCurrentLockedValue(ctx, amountsLocked, LockedSource.Pablo);
 }
 
-export async function processSwappedEvent(
-  ctx: EventHandlerContext<Store, { event: true }>
-): Promise<void> {
+export async function processSwappedEvent(ctx: EventHandlerContext<Store, { event: true }>): Promise<void> {
   console.debug("processing SwappedEvent", ctx.event.id);
   const pabloSwappedEvent = new PabloSwappedEvent(ctx);
   const swappedEvent = getSwappedEvent(pabloSwappedEvent);
   const who = encodeAccount(swappedEvent.who);
-  const {
-    poolId,
-    fee,
-    baseAsset: baseAssetId,
-    baseAmount,
-    quoteAsset: quoteAssetId,
-    quoteAmount,
-  } = swappedEvent;
+  const { poolId, fee, baseAsset: baseAssetId, baseAmount, quoteAsset: quoteAssetId, quoteAmount } = swappedEvent;
   const feesLeavingPool = fee.fee - fee.lpFee;
   const spotPrice = quoteAmount / baseAmount; // TODO: check
 
@@ -352,24 +305,12 @@ export async function processSwappedEvent(
   pool.blockNumber = BigInt(ctx.block.height);
   pool.transactionCount += 1;
   pool.totalVolume += quoteAmount; // TODO: check if this is correct in the case of reversed, if exists
-  pool.totalLiquidity -= calculateFeeInQuoteAsset(
-    spotPrice,
-    quoteAssetId,
-    fee.assetId,
-    feesLeavingPool
-  );
+  pool.totalLiquidity -= calculateFeeInQuoteAsset(spotPrice, quoteAssetId, fee.assetId, feesLeavingPool);
 
-  const quoteAssetFee = calculateFeeInQuoteAsset(
-    spotPrice,
-    quoteAssetId,
-    fee.assetId,
-    fee.fee
-  );
+  const quoteAssetFee = calculateFeeInQuoteAsset(spotPrice, quoteAssetId, fee.assetId, fee.fee);
   pool.totalFees += quoteAssetFee;
 
-  const baseAsset = pool.poolAssets.find(
-    ({ id }) => id === baseAssetId.toString()
-  );
+  const baseAsset = pool.poolAssets.find(({ id }) => id === baseAssetId.toString());
 
   if (baseAsset) {
     baseAsset.timestamp = new Date(ctx.block.timestamp);
@@ -381,9 +322,7 @@ export async function processSwappedEvent(
     await ctx.store.save(baseAsset);
   }
 
-  const quoteAsset = pool.poolAssets.find(
-    ({ id }) => id === quoteAssetId.toString()
-  );
+  const quoteAsset = pool.poolAssets.find(({ id }) => id === quoteAssetId.toString());
 
   if (quoteAsset) {
     quoteAsset.timestamp = new Date(ctx.block.timestamp);
@@ -403,12 +342,7 @@ export async function processSwappedEvent(
   await storeHistoricalVolume(ctx, quoteAssetId.toString(), quoteAmount);
 }
 
-function calculateFeeInQuoteAsset(
-  spotPrice: bigint,
-  quoteAsset: bigint,
-  feeAsset: bigint,
-  fee: bigint
-): bigint {
+function calculateFeeInQuoteAsset(spotPrice: bigint, quoteAsset: bigint, feeAsset: bigint, fee: bigint): bigint {
   // calculate the quote amount based on the exchange rate if the fees are in the base asset
   return feeAsset === quoteAsset ? fee : spotPrice * fee;
 }
