@@ -58,6 +58,7 @@
         ./code/xcvm/cosmos/junod.nix
         ./code/xcvm/cosmos/gex.nix
         ./code/xcvm/cosmos/wasmswap.nix
+        ./parachains/acala.nix
       ];
       systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
       perSystem = { config, self', inputs', pkgs, system, crane, ... }: {
@@ -74,9 +75,9 @@
           devnet-dali = self'.packages.zombienet-rococo-local-dali-dev;
 
           # NOTE: crane can't be used because of how it vendors deps, which is incompatible with some packages in polkadot, an issue must be raised to the repo
-          acala-node = pkgs.callPackage ./.nix/acala-bin.nix {
-            rust-overlay = self'.packages.rust-nightly;
-          };
+          # acala-node = pkgs.callPackage ./.nix/acala-bin.nix {
+          #   rust-overlay = self'.packages.rust-nightly;
+          # };
 
           polkadot-node = pkgs.callPackage ./.nix/polkadot/polkadot-bin.nix {
             rust-nightly = self'.packages.rust-nightly;
