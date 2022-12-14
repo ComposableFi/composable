@@ -144,6 +144,13 @@ orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-l
 # simnode support
 simnode-apis = { package = "simnode-runtime-apis", git = "https://github.com/polytope-labs/substrate-simnode", default-features = false, branch = "polkadot-v0.9.27" }
 
+# IBC support
+pallet-ibc = { git = "https://github.com/ComposableFi/centauri", rev = "c7d2f2d812074850c3b5ab7e42fa582f72582355", default-features = false }
+ibc = { git = "https://github.com/ComposableFi/centauri", rev = "c7d2f2d812074850c3b5ab7e42fa582f72582355", default-features = false }
+pallet-ibc-ping = { git = "https://github.com/ComposableFi/centauri", rev = "c7d2f2d812074850c3b5ab7e42fa582f72582355", default-features = false }
+ibc-primitives = { git = "https://github.com/ComposableFi/centauri", rev = "c7d2f2d812074850c3b5ab7e42fa582f72582355", default-features = false }
+ibc-runtime-api = { git = "https://github.com/ComposableFi/centauri", rev = "c7d2f2d812074850c3b5ab7e42fa582f72582355", default-features = false }
+
 [dev-dependencies]
 frame-benchmarking = { package = "frame-benchmarking", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
 
@@ -207,6 +214,7 @@ runtime-benchmarks = [
   "pallet-staking-rewards/runtime-benchmarks",
   "cosmwasm/runtime-benchmarks",
   "asset-tx-payment/runtime-benchmarks",
+  "pallet-ibc/runtime-benchmarks",
 ]
 std = [
   "assets-registry/std",
@@ -293,4 +301,9 @@ std = [
   "cosmwasm/std",
   "cosmwasm-runtime-api/std",
   "asset-tx-payment/std",
+  "ibc/std",
+  "pallet-ibc/std",
+  "pallet-ibc-ping/std",
+  "ibc-primitives/std",
+  "ibc-runtime-api/std",
 ]
