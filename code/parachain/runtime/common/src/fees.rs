@@ -69,7 +69,10 @@ impl WellKnownForeignToNativePriceConverter {
 		match asset_id {
 			CurrencyId::KSM => Some(rational!(375 / 1_000_000)),
 			CurrencyId::ibcDOT => Some(rational!(2143 / 1_000_000)),
-			CurrencyId::USDT | CurrencyId::USDC => Some(rational!(15 / 1_000_000_000)),
+			CurrencyId::USDT | CurrencyId::USDC => Some(
+				// 15 * 12^12 : 1000 * 10^12
+				rational!(15_000_000_000_000 / 1_000_000_000_000_000),
+			),
 			CurrencyId::kUSD => Some(rational!(15 / 1_000)),
 			CurrencyId::PICA => Some(rational!(1 / 1)),
 			CurrencyId::PBLO => Some(rational!(1 / 1)),
