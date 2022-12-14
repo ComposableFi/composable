@@ -82,7 +82,7 @@ pub mod pallet {
 			tokens::WithdrawReasons,
 			LockIdentifier, LockableCurrency, Time,
 		},
-		transactional, PalletId,
+		PalletId,
 	};
 	use frame_system::pallet_prelude::*;
 	use sp_io::hashing::keccak_256;
@@ -101,6 +101,7 @@ pub mod pallet {
 	pub type VestingPeriodOf<T> = MomentOf<T>;
 	pub type RewardAmountOf<T> = <T as Config>::Balance;
 	pub type ProofOf<T> = Proof<<T as Config>::RelayChainAccountId>;
+	pub type BalanceOf<T> = <T as Config>::Balance;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -120,6 +121,10 @@ pub mod pallet {
 		OverFunded { excess_funds: T::Balance },
 		/// A portion of rewards have been unlocked and future claims will not have locks
 		RewardsUnlocked { at: MomentOf<T> },
+		/// Called after rewards have been added through the `add` extrinsic.
+		RewardsAdded { additions: Vec<(RemoteAccountOf<T>, RewardAmountOf<T>, VestingPeriodOf<T>)> },
+		/// Called after rewards have been deleted through the `delete` extrinsic.
+		RewardsDeleted { deletions: Vec<RemoteAccountOf<T>> },
 	}
 
 	#[pallet::error]
@@ -134,6 +139,8 @@ pub mod pallet {
 		NotAssociated,
 		AlreadyAssociated,
 		NotClaimableYet,
+		/// Returned by `delete` if the provided expected reward mismatches the actual reward.
+		UnexpectedRewardAmount,
 	}
 
 	#[pallet::config]
@@ -262,7 +269,6 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// Initialize the pallet at the current timestamp.
 		#[pallet::weight(<T as Config>::WeightInfo::initialize(TotalContributors::<T>::get()))]
-		#[transactional]
 		pub fn initialize(origin: OriginFor<T>) -> DispatchResult {
 			T::AdminOrigin::ensure_origin(origin)?;
 			let now = T::Time::now();
@@ -271,7 +277,6 @@ pub mod pallet {
 
 		/// Initialize the pallet at the given timestamp.
 		#[pallet::weight(<T as Config>::WeightInfo::initialize(TotalContributors::<T>::get()))]
-		#[transactional]
 		pub fn initialize_at(origin: OriginFor<T>, at: MomentOf<T>) -> DispatchResult {
 			T::AdminOrigin::ensure_origin(origin)?;
 			Self::do_initialize(at)
@@ -287,7 +292,6 @@ pub mod pallet {
 		///
 		/// Can only be called before `initialize`.
 		#[pallet::weight(<T as Config>::WeightInfo::populate(rewards.len() as _))]
-		#[transactional]
 		pub fn populate(
 			origin: OriginFor<T>,
 			rewards: Vec<(RemoteAccountOf<T>, RewardAmountOf<T>, VestingPeriodOf<T>)>,
@@ -306,7 +310,6 @@ pub mod pallet {
 		/// proof = sign (concat prefix (hex reward_account))
 		/// ```
 		#[pallet::weight(<T as Config>::WeightInfo::associate(TotalContributors::<T>::get()))]
-		#[transactional]
 		pub fn associate(
 			origin: OriginFor<T>,
 			reward_account: T::AccountId,
@@ -320,7 +323,6 @@ pub mod pallet {
 		/// A previous call to `associate` should have been made.
 		/// If logic gate pass, no fees are applied.
 		#[pallet::weight(<T as Config>::WeightInfo::claim(TotalContributors::<T>::get()))]
-		#[transactional]
 		pub fn claim(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let reward_account = ensure_signed(origin)?;
 			let remote_account = Associations::<T>::try_get(&reward_account)
@@ -339,6 +341,19 @@ pub mod pallet {
 			Self::do_unlock(reward_accounts);
 			Ok(())
 		}
+
+		/// Adds all accounts in the `additions` vector. Add may be called even if the pallet has
+		/// been initialized.
+		#[pallet::weight(<T as Config>::WeightInfo::populate(additions.len() as _))]
+		pub fn add(
+			origin: OriginFor<T>,
+			additions: Vec<(RemoteAccountOf<T>, RewardAmountOf<T>, VestingPeriodOf<T>)>,
+		) -> DispatchResult {
+			T::AdminOrigin::ensure_origin(origin)?;
+			Self::do_add(additions.clone())?;
+			Self::deposit_event(Event::RewardsAdded { additions });
+			Ok(())
+		}
 	}
 
 	#[pallet::extra_constants]
@@ -350,6 +365,63 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
+		/// Patch existing rewards by deleting them.
+		/// This will cause inconsistencies if a claim has already been made. Errors can be avoided
+		/// by passing the expected amount of rewards claimable.
+		///
+		/// Security:
+		/// * Should be called within a transactional context, as this may return an error but still
+		///   change
+		/// storage.
+		// pub(crate) fn do_delete(
+		// 	deletions: Vec<(RemoteAccountOf<T>, BalanceOf<T>)>,
+		// ) -> DispatchResult {
+		// 	let mut total_rewards: T::Balance = TotalRewards::<T>::get();
+		// 	let mut total_contributors: u32 = TotalContributors::<T>::get();
+
+		// 	// Get each account from deletions and remove it from the storage
+		// 	for (account, expected) in deletions {
+		// 		Rewards::<T>::mutate_exists(account, |rewards| {
+		// 			if let Some(rewards) = rewards {
+		// 				ensure!(rewards.total == expected, Error::<T>::UnexpectedRewardAmount);
+		// 				total_rewards -= rewards.total;
+		// 				total_contributors -= 1;
+		// 			}
+		// 			*rewards = None;
+		// 			Ok::<(), Error<T>>(())
+		// 		})?;
+		// 	}
+
+		// 	TotalRewards::<T>::set(total_rewards);
+		// 	TotalContributors::<T>::set(total_contributors);
+		// 	Ok(())
+		// }
+
+		/// Add new rewards to the pallet. Updates total_rewards and contributors accordingly.
+		pub fn do_add(
+			additions: Vec<(RemoteAccountOf<T>, RewardAmountOf<T>, VestingPeriodOf<T>)>,
+		) -> DispatchResult {
+			Self::ensure_can_reward(|| Self::in_uninitialized(|| Self::do_populate(additions)))
+		}
+
+		/// Runs the provided closure, and afterwards ensures that rewards can be paid out.
+		pub(crate) fn ensure_can_reward<F: FnOnce() -> DispatchResult>(f: F) -> DispatchResult {
+			let result = f();
+			let available_funds = T::RewardAsset::balance(&Self::account_id());
+			let remaining = TotalRewards::<T>::get().safe_sub(&ClaimedRewards::<T>::get())?;
+			ensure!(available_funds >= remaining, Error::<T>::RewardsNotFunded);
+			result
+		}
+
+		/// Runs the provided function while setting the crate to uninitialized. Useful during
+		/// patching.
+		pub(crate) fn in_uninitialized<F: FnOnce() -> DispatchResult>(f: F) -> DispatchResult {
+			let start = VestingTimeStart::<T>::take();
+			let result = f();
+			VestingTimeStart::<T>::set(start);
+			result
+		}
+
 		/// Initialize the Crowdloan at a given timestamp.
 		///
 		/// If the Crowdloan is over funded by more than the `OverFundedThreshold`, the `OverFunded`
