@@ -134,6 +134,7 @@ endwhile
 ensdomains
 extendsi
 ferdie
+fetchgit
 fgrep
 findutils
 fnft
