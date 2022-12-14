@@ -191,6 +191,34 @@ const sidebars = {
         },
         {
           type: 'category',
+          label: 'CosmWasm Orchestrate',
+          link: {
+            type: 'doc',
+            id: 'products/cosmwasm-orchestrate'
+          },
+          collapsible: true,
+          collapsed: true,
+          items: [
+            {
+              type: 'category',
+              label: 'Concepts',
+              link: {
+                type: 'doc',
+                id: 'products/cosmwasm-orchestrate/concepts/concepts'
+              },
+              collapsible: true,
+              collapsed: true,
+              items: [
+                'products/cosmwasm-orchestrate/concepts/direct-dispatch',
+                'products/cosmwasm-orchestrate/concepts/address-handlers',
+                'products/cosmwasm-orchestrate/concepts/custom-handler',
+              ]
+            },
+            'products/cosmwasm-orchestrate/tutorial-dex'
+          ]
+        },
+        {
+          type: 'category',
           label: 'Mosaic (Discontinued)',
           link: {
             type: 'doc',
