@@ -77,6 +77,7 @@ fn add_remove_lp() {
 				pool_id,
 				asset_amounts: assets_with_amounts.into(),
 				minted_lp: 199_999_999_814_806,
+				pool_type: "DualAssetConstantProduct".as_bytes().to_vec(),
 			},
 		);
 
@@ -102,6 +103,7 @@ fn add_remove_lp() {
 				pool_id,
 				asset_amounts: assets_with_next_amounts.into(),
 				minted_lp: 19999999981480,
+				pool_type: "DualAssetConstantProduct".as_bytes().to_vec(),
 			},
 		);
 

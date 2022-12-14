@@ -105,11 +105,37 @@ pub mod pallet {
 		},
 	}
 
+	impl<AccountId: Clone + PartialEq + Debug, AssetId: Clone + Ord + Debug>
+		PoolInitConfiguration<AccountId, AssetId>
+	{
+		fn get_type(&self) -> Vec<u8> {
+			let pool_type = match self {
+				PoolInitConfiguration::DualAssetConstantProduct {
+					owner: _,
+					fee: _,
+					assets_weights: _,
+				} => "DualAssetConstantProduct",
+			};
+			pool_type.as_bytes().to_vec()
+		}
+	}
+
 	#[derive(
 		RuntimeDebug, Encode, Decode, MaxEncodedLen, CloneNoBound, PartialEqNoBound, Eq, TypeInfo,
 	)]
 	pub enum PoolConfiguration<AccountId: Clone + PartialEq + Debug, AssetId: Clone + Ord + Debug> {
 		DualAssetConstantProduct(BasicPoolInfo<AccountId, AssetId, ConstU32<2>>),
+	}
+
+	impl<AccountId: Clone + PartialEq + Debug, AssetId: Clone + Ord + Debug>
+		PoolConfiguration<AccountId, AssetId>
+	{
+		fn get_type(&self) -> Vec<u8> {
+			let pool_type = match self {
+				PoolConfiguration::DualAssetConstantProduct(_) => "DualAssetConstantProduct",
+			};
+			pool_type.as_bytes().to_vec()
+		}
 	}
 
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
@@ -134,8 +160,10 @@ pub mod pallet {
 			pool_id: T::PoolId,
 			/// Owner of the pool.
 			owner: T::AccountId,
-			// Pool assets
+			/// Pool assets
 			asset_weights: BTreeMap<T::AssetId, Permill>,
+			/// Pool type
+			pool_type: Vec<u8>,
 		},
 		/// Liquidity added into the pool `T::PoolId`.
 		LiquidityAdded {
@@ -147,6 +175,8 @@ pub mod pallet {
 			asset_amounts: BTreeMap<T::AssetId, T::Balance>,
 			/// Amount of minted lp.
 			minted_lp: T::Balance,
+			/// Pool type
+			pool_type: Vec<u8>,
 		},
 		/// Liquidity removed from pool `T::PoolId` by `T::AccountId` in balanced way.
 		LiquidityRemoved {
@@ -156,6 +186,8 @@ pub mod pallet {
 			pool_id: T::PoolId,
 			/// Amount(s) of asset(s) removed from the pool.
 			asset_amounts: BTreeMap<T::AssetId, T::Balance>,
+			/// Pool type
+			pool_type: Vec<u8>,
 		},
 		/// Token exchange happened.
 		Swapped {
@@ -173,6 +205,8 @@ pub mod pallet {
 			quote_amount: T::Balance,
 			/// Charged fees.
 			fee: Fee<T::AssetId, T::Balance>,
+			/// Pool type
+			pool_type: Vec<u8>,
 		},
 		/// TWAP updated.
 		TwapUpdated {
@@ -510,7 +544,7 @@ pub mod pallet {
 			init_config: PoolInitConfigurationOf<T>,
 			lp_token_id: Option<AssetIdOf<T>>,
 		) -> Result<T::PoolId, DispatchError> {
-			let (owner, pool_id, assets_weights) = match init_config {
+			let (owner, pool_id, assets_weights) = match init_config.clone() {
 				PoolInitConfiguration::DualAssetConstantProduct { owner, fee, assets_weights } => {
 					let pool_id = DualAssetConstantProduct::<T>::do_create_pool(
 						&owner,
@@ -525,6 +559,7 @@ pub mod pallet {
 				owner,
 				pool_id,
 				asset_weights: assets_weights.into_inner(),
+				pool_type: PoolInitConfiguration::get_type(&init_config),
 			});
 			Ok(pool_id)
 		}
@@ -850,7 +885,7 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
-			let minted_lp = match pool {
+			let minted_lp = match pool.clone() {
 				PoolConfiguration::DualAssetConstantProduct(info) =>
 					DualAssetConstantProduct::<T>::add_liquidity(
 						who,
@@ -873,6 +908,7 @@ pub mod pallet {
 				pool_id,
 				asset_amounts: assets,
 				minted_lp,
+				pool_type: PoolConfiguration::get_type(&pool),
 			});
 			Ok(())
 		}
@@ -887,7 +923,7 @@ pub mod pallet {
 			let redeemable_assets = Self::redeemable_assets_for_lp_tokens(pool_id, lp_amount)?;
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
-			match pool {
+			match pool.clone() {
 				PoolConfiguration::DualAssetConstantProduct(info) => {
 					DualAssetConstantProduct::<T>::remove_liquidity(
 						who,
@@ -905,6 +941,7 @@ pub mod pallet {
 						pool_id,
 						who: who.clone(),
 						asset_amounts: redeemable_assets.assets,
+						pool_type: PoolConfiguration::get_type(&pool),
 					});
 				},
 			}
@@ -921,7 +958,7 @@ pub mod pallet {
 		) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
-			let (amount_out, amount_in, fee, _owner) = match pool {
+			let (amount_out, amount_in, fee, _owner) = match pool.clone() {
 				PoolConfiguration::DualAssetConstantProduct(info) => {
 					let (amount_out, amount_in, fee) =
 						DualAssetConstantProduct::<T>::get_exchange_value(
@@ -970,6 +1007,7 @@ pub mod pallet {
 				base_amount: amount_out.amount,
 				quote_amount: amount_in.amount,
 				fee,
+				pool_type: PoolConfiguration::get_type(&pool),
 			});
 
 			Ok(SwapResult {
@@ -989,7 +1027,7 @@ pub mod pallet {
 		) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
-			let (amount_sent, _owner, fees) = match pool {
+			let (amount_sent, _owner, fees) = match pool.clone() {
 				PoolConfiguration::DualAssetConstantProduct(info) => {
 					// NOTE: lp_fees includes owner_fees.
 					let (amount_out, amount_sent, fees) = DualAssetConstantProduct::<T>::do_buy(
@@ -1027,6 +1065,7 @@ pub mod pallet {
 				base_amount: out_asset.amount,
 				quote_amount: amount_sent.amount,
 				fee: fees,
+				pool_type: PoolConfiguration::get_type(&pool),
 			});
 			// TODO (vim): Return a BuyResult type
 			Ok(SwapResult::new(out_asset.asset_id, out_asset.amount, fees.asset_id, fees.fee))

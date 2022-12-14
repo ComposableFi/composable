@@ -359,6 +359,7 @@ fn add_lp_with_min_mint_amount() {
 				pool_id: 0,
 				asset_amounts: assets_with_init_amounts.into(),
 				minted_lp: 199_999_999_814_806,
+				pool_type: "DualAssetConstantProduct".as_bytes().to_vec(),
 			},
 		);
 
