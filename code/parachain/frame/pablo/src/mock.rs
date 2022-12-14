@@ -196,11 +196,6 @@ ord_parameter_types! {
 	pub const RootAccount: AccountId = ALICE;
 }
 
-parameter_types! {
-	pub const MaxStakingRewardPools: u32 = 10;
-	pub const MillisecsPerBlock: u32 = 12000;
-}
-
 impl pablo::Config for Test {
 	type Event = Event;
 	type AssetId = AssetId;

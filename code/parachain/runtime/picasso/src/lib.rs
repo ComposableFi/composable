@@ -260,11 +260,6 @@ impl assets_registry::Config for Runtime {
 parameter_types! {
 	pub PabloPalletId: PalletId = PalletId(*b"pal_pblo");
 	pub TWAPInterval: u64 = (MILLISECS_PER_BLOCK as u64) * 10;
-	pub MaxStakingRewardsPools: u32 = 10;
-	pub MaxRewardConfigsPerPool: u32 = 10;
-	pub MaxStakingDurationPresets: u32 = 10;
-	pub PbloAssetId: CurrencyId = CurrencyId::PBLO;
-	pub MsPerBlock: u32 = MILLISECS_PER_BLOCK;
 }
 
 impl pablo::Config for Runtime {

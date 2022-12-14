@@ -1025,13 +1025,7 @@ impl lending::Config for Runtime {
 
 parameter_types! {
   pub PabloId: PalletId = PalletId(*b"pall_pab");
-  pub LbpMinSaleDuration: BlockNumber = 3 * HOURS;
-  pub LbpMaxSaleDuration: BlockNumber = 30 * DAYS;
-  pub LbpMaxInitialWeight: Permill = Permill::from_percent(95);
-  pub LbpMinFinalWeight: Permill = Permill::from_percent(5);
   pub TWAPInterval: u64 = (MILLISECS_PER_BLOCK as u64) * 10;
-  pub const MaxStakingRewardPools: u32 = 10;
-  pub const MillisecsPerBlock: u32 = MILLISECS_PER_BLOCK;
 }
 
 impl pablo::Config for Runtime {
