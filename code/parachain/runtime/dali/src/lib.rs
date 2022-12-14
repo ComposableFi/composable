@@ -1007,6 +1007,7 @@ impl lending::Config for Runtime {
 	type Oracle = Oracle;
 	type VaultId = u64;
 	type Vault = Vault;
+	type VaultLender = Vault;
 	type CurrencyFactory = CurrencyFactory;
 	type MultiCurrency = Assets;
 	type Liquidation = Liquidations;

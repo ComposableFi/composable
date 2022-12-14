@@ -2,8 +2,10 @@ use crate::{AccountIdOf, Config, Pallet};
 use alloc::{collections::VecDeque, string::String, vec::Vec};
 use codec::Encode;
 use core::marker::PhantomData;
-use cosmwasm_minimal_std::{Addr, CanonicalAddr};
-use cosmwasm_vm::vm::VmGasCheckpoint;
+use cosmwasm_vm::{
+	cosmwasm_std::{Addr, CanonicalAddr},
+	vm::VmGasCheckpoint,
+};
 use scale_info::TypeInfo;
 
 pub trait VMPallet {

@@ -2,15 +2,16 @@ use crate::{
 	runtimes::wasmi::{CosmwasmVM, ExportRequirement},
 	Config,
 };
+
 use core::marker::PhantomData;
 use cosmwasm_vm::{
 	executor::{
 		ibc::{
-			IbcChannelClose, IbcChannelConnect, IbcChannelOpen, IbcPacketAck, IbcPacketReceive,
-			IbcPacketTimeout,
+			IbcChannelCloseCall, IbcChannelConnectCall, IbcChannelOpenCall, IbcPacketAckCall,
+			IbcPacketReceiveCall, IbcPacketTimeoutCall,
 		},
-		AllocateInput, AsFunctionName, DeallocateInput, ExecuteInput, InstantiateInput,
-		MigrateInput, QueryInput, ReplyInput,
+		AllocateCall, AsFunctionName, DeallocateCall, ExecuteCall, InstantiateCall, MigrateCall,
+		QueryCall, ReplyCall,
 	},
 	memory::PointerOf,
 	vm::VmMessageCustomOf,
@@ -42,20 +43,20 @@ impl<T: Config> Version<T> {
 		// Memory related exports.
 		(
 			ExportRequirement::Mandatory,
-			AllocateInput::<PointerOf<CosmwasmVM<T>>>::NAME,
+			AllocateCall::<PointerOf<CosmwasmVM<T>>>::NAME,
 			// extern "C" fn allocate(size: usize) -> u32;
 			&[parity_wasm::elements::ValueType::I32],
 		),
 		(
 			ExportRequirement::Mandatory,
-			DeallocateInput::<PointerOf<CosmwasmVM<T>>>::NAME,
+			DeallocateCall::<PointerOf<CosmwasmVM<T>>>::NAME,
 			// extern "C" fn deallocate(pointer: u32);
 			&[parity_wasm::elements::ValueType::I32],
 		),
 		// Contract execution exports.
 		(
 			ExportRequirement::Mandatory,
-			InstantiateInput::<VmMessageCustomOf<CosmwasmVM<T>>>::NAME,
+			InstantiateCall::<VmMessageCustomOf<CosmwasmVM<T>>>::NAME,
 			// extern "C" fn instantiate(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32;
 			&[
 				parity_wasm::elements::ValueType::I32,
@@ -65,7 +66,7 @@ impl<T: Config> Version<T> {
 		),
 		(
 			ExportRequirement::Mandatory,
-			ExecuteInput::<VmMessageCustomOf<CosmwasmVM<T>>>::NAME,
+			ExecuteCall::<VmMessageCustomOf<CosmwasmVM<T>>>::NAME,
 			// extern "C" fn execute(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32;
 			&[
 				parity_wasm::elements::ValueType::I32,
@@ -75,19 +76,19 @@ impl<T: Config> Version<T> {
 		),
 		(
 			ExportRequirement::Mandatory,
-			QueryInput::NAME,
+			QueryCall::NAME,
 			// extern "C" fn query(env_ptr: u32, msg_ptr: u32) -> u32;
 			&[parity_wasm::elements::ValueType::I32, parity_wasm::elements::ValueType::I32],
 		),
 		(
 			ExportRequirement::Optional,
-			MigrateInput::<VmMessageCustomOf<CosmwasmVM<T>>>::NAME,
+			MigrateCall::<VmMessageCustomOf<CosmwasmVM<T>>>::NAME,
 			// extern "C" fn migrate(env_ptr: u32, msg_ptr: u32) -> u32;
 			&[parity_wasm::elements::ValueType::I32, parity_wasm::elements::ValueType::I32],
 		),
 		(
 			ExportRequirement::Optional,
-			ReplyInput::<VmMessageCustomOf<CosmwasmVM<T>>>::NAME,
+			ReplyCall::<VmMessageCustomOf<CosmwasmVM<T>>>::NAME,
 			// extern "C" fn reply(env_ptr: u32, msg_ptr: u32) -> u32;
 			&[parity_wasm::elements::ValueType::I32, parity_wasm::elements::ValueType::I32],
 		),
@@ -107,32 +108,32 @@ impl<T: Config> Version<T> {
 	)] = &[
 		(
 			ExportRequirement::Mandatory,
-			IbcChannelOpen::NAME,
+			IbcChannelOpenCall::NAME,
 			&[parity_wasm::elements::ValueType::I32, parity_wasm::elements::ValueType::I32],
 		),
 		(
 			ExportRequirement::Mandatory,
-			IbcChannelConnect::<VmMessageCustomOf<CosmwasmVM<T>>>::NAME,
+			IbcChannelConnectCall::<VmMessageCustomOf<CosmwasmVM<T>>>::NAME,
 			&[parity_wasm::elements::ValueType::I32, parity_wasm::elements::ValueType::I32],
 		),
 		(
 			ExportRequirement::Mandatory,
-			IbcChannelClose::<VmMessageCustomOf<CosmwasmVM<T>>>::NAME,
+			IbcChannelCloseCall::<VmMessageCustomOf<CosmwasmVM<T>>>::NAME,
 			&[parity_wasm::elements::ValueType::I32, parity_wasm::elements::ValueType::I32],
 		),
 		(
 			ExportRequirement::Mandatory,
-			IbcPacketReceive::<VmMessageCustomOf<CosmwasmVM<T>>>::NAME,
+			IbcPacketReceiveCall::<VmMessageCustomOf<CosmwasmVM<T>>>::NAME,
 			&[parity_wasm::elements::ValueType::I32, parity_wasm::elements::ValueType::I32],
 		),
 		(
 			ExportRequirement::Mandatory,
-			IbcPacketAck::<VmMessageCustomOf<CosmwasmVM<T>>>::NAME,
+			IbcPacketAckCall::<VmMessageCustomOf<CosmwasmVM<T>>>::NAME,
 			&[parity_wasm::elements::ValueType::I32, parity_wasm::elements::ValueType::I32],
 		),
 		(
 			ExportRequirement::Mandatory,
-			IbcPacketTimeout::<VmMessageCustomOf<CosmwasmVM<T>>>::NAME,
+			IbcPacketTimeoutCall::<VmMessageCustomOf<CosmwasmVM<T>>>::NAME,
 			&[parity_wasm::elements::ValueType::I32, parity_wasm::elements::ValueType::I32],
 		),
 	];

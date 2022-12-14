@@ -1969,21 +1969,19 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-derive"
-version = "1.1.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6fca30d51f7e5fbfa6440d8b10d7df0231bdf77e97fd3fe5d0cb79cc4822e50c"
+version = "1.1.6"
+source = "git+https://github.com/ComposableFi/cosmwasm?rev=21351cc1ced863b9af7c8a69f923036bc919b3b1#21351cc1ced863b9af7c8a69f923036bc919b3b1"
 dependencies = [
  "syn 1.0.105",
 ]
 
 [[package]]
-name = "cosmwasm-minimal-std"
-version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=ee37ee8263cbcd249e163da47065980cbe426c47#ee37ee8263cbcd249e163da47065980cbe426c47"
+name = "cosmwasm-derive"
+version = "1.1.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6fca30d51f7e5fbfa6440d8b10d7df0231bdf77e97fd3fe5d0cb79cc4822e50c"
 dependencies = [
- "base64 0.13.1",
- "serde",
- "serde_json",
+ "syn 1.0.105",
 ]
 
 [[package]]
@@ -2041,7 +2039,7 @@ checksum = "875994993c2082a6fcd406937bf0fca21c349e4a624f3810253a14fa83a3a195"
 dependencies = [
  "base64 0.13.1",
  "cosmwasm-crypto",
- "cosmwasm-derive",
+ "cosmwasm-derive 1.1.9",
  "forward_ref",
  "schemars",
  "serde",
@@ -2051,11 +2049,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "cosmwasm-std"
+version = "1.1.6"
+source = "git+https://github.com/ComposableFi/cosmwasm?rev=21351cc1ced863b9af7c8a69f923036bc919b3b1#21351cc1ced863b9af7c8a69f923036bc919b3b1"
+dependencies = [
+ "base64 0.13.1",
+ "cosmwasm-derive 1.1.6",
+ "derivative",
+ "hex",
+ "serde",
+ "uint",
+]
+
+[[package]]
 name = "cosmwasm-vm"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=ee37ee8263cbcd249e163da47065980cbe426c47#ee37ee8263cbcd249e163da47065980cbe426c47"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=d462cfed2986a2ff17fbad5a4ad97f7f92330ae5#d462cfed2986a2ff17fbad5a4ad97f7f92330ae5"
 dependencies = [
- "cosmwasm-minimal-std",
+ "cosmwasm-std 1.1.6",
  "either",
  "log 0.4.17",
  "serde",
@@ -2065,9 +2076,9 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm-wasmi"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=ee37ee8263cbcd249e163da47065980cbe426c47#ee37ee8263cbcd249e163da47065980cbe426c47"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=d462cfed2986a2ff17fbad5a4ad97f7f92330ae5#d462cfed2986a2ff17fbad5a4ad97f7f92330ae5"
 dependencies = [
- "cosmwasm-minimal-std",
+ "cosmwasm-std 1.1.6",
  "cosmwasm-vm",
  "either",
  "hex",
@@ -2931,7 +2942,7 @@ version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1c8b264257c4f44c49b7ce09377af63aa040768ecd3fd7bdd2d48a09323a1e90"
 dependencies = [
- "cosmwasm-std",
+ "cosmwasm-std 1.0.0",
  "schemars",
  "serde",
 ]
@@ -2942,7 +2953,7 @@ version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "414b91f3d7a619bb26c835119d7095804596a1382ddc1d184c33c1d2c17f6c5e"
 dependencies = [
- "cosmwasm-std",
+ "cosmwasm-std 1.0.0",
  "cw2",
  "schemars",
  "semver 1.0.14",
@@ -2955,7 +2966,7 @@ name = "cw-xcvm-asset-registry"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-schema",
- "cosmwasm-std",
+ "cosmwasm-std 1.0.0",
  "cw-storage-plus",
  "cw-utils",
  "cw2",
@@ -2969,7 +2980,7 @@ dependencies = [
 name = "cw-xcvm-common"
 version = "0.1.0"
 dependencies = [
- "cosmwasm-std",
+ "cosmwasm-std 1.0.0",
  "cw-xcvm-utils",
  "schemars",
  "serde",
@@ -2981,7 +2992,7 @@ name = "cw-xcvm-gateway"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-schema",
- "cosmwasm-std",
+ "cosmwasm-std 1.0.0",
  "cw-storage-plus",
  "cw-utils",
  "cw-xcvm-asset-registry",
@@ -3006,7 +3017,7 @@ name = "cw-xcvm-interpreter"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-schema",
- "cosmwasm-std",
+ "cosmwasm-std 1.0.0",
  "cw-storage-plus",
  "cw-utils",
  "cw-xcvm-asset-registry",
@@ -3030,7 +3041,7 @@ dependencies = [
 name = "cw-xcvm-pingpong"
 version = "0.1.0"
 dependencies = [
- "cosmwasm-std",
+ "cosmwasm-std 1.0.0",
  "cw-storage-plus",
  "cw-utils",
  "cw-xcvm-common",
@@ -3054,7 +3065,7 @@ name = "cw-xcvm-router"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-schema",
- "cosmwasm-std",
+ "cosmwasm-std 1.0.0",
  "cw-storage-plus",
  "cw-utils",
  "cw-xcvm-asset-registry",
@@ -3077,7 +3088,7 @@ dependencies = [
 name = "cw-xcvm-utils"
 version = "0.1.0"
 dependencies = [
- "cosmwasm-std",
+ "cosmwasm-std 1.0.0",
  "xcvm-core",
 ]
 
@@ -3087,7 +3098,7 @@ version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "aa74c324af8e3506fd8d50759a265bead3f87402e413c840042af5d2808463d6"
 dependencies = [
- "cosmwasm-std",
+ "cosmwasm-std 1.0.0",
  "cw-storage-plus",
  "schemars",
  "serde",
@@ -3099,7 +3110,7 @@ version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4f446f59c519fbac5ab8b9f6c7f8dcaa05ee761703971406b28221ea778bb737"
 dependencies = [
- "cosmwasm-std",
+ "cosmwasm-std 1.0.0",
  "cw-utils",
  "schemars",
  "serde",
@@ -8262,7 +8273,6 @@ version = "1.0.0"
 dependencies = [
  "composable-support",
  "composable-traits",
- "cosmwasm-minimal-std",
  "cosmwasm-vm",
  "cosmwasm-vm-wasmi",
  "frame-benchmarking",
@@ -17694,7 +17704,7 @@ dependencies = [
 name = "xcvm-core"
 version = "0.1.0"
 dependencies = [
- "cosmwasm-std",
+ "cosmwasm-std 1.0.0",
  "cw-storage-plus",
  "fixed",
  "num",
