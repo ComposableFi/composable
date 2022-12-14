@@ -1,8 +1,8 @@
-{ buildGoModule, rustPlatform, fetchFromGitHub, patchelf, system, lib }:
+{ pkgs, system, lib }:
 let
-  libwasmvm = rustPlatform.buildRustPackage {
+  libwasmvm = pkgs.rustPlatform.buildRustPackage {
     name = "libwasmvm";
-    src = fetchFromGitHub {
+    src = pkgs.fetchFromGitHub {
       owner = "CosmWasm";
       repo = "wasmvm";
       rev = "1afba37bfd0eda626d11ec760f51b16cb4254167";
@@ -12,10 +12,10 @@ let
     sourceRoot = "source/libwasmvm";
     doCheck = false;
   };
-in buildGoModule {
+in pkgs.buildGoModule {
   name = "junod";
   doCheck = false;
-  src = fetchFromGitHub {
+  src = pkgs.fetchFromGitHub {
     owner = "CosmosContracts";
     repo = "juno";
     rev = "e6f9629538a88edf11aa7e7ed3d68c61f8e96aa6";
@@ -23,14 +23,14 @@ in buildGoModule {
   };
   vendorSha256 = "sha256-yGvxHS3wzjY1ZPUwuLK6B1+Xii8ipzhJpGi2Gl5Ytdo=";
   fixupPhase = ''
-    ${patchelf}/bin/patchelf \
+    ${pkgs.patchelf}/bin/patchelf \
       --shrink-rpath \
       --allowed-rpath-prefixes /nix/store \
       --replace-needed libwasmvm.${
         builtins.head (lib.strings.split "-" system)
       }.so libwasmvm.so \
       $out/bin/junod
-    ${patchelf}/bin/patchelf \
+    ${pkgs.patchelf}/bin/patchelf \
       --add-rpath ${libwasmvm}/lib \
       $out/bin/junod
   '';
