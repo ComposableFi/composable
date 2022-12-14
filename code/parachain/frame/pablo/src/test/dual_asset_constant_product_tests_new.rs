@@ -299,9 +299,6 @@ mod remove_liquidity {
 		assert_ok!(Tokens::mint_into(USDT, &DAVE, dave_usdt));
 		assert_eq!(Tokens::balance(USDT, &DAVE), dave_usdt);
 
-		dbg!(Tokens::balance(USDT, &Pablo::account_id(&pool_id)));
-		dbg!(Tokens::balance(BTC, &Pablo::account_id(&pool_id)));
-
 		if with_swaps {
 			assert_ok!(Pablo::do_swap(
 				&BOB,
@@ -320,9 +317,6 @@ mod remove_liquidity {
 		}
 
 		let min_receive = || BTreeMap::from([(BTC, 0), (USDT, 0)]);
-
-		dbg!(Tokens::balance(USDT, &Pablo::account_id(&pool_id)));
-		dbg!(Tokens::balance(BTC, &Pablo::account_id(&pool_id)));
 
 		assert_ok!(Pablo::remove_liquidity(
 			Origin::signed(CHARLIE),

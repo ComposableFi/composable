@@ -319,7 +319,7 @@ pub fn compute_in_given_out_new<T: PerThing>(
 	let ratio = power.safe_sub(&Decimal::ONE)?;
 
 	let a_sent = b_i_over_fee.safe_mul(&ratio)?.round_up();
-	let fee = dbg!(dbg!(a_sent).safe_mul(&dbg!(fee)))?.round_up().safe_to_u128()?;
+	let fee = a_sent.safe_mul(&fee)?.round_up().safe_to_u128()?;
 
 	Ok(ConstantProductAmmValueFeePair { value: a_sent.safe_to_u128()?, fee })
 }
