@@ -156,3 +156,4 @@ The following section lays out the release steps for each release in a checklist
 - [ ] Update the `v<Major>` branch on Github and make PR to master. Get it merged to main before next step. Note that `v<Major>` branch must not be deleted.
 - [ ] Get the tip of the branch signed according to 3.2.4 section.
 - [ ] Finally, create a tag `v<Branch.Spec_version>` (eg: `v5.4201`) to trigger the release artifact build.
+- [ ] Run on upgrade to new runtime on fork of live node data and running runtime (previos release).
