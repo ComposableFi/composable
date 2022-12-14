@@ -63,7 +63,8 @@
         ./parachains/polkadot.nix
         ./parachains/polkadot-launch.nix
       ];
-      systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
+      systems =
+        [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
       perSystem = { config, self', inputs', pkgs, system, crane, ... }: {
         _module.args.pkgs = import self.inputs.nixpkgs {
           inherit system;
