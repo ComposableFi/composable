@@ -1,3 +1,4 @@
+# We use https://flake.parts/ in order split this flake into multiple parts.
 {
   description = "Composable Finance";
 
@@ -29,10 +30,6 @@
     let darwinFilter = import ./darwin-filter.nix { lib = nixpkgs.lib; };
     in darwinFilter (flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [
-        # To import a flake module
-        # 1. Add foo to inputs
-        # 2. Add foo as a parameter to the outputs function
-        # 3. Add here: foo.flakeModule
         ./code/services/cmc-api/cmc-api.nix
         ./code/benchmarks.nix
         ./code/common-deps.nix
@@ -57,17 +54,10 @@
         ./subwasm.nix
         ./scripts/zombienet/flake-module.nix
         ./.nix/cargo/flake-module.nix
+        ./code/utils/composable-subxt/subxt.nix
       ];
-      systems =
-        [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
+      systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
       perSystem = { config, self', inputs', pkgs, system, crane, ... }: {
-        # Per-system attributes can be defined here. The self' and inputs'
-        # module parameters provide easy access to attributes of the same
-        # system.
-
-        # Equivalent to  inputs'.nixpkgs.legacyPackages.hello;
-        # packages.default = pkgs.hello;
-
         _module.args.pkgs = import self.inputs.nixpkgs {
           inherit system;
           overlays = with self.inputs; [
@@ -79,7 +69,6 @@
         packages = {
           default = self'.packages.zombienet-rococo-local-dali-dev;
           devnet-dali = self'.packages.zombienet-rococo-local-dali-dev;
-          subxt = pkgs.callPackage ./code/utils/composable-subxt/subxt.nix { };
           junod = pkgs.callPackage ./code/xcvm/cosmos/junod.nix { };
           gex = pkgs.callPackage ./code/xcvm/cosmos/gex.nix { };
           wasmswap = pkgs.callPackage ./code/xcvm/cosmos/wasmswap.nix {
