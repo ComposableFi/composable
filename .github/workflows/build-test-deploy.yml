@@ -859,14 +859,15 @@ jobs:
           name: ${{  env.CACHIX_COMPOSABLE }}
 
       - run: |
-          DEVNET_MAIN=$(nix show-derivation github:ComposableFi/composable/#devnet-dali-persistent)
-          DEVNET_PR=$(nix show-derivation .#devnet-dali-persistent)
+          DEVNET_MAIN=$(nix show-derivation github:ComposableFi/composable/#devnet-dali)
+          DEVNET_PR=$(nix show-derivation .#devnet-dali)
           TESTS_MAIN=$(nix show-derivation github:ComposableFi/composable/#runtime-tests)
           TESTS_PR=$(nix show-derivation .#runtime-tests)
 
           if [ "$DEVNET_MAIN" != "$DEVNET_PR" ] || [ "$TESTS_MAIN" != "$TESTS_PR" ]; then
-            ( nix run .#devnet-dali-persistent 2>&1 & ) | tee devnet-dali.log &
+            ( nix run .#devnet-dali 2>&1 & ) | tee devnet-dali.log &
             until test -f devnet-dali.log; do sleep 1 && echo "waiting network start"; done;
+
             ( tail --follow --lines=0  devnet-dali.log & ) | grep --max-count=1 "Network launched 🚀🚀"
             echo "PATH=$(pwd):$PATH" >> $GITHUB_ENV
             cd code/integration-tests/runtime-tests || exit
