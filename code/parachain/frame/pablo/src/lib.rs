@@ -105,18 +105,24 @@ pub mod pallet {
 		},
 	}
 
+	#[derive(
+		RuntimeDebug, Encode, Decode, MaxEncodedLen, CloneNoBound, PartialEq, Eq, TypeInfo,
+	)]
+	pub enum PoolConfigurationType {
+		DualAssetConstantProduct,
+	}
+
 	impl<AccountId: Clone + PartialEq + Debug, AssetId: Clone + Ord + Debug>
 		PoolInitConfiguration<AccountId, AssetId>
 	{
-		fn get_type(&self) -> Vec<u8> {
-			let pool_type = match self {
+		fn get_type(&self) -> PoolConfigurationType {
+			match self {
 				PoolInitConfiguration::DualAssetConstantProduct {
 					owner: _,
 					fee: _,
 					assets_weights: _,
-				} => "DualAssetConstantProduct",
-			};
-			pool_type.as_bytes().to_vec()
+				} => PoolConfigurationType::DualAssetConstantProduct,
+			}
 		}
 	}
 
@@ -130,11 +136,11 @@ pub mod pallet {
 	impl<AccountId: Clone + PartialEq + Debug, AssetId: Clone + Ord + Debug>
 		PoolConfiguration<AccountId, AssetId>
 	{
-		fn get_type(&self) -> Vec<u8> {
-			let pool_type = match self {
-				PoolConfiguration::DualAssetConstantProduct(_) => "DualAssetConstantProduct",
-			};
-			pool_type.as_bytes().to_vec()
+		fn get_type(&self) -> PoolConfigurationType {
+			match self {
+				PoolConfiguration::DualAssetConstantProduct(_) =>
+					PoolConfigurationType::DualAssetConstantProduct,
+			}
 		}
 	}
 
@@ -163,7 +169,7 @@ pub mod pallet {
 			/// Pool assets
 			asset_weights: BTreeMap<T::AssetId, Permill>,
 			/// Pool type
-			pool_type: Vec<u8>,
+			pool_type: PoolConfigurationType,
 		},
 		/// Liquidity added into the pool `T::PoolId`.
 		LiquidityAdded {
@@ -176,7 +182,7 @@ pub mod pallet {
 			/// Amount of minted lp.
 			minted_lp: T::Balance,
 			/// Pool type
-			pool_type: Vec<u8>,
+			pool_type: PoolConfigurationType,
 		},
 		/// Liquidity removed from pool `T::PoolId` by `T::AccountId` in balanced way.
 		LiquidityRemoved {
@@ -187,7 +193,7 @@ pub mod pallet {
 			/// Amount(s) of asset(s) removed from the pool.
 			asset_amounts: BTreeMap<T::AssetId, T::Balance>,
 			/// Pool type
-			pool_type: Vec<u8>,
+			pool_type: PoolConfigurationType,
 		},
 		/// Token exchange happened.
 		Swapped {
@@ -206,7 +212,7 @@ pub mod pallet {
 			/// Charged fees.
 			fee: Fee<T::AssetId, T::Balance>,
 			/// Pool type
-			pool_type: Vec<u8>,
+			pool_type: PoolConfigurationType,
 		},
 		/// TWAP updated.
 		TwapUpdated {

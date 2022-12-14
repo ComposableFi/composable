@@ -17,7 +17,7 @@ use crate::{
 		common_test_functions::dual_asset_pool_weights,
 		dual_asset_constant_product_tests::{create_pool_from_config, lp_token_of_pool},
 	},
-	PoolInitConfiguration,
+	PoolConfigurationType, PoolInitConfiguration,
 };
 
 #[test]
@@ -77,7 +77,7 @@ fn add_remove_lp() {
 				pool_id,
 				asset_amounts: assets_with_amounts.into(),
 				minted_lp: 199_999_999_814_806,
-				pool_type: "DualAssetConstantProduct".as_bytes().to_vec(),
+				pool_type: PoolConfigurationType::DualAssetConstantProduct,
 			},
 		);
 
@@ -103,7 +103,7 @@ fn add_remove_lp() {
 				pool_id,
 				asset_amounts: assets_with_next_amounts.into(),
 				minted_lp: 19999999981480,
-				pool_type: "DualAssetConstantProduct".as_bytes().to_vec(),
+				pool_type: PoolConfigurationType::DualAssetConstantProduct,
 			},
 		);
 
