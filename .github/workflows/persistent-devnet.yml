@@ -7,6 +7,7 @@ on:
         description: "Release tag, branch name or any other ref."
         required: true
         type: string
+  # Following is disabled to allow manual upgrade to run data migrations by QA in staging
   # push:
     # tags:
     #   - 'release-v[0-9]+\.[0-9]+'
