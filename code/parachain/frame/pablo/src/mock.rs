@@ -219,12 +219,6 @@ impl pablo::Config for Test {
 	type Time = Timestamp;
 	type TWAPInterval = TWAPInterval;
 	type WeightInfo = ();
-	type MaxStakingRewardPools = MaxStakingRewardPools;
-	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
-	type MaxStakingDurationPresets = MaxStakingDurationPresets;
-	type MsPerBlock = MillisecsPerBlock;
-	type PicaAssetId = PicaAssetId;
-	type PbloAssetId = PbloAssetId;
 }
 
 // Build genesis storage according to the mock runtime.

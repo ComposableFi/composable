@@ -1050,12 +1050,6 @@ impl pablo::Config for Runtime {
 	type TWAPInterval = TWAPInterval;
 	type Time = Timestamp;
 	type WeightInfo = weights::pablo::WeightInfo<Runtime>;
-	type MaxStakingRewardPools = MaxStakingRewardPools;
-	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
-	type MaxStakingDurationPresets = MaxStakingDurationPresets;
-	type MsPerBlock = MillisecsPerBlock;
-	type PicaAssetId = PicaAssetId;
-	type PbloAssetId = PbloAssetId;
 }
 
 parameter_types! {

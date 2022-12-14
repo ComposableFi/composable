@@ -281,13 +281,7 @@ impl pablo::Config for Runtime {
 	type EnableTwapOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type Time = Timestamp;
 	type TWAPInterval = TWAPInterval;
-	type MaxStakingRewardPools = MaxStakingRewardsPools;
-	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
-	type MaxStakingDurationPresets = MaxStakingDurationPresets;
 	type WeightInfo = weights::pablo::WeightInfo<Runtime>;
-	type PicaAssetId = NativeAssetId;
-	type PbloAssetId = PbloAssetId;
-	type MsPerBlock = MsPerBlock;
 }
 
 impl assets::Config for Runtime {
