@@ -1,25 +1,3 @@
-<svg width="25" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <g clip-path="url(#te69gulisa)">
-        <path d="m23.297 19.988-.001.001-2.98-1.72c.77-1.334.77-2.989 0-4.322l-.13-.226-4.11-7.119a4.331 4.331 0 0 0-3.743-2.16V1a7.783 7.783 0 0 1 6.723 3.88l4.107 7.113.129.222.003.006.003.006a7.787 7.787 0 0 1-.001 7.76z" fill="url(#lnba9ijlcb)"/>
-        <path d="M23.296 19.99a7.785 7.785 0 0 1-6.722 3.88h-8.48a7.783 7.783 0 0 1-6.723-3.88l2.98-1.72a4.331 4.331 0 0 0 3.742 2.16h8.481a4.332 4.332 0 0 0 3.742-2.16l2.98 1.72z" fill="url(#8bijaspxvc)"/>
-        <path d="M12.333 1v3.442a4.333 4.333 0 0 0-3.742 2.16l-4.11 7.119-.131.225a4.335 4.335 0 0 0 .001 4.322l-2.98 1.72a7.787 7.787 0 0 1-.003-7.76l.003-.007.003-.006.129-.222L5.61 4.879A7.788 7.788 0 0 1 12.333 1z" fill="url(#9rmokgyz1d)"/>
-        <path d="M16.573 16.984h-8.48a.878.878 0 0 1-.761-1.318l.13-.226 4.11-7.117a.871.871 0 0 1 .76-.44c.296 0 .592.147.761.44l4.11 7.117.13.226a.878.878 0 0 1-.76 1.318z" fill="#0FF"/>
-    </g>
-    <defs>
-        <linearGradient id="lnba9ijlcb" x1="13.212" y1=".32" x2="24.121" y2="19.31" gradientUnits="userSpaceOnUse">
-            <stop stop-color="#0B0B0B"/>
-            <stop offset="1" stop-color="#007979"/>
-        </linearGradient>
-        <linearGradient id="8bijaspxvc" x1="1.371" y1="21.07" x2="23.296" y2="21.07" gradientUnits="userSpaceOnUse">
-            <stop stop-color="#007979"/>
-            <stop offset="1" stop-color="#0B0B0B"/>
-        </linearGradient>
-        <linearGradient id="9rmokgyz1d" x1="11.347" y1=".558" x2=".559" y2="19.225" gradientUnits="userSpaceOnUse">
-            <stop stop-color="#007979"/>
-            <stop offset="1" stop-color="#0B0B0B"/>
-        </linearGradient>
-        <clipPath id="te69gulisa">
-            <path d="M.333 12c0-6.627 5.373-12 12-12 6.628 0 12 5.373 12 12s-5.372 12-12 12c-6.627 0-12-5.373-12-12z" fill="#fff"/>
-        </clipPath>
-    </defs>
-</svg>
+version https://git-lfs.github.com/spec/v1
+oid sha256:9dc3986fba85385706609af16425e974d29858744e013fe40a1b4b3b0b16f1a5
+size 1957
