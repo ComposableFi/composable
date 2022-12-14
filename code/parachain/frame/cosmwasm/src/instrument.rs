@@ -87,6 +87,7 @@ pub struct CostRules<T: Config> {
 	i64ctz: u32,
 	i64popcnt: u32,
 	i64add: u32,
+	i64sub: u32,
 	i64mul: u32,
 	i64divs: u32,
 	i64divu: u32,
@@ -159,6 +160,8 @@ impl<T: Config> Default for CostRules<T> {
 			i64ctz: calculate_weight::<T>(T::WeightInfo::instruction_I64Ctz, 2),
 			i64popcnt: calculate_weight::<T>(T::WeightInfo::instruction_I64Popcnt, 2),
 			i64add: calculate_weight::<T>(T::WeightInfo::instruction_I64Add, 3),
+			// FIXME(aeryz):
+			i64sub: calculate_weight::<T>(T::WeightInfo::instruction_I64Add, 3),
 			i64mul: calculate_weight::<T>(T::WeightInfo::instruction_I64Mul, 3),
 			i64divs: calculate_weight::<T>(T::WeightInfo::instruction_I64DivS, 3),
 			i64divu: calculate_weight::<T>(T::WeightInfo::instruction_I64DivU, 3),
@@ -265,6 +268,7 @@ impl<T: Config> Rules for CostRules<T> {
 			Instruction::I64Ctz | Instruction::I32Ctz => self.i64ctz,
 			Instruction::I64Popcnt | Instruction::I32Popcnt => self.i64popcnt,
 			Instruction::I64Add | Instruction::I32Add => self.i64add,
+			Instruction::I64Sub | Instruction::I32Sub => self.i64sub,
 			Instruction::I64Mul | Instruction::I32Mul => self.i64mul,
 			Instruction::I64DivS | Instruction::I32DivS => self.i64divs,
 			Instruction::I64DivU | Instruction::I32DivU => self.i64divu,
@@ -280,7 +284,6 @@ impl<T: Config> Rules for CostRules<T> {
 			Instruction::I32ShrU |
 			Instruction::I64ShrS |
 			Instruction::I32ShrS => self.i64shrs,
-			// TODO(aeryz): I64Sub
 			Instruction::I64Rotl | Instruction::I32Rotl => self.i64rotl,
 			Instruction::I64Rotr | Instruction::I32Rotr => self.i64rotr,
 			Instruction::I32WrapI64 => self.i32wrapi64,
