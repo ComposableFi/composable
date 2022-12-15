@@ -139,7 +139,7 @@ jobs:
   check-nix-long:
     runs-on: ubuntu-latest
     continue-on-error: true
-    if: github.event_name == 'pull_request' && contains('#flaky', github.event.pull_request.title)
+    if: github.event_name == 'pull_request' && contains(github.event.pull_request.title, '#flaky')
     needs:
       - check-nix
     concurrency:
