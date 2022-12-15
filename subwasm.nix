@@ -18,8 +18,8 @@
         src = pkgs.fetchFromGitHub {
           owner = "chevdor";
           repo = "subwasm";
-          rev = "4d4d789326d65fc23820f70916bd6bd6f499bd0a";
-          hash = "sha256-+/yqA6lP/5qyMxZupmaYBCRtbw2MFMBSgkmnxg261P8=";
+          rev = "d7e74ab5eb3f83773ad7c78fb0edd42fa33f5356";
+          hash = "sha256-Zo/wB1W3qp0cI+O0hAv0GfQ7tKXABboPY16ZNhyxmlk=";
         };
       in crane.stable.buildPackage {
         name = "subwasm";
