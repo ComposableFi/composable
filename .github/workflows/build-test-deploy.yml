@@ -140,6 +140,8 @@ jobs:
   check-nix-long:
     name: "Check nix long"
     runs-on: ubuntu-latest
+    needs:
+      - check-nix
     concurrency:
       group: ${{ github.workflow }}-check-nix-long-${{ github.ref }}
       cancel-in-progress: true
@@ -147,10 +149,20 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
-      - uses: "./.github/templates/watch-exec"
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
         with:
-          command: chmod +x ./.github/workflows/check-nix-long.sh && source ./.github/workflows/check-nix-long.sh
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          skipPush: true
+          installCommand: |
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --update
+            nix profile install github:cachix/cachix/3abb69595aa30b774b821efade3cb34da302440e
+          name: composable-community
+      - run: |
+          chmod +x ./.github/workflows/check-nix-long.sh
+          source ./.github/workflows/check-nix-long.sh
 
   taplo-cli-check:
     name: "Taplo cli check"
