@@ -447,10 +447,15 @@ jobs:
       - uses: "./.github/templates/watch-exec"
         with:
           pre-run: |
-            FILENAME=$(date -d yesterday +'%m-%d-%Y').zip
-            GS_BUCKET="${{ matrix.runtime }}-data-store"
-            gsutil cp gs://$GS_BUCKET/"$FILENAME" .
-            unzip -o "$FILENAME" -d /tmp/db
+            RUNTIME=${{ matrix.runtime }} ./code/integration-tests/local-integration-tests/simnode-data/fetch-data.sh
+            DATA_MAIN=$(nix show-derivation github:ComposableFi/composable/#simnode-data)
+            DATA_PR=$(nix show-derivation .#simnode-data)
+            TESTS_MAIN=$(nix show-derivation github:ComposableFi/composable/#simnode-tests-${{ matrix.runtime }})
+            TESTS_PR=$(nix show-derivation .#simnode-tests-${{ matrix.runtime }})
+
+            if [ "$DATA_MAIN" != "$DATA_PR" ] || [ "$TESTS_MAIN" != "$TESTS_PR" ]; then
+              exit 0
+            fi
           command: nix -- run .#simnode-tests-${{ matrix.runtime }}
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           nix-env: nixpkgs.python3 nixpkgs.unzip
