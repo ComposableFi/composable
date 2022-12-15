@@ -1,6 +1,6 @@
 use codec::Codec;
 use composable_support::rpc_helpers::SafeRpcWrapper;
-use composable_traits::dex::{PriceAggregate, RemoveLiquiditySimulationResult};
+use composable_traits::dex::PriceAggregate;
 use core::{fmt::Display, str::FromStr};
 use jsonrpsee::{
 	core::{Error as RpcError, RpcResult},
@@ -50,7 +50,7 @@ where
 		lp_amount: SafeRpcWrapper<Balance>,
 		min_expected_amounts: BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>,
 		at: Option<BlockHash>,
-	) -> RpcResult<RemoveLiquiditySimulationResult<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>>;
+	) -> RpcResult<BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>>;
 }
 
 pub struct Pablo<C, Block> {
@@ -133,8 +133,7 @@ where
 		lp_amount: SafeRpcWrapper<Balance>,
 		min_expected_amounts: BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>,
 		at: Option<<Block as BlockT>::Hash>,
-	) -> RpcResult<RemoveLiquiditySimulationResult<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>>
-	{
+	) -> RpcResult<BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>> {
 		let api = self.client.runtime_api();
 
 		let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));

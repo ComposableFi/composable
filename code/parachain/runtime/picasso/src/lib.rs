@@ -50,7 +50,7 @@ use common::{
 
 use composable_traits::{
 	assets::Asset,
-	dex::{Amm, PriceAggregate, RemoveLiquiditySimulationResult},
+	dex::{Amm, PriceAggregate},
 	xcm::assets::RemoteAssetRegistryInspect,
 };
 use primitives::currency::{CurrencyId, ValidateCurrencyId};
@@ -1004,12 +1004,11 @@ impl_runtime_apis! {
 			pool_id: SafeRpcWrapper<PoolId>,
 			amounts: BTreeMap<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>>,
 		) -> SafeRpcWrapper<Balance> {
-			let amounts: BTreeMap<CurrencyId, Balance> = amounts.iter().map(|(k, v)| (k.0,v.0)).collect();
 			SafeRpcWrapper(
 				<Pablo as Amm>::simulate_add_liquidity(
 					&who.0,
 					pool_id.0,
-					amounts,
+					amounts.iter().map(|(k, v)| (k.0, v.0)).collect(),
 				)
 				.unwrap_or_else(|_| Zero::zero())
 			)
@@ -1020,22 +1019,23 @@ impl_runtime_apis! {
 			pool_id: SafeRpcWrapper<PoolId>,
 			lp_amount: SafeRpcWrapper<Balance>,
 			min_expected_amounts: BTreeMap<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>>,
-		) -> RemoveLiquiditySimulationResult<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>> {
-			let min_expected_amounts: BTreeMap<_, _> = min_expected_amounts.iter().map(|(k, v)| (k.0, v.0)).collect();
-			let default_removed_assets = min_expected_amounts.keys().map(|k| (*k, 0_u128)).collect::<BTreeMap<_,_>>();
-			let simulate_remove_liquidity_result = <Pablo as Amm>::simulate_remove_liquidity(&who.0, pool_id.0, lp_amount.0)
-				.unwrap_or(
-					RemoveLiquiditySimulationResult{
-						assets: default_removed_assets
-					}
-				);
-			let mut new_map = BTreeMap::new();
-			for (k,v) in simulate_remove_liquidity_result.assets.iter() {
-				new_map.insert(SafeRpcWrapper(*k), SafeRpcWrapper(*v));
-			}
-			RemoveLiquiditySimulationResult{
-				assets: new_map
-			}
+		) -> BTreeMap<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>> {
+			<Pablo as Amm>::simulate_remove_liquidity(
+				&who.0,
+				pool_id.0,
+				lp_amount.0,
+				min_expected_amounts
+					.iter()
+					.map(|(k, v)| (k.0, v.0))
+					.collect()
+				)
+				.map(|simulation_result| {
+					simulation_result
+						.into_iter()
+						.map(|(k, v)| (SafeRpcWrapper(k), SafeRpcWrapper(v)))
+						.collect()
+				})
+				.unwrap_or_default()
 		}
 	}
 
