@@ -1161,30 +1161,52 @@ benchmarks! {
 				.instructions(vec![Instruction::I32Const(99), Instruction::Drop])
 				.build(), None),
 			(FunctionBuilder::new(FN_NAME)
-				// TODO(aeryz): This `7` is the offset of the first user defined function.
+				// TODO(aeryz): This `8` is the offset of the first user defined function.
 				// code_gen should provide a constant value for this.
-				.instructions(vec![Instruction::Call(7)])
+				.instructions(vec![Instruction::Call(8)])
 				.build(),
 			Some(r))], None);
 	}: {
 		wasm_invoke(&mut module);
 	}
 
+	// CallIndirect(u8, u32) calls a function through a table. That's why it is indirect.
+	//
+	// The first parameter is the index of the function signature. Note that this indices
+	// are unique so if you have 8 functions and there are only 3 unique function signatures,
+	// there will be 3 signature in the list. And the order is first occurance based. That's
+	// why although the function index is 7, we are using 4 for the signature index.
+	//
+	// The second parameter is reserved and not used right now.
+	//
+	// CallIndirect pops a I32 value from the stack as the function table index. Then it gets
+	// the function at `function_index`. Then it compares the signature at the given index with
+	// the given function's signature. It fails if they don't match. Then it does the actual call.
+	//
+	// n_extra_instrs = 3
 	instruction_CallIndirect {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
 		let mut module = create_wasm_module_with_fns(vec![
-			(FunctionBuilder::new(FN_NAME).instructions(vec![Instruction::I32Const(0), Instruction::CallIndirect(4, 0)]).build(), None)
-		], Some(TableSegment { num_elements: 1, function_index: 7 }));
+			(FunctionBuilder::new("garbage")
+				.instructions(vec![Instruction::I32Const(99), Instruction::Drop])
+				.build(), None),
+			(FunctionBuilder::new(FN_NAME)
+				.instructions(vec![Instruction::I32Const(0), Instruction::CallIndirect(4, 0)])
+				.build(), None)
+			], Some(TableSegment { num_elements: 1, function_index: 8 }));
 	}: {
 		wasm_invoke(&mut module);
 	}
 
+	// We are benchmarking this per parameter because the execution time increases linearly depending
+	// on the number of parameters. It is because internally signatures are being compared. And this
+	// comparison takes more time
 	instruction_CallIndirect_per_param {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
 		let p in 1..100;
 
 		let mut indirect_caller_instructions = Vec::new();
-		let mut indirect_function = FunctionBuilder::new("indirect_function").instructions(vec![Instruction::End]);
+		let mut indirect_function = FunctionBuilder::new("indirect_function").instructions(vec![Instruction::I32Const(0), Instruction::Drop]);
 		for i in 0..p {
 			indirect_function = indirect_function.param(ValueType::I64);
 			indirect_caller_instructions.push(Instruction::I64Const(0));
@@ -1192,9 +1214,9 @@ benchmarks! {
 		indirect_caller_instructions.extend(vec![Instruction::I32Const(0), Instruction::CallIndirect(5, 0)]);
 
 		let mut module = create_wasm_module_with_fns(vec![
+			(indirect_function.build(), None),
 			(FunctionBuilder::new(FN_NAME)
 				.instructions(indirect_caller_instructions).build(), None),
-			(indirect_function.build(), None)
 		], Some(TableSegment { num_elements: 1, function_index: 8 }));
 	}: {
 		wasm_invoke(&mut module);
