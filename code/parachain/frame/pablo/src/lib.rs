@@ -284,24 +284,7 @@ pub mod pallet {
 		#[pallet::constant]
 		type TWAPInterval: Get<MomentOf<Self>>;
 
-		type MaxStakingRewardPools: Get<u32>;
-
-		type MaxRewardConfigsPerPool: Get<u32>;
-
-		type MaxStakingDurationPresets: Get<u32>;
-
 		type WeightInfo: WeightInfo;
-
-		/// AssetId of the PICA asset
-		#[pallet::constant]
-		type PicaAssetId: Get<Self::AssetId>;
-
-		/// AssetId of the PBLO asset
-		#[pallet::constant]
-		type PbloAssetId: Get<Self::AssetId>;
-
-		#[pallet::constant]
-		type MsPerBlock: Get<u32>;
 	}
 
 	#[pallet::pallet]

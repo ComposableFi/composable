@@ -196,11 +196,6 @@ ord_parameter_types! {
 	pub const RootAccount: AccountId = ALICE;
 }
 
-parameter_types! {
-	pub const MaxStakingRewardPools: u32 = 10;
-	pub const MillisecsPerBlock: u32 = 12000;
-}
-
 impl pablo::Config for Test {
 	type Event = Event;
 	type AssetId = AssetId;
@@ -219,12 +214,6 @@ impl pablo::Config for Test {
 	type Time = Timestamp;
 	type TWAPInterval = TWAPInterval;
 	type WeightInfo = ();
-	type MaxStakingRewardPools = MaxStakingRewardPools;
-	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
-	type MaxStakingDurationPresets = MaxStakingDurationPresets;
-	type MsPerBlock = MillisecsPerBlock;
-	type PicaAssetId = PicaAssetId;
-	type PbloAssetId = PbloAssetId;
 }
 
 // Build genesis storage according to the mock runtime.

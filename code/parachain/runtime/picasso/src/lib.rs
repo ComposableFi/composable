@@ -43,12 +43,16 @@ use common::{
 	governance::native::*,
 	rewards::StakingPot,
 	AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, BondOfferId,
-	ForeignAssetId, Hash, MaxStringSize, Moment, ReservedDmpWeight, ReservedXcmpWeight, Signature,
-	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
+	ForeignAssetId, Hash, MaxStringSize, Moment, PoolId, ReservedDmpWeight, ReservedXcmpWeight,
+	Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 
-use composable_traits::{assets::Asset, xcm::assets::RemoteAssetRegistryInspect};
+use composable_traits::{
+	assets::Asset,
+	dex::{Amm, PriceAggregate, RemoveLiquiditySimulationResult},
+	xcm::assets::RemoteAssetRegistryInspect,
+};
 use primitives::currency::{CurrencyId, ValidateCurrencyId};
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
@@ -60,6 +64,7 @@ use sp_runtime::{
 };
 
 use composable_support::rpc_helpers::SafeRpcWrapper;
+use sp_std::{collections::btree_map::BTreeMap, fmt::Debug, vec::Vec};
 
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -90,7 +95,6 @@ use sp_runtime::AccountId32;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{FixedPointNumber, Perbill, Permill, Perquintill};
-use sp_std::fmt::Debug;
 use system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
@@ -251,6 +255,28 @@ impl assets_registry::Config for Runtime {
 	type ParachainOrGovernanceOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type CurrencyFactory = CurrencyFactory;
 	type WeightInfo = weights::assets_registry::WeightInfo<Runtime>;
+}
+
+parameter_types! {
+	pub PabloPalletId: PalletId = PalletId(*b"pal_pblo");
+	pub TWAPInterval: u64 = (MILLISECS_PER_BLOCK as u64) * 10;
+}
+
+impl pablo::Config for Runtime {
+	type Event = Event;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type Convert = sp_runtime::traits::ConvertInto;
+	type CurrencyFactory = CurrencyFactory;
+	type Assets = Assets;
+	type PoolId = PoolId;
+	type PalletId = PabloPalletId;
+	type LocalAssets = CurrencyFactory;
+	type PoolCreationOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type EnableTwapOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type Time = Timestamp;
+	type TWAPInterval = TWAPInterval;
+	type WeightInfo = weights::pablo::WeightInfo<Runtime>;
 }
 
 impl assets::Config for Runtime {
@@ -835,6 +861,7 @@ construct_runtime!(
 		Vesting: vesting = 57,
 		BondedFinance: bonded_finance = 58,
 		AssetsRegistry: assets_registry = 59,
+		Pablo: pablo = 60,
 
 		CallFilter: call_filter = 100,
 	}
@@ -897,6 +924,7 @@ mod benches {
 		[bonded_finance, BondedFinance]
 		[vesting, Vesting]
 		[assets_registry, AssetsRegistry]
+		[pablo, Pablo]
 	);
 }
 
@@ -941,6 +969,73 @@ impl_runtime_apis! {
 				crowdloan_rewards::amount_available_to_claim_for::<Runtime>(account_id)
 					.unwrap_or_else(|_| Balance::zero())
 			)
+		}
+	}
+
+	impl pablo_runtime_api::PabloRuntimeApi<Block, AccountId, PoolId, CurrencyId, Balance> for Runtime {
+		fn prices_for(
+			pool_id: PoolId,
+			base_asset_id: CurrencyId,
+			quote_asset_id: CurrencyId,
+			amount: Balance
+		) -> PriceAggregate<SafeRpcWrapper<PoolId>, SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>> {
+			pablo::prices_for::<Runtime>(
+				pool_id,
+				base_asset_id,
+				quote_asset_id,
+				amount
+			)
+			.map(|p| PriceAggregate{
+				pool_id: SafeRpcWrapper(p.pool_id),
+				base_asset_id: SafeRpcWrapper(p.base_asset_id),
+				quote_asset_id: SafeRpcWrapper(p.quote_asset_id),
+				spot_price: SafeRpcWrapper(p.spot_price)
+			})
+			.unwrap_or_else(|_| PriceAggregate{
+				pool_id: SafeRpcWrapper(pool_id),
+				base_asset_id: SafeRpcWrapper(base_asset_id),
+				quote_asset_id: SafeRpcWrapper(quote_asset_id),
+				spot_price: SafeRpcWrapper(0_u128)
+			})
+		}
+
+		fn simulate_add_liquidity(
+			who: SafeRpcWrapper<AccountId>,
+			pool_id: SafeRpcWrapper<PoolId>,
+			amounts: BTreeMap<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>>,
+		) -> SafeRpcWrapper<Balance> {
+			let amounts: BTreeMap<CurrencyId, Balance> = amounts.iter().map(|(k, v)| (k.0,v.0)).collect();
+			SafeRpcWrapper(
+				<Pablo as Amm>::simulate_add_liquidity(
+					&who.0,
+					pool_id.0,
+					amounts,
+				)
+				.unwrap_or_else(|_| Zero::zero())
+			)
+		}
+
+		fn simulate_remove_liquidity(
+			who: SafeRpcWrapper<AccountId>,
+			pool_id: SafeRpcWrapper<PoolId>,
+			lp_amount: SafeRpcWrapper<Balance>,
+			min_expected_amounts: BTreeMap<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>>,
+		) -> RemoveLiquiditySimulationResult<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>> {
+			let min_expected_amounts: BTreeMap<_, _> = min_expected_amounts.iter().map(|(k, v)| (k.0, v.0)).collect();
+			let default_removed_assets = min_expected_amounts.keys().map(|k| (*k, 0_u128)).collect::<BTreeMap<_,_>>();
+			let simulate_remove_liquidity_result = <Pablo as Amm>::simulate_remove_liquidity(&who.0, pool_id.0, lp_amount.0)
+				.unwrap_or(
+					RemoveLiquiditySimulationResult{
+						assets: default_removed_assets
+					}
+				);
+			let mut new_map = BTreeMap::new();
+			for (k,v) in simulate_remove_liquidity_result.assets.iter() {
+				new_map.insert(SafeRpcWrapper(*k), SafeRpcWrapper(*v));
+			}
+			RemoveLiquiditySimulationResult{
+				assets: new_map
+			}
 		}
 	}
 
