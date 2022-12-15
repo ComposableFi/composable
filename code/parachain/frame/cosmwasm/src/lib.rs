@@ -167,8 +167,7 @@ pub mod pallet {
 		ExecutionFailed { contract: AccountIdOf<T>, entrypoint: EntryPoint, error: Vec<u8> },
 		Emitted { contract: AccountIdOf<T>, ty: Vec<u8>, attributes: Vec<(Vec<u8>, Vec<u8>)> },
 		Migrated { contract: AccountIdOf<T>, to: CosmwasmCodeId },
-		AdminUpdated { contract: AccountIdOf<T>, new_admin: AccountIdOf<T> },
-		AdminCleared { contract: AccountIdOf<T> },
+		AdminUpdated { contract: AccountIdOf<T>, new_admin: Option<AccountIdOf<T>> },
 		IbcChannelOpen { contract: AccountIdOf<T> },
 	}
 
@@ -517,39 +516,15 @@ pub mod pallet {
 		pub fn update_admin(
 			origin: OriginFor<T>,
 			contract: AccountIdOf<T>,
-			new_admin: AccountIdOf<T>,
+			new_admin: Option<AccountIdOf<T>>,
 			gas: u64,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 			let initial_gas = T::WeightInfo::update_admin().saturating_add(gas);
 			let outcome =
-				Self::do_update_admin(&mut shared, who, contract.clone(), Some(new_admin.clone()));
+				Self::do_update_admin(&mut shared, who, contract.clone(), new_admin.clone());
 			Self::deposit_event(Event::<T>::AdminUpdated { contract, new_admin });
-			Self::refund_gas(outcome, initial_gas, shared.gas.remaining())
-		}
-
-		/// Clear the admin of a contract.
-		///
-		/// * Emits a `AdminCleared` event on success.
-		///
-		/// Arguments
-		///
-		/// * `origin` the origin dispatching the extrinsic.
-		/// * `contract` the address of the contract that we want to migrate.
-		/// * `gas` the maximum gas to use, the remaining is refunded at the end of the transaction.
-		#[transactional]
-		#[pallet::weight(T::WeightInfo::clear_admin().saturating_add(*gas))]
-		pub fn clear_admin(
-			origin: OriginFor<T>,
-			contract: AccountIdOf<T>,
-			gas: u64,
-		) -> DispatchResultWithPostInfo {
-			let who = ensure_signed(origin)?;
-			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
-			let initial_gas = T::WeightInfo::clear_admin().saturating_add(gas);
-			let outcome = Self::do_update_admin(&mut shared, who, contract.clone(), None);
-			Self::deposit_event(Event::<T>::AdminCleared { contract });
 			Self::refund_gas(outcome, initial_gas, shared.gas.remaining())
 		}
 	}
@@ -949,7 +924,7 @@ pub mod pallet {
 			new_admin: Option<AccountIdOf<T>>,
 		) -> Result<(), CosmwasmVMError<T>> {
 			let info = Self::contract_info(&contract)?;
-			let outcome = Self::cosmwasm_call(
+			Self::cosmwasm_call(
 				shared,
 				who.clone(),
 				contract.clone(),
@@ -964,8 +939,7 @@ pub mod pallet {
 					)
 					.map_err(Into::into)
 				},
-			);
-			outcome
+			)
 		}
 
 		fn block_env() -> BlockInfo {
