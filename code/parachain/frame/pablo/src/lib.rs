@@ -80,8 +80,7 @@ pub mod pallet {
 	use sp_arithmetic::FixedPointOperand;
 
 	use composable_maths::dex::{
-		constant_product::{compute_deposit_lp, compute_redeemed_for_lp},
-		price::compute_initial_price_cumulative,
+		constant_product::compute_redeemed_for_lp, price::compute_initial_price_cumulative,
 	};
 	use composable_traits::{
 		currency::BalanceLike,
@@ -616,35 +615,6 @@ pub mod pallet {
 			// 	)?;
 			// }
 			Ok(())
-		}
-
-		fn lp_for_liquidity(
-			pool_config: PoolConfiguration<T::AccountId, T::AssetId>,
-			pool_account: T::AccountId,
-			base_amount: T::Balance,
-			quote_amount: T::Balance,
-		) -> Result<T::Balance, DispatchError> {
-			match pool_config {
-				PoolConfiguration::DualAssetConstantProduct(pool) => {
-					let assets = pool.assets_weights.keys().copied().collect::<Vec<_>>();
-					let currency_pair = CurrencyPair::new(assets[0], assets[1]);
-					let pool_base_aum =
-						T::Convert::convert(T::Assets::balance(currency_pair.base, &pool_account));
-					let pool_quote_aum =
-						T::Convert::convert(T::Assets::balance(currency_pair.quote, &pool_account));
-
-					let lp_total_issuance =
-						T::Convert::convert(T::Assets::total_issuance(pool.lp_token));
-					let (_, amount_of_lp_token_to_mint) = compute_deposit_lp(
-						lp_total_issuance,
-						T::Convert::convert(base_amount),
-						T::Convert::convert(quote_amount),
-						pool_base_aum,
-						pool_quote_aum,
-					)?;
-					Ok(T::Convert::convert(amount_of_lp_token_to_mint))
-				},
-			}
 		}
 
 		#[deprecated(
