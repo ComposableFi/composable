@@ -211,6 +211,7 @@ jobs:
           command: nix -- build .#spell-check
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
+  # This isn't templated, since checkout needs to happen before templating occurs. 
   docs-check:
     name: "Docs check"
     runs-on: ubuntu-latest
@@ -220,11 +221,65 @@ jobs:
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
-      - uses: actions/checkout@v3
-      - uses: "./.github/templates/watch-exec"
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+          echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+        shell: "bash"
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
         with:
-          command: nix -- build .#docs-static
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          installCommand: |
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix nixpkgs.git-lfs nixpkgs.nodejs
+          name: ${{ env.CACHIX_COMPOSABLE }}
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+      - uses: actions/checkout@v3
+        with:
+          lfs: true
+      - run: |
+          # Marker status code in case of network failure.
+          STATUS_TRANSIENT_FAILURE=200
+          # Maximum retries in case of network failures.
+          RETRIES=5               
+          CMD="cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#docs-static  --no-update-lock-file --show-trace -L 2> >(tee -a $LOG_FILE >&2)" 
+          # Marker that a network error occurred.
+          BAD="HTTP error 200 ('')"  
+          LOG_FILE=/tmp/out.log
+
+          function run() {
+              eval "${CMD?}"
+              STATUS_CODE=$?
+              if [[ $STATUS_CODE -ne 0 ]] ; then
+                  C=$(grep -c "HTTP error 200" $LOG_FILE)
+                  if [[ $C -gt 0 ]]; then 
+                      STATUS_CODE=$STATUS_TRANSIENT_FAILURE 
+                  fi
+              fi
+          }
+
+          try=0
+          while [[ "${try?}" -le "${RETRIES?}" ]]; do
+              if [[ "${try?}" -eq "${RETRIES?}" ]] ; then
+                  exit 1
+              fi
+              run
+              if [[ $STATUS_CODE -ne 0 ]] || [[ $STATUS_CODE -ne $STATUS_TRANSIENT_FAILURE ]] ; then
+                  break
+              fi
+              ((try=try+1))
+          done
+
+          exit $((STATUS_CODE))    
+        shell: "bash"
+        working-directory: ./docs
+      - uses: FirebaseExtended/action-hosting-deploy@0f248036885ae672f78587669fa2923f0ef6cac2
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_DOCS_COMPOSABLE_FINANCE }}
+          projectId: composable-docs
+          entrypoint: docs/
+          channelId: ${{ github.event_name == 'push' && github.ref_name == 'main' && 'live' }}
 
   frontend-check:
     name: "Frontend check"
