@@ -139,7 +139,7 @@ jobs:
   check-nix-long:
     runs-on: ubuntu-latest
     continue-on-error: true
-    if: github.event_name == 'pull_request' && contains("#flaky", github.event.pull_request.title)
+    if: github.event_name == 'pull_request' && contains('#flaky', github.event.pull_request.title)
     needs:
       - check-nix
     concurrency:
@@ -161,7 +161,8 @@ jobs:
             nix-env -iA nixpkgs.cachix
           name: composable-community
       - run: |
-          source ./check-nix-long.sh
+          chmod +x ./.github/workflows/check-nix-long.sh
+          source ./.github/workflows/check-nix-long.sh
 
   taplo-cli-check:
     name: "Taplo cli check"
