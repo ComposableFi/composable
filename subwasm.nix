@@ -51,7 +51,7 @@
 
           installPhase = ''
             mkdir $out
-            ${subwasm}/bin/subwasm metadata --json ${runtime}/lib/runtime.optimized.wasm > $out/${chainName}-metadata.json;
+            ${pkgs.lib.meta.getExe subwasm} metadata --json ${runtime}/lib/runtime.optimized.wasm > $out/${chainName}-metadata.json;
           '';
         };
 
