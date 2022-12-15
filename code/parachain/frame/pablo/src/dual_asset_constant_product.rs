@@ -6,7 +6,7 @@ use composable_maths::dex::{
 	},
 	per_thing_acceptable_computation_error, PoolWeightMathExt,
 };
-use composable_support::math::safe::SafeAdd;
+use composable_support::{collections::vec::bounded::BiBoundedVec, math::safe::SafeAdd};
 use composable_traits::{
 	currency::{CurrencyFactory, RangeId},
 	dex::{AssetAmount, BasicPoolInfo, Fee, FeeConfig},
@@ -215,7 +215,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		pool: BasicPoolInfo<T::AccountId, T::AssetId, ConstU32<2>>,
 		pool_account: T::AccountId,
 		lp_amount: T::Balance,
-		min_receive: BoundedVec<AssetAmount<T::AssetId, T::Balance>, ConstU32<2>>,
+		min_receive: BiBoundedVec<AssetAmount<T::AssetId, T::Balance>, 1, 2>,
 	) -> Result<BTreeMap<T::AssetId, T::Balance>, DispatchError> {
 		let mut pool_assets = Self::get_pool_balances(&pool, &pool_account);
 

@@ -58,7 +58,10 @@ pub mod pallet {
 		WeightInfo,
 	};
 	use codec::FullCodec;
-	use composable_support::math::safe::{SafeArithmetic, SafeSub};
+	use composable_support::{
+		collections::vec::bounded::{bi_bounded_vec::BiBoundedVecOutOfBounds, BiBoundedVec},
+		math::safe::{SafeArithmetic, SafeSub},
+	};
 	use composable_traits::{
 		currency::{CurrencyFactory, LocalAssets},
 		defi::{CurrencyPair, Rate},
@@ -210,6 +213,8 @@ pub mod pallet {
 		IncorrectAssetAmounts,
 		UnsupportedOperation,
 		InitialDepositCannotBeZero,
+		/// The `min_amounts` passed to `remove_liquidity` must contain at least one asset.
+		MinAmountsMustContainAtLeastOneAsset,
 	}
 
 	#[pallet::config]
@@ -742,6 +747,7 @@ pub mod pallet {
 			who: &Self::AccountId,
 			pool_id: Self::PoolId,
 			lp_amount: Self::Balance,
+			min_amounts: BTreeMap<Self::AssetId, Self::Balance>,
 		) -> Result<BTreeMap<Self::AssetId, Self::Balance>, DispatchError> {
 			with_transaction(|| {
 				// since we're simulating this, we want to immediately roll it back no matter what
@@ -750,7 +756,7 @@ pub mod pallet {
 					who,
 					pool_id,
 					lp_amount,
-					BTreeMap::new(),
+					min_amounts,
 				))
 			})
 		}
@@ -837,11 +843,18 @@ pub mod pallet {
 						info,
 						pool_account,
 						lp_amount,
-						min_receive
-							.into_iter()
-							.map(|(asset_id, amount)| AssetAmount { asset_id, amount })
-							.try_collect()
-							.map_err(|_| Error::<T>::MoreThanTwoAssetsNotYetSupported)?,
+						BiBoundedVec::from_vec(
+							min_receive
+								.into_iter()
+								.map(|(asset_id, amount)| AssetAmount { asset_id, amount })
+								.collect(),
+						)
+						.map_err(|err| match err {
+							BiBoundedVecOutOfBounds::LowerBoundError { .. } =>
+								Error::<T>::MinAmountsMustContainAtLeastOneAsset,
+							BiBoundedVecOutOfBounds::UpperBoundError { .. } =>
+								Error::<T>::MoreThanTwoAssetsNotYetSupported,
+						})?,
 					)?;
 
 					Self::update_twap(pool_id)?;

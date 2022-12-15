@@ -87,6 +87,7 @@ pub trait Amm {
 		who: &Self::AccountId,
 		pool_id: Self::PoolId,
 		lp_amount: Self::Balance,
+		min_amounts: BTreeMap<Self::AssetId, Self::Balance>,
 	) -> Result<BTreeMap<Self::AssetId, Self::Balance>, DispatchError>
 	where
 		Self::AssetId: sp_std::cmp::Ord;

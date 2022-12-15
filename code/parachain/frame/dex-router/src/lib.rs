@@ -439,10 +439,12 @@ pub mod pallet {
 			who: &Self::AccountId,
 			pool_id: Self::PoolId,
 			lp_amount: Self::Balance,
+			min_amounts: BTreeMap<Self::AssetId, Self::Balance>,
 		) -> Result<BTreeMap<Self::AssetId, Self::Balance>, DispatchError> {
 			let (route, _reverse) = Self::get_route(pool_id).ok_or(Error::<T>::NoRouteFound)?;
 			match route[..] {
-				[pool_id] => T::Pablo::simulate_remove_liquidity(who, pool_id, lp_amount),
+				[pool_id] =>
+					T::Pablo::simulate_remove_liquidity(who, pool_id, lp_amount, min_amounts),
 				_ => Err(Error::<T>::UnsupportedOperation.into()),
 			}
 		}
