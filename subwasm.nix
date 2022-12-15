@@ -1,6 +1,19 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, system, crane, ... }: {
-    packages = rec {
+    packages = let
+      mkChainMetadata = { runtime, chainName, subwasm }:
+        pkgs.stdenv.mkDerivation {
+          name = "subwasm-get-${chainName}-metadata";
+          dontUnpack = true;
+
+          installPhase = ''
+            mkdir $out
+            ${
+              pkgs.lib.meta.getExe subwasm
+            } metadata --json ${runtime}/lib/runtime.optimized.wasm > $out/${chainName}-metadata.json;
+          '';
+        };
+    in rec {
       subwasm = let
         src = pkgs.fetchFromGitHub {
           owner = "chevdor";
@@ -44,28 +57,20 @@
         '';
       };
 
-      mkChainMetadata = { runtime, chainName }:
-        pkgs.stdenv.mkDerivation {
-          name = "subwasm-get-${chainName}-metadata";
-          dontUnpack = true;
-
-          installPhase = ''
-            mkdir $out
-            ${pkgs.lib.meta.getExe subwasm} metadata --json ${runtime}/lib/runtime.optimized.wasm > $out/${chainName}-metadata.json;
-          '';
-        };
-
       subwasm-get-dali-metadata = mkChainMetadata {
+        inherit subwasm;
         runtime = self'.packages.dali-runtime;
         chainName = "dali";
       };
 
       subwasm-get-picasso-metadata = mkChainMetadata {
+        inherit subwasm;
         runtime = self'.packages.picasso-runtime;
         chainName = "picasso";
       };
 
       subwasm-get-composable-metadata = mkChainMetadata {
+        inherit subwasm;
         runtime = self'.packages.composable-runtime;
         chainName = "composable";
       };
